@@ -65,7 +65,8 @@ async def get_stats():
     cursor = await db.execute("""
         SELECT q.category,
                COUNT(*) as total,
-               SUM(CASE WHEN p.status = 'correct' THEN 1 ELSE 0 END) as correct_count
+               SUM(CASE WHEN p.status = 'correct' THEN 1 ELSE 0 END) as correct_count,
+               SUM(CASE WHEN p.status = 'reviewing' THEN 1 ELSE 0 END) as reviewing_count
         FROM questions q
         LEFT JOIN user_progress p ON q.id = p.question_id
         GROUP BY q.category
@@ -74,7 +75,7 @@ async def get_stats():
     async for row in cursor:
         by_category[row["category"]] = {
             "total": row["total"],
-            "done": row["correct_count"] or 0,
+            "done": (row["correct_count"] or 0) + (row["reviewing_count"] or 0),
         }
 
     await db.close()
