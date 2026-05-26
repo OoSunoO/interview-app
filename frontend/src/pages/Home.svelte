@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { api } from "../lib/api.js";
-  import { store } from "../lib/stores.js";
+  import { store } from "../lib/stores.svelte.js";
 
   let { onNavigate } = $props();
   let recommend = $state([]);

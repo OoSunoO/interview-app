@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { store } from "../lib/stores.js";
+  import { store } from "../lib/stores.svelte.js";
   import CodeBlock from "../components/CodeBlock.svelte";
 
   let { questionId, onNavigate } = $props();
