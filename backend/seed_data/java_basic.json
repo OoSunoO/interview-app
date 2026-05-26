@@ -1,0 +1,102 @@
+[
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Java 中 == 和 equals() 的区别",
+    "content": "请解释 Java 中 == 运算符和 equals() 方法的区别。",
+    "answer": "== 比较的是引用地址（基本类型比较值），equals() 默认也是比较引用地址，但很多类（如 String、Integer）重写了 equals() 来比较内容。",
+    "hints": ["思考基本类型和引用类型的区别", "String 的 equals 是如何实现的"],
+    "tags": ["基础", "String", "相等比较"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HashMap 的底层实现原理",
+    "content": "请描述 Java HashMap 的底层数据结构和工作原理。",
+    "answer": "HashMap 底层是数组+链表+红黑树（Java 8+）。通过 key 的 hashCode 计算桶位置，哈希冲突时用链地址法，链表长度超过 8 且数组长度 >= 64 时转为红黑树。",
+    "hints": ["默认初始容量和负载因子是多少", "什么时候触发扩容"],
+    "tags": ["集合", "HashMap", "哈希"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "final 关键字的作用",
+    "content": "请说明 Java 中 final 关键字可以修饰哪些元素，各有什么作用。",
+    "answer": "final 可以修饰：类（不可继承）、方法（不可重写）、变量（不可变，基本类型值不变，引用类型指向不变）。",
+    "hints": ["final 变量是否一定需要在声明时初始化"],
+    "tags": ["基础", "关键字"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "volatile 关键字的作用和原理",
+    "content": "请解释 volatile 关键字的作用及其底层实现原理。",
+    "answer": "volatile 保证可见性（写操作立即刷新到主存，读操作从主存读取）和禁止指令重排序。底层通过内存屏障实现。但不保证原子性。",
+    "hints": ["volatile 能保证原子性吗", "和 synchronized 的区别"],
+    "tags": ["并发", "JMM", "关键字"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap 的实现原理",
+    "content": "请描述 ConcurrentHashMap 在 Java 7 和 Java 8 中的实现差异。",
+    "answer": "Java 7：Segment 分段锁，继承 ReentrantLock。Java 8：放弃分段锁，使用 CAS + synchronized 锁首节点，并发度更高，内存更少。",
+    "hints": ["Java 8 中什么情况下使用 synchronized", "size() 方法如何保证一致性"],
+    "tags": ["并发", "集合", "ConcurrentHashMap"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "String、StringBuilder、StringBuffer 的区别",
+    "content": "请比较 String、StringBuilder、StringBuffer 三者的区别。",
+    "answer": "String 不可变，每次拼接创建新对象。StringBuffer 可变且线程安全（synchronized），性能较差。StringBuilder 可变但线程不安全，性能最好。",
+    "hints": ["字符串拼接在循环中应该用哪个", "三者继承关系"],
+    "tags": ["基础", "String"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 内存区域划分",
+    "content": "请描述 JVM 运行时数据区的各个区域及其作用。",
+    "answer": "程序计数器（线程私有）、虚拟机栈（线程私有，存储栈帧）、本地方法栈、堆（所有线程共享，存储对象实例）、方法区（存储类信息/常量/静态变量）。",
+    "hints": ["JDK 8 中方法区的变化", "什么情况下会抛出 OOM"],
+    "tags": ["JVM", "内存"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "单例模式——双重检查锁实现",
+    "content": "请用双重检查锁（DCL）实现一个线程安全的单例模式。",
+    "answer": "```java\npublic class Singleton {\n    private static volatile Singleton instance;\n    private Singleton() {}\n    public static Singleton getInstance() {\n        if (instance == null) {\n            synchronized (Singleton.class) {\n                if (instance == null) {\n                    instance = new Singleton();\n                }\n            }\n        }\n        return instance;\n    }\n}\n```",
+    "hints": ["为什么需要 volatile", "为什么需要两次判断 null"],
+    "tags": ["设计模式", "并发"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 异常体系",
+    "content": "请描述 Java 的异常体系结构，包括受检异常和非受检异常的区别。",
+    "answer": "Throwable 分为 Error（不可处理，如 OOM）和 Exception。Exception 分为 RuntimeException（非受检，如 NPE）和其他（受检异常，如 IOException）。受检异常必须捕获或声明抛出。",
+    "hints": ["自定义异常应该继承哪个类", "try-with-resources 是什么"],
+    "tags": ["基础", "异常"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "面向对象三大特性",
+    "content": "请解释面向对象编程的三大特性：封装、继承、多态。",
+    "answer": "封装：隐藏内部实现，通过公开接口访问。继承：子类继承父类属性和方法，实现代码复用。多态：同一接口不同实现，通过父类引用指向子类对象实现。",
+    "hints": ["多态的两种形式：编译时多态和运行时多态"],
+    "tags": ["基础", "OOP"]
+  }
+]
