@@ -1,0 +1,102 @@
+[
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 垃圾回收算法",
+    "content": "请介绍 JVM 中常见的垃圾回收算法及其优缺点。",
+    "answer": "标记-清除（有内存碎片）、标记-复制（无碎片但浪费一半空间）、标记-整理（无碎片但效率低）、分代收集（新生代复制，老年代标记-整理）。",
+    "hints": ["Java 8 默认的垃圾回收器是什么", "CMS 和 G1 的区别"],
+    "tags": ["JVM", "GC"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "线程池的核心参数",
+    "content": "请解释 ThreadPoolExecutor 的核心参数及其作用。",
+    "answer": "corePoolSize（核心线程数）、maximumPoolSize（最大线程数）、keepAliveTime（空闲线程存活时间）、workQueue（任务队列）、threadFactory（线程工厂）、handler（拒绝策略）。",
+    "hints": ["任务提交后线程池的处理流程", "四种拒绝策略分别是什么"],
+    "tags": ["并发", "线程池"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "实现一个带超时的缓存",
+    "content": "请实现一个支持过期时间的泛型缓存，要求线程安全。",
+    "answer": "```java\npublic class TimedCache<K, V> {\n    private final ConcurrentHashMap<K, CacheEntry<V>> cache = new ConcurrentHashMap<>();\n    \n    private record CacheEntry<V>(V value, long expireAt) {}\n    \n    public void put(K key, V value, long ttlMs) {\n        cache.put(key, new CacheEntry<>(value, System.currentTimeMillis() + ttlMs));\n    }\n    \n    public V get(K key) {\n        CacheEntry<V> entry = cache.get(key);\n        if (entry == null || System.currentTimeMillis() > entry.expireAt()) {\n            cache.remove(key);\n            return null;\n        }\n        return entry.value();\n    }\n}\n```",
+    "hints": ["如何清理过期条目", "ConcurrentHashMap 能保证线程安全吗"],
+    "tags": ["并发", "缓存"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NIO 与 BIO 的区别",
+    "content": "请比较 Java NIO 和传统 BIO 的区别及适用场景。",
+    "answer": "BIO 是阻塞 I/O，一个线程处理一个连接，简单但线程开销大。NIO 是非阻塞 I/O，基于 Channel 和 Selector，一个线程可处理多个连接，适合高并发场景。",
+    "hints": ["NIO 的三个核心组件", "零拷贝（Zero-Copy）是什么"],
+    "tags": ["NIO", "IO"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Java 反射机制",
+    "content": "请解释 Java 反射机制及其常见用途。",
+    "answer": "反射允许程序在运行时获取类的完整信息（方法、字段、构造器）并动态调用。常用于框架（Spring）、ORM、动态代理、序列化等场景。",
+    "hints": ["获取 Class 对象的三种方式", "反射的性能开销如何优化"],
+    "tags": ["反射", "基础"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "泛型的类型擦除",
+    "content": "请解释 Java 泛型的类型擦除机制及其影响。",
+    "answer": "Java 泛型在编译时进行类型检查，编译后擦除类型信息，生成原始类型（Raw Type）的字节码。导致运行时无法获取泛型参数类型，List<String> 和 List<Integer> 实际上是同一个类。",
+    "hints": ["如何绕过类型擦除获取泛型参数类型", "桥方法（Bridge Method）的作用"],
+    "tags": ["泛型", "基础"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "类加载机制与双亲委派模型",
+    "content": "请描述 JVM 类加载机制和双亲委派模型的工作原理。",
+    "answer": "类加载分三步：加载、连接（验证/准备/解析）、初始化。双亲委派：加载类时先委派给父加载器，父加载器无法加载时才由子加载器加载。核心类由 Bootstrap 加载，保证核心 API 不被篡改。",
+    "hints": ["如何打破双亲委派模型", "Tomcat 的类加载器为什么打破双亲委派"],
+    "tags": ["JVM", "类加载"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ReentrantLock 与 synchronized 的区别",
+    "content": "请比较 ReentrantLock 和 synchronized 的区别。",
+    "answer": "synchronized 是 JVM 层面关键字，自动释放锁。ReentrantLock 是 API 层面的锁，需要手动释放，支持可中断、可定时、公平锁、条件变量等高级功能。Java 6 优化后性能差距不大。",
+    "hints": ["什么是锁升级", "Condition 的 await/signal 与 wait/notify 的区别"],
+    "tags": ["并发", "锁"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CompletableFuture 异步编程",
+    "content": "请介绍 CompletableFuture 的核心用法及异步编排能力。",
+    "answer": "CompletableFuture 提供了 supplyAsync/runAsync 创建异步任务，thenApply/thenCompose 串行编排，thenCombine 合并结果，allOf/anyOf 等待多个任务。支持异常回调 exceptionally/handle。",
+    "hints": ["默认线程池是什么", "thenApply 和 thenApplyAsync 的区别"],
+    "tags": ["并发", "异步"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Stream API 的中间操作和终端操作",
+    "content": "请列举 Java Stream API 的常见中间操作和终端操作。",
+    "answer": "中间操作：filter、map、flatMap、distinct、sorted、peek、limit/skip（延迟执行）。终端操作：collect、forEach、reduce、count、anyMatch/allMatch/noneMatch、findFirst/findAny（触发执行）。",
+    "hints": ["中间操作为什么是延迟执行的", "parallelStream 的注意事项"],
+    "tags": ["函数式", "Stream"]
+  }
+]

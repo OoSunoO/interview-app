@@ -1,0 +1,102 @@
+[
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "CAP 定理",
+    "content": "请解释 CAP 定理及其在分布式系统中的权衡。",
+    "answer": "CAP：一致性（Consistency）、可用性（Availability）、分区容错性（Partition Tolerance）三者最多同时满足两个。分布式系统必须保证 P，实际是 CP 或 AP 的选择。CP 优先（如 ZK）保证一致但可能不可用，AP 优先（如 Eureka）保证可用但可能不一致。",
+    "hints": ["BASE 理论和 CAP 的关系", "为什么 P 是必须的"],
+    "tags": ["分布式", "CAP"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "一致性哈希",
+    "content": "请解释一致性哈希算法的原理和优势。",
+    "answer": "一致性哈希将节点和数据映射到哈希环上，数据顺时针找到最近的节点。优势：节点增减仅影响相邻节点，大幅减少数据迁移量。引入虚拟节点解决负载不均问题。",
+    "hints": ["什么场景需要一致性哈希", "普通哈希取模有什么问题"],
+    "tags": ["分布式", "哈希"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "缓存策略",
+    "content": "请介绍常见的缓存策略及其适用场景。",
+    "answer": "Cache Aside（旁路缓存：读时回填，更新时先写 DB 再删缓存）、Read/Write Through（缓存代理读写）、Write Behind（异步批量写回 DB）。常见问题：缓存雪崩（大范围过期）、缓存穿透（查询不存在的数据）、缓存击穿（热点 key 过期）。",
+    "hints": ["更新缓存时为什么是删缓存而不是更新缓存", "如何解决缓存穿透"],
+    "tags": ["缓存"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息队列的作用",
+    "content": "请说明消息队列在分布式系统中的作用。",
+    "answer": "解耦（生产者和消费者独立演进）、削峰填谷（缓冲突发流量）、异步处理（提升响应速度）、可靠投递（消息持久化保证不丢失）。常见选型：Kafka（高吞吐，日志类）、RabbitMQ（低延迟，可靠路由）、RocketMQ（事务消息）。",
+    "hints": ["如何保证消息不重复消费", "消息顺序性如何保证"],
+    "tags": ["消息队列"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数据库分片策略",
+    "content": "请介绍数据库分片（Sharding）的常见策略和挑战。",
+    "answer": "分片策略：范围分片（按 ID 范围，简单但可能热点）、哈希分片（按 hash mod N，数据均匀但扩缩容难）、一致性哈希（迁移量少）、按业务属性分片（如按用户 ID）。挑战：跨分片查询、分布式事务、数据均衡、动态扩容。",
+    "hints": ["分片后如何做 JOIN 查询", "如何平滑扩容"],
+    "tags": ["数据库", "扩展"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微服务架构的优缺点",
+    "content": "请分析微服务架构的优缺点。",
+    "answer": "优点：独立部署（每个服务独立 CI/CD）、技术异构、故障隔离、团队自治。缺点：分布式复杂性（网络延迟、服务发现、配置管理、监控链路）、数据一致性（分布式事务）、调试困难、运维成本高。不适合简单应用。",
+    "hints": ["微服务和 SOA 的区别", "什么时候不应该用微服务"],
+    "tags": ["微服务", "架构"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "负载均衡算法",
+    "content": "请介绍常见的负载均衡算法。",
+    "answer": "轮询（Round Robin）、加权轮询、最少连接（Least Connections）、源地址哈希（IP Hash，保证会话一致性）、一致性哈希（缓存场景）。L4 负载均衡（传输层，性能高）和 L7 负载均衡（应用层，可路由 HTTP 路径）。",
+    "hints": ["Session 粘滞问题如何解决", "健康检查的几种方式"],
+    "tags": ["网络", "负载均衡"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "幂等性设计",
+    "content": "请解释接口幂等性及其实现方式。",
+    "answer": "幂等：同一操作多次执行结果相同。实现方式：1）唯一索引（防重复插入）。2）Token 机制（先获取 token，处理时携带）。3）乐观锁（版本号 CAS）。4）去重表（利用 DB 唯一键）。5）状态机（只有特定状态转换才执行）。",
+    "hints": ["天然幂等的操作有哪些", "MQ 消费者如何保证幂等"],
+    "tags": ["设计", "分布式"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计高并发短链接系统",
+    "content": "请设计一个支持高并发的短链接生成系统，包括存储方案和重定向流程。",
+    "answer": "存储：发号器（Snowflake/Redis incr）+ 缓存（Redis 热点）+ DB 持久化。流程：生成短码（Base62 编码自增 ID）→ 写入 DB+Cache。访问时先查 Cache，miss 查 DB 后回填 Cache。优化：布隆过滤器拦截无效短码，CDN 加速，预生成短码池。",
+    "hints": ["短码如何生成才能保证唯一且短", "如何防止恶意遍历短链接"],
+    "tags": ["设计", "高并发"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "限流策略",
+    "content": "请介绍常见的限流算法及其适用场景。",
+    "answer": "固定窗口（简单但有突刺问题）、滑动窗口（更平滑）、漏桶算法（恒定速率，适合平滑突发流量）、令牌桶（允许突发，适合大部分场景）。实现方式：Guava RateLimiter、Redis+Lua、Sentinel。限流维度：QPS、并发数、CPU 负载。",
+    "hints": ["限流和熔断的区别", "分布式限流如何实现"],
+    "tags": ["高并发", "限流"]
+  }
+]

@@ -1,0 +1,102 @@
+[
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "React 组件间通信方式",
+    "content": "请列举 React 中组件间通信的几种方式。",
+    "answer": "1）Props 父传子。2）回调函数子传父。3）Context 跨层级共享。4）状态管理库（Redux/Zustand/Jotai）。5）Event Bus（不推荐）。6）Ref/Callback Refs。原则：尽量用 Props 提升状态，避免过早引入状态管理。",
+    "hints": ["Context 的优缺点", "组件层级过深时的最佳实践"],
+    "tags": ["React", "组件通信"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "虚拟 DOM 的原理",
+    "content": "请解释虚拟 DOM 的工作原理及其优势。",
+    "answer": "虚拟 DOM 是真实 DOM 的 JS 对象表示。更新流程：1）状态变化生成新 Virtual DOM。2）Diff 新旧 Virtual DOM 找出差异。3）批量更新真实 DOM。优势：减少直接 DOM 操作（批量更新）、跨平台渲染、声明式编程范式。",
+    "hints": ["Diff 算法的复杂度为什么是 O(n)", "Key 属性的作用"],
+    "tags": ["React", "Vue", "基础"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "闭包（Closure）",
+    "content": "请解释 JavaScript 闭包的概念及其常见应用。",
+    "answer": "闭包是函数与其词法环境的组合。内部函数可以访问外部函数的变量，即使外部函数已执行完毕。应用：数据私有化（模块模式）、函数工厂（如柯里化）、事件监听/回调、防抖节流、React Hooks（useState 的实现依赖闭包）。",
+    "hints": ["闭包的内存泄漏问题", "let 和 var 在循环中的区别"],
+    "tags": ["JavaScript", "基础"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "事件循环（Event Loop）",
+    "content": "请描述 JavaScript 事件循环的机制。",
+    "answer": "JS 是单线程，通过事件循环实现异步。流程：1）执行同步代码（调用栈）。2）遇到异步任务放入 Web API。3）异步完成后回调进入任务队列。4）调用栈清空后，先处理微任务（Promise/MutationObserver），再处理宏任务（setTimeout/setInterval）。",
+    "hints": ["Promise 和 setTimeout 的执行顺序", "微任务和宏任务的划分"],
+    "tags": ["JavaScript", "异步"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 的 Fiber 架构",
+    "content": "请解释 React Fiber 架构的设计目标和实现原理。",
+    "answer": "Fiber 是为了解决 React 大型更新时卡顿的问题。核心：可中断的异步渲染。Fiber 节点组成链表树（child/sibling/return），支持双缓冲（workInProgress + current）。调度策略：高优先级任务插队（如 input 输入优先于列表渲染）。",
+    "hints": ["Fiber 如何实现任务中断和恢复", "优先级如何决定"],
+    "tags": ["React", "架构"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "原型链",
+    "content": "请解释 JavaScript 原型链的继承机制。",
+    "answer": "每个对象有 __proto__ 属性指向其原型。对象访问属性时，先找自身，找不到沿 __proto__ 向上找，直到 null。所有对象最终继承自 Object.prototype。通过 prototype 对象实现构造函数继承。ES6 class 是语法糖，本质仍是原型链。",
+    "hints": ["hasOwnProperty 和 in 操作符的区别", "Object.create(null) 的作用"],
+    "tags": ["JavaScript", "基础"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "跨域解决方案",
+    "content": "请列举前端常见的跨域解决方案。",
+    "answer": "CORS（服务器设置 Access-Control-Allow-Origin）、JSONP（只支持 GET）、代理服务器（开发环境 webpack/vite proxy）、postMessage（iframe 通信）、WebSocket（无跨域限制）、Nginx 反向代理。CORS 是主流方案。",
+    "hints": ["CORS 中的预检请求是什么", "withCredentials 字段的作用"],
+    "tags": ["网络", "安全"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Vue 响应式原理",
+    "content": "请解释 Vue 2 和 Vue 3 响应式系统的区别。",
+    "answer": "Vue 2 用 Object.defineProperty 递归劫持 getter/setter，无法检测数组/对象新增属性，需要 Vue.set。Vue 3 用 Proxy 代理整个对象，能拦截所有操作（包括新增属性、数组索引），性能更好且不需要递归初始化。",
+    "hints": ["Proxy 相比 defineProperty 的优势", "为什么 Vue 3 也保留了 ref"],
+    "tags": ["Vue", "响应式"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "状态管理方案对比",
+    "content": "请对比 Redux、Zustand、Jotai 和 Context 的特点。",
+    "answer": "Redux：单一 store，Action/Reducer 模式，适合大型项目，样板代码多。Zustand：轻量，API 简洁，基于 hook，无 Provider 包裹。Jotai：原子化状态，按需订阅，自动优化渲染。Context：内置，适合低频更新场景，高并发导致不必要的重渲染。",
+    "hints": ["什么场景应该用 Jotai 而不是 Redux", "Context 为什么会导致不必要的重渲染"],
+    "tags": ["状态管理"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "CSS BEM 命名规范",
+    "content": "请解释 CSS BEM 命名规范及其优势。",
+    "answer": "BEM = Block（组件块）__Element（元素）--Modifier（状态）。例：card__title--active。优势：命名空间避免冲突、结构清晰一眼看出层级关系、可维护性强。缺点：命名可能过长。替代方案：CSS Modules、Tailwind CSS、CSS-in-JS。",
+    "hints": ["BEM 和 CSS Modules 对比", "为什么大型项目需要 CSS 规范"],
+    "tags": ["CSS", "规范"]
+  }
+]

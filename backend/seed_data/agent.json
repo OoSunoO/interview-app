@@ -1,0 +1,102 @@
+[
+  {
+    "category": "agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "什么是 AI Agent",
+    "content": "请解释 AI Agent 的定义及其核心特征。",
+    "answer": "AI Agent 是能感知环境、自主决策并执行行动的智能体。核心特征：自主性（无需人类干预）、感知能力（观察环境）、决策能力（规划行动方案）、工具使用（调用外部工具完成任务）。",
+    "hints": ["Agent 和传统 AI 模型有什么区别", "ReAct 范式是什么"],
+    "tags": ["Agent", "基础概念"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ReAct 模式",
+    "content": "请解释 ReAct（Reasoning + Acting）模式的工作原理。",
+    "answer": "ReAct 将推理和行动交织进行：模型先分析当前状态（Thought），然后执行动作（Action），观察结果（Observation），再基于新信息继续推理。相比纯 Chain-of-Thought，ReAct 能通过外部反馈纠正错误推理。",
+    "hints": ["ReAct 和 CoT 的区别", "什么时候 Observation 可能出错"],
+    "tags": ["Agent", "推理"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Function Calling（函数调用）",
+    "content": "请解释 LLM Function Calling 的原理和实现方式。",
+    "answer": "Function Calling 是 LLM 将自然语言映射到结构化 API 调用的能力。实现方式：在请求中定义函数 schema（名称、参数描述、类型），模型返回函数名和参数 JSON，程序负责实际执行。关键在准确的函数描述和参数约束。",
+    "hints": ["如何设计函数描述让模型准确选择", "当多个函数都匹配时模型如何选择"],
+    "tags": ["Agent", "工具使用"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 的记忆系统",
+    "content": "请描述 Agent 的记忆系统构成及其作用。",
+    "answer": "三类记忆：1）短期记忆（上下文窗口，对话历史）。2）长期记忆（外部存储，如向量数据库 RAG）。3）工作记忆（当前任务相关）。记忆管理涉及：记忆编码、检索、刷新、遗忘。层次化记忆是 Agent 持久化能力的关键。",
+    "hints": ["记忆检索的 relevance 和 recency 如何平衡", "记忆刷新的策略有哪些"],
+    "tags": ["Agent", "记忆"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Multi-Agent 系统",
+    "content": "请介绍 Multi-Agent 系统的协作模式及其优缺点。",
+    "answer": "常见模式：1）主从模式（一个主 Agent 协调多个子 Agent）。2）辩论模式（多个 Agent 各自推理，交叉验证）。3）流水线模式（分阶段处理）。优势：分工明确、专业性强。挑战：通信开销、协调复杂度、幻觉传播。",
+    "hints": ["Agent 间通信协议如何设计", "如何防止 Agent 间的错误传播"],
+    "tags": ["Agent", "Multi-Agent"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Planning（规划）在 Agent 中的作用",
+    "content": "请解释 Agent 中的规划能力及其实现方式。",
+    "answer": "规划能力让 Agent 将复杂任务分解为子步骤并安排执行顺序。实现方式：CoT（逐步推理）、ToT（思维树，探索多条路径）、任务分解（将大任务拆为可执行的小任务）、动态重规划（失败后调整计划）。",
+    "hints": ["静态规划和动态规划的区别", "Agent 如何评估子任务完成情况"],
+    "tags": ["Agent", "规划"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAG（检索增强生成）",
+    "content": "请解释 RAG 的原理和关键组件。",
+    "answer": "RAG 在 LLM 生成前先从外部知识库检索相关信息。流程：用户查询 → 向量化 → 检索相似文档 → 文档+查询拼接 → LLM 生成。关键组件：Embedding 模型、向量数据库、分块策略（Chunking）、检索策略（相似度/混合检索）。",
+    "hints": ["分块大小对检索质量的影响", "Hybrid Search 为什么比纯向量检索更好"],
+    "tags": ["Agent", "RAG"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Agent 的工具使用能力",
+    "content": "请介绍 Agent 如何发现和使用工具。",
+    "answer": "Agent 通过工具描述（名称、功能、参数 schema）了解工具用途。使用流程：推理 → 选择工具 → 生成参数 → 调用工具 → 解析结果 → 继续推理。工具可包括搜索引擎、计算器、代码执行器、API 等。",
+    "hints": ["工具描述的详细程度对准确率的影响", "如何防止 Agent 误用危险工具"],
+    "tags": ["Agent", "工具使用"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "常见的 Agent 框架",
+    "content": "请列举主流的 Agent 开发框架及其特点。",
+    "answer": "LangChain（最流行，模块化，生态丰富但抽象层多）、AutoGen（微软，Multi-Agent 支持好）、CrewAI（多角色 Agent 协作）、Semantic Kernel（微软，.NET 友好）、Coze（字节，低代码）。选型考虑：语言偏好、Multi-Agent 需求、生态成熟度。",
+    "hints": ["LangChain 的 LCEL 是什么", "AutoGen 和 CrewAI 的 Multi-Agent 模式有何不同"],
+    "tags": ["Agent", "框架"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 的安全与对齐",
+    "content": "请讨论 Agent 系统面临的安全挑战和对齐策略。",
+    "answer": "安全挑战：Prompt 注入（恶意指令劫持 Agent）、工具滥用、权限提升、数据泄露。对齐策略：最小权限原则（仅给必要工具）、人类审批环（高危操作需确认）、沙箱执行、输入输出过滤、行为约束（System Prompt 边界）。",
+    "hints": ["间接 Prompt 注入如何防范", "Agent 的审计日志应该记录什么"],
+    "tags": ["Agent", "安全"]
+  }
+]

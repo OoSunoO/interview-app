@@ -1,0 +1,102 @@
+[
+  {
+    "category": "algorithm",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "两数之和",
+    "content": "给定一个整数数组 nums 和一个目标值 target，请在数组中找出和为目标值的两个数的下标。",
+    "answer": "```java\npublic int[] twoSum(int[] nums, int target) {\n    Map<Integer, Integer> map = new HashMap<>();\n    for (int i = 0; i < nums.length; i++) {\n        int complement = target - nums[i];\n        if (map.containsKey(complement)) {\n            return new int[]{map.get(complement), i};\n        }\n        map.put(nums[i], i);\n    }\n    return new int[0];\n}\n```",
+    "hints": ["暴力解法的时间复杂度是多少", "如何用空间换时间"],
+    "tags": ["数组", "哈希表"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "反转链表",
+    "content": "请实现单链表的反转。",
+    "answer": "```java\npublic ListNode reverseList(ListNode head) {\n    ListNode prev = null;\n    ListNode curr = head;\n    while (curr != null) {\n        ListNode next = curr.next;\n        curr.next = prev;\n        prev = curr;\n        curr = next;\n    }\n    return prev;\n}\n```",
+    "hints": ["迭代和递归两种方式", "递归的关键在于相信函数定义"],
+    "tags": ["链表"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "二叉树的前序/中序/后序遍历",
+    "content": "请实现二叉树的前序、中序、后序遍历（递归和非递归两种方式）。",
+    "answer": "```java\n// 递归\nvoid preorder(TreeNode root) { if (root == null) return; visit(root); preorder(root.left); preorder(root.right); }\nvoid inorder(TreeNode root) { if (root == null) return; inorder(root.left); visit(root); inorder(root.right); }\nvoid postorder(TreeNode root) { if (root == null) return; postorder(root.left); postorder(root.right); visit(root); }\n\n// 非递归前序\nvoid preorderIter(TreeNode root) {\n    Stack<TreeNode> stack = new Stack<>();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        TreeNode node = stack.pop();\n        visit(node);\n        if (node.right != null) stack.push(node.right);\n        if (node.left != null) stack.push(node.left);\n    }\n}\n```",
+    "hints": ["递归的本质是什么", "非递归如何模拟函数调用栈"],
+    "tags": ["树", "递归"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "排序算法对比",
+    "content": "请比较快速排序和归并排序的异同。",
+    "answer": "快排：原地排序（空间 O(log n)），平均 O(n log n)，最坏 O(n²)，不稳定。归并：需要额外 O(n) 空间，稳定，任何情况 O(n log n)。快排通常更快（缓存友好），归并适合链表和外排序。",
+    "hints": ["快排最坏情况什么时候出现", "为什么 Java 的 Arrays.sort 对基本类型用快排"],
+    "tags": ["排序"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "二分搜索",
+    "content": "请实现二分搜索算法，在有序数组中查找目标值。",
+    "answer": "```java\npublic int binarySearch(int[] nums, int target) {\n    int left = 0, right = nums.length - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2;\n        if (nums[mid] == target) return mid;\n        else if (nums[mid] < target) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1;\n}\n```",
+    "hints": ["mid 计算为什么不用 (left+right)/2", "二分搜索的变种有哪些"],
+    "tags": ["搜索", "数组"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "动态规划的核心思想",
+    "content": "请解释动态规划的核心思想和解题步骤。",
+    "answer": "核心：最优子结构（大问题最优解包含小问题最优解）、重叠子问题（子问题重复出现）、状态转移方程。解题步骤：1）定义状态 DP[i] 的含义。2）写出状态转移方程。3）初始化 base case。4）确定遍历顺序。",
+    "hints": ["动态规划和贪心的区别", "记忆化搜索和 DP 的区别"],
+    "tags": ["动态规划"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "BFS 和 DFS",
+    "content": "请实现图的 BFS 和 DFS 遍历。",
+    "answer": "```java\n// BFS\nvoid bfs(Node start) {\n    Queue<Node> queue = new LinkedList<>();\n    Set<Node> visited = new HashSet<>();\n    queue.offer(start);\n    visited.add(start);\n    while (!queue.isEmpty()) {\n        Node node = queue.poll();\n        visit(node);\n        for (Node neighbor : node.neighbors) {\n            if (!visited.contains(neighbor)) {\n                visited.add(neighbor);\n                queue.offer(neighbor);\n            }\n        }\n    }\n}\n// DFS (递归)\nvoid dfs(Node node, Set<Node> visited) {\n    visit(node);\n    visited.add(node);\n    for (Node neighbor : node.neighbors) {\n        if (!visited.contains(neighbor)) dfs(neighbor, visited);\n    }\n}\n```",
+    "hints": ["BFS 为什么可以找最短路径", "DFS 的空间复杂度"],
+    "tags": ["图", "搜索"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "LRU 缓存",
+    "content": "请实现 LRU（最近最少使用）缓存。",
+    "answer": "```java\nclass LRUCache {\n    class Node { int key, val; Node prev, next; Node(int k, int v) { key = k; val = v; } }\n    private final int capacity;\n    private final Map<Integer, Node> map = new HashMap<>();\n    private final Node head = new Node(0, 0), tail = new Node(0, 0);\n    \n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        head.next = tail; tail.prev = head;\n    }\n    \n    public int get(int key) {\n        if (!map.containsKey(key)) return -1;\n        Node node = map.get(key);\n        remove(node);\n        insertToHead(node);\n        return node.val;\n    }\n    \n    public void put(int key, int value) {\n        if (map.containsKey(key)) remove(map.get(key));\n        if (map.size() == capacity) remove(tail.prev);\n        insertToHead(new Node(key, value));\n    }\n    \n    private void remove(Node node) { map.remove(node.key); node.prev.next = node.next; node.next.prev = node.prev; }\n    private void insertToHead(Node node) { map.put(node.key, node); node.next = head.next; node.prev = head; head.next.prev = node; head.next = node; }\n}\n```",
+    "hints": ["LinkedHashMap 可以实现 LRU 吗", "为什么用双向链表不用单向"],
+    "tags": ["设计", "哈希表", "链表"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "贪心算法",
+    "content": "请解释贪心算法的核心思想及其适用条件。",
+    "answer": "核心：每一步选择当前最优解，不考虑全局。适用条件：1）最优子结构（大问题最优包含小问题最优）。2）贪心选择性质（局部最优能推导出全局最优）。典型应用：区间调度、哈夫曼编码、Dijkstra、Prim。",
+    "hints": ["贪心和动态规划的区别", "为什么 Dijkstra 能用贪心"],
+    "tags": ["贪心"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Top K 问题",
+    "content": "请介绍 Top K 问题的常见解法及时间复杂度。",
+    "answer": "三种解法：1）排序 O(n log n)。2）堆（最小堆 O(n log k)，适合海量数据）。3）快速选择（Quick Select，平均 O(n)，最坏 O(n²)）。大数据场景用堆或近似算法（如 Count-Min Sketch、Reservoir Sampling）。",
+    "hints": ["Quick Select 如何优化最坏情况", "海量数据中堆的优势"],
+    "tags": ["堆", "排序", "海量数据"]
+  }
+]
