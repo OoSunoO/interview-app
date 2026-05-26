@@ -23,6 +23,7 @@ async def init_db():
             answer TEXT NOT NULL DEFAULT '',
             hints TEXT NOT NULL DEFAULT '[]',
             tags TEXT NOT NULL DEFAULT '[]',
+            options TEXT NOT NULL DEFAULT '[]',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );

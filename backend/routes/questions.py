@@ -85,6 +85,7 @@ async def get_question(question_id: int):
         type=row["type"], title=row["title"], content=row["content"],
         answer=row["answer"], hints=json.loads(row["hints"]),
         tags=json.loads(row["tags"]),
+        options=json.loads(row["options"]),
         created_at=row["created_at"], updated_at=row["updated_at"],
         status=row["status"], review_count=row["review_count"],
         wrong_count=row["wrong_count"], notes=row["notes"],

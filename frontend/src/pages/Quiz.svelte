@@ -29,6 +29,8 @@
     saving = false;
   }
 
+  let selectedOption = $state(null);
+
   function renderContent(text) {
     if (!text) return [{ type: "text", content: "" }];
     const parts = text.split(/(```\w*\n[\s\S]*?```)/g);
@@ -37,6 +39,23 @@
       if (match) return { type: "code", lang: match[1], code: match[2].trimEnd() };
       return { type: "text", content: p };
     });
+  }
+
+  function isOptionCorrect(opt) {
+    if (!q) return false;
+    if (q.type === "true_false") return q.answer.startsWith(opt);
+    return q.answer.startsWith(opt.substring(0, 2));
+  }
+
+  async function selectOption(opt) {
+    if (selectedOption !== null) return;
+    selectedOption = opt;
+    const correct = isOptionCorrect(opt);
+    stopTimer();
+    saving = true;
+    await store.markProgress(q.id, correct ? "correct" : "wrong", timer);
+    showAnswer = true;
+    saving = false;
   }
 </script>
 
@@ -76,6 +95,33 @@
       {/if}
     {/if}
 
+    {#if q.type === "choice" || q.type === "true_false"}
+      <div class="options">
+        {#each q.options as opt}
+          <button class="option-btn"
+            class:selected={selectedOption === opt}
+            class:correct={selectedOption !== null && isOptionCorrect(opt)}
+            class:wrong={selectedOption === opt && !isOptionCorrect(opt)}
+            disabled={selectedOption !== null}
+            onclick={() => selectOption(opt)}
+          >
+            {opt}
+          </button>
+        {/each}
+      </div>
+    {:else}
+      {#if !showAnswer}
+        <div class="actions">
+          <button class="wrong-btn" onclick={() => mark("wrong")} disabled={saving}>
+            {saving ? "保存中..." : "答错了"}
+          </button>
+          <button class="correct-btn" onclick={() => mark("correct")} disabled={saving}>
+            {saving ? "保存中..." : "答对了"}
+          </button>
+        </div>
+      {/if}
+    {/if}
+
     {#if showAnswer}
       <div class="answer-section">
         <h3>参考答案</h3>
@@ -90,15 +136,6 @@
       <div class="after-actions">
         <button onclick={() => onNavigate("browse")}>返回题库</button>
         <button onclick={() => onNavigate("wrong")}>查看错题本</button>
-      </div>
-    {:else}
-      <div class="actions">
-        <button class="wrong-btn" onclick={() => mark("wrong")} disabled={saving}>
-          {saving ? "保存中..." : "答错了"}
-        </button>
-        <button class="correct-btn" onclick={() => mark("correct")} disabled={saving}>
-          {saving ? "保存中..." : "答对了"}
-        </button>
       </div>
     {/if}
   {/if}
@@ -128,6 +165,14 @@
   .wrong-btn:disabled { background: #7f1d1d; }
   .correct-btn { background: var(--success); }
   .correct-btn:disabled { background: #166534; }
+  .options { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .option-btn { width: 100%; padding: 14px; font-size: 15px; text-align: left; background: var(--bg-card); color: var(--text); border: 2px solid var(--border); transition: all 0.2s; }
+  .option-btn:active { transform: scale(0.98); }
+  .option-btn.selected { border-color: var(--accent); }
+  .option-btn.correct { border-color: var(--success); background: #052e16; color: #4ade80; }
+  .option-btn.wrong { border-color: var(--danger); background: #2d0a0a; color: #fca5a5; }
+  .option-btn:disabled { cursor: default; opacity: 1; }
+  .option-btn:disabled:not(.correct):not(.wrong) { opacity: 0.6; }
   .after-actions { display: flex; gap: 12px; }
   .after-actions button { flex: 1; padding: 12px; font-size: 14px; }
 </style>

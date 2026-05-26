@@ -11,6 +11,7 @@ class Question(BaseModel):
     title: str
     content: str
     answer: str
+    options: list[str] = []
     hints: list[str]
     tags: list[str]
     created_at: datetime

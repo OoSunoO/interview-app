@@ -98,5 +98,60 @@
     "answer": "中间操作：filter、map、flatMap、distinct、sorted、peek、limit/skip（延迟执行）。终端操作：collect、forEach、reduce、count、anyMatch/allMatch/noneMatch、findFirst/findAny（触发执行）。",
     "hints": ["中间操作为什么是延迟执行的", "parallelStream 的注意事项"],
     "tags": ["函数式", "Stream"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "JVM 垃圾回收器选型",
+    "content": "关于 JVM 垃圾回收器，以下说法正确的是？",
+    "options": ["A) 新生代使用标记-整理算法", "B) 老年代使用标记-复制算法", "C) CMS 是并行回收器", "D) G1 是分代收集器"],
+    "answer": "D) G1 是分代收集器。G1 将堆划分成 Region，兼顾新生代和老年代。新生代用标记-复制，老年代用标记-整理。CMS 是并发回收器（非并行）。",
+    "hints": ["CMS 和 G1 的核心区别", "什么是 Stop-The-World"],
+    "tags": ["JVM", "GC"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ThreadPoolExecutor 描述错误的是",
+    "content": "以下关于 ThreadPoolExecutor 的描述，错误的是？",
+    "options": ["A) corePoolSize 是核心线程数", "B) 队列满后创建新线程直到 maximumPoolSize", "C) 默认拒绝策略是 AbortPolicy", "D) keepAliveTime 对核心线程也生效"],
+    "answer": "D) keepAliveTime 对核心线程也生效。keepAliveTime 默认只对超出 corePoolSize 的额外线程生效。如需对核心线程也生效，需调用 allowCoreThreadTimeOut(true)。",
+    "hints": ["线程池处理任务的完整流程", "四种拒绝策略分别是什么"],
+    "tags": ["并发", "线程池"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java 并发包同步辅助类",
+    "content": "以下哪个属于 java.util.concurrent 包中的同步辅助类？",
+    "options": ["A) ArrayList", "B) CountDownLatch", "C) FileReader", "D) StringBuffer"],
+    "answer": "B) CountDownLatch。CountDownLatch 是并发包中的同步辅助类，允许一个或多个线程等待其他线程完成操作。CyclicBarrier、Semaphore 也属于此类。",
+    "hints": ["CountDownLatch 和 CyclicBarrier 的区别", "Semaphore 的作用"],
+    "tags": ["并发", "同步"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Java 泛型运行时类型信息",
+    "content": "Java 泛型在运行时可以获取具体的泛型参数类型。",
+    "options": ["正确", "错误"],
+    "answer": "错误。Java 泛型通过类型擦除实现，运行时泛型参数信息被擦除，List<String> 和 List<Integer> 在运行时是同一个 Class。但通过反射和 TypeToken 技巧可以间接获取。",
+    "hints": ["类型擦除的具体过程", "什么是桥方法"],
+    "tags": ["泛型", "基础"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "ReentrantLock 公平锁",
+    "content": "ReentrantLock 支持公平锁和非公平锁两种模式。",
+    "options": ["正确", "错误"],
+    "answer": "正确。ReentrantLock 构造器接受 fair 参数：true 为公平锁（按等待时间获取锁），false 为非公平锁（允许插队，默认）。公平锁性能更低但避免饥饿。",
+    "hints": ["公平锁和非公平锁的性能差异", "synchronized 是公平的还是非公平的"],
+    "tags": ["并发", "锁"]
   }
 ]

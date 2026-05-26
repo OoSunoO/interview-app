@@ -24,11 +24,12 @@ async def seed():
             questions = json.load(f)
         for q in questions:
             await db.execute(
-                "INSERT INTO questions (category, difficulty, type, title, content, answer, hints, tags) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO questions (category, difficulty, type, title, content, answer, hints, tags, options) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (q["category"], q["difficulty"], q["type"], q["title"],
                  q["content"], q["answer"],
                  json.dumps(q.get("hints", []), ensure_ascii=False),
-                 json.dumps(q.get("tags", []), ensure_ascii=False)),
+                 json.dumps(q.get("tags", []), ensure_ascii=False),
+                 json.dumps(q.get("options", []), ensure_ascii=False)),
             )
         print(f"  播种 {fname}: {len(questions)} 题")
 
