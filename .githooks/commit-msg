@@ -1,0 +1,14 @@
+#!/bin/sh
+# pre-commit commit-msg hook: validate commit message format
+MSG_FILE="$1"
+MSG=$(cat "$MSG_FILE" | head -1)
+
+# Format: "type: description" or "type(scope): description"
+if ! echo "$MSG" | grep -qE '^(feat|fix|refactor|docs|chore|test|style|perf)(\([a-z]+\))?:\s.+'; then
+  echo "❌ 提交信息格式不正确"
+  echo "格式: <类型>: <描述>"
+  echo "类型: feat, fix, refactor, docs, chore, test, style, perf"
+  echo "示例: feat: 添加用户注册功能"
+  echo "       fix: 修复登录页白屏问题"
+  exit 1
+fi
