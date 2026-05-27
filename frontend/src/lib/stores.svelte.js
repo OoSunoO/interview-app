@@ -1,4 +1,4 @@
-import { api } from "./api.js";
+import { api } from "./local-api.js";
 
 let _currentQuestion = $state(null);
 let _questions = $state([]);
@@ -7,6 +7,17 @@ let _wrongQuestions = $state([]);
 let _dueReviews = $state([]);
 let _loading = $state(false);
 let _filters = $state({ category: "", difficulty: "", search: "" });
+let _quizSession = $state([]);
+let _quizIndex = $state(0);
+
+function shuffled(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 export const store = {
   get currentQuestion() { return _currentQuestion; },
@@ -29,6 +40,38 @@ export const store = {
 
   get filters() { return _filters; },
   set filters(v) { _filters = v; },
+
+  get quizSession() { return _quizSession; },
+  get quizSessionLength() { return _quizSession.length; },
+  get quizIndex() { return _quizIndex; },
+  get hasPrev() { return _quizIndex > 0; },
+  get hasNext() { return _quizIndex < _quizSession.length - 1; },
+
+  startQuiz(list, shuffle = false) {
+    _quizSession = shuffle ? shuffled(list) : list;
+    _quizIndex = 0;
+  },
+
+  advanceQuiz() {
+    if (_quizIndex < _quizSession.length - 1) {
+      _quizIndex++;
+      return true;
+    }
+    return false;
+  },
+
+  retreatQuiz() {
+    if (_quizIndex > 0) {
+      _quizIndex--;
+      return true;
+    }
+    return false;
+  },
+
+  shuffleSession() {
+    _quizSession = shuffled(_quizSession);
+    _quizIndex = 0;
+  },
 
   async loadQuestions(params = {}) {
     _loading = true;

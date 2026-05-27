@@ -3,21 +3,15 @@ import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  base: "./",
   plugins: [
     svelte(),
     VitePWA({
       registerType: "autoUpdate",
-      manifest: {
-        name: "面试题练习",
-        short_name: "面试题",
-        description: "个人面试刷题练习 App",
-        theme_color: "#1e293b",
-        background_color: "#0f172a",
-        display: "standalone",
-        icons: [
-          { src: "/icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "/icon-512.png", sizes: "512x512", type: "image/png" },
-        ],
+      includeManifestIcons: false,
+      manifest: false,
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,json,png,svg,ico}"],
       },
     }),
   ],
