@@ -1,9 +1,21 @@
 const STORAGE_KEY = "interview_ai_config";
 
 export const PROVIDERS = [
-  { label: "Anthropic (Claude)", endpoint: "https://api.anthropic.com/v1/messages", model: "claude-sonnet-4-6" },
-  { label: "OpenAI (GPT)", endpoint: "https://api.openai.com/v1/chat/completions", model: "gpt-4o" },
-  { label: "DeepSeek", endpoint: "https://api.deepseek.com/v1/chat/completions", model: "deepseek-chat" },
+  {
+    label: "Anthropic (Claude)",
+    endpoint: "https://api.anthropic.com/v1/messages",
+    model: "claude-sonnet-4-6",
+  },
+  {
+    label: "OpenAI (GPT)",
+    endpoint: "https://api.openai.com/v1/chat/completions",
+    model: "gpt-4o",
+  },
+  {
+    label: "DeepSeek",
+    endpoint: "https://api.deepseek.com/v1/chat/completions",
+    model: "deepseek-chat",
+  },
 ];
 
 let _config = null;
@@ -14,7 +26,8 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) _config = JSON.parse(raw);
   } catch {}
-  if (!_config) _config = { key: "", endpoint: PROVIDERS[0].endpoint, model: PROVIDERS[0].model, provider: 0 };
+  if (!_config)
+    _config = { key: "", endpoint: PROVIDERS[0].endpoint, model: PROVIDERS[0].model, provider: 0 };
   return _config;
 }
 
@@ -43,7 +56,11 @@ export async function aiChat(systemPrompt, messages) {
   const isAnthropic = cfg.endpoint.includes("anthropic.com");
   const body = isAnthropic
     ? { model: cfg.model, max_tokens: 1024, system: systemPrompt, messages }
-    : { model: cfg.model, max_tokens: 1024, messages: [{ role: "system", content: systemPrompt }, ...messages] };
+    : {
+        model: cfg.model,
+        max_tokens: 1024,
+        messages: [{ role: "system", content: systemPrompt }, ...messages],
+      };
 
   const headers = { "Content-Type": "application/json" };
   if (isAnthropic) {
@@ -66,16 +83,25 @@ export async function aiChat(systemPrompt, messages) {
 export async function gradeAnswer(question, userAnswer, referenceAnswer) {
   return aiChat(
     "你是一个面试教练，评估候选人的答案。先用 ✅ 或 ⚠️ 判断正误，然后给出简短解释（不超过 100 字）。",
-    [{ role: "user", content: `题目：${question}\n\n参考答案：${referenceAnswer}\n\n我的答案：${userAnswer}\n\n请判断我的答案是否正确并给出建议。` }]
+    [
+      {
+        role: "user",
+        content: `题目：${question}\n\n参考答案：${referenceAnswer}\n\n我的答案：${userAnswer}\n\n请判断我的答案是否正确并给出建议。`,
+      },
+    ],
   );
 }
 
 export async function socraticChat(question, userAnswer, referenceAnswer, history) {
-  const system = "你是一个苏格拉底式面试教练。用户回答错了这道题，你的任务是通过提问引导他们自己发现正确答案。每次只问一个问题，不要直接给出答案。鼓励但不代答。";
+  const system =
+    "你是一个苏格拉底式面试教练。用户回答错了这道题，你的任务是通过提问引导他们自己发现正确答案。每次只问一个问题，不要直接给出答案。鼓励但不代答。";
 
   if (!history || history.length === 0) {
     return aiChat(system, [
-      { role: "user", content: `题目：${question}\n\n用户的答案：${userAnswer}\n\n参考答案：${referenceAnswer}\n\n问第一个苏格拉底式问题，引导用户深入思考。` }
+      {
+        role: "user",
+        content: `题目：${question}\n\n用户的答案：${userAnswer}\n\n参考答案：${referenceAnswer}\n\n问第一个苏格拉底式问题，引导用户深入思考。`,
+      },
     ]);
   }
 
