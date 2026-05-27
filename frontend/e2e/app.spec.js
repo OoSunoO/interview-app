@@ -90,4 +90,27 @@ test.describe("Mobile", () => {
     await expect(page.locator(".q-item").first()).toBeVisible({ timeout: 5000 });
     await checkNoOverflow();
   });
+
+  test("page content is scrollable vertically", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto("/");
+    // Browse page with many items should be scrollable
+    await page.getByRole("button", { name: NAV.browse }).click();
+    await expect(page.locator(".q-item").first()).toBeVisible({ timeout: 5000 });
+    // Scroll down and verify page moves
+    const scrollBefore = await page.evaluate(() => {
+      const el = document.querySelector(".content");
+      return el ? el.scrollTop : document.documentElement.scrollTop;
+    });
+    await page.evaluate(() => {
+      const el = document.querySelector(".content");
+      if (el) el.scrollTop = 500;
+    });
+    await page.waitForTimeout(200);
+    const scrollAfter = await page.evaluate(() => {
+      const el = document.querySelector(".content");
+      return el ? el.scrollTop : document.documentElement.scrollTop;
+    });
+    expect(scrollAfter).toBeGreaterThan(scrollBefore);
+  });
 });
