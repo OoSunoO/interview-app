@@ -10,7 +10,9 @@
     "serve": "npm run build && python3 -m http.server 8080 -d dist",
     "check": "svelte-check --tsconfig jsconfig.json",
     "format": "prettier --write src/",
-    "format:check": "prettier --check src/"
+    "format:check": "prettier --check src/",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "highlight.js": "^11.11.0",
@@ -18,10 +20,12 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
     "svelte": "^5.16.0",
     "svelte-check": "^4.4.8",
     "vite": "^6.0.5",
-    "vite-plugin-pwa": "^0.21.1"
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^4.1.7"
   }
 }
