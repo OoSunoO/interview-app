@@ -426,7 +426,7 @@
   .nav-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
   .after-actions button { flex: 1; padding: 12px; font-size: 14px; }
   .input-area { display: flex; flex-direction: column; gap: 8px; }
-  .answer-input, .code-input { resize: vertical; min-height: 80px; line-height: 1.6; }
+  .answer-input, .code-input { resize: vertical; min-height: 80px; line-height: 1.6; font-size: 16px; }
   .code-input { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; font-size: 13px; tab-size: 2; background: #0d1117; border-color: #21262d; }
   .code-input:focus { border-color: var(--accent-dim); }
   .submit-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; }
@@ -449,4 +449,13 @@
   .retry-btn { flex: 1; padding: 12px; background: none; color: var(--accent); border: 1px solid var(--accent); }
   .giveup-btn { flex: 1; padding: 12px; background: none; color: var(--text-muted); border: 1px solid var(--border); }
   .giveup-full { width: 100%; padding: 12px; background: none; color: var(--text-muted); border: 1px solid var(--border); margin-top: 4px; }
+
+  @media (max-width: 480px) {
+    .q-title { font-size: 16px; }
+    .q-content { font-size: 14px; }
+    .answer-input, .code-input { min-height: 120px; font-size: 16px; }
+    .option-btn { padding: 12px; font-size: 14px; }
+    .eval-actions button { padding: 14px; }
+    .page { padding: 14px 12px; }
+  }
 </style>
