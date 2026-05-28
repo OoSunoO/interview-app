@@ -10,6 +10,20 @@ let _filters = $state({ category: "", difficulty: "", search: "" });
 let _quizSession = $state([]);
 let _quizIndex = $state(0);
 
+function getInitialTheme() {
+  const stored = localStorage.getItem("theme");
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+let _theme = $state(getInitialTheme());
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+}
+applyTheme(getInitialTheme());
+
 function shuffled(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -147,5 +161,14 @@ export const store = {
   },
   async refreshDue() {
     _dueReviews = await api.progress.dueReviews();
+  },
+
+  get theme() {
+    return _theme;
+  },
+
+  toggleTheme() {
+    _theme = _theme === "dark" ? "light" : "dark";
+    applyTheme(_theme);
   },
 };

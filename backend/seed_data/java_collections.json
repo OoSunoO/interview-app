@@ -329,5 +329,177 @@
       "并发"
     ],
     "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashMap 在 JDK 8 中插入新元素的时间复杂度",
+    "content": "在 JDK 8 中，HashMap 插入一个键值对（未发生哈希冲突，且无需扩容）的时间复杂度是多少？",
+    "options": [
+      "A) O(1)",
+      "B) O(log n)",
+      "C) O(n)",
+      "D) O(n log n)"
+    ],
+    "answer": "答案：A) O(1)\n\n解析：在无哈希冲突且无需扩容的理想情况下，HashMap 根据 key 的 hashCode 直接定位到数组槽位，插入操作是常数时间复杂度。当发生哈希冲突时，JDK 8 采用链表 + 红黑树：链表长度 < 8 时 O(n)，>= 8 且数组长度 >= 64 时转为红黑树 O(log n)。\n\n扩展延伸：HashMap 扩容耗时 O(n)，因为需要 rehash 所有元素。所以如果能预估数据量，初始化时指定 capacity 可以避免频繁扩容。HashMap 的负载因子默认 0.75，是时间和空间的平衡——大了省空间但哈希冲突增加，小了反之。",
+    "hints": [
+      "先算 hashCode 再找槽位",
+      "JDK 8 的 HashMap 相比 JDK 7 有什么改进"
+    ],
+    "tags": [
+      "Java集合",
+      "HashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ConcurrentHashMap 在 JDK 8 中的锁机制",
+    "content": "JDK 8 的 ConcurrentHashMap 在并发写操作时使用什么机制保证线程安全？",
+    "options": [
+      "A) 对整个数组加锁",
+      "B) synchronized + CAS 对每个数组槽位加锁",
+      "C) ReentrantLock + 分段锁",
+      "D) 无锁，全部用 CAS 实现"
+    ],
+    "answer": "答案：B) synchronized + CAS 对每个数组槽位加锁\n\n解析：JDK 8 的 ConcurrentHashMap 摒弃了 JDK 7 的 Segment 分段锁，改用 synchronized + CAS 实现更细粒度的锁。put 时先 CAS 尝试插入，如果对应槽位为空则 CAS 成功；槽位有元素时对链表/红黑树的头节点加 synchronized 锁。优化点：synchronized 在 JDK 8 经过偏向锁→轻量级锁→重量级锁升级，锁竞争低时性能优于 ReentrantLock。\n\n扩展延伸：ConcurrentHashMap 的 size() 方法通过 baseCount + CounterCell 数组累加来避免加锁遍历。JDK 8 的 ConcurrentHashMap 在并发读操作完全不加锁（Node 的 val 和 next 用 volatile 保证可见性），所以读性能极高。",
+    "hints": [
+      "JDK 7 的 ConcurrentHashMap 用什么锁",
+      "为什么 JDK 8 改用 synchronized 而不是 ReentrantLock"
+    ],
+    "tags": [
+      "Java集合",
+      "并发",
+      "ConcurrentHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ArrayList 初始容量和扩容机制",
+    "content": "使用 new ArrayList() 创建 ArrayList 时，初始数组容量是多少？首次添加元素后容量变为多少？",
+    "options": [
+      "A) 初始 0，首次添加后变为 10",
+      "B) 初始 10，首次添加后变为 15",
+      "C) 初始 16，首次添加后变为 25",
+      "D) 初始 0，首次添加后变为 16"
+    ],
+    "answer": "答案：A) 初始 0，首次添加后变为 10\n\n解析：JDK 8 中 ArrayList 的无参构造器创建一个空数组（DEFAULTCAPACITY_EMPTY_ELEMENTDATA，容量 0）。首次 add 时调用 ensureCapacityInternal，将容量扩容为 DEFAULT_CAPACITY = 10。后续扩容每次扩大到原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。\n\n扩展延伸：如果知道数据量，使用 new ArrayList<>(initialCapacity) 可以避免多次扩容。ArrayList 的最大容量为 Integer.MAX_VALUE - 8（减去数组对象头预留）。频繁扩容的代价是数组拷贝（Arrays.copyOf），在数据量大的场景下性能影响明显。",
+    "hints": [
+      "无参构造器创建的是不是空数组",
+      "JDK 8 的扩容因子是多少"
+    ],
+    "tags": [
+      "Java集合",
+      "ArrayList"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashSet 的底层实现",
+    "content": "HashSet 的 add() 方法是如何保证元素不重复的？",
+    "options": [
+      "A) 内部维护一个 HashMap，元素作为 key，PRESENT 对象作为 value",
+      "B) 内部维护一个 ArrayList，每次 add 时遍历检查 equals()",
+      "C) 内部维护一个 TreeMap，用 compareTo() 比较",
+      "D) 内部维护一个数组，用 hashCode 取模存储"
+    ],
+    "answer": "答案：A) 内部维护一个 HashMap，元素作为 key，PRESENT 对象作为 value\n\n解析：HashSet 底层实际就是一个 HashMap，add(e) 方法调用 map.put(e, PRESENT)，其中 PRESENT 是一个静态的 dummy Object。利用 HashMap 的 key 不可重复特性来实现 Set 的去重。因此，存入 HashSet 的元素必须正确重写 hashCode() 和 equals() 方法。\n\n扩展延伸：LinkedHashSet 继承自 HashSet，底层使用 LinkedHashMap，可以维护插入顺序。TreeSet 底层使用 TreeMap（红黑树），支持排序。HashSet 允许 null 值（因为 HashMap 允许一个 null key）。",
+    "hints": [
+      "HashSet 和 HashMap 什么关系",
+      "HashSet 允许 null 吗"
+    ],
+    "tags": [
+      "Java集合",
+      "HashSet"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "LinkedList 的底层数据结构",
+    "content": "LinkedList 的底层数据结构是什么？",
+    "options": [
+      "A) 数组",
+      "B) 双向链表",
+      "C) 单向链表",
+      "D) 哈希表"
+    ],
+    "answer": "答案：B) 双向链表\n\n解析：LinkedList 底层使用双向链表（Doubly Linked List），每个节点（Node）包含三个字段：item（数据）、next（后继引用）、prev（前驱引用）。JDK 1.7 之前是循环链表（最后一个节点的 next 指向头节点），JDK 1.7 之后去掉了循环，改为非循环双向链表。\n\n扩展延伸：双向链表的特点：头尾插入删除 O(1)，指定位置插入/删除 O(n)（需要遍历到目标位置）。因为支持双向遍历，LinkedList 也可以作为双端队列（Deque）使用。LinkedList 的三个角色：List、Deque、Queue。",
+    "hints": [
+      "单向链表和双向链表的区别",
+      "JDK 7 前后的 LinkedList 有什么变化"
+    ],
+    "tags": [
+      "Java集合",
+      "LinkedList"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "ArrayList 遍历时删除元素是否安全",
+    "content": "使用 for-each 循环遍历 ArrayList 时直接调用 list.remove() 删除元素是安全的。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误\n\n解析：for-each 循环底层使用 Iterator 遍历，遍历过程中通过 list.remove() 直接删除元素会修改 modCount，导致迭代器在下一次 next() 时检测到 expectedModCount != modCount，抛出 ConcurrentModificationException。\n\n扩展延伸：安全的遍历删除方式：1）使用 Iterator 的 remove() 方法 2）使用 for 循环倒序删除 3）使用 Collection.removeIf()（JDK 8+，底层也是 Iterator）4）收集要删除的元素，遍历结束后批量删除。",
+    "hints": [
+      "ConcurrentModificationException 是怎么触发的",
+      "Iterator 的 remove 和 list 的 remove 有什么区别"
+    ],
+    "tags": [
+      "Java集合",
+      "ArrayList",
+      "异常"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "TreeMap 的有序性",
+    "content": "TreeMap 可以根据 key 的自然顺序或自定义 Comparator 进行排序。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确\n\n解析：TreeMap 底层使用红黑树（Red-Black Tree），key 会按照自然顺序（实现 Comparable 接口）或构造时传入的 Comparator 进行排序。因此 TreeMap 的 key 必须实现 Comparable 或传入 Comparator，否则会抛出 ClassCastException。\n\n扩展延伸：TreeMap 的 put/get/remove 操作都是 O(log n) 时间复杂度。提供的方法：firstKey()/lastKey()/headMap()/tailMap()/subMap() 等用于范围查询。相比 HashMap 的 O(1)，TreeMap 性能稍差但支持有序操作。",
+    "hints": [
+      "红黑树的特点是什么",
+      "TreeMap 和 HashMap 的应用场景区别"
+    ],
+    "tags": [
+      "Java集合",
+      "TreeMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "HashMap 允许 null 作为 key",
+    "content": "HashMap 允许使用 null 作为 key。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确\n\n解析：HashMap 允许一个 null key，它会被存放在 table[0] 的位置（hash 值为 0）。ConcurrentHashMap 和 Hashtable 不允许 null key——因为并发场景下无法区分「key 不存在」和「value 为 null」两种情况。\n\n扩展延伸：为什么 ConcurrentHashMap 不允许 null？因为并发环境下 get(key) 返回 null 时，无法判断是 key 对应的 value 就是 null，还是 key 不存在。HashMap 单线程下可以用 containsKey(key) 区分，但并发场景下可能在两次调用之间数据已被修改。",
+    "hints": [
+      "null key 在 HashMap 中怎么存储",
+      "ConcurrentHashMap 为什么不允许 null key"
+    ],
+    "tags": [
+      "Java集合",
+      "HashMap"
+    ]
   }
 ]

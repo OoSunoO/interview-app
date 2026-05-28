@@ -400,24 +400,24 @@
   .hints li { margin-bottom: 6px; }
   .answer-sections { display: flex; flex-direction: column; gap: 12px; }
   .answer-section { border-radius: var(--radius); padding: 16px; border: 1px solid; }
-  .answer-section.answer { background: #052e16; border-color: #166534; }
-  .answer-section.answer h3 { color: #4ade80; }
-  .answer-section.explanation { background: #1c1917; border-color: #713f12; }
-  .answer-section.explanation h3 { color: #fbbf24; }
-  .answer-section.extension { background: #1e1b2e; border-color: #5b21b6; }
-  .answer-section.extension h3 { color: #a78bfa; }
+  .answer-section.answer { background: var(--ans-answer-bg); border-color: var(--ans-answer-border); }
+  .answer-section.answer h3 { color: var(--ans-answer-text); }
+  .answer-section.explanation { background: var(--ans-explanation-bg); border-color: var(--ans-explanation-border); }
+  .answer-section.explanation h3 { color: var(--ans-explanation-text); }
+  .answer-section.extension { background: var(--ans-extension-bg); border-color: var(--ans-extension-border); }
+  .answer-section.extension h3 { color: var(--ans-extension-text); }
   .answer-section h3 { font-size: 14px; margin-bottom: 8px; }
   .answer-section p { font-size: 14px; line-height: 1.7; }
   .wrong-btn { background: var(--danger); }
-  .wrong-btn:disabled { background: #7f1d1d; }
+  .wrong-btn:disabled { background: var(--danger-bg); }
   .correct-btn { background: var(--success); }
-  .correct-btn:disabled { background: #166534; }
+  .correct-btn:disabled { background: var(--success-bg); }
   .options { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
   .option-btn { width: 100%; padding: 14px; font-size: 15px; text-align: left; background: var(--bg-card); color: var(--text); border: 2px solid var(--border); transition: all 0.2s; }
   .option-btn:active { transform: scale(0.98); }
   .option-btn.selected { border-color: var(--accent); }
-  .option-btn.correct { border-color: var(--success); background: #052e16; color: #4ade80; }
-  .option-btn.wrong { border-color: var(--danger); background: #2d0a0a; color: #fca5a5; }
+  .option-btn.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
+  .option-btn.wrong { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
   .option-btn:disabled { cursor: default; opacity: 1; }
   .option-btn:disabled:not(.correct):not(.wrong) { opacity: 0.6; }
   .nav-actions, .after-actions { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -427,7 +427,7 @@
   .after-actions button { flex: 1; padding: 12px; font-size: 14px; }
   .input-area { display: flex; flex-direction: column; gap: 8px; }
   .answer-input, .code-input { resize: vertical; min-height: 80px; line-height: 1.6; font-size: 16px; }
-  .code-input { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; font-size: 13px; tab-size: 2; background: #0d1117; border-color: #21262d; }
+  .code-input { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; font-size: 13px; tab-size: 2; background: var(--code-bg); border-color: var(--border); }
   .code-input:focus { border-color: var(--accent-dim); }
   .submit-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; }
   .submit-btn:disabled { opacity: 0.4; cursor: default; }
@@ -437,7 +437,7 @@
   .eval-actions button { flex: 1; padding: 14px; font-size: 15px; font-weight: 600; }
   .ai-grade-btn { width: 100%; margin-top: 8px; padding: 10px; font-size: 14px; background: none; border: 1px solid var(--border); color: var(--text-muted); }
   .ai-grade-btn:disabled { opacity: 0.5; }
-  .ai-grade { background: #1c1b2b; border: 1px solid #5b21b6; border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 8px; font-size: 14px; line-height: 1.6; }
+  .ai-grade { background: var(--ans-extension-bg); border: 1px solid var(--ans-extension-border); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 8px; font-size: 14px; line-height: 1.6; }
   .ai-grade p { margin-bottom: 4px; }
   .ai-config { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
   .config-hint { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
