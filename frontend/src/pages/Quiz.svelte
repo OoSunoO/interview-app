@@ -225,11 +225,8 @@
     <p class="loading">加载中...</p>
   {:else}
     <div class="q-meta">
-      <span class="tag">{q.category}</span>
-      <span class="tag diff {q.difficulty}">{q.difficulty}</span>
-      <span class="tag">{q.type}</span>
       {#if sessionProgress}
-        <span class="progress-text">{sessionProgress.index}/{sessionProgress.total}</span>
+        <span class="q-number-badge">{sessionProgress.index}/{sessionProgress.total}</span>
       {/if}
       {#if sessionProgress && !showAnswer}
         <button class="shuffle-btn" onclick={shuffleRemaining} title="随机后续题目">
@@ -251,97 +248,105 @@
       </div>
     {/if}
 
-    <h2 class="q-title">{q.title}</h2>
+    <div class="question-card">
+      <div class="card-header">
+        <span class="category-pill {q.category}">{q.category}</span>
+        <span class="diff-pill {q.difficulty}">{q.difficulty}</span>
+        <span class="type-pill {q.type}">{q.type}</span>
+      </div>
 
-    <div class="q-content">
-      {#each renderContent(q.content) as part}
-        {#if part.type === "code"}
-          <CodeBlock code={part.code} lang={part.lang} />
-        {:else}
-          <p>{part.content}</p>
-        {/if}
-      {/each}
-    </div>
+      <h2 class="q-title">{q.title}</h2>
 
-    {#if q.hints.length > 0 && !showAnswer}
-      <button class="hint-btn" onclick={() => showHints = !showHints}>
-        {showHints ? "隐藏提示" : "显示提示"} ({q.hints.length})
-      </button>
-      {#if showHints}
-        <ul class="hints">
-          {#each q.hints as hint}
-            <li>{hint}</li>
-          {/each}
-        </ul>
-      {/if}
-    {/if}
-
-    {#if q.type === "choice" || q.type === "true_false"}
-      <div class="options" role="group" aria-label="选项">
-        {#each q.options as opt, i}
-          <button class="option-btn"
-            class:selected={selectedOption === opt}
-            class:correct={selectedOption !== null && isOptionCorrect(opt)}
-            class:wrong={selectedOption === opt && !isOptionCorrect(opt)}
-            disabled={selectedOption !== null}
-            onclick={() => selectOption(opt)}
-          >
-            {q.options.length > 1 && q.type === "choice" ? `${i + 1}. ` : ""}{opt}
-          </button>
+      <div class="q-content">
+        {#each renderContent(q.content) as part}
+          {#if part.type === "code"}
+            <CodeBlock code={part.code} lang={part.lang} />
+          {:else}
+            <p>{part.content}</p>
+          {/if}
         {/each}
       </div>
-      {#if selectedOption !== null && !isOptionCorrect(selectedOption) && !showAnswer}
-        <div class="retry-actions">
-          <button class="retry-btn" onclick={retry}>再试一次</button>
-          <button class="giveup-btn" onclick={giveUp}>看答案</button>
-        </div>
+
+      {#if q.hints.length > 0 && !showAnswer}
+        <button class="hint-btn" onclick={() => showHints = !showHints}>
+          {showHints ? "隐藏提示" : "显示提示"} ({q.hints.length})
+        </button>
+        {#if showHints}
+          <ul class="hints">
+            {#each q.hints as hint}
+              <li>{hint}</li>
+            {/each}
+          </ul>
+        {/if}
       {/if}
-    {:else}
-      {#if !showAnswer}
-        <div class="input-area">
-          {#if q.type === "coding"}
-            <textarea class="code-input" bind:value={userAnswer} placeholder="写下你的代码..." rows="8" spellcheck="false"></textarea>
-          {:else}
-            <textarea class="answer-input" bind:value={userAnswer} placeholder="写下你的答案..." rows="4"></textarea>
-          {/if}
-        </div>
-        {#if !showSubmitResult}
-          <button class="submit-btn" onclick={submitAnswer} disabled={!userAnswer.trim()}>提交答案</button>
-        {:else}
-          <div class="self-eval">
-            <p class="eval-hint">对比参考答案，你答对了吗？</p>
-            <div class="eval-actions">
-              <button class="wrong-btn" onclick={() => selfEvaluate(false)}>答错了</button>
-              <button class="correct-btn" onclick={() => selfEvaluate(true)}>答对了</button>
-            </div>
-            <button class="ai-grade-btn" onclick={gradeWithAI} disabled={aiLoading}>
-              {aiLoading ? "AI 评分中..." : "🤖 AI 评分"}
+
+      {#if q.type === "choice" || q.type === "true_false"}
+        <div class="options" role="group" aria-label="选项">
+          {#each q.options as opt, i}
+            <button class="option-btn"
+              class:selected={selectedOption === opt}
+              class:correct={selectedOption !== null && isOptionCorrect(opt)}
+              class:wrong={selectedOption === opt && !isOptionCorrect(opt)}
+              disabled={selectedOption !== null}
+              onclick={() => selectOption(opt)}
+            >
+              {q.options.length > 1 && q.type === "choice" ? `${i + 1}. ` : ""}{opt}
             </button>
+          {/each}
+        </div>
+        {#if selectedOption !== null && !isOptionCorrect(selectedOption) && !showAnswer}
+          <div class="retry-actions">
+            <button class="retry-btn" onclick={retry}>再试一次</button>
+            <button class="giveup-btn" onclick={giveUp}>看答案</button>
           </div>
-          {#if showAIConfig}
-            <div class="ai-config">
-              <p class="config-hint">选择 AI 服务商并输入 API Key</p>
-              <select class="provider-select" bind:value={apiProvider}>
-                {#each PROVIDERS as p, i}
-                  <option value={i}>{p.label}</option>
-                {/each}
-              </select>
-              <div class="config-row">
-                <input type="password" bind:value={apiKeyInput} placeholder="输入 API Key..." />
-                <button class="config-save" onclick={saveAIKey}>保存</button>
+        {/if}
+      {:else}
+        {#if !showAnswer}
+          <div class="input-area">
+            {#if q.type === "coding"}
+              <textarea class="code-input" bind:value={userAnswer} placeholder="写下你的代码..." rows="8" spellcheck="false"></textarea>
+            {:else}
+              <textarea class="answer-input" bind:value={userAnswer} placeholder="写下你的答案..." rows="4"></textarea>
+            {/if}
+          </div>
+          {#if !showSubmitResult}
+            <button class="submit-btn" onclick={submitAnswer} disabled={!userAnswer.trim()}>提交答案</button>
+          {:else}
+            <div class="self-eval">
+              <p class="eval-hint">对比参考答案，你答对了吗？</p>
+              <div class="eval-actions">
+                <button class="wrong-btn" onclick={() => selfEvaluate(false)}>答错了</button>
+                <button class="correct-btn" onclick={() => selfEvaluate(true)}>答对了</button>
               </div>
+              <button class="ai-grade-btn" onclick={gradeWithAI} disabled={aiLoading}>
+                {aiLoading ? "AI 评分中..." : "🤖 AI 评分"}
+              </button>
             </div>
-          {/if}
-          {#if aiGrade}
-            <div class="ai-grade">
-              {#each aiGrade.split('\n') as line}
-                <p>{line}</p>
-              {/each}
-            </div>
+            {#if showAIConfig}
+              <div class="ai-config">
+                <p class="config-hint">选择 AI 服务商并输入 API Key</p>
+                <select class="provider-select" bind:value={apiProvider}>
+                  {#each PROVIDERS as p, i}
+                    <option value={i}>{p.label}</option>
+                  {/each}
+                </select>
+                <div class="config-row">
+                  <input type="password" bind:value={apiKeyInput} placeholder="输入 API Key..." />
+                  <button class="config-save" onclick={saveAIKey}>保存</button>
+                </div>
+              </div>
+            {/if}
+            {#if aiGrade}
+              <div class="ai-grade">
+                {#each aiGrade.split('\n') as line}
+                  <p>{line}</p>
+                {/each}
+              </div>
+            {/if}
           {/if}
         {/if}
       {/if}
-    {/if}
+    </div>
 
     {#if showSubmitResult || showAnswer}
       {#key q.id}
@@ -408,6 +413,63 @@
   .timer { margin-left: auto; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-muted); }
   .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transform-origin: left; transition: transform 0.3s ease; }
+  .question-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  .card-header {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .category-pill, .diff-pill, .type-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .category-pill.cs_basics { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+  .category-pill.algorithm { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+  .category-pill.database { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+  .category-pill.linux { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+  .category-pill.devops { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+  .category-pill.java_basic, .category-pill.java_advanced, .category-pill.java_collections { background: rgba(244, 114, 182, 0.15); color: #f472b6; }
+  .category-pill.react, .category-pill.frontend { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+  .category-pill.ai, .category-pill.agent { background: rgba(232, 121, 249, 0.15); color: #e879f9; }
+  .category-pill.system_design { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+  .category-pill.project_mgmt { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+  .category-pill.product { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+  .diff-pill.easy { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+  .diff-pill.medium { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+  .diff-pill.hard { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+  .type-pill { background: var(--bg-surface); color: var(--text-muted); }
+  .type-pill.choice { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+  .type-pill.true_false { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+  .type-pill.short_answer { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+  .type-pill.coding { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+  .q-number-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 14px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
   .q-title { font-size: 17px; font-weight: 600; }
   .q-content { line-height: 1.7; font-size: 15px; }
   .q-content p { margin-bottom: 8px; }
