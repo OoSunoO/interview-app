@@ -20,6 +20,7 @@
   let wrongAttempts = $state(0);
   let userAnswer = $state("");
   let showSubmitResult = $state(false);
+  let feedbackResult = $state(null);
   let aiGrade = $state(null);
   let aiLoading = $state(false);
   let showAIConfig = $state(false);
@@ -51,6 +52,7 @@
     const status = correct ? "correct" : "wrong";
     await store.markProgress(q.id, status, timer);
     q.status = status;
+    feedbackResult = status;
     showAnswer = true;
     saving = false;
   }
@@ -156,6 +158,7 @@
     wrongAttempts = 0;
     userAnswer = "";
     showSubmitResult = false;
+    feedbackResult = null;
     aiGrade = null;
     timer = 0;
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
@@ -248,7 +251,7 @@
       </div>
     {/if}
 
-    <div class="question-card">
+    <div class="question-card" class:feedback-correct={feedbackResult === "correct"} class:feedback-wrong={feedbackResult === "wrong"}>
       <div class="card-header">
         <span class="category-pill {q.category}">{q.category}</span>
         <span class="diff-pill {q.difficulty}">{q.difficulty}</span>
@@ -413,6 +416,14 @@
   .timer { margin-left: auto; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-muted); }
   .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transform-origin: left; transition: transform 0.3s ease; }
+  .question-card.feedback-correct {
+    box-shadow: 0 0 24px rgba(52, 211, 153, 0.3), var(--shadow-lg);
+    border-color: var(--success);
+  }
+  .question-card.feedback-wrong {
+    animation: shake 0.35s ease both;
+    border-color: var(--danger);
+  }
   .question-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -476,7 +487,9 @@
   .hint-btn { background: none; color: var(--warning); border: 1px solid var(--warning); padding: 8px; }
   .hints { padding-left: 20px; color: var(--text-muted); font-size: 14px; }
   .hints li { margin-bottom: 6px; }
-  .answer-section { border-radius: var(--radius); border: 1px solid; overflow: hidden; }
+  .answer-section { border-radius: var(--radius); border: 1px solid; overflow: hidden; animation: pop-in 0.3s ease both; }
+  .answer-section:nth-child(2) { animation-delay: 50ms; }
+  .answer-section:nth-child(3) { animation-delay: 100ms; }
   .answer-section.answer { background: var(--ans-answer-bg); border-color: var(--ans-answer-border); }
   .answer-section.explanation { background: var(--ans-explanation-bg); border-color: var(--ans-explanation-border); }
   .answer-section.extension { background: var(--ans-extension-bg); border-color: var(--ans-extension-border); }
@@ -498,10 +511,35 @@
   .option-btn { width: 100%; padding: 14px; font-size: 15px; text-align: left; background: var(--bg-card); color: var(--text); border: 2px solid var(--border); transition: all 0.2s; }
   .option-btn:active { transform: scale(0.98); }
   .option-btn.selected { border-color: var(--accent); }
-  .option-btn.correct { border-color: var(--success); background: var(--success-bg); color: var(--success); }
-  .option-btn.wrong { border-color: var(--danger); background: var(--danger-bg); color: var(--danger); }
+  .option-btn.correct {
+    border-color: var(--success); background: var(--success-bg); color: var(--success);
+    animation: bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .option-btn.wrong {
+    border-color: var(--danger); background: var(--danger-bg); color: var(--danger);
+    animation: shake 0.35s ease both;
+  }
   .option-btn:disabled { cursor: default; opacity: 1; }
   .option-btn:disabled:not(.correct):not(.wrong) { opacity: 0.6; }
+
+  @keyframes bounce-in {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.06); }
+    50% { transform: scale(0.97); }
+    70% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+  }
+  @keyframes pop-in {
+    0% { transform: scale(0.85); opacity: 0; }
+    70% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
   .nav-actions, .after-actions { display: flex; gap: 8px; flex-wrap: wrap; }
   .nav-btn { flex: 1; min-width: 100px; padding: 12px; font-size: 14px; text-align: center; background: var(--bg-card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
   .nav-btn:active { transform: scale(0.97); }
