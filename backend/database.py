@@ -37,6 +37,8 @@ async def init_db():
             wrong_count INTEGER DEFAULT 0,
             next_review_at DATETIME,
             notes TEXT DEFAULT '',
+            easiness REAL DEFAULT 2.5,
+            repetitions INTEGER DEFAULT 0,
             FOREIGN KEY (question_id) REFERENCES questions(id)
         );
 
@@ -49,5 +51,13 @@ async def init_db():
             FOREIGN KEY (question_id) REFERENCES questions(id)
         );
     """)
+
+    # Migrate existing databases: add SM-2 columns if missing
+    for col in ("easiness", "repetitions"):
+        try:
+            await db.execute(f"ALTER TABLE user_progress ADD COLUMN {col}")
+        except Exception:
+            pass  # Column already exists
+
     await db.commit()
     await db.close()

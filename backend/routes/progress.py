@@ -3,43 +3,88 @@ from database import get_db
 from models import ProgressUpdate, StatsOverview
 from datetime import datetime, timedelta
 import json
+import math
 
 router = APIRouter()
+
+
+def sm2_next(quality: int, easiness: float, repetitions: int, interval: int):
+    """SM-2 间隔重复算法。
+
+    quality: 0-5 评分 (0=完全忘记, 5=完美回答)
+    返回 (new_easiness, new_repetitions, new_interval_days)
+    """
+    ef = easiness + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+    ef = max(1.3, ef)
+
+    if quality < 3:
+        return (ef, 0, 1)
+    else:
+        if repetitions == 0:
+            next_interval = 1
+        elif repetitions == 1:
+            next_interval = 6
+        else:
+            next_interval = round(interval * ef)
+        return (ef, repetitions + 1, next_interval)
 
 
 @router.post("/{question_id}")
 async def update_progress(question_id: int, body: ProgressUpdate):
     db = await get_db()
     cursor = await db.execute(
-        "SELECT id, status, wrong_count FROM user_progress WHERE question_id = ?",
+        "SELECT id, status, wrong_count, easiness, repetitions, next_review_at FROM user_progress WHERE question_id = ?",
         (question_id,),
     )
     existing = await cursor.fetchone()
 
     now = datetime.utcnow()
-    tomorrow = (now + timedelta(days=1)).isoformat()
-    next_review = tomorrow if body.status == "wrong" else None
+
+    # Map app status to SM-2 quality
+    quality = 4 if body.status == "correct" else 1
 
     if existing:
+        easiness = existing["easiness"] or 2.5
+        repetitions = existing["repetitions"] or 0
+
+        # Calculate last interval from existing next_review_at
+        last_interval = 1
+        if existing["next_review_at"]:
+            try:
+                last_review = existing["next_review_at"]
+                if isinstance(last_review, str):
+                    last_review = datetime.fromisoformat(last_review.replace("Z", ""))
+                last_interval = max(1, (datetime.utcnow() - last_review).days)
+            except (ValueError, TypeError):
+                last_interval = 1
+
+        new_ef, new_reps, interval_days = sm2_next(quality, easiness, repetitions, last_interval)
+        next_review = (now + timedelta(days=interval_days)).isoformat()
+
         new_wrong_count = existing["wrong_count"] + (1 if body.status == "wrong" else 0)
         new_status = body.status
         if existing["status"] == "wrong" and body.status == "correct":
             new_status = "reviewing"
+
         await db.execute(
             """UPDATE user_progress
                SET status = ?, last_reviewed_at = ?, review_count = review_count + 1,
-                   wrong_count = ?, next_review_at = ?, notes = COALESCE(?, notes)
+                   wrong_count = ?, next_review_at = ?, notes = COALESCE(?, notes),
+                   easiness = ?, repetitions = ?
                WHERE question_id = ?""",
             (new_status, now.isoformat(), new_wrong_count, next_review,
-             body.notes, question_id),
+             body.notes, new_ef, new_reps, question_id),
         )
     else:
+        new_ef, new_reps, interval_days = sm2_next(quality, 2.5, 0, 0)
+        next_review = (now + timedelta(days=interval_days)).isoformat()
         new_wrong_count = 1 if body.status == "wrong" else 0
+
         await db.execute(
-            """INSERT INTO user_progress (question_id, status, last_reviewed_at, review_count, wrong_count, next_review_at, notes)
-               VALUES (?, ?, ?, 1, ?, ?, ?)""",
+            """INSERT INTO user_progress (question_id, status, last_reviewed_at, review_count, wrong_count, next_review_at, notes, easiness, repetitions)
+               VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?)""",
             (question_id, body.status, now.isoformat(), new_wrong_count,
-             next_review, body.notes or ""),
+             next_review, body.notes or "", new_ef, new_reps),
         )
 
     await db.execute(
@@ -93,11 +138,16 @@ async def get_wrong_questions():
     db = await get_db()
     cursor = await db.execute("""
         SELECT q.id, q.title, q.category, q.difficulty, q.type, q.tags,
-               p.wrong_count, p.last_reviewed_at, p.next_review_at
+               p.wrong_count, p.last_reviewed_at, p.next_review_at,
+               p.easiness, p.repetitions, p.review_count
         FROM questions q
         JOIN user_progress p ON q.id = p.question_id
         WHERE p.status IN ('wrong', 'reviewing')
-        ORDER BY p.wrong_count DESC, p.last_reviewed_at ASC
+        ORDER BY
+            CASE WHEN p.status = 'wrong' THEN 0 ELSE 1 END,
+            p.next_review_at ASC NULLS FIRST,
+            p.wrong_count DESC,
+            p.easiness ASC
     """)
     rows = await cursor.fetchall()
     await db.close()
@@ -115,7 +165,8 @@ async def get_due_reviews():
     now = datetime.utcnow().isoformat()
     cursor = await db.execute("""
         SELECT q.id, q.title, q.category, q.difficulty, q.type,
-               p.wrong_count, p.next_review_at
+               p.wrong_count, p.next_review_at,
+               p.easiness, p.repetitions
         FROM questions q
         JOIN user_progress p ON q.id = p.question_id
         WHERE p.status = 'wrong' AND p.next_review_at <= ?
