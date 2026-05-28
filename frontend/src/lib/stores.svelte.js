@@ -6,7 +6,7 @@ let _stats = $state(null);
 let _wrongQuestions = $state([]);
 let _dueReviews = $state([]);
 let _loading = $state(false);
-let _filters = $state({ category: "", difficulty: "", search: "" });
+let _filters = $state({ category: "", difficulty: "", status: "", search: "" });
 let _quizSession = $state([]);
 let _quizIndex = $state(0);
 

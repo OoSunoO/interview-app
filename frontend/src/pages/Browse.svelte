@@ -15,6 +15,7 @@
 
     { value: "java_basic", label: "Java" },
     { value: "java_advanced", label: "Java 进阶" },
+    { value: "java_collections", label: "Java 集合" },
     { value: "react", label: "React" },
     { value: "frontend", label: "前端" },
 
@@ -45,9 +46,6 @@
     onNavigate("quiz", { questionId: q.id });
   }
 
-  function statusLabel(s) {
-    return { new: "未做", seen: "看过", correct: "已掌握", wrong: "答错", reviewing: "复习中" }[s] || s;
-  }
 </script>
 
 <div class="page browse">
@@ -65,6 +63,13 @@
       <option value="medium">中等</option>
       <option value="hard">困难</option>
     </select>
+    <select bind:value={store.filters.status} onchange={applyFilter}>
+      <option value="">全部状态</option>
+      <option value="new">未做</option>
+      <option value="correct">已掌握</option>
+      <option value="wrong">答错</option>
+      <option value="reviewing">复习中</option>
+    </select>
     <button class="random-btn" onclick={goRandom} disabled={store.questions.length === 0}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="16 3 21 3 21 8"/>
@@ -73,7 +78,7 @@
         <line x1="15" y1="15" x2="21" y2="21"/>
         <line x1="4" y1="4" x2="9" y2="9"/>
       </svg>
-      随机一题
+      随机
     </button>
   </div>
 
@@ -96,12 +101,22 @@
   {:else}
     <div class="list">
       {#each store.questions as q}
-        <button class="card q-item" onclick={() => goQuestion(q)}>
+        <button class="card q-item status-{q.status}" onclick={() => goQuestion(q)}>
           <div class="q-header">
+            <span class="status-icon {q.status}">
+              {#if q.status === "correct"}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              {:else if q.status === "wrong"}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+              {:else if q.status === "reviewing"}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {:else}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+              {/if}
+            </span>
             <span class="tag">{q.category}</span>
             <span class="tag diff {q.difficulty}">{q.difficulty}</span>
             <span class="tag type">{q.type}</span>
-            <span class="status tag" class:wrong={q.status === "wrong"}>{statusLabel(q.status)}</span>
           </div>
           <p class="q-title">{q.title}</p>
           {#if q.tags.length > 0}
@@ -126,12 +141,19 @@
   .random-btn:not(:disabled):active { transform: scale(0.96); }
   .loading, .empty { text-align: center; color: var(--text-muted); padding: 40px 0; }
   .list { display: flex; flex-direction: column; gap: 10px; }
-  .q-item { text-align: left; width: 100%; }
-  .q-header { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .q-item { text-align: left; width: 100%; border-left: 3px solid transparent; }
+  .q-item.status-correct { border-left-color: var(--success); }
+  .q-item.status-reviewing { border-left-color: var(--warning); }
+  .q-item.status-wrong { border-left-color: var(--danger); }
+  .status-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
+  .status-icon.correct { color: var(--success); }
+  .status-icon.wrong { color: var(--danger); }
+  .status-icon.reviewing { color: var(--warning); }
+  .status-icon.new { color: var(--text-dim); }
+  .q-header { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
   .search-wrap { position: relative; display: flex; align-items: center; }
   .search-icon { position: absolute; left: 12px; color: var(--text-dim); pointer-events: none; }
   .search { padding-left: 36px; }
-  .q-item { border-left: 3px solid transparent; }
   .q-title { font-size: 14px; line-height: 1.4; }
   .q-tags { display: flex; gap: 4px; margin-top: 6px; }
   .mini-tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--border); color: var(--text-muted); }
