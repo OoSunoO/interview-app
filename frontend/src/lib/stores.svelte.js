@@ -6,6 +6,7 @@ let _stats = $state(null);
 let _wrongQuestions = $state([]);
 let _dueReviews = $state([]);
 let _loading = $state(false);
+let _error = $state(null);
 let _filters = $state({ category: "", difficulty: "", status: "", search: "" });
 let _quizSession = $state([]);
 let _quizIndex = $state(0);
@@ -76,6 +77,13 @@ export const store = {
     _loading = v;
   },
 
+  get error() {
+    return _error;
+  },
+  clearError() {
+    _error = null;
+  },
+
   get filters() {
     return _filters;
   },
@@ -127,8 +135,11 @@ export const store = {
 
   async loadQuestions(params = {}) {
     _loading = true;
+    _error = null;
     try {
       _questions = await api.questions.list({ ..._filters, ...params });
+    } catch (e) {
+      _error = e.message ?? "加载题目列表失败";
     } finally {
       _loading = false;
     }
@@ -136,8 +147,11 @@ export const store = {
 
   async loadQuestionDetail(id) {
     _loading = true;
+    _error = null;
     try {
       _currentQuestion = await api.questions.get(id);
+    } catch (e) {
+      _error = e.message ?? "加载题目详情失败";
     } finally {
       _loading = false;
     }

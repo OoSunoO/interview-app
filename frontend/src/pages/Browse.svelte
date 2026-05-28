@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { store } from "../lib/stores.svelte.js";
+  import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { onNavigate } = $props();
 
@@ -94,7 +95,9 @@
     />
   </div>
 
-  {#if store.loading}
+  {#if store.error}
+    <ErrorAlert message={store.error} onRetry={applyFilter} />
+  {:else if store.loading}
     <p class="loading">加载中...</p>
   {:else if store.questions.length === 0}
     <p class="empty">暂无题目 — 试试调整筛选条件或换个分类</p>

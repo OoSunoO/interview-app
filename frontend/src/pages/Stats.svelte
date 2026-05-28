@@ -6,7 +6,11 @@
 
   onMount(async () => {
     store.refreshStats();
-    wrongList = await api.progress.wrong();
+    try {
+      wrongList = await api.progress.wrong();
+    } catch (e) {
+      // wrongList stays empty on error — weak sections gracefully show nothing
+    }
   });
 
   const categoryNames = {

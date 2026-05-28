@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api } from "../lib/api.js";
   import { store } from "../lib/stores.svelte.js";
+  import ErrorAlert from "../components/ErrorAlert.svelte";
   import { hasAI, getAIConfig, saveAIConfig, setProvider, PROVIDERS, socraticChat } from "../lib/ai.js";
 
   let { onNavigate } = $props();
@@ -15,8 +16,22 @@
   let showAIConfig = $state(false);
   let apiKeyInput = $state(getAIConfig().key);
   let apiProvider = $state(getAIConfig().provider ?? 0);
+  let loading = $state(true);
+  let error = $state(null);
 
-  onMount(async () => { wrongQuestions = await api.progress.wrong(); });
+  async function loadWrong() {
+    loading = true;
+    error = null;
+    try {
+      wrongQuestions = await api.progress.wrong();
+    } catch (e) {
+      error = e.message ?? "加载错题失败";
+    } finally {
+      loading = false;
+    }
+  }
+
+  onMount(loadWrong);
 
   async function markCorrect() {
     const q = wrongQuestions[currentIndex];
@@ -139,10 +154,16 @@
   {:else}
     <div class="wrong-header">
       <h1 class="page-title">错题本</h1>
-      <span class="wrong-badge">{wrongQuestions.length}</span>
+      {#if !loading}
+        <span class="wrong-badge">{wrongQuestions.length}</span>
+      {/if}
     </div>
 
-    {#if wrongQuestions.length === 0}
+    {#if error}
+      <ErrorAlert message={error} onRetry={loadWrong} />
+    {:else if loading}
+      <p class="loading">加载中...</p>
+    {:else if wrongQuestions.length === 0}
       <p class="empty">暂无错题 — 继续保持！可以去题库刷更多题</p>
     {:else}
       <p class="summary">共 {wrongQuestions.length} 道待复习</p>
@@ -169,6 +190,7 @@
 <style>
   .wrong { display: flex; flex-direction: column; gap: 14px; }
   .empty { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 18px; }
+  .loading { text-align: center; color: var(--text-muted); padding: 60px 0; }
   .wrong-header { display: flex; align-items: center; gap: 10px; }
   .wrong-badge { background: var(--danger-bg); color: var(--danger); font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 12px; font-variant-numeric: tabular-nums; }
   .summary { color: var(--text-muted); font-size: 14px; }

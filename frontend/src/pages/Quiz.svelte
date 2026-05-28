@@ -2,10 +2,12 @@
   import { onMount } from "svelte";
   import { store } from "../lib/stores.svelte.js";
   import CodeBlock from "../components/CodeBlock.svelte";
+  import ErrorAlert from "../components/ErrorAlert.svelte";
   import { hasAI, getAIConfig, saveAIConfig, setProvider, PROVIDERS, gradeAnswer } from "../lib/ai.js";
 
   let { questionId, onNavigate } = $props();
   let q = $state(null);
+  let loadError = $state(null);
   let showAnswer = $state(false);
   let showHints = $state(false);
   let expandedSections = $state({ answer: true, explanation: false, extension: false });
@@ -33,10 +35,23 @@
     return { index: store.quizIndex + 1, total: n };
   });
 
-  onMount(async () => {
-    q = await store.loadQuestionDetail(questionId);
-    timerInterval = setInterval(() => timer++, 1000);
-  });
+  async function loadQuestion() {
+    loadError = null;
+    q = null;
+    try {
+      const result = await store.loadQuestionDetail(questionId);
+      if (result) {
+        q = result;
+        timerInterval = setInterval(() => timer++, 1000);
+      } else {
+        loadError = store.error ?? "加载题目失败";
+      }
+    } catch (e) {
+      loadError = e.message ?? "加载题目失败";
+    }
+  }
+
+  onMount(loadQuestion);
 
   function stopTimer() {
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
@@ -151,6 +166,7 @@
 
   function resetState() {
     q = null;
+    loadError = null;
     showAnswer = false;
     showHints = false;
     expandedSections = { answer: true, explanation: false, extension: false };
@@ -164,13 +180,29 @@
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   }
 
+  async function loadQuestionById(id) {
+    loadError = null;
+    try {
+      const result = await store.loadQuestionDetail(id);
+      if (result) {
+        q = result;
+        timerInterval = setInterval(() => timer++, 1000);
+        return true;
+      }
+      loadError = store.error ?? "加载题目失败";
+      return false;
+    } catch (e) {
+      loadError = e.message ?? "加载题目失败";
+      return false;
+    }
+  }
+
   async function goNext() {
     if (!store.hasNext) return;
     store.advanceQuiz();
     const nextId = store.quizSession[store.quizIndex].id;
     resetState();
-    q = await store.loadQuestionDetail(nextId);
-    timerInterval = setInterval(() => timer++, 1000);
+    await loadQuestionById(nextId);
   }
 
   async function goPrev() {
@@ -178,8 +210,7 @@
     store.retreatQuiz();
     const prevId = store.quizSession[store.quizIndex].id;
     resetState();
-    q = await store.loadQuestionDetail(prevId);
-    timerInterval = setInterval(() => timer++, 1000);
+    await loadQuestionById(prevId);
   }
 
   function shuffleRemaining() {
@@ -224,7 +255,9 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div class="page quiz">
-  {#if !q}
+  {#if loadError}
+    <ErrorAlert message={loadError} onRetry={loadQuestion} />
+  {:else if !q}
     <p class="loading">加载中...</p>
   {:else}
     <div class="q-meta">
