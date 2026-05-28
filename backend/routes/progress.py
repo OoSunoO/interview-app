@@ -92,7 +92,7 @@ async def get_stats():
 async def get_wrong_questions():
     db = await get_db()
     cursor = await db.execute("""
-        SELECT q.id, q.title, q.category, q.difficulty, q.type,
+        SELECT q.id, q.title, q.category, q.difficulty, q.type, q.tags,
                p.wrong_count, p.last_reviewed_at, p.next_review_at
         FROM questions q
         JOIN user_progress p ON q.id = p.question_id
@@ -101,7 +101,12 @@ async def get_wrong_questions():
     """)
     rows = await cursor.fetchall()
     await db.close()
-    return [dict(r) for r in rows]
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["tags"] = json.loads(d["tags"]) if isinstance(d.get("tags"), str) else d.get("tags", [])
+        result.append(d)
+    return result
 
 
 @router.get("/review/due")

@@ -1,0 +1,102 @@
+[
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "useState 闭包陷阱（Stale Closure）",
+    "content": "以下代码点击三次后输出什么？为什么？\n```jsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    const timer = setInterval(() => {\n      setCount(count + 1);\n    }, 1000);\n    return () => clearInterval(timer);\n  }, []);\n  return <p>{count}</p>;\n}\n```",
+    "answer": "答案：每次只增加到 1，永远不增长\n\n解析：useEffect 回调在 mount 时执行一次，闭包捕获了当时 count = 0。setInterval 中每次执行 setCount(count + 1) 等同于 setCount(0 + 1) = setCount(1)，所以 count 永远是 1。这是 React Hooks 中最常见的闭包陷阱。\n\n扩展延伸：三种解决方案 1）在依赖数组中加 count（但会使定时器重设）2）使用函数式更新 setCount(c => c + 1)（推荐，永远从最新状态计算）3）使用 useRef 保存最新值。函数式更新是最简洁的方案。",
+    "hints": ["闭包在渲染时捕获了什么", "函数式更新 setCount(c => c + 1) 为什么能避免这个问题"],
+    "tags": ["React", "Hooks", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "useEffect 依赖项遗漏的问题",
+    "content": "useEffect 缺少依赖项时可能引发什么问题？为什么 React 的 eslint-plugin-react-hooks 要求 exhaustive-deps？",
+    "answer": "答案：可能读到陈旧的 props/state，产生难以排查的 bug\n\n解析：useEffect 回调形成一个闭包，捕获了创建时的 props 和 state。缺少依赖项意味着即使依赖值变化，effect 也不会重新执行，回调中始终使用旧值。这可能导致数据不同步、无限循环（缺少依赖 + 在 effect 中 setState）或遗漏清理逻辑。\n\n扩展延伸：严格模式下如何思考依赖 1）组件中所有被 effect 引用的 props/state 都应加入依赖 2）如果想故意只在 mount 时执行，需明确说明意图（如 eslint-disable 注释 + 代码注释）3）useEffect 的参数是心智模型的核心——它等价于响应式系统的依赖追踪。",
+    "hints": ["react-hooks/exhaustive-deps 规则是什么", "哪些场景下需要故意跳过依赖"],
+    "tags": ["React", "Hooks", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "React key 属性的作用",
+    "content": "列表渲染时 key 属性有什么作用？使用数组索引作为 key 有什么风险？",
+    "answer": "答案：key 帮助 React 识别哪些元素被修改、添加或删除\n\n解析：React 通过 key 来判断是复用已有 DOM 节点还是创建新节点。使用索引做 key 的问题：在列表插入/删除/排序时，元素下标变化导致 key 改变，React 会错误地复用节点，引发状态错乱（如 input 输入框内容残留）。\n\n扩展延伸：key 的最佳实践 1）优先用数据的唯一 ID（如 id、UUID）2）仅在列表静态不变时用索引 3）key 应在兄弟节点间唯一 4）不推荐用 Math.random() 作为 key（每次渲染都新建 DOM，性能极差）。",
+    "hints": ["key 变化时 React 做什么", "插入新元素时用索引 key 会有什么表现"],
+    "tags": ["React", "列表", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "受控组件与非受控组件",
+    "content": "请解释 React 中受控组件和非受控组件的区别，各自的适用场景。",
+    "answer": "答案：受控组件由 React state 控制表单值，非受控组件由 DOM 自身的 ref 管理状态\n\n解析：受控组件每个输入都对应 state，onChange 更新 state → 组件重渲染 → 显示新值，数据流单向清晰。非受控组件用 ref 从 DOM 获取值，类似传统 HTML 表单，性能更好但难以实时校验。\n\n扩展延伸：如何选择 1）表单校验/联动/条件渲染 → 受控 2）简单的文件上传 → 非受控 3）混合使用（defaultValue + ref）在某些场景下也可行。React 推荐多数场景用受控组件。",
+    "hints": ["非受控组件如何获取当前值", "表单提交时两种方式的处理区别"],
+    "tags": ["React", "表单"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "useCallback/useMemo 的滥用问题",
+    "content": "是否所有函数都应该用 useCallback 包裹？什么情况下 useCallback/useMemo 反而会降低性能？",
+    "answer": "答案：不是。滥用 useCallback 反而可能降低性能\n\n解析：useCallback/useMemo 本身也有开销——依赖数组的比较 + 闭包维护。如果父组件每次渲染开销本身不大，传一个新函数给子组件也不浪费性能，那么加上 useCallback 增加的代码复杂度和内存开销可能超过减少重渲染带来的收益。\n\n扩展延伸：何时应该使用 1）传给 React.memo 包裹的子组件作为 props 2）作为 useEffect 的依赖项 3）自定义 Hook 返回值中。不使用的场景：原生 DOM 元素、非 memo 的组件、成本极轻的 computed 值。推荐在真正遇到性能问题时再优化，而非提前优化。",
+    "hints": ["React.memo 和 useCallback 的关系", "如何度量子组件重渲染的成本"],
+    "tags": ["React", "性能", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React.memo 的浅比较陷阱",
+    "content": "以下代码中 Child 组件被 React.memo 包裹，但父组件每次渲染 Child 仍然重渲染，为什么？\n```jsx\nfunction Parent() {\n  return <Child data={{ name: 'test' }} />;\n}\nconst Child = React.memo(({ data }) => <p>{data.name}</p>);\n```",
+    "answer": "答案：对象字面量每次渲染都是新引用，浅比较总是不相等\n\n解析：React.memo 默认使用浅比较（Object.is 比较 props）。{{ name: 'test' }} 每次在父组件 render 时都会创建新对象，引用不同导致浅比较结果为 false，所以 Child 永远重渲染。\n\n扩展延伸：解决方案 1）将对象提升到组件外（const DATA = { name: 'test' }）2）使用 useState/useRef 保持引用稳定 3）使用 useMemo 记忆化对象。React.memo 的心智模型：Props 引用不变才跳过渲染，所以传入内联对象/箭头函数会让 memo 完全失效。",
+    "hints": ["React.memo 默认比较策略是什么", "如何保持 props 引用稳定"],
+    "tags": ["React", "性能", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "组件卸载后 setState 的警告",
+    "content": "为什么 React 会在组件卸载后的 setState 时抛出警告？如何处理异步操作中的这个问题？",
+    "answer": "答案：卸载后 setState 表示内存泄漏——更新已不存在的组件状态\n\n解析：组件卸载后调用 setState，React 会在开发模式下输出警告（Can't perform a React state update on an unmounted component）。这通常是异步回调、定时器或订阅在组件卸载后仍在执行的结果。\n\n扩展延伸：修复方案 1）使用 AbortController 取消 fetch 请求 2）清理定时器/订阅（useEffect 的 cleanup）3）使用 useRef 标记组件是否挂载（如 const mounted = useRef(true) + mounted.current = false 在 cleanup 中，但不推荐作为默认方案）。React 18 的 StrictMode 会在开发环境双重触发 effect 以帮助发现此问题。",
+    "hints": ["useEffect 的清理函数何时执行", "AbortController 如何取消请求"],
+    "tags": ["React", "Hooks", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "连续 setState 的批量更新问题",
+    "content": "以下代码执行后 count 是多少？\n```jsx\nconst [count, setCount] = useState(0);\nconst handleClick = () => {\n  setCount(count + 1);\n  setCount(count + 1);\n  setCount(count + 1);\n};\n```",
+    "answer": "答案：1，不是 3\n\n解析：React 18 中事件处理函数内的 setState 会批量执行（batch update）。三个 setCount(count + 1) 在渲染时 count 都是 0，所以 0 + 1 = 1，最终结果只有 1。这是 React 状态更新机制的核心——state 在单次渲染中保持快照。\n\n扩展延伸：如需基于最新状态多次更新，应使用函数式更新 setCount(c => c + 1) 重复三次，结果才是 3。React 18 之前的版本仅在事件处理函数中批量执行，setTimeout 和 Promise 回调中不会批量。React 18 实现了自动批量更新，所有场景均批量处理。",
+    "hints": ["函数式更新 setCount(c => c + 1) 和普通更新的区别", "React 18 的自动批量更新是什么"],
+    "tags": ["React", "Hooks", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 合成事件与原生事件混用",
+    "content": "在 React 组件中混用 React 合成事件和原生 DOM 事件，可能遇到什么问题？",
+    "answer": "答案：执行顺序不可控、事件冒泡/捕获行为异常、内存泄漏\n\n解析：React 合成事件在根节点（React 17 之前为 document，React 17+ 为 root 节点）统一委托处理。原生事件在真实 DOM 上绑定，两者执行时机不同。混用时可能出现：原生事件阻止冒泡后 React 事件无法触发、卸载时未清理原生事件导致内存泄漏、e.stopPropagation() 对原生事件无效。\n\n扩展延伸：最佳实践 1）尽量只用 React 事件系统 2）必须用原生事件时，在 useEffect 的 cleanup 中 removeEventListener 3）useRef 绑定原生事件是合法场景（如 Canvas、第三方库集成）。React 18 改为在 root 节点委托合成事件，使事件行为更贴近原生 DOM。",
+    "hints": ["React 合成事件在哪里绑定", "e.stopPropagation() 在合成事件和原生事件中的区别"],
+    "tags": ["React", "事件", "陷阱"]
+  },
+  {
+    "category": "react",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "自定义 Hook 的命名约定与设计",
+    "content": "自定义 Hook 为什么必须以 use 开头？不遵守会有什么后果？设计自定义 Hook 的最佳实践有哪些？",
+    "answer": "答案：use 前缀是 React 约定的命名规则，ESLint 插件依赖此规则检查 Hook 规则\n\n解析：eslint-plugin-react-hooks 通过函数名是否以 use 开头来判断其是否为 Hook，从而检查 Hooks 的调用规则（不在条件/循环中调用）。不遵守命名约定会失去规则检查，无法发现条件调用 Hook 等错误。\n\n扩展延伸：设计原则 1）单一职责——每个 Hook 管理一个关注点 2）返回值尽量是数组或具名对象 3）依赖参数化——接受外部依赖作为参数 4）组合优于继承——用多个简单 Hook 组合出复杂逻辑 5）避免过度抽象——3 次以上复用才值得抽取。",
+    "hints": ["ESLint 如何判断一个函数是自定义 Hook", "自定义 Hook 的参数和返回值应该如何设计"],
+    "tags": ["React", "Hooks", "规范"]
+  }
+]

@@ -1,0 +1,152 @@
+[
+  {
+    "category": "devops",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Dockerfile 最佳实践",
+    "content": "编写 Dockerfile 时有哪些最佳实践可以减小镜像体积和提升构建速度？",
+    "answer": "答案：多阶段构建 + 合理利用缓存 + 精简基础镜像\n\n解析：1）多阶段构建：构建阶段用完整 SDK 镜像，运行阶段用 slim/JRE 镜像拷贝产物。2）利用构建缓存：先 COPY package.json 安装依赖（依赖变更频率低），再 COPY 源码（变更频繁），这样不改依赖时缓存生效。3）基础镜像选择：alpine（5MB）或 slim（常 100MB），避免用 full 镜像。4）合并 RUN 命令减少层数，清理 apt/apk 缓存。\n\n扩展延伸：优化效果示例：多阶段构建前 1.2GB → 构建后 120MB。推荐工具：Dive（分析镜像每层空间占用）、docker-slim（自动收缩镜像）。安全建议：不以 root 用户运行（RUN adduser -D app && USER app）、使用可信基础镜像、定期扫描漏洞（Trivy/Snyk）。",
+    "hints": ["Docker 镜像的层（Layer）是怎么产生的", "为什么 alpine 镜像更小但可能有兼容问题"],
+    "tags": ["Docker", "容器"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Docker Compose vs Kubernetes",
+    "content": "对比 Docker Compose 和 Kubernetes 的使用场景和核心差异。",
+    "answer": "答案：Compose 适合单机多容器编排，K8s 适合集群级容器编排\n\n解析：Docker Compose 通过 YAML 定义多服务（前端/后端/数据库），docker compose up 一键启动，适合本地开发和小项目。Kubernetes 管理集群（多节点），自动调度、服务发现、自动扩缩容、滚动更新、自愈。学习曲线陡，运维成本高。\n\n扩展延伸：什么样的规模需要 K8s？建议标准：超过 5 个微服务、需要自动扩缩容、需要灰度发布/蓝绿部署、跨多台机器。K8s 核心概念：Pod（最小调度单位）、Deployment（声明式更新）、Service（服务发现和负载均衡）、ConfigMap/Secret（配置管理）、Ingress（外部访问入口）。",
+    "hints": ["Pod 和 Deployment 的关系", "Service 的 ClusterIP/NodePort/LoadBalancer 三种类型"],
+    "tags": ["Docker", "K8s", "容器"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CI/CD 流水线设计",
+    "content": "请设计一个 Java 项目的 CI/CD 流水线，包含代码提交到生产部署的完整流程。",
+    "answer": "答案：代码提交 → 自动构建 → 自动测试 → 构建镜像 → 部署到测试环境 → 验收 → 灰度发布 → 生产\n\n解析：完整流水线 1）代码提交触发 CI（push/PR）2）代码检查：Lint + 单元测试 + 集成测试 3）构建和打包：Maven/Gradle 编译、Docker 构建镜像 4）推送到镜像仓库（Docker Hub/Harbor）5）部署到测试/预发环境 6）自动化测试（接口/UI）7）人工验收（可选）8）灰度发布（金丝雀部署，先 1% 流量）9）全量上线。\n\n扩展延伸：质量门禁：测试覆盖率低于 80% 阻断、SonarQube 代码质量检测阻断、安全扫描（SAST/DAST）。回滚策略：K8s 天然支持滚动回滚（kubectl rollout undo）。版本管理：GitFlow 或 Trunk-Based，镜像 tag 使用 git commit SHA（可追溯）。",
+    "hints": ["蓝绿部署和金丝雀部署的区别", "CI 和 CD 的分界点在哪里"],
+    "tags": ["CI/CD", "DevOps"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Docker 网络模式",
+    "content": "请说明 Docker 的几种网络模式及各自适用场景。",
+    "answer": "答案：bridge/host/none/overlay 四种主要模式\n\n解析：bridge（默认）：Docker 网桥（docker0），容器分配独立 IP 通过 NAT 对外通信，容器间可通过 IP 或 --link 通信，适合单机多容器。host：容器直接使用宿主机网络栈，无独立 IP，性能好但端口隔离差，适合网络性能敏感场景。none：容器无网络能力，用于安全隔离或自定义网络。overlay：跨宿主机容器通信（Swarm/K8s 使用），通过 VXLAN 隧道实现。\n\n扩展延伸：Docker Compose 默认创建自定义 bridge 网络，支持 DNS 解析（服务名直接访问），比默认 bridge 多自动服务发现功能。常用：docker network create -d overlay mynet 创建 overlay 网络。端口映射 docker run -p 8080:80，底层是 iptables DNAT 规则。",
+    "hints": ["docker run -p 8080:80 底层做了什么", "host 模式为什么性能更好"],
+    "tags": ["Docker", "网络"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s Pod 的生命周期",
+    "content": "请描述 Kubernetes Pod 的状态流转和探针（Probe）机制。",
+    "answer": "答案：Pod 状态：Pending → Running → Succeeded/Failed，探针决定 Pod 是否健康\n\n解析：Pod 生命周期：Pending（调度中/拉取镜像）→ Running（至少一个容器运行）→ Succeeded（任务完成）→ Failed（出错退出）。未知状态（Unknown）意味着与节点通信失败。三种探针：livenessProbe（存活—检测容器是否运行，失败则重启）、readinessProbe（就绪—检测是否能接受流量，失败则从 Service 摘除）、startupProbe（启动—给慢启动应用缓冲时间）。\n\n扩展延伸：探针配置：initialDelaySeconds（启动后等多久开始检测）、periodSeconds（检测间隔）、timeoutSeconds（超时）。常用检测方式 HTTP GET、TCP Socket、Exec 命令。典型问题：初次启动慢的 Java 应用需 startupProbe 避免被误杀；livenessProbe 不应依赖外部服务（否则外部故障导致容器连环重启）。",
+    "hints": ["restartPolicy 的三个值和各自作用", "liveness 和 readiness 探针都失败时行为有什么不同"],
+    "tags": ["K8s", "容器"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "监控告警体系设计",
+    "content": "如何为一个线上服务设计监控告警体系？常用的指标和工具有哪些？",
+    "answer": "答案：四类黄金指标 + Prometheus + Grafana + 告警通道\n\n解析：Google SRE 四类黄金信号：1）延迟（Latency）— 接口 P99/P95/P50 响应时间 2）流量（Traffic）— QPS/TPS 3）错误（Errors）— HTTP 5xx、业务错误码 4）饱和度（Saturation）— CPU/内存/磁盘/连接池使用率。工具链：Prometheus（指标采集 + 存储）→ Grafana（可视化）→ AlertManager（告警管理）→ 飞书/钉钉/邮件（通知）。\n\n扩展延伸：告警策略核心原则 1）不要告警」机器 CPU 高了」，要告警」业务受损了」（如 P99 延迟 > 5s）2）没有对应的处理动作就不要告警 3）设置告警静默期避免告警风暴 4）用」多窗口」检测（连续 N 次超过阈值才告警，避免抖动）。SLA/SLO 的制定：以用户感知为准，而非基础设施指标。",
+    "hints": ["P99 延迟和平均延迟的差异", "什么是指标（Metrics）、日志（Logs）、链路（Traces）三支柱"],
+    "tags": ["监控", "可观测性"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 排障实战",
+    "content": "K8s 中 Pod 一直处于 Pending/CrashLoopBackOff/ImagePullBackOff 状态，分别是什么原因？怎么排查？",
+    "answer": "答案：Pending→资源不足或调度失败，CrashLoop→容器启动后立即崩溃，ImagePull→镜像拉取失败\n\n解析：Pending：kubectl describe pod 查看 Events。常见原因：节点 CPU/内存不足、PVC 不可用、NodeSelector/Affinity 不匹配、节点有 taints（污点）。CrashLoopBackOff：kubectl logs pod 查看容器日志，kubectl logs --previous pod 查看前一次崩溃日志。常见原因：应用启动即抛异常、配置错误、健康检查探针配置不合理。ImagePullBackOff：检查镜像名和 tag、镜像仓库认证（imagePullSecrets）、仓库地址是否可达。\n\n扩展延伸：实用调试命令：kubectl exec -it pod -- sh（进入容器排查）、kubectl port-forward pod 8080:8080（端口转发本地调试）、kubectl get events --sort-by='.lastTimestamp'（按时间排序事件）。高级：临时 Pod 调试 kubectl debug node/node-name（K8s 1.20+）。",
+    "hints": ["kubectl describe pod 和 kubectl logs 分别看什么", "CrashLoopBackOff 的重启间隔策略"],
+    "tags": ["K8s", "排查"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Git 工作流对比",
+    "content": "请对比 GitFlow、GitHub Flow、Trunk-Based Development 三种 Git 工作流。",
+    "answer": "答案：GitFlow 适合有版本发布节奏的项目，GitHub Flow 适合持续部署，Trunk-Based 适合 CI/CD 成熟度高的团队\n\n解析：GitFlow：main + develop + feature/hotfix/release 分支，每个 release 从 develop 切出，合入 main 和 develop。结构严谨但分支复杂，不适合每天多次部署。GitHub Flow：只有一个 main 分支，功能分支短命，提交 PR → review → merge → 立即部署。简单但要求 CI 完善和快速发布。Trunk-Based：所有人直接向主干提交（短特性分支 < 1 天），通过 Feature Flag 控制未完成功能上线。最大程度减少 merge 冲突和最简 CI/CD 路径。\n\n扩展延伸：选择建议：有固定版本号、需要维护多个版本（如移动端）→ GitFlow；SaaS 产品每天多次部署 → GitHub Flow 或 Trunk-Based。Feature Flag 工具（LaunchDarkly/Unleash）是 Trunk-Based 的核心前提。关键原则：工作流只是手段，目标是减少合并冲突和加快交付速度，不是流程越复杂越「规范」。",
+    "hints": ["GitFlow 的 release 分支和 hotfix 分支分别用于什么", "Feature Flag 如何帮助团队不用功能分支也能控制上线"],
+    "tags": ["Git", "工作流"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "配置管理工具对比",
+    "content": "对比 Ansible、Terraform、Chef/Puppet 的异同和适用场景。",
+    "answer": "答案：Ansible（无 Agent 配置管理）、Terraform（基础设施即代码）、Chef/Puppet（有 Agent 配置管理）\n\n解析：Ansible：基于 SSH（无 Agent），Push 模式，YAML Playbook，适合临时任务和配置管理。学习曲线低，但大规模下速度慢。Terraform：声明式 IaC，管理云资源（AWS/Azure/GCP），HCL 语言，有状态文件（tfstate）。核心是资源编排而非配置管理。Chef/Puppet：基于 Agent，Pull 模式（Agent 从 Server 拉取配置），适合大规模服务器配置管理。Chef 用 Ruby DSL，Puppet 用声明式 DSL，两者都有 Master 架构。\n\n扩展延伸：现代 DevOps 常见组合：Terraform（管基础设施创建）+ Ansible（管服务器初始化配置）+ Packer（构建镜像）+ Helm（管 K8s 应用部署）。Pulumi：新一代 IaC 工具，用通用编程语言（TypeScript/Python/Go）替代 DSL，比 Terraform 更灵活但生态不如成熟。不可变基础设施趋势：不修改运行中的服务器，而是构建新镜像替换——这从根本上改变了配置管理工具的角色。",
+    "hints": ["Terraform 的 desired state 和 current state 如何同步", "Push 模式和 Pull 模式各自优缺点"],
+    "tags": ["IaC", "DevOps", "自动化"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Docker 数据卷和数据挂载",
+    "content": "请说明 Docker 中 Volume 和 Bind Mount 的区别及各自适用场景。",
+    "answer": "答案：Volume 由 Docker 管理（推荐），Bind Mount 映射宿主机任意路径\n\n解析：Volume：docker volume create 创建，存储在 /var/lib/docker/volumes/，完全由 Docker 管理。适合持久化数据库数据、在容器间共享数据、备份恢复。Bind Mount：docker run -v /host/path:/container/path 直接映射宿主机路径。权限与宿主机一致，性能略好。适合开发时热重载代码（源码目录挂载进去）、读取宿主机配置文件。\n\n扩展延伸：tmpfs mount：内存中的临时存储（- —tmpfs），不持久化，适合敏感数据（密码/密钥）。数据卷容器：在早期（Compose 普及前）用于在容器间共享数据，目前已少用。docker compose 中 volumes 定义的 named volume 底层就是 Volume。生产建议：数据库等有状态服务用 Volume + 定期备份，开发场景用 Bind Mount。",
+    "hints": ["docker run -v 和 docker compose volumes 的关系", "数据库容器为什么推荐 Volume 而非 Bind Mount"],
+    "tags": ["Docker", "存储"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "日志收集方案",
+    "content": "设计一套分布式系统的日志收集方案，对比 ELK 和 Loki 的优劣。",
+    "answer": "答案：Filebeat/Fluentd → 集中存储 → 搜索和可视化\n\n解析：ELK（Elasticsearch + Logstash + Kibana）：Logstash 聚合日志写入 ES，Kibana 查询分析。功能强大（全文搜索 + 聚合分析 + 仪表盘），但资源消耗大（ES 吃内存），运维复杂。Loki + Promtail + Grafana：Loki 借鉴 Prometheus 理念，只索引元数据（标签），日志内容不索引。资源消耗小，与 Prometheus 和 Grafana 无缝集成，但查询能力弱于 ES。\n\n扩展延伸：采集方案对比：Filebeat（轻量，Go 实现，ELK 生态）/ Fluentd（Ruby，插件丰富）/ Promtail（Loki 专属）/ Vector（Rust，新一代高性能，支持多输出）。日志治理：设置保存周期（热节点 7 天、冷节点 30 天）、日志级别采样（DEBUG 级别按 1:100 采样）、敏感信息脱敏（密码/身份证正则替换）。注意：日志不是越多越好，T 级日志如果没有索引和治理等于垃圾。",
+    "hints": ["Loki 为什么不索引日志内容", "全量索引（ES）vs 索引元数据（Loki）的各自适用场景"],
+    "tags": ["日志", "可观测性"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "蓝绿部署与滚动更新",
+    "content": "请解释蓝绿部署、滚动更新、金丝雀发布三种发布策略的区别。",
+    "answer": "答案：蓝绿部署是两套环境切换，滚动更新是逐步替换，金丝雀是小比例灰度验证\n\n解析：蓝绿部署：维护两套完全相同的环境（蓝=当前在线，绿=新版本）。切换时调整负载均衡流量从蓝切到绿。问题：需要双倍资源、切换瞬间可能有短暂不一致。滚动更新：逐个或逐批替换 Pod（K8s deployment strategy: RollingUpdate）。设置 maxSurge（最多超出多少个新 Pod）和 maxUnavailable（最多允许多少个不可用）。部署过程不中断服务，但回滚慢。金丝雀发布：先让 1%-5% 的流量走新版本，监控指标正常后逐步增加到 100%。与 A/B 测试的区别：金丝雀是验证稳定性，A/B 测试是验证业务效果（转化率等）。\n\n扩展延伸：K8s 中的实现：Deployment 的 rollingUpdate 参数控制滚动更新行为。金丝雀需用 Service Mesh（Istio/Linkerd）或 Ingress Controller（NGINX Ingress 的 canary annotation）实现精细流量控制。自动化的发布决策：金丝雀阶段自动回滚（检测到错误率上升 → 自动切回旧版本）是 SRE 实践中重要的发布安全保障。",
+    "hints": ["Deployment 的 maxSurge 和 maxUnavailable 参数怎么配", "为什么金丝雀发布需要 Service Mesh 或高级 Ingress"],
+    "tags": ["发布", "K8s", "SRE"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "SRE 核心实践",
+    "content": "请解释 SRE（Site Reliability Engineering）的核心概念：SLO、SLI、Error Budget。",
+    "answer": "答案：SLI 是实际指标，SLO 是目标阈值，Error Budget = 1 - SLO，代表可容忍的不可靠时间\n\n解析：SLI（Service Level Indicator）——我们怎么衡量可靠性？如请求延迟 P99 < 200ms、可用率 > 99.9%。SLO（Service Level Objective）——目标值，如」季度内 P99 延迟 < 200ms 的时间占比 > 99.9%」。Error Budget（错误预算）——如果 SLO 是 99.9%，季度错误预算 = 0.1% × 3 个月 ≈ 2.6 小时不可用。预算用完前可以发布新功能，用完后必须冻结发布专注于稳定性——这是 SRE 平衡」可靠性和创新速度」的核心机制。\n\n扩展延伸：SRE 与传统运维的区别：SRE 是软件工程师做运维，用工程手段解决运维问题（自动化而非手动）。SRE 践行」运维是软件工程」理念，限制运维工作 < 50% 时间，剩余时间做开发减少运维负担。谷歌 SRE 书的经典原则：1）减少琐事（Toil）——手动、重复、可自动化的操作 2）可靠性的边际递减——99.99% 比 99.9% 只多 9 分钟/月但成本翻数倍 3）监控应简单——4 个黄金信号比 100 个指标更有效。",
+    "hints": ["99.9% 和 99.99% 的可用性差异有多大", "Error Budget 用完后的发布冻结如何执行"],
+    "tags": ["SRE", "可靠性"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Helm K8s 包管理",
+    "content": "什么是 Helm？为什么需要 Helm 而非直接用 kubectl apply？",
+    "answer": "答案：Helm 是 K8s 的包管理器，通过 Chart 模板化管理和分发 K8s 资源\n\n解析：一个微服务通常需要 Deployment + Service + ConfigMap + Ingress 多个 YAML，跨环境（dev/staging/prod）还有很多重复配置。Helm Chart 用 Go 模板语法定义资源模板，values.yaml 注入环境差异。核心概念：Chart（包定义）、Release（运行实例）、Repository（仓库）。Helm install/upgrade/rollback 管理应用生命周期。\n\n扩展延伸：Helm vs Kustomize：Helm 是 Go 模板，功能强大但复杂；Kustomize（kubectl 内置）用 overlay 方式覆盖配置，不需学模板语法，但灵活性不如 Helm。生产建议：复杂应用用 Helm，简单项目用 Kustomize。Helm Hook（pre-install/post-install 等）可用于在部署前后执行数据库迁移等任务。注意：Helm 不管理 CRD 升级（可能造成数据丢失），helm template 可以本地渲染 YAML 用于审查。",
+    "hints": ["Helm 的 values.yaml 如何在不同环境间复用", "Helm 和 Kustomize 的选择标准"],
+    "tags": ["K8s", "Helm"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "容器安全最佳实践",
+    "content": "请列出容器化环境中的安全最佳实践。",
+    "answer": "答案：最小权限 + 镜像签名 + 运行时安全 + 网络隔离 + 漏洞扫描\n\n解析：1）最小权限——不以 root 运行（USER app）、readOnlyRootFilesystem: true、drop ALL Linux capabilities 再按需添加 2）镜像安全——使用可信基础镜像（Docker Official Images / distroless）、Trivy/Clair 定期漏洞扫描、镜像签名（cosign）防篡改 3）网络隔离——必要时 networkpolicy 限制 Pod 间通信、不暴露不必要的端口 4）运行时安全——Falco（行为监控）、Seccomp/AppArmor 限制系统调用 5）密钥管理——不把密码写在镜像里，用 K8s Secret、Vault 或外部密钥管理服务。\n\n扩展延伸：OWASP Docker Top 10 中最高危的问题包括：Host 文件系统挂载（docker run -v /:/host）、特权模式（-- privileged）、不验证镜像来源。Supply Chain Security（软件供应链安全）：构建镜像时锁定基础镜像 digest 而非 tag（FROM alpine@sha256:xxx），避免镜像被篡改。Docker Bench Security 脚本可自动检查 Docker 环境的安全配置。",
+    "hints": ["docker run --privileged 有什么风险", "Why distroless base images are more secure"],
+    "tags": ["Docker", "安全"]
+  }
+]
