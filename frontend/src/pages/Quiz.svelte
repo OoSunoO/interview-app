@@ -8,6 +8,11 @@
   let q = $state(null);
   let showAnswer = $state(false);
   let showHints = $state(false);
+  let expandedSections = $state({ answer: true, explanation: false, extension: false });
+
+  function toggleSection(type) {
+    expandedSections = { ...expandedSections, [type]: !expandedSections[type] };
+  }
   let timer = $state(0);
   let timerInterval = $state(null);
   let saving = $state(false);
@@ -146,6 +151,7 @@
     q = null;
     showAnswer = false;
     showHints = false;
+    expandedSections = { answer: true, explanation: false, extension: false };
     selectedOption = null;
     wrongAttempts = 0;
     userAnswer = "";
@@ -338,25 +344,36 @@
     {/if}
 
     {#if showSubmitResult || showAnswer}
-      <div class="answer-sections">
-        {#each renderAnswer(q.answer) as section}
+      {#key q.id}
+        {@const sections = renderAnswer(q.answer)}
+        {#each sections as section}
           <div class="answer-section {section.type}">
-            <h3>
-              {#if section.type === "answer"}参考答案
-              {:else if section.type === "explanation"}解析
-              {:else}扩展延伸
-              {/if}
-            </h3>
-            {#each section.parts as part}
-              {#if part.type === "code"}
-                <CodeBlock code={part.code} lang={part.lang} />
-              {:else}
-                <p>{part.content}</p>
-              {/if}
-            {/each}
+            <button class="section-header" onclick={() => toggleSection(section.type)} aria-expanded={expandedSections[section.type]}>
+              <span class="section-label">
+                {#if section.type === "answer"}参考答案
+                {:else if section.type === "explanation"}解析
+                {:else}扩展延伸
+                {/if}
+              </span>
+              <svg class="chevron" class:open={expandedSections[section.type]} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            {#if expandedSections[section.type]}
+              <div class="section-body">
+                {#each section.parts as part}
+                  {#if part.type === "code"}
+                    <CodeBlock code={part.code} lang={part.lang} />
+                  {:else}
+                    <p>{part.content}</p>
+                  {/if}
+                {/each}
+              </div>
+            {/if}
           </div>
         {/each}
-      </div>
+      {/key}
+    {/if}
 
       {#if showAnswer}
         {#if sessionProgress}
@@ -378,7 +395,6 @@
           </div>
         {/if}
       {/if}
-    {/if}
   {/if}
 </div>
 
@@ -398,16 +414,20 @@
   .hint-btn { background: none; color: var(--warning); border: 1px solid var(--warning); padding: 8px; }
   .hints { padding-left: 20px; color: var(--text-muted); font-size: 14px; }
   .hints li { margin-bottom: 6px; }
-  .answer-sections { display: flex; flex-direction: column; gap: 12px; }
-  .answer-section { border-radius: var(--radius); padding: 16px; border: 1px solid; }
+  .answer-section { border-radius: var(--radius); border: 1px solid; overflow: hidden; }
   .answer-section.answer { background: var(--ans-answer-bg); border-color: var(--ans-answer-border); }
-  .answer-section.answer h3 { color: var(--ans-answer-text); }
   .answer-section.explanation { background: var(--ans-explanation-bg); border-color: var(--ans-explanation-border); }
-  .answer-section.explanation h3 { color: var(--ans-explanation-text); }
   .answer-section.extension { background: var(--ans-extension-bg); border-color: var(--ans-extension-border); }
-  .answer-section.extension h3 { color: var(--ans-extension-text); }
-  .answer-section h3 { font-size: 14px; margin-bottom: 8px; }
-  .answer-section p { font-size: 14px; line-height: 1.7; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; background: none; color: inherit; border: none; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; border-radius: 0; }
+  .section-header:active { transform: none; }
+  .answer-section.answer .section-header { color: var(--ans-answer-text); }
+  .answer-section.explanation .section-header { color: var(--ans-explanation-text); }
+  .answer-section.extension .section-header { color: var(--ans-extension-text); }
+  .chevron { transition: transform 0.25s ease; flex-shrink: 0; }
+  .chevron.open { transform: rotate(180deg); }
+  .section-body { padding: 0 16px 14px; animation: fadeIn 0.2s ease; }
+  .section-body p { font-size: 14px; line-height: 1.7; }
+  .section-body p:not(:last-child) { margin-bottom: 8px; }
   .wrong-btn { background: var(--danger); }
   .wrong-btn:disabled { background: var(--danger-bg); }
   .correct-btn { background: var(--success); }
