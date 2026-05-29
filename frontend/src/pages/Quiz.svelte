@@ -17,7 +17,18 @@
   let loadError = $state(null);
   let showAnswer = $state(false);
   let showHints = $state(false);
+  let browseMode = $state(false);
   let expandedSections = $state({ answer: true, explanation: false, extension: false });
+
+  function toggleBrowseMode() {
+    browseMode = !browseMode;
+    if (browseMode) {
+      showAnswer = true;
+      expandedSections = { answer: true, explanation: true, extension: true };
+    } else {
+      resetState();
+    }
+  }
 
   function toggleSection(type) {
     expandedSections = { ...expandedSections, [type]: !expandedSections[type] };
@@ -180,9 +191,11 @@
   function resetState() {
     q = null;
     loadError = null;
-    showAnswer = false;
+    showAnswer = browseMode;
     showHints = false;
-    expandedSections = { answer: true, explanation: false, extension: false };
+    expandedSections = browseMode
+      ? { answer: true, explanation: true, extension: true }
+      : { answer: true, explanation: false, extension: false };
     selectedOption = null;
     wrongAttempts = 0;
     userAnswer = "";
@@ -280,6 +293,9 @@
       {#if sessionProgress}
         <span class="q-number-badge">{sessionProgress.index}/{sessionProgress.total}</span>
       {/if}
+      <button class="browse-toggle" class:active={browseMode} onclick={toggleBrowseMode}>
+        {browseMode ? "浏览" : "答题"}
+      </button>
       {#if sessionProgress && !showAnswer}
         <button class="shuffle-btn" onclick={shuffleRemaining} title="随机后续题目">
           <svg
@@ -335,7 +351,7 @@
         {/each}
       </div>
 
-      {#if q.hints.length > 0 && !showAnswer}
+      {#if q.hints.length > 0 && !showAnswer && !browseMode}
         <button class="hint-trigger" onclick={() => (showHints = !showHints)}>
           <svg
             width="14"
@@ -362,7 +378,8 @@
         {/if}
       {/if}
 
-      {#if q.type === "choice" || q.type === "true_false"}
+      {#if !browseMode}
+        {#if q.type === "choice" || q.type === "true_false"}
         <div class="options" role="group" aria-label="选项">
           {#each q.options as opt, i}
             <button
@@ -442,9 +459,10 @@
           {/if}
         {/if}
       {/if}
+    {/if}
     </div>
 
-    {#if showSubmitResult || showAnswer}
+    {#if browseMode || showSubmitResult || showAnswer}
       {#key q.id}
         {@const sections = renderAnswer(q.answer)}
         {#each sections as section, i}
@@ -491,7 +509,7 @@
       {/key}
     {/if}
 
-    {#if showAnswer}
+    {#if browseMode || showAnswer}
       {#if sessionProgress}
         <div class="nav-actions">
           <button class="nav-btn exit" onclick={exit}>返回题库</button>
@@ -532,6 +550,22 @@
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
+  }
+  .browse-toggle {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    letter-spacing: 0.5px;
+    transition: all 0.3s var(--spring);
+  }
+  .browse-toggle.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border-color: var(--accent);
   }
   .shuffle-btn {
     background: none;
