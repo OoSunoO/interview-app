@@ -56,7 +56,7 @@
 <div class="page kp-page">
   <div class="page-header">
     <h1 class="page-title">知识点</h1>
-    <p class="page-sub">基于 tags 提取的知识体系，共 {points.length} 个知识点</p>
+    <p class="page-sub">共 {points.length} 个知识点，按领域分类</p>
   </div>
 
   <div class="search-wrap">
@@ -65,7 +65,7 @@
     </svg>
     <input
       class="search"
-      placeholder="搜索知识点..."
+      placeholder="搜索知识点或领域..."
       bind:value={searchQuery}
     />
   </div>
@@ -75,39 +75,46 @@
   {:else if loading}
     <div class="skeleton-grid">
       {#each Array(6) as _}
-        <div class="skeleton-card" style="height: 120px"></div>
+        <div class="skeleton-card" style="height: 100px"></div>
       {/each}
     </div>
   {:else if filtered.length === 0}
-    <p class="empty">暂无匹配的知识点</p>
+    <p class="empty">暂无匹配的领域</p>
   {:else}
-    <div class="kp-grid">
-      {#each filtered as kp}
-        <button class="card kp-card" onclick={() => goToDetail(kp.name)}>
-          <div class="kp-top">
-            <span class="kp-name">{kp.name}</span>
-            <span class="kp-count">{kp.question_count} 题</span>
-          </div>
-          {#if kp.categories.length > 0}
-            <div class="kp-cats">
-              {#each kp.categories.slice(0, 3) as cat}
-                <span class="mini-tag">{cat}</span>
+    <div class="cat-list">
+      {#each filtered as cat}
+        <div class="cat-card card" class:expanded={expandedCategory === cat.id}>
+          <button class="cat-header" onclick={() => toggleCategory(cat.id)}>
+            <div class="cat-header-left">
+              <span class="cat-label">{cat.label}</span>
+              <span class="cat-stats">{cat.totalQuestions} 题</span>
+            </div>
+            <div class="cat-header-right">
+              <span class="mastery-badge" style="color: {getMasteryColor(Math.round(cat.totalMastery / cat.children.length))}">
+                掌握 {Math.round(cat.totalMastery / cat.children.length)}%
+              </span>
+              <svg class="cat-arrow" class:rotated={expandedCategory === cat.id} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </button>
+          {#if expandedCategory === cat.id}
+            <div class="cat-children">
+              {#each cat.children as kp}
+                <button class="child-item" onclick={() => goToDetail(kp.name)}>
+                  <span class="child-name">{kp.name}</span>
+                  <span class="child-count">{kp.count || kp.question_count} 题</span>
+                  <div class="child-mastery">
+                    <div class="mastery-bar-bg">
+                      <div class="mastery-bar-fill" style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"></div>
+                    </div>
+                    <span class="mastery-label" style="color: {getMasteryColor(kp.mastery)}; font-size: 11px;">
+                      {kp.mastery}%
+                    </span>
+                  </div>
+                </button>
               {/each}
             </div>
           {/if}
-          <div class="kp-mastery">
-            <div class="mastery-bar-bg">
-              <div
-                class="mastery-bar-fill"
-                style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"
-              ></div>
-            </div>
-            <span class="mastery-label" style="color: {getMasteryColor(kp.mastery)}">
-              {getMasteryLabel(kp.mastery)}
-              {kp.mastery}%
-            </span>
-          </div>
-        </button>
+        </div>
       {/each}
     </div>
   {/if}
@@ -124,37 +131,44 @@
 
   .empty { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 14px; }
 
-  .kp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .kp-card {
-    text-align: left;
-    width: 100%;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    cursor: pointer;
-    transition: border-color 0.2s, transform 0.15s;
+  /* Category list (hierarchical) */
+  .cat-list { display: flex; flex-direction: column; gap: 8px; }
+  .cat-card { padding: 0; overflow: hidden; }
+  .cat-header {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; padding: 14px 16px; cursor: pointer; text-align: left;
+    background: none; border: none; color: var(--text); gap: 12px;
+    transition: background 0.15s;
   }
-  .kp-card:active { transform: scale(0.97); border-color: var(--accent); }
-  .kp-top { display: flex; justify-content: space-between; align-items: center; }
-  .kp-name { font-size: 14px; font-weight: 600; line-height: 1.3; color: var(--text); }
-  .kp-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; background: var(--border); padding: 2px 8px; border-radius: 8px; }
-  .kp-cats { display: flex; gap: 4px; flex-wrap: wrap; }
-  .mini-tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border); }
+  .cat-header:hover { background: var(--bg-surface); }
+  .cat-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .cat-label { font-size: 15px; font-weight: 700; color: var(--text); }
+  .cat-stats { font-size: 12px; color: var(--text-muted); white-space: nowrap; background: var(--border); padding: 2px 10px; border-radius: 10px; }
+  .cat-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .mastery-badge { font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .cat-arrow { transition: transform 0.2s; color: var(--text-dim); }
+  .cat-arrow.rotated { transform: rotate(90deg); }
 
-  .kp-mastery { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+  .cat-children { border-top: 1px solid var(--border); padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .child-item {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 10px 8px; cursor: pointer; text-align: left;
+    background: none; border: none; border-radius: 6px; color: var(--text);
+    transition: background 0.12s;
+  }
+  .child-item:hover { background: var(--bg-surface); }
+  .child-name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; }
+  .child-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .child-mastery { display: flex; align-items: center; gap: 6px; width: 100px; flex-shrink: 0; }
+
   .mastery-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
   .mastery-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
   .mastery-label { font-size: 10px; font-weight: 600; white-space: nowrap; }
 
-  .skeleton-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .skeleton-grid { display: flex; flex-direction: column; gap: 10px; }
   .skeleton-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); animation: pulse 1.5s ease infinite; }
   @keyframes pulse {
     0%, 100% { opacity: 0.5; }
     50% { opacity: 0.25; }
-  }
-
-  @media (max-width: 380px) {
-    .kp-grid { grid-template-columns: 1fr; }
   }
 </style>
