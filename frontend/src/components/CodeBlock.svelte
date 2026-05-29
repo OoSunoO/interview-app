@@ -13,7 +13,9 @@
   hljs.registerLanguage("json", json);
 
   let { code = "", lang = "" } = $props();
-  let highlighted = $derived(lang ? hljs.highlight(code, { language: lang }).value : hljs.highlightAuto(code).value);
+  let highlighted = $derived(
+    lang ? hljs.highlight(code, { language: lang }).value : hljs.highlightAuto(code).value,
+  );
 </script>
 
 <pre class="code-block"><code>{@html highlighted}</code></pre>
@@ -28,5 +30,7 @@
     line-height: 1.5;
     margin: 8px 0;
   }
-  .code-block code { font-family: "SF Mono", "Fira Code", monospace; }
+  .code-block code {
+    font-family: "SF Mono", "Fira Code", monospace;
+  }
 </style>

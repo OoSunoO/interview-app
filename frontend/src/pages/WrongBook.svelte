@@ -3,7 +3,14 @@
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
-  import { hasAI, getAIConfig, saveAIConfig, setProvider, PROVIDERS, socraticChat } from "../lib/ai.js";
+  import {
+    hasAI,
+    getAIConfig,
+    saveAIConfig,
+    setProvider,
+    PROVIDERS,
+    socraticChat,
+  } from "../lib/ai.js";
 
   let { onNavigate } = $props();
   let wrongQuestions = $state([]);
@@ -49,7 +56,10 @@
   }
 
   async function startSocratic() {
-    if (!hasAI()) { showAIConfig = true; return; }
+    if (!hasAI()) {
+      showAIConfig = true;
+      return;
+    }
     const q = wrongQuestions[currentIndex];
     socraticLoading = true;
     socraticMsgs = [];
@@ -70,7 +80,10 @@
     socraticMsgs = [...socraticMsgs, { role: "user", content: userMsg }];
     socraticLoading = true;
     try {
-      const history = socraticMsgs.map(m => ({ role: m.role === "ai" ? "assistant" : "user", content: m.content }));
+      const history = socraticMsgs.map((m) => ({
+        role: m.role === "ai" ? "assistant" : "user",
+        content: m.content,
+      }));
       const reply = await socraticChat(q.title, "", q.answer, history);
       socraticMsgs = [...socraticMsgs, { role: "ai", content: reply }];
     } catch (e) {
@@ -90,7 +103,13 @@
 <div class="page wrong">
   {#if reviewMode}
     <div class="review-header">
-      <button class="back-btn" onclick={() => { reviewMode = false; showAnswer = false; }}>← 退出</button>
+      <button
+        class="back-btn"
+        onclick={() => {
+          reviewMode = false;
+          showAnswer = false;
+        }}>← 退出</button
+      >
       <span class="review-progress">{currentIndex + 1}/{wrongQuestions.length}</span>
     </div>
 
@@ -98,13 +117,19 @@
       <div class="review-card">
         <div class="q-info">
           <span class="tag">{wrongQuestions[currentIndex].category}</span>
-          <span class="tag diff {wrongQuestions[currentIndex].difficulty}">{wrongQuestions[currentIndex].difficulty}</span>
+          <span class="tag diff {wrongQuestions[currentIndex].difficulty}"
+            >{wrongQuestions[currentIndex].difficulty}</span
+          >
           <span class="wrong-badge-sm">答错 {wrongQuestions[currentIndex].wrong_count} 次</span>
         </div>
         <h2 class="review-title">{wrongQuestions[currentIndex].title}</h2>
       </div>
 
-      <button class="reveal-btn" class:revealed={showAnswer} onclick={() => showAnswer = !showAnswer}>
+      <button
+        class="reveal-btn"
+        class:revealed={showAnswer}
+        onclick={() => (showAnswer = !showAnswer)}
+      >
         {showAnswer ? "隐藏答案" : "查看答案"}
       </button>
 
@@ -142,8 +167,16 @@
           {/each}
           {#if !showAnswer}
             <div class="chat-input-row">
-              <input bind:value={chatInput} placeholder="输入你的回答..." onkeydown={(e) => e.key === "Enter" && sendChat()} />
-              <button class="chat-send" onclick={sendChat} disabled={socraticLoading || !chatInput.trim()}>发送</button>
+              <input
+                bind:value={chatInput}
+                placeholder="输入你的回答..."
+                onkeydown={(e) => e.key === "Enter" && sendChat()}
+              />
+              <button
+                class="chat-send"
+                onclick={sendChat}
+                disabled={socraticLoading || !chatInput.trim()}>发送</button
+              >
             </div>
           {/if}
         </div>
@@ -167,13 +200,19 @@
       <p class="empty">暂无错题 — 继续保持！可以去题库刷更多题</p>
     {:else}
       <p class="summary">共 {wrongQuestions.length} 道待复习</p>
-      <button class="start-review btn-gradient" onclick={() => reviewMode = true}>
+      <button class="start-review btn-gradient" onclick={() => (reviewMode = true)}>
         开始复习 ({wrongQuestions.length})
       </button>
 
       <div class="list">
         {#each wrongQuestions as q}
-          <button class="card" onclick={() => { store.startQuiz(wrongQuestions); onNavigate("quiz", { questionId: q.id }); }}>
+          <button
+            class="card"
+            onclick={() => {
+              store.startQuiz(wrongQuestions);
+              onNavigate("quiz", { questionId: q.id });
+            }}
+          >
             <div class="q-header">
               <span class="tag">{q.category}</span>
               <span class="tag diff {q.difficulty}">{q.difficulty}</span>
@@ -188,47 +227,241 @@
 </div>
 
 <style>
-  .wrong { display: flex; flex-direction: column; gap: 14px; }
-  .empty { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 18px; }
-  .loading { text-align: center; color: var(--text-muted); padding: 60px 0; }
-  .wrong-header { display: flex; align-items: center; gap: 10px; }
-  .wrong-badge { background: var(--danger-bg); color: var(--danger); font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 12px; font-variant-numeric: tabular-nums; }
-  .summary { color: var(--text-muted); font-size: 14px; }
-  .start-review { width: 100%; padding: 14px; font-size: 16px; font-weight: 600; border-radius: var(--radius); }
-  .list { display: flex; flex-direction: column; gap: 10px; }
-  .wrong .card { text-align: left; width: 100%; padding: 14px; color: var(--text); cursor: pointer; border-left: 3px solid rgba(248, 113, 113, 0.3); }
-  .q-header { display: flex; gap: 8px; font-size: 12px; color: var(--text-muted); margin-bottom: 6px; align-items: center; }
-  .wrong-count { margin-left: auto; color: var(--danger); font-size: 12px; }
-  .q-title-text { font-size: 14px; line-height: 1.4; }
-  .review-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
-  .back-btn { background: none; color: var(--text-dim); padding: 8px 0; font-size: 14px; }
-  .review-progress { font-size: 14px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-  .q-info { display: flex; gap: 8px; font-size: 13px; color: var(--text-muted); align-items: center; flex-wrap: wrap; }
-  .q-info .wrong-badge-sm { margin-left: auto; font-size: 11px; color: var(--danger); background: var(--danger-bg); padding: 2px 8px; border-radius: 4px; }
-  .review-title { font-size: 17px; font-weight: 600; line-height: 1.5; margin: 8px 0 4px; }
-  .reveal-btn { width: 100%; padding: 16px; background: var(--bg-surface); color: var(--text); border: 1px dashed var(--border); border-radius: var(--radius); font-size: 15px; cursor: pointer; transition: all 0.2s; }
-  .reveal-btn:active { background: var(--bg-card-hover); border-style: solid; border-color: var(--accent-dim); }
-  .reveal-btn.revealed { border-style: solid; border-color: var(--accent-dim); background: var(--accent-bg); }
-  .review-actions { display: flex; gap: 12px; margin-top: 16px; }
-  .review-actions button { flex: 1; padding: 16px; font-weight: 600; border-radius: var(--radius); }
-  .correct-btn { background: var(--success); }
-  .wrong-btn { background: var(--danger); }
-  .review-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); padding: 20px; }
-  .socratic-btn { width: 100%; padding: 12px; font-size: 14px; background: none; border: 1px solid var(--border); color: var(--text-muted); margin-top: 8px; }
-  .socratic-chat { display: flex; flex-direction: column; gap: 10px; background: var(--bg-surface); border-radius: var(--radius); border: 1px solid var(--border); padding: 14px; max-height: 400px; overflow-y: auto; }
-  .chat-msg { max-width: 90%; }
-  .chat-msg.ai { align-self: flex-start; }
-  .chat-msg.user { align-self: flex-end; }
-  .msg-content { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px; line-height: 1.6; }
-  .chat-msg.ai .msg-content { background: var(--bg-card); border: 1px solid var(--border); color: var(--text); }
-  .chat-msg.user .msg-content { background: var(--accent-bg); border: 1px solid var(--accent-dim); color: var(--text); }
-  .chat-input-row { display: flex; gap: 8px; margin-top: 8px; }
-  .chat-input-row input { flex: 1; }
-  .chat-send { white-space: nowrap; padding: 10px 16px; }
-  .ai-config { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
-  .config-hint { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-  .provider-select { margin-bottom: 8px; }
-  .config-row { display: flex; gap: 8px; }
-  .config-row input { flex: 1; }
-  .config-save { white-space: nowrap; padding: 10px 16px; }
+  .wrong {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 0;
+    font-size: 18px;
+  }
+  .loading {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 60px 0;
+  }
+  .wrong-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .wrong-badge {
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .start-review {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: var(--radius);
+  }
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .wrong .card {
+    text-align: left;
+    width: 100%;
+    padding: 14px;
+    color: var(--text);
+    cursor: pointer;
+    border-left: 3px solid rgba(248, 113, 113, 0.3);
+  }
+  .q-header {
+    display: flex;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    align-items: center;
+  }
+  .wrong-count {
+    margin-left: auto;
+    color: var(--danger);
+    font-size: 12px;
+  }
+  .q-title-text {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+  }
+  .back-btn {
+    background: none;
+    color: var(--text-dim);
+    padding: 8px 0;
+    font-size: 14px;
+  }
+  .review-progress {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .q-info {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .q-info .wrong-badge-sm {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--danger);
+    background: var(--danger-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .review-title {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 8px 0 4px;
+  }
+  .reveal-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .reveal-btn:active {
+    background: var(--bg-card-hover);
+    border-style: solid;
+    border-color: var(--accent-dim);
+  }
+  .reveal-btn.revealed {
+    border-style: solid;
+    border-color: var(--accent-dim);
+    background: var(--accent-bg);
+  }
+  .review-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .review-actions button {
+    flex: 1;
+    padding: 16px;
+    font-weight: 600;
+    border-radius: var(--radius);
+  }
+  .correct-btn {
+    background: var(--success);
+  }
+  .wrong-btn {
+    background: var(--danger);
+  }
+  .review-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 20px;
+  }
+  .socratic-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+  .socratic-chat {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 14px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .chat-msg {
+    max-width: 90%;
+  }
+  .chat-msg.ai {
+    align-self: flex-start;
+  }
+  .chat-msg.user {
+    align-self: flex-end;
+  }
+  .msg-content {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .chat-msg.ai .msg-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .chat-msg.user .msg-content {
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-dim);
+    color: var(--text);
+  }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .chat-input-row input {
+    flex: 1;
+  }
+  .chat-send {
+    white-space: nowrap;
+    padding: 10px 16px;
+  }
+  .ai-config {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+  }
+  .config-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .provider-select {
+    margin-bottom: 8px;
+  }
+  .config-row {
+    display: flex;
+    gap: 8px;
+  }
+  .config-row input {
+    flex: 1;
+  }
+  .config-save {
+    white-space: nowrap;
+    padding: 10px 16px;
+  }
 </style>

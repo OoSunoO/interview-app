@@ -46,8 +46,17 @@
 
 <div class="page kp-detail-page">
   <button class="back-btn" onclick={() => onNavigate("knowledge")}>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="15 18 9 12 15 6"/>
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <polyline points="15 18 9 12 15 6" />
     </svg>
     返回知识点
   </button>
@@ -66,7 +75,12 @@
         <span class="kp-count">{detail.question_count} 道相关题目</span>
       </div>
       <div class="kp-mastery-section">
-        <div class="mastery-badge" style="background: {getMasteryColor(detail.mastery)}22; color: {getMasteryColor(detail.mastery)}; border: 1px solid {getMasteryColor(detail.mastery)}44;">
+        <div
+          class="mastery-badge"
+          style="background: {getMasteryColor(detail.mastery)}22; color: {getMasteryColor(
+            detail.mastery,
+          )}; border: 1px solid {getMasteryColor(detail.mastery)}44;"
+        >
           {getMasteryLabel(detail.mastery)} · {detail.mastery}%
         </div>
       </div>
@@ -93,13 +107,54 @@
           <div class="q-header">
             <span class="status-icon {q.status}">
               {#if q.status === "correct"}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline
+                    points="22 4 12 14.01 9 11.01"
+                  /></svg
+                >
               {:else if q.status === "wrong"}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
+                >
               {:else if q.status === "reviewing"}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg
+                >
               {:else}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"><circle cx="12" cy="12" r="10" /></svg
+                >
               {/if}
             </span>
             <span class="tag">{q.category}</span>
@@ -115,7 +170,11 @@
 </div>
 
 <style>
-  .kp-detail-page { display: flex; flex-direction: column; gap: 12px; }
+  .kp-detail-page {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
   .back-btn {
     display: inline-flex;
     align-items: center;
@@ -128,45 +187,148 @@
     cursor: pointer;
     width: fit-content;
   }
-  .back-btn:active { opacity: 0.7; }
+  .back-btn:active {
+    opacity: 0.7;
+  }
 
-  .kp-header { display: flex; flex-direction: column; gap: 10px; }
-  .kp-title-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-  .kp-title { font-size: 20px; margin: 0; }
-  .kp-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; background: var(--border); padding: 2px 10px; border-radius: 8px; margin-top: 4px; }
-  .kp-mastery-section { display: flex; }
-  .mastery-badge { font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 12px; display: inline-block; }
-  .kp-cats { display: flex; gap: 4px; flex-wrap: wrap; }
-  .mini-tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border); }
+  .kp-header {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .kp-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .kp-title {
+    font-size: 20px;
+    margin: 0;
+  }
+  .kp-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    background: var(--border);
+    padding: 2px 10px;
+    border-radius: 8px;
+    margin-top: 4px;
+  }
+  .kp-mastery-section {
+    display: flex;
+  }
+  .mastery-badge {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 12px;
+    display: inline-block;
+  }
+  .kp-cats {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .mini-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
 
-  .kp-summary { padding: 14px; }
-  .section-label { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
-  .summary-text { font-size: 13px; line-height: 1.7; color: var(--text); }
+  .kp-summary {
+    padding: 14px;
+  }
+  .section-label {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+  }
+  .summary-text {
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--text);
+  }
 
-  .section-title { font-size: 14px; font-weight: 600; margin-top: 4px; color: var(--text); }
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 4px;
+    color: var(--text);
+  }
 
-  .question-list { display: flex; flex-direction: column; gap: 10px; }
+  .question-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
   .q-item {
     text-align: left;
     width: 100%;
     padding: 14px;
     border-left: 3px solid transparent;
   }
-  .q-item.status-correct { border-left-color: var(--success); }
-  .q-item.status-reviewing { border-left-color: var(--warning); }
-  .q-item.status-wrong { border-left-color: var(--danger); }
-  .q-header { display: flex; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; align-items: center; }
-  .status-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
-  .status-icon.correct { color: var(--success); }
-  .status-icon.wrong { color: var(--danger); }
-  .status-icon.reviewing { color: var(--warning); }
-  .status-icon.new { color: var(--text-dim); }
-  .q-title { font-size: 14px; font-weight: 500; margin-bottom: 3px; }
-  .q-content-preview { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .q-item.status-correct {
+    border-left-color: var(--success);
+  }
+  .q-item.status-reviewing {
+    border-left-color: var(--warning);
+  }
+  .q-item.status-wrong {
+    border-left-color: var(--danger);
+  }
+  .q-header {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .status-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .status-icon.correct {
+    color: var(--success);
+  }
+  .status-icon.wrong {
+    color: var(--danger);
+  }
+  .status-icon.reviewing {
+    color: var(--warning);
+  }
+  .status-icon.new {
+    color: var(--text-dim);
+  }
+  .q-title {
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .q-content-preview {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
 
-  .skeleton-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); animation: pulse 1.5s ease infinite; }
+  .skeleton-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    animation: pulse 1.5s ease infinite;
+  }
   @keyframes pulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 0.25; }
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 0.25;
+    }
   }
 </style>

@@ -41,6 +41,14 @@
 </div>
 
 <style>
-  .app-shell { height: 100%; display: flex; flex-direction: column; }
-  .content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .app-shell {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 </style>

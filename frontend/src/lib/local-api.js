@@ -45,11 +45,21 @@ function matchesSearch(q, search) {
 // ── Knowledge Points helpers ──────────────────────────────────────
 
 const CATEGORY_NAMES = {
-  java_basic: "Java 基础", java_advanced: "Java 进阶", ai: "AI 基础",
-  agent: "AI Agent", algorithm: "算法", system_design: "系统设计",
-  frontend: "前端", cs_basics: "计算机基础", database: "数据库",
-  linux: "Linux", devops: "DevOps", react: "React",
-  project_mgmt: "项目管理", product: "产品思维", java_collections: "Java 集合",
+  java_basic: "Java 基础",
+  java_advanced: "Java 进阶",
+  ai: "AI 基础",
+  agent: "AI Agent",
+  algorithm: "算法",
+  system_design: "系统设计",
+  frontend: "前端",
+  cs_basics: "计算机基础",
+  database: "数据库",
+  linux: "Linux",
+  devops: "DevOps",
+  react: "React",
+  project_mgmt: "项目管理",
+  product: "产品思维",
+  java_collections: "Java 集合",
 };
 
 /** Build a readable summary for a knowledge point from its questions */
@@ -63,7 +73,7 @@ function generateSummary(tag, tagQuestions) {
     // Add title
     concepts.add(title.replace(/^请(解释|介绍|描述)?/, "").trim());
     // Extract short meaningful phrases from content
-    const snippets = content.split(/[。，；]/).filter(s => s.length > 5 && s.length < 40);
+    const snippets = content.split(/[。，；]/).filter((s) => s.length > 5 && s.length < 40);
     for (const s of snippets.slice(0, 2)) {
       concepts.add(s.trim() + "。");
     }
@@ -172,9 +182,7 @@ export const api = {
         review_count: (existing.review_count || 0) + 1,
         last_reviewed_at: new Date().toISOString(),
         next_review_at:
-          body.status === "wrong"
-            ? new Date(Date.now() + 86400000).toISOString()
-            : null,
+          body.status === "wrong" ? new Date(Date.now() + 86400000).toISOString() : null,
         notes: body.notes || existing.notes || "",
       };
       saveProgress(progress);
@@ -256,10 +264,7 @@ export const api = {
       const progress = getProgress();
       const now = new Date().toISOString();
       const dueIds = Object.entries(progress)
-        .filter(
-          ([, p]) =>
-            p.status === "wrong" && p.next_review_at && p.next_review_at <= now,
-        )
+        .filter(([, p]) => p.status === "wrong" && p.next_review_at && p.next_review_at <= now)
         .map(([id]) => Number(id));
 
       return questions
@@ -293,7 +298,7 @@ export const api = {
         const done = p?.status === "correct" || p?.status === "reviewing";
         if (done) catData[cat].done++;
 
-        for (const tag of (q.tags || [])) {
+        for (const tag of q.tags || []) {
           if (!catData[cat].tags[tag]) {
             catData[cat].tags[tag] = { total: 0, done: 0 };
           }
@@ -303,12 +308,21 @@ export const api = {
       }
 
       const categoryNames = {
-        ai: "AI", agent: "AI Agent", algorithm: "算法",
-        cs_basics: "计算机基础", database: "数据库", devops: "DevOps",
-        frontend: "前端", java_basic: "Java 基础", java_advanced: "Java 进阶",
-        java_collections: "Java 集合", linux: "Linux",
-        react: "React", system_design: "系统设计",
-        product: "产品思维", project_mgmt: "项目管理",
+        ai: "AI",
+        agent: "AI Agent",
+        algorithm: "算法",
+        cs_basics: "计算机基础",
+        database: "数据库",
+        devops: "DevOps",
+        frontend: "前端",
+        java_basic: "Java 基础",
+        java_advanced: "Java 进阶",
+        java_collections: "Java 集合",
+        linux: "Linux",
+        react: "React",
+        system_design: "系统设计",
+        product: "产品思维",
+        project_mgmt: "项目管理",
       };
 
       return Object.entries(catData)

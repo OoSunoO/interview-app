@@ -81,8 +81,17 @@
       {#if dueCount > 0}
         <button class="due-card" onclick={() => onNavigate("wrong")}>
           <div class="due-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
             </svg>
           </div>
           <div class="due-body">
@@ -90,15 +99,35 @@
             <span class="due-cnt">{dueCount} 道题待巩固</span>
           </div>
           <div class="due-arrow-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 18 15 12 9 6"/>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
             </svg>
           </div>
         </button>
       {:else}
         <div class="all-clear">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--success)"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline
+              points="22 4 12 14.01 9 11.01"
+            />
           </svg>
           <span>暂无待复习题目，继续保持</span>
         </div>
@@ -136,8 +165,17 @@
       <button class="btn-wrap start-cta" onclick={() => onNavigate("browse")}>
         开始刷题
         <span class="btn-icon">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"/>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6" />
           </svg>
         </span>
       </button>
@@ -146,7 +184,12 @@
 </div>
 
 <style>
-  .home { display: flex; flex-direction: column; gap: 0; padding-top: 0; }
+  .home {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding-top: 0;
+  }
 
   /* ── Hero Section ── */
   .hero-section {
@@ -168,7 +211,10 @@
     background: radial-gradient(circle, rgba(108, 140, 255, 0.1) 0%, transparent 60%);
     pointer-events: none;
   }
-  .hero-content { position: relative; z-index: 1; }
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
   .eyebrow {
     display: inline-flex;
     padding: 4px 14px;
@@ -189,21 +235,66 @@
     color: var(--text);
     margin-bottom: 8px;
   }
-  .hero-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+  .hero-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
 
   /* ── Stats ── */
-  .hero-stats { display: flex; justify-content: center; gap: 12px; position: relative; z-index: 1; }
-  .hero-stats .double-bezel { width: 98px; }
-  .stat-inner { text-align: center; padding: 14px 8px; }
-  .stat-num { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); line-height: 1.1; }
-  .stat-inner.accent .stat-num { color: var(--accent); }
-  .stat-inner.attention .stat-num { color: var(--danger); }
-  .stat-lbl { font-size: 11px; color: var(--text-dim); margin-top: 4px; font-weight: 500; }
-  .hero-stats-skeleton { display: flex; justify-content: center; gap: 12px; position: relative; z-index: 1; }
-  .hero-stats-skeleton .skeleton-box { width: 98px; height: 88px; }
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-stats .double-bezel {
+    width: 98px;
+  }
+  .stat-inner {
+    text-align: center;
+    padding: 14px 8px;
+  }
+  .stat-num {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .stat-inner.accent .stat-num {
+    color: var(--accent);
+  }
+  .stat-inner.attention .stat-num {
+    color: var(--danger);
+  }
+  .stat-lbl {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  .hero-stats-skeleton {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-stats-skeleton .skeleton-box {
+    width: 98px;
+    height: 88px;
+  }
 
   /* ── Body Section ── */
-  .body-section { display: flex; flex-direction: column; gap: 14px; }
+  .body-section {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
 
   /* ── Due Card ── */
   .due-card {
@@ -219,7 +310,11 @@
     border-radius: var(--radius);
     transition: all 0.3s var(--spring);
   }
-  .due-card:active { background: var(--bg-card-hover); border-color: rgba(108, 140, 255, 0.2); transform: scale(0.99); }
+  .due-card:active {
+    background: var(--bg-card-hover);
+    border-color: rgba(108, 140, 255, 0.2);
+    transform: scale(0.99);
+  }
   .due-icon {
     width: 36px;
     height: 36px;
@@ -231,9 +326,21 @@
     flex-shrink: 0;
     color: var(--accent);
   }
-  .due-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-  .due-lbl { font-size: 13px; font-weight: 600; color: var(--text); }
-  .due-cnt { font-size: 12px; color: var(--text-muted); }
+  .due-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .due-lbl {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .due-cnt {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
   .due-arrow-icon {
     width: 28px;
     height: 28px;
@@ -282,7 +389,11 @@
   }
 
   /* ── Recommend ── */
-  .recommend-list { display: flex; flex-direction: column; gap: 10px; }
+  .recommend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
   .rec-card {
     text-align: left;
     width: 100%;
@@ -294,12 +405,35 @@
     animation: fade-in 0.6s var(--spring) both;
     transition: all 0.3s var(--spring);
   }
-  .rec-card:active { background: var(--bg-card-hover); border-color: rgba(108, 140, 255, 0.2); transform: scale(0.99); }
-  .rec-badges { display: flex; gap: 4px; margin-bottom: 8px; }
-  .rec-title { font-size: 16px; font-weight: 700; line-height: 1.45; margin-bottom: 6px; letter-spacing: -0.2px; }
-  .rec-type { font-size: 11px; color: var(--text-dim); font-weight: 500; }
+  .rec-card:active {
+    background: var(--bg-card-hover);
+    border-color: rgba(108, 140, 255, 0.2);
+    transform: scale(0.99);
+  }
+  .rec-badges {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .rec-title {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.45;
+    margin-bottom: 6px;
+    letter-spacing: -0.2px;
+  }
+  .rec-type {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
 
-  .empty-rec { text-align: center; color: var(--text-muted); font-size: 14px; padding: 20px 0; }
+  .empty-rec {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 20px 0;
+  }
 
   /* ── CTA ── */
   .start-cta {

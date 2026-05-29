@@ -4,10 +4,19 @@
 
 <div class="error-shell">
   <div class="error-inner">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="12" y1="8" x2="12" y2="12"/>
-      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
     </svg>
     <p class="error-msg">{message}</p>
     {#if onRetry}
@@ -36,7 +45,10 @@
     color: var(--danger);
     text-align: center;
   }
-  .error-msg { font-size: 14px; line-height: 1.5; }
+  .error-msg {
+    font-size: 14px;
+    line-height: 1.5;
+  }
   .error-retry {
     margin-top: 4px;
     padding: 8px 20px;
@@ -48,5 +60,7 @@
     border-radius: var(--radius-sm);
     cursor: pointer;
   }
-  .error-retry:active { transform: scale(0.96); }
+  .error-retry:active {
+    transform: scale(0.96);
+  }
 </style>

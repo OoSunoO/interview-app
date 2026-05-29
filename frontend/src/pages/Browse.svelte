@@ -28,7 +28,9 @@
     { value: "product", label: "产品思维" },
   ];
 
-  onMount(() => { store.loadQuestions(); });
+  onMount(() => {
+    store.loadQuestions();
+  });
 
   function applyFilter() {
     store.loadQuestions({ page: 1 });
@@ -46,7 +48,6 @@
     store.startQuiz(list);
     onNavigate("quiz", { questionId: q.id });
   }
-
 </script>
 
 <div class="page browse">
@@ -72,20 +73,39 @@
       <option value="reviewing">复习中</option>
     </select>
     <button class="random-btn" onclick={goRandom} disabled={store.questions.length === 0}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="16 3 21 3 21 8"/>
-        <line x1="4" y1="20" x2="21" y2="3"/>
-        <polyline points="21 16 21 21 16 21"/>
-        <line x1="15" y1="15" x2="21" y2="21"/>
-        <line x1="4" y1="4" x2="9" y2="9"/>
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="16 3 21 3 21 8" />
+        <line x1="4" y1="20" x2="21" y2="3" />
+        <polyline points="21 16 21 21 16 21" />
+        <line x1="15" y1="15" x2="21" y2="21" />
+        <line x1="4" y1="4" x2="9" y2="9" />
       </svg>
       随机
     </button>
   </div>
 
   <div class="search-wrap">
-    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    <svg
+      class="search-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
     </svg>
     <input
       class="search"
@@ -108,13 +128,54 @@
           <div class="q-header">
             <span class="status-icon {q.status}">
               {#if q.status === "correct"}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline
+                    points="22 4 12 14.01 9 11.01"
+                  /></svg
+                >
               {:else if q.status === "wrong"}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
+                >
               {:else if q.status === "reviewing"}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  ><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg
+                >
               {:else}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"><circle cx="12" cy="12" r="10" /></svg
+                >
               {/if}
             </span>
             <span class="tag">{q.category}</span>
@@ -136,28 +197,116 @@
 </div>
 
 <style>
-  .browse { display: flex; flex-direction: column; gap: 12px; }
-  .filters { display: flex; gap: 8px; }
-  .filters select { flex: 1; }
-  .random-btn { white-space: nowrap; padding: 8px 14px; font-size: 13px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-  .random-btn:disabled { opacity: 0.4; cursor: default; }
-  .random-btn:not(:disabled):active { transform: scale(0.96); }
-  .loading, .empty { text-align: center; color: var(--text-muted); padding: 40px 0; }
-  .list { display: flex; flex-direction: column; gap: 10px; }
-  .q-item { text-align: left; width: 100%; border-left: 3px solid transparent; }
-  .q-item.status-correct { border-left-color: var(--success); }
-  .q-item.status-reviewing { border-left-color: var(--warning); }
-  .q-item.status-wrong { border-left-color: var(--danger); }
-  .status-icon { display: inline-flex; align-items: center; flex-shrink: 0; }
-  .status-icon.correct { color: var(--success); }
-  .status-icon.wrong { color: var(--danger); }
-  .status-icon.reviewing { color: var(--warning); }
-  .status-icon.new { color: var(--text-dim); }
-  .q-header { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; align-items: center; }
-  .search-wrap { position: relative; display: flex; align-items: center; }
-  .search-icon { position: absolute; left: 12px; color: var(--text-dim); pointer-events: none; }
-  .search { padding-left: 36px; }
-  .q-title { font-size: 14px; line-height: 1.4; }
-  .q-tags { display: flex; gap: 4px; margin-top: 6px; }
-  .mini-tag { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: var(--border); color: var(--text-muted); }
+  .browse {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .filters {
+    display: flex;
+    gap: 8px;
+  }
+  .filters select {
+    flex: 1;
+  }
+  .random-btn {
+    white-space: nowrap;
+    padding: 8px 14px;
+    font-size: 13px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .random-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .random-btn:not(:disabled):active {
+    transform: scale(0.96);
+  }
+  .loading,
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 0;
+  }
+  .list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .q-item {
+    text-align: left;
+    width: 100%;
+    border-left: 3px solid transparent;
+  }
+  .q-item.status-correct {
+    border-left-color: var(--success);
+  }
+  .q-item.status-reviewing {
+    border-left-color: var(--warning);
+  }
+  .q-item.status-wrong {
+    border-left-color: var(--danger);
+  }
+  .status-icon {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .status-icon.correct {
+    color: var(--success);
+  }
+  .status-icon.wrong {
+    color: var(--danger);
+  }
+  .status-icon.reviewing {
+    color: var(--warning);
+  }
+  .status-icon.new {
+    color: var(--text-dim);
+  }
+  .q-header {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+  .search {
+    padding-left: 36px;
+  }
+  .q-title {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .q-tags {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+  .mini-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: var(--border);
+    color: var(--text-muted);
+  }
 </style>

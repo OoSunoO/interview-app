@@ -2,4812 +2,3495 @@
 // Total: 255 questions
 export const questions = [
   {
-    "id": 1,
-    "category": "agent",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "什么是 AI Agent",
-    "content": "请解释 AI Agent 的定义及其核心特征。",
-    "answer": "AI Agent 是能感知环境、自主决策并执行行动的智能体。核心特征：自主性（无需人类干预）、感知能力（观察环境）、决策能力（规划行动方案）、工具使用（调用外部工具完成任务）。",
-    "hints": [
-      "Agent 和传统 AI 模型有什么区别",
-      "ReAct 范式是什么"
-    ],
-    "tags": [
-      "Agent",
-      "基础概念"
-    ],
-    "options": []
+    id: 1,
+    category: "agent",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "什么是 AI Agent",
+    content: "请解释 AI Agent 的定义及其核心特征。",
+    answer:
+      "AI Agent 是能感知环境、自主决策并执行行动的智能体。核心特征：自主性（无需人类干预）、感知能力（观察环境）、决策能力（规划行动方案）、工具使用（调用外部工具完成任务）。",
+    hints: ["Agent 和传统 AI 模型有什么区别", "ReAct 范式是什么"],
+    tags: ["Agent", "基础概念"],
+    options: [],
   },
   {
-    "id": 2,
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ReAct 模式",
-    "content": "请解释 ReAct（Reasoning + Acting）模式的工作原理。",
-    "answer": "ReAct 将推理和行动交织进行：模型先分析当前状态（Thought），然后执行动作（Action），观察结果（Observation），再基于新信息继续推理。相比纯 Chain-of-Thought，ReAct 能通过外部反馈纠正错误推理。",
-    "hints": [
-      "ReAct 和 CoT 的区别",
-      "什么时候 Observation 可能出错"
-    ],
-    "tags": [
-      "Agent",
-      "推理"
-    ],
-    "options": []
+    id: 2,
+    category: "agent",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ReAct 模式",
+    content: "请解释 ReAct（Reasoning + Acting）模式的工作原理。",
+    answer:
+      "ReAct 将推理和行动交织进行：模型先分析当前状态（Thought），然后执行动作（Action），观察结果（Observation），再基于新信息继续推理。相比纯 Chain-of-Thought，ReAct 能通过外部反馈纠正错误推理。",
+    hints: ["ReAct 和 CoT 的区别", "什么时候 Observation 可能出错"],
+    tags: ["Agent", "推理"],
+    options: [],
   },
   {
-    "id": 3,
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Function Calling（函数调用）",
-    "content": "请解释 LLM Function Calling 的原理和实现方式。",
-    "answer": "Function Calling 是 LLM 将自然语言映射到结构化 API 调用的能力。实现方式：在请求中定义函数 schema（名称、参数描述、类型），模型返回函数名和参数 JSON，程序负责实际执行。关键在准确的函数描述和参数约束。",
-    "hints": [
-      "如何设计函数描述让模型准确选择",
-      "当多个函数都匹配时模型如何选择"
-    ],
-    "tags": [
-      "Agent",
-      "工具使用"
-    ],
-    "options": []
+    id: 3,
+    category: "agent",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Function Calling（函数调用）",
+    content: "请解释 LLM Function Calling 的原理和实现方式。",
+    answer:
+      "Function Calling 是 LLM 将自然语言映射到结构化 API 调用的能力。实现方式：在请求中定义函数 schema（名称、参数描述、类型），模型返回函数名和参数 JSON，程序负责实际执行。关键在准确的函数描述和参数约束。",
+    hints: ["如何设计函数描述让模型准确选择", "当多个函数都匹配时模型如何选择"],
+    tags: ["Agent", "工具使用"],
+    options: [],
   },
   {
-    "id": 4,
-    "category": "agent",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Agent 的记忆系统",
-    "content": "请描述 Agent 的记忆系统构成及其作用。",
-    "answer": "三类记忆：1）短期记忆（上下文窗口，对话历史）。2）长期记忆（外部存储，如向量数据库 RAG）。3）工作记忆（当前任务相关）。记忆管理涉及：记忆编码、检索、刷新、遗忘。层次化记忆是 Agent 持久化能力的关键。",
-    "hints": [
-      "记忆检索的 relevance 和 recency 如何平衡",
-      "记忆刷新的策略有哪些"
-    ],
-    "tags": [
-      "Agent",
-      "记忆"
-    ],
-    "options": []
+    id: 4,
+    category: "agent",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "Agent 的记忆系统",
+    content: "请描述 Agent 的记忆系统构成及其作用。",
+    answer:
+      "三类记忆：1）短期记忆（上下文窗口，对话历史）。2）长期记忆（外部存储，如向量数据库 RAG）。3）工作记忆（当前任务相关）。记忆管理涉及：记忆编码、检索、刷新、遗忘。层次化记忆是 Agent 持久化能力的关键。",
+    hints: ["记忆检索的 relevance 和 recency 如何平衡", "记忆刷新的策略有哪些"],
+    tags: ["Agent", "记忆"],
+    options: [],
   },
   {
-    "id": 5,
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Multi-Agent 系统",
-    "content": "请介绍 Multi-Agent 系统的协作模式及其优缺点。",
-    "answer": "常见模式：1）主从模式（一个主 Agent 协调多个子 Agent）。2）辩论模式（多个 Agent 各自推理，交叉验证）。3）流水线模式（分阶段处理）。优势：分工明确、专业性强。挑战：通信开销、协调复杂度、幻觉传播。",
-    "hints": [
-      "Agent 间通信协议如何设计",
-      "如何防止 Agent 间的错误传播"
-    ],
-    "tags": [
-      "Agent",
-      "Multi-Agent"
-    ],
-    "options": []
+    id: 5,
+    category: "agent",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Multi-Agent 系统",
+    content: "请介绍 Multi-Agent 系统的协作模式及其优缺点。",
+    answer:
+      "常见模式：1）主从模式（一个主 Agent 协调多个子 Agent）。2）辩论模式（多个 Agent 各自推理，交叉验证）。3）流水线模式（分阶段处理）。优势：分工明确、专业性强。挑战：通信开销、协调复杂度、幻觉传播。",
+    hints: ["Agent 间通信协议如何设计", "如何防止 Agent 间的错误传播"],
+    tags: ["Agent", "Multi-Agent"],
+    options: [],
   },
   {
-    "id": 6,
-    "category": "agent",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Planning（规划）在 Agent 中的作用",
-    "content": "请解释 Agent 中的规划能力及其实现方式。",
-    "answer": "规划能力让 Agent 将复杂任务分解为子步骤并安排执行顺序。实现方式：CoT（逐步推理）、ToT（思维树，探索多条路径）、任务分解（将大任务拆为可执行的小任务）、动态重规划（失败后调整计划）。",
-    "hints": [
-      "静态规划和动态规划的区别",
-      "Agent 如何评估子任务完成情况"
-    ],
-    "tags": [
-      "Agent",
-      "规划"
-    ],
-    "options": []
+    id: 6,
+    category: "agent",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Planning（规划）在 Agent 中的作用",
+    content: "请解释 Agent 中的规划能力及其实现方式。",
+    answer:
+      "规划能力让 Agent 将复杂任务分解为子步骤并安排执行顺序。实现方式：CoT（逐步推理）、ToT（思维树，探索多条路径）、任务分解（将大任务拆为可执行的小任务）、动态重规划（失败后调整计划）。",
+    hints: ["静态规划和动态规划的区别", "Agent 如何评估子任务完成情况"],
+    tags: ["Agent", "规划"],
+    options: [],
   },
   {
-    "id": 7,
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "RAG（检索增强生成）",
-    "content": "请解释 RAG 的原理和关键组件。",
-    "answer": "RAG 在 LLM 生成前先从外部知识库检索相关信息。流程：用户查询 → 向量化 → 检索相似文档 → 文档+查询拼接 → LLM 生成。关键组件：Embedding 模型、向量数据库、分块策略（Chunking）、检索策略（相似度/混合检索）。",
-    "hints": [
-      "分块大小对检索质量的影响",
-      "Hybrid Search 为什么比纯向量检索更好"
-    ],
-    "tags": [
-      "Agent",
-      "RAG"
-    ],
-    "options": []
+    id: 7,
+    category: "agent",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "RAG（检索增强生成）",
+    content: "请解释 RAG 的原理和关键组件。",
+    answer:
+      "RAG 在 LLM 生成前先从外部知识库检索相关信息。流程：用户查询 → 向量化 → 检索相似文档 → 文档+查询拼接 → LLM 生成。关键组件：Embedding 模型、向量数据库、分块策略（Chunking）、检索策略（相似度/混合检索）。",
+    hints: ["分块大小对检索质量的影响", "Hybrid Search 为什么比纯向量检索更好"],
+    tags: ["Agent", "RAG"],
+    options: [],
   },
   {
-    "id": 8,
-    "category": "agent",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Agent 的工具使用能力",
-    "content": "请介绍 Agent 如何发现和使用工具。",
-    "answer": "Agent 通过工具描述（名称、功能、参数 schema）了解工具用途。使用流程：推理 → 选择工具 → 生成参数 → 调用工具 → 解析结果 → 继续推理。工具可包括搜索引擎、计算器、代码执行器、API 等。",
-    "hints": [
-      "工具描述的详细程度对准确率的影响",
-      "如何防止 Agent 误用危险工具"
-    ],
-    "tags": [
-      "Agent",
-      "工具使用"
-    ],
-    "options": []
+    id: 8,
+    category: "agent",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Agent 的工具使用能力",
+    content: "请介绍 Agent 如何发现和使用工具。",
+    answer:
+      "Agent 通过工具描述（名称、功能、参数 schema）了解工具用途。使用流程：推理 → 选择工具 → 生成参数 → 调用工具 → 解析结果 → 继续推理。工具可包括搜索引擎、计算器、代码执行器、API 等。",
+    hints: ["工具描述的详细程度对准确率的影响", "如何防止 Agent 误用危险工具"],
+    tags: ["Agent", "工具使用"],
+    options: [],
   },
   {
-    "id": 9,
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "常见的 Agent 框架",
-    "content": "请列举主流的 Agent 开发框架及其特点。",
-    "answer": "LangChain（最流行，模块化，生态丰富但抽象层多）、AutoGen（微软，Multi-Agent 支持好）、CrewAI（多角色 Agent 协作）、Semantic Kernel（微软，.NET 友好）、Coze（字节，低代码）。选型考虑：语言偏好、Multi-Agent 需求、生态成熟度。",
-    "hints": [
-      "LangChain 的 LCEL 是什么",
-      "AutoGen 和 CrewAI 的 Multi-Agent 模式有何不同"
-    ],
-    "tags": [
-      "Agent",
-      "框架"
-    ],
-    "options": []
+    id: 9,
+    category: "agent",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "常见的 Agent 框架",
+    content: "请列举主流的 Agent 开发框架及其特点。",
+    answer:
+      "LangChain（最流行，模块化，生态丰富但抽象层多）、AutoGen（微软，Multi-Agent 支持好）、CrewAI（多角色 Agent 协作）、Semantic Kernel（微软，.NET 友好）、Coze（字节，低代码）。选型考虑：语言偏好、Multi-Agent 需求、生态成熟度。",
+    hints: ["LangChain 的 LCEL 是什么", "AutoGen 和 CrewAI 的 Multi-Agent 模式有何不同"],
+    tags: ["Agent", "框架"],
+    options: [],
   },
   {
-    "id": 10,
-    "category": "agent",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Agent 的安全与对齐",
-    "content": "请讨论 Agent 系统面临的安全挑战和对齐策略。",
-    "answer": "安全挑战：Prompt 注入（恶意指令劫持 Agent）、工具滥用、权限提升、数据泄露。对齐策略：最小权限原则（仅给必要工具）、人类审批环（高危操作需确认）、沙箱执行、输入输出过滤、行为约束（System Prompt 边界）。",
-    "hints": [
-      "间接 Prompt 注入如何防范",
-      "Agent 的审计日志应该记录什么"
-    ],
-    "tags": [
-      "Agent",
-      "安全"
-    ],
-    "options": []
+    id: 10,
+    category: "agent",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "Agent 的安全与对齐",
+    content: "请讨论 Agent 系统面临的安全挑战和对齐策略。",
+    answer:
+      "安全挑战：Prompt 注入（恶意指令劫持 Agent）、工具滥用、权限提升、数据泄露。对齐策略：最小权限原则（仅给必要工具）、人类审批环（高危操作需确认）、沙箱执行、输入输出过滤、行为约束（System Prompt 边界）。",
+    hints: ["间接 Prompt 注入如何防范", "Agent 的审计日志应该记录什么"],
+    tags: ["Agent", "安全"],
+    options: [],
   },
   {
-    "id": 11,
-    "category": "ai",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Transformer 的核心架构",
-    "content": "请描述 Transformer 模型的核心组件及其作用。",
-    "answer": "Transformer 由 Encoder 和 Decoder 组成。核心组件：Self-Attention（捕捉序列内部依赖）、Multi-Head Attention（多个子空间并行学习）、Feed Forward（非线性变换）、Positional Encoding（注入位置信息）、Layer Normalization 和残差连接。",
-    "hints": [
-      "Scaled Dot-Product Attention 的公式",
-      "为什么需要 Positional Encoding"
-    ],
-    "tags": [
-      "深度学习",
-      "NLP",
-      "Transformer"
-    ],
-    "options": []
+    id: 11,
+    category: "ai",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Transformer 的核心架构",
+    content: "请描述 Transformer 模型的核心组件及其作用。",
+    answer:
+      "Transformer 由 Encoder 和 Decoder 组成。核心组件：Self-Attention（捕捉序列内部依赖）、Multi-Head Attention（多个子空间并行学习）、Feed Forward（非线性变换）、Positional Encoding（注入位置信息）、Layer Normalization 和残差连接。",
+    hints: ["Scaled Dot-Product Attention 的公式", "为什么需要 Positional Encoding"],
+    tags: ["深度学习", "NLP", "Transformer"],
+    options: [],
   },
   {
-    "id": 12,
-    "category": "ai",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "过拟合和欠拟合",
-    "content": "请解释过拟合和欠拟合的区别及解决方法。",
-    "answer": "过拟合：模型在训练集上表现好，测试集上差。解决：增加数据、正则化（L1/L2）、Dropout、早停、数据增强。欠拟合：模型在训练集上表现就不好。解决：增加模型复杂度、减少正则化、增加训练轮数、特征工程。",
-    "hints": [
-      "学习率过大会导致什么",
-      "交叉验证的作用"
-    ],
-    "tags": [
-      "机器学习",
-      "基础"
-    ],
-    "options": []
+    id: 12,
+    category: "ai",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "过拟合和欠拟合",
+    content: "请解释过拟合和欠拟合的区别及解决方法。",
+    answer:
+      "过拟合：模型在训练集上表现好，测试集上差。解决：增加数据、正则化（L1/L2）、Dropout、早停、数据增强。欠拟合：模型在训练集上表现就不好。解决：增加模型复杂度、减少正则化、增加训练轮数、特征工程。",
+    hints: ["学习率过大会导致什么", "交叉验证的作用"],
+    tags: ["机器学习", "基础"],
+    options: [],
   },
   {
-    "id": 13,
-    "category": "ai",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "GPT 系列的核心演进",
-    "content": "请简述 GPT-1 到 GPT-4 的核心技术演进路线。",
-    "answer": "GPT-1：证明单向 Transformer 预训练+微调有效。GPT-2：增大数据和模型，Zero-shot 能力涌现。GPT-3：175B 参数，In-context Learning 和 Few-shot 能力。GPT-3.5/4：引入 RLHF（PPO 算法），对齐人类偏好，支持多模态。",
-    "hints": [
-      "RLHF 的三个步骤",
-      "InstructGPT 和 GPT-3 的区别"
-    ],
-    "tags": [
-      "NLP",
-      "LLM",
-      "GPT"
-    ],
-    "options": []
+    id: 13,
+    category: "ai",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "GPT 系列的核心演进",
+    content: "请简述 GPT-1 到 GPT-4 的核心技术演进路线。",
+    answer:
+      "GPT-1：证明单向 Transformer 预训练+微调有效。GPT-2：增大数据和模型，Zero-shot 能力涌现。GPT-3：175B 参数，In-context Learning 和 Few-shot 能力。GPT-3.5/4：引入 RLHF（PPO 算法），对齐人类偏好，支持多模态。",
+    hints: ["RLHF 的三个步骤", "InstructGPT 和 GPT-3 的区别"],
+    tags: ["NLP", "LLM", "GPT"],
+    options: [],
   },
   {
-    "id": 14,
-    "category": "ai",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "CNN 的核心组件",
-    "content": "请描述卷积神经网络（CNN）的核心组件及其作用。",
-    "answer": "卷积层（提取局部特征，参数共享）、池化层（下采样，降维，防止过拟合）、全连接层（特征组合+分类）。关键特性：局部连接、权值共享、层次化特征提取。",
-    "hints": [
-      "卷积核大小如何选择",
-      "最大池化和平均池化的区别"
-    ],
-    "tags": [
-      "深度学习",
-      "CNN"
-    ],
-    "options": []
+    id: 14,
+    category: "ai",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "CNN 的核心组件",
+    content: "请描述卷积神经网络（CNN）的核心组件及其作用。",
+    answer:
+      "卷积层（提取局部特征，参数共享）、池化层（下采样，降维，防止过拟合）、全连接层（特征组合+分类）。关键特性：局部连接、权值共享、层次化特征提取。",
+    hints: ["卷积核大小如何选择", "最大池化和平均池化的区别"],
+    tags: ["深度学习", "CNN"],
+    options: [],
   },
   {
-    "id": 15,
-    "category": "ai",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "监督学习和无监督学习的区别",
-    "content": "请解释监督学习、无监督学习和半监督学习的区别。",
-    "answer": "监督学习：使用有标签数据训练，输入到输出的映射。无监督学习：使用无标签数据，发现数据内在结构（聚类、降维）。半监督学习：少量标签+大量无标签数据。",
-    "hints": [
-      "常见的监督学习算法有哪些",
-      "聚类算法有哪些"
-    ],
-    "tags": [
-      "机器学习",
-      "基础"
-    ],
-    "options": []
+    id: 15,
+    category: "ai",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "监督学习和无监督学习的区别",
+    content: "请解释监督学习、无监督学习和半监督学习的区别。",
+    answer:
+      "监督学习：使用有标签数据训练，输入到输出的映射。无监督学习：使用无标签数据，发现数据内在结构（聚类、降维）。半监督学习：少量标签+大量无标签数据。",
+    hints: ["常见的监督学习算法有哪些", "聚类算法有哪些"],
+    tags: ["机器学习", "基础"],
+    options: [],
   },
   {
-    "id": 16,
-    "category": "ai",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "损失函数的选择",
-    "content": "请介绍常见的损失函数及其适用场景。",
-    "answer": "MSE（回归）、交叉熵（分类）、Hinge Loss（SVM）、BCE（二分类）、CTC Loss（序列对齐）、KL 散度（分布差异）、Contrastive Loss（对比学习）。分类用交叉熵，回归用 MSE。",
-    "hints": [
-      "MSE 作为分类损失有什么问题",
-      "Focal Loss 解决了什么问题"
-    ],
-    "tags": [
-      "机器学习",
-      "损失函数"
-    ],
-    "options": []
+    id: 16,
+    category: "ai",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "损失函数的选择",
+    content: "请介绍常见的损失函数及其适用场景。",
+    answer:
+      "MSE（回归）、交叉熵（分类）、Hinge Loss（SVM）、BCE（二分类）、CTC Loss（序列对齐）、KL 散度（分布差异）、Contrastive Loss（对比学习）。分类用交叉熵，回归用 MSE。",
+    hints: ["MSE 作为分类损失有什么问题", "Focal Loss 解决了什么问题"],
+    tags: ["机器学习", "损失函数"],
+    options: [],
   },
   {
-    "id": 17,
-    "category": "ai",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "RLHF（基于人类反馈的强化学习）",
-    "content": "请描述 RLHF 的核心流程。",
-    "answer": "三步：1）SFT：在高质量数据上微调预训练模型。2）训练奖励模型：收集人类对模型输出的偏好比较数据，训练一个打分模型。3）PPO 优化：用奖励模型指导策略模型优化，同时加 KL 惩罚防止模型偏离太远。",
-    "hints": [
-      "为什么需要 KL 惩罚项",
-      "奖励模型的训练数据如何构建"
-    ],
-    "tags": [
-      "LLM",
-      "RLHF"
-    ],
-    "options": []
+    id: 17,
+    category: "ai",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "RLHF（基于人类反馈的强化学习）",
+    content: "请描述 RLHF 的核心流程。",
+    answer:
+      "三步：1）SFT：在高质量数据上微调预训练模型。2）训练奖励模型：收集人类对模型输出的偏好比较数据，训练一个打分模型。3）PPO 优化：用奖励模型指导策略模型优化，同时加 KL 惩罚防止模型偏离太远。",
+    hints: ["为什么需要 KL 惩罚项", "奖励模型的训练数据如何构建"],
+    tags: ["LLM", "RLHF"],
+    options: [],
   },
   {
-    "id": 18,
-    "category": "ai",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "注意力机制（Attention）",
-    "content": "请解释注意力机制的核心思想。",
-    "answer": "Attention 的核心是计算 Query 和 Key 的相似度得到权重，用权重对 Value 加权求和。本质是让模型聚焦于输入中的重要部分。公式：Attention(Q,K,V) = softmax(QK^T/√d)V。",
-    "hints": [
-      "Self-Attention 和 Cross-Attention 的区别",
-      "为什么要除以 √d"
-    ],
-    "tags": [
-      "深度学习",
-      "Attention"
-    ],
-    "options": []
+    id: 18,
+    category: "ai",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "注意力机制（Attention）",
+    content: "请解释注意力机制的核心思想。",
+    answer:
+      "Attention 的核心是计算 Query 和 Key 的相似度得到权重，用权重对 Value 加权求和。本质是让模型聚焦于输入中的重要部分。公式：Attention(Q,K,V) = softmax(QK^T/√d)V。",
+    hints: ["Self-Attention 和 Cross-Attention 的区别", "为什么要除以 √d"],
+    tags: ["深度学习", "Attention"],
+    options: [],
   },
   {
-    "id": 19,
-    "category": "ai",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "模型评估指标",
-    "content": "请介绍分类任务中常见的评估指标。",
-    "answer": "准确率（Accuracy）、精确率（Precision）、召回率（Recall）、F1-Score、ROC-AUC、混淆矩阵。精确率关注误检，召回率关注漏检，F1 是两者的调和平均。AUC 衡量模型排序能力。",
-    "hints": [
-      "精确率和召回率哪个更重要取决于什么",
-      "如何计算多分类的 F1"
-    ],
-    "tags": [
-      "机器学习",
-      "评估"
-    ],
-    "options": []
+    id: 19,
+    category: "ai",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "模型评估指标",
+    content: "请介绍分类任务中常见的评估指标。",
+    answer:
+      "准确率（Accuracy）、精确率（Precision）、召回率（Recall）、F1-Score、ROC-AUC、混淆矩阵。精确率关注误检，召回率关注漏检，F1 是两者的调和平均。AUC 衡量模型排序能力。",
+    hints: ["精确率和召回率哪个更重要取决于什么", "如何计算多分类的 F1"],
+    tags: ["机器学习", "评估"],
+    options: [],
   },
   {
-    "id": 20,
-    "category": "ai",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "LoRA 微调原理",
-    "content": "请解释 LoRA（Low-Rank Adaptation）的原理。",
-    "answer": "LoRA 冻结原始权重 W，在 W 旁插入低秩分解矩阵 B×A（B∈R^{d×r}, A∈R^{r×k}, r≪min(d,k)），只训练 B 和 A。推理时可将 BA 合并回 W，不增加推理延迟。大幅减少可训练参数数量。",
-    "hints": [
-      "QLoRA 比 LoRA 多了什么",
-      "LoRA 的秩 r 如何选择"
-    ],
-    "tags": [
-      "LLM",
-      "微调"
-    ],
-    "options": []
+    id: 20,
+    category: "ai",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "LoRA 微调原理",
+    content: "请解释 LoRA（Low-Rank Adaptation）的原理。",
+    answer:
+      "LoRA 冻结原始权重 W，在 W 旁插入低秩分解矩阵 B×A（B∈R^{d×r}, A∈R^{r×k}, r≪min(d,k)），只训练 B 和 A。推理时可将 BA 合并回 W，不增加推理延迟。大幅减少可训练参数数量。",
+    hints: ["QLoRA 比 LoRA 多了什么", "LoRA 的秩 r 如何选择"],
+    tags: ["LLM", "微调"],
+    options: [],
   },
   {
-    "id": 21,
-    "category": "algorithm",
-    "difficulty": "easy",
-    "type": "coding",
-    "title": "两数之和",
-    "content": "给定一个整数数组 nums 和一个目标值 target，请在数组中找出和为目标值的两个数的下标。",
-    "answer": "```java\npublic int[] twoSum(int[] nums, int target) {\n    Map<Integer, Integer> map = new HashMap<>();\n    for (int i = 0; i < nums.length; i++) {\n        int complement = target - nums[i];\n        if (map.containsKey(complement)) {\n            return new int[]{map.get(complement), i};\n        }\n        map.put(nums[i], i);\n    }\n    return new int[0];\n}\n```",
-    "hints": [
-      "暴力解法的时间复杂度是多少",
-      "如何用空间换时间"
-    ],
-    "tags": [
-      "数组",
-      "哈希表"
-    ],
-    "options": []
+    id: 21,
+    category: "algorithm",
+    difficulty: "easy",
+    type: "coding",
+    title: "两数之和",
+    content: "给定一个整数数组 nums 和一个目标值 target，请在数组中找出和为目标值的两个数的下标。",
+    answer:
+      "```java\npublic int[] twoSum(int[] nums, int target) {\n    Map<Integer, Integer> map = new HashMap<>();\n    for (int i = 0; i < nums.length; i++) {\n        int complement = target - nums[i];\n        if (map.containsKey(complement)) {\n            return new int[]{map.get(complement), i};\n        }\n        map.put(nums[i], i);\n    }\n    return new int[0];\n}\n```",
+    hints: ["暴力解法的时间复杂度是多少", "如何用空间换时间"],
+    tags: ["数组", "哈希表"],
+    options: [],
   },
   {
-    "id": 22,
-    "category": "algorithm",
-    "difficulty": "easy",
-    "type": "coding",
-    "title": "反转链表",
-    "content": "请实现单链表的反转。",
-    "answer": "```java\npublic ListNode reverseList(ListNode head) {\n    ListNode prev = null;\n    ListNode curr = head;\n    while (curr != null) {\n        ListNode next = curr.next;\n        curr.next = prev;\n        prev = curr;\n        curr = next;\n    }\n    return prev;\n}\n```",
-    "hints": [
-      "迭代和递归两种方式",
-      "递归的关键在于相信函数定义"
-    ],
-    "tags": [
-      "链表"
-    ],
-    "options": []
+    id: 22,
+    category: "algorithm",
+    difficulty: "easy",
+    type: "coding",
+    title: "反转链表",
+    content: "请实现单链表的反转。",
+    answer:
+      "```java\npublic ListNode reverseList(ListNode head) {\n    ListNode prev = null;\n    ListNode curr = head;\n    while (curr != null) {\n        ListNode next = curr.next;\n        curr.next = prev;\n        prev = curr;\n        curr = next;\n    }\n    return prev;\n}\n```",
+    hints: ["迭代和递归两种方式", "递归的关键在于相信函数定义"],
+    tags: ["链表"],
+    options: [],
   },
   {
-    "id": 23,
-    "category": "algorithm",
-    "difficulty": "hard",
-    "type": "coding",
-    "title": "二叉树的前序/中序/后序遍历",
-    "content": "请实现二叉树的前序、中序、后序遍历（递归和非递归两种方式）。",
-    "answer": "```java\n// 递归\nvoid preorder(TreeNode root) { if (root == null) return; visit(root); preorder(root.left); preorder(root.right); }\nvoid inorder(TreeNode root) { if (root == null) return; inorder(root.left); visit(root); inorder(root.right); }\nvoid postorder(TreeNode root) { if (root == null) return; postorder(root.left); postorder(root.right); visit(root); }\n\n// 非递归前序\nvoid preorderIter(TreeNode root) {\n    Stack<TreeNode> stack = new Stack<>();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        TreeNode node = stack.pop();\n        visit(node);\n        if (node.right != null) stack.push(node.right);\n        if (node.left != null) stack.push(node.left);\n    }\n}\n```",
-    "hints": [
-      "递归的本质是什么",
-      "非递归如何模拟函数调用栈"
-    ],
-    "tags": [
-      "树",
-      "递归"
-    ],
-    "options": []
+    id: 23,
+    category: "algorithm",
+    difficulty: "hard",
+    type: "coding",
+    title: "二叉树的前序/中序/后序遍历",
+    content: "请实现二叉树的前序、中序、后序遍历（递归和非递归两种方式）。",
+    answer:
+      "```java\n// 递归\nvoid preorder(TreeNode root) { if (root == null) return; visit(root); preorder(root.left); preorder(root.right); }\nvoid inorder(TreeNode root) { if (root == null) return; inorder(root.left); visit(root); inorder(root.right); }\nvoid postorder(TreeNode root) { if (root == null) return; postorder(root.left); postorder(root.right); visit(root); }\n\n// 非递归前序\nvoid preorderIter(TreeNode root) {\n    Stack<TreeNode> stack = new Stack<>();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        TreeNode node = stack.pop();\n        visit(node);\n        if (node.right != null) stack.push(node.right);\n        if (node.left != null) stack.push(node.left);\n    }\n}\n```",
+    hints: ["递归的本质是什么", "非递归如何模拟函数调用栈"],
+    tags: ["树", "递归"],
+    options: [],
   },
   {
-    "id": 24,
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "排序算法对比",
-    "content": "请比较快速排序和归并排序的异同。",
-    "answer": "快排：原地排序（空间 O(log n)），平均 O(n log n)，最坏 O(n²)，不稳定。归并：需要额外 O(n) 空间，稳定，任何情况 O(n log n)。快排通常更快（缓存友好），归并适合链表和外排序。",
-    "hints": [
-      "快排最坏情况什么时候出现",
-      "为什么 Java 的 Arrays.sort 对基本类型用快排"
-    ],
-    "tags": [
-      "排序"
-    ],
-    "options": []
+    id: 24,
+    category: "algorithm",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "排序算法对比",
+    content: "请比较快速排序和归并排序的异同。",
+    answer:
+      "快排：原地排序（空间 O(log n)），平均 O(n log n)，最坏 O(n²)，不稳定。归并：需要额外 O(n) 空间，稳定，任何情况 O(n log n)。快排通常更快（缓存友好），归并适合链表和外排序。",
+    hints: ["快排最坏情况什么时候出现", "为什么 Java 的 Arrays.sort 对基本类型用快排"],
+    tags: ["排序"],
+    options: [],
   },
   {
-    "id": 25,
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
-    "title": "二分搜索",
-    "content": "请实现二分搜索算法，在有序数组中查找目标值。",
-    "answer": "```java\npublic int binarySearch(int[] nums, int target) {\n    int left = 0, right = nums.length - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2;\n        if (nums[mid] == target) return mid;\n        else if (nums[mid] < target) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1;\n}\n```",
-    "hints": [
-      "mid 计算为什么不用 (left+right)/2",
-      "二分搜索的变种有哪些"
-    ],
-    "tags": [
-      "搜索",
-      "数组"
-    ],
-    "options": []
+    id: 25,
+    category: "algorithm",
+    difficulty: "medium",
+    type: "coding",
+    title: "二分搜索",
+    content: "请实现二分搜索算法，在有序数组中查找目标值。",
+    answer:
+      "```java\npublic int binarySearch(int[] nums, int target) {\n    int left = 0, right = nums.length - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2;\n        if (nums[mid] == target) return mid;\n        else if (nums[mid] < target) left = mid + 1;\n        else right = mid - 1;\n    }\n    return -1;\n}\n```",
+    hints: ["mid 计算为什么不用 (left+right)/2", "二分搜索的变种有哪些"],
+    tags: ["搜索", "数组"],
+    options: [],
   },
   {
-    "id": 26,
-    "category": "algorithm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "动态规划的核心思想",
-    "content": "请解释动态规划的核心思想和解题步骤。",
-    "answer": "核心：最优子结构（大问题最优解包含小问题最优解）、重叠子问题（子问题重复出现）、状态转移方程。解题步骤：1）定义状态 DP[i] 的含义。2）写出状态转移方程。3）初始化 base case。4）确定遍历顺序。",
-    "hints": [
-      "动态规划和贪心的区别",
-      "记忆化搜索和 DP 的区别"
-    ],
-    "tags": [
-      "动态规划"
-    ],
-    "options": []
+    id: 26,
+    category: "algorithm",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "动态规划的核心思想",
+    content: "请解释动态规划的核心思想和解题步骤。",
+    answer:
+      "核心：最优子结构（大问题最优解包含小问题最优解）、重叠子问题（子问题重复出现）、状态转移方程。解题步骤：1）定义状态 DP[i] 的含义。2）写出状态转移方程。3）初始化 base case。4）确定遍历顺序。",
+    hints: ["动态规划和贪心的区别", "记忆化搜索和 DP 的区别"],
+    tags: ["动态规划"],
+    options: [],
   },
   {
-    "id": 27,
-    "category": "algorithm",
-    "difficulty": "easy",
-    "type": "coding",
-    "title": "BFS 和 DFS",
-    "content": "请实现图的 BFS 和 DFS 遍历。",
-    "answer": "```java\n// BFS\nvoid bfs(Node start) {\n    Queue<Node> queue = new LinkedList<>();\n    Set<Node> visited = new HashSet<>();\n    queue.offer(start);\n    visited.add(start);\n    while (!queue.isEmpty()) {\n        Node node = queue.poll();\n        visit(node);\n        for (Node neighbor : node.neighbors) {\n            if (!visited.contains(neighbor)) {\n                visited.add(neighbor);\n                queue.offer(neighbor);\n            }\n        }\n    }\n}\n// DFS (递归)\nvoid dfs(Node node, Set<Node> visited) {\n    visit(node);\n    visited.add(node);\n    for (Node neighbor : node.neighbors) {\n        if (!visited.contains(neighbor)) dfs(neighbor, visited);\n    }\n}\n```",
-    "hints": [
-      "BFS 为什么可以找最短路径",
-      "DFS 的空间复杂度"
-    ],
-    "tags": [
-      "图",
-      "搜索"
-    ],
-    "options": []
+    id: 27,
+    category: "algorithm",
+    difficulty: "easy",
+    type: "coding",
+    title: "BFS 和 DFS",
+    content: "请实现图的 BFS 和 DFS 遍历。",
+    answer:
+      "```java\n// BFS\nvoid bfs(Node start) {\n    Queue<Node> queue = new LinkedList<>();\n    Set<Node> visited = new HashSet<>();\n    queue.offer(start);\n    visited.add(start);\n    while (!queue.isEmpty()) {\n        Node node = queue.poll();\n        visit(node);\n        for (Node neighbor : node.neighbors) {\n            if (!visited.contains(neighbor)) {\n                visited.add(neighbor);\n                queue.offer(neighbor);\n            }\n        }\n    }\n}\n// DFS (递归)\nvoid dfs(Node node, Set<Node> visited) {\n    visit(node);\n    visited.add(node);\n    for (Node neighbor : node.neighbors) {\n        if (!visited.contains(neighbor)) dfs(neighbor, visited);\n    }\n}\n```",
+    hints: ["BFS 为什么可以找最短路径", "DFS 的空间复杂度"],
+    tags: ["图", "搜索"],
+    options: [],
   },
   {
-    "id": 28,
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
-    "title": "LRU 缓存",
-    "content": "请实现 LRU（最近最少使用）缓存。",
-    "answer": "```java\nclass LRUCache {\n    class Node { int key, val; Node prev, next; Node(int k, int v) { key = k; val = v; } }\n    private final int capacity;\n    private final Map<Integer, Node> map = new HashMap<>();\n    private final Node head = new Node(0, 0), tail = new Node(0, 0);\n    \n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        head.next = tail; tail.prev = head;\n    }\n    \n    public int get(int key) {\n        if (!map.containsKey(key)) return -1;\n        Node node = map.get(key);\n        remove(node);\n        insertToHead(node);\n        return node.val;\n    }\n    \n    public void put(int key, int value) {\n        if (map.containsKey(key)) remove(map.get(key));\n        if (map.size() == capacity) remove(tail.prev);\n        insertToHead(new Node(key, value));\n    }\n    \n    private void remove(Node node) { map.remove(node.key); node.prev.next = node.next; node.next.prev = node.prev; }\n    private void insertToHead(Node node) { map.put(node.key, node); node.next = head.next; node.prev = head; head.next.prev = node; head.next = node; }\n}\n```",
-    "hints": [
-      "LinkedHashMap 可以实现 LRU 吗",
-      "为什么用双向链表不用单向"
-    ],
-    "tags": [
-      "设计",
-      "哈希表",
-      "链表"
-    ],
-    "options": []
+    id: 28,
+    category: "algorithm",
+    difficulty: "medium",
+    type: "coding",
+    title: "LRU 缓存",
+    content: "请实现 LRU（最近最少使用）缓存。",
+    answer:
+      "```java\nclass LRUCache {\n    class Node { int key, val; Node prev, next; Node(int k, int v) { key = k; val = v; } }\n    private final int capacity;\n    private final Map<Integer, Node> map = new HashMap<>();\n    private final Node head = new Node(0, 0), tail = new Node(0, 0);\n    \n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        head.next = tail; tail.prev = head;\n    }\n    \n    public int get(int key) {\n        if (!map.containsKey(key)) return -1;\n        Node node = map.get(key);\n        remove(node);\n        insertToHead(node);\n        return node.val;\n    }\n    \n    public void put(int key, int value) {\n        if (map.containsKey(key)) remove(map.get(key));\n        if (map.size() == capacity) remove(tail.prev);\n        insertToHead(new Node(key, value));\n    }\n    \n    private void remove(Node node) { map.remove(node.key); node.prev.next = node.next; node.next.prev = node.prev; }\n    private void insertToHead(Node node) { map.put(node.key, node); node.next = head.next; node.prev = head; head.next.prev = node; head.next = node; }\n}\n```",
+    hints: ["LinkedHashMap 可以实现 LRU 吗", "为什么用双向链表不用单向"],
+    tags: ["设计", "哈希表", "链表"],
+    options: [],
   },
   {
-    "id": 29,
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "贪心算法",
-    "content": "请解释贪心算法的核心思想及其适用条件。",
-    "answer": "核心：每一步选择当前最优解，不考虑全局。适用条件：1）最优子结构（大问题最优包含小问题最优）。2）贪心选择性质（局部最优能推导出全局最优）。典型应用：区间调度、哈夫曼编码、Dijkstra、Prim。",
-    "hints": [
-      "贪心和动态规划的区别",
-      "为什么 Dijkstra 能用贪心"
-    ],
-    "tags": [
-      "贪心"
-    ],
-    "options": []
+    id: 29,
+    category: "algorithm",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "贪心算法",
+    content: "请解释贪心算法的核心思想及其适用条件。",
+    answer:
+      "核心：每一步选择当前最优解，不考虑全局。适用条件：1）最优子结构（大问题最优包含小问题最优）。2）贪心选择性质（局部最优能推导出全局最优）。典型应用：区间调度、哈夫曼编码、Dijkstra、Prim。",
+    hints: ["贪心和动态规划的区别", "为什么 Dijkstra 能用贪心"],
+    tags: ["贪心"],
+    options: [],
   },
   {
-    "id": 30,
-    "category": "algorithm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Top K 问题",
-    "content": "请介绍 Top K 问题的常见解法及时间复杂度。",
-    "answer": "三种解法：1）排序 O(n log n)。2）堆（最小堆 O(n log k)，适合海量数据）。3）快速选择（Quick Select，平均 O(n)，最坏 O(n²)）。大数据场景用堆或近似算法（如 Count-Min Sketch、Reservoir Sampling）。",
-    "hints": [
-      "Quick Select 如何优化最坏情况",
-      "海量数据中堆的优势"
-    ],
-    "tags": [
-      "堆",
-      "排序",
-      "海量数据"
-    ],
-    "options": []
+    id: 30,
+    category: "algorithm",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "Top K 问题",
+    content: "请介绍 Top K 问题的常见解法及时间复杂度。",
+    answer:
+      "三种解法：1）排序 O(n log n)。2）堆（最小堆 O(n log k)，适合海量数据）。3）快速选择（Quick Select，平均 O(n)，最坏 O(n²)）。大数据场景用堆或近似算法（如 Count-Min Sketch、Reservoir Sampling）。",
+    hints: ["Quick Select 如何优化最坏情况", "海量数据中堆的优势"],
+    tags: ["堆", "排序", "海量数据"],
+    options: [],
   },
   {
-    "id": 31,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "TCP 三次握手和四次挥手",
-    "content": "请描述 TCP 三次握手和四次挥手的过程，以及为什么需要三次握手而不是两次？",
-    "answer": "答案：三次握手建立连接，四次挥手断开连接\n\n解析：三次握手：Client → SYN → Server（1）→ Server → SYN+ACK → Client（2）→ Client → ACK → Server（3）。为什么三次不是两次？避免已失效的连接请求到达服务器被误认为新连接（「已失效的连接请求报文集」问题）。四次挥手：Client → FIN → Server（1）→ Server → ACK → Client（2，半关闭状态）→ Server → FIN → Client（3）→ Client → ACK → Server（4，TIME_WAIT 2MSL）。\n\n扩展延伸：TIME_WAIT 状态为什么是 2MSL（2 倍最大段生命周期）？1）确保最后一个 ACK 能到达服务器 2）使旧连接的数据包在网络中完全消失。大量 TIME_WAIT 会耗尽端口资源，高并发服务器的常见优化：开启 net.ipv4.tcp_tw_reuse。SYN Flood 攻击原理：攻击者发大量 SYN 不回复 ACK，耗尽服务器的半连接队列（SYN Backlog），通过 TCP 半连接 + SYN Cookie 防御。",
-    "hints": [
-      "为什么挥手需要四次而握手只要三次",
-      "大量 TIME_WAIT 有什么影响"
-    ],
-    "tags": [
-      "网络",
-      "TCP"
-    ],
-    "options": []
+    id: 31,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "TCP 三次握手和四次挥手",
+    content: "请描述 TCP 三次握手和四次挥手的过程，以及为什么需要三次握手而不是两次？",
+    answer:
+      "答案：三次握手建立连接，四次挥手断开连接\n\n解析：三次握手：Client → SYN → Server（1）→ Server → SYN+ACK → Client（2）→ Client → ACK → Server（3）。为什么三次不是两次？避免已失效的连接请求到达服务器被误认为新连接（「已失效的连接请求报文集」问题）。四次挥手：Client → FIN → Server（1）→ Server → ACK → Client（2，半关闭状态）→ Server → FIN → Client（3）→ Client → ACK → Server（4，TIME_WAIT 2MSL）。\n\n扩展延伸：TIME_WAIT 状态为什么是 2MSL（2 倍最大段生命周期）？1）确保最后一个 ACK 能到达服务器 2）使旧连接的数据包在网络中完全消失。大量 TIME_WAIT 会耗尽端口资源，高并发服务器的常见优化：开启 net.ipv4.tcp_tw_reuse。SYN Flood 攻击原理：攻击者发大量 SYN 不回复 ACK，耗尽服务器的半连接队列（SYN Backlog），通过 TCP 半连接 + SYN Cookie 防御。",
+    hints: ["为什么挥手需要四次而握手只要三次", "大量 TIME_WAIT 有什么影响"],
+    tags: ["网络", "TCP"],
+    options: [],
   },
   {
-    "id": 32,
-    "category": "cs_basics",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "HTTP 和 HTTPS 的区别",
-    "content": "请说明 HTTPS 的工作原理，以及 HTTP/1.1、HTTP/2、HTTP/3 的核心改进。",
-    "answer": "答案：HTTPS = HTTP + TLS（SSL）加密传输\n\n解析：HTTPS 握手过程：Client Hello → Server Hello + 证书 → 客户端验证证书 → 协商会话密钥（非对称加密）→ 后续对称加密通信。核心区别：HTTP 明文传输易被中间人攻击，HTTPS 加密 + 身份验证（CA 证书）保证安全。\n\n扩展延伸：HTTP/2 改进：多路复用（一个连接并发多个请求）、头部压缩（HPACK）、服务器推送（Server Push）、二进制分帧。HTTP/3（QUIC）：基于 UDP 而非 TCP，解决 HTTP/2 的队头阻塞（HOL blocking）问题，在弱网环境下连接建立更快。目前主流互联网公司已全面切 HTTPS，HTTP/2 和 HTTP/3 在逐步推广中。",
-    "hints": [
-      "非对称和对称加密分别在 HTTPS 的哪个阶段用",
-      "HTTP/2 的队头阻塞问题怎么产生的"
-    ],
-    "tags": [
-      "网络",
-      "HTTP"
-    ],
-    "options": []
+    id: 32,
+    category: "cs_basics",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "HTTP 和 HTTPS 的区别",
+    content: "请说明 HTTPS 的工作原理，以及 HTTP/1.1、HTTP/2、HTTP/3 的核心改进。",
+    answer:
+      "答案：HTTPS = HTTP + TLS（SSL）加密传输\n\n解析：HTTPS 握手过程：Client Hello → Server Hello + 证书 → 客户端验证证书 → 协商会话密钥（非对称加密）→ 后续对称加密通信。核心区别：HTTP 明文传输易被中间人攻击，HTTPS 加密 + 身份验证（CA 证书）保证安全。\n\n扩展延伸：HTTP/2 改进：多路复用（一个连接并发多个请求）、头部压缩（HPACK）、服务器推送（Server Push）、二进制分帧。HTTP/3（QUIC）：基于 UDP 而非 TCP，解决 HTTP/2 的队头阻塞（HOL blocking）问题，在弱网环境下连接建立更快。目前主流互联网公司已全面切 HTTPS，HTTP/2 和 HTTP/3 在逐步推广中。",
+    hints: ["非对称和对称加密分别在 HTTPS 的哪个阶段用", "HTTP/2 的队头阻塞问题怎么产生的"],
+    tags: ["网络", "HTTP"],
+    options: [],
   },
   {
-    "id": 33,
-    "category": "cs_basics",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "从输入 URL 到页面展示的全过程",
-    "content": "浏览器输入一个 URL 到页面渲染出来，中间发生了什么？",
-    "answer": "答案：DNS 解析 → TCP 连接 → TLS 握手 → HTTP 请求 → 服务器处理 → 浏览器渲染\n\n解析：1）DNS 解析：浏览器缓存 → 系统 hosts → 本地 DNS → 根/顶级/权威 DNS 服务器 2）TCP 三次握手 3）TLS 协商（HTTPS）4）发送 HTTP 请求 5）服务器处理返回 HTML 6）浏览器解析 HTML 构建 DOM 树，同时 CSSOM 构建 7）遇到 JS 阻塞解析（defer/async 可改变行为）8）DOM + CSSOM → Render Tree → Layout（布局）→ Paint（绘制）→ Composite（合成）。\n\n扩展延伸：优化关键渲染路径 a）CSS 放在 head 尽早加载（避免闪白）b）JS 放在 body 末尾或用 defer/async c）关键 CSS 内联（Critical CSS）d）图片懒加载（loading='lazy'）e）减少重排（Reflow）——修改元素的几何属性比修改颜色（Repaint）成本更高。首屏渲染时间（FCP/LCP）是用户体验最核心的指标之一。",
-    "hints": [
-      "defer 和 async 的区别",
-      "重排（Reflow）和重绘（Repaint）的区别"
-    ],
-    "tags": [
-      "网络",
-      "浏览器"
-    ],
-    "options": []
+    id: 33,
+    category: "cs_basics",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "从输入 URL 到页面展示的全过程",
+    content: "浏览器输入一个 URL 到页面渲染出来，中间发生了什么？",
+    answer:
+      "答案：DNS 解析 → TCP 连接 → TLS 握手 → HTTP 请求 → 服务器处理 → 浏览器渲染\n\n解析：1）DNS 解析：浏览器缓存 → 系统 hosts → 本地 DNS → 根/顶级/权威 DNS 服务器 2）TCP 三次握手 3）TLS 协商（HTTPS）4）发送 HTTP 请求 5）服务器处理返回 HTML 6）浏览器解析 HTML 构建 DOM 树，同时 CSSOM 构建 7）遇到 JS 阻塞解析（defer/async 可改变行为）8）DOM + CSSOM → Render Tree → Layout（布局）→ Paint（绘制）→ Composite（合成）。\n\n扩展延伸：优化关键渲染路径 a）CSS 放在 head 尽早加载（避免闪白）b）JS 放在 body 末尾或用 defer/async c）关键 CSS 内联（Critical CSS）d）图片懒加载（loading='lazy'）e）减少重排（Reflow）——修改元素的几何属性比修改颜色（Repaint）成本更高。首屏渲染时间（FCP/LCP）是用户体验最核心的指标之一。",
+    hints: ["defer 和 async 的区别", "重排（Reflow）和重绘（Repaint）的区别"],
+    tags: ["网络", "浏览器"],
+    options: [],
   },
   {
-    "id": 34,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "进程与线程的区别",
-    "content": "请说明进程和线程的区别，以及多线程编程需要注意的问题。",
-    "answer": "答案：进程是资源分配的最小单位，线程是 CPU 调度的最小单位\n\n解析：进程拥有独立的地址空间、文件描述符、堆栈；线程共享进程的地址空间和资源，每个线程有自己的栈和寄存器。线程切换开销远小于进程（不涉及地址空间切换）。一个进程崩溃不影响其他进程；一个线程崩溃可能导致整个进程退出。\n\n扩展延伸：多线程编程三大问题：竞态条件（Race Condition）→ 加锁/原子类解决、死锁（Deadlock）→ 统一加锁顺序/超时锁、活锁和饥饿。线程模型：1:1（Java 线程映射到内核线程，Java 默认）和 M:N（协程/虚拟线程——JDK 21 Virtual Threads）。虚拟线程的优势在于可以创建百万级线程，适合 IO 密集型任务，但计算密集型仍用平台线程。",
-    "hints": [
-      "线程上下文切换为什么比进程快",
-      "JDK 21 虚拟线程和传统线程的区别"
-    ],
-    "tags": [
-      "操作系统",
-      "并发"
-    ],
-    "options": []
+    id: 34,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "进程与线程的区别",
+    content: "请说明进程和线程的区别，以及多线程编程需要注意的问题。",
+    answer:
+      "答案：进程是资源分配的最小单位，线程是 CPU 调度的最小单位\n\n解析：进程拥有独立的地址空间、文件描述符、堆栈；线程共享进程的地址空间和资源，每个线程有自己的栈和寄存器。线程切换开销远小于进程（不涉及地址空间切换）。一个进程崩溃不影响其他进程；一个线程崩溃可能导致整个进程退出。\n\n扩展延伸：多线程编程三大问题：竞态条件（Race Condition）→ 加锁/原子类解决、死锁（Deadlock）→ 统一加锁顺序/超时锁、活锁和饥饿。线程模型：1:1（Java 线程映射到内核线程，Java 默认）和 M:N（协程/虚拟线程——JDK 21 Virtual Threads）。虚拟线程的优势在于可以创建百万级线程，适合 IO 密集型任务，但计算密集型仍用平台线程。",
+    hints: ["线程上下文切换为什么比进程快", "JDK 21 虚拟线程和传统线程的区别"],
+    tags: ["操作系统", "并发"],
+    options: [],
   },
   {
-    "id": 35,
-    "category": "cs_basics",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "HTTPS 中间人攻击与防御",
-    "content": "HTTPS 是安全的，为什么还会有中间人攻击？企业办公场景下的 HTTPS 解密又是怎么做到的？",
-    "answer": "答案：HTTPS 的保护依赖于客户端正确验证服务器证书，如果客户端信任了攻击者的 CA 证书，中间人攻击即可实现\n\n解析：经典中间人攻击流程：攻击者拦截 Client → Server 的请求，伪造服务器证书给客户端。如果客户端安装了攻击者的 CA 根证书（如钓鱼诱导），则客户端会信任伪造证书——攻击者」解密」客户端请求后再用真实证书与服务器通信，完全窃听内容。企业办公场景的 HTTPS 解密也是这个原理——员工设备安装企业 CA 证书，网关解密审查。\n\n扩展延伸：为什么公共 Wi-Fi 不要访问敏感网站？因为公共网络可能被 ARP 欺骗/伪造网关。真正确保安全的方法：证书钉扎（Certificate Pinning）——客户端硬编码服务器证书或公钥，不依赖 CA 链。但证书钉扎也有风险：服务器证书更换时需要同时更新客户端。HSTS（HTTP Strict Transport Security）：强制浏览器只能用 HTTPS 访问，防止降级攻击。",
-    "hints": [
-      "CA 证书体系为什么是 HTTPS 安全的基石",
-      "证书钉扎（Pinning）有什么优缺点"
-    ],
-    "tags": [
-      "网络",
-      "安全"
-    ],
-    "options": []
+    id: 35,
+    category: "cs_basics",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "HTTPS 中间人攻击与防御",
+    content: "HTTPS 是安全的，为什么还会有中间人攻击？企业办公场景下的 HTTPS 解密又是怎么做到的？",
+    answer:
+      "答案：HTTPS 的保护依赖于客户端正确验证服务器证书，如果客户端信任了攻击者的 CA 证书，中间人攻击即可实现\n\n解析：经典中间人攻击流程：攻击者拦截 Client → Server 的请求，伪造服务器证书给客户端。如果客户端安装了攻击者的 CA 根证书（如钓鱼诱导），则客户端会信任伪造证书——攻击者」解密」客户端请求后再用真实证书与服务器通信，完全窃听内容。企业办公场景的 HTTPS 解密也是这个原理——员工设备安装企业 CA 证书，网关解密审查。\n\n扩展延伸：为什么公共 Wi-Fi 不要访问敏感网站？因为公共网络可能被 ARP 欺骗/伪造网关。真正确保安全的方法：证书钉扎（Certificate Pinning）——客户端硬编码服务器证书或公钥，不依赖 CA 链。但证书钉扎也有风险：服务器证书更换时需要同时更新客户端。HSTS（HTTP Strict Transport Security）：强制浏览器只能用 HTTPS 访问，防止降级攻击。",
+    hints: ["CA 证书体系为什么是 HTTPS 安全的基石", "证书钉扎（Pinning）有什么优缺点"],
+    tags: ["网络", "安全"],
+    options: [],
   },
   {
-    "id": 36,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "操作系统的内存管理",
-    "content": "请解释虚拟内存、分页、缺页中断（Page Fault）的概念。",
-    "answer": "答案：虚拟内存为每个进程提供独立连续的地址空间，通过分页机制映射到物理内存\n\n解析：虚拟内存解决的核心问题：1）隔离进程地址空间 2）让物理内存不连续但在进程视角连续 3）允许程序使用超过物理内存大小（换入换出）。分页：将虚拟地址和物理地址都分成固定大小的页（通常 4KB），页表维护映射关系。缺页中断：进程访问的页不在物理内存中，CPU 触发缺页中断→操作系统从磁盘加载页→更新页表→重新执行指令。\n\n扩展延伸：TLB（快表）缓存最近使用的页表项，减少页表查询开销——这就是为什么频繁访问大内存时程序慢（TLB miss 多）。页面置换算法：FIFO、LRU（最近最久未使用）、LFU（最少使用）。LRU 是理论上最优的，但实现代价高，操作系统通常用近似 LRU（Clock 算法）。Java 应用调优中的」降低 GC 停顿」本质上也是内存管理策略的选择。",
-    "hints": [
-      "为什么 32 位系统最大内存是 4GB",
-      "TLB miss 对性能的影响"
-    ],
-    "tags": [
-      "操作系统",
-      "内存"
-    ],
-    "options": []
+    id: 36,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "操作系统的内存管理",
+    content: "请解释虚拟内存、分页、缺页中断（Page Fault）的概念。",
+    answer:
+      "答案：虚拟内存为每个进程提供独立连续的地址空间，通过分页机制映射到物理内存\n\n解析：虚拟内存解决的核心问题：1）隔离进程地址空间 2）让物理内存不连续但在进程视角连续 3）允许程序使用超过物理内存大小（换入换出）。分页：将虚拟地址和物理地址都分成固定大小的页（通常 4KB），页表维护映射关系。缺页中断：进程访问的页不在物理内存中，CPU 触发缺页中断→操作系统从磁盘加载页→更新页表→重新执行指令。\n\n扩展延伸：TLB（快表）缓存最近使用的页表项，减少页表查询开销——这就是为什么频繁访问大内存时程序慢（TLB miss 多）。页面置换算法：FIFO、LRU（最近最久未使用）、LFU（最少使用）。LRU 是理论上最优的，但实现代价高，操作系统通常用近似 LRU（Clock 算法）。Java 应用调优中的」降低 GC 停顿」本质上也是内存管理策略的选择。",
+    hints: ["为什么 32 位系统最大内存是 4GB", "TLB miss 对性能的影响"],
+    tags: ["操作系统", "内存"],
+    options: [],
   },
   {
-    "id": 37,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "DNS 解析过程与优化",
-    "content": "请描述完整的 DNS 解析过程，以及常见的 DNS 优化手段。",
-    "answer": "答案：递归查询 → 迭代查询：浏览器缓存 → 系统缓存 → 路由器缓存 → ISP DNS → 根 DNS → 顶级域名 DNS → 权威 DNS\n\n解析：当所有缓存都 miss 时，ISP 的 DNS 服务器（递归解析器）代替客户端进行递归查询：问根 DNS（.）→ 得到 .com 顶级域服务器地址 → 问 .com DNS → 得到 example.com 权威服务器地址 → 问权威服务器得到 IP。DNS 使用 UDP 53 端口（响应小于 512 字节）或 TCP 53 端口（响应超过 512 字节）。\n\n扩展延伸：DNS 优化：1）DNS 预取（<link rel='dns-prefetch' href='//api.example.com'>）2）CDN 利用 DNS 的 GeoDNS 功能返回最近节点 IP 3）HTTP/2 的 Connection Coalescing 依赖 DNS 4）DoH（DNS over HTTPS）和 DoT（DNS over TLS）加密 DNS 查询防劫持。国内访问慢的常见原因之一是 DNS 解析受到干扰，换公共 DNS（如 114.114.114.114 或 8.8.8.8）是常见优化手段。",
-    "hints": [
-      "DNS 为什么用 UDP 而不是 TCP",
-      "CDN 如何通过 DNS 实现就近访问"
-    ],
-    "tags": [
-      "网络",
-      "DNS"
-    ],
-    "options": []
+    id: 37,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "DNS 解析过程与优化",
+    content: "请描述完整的 DNS 解析过程，以及常见的 DNS 优化手段。",
+    answer:
+      "答案：递归查询 → 迭代查询：浏览器缓存 → 系统缓存 → 路由器缓存 → ISP DNS → 根 DNS → 顶级域名 DNS → 权威 DNS\n\n解析：当所有缓存都 miss 时，ISP 的 DNS 服务器（递归解析器）代替客户端进行递归查询：问根 DNS（.）→ 得到 .com 顶级域服务器地址 → 问 .com DNS → 得到 example.com 权威服务器地址 → 问权威服务器得到 IP。DNS 使用 UDP 53 端口（响应小于 512 字节）或 TCP 53 端口（响应超过 512 字节）。\n\n扩展延伸：DNS 优化：1）DNS 预取（<link rel='dns-prefetch' href='//api.example.com'>）2）CDN 利用 DNS 的 GeoDNS 功能返回最近节点 IP 3）HTTP/2 的 Connection Coalescing 依赖 DNS 4）DoH（DNS over HTTPS）和 DoT（DNS over TLS）加密 DNS 查询防劫持。国内访问慢的常见原因之一是 DNS 解析受到干扰，换公共 DNS（如 114.114.114.114 或 8.8.8.8）是常见优化手段。",
+    hints: ["DNS 为什么用 UDP 而不是 TCP", "CDN 如何通过 DNS 实现就近访问"],
+    tags: ["网络", "DNS"],
+    options: [],
   },
   {
-    "id": 38,
-    "category": "cs_basics",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "进程间通信方式（IPC）",
-    "content": "操作系统中有哪些进程间通信方式？各自适合什么场景？",
-    "answer": "答案：管道、信号、消息队列、共享内存、信号量、套接字\n\n解析：管道（Pipe）——亲缘关系进程间通信，半双工，Unix 最古老的方式。命名管道（FIFO）突破无亲缘限制。信号（Signal）——异步事件通知，如 SIGINT/SIGTERM，携带信息有限。消息队列——消息链表，支持随机查询，适合非频繁小块数据。共享内存——最快 IPC，多进程直接读写同一块内存，需配合信号量做同步。信号量（Semaphore）——计数器，用于进程/线程同步，不传数据。套接字（Socket）——跨网络通信，Unix Domain Socket 比 TCP Socket 快（不走网络协议栈）。\n\n扩展延伸：各 IPC 的性能对比（效率从高到低）：共享内存 > Unix Domain Socket > 管道 > 消息队列 > TCP Socket。Java 中 IPC 的实现：Java NIO Pipe、Socket（TCP/Unix Domain）、MappedByteBuffer（共享内存）、RocketMQ/Kafka（消息队列）、Semaphore。现代微服务架构中跨进程通信主流是 gRPC（基于 HTTP/2）和消息队列。",
-    "hints": [
-      "为什么共享内存需要配合信号量",
-      "Unix Domain Socket 比 TCP Socket 快在哪里"
-    ],
-    "tags": [
-      "操作系统",
-      "IPC",
-      "并发"
-    ],
-    "options": []
+    id: 38,
+    category: "cs_basics",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "进程间通信方式（IPC）",
+    content: "操作系统中有哪些进程间通信方式？各自适合什么场景？",
+    answer:
+      "答案：管道、信号、消息队列、共享内存、信号量、套接字\n\n解析：管道（Pipe）——亲缘关系进程间通信，半双工，Unix 最古老的方式。命名管道（FIFO）突破无亲缘限制。信号（Signal）——异步事件通知，如 SIGINT/SIGTERM，携带信息有限。消息队列——消息链表，支持随机查询，适合非频繁小块数据。共享内存——最快 IPC，多进程直接读写同一块内存，需配合信号量做同步。信号量（Semaphore）——计数器，用于进程/线程同步，不传数据。套接字（Socket）——跨网络通信，Unix Domain Socket 比 TCP Socket 快（不走网络协议栈）。\n\n扩展延伸：各 IPC 的性能对比（效率从高到低）：共享内存 > Unix Domain Socket > 管道 > 消息队列 > TCP Socket。Java 中 IPC 的实现：Java NIO Pipe、Socket（TCP/Unix Domain）、MappedByteBuffer（共享内存）、RocketMQ/Kafka（消息队列）、Semaphore。现代微服务架构中跨进程通信主流是 gRPC（基于 HTTP/2）和消息队列。",
+    hints: ["为什么共享内存需要配合信号量", "Unix Domain Socket 比 TCP Socket 快在哪里"],
+    tags: ["操作系统", "IPC", "并发"],
+    options: [],
   },
   {
-    "id": 39,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "用户态和内核态",
-    "content": "请解释用户态和内核态的区别，以及系统调用的开销从何而来。",
-    "answer": "答案：用户态权限受限，内核态可执行特权指令，系统调用是两者间的桥梁\n\n解析：CPU 特权级分为 Ring 0（内核态）和 Ring 3（用户态）。用户态不能直接操作硬件、访问内核空间、执行特权指令（如中断关闭）。需要这些操作时必须通过系统调用（System Call）陷入内核。系统调用的开销：1）保存用户态寄存器上下文 2）切换到内核栈 3）权限检查 4）执行内核代码 5）恢复用户态上下文。\n\n扩展延伸：减少用户态-内核态切换的手段：1）mmap 代替 read/write（共享内存映射减少拷贝和切换）2）批量 IO 操作（IO 合并）3）使用 io_uring（Linux 5.1，共享提交/完成队列，无需每次 IO 都系统调用）4）DPDK 绕过内核直接操作网卡。为什么协程快？协程切换在用户态完成，不需要陷入内核。",
-    "hints": [
-      "系统调用比普通函数调用慢在哪些环节",
-      "Java 中文件读写经历了多少次用户态-内核态切换"
-    ],
-    "tags": [
-      "操作系统",
-      "系统调用"
-    ],
-    "options": []
+    id: 39,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "用户态和内核态",
+    content: "请解释用户态和内核态的区别，以及系统调用的开销从何而来。",
+    answer:
+      "答案：用户态权限受限，内核态可执行特权指令，系统调用是两者间的桥梁\n\n解析：CPU 特权级分为 Ring 0（内核态）和 Ring 3（用户态）。用户态不能直接操作硬件、访问内核空间、执行特权指令（如中断关闭）。需要这些操作时必须通过系统调用（System Call）陷入内核。系统调用的开销：1）保存用户态寄存器上下文 2）切换到内核栈 3）权限检查 4）执行内核代码 5）恢复用户态上下文。\n\n扩展延伸：减少用户态-内核态切换的手段：1）mmap 代替 read/write（共享内存映射减少拷贝和切换）2）批量 IO 操作（IO 合并）3）使用 io_uring（Linux 5.1，共享提交/完成队列，无需每次 IO 都系统调用）4）DPDK 绕过内核直接操作网卡。为什么协程快？协程切换在用户态完成，不需要陷入内核。",
+    hints: ["系统调用比普通函数调用慢在哪些环节", "Java 中文件读写经历了多少次用户态-内核态切换"],
+    tags: ["操作系统", "系统调用"],
+    options: [],
   },
   {
-    "id": 40,
-    "category": "cs_basics",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "零拷贝技术",
-    "content": "什么是零拷贝（Zero-Copy）？在 Java 和操作系统层面如何实现？",
-    "answer": "答案：零拷贝是避免数据在用户态和内核态之间多次拷贝的技术\n\n解析：传统 IO 读取文件发送到网络：磁盘 → 内核缓冲区（DMA）→ 用户缓冲区（CPU 拷贝）→ Socket 缓冲区（CPU 拷贝）→ 网卡（DMA），共 4 次拷贝 + 4 次上下文切换。零拷贝优化后：磁盘 → 内核缓冲区（DMA）→ Socket 缓冲区（CPU 拷贝，仅需描述符）→ 网卡（DMA），2 次拷贝 + 2 次上下文切换。\n\n扩展延伸：Linux 零拷贝实现方式：1）sendfile()——文件到 Socket 直接在内核空间传输 2）mmap()——文件映射到进程地址空间，减少一次拷贝 3）splice()——两个文件描述符间的零拷贝。Java 中的零拷贝：FileChannel.transferTo() 底层调用 sendfile；MappedByteBuffer 使用 mmap。Netty 和 Kafka 都大量使用零拷贝提升性能——Kafka 消费消息时从文件到网络的路径就是零拷贝，因此吞吐量极高。",
-    "hints": [
-      "传统 IO 的 4 次拷贝分别发生在哪里",
-      "Kafka 为什么这么快"
-    ],
-    "tags": [
-      "操作系统",
-      "IO",
-      "性能"
-    ],
-    "options": []
+    id: 40,
+    category: "cs_basics",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "零拷贝技术",
+    content: "什么是零拷贝（Zero-Copy）？在 Java 和操作系统层面如何实现？",
+    answer:
+      "答案：零拷贝是避免数据在用户态和内核态之间多次拷贝的技术\n\n解析：传统 IO 读取文件发送到网络：磁盘 → 内核缓冲区（DMA）→ 用户缓冲区（CPU 拷贝）→ Socket 缓冲区（CPU 拷贝）→ 网卡（DMA），共 4 次拷贝 + 4 次上下文切换。零拷贝优化后：磁盘 → 内核缓冲区（DMA）→ Socket 缓冲区（CPU 拷贝，仅需描述符）→ 网卡（DMA），2 次拷贝 + 2 次上下文切换。\n\n扩展延伸：Linux 零拷贝实现方式：1）sendfile()——文件到 Socket 直接在内核空间传输 2）mmap()——文件映射到进程地址空间，减少一次拷贝 3）splice()——两个文件描述符间的零拷贝。Java 中的零拷贝：FileChannel.transferTo() 底层调用 sendfile；MappedByteBuffer 使用 mmap。Netty 和 Kafka 都大量使用零拷贝提升性能——Kafka 消费消息时从文件到网络的路径就是零拷贝，因此吞吐量极高。",
+    hints: ["传统 IO 的 4 次拷贝分别发生在哪里", "Kafka 为什么这么快"],
+    tags: ["操作系统", "IO", "性能"],
+    options: [],
   },
   {
-    "id": 41,
-    "category": "cs_basics",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "HTTP 状态码分类",
-    "content": "HTTP 状态码中 1xx、2xx、3xx、4xx、5xx 各代表什么？列举最常见的几个。",
-    "answer": "答案：1xx（信息）、2xx（成功）、3xx（重定向）、4xx（客户端错误）、5xx（服务端错误）\n\n解析：1xx 少见，100 Continue 表示服务器收到请求头可继续发 body。2xx：200 OK（成功）、201 Created（创建成功）、204 No Content（删除成功，无响应体）。3xx：301 永久重定向（搜索引擎更新 URL）、302 临时重定向（未登录跳到登录页）、304 Not Modified（缓存有效）。4xx：400 参数错误、401 未认证、403 无权限、404 找不到资源、405 方法不允许、429 请求过频繁。5xx：500 服务器内部错误、502 Bad Gateway（网关/代理上游无响应）、503 服务暂时不可用（过载/维护）、504 Gateway Timeout。\n\n扩展延伸：RESTful API 设计中状态码的正确使用——成功不要全都 200，创建用 201。重定向前后端分离中 302 用于登录跳转。区分 401（没登录）和 403（登录了但没权限）在权限系统中很关键。502 和 504 通常意味着网关/Nginx 和后端连接有问题，503 常见于部署时流量切走或过载保护。",
-    "hints": [
-      "301 和 302 的区别是什么",
-      "502/503/504 分别对应什么故障"
-    ],
-    "tags": [
-      "网络",
-      "HTTP"
-    ],
-    "options": []
+    id: 41,
+    category: "cs_basics",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "HTTP 状态码分类",
+    content: "HTTP 状态码中 1xx、2xx、3xx、4xx、5xx 各代表什么？列举最常见的几个。",
+    answer:
+      "答案：1xx（信息）、2xx（成功）、3xx（重定向）、4xx（客户端错误）、5xx（服务端错误）\n\n解析：1xx 少见，100 Continue 表示服务器收到请求头可继续发 body。2xx：200 OK（成功）、201 Created（创建成功）、204 No Content（删除成功，无响应体）。3xx：301 永久重定向（搜索引擎更新 URL）、302 临时重定向（未登录跳到登录页）、304 Not Modified（缓存有效）。4xx：400 参数错误、401 未认证、403 无权限、404 找不到资源、405 方法不允许、429 请求过频繁。5xx：500 服务器内部错误、502 Bad Gateway（网关/代理上游无响应）、503 服务暂时不可用（过载/维护）、504 Gateway Timeout。\n\n扩展延伸：RESTful API 设计中状态码的正确使用——成功不要全都 200，创建用 201。重定向前后端分离中 302 用于登录跳转。区分 401（没登录）和 403（登录了但没权限）在权限系统中很关键。502 和 504 通常意味着网关/Nginx 和后端连接有问题，503 常见于部署时流量切走或过载保护。",
+    hints: ["301 和 302 的区别是什么", "502/503/504 分别对应什么故障"],
+    tags: ["网络", "HTTP"],
+    options: [],
   },
   {
-    "id": 42,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "死锁的必要条件与预防",
-    "content": "请说明死锁产生的四个必要条件，以及预防死锁的策略。",
-    "answer": "答案：互斥 + 持有并等待 + 不可抢占 + 循环等待，破坏任意一个即可预防死锁\n\n解析：四个必要条件缺一不可：1）互斥——资源一次只能分配给一个线程 2）持有并等待——线程持有资源同时等待其他资源 3）不可抢占——资源只能被持有者主动释放 4）循环等待——多个线程形成等待环。预防策略：破坏」持有并等待」→ 一次性申请所有资源（资源利用率低）；破坏」不可抢占」→ 获取不到新资源时释放已有资源；破坏」循环等待」→ 统一加锁顺序，所有线程按相同顺序获取锁。\n\n扩展延伸：银行家算法——避免死锁的经典算法，但实际工程很少用（需要预知最大资源需求）。实际开发中更常用的是检测而非预防：Java 的 jstack 可 dump 线程栈发现死锁（Found one Java-level deadlock），或者用定时任务检测长时间等待的线程。数据库死锁：InnoDB 自动检测死锁并回滚代价较小的事务。写代码时遵循」锁顺序一致」原则是最简单有效的防死锁手段。",
-    "hints": [
-      "破坏死锁的四个条件分别有什么代价",
-      "jstack 怎么看死锁"
-    ],
-    "tags": [
-      "操作系统",
-      "并发",
-      "死锁"
-    ],
-    "options": []
+    id: 42,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "死锁的必要条件与预防",
+    content: "请说明死锁产生的四个必要条件，以及预防死锁的策略。",
+    answer:
+      "答案：互斥 + 持有并等待 + 不可抢占 + 循环等待，破坏任意一个即可预防死锁\n\n解析：四个必要条件缺一不可：1）互斥——资源一次只能分配给一个线程 2）持有并等待——线程持有资源同时等待其他资源 3）不可抢占——资源只能被持有者主动释放 4）循环等待——多个线程形成等待环。预防策略：破坏」持有并等待」→ 一次性申请所有资源（资源利用率低）；破坏」不可抢占」→ 获取不到新资源时释放已有资源；破坏」循环等待」→ 统一加锁顺序，所有线程按相同顺序获取锁。\n\n扩展延伸：银行家算法——避免死锁的经典算法，但实际工程很少用（需要预知最大资源需求）。实际开发中更常用的是检测而非预防：Java 的 jstack 可 dump 线程栈发现死锁（Found one Java-level deadlock），或者用定时任务检测长时间等待的线程。数据库死锁：InnoDB 自动检测死锁并回滚代价较小的事务。写代码时遵循」锁顺序一致」原则是最简单有效的防死锁手段。",
+    hints: ["破坏死锁的四个条件分别有什么代价", "jstack 怎么看死锁"],
+    tags: ["操作系统", "并发", "死锁"],
+    options: [],
   },
   {
-    "id": 43,
-    "category": "cs_basics",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "CPU 上下文切换",
-    "content": "什么是 CPU 上下文切换？哪些情况会触发？对性能有什么影响？",
-    "answer": "答案：CPU 从一个进程/线程切换到另一个时保存和恢复运行状态的过程\n\n解析：上下文（Context）包括：寄存器值、程序计数器、栈指针、内存映射等。触发场景：1）时间片用完——操作系统强制切换 2）系统调用——从用户态切换到内核态（也算轻量级上下文切换）3）IO 等待——进程阻塞 4）中断处理——硬件中断打断当前执行。\n\n扩展延伸：上下文切换的成本：保存/恢复寄存器、TLB 失效（页表缓存）、cache 失效。一次上下文切换约几微秒，但后续的 cache 预热代价更大（cache miss 可能慢几百倍）。排查工具：vmstat 看 cs（context switch）列、pidstat -w 看进程级上下文切换。如果系统 cs 很高但 CPU 利用率不高，说明锁竞争或线程过多——这就是」上下文切换导致系统变慢但 CPU 空闲」的经典场景。",
-    "hints": [
-      "时间片设置的长短对上下文切换频率有何影响",
-      "为什么 Java 中线程数不是越多越好"
-    ],
-    "tags": [
-      "操作系统",
-      "CPU",
-      "性能"
-    ],
-    "options": []
+    id: 43,
+    category: "cs_basics",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "CPU 上下文切换",
+    content: "什么是 CPU 上下文切换？哪些情况会触发？对性能有什么影响？",
+    answer:
+      "答案：CPU 从一个进程/线程切换到另一个时保存和恢复运行状态的过程\n\n解析：上下文（Context）包括：寄存器值、程序计数器、栈指针、内存映射等。触发场景：1）时间片用完——操作系统强制切换 2）系统调用——从用户态切换到内核态（也算轻量级上下文切换）3）IO 等待——进程阻塞 4）中断处理——硬件中断打断当前执行。\n\n扩展延伸：上下文切换的成本：保存/恢复寄存器、TLB 失效（页表缓存）、cache 失效。一次上下文切换约几微秒，但后续的 cache 预热代价更大（cache miss 可能慢几百倍）。排查工具：vmstat 看 cs（context switch）列、pidstat -w 看进程级上下文切换。如果系统 cs 很高但 CPU 利用率不高，说明锁竞争或线程过多——这就是」上下文切换导致系统变慢但 CPU 空闲」的经典场景。",
+    hints: ["时间片设置的长短对上下文切换频率有何影响", "为什么 Java 中线程数不是越多越好"],
+    tags: ["操作系统", "CPU", "性能"],
+    options: [],
   },
   {
-    "id": 44,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "RESTful API 设计原则",
-    "content": "请说明 RESTful API 的设计原则和成熟度模型（Richardson Maturity Model）。",
-    "answer": "答案：资源导向 + 统一接口 + 无状态 + 可缓存\n\n解析：REST 核心原则 1）一切皆资源，URL 表示资源（/users/123）而非操作（/getUser）2）使用 HTTP 方法表达操作：GET（查询）、POST（创建）、PUT（全量更新）、PATCH（部分更新）、DELETE（删除）3）无状态——每次请求包含所有必要信息，服务器不保存客户端状态 4）响应中使用状态码和超媒体（HATEOAS 可选）。Richardson Maturity Model 从 Level 0 到 Level 3：0 级（RPC 风格，一个 URL 做所有事）→ 1 级（资源 URL）→ 2 级（HTTP 方法 + 状态码）→ 3 级（HATEOAS，返回关联资源的链接）。\n\n扩展延伸：REST 常见反模式：1）URL 用动词（/getUserById）应为 /users/123 2）全部用 POST 3）忽略安全方法幂等性（GET/DELETE 多次结果应一致）4）分页没有 Link header 或返回总条数导致扫描全表。GraphQL vs REST：REST 多种资源需要多次请求，GraphQL 一次查询即可取嵌套数据，但缓存和控制更复杂。",
-    "hints": [
-      "PUT 和 PATCH 的区别",
-      "什么是幂等性，哪些 HTTP 方法是幂等的"
-    ],
-    "tags": [
-      "网络",
-      "API",
-      "架构"
-    ],
-    "options": []
+    id: 44,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "RESTful API 设计原则",
+    content: "请说明 RESTful API 的设计原则和成熟度模型（Richardson Maturity Model）。",
+    answer:
+      "答案：资源导向 + 统一接口 + 无状态 + 可缓存\n\n解析：REST 核心原则 1）一切皆资源，URL 表示资源（/users/123）而非操作（/getUser）2）使用 HTTP 方法表达操作：GET（查询）、POST（创建）、PUT（全量更新）、PATCH（部分更新）、DELETE（删除）3）无状态——每次请求包含所有必要信息，服务器不保存客户端状态 4）响应中使用状态码和超媒体（HATEOAS 可选）。Richardson Maturity Model 从 Level 0 到 Level 3：0 级（RPC 风格，一个 URL 做所有事）→ 1 级（资源 URL）→ 2 级（HTTP 方法 + 状态码）→ 3 级（HATEOAS，返回关联资源的链接）。\n\n扩展延伸：REST 常见反模式：1）URL 用动词（/getUserById）应为 /users/123 2）全部用 POST 3）忽略安全方法幂等性（GET/DELETE 多次结果应一致）4）分页没有 Link header 或返回总条数导致扫描全表。GraphQL vs REST：REST 多种资源需要多次请求，GraphQL 一次查询即可取嵌套数据，但缓存和控制更复杂。",
+    hints: ["PUT 和 PATCH 的区别", "什么是幂等性，哪些 HTTP 方法是幂等的"],
+    tags: ["网络", "API", "架构"],
+    options: [],
   },
   {
-    "id": 45,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "对称加密与非对称加密",
-    "content": "请对比对称加密和非对称加密的原理、优缺点和典型应用场景。",
-    "answer": "答案：对称加密用同一密钥加解密（快），非对称加密用公私钥对（安全但慢）\n\n解析：对称加密：AES（高级加密标准，最常用）、DES（已淘汰）、3DES。优点：加密速度快（硬件加速），适合大量数据加密。缺点：密钥分发困难——如何安全地将密钥告诉对方？非对称加密：RSA（基于大数分解）、ECC（椭圆曲线，更高效）。公钥加密私钥解密，私钥签名公钥验证。优点：无需预先共享密钥。缺点：慢（RSA 比 AES 慢千倍），不适合大量数据。\n\n扩展延伸：HTTPS 的秘密：结合两者优点——非对称加密协商临时会话密钥，后续用对称加密传输数据（这就是 TLS 握手的过程）。RSA 2048 位提供足够安全性，但量子计算机可破解 RSA——后量子密码学正在研究中。实际应用中，ECC 256 位安全性等价于 RSA 3072 位，更高效。数字签名：私钥签名保证身份认证和不可否认性。",
-    "hints": [
-      "HTTPS 中为什么同时用两种加密",
-      "量子计算机对现有加密体系的威胁"
-    ],
-    "tags": [
-      "网络",
-      "安全",
-      "加密"
-    ],
-    "options": []
+    id: 45,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "对称加密与非对称加密",
+    content: "请对比对称加密和非对称加密的原理、优缺点和典型应用场景。",
+    answer:
+      "答案：对称加密用同一密钥加解密（快），非对称加密用公私钥对（安全但慢）\n\n解析：对称加密：AES（高级加密标准，最常用）、DES（已淘汰）、3DES。优点：加密速度快（硬件加速），适合大量数据加密。缺点：密钥分发困难——如何安全地将密钥告诉对方？非对称加密：RSA（基于大数分解）、ECC（椭圆曲线，更高效）。公钥加密私钥解密，私钥签名公钥验证。优点：无需预先共享密钥。缺点：慢（RSA 比 AES 慢千倍），不适合大量数据。\n\n扩展延伸：HTTPS 的秘密：结合两者优点——非对称加密协商临时会话密钥，后续用对称加密传输数据（这就是 TLS 握手的过程）。RSA 2048 位提供足够安全性，但量子计算机可破解 RSA——后量子密码学正在研究中。实际应用中，ECC 256 位安全性等价于 RSA 3072 位，更高效。数字签名：私钥签名保证身份认证和不可否认性。",
+    hints: ["HTTPS 中为什么同时用两种加密", "量子计算机对现有加密体系的威胁"],
+    tags: ["网络", "安全", "加密"],
+    options: [],
   },
   {
-    "id": 46,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "字符编码：ASCII、Unicode、UTF-8",
-    "content": "请解释 ASCII、Unicode、UTF-8 的关系和区别。为什么 UTF-8 成为互联网主流？",
-    "answer": "答案：ASCII 是 7 位编码（128 字符），Unicode 是字符集（码位），UTF-8 是 Unicode 的一种变长编码方案\n\n解析：ASCII 只覆盖英文字母和符号，1 字节。Unicode 给每个字符分配一个唯一的码位（Code Point，如 U+4E2D 代表「中」），但没规定如何存储。UTF-8 是变长编码（1-4 字节），ASCII 兼容——英文字母 1 字节（兼容 ASCII），拉丁文 2 字节，常用汉字 3 字节，冷僻字 4 字节。由于 ASCII 兼容、无字节序问题（BOM）、节省空间，UTF-8 成为 Web 主流（>98% 的网页使用 UTF-8）。\n\n扩展延伸：常见乱码原因：文件用 UTF-8 保存而程序用 GBK 读取（中文常见）。BOM（Byte Order Mark）——UTF-8 不需要 BOM（无字节序问题），但 Windows 记事本会在 UTF-8 文件开头加 EF BB BF 导致跨平台问题。程序中处理字符的黄金法则：内部统一用 Unicode（Java 的 String 是 UTF-16），输入输出时指定编码（IO 流的 charset 参数）。Python 2 到 Python 3 最大的改进之一就是默认编码从 ASCII 改为 UTF-8。",
-    "hints": [
-      "UTF-8 和 UTF-16 的区别",
-      "Java 中 char 类型能不能存所有 Unicode 字符"
-    ],
-    "tags": [
-      "基础",
-      "编码"
-    ],
-    "options": []
+    id: 46,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "字符编码：ASCII、Unicode、UTF-8",
+    content: "请解释 ASCII、Unicode、UTF-8 的关系和区别。为什么 UTF-8 成为互联网主流？",
+    answer:
+      "答案：ASCII 是 7 位编码（128 字符），Unicode 是字符集（码位），UTF-8 是 Unicode 的一种变长编码方案\n\n解析：ASCII 只覆盖英文字母和符号，1 字节。Unicode 给每个字符分配一个唯一的码位（Code Point，如 U+4E2D 代表「中」），但没规定如何存储。UTF-8 是变长编码（1-4 字节），ASCII 兼容——英文字母 1 字节（兼容 ASCII），拉丁文 2 字节，常用汉字 3 字节，冷僻字 4 字节。由于 ASCII 兼容、无字节序问题（BOM）、节省空间，UTF-8 成为 Web 主流（>98% 的网页使用 UTF-8）。\n\n扩展延伸：常见乱码原因：文件用 UTF-8 保存而程序用 GBK 读取（中文常见）。BOM（Byte Order Mark）——UTF-8 不需要 BOM（无字节序问题），但 Windows 记事本会在 UTF-8 文件开头加 EF BB BF 导致跨平台问题。程序中处理字符的黄金法则：内部统一用 Unicode（Java 的 String 是 UTF-16），输入输出时指定编码（IO 流的 charset 参数）。Python 2 到 Python 3 最大的改进之一就是默认编码从 ASCII 改为 UTF-8。",
+    hints: ["UTF-8 和 UTF-16 的区别", "Java 中 char 类型能不能存所有 Unicode 字符"],
+    tags: ["基础", "编码"],
+    options: [],
   },
   {
-    "id": 47,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "TCP 三次握手中 SYN 包的作用",
-    "content": "在 TCP 三次握手中，客户端发送的第一个 SYN 包主要目的是什么？",
-    "answer": "答案：A) 告知服务器自己的初始序列号（ISN）\n\n解析：SYN（Synchronize Sequence Numbers）包的核心目的是让客户端告知服务器自己的初始序列号（ISN），服务器收到后回复 SYN+ACK 携带自己的 ISN。这样双方就都知道对方的初始序列号，后续数据传输才能保证有序性和可靠性。\n\n扩展延伸：如果没有三次握手，服务器无法确认客户端是否已经收到自己的 SYN+ACK。两次握手会导致「已失效的连接请求报文段」问题——客户端 A 发起的旧 SYN 延迟到达服务器，服务器误以为新连接并分配资源，而客户端早已放弃，造成资源浪费。",
-    "hints": [
-      "SYN 的全称是什么",
-      "为什么两次握手不行"
-    ],
-    "tags": [
-      "网络",
-      "TCP"
-    ],
-    "options": [
+    id: 47,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "choice",
+    title: "TCP 三次握手中 SYN 包的作用",
+    content: "在 TCP 三次握手中，客户端发送的第一个 SYN 包主要目的是什么？",
+    answer:
+      "答案：A) 告知服务器自己的初始序列号（ISN）\n\n解析：SYN（Synchronize Sequence Numbers）包的核心目的是让客户端告知服务器自己的初始序列号（ISN），服务器收到后回复 SYN+ACK 携带自己的 ISN。这样双方就都知道对方的初始序列号，后续数据传输才能保证有序性和可靠性。\n\n扩展延伸：如果没有三次握手，服务器无法确认客户端是否已经收到自己的 SYN+ACK。两次握手会导致「已失效的连接请求报文段」问题——客户端 A 发起的旧 SYN 延迟到达服务器，服务器误以为新连接并分配资源，而客户端早已放弃，造成资源浪费。",
+    hints: ["SYN 的全称是什么", "为什么两次握手不行"],
+    tags: ["网络", "TCP"],
+    options: [
       "A) 告知服务器自己的初始序列号（ISN）",
       "B) 请求服务器分配端口",
       "C) 验证服务器的带宽",
-      "D) 传输应用层数据"
-    ]
+      "D) 传输应用层数据",
+    ],
   },
   {
-    "id": 48,
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "操作系统分页中页表的作用",
-    "content": "操作系统的分页机制中，页表（Page Table）的主要作用是什么？",
-    "answer": "答案：A) 将虚拟地址映射到物理地址\n\n解析：页表是操作系统用于维护虚拟地址到物理地址映射的核心数据结构。每个进程拥有自己的页表，CPU 中的 MMU（内存管理单元）在每次内存访问时查询页表完成地址转换。页表还能记录页面的访问权限、是否在物理内存中等元数据。\n\n扩展延伸：多级页表（x86_64 使用 4 级页表）解决了线性页表占用连续大内存的问题。TLB（快表）缓存最近使用的页表项，利用局部性原理加速地址转换。当发生 TLB miss 时，CPU 需要遍历多级页表，性能损失显著。",
-    "hints": [
-      "MMU 和页表的关系",
-      "为什么需要多级页表"
-    ],
-    "tags": [
-      "操作系统",
-      "内存"
-    ],
-    "options": [
+    id: 48,
+    category: "cs_basics",
+    difficulty: "medium",
+    type: "choice",
+    title: "操作系统分页中页表的作用",
+    content: "操作系统的分页机制中，页表（Page Table）的主要作用是什么？",
+    answer:
+      "答案：A) 将虚拟地址映射到物理地址\n\n解析：页表是操作系统用于维护虚拟地址到物理地址映射的核心数据结构。每个进程拥有自己的页表，CPU 中的 MMU（内存管理单元）在每次内存访问时查询页表完成地址转换。页表还能记录页面的访问权限、是否在物理内存中等元数据。\n\n扩展延伸：多级页表（x86_64 使用 4 级页表）解决了线性页表占用连续大内存的问题。TLB（快表）缓存最近使用的页表项，利用局部性原理加速地址转换。当发生 TLB miss 时，CPU 需要遍历多级页表，性能损失显著。",
+    hints: ["MMU 和页表的关系", "为什么需要多级页表"],
+    tags: ["操作系统", "内存"],
+    options: [
       "A) 将虚拟地址映射到物理地址",
       "B) 管理磁盘空间分配",
       "C) 控制进程的 CPU 时间片",
-      "D) 存储文件系统的元数据"
-    ]
+      "D) 存储文件系统的元数据",
+    ],
   },
   {
-    "id": 49,
-    "category": "cs_basics",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "HTTP 请求方法中哪些是幂等的",
-    "content": "以下哪个 HTTP 方法是幂等的（多次调用结果一致）？",
-    "answer": "答案：C) DELETE\n\n解析：幂等性指多次执行同一操作的结果与执行一次相同。DELETE 无论调用一次还是多次，服务器上资源都处于「已删除」状态（虽然后续 200 可能变为 404），但语义上资源状态一致。GET、PUT、DELETE 都是幂等的。POST（创建资源）每次都会新建资源，PATCH（部分更新）可能非幂等。\n\n扩展延伸：幂等性在 RESTful API 设计中很重要——在网络不稳定导致请求重发时，非幂等方法可能导致重复扣款等问题。分布式系统中常用幂等令牌（Idempotency Key）保证操作恰好执行一次。PUT 是全量更新，反复执行资源状态不变；PATCH 是增量更新，如果操作是」每次加 1」则非幂等。",
-    "hints": [
-      "PUT 和 POST 在幂等上的区别",
-      "幂等性在分布式系统中的意义"
-    ],
-    "tags": [
-      "网络",
-      "HTTP"
-    ],
-    "options": [
-      "A) POST",
-      "B) PATCH",
-      "C) DELETE",
-      "D) 以上都不是"
-    ]
+    id: 49,
+    category: "cs_basics",
+    difficulty: "easy",
+    type: "choice",
+    title: "HTTP 请求方法中哪些是幂等的",
+    content: "以下哪个 HTTP 方法是幂等的（多次调用结果一致）？",
+    answer:
+      "答案：C) DELETE\n\n解析：幂等性指多次执行同一操作的结果与执行一次相同。DELETE 无论调用一次还是多次，服务器上资源都处于「已删除」状态（虽然后续 200 可能变为 404），但语义上资源状态一致。GET、PUT、DELETE 都是幂等的。POST（创建资源）每次都会新建资源，PATCH（部分更新）可能非幂等。\n\n扩展延伸：幂等性在 RESTful API 设计中很重要——在网络不稳定导致请求重发时，非幂等方法可能导致重复扣款等问题。分布式系统中常用幂等令牌（Idempotency Key）保证操作恰好执行一次。PUT 是全量更新，反复执行资源状态不变；PATCH 是增量更新，如果操作是」每次加 1」则非幂等。",
+    hints: ["PUT 和 POST 在幂等上的区别", "幂等性在分布式系统中的意义"],
+    tags: ["网络", "HTTP"],
+    options: ["A) POST", "B) PATCH", "C) DELETE", "D) 以上都不是"],
   },
   {
-    "id": 50,
-    "category": "cs_basics",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "HTTPS 使用对称加密传输数据",
-    "content": "HTTPS 在整个通信过程中全部使用非对称加密。",
-    "answer": "答案：错误\n\n解析：HTTPS 灵活结合了两种加密方式：TLS 握手阶段使用非对称加密（RSA 或 ECDHE）协商对称密钥，后续数据传输阶段使用对称加密（AES 等）。对称加密比非对称加密快千倍以上，适合大量数据传输。\n\n扩展延伸：TLS 1.3 相比 TLS 1.2 将握手从 2-RTT 缩减到 1-RTT，并移除了不安全算法支持。ECDHE 密钥交换提供前向安全性（Perfect Forward Secrecy）——即使私钥泄露，已记录的加密通信也无法被解密，RSA 密钥交换不具备此特性。",
-    "hints": [
-      "非对称加密和对称加密分别在什么时候用",
-      "什么是前向安全性"
-    ],
-    "tags": [
-      "网络",
-      "安全"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 50,
+    category: "cs_basics",
+    difficulty: "easy",
+    type: "true_false",
+    title: "HTTPS 使用对称加密传输数据",
+    content: "HTTPS 在整个通信过程中全部使用非对称加密。",
+    answer:
+      "答案：错误\n\n解析：HTTPS 灵活结合了两种加密方式：TLS 握手阶段使用非对称加密（RSA 或 ECDHE）协商对称密钥，后续数据传输阶段使用对称加密（AES 等）。对称加密比非对称加密快千倍以上，适合大量数据传输。\n\n扩展延伸：TLS 1.3 相比 TLS 1.2 将握手从 2-RTT 缩减到 1-RTT，并移除了不安全算法支持。ECDHE 密钥交换提供前向安全性（Perfect Forward Secrecy）——即使私钥泄露，已记录的加密通信也无法被解密，RSA 密钥交换不具备此特性。",
+    hints: ["非对称加密和对称加密分别在什么时候用", "什么是前向安全性"],
+    tags: ["网络", "安全"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 51,
-    "category": "cs_basics",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "死锁必须满足四个必要条件",
-    "content": "只要进程间存在循环等待资源就一定会发生死锁。",
-    "answer": "答案：错误\n\n解析：死锁需要同时满足四个必要条件：互斥、持有并等待、不可抢占、循环等待。仅有循环等待还不够——如果资源可以被抢占（如 CPU 时间片轮转），或某些资源允许多个进程同时访问（如共享内存读操作），则不会形成死锁。四个条件缺一不可。\n\n扩展延伸：处理死锁的三种策略：1）死锁预防——破坏四个条件中的任意一个（如规定加锁顺序破坏循环等待）2）死锁避免——银行家算法 3）死锁检测与恢复——允许死锁发生，检测到后强制回滚。实际工程中使用最多的是一致性加锁顺序（预防）和超时机制（检测恢复）。",
-    "hints": [
-      "死锁的四个必要条件分别是什么",
-      "破坏循环等待一定就能防止死锁吗"
-    ],
-    "tags": [
-      "操作系统",
-      "并发",
-      "死锁"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 51,
+    category: "cs_basics",
+    difficulty: "easy",
+    type: "true_false",
+    title: "死锁必须满足四个必要条件",
+    content: "只要进程间存在循环等待资源就一定会发生死锁。",
+    answer:
+      "答案：错误\n\n解析：死锁需要同时满足四个必要条件：互斥、持有并等待、不可抢占、循环等待。仅有循环等待还不够——如果资源可以被抢占（如 CPU 时间片轮转），或某些资源允许多个进程同时访问（如共享内存读操作），则不会形成死锁。四个条件缺一不可。\n\n扩展延伸：处理死锁的三种策略：1）死锁预防——破坏四个条件中的任意一个（如规定加锁顺序破坏循环等待）2）死锁避免——银行家算法 3）死锁检测与恢复——允许死锁发生，检测到后强制回滚。实际工程中使用最多的是一致性加锁顺序（预防）和超时机制（检测恢复）。",
+    hints: ["死锁的四个必要条件分别是什么", "破坏循环等待一定就能防止死锁吗"],
+    tags: ["操作系统", "并发", "死锁"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 52,
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL 索引的底层数据结构",
-    "content": "为什么 MySQL InnoDB 使用 B+ 树而不是 B 树或红黑树作为索引结构？",
-    "answer": "答案：B+ 树在范围查询和磁盘 IO 上优于 B 树和红黑树\n\n解析：B+ 树相比 B 树的优势 1）只有叶子节点存数据，非叶子节点只存键，单节点可存更多索引项，树高度低（3-4 层即可支持千万级数据，范围查询仅 3-4 次 IO）2）叶子节点用链表连接，范围查询只需遍历链表，无需中序遍历。红黑树是二叉树，高度 logN，大数据量下 IO 次数远多于 B+ 树。\n\n扩展延伸：聚簇索引（InnoDB 主键）的叶子节点存整行数据，二级索引叶子节点存主键值。回表查询：二级索引查到主键 → 再查聚簇索引。覆盖索引：查询字段在二级索引中已包含，无需回表。索引下推（ICP）：MySQL 5.6 优化，在索引遍历时提前过滤，减少回表次数。",
-    "hints": [
-      "磁盘 IO 和树高度的关系",
-      "B+ 树的叶子节点链表怎么优化范围查询"
-    ],
-    "tags": [
-      "MySQL",
-      "索引"
-    ],
-    "options": []
+    id: 52,
+    category: "database",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "MySQL 索引的底层数据结构",
+    content: "为什么 MySQL InnoDB 使用 B+ 树而不是 B 树或红黑树作为索引结构？",
+    answer:
+      "答案：B+ 树在范围查询和磁盘 IO 上优于 B 树和红黑树\n\n解析：B+ 树相比 B 树的优势 1）只有叶子节点存数据，非叶子节点只存键，单节点可存更多索引项，树高度低（3-4 层即可支持千万级数据，范围查询仅 3-4 次 IO）2）叶子节点用链表连接，范围查询只需遍历链表，无需中序遍历。红黑树是二叉树，高度 logN，大数据量下 IO 次数远多于 B+ 树。\n\n扩展延伸：聚簇索引（InnoDB 主键）的叶子节点存整行数据，二级索引叶子节点存主键值。回表查询：二级索引查到主键 → 再查聚簇索引。覆盖索引：查询字段在二级索引中已包含，无需回表。索引下推（ICP）：MySQL 5.6 优化，在索引遍历时提前过滤，减少回表次数。",
+    hints: ["磁盘 IO 和树高度的关系", "B+ 树的叶子节点链表怎么优化范围查询"],
+    tags: ["MySQL", "索引"],
+    options: [],
   },
   {
-    "id": 53,
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL 事务隔离级别",
-    "content": "请解释 MySQL 的四种事务隔离级别及其解决的问题。",
-    "answer": "答案：读未提交、读已提交、可重复读（MySQL 默认）、串行化\n\n解析：隔离级别由低到高：读未提交→脏读、不可重复读、幻读都可能；读已提交→避免了脏读，不可重复读和幻读可能；可重复读→脏读和不可重复读已避免，幻读可能（InnoDB 的 MVCC + Next-Key Lock 在 RR 级别基本解决了幻读）；串行化→全部解决，但并发极低。\n\n扩展延伸：MVCC（多版本并发控制）通过 undo log 实现数据多版本，每条记录有事务 ID 和回滚指针。Read View 决定事务能看到哪个版本。Next-Key Lock = 行锁 + Gap Lock（间隙锁），是 InnoDB 在 RR 级别防止幻读的关键。",
-    "hints": [
-      "MVCC 如何实现不同隔离级别",
-      "间隙锁（Gap Lock）解决什么问题"
-    ],
-    "tags": [
-      "MySQL",
-      "事务",
-      "并发"
-    ],
-    "options": []
+    id: 53,
+    category: "database",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "MySQL 事务隔离级别",
+    content: "请解释 MySQL 的四种事务隔离级别及其解决的问题。",
+    answer:
+      "答案：读未提交、读已提交、可重复读（MySQL 默认）、串行化\n\n解析：隔离级别由低到高：读未提交→脏读、不可重复读、幻读都可能；读已提交→避免了脏读，不可重复读和幻读可能；可重复读→脏读和不可重复读已避免，幻读可能（InnoDB 的 MVCC + Next-Key Lock 在 RR 级别基本解决了幻读）；串行化→全部解决，但并发极低。\n\n扩展延伸：MVCC（多版本并发控制）通过 undo log 实现数据多版本，每条记录有事务 ID 和回滚指针。Read View 决定事务能看到哪个版本。Next-Key Lock = 行锁 + Gap Lock（间隙锁），是 InnoDB 在 RR 级别防止幻读的关键。",
+    hints: ["MVCC 如何实现不同隔离级别", "间隙锁（Gap Lock）解决什么问题"],
+    tags: ["MySQL", "事务", "并发"],
+    options: [],
   },
   {
-    "id": 54,
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 慢查询排查与优化",
-    "content": "线上 SQL 查询突然变慢，你怎么排查和优化？",
-    "answer": "答案：慢查询日志 → EXPLAIN 分析执行计划 → 优化索引/SQL\n\n解析：排查流程 1）set global slow_query_log=ON 开启慢查询 2）分析慢日志，找到耗时 SQL 3）EXPLAIN SQL 看 type（ALL=全表扫描需优化→range→ref→const）、rows（扫描行数）、Extra（Using filesort/Using temporary=需要优化）4）确认是否缺索引或索引失效。常见索引失效：函数操作、隐式类型转换、LIKE '%xx'、OR 条件、联合索引未用最左前缀。\n\n扩展延伸：优化策略 a）覆盖索引消除回表 b）大分页优化：select * from t WHERE id > 10000 LIMIT 10 而非 LIMIT 100000,10 c）分批处理大量数据 d）读写分离减轻主库压力 e）必要时上缓存（Redis）。线上操作规范：先在测试环境 EXPLAIN，大表加索引用 pt-osc（在线 DDL 工具）。",
-    "hints": [
+    id: 54,
+    category: "database",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "MySQL 慢查询排查与优化",
+    content: "线上 SQL 查询突然变慢，你怎么排查和优化？",
+    answer:
+      "答案：慢查询日志 → EXPLAIN 分析执行计划 → 优化索引/SQL\n\n解析：排查流程 1）set global slow_query_log=ON 开启慢查询 2）分析慢日志，找到耗时 SQL 3）EXPLAIN SQL 看 type（ALL=全表扫描需优化→range→ref→const）、rows（扫描行数）、Extra（Using filesort/Using temporary=需要优化）4）确认是否缺索引或索引失效。常见索引失效：函数操作、隐式类型转换、LIKE '%xx'、OR 条件、联合索引未用最左前缀。\n\n扩展延伸：优化策略 a）覆盖索引消除回表 b）大分页优化：select * from t WHERE id > 10000 LIMIT 10 而非 LIMIT 100000,10 c）分批处理大量数据 d）读写分离减轻主库压力 e）必要时上缓存（Redis）。线上操作规范：先在测试环境 EXPLAIN，大表加索引用 pt-osc（在线 DDL 工具）。",
+    hints: [
       "EXPLAIN 的 type 字段有哪些值，分别代表什么",
-      "为什么 LIMIT 100000,10 比 LIMIT 10 慢很多"
+      "为什么 LIMIT 100000,10 比 LIMIT 10 慢很多",
     ],
-    "tags": [
-      "MySQL",
-      "排查",
-      "性能"
-    ],
-    "options": []
+    tags: ["MySQL", "排查", "性能"],
+    options: [],
   },
   {
-    "id": 55,
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 的数据结构和应用场景",
-    "content": "请列举 Redis 的常用数据类型及对应的典型应用场景。",
-    "answer": "答案：String/Hash/List/Set/ZSet，每种对应不同场景\n\n解析：String—缓存（set/get）、计数器（incr）、分布式锁（setnx）。Hash—存储对象字段（用户信息），省内存且可单独更新字段。List—消息队列（LPUSH+BRPOP）、最新列表（LPUSH+LTRIM）。Set—标签/去重、共同关注（sinter 交集）。ZSet—排行榜（score 排序）、延迟队列（按时间戳排序）。\n\n扩展延伸：高级数据结构 Bitmap（签到统计、布隆过滤器）、HyperLogLog（UV 统计，12KB 存 2^64 唯一值）、Geo（地理位置、附近的人）。Redis 单线程模型为什么快？纯内存操作 + IO 多路复用 + 避免上下文切换，但单个 key 不应存过大（超过 10MB 会阻塞）。",
-    "hints": [
-      "ZSet 底层跳表（Skip List）的原理",
-      "Redis 单线程模型如何处理并发请求"
-    ],
-    "tags": [
-      "Redis",
-      "缓存"
-    ],
-    "options": []
+    id: 55,
+    category: "database",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Redis 的数据结构和应用场景",
+    content: "请列举 Redis 的常用数据类型及对应的典型应用场景。",
+    answer:
+      "答案：String/Hash/List/Set/ZSet，每种对应不同场景\n\n解析：String—缓存（set/get）、计数器（incr）、分布式锁（setnx）。Hash—存储对象字段（用户信息），省内存且可单独更新字段。List—消息队列（LPUSH+BRPOP）、最新列表（LPUSH+LTRIM）。Set—标签/去重、共同关注（sinter 交集）。ZSet—排行榜（score 排序）、延迟队列（按时间戳排序）。\n\n扩展延伸：高级数据结构 Bitmap（签到统计、布隆过滤器）、HyperLogLog（UV 统计，12KB 存 2^64 唯一值）、Geo（地理位置、附近的人）。Redis 单线程模型为什么快？纯内存操作 + IO 多路复用 + 避免上下文切换，但单个 key 不应存过大（超过 10MB 会阻塞）。",
+    hints: ["ZSet 底层跳表（Skip List）的原理", "Redis 单线程模型如何处理并发请求"],
+    tags: ["Redis", "缓存"],
+    options: [],
   },
   {
-    "id": 56,
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 分布式锁的实现与陷阱",
-    "content": "用 Redis 实现分布式锁需要注意哪些问题？Redlock 算法是什么？",
-    "answer": "答案：核心坑：锁超时、不可重入、主从切换导致锁丢失\n\n解析：正确实现：SET key uuid NX PX 30000（原子操作设值和过期时间）。UUID 作为 value 用于释放时校验（防止释放别人锁）。释放用 Lua 脚本确保原子性（先 get 比较再 del）。注意事项：1）过期时间需大于业务执行时间，否则需看门狗（Watch Dog）续期 2）不可重入需额外支持 3）主从架构下 master 宕机后 slave 未同步锁信息，新 master 被其他客户端加锁。\n\n扩展延伸：Redlock 是 Redis 官方的分布式锁算法，在大多数（N/2+1）节点上成功加锁才算成功，适用于需要严格互斥的场景。但 Redlock 也有争议（时钟漂移问题），分布式一致性要求极高的场景建议用 ZooKeeper 的临时顺序节点实现锁。",
-    "hints": [
-      "释放锁时为什么用 Lua 脚本",
-      "主从切换导致锁丢失怎么解决"
-    ],
-    "tags": [
-      "Redis",
-      "分布式",
-      "锁"
-    ],
-    "options": []
+    id: 56,
+    category: "database",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "Redis 分布式锁的实现与陷阱",
+    content: "用 Redis 实现分布式锁需要注意哪些问题？Redlock 算法是什么？",
+    answer:
+      "答案：核心坑：锁超时、不可重入、主从切换导致锁丢失\n\n解析：正确实现：SET key uuid NX PX 30000（原子操作设值和过期时间）。UUID 作为 value 用于释放时校验（防止释放别人锁）。释放用 Lua 脚本确保原子性（先 get 比较再 del）。注意事项：1）过期时间需大于业务执行时间，否则需看门狗（Watch Dog）续期 2）不可重入需额外支持 3）主从架构下 master 宕机后 slave 未同步锁信息，新 master 被其他客户端加锁。\n\n扩展延伸：Redlock 是 Redis 官方的分布式锁算法，在大多数（N/2+1）节点上成功加锁才算成功，适用于需要严格互斥的场景。但 Redlock 也有争议（时钟漂移问题），分布式一致性要求极高的场景建议用 ZooKeeper 的临时顺序节点实现锁。",
+    hints: ["释放锁时为什么用 Lua 脚本", "主从切换导致锁丢失怎么解决"],
+    tags: ["Redis", "分布式", "锁"],
+    options: [],
   },
   {
-    "id": 57,
-    "category": "database",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "MySQL 三大日志：binlog、redo log、undo log",
-    "content": "请解释 MySQL 的 binlog、redo log、undo log 各自的作用。",
-    "answer": "答案：redo log 保证崩溃恢复（crash-safe），binlog 用于备份和主从同步，undo log 实现事务回滚和 MVCC\n\n解析：redo log（InnoDB 特有，物理日志）记录「做了什么修改」，事务提交时先写 redo log 再刷盘（WAL——Write-Ahead Logging），崩溃后重放恢复。binlog（Server 层，逻辑日志）记录 SQL 语句或行变更，用于主从同步和时间点恢复。undo log（逻辑日志，反向记录）用于事务回滚和 MVCC 的快照读。\n\n扩展延伸：两阶段提交（2PC）保证 redo log 和 binlog 的一致性——prepare 阶段写 redo log，commit 阶段写 binlog。崩溃恢复时比较两个日志的状态，决定事务是提交还是回滚。这样主从数据才不会不一致。",
-    "hints": [
-      "为什么 MySQL 需要两份日志（redo + binlog）",
-      "两阶段提交如何保证主从一致"
-    ],
-    "tags": [
-      "MySQL",
-      "基础"
-    ],
-    "options": []
+    id: 57,
+    category: "database",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "MySQL 三大日志：binlog、redo log、undo log",
+    content: "请解释 MySQL 的 binlog、redo log、undo log 各自的作用。",
+    answer:
+      "答案：redo log 保证崩溃恢复（crash-safe），binlog 用于备份和主从同步，undo log 实现事务回滚和 MVCC\n\n解析：redo log（InnoDB 特有，物理日志）记录「做了什么修改」，事务提交时先写 redo log 再刷盘（WAL——Write-Ahead Logging），崩溃后重放恢复。binlog（Server 层，逻辑日志）记录 SQL 语句或行变更，用于主从同步和时间点恢复。undo log（逻辑日志，反向记录）用于事务回滚和 MVCC 的快照读。\n\n扩展延伸：两阶段提交（2PC）保证 redo log 和 binlog 的一致性——prepare 阶段写 redo log，commit 阶段写 binlog。崩溃恢复时比较两个日志的状态，决定事务是提交还是回滚。这样主从数据才不会不一致。",
+    hints: ["为什么 MySQL 需要两份日志（redo + binlog）", "两阶段提交如何保证主从一致"],
+    tags: ["MySQL", "基础"],
+    options: [],
   },
   {
-    "id": 58,
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 缓存穿透、击穿、雪崩",
-    "content": "请解释缓存穿透、缓存击穿、缓存雪崩的区别及应对方案。",
-    "answer": "答案：穿透→查询不存在数据；击穿→热点 key 过期；雪崩→大量 key 同时过期或 Redis 宕机\n\n解析：缓存穿透：查询的 key 在缓存和 DB 都不存在，请求直接打到 DB。方案：布隆过滤器（Bloom Filter）拦截不存在 key 或缓存空值（短过期时间）。缓存击穿：某一热点 key 过期，高并发全部打到 DB。方案：互斥锁（setnx）保证只有一个线程查 DB 重建缓存；或逻辑过期（value 里存过期时间，异步刷新）。缓存雪崩：大量 key 集中过期或 Redis 挂掉。方案：过期时间加随机值分散、多级缓存（本地 + 远程）、Redis 高可用（主从/集群）。\n\n扩展延伸：布隆过滤器原理：多个哈希函数映射到 bit 数组，判断「一定不存在」或「可能存在」。存在误判率（false positive），可通过调整位数组大小和哈希函数数量控制。Google Guava 的 BloomFilter 可算最优参数。",
-    "hints": [
-      "布隆过滤器为什么说「一定不存在」和「可能存在」",
-      "互斥锁方案在高并发下性能如何"
-    ],
-    "tags": [
-      "Redis",
-      "缓存",
-      "高并发"
-    ],
-    "options": []
+    id: 58,
+    category: "database",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Redis 缓存穿透、击穿、雪崩",
+    content: "请解释缓存穿透、缓存击穿、缓存雪崩的区别及应对方案。",
+    answer:
+      "答案：穿透→查询不存在数据；击穿→热点 key 过期；雪崩→大量 key 同时过期或 Redis 宕机\n\n解析：缓存穿透：查询的 key 在缓存和 DB 都不存在，请求直接打到 DB。方案：布隆过滤器（Bloom Filter）拦截不存在 key 或缓存空值（短过期时间）。缓存击穿：某一热点 key 过期，高并发全部打到 DB。方案：互斥锁（setnx）保证只有一个线程查 DB 重建缓存；或逻辑过期（value 里存过期时间，异步刷新）。缓存雪崩：大量 key 集中过期或 Redis 挂掉。方案：过期时间加随机值分散、多级缓存（本地 + 远程）、Redis 高可用（主从/集群）。\n\n扩展延伸：布隆过滤器原理：多个哈希函数映射到 bit 数组，判断「一定不存在」或「可能存在」。存在误判率（false positive），可通过调整位数组大小和哈希函数数量控制。Google Guava 的 BloomFilter 可算最优参数。",
+    hints: ["布隆过滤器为什么说「一定不存在」和「可能存在」", "互斥锁方案在高并发下性能如何"],
+    tags: ["Redis", "缓存", "高并发"],
+    options: [],
   },
   {
-    "id": 59,
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL 死锁场景与排查",
-    "content": "描述一个常见的 MySQL 死锁场景，以及如何排查和处理。",
-    "answer": "答案：最常见的是两个事务以不同顺序加锁导致互相等待\n\n解析：场景：事务 A：UPDATE t SET x=1 WHERE id=1 → UPDATE t SET x=2 WHERE id=2。事务 B：UPDATE t SET x=3 WHERE id=2 → UPDATE t SET x=4 WHERE id=1。互相持有对方需要的锁。排查：SHOW ENGINE INNODB STATUS 查看 LATEST DETECTED DEADLOCK 部分，输出中会显示两个事务各自持有和等待的锁。\n\n扩展延伸：InnoDB 自动检测死锁并使其中一个事务回滚（代价更小者）。预防策略 1）所有事务以相同顺序访问资源 2）尽量缩短事务时间，减少锁持有 3）合理设置隔离级别 4）使用等值查询而非范围查询（减少间隙锁冲突）。事务中快排查，才是最好的防死锁策略。",
-    "hints": [
-      "SHOW ENGINE INNODB STATUS 的输出怎么看",
-      "为什么等值查询比范围查询更少死锁"
-    ],
-    "tags": [
-      "MySQL",
-      "事务",
-      "排查"
-    ],
-    "options": []
+    id: 59,
+    category: "database",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "MySQL 死锁场景与排查",
+    content: "描述一个常见的 MySQL 死锁场景，以及如何排查和处理。",
+    answer:
+      "答案：最常见的是两个事务以不同顺序加锁导致互相等待\n\n解析：场景：事务 A：UPDATE t SET x=1 WHERE id=1 → UPDATE t SET x=2 WHERE id=2。事务 B：UPDATE t SET x=3 WHERE id=2 → UPDATE t SET x=4 WHERE id=1。互相持有对方需要的锁。排查：SHOW ENGINE INNODB STATUS 查看 LATEST DETECTED DEADLOCK 部分，输出中会显示两个事务各自持有和等待的锁。\n\n扩展延伸：InnoDB 自动检测死锁并使其中一个事务回滚（代价更小者）。预防策略 1）所有事务以相同顺序访问资源 2）尽量缩短事务时间，减少锁持有 3）合理设置隔离级别 4）使用等值查询而非范围查询（减少间隙锁冲突）。事务中快排查，才是最好的防死锁策略。",
+    hints: ["SHOW ENGINE INNODB STATUS 的输出怎么看", "为什么等值查询比范围查询更少死锁"],
+    tags: ["MySQL", "事务", "排查"],
+    options: [],
   },
   {
-    "id": 60,
-    "category": "database",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Redis 持久化机制",
-    "content": "请比较 Redis 的 RDB 和 AOF 持久化方式，各自优缺点和适用场景。",
-    "answer": "答案：RDB 是快照，AOF 是追加写日志\n\n解析：RDB 定期将内存数据 dump 到磁盘，文件紧凑适合备份和全量恢复。缺点是宕机可能丢失上次快照后的数据，fork 子进程进行 BGSAVE 时如果数据量大可能耗时。AOF 记录每次写命令，数据安全度高（可配 always 每秒），文件可重写压缩。缺点是文件通常比 RDB 大，恢复速度比 RDB 慢。\n\n扩展延伸：Redis 4.0 起支持混合持久化——RDB 做全量快照 + 增量 AOF 日志，既保证重启快速加载，又保证数据安全性。生产建议：开启混合持久化，同时配置 AOF fsync 每秒一次。主从复制中从节点也建议开启持久化，但应优先保证主节点性能。",
-    "hints": [
-      "RDB 的 BGSAVE 和 COW（写时复制）原理",
-      "AOF 重写（rewrite）做了什么"
-    ],
-    "tags": [
-      "Redis",
-      "基础"
-    ],
-    "options": []
+    id: 60,
+    category: "database",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Redis 持久化机制",
+    content: "请比较 Redis 的 RDB 和 AOF 持久化方式，各自优缺点和适用场景。",
+    answer:
+      "答案：RDB 是快照，AOF 是追加写日志\n\n解析：RDB 定期将内存数据 dump 到磁盘，文件紧凑适合备份和全量恢复。缺点是宕机可能丢失上次快照后的数据，fork 子进程进行 BGSAVE 时如果数据量大可能耗时。AOF 记录每次写命令，数据安全度高（可配 always 每秒），文件可重写压缩。缺点是文件通常比 RDB 大，恢复速度比 RDB 慢。\n\n扩展延伸：Redis 4.0 起支持混合持久化——RDB 做全量快照 + 增量 AOF 日志，既保证重启快速加载，又保证数据安全性。生产建议：开启混合持久化，同时配置 AOF fsync 每秒一次。主从复制中从节点也建议开启持久化，但应优先保证主节点性能。",
+    hints: ["RDB 的 BGSAVE 和 COW（写时复制）原理", "AOF 重写（rewrite）做了什么"],
+    tags: ["Redis", "基础"],
+    options: [],
   },
   {
-    "id": 61,
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "分库分表策略",
-    "content": "什么时候需要分库分表？分片键如何选择？分页/跨分片查询怎么处理？",
-    "answer": "答案：单表数据量过大（MySQL 建议不超过千万级）或 QPS 过高时考虑分库分表\n\n解析：分库分表策略 1）垂直分库：按业务模块拆分（用户库/订单库）2）水平分表：同结构多表，按分片键取模或范围。分片键选择原则：业务最常用的查询条件（用户 ID 或订单 ID），保证大多数查询路由到单一分片。跨分片查询：尽量避免（违背分片初衷），可通过全局表（字典类数据不改动）+ 冗余字段（如订单表存用户名避免 join）。\n\n扩展延伸：分页难题 a）全局排序后取 offset+N → 各分片查 offset+N 条再归并，性能差 b）业务妥协：禁止深度分页、只用游标分页（WHERE id > last_id LIMIT 10）。常用中间件：ShardingSphere、MyCat。更现代的方案：TiDB（分布式 NewSQL）自动分片，对应用透明。",
-    "hints": [
-      "分片键为什么选用户 ID 或订单 ID",
-      "分布式 ID 生成方案有哪些（雪花算法）"
-    ],
-    "tags": [
-      "MySQL",
-      "分布式",
-      "架构"
-    ],
-    "options": []
+    id: 61,
+    category: "database",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "分库分表策略",
+    content: "什么时候需要分库分表？分片键如何选择？分页/跨分片查询怎么处理？",
+    answer:
+      "答案：单表数据量过大（MySQL 建议不超过千万级）或 QPS 过高时考虑分库分表\n\n解析：分库分表策略 1）垂直分库：按业务模块拆分（用户库/订单库）2）水平分表：同结构多表，按分片键取模或范围。分片键选择原则：业务最常用的查询条件（用户 ID 或订单 ID），保证大多数查询路由到单一分片。跨分片查询：尽量避免（违背分片初衷），可通过全局表（字典类数据不改动）+ 冗余字段（如订单表存用户名避免 join）。\n\n扩展延伸：分页难题 a）全局排序后取 offset+N → 各分片查 offset+N 条再归并，性能差 b）业务妥协：禁止深度分页、只用游标分页（WHERE id > last_id LIMIT 10）。常用中间件：ShardingSphere、MyCat。更现代的方案：TiDB（分布式 NewSQL）自动分片，对应用透明。",
+    hints: ["分片键为什么选用户 ID 或订单 ID", "分布式 ID 生成方案有哪些（雪花算法）"],
+    tags: ["MySQL", "分布式", "架构"],
+    options: [],
   },
   {
-    "id": 62,
-    "category": "database",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "MySQL InnoDB 中的聚簇索引",
-    "content": "关于 MySQL InnoDB 的聚簇索引（Clustered Index），以下哪个说法是正确的？",
-    "answer": "答案：B) 聚簇索引的叶子节点存储整行数据\n\n解析：InnoDB 的聚簇索引（主键索引）叶子节点直接存储整行数据，因此通过主键查询只需一次 B+ 树查找即可拿到完整数据。每张表只能有一个聚簇索引（数据物理排列方式只能有一种）。如果不指定主键，InnoDB 会选第一个 UNIQUE NOT NULL 列作为聚簇索引，如果没有则自动生成隐藏的 ROW_ID。\n\n扩展延伸：二级索引（非聚簇索引）的叶子节点存储主键值，通过二级索引查询需要「回表」——先查到主键再到聚簇索引查完整数据。覆盖索引就是在二级索引中已包含查询所需的所有字段，避免了回表。",
-    "hints": [
-      "为什么一张表只能有一个聚簇索引",
-      "回表查询是什么意思"
-    ],
-    "tags": [
-      "MySQL",
-      "索引"
-    ],
-    "options": [
+    id: 62,
+    category: "database",
+    difficulty: "medium",
+    type: "choice",
+    title: "MySQL InnoDB 中的聚簇索引",
+    content: "关于 MySQL InnoDB 的聚簇索引（Clustered Index），以下哪个说法是正确的？",
+    answer:
+      "答案：B) 聚簇索引的叶子节点存储整行数据\n\n解析：InnoDB 的聚簇索引（主键索引）叶子节点直接存储整行数据，因此通过主键查询只需一次 B+ 树查找即可拿到完整数据。每张表只能有一个聚簇索引（数据物理排列方式只能有一种）。如果不指定主键，InnoDB 会选第一个 UNIQUE NOT NULL 列作为聚簇索引，如果没有则自动生成隐藏的 ROW_ID。\n\n扩展延伸：二级索引（非聚簇索引）的叶子节点存储主键值，通过二级索引查询需要「回表」——先查到主键再到聚簇索引查完整数据。覆盖索引就是在二级索引中已包含查询所需的所有字段，避免了回表。",
+    hints: ["为什么一张表只能有一个聚簇索引", "回表查询是什么意思"],
+    tags: ["MySQL", "索引"],
+    options: [
       "A) 每张表可以有多个聚簇索引",
       "B) 聚簇索引的叶子节点存储整行数据",
       "C) 聚簇索引默认使用 B 树而非 B+ 树",
-      "D) 不指定主键时 InnoDB 不会创建聚簇索引"
-    ]
+      "D) 不指定主键时 InnoDB 不会创建聚簇索引",
+    ],
   },
   {
-    "id": 63,
-    "category": "database",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "Redis 的过期删除策略",
-    "content": "Redis 对已过期的 key 使用什么策略来删除？",
-    "answer": "答案：B) 惰性删除 + 定期删除\n\n解析：Redis 采用两种策略结合：定期删除（每 100ms 随机抽取部分设置了过期时间的 key 检查并删除）和惰性删除（访问 key 时检查是否过期，过期则删除）。定期删除避免集中扫描全库造成卡顿，惰性删除兜底避免过期 key 长期占用内存。\n\n扩展延伸：即使有两种策略，当大量 key 同时过期而删除不及时，Redis 内存可能被写满。此时 Redis 的内存淘汰策略（eviction）生效：noeviction（默认，写入返回错误）、allkeys-lru（淘汰最近最少用）、volatile-ttl（淘汰剩余 TTL 最短的）等。生产推荐 allkeys-lru 或 allkeys-lfu。",
-    "hints": [
-      "定期删除为什么不是定时遍历全部 key",
-      "内存淘汰策略和过期删除策略的区别"
-    ],
-    "tags": [
-      "Redis",
-      "缓存"
-    ],
-    "options": [
+    id: 63,
+    category: "database",
+    difficulty: "medium",
+    type: "choice",
+    title: "Redis 的过期删除策略",
+    content: "Redis 对已过期的 key 使用什么策略来删除？",
+    answer:
+      "答案：B) 惰性删除 + 定期删除\n\n解析：Redis 采用两种策略结合：定期删除（每 100ms 随机抽取部分设置了过期时间的 key 检查并删除）和惰性删除（访问 key 时检查是否过期，过期则删除）。定期删除避免集中扫描全库造成卡顿，惰性删除兜底避免过期 key 长期占用内存。\n\n扩展延伸：即使有两种策略，当大量 key 同时过期而删除不及时，Redis 内存可能被写满。此时 Redis 的内存淘汰策略（eviction）生效：noeviction（默认，写入返回错误）、allkeys-lru（淘汰最近最少用）、volatile-ttl（淘汰剩余 TTL 最短的）等。生产推荐 allkeys-lru 或 allkeys-lfu。",
+    hints: ["定期删除为什么不是定时遍历全部 key", "内存淘汰策略和过期删除策略的区别"],
+    tags: ["Redis", "缓存"],
+    options: [
       "A) 定时删除，每隔 100ms 扫描全部 key",
       "B) 惰性删除 + 定期删除",
       "C) 只靠惰性删除，访问时检查",
-      "D) 当内存满时一次性全部删除过期 key"
-    ]
+      "D) 当内存满时一次性全部删除过期 key",
+    ],
   },
   {
-    "id": 64,
-    "category": "database",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "SQL 中 JOIN 查询的类型",
-    "content": "以下哪个 SQL JOIN 会返回左表中所有记录以及右表中匹配的记录？",
-    "answer": "答案：B) LEFT JOIN（LEFT OUTER JOIN）\n\n解析：LEFT JOIN 保留左表全部记录，右表无匹配时返回 NULL。INNER JOIN 只返回两表匹配的记录。RIGHT JOIN 保留右表全部。FULL OUTER JOIN 保留两表全部记录。MySQL 不支持 FULL OUTER JOIN，可通过 LEFT JOIN + UNION + RIGHT JOIN 模拟。\n\n扩展延伸：在 SQL 优化中，应优先使用 INNER JOIN（结果集最小，扫描数据少）。LEFT JOIN 要确保右表关联字段有索引，否则全表扫描性能极差。注意：LEFT JOIN 加上 WHERE 右表字段非空条件会隐式转为 INNER JOIN——因为 NULL 比较永远为 FALSE。",
-    "hints": [
-      "LEFT JOIN 加上 WHERE 右表 IS NOT NULL 会怎样",
-      "MySQL 为什么不支持 FULL OUTER JOIN"
-    ],
-    "tags": [
-      "MySQL",
-      "SQL"
-    ],
-    "options": [
-      "A) INNER JOIN",
-      "B) LEFT JOIN",
-      "C) RIGHT JOIN",
-      "D) FULL OUTER JOIN"
-    ]
+    id: 64,
+    category: "database",
+    difficulty: "easy",
+    type: "choice",
+    title: "SQL 中 JOIN 查询的类型",
+    content: "以下哪个 SQL JOIN 会返回左表中所有记录以及右表中匹配的记录？",
+    answer:
+      "答案：B) LEFT JOIN（LEFT OUTER JOIN）\n\n解析：LEFT JOIN 保留左表全部记录，右表无匹配时返回 NULL。INNER JOIN 只返回两表匹配的记录。RIGHT JOIN 保留右表全部。FULL OUTER JOIN 保留两表全部记录。MySQL 不支持 FULL OUTER JOIN，可通过 LEFT JOIN + UNION + RIGHT JOIN 模拟。\n\n扩展延伸：在 SQL 优化中，应优先使用 INNER JOIN（结果集最小，扫描数据少）。LEFT JOIN 要确保右表关联字段有索引，否则全表扫描性能极差。注意：LEFT JOIN 加上 WHERE 右表字段非空条件会隐式转为 INNER JOIN——因为 NULL 比较永远为 FALSE。",
+    hints: ["LEFT JOIN 加上 WHERE 右表 IS NOT NULL 会怎样", "MySQL 为什么不支持 FULL OUTER JOIN"],
+    tags: ["MySQL", "SQL"],
+    options: ["A) INNER JOIN", "B) LEFT JOIN", "C) RIGHT JOIN", "D) FULL OUTER JOIN"],
   },
   {
-    "id": 65,
-    "category": "database",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "Redis 单线程模型",
-    "content": "Redis 在 6.0 版本后完全改为多线程模型，所有操作都由多线程执行。",
-    "answer": "答案：错误\n\n解析：Redis 6.0 引入了多线程 IO（网络读写由多线程处理），但核心的命令执行（命令解析、数据操作）仍然是单线程的。多线程 IO 解决了网络读写瓶颈（大报文收发），而核心操作保持单线程避免了并发竞争问题。Redis 7.0 进一步优化了多线程 IO 的效率和灵活性。\n\n扩展延伸：Redis 单线程模型为什么快？1）纯内存操作 2）IO 多路复用（epoll）3）避免线程切换和锁竞争。即使核心是单线程，单个 key 的操作过长（如 KEYS、HGETALL 大 hash）会阻塞其他请求。Redis 6/7 的多线程 IO 默认关闭（io-threads-do-reads no），需手动配置启用。",
-    "hints": [
-      "Redis 6.0 到底哪些部分变成多线程了",
-      "单线程模型为什么 redis 性能仍然很高"
-    ],
-    "tags": [
-      "Redis",
-      "基础"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 65,
+    category: "database",
+    difficulty: "easy",
+    type: "true_false",
+    title: "Redis 单线程模型",
+    content: "Redis 在 6.0 版本后完全改为多线程模型，所有操作都由多线程执行。",
+    answer:
+      "答案：错误\n\n解析：Redis 6.0 引入了多线程 IO（网络读写由多线程处理），但核心的命令执行（命令解析、数据操作）仍然是单线程的。多线程 IO 解决了网络读写瓶颈（大报文收发），而核心操作保持单线程避免了并发竞争问题。Redis 7.0 进一步优化了多线程 IO 的效率和灵活性。\n\n扩展延伸：Redis 单线程模型为什么快？1）纯内存操作 2）IO 多路复用（epoll）3）避免线程切换和锁竞争。即使核心是单线程，单个 key 的操作过长（如 KEYS、HGETALL 大 hash）会阻塞其他请求。Redis 6/7 的多线程 IO 默认关闭（io-threads-do-reads no），需手动配置启用。",
+    hints: ["Redis 6.0 到底哪些部分变成多线程了", "单线程模型为什么 redis 性能仍然很高"],
+    tags: ["Redis", "基础"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 66,
-    "category": "database",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "数据库索引会降低写入性能",
-    "content": "数据库表中建立的索引越多，数据的插入、更新和删除操作就越慢。",
-    "answer": "答案：正确\n\n解析：索引维护需要额外的开销：INSERT 需要在所有索引中插入新记录，UPDATE 可能涉及索引列的修改（删除旧索引条目 + 插入新条目），DELETE 需要在所有索引中删除对应记录。索引越多，写入操作涉及的索引维护就越多，性能下降越明显。\n\n扩展延伸：索引优化的 trade-off：读多写少的场景可以适当多建索引（覆盖查询），写多读少的场景要严格控制索引数量。常见优化：联合索引代替多个单列索引（减少索引数量同时覆盖多查询条件），冗余索引清理（如已有 (a,b) 联合索引则不需要单独的 a 索引）。",
-    "hints": [
-      "索引维护在写入时具体做了哪些操作",
-      "联合索引和最左前缀原则"
-    ],
-    "tags": [
-      "MySQL",
-      "索引"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 66,
+    category: "database",
+    difficulty: "easy",
+    type: "true_false",
+    title: "数据库索引会降低写入性能",
+    content: "数据库表中建立的索引越多，数据的插入、更新和删除操作就越慢。",
+    answer:
+      "答案：正确\n\n解析：索引维护需要额外的开销：INSERT 需要在所有索引中插入新记录，UPDATE 可能涉及索引列的修改（删除旧索引条目 + 插入新条目），DELETE 需要在所有索引中删除对应记录。索引越多，写入操作涉及的索引维护就越多，性能下降越明显。\n\n扩展延伸：索引优化的 trade-off：读多写少的场景可以适当多建索引（覆盖查询），写多读少的场景要严格控制索引数量。常见优化：联合索引代替多个单列索引（减少索引数量同时覆盖多查询条件），冗余索引清理（如已有 (a,b) 联合索引则不需要单独的 a 索引）。",
+    hints: ["索引维护在写入时具体做了哪些操作", "联合索引和最左前缀原则"],
+    tags: ["MySQL", "索引"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 67,
-    "category": "devops",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Dockerfile 最佳实践",
-    "content": "编写 Dockerfile 时有哪些最佳实践可以减小镜像体积和提升构建速度？",
-    "answer": "答案：多阶段构建 + 合理利用缓存 + 精简基础镜像\n\n解析：1）多阶段构建：构建阶段用完整 SDK 镜像，运行阶段用 slim/JRE 镜像拷贝产物。2）利用构建缓存：先 COPY package.json 安装依赖（依赖变更频率低），再 COPY 源码（变更频繁），这样不改依赖时缓存生效。3）基础镜像选择：alpine（5MB）或 slim（常 100MB），避免用 full 镜像。4）合并 RUN 命令减少层数，清理 apt/apk 缓存。\n\n扩展延伸：优化效果示例：多阶段构建前 1.2GB → 构建后 120MB。推荐工具：Dive（分析镜像每层空间占用）、docker-slim（自动收缩镜像）。安全建议：不以 root 用户运行（RUN adduser -D app && USER app）、使用可信基础镜像、定期扫描漏洞（Trivy/Snyk）。",
-    "hints": [
-      "Docker 镜像的层（Layer）是怎么产生的",
-      "为什么 alpine 镜像更小但可能有兼容问题"
-    ],
-    "tags": [
-      "Docker",
-      "容器"
-    ],
-    "options": []
+    id: 67,
+    category: "devops",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Dockerfile 最佳实践",
+    content: "编写 Dockerfile 时有哪些最佳实践可以减小镜像体积和提升构建速度？",
+    answer:
+      "答案：多阶段构建 + 合理利用缓存 + 精简基础镜像\n\n解析：1）多阶段构建：构建阶段用完整 SDK 镜像，运行阶段用 slim/JRE 镜像拷贝产物。2）利用构建缓存：先 COPY package.json 安装依赖（依赖变更频率低），再 COPY 源码（变更频繁），这样不改依赖时缓存生效。3）基础镜像选择：alpine（5MB）或 slim（常 100MB），避免用 full 镜像。4）合并 RUN 命令减少层数，清理 apt/apk 缓存。\n\n扩展延伸：优化效果示例：多阶段构建前 1.2GB → 构建后 120MB。推荐工具：Dive（分析镜像每层空间占用）、docker-slim（自动收缩镜像）。安全建议：不以 root 用户运行（RUN adduser -D app && USER app）、使用可信基础镜像、定期扫描漏洞（Trivy/Snyk）。",
+    hints: ["Docker 镜像的层（Layer）是怎么产生的", "为什么 alpine 镜像更小但可能有兼容问题"],
+    tags: ["Docker", "容器"],
+    options: [],
   },
   {
-    "id": 68,
-    "category": "devops",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Docker Compose vs Kubernetes",
-    "content": "对比 Docker Compose 和 Kubernetes 的使用场景和核心差异。",
-    "answer": "答案：Compose 适合单机多容器编排，K8s 适合集群级容器编排\n\n解析：Docker Compose 通过 YAML 定义多服务（前端/后端/数据库），docker compose up 一键启动，适合本地开发和小项目。Kubernetes 管理集群（多节点），自动调度、服务发现、自动扩缩容、滚动更新、自愈。学习曲线陡，运维成本高。\n\n扩展延伸：什么样的规模需要 K8s？建议标准：超过 5 个微服务、需要自动扩缩容、需要灰度发布/蓝绿部署、跨多台机器。K8s 核心概念：Pod（最小调度单位）、Deployment（声明式更新）、Service（服务发现和负载均衡）、ConfigMap/Secret（配置管理）、Ingress（外部访问入口）。",
-    "hints": [
-      "Pod 和 Deployment 的关系",
-      "Service 的 ClusterIP/NodePort/LoadBalancer 三种类型"
-    ],
-    "tags": [
-      "Docker",
-      "K8s",
-      "容器"
-    ],
-    "options": []
+    id: 68,
+    category: "devops",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Docker Compose vs Kubernetes",
+    content: "对比 Docker Compose 和 Kubernetes 的使用场景和核心差异。",
+    answer:
+      "答案：Compose 适合单机多容器编排，K8s 适合集群级容器编排\n\n解析：Docker Compose 通过 YAML 定义多服务（前端/后端/数据库），docker compose up 一键启动，适合本地开发和小项目。Kubernetes 管理集群（多节点），自动调度、服务发现、自动扩缩容、滚动更新、自愈。学习曲线陡，运维成本高。\n\n扩展延伸：什么样的规模需要 K8s？建议标准：超过 5 个微服务、需要自动扩缩容、需要灰度发布/蓝绿部署、跨多台机器。K8s 核心概念：Pod（最小调度单位）、Deployment（声明式更新）、Service（服务发现和负载均衡）、ConfigMap/Secret（配置管理）、Ingress（外部访问入口）。",
+    hints: ["Pod 和 Deployment 的关系", "Service 的 ClusterIP/NodePort/LoadBalancer 三种类型"],
+    tags: ["Docker", "K8s", "容器"],
+    options: [],
   },
   {
-    "id": 69,
-    "category": "devops",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "CI/CD 流水线设计",
-    "content": "请设计一个 Java 项目的 CI/CD 流水线，包含代码提交到生产部署的完整流程。",
-    "answer": "答案：代码提交 → 自动构建 → 自动测试 → 构建镜像 → 部署到测试环境 → 验收 → 灰度发布 → 生产\n\n解析：完整流水线 1）代码提交触发 CI（push/PR）2）代码检查：Lint + 单元测试 + 集成测试 3）构建和打包：Maven/Gradle 编译、Docker 构建镜像 4）推送到镜像仓库（Docker Hub/Harbor）5）部署到测试/预发环境 6）自动化测试（接口/UI）7）人工验收（可选）8）灰度发布（金丝雀部署，先 1% 流量）9）全量上线。\n\n扩展延伸：质量门禁：测试覆盖率低于 80% 阻断、SonarQube 代码质量检测阻断、安全扫描（SAST/DAST）。回滚策略：K8s 天然支持滚动回滚（kubectl rollout undo）。版本管理：GitFlow 或 Trunk-Based，镜像 tag 使用 git commit SHA（可追溯）。",
-    "hints": [
-      "蓝绿部署和金丝雀部署的区别",
-      "CI 和 CD 的分界点在哪里"
-    ],
-    "tags": [
-      "CI/CD",
-      "DevOps"
-    ],
-    "options": []
+    id: 69,
+    category: "devops",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "CI/CD 流水线设计",
+    content: "请设计一个 Java 项目的 CI/CD 流水线，包含代码提交到生产部署的完整流程。",
+    answer:
+      "答案：代码提交 → 自动构建 → 自动测试 → 构建镜像 → 部署到测试环境 → 验收 → 灰度发布 → 生产\n\n解析：完整流水线 1）代码提交触发 CI（push/PR）2）代码检查：Lint + 单元测试 + 集成测试 3）构建和打包：Maven/Gradle 编译、Docker 构建镜像 4）推送到镜像仓库（Docker Hub/Harbor）5）部署到测试/预发环境 6）自动化测试（接口/UI）7）人工验收（可选）8）灰度发布（金丝雀部署，先 1% 流量）9）全量上线。\n\n扩展延伸：质量门禁：测试覆盖率低于 80% 阻断、SonarQube 代码质量检测阻断、安全扫描（SAST/DAST）。回滚策略：K8s 天然支持滚动回滚（kubectl rollout undo）。版本管理：GitFlow 或 Trunk-Based，镜像 tag 使用 git commit SHA（可追溯）。",
+    hints: ["蓝绿部署和金丝雀部署的区别", "CI 和 CD 的分界点在哪里"],
+    tags: ["CI/CD", "DevOps"],
+    options: [],
   },
   {
-    "id": 70,
-    "category": "devops",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Docker 网络模式",
-    "content": "请说明 Docker 的几种网络模式及各自适用场景。",
-    "answer": "答案：bridge/host/none/overlay 四种主要模式\n\n解析：bridge（默认）：Docker 网桥（docker0），容器分配独立 IP 通过 NAT 对外通信，容器间可通过 IP 或 --link 通信，适合单机多容器。host：容器直接使用宿主机网络栈，无独立 IP，性能好但端口隔离差，适合网络性能敏感场景。none：容器无网络能力，用于安全隔离或自定义网络。overlay：跨宿主机容器通信（Swarm/K8s 使用），通过 VXLAN 隧道实现。\n\n扩展延伸：Docker Compose 默认创建自定义 bridge 网络，支持 DNS 解析（服务名直接访问），比默认 bridge 多自动服务发现功能。常用：docker network create -d overlay mynet 创建 overlay 网络。端口映射 docker run -p 8080:80，底层是 iptables DNAT 规则。",
-    "hints": [
-      "docker run -p 8080:80 底层做了什么",
-      "host 模式为什么性能更好"
-    ],
-    "tags": [
-      "Docker",
-      "网络"
-    ],
-    "options": []
+    id: 70,
+    category: "devops",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Docker 网络模式",
+    content: "请说明 Docker 的几种网络模式及各自适用场景。",
+    answer:
+      "答案：bridge/host/none/overlay 四种主要模式\n\n解析：bridge（默认）：Docker 网桥（docker0），容器分配独立 IP 通过 NAT 对外通信，容器间可通过 IP 或 --link 通信，适合单机多容器。host：容器直接使用宿主机网络栈，无独立 IP，性能好但端口隔离差，适合网络性能敏感场景。none：容器无网络能力，用于安全隔离或自定义网络。overlay：跨宿主机容器通信（Swarm/K8s 使用），通过 VXLAN 隧道实现。\n\n扩展延伸：Docker Compose 默认创建自定义 bridge 网络，支持 DNS 解析（服务名直接访问），比默认 bridge 多自动服务发现功能。常用：docker network create -d overlay mynet 创建 overlay 网络。端口映射 docker run -p 8080:80，底层是 iptables DNAT 规则。",
+    hints: ["docker run -p 8080:80 底层做了什么", "host 模式为什么性能更好"],
+    tags: ["Docker", "网络"],
+    options: [],
   },
   {
-    "id": 71,
-    "category": "devops",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "K8s Pod 的生命周期",
-    "content": "请描述 Kubernetes Pod 的状态流转和探针（Probe）机制。",
-    "answer": "答案：Pod 状态：Pending → Running → Succeeded/Failed，探针决定 Pod 是否健康\n\n解析：Pod 生命周期：Pending（调度中/拉取镜像）→ Running（至少一个容器运行）→ Succeeded（任务完成）→ Failed（出错退出）。未知状态（Unknown）意味着与节点通信失败。三种探针：livenessProbe（存活—检测容器是否运行，失败则重启）、readinessProbe（就绪—检测是否能接受流量，失败则从 Service 摘除）、startupProbe（启动—给慢启动应用缓冲时间）。\n\n扩展延伸：探针配置：initialDelaySeconds（启动后等多久开始检测）、periodSeconds（检测间隔）、timeoutSeconds（超时）。常用检测方式 HTTP GET、TCP Socket、Exec 命令。典型问题：初次启动慢的 Java 应用需 startupProbe 避免被误杀；livenessProbe 不应依赖外部服务（否则外部故障导致容器连环重启）。",
-    "hints": [
-      "restartPolicy 的三个值和各自作用",
-      "liveness 和 readiness 探针都失败时行为有什么不同"
-    ],
-    "tags": [
-      "K8s",
-      "容器"
-    ],
-    "options": []
+    id: 71,
+    category: "devops",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "K8s Pod 的生命周期",
+    content: "请描述 Kubernetes Pod 的状态流转和探针（Probe）机制。",
+    answer:
+      "答案：Pod 状态：Pending → Running → Succeeded/Failed，探针决定 Pod 是否健康\n\n解析：Pod 生命周期：Pending（调度中/拉取镜像）→ Running（至少一个容器运行）→ Succeeded（任务完成）→ Failed（出错退出）。未知状态（Unknown）意味着与节点通信失败。三种探针：livenessProbe（存活—检测容器是否运行，失败则重启）、readinessProbe（就绪—检测是否能接受流量，失败则从 Service 摘除）、startupProbe（启动—给慢启动应用缓冲时间）。\n\n扩展延伸：探针配置：initialDelaySeconds（启动后等多久开始检测）、periodSeconds（检测间隔）、timeoutSeconds（超时）。常用检测方式 HTTP GET、TCP Socket、Exec 命令。典型问题：初次启动慢的 Java 应用需 startupProbe 避免被误杀；livenessProbe 不应依赖外部服务（否则外部故障导致容器连环重启）。",
+    hints: ["restartPolicy 的三个值和各自作用", "liveness 和 readiness 探针都失败时行为有什么不同"],
+    tags: ["K8s", "容器"],
+    options: [],
   },
   {
-    "id": 72,
-    "category": "devops",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "监控告警体系设计",
-    "content": "如何为一个线上服务设计监控告警体系？常用的指标和工具有哪些？",
-    "answer": "答案：四类黄金指标 + Prometheus + Grafana + 告警通道\n\n解析：Google SRE 四类黄金信号：1）延迟（Latency）— 接口 P99/P95/P50 响应时间 2）流量（Traffic）— QPS/TPS 3）错误（Errors）— HTTP 5xx、业务错误码 4）饱和度（Saturation）— CPU/内存/磁盘/连接池使用率。工具链：Prometheus（指标采集 + 存储）→ Grafana（可视化）→ AlertManager（告警管理）→ 飞书/钉钉/邮件（通知）。\n\n扩展延伸：告警策略核心原则 1）不要告警」机器 CPU 高了」，要告警」业务受损了」（如 P99 延迟 > 5s）2）没有对应的处理动作就不要告警 3）设置告警静默期避免告警风暴 4）用」多窗口」检测（连续 N 次超过阈值才告警，避免抖动）。SLA/SLO 的制定：以用户感知为准，而非基础设施指标。",
-    "hints": [
+    id: 72,
+    category: "devops",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "监控告警体系设计",
+    content: "如何为一个线上服务设计监控告警体系？常用的指标和工具有哪些？",
+    answer:
+      "答案：四类黄金指标 + Prometheus + Grafana + 告警通道\n\n解析：Google SRE 四类黄金信号：1）延迟（Latency）— 接口 P99/P95/P50 响应时间 2）流量（Traffic）— QPS/TPS 3）错误（Errors）— HTTP 5xx、业务错误码 4）饱和度（Saturation）— CPU/内存/磁盘/连接池使用率。工具链：Prometheus（指标采集 + 存储）→ Grafana（可视化）→ AlertManager（告警管理）→ 飞书/钉钉/邮件（通知）。\n\n扩展延伸：告警策略核心原则 1）不要告警」机器 CPU 高了」，要告警」业务受损了」（如 P99 延迟 > 5s）2）没有对应的处理动作就不要告警 3）设置告警静默期避免告警风暴 4）用」多窗口」检测（连续 N 次超过阈值才告警，避免抖动）。SLA/SLO 的制定：以用户感知为准，而非基础设施指标。",
+    hints: [
       "P99 延迟和平均延迟的差异",
-      "什么是指标（Metrics）、日志（Logs）、链路（Traces）三支柱"
+      "什么是指标（Metrics）、日志（Logs）、链路（Traces）三支柱",
     ],
-    "tags": [
-      "监控",
-      "可观测性"
-    ],
-    "options": []
+    tags: ["监控", "可观测性"],
+    options: [],
   },
   {
-    "id": 73,
-    "category": "devops",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "K8s 排障实战",
-    "content": "K8s 中 Pod 一直处于 Pending/CrashLoopBackOff/ImagePullBackOff 状态，分别是什么原因？怎么排查？",
-    "answer": "答案：Pending→资源不足或调度失败，CrashLoop→容器启动后立即崩溃，ImagePull→镜像拉取失败\n\n解析：Pending：kubectl describe pod 查看 Events。常见原因：节点 CPU/内存不足、PVC 不可用、NodeSelector/Affinity 不匹配、节点有 taints（污点）。CrashLoopBackOff：kubectl logs pod 查看容器日志，kubectl logs --previous pod 查看前一次崩溃日志。常见原因：应用启动即抛异常、配置错误、健康检查探针配置不合理。ImagePullBackOff：检查镜像名和 tag、镜像仓库认证（imagePullSecrets）、仓库地址是否可达。\n\n扩展延伸：实用调试命令：kubectl exec -it pod -- sh（进入容器排查）、kubectl port-forward pod 8080:8080（端口转发本地调试）、kubectl get events --sort-by='.lastTimestamp'（按时间排序事件）。高级：临时 Pod 调试 kubectl debug node/node-name（K8s 1.20+）。",
-    "hints": [
-      "kubectl describe pod 和 kubectl logs 分别看什么",
-      "CrashLoopBackOff 的重启间隔策略"
-    ],
-    "tags": [
-      "K8s",
-      "排查"
-    ],
-    "options": []
+    id: 73,
+    category: "devops",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "K8s 排障实战",
+    content:
+      "K8s 中 Pod 一直处于 Pending/CrashLoopBackOff/ImagePullBackOff 状态，分别是什么原因？怎么排查？",
+    answer:
+      "答案：Pending→资源不足或调度失败，CrashLoop→容器启动后立即崩溃，ImagePull→镜像拉取失败\n\n解析：Pending：kubectl describe pod 查看 Events。常见原因：节点 CPU/内存不足、PVC 不可用、NodeSelector/Affinity 不匹配、节点有 taints（污点）。CrashLoopBackOff：kubectl logs pod 查看容器日志，kubectl logs --previous pod 查看前一次崩溃日志。常见原因：应用启动即抛异常、配置错误、健康检查探针配置不合理。ImagePullBackOff：检查镜像名和 tag、镜像仓库认证（imagePullSecrets）、仓库地址是否可达。\n\n扩展延伸：实用调试命令：kubectl exec -it pod -- sh（进入容器排查）、kubectl port-forward pod 8080:8080（端口转发本地调试）、kubectl get events --sort-by='.lastTimestamp'（按时间排序事件）。高级：临时 Pod 调试 kubectl debug node/node-name（K8s 1.20+）。",
+    hints: ["kubectl describe pod 和 kubectl logs 分别看什么", "CrashLoopBackOff 的重启间隔策略"],
+    tags: ["K8s", "排查"],
+    options: [],
   },
   {
-    "id": 74,
-    "category": "devops",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Git 工作流对比",
-    "content": "请对比 GitFlow、GitHub Flow、Trunk-Based Development 三种 Git 工作流。",
-    "answer": "答案：GitFlow 适合有版本发布节奏的项目，GitHub Flow 适合持续部署，Trunk-Based 适合 CI/CD 成熟度高的团队\n\n解析：GitFlow：main + develop + feature/hotfix/release 分支，每个 release 从 develop 切出，合入 main 和 develop。结构严谨但分支复杂，不适合每天多次部署。GitHub Flow：只有一个 main 分支，功能分支短命，提交 PR → review → merge → 立即部署。简单但要求 CI 完善和快速发布。Trunk-Based：所有人直接向主干提交（短特性分支 < 1 天），通过 Feature Flag 控制未完成功能上线。最大程度减少 merge 冲突和最简 CI/CD 路径。\n\n扩展延伸：选择建议：有固定版本号、需要维护多个版本（如移动端）→ GitFlow；SaaS 产品每天多次部署 → GitHub Flow 或 Trunk-Based。Feature Flag 工具（LaunchDarkly/Unleash）是 Trunk-Based 的核心前提。关键原则：工作流只是手段，目标是减少合并冲突和加快交付速度，不是流程越复杂越「规范」。",
-    "hints": [
+    id: 74,
+    category: "devops",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Git 工作流对比",
+    content: "请对比 GitFlow、GitHub Flow、Trunk-Based Development 三种 Git 工作流。",
+    answer:
+      "答案：GitFlow 适合有版本发布节奏的项目，GitHub Flow 适合持续部署，Trunk-Based 适合 CI/CD 成熟度高的团队\n\n解析：GitFlow：main + develop + feature/hotfix/release 分支，每个 release 从 develop 切出，合入 main 和 develop。结构严谨但分支复杂，不适合每天多次部署。GitHub Flow：只有一个 main 分支，功能分支短命，提交 PR → review → merge → 立即部署。简单但要求 CI 完善和快速发布。Trunk-Based：所有人直接向主干提交（短特性分支 < 1 天），通过 Feature Flag 控制未完成功能上线。最大程度减少 merge 冲突和最简 CI/CD 路径。\n\n扩展延伸：选择建议：有固定版本号、需要维护多个版本（如移动端）→ GitFlow；SaaS 产品每天多次部署 → GitHub Flow 或 Trunk-Based。Feature Flag 工具（LaunchDarkly/Unleash）是 Trunk-Based 的核心前提。关键原则：工作流只是手段，目标是减少合并冲突和加快交付速度，不是流程越复杂越「规范」。",
+    hints: [
       "GitFlow 的 release 分支和 hotfix 分支分别用于什么",
-      "Feature Flag 如何帮助团队不用功能分支也能控制上线"
+      "Feature Flag 如何帮助团队不用功能分支也能控制上线",
     ],
-    "tags": [
-      "Git",
-      "工作流"
-    ],
-    "options": []
+    tags: ["Git", "工作流"],
+    options: [],
   },
   {
-    "id": 75,
-    "category": "devops",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "配置管理工具对比",
-    "content": "对比 Ansible、Terraform、Chef/Puppet 的异同和适用场景。",
-    "answer": "答案：Ansible（无 Agent 配置管理）、Terraform（基础设施即代码）、Chef/Puppet（有 Agent 配置管理）\n\n解析：Ansible：基于 SSH（无 Agent），Push 模式，YAML Playbook，适合临时任务和配置管理。学习曲线低，但大规模下速度慢。Terraform：声明式 IaC，管理云资源（AWS/Azure/GCP），HCL 语言，有状态文件（tfstate）。核心是资源编排而非配置管理。Chef/Puppet：基于 Agent，Pull 模式（Agent 从 Server 拉取配置），适合大规模服务器配置管理。Chef 用 Ruby DSL，Puppet 用声明式 DSL，两者都有 Master 架构。\n\n扩展延伸：现代 DevOps 常见组合：Terraform（管基础设施创建）+ Ansible（管服务器初始化配置）+ Packer（构建镜像）+ Helm（管 K8s 应用部署）。Pulumi：新一代 IaC 工具，用通用编程语言（TypeScript/Python/Go）替代 DSL，比 Terraform 更灵活但生态不如成熟。不可变基础设施趋势：不修改运行中的服务器，而是构建新镜像替换——这从根本上改变了配置管理工具的角色。",
-    "hints": [
+    id: 75,
+    category: "devops",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "配置管理工具对比",
+    content: "对比 Ansible、Terraform、Chef/Puppet 的异同和适用场景。",
+    answer:
+      "答案：Ansible（无 Agent 配置管理）、Terraform（基础设施即代码）、Chef/Puppet（有 Agent 配置管理）\n\n解析：Ansible：基于 SSH（无 Agent），Push 模式，YAML Playbook，适合临时任务和配置管理。学习曲线低，但大规模下速度慢。Terraform：声明式 IaC，管理云资源（AWS/Azure/GCP），HCL 语言，有状态文件（tfstate）。核心是资源编排而非配置管理。Chef/Puppet：基于 Agent，Pull 模式（Agent 从 Server 拉取配置），适合大规模服务器配置管理。Chef 用 Ruby DSL，Puppet 用声明式 DSL，两者都有 Master 架构。\n\n扩展延伸：现代 DevOps 常见组合：Terraform（管基础设施创建）+ Ansible（管服务器初始化配置）+ Packer（构建镜像）+ Helm（管 K8s 应用部署）。Pulumi：新一代 IaC 工具，用通用编程语言（TypeScript/Python/Go）替代 DSL，比 Terraform 更灵活但生态不如成熟。不可变基础设施趋势：不修改运行中的服务器，而是构建新镜像替换——这从根本上改变了配置管理工具的角色。",
+    hints: [
       "Terraform 的 desired state 和 current state 如何同步",
-      "Push 模式和 Pull 模式各自优缺点"
+      "Push 模式和 Pull 模式各自优缺点",
     ],
-    "tags": [
-      "IaC",
-      "DevOps",
-      "自动化"
-    ],
-    "options": []
+    tags: ["IaC", "DevOps", "自动化"],
+    options: [],
   },
   {
-    "id": 76,
-    "category": "devops",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Docker 数据卷和数据挂载",
-    "content": "请说明 Docker 中 Volume 和 Bind Mount 的区别及各自适用场景。",
-    "answer": "答案：Volume 由 Docker 管理（推荐），Bind Mount 映射宿主机任意路径\n\n解析：Volume：docker volume create 创建，存储在 /var/lib/docker/volumes/，完全由 Docker 管理。适合持久化数据库数据、在容器间共享数据、备份恢复。Bind Mount：docker run -v /host/path:/container/path 直接映射宿主机路径。权限与宿主机一致，性能略好。适合开发时热重载代码（源码目录挂载进去）、读取宿主机配置文件。\n\n扩展延伸：tmpfs mount：内存中的临时存储（- —tmpfs），不持久化，适合敏感数据（密码/密钥）。数据卷容器：在早期（Compose 普及前）用于在容器间共享数据，目前已少用。docker compose 中 volumes 定义的 named volume 底层就是 Volume。生产建议：数据库等有状态服务用 Volume + 定期备份，开发场景用 Bind Mount。",
-    "hints": [
+    id: 76,
+    category: "devops",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Docker 数据卷和数据挂载",
+    content: "请说明 Docker 中 Volume 和 Bind Mount 的区别及各自适用场景。",
+    answer:
+      "答案：Volume 由 Docker 管理（推荐），Bind Mount 映射宿主机任意路径\n\n解析：Volume：docker volume create 创建，存储在 /var/lib/docker/volumes/，完全由 Docker 管理。适合持久化数据库数据、在容器间共享数据、备份恢复。Bind Mount：docker run -v /host/path:/container/path 直接映射宿主机路径。权限与宿主机一致，性能略好。适合开发时热重载代码（源码目录挂载进去）、读取宿主机配置文件。\n\n扩展延伸：tmpfs mount：内存中的临时存储（- —tmpfs），不持久化，适合敏感数据（密码/密钥）。数据卷容器：在早期（Compose 普及前）用于在容器间共享数据，目前已少用。docker compose 中 volumes 定义的 named volume 底层就是 Volume。生产建议：数据库等有状态服务用 Volume + 定期备份，开发场景用 Bind Mount。",
+    hints: [
       "docker run -v 和 docker compose volumes 的关系",
-      "数据库容器为什么推荐 Volume 而非 Bind Mount"
+      "数据库容器为什么推荐 Volume 而非 Bind Mount",
     ],
-    "tags": [
-      "Docker",
-      "存储"
-    ],
-    "options": []
+    tags: ["Docker", "存储"],
+    options: [],
   },
   {
-    "id": 77,
-    "category": "devops",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "日志收集方案",
-    "content": "设计一套分布式系统的日志收集方案，对比 ELK 和 Loki 的优劣。",
-    "answer": "答案：Filebeat/Fluentd → 集中存储 → 搜索和可视化\n\n解析：ELK（Elasticsearch + Logstash + Kibana）：Logstash 聚合日志写入 ES，Kibana 查询分析。功能强大（全文搜索 + 聚合分析 + 仪表盘），但资源消耗大（ES 吃内存），运维复杂。Loki + Promtail + Grafana：Loki 借鉴 Prometheus 理念，只索引元数据（标签），日志内容不索引。资源消耗小，与 Prometheus 和 Grafana 无缝集成，但查询能力弱于 ES。\n\n扩展延伸：采集方案对比：Filebeat（轻量，Go 实现，ELK 生态）/ Fluentd（Ruby，插件丰富）/ Promtail（Loki 专属）/ Vector（Rust，新一代高性能，支持多输出）。日志治理：设置保存周期（热节点 7 天、冷节点 30 天）、日志级别采样（DEBUG 级别按 1:100 采样）、敏感信息脱敏（密码/身份证正则替换）。注意：日志不是越多越好，T 级日志如果没有索引和治理等于垃圾。",
-    "hints": [
-      "Loki 为什么不索引日志内容",
-      "全量索引（ES）vs 索引元数据（Loki）的各自适用场景"
-    ],
-    "tags": [
-      "日志",
-      "可观测性"
-    ],
-    "options": []
+    id: 77,
+    category: "devops",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "日志收集方案",
+    content: "设计一套分布式系统的日志收集方案，对比 ELK 和 Loki 的优劣。",
+    answer:
+      "答案：Filebeat/Fluentd → 集中存储 → 搜索和可视化\n\n解析：ELK（Elasticsearch + Logstash + Kibana）：Logstash 聚合日志写入 ES，Kibana 查询分析。功能强大（全文搜索 + 聚合分析 + 仪表盘），但资源消耗大（ES 吃内存），运维复杂。Loki + Promtail + Grafana：Loki 借鉴 Prometheus 理念，只索引元数据（标签），日志内容不索引。资源消耗小，与 Prometheus 和 Grafana 无缝集成，但查询能力弱于 ES。\n\n扩展延伸：采集方案对比：Filebeat（轻量，Go 实现，ELK 生态）/ Fluentd（Ruby，插件丰富）/ Promtail（Loki 专属）/ Vector（Rust，新一代高性能，支持多输出）。日志治理：设置保存周期（热节点 7 天、冷节点 30 天）、日志级别采样（DEBUG 级别按 1:100 采样）、敏感信息脱敏（密码/身份证正则替换）。注意：日志不是越多越好，T 级日志如果没有索引和治理等于垃圾。",
+    hints: ["Loki 为什么不索引日志内容", "全量索引（ES）vs 索引元数据（Loki）的各自适用场景"],
+    tags: ["日志", "可观测性"],
+    options: [],
   },
   {
-    "id": 78,
-    "category": "devops",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "蓝绿部署与滚动更新",
-    "content": "请解释蓝绿部署、滚动更新、金丝雀发布三种发布策略的区别。",
-    "answer": "答案：蓝绿部署是两套环境切换，滚动更新是逐步替换，金丝雀是小比例灰度验证\n\n解析：蓝绿部署：维护两套完全相同的环境（蓝=当前在线，绿=新版本）。切换时调整负载均衡流量从蓝切到绿。问题：需要双倍资源、切换瞬间可能有短暂不一致。滚动更新：逐个或逐批替换 Pod（K8s deployment strategy: RollingUpdate）。设置 maxSurge（最多超出多少个新 Pod）和 maxUnavailable（最多允许多少个不可用）。部署过程不中断服务，但回滚慢。金丝雀发布：先让 1%-5% 的流量走新版本，监控指标正常后逐步增加到 100%。与 A/B 测试的区别：金丝雀是验证稳定性，A/B 测试是验证业务效果（转化率等）。\n\n扩展延伸：K8s 中的实现：Deployment 的 rollingUpdate 参数控制滚动更新行为。金丝雀需用 Service Mesh（Istio/Linkerd）或 Ingress Controller（NGINX Ingress 的 canary annotation）实现精细流量控制。自动化的发布决策：金丝雀阶段自动回滚（检测到错误率上升 → 自动切回旧版本）是 SRE 实践中重要的发布安全保障。",
-    "hints": [
+    id: 78,
+    category: "devops",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "蓝绿部署与滚动更新",
+    content: "请解释蓝绿部署、滚动更新、金丝雀发布三种发布策略的区别。",
+    answer:
+      "答案：蓝绿部署是两套环境切换，滚动更新是逐步替换，金丝雀是小比例灰度验证\n\n解析：蓝绿部署：维护两套完全相同的环境（蓝=当前在线，绿=新版本）。切换时调整负载均衡流量从蓝切到绿。问题：需要双倍资源、切换瞬间可能有短暂不一致。滚动更新：逐个或逐批替换 Pod（K8s deployment strategy: RollingUpdate）。设置 maxSurge（最多超出多少个新 Pod）和 maxUnavailable（最多允许多少个不可用）。部署过程不中断服务，但回滚慢。金丝雀发布：先让 1%-5% 的流量走新版本，监控指标正常后逐步增加到 100%。与 A/B 测试的区别：金丝雀是验证稳定性，A/B 测试是验证业务效果（转化率等）。\n\n扩展延伸：K8s 中的实现：Deployment 的 rollingUpdate 参数控制滚动更新行为。金丝雀需用 Service Mesh（Istio/Linkerd）或 Ingress Controller（NGINX Ingress 的 canary annotation）实现精细流量控制。自动化的发布决策：金丝雀阶段自动回滚（检测到错误率上升 → 自动切回旧版本）是 SRE 实践中重要的发布安全保障。",
+    hints: [
       "Deployment 的 maxSurge 和 maxUnavailable 参数怎么配",
-      "为什么金丝雀发布需要 Service Mesh 或高级 Ingress"
+      "为什么金丝雀发布需要 Service Mesh 或高级 Ingress",
     ],
-    "tags": [
-      "发布",
-      "K8s",
-      "SRE"
-    ],
-    "options": []
+    tags: ["发布", "K8s", "SRE"],
+    options: [],
   },
   {
-    "id": 79,
-    "category": "devops",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "SRE 核心实践",
-    "content": "请解释 SRE（Site Reliability Engineering）的核心概念：SLO、SLI、Error Budget。",
-    "answer": "答案：SLI 是实际指标，SLO 是目标阈值，Error Budget = 1 - SLO，代表可容忍的不可靠时间\n\n解析：SLI（Service Level Indicator）——我们怎么衡量可靠性？如请求延迟 P99 < 200ms、可用率 > 99.9%。SLO（Service Level Objective）——目标值，如」季度内 P99 延迟 < 200ms 的时间占比 > 99.9%」。Error Budget（错误预算）——如果 SLO 是 99.9%，季度错误预算 = 0.1% × 3 个月 ≈ 2.6 小时不可用。预算用完前可以发布新功能，用完后必须冻结发布专注于稳定性——这是 SRE 平衡」可靠性和创新速度」的核心机制。\n\n扩展延伸：SRE 与传统运维的区别：SRE 是软件工程师做运维，用工程手段解决运维问题（自动化而非手动）。SRE 践行」运维是软件工程」理念，限制运维工作 < 50% 时间，剩余时间做开发减少运维负担。谷歌 SRE 书的经典原则：1）减少琐事（Toil）——手动、重复、可自动化的操作 2）可靠性的边际递减——99.99% 比 99.9% 只多 9 分钟/月但成本翻数倍 3）监控应简单——4 个黄金信号比 100 个指标更有效。",
-    "hints": [
-      "99.9% 和 99.99% 的可用性差异有多大",
-      "Error Budget 用完后的发布冻结如何执行"
-    ],
-    "tags": [
-      "SRE",
-      "可靠性"
-    ],
-    "options": []
+    id: 79,
+    category: "devops",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "SRE 核心实践",
+    content: "请解释 SRE（Site Reliability Engineering）的核心概念：SLO、SLI、Error Budget。",
+    answer:
+      "答案：SLI 是实际指标，SLO 是目标阈值，Error Budget = 1 - SLO，代表可容忍的不可靠时间\n\n解析：SLI（Service Level Indicator）——我们怎么衡量可靠性？如请求延迟 P99 < 200ms、可用率 > 99.9%。SLO（Service Level Objective）——目标值，如」季度内 P99 延迟 < 200ms 的时间占比 > 99.9%」。Error Budget（错误预算）——如果 SLO 是 99.9%，季度错误预算 = 0.1% × 3 个月 ≈ 2.6 小时不可用。预算用完前可以发布新功能，用完后必须冻结发布专注于稳定性——这是 SRE 平衡」可靠性和创新速度」的核心机制。\n\n扩展延伸：SRE 与传统运维的区别：SRE 是软件工程师做运维，用工程手段解决运维问题（自动化而非手动）。SRE 践行」运维是软件工程」理念，限制运维工作 < 50% 时间，剩余时间做开发减少运维负担。谷歌 SRE 书的经典原则：1）减少琐事（Toil）——手动、重复、可自动化的操作 2）可靠性的边际递减——99.99% 比 99.9% 只多 9 分钟/月但成本翻数倍 3）监控应简单——4 个黄金信号比 100 个指标更有效。",
+    hints: ["99.9% 和 99.99% 的可用性差异有多大", "Error Budget 用完后的发布冻结如何执行"],
+    tags: ["SRE", "可靠性"],
+    options: [],
   },
   {
-    "id": 80,
-    "category": "devops",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Helm K8s 包管理",
-    "content": "什么是 Helm？为什么需要 Helm 而非直接用 kubectl apply？",
-    "answer": "答案：Helm 是 K8s 的包管理器，通过 Chart 模板化管理和分发 K8s 资源\n\n解析：一个微服务通常需要 Deployment + Service + ConfigMap + Ingress 多个 YAML，跨环境（dev/staging/prod）还有很多重复配置。Helm Chart 用 Go 模板语法定义资源模板，values.yaml 注入环境差异。核心概念：Chart（包定义）、Release（运行实例）、Repository（仓库）。Helm install/upgrade/rollback 管理应用生命周期。\n\n扩展延伸：Helm vs Kustomize：Helm 是 Go 模板，功能强大但复杂；Kustomize（kubectl 内置）用 overlay 方式覆盖配置，不需学模板语法，但灵活性不如 Helm。生产建议：复杂应用用 Helm，简单项目用 Kustomize。Helm Hook（pre-install/post-install 等）可用于在部署前后执行数据库迁移等任务。注意：Helm 不管理 CRD 升级（可能造成数据丢失），helm template 可以本地渲染 YAML 用于审查。",
-    "hints": [
-      "Helm 的 values.yaml 如何在不同环境间复用",
-      "Helm 和 Kustomize 的选择标准"
-    ],
-    "tags": [
-      "K8s",
-      "Helm"
-    ],
-    "options": []
+    id: 80,
+    category: "devops",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Helm K8s 包管理",
+    content: "什么是 Helm？为什么需要 Helm 而非直接用 kubectl apply？",
+    answer:
+      "答案：Helm 是 K8s 的包管理器，通过 Chart 模板化管理和分发 K8s 资源\n\n解析：一个微服务通常需要 Deployment + Service + ConfigMap + Ingress 多个 YAML，跨环境（dev/staging/prod）还有很多重复配置。Helm Chart 用 Go 模板语法定义资源模板，values.yaml 注入环境差异。核心概念：Chart（包定义）、Release（运行实例）、Repository（仓库）。Helm install/upgrade/rollback 管理应用生命周期。\n\n扩展延伸：Helm vs Kustomize：Helm 是 Go 模板，功能强大但复杂；Kustomize（kubectl 内置）用 overlay 方式覆盖配置，不需学模板语法，但灵活性不如 Helm。生产建议：复杂应用用 Helm，简单项目用 Kustomize。Helm Hook（pre-install/post-install 等）可用于在部署前后执行数据库迁移等任务。注意：Helm 不管理 CRD 升级（可能造成数据丢失），helm template 可以本地渲染 YAML 用于审查。",
+    hints: ["Helm 的 values.yaml 如何在不同环境间复用", "Helm 和 Kustomize 的选择标准"],
+    tags: ["K8s", "Helm"],
+    options: [],
   },
   {
-    "id": 81,
-    "category": "devops",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "容器安全最佳实践",
-    "content": "请列出容器化环境中的安全最佳实践。",
-    "answer": "答案：最小权限 + 镜像签名 + 运行时安全 + 网络隔离 + 漏洞扫描\n\n解析：1）最小权限——不以 root 运行（USER app）、readOnlyRootFilesystem: true、drop ALL Linux capabilities 再按需添加 2）镜像安全——使用可信基础镜像（Docker Official Images / distroless）、Trivy/Clair 定期漏洞扫描、镜像签名（cosign）防篡改 3）网络隔离——必要时 networkpolicy 限制 Pod 间通信、不暴露不必要的端口 4）运行时安全——Falco（行为监控）、Seccomp/AppArmor 限制系统调用 5）密钥管理——不把密码写在镜像里，用 K8s Secret、Vault 或外部密钥管理服务。\n\n扩展延伸：OWASP Docker Top 10 中最高危的问题包括：Host 文件系统挂载（docker run -v /:/host）、特权模式（-- privileged）、不验证镜像来源。Supply Chain Security（软件供应链安全）：构建镜像时锁定基础镜像 digest 而非 tag（FROM alpine@sha256:xxx），避免镜像被篡改。Docker Bench Security 脚本可自动检查 Docker 环境的安全配置。",
-    "hints": [
-      "docker run --privileged 有什么风险",
-      "Why distroless base images are more secure"
-    ],
-    "tags": [
-      "Docker",
-      "安全"
-    ],
-    "options": []
+    id: 81,
+    category: "devops",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "容器安全最佳实践",
+    content: "请列出容器化环境中的安全最佳实践。",
+    answer:
+      "答案：最小权限 + 镜像签名 + 运行时安全 + 网络隔离 + 漏洞扫描\n\n解析：1）最小权限——不以 root 运行（USER app）、readOnlyRootFilesystem: true、drop ALL Linux capabilities 再按需添加 2）镜像安全——使用可信基础镜像（Docker Official Images / distroless）、Trivy/Clair 定期漏洞扫描、镜像签名（cosign）防篡改 3）网络隔离——必要时 networkpolicy 限制 Pod 间通信、不暴露不必要的端口 4）运行时安全——Falco（行为监控）、Seccomp/AppArmor 限制系统调用 5）密钥管理——不把密码写在镜像里，用 K8s Secret、Vault 或外部密钥管理服务。\n\n扩展延伸：OWASP Docker Top 10 中最高危的问题包括：Host 文件系统挂载（docker run -v /:/host）、特权模式（-- privileged）、不验证镜像来源。Supply Chain Security（软件供应链安全）：构建镜像时锁定基础镜像 digest 而非 tag（FROM alpine@sha256:xxx），避免镜像被篡改。Docker Bench Security 脚本可自动检查 Docker 环境的安全配置。",
+    hints: ["docker run --privileged 有什么风险", "Why distroless base images are more secure"],
+    tags: ["Docker", "安全"],
+    options: [],
   },
   {
-    "id": 82,
-    "category": "frontend",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "React 组件间通信方式",
-    "content": "请列举 React 中组件间通信的几种方式。",
-    "answer": "1）Props 父传子。2）回调函数子传父。3）Context 跨层级共享。4）状态管理库（Redux/Zustand/Jotai）。5）Event Bus（不推荐）。6）Ref/Callback Refs。原则：尽量用 Props 提升状态，避免过早引入状态管理。",
-    "hints": [
-      "Context 的优缺点",
-      "组件层级过深时的最佳实践"
-    ],
-    "tags": [
-      "React",
-      "组件通信"
-    ],
-    "options": []
+    id: 82,
+    category: "frontend",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "React 组件间通信方式",
+    content: "请列举 React 中组件间通信的几种方式。",
+    answer:
+      "1）Props 父传子。2）回调函数子传父。3）Context 跨层级共享。4）状态管理库（Redux/Zustand/Jotai）。5）Event Bus（不推荐）。6）Ref/Callback Refs。原则：尽量用 Props 提升状态，避免过早引入状态管理。",
+    hints: ["Context 的优缺点", "组件层级过深时的最佳实践"],
+    tags: ["React", "组件通信"],
+    options: [],
   },
   {
-    "id": 83,
-    "category": "frontend",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "虚拟 DOM 的原理",
-    "content": "请解释虚拟 DOM 的工作原理及其优势。",
-    "answer": "虚拟 DOM 是真实 DOM 的 JS 对象表示。更新流程：1）状态变化生成新 Virtual DOM。2）Diff 新旧 Virtual DOM 找出差异。3）批量更新真实 DOM。优势：减少直接 DOM 操作（批量更新）、跨平台渲染、声明式编程范式。",
-    "hints": [
-      "Diff 算法的复杂度为什么是 O(n)",
-      "Key 属性的作用"
-    ],
-    "tags": [
-      "React",
-      "Vue",
-      "基础"
-    ],
-    "options": []
+    id: 83,
+    category: "frontend",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "虚拟 DOM 的原理",
+    content: "请解释虚拟 DOM 的工作原理及其优势。",
+    answer:
+      "虚拟 DOM 是真实 DOM 的 JS 对象表示。更新流程：1）状态变化生成新 Virtual DOM。2）Diff 新旧 Virtual DOM 找出差异。3）批量更新真实 DOM。优势：减少直接 DOM 操作（批量更新）、跨平台渲染、声明式编程范式。",
+    hints: ["Diff 算法的复杂度为什么是 O(n)", "Key 属性的作用"],
+    tags: ["React", "Vue", "基础"],
+    options: [],
   },
   {
-    "id": 84,
-    "category": "frontend",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "闭包（Closure）",
-    "content": "请解释 JavaScript 闭包的概念及其常见应用。",
-    "answer": "闭包是函数与其词法环境的组合。内部函数可以访问外部函数的变量，即使外部函数已执行完毕。应用：数据私有化（模块模式）、函数工厂（如柯里化）、事件监听/回调、防抖节流、React Hooks（useState 的实现依赖闭包）。",
-    "hints": [
-      "闭包的内存泄漏问题",
-      "let 和 var 在循环中的区别"
-    ],
-    "tags": [
-      "JavaScript",
-      "基础"
-    ],
-    "options": []
+    id: 84,
+    category: "frontend",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "闭包（Closure）",
+    content: "请解释 JavaScript 闭包的概念及其常见应用。",
+    answer:
+      "闭包是函数与其词法环境的组合。内部函数可以访问外部函数的变量，即使外部函数已执行完毕。应用：数据私有化（模块模式）、函数工厂（如柯里化）、事件监听/回调、防抖节流、React Hooks（useState 的实现依赖闭包）。",
+    hints: ["闭包的内存泄漏问题", "let 和 var 在循环中的区别"],
+    tags: ["JavaScript", "基础"],
+    options: [],
   },
   {
-    "id": 85,
-    "category": "frontend",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "事件循环（Event Loop）",
-    "content": "请描述 JavaScript 事件循环的机制。",
-    "answer": "JS 是单线程，通过事件循环实现异步。流程：1）执行同步代码（调用栈）。2）遇到异步任务放入 Web API。3）异步完成后回调进入任务队列。4）调用栈清空后，先处理微任务（Promise/MutationObserver），再处理宏任务（setTimeout/setInterval）。",
-    "hints": [
-      "Promise 和 setTimeout 的执行顺序",
-      "微任务和宏任务的划分"
-    ],
-    "tags": [
-      "JavaScript",
-      "异步"
-    ],
-    "options": []
+    id: 85,
+    category: "frontend",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "事件循环（Event Loop）",
+    content: "请描述 JavaScript 事件循环的机制。",
+    answer:
+      "JS 是单线程，通过事件循环实现异步。流程：1）执行同步代码（调用栈）。2）遇到异步任务放入 Web API。3）异步完成后回调进入任务队列。4）调用栈清空后，先处理微任务（Promise/MutationObserver），再处理宏任务（setTimeout/setInterval）。",
+    hints: ["Promise 和 setTimeout 的执行顺序", "微任务和宏任务的划分"],
+    tags: ["JavaScript", "异步"],
+    options: [],
   },
   {
-    "id": 86,
-    "category": "frontend",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "React 的 Fiber 架构",
-    "content": "请解释 React Fiber 架构的设计目标和实现原理。",
-    "answer": "Fiber 是为了解决 React 大型更新时卡顿的问题。核心：可中断的异步渲染。Fiber 节点组成链表树（child/sibling/return），支持双缓冲（workInProgress + current）。调度策略：高优先级任务插队（如 input 输入优先于列表渲染）。",
-    "hints": [
-      "Fiber 如何实现任务中断和恢复",
-      "优先级如何决定"
-    ],
-    "tags": [
-      "React",
-      "架构"
-    ],
-    "options": []
+    id: 86,
+    category: "frontend",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "React 的 Fiber 架构",
+    content: "请解释 React Fiber 架构的设计目标和实现原理。",
+    answer:
+      "Fiber 是为了解决 React 大型更新时卡顿的问题。核心：可中断的异步渲染。Fiber 节点组成链表树（child/sibling/return），支持双缓冲（workInProgress + current）。调度策略：高优先级任务插队（如 input 输入优先于列表渲染）。",
+    hints: ["Fiber 如何实现任务中断和恢复", "优先级如何决定"],
+    tags: ["React", "架构"],
+    options: [],
   },
   {
-    "id": 87,
-    "category": "frontend",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "原型链",
-    "content": "请解释 JavaScript 原型链的继承机制。",
-    "answer": "每个对象有 __proto__ 属性指向其原型。对象访问属性时，先找自身，找不到沿 __proto__ 向上找，直到 null。所有对象最终继承自 Object.prototype。通过 prototype 对象实现构造函数继承。ES6 class 是语法糖，本质仍是原型链。",
-    "hints": [
-      "hasOwnProperty 和 in 操作符的区别",
-      "Object.create(null) 的作用"
-    ],
-    "tags": [
-      "JavaScript",
-      "基础"
-    ],
-    "options": []
+    id: 87,
+    category: "frontend",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "原型链",
+    content: "请解释 JavaScript 原型链的继承机制。",
+    answer:
+      "每个对象有 __proto__ 属性指向其原型。对象访问属性时，先找自身，找不到沿 __proto__ 向上找，直到 null。所有对象最终继承自 Object.prototype。通过 prototype 对象实现构造函数继承。ES6 class 是语法糖，本质仍是原型链。",
+    hints: ["hasOwnProperty 和 in 操作符的区别", "Object.create(null) 的作用"],
+    tags: ["JavaScript", "基础"],
+    options: [],
   },
   {
-    "id": 88,
-    "category": "frontend",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "跨域解决方案",
-    "content": "请列举前端常见的跨域解决方案。",
-    "answer": "CORS（服务器设置 Access-Control-Allow-Origin）、JSONP（只支持 GET）、代理服务器（开发环境 webpack/vite proxy）、postMessage（iframe 通信）、WebSocket（无跨域限制）、Nginx 反向代理。CORS 是主流方案。",
-    "hints": [
-      "CORS 中的预检请求是什么",
-      "withCredentials 字段的作用"
-    ],
-    "tags": [
-      "网络",
-      "安全"
-    ],
-    "options": []
+    id: 88,
+    category: "frontend",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "跨域解决方案",
+    content: "请列举前端常见的跨域解决方案。",
+    answer:
+      "CORS（服务器设置 Access-Control-Allow-Origin）、JSONP（只支持 GET）、代理服务器（开发环境 webpack/vite proxy）、postMessage（iframe 通信）、WebSocket（无跨域限制）、Nginx 反向代理。CORS 是主流方案。",
+    hints: ["CORS 中的预检请求是什么", "withCredentials 字段的作用"],
+    tags: ["网络", "安全"],
+    options: [],
   },
   {
-    "id": 89,
-    "category": "frontend",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Vue 响应式原理",
-    "content": "请解释 Vue 2 和 Vue 3 响应式系统的区别。",
-    "answer": "Vue 2 用 Object.defineProperty 递归劫持 getter/setter，无法检测数组/对象新增属性，需要 Vue.set。Vue 3 用 Proxy 代理整个对象，能拦截所有操作（包括新增属性、数组索引），性能更好且不需要递归初始化。",
-    "hints": [
-      "Proxy 相比 defineProperty 的优势",
-      "为什么 Vue 3 也保留了 ref"
-    ],
-    "tags": [
-      "Vue",
-      "响应式"
-    ],
-    "options": []
+    id: 89,
+    category: "frontend",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Vue 响应式原理",
+    content: "请解释 Vue 2 和 Vue 3 响应式系统的区别。",
+    answer:
+      "Vue 2 用 Object.defineProperty 递归劫持 getter/setter，无法检测数组/对象新增属性，需要 Vue.set。Vue 3 用 Proxy 代理整个对象，能拦截所有操作（包括新增属性、数组索引），性能更好且不需要递归初始化。",
+    hints: ["Proxy 相比 defineProperty 的优势", "为什么 Vue 3 也保留了 ref"],
+    tags: ["Vue", "响应式"],
+    options: [],
   },
   {
-    "id": 90,
-    "category": "frontend",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "状态管理方案对比",
-    "content": "请对比 Redux、Zustand、Jotai 和 Context 的特点。",
-    "answer": "Redux：单一 store，Action/Reducer 模式，适合大型项目，样板代码多。Zustand：轻量，API 简洁，基于 hook，无 Provider 包裹。Jotai：原子化状态，按需订阅，自动优化渲染。Context：内置，适合低频更新场景，高并发导致不必要的重渲染。",
-    "hints": [
-      "什么场景应该用 Jotai 而不是 Redux",
-      "Context 为什么会导致不必要的重渲染"
-    ],
-    "tags": [
-      "状态管理"
-    ],
-    "options": []
+    id: 90,
+    category: "frontend",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "状态管理方案对比",
+    content: "请对比 Redux、Zustand、Jotai 和 Context 的特点。",
+    answer:
+      "Redux：单一 store，Action/Reducer 模式，适合大型项目，样板代码多。Zustand：轻量，API 简洁，基于 hook，无 Provider 包裹。Jotai：原子化状态，按需订阅，自动优化渲染。Context：内置，适合低频更新场景，高并发导致不必要的重渲染。",
+    hints: ["什么场景应该用 Jotai 而不是 Redux", "Context 为什么会导致不必要的重渲染"],
+    tags: ["状态管理"],
+    options: [],
   },
   {
-    "id": 91,
-    "category": "frontend",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "CSS BEM 命名规范",
-    "content": "请解释 CSS BEM 命名规范及其优势。",
-    "answer": "BEM = Block（组件块）__Element（元素）--Modifier（状态）。例：card__title--active。优势：命名空间避免冲突、结构清晰一眼看出层级关系、可维护性强。缺点：命名可能过长。替代方案：CSS Modules、Tailwind CSS、CSS-in-JS。",
-    "hints": [
-      "BEM 和 CSS Modules 对比",
-      "为什么大型项目需要 CSS 规范"
-    ],
-    "tags": [
-      "CSS",
-      "规范"
-    ],
-    "options": []
+    id: 91,
+    category: "frontend",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "CSS BEM 命名规范",
+    content: "请解释 CSS BEM 命名规范及其优势。",
+    answer:
+      "BEM = Block（组件块）__Element（元素）--Modifier（状态）。例：card__title--active。优势：命名空间避免冲突、结构清晰一眼看出层级关系、可维护性强。缺点：命名可能过长。替代方案：CSS Modules、Tailwind CSS、CSS-in-JS。",
+    hints: ["BEM 和 CSS Modules 对比", "为什么大型项目需要 CSS 规范"],
+    tags: ["CSS", "规范"],
+    options: [],
   },
   {
-    "id": 92,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "JVM 垃圾回收算法",
-    "content": "请介绍 JVM 中常见的垃圾回收算法及其优缺点。",
-    "answer": "标记-清除（有内存碎片）、标记-复制（无碎片但浪费一半空间）、标记-整理（无碎片但效率低）、分代收集（新生代复制，老年代标记-整理）。",
-    "hints": [
-      "Java 8 默认的垃圾回收器是什么",
-      "CMS 和 G1 的区别"
-    ],
-    "tags": [
-      "JVM",
-      "GC"
-    ],
-    "options": []
+    id: 92,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "JVM 垃圾回收算法",
+    content: "请介绍 JVM 中常见的垃圾回收算法及其优缺点。",
+    answer:
+      "标记-清除（有内存碎片）、标记-复制（无碎片但浪费一半空间）、标记-整理（无碎片但效率低）、分代收集（新生代复制，老年代标记-整理）。",
+    hints: ["Java 8 默认的垃圾回收器是什么", "CMS 和 G1 的区别"],
+    tags: ["JVM", "GC"],
+    options: [],
   },
   {
-    "id": 93,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "线程池的核心参数",
-    "content": "请解释 ThreadPoolExecutor 的核心参数及其作用。",
-    "answer": "corePoolSize（核心线程数）、maximumPoolSize（最大线程数）、keepAliveTime（空闲线程存活时间）、workQueue（任务队列）、threadFactory（线程工厂）、handler（拒绝策略）。",
-    "hints": [
-      "任务提交后线程池的处理流程",
-      "四种拒绝策略分别是什么"
-    ],
-    "tags": [
-      "并发",
-      "线程池"
-    ],
-    "options": []
+    id: 93,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "线程池的核心参数",
+    content: "请解释 ThreadPoolExecutor 的核心参数及其作用。",
+    answer:
+      "corePoolSize（核心线程数）、maximumPoolSize（最大线程数）、keepAliveTime（空闲线程存活时间）、workQueue（任务队列）、threadFactory（线程工厂）、handler（拒绝策略）。",
+    hints: ["任务提交后线程池的处理流程", "四种拒绝策略分别是什么"],
+    tags: ["并发", "线程池"],
+    options: [],
   },
   {
-    "id": 94,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "coding",
-    "title": "实现一个带超时的缓存",
-    "content": "请实现一个支持过期时间的泛型缓存，要求线程安全。",
-    "answer": "```java\npublic class TimedCache<K, V> {\n    private final ConcurrentHashMap<K, CacheEntry<V>> cache = new ConcurrentHashMap<>();\n    \n    private record CacheEntry<V>(V value, long expireAt) {}\n    \n    public void put(K key, V value, long ttlMs) {\n        cache.put(key, new CacheEntry<>(value, System.currentTimeMillis() + ttlMs));\n    }\n    \n    public V get(K key) {\n        CacheEntry<V> entry = cache.get(key);\n        if (entry == null || System.currentTimeMillis() > entry.expireAt()) {\n            cache.remove(key);\n            return null;\n        }\n        return entry.value();\n    }\n}\n```",
-    "hints": [
-      "如何清理过期条目",
-      "ConcurrentHashMap 能保证线程安全吗"
-    ],
-    "tags": [
-      "并发",
-      "缓存"
-    ],
-    "options": []
+    id: 94,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "coding",
+    title: "实现一个带超时的缓存",
+    content: "请实现一个支持过期时间的泛型缓存，要求线程安全。",
+    answer:
+      "```java\npublic class TimedCache<K, V> {\n    private final ConcurrentHashMap<K, CacheEntry<V>> cache = new ConcurrentHashMap<>();\n    \n    private record CacheEntry<V>(V value, long expireAt) {}\n    \n    public void put(K key, V value, long ttlMs) {\n        cache.put(key, new CacheEntry<>(value, System.currentTimeMillis() + ttlMs));\n    }\n    \n    public V get(K key) {\n        CacheEntry<V> entry = cache.get(key);\n        if (entry == null || System.currentTimeMillis() > entry.expireAt()) {\n            cache.remove(key);\n            return null;\n        }\n        return entry.value();\n    }\n}\n```",
+    hints: ["如何清理过期条目", "ConcurrentHashMap 能保证线程安全吗"],
+    tags: ["并发", "缓存"],
+    options: [],
   },
   {
-    "id": 95,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "NIO 与 BIO 的区别",
-    "content": "请比较 Java NIO 和传统 BIO 的区别及适用场景。",
-    "answer": "BIO 是阻塞 I/O，一个线程处理一个连接，简单但线程开销大。NIO 是非阻塞 I/O，基于 Channel 和 Selector，一个线程可处理多个连接，适合高并发场景。",
-    "hints": [
-      "NIO 的三个核心组件",
-      "零拷贝（Zero-Copy）是什么"
-    ],
-    "tags": [
-      "NIO",
-      "IO"
-    ],
-    "options": []
+    id: 95,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "NIO 与 BIO 的区别",
+    content: "请比较 Java NIO 和传统 BIO 的区别及适用场景。",
+    answer:
+      "BIO 是阻塞 I/O，一个线程处理一个连接，简单但线程开销大。NIO 是非阻塞 I/O，基于 Channel 和 Selector，一个线程可处理多个连接，适合高并发场景。",
+    hints: ["NIO 的三个核心组件", "零拷贝（Zero-Copy）是什么"],
+    tags: ["NIO", "IO"],
+    options: [],
   },
   {
-    "id": 96,
-    "category": "java_advanced",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Java 反射机制",
-    "content": "请解释 Java 反射机制及其常见用途。",
-    "answer": "反射允许程序在运行时获取类的完整信息（方法、字段、构造器）并动态调用。常用于框架（Spring）、ORM、动态代理、序列化等场景。",
-    "hints": [
-      "获取 Class 对象的三种方式",
-      "反射的性能开销如何优化"
-    ],
-    "tags": [
-      "反射",
-      "基础"
-    ],
-    "options": []
+    id: 96,
+    category: "java_advanced",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Java 反射机制",
+    content: "请解释 Java 反射机制及其常见用途。",
+    answer:
+      "反射允许程序在运行时获取类的完整信息（方法、字段、构造器）并动态调用。常用于框架（Spring）、ORM、动态代理、序列化等场景。",
+    hints: ["获取 Class 对象的三种方式", "反射的性能开销如何优化"],
+    tags: ["反射", "基础"],
+    options: [],
   },
   {
-    "id": 97,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "泛型的类型擦除",
-    "content": "请解释 Java 泛型的类型擦除机制及其影响。",
-    "answer": "Java 泛型在编译时进行类型检查，编译后擦除类型信息，生成原始类型（Raw Type）的字节码。导致运行时无法获取泛型参数类型，List<String> 和 List<Integer> 实际上是同一个类。",
-    "hints": [
-      "如何绕过类型擦除获取泛型参数类型",
-      "桥方法（Bridge Method）的作用"
-    ],
-    "tags": [
-      "泛型",
-      "基础"
-    ],
-    "options": []
+    id: 97,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "泛型的类型擦除",
+    content: "请解释 Java 泛型的类型擦除机制及其影响。",
+    answer:
+      "Java 泛型在编译时进行类型检查，编译后擦除类型信息，生成原始类型（Raw Type）的字节码。导致运行时无法获取泛型参数类型，List<String> 和 List<Integer> 实际上是同一个类。",
+    hints: ["如何绕过类型擦除获取泛型参数类型", "桥方法（Bridge Method）的作用"],
+    tags: ["泛型", "基础"],
+    options: [],
   },
   {
-    "id": 98,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "类加载机制与双亲委派模型",
-    "content": "请描述 JVM 类加载机制和双亲委派模型的工作原理。",
-    "answer": "类加载分三步：加载、连接（验证/准备/解析）、初始化。双亲委派：加载类时先委派给父加载器，父加载器无法加载时才由子加载器加载。核心类由 Bootstrap 加载，保证核心 API 不被篡改。",
-    "hints": [
-      "如何打破双亲委派模型",
-      "Tomcat 的类加载器为什么打破双亲委派"
-    ],
-    "tags": [
-      "JVM",
-      "类加载"
-    ],
-    "options": []
+    id: 98,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "类加载机制与双亲委派模型",
+    content: "请描述 JVM 类加载机制和双亲委派模型的工作原理。",
+    answer:
+      "类加载分三步：加载、连接（验证/准备/解析）、初始化。双亲委派：加载类时先委派给父加载器，父加载器无法加载时才由子加载器加载。核心类由 Bootstrap 加载，保证核心 API 不被篡改。",
+    hints: ["如何打破双亲委派模型", "Tomcat 的类加载器为什么打破双亲委派"],
+    tags: ["JVM", "类加载"],
+    options: [],
   },
   {
-    "id": 99,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ReentrantLock 与 synchronized 的区别",
-    "content": "请比较 ReentrantLock 和 synchronized 的区别。",
-    "answer": "synchronized 是 JVM 层面关键字，自动释放锁。ReentrantLock 是 API 层面的锁，需要手动释放，支持可中断、可定时、公平锁、条件变量等高级功能。Java 6 优化后性能差距不大。",
-    "hints": [
-      "什么是锁升级",
-      "Condition 的 await/signal 与 wait/notify 的区别"
-    ],
-    "tags": [
-      "并发",
-      "锁"
-    ],
-    "options": []
+    id: 99,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ReentrantLock 与 synchronized 的区别",
+    content: "请比较 ReentrantLock 和 synchronized 的区别。",
+    answer:
+      "synchronized 是 JVM 层面关键字，自动释放锁。ReentrantLock 是 API 层面的锁，需要手动释放，支持可中断、可定时、公平锁、条件变量等高级功能。Java 6 优化后性能差距不大。",
+    hints: ["什么是锁升级", "Condition 的 await/signal 与 wait/notify 的区别"],
+    tags: ["并发", "锁"],
+    options: [],
   },
   {
-    "id": 100,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "CompletableFuture 异步编程",
-    "content": "请介绍 CompletableFuture 的核心用法及异步编排能力。",
-    "answer": "CompletableFuture 提供了 supplyAsync/runAsync 创建异步任务，thenApply/thenCompose 串行编排，thenCombine 合并结果，allOf/anyOf 等待多个任务。支持异常回调 exceptionally/handle。",
-    "hints": [
-      "默认线程池是什么",
-      "thenApply 和 thenApplyAsync 的区别"
-    ],
-    "tags": [
-      "并发",
-      "异步"
-    ],
-    "options": []
+    id: 100,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "CompletableFuture 异步编程",
+    content: "请介绍 CompletableFuture 的核心用法及异步编排能力。",
+    answer:
+      "CompletableFuture 提供了 supplyAsync/runAsync 创建异步任务，thenApply/thenCompose 串行编排，thenCombine 合并结果，allOf/anyOf 等待多个任务。支持异常回调 exceptionally/handle。",
+    hints: ["默认线程池是什么", "thenApply 和 thenApplyAsync 的区别"],
+    tags: ["并发", "异步"],
+    options: [],
   },
   {
-    "id": 101,
-    "category": "java_advanced",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Stream API 的中间操作和终端操作",
-    "content": "请列举 Java Stream API 的常见中间操作和终端操作。",
-    "answer": "中间操作：filter、map、flatMap、distinct、sorted、peek、limit/skip（延迟执行）。终端操作：collect、forEach、reduce、count、anyMatch/allMatch/noneMatch、findFirst/findAny（触发执行）。",
-    "hints": [
-      "中间操作为什么是延迟执行的",
-      "parallelStream 的注意事项"
-    ],
-    "tags": [
-      "函数式",
-      "Stream"
-    ],
-    "options": []
+    id: 101,
+    category: "java_advanced",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Stream API 的中间操作和终端操作",
+    content: "请列举 Java Stream API 的常见中间操作和终端操作。",
+    answer:
+      "中间操作：filter、map、flatMap、distinct、sorted、peek、limit/skip（延迟执行）。终端操作：collect、forEach、reduce、count、anyMatch/allMatch/noneMatch、findFirst/findAny（触发执行）。",
+    hints: ["中间操作为什么是延迟执行的", "parallelStream 的注意事项"],
+    tags: ["函数式", "Stream"],
+    options: [],
   },
   {
-    "id": 102,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "JVM 垃圾回收器选型",
-    "content": "关于 JVM 垃圾回收器，以下说法正确的是？",
-    "answer": "答案：D) G1 是分代收集器\n\n解析：G1 将堆划分成多个 Region，兼顾新生代和老年代。新生代使用标记-复制算法，老年代使用标记-整理算法。CMS 是并发回收器（非并行），目标是降低停顿时间。\n\n扩展延伸：G1 的设计目标是替代 CMS，支持可预测的停顿时间模型（-XX:MaxGCPauseMillis）。相比 CMS，G1 的优势在于减少了内存碎片且停顿更可预测。推荐阅读《深入理解 Java 虚拟机》第 3 章。",
-    "hints": [
-      "CMS 和 G1 的核心区别",
-      "什么是 Stop-The-World"
-    ],
-    "tags": [
-      "JVM",
-      "GC"
-    ],
-    "options": [
+    id: 102,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "choice",
+    title: "JVM 垃圾回收器选型",
+    content: "关于 JVM 垃圾回收器，以下说法正确的是？",
+    answer:
+      "答案：D) G1 是分代收集器\n\n解析：G1 将堆划分成多个 Region，兼顾新生代和老年代。新生代使用标记-复制算法，老年代使用标记-整理算法。CMS 是并发回收器（非并行），目标是降低停顿时间。\n\n扩展延伸：G1 的设计目标是替代 CMS，支持可预测的停顿时间模型（-XX:MaxGCPauseMillis）。相比 CMS，G1 的优势在于减少了内存碎片且停顿更可预测。推荐阅读《深入理解 Java 虚拟机》第 3 章。",
+    hints: ["CMS 和 G1 的核心区别", "什么是 Stop-The-World"],
+    tags: ["JVM", "GC"],
+    options: [
       "A) 新生代使用标记-整理算法",
       "B) 老年代使用标记-复制算法",
       "C) CMS 是并行回收器",
-      "D) G1 是分代收集器"
-    ]
+      "D) G1 是分代收集器",
+    ],
   },
   {
-    "id": 103,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "ThreadPoolExecutor 描述错误的是",
-    "content": "以下关于 ThreadPoolExecutor 的描述，错误的是？",
-    "answer": "答案：D) keepAliveTime 对核心线程也生效\n\n解析：keepAliveTime 默认只对超出 corePoolSize 的额外空闲线程生效。核心线程默认一直存活，如需要对核心线程也生效需调用 allowCoreThreadTimeOut(true)。\n\n扩展延伸：线程池处理流程：提交任务 → 核心线程满 → 入队列 → 队列满 → 创建新线程至 maximumPoolSize → 超限则执行拒绝策略。四种拒绝策略：AbortPolicy（默认，抛异常）、CallerRunsPolicy（调用者线程执行）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃最旧未处理任务）。",
-    "hints": [
-      "线程池处理任务的完整流程",
-      "四种拒绝策略分别是什么"
-    ],
-    "tags": [
-      "并发",
-      "线程池"
-    ],
-    "options": [
+    id: 103,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "choice",
+    title: "ThreadPoolExecutor 描述错误的是",
+    content: "以下关于 ThreadPoolExecutor 的描述，错误的是？",
+    answer:
+      "答案：D) keepAliveTime 对核心线程也生效\n\n解析：keepAliveTime 默认只对超出 corePoolSize 的额外空闲线程生效。核心线程默认一直存活，如需要对核心线程也生效需调用 allowCoreThreadTimeOut(true)。\n\n扩展延伸：线程池处理流程：提交任务 → 核心线程满 → 入队列 → 队列满 → 创建新线程至 maximumPoolSize → 超限则执行拒绝策略。四种拒绝策略：AbortPolicy（默认，抛异常）、CallerRunsPolicy（调用者线程执行）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃最旧未处理任务）。",
+    hints: ["线程池处理任务的完整流程", "四种拒绝策略分别是什么"],
+    tags: ["并发", "线程池"],
+    options: [
       "A) corePoolSize 是核心线程数",
       "B) 队列满后创建新线程直到 maximumPoolSize",
       "C) 默认拒绝策略是 AbortPolicy",
-      "D) keepAliveTime 对核心线程也生效"
-    ]
+      "D) keepAliveTime 对核心线程也生效",
+    ],
   },
   {
-    "id": 104,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "Java 并发包同步辅助类",
-    "content": "以下哪个属于 java.util.concurrent 包中的同步辅助类？",
-    "answer": "答案：B) CountDownLatch\n\n解析：CountDownLatch 是 java.util.concurrent 包中的同步辅助类，允许一个或多个线程等待其他线程完成操作。类似工具还包括 CyclicBarrier（可循环屏障）和 Semaphore（信号量，控制并发数量）。\n\n扩展延伸：CountDownLatch 与 CyclicBarrier 的关键区别：CountDownLatch 是一次性的、一个或多个线程等待其他线程完成；CyclicBarrier 是可循环使用的、多个线程相互等待到达同一屏障点。Semaphore 适用于限流场景，通过 acquire/release 控制许可证数量。",
-    "hints": [
-      "CountDownLatch 和 CyclicBarrier 的区别",
-      "Semaphore 的作用"
-    ],
-    "tags": [
-      "并发",
-      "同步"
-    ],
-    "options": [
-      "A) ArrayList",
-      "B) CountDownLatch",
-      "C) FileReader",
-      "D) StringBuffer"
-    ]
+    id: 104,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "choice",
+    title: "Java 并发包同步辅助类",
+    content: "以下哪个属于 java.util.concurrent 包中的同步辅助类？",
+    answer:
+      "答案：B) CountDownLatch\n\n解析：CountDownLatch 是 java.util.concurrent 包中的同步辅助类，允许一个或多个线程等待其他线程完成操作。类似工具还包括 CyclicBarrier（可循环屏障）和 Semaphore（信号量，控制并发数量）。\n\n扩展延伸：CountDownLatch 与 CyclicBarrier 的关键区别：CountDownLatch 是一次性的、一个或多个线程等待其他线程完成；CyclicBarrier 是可循环使用的、多个线程相互等待到达同一屏障点。Semaphore 适用于限流场景，通过 acquire/release 控制许可证数量。",
+    hints: ["CountDownLatch 和 CyclicBarrier 的区别", "Semaphore 的作用"],
+    tags: ["并发", "同步"],
+    options: ["A) ArrayList", "B) CountDownLatch", "C) FileReader", "D) StringBuffer"],
   },
   {
-    "id": 105,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "Java 泛型运行时类型信息",
-    "content": "Java 泛型在运行时可以获取具体的泛型参数类型。",
-    "answer": "答案：错误\n\n解析：Java 泛型通过类型擦除实现，编译后泛型参数信息被擦除为原始类型（Raw Type），List<String> 和 List<Integer> 运行时是同一个 Class。但可通过反射和 TypeToken 技巧间接获取泛型参数。\n\n扩展延伸：类型擦除的具体过程：编译器将 T 替换为 Object（无界）或上界类型，并插入必要的强制转换。桥方法（Bridge Method）是编译器在子类中生成的合成方法，确保多态正确。推荐阅读《Java 核心技术 卷 I》第 8 章泛型部分。",
-    "hints": [
-      "类型擦除的具体过程",
-      "什么是桥方法"
-    ],
-    "tags": [
-      "泛型",
-      "基础"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 105,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "true_false",
+    title: "Java 泛型运行时类型信息",
+    content: "Java 泛型在运行时可以获取具体的泛型参数类型。",
+    answer:
+      "答案：错误\n\n解析：Java 泛型通过类型擦除实现，编译后泛型参数信息被擦除为原始类型（Raw Type），List<String> 和 List<Integer> 运行时是同一个 Class。但可通过反射和 TypeToken 技巧间接获取泛型参数。\n\n扩展延伸：类型擦除的具体过程：编译器将 T 替换为 Object（无界）或上界类型，并插入必要的强制转换。桥方法（Bridge Method）是编译器在子类中生成的合成方法，确保多态正确。推荐阅读《Java 核心技术 卷 I》第 8 章泛型部分。",
+    hints: ["类型擦除的具体过程", "什么是桥方法"],
+    tags: ["泛型", "基础"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 106,
-    "category": "java_advanced",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "ReentrantLock 公平锁",
-    "content": "ReentrantLock 支持公平锁和非公平锁两种模式。",
-    "answer": "答案：正确\n\n解析：ReentrantLock 构造器接受 fair 参数控制模式。公平锁按线程等待时间顺序获取锁，避免饥饿但吞吐量低；非公平锁允许插队（默认），性能更高但极端情况可能导致线程饥饿。\n\n扩展延伸：synchronized 是非公平的，性能与 ReentrantLock 差距已缩小（JDK 6 锁优化）。ReentrantLock 在需要可中断锁、定时锁、公平锁或条件变量（Condition）的场景仍不可替代。推荐阅读《Java 并发编程实战》第 13 章。",
-    "hints": [
-      "公平锁和非公平锁的性能差异",
-      "synchronized 是公平的还是非公平的"
-    ],
-    "tags": [
-      "并发",
-      "锁"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 106,
+    category: "java_advanced",
+    difficulty: "easy",
+    type: "true_false",
+    title: "ReentrantLock 公平锁",
+    content: "ReentrantLock 支持公平锁和非公平锁两种模式。",
+    answer:
+      "答案：正确\n\n解析：ReentrantLock 构造器接受 fair 参数控制模式。公平锁按线程等待时间顺序获取锁，避免饥饿但吞吐量低；非公平锁允许插队（默认），性能更高但极端情况可能导致线程饥饿。\n\n扩展延伸：synchronized 是非公平的，性能与 ReentrantLock 差距已缩小（JDK 6 锁优化）。ReentrantLock 在需要可中断锁、定时锁、公平锁或条件变量（Condition）的场景仍不可替代。推荐阅读《Java 并发编程实战》第 13 章。",
+    hints: ["公平锁和非公平锁的性能差异", "synchronized 是公平的还是非公平的"],
+    tags: ["并发", "锁"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 107,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "ThreadLocal 内存泄漏场景",
-    "content": "ThreadLocal 为什么可能导致内存泄漏？使用时应注意什么？",
-    "answer": "答案：ThreadLocalMap 的 key 是弱引用（WeakReference），value 是强引用\n\n解析：ThreadLocalMap.Entry 继承 WeakReference，key（ThreadLocal 实例）为弱引用，value 为强引用。当 ThreadLocal 外部强引用被回收后，GC 会回收 key（弱引用），但 value 仍有强引用链（Thread → ThreadLocalMap → Entry → value）。只要线程存活，value 就无法回收，造成内存泄漏。\n\n扩展延伸：最佳实践 1）每次使用后调用 remove() 清除 Entry 2）使用 try-finally 确保 remove 执行 3）线程池场景尤其危险——线程复用会持续累积泄漏。Tomcat、Jetty 等容器经常有大流量经过，ThreadLocal 泄漏可能快速撑满老年代引发 Full GC。",
-    "hints": [
-      "WeakReference 在 GC 时怎么处理",
-      "为什么线程池会放大这个泄漏问题"
-    ],
-    "tags": [
-      "并发",
-      "内存",
-      "陷阱"
-    ],
-    "options": []
+    id: 107,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "ThreadLocal 内存泄漏场景",
+    content: "ThreadLocal 为什么可能导致内存泄漏？使用时应注意什么？",
+    answer:
+      "答案：ThreadLocalMap 的 key 是弱引用（WeakReference），value 是强引用\n\n解析：ThreadLocalMap.Entry 继承 WeakReference，key（ThreadLocal 实例）为弱引用，value 为强引用。当 ThreadLocal 外部强引用被回收后，GC 会回收 key（弱引用），但 value 仍有强引用链（Thread → ThreadLocalMap → Entry → value）。只要线程存活，value 就无法回收，造成内存泄漏。\n\n扩展延伸：最佳实践 1）每次使用后调用 remove() 清除 Entry 2）使用 try-finally 确保 remove 执行 3）线程池场景尤其危险——线程复用会持续累积泄漏。Tomcat、Jetty 等容器经常有大流量经过，ThreadLocal 泄漏可能快速撑满老年代引发 Full GC。",
+    hints: ["WeakReference 在 GC 时怎么处理", "为什么线程池会放大这个泄漏问题"],
+    tags: ["并发", "内存", "陷阱"],
+    options: [],
   },
   {
-    "id": 108,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "线程池异常吞没陷阱",
-    "content": "用 ExecutorService.submit() 提交任务，任务中抛出的运行时异常会发生什么？execute() 和 submit() 对异常处理有何区别？",
-    "answer": "答案：submit() 会吞没异常，execute() 会抛出异常\n\n解析：submit() 返回 Future，任务异常被封装在 Future.get() 返回的 ExecutionException 中。如果从未调用 Future.get()，异常会被静默吞没。execute() 提交的任务抛异常时，未被捕获的异常会传播到线程池的 uncaughtExceptionHandler，线程销毁并创建新线程替换。\n\n扩展延伸：如何避免 1）调用 Future.get() 捕获异常 2）使用 execute() 提交关键任务 3）设置自定义 UncaughtExceptionHandler 记录日志 4）使用 afterExecute() 钩子（ThreadPoolExecutor 扩展点）。生产中线上问题排查往往因异常被吞没而无从下手，建议所有 submit 的任务都显式处理异常。",
-    "hints": [
-      "Future.get() 会抛出什么异常",
-      "execute 和 submit 内部实现有何不同"
-    ],
-    "tags": [
-      "并发",
-      "线程池",
-      "陷阱"
-    ],
-    "options": []
+    id: 108,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "线程池异常吞没陷阱",
+    content:
+      "用 ExecutorService.submit() 提交任务，任务中抛出的运行时异常会发生什么？execute() 和 submit() 对异常处理有何区别？",
+    answer:
+      "答案：submit() 会吞没异常，execute() 会抛出异常\n\n解析：submit() 返回 Future，任务异常被封装在 Future.get() 返回的 ExecutionException 中。如果从未调用 Future.get()，异常会被静默吞没。execute() 提交的任务抛异常时，未被捕获的异常会传播到线程池的 uncaughtExceptionHandler，线程销毁并创建新线程替换。\n\n扩展延伸：如何避免 1）调用 Future.get() 捕获异常 2）使用 execute() 提交关键任务 3）设置自定义 UncaughtExceptionHandler 记录日志 4）使用 afterExecute() 钩子（ThreadPoolExecutor 扩展点）。生产中线上问题排查往往因异常被吞没而无从下手，建议所有 submit 的任务都显式处理异常。",
+    hints: ["Future.get() 会抛出什么异常", "execute 和 submit 内部实现有何不同"],
+    tags: ["并发", "线程池", "陷阱"],
+    options: [],
   },
   {
-    "id": 109,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ConcurrentModificationException 场景",
-    "content": "在什么情况下会抛出 ConcurrentModificationException？如何在遍历时安全删除集合元素？",
-    "answer": "答案：遍历集合时直接调用集合的 remove/add 方法会抛此异常\n\n解析：ArrayList、HashMap 等集合的迭代器采用 fail-fast 机制，内部维护 modCount 计数器。遍历期间若非通过迭代器修改集合（如 list.remove()），modCount 与预期值不符即抛出 ConcurrentModificationException。\n\n扩展延伸：三种安全删除方式 1）使用 Iterator.remove()（单线程安全）2）使用 ConcurrentHashMap/CopyOnWriteArrayList（并发场景）3）使用 Java 8 的 removeIf() 内部已处理迭代器同步。需要注意的是，即使单线程也可能在多处代码间接修改集合时触发此异常。",
-    "hints": [
-      "迭代器的 fail-fast 机制是什么",
-      "CopyOnWriteArrayList 为什么不会抛此异常"
-    ],
-    "tags": [
-      "并发",
-      "集合",
-      "陷阱"
-    ],
-    "options": []
+    id: 109,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ConcurrentModificationException 场景",
+    content: "在什么情况下会抛出 ConcurrentModificationException？如何在遍历时安全删除集合元素？",
+    answer:
+      "答案：遍历集合时直接调用集合的 remove/add 方法会抛此异常\n\n解析：ArrayList、HashMap 等集合的迭代器采用 fail-fast 机制，内部维护 modCount 计数器。遍历期间若非通过迭代器修改集合（如 list.remove()），modCount 与预期值不符即抛出 ConcurrentModificationException。\n\n扩展延伸：三种安全删除方式 1）使用 Iterator.remove()（单线程安全）2）使用 ConcurrentHashMap/CopyOnWriteArrayList（并发场景）3）使用 Java 8 的 removeIf() 内部已处理迭代器同步。需要注意的是，即使单线程也可能在多处代码间接修改集合时触发此异常。",
+    hints: ["迭代器的 fail-fast 机制是什么", "CopyOnWriteArrayList 为什么不会抛此异常"],
+    tags: ["并发", "集合", "陷阱"],
+    options: [],
   },
   {
-    "id": 110,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "线上 CPU 100% 排查思路",
-    "content": "线上应用突然 CPU 持续 100%，你如何定位根因？请描述完整排查流程。",
-    "answer": "答案：top → top -H → jstack → 分析线程栈\n\n解析：1）top 确认 CPU 100% 的进程 PID 2）top -H -p PID 找到 CPU 最高的线程 TID 3）printf '%x\\n' TID 转十六进制 4）jstack PID | grep -A 30 TID_HEX 查看线程栈。常见原因包括：死循环（无锁）、频繁 GC（内存不足/泄漏）、锁竞争激烈（上下文切换开销）、正则表达式回溯过多。\n\n扩展延伸：如果是频繁 GC 导致 CPU 高，重点排查堆内存和 GC 日志。如果是锁竞争，看线程是否大量处于 BLOCKED 状态。如果周期性飙升，可能和大对象分配/定时任务有关。高级工具：Arthas（在线诊断）、async-profiler（火焰图）、VisualVM（离线分析）。",
-    "hints": [
-      "如何将线程 ID 从十进制转十六进制",
-      "jstack 输出的线程状态有哪些含义"
-    ],
-    "tags": [
-      "JVM",
-      "排查",
-      "性能"
-    ],
-    "options": []
+    id: 110,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "线上 CPU 100% 排查思路",
+    content: "线上应用突然 CPU 持续 100%，你如何定位根因？请描述完整排查流程。",
+    answer:
+      "答案：top → top -H → jstack → 分析线程栈\n\n解析：1）top 确认 CPU 100% 的进程 PID 2）top -H -p PID 找到 CPU 最高的线程 TID 3）printf '%x\\n' TID 转十六进制 4）jstack PID | grep -A 30 TID_HEX 查看线程栈。常见原因包括：死循环（无锁）、频繁 GC（内存不足/泄漏）、锁竞争激烈（上下文切换开销）、正则表达式回溯过多。\n\n扩展延伸：如果是频繁 GC 导致 CPU 高，重点排查堆内存和 GC 日志。如果是锁竞争，看线程是否大量处于 BLOCKED 状态。如果周期性飙升，可能和大对象分配/定时任务有关。高级工具：Arthas（在线诊断）、async-profiler（火焰图）、VisualVM（离线分析）。",
+    hints: ["如何将线程 ID 从十进制转十六进制", "jstack 输出的线程状态有哪些含义"],
+    tags: ["JVM", "排查", "性能"],
+    options: [],
   },
   {
-    "id": 111,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "死锁的排查与预防",
-    "content": "请描述死锁的四个必要条件，以及如何排查和预防死锁。",
-    "answer": "答案：互斥、占有且等待、不可抢占、循环等待\n\n解析：排查死锁步骤 1）jps 找到进程 PID 2）jstack PID 搜索 deadlock 关键字 3）JVM 会在死锁检测中输出线程持有和等待的锁信息。预防策略：统一加锁顺序（最重要的）、使用 tryLock 带超时（Lock API）、缩小锁粒度、使用无锁数据结构。\n\n扩展延伸：实战中数据库死锁比代码死锁更常见——两个事务以不同顺序加行锁导致。从死锁恢复：jstack 检测后可以 kill -3 触发线程转储，或重启进程。长期方案：代码审查中加入锁顺序检查、使用静态分析工具（FindBugs 等）检测违反锁顺序的代码。",
-    "hints": [
-      "jstack 输出中如何识别死锁",
-      "为什么统一加锁顺序可以预防死锁"
-    ],
-    "tags": [
-      "并发",
-      "锁",
-      "排查"
-    ],
-    "options": []
+    id: 111,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "死锁的排查与预防",
+    content: "请描述死锁的四个必要条件，以及如何排查和预防死锁。",
+    answer:
+      "答案：互斥、占有且等待、不可抢占、循环等待\n\n解析：排查死锁步骤 1）jps 找到进程 PID 2）jstack PID 搜索 deadlock 关键字 3）JVM 会在死锁检测中输出线程持有和等待的锁信息。预防策略：统一加锁顺序（最重要的）、使用 tryLock 带超时（Lock API）、缩小锁粒度、使用无锁数据结构。\n\n扩展延伸：实战中数据库死锁比代码死锁更常见——两个事务以不同顺序加行锁导致。从死锁恢复：jstack 检测后可以 kill -3 触发线程转储，或重启进程。长期方案：代码审查中加入锁顺序检查、使用静态分析工具（FindBugs 等）检测违反锁顺序的代码。",
+    hints: ["jstack 输出中如何识别死锁", "为什么统一加锁顺序可以预防死锁"],
+    tags: ["并发", "锁", "排查"],
+    options: [],
   },
   {
-    "id": 112,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "线上 OOM 排查完整流程",
-    "content": "线上服务频繁 OOM，你如何定位内存泄漏的根因？",
-    "answer": "答案：配置 OOM dump → 使用 MAT/Eclipse Memory Analyzer 分析\n\n解析：排查流程 1）JVM 启动参数上加 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof 2）服务 OOM 后自动生成 dump 文件 3）用 MAT 打开 dump，查看 Leak Suspects Report（泄漏嫌疑报告）4）查看 Dominator Tree（支配树），按保留堆大小排序找最大对象 5）检查 GC Roots 引用链确定泄漏源头。\n\n扩展延伸：常见泄漏类型 a）集合类泄漏（HashMap key 未移除）b）回调/监听器未注销 c）类加载器泄漏（Tomcat 热部署）d）ThreadLocal 不 remove e）直接内存泄漏（ByteBuffer.allocateDirect 未释放）。建议结合 jstat -gcutil 观察 GC 趋势和内存上涨斜率来预警。",
-    "hints": [
+    id: 112,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "线上 OOM 排查完整流程",
+    content: "线上服务频繁 OOM，你如何定位内存泄漏的根因？",
+    answer:
+      "答案：配置 OOM dump → 使用 MAT/Eclipse Memory Analyzer 分析\n\n解析：排查流程 1）JVM 启动参数上加 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof 2）服务 OOM 后自动生成 dump 文件 3）用 MAT 打开 dump，查看 Leak Suspects Report（泄漏嫌疑报告）4）查看 Dominator Tree（支配树），按保留堆大小排序找最大对象 5）检查 GC Roots 引用链确定泄漏源头。\n\n扩展延伸：常见泄漏类型 a）集合类泄漏（HashMap key 未移除）b）回调/监听器未注销 c）类加载器泄漏（Tomcat 热部署）d）ThreadLocal 不 remove e）直接内存泄漏（ByteBuffer.allocateDirect 未释放）。建议结合 jstat -gcutil 观察 GC 趋势和内存上涨斜率来预警。",
+    hints: [
       "HeapDumpOnOutOfMemoryError 有什么用",
-      "MAT 的 Leak Suspects 和 Dominator Tree 分别看什么"
+      "MAT 的 Leak Suspects 和 Dominator Tree 分别看什么",
     ],
-    "tags": [
-      "JVM",
-      "排查",
-      "性能",
-      "内存"
-    ],
-    "options": []
+    tags: ["JVM", "排查", "性能", "内存"],
+    options: [],
   },
   {
-    "id": 113,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "AQS 的核心实现原理",
-    "content": "关于 AbstractQueuedSynchronizer（AQS）的核心实现原理，以下描述正确的是？",
-    "answer": "答案：B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列\n\n解析：AQS 维护一个 volatile int state（同步状态）和一个 CLH 双向队列（等待线程队列）。通过 CAS 操作 state，子类通过 tryAcquire/tryRelease 模板方法控制状态变化。支持独占（如 ReentrantLock）和共享（如 Semaphore）两种模式。\n\n扩展延伸：AQS 是 JUC 包的基石，基于它的同步器包括 ReentrantLock（tryAcquire）、Semaphore（tryAcquireShared）、CountDownLatch（tryAcquireShared）、ReentrantReadWriteLock（读写分离）。条件队列（ConditionObject）也是 AQS 的内部实现。",
-    "hints": [
-      "ReentrantLock 和 Semaphore 在 AQS 上的实现差异",
-      "CLH 队列和条件队列的关系"
-    ],
-    "tags": [
-      "并发",
-      "AQS"
-    ],
-    "options": [
+    id: 113,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "choice",
+    title: "AQS 的核心实现原理",
+    content: "关于 AbstractQueuedSynchronizer（AQS）的核心实现原理，以下描述正确的是？",
+    answer:
+      "答案：B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列\n\n解析：AQS 维护一个 volatile int state（同步状态）和一个 CLH 双向队列（等待线程队列）。通过 CAS 操作 state，子类通过 tryAcquire/tryRelease 模板方法控制状态变化。支持独占（如 ReentrantLock）和共享（如 Semaphore）两种模式。\n\n扩展延伸：AQS 是 JUC 包的基石，基于它的同步器包括 ReentrantLock（tryAcquire）、Semaphore（tryAcquireShared）、CountDownLatch（tryAcquireShared）、ReentrantReadWriteLock（读写分离）。条件队列（ConditionObject）也是 AQS 的内部实现。",
+    hints: ["ReentrantLock 和 Semaphore 在 AQS 上的实现差异", "CLH 队列和条件队列的关系"],
+    tags: ["并发", "AQS"],
+    options: [
       "A) AQS 使用数组存储等待线程",
       "B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列",
       "C) AQS 只支持独占模式",
-      "D) AQS 基于自旋锁实现"
-    ]
+      "D) AQS 基于自旋锁实现",
+    ],
   },
   {
-    "id": 114,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "true_false",
-    "title": "虚拟线程与平台线程的关系",
-    "content": "JDK 21 的虚拟线程（Virtual Threads）旨在完全替代平台线程（Platform Threads）。",
-    "answer": "答案：错误\n\n解析：虚拟线程是 JDK 实现的用户态线程（纤程），挂载在平台线程上执行，不是替代关系。适用 IO 密集型任务（大量阻塞等待），不适用 CPU 密集型任务。虚拟线程的优势在于可以创建数百万级别，但同步锁（synchronized）内会 pin 住载体线程，建议改用 ReentrantLock。\n\n扩展延伸：虚拟线程底层通过 Continuation 实现 yield 和 resume，遇到阻塞操作时自动从载体线程卸载。使用时注意：synchronized 块内虚拟线程不会卸载，大量 synchronized 会降低虚拟线程的优势。推荐阅读 JEP 444。",
-    "hints": [
-      "虚拟线程和操作系统线程的映射关系",
-      "什么场景下虚拟线程性能不如平台线程"
-    ],
-    "tags": [
-      "并发",
-      "虚拟线程"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 114,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "true_false",
+    title: "虚拟线程与平台线程的关系",
+    content: "JDK 21 的虚拟线程（Virtual Threads）旨在完全替代平台线程（Platform Threads）。",
+    answer:
+      "答案：错误\n\n解析：虚拟线程是 JDK 实现的用户态线程（纤程），挂载在平台线程上执行，不是替代关系。适用 IO 密集型任务（大量阻塞等待），不适用 CPU 密集型任务。虚拟线程的优势在于可以创建数百万级别，但同步锁（synchronized）内会 pin 住载体线程，建议改用 ReentrantLock。\n\n扩展延伸：虚拟线程底层通过 Continuation 实现 yield 和 resume，遇到阻塞操作时自动从载体线程卸载。使用时注意：synchronized 块内虚拟线程不会卸载，大量 synchronized 会降低虚拟线程的优势。推荐阅读 JEP 444。",
+    hints: ["虚拟线程和操作系统线程的映射关系", "什么场景下虚拟线程性能不如平台线程"],
+    tags: ["并发", "虚拟线程"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 115,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "CAS 操作的 ABA 问题",
-    "content": "CAS 操作中的 ABA 问题是指什么？以下哪种方式可以解决？",
-    "answer": "答案：A) 值从 A 变 B 又变回 A，CAS 误认为未修改过\n\n解析：ABA 问题的本质是 CAS 只检查值是否和预期相同，不关心中间是否修改过。在指针复用场景中特别危险（如栈操作时，A→B→A 的指针可能指向已被回收的对象）。\n\n扩展延伸：解决方案 1）AtomicStampedReference（带版本号的原子引用，每次修改更新 stamp）2）AtomicMarkableReference（带布尔标记）3）使用传统的锁。Java 的 ConcurrentLinkedDeque 等无锁数据结构内部已处理了 ABA 问题。",
-    "hints": [
+    id: 115,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "choice",
+    title: "CAS 操作的 ABA 问题",
+    content: "CAS 操作中的 ABA 问题是指什么？以下哪种方式可以解决？",
+    answer:
+      "答案：A) 值从 A 变 B 又变回 A，CAS 误认为未修改过\n\n解析：ABA 问题的本质是 CAS 只检查值是否和预期相同，不关心中间是否修改过。在指针复用场景中特别危险（如栈操作时，A→B→A 的指针可能指向已被回收的对象）。\n\n扩展延伸：解决方案 1）AtomicStampedReference（带版本号的原子引用，每次修改更新 stamp）2）AtomicMarkableReference（带布尔标记）3）使用传统的锁。Java 的 ConcurrentLinkedDeque 等无锁数据结构内部已处理了 ABA 问题。",
+    hints: [
       "AtomicStampedReference 和 AtomicReference 的区别",
-      "为什么说 ABA 问题对数值操作通常无害"
+      "为什么说 ABA 问题对数值操作通常无害",
     ],
-    "tags": [
-      "并发",
-      "CAS"
-    ],
-    "options": [
+    tags: ["并发", "CAS"],
+    options: [
       "A) 值从 A 变 B 又变回 A，CAS 误认为未修改过",
       "B) 值从未变化过但 CAS 失败",
       "C) 使用 synchronized 代替 CAS",
-      "D) 增大自旋次数"
-    ]
+      "D) 增大自旋次数",
+    ],
   },
   {
-    "id": 116,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "锁升级过程（偏向锁→轻量级锁→重量级锁）",
-    "content": "请描述 synchronized 在 HotSpot JVM 中的锁升级过程，包括偏向锁、轻量级锁、重量级锁的触发条件和切换机制。",
-    "answer": "答案：无锁 → 偏向锁 → 轻量级锁 → 重量级锁（单向升级，不可降级）\n\n解析：偏向锁：第一个获取锁的线程将对象头 Mark Word 设为偏向模式，记录线程 ID，后续该线程再次获取无需同步操作。轻量级锁：有另一个线程竞争时，偏向锁撤销，升级为轻量级锁（自旋获取）。重量级锁：自旋超过阈值或等待线程数过多，膨胀为重量级锁，未获取到的线程阻塞进入等待队列。\n\n扩展延伸：JDK 15 起默认禁用偏向锁（JEP 374），因为偏向锁的撤销在高并发场景下成本较高（需要在全局安全点执行）。自适应自旋（JDK 6 引入）让 JVM 根据上次自旋结果动态调整自旋次数。",
-    "hints": [
-      "JDK 15 为什么默认禁用了偏向锁",
-      "轻量级锁自旋失败会立即升级吗"
-    ],
-    "tags": [
-      "并发",
-      "锁",
-      "JVM"
-    ],
-    "options": []
+    id: 116,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "锁升级过程（偏向锁→轻量级锁→重量级锁）",
+    content:
+      "请描述 synchronized 在 HotSpot JVM 中的锁升级过程，包括偏向锁、轻量级锁、重量级锁的触发条件和切换机制。",
+    answer:
+      "答案：无锁 → 偏向锁 → 轻量级锁 → 重量级锁（单向升级，不可降级）\n\n解析：偏向锁：第一个获取锁的线程将对象头 Mark Word 设为偏向模式，记录线程 ID，后续该线程再次获取无需同步操作。轻量级锁：有另一个线程竞争时，偏向锁撤销，升级为轻量级锁（自旋获取）。重量级锁：自旋超过阈值或等待线程数过多，膨胀为重量级锁，未获取到的线程阻塞进入等待队列。\n\n扩展延伸：JDK 15 起默认禁用偏向锁（JEP 374），因为偏向锁的撤销在高并发场景下成本较高（需要在全局安全点执行）。自适应自旋（JDK 6 引入）让 JVM 根据上次自旋结果动态调整自旋次数。",
+    hints: ["JDK 15 为什么默认禁用了偏向锁", "轻量级锁自旋失败会立即升级吗"],
+    tags: ["并发", "锁", "JVM"],
+    options: [],
   },
   {
-    "id": 117,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "JMM 与 happens-before 原则",
-    "content": "请解释 Java 内存模型（JMM）中的 happens-before 原则，列举常见的 happens-before 规则。",
-    "answer": "答案：happens-before 确保前一个操作的结果对后续操作可见\n\n解析：JMM 是抽象的内存模型，定义了多线程环境下共享变量的可见性规则。happens-before 原则用于判断数据是否存在竞争，无需关心具体的重排序和内存屏障实现细节。\n\n扩展延伸：八条 happens-before 规则 1）程序次序规则—同一线程前一个操作 happens-before 后一个 2）volatile 规则—volatile 变量的写 happens-before 读 3）锁规则—解锁 happens-before 加锁 4）传递性—A happens-before B, B happens-before C ⇒ A happens-before C 5）线程 start 规则—start() happens-before 该线程任何动作 6）线程 join 规则—线程的所有操作 happens-before join() 返回 7）中断规则—interrupt() happens-before 检测到中断 8）对象终结规则—构造函数结束 happens-before finalize()。",
-    "hints": [
-      "volatile 写和读的 happens-before 关系",
-      "传递性如何推导出对某个字段的可见性保证"
-    ],
-    "tags": [
-      "并发",
-      "JMM"
-    ],
-    "options": []
+    id: 117,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "JMM 与 happens-before 原则",
+    content:
+      "请解释 Java 内存模型（JMM）中的 happens-before 原则，列举常见的 happens-before 规则。",
+    answer:
+      "答案：happens-before 确保前一个操作的结果对后续操作可见\n\n解析：JMM 是抽象的内存模型，定义了多线程环境下共享变量的可见性规则。happens-before 原则用于判断数据是否存在竞争，无需关心具体的重排序和内存屏障实现细节。\n\n扩展延伸：八条 happens-before 规则 1）程序次序规则—同一线程前一个操作 happens-before 后一个 2）volatile 规则—volatile 变量的写 happens-before 读 3）锁规则—解锁 happens-before 加锁 4）传递性—A happens-before B, B happens-before C ⇒ A happens-before C 5）线程 start 规则—start() happens-before 该线程任何动作 6）线程 join 规则—线程的所有操作 happens-before join() 返回 7）中断规则—interrupt() happens-before 检测到中断 8）对象终结规则—构造函数结束 happens-before finalize()。",
+    hints: ["volatile 写和读的 happens-before 关系", "传递性如何推导出对某个字段的可见性保证"],
+    tags: ["并发", "JMM"],
+    options: [],
   },
   {
-    "id": 118,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "安全点（Safepoint）是什么",
-    "content": "请解释 JVM 中的安全点（Safepoint）是什么，它有什么作用？哪些场景会触发全局安全点？",
-    "answer": "答案：Safepoint 是所有线程都到达的一个安全状态点，JVM 在此可以执行全局操作\n\n解析：JVM 需要所有线程到达 Safepoint 才能执行 STW 操作。线程在 Safepoint 时栈状态是确定的，可以安全地进行 GC、偏向锁撤销、类重定义等操作。线程通过主动轮询检查 Safepoint 标志来进入 Safepoint。\n\n扩展延伸：触发全局 Safepoint 的场景：1）GC 停顿（最常见）2）偏向锁撤销 3）JIT 编译优化 4）线程堆栈 dump。Safepoint 导致的长时间停顿问题：循环中没有 Safepoint 轮询点（如大数组遍历）导致线程迟迟无法进入。JVM 参数 -XX:+PrintSafepointStatistics 可打印 Safepoint 日志。",
-    "hints": [
-      "循环中有没有 Safepoint 轮询点的影响",
-      "长时间 STW 的常见原因有哪些"
-    ],
-    "tags": [
-      "JVM",
-      "性能"
-    ],
-    "options": []
+    id: 118,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "安全点（Safepoint）是什么",
+    content: "请解释 JVM 中的安全点（Safepoint）是什么，它有什么作用？哪些场景会触发全局安全点？",
+    answer:
+      "答案：Safepoint 是所有线程都到达的一个安全状态点，JVM 在此可以执行全局操作\n\n解析：JVM 需要所有线程到达 Safepoint 才能执行 STW 操作。线程在 Safepoint 时栈状态是确定的，可以安全地进行 GC、偏向锁撤销、类重定义等操作。线程通过主动轮询检查 Safepoint 标志来进入 Safepoint。\n\n扩展延伸：触发全局 Safepoint 的场景：1）GC 停顿（最常见）2）偏向锁撤销 3）JIT 编译优化 4）线程堆栈 dump。Safepoint 导致的长时间停顿问题：循环中没有 Safepoint 轮询点（如大数组遍历）导致线程迟迟无法进入。JVM 参数 -XX:+PrintSafepointStatistics 可打印 Safepoint 日志。",
+    hints: ["循环中有没有 Safepoint 轮询点的影响", "长时间 STW 的常见原因有哪些"],
+    tags: ["JVM", "性能"],
+    options: [],
   },
   {
-    "id": 119,
-    "category": "java_advanced",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Record 类（JDK 16）",
-    "content": "请介绍 Java 14 预览、JDK 16 正式发布的 Record 类型。它和普通类有什么区别？",
-    "answer": "答案：Record 是用于创建不可变数据载体的特殊类，自动生成构造器、getter、equals/hashCode/toString\n\n解析：声明 record Point(int x, int y) {} 等效于一个包含 private final 字段、全参构造器、x()/y() 访问方法（不是 getX()）、equals/hashCode/toString 的普通类。Record 是 final 类，不能继承也不能被继承，所有字段隐式为 final。\n\n扩展延伸：Record 的优势 1）极大简化 POJO/DTO 的编写 2）自动提供的 equals/hashCode 基于所有字段（按值比较而非引用）3）构造器可做验证：Record Point { Point { if (x < 0) throw new IllegalArgumentException(); } }。不适合场景：需要 JPA/Hibernate 代理的实体类、需要继承的类。推荐阅读 JEP 395。",
-    "hints": [
-      "Record 和 Lombok @Data 的区别",
-      "Record 的访问方法为什么是字段名而不是 getX()"
-    ],
-    "tags": [
-      "基础",
-      "JDK 新特性"
-    ],
-    "options": []
+    id: 119,
+    category: "java_advanced",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Record 类（JDK 16）",
+    content: "请介绍 Java 14 预览、JDK 16 正式发布的 Record 类型。它和普通类有什么区别？",
+    answer:
+      "答案：Record 是用于创建不可变数据载体的特殊类，自动生成构造器、getter、equals/hashCode/toString\n\n解析：声明 record Point(int x, int y) {} 等效于一个包含 private final 字段、全参构造器、x()/y() 访问方法（不是 getX()）、equals/hashCode/toString 的普通类。Record 是 final 类，不能继承也不能被继承，所有字段隐式为 final。\n\n扩展延伸：Record 的优势 1）极大简化 POJO/DTO 的编写 2）自动提供的 equals/hashCode 基于所有字段（按值比较而非引用）3）构造器可做验证：Record Point { Point { if (x < 0) throw new IllegalArgumentException(); } }。不适合场景：需要 JPA/Hibernate 代理的实体类、需要继承的类。推荐阅读 JEP 395。",
+    hints: ["Record 和 Lombok @Data 的区别", "Record 的访问方法为什么是字段名而不是 getX()"],
+    tags: ["基础", "JDK 新特性"],
+    options: [],
   },
   {
-    "id": 120,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "ForkJoinPool 的描述",
-    "content": "关于 ForkJoinPool 框架，以下描述正确的是？",
-    "answer": "答案：B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制\n\n解析：ForkJoinPool 采用工作窃取算法：每个工作线程维护自己的双端任务队列，完成自己队列任务后从其他线程队列尾部「窃取」任务执行。这充分利用多核 CPU，减少线程竞争。\n\n扩展延伸：ForkJoinPool.commonPool() 是全局共享实例（默认并行度 = CPU 核心数 - 1）。Java 8 的 parallelStream 默认使用 commonPool。但 I/O 密集型任务不应使用 parallelStream（会阻塞公共池线程）。",
-    "hints": [
-      "工作窃取算法为什么从队列尾部窃取",
-      "parallelStream 使用的什么线程池"
-    ],
-    "tags": [
-      "并发",
-      "ForkJoinPool"
-    ],
-    "options": [
+    id: 120,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "choice",
+    title: "ForkJoinPool 的描述",
+    content: "关于 ForkJoinPool 框架，以下描述正确的是？",
+    answer:
+      "答案：B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制\n\n解析：ForkJoinPool 采用工作窃取算法：每个工作线程维护自己的双端任务队列，完成自己队列任务后从其他线程队列尾部「窃取」任务执行。这充分利用多核 CPU，减少线程竞争。\n\n扩展延伸：ForkJoinPool.commonPool() 是全局共享实例（默认并行度 = CPU 核心数 - 1）。Java 8 的 parallelStream 默认使用 commonPool。但 I/O 密集型任务不应使用 parallelStream（会阻塞公共池线程）。",
+    hints: ["工作窃取算法为什么从队列尾部窃取", "parallelStream 使用的什么线程池"],
+    tags: ["并发", "ForkJoinPool"],
+    options: [
       "A) ForkJoinPool 使用单线程处理所有任务",
       "B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制",
       "C) ForkJoinPool 的任务队列是全局统一的",
-      "D) ForkJoinPool 只能用于递归任务"
-    ]
+      "D) ForkJoinPool 只能用于递归任务",
+    ],
   },
   {
-    "id": 121,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "JVM 常用调优参数",
-    "content": "请列举常用的 JVM 调优参数及其作用，包括堆内存、GC、诊断等方面。",
-    "answer": "答案：堆内存设置 -Xms/-Xmx、GC 选择 -XX:+UseG1GC、诊断 -XX:+HeapDumpOnOutOfMemoryError\n\n解析：堆内存：-Xms2g -Xmx2g（初始和最大堆，建议相等避免扩容开销）、-Xmn512m（新生代大小）、-XX:MaxMetaspaceSize=256m（元空间上限）。GC 相关：-XX:+UseG1GC、-XX:MaxGCPauseMillis=200、-XX:ParallelGCThreads=8。诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof -Xloggc:gc.log。\n\n扩展延伸：典型 4G 堆参数示例：-Xms4g -Xmx4g -Xmn2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+PrintGCDetails -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/dump.hprof。建议最小化参数（只用必要的），逐个调整观察效果。",
-    "hints": [
-      "-Xms 和 -Xmx 为什么不建议设置不同值",
-      "DisableExplicitGC 解决了什么问题"
-    ],
-    "tags": [
-      "JVM",
-      "调优"
-    ],
-    "options": []
+    id: 121,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "JVM 常用调优参数",
+    content: "请列举常用的 JVM 调优参数及其作用，包括堆内存、GC、诊断等方面。",
+    answer:
+      "答案：堆内存设置 -Xms/-Xmx、GC 选择 -XX:+UseG1GC、诊断 -XX:+HeapDumpOnOutOfMemoryError\n\n解析：堆内存：-Xms2g -Xmx2g（初始和最大堆，建议相等避免扩容开销）、-Xmn512m（新生代大小）、-XX:MaxMetaspaceSize=256m（元空间上限）。GC 相关：-XX:+UseG1GC、-XX:MaxGCPauseMillis=200、-XX:ParallelGCThreads=8。诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof -Xloggc:gc.log。\n\n扩展延伸：典型 4G 堆参数示例：-Xms4g -Xmx4g -Xmn2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+PrintGCDetails -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/dump.hprof。建议最小化参数（只用必要的），逐个调整观察效果。",
+    hints: ["-Xms 和 -Xmx 为什么不建议设置不同值", "DisableExplicitGC 解决了什么问题"],
+    tags: ["JVM", "调优"],
+    options: [],
   },
   {
-    "id": 122,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "String.intern() 与常量池",
-    "content": "String.intern() 方法会将字符串放入运行时常量池，并返回常量池中的引用。",
-    "answer": "答案：正确\n\n解析：intern() 方法检查字符串常量池中是否存在 equals 相等的字符串，存在则返回常量池中的引用，不存在则在常量池中创建并返回引用。JDK 7 之前常量池在方法区（永久代），JDK 7 起常量池移到了堆中。\n\n扩展延伸：大量重复字符串场景下 intern() 可显著节省内存（如数据库查询返回的相同状态码）。但滥用 intern() 会导致常量池膨胀。String 字面量（如 \"hello\"）自动执行 intern 行为，new String(\"hello\") 会创建两个对象：堆中的 String 对象和常量池中的字面量。",
-    "hints": [
-      "new String(\"hello\") 创建了几个对象",
-      "JDK 6 和 JDK 7+ 的 intern() 行为有何不同"
-    ],
-    "tags": [
-      "基础",
-      "JVM",
-      "String"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 122,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "true_false",
+    title: "String.intern() 与常量池",
+    content: "String.intern() 方法会将字符串放入运行时常量池，并返回常量池中的引用。",
+    answer:
+      '答案：正确\n\n解析：intern() 方法检查字符串常量池中是否存在 equals 相等的字符串，存在则返回常量池中的引用，不存在则在常量池中创建并返回引用。JDK 7 之前常量池在方法区（永久代），JDK 7 起常量池移到了堆中。\n\n扩展延伸：大量重复字符串场景下 intern() 可显著节省内存（如数据库查询返回的相同状态码）。但滥用 intern() 会导致常量池膨胀。String 字面量（如 "hello"）自动执行 intern 行为，new String("hello") 会创建两个对象：堆中的 String 对象和常量池中的字面量。',
+    hints: ['new String("hello") 创建了几个对象', "JDK 6 和 JDK 7+ 的 intern() 行为有何不同"],
+    tags: ["基础", "JVM", "String"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 123,
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "HashMap 线程不安全的表现",
-    "content": "为什么 HashMap 是线程不安全的？多线程环境下使用 HashMap 会出现哪些问题？",
-    "answer": "答案：死循环（JDK 7）、数据覆盖、modCount 不一致\n\n解析：JDK 7 中 put 触发扩容时（transfer 方法），头插法在多线程并发 resize 下可能形成环形链表，导致 get 时死循环（CPU 100%）。数据覆盖：两个线程同时 put，后写入覆盖前写入。modCount 不一致：迭代时其他线程修改结构，触发 fail-fast 抛 ConcurrentModificationException。\n\n扩展延伸：JDK 8 改用尾插法修复了死循环问题，但仍有数据覆盖和 ConcurrentModificationException 问题。线程安全替代方案：ConcurrentHashMap（分段锁/CAS + synchronized）、Collections.synchronizedMap（全表锁）、Hashtable（全表锁）。",
-    "hints": [
-      "JDK 7 的头插法为什么会导致死循环",
-      "JDK 8 为什么改为尾插法"
-    ],
-    "tags": [
-      "集合",
-      "HashMap",
-      "并发"
-    ],
-    "options": []
+    id: 123,
+    category: "java_advanced",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "HashMap 线程不安全的表现",
+    content: "为什么 HashMap 是线程不安全的？多线程环境下使用 HashMap 会出现哪些问题？",
+    answer:
+      "答案：死循环（JDK 7）、数据覆盖、modCount 不一致\n\n解析：JDK 7 中 put 触发扩容时（transfer 方法），头插法在多线程并发 resize 下可能形成环形链表，导致 get 时死循环（CPU 100%）。数据覆盖：两个线程同时 put，后写入覆盖前写入。modCount 不一致：迭代时其他线程修改结构，触发 fail-fast 抛 ConcurrentModificationException。\n\n扩展延伸：JDK 8 改用尾插法修复了死循环问题，但仍有数据覆盖和 ConcurrentModificationException 问题。线程安全替代方案：ConcurrentHashMap（分段锁/CAS + synchronized）、Collections.synchronizedMap（全表锁）、Hashtable（全表锁）。",
+    hints: ["JDK 7 的头插法为什么会导致死循环", "JDK 8 为什么改为尾插法"],
+    tags: ["集合", "HashMap", "并发"],
+    options: [],
   },
   {
-    "id": 124,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "HashMap 长度为什么是 2 的幂次方",
-    "content": "HashMap 要求初始容量是 2 的幂次方，主要原因是什么？",
-    "answer": "答案：B) 可以用位运算 (n - 1) & hash 替代取模提高性能\n\n解析：HashMap 用 (n - 1) & hash 计算桶位置，等价于 hash % n 但位运算更快。这要求 n 是 2 的幂次方，此时 (n-1) 的二进制是全 1，与 hash 做 & 运算能充分利用 hash 值的低位，分布均匀。\n\n扩展延伸：如果指定容量不是 2 的幂，HashMap 会通过 tableSizeFor() 方法向上取整到最近的 2 的幂（通过多次无符号右移和或运算实现）。扩容时重新计算位置：元素在新数组中的位置要么在原位置，要么在原位置 + 旧容量，这得益于容量始终是 2 的幂。",
-    "hints": [
+    id: 124,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "choice",
+    title: "HashMap 长度为什么是 2 的幂次方",
+    content: "HashMap 要求初始容量是 2 的幂次方，主要原因是什么？",
+    answer:
+      "答案：B) 可以用位运算 (n - 1) & hash 替代取模提高性能\n\n解析：HashMap 用 (n - 1) & hash 计算桶位置，等价于 hash % n 但位运算更快。这要求 n 是 2 的幂次方，此时 (n-1) 的二进制是全 1，与 hash 做 & 运算能充分利用 hash 值的低位，分布均匀。\n\n扩展延伸：如果指定容量不是 2 的幂，HashMap 会通过 tableSizeFor() 方法向上取整到最近的 2 的幂（通过多次无符号右移和或运算实现）。扩容时重新计算位置：元素在新数组中的位置要么在原位置，要么在原位置 + 旧容量，这得益于容量始终是 2 的幂。",
+    hints: [
       "位运算 (n - 1) & hash 和 hash % n 等价的条件",
-      "扩容时元素位置为什么要么不变要么偏移旧容量"
+      "扩容时元素位置为什么要么不变要么偏移旧容量",
     ],
-    "tags": [
-      "集合",
-      "HashMap"
-    ],
-    "options": [
+    tags: ["集合", "HashMap"],
+    options: [
       "A) 减少哈希碰撞概率",
       "B) 可以用位运算 (n - 1) & hash 替代取模提高性能",
       "C) 节省内存空间",
-      "D) 方便扩容时重新哈希"
-    ]
+      "D) 方便扩容时重新哈希",
+    ],
   },
   {
-    "id": 125,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "ConcurrentHashMap 复合操作原子性",
-    "content": "关于 ConcurrentHashMap 的原子性，以下说法正确的是？",
-    "answer": "答案：B) putIfAbsent() 是原子操作，但先 get 再 put 不是\n\n解析：ConcurrentHashMap 的单个方法（put、get、putIfAbsent、replace）是线程安全的原子操作。但组合操作如 if (!map.containsKey(key)) { map.put(key, value); } 不是原子性的，两个线程可能同时通过检查并 put。\n\n扩展延伸：ConcurrentHashMap 提供的原子复合方法：putIfAbsent(key, val)（不存在才 put）、compute(key, (k, v) -> ...)（原子更新）、merge(key, val, (old, new) -> ...)（原子合并）。这些方法内部用 CAS + synchronized 保证原子性。推荐使用这些原子方法替代手动组合的 get-then-put 模式。",
-    "hints": [
-      "compute() 和 putIfAbsent() 为什么是原子的",
-      "先判断 containsKey 再 put 有什么问题"
-    ],
-    "tags": [
-      "并发",
-      "集合",
-      "ConcurrentHashMap"
-    ],
-    "options": [
+    id: 125,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "choice",
+    title: "ConcurrentHashMap 复合操作原子性",
+    content: "关于 ConcurrentHashMap 的原子性，以下说法正确的是？",
+    answer:
+      "答案：B) putIfAbsent() 是原子操作，但先 get 再 put 不是\n\n解析：ConcurrentHashMap 的单个方法（put、get、putIfAbsent、replace）是线程安全的原子操作。但组合操作如 if (!map.containsKey(key)) { map.put(key, value); } 不是原子性的，两个线程可能同时通过检查并 put。\n\n扩展延伸：ConcurrentHashMap 提供的原子复合方法：putIfAbsent(key, val)（不存在才 put）、compute(key, (k, v) -> ...)（原子更新）、merge(key, val, (old, new) -> ...)（原子合并）。这些方法内部用 CAS + synchronized 保证原子性。推荐使用这些原子方法替代手动组合的 get-then-put 模式。",
+    hints: ["compute() 和 putIfAbsent() 为什么是原子的", "先判断 containsKey 再 put 有什么问题"],
+    tags: ["并发", "集合", "ConcurrentHashMap"],
+    options: [
       "A) 所有操作都是原子性的",
       "B) putIfAbsent() 是原子操作，但先 get 再 put 不是",
       "C) 遍历时不会抛 ConcurrentModificationException",
-      "D) 多线程 put 一定互相覆盖"
-    ]
+      "D) 多线程 put 一定互相覆盖",
+    ],
   },
   {
-    "id": 126,
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Java 语法糖",
-    "content": "什么是 Java 语法糖？列举 Java 中常见的语法糖及其底层实现。",
-    "answer": "答案：语法糖是编译器提供的便捷语法，本质由编译器 desugar 为底层代码\n\n解析：泛型——编译时擦除为强制转换和 Object 操作。自动拆装箱——编译为 Integer.valueOf() 和 intValue()。for-each 循环——编译为 Iterator 迭代（数组为 fori）。枚举（enum）——编译为继承 Enum 的 final 类。变长参数——编译为数组参数。try-with-resources——编译为 try-finally + close 调用。switch 支持 String——编译为 hashCode + equals。\n\n扩展延伸：语法糖在编译阶段（javac）解析，生成的字节码与手写底层代码等价。反编译工具（如 jad、CFR）可查看 desugar 后的代码。理解语法糖有助于避免陷阱——如 for-each 在遍历时 remove 会抛 ConcurrentModificationException，因为底层仍是 Iterator。",
-    "hints": [
-      "for-each 在遍历删除时会怎样",
-      "枚举在字节码层面是什么样的"
-    ],
-    "tags": [
-      "基础",
-      "语法糖"
-    ],
-    "options": []
+    id: 126,
+    category: "java_advanced",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Java 语法糖",
+    content: "什么是 Java 语法糖？列举 Java 中常见的语法糖及其底层实现。",
+    answer:
+      "答案：语法糖是编译器提供的便捷语法，本质由编译器 desugar 为底层代码\n\n解析：泛型——编译时擦除为强制转换和 Object 操作。自动拆装箱——编译为 Integer.valueOf() 和 intValue()。for-each 循环——编译为 Iterator 迭代（数组为 fori）。枚举（enum）——编译为继承 Enum 的 final 类。变长参数——编译为数组参数。try-with-resources——编译为 try-finally + close 调用。switch 支持 String——编译为 hashCode + equals。\n\n扩展延伸：语法糖在编译阶段（javac）解析，生成的字节码与手写底层代码等价。反编译工具（如 jad、CFR）可查看 desugar 后的代码。理解语法糖有助于避免陷阱——如 for-each 在遍历时 remove 会抛 ConcurrentModificationException，因为底层仍是 Iterator。",
+    hints: ["for-each 在遍历删除时会怎样", "枚举在字节码层面是什么样的"],
+    tags: ["基础", "语法糖"],
+    options: [],
   },
   {
-    "id": 127,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Java 中 == 和 equals() 的区别",
-    "content": "请解释 Java 中 == 运算符和 equals() 方法的区别。",
-    "answer": "== 比较的是引用地址（基本类型比较值），equals() 默认也是比较引用地址，但很多类（如 String、Integer）重写了 equals() 来比较内容。",
-    "hints": [
-      "思考基本类型和引用类型的区别",
-      "String 的 equals 是如何实现的"
-    ],
-    "tags": [
-      "基础",
-      "String",
-      "相等比较"
-    ],
-    "options": []
+    id: 127,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Java 中 == 和 equals() 的区别",
+    content: "请解释 Java 中 == 运算符和 equals() 方法的区别。",
+    answer:
+      "== 比较的是引用地址（基本类型比较值），equals() 默认也是比较引用地址，但很多类（如 String、Integer）重写了 equals() 来比较内容。",
+    hints: ["思考基本类型和引用类型的区别", "String 的 equals 是如何实现的"],
+    tags: ["基础", "String", "相等比较"],
+    options: [],
   },
   {
-    "id": 128,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "HashMap 的底层实现原理",
-    "content": "请描述 Java HashMap 的底层数据结构和工作原理。",
-    "answer": "HashMap 底层是数组+链表+红黑树（Java 8+）。通过 key 的 hashCode 计算桶位置，哈希冲突时用链地址法，链表长度超过 8 且数组长度 >= 64 时转为红黑树。",
-    "hints": [
-      "默认初始容量和负载因子是多少",
-      "什么时候触发扩容"
-    ],
-    "tags": [
-      "集合",
-      "HashMap",
-      "哈希"
-    ],
-    "options": []
+    id: 128,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "HashMap 的底层实现原理",
+    content: "请描述 Java HashMap 的底层数据结构和工作原理。",
+    answer:
+      "HashMap 底层是数组+链表+红黑树（Java 8+）。通过 key 的 hashCode 计算桶位置，哈希冲突时用链地址法，链表长度超过 8 且数组长度 >= 64 时转为红黑树。",
+    hints: ["默认初始容量和负载因子是多少", "什么时候触发扩容"],
+    tags: ["集合", "HashMap", "哈希"],
+    options: [],
   },
   {
-    "id": 129,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "final 关键字的作用",
-    "content": "请说明 Java 中 final 关键字可以修饰哪些元素，各有什么作用。",
-    "answer": "final 可以修饰：类（不可继承）、方法（不可重写）、变量（不可变，基本类型值不变，引用类型指向不变）。",
-    "hints": [
-      "final 变量是否一定需要在声明时初始化"
-    ],
-    "tags": [
-      "基础",
-      "关键字"
-    ],
-    "options": []
+    id: 129,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "final 关键字的作用",
+    content: "请说明 Java 中 final 关键字可以修饰哪些元素，各有什么作用。",
+    answer:
+      "final 可以修饰：类（不可继承）、方法（不可重写）、变量（不可变，基本类型值不变，引用类型指向不变）。",
+    hints: ["final 变量是否一定需要在声明时初始化"],
+    tags: ["基础", "关键字"],
+    options: [],
   },
   {
-    "id": 130,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "volatile 关键字的作用和原理",
-    "content": "请解释 volatile 关键字的作用及其底层实现原理。",
-    "answer": "volatile 保证可见性（写操作立即刷新到主存，读操作从主存读取）和禁止指令重排序。底层通过内存屏障实现。但不保证原子性。",
-    "hints": [
-      "volatile 能保证原子性吗",
-      "和 synchronized 的区别"
-    ],
-    "tags": [
-      "并发",
-      "JMM",
-      "关键字"
-    ],
-    "options": []
+    id: 130,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "volatile 关键字的作用和原理",
+    content: "请解释 volatile 关键字的作用及其底层实现原理。",
+    answer:
+      "volatile 保证可见性（写操作立即刷新到主存，读操作从主存读取）和禁止指令重排序。底层通过内存屏障实现。但不保证原子性。",
+    hints: ["volatile 能保证原子性吗", "和 synchronized 的区别"],
+    tags: ["并发", "JMM", "关键字"],
+    options: [],
   },
   {
-    "id": 131,
-    "category": "java_basic",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "ConcurrentHashMap 的实现原理",
-    "content": "请描述 ConcurrentHashMap 在 Java 7 和 Java 8 中的实现差异。",
-    "answer": "Java 7：Segment 分段锁，继承 ReentrantLock。Java 8：放弃分段锁，使用 CAS + synchronized 锁首节点，并发度更高，内存更少。",
-    "hints": [
-      "Java 8 中什么情况下使用 synchronized",
-      "size() 方法如何保证一致性"
-    ],
-    "tags": [
-      "并发",
-      "集合",
-      "ConcurrentHashMap"
-    ],
-    "options": []
+    id: 131,
+    category: "java_basic",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "ConcurrentHashMap 的实现原理",
+    content: "请描述 ConcurrentHashMap 在 Java 7 和 Java 8 中的实现差异。",
+    answer:
+      "Java 7：Segment 分段锁，继承 ReentrantLock。Java 8：放弃分段锁，使用 CAS + synchronized 锁首节点，并发度更高，内存更少。",
+    hints: ["Java 8 中什么情况下使用 synchronized", "size() 方法如何保证一致性"],
+    tags: ["并发", "集合", "ConcurrentHashMap"],
+    options: [],
   },
   {
-    "id": 132,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "String、StringBuilder、StringBuffer 的区别",
-    "content": "请比较 String、StringBuilder、StringBuffer 三者的区别。",
-    "answer": "String 不可变，每次拼接创建新对象。StringBuffer 可变且线程安全（synchronized），性能较差。StringBuilder 可变但线程不安全，性能最好。",
-    "hints": [
-      "字符串拼接在循环中应该用哪个",
-      "三者继承关系"
-    ],
-    "tags": [
-      "基础",
-      "String"
-    ],
-    "options": []
+    id: 132,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "String、StringBuilder、StringBuffer 的区别",
+    content: "请比较 String、StringBuilder、StringBuffer 三者的区别。",
+    answer:
+      "String 不可变，每次拼接创建新对象。StringBuffer 可变且线程安全（synchronized），性能较差。StringBuilder 可变但线程不安全，性能最好。",
+    hints: ["字符串拼接在循环中应该用哪个", "三者继承关系"],
+    tags: ["基础", "String"],
+    options: [],
   },
   {
-    "id": 133,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "JVM 内存区域划分",
-    "content": "请描述 JVM 运行时数据区的各个区域及其作用。",
-    "answer": "程序计数器（线程私有）、虚拟机栈（线程私有，存储栈帧）、本地方法栈、堆（所有线程共享，存储对象实例）、方法区（存储类信息/常量/静态变量）。",
-    "hints": [
-      "JDK 8 中方法区的变化",
-      "什么情况下会抛出 OOM"
-    ],
-    "tags": [
-      "JVM",
-      "内存"
-    ],
-    "options": []
+    id: 133,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "JVM 内存区域划分",
+    content: "请描述 JVM 运行时数据区的各个区域及其作用。",
+    answer:
+      "程序计数器（线程私有）、虚拟机栈（线程私有，存储栈帧）、本地方法栈、堆（所有线程共享，存储对象实例）、方法区（存储类信息/常量/静态变量）。",
+    hints: ["JDK 8 中方法区的变化", "什么情况下会抛出 OOM"],
+    tags: ["JVM", "内存"],
+    options: [],
   },
   {
-    "id": 134,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "coding",
-    "title": "单例模式——双重检查锁实现",
-    "content": "请用双重检查锁（DCL）实现一个线程安全的单例模式。",
-    "answer": "```java\npublic class Singleton {\n    private static volatile Singleton instance;\n    private Singleton() {}\n    public static Singleton getInstance() {\n        if (instance == null) {\n            synchronized (Singleton.class) {\n                if (instance == null) {\n                    instance = new Singleton();\n                }\n            }\n        }\n        return instance;\n    }\n}\n```",
-    "hints": [
-      "为什么需要 volatile",
-      "为什么需要两次判断 null"
-    ],
-    "tags": [
-      "设计模式",
-      "并发"
-    ],
-    "options": []
+    id: 134,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "coding",
+    title: "单例模式——双重检查锁实现",
+    content: "请用双重检查锁（DCL）实现一个线程安全的单例模式。",
+    answer:
+      "```java\npublic class Singleton {\n    private static volatile Singleton instance;\n    private Singleton() {}\n    public static Singleton getInstance() {\n        if (instance == null) {\n            synchronized (Singleton.class) {\n                if (instance == null) {\n                    instance = new Singleton();\n                }\n            }\n        }\n        return instance;\n    }\n}\n```",
+    hints: ["为什么需要 volatile", "为什么需要两次判断 null"],
+    tags: ["设计模式", "并发"],
+    options: [],
   },
   {
-    "id": 135,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Java 异常体系",
-    "content": "请描述 Java 的异常体系结构，包括受检异常和非受检异常的区别。",
-    "answer": "Throwable 分为 Error（不可处理，如 OOM）和 Exception。Exception 分为 RuntimeException（非受检，如 NPE）和其他（受检异常，如 IOException）。受检异常必须捕获或声明抛出。",
-    "hints": [
-      "自定义异常应该继承哪个类",
-      "try-with-resources 是什么"
-    ],
-    "tags": [
-      "基础",
-      "异常"
-    ],
-    "options": []
+    id: 135,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Java 异常体系",
+    content: "请描述 Java 的异常体系结构，包括受检异常和非受检异常的区别。",
+    answer:
+      "Throwable 分为 Error（不可处理，如 OOM）和 Exception。Exception 分为 RuntimeException（非受检，如 NPE）和其他（受检异常，如 IOException）。受检异常必须捕获或声明抛出。",
+    hints: ["自定义异常应该继承哪个类", "try-with-resources 是什么"],
+    tags: ["基础", "异常"],
+    options: [],
   },
   {
-    "id": 136,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "面向对象三大特性",
-    "content": "请解释面向对象编程的三大特性：封装、继承、多态。",
-    "answer": "封装：隐藏内部实现，通过公开接口访问。继承：子类继承父类属性和方法，实现代码复用。多态：同一接口不同实现，通过父类引用指向子类对象实现。",
-    "hints": [
-      "多态的两种形式：编译时多态和运行时多态"
-    ],
-    "tags": [
-      "基础",
-      "OOP"
-    ],
-    "options": []
+    id: 136,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "面向对象三大特性",
+    content: "请解释面向对象编程的三大特性：封装、继承、多态。",
+    answer:
+      "封装：隐藏内部实现，通过公开接口访问。继承：子类继承父类属性和方法，实现代码复用。多态：同一接口不同实现，通过父类引用指向子类对象实现。",
+    hints: ["多态的两种形式：编译时多态和运行时多态"],
+    tags: ["基础", "OOP"],
+    options: [],
   },
   {
-    "id": 137,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "下列哪个不是 Java 基本数据类型",
-    "content": "下列哪个不是 Java 的基本数据类型？",
-    "answer": "答案：B) String\n\n解析：String 是引用类型，不是基本数据类型。Java 的 8 种基本类型为 byte、short、int、long、float、double、boolean、char，它们存储在栈内存中，而引用类型存储在堆内存中。\n\n扩展延伸：基本类型和引用类型的根本区别在于存储方式和传递方式。基本类型变量直接存储值，赋值时拷贝值；引用类型变量存储对象地址，赋值时拷贝引用（指向同一对象）。",
-    "hints": [
-      "基本类型和引用类型的区别"
-    ],
-    "tags": [
-      "基础",
-      "数据类型"
-    ],
-    "options": [
-      "A) int",
-      "B) String",
-      "C) boolean",
-      "D) double"
-    ]
+    id: 137,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "choice",
+    title: "下列哪个不是 Java 基本数据类型",
+    content: "下列哪个不是 Java 的基本数据类型？",
+    answer:
+      "答案：B) String\n\n解析：String 是引用类型，不是基本数据类型。Java 的 8 种基本类型为 byte、short、int、long、float、double、boolean、char，它们存储在栈内存中，而引用类型存储在堆内存中。\n\n扩展延伸：基本类型和引用类型的根本区别在于存储方式和传递方式。基本类型变量直接存储值，赋值时拷贝值；引用类型变量存储对象地址，赋值时拷贝引用（指向同一对象）。",
+    hints: ["基本类型和引用类型的区别"],
+    tags: ["基础", "数据类型"],
+    options: ["A) int", "B) String", "C) boolean", "D) double"],
   },
   {
-    "id": 138,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "ArrayList 和 LinkedList 的描述正确的是",
-    "content": "以下关于 ArrayList 和 LinkedList 的描述，正确的是？",
-    "answer": "答案：C) ArrayList 底层是数组实现\n\n解析：ArrayList 底层基于 Object[] 动态数组，优势在于随机访问 O(1)，但中间插入/删除需要移动元素 O(n)。LinkedList 底层是双向链表，插入/删除 O(1) 但随机访问 O(n)。两者均非线程安全，多线程场景需使用 Collections.synchronizedList() 或 CopyOnWriteArrayList。\n\n扩展延伸：ArrayList 默认初始容量为 10，扩容时按 1.5 倍增长（newCapacity = oldCapacity + (oldCapacity >> 1)），通过 Arrays.copyOf() 拷贝到新数组。LinkedList 同时实现了 Deque 接口，可作双端队列使用。",
-    "hints": [
-      "各自底层数据结构是什么",
-      "插入和访问的时间复杂度各是多少"
-    ],
-    "tags": [
-      "集合",
-      "List"
-    ],
-    "options": [
+    id: 138,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "choice",
+    title: "ArrayList 和 LinkedList 的描述正确的是",
+    content: "以下关于 ArrayList 和 LinkedList 的描述，正确的是？",
+    answer:
+      "答案：C) ArrayList 底层是数组实现\n\n解析：ArrayList 底层基于 Object[] 动态数组，优势在于随机访问 O(1)，但中间插入/删除需要移动元素 O(n)。LinkedList 底层是双向链表，插入/删除 O(1) 但随机访问 O(n)。两者均非线程安全，多线程场景需使用 Collections.synchronizedList() 或 CopyOnWriteArrayList。\n\n扩展延伸：ArrayList 默认初始容量为 10，扩容时按 1.5 倍增长（newCapacity = oldCapacity + (oldCapacity >> 1)），通过 Arrays.copyOf() 拷贝到新数组。LinkedList 同时实现了 Deque 接口，可作双端队列使用。",
+    hints: ["各自底层数据结构是什么", "插入和访问的时间复杂度各是多少"],
+    tags: ["集合", "List"],
+    options: [
       "A) ArrayList 在中间插入元素更快",
       "B) LinkedList 随机访问性能更好",
       "C) ArrayList 底层是数组实现",
-      "D) 两者都是线程安全的"
-    ]
+      "D) 两者都是线程安全的",
+    ],
   },
   {
-    "id": 139,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "保证线程可见性的关键字",
-    "content": "以下哪个关键字可以保证线程间的可见性？",
-    "answer": "答案：B) volatile\n\n解析：volatile 关键字保证可见性和禁止指令重排序。写操作立即刷新到主存，读操作从主存读取，通过内存屏障实现。但 volatile 不保证原子性，i++ 操作仍需加锁。\n\n扩展延伸：volatile 与 synchronized 的关键区别：volatile 仅保证可见性，synchronized 同时保证可见性和原子性。经典应用场景包括 DCL（双重检查锁）单例模式的状态标志位。推荐阅读《Java 并发编程的艺术》第三章。",
-    "hints": [
-      "volatile 和 synchronized 的区别",
-      "什么是指令重排序"
-    ],
-    "tags": [
-      "并发",
-      "关键字"
-    ],
-    "options": [
-      "A) synchronized",
-      "B) volatile",
-      "C) static",
-      "D) final"
-    ]
+    id: 139,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "choice",
+    title: "保证线程可见性的关键字",
+    content: "以下哪个关键字可以保证线程间的可见性？",
+    answer:
+      "答案：B) volatile\n\n解析：volatile 关键字保证可见性和禁止指令重排序。写操作立即刷新到主存，读操作从主存读取，通过内存屏障实现。但 volatile 不保证原子性，i++ 操作仍需加锁。\n\n扩展延伸：volatile 与 synchronized 的关键区别：volatile 仅保证可见性，synchronized 同时保证可见性和原子性。经典应用场景包括 DCL（双重检查锁）单例模式的状态标志位。推荐阅读《Java 并发编程的艺术》第三章。",
+    hints: ["volatile 和 synchronized 的区别", "什么是指令重排序"],
+    tags: ["并发", "关键字"],
+    options: ["A) synchronized", "B) volatile", "C) static", "D) final"],
   },
   {
-    "id": 140,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "Java 方法参数传递方式",
-    "content": "Java 中方法参数传递全部是值传递，不存在引用传递。",
-    "answer": "答案：正确\n\n解析：Java 只有值传递。基本类型传递值的副本，引用类型传递引用的副本（即对象地址的副本）。方法内修改引用指向新对象不会影响外部引用，但修改对象内部属性会影响原对象。\n\n扩展延伸：为什么 swap 函数在 Java 中无效？因为交换的是引用的副本，方法结束后副本销毁，原引用不变。推荐阅读《Core Java Volume I》4.5 节关于参数传递的讨论。",
-    "hints": [
-      "传值和传引用的区别",
-      "为什么 swap 函数在 Java 中无效"
-    ],
-    "tags": [
-      "基础",
-      "参数传递"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 140,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "true_false",
+    title: "Java 方法参数传递方式",
+    content: "Java 中方法参数传递全部是值传递，不存在引用传递。",
+    answer:
+      "答案：正确\n\n解析：Java 只有值传递。基本类型传递值的副本，引用类型传递引用的副本（即对象地址的副本）。方法内修改引用指向新对象不会影响外部引用，但修改对象内部属性会影响原对象。\n\n扩展延伸：为什么 swap 函数在 Java 中无效？因为交换的是引用的副本，方法结束后副本销毁，原引用不变。推荐阅读《Core Java Volume I》4.5 节关于参数传递的讨论。",
+    hints: ["传值和传引用的区别", "为什么 swap 函数在 Java 中无效"],
+    tags: ["基础", "参数传递"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 141,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "String 的线程安全性",
-    "content": "String 是不可变类，所以它是线程安全的。",
-    "answer": "答案：正确\n\n解析：String 是不可变类，一旦创建内容不可变，所有「修改」操作都返回新对象。不可变对象不存在数据竞争条件，天然具备线程安全性，无需同步即可安全地在多线程间共享。\n\n扩展延伸：不可变对象的五大优势：线程安全、可缓存 hash 值（String 的 hashCode 只计算一次）、可自由共享（字符串常量池）、适合作为 Map/Set 的键、防止被篡改。推荐阅读《Effective Java》第 17 条「使可变性最小化」。",
-    "hints": [
-      "String 的 + 拼接是否创建新对象",
-      "不可变对象的优势有哪些"
-    ],
-    "tags": [
-      "基础",
-      "String",
-      "并发"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 141,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "true_false",
+    title: "String 的线程安全性",
+    content: "String 是不可变类，所以它是线程安全的。",
+    answer:
+      "答案：正确\n\n解析：String 是不可变类，一旦创建内容不可变，所有「修改」操作都返回新对象。不可变对象不存在数据竞争条件，天然具备线程安全性，无需同步即可安全地在多线程间共享。\n\n扩展延伸：不可变对象的五大优势：线程安全、可缓存 hash 值（String 的 hashCode 只计算一次）、可自由共享（字符串常量池）、适合作为 Map/Set 的键、防止被篡改。推荐阅读《Effective Java》第 17 条「使可变性最小化」。",
+    hints: ["String 的 + 拼接是否创建新对象", "不可变对象的优势有哪些"],
+    tags: ["基础", "String", "并发"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 142,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Integer 自动装箱的陷阱",
-    "content": "以下代码输出什么？请解释原因。\n```java\nInteger a = 127;\nInteger b = 127;\nInteger c = 128;\nInteger d = 128;\nSystem.out.println(a == b);\nSystem.out.println(c == d);\n```",
-    "answer": "答案：true 和 false\n\n解析：执行 Integer.valueOf() 时，JVM 默认缓存了 [-128, 127] 范围内的 Integer 对象。a 和 b 都指向缓存池中的同一对象，== 比较引用地址为 true。128 超出缓存范围，c 和 d 各自 new 新对象，== 为 false。\n\n扩展延伸：所有包装类都有缓存机制：Boolean 缓存全部、Byte/Short/Long 缓存 [-128, 127]、Character 缓存 [0, 127]。比较包装类值应始终使用 equals() 或拆箱后比较。",
-    "hints": [
-      "== 比较的是什么？引用还是值",
-      "Integer 的缓存范围是多少"
-    ],
-    "tags": [
-      "基础",
-      "包装类",
-      "陷阱"
-    ],
-    "options": []
+    id: 142,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Integer 自动装箱的陷阱",
+    content:
+      "以下代码输出什么？请解释原因。\n```java\nInteger a = 127;\nInteger b = 127;\nInteger c = 128;\nInteger d = 128;\nSystem.out.println(a == b);\nSystem.out.println(c == d);\n```",
+    answer:
+      "答案：true 和 false\n\n解析：执行 Integer.valueOf() 时，JVM 默认缓存了 [-128, 127] 范围内的 Integer 对象。a 和 b 都指向缓存池中的同一对象，== 比较引用地址为 true。128 超出缓存范围，c 和 d 各自 new 新对象，== 为 false。\n\n扩展延伸：所有包装类都有缓存机制：Boolean 缓存全部、Byte/Short/Long 缓存 [-128, 127]、Character 缓存 [0, 127]。比较包装类值应始终使用 equals() 或拆箱后比较。",
+    hints: ["== 比较的是什么？引用还是值", "Integer 的缓存范围是多少"],
+    tags: ["基础", "包装类", "陷阱"],
+    options: [],
   },
   {
-    "id": 143,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "循环中字符串拼接的性能陷阱",
-    "content": "以下两种字符串拼接方式，哪种性能更好？为什么？\n```java\n// 方式 A\nString s = \"\";\nfor (int i = 0; i < 10000; i++) {\n    s += i;\n}\n\n// 方式 B\nStringBuilder sb = new StringBuilder();\nfor (int i = 0; i < 10000; i++) {\n    sb.append(i);\n}\nString s = sb.toString();\n```",
-    "answer": "答案：方式 B 性能远超方式 A\n\n解析：String 是不可变对象，每次 + 拼接都会创建新的 String 对象。10000 次循环会产生 10000 个中间字符串对象，大量内存浪费和 GC 压力。StringBuilder 是可变对象，append 在内部数组操作，无需反复创建新对象。\n\n扩展延伸：编译器会将单行 + 拼接优化为 StringBuilder（如 String s = a + b + c 会优化）。但循环内的拼接编译器无法优化，每次迭代都会创建新 StringBuilder 对象。这条规则同样适用于 StringBuffer（线程安全版，但性能差于 StringBuilder）。",
-    "hints": [
-      "String 的不可变性意味着什么",
-      "编译器对 + 拼接做了哪些优化"
-    ],
-    "tags": [
-      "基础",
-      "String",
-      "性能",
-      "陷阱"
-    ],
-    "options": []
+    id: 143,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "循环中字符串拼接的性能陷阱",
+    content:
+      '以下两种字符串拼接方式，哪种性能更好？为什么？\n```java\n// 方式 A\nString s = "";\nfor (int i = 0; i < 10000; i++) {\n    s += i;\n}\n\n// 方式 B\nStringBuilder sb = new StringBuilder();\nfor (int i = 0; i < 10000; i++) {\n    sb.append(i);\n}\nString s = sb.toString();\n```',
+    answer:
+      "答案：方式 B 性能远超方式 A\n\n解析：String 是不可变对象，每次 + 拼接都会创建新的 String 对象。10000 次循环会产生 10000 个中间字符串对象，大量内存浪费和 GC 压力。StringBuilder 是可变对象，append 在内部数组操作，无需反复创建新对象。\n\n扩展延伸：编译器会将单行 + 拼接优化为 StringBuilder（如 String s = a + b + c 会优化）。但循环内的拼接编译器无法优化，每次迭代都会创建新 StringBuilder 对象。这条规则同样适用于 StringBuffer（线程安全版，但性能差于 StringBuilder）。",
+    hints: ["String 的不可变性意味着什么", "编译器对 + 拼接做了哪些优化"],
+    tags: ["基础", "String", "性能", "陷阱"],
+    options: [],
   },
   {
-    "id": 144,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "重写 equals 不重写 hashCode 的后果",
-    "content": "自定义类只重写了 equals() 但未重写 hashCode()，用做 HashMap 的 key 时会出现什么问题？",
-    "answer": "答案：无法正确根据 equals 相等来存取对象\n\n解析：HashMap 先用 hashCode() 定位桶位置，再用 equals() 比较链表中元素。两个 equals 相等的对象若 hashCode 不同，会被分到不同桶中，导致 put 时存两个条目，get 时只能在其中一个桶里找到。这意味着 equals 逻辑相等的对象无法在 HashMap 中正确工作。\n\n扩展延伸：为什么要求 equals 相等则 hashCode 必须相等（反向不要求）？因为 HashMap 的分桶机制依赖 hashCode 判断是否可能在同一个桶。此外，用可变对象做 HashMap key 极不推荐——修改对象内容后 hashCode 会变，旧桶位置的数据将无法被访问，造成内存泄漏。",
-    "hints": [
-      "HashMap 如何用 hashCode 和 equals 定位元素",
-      "equals 和 hashCode 的约定是什么"
-    ],
-    "tags": [
-      "集合",
-      "HashMap",
-      "陷阱"
-    ],
-    "options": []
+    id: 144,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "重写 equals 不重写 hashCode 的后果",
+    content:
+      "自定义类只重写了 equals() 但未重写 hashCode()，用做 HashMap 的 key 时会出现什么问题？",
+    answer:
+      "答案：无法正确根据 equals 相等来存取对象\n\n解析：HashMap 先用 hashCode() 定位桶位置，再用 equals() 比较链表中元素。两个 equals 相等的对象若 hashCode 不同，会被分到不同桶中，导致 put 时存两个条目，get 时只能在其中一个桶里找到。这意味着 equals 逻辑相等的对象无法在 HashMap 中正确工作。\n\n扩展延伸：为什么要求 equals 相等则 hashCode 必须相等（反向不要求）？因为 HashMap 的分桶机制依赖 hashCode 判断是否可能在同一个桶。此外，用可变对象做 HashMap key 极不推荐——修改对象内容后 hashCode 会变，旧桶位置的数据将无法被访问，造成内存泄漏。",
+    hints: ["HashMap 如何用 hashCode 和 equals 定位元素", "equals 和 hashCode 的约定是什么"],
+    tags: ["集合", "HashMap", "陷阱"],
+    options: [],
   },
   {
-    "id": 145,
-    "category": "java_basic",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "try-catch-finally 中 return 的执行顺序",
-    "content": "以下代码输出什么？为什么？\n```java\npublic static int test() {\n    try {\n        return 1;\n    } catch (Exception e) {\n        return 2;\n    } finally {\n        return 3;\n    }\n}\n```",
-    "answer": "答案：输出 3\n\n解析：finally 块中的 return 会覆盖 try 块中的 return。执行流程：try 中执行到 return 1 → 暂存返回值 1 → 执行 finally → finally 中有 return 3 → 直接返回 3，try 的返回值被丢弃。\n\n扩展延伸：即使 finally 没有 return，也会在 try 的 return 之前执行。如果 finally 中修改了返回值变量（基本类型无效，引用类型影响对象状态），结果可能出乎意料。最佳实践：永远不要在 finally 块中使用 return，仅用于释放资源。",
-    "hints": [
-      "finally 一定会执行吗",
-      "finally 和 try 都有 return 时谁优先"
-    ],
-    "tags": [
-      "基础",
-      "异常",
-      "陷阱"
-    ],
-    "options": []
+    id: 145,
+    category: "java_basic",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "try-catch-finally 中 return 的执行顺序",
+    content:
+      "以下代码输出什么？为什么？\n```java\npublic static int test() {\n    try {\n        return 1;\n    } catch (Exception e) {\n        return 2;\n    } finally {\n        return 3;\n    }\n}\n```",
+    answer:
+      "答案：输出 3\n\n解析：finally 块中的 return 会覆盖 try 块中的 return。执行流程：try 中执行到 return 1 → 暂存返回值 1 → 执行 finally → finally 中有 return 3 → 直接返回 3，try 的返回值被丢弃。\n\n扩展延伸：即使 finally 没有 return，也会在 try 的 return 之前执行。如果 finally 中修改了返回值变量（基本类型无效，引用类型影响对象状态），结果可能出乎意料。最佳实践：永远不要在 finally 块中使用 return，仅用于释放资源。",
+    hints: ["finally 一定会执行吗", "finally 和 try 都有 return 时谁优先"],
+    tags: ["基础", "异常", "陷阱"],
+    options: [],
   },
   {
-    "id": 146,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "SimpleDateFormat 的线程安全问题",
-    "content": "在多线程环境下共享同一个 SimpleDateFormat 实例进行日期格式化/解析，可能会有什么问题？如何解决？",
-    "answer": "答案：可能产生数据竞争，导致结果错误甚至 JVM 崩溃\n\n解析：SimpleDateFormat 内部维护 Calendar 对象，parse() 和 format() 方法会修改其内部状态。多个线程同时调用时产生竞态条件，可能出现解析结果错误、NumberFormatException 或死循环。\n\n扩展延伸：四种解决方案 1）每次使用时 new 新实例（简单但开销大）2）加同步锁（影响吞吐）3）使用 ThreadLocal 为每线程缓存实例（推荐）4）使用线程安全的 DateTimeFormatter（Java 8，最佳方案）。JDK 8 的 DateTimeFormatter 是不可变且线程安全的，应作为首选。",
-    "hints": [
-      "SimpleDateFormat 内部是否有可变状态",
-      "Java 8 提供了什么替代方案"
-    ],
-    "tags": [
-      "并发",
-      "陷阱",
-      "日期"
-    ],
-    "options": []
+    id: 146,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "SimpleDateFormat 的线程安全问题",
+    content:
+      "在多线程环境下共享同一个 SimpleDateFormat 实例进行日期格式化/解析，可能会有什么问题？如何解决？",
+    answer:
+      "答案：可能产生数据竞争，导致结果错误甚至 JVM 崩溃\n\n解析：SimpleDateFormat 内部维护 Calendar 对象，parse() 和 format() 方法会修改其内部状态。多个线程同时调用时产生竞态条件，可能出现解析结果错误、NumberFormatException 或死循环。\n\n扩展延伸：四种解决方案 1）每次使用时 new 新实例（简单但开销大）2）加同步锁（影响吞吐）3）使用 ThreadLocal 为每线程缓存实例（推荐）4）使用线程安全的 DateTimeFormatter（Java 8，最佳方案）。JDK 8 的 DateTimeFormatter 是不可变且线程安全的，应作为首选。",
+    hints: ["SimpleDateFormat 内部是否有可变状态", "Java 8 提供了什么替代方案"],
+    tags: ["并发", "陷阱", "日期"],
+    options: [],
   },
   {
-    "id": 147,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "List.subList 的视图陷阱",
-    "content": "以下代码会出什么问题？\n```java\nList<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));\nList<Integer> sub = list.subList(1, 4);\nlist.add(6);\nSystem.out.println(sub.size());\n```",
-    "answer": "答案：抛出 ConcurrentModificationException\n\n解析：subList() 返回的是原列表的视图（view），而非独立副本。对原列表结构性修改（add/remove/size 变化）后，subList 的 modCount 校验会失败，访问 subList 时抛 ConcurrentModificationException。\n\n扩展延伸：subList 视图的修改会同步反映到原列表（如 subList.clear() 会清空原列表对应元素）。如需独立的子列表副本，应使用 new ArrayList<>(list.subList(1, 4))。同理，Arrays.asList() 返回的也是固定长度视图，不支持 add/remove。",
-    "hints": [
-      "subList 返回的是新列表还是视图",
-      "什么是结构性和非结构性修改"
-    ],
-    "tags": [
-      "集合",
-      "List",
-      "陷阱"
-    ],
-    "options": []
+    id: 147,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "List.subList 的视图陷阱",
+    content:
+      "以下代码会出什么问题？\n```java\nList<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));\nList<Integer> sub = list.subList(1, 4);\nlist.add(6);\nSystem.out.println(sub.size());\n```",
+    answer:
+      "答案：抛出 ConcurrentModificationException\n\n解析：subList() 返回的是原列表的视图（view），而非独立副本。对原列表结构性修改（add/remove/size 变化）后，subList 的 modCount 校验会失败，访问 subList 时抛 ConcurrentModificationException。\n\n扩展延伸：subList 视图的修改会同步反映到原列表（如 subList.clear() 会清空原列表对应元素）。如需独立的子列表副本，应使用 new ArrayList<>(list.subList(1, 4))。同理，Arrays.asList() 返回的也是固定长度视图，不支持 add/remove。",
+    hints: ["subList 返回的是新列表还是视图", "什么是结构性和非结构性修改"],
+    tags: ["集合", "List", "陷阱"],
+    options: [],
   },
   {
-    "id": 148,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "关于 Java 数组的描述",
-    "content": "以下关于 Java 数组的描述，正确的是？",
-    "answer": "答案：D) 数组是对象类型\n\n解析：Java 中数组是引用类型（对象），所有数组都继承 Object 类。数组长度一旦确定不可变（length 是 final 属性）。数组只能存储同一类型（或兼容类型）的数据。基本类型数组如 int[] 也是对象。\n\n扩展延伸：数组的父类是 Object，可通过 arr instanceof Object 验证。获取数组类型用 arr.getClass().getName()，如 int[] 输出 [I。Arrays 工具类提供了排序、二分查找、拷贝等实用方法。",
-    "hints": [
-      "数组的 length 是属性还是方法",
-      "int[].class.getName() 输出什么"
-    ],
-    "tags": [
-      "基础",
-      "数组"
-    ],
-    "options": [
+    id: 148,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "choice",
+    title: "关于 Java 数组的描述",
+    content: "以下关于 Java 数组的描述，正确的是？",
+    answer:
+      "答案：D) 数组是对象类型\n\n解析：Java 中数组是引用类型（对象），所有数组都继承 Object 类。数组长度一旦确定不可变（length 是 final 属性）。数组只能存储同一类型（或兼容类型）的数据。基本类型数组如 int[] 也是对象。\n\n扩展延伸：数组的父类是 Object，可通过 arr instanceof Object 验证。获取数组类型用 arr.getClass().getName()，如 int[] 输出 [I。Arrays 工具类提供了排序、二分查找、拷贝等实用方法。",
+    hints: ["数组的 length 是属性还是方法", "int[].class.getName() 输出什么"],
+    tags: ["基础", "数组"],
+    options: [
       "A) 数组是基本数据类型",
       "B) 数组长度一旦确定可以动态改变",
       "C) 数组中可以存储不同类型的数据",
-      "D) 数组是对象类型"
-    ]
+      "D) 数组是对象类型",
+    ],
   },
   {
-    "id": 149,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "匿名内部类访问局部变量",
-    "content": "Java 中匿名内部类可以访问外部方法的局部变量，但该变量必须是 final 或 effectively final（JDK 8+）。",
-    "answer": "答案：正确\n\n解析：匿名内部类访问外部局部变量时，编译器将该变量的值拷贝到内部类中（作为构造参数）。为避免拷贝后的值和原值不一致导致混淆，要求变量不可变。JDK 8 之前必须显式声明 final，JDK 8 起只要变量实际未修改（effectively final）即可。\n\n扩展延伸：Lambda 表达式本质上也是匿名内部类的简化形式，捕获外部变量同样要求 effectively final。如果需要在 Lambda 中修改变量值，可用数组包装（如 int[] count = {0}）或使用 AtomicInteger 等容器。",
-    "hints": [
-      "为什么局部变量需要 final 或 effectively final",
-      "Lambda 表达式是否也有同样的限制"
-    ],
-    "tags": [
-      "基础",
-      "内部类"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 149,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "true_false",
+    title: "匿名内部类访问局部变量",
+    content:
+      "Java 中匿名内部类可以访问外部方法的局部变量，但该变量必须是 final 或 effectively final（JDK 8+）。",
+    answer:
+      "答案：正确\n\n解析：匿名内部类访问外部局部变量时，编译器将该变量的值拷贝到内部类中（作为构造参数）。为避免拷贝后的值和原值不一致导致混淆，要求变量不可变。JDK 8 之前必须显式声明 final，JDK 8 起只要变量实际未修改（effectively final）即可。\n\n扩展延伸：Lambda 表达式本质上也是匿名内部类的简化形式，捕获外部变量同样要求 effectively final。如果需要在 Lambda 中修改变量值，可用数组包装（如 int[] count = {0}）或使用 AtomicInteger 等容器。",
+    hints: ["为什么局部变量需要 final 或 effectively final", "Lambda 表达式是否也有同样的限制"],
+    tags: ["基础", "内部类"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 150,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "深拷贝与浅拷贝的区别",
-    "content": "请解释深拷贝和浅拷贝的区别，以及 Java 中实现深拷贝的常见方式。",
-    "answer": "答案：浅拷贝只复制引用地址不复制对象本身，深拷贝递归复制所有引用对象\n\n解析：浅拷贝（Shallow Copy）— 拷贝后的对象和原对象共享内部引用对象，修改引用对象属性会影响双方。Object.clone() 默认是浅拷贝。深拷贝（Deep Copy）— 递归复制所有层级，拷贝后的对象完全独立。\n\n扩展延伸：深拷贝实现方式 1）重写 clone() 并逐层手动 clone 2）序列化方式：对象实现 Serializable，ByteArrayOutputStream + ObjectOutputStream 写入再读取 3）Json 序列化反序列化：如 Jackson / Gson 4）拷贝构造器（需手动写）。实际开发建议优先用 Record 或不可变对象减少拷贝需求。",
-    "hints": [
-      "Object.clone() 默认是深拷贝还是浅拷贝",
-      "序列化为什么能实现深拷贝"
-    ],
-    "tags": [
-      "基础",
-      "拷贝"
-    ],
-    "options": []
+    id: 150,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "深拷贝与浅拷贝的区别",
+    content: "请解释深拷贝和浅拷贝的区别，以及 Java 中实现深拷贝的常见方式。",
+    answer:
+      "答案：浅拷贝只复制引用地址不复制对象本身，深拷贝递归复制所有引用对象\n\n解析：浅拷贝（Shallow Copy）— 拷贝后的对象和原对象共享内部引用对象，修改引用对象属性会影响双方。Object.clone() 默认是浅拷贝。深拷贝（Deep Copy）— 递归复制所有层级，拷贝后的对象完全独立。\n\n扩展延伸：深拷贝实现方式 1）重写 clone() 并逐层手动 clone 2）序列化方式：对象实现 Serializable，ByteArrayOutputStream + ObjectOutputStream 写入再读取 3）Json 序列化反序列化：如 Jackson / Gson 4）拷贝构造器（需手动写）。实际开发建议优先用 Record 或不可变对象减少拷贝需求。",
+    hints: ["Object.clone() 默认是深拷贝还是浅拷贝", "序列化为什么能实现深拷贝"],
+    tags: ["基础", "拷贝"],
+    options: [],
   },
   {
-    "id": 151,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Comparable 与 Comparator 的区别",
-    "content": "请比较 Comparable 和 Comparator 两个接口的区别及各自的使用场景。",
-    "answer": "答案：Comparable 定义自然排序（内部比较器），Comparator 定义自定义排序（外部比较器）\n\n解析：Comparable 在 java.lang 包中，只有一个 compareTo(T o) 方法，需要被排序的类实现，如 String、Integer 都实现了 Comparable。Comparator 在 java.util 包中，有 compare(T o1, T o2) 方法，独立于被排序的类，可创建多个不同排序规则。\n\n扩展延伸：Comparator 的优势 1）不修改原类代码（开闭原则）2）可定义多种排序方式 3）Java 8 起支持 Lambda 和链式调用：Comparator.comparing(Person::getName).thenComparing(Person::getAge)。",
-    "hints": [
-      "String 和 Integer 的排序规则是哪种",
-      "如何对一个 Person 类分别按姓名和年龄排序"
-    ],
-    "tags": [
-      "集合",
-      "排序"
-    ],
-    "options": []
+    id: 151,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Comparable 与 Comparator 的区别",
+    content: "请比较 Comparable 和 Comparator 两个接口的区别及各自的使用场景。",
+    answer:
+      "答案：Comparable 定义自然排序（内部比较器），Comparator 定义自定义排序（外部比较器）\n\n解析：Comparable 在 java.lang 包中，只有一个 compareTo(T o) 方法，需要被排序的类实现，如 String、Integer 都实现了 Comparable。Comparator 在 java.util 包中，有 compare(T o1, T o2) 方法，独立于被排序的类，可创建多个不同排序规则。\n\n扩展延伸：Comparator 的优势 1）不修改原类代码（开闭原则）2）可定义多种排序方式 3）Java 8 起支持 Lambda 和链式调用：Comparator.comparing(Person::getName).thenComparing(Person::getAge)。",
+    hints: ["String 和 Integer 的排序规则是哪种", "如何对一个 Person 类分别按姓名和年龄排序"],
+    tags: ["集合", "排序"],
+    options: [],
   },
   {
-    "id": 152,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Java 注解的保留策略",
-    "content": "Java 注解（Annotation）的保留策略（RetentionPolicy）有哪些？各有什么用途？",
-    "answer": "答案：SOURCE / CLASS / RUNTIME 三种保留策略\n\n解析：SOURCE—注解仅在源码中保留，编译时丢弃，典型如 @Override、@SuppressWarnings。CLASS—注解在 .class 文件中保留，但运行时不可通过反射获取，是默认策略。RUNTIME—注解在运行时保留，可通过反射读取，自定义框架注解通常用此策略（如 Spring 的 @Component、MyBatis 的 @Select）。\n\n扩展延伸：三种元注解：@Retention（指定保留策略）、@Target（指定可修饰的目标）、@Documented（是否纳入 Javadoc）。Spring 框架大量使用 RUNTIME 策略的注解实现声明式编程。",
-    "hints": [
-      "@Override 和 @Autowired 的保留策略分别是什么",
-      "框架为什么用 RUNTIME 策略"
-    ],
-    "tags": [
-      "注解",
-      "基础"
-    ],
-    "options": []
+    id: 152,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Java 注解的保留策略",
+    content: "Java 注解（Annotation）的保留策略（RetentionPolicy）有哪些？各有什么用途？",
+    answer:
+      "答案：SOURCE / CLASS / RUNTIME 三种保留策略\n\n解析：SOURCE—注解仅在源码中保留，编译时丢弃，典型如 @Override、@SuppressWarnings。CLASS—注解在 .class 文件中保留，但运行时不可通过反射获取，是默认策略。RUNTIME—注解在运行时保留，可通过反射读取，自定义框架注解通常用此策略（如 Spring 的 @Component、MyBatis 的 @Select）。\n\n扩展延伸：三种元注解：@Retention（指定保留策略）、@Target（指定可修饰的目标）、@Documented（是否纳入 Javadoc）。Spring 框架大量使用 RUNTIME 策略的注解实现声明式编程。",
+    hints: ["@Override 和 @Autowired 的保留策略分别是什么", "框架为什么用 RUNTIME 策略"],
+    tags: ["注解", "基础"],
+    options: [],
   },
   {
-    "id": 153,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "try-with-resources 的原理",
-    "content": "请解释 try-with-resources 的语法和底层实现原理。它和传统的 try-finally 有什么优势？",
-    "answer": "答案：try-with-resources 自动关闭实现了 AutoCloseable 的资源，代码更简洁且不会遗漏 close()\n\n解析：语法 try (InputStream is = new FileInputStream(\"file.txt\")) { ... }。在 try 块结束后（无论正常或异常），JVM 自动调用资源的 close() 方法，且关闭顺序与声明顺序相反。编译时会被 desugar 为 try-finally 形式，但额外处理了抑制异常（Suppressed Exception）。\n\n扩展延伸：传统 try-finally 中，如果 try 块抛异常且 finally 的 close() 也抛异常，try 块异常会被 close() 异常覆盖，导致丢失原始异常。try-with-resources 会将 close() 异常添加到抑制异常列表（可通过 getSuppressed() 获取），保留原始异常。JDK 9 起支持在 try 外声明资源变量。",
-    "hints": [
-      "传统 try-finally 中 close() 抛异常会怎样",
-      "getSuppressed() 方法的用途"
-    ],
-    "tags": [
-      "基础",
-      "异常"
-    ],
-    "options": []
+    id: 153,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "try-with-resources 的原理",
+    content: "请解释 try-with-resources 的语法和底层实现原理。它和传统的 try-finally 有什么优势？",
+    answer:
+      '答案：try-with-resources 自动关闭实现了 AutoCloseable 的资源，代码更简洁且不会遗漏 close()\n\n解析：语法 try (InputStream is = new FileInputStream("file.txt")) { ... }。在 try 块结束后（无论正常或异常），JVM 自动调用资源的 close() 方法，且关闭顺序与声明顺序相反。编译时会被 desugar 为 try-finally 形式，但额外处理了抑制异常（Suppressed Exception）。\n\n扩展延伸：传统 try-finally 中，如果 try 块抛异常且 finally 的 close() 也抛异常，try 块异常会被 close() 异常覆盖，导致丢失原始异常。try-with-resources 会将 close() 异常添加到抑制异常列表（可通过 getSuppressed() 获取），保留原始异常。JDK 9 起支持在 try 外声明资源变量。',
+    hints: ["传统 try-finally 中 close() 抛异常会怎样", "getSuppressed() 方法的用途"],
+    tags: ["基础", "异常"],
+    options: [],
   },
   {
-    "id": 154,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "transient 关键字的作用",
-    "content": "关于 Java transient 关键字，以下说法正确的是？",
-    "answer": "答案：B) transient 修饰的变量不参与序列化\n\n解析：transient 关键字用于指示 Java 序列化时跳过该字段。反序列化后 transient 字段恢复为默认值（引用类型 null，基本类型 0/false）。transient 只能修饰变量（字段），不能修饰方法或类。static 变量默认不参与序列化（不属于对象状态），无需 transient 修饰。\n\n扩展延伸：transient 的应用场景：缓存字段（如 Hibernate 的一级缓存）、派生字段（可根据其他字段计算得出）、敏感信息（密码等，序列化前已做处理）。Externalizable 接口完全自定义序列化时，transient 不再适用。",
-    "hints": [
-      "static 变量是否参与序列化",
-      "反序列化后 transient 字段的值是什么"
-    ],
-    "tags": [
-      "基础",
-      "序列化"
-    ],
-    "options": [
+    id: 154,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "choice",
+    title: "transient 关键字的作用",
+    content: "关于 Java transient 关键字，以下说法正确的是？",
+    answer:
+      "答案：B) transient 修饰的变量不参与序列化\n\n解析：transient 关键字用于指示 Java 序列化时跳过该字段。反序列化后 transient 字段恢复为默认值（引用类型 null，基本类型 0/false）。transient 只能修饰变量（字段），不能修饰方法或类。static 变量默认不参与序列化（不属于对象状态），无需 transient 修饰。\n\n扩展延伸：transient 的应用场景：缓存字段（如 Hibernate 的一级缓存）、派生字段（可根据其他字段计算得出）、敏感信息（密码等，序列化前已做处理）。Externalizable 接口完全自定义序列化时，transient 不再适用。",
+    hints: ["static 变量是否参与序列化", "反序列化后 transient 字段的值是什么"],
+    tags: ["基础", "序列化"],
+    options: [
       "A) transient 修饰的变量不能被访问",
       "B) transient 修饰的变量不参与序列化",
       "C) transient 可以修饰方法",
-      "D) static 变量默认是 transient 的"
-    ]
+      "D) static 变量默认是 transient 的",
+    ],
   },
   {
-    "id": 155,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "枚举类型的抽象方法",
-    "content": "Java 枚举类型（enum）不能定义抽象方法。",
-    "answer": "答案：错误\n\n解析：Java 枚举可以定义抽象方法，每个枚举常量通过匿名内部类的方式实现该抽象方法。例如：\n```java\nenum Operation {\n    ADD { int apply(int a, int b) { return a + b; } },\n    SUB { int apply(int a, int b) { return a - b; } };\n    abstract int apply(int a, int b);\n}\n```\n\n扩展延伸：枚举天然单例（Effective Java 推荐为最安全的单例实现方式），且自动提供序列化保护（反序列化不会创建新实例）。编译器为每个枚举常量生成 static final 字段。",
-    "hints": [
-      "枚举常量的类体可以包含什么",
-      "为什么枚举被认为是最好的单例实现"
-    ],
-    "tags": [
-      "基础",
-      "枚举"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 155,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "true_false",
+    title: "枚举类型的抽象方法",
+    content: "Java 枚举类型（enum）不能定义抽象方法。",
+    answer:
+      "答案：错误\n\n解析：Java 枚举可以定义抽象方法，每个枚举常量通过匿名内部类的方式实现该抽象方法。例如：\n```java\nenum Operation {\n    ADD { int apply(int a, int b) { return a + b; } },\n    SUB { int apply(int a, int b) { return a - b; } };\n    abstract int apply(int a, int b);\n}\n```\n\n扩展延伸：枚举天然单例（Effective Java 推荐为最安全的单例实现方式），且自动提供序列化保护（反序列化不会创建新实例）。编译器为每个枚举常量生成 static final 字段。",
+    hints: ["枚举常量的类体可以包含什么", "为什么枚举被认为是最好的单例实现"],
+    tags: ["基础", "枚举"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 156,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Java SPI 机制",
-    "content": "什么是 Java SPI（Service Provider Interface）机制？它和 API 有什么区别？典型应用场景有哪些？",
-    "answer": "答案：SPI 是 JDK 内置的服务发现机制，允许第三方为接口提供实现\n\n解析：SPI 工作流程 1）定义标准接口 2）提供方在 META-INF/services/ 目录下创建以接口全限定名命名的文件，内容为实现类全限定名 3）调用方用 ServiceLoader.load(Interface.class) 加载所有实现。API 是「我提供接口你给我实现」，SPI 是「我提供接口你给我扩展」。\n\n扩展延伸：JDK 中的 SPI 示例：JDBC 驱动加载（DriverManager 通过 SPI 发现数据库驱动）、Slf4j 日志门面（通过 SPI 绑定具体日志实现）。ClassPath 上引入 mysql-connector-java.jar 后，ServiceLoader 自动发现 com.mysql.cj.jdbc.Driver。",
-    "hints": [
-      "JDBC 驱动是如何自动被加载的",
-      "ServiceLoader 的懒加载特性"
-    ],
-    "tags": [
-      "基础",
-      "SPI"
-    ],
-    "options": []
+    id: 156,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Java SPI 机制",
+    content:
+      "什么是 Java SPI（Service Provider Interface）机制？它和 API 有什么区别？典型应用场景有哪些？",
+    answer:
+      "答案：SPI 是 JDK 内置的服务发现机制，允许第三方为接口提供实现\n\n解析：SPI 工作流程 1）定义标准接口 2）提供方在 META-INF/services/ 目录下创建以接口全限定名命名的文件，内容为实现类全限定名 3）调用方用 ServiceLoader.load(Interface.class) 加载所有实现。API 是「我提供接口你给我实现」，SPI 是「我提供接口你给我扩展」。\n\n扩展延伸：JDK 中的 SPI 示例：JDBC 驱动加载（DriverManager 通过 SPI 发现数据库驱动）、Slf4j 日志门面（通过 SPI 绑定具体日志实现）。ClassPath 上引入 mysql-connector-java.jar 后，ServiceLoader 自动发现 com.mysql.cj.jdbc.Driver。",
+    hints: ["JDBC 驱动是如何自动被加载的", "ServiceLoader 的懒加载特性"],
+    tags: ["基础", "SPI"],
+    options: [],
   },
   {
-    "id": 157,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "Java 编译期常量",
-    "content": "以下哪个是 Java 编译期常量（编译时就确定值）？",
-    "answer": "答案：B) final int b = 100\n\n解析：编译期常量（Compile-Time Constant）必须同时满足：final 修饰、基本类型或 String、值在编译期可确定（字面量或常量表达式）。编译期常量会被编译器内联到使用处（javac 的常量传播优化），修改常量值需要重新编译所有引用类。\n\n扩展延伸：编译期常量的影响：public static final int MAX = 100 如果被其他类引用，修改为 200 后不重新编译引用类，引用类仍然使用旧的 100（内联到字节码中）。",
-    "hints": [
-      "final 变量是否一定是编译期常量",
-      "编译期常量的内联优化有什么潜在风险"
-    ],
-    "tags": [
-      "基础",
-      "关键字"
-    ],
-    "options": [
+    id: 157,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "choice",
+    title: "Java 编译期常量",
+    content: "以下哪个是 Java 编译期常量（编译时就确定值）？",
+    answer:
+      "答案：B) final int b = 100\n\n解析：编译期常量（Compile-Time Constant）必须同时满足：final 修饰、基本类型或 String、值在编译期可确定（字面量或常量表达式）。编译期常量会被编译器内联到使用处（javac 的常量传播优化），修改常量值需要重新编译所有引用类。\n\n扩展延伸：编译期常量的影响：public static final int MAX = 100 如果被其他类引用，修改为 200 后不重新编译引用类，引用类仍然使用旧的 100（内联到字节码中）。",
+    hints: ["final 变量是否一定是编译期常量", "编译期常量的内联优化有什么潜在风险"],
+    tags: ["基础", "关键字"],
+    options: [
       "A) int a = new Random().nextInt()",
       "B) final int b = 100",
       "C) int c = System.currentTimeMillis()",
-      "D) static int d = 42"
-    ]
+      "D) static int d = 42",
+    ],
   },
   {
-    "id": 158,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "JVM、JDK 和 JRE 的关系",
-    "content": "关于 JVM、JDK 和 JRE 三者的关系，以下描述正确的是？",
-    "answer": "答案：C) JRE = JVM + 核心类库\n\n解析：JVM（Java Virtual Machine）运行 Java 字节码。JRE = JVM + 核心类库（rt.jar 等），是运行已编译 Java 程序所需的环境。JDK = JRE + 开发工具（javac、jar、jdb 等），是开发 Java 程序的工具包。\n\n扩展延伸：三者包含关系：JDK ⊃ JRE ⊃ JVM。编写 Java 代码只需 JDK，运行只需 JRE。JVM 是跨平台核心——不同平台有不同 JVM 实现，但字节码相同。",
-    "hints": [
-      "运行 Java 程序和开发 Java 程序分别需要什么",
-      "JVM 为什么能跨平台"
-    ],
-    "tags": [
-      "基础",
-      "JVM"
-    ],
-    "options": [
+    id: 158,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "choice",
+    title: "JVM、JDK 和 JRE 的关系",
+    content: "关于 JVM、JDK 和 JRE 三者的关系，以下描述正确的是？",
+    answer:
+      "答案：C) JRE = JVM + 核心类库\n\n解析：JVM（Java Virtual Machine）运行 Java 字节码。JRE = JVM + 核心类库（rt.jar 等），是运行已编译 Java 程序所需的环境。JDK = JRE + 开发工具（javac、jar、jdb 等），是开发 Java 程序的工具包。\n\n扩展延伸：三者包含关系：JDK ⊃ JRE ⊃ JVM。编写 Java 代码只需 JDK，运行只需 JRE。JVM 是跨平台核心——不同平台有不同 JVM 实现，但字节码相同。",
+    hints: ["运行 Java 程序和开发 Java 程序分别需要什么", "JVM 为什么能跨平台"],
+    tags: ["基础", "JVM"],
+    options: [
       "A) JRE = JVM + 开发工具",
       "B) JDK = JRE + 核心类库",
       "C) JRE = JVM + 核心类库",
-      "D) JDK = JVM + 核心类库"
-    ]
+      "D) JDK = JVM + 核心类库",
+    ],
   },
   {
-    "id": 159,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "重载和重写的区别",
-    "content": "以下关于重载（Overload）和重写（Override）的描述，正确的是？",
-    "answer": "答案：B) 重写的方法返回值类型必须相同（或协变）\n\n解析：重载发生在同一个类中，方法名相同参数列表不同（个数、类型、顺序），与返回值无关。重写发生在父子类中，方法签名必须相同，返回值类型相同或是其子类型（协变返回类型），访问权限不能更严格，不能抛出更宽泛的异常。\n\n扩展延伸：@Override 注解可帮助校验是否正确重写。重载是编译时多态（静态分派），重写是运行时多态（动态分派）。构造方法不能被重写，但可以被重载。",
-    "hints": [
-      "重载和重写分别属于编译时还是运行时多态",
-      "为什么重写不能降低访问权限"
-    ],
-    "tags": [
-      "基础",
-      "OOP"
-    ],
-    "options": [
+    id: 159,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "choice",
+    title: "重载和重写的区别",
+    content: "以下关于重载（Overload）和重写（Override）的描述，正确的是？",
+    answer:
+      "答案：B) 重写的方法返回值类型必须相同（或协变）\n\n解析：重载发生在同一个类中，方法名相同参数列表不同（个数、类型、顺序），与返回值无关。重写发生在父子类中，方法签名必须相同，返回值类型相同或是其子类型（协变返回类型），访问权限不能更严格，不能抛出更宽泛的异常。\n\n扩展延伸：@Override 注解可帮助校验是否正确重写。重载是编译时多态（静态分派），重写是运行时多态（动态分派）。构造方法不能被重写，但可以被重载。",
+    hints: ["重载和重写分别属于编译时还是运行时多态", "为什么重写不能降低访问权限"],
+    tags: ["基础", "OOP"],
+    options: [
       "A) 重载发生在继承关系中",
       "B) 重写的方法返回值类型必须相同（或协变）",
       "C) 重载的方法参数列表必须不同，返回值类型也要求不同",
-      "D) 重写可以发生在同一个类中"
-    ]
+      "D) 重写可以发生在同一个类中",
+    ],
   },
   {
-    "id": 160,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "基本类型和包装类型的比较",
-    "content": "两个 Integer 对象使用 == 比较时，只要它们的数值相等结果就为 true。",
-    "answer": "答案：错误\n\n解析：== 比较的是引用地址而非数值。Integer 在 [-128, 127] 范围有缓存，该范围内数值相等 == 返回 true，超出范围每次创建新对象 == 返回 false。应用 equals() 比较数值，或拆箱后比较。\n\n扩展延伸：自动装箱通过 Integer.valueOf() 实现，该方法使用了缓存机制。所有包装类（Boolean/Byte/Short/Integer/Long/Character）都有缓存，只是范围不同。基本类型和包装类型的区别还包括：默认值（int=0，Integer=null）、存储位置（栈 vs 堆）、性能开销（包装类涉及对象创建和 GC）。",
-    "hints": [
-      "Integer 的缓存范围",
-      "自动装箱和拆箱的底层实现"
-    ],
-    "tags": [
-      "基础",
-      "包装类"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 160,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "true_false",
+    title: "基本类型和包装类型的比较",
+    content: "两个 Integer 对象使用 == 比较时，只要它们的数值相等结果就为 true。",
+    answer:
+      "答案：错误\n\n解析：== 比较的是引用地址而非数值。Integer 在 [-128, 127] 范围有缓存，该范围内数值相等 == 返回 true，超出范围每次创建新对象 == 返回 false。应用 equals() 比较数值，或拆箱后比较。\n\n扩展延伸：自动装箱通过 Integer.valueOf() 实现，该方法使用了缓存机制。所有包装类（Boolean/Byte/Short/Integer/Long/Character）都有缓存，只是范围不同。基本类型和包装类型的区别还包括：默认值（int=0，Integer=null）、存储位置（栈 vs 堆）、性能开销（包装类涉及对象创建和 GC）。",
+    hints: ["Integer 的缓存范围", "自动装箱和拆箱的底层实现"],
+    tags: ["基础", "包装类"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 161,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "String 为什么设计成不可变",
-    "content": "Java 为什么将 String 设计为不可变类？不可变性的好处有哪些？",
-    "answer": "答案：线程安全、哈希缓存、常量池共享、安全防护\n\n解析：1）线程安全——不可变对象无需同步即可在多线程间共享 2）哈希缓存——String 的 hashCode 只计算一次，适合做 HashMap key 3）字符串常量池——不可变确保常量池中的字符串不会被意外修改 4）安全防护——ClassLoader 加载类时使用 String 参数，不可变防止恶意篡改\n\n扩展延伸：String 通过 final class 和 private final char[]（JDK 8）或 byte[]（JDK 9+）实现不可变，所有「修改」操作（concat、replace 等）都返回新对象。不可变不等于常量——引用可变但对象内容不变。推荐阅读《Effective Java》第 17 条。",
-    "hints": [
-      "String 的 hashCode 为什么只计算一次",
-      "如果 String 可变，对 HashMap key 有什么影响"
-    ],
-    "tags": [
-      "基础",
-      "String"
-    ],
-    "options": []
+    id: 161,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "String 为什么设计成不可变",
+    content: "Java 为什么将 String 设计为不可变类？不可变性的好处有哪些？",
+    answer:
+      "答案：线程安全、哈希缓存、常量池共享、安全防护\n\n解析：1）线程安全——不可变对象无需同步即可在多线程间共享 2）哈希缓存——String 的 hashCode 只计算一次，适合做 HashMap key 3）字符串常量池——不可变确保常量池中的字符串不会被意外修改 4）安全防护——ClassLoader 加载类时使用 String 参数，不可变防止恶意篡改\n\n扩展延伸：String 通过 final class 和 private final char[]（JDK 8）或 byte[]（JDK 9+）实现不可变，所有「修改」操作（concat、replace 等）都返回新对象。不可变不等于常量——引用可变但对象内容不变。推荐阅读《Effective Java》第 17 条。",
+    hints: ["String 的 hashCode 为什么只计算一次", "如果 String 可变，对 HashMap key 有什么影响"],
+    tags: ["基础", "String"],
+    options: [],
   },
   {
-    "id": 162,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "new String(\"abc\") 创建了几个对象",
-    "content": "执行 String s = new String(\"abc\") 创建了几个对象？请分析。",
-    "answer": "答案：1 或 2 个对象\n\n解析：如果常量池中已有 \"abc\" 字面量，则只在堆中创建 1 个 String 对象。如果常量池中不存在 \"abc\"，则先在常量池中创建字面量对象，再在堆中创建 1 个 String 对象（共 2 个）。new String() 始终在堆中创建新对象，而双引号字面量走常量池（复用或创建）。\n\n扩展延伸：String s = \"abc\" 和 String s = new String(\"abc\") 的区别——前者直接引用常量池对象（可能复用），后者强制创建新堆对象。intern() 方法可将堆中的字符串引用放入常量池并返回常量池引用。",
-    "hints": [
-      "双引号字面量和 new String() 的区别",
-      "常量池中已有相同字符串时会怎样"
-    ],
-    "tags": [
-      "基础",
-      "String",
-      "JVM"
-    ],
-    "options": []
+    id: 162,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "short_answer",
+    title: 'new String("abc") 创建了几个对象',
+    content: '执行 String s = new String("abc") 创建了几个对象？请分析。',
+    answer:
+      '答案：1 或 2 个对象\n\n解析：如果常量池中已有 "abc" 字面量，则只在堆中创建 1 个 String 对象。如果常量池中不存在 "abc"，则先在常量池中创建字面量对象，再在堆中创建 1 个 String 对象（共 2 个）。new String() 始终在堆中创建新对象，而双引号字面量走常量池（复用或创建）。\n\n扩展延伸：String s = "abc" 和 String s = new String("abc") 的区别——前者直接引用常量池对象（可能复用），后者强制创建新堆对象。intern() 方法可将堆中的字符串引用放入常量池并返回常量池引用。',
+    hints: ["双引号字面量和 new String() 的区别", "常量池中已有相同字符串时会怎样"],
+    tags: ["基础", "String", "JVM"],
+    options: [],
   },
   {
-    "id": 163,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "BigDecimal 处理浮点数精度",
-    "content": "为什么 0.1 + 0.2 != 0.3？如何用 BigDecimal 正确进行浮点数运算？",
-    "answer": "答案：float/double 采用二进制浮点数表示，无法精确表示 0.1 等十进制小数。BigDecimal 可精确控制精度。\n\n解析：float/double 使用 IEEE 754 标准，二进制无法精确表示 1/10（类似十进制无法精确表示 1/3）。BigDecimal 基于十进制整数运算，精度可控。使用时务必用 BigDecimal 字符串构造器 new BigDecimal(\"0.1\")，而非 new BigDecimal(0.1)（后者仍然有精度误差）。\n\n扩展延伸：BigDecimal 常见陷阱：1）用 double 构造会有精度问题 2）除法需指定精度和舍入模式（RoundingMode.HALF_UP）3）equals 同时比较值和精度（\"1.0\" != \"1.00\"），compareTo 只比较值。推荐在金额计算、货币等场景中强制使用 BigDecimal。",
-    "hints": [
-      "为什么二进制无法精确表示 0.1",
-      "BigDecimal 的 equals 和 compareTo 有什么区别"
-    ],
-    "tags": [
-      "基础",
-      "BigDecimal",
-      "精度"
-    ],
-    "options": []
+    id: 163,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "BigDecimal 处理浮点数精度",
+    content: "为什么 0.1 + 0.2 != 0.3？如何用 BigDecimal 正确进行浮点数运算？",
+    answer:
+      '答案：float/double 采用二进制浮点数表示，无法精确表示 0.1 等十进制小数。BigDecimal 可精确控制精度。\n\n解析：float/double 使用 IEEE 754 标准，二进制无法精确表示 1/10（类似十进制无法精确表示 1/3）。BigDecimal 基于十进制整数运算，精度可控。使用时务必用 BigDecimal 字符串构造器 new BigDecimal("0.1")，而非 new BigDecimal(0.1)（后者仍然有精度误差）。\n\n扩展延伸：BigDecimal 常见陷阱：1）用 double 构造会有精度问题 2）除法需指定精度和舍入模式（RoundingMode.HALF_UP）3）equals 同时比较值和精度（"1.0" != "1.00"），compareTo 只比较值。推荐在金额计算、货币等场景中强制使用 BigDecimal。',
+    hints: ["为什么二进制无法精确表示 0.1", "BigDecimal 的 equals 和 compareTo 有什么区别"],
+    tags: ["基础", "BigDecimal", "精度"],
+    options: [],
   },
   {
-    "id": 164,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "接口和抽象类的区别",
-    "content": "请说明接口（Interface）和抽象类（Abstract Class）的区别及各自的使用场景。",
-    "answer": "答案：接口更强调行为契约（can-do），抽象类强调类层次关系（is-a）\n\n解析：核心区别 1）设计思想——抽象类表示「是什么」，接口表示「能做什么」2）继承 vs 实现——单继承多实现 3）构造方法——抽象类有，接口无 4）成员变量——抽象类可任意，接口只能是 public static final 5）方法——抽象类可有任意方法，JDK 8 起接口有 default/static 方法，JDK 9 起接口有 private 方法\n\n扩展延伸：如何选择？需要共享代码用抽象类（如模板方法模式）；需要定义能力契约用接口（如 Runnable、Comparable）。模板方法模式：抽象类定义骨架（final template method）让子类实现抽象步骤。接口 default 方法解决集合库演进问题（如 List.sort 向后兼容）。",
-    "hints": [
-      "为什么 Java 是单继承多实现",
-      "JDK 8 中接口新增了什么能力"
-    ],
-    "tags": [
-      "基础",
-      "OOP"
-    ],
-    "options": []
+    id: 164,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "接口和抽象类的区别",
+    content: "请说明接口（Interface）和抽象类（Abstract Class）的区别及各自的使用场景。",
+    answer:
+      "答案：接口更强调行为契约（can-do），抽象类强调类层次关系（is-a）\n\n解析：核心区别 1）设计思想——抽象类表示「是什么」，接口表示「能做什么」2）继承 vs 实现——单继承多实现 3）构造方法——抽象类有，接口无 4）成员变量——抽象类可任意，接口只能是 public static final 5）方法——抽象类可有任意方法，JDK 8 起接口有 default/static 方法，JDK 9 起接口有 private 方法\n\n扩展延伸：如何选择？需要共享代码用抽象类（如模板方法模式）；需要定义能力契约用接口（如 Runnable、Comparable）。模板方法模式：抽象类定义骨架（final template method）让子类实现抽象步骤。接口 default 方法解决集合库演进问题（如 List.sort 向后兼容）。",
+    hints: ["为什么 Java 是单继承多实现", "JDK 8 中接口新增了什么能力"],
+    tags: ["基础", "OOP"],
+    options: [],
   },
   {
-    "id": 165,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "构造方法的特点",
-    "content": "以下关于 Java 构造方法的描述，错误的是？",
-    "answer": "答案：B) 构造方法可以被重写\n\n解析：构造方法不能被重写（override），因为它不是普通方法且子类构造方法名与父类不同。构造方法可以重载（不同参数列表）。如果类没有定义任何构造方法，编译器自动生成默认无参构造，参数和访问修饰符与类相同。\n\n扩展延伸：如果显式定义了有参构造，编译器不会生成默认无参构造。子类构造方法第一行隐式调用 super()（父类无参构造），如果父类没有无参构造需显式调用 super(参数)。构造方法可以是 private（单例模式）。",
-    "hints": [
-      "子类构造方法默认调用父类哪个构造方法",
-      "为什么构造方法不能被重写"
-    ],
-    "tags": [
-      "基础",
-      "OOP"
-    ],
-    "options": [
+    id: 165,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "choice",
+    title: "构造方法的特点",
+    content: "以下关于 Java 构造方法的描述，错误的是？",
+    answer:
+      "答案：B) 构造方法可以被重写\n\n解析：构造方法不能被重写（override），因为它不是普通方法且子类构造方法名与父类不同。构造方法可以重载（不同参数列表）。如果类没有定义任何构造方法，编译器自动生成默认无参构造，参数和访问修饰符与类相同。\n\n扩展延伸：如果显式定义了有参构造，编译器不会生成默认无参构造。子类构造方法第一行隐式调用 super()（父类无参构造），如果父类没有无参构造需显式调用 super(参数)。构造方法可以是 private（单例模式）。",
+    hints: ["子类构造方法默认调用父类哪个构造方法", "为什么构造方法不能被重写"],
+    tags: ["基础", "OOP"],
+    options: [
       "A) 构造方法名必须与类名相同",
       "B) 构造方法可以被重写（override）",
       "C) 构造方法可以重载（overload）",
-      "D) 如果未定义构造方法，编译器自动生成无参构造"
-    ]
+      "D) 如果未定义构造方法，编译器自动生成无参构造",
+    ],
   },
   {
-    "id": 166,
-    "category": "java_basic",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "成员变量和局部变量的区别",
-    "content": "以下关于成员变量和局部变量的描述，正确的是？",
-    "answer": "答案：C) 局部变量存在于栈内存中\n\n解析：成员变量（field）存储在堆中（实例变量随对象，静态变量随类），有默认值（数值 0，引用 null，boolean false）。局部变量存储在栈中，必须显式初始化后才能使用，否则编译错误。成员变量作用范围是整个类，局部变量只在定义它的方法/代码块中有效。\n\n扩展延伸：成员变量和局部变量可同名，局部变量会遮蔽（shadow）成员变量，通过 this 访问成员变量。Java 局部变量不允许被 final 之外的修饰符修饰，而成员变量可被各种访问修饰符修饰。",
-    "hints": [
-      "局部变量和成员变量的初始化有什么区别",
-      "this 关键字在变量遮蔽中的作用"
-    ],
-    "tags": [
-      "基础",
-      "JVM"
-    ],
-    "options": [
+    id: 166,
+    category: "java_basic",
+    difficulty: "easy",
+    type: "choice",
+    title: "成员变量和局部变量的区别",
+    content: "以下关于成员变量和局部变量的描述，正确的是？",
+    answer:
+      "答案：C) 局部变量存在于栈内存中\n\n解析：成员变量（field）存储在堆中（实例变量随对象，静态变量随类），有默认值（数值 0，引用 null，boolean false）。局部变量存储在栈中，必须显式初始化后才能使用，否则编译错误。成员变量作用范围是整个类，局部变量只在定义它的方法/代码块中有效。\n\n扩展延伸：成员变量和局部变量可同名，局部变量会遮蔽（shadow）成员变量，通过 this 访问成员变量。Java 局部变量不允许被 final 之外的修饰符修饰，而成员变量可被各种访问修饰符修饰。",
+    hints: ["局部变量和成员变量的初始化有什么区别", "this 关键字在变量遮蔽中的作用"],
+    tags: ["基础", "JVM"],
+    options: [
       "A) 局部变量有默认值",
       "B) 成员变量存在于栈内存中",
       "C) 局部变量存在于栈内存中",
-      "D) 成员变量只能在构造方法中赋值"
-    ]
+      "D) 成员变量只能在构造方法中赋值",
+    ],
   },
   {
-    "id": 167,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Object 类的常见方法",
-    "content": "请列举 java.lang.Object 类中的常用方法及其作用。",
-    "answer": "答案：equals/hashCode/toString/clone/finalize/getClass/notify/wait\n\n解析：equals()—判断对象逻辑相等（默认比较引用地址）。hashCode()—返回哈希码，与 equals 有约定关系。toString()—返回字符串表示，默认是 类名@hashCode十六进制。clone()—创建并返回对象的拷贝（默认浅拷贝）。finalize()—GC 回收前调用（JDK 9 已弃用）。getClass()—返回运行时 Class 对象。notify()/notifyAll()/wait()—线程间通信。\n\n扩展延伸：为什么重写 equals 必须重写 hashCode——HashMap 等集合依赖 hashCode 定位桶位置。toString 在日志和调试中至关重要，推荐用 IDE 自动生成或使用 Apache Commons ToStringBuilder。clone 方法需实现 Cloneable 接口（标记接口），否则抛 CloneNotSupportedException。",
-    "hints": [
-      "equals 和 hashCode 的约定关系",
-      "clone 方法为什么需要实现 Cloneable 接口"
-    ],
-    "tags": [
-      "基础",
-      "Object"
-    ],
-    "options": []
+    id: 167,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Object 类的常见方法",
+    content: "请列举 java.lang.Object 类中的常用方法及其作用。",
+    answer:
+      "答案：equals/hashCode/toString/clone/finalize/getClass/notify/wait\n\n解析：equals()—判断对象逻辑相等（默认比较引用地址）。hashCode()—返回哈希码，与 equals 有约定关系。toString()—返回字符串表示，默认是 类名@hashCode十六进制。clone()—创建并返回对象的拷贝（默认浅拷贝）。finalize()—GC 回收前调用（JDK 9 已弃用）。getClass()—返回运行时 Class 对象。notify()/notifyAll()/wait()—线程间通信。\n\n扩展延伸：为什么重写 equals 必须重写 hashCode——HashMap 等集合依赖 hashCode 定位桶位置。toString 在日志和调试中至关重要，推荐用 IDE 自动生成或使用 Apache Commons ToStringBuilder。clone 方法需实现 Cloneable 接口（标记接口），否则抛 CloneNotSupportedException。",
+    hints: ["equals 和 hashCode 的约定关系", "clone 方法为什么需要实现 Cloneable 接口"],
+    tags: ["基础", "Object"],
+    options: [],
   },
   {
-    "id": 168,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "JDK 动态代理和 CGLIB 的区别",
-    "content": "请说明 JDK 动态代理和 CGLIB 动态代理的区别及各自的使用场景。",
-    "answer": "答案：JDK 动态代理基于接口，CGLIB 基于继承子类\n\n解析：JDK 动态代理要求目标类实现接口，通过 Proxy.newProxyInstance() 创建，内部使用 InvocationHandler 处理调用。CGLIB（Code Generation Library）通过 ASM 生成目标类的子类，覆盖父类方法实现代理，无需接口。Spring AOP 默认使用 JDK 动态代理实现接口，CGLIB 实现类代理。\n\n扩展延伸：Spring Boot 2.0+ 默认使用 CGLIB（spring.aop.proxy-target-class=true）。CGLIB 不能代理 final 方法和 final 类（因为通过继承实现）。性能方面：JDK 7+ 后 JDK 动态代理性能已接近 CGLIB。底层原理：JDK 动态代理在运行时生成代理类字节码，CGLIB 用 ASM 框架操作字节码。",
-    "hints": [
-      "Spring AOP 如何选择 JDK 代理还是 CGLIB",
-      "为什么 CGLIB 不能代理 final 方法"
-    ],
-    "tags": [
-      "反射",
-      "代理",
-      "Spring"
-    ],
-    "options": []
+    id: 168,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "JDK 动态代理和 CGLIB 的区别",
+    content: "请说明 JDK 动态代理和 CGLIB 动态代理的区别及各自的使用场景。",
+    answer:
+      "答案：JDK 动态代理基于接口，CGLIB 基于继承子类\n\n解析：JDK 动态代理要求目标类实现接口，通过 Proxy.newProxyInstance() 创建，内部使用 InvocationHandler 处理调用。CGLIB（Code Generation Library）通过 ASM 生成目标类的子类，覆盖父类方法实现代理，无需接口。Spring AOP 默认使用 JDK 动态代理实现接口，CGLIB 实现类代理。\n\n扩展延伸：Spring Boot 2.0+ 默认使用 CGLIB（spring.aop.proxy-target-class=true）。CGLIB 不能代理 final 方法和 final 类（因为通过继承实现）。性能方面：JDK 7+ 后 JDK 动态代理性能已接近 CGLIB。底层原理：JDK 动态代理在运行时生成代理类字节码，CGLIB 用 ASM 框架操作字节码。",
+    hints: ["Spring AOP 如何选择 JDK 代理还是 CGLIB", "为什么 CGLIB 不能代理 final 方法"],
+    tags: ["反射", "代理", "Spring"],
+    options: [],
   },
   {
-    "id": 169,
-    "category": "java_basic",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "continue、break 和 return 的区别",
-    "content": "请说明 Java 中 continue、break 和 return 在循环中的区别。",
-    "answer": "答案：continue 跳过本次循环，break 结束整个循环，return 结束整个方法\n\n解析：continue—结束当前迭代，进入下一次循环（在 for 循环中执行步进表达式）。break—立即退出当前循环体（不执行后续迭代）。return—结束当前方法，返回调用处。break 和 continue 可配合标签（label）控制外层循环——outer: for (...) { for (...) { break outer; } }。\n\n扩展延伸：在 switch 语句中，break 用于防止 case 穿透。带标签的 break/continue 可跳出多层嵌套循环，但可读性差，建议封装为方法或用 return 替代。Java 没有 goto 关键字，但 break/continue 标签实现了受限制的 goto 功能。",
-    "hints": [
-      "带标签的 break 和 continue 有什么用",
-      "在嵌套循环中如何一次跳出所有循环"
-    ],
-    "tags": [
-      "基础",
-      "控制流"
-    ],
-    "options": []
+    id: 169,
+    category: "java_basic",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "continue、break 和 return 的区别",
+    content: "请说明 Java 中 continue、break 和 return 在循环中的区别。",
+    answer:
+      "答案：continue 跳过本次循环，break 结束整个循环，return 结束整个方法\n\n解析：continue—结束当前迭代，进入下一次循环（在 for 循环中执行步进表达式）。break—立即退出当前循环体（不执行后续迭代）。return—结束当前方法，返回调用处。break 和 continue 可配合标签（label）控制外层循环——outer: for (...) { for (...) { break outer; } }。\n\n扩展延伸：在 switch 语句中，break 用于防止 case 穿透。带标签的 break/continue 可跳出多层嵌套循环，但可读性差，建议封装为方法或用 return 替代。Java 没有 goto 关键字，但 break/continue 标签实现了受限制的 goto 功能。",
+    hints: ["带标签的 break 和 continue 有什么用", "在嵌套循环中如何一次跳出所有循环"],
+    tags: ["基础", "控制流"],
+    options: [],
   },
   {
-    "id": 170,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "说说 List, Set, Queue, Map 四者的区别？",
-    "content": "说说 List, Set, Queue, Map 四者的区别？",
-    "answer": "答案：- List(对付顺序的好帮手): 存储的元素是有序的、可重复的。- Set(注重独一无二的性质): 存储的元素不可重复的。- Queue(实现排队功能的叫号机): 按特定的排队规则来确定先后顺序，存储的元素是有序的、可重复的。\n\n解析：- Map(用 key 来搜索的专家): 使用键值对（key-value）存储，类似于数学上的函数 y=f(x)，\"x\" 代表 key，\"y\" 代表 value，key 是无序的、不可重复的，value 是无序的、可重复的，每个键最多映射到一个值。",
-    "hints": [
-      "存储的元素是有序的、可重复的",
-      "存储的元素不可重复的"
-    ],
-    "tags": [
-      "Java集合"
-    ],
-    "options": []
+    id: 170,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "说说 List, Set, Queue, Map 四者的区别？",
+    content: "说说 List, Set, Queue, Map 四者的区别？",
+    answer:
+      '答案：- List(对付顺序的好帮手): 存储的元素是有序的、可重复的。- Set(注重独一无二的性质): 存储的元素不可重复的。- Queue(实现排队功能的叫号机): 按特定的排队规则来确定先后顺序，存储的元素是有序的、可重复的。\n\n解析：- Map(用 key 来搜索的专家): 使用键值对（key-value）存储，类似于数学上的函数 y=f(x)，"x" 代表 key，"y" 代表 value，key 是无序的、不可重复的，value 是无序的、可重复的，每个键最多映射到一个值。',
+    hints: ["存储的元素是有序的、可重复的", "存储的元素不可重复的"],
+    tags: ["Java集合"],
+    options: [],
   },
   {
-    "id": 171,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "如何选用集合?",
-    "content": "如何选用集合?",
-    "answer": "答案：我们主要根据集合的特点来选择合适的集合。\n\n解析：比如：\n- 我们需要根据键值获取到元素值时就选用 Map 接口下的集合，需要排序时选择 TreeMap,不需要排序时就选择 HashMap,需要保证线程安全就选用 ConcurrentHashMap。- 我们只需要存放元素值时，就选择实现Collection 接口的集合，需要保证元素唯一时选择实现 Set 接口的集合比如 TreeSet 或 HashSet，不需要就选择实现 List 接口的比如 ArrayList 或 LinkedList，然后再根据实现这些接口的集合的特点来选用。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "并发",
-      "IO"
-    ],
-    "options": []
+    id: 171,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "如何选用集合?",
+    content: "如何选用集合?",
+    answer:
+      "答案：我们主要根据集合的特点来选择合适的集合。\n\n解析：比如：\n- 我们需要根据键值获取到元素值时就选用 Map 接口下的集合，需要排序时选择 TreeMap,不需要排序时就选择 HashMap,需要保证线程安全就选用 ConcurrentHashMap。- 我们只需要存放元素值时，就选择实现Collection 接口的集合，需要保证元素唯一时选择实现 Set 接口的集合比如 TreeSet 或 HashSet，不需要就选择实现 List 接口的比如 ArrayList 或 LinkedList，然后再根据实现这些接口的集合的特点来选用。",
+    hints: [],
+    tags: ["Java集合", "集合", "并发", "IO"],
+    options: [],
   },
   {
-    "id": 172,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "为什么要使用集合？",
-    "content": "为什么要使用集合？",
-    "answer": "答案：当我们需要存储一组类型相同的数据时，数组是最常用且最基本的容器之一。但是，使用数组存储对象存在一些不足之处，因为在实际开发中，存储的数据类型多种多样且数量不确定。这时，Java 集合就派上用场了。\n\n解析：与数组相比，Java 集合提供了更灵活、更有效的方法来存储多个数据对象。Java 集合框架中的各种集合类和接口可以存储不同类型和数量的对象，同时还具有多样化的操作方式。相较于数组，Java 集合的优势在于它们的大小可变、支持泛型、具有内建算法等。总的来说，Java 集合提高了数据的存储和处理灵活性，可以更好地适应现代软件开发中多样化的数据需求，并支持高质量的代码编写。## List",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "泛型"
-    ],
-    "options": []
+    id: 172,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "为什么要使用集合？",
+    content: "为什么要使用集合？",
+    answer:
+      "答案：当我们需要存储一组类型相同的数据时，数组是最常用且最基本的容器之一。但是，使用数组存储对象存在一些不足之处，因为在实际开发中，存储的数据类型多种多样且数量不确定。这时，Java 集合就派上用场了。\n\n解析：与数组相比，Java 集合提供了更灵活、更有效的方法来存储多个数据对象。Java 集合框架中的各种集合类和接口可以存储不同类型和数量的对象，同时还具有多样化的操作方式。相较于数组，Java 集合的优势在于它们的大小可变、支持泛型、具有内建算法等。总的来说，Java 集合提高了数据的存储和处理灵活性，可以更好地适应现代软件开发中多样化的数据需求，并支持高质量的代码编写。## List",
+    hints: [],
+    tags: ["Java集合", "集合", "泛型"],
+    options: [],
   },
   {
-    "id": 173,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ArrayList 和 Array（数组）的区别？",
-    "content": "ArrayList 和 Array（数组）的区别？",
-    "answer": "答案：ArrayList 内部基于动态数组实现，比 Array（静态数组） 使用起来更加灵活：\n- ArrayList会根据实际存储的元素动态地扩容或缩容，而 Array 被创建之后就不能改变它的长度了。- ArrayList 允许你使用泛型来确保类型安全，Array 则不可以。- ArrayList 中只能存储对象。\n\n解析：对于基本类型数据，需要使用其对应的包装类（如 Integer、Double 等）。Array 可以直接存储基本类型数据，也可以存储对象。- ArrayList 支持插入、删除、遍历等常见操作，并且提供了丰富的 API 操作方法，比如 add()、remove()等。Array 只是一个固定长度的数组，只能按照下标访问其中的元素，不具备动态添加、删除元素的能力。- ArrayList创建时不需要指定大小，而Array创建时必须指定大小。下面是二者使用的简单对比：\nArray：\nArrayList ：",
-    "hints": [
-      "Array：\nArrayList ："
-    ],
-    "tags": [
-      "Java集合",
-      "集合",
-      "泛型"
-    ],
-    "options": []
+    id: 173,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ArrayList 和 Array（数组）的区别？",
+    content: "ArrayList 和 Array（数组）的区别？",
+    answer:
+      "答案：ArrayList 内部基于动态数组实现，比 Array（静态数组） 使用起来更加灵活：\n- ArrayList会根据实际存储的元素动态地扩容或缩容，而 Array 被创建之后就不能改变它的长度了。- ArrayList 允许你使用泛型来确保类型安全，Array 则不可以。- ArrayList 中只能存储对象。\n\n解析：对于基本类型数据，需要使用其对应的包装类（如 Integer、Double 等）。Array 可以直接存储基本类型数据，也可以存储对象。- ArrayList 支持插入、删除、遍历等常见操作，并且提供了丰富的 API 操作方法，比如 add()、remove()等。Array 只是一个固定长度的数组，只能按照下标访问其中的元素，不具备动态添加、删除元素的能力。- ArrayList创建时不需要指定大小，而Array创建时必须指定大小。下面是二者使用的简单对比：\nArray：\nArrayList ：",
+    hints: ["Array：\nArrayList ："],
+    tags: ["Java集合", "集合", "泛型"],
+    options: [],
   },
   {
-    "id": 174,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ArrayList 和 Vector 的区别?（了解即可）",
-    "content": "ArrayList 和 Vector 的区别?（了解即可）",
-    "answer": "答案：- ArrayList 是 List 的主要实现类，底层使用 Object[]存储，适用于频繁的查找工作，线程不安全 。\n- Vector 是 List 的古老实现类，底层使用Object[] 存储，线程安全。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "并发"
-    ],
-    "options": []
+    id: 174,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ArrayList 和 Vector 的区别?（了解即可）",
+    content: "ArrayList 和 Vector 的区别?（了解即可）",
+    answer:
+      "答案：- ArrayList 是 List 的主要实现类，底层使用 Object[]存储，适用于频繁的查找工作，线程不安全 。\n- Vector 是 List 的古老实现类，底层使用Object[] 存储，线程安全。",
+    hints: [],
+    tags: ["Java集合", "集合", "并发"],
+    options: [],
   },
   {
-    "id": 175,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Vector 和 Stack 的区别?（了解即可）",
-    "content": "Vector 和 Stack 的区别?（了解即可）",
-    "answer": "答案：- Vector 和 Stack 两者都是线程安全的，都是使用 synchronized 关键字进行同步处理。- Stack 继承自 Vector，是一个后进先出的栈，而 Vector 是一个列表。随着 Java 并发编程的发展，Vector 和 Stack 已经被淘汰，推荐使用并发集合类（例如 ConcurrentHashMap、CopyOnWriteArrayList 等）或者手动实现线程安全的方法来提供安全的多线程操作支持。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "并发",
-      "关键字"
-    ],
-    "options": []
+    id: 175,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Vector 和 Stack 的区别?（了解即可）",
+    content: "Vector 和 Stack 的区别?（了解即可）",
+    answer:
+      "答案：- Vector 和 Stack 两者都是线程安全的，都是使用 synchronized 关键字进行同步处理。- Stack 继承自 Vector，是一个后进先出的栈，而 Vector 是一个列表。随着 Java 并发编程的发展，Vector 和 Stack 已经被淘汰，推荐使用并发集合类（例如 ConcurrentHashMap、CopyOnWriteArrayList 等）或者手动实现线程安全的方法来提供安全的多线程操作支持。",
+    hints: [],
+    tags: ["Java集合", "集合", "并发", "关键字"],
+    options: [],
   },
   {
-    "id": 176,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ArrayList 可以添加 null 值吗？",
-    "content": "ArrayList 可以添加 null 值吗？",
-    "answer": "答案：ArrayList 中可以存储任何类型的对象，包括 null 值。不过，不建议向ArrayList 中添加 null 值， null 值无意义，会让代码难以维护比如忘记做判空处理就会导致空指针异常。示例代码：\n输出：",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "异常"
-    ],
-    "options": []
+    id: 176,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ArrayList 可以添加 null 值吗？",
+    content: "ArrayList 可以添加 null 值吗？",
+    answer:
+      "答案：ArrayList 中可以存储任何类型的对象，包括 null 值。不过，不建议向ArrayList 中添加 null 值， null 值无意义，会让代码难以维护比如忘记做判空处理就会导致空指针异常。示例代码：\n输出：",
+    hints: [],
+    tags: ["Java集合", "集合", "异常"],
+    options: [],
   },
   {
-    "id": 177,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ArrayList 插入和删除元素的时间复杂度？",
-    "content": "ArrayList 插入和删除元素的时间复杂度？",
-    "answer": "答案：对于插入：\n- 头部插入：由于需要将所有元素都依次向后移动一个位置，因此时间复杂度是 O(n)。- 尾部插入：当 ArrayList 的容量未达到极限时，往列表末尾插入元素的时间复杂度是 O(1)，因为它只需要在数组末尾添加一个元素即可；当容量已达到极限并且需要扩容时，则需要执行一次 O(n) 的操作将原数组复制到新的更大的数组中，然后再执行 O(1) 的操作添加元素。\n\n解析：- 指定位置插入：需要将目标位置之后的所有元素都向后移动一个位置，然后再把新元素放入指定位置。这个过程需要移动平均 n/2 个元素，因此时间复杂度为 O(n)。对于删除：\n- 头部删除：由于需要将所有元素依次向前移动一个位置，因此时间复杂度是 O(n)。- 尾部删除：当删除的元素位于列表末尾时，时间复杂度为 O(1)。- 指定位置删除：需要将目标元素之后的所有元素向前移动一个位置以填补被删除的空白位置，因此需要移动平均 n/2 个元素，时间复杂度为 O(n)。这里简单列举一个例子：",
-    "hints": [
+    id: 177,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ArrayList 插入和删除元素的时间复杂度？",
+    content: "ArrayList 插入和删除元素的时间复杂度？",
+    answer:
+      "答案：对于插入：\n- 头部插入：由于需要将所有元素都依次向后移动一个位置，因此时间复杂度是 O(n)。- 尾部插入：当 ArrayList 的容量未达到极限时，往列表末尾插入元素的时间复杂度是 O(1)，因为它只需要在数组末尾添加一个元素即可；当容量已达到极限并且需要扩容时，则需要执行一次 O(n) 的操作将原数组复制到新的更大的数组中，然后再执行 O(1) 的操作添加元素。\n\n解析：- 指定位置插入：需要将目标位置之后的所有元素都向后移动一个位置，然后再把新元素放入指定位置。这个过程需要移动平均 n/2 个元素，因此时间复杂度为 O(n)。对于删除：\n- 头部删除：由于需要将所有元素依次向前移动一个位置，因此时间复杂度是 O(n)。- 尾部删除：当删除的元素位于列表末尾时，时间复杂度为 O(1)。- 指定位置删除：需要将目标元素之后的所有元素向前移动一个位置以填补被删除的空白位置，因此需要移动平均 n/2 个元素，时间复杂度为 O(n)。这里简单列举一个例子：",
+    hints: [
       "需要将目标位置之后的所有元素都向后移动一个位置，然后再把新元素放入指定位置",
-      "- 头部删除：由于需要将所有元素依次向前移动一个位置，因此时间复杂度是 O(n)"
+      "- 头部删除：由于需要将所有元素依次向前移动一个位置，因此时间复杂度是 O(n)",
     ],
-    "tags": [
-      "Java集合",
-      "集合"
-    ],
-    "options": []
+    tags: ["Java集合", "集合"],
+    options: [],
   },
   {
-    "id": 178,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "LinkedList 插入和删除元素的时间复杂度？",
-    "content": "LinkedList 插入和删除元素的时间复杂度？",
-    "answer": "答案：- 头部插入/删除：只需要修改头结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)。- 尾部插入/删除：只需要修改尾结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)。- 指定位置插入/删除：需要先移动到指定位置，再修改指定节点的指针完成插入/删除，不过由于有头尾指针，可以从较近的指针出发，因此需要遍历平均 n/4 个元素，时间复杂度为 O(n)。\n\n解析：这里简单列举一个例子：假如我们要删除节点 9 的话，需要先遍历链表找到该节点。然后，再执行相应节点指针指向的更改，具体的源码可以参考：LinkedList 源码分析 。",
-    "hints": [
+    id: 178,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "LinkedList 插入和删除元素的时间复杂度？",
+    content: "LinkedList 插入和删除元素的时间复杂度？",
+    answer:
+      "答案：- 头部插入/删除：只需要修改头结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)。- 尾部插入/删除：只需要修改尾结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)。- 指定位置插入/删除：需要先移动到指定位置，再修改指定节点的指针完成插入/删除，不过由于有头尾指针，可以从较近的指针出发，因此需要遍历平均 n/4 个元素，时间复杂度为 O(n)。\n\n解析：这里简单列举一个例子：假如我们要删除节点 9 的话，需要先遍历链表找到该节点。然后，再执行相应节点指针指向的更改，具体的源码可以参考：LinkedList 源码分析 。",
+    hints: [
       "只需要修改头结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)",
-      "只需要修改尾结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)"
+      "只需要修改尾结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)",
     ],
-    "tags": [
-      "Java集合",
-      "集合"
-    ],
-    "options": []
+    tags: ["Java集合", "集合"],
+    options: [],
   },
   {
-    "id": 179,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "LinkedList 为什么不能实现 RandomAccess 接口？",
-    "content": "LinkedList 为什么不能实现 RandomAccess 接口？",
-    "answer": "答案：RandomAccess 是一个标记接口，用来表明实现该接口的类支持随机访问（即可以通过索引快速访问元素）。由于 LinkedList 底层数据结构是链表，内存地址不连续，只能通过指针来定位，不支持随机快速访问，所以不能实现 RandomAccess 接口。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合"
-    ],
-    "options": []
+    id: 179,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "LinkedList 为什么不能实现 RandomAccess 接口？",
+    content: "LinkedList 为什么不能实现 RandomAccess 接口？",
+    answer:
+      "答案：RandomAccess 是一个标记接口，用来表明实现该接口的类支持随机访问（即可以通过索引快速访问元素）。由于 LinkedList 底层数据结构是链表，内存地址不连续，只能通过指针来定位，不支持随机快速访问，所以不能实现 RandomAccess 接口。",
+    hints: [],
+    tags: ["Java集合", "集合"],
+    options: [],
   },
   {
-    "id": 180,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ArrayList 与 LinkedList 区别?",
-    "content": "ArrayList 与 LinkedList 区别?",
-    "answer": "答案：- **是否保证线程安全：** ArrayList 和 LinkedList 都是不同步的，也就是不保证线程安全；- **底层数据结构：** ArrayList 底层使用的是 **Object 数组**；LinkedList 底层使用的是 **双向链表** 数据结构（JDK1.6 之前为循环链表，JDK1.7 取消了循环。\n\n解析：注意双向链表和双向循环链表的区别，下面有介绍到！）\n- **插入和删除是否受元素位置的影响：**\n- ArrayList 采用数组存储，所以插入和删除元素的时间复杂度受元素位置的影响。比如：执行add(E e)方法的时候， ArrayList 会默认在将指定的元素追加到此列表的末尾，这种情况时间复杂度就是 O(1)。但是如果要在指定位置 i 插入和删除元素的话（add(int index, E element)），时间复杂度就为 O(n)。因为在进行上述操作的时候集合中第 i 和第 i 个元素之后的(n-i)个元素都要执行向后位/向前移一位的操作。- LinkedList 采用链表存储，所以在头尾插入或者删除元素不受元素位置的影响（add(E e)、addFirst(E e)、addLast(E e)、removeFirst()、 removeLast()），时间复杂度为 O(1)，如果是要在指定位置 i 插入和删除元素的话（add(int index, E element)，remove(Object o),remove(int index)）， 时间复杂度为 O(n) ，因为需要先移动到指定位置再插入和删除。- **是否支持快速随机访问：** LinkedList 不支持高效的随机元素访问，而 ArrayList（实现了 RandomAccess 接口） 支持。快速随机访问就是通过元素的序号快速获取元素对象(对应于get(int index)方法)。- **内存空间占用：** ArrayList 的空间浪费主要体现在在 list 列表的结尾会预留一定的容量空间，而 LinkedList 的空间花费则体现在它的每一个元素都需要消耗比 ArrayList 更多的空间（因为要存放直接后继和直接前驱以及数据）。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "并发"
-    ],
-    "options": []
+    id: 180,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ArrayList 与 LinkedList 区别?",
+    content: "ArrayList 与 LinkedList 区别?",
+    answer:
+      "答案：- **是否保证线程安全：** ArrayList 和 LinkedList 都是不同步的，也就是不保证线程安全；- **底层数据结构：** ArrayList 底层使用的是 **Object 数组**；LinkedList 底层使用的是 **双向链表** 数据结构（JDK1.6 之前为循环链表，JDK1.7 取消了循环。\n\n解析：注意双向链表和双向循环链表的区别，下面有介绍到！）\n- **插入和删除是否受元素位置的影响：**\n- ArrayList 采用数组存储，所以插入和删除元素的时间复杂度受元素位置的影响。比如：执行add(E e)方法的时候， ArrayList 会默认在将指定的元素追加到此列表的末尾，这种情况时间复杂度就是 O(1)。但是如果要在指定位置 i 插入和删除元素的话（add(int index, E element)），时间复杂度就为 O(n)。因为在进行上述操作的时候集合中第 i 和第 i 个元素之后的(n-i)个元素都要执行向后位/向前移一位的操作。- LinkedList 采用链表存储，所以在头尾插入或者删除元素不受元素位置的影响（add(E e)、addFirst(E e)、addLast(E e)、removeFirst()、 removeLast()），时间复杂度为 O(1)，如果是要在指定位置 i 插入和删除元素的话（add(int index, E element)，remove(Object o),remove(int index)）， 时间复杂度为 O(n) ，因为需要先移动到指定位置再插入和删除。- **是否支持快速随机访问：** LinkedList 不支持高效的随机元素访问，而 ArrayList（实现了 RandomAccess 接口） 支持。快速随机访问就是通过元素的序号快速获取元素对象(对应于get(int index)方法)。- **内存空间占用：** ArrayList 的空间浪费主要体现在在 list 列表的结尾会预留一定的容量空间，而 LinkedList 的空间花费则体现在它的每一个元素都需要消耗比 ArrayList 更多的空间（因为要存放直接后继和直接前驱以及数据）。",
+    hints: [],
+    tags: ["Java集合", "集合", "并发"],
+    options: [],
   },
   {
-    "id": 181,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "集合中的 fail-fast 和 fail-safe 是什么？",
-    "content": "集合中的 fail-fast 和 fail-safe 是什么？",
-    "answer": "答案：fail-fast（快速失败）和 fail-safe（安全失败）是Java集合框架在处理并发修改问题时，两种截然不同的设计哲学和容错策略。关于fail-fast引用medium中一篇文章关于fail-fast和fail-safe的说法：\n快速失败的思想即针对可能发生的异常进行提前表明故障并停止运行，通过尽早的发现和停止错误，降低故障系统级联的风险。在java.util包下的大部分集合（如 ArrayList, HashMap）是不支持线程安全的，为了能够提前发现并发操作导致线程安全风险，提出通过维护一个modCount记录修改的次数，迭代期间通过比对预期修改次数expectedModCount和modCount是否一致来判断是否存在并发操作，从而实现快速失败，由此保证在避免在异常时执行非必要的复杂代码。\n\n解析：**ArrayList (fail-fast) 示例：**\n输出：\n程序在线程 t2 修改列表后，线程 t1 的下一次迭代操作立刻就抛出了 ConcurrentModificationException。这是因为 ArrayList 的迭代器在每次 next() 调用时，都会检查 modCount 是否被改变。一旦发现集合在迭代器不知情的情况下被修改，它会立即“快速失败”，以防止在不一致的数据上继续操作导致不可预期的后果。对此我们也给出for循环底层迭代器获取下一个元素时的next方法，可以看到其内部的checkForComodification具有针对修改次数比对的逻辑：\n而fail-safe也就是安全失败的含义，它旨在即使面对意外情况也能恢复并继续运行，这使得它特别适用于不确定或者不稳定的环境：\n该思想常运用于并发容器，最经典的实现就是CopyOnWriteArrayList的实现，通过写时复制（Copy-On-Write）的思想保证在进行修改操作时复制出一份快照，基于这份快照完成添加或者删除操作后，将CopyOnWriteArrayList底层的数组引用指向这个新的数组空间，由此避免迭代时被并发修改所干扰所导致并发操作安全问题，当然这种做法也存在缺点，即进行遍历操作时无法获得实时结果：\n!\n对应我们也给出CopyOnWriteArrayList实现fail-safe的核心代码，可以看到它的实现就是通过getArray获取数组引用然后通过Arrays.copyOf得到一个数组的快照，基于这个快照完成添加操作后，修改底层array变量指向的引用地址由此完成写时复制：\n## Set",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "并发",
-      "异常"
-    ],
-    "options": []
+    id: 181,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "集合中的 fail-fast 和 fail-safe 是什么？",
+    content: "集合中的 fail-fast 和 fail-safe 是什么？",
+    answer:
+      "答案：fail-fast（快速失败）和 fail-safe（安全失败）是Java集合框架在处理并发修改问题时，两种截然不同的设计哲学和容错策略。关于fail-fast引用medium中一篇文章关于fail-fast和fail-safe的说法：\n快速失败的思想即针对可能发生的异常进行提前表明故障并停止运行，通过尽早的发现和停止错误，降低故障系统级联的风险。在java.util包下的大部分集合（如 ArrayList, HashMap）是不支持线程安全的，为了能够提前发现并发操作导致线程安全风险，提出通过维护一个modCount记录修改的次数，迭代期间通过比对预期修改次数expectedModCount和modCount是否一致来判断是否存在并发操作，从而实现快速失败，由此保证在避免在异常时执行非必要的复杂代码。\n\n解析：**ArrayList (fail-fast) 示例：**\n输出：\n程序在线程 t2 修改列表后，线程 t1 的下一次迭代操作立刻就抛出了 ConcurrentModificationException。这是因为 ArrayList 的迭代器在每次 next() 调用时，都会检查 modCount 是否被改变。一旦发现集合在迭代器不知情的情况下被修改，它会立即“快速失败”，以防止在不一致的数据上继续操作导致不可预期的后果。对此我们也给出for循环底层迭代器获取下一个元素时的next方法，可以看到其内部的checkForComodification具有针对修改次数比对的逻辑：\n而fail-safe也就是安全失败的含义，它旨在即使面对意外情况也能恢复并继续运行，这使得它特别适用于不确定或者不稳定的环境：\n该思想常运用于并发容器，最经典的实现就是CopyOnWriteArrayList的实现，通过写时复制（Copy-On-Write）的思想保证在进行修改操作时复制出一份快照，基于这份快照完成添加或者删除操作后，将CopyOnWriteArrayList底层的数组引用指向这个新的数组空间，由此避免迭代时被并发修改所干扰所导致并发操作安全问题，当然这种做法也存在缺点，即进行遍历操作时无法获得实时结果：\n!\n对应我们也给出CopyOnWriteArrayList实现fail-safe的核心代码，可以看到它的实现就是通过getArray获取数组引用然后通过Arrays.copyOf得到一个数组的快照，基于这个快照完成添加操作后，修改底层array变量指向的引用地址由此完成写时复制：\n## Set",
+    hints: [],
+    tags: ["Java集合", "集合", "并发", "异常"],
+    options: [],
   },
   {
-    "id": 182,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Comparable 和 Comparator 的区别",
-    "content": "请比较 Comparable 和 Comparator 的区别。",
-    "answer": "答案：Comparable 接口和 Comparator 接口都是 Java 中用于排序的接口，它们在实现类对象之间比较大小、排序等方面发挥了重要作用：\n- Comparable 接口实际上是出自java.lang包 它有一个 compareTo(Object obj)方法用来排序\n- Comparator接口实际上是出自 java.util 包它有一个compare(Object obj1, Object obj2)方法用来排序\n一般我们需要对一个集合使用自定义排序时，我们就要重写compareTo()方法或compare()方法，当我们需要对某一个集合实现两种排序方式，比如一个 song 对象中的歌名和歌手名分别采用一种排序方法的话，我们可以重写compareTo()方法和使用自制的Comparator方法或者以两个 Comparator。",
-    "hints": [
-      "Output："
-    ],
-    "tags": [
-      "Java集合",
-      "集合",
-      "IO",
-      "重载重写"
-    ],
-    "options": []
+    id: 182,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Comparable 和 Comparator 的区别",
+    content: "请比较 Comparable 和 Comparator 的区别。",
+    answer:
+      "答案：Comparable 接口和 Comparator 接口都是 Java 中用于排序的接口，它们在实现类对象之间比较大小、排序等方面发挥了重要作用：\n- Comparable 接口实际上是出自java.lang包 它有一个 compareTo(Object obj)方法用来排序\n- Comparator接口实际上是出自 java.util 包它有一个compare(Object obj1, Object obj2)方法用来排序\n一般我们需要对一个集合使用自定义排序时，我们就要重写compareTo()方法或compare()方法，当我们需要对某一个集合实现两种排序方式，比如一个 song 对象中的歌名和歌手名分别采用一种排序方法的话，我们可以重写compareTo()方法和使用自制的Comparator方法或者以两个 Comparator。",
+    hints: ["Output："],
+    tags: ["Java集合", "集合", "IO", "重载重写"],
+    options: [],
   },
   {
-    "id": 183,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "无序性和不可重复性的含义是什么",
-    "content": "请解释 无序性和不可重复性的含义是什么。",
-    "answer": "答案：- 无序性不等于随机性 ，无序性是指存储的数据在底层数组中并非按照数组索引的顺序添加 ，而是根据数据的哈希值决定的。\n- 不可重复性是指添加的元素按照 equals() 判断时 ，返回 false，需要同时重写 equals() 方法和 hashCode() 方法。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "重载重写"
-    ],
-    "options": []
+    id: 183,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "无序性和不可重复性的含义是什么",
+    content: "请解释 无序性和不可重复性的含义是什么。",
+    answer:
+      "答案：- 无序性不等于随机性 ，无序性是指存储的数据在底层数组中并非按照数组索引的顺序添加 ，而是根据数据的哈希值决定的。\n- 不可重复性是指添加的元素按照 equals() 判断时 ，返回 false，需要同时重写 equals() 方法和 hashCode() 方法。",
+    hints: [],
+    tags: ["Java集合", "重载重写"],
+    options: [],
   },
   {
-    "id": 184,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同",
-    "content": "请解释 比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同。",
-    "answer": "答案：- HashSet、LinkedHashSet 和 TreeSet 都是 Set 接口的实现类，都能保证元素唯一，并且都不是线程安全的。- HashSet、LinkedHashSet 和 TreeSet 的主要区别在于底层数据结构不同。HashSet 的底层数据结构是哈希表（基于 HashMap 实现）。\n\n解析：LinkedHashSet 的底层数据结构是链表和哈希表，元素的插入和取出顺序满足 FIFO。TreeSet 底层数据结构是红黑树，元素是有序的，排序的方式有自然排序和定制排序。- 底层数据结构不同又导致这三者的应用场景不同。HashSet 用于不需要保证元素插入和取出顺序的场景，LinkedHashSet 用于保证元素的插入和取出顺序满足 FIFO 的场景，TreeSet 用于支持对元素自定义排序规则的场景。## Queue",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合",
-      "并发"
-    ],
-    "options": []
+    id: 184,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同",
+    content: "请解释 比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同。",
+    answer:
+      "答案：- HashSet、LinkedHashSet 和 TreeSet 都是 Set 接口的实现类，都能保证元素唯一，并且都不是线程安全的。- HashSet、LinkedHashSet 和 TreeSet 的主要区别在于底层数据结构不同。HashSet 的底层数据结构是哈希表（基于 HashMap 实现）。\n\n解析：LinkedHashSet 的底层数据结构是链表和哈希表，元素的插入和取出顺序满足 FIFO。TreeSet 底层数据结构是红黑树，元素是有序的，排序的方式有自然排序和定制排序。- 底层数据结构不同又导致这三者的应用场景不同。HashSet 用于不需要保证元素插入和取出顺序的场景，LinkedHashSet 用于保证元素的插入和取出顺序满足 FIFO 的场景，TreeSet 用于支持对元素自定义排序规则的场景。## Queue",
+    hints: [],
+    tags: ["Java集合", "集合", "并发"],
+    options: [],
   },
   {
-    "id": 185,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Queue 与 Deque 的区别",
-    "content": "请比较 Queue 与 Deque 的区别。",
-    "answer": "答案：Queue 是单端队列，只能从一端插入元素，另一端删除元素，实现上一般遵循 **先进先出（FIFO）** 规则。Queue 扩展了 Collection 的接口，根据 **因为容量问题而导致操作失败后处理方式的不同** 可以分为两类方法: 一种在操作失败后会抛出异常，另一种则会返回特殊值。| Queue 接口 | 抛出异常  | 返回特殊值 |\n| ------------ | --------- | ---------- |\n| 插入队尾     | add(E e)  | offer(E e) |\n| 删除队首     | remove()  | poll()     |\n| 查询队首元素 | element() | peek()     |\nDeque 是双端队列，在队列的两端均可以插入或删除元素。\n\n解析：Deque 扩展了 Queue 的接口, 增加了在队首和队尾进行插入和删除的方法，同样根据失败后处理方式的不同分为两类：\n| Deque 接口 | 抛出异常      | 返回特殊值      |\n| ------------ | ------------- | --------------- |\n| 插入队首     | addFirst(E e) | offerFirst(E e) |\n| 插入队尾     | addLast(E e)  | offerLast(E e)  |\n| 删除队首     | removeFirst() | pollFirst()     |\n| 删除队尾     | removeLast()  | pollLast()      |\n| 查询队首元素 | getFirst()    | peekFirst()     |\n| 查询队尾元素 | getLast()     | peekLast()      |\n事实上，Deque 还提供有 push() 和 pop() 等其他方法，可用于模拟栈。",
-    "hints": [
-      "一种在操作失败后会抛出异常，另一种则会返回特殊值"
-    ],
-    "tags": [
-      "Java集合",
-      "异常",
-      "IO"
-    ],
-    "options": []
+    id: 185,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Queue 与 Deque 的区别",
+    content: "请比较 Queue 与 Deque 的区别。",
+    answer:
+      "答案：Queue 是单端队列，只能从一端插入元素，另一端删除元素，实现上一般遵循 **先进先出（FIFO）** 规则。Queue 扩展了 Collection 的接口，根据 **因为容量问题而导致操作失败后处理方式的不同** 可以分为两类方法: 一种在操作失败后会抛出异常，另一种则会返回特殊值。| Queue 接口 | 抛出异常  | 返回特殊值 |\n| ------------ | --------- | ---------- |\n| 插入队尾     | add(E e)  | offer(E e) |\n| 删除队首     | remove()  | poll()     |\n| 查询队首元素 | element() | peek()     |\nDeque 是双端队列，在队列的两端均可以插入或删除元素。\n\n解析：Deque 扩展了 Queue 的接口, 增加了在队首和队尾进行插入和删除的方法，同样根据失败后处理方式的不同分为两类：\n| Deque 接口 | 抛出异常      | 返回特殊值      |\n| ------------ | ------------- | --------------- |\n| 插入队首     | addFirst(E e) | offerFirst(E e) |\n| 插入队尾     | addLast(E e)  | offerLast(E e)  |\n| 删除队首     | removeFirst() | pollFirst()     |\n| 删除队尾     | removeLast()  | pollLast()      |\n| 查询队首元素 | getFirst()    | peekFirst()     |\n| 查询队尾元素 | getLast()     | peekLast()      |\n事实上，Deque 还提供有 push() 和 pop() 等其他方法，可用于模拟栈。",
+    hints: ["一种在操作失败后会抛出异常，另一种则会返回特殊值"],
+    tags: ["Java集合", "异常", "IO"],
+    options: [],
   },
   {
-    "id": 186,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ArrayDeque 与 LinkedList 的区别",
-    "content": "请比较 ArrayDeque 与 LinkedList 的区别。",
-    "answer": "答案：ArrayDeque 和 LinkedList 都实现了 Deque 接口，两者都具有队列的功能，但两者有什么区别呢？- ArrayDeque 是基于可变长的数组和双指针来实现，而 LinkedList 则通过链表来实现。- ArrayDeque 不支持存储 NULL 数据，但 LinkedList 支持。\n\n解析：- ArrayDeque 是在 JDK1.6 才被引入的，而LinkedList 早在 JDK1.2 时就已经存在。- ArrayDeque 插入时可能存在扩容过程, 不过均摊后的插入操作依然为 O(1)。虽然 LinkedList 不需要扩容，但是每次插入数据时均需要申请新的堆空间，均摊性能相比更慢。从性能的角度上，选用 ArrayDeque 来实现队列要比 LinkedList 更好。此外，ArrayDeque 也可以用于实现栈。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "集合"
-    ],
-    "options": []
+    id: 186,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ArrayDeque 与 LinkedList 的区别",
+    content: "请比较 ArrayDeque 与 LinkedList 的区别。",
+    answer:
+      "答案：ArrayDeque 和 LinkedList 都实现了 Deque 接口，两者都具有队列的功能，但两者有什么区别呢？- ArrayDeque 是基于可变长的数组和双指针来实现，而 LinkedList 则通过链表来实现。- ArrayDeque 不支持存储 NULL 数据，但 LinkedList 支持。\n\n解析：- ArrayDeque 是在 JDK1.6 才被引入的，而LinkedList 早在 JDK1.2 时就已经存在。- ArrayDeque 插入时可能存在扩容过程, 不过均摊后的插入操作依然为 O(1)。虽然 LinkedList 不需要扩容，但是每次插入数据时均需要申请新的堆空间，均摊性能相比更慢。从性能的角度上，选用 ArrayDeque 来实现队列要比 LinkedList 更好。此外，ArrayDeque 也可以用于实现栈。",
+    hints: [],
+    tags: ["Java集合", "集合"],
+    options: [],
   },
   {
-    "id": 187,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "说一说 PriorityQueue",
-    "content": "说一说 PriorityQueue",
-    "answer": "答案：PriorityQueue 是在 JDK1.5 中被引入的, 其与 Queue 的区别在于元素出队顺序是与优先级相关的，即总是优先级最高的元素先出队。这里列举其相关的一些要点：\n- PriorityQueue 利用了二叉堆的数据结构来实现的，底层使用可变长的数组来存储数据\n- PriorityQueue 通过堆元素的上浮和下沉，实现了在 O(logn) 的时间复杂度内插入元素和删除堆顶元素。- PriorityQueue 是非线程安全的，且不支持存储 NULL 和 non-comparable 的对象。\n\n解析：- PriorityQueue 默认是小顶堆，但可以接收一个 Comparator 作为构造参数，从而来自定义元素优先级的先后。PriorityQueue 在面试中可能更多的会出现在手撕算法的时候，典型例题包括堆排序、求第 K 大的数、带权图的遍历等，所以需要会熟练使用才行。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "并发",
-      "IO"
-    ],
-    "options": []
+    id: 187,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "说一说 PriorityQueue",
+    content: "说一说 PriorityQueue",
+    answer:
+      "答案：PriorityQueue 是在 JDK1.5 中被引入的, 其与 Queue 的区别在于元素出队顺序是与优先级相关的，即总是优先级最高的元素先出队。这里列举其相关的一些要点：\n- PriorityQueue 利用了二叉堆的数据结构来实现的，底层使用可变长的数组来存储数据\n- PriorityQueue 通过堆元素的上浮和下沉，实现了在 O(logn) 的时间复杂度内插入元素和删除堆顶元素。- PriorityQueue 是非线程安全的，且不支持存储 NULL 和 non-comparable 的对象。\n\n解析：- PriorityQueue 默认是小顶堆，但可以接收一个 Comparator 作为构造参数，从而来自定义元素优先级的先后。PriorityQueue 在面试中可能更多的会出现在手撕算法的时候，典型例题包括堆排序、求第 K 大的数、带权图的遍历等，所以需要会熟练使用才行。",
+    hints: [],
+    tags: ["Java集合", "并发", "IO"],
+    options: [],
   },
   {
-    "id": 188,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "什么是 BlockingQueue？",
-    "content": "什么是 BlockingQueue？",
-    "answer": "答案：BlockingQueue （阻塞队列）是一个接口，继承自 Queue。BlockingQueue阻塞的原因是其支持当队列没有元素时一直阻塞，直到有元素；还支持如果队列已满，一直等到队列可以放入新元素时再放入。\n\n解析：BlockingQueue 常用于生产者-消费者模型中，生产者线程会向队列中添加数据，而消费者线程会从队列中取出数据进行处理。",
-    "hints": [],
-    "tags": [
-      "Java集合",
-      "并发",
-      "面向对象"
-    ],
-    "options": []
+    id: 188,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "什么是 BlockingQueue？",
+    content: "什么是 BlockingQueue？",
+    answer:
+      "答案：BlockingQueue （阻塞队列）是一个接口，继承自 Queue。BlockingQueue阻塞的原因是其支持当队列没有元素时一直阻塞，直到有元素；还支持如果队列已满，一直等到队列可以放入新元素时再放入。\n\n解析：BlockingQueue 常用于生产者-消费者模型中，生产者线程会向队列中添加数据，而消费者线程会从队列中取出数据进行处理。",
+    hints: [],
+    tags: ["Java集合", "并发", "面向对象"],
+    options: [],
   },
   {
-    "id": 189,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "BlockingQueue 的实现类有哪些？",
-    "content": "BlockingQueue 的实现类有哪些？",
-    "answer": "答案：Java 中常用的阻塞队列实现类有以下几种：\n1. ArrayBlockingQueue：使用数组实现的有界阻塞队列。在创建时需要指定容量大小，并支持公平和非公平两种方式的锁访问机制。2. LinkedBlockingQueue：使用单向链表实现的可选有界阻塞队列。\n\n解析：在创建时可以指定容量大小，如果不指定则默认为Integer.MAX_VALUE。和ArrayBlockingQueue不同的是， 它仅支持非公平的锁访问机制。3. PriorityBlockingQueue：支持优先级排序的无界阻塞队列。元素必须实现Comparable接口或者在构造函数中传入Comparator对象，并且不能插入 null 元素。4. SynchronousQueue：同步队列，是一种不存储元素的阻塞队列。每个插入操作都必须等待对应的删除操作，反之删除操作也必须等待插入操作。因此，SynchronousQueue通常用于线程之间的直接传递数据。5. DelayQueue：延迟队列，其中的元素只有到了其指定的延迟时间，才能够从队列中出队。6. ……\n日常开发中，这些队列使用的其实都不多，了解即可。",
-    "hints": [
+    id: 189,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "BlockingQueue 的实现类有哪些？",
+    content: "BlockingQueue 的实现类有哪些？",
+    answer:
+      "答案：Java 中常用的阻塞队列实现类有以下几种：\n1. ArrayBlockingQueue：使用数组实现的有界阻塞队列。在创建时需要指定容量大小，并支持公平和非公平两种方式的锁访问机制。2. LinkedBlockingQueue：使用单向链表实现的可选有界阻塞队列。\n\n解析：在创建时可以指定容量大小，如果不指定则默认为Integer.MAX_VALUE。和ArrayBlockingQueue不同的是， 它仅支持非公平的锁访问机制。3. PriorityBlockingQueue：支持优先级排序的无界阻塞队列。元素必须实现Comparable接口或者在构造函数中传入Comparator对象，并且不能插入 null 元素。4. SynchronousQueue：同步队列，是一种不存储元素的阻塞队列。每个插入操作都必须等待对应的删除操作，反之删除操作也必须等待插入操作。因此，SynchronousQueue通常用于线程之间的直接传递数据。5. DelayQueue：延迟队列，其中的元素只有到了其指定的延迟时间，才能够从队列中出队。6. ……\n日常开发中，这些队列使用的其实都不多，了解即可。",
+    hints: [
       "1. ArrayBlockingQueue：使用数组实现的有界阻塞队列",
-      "使用单向链表实现的可选有界阻塞队列"
+      "使用单向链表实现的可选有界阻塞队列",
     ],
-    "tags": [
-      "Java集合",
-      "并发",
-      "IO"
-    ],
-    "options": []
+    tags: ["Java集合", "并发", "IO"],
+    options: [],
   },
   {
-    "id": 190,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ArrayBlockingQueue 和 LinkedBlockingQueue 有什么区别？",
-    "content": "ArrayBlockingQueue 和 LinkedBlockingQueue 有什么区别？",
-    "answer": "答案：ArrayBlockingQueue 和 LinkedBlockingQueue 是 Java 并发包中常用的两种阻塞队列实现，它们都是线程安全的。不过，不过它们之间也存在下面这些区别：\n- 底层实现：ArrayBlockingQueue 基于数组实现，而 LinkedBlockingQueue 基于链表实现。- 是否有界：ArrayBlockingQueue 是有界队列，必须在创建时指定容量大小。\n\n解析：LinkedBlockingQueue 创建时可以不指定容量大小，默认是Integer.MAX_VALUE，也就是无界的。但也可以指定队列大小，从而成为有界的。- 锁是否分离： ArrayBlockingQueue中的锁是没有分离的，即生产和消费用的是同一个锁；LinkedBlockingQueue中的锁是分离的，即生产用的是putLock，消费是takeLock，这样可以防止生产者和消费者线程之间的锁争夺。- 内存占用：ArrayBlockingQueue 需要提前分配数组内存，而 LinkedBlockingQueue 则是动态分配链表节点内存。这意味着，ArrayBlockingQueue 在创建时就会占用一定的内存空间，且往往申请的内存比实际所用的内存更大，而LinkedBlockingQueue 则是根据元素的增加而逐渐占用内存空间。",
-    "hints": [
-      "ArrayBlockingQueue 是有界队列，必须在创建时指定容量大小"
-    ],
-    "tags": [
-      "Java集合",
-      "并发"
-    ],
-    "options": []
+    id: 190,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "ArrayBlockingQueue 和 LinkedBlockingQueue 有什么区别？",
+    content: "ArrayBlockingQueue 和 LinkedBlockingQueue 有什么区别？",
+    answer:
+      "答案：ArrayBlockingQueue 和 LinkedBlockingQueue 是 Java 并发包中常用的两种阻塞队列实现，它们都是线程安全的。不过，不过它们之间也存在下面这些区别：\n- 底层实现：ArrayBlockingQueue 基于数组实现，而 LinkedBlockingQueue 基于链表实现。- 是否有界：ArrayBlockingQueue 是有界队列，必须在创建时指定容量大小。\n\n解析：LinkedBlockingQueue 创建时可以不指定容量大小，默认是Integer.MAX_VALUE，也就是无界的。但也可以指定队列大小，从而成为有界的。- 锁是否分离： ArrayBlockingQueue中的锁是没有分离的，即生产和消费用的是同一个锁；LinkedBlockingQueue中的锁是分离的，即生产用的是putLock，消费是takeLock，这样可以防止生产者和消费者线程之间的锁争夺。- 内存占用：ArrayBlockingQueue 需要提前分配数组内存，而 LinkedBlockingQueue 则是动态分配链表节点内存。这意味着，ArrayBlockingQueue 在创建时就会占用一定的内存空间，且往往申请的内存比实际所用的内存更大，而LinkedBlockingQueue 则是根据元素的增加而逐渐占用内存空间。",
+    hints: ["ArrayBlockingQueue 是有界队列，必须在创建时指定容量大小"],
+    tags: ["Java集合", "并发"],
+    options: [],
   },
   {
-    "id": 191,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "HashMap 在 JDK 8 中插入新元素的时间复杂度",
-    "content": "在 JDK 8 中，HashMap 插入一个键值对（未发生哈希冲突，且无需扩容）的时间复杂度是多少？",
-    "answer": "答案：A) O(1)\n\n解析：在无哈希冲突且无需扩容的理想情况下，HashMap 根据 key 的 hashCode 直接定位到数组槽位，插入操作是常数时间复杂度。当发生哈希冲突时，JDK 8 采用链表 + 红黑树：链表长度 < 8 时 O(n)，>= 8 且数组长度 >= 64 时转为红黑树 O(log n)。\n\n扩展延伸：HashMap 扩容耗时 O(n)，因为需要 rehash 所有元素。所以如果能预估数据量，初始化时指定 capacity 可以避免频繁扩容。HashMap 的负载因子默认 0.75，是时间和空间的平衡——大了省空间但哈希冲突增加，小了反之。",
-    "hints": [
-      "先算 hashCode 再找槽位",
-      "JDK 8 的 HashMap 相比 JDK 7 有什么改进"
-    ],
-    "tags": [
-      "Java集合",
-      "HashMap"
-    ],
-    "options": [
-      "A) O(1)",
-      "B) O(log n)",
-      "C) O(n)",
-      "D) O(n log n)"
-    ]
+    id: 191,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "choice",
+    title: "HashMap 在 JDK 8 中插入新元素的时间复杂度",
+    content:
+      "在 JDK 8 中，HashMap 插入一个键值对（未发生哈希冲突，且无需扩容）的时间复杂度是多少？",
+    answer:
+      "答案：A) O(1)\n\n解析：在无哈希冲突且无需扩容的理想情况下，HashMap 根据 key 的 hashCode 直接定位到数组槽位，插入操作是常数时间复杂度。当发生哈希冲突时，JDK 8 采用链表 + 红黑树：链表长度 < 8 时 O(n)，>= 8 且数组长度 >= 64 时转为红黑树 O(log n)。\n\n扩展延伸：HashMap 扩容耗时 O(n)，因为需要 rehash 所有元素。所以如果能预估数据量，初始化时指定 capacity 可以避免频繁扩容。HashMap 的负载因子默认 0.75，是时间和空间的平衡——大了省空间但哈希冲突增加，小了反之。",
+    hints: ["先算 hashCode 再找槽位", "JDK 8 的 HashMap 相比 JDK 7 有什么改进"],
+    tags: ["Java集合", "HashMap"],
+    options: ["A) O(1)", "B) O(log n)", "C) O(n)", "D) O(n log n)"],
   },
   {
-    "id": 192,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "ConcurrentHashMap 在 JDK 8 中的锁机制",
-    "content": "JDK 8 的 ConcurrentHashMap 在并发写操作时使用什么机制保证线程安全？",
-    "answer": "答案：B) synchronized + CAS 对每个数组槽位加锁\n\n解析：JDK 8 的 ConcurrentHashMap 摒弃了 JDK 7 的 Segment 分段锁，改用 synchronized + CAS 实现更细粒度的锁。put 时先 CAS 尝试插入，如果对应槽位为空则 CAS 成功；槽位有元素时对链表/红黑树的头节点加 synchronized 锁。优化点：synchronized 在 JDK 8 经过偏向锁→轻量级锁→重量级锁升级，锁竞争低时性能优于 ReentrantLock。\n\n扩展延伸：ConcurrentHashMap 的 size() 方法通过 baseCount + CounterCell 数组累加来避免加锁遍历。JDK 8 的 ConcurrentHashMap 在并发读操作完全不加锁（Node 的 val 和 next 用 volatile 保证可见性），所以读性能极高。",
-    "hints": [
+    id: 192,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "choice",
+    title: "ConcurrentHashMap 在 JDK 8 中的锁机制",
+    content: "JDK 8 的 ConcurrentHashMap 在并发写操作时使用什么机制保证线程安全？",
+    answer:
+      "答案：B) synchronized + CAS 对每个数组槽位加锁\n\n解析：JDK 8 的 ConcurrentHashMap 摒弃了 JDK 7 的 Segment 分段锁，改用 synchronized + CAS 实现更细粒度的锁。put 时先 CAS 尝试插入，如果对应槽位为空则 CAS 成功；槽位有元素时对链表/红黑树的头节点加 synchronized 锁。优化点：synchronized 在 JDK 8 经过偏向锁→轻量级锁→重量级锁升级，锁竞争低时性能优于 ReentrantLock。\n\n扩展延伸：ConcurrentHashMap 的 size() 方法通过 baseCount + CounterCell 数组累加来避免加锁遍历。JDK 8 的 ConcurrentHashMap 在并发读操作完全不加锁（Node 的 val 和 next 用 volatile 保证可见性），所以读性能极高。",
+    hints: [
       "JDK 7 的 ConcurrentHashMap 用什么锁",
-      "为什么 JDK 8 改用 synchronized 而不是 ReentrantLock"
+      "为什么 JDK 8 改用 synchronized 而不是 ReentrantLock",
     ],
-    "tags": [
-      "Java集合",
-      "并发",
-      "ConcurrentHashMap"
-    ],
-    "options": [
+    tags: ["Java集合", "并发", "ConcurrentHashMap"],
+    options: [
       "A) 对整个数组加锁",
       "B) synchronized + CAS 对每个数组槽位加锁",
       "C) ReentrantLock + 分段锁",
-      "D) 无锁，全部用 CAS 实现"
-    ]
+      "D) 无锁，全部用 CAS 实现",
+    ],
   },
   {
-    "id": 193,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "ArrayList 初始容量和扩容机制",
-    "content": "使用 new ArrayList() 创建 ArrayList 时，初始数组容量是多少？首次添加元素后容量变为多少？",
-    "answer": "答案：A) 初始 0，首次添加后变为 10\n\n解析：JDK 8 中 ArrayList 的无参构造器创建一个空数组（DEFAULTCAPACITY_EMPTY_ELEMENTDATA，容量 0）。首次 add 时调用 ensureCapacityInternal，将容量扩容为 DEFAULT_CAPACITY = 10。后续扩容每次扩大到原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。\n\n扩展延伸：如果知道数据量，使用 new ArrayList<>(initialCapacity) 可以避免多次扩容。ArrayList 的最大容量为 Integer.MAX_VALUE - 8（减去数组对象头预留）。频繁扩容的代价是数组拷贝（Arrays.copyOf），在数据量大的场景下性能影响明显。",
-    "hints": [
-      "无参构造器创建的是不是空数组",
-      "JDK 8 的扩容因子是多少"
-    ],
-    "tags": [
-      "Java集合",
-      "ArrayList"
-    ],
-    "options": [
+    id: 193,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "choice",
+    title: "ArrayList 初始容量和扩容机制",
+    content:
+      "使用 new ArrayList() 创建 ArrayList 时，初始数组容量是多少？首次添加元素后容量变为多少？",
+    answer:
+      "答案：A) 初始 0，首次添加后变为 10\n\n解析：JDK 8 中 ArrayList 的无参构造器创建一个空数组（DEFAULTCAPACITY_EMPTY_ELEMENTDATA，容量 0）。首次 add 时调用 ensureCapacityInternal，将容量扩容为 DEFAULT_CAPACITY = 10。后续扩容每次扩大到原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。\n\n扩展延伸：如果知道数据量，使用 new ArrayList<>(initialCapacity) 可以避免多次扩容。ArrayList 的最大容量为 Integer.MAX_VALUE - 8（减去数组对象头预留）。频繁扩容的代价是数组拷贝（Arrays.copyOf），在数据量大的场景下性能影响明显。",
+    hints: ["无参构造器创建的是不是空数组", "JDK 8 的扩容因子是多少"],
+    tags: ["Java集合", "ArrayList"],
+    options: [
       "A) 初始 0，首次添加后变为 10",
       "B) 初始 10，首次添加后变为 15",
       "C) 初始 16，首次添加后变为 25",
-      "D) 初始 0，首次添加后变为 16"
-    ]
+      "D) 初始 0，首次添加后变为 16",
+    ],
   },
   {
-    "id": 194,
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "HashSet 的底层实现",
-    "content": "HashSet 的 add() 方法是如何保证元素不重复的？",
-    "answer": "答案：A) 内部维护一个 HashMap，元素作为 key，PRESENT 对象作为 value\n\n解析：HashSet 底层实际就是一个 HashMap，add(e) 方法调用 map.put(e, PRESENT)，其中 PRESENT 是一个静态的 dummy Object。利用 HashMap 的 key 不可重复特性来实现 Set 的去重。因此，存入 HashSet 的元素必须正确重写 hashCode() 和 equals() 方法。\n\n扩展延伸：LinkedHashSet 继承自 HashSet，底层使用 LinkedHashMap，可以维护插入顺序。TreeSet 底层使用 TreeMap（红黑树），支持排序。HashSet 允许 null 值（因为 HashMap 允许一个 null key）。",
-    "hints": [
-      "HashSet 和 HashMap 什么关系",
-      "HashSet 允许 null 吗"
-    ],
-    "tags": [
-      "Java集合",
-      "HashSet"
-    ],
-    "options": [
+    id: 194,
+    category: "java_collections",
+    difficulty: "medium",
+    type: "choice",
+    title: "HashSet 的底层实现",
+    content: "HashSet 的 add() 方法是如何保证元素不重复的？",
+    answer:
+      "答案：A) 内部维护一个 HashMap，元素作为 key，PRESENT 对象作为 value\n\n解析：HashSet 底层实际就是一个 HashMap，add(e) 方法调用 map.put(e, PRESENT)，其中 PRESENT 是一个静态的 dummy Object。利用 HashMap 的 key 不可重复特性来实现 Set 的去重。因此，存入 HashSet 的元素必须正确重写 hashCode() 和 equals() 方法。\n\n扩展延伸：LinkedHashSet 继承自 HashSet，底层使用 LinkedHashMap，可以维护插入顺序。TreeSet 底层使用 TreeMap（红黑树），支持排序。HashSet 允许 null 值（因为 HashMap 允许一个 null key）。",
+    hints: ["HashSet 和 HashMap 什么关系", "HashSet 允许 null 吗"],
+    tags: ["Java集合", "HashSet"],
+    options: [
       "A) 内部维护一个 HashMap，元素作为 key，PRESENT 对象作为 value",
       "B) 内部维护一个 ArrayList，每次 add 时遍历检查 equals()",
       "C) 内部维护一个 TreeMap，用 compareTo() 比较",
-      "D) 内部维护一个数组，用 hashCode 取模存储"
-    ]
+      "D) 内部维护一个数组，用 hashCode 取模存储",
+    ],
   },
   {
-    "id": 195,
-    "category": "java_collections",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "LinkedList 的底层数据结构",
-    "content": "LinkedList 的底层数据结构是什么？",
-    "answer": "答案：B) 双向链表\n\n解析：LinkedList 底层使用双向链表（Doubly Linked List），每个节点（Node）包含三个字段：item（数据）、next（后继引用）、prev（前驱引用）。JDK 1.7 之前是循环链表（最后一个节点的 next 指向头节点），JDK 1.7 之后去掉了循环，改为非循环双向链表。\n\n扩展延伸：双向链表的特点：头尾插入删除 O(1)，指定位置插入/删除 O(n)（需要遍历到目标位置）。因为支持双向遍历，LinkedList 也可以作为双端队列（Deque）使用。LinkedList 的三个角色：List、Deque、Queue。",
-    "hints": [
-      "单向链表和双向链表的区别",
-      "JDK 7 前后的 LinkedList 有什么变化"
-    ],
-    "tags": [
-      "Java集合",
-      "LinkedList"
-    ],
-    "options": [
-      "A) 数组",
-      "B) 双向链表",
-      "C) 单向链表",
-      "D) 哈希表"
-    ]
+    id: 195,
+    category: "java_collections",
+    difficulty: "easy",
+    type: "choice",
+    title: "LinkedList 的底层数据结构",
+    content: "LinkedList 的底层数据结构是什么？",
+    answer:
+      "答案：B) 双向链表\n\n解析：LinkedList 底层使用双向链表（Doubly Linked List），每个节点（Node）包含三个字段：item（数据）、next（后继引用）、prev（前驱引用）。JDK 1.7 之前是循环链表（最后一个节点的 next 指向头节点），JDK 1.7 之后去掉了循环，改为非循环双向链表。\n\n扩展延伸：双向链表的特点：头尾插入删除 O(1)，指定位置插入/删除 O(n)（需要遍历到目标位置）。因为支持双向遍历，LinkedList 也可以作为双端队列（Deque）使用。LinkedList 的三个角色：List、Deque、Queue。",
+    hints: ["单向链表和双向链表的区别", "JDK 7 前后的 LinkedList 有什么变化"],
+    tags: ["Java集合", "LinkedList"],
+    options: ["A) 数组", "B) 双向链表", "C) 单向链表", "D) 哈希表"],
   },
   {
-    "id": 196,
-    "category": "java_collections",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "ArrayList 遍历时删除元素是否安全",
-    "content": "使用 for-each 循环遍历 ArrayList 时直接调用 list.remove() 删除元素是安全的。",
-    "answer": "答案：错误\n\n解析：for-each 循环底层使用 Iterator 遍历，遍历过程中通过 list.remove() 直接删除元素会修改 modCount，导致迭代器在下一次 next() 时检测到 expectedModCount != modCount，抛出 ConcurrentModificationException。\n\n扩展延伸：安全的遍历删除方式：1）使用 Iterator 的 remove() 方法 2）使用 for 循环倒序删除 3）使用 Collection.removeIf()（JDK 8+，底层也是 Iterator）4）收集要删除的元素，遍历结束后批量删除。",
-    "hints": [
+    id: 196,
+    category: "java_collections",
+    difficulty: "easy",
+    type: "true_false",
+    title: "ArrayList 遍历时删除元素是否安全",
+    content: "使用 for-each 循环遍历 ArrayList 时直接调用 list.remove() 删除元素是安全的。",
+    answer:
+      "答案：错误\n\n解析：for-each 循环底层使用 Iterator 遍历，遍历过程中通过 list.remove() 直接删除元素会修改 modCount，导致迭代器在下一次 next() 时检测到 expectedModCount != modCount，抛出 ConcurrentModificationException。\n\n扩展延伸：安全的遍历删除方式：1）使用 Iterator 的 remove() 方法 2）使用 for 循环倒序删除 3）使用 Collection.removeIf()（JDK 8+，底层也是 Iterator）4）收集要删除的元素，遍历结束后批量删除。",
+    hints: [
       "ConcurrentModificationException 是怎么触发的",
-      "Iterator 的 remove 和 list 的 remove 有什么区别"
+      "Iterator 的 remove 和 list 的 remove 有什么区别",
     ],
-    "tags": [
-      "Java集合",
-      "ArrayList",
-      "异常"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    tags: ["Java集合", "ArrayList", "异常"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 197,
-    "category": "java_collections",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "TreeMap 的有序性",
-    "content": "TreeMap 可以根据 key 的自然顺序或自定义 Comparator 进行排序。",
-    "answer": "答案：正确\n\n解析：TreeMap 底层使用红黑树（Red-Black Tree），key 会按照自然顺序（实现 Comparable 接口）或构造时传入的 Comparator 进行排序。因此 TreeMap 的 key 必须实现 Comparable 或传入 Comparator，否则会抛出 ClassCastException。\n\n扩展延伸：TreeMap 的 put/get/remove 操作都是 O(log n) 时间复杂度。提供的方法：firstKey()/lastKey()/headMap()/tailMap()/subMap() 等用于范围查询。相比 HashMap 的 O(1)，TreeMap 性能稍差但支持有序操作。",
-    "hints": [
-      "红黑树的特点是什么",
-      "TreeMap 和 HashMap 的应用场景区别"
-    ],
-    "tags": [
-      "Java集合",
-      "TreeMap"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 197,
+    category: "java_collections",
+    difficulty: "easy",
+    type: "true_false",
+    title: "TreeMap 的有序性",
+    content: "TreeMap 可以根据 key 的自然顺序或自定义 Comparator 进行排序。",
+    answer:
+      "答案：正确\n\n解析：TreeMap 底层使用红黑树（Red-Black Tree），key 会按照自然顺序（实现 Comparable 接口）或构造时传入的 Comparator 进行排序。因此 TreeMap 的 key 必须实现 Comparable 或传入 Comparator，否则会抛出 ClassCastException。\n\n扩展延伸：TreeMap 的 put/get/remove 操作都是 O(log n) 时间复杂度。提供的方法：firstKey()/lastKey()/headMap()/tailMap()/subMap() 等用于范围查询。相比 HashMap 的 O(1)，TreeMap 性能稍差但支持有序操作。",
+    hints: ["红黑树的特点是什么", "TreeMap 和 HashMap 的应用场景区别"],
+    tags: ["Java集合", "TreeMap"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 198,
-    "category": "java_collections",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "HashMap 允许 null 作为 key",
-    "content": "HashMap 允许使用 null 作为 key。",
-    "answer": "答案：正确\n\n解析：HashMap 允许一个 null key，它会被存放在 table[0] 的位置（hash 值为 0）。ConcurrentHashMap 和 Hashtable 不允许 null key——因为并发场景下无法区分「key 不存在」和「value 为 null」两种情况。\n\n扩展延伸：为什么 ConcurrentHashMap 不允许 null？因为并发环境下 get(key) 返回 null 时，无法判断是 key 对应的 value 就是 null，还是 key 不存在。HashMap 单线程下可以用 containsKey(key) 区分，但并发场景下可能在两次调用之间数据已被修改。",
-    "hints": [
-      "null key 在 HashMap 中怎么存储",
-      "ConcurrentHashMap 为什么不允许 null key"
-    ],
-    "tags": [
-      "Java集合",
-      "HashMap"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
+    id: 198,
+    category: "java_collections",
+    difficulty: "easy",
+    type: "true_false",
+    title: "HashMap 允许 null 作为 key",
+    content: "HashMap 允许使用 null 作为 key。",
+    answer:
+      "答案：正确\n\n解析：HashMap 允许一个 null key，它会被存放在 table[0] 的位置（hash 值为 0）。ConcurrentHashMap 和 Hashtable 不允许 null key——因为并发场景下无法区分「key 不存在」和「value 为 null」两种情况。\n\n扩展延伸：为什么 ConcurrentHashMap 不允许 null？因为并发环境下 get(key) 返回 null 时，无法判断是 key 对应的 value 就是 null，还是 key 不存在。HashMap 单线程下可以用 containsKey(key) 区分，但并发场景下可能在两次调用之间数据已被修改。",
+    hints: ["null key 在 HashMap 中怎么存储", "ConcurrentHashMap 为什么不允许 null key"],
+    tags: ["Java集合", "HashMap"],
+    options: ["正确", "错误"],
   },
   {
-    "id": 199,
-    "category": "linux",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "常用文件操作命令",
-    "content": "请列举 Linux 中常用的文件操作命令及其用途。",
-    "answer": "答案：ls（列出目录）、cd（切换目录）、cp（复制）、mv（移动/重命名）、rm（删除）、mkdir（创建目录）、touch（创建空文件/更新时间戳）、cat（查看文件内容）、less/more（分页查看）、head/tail（查看首尾行）、find（查找文件）、tar（压缩/归档）\n\n解析：日常开发最常用的组合：ls -la 查看详细列表含隐藏文件、find . -name '*.js' 递归查找、tail -f app.log 实时跟踪日志、tar -czf archive.tar.gz dir/ 压缩、tar -xzf archive.tar.gz 解压。\n\n扩展延伸：rm -rf 是危险命令（无提醒直接删除）。安全的替代是先在回收站目录 mv，或使用 trash-cli。cp/mv 默认不递归处理目录，需加 -r 选项。",
-    "hints": [
-      "rm 删除了能恢复吗",
-      "cp 和 mv 的区别是什么"
-    ],
-    "tags": [
-      "基础",
-      "文件操作"
-    ],
-    "options": []
+    id: 199,
+    category: "linux",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "常用文件操作命令",
+    content: "请列举 Linux 中常用的文件操作命令及其用途。",
+    answer:
+      "答案：ls（列出目录）、cd（切换目录）、cp（复制）、mv（移动/重命名）、rm（删除）、mkdir（创建目录）、touch（创建空文件/更新时间戳）、cat（查看文件内容）、less/more（分页查看）、head/tail（查看首尾行）、find（查找文件）、tar（压缩/归档）\n\n解析：日常开发最常用的组合：ls -la 查看详细列表含隐藏文件、find . -name '*.js' 递归查找、tail -f app.log 实时跟踪日志、tar -czf archive.tar.gz dir/ 压缩、tar -xzf archive.tar.gz 解压。\n\n扩展延伸：rm -rf 是危险命令（无提醒直接删除）。安全的替代是先在回收站目录 mv，或使用 trash-cli。cp/mv 默认不递归处理目录，需加 -r 选项。",
+    hints: ["rm 删除了能恢复吗", "cp 和 mv 的区别是什么"],
+    tags: ["基础", "文件操作"],
+    options: [],
   },
   {
-    "id": 200,
-    "category": "linux",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "进程和端口查看",
-    "content": "如何查看 Linux 中正在运行的进程和端口占用情况？",
-    "answer": "答案：ps（查看进程）、top/htop（实时监控）、netstat（查看端口和网络连接）、lsof（查看打开文件和端口）、ss（现代版 netstat）\n\n解析：常用组合 ps aux | grep java（查找 Java 进程）、netstat -tlnp | grep 8080（查看 8080 端口占用）、lsof -i :8080（查看谁在使用端口）、top -p PID（监控特定进程）。\n\n扩展延伸：kill PID 发送 TERM 信号（可捕获的优雅终止），kill -9 PID 发送 KILL 信号（强制终止，无法捕获）。应先尝试普通 kill，无效再用 -9。ss 比 netstat 更快（直接从内核读取），推荐优先使用。",
-    "hints": [
-      "kill 和 kill -9 的区别",
-      "netstat 的 -tlnp 各个参数含义"
-    ],
-    "tags": [
-      "进程",
-      "网络",
-      "排查"
-    ],
-    "options": []
+    id: 200,
+    category: "linux",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "进程和端口查看",
+    content: "如何查看 Linux 中正在运行的进程和端口占用情况？",
+    answer:
+      "答案：ps（查看进程）、top/htop（实时监控）、netstat（查看端口和网络连接）、lsof（查看打开文件和端口）、ss（现代版 netstat）\n\n解析：常用组合 ps aux | grep java（查找 Java 进程）、netstat -tlnp | grep 8080（查看 8080 端口占用）、lsof -i :8080（查看谁在使用端口）、top -p PID（监控特定进程）。\n\n扩展延伸：kill PID 发送 TERM 信号（可捕获的优雅终止），kill -9 PID 发送 KILL 信号（强制终止，无法捕获）。应先尝试普通 kill，无效再用 -9。ss 比 netstat 更快（直接从内核读取），推荐优先使用。",
+    hints: ["kill 和 kill -9 的区别", "netstat 的 -tlnp 各个参数含义"],
+    tags: ["进程", "网络", "排查"],
+    options: [],
   },
   {
-    "id": 201,
-    "category": "linux",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Linux 文件权限管理",
-    "content": "请解释 Linux 文件权限 rwxr-xr-- 的含义，以及 chmod 的用法。",
-    "answer": "答案：三种权限位（所有者/所在组/其他人），rwx = 读/写/执行\n\n解析：rwxr-xr-- 拆解：所有者 rwx（可读写执行）、所属组 r-x（可读和执行）、其他人 r--（只读）。数字表示：r=4, w=2, x=1，所以 rwx=7, r-x=5, r--=4，chmod 754 等同于该权限。\n\n扩展延伸：chmod +x script.sh 添加执行权限（常用）。目录的执行权限（x）代表能否 cd 进入。chown user:group file 更改所有者和组。权限管理的进阶话题包括 ACL（setfacl/getfacl）和 SELinux（强制访问控制）。",
-    "hints": [
-      "目录的 r 和 x 权限分别代表什么",
-      "数字权限 755 和 644 分别用于什么场景"
-    ],
-    "tags": [
-      "基础",
-      "权限"
-    ],
-    "options": []
+    id: 201,
+    category: "linux",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "Linux 文件权限管理",
+    content: "请解释 Linux 文件权限 rwxr-xr-- 的含义，以及 chmod 的用法。",
+    answer:
+      "答案：三种权限位（所有者/所在组/其他人），rwx = 读/写/执行\n\n解析：rwxr-xr-- 拆解：所有者 rwx（可读写执行）、所属组 r-x（可读和执行）、其他人 r--（只读）。数字表示：r=4, w=2, x=1，所以 rwx=7, r-x=5, r--=4，chmod 754 等同于该权限。\n\n扩展延伸：chmod +x script.sh 添加执行权限（常用）。目录的执行权限（x）代表能否 cd 进入。chown user:group file 更改所有者和组。权限管理的进阶话题包括 ACL（setfacl/getfacl）和 SELinux（强制访问控制）。",
+    hints: ["目录的 r 和 x 权限分别代表什么", "数字权限 755 和 644 分别用于什么场景"],
+    tags: ["基础", "权限"],
+    options: [],
   },
   {
-    "id": 202,
-    "category": "linux",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "文本处理三剑客：grep、sed、awk",
-    "content": "分别说明 grep、sed、awk 的用途和典型用法。",
-    "answer": "答案：grep 搜索文本行、sed 编辑替换文本、awk 处理结构化数据\n\n解析：grep 'pattern' file（搜索）、grep -r 'TODO' src/（递归搜索）、grep -i 'error' log（忽略大小写）。sed 's/old/new/g' file（全局替换）、sed -i '.bak' 's/old/new/g' file（原地替换+备份）。awk '{print $1, $3}' file（打印第 1/3 列）、awk '$3 > 100 {print}' file（条件过滤）。\n\n扩展延伸：一次完整的排查命令流：grep ERROR app.log | awk '{print $2, $NF}' | sort | uniq -c | sort -rn。管道组合是 Linux 哲学的核心——每个命令做好一件事，串联解决复杂问题。",
-    "hints": [
-      "grep 的 -r、-i、-v 参数各有什么用",
-      "awk 处理日志的典型场景"
-    ],
-    "tags": [
-      "文本处理",
-      "命令"
-    ],
-    "options": []
+    id: 202,
+    category: "linux",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "文本处理三剑客：grep、sed、awk",
+    content: "分别说明 grep、sed、awk 的用途和典型用法。",
+    answer:
+      "答案：grep 搜索文本行、sed 编辑替换文本、awk 处理结构化数据\n\n解析：grep 'pattern' file（搜索）、grep -r 'TODO' src/（递归搜索）、grep -i 'error' log（忽略大小写）。sed 's/old/new/g' file（全局替换）、sed -i '.bak' 's/old/new/g' file（原地替换+备份）。awk '{print $1, $3}' file（打印第 1/3 列）、awk '$3 > 100 {print}' file（条件过滤）。\n\n扩展延伸：一次完整的排查命令流：grep ERROR app.log | awk '{print $2, $NF}' | sort | uniq -c | sort -rn。管道组合是 Linux 哲学的核心——每个命令做好一件事，串联解决复杂问题。",
+    hints: ["grep 的 -r、-i、-v 参数各有什么用", "awk 处理日志的典型场景"],
+    tags: ["文本处理", "命令"],
+    options: [],
   },
   {
-    "id": 203,
-    "category": "linux",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "系统监控：磁盘、内存、CPU",
-    "content": "如何查看 Linux 系统的磁盘、内存和 CPU 使用情况？",
-    "answer": "答案：df（磁盘）、free（内存）、top/uptime（CPU/负载）\n\n解析：df -h（人类可读的磁盘使用情况）、du -sh *（当前目录各子目录大小）。free -h（内存使用，含 buffer/cache）。top（实时 CPU/内存排序，按 P 按 CPU 排序，按 M 按内存排序）。uptime（系统负载——1/5/15 分钟平均值）。\n\n扩展延伸：性能排查基础 1）CPU 高 → top 找高 CPU 进程 2）内存不足 → free -m、查看 OOM Killer 日志 dmesg 3）磁盘满 → df -h、大文件定位 du -sh * | sort -rh（需要管道组合）4）IO 压力 → iostat -x 1（需 sysstat 包）。",
-    "hints": [
-      "free 输出中 available 和 free 的区别",
-      "系统负载（load average）多少算正常"
-    ],
-    "tags": [
-      "基础",
-      "监控",
-      "排查"
-    ],
-    "options": []
+    id: 203,
+    category: "linux",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "系统监控：磁盘、内存、CPU",
+    content: "如何查看 Linux 系统的磁盘、内存和 CPU 使用情况？",
+    answer:
+      "答案：df（磁盘）、free（内存）、top/uptime（CPU/负载）\n\n解析：df -h（人类可读的磁盘使用情况）、du -sh *（当前目录各子目录大小）。free -h（内存使用，含 buffer/cache）。top（实时 CPU/内存排序，按 P 按 CPU 排序，按 M 按内存排序）。uptime（系统负载——1/5/15 分钟平均值）。\n\n扩展延伸：性能排查基础 1）CPU 高 → top 找高 CPU 进程 2）内存不足 → free -m、查看 OOM Killer 日志 dmesg 3）磁盘满 → df -h、大文件定位 du -sh * | sort -rh（需要管道组合）4）IO 压力 → iostat -x 1（需 sysstat 包）。",
+    hints: ["free 输出中 available 和 free 的区别", "系统负载（load average）多少算正常"],
+    tags: ["基础", "监控", "排查"],
+    options: [],
   },
   {
-    "id": 204,
-    "category": "linux",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Shell 脚本常见陷阱",
-    "content": "以下 shell 脚本有什么问题？\n```bash\nVALUE = $(cat file.txt)\nif [ -n $VALUE ]\nthen\n    echo $VALUE\nfi\n```",
-    "answer": "答案：三处错误：等号空格、变量引用缺引号、条件判断语法。\n\n解析：1）VALUE = ... 等号两边不能有空格，应为 VALUE=... 2）[ -n $VALUE ] 当 VALUE 为空时展开为 [ -n ]，返回 true。应加引号 [ -n \"$VALUE\" ] 3）if 语句中 then 应在下一行或用分号 if ...; then。此外 echo 变量也建议加引号避免含空格时多参输出。\n\n扩展延伸：更多 shell 陷阱：忘记在变量赋值前加 export（子进程拿不到变量）、管道中变量修改不回传（| 后的命令在子 shell 运行）、未设置 set -e 导致错误被忽略、使用 for file in $(ls *.txt) 而非 for file in *.txt（文件名含空格会拆分）。最佳实践：始终用 ShellCheck 工具检查脚本。",
-    "hints": [
-      "shell 中变量赋值为什么不能有空格",
-      "$VALUE 和 \"$VALUE\" 有什么区别"
-    ],
-    "tags": [
-      "Shell",
-      "脚本",
-      "陷阱"
-    ],
-    "options": []
+    id: 204,
+    category: "linux",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Shell 脚本常见陷阱",
+    content:
+      "以下 shell 脚本有什么问题？\n```bash\nVALUE = $(cat file.txt)\nif [ -n $VALUE ]\nthen\n    echo $VALUE\nfi\n```",
+    answer:
+      '答案：三处错误：等号空格、变量引用缺引号、条件判断语法。\n\n解析：1）VALUE = ... 等号两边不能有空格，应为 VALUE=... 2）[ -n $VALUE ] 当 VALUE 为空时展开为 [ -n ]，返回 true。应加引号 [ -n "$VALUE" ] 3）if 语句中 then 应在下一行或用分号 if ...; then。此外 echo 变量也建议加引号避免含空格时多参输出。\n\n扩展延伸：更多 shell 陷阱：忘记在变量赋值前加 export（子进程拿不到变量）、管道中变量修改不回传（| 后的命令在子 shell 运行）、未设置 set -e 导致错误被忽略、使用 for file in $(ls *.txt) 而非 for file in *.txt（文件名含空格会拆分）。最佳实践：始终用 ShellCheck 工具检查脚本。',
+    hints: ["shell 中变量赋值为什么不能有空格", '$VALUE 和 "$VALUE" 有什么区别'],
+    tags: ["Shell", "脚本", "陷阱"],
+    options: [],
   },
   {
-    "id": 205,
-    "category": "linux",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "硬链接与软链接的区别",
-    "content": "请解释 Linux 中硬链接和软链接（符号链接）的区别。",
-    "answer": "答案：硬链接是文件 inode 的另一个名字，软链接是一个独立文件指向目标路径\n\n解析：硬链接与原始文件共享同一 inode（文件数据块），删除一个不影响另一个。软链接是一个特殊文件，存储目标文件的路径，目标文件删除后软链接变成断链（dangling）。硬链接不能跨文件系统、不能链接目录；软链接无此限制。\n\n扩展延伸：ln source link 创建硬链接，ln -s source link 创建软链接。ls -i 查看文件 inode 号，硬链接的 inode 号相同。为什么不能对目录做硬链接？防止循环引用导致 fsck 无法处理。软链接在项目中用于管理配置文件版本、切换环境变量等场景。",
-    "hints": [
-      "ln 和 ln -s 的区别",
-      "硬链接删除后原文件数据还在吗"
-    ],
-    "tags": [
-      "基础",
-      "文件系统"
-    ],
-    "options": []
+    id: 205,
+    category: "linux",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "硬链接与软链接的区别",
+    content: "请解释 Linux 中硬链接和软链接（符号链接）的区别。",
+    answer:
+      "答案：硬链接是文件 inode 的另一个名字，软链接是一个独立文件指向目标路径\n\n解析：硬链接与原始文件共享同一 inode（文件数据块），删除一个不影响另一个。软链接是一个特殊文件，存储目标文件的路径，目标文件删除后软链接变成断链（dangling）。硬链接不能跨文件系统、不能链接目录；软链接无此限制。\n\n扩展延伸：ln source link 创建硬链接，ln -s source link 创建软链接。ls -i 查看文件 inode 号，硬链接的 inode 号相同。为什么不能对目录做硬链接？防止循环引用导致 fsck 无法处理。软链接在项目中用于管理配置文件版本、切换环境变量等场景。",
+    hints: ["ln 和 ln -s 的区别", "硬链接删除后原文件数据还在吗"],
+    tags: ["基础", "文件系统"],
+    options: [],
   },
   {
-    "id": 206,
-    "category": "linux",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "crontab 定时任务",
-    "content": "请说明 crontab 的语法格式和常见用法。",
-    "answer": "答案：五个时间字段：分 时 日 月 周，后跟要执行的命令\n\n解析：格式：* * * * * command。各字段：分钟(0-59) 小时(0-23) 日(1-31) 月(1-12) 周(0-7,0和7都表示周日)。示例：0 3 * * * /script.sh（每天凌晨 3 点）、*/5 * * * * /monitor.sh（每 5 分钟）、0 9-17 * * 1-5 /work.sh（工作日 9-17 点每小时）。\n\n扩展延伸：crontab -e 编辑、crontab -l 列出、crontab -r 删除。常见坑 1）cron 环境变量极少，脚本内 PATH 需自行设定 2）日志重定向 > /tmp/cron.log 2>&1（否则出错无反馈）3）cron 中的 % 需转义 \\%。推荐在脚本开头设置 PATH 和 source 环境文件。",
-    "hints": [
-      "cron 脚本的环境变量和 SSH 登录有何不同",
-      "如何调试 cron 任务不执行的问题"
-    ],
-    "tags": [
-      "基础",
-      "定时任务"
-    ],
-    "options": []
+    id: 206,
+    category: "linux",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "crontab 定时任务",
+    content: "请说明 crontab 的语法格式和常见用法。",
+    answer:
+      "答案：五个时间字段：分 时 日 月 周，后跟要执行的命令\n\n解析：格式：* * * * * command。各字段：分钟(0-59) 小时(0-23) 日(1-31) 月(1-12) 周(0-7,0和7都表示周日)。示例：0 3 * * * /script.sh（每天凌晨 3 点）、*/5 * * * * /monitor.sh（每 5 分钟）、0 9-17 * * 1-5 /work.sh（工作日 9-17 点每小时）。\n\n扩展延伸：crontab -e 编辑、crontab -l 列出、crontab -r 删除。常见坑 1）cron 环境变量极少，脚本内 PATH 需自行设定 2）日志重定向 > /tmp/cron.log 2>&1（否则出错无反馈）3）cron 中的 % 需转义 \\%。推荐在脚本开头设置 PATH 和 source 环境文件。",
+    hints: ["cron 脚本的环境变量和 SSH 登录有何不同", "如何调试 cron 任务不执行的问题"],
+    tags: ["基础", "定时任务"],
+    options: [],
   },
   {
-    "id": 207,
-    "category": "linux",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Linux IO 模型：select、poll、epoll",
-    "content": "请解释 Linux 的 IO 多路复用机制，select、poll、epoll 的区别。",
-    "answer": "答案：三者都是 IO 多路复用机制，epoll 性能最优\n\n解析：select：监听 fd 集合有上限（FD_SETSIZE，默认 1024），每次调用需将 fd 集合从用户态拷贝到内核态，O(n) 遍历所有 fd。poll：相比 select 去除了 1024 上限，但仍有大集合拷贝和遍历开销。epoll：事件驱动，只返回就绪的 fd（O(1)），无上限，通过 mmap 共享内存减少拷贝，支持边缘触发（ET）和水平触发（LT）。\n\n扩展延伸：适用场景 select/poll 适合少量连接（小于 100），epoll 适合大量连接（高并发服务如 Nginx、Redis）。Nginx 架构就是基于 epoll 的事件驱动模型。Java NIO 的 Selector 在 Linux 上底层使用 epoll（JDK 1.4+）。面试中常问：epoll 的两种触发模式 ET 和 LT 的区别。",
-    "hints": [
-      "select 的 1024 限制从何而来",
-      "epoll 的 ET（边缘触发）和 LT（水平触发）的区别"
-    ],
-    "tags": [
-      "IO",
-      "网络",
-      "高级"
-    ],
-    "options": []
+    id: 207,
+    category: "linux",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "Linux IO 模型：select、poll、epoll",
+    content: "请解释 Linux 的 IO 多路复用机制，select、poll、epoll 的区别。",
+    answer:
+      "答案：三者都是 IO 多路复用机制，epoll 性能最优\n\n解析：select：监听 fd 集合有上限（FD_SETSIZE，默认 1024），每次调用需将 fd 集合从用户态拷贝到内核态，O(n) 遍历所有 fd。poll：相比 select 去除了 1024 上限，但仍有大集合拷贝和遍历开销。epoll：事件驱动，只返回就绪的 fd（O(1)），无上限，通过 mmap 共享内存减少拷贝，支持边缘触发（ET）和水平触发（LT）。\n\n扩展延伸：适用场景 select/poll 适合少量连接（小于 100），epoll 适合大量连接（高并发服务如 Nginx、Redis）。Nginx 架构就是基于 epoll 的事件驱动模型。Java NIO 的 Selector 在 Linux 上底层使用 epoll（JDK 1.4+）。面试中常问：epoll 的两种触发模式 ET 和 LT 的区别。",
+    hints: ["select 的 1024 限制从何而来", "epoll 的 ET（边缘触发）和 LT（水平触发）的区别"],
+    tags: ["IO", "网络", "高级"],
+    options: [],
   },
   {
-    "id": 208,
-    "category": "linux",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "线上服务器排查实战",
-    "content": "一台 Linux 服务器变慢，你怎么排查？请描述从系统级到应用级的完整流程。",
-    "answer": "答案：top → dmesg → iostat → free → netstat → strace\n\n解析：1）top 看 CPU/内存占用，高 CPU 的进程序号 TID 转 jstack 查 Java 应用线程栈。2）dmesg -T 查看内核日志（OOM Killer、内核异常）。3）iostat -x 1 看磁盘 IO（%util > 70% 表示 IO 瓶颈，await 高说明响应慢）。4）free -h 看内存，关注 available 而非 free（Linux 会用内存做缓存）。5）netstat -i 看网络丢包。6）strace -p PID 跟踪系统调用（如果怀疑某进程行为异常）。\n\n扩展延伸：磁盘 IO 的排查重点：iostat 的 r/s、w/s（每秒 IO 请求数）和 await（平均响应时间）。网络问题：ss -s 看连接统计，tcpdump 抓包分析。内存问题：cat /proc/meminfo 查看内核内存细节，/proc/PID/smaps 分析进程内存分布。工具链：perf（性能分析）、sar（历史性能数据）。",
-    "hints": [
-      "iostat 中 %util 和 await 如何解读",
-      "free 显示 cached 和 available 的区别"
-    ],
-    "tags": [
-      "排查",
-      "性能",
-      "实战"
-    ],
-    "options": []
+    id: 208,
+    category: "linux",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "线上服务器排查实战",
+    content: "一台 Linux 服务器变慢，你怎么排查？请描述从系统级到应用级的完整流程。",
+    answer:
+      "答案：top → dmesg → iostat → free → netstat → strace\n\n解析：1）top 看 CPU/内存占用，高 CPU 的进程序号 TID 转 jstack 查 Java 应用线程栈。2）dmesg -T 查看内核日志（OOM Killer、内核异常）。3）iostat -x 1 看磁盘 IO（%util > 70% 表示 IO 瓶颈，await 高说明响应慢）。4）free -h 看内存，关注 available 而非 free（Linux 会用内存做缓存）。5）netstat -i 看网络丢包。6）strace -p PID 跟踪系统调用（如果怀疑某进程行为异常）。\n\n扩展延伸：磁盘 IO 的排查重点：iostat 的 r/s、w/s（每秒 IO 请求数）和 await（平均响应时间）。网络问题：ss -s 看连接统计，tcpdump 抓包分析。内存问题：cat /proc/meminfo 查看内核内存细节，/proc/PID/smaps 分析进程内存分布。工具链：perf（性能分析）、sar（历史性能数据）。",
+    hints: ["iostat 中 %util 和 await 如何解读", "free 显示 cached 和 available 的区别"],
+    tags: ["排查", "性能", "实战"],
+    options: [],
   },
   {
-    "id": 209,
-    "category": "product",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "产品思维的核心",
-    "content": "什么是产品思维？技术开发为什么需要具备产品思维？",
-    "answer": "答案：产品思维是从用户需求出发，关注价值创造和全局最优的思考方式\n\n解析：产品思维 vs 项目思维的关键区别：项目思维关注」按时交付功能」（输入导向），产品思维关注」是否解决了真问题」（价值导向）。具体表现：做功能前先问」用户真的需要吗」、」能否用更简单的方式解决」、」怎么衡量这个功能做成功了」。\n\n扩展延伸：开发人员为什么要有产品思维 1）避免做无用功——不理解业务价值就做不出好设计 2）技术选型更有判断力——知道什么场景下简洁比优雅更重要 3）沟通更有效——和 PM、设计用同一套语言对话。技术负责人和技术骨干的区别往往不在于谁的代码写得更好，而在于谁能从业务价值角度判断技术方案的取舍。",
-    "hints": [
-      "产品思维和项目思维的区别在哪",
-      "技术人员如何培养产品敏感度"
-    ],
-    "tags": [
-      "产品思维"
-    ],
-    "options": []
+    id: 209,
+    category: "product",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "产品思维的核心",
+    content: "什么是产品思维？技术开发为什么需要具备产品思维？",
+    answer:
+      "答案：产品思维是从用户需求出发，关注价值创造和全局最优的思考方式\n\n解析：产品思维 vs 项目思维的关键区别：项目思维关注」按时交付功能」（输入导向），产品思维关注」是否解决了真问题」（价值导向）。具体表现：做功能前先问」用户真的需要吗」、」能否用更简单的方式解决」、」怎么衡量这个功能做成功了」。\n\n扩展延伸：开发人员为什么要有产品思维 1）避免做无用功——不理解业务价值就做不出好设计 2）技术选型更有判断力——知道什么场景下简洁比优雅更重要 3）沟通更有效——和 PM、设计用同一套语言对话。技术负责人和技术骨干的区别往往不在于谁的代码写得更好，而在于谁能从业务价值角度判断技术方案的取舍。",
+    hints: ["产品思维和项目思维的区别在哪", "技术人员如何培养产品敏感度"],
+    tags: ["产品思维"],
+    options: [],
   },
   {
-    "id": 210,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MVP 和精益创业",
-    "content": "请解释 MVP（最小可行产品）的概念和精益创业方法论的核心理念。",
-    "answer": "答案：MVP 是用最少的投入验证最大的商业假设\n\n解析：MVP 不是功能残缺的半成品，而是」能验证核心假设的最小版本」。精益创业的核心循环：构建（Build）→ 衡量（Measure）→ 学习（Learn）。一次循环的目标是验证一个假设（如」用户愿意为这个功能付费」），而不是把产品做完。如果假设被证伪，就要 pivot（转型）。\n\n扩展延伸：MVP 的常见误区 1）把 MVP 做成了」少几个功能但还是要完整发布」（太重量级）2）没有明确的验证指标（做了但不知道怎么判断成败）3）忽略手动验证——有时用人工服务代替自动化功能来验证需求（」Wizard of Oz」 测试）比写代码快得多。MVP 的目标是验证学习，不是交付产品。",
-    "hints": [
-      "MVP 和 Prototype 的区别",
-      "什么情况应该果断 pivot"
-    ],
-    "tags": [
-      "产品思维",
-      "MVP"
-    ],
-    "options": []
+    id: 210,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "MVP 和精益创业",
+    content: "请解释 MVP（最小可行产品）的概念和精益创业方法论的核心理念。",
+    answer:
+      "答案：MVP 是用最少的投入验证最大的商业假设\n\n解析：MVP 不是功能残缺的半成品，而是」能验证核心假设的最小版本」。精益创业的核心循环：构建（Build）→ 衡量（Measure）→ 学习（Learn）。一次循环的目标是验证一个假设（如」用户愿意为这个功能付费」），而不是把产品做完。如果假设被证伪，就要 pivot（转型）。\n\n扩展延伸：MVP 的常见误区 1）把 MVP 做成了」少几个功能但还是要完整发布」（太重量级）2）没有明确的验证指标（做了但不知道怎么判断成败）3）忽略手动验证——有时用人工服务代替自动化功能来验证需求（」Wizard of Oz」 测试）比写代码快得多。MVP 的目标是验证学习，不是交付产品。",
+    hints: ["MVP 和 Prototype 的区别", "什么情况应该果断 pivot"],
+    tags: ["产品思维", "MVP"],
+    options: [],
   },
   {
-    "id": 211,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据分析驱动产品决策",
-    "content": "产品经理常用的数据分析方法有哪些？如何用数据驱动产品决策？",
-    "answer": "答案：漏斗分析 + 留存分析 + 分组对比（Cohort Analysis）+ A/B 测试\n\n解析：漏斗分析：用户路径各步骤转化率（如注册→激活→付费），定位流失最严重的环节。留存分析：新增用户在第 1/7/30 天回来了多少（衡量产品黏性）。Cohort Analysis：按用户获取时间分组，对比不同批次的行为差异。A/B 测试：两个版本同时上线，看哪个更优——但需统计显著性（p值），样本量不足的 A/B 测试比没有更误导。\n\n扩展延伸：核心指标框架 a）北极星指标（North Star Metric）——唯一最重要的指标，反映产品长期价值（如 Airbnb 的」预订过夜数」）b）AARRR 海盗指标——Acquisition/Activation/Retention/Revenue/Referral c）不要混淆指标上升和业务变好——如增加注册引导能提高注册量但可能降低了注册质量。好的指标是可衡量、可行动、可理解的。",
-    "hints": [
-      "北极星指标和 OKR 有什么关系",
-      "A/B 测试需要多少样本量才有统计意义"
-    ],
-    "tags": [
-      "数据",
-      "分析"
-    ],
-    "options": []
+    id: 211,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "数据分析驱动产品决策",
+    content: "产品经理常用的数据分析方法有哪些？如何用数据驱动产品决策？",
+    answer:
+      "答案：漏斗分析 + 留存分析 + 分组对比（Cohort Analysis）+ A/B 测试\n\n解析：漏斗分析：用户路径各步骤转化率（如注册→激活→付费），定位流失最严重的环节。留存分析：新增用户在第 1/7/30 天回来了多少（衡量产品黏性）。Cohort Analysis：按用户获取时间分组，对比不同批次的行为差异。A/B 测试：两个版本同时上线，看哪个更优——但需统计显著性（p值），样本量不足的 A/B 测试比没有更误导。\n\n扩展延伸：核心指标框架 a）北极星指标（North Star Metric）——唯一最重要的指标，反映产品长期价值（如 Airbnb 的」预订过夜数」）b）AARRR 海盗指标——Acquisition/Activation/Retention/Revenue/Referral c）不要混淆指标上升和业务变好——如增加注册引导能提高注册量但可能降低了注册质量。好的指标是可衡量、可行动、可理解的。",
+    hints: ["北极星指标和 OKR 有什么关系", "A/B 测试需要多少样本量才有统计意义"],
+    tags: ["数据", "分析"],
+    options: [],
   },
   {
-    "id": 212,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "用户研究方法",
-    "content": "产品设计前如何做用户研究？定性和定量研究分别适合什么场景？",
-    "answer": "答案：定性研究回答」为什么」，定量研究回答」有多少」\n\n解析：定性研究：用户访谈、可用性测试、日记研究。适合探索未知问题、理解用户动机和行为模式。样本量小（5-10 人已能发现 80% 可用性问题），不追求统计意义。定量研究：问卷调查、数据分析、A/B 测试。适合验证假设、量化影响、做决策。样本量大，追求统计显著性。\n\n扩展延伸：用户访谈核心技巧 1）不问」你会不会用」（意愿和实际行为往往不一致），要问」上次你遇到 X 的时候怎么处理的」（具体行为回忆）2）先开放后收敛——」你平时怎么处理文件」→」你用过哪些工具」 3）寻找极端用户——重度用户和流失用户比普通用户更有洞察价值。不要问用户」想要什么」——亨利福特的名言：如果问用户想要什么，他们会说更快的马。",
-    "hints": [
-      "定性研究 5 个用户就够了的依据是什么",
-      "如何避免用户访谈中的引导性问题"
-    ],
-    "tags": [
-      "用户研究",
-      "设计"
-    ],
-    "options": []
+    id: 212,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "用户研究方法",
+    content: "产品设计前如何做用户研究？定性和定量研究分别适合什么场景？",
+    answer:
+      "答案：定性研究回答」为什么」，定量研究回答」有多少」\n\n解析：定性研究：用户访谈、可用性测试、日记研究。适合探索未知问题、理解用户动机和行为模式。样本量小（5-10 人已能发现 80% 可用性问题），不追求统计意义。定量研究：问卷调查、数据分析、A/B 测试。适合验证假设、量化影响、做决策。样本量大，追求统计显著性。\n\n扩展延伸：用户访谈核心技巧 1）不问」你会不会用」（意愿和实际行为往往不一致），要问」上次你遇到 X 的时候怎么处理的」（具体行为回忆）2）先开放后收敛——」你平时怎么处理文件」→」你用过哪些工具」 3）寻找极端用户——重度用户和流失用户比普通用户更有洞察价值。不要问用户」想要什么」——亨利福特的名言：如果问用户想要什么，他们会说更快的马。",
+    hints: ["定性研究 5 个用户就够了的依据是什么", "如何避免用户访谈中的引导性问题"],
+    tags: ["用户研究", "设计"],
+    options: [],
   },
   {
-    "id": 213,
-    "category": "product",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "OKR 与 KPI 的区别",
-    "content": "请解释 OKR 和 KPI 的区别，OKR 如何制定才能有效驱动团队？",
-    "answer": "答案：OKR 是目标管理工具（定方向），KPI 是绩效衡量工具（看结果）\n\n解析：OKR = Objective（定性的有挑战的目标）+ Key Results（3-5 个量化结果指标）。好的 Objectives 是鼓舞人心的（如」打造中国最好的电商用户体验」），好的 KRs 是可衡量的（如」支付成功率从 95% 提升到 99%」）。KPI 是日常运营指标（如响应时间），OKR 是阶段性突破目标。OKR 完成 70% 就算好（挑战性目标），KPI 通常期望 100%。\n\n扩展延伸：OKR 落地常见失败原因 1）OKR 变成了任务清单（KR 应该是结果而非任务）2）目标太多（每季度 3-5 个 OKR，聚焦）3）没有对齐（下层 OKR 应支持上层 OKR）4）设定完就不管了（需要每周 check-in）。OKR 的核心价值不在于」制定」而在于」复盘」——定期审视进度决定要不要调整策略。注意区分：OKR 和绩效解绑才是正确的做法，否则团队会」安全地」设定容易达成的目标。",
-    "hints": [
+    id: 213,
+    category: "product",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "OKR 与 KPI 的区别",
+    content: "请解释 OKR 和 KPI 的区别，OKR 如何制定才能有效驱动团队？",
+    answer:
+      "答案：OKR 是目标管理工具（定方向），KPI 是绩效衡量工具（看结果）\n\n解析：OKR = Objective（定性的有挑战的目标）+ Key Results（3-5 个量化结果指标）。好的 Objectives 是鼓舞人心的（如」打造中国最好的电商用户体验」），好的 KRs 是可衡量的（如」支付成功率从 95% 提升到 99%」）。KPI 是日常运营指标（如响应时间），OKR 是阶段性突破目标。OKR 完成 70% 就算好（挑战性目标），KPI 通常期望 100%。\n\n扩展延伸：OKR 落地常见失败原因 1）OKR 变成了任务清单（KR 应该是结果而非任务）2）目标太多（每季度 3-5 个 OKR，聚焦）3）没有对齐（下层 OKR 应支持上层 OKR）4）设定完就不管了（需要每周 check-in）。OKR 的核心价值不在于」制定」而在于」复盘」——定期审视进度决定要不要调整策略。注意区分：OKR 和绩效解绑才是正确的做法，否则团队会」安全地」设定容易达成的目标。",
+    hints: [
       "OKR 的 KR 和 KPI 看起来都是数字，本质区别在哪",
-      "为什么说 OKR 完成 100% 说明定得太低了"
+      "为什么说 OKR 完成 100% 说明定得太低了",
     ],
-    "tags": [
-      "管理",
-      "目标"
-    ],
-    "options": []
+    tags: ["管理", "目标"],
+    options: [],
   },
   {
-    "id": 214,
-    "category": "product",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "技术选择的产品思维",
-    "content": "作为技术负责人，一个新项目要选择技术栈，除了技术因素还要考虑哪些产品/业务层面的因素？",
-    "answer": "答案：业务阶段、团队能力、维护成本、生态成熟度、招聘难度\n\n解析：技术选型从来不仅仅是技术问题。初创阶段选熟悉的技术栈（跑得快比用得爽重要），成长阶段考虑可扩展性，成熟阶段考虑成本和稳定性。选冷门框架可能面试造火箭入职拧螺丝——招不到人。大厂为什么用 Java？不是因为它最好，而是人才池大，招人成本低。\n\n扩展延伸：决策框架 1）这个选择对交付速度的影响（3 个月能上线吗 vs 6 个月）2）出了问题能找人修吗（社区活跃度、公司内 expertise）3）未来 2 年这个技术还活着吗（生态趋势、大厂背书）4）如果选错了，切换成本有多高。选技术栈跟选投资一样——最好的技术不一定赢，生态最繁荣的技术才赢。历史上有大量技术选型正确但输给生态的案例（如 Flutter vs RN）。",
-    "hints": [
-      "为什么大厂中间件也要做技术选型评审",
-      "技术选型中的 sunk cost（沉没成本）陷阱"
-    ],
-    "tags": [
-      "产品思维",
-      "技术选型"
-    ],
-    "options": []
+    id: 214,
+    category: "product",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "技术选择的产品思维",
+    content:
+      "作为技术负责人，一个新项目要选择技术栈，除了技术因素还要考虑哪些产品/业务层面的因素？",
+    answer:
+      "答案：业务阶段、团队能力、维护成本、生态成熟度、招聘难度\n\n解析：技术选型从来不仅仅是技术问题。初创阶段选熟悉的技术栈（跑得快比用得爽重要），成长阶段考虑可扩展性，成熟阶段考虑成本和稳定性。选冷门框架可能面试造火箭入职拧螺丝——招不到人。大厂为什么用 Java？不是因为它最好，而是人才池大，招人成本低。\n\n扩展延伸：决策框架 1）这个选择对交付速度的影响（3 个月能上线吗 vs 6 个月）2）出了问题能找人修吗（社区活跃度、公司内 expertise）3）未来 2 年这个技术还活着吗（生态趋势、大厂背书）4）如果选错了，切换成本有多高。选技术栈跟选投资一样——最好的技术不一定赢，生态最繁荣的技术才赢。历史上有大量技术选型正确但输给生态的案例（如 Flutter vs RN）。",
+    hints: ["为什么大厂中间件也要做技术选型评审", "技术选型中的 sunk cost（沉没成本）陷阱"],
+    tags: ["产品思维", "技术选型"],
+    options: [],
   },
   {
-    "id": 215,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "需求优先级排序方法",
-    "content": "面对大量的需求，有哪些科学的优先级排序方法？",
-    "answer": "答案：RICE 评分、价值-成本矩阵、MoSCoW 法则、Kano 模型\n\n解析：RICE = Reach（影响人数）× Impact（影响程度）× Confidence（信心指数）/ Effort（开发成本）。评分越高优先级越高，可以量化对比。价值-成本矩阵：横轴=开发成本，纵轴=业务价值。先做高价值低成本（低垂的果实），最后做低价值高成本。MoSCoW：Must have（必须有）/ Should have（应该有）/ Could have（可以有）/ Won't have（这次不做）。Kano 模型：区分基本型需求（必须有）、期望型需求（越多越好）、兴奋型需求（超出预期）。\n\n扩展延伸：撕逼场景——PM 说「这个很重要」，开发说「这个太复杂」，怎么办？用 RICE 把争论从主观判断变成可衡量的分数。常见误区 1）把紧急当重要（爱森豪威尔矩阵来区分）2）每种需求都说」必须做」（MoSCoW 的 Must 最好 < 50%）3）没有考虑技术债务——不做技术改进短期没问题，长期寸步难行。好的优先级排期是 60% 新功能 + 20% 技术改进 + 20% 修复优化。",
-    "hints": [
-      "RICE 方法中 Confidence 怎么打分",
-      "Kano 模型中的兴奋型需求有什么陷阱"
-    ],
-    "tags": [
-      "需求",
-      "优先级"
-    ],
-    "options": []
+    id: 215,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "需求优先级排序方法",
+    content: "面对大量的需求，有哪些科学的优先级排序方法？",
+    answer:
+      "答案：RICE 评分、价值-成本矩阵、MoSCoW 法则、Kano 模型\n\n解析：RICE = Reach（影响人数）× Impact（影响程度）× Confidence（信心指数）/ Effort（开发成本）。评分越高优先级越高，可以量化对比。价值-成本矩阵：横轴=开发成本，纵轴=业务价值。先做高价值低成本（低垂的果实），最后做低价值高成本。MoSCoW：Must have（必须有）/ Should have（应该有）/ Could have（可以有）/ Won't have（这次不做）。Kano 模型：区分基本型需求（必须有）、期望型需求（越多越好）、兴奋型需求（超出预期）。\n\n扩展延伸：撕逼场景——PM 说「这个很重要」，开发说「这个太复杂」，怎么办？用 RICE 把争论从主观判断变成可衡量的分数。常见误区 1）把紧急当重要（爱森豪威尔矩阵来区分）2）每种需求都说」必须做」（MoSCoW 的 Must 最好 < 50%）3）没有考虑技术债务——不做技术改进短期没问题，长期寸步难行。好的优先级排期是 60% 新功能 + 20% 技术改进 + 20% 修复优化。",
+    hints: ["RICE 方法中 Confidence 怎么打分", "Kano 模型中的兴奋型需求有什么陷阱"],
+    tags: ["需求", "优先级"],
+    options: [],
   },
   {
-    "id": 216,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "核心业务指标解读",
-    "content": "请解释 DAU、MAU、ARPU、LTV、GMV、CAC 等常见业务指标的含义。",
-    "answer": "答案：DAU/MAU（活跃用户）、ARPU/LTV（用户价值）、GMV（交易额）、CAC（获客成本）\n\n解析：DAU（日活跃用户）和 MAU（月活跃用户）衡量产品规模和健康度。DAU/MAU 比值反映用户黏性——超过 50% 说明产品好。ARPU（每用户平均收入）= 总收入 / 用户数。LTV（用户生命周期价值）= ARPU × 平均用户生命周期——客户终身能带来多少收入。GMV（商品交易总额）常用于电商——平台流水总额（含未支付订单）。CAC（用户获取成本）= 总营销费用 / 新增用户数。LTV/CAC > 3 说明商业模式健康。\n\n扩展延伸：为什么有些产品只看 DAU 不看 LTV？不同产品阶段关注不同。社交/内容产品早期看 DAU（增长第一），电商看 GMV 和复购率，SaaS 看 LTV/CAC 和续费率（NDR）。指标之间的关联比单个指标更重要：DAU 涨了但 ARPU 降了——说明新增的是低价值用户，需要检查获客渠道质量。衡量不重要，理解指标背后的业务含义才重要。",
-    "hints": [
-      "LTV/CAC 比值多少算健康",
-      "为什么 DAU 涨了不一定代表产品好"
-    ],
-    "tags": [
-      "指标",
-      "数据分析"
-    ],
-    "options": []
+    id: 216,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "核心业务指标解读",
+    content: "请解释 DAU、MAU、ARPU、LTV、GMV、CAC 等常见业务指标的含义。",
+    answer:
+      "答案：DAU/MAU（活跃用户）、ARPU/LTV（用户价值）、GMV（交易额）、CAC（获客成本）\n\n解析：DAU（日活跃用户）和 MAU（月活跃用户）衡量产品规模和健康度。DAU/MAU 比值反映用户黏性——超过 50% 说明产品好。ARPU（每用户平均收入）= 总收入 / 用户数。LTV（用户生命周期价值）= ARPU × 平均用户生命周期——客户终身能带来多少收入。GMV（商品交易总额）常用于电商——平台流水总额（含未支付订单）。CAC（用户获取成本）= 总营销费用 / 新增用户数。LTV/CAC > 3 说明商业模式健康。\n\n扩展延伸：为什么有些产品只看 DAU 不看 LTV？不同产品阶段关注不同。社交/内容产品早期看 DAU（增长第一），电商看 GMV 和复购率，SaaS 看 LTV/CAC 和续费率（NDR）。指标之间的关联比单个指标更重要：DAU 涨了但 ARPU 降了——说明新增的是低价值用户，需要检查获客渠道质量。衡量不重要，理解指标背后的业务含义才重要。",
+    hints: ["LTV/CAC 比值多少算健康", "为什么 DAU 涨了不一定代表产品好"],
+    tags: ["指标", "数据分析"],
+    options: [],
   },
   {
-    "id": 217,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "竞品分析方法论",
-    "content": "如何做有效的竞品分析？从哪几个维度切入？",
-    "answer": "答案：从产品/用户/商业/技术四个维度系统性拆解\n\n解析：1）产品维度——功能矩阵对比（都有 / 我们有他们没有 / 他们有我们没有）、用户体验 diff（关键流程的差异）、定价策略 2）用户维度——目标用户画像差异、用户评价（App Store 差评是最好的改进方向）、NPS 对比 3）商业维度——商业模式（广告/订阅/交易抽成）、市场份额、融资阶段 4）技术维度——技术栈、架构优劣、性能对比。\n\n扩展延伸：竞品分析常见错误 1）罗列功能清单没有分析——要回答「为什么他们这样做」而不是「他们做了什么」2）只盯着头部竞品——忽略新兴选手（往往从不起眼的方向颠覆）3）先入为主的偏见——找数据证明自己的观点而不是探索真相。好的竞品分析产出不是一份报告，而是给团队提供 3-5 个 actionable insights（可执行的洞察）。",
-    "hints": [
-      "功能对比矩阵和用户旅程 diff 分别用于什么场景",
-      "为什么竞品分析要关注 App Store 差评"
-    ],
-    "tags": [
-      "竞品",
-      "分析"
-    ],
-    "options": []
+    id: 217,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "竞品分析方法论",
+    content: "如何做有效的竞品分析？从哪几个维度切入？",
+    answer:
+      "答案：从产品/用户/商业/技术四个维度系统性拆解\n\n解析：1）产品维度——功能矩阵对比（都有 / 我们有他们没有 / 他们有我们没有）、用户体验 diff（关键流程的差异）、定价策略 2）用户维度——目标用户画像差异、用户评价（App Store 差评是最好的改进方向）、NPS 对比 3）商业维度——商业模式（广告/订阅/交易抽成）、市场份额、融资阶段 4）技术维度——技术栈、架构优劣、性能对比。\n\n扩展延伸：竞品分析常见错误 1）罗列功能清单没有分析——要回答「为什么他们这样做」而不是「他们做了什么」2）只盯着头部竞品——忽略新兴选手（往往从不起眼的方向颠覆）3）先入为主的偏见——找数据证明自己的观点而不是探索真相。好的竞品分析产出不是一份报告，而是给团队提供 3-5 个 actionable insights（可执行的洞察）。",
+    hints: ["功能对比矩阵和用户旅程 diff 分别用于什么场景", "为什么竞品分析要关注 App Store 差评"],
+    tags: ["竞品", "分析"],
+    options: [],
   },
   {
-    "id": 218,
-    "category": "product",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "NPS（净推荐值）",
-    "content": "什么是 NPS？如何计算？有什么优缺点？",
-    "answer": "答案：NPS（Net Promoter Score）衡量用户忠诚度，问「你有多大可能向朋友推荐我们的产品？」\n\n解析：评分 0-10：推荐者（9-10）、被动者（7-8）、贬损者（0-6）。NPS = %推荐者 - %贬损者。结果范围 -100 到 +100。NPS > 50 算优秀，> 70 算世界级。优点：问题简单、结果直观、跨行业可比、与业务增长高度相关。缺点：单维度测量、文化差异（有些文化不爱打极端分）、不能告诉你具体怎么改进。\n\n扩展延伸：NPS 的配套问题才是价值所在——「为什么给了这个分数？」（开放式）。分析贬损者的反馈比 NPS 分数本身更有价值。行业参考：SaaS 平均 NPS 约 30-40，消费互联网约 50-60。高级用法：针对不同用户群（新用户 / 活跃用户 / 流失用户）分别追踪 NPS，能发现不同群体的满意度差异。NPS 应该按月/季度追踪趋势，而非孤立看一次值。",
-    "hints": [
-      "NPS 和 CSAT（客户满意度）的区别",
-      "为什么贬损者的定性反馈比分数更值钱"
-    ],
-    "tags": [
-      "指标",
-      "用户"
-    ],
-    "options": []
+    id: 218,
+    category: "product",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "NPS（净推荐值）",
+    content: "什么是 NPS？如何计算？有什么优缺点？",
+    answer:
+      "答案：NPS（Net Promoter Score）衡量用户忠诚度，问「你有多大可能向朋友推荐我们的产品？」\n\n解析：评分 0-10：推荐者（9-10）、被动者（7-8）、贬损者（0-6）。NPS = %推荐者 - %贬损者。结果范围 -100 到 +100。NPS > 50 算优秀，> 70 算世界级。优点：问题简单、结果直观、跨行业可比、与业务增长高度相关。缺点：单维度测量、文化差异（有些文化不爱打极端分）、不能告诉你具体怎么改进。\n\n扩展延伸：NPS 的配套问题才是价值所在——「为什么给了这个分数？」（开放式）。分析贬损者的反馈比 NPS 分数本身更有价值。行业参考：SaaS 平均 NPS 约 30-40，消费互联网约 50-60。高级用法：针对不同用户群（新用户 / 活跃用户 / 流失用户）分别追踪 NPS，能发现不同群体的满意度差异。NPS 应该按月/季度追踪趋势，而非孤立看一次值。",
+    hints: ["NPS 和 CSAT（客户满意度）的区别", "为什么贬损者的定性反馈比分数更值钱"],
+    tags: ["指标", "用户"],
+    options: [],
   },
   {
-    "id": 219,
-    "category": "product",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "产品路线图规划",
-    "content": "如何制定产品路线图？不同时间跨度的路线图应该细化到什么程度？",
-    "answer": "答案：按时间跨度分层：长期（愿景）→ 中期（方向）→ 短期（执行）\n\n解析：战略路线图（6-12 月）：只列大方向（如「提升用户留存」），不涉及具体功能。主题路线图（3-6 月）：按主题组织（如「支付体验优化」「用户增长体系」），每个主题 2-3 个关键结果。交付路线图（1-3 月）：具体到功能维度和预期交付时间，但不说死日期。Sprint Plan（1-2 周）：精确到用户故事和任务。层次越低越详细，高层路线图只回答「往哪走」而非「怎么走」。\n\n扩展延伸：路线图不是承诺——好产品会标注「本路线图代表当前优先级，可能随用户反馈和市场变化调整」。路线图的输出是「对齐」（让团队、管理层、干系人知道方向），不是「计划」。常见错误：把路线图做成甘特图（3 个月前就定死了 12 月的功能）、路线图塞了太多「肯定要做」的东西（没有体现取舍——取舍才是产品经理的核心工作）。",
-    "hints": [
-      "战略路线图和交付路线图的区别",
-      "为什么路线图应该标注「可能变化」"
-    ],
-    "tags": [
-      "规划",
-      "路线图"
-    ],
-    "options": []
+    id: 219,
+    category: "product",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "产品路线图规划",
+    content: "如何制定产品路线图？不同时间跨度的路线图应该细化到什么程度？",
+    answer:
+      "答案：按时间跨度分层：长期（愿景）→ 中期（方向）→ 短期（执行）\n\n解析：战略路线图（6-12 月）：只列大方向（如「提升用户留存」），不涉及具体功能。主题路线图（3-6 月）：按主题组织（如「支付体验优化」「用户增长体系」），每个主题 2-3 个关键结果。交付路线图（1-3 月）：具体到功能维度和预期交付时间，但不说死日期。Sprint Plan（1-2 周）：精确到用户故事和任务。层次越低越详细，高层路线图只回答「往哪走」而非「怎么走」。\n\n扩展延伸：路线图不是承诺——好产品会标注「本路线图代表当前优先级，可能随用户反馈和市场变化调整」。路线图的输出是「对齐」（让团队、管理层、干系人知道方向），不是「计划」。常见错误：把路线图做成甘特图（3 个月前就定死了 12 月的功能）、路线图塞了太多「肯定要做」的东西（没有体现取舍——取舍才是产品经理的核心工作）。",
+    hints: ["战略路线图和交付路线图的区别", "为什么路线图应该标注「可能变化」"],
+    tags: ["规划", "路线图"],
+    options: [],
   },
   {
-    "id": 220,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "用户体验地图",
-    "content": "什么是用户体验地图（Customer Journey Map）？如何绘制？",
-    "answer": "答案：用户体验地图可视化用户从接触到使用产品的完整旅程，标出触点和情绪\n\n解析：典型结构：阶段（认知 → 考虑 → 购买 → 使用 → 推荐）→ 用户行为（每一步做什么）→ 触点（官网 / App / 客服）→ 用户想法和感受 → 情绪曲线（高/低点）→ 痛点和机会点。绘制步骤：1）定义用户画像 2）列出用户目标（在什么场景下想完成什么）3）列出每个阶段的用户行为和触点 4）标注情绪 5）识别痛点（情绪低谷）6）针对痛点提出改进方案。\n\n扩展延伸：用户体验地图 vs 服务蓝图：体验地图从用户视角出发，服务蓝图从服务提供者视角出发（包括后台不可见的部分）。一个好的体验地图应该让团队看完后达成共识——「原来用户在注册环节这么痛苦，我们得改这里」。体验地图的价值不在最后的图本身，而在绘制过程中跨职能团队的讨论和洞察。",
-    "hints": [
-      "用户体验地图中的情绪曲线怎么获取",
-      "服务蓝图和用户体验地图有什么区别"
-    ],
-    "tags": [
-      "用户研究",
-      "设计"
-    ],
-    "options": []
+    id: 220,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "用户体验地图",
+    content: "什么是用户体验地图（Customer Journey Map）？如何绘制？",
+    answer:
+      "答案：用户体验地图可视化用户从接触到使用产品的完整旅程，标出触点和情绪\n\n解析：典型结构：阶段（认知 → 考虑 → 购买 → 使用 → 推荐）→ 用户行为（每一步做什么）→ 触点（官网 / App / 客服）→ 用户想法和感受 → 情绪曲线（高/低点）→ 痛点和机会点。绘制步骤：1）定义用户画像 2）列出用户目标（在什么场景下想完成什么）3）列出每个阶段的用户行为和触点 4）标注情绪 5）识别痛点（情绪低谷）6）针对痛点提出改进方案。\n\n扩展延伸：用户体验地图 vs 服务蓝图：体验地图从用户视角出发，服务蓝图从服务提供者视角出发（包括后台不可见的部分）。一个好的体验地图应该让团队看完后达成共识——「原来用户在注册环节这么痛苦，我们得改这里」。体验地图的价值不在最后的图本身，而在绘制过程中跨职能团队的讨论和洞察。",
+    hints: ["用户体验地图中的情绪曲线怎么获取", "服务蓝图和用户体验地图有什么区别"],
+    tags: ["用户研究", "设计"],
+    options: [],
   },
   {
-    "id": 221,
-    "category": "product",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "留存率分析与改善",
-    "content": "什么是留存率（Retention）？如何分析和提升产品留存？",
-    "answer": "答案：留存率是用户首次使用后在特定时间点再次使用的比例\n\n解析：常见留存指标：次日留存（产品初次体验吸引力）、7 日留存（产品价值是否被感知）、30 日留存（产品习惯是否养成）。SaaS 常用」周留存」和」月留存」，消费 App 更关注日留存。留存分三类：新增留存（当天新增用户后续回来的比例）、活跃留存（已有活跃用户的持续活跃）、回流留存（流失用户重新激活）。\n\n扩展延伸：提升留存的实战策略 1）Aha Moment（啊哈时刻）——让用户尽快体验到产品核心价值（如 Facebook 7 天内加 10 个好友）2）Habit Loop 触发→行动→奖励→投入 3）留存曲线分组——按获客渠道/注册月份分组，找到留存最好的那个群体然后分析原因 4）挽回唤醒（Push 通知 / 邮件）。留存是一切增长的基础——获客成本再低，留不住用户也没用。改善留存 1% 比获客增长 10% 对长期增长更有效。",
-    "hints": [
-      "次日/7 日/30 日留存分别反映什么问题",
-      "Aha Moment 怎么找到"
-    ],
-    "tags": [
-      "留存",
-      "增长"
-    ],
-    "options": []
+    id: 221,
+    category: "product",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "留存率分析与改善",
+    content: "什么是留存率（Retention）？如何分析和提升产品留存？",
+    answer:
+      "答案：留存率是用户首次使用后在特定时间点再次使用的比例\n\n解析：常见留存指标：次日留存（产品初次体验吸引力）、7 日留存（产品价值是否被感知）、30 日留存（产品习惯是否养成）。SaaS 常用」周留存」和」月留存」，消费 App 更关注日留存。留存分三类：新增留存（当天新增用户后续回来的比例）、活跃留存（已有活跃用户的持续活跃）、回流留存（流失用户重新激活）。\n\n扩展延伸：提升留存的实战策略 1）Aha Moment（啊哈时刻）——让用户尽快体验到产品核心价值（如 Facebook 7 天内加 10 个好友）2）Habit Loop 触发→行动→奖励→投入 3）留存曲线分组——按获客渠道/注册月份分组，找到留存最好的那个群体然后分析原因 4）挽回唤醒（Push 通知 / 邮件）。留存是一切增长的基础——获客成本再低，留不住用户也没用。改善留存 1% 比获客增长 10% 对长期增长更有效。",
+    hints: ["次日/7 日/30 日留存分别反映什么问题", "Aha Moment 怎么找到"],
+    tags: ["留存", "增长"],
+    options: [],
   },
   {
-    "id": 222,
-    "category": "product",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "产品生命周期管理",
-    "content": "请解释产品生命周期（PLC）各阶段的特点和策略。",
-    "answer": "答案：导入期 → 成长期 → 成熟期 → 衰退期，各阶段策略不同\n\n解析：导入期：产品刚上线，用户量少。策略——验证核心价值，不计较商业化，关注留存和口碑。成长期：PMF（产品-市场匹配）确认，快速增长。策略——全力获客，建立竞争壁垒，开始考虑变现。成熟期：增长放缓，市场份额稳定。策略——优化变现效率，降低成本，拓展新场景（找第二曲线）。衰退期：用户和收入下滑。策略——收割（减少投入维持利润），或转型/停止。\n\n扩展延伸：产品生命周期的误用：不要因为产品上线 3 个月增长慢就断言在导入期——可能根本是 PMF 没找到。判断产品所处阶段看核心指标趋势而非时间。Porter 五力模型辅助判断外部竞争环境（何时进入、何时退出）。深刻认知：产品生命周期不是产品自身属性，而是市场和用户需求的变化。没有永恒的产品——诺基亚的功能机、PC 互联网时代的门户都是例证。",
-    "hints": [
-      "导入期和成长期的判断标准是什么",
-      "什么是 PMF（Product-Market Fit）"
-    ],
-    "tags": [
-      "产品管理",
-      "生命周期"
-    ],
-    "options": []
+    id: 222,
+    category: "product",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "产品生命周期管理",
+    content: "请解释产品生命周期（PLC）各阶段的特点和策略。",
+    answer:
+      "答案：导入期 → 成长期 → 成熟期 → 衰退期，各阶段策略不同\n\n解析：导入期：产品刚上线，用户量少。策略——验证核心价值，不计较商业化，关注留存和口碑。成长期：PMF（产品-市场匹配）确认，快速增长。策略——全力获客，建立竞争壁垒，开始考虑变现。成熟期：增长放缓，市场份额稳定。策略——优化变现效率，降低成本，拓展新场景（找第二曲线）。衰退期：用户和收入下滑。策略——收割（减少投入维持利润），或转型/停止。\n\n扩展延伸：产品生命周期的误用：不要因为产品上线 3 个月增长慢就断言在导入期——可能根本是 PMF 没找到。判断产品所处阶段看核心指标趋势而非时间。Porter 五力模型辅助判断外部竞争环境（何时进入、何时退出）。深刻认知：产品生命周期不是产品自身属性，而是市场和用户需求的变化。没有永恒的产品——诺基亚的功能机、PC 互联网时代的门户都是例证。",
+    hints: ["导入期和成长期的判断标准是什么", "什么是 PMF（Product-Market Fit）"],
+    tags: ["产品管理", "生命周期"],
+    options: [],
   },
   {
-    "id": 223,
-    "category": "project_mgmt",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "敏捷开发的核心原则",
-    "content": "请解释敏捷开发（Agile）的四大核心价值观和十二条原则的核心思想。",
-    "answer": "答案：个体和互动高于流程和工具、可工作的软件高于详尽的文档、客户合作高于合同谈判、响应变化高于遵循计划\n\n解析：敏捷的核心是迭代交付和快速反馈。四大价值观中每一条的后半部分仍有价值，但前半部分更优先。十二条原则中最重要的几条：尽早持续交付有价值的软件、欢迎需求变化、业务和开发日常协作、面对面沟通、可持续的开发节奏、定期反思调整。\n\n扩展延伸：敏捷 vs 瀑布模型的关键区别：瀑布假设需求可以前期完全确定，敏捷承认需求会变化。Scrum 和 Kanban 是两种最主流的敏捷框架——Scrum 用固定周期（Sprint），Kanban 用持续流和 WIP 限制。面试常见问题：你们团队怎么实践敏捷的？重点不在于用了什么仪式，而在于是否真的做到了快速迭代和持续改进。",
-    "hints": [
-      "敏捷和瀑布的核心区别是什么",
-      "Scrum 的五个仪式分别是什么"
-    ],
-    "tags": [
-      "敏捷",
-      "Scrum"
-    ],
-    "options": []
+    id: 223,
+    category: "project_mgmt",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "敏捷开发的核心原则",
+    content: "请解释敏捷开发（Agile）的四大核心价值观和十二条原则的核心思想。",
+    answer:
+      "答案：个体和互动高于流程和工具、可工作的软件高于详尽的文档、客户合作高于合同谈判、响应变化高于遵循计划\n\n解析：敏捷的核心是迭代交付和快速反馈。四大价值观中每一条的后半部分仍有价值，但前半部分更优先。十二条原则中最重要的几条：尽早持续交付有价值的软件、欢迎需求变化、业务和开发日常协作、面对面沟通、可持续的开发节奏、定期反思调整。\n\n扩展延伸：敏捷 vs 瀑布模型的关键区别：瀑布假设需求可以前期完全确定，敏捷承认需求会变化。Scrum 和 Kanban 是两种最主流的敏捷框架——Scrum 用固定周期（Sprint），Kanban 用持续流和 WIP 限制。面试常见问题：你们团队怎么实践敏捷的？重点不在于用了什么仪式，而在于是否真的做到了快速迭代和持续改进。",
+    hints: ["敏捷和瀑布的核心区别是什么", "Scrum 的五个仪式分别是什么"],
+    tags: ["敏捷", "Scrum"],
+    options: [],
   },
   {
-    "id": 224,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Scrum 框架的核心角色和仪式",
-    "content": "请描述 Scrum 框架中的三个角色、五个事件和三个工件。",
-    "answer": "答案：角色—Product Owner / Scrum Master / Dev Team；事件—Sprint Planning / Daily Scrum / Sprint Review / Sprint Retro / 待办事项梳理；工件—Product Backlog / Sprint Backlog / 增量\n\n解析：Product Owner 负责」做什么」（确定优先级、最大化价值），Scrum Master 负责」怎么做得更好」（引导流程、移除障碍），Dev Team 负责」怎么做」（自组织完成任务）。Sprint Planning 定目标，Daily Scrum 同步进展，Sprint Review 展示成果给干系人，Sprint Retro 团队内复盘改进。\n\n扩展延伸：Scrum 容易踩的坑：1）Daily Scrum 变成汇报会而非同步站会 2）Sprint Review 变成走形式而非真实演示 3）Retro 发现的问题没有跟进措施 4）PO 在 Sprint 中变更目标。本质：Scrum 的仪式是为了暴露问题，不是为了走流程。如果团队回顾中反复出现相同问题，说明调整机制失效了。",
-    "hints": [
-      "Scrum Master 和项目经理有什么不同",
-      "一个 Sprint 的理想时长和什么有关"
-    ],
-    "tags": [
-      "敏捷",
-      "Scrum"
-    ],
-    "options": []
+    id: 224,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Scrum 框架的核心角色和仪式",
+    content: "请描述 Scrum 框架中的三个角色、五个事件和三个工件。",
+    answer:
+      "答案：角色—Product Owner / Scrum Master / Dev Team；事件—Sprint Planning / Daily Scrum / Sprint Review / Sprint Retro / 待办事项梳理；工件—Product Backlog / Sprint Backlog / 增量\n\n解析：Product Owner 负责」做什么」（确定优先级、最大化价值），Scrum Master 负责」怎么做得更好」（引导流程、移除障碍），Dev Team 负责」怎么做」（自组织完成任务）。Sprint Planning 定目标，Daily Scrum 同步进展，Sprint Review 展示成果给干系人，Sprint Retro 团队内复盘改进。\n\n扩展延伸：Scrum 容易踩的坑：1）Daily Scrum 变成汇报会而非同步站会 2）Sprint Review 变成走形式而非真实演示 3）Retro 发现的问题没有跟进措施 4）PO 在 Sprint 中变更目标。本质：Scrum 的仪式是为了暴露问题，不是为了走流程。如果团队回顾中反复出现相同问题，说明调整机制失效了。",
+    hints: ["Scrum Master 和项目经理有什么不同", "一个 Sprint 的理想时长和什么有关"],
+    tags: ["敏捷", "Scrum"],
+    options: [],
   },
   {
-    "id": 225,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "需求管理：用户故事与验收标准",
-    "content": "如何写好用户故事（User Story）？INVEST 原则是什么？",
-    "answer": "答案：用户故事格式：作为<角色>，我希望<功能>，以便<价值>。INVEST：Independent / Negotiable / Valuable / Estimable / Small / Testable\n\n解析：一个好用户故事的核心三要素：角色（谁要用）、功能（做什么）、价值（为什么做）。INVEST 原则中：Independent（可独立交付，减少依赖）、Valuable（对用户或业务有明确价值）、Testable（有明确的验收标准判断」完成」）。验收标准（Acceptance Criteria）用 Given/When/Then 格式（BDD）描述场景。\n\n扩展延伸：故事拆分技巧：按边界（CRUD 拆成不同的故事）、按工作流步骤（下单→支付→发货）、按业务规则（普通下单→VIP 下单）。Epic → Feature → User Story → Task 的层次分解。不要急着把故事写得太细——需求是渐进明细的，过早细化意味着后期大概率要返工。",
-    "hints": [
-      "什么是 BDD 的 Given/When/Then",
-      "Epic 和 User Story 的区别"
-    ],
-    "tags": [
-      "需求",
-      "用户故事"
-    ],
-    "options": []
+    id: 225,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "需求管理：用户故事与验收标准",
+    content: "如何写好用户故事（User Story）？INVEST 原则是什么？",
+    answer:
+      "答案：用户故事格式：作为<角色>，我希望<功能>，以便<价值>。INVEST：Independent / Negotiable / Valuable / Estimable / Small / Testable\n\n解析：一个好用户故事的核心三要素：角色（谁要用）、功能（做什么）、价值（为什么做）。INVEST 原则中：Independent（可独立交付，减少依赖）、Valuable（对用户或业务有明确价值）、Testable（有明确的验收标准判断」完成」）。验收标准（Acceptance Criteria）用 Given/When/Then 格式（BDD）描述场景。\n\n扩展延伸：故事拆分技巧：按边界（CRUD 拆成不同的故事）、按工作流步骤（下单→支付→发货）、按业务规则（普通下单→VIP 下单）。Epic → Feature → User Story → Task 的层次分解。不要急着把故事写得太细——需求是渐进明细的，过早细化意味着后期大概率要返工。",
+    hints: ["什么是 BDD 的 Given/When/Then", "Epic 和 User Story 的区别"],
+    tags: ["需求", "用户故事"],
+    options: [],
   },
   {
-    "id": 226,
-    "category": "project_mgmt",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "项目风险管理",
-    "content": "请描述项目风险管理的过程，如何识别、评估和应对风险？",
-    "answer": "答案：识别 → 定性和定量分析 → 规划应对 → 监控和跟踪\n\n解析：风险识别：头脑风暴、历史经验、清单检查。风险评估：按概率×影响打分，高概率高影响 → 红色预警。四个应对策略：规避（改变计划消除风险）、转移（保险/外包）、减轻（降低概率或影响）、接受（主动接受并准备应急计划）。\n\n扩展延伸：技术项目常见风险 a）需求理解偏差（最危险——发现晚代价大）→ 做原型验证、迭代确认 b）技术选型不当 → POC（概念验证）先行 c）关键人员离职 → 轮岗和文档沉淀 d）第三方依赖不可靠 → 熔断降级方案。在每个 Sprint 的 Retro 中也应回顾风险——风险是动态的，不是一次识别就完了。",
-    "hints": [
-      "概率-影响矩阵怎么用",
-      "应急计划和弹回计划的区别"
-    ],
-    "tags": [
-      "风险管理"
-    ],
-    "options": []
+    id: 226,
+    category: "project_mgmt",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "项目风险管理",
+    content: "请描述项目风险管理的过程，如何识别、评估和应对风险？",
+    answer:
+      "答案：识别 → 定性和定量分析 → 规划应对 → 监控和跟踪\n\n解析：风险识别：头脑风暴、历史经验、清单检查。风险评估：按概率×影响打分，高概率高影响 → 红色预警。四个应对策略：规避（改变计划消除风险）、转移（保险/外包）、减轻（降低概率或影响）、接受（主动接受并准备应急计划）。\n\n扩展延伸：技术项目常见风险 a）需求理解偏差（最危险——发现晚代价大）→ 做原型验证、迭代确认 b）技术选型不当 → POC（概念验证）先行 c）关键人员离职 → 轮岗和文档沉淀 d）第三方依赖不可靠 → 熔断降级方案。在每个 Sprint 的 Retro 中也应回顾风险——风险是动态的，不是一次识别就完了。",
+    hints: ["概率-影响矩阵怎么用", "应急计划和弹回计划的区别"],
+    tags: ["风险管理"],
+    options: [],
   },
   {
-    "id": 227,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "项目估算方法",
-    "content": "软件开发中的估算为什么这么难？有哪些估算技术？",
-    "answer": "答案：估算难在不确定性和认知偏差。常用技术：功能点、故事点、计划扑克、类比估算、三点估算\n\n解析：软件开发的本质是新问题，未知因素多。常见误区：把估算当承诺、没有考虑非编码活动（会议/文档/调试）、基础假设无人质疑。估算技术对比：功能点/故事点（相对大小，不关注实际时间）、计划扑克（结合专家经验和群体智慧）、三点估算（乐观+悲观+最可能）/6 ≈ 加权平均。\n\n扩展延伸：技术债务的概念——为什么」快」往往更慢？赶时间走捷径会积累技术债务，后期用两倍时间偿还。关键原则 1）估算和承诺要分开——团队给估算，PO 做承诺 2）历史数据比直觉更可靠——有 velocity（团队速率）才能准确预测 3）越早的估算误差越大，定期重新估算。",
-    "hints": [
-      "故事点和小时数有什么不同",
-      "什么是理想时间和日历时间的区别"
-    ],
-    "tags": [
-      "估算",
-      "项目管理"
-    ],
-    "options": []
+    id: 227,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "项目估算方法",
+    content: "软件开发中的估算为什么这么难？有哪些估算技术？",
+    answer:
+      "答案：估算难在不确定性和认知偏差。常用技术：功能点、故事点、计划扑克、类比估算、三点估算\n\n解析：软件开发的本质是新问题，未知因素多。常见误区：把估算当承诺、没有考虑非编码活动（会议/文档/调试）、基础假设无人质疑。估算技术对比：功能点/故事点（相对大小，不关注实际时间）、计划扑克（结合专家经验和群体智慧）、三点估算（乐观+悲观+最可能）/6 ≈ 加权平均。\n\n扩展延伸：技术债务的概念——为什么」快」往往更慢？赶时间走捷径会积累技术债务，后期用两倍时间偿还。关键原则 1）估算和承诺要分开——团队给估算，PO 做承诺 2）历史数据比直觉更可靠——有 velocity（团队速率）才能准确预测 3）越早的估算误差越大，定期重新估算。",
+    hints: ["故事点和小时数有什么不同", "什么是理想时间和日历时间的区别"],
+    tags: ["估算", "项目管理"],
+    options: [],
   },
   {
-    "id": 228,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "沟通管理与干系人管理",
-    "content": "项目中经常出现的信息不畅通问题，怎么通过沟通管理和干系人管理来解决？",
-    "answer": "答案：明确沟通计划 + 识别干系人 + 建立多层次沟通渠道\n\n解析：沟通管理关键 1）沟通渠道数 = N×(N-1)/2，团队越大沟通成本越高 2）建立多层沟通机制：每日站会（同步）、周报（异步）、文档（归档）、IM（快速问答）3）信息辐射器——看板（Kanban 板）让团队状态一目了然。干系人管理：用权力-利益矩阵分类，不同象限不同管理策略（重点管理/保持满意/随时告知/最低投入）。\n\n扩展延伸：跨团队协作的典型问题：上下游依赖不清晰→ 用依赖地图可视化。异步沟通的最佳实践：写文档前想三遍」谁要看」、」看了做什么」、」想知道什么」。会议效率提升：每次会议必须有明确 agenda，结束时确认下一步行动和负责人。没有结论的会议等于浪费所有人的时间。",
-    "hints": [
-      "同步沟通和异步沟通各适合什么场景",
-      "干系人权力-利益矩阵的四个象限"
-    ],
-    "tags": [
-      "沟通",
-      "干系人"
-    ],
-    "options": []
+    id: 228,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "沟通管理与干系人管理",
+    content: "项目中经常出现的信息不畅通问题，怎么通过沟通管理和干系人管理来解决？",
+    answer:
+      "答案：明确沟通计划 + 识别干系人 + 建立多层次沟通渠道\n\n解析：沟通管理关键 1）沟通渠道数 = N×(N-1)/2，团队越大沟通成本越高 2）建立多层沟通机制：每日站会（同步）、周报（异步）、文档（归档）、IM（快速问答）3）信息辐射器——看板（Kanban 板）让团队状态一目了然。干系人管理：用权力-利益矩阵分类，不同象限不同管理策略（重点管理/保持满意/随时告知/最低投入）。\n\n扩展延伸：跨团队协作的典型问题：上下游依赖不清晰→ 用依赖地图可视化。异步沟通的最佳实践：写文档前想三遍」谁要看」、」看了做什么」、」想知道什么」。会议效率提升：每次会议必须有明确 agenda，结束时确认下一步行动和负责人。没有结论的会议等于浪费所有人的时间。",
+    hints: ["同步沟通和异步沟通各适合什么场景", "干系人权力-利益矩阵的四个象限"],
+    tags: ["沟通", "干系人"],
+    options: [],
   },
   {
-    "id": 229,
-    "category": "project_mgmt",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "关键路径法（CPM）",
-    "content": "什么是关键路径法？如何利用它来压缩项目工期？",
-    "answer": "答案：关键路径是项目中最长的任务依赖链，决定了项目最短完工时间\n\n解析：关键路径法（Critical Path Method）步骤：1）列出所有活动及其依赖关系 2）估算每个活动工期 3）绘制网络图 4）计算每个活动的最早/最晚开始和结束时间 5）找出总浮动时间（Total Float）为零的路径——即关键路径。关键路径上的任何一个活动延迟都会导致项目延期。压缩工期（Crashing）：在关键路径上加资源（人力/加班），但注意——成本以指数增长，且加人可能引入沟通开销（布鲁克斯法则：给一个已延迟的项目加人只会让它更延迟）。\n\n扩展延伸：关键链（Critical Chain）——高德拉特在《关键链》中提出的改进方法。不同于 CPM 关注任务依赖，关键链关注资源约束。核心做法：给每个任务减去安全时间（学生综合征——工作总是膨胀到分配的截止时间），在项目末端集中放置缓冲（Buffer）。项目的实际拖延往往是缓冲被不断吃掉导致的。关键路径不是静态的，项目执行中可能变化，需要定期更新。",
-    "hints": [
-      "总浮动时间和自由浮动时间的区别",
-      "布鲁克斯法则（Brooks' Law）是什么"
-    ],
-    "tags": [
-      "进度",
-      "经典理论"
-    ],
-    "options": []
+    id: 229,
+    category: "project_mgmt",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "关键路径法（CPM）",
+    content: "什么是关键路径法？如何利用它来压缩项目工期？",
+    answer:
+      "答案：关键路径是项目中最长的任务依赖链，决定了项目最短完工时间\n\n解析：关键路径法（Critical Path Method）步骤：1）列出所有活动及其依赖关系 2）估算每个活动工期 3）绘制网络图 4）计算每个活动的最早/最晚开始和结束时间 5）找出总浮动时间（Total Float）为零的路径——即关键路径。关键路径上的任何一个活动延迟都会导致项目延期。压缩工期（Crashing）：在关键路径上加资源（人力/加班），但注意——成本以指数增长，且加人可能引入沟通开销（布鲁克斯法则：给一个已延迟的项目加人只会让它更延迟）。\n\n扩展延伸：关键链（Critical Chain）——高德拉特在《关键链》中提出的改进方法。不同于 CPM 关注任务依赖，关键链关注资源约束。核心做法：给每个任务减去安全时间（学生综合征——工作总是膨胀到分配的截止时间），在项目末端集中放置缓冲（Buffer）。项目的实际拖延往往是缓冲被不断吃掉导致的。关键路径不是静态的，项目执行中可能变化，需要定期更新。",
+    hints: ["总浮动时间和自由浮动时间的区别", "布鲁克斯法则（Brooks' Law）是什么"],
+    tags: ["进度", "经典理论"],
+    options: [],
   },
   {
-    "id": 230,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "燃尽图与燃起图",
-    "content": "燃尽图和燃起图的区别是什么？在项目管理中各有什么用？",
-    "answer": "答案：燃尽图看剩余工作量随时间减少，燃起图看已完成工作量随时间积累\n\n解析：燃尽图（Burndown Chart）：X 轴=时间（Sprint 天数），Y 轴=剩余工作量（故事点/小时数）。理想线是一条对角线从总工作量到 0，实际线在其上。实际线在理想线上方 → 进度滞后。燃起图（Burnup Chart）：两条线——总工作量和已完成工作量，相交时即完成。燃起图比燃尽图更直观（不因范围变更而失真）。当 Sprint 中增加或减少需求时，燃尽图可能往上跳（看起来「糟糕」），燃起图则清晰显示范围变化和完成进度的关系。\n\n扩展延伸：如果燃尽图最后两天直线下降到 0 ——大概率是虚假报告（开发在前几天没有更新真实进度）。可靠的燃尽图需要每日更新剩余工作量。项目经理容易犯的错误：只看图不问原因。燃尽/燃起图是沟通工具，不是考核工具——用图来发现问题（为什么进度慢了），而不是用来压团队（快点完成！）。",
-    "hints": [
-      "燃尽图在 Sprint 中增加需求会有什么变化",
-      "燃起图为什么比燃尽图更能反映范围变化"
-    ],
-    "tags": [
-      "进度",
-      "工具"
-    ],
-    "options": []
+    id: 230,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "燃尽图与燃起图",
+    content: "燃尽图和燃起图的区别是什么？在项目管理中各有什么用？",
+    answer:
+      "答案：燃尽图看剩余工作量随时间减少，燃起图看已完成工作量随时间积累\n\n解析：燃尽图（Burndown Chart）：X 轴=时间（Sprint 天数），Y 轴=剩余工作量（故事点/小时数）。理想线是一条对角线从总工作量到 0，实际线在其上。实际线在理想线上方 → 进度滞后。燃起图（Burnup Chart）：两条线——总工作量和已完成工作量，相交时即完成。燃起图比燃尽图更直观（不因范围变更而失真）。当 Sprint 中增加或减少需求时，燃尽图可能往上跳（看起来「糟糕」），燃起图则清晰显示范围变化和完成进度的关系。\n\n扩展延伸：如果燃尽图最后两天直线下降到 0 ——大概率是虚假报告（开发在前几天没有更新真实进度）。可靠的燃尽图需要每日更新剩余工作量。项目经理容易犯的错误：只看图不问原因。燃尽/燃起图是沟通工具，不是考核工具——用图来发现问题（为什么进度慢了），而不是用来压团队（快点完成！）。",
+    hints: ["燃尽图在 Sprint 中增加需求会有什么变化", "燃起图为什么比燃尽图更能反映范围变化"],
+    tags: ["进度", "工具"],
+    options: [],
   },
   {
-    "id": 231,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Kanban vs Scrum 的选择",
-    "content": "什么情况下用 Scrum？什么情况下用 Kanban？如何选择？",
-    "answer": "答案：Scrum 适合有固定节奏、需求较明确的项目；Kanban 适合需求变化频繁、需持续交付的团队\n\n解析：Scrum 适合：产品功能开发（固定 Sprint 周期）、团队需要建立工作节奏、需求可以按 Sprint 规划。Kanban 适合：运维和支持团队（没有固定版本）、需求优先级频繁变化、想减少 WIP（在制品）暴露瓶颈。两者核心区别：Scrum 有固定时间盒和时间承诺，Kanban 是持续流没有固定迭代。Scrum 的迭代回顾提供结构化改进机会，Kanban 通过 WIP 限制和流动指标持续改进。\n\n扩展延伸：Scrumban——两者的混合体，团队既保留 Sprint 节奏又引入 WIP 限制。适合从 Scrum 向 Kanban 过渡的团队。选择框架不如坚持原则：不管是 Scrum 还是 Kanban，核心在于 1）快速反馈 2）持续改进 3）透明化（看板/站会）。框架不会让你变敏捷，持续改进的团队文化才会。",
-    "hints": [
-      "WIP 限制为什么是 Kanban 的核心机制",
-      "Scrum 的固定时间盒适合什么类型的团队"
-    ],
-    "tags": [
-      "敏捷",
-      "Scrum",
-      "Kanban"
-    ],
-    "options": []
+    id: 231,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "Kanban vs Scrum 的选择",
+    content: "什么情况下用 Scrum？什么情况下用 Kanban？如何选择？",
+    answer:
+      "答案：Scrum 适合有固定节奏、需求较明确的项目；Kanban 适合需求变化频繁、需持续交付的团队\n\n解析：Scrum 适合：产品功能开发（固定 Sprint 周期）、团队需要建立工作节奏、需求可以按 Sprint 规划。Kanban 适合：运维和支持团队（没有固定版本）、需求优先级频繁变化、想减少 WIP（在制品）暴露瓶颈。两者核心区别：Scrum 有固定时间盒和时间承诺，Kanban 是持续流没有固定迭代。Scrum 的迭代回顾提供结构化改进机会，Kanban 通过 WIP 限制和流动指标持续改进。\n\n扩展延伸：Scrumban——两者的混合体，团队既保留 Sprint 节奏又引入 WIP 限制。适合从 Scrum 向 Kanban 过渡的团队。选择框架不如坚持原则：不管是 Scrum 还是 Kanban，核心在于 1）快速反馈 2）持续改进 3）透明化（看板/站会）。框架不会让你变敏捷，持续改进的团队文化才会。",
+    hints: ["WIP 限制为什么是 Kanban 的核心机制", "Scrum 的固定时间盒适合什么类型的团队"],
+    tags: ["敏捷", "Scrum", "Kanban"],
+    options: [],
   },
   {
-    "id": 232,
-    "category": "project_mgmt",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "代码评审与项目管理",
-    "content": "代码评审（Code Review）在项目管理中扮演什么角色？好的评审流程是什么？",
-    "answer": "答案：代码评审是质量门禁 + 知识共享 + 团队标准对齐\n\n解析：代码评审的三个价值 1）缺陷发现——越早发现修复成本越低（集成测试发现问题修复成本是评审阶段的 4 倍）2）知识传递——新人对代码库的理解通过评审加速，减少单点依赖 3）标准对齐——团队代码风格和架构原则通过评审达成一致。好的评审流程：PR 不超过 200-400 行（超过 400 行评审效果急剧下降），24 小时内响应，作者写好描述和上下文（What/Why/How），评审者关注逻辑和架构 > 风格（风格问题交由 linter）。\n\n扩展延伸：如何避免 Code Review 流于形式 1）不做 review 不能合并（分支保护）2）不要上来就改代码——先理解「为什么要这么改」3）三明治反馈法：肯定（「这个设计很好」）→ 建议（「但是这里可能需要考虑 X」）→ 鼓励（「整体很不错，改完这个点就可以合并了」）。评审不是找茬——目标是帮同事把代码变得更好。同理，收到 review comment 时不要 defensive——每个 comment 都是一个免费的改进机会。",
-    "hints": [
-      "为什么 PR 超过 400 行后缺陷发现率会急剧下降",
-      "Code Review 中的三明治反馈法怎么用"
-    ],
-    "tags": [
-      "质量",
-      "协作"
-    ],
-    "options": []
+    id: 232,
+    category: "project_mgmt",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "代码评审与项目管理",
+    content: "代码评审（Code Review）在项目管理中扮演什么角色？好的评审流程是什么？",
+    answer:
+      "答案：代码评审是质量门禁 + 知识共享 + 团队标准对齐\n\n解析：代码评审的三个价值 1）缺陷发现——越早发现修复成本越低（集成测试发现问题修复成本是评审阶段的 4 倍）2）知识传递——新人对代码库的理解通过评审加速，减少单点依赖 3）标准对齐——团队代码风格和架构原则通过评审达成一致。好的评审流程：PR 不超过 200-400 行（超过 400 行评审效果急剧下降），24 小时内响应，作者写好描述和上下文（What/Why/How），评审者关注逻辑和架构 > 风格（风格问题交由 linter）。\n\n扩展延伸：如何避免 Code Review 流于形式 1）不做 review 不能合并（分支保护）2）不要上来就改代码——先理解「为什么要这么改」3）三明治反馈法：肯定（「这个设计很好」）→ 建议（「但是这里可能需要考虑 X」）→ 鼓励（「整体很不错，改完这个点就可以合并了」）。评审不是找茬——目标是帮同事把代码变得更好。同理，收到 review comment 时不要 defensive——每个 comment 都是一个免费的改进机会。",
+    hints: ["为什么 PR 超过 400 行后缺陷发现率会急剧下降", "Code Review 中的三明治反馈法怎么用"],
+    tags: ["质量", "协作"],
+    options: [],
   },
   {
-    "id": 233,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "技术债务管理",
-    "content": "什么是技术债务？如何识别和管理技术债务？",
-    "answer": "答案：技术债务是为了短期交付而做出的妥协性技术决策，长期需偿还利息（维护成本）\n\n解析：技术债务四象限（Martin Fowler 分类）：1）有意的/可管理的——团队故意选择 Quick-and-Dirty 方案并记录在案 2）有意的/不可管理的——方案是最快方案但没有记录 3）无意的/可管理的——团队不知道有更好的方案但架构尚可演变 4）无意的/不可管理的——混乱的架构且整个团队都不知道怎么改善。最危险的是第 4 类——代码还能跑但没人敢改。管理策略：像管理金融债务一样——借债可以（快速交付验证业务假设），但要记录（在 README/TODO 注明债务）、定期还（每个 Sprint 安排 20% 时间用于还债）、避免高利贷（对核心架构的妥协）。\n\n扩展延伸：识别技术债务的信号 1）改一个 bug 引入三个新 bug 2）新人上手时间越来越长 3）构建/测试越来越慢 4）每次上线都在赌。量化方法：SonarQube 的代码异味（Code Smell）和复杂度指标、循环复杂度（Cyclomatic Complexity）、测试覆盖率趋势。切记：有时候重写是更贵的方案——完全重写往往损失了系统隐式积累的知识（Bug 修复、业务规则暗含的细节）——The Big Rewrite 陷阱。",
-    "hints": [
-      "Martin Fowler 的技术债务四象限怎么用",
-      "为什么完全重写往往比线性重构更危险"
-    ],
-    "tags": [
-      "质量",
-      "技术债务"
-    ],
-    "options": []
+    id: 233,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "技术债务管理",
+    content: "什么是技术债务？如何识别和管理技术债务？",
+    answer:
+      "答案：技术债务是为了短期交付而做出的妥协性技术决策，长期需偿还利息（维护成本）\n\n解析：技术债务四象限（Martin Fowler 分类）：1）有意的/可管理的——团队故意选择 Quick-and-Dirty 方案并记录在案 2）有意的/不可管理的——方案是最快方案但没有记录 3）无意的/可管理的——团队不知道有更好的方案但架构尚可演变 4）无意的/不可管理的——混乱的架构且整个团队都不知道怎么改善。最危险的是第 4 类——代码还能跑但没人敢改。管理策略：像管理金融债务一样——借债可以（快速交付验证业务假设），但要记录（在 README/TODO 注明债务）、定期还（每个 Sprint 安排 20% 时间用于还债）、避免高利贷（对核心架构的妥协）。\n\n扩展延伸：识别技术债务的信号 1）改一个 bug 引入三个新 bug 2）新人上手时间越来越长 3）构建/测试越来越慢 4）每次上线都在赌。量化方法：SonarQube 的代码异味（Code Smell）和复杂度指标、循环复杂度（Cyclomatic Complexity）、测试覆盖率趋势。切记：有时候重写是更贵的方案——完全重写往往损失了系统隐式积累的知识（Bug 修复、业务规则暗含的细节）——The Big Rewrite 陷阱。",
+    hints: ["Martin Fowler 的技术债务四象限怎么用", "为什么完全重写往往比线性重构更危险"],
+    tags: ["质量", "技术债务"],
+    options: [],
   },
   {
-    "id": 234,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "项目复盘方法",
-    "content": "项目结束了如何做有效的复盘？常用的复盘工具有哪些？",
-    "answer": "答案：5 个步骤：收集数据 → 回顾目标 → 评估结果 → 分析原因 → 总结改进\n\n解析：复盘 vs 总结的区别：总结是「我做了什么」，复盘是「我为什么这么做、能否做得更好」。有效复盘的四个心态：开放心态（不掩饰问题）、坦诚表达（对事不对人）、聚焦改进（不追究责任）、反思自我（从自己身上找原因）。常用工具：5 Whys（连续追问 5 个「为什么」找到根因）、Starfish（Start/Stop/Continue/More of/Less of）、KPT（Keep/Problem/Try）、四象限（做得好/做得差/反思/改进）。\n\n扩展延伸：失败的项目更需要复盘——但容易变成追责会。好的复盘引导者（Facilitator）会：「允许失败」的文化比任何复盘技巧都重要——如果大家不敢说真话，复复盘不出任何有用信息。复盘的输出不是文档，而是可执行的改进项：每项指定负责人和截止日期。下一轮复盘第一件事——检查上次复盘的改进项完成没有。",
-    "hints": [
-      "复盘的 5 个步骤具体怎么操作",
-      "项目失败后的复盘如何避免变成追责会"
-    ],
-    "tags": [
-      "复盘",
-      "改进"
-    ],
-    "options": []
+    id: 234,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "项目复盘方法",
+    content: "项目结束了如何做有效的复盘？常用的复盘工具有哪些？",
+    answer:
+      "答案：5 个步骤：收集数据 → 回顾目标 → 评估结果 → 分析原因 → 总结改进\n\n解析：复盘 vs 总结的区别：总结是「我做了什么」，复盘是「我为什么这么做、能否做得更好」。有效复盘的四个心态：开放心态（不掩饰问题）、坦诚表达（对事不对人）、聚焦改进（不追究责任）、反思自我（从自己身上找原因）。常用工具：5 Whys（连续追问 5 个「为什么」找到根因）、Starfish（Start/Stop/Continue/More of/Less of）、KPT（Keep/Problem/Try）、四象限（做得好/做得差/反思/改进）。\n\n扩展延伸：失败的项目更需要复盘——但容易变成追责会。好的复盘引导者（Facilitator）会：「允许失败」的文化比任何复盘技巧都重要——如果大家不敢说真话，复复盘不出任何有用信息。复盘的输出不是文档，而是可执行的改进项：每项指定负责人和截止日期。下一轮复盘第一件事——检查上次复盘的改进项完成没有。",
+    hints: ["复盘的 5 个步骤具体怎么操作", "项目失败后的复盘如何避免变成追责会"],
+    tags: ["复盘", "改进"],
+    options: [],
   },
   {
-    "id": 235,
-    "category": "project_mgmt",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "跨职能团队协作",
-    "content": "如何有效管理跨职能团队（设计/开发/测试/运营）的协作？",
-    "answer": "答案：统一目标 + 明确接口 + 建立节奏 + 工具打通\n\n解析：跨职能团队最大的挑战是不同角色的工作节奏和语言不同。1）统一目标——用 OKR 对齐，让每个角色知道」为什么做这个事」而不是」PM 让我做这个」2）明确接口——设计师交付什么格式、开发需要什么、测试何时介入、运营上线前需准备什么，每个环节的输入输出和时间节点清晰 3）建立节奏——双周迭代计划会、每周设计评审、每日站会 4）工具打通——设计稿（Figma）→ 开发任务（JIRA）→ 测试用例 → 发布，减少信息断裂。\n\n扩展延伸：最影响跨职能协作效率的因素——等待（设计师等 PRD、开发等设计、测试等开发、运营等发布）。解决方案：让上下游角色尽早参与（设计师在需求阶段就介入、测试在开发中写用例）。Scrum 的」全栈」理念——不是指技术全栈，而是每个角色对整个交付负责而非只做自己那一块。T 型人才——在自己的领域精深（专精）同时了解上下游工作（广博）。",
-    "hints": [
-      "设计师应该在什么阶段介入开发流程",
-      "什么是 T 型人才，跨职能团队为什么需要"
-    ],
-    "tags": [
-      "协作",
-      "团队"
-    ],
-    "options": []
+    id: 235,
+    category: "project_mgmt",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "跨职能团队协作",
+    content: "如何有效管理跨职能团队（设计/开发/测试/运营）的协作？",
+    answer:
+      "答案：统一目标 + 明确接口 + 建立节奏 + 工具打通\n\n解析：跨职能团队最大的挑战是不同角色的工作节奏和语言不同。1）统一目标——用 OKR 对齐，让每个角色知道」为什么做这个事」而不是」PM 让我做这个」2）明确接口——设计师交付什么格式、开发需要什么、测试何时介入、运营上线前需准备什么，每个环节的输入输出和时间节点清晰 3）建立节奏——双周迭代计划会、每周设计评审、每日站会 4）工具打通——设计稿（Figma）→ 开发任务（JIRA）→ 测试用例 → 发布，减少信息断裂。\n\n扩展延伸：最影响跨职能协作效率的因素——等待（设计师等 PRD、开发等设计、测试等开发、运营等发布）。解决方案：让上下游角色尽早参与（设计师在需求阶段就介入、测试在开发中写用例）。Scrum 的」全栈」理念——不是指技术全栈，而是每个角色对整个交付负责而非只做自己那一块。T 型人才——在自己的领域精深（专精）同时了解上下游工作（广博）。",
+    hints: ["设计师应该在什么阶段介入开发流程", "什么是 T 型人才，跨职能团队为什么需要"],
+    tags: ["协作", "团队"],
+    options: [],
   },
   {
-    "id": 236,
-    "category": "react",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "useState 闭包陷阱（Stale Closure）",
-    "content": "以下代码点击三次后输出什么？为什么？\n```jsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    const timer = setInterval(() => {\n      setCount(count + 1);\n    }, 1000);\n    return () => clearInterval(timer);\n  }, []);\n  return <p>{count}</p>;\n}\n```",
-    "answer": "答案：每次只增加到 1，永远不增长\n\n解析：useEffect 回调在 mount 时执行一次，闭包捕获了当时 count = 0。setInterval 中每次执行 setCount(count + 1) 等同于 setCount(0 + 1) = setCount(1)，所以 count 永远是 1。这是 React Hooks 中最常见的闭包陷阱。\n\n扩展延伸：三种解决方案 1）在依赖数组中加 count（但会使定时器重设）2）使用函数式更新 setCount(c => c + 1)（推荐，永远从最新状态计算）3）使用 useRef 保存最新值。函数式更新是最简洁的方案。",
-    "hints": [
-      "闭包在渲染时捕获了什么",
-      "函数式更新 setCount(c => c + 1) 为什么能避免这个问题"
-    ],
-    "tags": [
-      "React",
-      "Hooks",
-      "陷阱"
-    ],
-    "options": []
+    id: 236,
+    category: "react",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "useState 闭包陷阱（Stale Closure）",
+    content:
+      "以下代码点击三次后输出什么？为什么？\n```jsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    const timer = setInterval(() => {\n      setCount(count + 1);\n    }, 1000);\n    return () => clearInterval(timer);\n  }, []);\n  return <p>{count}</p>;\n}\n```",
+    answer:
+      "答案：每次只增加到 1，永远不增长\n\n解析：useEffect 回调在 mount 时执行一次，闭包捕获了当时 count = 0。setInterval 中每次执行 setCount(count + 1) 等同于 setCount(0 + 1) = setCount(1)，所以 count 永远是 1。这是 React Hooks 中最常见的闭包陷阱。\n\n扩展延伸：三种解决方案 1）在依赖数组中加 count（但会使定时器重设）2）使用函数式更新 setCount(c => c + 1)（推荐，永远从最新状态计算）3）使用 useRef 保存最新值。函数式更新是最简洁的方案。",
+    hints: ["闭包在渲染时捕获了什么", "函数式更新 setCount(c => c + 1) 为什么能避免这个问题"],
+    tags: ["React", "Hooks", "陷阱"],
+    options: [],
   },
   {
-    "id": 237,
-    "category": "react",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "useEffect 依赖项遗漏的问题",
-    "content": "useEffect 缺少依赖项时可能引发什么问题？为什么 React 的 eslint-plugin-react-hooks 要求 exhaustive-deps？",
-    "answer": "答案：可能读到陈旧的 props/state，产生难以排查的 bug\n\n解析：useEffect 回调形成一个闭包，捕获了创建时的 props 和 state。缺少依赖项意味着即使依赖值变化，effect 也不会重新执行，回调中始终使用旧值。这可能导致数据不同步、无限循环（缺少依赖 + 在 effect 中 setState）或遗漏清理逻辑。\n\n扩展延伸：严格模式下如何思考依赖 1）组件中所有被 effect 引用的 props/state 都应加入依赖 2）如果想故意只在 mount 时执行，需明确说明意图（如 eslint-disable 注释 + 代码注释）3）useEffect 的参数是心智模型的核心——它等价于响应式系统的依赖追踪。",
-    "hints": [
-      "react-hooks/exhaustive-deps 规则是什么",
-      "哪些场景下需要故意跳过依赖"
-    ],
-    "tags": [
-      "React",
-      "Hooks",
-      "陷阱"
-    ],
-    "options": []
+    id: 237,
+    category: "react",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "useEffect 依赖项遗漏的问题",
+    content:
+      "useEffect 缺少依赖项时可能引发什么问题？为什么 React 的 eslint-plugin-react-hooks 要求 exhaustive-deps？",
+    answer:
+      "答案：可能读到陈旧的 props/state，产生难以排查的 bug\n\n解析：useEffect 回调形成一个闭包，捕获了创建时的 props 和 state。缺少依赖项意味着即使依赖值变化，effect 也不会重新执行，回调中始终使用旧值。这可能导致数据不同步、无限循环（缺少依赖 + 在 effect 中 setState）或遗漏清理逻辑。\n\n扩展延伸：严格模式下如何思考依赖 1）组件中所有被 effect 引用的 props/state 都应加入依赖 2）如果想故意只在 mount 时执行，需明确说明意图（如 eslint-disable 注释 + 代码注释）3）useEffect 的参数是心智模型的核心——它等价于响应式系统的依赖追踪。",
+    hints: ["react-hooks/exhaustive-deps 规则是什么", "哪些场景下需要故意跳过依赖"],
+    tags: ["React", "Hooks", "陷阱"],
+    options: [],
   },
   {
-    "id": 238,
-    "category": "react",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "React key 属性的作用",
-    "content": "列表渲染时 key 属性有什么作用？使用数组索引作为 key 有什么风险？",
-    "answer": "答案：key 帮助 React 识别哪些元素被修改、添加或删除\n\n解析：React 通过 key 来判断是复用已有 DOM 节点还是创建新节点。使用索引做 key 的问题：在列表插入/删除/排序时，元素下标变化导致 key 改变，React 会错误地复用节点，引发状态错乱（如 input 输入框内容残留）。\n\n扩展延伸：key 的最佳实践 1）优先用数据的唯一 ID（如 id、UUID）2）仅在列表静态不变时用索引 3）key 应在兄弟节点间唯一 4）不推荐用 Math.random() 作为 key（每次渲染都新建 DOM，性能极差）。",
-    "hints": [
-      "key 变化时 React 做什么",
-      "插入新元素时用索引 key 会有什么表现"
-    ],
-    "tags": [
-      "React",
-      "列表",
-      "陷阱"
-    ],
-    "options": []
+    id: 238,
+    category: "react",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "React key 属性的作用",
+    content: "列表渲染时 key 属性有什么作用？使用数组索引作为 key 有什么风险？",
+    answer:
+      "答案：key 帮助 React 识别哪些元素被修改、添加或删除\n\n解析：React 通过 key 来判断是复用已有 DOM 节点还是创建新节点。使用索引做 key 的问题：在列表插入/删除/排序时，元素下标变化导致 key 改变，React 会错误地复用节点，引发状态错乱（如 input 输入框内容残留）。\n\n扩展延伸：key 的最佳实践 1）优先用数据的唯一 ID（如 id、UUID）2）仅在列表静态不变时用索引 3）key 应在兄弟节点间唯一 4）不推荐用 Math.random() 作为 key（每次渲染都新建 DOM，性能极差）。",
+    hints: ["key 变化时 React 做什么", "插入新元素时用索引 key 会有什么表现"],
+    tags: ["React", "列表", "陷阱"],
+    options: [],
   },
   {
-    "id": 239,
-    "category": "react",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "受控组件与非受控组件",
-    "content": "请解释 React 中受控组件和非受控组件的区别，各自的适用场景。",
-    "answer": "答案：受控组件由 React state 控制表单值，非受控组件由 DOM 自身的 ref 管理状态\n\n解析：受控组件每个输入都对应 state，onChange 更新 state → 组件重渲染 → 显示新值，数据流单向清晰。非受控组件用 ref 从 DOM 获取值，类似传统 HTML 表单，性能更好但难以实时校验。\n\n扩展延伸：如何选择 1）表单校验/联动/条件渲染 → 受控 2）简单的文件上传 → 非受控 3）混合使用（defaultValue + ref）在某些场景下也可行。React 推荐多数场景用受控组件。",
-    "hints": [
-      "非受控组件如何获取当前值",
-      "表单提交时两种方式的处理区别"
-    ],
-    "tags": [
-      "React",
-      "表单"
-    ],
-    "options": []
+    id: 239,
+    category: "react",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "受控组件与非受控组件",
+    content: "请解释 React 中受控组件和非受控组件的区别，各自的适用场景。",
+    answer:
+      "答案：受控组件由 React state 控制表单值，非受控组件由 DOM 自身的 ref 管理状态\n\n解析：受控组件每个输入都对应 state，onChange 更新 state → 组件重渲染 → 显示新值，数据流单向清晰。非受控组件用 ref 从 DOM 获取值，类似传统 HTML 表单，性能更好但难以实时校验。\n\n扩展延伸：如何选择 1）表单校验/联动/条件渲染 → 受控 2）简单的文件上传 → 非受控 3）混合使用（defaultValue + ref）在某些场景下也可行。React 推荐多数场景用受控组件。",
+    hints: ["非受控组件如何获取当前值", "表单提交时两种方式的处理区别"],
+    tags: ["React", "表单"],
+    options: [],
   },
   {
-    "id": 240,
-    "category": "react",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "useCallback/useMemo 的滥用问题",
-    "content": "是否所有函数都应该用 useCallback 包裹？什么情况下 useCallback/useMemo 反而会降低性能？",
-    "answer": "答案：不是。滥用 useCallback 反而可能降低性能\n\n解析：useCallback/useMemo 本身也有开销——依赖数组的比较 + 闭包维护。如果父组件每次渲染开销本身不大，传一个新函数给子组件也不浪费性能，那么加上 useCallback 增加的代码复杂度和内存开销可能超过减少重渲染带来的收益。\n\n扩展延伸：何时应该使用 1）传给 React.memo 包裹的子组件作为 props 2）作为 useEffect 的依赖项 3）自定义 Hook 返回值中。不使用的场景：原生 DOM 元素、非 memo 的组件、成本极轻的 computed 值。推荐在真正遇到性能问题时再优化，而非提前优化。",
-    "hints": [
-      "React.memo 和 useCallback 的关系",
-      "如何度量子组件重渲染的成本"
-    ],
-    "tags": [
-      "React",
-      "性能",
-      "陷阱"
-    ],
-    "options": []
+    id: 240,
+    category: "react",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "useCallback/useMemo 的滥用问题",
+    content:
+      "是否所有函数都应该用 useCallback 包裹？什么情况下 useCallback/useMemo 反而会降低性能？",
+    answer:
+      "答案：不是。滥用 useCallback 反而可能降低性能\n\n解析：useCallback/useMemo 本身也有开销——依赖数组的比较 + 闭包维护。如果父组件每次渲染开销本身不大，传一个新函数给子组件也不浪费性能，那么加上 useCallback 增加的代码复杂度和内存开销可能超过减少重渲染带来的收益。\n\n扩展延伸：何时应该使用 1）传给 React.memo 包裹的子组件作为 props 2）作为 useEffect 的依赖项 3）自定义 Hook 返回值中。不使用的场景：原生 DOM 元素、非 memo 的组件、成本极轻的 computed 值。推荐在真正遇到性能问题时再优化，而非提前优化。",
+    hints: ["React.memo 和 useCallback 的关系", "如何度量子组件重渲染的成本"],
+    tags: ["React", "性能", "陷阱"],
+    options: [],
   },
   {
-    "id": 241,
-    "category": "react",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "React.memo 的浅比较陷阱",
-    "content": "以下代码中 Child 组件被 React.memo 包裹，但父组件每次渲染 Child 仍然重渲染，为什么？\n```jsx\nfunction Parent() {\n  return <Child data={{ name: 'test' }} />;\n}\nconst Child = React.memo(({ data }) => <p>{data.name}</p>);\n```",
-    "answer": "答案：对象字面量每次渲染都是新引用，浅比较总是不相等\n\n解析：React.memo 默认使用浅比较（Object.is 比较 props）。{{ name: 'test' }} 每次在父组件 render 时都会创建新对象，引用不同导致浅比较结果为 false，所以 Child 永远重渲染。\n\n扩展延伸：解决方案 1）将对象提升到组件外（const DATA = { name: 'test' }）2）使用 useState/useRef 保持引用稳定 3）使用 useMemo 记忆化对象。React.memo 的心智模型：Props 引用不变才跳过渲染，所以传入内联对象/箭头函数会让 memo 完全失效。",
-    "hints": [
-      "React.memo 默认比较策略是什么",
-      "如何保持 props 引用稳定"
-    ],
-    "tags": [
-      "React",
-      "性能",
-      "陷阱"
-    ],
-    "options": []
+    id: 241,
+    category: "react",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "React.memo 的浅比较陷阱",
+    content:
+      "以下代码中 Child 组件被 React.memo 包裹，但父组件每次渲染 Child 仍然重渲染，为什么？\n```jsx\nfunction Parent() {\n  return <Child data={{ name: 'test' }} />;\n}\nconst Child = React.memo(({ data }) => <p>{data.name}</p>);\n```",
+    answer:
+      "答案：对象字面量每次渲染都是新引用，浅比较总是不相等\n\n解析：React.memo 默认使用浅比较（Object.is 比较 props）。{{ name: 'test' }} 每次在父组件 render 时都会创建新对象，引用不同导致浅比较结果为 false，所以 Child 永远重渲染。\n\n扩展延伸：解决方案 1）将对象提升到组件外（const DATA = { name: 'test' }）2）使用 useState/useRef 保持引用稳定 3）使用 useMemo 记忆化对象。React.memo 的心智模型：Props 引用不变才跳过渲染，所以传入内联对象/箭头函数会让 memo 完全失效。",
+    hints: ["React.memo 默认比较策略是什么", "如何保持 props 引用稳定"],
+    tags: ["React", "性能", "陷阱"],
+    options: [],
   },
   {
-    "id": 242,
-    "category": "react",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "组件卸载后 setState 的警告",
-    "content": "为什么 React 会在组件卸载后的 setState 时抛出警告？如何处理异步操作中的这个问题？",
-    "answer": "答案：卸载后 setState 表示内存泄漏——更新已不存在的组件状态\n\n解析：组件卸载后调用 setState，React 会在开发模式下输出警告（Can't perform a React state update on an unmounted component）。这通常是异步回调、定时器或订阅在组件卸载后仍在执行的结果。\n\n扩展延伸：修复方案 1）使用 AbortController 取消 fetch 请求 2）清理定时器/订阅（useEffect 的 cleanup）3）使用 useRef 标记组件是否挂载（如 const mounted = useRef(true) + mounted.current = false 在 cleanup 中，但不推荐作为默认方案）。React 18 的 StrictMode 会在开发环境双重触发 effect 以帮助发现此问题。",
-    "hints": [
-      "useEffect 的清理函数何时执行",
-      "AbortController 如何取消请求"
-    ],
-    "tags": [
-      "React",
-      "Hooks",
-      "陷阱"
-    ],
-    "options": []
+    id: 242,
+    category: "react",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "组件卸载后 setState 的警告",
+    content: "为什么 React 会在组件卸载后的 setState 时抛出警告？如何处理异步操作中的这个问题？",
+    answer:
+      "答案：卸载后 setState 表示内存泄漏——更新已不存在的组件状态\n\n解析：组件卸载后调用 setState，React 会在开发模式下输出警告（Can't perform a React state update on an unmounted component）。这通常是异步回调、定时器或订阅在组件卸载后仍在执行的结果。\n\n扩展延伸：修复方案 1）使用 AbortController 取消 fetch 请求 2）清理定时器/订阅（useEffect 的 cleanup）3）使用 useRef 标记组件是否挂载（如 const mounted = useRef(true) + mounted.current = false 在 cleanup 中，但不推荐作为默认方案）。React 18 的 StrictMode 会在开发环境双重触发 effect 以帮助发现此问题。",
+    hints: ["useEffect 的清理函数何时执行", "AbortController 如何取消请求"],
+    tags: ["React", "Hooks", "陷阱"],
+    options: [],
   },
   {
-    "id": 243,
-    "category": "react",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "连续 setState 的批量更新问题",
-    "content": "以下代码执行后 count 是多少？\n```jsx\nconst [count, setCount] = useState(0);\nconst handleClick = () => {\n  setCount(count + 1);\n  setCount(count + 1);\n  setCount(count + 1);\n};\n```",
-    "answer": "答案：1，不是 3\n\n解析：React 18 中事件处理函数内的 setState 会批量执行（batch update）。三个 setCount(count + 1) 在渲染时 count 都是 0，所以 0 + 1 = 1，最终结果只有 1。这是 React 状态更新机制的核心——state 在单次渲染中保持快照。\n\n扩展延伸：如需基于最新状态多次更新，应使用函数式更新 setCount(c => c + 1) 重复三次，结果才是 3。React 18 之前的版本仅在事件处理函数中批量执行，setTimeout 和 Promise 回调中不会批量。React 18 实现了自动批量更新，所有场景均批量处理。",
-    "hints": [
-      "函数式更新 setCount(c => c + 1) 和普通更新的区别",
-      "React 18 的自动批量更新是什么"
-    ],
-    "tags": [
-      "React",
-      "Hooks",
-      "陷阱"
-    ],
-    "options": []
+    id: 243,
+    category: "react",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "连续 setState 的批量更新问题",
+    content:
+      "以下代码执行后 count 是多少？\n```jsx\nconst [count, setCount] = useState(0);\nconst handleClick = () => {\n  setCount(count + 1);\n  setCount(count + 1);\n  setCount(count + 1);\n};\n```",
+    answer:
+      "答案：1，不是 3\n\n解析：React 18 中事件处理函数内的 setState 会批量执行（batch update）。三个 setCount(count + 1) 在渲染时 count 都是 0，所以 0 + 1 = 1，最终结果只有 1。这是 React 状态更新机制的核心——state 在单次渲染中保持快照。\n\n扩展延伸：如需基于最新状态多次更新，应使用函数式更新 setCount(c => c + 1) 重复三次，结果才是 3。React 18 之前的版本仅在事件处理函数中批量执行，setTimeout 和 Promise 回调中不会批量。React 18 实现了自动批量更新，所有场景均批量处理。",
+    hints: ["函数式更新 setCount(c => c + 1) 和普通更新的区别", "React 18 的自动批量更新是什么"],
+    tags: ["React", "Hooks", "陷阱"],
+    options: [],
   },
   {
-    "id": 244,
-    "category": "react",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "React 合成事件与原生事件混用",
-    "content": "在 React 组件中混用 React 合成事件和原生 DOM 事件，可能遇到什么问题？",
-    "answer": "答案：执行顺序不可控、事件冒泡/捕获行为异常、内存泄漏\n\n解析：React 合成事件在根节点（React 17 之前为 document，React 17+ 为 root 节点）统一委托处理。原生事件在真实 DOM 上绑定，两者执行时机不同。混用时可能出现：原生事件阻止冒泡后 React 事件无法触发、卸载时未清理原生事件导致内存泄漏、e.stopPropagation() 对原生事件无效。\n\n扩展延伸：最佳实践 1）尽量只用 React 事件系统 2）必须用原生事件时，在 useEffect 的 cleanup 中 removeEventListener 3）useRef 绑定原生事件是合法场景（如 Canvas、第三方库集成）。React 18 改为在 root 节点委托合成事件，使事件行为更贴近原生 DOM。",
-    "hints": [
-      "React 合成事件在哪里绑定",
-      "e.stopPropagation() 在合成事件和原生事件中的区别"
-    ],
-    "tags": [
-      "React",
-      "事件",
-      "陷阱"
-    ],
-    "options": []
+    id: 244,
+    category: "react",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "React 合成事件与原生事件混用",
+    content: "在 React 组件中混用 React 合成事件和原生 DOM 事件，可能遇到什么问题？",
+    answer:
+      "答案：执行顺序不可控、事件冒泡/捕获行为异常、内存泄漏\n\n解析：React 合成事件在根节点（React 17 之前为 document，React 17+ 为 root 节点）统一委托处理。原生事件在真实 DOM 上绑定，两者执行时机不同。混用时可能出现：原生事件阻止冒泡后 React 事件无法触发、卸载时未清理原生事件导致内存泄漏、e.stopPropagation() 对原生事件无效。\n\n扩展延伸：最佳实践 1）尽量只用 React 事件系统 2）必须用原生事件时，在 useEffect 的 cleanup 中 removeEventListener 3）useRef 绑定原生事件是合法场景（如 Canvas、第三方库集成）。React 18 改为在 root 节点委托合成事件，使事件行为更贴近原生 DOM。",
+    hints: ["React 合成事件在哪里绑定", "e.stopPropagation() 在合成事件和原生事件中的区别"],
+    tags: ["React", "事件", "陷阱"],
+    options: [],
   },
   {
-    "id": 245,
-    "category": "react",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "自定义 Hook 的命名约定与设计",
-    "content": "自定义 Hook 为什么必须以 use 开头？不遵守会有什么后果？设计自定义 Hook 的最佳实践有哪些？",
-    "answer": "答案：use 前缀是 React 约定的命名规则，ESLint 插件依赖此规则检查 Hook 规则\n\n解析：eslint-plugin-react-hooks 通过函数名是否以 use 开头来判断其是否为 Hook，从而检查 Hooks 的调用规则（不在条件/循环中调用）。不遵守命名约定会失去规则检查，无法发现条件调用 Hook 等错误。\n\n扩展延伸：设计原则 1）单一职责——每个 Hook 管理一个关注点 2）返回值尽量是数组或具名对象 3）依赖参数化——接受外部依赖作为参数 4）组合优于继承——用多个简单 Hook 组合出复杂逻辑 5）避免过度抽象——3 次以上复用才值得抽取。",
-    "hints": [
-      "ESLint 如何判断一个函数是自定义 Hook",
-      "自定义 Hook 的参数和返回值应该如何设计"
-    ],
-    "tags": [
-      "React",
-      "Hooks",
-      "规范"
-    ],
-    "options": []
+    id: 245,
+    category: "react",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "自定义 Hook 的命名约定与设计",
+    content:
+      "自定义 Hook 为什么必须以 use 开头？不遵守会有什么后果？设计自定义 Hook 的最佳实践有哪些？",
+    answer:
+      "答案：use 前缀是 React 约定的命名规则，ESLint 插件依赖此规则检查 Hook 规则\n\n解析：eslint-plugin-react-hooks 通过函数名是否以 use 开头来判断其是否为 Hook，从而检查 Hooks 的调用规则（不在条件/循环中调用）。不遵守命名约定会失去规则检查，无法发现条件调用 Hook 等错误。\n\n扩展延伸：设计原则 1）单一职责——每个 Hook 管理一个关注点 2）返回值尽量是数组或具名对象 3）依赖参数化——接受外部依赖作为参数 4）组合优于继承——用多个简单 Hook 组合出复杂逻辑 5）避免过度抽象——3 次以上复用才值得抽取。",
+    hints: ["ESLint 如何判断一个函数是自定义 Hook", "自定义 Hook 的参数和返回值应该如何设计"],
+    tags: ["React", "Hooks", "规范"],
+    options: [],
   },
   {
-    "id": 246,
-    "category": "system_design",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "CAP 定理",
-    "content": "请解释 CAP 定理及其在分布式系统中的权衡。",
-    "answer": "CAP：一致性（Consistency）、可用性（Availability）、分区容错性（Partition Tolerance）三者最多同时满足两个。分布式系统必须保证 P，实际是 CP 或 AP 的选择。CP 优先（如 ZK）保证一致但可能不可用，AP 优先（如 Eureka）保证可用但可能不一致。",
-    "hints": [
-      "BASE 理论和 CAP 的关系",
-      "为什么 P 是必须的"
-    ],
-    "tags": [
-      "分布式",
-      "CAP"
-    ],
-    "options": []
+    id: 246,
+    category: "system_design",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "CAP 定理",
+    content: "请解释 CAP 定理及其在分布式系统中的权衡。",
+    answer:
+      "CAP：一致性（Consistency）、可用性（Availability）、分区容错性（Partition Tolerance）三者最多同时满足两个。分布式系统必须保证 P，实际是 CP 或 AP 的选择。CP 优先（如 ZK）保证一致但可能不可用，AP 优先（如 Eureka）保证可用但可能不一致。",
+    hints: ["BASE 理论和 CAP 的关系", "为什么 P 是必须的"],
+    tags: ["分布式", "CAP"],
+    options: [],
   },
   {
-    "id": 247,
-    "category": "system_design",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "一致性哈希",
-    "content": "请解释一致性哈希算法的原理和优势。",
-    "answer": "一致性哈希将节点和数据映射到哈希环上，数据顺时针找到最近的节点。优势：节点增减仅影响相邻节点，大幅减少数据迁移量。引入虚拟节点解决负载不均问题。",
-    "hints": [
-      "什么场景需要一致性哈希",
-      "普通哈希取模有什么问题"
-    ],
-    "tags": [
-      "分布式",
-      "哈希"
-    ],
-    "options": []
+    id: 247,
+    category: "system_design",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "一致性哈希",
+    content: "请解释一致性哈希算法的原理和优势。",
+    answer:
+      "一致性哈希将节点和数据映射到哈希环上，数据顺时针找到最近的节点。优势：节点增减仅影响相邻节点，大幅减少数据迁移量。引入虚拟节点解决负载不均问题。",
+    hints: ["什么场景需要一致性哈希", "普通哈希取模有什么问题"],
+    tags: ["分布式", "哈希"],
+    options: [],
   },
   {
-    "id": 248,
-    "category": "system_design",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "缓存策略",
-    "content": "请介绍常见的缓存策略及其适用场景。",
-    "answer": "Cache Aside（旁路缓存：读时回填，更新时先写 DB 再删缓存）、Read/Write Through（缓存代理读写）、Write Behind（异步批量写回 DB）。常见问题：缓存雪崩（大范围过期）、缓存穿透（查询不存在的数据）、缓存击穿（热点 key 过期）。",
-    "hints": [
-      "更新缓存时为什么是删缓存而不是更新缓存",
-      "如何解决缓存穿透"
-    ],
-    "tags": [
-      "缓存"
-    ],
-    "options": []
+    id: 248,
+    category: "system_design",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "缓存策略",
+    content: "请介绍常见的缓存策略及其适用场景。",
+    answer:
+      "Cache Aside（旁路缓存：读时回填，更新时先写 DB 再删缓存）、Read/Write Through（缓存代理读写）、Write Behind（异步批量写回 DB）。常见问题：缓存雪崩（大范围过期）、缓存穿透（查询不存在的数据）、缓存击穿（热点 key 过期）。",
+    hints: ["更新缓存时为什么是删缓存而不是更新缓存", "如何解决缓存穿透"],
+    tags: ["缓存"],
+    options: [],
   },
   {
-    "id": 249,
-    "category": "system_design",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "消息队列的作用",
-    "content": "请说明消息队列在分布式系统中的作用。",
-    "answer": "解耦（生产者和消费者独立演进）、削峰填谷（缓冲突发流量）、异步处理（提升响应速度）、可靠投递（消息持久化保证不丢失）。常见选型：Kafka（高吞吐，日志类）、RabbitMQ（低延迟，可靠路由）、RocketMQ（事务消息）。",
-    "hints": [
-      "如何保证消息不重复消费",
-      "消息顺序性如何保证"
-    ],
-    "tags": [
-      "消息队列"
-    ],
-    "options": []
+    id: 249,
+    category: "system_design",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "消息队列的作用",
+    content: "请说明消息队列在分布式系统中的作用。",
+    answer:
+      "解耦（生产者和消费者独立演进）、削峰填谷（缓冲突发流量）、异步处理（提升响应速度）、可靠投递（消息持久化保证不丢失）。常见选型：Kafka（高吞吐，日志类）、RabbitMQ（低延迟，可靠路由）、RocketMQ（事务消息）。",
+    hints: ["如何保证消息不重复消费", "消息顺序性如何保证"],
+    tags: ["消息队列"],
+    options: [],
   },
   {
-    "id": 250,
-    "category": "system_design",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "数据库分片策略",
-    "content": "请介绍数据库分片（Sharding）的常见策略和挑战。",
-    "answer": "分片策略：范围分片（按 ID 范围，简单但可能热点）、哈希分片（按 hash mod N，数据均匀但扩缩容难）、一致性哈希（迁移量少）、按业务属性分片（如按用户 ID）。挑战：跨分片查询、分布式事务、数据均衡、动态扩容。",
-    "hints": [
-      "分片后如何做 JOIN 查询",
-      "如何平滑扩容"
-    ],
-    "tags": [
-      "数据库",
-      "扩展"
-    ],
-    "options": []
+    id: 250,
+    category: "system_design",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "数据库分片策略",
+    content: "请介绍数据库分片（Sharding）的常见策略和挑战。",
+    answer:
+      "分片策略：范围分片（按 ID 范围，简单但可能热点）、哈希分片（按 hash mod N，数据均匀但扩缩容难）、一致性哈希（迁移量少）、按业务属性分片（如按用户 ID）。挑战：跨分片查询、分布式事务、数据均衡、动态扩容。",
+    hints: ["分片后如何做 JOIN 查询", "如何平滑扩容"],
+    tags: ["数据库", "扩展"],
+    options: [],
   },
   {
-    "id": 251,
-    "category": "system_design",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "微服务架构的优缺点",
-    "content": "请分析微服务架构的优缺点。",
-    "answer": "优点：独立部署（每个服务独立 CI/CD）、技术异构、故障隔离、团队自治。缺点：分布式复杂性（网络延迟、服务发现、配置管理、监控链路）、数据一致性（分布式事务）、调试困难、运维成本高。不适合简单应用。",
-    "hints": [
-      "微服务和 SOA 的区别",
-      "什么时候不应该用微服务"
-    ],
-    "tags": [
-      "微服务",
-      "架构"
-    ],
-    "options": []
+    id: 251,
+    category: "system_design",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "微服务架构的优缺点",
+    content: "请分析微服务架构的优缺点。",
+    answer:
+      "优点：独立部署（每个服务独立 CI/CD）、技术异构、故障隔离、团队自治。缺点：分布式复杂性（网络延迟、服务发现、配置管理、监控链路）、数据一致性（分布式事务）、调试困难、运维成本高。不适合简单应用。",
+    hints: ["微服务和 SOA 的区别", "什么时候不应该用微服务"],
+    tags: ["微服务", "架构"],
+    options: [],
   },
   {
-    "id": 252,
-    "category": "system_design",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "负载均衡算法",
-    "content": "请介绍常见的负载均衡算法。",
-    "answer": "轮询（Round Robin）、加权轮询、最少连接（Least Connections）、源地址哈希（IP Hash，保证会话一致性）、一致性哈希（缓存场景）。L4 负载均衡（传输层，性能高）和 L7 负载均衡（应用层，可路由 HTTP 路径）。",
-    "hints": [
-      "Session 粘滞问题如何解决",
-      "健康检查的几种方式"
-    ],
-    "tags": [
-      "网络",
-      "负载均衡"
-    ],
-    "options": []
+    id: 252,
+    category: "system_design",
+    difficulty: "easy",
+    type: "short_answer",
+    title: "负载均衡算法",
+    content: "请介绍常见的负载均衡算法。",
+    answer:
+      "轮询（Round Robin）、加权轮询、最少连接（Least Connections）、源地址哈希（IP Hash，保证会话一致性）、一致性哈希（缓存场景）。L4 负载均衡（传输层，性能高）和 L7 负载均衡（应用层，可路由 HTTP 路径）。",
+    hints: ["Session 粘滞问题如何解决", "健康检查的几种方式"],
+    tags: ["网络", "负载均衡"],
+    options: [],
   },
   {
-    "id": 253,
-    "category": "system_design",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "幂等性设计",
-    "content": "请解释接口幂等性及其实现方式。",
-    "answer": "幂等：同一操作多次执行结果相同。实现方式：1）唯一索引（防重复插入）。2）Token 机制（先获取 token，处理时携带）。3）乐观锁（版本号 CAS）。4）去重表（利用 DB 唯一键）。5）状态机（只有特定状态转换才执行）。",
-    "hints": [
-      "天然幂等的操作有哪些",
-      "MQ 消费者如何保证幂等"
-    ],
-    "tags": [
-      "设计",
-      "分布式"
-    ],
-    "options": []
+    id: 253,
+    category: "system_design",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "幂等性设计",
+    content: "请解释接口幂等性及其实现方式。",
+    answer:
+      "幂等：同一操作多次执行结果相同。实现方式：1）唯一索引（防重复插入）。2）Token 机制（先获取 token，处理时携带）。3）乐观锁（版本号 CAS）。4）去重表（利用 DB 唯一键）。5）状态机（只有特定状态转换才执行）。",
+    hints: ["天然幂等的操作有哪些", "MQ 消费者如何保证幂等"],
+    tags: ["设计", "分布式"],
+    options: [],
   },
   {
-    "id": 254,
-    "category": "system_design",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "设计高并发短链接系统",
-    "content": "请设计一个支持高并发的短链接生成系统，包括存储方案和重定向流程。",
-    "answer": "存储：发号器（Snowflake/Redis incr）+ 缓存（Redis 热点）+ DB 持久化。流程：生成短码（Base62 编码自增 ID）→ 写入 DB+Cache。访问时先查 Cache，miss 查 DB 后回填 Cache。优化：布隆过滤器拦截无效短码，CDN 加速，预生成短码池。",
-    "hints": [
-      "短码如何生成才能保证唯一且短",
-      "如何防止恶意遍历短链接"
-    ],
-    "tags": [
-      "设计",
-      "高并发"
-    ],
-    "options": []
+    id: 254,
+    category: "system_design",
+    difficulty: "hard",
+    type: "short_answer",
+    title: "设计高并发短链接系统",
+    content: "请设计一个支持高并发的短链接生成系统，包括存储方案和重定向流程。",
+    answer:
+      "存储：发号器（Snowflake/Redis incr）+ 缓存（Redis 热点）+ DB 持久化。流程：生成短码（Base62 编码自增 ID）→ 写入 DB+Cache。访问时先查 Cache，miss 查 DB 后回填 Cache。优化：布隆过滤器拦截无效短码，CDN 加速，预生成短码池。",
+    hints: ["短码如何生成才能保证唯一且短", "如何防止恶意遍历短链接"],
+    tags: ["设计", "高并发"],
+    options: [],
   },
   {
-    "id": 255,
-    "category": "system_design",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "限流策略",
-    "content": "请介绍常见的限流算法及其适用场景。",
-    "answer": "固定窗口（简单但有突刺问题）、滑动窗口（更平滑）、漏桶算法（恒定速率，适合平滑突发流量）、令牌桶（允许突发，适合大部分场景）。实现方式：Guava RateLimiter、Redis+Lua、Sentinel。限流维度：QPS、并发数、CPU 负载。",
-    "hints": [
-      "限流和熔断的区别",
-      "分布式限流如何实现"
-    ],
-    "tags": [
-      "高并发",
-      "限流"
-    ],
-    "options": []
-  }
+    id: 255,
+    category: "system_design",
+    difficulty: "medium",
+    type: "short_answer",
+    title: "限流策略",
+    content: "请介绍常见的限流算法及其适用场景。",
+    answer:
+      "固定窗口（简单但有突刺问题）、滑动窗口（更平滑）、漏桶算法（恒定速率，适合平滑突发流量）、令牌桶（允许突发，适合大部分场景）。实现方式：Guava RateLimiter、Redis+Lua、Sentinel。限流维度：QPS、并发数、CPU 负载。",
+    hints: ["限流和熔断的区别", "分布式限流如何实现"],
+    tags: ["高并发", "限流"],
+    options: [],
+  },
 ];

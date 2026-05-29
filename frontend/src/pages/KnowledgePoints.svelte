@@ -79,14 +79,20 @@
   </div>
 
   <div class="search-wrap">
-    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    <svg
+      class="search-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
     </svg>
-    <input
-      class="search"
-      placeholder="搜索知识点或领域..."
-      bind:value={searchQuery}
-    />
+    <input class="search" placeholder="搜索知识点或领域..." bind:value={searchQuery} />
   </div>
 
   {#if error}
@@ -109,10 +115,22 @@
               <span class="cat-stats">{cat.totalQuestions} 题</span>
             </div>
             <div class="cat-header-right">
-              <span class="mastery-badge" style="color: {getMasteryColor(Math.round(cat.totalMastery / cat.children.length))}">
+              <span
+                class="mastery-badge"
+                style="color: {getMasteryColor(Math.round(cat.totalMastery / cat.children.length))}"
+              >
                 掌握 {Math.round(cat.totalMastery / cat.children.length)}%
               </span>
-              <svg class="cat-arrow" class:rotated={expandedCategory === cat.id} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg
+                class="cat-arrow"
+                class:rotated={expandedCategory === cat.id}
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"><polyline points="9 18 15 12 9 6" /></svg
+              >
             </div>
           </button>
           {#if expandedCategory === cat.id}
@@ -123,9 +141,15 @@
                   <span class="child-count">{kp.count || kp.question_count} 题</span>
                   <div class="child-mastery">
                     <div class="mastery-bar-bg">
-                      <div class="mastery-bar-fill" style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"></div>
+                      <div
+                        class="mastery-bar-fill"
+                        style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"
+                      ></div>
                     </div>
-                    <span class="mastery-label" style="color: {getMasteryColor(kp.mastery)}; font-size: 11px;">
+                    <span
+                      class="mastery-label"
+                      style="color: {getMasteryColor(kp.mastery)}; font-size: 11px;"
+                    >
                       {kp.mastery}%
                     </span>
                   </div>
@@ -140,49 +164,171 @@
 </div>
 
 <style>
-  .kp-page { display: flex; flex-direction: column; gap: 14px; }
-  .page-header { margin-bottom: 4px; }
-  .page-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .kp-page {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .page-header {
+    margin-bottom: 4px;
+  }
+  .page-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
 
-  .search-wrap { position: relative; display: flex; align-items: center; }
-  .search-icon { position: absolute; left: 12px; color: var(--text-dim); pointer-events: none; }
-  .search { padding-left: 36px; }
+  .search-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+  .search {
+    padding-left: 36px;
+  }
 
-  .empty { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 14px; }
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 40px 0;
+    font-size: 14px;
+  }
 
   /* Category list (hierarchical) */
-  .cat-list { display: flex; flex-direction: column; gap: 8px; }
-  .cat-card { padding: 0; overflow: hidden; }
+  .cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .cat-card {
+    padding: 0;
+    overflow: hidden;
+  }
   .cat-header {
-    display: flex; justify-content: space-between; align-items: center;
-    width: 100%; padding: 14px 16px; cursor: pointer; text-align: left;
-    background: none; border: none; color: var(--text); gap: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--text);
+    gap: 12px;
     transition: background 0.15s;
   }
-  .cat-header:hover { background: var(--bg-surface); }
-  .cat-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-  .cat-label { font-size: 15px; font-weight: 700; color: var(--text); }
-  .cat-stats { font-size: 12px; color: var(--text-muted); white-space: nowrap; background: var(--bg-surface); padding: 2px 10px; border-radius: 10px; }
-  .cat-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-  .mastery-badge { font-size: 12px; font-weight: 600; white-space: nowrap; }
-  .cat-arrow { transition: transform 0.2s; color: var(--text-dim); }
-  .cat-arrow.rotated { transform: rotate(90deg); }
+  .cat-header:hover {
+    background: var(--bg-surface);
+  }
+  .cat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+  .cat-label {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .cat-stats {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    background: var(--bg-surface);
+    padding: 2px 10px;
+    border-radius: 10px;
+  }
+  .cat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .mastery-badge {
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .cat-arrow {
+    transition: transform 0.2s;
+    color: var(--text-dim);
+  }
+  .cat-arrow.rotated {
+    transform: rotate(90deg);
+  }
 
-  .cat-children { border-top: 1px solid var(--border); padding: 8px 16px 12px; display: flex; flex-direction: column; gap: 2px; }
+  .cat-children {
+    border-top: 1px solid var(--border);
+    padding: 8px 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
   .child-item {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%; padding: 10px 8px; cursor: pointer; text-align: left;
-    background: none; border: none; border-radius: 6px; color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 8px;
+    cursor: pointer;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--text);
     transition: background 0.12s;
   }
-  .child-item:hover { background: var(--bg-surface); }
-  .child-name { font-size: 14px; font-weight: 500; flex: 1; min-width: 0; }
-  .child-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
-  .child-mastery { display: flex; align-items: center; gap: 6px; width: 100px; flex-shrink: 0; }
+  .child-item:hover {
+    background: var(--bg-surface);
+  }
+  .child-name {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    min-width: 0;
+  }
+  .child-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .child-mastery {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100px;
+    flex-shrink: 0;
+  }
 
-  .mastery-bar-bg { flex: 1; height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; }
-  .mastery-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-  .mastery-label { font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .mastery-bar-bg {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-surface);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .mastery-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .mastery-label {
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
 
-  .skeleton-grid { display: flex; flex-direction: column; gap: 10px; }
+  .skeleton-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
 </style>
