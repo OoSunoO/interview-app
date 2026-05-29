@@ -212,9 +212,10 @@
 
   .recommend-list { display: flex; flex-direction: column; gap: 10px; }
   .recommend-item { text-align: left; width: 100%; padding: 14px; }
-  .rec-top { display: flex; gap: 6px; margin-bottom: 8px; }
-  .rec-title { font-size: 15px; line-height: 1.45; margin-bottom: 4px; }
-  .rec-type { font-size: 12px; color: var(--text-dim); }
+  .rec-top { display: flex; gap: 4px; margin-bottom: 6px; }
+  .rec-top .tag { font-size: 10px; padding: 1px 5px; }
+  .rec-title { font-size: 17px; font-weight: 700; color: var(--text); line-height: 1.5; margin-bottom: 6px; }
+  .rec-type { font-size: 11px; color: var(--text-dim); opacity: 0.65; }
 
   .start-btn {
     width: 100%;
