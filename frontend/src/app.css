@@ -79,7 +79,9 @@ body {
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 * {
@@ -87,7 +89,8 @@ body {
   padding: 0;
   box-sizing: border-box;
 }
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden;
 }
