@@ -92,6 +92,17 @@
     socraticLoading = false;
   }
 
+  let grouped = $derived.by(() => {
+    const groups = {};
+    for (const q of wrongQuestions) {
+      const tag = (q.tags && q.tags[0]) || "未分类";
+      if (!groups[tag]) groups[tag] = { tag, questions: [], totalWrong: 0 };
+      groups[tag].questions.push(q);
+      groups[tag].totalWrong += q.wrong_count;
+    }
+    return Object.values(groups).sort((a, b) => b.totalWrong - a.totalWrong);
+  });
+
   function saveAIKey() {
     setProvider(apiProvider);
     saveAIConfig({ key: apiKeyInput });
@@ -204,22 +215,32 @@
         开始复习 ({wrongQuestions.length})
       </button>
 
-      <div class="list">
-        {#each wrongQuestions as q}
-          <button
-            class="card"
-            onclick={() => {
-              store.startQuiz(wrongQuestions);
-              onNavigate("quiz", { questionId: q.id });
-            }}
-          >
-            <div class="q-header">
-              <span class="tag">{q.category}</span>
-              <span class="tag diff {q.difficulty}">{q.difficulty}</span>
-              <span class="wrong-count">答错 {q.wrong_count} 次</span>
+      <div class="group-list">
+        {#each grouped as group}
+          <div class="group">
+            <div class="group-header">
+              <span class="group-tag">{group.tag}</span>
+              <span class="group-wrong">错 {group.totalWrong} 次</span>
             </div>
-            <p class="q-title-text">{q.title}</p>
-          </button>
+            <div class="group-questions">
+              {#each group.questions as q}
+                <button
+                  class="card"
+                  onclick={() => {
+                    store.startQuiz(wrongQuestions);
+                    onNavigate("quiz", { questionId: q.id });
+                  }}
+                >
+                  <div class="q-header">
+                    <span class="tag">{q.category}</span>
+                    <span class="tag diff {q.difficulty}">{q.difficulty}</span>
+                    <span class="wrong-count">答错 {q.wrong_count} 次</span>
+                  </div>
+                  <p class="q-title-text">{q.title}</p>
+                </button>
+              {/each}
+            </div>
+          </div>
         {/each}
       </div>
     {/if}
@@ -297,6 +318,39 @@
   .q-title-text {
     font-size: 14px;
     line-height: 1.4;
+  }
+  .group-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .group-tag {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: none;
+  }
+  .group-wrong {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--danger-bg);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .group-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
   .review-header {
     display: flex;
