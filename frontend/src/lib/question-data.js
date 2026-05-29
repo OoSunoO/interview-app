@@ -5470,7 +5470,11 @@ export const questions = [
     "title": "如何选用集合?",
     "content": "如何选用集合?",
     "answer": "答案：我们主要根据集合的特点来选择合适的集合。\n\n解析：比如：\n- 我们需要根据键值获取到元素值时就选用 Map 接口下的集合，需要排序时选择 TreeMap,不需要排序时就选择 HashMap,需要保证线程安全就选用 ConcurrentHashMap。- 我们只需要存放元素值时，就选择实现Collection 接口的集合，需要保证元素唯一时选择实现 Set 接口的集合比如 TreeSet 或 HashSet，不需要就选择实现 List 接口的比如 ArrayList 或 LinkedList，然后再根据实现这些接口的集合的特点来选用。",
-    "hints": [],
+    "hints": [
+      "需要根据键值获取元素 → Map 接口",
+      "只需要存放元素 → Collection 接口，需唯一 → Set，不需唯一 → List",
+      "需要排序 → TreeMap / TreeSet，线程安全 → ConcurrentHashMap"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5487,7 +5491,10 @@ export const questions = [
     "title": "为什么要使用集合？",
     "content": "为什么要使用集合？",
     "answer": "答案：当我们需要存储一组类型相同的数据时，数组是最常用且最基本的容器之一。但是，使用数组存储对象存在一些不足之处，因为在实际开发中，存储的数据类型多种多样且数量不确定。这时，Java 集合就派上用场了。\n\n解析：与数组相比，Java 集合提供了更灵活、更有效的方法来存储多个数据对象。Java 集合框架中的各种集合类和接口可以存储不同类型和数量的对象，同时还具有多样化的操作方式。相较于数组，Java 集合的优势在于它们的大小可变、支持泛型、具有内建算法等。总的来说，Java 集合提高了数据的存储和处理灵活性，可以更好地适应现代软件开发中多样化的数据需求，并支持高质量的代码编写。## List",
-    "hints": [],
+    "hints": [
+      "数组的缺点：长度固定、无法动态扩容",
+      "集合的优势：大小可变、支持泛型、丰富 API 和算法"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5521,7 +5528,10 @@ export const questions = [
     "title": "ArrayList 和 Vector 的区别?（了解即可）",
     "content": "ArrayList 和 Vector 的区别?（了解即可）",
     "answer": "答案：- ArrayList 是 List 的主要实现类，底层使用 Object[]存储，适用于频繁的查找工作，线程不安全 。\n- Vector 是 List 的古老实现类，底层使用Object[] 存储，线程安全。",
-    "hints": [],
+    "hints": [
+      "ArrayList 线程不安全，Vector 线程安全",
+      "Vector 是 JDK 1.0 遗留类，已被 ArrayList 取代"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5537,7 +5547,10 @@ export const questions = [
     "title": "Vector 和 Stack 的区别?（了解即可）",
     "content": "Vector 和 Stack 的区别?（了解即可）",
     "answer": "答案：- Vector 和 Stack 两者都是线程安全的，都是使用 synchronized 关键字进行同步处理。- Stack 继承自 Vector，是一个后进先出的栈，而 Vector 是一个列表。随着 Java 并发编程的发展，Vector 和 Stack 已经被淘汰，推荐使用并发集合类（例如 ConcurrentHashMap、CopyOnWriteArrayList 等）或者手动实现线程安全的方法来提供安全的多线程操作支持。",
-    "hints": [],
+    "hints": [
+      "Stack 继承自 Vector，是后进先出的栈",
+      "两者都是线程安全的（synchronized），但已被淘汰"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5554,7 +5567,10 @@ export const questions = [
     "title": "ArrayList 可以添加 null 值吗？",
     "content": "ArrayList 可以添加 null 值吗？",
     "answer": "答案：ArrayList 中可以存储任何类型的对象，包括 null 值。不过，不建议向ArrayList 中添加 null 值， null 值无意义，会让代码难以维护比如忘记做判空处理就会导致空指针异常。示例代码：\n输出：",
-    "hints": [],
+    "hints": [
+      "ArrayList 可以存储任何类型的对象",
+      "添加 null 值可能导致 NullPointerException，不建议这样做"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5606,7 +5622,10 @@ export const questions = [
     "title": "LinkedList 为什么不能实现 RandomAccess 接口？",
     "content": "LinkedList 为什么不能实现 RandomAccess 接口？",
     "answer": "答案：RandomAccess 是一个标记接口，用来表明实现该接口的类支持随机访问（即可以通过索引快速访问元素）。由于 LinkedList 底层数据结构是链表，内存地址不连续，只能通过指针来定位，不支持随机快速访问，所以不能实现 RandomAccess 接口。",
-    "hints": [],
+    "hints": [
+      "RandomAccess 是标记接口，表示支持通过索引快速随机访问",
+      "LinkedList 底层是链表，内存地址不连续，只能通过指针遍历定位"
+    ],
     "tags": [
       "Java集合",
       "集合"
@@ -5621,7 +5640,11 @@ export const questions = [
     "title": "ArrayList 与 LinkedList 区别?",
     "content": "ArrayList 与 LinkedList 区别?",
     "answer": "答案：- **是否保证线程安全：** ArrayList 和 LinkedList 都是不同步的，也就是不保证线程安全；- **底层数据结构：** ArrayList 底层使用的是 **Object 数组**；LinkedList 底层使用的是 **双向链表** 数据结构（JDK1.6 之前为循环链表，JDK1.7 取消了循环。\n\n解析：注意双向链表和双向循环链表的区别，下面有介绍到！）\n- **插入和删除是否受元素位置的影响：**\n- ArrayList 采用数组存储，所以插入和删除元素的时间复杂度受元素位置的影响。比如：执行add(E e)方法的时候， ArrayList 会默认在将指定的元素追加到此列表的末尾，这种情况时间复杂度就是 O(1)。但是如果要在指定位置 i 插入和删除元素的话（add(int index, E element)），时间复杂度就为 O(n)。因为在进行上述操作的时候集合中第 i 和第 i 个元素之后的(n-i)个元素都要执行向后位/向前移一位的操作。- LinkedList 采用链表存储，所以在头尾插入或者删除元素不受元素位置的影响（add(E e)、addFirst(E e)、addLast(E e)、removeFirst()、 removeLast()），时间复杂度为 O(1)，如果是要在指定位置 i 插入和删除元素的话（add(int index, E element)，remove(Object o),remove(int index)）， 时间复杂度为 O(n) ，因为需要先移动到指定位置再插入和删除。- **是否支持快速随机访问：** LinkedList 不支持高效的随机元素访问，而 ArrayList（实现了 RandomAccess 接口） 支持。快速随机访问就是通过元素的序号快速获取元素对象(对应于get(int index)方法)。- **内存空间占用：** ArrayList 的空间浪费主要体现在在 list 列表的结尾会预留一定的容量空间，而 LinkedList 的空间花费则体现在它的每一个元素都需要消耗比 ArrayList 更多的空间（因为要存放直接后继和直接前驱以及数据）。",
-    "hints": [],
+    "hints": [
+      "底层数据结构：ArrayList 是数组，LinkedList 是双向链表",
+      "插入删除受位置影响：ArrayList 尾部 O(1) 中间 O(n)，LinkedList 头尾 O(1) 中间 O(n)",
+      "ArrayList 支持快速随机访问，LinkedList 不支持"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5637,7 +5660,10 @@ export const questions = [
     "title": "集合中的 fail-fast 和 fail-safe 是什么？",
     "content": "集合中的 fail-fast 和 fail-safe 是什么？",
     "answer": "答案：fail-fast（快速失败）和 fail-safe（安全失败）是Java集合框架在处理并发修改问题时，两种截然不同的设计哲学和容错策略。关于fail-fast引用medium中一篇文章关于fail-fast和fail-safe的说法：\n快速失败的思想即针对可能发生的异常进行提前表明故障并停止运行，通过尽早的发现和停止错误，降低故障系统级联的风险。在java.util包下的大部分集合（如 ArrayList, HashMap）是不支持线程安全的，为了能够提前发现并发操作导致线程安全风险，提出通过维护一个modCount记录修改的次数，迭代期间通过比对预期修改次数expectedModCount和modCount是否一致来判断是否存在并发操作，从而实现快速失败，由此保证在避免在异常时执行非必要的复杂代码。\n\n解析：**ArrayList (fail-fast) 示例：**\n输出：\n程序在线程 t2 修改列表后，线程 t1 的下一次迭代操作立刻就抛出了 ConcurrentModificationException。这是因为 ArrayList 的迭代器在每次 next() 调用时，都会检查 modCount 是否被改变。一旦发现集合在迭代器不知情的情况下被修改，它会立即“快速失败”，以防止在不一致的数据上继续操作导致不可预期的后果。对此我们也给出for循环底层迭代器获取下一个元素时的next方法，可以看到其内部的checkForComodification具有针对修改次数比对的逻辑：\n而fail-safe也就是安全失败的含义，它旨在即使面对意外情况也能恢复并继续运行，这使得它特别适用于不确定或者不稳定的环境：\n该思想常运用于并发容器，最经典的实现就是CopyOnWriteArrayList的实现，通过写时复制（Copy-On-Write）的思想保证在进行修改操作时复制出一份快照，基于这份快照完成添加或者删除操作后，将CopyOnWriteArrayList底层的数组引用指向这个新的数组空间，由此避免迭代时被并发修改所干扰所导致并发操作安全问题，当然这种做法也存在缺点，即进行遍历操作时无法获得实时结果：\n!\n对应我们也给出CopyOnWriteArrayList实现fail-safe的核心代码，可以看到它的实现就是通过getArray获取数组引用然后通过Arrays.copyOf得到一个数组的快照，基于这个快照完成添加操作后，修改底层array变量指向的引用地址由此完成写时复制：\n## Set",
-    "hints": [],
+    "hints": [
+      "fail-fast：检测到 modCount 变化立即抛 ConcurrentModificationException",
+      "fail-safe：写时复制快照，避免并发修改，但读取可能不是最新的"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5673,7 +5699,10 @@ export const questions = [
     "title": "无序性和不可重复性的含义是什么",
     "content": "请解释 无序性和不可重复性的含义是什么。",
     "answer": "答案：- 无序性不等于随机性 ，无序性是指存储的数据在底层数组中并非按照数组索引的顺序添加 ，而是根据数据的哈希值决定的。\n- 不可重复性是指添加的元素按照 equals() 判断时 ，返回 false，需要同时重写 equals() 方法和 hashCode() 方法。",
-    "hints": [],
+    "hints": [
+      "无序性：按哈希值决定存储位置，不按添加顺序",
+      "不可重复性：需要同时重写 equals() 和 hashCode() 来保证"
+    ],
     "tags": [
       "Java集合",
       "重载重写"
@@ -5688,7 +5717,11 @@ export const questions = [
     "title": "比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同",
     "content": "请解释 比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同。",
     "answer": "答案：- HashSet、LinkedHashSet 和 TreeSet 都是 Set 接口的实现类，都能保证元素唯一，并且都不是线程安全的。- HashSet、LinkedHashSet 和 TreeSet 的主要区别在于底层数据结构不同。HashSet 的底层数据结构是哈希表（基于 HashMap 实现）。\n\n解析：LinkedHashSet 的底层数据结构是链表和哈希表，元素的插入和取出顺序满足 FIFO。TreeSet 底层数据结构是红黑树，元素是有序的，排序的方式有自然排序和定制排序。- 底层数据结构不同又导致这三者的应用场景不同。HashSet 用于不需要保证元素插入和取出顺序的场景，LinkedHashSet 用于保证元素的插入和取出顺序满足 FIFO 的场景，TreeSet 用于支持对元素自定义排序规则的场景。## Queue",
-    "hints": [],
+    "hints": [
+      "三者都保证元素唯一，都不是线程安全的",
+      "底层数据结构：HashSet→哈希表，LinkedHashSet→链表+哈希表，TreeSet→红黑树",
+      "LinkedHashSet 维护插入顺序，TreeSet 支持排序"
+    ],
     "tags": [
       "Java集合",
       "集合",
@@ -5722,7 +5755,11 @@ export const questions = [
     "title": "ArrayDeque 与 LinkedList 的区别",
     "content": "请比较 ArrayDeque 与 LinkedList 的区别。",
     "answer": "答案：ArrayDeque 和 LinkedList 都实现了 Deque 接口，两者都具有队列的功能，但两者有什么区别呢？- ArrayDeque 是基于可变长的数组和双指针来实现，而 LinkedList 则通过链表来实现。- ArrayDeque 不支持存储 NULL 数据，但 LinkedList 支持。\n\n解析：- ArrayDeque 是在 JDK1.6 才被引入的，而LinkedList 早在 JDK1.2 时就已经存在。- ArrayDeque 插入时可能存在扩容过程, 不过均摊后的插入操作依然为 O(1)。虽然 LinkedList 不需要扩容，但是每次插入数据时均需要申请新的堆空间，均摊性能相比更慢。从性能的角度上，选用 ArrayDeque 来实现队列要比 LinkedList 更好。此外，ArrayDeque 也可以用于实现栈。",
-    "hints": [],
+    "hints": [
+      "ArrayDeque 基于可变长数组+双指针，LinkedList 基于链表",
+      "ArrayDeque 不支持 null，均摊插入性能更优",
+      "ArrayDeque 也可用作栈，性能优于 LinkedList"
+    ],
     "tags": [
       "Java集合",
       "集合"
@@ -5737,7 +5774,11 @@ export const questions = [
     "title": "说一说 PriorityQueue",
     "content": "说一说 PriorityQueue",
     "answer": "答案：PriorityQueue 是在 JDK1.5 中被引入的, 其与 Queue 的区别在于元素出队顺序是与优先级相关的，即总是优先级最高的元素先出队。这里列举其相关的一些要点：\n- PriorityQueue 利用了二叉堆的数据结构来实现的，底层使用可变长的数组来存储数据\n- PriorityQueue 通过堆元素的上浮和下沉，实现了在 O(logn) 的时间复杂度内插入元素和删除堆顶元素。- PriorityQueue 是非线程安全的，且不支持存储 NULL 和 non-comparable 的对象。\n\n解析：- PriorityQueue 默认是小顶堆，但可以接收一个 Comparator 作为构造参数，从而来自定义元素优先级的先后。PriorityQueue 在面试中可能更多的会出现在手撕算法的时候，典型例题包括堆排序、求第 K 大的数、带权图的遍历等，所以需要会熟练使用才行。",
-    "hints": [],
+    "hints": [
+      "底层是二叉堆（小顶堆），默认按自然顺序出队",
+      "插入和删除堆顶的时间复杂度 O(log n)",
+      "非线程安全，不支持 null，可用 Comparator 自定义优先级"
+    ],
     "tags": [
       "Java集合",
       "并发",
@@ -5753,7 +5794,10 @@ export const questions = [
     "title": "什么是 BlockingQueue？",
     "content": "什么是 BlockingQueue？",
     "answer": "答案：BlockingQueue （阻塞队列）是一个接口，继承自 Queue。BlockingQueue阻塞的原因是其支持当队列没有元素时一直阻塞，直到有元素；还支持如果队列已满，一直等到队列可以放入新元素时再放入。\n\n解析：BlockingQueue 常用于生产者-消费者模型中，生产者线程会向队列中添加数据，而消费者线程会从队列中取出数据进行处理。",
-    "hints": [],
+    "hints": [
+      "队列为空时取元素会阻塞等待，队列满时放元素会阻塞等待",
+      "经典应用场景：生产者-消费者模型"
+    ],
     "tags": [
       "Java集合",
       "并发",
