@@ -42,6 +42,71 @@ function matchesSearch(q, search) {
   return q.title.toLowerCase().includes(s) || q.content.toLowerCase().includes(s);
 }
 
+// ── Knowledge Points helpers ──────────────────────────────────────
+
+const CATEGORY_NAMES = {
+  java_basic: "Java 基础", java_advanced: "Java 进阶", ai: "AI 基础",
+  agent: "AI Agent", algorithm: "算法", system_design: "系统设计",
+  frontend: "前端", cs_basics: "计算机基础", database: "数据库",
+  linux: "Linux", devops: "DevOps", react: "React",
+  project_mgmt: "项目管理", product: "产品思维", java_collections: "Java 集合",
+};
+
+/** Build a readable summary for a knowledge point from its questions */
+function generateSummary(tag, tagQuestions) {
+  // Collect unique key phrases from question titles and content
+  const concepts = new Set();
+  for (const q of tagQuestions) {
+    // Extract key concepts from content
+    const content = q.content || "";
+    const title = q.title || "";
+    // Add title
+    concepts.add(title.replace(/^请.*?/, "").replace(/^请解释/, "").replace(/^请介绍/, "").replace(/^请描述/, "").trim());
+    // Extract short meaningful phrases from content
+    const snippets = content.split(/[。，；]/).filter(s => s.length > 5 && s.length < 40);
+    for (const s of snippets.slice(0, 2)) {
+      concepts.add(s.trim() + "。");
+    }
+  }
+  return Array.from(concepts).slice(0, 5).join("");
+}
+
+/** Compute mastery for a tag across all questions, using progress data */
+function computeMastery(tag, progress) {
+  const tagQuestions = questions.filter((q) => q.tags.includes(tag));
+  if (tagQuestions.length === 0) return 0;
+  let totalScore = 0;
+  for (const q of tagQuestions) {
+    const p = progress[q.id];
+    if (!p || p.status === "new") {
+      totalScore += 0;
+    } else if (p.status === "correct") {
+      totalScore += 1;
+    } else if (p.status === "reviewing") {
+      totalScore += 0.5;
+    } else if (p.status === "wrong") {
+      totalScore += 0;
+    }
+  }
+  return Math.round((totalScore / tagQuestions.length) * 100);
+}
+
+/** Get category group mapping for each tag */
+function getTagCategoryMap() {
+  const map = {};
+  for (const q of questions) {
+    for (const t of q.tags) {
+      if (!map[t]) map[t] = new Set();
+      map[t].add(q.category);
+    }
+  }
+  const result = {};
+  for (const [tag, cats] of Object.entries(map)) {
+    result[tag] = Array.from(cats).map((c) => CATEGORY_NAMES[c] || c);
+  }
+  return result;
+}
+
 export const api = {
   questions: {
     list(params = {}) {
@@ -211,6 +276,65 @@ export const api = {
             next_review_at: p.next_review_at,
           };
         });
+    },
+  },
+
+  // ── Knowledge Points API ─────────────────────────────────────
+  knowledge: {
+    /** List all knowledge points (from tags), with counts and mastery */
+    list() {
+      const progress = getProgress();
+      const tagMap = {};
+      const tagCategories = getTagCategoryMap();
+
+      for (const q of questions) {
+        for (const t of q.tags) {
+          if (!tagMap[t]) tagMap[t] = [];
+          tagMap[t].push(q.id);
+        }
+      }
+
+      return Object.entries(tagMap)
+        .map(([tag, ids]) => ({
+          name: tag,
+          question_count: ids.length,
+          mastery: computeMastery(tag, progress),
+          categories: tagCategories[tag] || [],
+        }))
+        .sort((a, b) => b.question_count - a.question_count);
+    },
+
+    /** Get detail for a specific knowledge point */
+    get(tag) {
+      const progress = getProgress();
+      const tagQuestions = questions.filter((q) => q.tags.includes(tag));
+      if (tagQuestions.length === 0) throw new Error(`Knowledge point '${tag}' not found`);
+
+      const ids = tagQuestions.map((q) => q.id);
+      const tagCategories = getTagCategoryMap();
+
+      return {
+        name: tag,
+        question_count: tagQuestions.length,
+        mastery: computeMastery(tag, progress),
+        categories: tagCategories[tag] || [],
+        summary: generateSummary(tag, tagQuestions),
+        questions: tagQuestions.map((q) => {
+          const p = progress[q.id] || {};
+          return {
+            id: q.id,
+            title: q.title,
+            category: q.category,
+            difficulty: q.difficulty,
+            type: q.type,
+            content: q.content,
+            tags: q.tags,
+            status: p.status || "new",
+            wrong_count: p.wrong_count || 0,
+            review_count: p.review_count || 0,
+          };
+        }),
+      };
     },
   },
 };

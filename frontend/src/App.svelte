@@ -5,12 +5,16 @@
   import Quiz from "./pages/Quiz.svelte";
   import WrongBook from "./pages/WrongBook.svelte";
   import Stats from "./pages/Stats.svelte";
+  import KnowledgePoints from "./pages/KnowledgePoints.svelte";
+  import KnowledgePointDetail from "./pages/KnowledgePointDetail.svelte";
 
   let page = $state("home");
   let selectedQuestionId = $state(null);
+  let selectedTag = $state(null);
 
   function navigate(to, params = {}) {
     if (params.questionId) selectedQuestionId = params.questionId;
+    if (params.tag) selectedTag = params.tag;
     page = to;
   }
 </script>
@@ -25,6 +29,10 @@
       <Quiz questionId={selectedQuestionId} onNavigate={navigate} />
     {:else if page === "wrong"}
       <WrongBook onNavigate={navigate} />
+    {:else if page === "knowledge"}
+      <KnowledgePoints onNavigate={navigate} />
+    {:else if page === "knowledge-detail"}
+      <KnowledgePointDetail tag={selectedTag} onNavigate={navigate} />
     {:else if page === "stats"}
       <Stats />
     {/if}

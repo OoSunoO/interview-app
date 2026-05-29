@@ -5,6 +5,7 @@
   const tabs = [
     { id: "home", label: "首页", icon: "home" },
     { id: "browse", label: "题库", icon: "browse" },
+    { id: "knowledge", label: "知识点", icon: "knowledge" },
     { id: "wrong", label: "错题", icon: "wrong" },
     { id: "stats", label: "进度", icon: "stats" },
   ];
@@ -32,6 +33,10 @@
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <path d="M15 9l-6 6M9 9l6 6"/>
+          </svg>
+        {:else if tab.icon === "knowledge"}
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
           </svg>
         {:else if tab.icon === "stats"}
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
