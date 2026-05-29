@@ -11,43 +11,44 @@
   ];
 </script>
 
-<nav class="nav">
-  {#each tabs as tab}
-    <button
-      class="nav-item"
-      class:active={current === tab.id}
-      onclick={() => onNavigate(tab.id)}
-    >
-      <span class="icon-wrap">
-        {#if tab.icon === "home"}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
-          </svg>
-        {:else if tab.icon === "knowledge"}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
-          </svg>
-        {:else if tab.icon === "browse"}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-          </svg>
-        {:else if tab.icon === "wrong"}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/>
-            <path d="M15 9l-6 6M9 9l6 6"/>
-          </svg>
-        {:else if tab.icon === "stats"}
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 20V10M12 20V4M6 20v-6"/>
-          </svg>
-        {/if}
-      </span>
-      <span class="label">{tab.label}</span>
-    </button>
-  {/each}
-  <button class="theme-btn" onclick={() => store.toggleTheme()} aria-label="切换主题">
+<nav class="nav-island">
+  <div class="nav-inner">
+    {#each tabs as tab}
+      <button
+        class="nav-item"
+        class:active={current === tab.id}
+        onclick={() => onNavigate(tab.id)}
+      >
+        <span class="icon-wrap">
+          {#if tab.icon === "home"}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+            </svg>
+          {:else if tab.icon === "knowledge"}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+            </svg>
+          {:else if tab.icon === "browse"}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+            </svg>
+          {:else if tab.icon === "wrong"}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+            </svg>
+          {:else if tab.icon === "stats"}
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6"/>
+            </svg>
+          {/if}
+        </span>
+        <span class="label">{tab.label}</span>
+      </button>
+    {/each}
+  </div>
+  <button class="theme-toggle" onclick={() => store.toggleTheme()} aria-label="切换主题">
     {#if store.theme === "dark"}
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="5"/>
         <line x1="12" y1="1" x2="12" y2="3"/>
         <line x1="12" y1="21" x2="12" y2="23"/>
@@ -59,7 +60,7 @@
         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
       </svg>
     {:else}
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
       </svg>
     {/if}
@@ -67,20 +68,24 @@
 </nav>
 
 <style>
-  .nav {
+  .nav-island {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: max(12px, var(--safe-bottom));
+    left: 12px;
+    right: 12px;
+    z-index: 100;
+  }
+  .nav-inner {
     display: flex;
     background: var(--nav-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--border);
-    padding-bottom: var(--safe-bottom);
-    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    padding: 4px;
     height: var(--nav-height);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.4s var(--spring), border-color 0.4s var(--spring);
   }
   .nav-item {
     flex: 1;
@@ -88,50 +93,50 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 0;
+    gap: 1px;
+    padding: 0 4px;
     background: none;
     color: var(--text-dim);
-    border-radius: 0;
+    border-radius: var(--radius-lg);
     position: relative;
-    transition: color 0.2s;
+    transition: color 0.3s var(--spring), background 0.3s var(--spring);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
   }
-  .nav-item.active { color: var(--accent); }
-  .nav-item.active::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 20px;
-    height: 2px;
-    background: var(--accent);
-    border-radius: 0 0 2px 2px;
+  .nav-item.active {
+    color: var(--accent);
+    background: var(--accent-bg);
   }
+  .nav-item:active { transform: scale(0.94); }
   .icon-wrap {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
-    transition: transform 0.2s;
+    width: 22px;
+    height: 22px;
+    transition: transform 0.3s var(--spring);
   }
   .nav-item:active .icon-wrap { transform: scale(0.85); }
-  .label { font-size: 10px; letter-spacing: 0.2px; }
-  .theme-btn {
+  .label { font-size: 9px; letter-spacing: 0.3px; font-weight: 600; }
+
+  .theme-toggle {
     position: absolute;
-    top: 8px;
-    right: 12px;
-    padding: 6px;
-    background: none;
-    color: var(--text-dim);
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
+    top: -44px;
+    right: 4px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.2s, transform 0.2s;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 50%;
+    color: var(--text-dim);
+    transition: all 0.3s var(--spring);
   }
-  .theme-btn:active { transform: scale(0.85); color: var(--accent); }
+  .theme-toggle:active { transform: scale(0.88); color: var(--accent); }
 </style>

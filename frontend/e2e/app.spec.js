@@ -5,8 +5,7 @@ const NAV = { home: "首页", browse: "题库", knowledge: "知识点", wrong: "
 async function goTo(page, tab) {
   await page.goto("/");
   await page.waitForTimeout(300);
-  // Click at bottom of nav button to avoid the theme button (position:absolute; top-right)
-  await page.getByRole("button", { name: tab }).click({ position: { x: 20, y: 54 } });
+  await page.getByRole("button", { name: tab }).click();
   await page.waitForTimeout(200);
 }
 
@@ -60,7 +59,7 @@ test.describe("Quiz", () => {
     const hintBtn = page.getByRole("button", { name: /提示/ });
     if (await hintBtn.isVisible()) {
       await hintBtn.click();
-      await expect(page.locator(".hints")).toBeVisible();
+      await expect(page.locator(".hints-list")).toBeVisible();
     }
   });
 });

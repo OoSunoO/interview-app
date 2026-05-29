@@ -94,7 +94,7 @@
   {:else if loading}
     <div class="skeleton-grid">
       {#each Array(6) as _}
-        <div class="skeleton-card" style="height: 100px"></div>
+        <div class="skeleton" style="height: 100px"></div>
       {/each}
     </div>
   {:else if grouped.length === 0}
@@ -162,7 +162,7 @@
   .cat-header:hover { background: var(--bg-surface); }
   .cat-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .cat-label { font-size: 15px; font-weight: 700; color: var(--text); }
-  .cat-stats { font-size: 12px; color: var(--text-muted); white-space: nowrap; background: var(--border); padding: 2px 10px; border-radius: 10px; }
+  .cat-stats { font-size: 12px; color: var(--text-muted); white-space: nowrap; background: var(--bg-surface); padding: 2px 10px; border-radius: 10px; }
   .cat-header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
   .mastery-badge { font-size: 12px; font-weight: 600; white-space: nowrap; }
   .cat-arrow { transition: transform 0.2s; color: var(--text-dim); }
@@ -180,14 +180,9 @@
   .child-count { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
   .child-mastery { display: flex; align-items: center; gap: 6px; width: 100px; flex-shrink: 0; }
 
-  .mastery-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .mastery-bar-bg { flex: 1; height: 4px; background: var(--bg-surface); border-radius: 2px; overflow: hidden; }
   .mastery-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
   .mastery-label { font-size: 10px; font-weight: 600; white-space: nowrap; }
 
   .skeleton-grid { display: flex; flex-direction: column; gap: 10px; }
-  .skeleton-card { background: var(--bg-card); border-radius: var(--radius); border: 1px solid var(--border); animation: pulse 1.5s ease infinite; }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 0.25; }
-  }
 </style>

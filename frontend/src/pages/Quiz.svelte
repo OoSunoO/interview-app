@@ -266,7 +266,7 @@
       {/if}
       {#if sessionProgress && !showAnswer}
         <button class="shuffle-btn" onclick={shuffleRemaining} title="随机后续题目">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="16 3 21 3 21 8"/>
             <line x1="4" y1="20" x2="21" y2="3"/>
             <polyline points="21 16 21 21 16 21"/>
@@ -275,18 +275,22 @@
           </svg>
         </button>
       {/if}
-      <span class="timer">{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
+      <span class="q-timer">{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
     </div>
 
     {#if sessionProgress}
-      <div class="progress-bar">
+      <div class="progress-track">
         <div class="progress-fill" style="transform: scaleX({sessionProgress.index / sessionProgress.total})"></div>
       </div>
     {/if}
 
-    <div class="question-card" class:feedback-correct={feedbackResult === "correct"} class:feedback-wrong={feedbackResult === "wrong"}>
-      <div class="card-header">
-        <span class="category-pill {q.category}">{q.category}</span>
+    <div
+      class="q-card"
+      class:feedback-correct={feedbackResult === "correct"}
+      class:feedback-wrong={feedbackResult === "wrong"}
+    >
+      <div class="q-card-header">
+        <span class="cat-pill {q.category}">{q.category}</span>
         <span class="diff-pill {q.difficulty}">{q.difficulty}</span>
         <span class="type-pill {q.type}">{q.type}</span>
       </div>
@@ -304,11 +308,14 @@
       </div>
 
       {#if q.hints.length > 0 && !showAnswer}
-        <button class="hint-btn" onclick={() => showHints = !showHints}>
-          {showHints ? "隐藏提示" : "显示提示"} ({q.hints.length})
+        <button class="hint-trigger" onclick={() => showHints = !showHints}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
+          </svg>
+          {showHints ? "收起提示" : "显示提示"} ({q.hints.length})
         </button>
         {#if showHints}
-          <ul class="hints">
+          <ul class="hints-list">
             {#each q.hints as hint}
               <li>{hint}</li>
             {/each}
@@ -319,7 +326,7 @@
       {#if q.type === "choice" || q.type === "true_false"}
         <div class="options" role="group" aria-label="选项">
           {#each q.options as opt, i}
-            <button class="option-btn"
+            <button class="opt-btn"
               class:selected={selectedOption === opt}
               class:correct={selectedOption !== null && isOptionCorrect(opt)}
               class:wrong={selectedOption === opt && !isOptionCorrect(opt)}
@@ -331,9 +338,9 @@
           {/each}
         </div>
         {#if selectedOption !== null && !isOptionCorrect(selectedOption) && !showAnswer}
-          <div class="retry-actions">
-            <button class="retry-btn" onclick={retry}>再试一次</button>
-            <button class="giveup-btn" onclick={giveUp}>看答案</button>
+          <div class="choice-actions">
+            <button class="choice-retry" onclick={retry}>再试一次</button>
+            <button class="choice-giveup" onclick={giveUp}>看答案</button>
           </div>
         {/if}
       {:else}
@@ -351,11 +358,11 @@
             <div class="self-eval">
               <p class="eval-hint">对比参考答案，你答对了吗？</p>
               <div class="eval-actions">
-                <button class="wrong-btn" onclick={() => selfEvaluate(false)}>答错了</button>
-                <button class="correct-btn" onclick={() => selfEvaluate(true)}>答对了</button>
+                <button class="eval-wrong" onclick={() => selfEvaluate(false)}>答错了</button>
+                <button class="eval-correct" onclick={() => selfEvaluate(true)}>答对了</button>
               </div>
-              <button class="ai-grade-btn" onclick={gradeWithAI} disabled={aiLoading}>
-                {aiLoading ? "AI 评分中..." : "🤖 AI 评分"}
+              <button class="ai-grade-trigger" onclick={gradeWithAI} disabled={aiLoading}>
+                {aiLoading ? "AI 评分中..." : "AI 评分"}
               </button>
             </div>
             {#if showAIConfig}
@@ -387,21 +394,21 @@
     {#if showSubmitResult || showAnswer}
       {#key q.id}
         {@const sections = renderAnswer(q.answer)}
-        {#each sections as section}
-          <div class="answer-section {section.type}">
-            <button class="section-header" onclick={() => toggleSection(section.type)} aria-expanded={expandedSections[section.type]}>
-              <span class="section-label">
+        {#each sections as section, i}
+          <div class="ans-section {section.type}" style="animation-delay: {i * 60}ms">
+            <button class="ans-header" onclick={() => toggleSection(section.type)} aria-expanded={expandedSections[section.type]}>
+              <span class="ans-label">
                 {#if section.type === "answer"}参考答案
                 {:else if section.type === "explanation"}解析
                 {:else}扩展延伸
                 {/if}
               </span>
-              <svg class="chevron" class:open={expandedSections[section.type]} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg class="chevron" class:open={expandedSections[section.type]} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
             {#if expandedSections[section.type]}
-              <div class="section-body">
+              <div class="ans-body">
                 {#each section.parts as part}
                   {#if part.type === "code"}
                     <CodeBlock code={part.code} lang={part.lang} />
@@ -416,180 +423,232 @@
       {/key}
     {/if}
 
-      {#if showAnswer}
-        {#if sessionProgress}
-          <div class="nav-actions">
-            <button onclick={exit} class="nav-btn">返回题库</button>
-            {#if store.hasPrev}
-              <button onclick={goPrev} class="nav-btn">← 上一题</button>
-            {/if}
-            {#if store.hasNext}
-              <button onclick={goNext} class="nav-btn primary">下一题 →</button>
-            {:else}
-              <button onclick={exit} class="nav-btn primary">完成</button>
-            {/if}
-          </div>
-        {:else}
-          <div class="after-actions">
-            <button onclick={() => onNavigate("browse")}>返回题库</button>
-            <button onclick={() => onNavigate("wrong")}>查看错题本</button>
-          </div>
-        {/if}
+    {#if showAnswer}
+      {#if sessionProgress}
+        <div class="nav-actions">
+          <button class="nav-btn exit" onclick={exit}>返回题库</button>
+          {#if store.hasPrev}
+            <button class="nav-btn prev" onclick={goPrev}>← 上一题</button>
+          {/if}
+          {#if store.hasNext}
+            <button class="nav-btn next" onclick={goNext}>下一题 →</button>
+          {:else}
+            <button class="nav-btn next" onclick={exit}>完成</button>
+          {/if}
+        </div>
+      {:else}
+        <div class="nav-actions single">
+          <button class="nav-btn exit" onclick={() => onNavigate("browse")}>返回题库</button>
+          <button class="nav-btn next" onclick={() => onNavigate("wrong")}>错题本</button>
+        </div>
       {/if}
+    {/if}
   {/if}
 </div>
 
 <style>
   .quiz { display: flex; flex-direction: column; gap: 14px; }
   .loading { text-align: center; color: var(--text-muted); padding: 60px 0; }
+
+  /* ── Meta Bar ── */
   .q-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .progress-text { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-left: 4px; }
-  .shuffle-btn { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 4px; cursor: pointer; line-height: 1; display: inline-flex; align-items: center; color: var(--text-muted); }
-  .shuffle-btn:active { transform: scale(0.88); }
-  .timer { margin-left: auto; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-muted); }
-  .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transform-origin: left; transition: transform 0.3s ease; }
-  .question-card.feedback-correct {
-    box-shadow: 0 0 24px rgba(52, 211, 153, 0.3), var(--shadow-lg);
-    border-color: var(--success);
-  }
-  .question-card.feedback-wrong {
-    animation: shake 0.35s ease both;
-    border-color: var(--danger);
-  }
-  .question-card {
-    background: var(--bg-card);
+  .shuffle-btn {
+    background: none;
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    transition: background-color 0.2s, border-color 0.2s;
-  }
-  .card-header {
-    display: flex;
-    gap: 6px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
     align-items: center;
-    flex-wrap: wrap;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.3s var(--spring);
   }
-  .category-pill, .diff-pill, .type-pill {
-    font-size: 11px;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-weight: 600;
-    letter-spacing: 0.3px;
-  }
-  .category-pill.cs_basics { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
-  .category-pill.algorithm { background: rgba(52, 211, 153, 0.15); color: #34d399; }
-  .category-pill.database { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-  .category-pill.linux { background: rgba(248, 113, 113, 0.15); color: #f87171; }
-  .category-pill.devops { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
-  .category-pill.java_basic, .category-pill.java_advanced, .category-pill.java_collections { background: rgba(244, 114, 182, 0.15); color: #f472b6; }
-  .category-pill.react, .category-pill.frontend { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
-  .category-pill.ai, .category-pill.agent { background: rgba(232, 121, 249, 0.15); color: #e879f9; }
-  .category-pill.system_design { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
-  .category-pill.project_mgmt { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
-  .category-pill.product { background: rgba(52, 211, 153, 0.15); color: #34d399; }
-  .diff-pill.easy { background: rgba(52, 211, 153, 0.15); color: #34d399; }
-  .diff-pill.medium { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-  .diff-pill.hard { background: rgba(248, 113, 113, 0.15); color: #f87171; }
-  .type-pill { background: var(--bg-surface); color: var(--text-muted); }
-  .type-pill.choice { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
-  .type-pill.true_false { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
-  .type-pill.short_answer { background: rgba(52, 211, 153, 0.15); color: #34d399; }
-  .type-pill.coding { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+  .shuffle-btn:active { transform: scale(0.88); }
+  .q-timer { margin-left: auto; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-muted); }
   .q-number-badge {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 28px;
-    height: 28px;
-    padding: 0 8px;
-    border-radius: 14px;
+    min-width: 30px;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-pill);
     background: var(--accent-bg);
     color: var(--accent);
     font-size: 12px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
   }
-  .q-title { font-size: 17px; font-weight: 600; }
-  .q-content { line-height: 1.7; font-size: 15px; }
+
+  /* ── Progress ── */
+  .progress-track { height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transform-origin: left; transition: transform 0.5s var(--spring); }
+
+  /* ── Question Card (Double-Bezel) ── */
+  .q-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: calc(var(--radius-lg) + 2px);
+    padding: 5px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.4s var(--spring);
+  }
+  .q-card > :not(:first-child) {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    border: 1px solid var(--border-hairline);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .q-card.feedback-correct > :first-child + * {
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.04), 0 0 28px var(--success-glow);
+    border-color: rgba(74, 222, 128, 0.2);
+  }
+  .q-card.feedback-wrong > :first-child + * {
+    animation: shake 0.35s var(--spring) both;
+    border-color: rgba(248, 113, 113, 0.2);
+  }
+
+  .q-card-header { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+  .cat-pill, .diff-pill, .type-pill {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  .cat-pill.cs_basics { background: rgba(108, 140, 255, 0.1); color: #6c8cff; }
+  .cat-pill.algorithm { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+  .cat-pill.database { background: rgba(251, 191, 36, 0.1); color: #fbbf24; }
+  .cat-pill.linux { background: rgba(248, 113, 113, 0.1); color: #f87171; }
+  .cat-pill.devops { background: rgba(167, 139, 250, 0.1); color: #a78bfa; }
+  .cat-pill.java_basic, .cat-pill.java_advanced, .cat-pill.java_collections { background: rgba(244, 114, 182, 0.1); color: #f472b6; }
+  .cat-pill.react, .cat-pill.frontend { background: rgba(56, 189, 248, 0.1); color: #38bdf8; }
+  .cat-pill.ai, .cat-pill.agent { background: rgba(232, 121, 249, 0.1); color: #e879f9; }
+  .cat-pill.system_design { background: rgba(251, 146, 60, 0.1); color: #fb923c; }
+  .cat-pill.project_mgmt { background: rgba(148, 163, 184, 0.1); color: #94a3b8; }
+  .cat-pill.product { background: rgba(74, 222, 128, 0.1); color: #4ade80; }
+  .diff-pill.easy { background: var(--success-bg); color: var(--success); }
+  .diff-pill.medium { background: var(--warning-bg); color: var(--warning); }
+  .diff-pill.hard { background: var(--danger-bg); color: var(--danger); }
+  .type-pill { background: var(--bg-surface); color: var(--text-muted); }
+  .type-pill.choice { background: rgba(108, 140, 255, 0.1); color: #6c8cff; }
+  .type-pill.true_false { background: rgba(167, 139, 250, 0.1); color: #a78bfa; }
+  .type-pill.short_answer { background: var(--success-bg); color: var(--success); }
+  .type-pill.coding { background: var(--danger-bg); color: var(--danger); }
+
+  .q-title { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; }
+  .q-content { line-height: 1.75; font-size: 15px; }
   .q-content p { margin-bottom: 8px; }
-  .hint-btn { background: none; color: var(--warning); border: 1px solid var(--warning); padding: 8px; }
-  .hints { padding-left: 20px; color: var(--text-muted); font-size: 14px; }
-  .hints li { margin-bottom: 6px; }
-  .answer-section { border-radius: var(--radius); border: 1px solid; overflow: hidden; animation: pop-in 0.3s ease both; }
-  .answer-section:nth-child(2) { animation-delay: 50ms; }
-  .answer-section:nth-child(3) { animation-delay: 100ms; }
-  .answer-section.answer { background: var(--ans-answer-bg); border-color: var(--ans-answer-border); }
-  .answer-section.explanation { background: var(--ans-explanation-bg); border-color: var(--ans-explanation-border); }
-  .answer-section.extension { background: var(--ans-extension-bg); border-color: var(--ans-extension-border); }
-  .section-header { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 12px 16px; background: none; color: inherit; border: none; cursor: pointer; font-size: 14px; font-weight: 600; font-family: inherit; border-radius: 0; }
-  .section-header:active { transform: none; }
-  .answer-section.answer .section-header { color: var(--ans-answer-text); }
-  .answer-section.explanation .section-header { color: var(--ans-explanation-text); }
-  .answer-section.extension .section-header { color: var(--ans-extension-text); }
-  .chevron { transition: transform 0.25s ease; flex-shrink: 0; }
-  .chevron.open { transform: rotate(180deg); }
-  .section-body { padding: 0 16px 14px; animation: fadeIn 0.2s ease; }
-  .section-body p { font-size: 14px; line-height: 1.7; }
-  .section-body p:not(:last-child) { margin-bottom: 8px; }
-  .wrong-btn { background: var(--danger); }
-  .wrong-btn:disabled { background: var(--danger-bg); }
-  .correct-btn { background: var(--success); }
-  .correct-btn:disabled { background: var(--success-bg); }
-  .options { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
-  .option-btn { width: 100%; padding: 14px; font-size: 15px; text-align: left; background: var(--bg-card); color: var(--text); border: 2px solid var(--border); transition: all 0.2s; }
-  .option-btn:active { transform: scale(0.98); }
-  .option-btn.selected { border-color: var(--accent); }
-  .option-btn.correct {
+
+  .hint-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    color: var(--warning);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: var(--radius-pill);
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    width: fit-content;
+    transition: all 0.3s var(--spring);
+  }
+  .hint-trigger:active { transform: scale(0.96); }
+  .hints-list { padding-left: 20px; color: var(--text-muted); font-size: 14px; }
+  .hints-list li { margin-bottom: 6px; }
+
+  /* ── Options ── */
+  .options { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .opt-btn {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+    text-align: left;
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: all 0.3s var(--spring);
+  }
+  .opt-btn:active { transform: scale(0.98); }
+  .opt-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .opt-btn.correct {
     border-color: var(--success); background: var(--success-bg); color: var(--success);
-    animation: bounce-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation: spring-in 0.45s var(--spring) both;
   }
-  .option-btn.wrong {
+  .opt-btn.wrong {
     border-color: var(--danger); background: var(--danger-bg); color: var(--danger);
-    animation: shake 0.35s ease both;
+    animation: shake 0.35s var(--spring) both;
   }
-  .option-btn:disabled { cursor: default; opacity: 1; }
-  .option-btn:disabled:not(.correct):not(.wrong) { opacity: 0.6; }
+  .opt-btn:disabled { cursor: default; opacity: 1; }
+  .opt-btn:disabled:not(.correct):not(.wrong) { opacity: 0.5; }
 
-  @keyframes bounce-in {
-    0% { transform: scale(1); }
-    30% { transform: scale(1.06); }
-    50% { transform: scale(0.97); }
-    70% { transform: scale(1.03); }
-    100% { transform: scale(1); }
-  }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
-  }
-  @keyframes pop-in {
-    0% { transform: scale(0.85); opacity: 0; }
-    70% { transform: scale(1.05); }
-    100% { transform: scale(1); opacity: 1; }
-  }
+  .choice-actions { display: flex; gap: 8px; }
+  .choice-retry { flex: 1; padding: 10px; background: none; color: var(--accent); border: 1px solid var(--accent); border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; }
+  .choice-giveup { flex: 1; padding: 10px; background: var(--bg-surface); color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; }
 
-  .nav-actions, .after-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-  .nav-btn { flex: 1; min-width: 100px; padding: 12px; font-size: 14px; text-align: center; background: var(--bg-card); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
-  .nav-btn:active { transform: scale(0.97); }
-  .nav-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-  .after-actions button { flex: 1; padding: 12px; font-size: 14px; }
+  /* ── Answer Sections ── */
+  .ans-section {
+    border-radius: var(--radius);
+    overflow: hidden;
+    animation: scale-in 0.4s var(--spring) both;
+  }
+  .ans-section.answer { background: var(--ans-answer-bg); border: 1px solid var(--ans-answer-border); }
+  .ans-section.explanation { background: var(--ans-explanation-bg); border: 1px solid var(--ans-explanation-border); }
+  .ans-section.extension { background: var(--ans-extension-bg); border: 1px solid var(--ans-extension-border); }
+  .ans-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 16px;
+    background: none;
+    color: inherit;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: 0;
+    transition: background 0.3s var(--spring);
+  }
+  .ans-header:hover { background: rgba(255,255,255,0.03); }
+  .ans-header:active { transform: none; }
+  .ans-section.answer .ans-header { color: var(--ans-answer-text); }
+  .ans-section.explanation .ans-header { color: var(--ans-explanation-text); }
+  .ans-section.extension .ans-header { color: var(--ans-extension-text); }
+  .chevron { transition: transform 0.3s var(--spring); flex-shrink: 0; }
+  .chevron.open { transform: rotate(180deg); }
+  .ans-body { padding: 0 16px 14px; animation: fade-up 0.25s var(--spring); }
+  .ans-body p { font-size: 14px; line-height: 1.7; }
+  .ans-body p:not(:last-child) { margin-bottom: 8px; }
+
+  /* ── Input ── */
   .input-area { display: flex; flex-direction: column; gap: 8px; }
   .answer-input, .code-input { resize: vertical; min-height: 80px; line-height: 1.6; font-size: 16px; }
-  .code-input { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; font-size: 13px; tab-size: 2; background: var(--code-bg); border-color: var(--border); }
-  .code-input:focus { border-color: var(--accent-dim); }
-  .submit-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; }
+  .code-input { font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace; font-size: 13px; tab-size: 2; background: var(--code-bg); }
+  .submit-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border-radius: var(--radius-sm); }
   .submit-btn:disabled { opacity: 0.4; cursor: default; }
+
+  /* ── Self Eval ── */
   .self-eval { display: flex; flex-direction: column; gap: 10px; }
-  .eval-hint { text-align: center; font-size: 14px; color: var(--text-muted); }
-  .eval-actions { display: flex; gap: 12px; }
-  .eval-actions button { flex: 1; padding: 14px; font-size: 15px; font-weight: 600; }
-  .ai-grade-btn { width: 100%; margin-top: 8px; padding: 10px; font-size: 14px; background: none; border: 1px solid var(--border); color: var(--text-muted); }
-  .ai-grade-btn:disabled { opacity: 0.5; }
+  .eval-hint { text-align: center; font-size: 13px; color: var(--text-muted); }
+  .eval-actions { display: flex; gap: 10px; }
+  .eval-wrong { flex: 1; padding: 12px; font-size: 14px; font-weight: 600; background: var(--danger); border-radius: var(--radius-sm); }
+  .eval-correct { flex: 1; padding: 12px; font-size: 14px; font-weight: 600; background: var(--success); border-radius: var(--radius-sm); }
+  .ai-grade-trigger { width: 100%; padding: 10px; font-size: 13px; background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: var(--radius-sm); }
+  .ai-grade-trigger:disabled { opacity: 0.5; }
+
   .ai-grade { background: var(--ans-extension-bg); border: 1px solid var(--ans-extension-border); border-radius: var(--radius-sm); padding: 12px 16px; margin-top: 8px; font-size: 14px; line-height: 1.6; }
   .ai-grade p { margin-bottom: 4px; }
   .ai-config { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
@@ -598,17 +657,30 @@
   .config-row { display: flex; gap: 8px; }
   .config-row input { flex: 1; }
   .config-save { white-space: nowrap; padding: 10px 16px; }
-  .retry-actions { display: flex; gap: 8px; margin-top: 4px; }
-  .retry-btn { flex: 1; padding: 12px; background: none; color: var(--accent); border: 1px solid var(--accent); }
-  .giveup-btn { flex: 1; padding: 12px; background: none; color: var(--text-muted); border: 1px solid var(--border); }
-  .giveup-full { width: 100%; padding: 12px; background: none; color: var(--text-muted); border: 1px solid var(--border); margin-top: 4px; }
+
+  /* ── Navigation ── */
+  .nav-actions { display: flex; gap: 8px; }
+  .nav-actions.single { flex-wrap: wrap; }
+  .nav-btn {
+    flex: 1;
+    min-width: 90px;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    border-radius: var(--radius-sm);
+    transition: all 0.3s var(--spring);
+  }
+  .nav-btn:active { transform: scale(0.97); }
+  .nav-btn.exit { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+  .nav-btn.prev { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+  .nav-btn.next { background: var(--accent); color: #fff; border: none; }
 
   @media (max-width: 480px) {
-    .q-title { font-size: 16px; }
+    .q-title { font-size: 15px; }
     .q-content { font-size: 14px; }
     .answer-input, .code-input { min-height: 120px; font-size: 16px; }
-    .option-btn { padding: 12px; font-size: 14px; }
-    .eval-actions button { padding: 14px; }
-    .page { padding: 14px 12px; }
+    .opt-btn { padding: 12px; font-size: 14px; }
+    .page { padding: 18px 14px; }
   }
 </style>
