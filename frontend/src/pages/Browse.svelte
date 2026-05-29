@@ -109,10 +109,16 @@
     </svg>
     <input
       class="search"
-      placeholder="搜索题目..."
+      placeholder="搜索题目、答案、标签..."
       bind:value={store.filters.search}
       oninput={() => applyFilter()}
     />
+    {#if store.filters.search}
+      <button class="search-clear" title="清除搜索" onclick={() => { store.filters.search = ""; applyFilter(); }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      </button>
+    {/if}
   </div>
 
   {#if store.error}
@@ -122,6 +128,7 @@
   {:else if store.questions.length === 0}
     <p class="empty">暂无题目 — 试试调整筛选条件或换个分类</p>
   {:else}
+    <p class="result-count">共 {store.questions.length} 题</p>
     <div class="list">
       {#each store.questions as q}
         <button class="card q-item status-{q.status}" data-testid="question-item" onclick={() => goQuestion(q)}>
@@ -292,6 +299,27 @@
   }
   .search {
     padding-left: 36px;
+    padding-right: 32px;
+  }
+  .search-clear {
+    position: absolute;
+    right: 8px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    border-radius: 50%;
+    transition: all 0.2s var(--spring);
+  }
+  .search-clear:active {
+    background: var(--bg-surface);
+    transform: scale(0.85);
+  }
+  .result-count {
+    font-size: 12px;
+    color: var(--text-muted);
   }
   .q-title {
     font-size: 14px;

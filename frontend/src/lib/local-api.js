@@ -39,7 +39,10 @@ function saveSessions(s) {
 function matchesSearch(q, search) {
   if (!search) return true;
   const s = search.toLowerCase();
-  return q.title.toLowerCase().includes(s) || q.content.toLowerCase().includes(s);
+  return q.title.toLowerCase().includes(s) ||
+    q.content.toLowerCase().includes(s) ||
+    (q.answer || "").toLowerCase().includes(s) ||
+    (q.tags || []).some((t) => t.toLowerCase().includes(s));
 }
 
 // ── Knowledge Points helpers ──────────────────────────────────────
@@ -132,7 +135,7 @@ export const api = {
       }
 
       const page = params.page || 1;
-      const pageSize = params.page_size || 20;
+      const pageSize = params.page_size || 200;
       const offset = (page - 1) * pageSize;
 
       return result.slice(offset, offset + pageSize).map((q) => {
