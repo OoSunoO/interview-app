@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { api } from "../lib/api.js";
+  import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import ProgressRing from "../components/ProgressRing.svelte";
 

@@ -1,6 +1,6 @@
 <script>
   import { onMount } from "svelte";
-  import { api } from "../lib/api.js";
+  import { api } from "../lib/local-api.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { onNavigate } = $props();
