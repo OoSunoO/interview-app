@@ -51,7 +51,7 @@
 </script>
 
 <div class="page browse">
-  <h1 class="page-title">题库</h1>
+  <h1 class="page-title" data-testid="page-title">题库</h1>
 
   <div class="filters">
     <select bind:value={store.filters.category} onchange={applyFilter}>
@@ -124,7 +124,7 @@
   {:else}
     <div class="list">
       {#each store.questions as q}
-        <button class="card q-item status-{q.status}" onclick={() => goQuestion(q)}>
+        <button class="card q-item status-{q.status}" data-testid="question-item" onclick={() => goQuestion(q)}>
           <div class="q-header">
             <span class="status-icon {q.status}">
               {#if q.status === "correct"}

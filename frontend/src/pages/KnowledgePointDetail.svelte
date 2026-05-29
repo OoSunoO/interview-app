@@ -69,7 +69,7 @@
     <div class="skeleton-card" style="height: 80px; margin-top: 8px"></div>
     <div class="skeleton-card" style="height: 80px; margin-top: 8px"></div>
   {:else if detail}
-    <div class="kp-header card">
+    <div class="kp-header card" data-testid="kp-header">
       <div class="kp-title-row">
         <h1 class="kp-title">{detail.name}</h1>
         <span class="kp-count">{detail.question_count} 道相关题目</span>

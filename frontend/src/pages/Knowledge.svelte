@@ -49,7 +49,7 @@
 </script>
 
 <div class="page knowledge">
-  <h1 class="page-title">知识点</h1>
+  <h1 class="page-title" data-testid="page-title">知识点</h1>
   <p class="page-sub">按领域分层浏览，追踪每个知识点的掌握进度</p>
 
   <div class="search-wrap">

@@ -68,12 +68,12 @@
 </script>
 
 <div class="page stats-page">
-  <h1 class="page-title">学习进度</h1>
+  <h1 class="page-title" data-testid="page-title">学习进度</h1>
 
   {#if !stats}
     <p class="loading">加载中...</p>
   {:else}
-    <div class="overview">
+    <div class="overview" data-testid="stats-overview">
       <div class="overview-item">
         <span class="num">{stats.total}</span>
         <span class="label">总题</span>

@@ -323,7 +323,7 @@
         <span class="type-pill {q.type}">{q.type}</span>
       </div>
 
-      <h2 class="q-title">{q.title}</h2>
+      <h2 class="q-title" data-testid="question-title">{q.title}</h2>
 
       <div class="q-content">
         {#each renderContent(q.content) as part}
@@ -354,7 +354,7 @@
           {showHints ? "收起提示" : "显示提示"} ({q.hints.length})
         </button>
         {#if showHints}
-          <ul class="hints-list">
+          <ul class="hints-list" data-testid="hints-list">
             {#each q.hints as hint}
               <li>{hint}</li>
             {/each}
@@ -366,7 +366,7 @@
         <div class="options" role="group" aria-label="选项">
           {#each q.options as opt, i}
             <button
-              class="opt-btn"
+              class="opt-btn" data-testid="option-button"
               class:selected={selectedOption === opt}
               class:correct={selectedOption !== null && isOptionCorrect(opt)}
               class:wrong={selectedOption === opt && !isOptionCorrect(opt)}
@@ -448,7 +448,7 @@
       {#key q.id}
         {@const sections = renderAnswer(q.answer)}
         {#each sections as section, i}
-          <div class="ans-section {section.type}" style="animation-delay: {i * 60}ms">
+          <div class="ans-section {section.type}" data-testid="answer-section" style="animation-delay: {i * 60}ms">
             <button
               class="ans-header"
               onclick={() => toggleSection(section.type)}

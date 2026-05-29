@@ -74,7 +74,7 @@
 
 <div class="page kp-page">
   <div class="page-header">
-    <h1 class="page-title">知识点</h1>
+    <h1 class="page-title" data-testid="page-title">知识点</h1>
     <p class="page-sub">共 {points.length} 个知识点，按领域分类</p>
   </div>
 
@@ -108,8 +108,8 @@
   {:else}
     <div class="cat-list">
       {#each grouped as cat}
-        <div class="cat-card card" class:expanded={expandedCategory === cat.id}>
-          <button class="cat-header" onclick={() => toggleCategory(cat.id)}>
+        <div class="cat-card card" data-testid="category-card" class:expanded={expandedCategory === cat.id}>
+          <button class="cat-header" data-testid="category-header" onclick={() => toggleCategory(cat.id)}>
             <div class="cat-header-left">
               <span class="cat-label">{cat.label}</span>
               <span class="cat-stats">{cat.totalQuestions} 题</span>
@@ -136,7 +136,7 @@
           {#if expandedCategory === cat.id}
             <div class="cat-children">
               {#each cat.children as kp}
-                <button class="child-item" onclick={() => goToDetail(kp.name)}>
+                <button class="child-item" data-testid="knowledge-item" onclick={() => goToDetail(kp.name)}>
                   <span class="child-name">{kp.name}</span>
                   <span class="child-count">{kp.count || kp.question_count} 题</span>
                   <div class="child-mastery">

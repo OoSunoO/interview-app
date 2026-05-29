@@ -186,7 +186,7 @@
     {/if}
   {:else}
     <div class="wrong-header">
-      <h1 class="page-title">错题本</h1>
+      <h1 class="page-title" data-testid="page-title">错题本</h1>
       {#if !loading}
         <span class="wrong-badge">{wrongQuestions.length}</span>
       {/if}
