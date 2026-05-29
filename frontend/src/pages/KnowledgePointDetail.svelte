@@ -19,7 +19,7 @@
     try {
       detail = await api.knowledge.get(tag);
     } catch (e) {
-      error = e.message ?? "加载知识点详情失败";
+      error = e?.message || "加载知识点详情失败";
     } finally {
       loading = false;
     }

@@ -1,10 +1,13 @@
 import { test, expect } from "@playwright/test";
 
-const NAV = { home: "首页", browse: "题库", wrong: "错题", stats: "进度" };
+const NAV = { home: "首页", browse: "题库", knowledge: "知识点", wrong: "错题", stats: "进度" };
 
 async function goTo(page, tab) {
   await page.goto("/");
-  await page.getByRole("button", { name: tab }).click();
+  await page.waitForTimeout(300);
+  // Click at bottom of nav button to avoid the theme button (position:absolute; top-right)
+  await page.getByRole("button", { name: tab }).click({ position: { x: 20, y: 54 } });
+  await page.waitForTimeout(200);
 }
 
 test.describe("Home", () => {
@@ -72,7 +75,27 @@ test.describe("Wrong Book", () => {
 test.describe("Stats", () => {
   test("loads stats overview", async ({ page }) => {
     await goTo(page, NAV.stats);
+    // Wait for async stats to load: loading text disappears → overview appears
     await expect(page.locator(".overview")).toBeVisible({ timeout: 5000 });
+  });
+});
+
+test.describe("Knowledge Points", () => {
+  test("loads knowledge points grouped by category", async ({ page }) => {
+    await goTo(page, NAV.knowledge);
+    await expect(page.locator(".cat-card").first()).toBeVisible({ timeout: 5000 });
+    expect(await page.locator(".cat-card").count()).toBeGreaterThan(0);
+  });
+
+  test("clicking a knowledge point opens detail page", async ({ page }) => {
+    await goTo(page, NAV.knowledge);
+    await expect(page.locator(".cat-card").first()).toBeVisible({ timeout: 5000 });
+    // Expand the first category
+    await page.locator(".cat-header").first().click();
+    await expect(page.locator(".child-item").first()).toBeVisible({ timeout: 3000 });
+    // Click a child knowledge point to open detail
+    await page.locator(".child-item").first().click();
+    await expect(page.locator(".kp-header")).toBeVisible({ timeout: 5000 });
   });
 });
 

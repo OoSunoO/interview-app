@@ -5,6 +5,7 @@ let _questions = $state([]);
 let _stats = $state(null);
 let _wrongQuestions = $state([]);
 let _dueReviews = $state([]);
+let _knowledge = $state([]);
 let _loading = $state(false);
 let _error = $state(null);
 let _filters = $state({ category: "", difficulty: "", status: "", search: "" });
@@ -68,6 +69,13 @@ export const store = {
   },
   set dueReviews(v) {
     _dueReviews = v;
+  },
+
+  get knowledge() {
+    return _knowledge;
+  },
+  set knowledge(v) {
+    _knowledge = v;
   },
 
   get loading() {
@@ -175,6 +183,18 @@ export const store = {
   },
   async refreshDue() {
     _dueReviews = await api.progress.dueReviews();
+  },
+
+  async loadKnowledge() {
+    _loading = true;
+    _error = null;
+    try {
+      _knowledge = await api.progress.knowledge();
+    } catch (e) {
+      _error = e.message ?? "加载知识点失败";
+    } finally {
+      _loading = false;
+    }
   },
 
   get theme() {

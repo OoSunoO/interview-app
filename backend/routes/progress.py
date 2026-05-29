@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from collections import defaultdict
 from database import get_db
 from models import ProgressUpdate, StatsOverview
 from datetime import datetime, timedelta
@@ -156,6 +157,66 @@ async def get_wrong_questions():
         d = dict(r)
         d["tags"] = json.loads(d["tags"]) if isinstance(d.get("tags"), str) else d.get("tags", [])
         result.append(d)
+    return result
+
+
+@router.get("/knowledge")
+async def get_knowledge():
+    db = await get_db()
+
+    # Get all questions with progress, category, and tags
+    cursor = await db.execute("""
+        SELECT q.id, q.category, q.tags,
+               COALESCE(p.status, 'new') as status
+        FROM questions q
+        LEFT JOIN user_progress p ON q.id = p.question_id
+        ORDER BY q.id
+    """)
+    rows = await cursor.fetchall()
+    await db.close()
+
+    # Category display names
+    category_names = {
+        "ai": "AI", "agent": "AI Agent", "algorithm": "算法",
+        "cs_basics": "计算机基础", "database": "数据库", "devops": "DevOps",
+        "frontend": "前端", "java_basic": "Java 基础", "java_advanced": "Java 进阶",
+        "java_collections": "Java 集合", "linux": "Linux",
+        "react": "React", "system_design": "系统设计",
+        "product": "产品思维", "project_mgmt": "项目管理",
+    }
+
+    # Build: category -> { total, done, tags: { tag_name: {total, done} } }
+    cat_data = defaultdict(lambda: {"total": 0, "done": 0, "tags": defaultdict(lambda: {"total": 0, "done": 0})})
+
+    for r in rows:
+        cat = r["category"]
+        status = r["status"]
+        tags = json.loads(r["tags"]) if isinstance(r["tags"], str) else (r["tags"] or [])
+
+        cat_data[cat]["total"] += 1
+        if status in ("correct", "reviewing"):
+            cat_data[cat]["done"] += 1
+
+        for tag in tags:
+            cat_data[cat]["tags"][tag]["total"] += 1
+            if status in ("correct", "reviewing"):
+                cat_data[cat]["tags"][tag]["done"] += 1
+
+    result = []
+    for cat_key in sorted(cat_data.keys()):
+        cd = cat_data[cat_key]
+        tags_list = [
+            {"name": t, "total": td["total"], "done": td["done"]}
+            for t, td in sorted(cd["tags"].items(), key=lambda x: -x[1]["total"])
+        ]
+        result.append({
+            "name": cat_key,
+            "label": category_names.get(cat_key, cat_key),
+            "total": cd["total"],
+            "done": cd["done"],
+            "tags": tags_list,
+        })
+
     return result
 
 

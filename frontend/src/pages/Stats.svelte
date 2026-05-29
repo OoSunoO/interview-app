@@ -5,7 +5,8 @@
   import ProgressRing from "../components/ProgressRing.svelte";
 
   onMount(async () => {
-    store.refreshStats();
+    // refreshStats must resolve before rendering overview content
+    await store.refreshStats();
     try {
       wrongList = await api.progress.wrong();
     } catch (e) {

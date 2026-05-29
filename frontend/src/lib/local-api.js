@@ -61,7 +61,7 @@ function generateSummary(tag, tagQuestions) {
     const content = q.content || "";
     const title = q.title || "";
     // Add title
-    concepts.add(title.replace(/^请.*?/, "").replace(/^请解释/, "").replace(/^请介绍/, "").replace(/^请描述/, "").trim());
+    concepts.add(title.replace(/^请(解释|介绍|描述)?/, "").trim());
     // Extract short meaningful phrases from content
     const snippets = content.split(/[。，；]/).filter(s => s.length > 5 && s.length < 40);
     for (const s of snippets.slice(0, 2)) {
@@ -276,6 +276,52 @@ export const api = {
             next_review_at: p.next_review_at,
           };
         });
+    },
+
+    knowledge() {
+      const progress = getProgress();
+      const catData = {};
+
+      for (const q of questions) {
+        const cat = q.category;
+        if (!catData[cat]) {
+          catData[cat] = { total: 0, done: 0, tags: {} };
+        }
+        catData[cat].total++;
+
+        const p = progress[q.id];
+        const done = p?.status === "correct" || p?.status === "reviewing";
+        if (done) catData[cat].done++;
+
+        for (const tag of (q.tags || [])) {
+          if (!catData[cat].tags[tag]) {
+            catData[cat].tags[tag] = { total: 0, done: 0 };
+          }
+          catData[cat].tags[tag].total++;
+          if (done) catData[cat].tags[tag].done++;
+        }
+      }
+
+      const categoryNames = {
+        ai: "AI", agent: "AI Agent", algorithm: "算法",
+        cs_basics: "计算机基础", database: "数据库", devops: "DevOps",
+        frontend: "前端", java_basic: "Java 基础", java_advanced: "Java 进阶",
+        java_collections: "Java 集合", linux: "Linux",
+        react: "React", system_design: "系统设计",
+        product: "产品思维", project_mgmt: "项目管理",
+      };
+
+      return Object.entries(catData)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, cd]) => ({
+          name,
+          label: categoryNames[name] || name,
+          total: cd.total,
+          done: cd.done,
+          tags: Object.entries(cd.tags)
+            .sort(([, a], [, b]) => b.total - a.total)
+            .map(([tname, td]) => ({ name: tname, total: td.total, done: td.done })),
+        }));
     },
   },
 

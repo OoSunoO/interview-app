@@ -32,5 +32,6 @@ export const api = {
     stats: () => get("/progress/stats"),
     wrong: () => get("/progress/wrong"),
     dueReviews: () => get("/progress/review/due"),
+    knowledge: () => get("/progress/knowledge"),
   },
 };

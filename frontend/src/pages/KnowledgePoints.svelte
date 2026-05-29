@@ -9,14 +9,36 @@
   let loading = $state(true);
   let error = $state(null);
   let searchQuery = $state("");
+  let expandedCategory = $state(null);
 
+  // Filter flat list by search
   let filtered = $derived(
     points.filter(
       (p) =>
         !searchQuery ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.categories.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase())),
     ),
   );
+
+  // Group filtered points by first category into hierarchical structure
+  let grouped = $derived.by(() => {
+    const map = {};
+    for (const p of filtered) {
+      const cat = p.categories[0] || "其他";
+      if (!map[cat]) {
+        map[cat] = { id: cat, label: cat, totalQuestions: 0, totalMastery: 0, children: [] };
+      }
+      map[cat].children.push({
+        name: p.name,
+        question_count: p.question_count,
+        mastery: p.mastery,
+      });
+      map[cat].totalQuestions += p.question_count;
+      map[cat].totalMastery += p.mastery;
+    }
+    return Object.values(map).sort((a, b) => b.totalQuestions - a.totalQuestions);
+  });
 
   onMount(async () => {
     await loadPoints();
@@ -34,18 +56,15 @@
     }
   }
 
+  function toggleCategory(id) {
+    expandedCategory = expandedCategory === id ? null : id;
+  }
+
   function getMasteryColor(mastery) {
     if (mastery >= 80) return "var(--success)";
     if (mastery >= 40) return "var(--warning)";
     if (mastery > 0) return "var(--danger)";
     return "var(--text-dim)";
-  }
-
-  function getMasteryLabel(mastery) {
-    if (mastery >= 80) return "已掌握";
-    if (mastery >= 40) return "学习中";
-    if (mastery > 0) return "需加强";
-    return "未学习";
   }
 
   function goToDetail(tag) {
@@ -78,11 +97,11 @@
         <div class="skeleton-card" style="height: 100px"></div>
       {/each}
     </div>
-  {:else if filtered.length === 0}
+  {:else if grouped.length === 0}
     <p class="empty">暂无匹配的领域</p>
   {:else}
     <div class="cat-list">
-      {#each filtered as cat}
+      {#each grouped as cat}
         <div class="cat-card card" class:expanded={expandedCategory === cat.id}>
           <button class="cat-header" onclick={() => toggleCategory(cat.id)}>
             <div class="cat-header-left">
