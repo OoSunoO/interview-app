@@ -9,7 +9,9 @@
     saveAIConfig,
     setProvider,
     PROVIDERS,
-    gradeAnswer,
+    gradeDetailed,
+    saveScoreEntry,
+    getScoreHistory,
   } from "../lib/ai.js";
 
   let { questionId, onNavigate } = $props();
@@ -37,13 +39,17 @@
   let timerInterval = $state(null);
   let saving = $state(false);
   let selectedOption = $state(null);
+  let selectedOptions = $state([]);
   let wrongAttempts = $state(0);
   let userAnswer = $state("");
   let showSubmitResult = $state(false);
+  let multiSubmitted = $state(false);
   let feedbackResult = $state(null);
   let aiGrade = $state(null);
   let aiLoading = $state(false);
   let showAIConfig = $state(false);
+  let showScoreHistory = $state(false);
+  let scoreHistory = $state([]);
   let apiKeyInput = $state(getAIConfig().key);
   let apiProvider = $state(getAIConfig().provider ?? 0);
 
@@ -56,6 +62,7 @@
   async function loadQuestion() {
     loadError = null;
     q = null;
+    scoreHistory = getScoreHistory();
     try {
       const result = await store.loadQuestionDetail(questionId);
       if (result) {
@@ -101,9 +108,16 @@
     aiLoading = true;
     aiGrade = null;
     try {
-      aiGrade = await gradeAnswer(q.title + "\n" + q.content, userAnswer, q.answer);
+      const result = await gradeDetailed(q.title + "\n" + q.content, userAnswer, q.answer);
+      aiGrade = result;
+      saveScoreEntry({
+        questionId: q.id,
+        title: q.title,
+        overall: result.overall,
+        dimensions: result.dimensions,
+      });
     } catch (e) {
-      aiGrade = "评分解读失败：" + e.message;
+      aiGrade = { overall: "错误", dimensions: [], suggestion: "评分解读失败：" + e.message };
     }
     aiLoading = false;
   }
@@ -129,6 +143,39 @@
     if (!q) return false;
     if (q.type === "true_false") return q.answer.startsWith(opt);
     return q.answer.startsWith(opt.substring(0, 2));
+  }
+
+  function parseCorrectOptions(answer) {
+    const dot = answer.indexOf("。");
+    const prefix = dot > 0 ? answer.slice(0, dot).trim() : answer.trim();
+    return prefix.split(/[,，、]/).map((s) => s.trim()).filter(Boolean);
+  }
+
+  function toggleOption(opt) {
+    if (multiSubmitted) return;
+    const idx = selectedOptions.indexOf(opt);
+    if (idx === -1) {
+      selectedOptions = [...selectedOptions, opt];
+    } else {
+      selectedOptions = selectedOptions.filter((o) => o !== opt);
+    }
+  }
+
+  async function submitMultiChoice() {
+    if (selectedOptions.length === 0) return;
+    multiSubmitted = true;
+    stopTimer();
+    const correct = parseCorrectOptions(q.answer);
+    const selected = selectedOptions.map((o) => o.substring(0, 2).trim().replace(/\.$/, ""));
+    const allCorrect = correct.length === selected.length &&
+      correct.every((c) => selected.includes(c));
+    const status = allCorrect ? "correct" : "wrong";
+    saving = true;
+    await store.markProgress(q.id, status, timer);
+    q.status = status;
+    feedbackResult = status;
+    showAnswer = true;
+    saving = false;
   }
 
   function renderAnswer(text) {
@@ -197,6 +244,8 @@
       ? { answer: true, explanation: true, extension: true }
       : { answer: true, explanation: false, extension: false };
     selectedOption = null;
+    selectedOptions = [];
+    multiSubmitted = false;
     wrongAttempts = 0;
     userAnswer = "";
     showSubmitResult = false;
@@ -267,6 +316,13 @@
         selectOption(q.options[idx]);
       }
     }
+    if (q.type === "multiple_choice" && !multiSubmitted) {
+      const idx = parseInt(e.key) - 1;
+      if (idx >= 0 && idx < q.options.length) {
+        toggleOption(q.options[idx]);
+      }
+      if (e.key === "Enter") submitMultiChoice();
+    }
     if (q.type === "true_false") {
       if (e.key === "1" && selectedOption === null) selectOption(q.options[0]);
       if (e.key === "2" && selectedOption === null) selectOption(q.options[1]);
@@ -275,7 +331,7 @@
       if (e.key === "r" || e.key === "R") retry();
       if (e.key === "g" || e.key === "G") giveUp();
     }
-    if (!showAnswer && !showSubmitResult && q.type !== "choice" && q.type !== "true_false") {
+    if (!showAnswer && !showSubmitResult && q.type !== "choice" && q.type !== "true_false" && q.type !== "multiple_choice") {
       if (e.key === "Enter" && userAnswer.trim()) submitAnswer();
     }
   }
@@ -379,22 +435,34 @@
       {/if}
 
       {#if !browseMode}
-        {#if q.type === "choice" || q.type === "true_false"}
+        {#if q.type === "choice" || q.type === "true_false" || q.type === "multiple_choice"}
         <div class="options" role="group" aria-label="选项">
           {#each q.options as opt, i}
             <button
               class="opt-btn" data-testid="option-button"
-              class:selected={selectedOption === opt}
-              class:correct={selectedOption !== null && isOptionCorrect(opt)}
-              class:wrong={selectedOption === opt && !isOptionCorrect(opt)}
-              disabled={selectedOption !== null}
-              onclick={() => selectOption(opt)}
+              class:selected={q.type === "multiple_choice" ? selectedOptions.includes(opt) : selectedOption === opt}
+              class:correct={q.type === "multiple_choice" ? (multiSubmitted && parseCorrectOptions(q.answer).includes(opt.substring(0, 2).trim().replace(/\.$/, ""))) : (selectedOption !== null && isOptionCorrect(opt))}
+              class:wrong={q.type === "multiple_choice" ? (multiSubmitted && selectedOptions.includes(opt) && !parseCorrectOptions(q.answer).includes(opt.substring(0, 2).trim().replace(/\.$/, ""))) : (selectedOption === opt && !isOptionCorrect(opt))}
+              disabled={q.type === "multiple_choice" ? multiSubmitted : selectedOption !== null}
+              onclick={() => q.type === "multiple_choice" ? toggleOption(opt) : selectOption(opt)}
             >
-              {q.options.length > 1 && q.type === "choice" ? `${i + 1}. ` : ""}{opt}
+              {q.type === "multiple_choice" ? opt : q.options.length > 1 && q.type === "choice" ? `${i + 1}. ` : ""}{opt}
             </button>
           {/each}
         </div>
-        {#if selectedOption !== null && !isOptionCorrect(selectedOption) && !showAnswer}
+        {#if q.type === "multiple_choice"}
+          {#if !multiSubmitted}
+            <button class="submit-btn multi-submit" onclick={submitMultiChoice} disabled={selectedOptions.length === 0}>
+              确认提交（已选 {selectedOptions.length} 项）
+            </button>
+          {:else if !showAnswer}
+            <div class="choice-actions">
+              <button class="choice-retry" onclick={() => { multiSubmitted = false; selectedOptions = []; }}>重选</button>
+              <button class="choice-giveup" onclick={giveUp}>看答案</button>
+            </div>
+          {/if}
+        {/if}
+        {#if q.type !== "multiple_choice" && selectedOption !== null && !isOptionCorrect(selectedOption) && !showAnswer}
           <div class="choice-actions">
             <button class="choice-retry" onclick={retry}>再试一次</button>
             <button class="choice-giveup" onclick={giveUp}>看答案</button>
@@ -451,10 +519,58 @@
             {/if}
             {#if aiGrade}
               <div class="ai-grade">
-                {#each aiGrade.split("\n") as line}
-                  <p>{line}</p>
-                {/each}
+                {#if aiGrade.dimensions}
+                  <div class="grade-dimensions">
+                    {#each aiGrade.dimensions as dim}
+                      <div class="grade-dim">
+                        <div class="grade-dim-header">
+                          <span class="grade-dim-name">{dim.name}</span>
+                          <span class="grade-dim-score">{dim.score}</span>
+                        </div>
+                        <div class="grade-bar-wrap">
+                          <div class="grade-bar-fill" style="width: {dim.score}%"></div>
+                        </div>
+                        {#if dim.comment}
+                          <p class="grade-dim-comment">{dim.comment}</p>
+                        {/if}
+                      </div>
+                    {/each}
+                  </div>
+                  {#if aiGrade.suggestion}
+                    <div class="grade-suggestion">{aiGrade.suggestion}</div>
+                  {/if}
+                {:else if typeof aiGrade === "string"}
+                  {#each aiGrade.split("\n") as line}
+                    <p>{line}</p>
+                  {/each}
+                {:else if aiGrade.raw}
+                  {#each aiGrade.raw.split("\n") as line}
+                    <p>{line}</p>
+                  {/each}
+                {/if}
               </div>
+              {#if scoreHistory.length > 0}
+                <button class="history-toggle" onclick={() => (showScoreHistory = !showScoreHistory)}>
+                  {showScoreHistory ? "收起" : "查看"}评分历史 ({scoreHistory.length})
+                </button>
+                {#if showScoreHistory}
+                  <div class="score-history">
+                    {#each [...scoreHistory].reverse().slice(0, 10) as entry}
+                      <div class="score-entry">
+                        <div class="score-entry-header">
+                          <span class="score-entry-title">{entry.title}</span>
+                          <span class="score-entry-overall">{entry.overall}</span>
+                        </div>
+                        <div class="score-entry-dims">
+                          {#each entry.dimensions || [] as dim}
+                            <span class="score-mini-dim">{dim.name} {dim.score}</span>
+                          {/each}
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
+              {/if}
             {/if}
           {/if}
         {/if}
@@ -1011,6 +1127,112 @@
   }
   .ai-grade p {
     margin-bottom: 4px;
+  }
+  .grade-dimensions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .grade-dim-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .grade-dim-name {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .grade-dim-score {
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .grade-bar-wrap {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 4px 0;
+  }
+  .grade-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+    transition: width 0.6s var(--spring);
+  }
+  .grade-dim-comment {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+  .grade-suggestion {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin-top: 8px;
+  }
+  .history-toggle {
+    width: 100%;
+    padding: 8px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+  }
+  .score-history {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .score-entry {
+    padding: 8px 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+  }
+  .score-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .score-entry-title {
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .score-entry-overall {
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .score-entry-dims {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .score-mini-dim {
+    font-size: 10px;
+    padding: 1px 6px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border-radius: 3px;
+    font-variant-numeric: tabular-nums;
   }
   .ai-config {
     background: var(--bg-surface);

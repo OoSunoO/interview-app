@@ -1,0 +1,273 @@
+[
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Java 中 String 是不可变的",
+    "content": "在 Java 中，String 类的对象一旦创建就不可修改。",
+    "answer": "正确。解析：String 被 final 修饰，其底层 char[]（JDK 8）或 byte[]（JDK 9+）也被 final 修饰，且不提供修改内部数组的方法。任何看似修改 String 的操作（如 concat、replace）都会返回新的 String 对象。",
+    "options": ["正确", "错误"],
+    "tags": ["基础", "String"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "== 比较的是对象的内容",
+    "content": "在 Java 中，使用 == 比较两个字符串时，比较的是它们的内容是否相等。",
+    "answer": "错误。解析：== 比较的是两个对象的引用（内存地址）是否相同，而不是内容。比较字符串内容应使用 equals() 方法。",
+    "tags": ["基础", "字符串比较"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Java 支持多重继承",
+    "content": "Java 支持类的多重继承（即一个类可以同时继承多个父类）。",
+    "answer": "错误。解析：Java 不支持类的多重继承，一个类只能继承一个父类（单继承）。但 Java 支持接口的多重实现（一个类可以实现多个接口），JDK 8 以后接口还可以有默认方法。",
+    "tags": ["面向对象", "继承"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "finally 块一定会执行",
+    "content": "在 Java 异常处理中，finally 块中的代码在任何情况下都会执行。",
+    "answer": "错误。解析：finally 块在大多数情况下会执行，但以下情况不会：1）在 try 或 catch 中调用了 System.exit()；2）JVM 崩溃；3）线程被杀死。此外，finally 在 return 执行之后、方法返回之前执行。",
+    "tags": ["基础", "异常处理"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "数组有 length() 方法",
+    "content": "在 Java 中，数组有 length() 方法用于获取数组长度。",
+    "answer": "错误。解析：数组有 length 属性（不是方法）。获取数组长度使用 arr.length，而不是 arr.length()。String 类有 length() 方法。",
+    "tags": ["基础", "数组"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "抽象类不能实例化",
+    "content": "抽象类不能使用 new 关键字直接创建实例。",
+    "answer": "正确。解析：抽象类使用 abstract 修饰，不能被直接实例化。必须先定义具体的子类继承抽象类并实现所有抽象方法后，才能创建子类的实例。",
+    "tags": ["面向对象", "抽象类"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "static 方法可以重写",
+    "content": "子类可以重写（Override）父类的 static 方法。",
+    "answer": "错误。解析：static 方法是类级别的方法，属于编译期绑定，不能被重写。如果子类定义了与父类同名的 static 方法，实际上是隐藏（Hide）了父类的方法，不是重写。调用时根据引用类型决定，不体现多态。",
+    "tags": ["面向对象", "static"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "float f = 3.4; 编译正确",
+    "content": "在 Java 中，float f = 3.4; 是合法的赋值语句。",
+    "answer": "错误。解析：3.4 字面量默认是 double 类型，直接赋值给 float 会损失精度，编译报错。应该在数字后面加 f 或 F 后缀（float f = 3.4f;），或显式强转（float f = (float)3.4;）。",
+    "tags": ["基础", "数据类型"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "switch 支持 String 类型",
+    "content": "Java 的 switch 语句支持 String 类型作为条件表达式。",
+    "answer": "正确。解析：从 JDK 7 开始，switch 语句支持 String 类型（通过比较字符串的 hashCode 实现）。JDK 17 之后 switch 还支持模式匹配和 null 值。",
+    "tags": ["基础", "switch"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "构造方法可以被继承",
+    "content": "子类可以继承父类的构造方法。",
+    "answer": "错误。解析：构造方法不能被继承。子类在构造方法中通过 super() 调用父类的构造方法，但这不是继承。如果父类没有无参构造方法，子类必须在构造方法中显式调用 super(参数)。",
+    "tags": ["面向对象", "构造方法"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "HashMap 允许 null key",
+    "content": "HashMap 允许将 null 作为键（key）存储。",
+    "answer": "正确。解析：HashMap 允许一个 null key 和多个 null value。null key 总是存储在数组索引 0 的位置（HashMap 对 null 做了特殊处理，hash 值为 0）。而 Hashtable 和 ConcurrentHashMap 不允许 null key。",
+    "tags": ["集合", "HashMap"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "ArrayList 是线程安全的",
+    "content": "ArrayList 是线程安全的集合类，可以在多线程环境下使用。",
+    "answer": "错误。解析：ArrayList 不是线程安全的。多线程并发修改 ArrayList 可能导致数据不一致或 ConcurrentModificationException。多线程环境下应使用 CopyOnWriteArrayList、Collections.synchronizedList() 或 Vector。",
+    "tags": ["集合", "ArrayList"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "HashSet 保证元素按插入顺序排列",
+    "content": "HashSet 保证元素的迭代顺序与插入顺序一致。",
+    "answer": "错误。解析：HashSet 基于 HashMap 实现，不保证迭代顺序。元素顺序可能随时间变化。如果需要保持插入顺序，应使用 LinkedHashSet。如果需要排序，应使用 TreeSet。",
+    "tags": ["集合", "HashSet"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "HashMap 默认负载因子是 0.75",
+    "content": "HashMap 的默认负载因子（load factor）是 0.75，这是时间与空间的折中值。",
+    "answer": "正确。解析：默认负载因子 0.75 是权衡的结果。太高会降低空间开销但增加哈希碰撞概率，太低会增加扩容次数浪费内存。0.75 在大多数场景下提供了较好的性能平衡。",
+    "tags": ["集合", "HashMap"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "ConcurrentHashMap key 可以为 null",
+    "content": "ConcurrentHashMap 允许 null 作为键。",
+    "answer": "错误。解析：ConcurrentHashMap 不允许 null key 和 null value。原因是 ConcurrentHashMap 用于多线程环境，如果 get() 返回 null，无法区分是 key 不存在还是 value 本身为 null。而 HashMap 允许 null 是因为单线程环境下可以通过 containsKey() 区分。",
+    "tags": ["集合", "ConcurrentHashMap"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "PriorityQueue 保证元素按 FIFO 顺序",
+    "content": "PriorityQueue 按照先进先出（FIFO）的顺序处理元素。",
+    "answer": "错误。解析：PriorityQueue 是按照元素优先级顺序（自然顺序或 Comparator 指定的顺序）处理元素，而不是 FIFO 顺序。每次出队（poll）的都是优先级最高的元素。如果需要 FIFO 顺序，应使用 LinkedList 作为 Queue。",
+    "tags": ["集合", "Queue"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "private 方法可以被反射调用",
+    "content": "使用 Java 反射机制，可以在运行时调用类的 private 方法。",
+    "answer": "正确。解析：通过 setAccessible(true) 可以绕过 Java 的访问控制检查，调用 private 方法、访问 private 字段。但这违背了封装原则，在生产代码中应谨慎使用。",
+    "tags": ["基础", "反射"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Java 只有值传递",
+    "content": "Java 只有值传递（pass-by-value），没有引用传递。",
+    "answer": "正确。解析：Java 严格按值传递。对于基本类型传递的是值的副本，对于引用类型传递的是引用的副本（而不是引用本身）。所以在方法内部修改引用指向的对象属性会影响到原对象，但修改引用本身（如赋新值）不会影响原引用。",
+    "tags": ["基础", "参数传递"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "volatile 保证原子性",
+    "content": "volatile 关键字可以保证对变量的操作是原子性的。",
+    "answer": "错误。解析：volatile 保证可见性和禁止指令重排序，但不保证原子性。例如 count++ 包含读取、加1、写入三步，volatile 不能保证这三步的原子性。需要原子性时应使用 synchronized、Lock 或 AtomicInteger 等原子类。",
+    "tags": ["并发", "volatile"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "synchronized 是悲观锁",
+    "content": "Java 中的 synchronized 属于悲观锁。",
+    "answer": "正确。解析：synchronized 默认假设并发冲突会发生，因此使用阻塞式加锁。但在 JDK 6 之后引入了锁升级机制（偏向锁→轻量级锁→重量级锁），轻量级锁通过 CAS 自旋实现，融合了乐观锁思想，但整体上仍属于悲观锁范畴。",
+    "tags": ["并发", "synchronized"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "G1 是 JDK 8 默认的垃圾回收器",
+    "content": "JDK 8 的默认垃圾回收器是 G1（Garbage First）。",
+    "answer": "错误。解析：JDK 8 的默认垃圾回收器是 Parallel Scavenge + Parallel Old（并行回收器）。G1 从 JDK 9 才开始成为默认垃圾回收器。",
+    "tags": ["JVM", "GC"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "方法区在 JDK 8 中被移除",
+    "content": "JDK 8 中移除了方法区（Method Area），使用元空间（Metaspace）替代。",
+    "answer": "正确。解析：JDK 8 中永久代（PermGen，方法区的实现）被移除，由元空间（Metaspace）替代。区别在于：永久代使用 JVM 堆内存，元空间使用本地内存（Native Memory），不再受 JVM 最大内存限制。",
+    "tags": ["JVM", "内存结构"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "线程池核心线程会被回收",
+    "content": "ThreadPoolExecutor 中，如果 allowCoreThreadTimeOut 设置为 true，核心线程也会因空闲超时被回收。",
+    "answer": "正确。解析：默认情况下核心线程即使空闲也会存活。但调用 allowCoreThreadTimeOut(true) 后，核心线程也会受 keepAliveTime 控制，超时后会被回收。这在低负载场景下可以节省线程资源。",
+    "tags": ["并发", "线程池"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Stream 可以重复使用",
+    "content": "Java 8 的 Stream 执行完终止操作后可以再次遍历。",
+    "answer": "错误。解析：Stream 执行终止操作（如 collect、forEach）后就被消费了，不能再次使用。Stream 是一次性的，如果需要重新遍历，必须重新创建 Stream。这类似于迭代器只能单向遍历一次。",
+    "tags": ["Java 8", "Stream"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Lambda 表达式会生成匿名内部类",
+    "content": "Lambda 表达式在编译时会生成匿名内部类。",
+    "answer": "错误。解析：Lambda 表达式不会编译为匿名内部类。编译器使用 invokedynamic 指令在运行时动态生成实现，避免了匿名内部类每次加载时的类文件生成开销。这是性能优于匿名内部类的原因之一。",
+    "tags": ["Java 8", "Lambda"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "单例模式的双重检查锁需要 volatile",
+    "content": "双重检查锁定（Double-Checked Locking）实现单例时，instance 变量需要用 volatile 修饰。",
+    "answer": "正确。解析：不加 volatile 可能导致指令重排序：instance = new Singleton() 分为分配内存→初始化对象→赋值三步，可能先赋值（引用不为 null）后初始化，导致其他线程拿到未初始化的对象。volatile 禁止重排序解决此问题。",
+    "tags": ["并发", "单例"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "重载属于编译期多态",
+    "content": "方法重载（Overload）是编译期多态，方法重写（Override）是运行期多态。",
+    "answer": "正确。解析：重载在编译期根据参数类型、个数决定调用哪个方法（静态分派），属于编译期多态。重写在运行期根据实际对象类型决定调用哪个方法（动态分派），属于运行期多态。",
+    "tags": ["面向对象", "多态"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "char 可以存储汉字",
+    "content": "Java 中的 char 类型变量可以存储一个汉字。",
+    "answer": "正确。解析：Java char 是 16 位 Unicode 编码，占用 2 字节。大部分汉字在 Unicode 基本多语言平面（BMP）内，可用一个 char 表示。但部分生僻字（扩展平面）需要两个 char 表示（代理对）。",
+    "tags": ["基础", "char"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "接口中的变量默认是常量",
+    "content": "在接口中定义的成员变量默认是 public static final 的。",
+    "answer": "正确。解析：接口中的字段隐式使用 public static final 修饰。因为接口不能被实例化，字段只能通过类名访问，且接口定义的是能力契约而非状态，所以字段必须是常量。",
+    "tags": ["面向对象", "接口"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "LinkedList 实现了 Deque 接口",
+    "content": "LinkedList 不仅实现了 List 接口，还实现了 Deque 接口。",
+    "answer": "正确。解析：LinkedList 同时实现了 List 和 Deque 接口，因此既可以作为列表使用，也可以作为双端队列（栈/队列）使用。作为队列时，offer/poll/peek 操作都是 O(1)。",
+    "tags": ["集合", "LinkedList"]
+  }
+]

@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { store } from "../lib/stores.svelte.js";
+  import { api } from "../lib/local-api.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { onNavigate } = $props();
@@ -48,6 +49,21 @@
     store.startQuiz(list);
     onNavigate("quiz", { questionId: q.id });
   }
+
+  function exportMarkdown() {
+    const ids = store.questions.map((q) => q.id);
+    if (ids.length === 0) return;
+    const md = api.exportMarkdown(ids);
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `面试题库-${new Date().toISOString().slice(0, 10)}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 </script>
 
 <div class="page browse">
@@ -72,6 +88,31 @@
       <option value="wrong">答错</option>
       <option value="reviewing">复习中</option>
     </select>
+    <select bind:value={store.filters.type} onchange={applyFilter}>
+      <option value="">全部题型</option>
+      <option value="short_answer">简答</option>
+      <option value="coding">编码</option>
+      <option value="choice">选择</option>
+      <option value="true_false">判断</option>
+      <option value="multiple_choice">多选</option>
+    </select>
+    <select bind:value={store.filters.company} onchange={applyFilter}>
+      <option value="">全部来源</option>
+      <option value="字节跳动">字节跳动</option>
+      <option value="腾讯">腾讯</option>
+      <option value="阿里巴巴">阿里巴巴</option>
+      <option value="美团">美团</option>
+      <option value="华为">华为</option>
+      <option value="Google">Google</option>
+      <option value="Microsoft">Microsoft</option>
+    </select>
+    <select class="sort-select" bind:value={store.filters.sort_by} onchange={applyFilter}>
+      <option value="">默认排序</option>
+      <option value="difficulty">按难度</option>
+      <option value="category">按分类</option>
+      <option value="type">按题型</option>
+      <option value="status">按状态</option>
+    </select>
     <button class="random-btn" onclick={goRandom} disabled={store.questions.length === 0}>
       <svg
         width="14"
@@ -90,6 +131,15 @@
         <line x1="4" y1="4" x2="9" y2="9" />
       </svg>
       随机
+    </button>
+    <button class="export-btn" onclick={exportMarkdown} disabled={store.questions.length === 0}>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" y1="15" x2="12" y2="3" />
+      </svg>
+      导出
     </button>
   </div>
 
@@ -188,6 +238,9 @@
             <span class="tag">{q.category}</span>
             <span class="tag diff {q.difficulty}">{q.difficulty}</span>
             <span class="tag type">{q.type}</span>
+            {#if q.company}
+              <span class="tag company">{q.company}</span>
+            {/if}
           </div>
           <p class="q-title">{q.title}</p>
           {#if q.tags.length > 0}
@@ -215,6 +268,11 @@
   }
   .filters select {
     flex: 1;
+    min-width: 0;
+  }
+  .sort-select {
+    flex: 0.6 !important;
+    font-size: 12px;
   }
   .random-btn {
     white-space: nowrap;
@@ -230,12 +288,33 @@
     align-items: center;
     gap: 6px;
   }
-  .random-btn:disabled {
+  .random-btn:disabled,
+  .export-btn:disabled {
     opacity: 0.4;
     cursor: default;
   }
-  .random-btn:not(:disabled):active {
+  .random-btn:not(:disabled):active,
+  .export-btn:not(:disabled):active {
     transform: scale(0.96);
+  }
+  .export-btn {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 12px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s var(--spring);
+  }
+  .export-btn:not(:disabled):hover {
+    border-color: var(--accent-dim);
+    color: var(--accent);
   }
   .loading,
   .empty {
@@ -336,5 +415,10 @@
     border-radius: 3px;
     background: var(--border);
     color: var(--text-muted);
+  }
+  .tag.company {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
   }
 </style>

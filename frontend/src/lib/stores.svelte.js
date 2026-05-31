@@ -8,7 +8,15 @@ let _dueReviews = $state([]);
 let _knowledge = $state([]);
 let _loading = $state(false);
 let _error = $state(null);
-let _filters = $state({ category: "", difficulty: "", status: "", search: "" });
+let _filters = $state({
+  category: "",
+  difficulty: "",
+  type: "",
+  status: "",
+  search: "",
+  sort_by: "",
+  company: "",
+});
 let _quizSession = $state([]);
 let _quizIndex = $state(0);
 

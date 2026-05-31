@@ -6,8 +6,14 @@
     "title": "常用文件操作命令",
     "content": "请列举 Linux 中常用的文件操作命令及其用途。",
     "answer": "答案：ls（列出目录）、cd（切换目录）、cp（复制）、mv（移动/重命名）、rm（删除）、mkdir（创建目录）、touch（创建空文件/更新时间戳）、cat（查看文件内容）、less/more（分页查看）、head/tail（查看首尾行）、find（查找文件）、tar（压缩/归档）\n\n解析：日常开发最常用的组合：ls -la 查看详细列表含隐藏文件、find . -name '*.js' 递归查找、tail -f app.log 实时跟踪日志、tar -czf archive.tar.gz dir/ 压缩、tar -xzf archive.tar.gz 解压。\n\n扩展延伸：rm -rf 是危险命令（无提醒直接删除）。安全的替代是先在回收站目录 mv，或使用 trash-cli。cp/mv 默认不递归处理目录，需加 -r 选项。",
-    "hints": ["rm 删除了能恢复吗", "cp 和 mv 的区别是什么"],
-    "tags": ["基础", "文件操作"]
+    "hints": [
+      "rm 删除了能恢复吗",
+      "cp 和 mv 的区别是什么"
+    ],
+    "tags": [
+      "基础",
+      "文件操作"
+    ]
   },
   {
     "category": "linux",
@@ -16,8 +22,16 @@
     "title": "进程和端口查看",
     "content": "如何查看 Linux 中正在运行的进程和端口占用情况？",
     "answer": "答案：ps（查看进程）、top/htop（实时监控）、netstat（查看端口和网络连接）、lsof（查看打开文件和端口）、ss（现代版 netstat）\n\n解析：常用组合 ps aux | grep java（查找 Java 进程）、netstat -tlnp | grep 8080（查看 8080 端口占用）、lsof -i :8080（查看谁在使用端口）、top -p PID（监控特定进程）。\n\n扩展延伸：kill PID 发送 TERM 信号（可捕获的优雅终止），kill -9 PID 发送 KILL 信号（强制终止，无法捕获）。应先尝试普通 kill，无效再用 -9。ss 比 netstat 更快（直接从内核读取），推荐优先使用。",
-    "hints": ["kill 和 kill -9 的区别", "netstat 的 -tlnp 各个参数含义"],
-    "tags": ["进程", "网络", "排查"]
+    "hints": [
+      "kill 和 kill -9 的区别",
+      "netstat 的 -tlnp 各个参数含义"
+    ],
+    "tags": [
+      "进程",
+      "网络",
+      "排查"
+    ],
+    "company": "腾讯"
   },
   {
     "category": "linux",
@@ -26,8 +40,15 @@
     "title": "Linux 文件权限管理",
     "content": "请解释 Linux 文件权限 rwxr-xr-- 的含义，以及 chmod 的用法。",
     "answer": "答案：三种权限位（所有者/所在组/其他人），rwx = 读/写/执行\n\n解析：rwxr-xr-- 拆解：所有者 rwx（可读写执行）、所属组 r-x（可读和执行）、其他人 r--（只读）。数字表示：r=4, w=2, x=1，所以 rwx=7, r-x=5, r--=4，chmod 754 等同于该权限。\n\n扩展延伸：chmod +x script.sh 添加执行权限（常用）。目录的执行权限（x）代表能否 cd 进入。chown user:group file 更改所有者和组。权限管理的进阶话题包括 ACL（setfacl/getfacl）和 SELinux（强制访问控制）。",
-    "hints": ["目录的 r 和 x 权限分别代表什么", "数字权限 755 和 644 分别用于什么场景"],
-    "tags": ["基础", "权限"]
+    "hints": [
+      "目录的 r 和 x 权限分别代表什么",
+      "数字权限 755 和 644 分别用于什么场景"
+    ],
+    "tags": [
+      "基础",
+      "权限"
+    ],
+    "company": "华为"
   },
   {
     "category": "linux",
@@ -36,8 +57,14 @@
     "title": "文本处理三剑客：grep、sed、awk",
     "content": "分别说明 grep、sed、awk 的用途和典型用法。",
     "answer": "答案：grep 搜索文本行、sed 编辑替换文本、awk 处理结构化数据\n\n解析：grep 'pattern' file（搜索）、grep -r 'TODO' src/（递归搜索）、grep -i 'error' log（忽略大小写）。sed 's/old/new/g' file（全局替换）、sed -i '.bak' 's/old/new/g' file（原地替换+备份）。awk '{print $1, $3}' file（打印第 1/3 列）、awk '$3 > 100 {print}' file（条件过滤）。\n\n扩展延伸：一次完整的排查命令流：grep ERROR app.log | awk '{print $2, $NF}' | sort | uniq -c | sort -rn。管道组合是 Linux 哲学的核心——每个命令做好一件事，串联解决复杂问题。",
-    "hints": ["grep 的 -r、-i、-v 参数各有什么用", "awk 处理日志的典型场景"],
-    "tags": ["文本处理", "命令"]
+    "hints": [
+      "grep 的 -r、-i、-v 参数各有什么用",
+      "awk 处理日志的典型场景"
+    ],
+    "tags": [
+      "文本处理",
+      "命令"
+    ]
   },
   {
     "category": "linux",
@@ -46,8 +73,15 @@
     "title": "系统监控：磁盘、内存、CPU",
     "content": "如何查看 Linux 系统的磁盘、内存和 CPU 使用情况？",
     "answer": "答案：df（磁盘）、free（内存）、top/uptime（CPU/负载）\n\n解析：df -h（人类可读的磁盘使用情况）、du -sh *（当前目录各子目录大小）。free -h（内存使用，含 buffer/cache）。top（实时 CPU/内存排序，按 P 按 CPU 排序，按 M 按内存排序）。uptime（系统负载——1/5/15 分钟平均值）。\n\n扩展延伸：性能排查基础 1）CPU 高 → top 找高 CPU 进程 2）内存不足 → free -m、查看 OOM Killer 日志 dmesg 3）磁盘满 → df -h、大文件定位 du -sh * | sort -rh（需要管道组合）4）IO 压力 → iostat -x 1（需 sysstat 包）。",
-    "hints": ["free 输出中 available 和 free 的区别", "系统负载（load average）多少算正常"],
-    "tags": ["基础", "监控", "排查"]
+    "hints": [
+      "free 输出中 available 和 free 的区别",
+      "系统负载（load average）多少算正常"
+    ],
+    "tags": [
+      "基础",
+      "监控",
+      "排查"
+    ]
   },
   {
     "category": "linux",
@@ -56,8 +90,15 @@
     "title": "Shell 脚本常见陷阱",
     "content": "以下 shell 脚本有什么问题？\n```bash\nVALUE = $(cat file.txt)\nif [ -n $VALUE ]\nthen\n    echo $VALUE\nfi\n```",
     "answer": "答案：三处错误：等号空格、变量引用缺引号、条件判断语法。\n\n解析：1）VALUE = ... 等号两边不能有空格，应为 VALUE=... 2）[ -n $VALUE ] 当 VALUE 为空时展开为 [ -n ]，返回 true。应加引号 [ -n \"$VALUE\" ] 3）if 语句中 then 应在下一行或用分号 if ...; then。此外 echo 变量也建议加引号避免含空格时多参输出。\n\n扩展延伸：更多 shell 陷阱：忘记在变量赋值前加 export（子进程拿不到变量）、管道中变量修改不回传（| 后的命令在子 shell 运行）、未设置 set -e 导致错误被忽略、使用 for file in $(ls *.txt) 而非 for file in *.txt（文件名含空格会拆分）。最佳实践：始终用 ShellCheck 工具检查脚本。",
-    "hints": ["shell 中变量赋值为什么不能有空格", "$VALUE 和 \"$VALUE\" 有什么区别"],
-    "tags": ["Shell", "脚本", "陷阱"]
+    "hints": [
+      "shell 中变量赋值为什么不能有空格",
+      "$VALUE 和 \"$VALUE\" 有什么区别"
+    ],
+    "tags": [
+      "Shell",
+      "脚本",
+      "陷阱"
+    ]
   },
   {
     "category": "linux",
@@ -66,8 +107,14 @@
     "title": "硬链接与软链接的区别",
     "content": "请解释 Linux 中硬链接和软链接（符号链接）的区别。",
     "answer": "答案：硬链接是文件 inode 的另一个名字，软链接是一个独立文件指向目标路径\n\n解析：硬链接与原始文件共享同一 inode（文件数据块），删除一个不影响另一个。软链接是一个特殊文件，存储目标文件的路径，目标文件删除后软链接变成断链（dangling）。硬链接不能跨文件系统、不能链接目录；软链接无此限制。\n\n扩展延伸：ln source link 创建硬链接，ln -s source link 创建软链接。ls -i 查看文件 inode 号，硬链接的 inode 号相同。为什么不能对目录做硬链接？防止循环引用导致 fsck 无法处理。软链接在项目中用于管理配置文件版本、切换环境变量等场景。",
-    "hints": ["ln 和 ln -s 的区别", "硬链接删除后原文件数据还在吗"],
-    "tags": ["基础", "文件系统"]
+    "hints": [
+      "ln 和 ln -s 的区别",
+      "硬链接删除后原文件数据还在吗"
+    ],
+    "tags": [
+      "基础",
+      "文件系统"
+    ]
   },
   {
     "category": "linux",
@@ -76,8 +123,14 @@
     "title": "crontab 定时任务",
     "content": "请说明 crontab 的语法格式和常见用法。",
     "answer": "答案：五个时间字段：分 时 日 月 周，后跟要执行的命令\n\n解析：格式：* * * * * command。各字段：分钟(0-59) 小时(0-23) 日(1-31) 月(1-12) 周(0-7,0和7都表示周日)。示例：0 3 * * * /script.sh（每天凌晨 3 点）、*/5 * * * * /monitor.sh（每 5 分钟）、0 9-17 * * 1-5 /work.sh（工作日 9-17 点每小时）。\n\n扩展延伸：crontab -e 编辑、crontab -l 列出、crontab -r 删除。常见坑 1）cron 环境变量极少，脚本内 PATH 需自行设定 2）日志重定向 > /tmp/cron.log 2>&1（否则出错无反馈）3）cron 中的 % 需转义 \\%。推荐在脚本开头设置 PATH 和 source 环境文件。",
-    "hints": ["cron 脚本的环境变量和 SSH 登录有何不同", "如何调试 cron 任务不执行的问题"],
-    "tags": ["基础", "定时任务"]
+    "hints": [
+      "cron 脚本的环境变量和 SSH 登录有何不同",
+      "如何调试 cron 任务不执行的问题"
+    ],
+    "tags": [
+      "基础",
+      "定时任务"
+    ]
   },
   {
     "category": "linux",
@@ -86,8 +139,16 @@
     "title": "Linux IO 模型：select、poll、epoll",
     "content": "请解释 Linux 的 IO 多路复用机制，select、poll、epoll 的区别。",
     "answer": "答案：三者都是 IO 多路复用机制，epoll 性能最优\n\n解析：select：监听 fd 集合有上限（FD_SETSIZE，默认 1024），每次调用需将 fd 集合从用户态拷贝到内核态，O(n) 遍历所有 fd。poll：相比 select 去除了 1024 上限，但仍有大集合拷贝和遍历开销。epoll：事件驱动，只返回就绪的 fd（O(1)），无上限，通过 mmap 共享内存减少拷贝，支持边缘触发（ET）和水平触发（LT）。\n\n扩展延伸：适用场景 select/poll 适合少量连接（小于 100），epoll 适合大量连接（高并发服务如 Nginx、Redis）。Nginx 架构就是基于 epoll 的事件驱动模型。Java NIO 的 Selector 在 Linux 上底层使用 epoll（JDK 1.4+）。面试中常问：epoll 的两种触发模式 ET 和 LT 的区别。",
-    "hints": ["select 的 1024 限制从何而来", "epoll 的 ET（边缘触发）和 LT（水平触发）的区别"],
-    "tags": ["IO", "网络", "高级"]
+    "hints": [
+      "select 的 1024 限制从何而来",
+      "epoll 的 ET（边缘触发）和 LT（水平触发）的区别"
+    ],
+    "tags": [
+      "IO",
+      "网络",
+      "高级"
+    ],
+    "company": "华为"
   },
   {
     "category": "linux",
@@ -96,7 +157,14 @@
     "title": "线上服务器排查实战",
     "content": "一台 Linux 服务器变慢，你怎么排查？请描述从系统级到应用级的完整流程。",
     "answer": "答案：top → dmesg → iostat → free → netstat → strace\n\n解析：1）top 看 CPU/内存占用，高 CPU 的进程序号 TID 转 jstack 查 Java 应用线程栈。2）dmesg -T 查看内核日志（OOM Killer、内核异常）。3）iostat -x 1 看磁盘 IO（%util > 70% 表示 IO 瓶颈，await 高说明响应慢）。4）free -h 看内存，关注 available 而非 free（Linux 会用内存做缓存）。5）netstat -i 看网络丢包。6）strace -p PID 跟踪系统调用（如果怀疑某进程行为异常）。\n\n扩展延伸：磁盘 IO 的排查重点：iostat 的 r/s、w/s（每秒 IO 请求数）和 await（平均响应时间）。网络问题：ss -s 看连接统计，tcpdump 抓包分析。内存问题：cat /proc/meminfo 查看内核内存细节，/proc/PID/smaps 分析进程内存分布。工具链：perf（性能分析）、sar（历史性能数据）。",
-    "hints": ["iostat 中 %util 和 await 如何解读", "free 显示 cached 和 available 的区别"],
-    "tags": ["排查", "性能", "实战"]
+    "hints": [
+      "iostat 中 %util 和 await 如何解读",
+      "free 显示 cached 和 available 的区别"
+    ],
+    "tags": [
+      "排查",
+      "性能",
+      "实战"
+    ]
   }
 ]

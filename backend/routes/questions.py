@@ -10,6 +10,7 @@ router = APIRouter()
 async def list_questions(
     category: str = None,
     difficulty: str = None,
+    type: str = Query(None, alias="type"),
     tag: str = None,
     status: str = None,
     search: str = None,
@@ -26,6 +27,9 @@ async def list_questions(
     if difficulty:
         conditions.append("q.difficulty = ?")
         params.append(difficulty)
+    if type:
+        conditions.append("q.type = ?")
+        params.append(type)
     if tag:
         conditions.append("q.tags LIKE ?")
         params.append(f'%"{tag}"%')
@@ -40,7 +44,7 @@ async def list_questions(
     offset = (page - 1) * page_size
 
     sql = f"""
-        SELECT q.id, q.category, q.difficulty, q.type, q.title, q.tags,
+        SELECT q.id, q.category, q.difficulty, q.type, q.title, q.tags, q.company,
                COALESCE(p.status, 'new') as status, COALESCE(p.wrong_count, 0) as wrong_count
         FROM questions q
         LEFT JOIN user_progress p ON q.id = p.question_id
@@ -57,6 +61,7 @@ async def list_questions(
         QuestionListItem(
             id=r["id"], category=r["category"], difficulty=r["difficulty"],
             type=r["type"], title=r["title"], tags=json.loads(r["tags"]),
+            company=r["company"] or "",
             status=r["status"], wrong_count=r["wrong_count"],
         ) for r in rows
     ]
@@ -86,6 +91,7 @@ async def get_question(question_id: int):
         answer=row["answer"], hints=json.loads(row["hints"]),
         tags=json.loads(row["tags"]),
         options=json.loads(row["options"]),
+        company=row["company"] or "",
         created_at=row["created_at"], updated_at=row["updated_at"],
         status=row["status"], review_count=row["review_count"],
         wrong_count=row["wrong_count"], notes=row["notes"],

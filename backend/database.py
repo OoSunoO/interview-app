@@ -24,6 +24,7 @@ async def init_db():
             hints TEXT NOT NULL DEFAULT '[]',
             tags TEXT NOT NULL DEFAULT '[]',
             options TEXT NOT NULL DEFAULT '[]',
+            company TEXT NOT NULL DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
@@ -58,6 +59,12 @@ async def init_db():
             await db.execute(f"ALTER TABLE user_progress ADD COLUMN {col}")
         except Exception:
             pass  # Column already exists
+
+    # Migrate existing databases: add company column if missing
+    try:
+        await db.execute("ALTER TABLE questions ADD COLUMN company TEXT NOT NULL DEFAULT ''")
+    except Exception:
+        pass  # Column already exists
 
     await db.commit()
     await db.close()

@@ -126,12 +126,29 @@ export const api = {
       let result = questions;
       if (params.category) result = result.filter((q) => q.category === params.category);
       if (params.difficulty) result = result.filter((q) => q.difficulty === params.difficulty);
+      if (params.type) result = result.filter((q) => q.type === params.type);
       if (params.search) result = result.filter((q) => matchesSearch(q, params.search));
       if (params.tag) result = result.filter((q) => q.tags.includes(params.tag));
 
       const progress = getProgress();
+      if (params.company) {
+        result = result.filter((q) => q.company && q.company.includes(params.company));
+      }
       if (params.status) {
         result = result.filter((q) => (progress[q.id]?.status || "new") === params.status);
+      }
+
+      // sort
+      const diffRank = { easy: 0, medium: 1, hard: 2 };
+      if (params.sort_by === "difficulty") {
+        result = [...result].sort((a, b) => (diffRank[a.difficulty] ?? 1) - (diffRank[b.difficulty] ?? 1));
+      } else if (params.sort_by === "category") {
+        result = [...result].sort((a, b) => a.category.localeCompare(b.category));
+      } else if (params.sort_by === "type") {
+        result = [...result].sort((a, b) => a.type.localeCompare(b.type));
+      } else if (params.sort_by === "status") {
+        const statusRank = { wrong: 0, reviewing: 1, new: 2, correct: 3 };
+        result = [...result].sort((a, b) => (statusRank[progress[a.id]?.status || "new"] - statusRank[progress[b.id]?.status || "new"]));
       }
 
       const page = params.page || 1;
@@ -147,6 +164,7 @@ export const api = {
           type: q.type,
           title: q.title,
           tags: q.tags,
+          company: q.company || "",
           status: p.status || "new",
           wrong_count: p.wrong_count || 0,
         };
@@ -159,6 +177,7 @@ export const api = {
       const p = getProgress()[id] || {};
       return {
         ...q,
+        company: q.company || "",
         status: p.status || "new",
         review_count: p.review_count || 0,
         wrong_count: p.wrong_count || 0,
@@ -399,5 +418,34 @@ export const api = {
         }),
       };
     },
+  },
+
+  /** Export filtered questions as Markdown */
+  exportMarkdown(ids) {
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const items = questions.filter((q) => ids.includes(q.id));
+    const lines = [`# 面试题库导出 (${dateStr})`, `共 ${items.length} 题\n`, ...Array(items.length).fill("---")];
+
+    const cats = { cs_basics: "计算机基础", algorithm: "算法", database: "数据库", linux: "Linux", devops: "DevOps", java_basic: "Java", java_advanced: "Java 进阶", java_collections: "Java 集合", react: "React", frontend: "前端", ai: "AI 基础", agent: "AI Agent", system_design: "系统设计", project_mgmt: "项目管理", product: "产品思维" };
+
+    let md = `# 面试题库导出 (${dateStr})\n\n共 ${items.length} 题\n\n`;
+    for (const q of items) {
+      const catLabel = cats[q.category] || q.category;
+      const diffLabel = { easy: "简单", medium: "中等", hard: "困难" }[q.difficulty] || q.difficulty;
+      const typeLabel = { short_answer: "简答", coding: "编程", choice: "选择", true_false: "判断" }[q.type] || q.type;
+      const tags = (q.tags || []).map((t) => `\`${t}\``).join(" ");
+
+      md += `---\n\n### ${q.id}. ${q.title}\n\n**分类：** ${catLabel} | **难度：** ${diffLabel} | **题型：** ${typeLabel}`;
+      if (q.company) md += ` | **来源：** ${q.company}`;
+      md += `\n\n`;
+      if (tags) md += `${tags}\n\n`;
+      md += `${q.content}\n\n`;
+      if (q.options && q.options.length > 0) {
+        md += `**选项：**\n\n${q.options.map((o, i) => `${i + 1}. ${o}`).join("\n")}\n\n`;
+      }
+      md += `**答案：**\n> ${q.answer?.replace(/\n/g, "\n> ") ?? ""}\n\n`;
+    }
+    return md;
   },
 };

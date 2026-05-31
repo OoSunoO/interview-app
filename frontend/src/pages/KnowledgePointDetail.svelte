@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
+  import { hasAI, aiChat } from "../lib/ai.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { tag, onNavigate } = $props();
@@ -8,6 +9,8 @@
   let detail = $state(null);
   let loading = $state(true);
   let error = $state(null);
+  let aiSummary = $state(null);
+  let aiSummaryLoading = $state(false);
 
   onMount(async () => {
     await loadDetail();
@@ -18,10 +21,32 @@
     error = null;
     try {
       detail = await api.knowledge.get(tag);
+      if (detail && hasAI()) generateAISummary();
     } catch (e) {
       error = e?.message || "加载知识点详情失败";
     } finally {
       loading = false;
+    }
+  }
+
+  async function generateAISummary() {
+    if (!detail || detail.questions.length === 0) return;
+    aiSummaryLoading = true;
+    try {
+      const qs = detail.questions.slice(0, 15);
+      const prompt = qs
+        .map((q, i) => `${i + 1}. ${q.title}\n${q.content.slice(0, 300)}`)
+        .join("\n\n");
+
+      const reply = await aiChat(
+        "你是一位技术面试官。针对下面这个知识点下的面试题，写一段 150 字以内的学习摘要：包含这个知识点覆盖的核心概念、常见考察角度、以及掌握的难点。直接输出摘要，不要多余格式。",
+        [{ role: "user", content: `知识点：${detail.name}\n\n相关题目：\n${prompt}` }],
+      );
+      aiSummary = reply;
+    } catch {
+      // silently fall back to heuristic summary
+    } finally {
+      aiSummaryLoading = false;
     }
   }
 
@@ -93,10 +118,17 @@
       {/if}
     </div>
 
-    {#if detail.summary}
+    {#if detail.summary || aiSummary}
       <div class="kp-summary card">
-        <h3 class="section-label">知识点综述</h3>
-        <p class="summary-text">{detail.summary}</p>
+        <h3 class="section-label">
+          知识点综述
+          {#if aiSummaryLoading}
+            <span class="summary-badge loading">AI 生成中...</span>
+          {:else if aiSummary}
+            <span class="summary-badge ai">AI 生成</span>
+          {/if}
+        </h3>
+        <p class="summary-text">{aiSummary || detail.summary}</p>
       </div>
     {/if}
 
@@ -247,6 +279,24 @@
     font-weight: 600;
     margin-bottom: 8px;
     color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .summary-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 8px;
+    letter-spacing: 0.3px;
+  }
+  .summary-badge.ai {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+  .summary-badge.loading {
+    background: var(--bg-surface);
+    color: var(--text-dim);
   }
   .summary-text {
     font-size: 13px;

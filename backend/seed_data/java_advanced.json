@@ -6,8 +6,15 @@
     "title": "JVM 垃圾回收算法",
     "content": "请介绍 JVM 中常见的垃圾回收算法及其优缺点。",
     "answer": "标记-清除（有内存碎片）、标记-复制（无碎片但浪费一半空间）、标记-整理（无碎片但效率低）、分代收集（新生代复制，老年代标记-整理）。",
-    "hints": ["Java 8 默认的垃圾回收器是什么", "CMS 和 G1 的区别"],
-    "tags": ["JVM", "GC"]
+    "hints": [
+      "Java 8 默认的垃圾回收器是什么",
+      "CMS 和 G1 的区别"
+    ],
+    "tags": [
+      "JVM",
+      "GC"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -16,8 +23,15 @@
     "title": "线程池的核心参数",
     "content": "请解释 ThreadPoolExecutor 的核心参数及其作用。",
     "answer": "corePoolSize（核心线程数）、maximumPoolSize（最大线程数）、keepAliveTime（空闲线程存活时间）、workQueue（任务队列）、threadFactory（线程工厂）、handler（拒绝策略）。",
-    "hints": ["任务提交后线程池的处理流程", "四种拒绝策略分别是什么"],
-    "tags": ["并发", "线程池"]
+    "hints": [
+      "任务提交后线程池的处理流程",
+      "四种拒绝策略分别是什么"
+    ],
+    "tags": [
+      "并发",
+      "线程池"
+    ],
+    "company": "阿里巴巴,腾讯"
   },
   {
     "category": "java_advanced",
@@ -26,8 +40,14 @@
     "title": "实现一个带超时的缓存",
     "content": "请实现一个支持过期时间的泛型缓存，要求线程安全。",
     "answer": "```java\npublic class TimedCache<K, V> {\n    private final ConcurrentHashMap<K, CacheEntry<V>> cache = new ConcurrentHashMap<>();\n    \n    private record CacheEntry<V>(V value, long expireAt) {}\n    \n    public void put(K key, V value, long ttlMs) {\n        cache.put(key, new CacheEntry<>(value, System.currentTimeMillis() + ttlMs));\n    }\n    \n    public V get(K key) {\n        CacheEntry<V> entry = cache.get(key);\n        if (entry == null || System.currentTimeMillis() > entry.expireAt()) {\n            cache.remove(key);\n            return null;\n        }\n        return entry.value();\n    }\n}\n```",
-    "hints": ["如何清理过期条目", "ConcurrentHashMap 能保证线程安全吗"],
-    "tags": ["并发", "缓存"]
+    "hints": [
+      "如何清理过期条目",
+      "ConcurrentHashMap 能保证线程安全吗"
+    ],
+    "tags": [
+      "并发",
+      "缓存"
+    ]
   },
   {
     "category": "java_advanced",
@@ -36,8 +56,15 @@
     "title": "NIO 与 BIO 的区别",
     "content": "请比较 Java NIO 和传统 BIO 的区别及适用场景。",
     "answer": "BIO 是阻塞 I/O，一个线程处理一个连接，简单但线程开销大。NIO 是非阻塞 I/O，基于 Channel 和 Selector，一个线程可处理多个连接，适合高并发场景。",
-    "hints": ["NIO 的三个核心组件", "零拷贝（Zero-Copy）是什么"],
-    "tags": ["NIO", "IO"]
+    "hints": [
+      "NIO 的三个核心组件",
+      "零拷贝（Zero-Copy）是什么"
+    ],
+    "tags": [
+      "NIO",
+      "IO"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -46,8 +73,14 @@
     "title": "Java 反射机制",
     "content": "请解释 Java 反射机制及其常见用途。",
     "answer": "反射允许程序在运行时获取类的完整信息（方法、字段、构造器）并动态调用。常用于框架（Spring）、ORM、动态代理、序列化等场景。",
-    "hints": ["获取 Class 对象的三种方式", "反射的性能开销如何优化"],
-    "tags": ["反射", "基础"]
+    "hints": [
+      "获取 Class 对象的三种方式",
+      "反射的性能开销如何优化"
+    ],
+    "tags": [
+      "反射",
+      "基础"
+    ]
   },
   {
     "category": "java_advanced",
@@ -56,8 +89,14 @@
     "title": "泛型的类型擦除",
     "content": "请解释 Java 泛型的类型擦除机制及其影响。",
     "answer": "Java 泛型在编译时进行类型检查，编译后擦除类型信息，生成原始类型（Raw Type）的字节码。导致运行时无法获取泛型参数类型，List<String> 和 List<Integer> 实际上是同一个类。",
-    "hints": ["如何绕过类型擦除获取泛型参数类型", "桥方法（Bridge Method）的作用"],
-    "tags": ["泛型", "基础"]
+    "hints": [
+      "如何绕过类型擦除获取泛型参数类型",
+      "桥方法（Bridge Method）的作用"
+    ],
+    "tags": [
+      "泛型",
+      "基础"
+    ]
   },
   {
     "category": "java_advanced",
@@ -66,8 +105,15 @@
     "title": "类加载机制与双亲委派模型",
     "content": "请描述 JVM 类加载机制和双亲委派模型的工作原理。",
     "answer": "类加载分三步：加载、连接（验证/准备/解析）、初始化。双亲委派：加载类时先委派给父加载器，父加载器无法加载时才由子加载器加载。核心类由 Bootstrap 加载，保证核心 API 不被篡改。",
-    "hints": ["如何打破双亲委派模型", "Tomcat 的类加载器为什么打破双亲委派"],
-    "tags": ["JVM", "类加载"]
+    "hints": [
+      "如何打破双亲委派模型",
+      "Tomcat 的类加载器为什么打破双亲委派"
+    ],
+    "tags": [
+      "JVM",
+      "类加载"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -76,8 +122,14 @@
     "title": "ReentrantLock 与 synchronized 的区别",
     "content": "请比较 ReentrantLock 和 synchronized 的区别。",
     "answer": "synchronized 是 JVM 层面关键字，自动释放锁。ReentrantLock 是 API 层面的锁，需要手动释放，支持可中断、可定时、公平锁、条件变量等高级功能。Java 6 优化后性能差距不大。",
-    "hints": ["什么是锁升级", "Condition 的 await/signal 与 wait/notify 的区别"],
-    "tags": ["并发", "锁"]
+    "hints": [
+      "什么是锁升级",
+      "Condition 的 await/signal 与 wait/notify 的区别"
+    ],
+    "tags": [
+      "并发",
+      "锁"
+    ]
   },
   {
     "category": "java_advanced",
@@ -86,8 +138,14 @@
     "title": "CompletableFuture 异步编程",
     "content": "请介绍 CompletableFuture 的核心用法及异步编排能力。",
     "answer": "CompletableFuture 提供了 supplyAsync/runAsync 创建异步任务，thenApply/thenCompose 串行编排，thenCombine 合并结果，allOf/anyOf 等待多个任务。支持异常回调 exceptionally/handle。",
-    "hints": ["默认线程池是什么", "thenApply 和 thenApplyAsync 的区别"],
-    "tags": ["并发", "异步"]
+    "hints": [
+      "默认线程池是什么",
+      "thenApply 和 thenApplyAsync 的区别"
+    ],
+    "tags": [
+      "并发",
+      "异步"
+    ]
   },
   {
     "category": "java_advanced",
@@ -96,8 +154,14 @@
     "title": "Stream API 的中间操作和终端操作",
     "content": "请列举 Java Stream API 的常见中间操作和终端操作。",
     "answer": "中间操作：filter、map、flatMap、distinct、sorted、peek、limit/skip（延迟执行）。终端操作：collect、forEach、reduce、count、anyMatch/allMatch/noneMatch、findFirst/findAny（触发执行）。",
-    "hints": ["中间操作为什么是延迟执行的", "parallelStream 的注意事项"],
-    "tags": ["函数式", "Stream"]
+    "hints": [
+      "中间操作为什么是延迟执行的",
+      "parallelStream 的注意事项"
+    ],
+    "tags": [
+      "函数式",
+      "Stream"
+    ]
   },
   {
     "category": "java_advanced",
@@ -105,10 +169,22 @@
     "type": "choice",
     "title": "JVM 垃圾回收器选型",
     "content": "关于 JVM 垃圾回收器，以下说法正确的是？",
-    "options": ["A) 新生代使用标记-整理算法", "B) 老年代使用标记-复制算法", "C) CMS 是并行回收器", "D) G1 是分代收集器"],
+    "options": [
+      "A) 新生代使用标记-整理算法",
+      "B) 老年代使用标记-复制算法",
+      "C) CMS 是并行回收器",
+      "D) G1 是分代收集器"
+    ],
     "answer": "答案：D) G1 是分代收集器\n\n解析：G1 将堆划分成多个 Region，兼顾新生代和老年代。新生代使用标记-复制算法，老年代使用标记-整理算法。CMS 是并发回收器（非并行），目标是降低停顿时间。\n\n扩展延伸：G1 的设计目标是替代 CMS，支持可预测的停顿时间模型（-XX:MaxGCPauseMillis）。相比 CMS，G1 的优势在于减少了内存碎片且停顿更可预测。推荐阅读《深入理解 Java 虚拟机》第 3 章。",
-    "hints": ["CMS 和 G1 的核心区别", "什么是 Stop-The-World"],
-    "tags": ["JVM", "GC"]
+    "hints": [
+      "CMS 和 G1 的核心区别",
+      "什么是 Stop-The-World"
+    ],
+    "tags": [
+      "JVM",
+      "GC"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -116,10 +192,21 @@
     "type": "choice",
     "title": "ThreadPoolExecutor 描述错误的是",
     "content": "以下关于 ThreadPoolExecutor 的描述，错误的是？",
-    "options": ["A) corePoolSize 是核心线程数", "B) 队列满后创建新线程直到 maximumPoolSize", "C) 默认拒绝策略是 AbortPolicy", "D) keepAliveTime 对核心线程也生效"],
+    "options": [
+      "A) corePoolSize 是核心线程数",
+      "B) 队列满后创建新线程直到 maximumPoolSize",
+      "C) 默认拒绝策略是 AbortPolicy",
+      "D) keepAliveTime 对核心线程也生效"
+    ],
     "answer": "答案：D) keepAliveTime 对核心线程也生效\n\n解析：keepAliveTime 默认只对超出 corePoolSize 的额外空闲线程生效。核心线程默认一直存活，如需要对核心线程也生效需调用 allowCoreThreadTimeOut(true)。\n\n扩展延伸：线程池处理流程：提交任务 → 核心线程满 → 入队列 → 队列满 → 创建新线程至 maximumPoolSize → 超限则执行拒绝策略。四种拒绝策略：AbortPolicy（默认，抛异常）、CallerRunsPolicy（调用者线程执行）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃最旧未处理任务）。",
-    "hints": ["线程池处理任务的完整流程", "四种拒绝策略分别是什么"],
-    "tags": ["并发", "线程池"]
+    "hints": [
+      "线程池处理任务的完整流程",
+      "四种拒绝策略分别是什么"
+    ],
+    "tags": [
+      "并发",
+      "线程池"
+    ]
   },
   {
     "category": "java_advanced",
@@ -127,10 +214,21 @@
     "type": "choice",
     "title": "Java 并发包同步辅助类",
     "content": "以下哪个属于 java.util.concurrent 包中的同步辅助类？",
-    "options": ["A) ArrayList", "B) CountDownLatch", "C) FileReader", "D) StringBuffer"],
+    "options": [
+      "A) ArrayList",
+      "B) CountDownLatch",
+      "C) FileReader",
+      "D) StringBuffer"
+    ],
     "answer": "答案：B) CountDownLatch\n\n解析：CountDownLatch 是 java.util.concurrent 包中的同步辅助类，允许一个或多个线程等待其他线程完成操作。类似工具还包括 CyclicBarrier（可循环屏障）和 Semaphore（信号量，控制并发数量）。\n\n扩展延伸：CountDownLatch 与 CyclicBarrier 的关键区别：CountDownLatch 是一次性的、一个或多个线程等待其他线程完成；CyclicBarrier 是可循环使用的、多个线程相互等待到达同一屏障点。Semaphore 适用于限流场景，通过 acquire/release 控制许可证数量。",
-    "hints": ["CountDownLatch 和 CyclicBarrier 的区别", "Semaphore 的作用"],
-    "tags": ["并发", "同步"]
+    "hints": [
+      "CountDownLatch 和 CyclicBarrier 的区别",
+      "Semaphore 的作用"
+    ],
+    "tags": [
+      "并发",
+      "同步"
+    ]
   },
   {
     "category": "java_advanced",
@@ -138,10 +236,19 @@
     "type": "true_false",
     "title": "Java 泛型运行时类型信息",
     "content": "Java 泛型在运行时可以获取具体的泛型参数类型。",
-    "options": ["正确", "错误"],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "answer": "答案：错误\n\n解析：Java 泛型通过类型擦除实现，编译后泛型参数信息被擦除为原始类型（Raw Type），List<String> 和 List<Integer> 运行时是同一个 Class。但可通过反射和 TypeToken 技巧间接获取泛型参数。\n\n扩展延伸：类型擦除的具体过程：编译器将 T 替换为 Object（无界）或上界类型，并插入必要的强制转换。桥方法（Bridge Method）是编译器在子类中生成的合成方法，确保多态正确。推荐阅读《Java 核心技术 卷 I》第 8 章泛型部分。",
-    "hints": ["类型擦除的具体过程", "什么是桥方法"],
-    "tags": ["泛型", "基础"]
+    "hints": [
+      "类型擦除的具体过程",
+      "什么是桥方法"
+    ],
+    "tags": [
+      "泛型",
+      "基础"
+    ]
   },
   {
     "category": "java_advanced",
@@ -149,10 +256,19 @@
     "type": "true_false",
     "title": "ReentrantLock 公平锁",
     "content": "ReentrantLock 支持公平锁和非公平锁两种模式。",
-    "options": ["正确", "错误"],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "answer": "答案：正确\n\n解析：ReentrantLock 构造器接受 fair 参数控制模式。公平锁按线程等待时间顺序获取锁，避免饥饿但吞吐量低；非公平锁允许插队（默认），性能更高但极端情况可能导致线程饥饿。\n\n扩展延伸：synchronized 是非公平的，性能与 ReentrantLock 差距已缩小（JDK 6 锁优化）。ReentrantLock 在需要可中断锁、定时锁、公平锁或条件变量（Condition）的场景仍不可替代。推荐阅读《Java 并发编程实战》第 13 章。",
-    "hints": ["公平锁和非公平锁的性能差异", "synchronized 是公平的还是非公平的"],
-    "tags": ["并发", "锁"]
+    "hints": [
+      "公平锁和非公平锁的性能差异",
+      "synchronized 是公平的还是非公平的"
+    ],
+    "tags": [
+      "并发",
+      "锁"
+    ]
   },
   {
     "category": "java_advanced",
@@ -161,8 +277,16 @@
     "title": "ThreadLocal 内存泄漏场景",
     "content": "ThreadLocal 为什么可能导致内存泄漏？使用时应注意什么？",
     "answer": "答案：ThreadLocalMap 的 key 是弱引用（WeakReference），value 是强引用\n\n解析：ThreadLocalMap.Entry 继承 WeakReference，key（ThreadLocal 实例）为弱引用，value 为强引用。当 ThreadLocal 外部强引用被回收后，GC 会回收 key（弱引用），但 value 仍有强引用链（Thread → ThreadLocalMap → Entry → value）。只要线程存活，value 就无法回收，造成内存泄漏。\n\n扩展延伸：最佳实践 1）每次使用后调用 remove() 清除 Entry 2）使用 try-finally 确保 remove 执行 3）线程池场景尤其危险——线程复用会持续累积泄漏。Tomcat、Jetty 等容器经常有大流量经过，ThreadLocal 泄漏可能快速撑满老年代引发 Full GC。",
-    "hints": ["WeakReference 在 GC 时怎么处理", "为什么线程池会放大这个泄漏问题"],
-    "tags": ["并发", "内存", "陷阱"]
+    "hints": [
+      "WeakReference 在 GC 时怎么处理",
+      "为什么线程池会放大这个泄漏问题"
+    ],
+    "tags": [
+      "并发",
+      "内存",
+      "陷阱"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -171,8 +295,16 @@
     "title": "线程池异常吞没陷阱",
     "content": "用 ExecutorService.submit() 提交任务，任务中抛出的运行时异常会发生什么？execute() 和 submit() 对异常处理有何区别？",
     "answer": "答案：submit() 会吞没异常，execute() 会抛出异常\n\n解析：submit() 返回 Future，任务异常被封装在 Future.get() 返回的 ExecutionException 中。如果从未调用 Future.get()，异常会被静默吞没。execute() 提交的任务抛异常时，未被捕获的异常会传播到线程池的 uncaughtExceptionHandler，线程销毁并创建新线程替换。\n\n扩展延伸：如何避免 1）调用 Future.get() 捕获异常 2）使用 execute() 提交关键任务 3）设置自定义 UncaughtExceptionHandler 记录日志 4）使用 afterExecute() 钩子（ThreadPoolExecutor 扩展点）。生产中线上问题排查往往因异常被吞没而无从下手，建议所有 submit 的任务都显式处理异常。",
-    "hints": ["Future.get() 会抛出什么异常", "execute 和 submit 内部实现有何不同"],
-    "tags": ["并发", "线程池", "陷阱"]
+    "hints": [
+      "Future.get() 会抛出什么异常",
+      "execute 和 submit 内部实现有何不同"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "陷阱"
+    ],
+    "company": "阿里巴巴,腾讯"
   },
   {
     "category": "java_advanced",
@@ -181,8 +313,15 @@
     "title": "ConcurrentModificationException 场景",
     "content": "在什么情况下会抛出 ConcurrentModificationException？如何在遍历时安全删除集合元素？",
     "answer": "答案：遍历集合时直接调用集合的 remove/add 方法会抛此异常\n\n解析：ArrayList、HashMap 等集合的迭代器采用 fail-fast 机制，内部维护 modCount 计数器。遍历期间若非通过迭代器修改集合（如 list.remove()），modCount 与预期值不符即抛出 ConcurrentModificationException。\n\n扩展延伸：三种安全删除方式 1）使用 Iterator.remove()（单线程安全）2）使用 ConcurrentHashMap/CopyOnWriteArrayList（并发场景）3）使用 Java 8 的 removeIf() 内部已处理迭代器同步。需要注意的是，即使单线程也可能在多处代码间接修改集合时触发此异常。",
-    "hints": ["迭代器的 fail-fast 机制是什么", "CopyOnWriteArrayList 为什么不会抛此异常"],
-    "tags": ["并发", "集合", "陷阱"]
+    "hints": [
+      "迭代器的 fail-fast 机制是什么",
+      "CopyOnWriteArrayList 为什么不会抛此异常"
+    ],
+    "tags": [
+      "并发",
+      "集合",
+      "陷阱"
+    ]
   },
   {
     "category": "java_advanced",
@@ -191,8 +330,15 @@
     "title": "线上 CPU 100% 排查思路",
     "content": "线上应用突然 CPU 持续 100%，你如何定位根因？请描述完整排查流程。",
     "answer": "答案：top → top -H → jstack → 分析线程栈\n\n解析：1）top 确认 CPU 100% 的进程 PID 2）top -H -p PID 找到 CPU 最高的线程 TID 3）printf '%x\\n' TID 转十六进制 4）jstack PID | grep -A 30 TID_HEX 查看线程栈。常见原因包括：死循环（无锁）、频繁 GC（内存不足/泄漏）、锁竞争激烈（上下文切换开销）、正则表达式回溯过多。\n\n扩展延伸：如果是频繁 GC 导致 CPU 高，重点排查堆内存和 GC 日志。如果是锁竞争，看线程是否大量处于 BLOCKED 状态。如果周期性飙升，可能和大对象分配/定时任务有关。高级工具：Arthas（在线诊断）、async-profiler（火焰图）、VisualVM（离线分析）。",
-    "hints": ["如何将线程 ID 从十进制转十六进制", "jstack 输出的线程状态有哪些含义"],
-    "tags": ["JVM", "排查", "性能"]
+    "hints": [
+      "如何将线程 ID 从十进制转十六进制",
+      "jstack 输出的线程状态有哪些含义"
+    ],
+    "tags": [
+      "JVM",
+      "排查",
+      "性能"
+    ]
   },
   {
     "category": "java_advanced",
@@ -201,8 +347,15 @@
     "title": "死锁的排查与预防",
     "content": "请描述死锁的四个必要条件，以及如何排查和预防死锁。",
     "answer": "答案：互斥、占有且等待、不可抢占、循环等待\n\n解析：排查死锁步骤 1）jps 找到进程 PID 2）jstack PID 搜索 deadlock 关键字 3）JVM 会在死锁检测中输出线程持有和等待的锁信息。预防策略：统一加锁顺序（最重要的）、使用 tryLock 带超时（Lock API）、缩小锁粒度、使用无锁数据结构。\n\n扩展延伸：实战中数据库死锁比代码死锁更常见——两个事务以不同顺序加行锁导致。从死锁恢复：jstack 检测后可以 kill -3 触发线程转储，或重启进程。长期方案：代码审查中加入锁顺序检查、使用静态分析工具（FindBugs 等）检测违反锁顺序的代码。",
-    "hints": ["jstack 输出中如何识别死锁", "为什么统一加锁顺序可以预防死锁"],
-    "tags": ["并发", "锁", "排查"]
+    "hints": [
+      "jstack 输出中如何识别死锁",
+      "为什么统一加锁顺序可以预防死锁"
+    ],
+    "tags": [
+      "并发",
+      "锁",
+      "排查"
+    ]
   },
   {
     "category": "java_advanced",
@@ -211,8 +364,16 @@
     "title": "线上 OOM 排查完整流程",
     "content": "线上服务频繁 OOM，你如何定位内存泄漏的根因？",
     "answer": "答案：配置 OOM dump → 使用 MAT/Eclipse Memory Analyzer 分析\n\n解析：排查流程 1）JVM 启动参数上加 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof 2）服务 OOM 后自动生成 dump 文件 3）用 MAT 打开 dump，查看 Leak Suspects Report（泄漏嫌疑报告）4）查看 Dominator Tree（支配树），按保留堆大小排序找最大对象 5）检查 GC Roots 引用链确定泄漏源头。\n\n扩展延伸：常见泄漏类型 a）集合类泄漏（HashMap key 未移除）b）回调/监听器未注销 c）类加载器泄漏（Tomcat 热部署）d）ThreadLocal 不 remove e）直接内存泄漏（ByteBuffer.allocateDirect 未释放）。建议结合 jstat -gcutil 观察 GC 趋势和内存上涨斜率来预警。",
-    "hints": ["HeapDumpOnOutOfMemoryError 有什么用", "MAT 的 Leak Suspects 和 Dominator Tree 分别看什么"],
-    "tags": ["JVM", "排查", "性能", "内存"]
+    "hints": [
+      "HeapDumpOnOutOfMemoryError 有什么用",
+      "MAT 的 Leak Suspects 和 Dominator Tree 分别看什么"
+    ],
+    "tags": [
+      "JVM",
+      "排查",
+      "性能",
+      "内存"
+    ]
   },
   {
     "category": "java_advanced",
@@ -220,10 +381,21 @@
     "type": "choice",
     "title": "AQS 的核心实现原理",
     "content": "关于 AbstractQueuedSynchronizer（AQS）的核心实现原理，以下描述正确的是？",
-    "options": ["A) AQS 使用数组存储等待线程", "B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列", "C) AQS 只支持独占模式", "D) AQS 基于自旋锁实现"],
+    "options": [
+      "A) AQS 使用数组存储等待线程",
+      "B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列",
+      "C) AQS 只支持独占模式",
+      "D) AQS 基于自旋锁实现"
+    ],
     "answer": "答案：B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列\n\n解析：AQS 维护一个 volatile int state（同步状态）和一个 CLH 双向队列（等待线程队列）。通过 CAS 操作 state，子类通过 tryAcquire/tryRelease 模板方法控制状态变化。支持独占（如 ReentrantLock）和共享（如 Semaphore）两种模式。\n\n扩展延伸：AQS 是 JUC 包的基石，基于它的同步器包括 ReentrantLock（tryAcquire）、Semaphore（tryAcquireShared）、CountDownLatch（tryAcquireShared）、ReentrantReadWriteLock（读写分离）。条件队列（ConditionObject）也是 AQS 的内部实现。",
-    "hints": ["ReentrantLock 和 Semaphore 在 AQS 上的实现差异", "CLH 队列和条件队列的关系"],
-    "tags": ["并发", "AQS"]
+    "hints": [
+      "ReentrantLock 和 Semaphore 在 AQS 上的实现差异",
+      "CLH 队列和条件队列的关系"
+    ],
+    "tags": [
+      "并发",
+      "AQS"
+    ]
   },
   {
     "category": "java_advanced",
@@ -231,10 +403,20 @@
     "type": "true_false",
     "title": "虚拟线程与平台线程的关系",
     "content": "JDK 21 的虚拟线程（Virtual Threads）旨在完全替代平台线程（Platform Threads）。",
-    "options": ["正确", "错误"],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "answer": "答案：错误\n\n解析：虚拟线程是 JDK 实现的用户态线程（纤程），挂载在平台线程上执行，不是替代关系。适用 IO 密集型任务（大量阻塞等待），不适用 CPU 密集型任务。虚拟线程的优势在于可以创建数百万级别，但同步锁（synchronized）内会 pin 住载体线程，建议改用 ReentrantLock。\n\n扩展延伸：虚拟线程底层通过 Continuation 实现 yield 和 resume，遇到阻塞操作时自动从载体线程卸载。使用时注意：synchronized 块内虚拟线程不会卸载，大量 synchronized 会降低虚拟线程的优势。推荐阅读 JEP 444。",
-    "hints": ["虚拟线程和操作系统线程的映射关系", "什么场景下虚拟线程性能不如平台线程"],
-    "tags": ["并发", "虚拟线程"]
+    "hints": [
+      "虚拟线程和操作系统线程的映射关系",
+      "什么场景下虚拟线程性能不如平台线程"
+    ],
+    "tags": [
+      "并发",
+      "虚拟线程"
+    ],
+    "company": "腾讯"
   },
   {
     "category": "java_advanced",
@@ -242,10 +424,21 @@
     "type": "choice",
     "title": "CAS 操作的 ABA 问题",
     "content": "CAS 操作中的 ABA 问题是指什么？以下哪种方式可以解决？",
-    "options": ["A) 值从 A 变 B 又变回 A，CAS 误认为未修改过", "B) 值从未变化过但 CAS 失败", "C) 使用 synchronized 代替 CAS", "D) 增大自旋次数"],
+    "options": [
+      "A) 值从 A 变 B 又变回 A，CAS 误认为未修改过",
+      "B) 值从未变化过但 CAS 失败",
+      "C) 使用 synchronized 代替 CAS",
+      "D) 增大自旋次数"
+    ],
     "answer": "答案：A) 值从 A 变 B 又变回 A，CAS 误认为未修改过\n\n解析：ABA 问题的本质是 CAS 只检查值是否和预期相同，不关心中间是否修改过。在指针复用场景中特别危险（如栈操作时，A→B→A 的指针可能指向已被回收的对象）。\n\n扩展延伸：解决方案 1）AtomicStampedReference（带版本号的原子引用，每次修改更新 stamp）2）AtomicMarkableReference（带布尔标记）3）使用传统的锁。Java 的 ConcurrentLinkedDeque 等无锁数据结构内部已处理了 ABA 问题。",
-    "hints": ["AtomicStampedReference 和 AtomicReference 的区别", "为什么说 ABA 问题对数值操作通常无害"],
-    "tags": ["并发", "CAS"]
+    "hints": [
+      "AtomicStampedReference 和 AtomicReference 的区别",
+      "为什么说 ABA 问题对数值操作通常无害"
+    ],
+    "tags": [
+      "并发",
+      "CAS"
+    ]
   },
   {
     "category": "java_advanced",
@@ -254,8 +447,15 @@
     "title": "锁升级过程（偏向锁→轻量级锁→重量级锁）",
     "content": "请描述 synchronized 在 HotSpot JVM 中的锁升级过程，包括偏向锁、轻量级锁、重量级锁的触发条件和切换机制。",
     "answer": "答案：无锁 → 偏向锁 → 轻量级锁 → 重量级锁（单向升级，不可降级）\n\n解析：偏向锁：第一个获取锁的线程将对象头 Mark Word 设为偏向模式，记录线程 ID，后续该线程再次获取无需同步操作。轻量级锁：有另一个线程竞争时，偏向锁撤销，升级为轻量级锁（自旋获取）。重量级锁：自旋超过阈值或等待线程数过多，膨胀为重量级锁，未获取到的线程阻塞进入等待队列。\n\n扩展延伸：JDK 15 起默认禁用偏向锁（JEP 374），因为偏向锁的撤销在高并发场景下成本较高（需要在全局安全点执行）。自适应自旋（JDK 6 引入）让 JVM 根据上次自旋结果动态调整自旋次数。",
-    "hints": ["JDK 15 为什么默认禁用了偏向锁", "轻量级锁自旋失败会立即升级吗"],
-    "tags": ["并发", "锁", "JVM"]
+    "hints": [
+      "JDK 15 为什么默认禁用了偏向锁",
+      "轻量级锁自旋失败会立即升级吗"
+    ],
+    "tags": [
+      "并发",
+      "锁",
+      "JVM"
+    ]
   },
   {
     "category": "java_advanced",
@@ -264,8 +464,14 @@
     "title": "JMM 与 happens-before 原则",
     "content": "请解释 Java 内存模型（JMM）中的 happens-before 原则，列举常见的 happens-before 规则。",
     "answer": "答案：happens-before 确保前一个操作的结果对后续操作可见\n\n解析：JMM 是抽象的内存模型，定义了多线程环境下共享变量的可见性规则。happens-before 原则用于判断数据是否存在竞争，无需关心具体的重排序和内存屏障实现细节。\n\n扩展延伸：八条 happens-before 规则 1）程序次序规则—同一线程前一个操作 happens-before 后一个 2）volatile 规则—volatile 变量的写 happens-before 读 3）锁规则—解锁 happens-before 加锁 4）传递性—A happens-before B, B happens-before C ⇒ A happens-before C 5）线程 start 规则—start() happens-before 该线程任何动作 6）线程 join 规则—线程的所有操作 happens-before join() 返回 7）中断规则—interrupt() happens-before 检测到中断 8）对象终结规则—构造函数结束 happens-before finalize()。",
-    "hints": ["volatile 写和读的 happens-before 关系", "传递性如何推导出对某个字段的可见性保证"],
-    "tags": ["并发", "JMM"]
+    "hints": [
+      "volatile 写和读的 happens-before 关系",
+      "传递性如何推导出对某个字段的可见性保证"
+    ],
+    "tags": [
+      "并发",
+      "JMM"
+    ]
   },
   {
     "category": "java_advanced",
@@ -274,8 +480,14 @@
     "title": "安全点（Safepoint）是什么",
     "content": "请解释 JVM 中的安全点（Safepoint）是什么，它有什么作用？哪些场景会触发全局安全点？",
     "answer": "答案：Safepoint 是所有线程都到达的一个安全状态点，JVM 在此可以执行全局操作\n\n解析：JVM 需要所有线程到达 Safepoint 才能执行 STW 操作。线程在 Safepoint 时栈状态是确定的，可以安全地进行 GC、偏向锁撤销、类重定义等操作。线程通过主动轮询检查 Safepoint 标志来进入 Safepoint。\n\n扩展延伸：触发全局 Safepoint 的场景：1）GC 停顿（最常见）2）偏向锁撤销 3）JIT 编译优化 4）线程堆栈 dump。Safepoint 导致的长时间停顿问题：循环中没有 Safepoint 轮询点（如大数组遍历）导致线程迟迟无法进入。JVM 参数 -XX:+PrintSafepointStatistics 可打印 Safepoint 日志。",
-    "hints": ["循环中有没有 Safepoint 轮询点的影响", "长时间 STW 的常见原因有哪些"],
-    "tags": ["JVM", "性能"]
+    "hints": [
+      "循环中有没有 Safepoint 轮询点的影响",
+      "长时间 STW 的常见原因有哪些"
+    ],
+    "tags": [
+      "JVM",
+      "性能"
+    ]
   },
   {
     "category": "java_advanced",
@@ -284,8 +496,14 @@
     "title": "Record 类（JDK 16）",
     "content": "请介绍 Java 14 预览、JDK 16 正式发布的 Record 类型。它和普通类有什么区别？",
     "answer": "答案：Record 是用于创建不可变数据载体的特殊类，自动生成构造器、getter、equals/hashCode/toString\n\n解析：声明 record Point(int x, int y) {} 等效于一个包含 private final 字段、全参构造器、x()/y() 访问方法（不是 getX()）、equals/hashCode/toString 的普通类。Record 是 final 类，不能继承也不能被继承，所有字段隐式为 final。\n\n扩展延伸：Record 的优势 1）极大简化 POJO/DTO 的编写 2）自动提供的 equals/hashCode 基于所有字段（按值比较而非引用）3）构造器可做验证：Record Point { Point { if (x < 0) throw new IllegalArgumentException(); } }。不适合场景：需要 JPA/Hibernate 代理的实体类、需要继承的类。推荐阅读 JEP 395。",
-    "hints": ["Record 和 Lombok @Data 的区别", "Record 的访问方法为什么是字段名而不是 getX()"],
-    "tags": ["基础", "JDK 新特性"]
+    "hints": [
+      "Record 和 Lombok @Data 的区别",
+      "Record 的访问方法为什么是字段名而不是 getX()"
+    ],
+    "tags": [
+      "基础",
+      "JDK 新特性"
+    ]
   },
   {
     "category": "java_advanced",
@@ -293,10 +511,21 @@
     "type": "choice",
     "title": "ForkJoinPool 的描述",
     "content": "关于 ForkJoinPool 框架，以下描述正确的是？",
-    "options": ["A) ForkJoinPool 使用单线程处理所有任务", "B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制", "C) ForkJoinPool 的任务队列是全局统一的", "D) ForkJoinPool 只能用于递归任务"],
+    "options": [
+      "A) ForkJoinPool 使用单线程处理所有任务",
+      "B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制",
+      "C) ForkJoinPool 的任务队列是全局统一的",
+      "D) ForkJoinPool 只能用于递归任务"
+    ],
     "answer": "答案：B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制\n\n解析：ForkJoinPool 采用工作窃取算法：每个工作线程维护自己的双端任务队列，完成自己队列任务后从其他线程队列尾部「窃取」任务执行。这充分利用多核 CPU，减少线程竞争。\n\n扩展延伸：ForkJoinPool.commonPool() 是全局共享实例（默认并行度 = CPU 核心数 - 1）。Java 8 的 parallelStream 默认使用 commonPool。但 I/O 密集型任务不应使用 parallelStream（会阻塞公共池线程）。",
-    "hints": ["工作窃取算法为什么从队列尾部窃取", "parallelStream 使用的什么线程池"],
-    "tags": ["并发", "ForkJoinPool"]
+    "hints": [
+      "工作窃取算法为什么从队列尾部窃取",
+      "parallelStream 使用的什么线程池"
+    ],
+    "tags": [
+      "并发",
+      "ForkJoinPool"
+    ]
   },
   {
     "category": "java_advanced",
@@ -305,8 +534,15 @@
     "title": "JVM 常用调优参数",
     "content": "请列举常用的 JVM 调优参数及其作用，包括堆内存、GC、诊断等方面。",
     "answer": "答案：堆内存设置 -Xms/-Xmx、GC 选择 -XX:+UseG1GC、诊断 -XX:+HeapDumpOnOutOfMemoryError\n\n解析：堆内存：-Xms2g -Xmx2g（初始和最大堆，建议相等避免扩容开销）、-Xmn512m（新生代大小）、-XX:MaxMetaspaceSize=256m（元空间上限）。GC 相关：-XX:+UseG1GC、-XX:MaxGCPauseMillis=200、-XX:ParallelGCThreads=8。诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof -Xloggc:gc.log。\n\n扩展延伸：典型 4G 堆参数示例：-Xms4g -Xmx4g -Xmn2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+PrintGCDetails -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/dump.hprof。建议最小化参数（只用必要的），逐个调整观察效果。",
-    "hints": ["-Xms 和 -Xmx 为什么不建议设置不同值", "DisableExplicitGC 解决了什么问题"],
-    "tags": ["JVM", "调优"]
+    "hints": [
+      "-Xms 和 -Xmx 为什么不建议设置不同值",
+      "DisableExplicitGC 解决了什么问题"
+    ],
+    "tags": [
+      "JVM",
+      "调优"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -314,10 +550,20 @@
     "type": "true_false",
     "title": "String.intern() 与常量池",
     "content": "String.intern() 方法会将字符串放入运行时常量池，并返回常量池中的引用。",
-    "options": ["正确", "错误"],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "answer": "答案：正确\n\n解析：intern() 方法检查字符串常量池中是否存在 equals 相等的字符串，存在则返回常量池中的引用，不存在则在常量池中创建并返回引用。JDK 7 之前常量池在方法区（永久代），JDK 7 起常量池移到了堆中。\n\n扩展延伸：大量重复字符串场景下 intern() 可显著节省内存（如数据库查询返回的相同状态码）。但滥用 intern() 会导致常量池膨胀。String 字面量（如 \"hello\"）自动执行 intern 行为，new String(\"hello\") 会创建两个对象：堆中的 String 对象和常量池中的字面量。",
-    "hints": ["new String(\"hello\") 创建了几个对象", "JDK 6 和 JDK 7+ 的 intern() 行为有何不同"],
-    "tags": ["基础", "JVM", "String"]
+    "hints": [
+      "new String(\"hello\") 创建了几个对象",
+      "JDK 6 和 JDK 7+ 的 intern() 行为有何不同"
+    ],
+    "tags": [
+      "基础",
+      "JVM",
+      "String"
+    ]
   },
   {
     "category": "java_advanced",
@@ -326,8 +572,16 @@
     "title": "HashMap 线程不安全的表现",
     "content": "为什么 HashMap 是线程不安全的？多线程环境下使用 HashMap 会出现哪些问题？",
     "answer": "答案：死循环（JDK 7）、数据覆盖、modCount 不一致\n\n解析：JDK 7 中 put 触发扩容时（transfer 方法），头插法在多线程并发 resize 下可能形成环形链表，导致 get 时死循环（CPU 100%）。数据覆盖：两个线程同时 put，后写入覆盖前写入。modCount 不一致：迭代时其他线程修改结构，触发 fail-fast 抛 ConcurrentModificationException。\n\n扩展延伸：JDK 8 改用尾插法修复了死循环问题，但仍有数据覆盖和 ConcurrentModificationException 问题。线程安全替代方案：ConcurrentHashMap（分段锁/CAS + synchronized）、Collections.synchronizedMap（全表锁）、Hashtable（全表锁）。",
-    "hints": ["JDK 7 的头插法为什么会导致死循环", "JDK 8 为什么改为尾插法"],
-    "tags": ["集合", "HashMap", "并发"]
+    "hints": [
+      "JDK 7 的头插法为什么会导致死循环",
+      "JDK 8 为什么改为尾插法"
+    ],
+    "tags": [
+      "集合",
+      "HashMap",
+      "并发"
+    ],
+    "company": "阿里巴巴,腾讯"
   },
   {
     "category": "java_advanced",
@@ -335,10 +589,22 @@
     "type": "choice",
     "title": "HashMap 长度为什么是 2 的幂次方",
     "content": "HashMap 要求初始容量是 2 的幂次方，主要原因是什么？",
-    "options": ["A) 减少哈希碰撞概率", "B) 可以用位运算 (n - 1) & hash 替代取模提高性能", "C) 节省内存空间", "D) 方便扩容时重新哈希"],
+    "options": [
+      "A) 减少哈希碰撞概率",
+      "B) 可以用位运算 (n - 1) & hash 替代取模提高性能",
+      "C) 节省内存空间",
+      "D) 方便扩容时重新哈希"
+    ],
     "answer": "答案：B) 可以用位运算 (n - 1) & hash 替代取模提高性能\n\n解析：HashMap 用 (n - 1) & hash 计算桶位置，等价于 hash % n 但位运算更快。这要求 n 是 2 的幂次方，此时 (n-1) 的二进制是全 1，与 hash 做 & 运算能充分利用 hash 值的低位，分布均匀。\n\n扩展延伸：如果指定容量不是 2 的幂，HashMap 会通过 tableSizeFor() 方法向上取整到最近的 2 的幂（通过多次无符号右移和或运算实现）。扩容时重新计算位置：元素在新数组中的位置要么在原位置，要么在原位置 + 旧容量，这得益于容量始终是 2 的幂。",
-    "hints": ["位运算 (n - 1) & hash 和 hash % n 等价的条件", "扩容时元素位置为什么要么不变要么偏移旧容量"],
-    "tags": ["集合", "HashMap"]
+    "hints": [
+      "位运算 (n - 1) & hash 和 hash % n 等价的条件",
+      "扩容时元素位置为什么要么不变要么偏移旧容量"
+    ],
+    "tags": [
+      "集合",
+      "HashMap"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -346,10 +612,23 @@
     "type": "choice",
     "title": "ConcurrentHashMap 复合操作原子性",
     "content": "关于 ConcurrentHashMap 的原子性，以下说法正确的是？",
-    "options": ["A) 所有操作都是原子性的", "B) putIfAbsent() 是原子操作，但先 get 再 put 不是", "C) 遍历时不会抛 ConcurrentModificationException", "D) 多线程 put 一定互相覆盖"],
+    "options": [
+      "A) 所有操作都是原子性的",
+      "B) putIfAbsent() 是原子操作，但先 get 再 put 不是",
+      "C) 遍历时不会抛 ConcurrentModificationException",
+      "D) 多线程 put 一定互相覆盖"
+    ],
     "answer": "答案：B) putIfAbsent() 是原子操作，但先 get 再 put 不是\n\n解析：ConcurrentHashMap 的单个方法（put、get、putIfAbsent、replace）是线程安全的原子操作。但组合操作如 if (!map.containsKey(key)) { map.put(key, value); } 不是原子性的，两个线程可能同时通过检查并 put。\n\n扩展延伸：ConcurrentHashMap 提供的原子复合方法：putIfAbsent(key, val)（不存在才 put）、compute(key, (k, v) -> ...)（原子更新）、merge(key, val, (old, new) -> ...)（原子合并）。这些方法内部用 CAS + synchronized 保证原子性。推荐使用这些原子方法替代手动组合的 get-then-put 模式。",
-    "hints": ["compute() 和 putIfAbsent() 为什么是原子的", "先判断 containsKey 再 put 有什么问题"],
-    "tags": ["并发", "集合", "ConcurrentHashMap"]
+    "hints": [
+      "compute() 和 putIfAbsent() 为什么是原子的",
+      "先判断 containsKey 再 put 有什么问题"
+    ],
+    "tags": [
+      "并发",
+      "集合",
+      "ConcurrentHashMap"
+    ],
+    "company": "阿里巴巴"
   },
   {
     "category": "java_advanced",
@@ -358,7 +637,13 @@
     "title": "Java 语法糖",
     "content": "什么是 Java 语法糖？列举 Java 中常见的语法糖及其底层实现。",
     "answer": "答案：语法糖是编译器提供的便捷语法，本质由编译器 desugar 为底层代码\n\n解析：泛型——编译时擦除为强制转换和 Object 操作。自动拆装箱——编译为 Integer.valueOf() 和 intValue()。for-each 循环——编译为 Iterator 迭代（数组为 fori）。枚举（enum）——编译为继承 Enum 的 final 类。变长参数——编译为数组参数。try-with-resources——编译为 try-finally + close 调用。switch 支持 String——编译为 hashCode + equals。\n\n扩展延伸：语法糖在编译阶段（javac）解析，生成的字节码与手写底层代码等价。反编译工具（如 jad、CFR）可查看 desugar 后的代码。理解语法糖有助于避免陷阱——如 for-each 在遍历时 remove 会抛 ConcurrentModificationException，因为底层仍是 Iterator。",
-    "hints": ["for-each 在遍历删除时会怎样", "枚举在字节码层面是什么样的"],
-    "tags": ["基础", "语法糖"]
+    "hints": [
+      "for-each 在遍历删除时会怎样",
+      "枚举在字节码层面是什么样的"
+    ],
+    "tags": [
+      "基础",
+      "语法糖"
+    ]
   }
 ]
