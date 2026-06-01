@@ -142,7 +142,8 @@
   function isOptionCorrect(opt) {
     if (!q) return false;
     if (q.type === "true_false") return q.answer.startsWith(opt);
-    return q.answer.startsWith(opt.substring(0, 2));
+    const prefix = opt.substring(0, 2).trim().replace(/\.$/, "");
+    return q.answer.startsWith(prefix);
   }
 
   function parseCorrectOptions(answer) {
