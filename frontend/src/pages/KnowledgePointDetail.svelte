@@ -1,5 +1,6 @@
 <script>
   import { onMount } from "svelte";
+  import { marked } from "marked";
   import { api } from "../lib/local-api.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
@@ -96,11 +97,30 @@
       {/if}
     </div>
 
-    <!-- Knowledge Content: source link to JavaGuide -->
-    {#if detail.source}
+    <!-- Knowledge Content -->
+    {#if detail.content}
+      <div class="kp-content card">
+        <h2 class="content-heading">知识资料</h2>
+        <div class="content-body">{@html marked(detail.content)}</div>
+        {#if detail.source}
+          <a
+            href={detail.source.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="source-link-btn"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            完整阅读 —— {detail.source.title}
+          </a>
+        {/if}
+      </div>
+    {:else if detail.source}
       <div class="kp-source card">
         <h2 class="content-heading">知识资料</h2>
-        <p class="source-description">该知识点的内容已在 JavaGuide 中整理，点击下方链接阅读原文。</p>
+        <p class="source-description">暂无本地摘要，去 JavaGuide 阅读原文。</p>
         <a
           href={detail.source.url}
           target="_blank"
@@ -114,7 +134,7 @@
           去 JavaGuide 阅读 —— {detail.source.title}
         </a>
       </div>
-    {:else if !detail.source && !detail.content}
+    {:else}
       <div class="kp-empty card">
         <h2 class="content-heading">知识资料</h2>
         <p class="empty-text">暂无资料</p>
@@ -271,6 +291,75 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+
+  /* Knowledge Content: rendered markdown */
+  .kp-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .content-body {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    overflow-x: auto;
+  }
+  .content-body h2 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 16px 0 8px 0;
+    color: var(--accent);
+  }
+  .content-body h2:first-child {
+    margin-top: 0;
+  }
+  .content-body h3 {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 12px 0 6px 0;
+  }
+  .content-body p {
+    margin: 6px 0;
+  }
+  .content-body ul, .content-body ol {
+    margin: 6px 0;
+    padding-left: 20px;
+  }
+  .content-body li {
+    margin: 3px 0;
+  }
+  .content-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+  .content-body th, .content-body td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  .content-body th {
+    background: var(--bg-surface);
+    font-weight: 600;
+  }
+  .content-body code {
+    font-size: 13px;
+    background: var(--bg-surface);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+  }
+  .content-body a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .content-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 12px 0;
   }
   .source-description {
     font-size: 14px;
