@@ -246,7 +246,16 @@
           {#if q.tags.length > 0}
             <div class="q-tags">
               {#each q.tags.slice(0, 3) as t}
-                <span class="mini-tag">{t}</span>
+                <span
+                  class="mini-tag kp-link"
+                  role="button"
+                  tabindex="0"
+                  onkeydown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onNavigate("knowledge-detail", { tag: t }); } }}
+                  onclick={(e) => { e.stopPropagation(); onNavigate("knowledge-detail", { tag: t }); }}
+                  title="查看知识点：{t}"
+                >
+                  {t}
+                </span>
               {/each}
             </div>
           {/if}
@@ -415,6 +424,20 @@
     border-radius: 3px;
     background: var(--border);
     color: var(--text-muted);
+  }
+  .mini-tag.kp-link {
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid transparent;
+    font-family: inherit;
+  }
+  .mini-tag.kp-link:hover {
+    border-color: var(--accent-dim);
+  }
+  .mini-tag.kp-link:active {
+    transform: scale(0.92);
   }
   .tag.company {
     background: var(--accent-bg);

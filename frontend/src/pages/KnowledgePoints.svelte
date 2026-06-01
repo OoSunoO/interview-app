@@ -10,6 +10,7 @@
   let error = $state(null);
   let searchQuery = $state("");
   let expandedCategory = $state(null);
+  let expandedKp = $state(null);
 
   // Filter flat list by search
   let filtered = $derived(
@@ -27,18 +28,23 @@
     for (const p of filtered) {
       const cat = p.categories[0] || "其他";
       if (!map[cat]) {
-        map[cat] = { id: cat, label: cat, totalQuestions: 0, totalMastery: 0, children: [] };
+        map[cat] = { id: cat, label: cat, totalQuestions: 0, totalMastery: 0, count: 0, children: [] };
       }
       map[cat].children.push({
         name: p.name,
         question_count: p.question_count,
         mastery: p.mastery,
+        has_content: p.has_content,
       });
       map[cat].totalQuestions += p.question_count;
       map[cat].totalMastery += p.mastery;
+      map[cat].count++;
     }
     return Object.values(map).sort((a, b) => b.totalQuestions - a.totalQuestions);
   });
+
+  // Cache for knowledge detail content
+  let detailCache = $state({});
 
   onMount(async () => {
     await loadPoints();
@@ -60,6 +66,22 @@
     expandedCategory = expandedCategory === id ? null : id;
   }
 
+  async function toggleKp(name) {
+    if (expandedKp === name) {
+      expandedKp = null;
+      return;
+    }
+    expandedKp = name;
+    if (!detailCache[name]) {
+      try {
+        const detail = await api.knowledge.get(name);
+        detailCache[name] = detail;
+      } catch {
+        // silently fail
+      }
+    }
+  }
+
   function getMasteryColor(mastery) {
     if (mastery >= 80) return "var(--success)";
     if (mastery >= 40) return "var(--warning)";
@@ -69,6 +91,21 @@
 
   function goToDetail(tag) {
     onNavigate("knowledge-detail", { tag });
+  }
+
+  function stripMarkdown(text) {
+    if (!text) return "";
+    return text
+      .replace(/^### /gm, "")
+      .replace(/^## /gm, "")
+      .replace(/^# /gm, "")
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`(.+?)`/g, "$1")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/[\|\-]{3,}/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
   }
 </script>
 
@@ -112,14 +149,14 @@
           <button class="cat-header" data-testid="category-header" onclick={() => toggleCategory(cat.id)}>
             <div class="cat-header-left">
               <span class="cat-label">{cat.label}</span>
-              <span class="cat-stats">{cat.totalQuestions} 题</span>
+              <span class="cat-stats">{cat.count} 个知识点</span>
             </div>
             <div class="cat-header-right">
               <span
                 class="mastery-badge"
-                style="color: {getMasteryColor(Math.round(cat.totalMastery / cat.children.length))}"
+                style="color: {getMasteryColor(Math.round(cat.totalMastery / Math.max(cat.children.length, 1)))}"
               >
-                掌握 {Math.round(cat.totalMastery / cat.children.length)}%
+                掌握 {Math.round(cat.totalMastery / Math.max(cat.children.length, 1))}%
               </span>
               <svg
                 class="cat-arrow"
@@ -136,24 +173,66 @@
           {#if expandedCategory === cat.id}
             <div class="cat-children">
               {#each cat.children as kp}
-                <button class="child-item" data-testid="knowledge-item" onclick={() => goToDetail(kp.name)}>
-                  <span class="child-name">{kp.name}</span>
-                  <span class="child-count">{kp.count || kp.question_count} 题</span>
-                  <div class="child-mastery">
-                    <div class="mastery-bar-bg">
-                      <div
-                        class="mastery-bar-fill"
-                        style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"
-                      ></div>
+                <div class="kp-wrapper" data-testid="knowledge-item">
+                  <button
+                    class="child-item"
+                    class:expanded={expandedKp === kp.name}
+                    onclick={() => toggleKp(kp.name)}
+                  >
+                    <div class="child-info">
+                      <span class="child-name">{kp.name}</span>
+                      <span class="child-count">{kp.question_count} 题</span>
+                      {#if kp.has_content}
+                        <span class="content-badge">📖 有讲解</span>
+                      {/if}
                     </div>
-                    <span
-                      class="mastery-label"
-                      style="color: {getMasteryColor(kp.mastery)}; font-size: 11px;"
+                    <div class="child-mastery">
+                      <div class="mastery-bar-bg">
+                        <div
+                          class="mastery-bar-fill"
+                          style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"
+                        ></div>
+                      </div>
+                      <span
+                        class="mastery-label"
+                        style="color: {getMasteryColor(kp.mastery)}; font-size: 11px;"
+                      >
+                        {kp.mastery}%
+                      </span>
+                    </div>
+                    <svg
+                      class="child-arrow"
+                      class:rotated={expandedKp === kp.name}
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
                     >
-                      {kp.mastery}%
-                    </span>
-                  </div>
-                </button>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {#if expandedKp === kp.name}
+                    <div class="kp-preview">
+                      {#if detailCache[kp.name]?.content}
+                        <div class="kp-content-preview">
+                          {stripMarkdown(detailCache[kp.name].content).slice(0, 300)}
+                          {#if detailCache[kp.name].content.length > 300}
+                            <span class="content-more">...</span>
+                          {/if}
+                        </div>
+                      {:else if detailCache[kp.name]}
+                        <p class="kp-no-content">暂无知识讲解内容</p>
+                      {:else}
+                        <p class="kp-loading">加载中...</p>
+                      {/if}
+                      <button class="kp-detail-btn" onclick={() => goToDetail(kp.name)}>
+                        查看完整内容 →
+                      </button>
+                    </div>
+                  {/if}
+                </div>
               {/each}
             </div>
           {/if}
@@ -272,6 +351,12 @@
     flex-direction: column;
     gap: 2px;
   }
+
+  .kp-wrapper {
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
   .child-item {
     display: flex;
     align-items: center;
@@ -289,16 +374,36 @@
   .child-item:hover {
     background: var(--bg-surface);
   }
+  .child-item.expanded {
+    background: var(--bg-surface);
+    border-radius: 6px 6px 0 0;
+  }
+  .child-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
   .child-name {
     font-size: 14px;
     font-weight: 500;
-    flex: 1;
-    min-width: 0;
+    white-space: nowrap;
   }
   .child-count {
     font-size: 11px;
     color: var(--text-muted);
     white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .content-badge {
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .child-mastery {
     display: flex;
@@ -306,6 +411,14 @@
     gap: 6px;
     width: 100px;
     flex-shrink: 0;
+  }
+  .child-arrow {
+    transition: transform 0.2s;
+    color: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .child-arrow.rotated {
+    transform: rotate(180deg);
   }
 
   .mastery-bar-bg {
@@ -324,6 +437,42 @@
     font-size: 10px;
     font-weight: 600;
     white-space: nowrap;
+  }
+
+  .kp-preview {
+    padding: 8px 8px 12px 8px;
+    border-top: 1px solid var(--border);
+    margin: 0 0 2px 0;
+    background: var(--bg-card);
+    border-radius: 0 0 6px 6px;
+  }
+  .kp-content-preview {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .content-more {
+    color: var(--text-muted);
+  }
+  .kp-no-content,
+  .kp-loading {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .kp-detail-btn {
+    font-size: 12px;
+    color: var(--accent);
+    background: none;
+    border: none;
+    padding: 4px 0;
+    cursor: pointer;
+    font-weight: 600;
+    display: block;
+  }
+  .kp-detail-btn:hover {
+    text-decoration: underline;
   }
 
   .skeleton-grid {

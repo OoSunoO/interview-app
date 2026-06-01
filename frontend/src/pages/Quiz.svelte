@@ -3,6 +3,7 @@
   import { store } from "../lib/stores.svelte.js";
   import CodeBlock from "../components/CodeBlock.svelte";
   import ErrorAlert from "../components/ErrorAlert.svelte";
+  import { api } from "../lib/local-api.js";
   import {
     hasAI,
     getAIConfig,
@@ -49,9 +50,18 @@
   let aiLoading = $state(false);
   let showAIConfig = $state(false);
   let showScoreHistory = $state(false);
-  let scoreHistory = $state([]);
   let apiKeyInput = $state(getAIConfig().key);
   let apiProvider = $state(getAIConfig().provider ?? 0);
+
+  let scoreHistory = $state([]);
+  let knowledgeTags = $state([]);
+
+  // Load knowledge tags for the current question
+  function loadKnowledgeTags() {
+    if (q) {
+      knowledgeTags = api.knowledge.getTagsForQuestion(q.id).filter((t) => t.has_content);
+    }
+  }
 
   let sessionProgress = $derived.by(() => {
     const n = store.quizSessionLength;
@@ -67,6 +77,7 @@
       const result = await store.loadQuestionDetail(questionId);
       if (result) {
         q = result;
+        loadKnowledgeTags();
         timerInterval = setInterval(() => timer++, 1000);
       } else {
         loadError = store.error ?? "加载题目失败";
@@ -438,6 +449,20 @@
             {/each}
           </ul>
         {/if}
+      {/if}
+
+      {#if knowledgeTags.length > 0}
+        <div class="knowledge-tags">
+          <span class="kt-label">📖 相关知识：</span>
+          {#each knowledgeTags as kt}
+            <button
+              class="kt-btn"
+              onclick={() => onNavigate("knowledge-detail", { tag: kt.name })}
+            >
+              {kt.name}
+            </button>
+          {/each}
+        </div>
       {/if}
 
       {#if !browseMode}
@@ -1264,6 +1289,34 @@
   .config-save {
     white-space: nowrap;
     padding: 10px 16px;
+  }
+
+  /* ── Knowledge Tags ── */
+  .knowledge-tags {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .kt-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .kt-btn {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid var(--accent-dim);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s var(--spring);
+  }
+  .kt-btn:active {
+    transform: scale(0.95);
   }
 
   /* ── Navigation ── */

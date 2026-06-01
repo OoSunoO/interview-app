@@ -451,6 +451,13 @@
           <div class="group">
             <div class="group-header">
               <span class="group-tag">{group.tag}</span>
+              <button
+                class="kp-nav-btn"
+                onclick={() => onNavigate("knowledge-detail", { tag: group.tag })}
+                title="查看知识点"
+              >
+                📖 知识点
+              </button>
               <span class="group-wrong">错 {group.totalWrong} 次</span>
             </div>
             {#if group.totalQuestions > 0}
@@ -673,6 +680,24 @@
     padding: 2px 8px;
     border-radius: 4px;
     font-weight: 600;
+  }
+  .kp-nav-btn {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .kp-nav-btn:hover {
+    border-color: var(--accent-dim);
+  }
+  .kp-nav-btn:active {
+    transform: scale(0.92);
   }
   .group-mastery {
     display: flex;

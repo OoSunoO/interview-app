@@ -1,5 +1,9 @@
 // Offline-capable API — reads bundled question data, stores progress in localStorage
 import { questions } from "./question-data.js";
+import { buildKnowledgeMap, getKnowledgeForTag } from "./knowledge-data.js";
+
+// Build knowledge map once (question data is static)
+const knowledgeMap = buildKnowledgeMap(questions);
 
 const PROGRESS_KEY = "quiz_progress";
 const SESSION_KEY = "quiz_review_sessions";
@@ -366,7 +370,7 @@ export const api = {
 
   // ── Knowledge Points API ─────────────────────────────────────
   knowledge: {
-    /** List all knowledge points (from tags), with counts and mastery */
+    /** List all knowledge points (from tags), with counts, mastery, and hasContent flag */
     list() {
       const progress = getProgress();
       const tagMap = {};
@@ -379,30 +383,42 @@ export const api = {
         }
       }
 
+      // Also include knowledge-only tags (no question associations but have pre-written content)
+      for (const tag of Object.keys(knowledgeMap)) {
+        if (!tagMap[tag]) {
+          tagMap[tag] = [];
+        }
+      }
+
       return Object.entries(tagMap)
         .map(([tag, ids]) => ({
           name: tag,
           question_count: ids.length,
-          mastery: computeMastery(tag, progress),
-          categories: tagCategories[tag] || [],
+          mastery: ids.length > 0 ? computeMastery(tag, progress) : 0,
+          categories: tagCategories[tag] || [knowledgeMap[tag]?.category || "其他"],
+          has_content: !!getKnowledgeForTag(tag),
         }))
         .sort((a, b) => b.question_count - a.question_count);
     },
 
-    /** Get detail for a specific knowledge point */
+    /** Get detail for a specific knowledge point, with pre-stored content */
     get(tag) {
       const progress = getProgress();
       const tagQuestions = questions.filter((q) => q.tags.includes(tag));
-      if (tagQuestions.length === 0) throw new Error(`Knowledge point '${tag}' not found`);
 
       const ids = tagQuestions.map((q) => q.id);
       const tagCategories = getTagCategoryMap();
+      const stored = getKnowledgeForTag(tag);
 
       return {
         name: tag,
         question_count: tagQuestions.length,
-        mastery: computeMastery(tag, progress),
-        categories: tagCategories[tag] || [],
+        mastery: tagQuestions.length > 0 ? computeMastery(tag, progress) : 0,
+        categories: tagCategories[tag] || (stored ? [stored.category || ""] : []),
+        // Pre-stored knowledge content (markdown), or empty if not available
+        content: stored?.content || "",
+        has_content: !!stored?.content,
+        // AI-generated summary falls back to heuristic
         summary: generateSummary(tag, tagQuestions),
         questions: tagQuestions.map((q) => {
           const p = progress[q.id] || {};
@@ -420,6 +436,19 @@ export const api = {
           };
         }),
       };
+    },
+
+    /**
+     * Get knowledge tags for a given question ID.
+     * Returns array of { name, has_content } for each tag on this question.
+     */
+    getTagsForQuestion(questionId) {
+      const q = questions.find((x) => x.id === questionId);
+      if (!q) return [];
+      return (q.tags || []).map((t) => ({
+        name: t,
+        has_content: !!getKnowledgeForTag(t),
+      }));
     },
   },
 

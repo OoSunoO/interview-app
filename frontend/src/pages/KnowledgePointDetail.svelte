@@ -3,6 +3,7 @@
   import { api } from "../lib/local-api.js";
   import { hasAI, aiChat } from "../lib/ai.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
+  import CodeBlock from "../components/CodeBlock.svelte";
 
   let { tag, onNavigate } = $props();
 
@@ -21,7 +22,7 @@
     error = null;
     try {
       detail = await api.knowledge.get(tag);
-      if (detail && hasAI()) generateAISummary();
+      if (detail && hasAI() && !detail.content) generateAISummary();
     } catch (e) {
       error = e?.message || "加载知识点详情失败";
     } finally {
@@ -67,6 +68,40 @@
   function goQuestion(q) {
     onNavigate("quiz", { questionId: q.id });
   }
+
+  // Render markdown-style content with code blocks
+  function renderContent(text) {
+    if (!text) return [{ type: "text", content: "" }];
+    const parts = text.split(/(```\w*\n[\s\S]*?```)/g);
+    return parts.map((p) => {
+      const match = p.match(/```(\w*)\n([\s\S]*?)```/);
+      if (match) return { type: "code", lang: match[1], code: match[2].trimEnd() };
+      return { type: "text", content: p };
+    });
+  }
+
+  // Split markdown content into sections by ## headings
+  function parseSections(text) {
+    if (!text) return [];
+    const lines = text.split("\n");
+    const sections = [];
+    let current = null;
+
+    for (const line of lines) {
+      const heading = line.match(/^## (.+)/);
+      if (heading) {
+        if (current) sections.push(current);
+        current = { title: heading[1], content: [] };
+      } else {
+        if (!current) {
+          current = { title: "", content: [] };
+        }
+        current.content.push(line);
+      }
+    }
+    if (current) sections.push(current);
+    return sections;
+  }
 </script>
 
 <div class="page kp-detail-page">
@@ -94,10 +129,13 @@
     <div class="skeleton-card" style="height: 80px; margin-top: 8px"></div>
     <div class="skeleton-card" style="height: 80px; margin-top: 8px"></div>
   {:else if detail}
+    <!-- Header -->
     <div class="kp-header card" data-testid="kp-header">
       <div class="kp-title-row">
         <h1 class="kp-title">{detail.name}</h1>
-        <span class="kp-count">{detail.question_count} 道相关题目</span>
+        {#if detail.question_count > 0}
+          <span class="kp-count">{detail.question_count} 道相关题目</span>
+        {/if}
       </div>
       <div class="kp-mastery-section">
         <div
@@ -118,7 +156,43 @@
       {/if}
     </div>
 
-    {#if detail.summary || aiSummary}
+    <!-- Knowledge Content (pre-stored) -->
+    {#if detail.content}
+      <div class="kp-content card">
+        <h2 class="content-heading">知识讲解</h2>
+        <div class="content-body">
+          {#each parseSections(detail.content) as section}
+            {#if section.title}
+              <h3 class="content-subheading">{section.title}</h3>
+            {/if}
+            <div class="content-text">
+              {#each renderContent(section.content.join("\n")) as part}
+                {#if part.type === "code"}
+                  <CodeBlock code={part.code} lang={part.lang} />
+                {:else}
+                  {#each part.content.split("\n") as line}
+                    {#if line.startsWith("### ")}
+                      <h4 class="content-h4">{line.slice(4)}</h4>
+                    {:else if line.startsWith("- **")}
+                      <p class="content-line">{@html line}</p>
+                    {:else if line.match(/^\d+\.\s/)}
+                      <p class="content-line">{line}</p>
+                    {:else if line.startsWith("|")}
+                      <p class="content-line table-line">{line}</p>
+                    {:else if line.trim() === ""}
+                      <br />
+                    {:else}
+                      <p class="content-line">{line}</p>
+                    {/if}
+                  {/each}
+                {/if}
+              {/each}
+            </div>
+          {/each}
+        </div>
+      </div>
+    {:else if detail.summary || aiSummary}
+      <!-- Fallback AI/heuristic summary when no pre-stored content -->
       <div class="kp-summary card">
         <h3 class="section-label">
           知识点综述
@@ -132,72 +206,77 @@
       </div>
     {/if}
 
-    <h3 class="section-title">相关题目</h3>
-    <div class="question-list">
-      {#each detail.questions as q}
-        <button class="card q-item status-{q.status}" onclick={() => goQuestion(q)}>
-          <div class="q-header">
-            <span class="status-icon {q.status}">
-              {#if q.status === "correct"}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline
-                    points="22 4 12 14.01 9 11.01"
-                  /></svg
-                >
-              {:else if q.status === "wrong"}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
-                >
-              {:else if q.status === "reviewing"}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg
-                >
-              {:else}
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"><circle cx="12" cy="12" r="10" /></svg
-                >
-              {/if}
-            </span>
-            <span class="tag">{q.category}</span>
-            <span class="tag diff {q.difficulty}">{q.difficulty}</span>
-            <span class="tag type">{q.type}</span>
-          </div>
-          <p class="q-title">{q.title}</p>
-          <p class="q-content-preview">{q.content.slice(0, 60)}...</p>
-        </button>
-      {/each}
-    </div>
+    <!-- Related Questions -->
+    {#if detail.questions.length > 0}
+      <h3 class="section-title">相关题目</h3>
+      <div class="question-list">
+        {#each detail.questions as q}
+          <button class="card q-item status-{q.status}" onclick={() => goQuestion(q)}>
+            <div class="q-header">
+              <span class="status-icon {q.status}">
+                {#if q.status === "correct"}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline
+                      points="22 4 12 14.01 9 11.01"
+                    /></svg
+                  >
+                {:else if q.status === "wrong"}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
+                  >
+                {:else if q.status === "reviewing"}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg
+                  >
+                {:else}
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"><circle cx="12" cy="12" r="10" /></svg
+                  >
+                {/if}
+              </span>
+              <span class="tag">{q.category}</span>
+              <span class="tag diff {q.difficulty}">{q.difficulty}</span>
+              <span class="tag type">{q.type}</span>
+            </div>
+            <p class="q-title">{q.title}</p>
+            <p class="q-content-preview">{q.content.slice(0, 60)}...</p>
+          </button>
+        {/each}
+      </div>
+    {:else}
+      <p class="no-questions">该知识点暂关联题目，建议独立学习知识内容。</p>
+    {/if}
   {/if}
 </div>
 
@@ -271,6 +350,61 @@
     border: 1px solid var(--border);
   }
 
+  /* Knowledge Content (pre-stored) */
+  .kp-content {
+    padding: 16px;
+  }
+  .content-heading {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 12px 0;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .content-body {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .content-subheading {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 16px 0 8px 0;
+    color: var(--text);
+  }
+  .content-h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 12px 0 4px 0;
+    color: var(--text);
+  }
+  .content-line {
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .content-line.table-line {
+    font-family: monospace;
+    font-size: 12px;
+  }
+  .content-text {
+    margin-bottom: 8px;
+  }
+  .content-text :global(p) {
+    margin-bottom: 6px;
+  }
+  .content-text :global(code) {
+    background: var(--bg-surface);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-family: monospace;
+  }
+  .content-text :global(strong) {
+    font-weight: 700;
+  }
+
+  /* Summary fallback */
   .kp-summary {
     padding: 14px;
   }
@@ -364,6 +498,13 @@
     font-size: 12px;
     color: var(--text-muted);
     line-height: 1.4;
+  }
+
+  .no-questions {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 20px 0;
   }
 
   .skeleton-card {
