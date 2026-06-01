@@ -102,37 +102,6 @@
       <div class="kp-content card">
         <h2 class="content-heading">知识资料</h2>
         <div class="content-body">{@html marked(detail.content)}</div>
-        {#if detail.source}
-          <a
-            href={detail.source.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="source-link-btn"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-            </svg>
-            完整阅读 —— {detail.source.title}
-          </a>
-        {/if}
-      </div>
-    {:else if detail.source}
-      <div class="kp-source card">
-        <h2 class="content-heading">知识资料</h2>
-        <p class="source-description">暂无本地摘要，去 JavaGuide 阅读原文。</p>
-        <a
-          href={detail.source.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="source-link-btn"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-          </svg>
-          去 JavaGuide 阅读 —— {detail.source.title}
-        </a>
       </div>
     {:else}
       <div class="kp-empty card">
@@ -285,14 +254,6 @@
     border: 1px solid var(--border);
   }
 
-  /* Knowledge Content: source link */
-  .kp-source {
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
   /* Knowledge Content: rendered markdown */
   .kp-content {
     padding: 16px;
@@ -361,33 +322,6 @@
     border-top: 1px solid var(--border);
     margin: 12px 0;
   }
-  .source-description {
-    font-size: 14px;
-    color: var(--text-muted);
-    line-height: 1.6;
-    margin: 0;
-  }
-  .source-link-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    background: var(--accent);
-    color: #fff;
-    border-radius: 8px;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600;
-    width: fit-content;
-    transition: opacity 0.2s;
-  }
-  .source-link-btn:hover {
-    opacity: 0.85;
-  }
-  .source-link-btn:active {
-    opacity: 0.7;
-  }
-
   /* Knowledge Content: empty */
   .kp-empty {
     padding: 16px;

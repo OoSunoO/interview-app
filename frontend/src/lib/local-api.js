@@ -415,10 +415,9 @@ export const api = {
         question_count: tagQuestions.length,
         mastery: tagQuestions.length > 0 ? computeMastery(tag, progress) : 0,
         categories: tagCategories[tag] || (stored ? [stored.category || ""] : []),
-        // Pre-stored knowledge content (markdown) — cleared; using source links instead
-        content: "",
+        content: stored?.content || "",
         source: stored?.source || null,
-        has_content: !!stored?.source,
+        has_content: !!stored?.content,
         // AI-generated summary falls back to heuristic
         summary: generateSummary(tag, tagQuestions),
         questions: tagQuestions.map((q) => {
