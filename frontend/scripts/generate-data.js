@@ -25,6 +25,7 @@ for (const f of files) {
       hints: q.hints || [],
       tags: q.tags || [],
       options: q.options || [],
+      company: q.company || "",
     });
   }
 }
