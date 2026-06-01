@@ -7,10 +7,10 @@
     "content": "JDK 8 中 HashMap 的底层数据结构是？",
     "answer": "答案：C) 数组 + 链表 + 红黑树。解析：JDK 8 中 HashMap 底层采用数组 + 链表 + 红黑树实现。当链表长度超过阈值（8）且数组长度 ≥ 64 时，链表转换为红黑树，将查询时间复杂度从 O(n) 降低为 O(log n)。JDK 7 及之前只有数组 + 链表。",
     "options": [
-      "数组",
-      "数组 + 链表",
-      "数组 + 链表 + 红黑树",
-      "哈希表 + 二叉树"
+      "A) 数组",
+      "B) 数组 + 链表",
+      "C) 数组 + 链表 + 红黑树",
+      "D) 哈希表 + 二叉树"
     ],
     "hints": [
       "JDK 7 和 JDK 8 的实现不同",
@@ -29,10 +29,10 @@
     "content": "关于 HashMap 的 put(K, V) 方法执行流程，下列描述错误的是？",
     "answer": "答案：D) 如果 key 已存在，直接覆盖旧值并返回 null。解析：当 key 已存在时，put 方法会覆盖旧值，但返回的是被覆盖的旧值（old value），而不是 null。只有 key 不存在时插入才返回 null。",
     "options": [
-      "先对 key 做 hash 计算，然后定位数组索引",
-      "如果该位置为空，直接插入新节点",
-      "如果该位置不为空，遍历链表或红黑树查找 key",
-      "如果 key 已存在，直接覆盖旧值并返回 null"
+      "A) 先对 key 做 hash 计算，然后定位数组索引",
+      "B) 如果该位置为空，直接插入新节点",
+      "C) 如果该位置不为空，遍历链表或红黑树查找 key",
+      "D) 如果 key 已存在，直接覆盖旧值并返回 null"
     ],
     "hints": [
       "注意 put 方法的返回值语义"
@@ -50,10 +50,10 @@
     "content": "关于 HashMap 的扩容机制，下列哪个说法是正确的？",
     "answer": "答案：B) 当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍。解析：HashMap 的默认负载因子是 0.75，当元素个数 > capacity × loadFactor 时扩容为原来的 2 倍。扩容后所有元素需要重新计算哈希索引（rehash），因此扩容是较耗时的操作。",
     "options": [
-      "当链表长度超过 8 时触发扩容",
-      "当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍",
-      "每次 put 操作都会检查是否需要扩容",
-      "扩容后元素位置不变，只需复制到新数组"
+      "A) 当链表长度超过 8 时触发扩容",
+      "B) 当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍",
+      "C) 每次 put 操作都会检查是否需要扩容",
+      "D) 扩容后元素位置不变，只需复制到新数组"
     ],
     "hints": [
       "threshold 的计算方式",
@@ -72,10 +72,10 @@
     "content": "以下关于 JDK 7 和 JDK 8 中 HashMap 的区别，说法错误的是？",
     "answer": "答案：B) JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全。解析：尾插法确实解决了扩容时环形链表导致的死循环问题，但这并不意味着 HashMap 变成线程安全。put、get、resize 等操作仍然没有加锁，多线程下仍可能出现数据覆盖、size 不准确等问题。",
     "options": [
-      "JDK 8 引入红黑树优化链表过长时的查询性能",
-      "JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全",
-      "JDK 7 使用头插法，JDK 8 使用尾插法",
-      "JDK 8 的 hash 计算比 JDK 7 更简化"
+      "A) JDK 8 引入红黑树优化链表过长时的查询性能",
+      "B) JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全",
+      "C) JDK 7 使用头插法，JDK 8 使用尾插法",
+      "D) JDK 8 的 hash 计算比 JDK 7 更简化"
     ],
     "hints": [
       "线程安全和数据结构优化是两个不同的问题"
@@ -93,10 +93,10 @@
     "content": "JDK 7 中 ConcurrentHashMap 采用什么机制保证线程安全？",
     "answer": "答案：B) Segment + ReentrantLock 分段锁。解析：JDK 7 的 ConcurrentHashMap 采用分段锁设计，将数据分为多个 Segment（默认 16 个），每个 Segment 持有一把 ReentrantLock 锁。写操作只需锁住对应 Segment，不影响其他 Segment 的读写，从而实现高并发。",
     "options": [
-      "对整个数组加 synchronized 锁",
-      "Segment + ReentrantLock 分段锁",
-      "CAS + volatile + synchronized",
-      "使用读写锁 ReadWriteLock"
+      "A) 对整个数组加 synchronized 锁",
+      "B) Segment + ReentrantLock 分段锁",
+      "C) CAS + volatile + synchronized",
+      "D) 使用读写锁 ReadWriteLock"
     ],
     "hints": [
       "JDK 7 和 JDK 8 的 ConcurrentHashMap 实现完全不同"
@@ -114,10 +114,10 @@
     "content": "JDK 8 中 ConcurrentHashMap 采用什么机制保证线程安全？",
     "answer": "答案：C) CAS + volatile + synchronized（桶粒度锁）。解析：JDK 8 放弃了 Segment 分段锁，改为 CAS + volatile + synchronized 实现。插入时如果桶为空则用 CAS 插入，否则对桶的首节点加 synchronized 锁。粒度更细（从 Segment 级降到桶级），并发性能更好。",
     "options": [
-      "ReentrantLock 分段锁",
-      "对整个数组加锁",
-      "CAS + volatile + synchronized（桶粒度锁）",
-      "使用乐观锁 + 版本号"
+      "A) ReentrantLock 分段锁",
+      "B) 对整个数组加锁",
+      "C) CAS + volatile + synchronized（桶粒度锁）",
+      "D) 使用乐观锁 + 版本号"
     ],
     "hints": [
       "JDK 8 对 ConcurrentHashMap 做了重大重构"
@@ -135,10 +135,10 @@
     "content": "ArrayList 在调用 add() 方法且内部数组已满时的扩容方式是？",
     "answer": "答案：A) 扩容为原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。解析：ArrayList 扩容时计算新容量为 oldCapacity + (oldCapacity >> 1)，即 1.5 倍。然后使用 Arrays.copyOf 将原数组元素复制到新数组。",
     "options": [
-      "扩容为原来的 1.5 倍",
-      "扩容为原来的 2 倍",
-      "扩容为原来的 1.25 倍",
-      "每次固定增加 10 个容量"
+      "A) 扩容为原来的 1.5 倍",
+      "B) 扩容为原来的 2 倍",
+      "C) 扩容为原来的 1.25 倍",
+      "D) 每次固定增加 10 个容量"
     ],
     "hints": [
       "看源码中的 grow() 方法实现"
@@ -156,10 +156,10 @@
     "content": "以下关于 ArrayList 和 LinkedList 的说法，正确的是？",
     "answer": "答案：D) ArrayList 随机访问快，LinkedList 插入删除快。解析：ArrayList 基于数组实现，支持 O(1) 随机访问；LinkedList 基于双向链表实现，插入和删除只需修改指针为 O(1)，但随机访问需要遍历为 O(n)。两者都不是线程安全的。",
     "options": [
-      "ArrayList 和 LinkedList 都是线程安全的",
-      "LinkedList 随机访问比 ArrayList 快",
-      "ArrayList 插入和删除比 LinkedList 快",
-      "ArrayList 随机访问快，LinkedList 插入删除快"
+      "A) ArrayList 和 LinkedList 都是线程安全的",
+      "B) LinkedList 随机访问比 ArrayList 快",
+      "C) ArrayList 插入和删除比 LinkedList 快",
+      "D) ArrayList 随机访问快，LinkedList 插入删除快"
     ],
     "hints": [
       "考虑底层数据结构的不同"
@@ -177,10 +177,10 @@
     "content": "下列哪个类不是 Set 接口的实现类？",
     "answer": "答案：D) Map。解析：Map 是独立的根接口，与 Collection 平级。HashSet、TreeSet、LinkedHashSet 都是 Set 接口的实现类。",
     "options": [
-      "HashSet",
-      "TreeSet",
-      "LinkedHashSet",
-      "Map"
+      "A) HashSet",
+      "B) TreeSet",
+      "C) LinkedHashSet",
+      "D) Map"
     ],
     "hints": [
       "Set 是 Collection 的子接口，注意区分 Map"
@@ -198,10 +198,10 @@
     "content": "HashSet 是如何保证元素不重复的？",
     "answer": "答案：A) 底层基于 HashMap，元素作为 HashMap 的 key 存储。解析：HashSet 的底层实际是 HashMap，添加元素时把元素作为 HashMap 的 key，value 是一个常量 PRESENT（new Object()）。利用 HashMap key 不可重复的特性保证元素不重复，依赖元素的 hashCode() 和 equals() 方法。",
     "options": [
-      "底层基于 HashMap，元素作为 HashMap 的 key 存储",
-      "内部维护一个数组，每次添加时遍历检查",
-      "使用 TreeMap 的排序特性保证不重复",
-      "通过 CAS 操作实现去重"
+      "A) 底层基于 HashMap，元素作为 HashMap 的 key 存储",
+      "B) 内部维护一个数组，每次添加时遍历检查",
+      "C) 使用 TreeMap 的排序特性保证不重复",
+      "D) 通过 CAS 操作实现去重"
     ],
     "hints": [
       "添加 add() 方法的返回值说明了什么？"
@@ -219,10 +219,10 @@
     "content": "HashMap 在多线程环境下可能出现哪些问题？以下说法错误的是？",
     "answer": "答案：C) 多线程读操作一定会抛出 ConcurrentModificationException。解析：ComcurrentModificationException 只在迭代过程中检测到结构性修改时才会抛出（fast-fail 机制），并非一定会出现。多线程读不一定会抛异常，但可能出现脏读、死循环（JDK 7 头插法导致）、数据覆盖等问题。",
     "options": [
-      "JDK 7 中扩容时可能出现环形链表导致死循环",
-      "多线程 put 可能导致数据覆盖",
-      "多线程读操作一定会抛出 ConcurrentModificationException",
-      "多线程 put 后 get 可能获取不到刚 put 的数据"
+      "A) JDK 7 中扩容时可能出现环形链表导致死循环",
+      "B) 多线程 put 可能导致数据覆盖",
+      "C) 多线程读操作一定会抛出 ConcurrentModificationException",
+      "D) 多线程 put 后 get 可能获取不到刚 put 的数据"
     ],
     "hints": [
       "fast-fail 机制只在特定条件下触发"
@@ -240,10 +240,10 @@
     "content": "TreeMap 根据什么来排序 key？",
     "answer": "答案：C) 根据 key 的自然顺序（Comparable）或构造时传入的 Comparator。解析：TreeMap 基于红黑树实现，key 必须实现 Comparable 接口或在构造 TreeMap 时传入 Comparator。插入时自动排序，保证 key 有序。",
     "options": [
-      "按 key 的 hashCode 大小排序",
-      "按插入顺序排序",
-      "根据 key 的自然顺序（Comparable）或构造时传入的 Comparator",
-      "随机排序"
+      "A) 按 key 的 hashCode 大小排序",
+      "B) 按插入顺序排序",
+      "C) 根据 key 的自然顺序（Comparable）或构造时传入的 Comparator",
+      "D) 随机排序"
     ],
     "hints": [
       "TreeMap 的 key 有什么约束？"
@@ -261,10 +261,10 @@
     "content": "HashMap 如何根据 key 计算在数组中的存放位置？",
     "answer": "答案：B) h = key.hashCode()，然后 h ^ (h >>> 16) 得到扰动后的 hash，再与数组长度 - 1 做 & 运算。解析：HashMap 先对 key 的 hashCode() 做高 16 位异或低 16 位的扰动计算，目的是让高位也参与寻址，减少哈希碰撞。然后通过 (n - 1) & hash 计算数组下标，等价于取模运算但位运算效率更高。",
     "options": [
-      "直接使用 key.hashCode() % 数组长度取模",
-      "h = key.hashCode()，h ^ (h >>> 16) 后与 n - 1 做 & 运算",
-      "使用 key.hashCode() 的绝对值作为下标",
-      "使用 key.toString().length() 作为下标"
+      "A) 直接使用 key.hashCode() % 数组长度取模",
+      "B) h = key.hashCode()，h ^ (h >>> 16) 后与 n - 1 做 & 运算",
+      "C) 使用 key.hashCode() 的绝对值作为下标",
+      "D) 使用 key.toString().length() 作为下标"
     ],
     "hints": [
       "为什么 HashMap 的容量必须是 2 的幂？"
@@ -282,10 +282,10 @@
     "content": "以下哪个接口不是 Collection 接口的子接口？",
     "answer": "答案：C) Map。解析：Collection 的子接口包括 List、Set、Queue。Map 是独立于 Collection 的另一个根接口，两者在类层次结构中是平级的。",
     "options": [
-      "List",
-      "Set",
-      "Map",
-      "Queue"
+      "A) List",
+      "B) Set",
+      "C) Map",
+      "D) Queue"
     ],
     "hints": [
       "Collection 和 Map 的关系是什么？"
@@ -303,10 +303,10 @@
     "content": "HashMap 的默认初始容量和负载因子分别是多少？",
     "answer": "答案：B) 初始容量 16，负载因子 0.75。解析：HashMap 默认初始容量是 1 << 4 = 16，默认负载因子是 0.75f。负载因子 0.75 是时间和空间成本的权衡，过高减少扩容次数但增加哈希碰撞，过低增加内存浪费。",
     "options": [
-      "初始容量 8，负载因子 0.5",
-      "初始容量 16，负载因子 0.75",
-      "初始容量 32，负载因子 0.8",
-      "初始容量 10，负载因子 0.6"
+      "A) 初始容量 8，负载因子 0.5",
+      "B) 初始容量 16，负载因子 0.75",
+      "C) 初始容量 32，负载因子 0.8",
+      "D) 初始容量 10，负载因子 0.6"
     ],
     "hints": [
       "看 HashMap 源码中的 DEFAULT_INITIAL_CAPACITY 和 DEFAULT_LOAD_FACTOR"
@@ -324,10 +324,10 @@
     "content": "HashMap 中链表转换为红黑树的条件是什么？",
     "answer": "答案：C) 链表长度 ≥ 8 且数组长度 ≥ 64。解析：两个条件缺一不可：链表长度达到 TREEIFY_THRESHOLD（8）时，会先检查数组长度——如果 < MIN_TREEIFY_CAPACITY（64），则优先扩容数组而非转红黑树。只有数组长度 ≥ 64 时才会将链表转为红黑树。",
     "options": [
-      "链表长度 ≥ 8",
-      "链表长度 ≥ 8 且数组长度 ≥ 16",
-      "链表长度 ≥ 8 且数组长度 ≥ 64",
-      "数组长度 ≥ 64"
+      "A) 链表长度 ≥ 8",
+      "B) 链表长度 ≥ 8 且数组长度 ≥ 16",
+      "C) 链表长度 ≥ 8 且数组长度 ≥ 64",
+      "D) 数组长度 ≥ 64"
     ],
     "hints": [
       "树化需要同时满足两个条件"
@@ -345,10 +345,10 @@
     "content": "ConcurrentHashMap 的 size() 方法在并发环境下如何保证正确性？",
     "answer": "答案：D) 先尝试无锁统计，如果竞争激烈则加锁统计。解析：ConcurrentHashMap 的 size() 采用先无锁统计策略：先通过 sumCount() 无锁累加 baseCount 和 CounterCell 数组的值。如果在统计过程中发生了并发修改，会使用 counterCells 辅助记录，最终通过累加所有计数来得到正确结果，无需每次都加锁。",
     "options": [
-      "直接返回一个变量，不保证准确性",
-      "每次调用 size() 都会遍历整个哈希表",
-      "使用 synchronized 保证线程安全",
-      "先尝试无锁统计，如果竞争激烈则加锁统计"
+      "A) 直接返回一个变量，不保证准确性",
+      "B) 每次调用 size() 都会遍历整个哈希表",
+      "C) 使用 synchronized 保证线程安全",
+      "D) 先尝试无锁统计，如果竞争激烈则加锁统计"
     ],
     "hints": [
       "JDK 8 的 CounterCell"
@@ -366,10 +366,10 @@
     "content": "以下哪种不是解决哈希冲突的常见方法？",
     "answer": "答案：D) 位运算法。解析：解决哈希冲突的常见方法有：链地址法（HashMap 使用）、开放地址法（ThreadLocalMap 使用）、再哈希法。位运算是计算哈希值的方法，不是解决冲突的方式。",
     "options": [
-      "链地址法",
-      "开放地址法",
-      "再哈希法",
-      "位运算法"
+      "A) 链地址法",
+      "B) 开放地址法",
+      "C) 再哈希法",
+      "D) 位运算法"
     ],
     "hints": [
       "考虑常见的哈希表实现方式"
@@ -387,10 +387,10 @@
     "content": "在使用迭代器遍历集合时，其他线程修改了集合结构，会发生什么？",
     "answer": "答案：B) 抛出 ConcurrentModificationException。解析：Java 集合框架中的迭代器采用了 fast-fail 机制。迭代器内部维护一个 modCount 计数器，当检测到 modCount 被修改（即集合结构被修改）时，立即抛出 ConcurrentModificationException，而不是冒险在后续操作中继续。",
     "options": [
-      "正常完成遍历，但数据可能不准确",
-      "抛出 ConcurrentModificationException",
-      "无限循环",
-      "自动等待其他线程完成修改"
+      "A) 正常完成遍历，但数据可能不准确",
+      "B) 抛出 ConcurrentModificationException",
+      "C) 无限循环",
+      "D) 自动等待其他线程完成修改"
     ],
     "hints": [
       "fast-fail 的 fail 指的是什么？"
@@ -408,10 +408,10 @@
     "content": "关于 Comparable 和 Comparator 的区别，以下说法正确的是？",
     "answer": "答案：A) Comparable 定义在元素类内部，Comparator 定义在外部。解析：Comparable 是内部比较器，元素类实现 Comparable 接口的 compareTo() 方法定义自然排序。Comparator 是外部比较器，单独定义比较策略，适用于无法修改源码或需要多种排序方式的场景。",
     "options": [
-      "Comparable 定义在元素类内部，Comparator 定义在外部",
-      "Comparable 可以定义多种排序方式，Comparator 只能定义一种",
-      "Comparator 位于 java.lang 包中",
-      "Comparable 使用 compare() 方法，Comparator 使用 compareTo() 方法"
+      "A) Comparable 定义在元素类内部，Comparator 定义在外部",
+      "B) Comparable 可以定义多种排序方式，Comparator 只能定义一种",
+      "C) Comparator 位于 java.lang 包中",
+      "D) Comparable 使用 compare() 方法，Comparator 使用 compareTo() 方法"
     ],
     "hints": [
       "一个是 int compareTo(T o)，一个是 int compare(T o1, T o2)"

@@ -2532,10 +2532,10 @@ export const questions = [
       "内存管理"
     ],
     "options": [
-      "堆",
-      "虚拟机栈",
-      "方法区",
-      "直接内存"
+      "A) 堆",
+      "B) 虚拟机栈",
+      "C) 方法区",
+      "D) 直接内存"
     ],
     "company": ""
   },
@@ -2555,10 +2555,10 @@ export const questions = [
       "堆内存"
     ],
     "options": [
-      "对象创建后直接进入老年代",
-      "对象首先在 Eden 区分配，经过 Minor GC 后进入 Survivor 区",
-      "所有对象都在老年代创建，根据使用频率降级到年轻代",
-      "Survivor 区满了才会触发 Minor GC"
+      "A) 对象创建后直接进入老年代",
+      "B) 对象首先在 Eden 区分配，经过 Minor GC 后进入 Survivor 区",
+      "C) 所有对象都在老年代创建，根据使用频率降级到年轻代",
+      "D) Survivor 区满了才会触发 Minor GC"
     ],
     "company": ""
   },
@@ -2578,10 +2578,10 @@ export const questions = [
       "GC"
     ],
     "options": [
-      "虚拟机栈中引用的对象",
-      "方法区中静态属性引用的对象",
-      "方法区中未被引用的常量",
-      "本地方法栈中 JNI 引用的对象"
+      "A) 虚拟机栈中引用的对象",
+      "B) 方法区中静态属性引用的对象",
+      "C) 方法区中未被引用的常量",
+      "D) 本地方法栈中 JNI 引用的对象"
     ],
     "company": ""
   },
@@ -2601,10 +2601,10 @@ export const questions = [
       "GC"
     ],
     "options": [
-      "G1 是分代的、区域化的垃圾回收器",
-      "CMS 使用标记-清除算法，会产生内存碎片",
-      "G1 将堆划分为多个 Region，支持可预测的停顿",
-      "G1 的停顿时间比 CMS 更短且完全可预测"
+      "A) G1 是分代的、区域化的垃圾回收器",
+      "B) CMS 使用标记-清除算法，会产生内存碎片",
+      "C) G1 将堆划分为多个 Region，支持可预测的停顿",
+      "D) G1 的停顿时间比 CMS 更短且完全可预测"
     ],
     "company": ""
   },
@@ -2624,10 +2624,10 @@ export const questions = [
       "类加载"
     ],
     "options": [
-      "类加载器收到类加载请求时，先将请求委派给父类加载器加载",
-      "类加载器收到类加载请求时，先自己尝试加载，失败后再委派给父加载器",
-      "双亲委派模型可以避免类被重复加载，但会降低安全性",
-      "双亲委派模型只在 JDK 8 及以下版本中使用"
+      "A) 类加载器收到类加载请求时，先将请求委派给父类加载器加载",
+      "B) 类加载器收到类加载请求时，先自己尝试加载，失败后再委派给父加载器",
+      "C) 双亲委派模型可以避免类被重复加载，但会降低安全性",
+      "D) 双亲委派模型只在 JDK 8 及以下版本中使用"
     ],
     "company": ""
   },
@@ -2648,10 +2648,10 @@ export const questions = [
       "类加载"
     ],
     "options": [
-      "加载 → 准备 → 验证 → 初始化 → 解析",
-      "加载 → 验证 → 准备 → 解析 → 初始化",
-      "加载 → 验证 → 初始化 → 准备 → 解析",
-      "加载 → 解析 → 验证 → 准备 → 初始化"
+      "A) 加载 → 准备 → 验证 → 初始化 → 解析",
+      "B) 加载 → 验证 → 准备 → 解析 → 初始化",
+      "C) 加载 → 验证 → 初始化 → 准备 → 解析",
+      "D) 加载 → 解析 → 验证 → 准备 → 初始化"
     ],
     "company": ""
   },
@@ -2671,10 +2671,10 @@ export const questions = [
       "OOM"
     ],
     "options": [
-      "循环创建大量 Java 对象不释放",
-      "运行时大量生成动态代理类或 CGLIB 代理类",
-      "递归调用深度过大",
-      "创建超大数组"
+      "A) 循环创建大量 Java 对象不释放",
+      "B) 运行时大量生成动态代理类或 CGLIB 代理类",
+      "C) 递归调用深度过大",
+      "D) 创建超大数组"
     ],
     "company": ""
   },
@@ -2694,10 +2694,10 @@ export const questions = [
       "引用"
     ],
     "options": [
-      "强引用一定会被回收",
-      "弱引用只在内存不足时回收",
-      "软引用的对象在下一次 GC 时一定被回收",
-      "软引用和弱引用在 GC 时都会被回收"
+      "A) 强引用一定会被回收",
+      "B) 弱引用只在内存不足时回收",
+      "C) 软引用的对象在下一次 GC 时一定被回收",
+      "D) 软引用和弱引用在 GC 时都会被回收"
     ],
     "company": ""
   },
@@ -2717,10 +2717,10 @@ export const questions = [
       "接口"
     ],
     "options": [
-      "私有方法",
-      "默认方法和静态方法",
-      "受保护方法",
-      "final 方法"
+      "A) 私有方法",
+      "B) 默认方法和静态方法",
+      "C) 受保护方法",
+      "D) final 方法"
     ],
     "company": ""
   },
@@ -2740,10 +2740,10 @@ export const questions = [
       "Lambda"
     ],
     "options": [
-      "函数式接口的匿名实现",
-      "匿名内部类的语法糖",
-      "一种新的数据类型",
-      "运行时动态生成的方法"
+      "A) 函数式接口的匿名实现",
+      "B) 匿名内部类的语法糖",
+      "C) 一种新的数据类型",
+      "D) 运行时动态生成的方法"
     ],
     "company": ""
   },
@@ -2763,10 +2763,10 @@ export const questions = [
       "Stream"
     ],
     "options": [
-      "filter",
-      "map",
-      "sorted",
-      "collect"
+      "A) filter",
+      "B) map",
+      "C) sorted",
+      "D) collect"
     ],
     "company": ""
   },
@@ -2786,10 +2786,10 @@ export const questions = [
       "Optional"
     ],
     "options": [
-      "提高方法的执行效率",
-      "避免 NullPointerException，更优雅地处理可能为 null 的值",
-      "替代 try-catch 异常处理",
-      "实现对象的深拷贝"
+      "A) 提高方法的执行效率",
+      "B) 避免 NullPointerException，更优雅地处理可能为 null 的值",
+      "C) 替代 try-catch 异常处理",
+      "D) 实现对象的深拷贝"
     ],
     "company": ""
   },
@@ -2809,10 +2809,10 @@ export const questions = [
       "synchronized"
     ],
     "options": [
-      "始终使用互斥量实现，性能较差",
-      "基于 AQS 中的 CLH 队列实现",
-      "基于 Monitor 对象，通过锁升级实现",
-      "使用 atomic 变量实现"
+      "A) 始终使用互斥量实现，性能较差",
+      "B) 基于 AQS 中的 CLH 队列实现",
+      "C) 基于 Monitor 对象，通过锁升级实现",
+      "D) 使用 atomic 变量实现"
     ],
     "company": ""
   },
@@ -2832,10 +2832,10 @@ export const questions = [
       "volatile"
     ],
     "options": [
-      "保证可见性和禁止指令重排序，但不保证原子性",
-      "保证可见性和原子性",
-      "保证可见性、原子性和有序性",
-      "只保证可见性"
+      "A) 保证可见性和禁止指令重排序，但不保证原子性",
+      "B) 保证可见性和原子性",
+      "C) 保证可见性、原子性和有序性",
+      "D) 只保证可见性"
     ],
     "company": ""
   },
@@ -2855,10 +2855,10 @@ export const questions = [
       "线程池"
     ],
     "options": [
-      "直接抛出异常",
-      "丢弃该任务",
-      "创建新线程，如果已达最大线程数则执行拒绝策略",
-      "阻塞等待线程空闲"
+      "A) 直接抛出异常",
+      "B) 丢弃该任务",
+      "C) 创建新线程，如果已达最大线程数则执行拒绝策略",
+      "D) 阻塞等待线程空闲"
     ],
     "company": ""
   },
@@ -2878,10 +2878,10 @@ export const questions = [
       "AQS"
     ],
     "options": [
-      "基于 synchronized 实现的阻塞队列",
-      "基于 volatile int state + CLH 双向队列 + CAS 操作",
-      "基于 ThreadLocal 实现线程隔离",
-      "基于 HashMap 存储等待线程"
+      "A) 基于 synchronized 实现的阻塞队列",
+      "B) 基于 volatile int state + CLH 双向队列 + CAS 操作",
+      "C) 基于 ThreadLocal 实现线程隔离",
+      "D) 基于 HashMap 存储等待线程"
     ],
     "company": ""
   },
@@ -2901,10 +2901,10 @@ export const questions = [
       "锁"
     ],
     "options": [
-      "ReentrantLock 支持公平锁和非公平锁",
-      "synchronized 是隐式锁，自动释放",
-      "ReentrantLock 支持多个 Condition 条件变量",
-      "synchronized 支持超时获取锁"
+      "A) ReentrantLock 支持公平锁和非公平锁",
+      "B) synchronized 是隐式锁，自动释放",
+      "C) ReentrantLock 支持多个 Condition 条件变量",
+      "D) synchronized 支持超时获取锁"
     ],
     "company": ""
   },
@@ -2924,10 +2924,10 @@ export const questions = [
       "CAS"
     ],
     "options": [
-      "ABA 问题",
-      "自旋开销大",
-      "死锁",
-      "只能保证单个变量原子操作"
+      "A) ABA 问题",
+      "B) 自旋开销大",
+      "C) 死锁",
+      "D) 只能保证单个变量原子操作"
     ],
     "company": ""
   },
@@ -2947,10 +2947,10 @@ export const questions = [
       "线程"
     ],
     "options": [
-      "NEW",
-      "BLOCKED",
-      "WAITING",
-      "Running"
+      "A) NEW",
+      "B) BLOCKED",
+      "C) WAITING",
+      "D) Running"
     ],
     "company": ""
   },
@@ -2970,10 +2970,10 @@ export const questions = [
       "接口"
     ],
     "options": [
-      "必须在实现类中重写该方法，否则编译报错",
-      "编译通过，运行时报错",
-      "自动使用第一个接口的默认方法",
-      "自动使用第二个接口的默认方法"
+      "A) 必须在实现类中重写该方法，否则编译报错",
+      "B) 编译通过，运行时报错",
+      "C) 自动使用第一个接口的默认方法",
+      "D) 自动使用第二个接口的默认方法"
     ],
     "company": ""
   },
@@ -3889,10 +3889,10 @@ export const questions = [
       "Java程序结构"
     ],
     "options": [
-      ".class",
-      ".java",
-      ".cpp",
-      ".txt"
+      "A) .class",
+      "B) .java",
+      "C) .cpp",
+      "D) .txt"
     ],
     "company": ""
   },
@@ -3912,10 +3912,10 @@ export const questions = [
       "位运算"
     ],
     "options": [
-      "0",
-      "3",
-      "8",
-      "-1"
+      "A) 0",
+      "B) 3",
+      "C) 8",
+      "D) -1"
     ],
     "company": ""
   },
@@ -3935,10 +3935,10 @@ export const questions = [
       "数组"
     ],
     "options": [
-      "a[0]",
-      "a[a.length-1]",
-      "a[3]",
-      "int i=1; a[i]"
+      "A) a[0]",
+      "B) a[a.length-1]",
+      "C) a[3]",
+      "D) int i=1; a[i]"
     ],
     "company": ""
   },
@@ -3958,10 +3958,10 @@ export const questions = [
       "重载"
     ],
     "options": [
-      "封装",
-      "继承",
-      "覆盖",
-      "重载"
+      "A) 封装",
+      "B) 继承",
+      "C) 覆盖",
+      "D) 重载"
     ],
     "company": ""
   },
@@ -3981,10 +3981,10 @@ export const questions = [
       "构造函数"
     ],
     "options": [
-      "保护成员变量",
-      "读取类的成员变量",
-      "描述类的特征",
-      "初始化成员变量"
+      "A) 保护成员变量",
+      "B) 读取类的成员变量",
+      "C) 描述类的特征",
+      "D) 初始化成员变量"
     ],
     "company": ""
   },
@@ -4004,10 +4004,10 @@ export const questions = [
       "异常处理"
     ],
     "options": [
-      "try",
-      "break",
-      "catch",
-      "finally"
+      "A) try",
+      "B) break",
+      "C) catch",
+      "D) finally"
     ],
     "company": ""
   },
@@ -4027,10 +4027,10 @@ export const questions = [
       "类和对象"
     ],
     "options": [
-      "类是对象的抽象",
-      "对象是类的抽象",
-      "对象是类的子类",
-      "类是对象的具体实例"
+      "A) 类是对象的抽象",
+      "B) 对象是类的抽象",
+      "C) 对象是类的子类",
+      "D) 类是对象的具体实例"
     ],
     "company": ""
   },
@@ -4050,10 +4050,10 @@ export const questions = [
       "标识符"
     ],
     "options": [
-      "$persons",
-      "twoNum",
-      "_myVar",
-      "_point"
+      "A) $persons",
+      "B) twoNum",
+      "C) _myVar",
+      "D) _point"
     ],
     "company": ""
   },
@@ -4073,10 +4073,10 @@ export const questions = [
       "static方法"
     ],
     "options": [
-      "static void method()",
-      "public void method()",
-      "final void method()",
-      "abstract void method()"
+      "A) static void method()",
+      "B) public void method()",
+      "C) final void method()",
+      "D) abstract void method()"
     ],
     "company": ""
   },
@@ -4096,10 +4096,10 @@ export const questions = [
       "ArrayList"
     ],
     "options": [
-      "ArrayList myList=new Object()",
-      "List myList=new ArrayList()",
-      "ArrayList myList=new List()",
-      "List myList=new List()"
+      "A) ArrayList myList=new Object()",
+      "B) List myList=new ArrayList()",
+      "C) ArrayList myList=new List()",
+      "D) List myList=new List()"
     ],
     "company": ""
   },
@@ -4119,10 +4119,10 @@ export const questions = [
       "Java程序结构"
     ],
     "options": [
-      ".class和.java",
-      ".java和.class",
-      ".class和.class",
-      ".java和.java"
+      "A) .class和.java",
+      "B) .java和.class",
+      "C) .class和.class",
+      "D) .java和.java"
     ],
     "company": ""
   },
@@ -4142,10 +4142,10 @@ export const questions = [
       "Applet"
     ],
     "options": [
-      "start()",
-      "stop()",
-      "init()",
-      "paint()"
+      "A) start()",
+      "B) stop()",
+      "C) init()",
+      "D) paint()"
     ],
     "company": ""
   },
@@ -4165,10 +4165,10 @@ export const questions = [
       "包和导入"
     ],
     "options": [
-      "package,import,class",
-      "class,import,package",
-      "import,package,class",
-      "package,class,import"
+      "A) package,import,class",
+      "B) class,import,package",
+      "C) import,package,class",
+      "D) package,class,import"
     ],
     "company": ""
   },
@@ -4188,10 +4188,10 @@ export const questions = [
       "数据类型"
     ],
     "options": [
-      "int i = 32;",
-      "float f = 45.0;",
-      "double d = 45.0;",
-      "char c = 'u';"
+      "A) int i = 32;",
+      "B) float f = 45.0;",
+      "C) double d = 45.0;",
+      "D) char c = 'u';"
     ],
     "company": ""
   },
@@ -4211,10 +4211,10 @@ export const questions = [
       "Unicode"
     ],
     "options": [
-      "ASCII",
-      "BCD",
-      "DCB",
-      "Unicode"
+      "A) ASCII",
+      "B) BCD",
+      "C) DCB",
+      "D) Unicode"
     ],
     "company": ""
   },
@@ -4234,10 +4234,10 @@ export const questions = [
       "访问控制"
     ],
     "options": [
-      "public",
-      "protected",
-      "private",
-      "static"
+      "A) public",
+      "B) protected",
+      "C) private",
+      "D) static"
     ],
     "company": ""
   },
@@ -4257,10 +4257,10 @@ export const questions = [
       "main方法"
     ],
     "options": [
-      "public main(String args[])",
-      "public static void main(String args[])",
-      "private static void main(String args[])",
-      "void main()"
+      "A) public main(String args[])",
+      "B) public static void main(String args[])",
+      "C) private static void main(String args[])",
+      "D) void main()"
     ],
     "company": ""
   },
@@ -4280,10 +4280,10 @@ export const questions = [
       "synchronized"
     ],
     "options": [
-      "transient",
-      "synchronized",
-      "serialize",
-      "static"
+      "A) transient",
+      "B) synchronized",
+      "C) serialize",
+      "D) static"
     ],
     "company": ""
   },
@@ -4303,10 +4303,10 @@ export const questions = [
       "抽象方法"
     ],
     "options": [
-      "可以有方法体",
-      "可以出现在非抽象类中",
-      "是没有方法体的方法",
-      "抽象类中的方法都是抽象方法"
+      "A) 可以有方法体",
+      "B) 可以出现在非抽象类中",
+      "C) 是没有方法体的方法",
+      "D) 抽象类中的方法都是抽象方法"
     ],
     "company": ""
   },
@@ -4326,10 +4326,10 @@ export const questions = [
       "File类"
     ],
     "options": [
-      "字符流类",
-      "字节流类",
-      "对象流类",
-      "非流类"
+      "A) 字符流类",
+      "B) 字节流类",
+      "C) 对象流类",
+      "D) 非流类"
     ],
     "company": ""
   },
@@ -4349,10 +4349,10 @@ export const questions = [
       "main方法"
     ],
     "options": [
-      "String args",
-      "String args[]",
-      "Char arg",
-      "StringBuffer args[]"
+      "A) String args",
+      "B) String args[]",
+      "C) Char arg",
+      "D) StringBuffer args[]"
     ],
     "company": ""
   },
@@ -4372,10 +4372,10 @@ export const questions = [
       "取模运算"
     ],
     "options": [
-      "-1",
-      "2",
-      "1",
-      "3"
+      "A) -1",
+      "B) 2",
+      "C) 1",
+      "D) 3"
     ],
     "company": ""
   },
@@ -4395,10 +4395,10 @@ export const questions = [
       "继承"
     ],
     "options": [
-      "在Java中类只允许单一继承",
-      "在Java中一个类只能实现一个接口",
-      "在Java中一个类不能同时继承一个类和实现一个接口",
-      "在Java中接口只允许单一继承"
+      "A) 在Java中类只允许单一继承",
+      "B) 在Java中一个类只能实现一个接口",
+      "C) 在Java中一个类不能同时继承一个类和实现一个接口",
+      "D) 在Java中接口只允许单一继承"
     ],
     "company": ""
   },
@@ -4418,10 +4418,10 @@ export const questions = [
       "数组"
     ],
     "options": [
-      "x[5-3]",
-      "x[k]",
-      "x[k+5]",
-      "x[0]"
+      "A) x[5-3]",
+      "B) x[k]",
+      "C) x[k+5]",
+      "D) x[0]"
     ],
     "company": ""
   },
@@ -4441,10 +4441,10 @@ export const questions = [
       "图形界面"
     ],
     "options": [
-      "Graphics",
-      "Graphics2D",
-      "String",
-      "Color"
+      "A) Graphics",
+      "B) Graphics2D",
+      "C) String",
+      "D) Color"
     ],
     "company": ""
   },
@@ -4464,10 +4464,10 @@ export const questions = [
       "数据类型"
     ],
     "options": [
-      "int",
-      "Boolean",
-      "float",
-      "char"
+      "A) int",
+      "B) Boolean",
+      "C) float",
+      "D) char"
     ],
     "company": ""
   },
@@ -4487,10 +4487,10 @@ export const questions = [
       "重载"
     ],
     "options": [
-      "隐藏",
-      "重写",
-      "重载",
-      "Java不支持此特性"
+      "A) 隐藏",
+      "B) 重写",
+      "C) 重载",
+      "D) Java不支持此特性"
     ],
     "company": ""
   },
@@ -4510,10 +4510,10 @@ export const questions = [
       "构造函数"
     ],
     "options": [
-      "一个类的构造方法可以有多个",
-      "构造方法在类定义时被调用",
-      "构造方法只能由对象中的其它方法调用",
-      "构造方法可以和类同名，也可以和类名不同"
+      "A) 一个类的构造方法可以有多个",
+      "B) 构造方法在类定义时被调用",
+      "C) 构造方法只能由对象中的其它方法调用",
+      "D) 构造方法可以和类同名，也可以和类名不同"
     ],
     "company": ""
   },
@@ -4533,10 +4533,10 @@ export const questions = [
       "Applet生命周期"
     ],
     "options": [
-      "init()",
-      "start()",
-      "destroy()",
-      "stop()"
+      "A) init()",
+      "B) start()",
+      "C) destroy()",
+      "D) stop()"
     ],
     "company": ""
   },
@@ -4556,10 +4556,10 @@ export const questions = [
       "数组默认值"
     ],
     "options": [
-      "编译时将产生错误",
-      "编译时正确，运行时将产生错误",
-      "输出零",
-      "输出空"
+      "A) 编译时将产生错误",
+      "B) 编译时正确，运行时将产生错误",
+      "C) 输出零",
+      "D) 输出空"
     ],
     "company": ""
   },
@@ -4580,10 +4580,10 @@ export const questions = [
       "类型转换"
     ],
     "options": [
-      "byte",
-      "short",
-      "int",
-      "double"
+      "A) byte",
+      "B) short",
+      "C) int",
+      "D) double"
     ],
     "company": ""
   },
@@ -4603,10 +4603,10 @@ export const questions = [
       "抽象类"
     ],
     "options": [
-      "abstract Animal{abstract void growl();}",
-      "class abstract Animal{abstract void growl();}",
-      "abstract class Animal{abstract void growl();}",
-      "abstract class Animal{abstract void growl(){}}"
+      "A) abstract Animal{abstract void growl();}",
+      "B) class abstract Animal{abstract void growl();}",
+      "C) abstract class Animal{abstract void growl();}",
+      "D) abstract class Animal{abstract void growl(){}}"
     ],
     "company": ""
   },
@@ -4626,10 +4626,10 @@ export const questions = [
       "Java文件结构"
     ],
     "options": [
-      "import java.awt.*;",
-      "package mypackage;",
-      "class OtherClass{}",
-      "public class MyClass{}"
+      "A) import java.awt.*;",
+      "B) package mypackage;",
+      "C) class OtherClass{}",
+      "D) public class MyClass{}"
     ],
     "company": ""
   },
@@ -4649,10 +4649,10 @@ export const questions = [
       "包装类"
     ],
     "options": [
-      "a是整数类型变量，b是整数类对象",
-      "a是整数类对象，b是整数类型变量",
-      "a和b都是整数类对象并且值相等",
-      "a和b都是整数类型变量并且值相等"
+      "A) a是整数类型变量，b是整数类对象",
+      "B) a是整数类对象，b是整数类型变量",
+      "C) a和b都是整数类对象并且值相等",
+      "D) a和b都是整数类型变量并且值相等"
     ],
     "company": ""
   },
@@ -4672,10 +4672,10 @@ export const questions = [
       "Applet"
     ],
     "options": [
-      "import java.awt.*;",
-      "import java.applet.Applet;",
-      "import java.io.*;",
-      "import java.awt.Graphics;"
+      "A) import java.awt.*;",
+      "B) import java.applet.Applet;",
+      "C) import java.io.*;",
+      "D) import java.awt.Graphics;"
     ],
     "company": ""
   },
@@ -4695,10 +4695,10 @@ export const questions = [
       "Swing"
     ],
     "options": [
-      "JApplet",
-      "JTree",
-      "JDialog",
-      "JFrame"
+      "A) JApplet",
+      "B) JTree",
+      "C) JDialog",
+      "D) JFrame"
     ],
     "company": ""
   },
@@ -4718,10 +4718,10 @@ export const questions = [
       "import语句"
     ],
     "options": [
-      "import ch4.*;",
-      "package ch4.*;",
-      "ch4 import;",
-      "ch4 package;"
+      "A) import ch4.*;",
+      "B) package ch4.*;",
+      "C) ch4 import;",
+      "D) ch4 package;"
     ],
     "company": ""
   },
@@ -4741,10 +4741,10 @@ export const questions = [
       "异常体系"
     ],
     "options": [
-      "java.io.Exception",
-      "java.lang.Throwable",
-      "java.lang.Exception",
-      "java.lang.Error"
+      "A) java.io.Exception",
+      "B) java.lang.Throwable",
+      "C) java.lang.Exception",
+      "D) java.lang.Error"
     ],
     "company": ""
   },
@@ -4764,10 +4764,10 @@ export const questions = [
       "AWT"
     ],
     "options": [
-      "java.io",
-      "java.sql",
-      "java.awt",
-      "java.rmi"
+      "A) java.io",
+      "B) java.sql",
+      "C) java.awt",
+      "D) java.rmi"
     ],
     "company": ""
   },
@@ -4787,10 +4787,10 @@ export const questions = [
       "事件处理"
     ],
     "options": [
-      "KeyEvent",
-      "ActionEvent",
-      "ItemEvent",
-      "MouseEvent"
+      "A) KeyEvent",
+      "B) ActionEvent",
+      "C) ItemEvent",
+      "D) MouseEvent"
     ],
     "company": ""
   },
@@ -4810,10 +4810,10 @@ export const questions = [
       "标识符"
     ],
     "options": [
-      "fieldname",
-      "super",
-      "3number",
-      "#number"
+      "A) fieldname",
+      "B) super",
+      "C) 3number",
+      "D) #number"
     ],
     "company": ""
   },
@@ -4834,10 +4834,10 @@ export const questions = [
       "运算符优先级"
     ],
     "options": [
-      "3",
-      "3.5",
-      "4",
-      "5"
+      "A) 3",
+      "B) 3.5",
+      "C) 4",
+      "D) 5"
     ],
     "company": ""
   },
@@ -4857,10 +4857,10 @@ export const questions = [
       "循环"
     ],
     "options": [
-      "5",
-      "1",
-      "15",
-      "16"
+      "A) 5",
+      "B) 1",
+      "C) 15",
+      "D) 16"
     ],
     "company": ""
   },
@@ -4880,10 +4880,10 @@ export const questions = [
       "static方法"
     ],
     "options": [
-      "static void method()",
-      "public void method()",
-      "final void method()",
-      "abstract void method()"
+      "A) static void method()",
+      "B) public void method()",
+      "C) final void method()",
+      "D) abstract void method()"
     ],
     "company": ""
   },
@@ -4903,10 +4903,10 @@ export const questions = [
       "String"
     ],
     "options": [
-      "aceg",
-      "ACEG",
-      "abcdefg",
-      "abcd"
+      "A) aceg",
+      "B) ACEG",
+      "C) abcdefg",
+      "D) abcd"
     ],
     "company": ""
   },
@@ -4926,10 +4926,10 @@ export const questions = [
       "instanceof"
     ],
     "options": [
-      "9",
-      "true",
-      "1",
-      "false"
+      "A) 9",
+      "B) true",
+      "C) 1",
+      "D) false"
     ],
     "company": ""
   },
@@ -4949,10 +4949,10 @@ export const questions = [
       "循环"
     ],
     "options": [
-      "while先判断后执行，for先执行后判断",
-      "while判断条件一般是程序结果，for的判断条件一般是非程序结果",
-      "两种循环任何时候都不可以替换",
-      "两种循环结构中都必须有循环体，循环体不能为空"
+      "A) while先判断后执行，for先执行后判断",
+      "B) while判断条件一般是程序结果，for的判断条件一般是非程序结果",
+      "C) 两种循环任何时候都不可以替换",
+      "D) 两种循环结构中都必须有循环体，循环体不能为空"
     ],
     "company": ""
   },
@@ -4972,10 +4972,10 @@ export const questions = [
       "静态成员"
     ],
     "options": [
-      "同一个类的对象共用同一段内存",
-      "同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间",
-      "对象的方法不占用内存",
-      "以上都不对"
+      "A) 同一个类的对象共用同一段内存",
+      "B) 同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间",
+      "C) 对象的方法不占用内存",
+      "D) 以上都不对"
     ],
     "company": ""
   },
@@ -4995,10 +4995,10 @@ export const questions = [
       "继承"
     ],
     "options": [
-      "子类将继承父类所有的属性和方法",
-      "子类将继承父类的非私有属性和方法",
-      "子类只继承父类public方法和属性",
-      "子类只继承父类的方法，而不继承属性"
+      "A) 子类将继承父类所有的属性和方法",
+      "B) 子类将继承父类的非私有属性和方法",
+      "C) 子类只继承父类public方法和属性",
+      "D) 子类只继承父类的方法，而不继承属性"
     ],
     "company": ""
   },
@@ -5018,10 +5018,10 @@ export const questions = [
       "重载与覆盖"
     ],
     "options": [
-      "覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中",
-      "覆盖方法可以不同名，而重载方法必须同名",
-      "final修饰的方法可以被覆盖，但不能被重载",
-      "覆盖与重载是同一回事"
+      "A) 覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中",
+      "B) 覆盖方法可以不同名，而重载方法必须同名",
+      "C) final修饰的方法可以被覆盖，但不能被重载",
+      "D) 覆盖与重载是同一回事"
     ],
     "company": ""
   },
@@ -5041,10 +5041,10 @@ export const questions = [
       "网络编程"
     ],
     "options": [
-      "import java.sql.*;",
-      "import java.util.*;",
-      "import java.io.*;",
-      "import java.net.*;"
+      "A) import java.sql.*;",
+      "B) import java.util.*;",
+      "C) import java.io.*;",
+      "D) import java.net.*;"
     ],
     "company": ""
   },
@@ -5064,10 +5064,10 @@ export const questions = [
       "布局管理"
     ],
     "options": [
-      "p.add(b);",
-      "p.add(b,\"North\");",
-      "p.add(b,\"South\");",
-      "b.add(p,\"North\");"
+      "A) p.add(b);",
+      "B) p.add(b,\"North\");",
+      "C) p.add(b,\"South\");",
+      "D) b.add(p,\"North\");"
     ],
     "company": ""
   },
@@ -5087,10 +5087,10 @@ export const questions = [
       "Frame"
     ],
     "options": [
-      "FlowLayout",
-      "BorderLayout",
-      "CardLayout",
-      "null"
+      "A) FlowLayout",
+      "B) BorderLayout",
+      "C) CardLayout",
+      "D) null"
     ],
     "company": ""
   },
@@ -5110,10 +5110,10 @@ export const questions = [
       "文件输入"
     ],
     "options": [
-      "FileInputStream",
-      "FileOutputStream",
-      "DataOutputStream",
-      "FileWriter"
+      "A) FileInputStream",
+      "B) FileOutputStream",
+      "C) DataOutputStream",
+      "D) FileWriter"
     ],
     "company": ""
   },
@@ -5134,10 +5134,10 @@ export const questions = [
       "FileOutputStream"
     ],
     "options": [
-      "ABCABC",
-      "ABCDE",
-      "Test",
-      "ABCDEABCDEABCDE"
+      "A) ABCABC",
+      "B) ABCDE",
+      "C) Test",
+      "D) ABCDEABCDEABCDE"
     ],
     "company": ""
   },
@@ -5157,10 +5157,10 @@ export const questions = [
       "字节码"
     ],
     "options": [
-      ".java",
-      ".class",
-      ".html",
-      ".exe"
+      "A) .java",
+      "B) .class",
+      "C) .html",
+      "D) .exe"
     ],
     "company": ""
   },
@@ -5181,10 +5181,10 @@ export const questions = [
       "运算符"
     ],
     "options": [
-      "3",
-      "3.5",
-      "4",
-      "5"
+      "A) 3",
+      "B) 3.5",
+      "C) 4",
+      "D) 5"
     ],
     "company": ""
   },
@@ -5204,10 +5204,10 @@ export const questions = [
       "访问控制"
     ],
     "options": [
-      "public",
-      "private",
-      "static",
-      "protected"
+      "A) public",
+      "B) private",
+      "C) static",
+      "D) protected"
     ],
     "company": ""
   },
@@ -5227,10 +5227,10 @@ export const questions = [
       "static方法"
     ],
     "options": [
-      "static void method()",
-      "public void method()",
-      "final void method()",
-      "abstract void method()"
+      "A) static void method()",
+      "B) public void method()",
+      "C) final void method()",
+      "D) abstract void method()"
     ],
     "company": ""
   },
@@ -5250,10 +5250,10 @@ export const questions = [
       "条件语句"
     ],
     "options": [
-      "if语句和else语句必须成对出现",
-      "if语句可以没有else语句对应",
-      "switch结构中每个case语句中必须用break语句",
-      "switch结构中必须有default语句"
+      "A) if语句和else语句必须成对出现",
+      "B) if语句可以没有else语句对应",
+      "C) switch结构中每个case语句中必须用break语句",
+      "D) switch结构中必须有default语句"
     ],
     "company": ""
   },
@@ -5273,10 +5273,10 @@ export const questions = [
       "循环"
     ],
     "options": [
-      "没有区别，任何情况下效果一样",
-      "while循环比do...while循环执行效率高",
-      "while循环是先循环后判断，循环体至少被执行一次",
-      "do...while循环是先循环后判断，循环体至少被执行一次"
+      "A) 没有区别，任何情况下效果一样",
+      "B) while循环比do...while循环执行效率高",
+      "C) while循环是先循环后判断，循环体至少被执行一次",
+      "D) do...while循环是先循环后判断，循环体至少被执行一次"
     ],
     "company": ""
   },
@@ -5296,10 +5296,10 @@ export const questions = [
       "循环"
     ],
     "options": [
-      "while先判断后执行，for先执行后判断",
-      "while判断条件一般是程序结果，for的判断条件一般是非程序结果",
-      "两种循环任何时候都不可以替换",
-      "两种循环结构中都必须有循环体，循环体不能为空"
+      "A) while先判断后执行，for先执行后判断",
+      "B) while判断条件一般是程序结果，for的判断条件一般是非程序结果",
+      "C) 两种循环任何时候都不可以替换",
+      "D) 两种循环结构中都必须有循环体，循环体不能为空"
     ],
     "company": ""
   },
@@ -5319,10 +5319,10 @@ export const questions = [
       "修饰符"
     ],
     "options": [
-      "private",
-      "public",
-      "protected",
-      "final"
+      "A) private",
+      "B) public",
+      "C) protected",
+      "D) final"
     ],
     "company": ""
   },
@@ -5342,10 +5342,10 @@ export const questions = [
       "void"
     ],
     "options": [
-      "方法没有返回值",
-      "方法体为空",
-      "没有意义",
-      "定义方法时必须使用"
+      "A) 方法没有返回值",
+      "B) 方法体为空",
+      "C) 没有意义",
+      "D) 定义方法时必须使用"
     ],
     "company": ""
   },
@@ -5365,10 +5365,10 @@ export const questions = [
       "return"
     ],
     "options": [
-      "只能让方法返回数值",
-      "方法都必须含有",
-      "方法中可以有多句return",
-      "不能用来返回对象"
+      "A) 只能让方法返回数值",
+      "B) 方法都必须含有",
+      "C) 方法中可以有多句return",
+      "D) 不能用来返回对象"
     ],
     "company": ""
   },
@@ -5388,10 +5388,10 @@ export const questions = [
       "静态成员"
     ],
     "options": [
-      "同一个类的对象共用同一段内存",
-      "同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间",
-      "对象的方法不占用内存",
-      "以上都不对"
+      "A) 同一个类的对象共用同一段内存",
+      "B) 同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间",
+      "C) 对象的方法不占用内存",
+      "D) 以上都不对"
     ],
     "company": ""
   },
@@ -5411,10 +5411,10 @@ export const questions = [
       "类和对象"
     ],
     "options": [
-      "不需要定义类，就能创建对象",
-      "对象中必须有属性和方法",
-      "属性可以是简单变量，也可以是一个对象",
-      "属性必须是简单变量"
+      "A) 不需要定义类，就能创建对象",
+      "B) 对象中必须有属性和方法",
+      "C) 属性可以是简单变量，也可以是一个对象",
+      "D) 属性必须是简单变量"
     ],
     "company": ""
   },
@@ -5434,10 +5434,10 @@ export const questions = [
       "源文件结构"
     ],
     "options": [
-      "一个程序可以包含多个源文件",
-      "一个源文件中只能有一个类",
-      "一个源文件中可以有多个公共类",
-      "一个源文件只能供一个程序使用"
+      "A) 一个程序可以包含多个源文件",
+      "B) 一个源文件中只能有一个类",
+      "C) 一个源文件中可以有多个公共类",
+      "D) 一个源文件只能供一个程序使用"
     ],
     "company": ""
   },
@@ -5457,10 +5457,10 @@ export const questions = [
       "main方法"
     ],
     "options": [
-      "方法main()只能放在公共类中",
-      "main()的头定义可以根据情况任意更改",
-      "一个类中可以没有main()方法",
-      "所有对象的创建都必须放在main()方法中"
+      "A) 方法main()只能放在公共类中",
+      "B) main()的头定义可以根据情况任意更改",
+      "C) 一个类中可以没有main()方法",
+      "D) 所有对象的创建都必须放在main()方法中"
     ],
     "company": ""
   },
@@ -5480,10 +5480,10 @@ export const questions = [
       "构造函数"
     ],
     "options": [
-      "创建对象时",
-      "类定义时",
-      "使用对象的方法时",
-      "使用对象的属性时"
+      "A) 创建对象时",
+      "B) 类定义时",
+      "C) 使用对象的方法时",
+      "D) 使用对象的属性时"
     ],
     "company": ""
   },
@@ -5503,10 +5503,10 @@ export const questions = [
       "抽象方法"
     ],
     "options": [
-      "可以有方法体",
-      "可以出现在非抽象类中",
-      "是没有方法体的方法",
-      "抽象类中的方法都是抽象方法"
+      "A) 可以有方法体",
+      "B) 可以出现在非抽象类中",
+      "C) 是没有方法体的方法",
+      "D) 抽象类中的方法都是抽象方法"
     ],
     "company": ""
   },
@@ -5526,10 +5526,10 @@ export const questions = [
       "继承"
     ],
     "options": [
-      "子类将继承父类所有的属性和方法",
-      "子类将继承父类的非私有属性和方法",
-      "子类只继承父类public方法和属性",
-      "子类只继承父类的方法，而不继承属性"
+      "A) 子类将继承父类所有的属性和方法",
+      "B) 子类将继承父类的非私有属性和方法",
+      "C) 子类只继承父类public方法和属性",
+      "D) 子类只继承父类的方法，而不继承属性"
     ],
     "company": ""
   },
@@ -5549,10 +5549,10 @@ export const questions = [
       "构造函数"
     ],
     "options": [
-      "一个类只能有一个构造函数",
-      "一个类可以有多个不同名的构造函数",
-      "构造函数与类同名",
-      "构造函数必须自己定义，不能使用父类的构造函数"
+      "A) 一个类只能有一个构造函数",
+      "B) 一个类可以有多个不同名的构造函数",
+      "C) 构造函数与类同名",
+      "D) 构造函数必须自己定义，不能使用父类的构造函数"
     ],
     "company": ""
   },
@@ -5572,10 +5572,10 @@ export const questions = [
       "this和super"
     ],
     "options": [
-      "都可以用在main()方法中",
-      "都是指一个内存地址",
-      "不能用在main()方法中",
-      "意义相同"
+      "A) 都可以用在main()方法中",
+      "B) 都是指一个内存地址",
+      "C) 不能用在main()方法中",
+      "D) 意义相同"
     ],
     "company": ""
   },
@@ -5595,10 +5595,10 @@ export const questions = [
       "super"
     ],
     "options": [
-      "是指当前对象的内存地址",
-      "是指当前对象的父类对象的内存地址",
-      "是指当前对象的父类",
-      "可以用在main()方法中"
+      "A) 是指当前对象的内存地址",
+      "B) 是指当前对象的父类对象的内存地址",
+      "C) 是指当前对象的父类",
+      "D) 可以用在main()方法中"
     ],
     "company": ""
   },
@@ -5618,10 +5618,10 @@ export const questions = [
       "重载与覆盖"
     ],
     "options": [
-      "覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中",
-      "覆盖方法可以不同名，而重载方法必须同名",
-      "final修饰的方法可以被覆盖，但不能被重载",
-      "覆盖与重载是同一回事"
+      "A) 覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中",
+      "B) 覆盖方法可以不同名，而重载方法必须同名",
+      "C) final修饰的方法可以被覆盖，但不能被重载",
+      "D) 覆盖与重载是同一回事"
     ],
     "company": ""
   },
@@ -5641,10 +5641,10 @@ export const questions = [
       "接口"
     ],
     "options": [
-      "实现一个接口必须实现接口的所有方法",
-      "一个类只能实现一个接口",
-      "接口间不能有继承关系",
-      "接口和抽象类是同一回事"
+      "A) 实现一个接口必须实现接口的所有方法",
+      "B) 一个类只能实现一个接口",
+      "C) 接口间不能有继承关系",
+      "D) 接口和抽象类是同一回事"
     ],
     "company": ""
   },
@@ -5664,10 +5664,10 @@ export const questions = [
       "异常"
     ],
     "options": [
-      "程序执行过程中遇到的事先没有预料到的情况",
-      "程序中的语法错误",
-      "程序的编译错误",
-      "以上都是"
+      "A) 程序执行过程中遇到的事先没有预料到的情况",
+      "B) 程序中的语法错误",
+      "C) 程序的编译错误",
+      "D) 以上都是"
     ],
     "company": ""
   },
@@ -5687,10 +5687,10 @@ export const questions = [
       "异常处理"
     ],
     "options": [
-      "必须用try/catch处理异常或用throws抛出",
-      "如果程序错误，必须用try/catch处理",
-      "可以置之不理",
-      "只能使用try/catch处理"
+      "A) 必须用try/catch处理异常或用throws抛出",
+      "B) 如果程序错误，必须用try/catch处理",
+      "C) 可以置之不理",
+      "D) 只能使用try/catch处理"
     ],
     "company": ""
   },
@@ -5710,10 +5710,10 @@ export const questions = [
       "流分类"
     ],
     "options": [
-      "前者带有缓冲，后者没有",
-      "前者是块读写，后者是字节读写",
-      "二者没有区别，可以互换使用",
-      "每次读写的字节数不同"
+      "A) 前者带有缓冲，后者没有",
+      "B) 前者是块读写，后者是字节读写",
+      "C) 二者没有区别，可以互换使用",
+      "D) 每次读写的字节数不同"
     ],
     "company": ""
   },
@@ -5733,10 +5733,10 @@ export const questions = [
       "字节流"
     ],
     "options": [
-      "FileInputStream",
-      "BufferedInputStream",
-      "FilterInputStream",
-      "InputStreamReader"
+      "A) FileInputStream",
+      "B) BufferedInputStream",
+      "C) FilterInputStream",
+      "D) InputStreamReader"
     ],
     "company": ""
   },
@@ -5756,10 +5756,10 @@ export const questions = [
       "消息传递"
     ],
     "options": [
-      "调用语句",
-      "命令",
-      "口令",
-      "消息"
+      "A) 调用语句",
+      "B) 命令",
+      "C) 口令",
+      "D) 消息"
     ],
     "company": ""
   },
@@ -5779,10 +5779,10 @@ export const questions = [
       "多线程"
     ],
     "options": [
-      "安全性",
-      "多线程",
-      "跨平台",
-      "可移植"
+      "A) 安全性",
+      "B) 多线程",
+      "C) 跨平台",
+      "D) 可移植"
     ],
     "company": ""
   },
@@ -5802,10 +5802,10 @@ export const questions = [
       "Applet"
     ],
     "options": [
-      "编写源代码",
-      "编写HTML文件调用该小程序",
-      "编译过程",
-      "解释执行"
+      "A) 编写源代码",
+      "B) 编写HTML文件调用该小程序",
+      "C) 编译过程",
+      "D) 解释执行"
     ],
     "company": ""
   },
@@ -5825,10 +5825,10 @@ export const questions = [
       "Unicode"
     ],
     "options": [
-      "8",
-      "16",
-      "32",
-      "64"
+      "A) 8",
+      "B) 16",
+      "C) 32",
+      "D) 64"
     ],
     "company": ""
   },
@@ -5848,10 +5848,10 @@ export const questions = [
       "变量默认值"
     ],
     "options": [
-      "有错误，变量i没有初始化",
-      "null",
-      "1",
-      "0"
+      "A) 有错误，变量i没有初始化",
+      "B) null",
+      "C) 1",
+      "D) 0"
     ],
     "company": ""
   },
@@ -5871,10 +5871,10 @@ export const questions = [
       "取模运算"
     ],
     "options": [
-      "1,1",
-      "1,1.0",
-      "1.0,1",
-      "1.0,1.0"
+      "A) 1,1",
+      "B) 1,1.0",
+      "C) 1.0,1",
+      "D) 1.0,1.0"
     ],
     "company": ""
   },
@@ -5894,10 +5894,10 @@ export const questions = [
       "逻辑运算"
     ],
     "options": [
-      "true",
-      "false",
-      "1",
-      "0"
+      "A) true",
+      "B) false",
+      "C) 1",
+      "D) 0"
     ],
     "company": ""
   },
@@ -5917,10 +5917,10 @@ export const questions = [
       "条件判断"
     ],
     "options": [
-      "x>0",
-      "x>-3",
-      "x<=-3",
-      "x<=0 && x>-3"
+      "A) x>0",
+      "B) x>-3",
+      "C) x<=-3",
+      "D) x<=0 && x>-3"
     ],
     "company": ""
   },
@@ -5940,10 +5940,10 @@ export const questions = [
       "关键字"
     ],
     "options": [
-      "protected",
-      "provate",
-      "transient",
-      "volatile"
+      "A) protected",
+      "B) provate",
+      "C) transient",
+      "D) volatile"
     ],
     "company": ""
   },
@@ -5963,10 +5963,10 @@ export const questions = [
       "重载"
     ],
     "options": [
-      "隐藏",
-      "覆盖",
-      "重载",
-      "Java不支持此特性"
+      "A) 隐藏",
+      "B) 覆盖",
+      "C) 重载",
+      "D) Java不支持此特性"
     ],
     "company": ""
   },
@@ -5986,10 +5986,10 @@ export const questions = [
       "异常处理"
     ],
     "options": [
-      "catch",
-      "throws",
-      "try",
-      "finally"
+      "A) catch",
+      "B) throws",
+      "C) try",
+      "D) finally"
     ],
     "company": ""
   },
@@ -6009,10 +6009,10 @@ export const questions = [
       "接口"
     ],
     "options": [
-      "private",
-      "protected",
-      "private protected",
-      "public"
+      "A) private",
+      "B) protected",
+      "C) private protected",
+      "D) public"
     ],
     "company": ""
   },
@@ -6032,10 +6032,10 @@ export const questions = [
       "多态"
     ],
     "options": [
-      "parent\\nchild\\nchild",
-      "parent\\nchild\\nparent",
-      "parent\\nchild",
-      "编译错误"
+      "A) parent\\nchild\\nchild",
+      "B) parent\\nchild\\nparent",
+      "C) parent\\nchild",
+      "D) 编译错误"
     ],
     "company": ""
   },
@@ -6055,10 +6055,10 @@ export const questions = [
       "过滤流"
     ],
     "options": [
-      "File stream",
-      "Pipe stream",
-      "Random stream",
-      "Filter stream"
+      "A) File stream",
+      "B) Pipe stream",
+      "C) Random stream",
+      "D) Filter stream"
     ],
     "company": ""
   },
@@ -6078,10 +6078,10 @@ export const questions = [
       "管道流"
     ],
     "options": [
-      "Filter stream",
-      "File stream",
-      "Random access stream",
-      "Piped stream"
+      "A) Filter stream",
+      "B) File stream",
+      "C) Random access stream",
+      "D) Piped stream"
     ],
     "company": "腾讯"
   },
@@ -6101,10 +6101,10 @@ export const questions = [
       "Swing"
     ],
     "options": [
-      "Swing是由纯Java实现的轻量级构件",
-      "Swing没有本地代码",
-      "Swing不依赖操作系统的支持",
-      "Swing支持图形用户界面"
+      "A) Swing是由纯Java实现的轻量级构件",
+      "B) Swing没有本地代码",
+      "C) Swing不依赖操作系统的支持",
+      "D) Swing支持图形用户界面"
     ],
     "company": ""
   },
@@ -6124,10 +6124,10 @@ export const questions = [
       "Applet事件"
     ],
     "options": [
-      "import java.awt.*;",
-      "import java.applet.*;",
-      "import java.io.*;",
-      "import java.awt.event.*;"
+      "A) import java.awt.*;",
+      "B) import java.applet.*;",
+      "C) import java.io.*;",
+      "D) import java.awt.event.*;"
     ],
     "company": ""
   },
@@ -6147,10 +6147,10 @@ export const questions = [
       "注释规范"
     ],
     "options": [
-      "注释应该增加代码的清晰度",
-      "注释要简洁",
-      "在写代码之前写注释",
-      "尽量给每一条语句加注释"
+      "A) 注释应该增加代码的清晰度",
+      "B) 注释要简洁",
+      "C) 在写代码之前写注释",
+      "D) 尽量给每一条语句加注释"
     ],
     "company": ""
   },
@@ -6170,10 +6170,10 @@ export const questions = [
       "流分类"
     ],
     "options": [
-      "输入流和输出流",
-      "字节流和字符流",
-      "节点流和处理流",
-      "以上都是"
+      "A) 输入流和输出流",
+      "B) 字节流和字符流",
+      "C) 节点流和处理流",
+      "D) 以上都是"
     ],
     "company": ""
   },
@@ -6806,10 +6806,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "数组",
-      "数组 + 链表",
-      "数组 + 链表 + 红黑树",
-      "哈希表 + 二叉树"
+      "A) 数组",
+      "B) 数组 + 链表",
+      "C) 数组 + 链表 + 红黑树",
+      "D) 哈希表 + 二叉树"
     ],
     "company": ""
   },
@@ -6829,10 +6829,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "先对 key 做 hash 计算，然后定位数组索引",
-      "如果该位置为空，直接插入新节点",
-      "如果该位置不为空，遍历链表或红黑树查找 key",
-      "如果 key 已存在，直接覆盖旧值并返回 null"
+      "A) 先对 key 做 hash 计算，然后定位数组索引",
+      "B) 如果该位置为空，直接插入新节点",
+      "C) 如果该位置不为空，遍历链表或红黑树查找 key",
+      "D) 如果 key 已存在，直接覆盖旧值并返回 null"
     ],
     "company": ""
   },
@@ -6853,10 +6853,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "当链表长度超过 8 时触发扩容",
-      "当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍",
-      "每次 put 操作都会检查是否需要扩容",
-      "扩容后元素位置不变，只需复制到新数组"
+      "A) 当链表长度超过 8 时触发扩容",
+      "B) 当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍",
+      "C) 每次 put 操作都会检查是否需要扩容",
+      "D) 扩容后元素位置不变，只需复制到新数组"
     ],
     "company": ""
   },
@@ -6876,10 +6876,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "JDK 8 引入红黑树优化链表过长时的查询性能",
-      "JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全",
-      "JDK 7 使用头插法，JDK 8 使用尾插法",
-      "JDK 8 的 hash 计算比 JDK 7 更简化"
+      "A) JDK 8 引入红黑树优化链表过长时的查询性能",
+      "B) JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全",
+      "C) JDK 7 使用头插法，JDK 8 使用尾插法",
+      "D) JDK 8 的 hash 计算比 JDK 7 更简化"
     ],
     "company": ""
   },
@@ -6899,10 +6899,10 @@ export const questions = [
       "ConcurrentHashMap"
     ],
     "options": [
-      "对整个数组加 synchronized 锁",
-      "Segment + ReentrantLock 分段锁",
-      "CAS + volatile + synchronized",
-      "使用读写锁 ReadWriteLock"
+      "A) 对整个数组加 synchronized 锁",
+      "B) Segment + ReentrantLock 分段锁",
+      "C) CAS + volatile + synchronized",
+      "D) 使用读写锁 ReadWriteLock"
     ],
     "company": ""
   },
@@ -6922,10 +6922,10 @@ export const questions = [
       "ConcurrentHashMap"
     ],
     "options": [
-      "ReentrantLock 分段锁",
-      "对整个数组加锁",
-      "CAS + volatile + synchronized（桶粒度锁）",
-      "使用乐观锁 + 版本号"
+      "A) ReentrantLock 分段锁",
+      "B) 对整个数组加锁",
+      "C) CAS + volatile + synchronized（桶粒度锁）",
+      "D) 使用乐观锁 + 版本号"
     ],
     "company": ""
   },
@@ -6945,10 +6945,10 @@ export const questions = [
       "ArrayList"
     ],
     "options": [
-      "扩容为原来的 1.5 倍",
-      "扩容为原来的 2 倍",
-      "扩容为原来的 1.25 倍",
-      "每次固定增加 10 个容量"
+      "A) 扩容为原来的 1.5 倍",
+      "B) 扩容为原来的 2 倍",
+      "C) 扩容为原来的 1.25 倍",
+      "D) 每次固定增加 10 个容量"
     ],
     "company": ""
   },
@@ -6968,10 +6968,10 @@ export const questions = [
       "ArrayList"
     ],
     "options": [
-      "ArrayList 和 LinkedList 都是线程安全的",
-      "LinkedList 随机访问比 ArrayList 快",
-      "ArrayList 插入和删除比 LinkedList 快",
-      "ArrayList 随机访问快，LinkedList 插入删除快"
+      "A) ArrayList 和 LinkedList 都是线程安全的",
+      "B) LinkedList 随机访问比 ArrayList 快",
+      "C) ArrayList 插入和删除比 LinkedList 快",
+      "D) ArrayList 随机访问快，LinkedList 插入删除快"
     ],
     "company": ""
   },
@@ -6991,10 +6991,10 @@ export const questions = [
       "Set"
     ],
     "options": [
-      "HashSet",
-      "TreeSet",
-      "LinkedHashSet",
-      "Map"
+      "A) HashSet",
+      "B) TreeSet",
+      "C) LinkedHashSet",
+      "D) Map"
     ],
     "company": ""
   },
@@ -7014,10 +7014,10 @@ export const questions = [
       "HashSet"
     ],
     "options": [
-      "底层基于 HashMap，元素作为 HashMap 的 key 存储",
-      "内部维护一个数组，每次添加时遍历检查",
-      "使用 TreeMap 的排序特性保证不重复",
-      "通过 CAS 操作实现去重"
+      "A) 底层基于 HashMap，元素作为 HashMap 的 key 存储",
+      "B) 内部维护一个数组，每次添加时遍历检查",
+      "C) 使用 TreeMap 的排序特性保证不重复",
+      "D) 通过 CAS 操作实现去重"
     ],
     "company": ""
   },
@@ -7037,10 +7037,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "JDK 7 中扩容时可能出现环形链表导致死循环",
-      "多线程 put 可能导致数据覆盖",
-      "多线程读操作一定会抛出 ConcurrentModificationException",
-      "多线程 put 后 get 可能获取不到刚 put 的数据"
+      "A) JDK 7 中扩容时可能出现环形链表导致死循环",
+      "B) 多线程 put 可能导致数据覆盖",
+      "C) 多线程读操作一定会抛出 ConcurrentModificationException",
+      "D) 多线程 put 后 get 可能获取不到刚 put 的数据"
     ],
     "company": ""
   },
@@ -7060,10 +7060,10 @@ export const questions = [
       "TreeMap"
     ],
     "options": [
-      "按 key 的 hashCode 大小排序",
-      "按插入顺序排序",
-      "根据 key 的自然顺序（Comparable）或构造时传入的 Comparator",
-      "随机排序"
+      "A) 按 key 的 hashCode 大小排序",
+      "B) 按插入顺序排序",
+      "C) 根据 key 的自然顺序（Comparable）或构造时传入的 Comparator",
+      "D) 随机排序"
     ],
     "company": ""
   },
@@ -7083,10 +7083,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "直接使用 key.hashCode() % 数组长度取模",
-      "h = key.hashCode()，h ^ (h >>> 16) 后与 n - 1 做 & 运算",
-      "使用 key.hashCode() 的绝对值作为下标",
-      "使用 key.toString().length() 作为下标"
+      "A) 直接使用 key.hashCode() % 数组长度取模",
+      "B) h = key.hashCode()，h ^ (h >>> 16) 后与 n - 1 做 & 运算",
+      "C) 使用 key.hashCode() 的绝对值作为下标",
+      "D) 使用 key.toString().length() 作为下标"
     ],
     "company": ""
   },
@@ -7106,10 +7106,10 @@ export const questions = [
       "Collection"
     ],
     "options": [
-      "List",
-      "Set",
-      "Map",
-      "Queue"
+      "A) List",
+      "B) Set",
+      "C) Map",
+      "D) Queue"
     ],
     "company": ""
   },
@@ -7129,10 +7129,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "初始容量 8，负载因子 0.5",
-      "初始容量 16，负载因子 0.75",
-      "初始容量 32，负载因子 0.8",
-      "初始容量 10，负载因子 0.6"
+      "A) 初始容量 8，负载因子 0.5",
+      "B) 初始容量 16，负载因子 0.75",
+      "C) 初始容量 32，负载因子 0.8",
+      "D) 初始容量 10，负载因子 0.6"
     ],
     "company": ""
   },
@@ -7152,10 +7152,10 @@ export const questions = [
       "HashMap"
     ],
     "options": [
-      "链表长度 ≥ 8",
-      "链表长度 ≥ 8 且数组长度 ≥ 16",
-      "链表长度 ≥ 8 且数组长度 ≥ 64",
-      "数组长度 ≥ 64"
+      "A) 链表长度 ≥ 8",
+      "B) 链表长度 ≥ 8 且数组长度 ≥ 16",
+      "C) 链表长度 ≥ 8 且数组长度 ≥ 64",
+      "D) 数组长度 ≥ 64"
     ],
     "company": ""
   },
@@ -7175,10 +7175,10 @@ export const questions = [
       "ConcurrentHashMap"
     ],
     "options": [
-      "直接返回一个变量，不保证准确性",
-      "每次调用 size() 都会遍历整个哈希表",
-      "使用 synchronized 保证线程安全",
-      "先尝试无锁统计，如果竞争激烈则加锁统计"
+      "A) 直接返回一个变量，不保证准确性",
+      "B) 每次调用 size() 都会遍历整个哈希表",
+      "C) 使用 synchronized 保证线程安全",
+      "D) 先尝试无锁统计，如果竞争激烈则加锁统计"
     ],
     "company": ""
   },
@@ -7198,10 +7198,10 @@ export const questions = [
       "哈希"
     ],
     "options": [
-      "链地址法",
-      "开放地址法",
-      "再哈希法",
-      "位运算法"
+      "A) 链地址法",
+      "B) 开放地址法",
+      "C) 再哈希法",
+      "D) 位运算法"
     ],
     "company": ""
   },
@@ -7221,10 +7221,10 @@ export const questions = [
       "迭代器"
     ],
     "options": [
-      "正常完成遍历，但数据可能不准确",
-      "抛出 ConcurrentModificationException",
-      "无限循环",
-      "自动等待其他线程完成修改"
+      "A) 正常完成遍历，但数据可能不准确",
+      "B) 抛出 ConcurrentModificationException",
+      "C) 无限循环",
+      "D) 自动等待其他线程完成修改"
     ],
     "company": ""
   },
@@ -7244,10 +7244,10 @@ export const questions = [
       "排序"
     ],
     "options": [
-      "Comparable 定义在元素类内部，Comparator 定义在外部",
-      "Comparable 可以定义多种排序方式，Comparator 只能定义一种",
-      "Comparator 位于 java.lang 包中",
-      "Comparable 使用 compare() 方法，Comparator 使用 compareTo() 方法"
+      "A) Comparable 定义在元素类内部，Comparator 定义在外部",
+      "B) Comparable 可以定义多种排序方式，Comparator 只能定义一种",
+      "C) Comparator 位于 java.lang 包中",
+      "D) Comparable 使用 compare() 方法，Comparator 使用 compareTo() 方法"
     ],
     "company": ""
   },
