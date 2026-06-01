@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- v1.0.0 版本号系统：前端页面底部显示版本号 + 后端 /api/version 端点
 - AI 评分和苏格拉底式对话（支持 Anthropic / OpenAI / DeepSeek）
 - 选择题和判断题题型，带重试机制
 - 简答/编码题的输入框和提交流程

@@ -17,6 +17,7 @@ async function post(path, body) {
 }
 
 export const api = {
+  version: () => get("/version"),
   questions: {
     list: (params = {}) => {
       const q = new URLSearchParams();

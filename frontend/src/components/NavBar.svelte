@@ -9,6 +9,8 @@
     { id: "wrong", label: "错题", icon: "wrong" },
     { id: "stats", label: "进度", icon: "stats" },
   ];
+
+  const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "";
 </script>
 
 <nav class="nav-island">
@@ -130,6 +132,9 @@
       </svg>
     {/if}
   </button>
+  {#if version}
+    <div class="version-label">v{version}</div>
+  {/if}
 </nav>
 
 <style>
@@ -218,5 +223,21 @@
   .theme-toggle:active {
     transform: scale(0.88);
     color: var(--accent);
+  }
+
+  .version-label {
+    position: absolute;
+    top: -44px;
+    left: 4px;
+    font-size: 9px;
+    color: var(--text-dim);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-pill);
   }
 </style>

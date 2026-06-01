@@ -120,7 +120,10 @@ function getTagCategoryMap() {
   return result;
 }
 
+const BUILD_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0";
+
 export const api = {
+  version: () => ({ version: BUILD_VERSION, name: "面试题 App" }),
   questions: {
     list(params = {}) {
       let result = questions;

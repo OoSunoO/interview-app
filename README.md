@@ -48,6 +48,7 @@ npm run dev
 | GET | /api/progress/stats | 学习统计 |
 | GET | /api/progress/wrong | 错题列表 |
 | GET | /api/progress/review/due | 待复习列表 |
+| GET | /api/version | 版本信息 |
 
 ## 功能
 
