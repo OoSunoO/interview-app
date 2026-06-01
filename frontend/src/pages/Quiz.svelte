@@ -139,16 +139,21 @@
     });
   }
 
+  function answerBody() {
+    return q.answer.replace(/^答案[：:]\s*/, "");
+  }
+
   function isOptionCorrect(opt) {
     if (!q) return false;
-    if (q.type === "true_false") return q.answer.startsWith(opt);
+    if (q.type === "true_false") return answerBody().startsWith(opt);
     const prefix = opt.substring(0, 2).trim().replace(/\.$/, "");
-    return q.answer.startsWith(prefix);
+    return answerBody().startsWith(prefix);
   }
 
   function parseCorrectOptions(answer) {
-    const dot = answer.indexOf("。");
-    const prefix = dot > 0 ? answer.slice(0, dot).trim() : answer.trim();
+    const stripped = answer.replace(/^答案[：:]/, "");
+    const dot = stripped.indexOf("。");
+    const prefix = dot > 0 ? stripped.slice(0, dot).trim() : stripped.trim();
     return prefix.split(/[,，、]/).map((s) => s.trim()).filter(Boolean);
   }
 
