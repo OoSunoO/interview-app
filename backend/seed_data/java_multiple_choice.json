@@ -5,10 +5,21 @@
     "type": "multiple_choice",
     "title": "Java 基本数据类型",
     "content": "以下哪些是 Java 的基本数据类型（Primitive Type）？",
-    "answer": "A)、C)。解析：Java 有 8 种基本数据类型：byte、short、int、long、float、double、boolean、char。String 是引用类型，BigDecimal 是 java.math 包中的类，属于引用类型。基本类型存储在栈上，引用类型存储在堆上。",
-    "options": ["A) int", "B) String", "C) boolean", "D) BigDecimal"],
-    "hints": ["基本数据类型只有 8 种", "String 不是基本类型"],
-    "tags": ["基础", "数据类型"]
+    "answer": "答案：A)、C)。解析：Java 有 8 种基本数据类型：byte、short、int、long、float、double、boolean、char。String 是引用类型，BigDecimal 是 java.math 包中的类，属于引用类型。基本类型存储在栈上，引用类型存储在堆上。",
+    "options": [
+      "A) int",
+      "B) String",
+      "C) boolean",
+      "D) BigDecimal"
+    ],
+    "hints": [
+      "基本数据类型只有 8 种",
+      "String 不是基本类型"
+    ],
+    "tags": [
+      "基础",
+      "数据类型"
+    ]
   },
   {
     "category": "java_basic",
@@ -16,10 +27,20 @@
     "type": "multiple_choice",
     "title": "面向对象三大特性",
     "content": "以下哪些是 Java 面向对象的特性？",
-    "answer": "A)、B)、C)。解析：面向对象的三大特性是封装（Encapsulation）、继承（Inheritance）和多态（Polymorphism）。封装通过 private 关键字隐藏实现细节；继承通过 extends 实现代码复用；多态通过方法重写实现同一接口的不同表现。重载（Overload）是编译期多态的体现，但通常不被列为三大特性之一，而是多态的一种实现手段。",
-    "options": ["A) 封装", "B) 继承", "C) 多态", "D) 重载"],
-    "hints": ["三大特性是 Java 面向对象的基石"],
-    "tags": ["面向对象", "基础"]
+    "answer": "答案：A)、B)、C)。解析：面向对象的三大特性是封装（Encapsulation）、继承（Inheritance）和多态（Polymorphism）。封装通过 private 关键字隐藏实现细节；继承通过 extends 实现代码复用；多态通过方法重写实现同一接口的不同表现。重载（Overload）是编译期多态的体现，但通常不被列为三大特性之一，而是多态的一种实现手段。",
+    "options": [
+      "A) 封装",
+      "B) 继承",
+      "C) 多态",
+      "D) 重载"
+    ],
+    "hints": [
+      "三大特性是 Java 面向对象的基石"
+    ],
+    "tags": [
+      "面向对象",
+      "基础"
+    ]
   },
   {
     "category": "java_basic",
@@ -27,10 +48,20 @@
     "type": "multiple_choice",
     "title": "String 类的特性",
     "content": "关于 Java 中 String 类的描述，哪些是正确的？",
-    "answer": "A)、B)、D)。解析：String 被 final 修饰，不可被继承；String 底层在 JDK 8 及之前是 char[]，JDK 9+ 优化为 byte[]（加上 coder 标志位区分 Latin1 和 UTF16）；字符串常量池存储字符串字面量，通过 intern() 方法可以手动将字符串加入常量池。String 类重写了 equals() 方法，比较的是内容而非引用。",
-    "options": ["A) String 类被 final 修饰，不能被继承", "B) 底层使用 char[] 或 byte[] 存储", "C) String 可以通过 new 创建，不会进入常量池", "D) String 重写了 equals() 方法"],
-    "hints": ["考虑 final、底层存储、常量池"],
-    "tags": ["基础", "String"]
+    "answer": "答案：A)、B)、D)。解析：String 被 final 修饰，不可被继承；String 底层在 JDK 8 及之前是 char[]，JDK 9+ 优化为 byte[]（加上 coder 标志位区分 Latin1 和 UTF16）；字符串常量池存储字符串字面量，通过 intern() 方法可以手动将字符串加入常量池。String 类重写了 equals() 方法，比较的是内容而非引用。",
+    "options": [
+      "A) String 类被 final 修饰，不能被继承",
+      "B) 底层使用 char[] 或 byte[] 存储",
+      "C) String 可以通过 new 创建，不会进入常量池",
+      "D) String 重写了 equals() 方法"
+    ],
+    "hints": [
+      "考虑 final、底层存储、常量池"
+    ],
+    "tags": [
+      "基础",
+      "String"
+    ]
   },
   {
     "category": "java_basic",
@@ -38,10 +69,21 @@
     "type": "multiple_choice",
     "title": "异常体系结构",
     "content": "以下关于 Java 异常体系的描述，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：Throwable 是顶层父类，分为 Error（不可恢复，如 OutOfMemoryError）和 Exception（可处理）。RuntimeException 及其子类属于非检查异常（Unchecked Exception），不需要显式捕获或声明抛出。受检异常（Checked Exception，如 IOException）必须在方法签名中 throws 声明或 try-catch 处理。Throwable 不是异常，它是 Error 和 Exception 的共同父类。",
-    "options": ["A) RuntimeException 属于非检查异常", "B) Throwable 是检查异常的一种", "C) Error 表示程序无法处理的严重问题", "D) 受检异常必须在编译时处理"],
-    "hints": ["区分检查异常和非检查异常", "Throwable 的层次结构"],
-    "tags": ["基础", "异常"]
+    "answer": "答案：A)、C)、D)。解析：Throwable 是顶层父类，分为 Error（不可恢复，如 OutOfMemoryError）和 Exception（可处理）。RuntimeException 及其子类属于非检查异常（Unchecked Exception），不需要显式捕获或声明抛出。受检异常（Checked Exception，如 IOException）必须在方法签名中 throws 声明或 try-catch 处理。Throwable 不是异常，它是 Error 和 Exception 的共同父类。",
+    "options": [
+      "A) RuntimeException 属于非检查异常",
+      "B) Throwable 是检查异常的一种",
+      "C) Error 表示程序无法处理的严重问题",
+      "D) 受检异常必须在编译时处理"
+    ],
+    "hints": [
+      "区分检查异常和非检查异常",
+      "Throwable 的层次结构"
+    ],
+    "tags": [
+      "基础",
+      "异常"
+    ]
   },
   {
     "category": "java_basic",
@@ -49,10 +91,20 @@
     "type": "multiple_choice",
     "title": "final 关键字的用法",
     "content": "以下关于 Java final 关键字的说法，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：final 修饰类表示该类不能被继承；修饰方法表示该方法不能被子类重写（但可以重载）；修饰变量表示该变量只能被赋值一次（常量）。final 修饰的引用类型变量，引用地址不可变，但对象内部的状态可以改变。final 方法可以被继承，只是不能重写。",
-    "options": ["A) final 修饰的类不能被继承", "B) final 修饰的方法不能被继承", "C) final 修饰的变量只能被赋值一次", "D) final 修饰引用类型时，引用不可变但对象内容可变"],
-    "hints": ["final 作用于类、方法、变量三个层面的含义不同"],
-    "tags": ["基础", "关键字"]
+    "answer": "答案：A)、C)、D)。解析：final 修饰类表示该类不能被继承；修饰方法表示该方法不能被子类重写（但可以重载）；修饰变量表示该变量只能被赋值一次（常量）。final 修饰的引用类型变量，引用地址不可变，但对象内部的状态可以改变。final 方法可以被继承，只是不能重写。",
+    "options": [
+      "A) final 修饰的类不能被继承",
+      "B) final 修饰的方法不能被继承",
+      "C) final 修饰的变量只能被赋值一次",
+      "D) final 修饰引用类型时，引用不可变但对象内容可变"
+    ],
+    "hints": [
+      "final 作用于类、方法、变量三个层面的含义不同"
+    ],
+    "tags": [
+      "基础",
+      "关键字"
+    ]
   },
   {
     "category": "java_basic",
@@ -60,10 +112,20 @@
     "type": "multiple_choice",
     "title": "访问修饰符的可见范围",
     "content": "以下关于 Java 访问修饰符的描述，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：Java 有四种访问级别：public（所有类可见）、protected（同包 + 子类可见）、默认/package-private（同包可见）、private（同类可见）。protected 修饰的成员在不同包的子类中可以通过继承关系访问，但不能通过父类引用访问其他实例的 protected 成员。默认访问权限仅限同包访问。",
-    "options": ["A) public 对所有类可见", "B) protected 仅对同包类可见", "C) private 仅在同类中可见", "D) 默认访问权限（无修饰符）仅对同包可见"],
-    "hints": ["protected 权限比默认权限更开放"],
-    "tags": ["面向对象", "关键字"]
+    "answer": "答案：A)、C)、D)。解析：Java 有四种访问级别：public（所有类可见）、protected（同包 + 子类可见）、默认/package-private（同包可见）、private（同类可见）。protected 修饰的成员在不同包的子类中可以通过继承关系访问，但不能通过父类引用访问其他实例的 protected 成员。默认访问权限仅限同包访问。",
+    "options": [
+      "A) public 对所有类可见",
+      "B) protected 仅对同包类可见",
+      "C) private 仅在同类中可见",
+      "D) 默认访问权限（无修饰符）仅对同包可见"
+    ],
+    "hints": [
+      "protected 权限比默认权限更开放"
+    ],
+    "tags": [
+      "面向对象",
+      "关键字"
+    ]
   },
   {
     "category": "java_collections",
@@ -71,10 +133,21 @@
     "type": "multiple_choice",
     "title": "ArrayList 的特性",
     "content": "以下关于 ArrayList 的描述，哪些是正确的？",
-    "answer": "A)、B)、D)。解析：ArrayList 基于动态数组实现，初始容量为 10（懒加载，第一次 add 时初始化），扩容时按 1.5 倍增长（oldCapacity + oldCapacity >> 1）。ArrayList 允许 null 元素，并且通过 ensureCapacity() 可以手动增加容量以减少扩容次数。ArrayList 不是线程安全的，多线程环境下应使用 CopyOnWriteArrayList 或 Collections.synchronizedList()。",
-    "options": ["A) 底层基于动态数组实现", "B) 扩容时按原容量的 1.5 倍增长", "C) ArrayList 是线程安全的", "D) 允许存储 null 元素"],
-    "hints": ["看 ArrayList 源码的 grow() 方法", "线程安全性需要额外保证"],
-    "tags": ["集合", "ArrayList"]
+    "answer": "答案：A)、B)、D)。解析：ArrayList 基于动态数组实现，初始容量为 10（懒加载，第一次 add 时初始化），扩容时按 1.5 倍增长（oldCapacity + oldCapacity >> 1）。ArrayList 允许 null 元素，并且通过 ensureCapacity() 可以手动增加容量以减少扩容次数。ArrayList 不是线程安全的，多线程环境下应使用 CopyOnWriteArrayList 或 Collections.synchronizedList()。",
+    "options": [
+      "A) 底层基于动态数组实现",
+      "B) 扩容时按原容量的 1.5 倍增长",
+      "C) ArrayList 是线程安全的",
+      "D) 允许存储 null 元素"
+    ],
+    "hints": [
+      "看 ArrayList 源码的 grow() 方法",
+      "线程安全性需要额外保证"
+    ],
+    "tags": [
+      "集合",
+      "ArrayList"
+    ]
   },
   {
     "category": "java_collections",
@@ -82,10 +155,21 @@
     "type": "multiple_choice",
     "title": "HashMap 的特性",
     "content": "以下关于 Java HashMap 的描述，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：HashMap 允许一个 null 键和多个 null 值，null 键的哈希值固定为 0（存储在数组索引 0 的位置）。JDK 8 引入了红黑树优化：当链表长度 ≥ 8 且数组长度 ≥ 64 时链表转为红黑树，将查询复杂度从 O(n) 降为 O(log n)。HashMap 默认负载因子 0.75 是时间和空间的折中。默认初始容量 16 必须是 2 的幂。",
-    "options": ["A) 允许一个 null 键", "B) HashMap 在 JDK 8 中是线程安全的", "C) JDK 8 中引入了红黑树优化", "D) 默认负载因子是 0.75"],
-    "hints": ["HashMap 在多线程下存在问题", "红黑树优化的触发条件"],
-    "tags": ["集合", "HashMap"]
+    "answer": "答案：A)、C)、D)。解析：HashMap 允许一个 null 键和多个 null 值，null 键的哈希值固定为 0（存储在数组索引 0 的位置）。JDK 8 引入了红黑树优化：当链表长度 ≥ 8 且数组长度 ≥ 64 时链表转为红黑树，将查询复杂度从 O(n) 降为 O(log n)。HashMap 默认负载因子 0.75 是时间和空间的折中。默认初始容量 16 必须是 2 的幂。",
+    "options": [
+      "A) 允许一个 null 键",
+      "B) HashMap 在 JDK 8 中是线程安全的",
+      "C) JDK 8 中引入了红黑树优化",
+      "D) 默认负载因子是 0.75"
+    ],
+    "hints": [
+      "HashMap 在多线程下存在问题",
+      "红黑树优化的触发条件"
+    ],
+    "tags": [
+      "集合",
+      "HashMap"
+    ]
   },
   {
     "category": "java_collections",
@@ -93,10 +177,20 @@
     "type": "multiple_choice",
     "title": "HashMap 与 Hashtable 的区别",
     "content": "以下关于 HashMap 和 Hashtable 区别的描述，哪些是正确的？",
-    "answer": "A)、B)、C)。解析：HashMap 和 Hashtable 的主要区别：1）线程安全：Hashtable 使用 synchronized 保证线程安全，HashMap 非线程安全；2）null 值：HashMap 允许 null key 和 null value，Hashtable 不允许；3）初始容量和扩容：HashMap 初始 16 扩容 2 倍，Hashtable 初始 11 扩容 2 倍 + 1；4）继承关系：Hashtable 继承 Dictionary，HashMap 继承 AbstractMap。Hashtable 是遗留类，推荐使用 ConcurrentHashMap 替代。",
-    "options": ["A) Hashtable 是线程安全的，HashMap 不是", "B) HashMap 允许 null 键和 null 值", "C) Hashtable 是遗留类，推荐用 ConcurrentHashMap 替代", "D) HashMap 的默认初始容量是 11"],
-    "hints": ["考虑线程安全、null 处理、容量策略"],
-    "tags": ["集合", "HashMap"]
+    "answer": "答案：A)、B)、C)。解析：HashMap 和 Hashtable 的主要区别：1）线程安全：Hashtable 使用 synchronized 保证线程安全，HashMap 非线程安全；2）null 值：HashMap 允许 null key 和 null value，Hashtable 不允许；3）初始容量和扩容：HashMap 初始 16 扩容 2 倍，Hashtable 初始 11 扩容 2 倍 + 1；4）继承关系：Hashtable 继承 Dictionary，HashMap 继承 AbstractMap。Hashtable 是遗留类，推荐使用 ConcurrentHashMap 替代。",
+    "options": [
+      "A) Hashtable 是线程安全的，HashMap 不是",
+      "B) HashMap 允许 null 键和 null 值",
+      "C) Hashtable 是遗留类，推荐用 ConcurrentHashMap 替代",
+      "D) HashMap 的默认初始容量是 11"
+    ],
+    "hints": [
+      "考虑线程安全、null 处理、容量策略"
+    ],
+    "tags": [
+      "集合",
+      "HashMap"
+    ]
   },
   {
     "category": "java_collections",
@@ -104,10 +198,20 @@
     "type": "multiple_choice",
     "title": "Collections 工具类常用方法",
     "content": "以下哪些是 java.util.Collections 工具类提供的功能？",
-    "answer": "A)、B)、C)。解析：Collections 提供了丰富的集合操作工具：sort() 对 List 排序（要求元素实现 Comparable 或传入 Comparator）；unmodifiableList/Set/Map 返回不可修改的视图（修改会抛 UnsupportedOperationException）；synchronizedList/Set/Map 返回线程安全的包装视图；binarySearch() 二分查找；reverse() 反转；shuffle() 洗牌等。copyOnWrite 不属于 Collections 工具类，是 JUC 包中 CopyOnWriteArrayList 提供的机制。",
-    "options": ["A) sort() 对 List 进行排序", "B) unmodifiableList() 返回不可修改的集合视图", "C) synchronizedList() 返回线程安全的集合包装", "D) copyOnWrite() 实现写时复制"],
-    "hints": ["Collections 是包装类，不是并发包里的类"],
-    "tags": ["集合", "工具类"]
+    "answer": "答案：A)、B)、C)。解析：Collections 提供了丰富的集合操作工具：sort() 对 List 排序（要求元素实现 Comparable 或传入 Comparator）；unmodifiableList/Set/Map 返回不可修改的视图（修改会抛 UnsupportedOperationException）；synchronizedList/Set/Map 返回线程安全的包装视图；binarySearch() 二分查找；reverse() 反转；shuffle() 洗牌等。copyOnWrite 不属于 Collections 工具类，是 JUC 包中 CopyOnWriteArrayList 提供的机制。",
+    "options": [
+      "A) sort() 对 List 进行排序",
+      "B) unmodifiableList() 返回不可修改的集合视图",
+      "C) synchronizedList() 返回线程安全的集合包装",
+      "D) copyOnWrite() 实现写时复制"
+    ],
+    "hints": [
+      "Collections 是包装类，不是并发包里的类"
+    ],
+    "tags": [
+      "集合",
+      "工具类"
+    ]
   },
   {
     "category": "java_advanced",
@@ -115,10 +219,20 @@
     "type": "multiple_choice",
     "title": "线程池的拒绝策略",
     "content": "ThreadPoolExecutor 内置了哪些拒绝策略？",
-    "answer": "A)、B)、C)、D)。解析：ThreadPoolExecutor 内置了 4 种拒绝策略：AbortPolicy（默认，抛 RejectedExecutionException）、CallerRunsPolicy（调用者线程直接执行任务，降低提交速度）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃队列中最老的任务后重试提交）。实际开发中还可以自定义 RejectedExecutionHandler 实现更复杂的降级策略，如写入 MQ 或数据库。",
-    "options": ["A) AbortPolicy", "B) CallerRunsPolicy", "C) DiscardPolicy", "D) DiscardOldestPolicy"],
-    "hints": ["线程池的拒绝策略都实现了 RejectedExecutionHandler 接口"],
-    "tags": ["并发", "线程池"]
+    "answer": "答案：A)、B)、C)、D)。解析：ThreadPoolExecutor 内置了 4 种拒绝策略：AbortPolicy（默认，抛 RejectedExecutionException）、CallerRunsPolicy（调用者线程直接执行任务，降低提交速度）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃队列中最老的任务后重试提交）。实际开发中还可以自定义 RejectedExecutionHandler 实现更复杂的降级策略，如写入 MQ 或数据库。",
+    "options": [
+      "A) AbortPolicy",
+      "B) CallerRunsPolicy",
+      "C) DiscardPolicy",
+      "D) DiscardOldestPolicy"
+    ],
+    "hints": [
+      "线程池的拒绝策略都实现了 RejectedExecutionHandler 接口"
+    ],
+    "tags": [
+      "并发",
+      "线程池"
+    ]
   },
   {
     "category": "java_advanced",
@@ -126,10 +240,21 @@
     "type": "multiple_choice",
     "title": "synchronized 锁升级过程",
     "content": "关于 JDK 6 引入的 synchronized 锁升级机制，以下说法哪些是正确的？",
-    "answer": "A)、C)、D)。解析：JDK 6 优化了 synchronized 的锁机制，引入锁升级（膨胀）过程：无锁 → 偏向锁（只有一个线程访问）→ 轻量级锁（少量竞争，CAS 自旋）→ 重量级锁（大量竞争，阻塞）。偏向锁在 JDK 15 中默认关闭，JDK 21 中被移除。轻量级锁通过 CAS 自旋尝试获取锁，避免线程阻塞带来的上下文切换开销。重量级锁依赖操作系统互斥量实现，线程阻塞和唤醒开销最大。",
-    "options": ["A) 锁升级的顺序是：偏向锁 → 轻量级锁 → 重量级锁", "B) 偏向锁永久有效，不会撤销", "C) 轻量级锁通过 CAS 自旋获取锁", "D) 重量级锁会导致线程阻塞和上下文切换"],
-    "hints": ["锁升级是为了减少不必要的同步开销", "不同锁的适用场景不同"],
-    "tags": ["并发", "synchronized"]
+    "answer": "答案：A)、C)、D)。解析：JDK 6 优化了 synchronized 的锁机制，引入锁升级（膨胀）过程：无锁 → 偏向锁（只有一个线程访问）→ 轻量级锁（少量竞争，CAS 自旋）→ 重量级锁（大量竞争，阻塞）。偏向锁在 JDK 15 中默认关闭，JDK 21 中被移除。轻量级锁通过 CAS 自旋尝试获取锁，避免线程阻塞带来的上下文切换开销。重量级锁依赖操作系统互斥量实现，线程阻塞和唤醒开销最大。",
+    "options": [
+      "A) 锁升级的顺序是：偏向锁 → 轻量级锁 → 重量级锁",
+      "B) 偏向锁永久有效，不会撤销",
+      "C) 轻量级锁通过 CAS 自旋获取锁",
+      "D) 重量级锁会导致线程阻塞和上下文切换"
+    ],
+    "hints": [
+      "锁升级是为了减少不必要的同步开销",
+      "不同锁的适用场景不同"
+    ],
+    "tags": [
+      "并发",
+      "synchronized"
+    ]
   },
   {
     "category": "java_advanced",
@@ -137,10 +262,20 @@
     "type": "multiple_choice",
     "title": "JVM 运行时数据区域",
     "content": "以下哪些属于 JVM 运行时数据区（Runtime Data Areas）？",
-    "answer": "A)、B)、D)。解析：JVM 运行时数据区包括：程序计数器（PC Register，线程私有，记录当前线程执行的字节码地址）、虚拟机栈（Java Stack，线程私有，存储栈帧）、本地方法栈（Native Method Stack，线程私有，支持 native 方法）、堆（Heap，所有线程共享，存储对象实例）、方法区（Method Area，JDK 8 后由 Metaspace 实现）。直接内存（Direct Memory）是 NIO 在堆外分配的内存，不属于 JVM 规范定义的运行时数据区。",
-    "options": ["A) 程序计数器", "B) Java 虚拟机栈", "C) 直接内存", "D) 方法区"],
-    "hints": ["直接内存由 NIO 管理，不在 JVM 运行时数据区规范中"],
-    "tags": ["JVM", "内存管理"]
+    "answer": "答案：A)、B)、D)。解析：JVM 运行时数据区包括：程序计数器（PC Register，线程私有，记录当前线程执行的字节码地址）、虚拟机栈（Java Stack，线程私有，存储栈帧）、本地方法栈（Native Method Stack，线程私有，支持 native 方法）、堆（Heap，所有线程共享，存储对象实例）、方法区（Method Area，JDK 8 后由 Metaspace 实现）。直接内存（Direct Memory）是 NIO 在堆外分配的内存，不属于 JVM 规范定义的运行时数据区。",
+    "options": [
+      "A) 程序计数器",
+      "B) Java 虚拟机栈",
+      "C) 直接内存",
+      "D) 方法区"
+    ],
+    "hints": [
+      "直接内存由 NIO 管理，不在 JVM 运行时数据区规范中"
+    ],
+    "tags": [
+      "JVM",
+      "内存管理"
+    ]
   },
   {
     "category": "java_advanced",
@@ -148,10 +283,20 @@
     "type": "multiple_choice",
     "title": "可作为 GC Roots 的对象",
     "content": "以下哪些对象可以作为 GC Roots？",
-    "answer": "A)、B)、C)。解析：可作为 GC Roots 的对象包括：虚拟机栈中引用的对象（本地变量表中的引用）、方法区中静态属性引用的对象、方法区中常量池引用的对象、本地方法栈中 JNI 引用的对象（全局 JNI 引用）、活跃线程（Thread 对象）。通过 GC Roots 可达性分析，从这些根对象出发，无法到达的对象即为可回收对象。未被引用的字符串常量可能已被判定为无用常量，不能作为 GC Root。",
-    "options": ["A) 虚拟机栈中引用的对象", "B) 方法区中静态属性引用的对象", "C) 本地方法栈中 JNI 引用的对象", "D) 字符串常量池中未被引用的常量"],
-    "hints": ["GC Roots 是活跃的引用起点"],
-    "tags": ["JVM", "GC"]
+    "answer": "答案：A)、B)、C)。解析：可作为 GC Roots 的对象包括：虚拟机栈中引用的对象（本地变量表中的引用）、方法区中静态属性引用的对象、方法区中常量池引用的对象、本地方法栈中 JNI 引用的对象（全局 JNI 引用）、活跃线程（Thread 对象）。通过 GC Roots 可达性分析，从这些根对象出发，无法到达的对象即为可回收对象。未被引用的字符串常量可能已被判定为无用常量，不能作为 GC Root。",
+    "options": [
+      "A) 虚拟机栈中引用的对象",
+      "B) 方法区中静态属性引用的对象",
+      "C) 本地方法栈中 JNI 引用的对象",
+      "D) 字符串常量池中未被引用的常量"
+    ],
+    "hints": [
+      "GC Roots 是活跃的引用起点"
+    ],
+    "tags": [
+      "JVM",
+      "GC"
+    ]
   },
   {
     "category": "java_advanced",
@@ -159,9 +304,20 @@
     "type": "multiple_choice",
     "title": "Java 8 Stream 的特性",
     "content": "以下关于 Java 8 Stream 的描述，哪些是正确的？",
-    "answer": "A)、B)、D)。解析：Stream 本身不存储数据，而是对数据源（集合、数组等）的视图描述；Stream 操作是惰性求值的，中间操作（如 filter、map）不会立即执行，遇到终止操作（如 collect、forEach）才触发实际计算；Stream 的一次性体现在一旦执行了终止操作，该 Stream 就被消费了，不能再次使用。Stream 不改变数据源，操作结果通常是新的 Stream 或值。",
-    "options": ["A) Stream 不存储数据，是对数据源的一个视图", "B) 中间操作是惰性的，遇到终止操作才执行", "C) Stream 可以多次遍历，执行终止操作后仍可使用", "D) Stream 操作不会修改数据源"],
-    "hints": ["Stream 与集合的区别", "终止操作会消费 Stream"],
-    "tags": ["Java 8", "Stream"]
+    "answer": "答案：A)、B)、D)。解析：Stream 本身不存储数据，而是对数据源（集合、数组等）的视图描述；Stream 操作是惰性求值的，中间操作（如 filter、map）不会立即执行，遇到终止操作（如 collect、forEach）才触发实际计算；Stream 的一次性体现在一旦执行了终止操作，该 Stream 就被消费了，不能再次使用。Stream 不改变数据源，操作结果通常是新的 Stream 或值。",
+    "options": [
+      "A) Stream 不存储数据，是对数据源的一个视图",
+      "B) 中间操作是惰性的，遇到终止操作才执行",
+      "C) Stream 可以多次遍历，执行终止操作后仍可使用",
+      "D) Stream 操作不会修改数据源"
+    ],
+    "hints": [
+      "Stream 与集合的区别",
+      "终止操作会消费 Stream"
+    ],
+    "tags": [
+      "Java 8",
+      "Stream"
+    ]
   }
 ]

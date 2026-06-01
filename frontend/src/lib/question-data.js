@@ -2523,7 +2523,7 @@ export const questions = [
     "type": "choice",
     "title": "JVM 运行时数据区域",
     "content": "以下哪个不是 JVM 运行时数据区的组成部分？",
-    "answer": "D) 直接内存。解析：JVM 运行时数据区包括：程序计数器、虚拟机栈、本地方法栈、堆、方法区。直接内存（Direct Memory）不是 JVM 运行时数据区的一部分，它是 NIO 在堆外分配的内存，但受物理内存限制。",
+    "answer": "答案：D) 直接内存。解析：JVM 运行时数据区包括：程序计数器、虚拟机栈、本地方法栈、堆、方法区。直接内存（Direct Memory）不是 JVM 运行时数据区的一部分，它是 NIO 在堆外分配的内存，但受物理内存限制。",
     "hints": [
       "区分 JVM 管理的内存和堆外内存"
     ],
@@ -2546,7 +2546,7 @@ export const questions = [
     "type": "choice",
     "title": "堆内存的分代结构",
     "content": "关于 Java 堆内存分代，以下说法正确的是？",
-    "answer": "B) 对象首先在 Eden 区分配，经过 Minor GC 后进入 Survivor 区。解析：大多数新创建的对象首先在 Eden 区分配。Eden 区满时触发 Minor GC（Young GC），存活对象复制到 Survivor 区。经过多次 GC 仍然存活的对象（默认 15 次）晋升到老年代。",
+    "answer": "答案：B) 对象首先在 Eden 区分配，经过 Minor GC 后进入 Survivor 区。解析：大多数新创建的对象首先在 Eden 区分配。Eden 区满时触发 Minor GC（Young GC），存活对象复制到 Survivor 区。经过多次 GC 仍然存活的对象（默认 15 次）晋升到老年代。",
     "hints": [
       "大多数对象都是朝生夕死的"
     ],
@@ -2569,7 +2569,7 @@ export const questions = [
     "type": "choice",
     "title": "GC Roots 包括哪些",
     "content": "以下哪个不是可以作为 GC Roots 的对象？",
-    "answer": "C) 方法区中未被引用的常量。解析：GC Roots 包括：虚拟机栈中引用的对象、静态属性引用的对象、常量引用的对象、本地方法栈中 JNI 引用的对象。未被引用的常量自身可能已经被判定为无用常量，不能作为根。",
+    "answer": "答案：C) 方法区中未被引用的常量。解析：GC Roots 包括：虚拟机栈中引用的对象、静态属性引用的对象、常量引用的对象、本地方法栈中 JNI 引用的对象。未被引用的常量自身可能已经被判定为无用常量，不能作为根。",
     "hints": [
       "可作为 GC Root 的对象必须是活跃的引用"
     ],
@@ -2592,7 +2592,7 @@ export const questions = [
     "type": "choice",
     "title": "CMS 与 G1 垃圾回收器的区别",
     "content": "关于 CMS 和 G1 垃圾回收器的区别，以下说法错误的是？",
-    "answer": "D) G1 的停顿时间比 CMS 更短且完全可预测。解析：G1 通过 -XX:MaxGCPauseMillis 设置目标停顿时间，但这是软目标，并非绝对保证。G1 的停顿时间通常比 CMS 更可控，但不能完全可预测。CMS 已被 JDK 14 标记为移除，G1 是 JDK 9+ 的默认 GC。",
+    "answer": "答案：D) G1 的停顿时间比 CMS 更短且完全可预测。解析：G1 通过 -XX:MaxGCPauseMillis 设置目标停顿时间，但这是软目标，并非绝对保证。G1 的停顿时间通常比 CMS 更可控，但不能完全可预测。CMS 已被 JDK 14 标记为移除，G1 是 JDK 9+ 的默认 GC。",
     "hints": [
       "停顿时间目标和硬实时系统要求的区别"
     ],
@@ -2615,7 +2615,7 @@ export const questions = [
     "type": "choice",
     "title": "双亲委派模型",
     "content": "关于双亲委派模型，以下说法正确的是？",
-    "answer": "A) 类加载器收到类加载请求时，先将请求委派给父类加载器加载。解析：双亲委派模型的核心是：当前类加载器收到加载请求时，不会自己尝试加载，而是先委派给父类加载器。每层都是如此，因此所有加载请求最终都应该到达启动类加载器。只有当父加载器无法加载（抛出 ClassNotFoundException）时，子加载器才会尝试自己加载。",
+    "answer": "答案：A) 类加载器收到类加载请求时，先将请求委派给父类加载器加载。解析：双亲委派模型的核心是：当前类加载器收到加载请求时，不会自己尝试加载，而是先委派给父类加载器。每层都是如此，因此所有加载请求最终都应该到达启动类加载器。只有当父加载器无法加载（抛出 ClassNotFoundException）时，子加载器才会尝试自己加载。",
     "hints": [
       "双亲委派的核心目的是什么？"
     ],
@@ -2638,7 +2638,7 @@ export const questions = [
     "type": "choice",
     "title": "类加载的完整过程",
     "content": "JVM 类加载过程按顺序包括哪些阶段？",
-    "answer": "B) 加载 → 验证 → 准备 → 解析 → 初始化。解析：类加载包括 5 个阶段：加载（Loading）→ 验证（Verification）→ 准备（Preparation）→ 解析（Resolution）→ 初始化（Initialization）。验证确保 Class 文件字节流安全，准备为静态变量分配内存并设默认值，解析将符号引用转为直接引用，初始化执行类构造器 <clinit>() 方法。",
+    "answer": "答案：B) 加载 → 验证 → 准备 → 解析 → 初始化。解析：类加载包括 5 个阶段：加载（Loading）→ 验证（Verification）→ 准备（Preparation）→ 解析（Resolution）→ 初始化（Initialization）。验证确保 Class 文件字节流安全，准备为静态变量分配内存并设默认值，解析将符号引用转为直接引用，初始化执行类构造器 <clinit>() 方法。",
     "hints": [
       "初始化是最后一步",
       "顺序是固定的"
@@ -2662,7 +2662,7 @@ export const questions = [
     "type": "choice",
     "title": "OOM 常见场景",
     "content": "以下哪种操作最可能导致 OutOfMemoryError: Metaspace？",
-    "answer": "B) 运行时大量生成动态代理类或 CGLIB 代理类。解析：Metaspace（元空间）用于存储类元信息。大量动态生成代理类（如 CGLIB、Javassist）会填满 Metaspace 导致 OOM。堆溢出常见于大对象或内存泄漏，栈溢出常见于递归调用过深。",
+    "answer": "答案：B) 运行时大量生成动态代理类或 CGLIB 代理类。解析：Metaspace（元空间）用于存储类元信息。大量动态生成代理类（如 CGLIB、Javassist）会填满 Metaspace 导致 OOM。堆溢出常见于大对象或内存泄漏，栈溢出常见于递归调用过深。",
     "hints": [
       "区分堆、栈、元空间的溢出场景"
     ],
@@ -2685,7 +2685,7 @@ export const questions = [
     "type": "choice",
     "title": "Java 引用类型",
     "content": "以下哪种引用在 GC 被触发时一定会被回收？",
-    "answer": "D) 软引用和弱引用。解析：软引用（SoftReference）在内存不足时回收，弱引用（WeakReference）在下一次 GC 时回收。虚引用（PhantomReference）主要用于跟踪对象被回收的状态。强引用（Strong Reference）永远不会被 GC 回收，是导致内存泄漏的常见原因。",
+    "answer": "答案：D) 软引用和弱引用。解析：软引用（SoftReference）在内存不足时回收，弱引用（WeakReference）在下一次 GC 时回收。虚引用（PhantomReference）主要用于跟踪对象被回收的状态。强引用（Strong Reference）永远不会被 GC 回收，是导致内存泄漏的常见原因。",
     "hints": [
       "软引用和弱引用的回收时机不同"
     ],
@@ -2708,7 +2708,7 @@ export const questions = [
     "type": "choice",
     "title": "JDK 8 接口的新特性",
     "content": "JDK 8 允许在接口中定义哪种类型的方法？",
-    "answer": "B) 默认方法和静态方法。解析：JDK 8 引入了接口的默认方法（default method）和静态方法（static method）。默认方法通过 default 关键字定义，子类可以选择重写或继承。静态方法只能通过接口名直接调用。这一变化使得接口在演化时能向后兼容。",
+    "answer": "答案：B) 默认方法和静态方法。解析：JDK 8 引入了接口的默认方法（default method）和静态方法（static method）。默认方法通过 default 关键字定义，子类可以选择重写或继承。静态方法只能通过接口名直接调用。这一变化使得接口在演化时能向后兼容。",
     "hints": [
       "JDK 8 中接口有哪些变化？"
     ],
@@ -2731,7 +2731,7 @@ export const questions = [
     "type": "choice",
     "title": "Lambda 表达式本质",
     "content": "Java 中的 Lambda 表达式的本质是什么？",
-    "answer": "A) 函数式接口的匿名实现。解析：Lambda 表达式本质上是函数式接口（只有一个抽象方法的接口）的匿名实现。编译器通过 invokedynamic 指令将 Lambda 转换为对应的函数式接口实例。常见的函数式接口有 Runnable、Comparator、Function、Predicate、Consumer 等。",
+    "answer": "答案：A) 函数式接口的匿名实现。解析：Lambda 表达式本质上是函数式接口（只有一个抽象方法的接口）的匿名实现。编译器通过 invokedynamic 指令将 Lambda 转换为对应的函数式接口实例。常见的函数式接口有 Runnable、Comparator、Function、Predicate、Consumer 等。",
     "hints": [
       "Lambda 表达式的目标类型是什么？"
     ],
@@ -2754,7 +2754,7 @@ export const questions = [
     "type": "choice",
     "title": "Stream 中间操作与终止操作",
     "content": "以下哪个是 Stream 的终止操作？",
-    "answer": "D) collect。解析：Stream 操作分为中间操作（Intermediate）和终止操作（Terminal）。中间操作返回 Stream，惰性执行（如 map、filter、sorted）。终止操作触发实际计算并消耗 Stream（如 collect、forEach、reduce、count）。filter、map、sorted 都是中间操作，collect 是终止操作。",
+    "answer": "答案：D) collect。解析：Stream 操作分为中间操作（Intermediate）和终止操作（Terminal）。中间操作返回 Stream，惰性执行（如 map、filter、sorted）。终止操作触发实际计算并消耗 Stream（如 collect、forEach、reduce、count）。filter、map、sorted 都是中间操作，collect 是终止操作。",
     "hints": [
       "终止操作会消耗 Stream"
     ],
@@ -2777,7 +2777,7 @@ export const questions = [
     "type": "choice",
     "title": "Optional 的主要用途",
     "content": "Optional 的主要用途是什么？",
-    "answer": "B) 避免 NullPointerException，更优雅地处理可能为 null 的值。解析：Optional 是一个容器对象，用于表示一个值存在或不存在。通过显式告诉调用者返回值可能为空，强制调用者处理空值情况，从而减少 NPE。但不建议将 Optional 作为字段类型、方法参数或序列化对象使用。",
+    "answer": "答案：B) 避免 NullPointerException，更优雅地处理可能为 null 的值。解析：Optional 是一个容器对象，用于表示一个值存在或不存在。通过显式告诉调用者返回值可能为空，强制调用者处理空值情况，从而减少 NPE。但不建议将 Optional 作为字段类型、方法参数或序列化对象使用。",
     "hints": [
       "Optional 的设计初衷是什么？"
     ],
@@ -2800,7 +2800,7 @@ export const questions = [
     "type": "choice",
     "title": "synchronized 的底层实现",
     "content": "JDK 8 中 synchronized 关键字的底层实现机制是？",
-    "answer": "C) 基于 Monitor 对象，通过锁升级（偏向锁→轻量级锁→重量级锁）实现。解析：JDK 8 中 synchronized 通过 Monitor（监视器锁）实现。锁有四种状态：无锁→偏向锁→轻量级锁→重量级锁，在 JDK 6 之后引入的锁升级机制减少了锁的开销。偏向锁在只有一个线程访问时避免真正的同步，轻量级锁使用 CAS 自旋，重量级锁阻塞其他线程。",
+    "answer": "答案：C) 基于 Monitor 对象，通过锁升级（偏向锁→轻量级锁→重量级锁）实现。解析：JDK 8 中 synchronized 通过 Monitor（监视器锁）实现。锁有四种状态：无锁→偏向锁→轻量级锁→重量级锁，在 JDK 6 之后引入的锁升级机制减少了锁的开销。偏向锁在只有一个线程访问时避免真正的同步，轻量级锁使用 CAS 自旋，重量级锁阻塞其他线程。",
     "hints": [
       "JDK 6 之后对 synchronized 做了哪些优化？"
     ],
@@ -2823,7 +2823,7 @@ export const questions = [
     "type": "choice",
     "title": "volatile 关键字的作用",
     "content": "volatile 关键字保证哪些特性？",
-    "answer": "A) 保证可见性和禁止指令重排序，但不保证原子性。解析：volatile 能保证：1）可见性——一个线程修改 volatile 变量后，其他线程立即可见；2）禁止指令重排序——插入内存屏障防止编译器或 CPU 重排。但 volatile 不保证原子性，如 count++ 操作仍需加锁。",
+    "answer": "答案：A) 保证可见性和禁止指令重排序，但不保证原子性。解析：volatile 能保证：1）可见性——一个线程修改 volatile 变量后，其他线程立即可见；2）禁止指令重排序——插入内存屏障防止编译器或 CPU 重排。但 volatile 不保证原子性，如 count++ 操作仍需加锁。",
     "hints": [
       "volatile 适合什么场景？"
     ],
@@ -2846,7 +2846,7 @@ export const questions = [
     "type": "choice",
     "title": "ThreadPoolExecutor 的核心参数",
     "content": "ThreadPoolExecutor 的参数中，当任务数超过核心线程数且阻塞队列已满时的处理方式是？",
-    "answer": "C) 创建新线程（不超过最大线程数），如果已达最大线程数则执行拒绝策略。解析：线程池的工作流程：1）任务数 < corePoolSize → 创建核心线程执行；2）任务数 ≥ corePoolSize → 加入阻塞队列；3）队列满且线程数 < maximumPoolSize → 创建临时线程；4）队列满且线程数已达最大值 → 执行 RejectedExecutionHandler 拒绝策略。",
+    "answer": "答案：C) 创建新线程（不超过最大线程数），如果已达最大线程数则执行拒绝策略。解析：线程池的工作流程：1）任务数 < corePoolSize → 创建核心线程执行；2）任务数 ≥ corePoolSize → 加入阻塞队列；3）队列满且线程数 < maximumPoolSize → 创建临时线程；4）队列满且线程数已达最大值 → 执行 RejectedExecutionHandler 拒绝策略。",
     "hints": [
       "线程池参数包括 corePoolSize、maximumPoolSize、workQueue"
     ],
@@ -2869,7 +2869,7 @@ export const questions = [
     "type": "choice",
     "title": "AQS 的核心原理",
     "content": "AQS（AbstractQueuedSynchronizer）的核心实现原理是？",
-    "answer": "B) 基于 volatile int state + CLH 双向队列 + CAS 操作。解析：AQS 是 JUC 锁和同步器的基类。核心数据结构：volatile int state（同步状态）+ CLH 双向队列（等待队列）+ CAS（原子操作）。子类通过重写 tryAcquire/tryRelease 等方法定义获取和释放资源的逻辑。ReentrantLock、Semaphore、CountDownLatch 都基于 AQS。",
+    "answer": "答案：B) 基于 volatile int state + CLH 双向队列 + CAS 操作。解析：AQS 是 JUC 锁和同步器的基类。核心数据结构：volatile int state（同步状态）+ CLH 双向队列（等待队列）+ CAS（原子操作）。子类通过重写 tryAcquire/tryRelease 等方法定义获取和释放资源的逻辑。ReentrantLock、Semaphore、CountDownLatch 都基于 AQS。",
     "hints": [
       "ReentrantLock、Semaphore、CountDownLatch 都基于 AQS"
     ],
@@ -2892,7 +2892,7 @@ export const questions = [
     "type": "choice",
     "title": "ReentrantLock 与 synchronized 的区别",
     "content": "以下关于 ReentrantLock 和 synchronized 的说法，错误的是？",
-    "answer": "D) synchronized 支持超时获取锁。解析：synchronized 不支持超时获取锁，线程获取不到锁时会一直阻塞。ReentrantLock 提供了 tryLock(long timeout, TimeUnit unit) 支持超时获取锁。其他区别：ReentrantLock 支持公平锁、可中断锁、条件变量（Condition），synchronized 自动释放锁，ReentrantLock 需要手动 unlock。",
+    "answer": "答案：D) synchronized 支持超时获取锁。解析：synchronized 不支持超时获取锁，线程获取不到锁时会一直阻塞。ReentrantLock 提供了 tryLock(long timeout, TimeUnit unit) 支持超时获取锁。其他区别：ReentrantLock 支持公平锁、可中断锁、条件变量（Condition），synchronized 自动释放锁，ReentrantLock 需要手动 unlock。",
     "hints": [
       "synchronized 和 ReentrantLock 的获取方式有什么不同？"
     ],
@@ -2915,7 +2915,7 @@ export const questions = [
     "type": "choice",
     "title": "CAS 操作存在的问题",
     "content": "CAS（Compare And Swap）操作可能面临的问题不包括？",
-    "answer": "C) 死锁。解析：CAS 是乐观锁机制，常见问题包括：ABA 问题（通过 AtomicStampedReference 加版本号解决）、自旋开销（长时间自旋浪费 CPU）、只能保证单个变量的原子操作。CAS 不会导致死锁（因为没有锁等待），死锁通常发生在锁的嵌套使用中。",
+    "answer": "答案：C) 死锁。解析：CAS 是乐观锁机制，常见问题包括：ABA 问题（通过 AtomicStampedReference 加版本号解决）、自旋开销（长时间自旋浪费 CPU）、只能保证单个变量的原子操作。CAS 不会导致死锁（因为没有锁等待），死锁通常发生在锁的嵌套使用中。",
     "hints": [
       "CAS 是非阻塞的"
     ],
@@ -2938,7 +2938,7 @@ export const questions = [
     "type": "choice",
     "title": "Java 线程的六种状态",
     "content": "Java 线程在生命周期中不包含以下哪种状态？",
-    "answer": "D) 运行中（Running）。解析：Java 线程的 6 种状态定义在 Thread.State 枚举中：NEW（新建）、RUNNABLE（可运行，包含就绪和运行）、BLOCKED（阻塞等待锁）、WAITING（无限等待）、TIMED_WAITING（超时等待）、TERMINATED（终止）。JVM 层面的 RUNNABLE 状态合并了操作系统层面的就绪（Ready）和运行（Running）状态。",
+    "answer": "答案：D) 运行中（Running）。解析：Java 线程的 6 种状态定义在 Thread.State 枚举中：NEW（新建）、RUNNABLE（可运行，包含就绪和运行）、BLOCKED（阻塞等待锁）、WAITING（无限等待）、TIMED_WAITING（超时等待）、TERMINATED（终止）。JVM 层面的 RUNNABLE 状态合并了操作系统层面的就绪（Ready）和运行（Running）状态。",
     "hints": [
       "Thread.State 枚举中有哪些值？"
     ],
@@ -2961,7 +2961,7 @@ export const questions = [
     "type": "choice",
     "title": "JDK 8 接口默认方法的冲突解决",
     "content": "当一个类实现了两个接口，两个接口中有相同签名的默认方法时，以下说法正确的是？",
-    "answer": "A) 必须在实现类中重写该方法，否则编译报错。解析：如果一个类同时实现了两个具有相同签名默认方法的接口，编译器会报错，强制要求实现类重写该方法以消除歧义。可以在重写中使用 InterfaceName.super.methodName() 指定使用哪个接口的默认实现。",
+    "answer": "答案：A) 必须在实现类中重写该方法，否则编译报错。解析：如果一个类同时实现了两个具有相同签名默认方法的接口，编译器会报错，强制要求实现类重写该方法以消除歧义。可以在重写中使用 InterfaceName.super.methodName() 指定使用哪个接口的默认实现。",
     "hints": [
       "钻石问题在 Java 接口中如何解决？"
     ],
@@ -3880,7 +3880,7 @@ export const questions = [
     "type": "choice",
     "title": "Java源程序的文件扩展名",
     "content": "使用Java语言编写的源程序保存时的文件扩展名是？",
-    "answer": "B) .java。解析：Java源文件的扩展名是.java，编译后生成.class字节码文件。",
+    "answer": "答案：B) .java。解析：Java源文件的扩展名是.java，编译后生成.class字节码文件。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -3903,7 +3903,7 @@ export const questions = [
     "type": "choice",
     "title": "表达式a>>>3的值",
     "content": "设int a=-2，则表达式a>>>3的值为？",
-    "answer": "A) 0。解析：a>>>3是无符号右移操作。int-2的二进制是0xFFFFFFFE，右移3位高位补0，结果为0x1FFFFFFF，即536870911。",
+    "answer": "答案：A) 0。解析：a>>>3是无符号右移操作。int-2的二进制是0xFFFFFFFE，右移3位高位补0，结果为0x1FFFFFFF，即536870911。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -3926,7 +3926,7 @@ export const questions = [
     "type": "choice",
     "title": "数组元素引用错误的是",
     "content": "设有数组的定义int[] a = new int[3]，则下面对数组元素的引用错误的是？",
-    "answer": "C) a[3]。解析：数组长度为3，有效索引为0,1,2。a[3]超出数组范围，会抛出ArrayIndexOutOfBoundsException。",
+    "answer": "答案：C) a[3]。解析：数组长度为3，有效索引为0,1,2。a[3]超出数组范围，会抛出ArrayIndexOutOfBoundsException。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -3949,7 +3949,7 @@ export const questions = [
     "type": "choice",
     "title": "类中可以有两个同名函数的现象称为",
     "content": "在类的定义中可以有两个同名函数，这种现象称为函数什么？",
-    "answer": "D) 重载。解析：正确答案是D选项。",
+    "answer": "答案：D) 重载。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -3972,7 +3972,7 @@ export const questions = [
     "type": "choice",
     "title": "构造函数的作用是",
     "content": "在类的定义中构造函数的作用是？",
-    "answer": "D) 初始化成员变量。解析：正确答案是D选项。",
+    "answer": "答案：D) 初始化成员变量。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -3995,7 +3995,7 @@ export const questions = [
     "type": "choice",
     "title": "哪一个不是异常处理关键字",
     "content": "下面关键字中，哪一个不是用于异常处理语句？",
-    "answer": "B) break。解析：break用于跳出循环，不是异常处理关键字。try/catch/finally才是异常处理结构。",
+    "answer": "答案：B) break。解析：break用于跳出循环，不是异常处理关键字。try/catch/finally才是异常处理结构。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4018,7 +4018,7 @@ export const questions = [
     "type": "choice",
     "title": "类与对象的关系是",
     "content": "类与对象的关系是？",
-    "answer": "A) 类是对象的抽象。解析：正确答案是A选项。",
+    "answer": "答案：A) 类是对象的抽象。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4041,7 +4041,7 @@ export const questions = [
     "type": "choice",
     "title": "Java中不合法的标识符是",
     "content": "下面哪一个是Java中不合法的标识符？",
-    "answer": "A) $persons。解析：Java标识符可以由字母、数字、下划线、美元符号组成，但不能以数字开头，不能是关键字。$persons以$开头是合法的。",
+    "answer": "答案：A) $persons。解析：Java标识符可以由字母、数字、下划线、美元符号组成，但不能以数字开头，不能是关键字。$persons以$开头是合法的。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4064,7 +4064,7 @@ export const questions = [
     "type": "choice",
     "title": "使用类名AB作为前缀就可以调用的方法",
     "content": "为AB类的一个无形式参数无返回值的方法method书写方法头，使得使用类名AB作为前缀就可以调用它，该方法头的形式为？",
-    "answer": "A) static void method()。解析：static方法可以通过类名直接调用，无需创建对象。这是static方法的特征。",
+    "answer": "答案：A) static void method()。解析：static方法可以通过类名直接调用，无需创建对象。这是static方法的特征。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4087,7 +4087,7 @@ export const questions = [
     "type": "choice",
     "title": "构造ArrayList实例的正确方法是",
     "content": "欲构造ArrayList类的一个实例，此类继承了List接口，下列哪个方法是正确的？",
-    "answer": "B) List myList=new ArrayList()。解析：正确答案是B选项。",
+    "answer": "答案：B) List myList=new ArrayList()。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4110,7 +4110,7 @@ export const questions = [
     "type": "choice",
     "title": "Java源文件和编译后的文件扩展名",
     "content": "Java源文件和编译后的文件扩展名分别为？",
-    "answer": "B) .java和.class。解析：正确答案是B选项。",
+    "answer": "答案：B) .java和.class。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4133,7 +4133,7 @@ export const questions = [
     "type": "choice",
     "title": "Applet中完成画图操作需要重载的方法",
     "content": "在Java Applet程序用户自定义的Applet子类中，一般需要重载父类的哪个方法来完成一些画图操作？",
-    "answer": "D) paint()。解析：paint()方法用于绘制Applet界面内容，需要重写该方法来完成自定义绘图。",
+    "answer": "答案：D) paint()。解析：paint()方法用于绘制Applet界面内容，需要重写该方法来完成自定义绘图。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4156,7 +4156,7 @@ export const questions = [
     "type": "choice",
     "title": "Java源文件中import, class和package的正确顺序",
     "content": "对于一个Java源文件，import, class定义以及package正确的顺序是？",
-    "answer": "A) package,import,class。解析：正确答案是A选项。",
+    "answer": "答案：A) package,import,class。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4179,7 +4179,7 @@ export const questions = [
     "type": "choice",
     "title": "下面哪个变量声明是非法的",
     "content": "下面哪个是非法的变量声明？",
-    "answer": "B) float f = 45.0;。解析：float f=45.0;非法，因为45.0是double字面量，赋值给float需要强制转换或加f后缀。",
+    "answer": "答案：B) float f = 45.0;。解析：float f=45.0;非法，因为45.0是double字面量，赋值给float需要强制转换或加f后缀。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4202,7 +4202,7 @@ export const questions = [
     "type": "choice",
     "title": "Java语言使用的字符码集是",
     "content": "Java语言使用的字符码集是？",
-    "answer": "D) Unicode。解析：正确答案是D选项。",
+    "answer": "答案：D) Unicode。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4225,7 +4225,7 @@ export const questions = [
     "type": "choice",
     "title": "成员变量只能在所在类中使用的修饰符",
     "content": "如果一个类的成员变量只能在所在类中使用，则该成员变量必须使用的修饰是？",
-    "answer": "C) private。解析：正确答案是C选项。",
+    "answer": "答案：C) private。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4248,7 +4248,7 @@ export const questions = [
     "type": "choice",
     "title": "main方法说明正确的是",
     "content": "下面关于main方法说明正确的是？",
-    "answer": "B) public static void main(String args[])。解析：正确答案是B选项。",
+    "answer": "答案：B) public static void main(String args[])。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4271,7 +4271,7 @@ export const questions = [
     "type": "choice",
     "title": "可以对对象加互斥锁的关键字",
     "content": "哪个关键字可以对对象加互斥锁？",
-    "answer": "B) synchronized。解析：synchronized关键字用于实现线程同步，可以对对象加互斥锁。",
+    "answer": "答案：B) synchronized。解析：synchronized关键字用于实现线程同步，可以对对象加互斥锁。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4294,7 +4294,7 @@ export const questions = [
     "type": "choice",
     "title": "关于抽象方法的说法正确的是",
     "content": "关于抽象方法的说法正确的是？",
-    "answer": "C) 是没有方法体的方法。解析：正确答案是C选项。",
+    "answer": "答案：C) 是没有方法体的方法。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4317,7 +4317,7 @@ export const questions = [
     "type": "choice",
     "title": "java.io包的File类是",
     "content": "java.io包的File类是？",
-    "answer": "D) 非流类。解析：正确答案是D选项。",
+    "answer": "答案：D) 非流类。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4340,7 +4340,7 @@ export const questions = [
     "type": "choice",
     "title": "main方法的正确形参是",
     "content": "Java application中的主类需包含main方法，以下哪项是main方法的正确形参？",
-    "answer": "B) String args[]。解析：正确答案是B选项。",
+    "answer": "答案：B) String args[]。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4363,7 +4363,7 @@ export const questions = [
     "type": "choice",
     "title": "代码段y%x的输出结果为",
     "content": "int x=-3；int y=-10；System.out.println(y%x);的输出结果为？",
-    "answer": "A) -1。解析：正确答案是A选项。",
+    "answer": "答案：A) -1。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4386,7 +4386,7 @@ export const questions = [
     "type": "choice",
     "title": "关于继承的叙述正确的是",
     "content": "以下关于继承的叙述正确的是？",
-    "answer": "A) 在Java中类只允许单一继承。解析：正确答案是A选项。",
+    "answer": "答案：A) 在Java中类只允许单一继承。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4409,7 +4409,7 @@ export const questions = [
     "type": "choice",
     "title": "对byte数组元素错误的引用是",
     "content": "若有定义byte[] x={11,22,33,-66}; 0≤k≤3，则对x数组元素错误的引用是？",
-    "answer": "C) x[k+5]。解析：正确答案是C选项。",
+    "answer": "答案：C) x[k+5]。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4432,7 +4432,7 @@ export const questions = [
     "type": "choice",
     "title": "paint()方法使用的参数类型是",
     "content": "paint()方法使用哪种类型的参数？",
-    "answer": "A) Graphics。解析：paint()方法接收Graphics对象作为参数，用于绘制图形界面。",
+    "answer": "答案：A) Graphics。解析：paint()方法接收Graphics对象作为参数，用于绘制图形界面。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4455,7 +4455,7 @@ export const questions = [
     "type": "choice",
     "title": "以下哪个不是Java的原始数据类型",
     "content": "以下哪个不是Java的原始数据类型？",
-    "answer": "B) Boolean。解析：Boolean（大写B）是包装类，不是原始数据类型。原始数据类型是boolean（小写b）。",
+    "answer": "答案：B) Boolean。解析：Boolean（大写B）是包装类，不是原始数据类型。原始数据类型是boolean（小写b）。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4478,7 +4478,7 @@ export const questions = [
     "type": "choice",
     "title": "一个类可定义许多同名的方法称为",
     "content": "在Java中，一个类可同时定义许多同名的方法，这些方法的形式参数的个数、类型或顺序各不相同，传回的值也可以不相同。这种面向对象程序特性称为？",
-    "answer": "C) 重载。解析：正确答案是C选项。",
+    "answer": "答案：C) 重载。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4501,7 +4501,7 @@ export const questions = [
     "type": "choice",
     "title": "有关构造方法的说法正确的是",
     "content": "以下有关构造方法的说法，正确的是？",
-    "answer": "A) 一个类的构造方法可以有多个。解析：正确答案是A选项。",
+    "answer": "答案：A) 一个类的构造方法可以有多个。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4524,7 +4524,7 @@ export const questions = [
     "type": "choice",
     "title": "Applet中最先被执行的方法是",
     "content": "在浏览器中执行applet程序，以下选项中的哪个方法将被最先执行？",
-    "answer": "A) init()。解析：正确答案是A选项。",
+    "answer": "答案：A) init()。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4547,7 +4547,7 @@ export const questions = [
     "type": "choice",
     "title": "int数组默认值的输出结果",
     "content": "public class Person{static int arr[]=new int[5];public static void main(String a[]){System.out.println(arr[0]);}} 输出结果是？",
-    "answer": "C) 输出零。解析：正确答案是C选项。",
+    "answer": "答案：C) 输出零。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4570,7 +4570,7 @@ export const questions = [
     "type": "choice",
     "title": "方法返回类型正确的是",
     "content": "ReturnType method(byte x, double y){return (short)x/y*2;} 该方法的返回类型是？",
-    "answer": "D) double。解析：正确答案是D选项。",
+    "answer": "答案：D) double。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项",
       "注意运算符优先级和类型转换规则"
@@ -4594,7 +4594,7 @@ export const questions = [
     "type": "choice",
     "title": "合法的抽象类定义是",
     "content": "下列类定义中哪些是合法的抽象类的定义？",
-    "answer": "C) abstract class Animal{abstract void growl();}。解析：正确答案是C选项。",
+    "answer": "答案：C) abstract class Animal{abstract void growl();}。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4617,7 +4617,7 @@ export const questions = [
     "type": "choice",
     "title": "哪个选项不能插入到行1",
     "content": "有以下程序片段：1.public class Interesting{//do sth} 下列哪个选项不能插入到行1？",
-    "answer": "D) public class MyClass{}。解析：正确答案是D选项。",
+    "answer": "答案：D) public class MyClass{}。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4640,7 +4640,7 @@ export const questions = [
     "type": "choice",
     "title": "Integer.parseInt和Integer.valueOf的说法正确的是",
     "content": "a = Integer.parseInt(\"12\"); b = Integer.valueOf(\"12\").intValue(); 下述说法正确的是？",
-    "answer": "D) a和b都是整数类型变量并且值相等。解析：正确答案是D选项。",
+    "answer": "答案：D) a和b都是整数类型变量并且值相等。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4663,7 +4663,7 @@ export const questions = [
     "type": "choice",
     "title": "编写Java Applet程序需要导入的包",
     "content": "在编写Java Applet程序时，需在程序的开头写上什么语句？",
-    "answer": "B) import java.applet.Applet;。解析：正确答案是B选项。",
+    "answer": "答案：B) import java.applet.Applet;。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4686,7 +4686,7 @@ export const questions = [
     "type": "choice",
     "title": "不属于Swing顶层容器的是",
     "content": "下列哪一项不属于Swing的顶层容器？",
-    "answer": "B) JTree。解析：正确答案是B选项。",
+    "answer": "答案：B) JTree。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4709,7 +4709,7 @@ export const questions = [
     "type": "choice",
     "title": "使包ch4在当前程序中可见的语句",
     "content": "为了使包ch4在当前程序中可见，可以使用的语句是？",
-    "answer": "A) import ch4.*;。解析：正确答案是A选项。",
+    "answer": "答案：A) import ch4.*;。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4732,7 +4732,7 @@ export const questions = [
     "type": "choice",
     "title": "所有的异常类皆继承自",
     "content": "请问所有的异常类皆继承哪一个类？",
-    "answer": "B) java.lang.Throwable。解析：正确答案是B选项。",
+    "answer": "答案：B) java.lang.Throwable。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4755,7 +4755,7 @@ export const questions = [
     "type": "choice",
     "title": "Java基本的GUI设计需要用到的包",
     "content": "进行Java基本的GUI设计需要用到的包是？",
-    "answer": "C) java.awt。解析：正确答案是C选项。",
+    "answer": "答案：C) java.awt。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4778,7 +4778,7 @@ export const questions = [
     "type": "choice",
     "title": "点击鼠标时触发的事件",
     "content": "当点击鼠标或者拖动鼠标时，触发的事件是下列的哪一个？",
-    "answer": "D) MouseEvent。解析：正确答案是D选项。",
+    "answer": "答案：D) MouseEvent。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4801,7 +4801,7 @@ export const questions = [
     "type": "choice",
     "title": "Java中的标识符",
     "content": "如下哪个是Java中的合法标识符？",
-    "answer": "A) fieldname。解析：正确答案是A选项。",
+    "answer": "答案：A) fieldname。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4824,7 +4824,7 @@ export const questions = [
     "type": "choice",
     "title": "表达式y+=z--/++x的值",
     "content": "设x=1,y=2,z=3，则表达式y+=z--/++x的值是？",
-    "answer": "A) 3。解析：z--/++x = 3/2 = 1（整数除法），y+=1 = 3。注意运算符优先级：后缀自增最高，前缀自增次之，除法再次之，赋值最低。",
+    "answer": "答案：A) 3。解析：z--/++x = 3/2 = 1（整数除法），y+=1 = 3。注意运算符优先级：后缀自增最高，前缀自增次之，除法再次之，赋值最低。",
     "hints": [
       "先排除明显错误的选项",
       "注意运算符优先级和类型转换规则"
@@ -4848,7 +4848,7 @@ export const questions = [
     "type": "choice",
     "title": "循环后count的值",
     "content": "int count=1;for(int i=1;i<=5;i++){count+=i;}System.out.println(count); 执行之后count的值是？",
-    "answer": "D) 16。解析：正确答案是D选项。",
+    "answer": "答案：D) 16。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4871,7 +4871,7 @@ export const questions = [
     "type": "choice",
     "title": "使用类名作为前缀就可以调用它",
     "content": "为AB类的一个无形式参数无返回值的方法method书写方法头，使得使用类名AB作为前缀就可以调用它，该方法头的形式为？",
-    "answer": "A) static void method()。解析：正确答案是A选项。",
+    "answer": "答案：A) static void method()。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4894,7 +4894,7 @@ export const questions = [
     "type": "choice",
     "title": "String循环输出结果",
     "content": "String s=new String(\"abcdefg\"); for(int i=0;i<s.length();i+=2){System.out.print(s.charAt(i));} 输出结果是？",
-    "answer": "A) aceg。解析：循环i从0开始，每次+2，输出索引0,2,4,6位置的字符：a,c,e,g。",
+    "answer": "答案：A) aceg。解析：循环i从0开始，每次+2，输出索引0,2,4,6位置的字符：a,c,e,g。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4917,7 +4917,7 @@ export const questions = [
     "type": "choice",
     "title": "instanceof运算结果",
     "content": "Integer integ=new Integer(9); boolean b=integ instanceof Object; 程序段执行后b的值是？",
-    "answer": "B) true。解析：正确答案是B选项。",
+    "answer": "答案：B) true。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4940,7 +4940,7 @@ export const questions = [
     "type": "choice",
     "title": "for循环和while循环的说法哪个正确",
     "content": "关于for循环和while循环的说法哪个正确？",
-    "answer": "B) while判断条件一般是程序结果，for的判断条件一般是非程序结果。解析：正确答案是B选项。",
+    "answer": "答案：B) while判断条件一般是程序结果，for的判断条件一般是非程序结果。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4963,7 +4963,7 @@ export const questions = [
     "type": "choice",
     "title": "关于对象成员占用内存的说法哪个正确",
     "content": "关于对象成员占用内存的说法哪个正确？",
-    "answer": "B) 同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间。解析：正确答案是B选项。",
+    "answer": "答案：B) 同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -4986,7 +4986,7 @@ export const questions = [
     "type": "choice",
     "title": "关于继承的说法正确的是",
     "content": "关于继承的说法正确的是？",
-    "answer": "B) 子类将继承父类的非私有属性和方法。解析：正确答案是B选项。",
+    "answer": "答案：B) 子类将继承父类的非私有属性和方法。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5009,7 +5009,7 @@ export const questions = [
     "type": "choice",
     "title": "覆盖与重载的关系是",
     "content": "覆盖与重载的关系是？",
-    "answer": "A) 覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中。解析：正确答案是A选项。",
+    "answer": "答案：A) 覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5032,7 +5032,7 @@ export const questions = [
     "type": "choice",
     "title": "提供编写网络应用程序类的包",
     "content": "下面哪一个import命令可以为我们提供编写网络应用程序的类？",
-    "answer": "D) import java.net.*;。解析：正确答案是D选项。",
+    "answer": "答案：D) import java.net.*;。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5055,7 +5055,7 @@ export const questions = [
     "type": "choice",
     "title": "BorderLayout布局下在下方添加按钮",
     "content": "如果容器组件p的布局是BorderLayout，则在p的下边中添加一个按钮b，应该使用的语句是？",
-    "answer": "C) p.add(b,\"South\");。解析：正确答案是C选项。",
+    "answer": "答案：C) p.add(b,\"South\");。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5078,7 +5078,7 @@ export const questions = [
     "type": "choice",
     "title": "Frame对象默认的布局管理器是",
     "content": "Frame对象默认的布局管理器是？",
-    "answer": "B) BorderLayout。解析：正确答案是B选项。",
+    "answer": "答案：B) BorderLayout。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5101,7 +5101,7 @@ export const questions = [
     "type": "choice",
     "title": "从文件中读取数据需要创建哪个类的对象",
     "content": "如果需要从文件中读取数据，则可以在程序中创建哪一个类的对象？",
-    "answer": "A) FileInputStream。解析：正确答案是A选项。",
+    "answer": "答案：A) FileInputStream。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5124,7 +5124,7 @@ export const questions = [
     "type": "choice",
     "title": "FileOutputStream运行3次后文件内容",
     "content": "程序创建FileOutputStream(\"test.txt\",true)对象写入\"ABCDE\"，运行3次后文件内容是什么？",
-    "answer": "D) ABCDEABCDEABCDE。解析：FileOutputStream第二个参数true表示追加模式，每次运行追加\"ABCDE\"，运行3次后内容为\"ABCDEABCDEABCDE\"。",
+    "answer": "答案：D) ABCDEABCDEABCDE。解析：FileOutputStream第二个参数true表示追加模式，每次运行追加\"ABCDE\"，运行3次后内容为\"ABCDEABCDEABCDE\"。",
     "hints": [
       "先排除明显错误的选项",
       "注意运算符优先级和类型转换规则"
@@ -5148,7 +5148,7 @@ export const questions = [
     "type": "choice",
     "title": "字节码文件的扩展名为",
     "content": "编译Java Application源程序文件将产生相应的字节码文件，这些字节码文件的扩展名为？",
-    "answer": "B) .class。解析：正确答案是B选项。",
+    "answer": "答案：B) .class。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5171,7 +5171,7 @@ export const questions = [
     "type": "choice",
     "title": "表达式y+=z--/++x的值（第二次出现）",
     "content": "设x=1,y=2,z=3，则表达式y+=z--/++x的值是？",
-    "answer": "A) 3。解析：正确答案是A选项。",
+    "answer": "答案：A) 3。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项",
       "注意运算符优先级和类型转换规则"
@@ -5195,7 +5195,7 @@ export const questions = [
     "type": "choice",
     "title": "不允许作为类及类成员的访问控制符",
     "content": "不允许作为类及类成员的访问控制符的是？",
-    "answer": "C) static。解析：正确答案是C选项。",
+    "answer": "答案：C) static。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5218,7 +5218,7 @@ export const questions = [
     "type": "choice",
     "title": "使用类名AB作为前缀就可以调用它（第三次出现）",
     "content": "为AB类的一个方法method书写方法头，使得使用类名AB作为前缀就可以调用它，该方法头的形式为？",
-    "answer": "A) static void method()。解析：正确答案是A选项。",
+    "answer": "答案：A) static void method()。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5241,7 +5241,7 @@ export const questions = [
     "type": "choice",
     "title": "关于选择结构的说法哪个正确",
     "content": "关于选择结构下列哪个说法正确？",
-    "answer": "B) if语句可以没有else语句对应。解析：正确答案是B选项。",
+    "answer": "答案：B) if语句可以没有else语句对应。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5264,7 +5264,7 @@ export const questions = [
     "type": "choice",
     "title": "while和do...while循环的区别",
     "content": "while循环和do...while循环的区别是？",
-    "answer": "D) do...while循环是先循环后判断，循环体至少被执行一次。解析：正确答案是D选项。",
+    "answer": "答案：D) do...while循环是先循环后判断，循环体至少被执行一次。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5287,7 +5287,7 @@ export const questions = [
     "type": "choice",
     "title": "关于for循环和while循环的说法哪个正确",
     "content": "关于for循环和while循环的说法哪个正确？",
-    "answer": "B) while判断条件一般是程序结果，for的判断条件一般是非程序结果。解析：while循环先判断后执行，for循环也是先判断后执行，两者可以互相转换。",
+    "answer": "答案：B) while判断条件一般是程序结果，for的判断条件一般是非程序结果。解析：while循环先判断后执行，for循环也是先判断后执行，两者可以互相转换。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5310,7 +5310,7 @@ export const questions = [
     "type": "choice",
     "title": "与访问控制无关的修饰符",
     "content": "下列修饰符中与访问控制无关的是？",
-    "answer": "D) final。解析：正确答案是D选项。",
+    "answer": "答案：D) final。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5333,7 +5333,7 @@ export const questions = [
     "type": "choice",
     "title": "void的含义",
     "content": "void的含义是？",
-    "answer": "A) 方法没有返回值。解析：正确答案是A选项。",
+    "answer": "答案：A) 方法没有返回值。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5356,7 +5356,7 @@ export const questions = [
     "type": "choice",
     "title": "关于return语句的说法正确的是",
     "content": "关于return语句的说法正确的是？",
-    "answer": "C) 方法中可以有多句return。解析：正确答案是C选项。",
+    "answer": "答案：C) 方法中可以有多句return。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5379,7 +5379,7 @@ export const questions = [
     "type": "choice",
     "title": "关于对象成员占用内存的说法哪个正确（重复）",
     "content": "关于对象成员占用内存的说法哪个正确？",
-    "answer": "B) 同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间。解析：正确答案是B选项。",
+    "answer": "答案：B) 同一个类的对象使用不同的内存段，但静态成员共享相同的内存空间。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5402,7 +5402,7 @@ export const questions = [
     "type": "choice",
     "title": "下列说法哪个正确",
     "content": "下列说法哪个正确？",
-    "answer": "C) 属性可以是简单变量，也可以是一个对象。解析：正确答案是C选项。",
+    "answer": "答案：C) 属性可以是简单变量，也可以是一个对象。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5425,7 +5425,7 @@ export const questions = [
     "type": "choice",
     "title": "关于源文件的说法哪个正确",
     "content": "下列说法哪个正确？",
-    "answer": "A) 一个程序可以包含多个源文件。解析：正确答案是A选项。",
+    "answer": "答案：A) 一个程序可以包含多个源文件。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5448,7 +5448,7 @@ export const questions = [
     "type": "choice",
     "title": "关于main()方法的说法哪个正确",
     "content": "关于方法main()的说法哪个正确？",
-    "answer": "C) 一个类中可以没有main()方法。解析：正确答案是C选项。",
+    "answer": "答案：C) 一个类中可以没有main()方法。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5471,7 +5471,7 @@ export const questions = [
     "type": "choice",
     "title": "构造函数何时被调用",
     "content": "构造函数何时被调用？",
-    "answer": "A) 创建对象时。解析：正确答案是A选项。",
+    "answer": "答案：A) 创建对象时。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5494,7 +5494,7 @@ export const questions = [
     "type": "choice",
     "title": "关于抽象方法的说法正确的是（重复）",
     "content": "关于抽象方法的说法正确的是？",
-    "answer": "C) 是没有方法体的方法。解析：正确答案是C选项。",
+    "answer": "答案：C) 是没有方法体的方法。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5517,7 +5517,7 @@ export const questions = [
     "type": "choice",
     "title": "关于继承的说法正确的是（重复）",
     "content": "关于继承的说法正确的是？",
-    "answer": "B) 子类将继承父类的非私有属性和方法。解析：正确答案是B选项。",
+    "answer": "答案：B) 子类将继承父类的非私有属性和方法。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5540,7 +5540,7 @@ export const questions = [
     "type": "choice",
     "title": "关于构造函数的说法哪个正确",
     "content": "关于构造函数的说法哪个正确？",
-    "answer": "C) 构造函数与类同名。解析：正确答案是C选项。",
+    "answer": "答案：C) 构造函数与类同名。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5563,7 +5563,7 @@ export const questions = [
     "type": "choice",
     "title": "this和super的说法正确的是",
     "content": "关于this和super的说法正确的是？",
-    "answer": "C) 不能用在main()方法中。解析：正确答案是C选项。",
+    "answer": "答案：C) 不能用在main()方法中。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5586,7 +5586,7 @@ export const questions = [
     "type": "choice",
     "title": "关于super的说法正确的是",
     "content": "关于super的说法正确的是？",
-    "answer": "B) 是指当前对象的父类对象的内存地址。解析：正确答案是B选项。",
+    "answer": "答案：B) 是指当前对象的父类对象的内存地址。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5609,7 +5609,7 @@ export const questions = [
     "type": "choice",
     "title": "覆盖与重载的关系是（重复）",
     "content": "覆盖与重载的关系是？",
-    "answer": "A) 覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中。解析：正确答案是A选项。",
+    "answer": "答案：A) 覆盖只有发生在父类与子类之间，而重载可以发生在同一个类中。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5632,7 +5632,7 @@ export const questions = [
     "type": "choice",
     "title": "关于接口的说法哪个正确",
     "content": "关于接口哪个说法正确？",
-    "answer": "A) 实现一个接口必须实现接口的所有方法。解析：正确答案是A选项。",
+    "answer": "答案：A) 实现一个接口必须实现接口的所有方法。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5655,7 +5655,7 @@ export const questions = [
     "type": "choice",
     "title": "异常包含哪些内容",
     "content": "异常包含下列哪些内容？",
-    "answer": "A) 程序执行过程中遇到的事先没有预料到的情况。解析：正确答案是A选项。",
+    "answer": "答案：A) 程序执行过程中遇到的事先没有预料到的情况。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5678,7 +5678,7 @@ export const questions = [
     "type": "choice",
     "title": "对于可能抛出异常的语句的处理方式",
     "content": "对于已经被定义过可能抛出异常的语句，在编程时应该？",
-    "answer": "A) 必须用try/catch处理异常或用throws抛出。解析：正确答案是A选项。",
+    "answer": "答案：A) 必须用try/catch处理异常或用throws抛出。解析：正确答案是A选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5701,7 +5701,7 @@ export const questions = [
     "type": "choice",
     "title": "字符流与字节流的区别在于",
     "content": "字符流与字节流的区别在于？",
-    "answer": "D) 每次读写的字节数不同。解析：正确答案是D选项。",
+    "answer": "答案：D) 每次读写的字节数不同。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5724,7 +5724,7 @@ export const questions = [
     "type": "choice",
     "title": "下列流中不属于字节流的是",
     "content": "下列流中哪个不属于字节流？",
-    "answer": "D) InputStreamReader。解析：正确答案是D选项。",
+    "answer": "答案：D) InputStreamReader。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5747,7 +5747,7 @@ export const questions = [
     "type": "choice",
     "title": "一个对象请求另一个对象为其服务的方式",
     "content": "在面向对象的方法中，一个对象请求另一个对象为其服务的方式是通过发送什么？",
-    "answer": "D) 消息。解析：正确答案是D选项。",
+    "answer": "答案：D) 消息。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5770,7 +5770,7 @@ export const questions = [
     "type": "choice",
     "title": "反映Java程序并行机制的特点",
     "content": "Java语言具有许多优点和特点，下列选项中哪个反映了Java程序并行机制的特点？",
-    "answer": "B) 多线程。解析：正确答案是B选项。",
+    "answer": "答案：B) 多线程。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5793,7 +5793,7 @@ export const questions = [
     "type": "choice",
     "title": "编写Java applet程序与Java application不同的步骤是",
     "content": "编写和运行Java applet程序与编写和运行Java application程序不同的步骤是？",
-    "answer": "B) 编写HTML文件调用该小程序。解析：正确答案是B选项。",
+    "answer": "答案：B) 编写HTML文件调用该小程序。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5816,7 +5816,7 @@ export const questions = [
     "type": "choice",
     "title": "每个Unicode码占用的比特位",
     "content": "Java的字符类型采用的是Unicode编码方案，每个Unicode码占用多少个比特位？",
-    "answer": "B) 16。解析：正确答案是B选项。",
+    "answer": "答案：B) 16。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5839,7 +5839,7 @@ export const questions = [
     "type": "choice",
     "title": "int类型成员变量的默认值",
     "content": "public class MyClass{static int i;public static void main(String argv[]){System.out.println(i);}} 输出结果是？",
-    "answer": "D) 0。解析：正确答案是D选项。",
+    "answer": "答案：D) 0。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5862,7 +5862,7 @@ export const questions = [
     "type": "choice",
     "title": "100%3和100%3.0的输出结果",
     "content": "System.out.print(100%3);System.out.print(\",\");System.out.println(100%3.0); 输出结果是？",
-    "answer": "B) 1,1.0。解析：正确答案是B选项。",
+    "answer": "答案：B) 1,1.0。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5885,7 +5885,7 @@ export const questions = [
     "type": "choice",
     "title": "复杂逻辑表达式的结果",
     "content": "int x=20,y=30;boolean b=x>50&&y>60||x>50&&y<-60||x<-50&&y>60||x<-50&&y<-60; b的值是？",
-    "answer": "B) false。解析：正确答案是B选项。",
+    "answer": "答案：B) false。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5908,7 +5908,7 @@ export const questions = [
     "type": "choice",
     "title": "打印字符串second时x的范围",
     "content": "if(x>0){\"first\"}else if(x>-3){\"second\"}else{\"third\"} x处于什么范围时将打印\"second\"?",
-    "answer": "D) x<=0 && x>-3。解析：x>0打印first，x<=0&&x>-3打印second，x<=-3打印third。",
+    "answer": "答案：D) x<=0 && x>-3。解析：x>0打印first，x<=0&&x>-3打印second，x<=-3打印third。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5931,7 +5931,7 @@ export const questions = [
     "type": "choice",
     "title": "声明暂时性变量应使用的修饰符",
     "content": "若要把变量声名为暂时性变量，应使用如下哪种修饰符？",
-    "answer": "C) transient。解析：正确答案是C选项。",
+    "answer": "答案：C) transient。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5954,7 +5954,7 @@ export const questions = [
     "type": "choice",
     "title": "一个类可定义许多同名的方法称为（重复）",
     "content": "在Java中，一个类可同时定义许多同名的方法，参数个数类型或顺序各不相同，这种特性称为？",
-    "answer": "C) 重载。解析：正确答案是C选项。",
+    "answer": "答案：C) 重载。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -5977,7 +5977,7 @@ export const questions = [
     "type": "choice",
     "title": "抛出异常应使用的子句",
     "content": "如要抛出异常，应用下列哪种子句？",
-    "answer": "B) throws。解析：正确答案是B选项。",
+    "answer": "答案：B) throws。解析：正确答案是B选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6000,7 +6000,7 @@ export const questions = [
     "type": "choice",
     "title": "声明接口时使用的修饰符",
     "content": "在使用interface声明一个接口时，只可以使用什么修饰符修饰该接口？",
-    "answer": "D) public。解析：正确答案是D选项。",
+    "answer": "答案：D) public。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6023,7 +6023,7 @@ export const questions = [
     "type": "choice",
     "title": "多态情况下printall()的输出结果",
     "content": "class Parent{void printMe(){print(\"parent\")}} class Child extends Parent{void printMe(){print(\"child\")} void printall(){super.printMe();this.printMe();printMe();}} new Child().printall()输出？",
-    "answer": "A) parent\\nchild\\nchild。解析：super.printMe()调用父类方法输出parent，this.printMe()和printMe()都调用子类方法输出child。多态特性。",
+    "answer": "答案：A) parent\\nchild\\nchild。解析：super.printMe()调用父类方法输出parent，this.printMe()和printMe()都调用子类方法输出child。多态特性。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6046,7 +6046,7 @@ export const questions = [
     "type": "choice",
     "title": "为读取的内容进行处理后再输出应使用的流",
     "content": "为读取的内容进行处理后再输出，需要使用下列哪种流？",
-    "answer": "D) Filter stream。解析：正确答案是D选项。",
+    "answer": "答案：D) Filter stream。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6069,7 +6069,7 @@ export const questions = [
     "type": "choice",
     "title": "实现多线程之间的通信应使用的流",
     "content": "为实现多线程之间的通信，需要使用下列哪种流才合适？",
-    "answer": "D) Piped stream。解析：正确答案是D选项。",
+    "answer": "答案：D) Piped stream。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6092,7 +6092,7 @@ export const questions = [
     "type": "choice",
     "title": "Swing与AWT的区别不包括",
     "content": "Swing与AWT的区别不包括？",
-    "answer": "D) Swing支持图形用户界面。解析：正确答案是D选项。",
+    "answer": "答案：D) Swing支持图形用户界面。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6115,7 +6115,7 @@ export const questions = [
     "type": "choice",
     "title": "Applet事件处理需要导入的包",
     "content": "在编写Java applet程序时，若需要对发生事件作出响应和处理，需要在程序开头写上什么语句？",
-    "answer": "D) import java.awt.event.*;。解析：正确答案是D选项。",
+    "answer": "答案：D) import java.awt.event.*;。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6138,7 +6138,7 @@ export const questions = [
     "type": "choice",
     "title": "注释的基本原则不包括",
     "content": "注释的基本原则不包括？",
-    "answer": "D) 尽量给每一条语句加注释。解析：正确答案是D选项。",
+    "answer": "答案：D) 尽量给每一条语句加注释。解析：正确答案是D选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6161,7 +6161,7 @@ export const questions = [
     "type": "choice",
     "title": "java.io包的流按功能分为",
     "content": "java.io包中定义的流类型按功能分为？",
-    "answer": "C) 节点流和处理流。解析：正确答案是C选项。",
+    "answer": "答案：C) 节点流和处理流。解析：正确答案是C选项。",
     "hints": [
       "先排除明显错误的选项"
     ],
@@ -6796,7 +6796,7 @@ export const questions = [
     "type": "choice",
     "title": "HashMap 底层数据结构",
     "content": "JDK 8 中 HashMap 的底层数据结构是？",
-    "answer": "C) 数组 + 链表 + 红黑树。解析：JDK 8 中 HashMap 底层采用数组 + 链表 + 红黑树实现。当链表长度超过阈值（8）且数组长度 ≥ 64 时，链表转换为红黑树，将查询时间复杂度从 O(n) 降低为 O(log n)。JDK 7 及之前只有数组 + 链表。",
+    "answer": "答案：C) 数组 + 链表 + 红黑树。解析：JDK 8 中 HashMap 底层采用数组 + 链表 + 红黑树实现。当链表长度超过阈值（8）且数组长度 ≥ 64 时，链表转换为红黑树，将查询时间复杂度从 O(n) 降低为 O(log n)。JDK 7 及之前只有数组 + 链表。",
     "hints": [
       "JDK 7 和 JDK 8 的实现不同",
       "考虑链表过长时的优化手段"
@@ -6820,7 +6820,7 @@ export const questions = [
     "type": "choice",
     "title": "HashMap put 方法的执行流程",
     "content": "关于 HashMap 的 put(K, V) 方法执行流程，下列描述错误的是？",
-    "answer": "D) 如果 key 已存在，直接覆盖旧值并返回 null。解析：当 key 已存在时，put 方法会覆盖旧值，但返回的是被覆盖的旧值（old value），而不是 null。只有 key 不存在时插入才返回 null。",
+    "answer": "答案：D) 如果 key 已存在，直接覆盖旧值并返回 null。解析：当 key 已存在时，put 方法会覆盖旧值，但返回的是被覆盖的旧值（old value），而不是 null。只有 key 不存在时插入才返回 null。",
     "hints": [
       "注意 put 方法的返回值语义"
     ],
@@ -6843,7 +6843,7 @@ export const questions = [
     "type": "choice",
     "title": "HashMap 扩容机制",
     "content": "关于 HashMap 的扩容机制，下列哪个说法是正确的？",
-    "answer": "B) 当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍。解析：HashMap 的默认负载因子是 0.75，当元素个数 > capacity × loadFactor 时扩容为原来的 2 倍。扩容后所有元素需要重新计算哈希索引（rehash），因此扩容是较耗时的操作。",
+    "answer": "答案：B) 当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍。解析：HashMap 的默认负载因子是 0.75，当元素个数 > capacity × loadFactor 时扩容为原来的 2 倍。扩容后所有元素需要重新计算哈希索引（rehash），因此扩容是较耗时的操作。",
     "hints": [
       "threshold 的计算方式",
       "扩容后元素需要 rehash"
@@ -6867,7 +6867,7 @@ export const questions = [
     "type": "choice",
     "title": "JDK 7 与 JDK 8 HashMap 的区别",
     "content": "以下关于 JDK 7 和 JDK 8 中 HashMap 的区别，说法错误的是？",
-    "answer": "B) JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全。解析：尾插法确实解决了扩容时环形链表导致的死循环问题，但这并不意味着 HashMap 变成线程安全。put、get、resize 等操作仍然没有加锁，多线程下仍可能出现数据覆盖、size 不准确等问题。",
+    "answer": "答案：B) JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全。解析：尾插法确实解决了扩容时环形链表导致的死循环问题，但这并不意味着 HashMap 变成线程安全。put、get、resize 等操作仍然没有加锁，多线程下仍可能出现数据覆盖、size 不准确等问题。",
     "hints": [
       "线程安全和数据结构优化是两个不同的问题"
     ],
@@ -6890,7 +6890,7 @@ export const questions = [
     "type": "choice",
     "title": "ConcurrentHashMap JDK 7 的同步机制",
     "content": "JDK 7 中 ConcurrentHashMap 采用什么机制保证线程安全？",
-    "answer": "B) Segment + ReentrantLock 分段锁。解析：JDK 7 的 ConcurrentHashMap 采用分段锁设计，将数据分为多个 Segment（默认 16 个），每个 Segment 持有一把 ReentrantLock 锁。写操作只需锁住对应 Segment，不影响其他 Segment 的读写，从而实现高并发。",
+    "answer": "答案：B) Segment + ReentrantLock 分段锁。解析：JDK 7 的 ConcurrentHashMap 采用分段锁设计，将数据分为多个 Segment（默认 16 个），每个 Segment 持有一把 ReentrantLock 锁。写操作只需锁住对应 Segment，不影响其他 Segment 的读写，从而实现高并发。",
     "hints": [
       "JDK 7 和 JDK 8 的 ConcurrentHashMap 实现完全不同"
     ],
@@ -6913,7 +6913,7 @@ export const questions = [
     "type": "choice",
     "title": "ConcurrentHashMap JDK 8 的同步机制",
     "content": "JDK 8 中 ConcurrentHashMap 采用什么机制保证线程安全？",
-    "answer": "C) CAS + volatile + synchronized（桶粒度锁）。解析：JDK 8 放弃了 Segment 分段锁，改为 CAS + volatile + synchronized 实现。插入时如果桶为空则用 CAS 插入，否则对桶的首节点加 synchronized 锁。粒度更细（从 Segment 级降到桶级），并发性能更好。",
+    "answer": "答案：C) CAS + volatile + synchronized（桶粒度锁）。解析：JDK 8 放弃了 Segment 分段锁，改为 CAS + volatile + synchronized 实现。插入时如果桶为空则用 CAS 插入，否则对桶的首节点加 synchronized 锁。粒度更细（从 Segment 级降到桶级），并发性能更好。",
     "hints": [
       "JDK 8 对 ConcurrentHashMap 做了重大重构"
     ],
@@ -6936,7 +6936,7 @@ export const questions = [
     "type": "choice",
     "title": "ArrayList 扩容机制",
     "content": "ArrayList 在调用 add() 方法且内部数组已满时的扩容方式是？",
-    "answer": "A) 扩容为原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。解析：ArrayList 扩容时计算新容量为 oldCapacity + (oldCapacity >> 1)，即 1.5 倍。然后使用 Arrays.copyOf 将原数组元素复制到新数组。",
+    "answer": "答案：A) 扩容为原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。解析：ArrayList 扩容时计算新容量为 oldCapacity + (oldCapacity >> 1)，即 1.5 倍。然后使用 Arrays.copyOf 将原数组元素复制到新数组。",
     "hints": [
       "看源码中的 grow() 方法实现"
     ],
@@ -6959,7 +6959,7 @@ export const questions = [
     "type": "choice",
     "title": "ArrayList 与 LinkedList 的区别",
     "content": "以下关于 ArrayList 和 LinkedList 的说法，正确的是？",
-    "answer": "D) ArrayList 随机访问快，LinkedList 插入删除快。解析：ArrayList 基于数组实现，支持 O(1) 随机访问；LinkedList 基于双向链表实现，插入和删除只需修改指针为 O(1)，但随机访问需要遍历为 O(n)。两者都不是线程安全的。",
+    "answer": "答案：D) ArrayList 随机访问快，LinkedList 插入删除快。解析：ArrayList 基于数组实现，支持 O(1) 随机访问；LinkedList 基于双向链表实现，插入和删除只需修改指针为 O(1)，但随机访问需要遍历为 O(n)。两者都不是线程安全的。",
     "hints": [
       "考虑底层数据结构的不同"
     ],
@@ -6982,7 +6982,7 @@ export const questions = [
     "type": "choice",
     "title": "Set 的实现类",
     "content": "下列哪个类不是 Set 接口的实现类？",
-    "answer": "D) Map。解析：Map 是独立的根接口，与 Collection 平级。HashSet、TreeSet、LinkedHashSet 都是 Set 接口的实现类。",
+    "answer": "答案：D) Map。解析：Map 是独立的根接口，与 Collection 平级。HashSet、TreeSet、LinkedHashSet 都是 Set 接口的实现类。",
     "hints": [
       "Set 是 Collection 的子接口，注意区分 Map"
     ],
@@ -7005,7 +7005,7 @@ export const questions = [
     "type": "choice",
     "title": "HashSet 如何保证元素不重复",
     "content": "HashSet 是如何保证元素不重复的？",
-    "answer": "A) 底层基于 HashMap，元素作为 HashMap 的 key 存储。解析：HashSet 的底层实际是 HashMap，添加元素时把元素作为 HashMap 的 key，value 是一个常量 PRESENT（new Object()）。利用 HashMap key 不可重复的特性保证元素不重复，依赖元素的 hashCode() 和 equals() 方法。",
+    "answer": "答案：A) 底层基于 HashMap，元素作为 HashMap 的 key 存储。解析：HashSet 的底层实际是 HashMap，添加元素时把元素作为 HashMap 的 key，value 是一个常量 PRESENT（new Object()）。利用 HashMap key 不可重复的特性保证元素不重复，依赖元素的 hashCode() 和 equals() 方法。",
     "hints": [
       "添加 add() 方法的返回值说明了什么？"
     ],
@@ -7028,7 +7028,7 @@ export const questions = [
     "type": "choice",
     "title": "HashMap 线程不安全的表现",
     "content": "HashMap 在多线程环境下可能出现哪些问题？以下说法错误的是？",
-    "answer": "C) 多线程读操作一定会抛出 ConcurrentModificationException。解析：ComcurrentModificationException 只在迭代过程中检测到结构性修改时才会抛出（fast-fail 机制），并非一定会出现。多线程读不一定会抛异常，但可能出现脏读、死循环（JDK 7 头插法导致）、数据覆盖等问题。",
+    "answer": "答案：C) 多线程读操作一定会抛出 ConcurrentModificationException。解析：ComcurrentModificationException 只在迭代过程中检测到结构性修改时才会抛出（fast-fail 机制），并非一定会出现。多线程读不一定会抛异常，但可能出现脏读、死循环（JDK 7 头插法导致）、数据覆盖等问题。",
     "hints": [
       "fast-fail 机制只在特定条件下触发"
     ],
@@ -7051,7 +7051,7 @@ export const questions = [
     "type": "choice",
     "title": "TreeMap 的排序方式",
     "content": "TreeMap 根据什么来排序 key？",
-    "answer": "C) 根据 key 的自然顺序（Comparable）或构造时传入的 Comparator。解析：TreeMap 基于红黑树实现，key 必须实现 Comparable 接口或在构造 TreeMap 时传入 Comparator。插入时自动排序，保证 key 有序。",
+    "answer": "答案：C) 根据 key 的自然顺序（Comparable）或构造时传入的 Comparator。解析：TreeMap 基于红黑树实现，key 必须实现 Comparable 接口或在构造 TreeMap 时传入 Comparator。插入时自动排序，保证 key 有序。",
     "hints": [
       "TreeMap 的 key 有什么约束？"
     ],
@@ -7074,7 +7074,7 @@ export const questions = [
     "type": "choice",
     "title": "HashMap 计算数组索引的方式",
     "content": "HashMap 如何根据 key 计算在数组中的存放位置？",
-    "answer": "B) h = key.hashCode()，然后 h ^ (h >>> 16) 得到扰动后的 hash，再与数组长度 - 1 做 & 运算。解析：HashMap 先对 key 的 hashCode() 做高 16 位异或低 16 位的扰动计算，目的是让高位也参与寻址，减少哈希碰撞。然后通过 (n - 1) & hash 计算数组下标，等价于取模运算但位运算效率更高。",
+    "answer": "答案：B) h = key.hashCode()，然后 h ^ (h >>> 16) 得到扰动后的 hash，再与数组长度 - 1 做 & 运算。解析：HashMap 先对 key 的 hashCode() 做高 16 位异或低 16 位的扰动计算，目的是让高位也参与寻址，减少哈希碰撞。然后通过 (n - 1) & hash 计算数组下标，等价于取模运算但位运算效率更高。",
     "hints": [
       "为什么 HashMap 的容量必须是 2 的幂？"
     ],
@@ -7097,7 +7097,7 @@ export const questions = [
     "type": "choice",
     "title": "Collection 接口的子接口",
     "content": "以下哪个接口不是 Collection 接口的子接口？",
-    "answer": "C) Map。解析：Collection 的子接口包括 List、Set、Queue。Map 是独立于 Collection 的另一个根接口，两者在类层次结构中是平级的。",
+    "answer": "答案：C) Map。解析：Collection 的子接口包括 List、Set、Queue。Map 是独立于 Collection 的另一个根接口，两者在类层次结构中是平级的。",
     "hints": [
       "Collection 和 Map 的关系是什么？"
     ],
@@ -7120,7 +7120,7 @@ export const questions = [
     "type": "choice",
     "title": "HashMap 默认初始容量和负载因子",
     "content": "HashMap 的默认初始容量和负载因子分别是多少？",
-    "answer": "B) 初始容量 16，负载因子 0.75。解析：HashMap 默认初始容量是 1 << 4 = 16，默认负载因子是 0.75f。负载因子 0.75 是时间和空间成本的权衡，过高减少扩容次数但增加哈希碰撞，过低增加内存浪费。",
+    "answer": "答案：B) 初始容量 16，负载因子 0.75。解析：HashMap 默认初始容量是 1 << 4 = 16，默认负载因子是 0.75f。负载因子 0.75 是时间和空间成本的权衡，过高减少扩容次数但增加哈希碰撞，过低增加内存浪费。",
     "hints": [
       "看 HashMap 源码中的 DEFAULT_INITIAL_CAPACITY 和 DEFAULT_LOAD_FACTOR"
     ],
@@ -7143,7 +7143,7 @@ export const questions = [
     "type": "choice",
     "title": "HashMap 链表转红黑树的触发条件",
     "content": "HashMap 中链表转换为红黑树的条件是什么？",
-    "answer": "C) 链表长度 ≥ 8 且数组长度 ≥ 64。解析：两个条件缺一不可：链表长度达到 TREEIFY_THRESHOLD（8）时，会先检查数组长度——如果 < MIN_TREEIFY_CAPACITY（64），则优先扩容数组而非转红黑树。只有数组长度 ≥ 64 时才会将链表转为红黑树。",
+    "answer": "答案：C) 链表长度 ≥ 8 且数组长度 ≥ 64。解析：两个条件缺一不可：链表长度达到 TREEIFY_THRESHOLD（8）时，会先检查数组长度——如果 < MIN_TREEIFY_CAPACITY（64），则优先扩容数组而非转红黑树。只有数组长度 ≥ 64 时才会将链表转为红黑树。",
     "hints": [
       "树化需要同时满足两个条件"
     ],
@@ -7166,7 +7166,7 @@ export const questions = [
     "type": "choice",
     "title": "ConcurrentHashMap 的 size() 方法",
     "content": "ConcurrentHashMap 的 size() 方法在并发环境下如何保证正确性？",
-    "answer": "D) 先尝试无锁统计，如果竞争激烈则加锁统计。解析：ConcurrentHashMap 的 size() 采用先无锁统计策略：先通过 sumCount() 无锁累加 baseCount 和 CounterCell 数组的值。如果在统计过程中发生了并发修改，会使用 counterCells 辅助记录，最终通过累加所有计数来得到正确结果，无需每次都加锁。",
+    "answer": "答案：D) 先尝试无锁统计，如果竞争激烈则加锁统计。解析：ConcurrentHashMap 的 size() 采用先无锁统计策略：先通过 sumCount() 无锁累加 baseCount 和 CounterCell 数组的值。如果在统计过程中发生了并发修改，会使用 counterCells 辅助记录，最终通过累加所有计数来得到正确结果，无需每次都加锁。",
     "hints": [
       "JDK 8 的 CounterCell"
     ],
@@ -7189,7 +7189,7 @@ export const questions = [
     "type": "choice",
     "title": "解决哈希冲突的方式",
     "content": "以下哪种不是解决哈希冲突的常见方法？",
-    "answer": "D) 位运算法。解析：解决哈希冲突的常见方法有：链地址法（HashMap 使用）、开放地址法（ThreadLocalMap 使用）、再哈希法。位运算是计算哈希值的方法，不是解决冲突的方式。",
+    "answer": "答案：D) 位运算法。解析：解决哈希冲突的常见方法有：链地址法（HashMap 使用）、开放地址法（ThreadLocalMap 使用）、再哈希法。位运算是计算哈希值的方法，不是解决冲突的方式。",
     "hints": [
       "考虑常见的哈希表实现方式"
     ],
@@ -7212,7 +7212,7 @@ export const questions = [
     "type": "choice",
     "title": "迭代器的快速失败机制",
     "content": "在使用迭代器遍历集合时，其他线程修改了集合结构，会发生什么？",
-    "answer": "B) 抛出 ConcurrentModificationException。解析：Java 集合框架中的迭代器采用了 fast-fail 机制。迭代器内部维护一个 modCount 计数器，当检测到 modCount 被修改（即集合结构被修改）时，立即抛出 ConcurrentModificationException，而不是冒险在后续操作中继续。",
+    "answer": "答案：B) 抛出 ConcurrentModificationException。解析：Java 集合框架中的迭代器采用了 fast-fail 机制。迭代器内部维护一个 modCount 计数器，当检测到 modCount 被修改（即集合结构被修改）时，立即抛出 ConcurrentModificationException，而不是冒险在后续操作中继续。",
     "hints": [
       "fast-fail 的 fail 指的是什么？"
     ],
@@ -7235,7 +7235,7 @@ export const questions = [
     "type": "choice",
     "title": "Comparable 与 Comparator 的区别",
     "content": "关于 Comparable 和 Comparator 的区别，以下说法正确的是？",
-    "answer": "A) Comparable 定义在元素类内部，Comparator 定义在外部。解析：Comparable 是内部比较器，元素类实现 Comparable 接口的 compareTo() 方法定义自然排序。Comparator 是外部比较器，单独定义比较策略，适用于无法修改源码或需要多种排序方式的场景。",
+    "answer": "答案：A) Comparable 定义在元素类内部，Comparator 定义在外部。解析：Comparable 是内部比较器，元素类实现 Comparable 接口的 compareTo() 方法定义自然排序。Comparator 是外部比较器，单独定义比较策略，适用于无法修改源码或需要多种排序方式的场景。",
     "hints": [
       "一个是 int compareTo(T o)，一个是 int compare(T o1, T o2)"
     ],
@@ -7258,7 +7258,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "Java 基本数据类型",
     "content": "以下哪些是 Java 的基本数据类型（Primitive Type）？",
-    "answer": "A)、C)。解析：Java 有 8 种基本数据类型：byte、short、int、long、float、double、boolean、char。String 是引用类型，BigDecimal 是 java.math 包中的类，属于引用类型。基本类型存储在栈上，引用类型存储在堆上。",
+    "answer": "答案：A)、C)。解析：Java 有 8 种基本数据类型：byte、short、int、long、float、double、boolean、char。String 是引用类型，BigDecimal 是 java.math 包中的类，属于引用类型。基本类型存储在栈上，引用类型存储在堆上。",
     "hints": [
       "基本数据类型只有 8 种",
       "String 不是基本类型"
@@ -7282,7 +7282,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "面向对象三大特性",
     "content": "以下哪些是 Java 面向对象的特性？",
-    "answer": "A)、B)、C)。解析：面向对象的三大特性是封装（Encapsulation）、继承（Inheritance）和多态（Polymorphism）。封装通过 private 关键字隐藏实现细节；继承通过 extends 实现代码复用；多态通过方法重写实现同一接口的不同表现。重载（Overload）是编译期多态的体现，但通常不被列为三大特性之一，而是多态的一种实现手段。",
+    "answer": "答案：A)、B)、C)。解析：面向对象的三大特性是封装（Encapsulation）、继承（Inheritance）和多态（Polymorphism）。封装通过 private 关键字隐藏实现细节；继承通过 extends 实现代码复用；多态通过方法重写实现同一接口的不同表现。重载（Overload）是编译期多态的体现，但通常不被列为三大特性之一，而是多态的一种实现手段。",
     "hints": [
       "三大特性是 Java 面向对象的基石"
     ],
@@ -7305,7 +7305,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "String 类的特性",
     "content": "关于 Java 中 String 类的描述，哪些是正确的？",
-    "answer": "A)、B)、D)。解析：String 被 final 修饰，不可被继承；String 底层在 JDK 8 及之前是 char[]，JDK 9+ 优化为 byte[]（加上 coder 标志位区分 Latin1 和 UTF16）；字符串常量池存储字符串字面量，通过 intern() 方法可以手动将字符串加入常量池。String 类重写了 equals() 方法，比较的是内容而非引用。",
+    "answer": "答案：A)、B)、D)。解析：String 被 final 修饰，不可被继承；String 底层在 JDK 8 及之前是 char[]，JDK 9+ 优化为 byte[]（加上 coder 标志位区分 Latin1 和 UTF16）；字符串常量池存储字符串字面量，通过 intern() 方法可以手动将字符串加入常量池。String 类重写了 equals() 方法，比较的是内容而非引用。",
     "hints": [
       "考虑 final、底层存储、常量池"
     ],
@@ -7328,7 +7328,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "异常体系结构",
     "content": "以下关于 Java 异常体系的描述，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：Throwable 是顶层父类，分为 Error（不可恢复，如 OutOfMemoryError）和 Exception（可处理）。RuntimeException 及其子类属于非检查异常（Unchecked Exception），不需要显式捕获或声明抛出。受检异常（Checked Exception，如 IOException）必须在方法签名中 throws 声明或 try-catch 处理。Throwable 不是异常，它是 Error 和 Exception 的共同父类。",
+    "answer": "答案：A)、C)、D)。解析：Throwable 是顶层父类，分为 Error（不可恢复，如 OutOfMemoryError）和 Exception（可处理）。RuntimeException 及其子类属于非检查异常（Unchecked Exception），不需要显式捕获或声明抛出。受检异常（Checked Exception，如 IOException）必须在方法签名中 throws 声明或 try-catch 处理。Throwable 不是异常，它是 Error 和 Exception 的共同父类。",
     "hints": [
       "区分检查异常和非检查异常",
       "Throwable 的层次结构"
@@ -7352,7 +7352,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "final 关键字的用法",
     "content": "以下关于 Java final 关键字的说法，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：final 修饰类表示该类不能被继承；修饰方法表示该方法不能被子类重写（但可以重载）；修饰变量表示该变量只能被赋值一次（常量）。final 修饰的引用类型变量，引用地址不可变，但对象内部的状态可以改变。final 方法可以被继承，只是不能重写。",
+    "answer": "答案：A)、C)、D)。解析：final 修饰类表示该类不能被继承；修饰方法表示该方法不能被子类重写（但可以重载）；修饰变量表示该变量只能被赋值一次（常量）。final 修饰的引用类型变量，引用地址不可变，但对象内部的状态可以改变。final 方法可以被继承，只是不能重写。",
     "hints": [
       "final 作用于类、方法、变量三个层面的含义不同"
     ],
@@ -7375,7 +7375,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "访问修饰符的可见范围",
     "content": "以下关于 Java 访问修饰符的描述，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：Java 有四种访问级别：public（所有类可见）、protected（同包 + 子类可见）、默认/package-private（同包可见）、private（同类可见）。protected 修饰的成员在不同包的子类中可以通过继承关系访问，但不能通过父类引用访问其他实例的 protected 成员。默认访问权限仅限同包访问。",
+    "answer": "答案：A)、C)、D)。解析：Java 有四种访问级别：public（所有类可见）、protected（同包 + 子类可见）、默认/package-private（同包可见）、private（同类可见）。protected 修饰的成员在不同包的子类中可以通过继承关系访问，但不能通过父类引用访问其他实例的 protected 成员。默认访问权限仅限同包访问。",
     "hints": [
       "protected 权限比默认权限更开放"
     ],
@@ -7398,7 +7398,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "ArrayList 的特性",
     "content": "以下关于 ArrayList 的描述，哪些是正确的？",
-    "answer": "A)、B)、D)。解析：ArrayList 基于动态数组实现，初始容量为 10（懒加载，第一次 add 时初始化），扩容时按 1.5 倍增长（oldCapacity + oldCapacity >> 1）。ArrayList 允许 null 元素，并且通过 ensureCapacity() 可以手动增加容量以减少扩容次数。ArrayList 不是线程安全的，多线程环境下应使用 CopyOnWriteArrayList 或 Collections.synchronizedList()。",
+    "answer": "答案：A)、B)、D)。解析：ArrayList 基于动态数组实现，初始容量为 10（懒加载，第一次 add 时初始化），扩容时按 1.5 倍增长（oldCapacity + oldCapacity >> 1）。ArrayList 允许 null 元素，并且通过 ensureCapacity() 可以手动增加容量以减少扩容次数。ArrayList 不是线程安全的，多线程环境下应使用 CopyOnWriteArrayList 或 Collections.synchronizedList()。",
     "hints": [
       "看 ArrayList 源码的 grow() 方法",
       "线程安全性需要额外保证"
@@ -7422,7 +7422,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "HashMap 的特性",
     "content": "以下关于 Java HashMap 的描述，哪些是正确的？",
-    "answer": "A)、C)、D)。解析：HashMap 允许一个 null 键和多个 null 值，null 键的哈希值固定为 0（存储在数组索引 0 的位置）。JDK 8 引入了红黑树优化：当链表长度 ≥ 8 且数组长度 ≥ 64 时链表转为红黑树，将查询复杂度从 O(n) 降为 O(log n)。HashMap 默认负载因子 0.75 是时间和空间的折中。默认初始容量 16 必须是 2 的幂。",
+    "answer": "答案：A)、C)、D)。解析：HashMap 允许一个 null 键和多个 null 值，null 键的哈希值固定为 0（存储在数组索引 0 的位置）。JDK 8 引入了红黑树优化：当链表长度 ≥ 8 且数组长度 ≥ 64 时链表转为红黑树，将查询复杂度从 O(n) 降为 O(log n)。HashMap 默认负载因子 0.75 是时间和空间的折中。默认初始容量 16 必须是 2 的幂。",
     "hints": [
       "HashMap 在多线程下存在问题",
       "红黑树优化的触发条件"
@@ -7446,7 +7446,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "HashMap 与 Hashtable 的区别",
     "content": "以下关于 HashMap 和 Hashtable 区别的描述，哪些是正确的？",
-    "answer": "A)、B)、C)。解析：HashMap 和 Hashtable 的主要区别：1）线程安全：Hashtable 使用 synchronized 保证线程安全，HashMap 非线程安全；2）null 值：HashMap 允许 null key 和 null value，Hashtable 不允许；3）初始容量和扩容：HashMap 初始 16 扩容 2 倍，Hashtable 初始 11 扩容 2 倍 + 1；4）继承关系：Hashtable 继承 Dictionary，HashMap 继承 AbstractMap。Hashtable 是遗留类，推荐使用 ConcurrentHashMap 替代。",
+    "answer": "答案：A)、B)、C)。解析：HashMap 和 Hashtable 的主要区别：1）线程安全：Hashtable 使用 synchronized 保证线程安全，HashMap 非线程安全；2）null 值：HashMap 允许 null key 和 null value，Hashtable 不允许；3）初始容量和扩容：HashMap 初始 16 扩容 2 倍，Hashtable 初始 11 扩容 2 倍 + 1；4）继承关系：Hashtable 继承 Dictionary，HashMap 继承 AbstractMap。Hashtable 是遗留类，推荐使用 ConcurrentHashMap 替代。",
     "hints": [
       "考虑线程安全、null 处理、容量策略"
     ],
@@ -7469,7 +7469,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "Collections 工具类常用方法",
     "content": "以下哪些是 java.util.Collections 工具类提供的功能？",
-    "answer": "A)、B)、C)。解析：Collections 提供了丰富的集合操作工具：sort() 对 List 排序（要求元素实现 Comparable 或传入 Comparator）；unmodifiableList/Set/Map 返回不可修改的视图（修改会抛 UnsupportedOperationException）；synchronizedList/Set/Map 返回线程安全的包装视图；binarySearch() 二分查找；reverse() 反转；shuffle() 洗牌等。copyOnWrite 不属于 Collections 工具类，是 JUC 包中 CopyOnWriteArrayList 提供的机制。",
+    "answer": "答案：A)、B)、C)。解析：Collections 提供了丰富的集合操作工具：sort() 对 List 排序（要求元素实现 Comparable 或传入 Comparator）；unmodifiableList/Set/Map 返回不可修改的视图（修改会抛 UnsupportedOperationException）；synchronizedList/Set/Map 返回线程安全的包装视图；binarySearch() 二分查找；reverse() 反转；shuffle() 洗牌等。copyOnWrite 不属于 Collections 工具类，是 JUC 包中 CopyOnWriteArrayList 提供的机制。",
     "hints": [
       "Collections 是包装类，不是并发包里的类"
     ],
@@ -7492,7 +7492,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "线程池的拒绝策略",
     "content": "ThreadPoolExecutor 内置了哪些拒绝策略？",
-    "answer": "A)、B)、C)、D)。解析：ThreadPoolExecutor 内置了 4 种拒绝策略：AbortPolicy（默认，抛 RejectedExecutionException）、CallerRunsPolicy（调用者线程直接执行任务，降低提交速度）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃队列中最老的任务后重试提交）。实际开发中还可以自定义 RejectedExecutionHandler 实现更复杂的降级策略，如写入 MQ 或数据库。",
+    "answer": "答案：A)、B)、C)、D)。解析：ThreadPoolExecutor 内置了 4 种拒绝策略：AbortPolicy（默认，抛 RejectedExecutionException）、CallerRunsPolicy（调用者线程直接执行任务，降低提交速度）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃队列中最老的任务后重试提交）。实际开发中还可以自定义 RejectedExecutionHandler 实现更复杂的降级策略，如写入 MQ 或数据库。",
     "hints": [
       "线程池的拒绝策略都实现了 RejectedExecutionHandler 接口"
     ],
@@ -7515,7 +7515,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "synchronized 锁升级过程",
     "content": "关于 JDK 6 引入的 synchronized 锁升级机制，以下说法哪些是正确的？",
-    "answer": "A)、C)、D)。解析：JDK 6 优化了 synchronized 的锁机制，引入锁升级（膨胀）过程：无锁 → 偏向锁（只有一个线程访问）→ 轻量级锁（少量竞争，CAS 自旋）→ 重量级锁（大量竞争，阻塞）。偏向锁在 JDK 15 中默认关闭，JDK 21 中被移除。轻量级锁通过 CAS 自旋尝试获取锁，避免线程阻塞带来的上下文切换开销。重量级锁依赖操作系统互斥量实现，线程阻塞和唤醒开销最大。",
+    "answer": "答案：A)、C)、D)。解析：JDK 6 优化了 synchronized 的锁机制，引入锁升级（膨胀）过程：无锁 → 偏向锁（只有一个线程访问）→ 轻量级锁（少量竞争，CAS 自旋）→ 重量级锁（大量竞争，阻塞）。偏向锁在 JDK 15 中默认关闭，JDK 21 中被移除。轻量级锁通过 CAS 自旋尝试获取锁，避免线程阻塞带来的上下文切换开销。重量级锁依赖操作系统互斥量实现，线程阻塞和唤醒开销最大。",
     "hints": [
       "锁升级是为了减少不必要的同步开销",
       "不同锁的适用场景不同"
@@ -7539,7 +7539,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "JVM 运行时数据区域",
     "content": "以下哪些属于 JVM 运行时数据区（Runtime Data Areas）？",
-    "answer": "A)、B)、D)。解析：JVM 运行时数据区包括：程序计数器（PC Register，线程私有，记录当前线程执行的字节码地址）、虚拟机栈（Java Stack，线程私有，存储栈帧）、本地方法栈（Native Method Stack，线程私有，支持 native 方法）、堆（Heap，所有线程共享，存储对象实例）、方法区（Method Area，JDK 8 后由 Metaspace 实现）。直接内存（Direct Memory）是 NIO 在堆外分配的内存，不属于 JVM 规范定义的运行时数据区。",
+    "answer": "答案：A)、B)、D)。解析：JVM 运行时数据区包括：程序计数器（PC Register，线程私有，记录当前线程执行的字节码地址）、虚拟机栈（Java Stack，线程私有，存储栈帧）、本地方法栈（Native Method Stack，线程私有，支持 native 方法）、堆（Heap，所有线程共享，存储对象实例）、方法区（Method Area，JDK 8 后由 Metaspace 实现）。直接内存（Direct Memory）是 NIO 在堆外分配的内存，不属于 JVM 规范定义的运行时数据区。",
     "hints": [
       "直接内存由 NIO 管理，不在 JVM 运行时数据区规范中"
     ],
@@ -7562,7 +7562,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "可作为 GC Roots 的对象",
     "content": "以下哪些对象可以作为 GC Roots？",
-    "answer": "A)、B)、C)。解析：可作为 GC Roots 的对象包括：虚拟机栈中引用的对象（本地变量表中的引用）、方法区中静态属性引用的对象、方法区中常量池引用的对象、本地方法栈中 JNI 引用的对象（全局 JNI 引用）、活跃线程（Thread 对象）。通过 GC Roots 可达性分析，从这些根对象出发，无法到达的对象即为可回收对象。未被引用的字符串常量可能已被判定为无用常量，不能作为 GC Root。",
+    "answer": "答案：A)、B)、C)。解析：可作为 GC Roots 的对象包括：虚拟机栈中引用的对象（本地变量表中的引用）、方法区中静态属性引用的对象、方法区中常量池引用的对象、本地方法栈中 JNI 引用的对象（全局 JNI 引用）、活跃线程（Thread 对象）。通过 GC Roots 可达性分析，从这些根对象出发，无法到达的对象即为可回收对象。未被引用的字符串常量可能已被判定为无用常量，不能作为 GC Root。",
     "hints": [
       "GC Roots 是活跃的引用起点"
     ],
@@ -7585,7 +7585,7 @@ export const questions = [
     "type": "multiple_choice",
     "title": "Java 8 Stream 的特性",
     "content": "以下关于 Java 8 Stream 的描述，哪些是正确的？",
-    "answer": "A)、B)、D)。解析：Stream 本身不存储数据，而是对数据源（集合、数组等）的视图描述；Stream 操作是惰性求值的，中间操作（如 filter、map）不会立即执行，遇到终止操作（如 collect、forEach）才触发实际计算；Stream 的一次性体现在一旦执行了终止操作，该 Stream 就被消费了，不能再次使用。Stream 不改变数据源，操作结果通常是新的 Stream 或值。",
+    "answer": "答案：A)、B)、D)。解析：Stream 本身不存储数据，而是对数据源（集合、数组等）的视图描述；Stream 操作是惰性求值的，中间操作（如 filter、map）不会立即执行，遇到终止操作（如 collect、forEach）才触发实际计算；Stream 的一次性体现在一旦执行了终止操作，该 Stream 就被消费了，不能再次使用。Stream 不改变数据源，操作结果通常是新的 Stream 或值。",
     "hints": [
       "Stream 与集合的区别",
       "终止操作会消费 Stream"
@@ -7609,7 +7609,7 @@ export const questions = [
     "type": "true_false",
     "title": "Java 中 String 是不可变的",
     "content": "在 Java 中，String 类的对象一旦创建就不可修改。",
-    "answer": "正确。解析：String 被 final 修饰，其底层 char[]（JDK 8）或 byte[]（JDK 9+）也被 final 修饰，且不提供修改内部数组的方法。任何看似修改 String 的操作（如 concat、replace）都会返回新的 String 对象。",
+    "answer": "答案：正确。解析：String 被 final 修饰，其底层 char[]（JDK 8）或 byte[]（JDK 9+）也被 final 修饰，且不提供修改内部数组的方法。任何看似修改 String 的操作（如 concat、replace）都会返回新的 String 对象。",
     "hints": [],
     "tags": [
       "基础",
@@ -7634,7 +7634,10 @@ export const questions = [
       "基础",
       "字符串比较"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7650,7 +7653,10 @@ export const questions = [
       "面向对象",
       "继承"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7666,7 +7672,10 @@ export const questions = [
       "基础",
       "异常处理"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7682,7 +7691,10 @@ export const questions = [
       "基础",
       "数组"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7698,7 +7710,10 @@ export const questions = [
       "面向对象",
       "抽象类"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7714,7 +7729,10 @@ export const questions = [
       "面向对象",
       "static"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7730,7 +7748,10 @@ export const questions = [
       "基础",
       "数据类型"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7746,7 +7767,10 @@ export const questions = [
       "基础",
       "switch"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7762,7 +7786,10 @@ export const questions = [
       "面向对象",
       "构造方法"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7778,7 +7805,10 @@ export const questions = [
       "集合",
       "HashMap"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7794,7 +7824,10 @@ export const questions = [
       "集合",
       "ArrayList"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7810,7 +7843,10 @@ export const questions = [
       "集合",
       "HashSet"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7826,7 +7862,10 @@ export const questions = [
       "集合",
       "HashMap"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7842,7 +7881,10 @@ export const questions = [
       "集合",
       "ConcurrentHashMap"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7858,7 +7900,10 @@ export const questions = [
       "集合",
       "Queue"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7874,7 +7919,10 @@ export const questions = [
       "基础",
       "反射"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7890,7 +7938,10 @@ export const questions = [
       "基础",
       "参数传递"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7906,7 +7957,10 @@ export const questions = [
       "并发",
       "volatile"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7922,7 +7976,10 @@ export const questions = [
       "并发",
       "synchronized"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7938,7 +7995,10 @@ export const questions = [
       "JVM",
       "GC"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7954,7 +8014,10 @@ export const questions = [
       "JVM",
       "内存结构"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7970,7 +8033,10 @@ export const questions = [
       "并发",
       "线程池"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -7986,7 +8052,10 @@ export const questions = [
       "Java 8",
       "Stream"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -8002,7 +8071,10 @@ export const questions = [
       "Java 8",
       "Lambda"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -8018,7 +8090,10 @@ export const questions = [
       "并发",
       "单例"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -8034,7 +8109,10 @@ export const questions = [
       "面向对象",
       "多态"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -8050,7 +8128,10 @@ export const questions = [
       "基础",
       "char"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -8066,7 +8147,10 @@ export const questions = [
       "面向对象",
       "接口"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
@@ -8082,7 +8166,10 @@ export const questions = [
       "集合",
       "LinkedList"
     ],
-    "options": [],
+    "options": [
+      "正确",
+      "错误"
+    ],
     "company": ""
   },
   {
