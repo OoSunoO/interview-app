@@ -1,17 +1,13 @@
 <script>
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
-  import { hasAI, aiChat } from "../lib/ai.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
-  import CodeBlock from "../components/CodeBlock.svelte";
 
   let { tag, onNavigate } = $props();
 
   let detail = $state(null);
   let loading = $state(true);
   let error = $state(null);
-  let aiSummary = $state(null);
-  let aiSummaryLoading = $state(false);
 
   onMount(async () => {
     await loadDetail();
@@ -22,32 +18,10 @@
     error = null;
     try {
       detail = await api.knowledge.get(tag);
-      if (detail && hasAI() && !detail.content) generateAISummary();
     } catch (e) {
       error = e?.message || "加载知识点详情失败";
     } finally {
       loading = false;
-    }
-  }
-
-  async function generateAISummary() {
-    if (!detail || detail.questions.length === 0) return;
-    aiSummaryLoading = true;
-    try {
-      const qs = detail.questions.slice(0, 15);
-      const prompt = qs
-        .map((q, i) => `${i + 1}. ${q.title}\n${q.content.slice(0, 300)}`)
-        .join("\n\n");
-
-      const reply = await aiChat(
-        "你是一位技术面试官。针对下面这个知识点下的面试题，写一段 150 字以内的学习摘要：包含这个知识点覆盖的核心概念、常见考察角度、以及掌握的难点。直接输出摘要，不要多余格式。",
-        [{ role: "user", content: `知识点：${detail.name}\n\n相关题目：\n${prompt}` }],
-      );
-      aiSummary = reply;
-    } catch {
-      // silently fall back to heuristic summary
-    } finally {
-      aiSummaryLoading = false;
     }
   }
 
@@ -67,40 +41,6 @@
 
   function goQuestion(q) {
     onNavigate("quiz", { questionId: q.id });
-  }
-
-  // Render markdown-style content with code blocks
-  function renderContent(text) {
-    if (!text) return [{ type: "text", content: "" }];
-    const parts = text.split(/(```\w*\n[\s\S]*?```)/g);
-    return parts.map((p) => {
-      const match = p.match(/```(\w*)\n([\s\S]*?)```/);
-      if (match) return { type: "code", lang: match[1], code: match[2].trimEnd() };
-      return { type: "text", content: p };
-    });
-  }
-
-  // Split markdown content into sections by ## headings
-  function parseSections(text) {
-    if (!text) return [];
-    const lines = text.split("\n");
-    const sections = [];
-    let current = null;
-
-    for (const line of lines) {
-      const heading = line.match(/^## (.+)/);
-      if (heading) {
-        if (current) sections.push(current);
-        current = { title: heading[1], content: [] };
-      } else {
-        if (!current) {
-          current = { title: "", content: [] };
-        }
-        current.content.push(line);
-      }
-    }
-    if (current) sections.push(current);
-    return sections;
   }
 </script>
 
@@ -156,53 +96,28 @@
       {/if}
     </div>
 
-    <!-- Knowledge Content (pre-stored) -->
-    {#if detail.content}
-      <div class="kp-content card">
-        <h2 class="content-heading">知识讲解</h2>
-        <div class="content-body">
-          {#each parseSections(detail.content) as section}
-            {#if section.title}
-              <h3 class="content-subheading">{section.title}</h3>
-            {/if}
-            <div class="content-text">
-              {#each renderContent(section.content.join("\n")) as part}
-                {#if part.type === "code"}
-                  <CodeBlock code={part.code} lang={part.lang} />
-                {:else}
-                  {#each part.content.split("\n") as line}
-                    {#if line.startsWith("### ")}
-                      <h4 class="content-h4">{line.slice(4)}</h4>
-                    {:else if line.startsWith("- **")}
-                      <p class="content-line">{@html line}</p>
-                    {:else if line.match(/^\d+\.\s/)}
-                      <p class="content-line">{line}</p>
-                    {:else if line.startsWith("|")}
-                      <p class="content-line table-line">{line}</p>
-                    {:else if line.trim() === ""}
-                      <br />
-                    {:else}
-                      <p class="content-line">{line}</p>
-                    {/if}
-                  {/each}
-                {/if}
-              {/each}
-            </div>
-          {/each}
-        </div>
+    <!-- Knowledge Content: source link to JavaGuide -->
+    {#if detail.source}
+      <div class="kp-source card">
+        <h2 class="content-heading">知识资料</h2>
+        <p class="source-description">该知识点的内容已在 JavaGuide 中整理，点击下方链接阅读原文。</p>
+        <a
+          href={detail.source.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="source-link-btn"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+          去 JavaGuide 阅读 —— {detail.source.title}
+        </a>
       </div>
-    {:else if detail.summary || aiSummary}
-      <!-- Fallback AI/heuristic summary when no pre-stored content -->
-      <div class="kp-summary card">
-        <h3 class="section-label">
-          知识点综述
-          {#if aiSummaryLoading}
-            <span class="summary-badge loading">AI 生成中...</span>
-          {:else if aiSummary}
-            <span class="summary-badge ai">AI 生成</span>
-          {/if}
-        </h3>
-        <p class="summary-text">{aiSummary || detail.summary}</p>
+    {:else if !detail.source && !detail.content}
+      <div class="kp-empty card">
+        <h2 class="content-heading">知识资料</h2>
+        <p class="empty-text">暂无资料</p>
       </div>
     {/if}
 
@@ -350,9 +265,46 @@
     border: 1px solid var(--border);
   }
 
-  /* Knowledge Content (pre-stored) */
-  .kp-content {
+  /* Knowledge Content: source link */
+  .kp-source {
     padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .source-description {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .source-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    width: fit-content;
+    transition: opacity 0.2s;
+  }
+  .source-link-btn:hover {
+    opacity: 0.85;
+  }
+  .source-link-btn:active {
+    opacity: 0.7;
+  }
+
+  /* Knowledge Content: empty */
+  .kp-empty {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
   .content-heading {
     font-size: 16px;
@@ -362,80 +314,10 @@
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
   }
-  .content-body {
+  .empty-text {
     font-size: 14px;
-    line-height: 1.8;
-    color: var(--text);
-  }
-  .content-subheading {
-    font-size: 15px;
-    font-weight: 700;
-    margin: 16px 0 8px 0;
-    color: var(--text);
-  }
-  .content-h4 {
-    font-size: 14px;
-    font-weight: 600;
-    margin: 12px 0 4px 0;
-    color: var(--text);
-  }
-  .content-line {
-    margin-bottom: 4px;
-    color: var(--text);
-  }
-  .content-line.table-line {
-    font-family: monospace;
-    font-size: 12px;
-  }
-  .content-text {
-    margin-bottom: 8px;
-  }
-  .content-text :global(p) {
-    margin-bottom: 6px;
-  }
-  .content-text :global(code) {
-    background: var(--bg-surface);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 13px;
-    font-family: monospace;
-  }
-  .content-text :global(strong) {
-    font-weight: 700;
-  }
-
-  /* Summary fallback */
-  .kp-summary {
-    padding: 14px;
-  }
-  .section-label {
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 8px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .summary-badge {
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 8px;
-    letter-spacing: 0.3px;
-  }
-  .summary-badge.ai {
-    background: var(--accent-bg);
-    color: var(--accent);
-  }
-  .summary-badge.loading {
-    background: var(--bg-surface);
     color: var(--text-dim);
-  }
-  .summary-text {
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--text);
+    margin: 0;
   }
 
   .section-title {
