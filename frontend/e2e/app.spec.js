@@ -92,8 +92,10 @@ test.describe("Knowledge Points", () => {
     // Expand the first category
     await page.locator("[data-testid=category-header]").first().click();
     await expect(page.locator("[data-testid=knowledge-item]").first()).toBeVisible({ timeout: 3000 });
-    // Click a child knowledge point to open detail
+    // Click a child knowledge point to expand inline
     await page.locator("[data-testid=knowledge-item]").first().click();
+    // Click "查看完整内容 →" to navigate to the detail page
+    await page.getByRole("button", { name: /查看完整内容/ }).first().click();
     await expect(page.locator("[data-testid=kp-header]")).toBeVisible({ timeout: 5000 });
   });
 });
