@@ -3,10 +3,17 @@
   import { store } from "../lib/stores.svelte.js";
   import { api } from "../lib/local-api.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
+  import Pagination from "../components/Pagination.svelte";
 
   let { onNavigate } = $props();
 
   let showRandomHint = $state(false);
+
+  const PAGE_SIZE = 20;
+  let currentPage = $state(1);
+
+  let totalPages = $derived(Math.max(1, Math.ceil(store.questions.length / PAGE_SIZE)));
+  let pagedQuestions = $derived(store.questions.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE));
 
   const categories = [
     { value: "", label: "全部" },
@@ -36,6 +43,7 @@
   });
 
   function applyFilter() {
+    currentPage = 1;
     store.loadQuestions({ page: 1 });
   }
 
@@ -282,7 +290,7 @@
   {:else}
     <p class="result-count">共 {store.questions.length} 题</p>
     <div class="list">
-      {#each store.questions as q}
+      {#each pagedQuestions as q}
         <button
           class="card q-item status-{q.status}"
           data-testid="question-item"
@@ -379,6 +387,7 @@
         </button>
       {/each}
     </div>
+    <Pagination page={currentPage} {totalPages} onPageChange={(n) => { currentPage = n; }} />
   {/if}
 </div>
 

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
+  import Pagination from "../components/Pagination.svelte";
 
   let { onNavigate } = $props();
 
@@ -11,6 +12,9 @@
   let searchQuery = $state("");
   let expandedCategory = $state(null);
   let expandedKp = $state(null);
+
+  const PAGE_SIZE = 6;
+  let currentPage = $state(1);
 
   // Filter flat list by search
   let filtered = $derived(
@@ -42,6 +46,10 @@
     }
     return Object.values(map).sort((a, b) => b.totalQuestions - a.totalQuestions);
   });
+
+  // Paginate grouped categories
+  let totalPages = $derived(Math.max(1, Math.ceil(grouped.length / PAGE_SIZE)));
+  let pagedGrouped = $derived(grouped.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE));
 
   // Cache for knowledge detail content
   let detailCache = $state({});
@@ -129,7 +137,12 @@
     >
       <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
     </svg>
-    <input class="search" placeholder="搜索知识点或领域..." bind:value={searchQuery} />
+    <input
+      class="search"
+      placeholder="搜索知识点或领域..."
+      bind:value={searchQuery}
+      oninput={() => { currentPage = 1; }}
+    />
   </div>
 
   {#if error}
@@ -144,7 +157,7 @@
     <p class="empty">暂无匹配的领域</p>
   {:else}
     <div class="cat-list">
-      {#each grouped as cat}
+      {#each pagedGrouped as cat}
         <div class="cat-card card" data-testid="category-card" class:expanded={expandedCategory === cat.id}>
           <button class="cat-header" data-testid="category-header" onclick={() => toggleCategory(cat.id)}>
             <div class="cat-header-left">
@@ -239,6 +252,7 @@
         </div>
       {/each}
     </div>
+    <Pagination page={currentPage} {totalPages} onPageChange={(n) => { currentPage = n; }} />
   {/if}
 </div>
 
