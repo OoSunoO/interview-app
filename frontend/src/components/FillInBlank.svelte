@@ -90,10 +90,11 @@
     if (emptyIdx === -1) return;
 
     // Decrement pool count
-    poolItems[poolIdx] = {
-      ...poolItems[poolIdx],
-      count: poolItems[poolIdx].count - 1,
-    };
+    poolItems = poolItems.map((item, idx) =>
+      idx === poolIdx
+        ? { ...item, count: item.count - 1 }
+        : item
+    );
 
     // Fill the blank
     const newFilled = [...filledBlanks];
@@ -115,10 +116,11 @@
     // Increment pool count
     const poolIdx = poolItems.findIndex((p) => p.word === word);
     if (poolIdx !== -1) {
-      poolItems[poolIdx] = {
-        ...poolItems[poolIdx],
-        count: poolItems[poolIdx].count + 1,
-      };
+      poolItems = poolItems.map((item, idx) =>
+        idx === poolIdx
+          ? { ...item, count: item.count + 1 }
+          : item
+      );
     }
   }
 
