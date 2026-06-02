@@ -676,47 +676,1591 @@ HyperLogLog（基数统计，固定12KB，误差0.81%）、Bitmap（位图）、
   // K8s
   K8s: {
     category: "devops",
-    source: null,
+    content: `## Kubernetes 核心概念
+
+> 来源：JavaGuide
+
+### 核心架构
+Kubernetes（K8s）是 Google 开源的容器编排平台，用于自动部署、扩展和管理容器化应用。
+
+- **Master 组件**：API Server（集群入口）、Scheduler（调度 Pod）、Controller Manager（维护集群状态）、etcd（分布式键值存储）。
+- **Node 组件**：kubelet（管理 Pod 生命周期）、kube-proxy（网络代理与负载均衡）、容器运行时（如 Docker/containerd）。
+
+### 核心资源对象
+
+| 资源 | 作用 |
+|------|------|
+| **Pod** | 最小调度单元，包含一个或多个共享网络的容器 |
+| **Service** | 提供稳定的网络端点，通过 Label Selector 关联 Pod，实现负载均衡 |
+| **Deployment** | 声明式更新 Pod 和 ReplicaSet，支持滚动更新和回滚 |
+| **ConfigMap / Secret** | 配置管理，Secret 用 Base64 编码存储敏感信息 |
+| **Ingress** | 七层负载均衡，将外部 HTTP/HTTPS 路由到集群内 Service |
+| **Namespace** | 虚拟集群隔离，多租户支持 |
+
+### kubectl 常用命令
+
+\`\`\`bash
+# 获取资源
+kubectl get pods -n <namespace>
+kubectl get deploy,svc --all-namespaces
+
+# 排查排错
+kubectl describe pod <name>
+kubectl logs -f <pod-name>
+kubectl exec -it <pod-name> -- /bin/sh
+
+# 发布管理
+kubectl apply -f deployment.yaml
+kubectl rollout status deploy/<name>
+kubectl rollout undo deploy/<name>
+\`\`\`
+
+### Pod 生命周期
+Pending → Running → Succeeded/Failed → Unknown。Init 容器先于主容器启动；Readiness Probe 通过后才加入 Service 端点；Liveness Probe 失败则重启容器。
+
+### 关键特性
+- **自动恢复**：故障 Pod 自动重建，保证期望副本数。
+- **水平扩缩**：HPA 根据 CPU/内存自动调整副本数。
+- **服务发现**：DNS 解析 Service 名到 Cluster IP。
+- **存储卷**：支持 emptyDir、hostPath、PVC、ConfigMap 等多种卷类型。`,
+    source: "JavaGuide",
   },
 
   // React
   React: {
     category: "react",
-    source: null,
+    content: `## React 核心概念
+
+> 来源：JavaGuide
+
+### 虚拟 DOM（Virtual DOM）
+虚拟 DOM 是真实 DOM 的 JavaScript 对象表示。当状态变化时，React 先在虚拟 DOM 上计算差异（Diffing），然后批量更新真实 DOM（Reconciliation），减少直接操作 DOM 的开销。
+
+- **Diff 算法**：同级比较，类型不同则重建整个子树；key 属性优化列表 diff 性能。
+- **Fiber 架构**（React 16+）：将协调过程拆分为可中断的工作单元，实现增量渲染，避免阻塞主线程。
+
+### JSX
+JSX 是 JavaScript 的语法扩展，最终被 Babel 编译为 React.createElement() 调用。JSX 中：
+- 表达式用 {} 包裹
+- 属性名采用驼峰命名（className, onClick 等）
+- 行内样式接收对象而非字符串
+
+### 组件生命周期（React 16.3+）
+
+| 阶段 | 类组件方法 | Hook 替代 |
+|------|-----------|-----------|
+| 挂载 | constructor → render → componentDidMount | useEffect(fn, []) |
+| 更新 | shouldComponentUpdate → render → componentDidUpdate | useEffect(fn, [deps]) |
+| 卸载 | componentWillUnmount | useEffect(() => fn, []) 的返回函数 |
+
+### 状态管理
+- **useState**：函数组件内状态管理
+- **useReducer**：复杂状态逻辑，类似 Redux 模式
+- **Context API**：跨层级组件通信，避免 props drilling
+- **外部状态库**：Redux（单一 store）、Zustand（轻量）、Jotai（原子化）
+
+### 组件通信
+- 父→子：Props
+- 子→父：回调函数 Props
+- 兄弟：提升状态到共同父组件
+- 跨层级：Context API 或全局状态库`,
+    source: "JavaGuide",
   },
   Hooks: {
     category: "react",
-    source: null,
+    content: `## React Hooks 详解
+
+> 来源：JavaGuide
+
+React 16.8 引入 Hooks，让函数组件拥有状态和副作用能力，不再需要类组件。
+
+### 常用 Hooks
+
+**useState** — 状态管理
+\`\`\`jsx
+const [count, setCount] = useState(0);
+\`\`\`
+- 参数为初始值，返回 [值, 更新函数] 数组
+- 更新函数传入函数以基于旧值更新：setCount(prev => prev + 1)
+
+**useEffect** — 副作用处理
+\`\`\`jsx
+useEffect(() => {
+  // 副作用逻辑（订阅、请求、DOM 操作）
+  return () => { /* 清理函数，组件卸载时执行 */ };
+}, [dependencies]);
+\`\`\`
+- 依赖数组为空：仅在挂载和卸载时执行
+- 依赖数组变化：每次依赖变化时执行旧清理 + 新副作用
+- 无依赖数组：每次渲染后执行（不推荐）
+
+**useContext** — 跨组件共享数据
+\`\`\`jsx
+const value = useContext(MyContext);
+\`\`\`
+- 避免 props drilling，配合 Context.Provider 使用
+
+**useRef** — 引用 DOM 或保留可变值
+\`\`\`jsx
+const inputRef = useRef(null);
+<input ref={inputRef} />;
+\`\`\`
+- 返回的 ref 对象在整个组件生命周期内保持不变
+- 修改 .current 不会触发重新渲染
+
+**useMemo / useCallback** — 性能优化
+- useMemo 缓存计算结果，useCallback 缓存函数引用
+- 仅在依赖变化时重新计算
+
+### 自定义 Hooks
+将组件逻辑提取为可复用的函数，以 use 开头：
+\`\`\`jsx
+function useWindowWidth() {
+  const [width, setWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+}
+\`\`\`
+
+### Hooks 规则
+1. 只能在函数组件或自定义 Hook 顶层调用（不能在循环/条件/嵌套函数中）
+2. 只能在 React 函数组件或自定义 Hook 中调用`,
+    source: "JavaGuide",
   },
 
   // AI Agent
   Agent: {
     category: "agent",
-    source: null,
+    content: `## AI Agent 核心概念
+
+> 来源：JavaGuide
+
+### 什么是 Agent？
+AI Agent（智能体）是一种能够**感知环境、制定规划、执行行动**的智能系统。与传统 LLM 的一次性问答不同，Agent 可以自主完成多步骤任务。
+
+### 感知-规划-行动循环
+
+1. **感知（Perception）**：从环境中获取信息——用户输入、传感器数据、API 返回、工具结果等。
+2. **规划（Planning）**：基于当前状态和目标，制定行动方案。常用方法：
+   - **ReAct**（Reasoning + Acting）：交替推理和行动，将思考过程记录为 Chain-of-Thought。
+   - **Plan-and-Solve**：先制定完整计划，再逐一执行。
+   - **Tree-of-Thoughts**：探索多条推理路径，评估最优选择。
+3. **行动（Action）**：执行具体操作，如调用 API、运行代码、查询数据库、发送消息等。行动结果反馈到感知，形成闭环。
+
+### 工具使用（Tool Use）
+Agent 通过调用外部工具扩展能力边界：
+- **Function Calling**：LLM 输出结构化 JSON，触发预注册的函数调用来完成任务（如天气查询、文件操作）。
+- **代码解释器**：执行 Python/JS 代码处理计算和数据分析。
+- **RAG 检索**：从外部知识库获取实时信息补充上下文。
+- **Web 搜索**：获取最新互联网信息。
+
+### Agent 关键能力
+- **记忆（Memory）**：短期（会话上下文）和长期（向量数据库持久化）。
+- **自我反思（Self-reflection）**：评估行动结果，调整策略，迭代改进。`,
+    source: "JavaGuide",
   },
   "Multi-Agent": {
     category: "agent",
-    source: null,
+    content: `## 多 Agent 协作
+
+> 来源：JavaGuide
+
+### 为什么需要多 Agent？
+单个 Agent 在处理复杂任务时面临上下文窗口限制、专业知识不足、缺乏分工协作等瓶颈。多 Agent 系统通过多个专门 Agent 的协同配合，提升整体能力和鲁棒性。
+
+### 多 Agent 协作模式
+
+| 模式 | 描述 | 代表案例 |
+|------|------|---------|
+| 主从模式 | 一个 Orchestrator Agent 协调多个 Worker Agent | AutoGen、CrewAI |
+| 辩论模式 | 多个 Agent 对同一问题辩论，互相质疑和修正 | ChatDev（程序员+审查员） |
+| 管道模式 | 任务拆分为多个步骤，每个步骤由专门 Agent 处理 | 代码生成（设计→编码→测试→部署） |
+| 分层模式 | Agent 按层级组织，上层 Agent 向下层分配子任务 | 组织架构模拟 |
+
+### 通信协议
+
+- **消息队列**：通过消息中间件异步通信，解耦 Agent 节点。
+- **共享记忆**：所有 Agent 读写共享向量数据库或结构化存储。
+- **函数调用**：Agent 之间通过标准 API 互相调用服务。
+- **结构化对话**：预定义通信格式（JSON/Protocol Buffers），确保消息解析一致性。
+
+### 角色分工设计
+
+典型的多 Agent 系统包含以下角色：
+- **Orchestrator（协调者）**：任务解析、拆解和调度，汇总最终结果。
+- **Searcher（搜索者）**：检索知识库、网络搜索、收集信息。
+- **Coder（编码者）**：编写和调试代码。
+- **Reviewer（审查者）**：代码审查、质量检测、安全审计。
+- **Planner（规划者）**：长期规划、依赖管理和资源分配。
+
+### 挑战
+- **幻觉传播**：一个 Agent 的错误可能被其他 Agent 采纳放大。
+- **通信开销**：Agent 间消息量随数量平方增长。
+- **收敛困难**：多轮辩论难以达成一致。`,
+    source: "JavaGuide",
   },
 
   // AI basics
   LLM: {
     category: "ai",
-    source: null,
+    content: `## 大型语言模型（LLM）核心概念
+
+> 来源：JavaGuide
+
+### 什么是 LLM？
+大型语言模型（Large Language Model）是基于 Transformer 架构、在海量文本上预训练的深度学习模型，能够理解和生成自然语言。典型代表：GPT-4、Claude、Gemini、DeepSeek 等。
+
+### Transformer 架构核心
+
+Transformer 的核心是**自注意力机制（Self-Attention）**：
+
+1. **Attention（缩放点积注意力）**：对输入序列每个位置计算与其他位置的关联权重。
+   - Query（Q）、Key（K）、Value（V）三个向量矩阵
+   - Attention(Q,K,V) = softmax(QK^T / √d_k) × V
+   - √d_k 缩放因子防止梯度消失
+
+2. **Multi-Head Attention**：多头并行计算注意力，捕获不同子空间信息。
+
+3. **位置编码**：因 Self-Attention 无顺序感知，需注入位置信息（Sinusoidal 位置编码或可学习位置嵌入）。
+
+4. **FFN（前馈神经网络）**：每个 Attention 层后接两层全连接网络（ReLU/GELU 激活）。
+
+5. **残差连接 + 层归一化**：缓解深层网络梯度消失，加速训练。
+
+### 训练流程
+
+1. **预训练（Pre-training）**：在海量无标注语料上通过自监督学习训练，学习语言知识和世界知识。损失函数为下一个 Token 预测（Autoregressive LM）。
+
+2. **指令微调（Instruction Tuning）**：在高质量的指令-回答数据上微调，让模型学会遵循人类指令。
+
+3. **RLHF（基于人类反馈的强化学习）**：
+   - SFT（监督微调）→ RM（训练奖励模型）→ PPO（强化学习优化策略）
+   - 让模型输出更符合人类偏好（有用、诚实、无害）
+
+### 关键参数
+- **Context Window**：模型一次能处理的最大 Token 数（GPT-4 128K, Claude 200K）。
+- **Temperature**：控制输出随机性，越低越确定，越高越多样。
+- **Top-p / Top-k**：采样策略，控制生成质量。`,
+    source: "JavaGuide",
   },
   RAG: {
     category: "ai",
-    source: null,
+    content: `## 检索增强生成（RAG）
+
+> 来源：JavaGuide
+
+### 什么是 RAG？
+检索增强生成（Retrieval-Augmented Generation）是一种将信息检索与 LLM 生成相结合的技术范式。在回答问题时，先从外部知识库检索相关文档片段，再将检索结果作为上下文输入给 LLM 生成答案。
+
+### 为什么需要 RAG？
+- **解决知识过时**：LLM 训练数据有截止日期，RAG 可引入实时知识。
+- **缓解幻觉**：基于检索到的真实文档回答，减少编造。
+- **引入私有知识**：企业文档、产品手册等非公开数据可注入 RAG 系统。
+- **可溯源**：答案可追溯到具体文档，提升可信度。
+
+### RAG 核心流程
+
+1. **索引阶段**
+   - **文档切分（Chunking）**：将长文档切分为合适大小的片段（通常 256-1024 token）。
+   - **向量化**：使用 Embedding 模型将每个 Chunk 转为向量。
+   - **存储**：将向量存入向量数据库（Milvus、Pinecone、Chroma、Weaviate）。
+
+2. **检索阶段**
+   - **查询向量化**：将用户问题使用相同 Embedding 模型向量化。
+   - **相似度搜索**：在向量数据库中检索 Top-K 最相似 Chunk（余弦相似度或欧式距离）。
+
+3. **生成阶段**
+   - **拼接 Prompt**：将检索到的 Chunk 作为上下文 + 用户问题组成 Prompt。
+   - **LLM 生成**：大模型基于上下文回答问题。
+
+### 关键优化策略
+
+| 策略 | 说明 |
+|------|------|
+| **分块策略** | 滑动窗口/语义分割/层级分块，保持语义完整性 |
+| **混合检索** | 向量相似度 + BM25 关键词检索互补 |
+| **重排序（Rerank）** | 检索后用小模型对结果二次排序 |
+| **HyDE** | 用 LLM 生成假设文档后再检索 |
+| **多路召回** | 从多个不同知识源并发检索后融合 |
+| **查询改写** | 对模糊问题重写后再检索 |
+
+### 向量数据库选型
+
+| 数据库 | 特点 |
+|--------|------|
+| Milvus | 分布式、高可用、适合生产 |
+| Chroma | 轻量嵌入式，适合原型开发 |
+| Pinecone | 全托管云服务 |
+| Weaviate | 支持混合搜索和 GraphQL |`,
+    source: "JavaGuide",
   },
 
   // Frontend
   JavaScript: {
     category: "frontend",
-    source: null,
+    content: `## JavaScript 核心要点
+
+> 来源：JavaGuide
+
+### 原型与原型链
+JavaScript 通过原型链实现继承：
+- 每个对象有一个 __proto__ 隐式原型指向其构造函数的 prototype。
+- 属性查找沿原型链向上搜索，直到找到或到达 null（Object.prototype.__proto__ = null）。
+- \`\`\`js
+  function Person(name) { this.name = name; }
+  Person.prototype.sayHello = function() { console.log('Hello'); };
+  const p = new Person('Alice');
+  // p → Person.prototype → Object.prototype → null
+  \`\`\`
+
+### 闭包（Closure）
+函数访问其外部作用域中变量的能力，即使外部函数已执行完毕。
+- 用途：数据私有化、创建模块、防抖节流、柯里化。
+- 注意：不当使用闭包会导致内存泄漏（引用的对象无法 GC）。
+
+### 事件循环（Event Loop）
+JavaScript 是单线程语言，通过事件循环实现异步：
+1. **调用栈（Call Stack）**：执行同步代码。
+2. **任务队列（Task Queue）**：宏任务（setTimeout、setInterval、I/O）放入宏任务队列，微任务（Promise.then、MutationObserver、queueMicrotask）放入微任务队列。
+3. **执行顺序**：调用栈清空 → 执行所有微任务 → 取一个宏任务执行 → 重复。
+
+\`\`\`js
+console.log(1);                // 同步
+setTimeout(() => console.log(2), 0);  // 宏任务
+Promise.resolve().then(() => console.log(3));  // 微任务
+console.log(4);                // 同步
+// 输出：1, 4, 3, 2
+\`\`\`
+
+### ES6+ 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| let / const | 块级作用域，无变量提升（暂时性死区） |
+| 箭头函数 | 无 this 绑定、无 arguments、不能作构造函数 |
+| 解构赋值 | const { a, b } = obj; const [x, y] = arr; |
+| 模板字面量 | 反引号 + \${expression} |
+| Promise | 异步编程终极方案，链式调用 then/catch |
+| async/await | 基于 Promise 的语法糖，使异步代码同步化 |
+| 模块（ES Module） | import/export，静态分析支持 tree-shaking |
+| 展开运算符 | ... 展开数组/对象，替代 apply/concat/assign |
+| Map / Set | 比 Object 更适合作为字典/集合 |
+| Symbol | 唯一值，用于私有属性名 |
+| Proxy | 拦截对象操作，Vue 3 响应式基础 |`,
+    source: "JavaGuide",
   },
   CSS: {
     category: "frontend",
-    source: null,
+    content: `## CSS 核心要点
+
+> 来源：JavaGuide
+
+### 盒模型（Box Model）
+每个元素由 content（内容）→ padding（内边距）→ border（边框）→ margin（外边距）组成。
+
+- **content-box**（默认）：width/height 只包含 content，实际占位 = width + padding + border。
+- **border-box**（推荐）：width/height 包含 content + padding + border，布局更易计算。
+\`\`\`css
+*, *::before, *::after { box-sizing: border-box; }
+\`\`\`
+
+### Flexbox 布局
+一维布局模型，适合行/列方向的排列。
+
+**容器属性**：
+- display: flex → 启用 Flex 布局
+- flex-direction: row | column | row-reverse | column-reverse
+- justify-content: flex-start | center | space-between | space-around | space-evenly（主轴对齐）
+- align-items: stretch | center | flex-start | flex-end | baseline（交叉轴对齐）
+- flex-wrap: wrap | nowrap（是否换行）
+- gap: 10px（子项间距）
+
+**子项属性**：
+- flex: 1 → flex-grow: 1, flex-shrink: 1, flex-basis: 0%
+- align-self → 覆盖容器的 align-items
+- order → 调整显示顺序
+
+### Grid 布局
+二维布局模型，同时控制行和列。
+
+\`\`\`css
+.container {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;  /* 三列，中间两倍宽 */
+  grid-template-rows: auto 200px;
+  gap: 16px;
+}
+\`\`\`
+
+- fr 单位：剩余空间按比例分配
+- repeat(3, 1fr) → 重复三列均分
+- grid-area / grid-column / grid-row → 元素占据指定网格区域
+
+### 定位（Position）
+
+| 值 | 参考对象 | 是否脱离文档流 |
+|------|---------|:------------:|
+| static | 不适用（默认） | 否 |
+| relative | 自身原始位置 | 否（保留占位） |
+| absolute | 最近的非 static 祖先元素 | 是 |
+| fixed | 视口（viewport） | 是 |
+| sticky | 滚动容器 + 阈值 | 混合 |
+
+### 响应式设计
+
+1. **媒体查询（Media Queries）**：
+   \`\`\`css
+   @media (max-width: 768px) { /* 移动端样式 */ }
+   @media (min-width: 1024px) { /* 桌面端样式 */ }
+   \`\`\`
+
+2. **相对单位**：rem（根元素字体大小）、em（父元素字体大小）、vh/vw（视口百分比）、%（父元素百分比）。
+
+3. **移动优先**：先写移动端样式（基础），再用 min-width 媒体查询渐进增强。
+
+### 层叠与继承
+- **层叠**：选择器权重决定样式优先级，!important > 内联 > ID > 类/属性/伪类 > 元素/伪元素。
+- **继承**：部分属性（color、font、line-height）自动继承父元素。`,
+    source: "JavaGuide",
+  },
+
+  // Java detailed topics
+  泛型: {
+    category: "java_basic",
+    content: `## 泛型（Generics）
+
+> 来源：JavaGuide
+
+### 什么是泛型？
+泛型允许在定义类、接口和方法时使用类型参数，在实例化时指定具体类型，提供编译时类型安全检测。
+
+### 核心优势
+- **编译期类型检查**：将运行时 ClassCastException 提前到编译期。
+- **消除强制类型转换**：从集合取元素时自动推断类型。
+- **通用代码**：一套代码适用于多种类型。
+
+### 泛型擦除
+Java 的泛型是**编译期**特性，运行时通过类型擦除（Type Erasure）移除类型参数信息：
+
+\`\`\`java
+List<String> list = new ArrayList<>();
+// 编译后变为：List list = new ArrayList();
+\`\`\`
+- 无界类型参数 <T> 擦除为 Object。
+- 有界类型参数 <T extends Comparable> 擦除为边界类型 Comparable。
+- 可通过反射获取运行时类型信息。
+
+### 泛型通配符
+
+| 通配符 | 含义 | 示例 |
+|--------|------|------|
+| <?> | 无界通配符，表示任意类型 | List<?> |
+| <? extends T> | 上界通配符，T 或 T 的子类 | List<? extends Number> |
+| <? super T> | 下界通配符，T 或 T 的父类 | List<? super Integer> |
+
+**PECS 原则**（Producer Extends, Consumer Super）：生产者用 extends（只读），消费者用 super（只写）。
+
+### 泛型方法
+\`\`\`java
+public <T> T getValue(T value) { return value; }
+public static <T extends Comparable<T>> T max(T a, T b) {
+  return a.compareTo(b) > 0 ? a : b;
+}
+\`\`\`
+泛型方法独立于泛型类，可在非泛型类中定义。`,
+    source: "JavaGuide",
+  },
+  反射: {
+    category: "java_basic",
+    content: `## 反射（Reflection）
+
+> 来源：JavaGuide
+
+### 什么是反射？
+反射是 Java 提供的一种运行时机制，允许程序在运行时获取任意类的内部信息（构造方法、成员变量、方法、注解等），并操作对象的属性和方法。
+
+### 获取 Class 对象的三种方式
+\`\`\`java
+// 1. Class.forName() — 最常用
+Class<?> clazz = Class.forName("java.lang.String");
+
+// 2. 类名.class
+Class<?> clazz = String.class;
+
+// 3. 对象.getClass()
+String s = "hello";
+Class<?> clazz = s.getClass();
+\`\`\`
+
+### 反射常用 API
+
+\`\`\`java
+// 获取类信息
+clazz.getName();          // 全限定名
+clazz.getSimpleName();    // 简单类名
+clazz.getModifiers();     // 修饰符
+clazz.getPackage();       // 包信息
+
+// 获取成员（getXxx 获取 public 包括继承，getDeclaredXxx 获取所有包括私有）
+clazz.getFields();               // 所有 public 字段
+clazz.getDeclaredFields();       // 所有字段（包括私有）
+clazz.getMethods();              // 所有 public 方法
+clazz.getDeclaredConstructors(); // 所有构造方法
+
+// 操作私有成员（需 setAccessible(true)）
+Field field = clazz.getDeclaredField("name");
+field.setAccessible(true);
+field.set(obj, "newValue");
+\`\`\`
+
+### 优缺点
+- **优点**：运行时动态创建实例和调用方法，提高代码灵活性（Spring IoC、MyBatis 等框架基石）。
+- **缺点**：性能较低（反射调用比普通调用慢数十倍）；破坏封装性；增加复杂度。框架可缓存反射对象（如 Method、Field）缓解性能问题。
+
+### 典型应用场景
+Spring IoC 依赖注入、MyBatis ORM 映射、JUnit 测试框架、动态代理（JDK Proxy）、注解处理器等。`,
+    source: "JavaGuide",
+  },
+  包装类: {
+    category: "java_basic",
+    content: `## 包装类（Wrapper Class）
+
+> 来源：JavaGuide
+
+### 基本类型与包装类对应
+
+| 基本类型 | 包装类 | 默认值 | 大小 |
+|---------|--------|--------|------|
+| byte | Byte | 0 | 1B |
+| short | Short | 0 | 2B |
+| int | Integer | 0 | 4B |
+| long | Long | 0L | 8B |
+| float | Float | 0.0f | 4B |
+| double | Double | 0.0d | 8B |
+| char | Character | '\\u0000' | 2B |
+| boolean | Boolean | false | 未明确定义 |
+
+### 自动装箱与拆箱
+- **装箱**：int → Integer（调用 Integer.valueOf()）
+- **拆箱**：Integer → int（调用 Integer.intValue()）
+\`\`\`java
+Integer a = 10;  // 自动装箱：Integer.valueOf(10)
+int b = a;       // 自动拆箱：a.intValue()
+\`\`\`
+
+### 缓存机制
+包装类型有缓存池（享元模式），默认缓存某些区间的值：
+
+| 包装类 | 缓存范围 |
+|--------|---------|
+| Integer | -128 ~ 127（可配置：-Djava.lang.Integer.IntegerCache.high=xxx） |
+| Long | -128 ~ 127 |
+| Short | -128 ~ 127 |
+| Byte | -128 ~ 127（全部） |
+| Character | 0 ~ 127（ASCII） |
+| Boolean | true / false |
+
+\`\`\`java
+Integer a = 100, b = 100;
+System.out.println(a == b);  // true（缓存命中，同一对象）
+
+Integer c = 200, d = 200;
+System.out.println(c == d);  // false（超过缓存范围，不同对象）
+
+// 正确比较方式
+System.out.println(c.equals(d));  // true
+\`\`\`
+
+### 注意事项
+- 包装类对象不可变（final 修饰）。
+- new Integer(100) 强制创建新对象（与 valueOf 不同）。
+- 算术运算自动拆箱（可能抛 NPE：null + 1）。
+- 比较用 equals()，不用 ==（除非确定在缓存范围内）。`,
+    source: "JavaGuide",
+  },
+  异常: {
+    category: "java_basic",
+    content: `## Java 异常体系
+
+> 来源：JavaGuide
+
+### 异常分类
+
+\`\`\`
+Throwable
+├── Error（不可恢复，无需捕获）
+│   ├── OutOfMemoryError
+│   ├── StackOverflowError
+│   └── NoClassDefFoundError
+└── Exception（可处理）
+    ├── 受检异常（Checked Exception）
+    │   ├── IOException
+    │   ├── SQLException
+    │   └── ClassNotFoundException
+    └── 非受检异常（RuntimeException）
+        ├── NullPointerException
+        ├── IllegalArgumentException
+        ├── ClassCastException
+        ├── IndexOutOfBoundsException
+        └── ArithmeticException
+\`\`\`
+
+### 受检 vs 非受检异常
+
+| 特性 | 受检异常（Checked） | 运行时异常（Runtime/Unchecked） |
+|------|-------------------|-------------------------------|
+| 编译检查 | 必须处理（try-catch 或 throws） | 不强制处理 |
+| 继承 | Exception 的直接子类（不含 RuntimeException） | RuntimeException 的子类 |
+| 典型代表 | IOException, SQLException | NPE, IllegalArgumentException |
+| 触发场景 | 外部因素（文件不存在、网络断开） | 程序 Bug（逻辑错误、参数错误） |
+
+### try-catch-finally 与 try-with-resources
+
+**try-catch-finally**：
+- finally 块总能执行（除非 System.exit() 或 JVM 崩溃）。
+- finally 中 return 会覆盖 try 中的 return。
+
+**try-with-resources**（JDK 7+）：
+\`\`\`java
+try (FileInputStream fis = new FileInputStream("file.txt")) {
+  // 使用流
+} // 自动关闭，无需 finally
+\`\`\`
+- 资源类必须实现 AutoCloseable 接口。
+- 比 finally 更简洁，异常抑制机制不会丢失原始异常。
+
+### 最佳实践
+- 只捕获能处理的异常，否则向上抛出。
+- 异常粒度细化，不捕获 Exception 或 Throwable。
+- finally 中不要返回值或抛异常（会覆盖 try 中的异常）。
+- 使用自定义异常更好表达业务语义。`,
+    source: "JavaGuide",
+  },
+  序列化: {
+    category: "java_basic",
+    content: `## Java 序列化
+
+> 来源：JavaGuide
+
+### 什么是序列化？
+序列化（Serialization）将 Java 对象转换为字节序列，便于存储或网络传输；反序列化将字节序列恢复为 Java 对象。
+
+### 实现方式
+
+**1. 原生 Serializable 接口**
+\`\`\`java
+public class User implements Serializable {
+  private static final long serialVersionUID = 1L;
+  private String name;
+  private transient int age;  // transient 字段不被序列化
+}
+\`\`\`
+
+**2. Externalizable 接口**
+- 需实现 writeExternal() 和 readExternal() 自定义序列化逻辑。
+- 性能优于 Serializable，但需手动编码。
+
+### serialVersionUID 作用
+- 用于反序列化时验证版本一致性。
+- 显式声明可避免因类结构变更导致 InvalidClassException：
+  - 修改了类字段、方法等结构 → serialVersionUID 变化。
+  - 不显式声明时 JVM 自动生成（不同编译器实现可能不同）。
+
+### transient 关键字
+- 标识的字段不参与序列化（反序列化后为默认值）。
+- 适用于敏感信息（密码）或不需持久化的字段（缓存引用）。
+
+### 注意事项
+- 静态变量不属于对象状态，不参与序列化。
+- 反序列化不调用构造方法，通过 Unsafe 或反射直接创建对象。
+- 若父类未实现 Serializable，父类字段需有无参构造方法（反序列化时调用）。
+- 序列化会递归序列化所有引用的对象（需全部实现 Serializable）。
+- 推荐使用 JSON（Jackson/Gson）替代 Java 原生序列化——跨语言、可读性好、安全性高。`,
+    source: "JavaGuide",
+  },
+  锁: {
+    category: "java_advanced",
+    content: `## Java 锁机制详解
+
+> 来源：JavaGuide
+
+### 锁的分类
+
+| 维度 | 分类 |
+|------|------|
+| 粒度 | 偏向锁 → 轻量级锁 → 重量级锁（锁升级） |
+| 公平性 | 公平锁（按申请顺序）、非公平锁（允许插队） |
+| 共享性 | 共享锁（读锁）、独占锁（写锁） |
+| 可重入性 | 可重入锁（ReentrantLock/synchronized）、不可重入锁 |
+| 乐观/悲观 | 乐观锁（CAS）、悲观锁（synchronized/ReentrantLock） |
+
+### 死锁（Deadlock）
+
+四个必要条件：
+1. **互斥**：资源一次只能被一个线程占用。
+2. **请求与保持**：线程持有资源时请求其他资源。
+3. **不剥夺**：资源不能被强行剥夺。
+4. **循环等待**：多个线程形成循环等待链。
+
+**预防策略**：
+- 资源顺序化：所有线程按固定顺序申请资源（破坏循环等待）。
+- 一次性申请所有资源（破坏请求与保持）。
+- 超时释放（tryLock 带超时）。
+
+**检测方法**：
+- jstack（Thread Dump）：搜索 "Found one Java-level deadlock"。
+- JConsole 图形化监控。
+- VisualVM 插件分析。
+
+### synchronized（内置锁）
+- 可重入（锁对象关联计数器，同线程可多次获取）。
+- JDK 6+ 锁升级：无锁 → 偏向锁 → 轻量级锁（CAS 自旋）→ 重量级锁（OS 互斥量）。
+- 非公平锁。
+
+### ReentrantLock（显式锁）
+- 支持公平/非公平模式（构造参数）。
+- 提供 tryLock(timeout) 超时获取。
+- 需手动 lock() / unlock()（通常结合 finally 释放）。
+- 底层基于 AQS（AbstractQueuedSynchronizer）。
+
+### synchronized vs ReentrantLock
+| 特性 | synchronized | ReentrantLock |
+|------|-------------|---------------|
+| 使用方式 | 关键字，自动释放 | API，需手动释放 |
+| 可中断 | 不可中断 | lockInterruptibly() 可中断 |
+| 超时 | 不支持 | tryLock(timeout) |
+| 公平性 | 非公平 | 可配置公平/非公平 |
+| 条件等待 | wait/notify（Object 方法） | Condition（支持多条件） |
+| 性能 | JDK 6+ 优化后差距很小 | 高并发场景略优 |`,
+    source: "JavaGuide",
+  },
+  类加载: {
+    category: "java_advanced",
+    content: `## 类加载机制
+
+> 来源：《深入理解 Java 虚拟机》
+
+### 类加载的七个阶段
+
+\`\`\`
+加载 → 验证 → 准备 → 解析 → 初始化 → 使用 → 卸载
+\`\`\`
+
+1. **加载（Loading）**：通过全限定类名获取类的二进制字节流，将其转化为方法区运行时数据结构，在堆中生成 Class 对象。
+2. **验证（Verification）**：确保字节流符合 JVM 规范（文件格式、元数据、字节码、符号引用验证）。
+3. **准备（Preparation）**：为类变量（static）在方法区分配内存并设零值（如 int=0，引用=null，final static 直接赋值）。
+4. **解析（Resolution）**：将常量池中的符号引用替换为直接引用（指向内存地址的指针）。
+5. **初始化（Initialization）**：执行类构造器 <clinit>() 方法，按代码顺序赋值 static 变量和 static 块。
+6. **使用**：对象实例化和调用。
+7. **卸载**：类被 GC 回收（需满足三个条件：所有实例被回收、ClassLoader 被回收、无反射引用）。
+
+### 双亲委派模型
+
+\`\`\`
+启动类加载器（Bootstrap ClassLoader）
+    ↕
+扩展类加载器（Extension ClassLoader）
+    ↕
+应用类加载器（Application ClassLoader）
+\`\`\`
+
+**工作原理**：
+- 自底向上检查类是否已加载（findLoadedClass）。
+- 自顶向下尝试加载（父加载器加载失败才轮到子加载器）。
+
+**优势**：
+- 避免核心 API 被篡改（如用户自定义 java.lang.String 不会被加载）。
+- 保证 Java 类库的安全性。
+
+**破坏双亲委派**：
+- 继承 ClassLoader 并重写 loadClass() 方法。
+- 典型场景：Tomcat 的 WebAppClassLoader（优先加载 Web 应用类）、SPI 机制（ServiceLoader 使用线程上下文类加载器）。`,
+    source: "JavaGuide",
+  },
+  JMM: {
+    category: "java_advanced",
+    content: `## Java 内存模型（JMM）
+
+> 来源：《深入理解 Java 虚拟机》
+
+### 什么是 JMM？
+JMM（Java Memory Model）是一种规范，定义了多线程程序中共享变量的访问规则，保证并发场景下的可见性、有序性和原子性。
+
+### 主存与工作内存
+- **主内存**：所有线程共享，存储所有变量（实例字段、静态字段、数组元素）。
+- **工作内存**：每个线程私有，存储从主内存拷贝的变量副本。
+
+线程不能直接操作主内存，必须先将变量从主内存拷贝到工作内存，修改后再写回主内存。
+
+### happens-before 原则
+如果两个操作满足 happens-before 关系，则前一个操作的结果对后一个操作可见。
+
+**关键规则**：
+1. **程序顺序规则**：线程内每个操作 happens-before 后续操作。
+2. **volatile 规则**：volatile 变量的写 happens-before 后续对该变量的读。
+3. **锁规则**：解锁 happens-before 后续的加锁。
+4. **传递性**：A happens-before B, B happens-before C → A happens-before C。
+5. **start 规则**：线程 start() happens-before 该线程的任何操作。
+6. **join 规则**：线程的所有操作 happens-before 其他线程对该线程的 join() 返回。
+
+### 三大特性
+
+| 特性 | 定义 | 保障机制 |
+|------|------|---------|
+| **原子性** | 一个或多个操作不可分割 | 基本类型读写（除 long/double）、synchronized、Lock、Atomic 类 |
+| **可见性** | 一个线程修改共享变量，其他线程能立即看到 | volatile、synchronized（解锁前刷新到主存）、final |
+| **有序性** | 程序按代码顺序执行 | volatile（禁止指令重排）、synchronized（同一锁串行执行）、happens-before 规则 |
+
+### 指令重排序
+编译器和处理器为优化性能对指令重新排序，但必须遵守 **as-if-serial 语义**（单线程内不影响结果）。
+
+**内存屏障**（Memory Barrier）：
+- LoadLoad：禁止读-读重排序。
+- StoreStore：禁止写-写重排序。
+- LoadStore：禁止读-写重排序。
+- StoreLoad：禁止写-读重排序（最重开销最大，volatile 写插入）。`,
+    source: "JavaGuide",
+  },
+  Stream: {
+    category: "java_basic",
+    content: `## Stream API
+
+> 来源：JavaGuide
+
+### 什么是 Stream？
+Stream（java.util.stream）是 Java 8 引入的、对集合操作进行函数式编程的 API。不会存储数据，而是对数据源执行一系列流水线操作。
+
+### 流的三个步骤
+\`\`\`java
+List<String> result = list.stream()    // 1. 创建流
+  .filter(s -> s.startsWith("A"))       // 2. 中间操作（多个）
+  .map(String::toUpperCase)
+  .collect(Collectors.toList());        // 3. 终端操作
+\`\`\`
+
+### 创建流的方式
+\`\`\`java
+// 从集合
+list.stream();
+set.parallelStream();  // 并行流
+
+// 从数组
+Arrays.stream(arr);
+
+// 从值
+Stream.of("a", "b", "c");
+
+// 无限流
+Stream.generate(Math::random).limit(5);
+Stream.iterate(0, n -> n + 2).limit(10);
+\`\`\`
+
+### 中间操作（Lazy，不触发执行）
+
+| 操作 | 说明 |
+|------|------|
+| filter(Predicate) | 过滤 |
+| map(Function) | 映射转换 |
+| flatMap(Function) | 扁平化映射（如 List<List> → List） |
+| distinct() | 去重（基于 equals） |
+| sorted() | 排序 |
+| peek(Consumer) | 调试用，保留元素 |
+| limit(n) | 限制个数 |
+| skip(n) | 跳过前 n 个 |
+
+### 终端操作（触发流水线执行）
+
+| 操作 | 说明 |
+|------|------|
+| collect(Collector) | 转换为集合/Map/分组 |
+| toList() | Java 16+ 快捷收集为 List |
+| forEach(Consumer) | 遍历 |
+| reduce(BinaryOperator) | 归纳聚合 |
+| count() | 计数 |
+| anyMatch / allMatch / noneMatch | 匹配检查 |
+| findFirst / findAny | 查找元素 |
+| min / max | 最值 |
+
+### 常用 Collector
+\`\`\`java
+Collectors.toList() / toSet() / toMap()
+Collectors.joining(",")           // 字符串拼接
+Collectors.groupingBy(Function)  // 分组
+Collectors.partitioningBy(Predicate)  // 分区（true/false）
+Collectors.summarizingInt()      // 统计（count/sum/min/avg/max）
+\`\`\`
+
+### 注意事项
+- 流不能重复使用（执行终端操作后流关闭）。
+- 并行流 parallelStream 使用 ForkJoinPool 公共线程池，分区执行后合并结果。
+- 避免在并行流中使用有状态的操作或有副作用的行为。`,
+    source: "JavaGuide",
+  },
+  Lambda: {
+    category: "java_basic",
+    content: `## Lambda 表达式
+
+> 来源：JavaGuide
+
+### 什么是 Lambda？
+Lambda 表达式是 Java 8 引入的函数式编程特性，允许将函数作为方法参数传递，使代码更简洁。
+
+### 语法
+\`\`\`java
+// 完整形式
+(parameters) -> { statements; }
+
+// 省略形式
+x -> x * 2                     // 单个参数省略括号，单条语句省略 return
+(String a, String b) -> a.length() - b.length()  // 参数类型可省略（自动推断）
+() -> System.out.println("")   // 无参需空括号
+\`\`\`
+
+### 函数式接口
+Lambda 的类型是函数式接口（Functional Interface）—— 只有一个抽象方法的接口，用 @FunctionalInterface 注解。
+
+Java 内置四大核心函数式接口：
+
+| 接口 | 参数 | 返回值 | 用途 |
+|------|------|--------|------|
+| Predicate<T> | T | boolean | 断言/过滤 |
+| Consumer<T> | T | void | 消费/打印 |
+| Function<T,R> | T | R | 转换/映射 |
+| Supplier<T> | 无 | T | 生产/提供 |
+
+\`\`\`java
+// 使用示例
+Predicate<String> nonEmpty = s -> !s.isEmpty();
+Consumer<String> print = s -> System.out.println(s);
+Function<String, Integer> len = s -> s.length();
+Supplier<Double> random = () -> Math.random();
+\`\`\`
+
+### 方法引用（Method Reference）
+当 Lambda 体直接调用已有方法时，可用更简洁的方法引用：
+
+| 类型 | 语法 | 等价 Lambda |
+|------|------|-------------|
+| 静态方法 | Class::staticMethod | x -> Class.staticMethod(x) |
+| 实例方法（对象） | obj::instanceMethod | x -> obj.instanceMethod(x) |
+| 实例方法（参数） | Class::instanceMethod | (obj, x) -> obj.instanceMethod(x) |
+| 构造方法 | Class::new | x -> new Class(x) |
+
+### 变量捕获
+Lambda 可以访问外部变量，但被引用的局部变量必须是**隐式 final**（或等效 final）—— 即初始化后不改变值。`,
+    source: "JavaGuide",
+  },
+  注解: {
+    category: "java_basic",
+    content: `## 注解（Annotation）
+
+> 来源：JavaGuide
+
+### 什么是注解？
+注解是 Java 5 引入的元数据机制，为代码提供额外信息，不影响程序本身的执行逻辑，但可被编译器和框架处理。
+
+### 元注解（标注注解的注解）
+
+| 元注解 | 说明 |
+|--------|------|
+| @Target | 注解可用目标（TYPE、FIELD、METHOD、PARAMETER、CONSTRUCTOR、LOCAL_VARIABLE、ANNOTATION_TYPE、PACKAGE） |
+| @Retention | 保留策略：SOURCE（编译丢弃）、CLASS（class 文件保留，运行时不可反射）、RUNTIME（运行时保留，可反射读取） |
+| @Documented | 生成的 JavaDoc 中包含注解 |
+| @Inherited | 子类可继承父类的注解 |
+| @Repeatable | Java 8+，允许在同一声明上重复使用同个注解 |
+
+### 自定义注解
+\`\`\`java
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface LogExecutionTime {
+  String value() default "";
+  boolean enabled() default true;
+}
+\`\`\`
+
+### 核心内置注解
+
+| 注解 | 用途 |
+|------|------|
+| @Override | 重写父类方法（编译期检查） |
+| @Deprecated | 标记过时元素 |
+| @SuppressWarnings | 压制编译器警告 |
+| @FunctionalInterface | 函数式接口标记 |
+| @SafeVarargs | 抑制堆污染警告 |
+
+### 注解处理机制
+
+**编译期处理**（@Retention(SOURCE)）：通过 Annotation Processor（如 Lombok、@Override 检查）在 javac 编译时处理。
+
+**运行时处理**（@Retention(RUNTIME)）：通过反射读取注解信息：
+\`\`\`java
+if (method.isAnnotationPresent(LogExecutionTime.class)) {
+  LogExecutionTime annotation = method.getAnnotation(LogExecutionTime.class);
+  // 读取注解属性并执行相应处理
+}
+\`\`\`
+
+### 典型应用
+- **Spring**：@Component、@Autowired、@RequestMapping、@Transactional
+- **JPA/MyBatis**：@Entity、@Table、@Column、@Select
+- **测试框架**：@Test、@Before、@After（JUnit）
+- **Lombok**：@Getter、@Setter、@Builder（编译期处理生成代码）`,
+    source: "JavaGuide",
+  },
+  内部类: {
+    category: "java_basic",
+    content: `## 内部类（Inner Class）
+
+> 来源：JavaGuide
+
+### 什么是内部类？
+Java 内部类（Inner Class）是定义在另一个类内部的类。内部类可以访问外部类的所有成员（包括 private），外部类也可访问内部类实例的私有成员。
+
+### 四种内部类
+
+**1. 成员内部类（Member Inner Class）**
+\`\`\`java
+class Outer {
+  private int x = 1;
+  class Inner {
+    void print() { System.out.println(x); }  // 访问外部类私有成员
+  }
+}
+// 使用：Outer.Inner in = new Outer().new Inner();
+\`\`\`
+- 不能定义静态成员（final static 常量除外）。
+
+**2. 静态内部类（Static Nested Class）**
+\`\`\`java
+class Outer {
+  static class StaticInner { }
+}
+// 使用：Outer.StaticInner obj = new Outer.StaticInner();
+\`\`\`
+- 不持有外部类引用，不依赖外部类实例。
+- 可访问外部类的静态成员（包括 private static）。
+- 推荐用于辅助类（如 HashMap.Node、Integer.IntegerCache）。
+
+**3. 局部内部类（Local Inner Class）**
+- 定义在方法或作用域内，仅在当前作用域可见。
+- 访问外部变量需变量为 final 或等效 final。
+
+**4. 匿名内部类（Anonymous Inner Class）**
+\`\`\`java
+new Runnable() {
+  @Override
+  public void run() { System.out.println("run"); }
+};
+\`\`\`
+- 没有名称，同时定义并实例化类。
+- 常用于事件监听（Swing/Android）和创建接口/抽象类的实例。
+- Java 8 后多数匿名内部类可被 Lambda 替代。
+
+### 各内部类对比
+
+| 类型 | 持有外部类引用 | 访问外部实例成员 | 定义位置 |
+|------|:-------------:|:---------------:|----------|
+| 成员内部类 | ✅ | ✅ | 类内部 |
+| 静态内部类 | ❌ | 仅静态成员 | 类内部（static） |
+| 局部内部类 | ✅ | ✅ | 方法/作用域内 |
+| 匿名内部类 | ✅ | ✅ | 表达式中 |`,
+    source: "JavaGuide",
+  },
+  单例: {
+    category: "java_basic",
+    content: `## 单例模式（Singleton）
+
+> 来源：JavaGuide
+
+### 什么是单例？
+确保类全局只有一个实例，提供唯一访问点。适用于配置管理器、线程池、数据库连接池等。
+
+### 实现方式对比
+
+**1. 饿汉式（Eager Initialization）**
+\`\`\`java
+public class Singleton {
+  private static final Singleton INSTANCE = new Singleton();
+  private Singleton() {}
+  public static Singleton getInstance() { return INSTANCE; }
+}
+\`\`\`
+- 优点：线程安全（类加载时创建），简单。
+- 缺点：类加载就创建，若从未使用则浪费内存。
+
+**2. 懒汉式（Lazy Initialization）**
+\`\`\`java
+public class Singleton {
+  private static Singleton instance;
+  private Singleton() {}
+  public static synchronized Singleton getInstance() {  // 方法级同步
+    if (instance == null) instance = new Singleton();
+    return instance;
+  }
+}
+\`\`\`
+- 缺点：synchronized 在方法上，每次调用都加锁，性能低。
+
+**3. 双重校验锁（DCL，Double-Checked Locking）** ✅ 推荐
+\`\`\`java
+public class Singleton {
+  private static volatile Singleton instance;  // volatile 禁止指令重排
+  private Singleton() {}
+  public static Singleton getInstance() {
+    if (instance == null) {                  // 第一次检查（无锁）
+      synchronized (Singleton.class) {
+        if (instance == null) {              // 第二次检查（加锁）
+          instance = new Singleton();
+        }
+      }
+    }
+    return instance;
+  }
+}
+\`\`\`
+
+**4. 静态内部类（Initialization-on-demand Holder）** ✅ 推荐
+\`\`\`java
+public class Singleton {
+  private Singleton() {}
+  private static class Holder {
+    static final Singleton INSTANCE = new Singleton();
+  }
+  public static Singleton getInstance() { return Holder.INSTANCE; }
+}
+\`\`\`
+- 利用 JVM 类加载机制保证线程安全，延迟加载，无锁开销。
+
+**5. 枚举（Enum）** ✅ 最佳推荐
+\`\`\`java
+public enum Singleton {
+  INSTANCE;
+  public void doSomething() { }
+}
+\`\`\`
+- 天然防止反射攻击和序列化破坏，最简洁优雅。`,
+    source: "JavaGuide",
+  },
+  枚举: {
+    category: "java_basic",
+    content: `## 枚举（Enum）
+
+> 来源：JavaGuide
+
+### 什么是枚举？
+enum 是 Java 5 引入的关键字，用于定义一组命名常量。枚举类隐式继承 java.lang.Enum。
+
+### 基本用法
+\`\`\`java
+public enum Color {
+  RED, GREEN, BLUE;
+}
+// 使用：Color c = Color.RED;
+\`\`\`
+
+### 枚举扩展用法
+枚举可以有字段、构造方法、方法和抽象方法：
+\`\`\`java
+public enum Operation {
+  PLUS("+") { public double apply(double x, double y) { return x + y; } },
+  MINUS("-") { public double apply(double x, double y) { return x - y; } };
+
+  private final String symbol;
+  Operation(String symbol) { this.symbol = symbol; }
+  public abstract double apply(double x, double y);
+
+  @Override public String toString() { return symbol; }
+}
+\`\`\`
+
+### 枚举的隐含方法
+
+| 方法 | 说明 |
+|------|------|
+| values() | 返回枚举常量数组 |
+| valueOf(String) | 按名称返回枚举常量 |
+| ordinal() | 返回枚举常量的序数（从 0 开始，谨慎使用） |
+| name() | 返回枚举常量名称字符串 |
+
+### 枚举 vs 常量（public static final）
+
+| 维度 | 枚举 | 常量 |
+|------|------|------|
+| 类型安全 | ✅ 编译期检查 | ❌ 可传入任意 int |
+| 可读性 | 强（自带 toString） | 弱（打印数值） |
+| 功能扩展 | 支持字段、方法、接口实现 | 无 |
+| 单例保证 | 天然单例 | 手动实现 |
+| switch 支持 | ✅ | ❌（需 if-else） |
+
+### 枚举最佳实践
+- 结合 switch 使用（编译器检查是否覆盖所有枚举值）。
+- 用 EnumSet 和 EnumMap 替代 HashSet/HashMap（性能更高）。
+- 使用枚举实现单例模式（防止反射攻击和序列化破坏）。
+- 使用枚举实现策略模式（每个常量实现不同行为）。`,
+    source: "JavaGuide",
+  },
+  位运算: {
+    category: "java_basic",
+    content: `## 位运算
+
+> 来源：JavaGuide
+
+### 基本位运算符
+
+| 运算符 | 名称 | 说明 |
+|--------|------|------|
+| & | 按位与 | 同 1 则 1 |
+| \\| | 按位或 | 有 1 则 1 |
+| ^ | 按位异或 | 不同则 1 |
+| ~ | 按位取反 | 1 变 0，0 变 1 |
+| << | 左移 | 高位丢弃，低位补 0，相当于 ×2^n |
+| >> | 右移 | 高位补符号位，低位丢弃，相当于 ÷2^n（向下取整） |
+| >>> | 无符号右移 | 高位补 0，对于负数结果变正 |
+
+### 常见位运算技巧
+
+| 操作 | 表达式 | 说明 |
+|------|--------|------|
+| 判断奇偶 | (n & 1) == 1 | 奇数返回 true |
+| 取第 k 位 | (n >> k) & 1 | 获取 n 的二进制第 k 位 |
+| 置第 k 位为 1 | n \\|= (1 << k) | |
+| 置第 k 位为 0 | n &= ~(1 << k) | |
+| 交换两数 | a ^= b; b ^= a; a ^= b; | 无需临时变量 |
+| 2 的幂检测 | (n & (n-1)) == 0 | n > 0 |
+| 最低位 1 | n & (-n) | 保留最低位的 1 |
+| 消除最低位 1 | n & (n-1) | 将最低位的 1 变 0 |
+
+### 实际应用
+
+**权限掩码**：
+\`\`\`java
+final int READ = 1 << 0;   // 0001
+final int WRITE = 1 << 1;  // 0010
+int perm = READ | WRITE;   // 0011
+boolean hasWrite = (perm & WRITE) != 0;  // true
+\`\`\`
+
+**集合运算**：HashMap 用 (n-1) & hash 替代取模运算定位桶位（需 n 为 2 的幂次），位运算远快于 % 取模。
+
+**性能优化**：乘除 2 的幂次用 << 和 >>，如 x * 2 → x << 1（JVM JIT 编译器通常会自动优化）。`,
+    source: "JavaGuide",
+  },
+  设计模式: {
+    category: "java_basic",
+    content: `## 设计模式概览
+
+> 来源：JavaGuide
+
+### 什么是设计模式？
+设计模式是软件开发中经过验证的、可复用的解决方案，针对特定场景下的常见问题。GoF（Gang of Four）《设计模式》将 23 种模式分为三大类：
+
+### 创建型模式（5 种）
+关注对象创建机制，隐藏创建逻辑：
+
+| 模式 | 核心思想 | JDK/Spring 示例 |
+|------|---------|----------------|
+| **单例** | 全局唯一实例 | Runtime.getRuntime(), Spring Bean 默认作用域 |
+| **工厂方法** | 定义一个创建对象的接口，子类决定实例化哪个类 | Collection.iterator() |
+| **抽象工厂** | 创建一组相关对象 | javax.xml.parsers.DocumentBuilderFactory |
+| **建造者** | 分步构建复杂对象 | StringBuilder, Lombok @Builder |
+| **原型** | 克隆已有对象创建新实例 | Object.clone() |
+
+### 结构型模式（7 种）
+关注类与对象的组合：
+
+| 模式 | 核心思想 | 示例 |
+|------|---------|------|
+| **适配器** | 不兼容接口之间搭桥 | Arrays.asList(), InputStreamReader |
+| **装饰器** | 动态添加职责 | BufferedInputStream, IO 流体系 |
+| **代理** | 为对象提供替代/占位 | JDK Proxy, Cglib, Spring AOP |
+| **外观** | 为子系统提供统一接口 | Spring JDBC JdbcTemplate |
+| **桥接** | 抽象与实现分离 | JDBC DriverManager |
+| **组合** | 将对象组合成树形结构 | Map.putAll() |
+| **享元** | 共享细粒度对象减少创建 | Integer 缓存池, String 常量池 |
+
+### 行为型模式（11 种）
+关注对象间的通信和职责分配：
+
+| 模式 | 核心思想 | 示例 |
+|------|---------|------|
+| **策略** | 定义一系列算法，运行时切换 | Comparator, List.sort() |
+| **观察者** | 一对多依赖，状态变化自动通知 | Spring ApplicationListener |
+| **模板方法** | 定义算法骨架，子类实现细节 | JdbcTemplate, AQS |
+| **责任链** | 多个处理器形成链，依次处理请求 | FilterChain, Spring Interceptor |
+| **迭代器** | 顺序访问集合 | Iterator, List.iterator() |
+| **命令** | 将请求封装为对象 | Runnable, ThreadPoolExecutor |
+| **状态** | 状态变化改变行为 | 有限状态机 |
+| **备忘录** | 捕获和恢复对象状态 | 序列化/反序列化 |
+| **中介者** | 对象间通信通过中介转发 | Message Queue |
+| **解释器** | 定义语言的文法表示 | Pattern.compile() |
+| **访问者** | 不改变元素结构新增操作 | javax.lang.model.element |
+
+### 设计原则（SOLID）
+- **S**（单一职责）：一个类只负责一件事情。
+- **O**（开闭原则）：对扩展开放，对修改关闭。
+- **L**（里氏替换）：子类必须能替换父类。
+- **I**（接口隔离）：接口应该小而专。
+- **D**（依赖倒转）：面向接口编程而非实现。`,
+    source: "JavaGuide",
+  },
+  代理: {
+    category: "java_basic",
+    content: `## 代理模式（Proxy）
+
+> 来源：JavaGuide
+
+### 什么是代理？
+代理模式为目标对象提供代理对象，通过代理对象控制对目标对象的访问，可以在不修改目标代码的前提下增强功能。
+
+### 静态代理
+在编译期确定代理类，手动编写代理类实现目标接口：
+\`\`\`java
+interface Service { void execute(); }
+class RealService implements Service { public void execute() { ... } }
+class ProxyService implements Service {
+  private Service target;
+  public void execute() {
+    System.out.println("前置处理");
+    target.execute();
+    System.out.println("后置处理");
+  }
+}
+\`\`\`
+- 优点：实现简单。
+- 缺点：每个类都需要编写代理类，维护成本高。
+
+### JDK 动态代理
+基于接口，运行时通过反射生成代理类，使用 InvocationHandler 处理：
+\`\`\`java
+Service proxy = (Service) Proxy.newProxyInstance(
+  classLoader,
+  new Class[]{Service.class},
+  (proxyObj, method, args) -> {
+    System.out.println("前置处理");
+    Object result = method.invoke(target, args);
+    System.out.println("后置处理");
+    return result;
+  }
+);
+\`\`\`
+- 目标类必须实现接口（必须面向接口编程）。
+- 生成的代理类继承了 Proxy 并实现了目标接口。
+- Spring AOP 默认使用 JDK 动态代理（当目标类实现接口时）。
+
+### Cglib 动态代理
+基于继承，通过 ASM 字节码框架生成目标类的子类代理：
+- 目标类不需要实现接口。
+- 通过 MethodInterceptor 实现增强逻辑。
+- 无法代理 final 类和方法。
+- Spring AOP 在目标类未实现接口时自动使用 Cglib。
+- Spring Boot 2.x+ 默认使用 Cglib 代理。
+
+### 对比
+
+| 维度 | JDK 动态代理 | Cglib 动态代理 |
+|------|-------------|---------------|
+| 原理 | 反射 + 接口 | ASM 字节码生成子类 |
+| 目标要求 | 必须实现接口 | 无接口也可 |
+| final 限制 | 无 | 无法代理 final 方法/类 |
+| 性能（创建） | 较慢（反射生成） | 较快（字节码操作） |
+| 性能（调用） | 较好 | 更好 |
+| 使用场景 | Spring AOP（有接口） | Spring AOP（无接口） |`,
+    source: "JavaGuide",
+  },
+  Optional: {
+    category: "java_basic",
+    content: `## Optional 类
+
+> 来源：JavaGuide
+
+### 什么是 Optional？
+Optional<T> 是 Java 8 引入的容器类，代表一个可能包含也可能不包含值的对象。旨在减少 NullPointerException，提供更优雅的空值处理方式。
+
+### 创建 Optional
+\`\`\`java
+Optional<String> empty = Optional.empty();                  // 空 Optional
+Optional<String> of = Optional.of("hello");                 // 值非空（null 抛 NPE）
+Optional<String> nullable = Optional.ofNullable(someValue); // 值可为 null
+\`\`\`
+
+### 常用方法
+
+| 方法 | 说明 |
+|------|------|
+| isPresent() | 值是否存在 |
+| isEmpty() | Java 11+，值是否为空 |
+| ifPresent(Consumer) | 值存在时执行操作 |
+| ifPresentOrElse(Consumer, Runnable) | Java 9+，值存在/不存在分别处理 |
+| orElse(T) | 值存在返回自身，否则返回默认值 |
+| orElseGet(Supplier) | 值存在返回自身，否则执行 Supplier 获取值（延迟计算） |
+| orElseThrow(Supplier) | 值不存在时抛出自定义异常 |
+| map(Function) | 值存在时执行转换，返回 Optional |
+| flatMap(Function) | 值存在时执行转换（返回 Optional），避免嵌套 |
+| filter(Predicate) | 值存在且满足条件时保留，否则返回 Optional.empty() |
+| stream() | Java 9+，将 Optional 转为 Stream |
+
+### 正确使用方式
+\`\`\`java
+// ❌ 错误：仍然用 isPresent + get（和 if-null 检查没区别）
+if (opt.isPresent()) { String val = opt.get(); }
+
+// ✅ 正确：使用函数式 API
+opt.ifPresent(v -> System.out.println(v));
+
+String result = opt.orElse("default");
+User user = opt.orElseThrow(() -> new NoSuchElementException("User not found"));
+
+// ✅ 链式调用
+String city = Optional.ofNullable(user)
+  .map(User::getAddress)
+  .map(Address::getCity)
+  .orElse("未知");
+\`\`\`
+
+### 使用建议
+- 不要在字段、方法参数、集合元素中使用 Optional（增加了序列化成本和复杂性）。
+- 仅作为方法返回类型，表示"可能为空"的返回值。
+- 不要用 Optional 替代所有的 null 检查，仅用于流式链式调用场景。
+- 与 Stream 配合效果最好：stream.filter(...).findFirst().map(...).orElse(...)。`,
+    source: "JavaGuide",
+  },
+  BigDecimal: {
+    category: "java_basic",
+    content: `## BigDecimal 精度控制
+
+> 来源：JavaGuide
+
+### 浮点数精度问题
+\`\`\`java
+double d = 0.1 + 0.2;
+System.out.println(d);  // 0.30000000000000004
+\`\`\`
+float 和 double 使用二进制浮点数，无法精确表示 0.1、0.2 等十进制小数。
+
+### 使用 BigDecimal 解决
+\`\`\`java
+BigDecimal a = new BigDecimal("0.1");
+BigDecimal b = new BigDecimal("0.2");
+BigDecimal sum = a.add(b);
+System.out.println(sum);  // 0.3
+\`\`\`
+
+### ⚠️ 构造方法陷阱
+\`\`\`java
+// ❌ 错误：double 参数仍存在精度问题
+new BigDecimal(0.1);  // 结果: 0.100000000000000005551115123125...
+
+// ✅ 正确：使用字符串参数
+new BigDecimal("0.1");
+
+// ✅ 或者使用 BigDecimal.valueOf()（内部使用 Double.toString()）
+BigDecimal.valueOf(0.1);
+\`\`\`
+
+### 算术运算（返回新对象，BigDecimal 不可变）
+\`\`\`java
+BigDecimal a = new BigDecimal("10.5");
+BigDecimal b = new BigDecimal("3");
+
+a.add(b);              // 加
+a.subtract(b);         // 减
+a.multiply(b);         // 乘
+a.divide(b, 2, RoundingMode.HALF_UP);  // 除（需指定精度和舍入模式）
+a.setScale(2, RoundingMode.HALF_UP);   // 设置小数位
+\`\`\`
+
+### 舍入模式
+
+| 模式 | 说明 |
+|------|------|
+| HALF_UP | 四舍五入（最常用） |
+| HALF_DOWN | 五舍六入 |
+| HALF_EVEN | 银行家舍入（5 时进到偶数） |
+| UP | 远离零方向舍入 |
+| DOWN | 向零方向舍入（截断） |
+| CEILING | 向正无穷方向 |
+| FLOOR | 向负无穷方向 |
+
+### 比较方式
+\`\`\`java
+// ❌ equals 比较值 + 精度（0.0 和 0.00 不等）
+new BigDecimal("0.0").equals(new BigDecimal("0.00")); // false
+
+// ✅ compareTo 只比较数值
+new BigDecimal("0.0").compareTo(new BigDecimal("0.00")); // 0（相等）
+\`\`\`
+
+### 最佳实践
+1. 构造 BigDecimal 始终使用 String 参数。
+2. 除法运算必须指定 scale 和 roundingMode。
+3. 比较使用 compareTo() 而非 equals()。
+4. Java 中金额计算必须使用 BigDecimal。`,
+    source: "JavaGuide",
+  },
+  引用: {
+    category: "java_advanced",
+    content: `## Java 引用类型
+
+> 来源：《深入理解 Java 虚拟机》
+
+### 四种引用类型
+Java 提供了四种引用类型，控制对象的可达性和 GC 回收时机：
+
+**1. 强引用（Strong Reference）**
+\`\`\`java
+Object obj = new Object();
+\`\`\`
+- 最常见的引用类型。
+- 只要强引用存在，被引用的对象永远不会被 GC 回收。
+- 即使内存不足抛 OOM，也不会回收强引用对象。
+
+**2. 软引用（Soft Reference）**
+\`\`\`java
+SoftReference<Object> softRef = new SoftReference<>(new Object());
+Object obj = softRef.get();  // 可能为 null
+\`\`\`
+- JVM 内存充足时不回收，**内存不足时（即将 OOM 前）**回收。
+- 适合实现内存敏感缓存（如图片缓存、数据缓存）。
+- JDK 各版本对软引用 GC 策略有差异。
+
+**3. 弱引用（Weak Reference）**
+\`\`\`java
+WeakReference<Object> weakRef = new WeakReference<>(new Object());
+Object obj = weakRef.get();  // 可能为 null（下次 GC 后）
+\`\`\`
+- 无论内存是否充足，只要发生 GC 就回收。
+- 典型应用：WeakHashMap（key 为弱引用，GC 后自动清除键值对）。
+- ThreadLocal 的 Entry 使用弱引用引用 ThreadLocal 对象。
+
+**4. 虚引用（Phantom Reference）**
+\`\`\`java
+ReferenceQueue<Object> queue = new ReferenceQueue<>();
+PhantomReference<Object> phantomRef = new PhantomReference<>(new Object(), queue);
+phantomRef.get();  // 始终返回 null
+\`\`\`
+- 最弱的引用类型，无法通过虚引用获取对象实例。
+- 唯一目的是在对象被 GC 时收到通知（关联 ReferenceQueue）。
+- 用于跟踪对象回收（如 NIO DirectByteBuffer 的堆外内存释放）。
+
+### 对比总结
+
+| 引用类型 | 回收时机 | 获取对象 | 典型场景 |
+|---------|---------|---------|---------|
+| 强引用 | 永不回收（OOM 也不回收） | 直接获取 | 普通 new 对象 |
+| 软引用 | 内存不足时回收 | get() 可能为 null | 缓存 |
+| 弱引用 | 下次 GC 即回收 | get() 可能为 null | WeakHashMap |
+| 虚引用 | 任何时候 | 始终 null | 对象回收跟踪 |
+
+### 引用队列（ReferenceQueue）
+- 软引用、弱引用、虚引用可关联 ReferenceQueue。
+- 对象被回收后，对应的 Reference 对象会加入队列。
+- 可通过轮询队列，在对象被回收后执行清理逻辑。`,
+    source: "JavaGuide",
   },
 
   // Additional lowercase tags for match reliability
