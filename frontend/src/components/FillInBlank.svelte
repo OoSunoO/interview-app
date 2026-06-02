@@ -116,6 +116,23 @@
 </script>
 
 <div class="fill-in-blank">
+  <!-- Submit btn at top — always visible -->
+  <div class="submit-area-top">
+    {#if !submitted}
+      <button
+        class="submit-btn"
+        onclick={handleSubmit}
+        disabled={!allFilled}
+      >
+        提交答案
+      </button>
+    {:else}
+      <button class="retry-btn" onclick={handleRetry}>
+        重新作答
+      </button>
+    {/if}
+  </div>
+
   <!-- Question content with blanks rendered as dropdowns -->
   <div class="f-content">
     {#each splitContent(question.content) as part, i}
@@ -169,21 +186,6 @@
         {/each}
       </ul>
     {/if}
-  {/if}
-
-  <!-- Submit / Retry -->
-  {#if !submitted}
-    <button
-      class="submit-btn"
-      onclick={handleSubmit}
-      disabled={!allFilled}
-    >
-      提交答案
-    </button>
-  {:else}
-    <button class="retry-btn" onclick={handleRetry}>
-      重新作答
-    </button>
   {/if}
 </div>
 
