@@ -415,15 +415,17 @@
 
       <h2 class="q-title" data-testid="question-title">{q.title}</h2>
 
-      <div class="q-content">
-        {#each renderContent(q.content) as part}
-          {#if part.type === "code"}
-            <CodeBlock code={part.code} lang={part.lang} />
-          {:else}
-            <p>{part.content}</p>
-          {/if}
-        {/each}
-      </div>
+      {#if q.type !== "fill_in_blank"}
+        <div class="q-content">
+          {#each renderContent(q.content) as part}
+            {#if part.type === "code"}
+              <CodeBlock code={part.code} lang={part.lang} />
+            {:else}
+              <p>{part.content}</p>
+            {/if}
+          {/each}
+        </div>
+      {/if}
 
       {#if q.hints.length > 0 && !showAnswer && !browseMode}
         <button class="hint-trigger" onclick={() => (showHints = !showHints)}>

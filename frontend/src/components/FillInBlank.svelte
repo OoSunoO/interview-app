@@ -1,7 +1,7 @@
 <script>
   /**
    * Fill-in-the-blank question component
-   * Renders ___ placeholders as blank slots and shows candidate words as pills.
+   * Renders ___ placeholders as <select> dropdowns with candidate words.
    */
   import { store } from "../lib/stores.svelte.js";
 
@@ -9,18 +9,18 @@
 
   // Parsed answer data
   let correctGroups = $state([]);
-  let poolItems = $state([]);
-  let filledBlanks = $state([]);
+  let allCandidates = $state([]);
+  let selectedAnswers = $state([]);
   let submitted = $state(false);
   let blankResults = $state([]);
   let showHints = $state(false);
   let showResult = $state(false);
 
   // Derived: all blanks filled
-  let allFilled = $derived(filledBlanks.every((b) => b !== null));
+  let allFilled = $derived(selectedAnswers.every((a) => a !== null && a !== ""));
 
-  // Derived: blank placeholders from content
-  let blankSlots = $derived.by(() => {
+  // Derived: blank count from content
+  let blankCount = $derived.by(() => {
     const matches = question.content.match(/___/g);
     return matches ? matches.length : 0;
   });
@@ -31,7 +31,6 @@
     try {
       answerData = JSON.parse(question.answer);
     } catch {
-      // If answer is not JSON, try to treat it as a simple comma-separated list
       answerData = {
         correct: question.answer.split(/[,，、]/).map((s) => [s.trim()]),
         distractors: [],
@@ -41,21 +40,13 @@
     correctGroups = answerData.correct || [];
     const distractors = answerData.distractors || [];
 
-    // Build initial pool: all candidate words from correct groups + distractors
+    // Collect all unique candidate words from correct groups + distractors
     const correctWords = correctGroups.flat();
-    const allWords = [...correctWords, ...distractors];
+    const allWords = [...new Set([...correctWords, ...distractors])];
+    allCandidates = shuffleArray(allWords);
 
-    // Count occurrences of each word in the pool
-    const countMap = {};
-    for (const w of allWords) {
-      countMap[w] = (countMap[w] || 0) + 1;
-    }
-    poolItems = shuffleArray(
-      Object.entries(countMap).map(([word, count]) => ({ word, count }))
-    );
-
-    // Initialize filled blanks
-    filledBlanks = Array(correctGroups.length).fill(null);
+    // Initialize selected answers
+    selectedAnswers = Array(correctGroups.length).fill("");
     blankResults = Array(correctGroups.length).fill(null);
   }
 
@@ -78,50 +69,10 @@
     }
   });
 
-  function handlePillClick(word) {
-    if (submitted) return;
-
-    // Find the pool item
-    const poolIdx = poolItems.findIndex((p) => p.word === word);
-    if (poolIdx === -1 || poolItems[poolIdx].count <= 0) return;
-
-    // Find first empty blank
-    const emptyIdx = filledBlanks.findIndex((b) => b === null);
-    if (emptyIdx === -1) return;
-
-    // Decrement pool count
-    poolItems = poolItems.map((item, idx) =>
-      idx === poolIdx
-        ? { ...item, count: item.count - 1 }
-        : item
-    );
-
-    // Fill the blank
-    const newFilled = [...filledBlanks];
-    newFilled[emptyIdx] = word;
-    filledBlanks = newFilled;
-  }
-
-  function handleBlankClick(blankIdx) {
-    if (submitted) return;
-
-    const word = filledBlanks[blankIdx];
-    if (word === null) return;
-
-    // Clear the blank
-    const newFilled = [...filledBlanks];
-    newFilled[blankIdx] = null;
-    filledBlanks = newFilled;
-
-    // Increment pool count
-    const poolIdx = poolItems.findIndex((p) => p.word === word);
-    if (poolIdx !== -1) {
-      poolItems = poolItems.map((item, idx) =>
-        idx === poolIdx
-          ? { ...item, count: item.count + 1 }
-          : item
-      );
-    }
+  function handleSelectChange(index, value) {
+    const newSelected = [...selectedAnswers];
+    newSelected[index] = value;
+    selectedAnswers = newSelected;
   }
 
   async function handleSubmit() {
@@ -131,7 +82,7 @@
     // Check each blank
     const results = [];
     for (let i = 0; i < correctGroups.length; i++) {
-      const userWord = filledBlanks[i];
+      const userWord = selectedAnswers[i];
       const accepted = correctGroups[i];
       const isCorrect = accepted.includes(userWord);
       results.push({
@@ -165,38 +116,42 @@
 </script>
 
 <div class="fill-in-blank">
-  <!-- Question content with blanks rendered -->
+  <!-- Question content with blanks rendered as dropdowns -->
   <div class="f-content">
     {#each splitContent(question.content) as part, i}
       {#if part.type === "text"}
         <span>{part.text}</span>
       {:else if part.type === "blank"}
         {@const blankIdx = part.index}
-        <button
-          class="blank-slot"
-          class:filled={filledBlanks[blankIdx] !== null}
-          class:correct={submitted && blankResults[blankIdx]?.isCorrect}
-          class:wrong={submitted && blankResults[blankIdx] && !blankResults[blankIdx].isCorrect}
-          onclick={() => handleBlankClick(blankIdx)}
-          disabled={submitted}
-        >
-          {#if submitted && blankResults[blankIdx]}
+        {#if submitted && blankResults[blankIdx]}
+          <span
+            class="blank-result"
+            class:correct={blankResults[blankIdx].isCorrect}
+            class:wrong={!blankResults[blankIdx].isCorrect}
+          >
             <span class="blank-word">{blankResults[blankIdx].userWord}</span>
             {#if !blankResults[blankIdx].isCorrect}
               <span class="blank-correct">[{blankResults[blankIdx].correctAnswer}]</span>
             {/if}
-          {:else if filledBlanks[blankIdx] !== null}
-            {filledBlanks[blankIdx]}
-          {:else}
-            <span class="blank-placeholder">?</span>
-          {/if}
-        </button>
+          </span>
+        {:else}
+          <select
+            class="blank-select"
+            value={selectedAnswers[blankIdx]}
+            onchange={(e) => handleSelectChange(blankIdx, e.target.value)}
+          >
+            <option value="">请选择</option>
+            {#each allCandidates as word}
+              <option value={word}>{word}</option>
+            {/each}
+          </select>
+        {/if}
       {/if}
     {/each}
   </div>
 
   <!-- Hints -->
-  {#if question.hints.length > 0 && !submitted}
+  {#if question.hints?.length > 0 && !submitted}
     <button class="hint-trigger" onclick={() => (showHints = !showHints)}>
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -213,28 +168,6 @@
         {/each}
       </ul>
     {/if}
-  {/if}
-
-  <!-- Candidate pills -->
-  {#if !submitted}
-    <div class="pool">
-      <p class="pool-label">点击词语填入空白：</p>
-      <div class="pill-grid">
-        {#each poolItems as item}
-          <button
-            class="candidate-pill"
-            disabled={item.count <= 0}
-            class:used={item.count <= 0}
-            onclick={() => handlePillClick(item.word)}
-          >
-            {item.word}
-            {#if item.count > 1}
-              <span class="pill-count">×{item.count}</span>
-            {/if}
-          </button>
-        {/each}
-      </div>
-    </div>
   {/if}
 
   <!-- Submit / Retry -->
@@ -284,26 +217,23 @@
   }
 
   .f-content {
-    line-height: 2.2;
+    line-height: 2.4;
     font-size: 15px;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
   }
 
   .f-content span {
     line-height: 1.75;
   }
 
-  .blank-slot {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    min-width: 80px;
-    min-height: 32px;
-    padding: 2px 10px;
-    border: 2px dashed var(--border);
+  .blank-select {
+    display: inline-block;
+    min-width: 110px;
+    padding: 6px 28px 6px 10px;
+    border: 2px solid var(--border);
     border-radius: var(--radius-sm);
     background: var(--bg-surface);
     font-size: 14px;
@@ -312,38 +242,41 @@
     cursor: pointer;
     transition: all 0.2s var(--spring);
     font-family: inherit;
+    appearance: auto;
+    -webkit-appearance: auto;
+    -moz-appearance: auto;
   }
 
-  .blank-slot.filled {
-    border-style: solid;
-    border-color: var(--accent-dim);
-    background: var(--accent-bg);
+  .blank-select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px var(--accent-bg);
   }
 
-  .blank-slot:active:not(:disabled) {
-    transform: scale(0.95);
+  .blank-result {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 80px;
+    min-height: 32px;
+    padding: 2px 10px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    font-size: 14px;
+    font-weight: 600;
   }
 
-  .blank-slot.correct {
+  .blank-result.correct {
     border-color: var(--success);
     background: var(--success-bg);
     color: var(--success);
   }
 
-  .blank-slot.wrong {
+  .blank-result.wrong {
     border-color: var(--danger);
     background: var(--danger-bg);
     color: var(--danger);
-  }
-
-  .blank-slot:disabled {
-    cursor: default;
-    opacity: 1;
-  }
-
-  .blank-placeholder {
-    color: var(--text-dim);
-    font-weight: 400;
   }
 
   .blank-word {
@@ -357,57 +290,6 @@
     padding: 1px 5px;
     border-radius: 3px;
     white-space: nowrap;
-  }
-
-  .pool {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-  }
-
-  .pool-label {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-
-  .pill-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .candidate-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 6px 14px;
-    border-radius: var(--radius-pill);
-    background: var(--accent-bg);
-    color: var(--accent);
-    border: 1px solid var(--accent-dim);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s var(--spring);
-    font-family: inherit;
-  }
-
-  .candidate-pill:active:not(:disabled) {
-    transform: scale(0.93);
-  }
-
-  .candidate-pill:disabled {
-    opacity: 0.3;
-    cursor: default;
-    text-decoration: line-through;
-  }
-
-  .pill-count {
-    font-size: 10px;
-    opacity: 0.7;
-    font-weight: 400;
   }
 
   .hint-trigger {
