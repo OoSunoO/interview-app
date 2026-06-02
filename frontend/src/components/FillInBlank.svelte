@@ -139,8 +139,9 @@
             class="blank-select"
             value={selectedAnswers[blankIdx]}
             onchange={(e) => handleSelectChange(blankIdx, e.target.value)}
+            size={Math.min(allCandidates.length + 1, 5)}
           >
-            <option value="">请选择</option>
+            <option value="">— 选词 —</option>
             {#each allCandidates as word}
               <option value={word}>{word}</option>
             {/each}
