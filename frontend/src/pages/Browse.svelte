@@ -355,6 +355,8 @@
     display: inline-flex;
     align-items: center;
     flex-shrink: 0;
+    width: 16px;
+    height: 16px;
   }
   .status-icon.correct {
     color: var(--success);
@@ -413,6 +415,7 @@
   .q-title {
     font-size: 14px;
     line-height: 1.4;
+    color: var(--text);
   }
   .q-tags {
     display: flex;
@@ -444,5 +447,33 @@
     background: var(--accent-bg);
     color: var(--accent);
     border: 1px solid var(--accent-dim);
+  }
+  .tag.type {
+    background: var(--bg-surface);
+    color: var(--text-muted);
+  }
+  .tag.type.short_answer {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .tag.type.choice {
+    background: rgba(108, 140, 255, 0.1);
+    color: #6c8cff;
+  }
+  .tag.type.true_false {
+    background: rgba(167, 139, 250, 0.1);
+    color: #a78bfa;
+  }
+  .tag.type.coding {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  .tag.type.fill_in_blank {
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
+  }
+  .tag.type.multiple_choice {
+    background: rgba(108, 140, 255, 0.1);
+    color: #6c8cff;
   }
 </style>

@@ -909,13 +909,16 @@
     font-size: 17px;
     font-weight: 700;
     letter-spacing: -0.2px;
+    color: var(--text);
   }
   .q-content {
     line-height: 1.75;
     font-size: 15px;
+    color: var(--text);
   }
   .q-content p {
     margin-bottom: 8px;
+    color: var(--text);
   }
 
   .hint-trigger {
@@ -1076,6 +1079,7 @@
   .ans-body p {
     font-size: 14px;
     line-height: 1.7;
+    color: var(--text);
   }
   .ans-body p:not(:last-child) {
     margin-bottom: 8px;

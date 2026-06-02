@@ -143,7 +143,7 @@
     bottom: max(12px, var(--safe-bottom));
     left: 12px;
     right: 12px;
-    z-index: 100;
+    z-index: var(--z-nav);
   }
   .nav-inner {
     display: flex;
@@ -217,8 +217,10 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     border-radius: 50%;
-    color: var(--text-dim);
+    color: var(--text-muted);
     transition: all 0.3s var(--spring);
+    cursor: pointer;
+    z-index: calc(var(--z-nav) + 1);
   }
   .theme-toggle:active {
     transform: scale(0.88);
