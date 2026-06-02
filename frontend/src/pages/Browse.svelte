@@ -95,6 +95,7 @@
       <option value="choice">选择</option>
       <option value="true_false">判断</option>
       <option value="multiple_choice">多选</option>
+      <option value="fill_in_blank">填空</option>
     </select>
     <select bind:value={store.filters.company} onchange={applyFilter}>
       <option value="">全部来源</option>

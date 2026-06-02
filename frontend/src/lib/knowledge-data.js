@@ -718,6 +718,66 @@ HyperLogLog（基数统计，固定12KB，误差0.81%）、Bitmap（位图）、
     category: "frontend",
     source: null,
   },
+
+  // Additional lowercase tags for match reliability
+  jvm: {
+    category: "java_advanced",
+    content: `## JVM 核心知识点概览
+
+### JVM 运行时数据区域
+- **程序计数器**（线程私有）：指向当前线程执行的字节码行号地址。
+- **Java 虚拟机栈**（线程私有）：每个方法对应一个栈帧，存储局部变量表、操作数栈、动态链接和方法出口。
+- **本地方法栈**（线程私有）：为 native 方法服务，HotSpot 中与 Java 虚拟机栈合二为一。
+- **堆**（线程共享）：存放对象实例，GC 主要作用的区域。分为新生代（Eden + Survivor）和老年代。
+- **方法区/元空间**（线程共享）：存储类信息、常量、静态变量。JDK 8+ 用元空间（本地内存）替代永久代。
+
+### 垃圾回收
+- 判断对象存活：引用计数法（无法解决循环引用）和可达性分析（从 GC Roots 出发）。
+- 引用类型：强引用（永不回收）、软引用（内存不足回收）、弱引用（下次 GC 回收）、虚引用（跟踪回收）。
+- 垃圾收集算法：标记-清除（有碎片）、标记-复制（无碎片但浪费空间）、标记-整理（无碎片但效率低）。
+- 常见垃圾收集器：G1（JDK 9+ 默认）、ZGC（暂停 < 几毫秒）、CMS（JDK 14 移除）。
+
+### 类加载机制
+- 七个阶段：加载 → 验证 → 准备 → 解析 → 初始化 → 使用 → 卸载。
+- 双亲委派模型：启动类加载器 → 扩展类加载器 → 应用类加载器。自底向上检查，自顶向下加载。
+`,
+    source: "JavaGuide",
+  },
+  concurrency: {
+    category: "java_advanced",
+    content: `## 并发编程核心知识点概览
+
+### 线程基础
+- Java 线程在 JDK 1.2 后基于原生线程（Native Threads）实现，一对一映射到内核线程。
+- 六种状态：NEW → RUNNABLE → BLOCKED / WAITING / TIMED_WAITING → TERMINATED。
+- sleep() 不释放锁，自动苏醒；wait() 释放锁，需 notify/notifyAll 唤醒。
+
+### synchronized
+- 修饰实例方法锁 this，修饰静态方法锁 Class 对象，修饰代码块锁指定对象。
+- 底层原理：同步语句块使用 monitorenter + monitorexit 字节码指令。
+- 锁升级（JDK 6+）：无锁 → 偏向锁 → 轻量级锁 → 重量级锁（不可降级）。
+
+### volatile
+- 保证可见性：每次使用从主存读取，写操作立即刷新到主存。
+- 禁止指令重排序：通过插入内存屏障（StoreStore、StoreLoad、LoadLoad、LoadStore）实现。
+- 不保证原子性：复合操作（如 i++）需使用 synchronized 或 AtomicInteger。
+
+### CAS（Compare And Swap）
+- 三个操作数：V（更新变量）、E（预期值）、N（新值）。
+- 乐观锁实现，非阻塞，失败后自旋重试。
+- 问题：ABA、长时间自旋浪费 CPU、只能保证单个变量的原子操作。
+
+### AQS（AbstractQueuedSynchronizer）
+- JUC 的基石，为 ReentrantLock、Semaphore、CountDownLatch 等同步器提供框架。
+- 核心：volatile int state + CLH FIFO 队列，通过 CAS 修改 state。
+
+### 线程池
+- 核心参数：corePoolSize、maximumPoolSize、keepAliveTime、workQueue、threadFactory、handler。
+- 处理流程：核心线程 → 任务队列 → 最大线程 → 拒绝策略。
+- 不推荐 Executors 工具类（可能 OOM），推荐 ThreadPoolExecutor 构造函数。
+`,
+    source: "JavaGuide",
+  },
 };
 
 /**

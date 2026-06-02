@@ -1,0 +1,52 @@
+[
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM 运行时数据区域",
+    "content": "JVM 运行时数据区包括：程序计数器、___、本地方法栈、___、方法区（JDK 8 后改为___）。",
+    "answer": "{\"correct\":[[\"虚拟机栈\",\"Java虚拟机栈\"],[\"堆\",\"Java堆\",\"堆内存\"],[\"元空间\",\"Metaspace\"]],\"distractors\":[\"永久代\",\"直接内存\",\"运行时常量池\",\"栈内存\"]}",
+    "hints": ["除了程序计数器外，其他区域都可能发生 OOM", "方法区在 JDK 8 中被彻底移除，替代品使用本地内存"],
+    "tags": ["JVM", "内存管理"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Java 堆内存分区",
+    "content": "Java 堆被分为三个区域：___（新生代和老年代）、___（可选，JDK 7 后移除）。新生代又分为：___、Survivor 0 和 Survivor 1。",
+    "answer": "{\"correct\":[[\"年轻代\",\"新生代\"],[\"永久代\",\"PermGen\"],[\"Eden\",\"Eden区\"]],\"distractors\":[\"老年代\",\"元空间\",\"代码缓存\",\"直接内存\"]}",
+    "hints": ["默认 Eden:Survivor 比例为 8:1:1", "大多数对象都在 Eden 区分配"],
+    "tags": ["JVM", "堆内存"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "GC Roots 包括哪些",
+    "content": "可作为 GC Roots 的对象包括：虚拟机栈中___的对象、方法区中___引用的对象、方法区中___引用的对象、JNI（即一般说的 Native 方法）中引用的对象。",
+    "answer": "{\"correct\":[[\"引用\",\"引用的\"],[\"静态属性\",\"静态变量\"],[\"常量\",\"常量池\"]],\"distractors\":[\"局部变量\",\"实例方法\",\"成员变量\",\"临时变量\"]}",
+    "hints": ["GC Roots 是进行可达性分析的起始点", "局部变量表中的引用是 GC Roots 的一部分"],
+    "tags": ["JVM", "GC"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "类加载过程的步骤",
+    "content": "JVM 类加载过程包括以下七个阶段：加载、___、准备、___、初始化、使用和___。",
+    "answer": "{\"correct\":[[\"验证\",\"校验\"],[\"解析\"],[\"卸载\"]],\"distractors\":[\"编译\",\"执行\",\"链接\",\"优化\",\"运行\"]}",
+    "hints": ["前五个阶段（加载到初始化）是类加载的核心流程", "解析阶段不一定在初始化之前，JVM 规范允许在初始化之后开始解析"],
+    "tags": ["JVM", "类加载"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "对象存活判断算法",
+    "content": "JVM 判断对象是否存活有两种算法：___法（无法解决循环引用问题，不为主流）和___分析法（从 GC Roots 开始搜索，不可达的对象即为可回收对象）。",
+    "answer": "{\"correct\":[[\"引用计数\",\"引用计数法\"],[\"可达性\",\"可达性分析\"]],\"distractors\":[\"标记清除\",\"标记整理\",\"分代收集\",\"复制算法\"]}",
+    "hints": ["主流的 JVM 都采用第二种算法来判断对象是否存活", "循环引用是第一种算法的致命缺陷"],
+    "tags": ["JVM", "GC"]
+  }
+]

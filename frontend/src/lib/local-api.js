@@ -465,7 +465,7 @@ export const api = {
     for (const q of items) {
       const catLabel = cats[q.category] || q.category;
       const diffLabel = { easy: "简单", medium: "中等", hard: "困难" }[q.difficulty] || q.difficulty;
-      const typeLabel = { short_answer: "简答", coding: "编程", choice: "选择", true_false: "判断" }[q.type] || q.type;
+      const typeLabel = { short_answer: "简答", coding: "编程", choice: "选择", true_false: "判断", multiple_choice: "多选", fill_in_blank: "填空" }[q.type] || q.type;
       const tags = (q.tags || []).map((t) => `\`${t}\``).join(" ");
 
       md += `---\n\n### ${q.id}. ${q.title}\n\n**分类：** ${catLabel} | **难度：** ${diffLabel} | **题型：** ${typeLabel}`;

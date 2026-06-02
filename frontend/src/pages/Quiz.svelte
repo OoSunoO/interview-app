@@ -3,6 +3,7 @@
   import { store } from "../lib/stores.svelte.js";
   import CodeBlock from "../components/CodeBlock.svelte";
   import ErrorAlert from "../components/ErrorAlert.svelte";
+  import FillInBlank from "../components/FillInBlank.svelte";
   import { api } from "../lib/local-api.js";
   import {
     hasAI,
@@ -499,6 +500,8 @@
             <button class="choice-giveup" onclick={giveUp}>看答案</button>
           </div>
         {/if}
+      {:else if q.type === "fill_in_blank"}
+        <FillInBlank question={q} />
       {:else}
         {#if !showAnswer}
           <div class="input-area">
@@ -609,7 +612,7 @@
     {/if}
     </div>
 
-    {#if browseMode || showSubmitResult || showAnswer}
+    {#if q.type !== "fill_in_blank" && (browseMode || showSubmitResult || showAnswer)}
       {#key q.id}
         {@const sections = renderAnswer(q.answer)}
         {#each sections as section, i}
@@ -894,6 +897,10 @@
   .type-pill.coding {
     background: var(--danger-bg);
     color: var(--danger);
+  }
+  .type-pill.fill_in_blank {
+    background: rgba(251, 191, 36, 0.12);
+    color: #fbbf24;
   }
 
   .q-title {

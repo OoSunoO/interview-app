@@ -1,0 +1,52 @@
+[
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "线程的六种状态",
+    "content": "Java 线程的生命周期包括六种状态：NEW、___、BLOCKED（等待锁释放）、___（等待通知）、TIMED_WAITING（带超时等待）和___。",
+    "answer": "{\"correct\":[[\"RUNNABLE\",\"可运行\"],[\"WAITING\",\"等待\"],[\"TERMINATED\",\"终止\"]],\"distractors\":[\"READY\",\"SLEEPING\",\"RUNNING\",\"PAUSED\"]}",
+    "hints": ["操作系统层面的 READY 和 RUNNING 在 JVM 层面统一为一个状态", "线程在调用 Object.wait() 后会进入等待状态"],
+    "tags": ["并发", "线程"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "synchronized 的锁升级过程",
+    "content": "JDK 6 为 synchronized 引入锁升级机制：___（JDK 15 默认关闭，JDK 18 废弃）→ ___（通过 CAS 自旋获取）→ ___（依赖操作系统的互斥锁，进入等待队列）。",
+    "answer": "{\"correct\":[[\"偏向锁\",\"Biased Locking\"],[\"轻量级锁\",\"Lightweight Lock\"],[\"重量级锁\",\"Heavyweight Lock\"]],\"distractors\":[\"自旋锁\",\"共享锁\",\"公平锁\",\"可重入锁\"]}",
+    "hints": ["锁是单向升级的，不可降级", "重量级锁依赖操作系统底层的互斥量（Mutex）"],
+    "tags": ["并发", "锁"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "volatile 的两个核心语义",
+    "content": "volatile 关键字提供两个核心语义：一是保证___（每次使用都从主存获取，写操作立即刷新到主存），二是禁止___（通过插入内存屏障实现）。但 volatile 不保证___。",
+    "answer": "{\"correct\":[[\"可见性\",\"内存可见性\"],[\"指令重排序\",\"指令重排\"],[\"原子性\"]],\"distractors\":[\"有序性\",\"一致性\",\"持久性\",\"隔离性\"]}",
+    "hints": ["inc++ 这类复合操作需要使用 synchronized 或 AtomicInteger 来保证原子性", "内存屏障有 StoreStore、StoreLoad、LoadLoad、LoadStore 四种"],
+    "tags": ["并发", "volatile"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "死锁的四个必要条件",
+    "content": "死锁必须同时满足四个条件：___（资源只能被一个线程占用）、___（线程持有资源的同时请求新资源）、___（资源不能被强制剥夺）和___（多个线程形成闭合的依赖链）。",
+    "answer": "{\"correct\":[[\"互斥\",\"互斥条件\"],[\"请求与保持\",\"占有并等待\"],[\"不剥夺\",\"非抢占\"],[\"循环等待\",\"循环等待条件\"]],\"distractors\":[\"非阻塞\",\"饥饿\",\"活锁\",\"死循环\"]}",
+    "hints": ["破坏任意一个条件即可预防死锁", "最常用的预防方法是资源顺序化——破坏循环等待条件"],
+    "tags": ["并发", "死锁"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "线程池拒绝策略",
+    "content": "ThreadPoolExecutor 提供四种内置拒绝策略：抛异常的___、调用者线程执行的___、直接丢弃的___和丢弃最早未处理任务的___。",
+    "answer": "{\"correct\":[[\"AbortPolicy\"],[\"CallerRunsPolicy\"],[\"DiscardPolicy\"],[\"DiscardOldestPolicy\"]],\"distractors\":[\"RejectPolicy\",\"TimeoutPolicy\",\"QueuePolicy\",\"BlockPolicy\"]}",
+    "hints": ["默认策略是 AbortPolicy，会抛出 RejectedExecutionException", "CallerRunsPolicy 会在调用者线程中直接执行任务，可起到流量控制作用"],
+    "tags": ["并发", "线程池"]
+  }
+]
