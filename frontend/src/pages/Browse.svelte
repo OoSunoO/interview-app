@@ -6,6 +6,8 @@
 
   let { onNavigate } = $props();
 
+  let showRandomHint = $state(false);
+
   const categories = [
     { value: "", label: "全部" },
 
@@ -45,6 +47,23 @@
   function goRandom() {
     const list = store.questions;
     if (list.length === 0) return;
+
+    // Show brief toast if filters are active
+    const hasFilters =
+      store.filters.category ||
+      store.filters.difficulty ||
+      store.filters.type ||
+      store.filters.status ||
+      store.filters.company ||
+      store.filters.search ||
+      store.filters.sort_by;
+    if (hasFilters) {
+      showRandomHint = true;
+      setTimeout(() => {
+        showRandomHint = false;
+      }, 2000);
+    }
+
     const q = list[Math.floor(Math.random() * list.length)];
     store.startQuiz(list);
     onNavigate("quiz", { questionId: q.id });
@@ -70,78 +89,144 @@
   <h1 class="page-title" data-testid="page-title">题库</h1>
 
   <div class="filters">
-    <select bind:value={store.filters.category} onchange={applyFilter}>
-      {#each categories as c}
-        <option value={c.value}>{c.label}</option>
-      {/each}
-    </select>
-    <select bind:value={store.filters.difficulty} onchange={applyFilter}>
-      <option value="">全部难度</option>
-      <option value="easy">简单</option>
-      <option value="medium">中等</option>
-      <option value="hard">困难</option>
-    </select>
-    <select bind:value={store.filters.status} onchange={applyFilter}>
-      <option value="">全部状态</option>
-      <option value="new">未做</option>
-      <option value="correct">已掌握</option>
-      <option value="wrong">答错</option>
-      <option value="reviewing">复习中</option>
-    </select>
-    <select bind:value={store.filters.type} onchange={applyFilter}>
-      <option value="">全部题型</option>
-      <option value="short_answer">简答</option>
-      <option value="coding">编码</option>
-      <option value="choice">选择</option>
-      <option value="true_false">判断</option>
-      <option value="multiple_choice">多选</option>
-      <option value="fill_in_blank">填空</option>
-    </select>
-    <select bind:value={store.filters.company} onchange={applyFilter}>
-      <option value="">全部来源</option>
-      <option value="字节跳动">字节跳动</option>
-      <option value="腾讯">腾讯</option>
-      <option value="阿里巴巴">阿里巴巴</option>
-      <option value="美团">美团</option>
-      <option value="华为">华为</option>
-      <option value="Google">Google</option>
-      <option value="Microsoft">Microsoft</option>
-    </select>
-    <select class="sort-select" bind:value={store.filters.sort_by} onchange={applyFilter}>
-      <option value="">默认排序</option>
-      <option value="difficulty">按难度</option>
-      <option value="category">按分类</option>
-      <option value="type">按题型</option>
-      <option value="status">按状态</option>
-    </select>
-    <button class="random-btn" onclick={goRandom} disabled={store.questions.length === 0}>
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+    <div class="filters-row">
+      <div class="filter-item">
+        <span class="filter-label">分类</span>
+        <select
+          bind:value={store.filters.category}
+          onchange={applyFilter}
+          class:filter-active={store.filters.category}
+        >
+          {#each categories as c}
+            <option value={c.value}>{c.label}</option>
+          {/each}
+        </select>
+      </div>
+      <div class="filter-item">
+        <span class="filter-label">难度</span>
+        <select
+          bind:value={store.filters.difficulty}
+          onchange={applyFilter}
+          class:filter-active={store.filters.difficulty}
+        >
+          <option value="">全部难度</option>
+          <option value="easy">简单</option>
+          <option value="medium">中等</option>
+          <option value="hard">困难</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <span class="filter-label">状态</span>
+        <select
+          bind:value={store.filters.status}
+          onchange={applyFilter}
+          class:filter-active={store.filters.status}
+        >
+          <option value="">全部状态</option>
+          <option value="new">未做</option>
+          <option value="correct">已掌握</option>
+          <option value="wrong">答错</option>
+          <option value="reviewing">复习中</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <span class="filter-label">题型</span>
+        <select
+          bind:value={store.filters.type}
+          onchange={applyFilter}
+          class:filter-active={store.filters.type}
+        >
+          <option value="">全部题型</option>
+          <option value="short_answer">简答</option>
+          <option value="coding">编码</option>
+          <option value="choice">选择</option>
+          <option value="true_false">判断</option>
+          <option value="multiple_choice">多选</option>
+          <option value="fill_in_blank">填空</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <span class="filter-label">来源</span>
+        <select
+          bind:value={store.filters.company}
+          onchange={applyFilter}
+          class:filter-active={store.filters.company}
+        >
+          <option value="">全部来源</option>
+          <option value="字节跳动">字节跳动</option>
+          <option value="腾讯">腾讯</option>
+          <option value="阿里巴巴">阿里巴巴</option>
+          <option value="美团">美团</option>
+          <option value="华为">华为</option>
+          <option value="Google">Google</option>
+          <option value="Microsoft">Microsoft</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <span class="filter-label">排序</span>
+        <select
+          class:filter-active={store.filters.sort_by}
+          bind:value={store.filters.sort_by}
+          onchange={applyFilter}
+        >
+          <option value="">默认排序</option>
+          <option value="difficulty">按难度</option>
+          <option value="category">按分类</option>
+          <option value="type">按题型</option>
+          <option value="status">按状态</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      {#if showRandomHint}
+        <span class="random-hint">已从当前筛选结果中随机抽取</span>
+      {/if}
+      <button
+        class="random-btn"
+        onclick={goRandom}
+        disabled={store.questions.length === 0}
       >
-        <polyline points="16 3 21 3 21 8" />
-        <line x1="4" y1="20" x2="21" y2="3" />
-        <polyline points="21 16 21 21 16 21" />
-        <line x1="15" y1="15" x2="21" y2="21" />
-        <line x1="4" y1="4" x2="9" y2="9" />
-      </svg>
-      随机
-    </button>
-    <button class="export-btn" onclick={exportMarkdown} disabled={store.questions.length === 0}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <polyline points="7 10 12 15 17 10" />
-        <line x1="12" y1="15" x2="12" y2="3" />
-      </svg>
-      导出
-    </button>
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="16 3 21 3 21 8" />
+          <line x1="4" y1="20" x2="21" y2="3" />
+          <polyline points="21 16 21 21 16 21" />
+          <line x1="15" y1="15" x2="21" y2="21" />
+          <line x1="4" y1="4" x2="9" y2="9" />
+        </svg>
+        随机
+      </button>
+      <button
+        class="export-btn"
+        onclick={exportMarkdown}
+        disabled={store.questions.length === 0}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        导出
+      </button>
+    </div>
   </div>
 
   <div class="search-wrap">
@@ -165,9 +250,25 @@
       oninput={() => applyFilter()}
     />
     {#if store.filters.search}
-      <button class="search-clear" title="清除搜索" onclick={() => { store.filters.search = ""; applyFilter(); }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-          stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      <button
+        class="search-clear"
+        title="清除搜索"
+        onclick={() => {
+          store.filters.search = "";
+          applyFilter();
+        }}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          ><path d="M18 6 6 18M6 6l12 12" /></svg
+        >
       </button>
     {/if}
   </div>
@@ -182,7 +283,11 @@
     <p class="result-count">共 {store.questions.length} 题</p>
     <div class="list">
       {#each store.questions as q}
-        <button class="card q-item status-{q.status}" data-testid="question-item" onclick={() => goQuestion(q)}>
+        <button
+          class="card q-item status-{q.status}"
+          data-testid="question-item"
+          onclick={() => goQuestion(q)}
+        >
           <div class="q-header">
             <span class="status-icon {q.status}">
               {#if q.status === "correct"}
@@ -221,7 +326,9 @@
                   stroke-width="2.5"
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  ><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg
+                  ><circle cx="12" cy="12" r="10" /><polyline
+                    points="12 6 12 12 16 14"
+                  /></svg
                 >
               {:else}
                 <svg
@@ -232,7 +339,8 @@
                   stroke="currentColor"
                   stroke-width="2"
                   stroke-linecap="round"
-                  stroke-linejoin="round"><circle cx="12" cy="12" r="10" /></svg
+                  stroke-linejoin="round"
+                  ><circle cx="12" cy="12" r="10" /></svg
                 >
               {/if}
             </span>
@@ -251,8 +359,16 @@
                   class="mini-tag kp-link"
                   role="button"
                   tabindex="0"
-                  onkeydown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onNavigate("knowledge-detail", { tag: t }); } }}
-                  onclick={(e) => { e.stopPropagation(); onNavigate("knowledge-detail", { tag: t }); }}
+                  onkeydown={(e) => {
+                    if (e.key === "Enter") {
+                      e.stopPropagation();
+                      onNavigate("knowledge-detail", { tag: t });
+                    }
+                  }}
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    onNavigate("knowledge-detail", { tag: t });
+                  }}
                   title="查看知识点：{t}"
                 >
                   {t}
@@ -274,16 +390,60 @@
   }
   .filters {
     display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .filters-row {
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
   }
-  .filters select {
-    flex: 1;
-    min-width: 0;
+  .filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1 0 0;
+    min-width: 80px;
   }
-  .sort-select {
-    flex: 0.6 !important;
-    font-size: 12px;
+  .filter-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding-left: 2px;
   }
+  .filters-row select {
+    width: 100%;
+  }
+  .filters-row select.filter-active {
+    border-color: var(--accent-dim);
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  /* ── Actions Row ── */
+  .actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    position: relative;
+  }
+  .random-hint {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 4px);
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-bg);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    animation: fade-in 0.25s var(--spring);
+    pointer-events: none;
+  }
+
   .random-btn {
     white-space: nowrap;
     padding: 8px 14px;
@@ -326,6 +486,7 @@
     border-color: var(--accent-dim);
     color: var(--accent);
   }
+
   .loading,
   .empty {
     text-align: center;
