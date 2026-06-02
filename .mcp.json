@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "hermes-chat": {
+      "command": "hermes",
+      "args": ["mcp", "serve"],
+      "env": {}
+    },
+    "da-chui": {
+      "command": "/opt/homebrew/bin/python3.14",
+      "args": ["/Users/petersun/DEV/scripts/da-chui-persistent.py"],
+      "env": {}
+    }
+  }
+}
