@@ -996,5 +996,98 @@
       "C3",
       "多继承"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GIL 与并发编程",
+    "content": "请介绍 Python 的 GIL（全局解释器锁）及其对并发编程的影响。为什么 CPython 有 GIL？GIL 对多线程和多进程的影响有何不同？如何绕过 GIL 的限制？",
+    "answer": "答案：GIL 是 CPython 解释器中的互斥锁，确保同一时间只有一个线程执行 Python 字节码。\n\n为什么有 GIL：\n- CPython 的内存管理不是线程安全的（引用计数，Python 内部全局变量）\n- 如果不加 GIL，需要为每个对象加细粒度锁（开销大，容易死锁）\n- 早期 CPU 单核，GIL 不是问题\n- 移除 GIL 会让单线程性能下降 30%+（Free Threading CPython 尝试解决）\n\nGIL 对多线程的影响：\n- CPU 密集型任务：多线程不加速（因为 GIL 让同一时间只有一个线程在运行）\n- IO 密集型任务：多线程加速（线程在等待 IO 时释放 GIL，其他线程可以执行）\n- GIL 切换周期：每 100 个字节码指令（或 sys.setswitchinterval，默认 5ms）\n\n多进程 vs 多线程：\n- 多进程（multiprocessing）：每个进程有独立的 GIL，可以充分利用多核\n  使用 `if __name__ == \"__main__\": multiprocessing.set_start_method(\"spawn\")`\n- 多线程（threading）：共享内存，但 GIL 限制 CPU 密集型加速\n\n绕过 GIL 的方法：\n1. 多进程（multiprocessing）：每个进程独享 GIL\n   ProcessPoolExecutor（线程池的进程版）\n2. 使用 C 扩展：C 扩展在执行时可以释放 GIL\n   - Cython 的 `with nogil:`，C 代码中释放 GIL\n   - NumPy/SciPy 等库的 CPU 密集型操作释放 GIL\n3. 使用异步 IO（asyncio）：单线程并发，不依赖 GIL\n   适合高 IO 场景（Web 服务器）\n4. Python 3.13 的 Free-Threading 模式（实验性）：通过 --disable-gil 编译\n\n扩展延伸：asyncio——协程（coroutine）在单线程中实现并发。与线程的区别：协程在用户空间调度（协作式），线程由操作系统调度（抢占式）。asyncio 适合 IO 密集型（如 Web 服务器每秒数千请求）。concurrent.futures——ThreadPoolExecutor 和 ProcessPoolExecutor 的统一接口。",
+    "hints": [
+      "GIL = 同一时间只有一个线程执行 Python 字节码（保证引用计数安全）",
+      "CPU 密集用多进程（每个进程独享 GIL），IO 密集用多线程（等待 IO 时释放 GIL）",
+      "绕过 GIL：多进程 + C 扩展释放 GIL + asyncio + Python 3.13 Free-Threading"
+    ],
+    "tags": [
+      "Python",
+      "GIL",
+      "并发",
+      "多线程"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 装饰器",
+    "content": "请介绍 Python 装饰器（Decorator）的原理和应用。函数装饰器和类装饰器怎么写？functools.wraps 的作用是什么？装饰器在哪些场景下使用？",
+    "answer": "答案：装饰器在函数/类定义时修改其行为，本质是接受一个函数并返回一个新函数的高阶函数。\n\n函数装饰器原理：\n@decorator\ndef func():\n    pass\n# 等价于：func = decorator(func)\n\n实现：\ndef timer(func):\n    import functools\n    @functools.wraps(func)\n    def wrapper(*args, **kwargs):\n        start = time.time()\n        result = func(*args, **kwargs)\n        print(f\"{func.__name__} took {time.time()-start:.2f}s\")\n        return result\n    return wrapper\n\n@timer\ndef slow_function():\n    time.sleep(1)\n\n带参数的装饰器：\ndef repeat(n):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            for _ in range(n):\n                result = func(*args, **kwargs)\n            return result\n        return wrapper\n    return decorator\n\n@repeat(n=3)\ndef say_hi(name):\n    print(f\"Hi {name}\")\n# 等价于：say_hi = repeat(n=3)(say_hi)\n\nfunctools.wraps 的作用：\n- 保留原函数的元信息（__name__、__doc__、__module__ 等）\n- 如果没有 @functools.wraps(func)，wrapper 函数会掩盖原函数的名称和文档\n\n常用装饰器场景：\n- 计时（@timer）：测量函数执行时间\n- 缓存（@functools.lru_cache）：函数结果缓存\n- 权限校验（@login_required）：检查用户是否登录\n- 重试（@retry）：函数失败时自动重试\n- 日志（@log）：自动记录函数调用参数和结果\n- 单例模式（@singleton）：类装饰器实现单例\n\n类装饰器：\ndef singleton(cls):\n    instances = {}\n    def getinstance(*args, **kwargs):\n        if cls not in instances:\n            instances[cls] = cls(*args, **kwargs)\n        return instances[cls]\n    return getinstance\n\n扩展延伸：类作为装饰器——通过实现 __call__ 方法（保持状态）。内置装饰器——@staticmethod、@classmethod、@property。装饰器的执行顺序——靠近函数的装饰器先执行（从下到上）。装饰器在 Web 框架中大量使用（Flask 路由 @app.route()、Django 认证 @login_required）。",
+    "hints": [
+      "装饰器 = 高阶函数，接受函数返回新函数（func = decorator(func)）",
+      "@functools.wraps 保留原函数的 __name__ 和 __doc__"
+    ],
+    "tags": [
+      "Python",
+      "装饰器",
+      "高阶函数",
+      "AOP"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 上下文管理器",
+    "content": "请介绍 Python 的上下文管理器（Context Manager）。with 语句如何工作？如何用 __enter__ 和 __exit__ 实现自动资源管理？contextlib 模块提供了哪些便利工具？",
+    "answer": "答案：上下文管理器通过 with 语句自动管理资源的获取和释放。\n\n核心协议：__enter__ 和 __exit__\nclass FileOpen:\n    def __init__(self, filename, mode):\n        self.filename = filename\n        self.mode = mode\n\n    def __enter__(self):\n        self.file = open(self.filename, self.mode)\n        return self.file  # with 语句的 as 变量接收这个返回值\n\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.file.close()\n        # 返回 True 表示抑制异常（不向上传播）\n        # 返回 False 或 None 表示异常继续传播\n        return False\n\nwith FileOpen(\"test.txt\", \"r\") as f:\n    content = f.read()\n\n执行流程：\n1. 调用 FileOpen(\"test.txt\", \"r\") 得到上下文对象\n2. 调用 __enter__() → 返回值赋给 as 后面的变量\n3. 执行 with 代码块\n4. 无论代码块是否异常，都调用 __exit__()\n5. 如果代码块异常，exc_type/exc_val/exc_tb 为异常信息\n6. 如果 __exit__ 返回 True，异常被抑制\n\n@contextmanager 装饰器（contextlib 模块）：\nfrom contextlib import contextmanager\n\n@contextmanager\ndef file_open(filename, mode):\n    file = open(filename, mode)\n    try:\n        yield file  # yield 前的代码 = __enter__，yield 后的 = __exit__\n    finally:\n        file.close()\n\nwith file_open(\"test.txt\", \"r\") as f:\n    content = f.read()\n\ncontextlib 的其他工具：\n- closing(obj)：在退出 with 块时自动调用 obj.close()\n- suppress(*exceptions)：忽略指定异常（替代 try/except/pass）\n- redirect_stdout/redirect_stderr：临时重定向标准输出\n- ExitStack：动态管理多个上下文管理器（在不确定数量时使用）\n\nwith ExitStack() as stack:\n    files = [stack.enter_context(open(f)) for f in filenames]\n    # 所有文件会在退出时自动关闭\n\n常见应用：\n- 文件操作（自动关闭文件）\n- 数据库连接（自动提交/回滚）\n- 锁（自动释放 Lock）\n- 测试中的 mock 替换\n- 临时修改环境变量\n\n扩展延伸：异步上下文管理器——__aenter__ 和 __aexit__，用于 async with 语句（如 aiohttp 的客户端会话）。contextlib.ContextDecorator——将上下文管理器作为装饰器使用。contextvars——上下文变量（与 asyncio 配合，替代 threading.local）。",
+    "hints": [
+      "__enter__（分配资源 + 返回资源） + __exit__（释放资源 + 处理异常）",
+      "@contextmanager = yield 前 = __enter__，yield 后 = __exit__（自动生成 __enter__/__exit__）"
+    ],
+    "tags": [
+      "Python",
+      "上下文管理器",
+      "with",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Python 数据类型与性能",
+    "content": "请介绍 Python 内置数据类型的性能特点。list、dict、set、tuple 的时间复杂度各是多少？什么时候用 list 代替 dict？list 的 append 和 insert 性能为什么差异很大？",
+    "answer": "答案：不同数据结构在不同操作上有不同的时间复杂度。\n\nlist（动态数组）：\n- 索引 O(1)\n- append O(1) 摊还（偶尔扩容 O(n)，但均摊为 O(1)）\n- insert(i, x) / pop(i) O(n)（需要移动后续元素）\n- 查找（in）O(n)（线性搜索）\n- sort O(n log n)（Timsort）\n- 在列表开头插入/删除很慢（所有元素需要移动）\n- 适合：按索引访问、末尾增删、不需要快速查找的场景\n\ndict（哈希表）：\n- 键查找/插入/删除 平均 O(1)，最坏 O(n)（哈希冲突严重时）\n- 内存占用大（哈希表的负载因子和冲突链表）\n- Python 3.7+ 的 dict 保持插入顺序\n- dict 的 key 必须是可哈希的（hashable）\n- 适合：键值映射、快速查找、去重\n\nset（哈希集合）：\n- 查找/插入/删除 平均 O(1)（与 dict 基于相同的哈希表实现）\n- 本质是不带值的 dict\n- 适合：快速成员检查、去重、集合运算（交集/并集/差集）\n\ntuple（不可变序列）：\n- 与 list 相同的 O(1) 索引和 O(n) 查找\n- 比 list 更省内存（固定大小，不需要扩容预留空间）\n- 可作为 dict 的 key（因为不可变）\n- 适合：固定结构的数据、字典键、函数返回多个值\n\nlist vs deque（collections.deque）：\n- deque 的两端增删都是 O(1)（双向链表实现）\n- deque 的索引是 O(n)（需要遍历）\n- 适合队列/栈场景（两端操作频繁）\n\nlist 的 append vs insert 性能差异：\n- append 在末尾添加：只在数组已满时触发扩容（均摊 O(1)）\n- insert(0, x) 在开头插入：所有元素后移一位（O(n)）\n- 数据量大时 insert(0, x) 比 append 慢几十到几百倍\n- 需要频繁在开头添加时：使用 deque 或 reverse 后 append\n\n扩展延伸：__slots__——减少自定义类的内存占用（禁止动态添加 __dict__）。array.array——类型化数组（所有元素同类型，省内存）。NumPy 的 ndarray——连续内存的数值数组（比 Python list 快几个数量级）。",
+    "hints": [
+      "list = O(1)索引/O(n)查找/O(1)append/O(n)insert",
+      "dict/set = O(1)查找/插入/删除（内存占用大）",
+      "tuple = 比 list 省内存（不可变，无扩容空间），可用作 dict key"
+    ],
+    "tags": [
+      "Python",
+      "数据结构",
+      "性能",
+      "list"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 元类",
+    "content": "请介绍 Python 的元类（Metaclass）。什么是元类？如何用元类实现 ORM 模型或单例模式？__new__ 和 __init__ 在元类中的调用顺序是怎样的？",
+    "answer": "答案：元类是类的类——控制其他类的创建和行为。\n\n类也是对象：\n- 所有类由 type 创建（type 是默认的元类）\n- MyClass = type(\"MyClass\", (BaseClass,), {\"attr\": value})\n- 定义一个类时，Python 调用元类的 __new__ 和 __init__ 创建类对象\n\n自定义元类：\nclass Meta(type):\n    def __new__(mcs, name, bases, namespace):\n        # name = 类名，bases = 父类元组，namespace = 类的属性字典\n        # 在类创建前修改类定义\n        print(f\"Creating class {name}\")\n        if \"required_method\" not in namespace:\n            raise TypeError(f\"{name} must implement required_method\")\n        return super().__new__(mcs, name, bases, namespace)\n\n    def __init__(cls, name, bases, namespace):\n        # 类创建后的初始化\n        super().__init__(name, bases, namespace)\n        cls.created_at = time.time()  # 所有类自动获得 created_at 属性\n\nclass MyBase(metaclass=Meta):\n    def required_method(self):\n        pass\n\n调用顺序：\n1. Meta.__new__(mcs, name, bases, namespace) → 创建类对象\n2. Meta.__init__(cls, name, bases, namespace) → 初始化类对象\n3. 实例化时：类.__new__ → 类.__init__\n\n元类创建流程：\n1. Python 找到 metaclass（从类定义或父类继承）\n2. 准备 namespace（__prepare__ 方法可以返回自定义的 dict）\n3. 执行类体填充 namespace\n4. 调用元类的 __new__ 创建类\n5. 调用元类的 __init__ 初始化类\n\n元类 vs 装饰器：\n- 类装饰器在类创建后修改类（相当于手动调用装饰函数）\n- 元类在类创建过程中拦截（更底层，可以控制类创建的全部流程）\n- 元类对类的子类自动生效（继承），装饰器需要手动装饰每个子类\n\n常见应用：\n- ORM：SQLAlchemy 使用元类将类属性映射到数据库字段\n- 单例模式：元类控制 __call__ 方法，确保只有一个实例\n- 接口/抽象基类（ABC）：检查子类是否实现了必要方法\n- 自动注册：类定义时自动注册到某个注册表\n\n扩展延伸：__init_subclass__——一个更简单的方式在子类创建时执行代码（Python 3.6+）。不需要元类时优先使用 __init_subclass__。__set_name__——描述符在属性名确定时自动获取名称。Python 的描述符协议（__get__/__set__/__delete__）是 property/staticmethod/classmethod 的底层实现。",
+    "hints": [
+      "元类 = 类的类（type 是默认元类）。自定义元类继承 type，覆盖 __new__ 和 __init__",
+      "创建类：元类.__new__ → 元类.__init__。实例化：类.__new__ → 类.__init__",
+      "常用：ORM 映射（SQLAlchemy）、单例控制、接口检查、自动注册"
+    ],
+    "tags": [
+      "Python",
+      "元类",
+      "metaclass",
+      "type"
+    ]
   }
 ]

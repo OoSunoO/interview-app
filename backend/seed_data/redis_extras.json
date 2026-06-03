@@ -997,5 +997,95 @@
       "Redlock",
       "Redisson"
     ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 哨兵与集群对比",
+    "content": "请比较 Redis Sentinel（哨兵）和 Redis Cluster 两种高可用方案。它们的数据分片、故障转移和一致性保障各有什么不同？",
+    "answer": "答案：Redis Sentinel 提供高可用（主从自动切换），Redis Cluster 提供分片 + 高可用。\n\nRedis Sentinel：\n- 功能：监控主从状态，主节点故障时自动选举新主节点\n- 数据分片：不支持（所有数据在一台主节点上）\n- 高可用：Sentinel 集群（至少 3 个节点，奇数）通过 Raft 协议选主\n- 故障转移：\n  1. Sentinel 检测到主节点下线（主观下线 → 客观下线，需多数 Sentinel 确认）\n  2. Sentinel 选举一个副本为新主节点（通过 Raft 选举 Leader Sentinel）\n  3. Leader Sentinel 执行故障转移：选择一个从节点（优先级最高/数据最新/运行 ID 最小）升级为主\n  4. 其他从节点配置为复制新主节点\n- 客户端需要感知 Sentinel（通过 Sentinel API 获取当前主节点地址）\n- 适用：数据量 < 单机内存，需要高可用但不需要分片的场景\n\nRedis Cluster：\n- 功能：数据自动分片（16384 个哈希槽）+ 高可用（每个分片的主从复制）\n- 数据分片：16384 个槽（CRC16(key) % 16384），槽分布在多个主节点上\n- 高可用：每个主节点有 N 个从节点（当主节点故障时从节点自动提升）\n- 故障转移：Gossip 协议检测故障（各节点互相通信），从节点发起选举（Raft 投票）\n- 客户端连接任意节点，返回重定向（MOVED/ASK）到正确节点\n- 适用：数据量 > 单机内存，需要水平扩展的场景\n\n对比：\n- Sentinel 不支持在线水平扩展（增加容量需要重启集群）\n- Cluster 支持在线水平扩展（重新分片数据槽）\n- Sentinel 最多支持 1 主多从写扩展（读写分离），Cluster 支持多主写入\n- Sentinel 的最小部署 3 节点，Cluster 的最小部署 6 节点（3 主 3 从）\n\n扩展延伸：Redis Cluster 的局限性——不支持多键操作（如果键分布在不同的节点），需要使用 hash tag 强制相关键在同一节点。Proxy 方案（Codis/Twemproxy）——客户端连 Proxy，Proxy 做分片和路由（不需要修改客户端）。",
+    "hints": [
+      "Sentinel = 主从高可用 + 无分片（适合单机内存量级）",
+      "Cluster = 16384 槽自动分片 + 多主写入 + 在线水平扩展"
+    ],
+    "tags": [
+      "Redis",
+      "Sentinel",
+      "Cluster",
+      "高可用"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis Pipeline 与事务",
+    "content": "请介绍 Redis Pipeline 和 Redis 事务（MULTI/EXEC）的区别。Pipeline 如何提升批量操作的性能？Redis 事务为什么不是真正的 ACID 事务？",
+    "answer": "答案：Pipeline 批量发送命令减少网络往返，MULTI/EXEC 保证命令的原子性。\n\nPipeline（流水线）：\n- 将多个命令一次性发送到 Redis 服务器，不必等待每个命令的响应\n- 减少了 RTT（往返时间）——关键性能提升点\n- 响应是在所有命令发送完成后批量接收的\n- 性能提升：N 个命令从 N × RTT 减少到 1 × RTT（网络延迟高的场景提升几十倍）\n- Pipeline 不保证原子性——命令之间其他客户端的命令可以插入执行\n- Pipeline 必须关联同一连接（Redis 单连接有序执行）\n\nRedis 事务（MULTI/EXEC）：\n- MULTI 开始事务 → 命令入队 → EXEC 执行所有命令\n- 事务中的命令在 EXEC 时批量执行（中间不会有其他命令插入）\n- 事务的原子性：\n  - 所有命令执行（EXEC 前）或全部不执行（DISCARD）\n  - 语法错误（入队时检测到）→ 整个事务不执行\n  - 运行时错误（如对 string 执行 list 操作）→ 错误命令失败，其他命令继续执行（不是回滚）\n- Redis 事务不支持回滚（ROLLBACK）——因为 Redis 命令通常不会失败（除非类型不匹配）\n- WATCH 命令：乐观锁——在 EXEC 之前检查被 WATCH 的键是否被修改\n\nPipeline + 事务：\n- 可以将 Pipeline 和 MULTI/EXEC 结合使用：通过 Pipeline 发送 MULTI → 命令 → EXEC\n- 既获得 Pipeline 的网络效率优化，又获得事务的原子性保障\n\n为什么不是真正的 ACID 事务：\n- Redis 是单线程执行命令（不需要锁），事务只是命令的批量执行\n- Redis 不支持回滚（违反原子性中的\"失败回滚\"）\n- Redis 的持久化是异步的（如果服务器崩溃，已成功执行的事务可能丢失）\n\n扩展延伸：Lua 脚本（EVAL）——Redis 中的 Lua 脚本是原子执行的，可以替代事务实现更复杂的逻辑。Redis 事务在集群中的限制——事务中的所有键必须在同一节点（不能跨槽事务）。",
+    "hints": [
+      "Pipeline = 批量发送命令减少 RTT（不保证原子性）",
+      "Redis 事务 = MULTI/EXEC 批量执行（无回滚，运行时错误不阻断其他命令）"
+    ],
+    "tags": [
+      "Redis",
+      "Pipeline",
+      "事务",
+      "原子性"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redlock 分布式锁",
+    "content": "请介绍 Redlock（Redis Distributed Lock）算法。Redlock 如何在非可靠环境中实现分布式锁？Redlock 存在哪些争议（特别是在单节点 Redis 锁已经足够时）？",
+    "answer": "答案：Redlock（作者 Antirez）使用多个独立的 Redis 节点实现分布式锁。\n\nRedlock 算法步骤：\n1. 获取当前时间 T1\n2. 向 N 个独立的 Redis 节点依次请求锁（N 通常为 5）\n3. 每个锁请求设置超时时间（远小于锁的 TTL）\n4. 获取到多数节点（N/2 + 1 = 3）的锁后，检查总耗时是否 < 锁 TTL\n5. 获取成功：锁的有效期 = 锁 TTL - 获取锁的耗时\n6. 获取失败：向所有节点发送解锁请求（释放部分获取的锁）\n\n关键参数：\n- N = 5 个 Redis 节点（节点互相独立，无主从复制）\n- TTL（锁自动释放时间）：通常 10-30 秒（业务执行超时自动释放，防止死锁）\n- 锁获取超时：通常 5-50 毫秒/节点（快速失败，避免卡在一个节点上）\n\nRedlock 的争议（Martin Kleppmann 的批评）：\n1. 时间假设问题：Redlock 依赖时钟（假设时钟不跳跃），但 Redis 没有保护时钟的机制\n2. GC 暂停：Java GC Stop-The-World 可能导致锁 TTL 过期，但业务还在执行\n3. Fencing Token 缺失：Redlock 没有内置的递增 token 机制来防止锁被误解\n   - 解决方案：在锁值中使用 fencing token（递增计数器），资源层验证 token\n4. 单节点 Redis 锁 + 合理的 fallback 可能比 Redlock 更实用\n\nRedlock 的适用场景：\n- 不需要 fencing token 的场景（不涉及外部资源写入）\n- 锁资源的 TTL 远大于业务执行时间（有足够的安全余量）\n- 对 Redis 节点的时钟有合理监控\n\n扩展延伸：更简单的替代方案——单节点 Redis 分布式锁（SET key uuid NX EX 30）+ Redisson 看门狗（Watchdog）机制自动续期。Zookeeper 分布式锁（基于临时顺序节点 + Watch）——没有时钟依赖问题，但性能低于 Redis。Etcd 分布式锁——基于 Raft 强一致性，适合配置中心的分布式锁。",
+    "hints": [
+      "Redlock = 向 5 个独立 Redis 节点请求锁，获得多数（3）即成功",
+      "争议：依赖时钟 + GC 暂停 + 缺少 Fencing Token（建议使用 Fencing Token 机制）"
+    ],
+    "tags": [
+      "Redis",
+      "分布式锁",
+      "Redlock",
+      "共识"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Redis 过期与淘汰策略",
+    "content": "请介绍 Redis 的过期策略和内存淘汰策略。过期键的删除方式有哪些？当内存不足时 Redis 如何选择淘汰哪些键？",
+    "answer": "答案：Redis 通过过期策略和淘汰策略管理键的生命周期和内存使用。\n\n过期键删除策略（3 种）：\n1. 定时删除（主动）：设置定时器，到期立即删除。优点：及时释放内存。缺点：消耗 CPU（大量定时器）\n2. 惰性删除（被动）：每次访问键时检查是否过期，过期则删除。优点：CPU 友好。缺点：过期键可能长期占用内存\n3. 定期删除（周期扫描）：每隔 100ms 随机抽样部分已过期的键并删除\n   - Redis 实际使用：定期删除 + 惰性删除（组合策略）\n   - 每秒扫描 10 次（hz = 10），每次扫描 20 个随机键\n   - 如果超过 25% 的键已过期，继续扫描（最多 16 次循环）\n\n内存淘汰策略（maxmemory-policy，当内存达到 maxmemory 时）：\n1. noeviction（默认）：返回错误，不删除任何键（写入失败）\n2. allkeys-lru：从所有键中淘汰最近最少使用的\n3. volatile-lru：从设置了过期时间的键中淘汰最近最少使用的\n4. allkeys-lfu（Redis 4.0+）：从所有键中淘汰最不经常使用的\n5. volatile-lfu：从设置了过期时间的键中淘汰最不经常使用的\n6. allkeys-random：随机淘汰任意键\n7. volatile-random：从设置了过期时间的键中随机淘汰\n8. volatile-ttl：从设置了过期时间的键中淘汰 TTL 最短的\n\n选择建议：\n- 缓存场景（数据可恢复）：allkeys-lru 或 allkeys-lfu\n- 数据不丢失场景：noeviction + 监控告警（人工干预）\n- 混合场景（部分数据要持久化，部分可丢弃）：volatile-lru + 需要持久化的键不设过期\n\n扩展延伸：LRU vs LFU——LRU 淘汰最近最少使用的，LFU 淘汰最不经常使用的（应对突发的热门 key 被误淘汰）。Redis 的近似 LRU（不是精确 LRU）——抽样取最近访问时间最早的键（默认采样 5 个）。精确 LRU 需要维护链表，浪费内存。",
+    "hints": [
+      "过期删除 = 定期扫描（随机抽样）+ 惰性删除（访问时检查）",
+      "淘汰策略：allkeys-lru/lfu（缓存场景）、noeviction（数据不丢）、volatile-ttl"
+    ],
+    "tags": [
+      "Redis",
+      "过期",
+      "淘汰",
+      "LRU"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 持久化与复制",
+    "content": "请介绍 Redis 的持久化机制（RDB vs AOF）和主从复制原理。RDB 和 AOF 混合持久化（Redis 4.0）的优势是什么？主从复制的同步延迟如何处理？",
+    "answer": "答案：RDB 快照持久化、AOF 日志持久化、主从复制保障数据可用性。\n\nRDB（Redis Database Backup）：\n- 将内存数据全量 dump 到磁盘（二进制文件）\n- 触发方式：SAVE（同步阻塞）/ BGSAVE（fork 子进程异步写）\n- 优点：文件紧凑（适合备份和灾难恢复），加载速度快\n- 缺点：数据丢失窗口大（两次快照之间的数据可能丢失），fork 耗时（内存大时 fork 阻塞）\n\nAOF（Append-Only File）：\n- 将所有写命令追加到 AOF 文件（类似 MySQL 的 binlog）\n- 刷盘策略（appendfsync）：\n  - always：每次写入都 fsync（最安全，最慢）\n  - everysec（默认）：每秒 fsync 一次（最多丢 1 秒数据）\n  - no：由操作系统决定何时刷盘（最快，数据丢失风险最大）\n- AOF 重写（BGREWRITEAOF）：fork 子进程将内存数据转为写命令，替代旧的 AOF\n- 优点：数据更安全（everysec 最多丢 1 秒），AOF 日志可读\n- 缺点：文件体积大于 RDB，加载慢\n\n混合持久化（Redis 4.0）：\n- aof-use-rdb-preamble yes\n- AOF 文件以 RDB 格式开头（全量快照）+ 追加增量写命令（AOF 格式）\n- 加载时先加载 RDB 部分（快）→ 回放 AOF 部分（增量）\n- 结合了 RDB 的加载速度和 AOF 的数据安全性\n\n主从复制原理：\n1. 从节点发送 PSYNC 命令（携带 replid 和 offset）\n2. 如果主节点有 replid 匹配且 offset 在复制积压缓冲区范围内 → 部分同步（只同步增量）\n3. 否则 → 全量同步（RDB 快照 + 缓冲区增量）\n4. 全量同步三步：主节点生成 RDB（BGSAVE）→ 传输到从节点 → 从节点加载 RDB + 追回增量\n5. 后续主节点将写命令传播到从节点（基于长连接的命令传播）\n\n同步延迟问题：\n- 延迟来源：网络延迟、主节点写入压力大（复制积压溢出）\n- 导致的后果：从节点读到旧数据（数据不一致）\n- 解决方案：\n  - 监控主从复制延迟（replication lag）\n  - 关键读请求强制从主节点读取\n  - 从节点配置 min-replicas-to-write + min-replicas-max-lag 强制数据安全\n\n扩展延伸：Redis 复制的异步特性——主节点不等待从节点确认即返回（高性能但弱一致）。Redis 7 的 Replica 增强——replica 支持 WAIT 命令（等待 N 个 replica 确认写入）。Redis 复制与 Sentinel/Cluster 的关系——复制是基础，Sentinel 在复制基础上加自动故障转移。",
+    "hints": [
+      "RDB（全量快照，加载快）+ AOF（增量写命令，数据安全）→ 混合持久化（RDB + AOF 兼顾）",
+      "主从复制：PSYNC（尝试增量）→ 全量同步（RDB + 缓存增量）→ 命令传播（长连接）"
+    ],
+    "tags": [
+      "Redis",
+      "持久化",
+      "复制",
+      "RDB/AOF"
+    ]
   }
 ]

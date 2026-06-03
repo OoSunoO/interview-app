@@ -1258,5 +1258,145 @@
       "最佳实践",
       "OWASP"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Record 的限制",
+    "content": "关于 Java Record 的限制，以下哪些是正确的？（多选）",
+    "options": [
+      "Record 不能继承其他类",
+      "Record 可以声明额外的实例字段",
+      "Record 可以是 abstract 的",
+      "Record 可以实现接口",
+      "Record 自动生成 equals() 和 hashCode()",
+      "Record 的字段默认是 final 的"
+    ],
+    "answer": [
+      "A",
+      "D",
+      "E",
+      "F"
+    ],
+    "analysis": "Record 不能继承其他类（extends implicit java.lang.Record），但可以实现接口。Record 的所有字段都是 private final 的，自动生成 equals()、hashCode()、toString()。Record 不能声明额外的实例字段（只能声明在 components 中）。Record 不能是 abstract（设计上就是 final 的）。选项 B 错误（不能有额外实例字段），选项 C 错误（不能是 abstract）。",
+    "tags": [
+      "Java",
+      "Record",
+      "不可变",
+      "JDK16"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Stream 终止操作",
+    "content": "以下哪些是 Stream 的终止操作（Terminal Operation）？（多选）",
+    "options": [
+      "map()",
+      "filter()",
+      "collect()",
+      "reduce()",
+      "sorted()",
+      "forEach()"
+    ],
+    "answer": [
+      "C",
+      "D",
+      "F"
+    ],
+    "analysis": "Stream 的终止操作触发流水线的执行并产生结果或副作用。collect()、reduce()、forEach() 是终止操作。map()、filter()、sorted() 是中间操作（Intermediate Operation），返回新的 Stream 且惰性求值。中间操作不会立即执行，直到遇到终止操作才开始处理数据。",
+    "tags": [
+      "Java",
+      "Stream",
+      "终止操作",
+      "函数式"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Java 模块化系统限制",
+    "content": "以下哪些是 Java Platform Module System (JPMS) 的特性？（多选）",
+    "options": [
+      "模块必须显式导出包以允许其他模块访问",
+      "模块化 JAR 中的非模块化代码不能访问模块化 JAR 中的类",
+      "模块可以指定依赖的模块通过 requires transitive 传递",
+      "模块路径上的类自动拥有访问所有模块的权限",
+      "允许使用 --add-opens 在运行时打开模块的包进行反射访问",
+      "模块化应用一定比非模块化应用启动更快"
+    ],
+    "answer": [
+      "A",
+      "C",
+      "E"
+    ],
+    "analysis": "JPMS 的核心特性包括：模块通过 exports 显式导出包（选项 A）、requires transitive 传递依赖（选项 C）、反射访问可以用 --add-opens 运行时开放（选项 E，Spring 等框架常用）。选项 B 错误——未命名模块（unnamed module，classpath 上的代码）可以访问模块化 JAR 中导出的类。选项 D 错误——模块路径上的类遵循模块化规则，不能自动访问所有类。选项 F 错误——模块化不一定更快，甚至可能更慢（启动时有模块解析开销），模块化的主要优势是强封装和可靠的配置。",
+    "tags": [
+      "Java",
+      "JPMS",
+      "模块化",
+      "反射"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "垃圾回收器适用场景",
+    "content": "以下关于 GC 的叙述哪些是正确的？（多选）",
+    "options": [
+      "Serial GC 适合单线程环境或小型应用",
+      "Parallel GC 适合对吞吐量要求高的多线程应用",
+      "G1 GC 适合需要可预测暂停时间的大堆应用",
+      "ZGC 适合需要极低延迟（<10ms）的大堆应用",
+      "ZGC 只能在 Linux 上使用",
+      "G1 GC 在 JDK 8 中是默认的 GC"
+    ],
+    "answer": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "analysis": "Serial GC（串行收集器）适合单线程、小堆场景（选项 A）。Parallel GC 追求最大吞吐量，适合多线程批处理应用（选项 B）。G1 GC 通过 Region 划分和可预测的暂停时间模型适合大堆应用（选项 C）。ZGC 目标是 <10ms 暂停时间，适合大堆延迟敏感应用（选项 D）。选项 E 错误——ZGC 在 JDK 14+ 支持 Windows 和 macOS（Linux 优先，但现已支持所有主要平台）。选项 F 错误——JDK 8 的默认 GC 是 Parallel GC（G1 从 JDK 9 起成为默认 GC）。",
+    "tags": [
+      "Java",
+      "GC",
+      "G1",
+      "ZGC"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "LockSupport 特性",
+    "content": "以下关于 LockSupport 的描述哪些是正确的？（多选）",
+    "options": [
+      "park() 使当前线程进入 WAITING 状态",
+      "unpark(thread) 可以唤醒指定线程",
+      "park() 和 unpark() 不区分先后顺序，提前 unpark 后再 park 不会阻塞",
+      "LockSupport 使用基于信号量的许可证机制",
+      "park() 响应中断但不会抛出 InterruptedException",
+      "parkNanos() 支持纳秒级别的超时"
+    ],
+    "answer": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F"
+    ],
+    "analysis": "所有选项都是正确的。LockSupport 是 Java 并发包的基石——AQS（AbstractQueuedSynchronizer）底层使用 LockSupport 实现线程阻塞/唤醒。park()/unpark() 基于许可证（permit）机制，许可证的累积上限为 1。提前调用 unpark() 后，再调用 park() 会消耗已有的许可证，线程不会阻塞。park() 响应中断（线程设置中断标志，返回而不抛异常）。parkNanos() 支持纳秒超时。ReentrantLock、CountDownLatch、Semaphore 等同步器都基于 AQS + LockSupport 实现。",
+    "tags": [
+      "Java",
+      "LockSupport",
+      "AQS",
+      "线程"
+    ]
   }
 ]

@@ -1000,5 +1000,95 @@
       "空对象",
       "Null Object"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "责任链模式",
+    "content": "请介绍责任链模式（Chain of Responsibility）。责任链如何解耦请求的发送者和接收者？在 Java Servlet Filter 和 Netty Pipeline 中责任链是如何实现的？",
+    "answer": "答案：责任链将多个处理对象组成链，请求沿着链传递直到被处理。\n\n核心思想：\n- 多个处理者（Handler）各自决定是否能处理请求\n- 每个处理者持有下一个处理者的引用\n- 请求沿着链传递（直到某一步处理完或到达链的末端）\n- 发送者不需要知道哪个处理者会处理请求（解耦）\n\n实现方式：\n1. 纯责任链：请求被某个处理者处理后不再继续传递（如审批流程——找到对级别的审批人）\n2. 不纯责任链：请求经过每个处理者，每个处理者可以决定处理部分逻辑（如中间件——日志→认证→缓存→路由）\n\nJava Servlet Filter：\n- FilterChain 传入 Filter 列表\n- 每个 Filter 决定是否调用 chain.doFilter()（继续链）\n- 如果不调用 doFilter()，请求被拦截（权限校验失败）\n- 典型顺序：CharacterEncodingFilter → SecurityFilter → CacheFilter → Servlet\n\nNetty Pipeline（更复杂）：\n- ChannelPipeline 包含一系列 ChannelHandler（入站和出站）\n- 入站：从网络读取数据 → 解码器 → 业务 Handler\n- 出站：编码器 → 写入网络\n- 每个 Handler 通过 ctx.fireChannelRead() 传递到下一个 Handler\n\n优点：\n- 解耦发送者和接收者\n- 灵活性：链的顺序可以动态调整\n- 可以在链中动态增加/删除处理者\n- 符合开闭原则（增加新处理者不需要修改现有代码）\n\n缺点：\n- 调试困难（请求在多个处理者之间传递）\n- 性能开销（请求经过多个处理者）\n- 可能导致循环引用\n\n扩展延伸：中间件（Middleware）是责任链的变体——Express.js/Koa 的中间件、Redux middleware、FastAPI 中间件。Spring Security 的 Filter Chain——认证过滤器链，每个过滤器检查一种认证方式。责任链与装饰器模式的区别——装饰器为对象增加功能，责任链决定请求由谁处理。",
+    "hints": [
+      "责任链 = 请求沿处理器链传递，直到被处理或链结束。解耦发送者和接收者",
+      "Servlet Filter（chain.doFilter 继续/阻断链）→ Netty Pipeline（入站+出站 Handler + ctx.fireChannelRead）"
+    ],
+    "tags": [
+      "设计模式",
+      "责任链",
+      "Filter",
+      "Pipeline"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "观察者模式与发布订阅",
+    "content": "请介绍观察者模式（Observer）和发布订阅模式（Pub/Sub）的区别。两者在实现消息通知和解耦方面有什么不同？Java 的 Observable 和 Spring 的 ApplicationEvent 如何使用？",
+    "answer": "答案：观察者和发布订阅都用于实现事件驱动的松耦合通信，但 Pub/Sub 更彻底。\n\n观察者模式：\n- 主题（Subject）维护观察者列表，状态变化时直接通知所有观察者\n- 主题知道有哪些观察者（有引用关系）\n- 同步通信：主题直接调用观察者的 update() 方法\n- 耦合：主题和观察者之间有直接引用（虽然是通过接口）\n- 适用于：同一进程内的通知（Java awt/Swing 事件、JavaFX 属性绑定）\n\n发布订阅模式（Pub/Sub）：\n- 发布者和订阅者之间通过事件总线/消息代理通信\n- 发布者和订阅者不知道对方的存在（完全解耦）\n- 异步通信：事件通过消息队列传递\n- 可以跨进程、跨网络通信\n- 适用于：微服务消息（Kafka/RabbitMQ）、EventBus（Guava）、领域事件\n\nJava 的 Observer/Observable（JDK 9 已弃用）：\nclass WeatherData extends Observable {\n    void setMeasurements(float temp) {\n        setChanged();  // 标记状态已变化\n        notifyObservers(temp);  // 通知所有观察者\n    }\n}\n\nclass Display implements Observer {\n    public void update(Observable o, Object arg) {\n        // 收到通知后处理\n    }\n}\n\nSpring ApplicationEvent（观察者模式实现）：\n// 事件类\nclass OrderCreatedEvent extends ApplicationEvent {\n    Long orderId;\n}\n\n// 发布事件\napplicationEventPublisher.publishEvent(new OrderCreatedEvent(orderId));\n\n// 监听事件（@EventListener 注解）\n@Component\nclass OrderNotificationListener {\n    @EventListener\n    public void handleOrderCreated(OrderCreatedEvent event) {\n        // 异步处理（需要 @Async 注解或 @EnableAsync）\n    }\n}\n\n观察者 vs Pub/Sub 对比：\n- 耦合度：观察者（直接引用）> Pub/Sub（完全解耦）\n- 通信方式：观察者（同步）> Pub/Sub（异步，可通过 MQ 或 EventBus）\n- 错误隔离：观察者（观察者异常影响主题）> Pub/Sub（事件总线隔离）\n- 适用场景：观察者适合单进程内事件，Pub/Sub 适合分布式事件\n\n扩展延伸：响应式编程（RxJava / Reactor）——观察者模式的增强版（背压 + 操作符 + 异步）。Spring Cloud Stream——基于 Pub/Sub 的微服务消息驱动框架。Guava EventBus——Google 的进程内 Pub/Sub 实现。",
+    "hints": [
+      "观察者 = Subject→Observer 直接通知（有引用，同步，单进程内）",
+      "Pub/Sub = 发布者↔EventBus/消息队列↔订阅者（完全解耦，异步，跨进程）"
+    ],
+    "tags": [
+      "设计模式",
+      "观察者",
+      "Pub/Sub",
+      "事件驱动"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "工厂模式家族",
+    "content": "请介绍简单工厂、工厂方法（Factory Method）和抽象工厂（Abstract Factory）三种模式的区别。什么时候使用工厂方法而不是抽象工厂？",
+    "answer": "答案：三种工厂模式逐步提升抽象层次。\n\n简单工厂（Simple Factory）：\n- 一个工厂类，一个静态方法，根据参数创建不同的产品\n- 不是 GoF 的正式模式，但最常用\n- 示例：DocumentFactory.createDocument(\"PDF\") → PDFDocument / WordDocument\n- 缺点：添加新产品需要修改工厂类（违反开闭原则）\n\n工厂方法（Factory Method）：\n- 定义一个创建对象的接口，让子类决定实例化哪个类\n- Creator（抽象的工厂类）→ ConcreteCreator（具体的工厂子类）→ Product（产品）\n- 每个产品对应一个工厂（每个工厂只创建一种产品）\n- 添加新产品只需要增加新的工厂子类（符合开闭原则）\n- 示例：\n  interface DocumentFactory { Document create(); }\n  class PDFFactory implements DocumentFactory { public Document create() { return new PDFDocument(); } }\n  class WordFactory implements DocumentFactory { public Document create() { return new WordDocument(); } }\n\n抽象工厂（Abstract Factory）：\n- 创建一组相关的产品（产品族），不需指定具体类\n- 一个工厂可以创建多种产品（同一产品族的所有产品）\n- 示例（GUI 跨平台）：\n  interface GUIFactory { Button createButton(); TextField createTextField(); }\n  class WinFactory implements GUIFactory { Button createButton() { return new WinButton(); } TextField createTextField() { return new WinTextField(); } }\n  class MacFactory implements GUIFactory { Button createButton() { return new MacButton(); } TextField createTextField() { return new MacTextField(); } }\n\n工厂方法 vs 抽象工厂：\n- 工厂方法：一个工厂创建一种产品（继承层次）\n- 抽象工厂：一个工厂创建一整套产品（产品族）\n- 工厂方法使用继承（子类重写工厂方法）\n- 抽象工厂使用组合（通过参数选择工厂实现）\n- 选择：如果需要创建的产品总是成组出现（如不同主题的 UI 控件），用抽象工厂\n  如果需要灵活扩展产品类型，用工厂方法\n\n扩展延伸：Spring 的 BeanFactory——IoC 容器的工厂模式实现。建造者模式（Builder）——工厂模式创建对象后，Builder 模式进一步设置对象的复杂属性。依赖注入（DI）——工厂模式的进化版（不用自己写工厂，由 IoC 容器负责）。",
+    "hints": [
+      "简单工厂（一个类，根据参数创建不同产品）→ 工厂方法（每种产品一个工厂子类）→ 抽象工厂（创建一整套产品族）",
+      "工厂方法适合单产品扩展，抽象工厂适合产品族（同一主题的成套产品）"
+    ],
+    "tags": [
+      "设计模式",
+      "工厂",
+      "抽象工厂",
+      "创建型"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "策略模式",
+    "content": "请介绍策略模式（Strategy）。策略模式如何替代复杂条件语句（if-else/switch）？策略模式和状态模式（State）的区别是什么？",
+    "answer": "答案：策略模式将算法封装为独立的策略类，使它们可以互相替换。\n\n核心思想：\n- 定义策略接口（Strategy），所有具体策略实现该接口\n- 上下文（Context）持有策略引用，通过组合委托给策略\n- 客户端选择合适的策略注入到上下文中\n- 算法独立于客户端变化（开闭原则：添加新策略不需要修改现有代码）\n\n传统 if-else 的缺点：\nif (paymentType == \"CREDIT_CARD\") {\n    // 信用卡支付逻辑\n} else if (paymentType == \"ALIPAY\") {\n    // 支付宝逻辑\n} else if (paymentType == \"WECHAT\") {\n    // 微信支付逻辑\n}\n// 添加新支付方式需要修改这个条件语句\n\n策略模式实现：\n// 策略接口\ninterface PaymentStrategy {\n    void pay(double amount);\n}\n\n// 具体策略\nclass CreditCardStrategy implements PaymentStrategy { ... }\nclass AlipayStrategy implements PaymentStrategy { ... }\nclass WechatStrategy implements PaymentStrategy { ... }\n\n// 上下文\nclass PaymentContext {\n    private PaymentStrategy strategy;\n    void setStrategy(PaymentStrategy strategy) { this.strategy = strategy; }\n    void executePayment(double amount) { strategy.pay(amount); }\n}\n\n// 使用\nPaymentContext context = new PaymentContext();\ncontext.setStrategy(new AlipayStrategy());\ncontext.executePayment(100.0);\n\n策略模式 vs 状态模式：\n- 策略模式：客户端选择策略（外部决定），策略之间独立无关联\n- 状态模式：状态自动切换（内部决定），状态转换有固定的规则\n- 策略模式：解决\"怎么做\"（算法替换）\n- 状态模式：解决\"是什么状态的表现\"（行为随状态变化）\n- 类比：策略像选择交通工具（客户端选），状态像红绿灯（自动转换）\n\n实际应用：\n- Java Comparator（排序策略）\n- Spring Security 的 AuthenticationProvider（认证策略）\n- 支付系统（多种支付方式）\n- 促销活动（多种折扣策略）\n\n扩展延伸：策略模式的简化——函数式编程中策略就是高阶函数（Java 8 的 lambda + EnumMap<Type, Strategy> 消除多态开销）。Null Object 模式（空对象模式）——策略模式的一种特殊变体（提供什么都不做的默认策略）。",
+    "hints": [
+      "策略 = 算法封装成独立策略类 + 上下文通过组合委托给策略（运行时替换）",
+      "策略（客户端选，算法替换）vs 状态（内部自动转换，行为随状态变化）"
+    ],
+    "tags": [
+      "设计模式",
+      "策略",
+      "行为型",
+      "状态"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "适配器模式",
+    "content": "请介绍适配器模式（Adapter）。适配器如何让不兼容的接口协同工作？类适配器和对象适配器的区别？适配器、代理和装饰器模式有什么区别？",
+    "answer": "答案：适配器模式将一个接口转换成客户端期望的另一个接口。\n\n适配器的作用：\n- 客户端使用 Target 接口\n- Adaptee 是现有类（接口不兼容）\n- Adapter 实现 Target 接口，内部调用 Adaptee 的方法\n\n对象适配器（基于组合，推荐）：\nclass MediaPlayerAdapter implements MediaPlayer {\n    private AdvancedMediaPlayer advancedPlayer;\n\n    public MediaPlayerAdapter(AdvancedMediaPlayer player) {\n        this.advancedPlayer = player;\n    }\n\n    @Override\n    public void play(String fileName) {\n        // 将简单的 play 接口转换为高级播放器的接口\n        advancedPlayer.playAdvanced(fileName);\n    }\n}\n\n类适配器（基于继承）：\nclass MediaPlayerAdapter extends AdvancedMediaPlayer implements MediaPlayer {\n    @Override\n    public void play(String fileName) {\n        playAdvanced(fileName);  // 直接调用继承的方法\n    }\n}\n\n适配器 vs 代理 vs 装饰器：\n- 适配器（Adapter）：转换接口（解决接口不兼容）\n  示例：将 USB-C 接口转换为 HDMI 接口\n- 代理（Proxy）：控制对对象的访问（延迟加载/权限/远程代理）\n  示例：代理控制谁可以访问目标对象\n- 装饰器（Decorator）：动态增加功能（不改变接口）\n  示例：给咖啡加糖/加奶（同类接口，增加功能）\n\n关键区别：\n- 适配器改变接口（让 Target 和 Adaptee 可以一起工作）\n- 代理不改变接口（控制访问）\n- 装饰器不改变接口（增强功能）\n\n实际应用：\n- 兼容旧系统（Legacy System）：包装旧系统的接口为新系统可用\n- Java I/O：InputStreamReader 适配 InputStream 到 Reader\n- Spring 的 HandlerAdapter：将不同的 Controller 类型适配到统一的 DispatcherServlet 接口\n- SLF4J：日志框架适配器（统一接口适配 Log4j/Logback/JUL）\n\n扩展延伸：双向适配器——让两个接口互相适配（实现两个接口，互相调用）。缺省适配器（Default Adapter）——提供接口的默认空实现，子类只需重写需要的方法（JDK 8 中的 default 方法解决了这个问题）。外观模式（Facade）与适配器的区别——外观提供简化的接口（面向子系统），适配器解决接口不兼容。",
+    "hints": [
+      "适配器 = 转换接口（Target←Adapter→Adaptee），解决接口不兼容",
+      "适配器（改接口，兼容旧系统）vs 代理（不改接口，控制访问）vs 装饰器（不改接口，增强功能）"
+    ],
+    "tags": [
+      "设计模式",
+      "适配器",
+      "结构型",
+      "兼容性"
+    ]
   }
 ]

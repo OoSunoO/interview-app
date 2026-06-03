@@ -943,5 +943,95 @@
       "连续序列",
       "O(n)"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Boyer-Moore 字符串搜索",
+    "content": "请介绍 Boyer-Moore 字符串匹配算法。坏字符规则（Bad Character Rule）和好后缀规则（Good Suffix Rule）分别如何工作？为什么 Boyer-Moore 在实践中最快？",
+    "answer": "答案：Boyer-Moore 从右向左比较模式串，利用坏字符和好后缀规则跳过尽可能多的字符。\n\n核心思想：\n- 模式串与文本对齐后从右向左比较（与 KMP 从左向右不同）\n- 匹配失败时，根据坏字符规则和好后缀规则计算最大跳转距离\n- 最佳情况 O(n/m)（跳跃距离 = m），最坏 O(nm)\n\n坏字符规则：\n- 当文本字符 X 与模式串字符不匹配时，X 称为\"坏字符\"\n- 如果 X 在模式串中出现，将模式串向右移动使 X 与模式串中更靠右的相同字符对齐\n- 如果 X 不在模式串中出现，将模式串整体右移到 X 之后\n- 跳转距离 = max(1, last_occurrence[X] - mismatch_pos)\n\n好后缀规则：\n- 当后缀 t 匹配成功但前一个字符不匹配时，t 称为\"好后缀\"\n- 如果在模式串中找到一个与 t 相同但前一个字符不同的子串，将模式串右移到该子串与 t 对齐\n- 如果找不到完整子串，找 t 的最长前缀（同时也是模式串的后缀）\n- 跳转距离 = 模式串中好后缀出现的位置\n\n综合规则：取坏字符和好后缀的较大值作为实际跳转距离。\n\n为什么实践中最快：\n- 从右向左比较使坏字符出现在模式串末尾时，跳转距离最大\n- 随着文本增长，匹配失败的概率高，跳转步长大\n- 对自然语言文本，Boyer-Moore 通常不到 O(n)（次线性！）\n- 实际上：Boyer-Moore > KMP > Rabin-Karp（在大多数场景下）\n\n扩展延伸：Horspool 算法简化了 Boyer-Moore（只使用坏字符规则），性能相当（在字母表较大时）。Sunday 算法进一步改进（关注下一字符）。实际中的 strstr() 和 grep 通常使用 Boyer-Moore-Horspool 的变体。Boyer-Moore 对二进制数据（小字母表）的效果不如对自然文本。",
+    "hints": [
+      "Boyer-Moore 从右向左比较，利用坏字符和好后缀规则跳过字符",
+      "实践中通常是次线性的（小于 O(n)），是最快的通用字符串搜索算法"
+    ],
+    "tags": [
+      "算法",
+      "Boyer-Moore",
+      "字符串",
+      "匹配"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "并查集优化",
+    "content": "请介绍并查集（Union-Find / Disjoint Set）的两种优化——路径压缩（Path Compression）和按秩合并（Union by Rank）。优化后的时间复杂度为什么是近乎 O(1) 的？",
+    "answer": "答案：并查集维护不相交集合的合并和查找操作。\n\n基础操作：\n- find(x)：查找 x 所属集合的代表元素\n- union(x, y)：合并 x 和 y 所属的两个集合\n\n路径压缩（Path Compression）：\n- 在 find() 操作中，将路径上的所有节点直接连接到根节点\n- 代码：if (parent[x] != x) parent[x] = find(parent[x])\n- 效果：下次 find 同一元素时 O(1)\n- 不影响 union 操作\n\n按秩合并（Union by Rank）：\n- 合并时，将高度较小（秩较小）的树挂到高度较大的树下\n- 秩（rank）：树的高度的上界\n- 初始时每个元素的 rank = 0\n- 如果 rank[x] < rank[y]：parent[x] = y（不需要更新 rank）\n- 如果 rank[x] == rank[y]：parent[x] = y，rank[y]++\n- 效果：树的深度保持在 O(log n)\n\n时间复杂度：\n- 同时使用两种优化后，单次操作的摊还时间复杂度为 O(α(n))\n- α(n) 是阿克曼函数的反函数，增长极慢\n- α(10^100) ≈ 5，α(宇宙中的原子数) < 10\n- 实际使用时认为是 O(1)\n\n代码框架：\nint find(int x) {\n    if (parent[x] != x) parent[x] = find(parent[x]);\n    return parent[x];\n}\nvoid union(int x, int y) {\n    int px = find(x), py = find(y);\n    if (px == py) return;\n    if (rank[px] < rank[py]) parent[px] = py;\n    else if (rank[px] > rank[py]) parent[py] = px;\n    else { parent[py] = px; rank[px]++; }\n}\n\n扩展延伸：并查集的应用——连通分量检测（Kruskal 最小生成树、岛屿数量）、图的动态连通性、LCA（Tarjan 离线 LCA 算法）、社交网络（共同朋友检测）。可撤销并查集（支持回退操作，需要维护操作栈和按秩合并的现场）。持久化并查集（基于可持久化数组）。",
+    "hints": [
+      "路径压缩 = find 时扁平化树结构，按秩合并 = 矮树挂到大树",
+      "两种优化组合后 O(α(n))，实践中视为 O(1)"
+    ],
+    "tags": [
+      "算法",
+      "并查集",
+      "Union-Find",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "莫队算法",
+    "content": "请介绍莫队算法（Mo's Algorithm）的原理。它如何通过离线查询和分块排序实现高效的区间查询？如何处理区间增删的 O(1) 转移？",
+    "answer": "答案：莫队算法通过对离线查询排序，使相邻查询的区间变化最小化，以 O(1) 的转移代价处理区间查询。\n\n适用场景：\n- 离线区间查询（数组不修改或只需处理修改）\n- 区间维护的信息支持 O(1) 增删（如出现次数、异或和、第 K 大）\n- 典型应用：区间不同元素的个数、区间众数、区间逆序对\n\n算法步骤：\n1. 分块：将数组分为√n 块，每块大小 √n\n2. 排序查询：按左端点所在块排序，同块内按右端点排序\n   - 排序规则：(block[l], r) if block[l] is odd else (block[l], -r)\n   - 奇偶优化：奇数块右端点升序，偶数块右端点降序（减少右指针回退）\n3. 处理：维护当前区间 [L, R]，通过 add(R+1)、remove(L) 等操作移动边界\n\n时间复杂度：\n- 排序：O(q log q)\n- 处理过程：\n  - 左指针移动：O(q × √n)（同块内最多移动√n）\n  - 右指针移动：O(n × √n)（每块最多扫描一次整个数组）\n  - 总复杂度：O((n + q) × √n × O(1))\n\n代码框架：\nint L = 0, R = -1;  // 当前区间\nfor (auto q : queries) {\n    while (L > q.l) add(--L);\n    while (R < q.r) add(++R);\n    while (L < q.l) remove(L++);\n    while (R > q.r) remove(R--);\n    ans[q.id] = cur_ans;\n}\n\n扩展延伸：带修改莫队（Mo's Algorithm with Updates）——增加时间维度，支持修改操作。块大小调整为 n^(2/3)，复杂度 O(n^(5/3))。树上莫队——将树转换为欧拉序（Euler Tour），将树上路径查询转化为区间查询。回滚莫队（Rollback Mo）——add 操作不可逆时使用（如并查集），只有 add 没有 remove。",
+    "hints": [
+      "莫队 = 离线查询排序 + 块内右端点单调 + O(1) 区间转移",
+      "左指针 O(q√n)，右指针 O(n√n)，总复杂度 O((n+q)√n)"
+    ],
+    "tags": [
+      "算法",
+      "莫队",
+      "离线",
+      "区间查询"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Treap 和 Splay",
+    "content": "请介绍平衡二叉搜索树 Treap（树堆）和 Splay（伸展树）的原理。Treap 如何用随机化实现平衡？Splay 的旋转操作如何将被访问的节点提升到根？",
+    "answer": "答案：Treap 和 Splay 都是平衡二叉搜索树的变体。\n\nTreap（Tree + Heap）：\n- 每个节点持有一个随机优先级（priority）\n- 二叉搜索树性质（BST）：左子 < 根 < 右子（按 key）\n- 堆性质：父节点的优先级 > 子节点的优先级（按 priority）\n- 平衡性来自随机化——期望深度 O(log n)\n- 核心操作：旋转（左旋/右旋）——维护 Treap 性质\n  - split(root, key)：按 key 将树分成 < key 和 >= key 的两棵子树\n  - merge(left, right)：合并两棵子树（假设 left 所有 key < right 所有 key）\n  - 插入：split + merge\n  - 删除：split + merge（跳过目标节点）\n- 实现比红黑树简单得多，性能与红黑树相当\n\nSplay（伸展树）：\n- 不维护额外的平衡信息，通过每次操作后将访问节点旋转到根来维持平衡\n- 旋转类型：\n  - Zig/Zag：单旋转（父节点是根时）\n  - Zig-Zig/Zag-Zag：双旋转（节点和父节点都是左子或都是右子）\n  - Zig-Zag/Zag-Zig：双旋转（节点是左子父是右子）\n- 伸展操作（Splay）：将节点提升到树根的 6 种旋转组合\n- 摊还复杂度：O(log n) 每次操作\n\nTreap vs Splay：\n- Treap 实现更简单（split/merge），Splay 实现更复杂\n- Treap 是随机化的期望平衡，Splay 是摊还分析平衡\n- Splay 的优势：最近访问的节点在根附近（缓存友好），适合有局部性的访问模式\n- Treap 支持持久化（复制书节点即可），Splay 不支持持久化\n\n扩展延伸：fhq Treap（范浩强 Treap）基于 split/merge 实现所有操作（包括区间操作），不需要旋转。Splay 是 Link-Cut Tree（动态树）的基础数据结构。无旋 Treap 支持区间反转（类似文艺平衡树）。WBLT（Weight-balanced Tree）是另一种实用的平衡树实现，常用于数据竞赛。",
+    "hints": [
+      "Treap = BST + 随机优先级堆性质 + split/merge 操作",
+      "Splay = 访问节点旋转到根 + 摊还 O(log n)"
+    ],
+    "tags": [
+      "算法",
+      "Treap",
+      "Splay",
+      "平衡树"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Morris 遍历",
+    "content": "请介绍 Morris 遍历（Morris Traversal）算法。如何在 O(1) 空间内实现二叉树的前序、中序、后序遍历？Morris 遍历如何利用空闲的右指针实现无栈递归？",
+    "answer": "答案：Morris 遍历利用叶子节点的空闲右指针（right child）指向后继节点，实现 O(1) 空间的二叉树遍历。\n\n核心思想（线索二叉树，Threaded Binary Tree）：\n- 叶子节点的右指针是空闲的（null）\n- 将这些空闲指针指向中序遍历的后继节点\n- 遍历结束后恢复原始树结构（将右指针恢复为 null）\n\nMorris 中序遍历：\n1. 当前节点 curr = root\n2. 如果 curr 没有左子：访问 curr，curr = curr.right\n3. 如果 curr 有左子：\n   a. 找左子树的最右节点 predecessor（curr 在中序遍历中的前驱）\n   b. 如果 predecessor.right == null（未线索化）：\n      - predecessor.right = curr（建立线索）\n      - curr = curr.left（进入左子树）\n   c. 如果 predecessor.right == curr（已线索化）：\n      - 访问 curr\n      - predecessor.right = null（恢复原始结构）\n      - curr = curr.right（进入右子树）\n\n代码：\nvoid morrisInorder(TreeNode root) {\n    TreeNode curr = root;\n    while (curr != null) {\n        if (curr.left == null) {\n            visit(curr);\n            curr = curr.right;\n        } else {\n            TreeNode pred = curr.left;\n            while (pred.right != null && pred.right != curr)\n                pred = pred.right;\n            if (pred.right == null) {\n                pred.right = curr;\n                curr = curr.left;\n            } else {\n                pred.right = null;\n                visit(curr);\n                curr = curr.right;\n            }\n        }\n    }\n}\n\nMorris 前序遍历：\n- 在中序遍历的基础上，调整访问时机\n- 在 establish thread（建立线索）时访问 curr（在进入左子树之前）\n\nMorris 后序遍历：\n- 更复杂：需要逆序输出路径\n- 建立一个临时根节点，将原树作为左子\n- 在恢复线索时（发现 pred.right == curr），逆序输出 curr.left 到 pred 的路径\n- 最后额外处理右路径\n\n时间/空间复杂度：\n- 每个节点最多被访问 3 次（建立线索、利用线索、恢复线索）\n- 每条边最多走两次（向下找 predecessor，向上通过线索回溯）\n- O(n) 时间，O(1) 空间\n\n扩展延伸：Morris 遍历适合嵌入式系统或内存极有限的场景（不能使用递归栈）。递归遍历 O(h) 空间（h=树高），迭代遍历 O(h) 空间（显式栈），Morris 遍历 O(1) 空间。Morris 的缺陷是修改树结构（虽然会恢复），不适合并发环境。",
+    "hints": [
+      "Morris 遍历利用空闲右指针指向前驱/后继节点，实现 O(1) 空间",
+      "每个节点最多访问 3 次（建立线索/利用线索/恢复线索），O(n) 时间"
+    ],
+    "tags": [
+      "算法",
+      "Morris",
+      "二叉树",
+      "遍历"
+    ]
   }
 ]

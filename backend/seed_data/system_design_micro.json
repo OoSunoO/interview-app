@@ -984,5 +984,95 @@
       "令牌桶",
       "分布式"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务网格 Service Mesh",
+    "content": "请介绍服务网格（Service Mesh）的架构原理。Sidecar Proxy 的工作机制是什么？Istio 的数据平面和控制平面分别由哪些组件组成？",
+    "answer": "答案：服务网格将服务间通信从应用代码中剥离，下沉到基础设施层（Sidecar Proxy）。\n\n架构原理：\n- 数据平面（Data Plane）：每个服务实例旁部署一个 Sidecar Proxy（如 Envoy）\n- 控制平面（Control Plane）：统一管理 Sidecar 的配置（如 Istiod）\n- 服务之间的所有流量都通过 Sidecar 转发（零侵入，应用代码无需感知）\n\nSidecar Proxy 的工作机制：\n1. 流量拦截：通过 iptables/IPVS 规则将流入/流出服务的流量劫持到 Envoy\n2. 服务发现：从控制平面获取服务列表和负载均衡策略\n3. 流量治理：负载均衡、熔断、重试、超时\n4. 安全通信：mTLS（双向 TLS）自动加密服务间通信\n5. 可观测性：自动生成链路追踪、指标、访问日志\n\nIstio 组件：\n- 控制平面（Istiod）：\n  - Pilot：服务发现 + 流量管理（下发 Envoy 配置）\n  - Citadel：证书管理（自动签发 mTLS 证书）\n  - Galley：配置验证和分发\n- 数据平面（Envoy Proxy）：\n  - 高性能 C++ Proxy（L4/L7）\n  - 支持 HTTP/2、gRPC、TCP 等协议\n  - 热重载配置（动态路由调整）\n\n服务网格与 API 网关的关系：\n- 服务网格处理东西向流量（服务间通信）\n- API 网关处理南北向流量（外部→服务）\n- 两者可以配合使用：网关入站流量 → Sidecar 服务间转发\n\n扩展延伸：Kubernetes 是服务网格最佳运行平台（Pod 粒度部署 Sidecar）。无需 Sidecar 的替代方案——Cilium（基于 eBPF 内核技术，更轻量，性能更好）。Linkerd——比 Istio 更轻量的服务网格（Rust + Go）。Wasm 扩展——Envoy 支持 Wasm 插件扩展。",
+    "hints": [
+      "Service Mesh = 数据平面（Sidecar Proxy）+ 控制平面（配置/证书管理）",
+      "Istio：Envoy（数据面）+ Istiod（Pilot + Citadel + Galley）"
+    ],
+    "tags": [
+      "系统设计",
+      "Service Mesh",
+      "Istio",
+      "Sidecar"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "SAGA 分布式事务",
+    "content": "请介绍 SAGA 分布式事务模式。SAGA 如何通过补偿事务（Compensating Transaction）保证最终一致性？Choreography 和 Orchestration 两种实现方式各有什么适用场景？",
+    "answer": "答案：SAGA 是一种长事务模式，通过将全局事务拆分为多个本地事务 + 补偿事务来保证最终一致性。\n\nSAGA 核心思想：\n- 一个大事务拆分为 N 个子事务（T1, T2, ..., Tn）\n- 每个子事务 Ti 对应一个补偿事务 Ci（Ti 的逆操作）\n- 如果所有子事务成功 → 事务完成\n- 如果某个子事务 Tk 失败 → 依次执行 Ck-1, ..., C1 回滚\n\nChoreography（编排模式）：\n- 每个服务独立决策，通过事件驱动协作\n- 服务 A 完成操作 → 发送事件到消息队列 → 服务 B 消费事件执行下一操作\n- 事件中包含 Saga ID 用于串联\n- 适用场景：简单链路（2-3 个服务）、服务间耦合度低\n- 优点：无需中心协调器，性能好\n- 缺点：业务逻辑分散在多个服务，复杂链路难以追踪\n\nOrchestration（编排模式）：\n- 引入 Saga Orchestrator（协调器），集中管理所有步骤\n- 协调器发送命令给各服务（告诉服务做什么，而不是等待事件）\n- 协调器维护 Saga 状态（执行到哪一步了）\n- 适用场景：复杂链路（多个服务）、需要严格的状态管理\n- 优点：业务逻辑集中（协调器）、可追踪\n- 缺点：协调器可能成为瓶颈\n\n实现方案：\n- Apache Camel：Saga EIP（Enterprise Integration Pattern）\n- Seata（阿里）：AT（自动补偿）/ TCC（Try-Confirm-Cancel）/ SAGA 三种模式\n- Eventuate Tram：事件驱动的 SAGA 框架\n\n扩展延伸：SAGA vs TCC——SAGA 适合长事务（业务流程复杂），TCC 适合短事务（资源预留）。SAGA vs 2PC——2PC 是强一致性（XA 协议），SAGA 是最终一致性。SAGA 的隔离性不足——因为没有全局锁，需要业务层处理脏读（Countermeasure，如语义锁）。",
+    "hints": [
+      "SAGA = 子事务 + 补偿事务（T1,T2,...Tn / C1,C2,...Cn-1）",
+      "Choreography（事件驱动，简单链路）vs Orchestration（中心协调，复杂链路）"
+    ],
+    "tags": [
+      "系统设计",
+      "SAGA",
+      "分布式事务",
+      "最终一致性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "背压机制",
+    "content": "请介绍背压（Backpressure）机制在分布式系统中的应用。背压如何防止生产者压垮消费者？Reactive Streams 和 Akka Streams 中的背压实现有什么不同？",
+    "answer": "答案：背压是一种流量控制机制，消费者告知生产者降低发送速度，防止消费者被压垮。\n\n背压的核心思想：\n- 消费者处理能力有限，缓冲区溢出会导致数据丢失或 OOM\n- 消费者主动反馈当前负载状态，生产者根据反馈调整速率\n- 背压不是降级——是自适应调节，系统始终稳定运行\n\n无背压的问题：\n- 生产者以固定速率发送 → 消费者跟不上 → 缓冲区满 → OOM/丢弃\n- 解决方式一：无限制缓冲区（OOM 风险）\n- 解决方式二：丢弃数据（数据丢失）\n- 背压解决方式：消费者说\"我处理完了，请发下一批\"\n\nReactive Streams 背压模型（Java）：\n- Publisher（发布者）：发送数据流\n- Subscriber（订阅者）：接收并处理数据\n- Subscription 接口的 request(n) 方法：订阅者请求 n 个元素\n- 订阅者通过 request(n) 控制速率（拉模式）\n- 发布者不能超过 request(n) 的数量发送\n\nAkka Streams 的背压实现：\n- Actor 模型 + 异步消息传递\n- 每个处理阶段（Operator）内部维护缓冲区\n- 使用 Batch/Size 策略：累积一定数量或等待一定时间\n- 背压协议通过 Actor 消息传递（不阻塞）\n\nKafka 中的背压（Kafka Streams）：\n- consumer.poll(timeout)——控制每次拉取的最大记录数\n- max.poll.records 和 fetch.max.bytes——限制单次拉取量\n- 处理完当前批次再拉取下一批（自然背压）\n\n扩展延伸：TCP 的滑动窗口也是背压的一种形式——接收方通过窗口大小控制发送方速率。消息队列天然的背压能力——队列长度限制消息积压量，消费者处理完才拉取新消息。分布式系统中的背压传递——下游压力通过网络传递到上游。",
+    "hints": [
+      "背压 = 消费者通过 request(n) 控制生产者发送速率（拉模式）",
+      "Reactive Streams: Publisher → Subscriber 的 Subscription.request(n) 控制流"
+    ],
+    "tags": [
+      "系统设计",
+      "背压",
+      "流量控制",
+      "Reactive Streams"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "优雅关闭与服务启停",
+    "content": "请介绍微服务的优雅关闭（Graceful Shutdown）机制。如何保证服务关闭时不丢失正在处理的请求？Kubernetes 的 Pod 生命周期如何与优雅关闭配合？",
+    "answer": "答案：优雅关闭确保服务停止时完成正在处理的请求，不丢失数据。\n\n优雅关闭的步骤：\n1. 停止接收新请求：从负载均衡器/注册中心注销（标记为下线）\n2. 等待正在处理的请求完成：设置最大等待时间（如 30 秒）\n3. 释放资源：关闭连接池、数据库连接、线程池\n4. 执行清理：持久化内存状态、关闭文件句柄\n5. 退出进程\n\n实现方式：\n- Java（Spring Boot）：@PreDestroy / DisposableBean / shutdown hook\n- Python：signal.signal(signal.SIGTERM, handler)\n- Go：signal.Notify + 优雅退出逻辑\n- 关键：收到 SIGTERM 信号后开始优雅关闭，SIGKILL 无法捕获\n\nKubernetes Pod 生命周期：\n1. Pod 进入 Terminating 状态\n2. preStop Hook 执行（用户自定义的关闭前命令）\n3. SIGTERM 发送到主进程\n4. terminationGracePeriodSeconds 等待期（默认 30 秒）\n5. 超时后 SIGKILL 强制终止\n\n常见问题：\n- 注册中心未及时下线：K8s 的 Pod 被 Endpoint Controller 移除有延迟\n- 解决方案：preStop hook 中加入 sleep（如 sleep 10 秒，等待路由表更新）\n- 长连接/WebSocket：通知客户端重新连接，或等待连接自然关闭\n- 消息队列消费者：确认所有正在处理的消息后再关闭\n\n启动检查：\n- 就绪探针（Readiness Probe）：服务准备好接收流量后再注册\n- 存活探针（Liveness Probe）：检测服务是否存活（死锁/卡住自动重启）\n- 启动顺序依赖：Init Container 确保依赖服务已就绪\n\n扩展延伸：分布式系统中的优雅关闭更复杂——需要先通知上游不再发送请求。蓝绿部署中切换流量后等待原有连接完成。消息队列的优雅关闭——Kafka Consumer 关闭前调用 close() 自动触发 rebalance。",
+    "hints": [
+      "优雅关闭 = 停止接新请求 + 等旧请求完成 + 释放资源",
+      "K8s 中 preStop hook + terminationGracePeriodSeconds + SIGTERM → SIGKILL"
+    ],
+    "tags": [
+      "系统设计",
+      "优雅关闭",
+      "Kubernetes",
+      "高可用"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "单元化架构",
+    "content": "请介绍单元化架构（Unit Architecture）。如何通过单元化实现异地多活？单元化架构中的流量调度和数据分片策略是什么？",
+    "answer": "答案：单元化架构将系统拆分为多个独立的逻辑单元（Unit），每个单元包含完整的业务栈和对应的数据分片。\n\n核心概念：\n- 单元（Unit）：一个自包含的部署单元（包含应用 + 数据库 + 缓存），只处理特定分片的数据\n- 单元化 = 分片 + 部署隔离：每个单元处理完整请求（不是微服务的某个模块）\n- 用户路由：根据用户 ID 的哈希/范围，将用户分配到固定单元\n\n异地多活架构：\n- 多地域部署，每个地域部署若干单元\n- 同一用户的所有操作都在同一单元内完成（单元内闭环，无跨单元调用）\n- 主单元故障时，将用户流量切换到其他地域的备用单元\n- 数据同步：不同单元之间的数据通过异步复制同步\n\n流量调度：\n- 接入层：根据用户 ID/单元号将请求路由到正确的单元\n- GSLB（全局负载均衡）：根据用户地理位置和单元健康状态调度\n- 单元内请求闭环：同一单元的服务间调用不出单元（低延迟）\n\n数据分片策略：\n- 用户维度分片：每个单元包含一部分用户的全量数据\n- 分片键通常为 user_id/uid 哈希到分片数取模\n- 数据同步：主单元 → 其他单元（异步，如 MySQL Binlog + MQ）\n- 单元化切分后不再需要跨单元 JOIN（所有关联数据在同一单元内）\n\n单元化的挑战：\n- 跨单元场景：少数无法避免的跨单元操作（如全局管理员查看所有用户数据）→ 由聚合层处理\n- 数据一致性：单元间异步同步的延迟，故障切换时的数据丢失\n- 流量切换：切换时需要回放未同步数据，用户可能感知短暂不可用\n\n扩展延伸：单元化架构的典型实践——蚂蚁金服（LDC / 逻辑数据中心）、微信的容灾架构。单元化与微服务的关系——微服务是横向分层（按业务领域切分），单元化是纵向分片（按用户维度切分）。单元化的极致是全局多活而不是主备（所有单元都在处理流量）。",
+    "hints": [
+      "单元化 = 用户维度分片 + 同单元内业务闭环（跨地域部署）",
+      "GSLB 路由 + 单元内数据本地化 + 异步数据同步"
+    ],
+    "tags": [
+      "系统设计",
+      "单元化",
+      "异地多活",
+      "高可用"
+    ]
   }
 ]

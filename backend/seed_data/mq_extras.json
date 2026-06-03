@@ -998,5 +998,95 @@
       "Partition",
       "Kafka"
     ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息顺序性保障",
+    "content": "请介绍消息队列中如何保证消息的顺序性（有序消息）。Kafka 如何在分区内保证顺序？RocketMQ 的全局有序和分区有序如何实现？",
+    "answer": "答案：消息队列通过分区/队列内保证顺序，通常不提供跨分区的全局顺序。\n\nKafka 的消息顺序：\n- Kafka 只在分区（Partition）内部保证顺序（同一分区的消息按写入顺序消费）\n- Kafka 不保证跨分区消息的顺序（不同分区的消息可能被消费者乱序处理）\n- 保证同一业务消息进入同一分区的方法：\n  - 生产者指定消息 key（如 order_id） → 消息按 key 哈希到同一分区\n  - 自定义分区器（Partitioner） → 根据业务规则选择分区\n- 消费者保证有序消费：\n  - 使用单线程消费分区（一个分区只能被消费者组内的一个消费者消费）\n  - 但消费者的单线程处理可能成为瓶颈，可以通过多个分区（=多个消费者线程）扩展\n\nRocketMQ 的消息顺序：\n- 全局有序：创建一个 Queue（队列）的消息（性能低，不推荐）\n- 分区有序：同一 Queue 内的消息有序，不同 Queue 不保证\n- 使用 MessageQueueSelector 将同一业务 ID（如 order_id）的消息发送到同一 Queue\n- 消费者使用 SingleConsumer 消费该 Queue（单线程消费）\n\n顺序消息的挑战：\n- 重试导致的顺序乱：某条消息处理失败但后续消息已经处理成功\n  - 解决方案：顺序消息失败时只能阻塞重试（不能跳过），直到成功为止\n- 重新消费导致的重复：记录处理位点，幂等处理\n- 不能使用并发消费（多线程处理同一分区/Queue 会乱序）\n\n扩展延伸：消息队列的顺序和吞吐量的权衡——保证顺序牺牲并行度（单分区/Queue 只能单线程消费）。实际业务中通常只对关键路径（如订单创建流程）保证顺序。RocketMQ 支持全局有序和分区有序两种模式（全局有序性能极低，不推荐在大流量场景使用）。Pulsar 的 Topic 可配置为 Key_Shared 模式（同一 key 的消息在同一消费者有序处理）。",
+    "hints": [
+      "Kafka/RocketMQ 只保证分区/Queue 内部有序（通过 key 哈希路由到同一分区）",
+      "顺序消费 = 单线程处理 + 阻塞重试 + 不跳过失败消息（牺牲吞吐量）"
+    ],
+    "tags": [
+      "MQ",
+      "消息顺序",
+      "Kafka",
+      "RocketMQ"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式消息事务",
+    "content": "请介绍 RocketMQ 的事务消息（Transactional Message）机制。事务消息如何保证本地事务和消息发送的原子性？半消息（Half Message）和事务回查机制如何工作？",
+    "answer": "答案：RocketMQ 事务消息通过两阶段提交 + 事务回查，保证本地事务和消息发送的最终一致性。\n\n问题背景：\n- 分布式系统中，下单后发消息给积分服务：\n  1. 先下单（写 DB）再发消息 → 发消息失败则 DB 已提交（不一致）\n  2. 先发消息再下单 → 下单失败但消息已发送（不一致）\n- 事务消息保证：消息发送和本地事务要么都成功，要么都回滚\n\nRocketMQ 事务消息流程：\n1. 发送半消息（Half Message）\n   - Producer 向 Broker 发送一条半消息（消息对消费者不可见）\n   - Broker 存储该消息，状态为半消息（PREPARED 状态）\n2. 执行本地事务\n   - Producer 收到半消息确认后，执行本地事务（如写入订单数据库）\n3. 提交/回滚事务\n   - 本地事务成功：Producer 向 Broker 发送 COMMIT，消息变为可见\n   - 本地事务失败：Producer 向 Broker 发送 ROLLBACK，消息被删除\n\n事务回查（Transaction Checkback）：\n- 如果 Producer 在 COMMIT/ROLLBACK 之前崩溃或网络超时\n- Broker 会定期回查 Producer（询问本地事务的状态）\n- Producer 实现 checkLocalTransaction 回调，根据本地事务的执行结果返回 COMMIT/ROLLBACK\n- 回查次数有上限（默认 15 次），超过后消息进入死信队列\n\n与 Kafka 事务消息的对比：\n- Kafka 事务消息（EOS, Exactly Once Semantics）：使用 Transaction Coordinator + 幂等生产者\n- Kafka 更注重流处理中的端到端精确一次（Kafka Streams）\n- RocketMQ 事务消息更注重微服务场景的分布式事务\n\n扩展延伸：事务消息 vs 本地消息表（经典的最终一致性方案）。本地消息表：业务表 + 消息表在同一个数据库（本地事务），定时任务扫描消息表发送消息（更通用的方案，不依赖消息队列的事务特性）。事务消息本质上是对本地消息表的\"消息中间件原生实现\"。",
+    "hints": [
+      "事务消息 = 半消息（对消费者不可见）+ 本地事务执行 + COMMIT/ROLLBACK",
+      "事务回查：Broker 定期询问 Producer 本地事务结果（应对崩溃/超时）"
+    ],
+    "tags": [
+      "MQ",
+      "事务消息",
+      "RocketMQ",
+      "分布式事务"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息幂等性",
+    "content": "请介绍消息队列中的幂等性处理。为什么消息会重复？消息幂等处理的常见方案有哪些？",
+    "answer": "答案：消息幂等——无论消息被消费多少次，产生的结果相同。\n\n消息为什么重复：\n1. 生产者重试：消息发送超时 → 重试 → 实际已发送成功（重复消息进入队列）\n2. 消费者自动提交 offset 后崩溃：重新消费时读取上次提交的 offset（可能漏掉一些已消费的消息）\n3. 消息队列的\"至少一次\"（At-Least-Once）语义保证：保证消息不丢，但可能重复\n4. 网络重传：ACK 在传输中丢失，Broker 未收到确认而重发\n\n幂等方案：\n1. 业务表唯一约束（最强方案）：\n   - 消息中包含业务唯一 ID（如 order_id、payment_id）\n   - 业务表设置该 ID 为唯一索引或主键\n   - 重复消息 INSERT 时因主键冲突而失败 → 已经处理过，直接忽略\n2. 去重表（Redis/DB）：\n   - 消费者收到消息后，先查询去重表\n   - 如果已经处理过（ID 存在），直接 ACK 并丢弃\n   - 记录是通过 SET NX（Redis）或 INSERT IGNORE（DB）实现\n3. 状态机校验：\n   - 业务记录有状态字段（如订单状态：待支付 → 已支付 → 已发货）\n   - 重复消息到达时，检查当前状态是否允许本次操作\n   - 状态不允许则忽略（消息已经处理过了）\n4. 业务去重：\n   - 下游接口本身是幂等的（如 Set 操作而不是 Add 操作）\n   - 多次调用的效果 = 一次调用的效果\n\n幂等 ID 的生成：\n- 最好由上游（消息生产者）生成并放入消息体中\n- 全局唯一（UUID / Snowflake ID / 业务 ID + 时间戳 + 随机数）\n- 也可以使用消息队列自带的 Message ID（但 RocketMQ/Kafka 的 Message ID 可能重复）\n\n扩展延伸：消息幂等和消息去重的关系——去重是幂等的一种实现方式。Kafka 的幂等生产者（enable.idempotence=true）——保证生产者到 Broker 的消息不重复，但消费者端仍需要业务幂等。真正的端到端精确一次（EOS）需要 Kafka 事务 + 幂等消费者。",
+    "hints": [
+      "消息重复原因：生产者重试 + At-Least-Once 语义 + 消费者崩溃",
+      "幂等方案：唯一约束（DB 主键/唯一索引）+ 去重表 + 状态机校验"
+    ],
+    "tags": [
+      "MQ",
+      "幂等",
+      "去重",
+      "消息"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息积压处理",
+    "content": "请介绍消息队列消息积压（Message Backlog）的处理策略。如何及时发现积压？积压后如何快速消费积压消息？",
+    "answer": "答案：消息积压是消费者处理速度跟不上生产者发送速度导致的。\n\n及时发现积压：\n- 监控指标：Consumer Lag（消费者落后生产者的消息数）\n- Kafka：kafka-consumer-groups 命令查看 Lag，或 Burrow 监控系统\n- RocketMQ：控制台查看 Consumer 的堆积数\n- 告警阈值：根据业务容忍度（如积压 > 10000 条或延迟 > 5 分钟告警）\n\n积压原因排查：\n1. 消费者处理能力不足：代码效率低（慢 SQL、阻塞调用）、资源限制（CPU/IO 满载）\n2. 消费者数量不够：分区数 < 消费者数（Kafka 中一个分区只能被一个消费者消费）\n3. 消费者卡住/死循环：消费线程卡在某条消息上不继续\n4. 生产暴增：促销/秒杀活动导致消息量远超日常\n\n积压后的快速处理：\n1. 增加消费者数量（水平扩展消费者实例）\n   - Kafka：增加消费者实例数 ≤ 分区数。如果分区数不够，需要增加分区\n   - RocketMQ：增加消费者实例数 ≤ 队列数\n2. 临时增加消费者处理能力：\n   - 将积压的消息转发到一个新的临时 Topic（有更多分区）\n   - 启动大量临时消费者消费该 Topic\n   - 消费完后再将结果重新写入原始 Topic\n3. 降级处理：\n   - 积压严重时，跳过非关键业务（如日志、统计）的消息处理\n   - 只保证核心业务的消息被及时处理\n4. 限流生产者：紧急情况下通过开关限制上游发送量\n\n积压后的恢复过程：\n- 积压恢复后消费者的 Lag 逐渐减小到正常水平\n- 注意：积压恢复时消费者可能处理大量历史消息，需要保证消费速度持续高于生产速度\n- 积压期间的消息也要处理（不能跳过，除非业务允许丢弃）\n\n扩展延伸：Kafka 的消费性能受限于分区数（分区是并行消费的最小单位）。RocketMQ 的队列数可以动态增加。消息积压和处理延迟是消息队列最重要的 SLA 指标。Pulsar 的订阅模型天然支持灵活的消费者扩展（无分区绑定限制）。",
+    "hints": [
+      "及时发现：Consumer Lag 监控 + 告警（积压 > 阈值触发）",
+      "快速积压处理：增加消费者（≤分区数）+ 转 Topic 扩容消费 + 降级非核心"
+    ],
+    "tags": [
+      "MQ",
+      "积压",
+      "Consumer Lag",
+      "消费"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "延迟消息与定时消息",
+    "content": "请介绍消息队列中的延迟消息（Delayed Message）和定时消息（Scheduled Message）机制。RocketMQ 和 RabbitMQ 如何实现延迟消息？Kafka 为什么原生不支持延迟消息？",
+    "answer": "答案：延迟消息在指定时间后才被消费者消费（如订单超时未支付自动取消）。\n\n延迟消息 vs 定时消息：\n- 延迟消息：消息发送后延迟 N 秒/毫秒后才可见（相对时间）\n- 定时消息：消息在指定的绝对时间可见（如 2024-01-01 00:00:00）\n- 两者本质相同——定时消息 = 延迟消息 + 计算当前时间到目标时间的延迟\n\nRocketMQ 延迟消息：\n- 原生支持 18 个固定延迟级别（1s/5s/10s/30s/1m/2m/3m/4m/5m/6m/7m/8m/9m/10m/20m/30m/1h/2h）\n- 实现原理：\n  1. 消息发送时设置延迟级别（message.setDelayTimeLevel(level)）\n  2. Broker 将消息放入特定的延迟队列（SCHEDULE_TOPIC_XXXX）\n  3. 定时任务扫描延迟队列，到期后将消息投递到目标 Topic\n- 自定义延迟时间：通过修改 Broker 配置或自定义延迟级别\n\nRabbitMQ 延迟消息：\n- 通过死信交换机（DLX, Dead Letter Exchange）实现\n- 设置消息的 TTL（x-message-ttl），消息过期后转发到死信交换机\n- 死信交换机将消息路由到消费者队列\n- 或者使用延迟消息插件（rabbitmq-delayed-message-exchange）\n\nKafka 为什么不原生支持延迟消息：\n- Kafka 的设计理念是\"日志\"——消息按顺序追加，消费者按序消费\n- 延迟消息违反顺序消费模型（先发送的消息可能后消费）\n- Kafka 中实现延迟消息需要外部系统配合（如 Redis 存延迟任务 + 定时器投递到 Kafka）\n- Kafka 的时间轮（Timing Wheel）用于内部延迟操作（如生产者的重试延迟），不暴露给用户\n\n扩展延伸：延迟消息用在实际业务——订单超时取消、定时提醒、优惠券过期通知。Redis 的延迟消息方案——ZSET（有序集合）以时间戳为 score，定时轮询到期的 key。时间轮算法（Netty/Kafka 内部）——高效的延迟任务调度结构，复杂度 O(1) 添加/删除。",
+    "hints": [
+      "RocketMQ 支持 18 个延迟级别（1s-2h），RabbitMQ 通过 DLX/TTL 或插件实现",
+      "Kafka 不原生支持延迟消息（违反顺序日志模型），需外部系统配合"
+    ],
+    "tags": [
+      "MQ",
+      "延迟消息",
+      "定时消息",
+      "RocketMQ"
+    ]
   }
 ]

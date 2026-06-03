@@ -985,5 +985,96 @@
       "体系结构",
       "并行计算"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HTTP 与 HTTPS",
+    "content": "请介绍 HTTP 与 HTTPS 的区别。HTTPS 的 TLS 握手过程是什么？为什么 HTTPS 在建立连接时比 HTTP 多几个 RTT？证书链验证如何工作？",
+    "answer": "答案：HTTPS = HTTP + TLS（传输层安全协议），加密传输保护数据机密性和完整性。\n\nHTTP 的问题：\n- 明文传输（可被窃听）\n- 不验证身份（可被中间人攻击，MITM）\n- 不验证完整性（可被篡改）\n\nTLS 1.3 握手（1-RTT 首次，0-RTT 恢复）：\n1. Client Hello：客户端发送支持的 TLS 版本、密码套件列表、随机数\n2. Server Hello：服务器选择 TLS 版本和密码套件、发送证书链、发送随机数\n3. 证书验证 + 密钥交换：\n   - 客户端验证证书链（CA 签名验证）\n   - 客户端生成 Pre-Master Secret，用服务器公钥加密后发送\n   - 双方通过 Pre-Master Secret 和随机数派生会话密钥\n4. 握手完成：双方发送 Finished 消息（包含之前所有握手消息的 HMAC），开始加密通信\n\n证书链验证：\n1. 服务器证书由中间 CA 签发（intermediate CA）\n2. 中间 CA 证书由根 CA（Root CA）签发\n3. 客户端内置根证书（信任锚，如 Mozilla/Apple/Microsoft 的根证书库）\n4. 验证过程：\n   - 检查证书是否过期、域名是否匹配\n   - 用上级 CA 的公钥验证下级证书的签名\n   - 一直验证到根证书\n   - 检查证书是否被吊销（CRL / OCSP）\n\nHTTPS 优化：\n- TLS 1.3 将握手从 2-RTT 减少到 1-RTT（首次）/ 0-RTT（恢复）\n- Session Resumption：复用之前协商的会话密钥（减少握手）\n- False Start：允许客户端在握手完成前就开始发送数据（TLS 1.3 默认）\n\n扩展延伸：自签名证书——没有 CA 签名（适用于内部测试，浏览器会警告）。mTLS（双向 TLS）——客户端也需要提供证书（微服务间认证）。ACME 协议（Let's Encrypt 使用）——自动获取和续期 TLS 证书。HSTS（HTTP Strict Transport Security）——强制浏览器使用 HTTPS。",
+    "hints": [
+      "TLS 1.3：Client Hello → Server Hello（含证书）→ 密钥交换 → 加密通信（1-RTT）",
+      "证书链 = 服务器证书 → 中间 CA → 根 CA（浏览器内置信任，验证签名链直到根）"
+    ],
+    "tags": [
+      "CS基础",
+      "HTTPS",
+      "TLS",
+      "证书"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "TCP 三次握手与四次挥手",
+    "content": "请介绍 TCP 的建立连接（三次握手）和断开连接（四次挥手）过程。为什么连接需要三次握手而不是两次？为什么断开需要四次？TIME_WAIT 状态的作用是什么？",
+    "answer": "答案：TCP 通过三次握手建立可靠连接，四次挥手安全断开。\n\n三次握手：\n1. SYN：客户端发送 SYN（seq=x），进入 SYN_SENT 状态\n2. SYN+ACK：服务器回复 SYN（seq=y）+ ACK（ack=x+1），进入 SYN_RCVD 状态\n3. ACK：客户端发送 ACK（seq=x+1, ack=y+1），进入 ESTABLISHED 状态，服务器收到后也进入 ESTABLISHED\n\n为什么三次而不是两次：\n- 防止失效的连接请求到达服务器\n- 假设客户端发送 SYN，网络延迟导致客户端超时重传 SYN，服务器收到重传的 SYN 并回复\n  如果只有两次握手，连接就建立了。但之前延迟的 SYN 到达服务器时，服务器会再建立一次连接\n- 三次握手确保双方都确认对方能发送和接收（全双工确认）\n\n四次挥手：\n1. FIN：主动关闭方发送 FIN（seq=u），进入 FIN_WAIT_1 状态\n2. ACK：被动关闭方回复 ACK（ack=u+1），进入 CLOSE_WAIT 状态。主动方收到后进入 FIN_WAIT_2\n3. FIN：被动关闭方发送 FIN（seq=v），进入 LAST_ACK 状态\n4. ACK：主动关闭方回复 ACK（ack=v+1），进入 TIME_WAIT 状态。被动方收到后进入 CLOSED\n\n为什么需要四次：\n- TCP 是全双工的，双方各自独立关闭自己的发送通道\n- 被动方收到 FIN 后可能还有数据要发送，不能立即关闭\n- 先回复 ACK 确认收到关闭请求，等数据发送完再发 FIN\n\nTIME_WAIT 状态：\n- 持续 2MSL（Maximum Segment Lifetime，默认 2 分钟，实际 Linux 通常 60 秒）\n- 作用：\n  1. 确保最后的 ACK 能到达被动关闭方（如果 ACK 丢失，被动方会重发 FIN）\n  2. 使旧连接的所有数据包在网络中消失，防止影响新连接\n- 大量 TIME_WAIT 的问题：消耗端口资源（高并发客户端侧）\n  解决：SO_REUSEADDR 选项允许重用 TIME_WAIT 状态的端口\n\n扩展延伸：SYN Flood 攻击——发送大量 SYN 但不完成第三次握手，耗尽服务器资源。解决方案：SYN Cookie（不分配连接资源，通过 cookie 验证合法性）。TCP Fast Open（TFO）——在 SYN 中携带数据（减少 1-RTT，类似 TLS 1.3 的 0-RTT）。",
+    "hints": [
+      "三次握手 = 1.SYN → 2.SYN+ACK → 3.ACK（防止失效 SYN 建立连接）",
+      "四次挥手 = 1.FIN → 2.ACK → 3.FIN → 4.ACK（全双工独立关闭）",
+      "TIME_WAIT（2MSL）= 确保最后的 ACK 到达 + 旧数据包消散"
+    ],
+    "tags": [
+      "CS基础",
+      "TCP",
+      "三次握手",
+      "四次挥手"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RESTful API 设计",
+    "content": "请介绍 RESTful API 的设计原则。资源的 URL 如何命名？HTTP 方法（GET/POST/PUT/DELETE/PATCH）的语义是什么？分页、过滤、排序的标准设计模式是怎样的？",
+    "answer": "答案：REST（Representational State Transfer）以资源为中心，通过 HTTP 方法操作资源。\n\n核心原则：\n1. 一切皆资源（不是动词，是名词）\n2. 每个资源有唯一标识（URL）\n3. 通过表述（Representation）操作资源（JSON/XML）\n4. 无状态通信（每次请求包含所有必要信息）\n5. 使用标准 HTTP 方法\n\nURL 设计（名词复数）：\n- GET /users ——获取用户列表\n- GET /users/123 ——获取单个用户\n- POST /users ——创建用户\n- PUT /users/123 ——全量更新用户（替换）\n- PATCH /users/123 ——部分更新用户\n- DELETE /users/123 ——删除用户\n- GET /users/123/orders ——获取用户的订单列表（子资源）\n\nHTTP 方法语义：\n- GET（安全+幂等）：获取资源，不改变服务器状态\n- POST（非安全+非幂等）：创建资源或提交数据\n- PUT（非安全+幂等）：完全替换资源（幂等——多次调用结果相同）\n- PATCH（非安全+非幂等）：部分修改资源\n- DELETE（非安全+幂等）：删除资源\n\n分页/过滤/排序：\n- 分页：GET /users?page=2&per_page=20 或 GET /users?offset=20&limit=20\n  返回包含 total、page、per_page、data 等字段\n- 过滤：GET /users?role=admin&status=active\n- 排序：GET /users?sort=-created_at,name（-表示降序）\n- 搜索：GET /users?q=keyword（模糊搜索）\n\n状态码：\n- 200 OK（成功）、201 Created（创建成功，返回 Location Header）\n- 204 No Content（删除成功）\n- 400 Bad Request（参数错误）、401 Unauthorized（未认证）\n- 403 Forbidden（无权限）、404 Not Found（资源不存在）\n- 409 Conflict（冲突，如唯一约束违反）\n- 422 Unprocessable Entity（校验错误）\n- 500 Internal Server Error（服务器错误）\n\n扩展延伸：HATEOAS（Hypermedia as the Engine of Application State）——REST 的成熟度最高级别，响应中包含相关操作的链接。OpenAPI / Swagger——RESTful API 的标准描述格式。gRPC vs REST——gRPC 使用 HTTP/2 + Protobuf，性能更高，适合内部微服务通信。",
+    "hints": [
+      "REST = 资源（名词复数 URL）+ 方法（GET/POST/PUT/DELETE/PATCH）+ 无状态",
+      "分页：?page=2&per_page=20，过滤：?role=admin，排序：?sort=-created_at"
+    ],
+    "tags": [
+      "CS基础",
+      "REST",
+      "API设计",
+      "HTTP"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "OAuth 2.0 与 JWT",
+    "content": "请介绍 OAuth 2.0 的授权码流程（Authorization Code Flow）。Access Token 和 Refresh Token 的作用分别是什么？JWT（JSON Web Token）的结构和工作原理是什么？",
+    "answer": "答案：OAuth 2.0 是授权框架，JWT 是一种 Token 格式。\n\nOAuth 2.0 授权码流程（最常用，有第三方参与的登录）：\n1. 用户访问客户端（如\"使用微信登录\"）\n2. 客户端将用户重定向到授权服务器（微信）的登录授权页面\n3. 用户登录并授权 → 授权服务器生成授权码（Authorization Code）\n4. 授权码通过回调 URL 发送给客户端（一次性的、短期的）\n5. 客户端用授权码 + 客户端凭证（client_id + client_secret）向授权服务器交换 Token\n6. 授权服务器返回 Access Token（+ 可选的 Refresh Token）\n7. 客户端用 Access Token 访问资源服务器\n\nAccess Token vs Refresh Token：\n- Access Token：访问受保护资源的凭证，短期有效（通常 15 分钟 - 1 小时）\n- Refresh Token：用于获取新的 Access Token（不需要用户重新登录），长期有效（通常 7-30 天）\n- 分离原因：Access Token 传输频繁（容易被截获），设置短有效期减少风险\n- Refresh Token 只在客户端和授权服务器之间传输（暴露面更小）\n\nJWT（JSON Web Token）结构——三部分以点分隔：\nheader.payload.signature\n- Header：算法类型（如 RS256）和 Token 类型（JWT）\n- Payload：声明（Claims），如用户 ID、角色、过期时间（exp）、签发时间（iat）\n- Signature：对 header.payload 的签名（用密钥或私钥签名）\n\nJWT 验证：接收方用相同的密钥/公钥计算签名并与 JWT 的签名比较，验证 Token 是否被篡改。\n\nJWT 的特点：\n- 无状态：服务端不需要存储 Token（自包含的，payload 中有用户信息）\n- 跨域友好：JSON 格式，适合分布式系统\n- 不可篡改（有签名验证）\n- 但 payload 不是加密的（只做 Base64 编码），不要放敏感信息\n\n扩展延伸：JWT 的续期策略——Access Token 过期时使用 Refresh Token 获取新的 Access Token。JWT 的黑名单问题——无状态的 JWT 无法主动使其失效（需要黑名单，但如果使用黑名单则失去了无状态优势）。PKCE（Proof Key for Code Exchange）——在移动端/SPA 中增强 OAuth 授权码流程的安全性。",
+    "hints": [
+      "OAuth 2.0 授权码流程 = 用户授权 → 授权码 → Access Token + Refresh Token",
+      "JWT = header(算法).payload(声明).signature(签名)，无状态自包含 Token"
+    ],
+    "tags": [
+      "CS基础",
+      "OAuth",
+      "JWT",
+      "认证"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "操作系统内存分段与分页",
+    "content": "请介绍操作系统内存管理中的分段（Segmentation）和分页（Paging）机制。分段和分页的区别是什么？段页式管理（如 x86）如何结合两者的优点？",
+    "answer": "答案：分段和分页是两种不同的内存管理方式，x86 使用段页式结合。\n\n分段（Segmentation）：\n- 程序按逻辑段划分：代码段（CS）、数据段（DS）、栈段（SS）、附加段（ES）\n- 每个段有基地址（Base）+ 界限（Limit）描述段的位置和大小\n- 逻辑地址 = 段选择子（Segment Selector）+ 段内偏移\n- 优点：符合程序的逻辑结构（代码与数据分离），段可以独立共享和保护\n- 缺点：外部碎片（段大小不同，分配释放导致内存空洞），段大小限制\n\n分页（Paging）：\n- 物理内存划分为固定大小的页框（Page Frame，如 4KB）\n- 虚拟地址 = 页号（Page Number）+ 页内偏移（Offset）\n- 页表将虚拟页号映射到物理页框号\n- 优点：无外部碎片（所有页大小相同），支持虚拟内存（页交换到磁盘）\n- 缺点：内部碎片（最后一页不满），页表占用内存\n\nx86 的段页式管理：\n1. CPU 先分段：逻辑地址 → 通过段描述符（GDT/LDT）→ 线性地址（Linear Address）\n2. 再分页：线性地址 → 通过页表 → 物理地址\n3. 实际 x86-64 的段机制弱化了（大部分段基址设为 0），平坦内存模型\n4. 分段在现代 OS 中的作用：\n   - 硬件线程本地存储（TLS）：通过 FS/GS 段寄存器指向线程本地数据\n   - 权限检查：段描述符包含 DPL（描述符权限级别，ring 0-3）\n\n页表优化：\n- 多级页表：x86-64 使用 4 级页表（PML4 → PDPT → PD → PT），节省页表内存\n- TLB（Translation Lookaside Buffer）：页表的硬件缓存（最近使用的页表条目）\n  TLB miss 需要访问内存中的多级页表，开销大\n- 大页（Huge Pages）：2MB/1GB 的页减少页表条目数和 TLB miss\n\n扩展延伸：虚拟内存（Virtual Memory）——每个进程有独立的虚拟地址空间，通过页表映射到物理内存。交换空间（Swap Space）——将不常用的页换出到磁盘。MMU（内存管理单元）——CPU 中的硬件单元，负责虚拟地址到物理地址的翻译。",
+    "hints": [
+      "分段（逻辑单元分离+保护，外部碎片）vs 分页（固定大小无外部碎片+虚拟内存支持）",
+      "x86 段页式 = 分段（逻辑→线性）+ 分页（线性→物理），多级页表减少页表内存"
+    ],
+    "tags": [
+      "CS基础",
+      "内存管理",
+      "分段",
+      "分页"
+    ]
   }
 ]

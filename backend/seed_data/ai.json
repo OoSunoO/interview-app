@@ -952,5 +952,95 @@
       "隐私",
       "分布式"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Mamba 状态空间模型",
+    "content": "请介绍 Mamba 状态空间模型（State Space Model）的原理。Mamba 如何解决 Transformer 的自注意力 O(n²) 复杂度问题？它的选择机制（Selective Mechanism）是什么？",
+    "answer": "答案：Mamba（2023）是一种基于状态空间模型的序列建模架构，线性复杂度 O(n) 替代 Transformer 的 O(n²)。\n\n状态空间模型（SSM）基础：\n- 将序列建模为连续系统的离散化版本：h'(t) = Ah(t) + Bx(t), y(t) = Ch(t) + Dx(t)\n- S4（Structured State Space）使用 HiPPO 矩阵初始化 A，有效建模长程依赖\n- SSM 通过卷积模式并行训练（全局卷积核），通过循环模式线性推理\n- 推理时与 RNN 类似（状态递推，常数时间 O(1) 每个 token）\n\nMamba 的核心创新——选择机制：\n- 传统 SSM 的参数（A, B, C）是输入无关的（固定的）\n- Mamba 让 B、C 和步长 Δ 成为输入的函数（input-dependent）\n- 这使模型可以选择性关注或忽略某些输入——类似于 Attention 的 Query-Key 交互\n- 例如在 Selective Copy 任务中：模型选择性复制某些 token 而忽略分隔符\n- 输入相关的参数破坏了卷积模式的并行性，Mamba 用硬件感知的并行扫描（Parallel Scan）解决\n\n硬件感知算法：\n- 使用 CUDA 的并行扫描（Hiller's Scan）计算 SSM 递推\n- 将计算分块到 SRAM 中（类似 Flash Attention 的分块思路）\n- 使用内核融合减少 HBM 读写\n\n与 Transformer 对比：\n- Mamba：O(n) 训练，O(1) 推理（per token），更适合长序列\n- Transformer：O(n²) 训练，O(n) 推理（per token）（因 KV Cache 增长）\n- Mamba 在自然语言建模中匹配或略优于相同规模的 Transformer\n\n扩展延伸：Mamba-2（2024）简化了 SSM 结构（SSD = State Space Dual），训练速度比 Mamba-1 快 2-8×。Jamba（AI21 Labs）混合 Mamba 和 Transformer 层。Vision Mamba 将 Mamba 应用于图像。Mamba 的推理优势在长上下文场景（如 100K+ tokens）中最为明显。",
+    "hints": [
+      "Mamba = 状态空间模型 + 输入相关的选择机制 + 硬件感知并行扫描",
+      "O(n) 训练复杂度，O(1) per token 推理复杂度"
+    ],
+    "tags": [
+      "AI",
+      "Mamba",
+      "SSM",
+      "状态空间模型"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "DPO 偏好优化",
+    "content": "请介绍直接偏好优化（Direct Preference Optimization, DPO）。DPO 与 RLHF（基于 PPO）的核心区别是什么？DPO 如何绕过显式的奖励模型？",
+    "answer": "答案：DPO（2023）直接从偏好数据中优化策略，无需训练奖励模型和强化学习循环。\n\nRLHF（PPO 方法）：\n1. SFT：监督微调基础模型\n2. RM：训练奖励模型（从人类偏好数据中学习打分）\n3. RL（PPO）：用奖励模型通过强化学习优化策略\n4. 问题：需要维持参考模型和策略模型两个副本、需要训练奖励模型、PPO 训练不稳定\n\nDPO 的核心公式：\n- DPO 推导出奖励函数 r_θ 可以用策略 π_θ 和参考策略 π_ref 的似然比表示\n- 奖励 = β × log(π_θ(y|x) / π_ref(y|x))\n- 偏好损失直接优化策略：L = -E[log σ(β × log(π_θ(y_w|x) / π_ref(y_w|x)) - β × log(π_θ(y_l|x) / π_ref(y_l|x)))]\n  - y_w = 偏好的回答（chosen），y_l = 不偏好的回答（rejected）\n  - σ = sigmoid 函数\n  - β = 控制 KL 散度约束的系数\n\nDPO 不需要奖励模型的原因：\n- Bradley-Terry 偏好模型将偏好概率表示为两种奖励差异的 sigmoid\n- 将奖励函数 r_θ(x,y) 代入，可以用策略的形式表达（闭式解）\n- 直接优化策略的似然比，等价于隐式优化奖励\n\nDPO vs PPO：\n- DPO 更简单：不需要奖励模型、不需要价值函数、不需要 PPO 的 4 个模型副本\n- DPO 训练更稳定：没有 PPO 的 clip 超参数调优\n- DPO 直接优化偏好损失，PPO 间接优化（通过奖励模型）\n- DPO 的效果通常与 PPO 相当，在某些任务上更好\n\n扩展延伸：DPO 的变体有 IPO（Identity Preference Optimization）、KTO（Kahneman-Tversky Optimization，不需要成对偏好数据）、ORPO（在 SFT 阶段直接做偏好优化）。DPO 在 LLM 对齐中已成为 PPO 的主流替代方案。SimPO（Simple Preference Optimization）去掉了 DPO 中的参考模型。",
+    "hints": [
+      "DPO 用策略的似然比直接表示奖励，绕过奖励模型和 PPO",
+      "DPO = Bradley-Terry + 策略似然比的闭式解，无需价值函数"
+    ],
+    "tags": [
+      "AI",
+      "DPO",
+      "RLHF",
+      "偏好优化"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "混合专家负载均衡",
+    "content": "请介绍混合专家模型（MoE）中负载均衡（Load Balancing）的挑战和解决方案。辅助损失（Auxiliary Loss）如何工作？Expert Balancing 和 Router z-loss 是什么？",
+    "answer": "答案：MoE 的负载均衡目标是使每个 Expert 处理的 token 数量大致相等。\n\n负载不均衡的问题：\n1. 部分 Expert 过载，部分 Expert 空闲（计算资源浪费）\n2. 退化的 Expert：某些 Expert 学习的内容很少，模型容量浪费\n3. 梯度更新不均匀——过载的 Expert 更新频繁，空闲的 Expert 几乎不更新\n\n辅助损失（Auxiliary Loss）：\n- 在训练时添加额外的损失项，鼓励 Router 均匀分配 token\n- 经典的 Top-2 负载均衡损失（Switch Transformer）：\n  L_aux = α × N × Σ(f_i × P_i)\n  - N = Expert 数量\n  - f_i = 分配给 Expert i 的 token 比例\n  - P_i = Router 分配给 Expert i 的概率（所有 token 的平均值）\n  - α = 辅助损失系数（通常 0.01）\n  - 当 f_i = 1/N 且 P_i = 1/N 时，L_aux 最小\n\nExpert Balancing（GShard / Switch Transformer）：\n- 每个 Expert 有一个容量上限（capacity = tokens_per_batch / num_experts × capacity_factor）\n- 容量因子（capacity_factor）：通常 1.2-1.5。超过容量的 token 被丢弃（残差连接绕过 Expert）\n- 容量因子越小→计算效率越高→负载均衡要求更严格\n\nRouter z-loss（DeepSeek MoE / PaLM）：\n- 在 Router 的 logits 上添加 L2 惩罚，防止 Router logits 值过大\n- L_z = 1/B × Σ(ln(Σ exp(x_i)))²\n- 防止 Router 输出极端值，使路由决策更平滑\n- DeepSeek-V2 还使用了 Expert 级别的偏置项（bias）来动态调整路由\n\n扩展延伸：DeepSeek-V2 使用细粒度 Expert（fine-grained experts）和共享 Expert（shared expert），每个 token 激活少量 fine-grained Expert + 一个共享 Expert。Mixtral 8×7B 使用 Top-2 路由，千亿 MoE 模型中负载均衡是最关键的训练挑战之一。负载均衡也可以在主路由（auxiliary loss）之外使用辅助的 Expert 丢弃（expert dropping）策略。",
+    "hints": [
+      "辅助损失鼓励 Router 均匀分配 token，容量因子限制 Expert 最大负载",
+      "Router z-loss 防止路由 logits 极端化，使路由决策更平滑"
+    ],
+    "tags": [
+      "AI",
+      "MoE",
+      "负载均衡",
+      "Router"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LLM 数据配比策略",
+    "content": "请介绍大语言模型预训练数据的配比策略（Data Mixing/Data Recipe）。为什么需要混合多种来源的数据？数据配比对模型性能的具体影响是什么？DoReMi 和 D4 如何自动优化数据配比？",
+    "answer": "答案：LLM 预训练数据配比决定不同来源（网页、书籍、代码、学术论文等）数据在训练中的比例。\n\n数据配比的重要性：\n- 网络文本（CommonCrawl）最大但噪声多\n- 书籍和学术论文质量高但数量有限\n- 代码数据提升推理能力但过度依赖代码会损害语言理解\n- 不合理的配比导致：在某些领域欠拟合（更多数据配比不足的领域）或重复学习（数据配比过高）\n\n经典配比方案：\n- LLaMA（Meta）：以网络数据为主 + 书籍 + 代码\n  - 67% CommonCrawl（经过过滤和去重）\n  - 15% C4（经过筛选的网络文本）\n  - 4.5% GitHub 代码\n  - 4.5% Wikipedia\n  - 4.5% Books（Gutenberg 和 Books3）\n  - 4.5% ArXiv 论文\n- Chinchilla（DeepMind）的启示：模型大小和训练 token 数应等比例缩放（20 tokens per parameter）\n- 数据配比比模型架构更能影响下游任务性能\n\nDoReMi（Domain Reweighting with Minimization, 2023）：\n- 使用小型代理模型（proxy model）进行领域加权优化\n- 训练一个参考模型（用均匀配比）→ 训练一个加权模型（最小化各领域的 loss 加权求和）→ 用优化后的权重训练大模型\n- 关键发现：优化代理模型的权重可以转移到更大的模型\n\nD4（Data Distribution for Domain Diversity, 2024）：\n- 在 DoReMi 基础上改进，针对每组数据打分\n- 使用群体组（group）级别的加权，而非领域级别\n- 更细粒度的数据质量控制\n\n扩展延伸：数据配比是 LLM 训练的\"暗知识\"——各公司通常不公开具体的配比细节。数据重复（Data Repetition）的影响——重复超过一定次数有损性能（必须用高质量数据重新采样）。去重（Deduplication）是比数据配比更基础的步骤。FineWeb（Hugging Face）通过精确的去重筛选构建高质量预训练数据。",
+    "hints": [
+      "数据配比（网页/书籍/代码/论文的比例）显著影响模型下游能力",
+      "DoReMi 用代理模型自动优化各领域的数据权重"
+    ],
+    "tags": [
+      "AI",
+      "数据配比",
+      "预训练",
+      "DoReMi"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "KV Cache 共享策略",
+    "content": "请介绍 LLM 推理中的 KV Cache 共享策略。Multi-Query Attention（MQA）和 Grouped-Query Attention（GQA）如何通过共享 KV 头来减少 Cache 大小？KV 头共享的精度损失有多大？",
+    "answer": "答案：MQA 和 GQA 通过让多个 Query 头共享 Key 和 Value 头，大幅减少 KV Cache。\n\n标准 Multi-Head Attention（MHA）：\n- n_heads 个 Query 头，n_heads 个 Key 头，n_heads 个 Value 头\n- KV Cache 大小 = n_heads × d_head × 2 × precision × seq_len\n- 使用 n_heads 个独立的 KV 对，每个 query 头有自己的 KV\n\nMulti-Query Attention（MQA）：\n- n_heads 个 Query 头，1 个 Key 头，1 个 Value 头\n- 所有 Query 头共享同一个 Key 和 Value\n- KV Cache 缩小 n_heads 倍（例如 32× 缩减）\n- 论文：Fast Transformer Decoding (2019)\n\nGrouped-Query Attention（GQA）：\n- n_heads 个 Query 头分为 g 组，每组共享一个 KV 头\n- KV 头数 = g（通常 2-8），Cache 缩小 n_heads/g 倍\n- MHA（g=n_heads）和 MQA（g=1）是 GQA 的极端情况\n- GQA 是精度和效率的权衡\n\nKV 头共享的精度影响：\n- MQA：高压缩但精度有所损失。大多数情况下可接受，少数任务有 1-2% 的下降\n- GQA（g=8）：精度接近 MHA（差异 < 0.5%），Cache 减少 4×（相对于 32 头）\n- GQA（g=4）：精度差异极小，Cache 减少 8×\n- LLaMA 2 70B 使用 GQA（g=8），LLaMA 3 使用 GQA（g=8）\n- 实际效果：在长上下文任务中，GQA 的精度损失通常可以忽略\n\n为什么共享 KV 头是有效的：\n- 注意力头之间存在冗余——不同 Query 头关注的信息有重叠\n- KV 头共享限制了模型的容量但同时减少了内存带宽需求\n- 训练时可以从 MHA 开始，训练完成后通过投影合并（upcycling）转换为 GQA\n\n扩展延伸：MLA（Multi-head Latent Attention，DeepSeek-V2）将 KV 投影到低维空间再恢复，是比 GQA 更高效的压缩策略（进一步减少 2-4×）。MLA 的设计思想是低秩近似 KV 矩阵。KV Cache 压缩与量化（如 INT8/INT4 KV Cache）可以叠加在 MQA/GQA 之上进一步压缩。",
+    "hints": [
+      "MQA = 所有 Query 头共享 1 个 KV 头（Cache 减 n_heads 倍）",
+      "GQA = 分组共享 KV 头（g=8 时 Cache 减 4×，精度接近 MHA）"
+    ],
+    "tags": [
+      "AI",
+      "KV Cache",
+      "MQA",
+      "GQA"
+    ]
   }
 ]

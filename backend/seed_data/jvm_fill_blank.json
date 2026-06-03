@@ -963,5 +963,75 @@
       "元空间",
       "Metaspace"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "堆的分代布局",
+    "content": "HotSpot JVM 的堆内存按照_____观点分为新生代、老年代和元空间。新生代进一步划分为 Eden 区和两个_____区（S0 和 S1）。对象首先分配在_____区，经过多次 GC 后仍存活的对象被晋升到_____代。",
+    "answer": "{\"correct\":[\"分代\",\"Survivor\",\"Eden\",\"老\"],\"distractors\":[[\"分区\"],[\"From/To\"],[\"Young\"],[\"新生\"]]}",
+    "tags": [
+      "JVM",
+      "堆内存",
+      "GC",
+      "分代"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "GC Root 类型",
+    "content": "在 JVM 的 GC Roots 分析中，以下几种是常见的 GC Root：活动线程的栈帧中的_____引用、静态变量引用的对象、JNI 全局引用的对象、_____中的引用类型等。GC Root 是 GC 的可达性分析的_____。",
+    "answer": "{\"correct\":[\"局部变量\",\"运行时常量池\",\"起点\"],\"distractors\":[[\"全局\"],[\"堆\"],[\"终点\"]]}",
+    "tags": [
+      "JVM",
+      "GC Root",
+      "可达性",
+      "JNI"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "G1 Region 类型",
+    "content": "G1 GC 将堆划分为大小相等的 Region，每个 Region 可以扮演三种角色：_____（E）、Survivor（S）或 Old（O）。这个设计使 G1 不需要在物理上连续的新生代和老年代空间。G1 的并发标记阶段标记_____对象。Mixed GC 同时在新生代和_____代回收对象。",
+    "answer": "{\"correct\":[\"Eden\",\"存活\",\"老\"],\"distractors\":[[\"Young\"],[\"死亡\"],[\"新生\"]]}",
+    "tags": [
+      "JVM",
+      "G1",
+      "Region",
+      "GC"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "对象晋升阈值",
+    "content": "对象从新生代晋升到老年代的年龄阈值由参数_____控制，默认值为 _____。JVM 会动态计算 Threshold（热点对象的提前晋升），通过 -XX:+_____ 开启。如果 Survivor 区空间不足，对象将被_____晋升到老年代。",
+    "answer": "{\"correct\":[\"-XX:MaxTenuringThreshold\",\"15\",\"UseAdaptiveSizePolicy\",\"提前\"],\"distractors\":[[\"MaxTenuringThreshold\"],[\"8\"],[\"UseParallelGC\"],[\"直接\"]]}",
+    "tags": [
+      "JVM",
+      "晋升",
+      "Survivor",
+      "参数"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Direct Memory 特点",
+    "content": "DirectBuffer 使用_____ API 分配堆外内存。它通过 _____ 机制避免内核态到用户态的数据拷贝。与堆内缓冲区相比，DirectBuffer 的分配和释放开销更_____。它的容量通过 -XX:_____ 参数控制（默认为 0，即与堆上限相同）。",
+    "answer": "{\"correct\":[\"unsafe.allocateMemory\",\"零拷贝\",\"大\",\"MaxDirectMemorySize\"],\"distractors\":[[\"malloc\"],[\"DMA\"],[\"小\"],[\"DirectMemorySize\"]]}",
+    "tags": [
+      "JVM",
+      "DirectBuffer",
+      "堆外内存",
+      "NIO"
+    ]
   }
 ]

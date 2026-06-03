@@ -1003,5 +1003,95 @@
       "Static Import",
       "语法糖"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "组合优先于继承",
+    "content": "请解释\"组合优先于继承\"（Favor Composition over Inheritance）的设计原则。在什么情况下继承仍然是最佳选择？组合比继承的优势在哪里？",
+    "answer": "答案：组合优先于继承是指尽量通过对象组合（在一个类中引用其他类的对象）来实现代码复用，而不是通过继承。\n\n组合的优势：\n1. 更低耦合：组合的类之间通过接口交互，不继承实现的细节。子类耦合父类实现的每个细节。\n2. 更好的封装：继承打破封装，子类可以访问父类的受保护成员。组合通过公共接口访问。\n3. 更灵活：运行时可以替换组件（策略模式），继承在编译时已经固定。\n4. 避免脆弱的基类问题：父类实现变化会破坏所有子类（Fragile Base Class Problem）\n5. 不涉及复杂的层次结构：多层继承容易导致菱形问题（Diamond Problem）\n\n继承仍然是最佳选择的场景：\n1. 子类是父类的一种特化，符合 is-a 关系（如 Dog extends Animal）\n2. 子类不需要改变父类的行为，只需要扩展行为\n3. 父类的设计就是为了被继承（抽象类或设计好的模板方法）\n4. 需要利用多态（Polymorphism）——用统一接口处理不同子类\n\n设计的经验法则：\n- Has-a 关系使用组合，Is-a 关系使用继承\n- 优先使用接口（Interface）定义协议，组合实现具体行为\n- 设计抽象类时，考虑是否真的需要继承层次结构\n\n扩展延伸：Go 语言通过嵌入（Embedding）提供了另一种思路——类似继承的语法但本质是组合。Java 的 @Override 注解帮助检测继承错误（父类方法签名改变时编译报错）。Favor Composition over Inheritance 是 Design Patterns（GoF）中反复出现的核心原则。",
+    "hints": [
+      "组合（has-a）低耦合灵活，继承（is-a）强耦合但支持多态",
+      "脆弱的基类问题：父类变化破坏所有子类"
+    ],
+    "tags": [
+      "Java",
+      "OOP",
+      "组合",
+      "继承"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "接口与抽象类的选型",
+    "content": "在 Java 中，接口（Interface）和抽象类（Abstract Class）的使用场景如何选择？JDK 8+ 中接口增加了默认方法（default method）后，两者的区别发生了什么变化？",
+    "answer": "答案：接口和抽象类都是抽象类型，但有不同的设计意图和适用场景。\n\nJDK 8+ 之前的核心区别：\n1. 接口：只能声明抽象方法（不能有实现），字段只能是 public static final\n2. 抽象类：可以有具体方法、字段、构造函数\n\nJDK 8 之后的变化：\n1. 接口增加了 default method（默认方法）和 static method\n2. 接口也可以写方法实现，一定程度上模糊了接口和抽象类的界限\n\n接口 vs 抽象类的选择标准：\n\n使用接口的场景：\n- 定义契约（Contract）：\"你的对象能做到什么\"（行为的抽象）\n- 不相关的类之间共享行为：如 Comparable、Runnable\n- 多重类型继承：一个类可实现多个接口\n- 需要被多个不同的抽象层级实现\n\n使用抽象类的场景：\n- 相关类之间共享状态和实现：\"你的对象是什么\"（状态的抽象）\n- 提供部分实现 + 模板方法模式\n- 有受保护成员需要被子类访问\n- 需要非 public static final 字段\n\n本质上：接口表达能力（ability），抽象类表达身份（identity）。\n\n经验法则：\n- 优先使用接口定义类型\n- 优先使用接口定义的默认方法提供辅助实现\n- 只在需要共享状态或模板方法时使用抽象类\n- SimpleDateFormat 是\"抽象类比接口更合适\"的反面例子——DateFormat 是抽象类\n\n扩展延伸：Java 的 函数式接口（Functional Interface，只有一个抽象方法的接口）是 Lambda 表达式的基础。@FunctionalInterface 注解确保接口只有一个抽象方法。Java 8 引入的默认方法的动机是 Stream API 的向后兼容性（让 Collections API 新增 default 方法而不破坏已有实现）。",
+    "hints": [
+      "接口 = 能力契约（多继承），抽象类 = 身份抽象（状态共享+模板方法）",
+      "默认方法模糊了界限但仍保留核心区别：字段、构造函数、受保护成员"
+    ],
+    "tags": [
+      "Java",
+      "接口",
+      "抽象类",
+      "OOP"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "注解处理器",
+    "content": "请介绍 Java 注解处理器（Annotation Processor）的原理和使用场景。它在编译时的处理流程是什么？Lombok 和 MapStruct 是如何利用注解处理器实现代码生成的？",
+    "answer": "答案：注解处理器在编译时扫描和处理注解，自动生成代码。\n\n处理流程：\n1. 编译开始，javac 调用注解处理器（通过 SPI 注册，类路径下 META-INF/services/javax.annotation.processing.Processor）\n2. 处理器的 process() 方法被调用，传入 RoundEnvironment（包含标注了特定注解的元素）\n3. 处理器分析被注解的元素（类、方法、字段），生成 Java 源文件或字节码\n4. 如果生成了新文件，启动新一轮处理（直到没有新文件生成）\n5. 编译新生成的源文件，最终一起编译为 .class\n\n核心 API：\n- AbstractProcessor：所有处理器的基类，实现 process() 方法\n- RoundEnvironment：当前轮次的注解环境，获取被注解的元素\n- Filer：创建新文件（源文件、类文件、资源文件）的工具\n- Messager：输出编译日志（注意、警告、错误）\n- Elements/TypeMirror：类型和元素的反射 API\n\nLombok 的原理：\n- 利用注解处理器的 API，在编译时修改 AST（抽象语法树）\n- @Getter/@Setter：在 AST 中插入 getter/setter 方法\n- @Builder：生成 Builder 设计模式的辅助类\n- 注：Lombok 使用的不是标准 Filer API（生成新文件），而是直接操作编译器的内部 AST（利用非标准 API）\n\nMapStruct 的原理：\n- 在编译时自动生成 Bean 映射代码（类似于 ModelMapper，但零运行时反射）\n- 读取目标接口的方法签名，为每个方法生成映射实现类\n- 生成的代码是普通的 Java 类，没有运行时依赖\n\n扩展延伸：Google Auto 提供 @AutoService、@AutoValue 等注解。Error Prone 使用注解处理器做静态分析。注解处理器不会增加运行时开销（编译时已完成代码生成）。KAPT（Kotlin Annotation Processing Tool）支持在 Kotlin 中使用 Java 注解处理器。",
+    "hints": [
+      "注解处理器在编译时通过 SPI 发现，每轮生成新文件触发下一轮",
+      "Lombok 操作 AST（非标准），MapStruct 生成映射实现文件（标准 Filer）"
+    ],
+    "tags": [
+      "Java",
+      "注解处理器",
+      "Lombok",
+      "代码生成"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务加载器 SPI",
+    "content": "请介绍 Java 的 ServiceLoader 和服务加载机制（SPI）。SPI 和 API 的区别是什么？在 Spring Boot 自动配置和 JDBC 驱动加载中是如何使用 SPI 的？",
+    "answer": "答案：SPI（Service Provider Interface）是 Java 内置的插件机制，允许在运行时发现和加载服务提供者。\n\nSPI vs API：\n- API（Application Programming Interface）：由提供者定义接口，调用者使用\n- SPI（Service Provider Interface）：由框架定义接口，提供者实现。框架负责发现和加载所有实现\n- 典型例子：JDBC API 是 API（大家调用 java.sql.Connection），JDBC Driver 是 SPI（数据库厂商实现 java.sql.Driver 并通过 META-INF/services 注册）\n\nServiceLoader 机制：\n1. 服务提供者在 JAR 的 META-INF/services/ 目录下创建文件，文件名=服务接口全限定名\n2. 文件内容=实现类的全限定名（每行一个，支持多实现）\n3. 运行时 ServiceLoader.load(ServiceInterface.class) 读取该文件并加载实现类\n4. 实现类通过无参构造函数实例化\n\nJDBC 驱动加载：\n- 传统方法（JDK 6 之前）：Class.forName(\"com.mysql.jdbc.Driver\")——手动注册\n- SPI 方法（JDK 6+）：DriverManager 在初始化时通过 ServiceLoader 加载所有 META-INF/services/java.sql.Driver 中注册的驱动\n- 各数据库厂商标明实现类：mysql-connector-java.jar 中包含 META-INF/services/java.sql.Driver→com.mysql.cj.jdbc.Driver\n\nSpring Boot 自动配置：\n- 使用 spring.factories 或 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports 注册自动配置类\n- Spring Boot 启动时用 SpringFactoriesLoader（类似于 ServiceLoader 但更灵活）加载注册的自动配置\n- AutoConfiguration.imports 文件按条件（@ConditionalOnClass 等）决定哪些自动配置生效\n\n扩展延伸：Java 9+ 模块化系统中，SPI 通过 provides...with 语句声明（module-info.java）。Java 9 的 ServiceLoader 支持模块路径的跨模块加载。自定义 ServiceLoader 需要考虑线程上下文类加载器（Thread Context ClassLoader），在框架环境中尤为重要。",
+    "hints": [
+      "SPI = 框架定义接口 + 提供者实现 + META-INF/services 注册",
+      "JDBC 驱动通过 SPI 自动注册，Spring Boot 的 spring.factories 是 SPI 的扩展"
+    ],
+    "tags": [
+      "Java",
+      "SPI",
+      "ServiceLoader",
+      "JDBC"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "并发修改异常",
+    "content": "请解释 Java 的 ConcurrentModificationException（并发修改异常）的触发条件和解决方法。在 for-each 循环中删除集合元素为什么可能抛出该异常？",
+    "answer": "答案：ConcurrentModificationException 发生在遍历集合时，集合的结构被并发修改（增删元素）。\n\n触发原因：\n1. 单线程：在 for-each 循环（使用 Iterator）中直接调用集合的 remove() 方法\n2. 多线程：一个线程遍历集合的同时，另一线程修改集合\n\n问题本质：\n- for-each 循环本质上是 Iterator 的语法糖\n- Iterator 持有 modCount 的副本（期望修改次数）\n- 每次调用 next() 时检查 modCount 是否等于 expectedModCount\n- 集合的 remove() 方法会修改 modCount 但 Iterator 不知道\n- 检测到不一致就抛出 ConcurrentModificationException（fail-fast 行为）\n\n代码示例（触发异常）：\nList<String> list = new ArrayList<>(Arrays.asList(\"a\", \"b\", \"c\"));\nfor (String s : list) {\n    if (s.equals(\"b\")) list.remove(s);  // 抛 ConcurrentModificationException\n}\n\n解决方法：\n1. 使用 Iterator 的 remove()：iterator.remove()（会同步更新 expectedModCount）\n2. 使用 Collection.removeIf()：list.removeIf(s -> s.equals(\"b\"))（内部使用 Iterator 的 remove()）\n3. 收集到新集合后再批量删除：List<String> toRemove = ...; list.removeAll(toRemove);\n4. 使用 CopyOnWriteArrayList（多线程场景）：迭代器遍历的是快照，修改的是新副本\n5. 使用 Stream filter：list.stream().filter(s -> !s.equals(\"b\")).collect(toList())\n\n扩展延伸：ConcurrentHashMap、CopyOnWriteArrayList 等并发集合不会抛 ConcurrentModificationException（使用弱一致性迭代器——返回的数据可能是过时的但不会崩溃）。fail-fast 机制是一种缺陷检测机制，不是锁。Vector 和 Collections.synchronizedList 虽然线程安全但也会在 for-each 时抛该异常（需要手动加锁遍历）。",
+    "hints": [
+      "for-each 循环中调用集合的 remove() 会触发 modCount 不一致",
+      "Iterator.remove()、removeIf()、CopyOnWriteArrayList 是常用解决方案"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "异常"
+    ]
   }
 ]

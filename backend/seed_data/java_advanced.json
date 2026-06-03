@@ -1010,5 +1010,95 @@
       "Panama",
       "外部内存"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 编译优化技术",
+    "content": "请介绍 HotSpot JIT 编译器的几种重要优化技术。逃逸分析（Escape Analysis）如何实现栈上分配和锁消除？方法内联（Inlining）的触发条件是什么？",
+    "answer": "答案：JIT（Just-In-Time）编译器将热点代码编译为机器码，并在编译过程中应用多种优化。\n\n逃逸分析（Escape Analysis）：\n- 分析对象的作用域是否逃逸出方法或线程\n- 不逃逸的优化：栈上分配（Stack Allocation）——对象直接在栈帧中分配，无需 GC\n- 不逃逸的优化：锁消除（Lock Elision）——去掉不必要的同步锁\n- 不逃逸的优化：标量替换（Scalar Replacement）——将对象拆散为多个局部变量\n- -XX:+DoEscapeAnalysis 开启（JDK 8+ 默认）\n\n方法内联（Inlining）：\n- 将调用方法的字节码直接嵌入到当前方法的编译代码中\n- 减少方法调用开销（栈帧创建、参数传递）\n- 触发条件：方法足够小（-XX:MaxInlineSize=35 字节）、热点代码（调用计数超过阈值）、final 方法更易内联\n- -XX:CompileThreshold=10000（混合模式下方法调用计数阈值）\n- 内联后的代码可以做更多优化（因为去除了调用边界）\n\n其他优化技术：\n1. 循环优化：循环展开（Loop Unrolling）、循环剥离（Loop Peeling）\n2. 死代码消除（Dead Code Elimination）\n3. 常量折叠与传播（Constant Folding & Propagation）\n4. 公共子表达式消除（Common Subexpression Elimination）\n\n扩展延伸：C1（Client）编译器做轻量快速编译，C2（Server）编译器做深度优化编译。分层编译（Tiered Compilation）结合两者优势——方法先被 C1 快速编译，热点达到阈值后被 C2 重新深度编译。Graal JIT 是新一代 JIT 编译器，支持更激进的优化（如部分逃逸分析）。",
+    "hints": [
+      "逃逸分析→栈上分配、锁消除、标量替换",
+      "方法内联→MaxInlineSize=35，CompileThreshold=10000"
+    ],
+    "tags": [
+      "Java",
+      "JIT",
+      "逃逸分析",
+      "方法内联"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "虚拟线程原理与限制",
+    "content": "请深入解释 JDK 21 虚拟线程（Virtual Threads，Project Loom）的实现原理。虚拟线程如何实现轻量级调度？它在哪些场景下不能提升性能？",
+    "answer": "答案：虚拟线程是 JDK 21 正式发布的轻量级用户态线程，由 JVM 调度而非 OS。\n\n实现原理：\n1. 虚拟线程由 JVM 的 Carrier Thread（载体线程，普通的平台线程）调度执行\n2. 当虚拟线程执行阻塞操作（如 I/O、锁、Thread.sleep）时，会自动从 Carrier Thread 上 unmount（卸载），Carrier Thread 转而执行其他虚拟线程\n3. 阻塞操作完成后，虚拟线程重新 mount 到 Carrier Thread 继续执行\n4. 这个 unmount/mount 操作称为 Continuation（协程挂起恢复），是虚拟线程的核心机制\n\n调度模型：M:N 调度——M 个虚拟线程映射到 N 个 Carrier Thread（通常 N = CPU 核心数）。\n\n适用场景：\n- 大量并发 I/O 操作（Web 服务器、数据库客户端、微服务间调用）\n- 请求-响应模型（每个请求一个虚拟线程）\n\n不能提升性能的场景：\n1. CPU 密集型计算：虚拟线程不能并行利用 CPU（并行需要平台线程，虚拟线程在载体线程上串行执行）\n2. synchronized 块中使用：虚拟线程在 synchronized 块中执行阻塞操作时不能 unmount（固定到载体线程），会阻塞整个载体线程\n3. 使用原生方法（JNI）：执行 native 代码时会固定到载体线程\n4. 存在锁竞争的热点代码：当多个虚拟线程竞争同一把锁时，载体线程也会被阻塞\n\n扩展延伸：JDK 21 的虚拟线程是预览特性，JDK 21 正式转正。使用 ReentrantLock 替代 synchronized（synchronized 会固定虚拟线程）。虚拟线程的协程机制基于 Continuation，类似 Go 的 goroutine 和 Kotlin 的协程。虚拟线程的栈大小初始很小（~10KB）并按需扩展，支持千万级并发线程。",
+    "hints": [
+      "虚拟线程在阻塞时自动从 Carrier Thread 卸载（unmount）",
+      "synchronized 和 CPU 密集型任务会固定虚拟线程，无法发挥优势"
+    ],
+    "tags": [
+      "Java",
+      "虚拟线程",
+      "Project Loom",
+      "协程"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Foreign Function & Memory API",
+    "content": "请介绍 JDK 22 Foreign Function & Memory API（Project Panama）的原理和用法。它比 JNI 的优势在哪里？如何安全地操作堆外内存？",
+    "answer": "答案：FFM API（Foreign Function & Memory API）替代 JNI，提供纯 Java 调用原生代码和操作堆外内存的能力。\n\n核心组件：\n1. Arena：内存生命周期管理器。分配的内存自动在 Arena 关闭时释放（类似 try-with-resources）\n2. MemorySegment：堆外或堆内的连续内存区域。提供类型安全的内存访问。\n3. MemoryLayout：定义内存布局（字节对齐、字段偏移量），确保跨平台的兼容性\n4. Linker：原生函数链接器，将 Java 方法调用链接到 C 函数\n5. SymbolLookup：查找原生库中的符号（函数地址）\n\n比 JNI 的优势：\n1. 消除 JNI 的胶水代码（不再需要 javah 生成头文件，不需要手写 C 桩函数）\n2. 类型安全：MemoryLayout 和 VarHandle 提供类型安全的内存访问，JNI 的 GetIntArrayElement 等不检查边界\n3. 性能更好：FFM API 的内联优化比 JNI 的跨边界调用更高效\n4. 自动内存管理：Arena 关闭时自动释放内存（类似 RAII），JNI 需要手动 Release 或 Delete\n5. 支持堆外内存的直接操作（DirectByteBuffer 的现代替代方案）\n\n安全操作堆外内存：\n1. 使用 Arena 限定内存生命周期（避免 dangling pointer）\n2. MemoryLayout 确保正确的字节对齐和字段布局\n3. MemoryAccess 提供类型安全的 get/set 方法\n4. 通过 MemorySegment 的边界检查防止缓冲区溢出\n\n扩展延伸：FFM API 在 JDK 19 预览，JDK 22 转正。标准库中已有使用——如 java.util.zip 使用 FFM API 调用 zlib。典型应用场景：调用 C 库（如 TensorFlow C API、libfuse）、操作共享内存、实现序列化协议。",
+    "hints": [
+      "FFM API = Arena + MemorySegment + MemoryLayout + Linker",
+      "优势：无胶水代码、类型安全、自动内存管理、性能更好"
+    ],
+    "tags": [
+      "Java",
+      "FFM",
+      "Panama",
+      "JNI 替代"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "作用域值与结构化并发",
+    "content": "请介绍 JDK 21 的 ScopedValue（作用域值）和 StructuredTaskScope（结构化并发）。ScopedValue 与 ThreadLocal 的区别是什么？结构化并发如何改进线程管理？",
+    "answer": "答案：ScopedValue 和 StructuredTaskScope 是 JDK 21 的预览特性，分别改进上下文传递和并发任务管理。\n\nScopedValue：\n- 不可变的、限定作用域的上下文值传递机制\n- 通过 ScopedValue.where(key, value).run(() -> { ... }) 绑定值\n- 在 run 方法的执行边界内，绑定的值对调用栈可见\n- 子任务自动继承父作用域的 ScopedValue（无需手动传递）\n\nScopedValue vs ThreadLocal：\n1. 不可变性：ScopedValue 绑定后不可修改（final 语义），ThreadLocal 可随意 set/get\n2. 生命周期：ScopedValue 绑定到代码块的作用域（try-with-resources），ThreadLocal 绑定到线程的整个生命周期\n3. 继承性：虚拟线程场景下，ScopedValue 自动传递到子任务，ThreadLocal 在虚拟线程中需要手动传递\n4. 内存：ScopedValue 的副本数 = 载体线程数（少量），ThreadLocal 的副本数 = 线程数（可能大量）\n5. 安全性：ScopedValue 是只读的，防止无意中修改上层传入的值\n\nStructuredTaskScope（结构化并发）：\n- 将并发任务的创建-执行-结果收集绑定到一个结构化代码块中\n- 所有子任务必须在作用域结束前完成（join 或 cancel）\n- 确保不会\"泄露\"线程（结构化保证）\n\n示例场景：\n- ShutdownOnSuccess：适用于\"任一子任务成功即可\"的场景（race 模式）\n- ShutdownOnFailure：适用于\"全部子任务成功\"的场景（all 模式）\n\n扩展延伸：结构化并发解决的核心问题是线程泄露——传统 ExecutorService 提交任务后，如果忘记获取 Future 的结果，任务可能一直运行。StructuredTaskScope 在作用域关闭时自动中断未完成的任务。ScopedValue + 虚拟线程 + 结构化并发是 JDK 21 的三大并发特性更新，共同构建 Java 的现代并发编程模型。",
+    "hints": [
+      "ScopedValue = 不可变的块作用域上下文，ThreadLocal = 线程作用域可变上下文",
+      "结构化并发保证所有子任务在作用域结束前完成或取消"
+    ],
+    "tags": [
+      "Java",
+      "ScopedValue",
+      "结构化并发",
+      "Loom"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "动态 CDS 归档",
+    "content": "请介绍 JDK 的 Class Data Sharing（CDS）和 Application Class-Data Sharing（AppCDS）机制。动态 CDS 归档（Dynamic CDS Archive, JDK 13+）如何加速应用启动？",
+    "answer": "答案：CDS 通过共享类元数据加速 JVM 启动并减少内存占用。\n\n传统 CDS（JDK 5+）：\n- JRE 安装时创建 classes.jsa（Class Sharing Archive），包含核心类库的元数据\n- 多个 JVM 进程共享只读的类元数据（通过内存映射文件）\n- 减少启动时间（类加载时不需要读取和解析 class 文件）\n- 减少内存占用（多个 JVM 共享同一份类元数据）\n\nApplication CDS（AppCDS, JDK 10+）：\n- 将 CDS 从核心类库扩展到应用类\n- 通过三步骤使用：\n  1. 记录：-XX:DumpLoadedClassList=classes.lst 记录应用启动时加载的类\n  2. 归档：-Xshare:dump -XX:SharedArchiveFile=app.jsa -XX:SharedClassListFile=classes.lst\n  3. 使用：-Xshare:auto -XX:SharedArchiveFile=app.jsa\n- 大幅减少应用启动时间（30-50%）\n\n动态 CDS 归档（JDK 13+）：\n- 消除了显式记录类列表的步骤（不需要 -XX:DumpLoadedClassList）\n- JVM 退出时自动生成默认归档文件（默认位置：java_XXXX.jsa in temp dir）\n- 使用：-XX:ArchiveClassesAtExit=app.jsa（退出时生成归档）\n- 后续启动使用 -XX:SharedArchiveFile=app.jsa\n\n进一步优化：\n- 训练运行（Training Run）：启动应用并预热后退出生成归档\n- 生产环境中，应用第一次启动的类加载信息保存在归档中，后续启动直接使用\n- AOT 编译（JaOTC, JDK 17+）将类提前编译为机器码，与 CDS 互补\n\n扩展延伸：Spring Boot 应用的启动加速——通过 CDS 归档 + AOT 编译可以显著缩短启动时间。Spring Framework 6.1+ 支持自动生成 CDS 归档。Pitchfork（Spring 的 AOT 框架）使用 CDS + AOT 降低云原生环境的冷启动延迟。",
+    "hints": [
+      "AppCDS 将应用类的元数据归档到 .jsa 文件",
+      "动态 CDS 归档（JDK 13+）自动在 JVM 退出时生成归档"
+    ],
+    "tags": [
+      "Java",
+      "CDS",
+      "AppCDS",
+      "启动优化"
+    ]
   }
 ]

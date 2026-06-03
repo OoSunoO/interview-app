@@ -964,5 +964,100 @@
       "/sys",
       "文件系统"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 内存管理",
+    "content": "请介绍 Linux 的内存管理机制。虚拟内存和物理内存如何映射？什么是缺页中断（Page Fault）？OOM Killer（Out-Of-Memory Killer）如何选择被杀掉的进程？",
+    "answer": "答案：Linux 通过虚拟内存管理实现进程隔离和内存高效利用。\n\n虚拟内存与物理内存：\n- 每个进程拥有独立的虚拟地址空间（取决于架构，32 位 4GB，64 位 128TB）\n- 虚拟地址通过 MMU（内存管理单元）+ 页表映射到物理地址\n- 页表是多级结构（x86-64 使用 4 级页表）\n- 页大小：默认 4KB（HugePages 支持 2MB/1GB，减少 TLB 未命中）\n\n缺页中断（Page Fault）：\n1. 硬缺页（Major Page Fault）：需要从磁盘读取数据（如程序启动时从 Swap 换入）\n   - 开销很大（磁盘 IO，毫秒级）\n2. 软缺页（Minor Page Fault）：页在内存中但页表未建立映射（如首次访问已分配的页）\n   - 开销小（只需建立页表映射）\n3. 无效缺页（Segfault）：访问非法地址 → 发送 SIGSEGV 信号终止进程\n\nOOM Killer：\n- 当系统内存耗尽时触发（vm.overcommit_memory 和 vm.overcommit_ratio 控制过度分配策略）\n- 选择被杀进程的评分（oom_score）：\n  - 占用内存越多 → oom_score 越高（贡献占比约 60%）\n  - 子进程数越多 → oom_score 越高\n  - root 权限 → oom_score 稍微降低\n- 用户可调整：/proc/PID/oom_adj（-17=不杀死到 15=优先杀死）\n- 实际影响：oom_score 最高的进程被 oom_killer 终止\n\nSwap（交换空间）：\n- 将不常用的内存页换到磁盘（扩展可用内存）\n- swapiness（vm.swappiness）：控制倾向使用 Swap 的程度（0-100，默认 60）\n- 数据库服务器通常建议降低 swapiness（如 10）\n\n扩展延伸：cgroups（控制组）——限制/隔离进程组的资源使用（CPU、内存、IO）。memory cgroup 可以设置内存上限（limit_in_bytes），超过上限触发 OOM。NUMA（非统一内存访问）——多 CPU 架构中每个 CPU 有自己的本地内存（访问快），跨 CPU 访问远端内存（访问慢）。",
+    "hints": [
+      "虚拟内存 = 页表（多级）→ 物理内存 + MMU 地址翻译",
+      "缺页：硬缺页（磁盘 IO，慢）+ 软缺页（建页表，快）+ 无效缺页（段错误，SIGSEGV）",
+      "OOM Killer选择：内存占用高 + 子进程多 = oom_score 高"
+    ],
+    "tags": [
+      "Linux",
+      "内存",
+      "虚拟内存",
+      "Page Fault"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 进程与线程",
+    "content": "请介绍 Linux 进程和线程的实现。fork() 和 exec() 的区别是什么？写时复制（Copy-on-Write）如何优化 fork 性能？线程在 Linux 中如何实现？",
+    "answer": "答案：Linux 中线程是轻量级进程（LWP），通过 clone() 系统调用创建。\n\n进程创建：\n- fork()：创建当前进程的副本（子进程获得父进程的完整副本）\n  返回值：子进程返回 0，父进程返回子进程 PID\n- exec()：用新程序替换当前进程（加载可执行文件并运行）\n- fork + exec 是经典组合：fork 创建子进程 → exec 加载新程序\n\n写时复制（Copy-on-Write, COW）：\n- fork 时子进程共享父进程的物理内存页（不复制）\n- 父子进程的虚拟地址页都标记为只读\n- 当任一方尝试写入时触发缺页异常 → 内核复制该页 → 两个进程各自拥有独立副本\n- 好处：fork 几乎不需要复制内存（只需复制页表），写入时才真正复制\n- 大部分 fork 后立即 exec（新程序不继承父进程内存），COW 避免了大量无用复制\n\nLinux 线程：\n- 线程通过 clone() 系统调用创建（轻量级 fork）\n- clone() 可以指定共享的资源：\n  CLONE_VM（共享地址空间）、CLONE_FILES（共享文件描述符）、CLONE_SIGHAND（共享信号处理器）\n- 线程 = 使用 CLONE_VM 和 CLONE_FILES 标志的 clone 进程\n- 线程有自己的：栈、寄存器、线程 ID（TID）\n- 线程共享：地址空间、文件描述符、信号处理器\n\n进程 vs 线程：\n- 进程：独立的地址空间（页表）、独立的 PID、上下文切换开销大\n- 线程：共享地址空间（同一进程的线程之间通信只需读写内存）、独立 TID、切换开销小\n- 进程切换需要切换页表（TLB 刷新），线程切换不需要\n\n扩展延伸：僵尸进程——子进程退出但父进程未调用 wait()，进程表条目保持存在。孤儿进程——父进程先退出，子进程由 init（PID 1）收养。pid_max 和线程数上限（/proc/sys/kernel/threads-max）。",
+    "hints": [
+      "fork() = 复制进程 → exec() = 加载新程序（通常 fork + exec 组合使用）",
+      "COW = fork 时共享内存（只读标记），写入时复制页（避免大量无用复制）",
+      "Linux 线程 = clone(CLONE_VM|CLONE_FILES) → 共享地址空间的任务"
+    ],
+    "tags": [
+      "Linux",
+      "进程",
+      "线程",
+      "fork"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux IO 模型",
+    "content": "请介绍 Linux 的 5 种 IO 模型。阻塞 IO、非阻塞 IO、IO 多路复用、信号驱动 IO、异步 IO 各有什么特点？select、poll、epoll 的区别是什么？",
+    "answer": "答案：Linux 5 种 IO 模型的核心区别在于是否阻塞和何时通知就绪。\n\n5 种 IO 模型：\n1. 阻塞 IO（Blocking IO）：\n   - recvfrom() 一直等待直到数据就绪\n   - 特点：简单但线程被挂起，无法处理其他任务\n   - 适用：低并发场景\n2. 非阻塞 IO（Non-Blocking IO）：\n   - recvfrom() 立即返回（有数据返回数据，无数据返回 EAGAIN）\n   - 特点：需要轮询（busy waiting），浪费 CPU\n   - 几乎不直接使用\n3. IO 多路复用（IO Multiplexing）：\n   - select/poll/epoll 监控多个 FD，有就绪时通知应用\n   - 特点：单线程可管理数千连接，事件驱动\n   - 适用：Nginx、Redis、Netty 等高性能服务器\n4. 信号驱动 IO（Signal-Driven IO）：\n   - 注册 SIGIO 信号处理器，数据就绪时内核发送信号通知\n   - 特点：不阻塞，但信号处理复杂\n   - 实际使用较少\n5. 异步 IO（AIO / Async IO）：\n   - 发起 IO 操作后立即返回，内核完成操作后通知\n   - 与信号驱动的区别：信号驱动通知\"可以读了\"（同步），异步 IO 通知\"已经读完\"\n   - Linux AIO 实现有限，io_uring（Linux 5.1+）是真正的异步 IO\n\nselect / poll / epoll 对比：\n- select：\n  - 最大 FD 数限制（1024，由 FD_SETSIZE 决定）\n  - 每次调用需要将 FD 集合从用户态复制到内核态\n  - 遍历所有 FD 检查就绪状态（O(N)）\n- poll：\n  - 没有最大 FD 数限制（基于链表）\n  - 仍然需要遍历所有 FD（O(N)）\n  - 同样需要复制到内核态\n- epoll（Linux 2.6+，推荐）：\n  - epoll_create → epoll_ctl → epoll_wait\n  - 只在首次注册时将 FD 事件注册到内核（不重复复制）\n  - 内核维护事件表，直接返回就绪的 FD 列表（O(1)，不遍历所有 FD）\n  - 支持边缘触发（Edge-Triggered）和水平触发（Level-Triggered）\n    - 水平触发（LT）：默认，只要未读完就持续通知\n    - 边缘触发（ET）：只在状态变化时通知一次（需要配合非阻塞 IO + 循环读取）\n\n扩展延伸：io_uring（Linux 5.1+）——基于共享内存的异步 IO 接口，避免系统调用开销。通过 sqe（Submission Queue Entry）提交请求，cqe（Completion Queue Entry）获取结果。io_uring 是 Linux 异步 IO 的未来方向。",
+    "hints": [
+      "5 种 IO 模型：阻塞（等）→ 非阻塞（轮询）→ 多路复用（select/poll/epoll）→ 信号驱动 → 异步（io_uring）",
+      "epoll = O(1) 事件通知 + 内核维护事件表（不重复复制）+ 边缘触发/水平触发"
+    ],
+    "tags": [
+      "Linux",
+      "IO模型",
+      "epoll",
+      "多路复用"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 文件系统",
+    "content": "请介绍 Linux 文件系统的结构。inode 和 dentry 的区别是什么？硬链接和软链接（符号链接）的区别？df 显示的 Filesystem 使用率为什么和 du 计算的结果不一致？",
+    "answer": "答案：Linux 文件系统由 inode、dentry 和数据块组成。\n\ninode（索引节点）：\n- 存储文件的元数据（不包括文件名！）\n- 文件类型、权限（rwx）、所有者、大小、时间戳（atime/mtime/ctime）\n- 数据块指针（直接指针 + 间接指针 + 双重间接指针）\n- inode 数量在格式化时固定（目录可存的文件数受 inode 数量限制）\n\ndentry（目录项）：\n- 文件名到 inode 的映射（目录的本质是 dentry 列表）\n- 一个 dentry 由一个文件名和一个 inode 号组成\n- 多个 dentry 可以指向同一个 inode（硬链接）\n- dentry 缓存在内存（dcache）中加速路径解析\n\n硬链接 vs 软链接：\n- 硬链接（ln target link_name）：多个文件名指向同一个 inode（inode 引用计数 +1）\n  - 不能跨文件系统（inode 号在文件系统内唯一）\n  - 不能链接目录（防止循环引用）\n  - 删除原文件不影响硬链接文件（引用计数减到 0 才删除数据）\n- 软链接/符号链接（ln -s target link_name）：\n  - 独立的文件（独立的 inode），内容是目标路径\n  - 可以跨文件系统、可以链接目录\n  - 原文件删除后软链接变成\"dead link\"\n\ndf vs du 不一致的原因：\n- df 查看文件系统的 block 使用情况（从超级块读取，显示所有已分配的 block）\n- du 遍历目录树计算文件大小之和（只统计用户可见的文件）\n- 差异原因：\n  1. 已删除但仍在被进程持有的文件（进程打开文件句柄，文件未真正删除）\n     → df 显示已使用，du 不显示（文件已不在目录树中）\n  2. 超级块/日志/inode 等元数据占用的 block（df 统计，du 不统计）\n  3. 保留块（root 保留 5%，mkfs.ext4 -m 可调整）\n\n扩展延伸：ext4（默认，日志文件系统，支持 1EB+ 文件系统/16TB 单文件）→ XFS（大文件高性能，RHEL 7+ 默认）→ Btrfs（写时复制、快照、压缩）。VFS（虚拟文件系统层）——Linux 统一所有文件系统接口。tmpfs——基于内存的临时文件系统（/dev/shm）。",
+    "hints": [
+      "inode = 文件元数据（不含文件名），dentry = 文件名→inode 的映射",
+      "硬链接共享 inode（同一文件多个名字），软链接是独立的文件（存目标路径）",
+      "df > du 原因：已删但进程持有文件 + 元数据 + 保留块"
+    ],
+    "tags": [
+      "Linux",
+      "文件系统",
+      "inode",
+      "硬链接"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Linux 性能分析工具",
+    "content": "请介绍常用的 Linux 性能分析工具。如何定位 CPU 高、内存泄漏、IO 瓶颈和网络问题？top、vmstat、iostat、netstat、perf 的常用场景是什么？",
+    "answer": "答案：Linux 性能分析遵循 USE 方法论（Utilization/Saturation/Errors）。\n\nCPU 问题：\n- top / htop：查看 CPU 使用率（us=用户态、sy=内核态、id=空闲、wa=IO 等待、st=偷取时间）\n- perf top：查看 CPU 热点函数（火焰图数据来源）\n- mpstat -P ALL：查看每个 CPU 核的使用率\n- 高 CPU 排查：top 找到高 CPU 进程 → top -Hp PID 找到高 CPU 线程 → perf 或 jstack 定位代码\n\n内存问题：\n- free -h：查看内存总量、已用、可用、Swap 使用\n- vmstat 1：每秒查看内存/CPU/IO 概要（si/so 表示换入/换出量，持续非 0 表示内存不足）\n- top 按 RES（常驻内存）排序：找到内存占用高的进程\n- /proc/PID/smaps：查看进程内存映射详情\n- valgrind / AddressSanitizer：检测内存泄漏（C/C++ 程序）\n\nIO 问题：\n- iostat -x 1：查看磁盘 IO（r/s=读次数、w/s=写次数、await=IO 平均耗时、%util=磁盘利用率）\n- iostat 的 %util 接近 100% 表示磁盘饱和（但对于 SSD 不完全准确，因为 SSD 可以并行处理请求）\n- iotop：按进程查看 IO 使用量\n- strace -e trace=file -p PID：跟踪进程的文件系统调用\n\n网络问题：\n- netstat -anp / ss -tup：查看网络连接状态（LISTEN/ESTABLISHED/TIME_WAIT）\n- sar -n DEV 1：查看网络接口的吞吐量\n- tcpdump：抓包分析（配合 Wireshark 或 tcpdump -w file.pcap）\n- ping / mtr / traceroute：排查网络延迟和丢包\n\n综合工具：\n- dstat：top + vmstat + iostat + netstat 的合体\n- atop：带历史记录的全面监控\n- bcc / bpftrace：基于 eBPF 的动态追踪（Brendan Gregg 主导）\n\n扩展延伸：火焰图（Flame Graph）——Brendan Gregg 发明的 CPU/内存/IO 热点可视化工具。perf record + perf script → FlameGraph 脚本生成 SVG。USE 方法论——Check Utilization（利用率）、Saturation（饱和度）、Errors（错误率）来快速定位瓶颈。",
+    "hints": [
+      "CPU 问题：top → perf top / perf record（生成火焰图）",
+      "内存问题：free -h + vmstat 1（si/so 换页）+ top 按 RES 排序",
+      "IO 问题：iostat -x 1（await/%util）+ iotop（按进程）",
+      "网络问题：netstat/ss（连接状态）+ tcpdump（抓包）"
+    ],
+    "tags": [
+      "Linux",
+      "性能",
+      "工具",
+      "火焰图"
+    ]
   }
 ]

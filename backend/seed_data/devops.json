@@ -972,5 +972,96 @@
       "RBAC",
       "安全"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "容器镜像构建优化",
+    "content": "请介绍 Docker 镜像构建的优化策略。多阶段构建（Multi-stage Build）如何减小镜像体积？如何利用构建缓存加速构建？",
+    "answer": "答案：Docker 镜像优化核心是减少层数和体积。\n\n多阶段构建（Multi-stage Build）：\n- 使用多个 FROM 语句，每个 FROM 是一个独立的构建阶段\n- 第一阶段（build）：包含编译工具链（JDK/Go SDK/npm），编译出 artifact\n- 第二阶段（runtime）：只包含运行时环境（JRE/空镜像），从第一阶段 COPY artifact\n- 最终镜像只包含运行时环境和 artifact，不包含编译工具\n\n示例（Go）：\nFROM golang:1.20 AS builder\nWORKDIR /app\nCOPY go.mod go.sum ./\nRUN go mod download\nCOPY . .\nRUN go build -o app .\n\nFROM alpine:3.18\nCOPY --from=builder /app/app /app\nCMD [\"/app\"]\n\n构建缓存利用：\n- Docker 构建时逐层缓存——如果某层未变化，直接使用缓存\n- 优化技巧：先复制不常变的文件（go.mod/go.sum），再复制源代码\n- COPY go.mod go.sum ./（缓存命中）→ RUN go mod download（缓存命中）→ COPY . .（源代码变了才重新构建）\n- .dockerignore 排除不需要的文件（node_modules、.git、.env）\n\n基础镜像选择：\n- alpine（5MB）：最小，但 musl libc 可能不兼容\n- distroless（Google）：只包含应用和运行时依赖（无 shell、无包管理器），安全\n- slim（Debian 精简版）：兼容性好\n\n扩展延伸：镜像分析工具——dive（分层分析）、docker-slim（自动瘦身）。Docker BuildKit——新一代构建引擎（DOCKER_BUILDKIT=1），支持并行构建和更好的缓存。OCI 镜像标准——多架构镜像（manifest list）支持同一镜像在不同架构上运行。",
+    "hints": [
+      "多阶段构建 = build 阶段（工具链）+ runtime 阶段（仅 artifact），镜像大幅减小",
+      "缓存优化：先复制依赖文件（go.mod/package.json），后复制源码"
+    ],
+    "tags": [
+      "DevOps",
+      "Docker",
+      "镜像",
+      "构建"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "持续部署策略对比",
+    "content": "请对比不同的持续部署（Continuous Deployment）策略。滚动更新、蓝绿部署、金丝雀发布和 A/B 测试各有什么适用场景？",
+    "answer": "答案：四种部署策略各有侧重，选择取决于业务需求和风险容忍度。\n\n滚动更新（Rolling Update）：\n- 逐步替换旧版本实例为新版本（每次替换 1 个或少量实例）\n- K8s 默认策略：设置 maxSurge（最多超过期望的实例数）和 maxUnavailable（最多不可用实例数）\n- 优点：不需额外资源，最经济\n- 缺点：回滚慢（需要逐步替换回去），发布期间新旧版本共存\n- 适用：内部服务、非关键业务、资源敏感场景\n\n蓝绿部署（Blue-Green）：\n- 维护两套完整环境（蓝=旧、绿=新），一次性切换流量\n- 优点：切换瞬间完成（秒级），回滚极快（切回蓝环境即可）\n- 缺点：需要两倍资源，数据库需向前兼容\n- 适用：关键业务、数据库迁移（需要保持旧版本对新版本数据的兼容）\n\n金丝雀发布（Canary）：\n- 新版本先接收少量流量（5%），验证后再逐步扩展到 100%\n- 结合监控指标决定是否继续或回滚\n- 适用：面向用户的 Web 服务、高变更风险的发布\n\nA/B 测试（A/B Testing）：\n- 让不同用户群体体验不同版本，收集业务指标决定哪个版本更好\n- 目的不是降低发布风险，而是对比功能效果\n- 适用：UI 改版、算法实验、推荐系统对比\n\n安全发布的核心原则：\n- 灰度发布流程：内部测试（5%）→ 内部全量（20%）→ 外部灰度（50%）→ 全量（100%）\n- 自动回滚条件：错误率上升 > 5%、P99 延迟增加 > 20%、关键业务指标下降",
+    "hints": [
+      "滚动更新（最经济，回滚慢）→ 蓝绿（资源翻倍，瞬间切换）→ 金丝雀（逐步放量，验证后全量）→ A/B（对比功能效果）",
+      "灰度发布渐进：5%内部→20%内部→50%外部→100%全量，错误率上升自动回滚"
+    ],
+    "tags": [
+      "DevOps",
+      "部署",
+      "金丝雀",
+      "蓝绿部署"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Helm 包管理",
+    "content": "请介绍 Helm——Kubernetes 的包管理工具。Chart、Release 和 Repository 的概念是什么？Helm 模板如何实现参数化部署？",
+    "answer": "答案：Helm 将 K8s 资源打包为 Chart，通过参数化模板简化 Kubernetes 应用部署。\n\n核心概念：\n- Chart：一个 Helm 包，包含一组 K8s 资源定义（YAML 模板 + 默认值）\n- Release：Chart 的一次部署实例（同一 Chart 可以部署多次，每次是一个 Release）\n- Repository：Chart 的存储仓库（如 Artifact Hub / Harbor）\n\nChart 目录结构：\nmyapp/\n├── Chart.yaml          # Chart 元数据（名称、版本、依赖）\n├── values.yaml         # 默认配置值\n├── templates/          # Go Template 模板文件\n│   ├── deployment.yaml\n│   ├── service.yaml\n│   ├── _helpers.tpl    # 可复用的命名模板\n│   └── NOTES.txt       # 安装后的提示信息\n└── charts/             # 子 Chart（依赖）\n\n模板引擎（Go Template）：\n- {{ .Values.replicaCount }} ——引用 values.yaml 中的值\n- {{ .Release.Name }} ——内置对象（Release 名称）\n- {{ .Chart.Name }} ——Chart 元数据\n- {{ include \"myapp.fullname\" . }} ——复用 _helpers.tpl 中定义的模板\n- 控制结构：{{- if .Values.service.enabled }} ... {{- end }}\n- 范围遍历：{{- range .Values.ports }} ... {{- end }}\n\nHelm 操作：\n- helm install myapp ./myapp-chart ——安装 Chart 创建 Release\n- helm upgrade myapp ./myapp-chart ——升级 Release\n- helm rollback myapp 1 ——回滚到第 1 个版本\n- helm uninstall myapp ——卸载 Release\n- helm template ./myapp-chart ——本地渲染模板（不部署到集群）\n\n扩展延伸：Helm 2 vs Helm 3——Helm 2 需要 Tiller（服务端组件），Helm 3 移除 Tiller（更安全、更简单）。Helm Hooks——在 Release 生命周期的特定点执行 Job（如数据库迁移）。Helm 依赖管理——通过 dependencies 字段管理子 Chart。Kustomize——Helm 的替代方案（不依赖模板，使用原生 YAML + patch）。",
+    "hints": [
+      "Helm = Chart（包）+ Release（实例）+ Repository（仓库）",
+      "Go Template：values.yaml 提供参数，templates/ 渲染为 K8s YAML"
+    ],
+    "tags": [
+      "DevOps",
+      "Helm",
+      "Kubernetes",
+      "包管理"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CI/CD 管道设计",
+    "content": "请设计一个现代化的 CI/CD 管道。CI 阶段和 CD 阶段的职责分别是什么？CI 中的制品（Artifact）管理如何实现版本追溯？",
+    "answer": "答案：CI/CD 管道自动化代码从提交到生产的全过程。\n\nCI（持续集成）阶段：\n1. 代码检出：从 Git 仓库拉取代码\n2. 依赖安装：下载项目依赖（npm install / pip install / go mod download）\n3. 代码检查：Lint（ESLint/Pylint）、格式化检查（Prettier）、类型检查（TypeScript）\n4. 单元测试：运行单元测试 + 生成覆盖率报告\n5. 构建：编译代码（npm build / go build / mvn package）\n6. 安全扫描：依赖漏洞扫描（Snyk/Trivy）、SAST（静态安全分析）\n7. 制品生成：将构建产物打包为 Docker 镜像或 JAR/WAR\n8. 制品上传：推送到制品仓库（Docker Registry / Nexus / Artifactory）\n\nCD（持续交付/部署）阶段：\n1. 部署到测试环境：自动化部署到 staging/QA 环境\n2. 集成测试：运行集成测试、E2E 测试\n3. 性能测试：压力测试、基准测试（可选）\n4. 审批门：手动或自动审批（成功率 > 90%、延迟 < 阈值）\n5. 灰度部署：部署到生产环境的部分节点（金丝雀发布）\n6. 健康检查：监控部署后的错误率、延迟、业务指标\n7. 全量发布：验证通过后将流量切换到新版本\n\n制品版本追溯：\n- 每个构建生成唯一版本号（git commit SHA / 语义版本号）\n- 制品标签包含：版本号 + 构建时间 + Git Commit + 分支名\n- 从版本号可追溯到：代码提交、代码审查、构建日志、测试结果\n- 实现：Git Tag → CI Build → 制品仓库（Docker Image Tag 与 Git Commit 一一对应）\n\n扩展延伸：CI/CD 平台对比——Jenkins（可定制最强）、GitHub Actions（生态好，配置简单）、GitLab CI（一体化）、CircleCI（速度快）。Pipeline as Code——将管道定义写入代码仓库（.github/workflows/*.yml / .gitlab-ci.yml / Jenkinsfile）。",
+    "hints": [
+      "CI = 代码检查 + 测试 + 构建 → 制品；CD = 部署 + 验证 + 灰度 + 全量",
+      "制品版本追溯：版本号 = Git Commit SHA → 可追踪到代码/审查/构建日志/测试"
+    ],
+    "tags": [
+      "DevOps",
+      "CI/CD",
+      "管道",
+      "自动化"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务网格与服务治理",
+    "content": "请介绍服务网格（Service Mesh）的原理和架构。Sidecar 模式如何实现流量管理、可观测性和安全通信？Istio 的核心组件有哪些？",
+    "answer": "答案：服务网格通过 Sidecar 代理实现微服务间通信的控制，将流量管理、可观测性和安全策略从业务代码中剥离到基础设施层。\n\n核心架构：\n1. 数据平面（Data Plane）：每个服务实例旁部署 Sidecar 代理（Envoy），拦截所有进出流量\n2. 控制平面（Control Plane）：集中管理 Sidecar 的配置和策略\n\nIstio 核心组件：\n- Pilot：服务发现和流量管理（路由规则、故障注入、超时重试）\n- Citadel：证书管理和 mTLS 通信\n- Galley：配置验证和分发\n- Envoy：Sidecar 代理，实现实际的流量拦截和转发\n\n核心能力：\n1. 流量管理：蓝绿部署、金丝雀发布、灰度路由、故障注入（延迟/中断）\n2. 可观测性：分布式追踪（Jaeger/Zipkin）、指标（Prometheus）、日志\n3. 安全：mTLS 服务间加密通信、RBAC、JWT 认证\n4. 韧性：重试、超时、熔断、限流、健康检查\n\nSidecar 注入方式：\n- 手动注入：在 Deployment 中添加 Sidecar 容器\n- 自动注入：利用 Admission Webhook 自动注入 Sidecar\n\n扩展延伸：服务网格的争议——引入 Envoy Sidecar 会增加延迟（5-10ms）和资源消耗（每个 Sidecar ~50MB 内存）。是否有必要？简单场景用 K8s Service + Istio 就够了。性能敏感场景可用 eBPF 方案（Cilium Service Mesh）替代 Sidecar 模式。WASM 扩展——Envoy 支持 WASM Filter 实现自定义流量处理逻辑。",
+    "hints": [
+      "服务网格 = Sidecar（数据平面）+ 控制平面，将通信层剥离出业务代码",
+      "Istio 核心：Pilot（路由）+ Citadel（mTLS 证书）+ Envoy（Sidecar 代理）",
+      "性能争议：Sidecar 模式增加 5-10ms 延迟和内存消耗，eBPF 方案正在兴起"
+    ],
+    "tags": [
+      "DevOps",
+      "服务网格",
+      "Istio",
+      "Sidecar"
+    ]
   }
 ]

@@ -1006,5 +1006,95 @@
       "Kafka",
       "高吞吐"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "API 网关设计",
+    "content": "请介绍 API 网关（API Gateway）的核心功能和架构设计。网关和反向代理有什么区别？网关如何处理认证、限流和路由？",
+    "answer": "答案：API 网关是所有客户端请求的统一入口，负责请求路由、认证、限流、协议转换等横切关注点。\n\n网关 vs 反向代理：\n- 反向代理（Nginx）：第 4/7 层转发，功能简单（负载均衡、SSL 终止、静态文件服务）\n- API 网关：应用层功能更丰富（认证鉴权、限流熔断、请求/响应转换、API 版本管理、监控日志）\n- 现代架构中 Nginx 常在网关之前做流量入口，网关做业务路由\n\n核心功能：\n1. 路由与版本管理：根据请求路径/域名/Header 路由到不同后端服务\n2. 认证鉴权：统一处理 JWT/OAuth2/Session 认证\n3. 限流（Rate Limiting）：令牌桶/漏桶算法，支持 IP/用户/API 级别的限流\n4. 熔断（Circuit Breaker）：后端故障时快速失败，防止级联故障\n5. 请求/响应转换：协议转换（HTTP→gRPC）、字段映射、格式转换\n6. 监控与日志：请求耗时、错误率、调用链追踪\n\n高可用设计：\n- 无状态（水平扩展），状态集中到 Redis/DB\n- 网关本身的部署：多副本 + 负载均衡器（DNS 轮询/云负载均衡）\n- 插件化架构：每个功能实现为插件（Filter/Interceptor 模式）\n\n常见网关产品：\n- Kong：基于 OpenResty（Nginx + Lua），插件市场丰富\n- APISIX：Apache 开源，高性能（基于 Nginx + Lua），支持热加载\n- Spring Cloud Gateway：Java 技术栈，Reactive（WebFlux）\n- Zuul：Netflix 开源的 Servlet 网关（已逐渐被 Gateways 替代）\n\n扩展延伸：云原生网关——Ingress Controller（K8s 集群入口）、服务网格的 Sidecar Proxy 可替代部分网关功能。GraphQL Gateway 将多个后端聚合为统一的 GraphQL 端点。BFF（Backend For Frontend）是网关的变体——为不同客户端定制 API。",
+    "hints": [
+      "API 网关 = 统一入口 + 路由/认证/限流/熔断/监控",
+      "Nginx 是 4/7 层反向代理，网关是应用层功能更丰富的入口"
+    ],
+    "tags": [
+      "系统设计",
+      "API 网关",
+      "限流",
+      "路由"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "熔断与降级策略",
+    "content": "请介绍服务熔断（Circuit Breaker）和服务降级的原理与实现。熔断器的三种状态是什么？Hystrix 和 Resilience4j 各有什么特点？",
+    "answer": "答案：熔断和降级是微服务容错的核心手段，防止级联故障。\n\n熔断器（Circuit Breaker）三种状态：\n1. CLOSED（关闭）：正常状态，请求正常通过。失败次数累计达到阈值时进入 OPEN\n2. OPEN（断开）：请求直接快速失败（不调用后端）。经过 timeout 时间后进入 HALF_OPEN\n3. HALF_OPEN（半开）：尝试放行少量请求检查后端是否恢复\n   - 成功 → CLOSED（恢复）\n   - 失败 → OPEN（继续保持断开）\n\n熔断触发条件：\n- 滑动窗口统计（时间窗口内失败率 > 阈值，如 10 秒内 50% 失败）\n- 最少请求数（统计窗口必须达到最少请求数才判断，避免偶发波动触发熔断）\n\n服务降级与熔断的区别：\n- 熔断：调用端机制，保护调用方不被故障拖垮\n- 降级：服务端机制，主动牺牲非核心功能保障核心功能\n- 降级策略：返回默认值/缓存数据/空结果、限流非核心接口、关闭非核心服务\n\nHystrix vs Resilience4j：\n- Hystrix（Netflix，已维护模式）：基于线程池隔离（每个依赖独立线程池），默认信号量隔离\n- Resilience4j（推荐）：轻量级，基于装饰器模式（不依赖 Netflix 库）\n- Resilience4j 核心模块：CircuitBreaker、RateLimiter、Retry、Bulkhead、TimeLimiter\n- Bulkhead（舱壁隔离）：限制并发调用量，防止一个依赖耗尽所有资源\n\n扩展延伸：熔断与重试的关系——熔断开启时不应该重试（会阻止恢复）。重试应配合退避策略（Exponential Backoff + Jitter）。Sentinel（阿里）是功能更丰富的流控框架，支持热点限流、系统自适应保护。",
+    "hints": [
+      "熔断三态：CLOSED → OPEN（失败超阈值）→ HALF_OPEN（探活）→ CLOSED",
+      "熔断保护调用方（快速失败），降级保护服务方（牺牲非核心）"
+    ],
+    "tags": [
+      "系统设计",
+      "熔断",
+      "降级",
+      "容错"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "蓝绿部署与金丝雀发布",
+    "content": "请介绍蓝绿部署（Blue-Green Deployment）和金丝雀发布（Canary Release）的原理。如何实现零停机发布？灰度发布如何控制流量比例？",
+    "answer": "答案：蓝绿部署和金丝雀发布都用于实现零停机发布和降低发布风险。\n\n蓝绿部署：\n- 维护两套完全相同的生产环境（蓝 = 当前生产，绿 = 新版本）\n- 部署流程：\n  1. 将新版本部署到绿环境（蓝环境继续服务）\n  2. 对绿环境进行全面测试验证\n  3. 切换负载均衡器流量从蓝到绿（瞬间切换）\n  4. 蓝环境保留为回滚备用\n- 优点：切换瞬间完成，回滚极快（切回蓝环境即可）\n- 缺点：需要两倍资源，数据库兼容性问题（同时存在两个版本操作同一数据库）\n\n金丝雀发布（灰度发布）：\n- 新版本只对少量用户（1%-5%）开放，逐步扩大范围\n- 流程：\n  1. 部署新版本到少量实例（如 1 台服务器）\n  2. 将 5% 的流量路由到新版本\n  3. 监控错误率、延迟、业务指标\n  4. 逐步扩大流量比例（10% → 50% → 100%）\n  5. 出现问题时立即切回（仅影响灰度用户）\n\n流量路由方式：\n- 权重路由（负载均衡器根据权重分配，如 Nginx upstream weight）\n- Header/Cookie 路由：根据特定的 Header（X-Canary: true）或用户 ID 哈希\n- Istio/Service Mesh：基于 VirtualService 的权重路由\n\n数据库兼容性：\n- 新版本代码必须兼容旧版本数据库 schema（向后兼容的迁移）\n- 迁移策略：Add → Migrate → Remove（新增字段先不加 NOT NULL，数据迁移完成后再加约束）\n\n扩展延伸：滚动更新（Rolling Update）——逐台替换实例，不额外消耗资源，但回滚慢。A/B 测试与金丝雀的区别——A/B 测试的目的是验证功能效果，金丝雀的目的是降低发布风险。特性开关（Feature Flag）——不通过部署控制特性开关，配置中心动态控制。",
+    "hints": [
+      "蓝绿=两套完整环境瞬间切换，回滚快但资源翻倍",
+      "金丝雀=逐步放量（1%→5%→100%），降低风险，回滚仅影响灰度用户"
+    ],
+    "tags": [
+      "系统设计",
+      "部署",
+      "蓝绿部署",
+      "金丝雀发布"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分布式链路追踪",
+    "content": "请介绍分布式链路追踪（Distributed Tracing）的原理。Dapper/OpenTelemetry 如何通过 Trace ID 串联跨服务请求？Span 的数据结构是怎样的？",
+    "answer": "答案：分布式链路追踪追踪一个请求在多个微服务之间的完整调用路径。\n\n核心概念：\n- Trace：一次完整的请求链路，由多个 Span 组成\n- Span：一次远程调用/本地操作的基本工作单元\n- Trace ID：一次请求的全局唯一 ID，贯穿所有服务\n- Span ID：当前操作的唯一 ID\n- Parent Span ID：父 Span 的 ID，用于构建调用树\n\nSpan 数据结构（OpenTelemetry）：\n- trace_id, span_id, parent_span_id\n- operation_name（操作名，如 \"GET /api/users\"）\n- start_time, end_time（精确到纳秒）\n- status（OK/ERROR）\n- attributes（键值对，如 http.method, http.url）\n- events（带时间戳的事件记录）\n- resource（资源信息，如 service.name, host.ip）\n\n上下文传播（Context Propagation）：\n- HTTP：通过 Header 传递（W3C Trace Context：traceparent header）\n- RPC：通过 gRPC 的 Metadata 传递\n- 消息队列：通过消息 Header 传递\n- 线程间：通过 ThreadLocal 传递\n\n采样策略：\n- 全部采集：流量大时成本太高\n- 按比例采样：随机采 10% 的请求\n- 优先级采样：保留所有慢请求/错误的 Trace，按比例采样正常请求\n- 尾部采样：请求完成后根据结果决定是否采样\n\n扩展延伸：OpenTelemetry 是 CNCF 的标准化可观测性框架（合并了 OpenTracing 和 OpenCensus）。选型：Jaeger（存储用 Elasticsearch/Cassandra，适合大规模）、Zipkin（存储用 Cassandra/ES，更轻量）、SkyWalking（特别适合 Java，内置 APM 功能）。",
+    "hints": [
+      "Trace = 完整调用链 = 多个 Span 通过 Trace ID + Parent Span ID 串联",
+      "Span：trace_id + span_id + parent_span_id + op_name + 时间 + 状态"
+    ],
+    "tags": [
+      "系统设计",
+      "链路追踪",
+      "OpenTelemetry",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "配置中心设计",
+    "content": "请设计一个分布式配置中心。如何实现配置的实时推送？如何保证配置变更的一致性？配置中心对比：Apollo、Nacos、Consul 各有什么特点？",
+    "answer": "答案：配置中心统一管理分布式系统的配置，支持动态变更和实时推送。\n\n核心功能：\n1. 配置存储与管理：配置按应用/环境/集群组织（namespace 隔离）\n2. 配置热更新：不重启应用即可生效\n3. 配置变更通知：服务端推送变更到客户端\n4. 版本管理与回滚：每次变更保留历史版本\n5. 权限控制与审计：谁什么时候修改了什么配置\n\n实时推送的实现方式：\n1. 长轮询（Long Polling）：\n   - 客户端发起请求，服务端有变更才返回（超时后重新请求）\n   - 实现简单，兼容性好，几乎是准实时的（秒级）\n2. WebSocket：服务端主动推送变更\n   - 实时性更好，但需要维持长连接\n3. 配置变更回调：客户端注册 watcher，配置变更时通知\n\n一致性保障：\n- 配置存储在数据库 + 缓存\n- 每次读取从数据库读取（验证缓存一致性）\n- 版本号控制：每次变更生成新版本号，客户端携带版本号拉取\n- 分布式锁：配置修改时加锁，防止并发写冲突\n\n产品对比：\n- Apollo（携程）：功能最丰富（多环境/多集群/灰度发布/权限细粒度），Java 生态，需部署 ConfigService + AdminService + Portal\n- Nacos（阿里）：既是配置中心又是注册中心，HTTP 长轮询推送到客户端，与 Spring Cloud Alibaba 集成好\n- Consul（HashiCorp）：强一致性（Raft），KV Store 做配置，Watch 机制通知变更，健康检查与 DNS 服务发现\n\n扩展延伸：K8s ConfigMap——K8s 原生的配置管理，挂载为 Volume 或环境变量，不支持热更新（需要重启 Pod）。配置中心的高可用：多副本部署 + 数据库主从。配置加密：敏感信息（密码/密钥）在存储和传输时加密。",
+    "hints": [
+      "配置中心核心：配置存储 + 实时推送（长轮询/WebSocket）+ 版本管理 + 权限控制",
+      "Apollo 功能最全，Nacos 注册+配置一体，Consul 强一致性"
+    ],
+    "tags": [
+      "系统设计",
+      "配置中心",
+      "Apollo",
+      "Nacos"
+    ]
   }
 ]

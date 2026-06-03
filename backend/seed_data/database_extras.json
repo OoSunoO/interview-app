@@ -997,5 +997,95 @@
       "数据同步",
       "Binlog"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TiDB 架构",
+    "content": "请介绍 TiDB 的 NewSQL 架构。TiDB 如何通过计算存储分离实现水平扩展？TiKV 的 Raft 分区和 Percolator 事务模型如何工作？",
+    "answer": "答案：TiDB 是分布式 NewSQL 数据库，兼容 MySQL 协议，支持在线水平扩展和强一致性。\n\nTiDB 三层架构：\n1. TiDB Server（计算层）：\n   - 无状态 SQL 引擎（解析 SQL、生成执行计划、下推计算到 TiKV）\n   - 兼容 MySQL 协议（客户端可像连接 MySQL 一样连接 TiDB）\n   - 水平扩展：增加 TiDB Server 节点提升并发处理能力\n2. TiKV Server（存储层）：\n   - 分布式 KV 存储引擎（基于 RocksDB，LSM-Tree）\n   - 数据按 Range 分为 Region（默认 96MB），每个 Region 有 Leader 和 Follower\n   - Region 通过 Raft 协议复制（强一致性）\n   - 水平扩展：增加 TiKV 节点，Region 自动迁移到新节点\n3. PD Server（调度层）：\n   - 基于 etcd（Raft 一致性），管理 Region 元数据和调度\n   - 调度决策：Leader 均衡、Region 分裂/合并、故障转移\n\nTiKV 的 Raft 分区：\n- 数据分为多个 Region（每个 Region 一个 Raft Group）\n- 每个 Region 有 Leader（读写）+ 多个 Follower（只读+复制）\n- 读走 Leader（强一致），也支持 Follower Read（弱一致）\n- Region 分裂：超过 96MB 时自动分裂为两个 Region\n\nPercolator 事务模型：\n- TiDB 使用 Google Percolator 的分布式事务模型\n- 基于 Primary Key + 时间戳（TSO）的乐观事务\n- 事务流程：\n  1. Prewrite：写入所有 key 的锁和数据（携带时间戳）\n  2. Commit：提交 Primary Key（成功后事务即提交）\n  3. 异步提交（Async Commit / 1PC）优化——减少两阶段提交的开销\n\n扩展延伸：TiDB vs CockroachDB——类似架构但事务模型不同（CRDB 使用混合逻辑时钟 HLC，不依赖 TSO 全局时钟）。TiDB 适合 OLTP + 轻量 OLAP 场景（HTAP）。TiFlash——列存引擎（Raft Learner），用于分析型查询。",
+    "hints": [
+      "TiDB = TiDB（无状态 SQL 引擎）+ TiKV（Raft + Region 分片）+ PD（元数据调度）",
+      "Percolator 事务 = 乐观两阶段提交（Prewrite + Commit），基于 TSO 全局时间戳"
+    ],
+    "tags": [
+      "数据库",
+      "TiDB",
+      "NewSQL",
+      "分布式事务"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据分片策略",
+    "content": "请介绍数据库数据分片（Sharding）的策略和挑战。范围分片和哈希分片各有什么优缺点？分片后的跨节点查询和分布式事务如何处理？",
+    "answer": "答案：数据分片将大表水平切分到多个数据库节点（Shard），解决单机存储和性能瓶颈。\n\n分片策略：\n1. 范围分片（Range Sharding）：\n   - 按分片键的范围分配：Shard 1（id 1-1000000）、Shard 2（id 1000001-2000000）\n   - 优点：范围查询友好（连续范围通常在同一节点），支持分片键的范围扫描\n   - 缺点：数据倾斜（热点——最新数据集中在尾部分片），重新分片时需要移动大量数据\n2. 哈希分片（Hash Sharding）：\n   - 对分片键哈希取模：shard_id = hash(shard_key) % N\n   - 优点：数据分布均匀（无热点），写入负载均衡\n   - 缺点：范围查询需要广播到所有分片，增加分片需要迁移数据（一致性哈希可缓解）\n3. 一致性哈希（Consistent Hashing）：\n   - 哈希环 + 虚拟节点——增加/减少节点时只影响相邻节点\n   - 需要迁移的数据量约为 1/N（N = 节点数）\n   - 适合分片数频繁变化的场景\n\n分片键选择：\n- 选择访问频率最高、分布最均匀的字段（如 user_id、order_id）\n- 避免单调递增的字段（范围分片时产生热点）\n- 考虑业务查询模式——尽量让同一业务的数据在同一分片\n\n分片后的挑战：\n1. 跨节点查询：跨分片的查询需要广播到所有分片 → 聚合结果\n2. 分布式事务：分片后跨越多个节点的事务（2PC/SAGA/TCC）\n3. 全局主键：分片后不能使用数据库自增，需要分布式 ID（Snowflake）\n4. 分片键变更：极难在线变更（需要重新分布数据）\n\n扩展延伸：分片中间件——ShardingSphere（JDBC + Proxy 两种模式，功能丰富）、Vitess（YouTube 开源的 K8s 原生分片方案，支撑 CloudSQL）、MyCat（基于 Proxy 的 MySQL 分片代理）。分片 vs NoSQL——MongoDB 原生分片、Cassandra 的 Partition 设计。",
+    "hints": [
+      "范围分片（连续/范围查询友好/热点问题）vs 哈希分片（均匀分布/范围查询需广播）",
+      "分片挑战：跨节点查询 + 分布式事务 + 全局主键 + 分片键难变更"
+    ],
+    "tags": [
+      "数据库",
+      "分片",
+      "Sharding",
+      "水平扩展"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "SQL 慢查询优化方法论",
+    "content": "请介绍 SQL 慢查询的优化方法论。如何通过 EXPLAIN 分析查询性能？常见的慢查询原因和对应的优化手段有哪些？",
+    "answer": "答案：SQL 慢查询优化遵循\"先定位、再分析、后优化\"的流程。\n\n定位慢查询：\n- 慢查询日志（slow_query_log）：记录执行时间超过 long_query_time 的 SQL\n- performance_schema：更详细的信息（锁等待、IO、事务等）\n- 实时监控：信息_schema.PROCESSLIST 查看当前正在执行的查询\n\nEXPLAIN 分析（重要字段）：\n- type（访问类型）：system > const > eq_ref > ref > range > index > ALL（全表扫描）\n  - 目标：至少达到 range（范围扫描），最好 ref（等值引用）或 const（主键查询）\n- possible_keys / key：可能使用的索引 / 实际使用的索引\n- rows：预估扫描的行数（越小越好）\n- Extra：Using index（覆盖索引）、Using index condition（索引下推）、Using filesort（文件排序，要优化）、Using temporary（临时表，要优化）\n- key_len：使用的索引长度（越长说明索引覆盖的列越多）\n\n常见原因与优化：\n1. 全表扫描（ALL）：确认查询条件是否有索引，添加合适的索引\n2. 索引失效：\n   - 对索引列使用函数：WHERE UPPER(name) = 'ABC' → 改为 name = 'abc'\n   - 隐式类型转换：WHERE phone = 123（phone 是 varchar）→ 改为 '123'\n   - 最左前缀不满足：索引 (a,b,c) 但查询没有 a\n   - LIKE '%xxx'：以通配符开头会导致索引失效\n3. 排序和分组慢（Using filesort/Using temporary）：\n   - 确保排序列有索引（覆盖索引的列顺序匹配排序顺序）\n   - 分组字段建立索引可以减少临时表\n4. JOIN 慢：确保 JOIN 字段在驱动表和被驱动表上都有索引\n5. 分页慢（深分页 LIMIT 100000, 10）：\n   - 使用游标分页（WHERE id > last_id LIMIT 10）\n   - 或子查询延迟关联（先查出主键再关联原表）\n\n扩展延伸：覆盖索引优化——SELECT 只查索引包含的字段（不回表）。索引选择性（Cardinality）——区分度越高的列越适合建索引。不要对性别/状态这类低区分度列建单列索引（但可以加入联合索引）。MySQL 优化器的选择——即使有索引也可能选择全表扫描（估算扫描行数过大时）。",
+    "hints": [
+      "EXPLAIN 关键字段：type（const>ref>range>index>ALL）+ Extra（Using filesort/temporary=要优化）",
+      "索引失效：函数/隐式转换/最左前缀不满足/LIKE 前置通配符"
+    ],
+    "tags": [
+      "数据库",
+      "慢查询",
+      "EXPLAIN",
+      "索引优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "数据库连接池",
+    "content": "请介绍数据库连接池（Connection Pool）的原理和配置策略。为什么要使用连接池而不是每次创建新连接？连接池的常用参数（最小连接数/最大连接数/超时时间）如何配置？",
+    "answer": "答案：连接池维护一组数据库连接，应用程序重复使用它们，避免频繁创建和销毁连接的开销。\n\n为什么用连接池：\n- 创建连接的开销大：TCP 三次握手 + 数据库认证（几十到几百毫秒）\n- 数据库对连接数有限制（MySQL 默认 max_connections = 151）\n- 连接池复用连接——连接建立一次，后续请求复用已建立的连接\n- 连接池还提供连接管理（超时断开、健康检查、自动恢复）\n\n关键参数配置：\n1. 最小连接数（minimumIdle / minPoolSize）：\n   - 连接池保持的最小空闲连接数\n   - 推荐：根据业务低谷的 QPS 估算，保留少量空闲连接\n   - 太小 = 流量突发时创建连接的延迟\n2. 最大连接数（maximumPoolSize）：\n   - 连接池允许的最大活跃连接数\n   - 不是越大越好！数据库的 CPU/IO 限制了并行度\n   - 经验公式：CPU 核数 × 2 + 有效磁盘数（HDD 1-2，SSD 2-4）\n   - 常见配置：20-50（中等服务器），100-200（高性能服务器）\n   - HikariCP 作者建议：单节点 10-15 个连接已足够高吞吐\n3. 连接超时（connectionTimeout）：\n   - 等待连接的最大时间。超过则抛出异常\n   - 推荐：1000-5000ms（太长导致请求堆积，太短容易误判流量毛刺）\n4. 空闲超时（idleTimeout）：空闲连接的最大存活时间\n5. 最大生命周期（maxLifetime）：连接存活时间上限（建议小于数据库的 wait_timeout）\n\n连接池产品：\n- HikariCP（Java，最推荐）：性能极高，字节码优化，生产验证\n- Druid（Java，阿里）：功能最丰富（监控/SQL 审计/防 SQL 注入/慢查询日志）\n- DBCP/C3P0（Java，旧）：不再推荐（性能差，有坑）\n- SQLAlchemy（Python）：ORM 自带的连接池\n\n扩展延伸：连接泄露——应用中未关闭连接导致连接池耗尽。预防：try-with-resources（Java）/ with 语句（Python）。数据库侧的连接管理——wait_timeout（MySQL 默认 8 小时）。连接池大小与 PSCache（Prepared Statement Cache）的关系——缓存预编译的 SQL 计划，减少 SQL 解析开销，但占用连接池内存。",
+    "hints": [
+      "连接池复用连接（避免 TCP 握手 + 认证开销），最大连接数不是越大越好",
+      "经验：最大连接数 = CPU核数 × 2（SSD），HikariCP 推荐单节点 10-15 连接"
+    ],
+    "tags": [
+      "数据库",
+      "连接池",
+      "HikariCP",
+      "优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "查询计划与优化器",
+    "content": "请介绍数据库查询优化器（Query Optimizer）的工作原理。优化器如何选择索引？基于成本的优化（CBO）和基于规则的优化（RBO）的区别是什么？",
+    "answer": "答案：查询优化器将 SQL 语句转换为最高效的执行计划。\n\n优化器的工作流程：\n1. 解析器：SQL → 抽象语法树（AST）\n2. 预处理器：语义检查（表/列是否存在）、视图展开\n3. 优化器：生成多个执行计划（Join 顺序、索引选择、访问方式），选择成本最低的\n4. 执行器：按照执行计划执行\n\nRBO（基于规则的优化）：\n- 使用固定的规则进行优化（如\"WHERE 条件优先执行\"、\"子查询展开\"）\n- 规则是硬编码的经验法则\n- 优点：实现简单，执行计划可控\n- 缺点：不根据实际数据量调整，选择的计划不一定最优\n- 早期数据库（如 Oracle RBO）使用\n\nCBO（基于成本的优化）：\n- 根据统计信息估算每种执行计划的成本（IO + CPU + 网络）\n- 统计信息：表的行数、列的基数（Cardinality）、数据分布直方图\n- 优化器计算每种计划的成本，选择成本最低的\n- 缺点：统计信息过时时，优化器可能选择次优计划\n\nMySQL 的优化器：\n- 默认使用 CBO（MySQL 5.6+）\n- 通过 ANALYZE TABLE 更新统计信息\n- 使用 FORCE INDEX / USE INDEX / IGNORE INDEX 提示影响优化器选择\n- 优化器会考虑：全表扫描（ALL）、索引扫描（index/range/ref）、索引合并（Index Merge）、MRR（Multi-Range Read）\n\n扩展延伸：执行计划的查看——EXPLAIN（计划）+ EXPLAIN ANALYZE（MySQL 8.0，执行并输出实际耗时和行数）。优化器的局限——复杂的 JOIN 查询中，JOIN 顺序的选择是指数级的（N!），优化器通常使用启发式算法（贪心/动态规划）剪枝。统计信息的维护——自动更新 vs 手动更新，采样率设置。",
+    "hints": [
+      "RBO = 规则硬编码（实现简单，不根据数据量调整）→ CBO = 基于统计信息估算成本（IO+CPU+网络）",
+      "MySQL 使用 CBO，统计信息过时会导致优化器选错索引"
+    ],
+    "tags": [
+      "数据库",
+      "优化器",
+      "CBO",
+      "执行计划"
+    ]
   }
 ]

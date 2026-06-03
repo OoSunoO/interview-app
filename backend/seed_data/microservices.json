@@ -997,5 +997,95 @@
       "Istio",
       "Envoy"
     ]
+  },
+  {
+    "category": "系统设计",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "事件溯源模式",
+    "content": "请介绍事件溯源（Event Sourcing）模式。事件溯源与传统的 CRUD 有什么区别？如何从事件流重建当前状态？快照（Snapshot）的作用是什么？",
+    "answer": "答案：事件溯源以事件序列（Event Stream）为唯一真相源，而不是当前状态。\n\n核心思想：\n- 不存储当前状态，存储所有状态变更事件\n- 当前状态 = 从头回放所有事件（Event Replay）\n- 事件是不可变的（Immutable）、只能追加（Append-Only）\n\nCRUD vs 事件溯源：\n- CRUD：直接更新数据库记录（覆盖写，丢失历史）\n- 事件溯源：追加一个新事件（不覆盖数据，保留完整历史）\n- 示例：银行账户\n  - CRUD：UPDATE accounts SET balance = 90 WHERE id = 1（覆盖了之前的值）\n  - 事件溯源：追加事件 AccountWithdrawn { accountId: 1, amount: 10, timestamp: ... }\n\n优点：\n- 完整审计日志：所有变更都有记录\n- 时间旅行：可以回到任意时间点查看状态\n- 事件驱动友好：发布事件的同时存储事件\n- 灵活查询：可以从事件流生成多个不同的读模型（CQRS）\n\n重建状态与快照：\n- 从头回放所有事件 → 得到当前状态\n- 随着事件增加，回放越来越慢 → 引入快照\n- 快照（Snapshot）：每 N 个事件（如每 1000 个事件）保存一份当前状态的副本\n- 重建时：找到最近的快照 + 回放之后的事件（O(N) → O(M)，M < N）\n- 快照生成策略：定时生成（每 24 小时）、定量生成（每 1000 个事件）\n\n扩展延伸：事件溯源适合记账系统、审计系统、工作流引擎。不适合——CRUD 操作频繁且不需要审计的场景。事件溯源与领域驱动设计（DDD）中的聚合（Aggregate）紧密相关——聚合根的变更通过事件表示。Event Store——专门为事件溯源设计的数据库。",
+    "hints": [
+      "事件溯源 = 事件不可变追加 + 当前状态由事件回放得到",
+      "快照 = 每 N 个事件存一次状态快照，加速重建（O(N) → O(M)）"
+    ],
+    "tags": [
+      "微服务",
+      "事件溯源",
+      "CQRS",
+      "架构"
+    ]
+  },
+  {
+    "category": "系统设计",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "BFF 模式",
+    "content": "请介绍 BFF（Backend For Frontend）模式。为什么不同的客户端需要不同的 BFF？BFF 和 API Gateway 有什么区别？",
+    "answer": "答案：BFF 是为特定前端客户端定制的后端服务，一个 BFF 只服务一种客户端。\n\nBFF 的起源：\n- 传统后端提供一个通用 API，供 Web/iOS/Android/第三方使用\n- 各客户端的数据需求不同：移动端需要精简数据（省流量），Web 端需要完整数据，智能设备需要协议转换\n- BFF 为每种客户端提供定制 API（不再追求\"一个 API 服务所有\"）\n\nBFF 的职责：\n1. API 聚合：多个后端的 API 聚合为单个响应（减少客户端请求次数）\n2. 数据裁剪：只返回客户端需要的数据字段（省流量、省渲染时间）\n3. 协议转换：将后端的 gRPC/Thrift 协议转为前端友好的 REST/GraphQL\n4. 认证与会话：处理客户端特定的认证逻辑\n5. 数据格式化：日期格式、单位转换（前端需要的展示格式）\n\nBFF vs API Gateway：\n- API Gateway：统一的入口网关，处理横切关注点（认证/限流/路由）\n- BFF：业务差异化层，处理各种客户端特有的数据聚合和裁剪\n- 两者可以串联：请求 → Gateway → BFF → 后端服务\n- Facebook 的实践：BFF 直接包含 Gateway 的功能（一体化）\n\nBFF 的维护：\n- 每种客户端一个 BFF（Web BFF / iOS BFF / Android BFF / 小程序 BFF）\n- 团队结构对应：前端团队直接维护自己的 BFF（Full-stack 模式）\n- BFF 通常是轻量服务（Node.js/Go/Python），快速迭代\n\n扩展延伸：GraphQL 与 BFF 的关系——GraphQL 可以被视为通用的 BFF 实现（客户端自定义查询字段）。BFF 的反模式——承载过多业务逻辑（BFF 应该只是聚合层，不应包含核心业务逻辑）。BFF 的代码重复——不同客户端的 BFF 可能有大量相似代码，应通过共享库减少。",
+    "hints": [
+      "BFF = 为每种客户端（Web/iOS/Android）定制的专属后端服务",
+      "BFF 聚合/裁剪数据 + 协议转换；Gateway 做鉴权/限流/路由"
+    ],
+    "tags": [
+      "微服务",
+      "BFF",
+      "架构",
+      "前端"
+    ]
+  },
+  {
+    "category": "系统设计",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Serverless 架构",
+    "content": "请介绍 Serverless（无服务器）架构。FaaS（Function as a Service）的执行模型是什么？冷启动问题如何优化？Serverless 适合哪些场景？",
+    "answer": "答案：Serverless 是一种让开发者专注于业务逻辑、无需管理服务器的云原生架构模式。\n\n核心概念：\n- FaaS（Function as a Service）：以函数为粒度的计算服务（AWS Lambda、阿里云函数计算）\n- BaaS（Backend as a Service）：后端服务（认证、数据库、消息队列等）\n- 真正的 Serverless = FaaS + BaaS（函数执行 + 托管后端服务）\n\nFaaS 执行模型：\n1. 事件触发：HTTP 请求、消息队列消息、数据库变更、定时器\n2. 函数执行：分配执行环境 → 加载函数代码 → 执行 → 返回结果\n3. 自动扩缩：根据并发请求量自动创建/销毁执行实例\n4. 按量计费：只计费实际执行时间（没有请求不花钱）\n\n冷启动问题：\n- 冷启动 = 函数第一次被调用或长时间未使用后首次调用\n- 冷启动延迟 = 下载代码 + 启动运行时 + 初始化函数\n  - Java/.NET：数百毫秒到数秒（JVM 启动慢）\n  - Python/Node.js：几十毫秒到数百毫秒\n  - Go/Rust：几毫秒到几十毫秒（编译为原生二进制）\n- 优化策略：\n  1. 预留并发（Provisioned Concurrency）：保持一定数量的预热实例\n  2. 小函数：减少函数代码体积和依赖\n  3. 轻量运行时：使用 Python/Node.js/Go 替代 Java\n  4. 定期心跳（Keep Warm）：定时调用函数保持活跃\n\n适用场景：\n- 适合：事件驱动任务（图片处理/数据转换/ETL）、Webhook 处理、定时任务、胶水代码、弹性不可预测的工作负载\n- 不适合：长连接/WebSocket（函数执行有时间限制，如 Lambda 15 分钟）、高性能计算、低延迟敏感系统\n\n扩展延伸：Serverless 数据库——Aurora Serverless、DynamoDB（按量计费的数据库）。Serverless 编排——AWS Step Functions（工作流编排。Serverless 框架：Vercel（前端优先）、AWS SAM、Serverless Framework、Terraform。",
+    "hints": [
+      "Serverless = FaaS（计算）+ BaaS（托管服务），按量计费，无需管理服务器",
+      "冷启动优化：预留并发 + 小函数 + 轻量运行时 + 心跳保活"
+    ],
+    "tags": [
+      "微服务",
+      "Serverless",
+      "FaaS",
+      "云计算"
+    ]
+  },
+  {
+    "category": "系统设计",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Strangler Fig 模式",
+    "content": "请介绍 Strangler Fig（绞杀藤）模式。如何通过绞杀藤模式将遗留系统逐步迁移到新系统？这种模式为什么比\"大爆炸\"式重写风险更低？",
+    "answer": "答案：Strangler Fig 模式（绞杀藤模式）通过逐步替换的方式将遗留系统迁移到新系统。\n\n核心思想：\n- 在遗留系统周围逐步构建新系统，而不是一次性重写\n- 新功能逐步替代旧功能，直到旧系统完全被\"绞杀\"\n- 名称来自绞杀藤——藤蔓缠绕树木生长，最终树木死亡，藤蔓取而代之\n\n实施步骤：\n1. 确定替换范围：选择一批可以独立替换的功能\n2. 在新系统中实现替代功能\n3. 在遗留系统和新系统之间设置路由层（通常使用反向代理或 API 网关）\n4. 将特定功能的流量路由到新系统\n5. 验证新系统功能正确后，移除旧系统的对应功能\n6. 重复步骤 1-5，直到所有功能被替换\n\n路由机制：\n- 按 URL 路径路由：/api/v1→旧系统，/api/v2→新系统\n- 按功能特性路由：Feature Flag 控制流量分发\n- 按用户群体路由：内测用户走新系统，普通用户走旧系统\n\n为什么比大爆炸式重写风险低：\n- 大爆炸式重写：开发周期长（数月到数年），交付时一次切换，风险极高\n- 大爆炸式常见结果：新系统与旧系统行为不一致，回滚困难\n- 绞杀藤：每次替换小功能，快速交付价值，每次切换风险可控，可随时回滚单一功能\n\n扩展延伸：绞杀藤模式适用于旧系统无法增量修改的场景（如技术栈完全不同、旧系统已无人能维护）。替换策略可以从外到内（先替换 UI 层→API 层→数据层）或从内到外。Martin Fowler 提出的这一模式是微服务迁移的核心模式之一。",
+    "hints": [
+      "绞杀藤 = 逐步替换遗留系统功能，通过路由层控制流量分发",
+      "每次替换一小部分功能（已验证/可回滚），规避大爆炸式重写的风险"
+    ],
+    "tags": [
+      "微服务",
+      "迁移",
+      "绞杀藤",
+      "架构"
+    ]
+  },
+  {
+    "category": "系统设计",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Sidecar 模式",
+    "content": "请介绍 Sidecar（边车）模式的设计思想。Sidecar 和 Service Mesh 的关系是什么？Sidecar 模式在非 K8s 环境中如何使用？",
+    "answer": "答案：Sidecar 模式将一个辅助进程（Sidecar）附加到主应用进程旁边，提供辅助功能。\n\n设计思想：\n- 将横切关注点（日志、监控、配置、代理、认证）从主应用中剥离\n- 作为一个独立进程部署（与主应用在同一 Pod/节点）\n- 主应用和 Sidecar 共享生命周期和网络空间\n- 主应用不需要感知 Sidecar 的存在（零侵入）\n\nSidecar 的典型职责：\n- 服务通信：代理（Proxy）处理服务发现、负载均衡、重试\n- 可观测性：收集指标和日志、生成链路追踪\n- 安全：mTLS 终止、证书轮换、认证\n- 配置热更新：监听配置变更并通知主应用\n- 协议转换：兼容旧版本协议\n\nSidecar 与 Service Mesh：\n- Service Mesh = 一组 Sidecar Proxy 组成的网络（数据平面）+ 控制平面\n- Sidecar 是 Service Mesh 的数据平面实现方式\n- Istio/Linkerd 将 Envoy/Linkerd-proxy 以 Sidecar 模式部署\n- 没有 Service Mesh 也可以单独使用 Sidecar 模式\n\n非 K8s 环境中的 Sidecar：\n- Docker Compose：多个 container 在同一个 pod 概念下（docker-compose.yml 中定义多个 service）\n- 虚拟机：使用 systemd/supervisor 管理 Sidecar 进程，共享网络命名空间\n- Nomad：Task Group 中的多个 Task 共享网络和存储\n\n扩展延伸：Sidecar vs Ambassador vs Adapter——三种部署模式的比较（都属于 Sidecar 模式变体）。Ambassador：代理（如 Envoy 作为前端代理）。Adapter：适配器（如 Prometheus Exporter 适配监控系统）。Sidecar 的资源开销——每个 Pod 多一个 Sidecar 容器消耗额外的 CPU 和内存，大集群中成本可观。",
+    "hints": [
+      "Sidecar = 主应用旁挂辅助进程（代理/监控/安全等横切关注点）",
+      "Service Mesh = Sidecar 组成的网络（数据平面）+ 控制平面"
+    ],
+    "tags": [
+      "微服务",
+      "Sidecar",
+      "架构",
+      "Service Mesh"
+    ]
   }
 ]

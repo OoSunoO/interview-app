@@ -985,5 +985,95 @@
       "Kubeflow",
       "MLflow"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "DeepSpeed 引擎架构",
+    "content": "请介绍 DeepSpeed 的 ZeRO 优化引擎架构。ZeRO-1、ZeRO-2、ZeRO-3 分别优化了哪些显存部分？ZeRO-Offload 和 ZeRO-Infinity 如何将显存扩展到 CPU 和 NVMe？",
+    "answer": "答案：DeepSpeed ZeRO（Zero Redundancy Optimizer）通过分片消除显存冗余。\n\nZeRO-1（优化器状态分片）：\n- 优化器状态（Adam 的动量和方差）被分片到各 GPU，每个 GPU 只维护自己的分片\n- 每个 GPU 存储 O(1/N) 的优化器状态\n- 通信：前向/反向不需要额外通信，优化器更新时需要一次 All-Gather\n- 显存节省：约 4×（Adam 的优化器状态占 16 bytes/参数，分片到 8 GPU 就是 2 bytes/参数）\n\nZeRO-2（梯度分片）：\n- 在 ZeRO-1 基础上，梯度也被分片存储\n- 每个 GPU 只存储 O(1/N) 的梯度\n- 反向传播时通过 Reduce-Scatter 将梯度分布到各 GPU\n- 显存节省：额外节省约 4 bytes/参数\n- P_t = P_g = P_s = O(1/N)，显存约为原来的 1/N\n\nZeRO-3（参数分片）：\n- 在 ZeRO-2 基础上，模型参数也被分片\n- 每个 GPU 只存储 O(1/N) 的参数\n- 前向/反向时需要 All-Gather 获取完整的参数（计算完成后释放）\n- 通信量增加（每层都需要一次 All-Gather 收集参数、一次 Reduce-Scatter 处理梯度）\n- 显存节省：接近 1/N，可以训练远超单 GPU 显存容量的模型\n\nZeRO-Offload：\n- 将优化器状态和梯度卸载到 CPU 内存（CPU 内存远大于 GPU 显存）\n- Adam 优化器状态的更新在 CPU 上异步完成\n- 关键优化：CPU Optimizer 异步更新 + 双缓冲（Double Buffer）隐藏 CPU-GPU 传输延迟\n- 显存释放：~16 bytes/参数（优化器状态 + 梯度）被卸载到 CPU\n\nZeRO-Infinity：\n- 扩展到 NVMe（SSD）级别——GPU → CPU → NVMe 三级存储\n- 参数和优化器状态可以被卸载到 NVMe\n- 使用带宽优化调度：预取（prefetch）减少 I/O 等待\n- 可以在单 GPU 节点上训练比 GPU 显存大 100× 的模型\n\n扩展延伸：ZeRO-3 的通信量比 ZeRO-1/2 大（参数 All-Gather），但可以通过 overlap（计算与通信重叠）来隐藏延迟。FSDP（Fully Sharded Data Parallel）是 PyTorch 对 ZeRO-3 的实现，API 更简洁。ZeRO++ 优化跨节点通信（使用量化梯度通信和 hierarchical partitioning）。",
+    "hints": [
+      "ZeRO-1 优化器分片 → ZeRO-2 梯度分片 → ZeRO-3 参数分片（显存减 1/N 倍）",
+      "ZeRO-Offload（CPU 卸载）→ ZeRO-Infinity（扩展到 NVMe SSD）"
+    ],
+    "tags": [
+      "AI",
+      "DeepSpeed",
+      "ZeRO",
+      "分布式训练"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "NCCL 集合通信",
+    "content": "请介绍 NCCL（NVIDIA Collective Communications Library）在分布式训练中的作用。All-Reduce、All-Gather、Reduce-Scatter、Broadcast 分别在什么场景下使用？Ring All-Reduce 和 Tree All-Reduce 的区别是什么？",
+    "answer": "答案：NCCL 是 NVIDIA 的高性能集合通信库，用于 GPU 之间的数据传输。\n\n常见集合通信操作：\n1. Broadcast：从一个 GPU 将数据发送到所有 GPU。用于参数初始化、同步。\n2. All-Reduce：所有 GPU 的数据求和（或求平均）后分发到所有 GPU。用于梯度同步（数据并行中的梯度 All-Reduce）。\n3. Reduce-Scatter：先将数据分块求和，每块结果分散到对应 GPU。ZeRO-2/3 的梯度分片使用此操作。\n4. All-Gather：所有 GPU 的数据被收集在一起，每个 GPU 得到完整数据。ZeRO-3 中的参数收集使用此操作。\n5. Reduce：从所有 GPU 收集结果到一个 GPU。\n6. Scatter：将一个 GPU 的数据分块分发到所有 GPU。\n\nRing All-Reduce 原理：\n1. 将数据分为 N 块（N = GPU 数量）\n2. Scatter-Reduce 阶段：每个 GPU 将数据块传递给下一个 GPU，累加求和。经过 N-1 步后，每个 GPU 拥有一个完整求和的块\n3. All-Gather 阶段：每个 GPU 将累加后的块传递到下一个 GPU。经过 N-1 步后，所有 GPU 拥有完整数据\n4. 总通信量 = 2 × (N-1)/N × data_size（接近 2× data_size，与 N 无关！）\n\nTree All-Reduce 原理：\n- 使用二叉树进行数据归约（每个节点接收、求和、向上传递），然后广播结果\n- 通信量 O(log N × data_size)\n- 不适合 GPU 集群（在树结构中，靠近根节点的 GPU 负载最重）\n\nRing vs Tree：\n- Ring All-Reduce 通信量固定（与 GPU 数量无关），可扩展性强\n- Tree All-Reduce 在小规模集群中延迟更低（log N 步 vs N 步），但带宽利用率低\n- NCCL 默认使用 Ring All-Reduce（优化后的环形算法），在跨节点场景支持 NVLink + InfiniBand\n- 现代 NCCL 使用混合策略：小消息用 Tree，大消息用 Ring\n\n扩展延伸：NCCL 通过 NVLINK（GPU 间高速互联）和 InfiniBand（节点间互联）实现最高性能。NCCL 支持自动拓扑感知（自动检测 GPU 互联拓扑，选择最优通信路径）。通信计算重叠（Overlap）——将 All-Reduce 与反向传播的计算重叠，隐藏通信延迟。MSCCL 是微软的集合通信库，在 NCCL 基础上增加了调度优化。",
+    "hints": [
+      "Ring All-Reduce 通信量固定（2×数据量），与 GPU 数量无关，适合大规模集群",
+      "Reduce-Scatter 用于 ZeRO 分片梯度，All-Gather 用于 ZeRO 收集参数"
+    ],
+    "tags": [
+      "AI",
+      "NCCL",
+      "分布式训练",
+      "集合通信"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "vLLM 调度策略",
+    "content": "请介绍 vLLM 的推理调度策略。vLLM 如何实现 Continuous Batching（持续批处理）？它的抢占（Preemption）机制如何处理长序列？vLLM 的调度与 TensorRT-LLM 的调度有何不同？",
+    "answer": "答案：vLLM 使用 Continuous Batching 和 PageAttention 实现高吞吐推理。\n\nContinuous Batching（持续批处理）：\n- 传统方法：静态批处理（Static Batching）——将请求收集到固定大小的 batch，所有请求完成后返回\n- 持续批处理：在一个请求完成生成后立即插入新请求，不需要等待整个 batch 完成\n- 调度粒度：一个迭代（iteration）级别的调度，每次迭代检查可运行的请求\n- 实现方式：\n  1. 维护一个 Waiting Queue（等待队列）和 Running Batch（运行批）\n  2. 每次迭代前，检查是否有请求完成 → 移除完成请求，从队列加入新请求\n  3. 新请求的 Prefill 和正在运行请求的 Decode 不能混合在一个迭代中（Prefill 计算密集，Decode 内存带宽密集）\n\n调度策略：\n1. FCFS（First Come First Serve）：按到达时间调度\n2. 优先级调度：支持设置请求的优先级\n3. 最大 token 数限制：调度时确保 batch 的总 token 数不超过 max_num_batched_tokens\n\n抢占（Preemption）机制：\n- 当新请求的 Prefill 导致 KV Cache 超过 GPU 显存时，vLLM 抢占正在运行的请求\n- 抢占策略：\n  1. Swap（交换）：将被抢占请求的 KV Cache 从 GPU 交换到 CPU\n  2. Recomputation（重计算）：丢弃被抢占请求的 KV Cache，调度到它时重新 Prefill\n- 选择策略：调度器选择最近被调度的请求（Sequence Group 的优先级最低的进行抢占）\n\nvLLM vs TensorRT-LLM：\n- vLLM：开源（UC Berkeley），基于 PyTorch，PageAttention 是其优势\n- TensorRT-LLM：NVIDIA 官方，基于 TensorRT，更多的算子融合和 INT4/INT8/FP8 量化支持\n- vLLM 调度更灵活（支持抢占、动态批处理），TensorRT-LLM 更适合固定路径的优化\n- vLLM 的 In-flight Batching 是 Continuous Batching 的一种实现\n\n扩展延伸：SGLang 使用 RadixAttention（基于前缀树的 KV Cache 共享），同前缀的请求可以共享 KV Cache。Sarathi-Serve 使用分块 Prefill（Chunked Prefill）将 Prefill 切分为更小的块，使 Prefill 和 Decode 可以在同一个迭代中混合执行。",
+    "hints": [
+      "vLLM Continuous Batching = 请求粒度时调度，完成即替换",
+      "抢占：KV Cache 交换到 CPU（Swap）或丢弃后重计算（Recomputation）"
+    ],
+    "tags": [
+      "AI",
+      "vLLM",
+      "调度",
+      "Continuous Batching"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Megatron-LM 3D 并行",
+    "content": "请介绍 Megatron-LM 的 3D 并行策略。张量并行（Tensor Parallel）、流水线并行（Pipeline Parallel）和数据并行（Data Parallel）如何组合使用？3D 并行中各维度如何分配 GPU？",
+    "answer": "答案：Megatron-LM 的 3D 并行将 GPU 集群组织为三维网格，在每个维度采用不同的并行策略。\n\n三维度的并行策略：\n1. 张量并行（Tensor Parallelism）：在层内切分权重矩阵，使用 All-Reduce 通信。适合节点内（NVLink 高带宽），避免跨节点通信。\n2. 流水线并行（Pipeline Parallelism）：将模型按层切分到不同 Stage，每个 Stage 部署在不同 GPU 上。通信量小（只传输 activation border）。\n3. 数据并行（Data Parallelism）：每个 GPU 或每组 GPU 持有完整模型副本，处理不同数据分片。ZeRO 优化消除显存冗余。\n\nGPU 分配：\n- dp、tp、pp 分三维度，总 GPU 数 = dp × tp × pp\n- tp：通常设为节点内的 GPU 数（如 8），利用 NVLink 的高速互联\n- pp：通常设为 4-16，流水线气泡和通信量的折中\n- dp：剩余 GPU 分配给数据并行。dp = total_gpus / (tp × pp)\n\n例如 64 GPU = tp=8(NVLink) × pp=4 × dp=2\n\n3D 并行的通信层次：\n- 张量并行内部：All-Reduce（节点内，NVLink，400 GB/s）\n- 流水线并行之间：Peer-to-Peer（节点间或节点内，NVLink/IB，~50 GB/s）\n- 数据并行之间：All-Reduce（节点间，InfiniBand，~50 GB/s）\n\n3D 并行的负载均衡：\n- 张量并行：计算和通信完全对称（各 GPU 负载均衡）\n- 流水线并行：存在气泡（bubble），使用 1F1B 调度减小气泡\n- 数据并行：最均衡（各节点处理不同数据）\n\n扩展延伸：NVIDIA NeMo 框架封装了 Megatron-LM 的 3D 并行，提供简单的配置接口。训练 1T 参数模型需要 1000+ GPU（如 tp=8, pp=64, dp=8 = 4096 GPU）。Memory 预算的计算：激活值 + 模型参数 + 梯度 + 优化器状态的总和不能超过 GPU 显存。Activation Checkpointing 是 3D 并行之外最重要的显存优化。",
+    "hints": [
+      "3D 并行 = TP(层内切分) × PP(层间切分) × DP(数据分片)",
+      "GPU 总数 = tp × pp × dp，tp 使用 NVLink 节点内，pp/dp 使用 InfiniBand 跨节点"
+    ],
+    "tags": [
+      "AI",
+      "Megatron-LM",
+      "3D 并行",
+      "分布式训练"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Mixture of Depths",
+    "content": "请介绍 Mixture of Depths（MoD，深度混合）架构。MoD 如何通过动态分配计算量来提升 Transformer 的效率？它与 Mixture of Experts（MoE）的区别是什么？",
+    "answer": "答案：Mixture of Depths（2024，Google DeepMind）通过在序列维度动态选择哪些 token 经过计算密集型块（如 FFN），哪些跳过，以节省计算量。\n\n核心思想：\n- 不是所有 token 都需要相同的计算量——某些 token 的信息量较少，可以跳过 FFN 层\n- 使用 Router 网络为每个 token 生成一个\"计算权重\"（routing weight）\n- 每层选择 top-k 比例的 token 通过 FFN（计算密集型），其余 token 通过残差连接直接跳过\n- 被选择通过 FFN 的 token 称为\"计算 token\"，跳过的称为\"快捷 token\"\n\n与 MoE 的区别：\n- MoE：在 Expert（FFN 的多份副本）之间选择。每个 token 激活 1-2 个 Expert。所有 token 都经过计算。\n- MoD：在\"计算\"和\"跳过\"之间选择。部分 token 完全不经过 FFN。\n- MoE 的稀疏性在参数维度（更多参数，但局部激活），MoD 的稀疏性在序列维度（更少计算，每层处理部分 token）\n- MoD 可以与 MoE 结合：MoD 选择哪些 token 进入 MoE 层，MoE 再选择哪些 Expert\n\n训练和推理：\n- 训练时：使用 top-k 选择，Router 需要辅助损失来确保负载均衡\n- 推理时：每层只有 r% 的 token 经过 FFN，计算量减少到原来的 r%\n- 减少的 FLOPs = 1 - r（例如 r=50% 时，FFN 的计算量减半）\n- 辅助损失：鼓励 Router 均匀选择的辅助损失（类似 MoE 的负载均衡损失）\n\n性能效果：\n- 在相同 FLOPs 预算下，MoD Transformer 优于标准 Transformer\n- 可以以更少的计算量达到相同的性能\n- 或相同计算量下更大的模型规模\n\n扩展延伸：MoD 的方法思想源自 Conditional Computation（条件计算）——让模型自行决定是否计算。早期的 Conditional Computation 方法包括 Adaptive Computation Time（ACT）。Branch-Train-Merge 也是在序列维度上选择计算路径。MoD + MoE = 更强大的稀疏组合——Google 的 Mixture of Depths 论文同时探索了这种组合。",
+    "hints": [
+      "MoD = Router 选择每层 top-k% 的 token 经过 FFN，其余跳过",
+      "MoE 稀疏在参数，MoD 稀疏在序列维度（计算量），两者可组合"
+    ],
+    "tags": [
+      "AI",
+      "MoD",
+      "条件计算",
+      "稀疏"
+    ]
   }
 ]

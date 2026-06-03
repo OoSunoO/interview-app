@@ -998,5 +998,95 @@
       "虚拟线程",
       "调度"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GC 调优常用参数",
+    "content": "请介绍 JVM GC 调优的核心参数。新生代/老年代比例如何影响 GC 性能？为什么建议设置 -Xms 和 -Xmx 为相同的值？",
+    "answer": "答案：GC 调优的核心参数包括堆大小、代际比例、GC 选择等。\n\n堆大小参数：\n- -Xms<size>：初始堆大小（启动时分配的堆）\n- -Xmx<size>：最大堆大小（堆可以扩展到的上限）\n- 建议设置为相同值：避免堆大小动态调整（Resize）带来的性能开销。运行时调整堆大小是 stop-the-world 的。\n\n新生代参数：\n- -Xmn<size>：新生代大小\n- -XX:NewRatio=N：老年代:新生代比例，默认 2（老年代是新生代的 2 倍）\n- -XX:SurvivorRatio=N：Eden:Survivor 比例，默认 8（Eden=8, S0=1, S1=1）\n\n代际比例对 GC 的影响：\n- 新生代越大 → Minor GC 频率降低但暂停时间增加\n- 新生代越小 → Minor GC 频率增加但每次暂停时间短\n- Survivor 区过小 → 对象直接晋升到老年代（promotion），老年代 GC 更频繁\n- 建议：新生代约占堆的 1/3~1/2\n\nGC 选择参数：\n- -XX:+UseG1GC：使用 G1（JDK 9+ 默认）\n- -XX:+UseZGC：使用 ZGC（JDK 15+）\n- -XX:+UseParallelGC：使用 Parallel（JDK 8 默认）\n- -XX:MaxGCPauseMillis=200：GC 目标暂停时间（G1/ZGC 会尝试达成）\n\n日志参数：\n- -Xlog:gc*：GC 详细日志（JDK 9+ 统一日志系统）\n- -XX:+PrintGCDetails -XX:+PrintGCDateStamps（JDK 8 格式）\n- -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<path>：OOM 时自动 dump\n\n扩展延伸：G1 的 -XX:G1HeapRegionSize 控制 Region 大小（1MB~32MB，影响大对象分配）。ZGC 的 -XX:ZAllocationSpikeTolerance 控制分配尖峰容忍度（默认 2.0）。分配速率比堆大小更关键——如果分配速率过高，再大的堆也会频繁 GC。G1 的 Mixed GC 在并发标记后回收老年代的分区，逐步回收而非一次清理全部老年代。",
+    "hints": [
+      "-Xms = -Xmx 避免堆调整的开销（resize 是 STW）",
+      "NewRatio=2（默认）意味着老年代是新生代的 2 倍"
+    ],
+    "tags": [
+      "JVM",
+      "GC调优",
+      "堆配置",
+      "参数"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "堆转储分析",
+    "content": "请介绍 JVM 堆转储（Heap Dump）的分析方法。如何获取堆转储？MAT 和 jhat 如何分析堆文件？OOM 时自动获取堆转储的配置是什么？",
+    "answer": "答案：堆转储是分析内存泄漏和内存占用问题的关键工具。\n\n获取堆转储的方法：\n1. 自动获取：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof\n2. 手动获取（jmap）：jmap -dump:live,format=b,file=heap.hprof <pid>\n   - live 参数：只保留存活对象（触发 Full GC）\n3. jcmd：jcmd <pid> GC.heap_dump /path/heap.hprof\n4. JMX：HeapDumpMXBean 通过 JMX 客户端获取\n5. VisualVM/JMC：图形界面获取\n\nMAT（Memory Analyzer Tool）分析：\n1. 打开 .hprof 文件\n2. Suspects Report（泄漏嫌疑报告）：自动分析最可能的泄漏\n3. Histogram（直方图）：按类的实例数量和占用内存排序\n   - Shallow Heap（浅堆）：对象本身占用的内存\n   - Retained Heap（保留堆）：对象 + 它引用的所有对象的总内存\n4. Dominator Tree（支配树）：从 GC Root 到对象的最大路径\n5. Path to GC Roots（GC Root 路径）：找出为什么对象未被回收\n   - 排除软/弱/虚引用（看强引用路径）\n\n常见问题模式：\n1. 集合类泄漏：HashMap 无限增长\n2. 未释放的监听器/回调\n3. ThreadLocal 未清除\n4. 类加载器泄漏（字符串 intern、ClassLoader 引用链）\n\n扩展延伸：JProfiler 和 YourKit 也支持堆分析。jhat 是 JDK 自带的轻量分析工具（已弃用，建议使用 MAT）。OOM 自动堆转储可能会产生巨大的文件（几个 GB），需要确保磁盘空间足够。生产环境中可以在监控脚本中捕获 OOM 信号自动触发转储。",
+    "hints": [
+      "-XX:+HeapDumpOnOutOfMemoryError 自动获取 OOM 时的堆转储",
+      "MAT 的 Suspects Report + Path to GC Roots 是分析泄漏的标准流程"
+    ],
+    "tags": [
+      "JVM",
+      "堆转储",
+      "MAT",
+      "内存分析"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 编译层次",
+    "content": "请介绍 HotSpot JIT 编译的分层编译（Tiered Compilation）机制。C1（Client）和 C2（Server）编译器各有什么特点？JIT 编译如何决定方法是否达到编译阈值？",
+    "answer": "答案：分层编译在 JDK 7 中引入，JDK 8 默认开启，结合 C1 和 C2 编译器的优势。\n\n五个编译层次：\n- Level 0：解释执行（Interpreter）——直接执行字节码\n- Level 1：C1 编译器，完全优化（无 profiling），用于 trivial 方法\n- Level 2：C1 编译器，部分 profiling（方法调用计数、分支跳转计数）\n- Level 3：C1 编译器，完全 profiling（收集完整性能数据）\n- Level 4：C2 编译器，使用 C1 收集的 profile 信息做深度优化编译\n\n编译流程：\n1. 方法初始解释执行，调用计数递增\n2. 达到 Tier 3 编译阈值（默认 200），C1 开始带 profiling 编译\n3. C1 编译的方法运行过程中继续收集 profile 数据\n4. 方法调用计数再次达到阈值后，触发 C2 深度编译\n5. C2 利用 C1 收集的 profiling 信息做大量假设优化（如类层次分析、去虚拟化）\n6. 如果 C2 编译的假设失效（如新的子类被加载），方法退回到 Level 3 重新收集数据\n\nC1 vs C2：\n- C1（Client）：编译速度快（~10ms），优化少。用于快速获得编译代码。\n- C2（Server）：编译速度慢（~100ms+），优化多（逃逸分析、循环展开、自动向量化）。\n- C1 适合 GUI 应用（需要快速启动），C2 适合长期运行的服务端应用。\n\n编译阈值：\n- -XX:CompileThreshold=10000（C2 的直接编译阈值。使用分层编译时，C2 的触发需要方法调用计数 + 回边计数之和达到此值）\n- 回边计数（Backedge Counter）+ 方法调用计数 = 热度\n- -XX:OnStackReplacePercentage=140 控制 OSR（栈上替换）的触发——循环热点导致 JIT 在循环执行过程中替换编译\n\n扩展延伸：分层编译可以通过 -XX:-TieredCompilation 关闭（回退到只使用 C2）。Graal JIT 可以用 -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -XX:+UseJVMCICompiler 启用。AOT（Ahead-of-Time）编译（GraalVM native-image 或 jaotc）在应用启动前完成编译，消除 JIT 预热时间但放弃了运行时 profiling 优化。",
+    "hints": [
+      "分层编译 = 解释执行 → C1 轻量编译（带 profiling）→ C2 深度优化编译",
+      "C1 编译快优化少，C2 编译慢优化多（逃逸分析、循环展开）"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "分层编译",
+      "C1/C2"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JFR 事件机制",
+    "content": "请介绍 JDK Flight Recorder（JFR）的原理和如何使用。JFR 与传统的 JMX 监控相比有什么优势？如何用 JFR 诊断性能问题？",
+    "answer": "答案：JFR 是 JDK 内置的低开销事件记录框架，用于诊断 JVM 和应用性能。\n\n原理：\n1. JFR 包含大量预定义的事件（Event Type），如 GC 事件、锁竞争、方法采样分配、I/O 事件\n2. 事件分为三类：\n   - 即时事件（Instant）：时间点事件（如 OOM）\n   - 持续事件（Duration）：持续一段时间的事件（如 GC 暂停）\n   - 计时事件（Timed）：周期性触发的事件（如 CPU 采样）\n3. 事件写入环形缓冲区（Ring Buffer），溢出时丢弃旧事件\n4. 缓冲区定期刷新到磁盘文件（.jfr 文件）\n5. 默认配置下 JFR 的开销 < 1%\n\n启动方式：\n1. 命令行启动：-XX:StartFlightRecording:filename=recording.jfr,duration=120s\n2. 动态启动：jcmd <pid> JFR.start name=myrecording duration=120s\n3. jmc（JDK Mission Control）图形界面启动\n\nJFR vs JMX：\n- JMX：请求-响应模型，轮询采样（有间隔，可能错过峰值）。开销中等。\n- JFR：事件驱动模型，低开销连续记录（< 1%）。可以记录每一个事件（如每一次 GC 暂停、每一个锁竞争）\n- JFR 可以回溯分析（环形缓冲区保存了最近的记录），JMX 只能看当前值\n- JFR 可以记录方法级采样（-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints），用于火焰图\n\n诊断性能问题：\n1. CPU 热点：JFR 的 CPU 采样事件找到热点方法\n2. 锁竞争：Java Monitor Blocked 事件显示线程等待锁的时长\n3. GC 问题：GC 暂停时间、暂停频率、晋升失败\n4. 内存分配：TLAB 分配事件显示哪些方法分配了大量对象\n5. I/O：Socket/File I/O 事件显示读写操作的延迟\n\n扩展延伸：JDK 14+ 支持自定义 JFR 事件（@jdk.jfr.Event 注解）。OpenJDK 的 async-profiler 也可以生成类似 JFR 的数据。JMC 的自动分析器（Automated Analysis）可以自动检测 GC 压力、锁竞争等问题。JFR 文件可以通过 JDK 自带的 jfr 工具解析和过滤。",
+    "hints": [
+      "JFR = 低开销事件驱动记录（<1%），环形缓冲区保存历史事件",
+      "JFR vs JMX：事件驱动 vs 轮询采样，低开销 vs 中等开销，可回溯 vs 当前快照"
+    ],
+    "tags": [
+      "JVM",
+      "JFR",
+      "监控",
+      "性能诊断"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "类数据共享与 AOT",
+    "content": "请介绍 JDK 的 AppCDS 和 jaotc（AOT 编译器）的关系。AppCDS 加速启动的原理是什么？GraalVM Native Image 的 AOT 编译与 jaotc 有什么区别？",
+    "answer": "答案：AppCDS 和 jaotc 都是 JDK 自带的启动优化技术，但原理和效果不同。\n\nAppCDS 原理：\n- 将类和元数据提前解析、归档到 .jsa 文件\n- JVM 启动时通过内存映射直接加载归档的类元数据，跳过类文件的读取、解析、验证\n- 减少启动时间：省去类加载的 I/O 和解析阶段\n- 对运行时性能没有直接影响（只加速启动）\n- JDK 13+ 支持动态 CDS：-XX:ArchiveClassesAtExit=app.jsa 在退出时自动生成\n\njaotc（JDK 引入的 AOT 编译器）：\n- 在应用启动前将 Java 字节码编译为机器码（.so 库文件）\n- 跳过 JIT 编译的预热阶段，应用启动就达到峰值性能\n- 限制：只能编译已知的代码路径，不能处理动态生成的类或 Lambda\n- JDK 17+ 的 jaotc 基于 Graal 编译器\n- 使用：jaotc --output=app.so --module=java.base 并在启动时 -XX:AOTLibrary=./app.so\n\nGraalVM Native Image vs jaotc：\n- GraalVM Native Image：\n  - 在构建时（build time）完成所有类的分析和编译\n  - 生成独立的可执行文件（包含 GC、线程管理等）\n  - 不依赖 JVM，启动时间极快（毫秒级）\n  - 限制：不支持反射（需要配置 reflect-config.json）、不支持动态代理（需配置）、不支持方法句柄\n  - 在云原生、Serverless 场景中有明显优势\n- jaotc：\n  - 生成共享库，仍然在 JVM 上运行\n  - 减少 JIT 预热但保留 JVM 的完整运行时能力\n  - 对所有动态特性完全支持\n\n扩展延伸：Spring Boot 3.x + GraalVM Native Image = Spring Native。Spring AOT 引擎在构建时处理反射配置、代理配置、序列化配置，生成 GraalVM 兼容的 native 配置。在 Serverless 环境中，Native Image 的启动时间（<100ms）比 JVM（2-5s）有数量级优势。",
+    "hints": [
+      "AppCDS 加速类加载（跳过 I/O+解析），jaotc 跳过 JIT 预热（提前编译为机器码）",
+      "GraalVM Native Image = 完全独立的可执行文件（毫秒级启动），但动态特性受限"
+    ],
+    "tags": [
+      "JVM",
+      "CDS",
+      "AOT",
+      "GraalVM"
+    ]
   }
 ]

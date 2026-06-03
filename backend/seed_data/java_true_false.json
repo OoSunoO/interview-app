@@ -1020,5 +1020,80 @@
       "类型擦除",
       "编译"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "StringBuilder 线程安全",
+    "content": "StringBuilder 是线程安全的，可以在多线程环境中使用。",
+    "answer": "false",
+    "analysis": "StringBuilder 不是线程安全的。其方法（append、insert、delete 等）不进行同步控制。在多线程环境中应使用 StringBuffer（同步方法）或通过外部同步保护 StringBuilder。",
+    "tags": [
+      "Java",
+      "StringBuilder",
+      "StringBuffer",
+      "线程安全"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "switch 表达式有返回值",
+    "content": "Java 14+ 的 switch 表达式（Switch Expression）可以有返回值。",
+    "answer": "true",
+    "analysis": "JDK 14 正式引入了 Switch Expression，使用 -> 语法，可以直接赋值给变量：int num = switch(day) { case MON -> 1; case TUE -> 2; default -> 0; }。switch 表达式是穷尽的（必须覆盖所有可能值），使用 yield 关键字从代码块中返回值。",
+    "tags": [
+      "Java",
+      "switch",
+      "表达式",
+      "JDK14"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Optional 可以序列化",
+    "content": "java.util.Optional 实现了 Serializable 接口。",
+    "answer": "false",
+    "analysis": "Optional 没有实现 Serializable 接口。如果在领域对象中使用 Optional 作为字段并需要序列化（如将对象存入数据库或通过网络传输），会导致 NotSerializableException。正确做法是 Optional 仅作为返回类型使用（方法返回值），不应作为类的字段。",
+    "tags": [
+      "Java",
+      "Optional",
+      "序列化",
+      "最佳实践"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "finally 块不执行",
+    "content": "在 try-catch-finally 中，如果在 try 块中调用 System.exit(0)，finally 块不会执行。",
+    "answer": "true",
+    "analysis": "当调用 System.exit(0) 时，JVM 立即退出，不再执行 finally 块。类似的情况还有：线程被杀死（Thread.stop 或 OS 级 kill -9）、JVM 崩溃、电源故障等。除此之外，正常情况下 finally 块保证执行（即使 try 中有 return）。",
+    "tags": [
+      "Java",
+      "finally",
+      "异常",
+      "JVM"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "CMS GC 已废弃",
+    "content": "CMS（Concurrent Mark Sweep）垃圾回收器在 JDK 14 中被标记为废弃，在 JDK 14 中被正式移除。",
+    "answer": "true",
+    "analysis": "CMS GC 在 JDK 9 中被标记为废弃（@Deprecated），在 JDK 14 中被正式移除（JEP 363）。废弃的原因包括：CMS 存在碎片化问题（promotion failed）、需要大量 CPU 时间、与 G1 相比没有明显优势。G1 GC 在 JDK 9 中成为默认 GC，很好地替代了 CMS 的角色。",
+    "tags": [
+      "Java",
+      "CMS",
+      "GC",
+      "JVM"
+    ]
   }
 ]

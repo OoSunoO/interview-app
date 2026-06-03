@@ -971,5 +971,96 @@
       "PSA",
       "Security Context"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Pod 生命周期与钩子",
+    "content": "请介绍 Kubernetes Pod 的生命周期和钩子（Hook）机制。Pod 有哪些状态？Init Container、PostStart 和 PreStop 钩子分别在什么时机执行？",
+    "answer": "答案：Pod 生命周期从 Pending 到 Running 到 Succeeded/Failed。\n\nPod 状态（Phase）：\n- Pending：已被调度但容器尚未启动（正在拉取镜像、Init Container 未完成）\n- Running：至少一个容器正在运行（或正在重启）\n- Succeeded：所有容器正常退出（如 Job/CronJob 执行完成）\n- Failed：至少一个容器以非零状态退出\n- Unknown：节点与 API Server 失联\n\n容器状态（Container Status）：\n- Waiting：等待中（拉取镜像、等待资源）\n- Running：运行中\n- Terminated：已终止（退出码 0 成功、非 0 失败）\n\nInit Container（初始化容器）：\n- 在应用容器启动前执行，完成初始化任务\n- 多个 Init Container 按顺序执行（串行）\n- 适用于：等待依赖服务就绪、数据库迁移、初始化数据、权限设置\n- Init Container 完成后退出，不持续运行\n\n钩子（Lifecycle Hooks）：\n- PostStart：容器启动后立即执行（不保证在 ENTRYPOINT 之前，是并行执行的）\n  用途：注册服务到注册中心、预热缓存、通知其他系统\n- PreStop：容器停止前执行\n  用途：优雅关闭服务、注销服务注册、完成正在处理的请求\n  Kubernetes 等待 PreStop 完成（以及 terminationGracePeriodSeconds）后才发送 SIGTERM\n\nPod 状态转换：\nPending（调度中）→ Init Container 运行 → Running（主容器启动）→ 收到 SIGTERM → Terminating（执行 PreStop）→ 退出\n\n扩展延伸：Pod 的探针（Probe）——Liveness Probe（存活检测，死锁后重启）、Readiness Probe（就绪检测，是否接收流量）、Startup Probe（启动检测，慢启动容器使用）。Pod 的健康检查频率和超时设置。Pod 退出流程——PreStop（最多 terminationGracePeriodSeconds）→ SIGTERM → 等待 → SIGKILL",
+    "hints": [
+      "Init Container（串行初始化）→ PostStart（容器启动后，与主进程并行）→ PreStop（容器停止前做优雅关闭）",
+      "Pod 生命周期：Pending → InitContainer → Running → Terminating（PreStop）→ 退出"
+    ],
+    "tags": [
+      "K8s",
+      "Pod",
+      "生命周期",
+      "Hook"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 网络模型",
+    "content": "请介绍 Kubernetes 的网络模型。Pod 之间如何通信？Service 的 ClusterIP、NodePort、LoadBalancer 三种类型如何工作？CNI 插件（Calico/Flannel）的区别是什么？",
+    "answer": "答案：K8s 网络要求每个 Pod 有独立 IP，Pod 之间可以直接通信（无需 NAT）。\n\nK8s 网络模型的原则：\n- 所有 Pod 可以无需 NAT 直接相互通信\n- 所有 Node 可以无需 NAT 直接访问所有 Pod\n- Pod 看到的自身 IP 与其他 Pod 看到的该 Pod IP 相同\n\nPod 间通信：\n- 同一 Node 的 Pod：通过 cbr0（网桥）或 CNI 的虚拟网络接口\n- 不同 Node 的 Pod：通过覆盖网络（Overlay Network）或底层网络路由\n\nService 类型：\n1. ClusterIP（默认）：在集群内部暴露服务\n   - 通过 iptables/IPVS 规则将 ClusterIP 流量转发到后端 Pod\n   - 只能在集群内部访问\n2. NodePort：在每个 Node 上开放一个端口（30000-32767）\n   - 外部请求 → NodeIP:NodePort → ClusterIP:Port → Pod\n3. LoadBalancer：云厂商的负载均衡器（如 AWS ELB / ALB）\n   - 外部请求 → LB → NodePort → ClusterIP → Pod\n\nCNI 插件对比：\n- Flannel：简单的 Overlay 网络（VXLAN），性能略低，适合小规模集群\n- Calico：基于 BGP（边界网关协议），无 Overlay 封装，性能更好\n  支持网络策略（Network Policy），可做精细的网络安全控制\n- Cilium：基于 eBPF（内核扩展），性能极高，支持 L7 网络策略和可观测性\n\n扩展延伸：Ingress——七层负载均衡器（HTTP/HTTPS），基于域名/路径路由到不同 Service。Ingress Controller——Nginx Ingress、Traefik、HAProxy。Service Mesh——将服务间通信下沉到 Sidecar Proxy。Network Policy——Pod 级别的防火墙规则（入站/出站规则），需要 Calico/Cilium 等支持。",
+    "hints": [
+      "K8s 网络核心：Pod 独立 IP + 无 NAT 通信 + Service 负载均衡",
+      "Service 类型：ClusterIP（集群内）→ NodePort（节点端口）→ LoadBalancer（云 LB）",
+      "CNI 选型：Flannel（简单 Overlay）→ Calico（BGP+NetworkPolicy）→ Cilium（eBPF 高性能）"
+    ],
+    "tags": [
+      "K8s",
+      "网络",
+      "Service",
+      "CNI"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 存储与持久卷",
+    "content": "请介绍 Kubernetes 的存储体系。PV、PVC、StorageClass 的关系是什么？有状态应用（StatefulSet）如何管理持久化存储？",
+    "answer": "答案：K8s 通过 PV（PersistentVolume）和 PVC（PersistentVolumeClaim）解耦存储的提供和使用。\n\n核心概念：\n- PV（持久卷）：集群级别的存储资源，由管理员提供（提前创建或动态供应）\n  支持：NFS、iSCSI、云磁盘（AWS EBS/GCP PD/Azure Disk/Cinder）\n- PVC（持久卷声明）：用户对存储的请求（大小 + 访问模式）\n- StorageClass：描述存储的\"类\"（如 SSD 盘 / HDD 盘 / 分布式存储），实现动态供应\n\nPV 生命周期：\n1. 供应：静态（管理员提前创建 PV）或动态（StorageClass 自动创建 PV）\n2. 绑定：PVC 绑定到满足条件的 PV（一对一绑定）\n3. 使用：Pod 通过 Volume 使用 PVC\n4. 释放：删除 PVC 后，PV 的状态为 Released\n5. 回收策略：Retain（保留，手动回收）、Delete（自动删除）、Recycle（清除后重用，已弃用）\n\nStatefulSet 的存储管理：\n- StatefulSet 为每个副本创建独立的 PVC（volumeClaimTemplates）\n- 每个 Pod 绑定自己的 PVC，Pod 重建后重新挂载同一 PVC（数据不丢失）\n- 存储序数：pod-0 → pvc-0，pod-1 → pvc-1（Pod 与 PVC 一一对应）\n- 缩容时 PVC 不会被自动删除（必须手动删除，防止误删数据）\n\n访问模式：\n- ReadWriteOnce（RWO）：单节点读写（块存储，如 AWS EBS）\n- ReadOnlyMany（ROX）：多节点只读\n- ReadWriteMany（RWX）：多节点读写（分布式文件系统，如 NFS/CephFS）\n\n扩展延伸：CSI（Container Storage Interface）——标准化的存储插件接口，K8s 1.13 GA。CSI Driver 使不同存储厂商以标准方式接入 K8s。Local PV——使用本地磁盘（SSD/NVMe），性能最好但数据不跨节点（Pod 重新调度时需要数据迁移）。卷快照（VolumeSnapshot）——备份和恢复 PVC 的数据。",
+    "hints": [
+      "PV（资源供给）→ PVC（资源请求）→ StorageClass（动态供应）",
+      "StatefulSet = volumeClaimTemplates → 每个 Pod 绑定独立 PVC（Pod 重启数据不丢）"
+    ],
+    "tags": [
+      "K8s",
+      "存储",
+      "PV",
+      "PVC"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 调度与亲和性",
+    "content": "请介绍 Kubernetes 的调度器（Scheduler）工作原理。Pod 如何指定调度到特定的 Node？节点亲和性（Node Affinity）、Pod 亲和性（Pod Affinity）和污点/容忍（Taint/Toleration）的区别是什么？",
+    "answer": "答案：K8s Scheduler 将未调度的 Pod 分配到合适的 Node。\n\n调度过程：\n1. 过滤（Predicates / Filtering）：选出满足 Pod 资源请求的 Node\n   - Pod 请求的 CPU 和内存必须 ≤ Node 可分配量\n   - Pod 的端口不能冲突\n   - PersistentVolume 的 NodeAffinity 条件\n2. 评分（Priorities / Scoring）：对通过过滤的 Node 打分\n   - 资源利用率均衡（LeastRequestedPriority）\n   - 资源局部性（将 Pod 调度到已有数据的 Node）\n   - Pod 间亲和性/反亲和性\n3. 绑定：选择最高分的 Node，将 Pod 绑定到它。\n\n节点亲和性（Node Affinity）：\n- requiredDuringSchedulingIgnoredDuringExecution（硬性要求）：必须满足的条件\n- preferredDuringSchedulingIgnoredDuringExecution（软偏好）：优先选择\n- 示例：nodeSelectorTerms: matchExpressions: key: disktype operator: In values: [ssd]\n\nPod 亲和性（Pod Affinity / Anti-Affinity）：\n- Pod 亲和性：将 Pod 调度到同一 Node/Zone（低延迟，减少跨节点通信）\n- Pod 反亲和性：将 Pod 分散到不同 Node/Zone（高可用，故障隔离）\n- topologyKey 指定拓扑域（kubernetes.io/hostname 节点级别 / topology.kubernetes.io/zone 可用区级别）\n\n污点与容忍（Taint & Toleration）：\n- Taint（污点）：标记 Node 具有某种缺陷（如专用 GPU、磁盘故障）\n  kubectl taint nodes node1 key=value:NoSchedule\n- Toleration（容忍）：Pod 声明可以容忍该污点（主动选择）\n- 效果：NoSchedule（不调度）、PreferNoSchedule（尽量不调度）、NoExecute（驱逐现有 Pod）\n\n扩展延伸：自定义调度器——实现自己的 Scheduler（如基于 GPU 温度调度）。调度器扩展（Scheduler Extender / Scheduling Framework）——在过滤/评分阶段插入自定义逻辑。Descheduler——重新平衡集群中 Pod 的分布（解决调度后的不均衡）。",
+    "hints": [
+      "调度 = 过滤（选满足条件的 Node）+ 评分（打分最高的 Node）+ 绑定",
+      "Node Affinity（选择 Node 特征）→ Pod Affinity（聚合同类 Pod）→ Anti-Affinity（分散 Pod）→ Taint/Toleration（拒绝/容忍）"
+    ],
+    "tags": [
+      "K8s",
+      "调度",
+      "亲和性",
+      "污点"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 安全与 RBAC",
+    "content": "请介绍 Kubernetes 的安全模型。RBAC（基于角色的访问控制）如何工作？ServiceAccount 和 User Account 的区别是什么？Pod 安全策略（Pod Security Admission）和 NetworkPolicy 如何保护集群？",
+    "answer": "答案：K8s 安全模型保护 API Server 访问和 Pod 运行安全。\n\nK8s 安全层次：\n1. 传输安全：API Server 使用 TLS 加密通信\n2. 认证（Authentication）：验证请求者身份\n   - 客户端证书、Bearer Token（ServiceAccount Token）、OIDC（OpenID Connect）\n3. 授权（Authorization）：验证请求者是否有权限\n   - RBAC（最常用）、ABAC（属性基，已不推荐）、Webhook\n4. 准入控制（Admission Control）：在资源创建/更新时校验\n\nRBAC（基于角色的访问控制）：\n- 四个核心资源：\n  - Role：命名空间内的权限集合\n  - ClusterRole：集群级别的权限集合\n  - RoleBinding：将 Role 绑定到主体的绑定（命名空间内）\n  - ClusterRoleBinding：将 ClusterRole 绑定到主体（跨命名空间）\n- 权限格式：apiGroups + resources + verbs（get/list/create/update/delete/watch）\n\nServiceAccount vs User Account：\n- User Account：真实用户（管理员/开发者），用于 kubectl 操作，由外部认证（证书/OIDC）\n- ServiceAccount：Pod 使用的身份，用 Secret（自动挂载到 Pod）\n- ServiceAccount 默认自动挂载到 Pod 的 /var/run/secrets/kubernetes.io/serviceaccount\n\nPod 安全（Pod Security Admission，K8s 1.23+）：\n- 替代 PodSecurityPolicy（已弃用）\n- 预定义安全等级：Privileged（宽松）、Baseline（基本）、Restricted（严格）\n- 限制：不允许特权容器、不允许 hostNetwork、只读根文件系统、不允许特权提升\n\n扩展延伸：NetworkPolicy——Pod 粒度的防火墙（入站/出站规则），需要 CNI 插件支持（Calico/Cilium）。Secret 管理——base64 编码（不是加密），需要外部工具（Sealed Secrets / External Secrets / Vault）加密存储。OPA/Gatekeeper——可编程的准入控制策略（如要求所有镜像来自可信仓库）。",
+    "hints": [
+      "K8s 安全：TLS + 认证（你是谁）+ 授权（RBAC：你能做什么）+ 准入控制（检查做什么）",
+      "RBAC = Role/ClusterRole（权限）+ RoleBinding/ClusterRoleBinding（绑定到用户/ServiceAccount）"
+    ],
+    "tags": [
+      "K8s",
+      "安全",
+      "RBAC",
+      "ServiceAccount"
+    ]
   }
 ]
