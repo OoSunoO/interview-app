@@ -98,5 +98,55 @@
     "answer": "安全挑战：Prompt 注入（恶意指令劫持 Agent）、工具滥用、权限提升、数据泄露。对齐策略：最小权限原则（仅给必要工具）、人类审批环（高危操作需确认）、沙箱执行、输入输出过滤、行为约束（System Prompt 边界）。",
     "hints": ["间接 Prompt 注入如何防范", "Agent 的审计日志应该记录什么"],
     "tags": ["Agent", "安全"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 评估方法",
+    "content": "如何系统性地评估一个 AI Agent 的性能和质量？",
+    "answer": "答案：Agent 评估需要多维度：1）任务完成率——端到端成功率，如 Agent 能否在 5 步内完成用户目标。2）工具调用准确率——是否选择了正确的工具并生成正确的参数。3）推理质量——CoT 的合理性、错误纠正能力。4）鲁棒性——对输入扰动和模糊指令的应对。5）效率——完成任务所需的步骤和 token 消耗。\n\n解析：评估框架：1）基准测试（Benchmark）——GAIA、AgentBench、SWE-bench 等标准化测试集。2）人工评估——专家评分 + 用户满意度调查，最准确但成本高。3）LLM-as-Judge——用更强的模型评分，可自动化但可能有偏。4）单元测试——对单个工具调用/推理步骤做断言验证。\n\n扩展延伸：实际工程中建议建立持续评估流水线：每次 Agent 更新后在固定测试集上跑分，对比关键指标（成功率、平均步骤数、错误率）。注意：Agent 的非确定性导致评估结果有方差，建议多次运行取统计值。",
+    "hints": ["LLM-as-Judge 评估 Agent 时可能存在什么偏差", "为什么 Agent 基准测试容易过拟合"],
+    "tags": ["Agent", "评估"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 可观测性",
+    "content": "Agent 系统中的可观测性（Observability）需要关注哪些方面？如何调试 Agent 行为？",
+    "answer": "答案：Agent 可观测性核心关注三点：链路追踪、状态快照、成本监控。\n\n解析：1）链路追踪（Tracing）——记录每步的输入和输出：system prompt、用户输入、模型回复（含 CoT 过程）、工具调用请求和返回结果。用 Trace ID 串联完整会话。2）状态快照（State Logging）——完整记录 Agent 的内部状态变化，包括当前目标、已完成子任务、记忆检索结果、决策依据。3）成本监控——每次 LLM 调用的 token 消耗、工具调用的延迟、API 费用。\n\n扩展延伸：工程实践：1）使用结构化的 JSON 日志格式，每步输出包含 step_id、parent_step_id、type（thought/action/observation）、latency_ms、token_usage。2）引入 LangSmith/Arize/MLflow 等可观测平台。3）建立回放机制（Replay）——用历史日志重放 Agent 执行过程，方便定位问题。4）设置监控告警：单次调用超时、连续失败步数、token 骤增。",
+    "hints": ["为什么 Agent 的调试比传统后端应用更难", "Trace 日志中应该记录哪些信息来帮助复盘失败案例"],
+    "tags": ["Agent", "可观测性", "调试"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "结构化输出（Structured Output）",
+    "content": "在 Agent 系统中，如何可靠地从 LLM 获取结构化输出？有哪些方法？",
+    "answer": "答案：主要方法包括：JSON Mode、Function Calling（工具调用）、Guidance/Outlines（约束解码）。\n\n解析：1）JSON Mode——在 system prompt 中要求模型返回 JSON 格式并给出 schema 示例。简单但不可靠，复杂 schema 容易出错。2）Function Calling——定义工具函数 schema，模型返回结构化参数。适合有明确参数约束的场景。3）约束解码——如 JSON-mode（OpenAI）、Guidance（微软）、Outlines——在解码阶段约束 token 生成空间，保证输出格式严格合法。最可靠但需要框架支持。\n\n扩展延伸：工程建议：1）优先使用 Function Calling 获取结构化输出，它在主流 API 中经过充分测试。2）在不支持 Function Calling 的模型上用约束解码。3）始终在获取结构化输出后加一层 schema 校验（如 Zod/Pydantic），不信任模型输出。4）校验失败时重试一次，失败后降级。",
+    "hints": ["Function Calling 返回的 JSON 是否一定合法", "约束解码相比 JSON Mode 的优缺点是什么"],
+    "tags": ["Agent", "结构化输出", "Function Calling"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent Prompt Engineering 模式",
+    "content": "Agent 系统的 Prompt Engineering 有哪些核心模式和最佳实践？",
+    "answer": "答案：核心模式包括：角色定义、能力边界声明、工具描述规范、错误处理流程。\n\n解析：1）角色定义——明确 Agent 的身份、目标和约束（如「你是一个客服 Agent，只回答产品相关的问题」）。2）能力边界——告诉 Agent 自己能做什么和不能做什么（如「你不知道用户的密码」），减少幻觉。3）工具描述规范——每个工具的描述遵循「何时使用 ± 功能 ± 参数说明」格式，避免模糊描述。如：「search_flights: 当用户需要查询航班信息时使用。参数：origin（出发地 IATA 码），destination（目的地 IATA 码），date（日期 YYYY-MM-DD）」。4）错误处理流程——指导 Agent 在工具调用失败时如何处理（重试、降级、求助用户）。\n\n扩展延伸：高级技巧：1）Few-shot 示例——在 system prompt 中给 2-3 个完整的推理+调用示例。2）阶梯式约束——由松到严：先给宽松的指导原则，再加硬性规则（「绝对不要执行任何写操作」）。3）动态 Prompt 拼接——运行时根据用户上下文动态组装 system prompt 的不同模块（如记忆模块、工具列表模块）。4）定期评估 Prompt 质量——用 A/B 测试比较不同 prompt 版本的任务完成率。",
+    "hints": ["工具描述中「何时使用」和「功能」哪个更重要", "为什么 Few-shot 示例应该放在 system prompt 的末尾"],
+    "tags": ["Agent", "Prompt", "工程"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MCP（Model Context Protocol）",
+    "content": "请解释 MCP（Model Context Protocol）是什么，它解决了什么问题？",
+    "answer": "答案：MCP 是 Anthropic 提出的开放协议，定义 Agent/LLM 与外部工具和数据源之间的标准化接口。类比于「AI 界的 USB-C」，让模型通过统一协议接入任意工具。\n\n解析：MCP 解决了 Agent 工具集成的碎片化问题——传统上每个工具需要自定义集成代码，MCP 定义了统一：1）工具发现（Server 列出可用工具）。2）工具调用（Client→Server 的标准化请求/响应）。3）资源访问（读取文件、数据库等）。4）安全边界（权限声明和隔离）。架构：MCP Host（LLM 应用）→ MCP Client（协议客户端）→ MCP Server（工具提供方）。\n\n扩展延伸：MCP vs Function Calling：两者不冲突，MCP 是协议层（如何发现和调用），Function Calling 是模型层（如何生成参数）。MCP 的引入简化了 Agent 的工具扩展——新工具只需实现 MCP Server 即可被任意 MCP 兼容的 Agent 使用。OpenAI 的同类方案是 GPT Actions（基于 OpenAPI Schema）。",
+    "hints": ["MCP 和传统的 API Gateway 在概念上有什么异同", "在已有 Function Calling 的系统中引入 MCP 会带来什么价值"],
+    "tags": ["Agent", "MCP", "协议"]
   }
 ]

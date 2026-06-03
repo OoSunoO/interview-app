@@ -98,5 +98,55 @@
     "answer": "BEM = Block（组件块）__Element（元素）--Modifier（状态）。例：card__title--active。优势：命名空间避免冲突、结构清晰一眼看出层级关系、可维护性强。缺点：命名可能过长。替代方案：CSS Modules、Tailwind CSS、CSS-in-JS。",
     "hints": ["BEM 和 CSS Modules 对比", "为什么大型项目需要 CSS 规范"],
     "tags": ["CSS", "规范"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "浏览器渲染流程（CRP）",
+    "content": "请描述浏览器从接收 HTML 到完成页面渲染的完整流程。",
+    "answer": "答案：关键渲染路径（Critical Rendering Path）分为六步：\n\n1）HTML 解析——浏览器解析 HTML 生成 DOM 树。遇到 `<script>`（无 async/defer）时阻塞解析。2）CSS 解析——解析 CSS 生成 CSSOM 树。CSS 阻塞渲染但不阻塞 DOM 解析。3）合并渲染树——合并 DOM + CSSOM 生成 Render Tree（剔除 display:none 的节点）。4）布局（Layout）——计算每个节点的几何信息（位置和尺寸），递归构建 Layout Tree。5）绘制（Paint）——将 Render Tree 绘制为像素，填充颜色/边框/阴影等。6）合成（Composite）——将各层合成为最终画面，由 GPU 完成。\n\n扩展延伸：优化策略：1）精简 HTML/CSS/JS 体积。2）CSS 放 `<head>`，JS 放 `</body>` 前或加 async/defer。3）避免强制同步布局（Force Layout）——不要连续读取 offsetHeight 再修改 style。4）使用 transform 和 opacity 做动画（只触发合成，不触发布局和绘制）。5）content-visibility: auto 对首屏不可见内容延迟渲染。",
+    "hints": ["回流（Reflow）和重绘（Repaint）的区别", "为什么 transform: translate() 比 left/top 性能好"],
+    "tags": ["浏览器", "渲染", "性能"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端安全：XSS 与 CSRF",
+    "content": "请解释 XSS 和 CSRF 攻击的原理及防御措施。",
+    "answer": "答案：XSS（跨站脚本攻击）：攻击者将恶意脚本注入页面。CSRF（跨站请求伪造）：攻击者诱导用户执行非本意的操作。\n\n解析：XSS 分类：1）反射型 XSS——恶意脚本在 URL 参数中，服务端未转义直接返回。防御：对用户输入做 HTML 转义（`&<>\"'`），CSP 限制脚本来源。2）存储型 XSS——恶意脚本存入数据库，其他用户访问时执行。防御：输出编码 + Content Security Policy（CSP）。3）DOM 型 XSS——客户端 JS 将用户输入直接插入 innerHTML。防御：使用 textContent 替代 innerHTML，或使用 DOMPurify 消毒。\n\nCSRF 防御：1）SameSite Cookie（Lax/Strict 模式，最有效的现代方案）。2）CSRF Token——表单中嵌入随机 token，服务端校验。3）Referer/Origin 校验。4）关键操作要求二次确认（如输入密码或验证码）。\n\n扩展延伸：现代框架（React/Vue/Svelte）默认对绑定的变量做 HTML 转义，已防御了大部分 XSS。风险主要在：dangerouslySetInnerHTML / v-html / {@html}、第三方脚本、JSONP 接口。CSP 是最深层的防御——即使有 XSS，CSP 也能阻止脚本执行。",
+    "hints": ["有了框架的自动转义为什么还会出现 XSS", "SameSite=Lax 和 SameSite=Strict 的适用场景"],
+    "tags": ["安全", "XSS", "CSRF"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端构建工具：Webpack vs Vite",
+    "content": "请对比 Webpack 和 Vite 的构建原理和适用场景。",
+    "answer": "答案：核心区别在于开发服务器的实现方式和构建策略。\n\n解析：1）开发阶段——Webpack 启动时全量打包所有模块（即使当前页面只用了一小部分），项目越大启动越慢（分钟级）。Vite 利用浏览器原生 ES Module 支持，按需编译——启动时仅预构建 node_modules 依赖（用 esbuild），源文件直接作为 ESM 提供给浏览器，冷启动秒级。2）热更新（HMR）——Webpack 修改一个文件需要重新打包该模块及其依赖链；Vite 利用 ESM 的模块隔离性，只需替换被修改的文件（精确到模块边界），大项目仍保持毫秒级更新。3）生产构建——Vite 用 Rollup（不是 esbuild），因为 Rollup 的 Tree Shaking 和代码分割更成熟。Webpack 用自己的一套，插件生态更丰富。\n\n扩展延伸：选型建议：新项目优先 Vite（Svelte/React/Vue 官方脚手架都已切到 Vite），享受开发体验提升。遗留项目（特别是依赖 Webpack 插件和复杂配置的）保持 Webpack。Vite 的处理策略：SSR 支持原生、对传统 Webpack Loader 的依赖可能需要迁移。",
+    "hints": ["Vite 开发环境和生产环境为什么使用不同的打包器", "为什么 Vite 的 HMR 比 Webpack 快"],
+    "tags": ["构建工具", "Webpack", "Vite"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端缓存策略",
+    "content": "前端性能优化中缓存策略有哪些？如何合理利用缓存？",
+    "answer": "答案：前端缓存分三层：HTTP 缓存、Service Worker 缓存、应用层缓存（内存/存储）。\n\n解析：1）HTTP 缓存——通过响应头控制。强缓存：Cache-Control: max-age=31536000（缓存一年，适合指纹化静态资源）。协商缓存：ETag/Last-Modified（资源变化时服务端告知客户端更新）。策略：HTML 用 no-cache（每次都校验），CSS/JS 带 hash 用 max-age=1年。2）Service Worker 缓存——PWA 核心，拦截网络请求做更细粒度的缓存控制（Cache First / Network First / Stale-While-Revalidate）。3）应用层缓存——localStorage（同步读写 5MB 上限，适合小数据）、IndexedDB（异步读写无上限，适合大数据如离线数据）、内存缓存（React useMemo、手动 Map 缓存）。\n\n扩展延伸：缓存失效问题：1）资源更新——文件名加 hash（content hash）或版本号参数。2）灰度发布和缓存——灰度版本用不同的资源 CDN 路径。3）CDN 缓存——CDN 节点的缓存需要主动刷新或等待 TTL 过期。",
+    "hints": ["为什么 HTML 文件不适合设置长时间的强缓存", "Service Worker 的 Stale-While-Revalidate 策略的工作原理"],
+    "tags": ["缓存", "性能优化"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web 存储方案对比",
+    "content": "请对比 Cookie、localStorage、sessionStorage、IndexedDB 的特点和适用场景。",
+    "answer": "答案：四种存储机制从容量、作用域、API 类型等方面各有不同。\n\n解析：1）Cookie——容量 4KB，每次请求自动发送到服务端。适用：身份认证信息（Session ID / JWT Token），HttpOnly 防 XSS 读取。特点：可设置 domain/path/expires/SameSite。2）localStorage——容量 5MB，持久化存储（不主动清除不删除），仅客户端访问。适用：用户偏好、缓存数据。特点：同步 API，只能存字符串。3）sessionStorage——容量 5MB，标签页级隔离，关闭标签页清除。适用：临时表单数据。4）IndexedDB——容量无上限（取决于磁盘），异步 API 支持事务和索引。适用：离线数据、大文件（图片/文档）、结构化数据。\n\n扩展延伸：选型建议：需要服务端读取 → Cookie。简单键值持久化 → localStorage。标签页级临时数据 → sessionStorage。大量结构化/离线数据 → IndexedDB（引入 idb 库简化 Promise 封装）。性能注意：localStorage 的同步读写阻塞主线程，高频操作建议用内存缓存做中间层。",
+    "hints": ["localStorage 在多标签页场景下的同步问题", "IndexedDB 相比 localStorage 的核心优势是什么"],
+    "tags": ["存储", "Web API"]
   }
 ]
