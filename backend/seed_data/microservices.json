@@ -148,5 +148,70 @@
     "answer": "答案：Nginx 反向代理接收客户端请求并转发到后端服务器，负载均衡通过 upstream 模块将流量分发到多台服务器。支持轮询、加权轮询、IP Hash、最少连接等算法。\n\n解析：反向代理 vs 正向代理：正向代理代理客户端（如翻墙），反向代理代理服务端（客户端不知道实际服务端是谁）。负载均衡配置示例：upstream backend { server 192.168.1.1 weight=3; server 192.168.1.2 weight=2; }。负载均衡算法：1）轮询（默认）——依次分发，适合无状态服务。2）加权轮询——按权重比例分发，适合异构机器。3）IP Hash——对客户端 IP 哈希，保证同一客户端始终路由到同一后端（Session 亲和性）。4）最少连接——分发到当前活跃连接最少的后端。\n\n扩展延伸：Nginx 限流配置：ngx_http_limit_req_module（限 QPS）基于漏桶算法：limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s。ngx_http_limit_conn_module（限并发连接数）：limit_conn_zone $binary_remote_addr zone=addr:10m；limit_conn addr 100。应用层限流常用 Sentinel（Java）。Nginx 健康检查：被动（fail_timeout 内出错次数超标即标记不可用）和主动（ngx_http_upstream_check_module 定时探活）。七层 vs 四层负载均衡：HTTP/HTTPS 场景用七层（可解析 URL 做路由），TCP/UDP 场景用四层（性能更高）。Nginx 主要做七层，LVS/HAProxy 擅长四层。",
     "hints": ["Nginx 七层负载均衡和 LVS 四层负载均衡的适用场景", "Nginx 限流 rate=10r/s 的 burst 参数作用是什么"],
     "tags": ["Nginx", "反向代理", "负载均衡", "限流"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式事务（Seata）",
+    "content": "微服务架构中分布式事务有哪些方案？Seata 的 AT/TCC/Saga 模式有什么区别？",
+    "answer": "答案：分布式事务主流方案：2PC（强一致）、TCC（补偿）、Saga（最终一致）。Seata 同时支持 AT（自动 2PC）、TCC（手动补偿）和 Saga（编排模式）。\n\n解析：1）2PC（两阶段提交）——准备阶段（Prepare）+ 提交/回滚阶段。强一致但性能差（资源锁定时长长），不适合高并发场景。Seata AT 模式自动生成反向 SQL 实现回滚，对业务代码几乎零侵入。2）TCC（Try-Confirm-Cancel）——Try 阶段预留资源（如冻结库存），Confirm 阶段确认（扣减），Cancel 阶段释放（解冻）。需要业务方实现三阶段接口，侵入性高但性能优于 2PC。3）Saga——长事务拆为多个本地事务，每步完成后发送事件触发下一步；失败时执行逆向补偿操作。不适合有中间状态一致性要求的场景。\n\n扩展延伸：选型建议：事务边界内操作少 + 强一致性要求 → AT 模式（最适合大多数微服务场景）。涉及第三方资源（不提供回滚 API）→ TCC 模式。长事务 + 可接受最终一致 → Saga。实际决策：绝大多数业务不需要分布式事务——可以通过最终一致性（消息队列 + 本地事件表）实现，比 Seata 更轻量。消息队列 + 本地消息表方案：事务开始时发送消息到本地事件表（同一本地事务），定时轮询发送到 MQ，消费端幂等处理。这是阿里的核心分布式事务方案（RocketMQ 事务消息），也是大多数场景推荐的做法。",
+    "hints": [
+      "为什么大多数业务不需要分布式事务",
+      "RocketMQ 事务消息如何实现最终一致性"
+    ],
+    "tags": ["分布式事务", "Seata", "TCC", "Saga"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "事件驱动架构与 CDC",
+    "content": "请解释事件驱动架构（Event-Driven Architecture）和 CDC（Change Data Capture）的原理。",
+    "answer": "答案：事件驱动架构是一种服务间通过事件进行异步通信的架构模式，CDC 通过监听数据库变更日志将数据变更转化为事件流，是最可靠的事件捕获方式。\n\n解析：事件驱动架构核心：服务不直接调用其他服务，而是发布事件到消息总线，订阅者自行处理。关键优势：服务间解耦、可扩展性好、支持事件溯源。CDC（Change Data Capture）：通过读取数据库 binlog 的变更记录，将 INSERT/UPDATE/DELETE 转化为事件。Debezium（Red Hat，最流行的 CDC 平台）基于 Kafka Connect，支持 MySQL/PostgreSQL/MongoDB 等。典型架构：MySQL binlog → Debezium → Kafka → 下游服务消费。\n\n扩展延伸：事件驱动 vs 请求驱动：请求驱动（如 REST API）存在调用链长、耦合度高、可用性联动问题——A->B->C 链上任何一环挂了请求就失败。事件驱动牺牲了实时一致性，换来了可用性解耦和弹性伸缩。两种实现方式：1）消息队列（Kafka/RocketMQ）——异步解耦，生产者不需要知道消费者 2）CDC——不修改业务代码，通过数据库日志提取变更事件。适用场景：跨服务数据同步（订单→搜索→缓存）、微服务间状态同步、审计日志、CQRS 的写端事件源。注意：事件驱动增加系统复杂度（消息幂等、顺序性、死信处理），简单 CRUD 系统不要强行上事件驱动。",
+    "hints": [
+      "CDC 和 MQ 发布订阅的区别是什么",
+      "Debezium 如何保证 binlog 不丢失"
+    ],
+    "tags": ["事件驱动", "CDC", "Debezium", "Kafka"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "gRPC 协议与 Protobuf",
+    "content": "请介绍 gRPC 的核心特性和与 REST/OpenFeign 的对比。",
+    "answer": "答案：gRPC 是 Google 开源的高性能 RPC 框架，基于 HTTP/2 和 Protocol Buffers，支持双向流、流控和强类型接口定义。相比 REST/Feign，gRPC 性能更高、类型更安全，但调试和浏览器兼容性较差。\n\n解析：gRPC 核心特性：1）Protocol Buffers——强类型的接口定义语言（IDL），.proto 文件定义服务和消息，自动生成客户端/服务端代码。相比 JSON 的文本编码，Protobuf 是二进制编码，体积小 3-10 倍，解析速度快。2）HTTP/2——多路复用（单一连接传输多个流）、头部压缩（HPACK）、Server Push、双向流（客户端流/服务端流/双向流）。3）四种调用模式：Unary（一元 RPC，类似 HTTP 请求-响应）、Server Streaming（服务端流，如日志推送）、Client Streaming（客户端流，如上传文件）、Bidirectional Streaming（双向流，如实时聊天）。\n\n扩展延伸：REST vs gRPC 选型：外部 API / 浏览器端 → REST（HTTP/1.1 JSON，兼容性好）。内部服务间调用 → gRPC（性能好、类型安全）。Spring Boot 集成：spring-grpc（社区，非官方）或 grpc-spring-boot-starter（LogNet）。gRPC 在 K8s 生态中的角色：Istio 的 Envoy 原生支持 gRPC 流量管理，K8s Service 支持 gRPC 负载均衡（gRPC 使用 L7 负载均衡，需应用层解析 HTTP/2 流）。注意：gRPC 不适合浏览器端（需 gRPC-Web 转接），且在负载均衡器不支持 HTTP/2 时可能出问题。",
+    "hints": [
+      "Protobuf 相比 JSON 为什么更快更小",
+      "gRPC 双向流在哪些场景有独特优势"
+    ],
+    "tags": ["gRPC", "Protobuf", "HTTP/2", "RPC"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "API 版本管理策略",
+    "content": "微服务中如何管理 API 版本？向后兼容性和版本演进策略是什么？",
+    "answer": "答案：API 版本管理策略包括 URI 路径版本（/v1/orders）、请求头版本（Accept: application/vnd.myapp.v1+json）、查询参数版本（?version=1）。推荐 URI 路径版本，显式且易于调试。\n\n解析：1）URI 路径版本——/api/v1/orders 和 /api/v2/orders 并存，新旧版本可独立部署。显式、易调试、适合公共 API。缺点：URL 不纯净、版本散落在各 URL。2）请求头（Media Type Versioning）——Accept: application/vnd.myapp.v1+json。URL 干净，适合内部 API。缺点：调试不方便（需检查 HTTP Header）、浏览器访问困难。3）查询参数——/api/orders?version=1。配置灵活，也最容易被滥用（忘记参数时默认版本混乱）。\n\n扩展延伸：API 演进的核心原则——向后兼容性（Backward Compatibility）：1）只加不减——不能删除字段或参数（设为 deprecated）。2）只使非必填——不能把可选字段改为必填。3）新增 endpoint 安全，但修改已有 endpoint 行为要谨慎。4）给客户端足够时间迁移——deprecated 后至少保持一个版本周期（如 6 个月），打 Deprecated 日志。Service Mesh 版本路由：Istio 的 VirtualService 可以按 header/uri 做流量路由（v1 → 10%, v2 → 90%），实现金丝雀发布和灰度测试。语义化版本（SemVer）：MAJOR（不兼容变更）.MINOR（向后兼容新功能）.PATCH（向后兼容 Bug 修复），对 API 设计同样适用。",
+    "hints": [
+      "URI 版本和 Header 版本各自的开发者体验差异",
+      "向后兼容性被破坏的最常见场景是什么"
+    ],
+    "tags": ["API", "版本管理", "兼容", "Restful"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "可观测性三大支柱",
+    "content": "请解释可观测性（Observability）的三大支柱——指标（Metrics）、日志（Logs）、链路（Traces），以及它们之间的关系。",
+    "answer": "答案：可观测性三大支柱：Metrics（监控趋势和告警）、Logs（排查具体问题）、Traces（追踪跨服务请求路径）。三者覆盖从宏观到微观的不同粒度，合起来才能全面理解系统状态。\n\n解析：1）Metrics（指标）——聚合的、时间序列的数据（QPS/P99/错误率/CPU）。工具：Prometheus + Grafana。适用：宏观系统健康、告警触发、容量规划。缺点是只知道「有异常」但不知道具体哪个请求出了问题。2）Logs（日志）——离散的事件记录，包含丰富的上下文信息（请求参数、堆栈、异常详情）。工具：ELK/Loki。适用：微观问题定位、异常根因分析。缺点是数据量大、难以从整体趋势发现问题。3）Traces（链路）——单个请求横跨多个服务的完整调用链，各阶段耗时和状态。工具：Jaeger/SkyWalking。适用：慢请求分析、服务依赖梳理、瓶颈定位。\n\n扩展延伸：三者的关联实践：1）指标驱动告警——P99 延迟升高触发告警 2）通过链路定位慢在哪一环节——某服务调用耗时占大头 3）提取该环节的日志定位具体错误——数据库慢查询或网络超时。OpenTelemetry 标准：统一的三者采集标准，厂商无关的 API 和 SDK，推荐新项目直接使用 OpenTelemetry，后端选择 Jaeger/Zipkin/SkyWalking 按需。上下文传播：TraceID 在服务间传递关联日志、指标和链路的关键。参考 Google 的《Site Reliability Engineering》和《分布式系统可观测性》经典实践。",
+    "hints": [
+      "OpenTelemetry 和 Jaeger/Prometheus 之间是什么关系",
+      "TraceID 如何在跨服务调用中传播"
+    ],
+    "tags": ["可观测性", "Metrics", "Logs", "Traces", "OpenTelemetry"]
   }
 ]

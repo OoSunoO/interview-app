@@ -283,5 +283,70 @@
       "索引"
     ],
     "company": "美团"
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL Join 算法",
+    "content": "请介绍 MySQL 执行 JOIN 查询的几种算法及优化策略。",
+    "answer": "答案：MySQL 支持 Nested Loop Join、Hash Join（MySQL 8.0.18+）、Batched Key Access（BKA）三种 JOIN 算法。\n\n解析：1）Nested Loop Join（NLJ）——驱动表逐行匹配被驱动表，被驱动表有索引时高效（Index Nested-Loop Join），无索引时全表扫描极慢（Simple Nested-Loop Join）。Block Nested-Loop Join（BNL）优化：将驱动表的多行缓存到 Join Buffer 中批量匹配。2）Hash Join（MySQL 8.0.18+）——将小表构建哈希表，大表逐行探测。适用于等值 JOIN、被驱动表无索引的场景，性能远超 NLJ。MySQL 8.0 在 ON 条件无索引时自动选择 Hash Join。3）Batched Key Access（BKA）——从被驱动表批量获取主键后再回表（配合 MRR，Multi-Range Read 优化），减少随机 IO。\n\n扩展延伸：JOIN 优化核心原则：1）小表驱动大表——驱动表越小，匹配次数越少 2）JOIN 字段建索引——被驱动表的关联字段必须有索引（否则退化成 BNL 或全表扫描）3）只 SELECT 需要的字段——减少 Join Buffer 和网络传输 4）EXPLAIN 的 Extra 列出现 Using join buffer (Block Nested Loop) 说明需要优化索引。MySQL 8.0 移除 BNL 后 Hash Join 成为无索引 JOIN 的默认选择。",
+    "hints": [
+      "为什么小表驱动大表能提升 JOIN 性能",
+      "Hash Join 在什么条件下比 Nested Loop Join 更优"
+    ],
+    "tags": ["MySQL", "JOIN", "优化"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 优化器与执行计划",
+    "content": "MySQL 优化器如何选择执行计划？SQL 提示（Hint）和统计信息的作用是什么？",
+    "answer": "答案：MySQL 优化器基于表的统计信息（行数、索引基数、数据分布）估算各执行计划成本，选择成本最低的计划。SQL Hint 可强制优化器走特定路径，但应谨慎使用。\n\n解析：优化器决策过程：1）语法解析和语义检查 2）查询重写（子查询展开、谓词下推、常量折叠等）3）生成多个候选执行计划（各索引选择、JOIN 顺序）4）基于统计信息估算每个计划的成本（IO 成本 + CPU 成本）5）选择成本最低的计划。统计信息：InnoDB 通过随机采样（默认 20 个 B+ 树页面）估算索引基数，ANALYZE TABLE 可手动更新。统计信息过时会导致选错索引。SQL Hint：FORCE INDEX（强制走某索引）、IGNORE INDEX（忽略某索引）、STRAIGHT_JOIN（固定 JOIN 顺序）。\n\n扩展延伸：优化器的局限性：1）统计信息不准确导致选错索引——可 ANALYZE TABLE 更新统计，或手动 FORCE INDEX。2）OR 条件难以优化——MySQL 通常无法对 OR 条件使用索引合并（Index Merge），建议用 UNION ALL。3）深度分页优化器不知道业务语义——LIMIT 100000,10 仍然扫描 100010 行。优化器参数：optimizer_switch 可开启/关闭各种优化特性（如 hash_join=on、index_merge=on）。生产建议：上线前用 EXPLAIN 验证关键 SQL 的执行计划，首次发现 Using filesort/Using temporary 应立即优化。",
+    "hints": [
+      "统计信息过时会导致什么问题",
+      "FORCE INDEX 在什么场景下是必要的"
+    ],
+    "tags": ["MySQL", "优化器", "执行计划"]
+  },
+  {
+    "category": "database",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "数据库连接池配置",
+    "content": "请介绍 HikariCP 连接池的核心配置参数和调优建议。",
+    "answer": "答案：HikariCP 是目前性能最好的 Java 数据库连接池（Spring Boot 2.x+ 默认）。核心参数：maximumPoolSize（最大连接数）、minimumIdle（最小空闲数）、connectionTimeout（获取连接超时）、idleTimeout（空闲超时）、maxLifetime（最大生命周期）。\n\n解析：HikariCP 的设计哲学：轻量级、高性能。核心优化：1）代码级优化——字节码精简（减少代理层）、FastList（替代 ArrayList 提升 Statement 关闭性能）、ConcurrentBag（无锁集合，比 LinkedBlockingQueue 更优）。2）参数调优：maximumPoolSize——不是越大越好，HikariCP 作者建议公式：pool_size = Tn × (C - 1) + 1（Tn = CPU 核数，C = 单连接队列深度），一般在线程池大小附近即可（如 4C8G 服务器设 10-20）。connectionTimeout——默认 30 秒，快速失败场景可设 5 秒。maxLifetime——默认 30 分钟，建议小于数据库侧连接超时（如 MySQL wait_timeout=28800s，HikariCP maxLifetime 设 60000ms）。\n\n扩展延伸：连接池监控：Spring Boot Actuator 暴露 /actuator/health 查看连接池状态。关键指标：active（活跃连接数，<80% maximumPoolSize 正常）、idle（空闲连接数）、pending（等待连接的线程数，>0 说明连接池不够或慢 SQL 多）、timeout（连接获取超时次数）。生产告警：active 持续高水位 + pending > 0 应立即排查。注意：连接池泄漏（Connection Not Returned）是最常见问题——确保 try-with-resources 或 finally 中关闭连接。",
+    "hints": [
+      "为什么 HikariCP 比 C3P0/Druid 快",
+      "maximumPoolSize 设得越大性能越好吗"
+    ],
+    "tags": ["MySQL", "HikariCP", "连接池"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NoSQL 数据库选型对比",
+    "content": "请对比 MongoDB、Cassandra、Redis 的适用场景和数据模型差异。",
+    "answer": "答案：MongoDB 适合文档型灵活 schema 和快速迭代，Cassandra 适合高写入吞吐的时序/日志场景，Redis 适合缓存和实时数据处理。\n\n解析：1）MongoDB——文档数据库（BSON JSON 格式），灵活 schema、二级索引、聚合管道、副本集 + 分片。适合：内容管理、用户画像、日志、物联网（schema 多变场景）。不适合：复杂事务、多表 JOIN（MongoDB 4.0+ 支持多文档事务但性能有限）。2）Cassandra——宽列存储，LSM-Tree 写入极快、可线性扩展（加节点 = 加性能）、无单点故障。适合：时序数据（监控/指标）、消息/日志、IoT 传感器数据。不适合：复杂查询（需按 Partition Key 查询）、强一致性要求。3）Redis——内存 KV 存储，丰富的数据结构、毫秒级延迟、发布订阅。适合：缓存、会话、排行榜、分布式锁、实时计数器。不适合：大规模数据持久化（内存成本高）、复杂查询。\n\n扩展延伸：选型决策树：需要强事务 + 复杂 JOIN → MySQL/PostgreSQL。灵活 schema + 快速迭代 → MongoDB。高写入吞吐 + 线性扩展 → Cassandra。缓存/实时/计数器 → Redis。全文搜索 → Elasticsearch。图关系 → Neo4j。图数据库（Neo4j/ArangoDB）虽然使用场景集中，但在社交关系、推荐引擎、权限管理中不可替代。多模数据库趋势：PostgreSQL + 插件（TimescaleDB 时序 + PostGIS 空间）可减少技术栈复杂度。",
+    "hints": [
+      "Cassandra 的 LSM-Tree 相比 B+ 树有什么优势",
+      "什么时候不应该用 MongoDB 而应该坚持用 MySQL"
+    ],
+    "tags": ["NoSQL", "MongoDB", "Cassandra", "Redis", "选型"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 高可用方案对比",
+    "content": "请对比 Redis Sentinel 和 Redis Cluster 的架构差异和适用场景。",
+    "answer": "答案：Sentinel 提供主从切换的高可用（主从复制 + 哨兵监控），Cluster 提供数据分片 + 高可用（去中心化，自动分片和容错）。\n\n解析：Redis Sentinel（哨兵模式）：1 主 N 从，Sentinel 进程监控主节点健康，主宕机时自动将从节点提升为主。问题：写能力只有单节点容量（内存上限），分片需客户端自己做。Redis Cluster（集群模式）：16384 个哈希槽自动分配到多个主节点，每个主节点有 N 个从节点做 HA。去中心化——所有节点通过 Gossip 协议通信，客户端可连接任意节点，MOVED/ASK 重定向到正确节点。分片：CRC16(key) % 16384 计算槽位，自动迁移槽位实现在线扩缩容。\n\n扩展延伸：选型建议：数据量 < 单节点内存（<32GB）且只需要高可用 → Sentinel（简单稳定）。数据量超过单节点内存、需要水平扩展 → Cluster（自动分片）。Proxy 方案：Twemproxy（Twitter，静态分片，不支持自动故障转移）和 Codis（豌豆荚，支持在线扩缩容，但已停维），现在基本被 Redis Cluster 替代。Redis Cluster 的局限：1）不支持多 key 操作（不同槽位的 key 无法事务/管道）2）批量操作需保证 key 在同一槽位（用 hash tag）3）带宽消耗大（节点间 Gossip 通信）。Redis 7.0 优化了集群链路和迁移机制，减少了迁移期间的阻塞时间。",
+    "hints": [
+      "Redis Cluster 的 16384 个哈希槽如何分布",
+      "为什么 Redis Cluster 不支持跨槽位的事务操作"
+    ],
+    "tags": ["Redis", "高可用", "Sentinel", "Cluster"]
   }
 ]
