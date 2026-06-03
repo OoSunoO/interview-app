@@ -48,5 +48,55 @@
     "answer": "{\"correct\":[[\"引用计数\",\"引用计数法\"],[\"可达性\",\"可达性分析\"]],\"distractors\":[\"标记清除\",\"标记整理\",\"分代收集\",\"复制算法\"]}",
     "hints": ["主流的 JVM 都采用第二种算法来判断对象是否存活", "循环引用是第一种算法的致命缺陷"],
     "tags": ["JVM", "GC"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "主流 GC 收集器",
+    "content": "JDK 11+ 默认的 GC 收集器是___，它通过将堆划分为多个固定大小的 Region 来实现可预测的停顿。JDK 21+ 引入的___（JDK 15 Preview、JDK 21 GA）使用染色指针和读屏障，将停顿时间控制在___以下。",
+    "answer": "{\"correct\":[[\"G1\",\"G1 GC\",\"Garbage First\"],[\"ZGC\"],[\"1ms\",\"10ms\",\"毫秒级\"]],\"distractors\":[\"CMS\",\"Parallel\",\"Serial\",\"Shenandoah\"]}",
+    "hints": ["G1 GC 的目标是最大停顿时间可由 -XX:MaxGCPauseMillis 参数指定", "ZGC 的核心创新是染色指针（Colored Pointers）和读屏障（Load Barrier）"],
+    "tags": ["JVM", "GC", "G1", "ZGC"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "JVM 堆内存大小参数",
+    "content": "设置 JVM 初始堆大小的参数是___，设置最大堆大小的参数是___，设置新生代大小的参数是___，设置元空间大小上限的参数是___。",
+    "answer": "{\"correct\":[[\"-Xms\"],[\"-Xmx\"],[\"-Xmn\"],[\"-XX:MaxMetaspaceSize\"]],\"distractors\":[\"-Xss\",\"-XX:PermSize\",\"-XX:NewRatio\",\"-XX:SurvivorRatio\"]}",
+    "hints": ["Xmx 和 Xms 设置为相同值可以避免运行时动态调整堆大小带来的性能损耗", "JDK 8 使用 MaxMetaspaceSize 取代了 MaxPermSize"],
+    "tags": ["JVM", "参数", "堆内存"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Java 对象头结构",
+    "content": "在 64 位 JVM（未开启指针压缩）中，一个普通 Java 对象的对象头包含两个部分：___（存储哈希码、GC 分代年龄、锁状态标志、偏向线程 ID 等）和___（指向该对象所属类元数据的指针）。开启指针压缩后，第二部分在 64 位系统中从 8 字节压缩到___字节。",
+    "answer": "{\"correct\":[[\"Mark Word\",\"标记字\"],[\"Klass Pointer\",\"类指针\",\"类型指针\"],[\"4\",\"4 字节\"]],\"distractors\":[\"实例数据\",\"对齐填充\",\"对象体\",\"元数据\"]}",
+    "hints": ["Mark Word 在 32 位系统上占 4 字节，64 位系统上占 8 字节", "对象头是锁升级的关键——Mark Word 中存储了锁状态标志位"],
+    "tags": ["JVM", "对象头", "内存布局"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "Minor GC / Major GC / Full GC",
+    "content": "发生在新生代的 GC 称为___（触发频率高，速度较快）；发生在老年代的 GC 称为___；对整个堆（包括新生代、老年代、元空间）进行垃圾回收称为___，通常伴随停顿时间较长。",
+    "answer": "{\"correct\":[[\"Minor GC\",\"Young GC\"],[\"Major GC\",\"Old GC\"],[\"Full GC\"]],\"distractors\":[\"部分 GC\",\"全局 GC\",\"并发 GC\",\"停止 GC\"]}",
+    "hints": ["Full GC 通常伴随着至少一次 Minor GC", "频繁 Full GC 是 JVM 性能问题的常见信号，通常需要排查内存泄漏"],
+    "tags": ["JVM", "GC", "分代"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "Java 引用类型强度",
+    "content": "Java 提供了四种引用类型，强度从高到低依次为：___（new 出来的普通对象，GC 永不回收）、___（内存不足时才回收，常用于缓存）、___（下一次 GC 时一定回收，常用于补充原生 API 的 dispose 方法）、___（随时可被回收，无法通过 get 获得强引用，用于关联 GC 通知）。",
+    "answer": "{\"correct\":[[\"强引用\",\"Strong Reference\"],[\"软引用\",\"Soft Reference\"],[\"弱引用\",\"Weak Reference\"],[\"虚引用\",\"Phantom Reference\"]],\"distractors\":[\"影子引用\",\"空引用\",\"幽灵引用\",\"弹性引用\"]}",
+    "hints": ["WeakHashMap 是弱引用的典型应用——当 key 不再被外部引用时自动被 GC 回收", "软引用适合实现缓存（如 Guava Cache 的 softValues）"],
+    "tags": ["JVM", "引用", "GC"]
   }
 ]

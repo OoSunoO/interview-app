@@ -48,5 +48,55 @@
     "answer": "{\"correct\":[[\"AbortPolicy\"],[\"CallerRunsPolicy\"],[\"DiscardPolicy\"],[\"DiscardOldestPolicy\"]],\"distractors\":[\"RejectPolicy\",\"TimeoutPolicy\",\"QueuePolicy\",\"BlockPolicy\"]}",
     "hints": ["默认策略是 AbortPolicy，会抛出 RejectedExecutionException", "CallerRunsPolicy 会在调用者线程中直接执行任务，可起到流量控制作用"],
     "tags": ["并发", "线程池"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CAS 的三个操作数",
+    "content": "CAS（Compare-And-Swap）操作需要三个操作数：内存位置 V、预期值___、新值___。当 V 的值等于___时，将 V 更新为新值，否则不操作。",
+    "answer": "{\"correct\":[[\"A\",\"预期原值\"],[\"B\",\"新值\"],[\"A\",\"预期原值\"]],\"distractors\":[\"内存地址\",\"旧值\",\"比较结果\",\"偏移量\"]}",
+    "hints": ["CAS 是硬件层面支持的原子操作，java.util.concurrent.atomic 包基于此实现", "CAS 存在 ABA 问题，AtomicStampedReference 通过版本号解决"],
+    "tags": ["并发", "CAS", "原子操作"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "AQS 的核心组件",
+    "content": "AbstractQueuedSynchronizer（AQS）的核心组件包括：___（volatile 修饰的状态变量，表示资源的可用数量）、___（CLH 锁的变体，存放等待线程）、以及基于 LockSupport 的___/___机制。",
+    "answer": "{\"correct\":[[\"state\"],[\"同步队列\",\"CLH 队列\",\"FIFO 队列\"],[\"park\",\"阻塞\"],[\"unpark\",\"唤醒\"]],\"distractors\":[\"阻塞队列\",\"条件队列\",\"信号量\",\"锁\"]}",
+    "hints": ["ReentrantLock、CountDownLatch、Semaphore 都是基于 AQS 实现的", "AQS 的核心是 state + CLH 变体队列"],
+    "tags": ["并发", "AQS", "锁"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Thread.join() 的等待语义",
+    "content": "调用 t.join() 时，当前线程会___直到线程 t 执行完毕。join() 的内部实现使用___方法，让当前线程在 t 线程的___对象上等待。t 执行结束后，JVM 会调用___方法唤醒所有等待线程。",
+    "answer": "{\"correct\":[[\"阻塞\",\"等待\"],[\"wait\",\"Object.wait\"],[\"Thread\",\"线程\"],[\"notifyAll\"]],\"distractors\":[\"sleep\",\"yield\",\"interrupt\",\"notify\",\"LockSupport.park\"]}",
+    "hints": ["join(0) 表示无限等待直到目标线程结束", "join 的源码实际是 while (isAlive()) wait(0) 循环"],
+    "tags": ["并发", "线程", "join"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Happens-Before 规则",
+    "content": "JMM（Java 内存模型）定义了八条 Happens-Before 规则，其中四条核心规则是：___（同一个线程中前面的操作 happen-before 后面的）、___（对 volatile 变量的写操作 happen-before 后续的读）、___（锁的释放 happen-before 同一锁的获取）、___（A happens-before B 且 B happens-before C → A happens-before C）。",
+    "answer": "{\"correct\":[[\"程序次序\",\"程序顺序\"],[\"volatile 变量\",\"volatile\"],[\"锁\",\"释放锁\"],[\"传递性\"]],\"distractors\":[\"线程启动\",\"线程终止\",\"中断\",\"对象终结\"]}",
+    "hints": ["Happens-Before 不是时间上的先后，而是可见性的保证", "volatile 写-读规则保证了写入的值对后续读取可见"],
+    "tags": ["并发", "JMM", "Happens-Before"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "CountDownLatch / CyclicBarrier / Semaphore",
+    "content": "___是一个线程等待其他 N 个线程完成后才继续执行的同步器（计数器不能复用）；___是 N 个线程相互等待到同步点后再一起执行的同步器（计数器可以复用）；___是控制同时访问资源的线程数的同步器（发放许可证）。",
+    "answer": "{\"correct\":[[\"CountDownLatch\",\"倒计时门闩\"],[\"CyclicBarrier\",\"循环屏障\"],[\"Semaphore\",\"信号量\"]],\"distractors\":[\"Exchanger\",\"Phaser\",\"ReadWriteLock\",\"StampedLock\"]}",
+    "hints": ["CountDownLatch 的 countDown() 和 await() 配合使用", "CyclicBarrier 的 reset() 可以重置屏障"],
+    "tags": ["并发", "同步器"]
   }
 ]
