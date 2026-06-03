@@ -6,7 +6,7 @@ export default defineConfig({
     exclude: ["e2e/**", "node_modules/**"],
     coverage: {
       provider: "v8",
-      include: ["src/lib/ai.js"],
+      include: ["src/lib/ai.js", "src/lib/local-api.js"],
       thresholds: {
         functions: 55,
         lines: 44,

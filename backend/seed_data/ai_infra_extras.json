@@ -1,0 +1,82 @@
+[
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LLM 推理中的 KV Cache",
+    "content": "Transformer 自回归推理中 KV Cache 是什么？它是如何减少计算量的？存在哪些问题？",
+    "answer": "答案：KV Cache 缓存 Transformer 每层 Self-Attention 中历史 token 的 Key 和 Value 矩阵，避免每步重新计算。\n\n解析：自回归推理每步生成一个 token，新 token 只需与历史 token 做 Attention。如果不缓存，每步都要重新计算所有历史 token 的 K 和 V，复杂度 O(n²)。缓存后每步只需计算新 token 的 K 和 V，复杂度降为 O(n)。以 LLaMA 7B（hidden_dim=4096，32 层，FP16）为例：每 token 每层 KV cache = 2 × 4096 × 2 = 16KB，32 层 → 512KB/token，2048 上下文 → 约 1GB/请求。\n\n扩展延伸：KV Cache 的优化方向：1）MQA（Multi-Query Attention）——所有查询头共享一组 K-V，出自《Fast Transformer Decoding》论文。2）GQA（Grouped Query Attention）——折中方案，LLaMA 2 70B 和 LLaMA 3 系列使用。3）PagedAttention——分块管理 KV Cache 减少碎片（vLLM）。4）KV Cache 量化——从 FP16 到 INT8/INT4 减少显存占用。",
+    "hints": ["MQA 和 GQA 如何减少 KV Cache 大小", "KV Cache 的显存占用如何估算"],
+    "tags": ["LLM", "推理优化", "KV Cache", "Transformer"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Continuous Batching",
+    "content": "什么是 Continuous Batching（连续批处理）？它与传统静态 Batching 相比有什么优势？",
+    "answer": "答案：Continuous Batching 以 token 级别而非请求级别组织批次，调度器每步动态增删序列，消除静态批次的填充浪费。\n\n解析：传统静态 Batching：收集固定数量的请求后批量处理，短序列完成后必须等待最长的序列结束，GPU 利用率低。Continuous Batching（源于微软 Orca 论文，2022）：每步解码后，已完成序列立即移出批次，新序列加入。调度器在每次迭代时重新规划批次，保证 GPU 始终处理有效 token。\n\n扩展延伸：实现 Continuous Batching 的核心组件的关键考量：1）iteration-level scheduling——每步解码后重新调度。2）显存管理——动态分配和回收 KV Cache。3）vLLM 和 TensorRT-LLM 等主流框架均实现了不同版本的 Continuous Batching。TGI（Text Generation Inference）的简单批次拼接也属于类似的思路。",
+    "hints": ["静态批次中 padding token 浪费了多少算力", "vLLM 如何实现 Continuous Batching"],
+    "tags": ["LLM", "推理优化", "Continuous Batching", "vLLM"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "PagedAttention 与 vLLM",
+    "content": "PagedAttention 的核心思想是什么？vLLM 如何利用它提升 LLM 推理效率？",
+    "answer": "答案：PagedAttention 将 KV Cache 分页管理（固定大小 block，如 16 token/block），像操作系统虚拟内存一样解决碎片问题。\n\n解析：传统实现为每个请求预分配连续显存存放 KV Cache，但实际序列长度不确定，导致大量内部碎片和外部碎片（利用率仅 20%-40%）。PagedAttention 将 KV Cache 切为固定大小的 block（通常 16 token），不要求物理连续，通过 block table 映射逻辑页到物理页。当序列变长时按需分配新 block。\n\n扩展延伸：PagedAttention 的其他优势：1）Copy-on-Write——多个序列共享相同前缀的 block（beam search、并行采样场景节省显存）。2）Block 级内存复用——序列完成后 block 即时回收。vLLM 论文发表于 SOSP 2023（Kwon et al.），在 A100 80GB 上达到 vLLM 比 HF Transformers 快 14-24 倍。后续发展：SGLang 的 RadixAttention、LightLLM 等借鉴了类似思路。",
+    "hints": ["KV Cache 预分配方式为什么导致大量碎片", "Copy-on-Write 在 beam search 中如何节省显存"],
+    "tags": ["LLM", "推理优化", "PagedAttention", "vLLM"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HNSW 向量索引原理",
+    "content": "HNSW（Hierarchical Navigable Small World）向量索引的工作原理是什么？为什么它搜索速度快？",
+    "answer": "答案：HNSW 构建多层图结构——上层节点稀少（长跳转），下层节点密集（精细搜索），搜索从顶层贪婪遍历逐层下降。\n\n解析：HNSW 基于 NSW（Navigable Small World）改进，增加层级结构。构建时每个节点随机分配层级（指数衰减概率），插入时在每层找到近邻并连接。搜索时从顶层入口点开始，每层做贪婪搜索（贪心地走向最近的邻居），找到该层局部最近点后进入下一层继续，直到最底层做完整搜索。复杂度约为 O(log n)。\n\n扩展延伸：关键参数：M（每层最大连接数，默认 16）控制图密度；efConstruction（构建时搜索范围，默认 200）控制构建质量；efSearch（搜索时动态候选集大小）控制搜索质量。HNSW 出自论文《Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs》（Malkov & Yashunin，2018）。是目前最流行的 ANN 算法之一，Milvus、Qdrant 等向量数据库默认索引类型。",
+    "hints": ["HNSW 的参数 ef 和 M 分别控制什么", "NSW 和 HNSW 的区别是什么"],
+    "tags": ["向量数据库", "ANN", "HNSW", "索引"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "IVF-PQ 向量索引",
+    "content": "IVF-PQ（Inverted File with Product Quantization）索引如何实现高压缩比向量检索？适用什么场景？",
+    "answer": "答案：IVF 做粗粒度聚类剪枝搜索范围，PQ 将向量分块量化压缩。IVF 决定搜哪片，PQ 决定存多省。\n\n解析：IVF（倒排文件）：k-means 聚类划分 Voronoi 单元，搜索时只查最近 nprobe 个单元，减少搜索量。PQ（乘积量化）：将 d 维向量分成 m 个子向量，每个子向量独立聚类量化（如 256 个中心点 = 8 bit），原来 d × 4 字节可压缩为 m × 1 字节。例如 128 维向量分 8 组 → 512 字节 → 8 字节，压缩比达 64 倍。\n\n扩展延伸：IVF-PQ 的核心权衡：nprobe（搜索的聚类数）越多越准但越慢；m（子向量数）越大压缩越低但越准。FAISS（Facebook AI）的 IndexIVFPQ 是经典实现。适用场景：内存受限的超大规模检索（十亿级），可接受一定精度损失（Recall 通常 90%-95%）。对比 HNSW：HNSW 更快更准但内存占用大，IVF-PQ 内存效率高但精度和速度略差。",
+    "hints": ["PQ 的压缩比如何计算", "nprobe 参数对搜索质量的影响"],
+    "tags": ["向量数据库", "ANN", "IVF-PQ", "FAISS"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "稠密检索与混合检索",
+    "content": "稠密检索（Dense Retrieval）和稀疏检索（Sparse Retrieval）有什么区别？为什么生产级 RAG 系统常用混合检索？",
+    "answer": "答案：稠密检索用 Embedding 向量做语义匹配，稀疏检索（BM25）基于关键词精确匹配。混合检索结合两者优势。\n\n解析：稀疏检索（BM25/TF-IDF）基于词频和逆文档频率打分，优点是精确匹配、可解释性强、无需训练，缺点是无法处理同义词和语义差异（搜索”汽车”匹配不到”轿车”）。稠密检索用预训练语言模型（BERT、E5、BGE）生成文本向量，通过向量距离度量语义相似度，可以匹配同义表达，但需要大量训练数据、对罕见词不敏感。\n\n扩展延伸：混合检索的融合策略：1）RRF（Reciprocal Rank Fusion）——对多个排名的倒数求和，简单有效。2）加权求和——bm25_score × w1 + dense_score × w2，权重需调参。3）Learning to Rank——用模型学习最佳排序。主流向量数据库（Milvus、Weaviate、Elasticsearch）都原生支持混合检索。稠密模型推荐：BGE（BAAI，中文强）、E5（微软，英文强）、Cohere Embed、OpenAI text-embedding-3。",
+    "hints": ["RRF 融合排名的原理和优势", "Embedding 模型的 MTEB 基准"],
+    "tags": ["RAG", "检索", "Embedding", "混合检索"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAG Chunking 策略",
+    "content": "RAG 系统中文档分块（Chunking）的策略有哪些？分块大小如何影响检索质量？",
+    "answer": "答案：常见分块策略包括固定大小分块、语义分块、递归分块和文档结构感知分块，各有适用场景。\n\n解析：1）固定大小分块——按字符/token 数切分（如 512 token + 128 overlap），实现简单但可能切断语义完整的段落。2）语义分块——按句子边界、段落边界或语义完整度切分，如基于 Embedding 相似度检测主题转换点。3）递归分块（LangChain RecursiveCharacterTextSplitter）——按优先级逐级分隔符分割（\n\n → \n → 。 → .），尽量保持语义完整。4）文档结构感知分块——按 Markdown 标题、HTML 标签、代码函数边界切分。\n\n扩展延伸：分块大小的权衡：块太小（<100 token）→ 检索精确但缺乏上下文，LLM 看不清全貌；块太大（>1000 token）→ 包含噪音、超出 LLM 上下文窗口有效利用率、检索召回下降。实践中 256-512 token 结合 10%-20% overlap 是常见起点。高级策略：Small-to-Big——检索小片段但返回其所在的大段落（如 LlamaIndex 的 SentenceWindowNodeParser）。",
+    "hints": ["为什么需要 chunk overlap", "Small-to-Big 检索策略的工作原理"],
+    "tags": ["RAG", "Chunking", "文档处理"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAG Re-ranking",
+    "content": "RAG 系统中为什么需要 Re-ranking（重排序）阶段？Bi-encoder 和 Cross-encoder 在检索中的角色分别是什么？",
+    "answer": "答案：Re-ranking 用更精确的模型对初检结果重排，弥补第一阶段检索的精度不足。Bi-encoder 负责高效初检，Cross-encoder 负责精确重排。\n\n解析：第一阶段（Retrieval）使用 Bi-encoder（如 BGE、E5）——查询和文档独立编码，向量可预计算和建索引，适合大规模快速检索（百毫秒级），但独立编码丢失了查询-文档间的交互信息。第二阶段（Re-ranking）使用 Cross-encoder（如 BGE-reranker、Cohere Rerank）——查询和文档拼接后一起编码，能捕捉细粒度匹配信号，精度更高但无法预计算，只能对小规模候选集（如 Top-100）重排。\n\n扩展延伸：两阶段设计是效率和精度的最优平衡——Bi-encoder 从百万级文档召回 Top-100，Cross-encoder 对 Top-100 精排取 Top-5/10 送入 LLM。实际部署注意事项：1）Re-ranker 通常选择轻量模型（如 6 层 Transformer）控制延迟。2）可以多路召回（BM25 + 稠密检索 + 其他策略）后统一重排。3）Cohere Rerank API 和 BGE-reranker 是常用选项。",
+    "hints": ["为什么不用 Cross-encoder 直接做全量检索", "多路召回后统一重排的架构"],
+    "tags": ["RAG", "Re-ranking", "检索"]
+  }
+]

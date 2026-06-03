@@ -141,8 +141,8 @@
   .nav-island {
     position: fixed;
     bottom: max(12px, var(--safe-bottom));
-    left: 12px;
-    right: 12px;
+    left: max(12px, var(--safe-left, 0px));
+    right: max(12px, var(--safe-right, 0px));
     z-index: var(--z-nav);
   }
   .nav-inner {
@@ -241,5 +241,20 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-pill);
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 420px) {
+    .nav-inner {
+      padding: 2px;
+      height: 52px;
+    }
+    .label {
+      font-size: 8px;
+    }
+    .icon-wrap svg {
+      width: 18px;
+      height: 18px;
+    }
   }
 </style>

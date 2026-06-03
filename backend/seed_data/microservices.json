@@ -1,0 +1,152 @@
+[
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Spring Cloud 微服务核心组件",
+    "content": "Spring Cloud 微服务架构中核心组件有哪些？分别承担什么职责？",
+    "answer": "答案：Spring Cloud 体系核心组件包括注册中心（Nacos/Eureka）、配置中心（Nacos/Consul）、网关（Gateway/Zuul）、服务调用（OpenFeign）、熔断降级（Sentinel/Hystrix）、链路追踪（Sleuth+Zipkin/SkyWalking）。\n\n解析：1）注册中心——服务启动时注册自身地址，消费者从注册中心获取服务列表。Nacos 支持 AP/CP 切换，Eureka 纯 AP，Consul CP（Raft）。2）配置中心——集中管理配置文件，支持动态刷新。3）网关——统一入口，路由转发+认证+限流+日志。4）OpenFeign——声明式 HTTP 客户端，整合 Ribbon 做负载均衡。5）Sentinel——熔断/降级/限流一体，细粒度规则配置。6）链路追踪——跨服务调用链可视化，排查延迟和错误。\n\n扩展延伸：Spring Cloud 各版本演进：Netflix 版（已维护模式）→ Alibaba 版（Nacos+Sentinel+Seata 生态）→ Spring 官方（Gateway+LoadBalancer 替代 Zuul+Ribbon）。2026 年推荐：Spring Cloud Alibaba + Spring Cloud Gateway + Resilience4j（替代已停维的 Hystrix）。",
+    "hints": ["Netflix 组件（Eureka/Hystrix/Ribbon/Zuul）为什么进入维护模式", "Spring Cloud Alibaba 生态 vs Netflix 生态的选型"],
+    "tags": ["Spring Cloud", "微服务", "架构"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "OpenFeign 声明式服务调用",
+    "content": "OpenFeign 的工作原理是什么？它如何整合负载均衡和熔断降级？",
+    "answer": "答案：OpenFeign 通过 JDK 动态代理将接口声明转化为 HTTP 请求，整合 Ribbon/Spring Cloud LoadBalancer 做负载均衡，整合 Sentinel 做熔断降级。\n\n解析：开发者定义 @FeignClient 接口，标注请求方法和路径。OpenFeign 在运行时为每个接口创建动态代理——代理拦截方法调用，根据注解构建 HTTP 请求（URL/Method/Header/Body），通过 RestTemplate/HTTPClient 发送请求。负载均衡由 LoadBalancer 拦截（替换 URL 为服务名→解析实例列表→选一个），熔断由 Sentinel 在调用前后包装。\n\n扩展延伸：Feign 历史：Netflix Feign → Spring Cloud OpenFeign。OpenFeign 底层 HTTP 客户端可选：UrlConnection（默认）、Apache HttpClient（连接池）、OkHttp（高性能）。编码器/解码器：Jackson（默认 JSON）、Gson、自定义。压缩：Feign 支持请求/响应的 GZip 压缩（feign.compression.request.enabled=true）。超时配置：connectTimeout + readTimeout 区分处理。",
+    "hints": ["Feign 动态代理中如何解析 URL 中的占位符", "Feign 的负载均衡如何在不引入 Ribbon 的情况下工作"],
+    "tags": ["Spring Cloud", "OpenFeign", "服务调用"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Sentinel 熔断降级与流控",
+    "content": "Sentinel 的熔断降级和流量控制机制是什么？与 Hystrix 相比有什么核心优势？",
+    "answer": "答案：Sentinel 提供三种能力：流量控制（QPS/线程数限流）、熔断降级（RT/异常比例/异常数）、系统自适应保护（系统负载）。相比 Hystrix 的优势是细粒度规则、实时监控和多样化流量控制。\n\n解析：Sentinel 的核心概念是资源（Resource），通过 @SentinelResource 注解定义。流量控制模式：直接/关联/链路（来源链路限流）。效果：快速失败/Warm Up/排队等待。熔断降级状态机与 Hystrix 相同（CLOSE→OPEN→HALF_OPEN→CLOSE），但触发条件更丰富。\n\n扩展延伸：Sentinel vs Hystrix 核心对比：1）线程隔离——Hystrix 用线程池隔离（开销大），Sentinel 用信号量隔离（轻量），支持线程数限流。2）规则持久化——Sentinel 支持推模式（Nacos/APOLLO）、拉模式（文件），Hystrix 需自行实现。3）监控——Sentinel 提供 Dashboard 实时监控，Hystrix 需整合 Turbine。4）流量整形——Sentinel 支持 Warm Up（冷启动）、匀速排队（漏桶），Hystrix 只支持熔断。注意：Hystrix 已进入维护模式（2018 年起），推荐用 Sentinel 或 Resilience4j。",
+    "hints": ["Hystrix 线程池隔离 vs Sentinel 信号量隔离的优劣", "Sentinel 的热点参数限流如何配置"],
+    "tags": ["Sentinel", "熔断", "降级", "限流"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Spring Cloud Gateway",
+    "content": "Spring Cloud Gateway 的工作原理是什么？它的路由、过滤器和谓词机制如何工作？",
+    "answer": "答案：Spring Cloud Gateway 基于 Spring WebFlux 和 Reactor 实现异步非阻塞网关，路由（Route）由谓词（Predicate）匹配和过滤器（Filter）链组成。\n\n解析：核心概念：1）Route（路由）——ID + 目标 URI + Predicate 集合 + Filter 集合。2）Predicate（谓词）——匹配条件，包括 Path（路径匹配）/ Header（请求头匹配）/ Method（HTTP 方法）/ Query（请求参数匹配）/ Cookie / Host（域名）等。3）Filter（过滤器）——分为 Pre（请求转发前处理）和 Post（响应返回前处理），可修改请求/响应、限流、鉴权。\n\n扩展延伸：Gateway vs Zuul 1.x vs Zuul 2.x：Zuul 1.x 基于 Servlet 同步阻塞，每个请求占一个线程，性能差。Zuul 2.x 基于 Netty 异步非阻塞。Gateway 基于 WebFlux+Reactor，性能最高（RPS 比 Zuul 1.x 高约 3-5 倍）。Gateway 内置限流过滤器 RequestRateLimiter（基于 Redis + Lua 令牌桶），支持动态路由从注册中心自动发现服务。注意：Gateway 基于 WebFlux，因此**不支持 Servlet API**（如 HttpServletRequest），也不支持 Feign（同步阻塞）直接在过滤器中使用。",
+    "hints": ["Spring Cloud Gateway 为什么不能使用 HttpServletRequest", "Gateway 如何与 Nacos 集成实现动态路由"],
+    "tags": ["Spring Cloud Gateway", "网关", "WebFlux"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分布式锁：Redis vs ZooKeeper",
+    "content": "分布式锁的 Redis 实现和 ZooKeeper 实现有什么区别？各自适用什么场景？RedLock 解决了什么问题？",
+    "answer": "答案：Redis 基于 SET NX + 过期时间，ZK 基于临时顺序节点 + Watch。Redis 性能高但可靠性偏弱，ZK 可靠性高但性能偏低。RedLock 通过多数派写入解决 Redis 主从切换导致的锁失效问题。\n\n解析：Redis 实现：SET key value NX EX 30 获取锁，Lua 脚本原子释放（比较 value 防止误删别人的锁）。问题：主从异步复制下，主节点宕机后从节点未同步锁数据，新主节点无锁信息导致锁失效。ZooKeeper 实现：在锁节点下创建临时顺序节点，获取序号最小的节点即获取锁，监听前一个节点释放。ZK 的 ZAB 协议保证强一致，不会丢锁。\n\n扩展延伸：RedLock（Redis 官方分布式锁算法）：向多数 Redis 节点（奇数个，如 5 个）依次申请锁，超过半数获取成功才算加锁成功。争议：Martin Kleppmann（DDIA 作者）批评 RedLock 存在 GC pause 导致锁租约过期的根本问题。Cap'n Proto 作者也认为 RedLock 不是一个好的分布式锁。实际建议：绝大多数业务场景用 Redis 单机/哨兵集群版 SET NX 就足够了。需要严格互斥场景用 ZK/etcd。SDK：Redisson（Redis 客户端内置分布式锁实现）提供可重入锁、公平锁、读写锁、红锁等。",
+    "hints": ["Redis 主从异步复制为什么会导致锁失效", "Martin Kleppmann 对 RedLock 的批评核心观点是什么"],
+    "tags": ["分布式锁", "Redis", "ZooKeeper", "Redisson"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "接口幂等性设计",
+    "content": "分布式系统中如何保证接口幂等性？常见的幂等性设计方案有哪些？",
+    "answer": "答案：幂等性保证的核心是唯一Key + 去重机制。常用方案包括唯一键约束、Token机制、去重表、状态机、乐观锁。\n\n解析：1）唯一键约束——利用数据库唯一索引（如 order_no 建唯一索引），重复插入报错时捕获异常。适用：创建操作。2）Token 机制（预生成令牌）——业务请求前先获取 Token，提交时带上 Token，服务端校验 Token 是否存在（Redis 存 Token，取到即处理，取不到即重复）。适用：前端防重复提交。3）去重表——单独的幂等表（主键为业务唯一ID），INSERT 成功则处理，失败即重复。4）状态机——业务状态单向流转（待支付→已支付→已发货），更新时 WHERE status=前一个状态。UPDATE order SET status='paid' WHERE id=123 AND status='pending'。5）乐观锁——version 字段 CAS 更新。UPDATE product SET stock=stock-1, version=version+1 WHERE id=123 AND version=oldVersion。\n\n扩展延伸：几种方案的选型建议：订单创建→唯一键约束（简单可靠）；支付回调→去重表 + 状态机（双重保险）；前端表单→Token 机制；库存扣减→乐观锁。消息队列消费端的幂等：Kafka 每条消息有 offset，消费者可结合业务唯一 ID 做去重（Redis SETNX + 过期时间）。注意：在跨服务调用的链路上，幂等需要在每个环节都考虑（尤其是网关层和入口服务）。",
+    "hints": ["支付回调接口为什么要同时用去重表和状态机", "Kafka 消费者重启后如何保证幂等消费"],
+    "tags": ["幂等性", "分布式", "接口设计"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分布式定时任务调度",
+    "content": "分布式定时任务调度框架（XXL-JOB、Elastic-Job）的核心原理是什么？如何避免任务重复执行？",
+    "answer": "答案：核心原理是调度器集群通过分布式协调选主，将任务分片分配给各执行器节点。XXL-JOB 使用数据库悲观锁选主，Elastic-Job 使用 ZooKeeper 选举和分片。\n\n解析：XXL-JOB 架构：调度中心（Admin）→ 执行器（Executor）。调度中心从数据库锁表选主（for update 悲观锁），主调度节点负责任务分发。执行器注册到调度中心，调度中心按路由策略（轮询/一致性哈希/分片广播/故障转移）分配任务。分片广播模式：任务拆成 N 片（N=执行器数），每片处理 1/N 数据，适合大数据量处理。Elastic-Job（当当开源，现 Apache ShardingSphere 子项目）：基于 ZK 做选举和分片，支持任务分片动态调整（执行器上下线自动 re-sharding）。\n\n扩展延伸：选型建议：中小项目→XXL-JOB（部署运维简单，功能全）；大集群→Elastic-Job（ZK 驱动，弹性伸缩好）。ShedLock（轻量方案）：基于 Redis/MongoDB/数据库做分布式锁，确保同一时间只有一个节点执行任务，适合 Spring @Scheduled 注解的改造。任务幂等的关键：每个任务实例执行前检查分布式锁（如 Redis SETNX + 过期时间），结合业务去重。",
+    "hints": ["分片广播模式下任务执行失败怎么处理", "XXL-JOB 调度中心单点问题如何解决"],
+    "tags": ["分布式调度", "XXL-JOB", "Elastic-Job", "定时任务"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Spring Boot 自动装配原理",
+    "content": "Spring Boot 的 @EnableAutoConfiguration 和自动装配（Auto Configuration）原理是什么？",
+    "answer": "答案：Spring Boot 自动装配通过 @EnableAutoConfiguration 注解导入 AutoConfiguration.imports（或 spring.factories）中注册的自动配置类，按条件注解（@Conditional）按需生效。\n\n解析：启动类 @SpringBootApplication 复合注解包含 @EnableAutoConfiguration。EnableAutoConfiguration 通过 @Import(AutoConfigurationImportSelector.class) 导入选择器，选择器扫描 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports 文件（Spring Boot 2.7+，之前叫 spring.factories），读取所有自动配置类全限定名。\n\n扩展延伸：条件注解体系决定哪些自动配置生效：@ConditionalOnClass（类路径存在某类时才生效）@ConditionalOnMissingBean（容器中无某 Bean 时才生效）@ConditionalOnProperty（配置项满足条件）@ConditionalOnWebApplication（Web 环境）等。示例：RedisAutoConfiguration 上有 @ConditionalOnClass({RedisOperations.class})，只有引入 spring-boot-starter-data-redis 后才会加载。自动配置修改的入口：spring.autoconfigure.exclude 排除不需要的自动配置，或自定义 starter 时按需声明。",
+    "hints": ["spring.factories 替换为 AutoConfiguration.imports 的原因", "如何编写一个自定义 Spring Boot Starter"],
+    "tags": ["Spring Boot", "自动装配", "条件注解"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Nacos 一致性协议",
+    "content": "Nacos 作为注册中心和配置中心时，分别使用什么一致性协议？为什么 Nacos 能同时支持 CP 和 AP？",
+    "answer": "答案：Nacos 注册中心用临时实例（AP，Distro 协议）和持久实例（CP，Raft 协议）双模式；配置中心用 CP（Raft 协议）。Nacos 通过服务类型和元数据区分使用哪种协议。\n\n解析：1）临时实例（AP, Distro 协议）——客户端注册后每 5s 发心跳，服务端 15s 无心跳则标记不健康，30s 剔除。Distro 是 Nacos 自研的最终一致性协议（阿里巴巴内部 WAN 复制演变），节点间异步同步数据。读请求可能读到旧数据（AP 特性）。2）持久实例（CP, Raft 协议）——实例注册后需超过半数节点写入成功才确认，保证强一致性。3）配置中心（CP, Raft）——配置变更使用 Raft 确认，保证节点间配置一致。\n\n扩展延伸：设计思考——注册中心为什么可以用 AP？因为注册中心对短暂不一致容忍度高：消费者本地缓存了服务列表，几十毫秒的不一致不影响功能。Eureka 全员 AP，Consul 全员 CP，Nacos 首次在注册中心层面实现 AP/CP 统一。风险点：AP 模式下网络分区时可能读到旧的服务列表，调用已下线的服务。但 Nacos 的健康检查和自动摘除机制弥补了大部分问题。",
+    "hints": ["临时实例为什么用 AP 而不用 CP", "Distro 协议对比 Raft 协议的性能差异"],
+    "tags": ["Nacos", "一致性", "Distro", "Raft"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "服务网格与 Sidecar 模式",
+    "content": "什么是服务网格（Service Mesh）？Sidecar 模式的核心思想是什么？Istio 的架构由哪些组件组成？",
+    "answer": "答案：Service Mesh 将服务间通信能力从应用代码中剥离到基础设施层（Sidecar 代理），通过 Sidecar 实现服务发现、负载均衡、熔断、可观测性等。Istio 架构分为数据面（Envoy Sidecar）和控制面（Pilot/ Citadel/ Galley）。\n\n解析：Sidecar 模式的核心思想：在每个服务 Pod 旁部署一个代理（Sidecar），所有进出流量都经过 Sidecar，应用代码只关注业务逻辑，网络通信交给 Sidecar。Istio 控制面组件：1）Pilot——服务发现和流量管理，下发 Envoy 配置。2）Citadel——安全，管理证书和 mTLS。3）Galley——配置验证和分发。\n\n扩展延伸：与传统微服务框架（Spring Cloud）的对比：Spring Cloud 将服务发现、负载均衡、熔断等 SDK 嵌入应用进程，侵入性强（语言框架绑定）。Service Mesh 将这些能力下沉到 Sidecar，应用可以是任何语言（Go/Java/Python），且升级中间件能力只需更新 Sidecar 版本。瓶颈：引入 Sidecar 带来额外延迟（约 2-5ms 每个请求），集群规模大了控制面性能是瓶颈。适用建议：多语言异构服务、大规模集群（百+服务）→ Service Mesh；纯 Java + 中小规模 → Spring Cloud 生态更轻量。",
+    "hints": ["Spring Cloud 和 Service Mesh 能否共存", "Sidecar 代理为什么选择 Envoy"],
+    "tags": ["Service Mesh", "Istio", "Sidecar", "Envoy"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "优雅上下线与无损发布",
+    "content": "微服务架构中如何实现优雅上下线和无损发布？如何保证发布期间服务不降级？",
+    "answer": "答案：优雅上下线结合 K8s 就绪探针、PreStop Hook、服务注册中心注销和重试机制，保证流量无损切换。\n\n解析：关闭顺序：1）从注册中心注销——进程收到 SIGTERM 后先调用注册中心 deregister 接口（告知消费者不要再发流量过来）。2）等待流量耗尽——结合 K8s PreStop Hook 等待几秒（sleep 30），让正在处理的请求完成。3）关闭线程池——有序关闭（先停接受新请求，再等已有请求完成，超时强制关闭）。4）关闭 Spring 容器。启动顺序：1）注册就绪探针（Readiness Probe）——/actuator/health/readiness 返回 200 后 K8s 才将 Pod 加入 Service 端点。2）慢启动——负载均衡器最终权重递增。3）预热——缓存预热+线程池预热。\n\n扩展延伸：无损发布的全链路保障：网关层（Gateway 重试）→ 服务调用方（Feign 重试+Ribbon 重试，maxAutoRetriesNextServer=1）→ 消息队列（消费者 ACK 机制确保不丢消息）。蓝绿发布：两套完全独立的环境，瞬时切换流量。金丝雀发布：灰度 1%→10%→50%→100%，先验证新版稳定再全量。K8s 滚动更新配置（maxSurge=25%, maxUnavailable=0）保证发布期间始终有足够的 Pod 提供服务。注意：有状态服务（如数据库）的优雅上下线远比无状态服务复杂。",
+    "hints": ["Readiness Probe 和 Liveness Probe 的区别", "滚动更新中 maxSurge 和 maxUnavailable 如何配置"],
+    "tags": ["无损发布", "优雅上下线", "K8s", "滚动更新"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多级缓存架构设计",
+    "content": "微服务中如何设计多级缓存架构？本地缓存、分布式缓存如何协同？缓存一致性怎么保证？",
+    "answer": "答案：多级缓存架构一般为：本地缓存（Caffeine/Guava）→ 分布式缓存（Redis）→ 数据库。读请求优先走本地缓存，未命中再到 Redis，再未命中查 DB 并逐级回填。\n\n解析：1）本地缓存（L1）——Caffeine（高性能，W-TinyLFU 算法），延迟 <1μs，容量受 JVM 堆限制。适合热点数据、变化不频繁的数据。2）分布式缓存（L2）——Redis，延迟约 1-5ms（内网），容量可扩展。适合跨服务共享数据。3）为什么需要两级？Redis 的毫秒级延迟在高 QPS（10 万+/s）下仍会成为瓶颈，本地缓存延迟微秒级可以显著降级 Redis 压力。\n\n扩展延伸：缓存一致性问题：1）本地缓存一致性——Redis PUB/SUB 广播失效消息，各服务监听并淘汰本地缓存。2）分布式缓存双写一致性——更新 DB → 删除缓存（Cache Aside 模式）。一致性要求高时用延时双删（更新 DB → 删除缓存 → 休眠 → 再删一次），或 Canal 订阅 binlog 变更后主动删除/更新缓存。3）Hot Key 问题——本地缓存天然防热点（分散到各节点），Redis 端热点用本地缓存 + 限流兜底。4）缓存穿透解决——布隆过滤器（Bloom Filter）拦截不存在 key。",
+    "hints": ["为什么 Caffeine 比 Guava Cache 性能更好", "Canal 订阅 binlog 如何保证缓存最终一致性"],
+    "tags": ["多级缓存", "Caffeine", "Redis", "一致性"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分布式会话管理",
+    "content": "微服务架构下分布式 Session 有哪些解决方案？各自的优缺点是什么？",
+    "answer": "答案：三种主流方案：Session 集中存储（Spring Session + Redis）、JWT 无状态 Token、客户端 Cookie + 一致性 Hash。\n\n解析：1）Spring Session + Redis——Session 数据存 Redis，各服务从 Redis 读取。Spring Boot 引入 spring-session-data-redis 后开箱即用。优点：应用无感知，改造简单。缺点：每次请求多一次 Redis 网络 IO，Redis 故障影响登录。2）JWT Token——用户信息编码到 Token 中，服务端无状态。优点：零存储，天然跨服务，适合移动端。缺点：无法主动失效（除非配合黑名单），Token 体积大（带宽开销），敏感信息不应放 JWT Payload。3）一致性 Hash——Nginx/IP Hash 将同一用户路由到同一服务器。优点：零改造。缺点：扩缩容会导致 Hash 重分布，会话丢失；服务器宕机丢失该服务器上的所有会话。\n\n扩展延伸：生产实践：Web 端推荐 Spring Session + Redis（简单可靠），移动端 / 跨服务推荐 JWT（无状态）。JWT 的最佳实践：1）使用 short-lived Access Token（15 分钟）+ long-lived Refresh Token（7 天）。2）Token 存 HTTP Only Cookie（防 XSS），而非 localStorage。3）关键操作（支付/修改密码）额外校验。4）退出登录时将 Refresh Token 加入 Redis 黑名单。注意：JWT 无法做到传统的「踢人下线」，需要用 Refresh Token 黑名单配合实现。",
+    "hints": ["JWT 如何实现登出和强制踢人下线", "Spring Session 的底层 Redis 数据结构是什么"],
+    "tags": ["分布式Session", "JWT", "Spring Session", "Redis"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Spring Cloud 配置中心动态刷新原理",
+    "content": "Spring Cloud 配置中心如何实现配置的动态刷新？@RefreshScope 和 Spring Cloud Bus 的工作原理是什么？",
+    "answer": "答案：配置动态刷新通过 @RefreshScope 注解标记 Bean，Spring Cloud Bus 广播变更事件触发批量刷新。核心是 Spring Environment 的动态属性更新。\n\n解析：1）@RefreshScope——特殊 Scope，被标记的 Bean 在配置变更时会被销毁并重新创建。内部使用 ScopedProxy 代理，每个 @RefreshScope Bean 由 RefreshScope BeanFactoryPostProcessor 管理。调用 /actuator/refresh 端点时，Spring 重新加载 Environment（从 Config Server 拉取最新配置），然后销毁所有 @RefreshScope Bean 的缓存，下次注入时重新创建。2）Spring Cloud Bus——基于消息队列（RabbitMQ/Kafka）广播刷新事件。触发 /actuator/busrefresh 后，Config Server 通过 Bus 通知所有服务实例刷新配置，不需要逐个调用。\n\n扩展延伸：配置刷新优先级：1）/actuator/refresh 只刷新 @RefreshScope 标记的 Bean。2）Logging 级别的修改通过 /actuator/loggers 端点实时调整（无需 @RefreshScope）。3）数据源连接池等不支持热更新的配置仍需重启。三种配置管理方式对比：本地文件（spring-boot-config-file）+ 环境变量 > 启动参数。Apollo/Nacos Control Panel 修改 → 推送通知 → 客户端长轮询拉取 → 更新本地缓存 → 发布 RefreshEvent → @RefreshScope Bean 重建。注意：@RefreshScope 的 Bean 必须是 @ConfigurationProperties 或使用 @Value(\"${...}\") 注入的 Bean，且重新创建时可能会丢失运行时状态（如线程池中的任务）。",
+    "hints": ["@RefreshScope 为什么不能用在 @Configuration 类上", "BusRefresh 和单个 Refresh 的适用场景差异"],
+    "tags": ["配置中心", "@RefreshScope", "Spring Cloud Bus", "动态刷新"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Nginx 反向代理与负载均衡",
+    "content": "Nginx 反向代理和负载均衡的工作原理是什么？常见的负载均衡算法和限流配置如何实现？",
+    "answer": "答案：Nginx 反向代理接收客户端请求并转发到后端服务器，负载均衡通过 upstream 模块将流量分发到多台服务器。支持轮询、加权轮询、IP Hash、最少连接等算法。\n\n解析：反向代理 vs 正向代理：正向代理代理客户端（如翻墙），反向代理代理服务端（客户端不知道实际服务端是谁）。负载均衡配置示例：upstream backend { server 192.168.1.1 weight=3; server 192.168.1.2 weight=2; }。负载均衡算法：1）轮询（默认）——依次分发，适合无状态服务。2）加权轮询——按权重比例分发，适合异构机器。3）IP Hash——对客户端 IP 哈希，保证同一客户端始终路由到同一后端（Session 亲和性）。4）最少连接——分发到当前活跃连接最少的后端。\n\n扩展延伸：Nginx 限流配置：ngx_http_limit_req_module（限 QPS）基于漏桶算法：limit_req_zone $binary_remote_addr zone=one:10m rate=10r/s。ngx_http_limit_conn_module（限并发连接数）：limit_conn_zone $binary_remote_addr zone=addr:10m；limit_conn addr 100。应用层限流常用 Sentinel（Java）。Nginx 健康检查：被动（fail_timeout 内出错次数超标即标记不可用）和主动（ngx_http_upstream_check_module 定时探活）。七层 vs 四层负载均衡：HTTP/HTTPS 场景用七层（可解析 URL 做路由），TCP/UDP 场景用四层（性能更高）。Nginx 主要做七层，LVS/HAProxy 擅长四层。",
+    "hints": ["Nginx 七层负载均衡和 LVS 四层负载均衡的适用场景", "Nginx 限流 rate=10r/s 的 burst 参数作用是什么"],
+    "tags": ["Nginx", "反向代理", "负载均衡", "限流"]
+  }
+]

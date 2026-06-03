@@ -234,6 +234,17 @@
         </svg>
         导出
       </button>
+      <button
+        class="qr-browse-btn"
+        onclick={() => onNavigate("quick-review", { reviewConfig: { category: store.filters.category, difficulty: store.filters.difficulty, count: 20 } })}
+        disabled={store.questions.length === 0}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" /></svg>
+        速记
+      </button>
     </div>
   </div>
 
@@ -495,6 +506,29 @@
     border-color: var(--accent-dim);
     color: var(--accent);
   }
+  .qr-browse-btn {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 12px;
+    background: none;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s var(--spring);
+  }
+  .qr-browse-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .qr-browse-btn:not(:disabled):active {
+    transform: scale(0.96);
+    background: var(--accent-bg);
+  }
 
   .loading,
   .empty {
@@ -645,5 +679,43 @@
   .tag.type.multiple_choice {
     background: rgba(108, 140, 255, 0.1);
     color: #6c8cff;
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 480px) {
+    .filters-row {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      gap: 6px;
+      padding-bottom: 4px;
+      margin-bottom: -4px;
+    }
+    .filters-row::-webkit-scrollbar {
+      height: 2px;
+    }
+    .filters-row::-webkit-scrollbar-thumb {
+      background: var(--text-dim);
+      border-radius: 1px;
+    }
+    .filter-item {
+      min-width: 110px;
+      flex: none;
+      scroll-snap-align: start;
+    }
+    .filter-item select {
+      font-size: 13px;
+      padding: 8px 10px;
+    }
+    .actions-row {
+      justify-content: stretch;
+    }
+    .random-btn,
+    .export-btn,
+    .qr-browse-btn {
+      flex: 1;
+      justify-content: center;
+    }
   }
 </style>

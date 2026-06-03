@@ -277,4 +277,17 @@
     font-size: 11px;
     font-weight: 600;
   }
+
+  /* ── Mobile ── */
+  @media (max-width: 480px) {
+    .overview {
+      gap: 8px;
+    }
+    .overview-item {
+      padding: 12px 8px;
+    }
+    .overview-item .num {
+      font-size: 22px;
+    }
+  }
 </style>

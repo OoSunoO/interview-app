@@ -1,0 +1,72 @@
+[
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计高并发限流器",
+    "content": "如何设计一个高并发限流器？请比较令牌桶、滑动窗口日志、滑动窗口计数器等算法的实现和适用场景。",
+    "answer": "答案：常见限流算法包括令牌桶（Token Bucket）、滑动窗口日志（Sliding Window Log）、滑动窗口计数器（Sliding Window Counter）和漏桶（Leaky Bucket），各有优缺点。\n\n解析：1）令牌桶——固定速率 r 往桶里放令牌，桶容量 b 允许突发。请求消耗令牌，令牌不够则拒绝/等待。Guava RateLimiter 使用此算法，SmoothBursty 允许突发，SmoothWarmingUp 预冷防止冷启动压垮系统。2）滑动窗口日志——记录每个请求的时间戳，统计窗口内请求数。精度高但需存储所有时间戳，内存占用大。3）滑动窗口计数器——将时间窗口划分为 n 个小桶（如 60s 切 6 个 10s 桶），用当前桶 + 前一个桶的占比估算总量。近似但内存少，Sentinel 使用此算法。4）漏桶——请求以恒定速度被处理，超出的排队或丢弃。适合保护下游处理能力固定的场景。\n\n扩展延伸：分布式限流的实现策略：1）中心化——Redis + Lua 原子操作（INCR + EXPIRE），所有节点共享计数器，精度高但有网络瓶颈。2）本地化——每个节点独立限流（如 QPS 1000 × 10 节点 = 10000 集群 QPS），零延迟但总体误差大。3）自适应——基于 Sentinel 限流，动态调整。4）分层——网关层（粗粒度）+ 应用层（细粒度）组合。",
+    "hints": ["令牌桶容量和速率如何设置", "分布式限流为什么比单机限流复杂度高很多"],
+    "tags": ["系统设计", "限流", "高并发"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计实时排行榜",
+    "content": "如何设计一个支持高并发更新的实时排行榜？需要实时排名、Top-N 查询和分页。",
+    "answer": "答案：Redis Zset（有序集合）是实时排行榜最常用的方案，ZADD 更新分数（O(log n)），ZREVRANGE 查询 Top-N（O(log n + k)），ZREVRANK 查询个人排名（O(log n)）。\n\n解析：核心存储选型对比：1）Redis Zset——内存存储、毫秒级响应，ZINCRBY 原子更新分数。可存百万级数据量。缺点：数据量超过千万时内存占用大，需考虑持久化。2）MySQL——ORDER BY score LIMIT N 需全表排序（即使有索引），高并发下性能不足；个人排名可用窗口函数 RANK() OVER。适合更新频率低、数据量稳定的场景。3）Redis Zset + 数据库持久化——Redis 扛实时读写，定期异步刷到 DB，兼顾性能和可靠性。\n\n扩展延伸：排名的关键设计问题：1）同分处理——纯 Zset 按字典序排列同分项（不稳定），复合 score 技巧：score = 主分数 + 1 - (时间戳 / 10^10) 让先到者排前。2）Top-N vs 全量排名——全量排名可缓存分区段（1-100，101-200...），或只在查看特定名次时才计算。3）分页——ZREVRANGE 按排名区间取，游标分页（记录 last_score 和 last_member）。4）冷热分离——热数据（Top 1000）走 Redis，冷数据查 DB。",
+    "hints": ["Zset 的同分排序问题如何解决", "千万级用户全量排名能否用 Redis 存"],
+    "tags": ["系统设计", "排行榜", "Redis", "Zset"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CPU 100% 排查方法",
+    "content": "线上服务器 CPU 飙高到 100%，你如何排查找到问题代码？请描述完整的排查步骤。",
+    "answer": "答案：核心排查链路：top 定位高 CPU 进程 → top -H 定位高 CPU 线程 → 记下线程 ID 转十六进制 → jstack 获取堆栈 → 搜索 nid 匹配线程。\n\n解析：1）top 找到高 CPU 的 Java 进程 PID。2）top -H -p PID 找到该进程内高 CPU 的线程 TID（十进制）。3）printf '%x\\n' TID 将十进制线程 ID 转十六进制。4）jstack PID > stack.log 抓线程栈。5）在 stack.log 中搜索 nid=0x十六进制 找到对应线程的堆栈，定位到代码行。\n\n扩展延伸：不同原因的分析方向：1）Full GC——jstat -gcutil PID 看 FGC 和 FGCT；配合 jmap -histo 看对象分布。2）线程死循环——确认堆栈中是否在某个业务循环方法内。3）频繁线程创建销毁——pstree -p PID | wc -l 看线程数。4）CPU 系统性偏高——用 perf top -p PID 看 hotspot（native 级别，Arthas 的 profiler 也可以）。5）Linux 整体高且非 Java——用 top 定位高 CPU 非 Java 进程，再用系统工具分析。",
+    "hints": ["jstack 中 nid 和线程 ID 的换算关系", "Full GC 频繁为什么会导致 CPU 高"],
+    "tags": ["排查", "CPU", "性能", "JVM"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java OOM 排查方法",
+    "content": "线上 Java 应用发生 OOM（OutOfMemoryError），你如何定位根因？Heap Dump 如何分析？",
+    "answer": "答案：先通过错误日志判断 OOM 类型（Java heap space / Metaspace / Direct buffer / GC overhead limit exceeded），再收集 Heap Dump 分析。\n\n解析：排查步骤：1）查看错误日志确认 OOM 的具体信息——Java heap space（堆内存不足）、Metaspace（元空间不足，常见于 CGLib 动态类生成）、Direct buffer（堆外内存，Netty 使用不当常见）、GC overhead limit exceeded（98% 时间花 GC 但回收 < 2%）。2）JVM 启动参数加 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/，OOM 时自动 dump。3）用 MAT（Memory Analyzer Tool）分析 dump 文件：Leak Suspects Report（泄漏嫌疑分析）、Dominator Tree（大对象持有者）、GC Roots 链（谁阻止了对象被回收）。\n\n扩展延伸：常见内存泄漏模式：1）ThreadLocal 未 remove（Tomcat 线程池复用导致用户数据泄漏）。2）Map 作为缓存无大小限制。3）未关闭的 IO 流/连接。4）类加载器泄漏（Tomcat 热部署）。5）堆外内存泄漏——用 Google Native Memory Tracking（NMT）：-XX:NativeMemoryTracking=summary，jcmd VM.native_memory summary 查看。注意：Heap Dump 分析可能会因为 dump 过大导致卡顿，生产环境一般配置自动 dump 和报警。",
+    "hints": ["MAT 的 Leak Suspects Report 怎么看", "Native Memory Tracking 如何定位堆外内存泄漏"],
+    "tags": ["排查", "OOM", "JVM", "性能"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库连接池耗尽排查",
+    "content": "应用报错\"Connection pool exhausted\"或获取连接超时，你怎么排查和解决？",
+    "answer": "答案：排查链路：确认活跃连接数 → 查慢 SQL → 查连接泄漏 → 查数据库侧最大连接限制。\n\n解析：排查步骤：1）查看 HikariCP 监控指标（通过 Actuator 或 JMX），看 active 连接数是否接近 maximumPoolSize，idle 是否长期为 0。2）数据库侧 SHOW PROCESSLIST 或查询 performance_schema 看当前连接在执行什么 SQL。3）如果大量连接处于 Sleep 状态说明连接泄漏（connection not returned to pool）——检查代码中 try-with-resources 或 finally 中的 close()。4）如果大量连接处于 Query 执行中——检查慢 SQL，开启 slow_query_log，用 EXPLAIN 分析。\n\n扩展延伸：连接池配置建议：1）maximumPoolSize 不是越大越好——HikariCP 作者建议 pool_size = Tn × (C - 1) + 1（Tn = 核数，C = 单连接队列深度），一般经验公式为 (core_count × 2) + effective_spindle_count。2）连接泄漏自动化检测——HikariCP 的 leakDetectionThreshold（如设 60000ms，连接借出超过 60s 未归还则日志告警）。3）常见框架连接泄漏陷阱：Spring JPA/session-per-request 未关闭 EntityManager；RestTemplate 不配置连接池（TCP 连接未释放）。",
+    "hints": ["HikariCP leakDetectionThreshold 的使用", "连接池取不到连接时请求队列如何工作的"],
+    "tags": ["排查", "数据库", "连接池"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Full GC 频繁调优",
+    "content": "线上应用频繁 Full GC，每次停顿数秒，如何分析和优化？",
+    "answer": "答案：启用 GC 日志（-Xloggc + -XX:+PrintGCDetails）分析 GC 频率、停顿时间和各代变化，定位根因后再调整参数或排查泄漏。\n\n解析：Full GC 频繁的常见原因和处理：1）内存泄漏——对象持续堆积无法回收，老年代不断增长直到 Full GC。用 jmap -histo:live 触发 GC 后对比存活对象，或 dump 后用 MAT 分析。2）GC 参数不合理——年轻代过小导致对象过早进入老年代（premature promotion），从 GC 日志看 promotion rate 和晋升阈值。3）大对象直接进入老年代——-XX:PretenureSizeThreshold 设小了，日志看老年代直接分配。4）元空间不足——CGLib 动态类生成过多，加大 -XX:MaxMetaspaceSize。5）G1 GC 的 Humongous Allocation——超过 region 50% 的大对象。\n\n扩展延伸：GC 算法选型：1）G1（JDK 9+ 默认）——分区 + 并发标记 + 混合 GC，-XX:MaxGCPauseMillis=200 设目标停顿。2）ZGC（JDK 21+ 推荐）——染色指针 + 读屏障，停顿 < 1ms 但耗 CPU。3）Shenandoah——类似 ZGC 但用写屏障。GC 日志分析工具：gcviewer、gceasy、jupyter lab + pynvm。调优黄金法则：先确认是否有内存泄漏，再调整参数——参数调整不能修复泄漏。",
+    "hints": ["如何从 GC 日志判断是内存泄漏还是参数不合理", "G1 的 MaxGCPauseMillis 设太小会有什么副作用"],
+    "tags": ["排查", "JVM", "GC", "性能调优"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计分布式配置中心",
+    "content": "设计一个分布式配置中心的核心架构是怎样的？推模型和拉模型各有什么优劣？",
+    "answer": "答案：配置中心核心组件包括配置存储、管理后台、客户端 SDK 和推送通道。实现方式分推模式和拉模式。\n\n解析：拉模式（Polling）：客户端定时从配置中心拉取全量或增量配置。实现简单，客户端主动控制刷新频率。缺点：实时性不够（有延迟窗口），频繁拉取浪费资源（即使配置没变）。推模式（Long Polling/WebSocket）：服务端在配置变更时主动推送。Apollo 使用 Http Long Polling（客户端发起长连接请求，服务端hold住，60s 超时或配置变更时返回）。Nacos 支持 Push 和 Pull 双模式。\n\n扩展延伸：主流配置中心对比：1）Apollo（携程）——功能最全，多环境/多集群/灰度发布/权限管控，配置变更实时推送，架构相对重。2）Nacos（阿里）——配置中心 + 注册中心合一体，支持配置变更 Hook 回调。3）Consul（HashiCorp）——生态好（Service Mesh 集成），KV Store 做配置。配置中心的设计要点：1）配置变更的版本管理和回滚。2）配置变更的审计日志。3）灰度发布——只推送给部分实例验证。4）配置热加载——Spring Cloud Config 的 @RefreshScope + /actuator/refresh。5）监听机制——配置变更后执行回调。",
+    "hints": ["Apollo 的长轮询实现原理", "配置中心和注册中心能否合并"],
+    "tags": ["系统设计", "配置中心", "微服务"]
+  }
+]

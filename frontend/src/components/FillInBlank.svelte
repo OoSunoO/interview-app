@@ -366,4 +366,16 @@
   .retry-btn:active {
     transform: scale(0.98);
   }
+
+  @media (max-width: 480px) {
+    .blank-select {
+      min-width: 90px;
+      font-size: 13px;
+      padding: 8px 24px 8px 8px;
+    }
+    .f-content {
+      font-size: 14px;
+      gap: 4px;
+    }
+  }
 </style>

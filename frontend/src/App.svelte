@@ -7,14 +7,17 @@
   import Stats from "./pages/Stats.svelte";
   import KnowledgePoints from "./pages/KnowledgePoints.svelte";
   import KnowledgePointDetail from "./pages/KnowledgePointDetail.svelte";
+  import QuickReview from "./pages/QuickReview.svelte";
 
   let page = $state("home");
   let selectedQuestionId = $state(null);
   let selectedTag = $state(null);
+  let reviewConfig = $state(null);
 
   function navigate(to, params = {}) {
     if (params.questionId) selectedQuestionId = params.questionId;
     if (params.tag) selectedTag = params.tag;
+    if (params.reviewConfig) reviewConfig = params.reviewConfig;
     page = to;
   }
 </script>
@@ -35,6 +38,8 @@
       <KnowledgePointDetail tag={selectedTag} onNavigate={navigate} />
     {:else if page === "stats"}
       <Stats />
+    {:else if page === "quick-review"}
+      <QuickReview config={reviewConfig} onNavigate={navigate} />
     {/if}
   </main>
   <NavBar current={page} onNavigate={(p) => navigate(p)} />

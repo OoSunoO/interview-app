@@ -1084,4 +1084,37 @@
     border-radius: var(--radius-sm);
     padding: 14px;
   }
+
+  /* ── Mobile ── */
+  @media (max-width: 480px) {
+    .filter-tabs {
+      gap: 6px;
+    }
+    .filter-tab {
+      font-size: 12px;
+      padding: 6px 12px;
+    }
+    .q-item {
+      padding: 12px;
+    }
+    .schedule-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .schedule-label {
+      min-width: auto;
+    }
+    .schedule-questions {
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .schedule-questions button {
+      flex: 1;
+      min-width: 0;
+    }
+    .detail-card-inner {
+      padding: 14px;
+    }
+  }
 </style>

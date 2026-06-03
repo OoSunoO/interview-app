@@ -494,4 +494,30 @@
     flex-direction: column;
     gap: 10px;
   }
+
+  /* ── Mobile ── */
+  @media (max-width: 480px) {
+    .cat-header {
+      padding: 12px;
+    }
+    .cat-label {
+      font-size: 14px;
+    }
+    .child-item {
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 4px;
+    }
+    .child-name {
+      font-size: 13px;
+      white-space: normal;
+      overflow-wrap: break-word;
+    }
+    .child-mastery {
+      width: 80px;
+    }
+    .kp-content-preview {
+      font-size: 12px;
+    }
+  }
 </style>

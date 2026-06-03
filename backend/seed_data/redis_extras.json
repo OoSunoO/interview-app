@@ -1,0 +1,272 @@
+[
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 主从复制原理",
+    "content": "Redis 主从复制是如何工作的？psync2 和部分重同步的原理是什么？",
+    "answer": "答案：Redis 主从复制通过 PSYNC 命令实现，支持完整重同步和部分重同步（psync2）。全量同步时主节点 fork 子进程做 RDB 快照 + 增量缓冲；部分同步通过 replication ID 和 offset 在 backlog 中追回增量数据。\n\n解析：1）完整重同步——从节点向主节点发送 PSYNC ? -1（首次），主节点执行 BGSAVE 生成 RDB，同时将后续写命令缓冲到 replication backlog。RDB 传完后继续发送缓冲的写命令。2）部分重同步（psync2，Redis 4.0+）——从节点断线重连后发送上次的 replication ID 和 offset，主节点检查 offset 是否仍在 backlog 内（由 repl-backlog-size 决定，默认 1MB），如果在则发增量数据，不在则触发全量同步。3）心跳机制——主节点每 10s ping 从节点检测存活。\n\n扩展延伸：Redis 7.0+ 支持 diskless replication（无盘复制），主节点直接将 RDB 通过 socket 发送给从节点，减少磁盘 IO。全量同步的代价：fork 子进程可能阻塞主进程（数据量大时几十毫秒到秒级），RDB 传输占用网络带宽。建议：主节点配置禁用持久化以提高性能，从节点开启持久化；repl-backlog-size 根据网络断连频率调整（如 64MB-512MB）。",
+    "hints": [
+      "PSYNC 中 replication ID 和 offset 的作用是什么",
+      "全量同步时主节点 fork 子进程会有哪些影响"
+    ],
+    "tags": [
+      "Redis",
+      "主从复制",
+      "高可用"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 哨兵模式",
+    "content": "Redis Sentinel（哨兵）是如何实现高可用的？主节点宕机后故障转移的过程是什么？",
+    "answer": "答案：Sentinel 是一个独立进程，负责监控 Redis 节点状态、自动故障转移和通知客户端。当主节点宕机时，Sentinel 先判定主观下线（SDOWN）→ 达到 quorum 后判定客观下线（ODOWN）→ 选举 leader → 选新主节点 → 切换。\n\n解析：1）SDOWN（Subjective Down）——单个 Sentinel 检测到节点在一定时间内（down-after-milliseconds，默认 30s）没有响应 PING。2）ODOWN（Objective Down）——多个 Sentinel 都确认 SDOWN，达到 quorum（如 3 个 Sentinel 设 quorum=2）后判定 ODOWN。3）Leader 选举——Sentinel leader 通过 Raft 类算法选主（需要 N/2+1 投票），leader 负责执行故障转移。4）新主节点选择——优先选择 repl-priority 最小的从节点，然后选 replication offset 最大的（数据最新），最后选 runID 最小的（启动最早的）。5）故障转移——leader Sentinel 向新主节点发送 SLAVEOF NO ONE，其他从节点 SLAVEOF 新主节点，旧主恢复后降级为从节点。\n\n扩展延伸：Sentinel 客户端需要订阅 + channel（+switch-master）或定期 get-master-addr-by-name 获取最新主节点地址。Sentinel 集群最少部署 3 个实例（奇数，避免 split-brain 时无法选主）。生产建议：Sentinel 和 Redis 节点分开部署，避免同时宕机。",
+    "hints": [
+      "SDOWN 和 ODOWN 的区别是什么",
+      "为什么 Sentinel 集群建议部署奇数个节点"
+    ],
+    "tags": [
+      "Redis",
+      "哨兵",
+      "高可用",
+      "Sentinel"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Cluster 集群原理",
+    "content": "Redis Cluster 的数据分片和节点通信机制是什么？MOVED 和 ASK 重定向有什么区别？",
+    "answer": "答案：Redis Cluster 将数据分为 16384 个哈希槽（hash slot），每个节点负责一部分槽位。节点间通过 Gossip 协议通信。客户端访问时若槽位不在本节点，节点返回 MOVED/ASK 重定向给客户端。\n\n解析：1）哈希槽分配——计算 HASH_SLOT = CRC16(key) % 16384，将 key 映射到 0-16383 的槽位。支持 hash tag 机制：key 中 {…} 部分参与哈希，保证一批 key 落到同一节点，支持多 key 操作。2）MOVED 重定向——槽位已永久分配给其他节点时返回 MOVED ${slot} ${ip}:${port}，客户端直接跳转到新节点并刷新本地路由缓存。3）ASK 重定向——槽位正在迁移（迁移过程中）返回 ASK ${slot} ${ip}:${port}，客户端先向目标节点发 ASKING 命令再执行操作，仅单次生效（不刷新路由缓存）。4）Gossip 协议——节点间通过 PING/PONG 交换状态信息（包括其他节点的状态，称为 Gossip gossip），端口为 redis-port + 10000。\n\n扩展延伸：Cluster 限制：1）不支持多 key 操作（除非 key 在相同槽，通过 hash tag 实现）。2）事务操作涉及多 key 时也要求在同一节点。3）客户端需支持 Cluster 协议（如 JedisCluster、Lettuce）。集群规模建议：3 主 3 从起步（至少 3 主），节点数受 Gossip 通信量限制（官方建议 < 1000 节点）。节点扩容时需要 re-shard（slot 迁移），数据迁移过程中对客户端透明（通过 ASK 重定向）。",
+    "hints": [
+      "为什么 Redis Cluster 固定使用 16384 个槽而不是更多",
+      "hash tag 如何保证相关 key 落到同一节点"
+    ],
+    "tags": [
+      "Redis",
+      "Cluster",
+      "分片",
+      "哈希槽"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "缓存一致性：Cache Aside 模式",
+    "content": "什么是 Cache Aside Pattern？先更新数据库还是先删除缓存？如何保证缓存和数据库的一致性？",
+    "answer": "答案：Cache Aside Pattern 是当前最常用的缓存策略：读时先查缓存（miss 则读 DB 再回写缓存），写时先写 DB 再删除缓存。删除缓存是最小化一致性风险的方案。\n\n解析：为什么先写 DB 再删缓存而不是先删缓存再写 DB？如果先删缓存再写 DB，期间有并发读请求会直接读 DB（因缓存已删）并将旧数据回写到缓存，导致缓存与 DB 不一致。先写 DB 再删缓存的风险：写 DB 完成后还没删缓存时，旧缓存被其他线程读到。删除缓存比更新缓存好的原因：更新缓存存在竞争条件——A 写 DB 后缓存更新为 A 的值，B 写 DB 后缓存更新为 B 的值，但可能先 B 后 A（网络延迟导致 A 的更新请求晚于 B 到达），导致缓存最终是旧值。\n\n扩展延伸：Cache Aside 仍有短暂的窗口不一致（写 DB 到删缓存之间）。更高一致性方案：1）延迟双删——先删缓存 → 写 DB → sleep N ms → 再删缓存。N 取经验值 500-1000ms（取决于读请求的响应时间）。2）Canal（阿里开源）——订阅 MySQL binlog，变更时异步删除或更新缓存。3）读写锁——写操作加写锁阻塞并发读，保证强一致但降低性能。生产建议：绝大多数业务接受最终一致性，Cache Aside + 延迟双删 + TTL 兜底已足够。",
+    "hints": [
+      "为什么更新缓存比删除缓存更容易出问题",
+      "延迟双删中 sleep 的时间如何确定"
+    ],
+    "tags": [
+      "Redis",
+      "缓存",
+      "一致性",
+      "Cache Aside"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 事务机制",
+    "content": "Redis 的事务机制（MULTI/EXEC）是如何工作的？它与关系型数据库事务的本质区别是什么？",
+    "answer": "答案：Redis 事务通过 MULTI 开启，后续命令加入队列，EXEC 时批量原子执行。但 Redis 事务**不支持回滚**（没有 rollback），且是隔离单线程执行而非 ACID。\n\n解析：执行流程：1）MULTI——开启事务。2）命令入队——后续命令不立即执行，而是排入队列返回 QUEUED。3）EXEC——按顺序执行队列中的命令，保证不被其他命令中断。特点：整个事务是原子执行的（单线程保证无并发插入），但部分失败不回滚。WATCH 命令——乐观锁实现 CAS：WATCH key 后如果 key 在事务执行前被其他客户端修改，EXEC 返回 nil（事务放弃）。\n\n扩展延伸：对比关系型数据库事务：1）隔离性——Redis 单线程执行，天然可串行化（Serializable），没有脏读/不可重复读/幻读。2）持久性——Redis 事务不保证持久性（取决于 AOF 配置，always 模式才保证）。3）回滚——Redis 不支持回滚。如果命令入队时语法错误，所有命令被丢弃；如果 EXEC 后运行时错误（如对 string 做 LPUSH），正确命令不受影响。设计哲学：Redis 的设计者认为事务回滚是数据库层的复杂功能，Redis 保持简单——开发者应确保命令正确，错误在应用层处理。",
+    "hints": [
+      "WATCH 如何实现乐观锁（CAS）",
+      "Redis 事务中语法错误和运行时错误的处理有什么不同"
+    ],
+    "tags": [
+      "Redis",
+      "事务",
+      "MULTI",
+      "WATCH"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis Pipeline 批量操作",
+    "content": "Redis Pipeline 是什么？它和事务的主要区别是什么？适用什么场景？",
+    "answer": "答案：Pipeline 将多条命令一次性批量发送到服务器，减少网络往返时间（RTT）。它与事务的本质区别：Pipeline 不保证原子性，只是批量网络传输优化。\n\n解析：单条命令的网络 RTT 在本地网络约 0.1-1ms，远程网络 10-50ms。如果用 Pipeline 将 100 条命令一次发送，RTT 从 100ms 降到 0.1-1ms。Pipeline 的工作方式：客户端将多个命令缓冲到队列（不等待每个响应），一次性 flush 到服务器，服务器依次执行并将响应全部返回。\n\n扩展延伸：Pipeline vs 事务：Pipeline 只是网络层面的优化，命令被服务器逐个执行，期间可能有其他客户端的命令插入。MULTI/EXEC 保证执行期间的原子性（中间不会有其他命令插入）。两者可以结合使用：在 Pipeline 中发送 MULTI → 命令 → EXEC，既获得网络批量传输的效率又获得原子执行保证。注意：Pipeline 缓冲的命令过多会导致客户端内存占用过大（需要缓存所有响应直到读取），建议控制每批 1000-5000 条命令。Pipeline 在 Redis Cluster 中使用时需要注意 key 的 hash tag 分配。",
+    "hints": [
+      "Pipeline 缓冲的命令过多会产生什么问题",
+      "Pipeline 和 MULTI/EXEC 能否一起使用"
+    ],
+    "tags": [
+      "Redis",
+      "Pipeline",
+      "批量操作",
+      "RTT"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Lua 脚本",
+    "content": "Redis 中 Lua 脚本（EVAL）的工作原理是什么？它在批量操作的原子性上有什么优势？",
+    "answer": "答案：Lua 脚本在 Redis 服务端原子执行，脚本中的多条命令作为一个整体执行，中间不插入任何其他命令。通过 EVAL/EVALSHA 调用，脚本被缓存到服务器。\n\n解析：1）EVAL——直接传入脚本内容，如 EVAL 'return redis.call(\"SET\", KEYS[1], ARGV[1])' 1 foo bar。KEYS[1] 和 ARGV[1] 用于传入 key 和参数，规范要求显式传入 key 列表（Cluster 模式下校验 key 是否在同一节点）。2）EVALSHA——通过 SHA1 指纹调用已缓存的脚本，避免重复传输脚本内容。SCRIPT LOAD 预加载脚本，SCRIPT FLUSH 清空缓存。3）原子性——Lua 脚本中的命令与其他客户端的命令绝对隔离（Redis 单线程执行 Lua）。相比事务的优势：脚本中可以包含逻辑控制（if/else、循环等），而事务只能按固定顺序执行。\n\n扩展延伸：脚本超时处理：默认 lua-time-limit 5000ms，超时后 Redis 记录脚本到慢查询日志并开始接受 other commands 的请求（但不会执行），允许 SCRIPT KILL。如果脚本已经执行了写命令则只能 SHUTDOWN NOSAVE 强制终止。实践：分布式锁的 Redisson Watch Dog 续期、秒杀库存扣减、限流器令牌桶的复杂操作——都是用 Lua 脚本保证原子性。注意：Lua 脚本中应避免毫秒级耗时操作（如 TIME、大集合遍历），避免阻塞 Redis。",
+    "hints": [
+      "EVALSHA 比 EVAL 好在哪",
+      "Lua 脚本超时后为什么可能只能 SHUTDOWN NOSAVE"
+    ],
+    "tags": [
+      "Redis",
+      "Lua",
+      "原子性",
+      "EVAL"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 底层数据结构详解",
+    "content": "Redis 五种数据类型的底层实现分别是什么？SDS、quicklist、listpack、dict、intset、skiplist 各自的特点是什么？",
+    "answer": "答案：String 底层用 SDS（Simple Dynamic String）；List 用 quicklist（双向链表节点 + listpack）；Hash 用 dict（字典）或 listpack；Set 用 intset（整数集合）或 dict；Zset 用 skiplist + dict 或 listpack。\n\n解析：1）SDS——头部分别存储 len（已用长度）和 alloc（总容量），通过预分配和惰性空间释放避免重复内存操作。相比 C 字符串：O(1) 获取长度、二进制安全（不依赖 null 终止符）、自动扩容。Redis 7.0 有五类 SDS：sdshdr5/8/16/32/64（flags 字段区分）。2）quicklist（Redis 3.2+）——双向链表，每个节点使用 listpack（Redis 7.0+ 替换了原来的 ziplist）存储数据，平衡了内存紧凑和读写性能。3）listpack——连续内存块，每个元素带 encoding + data + length，无需像 ziplist 那样在遍历时更新 prevlen，解决连锁更新问题。4）dict——散列表，使用渐进式 rehash（ht[0] + ht[1] 双表），rehashidx 标记迁移进度。5）intset——有序的整数数组，支持 INT16/32/64 自动升级。6）skiplist——多层链表，层高随机（幂律分布），Redis 7.0 最大层数 64（之前是 32）。\n\n扩展延伸：切换阈值：Hash 的 field 数少于 512 且 value 小于 64 字节时用 listpack，否则用 dict。Zset 元素少于 128 且元素大小小于 64 字节时用 listpack，否则用 skiplist + dict。注意：ziplist 在 Redis 7.0 中被 listpack 全面取代。",
+    "hints": [
+      "为什么 listpack 解决了 ziplist 的连锁更新问题",
+      "SDS 的预分配策略如何减少内存重分配次数"
+    ],
+    "tags": [
+      "Redis",
+      "数据结构",
+      "SDS",
+      "listpack",
+      "skiplist"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis big key 治理",
+    "content": "什么是 Redis big key？它有什么危害？如何发现和处理 big key？",
+    "answer": "答案：Big key 指单个 key 包含大量数据（如大 String 超过 10MB，或集合类型元素超过 5000 个）。危害包括阻塞命令、网络带宽拥塞、集群数据倾斜。发现使用 redis-cli --bigkeys 或 memory usage 命令。\n\n解析：危害：1）阻塞——对大集合执行 DEL/EXPIRE 等操作会阻塞 Redis（O(n) 复杂度），大量数据在一次响应中传输也阻塞网络。2）网络——每次操作 big key 都要传输大量数据，增加网络延迟和带宽。3）数据倾斜——Cluster 场景下 big key 所在节点负载远高于其他节点。\n\n发现方法：1）redis-cli --bigkeys（scan 逐个类型统计，生产安全）。2）命令 memory usage key（Redis 4.0+，返回 key 的精确内存占用）。3）通过 MONITOR 或慢查询日志定位访问量大且数据传输量大的 key。\n\n扩展延伸：处理方案：1）大 String——拆分为多个小 key：原本存 user:123 一个字段拆为 user:123:profile user:123:orders。2）大 Hash——用 hscan + hdel 分批清除无用字段。3）大 List——用 ltrim 裁剪。4）大 Set/Zset——用 sscan/zscan + srem/zrem 分批，或用 sunlink（异步删除，Redis 4.0+）替代 del——UNLINK 命令在后台线程回收内存，主线程 O(1) 立即返回。5）提前预防——控制集合大小分裂，设置合理过期时间。",
+    "hints": [
+      "redis-cli --bigkeys 为什么是生产安全的",
+      "UNLINK 和 DEL 删除大 key 的区别是什么"
+    ],
+    "tags": [
+      "Redis",
+      "big key",
+      "性能",
+      "阻塞"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis hot key 治理",
+    "content": "什么是 Redis hot key？如何发现热点 key？有哪些治理方案？",
+    "answer": "答案：Hot key 指某个 key 的访问量远超平均值，导致该 key 所在的 Redis 节点成为瓶颈，集群中其他节点空闲。发现方法包括客户端统计、代理层统计、Redis 监测命令。治理主要靠本地缓存、副本分摊、热点拆分。\n\n解析：发现方法：1）客户端统计——在 Jedis/Lettuce 拦截层对 key 访问计数。2）代理层——如果使用 Twemproxy/Codis/Redis Cluster proxy，可以在代理层统计。3）Redis 4.0+ 开启 LFU 淘汰策略后，用 OBJECT FREQ key 查看访问频率。4）redis-cli --hotkeys（Redis 4.0+，需启用 LFU）。不推荐生产环境使用 MONITOR 命令找 hot key（性能开销极大）。\n\n扩展延伸：治理方案：1）本地缓存——在服务层（Caffeine/Guava Cache）缓存热点 key，减少对 Redis 的访问。这是最简单有效的方案。2）副本分摊——Redis 4.0+ 支持从节点处理读请求（readonly），将热点 key 的读压力分散到多个从节点。注意从节点数据可能延迟。3）拆散 Hot key——将一个 key 拆为 N 个 key：hotkey_1, hotkey_2, …, hotkey_N（如 hash tag 打散 + 轮询读取），将访问分散到不同节点。4）限流——在网关层对热点 key 请求限流，保护后端 Redis。5）读写分离——让一部分读流量走从节点（Redis Cluster 从节点可处理读）。",
+    "hints": [
+      "为什么不能在生产环境用 MONITOR 命令找 hot key",
+      "本地缓存缓解 hot key 的核心风险是什么"
+    ],
+    "tags": [
+      "Redis",
+      "hot key",
+      "热点",
+      "性能"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 内存淘汰策略",
+    "content": "Redis 的 8 种内存淘汰策略分别是什么？如何选择？LRU 和 LFU 的区别是什么？",
+    "answer": "答案：8 种策略分为 2 大类：不淘汰（noeviction）和可淘汰。可淘汰中分为：作用于所有 key（allkeys-lru/allkeys-lfu/allkeys-random）和仅限设置了过期时间的 key（volatile-lru/volatile-lfu/volatile-random/volatile-ttl）。\n\n解析：1）noeviction（默认）——内存满时写入操作返回 OOM 错误。2）allkeys-lru——淘汰最近最少使用的 key（推荐，多数业务场景最佳选择）。3）allkeys-lfu（Redis 4.0+）——淘汰使用频率最低的 key。4）allkeys-random——随机淘汰。5）volatile-lru——从设置了过期时间的 key 中淘汰最近最少使用的。6）volatile-lfu——从设置了过期时间的 key 中淘汰使用频率最低的。7）volatile-random——从设置了过期时间的 key 中随机淘汰。8）volatile-ttl——淘汰剩余存活时间最短的 key。\n\n扩展延伸：LRU 与 LFU 的区别：LRU（Least Recently Used）按最近访问时间淘汰，问题是一键批量读取旧数据可能把原本高频的缓存数据挤掉（缓存污染）。LFU（Least Frequently Used）按访问频率淘汰，维护每个 key 的访问计数器（counter，有限的频度老化避免长期高频压制新热点）。LFU 的 counter 是一个 8 位的概率计数器（Morris counter，用概率递增），最大值 255。Redis 的近似 LRU：不是精确 LRU，因为精确 LRU 需要维护全量链表，内存开销大。Redis 采样池（pool）方式——从所有 key 中随机取 samples（默认 maxmemory-samples=5），淘汰其中最旧的。sample 数越大越接近精确 LRU。选择建议：通用缓存 → allkeys-lru；有明显冷热区分且热 key 变化少 → allkeys-lfu；需要兼顾 TTL 策略 → volatile-ttl；业务明确不需要淘汰 → noeviction + 监控告警。",
+    "hints": [
+      "LRU 的缓存污染问题是什么",
+      "LFU 的 counter 为什么用 Morris 计数器而不是整数"
+    ],
+    "tags": [
+      "Redis",
+      "淘汰策略",
+      "LRU",
+      "LFU"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redisson 看门狗 Watch Dog",
+    "content": "Redisson 分布式锁的 Watch Dog（看门狗）机制是什么？锁自动续期是如何实现的？",
+    "answer": "答案：Watch Dog 是 Redisson 在获取分布式锁后启动的后台线程，在锁接近过期时自动续期，防止业务未完成而锁提前释放。默认锁超时 30s，每 10s 续期一次。\n\n解析：Redisson 的 RLock 使用 Lua 脚本加锁（SET key uuid NX PX 30000），加锁成功后客户端启动一个后台定时任务：每 leaseTime/3（默认 10s）执行一次 Lua 脚本检查锁是否还存在，如果存在则重置过期时间为 30s。如果 Redisson 客户端宕机或关机，Watch Dog 线程不再续期，锁在 30s 后自动释放。\n\n扩展延伸：使用 Watch Dog 时业务代码不需关心锁过期：如果业务执行时间超过锁过期时间，Watch Dog 自动续期；如果业务代码异常退出，Watch Dog 随线程死亡不再续期，锁自动释放。自定义超时：lock(10, TimeUnit.SECONDS) 手动指定租约时间（此时不启动 Watch Dog，到期自动释放）。tryLock 带等待时间：tryLock(waitTime, leaseTime, unit) 控制获取锁的等待时间和锁持有时间。注意：Watch Dog 只对 Redisson 的 RLock 生效（基于 SET NX + Lua 续期），不是 Redis SETNX 原生的功能。生产建议：如果业务执行时间非常稳定且可预估，手动设置 leaseTime 避免 Watch Dog 开销；如果执行时间有波动，使用 Watch Dog 自动续期更安全。",
+    "hints": [
+      "Watch Dog 为什么每 10 秒续期一次而不是更频繁",
+      "锁自动续期和手动指定租约时间应如何选择"
+    ],
+    "tags": [
+      "Redis",
+      "分布式锁",
+      "Redisson",
+      "Watch Dog"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 发布订阅与 Stream",
+    "content": "Redis 的 PUB/SUB 和 Stream（5.0+）有什么区别？Stream 的消费者组（Consumer Group）机制是如何工作的？",
+    "answer": "答案：PUB/SUB 是即时消息广播（fire-and-forget），消息不持久化、没有 ACK 机制、离线客户端丢失消息。Stream 是持久化消息队列，支持消费组、ACK、消息回溯，类似 Kafka 在 Redis 中的实现。\n\n解析：PUB/SUB 的缺陷：1）消息不持久，publisher 发送后 subscriber 不在线则消息丢失。2）没有 ACK 确认机制。3）每个订阅者收到相同消息（广播模型，与 Kafka 消费组不同）。4）不支持消息回溯。适用：实时性要求高但允许丢失的场景（如 Sentinel 的状态变更通知）、系统内部信号通信。Redis Stream（5.0+，借鉴 Kafka）：每个 Stream 是一个仅追加的消息链表，每条消息有唯一 ID（时间戳 + 序列号）。支持 XADD 添加、XREAD 读取（支持阻塞读）、XRANGE 范围查询。\n\n扩展延伸：Stream 的 Consumer Group：通过 XGROUP CREATE 创建消费组，同一消费组内的消费者分摊消息（类似 Kafka 消费组），每条消息只能被组内一个消费者消费。机制：1）每个消费组有 last_delivered_id（类似 Kafka 的 offset），新消费者从该位置开始消费。2）消息用 XREADGROUP 读取后变为 pending 状态，消费者需用 XACK 确认。3）未确认的消息会一直 pending，通过 XPENDING 查看，用 XCLAIM 转移给其他消费者处理（类似 Kafka 的重平衡）。Redis 7.0+ 新增 XAUTOCLAIM 自动处理超时的 pending 消息。注意：Stream 将数据存在内存，消息堆积（大量待消费消息会占用 RAM），不像 Kafka 用磁盘持久化。适用建议：轻量级消息队列、任务队列、临时数据流处理。非轻量的 MQ 场景还是用 Kafka/RocketMQ。",
+    "hints": [
+      "Stream 和 Kafka 在消息堆积能力上有什么本质区别",
+      "Stream 消费组的 pending 列表中 XCLAIM 的用途是什么"
+    ],
+    "tags": [
+      "Redis",
+      "Stream",
+      "PUB/SUB",
+      "消息队列"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 内存优化与碎片管理",
+    "content": "Redis 内存碎片是如何产生的？如何查看和管理内存碎片？jemalloc 在 Redis 中的作用是什么？",
+    "answer": "答案：内存碎片是对象频繁创建和删除、key 大小变化导致的内存分配间隙。Redis 使用 jemalloc 内存分配器减少碎片，并通过 info memory 查看内存碎片率。碎片率过高（>1.5）时启用 active defrag 自动整理。\n\n解析：1）碎片产生原因——Redis 创建/删除对象、key 增长/过期淘汰、不同大小 key 混合存储导致 jemalloc 分配的内存块无法被后续新分配完全利用。2）查看指标——info memory 中的 used_memory_rss（物理内存占用）和 used_memory（逻辑占用），计算 mem_fragmentation_ratio = used_memory_rss / used_memory。碎片率 > 1.5 表示碎片较多（即 RSS 远大于逻辑占用），< 1 表示使用了 swap（危险信号）。3）jemalloc——Redis 默认使用 jemalloc 分配器（编译时指定，而不是 glibc 的 malloc），对多线程场景优化好，通过固定 size class 和 slab 分配减少小对象碎片。\n\n扩展延伸：active defrag（Redis 4.0+ 实验性，5.0+ 生产可用）：配置 activedefrag yes，Redis 在后台进程中做碎片整理（复制对象到新的连续内存区域后释放旧内存）。参数：active-defrag-ignore-bytes 100MB（碎片超过此值时触发）、active-defrag-threshold-lower 10（碎片率超过 10% 时触发）。注意：active defrag 会占用 CPU 资源，在线业务繁忙时可能影响性能。如果碎片率很高，可以考虑重启（主从切换、RDB 重加载后内存会重新连续排列）、升级 jemalloc 版本、合理规划 key 大小分布。",
+    "hints": [
+      "mem_fragmentation_ratio < 1 意味着什么",
+      "Redis 重启后为什么碎片率会显著下降"
+    ],
+    "tags": [
+      "Redis",
+      "内存",
+      "碎片",
+      "jemalloc"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 生产配置最佳实践",
+    "content": "Redis 生产环境有哪些关键配置项？如何做合理的配置选型？",
+    "answer": "答案：关键配置包括内存限制 maxmemory、持久化策略、连接数 timeout、慢查询日志、安全配置、内核参数优化。\n\n解析：1）maxmemory——设置最大内存上限（如 4GB-32GB），建议留 20-30% 余量给内存碎片和复制缓冲。同时配置合理的淘汰策略（maxmemory-policy allkeys-lru）。2）持久化——建议开启混合持久化（Redis 4.0+ 的 aof-use-rdb-preamble yes）。AOF 配置 appendfsync everysec（每秒 fsync，性能与安全的平衡）。AOF rewrite 触发：auto-aof-rewrite-min-size（默认 64MB）+ auto-aof-rewrite-percentage 100（AOF 文件增长 100% 时重写）。3）连接和超时——timeout 300（空闲连接 300s 关闭）、tcp-keepalive 300（TCP Keepalive 探测保活）。4）慢查询——slowlog-log-slower-than 10000（10ms）和 slowlog-max-len 128（保留 128 条最近慢查询）。\n\n扩展延伸：内核参数优化：1）vm.overcommit_memory=1（允许内存超分配，避免 fork 子进程时 COW 失败）。2）net.core.somaxconn=65535（高并发连接 backlog）。3）禁用透明大页（transparent_hugepage=never，大页可能导致 Redis fork 时延迟抖动）。4）设置合理的 swappiness=1（尽量少 swap）。安全配置：设置 requirepass 强密码；rename-command FLUSHALL/FLUSHALL/KEYS 禁用作弊命令。连接数：maxclients 10000（默认 10000，需操作系统 ulimit 配合）。注意：Redis 不建议部署在容器化环境（特别是有 CPU 限流的 K8s Pod），因为 fork 子进程在 CPU 受限环境下耗时大幅增加。",
+    "hints": [
+      "为什么 Redis 不建议在 K8s 容器中部署",
+      "vm.overcommit_memory=1 对 Redis fork 的重要性"
+    ],
+    "tags": [
+      "Redis",
+      "配置",
+      "生产",
+      "调优"
+    ]
+  }
+]

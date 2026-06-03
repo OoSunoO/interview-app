@@ -1,0 +1,270 @@
+[
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 对象创建过程",
+    "content": "请描述一个 Java 对象从 new 指令到完全可用的完整创建过程。",
+    "answer": "答案：Java 对象创建分为五个步骤：类加载检查 → 分配内存 → 内存零值初始化 → 对象头设置 → 执行 init 方法。\n\n解析：1）类加载检查——当 new 指令执行时，先去常量池检查该类的符号引用，并检查该类是否被加载/解析/初始化。如果没有，则执行类加载过程。2）分配内存——从 Java 堆中划分一块内存给新对象。分配方式取决于堆是否规整：规整用指针碰撞（Bump the Pointer），不规整用空闲列表（Free List）。3）内存零值初始化——将分配到的内存空间全部初始化为零值（不包括对象头），这一步保证了对象的实例字段可以直接使用（不需要赋初值就能读到默认值）。4）对象头设置——设置 Mark Word（锁状态/GC 分代年龄/哈希码等）和 Klass Pointer（指向类元数据的指针）。5）执行 init 方法——执行字节码中的 <init> 方法（即构造方法），按照代码中的赋值语句完成初始化。\n\n扩展延伸：并发分配安全：多线程同时分配对象，JVM 通过 CAS + 失败重试（TLAB 未命中时）或 TLAB 预分配来解决。分配内存时的初始化顺序：零值初始化保证了对象的默认值，但 final 修饰的字段在 init 方法中必须赋值，否则编译错误。",
+    "hints": [
+      "指针碰撞和空闲列表分别适用什么 GC 算法",
+      "为什么需要内存零值初始化这一步"
+    ],
+    "tags": [
+      "JVM",
+      "对象创建",
+      "内存分配"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TLAB 线程本地分配缓冲区",
+    "content": "JVM 中的 TLAB（Thread Local Allocation Buffer）是什么？为什么需要它？",
+    "answer": "答案：TLAB 是 JVM 为每个线程在堆的 Eden 区中预分配的一小块私有内存区域，用于线程内对象分配，避免线程间的同步竞争。\n\n解析：默认设置下，每个线程启动时在 Eden 区分配一块 TLAB（典型大小约为 Eden 的 1% ——可通过 -XX:TLABSize 调整）。线程分配对象时优先在 TLAB 中分配（不需要加锁），TLAB 用完后才通过 CAS 竞争分配新的 TLAB 或者在老年代/直接 Eden 分配。\n\n扩展延伸：TLAB 的大小影响：TLAB 太小 → 线程频繁申请新 TLAB，竞争增多；TLAB 太大 → 浪费内存（TLAB 内部碎片，Eden 回收前未使用的 TLAB 空间无法给其他线程用）。JVM 通过 -XX:+UseTLAB（JDK 8 默认开启）控制。-XX:ResizeTLAB 允许 JVM 动态调整 TLAB 大小。TLAB 中的浪费：刚分配但未使用的 TLAB 空间在 Minor GC 时才会被回收。JVM 通过 TLAB Waste 统计浪费比例，动态调整大小以达到平衡。",
+    "hints": [
+      "TLAB 空间在 Minor GC 时会发生什么",
+      "如何通过 JVM 参数查看 TLAB 使用情况"
+    ],
+    "tags": [
+      "JVM",
+      "TLAB",
+      "内存分配"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "逃逸分析与栈上分配",
+    "content": "JVM 的逃逸分析（Escape Analysis）是什么？它能做哪些优化？",
+    "answer": "答案：逃逸分析是 JVM 通过分析对象的作用域和引用传递范围，判断对象是否逃逸出方法或线程，并据此做栈上分配、标量替换、锁消除等优化。\n\n解析：1）不会逃逸本地方法栈的对象可以在栈上分配，方法结束自动弹出栈帧即回收（无需 GC 介入）。2）标量替换（Scalar Replacement）——把对象拆散为多个标量（原始类型变量），拆散后在栈上分配。示例：Point 对象有 x 和 y 两个 int 字段，拆为两个局部变量。3）锁消除（Lock Elimination）——不会逃逸出当前线程的对象上的同步操作可被消除。\n\n扩展延伸：逃逸分析在 C2 编译器中实现（JDK 6 Update 23 后默认开启，-XX:+DoEscapeAnalysis）。局限性：逃逸分析是 JIT 编译期间做的，不是类加载时做的。只有 C2（Server Compiler）完全支持逃逸分析及后续优化，C1 只做有限支持。对象足够大时仍然需要在堆上分配。",
+    "hints": [
+      "逃逸分析 -XX:+DoEscapeAnalysis 默认开启",
+      "哪些场景下逃逸分析无法发挥作用"
+    ],
+    "tags": [
+      "JVM",
+      "逃逸分析",
+      "栈上分配",
+      "JIT"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 对象内存布局",
+    "content": "一个 Java 对象在堆内存中由哪些部分组成？Mark Word 和对象头各包含什么信息？",
+    "answer": "答案：Java 对象在内存中由三部分组成：对象头（Header）、实例数据（Instance Data）、对齐填充（Padding）。对象头又分为 Mark Word 和 Klass Pointer。\n\n解析：1）Mark Word——存储对象运行时数据，包括锁状态（偏向锁/轻量级锁/重量级锁标志位）、GC 分代年龄（4bit，最大 15）、对象哈希码（identity hashcode）、锁相关信息等。Mark Word 的内容随锁状态变化而变化。64 位 JVM 下 Mark Word 大小为 8 字节。2）Klass Pointer——指向对象的类元数据的指针（即该对象属于哪个类）。默认开启指针压缩（-XX:+UseCompressedClassPointers）时为 4 字节，未压缩时为 8 字节。3）实例数据——对象的字段值，按声明顺序存储，父类字段在前。4）对齐填充——HotSpot 要求对象起始地址是 8 字节的整数倍，Padding 补足到 8 的倍数。\n\n扩展延伸：指针压缩（-XX:+UseCompressedOops，JDK 8 默认开启）：将 64 位指针压缩为 32 位（堆 < 32GB），通过基址 + 偏移 * 8 的方式寻址定位真实地址。最大支持 32GB 堆。若堆超过 32GB（或显式禁用），则指针不压缩。对象内存大小计算：空 Object（无字段）在 64 位 + 压缩指针下：Mark Word 8 + Klass Pointer 4 + 对齐填充 4 = 16 字节。Integer 实例：Mark Word 8 + Klass 4 + int value 4 = 16 字节。",
+    "hints": [
+      "为什么 JVM 要求对象起始地址是 8 字节整数倍",
+      "指针压缩 CompressedOops 与 CompressedClassPointers 的区别"
+    ],
+    "tags": [
+      "JVM",
+      "对象头",
+      "Mark Word",
+      "指针压缩"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CMS 垃圾回收器详解",
+    "content": "CMS（Concurrent Mark Sweep）垃圾回收器的工作原理是什么？三色标记法和 Incremental Update 是什么？",
+    "answer": "答案：CMS 以最短停顿时间为目标，使用标记-清除算法，工作流程分为四个阶段：初始标记（STW）→ 并发标记 → 重新标记（STW）→ 并发清除。三色标记法用于描述并发标记过程中的对象状态，Incremental Update 是 CMS 处理并发标记期间引用变更的机制。\n\n解析：1）初始标记（Initial Mark，STW 极短）——标记 GC Roots 直接引用的对象。2）并发标记（Concurrent Mark）——从 GC Roots 出发，遍历整个对象图。三色标记法用三种颜色描述对象状态：白色（未被访问过）、灰色（自身被访问但引用的子对象未全部被扫描）、黑色（自身和子对象都扫描完毕）。3）重新标记（Remark，STW 比初始标记长）——修正并发标记期间因引用变化导致漏标的对象。CMS 采用 Incremental Update（增量更新）：在并发标记期间，如果黑色对象新增了对白色对象的引用，将黑色对象变回灰色，重新扫描。4）并发清除（Concurrent Sweep）——回收被标记为白色的对象的内存。\n\n扩展延伸：CMS 的问题：1）Concurrent Mode Failure——并发回收期间老年代空间不够，JVM 退化为 Serial Old 做 Full GC（STW 时间极长）。2）内存碎片——标记-清除算法产生碎片，当无法找到足够大的连续空间分配老年代对象时触发 Full GC。3）CPU 敏感——并发阶段占用 CPU，吞吐量降低。CMS 在 JDK 9 被标记为废弃（Deprecated），JDK 14 正式移除。",
+    "hints": [
+      "CMS 的 Incremental Update 与 G1 的 SATB 有什么区别",
+      "CMS 为什么需要两个 STW 阶段"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "CMS",
+      "三色标记"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "G1 垃圾回收器详解",
+    "content": "G1（Garbage First）垃圾回收器的核心原理是什么？Region、RSet、SATB 分别是什么？",
+    "answer": "答案：G1 将堆划分为多个大小相等的 Region（1-32MB），通过追踪每个 Region 的垃圾价值（回收收益），优先回收垃圾最多的 Region（Garbage First 得名）。核心组件包括 Region（分区）、RSet（外部引用记忆集）、SATB（并发标记算法）。\n\n解析：1）Region——G1 将堆分为 2048 个左右的 Region，每个 Region 大小 1-32MB（根据堆大小自动计算，-XX:G1HeapRegionSize 可手动设置）。Region 可以是 Eden、Survivor、Old 或 Humongous（大对象 Region，超过 Region 50% 的对象放入）。2）RSet（Remembered Set）——每个 Region 有一个 RSet，记录其他 Region 对该 Region 的引用。作用是避免 GC 时全堆扫描：只需要扫描 GC Roots + RSet 就能知道哪些 Region 中的对象引用了当前 Region。3）SATB（Snapshot At The Beginning）——并发标记的算法。在并发标记开始时记录一个对象图的快照（逻辑快照），并发期间新分配的对象全标记为黑色（存活）。SATB 通过写屏障记录所有并发期间引用被覆盖的旧对象，Remark 阶段重新处理。\n\n扩展延伸：G1 的回收流程：1）Young GC——Eden 用满时触发，Eden + Survivor 中的存活对象复制到新的 Survivor/Old Region。2）Mixed GC——并发标记完成后，对年轻代 + 部分高价值老年代 Region 一起回收。3）Full GC——Mixed GC 来不及回收导致老年代满或者 Humongous 分配失败，退化为 Serial Old（单线程 STW）。注意：G1 不是全能的，超小堆（<4GB）不如 Parallel GC，超低延迟需求不如 ZGC。",
+    "hints": [
+      "G1 的 Mixed GC 和 Full GC 分别在什么条件下触发",
+      "RSet 如何避免了全堆扫描"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "G1",
+      "Region",
+      "SATB"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ZGC 原理",
+    "content": "ZGC（Z Garbage Collector）的核心原理是什么？为什么它能做到 <1ms 的停顿？",
+    "answer": "答案：ZGC 基于染色指针（Colored Pointer）和读屏障（Load Barrier）实现并发标记-压缩，几乎所有工作阶段都与应用线程并发执行，因此停顿时间极短（<1ms，与堆大小无关）。\n\n解析：核心机制：1）染色指针（Colored Pointer）——ZGC 利用 64 位指针的高 4 位（42-45 bit）存储标记信息（Finalizable/Remapped/Mark0/Mark1），不依赖对象头的 GC 标记。因此 ZGC 只能用于 64 位系统且指针需要额外保留位。2）读屏障（Load Barrier）——每个指针加载操作（如对象字段访问）插入读屏障，检查指针的染色位。如果指针状态是 Bad Color（如处于 Mark0 状态但当前是 Mark1 周期），读屏障会修正指针（自愈，Self-Healing），然后返回正确的引用。3）Region 动态分配——ZGC 的 Region 分为小（2MB）、中（32MB）、大（N*2MB）三类，动态创建和销毁。\n\n扩展延伸：ZGC 的 GC 周期：并发标记（Concurrent Mark）→ 并发预备重分配（Concurrent Prepare for Relocate）→ 并发重分配（Concurrent Relocate）→ 并发重映射（Concurrent Remap）。所有阶段都是并发的，只有初始标记和最终处理有极短暂的 STW。ZGC 在 JDK 15 生产可用（JEP 377），JDK 21 以后做了大量改进（包括支持分代 ZGC——Generational ZGC，JEP 439）。ZGC vs G1 选择：低延迟要求（<10ms）→ ZGC；吞吐量 + 可接受 50-200ms 停顿 → G1。注意：ZGC 更耗 CPU（读屏障开销约 2-15%），不适合 CPU 密集且对停顿不敏感的应用。",
+    "hints": [
+      "染色指针为什么不能用于 32 位 JVM",
+      "ZGC 的读屏障为什么有自愈（Self-Healing）能力"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "ZGC",
+      "染色指针"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 编译优化",
+    "content": "JVM 的 JIT（Just-In-Time）编译是如何工作的？C1 和 C2 编译器有什么区别？分层编译是什么？",
+    "answer": "答案：JIT 编译器在运行时将热点代码（Hot Method）编译为本地机器码，避免重复解释执行，提升性能。C1（Client Compiler）编译快但优化浅，C2（Server Compiler）编译慢但优化深。分层编译（Tiered Compilation）结合两者优势。\n\n解析：分层编译共 5 层：0）解释执行（Interpreter）——不编译。1）简单 C1——开启基础优化（方法内联等），不记录 profiling。2）受限 C1——C1 + 部分 profiling（分支/类型/方法接收者）。3）完整 C1——完整 profiling。4）C2——基于 profiling 的激进优化，编译最慢但代码质量最高。层之间的切换是自适应的：方法调用次数到达阈值（-XX:TierXCompileThreshold）后逐层升级。\n\n扩展延伸：核心优化技术：1）方法内联（Method Inlining）——将简短的方法体直接嵌入调用处，消除方法调用的开销（压栈/弹栈/参数传递）。-XX:MaxInlineSize=35（默认 35 字节）。2）循环优化——循环展开（Loop Unrolling）、循环剥离（Loop Peeling）。3）锁粗化（Lock Coarsening）——连续加锁解锁合并为一次。4）逃逸分析相关优化（标量替换/栈上分配/锁消除）。\n\n调试和观察：-XX:+PrintCompilation 打印编译日志；-XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining 打印方法内联决策。C2 可能在极端场景下出现 bug（JDK 8u191 前曾有 C2 crash 的问题），此时可配置 -XX:-UseC2 降级为 C1。",
+    "hints": [
+      "分层编译中 Profiling 的开销如何控制",
+      "-XX:CompileThreshold 在分层编译下是否还生效"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "C1",
+      "C2",
+      "分层编译"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "类加载器与双亲委派破坏",
+    "content": "双亲委派模型在哪些场景下被破坏？如何自定义类加载器来打破双亲委派？",
+    "answer": "答案：双亲委派模型在 SPI 机制（JDBC）、Tomcat 容器、热部署、OSGi 等场景被打破。核心做法是重写 loadClass 方法或使用线程上下文类加载器（Thread Context ClassLoader）。\n\n解析：1）JDBC SPI——DriverManager 在 rt.jar 中（Bootstrap ClassLoader 加载），无法直接加载各数据库厂商的驱动实现（位于 classpath 的应用类）。JDK 引入 ServiceLoader + Thread Context ClassLoader 机制：线程上下文类加载器默认是应用类加载器，可以加载 classpath 下的类。2）Tomcat——每个 Web 应用有自己的 WebAppClassLoader，优先加载当前应用下的类，找不到才委派给父加载器。实现 Web 应用间隔离。3）热部署（如 Java IDE 热加载）——创建新的类加载器来加载修改后的类，旧类加载器及其加载的类可以被回收。4）OSGi——每个 Bundle 有独立的类加载器，不再遵循委派模型，而是声明式导入导出包。\n\n扩展延伸：自定义类加载器：继承 ClassLoader，重写 findClass（加载类逻辑）和 loadClass（打破双亲委派）。打破双亲委派的核心是在 loadClass 中先自己尝试加载类，再不委派给父加载器。Tomcat 使用的类加载顺序：Bootstrap → System → WEB-INF/classes → WEB-INF/lib/*.jar → Common（先加载应用类再委派）。注意：打破双亲委派必须小心，否则容易出现 ClassCastException 或 LinkageError——同一个类在不同类加载器中是不同的类型。",
+    "hints": [
+      "为什么 JDBC 4.0 不需要显式 Class.forName 注册驱动",
+      "Tomcat 为什么可以同时部署两个不同版本的 Spring 应用"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "双亲委派",
+      "ClassLoader"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GC 日志分析与调优工具",
+    "content": "如何解读 JVM GC 日志？有哪些 GC 日志分析工具？",
+    "answer": "答案：GC 日志记录了各代的容量变化、停顿时间、GC 原因和晋升情况。常用工具有 GCeasy、gceasy.io、GCViewer。\n\n解析：启用 GC 日志（JDK 8 参数与 JDK 9+ 参数不同）：JDK 8 用 -Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps；JDK 9+ 用 -Xlog:gc*:file=gc.log:time,uptime,level,tags。示例（ParNew + CMS）：[GC (Allocation Failure) [ParNew: 68204K->8498K(76672K), 0.0123456 secs] 68204K->12890K(251392K), 0.0125678 secs] [Times: user=0.03 sys=0.01, real=0.01 secs]。关键指标：ParNew 区 68204K->8498K（年轻代 GC 前后大小）、76672K（年轻代总容量）、251392K（堆总容量）。停顿时间 real=0.01 secs。\n\n扩展延伸：GC 调优目标：1）Minor GC 频率——每 5-10 秒一次比较正常，过于频繁说明年轻代太小。2）Full GC 频率——理想情况 0 次/天，每周 1-2 次可接受（取决于应用类型）。3）停顿时间——G1 目标 -XX:MaxGCPauseMillis=200（默认 200ms）。工具推荐：GCeasy（在线，自动生成调优建议）；gceasy.io（功能丰富，有 AI 辅助分析）；GCViewer（开源本地工具）。",
+    "hints": [
+      "GC 日志中的 user/sys/real 分别代表什么",
+      "如何从 GC 日志判断是否存在内存泄漏"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "日志分析",
+      "调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "内存泄漏模式与实战分析",
+    "content": "Java 中常见的内存泄漏模式有哪些？分别如何排查？ThreadLocal 为什么会内存泄漏？",
+    "answer": "答案：常见内存泄漏模式包括 ThreadLocal 未 remove、静态集合无限增长、类加载器泄漏、String.intern 失控、未关闭的资源。ThreadLocal 泄漏的原因是：ThreadLocalMap 的 key 是 WeakReference（GC 时 key 被回收），但 value 是强引用，导致 Entry.key=null 但 value 无法被回收。\n\n解析：1）ThreadLocal 泄漏——每个 Thread 持有 ThreadLocalMap，Entry 的 key 是 WeakReference<ThreadLocal>。当 ThreadLocal 对象被回收后，Entry.key 变为 null，但 value 仍然被 Entry 强引用。如果线程是长期存活（如 Tomcat Worker 线程池），这些 null-key Entry 永远不会被清理，除非 ThreadLocalMap 的 set/get 方法触发清理（expungeStaleEntry）。解决办法：每次用完后调用 remove()。2）静态集合——static List<Object> 添加对象后从未清理，对象数量持续增长。3）类加载器泄漏——Tomcat 热部署时，旧 WebAppClassLoader 因为被某些对象引用（如 java.beans.Introspector 缓存、用户线程未停止）无法 GC，其加载的所有类泄漏。4）String.intern——JDK 7+ 中 String.intern() 将字符串放入堆中，大量调用 intern 导致 char[] 无法被回收。\n\n扩展延伸：排查方法：使用 jmap -histo:live 查看存活对象分布，OOM 时 Heap Dump 后用 MAT 分析 Dominator Tree + GC Roots 链。排查思路：看哪个对象实例数异常多、确定该对象的 GC Root 持有者、反推业务代码。常见泄漏的 MAT 模式：Thread -> ThreadLocalMap -> Entry[] -> Value 的引用链。",
+    "hints": [
+      "ThreadLocalMap 的 set 方法中 expungeStaleEntry 做了什么",
+      "为什么线上 Tomcat 中 ThreadLocal 泄漏比独立 Java 应用更严重"
+    ],
+    "tags": [
+      "JVM",
+      "内存泄漏",
+      "ThreadLocal",
+      "MAT"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 性能监控工具链",
+    "content": "JVM 自带哪些性能监控工具？Arthas 相对 jstack/jmap 有什么优势？",
+    "answer": "答案：JDK 自带的工具包括 jstat（统计类加载/GC/编译）、jmap（堆转储/堆直方图）、jstack（线程栈）、jcmd（多功能）、jinfo（运行时参数查看/修改）、jhsdb（异常诊断）。Arthas 是阿里巴巴开源的 Java 诊断工具，提供实时监控和在线调试能力。\n\n解析：核心工具用法：1）jstat -gcutil PID 1000 1s（每 1s 查看 GC 利用率）。示例输出：S0 0.00 S1 85.23 E 72.45 O 45.12 M 88.90 YGC 123 YGCT 4.56 FGC 3 FGCT 1.23 GCT 5.79。2）jmap -histo PID（查看堆中对象实例数排序）：instances 最多的类通常是排查嫌疑对象。jmap -dump:format=b,file=heap.hprof PID（生产谨慎使用，会 STW，尤其是大堆）。3）jstack PID（打印线程栈）：找死锁、卡顿线程。死锁时 jstack 输出会明确提示 Found one Java-level deadlock。4）jcmd PID VM.flags（查看 JVM 参数）、jcmd PID Thread.print（同 jstack）。\n\n扩展延伸：Arthas 的优势：1）运行时观测——无需重启应用，watch/trace/monitor 命令实时观测方法入参/返回值/异常（类似动态 tracer）。2）在线反编译——jad 命令反编译已加载的类。3）动态修改——OGNL 表达式执行任意代码。4）火焰图——profiler 命令采集 CPU/内存采样生成火焰图。5）生产安全——通过 -X 限制范围，不推荐在核心交易系统频繁使用高开销命令。\n\n实践建议：生产环境优先用 jstat/jcmd（低开销），jmap -dump 在高峰期前谨慎使用（大堆 dump 会 STW）。Arthas 推荐在预发环境或低峰期使用。",
+    "hints": [
+      "jmap -dump 为什么在大堆生产环境中要谨慎使用",
+      "Arthas watch 命令对性能的影响"
+    ],
+    "tags": [
+      "JVM",
+      "监控",
+      "Arthas",
+      "jstat"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "OOM 类型详解",
+    "content": "Java 中有哪些不同类型的 OutOfMemoryError？分别是什么原因导致的？",
+    "answer": "答案：常见 OOM 类型共 6 种：Java heap space、Metaspace、Direct buffer memory、GC overhead limit exceeded、Unable to create new native thread、Requested array size exceeds VM limit。\n\n解析：1）Java heap space——Java 堆内存耗尽。最常见类型。原因：对象泄漏、堆设置过小（-Xmx）。特征：GC 日志显示老年代持续增长，Full GC 无法回收。2）Metaspace——元空间耗尽（JDK 8+）。原因：大量动态生成类（CGLib 代理/动态语言/热部署频繁）、-XX:MaxMetaspaceSize 过小。3）Direct buffer memory——堆外直接内存耗尽。原因：Netty/NIO 分配 DirectByteBuffer 忘记释放（Cleaner 没被调用），或 -XX:MaxDirectMemorySize 过小。堆外内存用 NMT 或 pmap 排查。4）GC overhead limit exceeded——98% 的时间花在 GC 上但回收不到 2% 的堆。是 JVM 的预警，说明堆已经快满了且 GC 无效。5）Unable to create new native thread——OS 线程数限制。原因：线程泄漏（创建不停止）、服务器 ulimit nproc 限制、操作系统 pid_max 上限。排查：pstree -p PID | wc -l 看线程数。6）Requested array size exceeds VM limit——申请的数组长度超过 JVM 限制（约 Integer.MAX_VALUE - 2），通常是代码 bug。\n\n扩展延伸：OOM 发生后的处理：JVM 参数配置 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/ 自动 dump。有些类型的 OOM（特别是 Unable to create new native thread）可能来不及 dump，需要用 ulimit 和 OS 日志提前排查。堆外内存相关的 OOM 用 Native Memory Tracking（-XX:NativeMemoryTracking=summary，然后 jcmd PID VM.native_memory summary）。注意：OOM 错误日志不一定在最开始出现异常的地方——JVM 可能同时有多个线程在不同地方抛出 OOM，需要看第一个出现的异常。",
+    "hints": [
+      "为什么 Unable to create new native thread 常常来不及产生 Heap Dump",
+      "Direct buffer memory OOM 和普通堆 OOM 的排查方法有何不同"
+    ],
+    "tags": [
+      "JVM",
+      "OOM",
+      "内存管理"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 常用参数分类与调优实践",
+    "content": "JVM 调优参数如何分类？请列举各分类下的核心参数，并给出典型的调优配置。",
+    "answer": "答案：JVM 调优参数分为：堆内存设置、GC 选型、日志诊断、性能调优四大类。\n\n解析：1）堆内存设置：-Xms（初始堆大小，一般 = -Xmx 避免动态调整）、-Xmx（最大堆，关键参数）、-Xmn（年轻代大小，典型值 1/3~1/4 堆）、-XX:NewRatio（老年代:年轻代比例，默认 2）、-XX:SurvivorRatio（Eden:Survivor 比例，默认 8）、-XX:MaxMetaspaceSize（元空间上限，不设则无上限）。2）GC 选型：-XX:+UseG1GC（G1 默认 JDK 9+）、-XX:+UseParallelGC（Parallel Scavenge + Parallel Old，默认 JDK 8）、-XX:+UseZGC（JDK 21 推荐）、-XX:MaxGCPauseMillis=200（G1 停顿目标）。3）日志诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/（OOM 自动 dump）、-Xloggc:gc.log（JDK 8 GC 日志）、-Xlog:gc*:file=gc.log（JDK 9+）。4）性能调优：-XX:+AlwaysPreTouch（启动时预申请物理内存，减少运行时缺页中断）、-XX:+DisableExplicitGC（禁止 System.gc()）、-XX:+PrintCommandLineFlags（打印实际生效参数）。\n\n扩展延伸：典型配置示例——4C8G 服务器的 Spring Boot 应用：java -Xms4g -Xmx4g -Xmn1536m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/logs/ -Xloggc:/opt/logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps。\n\n调优黄金原则：先确认问题（GC 频繁/OOM/响应慢），再针对性调参。不要为了调优而调优。调优后用 GC 日志验证效果，持续监控。",
+    "hints": [
+      "PreTouch 预申请物理内存为什么能减少运行期延迟抖动",
+      "为什么在容器化环境中 -Xmx 不能超过容器内存限制"
+    ],
+    "tags": [
+      "JVM",
+      "调优",
+      "参数",
+      "Xmx"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 引用类型深入与应用",
+    "content": "Java 的四种引用类型分别适用于什么场景？它们和引用队列（ReferenceQueue）的关系是什么？",
+    "answer": "答案：四种引用类型从强到弱：强引用（Strong Reference）、软引用（SoftReference）、弱引用（WeakReference）、虚引用（PhantomReference）。ReferenceQueue 用于跟踪引用指向的对象被回收后的通知。\n\n解析：1）强引用（Strong Reference）——Object obj = new Object()。只要强引用还存在，GC 永远不会回收该对象。被 OOM 也不会回收。问题：强引用不注意清理就是内存泄漏的根源。2）软引用（SoftReference）——GC 在内存不足（即将 OOM）时回收。适用：缓存实现，如 Guava Cache 的软引用值、MyBatis 的缓存。JDK 9+ 中 -XX:SoftRefLRUPolicyMSPerMB=1000（默认 1s 内未被访问的软引用对象会被回收）。3）弱引用（WeakReference）——GC 扫描到弱引用对象时，无论内存是否充足都会回收。适用：ThreadLocalMap（key 是 WeakReference<ThreadLocal>）、WeakHashMap、某些框架的缓存。4）虚引用（PhantomReference）——最弱，get() 始终返回 null。唯一用途：跟踪对象被回收的时刻（通过 ReferenceQueue）。适用：NIO DirectByteBuffer 的回收——Cleaner（extends PhantomReference）在 DirectByteBuffer 被 GC 后回调 clean() 释放堆外内存。\n\n扩展延伸：引用队列（ReferenceQueue）：在创建 SoftReference/WeakReference/PhantomReference 时可以关联一个 ReferenceQueue。当引用指向的对象被 GC 回收后，该引用对象被入队到 ReferenceQueue 中。应用：资源回收（如 DirectByteBuffer Cleaner 机制）、缓存失效通知。注意：PhantomReference 必须在构造时传入 ReferenceQueue，且必须手动处理队列中的引用，否则会造成 phantom reference 本身的内存泄漏。",
+    "hints": [
+      "ThreadLocalMap 为什么用 WeakReference 作为 key 而不是 SoftReference",
+      "PhantomReference 和 finalize() 在对象回收机制上的区别"
+    ],
+    "tags": [
+      "JVM",
+      "引用类型",
+      "ReferenceQueue"
+    ]
+  }
+]

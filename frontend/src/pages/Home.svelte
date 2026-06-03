@@ -10,6 +10,33 @@
   let loading = $state(true);
   let error = $state(null);
 
+  // ── Quick Review ──
+  let showQRDialog = $state(false);
+  let showResumeDialog = $state(false);
+  let savedQRSession = $state(null);
+  let qrCategory = $state("");
+  let qrDifficulty = $state("");
+  let qrCount = $state(20);
+
+  const categories = [
+    { value: "", label: "全部" },
+    { value: "cs_basics", label: "计算机基础" },
+    { value: "algorithm", label: "算法" },
+    { value: "database", label: "数据库" },
+    { value: "linux", label: "Linux" },
+    { value: "devops", label: "DevOps" },
+    { value: "java_basic", label: "Java" },
+    { value: "java_advanced", label: "Java 进阶" },
+    { value: "java_collections", label: "Java 集合" },
+    { value: "react", label: "React" },
+    { value: "frontend", label: "前端" },
+    { value: "ai", label: "AI 基础" },
+    { value: "agent", label: "AI Agent" },
+    { value: "system_design", label: "系统设计" },
+    { value: "project_mgmt", label: "项目管理" },
+    { value: "product", label: "产品思维" },
+  ];
+
   async function loadData() {
     loading = true;
     error = null;
@@ -30,6 +57,34 @@
   }
 
   onMount(loadData);
+
+  // ── Quick Review ──
+  function openQuickReview() {
+    savedQRSession = api.quickReview.getSession();
+    if (savedQRSession && savedQRSession.questionIds?.length > 0) {
+      showResumeDialog = true;
+    } else {
+      savedQRSession = null;
+      showQRDialog = true;
+    }
+  }
+
+  function resumeQuickReview() {
+    showResumeDialog = false;
+    onNavigate("quick-review", { reviewConfig: { resume: true } });
+  }
+
+  function startQuickReview() {
+    showQRDialog = false;
+    showResumeDialog = false;
+    onNavigate("quick-review", {
+      reviewConfig: { category: qrCategory, difficulty: qrDifficulty, count: qrCount },
+    });
+  }
+
+  function handleOverlayKeydown(e, close) {
+    if (e.key === "Escape") close();
+  }
 </script>
 
 <div class="page home">
@@ -179,9 +234,75 @@
           </svg>
         </span>
       </button>
+
+      <button class="qr-entry-btn" onclick={openQuickReview}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" /></svg>
+        速记模式
+      </button>
     {/if}
   </div>
 </div>
+
+<!-- ── Resume Dialog ── -->
+{#if showResumeDialog}
+  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+  <div class="dialog-overlay" onclick={() => (showResumeDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showResumeDialog = false)}>
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showResumeDialog = false)}>
+      <div class="dialog-title">继续速记？</div>
+      <div class="dialog-desc">您有未完成的速记训练，是否继续上次进度？</div>
+      <div class="resume-info">
+        已完成 <strong>{Object.keys(savedQRSession?.results || {}).length}/{savedQRSession?.questionIds?.length || 0}</strong> 题
+      </div>
+      <div class="dialog-actions">
+        <button class="dialog-btn cancel" onclick={() => { showResumeDialog = false; showQRDialog = true; savedQRSession = null; }}>开始新的</button>
+        <button class="dialog-btn primary" onclick={resumeQuickReview}>继续</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- ── Filter Dialog ── -->
+{#if showQRDialog}
+  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+  <div class="dialog-overlay" onclick={() => (showQRDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showQRDialog = false)}>
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showQRDialog = false)}>
+      <div class="dialog-title">速记模式</div>
+      <div class="dialog-desc">按条件筛选题目，快速浏览</div>
+
+      <label for="qr-cat">分类</label>
+      <select id="qr-cat" bind:value={qrCategory}>
+        {#each categories as cat}
+          <option value={cat.value}>{cat.label}</option>
+        {/each}
+      </select>
+
+      <label for="qr-diff">难度</label>
+      <select id="qr-diff" bind:value={qrDifficulty}>
+        <option value="">全部</option>
+        <option value="easy">简单</option>
+        <option value="medium">中等</option>
+        <option value="hard">困难</option>
+      </select>
+
+      <span class="dialog-label">题量</span>
+      <div class="count-options">
+        <button class="count-btn" class:active={qrCount === 10} onclick={() => (qrCount = 10)}>10</button>
+        <button class="count-btn" class:active={qrCount === 20} onclick={() => (qrCount = 20)}>20</button>
+        <button class="count-btn" class:active={qrCount === 30} onclick={() => (qrCount = 30)}>30</button>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="dialog-btn cancel" onclick={() => (showQRDialog = false)}>取消</button>
+        <button class="dialog-btn primary" onclick={startQuickReview}>开始</button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .home {
@@ -442,4 +563,199 @@
     font-size: 16px;
     padding: 12px 24px 12px 28px;
   }
+
+  /* ── Mobile ── */
+  @media (max-width: 480px) {
+    .hero-section {
+      margin: 0 -14px;
+      padding: 32px 14px 24px;
+    }
+    .hero-title {
+      font-size: 24px;
+    }
+    .hero-stats .double-bezel {
+      width: auto;
+      flex: 1;
+      min-width: 0;
+    }
+    .stat-inner {
+      padding: 10px 6px;
+    }
+    .stat-num {
+      font-size: 20px;
+    }
+    .stat-lbl {
+      font-size: 10px;
+    }
+    .hero-stats-skeleton .skeleton-box {
+      width: auto;
+      flex: 1;
+      height: 76px;
+    }
+    .rec-card {
+      padding: 14px;
+    }
+    .rec-title {
+      font-size: 14px;
+    }
+  }
+
+/* ── Quick Review Entry Button ── */
+.qr-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s var(--spring);
+}
+.qr-entry-btn:active {
+  transform: scale(0.97);
+  background: var(--accent-bg);
+}
+
+/* ── Dialogs (Overlay) ── */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-overlay);
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fade-in 0.2s both;
+}
+.dialog {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: scale-in 0.3s var(--spring) both;
+}
+.dialog-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+.dialog-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.dialog label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.dialog select {
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  width: 100%;
+}
+.dialog select:focus {
+  border-color: var(--accent);
+}
+.count-options {
+  display: flex;
+  gap: 8px;
+}
+.count-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s var(--spring);
+  text-align: center;
+}
+.count-btn:active {
+  transform: scale(0.96);
+}
+.count-btn.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.dialog-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+.dialog-btn {
+  flex: 1;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s var(--spring);
+  text-align: center;
+}
+.dialog-btn:active {
+  transform: scale(0.97);
+}
+.dialog-btn.cancel {
+  background: none;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+.dialog-btn.primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+.dialog-btn.secondary {
+  background: var(--bg-surface);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.resume-info {
+  padding: 12px 14px;
+  background: var(--accent-bg);
+  border: 1px solid rgba(108, 140, 255, 0.12);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+}
+.resume-info strong {
+  color: var(--accent);
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .dialog {
+    padding: 20px;
+    max-width: 300px;
+  }
+}
 </style>

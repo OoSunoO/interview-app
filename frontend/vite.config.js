@@ -8,6 +8,7 @@ const version = readFileSync(resolve(__dirname, "../VERSION"), "utf-8").trim();
 
 export default defineConfig({
   base: "./",
+  build: { target: "es2022" },
   define: {
     __APP_VERSION__: JSON.stringify(version),
   },

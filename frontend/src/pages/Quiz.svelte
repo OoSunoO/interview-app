@@ -282,6 +282,7 @@
       const result = await store.loadQuestionDetail(id);
       if (result) {
         q = result;
+        loadKnowledgeTags();
         timerInterval = setInterval(() => timer++, 1000);
         return true;
       }
@@ -349,7 +350,7 @@
       if (e.key === "r" || e.key === "R") retry();
       if (e.key === "g" || e.key === "G") giveUp();
     }
-    if (!showAnswer && !showSubmitResult && q.type !== "choice" && q.type !== "true_false" && q.type !== "multiple_choice") {
+    if (!showAnswer && !showSubmitResult && e.target.tagName !== "TEXTAREA" && q.type !== "choice" && q.type !== "true_false" && q.type !== "multiple_choice") {
       if (e.key === "Enter" && userAnswer.trim()) submitAnswer();
     }
   }
@@ -503,7 +504,7 @@
           </div>
         {/if}
       {:else if q.type === "fill_in_blank"}
-        <FillInBlank question={q} />
+        <FillInBlank question={q} onAnswered={() => showAnswer = true} />
       {:else}
         {#if !showAnswer}
           <div class="input-area">
@@ -614,7 +615,7 @@
     {/if}
     </div>
 
-    {#if q.type !== "fill_in_blank" && (browseMode || showSubmitResult || showAnswer)}
+    {#if browseMode || showSubmitResult || showAnswer}
       {#key q.id}
         {@const sections = renderAnswer(q.answer)}
         {#each sections as section, i}
@@ -1375,6 +1376,15 @@
     }
     .q-content {
       font-size: 14px;
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    .q-content :global(pre),
+    .q-content :global(code) {
+      max-width: 100%;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
     }
     .answer-input,
     .code-input {
@@ -1384,6 +1394,29 @@
     .opt-btn {
       padding: 12px;
       font-size: 14px;
+    }
+    .choice-actions {
+      flex-direction: column;
+    }
+    .choice-actions button {
+      width: 100%;
+    }
+    .ans-body {
+      font-size: 13px;
+      overflow-wrap: break-word;
+    }
+    .ans-body :global(pre),
+    .ans-body :global(code) {
+      max-width: 100%;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .nav-actions {
+      flex-direction: column;
+    }
+    .nav-actions .nav-btn {
+      width: 100%;
     }
     .page {
       padding: 18px 14px;

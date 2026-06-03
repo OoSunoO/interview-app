@@ -1,0 +1,170 @@
+[
+  {
+    "category": "cs_basics",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "TCP 和 UDP 的区别",
+    "content": "请从连接性、可靠性、传输方式、首部开销等方面比较 TCP 和 UDP 的主要区别。",
+    "answer": "答案：TCP 面向连接、可靠、基于字节流；UDP 无连接、不可靠、基于报文。\n\n解析：TCP 通过三次握手建立连接、确认应答（ACK）、超时重传、序列号保证有序、流量控制（滑动窗口）、拥塞控制（慢启动、拥塞避免、快重传、快恢复），首部至少 20 字节。UDP 直接发送报文，无确认机制，首部固定 8 字节，支持广播和组播。\n\n扩展延伸：TCP vs UDP 的选择取决于业务需求——HTTP 用 TCP（需要可靠传输）；DNS 用 UDP（单次查询，速度快）；视频直播用 UDP（允许丢包，延迟优先）；QUIC（HTTP/3）基于 UDP 但实现了类似 TCP 的可靠性。",
+    "hints": ["哪些应用层协议基于 TCP，哪些基于 UDP", "UDP 为什么比 TCP 快"],
+    "tags": ["网络", "TCP", "UDP"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "I/O 多路复用：select、poll、epoll",
+    "content": "解释 select、poll、epoll 三种 I/O 多路复用机制的区别，为什么 epoll 在 Linux 高并发场景下性能更好？",
+    "answer": "答案：三者都是同步 I/O，允许单线程监视多个文件描述符。区别在于：\n1）select：监视 fd 数量有限（FD_SETSIZE=1024），每次调用都要从用户态拷贝 fd 集合到内核态，内核轮询所有 fd。\n2）poll：基于链表，无最大数量限制，但仍有全量拷贝和全量轮询的问题。\n3）epoll：事件驱动，注册 fd + 事件后内核自动回调，只返回就绪的 fd，无需全量轮询；mmap 共享内存减少拷贝。\n\n解析：epoll 使用红黑树管理注册的 fd + 就绪链表存储活跃 fd。调用 epoll_wait 只返回就绪链表，复杂度 O(1)。select/poll 每次调用需遍历全部 fd（O(n)）。连接数越多，差距越明显。\n\n扩展延伸：epoll 的两种触发模式：LT（水平触发）- 默认，未处理完数据下次 epoll_wait 仍会通知。ET（边缘触发）- 只通知一次，需要一次把数据读完。ET 模式下通常搭配非阻塞 I/O 和 while 循环读取。",
+    "hints": ["epoll 的 LT 和 ET 触发模式有什么区别", "Java NIO 的 Selector 基于哪个操作系统机制"],
+    "tags": ["操作系统", "I/O", "Linux", "高并发"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TLS/SSL 握手过程",
+    "content": "HTTPS 中 TLS 握手是如何建立安全连接的？请描述 1.2 和 1.3 的关键区别。",
+    "answer": "答案：TLS 1.2 握手：ClientHello → ServerHello + 证书 → 客户端验证证书、生成预主密钥 → 双方计算会话密钥 → 加密通信开始。\n\n解析：TLS 1.2 需要两次往返（2-RTT）：第一次协商加密套件和证书，第二次交换密钥参数。TLS 1.3 将握手缩减为 1-RTT（首次连接）或 0-RTT（恢复连接），移除了不安全算法（RSA 密钥交换、RC4、CBC 模式），强制使用完美前向保密（PFS）的密钥交换算法（ECDHE）。\n\n扩展延伸：HTTPS 证书验证信任链：客户端内置根证书 → 验证中间 CA 签名 → 验证服务器证书签名。证书包含服务器公钥，用于加密客户端生成的预主密钥（或用于 ECDHE 的签名验证）。证书吊销的两种方式：CRL（证书吊销列表）和 OCSP（在线证书状态协议）。",
+    "hints": ["TLS 1.3 为什么减少了握手次数", "证书链验证是怎么逐级信任的"],
+    "tags": ["网络", "HTTPS", "TLS", "安全"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Cookie、Session、Token 的区别",
+    "content": "Cookie、Session 和 Token 三种身份认证机制之间有什么区别？各自的优缺点是什么？",
+    "answer": "答案：Cookie 是客户端存储数据的机制，Session 是服务器端保存用户状态的机制，Token 是自包含的身份凭证。\n\n解析：传统 Session 认证：用户登录后服务器创建 Session（存内存或 Redis），返回 Session ID 写入 Cookie。每次请求携带 Cookie，服务器查 Session 获取用户信息。缺点：服务器要存状态，分布式部署需要共享 Session 存储（如 Redis）。JWT Token 认证：用户登录后服务器签发 Token（包含用户信息 + 签名），客户端存储 Token，每次请求带在 HTTP Header 中。服务器校验签名即可，无需查询存储。\n\n扩展延伸：JWT 的优缺点——优点：无状态、跨域友好、适合移动端。缺点：无法主动吊销、Payload 仅 Base64 编码（不能放敏感信息）、Token 体积较大。现在趋势是使用 Refresh Token + Access Token 双 token 机制——短时效 Token + 长时效 Refresh Token 配合。",
+    "hints": ["JWT 的结构是什么（Header.Payload.Signature）", "分布式架构下 Session 共享的常见方案"],
+    "tags": ["网络", "认证", "安全"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "进程调度算法",
+    "content": "常见的进程/线程调度算法有哪些？现代操作系统一般使用哪种调度策略？",
+    "answer": "答案：常见调度算法包括先来先服务（FCFS）、短作业优先（SJF）、时间片轮转（RR）、优先级调度、多级反馈队列（MLFQ）等。\n\n解析：先来先服务简单但平均等待时间长（护航效应，convoy effect）。短作业优先平均等待时间最短但无法预知作业长度且可能饿死长作业。时间片轮转保证公平性但时间片大小影响性能。多级反馈队列（MLFQ）是现代操作系统的主流选择——设置多个不同优先级的队列，高优先级时间片短，低优先级时间片长，动态调整进程优先级，兼顾交互响应和吞吐量。\n\n扩展延伸：Linux 默认调度器 CFS（Completely Fair Scheduler）使用红黑树管理可运行进程，以 vruntime（虚拟运行时间）为键值，每次选择 vruntime 最小的进程执行，实现”完全公平”的近似。",
+    "hints": ["CFS 调度器中的 vruntime 是什么", "为什么现代操作系统不只用时间片轮转"],
+    "tags": ["操作系统", "调度", "进程"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "OSI 七层模型",
+    "content": "在 OSI 七层模型中，HTTP 协议位于哪一层？",
+    "answer": "答案：C) 应用层\n\n解析：OSI 七层模型自上而下为：应用层、表示层、会话层、传输层、网络层、数据链路层、物理层。HTTP、HTTPS、FTP、SMTP、DNS 均位于应用层。TCP/UDP 位于传输层，IP 位于网络层。以太网协议位于数据链路层。",
+    "hints": [],
+    "tags": ["网络", "OSI"],
+    "options": [
+      "A) 传输层",
+      "B) 网络层",
+      "C) 应用层",
+      "D) 会话层"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "CPU 缓存结构",
+    "content": "CPU 三级缓存（L1/L2/L3）的访问延迟大小顺序是？",
+    "answer": "答案：A) L1 < L2 < L3\n\n解析：CPU 缓存访问延迟大致：L1 ~1ns（约 4 个 CPU 周期），L2 ~4ns，L3 ~10ns，主存 ~100ns。L1 分指令缓存和数据缓存，速度最快但容量最小（通常 32KB）。L3 最大（通常 8-32MB）被多核共享。缓存行（Cache Line）通常 64 字节——连续访问的内存比随机访问快得多，这也是数组遍历比链表遍历快的原因之一。",
+    "hints": [],
+    "tags": ["计算机组成", "CPU", "缓存"],
+    "options": [
+      "A) L1 < L2 < L3",
+      "B) L1 > L2 > L3",
+      "C) L1 < L3 < L2",
+      "D) 三者速度一样快"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "TCP 拥塞控制算法",
+    "content": "以下哪个是 TCP 拥塞控制中慢启动阶段的特征？",
+    "answer": "答案：B) 拥塞窗口（cwnd）指数增长\n\n解析：TCP 慢启动阶段，每收到一个 ACK，cwnd 增加 1 MSS（最大报文段长度），相当于每 RTT 翻倍。当 cwnd 达到慢启动阈值（ssthresh）后进入拥塞避免阶段，cwnd 线性增长（每 RTT +1）。当检测到丢包时（超时或三个重复 ACK），发生快重传和快恢复。",
+    "hints": [],
+    "tags": ["网络", "TCP", "拥塞控制"],
+    "options": [
+      "A) 拥塞窗口线性增长",
+      "B) 拥塞窗口指数增长",
+      "C) 拥塞窗口不变",
+      "D) 拥塞窗口每次减半"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "虚拟内存的页面置换",
+    "content": "LRU（最近最久未使用）页面置换算法在实际操作系统中被广泛使用，因为它的实现开销极低。",
+    "answer": "错误。解析：LRU 理论性能好但硬件实现成本高——需要在每次内存访问时更新所有页面的访问时间戳，维护一个全排序链表。现代操作系统实际使用近似 LRU 的算法而不是完全 LRU：Linux 使用双时钟算法（Clock/第二次机会算法），结合 PG_referenced 和 PG_active 标志位进行近似 LRU 替换。部分架构使用 ARC（Adaptive Replacement Cache）或 LFU 变体。",
+    "tags": ["操作系统", "虚拟内存", "页面置换"],
+    "options": ["正确", "错误"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "CDN 的作用",
+    "content": "CDN（内容分发网络）只对静态资源加速有用，对动态 API 请求没有帮助。",
+    "answer": "错误。解析：CDN 的主要用途是加速静态资源（图片、CSS、JS、视频），但现代 CDN 也支持动态加速：1）DCDN（Dynamic CDN）通过智能路由、TCP 优化、边缘节点动态请求加速 API。2）边缘计算（Edge Computing）允许在 CDN 节点上执行函数计算（Cloudflare Workers、AWS Lambda@Edge）。3）全站加速（DCDN）结合静态缓存和动态路由优化，对动静混合场景同样有效。",
+    "tags": ["网络", "CDN", "性能"],
+    "options": ["正确", "错误"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "WebSocket 与 HTTP 的区别",
+    "content": "WebSocket 和 HTTP 有什么区别？WebSocket 适合哪些场景？",
+    "answer": "答案：WebSocket 是建立在 TCP 之上的全双工通信协议，通过 HTTP 升级握手建立（101 Switching Protocols）。HTTP 是请求-响应模式，服务端不能主动推送。\n\n解析：WebSocket 建立连接时先走 HTTP 握手，携带 Upgrade: websocket 头，服务端回应 101 后协议升级为 WebSocket。之后双方可以随时发送数据帧，开销极小（帧头 2-10 字节）。相比之下，HTTP 轮询每次都有完整的 HTTP 头（几百字节）。\n\n扩展延伸：WebSocket 的替代方案：1）SSE（Server-Sent Events）——服务端到客户端的单向通道，基于 HTTP，实现简单。2）长轮询（Long Polling）——传统方案，延迟高。3）gRPC Stream——基于 HTTP/2 的双向流。选型建议：双向通信需求 → WebSocket；仅服务端推送 → SSE；微服务间通信 → gRPC。",
+    "hints": ["WebSocket 握手过程是什么样的", "SSE（Server-Sent Events）和 WebSocket 的各自优势"],
+    "tags": ["网络", "WebSocket", "HTTP"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "协程与线程的上下文切换",
+    "content": "协程比线程更轻量，因为协程的上下文切换完全在用户态完成，不需要陷入内核。",
+    "answer": "正确。解析：线程上下文切换涉及内核态——保存/恢复 CPU 寄存器、修改 TLB、更新调度器数据结构，通常需要几百到上千个 CPU 周期。协程切换只在用户态进行，保存少量寄存器即可，通常只需几十个 CPU 周期。Go 的 G-M-P 模型、Kotlin 的协程、Python 的 async/await 都是用户态调度。一个线程栈默认 1-8 MB，一个协程栈初始 2-4 KB（可动态扩缩）。",
+    "tags": ["操作系统", "协程", "线程", "性能"],
+    "options": ["正确", "错误"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TLS 中间人攻击的原理与防御",
+    "content": "HTTPS 环境下中间人攻击（MITM）还有可能成功吗？它是如何实现的？如何防御？",
+    "answer": "答案：在纯 HTTPS 连接中 MITM 不可行（证书校验会失败），但攻击者通过 CA 欺骗或客户端信任伪造证书可以实现 MITM。\n\n解析：HTTPS 的 MITM 主要发生在以下场景：1）客户端设备被安装了恶意根证书（如公司代理、抓包工具 Charles/Fiddler），攻击者利用这个证书签发假证书。2）CA 被攻破或误发证书（历史上 DigiNotar、Comodo 曾发生）。3）DNS 劫持 + 客户端未启用 HSTS。\n\n扩展延伸：防御措施：1）HPKP（HTTP Public Key Pinning，现已弃用）。2）HSTS（HTTP Strict Transport Security）——强制浏览器使用 HTTPS，防止 SSL Strip。3）证书透明度（Certificate Transparency）——日志公开所有签发证书。4）DNSSEC + CAA 记录限制证书签发者。黑客实际攻击路线通常是 SSL Strip（将 HTTPS 降级为 HTTP）而非直接破解 TLS。",
+    "hints": ["SSL Strip 攻击是什么样的", "HSTS 如何防御 SSL Strip"],
+    "tags": ["网络", "HTTPS", "安全"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "HTTP 状态码分类",
+    "content": "HTTP 状态码以首位数字分类：1xx 为___，2xx 为成功（如 200 OK），3xx 为___（如 301 永久重定向），4xx 为客户端错误（如 404 Not Found），5xx 为___（如 502 Bad Gateway）。其中 304 表示___。",
+    "answer": "{\"correct\":[[\"信息\",\"信息响应\"],[\"重定向\"],[\"服务器错误\",\"服务端错误\"],[\"未修改\",\"Not Modified\"]],\"distractors\":[\"请求中\",\"跳转\",\"系统错误\",\"缓存失效\"]}",
+    "hints": ["304 和缓存有什么关系", "502 和 503 有什么区别"],
+    "tags": ["网络", "HTTP", "状态码"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "操作系统分页机制",
+    "content": "操作系统分页机制中，虚拟地址到物理地址的转换由___硬件完成。页表是多级结构的，原因是一个进程的虚拟地址空间可达 4GB（32 位）或 128TB（48 位），如果使用单级页表会___。常见的 x86-64 使用___级页表。缺页中断发生时，操作系统从___加载缺失的页面。",
+    "answer": "{\"correct\":[[\"MMU\",\"内存管理单元\"],[\"浪费内存\",\"占用过多内存\"],[\"4\",\"四\"],[\"磁盘\",\"交换区\",\"swap\"]],\"distractors\":[\"CPU\",\"TLB\",\"3\",\"缓存\"]}",
+    "hints": ["TLB（转译后备缓冲器）的作用", "缺页中断和普通中断有什么不同"],
+    "tags": ["操作系统", "内存管理", "分页"]
+  }
+]

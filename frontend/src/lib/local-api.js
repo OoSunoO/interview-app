@@ -1,6 +1,11 @@
 // Offline-capable API — reads bundled question data, stores progress in localStorage
-import { questions } from "./question-data.js";
-import { buildKnowledgeMap, getKnowledgeForTag } from "./knowledge-data.js";
+
+// Dynamic imports for code-splitting: Vite creates separate chunks
+// so the main bundle stays lean.
+const [{ questions }, { buildKnowledgeMap, getKnowledgeForTag }] = await Promise.all([
+  import("./question-data.js"),
+  import("./knowledge-data.js"),
+]);
 
 // Build knowledge map once (question data is static)
 const knowledgeMap = buildKnowledgeMap(questions);
@@ -201,7 +206,7 @@ export const api = {
       const existing = progress[questionId] || {};
       const wrongCount = (existing.wrong_count || 0) + (body.status === "wrong" ? 1 : 0);
       let newStatus = body.status;
-      if (existing.status === "wrong" && body.status === "correct") {
+      if (existing.status === "wrong" && body.status === "correct" && body.source !== "quick_review") {
         newStatus = "reviewing";
       }
 
@@ -213,16 +218,19 @@ export const api = {
         next_review_at:
           body.status === "wrong" ? new Date(Date.now() + 86400000).toISOString() : null,
         notes: body.notes || existing.notes || "",
+        source: body.source || "quiz",
       };
       saveProgress(progress);
 
       const sessions = getSessions();
+      const maxId = sessions.length > 0 ? Math.max(...sessions.map((s) => s.id)) : 0;
       sessions.push({
-        id: sessions.length + 1,
+        id: maxId + 1,
         question_id: questionId,
         reviewed_at: new Date().toISOString(),
         result: body.status,
         duration_seconds: body.duration_seconds || 0,
+        source: body.source || "quiz",
       });
       saveSessions(sessions);
 
@@ -312,6 +320,38 @@ export const api = {
         });
     },
 
+    /**
+     * Return up to `count` unreviewed questions for a review session.
+     * Does NOT fall back to mastered questions when unreviewed count is insufficient.
+     */
+    review(count = 10) {
+      const progress = getProgress();
+      const unreviewed = [];
+
+      for (const q of questions) {
+        const p = progress[q.id];
+        if (!p || p.status === "new") {
+          unreviewed.push(q);
+          if (unreviewed.length >= count) break;
+        }
+      }
+
+      return unreviewed.slice(0, count).map((q) => {
+        const p = progress[q.id] || {};
+        return {
+          id: q.id,
+          title: q.title,
+          category: q.category,
+          difficulty: q.difficulty,
+          type: q.type,
+          content: q.content,
+          tags: q.tags,
+          status: p.status || "new",
+          wrong_count: p.wrong_count || 0,
+        };
+      });
+    },
+
     knowledge() {
       const progress = getProgress();
       const catData = {};
@@ -352,6 +392,8 @@ export const api = {
         system_design: "系统设计",
         product: "产品思维",
         project_mgmt: "项目管理",
+        career: "求职与职业发展",
+        behavioral: "行为面试",
       };
 
       return Object.entries(catData)
@@ -365,6 +407,29 @@ export const api = {
             .sort(([, a], [, b]) => b.total - a.total)
             .map(([tname, td]) => ({ name: tname, total: td.total, done: td.done })),
         }));
+    },
+  },
+
+  // ── Quick Review Session ──────────────────────────────────
+  quickReview: {
+    saveSession(session) {
+      try {
+        localStorage.setItem("quick_review_session", JSON.stringify(session));
+      } catch (e) {
+        console.warn("quickReview save failed:", e);
+      }
+    },
+    getSession() {
+      try {
+        return JSON.parse(localStorage.getItem("quick_review_session") || "null");
+      } catch {
+        return null;
+      }
+    },
+    clearSession() {
+      try {
+        localStorage.removeItem("quick_review_session");
+      } catch { /* ignore */ }
     },
   },
 
