@@ -98,7 +98,7 @@
 
   async function markCorrect() {
     const q = wrongQuestions[currentIndex];
-    await api.progress.update(q.id, { status: "correct", duration_seconds: 0 });
+    await api.progress.update(q.id, { status: "correct", rating: "good", duration_seconds: 0 });
     wrongQuestions.splice(currentIndex, 1);
     showAnswer = false;
     if (wrongQuestions.length === 0) { reviewMode = false; currentDetail = null; }
@@ -107,7 +107,7 @@
 
   async function markWrongAgain() {
     const q = wrongQuestions[currentIndex];
-    await api.progress.update(q.id, { status: "wrong", duration_seconds: 0 });
+    await api.progress.update(q.id, { status: "wrong", rating: "forgot", duration_seconds: 0 });
     currentIndex = (currentIndex + 1) % wrongQuestions.length;
     showAnswer = false;
     loadReviewDetail(currentIndex);

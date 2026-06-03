@@ -105,7 +105,8 @@
     stopTimer();
     saving = true;
     const status = correct ? "correct" : "wrong";
-    await store.markProgress(q.id, status, timer);
+    const rating = correct ? "good" : "forgot";
+    await store.markProgress(q.id, status, timer, rating);
     q.status = status;
     feedbackResult = status;
     showAnswer = true;

@@ -8,6 +8,7 @@
     // refreshStats must resolve before rendering overview content
     await store.refreshStats();
     try {
+      dailyStats = await api.progress.dailyStats();
       wrongList = await api.progress.wrong();
     } catch (e) {
       // wrongList stays empty on error — weak sections gracefully show nothing
@@ -32,6 +33,7 @@
   };
 
   let wrongList = $state([]);
+  let dailyStats = $state(null);
 
   let stats = $derived(store.stats);
 
@@ -94,6 +96,23 @@
         size={100}
       />
     </div>
+
+    {#if dailyStats}
+      <div class="daily-section">
+        <div class="daily-item">
+          <span class="daily-num">{dailyStats.today.reviewed}</span>
+          <span class="daily-lbl">今日复习</span>
+        </div>
+        <div class="daily-item">
+          <span class="daily-num">{dailyStats.retention}%</span>
+          <span class="daily-lbl">掌握率</span>
+        </div>
+        <div class="daily-item">
+          <span class="daily-num fire">{dailyStats.streak}</span>
+          <span class="daily-lbl">连续天数</span>
+        </div>
+      </div>
+    {/if}
 
     <h2 class="section-title">各领域进度</h2>
     <div class="category-list">
@@ -187,6 +206,35 @@
     display: flex;
     justify-content: center;
     padding: 8px 0;
+  }
+
+  .daily-section {
+    display: flex;
+    gap: 8px;
+  }
+  .daily-item {
+    flex: 1;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 14px;
+    text-align: center;
+  }
+  .daily-num {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .daily-num.fire {
+    color: var(--warning);
+  }
+  .daily-lbl {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
   }
   .category-list {
     display: flex;

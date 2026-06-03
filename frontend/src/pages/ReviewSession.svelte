@@ -1,38 +1,35 @@
 <script>
   /**
-   * QuickReview — 速记模式
-   * Card-based quick Q&A review. Question → reveal answer → self-rate → next.
-   * Supports session save/resume for mid-exit recovery.
+   * ReviewSession — SM-2 间隔复习
+   * Card-based review with 4-level self-rating and SM-2 scheduling.
+   * Session save/resume via localStorage.
    */
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
+  import { store } from "../lib/stores.svelte.js";
+  import { RATINGS } from "../lib/sm2.js";
   import CodeBlock from "../components/CodeBlock.svelte";
 
   let { config, onNavigate } = $props();
 
-  // ── Phases ──
-  // loading | active | completed
+  // loading | active | completed | empty
   let phase = $state("loading");
-
-  // ── Session data ──
-  let questions = $state([]);
+  let cards = $state([]);
   let currentIndex = $state(0);
   let showAnswer = $state(false);
   let results = $state({});
 
-  // ── Derived ──
-  let currentQuestion = $derived(questions[currentIndex]);
-  let total = $derived(questions.length);
-  let rememberedCount = $derived(
-    Object.values(results).filter((r) => r === "remembered").length,
-  );
-  let forgotCount = $derived(
-    Object.values(results).filter((r) => r === "forgot").length,
-  );
-  let unsureCount = $derived(
-    Object.values(results).filter((r) => r === "unsure").length,
-  );
+  let currentCard = $derived(cards[currentIndex]);
+  let total = $derived(cards.length);
   let doneCount = $derived(Object.keys(results).length);
+  let counts = $derived.by(() => {
+    const c = { forgot: 0, hard: 0, good: 0, easy: 0 };
+    for (const r of Object.values(results)) c[r] = (c[r] || 0) + 1;
+    return c;
+  });
+  let retention = $derived(doneCount > 0 ? Math.round(((counts.good + counts.easy) / doneCount) * 100) : 0);
+
+  const SAVE_KEY = "review_session";
 
   function renderContent(text) {
     if (!text) return [{ type: "text", content: "" }];
@@ -72,100 +69,92 @@
     return sections.map((s) => ({ type: s.type, parts: renderContent(s.text) }));
   }
 
-  function startSession(filter) {
+  function startSession() {
     try {
-      const list = api.questions.list({
-        category: filter.category || undefined,
-        difficulty: filter.difficulty || undefined,
-        page_size: filter.count || 20,
-      });
-
-      if (list.length === 0) {
-        phase = "completed";
+      const session = api.progress.startReviewSession(20);
+      if (session.length === 0) {
+        phase = "empty";
         return;
       }
-
-      questions = list.map((item) => api.questions.get(item.id));
+      cards = session;
       currentIndex = 0;
       showAnswer = false;
       results = {};
       phase = "active";
       saveSession();
-    } catch (e) {
-      // If load fails, stay in loading and show nothing
-      phase = "completed";
+    } catch {
+      phase = "empty";
     }
   }
 
   function restoreSession(saved) {
     try {
-      questions = saved.questionIds.map((id) => api.questions.get(id));
+      cards = saved.cardIds.map((id) => api.questions.get(id));
       currentIndex = saved.currentIndex;
       results = saved.results || {};
       phase = "active";
       showAnswer = false;
     } catch {
-      // If restore fails, start fresh with saved filter
-      startSession(saved.filter || { count: 20 });
+      startSession();
     }
   }
 
   function saveSession() {
-    if (questions.length === 0) return;
-    api.quickReview.saveSession({
-      questionIds: questions.map((q) => q.id),
-      currentIndex,
-      results,
-      filter: config || { count: 20 },
-      updated_at: new Date().toISOString(),
-    });
+    if (cards.length === 0) return;
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        cardIds: cards.map((c) => c.id),
+        currentIndex,
+        results,
+        updated_at: new Date().toISOString(),
+      }));
+    } catch { /* ignore */ }
   }
 
-  onMount(() => {
-    if (config?.resume) {
-      const saved = api.quickReview.getSession();
-      if (saved && saved.questionIds?.length > 0) {
-        restoreSession(saved);
-        return;
-      }
+  function clearSession() {
+    try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ }
+  }
+
+  onMount(async () => {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.cardIds?.length > 0) {
+          restoreSession(parsed);
+          return;
+        }
+      } catch { /* ignore */ }
     }
-    startSession(config || { count: 20 });
+    startSession();
   });
 
   function revealAnswer() {
     showAnswer = true;
   }
 
-  function selfRate(rating) {
-    results = { ...results, [currentQuestion.id]: rating };
+  async function rate(rating) {
+    results = { ...results, [currentCard.id]: rating };
+    await store.rateAndAdvance(currentCard.id, rating);
 
-    const sm2Rating = { forgot: "forgot", unsure: "hard", remembered: "good" }[rating];
-
-    // Silent save — fire-and-forget
-    api.progress.update(currentQuestion.id, {
-      status: { forgot: "wrong", unsure: "reviewing", remembered: "correct" }[rating],
-      rating: sm2Rating,
-      source: "quick_review",
-      duration_seconds: 0,
-    });
-
-    if (currentIndex < questions.length - 1) {
+    if (currentIndex < cards.length - 1) {
       currentIndex++;
       showAnswer = false;
       saveSession();
     } else {
-      api.quickReview.clearSession();
+      clearSession();
       phase = "completed";
     }
   }
 
   function handleExit() {
     if (phase === "active" && doneCount > 0) saveSession();
+    else clearSession();
     onNavigate("home");
   }
 
   function handleDone() {
-    api.quickReview.clearSession();
+    clearSession();
     onNavigate("home");
   }
 
@@ -179,13 +168,13 @@
   };
 </script>
 
-<div class="page qr-page">
+<div class="page rs-page">
   <!-- ── Active ── -->
   {#if phase === "active"}
-    <div class="qr-header">
-      <span class="qr-title">速记模式</span>
-      <span class="qr-counter">{doneCount}/{total}</span>
-      <button class="qr-close" onclick={handleExit} aria-label="退出">
+    <div class="rs-header">
+      <span class="rs-title">间隔复习</span>
+      <span class="rs-counter">{doneCount}/{total}</span>
+      <button class="rs-close" onclick={handleExit} aria-label="退出">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" />
@@ -193,22 +182,22 @@
       </button>
     </div>
 
-    <div class="qr-progress-track">
-      <div class="qr-progress-fill" style="transform: scaleX({doneCount / total})"></div>
+    <div class="rs-progress-track">
+      <div class="rs-progress-fill" style="transform: scaleX({doneCount / total})"></div>
     </div>
 
-    {#key currentQuestion?.id}
-      <div class="qr-card">
-        <div class="qr-card-badges">
-          <span class="tag">{currentQuestion?.category ? (categoryLabel[currentQuestion.category] || currentQuestion.category) : ""}</span>
-          <span class="tag diff {currentQuestion?.difficulty}">{currentQuestion?.difficulty}</span>
-          <span class="tag type">{currentQuestion?.type}</span>
+    {#key currentCard?.id}
+      <div class="rs-card">
+        <div class="rs-card-badges">
+          <span class="tag">{currentCard?.category ? (categoryLabel[currentCard.category] || currentCard.category) : ""}</span>
+          <span class="tag diff {currentCard?.difficulty}">{currentCard?.difficulty}</span>
+          <span class="tag type">{currentCard?.type}</span>
         </div>
 
-        <h2 class="qr-question-title">{currentQuestion?.title}</h2>
+        <h2 class="rs-question-title">{currentCard?.title}</h2>
 
-        <div class="qr-content">
-          {#each renderContent(currentQuestion?.content || "") as part}
+        <div class="rs-content">
+          {#each renderContent(currentCard?.content || "") as part}
             {#if part.type === "code"}
               <CodeBlock code={part.code} lang={part.lang} />
             {:else}
@@ -217,27 +206,27 @@
           {/each}
         </div>
 
-        {#if currentQuestion?.hints?.length > 0 && !showAnswer}
-          <div class="qr-hints">
-            <span class="qr-hint-label">💡 提示</span>
-            {#each currentQuestion.hints.slice(0, 1) as hint}
-              <p class="qr-hint-text">{hint}</p>
+        {#if currentCard?.hints?.length > 0 && !showAnswer}
+          <div class="rs-hints">
+            <span class="rs-hint-label">💡 提示</span>
+            {#each currentCard.hints.slice(0, 1) as hint}
+              <p class="rs-hint-text">{hint}</p>
             {/each}
           </div>
         {/if}
 
-        {#if currentQuestion?.options?.length > 0}
-          <div class="qr-options">
-            {#each currentQuestion.options as opt}
-              <div class="qr-opt">{opt}</div>
+        {#if currentCard?.options?.length > 0}
+          <div class="rs-options">
+            {#each currentCard.options as opt}
+              <div class="rs-opt">{opt}</div>
             {/each}
           </div>
         {/if}
       </div>
 
       {#if !showAnswer}
-        <div class="qr-reveal-area">
-          <button class="qr-reveal-btn" onclick={revealAnswer}>
+        <div class="rs-reveal-area">
+          <button class="rs-reveal-btn" onclick={revealAnswer}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
               stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -246,16 +235,16 @@
           </button>
         </div>
       {:else}
-        <div class="qr-answer">
-          {#each renderAnswer(currentQuestion?.answer || "") as section}
-            <div class="qr-ans-section {section.type}">
-              <div class="qr-ans-label">
+        <div class="rs-answer">
+          {#each renderAnswer(currentCard?.answer || "") as section}
+            <div class="rs-ans-section {section.type}">
+              <div class="rs-ans-label">
                 {#if section.type === "answer"}参考答案
                 {:else if section.type === "explanation"}解析
                 {:else}扩展延伸
                 {/if}
               </div>
-              <div class="qr-ans-body">
+              <div class="rs-ans-body">
                 {#each section.parts as part}
                   {#if part.type === "code"}
                     <CodeBlock code={part.code} lang={part.lang} />
@@ -268,33 +257,56 @@
           {/each}
         </div>
 
-        <div class="qr-rate-area">
-          <p class="qr-rate-hint">这道题你掌握了吗？</p>
-          <div class="qr-rate-btns">
-            <button class="qr-rate-btn forgot" onclick={() => selfRate("forgot")}>
-              ❌ 不会
+        <div class="rs-rate-area">
+          <div class="rs-rate-btns">
+            <button class="rs-rate-btn forgot" onclick={() => rate("forgot")}>
+              <span class="rs-rate-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+              </span>
+              <span class="rs-rate-lbl">忘记了</span>
+              <span class="rs-rate-sub">1 天后复习</span>
             </button>
-            <button class="qr-rate-btn unsure" onclick={() => selfRate("unsure")}>
-              🤔 大概会
+            <button class="rs-rate-btn hard" onclick={() => rate("hard")}>
+              <span class="rs-rate-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+                  <path d="M12 8v4M12 16h.01" /></svg>
+              </span>
+              <span class="rs-rate-lbl">不太熟</span>
+              <span class="rs-rate-sub">1 天后复习</span>
             </button>
-            <button class="qr-rate-btn remembered" onclick={() => selfRate("remembered")}>
-              ✅ 已掌握
+            <button class="rs-rate-btn good" onclick={() => rate("good")}>
+              <span class="rs-rate-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              </span>
+              <span class="rs-rate-lbl">答对了</span>
+              <span class="rs-rate-sub">逐步延长</span>
+            </button>
+            <button class="rs-rate-btn easy" onclick={() => rate("easy")}>
+              <span class="rs-rate-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+              </span>
+              <span class="rs-rate-lbl">很简单</span>
+              <span class="rs-rate-sub">快速进阶</span>
             </button>
           </div>
         </div>
       {/if}
     {/key}
 
-  <!-- ── Completed / Empty ── -->
+  <!-- ── Completed ── -->
   {:else if phase === "completed"}
-    <div class="qr-summary">
-      <div class="summary-icon">
-        {#if total === 0}
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-            stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
-            <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
-        {:else if rememberedCount >= forgotCount}
+    <div class="rs-summary">
+      <div class="summary-icon {retention >= 70 ? 'good' : retention >= 40 ? 'ok' : 'bad'}">
+        {#if retention >= 70}
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
             stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
@@ -307,27 +319,27 @@
         {/if}
       </div>
 
-      {#if total === 0}
-        <h2 class="summary-title">没有符合条件的题目</h2>
-        <p class="summary-desc">试试更换筛选条件</p>
-      {:else}
-        <h2 class="summary-title">速记完成！</h2>
-        <div class="summary-stats">
-          <div class="summary-stat remembered">
-            <span class="summary-stat-num">{rememberedCount}</span>
-            <span class="summary-stat-lbl">已掌握</span>
-          </div>
-          <div class="summary-stat unsure">
-            <span class="summary-stat-num">{unsureCount}</span>
-            <span class="summary-stat-lbl">待巩固</span>
-          </div>
-          <div class="summary-stat forgot">
-            <span class="summary-stat-num">{forgotCount}</span>
-            <span class="summary-stat-lbl">要复习</span>
-          </div>
-        </div>
-        <p class="summary-pct">{Math.round((rememberedCount / total) * 100)}% 掌握率</p>
+      <h2 class="summary-title">复习完成！</h2>
+
+      {#if store.dailyStats?.streak > 0}
+        <div class="summary-streak">🔥 连续 {store.dailyStats.streak} 天</div>
       {/if}
+
+      <div class="summary-stats">
+        <div class="summary-stat good">
+          <span class="summary-stat-num">{counts.good + counts.easy}</span>
+          <span class="summary-stat-lbl">已掌握</span>
+        </div>
+        <div class="summary-stat hard">
+          <span class="summary-stat-num">{counts.hard}</span>
+          <span class="summary-stat-lbl">待巩固</span>
+        </div>
+        <div class="summary-stat forgot">
+          <span class="summary-stat-num">{counts.forgot}</span>
+          <span class="summary-stat-lbl">要复习</span>
+        </div>
+      </div>
+      <p class="summary-pct">{retention}% 掌握率</p>
 
       <div class="summary-actions">
         <button class="summary-btn primary" onclick={handleDone}>完成</button>
@@ -335,16 +347,33 @@
       </div>
     </div>
 
+  <!-- ── Empty ── -->
+  {:else if phase === "empty"}
+    <div class="rs-summary">
+      <div class="summary-icon good">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+          <polyline points="22 4 12 14.01 9 11.01" /></svg>
+      </div>
+      <h2 class="summary-title">暂无待复习题目</h2>
+      <p class="summary-desc">所有题目已按计划安排，请继续保持复习节奏！</p>
+      <div class="summary-actions">
+        <button class="summary-btn primary" onclick={handleDone}>返回首页</button>
+        <button class="summary-btn secondary" onclick={() => onNavigate("browse")}>浏览题库</button>
+      </div>
+    </div>
+
   <!-- ── Loading ── -->
   {:else}
-    <div class="qr-loading">
+    <div class="rs-loading">
       <div class="skeleton" style="height:200px"></div>
     </div>
   {/if}
 </div>
 
 <style>
-  .qr-page {
+  .rs-page {
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -352,23 +381,23 @@
   }
 
   /* ── Header ── */
-  .qr-header {
+  .rs-header {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .qr-title {
+  .rs-title {
     font-size: 15px;
     font-weight: 700;
     color: var(--accent);
   }
-  .qr-counter {
+  .rs-counter {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-muted);
     font-variant-numeric: tabular-nums;
   }
-  .qr-close {
+  .rs-close {
     margin-left: auto;
     width: 32px;
     height: 32px;
@@ -382,18 +411,18 @@
     color: var(--text-muted);
     cursor: pointer;
   }
-  .qr-close:active {
+  .rs-close:active {
     transform: scale(0.88);
   }
 
   /* ── Progress ── */
-  .qr-progress-track {
+  .rs-progress-track {
     height: 3px;
     background: var(--border);
     border-radius: 2px;
     overflow: hidden;
   }
-  .qr-progress-fill {
+  .rs-progress-fill {
     height: 100%;
     background: var(--accent);
     border-radius: 2px;
@@ -402,7 +431,7 @@
   }
 
   /* ── Question Card ── */
-  .qr-card {
+  .rs-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -410,7 +439,7 @@
     animation: fade-in 0.35s var(--spring) both;
   }
 
-  .qr-card-badges {
+  .rs-card-badges {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
@@ -421,7 +450,7 @@
     color: var(--text-dim);
   }
 
-  .qr-question-title {
+  .rs-question-title {
     font-size: 17px;
     font-weight: 700;
     letter-spacing: -0.2px;
@@ -430,44 +459,44 @@
     color: var(--text);
   }
 
-  .qr-content {
+  .rs-content {
     font-size: 15px;
     line-height: 1.75;
     color: var(--text);
   }
-  .qr-content p {
+  .rs-content p {
     margin-bottom: 8px;
   }
 
   /* ── Hints ── */
-  .qr-hints {
+  .rs-hints {
     margin-top: 12px;
     padding: 10px 14px;
     background: var(--warning-bg);
     border: 1px solid rgba(251, 191, 36, 0.15);
     border-radius: var(--radius-sm);
   }
-  .qr-hint-label {
+  .rs-hint-label {
     font-size: 11px;
     font-weight: 600;
     color: var(--warning);
     display: block;
     margin-bottom: 4px;
   }
-  .qr-hint-text {
+  .rs-hint-text {
     font-size: 13px;
     color: var(--text-muted);
     line-height: 1.5;
   }
 
-  /* ── Options (choice/true_false) ── */
-  .qr-options {
+  /* ── Options ── */
+  .rs-options {
     display: flex;
     flex-direction: column;
     gap: 6px;
     margin-top: 12px;
   }
-  .qr-opt {
+  .rs-opt {
     padding: 10px 14px;
     background: var(--bg-surface);
     border: 1px solid var(--border);
@@ -477,11 +506,11 @@
   }
 
   /* ── Reveal Button ── */
-  .qr-reveal-area {
+  .rs-reveal-area {
     display: flex;
     justify-content: center;
   }
-  .qr-reveal-btn {
+  .rs-reveal-btn {
     width: 100%;
     display: flex;
     align-items: center;
@@ -499,79 +528,71 @@
     font-family: inherit;
     animation: fade-in 0.5s var(--spring) both;
   }
-  .qr-reveal-btn:active {
+  .rs-reveal-btn:active {
     transform: scale(0.97);
   }
 
   /* ── Answer ── */
-  .qr-answer {
+  .rs-answer {
     display: flex;
     flex-direction: column;
     gap: 8px;
     animation: fade-up 0.3s var(--spring) both;
   }
-  .qr-ans-section {
+  .rs-ans-section {
     border-radius: var(--radius-sm);
     padding: 14px 16px;
   }
-  .qr-ans-section.answer {
+  .rs-ans-section.answer {
     background: var(--ans-answer-bg);
     border: 1px solid var(--ans-answer-border);
   }
-  .qr-ans-section.explanation {
+  .rs-ans-section.explanation {
     background: var(--ans-explanation-bg);
     border: 1px solid var(--ans-explanation-border);
   }
-  .qr-ans-section.extension {
+  .rs-ans-section.extension {
     background: var(--ans-extension-bg);
     border: 1px solid var(--ans-extension-border);
   }
-  .qr-ans-label {
+  .rs-ans-label {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.8px;
     text-transform: uppercase;
     margin-bottom: 6px;
   }
-  .qr-ans-section.answer .qr-ans-label {
-    color: var(--ans-answer-text);
-  }
-  .qr-ans-section.explanation .qr-ans-label {
-    color: var(--ans-explanation-text);
-  }
-  .qr-ans-section.extension .qr-ans-label {
-    color: var(--ans-extension-text);
-  }
-  .qr-ans-body {
+  .rs-ans-section.answer .rs-ans-label { color: var(--ans-answer-text); }
+  .rs-ans-section.explanation .rs-ans-label { color: var(--ans-explanation-text); }
+  .rs-ans-section.extension .rs-ans-label { color: var(--ans-extension-text); }
+  .rs-ans-body {
     font-size: 14px;
     line-height: 1.65;
   }
-  .qr-ans-body p {
+  .rs-ans-body p {
     margin-bottom: 6px;
     color: var(--text);
   }
-  .qr-ans-body :global(pre),
-  .qr-ans-body :global(code) {
+  .rs-ans-body :global(pre),
+  .rs-ans-body :global(code) {
     max-width: 100%;
     overflow-x: auto;
   }
 
   /* ── Self-Rating ── */
-  .qr-rate-area {
+  .rs-rate-area {
     animation: fade-in 0.4s var(--spring) both;
   }
-  .qr-rate-hint {
-    text-align: center;
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-  }
-  .qr-rate-btns {
-    display: flex;
+  .rs-rate-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
   }
-  .qr-rate-btn {
-    flex: 1;
+  .rs-rate-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
     padding: 14px 8px;
     font-size: 13px;
     font-weight: 600;
@@ -584,27 +605,51 @@
     font-family: inherit;
     text-align: center;
   }
-  .qr-rate-btn:active {
+  .rs-rate-btn:active {
     transform: scale(0.96);
   }
-  .qr-rate-btn.forgot:active {
+  .rs-rate-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+  }
+  .rs-rate-lbl {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .rs-rate-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  .rs-rate-btn.forgot:active,
+  .rs-rate-btn.forgot .rs-rate-icon {
     background: var(--danger-bg);
-    border-color: var(--danger);
     color: var(--danger);
   }
-  .qr-rate-btn.unsure:active {
+  .rs-rate-btn.hard:active,
+  .rs-rate-btn.hard .rs-rate-icon {
     background: var(--warning-bg);
-    border-color: var(--warning);
     color: var(--warning);
   }
-  .qr-rate-btn.remembered:active {
+  .rs-rate-btn.good:active,
+  .rs-rate-btn.good .rs-rate-icon {
     background: var(--success-bg);
-    border-color: var(--success);
     color: var(--success);
+  }
+  .rs-rate-btn.easy:active,
+  .rs-rate-btn.easy .rs-rate-icon {
+    background: var(--accent-bg);
+    color: var(--accent);
   }
 
   /* ── Summary ── */
-  .qr-summary {
+  .rs-summary {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -619,12 +664,24 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--accent-bg);
-    color: var(--accent);
+    background: var(--bg-surface);
+    color: var(--text-muted);
   }
   .summary-icon :global(svg) {
     width: 32px;
     height: 32px;
+  }
+  .summary-icon.good {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .summary-icon.ok {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  .summary-icon.bad {
+    background: var(--danger-bg);
+    color: var(--danger);
   }
   .summary-title {
     font-size: 20px;
@@ -634,6 +691,11 @@
   .summary-desc {
     font-size: 14px;
     color: var(--text-muted);
+  }
+  .summary-streak {
+    font-size: 14px;
+    color: var(--warning);
+    font-weight: 600;
   }
   .summary-stats {
     display: flex;
@@ -654,15 +716,9 @@
     font-weight: 800;
     font-variant-numeric: tabular-nums;
   }
-  .summary-stat.remembered .summary-stat-num {
-    color: var(--success);
-  }
-  .summary-stat.unsure .summary-stat-num {
-    color: var(--warning);
-  }
-  .summary-stat.forgot .summary-stat-num {
-    color: var(--danger);
-  }
+  .summary-stat.good .summary-stat-num { color: var(--success); }
+  .summary-stat.hard .summary-stat-num { color: var(--warning); }
+  .summary-stat.forgot .summary-stat-num { color: var(--danger); }
   .summary-stat-lbl {
     font-size: 11px;
     color: var(--text-dim);
@@ -704,23 +760,22 @@
   }
 
   /* ── Loading ── */
-  .qr-loading {
+  .rs-loading {
     padding: 40px 0;
   }
 
   /* ── Mobile ── */
   @media (max-width: 480px) {
-    .qr-card {
+    .rs-card {
       padding: 16px;
     }
-    .qr-question-title {
+    .rs-question-title {
       font-size: 15px;
     }
-    .qr-content {
+    .rs-content {
       font-size: 14px;
     }
-    .qr-rate-btn {
-      font-size: 12px;
+    .rs-rate-btn {
       padding: 12px 6px;
     }
     .summary-stats {

@@ -7,11 +7,14 @@ const [{ questions }, { buildKnowledgeMap, getKnowledgeForTag }] = await Promise
   import("./knowledge-data.js"),
 ]);
 
+import { rateCard, getDefaultProgress, QUICK_REVIEW_MAP, RATINGS } from "./sm2.js";
+
 // Build knowledge map once (question data is static)
 const knowledgeMap = buildKnowledgeMap(questions);
 
 const PROGRESS_KEY = "quiz_progress";
 const SESSION_KEY = "quiz_review_sessions";
+const DAILY_STATS_KEY = "quiz_daily_stats";
 
 function getProgress() {
   try {
@@ -43,6 +46,50 @@ function saveSessions(s) {
   } catch {
     /* ignore */
   }
+}
+
+function getDailyStats() {
+  try {
+    return JSON.parse(localStorage.getItem(DAILY_STATS_KEY) || "{}");
+  } catch { return {}; }
+}
+
+function saveDailyStats(stats) {
+  try {
+    localStorage.setItem(DAILY_STATS_KEY, JSON.stringify(stats));
+  } catch { /* ignore */ }
+}
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function computeStreak(daily) {
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const key = dateKey(d);
+    if ((daily[key]?.reviewed || 0) > 0) { streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return streak;
+}
+
+function recordReviewActivity(rating) {
+  if (!rating) return;
+  const daily = getDailyStats();
+  const today = dateKey(new Date());
+  if (!daily[today]) daily[today] = { reviewed: 0, remembered: 0, hard: 0, forgot: 0 };
+  daily[today].reviewed++;
+  if (rating === "good" || rating === "easy") daily[today].remembered++;
+  else if (rating === "hard") daily[today].hard++;
+  else if (rating === "forgot") daily[today].forgot++;
+  const entries = Object.entries(daily);
+  if (entries.length > 365) {
+    entries.sort(([a], [b]) => a.localeCompare(b));
+    for (let i = 0; i < entries.length - 365; i++) delete daily[entries[i][0]];
+  }
+  saveDailyStats(daily);
 }
 
 function matchesSearch(q, search) {
@@ -193,6 +240,10 @@ export const api = {
         status: p.status || "new",
         review_count: p.review_count || 0,
         wrong_count: p.wrong_count || 0,
+        ef: p.ef ?? 2.5,
+        interval: p.interval ?? 0,
+        repetitions: p.repetitions ?? 0,
+        next_review_at: p.next_review_at || null,
         notes: p.notes || "",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -204,37 +255,61 @@ export const api = {
     update(questionId, body) {
       const progress = getProgress();
       const existing = progress[questionId] || {};
-      const wrongCount = (existing.wrong_count || 0) + (body.status === "wrong" ? 1 : 0);
+      const prevSM2 = { ef: existing.ef, interval: existing.interval, repetitions: existing.repetitions };
+
+      // Determine rating: explicit or mapped from status
+      let rating = body.rating;
+      if (!rating && body.status) {
+        rating = body.status === "correct" ? "good" : "forgot";
+      }
+
+      // Compute SM-2 values when rating is available
+      let sm2 = {};
+      if (rating && RATINGS[rating]) {
+        sm2 = rateCard(rating, prevSM2);
+      }
+
+      const wrongCount = (existing.wrong_count || 0) + (body.status === "wrong" || rating === "forgot" || rating === "hard" ? 1 : 0);
       let newStatus = body.status;
-      if (existing.status === "wrong" && body.status === "correct" && body.source !== "quick_review") {
+      if (!newStatus && rating) {
+        newStatus = (rating === "forgot" || rating === "hard") ? "wrong" : "correct";
+      }
+      if (existing.status === "wrong" && newStatus === "correct" && body.source !== "quick_review") {
         newStatus = "reviewing";
       }
 
-      progress[questionId] = {
-        status: newStatus,
+      const entry = {
+        status: newStatus || existing.status || "new",
         wrong_count: wrongCount,
         review_count: (existing.review_count || 0) + 1,
         last_reviewed_at: new Date().toISOString(),
-        next_review_at:
-          body.status === "wrong" ? new Date(Date.now() + 86400000).toISOString() : null,
+        next_review_at: sm2.next_review_at || existing.next_review_at || null,
+        ef: sm2.ef ?? existing.ef ?? 2.5,
+        interval: sm2.interval ?? existing.interval ?? 0,
+        repetitions: sm2.repetitions ?? existing.repetitions ?? 0,
         notes: body.notes || existing.notes || "",
         source: body.source || "quiz",
       };
+      progress[questionId] = entry;
       saveProgress(progress);
 
+      // Log review session
       const sessions = getSessions();
       const maxId = sessions.length > 0 ? Math.max(...sessions.map((s) => s.id)) : 0;
       sessions.push({
         id: maxId + 1,
         question_id: questionId,
         reviewed_at: new Date().toISOString(),
-        result: body.status,
+        result: newStatus || body.status,
         duration_seconds: body.duration_seconds || 0,
         source: body.source || "quiz",
       });
       saveSessions(sessions);
 
-      return { ok: true };
+      // Record daily activity
+      recordReviewActivity(rating);
+
+      return { ok: true, sm2: entry };
     },
 
     stats() {
@@ -273,6 +348,17 @@ export const api = {
       };
     },
 
+    dailyStats() {
+      const daily = getDailyStats();
+      const today = dateKey(new Date());
+      const todayStats = daily[today] || { reviewed: 0, remembered: 0, hard: 0, forgot: 0 };
+      const streak = computeStreak(daily);
+      const retention = todayStats.reviewed > 0
+        ? Math.round((todayStats.remembered / todayStats.reviewed) * 100)
+        : 0;
+      return { today: todayStats, streak, retention };
+    },
+
     wrong() {
       const progress = getProgress();
       const wrongIds = Object.entries(progress)
@@ -301,7 +387,7 @@ export const api = {
       const progress = getProgress();
       const now = new Date().toISOString();
       const dueIds = Object.entries(progress)
-        .filter(([, p]) => p.status === "wrong" && p.next_review_at && p.next_review_at <= now)
+        .filter(([, p]) => p.next_review_at && p.next_review_at <= now)
         .map(([id]) => Number(id));
 
       return questions
@@ -316,6 +402,8 @@ export const api = {
             type: q.type,
             wrong_count: p.wrong_count || 0,
             next_review_at: p.next_review_at,
+            ef: p.ef,
+            interval: p.interval,
           };
         });
     },
@@ -348,6 +436,47 @@ export const api = {
           tags: q.tags,
           status: p.status || "new",
           wrong_count: p.wrong_count || 0,
+        };
+      });
+    },
+
+    startReviewSession(count = 20) {
+      const progress = getProgress();
+      const now = new Date();
+      const overdue = [];
+      const newCards = [];
+
+      for (const q of questions) {
+        const p = progress[q.id];
+        if (!p || p.status === "new") {
+          if (newCards.length < count) newCards.push(q);
+        } else if (p.next_review_at && new Date(p.next_review_at) <= now) {
+          overdue.push(q);
+        }
+      }
+
+      overdue.sort((a, b) => new Date(progress[a.id].next_review_at) - new Date(progress[b.id].next_review_at));
+
+      const session = [...overdue.slice(0, count), ...newCards].slice(0, count);
+      // Fisher-Yates shuffle
+      for (let i = session.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [session[i], session[j]] = [session[j], session[i]];
+      }
+      return session.map((q) => {
+        const p = progress[q.id] || {};
+        return {
+          id: q.id,
+          title: q.title,
+          category: q.category,
+          difficulty: q.difficulty,
+          type: q.type,
+          content: q.content,
+          tags: q.tags,
+          status: p.status || "new",
+          wrong_count: p.wrong_count || 0,
+          ef: p.ef,
+          interval: p.interval,
         };
       });
     },
@@ -545,5 +674,27 @@ export const api = {
       md += `**答案：**\n> ${q.answer?.replace(/\n/g, "\n> ") ?? ""}\n\n`;
     }
     return md;
+  },
+
+  migrateProgress() {
+    const progress = getProgress();
+    let changed = false;
+    for (const id of Object.keys(progress)) {
+      const entry = progress[id];
+      if (entry.ef === undefined) {
+        const defaults = getDefaultProgress();
+        progress[id] = { ...defaults, ...entry };
+        if (entry.status === "correct" && !entry.next_review_at) {
+          const d = new Date();
+          d.setDate(d.getDate() + 4);
+          progress[id].next_review_at = d.toISOString();
+          progress[id].interval = 4;
+          progress[id].repetitions = 1;
+        }
+        changed = true;
+      }
+    }
+    if (changed) saveProgress(progress);
+    return { migrated: changed };
   },
 };

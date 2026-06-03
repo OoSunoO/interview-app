@@ -19,6 +19,11 @@ let _filters = $state({
 });
 let _quizSession = $state([]);
 let _quizIndex = $state(0);
+let _dailyStats = $state({
+  today: { reviewed: 0, remembered: 0, hard: 0, forgot: 0 },
+  streak: 0,
+  retention: 0,
+});
 
 function getInitialTheme() {
   const stored = localStorage.getItem("theme");
@@ -77,6 +82,10 @@ export const store = {
   },
   set dueReviews(v) {
     _dueReviews = v;
+  },
+
+  get dailyStats() {
+    return _dailyStats;
   },
 
   get knowledge() {
@@ -174,13 +183,25 @@ export const store = {
     return _currentQuestion;
   },
 
-  async markProgress(questionId, status, duration = 0) {
-    await api.progress.update(questionId, { status, duration_seconds: duration });
-    if (status === "wrong") {
+  async markProgress(questionId, status, duration = 0, rating) {
+    await api.progress.update(questionId, { status, rating, duration_seconds: duration });
+    if (status === "wrong" || rating === "forgot" || rating === "hard") {
       _wrongQuestions = await api.progress.wrong();
       _dueReviews = await api.progress.dueReviews();
     }
     _stats = await api.progress.stats();
+  },
+
+  async rateAndAdvance(questionId, rating) {
+    await api.progress.update(questionId, { rating, source: "review_session" });
+    _dailyStats = await api.progress.dailyStats();
+    _stats = await api.progress.stats();
+    _dueReviews = await api.progress.dueReviews();
+    _wrongQuestions = await api.progress.wrong();
+  },
+
+  async refreshDailyStats() {
+    _dailyStats = await api.progress.dailyStats();
   },
 
   async refreshStats() {

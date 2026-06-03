@@ -349,6 +349,160 @@ describe("knowledge API", () => {
   });
 });
 
+describe("SM-2 progress.update with rating", () => {
+  it("stores SM-2 fields after good rating", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "good" });
+    const q = api.questions.get(1);
+    expect(q.ef).toBeGreaterThanOrEqual(1.3);
+    expect(q.interval).toBe(1);
+    expect(q.repetitions).toBe(1);
+    expect(q.next_review_at).toBeTruthy();
+  });
+
+  it("resets repetitions on forgot", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "good" }); // reps: 1
+    await api.progress.update(1, { rating: "forgot" }); // should reset
+    const q = api.questions.get(1);
+    expect(q.repetitions).toBe(0);
+    expect(q.interval).toBe(1);
+  });
+
+  it("advances to 6-day interval on second correct", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "good" }); // interval: 1
+    await api.progress.update(1, { rating: "good" }); // interval: 6
+    const q = api.questions.get(1);
+    expect(q.interval).toBe(6);
+    expect(q.repetitions).toBe(2);
+  });
+
+  it("writes ef from sm2 calculation (good=quality 4, ef stays 2.5)", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "good" });
+    const q = api.questions.get(1);
+    expect(q.ef).toBe(2.5);
+  });
+
+  it("accepts rating from status fallback", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { status: "correct" });
+    const q = api.questions.get(1);
+    expect(q.ef).toBeDefined();
+    expect(q.interval).toBe(1);
+  });
+});
+
+describe("dailyStats", () => {
+  it("returns zeros when no reviews today", async () => {
+    const api = await getApi();
+    const stats = api.progress.dailyStats();
+    expect(stats.today.reviewed).toBe(0);
+    expect(stats.streak).toBe(0);
+  });
+
+  it("counts reviews after rating cards", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "good" });
+    const stats = api.progress.dailyStats();
+    expect(stats.today.reviewed).toBe(1);
+    expect(stats.today.remembered).toBe(1);
+  });
+
+  it("counts forgot separately", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "forgot" });
+    const stats = api.progress.dailyStats();
+    expect(stats.today.reviewed).toBe(1);
+    expect(stats.today.forgot).toBe(1);
+    expect(stats.today.remembered).toBe(0);
+  });
+
+  it("computes retention correctly", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "good" });
+    await api.progress.update(2, { rating: "good" });
+    await api.progress.update(3, { rating: "forgot" });
+    const stats = api.progress.dailyStats();
+    expect(stats.today.reviewed).toBe(3);
+    expect(stats.today.remembered).toBe(2);
+    expect(stats.retention).toBe(67); // 2/3 ≈ 67%
+  });
+});
+
+describe("startReviewSession", () => {
+  it("returns new cards when no progress exists", async () => {
+    const api = await getApi();
+    const session = api.progress.startReviewSession(3);
+    expect(session.length).toBe(3);
+    expect(session.every((q) => q.id)).toBe(true);
+  });
+
+  it("returns overdue cards ahead of new cards", async () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: {
+          status: "wrong",
+          wrong_count: 1,
+          next_review_at: yesterday,
+          ef: 2.5,
+          interval: 1,
+          repetitions: 1,
+        },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const session = api.progress.startReviewSession(3);
+    // Session includes the overdue card plus new cards
+    expect(session.length).toBe(3);
+    expect(session.find((q) => q.id === 1)).toBeDefined();
+  });
+});
+
+describe("migrateProgress", () => {
+  it("adds SM-2 fields to existing progress entries", async () => {
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: {
+          status: "wrong",
+          wrong_count: 1,
+          review_count: 1,
+          next_review_at: new Date().toISOString(),
+        },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    api.migrateProgress();
+    const progress = JSON.parse(localStorage.getItem("quiz_progress"));
+    expect(progress["1"].ef).toBe(2.5);
+    expect(progress["1"].interval).toBe(0);
+    expect(progress["1"].repetitions).toBe(0);
+  });
+});
+
+describe("dueReviews with SM-2", () => {
+  it("returns all overdue questions regardless of status", async () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "correct", next_review_at: yesterday, ef: 2.5, interval: 6, repetitions: 2 },
+        2: { status: "wrong", next_review_at: yesterday, ef: 2.5, interval: 1, repetitions: 0 },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const due = api.progress.dueReviews();
+    expect(due).toHaveLength(2);
+  });
+});
+
 describe("exportMarkdown", () => {
   it("generates markdown for given question ids", async () => {
     const api = await getApi();

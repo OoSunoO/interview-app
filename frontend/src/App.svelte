@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte";
   import NavBar from "./components/NavBar.svelte";
   import Home from "./pages/Home.svelte";
   import Browse from "./pages/Browse.svelte";
@@ -8,6 +9,8 @@
   import KnowledgePoints from "./pages/KnowledgePoints.svelte";
   import KnowledgePointDetail from "./pages/KnowledgePointDetail.svelte";
   import QuickReview from "./pages/QuickReview.svelte";
+  import ReviewSession from "./pages/ReviewSession.svelte";
+  import { api } from "./lib/local-api.js";
 
   let page = $state("home");
   let selectedQuestionId = $state(null);
@@ -20,6 +23,10 @@
     if (params.reviewConfig) reviewConfig = params.reviewConfig;
     page = to;
   }
+
+  onMount(() => {
+    api.migrateProgress();
+  });
 </script>
 
 <div class="app-shell">
@@ -40,6 +47,8 @@
       <Stats />
     {:else if page === "quick-review"}
       <QuickReview config={reviewConfig} onNavigate={navigate} />
+    {:else if page === "review-session"}
+      <ReviewSession config={reviewConfig} onNavigate={navigate} />
     {/if}
   </main>
   <NavBar current={page} onNavigate={(p) => navigate(p)} />

@@ -49,6 +49,7 @@
       recommend = questions.slice(0, 3);
       dueCount = due.length;
       store.stats = stats;
+      store.refreshDailyStats();
     } catch (e) {
       error = e.message ?? "加载数据失败";
     } finally {
@@ -185,6 +186,25 @@
             />
           </svg>
           <span>暂无待复习题目，继续保持</span>
+        </div>
+      {/if}
+
+      <button class="review-entry-btn" onclick={() => onNavigate("review-session")}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+        间隔复习
+        {#if store.dailyStats?.streak > 0}
+          <span class="review-streak-badge">🔥 {store.dailyStats.streak} 天</span>
+        {/if}
+      </button>
+
+      {#if store.dailyStats && store.dailyStats.today.reviewed > 0}
+        <div class="daily-mini-stats">
+          <span>今日已复习 <strong>{store.dailyStats.today.reviewed}</strong> 题</span>
+          <span class="daily-dot">·</span>
+          <span>掌握率 <strong>{store.dailyStats.retention}%</strong></span>
         </div>
       {/if}
 
@@ -621,6 +641,53 @@
 .qr-entry-btn:active {
   transform: scale(0.97);
   background: var(--accent-bg);
+}
+
+/* ── SM-2 Review Entry Button ── */
+.review-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: var(--accent-gradient);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s var(--spring);
+}
+.review-entry-btn:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+.review-streak-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Daily Mini Stats ── */
+.daily-mini-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.daily-mini-stats strong {
+  font-weight: 700;
+  color: var(--accent);
+}
+.daily-dot {
+  color: var(--text-dim);
 }
 
 /* ── Dialogs (Overlay) ── */
