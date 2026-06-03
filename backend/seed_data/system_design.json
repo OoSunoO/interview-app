@@ -163,5 +163,55 @@
       "金丝雀发布如何决定放量比例"
     ],
     "tags": ["部署", "高可用"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Paxos 与 Raft 共识算法",
+    "content": "请解释 Raft 共识算法的工作原理，相比 Paxos 有什么优势？",
+    "answer": "Raft 通过 Leader 选举、日志复制和安全机制实现分布式共识。相比 Paxos，Raft 更易理解，因为将问题分解为相对独立的子问题。\n\n解析：Raft 的核心机制：1）Leader 选举——节点有三种角色：Leader（处理所有客户端请求）、Follower（被动复制）、Candidate（竞选 Leader）。Leader 定期发送心跳（AppendEntries RPC），Follower 超时未收到心跳则发起选举。2）日志复制——Leader 将客户端请求封装为日志条目，广播给所有 Follower，多数确认后提交（committed），然后应用到状态机。3）安全性——Leader 拥有所有已提交日志；Candidate 竞选时限制只有日志最新的节点才能胜出。\n\n扩展延伸：Paxos vs Raft 的差异：1）Paxos 有 Basic Paxos、Multi-Paxos 等多个变体，Raft 单一标准规范。2）Raft 的日志连续性强，日志复制和 Leader 选举紧密耦合。3）Paxos 理论上更通用，但 Raft 在实际工程中更流行（etcd、Consul、TiKV 都使用 Raft）。共识算法的核心价值：在不可靠的分布式环境中，让多个节点对某个值达成一致。",
+    "hints": ["Raft 中如何保证新选举的 Leader 拥有所有已提交日志", "Paxos 和 Raft 对网络分区（split-brain）的处理方式有何不同"],
+    "tags": ["分布式", "共识", "Raft", "Paxos"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式事务：2PC 与 Saga",
+    "content": "请比较两阶段提交（2PC）和 Saga 模式在分布式事务中的优劣和适用场景。",
+    "answer": "2PC 通过协调者和参与者两阶段提交实现强一致性（ACID）。Saga 将长事务拆分为多个本地事务 + 补偿事务，实现最终一致性。\n\n解析：2PC 流程：阶段一（Prepare）——协调者问每个参与者「能提交吗？」，参与者写 Undo/Redo 日志后回复 Yes/No。阶段二（Commit/Abort）——全部回复 Yes 则广播 Commit，任一 No 则广播 Abort。缺点：同步阻塞（参与者 Prepare 后锁资源直到收到 Commit/Abort）、协调者单点故障、脑裂风险（部分参与者 Commit 部分 Abort）。\n\nSaga 流程：每个本地事务执行完后发布事件，触发下一个本地事务。如果某个步骤失败，执行之前各步骤的补偿事务（逆向操作）。编排方式：1）Choreography（编排，事件驱动，无中心）。2）Orchestration（协调器，中心化控制）。\n\n扩展延伸：适用场景选型：需要强一致性（金融转账）→ 2PC 或 Percolator（Google Spanner 的优化版 2PC，TiDB 使用）。可以接受最终一致性（订单创建 → 支付 → 库存扣减）→ Saga（Seata AT/TCC 模式）。2PC 的锁持有时间长，高并发下吞吐量低。Saga 的挑战在于补偿事务的正确性——补偿逻辑必须幂等且能处理部分成功。",
+    "hints": ["2PC 的 Prepare 阶段为什么要写 Undo/Redo 日志", "Saga 的补偿事务和回滚（Rollback）有什么本质区别"],
+    "tags": ["分布式", "事务", "2PC", "Saga"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CDN 架构原理",
+    "content": "请解释 CDN 的工作原理及其在系统架构中的作用。",
+    "answer": "CDN（内容分发网络）将源站内容缓存到全球分布的边缘节点，用户就近获取内容。核心价值：降低延迟、减轻源站压力、抗 DDoS 攻击。\n\n解析：CDN 工作流程：用户请求 → DNS 解析 CNAME 到 CDN 调度系统 → 调度系统根据用户 IP 返回最近的边缘节点 IP → 用户请求边缘节点。边缘节点有缓存则直接返回（Cache Hit），没有则回源请求（从源站拉取后缓存到本地并返回）。\n\n核心组件：1）DNS 调度——按地理位置的 GSLB（全局负载均衡）。2）边缘缓存节点——存静态资源（图片/CSS/JS/视频），通过 LRU 淘汰策略管理。3）回源策略——缓存未命中时如何回源、回源超时/降级处理。4）预热/Push——大促前主动预热热点资源到边缘节点。\n\n扩展延伸：CDN 架构中的关键问题：1）缓存一致性——源站更新资源后如何通知 CDN 失效缓存（PURGE 请求或 Cache-Control: max-age=0 + 版本号）。2）HTTPS——边缘节点 TLS 证书管理、SNI 路由。3）DDoS 防护——CDN 天然防御（将所有流量分散到边缘节点，只有干净流量到达源站）。4）动态加速（DCDN）——针对动态 API 请求的加速，通过优化路由（TCP 优化、私有协议）而非缓存实现。",
+    "hints": ["CDN 回源时如果源站压力过大怎么办", "动态请求（API）能否用 CDN 加速"],
+    "tags": ["CDN", "网络", "性能"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "WebSocket vs SSE vs 轮询",
+    "content": "请比较 WebSocket、SSE（Server-Sent Events）和轮询三种实时通信方案的优劣。",
+    "answer": "轮询最简单但浪费资源；WebSocket 功能最全但复杂度高；SSE 是服务端→客户端的单向实时通道，实现简单。\n\n解析：1）轮询——客户端定时发 HTTP 请求查询是否有新数据。实现最简单，兼容性最好。缺点：大量请求浪费带宽（大多数请求没有新数据），实时性取决于轮询间隔。长轮询（Long Polling）改进：请求保持打开直到有数据或超时，减少空请求。2）WebSocket——全双工通信，一次握手建立长连接。适合双向高频通信（聊天、协同编辑、游戏）。支持 binary 帧，协议开销小。缺点：需要 WebSocket Server（不能直接用 CDN），连接管理复杂。3）SSE——基于 HTTP 的单向流（服务端推送）。浏览器通过 EventSource API 接收。自动重连，比 WebSocket 实现简单得多。适合单向数据流（推送通知、股票价格、日志流）。\n\n扩展延伸：选型建议：1）需要双向通信（用户发送 + 服务端推送）→ WebSocket。2）只需服务端推送消息→ SSE（简单场景首选）。3）没有长连接基础设施，实时性要求不高 → 轮询/长轮询。4）WebSocket 生产方案——Socket.IO（降级+房间广播自动处理）、Pusher/Ably（托管 WebSocket 服务）。5）SSE + HTTP/2——HTTP/2 的多路复用支持 SSE 更高效。6）WebTransport（HTTP/3 的替代方案，还在早期）。",
+    "hints": ["WebSocket 应用层的心跳机制如何设计", "SSE 相比 WebSocket 的局限性是什么"],
+    "tags": ["网络", "实时通信", "WebSocket", "SSE"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "系统设计估算方法",
+    "content": "系统设计面试中如何进行容量估算？请举例说明常用的估算方法。",
+    "answer": "系统设计估算的核心是「合理的近似」，不需要精确数字。通过已知参照物 + 快速计算得出合理范围。\n\n解析：常用估算方法：1）QPS 估算——DAU × 每天用户操作次数 / 86400（秒数）= 平均 QPS，峰值 QPS = 平均 QPS × 3-10 倍（取决于业务类型）。示例：Twitter 类应用 3 亿 DAU，每人每天发 5 条推文 → 每天 15 亿条 → 平均 QPS = 15亿/86400 ≈ 17K，峰值 ≈ 50K-170K。2）存储估算——每条数据大小 × 数量 × 副本数 × 冗余系数（1.2-1.5）。示例：推文 140 字符 + 元数据 ≈ 500 字节，15 亿条/天 → 每天 750GB，一年约 270TB（不考虑图片/视频）。3）带宽估算——QPS × 响应体大小。示例：每推文约 500 字节，峰值写入 QPS 50K → 写入带宽 ≈ 25MB/s ≈ 200Mbps。\n\n扩展延伸：需要记住的参照数据：1）MySQL 单机 QPS ≈ 1K（写入）/ 5K（读取）。2）Redis 单机 QPS ≈ 10 万。3）单机网络带宽 ≈ 1-10Gbps。4）磁盘顺序写 ≈ 200MB/s，随机 IOPS ≈ 100-10K（取决于 SSD/HDD）。5）内存访问 ≈ 100ns，SSD ≈ 0.1ms，HDD ≈ 10ms（数量级的差异）。非功能性需求的基准数据也很重要：BASE 64 编码和 Base62 编码的区别（6 字符 Base62 ≈ 56 亿种组合）。估算的目标不是精确到个位数，而是在 2-3 倍误差范围内（面试中展示拆解问题的思路比答案本身重要）。",
+    "hints": ["如何快速计算 64 位 vs 128 位的存储差异", "估算中 86400 这个常数在日常估算中的角色是什么"],
+    "tags": ["估算", "容量规划", "面试"]
   }
 ]

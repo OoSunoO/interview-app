@@ -225,5 +225,55 @@
       "为什么软标签比硬标签包含更多信息"
     ],
     "tags": ["模型压缩", "蒸馏"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GAN 生成对抗网络",
+    "content": "请解释 GAN（生成对抗网络）的核心原理和训练难点。",
+    "answer": "GAN 由生成器（Generator）和判别器（Discriminator）两个网络组成，通过对抗训练的方式共同提升。生成器试图生成逼真样本欺骗判别器，判别器试图区分真实样本和生成样本。\n\n解析：核心公式是 min_G max_D V(D,G) = E_{x~p_data}[log D(x)] + E_{z~p_z}[log(1-D(G(z)))]。训练过程：1）固定生成器，训练判别器区分真假。2）固定判别器，训练生成器生成更逼真的样本。3）交替进行直到纳什均衡。\n\n扩展延伸：训练难点：1）模式坍塌（Mode Collapse）——生成器只学会生成少数几种样本，失去多样性。解决方案：Mini-batch Discrimination、Unrolled GAN。2）训练不稳定——D 收敛太快或 G 梯度消失。解决方案：WGAN（Wasserstein 距离替代 JS 散度，用梯度裁剪保证 Lipschitz 约束）、LSGAN（最小二乘损失）、SNGAN（谱归一化）。3）评估困难——没有明确的指标衡量生成质量。常用指标：IS（Inception Score，衡量多样性和清晰度）、FID（Fréchet Inception Distance，更可靠，衡量真实分布和生成分布的距离）。4）GAN vs Diffusion：Diffusion 生成更稳定、质量更高（SOTA），但推理速度慢；GAN 生成快但训练不稳定。",
+    "hints": ["JS 散度在 GAN 训练中有什么缺陷导致梯度消失", "WGAN 的 Wasserstein 距离为什么能缓解训练不稳定"],
+    "tags": ["深度学习", "生成模型", "GAN"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Batch Normalization vs Layer Normalization",
+    "content": "请比较 Batch Normalization 和 Layer Normalization 的区别及各自适用场景。",
+    "answer": "BN 在 Batch 维度做归一化，LN 在特征维度做归一化。BN 依赖 Batch Size 且对序列长度敏感，LN 与 Batch Size 无关且适用于变长序列。\n\n解析：BN 计算每个特征通道在 batch 中的均值和方差，对小 batch 效果差（batch size < 16 时不稳定）。BN 在训练时维护全局移动平均，推理时使用固定统计量。BN 适合 CNN 等固定输入维度的网络。\n\nLN 对每个样本的所有特征计算均值和方差，不依赖 batch 维度，所以在 RNN/Transformer 中表现更好（同一 batch 内序列长度不同时 LN 仍然有效）。Transformer 中使用 LN 而不是 BN 的核心原因：位置编码 + 自适应序列长度。\n\n扩展延伸：其他归一化方法：1）Instance Normalization——对每个样本的每个通道独立归一化，风格迁移常用。2）Group Normalization——将通道分组归一化，batch size 极小时（如视频/3D 模型），LN 和 GN 的效果优于 BN。3）RMS Norm——简化版 LN（只归一化均方根，不减去均值），LLaMA 等现代 LLM 使用，计算更快。归一化的本质作用：解决内部协变量偏移（Internal Covariate Shift），让每层输入分布稳定，允许更大的学习率。",
+    "hints": ["Transformer 中为什么用 LayerNorm 而不是 BatchNorm", "BN 在训练和推理阶段的行为有什么不同"],
+    "tags": ["深度学习", "归一化", "BN", "LN"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "文本生成的解码策略",
+    "content": "请比较 LLM 文本生成中 Greedy Search、Beam Search 和 Sampling 的区别。",
+    "answer": "Greedy Search 每步选最高概率 token（最确定但缺乏多样性）；Beam Search 维护 K 条候选路径（适合翻译/摘要等确定性任务）；Sampling 从概率分布中随机采样（适合创意生成）。\n\n解析：1）Greedy Search——每步选择 argmax，简单高效但容易陷入重复；一旦某步选错无法纠正。2）Beam Search——维护 K（beam size）条最优路径，最终选概率积最大的路径。K 越大越可能找到全局最优但计算开销和重复率也增加。适合机器翻译、文本摘要等输出确定性较高的任务。3）Sampling——从概率分布随机采样，temperature 参数控制分布的平滑度：T → 0 趋近 Greedy，T → ∞ 趋近均匀分布，T = 1 保持原始分布。Top-K Sampling：只从概率最高的 K 个 token 中采样。Top-P（Nucleus）Sampling：累积概率达到 P 的最小集合中采样。\n\n扩展延伸：实际部署的组合策略：1）Chat 场景——Top-P = 0.9 + Temperature = 0.7 + 重复惩罚（repetition_penalty）。2）翻译/摘要——Beam Search + 长度惩罚（length_penalty），K=4 或 5。3）代码生成——Temperature = 0.2（较确定），或 Top-P = 0.95 保留一定多样性。4）创意写作——Temperature > 1.0 + Top-P 让输出更有创意但可能逻辑不佳。重复问题：通过 repetition_penalty（对已生成 token 的概率做衰减）或 frequency_penalty（对高频 token 降权）缓解。",
+    "hints": ["Beam Search 在对话生成中为什么不如在翻译中效果好", "Temperature 参数对概率分布的影响"],
+    "tags": ["LLM", "解码", "生成策略"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GPU vs TPU 硬件加速",
+    "content": "请比较 GPU 和 TPU 在深度学习训练和推理中的优劣势。",
+    "answer": "GPU 通用性强（CUDA 生态成熟），适用于各种模型和框架。TPU 专为 Google TensorFlow 设计（矩阵乘法加速器），在大规模 TPU 集群训练中性价比更高，但灵活性受限。\n\n解析：GPU 优势：1）CUDA 生态——PyTorch/TensorFlow/JAX 都深度支持。2）通用性——CNN/RNN/Transformer/GNN/扩散模型均可训练和推理。3）浮点精度——FP64/FP32/FP16/TF32/BF16/FP8 多种精度支持。4）显存——单卡可达 80GB（A100/H100）。\n\nTPU 优势：1）MXU（矩阵乘法单元）——专为大规模矩阵乘法优化，TPU v4 的算力达 275 TFLOPS（BF16）。2）互联带宽——TPU Pod 内通过高速互联（ICI，类似 NVLink）组成 2D 环面拓扑，2048 个 TPU 的超级计算机。3）BF16 原生支持——不需要 FP32 做中间计算。4）性价比——大规模训练时单 TFLOPS 成本低于 GPU。\n\n扩展延伸：选型建议：1）中小规模（1-8 卡）→ GPU（A100/H100），生态成熟。2）大规模分布式训练（256+ 卡）→ TPU Pod 或 GPU 集群（取决于预算和框架偏好）。3）推理部署 → GPU（T4/L4/A10G）更通用，TPU 推理需要 TensorFlow 或 JAX 模型转换。趋势：NVIDIA H100/B200 的 FP8 Transformer Engine + NVLink Switch 让 GPU 在大规模训练中的劣势缩小。关于训练加速的启示：硬件决定算力天花板，但算法优化（Flash Attention、ZeRO、量化训练）同样重要。",
+    "hints": ["TPU 的 MXU 和 GPU 的 Tensor Core 在矩阵乘法实现上的区别", "为什么 TPU 不适合做通用的科学计算"],
+    "tags": ["硬件", "GPU", "TPU", "训练"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "词嵌入（Word Embedding）方法",
+    "content": "请比较 Word2Vec、GloVe 和 FastText 三种词嵌入方法的原理和区别。",
+    "answer": "Word2Vec 基于上下文预测（局部窗口），GloVe 基于全局共现矩阵分解，FastText 引入子词信息解决 OOV 问题。\n\n解析：1）Word2Vec（Mikolov, 2013）——CBOW：根据上下文词预测目标词。Skip-gram：根据目标词预测上下文词。Skip-gram 对低频词效果更好但训练更慢。负采样（Negative Sampling）是加速训练的关键技巧——每次只更新少量负样本而非整个词表。2）GloVe（Pennington, 2014）——利用全局词共现矩阵，将词向量学习转化为矩阵分解（共现概率比的拟合，目标是让词向量的点积等于共现概率的对数）。优势：全局统计信息捕捉更好。3）FastText（Bojanowski, 2016）——将每个词表示为字符 n-gram 向量的和，未登录词（OOV）也能通过子词组合得到向量。对形态丰富的语言（如中文、德文）效果更好。\n\n扩展延伸：静态词嵌入 vs 上下文词嵌入：Word2Vec/GloVe/FastText 生成的是静态向量（同义词在不同上下文中不变），BERT/ELMo 等预训练语言模型生成的是上下文向量（根据上下文动态变化）。2018 年后 NLP 主流已转向预训练语言模型（BERT/GPT），但静态词嵌入在某些场景仍然有用——文本分类的特征提取、计算速度要求极高的场景、资源受限环境。",
+    "hints": ["Word2Vec 的负采样解决了什么问题", "静态词嵌入和上下文词嵌入的区别是什么"],
+    "tags": ["NLP", "词嵌入", "Word2Vec", "GloVe"]
   }
 ]
