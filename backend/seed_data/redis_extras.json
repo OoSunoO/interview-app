@@ -268,5 +268,55 @@
       "生产",
       "调优"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 6/7 多线程 I/O 模型",
+    "content": "Redis 6/7 引入了多线程 I/O，它优化了什么？Redis 的主线程和 I/O 线程各司什么职责？为什么 Redis 没有完全变成多线程？",
+    "answer": "答案：Redis 6 引入多线程处理网络 I/O（读写请求/响应数据），但命令执行仍然是单线程。多线程 I/O 解决了网络吞吐瓶颈——大量并发连接时单线程读取/写入 socket 的 CPU 开销过大。Redis 7 进一步优化了子线程效率和延迟稳定性。核心设计仍然是「多线程 I/O + 单线程命令执行」。\n\n解析：Redis 6 多线程 I/O 的工作方式：1）主线程负责 accept 新连接、分发读任务到 I/O 线程池。2）I/O 线程从 socket 中读取请求数据并解析。3）主线程等待所有 I/O 线程完成读后，单线程串行执行命令。4）执行完成后，主线程将响应数据分发给 I/O 线程写入 socket。I/O 线程数默认 3（读+写各 3），通过 io-threads 和 io-threads-do-reads 配置控制。\n\n扩展延伸：为什么 Redis 不改成全多线程？1）单线程模型是 Redis 高性能的核心基石——避免锁竞争、上下文切换和复杂的并发控制（Lua 脚本、事务、WATCH 的原子性都依赖单线程）。2）Redis 的瓶颈很少在 CPU——绝大多数场景下都是网络 I/O 和内存带宽受限。3）引入多线程执行命令会破坏现有数据结构的线程安全性，需要大量重构且收益不确定。Redis 6 的多线程 I/O 优化了「受限于网络带宽」而非「受限于 CPU」的场景——1Gbps+ 网络下，单线程处理网络 I/O 会成为瓶颈，多线程 I/O 显著提升吞吐。",
+    "hints": ["Redis 6 的多线程 I/O 为什么不解锁命令执行也变多线程", "io-threads-do-reads 配置对性能有什么影响"],
+    "tags": ["Redis", "多线程", "I/O", "性能"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RESP 协议",
+    "content": "Redis 序列化协议（RESP）是什么？RESP3（Redis 6+）相比 RESP2 有哪些改进？RESP 协议对 Redis 性能有什么影响？",
+    "answer": "答案：RESP（Redis Serialization Protocol）是 Redis 服务端和客户端之间通信的文本协议，将命令参数和结果编码为特定前缀的字符串。Redis 6 引入 RESP3 协议，新增了丰富的返回类型。\n\n解析：RESP 数据类型都用前缀标识：+ 简单字符串、- 错误、: 整数、$ 批量字符串（$5\\r\\nhello\\r\\n）、* 数组（*3\\r\\n...）。RESP 的设计原则是简单性和解析速度——前缀标识了类型和长度，解析器可以快速跳过不需要的数据。\n\nRESP2 vs RESP3：RESP2 只有 5 种类型（简单字符串、错误、整数、批量字符串、数组）。RESP3 新增加了 Map（有序映射）、Set（集合）、Bool（布尔值）、Double（浮点数）、Big Number（大数）、Null（空值）、Streamed types（流式类型）等 8 种新的数据类型。RESP3 的核心优势：客户端不再需要猜测服务端返回的数据是什么类型——Map 类型直接表示哈希结构，不需要解析为扁平数组。这大大简化和改进了客户端库的实现。\n\n扩展延伸：RESP 协议的性能考量：1）文本协议 vs 二进制协议——RESP 是文本协议，但效率并不低（没有 XML/JSON 的冗余）。大部分数据包很小（短 key 和整数），文本开销可忽略。2）Pipelining——RESP 天然支持管道传输（客户端不等待响应直接发送多个命令）。3）RESP3 支持服务器端推送（Push 类型），使客户端可以接收 Pub/Sub 消息、客户端断连通知等异步消息，无需轮询。4）RESP3 的流式类型支持从服务器获取大量数据（如一个大集合）时以流式传输，减少客户端内存压力。",
+    "hints": ["RESP 协议为什么选择文本形式而不是二进制", "RESP3 的 Push 类型对客户端实现有什么影响"],
+    "tags": ["Redis", "RESP", "协议", "RESP3"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 慢查询日志",
+    "content": "Redis 的慢查询日志（SLOWLOG）是如何工作的？如何通过慢查询日志定位性能问题？配置参数有哪些？",
+    "answer": "答案：Redis 的 SLOWLOG 记录执行时间超过指定阈值（slowlog-log-slower-than，单位微秒）的命令。日志保存在内存中，通过 SLOWLOG GET 查看。\n\n解析：配置参数：1）slowlog-log-slower-than——命令执行时间阈值，单位微秒（默认 10000，即 10ms）。设置为负值关闭慢查询日志，0 记录所有命令。2）slowlog-max-len——内存中保留的慢查询最大条数（默认 128）。超出时最早的记录被丢弃。与 MySQL 不同，Redis 的慢查询日志保存在内存（固定大小的队列），不会写文件，对性能影响极小。查看命令：SLOWLOG GET [count]——查看最近 N 条慢查询记录，每条包含：唯一 ID、时间戳、执行耗时（微秒）、命令及参数、客户端地址/端口。SLOWLOG LEN——查看当前慢查询数量。SLOWLOG RESET——清空慢查询日志。\n\n扩展延伸：通过慢查询定位问题的方法：1）慢查询日志显示执行时间长——首先检查命令的时间复杂度（O(N) 的 KEYS、SMEMBERS、HGETALL、LRANGE 可能在大集合上出问题）。2）排查 big key——慢查询中大量出现对大 key 的操作（DEL 大 key 也会阻塞）。3）排查慢查询对应的客户端——慢查询会记录客户端信息。4）注意 Redis 是单线程——一个慢查询会阻塞后续所有命令。如果观察到 QPS 下降，通常是有慢查询导致。优化建议：将 SLOWLOG 阈值设置为 1000-2000 微秒（1-2ms），这样可以看到对正常业务有实际影响的慢命令。避免使用 O(N) 命令，使用 SCAN 替代 KEYS、SSCAN 替代 SMEMBERS、HSCAN 替代 HGETALL。",
+    "hints": ["Redis 的慢查询日志为什么不写磁盘而是存在内存", "慢查询日志发现的大 key 怎么处理"],
+    "tags": ["Redis", "慢查询", "SLOWLOG", "性能"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 备份恢复策略",
+    "content": "Redis 的备份和恢复策略有哪些？RDB 和 AOF 的备份恢复场景各有什么不同？如何做异地容灾备份？",
+    "answer": "答案：Redis 的备份分为 RDB 备份（定时快照）和 AOF 备份（追加日志）。恢复时优先使用 AOF（数据更完整）。异地容灾通过主从复制、RDB 远程传输或云厂商跨地域复制实现。\n\n解析：RDB 备份——定期执行 BGSAVE 生成 .rdb 文件，Redis 4.0+ 可配置周期性自动触发（save 900 1 等）。备份方式：将 .rdb 文件 rsync/scp 到远程存储或云存储（S3/OSS）。RDB 适合全量备份和快速恢复，但可能丢失最后一次快照后的数据。AOF 备份——AOF 文件记录所有写操作，通过 rewrite（BGREWRITEAOF）控制文件大小。备份方式：定期复制 AOF 文件到远程存储。AOF 备份更安全（可设置 appendfsync everysec，最多丢 1 秒数据）。\n\n扩展延伸：恢复流程：1）将 RDB/AOF 文件放到 Redis 工作目录（dir 配置）。2）重启 Redis，自动加载 AOF 或 RDB（优先加载 AOF，如果没有 AOF 则加载 RDB）。3）验证数据完整性——用 redis-check-rdb 和 redis-check-aof 工具检查文件。异地容灾方案：1）主从复制跨机房——主节点在一个数据中心，从节点在其他数据中心。注意跨机房延迟。2）RDB 远程备份脚本——crontab 定期执行 BGSAVE，然后将 .rdb 用 rsync 同步到异地机器。3）云原生方案——AWS ElastiCache 跨区域复制（Global Datastore）、阿里云 Redis 跨地域复制。4）Sentinel/Cluster 的跨 AZ 部署——异常时切换到其他可用区。注意：AOF 也依赖 appendfsync 策略（always/everysec/no）。always 最安全但写入性能大幅下降（每次写入都 fsync）。生产建议：RDB + AOF 混合持久化 + AOF everysec + 定时异地 RDB 备份。",
+    "hints": ["恢复时 Redis 为什么优先加载 AOF 而不是 RDB", "Redis 异地容灾跨机房同步延迟问题如何解决"],
+    "tags": ["Redis", "备份", "恢复", "容灾"]
+  },
+  {
+    "category": "database",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "redis-benchmark 性能压测",
+    "content": "redis-benchmark 是做什么的？如何使用它测试 Redis 性能？测试结果中的关键指标怎么解读？",
+    "answer": "答案：redis-benchmark 是 Redis 自带的性能基准测试工具，模拟指定数量的并发客户端发送命令，统计每秒完成的请求数（TPS/QPS）和响应延迟。\n\n解析：基本用法：redis-benchmark -h 127.0.0.1 -p 6379 -c 50 -n 10000。参数说明：-c 并发客户端数（默认 50）、-n 总请求数（默认 100000）、-d 数据大小（字节，默认 3）、-t 指定测试的命令（如 -t set,get,lpush）、-P 启用 Pipeline（管道批处理数量）。默认测试：依次测试 PING、SET、GET、INCR、LPUSH、RPUSH、LPOP、RPOP、SADD、SPOP、LPUSH（列表）、MSET（批量）等命令。\n\n扩展延伸：解读结果：每条命令输出类似 SET: 93545.23 requests per second——表示 1 秒内完成了约 9.3 万次 SET 操作。影响测试结果的因素：1）网络延迟——localhost 测试排除网络因素。2）CPU 频率和内存带宽——Redis 是 CPU 和内存敏感型。3）数据大小（-d 参数）——数据越大带宽消耗越大。4）Pipeline 批处理——Pipelining 可以大幅提升 TPS（减少 RTT）。高级测试技巧：1）redis-benchmark -c 20 -n 100000 -P 10——测试 Pipeline 10 批量时的性能。2）redis-benchmark -t set,get -q——仅输出简洁结果（requests per second）。3）对比不同参数：分别测试 -c 10/50/200/1000 观察并发与吞吐的变化曲线。4）注意——redis-benchmark 不模拟真实业务场景（真实场景各命令比例不同，数据大小分布不同）。真实压测建议用自己编写的压测脚本（如 wrk + Lua 脚本、go 压测工具）。",
+    "hints": ["redis-benchmark 和真实流量压测的区别是什么", "Pipeline 测试中 -P 参数对 TPS 的典型影响"],
+    "tags": ["Redis", "性能", "压测", "benchmark"]
   }
 ]

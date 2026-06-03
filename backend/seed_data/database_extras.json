@@ -172,5 +172,55 @@
     "answer": "答案：数据库连接池复用 TCP 连接，避免每次数据库操作都经历 TCP 建连、MySQL 认证、TCP 断连的开销。\n\n解析：建连数据库通常需要 1-3ms（局域网）+ MySQL 认证，高频场景下不可忽略。连接池的关键参数：最小空闲连接数（保活，应对突发流量）、最大连接数（防止耗尽数据库资源）、连接超时（等待连接的最大时间）、空闲回收时间（超过此时间的空闲连接被关闭）。\n\n扩展延伸：HikariCP（Spring Boot 默认）推荐配置：maximumPoolSize = (core_count * 2) + effective_spindle_count。连接池不是越大越好——数据库侧每个连接消耗线程和内存（PostgreSQL 约 5MB/连接），过大的连接池反而导致上下文切换加剧。",
     "hints": ["连接池大小为什么不是越大越好", "如何监控连接池的健康状态"],
     "tags": ["数据库", "连接池", "性能"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 死锁分析与排查",
+    "content": "MySQL InnoDB 中死锁（Deadlock）是如何产生的？如何查看和分析死锁？有哪些预防措施？",
+    "answer": "答案：死锁是两个或多个事务相互等待对方释放锁导致的循环等待。InnoDB 通过死锁检测（wait-for graph）自动发现并回滚代价较小的事务（持有锁较少或回滚代价低的事务）。\n\n解析：死锁产生条件（与操作系统死锁条件一致）：互斥、持有并等待、不可剥夺、循环等待。MySQL 中典型的死锁场景：事务 A 锁了行 1 想锁行 2，事务 B 锁了行 2 想锁行 1。或者间隙锁导致的死锁——两个事务的 INSERT 操作在相邻间隙上相互阻塞。查看最近死锁：SHOW ENGINE INNODB STATUS；查看输出的 LATEST DETECTED DEADLOCK 部分，包含涉及的事务和 SQL、持有的锁、等待的锁。MySQL 5.6+ 启用 innodb_print_all_deadlocks 可将所有死锁记录到错误日志。\n\n扩展延伸：频繁死锁时应该分析的几个方向：1）SQL 执行顺序——确保多个事务访问多个表的顺序一致（如都按 A→B 的顺序加锁）。2）索引——检查 SQL 是否使用了正确的索引（全表扫描会锁大量行，增加死锁概率）。3）降低隔离级别——从 RR 降到 RC（减少间隙锁）。4）缩短事务——事务保持时间越短，死锁概率越低。5）重试机制——在应用层捕获死锁异常（MySQL 错误码 1213）并重试。注意：死锁不是 bug——它是事务并发下的正常现象。合理的策略是检测 + 重试，而非消除所有死锁可能。",
+    "hints": ["SHOW ENGINE INNODB STATUS 中哪个部分显示死锁信息", "为什么降低隔离级别可以减少死锁"],
+    "tags": ["MySQL", "死锁", "事务", "InnoDB"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "乐观锁与悲观锁",
+    "content": "乐观锁和悲观锁在数据库中的应用场景是什么？各自如何实现？什么场景下选择哪一种？",
+    "answer": "答案：悲观锁假设并发冲突很频繁，每次操作数据前都加锁（SELECT … FOR UPDATE）。乐观锁假设冲突很少发生，只在提交时检查数据是否被修改过（通过版本号或时间戳）。\n\n解析：悲观锁——通过数据库的锁机制（行锁、表锁）保证并发安全。适用场景：写冲突频繁、数据一致性要求极高的场景（如库存扣减、金融转账）。缺点：锁等待降低并发度，可能死锁。乐观锁——不锁数据库，通过应用层控制。常见实现方式：1）版本号（version）——读取时获取 version，更新时 SET version = version + 1 WHERE version = old_version。如果 affected_rows = 0 说明其他人已经修改过，重试。2）CAS（Check-And-Set）——WHERE status = old_status 或者 WHERE stock >= required 等条件判断。适用场景：读多写少、并发冲突概率低的场景（如文章更新、用户资料修改）。缺点：冲突频繁时重试开销大。\n\n扩展延伸：悲观锁的 select … for update 注意事项：1）必须在事务中执行。2）只在 InnoDB 的行锁级别生效（无索引会升级为表锁）。3）需要配合索引使用。乐观锁在分布式系统中的变体：1）Redis 的 WATCH 命令（乐观锁 CAS）。2）ETCD 的 Revision 机制。3）ZooKeeper 的版本号。选型总结：高并发写入、冲突频繁 → 悲观锁（或分布式锁）；低冲突概率、读多写少 → 乐观锁；一致性 > 性能 → 悲观锁；性能 > 强一致 → 乐观锁。",
+    "hints": ["SELECT … FOR UPDATE 在索引失效时可能变成表锁", "乐观锁 version 和 CAS 两种实现方式哪个更好"],
+    "tags": ["数据库", "乐观锁", "悲观锁", "并发"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "InnoDB 行格式（Row Format）",
+    "content": "MySQL InnoDB 支持哪几种行格式？COMPACT、DYNAMIC、COMPRESSED 之间有什么区别？溢出页（Overflow Page）是如何工作的？",
+    "answer": "答案：InnoDB 行格式有四种：REDUNDANT（旧格式，基本淘汰）、COMPACT（MySQL 5.0 引入）、DYNAMIC（MySQL 5.7 默认）、COMPRESSED（在 DYNAMIC 基础上支持页压缩）。DYNAMIC 和 COMPRESSED 会将长字段（TEXT/BLOB）存储在溢出页，行内只保留 20 字节指针。\n\n解析：COMPACT 格式——行数据包含变长字段长度列表、NULL 标志位、记录头信息、RowID（无主键时）、事务 ID、回滚指针、各列数据。当一行数据超过一个页（16KB）时，部分数据存储到溢出页（off-page storage），行内用 768 字节前缀 + 20 字节指针。缺点：大字段的 768 字节前缀占用了行内空间，可能导致行总长度过大。DYNAMIC 格式（MySQL 5.7 默认）——优化了大字段的存储：不再存储 768 字节前缀，行内只保留 20 字节溢出页指针。完全的行外存储减少了行大小，提高 B+ Tree 的扇出（一页能存更多行），改善范围扫描性能。\n\n扩展延伸：COMPRESSED 格式——同 DYNAMIC 的溢出机制，但页级别使用 zlib 压缩。优点：减少磁盘 I/O 和内存占用（压缩页在 buffer pool 中以压缩形式存在）。缺点：压缩/解压消耗 CPU。适用场景：存储日志、文本等可压缩比高的数据。注意：COMPRESSED 格式的性能取决于 CPU 和 I/O 的平衡——IO 密集且数据压缩比高时收益大；CPU 密集时可能得不偿失。查看行格式：SHOW TABLE STATUS LIKE 'table_name'; 或 INFORMATION_SCHEMA.TABLES。",
+    "hints": ["为什么 DYNAMIC 格式比 COMPACT 更适合大字段表", "COMPRESSED 行格式在什么场景下收益最大"],
+    "tags": ["MySQL", "InnoDB", "行格式", "存储"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "InnoDB 自适应哈希索引（AHI）",
+    "content": "什么是 InnoDB 的自适应哈希索引（Adaptive Hash Index）？它是如何工作的？什么情况下 AHI 可能成为瓶颈？",
+    "answer": "答案：自适应哈希索引（AHI）是 InnoDB 在内存中自动构建的哈希索引，加速 buffer pool 中频繁访问的索引页的等值查询（如 WHERE id = ?）。\n\n解析：AHI 的构建条件——InnoDB 监控对 B+ Tree 索引页的访问模式，如果某个索引页频繁通过等值条件访问（而不是范围扫描），且满足一定的访问频率阈值，InnoDB 会为该页构建 AHI 哈希索引。AHI 的数据结构是一个散列表，key 为（space_id + page_no），value 为哈希值。查询时先根据 space_id + page_no 查 AHI 找到页在 buffer pool 的位置，直接定位而无需遍历 B+ Tree 的多个层级。特点是完全自动、无需人工配置、内存分配来源于 buffer pool（通过 innodb_adaptive_hash_index_parts 控制分区数）。\n\n扩展延伸：AHI 可能成为瓶颈的场景：1）高并发写入时——AHI 需要维护自身的哈希表（split/merge），加锁操作（btr_search_latch）成为全局竞争热点（SX-latch contention）。2）MySQL 5.7 及之前版本中 AHI 使用单一的全局锁（search_latch），高并发 INSERT 场景下出现明显的等待（btr_search_latch 竞争）。3）MySQL 8.0 通过将 AHI 分区（innodb_adaptive_hash_index_parts，默认 8 分区）缓解了这个问题。AHI 支持开关控制：innodb_adaptive_hash_index=ON/OFF。关闭建议：如果 SHOW ENGINE INNODB STATUS 中 SEMAPHORES 部分显示大量 btr_search_latch 等待。AHI 只在等值查询上有效，对范围查询（>、<、BETWEEN）无帮助（B+ Tree 的叶子链表更优）。",
+    "hints": ["btr_search_latch 竞争在什么场景下会出现", "AHI 为什么对范围查询没有加速效果"],
+    "tags": ["MySQL", "InnoDB", "自适应哈希索引", "性能"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "索引覆盖（Covering Index）与回表",
+    "content": "什么是索引覆盖（Covering Index）？什么是回表查询（Bookmark Lookup）？为什么要尽量使用索引覆盖？如何通过 EXPLAIN 判断？",
+    "answer": "答案：索引覆盖指查询所需的所有列都在索引树中（无需回表访问主键数据页）。回表指通过二级索引找到主键值后，再到聚簇索引中读取完整行数据。覆盖索引避免回表，减少磁盘 I/O。\n\n解析：InnoDB 的聚簇索引（Clustered Index）——表数据按主键顺序存储在 B+ Tree 的叶子节点（主键=数据行）。二级索引（Secondary Index）——叶子节点存储索引列的值 + 主键值（不是数据行本身）。所以二级索引找到记录后还需通过主键回表（一次额外 B+ Tree 搜索）读取完整数据。覆盖索引：如果 SELECT 的列都在二级索引中（如 SELECT id, name FROM user WHERE name = '...'，而 (name, id) 是联合索引），则二级索引的叶子节点已包含所有需要的数据，无需回表。\n\n扩展延伸：EXPLAIN 中 Extra 字段出现 Using index 表示使用了覆盖索引（无需回表）。出现 Using index condition 表示索引下推（虽然用了索引但需要回表）。没有 Using index 说明走了二级索引 + 回表。覆盖索引的设计策略：将高频查询的字段加入到已有索引的最右端（不影响最左前缀匹配），或者为高频查询专门设计索引。如：某个查询频繁根据 status 查 id 和 create_time，可以建索引 (status, create_time, id) 实现覆盖。注意：不要过度设计覆盖索引——索引也是有维护成本的（插入/更新需更新所有索引）。覆盖索引的主要收益在于减少磁盘 I/O 和减少对聚簇索引的访问压力。",
+    "hints": ["EXPLAIN 中 Extra 字段的 Using index 和 Using index condition 的区别", "覆盖索引和联合索引的关系是什么"],
+    "tags": ["MySQL", "索引", "覆盖索引", "回表", "SQL优化"]
   }
 ]
