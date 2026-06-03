@@ -1,0 +1,133 @@
+[
+  {
+    "category": "kubernetes",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Pod 的生命周期状态",
+    "content": "请描述 Kubernetes Pod 的生命周期状态及其含义。",
+    "answer": "Pod 有五种状态：Pending（已被调度但容器未全部启动）、Running（所有容器在运行）、Succeeded（所有容器正常退出）、Failed（至少一个容器异常退出）、Unknown（节点失联，状态不可知）。另外 CrashLoopBackOff 表示容器反复崩溃重启。Init 容器先于业务容器执行，全部成功后才会进入 Running。",
+    "hints": [
+      "CrashLoopBackOff 是 Pod 状态吗？是一个状态条件",
+      "Init 容器的执行顺序和业务容器不同"
+    ],
+    "tags": ["Kubernetes", "Pod"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Deployment 更新策略",
+    "content": "请比较 Kubernetes Deployment 的 RollingUpdate 和 Recreate 两种更新策略。",
+    "answer": "Recreate：先删掉所有旧 Pod 再创建新 Pod，更新期间服务不可用。RollingUpdate：逐步替换旧 Pod，通过 maxSurge（最多超出期望副本数）和 maxUnavailable（最多不可用副本数）控制更新速率，保证服务持续可用。推荐用 RollingUpdate 配合 Readiness Probe 确保流量只切换到就绪的新 Pod。",
+    "hints": [
+      "RollingUpdate 的回滚和暂停操作",
+      "maxSurge 和 maxUnavailable 的合理取值"
+    ],
+    "tags": ["Kubernetes", "Deployment"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Service 类型对比",
+    "content": "请介绍 Kubernetes Service 的四种类型及其适用场景。",
+    "answer": "ClusterIP（默认，集群内部可达，服务间调用首选）、NodePort（每个节点开端口，外部可通过 node_ip:port 访问，适合调试和简单暴露）、LoadBalancer（云厂商 LB 自动分配公网 IP，生产外部入口）、ExternalName（返回 CNAME 记录，将服务映射到外部 DNS 名称）。NodePort 是 LoadBalancer 的基础——LB 把流量转发到节点 NodePort。",
+    "hints": [
+      "ClusterIP 只能在集群内部访问",
+      "NodePort 的端口范围是 30000-32767"
+    ],
+    "tags": ["Kubernetes", "Service", "网络"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "ConfigMap 与 Secret",
+    "content": "请说明 ConfigMap 和 Secret 的区别及使用方式。",
+    "answer": "两者都用于将配置和敏感信息与 Pod 解耦。ConfigMap 存储非敏感配置（明文），Secret 存储敏感数据（Base64 编码，支持加密存储）。使用方式：环境变量注入、Volume 挂载。Secret 更安全——Volume 方式挂载到 tmpfs（内存），不会写入磁盘；还可配合 External Secrets Operator 集成外部密钥管理服务。",
+    "hints": [
+      "ConfigMap 和 Secret 作为 Volume 挂载时更新后 Pod 会同步更新吗",
+      "Secret 的 etcd 加密需要额外配置"
+    ],
+    "tags": ["Kubernetes", "配置"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Ingress 的作用",
+    "content": "请解释 K8s Ingress 的作用和常用 Ingress Controller。",
+    "answer": "Ingress 是 K8s 的七层（HTTP/HTTPS）路由抽象，提供基于域名和路径的流量转发、TLS 终止、URL 重写等功能。Ingress 只是资源定义，真正干活的是 Ingress Controller。常用 Controller：Nginx Ingress（最广泛）、Traefik（自动服务发现、支持 TCP/UDP）、AWS ALB Ingress Controller（云原生）、Kong（API 网关能力）。",
+    "hints": [
+      "Ingress 和 Service 的职责划分",
+      "Ingress 的 Annotation 是扩展功能的主要方式"
+    ],
+    "tags": ["Kubernetes", "Ingress", "网络"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "PersistentVolume 与 PersistentVolumeClaim",
+    "content": "请解释 PV 和 PVC 的概念及 StorageClass 的作用。",
+    "answer": "PV（PersistentVolume）是集群管理员预置的存储资源；PVC（PersistentVolumeClaim）是用户对存储的请求（大小、访问模式）。PVC 绑定到满足条件的 PV 上供 Pod 使用。StorageClass 实现动态供给——用户创建 PVC 时，StorageClass 自动创建 PV，无需管理员手动预置。访问模式：ReadWriteOnce（单节点读写）、ReadOnlyMany（多节点只读）、ReadWriteMany（多节点读写）。",
+    "hints": [
+      "PV 的回收策略：Retain、Delete、Recycle（已废弃）",
+      "PVC 绑定 PV 的匹配逻辑"
+    ],
+    "tags": ["Kubernetes", "存储", "PV", "PVC"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Namespace 与资源隔离",
+    "content": "请介绍 Kubernetes Namespace 的作用和 Resource Quota 的配置。",
+    "answer": "Namespace 将集群划分为虚拟子集群，用于多租户隔离和环境隔离（如 dev/staging/prod 各一个 Namespace）。ResourceQuota 限制 Namespace 的总资源上限（CPU 总和、内存总和、PVC 数量、Service 数量等）。LimitRange 设置单个 Pod/Container 的默认资源请求和限制。注意：NetworkPolicy 需要 CNI 插件（如 Calico）支持才能实现网络隔离。",
+    "hints": [
+      "ResourceQuota 限制的是总量，LimitRange 限制的是单 Pod",
+      "默认创建的四个 Namespace：default、kube-system、kube-public、kube-node-lease"
+    ],
+    "tags": ["Kubernetes", "Namespace", "多租户"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Horizontal Pod Autoscaler",
+    "content": "请解释 HPA（水平 Pod 自动伸缩）的工作原理。",
+    "author": "Peter Sun",
+    "answer": "HPA 根据 Pod 的 CPU/内存使用率或自定义指标（如 QPS）自动调整 Deployment 的副本数。原理：HPA 控制器定期（默认 15s）从 Metrics Server 获取 Pod 指标，计算期望副本数 = 当前副本数 × (当前指标值 / 目标指标值)。配合 Cluster Autoscaler 可实现节点级自动扩缩容——Pod 因资源不足 Pending 时自动添加节点。",
+    "hints": [
+      "Metrics Server 和 Prometheus Adapter 的区别",
+      "HPA 的冷却周期（cooldown delay）可以防止频繁伸缩"
+    ],
+    "tags": ["Kubernetes", "HPA", "自动伸缩"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "探针（Probe）类型",
+    "content": "请介绍 Kubernetes 的三种探针及其用途。",
+    "answer": "Liveness Probe（存活探针）：检测容器是否存活，失败时 kubelet 重启容器。Readiness Probe（就绪探针）：检测容器是否准备好接收流量，失败时 Service 移除该 Pod 的端点。Startup Probe（启动探针）：检测容器是否已启动完成，用于启动慢的应用（如 Java 应用需要预热）。三种探针都支持 HTTP GET、TCP Socket、Exec 命令三种检测方式。 Startup Probe 成功后 Liveness 和 Readiness 探针才开始工作。",
+    "hints": [
+      "Liveness 和 Readiness 的失败后果不同",
+      "Startup Probe 是 K8s 1.18+ 引入的"
+    ],
+    "tags": ["Kubernetes", "探针", "健康检查"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RBAC 权限模型",
+    "content": "请解释 Kubernetes RBAC 的核心概念和最小权限原则。",
+    "answer": "RBAC 四个核心概念：Rule（允许的操作规则，如 get pods）、Role/RoleCluster（角色，在 Namespace 或集群级别定义一组规则）、RoleBinding/ClusterRoleBinding（角色绑定，将角色关联到用户/服务账号 ServiceAccount）。最小权限原则：只授予完成任务所需的最小权限。典型实践：为每个应用创建独立 ServiceAccount，配合使用 RBAC 限制其 API 访问范围。避免使用 cluster-admin。",
+    "hints": [
+      "Role 和 ClusterRole 的区别是作用域不同",
+      "ServiceAccount 是 Pod 的身份，不是用户的身份"
+    ],
+    "tags": ["Kubernetes", "RBAC", "安全"]
+  }
+]

@@ -319,5 +319,100 @@
       "Java 8",
       "Stream"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "multiple_choice",
+    "title": "equals() 与 ==",
+    "content": "以下关于 equals() 和 == 的描述，哪些是正确的？",
+    "answer": "答案：B)、C)、D)。解析：== 比较基本类型时比较值，比较引用类型时比较的是内存地址（引用是否指向同一对象）。equals() 默认行为同 ==（Object 的实现），但很多类重写了它：String.equals() 比较内容、Integer.equals() 比较值、List.equals() 比较元素和顺序。重写 equals() 必须同时重写 hashCode()——保证相等的对象哈希值相同（否则 HashMap 等集合可能出错）。",
+    "options": [
+      "A) == 和 equals() 完全相同，只是语法不同",
+      "B) == 比较引用类型时比较的是内存地址",
+      "C) String.equals() 比较的是字符串内容",
+      "D) 重写 equals() 必须同时重写 hashCode()"
+    ],
+    "hints": [
+      "Object 类的 equals() 默认就是 ==",
+      "hashCode 契约——相等的对象哈希值必须相同"
+    ],
+    "tags": ["基础", "equals", "=="]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "try-catch-finally 执行顺序",
+    "content": "执行以下代码会输出什么？\n```java\ntry {\n  return 1;\n} catch (Exception e) {\n  return 2;\n} finally {\n  return 3;\n}\n```",
+    "answer": "答案：A)。解析：finally 块中的 return 会覆盖 try 块中的 return，最终返回 3。即使 try 块中执行了 return，finally 块也会在执行 return 之前执行。如果 finally 也包含 return，则 finally 的返回值会替代 try 块的返回值。这是一个经典陷阱——finally 中的 return 会导致异常丢失（try 中的异常被 finally 的 return 吞掉）。",
+    "options": [
+      "A) 3",
+      "B) 1",
+      "C) 2",
+      "D) 编译错误"
+    ],
+    "hints": [
+      "finally 块永远会执行",
+      "finally 中的 return 覆盖 try 中的 return"
+    ],
+    "tags": ["基础", "异常", "陷阱"]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "multiple_choice",
+    "title": "List / Set / Map 的区别",
+    "content": "以下关于 Java 集合框架中 List、Set、Map 的描述，哪些是正确的？",
+    "answer": "答案：B)、C)、D)。解析：List 是有序可重复的集合（ArrayList、LinkedList、Vector）；Set 是无序不可重复的集合（HashSet、TreeSet、LinkedHashSet），判断重复依赖 equals() 和 hashCode()；Map 是键值对集合，键不可重复。Set 不继承 Collection 是错的——Set 继承 Collection，Map 不继承 Collection。List 和 Set 继承 Collection 接口，Map 是独立的接口体系。",
+    "options": [
+      "A) Set 不继承 Collection 接口",
+      "B) List 是有序且允许重复的集合",
+      "C) Map 的 key 不可重复，value 可以重复",
+      "D) HashSet 判断元素重复依赖 equals() 和 hashCode()"
+    ],
+    "hints": [
+      "Map 和 Collection 是同一层次的两个不同接口体系",
+      "TreeSet 判断重复依赖 Comparable/Comparator"
+    ],
+    "tags": ["集合", "基础"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "创建线程的方式",
+    "content": "以下哪些是 Java 中创建线程或提交异步任务的方式？",
+    "answer": "答案：A)、B)、D)。解析：创建线程有三种方式：继承 Thread 重写 run()、实现 Runnable 接口传给 Thread、实现 Callable 接口（有返回值、可抛异常）配合 FutureTask 或线程池。ThreadPoolExecutor.submit(Callable) 使用 Callable 接口。Thread.start() 是启动线程的正确方式，直接调用 run() 只是在当前线程执行普通方法，不会创建新线程。",
+    "options": [
+      "A) 继承 Thread 类重写 run() 方法",
+      "B) 实现 Runnable 接口传入 Thread",
+      "C) 直接调用 Thread 对象的 run() 方法",
+      "D) 实现 Callable 接口配合 ExecutorService"
+    ],
+    "hints": [
+      "Callable 和 Runnable 的主要区别",
+      "start() 和 run() 的区别是什么"
+    ],
+    "tags": ["并发", "线程"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Optional 的正确使用",
+    "content": "以下关于 Java Optional 的使用建议，哪些是正确的？",
+    "answer": "答案：A)、B)、C)。解析：Optional 是用来表示值可能为空的容器，核心是提供函数式处理空值的方式，避免 NPE。推荐用法：orElse() 提供默认值、orElseGet() 延迟求值（Supplier）、ifPresent() 判空后处理、orElseThrow() 明确抛出异常。不推荐用法：get() 前用 isPresent() 检查（等于换了个方式写 if null）、将 Optional 作为方法参数（增加调用方的负担只能传 null 或 Optional.of）、将 Optional 用于序列化/持久化字段。",
+    "options": [
+      "A) 使用 orElse() 提供默认值",
+      "B) 使用 orElseThrow() 明确抛出异常",
+      "C) 使用 map() 和 flatMap() 链式操作",
+      "D) 将 Optional 作为实体类字段"
+    ],
+    "hints": [
+      "Optional 的设计初衷是返回值，不是字段类型",
+      "orElse 和 orElseGet 有什么区别"
+    ],
+    "tags": ["Java 8", "Optional"]
   }
 ]
