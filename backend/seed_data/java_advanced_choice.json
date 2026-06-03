@@ -419,5 +419,110 @@
       "Java 8",
       "接口"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "JVM 参数类型的区分",
+    "content": "关于 JVM 参数类型的说法，以下正确的是？",
+    "answer": "答案：C) -X 参数并非标准参数，可能在不同 JDK 版本中变化。解析：JVM 参数分三类：标准参数（-D、-verbose 等，所有 JVM 实现都支持），-X 非标准参数（如 -Xmx、-Xms，功能稳定但不保证在所有 JVM 实现中支持），-XX 非稳定参数（如 -XX:+UseG1GC，可能在不同版本间变更或移除）。",
+    "options": [
+      "A) -X 参数是标准参数，所有 JVM 实现都必须支持",
+      "B) -XX 参数在所有 JDK 版本中完全一致",
+      "C) -X 参数并非标准参数，可能在不同 JDK 版本中变化",
+      "D) 标准参数以 -XX: 开头"
+    ],
+    "hints": [
+      "JVM 参数有三类：标准参数、-X 扩展参数、-XX 高级参数"
+    ],
+    "tags": [
+      "JVM",
+      "参数调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "G1 垃圾回收器的工作方式",
+    "content": "关于 G1（Garbage First）垃圾回收器的特性，以下说法正确的是？",
+    "answer": "答案：B) G1 将堆划分为多个 Region，优先回收垃圾最多的 Region。解析：G1 将堆划分为大小相等的 Region（约 1-32MB），通过维护每个 Region 的垃圾比例优先级列表，优先回收垃圾最多的 Region，从而在有限停顿时间内获得最大收益。G1 是 JDK 9 开始的默认 GC，目标是替代 CMS。",
+    "options": [
+      "A) G1 是串行垃圾回收器，只能单线程工作",
+      "B) G1 将堆划分为多个 Region，优先回收垃圾最多的 Region",
+      "C) G1 回收时会完全停止所有应用线程，无法控制停顿时间",
+      "D) G1 只能用于年轻代回收，老年代需要配合 CMS"
+    ],
+    "hints": [
+      "G1 的设计目标是可预测的停顿时间和合理的吞吐量"
+    ],
+    "tags": [
+      "JVM",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ThreadLocal 的内存泄漏风险",
+    "content": "关于 ThreadLocal 可能导致内存泄漏的原因，以下说法正确的是？",
+    "answer": "答案：D) ThreadLocalMap 的 key 是弱引用，value 是强引用，线程长时间存活时 value 可能无法回收。解析：ThreadLocalMap 的 Entry 继承 WeakReference，key（ThreadLocal 实例）是弱引用，value 是强引用。当 ThreadLocal 外部强引用被置 null 后，key 会被 GC 回收，但 value 仍然被 Entry 强引用，如果线程长期存活（如线程池中的线程），value 永远不会被回收，导致内存泄漏。",
+    "options": [
+      "A) ThreadLocal 内部使用强引用，导致 ThreadLocal 对象永远无法被回收",
+      "B) 内存泄漏是因为 ThreadLocal 没有实现 Serializable 接口",
+      "C) 每次调用 ThreadLocal.get() 都会创建新对象，导致堆内存溢出",
+      "D) ThreadLocalMap 的 key 是弱引用，value 是强引用，线程长时间存活时 value 可能无法回收"
+    ],
+    "hints": [
+      "ThreadLocalMap 中的 Entry 如何引用 key 和 value？"
+    ],
+    "tags": [
+      "ThreadLocal",
+      "内存管理"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ForkJoinPool 的工作窃取算法",
+    "content": "关于 ForkJoinPool 的工作窃取（Work-Stealing）算法，以下说法正确的是？",
+    "answer": "答案：A) 每个工作线程维护一个双端队列，空闲线程从其他线程队列尾部窃取任务。解析：ForkJoinPool 中每个工作线程都有自己的双端队列（Deque），线程正常工作时从队头取任务执行。当线程空闲时，会从其他线程的队列尾部「窃取」任务执行。窃取的是尾部任务，减少了与队列所有者（操作队头）的竞争，从而高效平衡负载。",
+    "options": [
+      "A) 每个工作线程维护一个双端队列，空闲线程从其他线程队列尾部窃取任务",
+      "B) 所有任务集中在一个全局队列中，空闲线程直接从全局队列取任务",
+      "C) 工作线程只处理自己提交的任务，不做跨线程的任务窃取",
+      "D) 空闲线程从其他线程队列的头部窃取任务，与队列所有者竞争同一端"
+    ],
+    "hints": [
+      "工作窃取算法如何减少线程间的竞争？"
+    ],
+    "tags": [
+      "并发",
+      "ForkJoinPool"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "CompletableFuture 的异步方法",
+    "content": "关于 CompletableFuture 中 thenApply 和 thenApplyAsync 的区别，以下说法正确的是？",
+    "answer": "答案：B) thenApply 默认在上一阶段线程中同步执行，thenApplyAsync 默认在 ForkJoinPool.commonPool() 中异步执行。解析：thenApply() 会在上一阶段 CompletionStage 执行的线程中同步执行（如果上一阶段已完成，则在当前线程执行），不会切换线程。thenApplyAsync() 无论上一阶段状态如何，都会提交到 ForkJoinPool.commonPool() 中异步执行。类似的区别也存在于 thenAccept/thenAcceptAsync、thenRun/thenRunAsync 等系列方法中。",
+    "options": [
+      "A) thenApply 和 thenApplyAsync 的行为完全相同，只是命名不同",
+      "B) thenApply 默认在上一阶段线程中同步执行，thenApplyAsync 默认在 ForkJoinPool.commonPool() 中异步执行",
+      "C) thenApply 可以处理异常，thenApplyAsync 不能",
+      "D) thenApplyAsync 只能用在 thenApply 之后"
+    ],
+    "hints": [
+      "Async 结尾的方法和不带 Async 的方法在执行线程上有何不同？"
+    ],
+    "tags": [
+      "并发",
+      "CompletableFuture"
+    ]
   }
 ]

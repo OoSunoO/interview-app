@@ -420,5 +420,110 @@
       "集合",
       "排序"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "LinkedHashMap 的迭代顺序",
+    "content": "关于 LinkedHashMap 的迭代顺序，以下说法正确的是？",
+    "answer": "答案：D) 默认按插入顺序迭代，也可以构造为按访问顺序迭代。解析：LinkedHashMap 继承 HashMap，在 Entry 中额外维护了双向链表记录顺序。默认 accessOrder=false，按插入顺序迭代；可以通过构造函数设置 accessOrder=true 启用访问顺序，此时每次 get 或 put 已存在的 key 会将对应 Entry 移到链表尾部，适用于实现 LRU 缓存。",
+    "options": [
+      "A) LinkedHashMap 的迭代顺序是无序的，和 HashMap 完全一致",
+      "B) LinkedHashMap 只能按插入顺序迭代，不能改变",
+      "C) LinkedHashMap 默认按 key 的自然排序迭代",
+      "D) 默认按插入顺序迭代，也可以构造为按访问顺序迭代"
+    ],
+    "hints": [
+      "LinkedHashMap 如何实现 LRU 缓存？"
+    ],
+    "tags": [
+      "集合",
+      "LinkedHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "CopyOnWriteArrayList 的迭代器特性",
+    "content": "关于 CopyOnWriteArrayList 的迭代器，以下说法正确的是？",
+    "answer": "答案：A) 迭代器基于创建时的数组快照，迭代过程中不会抛出 ConcurrentModificationException。解析：CopyOnWriteArrayList 的迭代器在创建时保存当前底层数组的快照引用，之后在此快照上遍历。在迭代期间对 List 的修改会创建新数组，不影响已有迭代器的遍历，因此支持 fail-safe 机制，不会抛出 ConcurrentModificationException，但也不保证能读到迭代器创建之后的修改。",
+    "options": [
+      "A) 迭代器基于创建时的数组快照，迭代过程中不会抛出 ConcurrentModificationException",
+      "B) 迭代器会实时反映迭代过程中的所有修改",
+      "C) CopyOnWriteArrayList 不支持迭代器遍历",
+      "D) 迭代过程中如果 List 被修改，迭代器会立即抛出 ConcurrentModificationException"
+    ],
+    "hints": [
+      "CopyOnWriteArrayList 的「快照」迭代器如何保证线程安全？"
+    ],
+    "tags": [
+      "集合",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "PriorityQueue 与 ConcurrentLinkedQueue",
+    "content": "关于 PriorityQueue 和 ConcurrentLinkedQueue 的区别，以下说法正确的是？",
+    "answer": "答案：C) PriorityQueue 是无界优先级队列，元素按自然顺序或 Comparator 排序；ConcurrentLinkedQueue 是基于 CAS 的无界线程安全队列，按 FIFO 排序。解析：PriorityQueue 底层使用二叉堆（最小堆/最大堆）实现，基于数组存储，非线程安全。ConcurrentLinkedQueue 使用 Michael-Scott 非阻塞链表算法，通过 CAS 保证线程安全，不阻塞线程，元素按 FIFO 顺序出队。两者都是无界的。",
+    "options": [
+      "A) PriorityQueue 是线程安全的，ConcurrentLinkedQueue 不是",
+      "B) 两者都按 FIFO 顺序出队",
+      "C) PriorityQueue 是无界优先级队列，元素按自然顺序或 Comparator 排序；ConcurrentLinkedQueue 是基于 CAS 的无界线程安全队列，按 FIFO 排序",
+      "D) ConcurrentLinkedQueue 使用锁保证线程安全"
+    ],
+    "hints": [
+      "PriorityQueue 的底层数据结构是什么？"
+    ],
+    "tags": [
+      "集合",
+      "Queue"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "Collections 工具类的同步包装方法",
+    "content": "调用 Collections.synchronizedList(new ArrayList()) 返回的 List，以下说法正确的是？",
+    "answer": "答案：B) 返回的 List 在每个方法上使用同步块包装，迭代时仍需外部同步。解析：Collections.synchronizedList() 返回同步包装器，它对 add、get、size 等单个方法使用 synchronized 块包装。但迭代器（iterator()、listIterator()）不自动加锁，所以在迭代时必须手动加同步块（synchronized(list)），否则可能产生不一致的视图，因为迭代是多个 get/next 操作的组合。",
+    "options": [
+      "A) 返回的 List 完全线程安全，所有操作包括迭代都自动同步",
+      "B) 返回的 List 在每个方法上使用同步块包装，迭代时仍需外部同步",
+      "C) 返回的 List 和 CopyOnWriteArrayList 行为完全一致",
+      "D) synchronizedList 的性能总是优于 ConcurrentLinkedDeque"
+    ],
+    "hints": [
+      "同步包装类的迭代器是否需要额外的同步措施？"
+    ],
+    "tags": [
+      "集合",
+      "工具类"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Collection 的 toArray() 与 toArray(T[])",
+    "content": "关于 ArrayList 的 toArray() 和 toArray(T[] a) 方法，以下说法正确的是？",
+    "answer": "答案：A) toArray() 返回 Object[] 类型，toArray(T[]) 在数组足够大时重用传入数组，否则创建新数组。解析：toArray() 方法返回 Object[]，不能直接强转为其他类型。toArray(T[] a) 是泛型方法：如果传入的数组长度足够（a.length >= size），则直接填入并返回该数组；如果不够，会通过反射创建相同类型的新数组。推荐传入长度为 0 的数组（如 toArray(new String[0])），JDK 会优化创建合适大小的数组。",
+    "options": [
+      "A) toArray() 返回 Object[] 类型，toArray(T[]) 在数组足够大时重用传入数组，否则创建新数组",
+      "B) toArray() 返回的数组可以直接强转为 String[]",
+      "C) toArray(T[]) 永远不会使用传入的数组，总是创建新数组",
+      "D) toArray() 和 toArray(T[]) 的行为完全等价"
+    ],
+    "hints": [
+      "传入长度为零的数组比传入非零长度数组性能更好吗？"
+    ],
+    "tags": [
+      "集合",
+      "数组"
+    ]
   }
 ]
