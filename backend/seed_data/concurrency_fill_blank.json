@@ -963,7 +963,7 @@
     "type": "fill_in_blank",
     "title": "AQS 状态队列",
     "content": "AbstractQueuedSynchronizer（AQS）内部维护一个 _____ 状态变量（state）和一个 _____ 双向链表（CLH 队列的变体）。当线程获取锁失败时，会被封装为 Node 节点加入 _____ 队列。Node 的前驱节点为 _____ 时，当前节点才有资格尝试获取锁。",
-    "answer": "{\"correct\":[\"volatile int\",\"等待\",\"同步\",\"head\"],\"distractors\":[[\"int\"],[\"阻塞\"],[\"条件\"],[\"tail\"]]}",
+    "answer": "{\"correct\": [[\"volatile int\"], [\"等待\"], [\"同步\"], [\"head\"]], \"distractors\": [[\"int\"], [\"阻塞\"], [\"条件\"], [\"tail\"]]}",
     "tags": [
       "Java",
       "AQS",
@@ -977,7 +977,7 @@
     "type": "fill_in_blank",
     "title": "StampedLock 模式",
     "content": "StampedLock 支持三种锁模式：_____、乐观读和悲观读。乐观读不需要获取锁，通过_____机制验证数据是否被修改。与 ReentrantReadWriteLock 不同，StampedLock 的锁是_____（可重入/不可重入的）。如果乐观读验证失败，会升级为_____锁。",
-    "answer": "{\"correct\":[\"悲观写\",\"stamp 校验\",\"不可重入的\",\"悲观读\"],\"distractors\":[[\"悲观读\"],[\"版本号\"],[\"可重入的\"],[\"乐观读\"]]}",
+    "answer": "{\"correct\": [[\"悲观写\"], [\"stamp 校验\"], [\"不可重入的\"], [\"悲观读\"]], \"distractors\": [[\"悲观读\"], [\"版本号\"], [\"可重入的\"], [\"乐观读\"]]}",
     "tags": [
       "Java",
       "StampedLock",
@@ -991,7 +991,7 @@
     "type": "fill_in_blank",
     "title": "内存屏障分类",
     "content": "在 JMM（Java 内存模型）中，内存屏障（Memory Barrier）分为四种类型：LoadLoad、StoreStore、_____ 和 _____。volatile 写操作插入 _____ 屏障禁止写操作重排序。volatile 读操作插入 _____ 屏障禁止读操作重排序。",
-    "answer": "{\"correct\":[\"LoadStore\",\"StoreLoad\",\"StoreStore\",\"LoadLoad\"],\"distractors\":[[\"StoreLoad\"],[\"LoadLoad\"],[\"LoadStore\"],[\"StoreStore\"]]}",
+    "answer": "{\"correct\": [[\"LoadStore\"], [\"StoreLoad\"], [\"StoreStore\"], [\"LoadLoad\"]], \"distractors\": [[\"StoreLoad\"], [\"LoadLoad\"], [\"LoadStore\"], [\"StoreStore\"]]}",
     "tags": [
       "Java",
       "JMM",
@@ -1005,7 +1005,7 @@
     "type": "fill_in_blank",
     "title": "Semaphore 公平性",
     "content": "Semaphore 的构造参数中可以设置_____策略。公平模式下，调用 acquire() 的线程按照 FIFO 顺序获取许可，而非公平模式下允许线程_____。Semaphore 适用于_____控制场景。计数信号量允许同时最多 _____ 个线程访问临界区。",
-    "answer": "{\"correct\":[\"公平\",\"抢占\",\"流量\",\"N\"],\"distractors\":[[\"公平性\"],[\"等待\"],[\"并发\"],[\"1\"]]}",
+    "answer": "{\"correct\": [[\"公平\"], [\"抢占\"], [\"流量\"], [\"N\"]], \"distractors\": [[\"公平性\"], [\"等待\"], [\"并发\"], [\"1\"]]}",
     "tags": [
       "Java",
       "Semaphore",
@@ -1019,7 +1019,7 @@
     "type": "fill_in_blank",
     "title": "线程状态转换",
     "content": "Java 线程从新建（NEW）状态调用 start() 后进入 _____ 状态。拥有锁的线程调用 wait() 会释放锁并进入 _____ 状态。线程进入同步代码块时未获得锁则进入 _____ 状态。线程调用 park() 后进入 _____ 状态。",
-    "answer": "{\"correct\":[\"RUNNABLE\",\"WAITING\",\"BLOCKED\",\"WAITING\"],\"distractors\":[[\"RUNNING\"],[\"TIMED_WAITING\"],[\"WAITING\"],[\"RUNNABLE\"]]}",
+    "answer": "{\"correct\": [[\"RUNNABLE\"], [\"WAITING\"], [\"BLOCKED\"], [\"WAITING\"]], \"distractors\": [[\"RUNNING\"], [\"TIMED_WAITING\"], [\"WAITING\"], [\"RUNNABLE\"]]}",
     "tags": [
       "Java",
       "线程",
@@ -1033,14 +1033,7 @@
     "type": "fill_in_blank",
     "title": "同步队列 SynchronousQueue",
     "content": "SynchronousQueue 是一个特殊的 BlockingQueue，其容量为 ____。",
-    "answer": {
-      "correct": [
-        [
-          "0",
-          "零"
-        ]
-      ]
-    },
+    "answer": "{\"correct\": [[\"0\", \"零\"]], \"distractors\": []}",
     "hints": [
       "SynchronousQueue 内部不存储任何元素",
       "每个 put 操作必须等待一个 take 操作（反之亦然），直接交付"
@@ -1052,14 +1045,7 @@
     "type": "fill_in_blank",
     "title": "锁消除优化",
     "content": "JIT 编译器的锁消除（Lock Elision）优化基于 ____ 分析技术来检测锁对象是否为线程局部。",
-    "answer": {
-      "correct": [
-        [
-          "逃逸分析",
-          "Escape Analysis"
-        ]
-      ]
-    },
+    "answer": "{\"correct\": [[\"逃逸分析\", \"Escape Analysis\"]], \"distractors\": []}",
     "hints": [
       "JIT 通过逃逸分析判断对象在方法内部创建且不会逃逸到其他线程",
       "如果锁对象是线程局部的，JIT 可以消除锁操作（不实际加锁）"
@@ -1071,14 +1057,7 @@
     "type": "fill_in_blank",
     "title": "锁粗化优化",
     "content": "当 JIT 检测到同一个锁被一个线程连续加锁解锁多次，会将锁的范围扩大到整个操作序列，这种优化称为____。",
-    "answer": {
-      "correct": [
-        [
-          "锁粗化",
-          "Lock Coarsening"
-        ]
-      ]
-    },
+    "answer": "{\"correct\": [[\"锁粗化\", \"Lock Coarsening\"]], \"distractors\": []}",
     "hints": [
       "锁粗化合并连续加锁/解锁操作为一次加锁/解锁",
       "避免短时间内重复加锁解锁的开销"
@@ -1090,15 +1069,7 @@
     "type": "fill_in_blank",
     "title": "偏向锁的撤销",
     "content": "当多个线程竞争偏向锁时，偏向锁会升级为轻量级锁。偏向锁的撤销需要在____点执行。",
-    "answer": {
-      "correct": [
-        [
-          "全局安全点",
-          "安全点",
-          "SafePoint"
-        ]
-      ]
-    },
+    "answer": "{\"correct\": [[\"全局安全点\", \"安全点\", \"SafePoint\"]], \"distractors\": []}",
     "hints": [
       "偏向锁撤销需要暂停所有线程（STW）",
       "撤销偏向锁的开销较大，JDK 15 起默认禁用了偏向锁"
@@ -1110,18 +1081,7 @@
     "type": "fill_in_blank",
     "title": "读写锁的锁降级",
     "content": "在 ReentrantReadWriteLock 中，从写锁降级为读锁的过程称为____。写锁持有者可以获取读锁（降级），但读锁持有者____获取写锁（升级）。",
-    "answer": {
-      "correct": [
-        [
-          "锁降级",
-          "Lock Downgrade"
-        ],
-        [
-          "不能",
-          "无法"
-        ]
-      ]
-    },
+    "answer": "{\"correct\": [[\"锁降级\", \"Lock Downgrade\"], [\"不能\", \"无法\"]], \"distractors\": []}",
     "hints": [
       "写锁 → 读锁：允许（降级，读锁可用性更高）",
       "读锁 → 写锁：不允许（升级会导致死锁）"
