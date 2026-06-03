@@ -213,5 +213,55 @@
     "answer": "系统设计估算的核心是「合理的近似」，不需要精确数字。通过已知参照物 + 快速计算得出合理范围。\n\n解析：常用估算方法：1）QPS 估算——DAU × 每天用户操作次数 / 86400（秒数）= 平均 QPS，峰值 QPS = 平均 QPS × 3-10 倍（取决于业务类型）。示例：Twitter 类应用 3 亿 DAU，每人每天发 5 条推文 → 每天 15 亿条 → 平均 QPS = 15亿/86400 ≈ 17K，峰值 ≈ 50K-170K。2）存储估算——每条数据大小 × 数量 × 副本数 × 冗余系数（1.2-1.5）。示例：推文 140 字符 + 元数据 ≈ 500 字节，15 亿条/天 → 每天 750GB，一年约 270TB（不考虑图片/视频）。3）带宽估算——QPS × 响应体大小。示例：每推文约 500 字节，峰值写入 QPS 50K → 写入带宽 ≈ 25MB/s ≈ 200Mbps。\n\n扩展延伸：需要记住的参照数据：1）MySQL 单机 QPS ≈ 1K（写入）/ 5K（读取）。2）Redis 单机 QPS ≈ 10 万。3）单机网络带宽 ≈ 1-10Gbps。4）磁盘顺序写 ≈ 200MB/s，随机 IOPS ≈ 100-10K（取决于 SSD/HDD）。5）内存访问 ≈ 100ns，SSD ≈ 0.1ms，HDD ≈ 10ms（数量级的差异）。非功能性需求的基准数据也很重要：BASE 64 编码和 Base62 编码的区别（6 字符 Base62 ≈ 56 亿种组合）。估算的目标不是精确到个位数，而是在 2-3 倍误差范围内（面试中展示拆解问题的思路比答案本身重要）。",
     "hints": ["如何快速计算 64 位 vs 128 位的存储差异", "估算中 86400 这个常数在日常估算中的角色是什么"],
     "tags": ["估算", "容量规划", "面试"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计实时排行榜系统",
+    "content": "请设计一个支持亿级用户、秒级更新的实时排行榜系统。需要考虑数据一致性、分片和容错。",
+    "answer": "答案：核心用 Redis Sorted Set 实现实时排名，分片+合并处理海量数据，定时持久化到 MySQL 做历史归档。\n\n解析：实时排行榜的核心数据结构是 Redis ZSet（有序集合），成员（member）为用户 ID，分数（score）为排名指标值。ZSet 通过 skiplist 实现 O(log n) 的插入/更新和 O(log n) 的范围查询。\n\n1）单 ZSet 方案——适合千万级以内。ZADD 更新分数，ZREVRANGE 0 99 获取 Top 100。优点：实现简单、毫秒级响应。缺点：单 ZSet 在亿级数据下内存占用大（约 40 字节/成员）。\n\n2）分片 ZSet 方案——按用户 ID 哈希分片到 N 个 Redis 实例（如 user_id % 10）。更新时写对应分片。查询全局 Top N：从每个分片取 Top N，归并排序后返回。优点：水平扩展、内存分散。缺点：归并开销随分片数增长（但 N 通常不大，如 10-20 片，归并成本可接受）。\n\n3）降级策略——读多写少：ZSet 全量在 Redis，缓存热门区间（Top 1000）减少查询压力。写多：批量更新（合并用户在短时间内的多次分数变更，减少 ZADD 调用）。\n\n扩展延伸：进阶优化：1）同分处理——score 相同按时间优先。方案：score = 整数值 + (MAX_TIMESTAMP - 当前时间戳) 的小数部分。2）归档策略——每日/每周结束时将 Top N 快照持久化到 MySQL，删除过期 ZSet。3）近似排行榜——允许误差时可用 Count-Min Sketch 近似计数 + 分段排序，大幅降低内存。4）实时变化推送——结合 Redis Pub/Sub 或 WebSocket 向用户推送排名变化（仅在用户排名变化超过阈值时推送，避免风暴）。",
+    "hints": ["ZSet 为什么适合做排行榜底层数据结构", "分片 ZSet 在归并时如何保证全局排名准确性"],
+    "tags": ["设计", "排行榜", "Redis", "高并发"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计分布式配置中心",
+    "content": "请设计一个分布式配置中心，支持配置的实时推送、版本管理和灰度发布。参考 Apollo/Nacos 架构。",
+    "answer": "答案：分布式配置中心的核心架构：Config 存储层（DB）+ 管理 Portal + Config Service（长轮询推送）+ Client SDK（本地缓存+监听回调）。配置变更流程：Portal 写入 DB → Config Service 通知客户端 → Client 拉取新配置。\n\n解析：1）配置存储——MySQL 存储配置项（key-value，按 Namespace/Group/DataId 组织）。每个配置有版本号（version），更新时版本递增。2）配置推送——客户端通过 Http 长轮询（Long Polling）向 Config Service 请求变更。服务端有变更立即返回，无变更保持连接等待（默认 30-60 秒超时后重新建立）。相比 WebSocket，长轮询实现简单、兼容性好。3）客户端设计——在本地缓存配置（文件 + 内存），启动时先读本地缓存（快），再异步拉取最新配置对比版本号。当服务端配置变更时，通过长轮询收到通知，拉取新配置并触发回调（监听器模式，支持热更新）。4）灰度发布——按 IP/标签/实例 ID 匹配灰度规则，只对特定客户端推送新配置，验证无误后全量发布。\n\n扩展延伸：进阶功能：1）配置回滚——每个配置保存历史版本，支持一键回滚到任意版本。2）配置监听——客户端注册监听器，配置变更时动态更新（如日志级别、降级开关）。注意：数据库连接等需要重建连接的配置变更，热更新有风险，建议配合应用重启。3）安全审计——配置变更记录操作人、时间、变更前后值。4）配置加密——敏感配置（密码、密钥）在 DB 中加密存储，客户端端到端解密。5）对比 Apollo（携程）vs Nacos（阿里）：Apollo 功能最全（多环境多集群、权限管理、灰度），Nacos 轻量兼具服务发现和配置管理能力。选择建议：纯配置中心用 Apollo，已有 Nacos 服务发现时用 Nacos 配置。",
+    "hints": ["长轮询（Long Polling）相比 WebSocket 在配置推送场景中的优势", "配置热更新在哪些场景下是安全的、哪些场景有风险"],
+    "tags": ["设计", "配置中心", "分布式"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "设计日志收集系统（ELK/EFK）",
+    "content": "请设计一个海量日志收集和分析系统。如何保证日志的可靠收集和高效检索？",
+    "answer": "答案：ELK（Elasticsearch + Logstash + Kibana）或 EFK（Elasticsearch + Filebeat/Fluentd + Kibana）是业界标准方案。日志从产生到可搜索的流程：应用日志 → Log Shippers（Filebeat）→ 消息队列（Kafka/Redis）→ Log Processor（Logstash/Fluentd）→ Elasticsearch → Kibana 展示。\n\n解析：1）日志采集层——Filebeat（轻量 agent，每个节点部署一个，读取日志文件）→ Kafka（削峰，解耦采集和消费）。Filebeat 特征：读取文件时维护偏移量，进程重启后从断点续传；背压感知——当输出（Kafka）压力大时放慢读取速度。\n\n2）日志传输层——Kafka 作为缓冲。优势：高吞吐、持久化、支持多消费组（实时流处理和批量归档并行）。Kafka 主题按应用/环境分区（如 topic = app_log_production）。\n\n3）日志处理层——Logstash/Fluentd 从 Kafka 消费日志，解析/结构化（Grok 正则解析日志格式 → JSON）、字段提取（IP、请求路径、响应码、耗时）。Logstash 功能强大但 Java 资源消耗大；Fluentd 用 Ruby/C 更轻量。\n\n4）存储和检索层——Elasticsearch 做倒排索引。常用优化：按时间分索引（如 app-logs-2024-06-01）、冷热分离（近期热数据 SSD 高副本、历史冷数据 HDD 低副本）、索引生命周期管理（ILM，自动从热→温→冷→删除）。\n\n扩展延伸：进阶话题：1）日志采样——全量日志开销大，对 DEBUG/INFO 级别按 1% 采样，ERROR/WARN 全量。2）结构化日志——应用侧打印 JSON 格式日志而不是文本日志（避免正则解析性能开销）。3）链路追踪关联——日志中注入 Trace ID（从分布式追踪系统 SkyWalking/Zipkin 获取），在 Kibana 中按 Trace ID 查询完整调用链。4）成本控制——日志保留策略：热数据 3 天 SSD、温数据 15 天 HDD、冷数据 30 天对象存储/COS。每天日志量 > 1TB 时考虑使用 ClickHouse 替代 Elasticsearch（压缩比高、查询速度快但搜索引擎能力弱）。",
+    "hints": ["为什么日志采集用 Filebeat 而非直接写 Kafka", "Elasticsearch 按时间分索引和 ILM 索引生命周期管理的关系"],
+    "tags": ["日志", "ELK", "EFK", "Elasticsearch"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计秒杀系统",
+    "content": "请设计一个高并发秒杀系统，要应对瞬时流量洪峰（万人抢几百件商品）。如何保证不超卖、不雪崩？",
+    "answer": "答案：秒杀系统的核心策略是「层层过滤、流量削峰」——在前端和中台尽可能拦截无效流量，后端确保数据一致性。关键步骤：前端限流 → CDN 静态化 → MQ 削峰 → Redis 原子扣减 → DB 最终一致性。\n\n解析：分层架构：1）前端层——按钮置灰（防重复点击）、动态 URL（隐藏接口地址，防提前抢）、验证码/滑块（拦住机器请求）。CDN 承载商品详情页，秒杀接口不走 CDN。\n\n2）网关层——同一用户限流（IP + 用户 ID 限流，如 5次/秒）、全局令牌桶（按商品数量比例限流，秒杀开始提前预热令牌）、恶意请求拦截（同一 IP 高频访问、异常 User-Agent）。\n\n3）服务层——Redis 原子扣减库存：`DECR stock_key`，返回值 < 0 说明已售罄（回滚）。余量写入 Lua 脚本确保原子性。扣减成功后将用户 ID 写入 Redis 有序集合（已抢到名单）。Redis 单机 10 万 QPS，扛住峰值流量绰绰有余。\n\n4）异步下单——扣减成功后发 MQ 消息（用户 ID + 商品 ID），后端 Worker 异步处理（订单生成、DB 库存扣减、支付）。MQ 削峰：流量均匀消费，避免瞬时 DB 压力。\n\n5）DB 层——乐观锁更新库存：`UPDATE stock SET count = count - 1 WHERE id = ? AND count > 0`（SQL 级别的原子性防止超卖）。唯一订单号约束防止重复下单。\n\n扩展延伸：超卖防线：1）第一道：Redis DECR（虽然超卖一丢丢但速度快）→ 2）第二道：MQ 消费者中的 DB 乐观锁 SQL（最终防线，精确到个位）。数据一致性：Redis 和 DB 之间的库存差异通过定时对账任务校正（每 5 分钟 Redis 库存同步到 DB）。限流触发后的降级：排队页（显示「前方排队 X 人」）、漏桶算法平滑请求输出。秒杀结束后：未抢到的用户推送安慰消息，附带下次预告或优惠券作为补偿。",
+    "hints": ["Redis DECR 为什么不能单独作为不超卖的保证", "秒杀系统中为什么要用 MQ 做异步下单而不是同步写 DB"],
+    "tags": ["设计", "秒杀", "高并发", "Redis"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计 API 网关",
+    "content": "请设计一个 API 网关，支持路由转发、身份认证、限流、请求日志和协议转换。参考 Kong / APISIX / Spring Cloud Gateway 的架构。",
+    "answer": "答案：API 网关是系统对外的统一入口，负责横切关注点（认证、限流、日志、监控）和请求路由。核心架构：路由表 + Filter 链（前置/后置过滤器）+ 上游服务。\n\n解析：核心组件：1）路由表——配置 URL pattern → 目标服务映射。支持精确路径、前缀匹配、正则匹配。路由存储：etcd（Kong）/ DB（APISIX）/ 配置文件（Spring Cloud Gateway）。\n\n2）过滤器链——请求在匹配路由后经过一系列过滤器。前置过滤器：身份认证（JWT/OAuth2 Token 校验）、限流（令牌桶/漏桶/Redis 计数器）、请求头转换（添加/删除 Header）、请求体校验。后置过滤器：响应头注入（CORS）、响应体转换（字段映射/过滤）、请求日志（记录请求路径、耗时、状态码）。\n\n3）负载均衡——支持轮询/加权/最少连接/一致性哈希，健康检查（主动心跳 + 被动熔断）。\n\n4）协议转换——HTTP → gRPC（网关将 RESTful 请求转为 Protobuf 调用）、HTTP → Dubbo（泛化调用）、WebSocket 代理。\n\n扩展延伸：进阶功能：1）灰度发布——按照 Header/Cookie/IP 权重将部分流量转发到新版本服务。2）限流维度——接口级、用户级、应用级（API Key）。分布式限流用 Redis + Lua 脚本实现。3）熔断降级——下游服务超时/错误率达到阈值时快速失败（返回降级响应），避免级联雪崩（Hystrix/Resilience4j/Sentinel）。4）网关选型对比：Kong（Nginx + Lua，高性能，插件生态丰富）、APISIX（Apache 孵化，动态路由，性能强）、Spring Cloud Gateway（Spring 生态，基于 WebFlux，Java 团队首选）、Envoy Proxy（C++ 高性能，Service Mesh 数据平面）。注意：网关不应包含业务逻辑，这只是横切关注点的汇聚层。业务逻辑应留在后端服务中。",
+    "hints": ["API 网关的过滤器链如何实现前置和后置处理", "Kong 和 APISIX 都基于 Nginx，为什么能实现动态路由而不需要 reload"],
+    "tags": ["网关", "API", "路由", "限流"]
   }
 ]
