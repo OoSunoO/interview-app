@@ -198,5 +198,55 @@
     "answer": "{\"correct\":[[\"Segment\",\"分段锁\"],[\"16\"],[\"CAS + synchronized\",\"CAS+synchronized\"],[\"8\",\"TREEIFY_THRESHOLD\"],[\"红黑树\",\"TreeBin\"]],\"distractors\":[\"读写锁\",\"自旋锁\",\"32\",\"数组\",\"二叉树\"]}",
     "hints": ["ConcurrentHashMap 的 size() 方法在 JDK 8 中通过 CounterCell 数组和 baseCount 组合计算", "JDK 8 的 ConcurrentHashMap 在弱一致性（get 不加锁）和强一致性之间做了权衡"],
     "tags": ["并发", "ConcurrentHashMap", "集合", "CAS"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ThreadPoolExecutor 执行流程",
+    "content": "ThreadPoolExecutor.execute() 的执行流程中：当线程数小于___时创建新线程执行任务；超过此值则尝试将任务放入___；如果队列已满则创建新线程直到达到___；超过此上限则执行___策略。",
+    "answer": "{\"correct\":[[\"corePoolSize\",\"核心线程数\"],[\"BlockingQueue\",\"工作队列\",\"任务队列\",\"阻塞队列\"],[\"maximumPoolSize\",\"最大线程数\"],[\"RejectedExecutionHandler\",\"拒绝策略\",\"饱和策略\"]],\"distractors\":[\"最大线程数\",\"等待队列\",\"直接拒绝\",\"丢弃\"]}",
+    "hints": ["corePoolSize 和 maximumPoolSize 之间的缓冲由工作队列承担", "拒绝策略包括 AbortPolicy、CallerRunsPolicy、DiscardPolicy 等"],
+    "tags": ["并发", "线程池", "ThreadPoolExecutor", "执行流程"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ReentrantLock 公平锁与非公平锁",
+    "content": "ReentrantLock 基于___框架实现。公平锁的 lock() 方法比非公平锁多调用___方法检查是否有等待更久的线程，而非公平锁直接___尝试获取锁（允许插队）。unlock() 每次将 state 减 1，当 state 为___时释放锁。",
+    "answer": "{\"correct\":[[\"AQS\",\"AbstractQueuedSynchronizer\"],[\"hasQueuedPredecessors\"],[\"compareAndSetState\",\"CAS\"],[\"0\",\"零\"]],\"distractors\":[\"CLH队列\",\"ThreadPoolExecutor\",\"LockSupport\",\"1\",\"负数\"]}",
+    "hints": ["非公平锁的性能通常高于公平锁——因为唤醒等待队列的成本比一次 CAS 高", "公平锁的 hasQueuedPredecessors 检查的是同步队列中是否有前驱节点"],
+    "tags": ["并发", "ReentrantLock", "AQS", "公平锁"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "SynchronousQueue 原理",
+    "content": "SynchronousQueue 是一个容量为___的 BlockingQueue，每个插入必须等待一个对应的___操作。公平模式下内部使用___（FIFO），非公平模式下使用___（LIFO）。核心的 transfer 方法通过自旋 + ___避免不必要的上下文切换。",
+    "answer": "{\"correct\":[[\"0\",\"零\"],[\"移除\",\"take\",\"poll\"],[\"TransferQueue\"],[\"TransferStack\"],[\"LockSupport.park\",\"park\",\"阻塞\"]],\"distractors\":[\"1\",\"无界\",\"put\",\"LinkedBlockingQueue\",\"SynchronousQueue\",\"yield\"]}",
+    "hints": ["SynchronousQueue 的 take() 和 put() 必须成对出现——没有缓冲", "TransferStack 使用 SCM（Singly-linked list + CAS）模式实现线程配对"],
+    "tags": ["并发", "SynchronousQueue", "BlockingQueue", "线程配对"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "FutureTask 状态转换",
+    "content": "FutureTask 的状态转换：NEW 能转换为___（正常完成前的中间态）再转换为___（正常完成）；或转换为___（异常完成）；也可从 NEW 直接转换为___（被取消）。get() 方法通过___使调用线程等待，任务完成后通过___唤醒。",
+    "answer": "{\"correct\":[[\"COMPLETING\"],[\"NORMAL\"],[\"EXCEPTIONAL\"],[\"CANCELLED\"],[\"LockSupport.park\",\"park\"],[\"LockSupport.unpark\",\"unpark\",\"finishCompletion\"]],\"distractors\":[\"SUCCESS\",\"FAILED\",\"INTERRUPTED\",\"DONE\",\"wait\",\"notify\"]}",
+    "hints": ["FutureTask 的状态一旦从 NEW 离开就不会再回到 NEW——单向状态机", "FutureTask 内部使用 WaitNode 链表管理等待线程"],
+    "tags": ["并发", "FutureTask", "状态", "AQS"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ThreadLocal 实现原理",
+    "content": "ThreadLocal 的 set(T) 方法获取当前线程的___，如果存在则调用 set(this, value) 存入，否则创建。ThreadLocalMap 使用___（而非链地址法）解决哈希冲突。Entry 的 key 是___引用。内存泄漏风险在于 Entry 的 value 是___引用（不会被自动清理），因此使用后应调用___方法。",
+    "answer": "{\"correct\":[[\"ThreadLocalMap\"],[\"开放寻址\",\"开放地址\",\"open addressing\"],[\"弱\",\"WeakReference\",\"Weak\"],[\"强\",\"Strong\",\"StrongReference\"],[\"remove\"]],\"distractors\":[\"ThreadLocal\",\"HashMap\",\"链地址\",\"软\",\"虚\",\"get\"]}",
+    "hints": ["ThreadLocalMap 使用线性探测法（开放寻址）解决冲突——因为 Entry 数量不会很大", "在线程池中使用 ThreadLocal 必须在使用后 remove——否则线程可复用导致内存泄漏"],
+    "tags": ["并发", "ThreadLocal", "ThreadLocalMap", "内存泄漏"]
   }
 ]

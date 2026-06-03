@@ -198,5 +198,55 @@
     "answer": "{\"correct\":[[\"类加载\"],[\"类加载\",\"类加载过程\"],[\"分配内存\"],[\"零值初始化\"],[\"对象头\",\"对象头信息\"],[\"<init>\",\"实例构造器\",\"初始化方法\"]],\"distractors\":[\"权限检查\",\"常量检查\",\"设置引用\",\"分配栈空间\",\"<clinit>\",\"静态初始化\"]}",
     "hints": ["对象创建过程中，零值初始化（Step 4）保证了 Java 对象的成员变量在不赋值时也有默认值", "<init> 和 <clinit> 的区别：前者是实例初始化方法（每次 new 都执行），后者是类初始化方法（类加载时执行一次）"],
     "tags": ["JVM", "对象创建", "初始化", "new"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "GC 调优核心参数",
+    "content": "GC 调优核心参数：-Xms 设置初始堆大小，___设置最大堆大小（建议两者相等避免运行时扩容）。___设置新生代和老年代的比例。G1 GC 通过___设置期望的最大 GC 暂停时间，___设置并行 GC 线程数。打印 GC 日志使用___（JDK 9+ 统一日志格式）。",
+    "answer": "{\"correct\":[[\"-Xmx\",\"最大堆大小\"],[\"-XX:NewRatio\"],[\"-XX:MaxGCPauseMillis\"],[\"-XX:ParallelGCThreads\"],[\"-Xlog:gc*\"]],\"distractors\":[\"-Xmn\",\"-Xss\",\"-XX:SurvivorRatio\",\"-XX:G1HeapRegionSize\",\"-verbose:gc\"]}",
+    "hints": ["Xms 和 Xmx 设为相同值可以避免运行时堆扩容和缩容的性能开销", "G1 的 MaxGCPauseMillis 默认 200ms，降低此值会增加 GC 频率"],
+    "tags": ["JVM", "GC", "调优", "参数"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "类加载器层次结构",
+    "content": "JDK 8 的类加载器层次（从父到子）：___→ 扩展类加载器（ExtClassLoader）→ ___。___加载 JDK 核心类库（rt.jar）。双亲委派的破坏——___让父类加载器请求子类加载器加载（如 JDBC 驱动通过 SPI 机制）。JDK 9 将扩展类加载器改为___。",
+    "answer": "{\"correct\":[[\"Bootstrap ClassLoader\",\"启动类加载器\"],[\"Application ClassLoader\",\"App ClassLoader\",\"系统类加载器\"],[\"Bootstrap ClassLoader\",\"启动类加载器\"],[\"线程上下文类加载器\",\"Thread Context ClassLoader\",\"TCCL\"],[\"Platform ClassLoader\",\"平台类加载器\"]],\"distractors\":[\"自定义类加载器\",\"Extension\",\"URLClassLoader\",\"Launcher\",\"ClassLoader\"]}",
+    "hints": ["双亲委派模型的工作流程——先委托父加载器加载，父加载器找不到才自己加载", "JDBC 驱动通过 ServiceLoader SPI + 线程上下文类加载器破坏双亲委派"],
+    "tags": ["JVM", "类加载", "双亲委派", "类加载器"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Java 四种引用类型",
+    "content": "Java 的四种引用类型从强到弱：___、___（内存不足时回收）、___（GC 时立即回收）、___（get() 始终返回 null）。___引用类型通常配合 ReferenceQueue 使用，用于跟踪对象被回收后的通知。",
+    "answer": "{\"correct\":[[\"强引用\",\"StrongReference\",\"Strong Reference\"],[\"软引用\",\"SoftReference\",\"Soft Reference\"],[\"弱引用\",\"WeakReference\",\"Weak Reference\"],[\"虚引用\",\"PhantomReference\",\"Phantom Reference\"],[\"虚\",\"PhantomReference\",\"Phantom\"]],\"distractors\":[\"硬引用\",\"软引用\",\"弱引用\",\"虚引用\"]}",
+    "hints": ["软引用适合做缓存——内存不足时自动回收", "虚引用的 get() 永远返回 null——它的唯一作用是跟踪对象被回收的时机"],
+    "tags": ["JVM", "引用类型", "WeakReference", "PhantomReference"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "元空间（Metaspace）",
+    "content": "JDK 8 使用___替代永久代（PermGen）存储类的元数据。元空间使用___（而不是 JVM 堆）存储元数据，默认无上限（受操作系统物理内存限制）。通过___设置元空间的最大大小，___设置触发 Full GC 的阈值。字符串常量池和静态变量在 JDK 7 中被移到了___。",
+    "answer": "{\"correct\":[[\"元空间\",\"Metaspace\"],[\"本地内存\",\"堆外内存\",\"Native Memory\"],[\"-XX:MaxMetaspaceSize\"],[\"-XX:MetaspaceSize\"],[\"Java堆\",\"堆\",\"heap\"]],\"distractors\":[\"永久代\",\"堆\",\"-XX:PermSize\",\"-XX:MaxPermSize\",\"直接内存\"]}",
+    "hints": ["元空间默认无上限——如果类加载过多可能导致物理内存耗尽", "MetaspaceSize 是触发 Full GC 的初始阈值，不是最大限制"],
+    "tags": ["JVM", "元空间", "Metaspace", "永久代"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JIT 编译触发条件",
+    "content": "HotSpot VM 中方法被调用超过___次时触发 JIT 编译（服务端模式默认 10000）。___（C1 编译器）进行少量优化、编译速度快；___（C2 编译器）进行大量优化、编译慢但代码质量高。JDK 7u4+ 默认使用___（在解释、C1、C2 之间动态切换）。OSR 用于___被 JIT 编译后，正在解释执行的代码立即切换到编译后的版本。",
+    "answer": "{\"correct\":[[\"-XX:CompileThreshold\",\"CompileThreshold\"],[\"Client Compiler\",\"C1\"],[\"Server Compiler\",\"C2\"],[\"分层编译\",\"TieredCompilation\"],[\"热点循环\",\"长时间运行的方法体\"]],\"distractors\":[\"-XX:InlineThreshold\",\"JIT\",\"AOT\",\"混合模式\",\"OSR\"]}",
+    "hints": ["OSR（On-Stack Replacement）让正在栈上运行的解释帧切换到编译后的执行入口", "分层编译的 0-4 层——从解释执行到 C2 顶级编译"],
+    "tags": ["JVM", "JIT", "编译", "C1", "C2"]
   }
 ]
