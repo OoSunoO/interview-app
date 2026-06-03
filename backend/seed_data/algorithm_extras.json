@@ -1548,5 +1548,104 @@
       "数组"
     ],
     "options": []
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "实现一个布隆过滤器",
+    "content": "实现一个简单的布隆过滤器（Bloom Filter），支持 add() 和 mightContain() 操作。布隆过滤器使用 k 个哈希函数和 m 位的位数组。请实现一个基于 Java BitSet 的版本，并讲解误判率（False Positive）与 k、m、n（插入元素数）的关系。",
+    "answer": "```java\nimport java.util.BitSet;\nimport java.util.function.Function;\n\nclass BloomFilter<T> {\n    private final BitSet bits;\n    private final int bitSize;         // m\n    private final int numHashFunctions; // k\n    private final Function<T, Integer>[] hashFunctions;\n\n    @SuppressWarnings(\"unchecked\")\n    public BloomFilter(int expectedInsertions, double falsePositiveRate) {\n        // 最优 bit 数 m = -n * ln(p) / (ln(2)^2)\n        this.bitSize = (int) Math.ceil(-expectedInsertions * Math.log(falsePositiveRate) / (Math.log(2) * Math.log(2)));\n        // 最优哈希函数数 k = (m/n) * ln(2)\n        this.numHashFunctions = (int) Math.ceil((double) bitSize / expectedInsertions * Math.log(2));\n        this.bits = new BitSet(bitSize);\n\n        // 使用不同的种子模拟 k 个独立的哈希函数\n        this.hashFunctions = new Function[numHashFunctions];\n        for (int i = 0; i < numHashFunctions; i++) {\n            final int seed = i;\n            hashFunctions[i] = (element) -> (element.hashCode() ^ seed * 0x9e3779b9) & Integer.MAX_VALUE;\n        }\n    }\n\n    // 使用 String 版本的构造更方便\n    public BloomFilter(int m, int k) {\n        this.bitSize = m;\n        this.numHashFunctions = k;\n        this.bits = new BitSet(bitSize);\n        this.hashFunctions = new Function[numHashFunctions];\n        for (int i = 0; i < numHashFunctions; i++) {\n            final int seed = i;\n            hashFunctions[i] = (element) -> (element.hashCode() ^ seed * 0x9e3779b9) & Integer.MAX_VALUE;\n        }\n    }\n\n    public void add(T element) {\n        for (Function<T, Integer> f : hashFunctions) {\n            int hash = f.apply(element) % bitSize;\n            bits.set(hash);\n        }\n    }\n\n    public boolean mightContain(T element) {\n        for (Function<T, Integer> f : hashFunctions) {\n            int hash = f.apply(element) % bitSize;\n            if (!bits.get(hash)) return false;  // 任何一个位为 0 → 一定不存在\n        }\n        return true;  // 所有位都为 1 → 可能存在（可能误判）\n    }\n\n    // 当前填充的 bit 数\n    public int getBitCount() {\n        return bits.cardinality();\n    }\n}\n```\n\n核心原理：布隆过滤器的误判率公式——P ≈ (1 - e^{-kn/m})^k。当 k = (m/n) * ln(2) 时误判率最低。例如 m = 8n（每个元素 8 bit）、k = 5 时误判率约 2.1%。优点：空间效率极高，缺点：不支持删除（标准布隆过滤器），存在误判（False Positive）但不存在漏判（False Negative）。\n\n扩展延伸：1）Guava 的 BloomFilter——Google 的 Guava 库提供了成熟的 BloomFilter 实现，使用 Funnel 接口 + 64 位哈希分高低位模拟多个哈希函数，生产直接用。2）布隆过滤器的变种——Counting Bloom Filter（支持删除，用计数器数组替代位数组）、Scalable Bloom Filter（可扩容，误判率达到阈值时新增一层）、Cuckoo Filter（支持删除，误判率更低）。3）大 A 在系统设计中的用途——缓存穿透防护（查 DB 前先查布隆过滤器，不存在直接返回）、推荐系统去重、比特币 SPV 节点（轻钱包用布隆过滤器过滤交易）。4）海量数据判重——当数据量大到无法用 HashSet 存储时（如 10 亿个 URL 判重），布隆过滤器用几百 MB 内存即可实现低误判率的判重。",
+    "hints": [
+      "布隆过滤器能删除元素吗——标准版不能，因为无法确定一个位是哪个元素设置的（多个元素可能共享同一个位）",
+      "实际生产中怎么确定 m 和 k——根据预期的 n 和可接受的误判率 p 用公式计算最优值"
+    ],
+    "tags": [
+      "算法",
+      "布隆过滤器",
+      "概率数据结构",
+      "判重"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "一致性哈希在分布式负载均衡中的工程实现",
+    "content": "一致性哈希在分布式负载均衡中如何精确实现？虚拟节点怎么确定数量？Ketama 一致性哈希算法的工作原理是什么？如果后端服务器的权重不同（如 16 核 64G 和 8 核 32G 的机器混部），一致性哈希如何支持加权分配？",
+    "answer": "答案：一致性哈希在负载均衡中的核心是：将服务器节点和虚拟节点哈希到环上，请求按 key 哈希后顺时针找到最近的虚拟节点，从而路由到对应物理节点。加权分配通过调整虚拟节点数量实现——权重越高的机器分配的虚拟节点越多，被命中的概率越大。\n\n解析：1）环的构建——哈希环通常使用 2^32 个槽位（0 ~ 2^32-1）。对每个物理节点的标识（IP:Port 或名称）进行哈希，映射到环上。2）虚拟节点——为什么需要虚拟节点：物理节点的哈希值在环上分布可能不均匀（少量节点时尤其明显）。解决方案是为每个物理节点创建 N 个虚拟节点（如 100-200 个），每个虚拟节点是「物理节点 ID + 编号」的哈希。请求命中虚拟节点后映射回物理节点。3）加权一致性哈希——权重高的物理节点分配更多的虚拟节点。例如权重 2:1 的两台机器，虚拟节点数 200:100。Ketama 算法（最早在 Memcached 客户端中实现）是加权一致性哈希的典型实现：对每个物理节点，根据其权重计算虚拟节点数（权重 × 160 或其他基数），生成「服务器名-编号」的 MD5 哈希，截取 4 字节作为环上的位置，存到 TreeMap 中。4）请求路由——对请求 key 做哈希，用 TreeMap 的 tailMap() 找到第一个 >= 哈希值的节点，如果没有则取 TreeMap 的第一个（环的尾部回到头部）。\n\n扩展延伸：工程实现细节：1）TreeMap 的 tailMap + 取首元素是 O(log n) 的操作，适合单机几千个虚拟节点级别的环。2）虚拟节点数量的 trade-off——虚拟节点越多分布越均匀，但构建和查找的开销越大。行业中常见每个物理节点 100-200 个虚拟节点（Ketama 默认 160）。3）一致性哈希 vs 哈希槽——Redis Cluster 用的是哈希槽（16384 个固定槽），不是一致性哈希。每个 key 映射到槽，槽分配到节点。增减节点时只需要迁移槽（迁移的只是槽范围，不需要 rehash 所有 key）。4）一致性哈希的变体——Jump Consistent Hash：O(log n) 时间复杂度，不需要维护环结构。只适合节点按线性编号增减的场景（不支持任意节点名）。Google 的 Maglev 哈希：用于负载均衡器的快速连接调度，使用「查找表（LUT）」方式实现几乎均匀的分配。\n\n加权分配的细节——如果机器性能不同（如新机器 32 核 128G vs 老机器 8 核 32G），可以按 benchmark 得分或 CPU 核数比例分配虚拟节点。注意权重不是精确的流量分配——一致性哈希是按 key 分配的，不是按请求数均匀分配。如果要精确的流量分配比例，需要用「有界负载一致性哈希」（Consistent Hashing with Bounded Loads）——在分配时检查节点的当前负载是否超过平均负载的一定比例，超过则跳过。",
+    "hints": [
+      "虚拟节点为什么能解决分布不均——量变引起质变，虚拟节点越多分布越均匀",
+      "一致性哈希能保证请求均匀分配到后端吗——不能保证精确均匀，只能保证「概率上均匀」+「增减节点时最小化重新分配」"
+    ],
+    "tags": [
+      "算法",
+      "一致性哈希",
+      "负载均衡",
+      "分布式",
+      "Ketama"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "实现 Trie 树（前缀树）",
+    "content": "实现一个 Trie 树（前缀树 / 字典树），支持 insert(word)、search(word) 和 startsWith(prefix) 操作。Trie 树常用于自动补全、拼写检查和前缀匹配场景。请讲解为什么 Trie 树在字符串搜索/匹配中比哈希表有优势。",
+    "answer": "```java\nclass Trie {\n    static class TrieNode {\n        TrieNode[] children = new TrieNode[26]; // 只包含小写字母\n        boolean isEnd = false;                   // 标记是否存在完整单词\n    }\n\n    private final TrieNode root;\n\n    public Trie() {\n        root = new TrieNode();\n    }\n\n    public void insert(String word) {\n        TrieNode node = root;\n        for (char c : word.toCharArray()) {\n            int idx = c - 'a';\n            if (node.children[idx] == null) {\n                node.children[idx] = new TrieNode();\n            }\n            node = node.children[idx];\n        }\n        node.isEnd = true;\n    }\n\n    public boolean search(String word) {\n        TrieNode node = searchPrefix(word);\n        return node != null && node.isEnd;\n    }\n\n    public boolean startsWith(String prefix) {\n        return searchPrefix(prefix) != null;\n    }\n\n    private TrieNode searchPrefix(String prefix) {\n        TrieNode node = root;\n        for (char c : prefix.toCharArray()) {\n            int idx = c - 'a';\n            if (node.children[idx] == null) return null;\n            node = node.children[idx];\n        }\n        return node;\n    }\n}\n```\n\n核心思想：Trie 树利用字符串的公共前缀来减少存储空间和查询时间。每个节点代表一个字符，路径表示一个字符串。插入和查询的时间复杂度都是 O(L)，L 是字符串长度，与 Trie 树中已有的字符串数量无关！\n\n扩展延伸：Trie vs 哈希表——1）前缀搜索：哈希表不支持高效的 startsWith / 前缀匹配（需要遍历所有 key）。Trie 树的 startsWith 时间复杂度 O(L)。2）自动补全：Trie 树可以遍历以某个前缀开头的所有单词（DFS 从前缀节点往下）。3）内存占用：Trie 树的每个节点都存储了一个 26 元素的数组（或 HashMap），在数据稀疏时内存浪费严重（每个字符消耗一个对象）。优化：用 HashMap<Character, TrieNode> 替代固定数组（节省内存但增加哈希开销），或用「压缩 Trie」/「Radix Tree」（将单链路的路径压缩到一个节点）。4）应用场景——浏览器/IDE 的自动补全、搜索框联想（Search Suggestion）、拼写检查、路由表查找（CIDR 匹配用二进制 Trie）。\n\n空间优化扩展：1）数组 vs HashMap——字符集大（如 Unicode）时数组太浪费，用 HashMap。2）Radix Tree（基数树）——将只有一个子节点的路径压缩成一个节点，大幅减少节点数。Linux 路由表、Nginx 的 location 匹配用 Radix Tree。3）Double-Array Trie（双数组 Trie）——用两个数组（base + check）实现，内存占用极小（CJK 分词常用）。Elasticsearch 的索引前缀查询用 Double-Array Trie。4）不适合的场景——字符串数量少且长度长，Trie 的内存开销高于哈希表。",
+    "hints": [
+      "为什么 Trie 树的前缀匹配比哈希表高效——哈希表需要遍历所有 key，Trie 沿着前缀路径走 O(L) 即可",
+      "Trie 树的空间开销主要在哪里——每个节点存储子节点数组/哈希表 + 节点对象开销，在稀疏字符串时内存浪费"
+    ],
+    "tags": [
+      "算法",
+      "Trie",
+      "前缀树",
+      "字符串",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "排序算法稳定性与工程选型",
+    "content": "在需要对「先按分数降序排列，分数相同的按姓名升序排列」的多字段排序中，以下哪种策略利用「稳定排序」特性可以最简洁地实现？",
+    "options": [
+      "A) 自定义比较器同时比较分数和姓名，一次排序完成",
+      "B) 先按姓名升序排序（次要字段），再按分数降序排序（主要字段），使用稳定排序算法",
+      "C) 先按分数降序排序，再对分数相同的组内按姓名升序排序",
+      "D) 稳定排序在这里没有优势，直接使用不稳定排序 + 复杂比较器即可"
+    ],
+    "answer": "答案：B) 先按姓名升序排序（次要字段），再按分数降序排序（主要字段），使用稳定排序算法\n\n解析：稳定排序的定义是：当两个元素 key 相等时，排序前后的相对顺序不变。利用这个特性，先将数据按次要字段（姓名）排序，再按主要字段（分数）降序排序。因为第二次排序是稳定的，分数相等时两元素的相对顺序保持第一次排序的结果（即姓名升序）。这是「稳定排序反向运用」的经典技巧。A 虽然也能正确实现，但需要写一个复杂的比较器（同时处理两个字段的顺序）。C 走了弯路——先分组再排序不如直接两次稳定排序简洁。D 错误地认为稳定排序没有优势。\n\n扩展延伸：各排序算法的稳定性：1）稳定排序——归并排序（O(n log n)）、插入排序（O(n²)，n 小时最快）、冒泡排序（O(n²)）。2）不稳定排序——快速排序、堆排序、选择排序、希尔排序。3）工程中 Java 的 Arrays.sort(Object[]) 用 TimSort（稳定，归并 + 插入混合排序，O(n log n)），Arrays.sort(int[]) 用 Dual-Pivot QuickSort（不稳定，但对基本类型来说稳定性无意义）。4）Python 的 list.sort() 和 sorted() 也是稳定排序（Timsort）。5）为什么基本类型排序不需要稳定（int[]/double[]）——基本类型没有「相等」之外的额外属性，相等即相同，排序结果无需区分。\n\n扩展——真实的排序场景：SQL 的 ORDER BY 子句可以直接实现：ORDER BY score DESC, name ASC。数据库排序引擎（通常使用归并排序或 Timsort）自动处理。如果是内存中排序，在 Java 中用 stream：list.stream().sorted(Comparator.comparingInt(Student::getScore).reversed().thenComparing(Student::getName))——这是自定义比较器方案（即 A），底层调用 TimSort 是稳定的。如果排序数据量超大（内存放不下），需要外部排序（多路归并排序），也是稳定性天然支持。",
+    "hints": [
+      "两次稳定排序分别排序要字段和次字段——先在稳定的排序中搞定次要顺序",
+      "Java 的 Arrays.sort(Object[]) 为什么用 Timsort（稳定）而 Arrays.sort(int[]) 用 Dual-Pivot QuickSort（不稳定）"
+    ],
+    "tags": [
+      "算法",
+      "排序",
+      "稳定性",
+      "Timsort"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "BitMap 与 RoaringBitmap：海量数据位图压缩原理",
+    "content": "BitMap（位图）的核心思想是用一个 bit 表示一个元素是否存在，在海量数据中有广泛的应用。但当数据稀疏时，BitMap 的空间浪费严重。RoaringBitmap（咆哮位图）如何在保持高效位运算的同时大幅压缩存储空间？它和传统的 BitMap / Java BitSet 相比有什么优势？求交集/并集的时间复杂度是多少？",
+    "answer": "答案：BitMap 用一个 bit 代表一个整数是否存在，查询和交集/并集操作可以用位运算高效完成。但当数据稀疏（如存储 [1, 1000000, 2000000]）时，一个 200 万位的 BitMap 需要 250KB，而 RoaringBitmap 通过分桶 + 自适应编码压缩到几 KB。\n\n解析：1）传统 BitMap——适合稠密数据（如存储 0 ~ 1000 万连续整数），每个元素 1 bit，查询 O(1)，交集/并集用位运算（popcount 或 SSE/AVX 指令集）非常快。缺点：数据稀疏时浪费空间（不管有没有值都要占一个 bit）。2）RoaringBitmap 的分桶策略——将 32 位整数的空间分为高 16 位（65536 个桶）和低 16 位（桶内编号）。高 16 位决定元素属于哪个桶（key），低 16 位决定桶内的位置。每个桶包含一个 Container，有三种类型：ArrayContainer（当桶内元素 < 4096 个时，直接存 sorted short 数组，每个元素 2 字节）、BitmapContainer（当桶内元素 >= 4096 个时，用 65536 bit = 8KB 的 BitMap）、RunContainer（当桶内元素连续成段时，存 (start, length) 对，适合连续范围如 [1,2,3,4,5] 存为 (1,5)）。\n\n扩展延伸：优点与性能：1）自适应压缩：RoaringBitmap 在数据稀疏时用 ArrayContainer（几个整数只占几字节），数据稠密时自动升为 BitmapContainer（位运算效率高）。连续数据用 RunContainer（压缩比最高）。这比固定使用 BitMap 灵活得多。2）求交集——遍历两个 RoaringBitmap 的桶，只有 key 相同的桶才需要做交集。两个 ArrayContainer 的交集用「双指针归并」O(n + m)；两个 BitmapContainer 的交集用位运算 AND；Array vs Bitmap 时将 Array 逐个检查是否在 Bitmap 中。3）求并集——类似。全集并集性能与数据分布有关。4）内存对比——存储 1000 万个随机整数：传统 BitMap 需要 1.2GB（不考虑分页时），RoaringBitmap 约 18MB。5）应用场景——Lucene/Elasticsearch 的倒排索引存储（文档 ID 集合）、Apache Druid 的 Bitmap 索引列、Redis 的扩展模块（Redis-Roaring）、ClickHouse 的位图函数。6）RoaringBitmap 在 64 位场景的局限——32 位分桶设计在 64 位整数上不能直接用，需要用多个 RoaringBitmap 或 64 位变体（如 Roaring64Bitmap 用高位 32 位做桶再进行类似处理）。",
+    "hints": [
+      "RoaringBitmap 什么时候用 ArrayContainer 什么时候用 BitmapContainer——以 4096 个元素为阈值（65536 的 1/16）",
+      "RoaringBitmap 为什么在 OLAP 引擎中这么受欢迎——海量数据场景下内存效率极高，且位运算性能好"
+    ],
+    "tags": [
+      "算法",
+      "数据结构",
+      "BitMap",
+      "RoaringBitmap",
+      "压缩"
+    ]
   }
 ]

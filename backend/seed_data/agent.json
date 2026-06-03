@@ -1521,5 +1521,107 @@
       "RAG",
       "长期记忆"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Agent Grounding 与事实性验证",
+    "content": "关于 Agent 的事实性验证（Grounding & Factuality Verification），以下哪个架构模式是正确的？",
+    "options": [
+      "A) Agent 只需要依赖 LLM 内置知识进行推理，不需要外部验证工具，因为模型本身已经过预训练和 RLHF 对齐",
+      "B) 最有效的验证策略是每步 Agent 输出后将其「冻结」，不进行任何额外的事实校验以保持推理连续性",
+      "C) 多层验证架构——LLM 输出经过工具辅助验证（搜索对照/数据库查询）→ 自我矛盾检测 → 置信度评估，未通过的输出被标记或回退重生成",
+      "D) 事实性验证只能在 Agent 最终输出时进行一次，无法在推理过程中间步骤进行验证"
+    ],
+    "answer": "C",
+    "hints": [
+      "Agent 的 grounding 是一个迭代过程——每个工具调用返回的结果都需要验证其合理性和一致性",
+      "Self-Ask（Press et al. 2022）和 Self-Check 是典型的验证模式——Agent 生成初始答案后再主动质疑自己的答案"
+    ],
+    "tags": [
+      "Agent",
+      "Grounding",
+      "事实验证",
+      "可靠性"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Computer Use / 视觉 GUI Agent",
+    "content": "什么是 Computer Use（计算机使用）Agent？这类 Agent 如何「看」和「操作」图形界面？目前技术面临的核心挑战是什么？",
+    "answer": "答案：Computer Use Agent 是一种能够像人类一样观察和操作计算机图形界面的 AI 系统——它通过截图「看」屏幕内容，然后生成鼠标点击、键盘输入、手势操作等动作来执行任务。Claude Computer Use、Gemini 屏幕理解、Apple Ferret UI、CogAgent 等工作代表了这一方向的探索。核心挑战包括视觉定位精度、跨应用上下文保持、执行鲁棒性和安全性。\n\n解析：技术架构——1）观察层：Agent 通过截取屏幕截图（或系统无障碍 API 获取 UI 树）感知当前状态。UI 树方式更精确但兼容性差（不同应用不同框架），截图方式通用但需要视觉模型理解界面。2）规划层：LLM/VLM 根据当前屏幕状态和用户目标决定下一步动作——点击哪个坐标？输入什么文本？拖拽还是滚动？3）执行层：通过操作系统级别的接口（如 macOS Accessibility API、Windows UI Automation、Android Accessibility Service）或计算机视觉（CV）的坐标映射来执行动作。4）反馈循环：执行动作后再次截图，对比预期变化和实际变化，判断动作是否成功。\n\n核心挑战——1）视觉定位精度：LLM 输出像素级坐标误差较大（尤其是大屏幕），需要后处理校准。常见方案：将屏幕划分为网格（如 10×10 块），让模型选择网格区域后再精确定位。2）UI 状态理解：动态内容（下拉菜单、滑块、悬浮提示）的识别和交互非常困难，静态截图无法完全表示 UI 的交互状态。3）跨应用工作流：任务往往需要跨多个应用（从浏览器复制数据到表格），应用切换和对应上下文保持是难题。4）执行鲁棒性：网络延迟、页面加载、动画过渡等异步事件导致截图和实际状态不同步。需要实现 Wait-and-Retry 机制。5）安全对齐：Agent 能操作整个桌面意味着巨大风险——误操作（删除文件、发送邮件）、对抗攻击（恶意页面诱导 Agent 执行危险操作）。需要细粒度的权限控制和人机确认环。",
+    "hints": [
+      "GUI Agent 面临的「grounding」问题比纯文本 Agent 更严重——模型看到的屏幕像素与实际 UI 元素的语义边界之间有很大的 gap",
+      "Screen parsing（屏幕解析）是 GUI Agent 的关键组件——将原始截图转化为结构化的 UI 元素列表"
+    ],
+    "tags": [
+      "Agent",
+      "Computer Use",
+      "GUI Agent",
+      "视觉 Agent"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Software Engineering Agent（SWE-Agent 架构）",
+    "content": "SWE-bench 上表现出色的 Code Agent（软件工程 Agent）通常采用什么架构？这类 Agent 的核心能力组件有哪些？处理大型代码库时的关键技术挑战是什么？",
+    "answer": "答案：SWE Agent 是专门处理软件工程任务的 AI 系统——理解代码问题、定位 bug、生成修复、运行测试验证。SWE-bench 上的顶级系统通常采用 Agentic 架构（非简单单轮生成），核心组件包括：代码库索引与检索、编辑决策与 patch 生成、沙箱执行与验证、错误驱动的迭代循环。处理大型代码库时，关键挑战是代码检索精度、编辑顺序规划、长上下文窗口管理和测试失败后的自适应调试。\n\n解析：核心能力组件——1）代码库理解与定位：将大型代码库转化为 LLM 可理解的结构。需要：代码检索工具（符号搜索、文件搜索、grep 式搜索）；仓库级别上下文（文件依赖关系、模块结构）；逐步探索策略（从高层到低层）。SWE-Agent（Princeton）的 Agent-Computer Interface（ACI）设计了专门的代码浏览命令（如 file_view、grep_search、find_class），让 Agent 可以高效导航代码库。2）编辑与生成：生成代码补丁（diff/patch）而非整个文件覆盖。编辑格式：用 search/replace 块指定在原文件的某个位置做精确替换。支持多文件编辑，需要理解跨文件的变更依赖。3）沙箱验证：在隔离环境中运行测试用例验证修复正确性；如果测试不通过，Agent 需要分析失败信息并迭代修复（Debug Loop）。\n\n扩展延伸：大型代码库的挑战——1）检索精度：SWE-bench 每个 issue 涉及的文件平均 2-5 个，但在真实仓库（百万行代码）中，Agent 需要从数千个文件中找到相关的几个。BM25 + Embedding 检索 + 结构感知排序的多阶段检索策略是常用方案。2）编辑规划：需要同时修改多个文件时，修改顺序很重要（修改 A 可能依赖先修改 B）。Agent 需要生成一个编辑计划而非盲目的逐个文件修改。3）上下文窗口管理：大型代码库无法全部放入上下文窗口。需要滑动窗口策略和智能的 retrieval-augmented generation（RAG）来选择每步需要看到的代码片段。4）回归测试选择：修改代码后不是跑全量测试（太慢），而是通过依赖分析选择受影响的测试子集运行。",
+    "hints": [
+      "SWE-Agent（Princeton）的核心贡献是 ACI（Agent-Computer Interface）——为 Agent 设计更高效的代码导航命令，而不是让模型直接写 shell 命令",
+      "SWE-bench 顶级系统几乎都使用 Agentic 循环（多轮探索-定位-修复-验证），而不是单次生成"
+    ],
+    "tags": [
+      "SWE-Agent",
+      "Code Agent",
+      "软件工程",
+      "SWE-bench"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Agent Instruction Hierarchy（指令优先级机制）",
+    "content": "关于 Agent 系统的 Instruction Hierarchy（指令优先级机制），以下哪个说法是错误的？",
+    "options": [
+      "A) Instruction Hierarchy 的核心思想是给不同来源的指令赋予不同优先级，系统提示（System Prompt）的优先级高于用户消息，用户消息高于工具返回的第三方内容",
+      "B) 实现 Instruction Hierarchy 的一种方法是在模型训练时就注入优先级标记（如 <sys>、<user>、<tool> 标签），让模型学会按优先级执行指令",
+      "C) Instruction Hierarchy 能够完全防御所有形式的 Prompt Injection 攻击，包括间接注入（如网页内容中的隐藏指令）",
+      "D) OpenAI 在 GPT-4 中实现了 Instruction Hierarchy，通过在模型内部对不同的消息角色施加不同的注意力权重来维护指令优先级"
+    ],
+    "answer": "C",
+    "hints": [
+      "Instruction Hierarchy 是一种重要的防御机制能显著提升对 Prompt Injection 的鲁棒性，但没有哪种防御是「完全」有效的",
+      "间接注入（Indirect Injection）——攻击者将恶意指令嵌入到 Agent 从外部读取的内容中（如网页、PDF、邮件体）——是 Agent 安全中最难防御的攻击面"
+    ],
+    "tags": [
+      "Agent",
+      "安全",
+      "Instruction Hierarchy",
+      "Prompt Injection"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent-to-Agent (A2A) 协议与跨 Agent 通信",
+    "content": "Google 2024 年提出的 Agent-to-Agent（A2A）协议解决了什么问题？A2A 的架构设计要点是什么？与 MCP（Model Context Protocol）相比，A2A 定位有哪些不同？",
+    "answer": "答案：A2A 是一个开放的跨 Agent 通信协议，解决不同 Agent 框架（LangChain、CrewAI、AutoGen 等）和不同平台之间无法互操作的问题——一个企业在 LangGraph 上开发的 Agent 如何与另一个企业用 Semantic Kernel 开发的 Agent 协作。A2A 定义了一套标准化的通信层，让 Agent 可以发现彼此的能力、发送任务请求、交换状态和结果。\n\n解析：A2A 的核心架构设计——1）Agent Card：每个 Agent 发布一个 JSON 格式的能力描述卡（Agent Card），包含元数据（名称、描述）、能力列表（支持的 task 类型）、通信端点（URL/Schema）。Agent Card 是 Agent 的「名片」，类似于 OAuth 的 Discover 端点。2）Task 驱动的通信：Agent 之间通过发送 Task 对象交互。Task 包含唯一的 task_id、输入（结构化自然语言 + 参数）、状态（submitted/working/completed/failed）、产出物（artifact）。支持流式更新——接收方可以实时推送进度。3）Skill 发现机制：一个 Agent 可以查询另一个 Agent 支持哪些 Skill（能力单元）。Skill 有明确的输入输出 Schema，支持版本化。Skill 的定义类似 OpenAI 的 Function Calling Schema。\n\n扩展延伸：A2A vs MCP——MCP（Model Context Protocol）定义了「LLM ↔ 工具」之间的接口标准，让 LLM 可以动态发现和调用外部工具。A2A 定义了「Agent ↔ Agent」之间的通信标准。两者定位完全不同：A2A 假设两端都是自主智能体，通信是对等的（peer-to-peer）；MCP 假设一端是 LLM/Agent（客户端），另一端是工具服务器（服务端），通信是主从式的。\n\n实战场景：一个企业用 A2A 标准能让它的客服 Agent 自动调用另一个企业的订单查询 Agent。A2A Agent Card 让客服 Agent 发现订单 Agent 的能力，Task 对象管理整个查询的生命周期，两个 Agent 可以分属不同的组织、基于不同的技术栈。",
+    "hints": [
+      "A2A 和 MCP 不是竞争关系而是互补关系——MCP 是工具协议（LLM ⇄ Tools），A2A 是 Agent 协议（Agent ⇄ Agent）",
+      "Agent Card 的设计类似 OAuth 的 Discover 端点——Agent 不需要预配置（hardcode）其他 Agent 的地址和能力，而是运行时发现"
+    ],
+    "tags": [
+      "Agent",
+      "A2A",
+      "通信协议",
+      "互操作性"
+    ]
   }
 ]

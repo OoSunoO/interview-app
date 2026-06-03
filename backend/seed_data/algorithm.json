@@ -1490,5 +1490,105 @@
       "海量数据",
       "分治"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "实现 LRU 缓存",
+    "content": "设计和实现一个 LRU（最近最少使用）缓存。要求 get(key) 和 put(key, value) 的操作时间复杂度均为 O(1)。当缓存容量达到上限时，淘汰最近最少使用的键值对。\n\n请提供数据结构的选型理由和核心实现逻辑。",
+    "answer": "```java\nimport java.util.HashMap;\nimport java.util.Map;\n\nclass LRUCache {\n    // 双向链表节点\n    static class DLinkedNode {\n        int key, value;\n        DLinkedNode prev, next;\n        DLinkedNode(int key, int value) {\n            this.key = key;\n            this.value = value;\n        }\n    }\n    \n    private final int capacity;\n    private final Map<Integer, DLinkedNode> cache = new HashMap<>();\n    private final DLinkedNode head = new DLinkedNode(0, 0); // 哨兵头节点\n    private final DLinkedNode tail = new DLinkedNode(0, 0); // 哨兵尾节点\n    \n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        head.next = tail;\n        tail.prev = head;\n    }\n    \n    public int get(int key) {\n        DLinkedNode node = cache.get(key);\n        if (node == null) return -1;\n        moveToHead(node);  // 访问后移到头部（表示最近使用了）\n        return node.value;\n    }\n    \n    public void put(int key, int value) {\n        DLinkedNode node = cache.get(key);\n        if (node != null) {\n            node.value = value;\n            moveToHead(node);\n        } else {\n            if (cache.size() >= capacity) {\n                DLinkedNode removed = removeTail(); // 淘汰尾部（最久未使用）\n                cache.remove(removed.key);\n            }\n            DLinkedNode newNode = new DLinkedNode(key, value);\n            cache.put(key, newNode);\n            addToHead(newNode);\n        }\n    }\n    \n    private void moveToHead(DLinkedNode node) {\n        removeNode(node);\n        addToHead(node);\n    }\n    \n    private void addToHead(DLinkedNode node) {\n        node.next = head.next;\n        node.prev = head;\n        head.next.prev = node;\n        head.next = node;\n    }\n    \n    private void removeNode(DLinkedNode node) {\n        node.prev.next = node.next;\n        node.next.prev = node.prev;\n    }\n    \n    private DLinkedNode removeTail() {\n        DLinkedNode node = tail.prev;\n        removeNode(node);\n        return node;\n    }\n}\n```\n\n解法：双向链表 + HashMap。HashMap 提供 O(1) 的查找，双向链表提供 O(1) 的节点移动和删除。核心思路：每次访问（get/put）将节点移到链表头部，淘汰时从链表尾部移除。哨兵节点（dummy head/tail）避免空指针边缘判断。\n\n扩展延伸：1）LinkedHashMap 在 Java 中已经实现了 LRU（accessOrder=true + 重写 removeEldestEntry），面试手写是为了考察底层实现。2）并发 LRU——用 ConcurrentHashMap + ReentrantLock 或 ReadWriteLock。3）LRU 的变种：LRU-K（统计最近 K 次访问频率，防止偶发的大查询刷掉热点）。4）Redis 的近似 LRU——通过采样 + 淘汰近似最久未使用的 key，不做精确 LRU（节省内存）。",
+    "hints": [
+      "为什么用双向链表而不是单向链表——删除节点时需要知道前驱节点",
+      "哨兵节点避免了什么边缘条件——空链表时的 null 判断"
+    ],
+    "tags": [
+      "数据结构",
+      "LRU",
+      "缓存",
+      "链表",
+      "哈希表"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Top K 问题解法比较：堆 vs 快速选择 vs 计数排序",
+    "content": "从一个海量数据中找出出现频率最高的 Top K 个元素（或最大的 K 个数），常见解法有哪些？各自的时间/空间复杂度是什么？海量数据（无法全部加载到内存）的情况下怎么做？",
+    "answer": "答案：Top K 问题的三大解法：最小堆（O(n log k)）、快速选择 QuickSelect（平均 O(n)）、计数排序/桶排序（O(n) 但限制多）。海量数据场景用堆 + 外部排序 + 数据分片（MapReduce）\n\n解析：1）最小堆——维护一个大小为 K 的最小堆，遍历数据时若当前元素大于堆顶则替换。时间复杂度 O(n log k)，空间 O(k)。适合各种场景，流式数据处理天然支持（不需要全部数据在内存）。缺点：每个元素都做 log k 的堆操作，k 很大时速度下降。2）快速选择（QuickSelect）——基于快排的 partition 思想，每次将数组分成两部分，判断第 K 大元素在哪一侧并递归处理。平均 O(n)，最坏 O(n²)。优点：速度快（不排序所有元素）。缺点：需要全部数据在内存中（原地修改数组），无法处理流式数据。3）计数排序/桶排序——如果数据范围有限（如年龄、成绩），可以用桶。遍历数据统计频率，再按桶的大小从大到小取 K 个。O(n + m)，m 是数据范围。适用场景受限（需要已知且有限的数据范围）。\n\n扩展延伸：海量数据场景——数据量大到无法加载到单机内存（如 100 亿条日志找 Top 100 错误码）：1）分片 + 分别计算 Top K → 合并结果。MapReduce 模式：Map 阶段每个分片计算局部 Top K，Reduce 阶段合并所有分片的 Top K。2）外部排序 + 堆——先用外部排序（归并排序变体，分块排序后写入磁盘，多路归并合并）将数据排序，再用堆取 Top K。适合支持排序的场景。3）近似方案——Count-Min Sketch（概率数据结构，用多个哈希函数 + 计数器近似统计频率）用于估算 Top K，内存极省但存在哈希冲突误差。4）精确 Top K vs 近似 Top K——精确需要完整的计数器或排序，海量数据下成本高。很多实际场景（如实时热门商品、热搜词）可以接受近似 Top K（用 Count-Min Sketch + 堆组合）。",
+    "hints": [
+      "为什么 Top K 用最小堆而不是最大堆——最小堆堆顶是「候选中最小的」，新元素比堆顶大才能进入",
+      "海量数据下精确 Top K 和近似 Top K 的取舍——Count-Min Sketch 可以大幅降低内存但牺牲精度"
+    ],
+    "tags": [
+      "算法",
+      "Top K",
+      "堆",
+      "排序",
+      "海量数据"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "实现一个线程安全的阻塞队列（生产者消费者）",
+    "content": "用 Java 实现一个线程安全的阻塞队列（Blocking Queue），支持 put() 和 take() 操作。当队列满时 put() 阻塞直到有空间，当队列空时 take() 阻塞直到有元素。要求讲解锁机制和条件等待的协作原理。",
+    "answer": "```java\nimport java.util.LinkedList;\nimport java.util.Queue;\nimport java.util.concurrent.locks.Condition;\nimport java.util.concurrent.locks.ReentrantLock;\n\nclass BoundedBlockingQueue<T> {\n    private final Queue<T> queue = new LinkedList<>();\n    private final int capacity;\n    private final ReentrantLock lock = new ReentrantLock();\n    private final Condition notFull = lock.newCondition();   // 队列非满条件\n    private final Condition notEmpty = lock.newCondition();  // 队列非空条件\n\n    public BoundedBlockingQueue(int capacity) {\n        this.capacity = capacity;\n    }\n\n    public void put(T item) throws InterruptedException {\n        lock.lock();\n        try {\n            while (queue.size() >= capacity) {\n                notFull.await();  // 队列满，等待「非满」信号\n            }\n            queue.offer(item);\n            notEmpty.signal();   // 通知等待的 take 线程\n        } finally {\n            lock.unlock();\n        }\n    }\n\n    public T take() throws InterruptedException {\n        lock.lock();\n        try {\n            while (queue.isEmpty()) {\n                notEmpty.await();  // 队列空，等待「非空」信号\n            }\n            T item = queue.poll();\n            notFull.signal();      // 通知等待的 put 线程\n            return item;\n        } finally {\n            lock.unlock();\n        }\n    }\n\n    public int size() {\n        lock.lock();\n        try {\n            return queue.size();\n        } finally {\n            lock.unlock();\n        }\n    }\n}\n```\n\n解法：ReentrantLock + 两个 Condition（notFull + notEmpty）。核心思路是使用显式锁的条件等待和通知机制：put 时若队列满则等待 notFull，插入后通知 notEmpty；take 时若队列空则等待 notEmpty，取出后通知 notFull。使用 while 循环而不是 if 检查条件——防止虚假唤醒（spurious wakeup）。\n\n扩展延伸：1）Java 标准库已经提供了 LinkedBlockingQueue（链表实现，默认 Integer.MAX_VALUE 容量）、ArrayBlockingQueue（数组实现，有界，公平/非公平锁可选）、SynchronousQueue（容量为 0，每个 put 必须等待一个 take），面试手写是为了考察线程协作和 Condition 的理解。2）使用 synchronized + wait()/notifyAll() 也能实现（一个锁 + notifyAll 广播），但效率低于 Condition（notifyAll 会唤醒所有等待线程，而 Condition 可以精确唤醒 put/take 的线程）。3）LockSupport.park()/unpark()——更底层的线程阻塞/唤醒机制，AQS（AbstractQueuedSynchronizer）的基石。\n\n实际问题：两个 Condition 相比一个锁 + notifyAll 的优势——notifyAll 会唤醒所有等待线程（包括 put 和 take），被唤醒的线程会重新竞争锁，浪费调度资源。Condition 可以精确唤醒 put 或 take 线程。",
+    "hints": [
+      "为什么用 while 循环而不是 if 检查条件——虚假唤醒和信号丢失",
+      "两个 Condition 相比 notifyAll 优化了什么——精确唤醒，避免「惊群效应」"
+    ],
+    "tags": [
+      "算法",
+      "多线程",
+      "阻塞队列",
+      "Condition",
+      "生产者消费者"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "二分查找的变种与边界处理",
+    "content": "在一个按升序排列的数组 nums 中查找目标值 target 的「最左插入位置」（即第一个 >= target 的位置）。例如 nums = [1,3,5,5,5,7], target = 5，应返回 2。以下哪个二分查找实现是正确的？",
+    "options": [
+      "A) while (left < right) { int mid = (left + right) / 2; if (nums[mid] >= target) right = mid; else left = mid + 1; } return left;",
+      "B) while (left <= right) { int mid = (left + right) / 2; if (nums[mid] >= target) right = mid - 1; else left = mid + 1; } return left;",
+      "C) while (left < right) { int mid = left + (right - left) / 2; if (nums[mid] >= target) right = mid; else left = mid + 1; } return left;",
+      "D) while (left < right) { int mid = left + (right - left) / 2; if (nums[mid] > target) right = mid; else left = mid + 1; } return left;"
+    ],
+    "answer": "答案：C) while (left < right) { int mid = left + (right - left) / 2; if (nums[mid] >= target) right = mid; else left = mid + 1; } return left;\n\n解析：二分查找找「第一个 >= target」的位置（下界 / lower_bound），这是 C++ STL 中 lower_bound 的标准实现。核心：1）循环条件是 left < right（不是 <=），因为 left == right 时找到答案了。2）mid 用 left + (right - left) / 2 避免整数溢出（(left+right)/2 在 left+right > Integer.MAX_VALUE 时溢出）。3）nums[mid] >= target 时，mid 可能是答案，所以 right = mid（不排除 mid）。否则 left = mid + 1。4）结果就是 left（循环结束时 left == right）。A 没有用 left + (right-left)/2 防溢出（但小数据下没问题）。B 用 <= + right = mid - 1 会跳过 mid。D 用 > target 会找第一个大于 target 的位置（即 upper_bound），而不是 >=。\n\n扩展延伸：二分查找的边界处理是面试高频考点：1）lower_bound（第一个 >= target）vs upper_bound（第一个 > target）的区别。2）旋转数组的二分——在 [4,5,6,7,0,1,2] 中找 target。先比较 mid 和 left 判断哪侧有序，再在有序侧用二分。3）二分答案——将「求解最值」转为「判断可行性」的思想，如「在 D 天内送达包裹的能力」或「分割数组的最大值」。这类题目的关键是写对 check(mid) 函数。4）二分的死循环——当 left + 1 = right 时，(left+right)/2 = left（整数除法向下取整），如果 mid 的赋值是 left = mid，可能死循环。所以模板中 left 总是 mid + 1，right = mid，不会死循环。",
+    "hints": [
+      "mid = (left + right) / 2 和 mid = left + (right - left) / 2 的区别是防整数溢出",
+      "lower_bound（第一个 >=）和 upper_bound（第一个 >）的 if 判断条件差别在等号"
+    ],
+    "tags": [
+      "算法",
+      "二分查找",
+      "边界处理",
+      "数组"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "跳跃表（Skip List）原理与时间复杂度分析",
+    "content": "跳跃表（Skip List）的核心数据结构和工作原理是什么？为什么它能在有序集合中实现 O(log n) 的查找、插入和删除？与平衡树（AVL / Red-Black Tree）相比的优劣势？Redis 的 Zset 为什么使用跳跃表而不是平衡树？",
+    "answer": "答案：跳跃表是一种基于多级索引的链表结构，通过在有序链表上增加多层索引层实现快速查找。查找、插入、删除的平均时间复杂度均为 O(log n)，空间复杂度 O(n)。\n\n解析：1）数据结构——底层是一个有序链表（所有元素）。在此基础上随机抽取部分元素作为「一级索引」层，一级索引上再随机抽取作为「二级索引」层，以此类推。每个节点在每一层有一个 forward 指针。2）查找过程——从最高层开始，向右找到「小于 target 的最大节点」，然后降一层继续向右，直到最底层找到目标。每层「跳过」大量元素，因此叫跳跃表。3）随机化层高——每个节点在插入时按概率 p（通常 1/2 或 1/4）决定是否提升到上一层。这种随机化策略使得索引层数期望为 log_{1/p}(n)。随机化保证了平均 O(log n) 而不需要像平衡树那样做旋转/染色来维持平衡。\n\n扩展延伸：与平衡树的对比——1）实现简单：跳跃表的核心操作只有几十行代码（插入/删除/查找），而红黑树需要处理旋转和染色，实现复杂得多。2）范围查询友好：底层是有序链表，ZRANGE（按排名/分数范围取元素）只需要在跳跃表上找到起始点然后沿链表遍历。平衡树的中序遍历也可以做到，但跳跃表的实现更直观。3）锁粒度：跳跃表的多层结构在并发场景下可以做到更细粒度的锁（层级别或节点级别），而平衡树的旋转操作需要锁更大范围。4）缺点：跳跃表占用的内存略多（每个节点有多个 forward 指针），缓存友好性不如紧凑的数组结构（如 B+ 树），但好于链表的随机指针访问。\n\nRedis Zset 为什么选跳跃表——Redis 作者（antirez）的解释：1）跳跃表实现简单，代码量和 bug 率低于平衡树。2）Zset 的范围查询（ZRANGEBYSCORE）频繁，跳跃表的有序链表遍历优势明显。3）Redis 的 Zset 结合了哈希表（ZSCORE O(1) 查分数）和跳跃表（范围查询 O(log n + m)），哈希表弥补了跳跃表不支持 O(1) 精确查找的缺点。\n\n工程实现细节：Redis 的跳跃表实现中，允许节点有重复的 score（按字典序排序），层高上限为 32 层（p = 1/4，因为 Redis 倾向于节省内存），后退指针（backward）支持从尾部向前遍历（ZREVRANGE）。",
+    "hints": [
+      "为什么跳跃表不需要像红黑树那样做旋转/再平衡——随机化层高在概率上保证平衡",
+      "Redis Zset 用跳跃表而不红黑树的核心原因——实现简单 + 范围查询友好 + 并发时锁粒度更细"
+    ],
+    "tags": [
+      "数据结构",
+      "跳跃表",
+      "Redis",
+      "Zset",
+      "时间复杂度"
+    ]
   }
 ]

@@ -1436,5 +1436,98 @@
       "AQS",
       "Object.wait"
     ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "线程中断协作机制",
+    "content": "Java 线程中断是协作机制而非强制终止。调用 thread.interrupt() 将线程的中断标志位设为___。线程通过___检测中断（返回 true 并___标志位），通过___仅检查不清除标志位。对于阻塞在 wait()/sleep()/join() 中的线程，interrupt() 会抛出___。已经终止的线程调用 interrupt()___（有/无）效果。",
+    "answer": "{\"correct\": [[\"true\"], [\"Thread.interrupted()\", \"interrupted()\"], [\"\\u6e05\\u9664\", \"\\u91cd\\u7f6e\", \"\\u6e05\\u7a7a\"], [\"isInterrupted()\", \"thread.isInterrupted()\"], [\"InterruptedException\"], [\"\\u65e0\", \"\\u6ca1\\u6709\", \"\\u65e0\\u6548\\u679c\"]], \"distractors\": [\"false\", \"1\", \"stop()\", \"isAlive()\", \"suspend()\", \"RuntimeException\", \"Exception\", \"\\u6709\", \"\\u4e0d\\u786e\\u5b9a\"]}",
+    "hints": [
+      "Thread.interrupted() 是静态方法，调用后会清除中断标志位；isInterrupted() 是实例方法，不清除标志位",
+      "InterruptedException 抛出后中断标志位会被清除——catch 块中通常需重新设置中断标志（Thread.currentThread().interrupt()）"
+    ],
+    "tags": [
+      "并发",
+      "线程",
+      "中断",
+      "InterruptedException"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "ConcurrentHashMap 1.8 实现",
+    "content": "JDK 8 的 ConcurrentHashMap 放弃分段锁（Segment），改为___ + ___实现并发安全。底层结构为数组 + 链表 + ___。当链表长度超过___且数组长度 ≥ 64 时，链表转为红黑树以降低查询时间复杂度到___。扩容时通过___机制让多个线程协同搬运元素。并发 put 操作通过数组元素上的___（首个元素为 null 时）和___（首个元素非 null 时）两种方式实现线程安全。",
+    "answer": "{\"correct\": [[\"synchronized\", \"\\u540c\\u6b65\\u9501\"], [\"CAS\", \"Compare And Swap\"], [\"\\u7ea2\\u9ed1\\u6811\", \"TreeBin\"], [\"8\"], [\"O(logN)\", \"O(log n)\", \"\\u5bf9\\u6570\\u7ea7\"], [\"\\u591a\\u7ebf\\u7a0b\\u5e76\\u53d1\\u6269\\u5bb9\", \"\\u534f\\u52a9\\u6269\\u5bb9\", \"transfer()\"], [\"CAS\", \"Unsafe.compareAndSwapObject\"], [\"synchronized\", \"\\u540c\\u6b65\\u9501\"]], \"distractors\": [\"ReentrantLock\", \"ReadWriteLock\", \"\\u8df3\\u8868\", \"B+ \\u6811\", \"6\", \"7\", \"10\", \"O(1)\", \"O(N)\", \"\\u4e32\\u884c\", \"\\u5206\\u6bb5\", \"\\u81ea\\u65cb\\u9501\"]}",
+    "hints": [
+      "JDK 8 的 ConcurrentHashMap 在并发写时锁粒度从 Segment 降级为数组元素（桶）级",
+      "CAS 在桶首元素为 null 时使用（无竞争快速路径），synchronized 在桶首元素非 null 时使用"
+    ],
+    "tags": [
+      "并发",
+      "ConcurrentHashMap",
+      "CAS",
+      "synchronized",
+      "集合"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "LongAdder 分段计数原理",
+    "content": "LongAdder 在 AtomicLong 基础上优化高并发计数，核心思路是___。内部维护一个___数组和基值 base。竞争低时所有线程累加到___上（CAS 操作）。当 CAS 失败次数增多时扩容 cell 数组（初始容量为___，每次翻倍，最大不超过 CPU 核数）。每个线程通过___计算 hash 映射到对应 cell 累加。sum() 方法的返回值为___，并发调用 sum()___（是/否）保证一致性。建议优先用___（JDK 8 新增）替代 AtomicLong 做高频计数统计。",
+    "answer": "{\"correct\": [[\"\\u70ed\\u70b9\\u5206\\u79bb\", \"\\u5206\\u6bb5\\u8ba1\\u6570\", \"\\u7a7a\\u95f4\\u6362\\u65f6\\u95f4\"], [\"Cell\", \"cells\"], [\"base\", \"base \\u503c\"], [\"2\", \"\\u4e8c\"], [\"ThreadLocalRandomProbe\", \"probe\", \"hash\"], [\"base + sum(cells)\", \"base + \\u2211cells\", \"\\u7d2f\\u52a0\\u6240\\u6709\\u5355\\u5143\\u683c\"], [\"\\u5426\", \"\\u4e0d\"], [\"LongAdder\"]], \"distractors\": [\"CAS \\u81ea\\u65cb\", \"\\u9501\\u5206\\u6bb5\", \"Block\", \"segment\", \"slot\", \"baseValue\", \"4\", \"8\", \"random()\", \"hashCode()\", \"base + cells[0]\", \"base - sum(cells)\", \"\\u662f\", \"AtomicLong\", \"LongAccumulator\"]}",
+    "hints": [
+      "LongAdder 的 sum() 在读时没有加锁——并发调用 sum() 的结果可能不是精确总和",
+      "LongAdder 适用于「写频繁、读较少」的场景（如计数器、指标统计），不适用于需要精确读值的场景"
+    ],
+    "tags": [
+      "并发",
+      "LongAdder",
+      "AtomicLong",
+      "分段计数",
+      "性能"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "内存屏障的四种类型与 X86 实现",
+    "content": "JVM 内存屏障分为四种：___（保证之前写操作在后续写之前完成）、___（保证之前写在后续读之前完成，最重的屏障）、___（保证之前读在后续读之前完成）和___（保证之前读在后续写之前完成）。volatile 写操作在 x86 平台实际插入的是___屏障（因为 x86 的强内存模型下其他屏障已是 no-op）。volatile 写的完整屏障序列为：写前插入___屏障，写后插入___屏障；volatile 读后插入___+___屏障。",
+    "answer": "{\"correct\": [[\"StoreStore\", \"\\u5199\\u5199\\u5c4f\\u969c\"], [\"StoreLoad\", \"\\u5199\\u8bfb\\u5c4f\\u969c\"], [\"LoadLoad\", \"\\u8bfb\\u8bfb\\u5c4f\\u969c\"], [\"LoadStore\", \"\\u8bfb\\u5199\\u5c4f\\u969c\"], [\"StoreLoad\"], [\"StoreStore\"], [\"StoreLoad\"], [\"LoadLoad\", \"LoadStore\"]], \"distractors\": [\"LoadStore\", \"StoreLoad\", \"StoreStore\", \"LoadLoad\", \"NoOp\", \"mfence\", \"lfence\", \"sfence\", \"volatile \\u5199\", \"volatile \\u8bfb\"]}",
+    "hints": [
+      "StoreLoad 是四种屏障中最「重」的——在 x86 上对应 mfence/lock 前缀指令",
+      "x86 是强内存模型（TSO），LoadLoad/LoadStore/StoreStore 在 x86 上都是 no-op，只有 StoreLoad 需要 CPU fence 指令",
+      "ARM/PowerPC 是弱内存模型，四种屏障都需要 CPU fence 指令实现"
+    ],
+    "tags": [
+      "并发",
+      "内存屏障",
+      "JMM",
+      "volatile",
+      "X86"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Exchanger 数据交换",
+    "content": "Exchanger 是 JUC 包中的同步器，支持两个线程在___（同步点）交换数据。内部使用___（CAS 自旋机制）和___（自旋失败后线程阻塞）两种等待策略。",
+    "answer": "{\"correct\":[[\"同步点\",\"交汇点\"],[\"自旋\",\"Spin\"],[\"park\",\"阻塞\"]],\"distractors\":[\"互斥锁\",\"信号量\",\"读写锁\",\"公平锁\",\"可重入锁\"]}",
+    "hints": [
+      "Exchanger 适合两个线程之间的数据交换场景，如生产者-消费者模式",
+      "交换超时会抛出 TimeoutException"
+    ],
+    "tags": [
+      "并发",
+      "Exchanger",
+      "JUC"
+    ]
   }
 ]

@@ -1893,5 +1893,94 @@
       "锁",
       "操作系统"
     ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "泛型通配符 PECS 原则",
+    "content": "给定 List<? extends Number> list1 和 List<? super Integer> list2，以下哪项操作可以编译通过？\nA) list1.add(Integer.valueOf(1))\nB) list2.add(Integer.valueOf(1))\nC) list1.add(new Object())\nD) list2.add(new Object())",
+    "answer": "B",
+    "hints": [
+      "extends 限定意味着生产者不能写入",
+      "super 限定意味着消费者可以安全写入"
+    ],
+    "tags": [
+      "Java",
+      "泛型",
+      "PECS",
+      "通配符"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "@Inherited 元注解的作用范围",
+    "content": "关于 @Inherited 元注解的行为，以下哪项描述是正确的？\nA) 父类上声明的所有注解都会自动被子类继承，无需额外标记\nB) @Inherited 使父类上的注解被子类继承，但仅对类层次继承有效，对接口实现和方法重写无效\nC) @Inherited 仅对接口继承有效，对类继承无效\nD) @Inherited 既支持类继承也支持方法重写时的注解继承",
+    "answer": "B",
+    "hints": [
+      "@Inherited 只沿类继承链传播",
+      "接口实现上的注解永远不被继承"
+    ],
+    "tags": [
+      "Java",
+      "注解",
+      "@Inherited",
+      "元注解"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "try-with-resources 的异常抑制机制",
+    "content": "关于 try-with-resources 的异常处理机制，以下哪项是正确的？\nA) 资源关闭时 close() 抛出的异常会覆盖 try 块中抛出的异常，导致原始异常丢失\nB) try 块和 close() 同时抛出异常时，两个异常都被传播但调用方只能捕获到 close() 异常\nC) close() 抛出的异常被添加到 try 块异常的抑制列表中，可通过 Throwable.getSuppressed() 获取\nD) try-with-resources 只能管理单个资源，多个资源需要嵌套 try 语句",
+    "answer": "C",
+    "hints": [
+      "抑制异常机制从 Java 7 开始引入",
+      "getSuppressed 返回的是 close 阶段产生的附加异常"
+    ],
+    "tags": [
+      "Java",
+      "异常处理",
+      "try-with-resources"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "VarHandle 的内存排序语义",
+    "content": "在 VarHandle 的四种内存排序访问模式中，以下哪项描述是正确的？\nA) set() 保证写操作立即对其他线程可见，等价于 volatile 写\nB) setRelease() 保证写之前的操作不会被重排序到写之后，但不保证其他线程能立即看到该写入\nC) getAcquire() 保证读之后的操作不会被重排序到读之前，且读到的值一定是某个线程写入的值\nD) getOpaque() 提供全局顺序一致性，等价于 volatile 读",
+    "answer": "C",
+    "hints": [
+      "release 和 acquire 是配对使用的内存屏障",
+      "plain 模式不做任何重排序限制"
+    ],
+    "tags": [
+      "Java",
+      "VarHandle",
+      "内存排序",
+      "JMM"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "MethodHandle.Lookup 的访问权限边界",
+    "content": "关于 MethodHandle.Lookup 的访问控制，以下哪项是正确的？\nA) 任意位置创建的 Lookup 对象可以访问所有类的所有方法，不受访问控制限制\nB) Lookup 对象持有创建者类的完整访问权限，可以访问模块内的 private 成员，但无法跨模块访问未导出包中的方法\nC) Lookup.findVirtual() 可以在任意类上查找 private 方法\nD) Lookup.unreflect() 可以将任意 Method 对象转换为 MethodHandle，无视访问权限检查",
+    "answer": "B",
+    "hints": [
+      "Lookup 的权限在创建时由调用者类决定",
+      "模块系统对 Lookup 的访问范围有额外限制"
+    ],
+    "tags": [
+      "Java",
+      "MethodHandle",
+      "反射",
+      "模块系统"
+    ]
   }
 ]

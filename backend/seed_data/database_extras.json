@@ -1554,5 +1554,109 @@
       "表空间",
       "存储管理"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 死锁分析与全局锁排查",
+    "content": "线上 MySQL 发生死锁时，如何快速定位死锁根因？InnoDB 的全局锁（LOCK TABLES 和 MDL）导致的死锁与行级死锁有什么不同？如何从应用层面系统性地预防死锁？",
+    "answer": "答案：SHOW ENGINE INNODB STATUS 查看 LATEST DETECTED DEADLOCK；全局锁死锁通常涉及表锁或元数据锁（MDL），行级死锁涉及记录锁和间隙锁。\n\n解析：排查步骤：1）执行 SHOW ENGINE INNODB STATUS\\G 找到 LATEST DETECTED DEADLOCK 段，查看事务 1 和事务 2 的 SQL、等待的锁（WAITING FOR THIS LOCK TO BE GRANTED）和当前持有的锁（HOLDS THE LOCK）。2）ROW LEVEL DEADLOCK 常见于两个事务加锁顺序相反，或二级索引与聚簇索引加锁顺序差异。3）MDL（元数据锁）死锁——ALTER TABLE 等待 DDL，DDL 被正在执行查询的事务阻塞。排查：performance_schema.metadata_locks 表看 MDL 等待链。\n\n扩展延伸：系统性预防策略：1）确保所有事务按相同的顺序访问表和行。2）保持事务短小（快速提交/回滚），减少锁持有时间。3）对高并发更新的表使用 READ COMMITTED 级别（无 Gap Lock 减少冲突）。4）合理设计索引——避免大范围锁扫描。5）SQL 语句使用明确的 ORDER BY 保证加锁顺序一致。6）设置 innodb_lock_wait_timeout（默认 50s）避免无限等待，设置较短的超时（如 5s）快速失败重试。7）兜底：应用层重试机制（捕获 DeadlockException 后 sleep 随机时间重试）。",
+    "hints": [
+      "SHOW ENGINE INNODB STATUS 中如何解读 LOCK WAIT 和 DEADLOCK 信息",
+      "MDL 死锁在什么场景下最容易出现——DDL 与长查询并发"
+    ],
+    "tags": [
+      "MySQL",
+      "死锁",
+      "MDL",
+      "行锁",
+      "排查"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "联合索引最左前缀与 Skip Scan",
+    "content": "表 t 上有联合索引 (a, b, c)，以下哪个查询能最充分利用该索引的三列进行索引扫描？",
+    "options": [
+      "A) WHERE b = 1 AND c = 2",
+      "B) WHERE a = 1 AND c = 2",
+      "C) WHERE a = 1 AND b = 2 AND c = 3",
+      "D) WHERE a > 1 AND b = 2"
+    ],
+    "answer": "答案：C)。解析：最左前缀原则要求从索引最左列开始匹配且不能跳过中间列。C) 完全匹配三列，三列都走索引（ref 访问）。A) 没有 a 列，索引完全失效（除非 MySQL 8.0 Skip Scan 能优化）。B) 跳过了 b 列，a 列用索引但 c 列无法直接利用（可能通过 ICP 下推过滤）。D) a > 1 是范围查询，a 范围扫描后 b 列无法利用排序（range 之后所有列失效）。注意：MySQL 8.0.13+ 的 Skip Scan 优化可以在特定条件下跳过最左列直接使用非首列——条件是优化器判断 a 列不同值较少且 b 列过滤性好。",
+    "hints": [
+      "范围查询（>, <, BETWEEN）后的索引列为什么失效——B+ 树的有序性被破坏",
+      "MySQL 8.0 Skip Scan 在什么条件下才能触发——a 列 distinct 值少 + b 列过滤性好"
+    ],
+    "tags": [
+      "MySQL",
+      "索引",
+      "最左前缀",
+      "Skip Scan",
+      "ICP"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "MySQL WAL 两阶段提交步骤",
+    "content": "MySQL 两阶段提交确保 redo log 和 binlog 一致：第一阶段 InnoDB 将 redo log 写入磁盘并标记为___状态。第二阶段 Server 层将 binlog 写入磁盘后，InnoDB 将 redo log 标记为___状态。如果在 prepare 完成后写入 binlog 前发生崩溃，___机制会回滚该事务；如果 binlog 已写完但 redo log 尚未标记完成时崩溃，重启后会自动___该事务。",
+    "answer": "{\"correct\": [[\"prepare\", \"准备\"], [\"commit\", \"提交\"], [\"崩溃恢复\", \"crash recovery\"], [\"提交\", \"commit\"]], \"distractors\": [\"undo\", \"rollback\", \"checkpoint\", \"purge\"]}",
+    "hints": [
+      "为什么必须先写 redo log 再写 binlog——崩溃恢复时以 binlog 为准",
+      "崩溃恢复时如果 redo log 处于 prepare 且 binlog 完整，事务应该提交还是回滚"
+    ],
+    "tags": [
+      "MySQL",
+      "WAL",
+      "两阶段提交",
+      "崩溃恢复",
+      "redo log"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL JOIN 算法演进与优化",
+    "content": "MySQL 执行 JOIN 查询时有哪几种连接算法？各自在什么场景下被优化器选择？如何通过索引设计和参数调优优化 JOIN 性能？",
+    "answer": "答案：三种算法：Nested Loop Join（有索引）、Block Nested Loop Join（无索引、MySQL 5.6+）、Hash Join（等值连接、MySQL 8.0.18+）。\n\n解析：1）Nested Loop Join（NLJ）——驱动表遍历每条记录，在被驱动表上用索引查找匹配，复杂度 O(N × logM)。最优方案但要求被驱动表有有效索引。2）Block Nested Loop Join（BNL）——驱动表一批记录（join_buffer_size 控制）缓存到 join buffer，一次批量匹配被驱动表全表扫描，减少 IO 次数。无索引时的次优方案。3）Hash Join——驱动表构建哈希表（内存），被驱动表逐条探测。等值 JOIN、两表均无索引时性能最好（比 BNL 快很多）。\n\n扩展延伸：优化策略：1）被驱动表 JOIN 列加索引——让优化器选择 NLJ 而非 BNL，这是最重要的优化。2）调整 join_buffer_size（默认 256KB）——BNL 时一次缓存更多驱动表记录，减少被驱动表扫描次数。但不要设过大（全局共享，过大浪费内存）。3）小表驱动大表——驱动表越小，被驱动表的索引查找次数越少。4）EXPLAIN 中 Extra 出现「Using join buffer (Block Nested Loop)」就是优化信号——需要检查被驱动表索引。",
+    "hints": [
+      "为什么被驱动表加索引对 JOIN 性能影响最大——NLJ 将全表扫描变为索引查找",
+      "Hash Join 为什么只适用于等值连接——哈希探测需要精确匹配"
+    ],
+    "tags": [
+      "MySQL",
+      "JOIN",
+      "NLJ",
+      "Hash Join",
+      "优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "MySQL 临时表的存储位置",
+    "content": "MySQL 在执行包含 DISTINCT、GROUP BY 或 UNION 的查询时，如果发现无法使用索引完成操作，会在 Extra 中显示「Using temporary」。这些临时表一定创建在磁盘上，会触发大量磁盘 IO 导致查询变慢。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "MySQL 临时表优先使用 MEMORY 引擎存放在内存中",
+      "tmp_table_size 和 max_heap_table_size 参数控制了内存临时表的最大大小"
+    ],
+    "tags": [
+      "MySQL",
+      "临时表",
+      "Using temporary",
+      "MEMORY引擎"
+    ]
   }
 ]

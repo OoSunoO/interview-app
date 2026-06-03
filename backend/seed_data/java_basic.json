@@ -1574,5 +1574,92 @@
       "Compact Strings",
       "JVM"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java String 不可变性的实现保障",
+    "content": "以下关于 Java String 不可变性的说法，哪一项是正确的？\nA) String 被声明为 final 类的唯一原因是禁止继承\nB) String 内部的 char[] 被声明为 final 意味着数组内容不可修改\nC) String 的不可变性由 final class、private final char[] 字段以及不暴露修改方法三者共同保障\nD) String 的不可变性仅由 JVM 运行时负责，与编译器无关",
+    "answer": "C",
+    "hints": [
+      "final char[] 只保证引用地址不变",
+      "String 的 substring 和 concat 都返回新对象"
+    ],
+    "tags": [
+      "Java",
+      "String",
+      "不可变性"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "static 关键字加载时机与特殊边界",
+    "content": "请解释 Java 中 static 变量、static 代码块和 static 内部类的加载时机。什么情况下 static 变量不会被初始化？static final 编译时常量有何特殊行为？",
+    "answer": "static 变量和 static 代码块在类加载的「初始化」阶段执行（对应 <clinit> 方法）。触发条件遵循 JLS 「首次主动使用」规则：new 对象、访问 static 字段、调用 static 方法、反射调用（Class.forName）、初始化子类等。\n不触发 static 初始化的特殊情况：1) 引用 static final 编译期常量（值在编译期已确定，直接内联到常量池）2) 通过子类引用父类的 static 字段（仅初始化父类）3) 定义数组引用类型 4) ClassLoader.loadClass() 默认不执行链接和初始化。\nstatic 内部类采用延迟加载策略：外部类加载时不加载内部类，只有在首次引用时才会触发其类加载和初始化。这是实现延迟加载单例模式的基础。",
+    "hints": [
+      "static final 基本类型是编译时常量",
+      "ClassLoader.loadClass 和 Class.forName 行为不同"
+    ],
+    "tags": [
+      "Java",
+      "static",
+      "类加载机制"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "final 关键字的语义深度解析",
+    "content": "请深入分析 final 关键字修饰 class、method、field 和 local variable 分别产生的语义约束。重点解释为什么 final 引用类型字段不能保证对象状态不可变，以及 JSR-133 对 final 字段的内存语义保证。",
+    "answer": "final 的语义约束：final class 不可被继承；final method 不可被重写（但可被重载）；final field 构造器完成后保证可见性；final local variable 不可重新赋值。\n关键陷阱：final 引用类型字段只保证引用指向的对象地址不可变，不保证对象内部状态不可变。例如 final List<String> list = new ArrayList<>(); list.add(\"x\") 完全合法。\nJSR-133 对 final 的内存语义增强：正确构造的 final 字段在另一个线程中「无需同步即可安全读取」。编译器保证 final 字段的写操作在构造器结束之前完成，且构造器结束后引用不会逸出。这使得不可变对象即使不通过同步也可以安全地在多个线程间传递。",
+    "hints": [
+      "final 字段的可见性保证依赖构造器不逸出",
+      "引用类型 final 和基本类型 final 本质不同"
+    ],
+    "tags": [
+      "Java",
+      "final",
+      "JSR-133",
+      "内存模型"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "符合全部设计原则的不可变对象",
+    "content": "请实现一个符合所有不可变对象设计原则的 Point 类，包含 x 和 y 两个 int 坐标。如果未来需要增加 Date 类型的 createTime 字段，防御性拷贝应如何实施？同时实现「修改返回新对象」的 withX 和 withY 方法。",
+    "answer": "public final class Point {\n    private final int x;\n    private final int y;\n\n    public Point(int x, int y) {\n        this.x = x;\n        this.y = y;\n    }\n\n    public int getX() { return x; }\n    public int getY() { return y; }\n\n    public Point withX(int newX) {\n        return new Point(newX, this.y);\n    }\n\n    public Point withY(int newY) {\n        return new Point(this.x, newY);\n    }\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (!(o instanceof Point)) return false;\n        Point p = (Point) o;\n        return x == p.x && y == p.y;\n    }\n\n    @Override\n    public int hashCode() {\n        return 31 * x + y;\n    }\n}\n\n如果增加 Date createTime 字段，防御性拷贝要求：构造器中使用 this.createTime = new Date(date.getTime()) 而不是直接保存传入引用；getter 中使用 return new Date(createTime.getTime()) 而不是直接返回内部引用。这是因为 Date 是可变对象，直接保存或返回引用会破坏封装性，调用方可以通过修改 Date 内部状态来改变不可变对象的状态。",
+    "hints": [
+      "不提供 setter 是基本要求但不是全部",
+      "引用类型字段的 getter 也需要防御性拷贝"
+    ],
+    "tags": [
+      "Java",
+      "不可变对象",
+      "防御性拷贝",
+      "设计模式"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "基本类型默认值与局部变量的初始化规则",
+    "content": "Java 中所有类型的变量（包括局部变量）在未显式初始化时都会被赋予默认值（如 int 为 0，boolean 为 false），因此以下代码可以编译通过：int x; System.out.println(x);\nA) 正确\nB) 错误",
+    "answer": "B",
+    "hints": [
+      "区分成员变量和局部变量的初始化规则",
+      "局部变量不初始化直接使用会导致编译错误"
+    ],
+    "tags": [
+      "Java",
+      "基本类型",
+      "变量初始化"
+    ]
   }
 ]

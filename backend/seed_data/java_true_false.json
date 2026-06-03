@@ -1588,5 +1588,90 @@
       "对象复活",
       "JVM"
     ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Arrays.sort 的算法选择策略",
+    "content": "Java 中 Arrays.sort() 对基本类型数组使用双轴快速排序（Dual-Pivot Quicksort），对对象数组使用 TimSort。\nA) 正确\nB) 错误",
+    "answer": "A",
+    "hints": [
+      "Dual-Pivot Quicksort 平均性能优于经典快速排序",
+      "TimSort 结合了归并排序和插入排序"
+    ],
+    "tags": [
+      "Java",
+      "Arrays.sort",
+      "排序算法"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "HashMap 的 null 键存储位置",
+    "content": "HashMap 允许存储至多一个 null 键，该 null 键始终被存储在数组索引 0 所对应的桶中。\nA) 正确\nB) 错误",
+    "answer": "A",
+    "hints": [
+      "null 键的 hash 值被特殊处理为 0",
+      "null 键存储在 table[0] 的链表中"
+    ],
+    "tags": [
+      "Java",
+      "HashMap",
+      "null键"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "unmodifiableList 的不可变性本质",
+    "content": "Collections.unmodifiableList() 返回一个真正不可变的列表，原始列表的后续修改不会影响这个不可变视图的内容。\nA) 正确\nB) 错误",
+    "answer": "B",
+    "hints": [
+      "unmodifiableList 返回的是视图而非副本",
+      "原始列表的变化会实时反映在不可变视图中"
+    ],
+    "tags": [
+      "Java",
+      "Collections",
+      "不可变列表"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "ConcurrentHashMap computeIfAbsent 的原子性",
+    "content": "ConcurrentHashMap 的 computeIfAbsent(K key, Function mappingFunction) 方法是原子操作——在并发场景下，对于同一个 key，mappingFunction 最多只会被执行一次。\nA) 正确\nB) 错误",
+    "answer": "A",
+    "hints": [
+      "computeIfAbsent 内部使用 CAS + synchronized 双重保障",
+      "mappingFunction 不应有副作用否则可能导致意外行为"
+    ],
+    "tags": [
+      "Java",
+      "ConcurrentHashMap",
+      "原子操作"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "ArrayList trimToSize 与内存回收的关系",
+    "content": "ArrayList 调用 trimToSize() 之后，底层数组缩小为恰好容纳当前元素的大小，多余内存会被立即释放并由 JVM 回收。\nA) 正确\nB) 错误",
+    "answer": "B",
+    "hints": [
+      "trimToSize 只调整引用指向新数组",
+      "旧数组的回收完全由 GC 决定，不保证立即执行"
+    ],
+    "tags": [
+      "Java",
+      "ArrayList",
+      "内存管理"
+    ]
   }
 ]

@@ -1564,5 +1564,111 @@
       "幂等",
       "工程权衡"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka LogSegment 结构与稀疏索引",
+    "content": "Kafka 的一个 Partition 目录中包含哪些文件？LogSegment 是如何切分的？.index 和 .timeindex 文件的稀疏索引机制如何工作？索引精度不足时会影响什么？",
+    "answer": "答案：Partition 目录包含 .log（消息数据）、.index（偏移量索引）、.timeindex（时间戳索引）、.txnindex（事务索引）。LogSegment 默认 1GB 或 1 周切分。.index 是稀疏索引，每 log.index.interval.bytes（默认 4096 字节）记录一个条目。\n\n解析：LogSegment 的切分条件（先到者触发）：1）当前 Segment 大小达到 log.segment.bytes（默认 1GB）。2）当前 Segment 存活时间超过 log.segment.ms（默认 7 天）。3）日志追加时偏移量差值超过 Integer.MAX_VALUE。.index 文件结构：每个条目记录相对偏移量（4 字节）和物理位置（4 字节）。稀疏索引间隔 4096 字节意味着每条消息（通常 1-10KB）大约每 400-4000 条消息才有一条索引。查找消息时是二分查找 .index 找到最近的 offset 映射，再在 .log 中顺序扫描。.timeindex 用于按时间戳查找（如从某时间点开始消费）。\n\n扩展延伸：索引精度对性能的影响：如果每条消息很小（如几百字节）且消费者频繁随机读取，稀疏索引的精度不够，需要在 .log 中额外扫描较多消息。优化方向：1）降低 log.index.interval.bytes（增加索引密度，但增加索引文件内存占用）。2）控制单条消息大小（batch.size 和 linger.ms 让消息合并发送）。.index 是内存映射文件（MappedByteBuffer）——访问时按页加载到内存，常用索引页会被操作系统 Page Cache 缓存，所以索引查找通常非常快。",
+    "hints": [
+      "稀疏索引相比密集索引的优势——索引文件更小，更多索引页可以被 Page Cache 缓存",
+      "Kafka 为什么采用稀疏索引而不是每消息索引——磁盘空间和内存占用的权衡"
+    ],
+    "tags": [
+      "Kafka",
+      "LogSegment",
+      "索引",
+      "稀疏索引",
+      "存储"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Kafka Consumer Rebalance 触发条件",
+    "content": "以下哪种情况不会触发 Kafka Consumer Group 的 Rebalance？",
+    "options": [
+      "A) 消费组内的某个消费者宕机，心跳超时导致 Group Coordinator 将其移除",
+      "B) 消费组订阅的某个 Topic 新增了 Partition（Partition 数增加）",
+      "C) 消费者调用 unsubscribe() 取消当前订阅",
+      "D) 消费者处理消息的速度变慢，导致消费 Lag 持续增大"
+    ],
+    "answer": "答案：D)。解析：Rebalance 的触发条件是消费组的「元数据」发生变化——A) 消费者宕机或主动离开（组成员变更）；B) 订阅 Topic 的 Partition 数变化；C) 订阅的 Topic 列表变更。消费者处理速度变慢（Lag 增加）只是消费能力的性能问题，不涉及元数据变动，不会触发 Rebalance。注意：Rebalance 期间消费组会停止消费（stop-the-world），Kafka 3.1+ 引入的增量协调式 Rebalance（Cooperative Rebalance）可以「每次只重分配受影响的 Partition」而非全部，减少全量停服的影响。",
+    "hints": [
+      "Eager Rebalance（全量停服）和 Cooperative Rebalance（增量调整）的区别",
+      "session.timeout.ms 和 heartbeat.interval.ms 配置不当会引发什么——频繁 Rebalance"
+    ],
+    "tags": [
+      "Kafka",
+      "Rebalance",
+      "Consumer Group",
+      "Partition"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RocketMQ 事务消息与最终一致性",
+    "content": "RocketMQ 的事务消息是如何实现分布式事务最终一致性的？请详细说明半消息（Half Message）机制和事务反查（Check-back）的完整流程。RocketMQ 事务消息与 Seata AT 模式在一致性保证上有什么区别？",
+    "answer": "答案：RocketMQ 事务消息采用两阶段提交（半消息 + 本地事务执行 + Commit/Rollback）加事务反查兜底实现最终一致性。\n\n解析：完整流程：1）Producer 发送半消息（Half Message）到 Broker——半消息对消费者不可见（Topic 的普通消费者无法消费），存储在特殊队列（RMQ_SYS_TRANS_HALF_TOPIC）。2）Producer 执行本地事务（如 INSERT 订单 + 扣库存）。3）根据本地事务结果发送 Commit 或 Rollback 给 Broker——Commit 后消息变为可见，消费者可消费；Rollback 则删除半消息。4）如果步骤 3 因网络/进程崩溃等原因失败，Broker 端的 TransactionMQProducer 会定期（默认 60s）回查 Producer 询问事务状态（OPAQUE 探询）。Producer 实现 TransactionListener 接口的 checkLocalTransaction 方法，根据本地事务记录的状态返回 COMMIT/ROLLBACK/UNKNOWN。\n\n扩展延伸：RocketMQ 事务消息 vs Seata AT：1）隔离级别——RocketMQ 事务消息不提供隔离性（半消息在提交前不可见，但本地事务的数据库修改是可见的，其他服务可能读到「未完成」的数据）；Seata AT 通过全局锁保证隔离性（分支事务的修改对全局事务外的操作不可见）。2）一致性模型——RocketMQ 消息最终可见（消息 + 本地事务的一致性通过反查补偿）；Seata AT 保证全局事务的原子性（全部提交或全部回滚）。3）适用场景——RocketMQ 事务消息适合异步解耦场景（如下单后发消息通知积分服务）；Seata AT 适合同线程、同步的分布式事务场景（跨库写入必须同时成功）。",
+    "hints": [
+      "半消息存储在 RMQ_SYS_TRANS_HALF_TOPIC，如何确保消费者看不到——OPAQUE 队列，对消费者不可见",
+      "事务反查的超时设置（transactionTimeOut）和反查间隔（checkInterval）如何配置"
+    ],
+    "tags": [
+      "RocketMQ",
+      "事务消息",
+      "半消息",
+      "最终一致性",
+      "分布式事务"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "RabbitMQ 死信队列来源与延迟队列实现",
+    "content": "关于 RabbitMQ 死信队列（Dead Letter Queue），以下哪个不是消息进入死信队列的条件？",
+    "options": [
+      "A) 消息被消费者拒绝（basic.reject / basic.nack）且 requeue 参数设为 false",
+      "B) 消息的 TTL（Time-To-Live）过期，未被消费",
+      "C) 队列达到最大长度限制（x-max-length），最早的消息被丢弃",
+      "D) 消息的优先级（priority）低于队列设定的优先级阈值"
+    ],
+    "answer": "答案：D)。解析：RabbitMQ 的死信三种来源：1）消费者拒绝且不重新入队（requeue=false）。2）消息 TTL 过期（通过 x-message-ttl 或 per-message TTL）。3）队列长度超过 x-max-length 或总字节超过 x-max-length-bytes 被丢弃的消息。RabbitMQ 通过死信实现延迟队列的经典方案：消息先发往一个设置了 TTL 的普通队列（无消费者），TTL 过期后自动路由到死信交换机（DLX），再进入实际消费队列。RabbitMQ 3.12+ 提供了原生延迟消息插件（rabbitmq-delayed-message-exchange）替代死信方案。D) 优先级和死信无关——RabbitMQ 通过 x-max-priority 设置队列的优先级范围（0-255），高优先级的消息会被优先投递，但优先级低不会进死信。",
+    "hints": [
+      "死信队列的 DLX 交换机和 DLK（Dead Letter Routing Key）如何配置",
+      "RabbitMQ 3.12 延迟消息插件（rabbitmq-delayed-message-exchange）的实现原理——基于 Mnesia 的延迟索引"
+    ],
+    "tags": [
+      "RabbitMQ",
+      "死信队列",
+      "DLX",
+      "延迟队列",
+      "TTL"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 水位线（HW）与 Leader Epoch",
+    "content": "Kafka 的 High Watermark（HW）和 Leader Epoch 分别是什么？Kafka 0.11 版本之前 HW 机制存在什么问题？Leader Epoch 如何从根本上解决副本日志截断导致的数据不一致问题？",
+    "answer": "答案：HW（High Watermark）是 ISR 中所有副本共享的最小 LEO（Log End Offset），消费者只能消费 HW 之前的数据。Leader Epoch（Kafka 0.11+）是分区 Leader 的版本号，每次 Leader 变更递增，用于防止日志截断导致的数据丢失。\n\n解析：旧 HW 问题：Kafka 0.11 之前，副本同步完全依赖 HW 对账。当 Leader 和 Follower 同时宕机时，Follower 重启后根据 HW 截断日志，而它的 LEO 可能实际比 HW 更高（因为 HW 是 ISR 中最小的 LEO）。如果该 Follower 成为新 Leader，之前已确认写入但超过 HW 的消息会永久丢失。更严重的场景——两个副本交替成为 Leader 导致数据交替覆盖（数据不一致）。\n\n扩展延伸：Leader Epoch 的工作方式：1）每次 Leader 变更（新 Leader 选举）时，Broker 生成新的 epoch 编号，记录到 __leader_epoch_checkpoint 文件中。2）每个消息批次都关联其产生的 epoch 值。3）Follower 重启后向 Leader 发送最新 epoch + offset，Leader 通过 epoch 找到该 epoch 对应的起始 offset。如果 follower 的 offset 大于 Leader 的 epoch 记录，Leader 会要求 Follower 截断到该 epoch 的起始位置。4）Kafka 2.8+ 已经使用 Leader Epoch 完全取代 HW 作为副本日志截断的唯一依据。本质区别：HW 是「猜测式截断」（基于最小公倍数思维，过于保守），Leader Epoch 是「协议式截断」（精确记录每个 Leader 任期的数据范围）。",
+    "hints": [
+      "HW 和 LEO 的关系——LEO 是副本本地最新 offset，HW 是 ISR 中所有副本共享的最小 LEO",
+      "两个副本交替宕机和恢复导致的数据覆盖问题为什么需要 Leader Epoch 才能解决"
+    ],
+    "tags": [
+      "Kafka",
+      "HW",
+      "Leader Epoch",
+      "副本",
+      "日志截断"
+    ]
   }
 ]

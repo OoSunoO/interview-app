@@ -1892,5 +1892,95 @@
       "toMap",
       "merge"
     ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ArrayList 与 LinkedList 的适用场景分析",
+    "content": "在以下哪种业务场景中，LinkedList 的性能明显优于 ArrayList？\nA) 按索引频繁随机访问元素\nB) 在列表尾部频繁追加大量元素\nC) 在列表头部频繁执行插入和删除操作\nD) 需要对列表执行频繁的排序操作",
+    "answer": "C",
+    "hints": [
+      "LinkedList 头尾操作 O(1)，中间操作 O(n)",
+      "ArrayList 尾部追加均摊 O(1)，头部插入 O(n)"
+    ],
+    "tags": [
+      "Java",
+      "ArrayList",
+      "LinkedList",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "有序 Map 的选择依据",
+    "content": "当需要键值对始终按照自然顺序（或自定义 Comparator）排序，且要求单次查找时间复杂度为 O(log n) 时，应选择哪个实现？\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",
+    "answer": "C",
+    "hints": [
+      "HashMap 的遍历顺序是无序的",
+      "LinkedHashMap 只保证插入或访问顺序而非排序"
+    ],
+    "tags": [
+      "Java",
+      "TreeMap",
+      "集合框架",
+      "排序"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "PriorityQueue 的底层数据结构与扩容策略",
+    "content": "关于 PriorityQueue 的内部实现，以下哪项是正确的？\nA) PriorityQueue 采用红黑树维护优先级顺序，保证 O(log n) 的入队和出队\nB) PriorityQueue 采用最小二叉堆实现，初始容量为 11，扩容策略为容量不足时增长 50% 或更少\nC) PriorityQueue 允许插入 null 值，null 在比较中被视为最小值\nD) PriorityQueue 的 iterator() 遍历顺序与 poll() 出队顺序完全一致",
+    "answer": "B",
+    "hints": [
+      "二叉堆用数组存储，堆化操作是 O(log n)",
+      "iterator 返回的是底层数组顺序而非堆序"
+    ],
+    "tags": [
+      "Java",
+      "PriorityQueue",
+      "二叉堆",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "NavigableMap 的特有方法",
+    "content": "以下方法中，哪一个是 NavigableMap 接口独有而 Map 接口没有定义的？\nA) putIfAbsent()\nB) merge()\nC) ceilingKey()\nD) forEach()",
+    "answer": "C",
+    "hints": [
+      "ceilingKey 返回大于等于给定键的最小键",
+      "putIfAbsent 和 merge 来自 Map 的默认方法"
+    ],
+    "tags": [
+      "Java",
+      "NavigableMap",
+      "TreeMap",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "WeakHashMap 的引用队列机制",
+    "content": "关于 WeakHashMap 的实现原理，以下哪项是正确的？\nA) WeakHashMap 的 key 在被 GC 回收后，对应 entry 会立即自动从 map 中删除\nB) WeakHashMap 使用 SoftReference 引用 key，适用于实现内存敏感缓存\nC) WeakHashMap 在每次调用 get、put、size 操作时，通过 ReferenceQueue 轮询已被 GC 回收的 key，同步清理对应 entry\nD) WeakHashMap 是线程安全的，可以在并发环境下直接使用",
+    "answer": "C",
+    "hints": [
+      "ReferenceQueue 配合 WeakReference 实现延迟清理",
+      "清理是在 Map 操作方法内部顺带执行的"
+    ],
+    "tags": [
+      "Java",
+      "WeakHashMap",
+      "引用队列",
+      "集合框架"
+    ]
   }
 ]

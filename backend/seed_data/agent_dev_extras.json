@@ -1571,5 +1571,107 @@
       "debugging",
       "llm-ops"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Context-Aware Semantic Caching for Agent Workflows",
+    "content": "关于 Agent 工作流中的语义缓存设计，以下哪种策略在实践中被证明最有效？",
+    "options": [
+      "A) 在 Agent 循环中对每步 LLM 调用的完整 prompt（含历史消息）计算精确哈希匹配，命中则直接返回缓存结果",
+      "B) 对 Agent 的 tool calling 结果（如搜索 API 的返回内容）进行语义相似度缓存——相同或高度相似的查询使用缓存结果，降低外部 API 延迟和成本",
+      "C) 不缓存任何中间 Agent 输出，因为 Agent 的生成结果具有高度非确定性，缓存的命中率极低",
+      "D) 只缓存系统级资源（如 tokenizer、模型权重），不缓存推理结果以避免过时数据导致的 Agent 决策错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "Agent 工作流中外部工具调用（API、搜索、数据库查询）的延迟占比最高，且相同或相似的请求重复出现（如多轮对话中的重复信息查询）",
+      "精确哈希匹配对 Agent 对话基本无效——即使语义相同，prompt 中的微小变化（如增加一个空格）也会导致哈希值完全不同"
+    ],
+    "tags": [
+      "Agent",
+      "语义缓存",
+      "缓存策略",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Multi-Agent Debate（多 Agent 辩论）架构",
+    "content": "什么是 Multi-Agent Debate 架构？Agent 之间如何进行有效辩论来提升推理和决策质量？辩论框架的设计要点和潜在风险是什么？",
+    "answer": "答案：Multi-Agent Debate 是让多个 Agent 实例就同一个问题独立生成回答，然后互相「辩论」——交换各自的推理过程和结论，允许每个 Agent 在看到其他 Agent 的论点后修正自己的判断，经过多轮迭代收敛到更准确的答案。这种方法源于 Du et al.（2023）的「Collaborative Debate」和 Liang et al.（2023）的「ChatEval」等研究。\n\n解析：辩论流程——1）独立推理阶段：N 个 Agent 实例（通常是同一个 LLM 的不同采样，或不同 LLM）独立阅读问题并生成初步回答和推理过程。2）论据交换阶段：每个 Agent 看到其他 Agent 的回答和推理。可以设计不同的暴露策略——只暴露结论（让 Agent 专注于答案）或暴露完整推理链（让 Agent 学习更好的推理模式）。3）迭代修正阶段：每个 Agent 基于看到的其他 Agent 的回答，决定维持己见、补充论据或改变立场。4）共识/投票阶段：经过多轮辩论后，通过投票、评分或仲裁机制选择最终答案。\n\n辩论框架设计要点——1）角色多样性：让 Agent 扮演不同角色（乐观者、质疑者、详细检查者）可以促进多样性，减少群体思维。2）辩论轮数控制：2-3 轮辩论通常就够了——超过 3 轮边际收益递减且 Token 消耗剧增。3）信息暴露策略：辩论中最有效的策略是先暴露完整推理链（第一轮），后续只暴露「更新部分」以减少信息冗余。4）偏见管理：辩论可能反而放大模型固有的偏见——如果所有 Agent 都是同一个模型的实例，它们共享相同的偏见。引入不同模型或不同的系统 Prompt 可以缓解。\n\n扩展延伸：潜在风险——1）假共识（False Consensus）：Agent 之间可能互相「说服」对方接受一个事实上错误的答案。对答案的自信表达（用词肯定程度）不是正确性的可靠信号。2）辩论成本：N 个 Agent × M 轮辩论 × 每次完整的 prompt 包含前几轮的全部辩论内容 → Token 消耗随轮数指数增长。成本收益比只在关键决策任务上值得。3）仲裁机制：当 Agent 之间无法达成一致时，需要有仲裁者（可以是更强 LLM 或人类）做最终决定。\n\n辩论 vs 集成（Ensemble）：辩论是 Agent 间交互的、动态的校正过程；集成是独立投票、不交互的聚合过程。辩论在需要复杂推理的任务上通常优于简单的多数投票，但 Token 消耗显著更大。",
+    "hints": [
+      "Multi-Agent Debate 不是简单的多数投票——Agent 在辩论过程中会看到其他 Agent 的推理并调整自己的判断，这是与集成方法的核心区别",
+      "「角色多样性」是关键设计参数——如果所有 Agent 用完全相同的 Prompt 和采样参数，辩论的效果会大幅下降"
+    ],
+    "tags": [
+      "Agent",
+      "Multi-Agent",
+      "Debate",
+      "推理质量"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Constrained Decoding（约束解码）与结构化输出",
+    "content": "关于 Constrained Decoding（约束解码）与结构化输出生成，以下哪个说法是正确的？",
+    "options": [
+      "A) Constrained Decoding 和 JSON mode 是同一个概念——都由 LLM 在生成时自行决定输出格式，无需外部干预",
+      "B) outlines 和 lm-format-enforcer 等库的核心原理是在 LLM 每次 token 采样时，用正则表达式或上下文无关文法（CFG）实时计算当前状态下的合法 token 集合，强制屏蔽非法 token",
+      "C) Constrained Decoding 只能应用于生成 JSON 格式，无法用于生成 XML、YAML 或其他自定义格式",
+      "D) 使用 Constrained Decoding 会显著降低生成质量，因为约束条件会阻止模型选择它认为最优的 token"
+    ],
+    "answer": "B",
+    "hints": [
+      "outlines 库支持正则表达式、JSON Schema、CFG 甚至 Python 数据类型的约束解码，在推理时通过 Index Masking 屏蔽不满足约束的 token",
+      "Constrained Decoding 如果约束合理（不违反语义），对生成质量几乎没有负面影响——它只屏蔽了「不可能符合格式」的 token，而不是改变模型的选择偏好"
+    ],
+    "tags": [
+      "Constrained Decoding",
+      "结构化输出",
+      "outlines",
+      "lm-format-enforcer"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Browser Agent / Web Automation Agent 架构设计",
+    "content": "设计一个能自动完成 Web 任务的 Browser Agent（浏览器 Agent），需要考虑哪些核心架构组件？与传统的 Web Scraping 相比，AI 驱动的 Browser Agent 的优势和劣势分别是什么？",
+    "answer": "答案：Browser Agent 是一个自主操控浏览器的 AI 系统——理解网页内容、规划交互动作（点击、输入、导航）、执行操作并处理动态反馈。核心架构组件包括：浏览器环境层、页面理解层、任务规划层、动作执行层。与传统 Web Scraping 相比，AI Agent 能处理无结构化和动态变化页面，但更慢、更贵、更不稳定。\n\n解析：核心架构组件——1）浏览器环境层：使用 Playwright/Puppeteer/Selenium 控制真实浏览器。提供页面截图（用于 VLM）、DOM 树（用于结构化理解）、网络请求拦截（用于 API 级数据获取）。需要无头（headless）或可视模式的切换。2）页面理解层：将浏览器页面转化为 LLM 可理解的结构化输入。三种策略——截屏 + VLM（最强通用性，但慢且贵）；可访问性树（Accessibility Tree，轻量级结构化表示，适合表单/FW 标准页面）；DOM 树精简版（保留交互元素的简化 HTML，适合技术选型）。实践中通常混用——用 A11y Tree 获取核心结构，截屏作为视觉辅助。3）任务规划层：LLM 根据用户目标分解为子任务序列。支持动态重规划——页面加载出错或元素找不到时修正计划。4）动作执行层：将 LLM 选择的行为转化为具体的浏览器操作。包括元素定位（CSS Selector / XPath / 坐标定位）、等待策略（显式等待元素出现、等待网络空闲）、错误处理（元素不存在时的多种 fallback 策略）。\n\n扩展延伸：AI Browser Agent vs Traditional Scraping——AI Agent 优势：1）抗页面结构变化（传统 scraping 改一个 CSS class 就崩了）；2）能处理登录、验证码、多步操作等复杂流程；3）可以提取非结构化内容（总结、对比、推论）。AI Agent 劣势：1）速度慢——每次操作都要 LLM 调用（500ms-2s/步 vs scraping 的 10ms/步）；2）成本高——Token 消耗大，处理带截图的 VLM 更贵；3）稳定性差——LLM 可能产生幻觉性操作（「看到」不存在的按钮）、LLM 的输出非确定性导致行为不经济。\n\n生产环境最佳实践：混合架构——将确定性操作（如精确的数据提取、已知表单的填写）用传统 scraping 实现，AI Agent 处理需要理解和适应的情况（如页面变化时的自适应 fallback）。",
+    "hints": [
+      "A11y Tree（可访问性树）是比 DOM 更高效的页面表示——它只包含用户可交互的元素，且每个元素包含 role、name、value 等结构化属性",
+      "传统 Web Scraping 和 AI Browser Agent 不是非此即彼——最好的方案是混合架构：确定性任务用 scraping，复杂/变化任务用 Agent"
+    ],
+    "tags": [
+      "Browser Agent",
+      "Web 自动化",
+      "Playwright",
+      "AI Agent"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agentic Workflow DSL（声明式 Agent 编排语言）",
+    "content": "什么是 Agentic Workflow DSL（领域特定语言）？为什么需要声明式地定义 Agent 工作流？主流的 Agent DSL 方案有哪些？与程序化编排（如直接写 Python 代码）相比，DSL 路线的优势和局限是什么？",
+    "answer": "答案：Agentic Workflow DSL 是一种专门用于定义 Agent 工作流的声明式语言或配置格式（通常是 YAML/JSON），开发者通过描述「做什么」而非「怎么做」来编排 Agent 的行为链路。声明式 DSL 将工作流逻辑与 LLM 调用实现解耦，使得 Agent 流程可读、可版本管理、可图形化编辑。主流方案包括 LangGraph 的 StateGraph 定义、Temporal 的工作流 YAML、Coze/Dify 等低代码平台的 Bot DSL、以及 AWS Step Functions 的状态机定义。\n\n解析：为什么需要 DSL——1）可读性和可审查性：生产级 Agent 工作流需要多人协作和代码审查。DSL 配置比 Python 代码更容易被非 LLM 专家理解和审查。2）版本化和回滚：DSL 配置文件可以独立版本化，回滚某个工作流的路由逻辑不会影响 Agent 实现的代码。3）可视化编辑：声明式 DSL 天然支持图形化呈现和拖拽编辑（如 Dify 的 DAG 编辑界面）。4）跨平台移植：标准化的 DSL 定义允许工作流在不同 Agent 框架之间迁移。\n\n主流方案——1）LangGraph 的 StateGraph：用 Python 构建图结构（节点加边），每个节点是函数或 LCEL 链。虽然不是严格的 DSL（是 Python DSL），但提供了状态管理、条件路由、循环控制。其架构被许多后来者借鉴。2）Dify Workflow DSL：YAML 格式的 DAG 工作流定义，支持 LLM 调用、工具节点、代码节点、条件分支、变量传递。突出特点是可视化和配置化。3）Temporal + Agent DSL：Temporal 提供持久化执行环境（天然支持故障恢复和长周期任务），Agent 工作流可以用 Temporal 的 Workflow 定义，利用其重试、超时和信号机制。4）AWS Step Functions + Bedrock Agents：Amazon States Language（ASL）JSON 定义 Agent 工作流，与 AWS 生态深度集成。\n\n扩展延伸：DSL 的局限——1）灵活性不足：复杂的条件逻辑和动态路由在 DSL 中难以表达。例如「根据用户对话历史中的情绪动态调整 Agent 策略」——纯 DSL 很难处理。2）调试困难：声明式配置的错误信息往往不直观（缩进错误、类型不匹配）。3）表达能力天花板：当 Agent 需要复杂的数据变换、自定义验证逻辑时，DSL 无法覆盖所有需求，需要逃逸到代码层。\n\n实践中，大多数生产级 Agent 系统采用混合模式：用 DSL 定义高层流程和路由（prompt 选择、模型路由、错误处理策略），在需要灵活逻辑的节点上用代码实现细节。这种「DSL-shell」架构平衡了可读性和灵活性。",
+    "hints": [
+      "LangGraph 的 StateGraph 实际上是嵌入在 Python 中的「内部 DSL」，而 Dify 和 Coze 使用标准的 YAML/JSON「外部 DSL」",
+      "DSL 的核心 trade-off：表达能力 vs 可控制性——越灵活的 DSL 越接近通用编程语言，但失去了声明式的可读性优势"
+    ],
+    "tags": [
+      "Agent",
+      "DSL",
+      "工作流编排",
+      "LangGraph"
+    ]
   }
 ]

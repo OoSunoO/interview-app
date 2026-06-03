@@ -1519,5 +1519,100 @@
       "NetworkPolicy",
       "安全"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s Scheduler 调度流程与扩展点",
+    "content": "请描述 Kubernetes Scheduler 的 Filtering + Scoring 两阶段调度流程。KubeScheduler 的调度框架（Scheduling Framework）提供了哪些扩展点？如何实现一个自定义调度插件来控制 Pod 调度到特定节点？",
+    "answer": "答案：调度分 Filtering（过滤不满足条件的节点）和 Scoring（给剩余节点打分排序）。调度框架扩展点包括 PreFilter/Filter/PostFilter/PreScore/Score/NormalizeScore/Reserve/Permit/PreBind/Bind/PostBind。\n\n解析：1）Filtering——串行执行所有 Filter 插件，包括 PodFitsResources（节点资源充足）、PodFitsHost（节点名匹配）、NodeUnschedulable（节点未封锁）、NodeAffinity（节点亲和性）、TaintToleration（污点容忍）、PodTopologySpread（拓扑分布约束）。一个 Filter 不通过即排除。2）Scoring——对 Filtered 节点并行打分，默认可使用 MostRequestedPriority（堆叠/利用率优先）、LeastRequestedPriority（分散优先）、BalancedResourceAllocation（CPU/内存均衡）。分数归一化后加权求和。\n\n扩展延伸：Scheduling Framework 扩展点详解：PreFilter（预处理 Pod 信息）、Filter（过滤节点）、PostFilter（无可用节点时处理，如抢占低优先级 Pod）、PreScore（为打分做准备工作）、Score（打分，返回 0-100）、NormalizeScore（多分数合并归一化）、Reserve（在节点上预留资源，防止调度另一个 Pod 冲突）、Permit（批准/等待/拒绝调度结果）、PreBind（绑定前操作，如网络存储准备）、Bind（绑定 Pod 到 Node，默认 API Server 写入 binding）、PostBind（绑定后通知）。实现自定义调度器有三种方式：1）独立调度器替换默认。2）Scheduler Extender（HTTP 扩展）。3）调度框架插件（最推荐，编译进 kube-scheduler 或使用 scheduler-plugins）。",
+    "hints": [
+      "调度框架中 Reserve 和 Unreserve 扩展点如何配合——先 Reserve 预留资源，绑定失败时 Unreserve 释放",
+      "为什么 PostFilter 可以抢占低优先级 Pod——将低优先级 Pod 驱逐释放资源供高优先级 Pod 使用"
+    ],
+    "tags": [
+      "K8s",
+      "Scheduler",
+      "调度框架",
+      "Filter",
+      "Score"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s Controller Manager 与控制器模式",
+    "content": "Kubernetes 的控制器模式（Controller Pattern）的核心机制是什么？ReplicaSet Controller 和 Deployment Controller 如何协作实现声明式更新？自定义 Operator 中的 Reconciler 循环是如何工作的？",
+    "answer": "答案：控制器模式通过 Informer 监听 API Server 的对象变化（List + Watch），比较期望状态与当前状态，然后执行 reconciliation 逻辑将当前状态调整为期望状态。\n\n解析：Informer 机制：1）List——初始化时全量获取对象列表。2）Watch——通过长连接监听增量变化（ADD/UPDATE/DELETE）。3）本地缓存（Indexer/ThreadSafe Store）——List 和 Watch 的数据同步到本地内存，reconciler 直接从本地读取避免频繁请求 API Server。ReplicaSet Controller：Watch ReplicaSet 和 Pod 对象。检测到 ReplicSet.Spec.Replicas 与当前 Pod 数量不符时，创建或删除 Pod。Deployment Controller：管理 ReplicaSet 的生命周期。滚动更新时创建新 ReplicaSet（期望 Pod 数逐步增加），同步减少旧 ReplicaSet 的 Pod 数，跟踪更新进度（新版 Pod 全部 Ready 后更新完成）。\n\n扩展延伸：自定义 Operator 的模式（基于 controller-runtime/operator-sdk）：1）Reconciler——核心逻辑方法，接收 Request（Namespace/Name），读取对象当前状态，与期望状态比较，执行操作。2）限速队列（WorkQueue）——处理失败时重新入队，带指数退避（rate limiter）。3）Event 驱动——不仅 Watch 主资源，还 Watch 关联资源（如一个自定义资源创建了 Deployment，reconciler 在 Deployment 变化时也能触发）。最佳实践：Reconciler 应该是幂等的；失败时返回 error 触发重新入队；使用 conditions（status.conditions）报告当前进度和错误；Watch 变更频率高的资源加 Predicate 过滤不相关的事件。",
+    "hints": [
+      "Informer 的 Reflector、Delta FIFO、Indexer 三个组件各负责什么",
+      "WorkQueue 的 Rate Limiting 为什么用指数退避而不是固定间隔重试"
+    ],
+    "tags": [
+      "K8s",
+      "Controller",
+      "Informer",
+      "Reconciler",
+      "Operator"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s Admission Webhook 与动态准入控制",
+    "content": "Kubernetes 准入控制有哪两个阶段？MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook 的区别是什么？如何设计一个安全且高可用的 Admission Webhook？常见的生产场景有哪些？",
+    "answer": "答案：两个阶段：Mutating（修改请求）先执行，Validating（验证请求）后执行。Webhook 通过 MutatingWebhookConfiguration 和 ValidatingWebhookConfiguration 配置。\n\n解析：工作流程：1）API Server 收到资源创建/更新/删除请求。2）先通过所有内置的 Mutating 准入插件。3）调用所有配置的 MutatingAdmissionWebhook——可以修改请求体（如注入 Sidecar、添加默认值、注入 Label）。4）通过所有内置的 Validating 准入插件。5）调用 ValidatingAdmissionWebhook——只能验证请求（拒绝或接受），不能修改。6）持久化到 etcd。\n\n扩展延伸：生产级 Webhook 设计要点：1）failurePolicy——设为 Fail 或 Ignore。Fail 模式下如果 Webhook 不可用（证书过期/服务宕机），整个集群的创建/更新操作都会阻塞。新集群建议先 Ignore，等稳定后再改为 Fail。2）超时设置——timeoutSeconds 建议 10-30s，超过后 API Server 认为失败（按 failurePolicy 处理）。3）证书管理——Webhook 使用 TLS（mutual TLS），API Server 验证 Webhook 的服务端证书。推荐用 cert-manager 自动签发和轮转。4）排除系统命名空间——通过 namespaceSelector 排除 kube-system/kube-public，避免系统组件受影响。5）只处理关心的操作——rules 中指定 apiGroups/apiVersions/operations/resources，缩小 Webhook 的触发范围。典型场景：Istio 的 Sidecar 注入（Mutating Webhook）、OPA/Gatekeeper 策略执行（Validating Webhook）、PodSecurity Admission（Validating）、资源默认值注入（如自动加资源 requests/limits）。",
+    "hints": [
+      "Mutating Webhook 修改请求后，Validating Webhook 看到的是修改后的请求还是原始请求——修改后的",
+      "failurePolicy=Fail 且 Webhook 证书过期时集群会变成什么样——所有 Pod 创建/更新都失败"
+    ],
+    "tags": [
+      "K8s",
+      "Admission Webhook",
+      "准入控制",
+      "Mutating",
+      "Validating"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s HPA 水平自动扩缩容原理",
+    "content": "Kubernetes HPA（HorizontalPodAutoscaler）根据 Pod 指标自动调整副本数的计算公式是什么？支持哪些指标类型？扩缩容的速率控制和稳定窗口（Stabilization Window）是如何工作的？",
+    "answer": "答案：计算公式：desiredReplicas = ceil[currentReplicas × (currentMetricValue / desiredMetricValue)]。支持 Resource/Pod/Object/External 四种指标类型。StabilizationWindow 防止频繁扩缩。\n\n解析：HPA 定期（默认 15 秒，--horizontal-pod-autoscaler-sync-period）从 metrics-server/Prometheus Adapter 拉取指标。计算过程：1）收集所有 Pod 的当前指标值。2）取平均值（averageUtilization 模式）或平均值（averageValue 模式）。3）代入公式计算期望副本数。指标类型：Resource——Pod 的 CPU/Memory 利用率（基于 metrics-server，HPA 内置支持）。Pod——Pod 自身暴露的自定义指标（如 HTTP QPS，需 Prometheus Adapter 适配）。Object——集群中其他对象的指标（如 Service 的 99 分位延迟）。External——外部系统指标（如 SQS 队列长度）。\n\n扩展延伸：扩缩容速率控制（HPA v2 behavior 字段）：scaleUp——扩容策略。可以配置 policies 限制扩容速度（如 selectPolicy=Max 取最大值：10s 内最多增加 4 个 Pod 或当前副本数 100% 两者取大）。scaleDown——缩容策略。核心参数 stabilizationWindowSeconds（默认 300s）：缩容计算后，HPA 不会立即执行，而是等待稳定窗口期——取窗口期内所有计算结果的最大值作为最终缩容目标，避免短暂流量波动导致频繁缩容。example：如果流量每 2 分钟波动一次，stabilizationWindowSeconds=300 可以避免「缩→扩→缩→扩」的震荡。K8s 1.23+ 支持 scale-to-zero（结合 KEDA），在没有请求时将 Deployment 缩到 0。",
+    "hints": [
+      "稳定窗口如何防止缩容震荡——取窗口期内所有计算值的最大值作为目标副本数",
+      "为什么 HPA 的默认缩容稳定窗口是 5 分钟而不是更短——避免指标抖动导致频繁扩缩"
+    ],
+    "tags": [
+      "K8s",
+      "HPA",
+      "自动扩缩容",
+      "StabilizationWindow",
+      "metrics-server"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s NetworkPolicy 与 Cilium eBPF 网络",
+    "content": "Kubernetes NetworkPolicy 如何实现 Pod 级别的网络隔离？Calico 的 iptables 方案和 Cilium 的 eBPF 方案在实现上有什么本质区别？eBPF 相比 iptables 在大规模集群中的性能优势是什么？",
+    "answer": "答案：NetworkPolicy 通过 podSelector 和 namespaceSelector 定义入站（Ingress）和出站（Egress）规则，匹配策略的流量放行，未匹配的默认拒绝。Calico 用 iptables 规则实现，Cilium 用 eBPF 程序在内核实现。\n\n解析：NetworkPolicy 工作原理：1）每个 Policy 包含 podSelector（选择目标 Pod）、policyTypes（Ingress/Egress）、规则列表（from/to + ports）。2）多个 NetworkPolicy 之间是 OR 关系——只要有一个 Policy 允许即放行。3）如果没有 NetworkPolicy 选中 Pod，默认允许所有流量。如果有一个 Policy 选中了 Pod，没有显式允许的流量被拒绝（default deny 模式）。\n\n扩展延伸：Calico iptables vs Cilium eBPF：1）匹配方式——iptables 规则是线性链表，每条规则从上到下逐条匹配。集群中规则数与 Service + Pod 数成正比，数千条规则时匹配延迟显著（每条新连接都要遍历整个规则链）。eBPF 使用 BPF 映射（哈希表），O(1) 查表匹配。2）更新效率——iptables 规则变更时需重建整个链（断开已有连接），大集群中 iptables-restore 需要几秒。eBPF 支持原子更新 BPF 映射条目，毫秒级完成。3）透明性——Cilium 替换 kube-proxy，Service 负载均衡直接在 eBPF 中完成（无需 iptables DNAT + conntrack），降低连接跟踪开销。4）可观测性——eBPF 可以捕获每个数据包的完整路径和耗时（Hubble），而 iptables 只有计数器。性能数据：5000 节点、50000 条 iptables 规则时，新连接建立延迟从 eBPF 的微秒级上升到 iptables 的几毫秒。这也是为什么云原生社区认为 eBPF 是 K8s 网络的未来方向。",
+    "hints": [
+      "iptables 规则为什么在大集群中性能差——线性遍历，每条新连接都要过所有规则",
+      "Cilium 为什么不需要 kube-proxy——Service 负载均衡在 eBPF 中直接完成（不需要 iptables DNAT）"
+    ],
+    "tags": [
+      "K8s",
+      "NetworkPolicy",
+      "Cilium",
+      "eBPF",
+      "Calico"
+    ]
   }
 ]

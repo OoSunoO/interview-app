@@ -1531,5 +1531,112 @@
       "内存管理",
       "系统优化"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux IO 模型与 epoll 实现原理",
+    "content": "请解释 Linux 的五种 IO 模型，重点说明 epoll 的 LT（水平触发）和 ET（边缘触发）模式的区别。epoll 相比 select 和 poll 为什么更高效？epoll 的 ET 模式在实现上需要注意什么？",
+    "answer": "答案：五种 IO 模型：阻塞 IO、非阻塞 IO、IO 多路复用（select/poll/epoll）、信号驱动 IO、异步 IO（AIO）。epoll 使用红黑树管理 fd（epoll_ctl）和 ready 链表返回就绪 fd（epoll_wait），O(1) 复杂度。\n\n解析：epoll 高效原因：1）select——fd_set 大小固定（FD_SETSIZE=1024），每次调用需要从用户态拷贝到内核态，内核线性扫描所有 fd O(N)。2）poll——无 1024 限制但仍是线性扫描 O(N)。3）epoll——epoll_ctl ADD/MOD/DEL 使用红黑树管理 fd（O(log N)）；fd 就绪时通过回调机制（callback）被放入 ready 链表。epoll_wait 只返回 ready 链表的 fd，无需遍历所有 fd。LT vs ET：LT（默认）——只要 fd 有数据可读，每次 epoll_wait 都返回。ET——仅当 fd 状态从不可读变为可读时通知一次。ET 模式必须循环 read 直到返回 EAGAIN，否则剩余数据丢失。\n\n扩展延伸：ET 模式的关键编程注意事项：1）fd 必须设为非阻塞（O_NONBLOCK）——因为需要循环 read 直到 EAGAIN，如果阻塞 read 会在无数据时卡住。2）每次 read 必须读完（读到 EAGAIN）——否则剩余数据不会再触发 epoll 通知。3）ET 模式下最好配合 EPOLLONESHOT 使用（防止多线程同时读同一个 fd 造成惊群）。性能对比：ET 减少 epoll_wait 的调用次数（只有状态变化才通知），但编程复杂度高。Nginx 使用 ET 模式、Redis 使用 LT 模式。大流量网络服务（百万连接）建议 ET + 非阻塞 IO + 一次读完。",
+    "hints": [
+      "select 的 1024 限制来自哪里——fd_set 位图的大小（FD_SETSIZE 常量，可重新编译内核修改）",
+      "ET 模式为什么要求 fd 必须是非阻塞的——需要循环 read 直到 EAGAIN，阻塞 read 会导致线程卡死"
+    ],
+    "tags": [
+      "Linux",
+      "IO模型",
+      "epoll",
+      "LT",
+      "ET"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Linux 进程与线程的实现",
+    "content": "在 Linux 中，关于进程与线程的实现机制，以下描述正确的是？",
+    "options": [
+      "A) Linux 内核在 task_struct 中区分进程和线程类型，使用不同的调度策略",
+      "B) 同一进程中的多个线程完全共享地址空间、文件描述符和信号处理，任何线程崩溃都会导致整个进程退出",
+      "C) Linux 的线程本质上是轻量级进程（LWP），通过 clone 系统调用创建，调用时传递 CLONE_VM/CLONE_FILES/CLONE_SIGHAND 等标志共享资源",
+      "D) Linux 线程之间的上下文切换开销远大于进程之间的上下文切换"
+    ],
+    "answer": "答案：C)。解析：Linux 内核不区分进程和线程——两者都用 task_struct 表示。线程（LWP）通过 clone 系统调用创建，传入 CLONE_VM（共享地址空间）、CLONE_FILES（共享文件描述符表）、CLONE_SIGHAND（共享信号处理）等标志。A) 错，内核统一视作 task，调度策略是普适的（不区分进程/线程）。B) 错，同一进程的线程共享地址空间、fd、信号处理等，但一个线程崩溃（比如 SIGSEGV）默认会使整个进程退出——不是「任何」崩溃都会导致进程退出，取决于信号处理。D) 错，线程切换（同进程内）比进程切换快得多——因为不需要切换地址空间（MMU TLB 不必刷新），上下文切换开销更小。Linux 线程通过 NPTL（Native POSIX Thread Library）实现，遵守 1:1 线程模型（一个用户线程对应一个内核 task）。",
+    "hints": [
+      "clone 系统调用的 flags 如何控制父子进程之间的资源共享程度",
+      "为什么线程切换比进程切换快——同进程内线程切换不需要切换 CR3（页表基址），TLB 不必刷新"
+    ],
+    "tags": [
+      "Linux",
+      "进程",
+      "线程",
+      "LWP",
+      "clone"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux 虚拟内存与缺页中断详解",
+    "content": "Linux 进程的虚拟地址空间如何通过多级页表映射到物理内存？x86_64 的四级页表（PML4 → PDPT → PD → PT）如何节省内存？缺页中断（Page Fault）有哪几种类型，各自的处理流程是什么？请说明写时复制（COW）的实现机制。",
+    "answer": "答案：虚拟地址通过 MMU + 页表转换为物理地址。四级页表按需分配（只有用到的虚拟地址范围才建立页表项），比单级连续页表节省大量内存。缺页分 Major（磁盘IO）、Minor（仅缺页表项）、Invalid（非法访问）三种。COW 在 fork 时共享物理页，写入时触发缺页复制。\n\n解析：x86_64 四级页表转换：虚拟地址 48 位分为 PML4(9bit) → PDPT(9bit) → PD(9bit) → PT(9bit) → Offset(12bit)。每级页表 512 项（2^9），每项 8 字节，共 4KB。如果整个用户空间都需要映射但只使用了少量区域，多级页表只需在 PML4 层建立几项（而不是 512*512*512 页表项）。\n\n扩展延伸：缺页中断类型：1）Major Page Fault——数据不在物理内存中（如 mmap 映射的文件尚未加载，或 swap 换出的页被访问），需要磁盘 IO。处理流程：内核找到空闲页帧 → 发起磁盘读取 → 页表项建立 → 进程被标记为睡眠 → IO 完成后唤醒。耗时毫秒级。2）Minor Page Fault——物理页已在内存但页表项不存在（如共享内存首次访问、fork 后 COW 页、懒加载的堆栈页）。无需磁盘 IO，仅分配页表项，微秒级。3）Invalid Page Fault——访问未被映射的虚拟地址（如 NULL 指针、越界访问），内核发送 SIGSEGV（段错误）终止进程。COW 流程：fork 后父子进程的虚拟地址指向相同物理页，内核将页表项设为只读。当任一进程尝试写入时触发缺页中断——内核检查 VMA 权限发现页是 COW 可写的，分配新物理页，复制原页内容，更新页表项为可写，返回到写入指令重新执行。",
+    "hints": [
+      "为什么 64 位系统实际只用了 48 位地址空间——当前硬件限制，理论上 64 位寻址空间太大不需要",
+      "Major Page Fault 和 Minor Page Fault 的数量级差距——Major 毫秒级（磁盘 IO），Minor 微秒级（仅内存操作）"
+    ],
+    "tags": [
+      "Linux",
+      "虚拟内存",
+      "页表",
+      "缺页中断",
+      "COW"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Linux 文件描述符与重定向",
+    "content": "在 Linux 中，每个进程启动时默认打开三个标准文件描述符。以下关于这三个 fd 的重定向操作，描述错误的是？",
+    "options": [
+      "A) fd 0 是标准输入（stdin），默认从键盘读取，可以使用 < file 将输入重定向到文件",
+      "B) fd 1 是标准输出（stdout），默认输出到终端，可以使用 > file 将输出重定向到文件",
+      "C) fd 2 是标准错误（stderr），默认也输出到终端，但 stderr 不能与其他文件描述符合并重定向",
+      "D) 使用 2>&1 可以将 stderr 合并到 stdout，然后一起通过管道传输或重定向到文件"
+    ],
+    "answer": "答案：C)。解析：stderr（fd 2）不仅可以重定向，而且是频繁需要重定向的——因为 stdout 和 stderr 默认都输出到终端，如果不分开，错误信息和正常输出混在一起。常用重定向组合：2>&1（stderr 合并到 stdout）、2>&1 | tee log.txt（终端 + 文件）、command &> file（bash 4+ 同时重定向 stdout 和 stderr）。A/B 正确。文件描述符是内核管理打开文件的数据结构——每个进程的 task_struct 中有 files_struct，包含一个指向 file 结构体的指针数组（fd 数组）。ulimit -n 查看进程最大 fd 数限制（默认 1024），大流量服务（如 Nginx、Redis）需要调高到 65535 以上。",
+    "hints": [
+      "文件描述符表和系统级打开文件表的关系——fd 指向 file 结构体，file 通过 inode 指向具体文件",
+      "为什么高并发网络服务需要调大 ulimit -n——每个 TCP 连接占用一个 fd，默认 1024 只能支撑约 1000 个并发连接"
+    ],
+    "tags": [
+      "Linux",
+      "文件描述符",
+      "重定向",
+      "stdout",
+      "stderr"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Systemd 服务管理与启动优化",
+    "content": "Systemd 的 Unit 类型有哪些？一个典型的 Service Unit 文件包含哪些配置段？systemctl enable/start/daemon-reload 各自的作用是什么？Systemd 相比传统 SysV init 在并行启动和依赖管理上有什么本质改进？如何分析和优化系统启动速度？",
+    "answer": "答案：Systemd Unit 类型：.service/.socket/.timer/.mount/.path/.target。Service Unit 核心段：[Unit]、[Service]、[Install]。Systemd 通过依赖拓扑图实现并行启动，取代 SysV init 的顺序串行启动。\n\n解析：1）[Unit]——Description（描述）、After/Before（启动顺序）、Requires/Wants（依赖关系：硬依赖/软依赖）、Conflicts（冲突）。2）[Service]——Type（simple/forking/oneshot/dbus/notify）、ExecStart（启动命令）、ExecStop（优雅停止）、Restart（on-failure/always/on-abnormal）、User/Group（运行用户）、WorkingDirectory、Environment、LimitNOFILE（文件描述符限制）。3）[Install]——WantedBy（指定 target，如 multi-user.target）。\n\n扩展延伸：systemctl enable vs start vs daemon-reload：enable——创建符号链接到 /etc/systemd/system/multi-user.target.wants/，使服务随系统启动。start——立即启动服务。daemon-reload——重新扫描 Unit 文件（修改了 .service 文件后必须先 daemon-reload 再 restart）。Systemd 并行启动原理：解析所有 Unit 的 Requires/Wants/After 关系形成依赖有向无环图（DAG），无依赖关系的 Unit 并行启动。对比 SysV init：串行执行 /etc/rc.d/ 下的脚本，即使无关服务也一个一个启动。启动速度分析工具：systemd-analyze blame（按耗时降序列出每个 Unit 的启动时间）、systemd-analyze critical-chain（显示启动关键路径）、systemd-analyze plot > boot.svg（生成可视化启动时间图）。优化技巧：将非关键服务延迟启动（通过 After 延迟依赖），没用到的服务 mask 掉（systemctl mask）。",
+    "hints": [
+      "systemd-analyze blame 和 systemd-analyze critical-chain 在优化方向上的区别——blame 找最慢的服务，critical-chain 找启动关键路径瓶颈",
+      "After=network.target 真的能保证网络已就绪吗——不能，network.target 只表示网络服务已启动，不保证 IP 已分配"
+    ],
+    "tags": [
+      "Systemd",
+      "服务管理",
+      "Unit",
+      "启动优化",
+      "systemctl"
+    ]
   }
 ]

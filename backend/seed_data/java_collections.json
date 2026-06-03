@@ -1645,5 +1645,95 @@
       "性能",
       "并发"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "TreeMap 对 null 键的处理策略",
+    "content": "Java 的 TreeMap 允许使用 null 作为键，与 HashMap 的行为一致，因为二者都实现了 Map 接口。\nA) 正确\nB) 错误",
+    "answer": "B",
+    "hints": [
+      "红黑树需要调用 compareTo 确定元素位置",
+      "null 无法参与自然顺序比较"
+    ],
+    "tags": [
+      "Java",
+      "TreeMap",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashMap 扩容时元素的位移规律",
+    "content": "关于 HashMap 的扩容机制，以下哪项描述是正确的？\nA) HashMap 扩容时将所有元素重新计算 hash 并插入新数组，时间复杂度 O(n)\nB) HashMap 扩容时容量翻倍，旧元素在新数组中的索引要么不变，要么为原索引 + 原数组长度，利用数组长度为 2 的幂次方特性优化\nC) 负载因子默认为 0.75，即元素数量达到数组长度的 75% 时立即触发扩容\nD) 扩容时所有链表会立即转换为红黑树以提高迁移效率",
+    "answer": "B",
+    "hints": [
+      "扩容优化利用 hash & oldCap 判断元素位置",
+      "红黑树转换在链表长度达到 8 时发生，与扩容无关"
+    ],
+    "tags": [
+      "Java",
+      "HashMap",
+      "扩容",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap Java 8 对分段锁的彻底重构",
+    "content": "请比较 ConcurrentHashMap 在 Java 7 和 Java 8 之间的核心实现差异。Java 8 为什么放弃分段锁（Segment）设计？新的并发控制机制是什么？",
+    "answer": "Java 7 CHM：内部包含 Segment[]，每个 Segment 继承 ReentrantLock，默认 16 个分段锁。写操作锁单个 Segment，读操作也需要获取 Segment 锁。size() 先无锁累加尝试 3 次，失败后锁全部 Segment。\nJava 8 放弃分段锁的原因：1) 分段锁内存固定开销大，不论数据量大小 Segment 数量固定 2) 锁竞争按 Segment 粒度分布不均，热点数据集中在少数 Segment 导致局部竞争激烈 3) 扩容时需要锁住所有 Segment 获取一致快照，复杂度高。\nJava 8 新机制：数组 + 链表/红黑树 + CAS + synchronized。锁粒度从 Segment 降级为数组每个桶位的头节点。put 操作利用 CAS 尝试将新节点设为桶头，若 CAS 失败则 synchronized 锁定桶头节点完成插入。get 操作完全无锁，由 volatile 修饰的 Node.val 和 Node.next 保证可见性。扩容采用多线程协同迁移（transfer），每个线程负责一部分桶。size() 使用 CounterCell 分段计数，减少原子累加竞争。",
+    "hints": [
+      "Java 8 的锁粒度从 Segment 级降到桶级",
+      "get 操作完全无锁得益于 volatile 语义"
+    ],
+    "tags": [
+      "Java",
+      "ConcurrentHashMap",
+      "并发",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CopyOnWriteArrayList 的设计定位与弱一致性",
+    "content": "请说明 CopyOnWriteArrayList 的设计原理、适用场景和核心缺陷。什么是迭代器的弱一致性？为什么它不适合写密集型场景？",
+    "answer": "设计原理：每次写操作（add/set/remove）时加 ReentrantLock，复制当前数组到新数组（长度加一或减一），在新数组上执行修改后替换 volatile 数组引用。读操作直接读取数组引用，完全无锁。\n适用场景：读远多于写的并发场景——典型例子是事件监听器列表、配置缓存、白名单。\n核心缺陷：1) 每次写都 O(n) 数组复制，频繁写入时吞吐量极低 2) 每次写入产生新数组对象，GC 压力巨大 3) 修改期间新旧数组同时存在，内存占用翻倍。\n弱一致性迭代器：iterator() 在创建时保存当前数组快照引用，后续遍历始终基于该快照，不受其他线程后续修改的影响。不抛出 ConcurrentModificationException。代价是迭代器看到的数据可能不是最新的。",
+    "hints": [
+      "读写分离思想的具体实现",
+      "快照迭代器保证不抛 ConcurrentModificationException"
+    ],
+    "tags": [
+      "Java",
+      "CopyOnWriteArrayList",
+      "并发",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "基于 LinkedHashMap 实现线程安全 LRU 缓存",
+    "content": "请基于 LinkedHashMap 实现一个最大容量为 100 的线程安全 LRU 缓存。说明 accessOrder 参数的行为差异，以及 removeEldestEntry 方法在 LRU 策略中的调用时机。",
+    "answer": "public class LRUCache<K, V> {\n    private final int maxCapacity;\n    private final LinkedHashMap<K, V> map;\n\n    public LRUCache(int maxCapacity) {\n        this.maxCapacity = maxCapacity;\n        this.map = new LinkedHashMap<>(16, 0.75f, true) {\n            @Override\n            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {\n                return size() > LRUCache.this.maxCapacity;\n            }\n        };\n    }\n\n    public synchronized V get(K key) {\n        return map.get(key);\n    }\n\n    public synchronized void put(K key, V value) {\n        map.put(key, value);\n    }\n}\n\naccessOrder 参数：false（默认）为插入顺序，链表顺序等于元素首次 put 的顺序；true 为访问顺序，每次 get 或 put 已存在的 key 时该 entry 被移动到链表尾部。LRU 缓存必须使用 accessOrder=true。\nremoveEldestEntry 调用时机：每次 put 或 putAll 执行完毕后被自动调用，返回 true 时移除链表头部的 entry。执行顺序是——put 先完成插入/更新操作，然后调用 removeEldestEntry 检查是否超出容量，若超出则淘汰最久未访问的头部 entry。这个设计保证了淘汰逻辑不影响正常插入流程。",
+    "hints": [
+      "accessOrder=true 是 LRU 行为的关键开关",
+      "removeEldestEntry 是 put 完成后的后置回调"
+    ],
+    "tags": [
+      "Java",
+      "LRU",
+      "LinkedHashMap",
+      "缓存",
+      "集合框架"
+    ]
   }
 ]

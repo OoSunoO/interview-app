@@ -1564,5 +1564,110 @@
       "GC调优",
       "Region"
     ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Compressed OOPs 指针压缩原理",
+    "content": "关于 JVM 的压缩普通对象指针（Compressed OOPs），以下说法正确的是？",
+    "options": [
+      "A) Compressed OOPs 默认开启，将 64 位堆指针压缩为 32 位，但仅在堆大小 ≤ 32GB 时有效；堆超过 32GB 时自动关闭",
+      "B) Compressed OOPs 只能压缩堆中对象的引用字段，无法压缩数组元素中的引用",
+      "C) Compressed OOPs 的压缩能力不依赖对象对齐，即使对象头没有 8 字节对齐也能正常工作",
+      "D) 关闭 Compressed OOPs（-XX:-UseCompressedOops）对性能没有任何影响"
+    ],
+    "answer": "A",
+    "hints": [
+      "Compressed OOPs 通过 32 位值加基址左移 3 位的方式寻址，最多覆盖 32GB 堆",
+      "指针压缩在堆 ≤ 32GB 时默认开启，节省约 40% 的引用内存占用，同时提升 CPU 缓存命中率"
+    ],
+    "tags": [
+      "JVM",
+      "Compressed OOPs",
+      "指针压缩",
+      "堆内存"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "G1 Humongous 大对象提前回收",
+    "content": "G1 GC 中，当一个对象的大小超过 Region 大小的一半时被标记为 humongous 对象。以下关于 humongous 对象的说法正确的是？",
+    "options": [
+      "A) 并发标记阶段如果发现 humongous 对象已无存活引用，G1 可以在 Mixed GC 之前将其所在 Region 整块回收（Eager Reclamation）",
+      "B) Humongous 对象在年轻代的 Survivor 区域分配，通过多次 Young GC 晋升到老年代",
+      "C) Humongous 对象不受 G1 停顿预测模型约束，任何 Mixed GC 都会扫描所有 Humongous Region",
+      "D) Humongous 对象只能通过 Full GC 回收，因为 G1 无法在并发阶段处理大对象"
+    ],
+    "answer": "A",
+    "hints": [
+      "Humongous Region 是一种特殊的老年代 Region，不参与正常的复制回收",
+      "Eager Reclamation 是 G1 在并发标记后的优化——直接回收全垃圾的 Humongous Region"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "Humongous",
+      "GC",
+      "内存分配"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM CodeCache 代码缓存管理",
+    "content": "JVM 的 CodeCache（代码缓存）是什么？它存储哪些内容？CodeCache 满了会发生什么？",
+    "answer": "CodeCache 是 JVM 用于存储 JIT 编译生成的本地机器码的内存区域，独立于堆和元空间。\n\n存储内容：1）JIT 编译后的方法代码（C1 和 C2 编译结果）。2）JVM 内部桩代码（Interpreter 入口、Stub 例程、异常处理代码）。3）Native 方法的适配代码。JDK 9+ 将 CodeCache 分为三个段（Segmented Code Cache）：non-method（JVM 内部桩代码，永不回收）、profiled（C1 编译代码，生命周期短）和 non-profiled（C2 编译代码，生命周期长）。\n\nCodeCache 满的影响：当 CodeCache 耗尽时，JVM 停止 JIT 编译，所有方法退回到解释执行，性能急剧下降。JVM 输出「CodeCache is full. Compiler has been disabled.」警告。CodeCache sweeper 线程会尝试回收未使用的编译代码，但如果回收速度跟不上，应用将长时间处于低性能的解释执行模式。\n\n调优：-XX:ReservedCodeCacheSize（JDK 8 默认 240MB，JDK 17+ 默认 256MB）、-XX:+PrintCodeCache 查看使用情况、jcmd <pid> Compiler.codecache 查看详细统计。对于大型微服务或复杂框架，建议适当增大 ReservedCodeCacheSize，避免 CodeCache 满导致的性能突降。",
+    "hints": [
+      "JDK 9 引入分段 CodeCache 将 C1 和 C2 编译代码分离，避免 C2 编译代码被 C1 代码的频繁回收影响",
+      "CodeCache 耗尽是生产环境性能突降的隐蔽原因——通常表现为某次部署后吞吐量骤降"
+    ],
+    "tags": [
+      "JVM",
+      "CodeCache",
+      "JIT",
+      "编译优化"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 编译器线程与编译队列机制",
+    "content": "JVM 的编译器线程（Compiler Thread）是如何工作的？-XX:CICompilerCount 参数的作用和默认值是什么？容器环境下为什么需要关注这个参数？",
+    "answer": "编译器线程是 JVM 后台线程，负责将热点字节码编译为本地机器码。编译请求由解释执行线程（方法调用计数器达到阈值后）提交到编译队列，编译器线程从队列中取出任务异步编译。\n\n工作机制：1）编译请求提交——方法调用计数或循环回边计数达到阈值后，方法被放入编译队列（优先级队列，C2 任务优先级高于 C1）。2）异步编译——编译器线程从队列头部取出任务，在后台完成编译，不影响应用线程的执行。3）完成回调——编译完成后，方法的入口指针被更新为编译后的机器码地址。\n\nCICompilerCount 参数：控制编译器线程的总数。默认值 = CPU 核数 / 2（最小 2，最大约 16）。分层编译模式下，C1 线程数 = CICompilerCount / 3（向下取整），C2 线程数 = 剩余部分。如果编译队列持续堆积（可通过 jstat -compiler 观察编译任务数持续增长），说明编译器线程数不足。\n\n容器环境问题：JDK 8u191 之前，JVM 检测到的是宿主机的 CPU 核数而非容器的 CPU 核数。如果宿主机 64 核但容器只分配 4 核，CICompilerCount 默认值为 32（64/2），导致容器内 32 个编译器线程争抢 4 个 CPU 核，编译线程之间互相竞争反而拖慢编译速度。解决办法：显式设置 -XX:CICompilerCount=2（或根据容器 CPU 核数调整）。JDK 10+（JEP 293）已修复此问题。",
+    "hints": [
+      "编译队列堆积的症状——jstat -compiler 的 Failed 和 Invalid 数量增加，应用长时间无法达到峰值性能",
+      "宿主机 64 核容器 4 核的场景下，CICompilerCount 默认 32 个线程会成为严重的 CPU 争抢源"
+    ],
+    "tags": [
+      "JVM",
+      "编译器线程",
+      "CICompilerCount",
+      "JIT",
+      "容器"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "invokedynamic 指令与 Lambda 实现原理",
+    "content": "JDK 7 引入的 invokedynamic 指令是什么？Lambda 表达式是如何通过 invokedynamic 实现的？与匿名内部类相比有何优势？",
+    "answer": "invokedynamic（JDK 7, JSR 292）是 Java 虚拟机指令集中最灵活的调用指令，允许在运行时动态确定方法的调用目标。它通过引导方法（Bootstrap Method, BSM）和调用点（CallSite）机制，将方法分派的决策推迟到运行时。\n\n执行流程：1）第一次执行 invokedynamic 时，JVM 调用指定的 BSM（此时 BSM 执行一次）。2）BSM 返回一个 CallSite 对象，内部封装了一个 MethodHandle（方法句柄）。3）后续执行直接从 CallSite 获取目标方法句柄调用，不再经过 BSM。4）CallSite 分为常量调用点（ConstantCallSite，目标不可变，最常用）和可变调用点（MutableCallSite，目标可在运行时切换，用于动态语言）。\n\nLambda 的实现：编译器将每个 Lambda 翻译为一个 invokedynamic 指令 + 对应的 BSM。BSM 在运行时调用 LambdaMetafactory.metafactory()，动态生成一个内部类（实现了目标函数式接口），Lambda 体的代码封装在该内部类的方法中。\n\n相比匿名内部类的优势：1）匿名内部类在编译时生成独立的 .class 文件；Lambda 在运行时动态生成，同一个 Lambda 的多次求值共享同一个 CallSite 和实现类。2）Lambda 的 this 指向外部类（匿名内部类的 this 指向内部类实例自身）。3）Lambda 不会每次调用都创建一个新实例——非捕获 Lambda 相当于单例，捕获 Lambda 每次调用创建新的实现类实例。",
+    "hints": [
+      "invokedynamic 的 BSM 在类加载时执行一次，后续调用直接通过 CallSite 获取方法句柄，性能与普通虚方法调用相当",
+      "非捕获 Lambda（如 x -> x + 1，没有引用外部非静态变量）相当于静态单例模式，每次 invokedynamic 返回同一个 CallSite"
+    ],
+    "tags": [
+      "JVM",
+      "invokedynamic",
+      "Lambda",
+      "MethodHandle",
+      "字节码"
+    ]
   }
 ]

@@ -1581,5 +1581,93 @@
       "并发",
       "环形缓冲区"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "泛型类型擦除的运行时真相",
+    "content": "Java 的泛型通过类型擦除实现，运行时无法获取泛型参数的具体类型。因此 List<String> 和 List<Integer> 在运行时是相同的 Class 对象。\nA) 正确\nB) 错误",
+    "answer": "A",
+    "hints": [
+      "反射调用 getTypeParameters 返回的是类型变量而非实际参数",
+      "通过匿名内部类可以绕开擦除获取类型信息"
+    ],
+    "tags": [
+      "Java",
+      "泛型",
+      "类型擦除"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ClassLoader 双亲委派模型的核心机制",
+    "content": "关于 ClassLoader 双亲委派模型的描述，哪一项是正确的？\nA) 类加载时首先由子 ClassLoader 尝试加载，加载失败后才交给父 ClassLoader\nB) 自定义 ClassLoader 必须重写 loadClass 方法才能遵循双亲委派模型\nC) loadClass 方法的核心逻辑是先委派父 ClassLoader 加载，父加载失败后才由自己尝试加载\nD) Thread.currentThread().getContextClassLoader() 返回当前类所属的 ClassLoader",
+    "answer": "C",
+    "hints": [
+      "双亲委派是自底向上检查、自顶向下尝试加载",
+      "findClass 和 loadClass 的分工是关键设计"
+    ],
+    "tags": [
+      "Java",
+      "ClassLoader",
+      "双亲委派"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 编译的核心优化技术详解",
+    "content": "请列举 HotSpot JVM 中至少 5 种 JIT 编译优化技术，并重点说明方法内联和逃逸分析的工作原理。方法内联在哪些场景下会失效？逃逸分析的标量替换如何实现栈上分配？",
+    "answer": "主要优化技术：1) 方法内联 2) 逃逸分析（含标量替换和锁消除）3) 循环优化（展开、不变代码外提）4) 空值检查消除 5) 类型精确推断（CHA）6) 窥孔优化。\n方法内联：将目标方法体直接复制到调用者代码中，消除方法调用和栈帧创建开销。阈值：方法体默认不超过 325 字节（-XX:MaxInlineSize），调用次数达到编译阈值（默认 10000）。内联失效条件：方法体过大、虚方法无法通过 CHA 确定唯一实现、-XX:-Inline 禁用内联。\n逃逸分析：分析对象引用是否逃逸出方法或线程边界。若未逃逸，JIT 可执行标量替换——将对象字段拆解为独立局部变量分配在栈上或寄存器中，而非在堆上分配完整对象。这消除了 GC 压力，对象随栈帧弹出自动回收。\n锁消除：若逃逸分析发现 synchronized 对象的引用不会逃逸到其他线程，JIT 会移除锁获取操作。",
+    "hints": [
+      "CHA 是方法内联的核心支撑技术",
+      "标量替换后对象可能完全不存在于堆中"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "逃逸分析",
+      "方法内联"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "实现遵循双亲委派的自定义 ClassLoader",
+    "content": "请实现一个自定义 ClassLoader，能够从指定包前缀的字节数组中加载类。要求：1) 严格遵循双亲委派模型 2) 只负责加载特定包前缀的类，其余交回父加载器 3) 说明 defineClass 和 resolveClass 的分工职责。",
+    "answer": "public class ByteArrayClassLoader extends ClassLoader {\n    private final String allowedPrefix;\n    private final Map<String, byte[]> classBytes;\n\n    public ByteArrayClassLoader(String allowedPrefix, Map<String, byte[]> classBytes, ClassLoader parent) {\n        super(parent);\n        this.allowedPrefix = allowedPrefix;\n        this.classBytes = classBytes;\n    }\n\n    @Override\n    protected Class<?> findClass(String name) throws ClassNotFoundException {\n        byte[] bytes = classBytes.get(name);\n        if (bytes == null) throw new ClassNotFoundException(name);\n        return defineClass(name, bytes, 0, bytes.length);\n    }\n\n    @Override\n    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {\n        if (!name.startsWith(allowedPrefix)) {\n            return super.loadClass(name, resolve);\n        }\n        Class<?> c = findLoadedClass(name);\n        if (c == null) {\n            try {\n                c = getParent().loadClass(name);\n            } catch (ClassNotFoundException e) {\n                c = findClass(name);\n            }\n        }\n        if (resolve) resolveClass(c);\n        return c;\n    }\n}\n\ndefineClass 职责：将 byte[] 转换为 Class 对象，内部校验字节码格式、验证常量池、检查 illegal access 等安全问题。resolveClass 职责：执行类的链接阶段（验证、准备、解析符号引用）。不调用 resolveClass 类仍可正常使用和实例化，符号引用在需要时按需解析。",
+    "hints": [
+      "findClass 是扩展点，loadClass 是委派逻辑",
+      "resolveClass 决定符号引用何时被解析"
+    ],
+    "tags": [
+      "Java",
+      "ClassLoader",
+      "双亲委派",
+      "类加载机制"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 模块系统的封装边界与反射授权",
+    "content": "Java 9 模块系统如何解决类路径和访问控制层面的问题？exports 和 opens 在语义上有何本质区别？为什么 JPMS 要求「深度反射」必须通过 opens 显式授权？",
+    "answer": "JPMS 解决的核心问题：1) 强封装——模块内包默认对外不可见，即使 public 类型也无法被外部访问 2) 可靠配置——声明式 requires transitive 建立依赖，不再依赖 Class-Path 隐式约定 3) 消除类路径地狱——模块路径不允许 split package，保证每个包唯一 4) 未命名模块保留向后兼容。\nexports 与 opens 的区别：exports 将包中的 public 类型开放给其他模块编译期和运行时正常调用；opens 将包中所有类型（含 private 成员）开放给运行时反射访问，但编译期不可见。\n深度反射需 opens 授权的原因：反射通过 setAccessible(true) 可以突破封装边界——访问 private 字段、调用私有方法。无模块化时代 setAccessible 可无条件突破一切可见性限制。JPMS 的设计哲学是「显式授权」：模块必须通过 opens 声明自愿开放包的反射权限。这既增强了安全性，也保留了 Spring、Hibernate 等框架的反射需求路径。",
+    "hints": [
+      "exports 只开放 public 类型的正常调用",
+      "opens 是反射特权操作的安全授权通道"
+    ],
+    "tags": [
+      "Java",
+      "JPMS",
+      "模块系统",
+      "反射"
+    ]
   }
 ]

@@ -1991,5 +1991,94 @@
       "编排",
       "异常处理"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "线程安全的集合类识别",
+    "content": "以下哪些集合是线程安全的，可以直接在多线程环境中使用而不需要额外同步？（多选）\nA) ConcurrentHashMap\nB) CopyOnWriteArrayList\nC) HashMap\nD) Collections.synchronizedMap(new HashMap<>())",
+    "answer": "A, B, D",
+    "hints": [
+      "HashMap 的 fast-fail 机制在多线程下容易触发",
+      "synchronizedMap 使用 mutex 锁包装所有方法"
+    ],
+    "tags": [
+      "Java",
+      "线程安全",
+      "并发集合"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "保证迭代顺序的 Map 实现",
+    "content": "以下哪些 Map 实现能够保证遍历时键值对的顺序是确定的？（多选）\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",
+    "answer": "B, C",
+    "hints": [
+      "LinkedHashMap 维护双向链表记录顺序",
+      "TreeMap 基于红黑树按 key 排序"
+    ],
+    "tags": [
+      "Java",
+      "Map",
+      "遍历顺序",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "ConcurrentModificationException 的触发路径",
+    "content": "以下哪些场景会抛出 ConcurrentModificationException？（多选）\nA) 线程 A 使用 Iterator 遍历 ArrayList 的同时，线程 B 调用 list.add() 添加元素\nB) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 list.remove(index)\nC) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 iterator.remove()\nD) 一个线程遍历 CopyOnWriteArrayList 的同时另一个线程向其中添加元素",
+    "answer": "A, B",
+    "hints": [
+      "iterator.remove 是安全的删除方式",
+      "CopyOnWriteArrayList 的迭代器基于快照"
+    ],
+    "tags": [
+      "Java",
+      "ConcurrentModificationException",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Collections 包装方法的语义陷阱",
+    "content": "关于 Collections 工具类的包装方法，以下哪些描述是正确的？（多选）\nA) Collections.unmodifiableList() 返回的视图拦截所有修改操作，调用 add/remove/set 时抛出 UnsupportedOperationException\nB) Collections.synchronizedList() 返回的同步列表在迭代时仍需外部手动加锁\nC) Collections.checkedList() 在运行时对所有插入元素执行类型检查\nD) Collections.emptyList() 返回的空列表可以正常调用 add() 来扩展元素",
+    "answer": "A, B, C",
+    "hints": [
+      "unmodifiableList 是视图而非不可变副本",
+      "synchronizedList 的迭代器本身不加锁"
+    ],
+    "tags": [
+      "Java",
+      "Collections",
+      "工具类",
+      "集合框架"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Queue 与 Deque 实现的核心特性",
+    "content": "以下关于 Java 队列实现的描述，哪些是正确的？（多选）\nA) ArrayDeque 的初始容量为 16，且容量始终保持为 2 的幂次方\nB) LinkedList 同时实现了 List 和 Deque 接口，可作为双端队列使用\nC) PriorityBlockingQueue 是有界阻塞队列，插入操作在队列满时阻塞\nD) DelayQueue 要求元素实现 Delayed 接口，take() 方法在有元素到期前阻塞",
+    "answer": "A, B, D",
+    "hints": [
+      "ArrayDeque 的 2 的幂次方容量用于位运算优化头尾指针",
+      "PriorityBlockingQueue 是无界队列"
+    ],
+    "tags": [
+      "Java",
+      "Queue",
+      "Deque",
+      "ArrayDeque",
+      "集合框架"
+    ]
   }
 ]

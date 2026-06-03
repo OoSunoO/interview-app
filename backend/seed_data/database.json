@@ -1575,5 +1575,110 @@
       "Partition Pruning",
       "SQL优化"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL Next-Key Lock 加锁规则与幻读处理",
+    "content": "请详细解释 MySQL InnoDB 在可重复读隔离级别下，Next-Key Lock 的加锁规则。什么情况下会退化为 Record Lock 或 Gap Lock？如何通过加锁规则分析线上死锁？",
+    "answer": "答案：Next-Key Lock = Record Lock + Gap Lock，锁住索引记录及记录之前的间隙。等值唯一索引命中退化为 Record Lock；等值无匹配退化为 Gap Lock；范围查询全程 Next-Key Lock。\n\n解析：加锁规则（基于 MySQL 8.0）：1）等值查询且唯一索引命中——退化为 Record Lock（只锁记录本身）。2）等值查询且无匹配记录——退化为 Gap Lock（锁住该值应在的间隙）。3）范围查询——覆盖范围内的所有记录及间隙，精确匹配的等值部分退化。4）非唯一索引等值查询——锁定命中记录的行锁 + 前后间隙锁，以及相邻的下一个键的 Gap Lock。\n\n扩展延伸：死锁分析技巧：事务 A 锁了记录 1 请求记录 2，事务 B 锁了记录 2 请求记录 1。更隐蔽的是同一条 SQL 在不同索引上加锁顺序不同——二级索引先锁（使用二级索引的 Next-Key Lock），再回表锁聚簇索引。如果另一个事务从聚簇索引反向操作，加锁顺序相反则死锁。排查工具：SHOW ENGINE INNODB STATUS\\G 查看 LATEST DETECTED DEADLOCK，关注两个事务的 SQL 语句和等待的锁模式。",
+    "hints": [
+      "Gap Lock 只在 REPEATABLE READ 级别存在，READ COMMITTED 级别没有 Gap Lock",
+      "为什么 RC 级别比 RR 级别更少出现死锁——因为没有 Gap Lock"
+    ],
+    "tags": [
+      "MySQL",
+      "InnoDB",
+      "锁",
+      "Next-Key Lock",
+      "间隙锁"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "MySQL 快照读与当前读的区别",
+    "content": "关于 MySQL InnoDB 的快照读（Consistent Read）和当前读（Locking Read），以下说法错误的是？",
+    "options": [
+      "A) 快照读通过 Read View + undo log 实现，不加锁，读不会阻塞写",
+      "B) 当前读会对读取的记录加锁，SELECT...FOR UPDATE 加排他锁，SELECT...LOCK IN SHARE MODE 加共享锁",
+      "C) 在 REPEATABLE READ 级别下，快照读的 Read View 在事务开始时创建并复用，保证多次读结果一致",
+      "D) UPDATE 语句的 WHERE 条件即使使用非索引列，也只会对匹配的记录加 Record Lock"
+    ],
+    "answer": "答案：D)。解析：UPDATE/DELETE 的 WHERE 条件如果使用非索引列，InnoDB 会对聚簇索引进行全表扫描，并对扫描过程中遇到的所有记录加 Next-Key Lock（或 Record Lock），不是只锁匹配的记录。如果扫描了 100 万行，即使只更新 1 行，100 万行都会被锁定——这是线上常见的「锁风暴」根因。A) 正确，快照读是 MVCC 的非阻塞读。B) 当前读包括 SELECT...FOR UPDATE（X 锁）、SELECT...LOCK IN SHARE MODE（S 锁）以及 UPDATE/DELETE/INSERT 操作的隐含读。C) 正确，RR 的 ReadView 在事务首次读时创建并复用。",
+    "hints": [
+      "全表扫描时加锁的传染范围——「锁住扫描过的所有行」",
+      "为什么 DELETE 大量数据时可能锁住整个表"
+    ],
+    "tags": [
+      "MySQL",
+      "MVCC",
+      "锁",
+      "快照读",
+      "当前读"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 索引选择性（Cardinality）与优化器",
+    "content": "什么是索引选择性（Cardinality/区分度）？MySQL 优化器如何基于它选择执行计划？当优化器选错索引时该如何处理？",
+    "answer": "答案：索引选择性 = 不同值的数量 / 总行数。选择性越高，索引过滤效果越好。优化器通过 Cardinality 统计信息估算扫描行数，选择成本最低的方案。选错索引时可用 USE INDEX 或 ANALYZE TABLE 刷新统计信息。\n\n解析：Cardinality 是 SHOW INDEX 中显示的字段，表示索引中不同值的估算数量。选择性 = Cardinality / 表行数，越接近 1 越好。MySQL 通过随机采样（innodb_stats_sample_pages 控制采样页数，默认 8）估算 Cardinality，不是精确值。\n\n扩展延伸：优化器选错索引的根因：1）统计信息过时——大量增删改后未触发自动更新，执行 ANALYZE TABLE 刷新。2）回表成本被忽略——二级索引选择性不高（如性别索引选择性 50%），优化器可能选择全表扫描，因为随机 IO 回表成本高。3）ORDER BY 与 WHERE 冲突——优化器优先满足排序走排序列索引，而非过滤条件索引。解决方案：建立覆盖索引（让二级索引包含所有查询字段，消除回表）；FORCE INDEX 强制指定；调整 SQL 或索引结构。",
+    "hints": [
+      "innodb_stats_sample_pages 参数如何影响 Cardinality 准确性",
+      "为什么「性别」字段通常不适合建索引——选择性太低"
+    ],
+    "tags": [
+      "MySQL",
+      "索引",
+      "优化器",
+      "Cardinality",
+      "SQL优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "MySQL RR 级别与幻读的关系",
+    "content": "MySQL InnoDB 在 REPEATABLE READ 隔离级别下，通过 MVCC 和 Next-Key Lock 完全消除了幻读（Phantom Read）问题。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "快照读和当前读在幻读处理上的差异——RR 级别下快照读无幻读但当前读仍可能有",
+      "什么场景下 RR 级别会出现「幻读」——先快照读再当前读"
+    ],
+    "tags": [
+      "MySQL",
+      "幻读",
+      "RR",
+      "隔离级别",
+      "事务"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 分库分表策略与分布式 ID",
+    "content": "如何设计 MySQL 分库分表方案？分片键如何选择？分库分表后如何实现跨分片查询和全局唯一主键生成？",
+    "answer": "答案：水平分片按 Range 或 Hash 分配；垂直分片按业务模块拆分。分片键选高频查询条件且分布均匀。全局 ID 常用雪花算法（Snowflake）。\n\n解析：1）分片策略——Range：按 ID/时间范围分片，易扩展但数据倾斜。Hash：按分片键哈希取模（如 user_id % 16），分布均匀但扩表需 Rehash（可预先用一致性哈希或分片数取 2 的幂减少迁移）。2）分片键选择——出现在 WHERE 条件最频繁的字段，数据分布均匀，尽量不跨分片。3）跨分片查询——聚合层（ShardingSphere/MyCat）合并结果；分页需逐分片查再内存排序。\n\n扩展延伸：分布式 ID 方案对比：雪花算法（Snowflake）——64 位 long：1 bit 符号位 + 41 bit 毫秒时间戳（69 年） + 10 bit 机器 ID + 12 bit 序列号（4096/ms），趋势递增，不依赖 DB。美团 Leaf——雪花模式 + 号段模式（预先取一批 ID 到本地）。UUID——36 位字符串，无序，不适合做聚簇索引（B+ 树频繁分裂）。推荐：雪花算法或其变种（如美团的 Leaf-snowflake），或 Redis INCR 生成短 ID。",
+    "hints": [
+      "雪花算法的时间回拨问题如何解决——等待或记录上次时间戳",
+      "分库分表后 ORDER BY + LIMIT 分页的「深翻页」问题为什么比单库更严重"
+    ],
+    "tags": [
+      "MySQL",
+      "分库分表",
+      "Sharding",
+      "分布式ID",
+      "雪花算法"
+    ]
   }
 ]

@@ -1535,5 +1535,113 @@
       "不可变基础设施",
       "DevOps"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes CNI 网络模型与 Pod 通信",
+    "content": "Kubernetes 的 CNI（Container Network Interface）网络模型是如何定义的？Pod 内容器如何共享网络命名空间（pause 容器的作用）？跨节点 Pod 通信的几种主流方案（overlay、路由、eBPF）各自的实现原理和性能差异是什么？",
+    "answer": "答案：CNI 定义容器的网络配置标准接口，K8s 通过 CNI 插件管理 Pod 网络。Pod 内通过 pause 容器持有网络命名空间。跨节点通信使用 overlay（VXLAN）、路由（Calico BGP）或 eBPF（Cilium）三种方案。\n\n解析：Pod 内多容器共享网络：每个 Pod 创建时先启动 infra/pause 容器，它持有 network namespace + PID namespace。其他业务容器通过 join 共享该 netns（localhost 通信，共享 IP 和端口空间）。CNI 插件工作流程：kubelet 在 Pod 调度到节点后调用 CNI 插件的 ADD 命令，插件负责分配 IP、配置网络接口、创建路由规则。\n\n扩展延伸：三种跨节点方案对比：1）Overlay（Flannel VXLAN）——在宿主机网络之上建立 VTEP 隧道，数据包封装在内核中完成。性能损耗约 10-20%，配置简单、不依赖底层网络。2）路由方案（Calico BGP）——每个节点作为 BGP Speaker，向集群网络通告 Pod CIDR 路由。数据包直接由三层路由转发，无封装开销，但需要底层网络设备支持 BGP，有 Pod 数量限制（路由表条目数）。3）eBPF 方案（Cilium）——通过 BPF 程序在内核级别直接处理网络数据包，替代 iptables 和 kube-proxy，延迟最低（微秒级），支持 L7 策略。性能排名：eBPF > BGP 路由 > VXLAN。",
+    "hints": [
+      "Pause 容器为什么叫 pause——它的唯一作用是保持 network namespace 存活（进程永久 sleep）",
+      "VXLAN 封装的数据包外部 UPD 头和内部 MAC 头各有多少字节——50 字节开销影响 MTU"
+    ],
+    "tags": [
+      "K8s",
+      "CNI",
+      "Pod网络",
+      "VXLAN",
+      "Calico",
+      "Cilium"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Kubernetes Pod QoS 模型",
+    "content": "K8s Pod 配置如下：containers[0].resources.requests = {cpu: 0.5, memory: 256Mi}，limits = {cpu: 1, memory: 512Mi}。该 Pod 的 QoS 类别是什么？",
+    "options": [
+      "A) Guaranteed",
+      "B) Burstable",
+      "C) BestEffort",
+      "D) Unknown"
+    ],
+    "answer": "答案：B)。解析：K8s 三种 QoS 类别判定：1）Guaranteed——所有容器都设置了 limits，且所有资源类型的 limits == requests（CPU 和 Memory 都必须分别相等）。本 Pod CPU limits(1) != requests(0.5)，Memory limits(512Mi) != requests(256Mi)，不满足。2）Burstable——至少一个容器有 requests 或 limits 但不满足 Guaranteed。3）BestEffort——没有任何 requests 和 limits。QoS 决定了节点资源紧张（OOM 或内存压力）时哪些 Pod 优先被驱逐：BestEffort > Burstable > Guaranteed。同一 QoS 类别内部，根据 OOM Score 按实际使用超出 requests 比例排序（超得越多越优先被杀死）。注意：QoS 仅基于资源 requests/limits 配置判断，与实际资源使用无关。",
+    "hints": [
+      "Burstable Pod 内如果某个容器不设置 limits 只设置 requests，会有什么影响——CPU 可以 Burst 到节点上限",
+      "Pod 的 QoS 如何影响 OOM Killer 的优先级——通过 oom_score_adj 参数"
+    ],
+    "tags": [
+      "K8s",
+      "QoS",
+      "资源限制",
+      "OOM",
+      "驱逐"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GitOps 工作流与 ArgoCD 原理",
+    "content": "GitOps 的核心原则是什么？ArgoCD 如何实现声明式环境同步和自动修复（Self-healing）？与传统 CI/CD 推模式（Push-based）相比，GitOps 拉模式（Pull-based）在安全性和一致性方面有什么架构优势？",
+    "answer": "答案：GitOps 以 Git 仓库作为唯一事实来源（Single Source of Truth），集群状态持续与 Git 同步。ArgoCD 监控 Git 仓库和集群状态的差异，自动或手动同步使集群匹配 Git 声明。\n\n解析：ArgoCD 工作流程：1）Application Controller 持续对比 Git 仓库中声明的 manifest（Helm/Kustomize/YAML）与集群中实际运行的资源。2）检测到差异时，根据 syncPolicy（manual/auto）决定是否同步。auto-sync 模式自动应用 Git 仓库中的最新配置；自愈（Self-healing）模式下，即使有人手动 kubectl edit 修改了集群资源，ArgoCD 也会将其恢复到 Git 仓库声明的状态。3）Git Webhook 触发同步——收到 Git push 事件后，ArgoCD 立即同步（而非默认 3 分钟轮询）。\n\n扩展延伸：GitOps Pull 模式的安全优势：1）CI 流水线只需推送镜像到仓库和更新 Git 仓库中的 manifest（如 kustomize edit set image），不需要 kubectl 权限或集群凭据。2）集群中的 ArgoCD Agent 从 Git 仓库拉取配置——集群凭据不出集群边界。3）回滚只需 git revert 提交，ArgoCD 自动同步回旧版本。4）审计日志天然由 Git 提供——谁在什么时间改了什么是不可篡改的。5）多集群管理：一个 ArgoCD 控制面可以管理多个集群，通过 RBAC 控制每个团队可同步的应用范围。对比传统 Push 模式（Jenkins/GitLab CI 直接 kubectl apply）：每个 CI Job 都需要 Kubeconfig（凭据散落在各处），且没有统一的变更审计和回滚能力。",
+    "hints": [
+      "ArgoCD 的 sync 策略——manual/auto & prune/self-heal 的组合含义",
+      "GitOps 中 CI 和 CD 的分界点在哪里——CI 到更新 Git manifest 为止，CD 是 ArgoCD 从 Git 到集群的同步"
+    ],
+    "tags": [
+      "GitOps",
+      "ArgoCD",
+      "CI/CD",
+      "K8s",
+      "声明式"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Docker 镜像分层结构与构建缓存",
+    "content": "关于 Docker 镜像的分层结构（UnionFS）和构建缓存，以下描述正确的是？",
+    "options": [
+      "A) Docker 镜像的每一层都是完整的文件系统快照，层与层之间相互独立且不共享数据",
+      "B) COPY 和 RUN 指令在 Dockerfile 中都会创建新的镜像层",
+      "C) 修改 Dockerfile 中任何一条指令都会导致所有后续层的缓存失效，无论改动多小",
+      "D) CMD 和 ENTRYPOINT 指令也会创建新的镜像层，因为它们定义了容器的执行入口"
+    ],
+    "answer": "答案：B)。解析：Docker 镜像由只读层堆叠，每层记录与上一层的差异（增量而非全量）。COPY/RUN/ADD 创建新层，因为这几条指令会改变文件系统。CMD/ENTRYPOINT/ENV/LABEL/EXPOSE 等元数据指令不创建新层——它们只修改 Image Config JSON（非 UnionFS 层）。A) 错，层记录的是增量差异（overlayfs2 的 lowerdir 层），不是完整快照。C) 错，只有底层指令修改导致该层缓存失效时，上层的缓存才失效（顶层修改不影响已缓存的下层指令）。最典型的优化：把变更频率低的放在 Dockerfile 前面（先 COPY package.json 再 RUN npm install 再 COPY 源码），让依赖安装层尽可能命中缓存。D) 错，CMD/ENTRYPOINT 不创建层。",
+    "hints": [
+      "Docker 镜像层存储在 /var/lib/docker/overlay2/ 下如何组织——lower 和 upper 目录叠加",
+      "为什么先 COPY package.json 再 RUN npm install 能提升缓存命中率——依赖文件变更频率远低于源码"
+    ],
+    "tags": [
+      "Docker",
+      "分层",
+      "缓存",
+      "Dockerfile",
+      "UnionFS"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "OpenTelemetry 与可观测性三支柱",
+    "content": "可观测性（Observability）的三大支柱是什么？OpenTelemetry 如何统一 Metrics、Logs 和 Traces 的采集和关联？OTLP 协议的设计原理和 Collector 的 Pipeline 架构是怎样的？",
+    "answer": "答案：三大支柱：Metrics（指标）、Logs（日志）、Traces（链路）。OpenTelemetry（OTel）提供统一 SDK 和 Collector，通过 OTLP 协议传输数据。Collector 使用 Receivers → Processors → Exporters 管道处理数据。\n\n解析：OTel 核心组件：1）API + SDK——应用代码引入 OTel SDK，通过统一的 API 生成 Traces（Span）、Metrics（Counter/Histogram）、Logs。SDK 自动采集 gRPC/HTTP 调用的链路上下文。2）Context Propagation——通过 W3C Trace Context 标准（traceparent 头：00-traceid-spanid-01）在跨服务调用中传播 Trace ID。3）OTLP 协议——基于 gRPC/HTTP Protobuf 传输，支持批量和 GZip 压缩。\n\n扩展延伸：OTel Collector 核心 Pipeline：1）Receivers——接收数据源（OTLP Receiver、Prometheus Receiver、Jaeger Receiver、K8s Receiver）。2）Processors——处理数据（batch 合并、attributes 增删、sampling 采样、memory_limiter 防止 OOM）。3）Exporters——转发到后端（Prometheus、Jaeger/ Tempo、Loki、DataDog、S3 存储）。Tail Sampling Processor：可以按 Trace 粒度采样——如果某个 Span 包含错误（error span），即使整体采样率是 1%，这个 Trace 的全体 Span 都会被保留。这是传统概率采样做不到的。关联手段——Logs 中可以嵌入 Trace ID 和 Span ID，实现 Log → Trace 的跳转查询。",
+    "hints": [
+      "W3C Trace Context 的 traceparent 头格式——00-traceid(32hex)-spanid(16hex)-01(traceflag)",
+      "Tail Sampling 相比 Head Sampling 的优点——可以基于完整 Trace 信息做采样决策（如保留含错误的 Trace）"
+    ],
+    "tags": [
+      "可观测性",
+      "OpenTelemetry",
+      "OTLP",
+      "Traces",
+      "Collector"
+    ]
   }
 ]

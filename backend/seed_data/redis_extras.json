@@ -1562,5 +1562,112 @@
       "主从复制",
       "全量同步"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 主从异步复制数据丢失与应对",
+    "content": "默认配置下 Redis 主从架构如果主节点宕机，会丢失多少数据？可能导致数据丢失的场景有哪几种？如何通过配置策略最小化数据丢失风险？",
+    "answer": "答案：异步复制下主节点宕机可能丢失 repl-backlog 中的数据（默认 1MB）+ 未刷盘的 AOF 缓冲。通过 min-replicas-to-write、min-replicas-max-lag 和 AOF 刷盘策略可降低风险。\n\n解析：数据丢失场景：1）主节点已写入内存但尚未发送给从节点——这部分数据在复制积压缓冲区（repl-backlog-size 默认 1MB）中。2）主节点内存中的数据尚未写入 AOF 文件或 RDB——取决于持久化策略。\n\n扩展延伸：Reduce risk 策略：1）min-replicas-to-write + min-replicas-max-lag——设置当从节点少于 N 个或延迟超过 M 秒时，主节点拒绝写入。例如 min-replicas-to-write=1 + min-replicas-max-lag=10，保证至少有一个从节点数据同步在 10s 内。2）AOF 持久化——appendfsync always（最安全，每条命令刷盘，性能下降 50-70%）或 everysec（折中）。3）repl-backlog-size 调大（如 64MB-512MB）给从节点更多追赶时间。4）Redis 7.0+ 的 WAITAOF 命令——主节点写后等待指定数量的从节点确认 AOF 刷盘后再返回客户端，类似 Kafka 的 acks=all。",
+    "hints": [
+      "min-replicas-to-write=2 且只有 1 个从节点时会发生什么——主节点拒绝写入",
+      "WAITAOF 与 ACK 机制的相似之处——同步等待副本确认"
+    ],
+    "tags": [
+      "Redis",
+      "主从",
+      "复制",
+      "数据丢失",
+      "高可用"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis 持久化 RDB vs AOF 选择",
+    "content": "关于 Redis 的 RDB 和 AOF 持久化机制，以下说法正确的是？",
+    "options": [
+      "A) RDB 是增量持久化，只记录上次备份以来的数据变更",
+      "B) AOF 文件采用二进制格式，因此比 RDB 文件更小",
+      "C) RDB 在 bgsave 时会 fork 子进程，fork 期间主进程完全阻塞无法处理任何请求",
+      "D) AOF 重写（Rewrite）时 fork 子进程扫描当前内存状态生成最小 AOF 文件，重写期间的新写入缓存在重写缓冲区，重写完成后合并"
+    ],
+    "answer": "答案：D)。解析：AOF 重写通过 fork 子进程读取当前内存键值对状态（不是重放旧 AOF），生成最小的 AOF 文件。主进程在此期间继续服务——新数据写请求同时追加到旧 AOF 和重写缓冲区，子进程完成后发信号给主进程，主进程将重写缓冲区内容追加到新 AOF 文件，然后原子替换旧文件。A) 错，RDB 是全量快照（保存某个时间点的所有数据）。B) 错，AOF 是文本协议格式（*N\\r\\n$M\\r\\n 格式），比 RDB 的压缩二进制大得多。C) 错，fork 是系统调用会阻塞主进程（耗时几十到几百毫秒），但 fork 完成后子进程异步写 RDB 不阻塞主进程。",
+    "hints": [
+      "fork 子进程的写时复制（Copy-On-Write）如何工作——子进程共享主进程的物理页，写入时才复制",
+      "Redis 7.0+ 混合持久化如何结合 RDB 和 AOF 优势——RDB 全量 + AOF 增量"
+    ],
+    "tags": [
+      "Redis",
+      "RDB",
+      "AOF",
+      "持久化",
+      "AOF重写"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 热 Key 与大 Key 的发现与治理",
+    "content": "什么是 Redis 的热 Key 和大 Key？各自会导致哪些线上问题？如何自动化发现并系统性治理？",
+    "answer": "答案：热 Key 指访问频率极高的 Key（如秒杀商品），导致单节点 CPU 打满。大 Key 指 String > 10MB 或集合元素超万级，导致读写延迟高和阻塞。发现方式：hotkeys 参数、--bigkeys 扫描、客户端统计。\n\n解析：热 Key 发现：1) Redis 6.2+ redis-cli --hotkeys（基于 LFU 的 COUNTER 采样）。2) 客户端侧本地统计（如每 10s 上报 Top N 访问频次）。3) 代理层（Codis/Twemproxy/Redis Enterprise）统一统计。热 Key 影响：单节点 CPU 饱和、网络带宽打满、所有请求集中在一个节点导致整体吞吐受限。大 Key 发现：1) redis-cli --bigkeys 扫描（遍历全库，不建议生产高峰期执行）。2) memory usage key 精确查询内存占用（Redis 4.0+）。大 Key 影响：读/写大 Key 阻塞主线程、集群数据倾斜（部分节点内存高）、删除大 Key 导致主线程卡顿。\n\n扩展延伸：系统性治理方案：热 Key——1）本地缓存（Caffeine/Guava Cache 挡掉大部分请求）。2）读写分离（从节点分担读流量）。3）打散：key:0 到 key:N，客户端随机选择一个访问。4）Redis 7.0+ Function 服务端聚合。大 Key——1）拆分（Hash 拆成多个小 Hash，如 user:123:friends:1···user:123:friends:10）。2）不同类型选择不同数据结构（如用户标签用 Set 而非 String 序列化）。3）渐进删除——DEL 大 Key 用 UNLINK 替代（异步释放内存，Redis 4.0+）。4）集合类型分批——HSCAN/SSCAN 游标遍历避免一次性全量。",
+    "hints": [
+      "hotkeys 参数依赖 LFU 淘汰策略才能生效——需要设置 maxmemory-policy allkeys-lfu 或 volatile-lfu",
+      "为什么 UNLINK 比 DEL 更适合删除大 Key——UNLINK 异步回收内存不阻塞主线程"
+    ],
+    "tags": [
+      "Redis",
+      "热Key",
+      "大Key",
+      "性能",
+      "LFU"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis 过期策略与惰性删除",
+    "content": "Redis 对过期 key 的删除策略包括定期删除和惰性删除组合使用。关于定期删除的实现，以下描述正确的是？",
+    "options": [
+      "A) 每隔 100ms 随机抽查 20 个设置了 TTL 的 key，删除已过期的，如果过期比例超过 25% 则继续抽查，直到低于 25% 或达到时间上限",
+      "B) 每秒扫描全库所有设置了 TTL 的 key，全部检查一遍是否过期",
+      "C) 仅在 key 被客户端访问时才检查是否过期，过期则删除",
+      "D) 使用独立的后台线程逐个遍历所有 key 并删除过期 key"
+    ],
+    "answer": "答案：A)。解析：Redis 单线程架构下，定期删除由 serverCron 每 100ms 触发，每次随机取 ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP（默认 20）个设置了 TTL 的 key 检查。如果过期比例 > 25%，继续抽查下一批（最多循环 16 次），每次循环耗时上限 25% 的 CPU 时间。这个机制的目的是防止过多过期的 key 同时到期导致 CPU 瞬间飙高。B) 描述的是全量扫描——每 100ms 全量扫描会严重阻塞主线程。C) 是惰性删除（lazy free 中的 lazy expiry），不是定期删除。D) Redis 4.0 的 lazy free 机制虽然用了后台线程，但那是惰性删除和 UNLINK 的场景，不是定期删除。两种删除策略互补：惰性删除确保过期 key 被访问时立即释放，定期删除确保未被访问的过期 key 最终被清理。",
+    "hints": [
+      "大量 key 同时过期（如缓存雪崩前兆）会导致什么——定期删除循环耗时增加，主线程卡顿",
+      "EXPIREAT 和 EXPIRE 的精度问题——过期时间是秒级精度，PEXPIRE 是毫秒级"
+    ],
+    "tags": [
+      "Redis",
+      "过期策略",
+      "定期删除",
+      "惰性删除",
+      "serverCron"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "content": "一致性哈希（Consistent Hashing）在 Redis 分片中的应用与局限是什么？虚拟节点解决了什么问题？对比 Redis Cluster 的哈希槽方案，一致性哈希的优劣势在哪里？",
+    "title": "Redis 一致性哈希分片与虚拟节点",
+    "answer": "答案：一致性哈希将 hash 值空间组织成环，节点和 key 都 hash 到环上，key 沿顺时针找到最近的节点。虚拟节点让每个真实节点映射到多个环上位置，解决数据分布不均的问题。相比 Redis Cluster 的 16384 个固定槽，一致性哈希扩容影响更小但缺乏原生管理能力。\n\n解析：一致性哈希的优势：1）节点增减只影响相邻节点（而不像普通哈希取模导致 N/N-1 比例的数据迁移）。2）虚拟节点（每个真实节点 150-200 个虚拟节点）让环上分布更均匀，动态变化时负载更均衡。\n\n扩展延伸：与 Redis Cluster 哈希槽方案对比：1）数据分布粒度——一致性哈希在环上连续分布，无法精细控制；Redis Cluster 每个主节点管理一段连续的槽位，支持通过 reshare 精确控制迁移量。2）客户端复杂度——一致性哈希客户端需要实现哈希环和虚拟节点映射（如 Jedis 的 ShardedJedis）；Redis Cluster 客户端通过 MOVED/ASK 重定向自动感知路由变化。3）高可用——一致性哈希方案通常额外需要 Sentinel 做故障转移；Redis Cluster 内置主从复制和自动 failover。4）扩缩容——一致性哈希扩容仅影响相邻节点；Redis Cluster 扩缩容需要 re-shard（数据迁移），用 ASK 重定向对外透明。实践建议：中小规模（< 100GB）用 Redis Cluster，有自建代理层需求时用一致性哈希 + 代理（如 Codis/Predis）。",
+    "hints": [
+      "一致性哈希中环上节点数很少时为什么不均匀——虚拟节点通过增加「粒度」让分布更均匀",
+      "Redis Cluster 为什么要用 16384 而不是更多或更少的槽——Gossip 消息大小限制"
+    ],
+    "tags": [
+      "Redis",
+      "一致性哈希",
+      "虚拟节点",
+      "Redis Cluster",
+      "分片"
+    ]
   }
 ]

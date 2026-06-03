@@ -1567,5 +1567,110 @@
       "容器",
       "操作系统"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "指令重排序与内存屏障",
+    "content": "现代 CPU 和编译器为什么会进行指令重排序（Instruction Reordering）？内存屏障（Memory Barrier）有哪几种类型？分别解决了什么问题？Java 的 volatile 关键字和 C++ 的 std::atomic 在底层如何通过内存屏障保证可见性和有序性？",
+    "answer": "答案：指令重排序是 CPU 和编译器为了提升指令级并行度（ILP）而对指令执行顺序进行的优化。重排序分为三种：编译器重排序（编译期）、CPU 指令级重排序（运行时）、内存系统重排序（缓存一致性引起）。内存屏障是禁止重排序的指令，分为四种：LoadLoad（禁止读-读重排序）、StoreStore（禁止写-写重排序）、LoadStore（禁止读-写重排序）、StoreLoad（禁止写-读重排序，最严格也最昂贵）。\n\n解析：为什么需要重排序？现代 CPU 采用流水线、超标量、乱序执行来提升性能。如果没有重排序，CPU 在等待缓存行填充时只能空转。重排序在单线程下保证结果一致（AS-IF-SERIAL 语义），但在多线程下可能导致意料之外的行为。Java volatile 底层实现：在 volatile 变量读写前后插入内存屏障。volatile 写前插入 StoreStore，写后插入 StoreLoad；volatile 读前插入 LoadLoad，读后插入 LoadStore。volatile 保证可见性（写操作立即刷新到主存，读操作从主存读取）和有序性（禁止重排序），但不保证原子性（如 count++ 仍需锁或 AtomicInteger）。\n\n扩展延伸：x86 架构采用强内存模型（TSO, Total Store Order），实际上只需要 StoreLoad 屏障（mfence 指令），其他三种屏障在 x86 上由硬件保证为无操作。ARM/PowerPC 使用弱内存模型，需要所有四种屏障。这就是无锁代码在不同架构间移植的陷阱——在 x86 上测试通过的无锁代码，在 ARM 上可能因缺少内存屏障而失败。Java 9+ 的 VarHandle 提供了更灵活的内存访问语义，支持 Acquire/Release/Opaque 等模式。",
+    "hints": [
+      "x86 是强内存模型只需要 mfence，ARM 是弱内存模型需要所有四种屏障",
+      "volatile 保证可见性和有序性但不保证原子性，count++ 仍不是线程安全的"
+    ],
+    "tags": [
+      "内存屏障",
+      "指令重排序",
+      "volatile",
+      "并发",
+      "JMM"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "乐观锁与悲观锁的适用场景",
+    "content": "关于乐观锁和悲观锁的比较，以下说法错误的是：",
+    "options": [
+      "A) 乐观锁假设并发冲突较少，在更新时检查数据是否被修改，适合读多写少场景",
+      "B) 悲观锁假设并发冲突频繁，通过加锁阻塞其他访问，适合写冲突严重的场景",
+      "C) 乐观锁的 CAS 操作在高并发下如果自旋次数过多，性能会劣于悲观锁",
+      "D) 乐观锁在数据库层面通过 SELECT ... FOR UPDATE 实现，MVCC 是悲观锁的实现方式"
+    ],
+    "answer": "答案：D) 乐观锁在数据库层面通过 SELECT ... FOR UPDATE 实现，MVCC 是悲观锁的实现方式\n\n解析：说法 D 错误，混淆了乐观锁和悲观锁的实现。SELECT ... FOR UPDATE 是悲观锁的实现（在读取时加排他锁，阻止其他事务修改）。MVCC（多版本并发控制）是乐观锁的典型实现——每个事务看到的是数据的快照版本，写入时检查版本号是否变化（CAS 思想），变化则回滚重试。乐观锁通常通过版本号实现：UPDATE table SET value = ?, version = version + 1 WHERE id = ? AND version = old_version。如果影响行数为 0，则说明版本冲突，需要重试。\n\n扩展延伸：乐观锁的适用边界——当写冲突率超过一定阈值时，乐观锁的频繁重试反而比悲观锁更慢。这个阈值取决于重试成本和锁持有时间。实际工程经验：写冲突 > 20% 时考虑悲观锁。乐观锁在分布式场景中更优（不需要分布式锁协调），悲观锁在单库事务中实现简单。ABA 问题——CAS 操作中变量从 A 变为 B 又变回 A，CAS 会认为值没变而成功，但状态已经变化。解决方案：使用带版本号的引用（AtomicStampedReference）或版本号字段。",
+    "hints": [
+      "SELECT ... FOR UPDATE 是悲观锁还是乐观锁？MVCC 是哪种锁的实现？",
+      "乐观锁在写冲突率超过多少时性能会劣于悲观锁？"
+    ],
+    "tags": [
+      "乐观锁",
+      "悲观锁",
+      "CAS",
+      "MVCC",
+      "并发"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CAS 的 ABA 问题与解决方案",
+    "content": "什么是 CAS（Compare-And-Swap）操作中的 ABA 问题？它在什么场景下会引发严重的程序错误？Java 和 Go 分别提供了什么机制来处理 ABA 问题？",
+    "answer": "答案：ABA 问题是指 CAS 操作中共享变量从 A 变为 B 又变回 A，CAS 检查时发现值仍是 A，误认为没有被修改过，但实际上中间状态已发生变化。在无锁数据结构中，ABA 问题可能引发指针悬空、数据损坏等严重故障。\n\n解析：典型场景——无锁栈的 pop 操作：栈顶 A 被线程 1 读取（old_top = A），线程 1 准备 CAS(top, A, A.next)。此时线程 2 pop 了 A 和 B，又 push 了 C（恰好 A 被回收重用，地址复用为 C.next）。当线程 1 的 CAS 执行时，比较 top 仍然是 A（但 A 已不是原来的 A），将 top 改为 A.next（实际上被重写为 C.next 指向的旧地址），导致栈结构损坏。\n\n扩展延伸：Java 的解决方案——AtomicStampedReference 在引用上附加 int 版本戳，每次修改版本戳递增，CAS 同时比较引用和版本戳。另一种方案是用 Double-Word CAS（如 AtomicReferenceFieldUpdater 配合 int 版本字段）。Go 的 sync/atomic 包中 CompareAndSwapPointer 配合 unsafe.Pointer 使用时，开发者需自行确保不发生 ABA（通过 GC 保证地址不被重用，或使用 Epoch-Based Reclamation）。工程建议——如果数据结构简单且 ABA 影响可忽略（如计数器），ABA 不是问题。对指针操作的无锁数据结构，必须使用带标记的 CAS 或 RCU 机制。",
+    "hints": [
+      "无锁栈中 ABA 问题为什么会导致指针悬空",
+      "AtomicStampedReference 如何通过版本戳解决 ABA"
+    ],
+    "tags": [
+      "CAS",
+      "ABA",
+      "无锁编程",
+      "并发",
+      "原子操作"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "volatile 与 long/double 的原子性",
+    "content": "Java 中 volatile 关键字可以保证对 long 和 double 类型的读写操作是原子的，同时保证可见性和有序性。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "答案：B) 错误\n\n解析：volatile 保证可见性和有序性，但不保证复合操作的原子性。题目前半部分「保证 long 和 double 读写是原子的」是正确的——未声明 volatile 的 long/double 的 64 位写可能被 JVM 拆分为两个 32 位写（在 32 位 JVM 上），而 volatile 保证其原子性。但题目说「保证可见性和有序性」也是对的。然而题目的完整陈述「volatile 保证对 long 和 double 的读写操作是原子的，同时保证可见性和有序性」整体正确吗？不，问题在于它暗示 volatile 对所有类型都保证原子性——复合操作如 volatileCount++（读-改-写）即使对 long/double 也不是原子的，三个线程同时执行可能产生丢失更新（结果 < 3）。题目的隐含含义是「volatile 保证原子性」，这是错误的。volatile 只保证单次读写的原子性（包括 long/double 的 64 位读写），但不保证读-改-写复合操作的原子性。\n\n扩展延伸：volatile 的典型正确使用场景——1）状态标志：boolean stopped 由另一个线程修改，检查线程可见变化。2）一次性安全发布：双重检查锁定（Double-Checked Locking）中单例实例需要 volatile 防止指令重排序导致部分构造对象被访问。3）开销较低的读写锁替代：一个线程写、多个线程读的共享变量。需要原子性的场景用 AtomicInteger/Long（内部使用 CAS + volatile 实现）。",
+    "hints": [
+      "volatile 保证可见性和有序性，但复合操作（如 count++）不是原子的",
+      "long/double 的非原子写入问题只在 32 位 JVM 上存在"
+    ],
+    "tags": [
+      "volatile",
+      "原子性",
+      "Java",
+      "并发",
+      "JMM"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式一致性模型：线性一致性到最终一致性",
+    "content": "请对比分布式系统中的四种一致性模型——线性一致性（Linearizability）、顺序一致性（Sequential Consistency）、因果一致性（Causal Consistency）和最终一致性（Eventual Consistency）。CAP 定理中的 C 指的是哪种一致性？不同一致性模型各自适用什么场景？",
+    "answer": "答案：四种一致性模型按强度从高到低：线性一致性 > 顺序一致性 > 因果一致性 > 最终一致性。CAP 定理中的 C（Consistency）指的是线性一致性——所有节点在同一时刻看到相同的数据，每次读取都返回最新的写入。\n\n解析：线性一致性——所有操作看起来是原子执行的，且遵循全局实时序（real-time order）。操作一旦完成，所有后续读取（无论哪个节点）都能看到该操作的结果。实现代价最高，需要跨节点同步（如 Paxos/Raft）。适用：分布式锁、账户余额。顺序一致性——所有节点以相同的顺序看到操作，但不保证实时序。即操作 A 在操作 B 之前完成，但部分节点可能先看到 B 再看到 A，不过所有节点看到的顺序一致。比线性一致性弱——不保证 real-time order。适用：分布式数据库的主从复制。因果一致性——有因果关系的操作必须按因果顺序被所有节点看到，无因果关系的操作可乱序。适用：社交网络（用户发帖后评论，必须先看到帖子才能评论）。最终一致性——如果没有新的写入，所有副本最终会收敛到一致的状态，无时间保证（可能是毫秒或小时）。适用：DNS、CDN、推荐系统。\n\n扩展延伸：实现技术——线性一致性：Raft/Paxos（多数派写入+读取法定人数）。顺序一致性：主从复制，所有写操作由主节点排序。因果一致性：向量时钟（Vector Clock）或版本向量追踪因果关系。最终一致性：Merkle Tree 反熵修复（Dynamo/Cassandra）、Quorum 机制（R+W > N）。实际系统很少有严格线性一致性的（性能代价太大），多数通过可调一致性（tunable consistency）让开发者根据场景选择。Google Spanner 使用 TrueTime API（基于原子钟+GPS）实现了全球分布式线性一致性。",
+    "hints": [
+      "线性一致性要求实时序（real-time order），顺序一致性只要求所有节点看到相同的顺序",
+      "CAP 定理中的 C 是线性一致性——这也是分布式系统中最难保证的一致性级别"
+    ],
+    "tags": [
+      "一致性模型",
+      "分布式",
+      "CAP",
+      "线性一致性",
+      "最终一致性"
+    ]
   }
 ]

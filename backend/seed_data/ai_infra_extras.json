@@ -1554,5 +1554,108 @@
       "model-compression",
       "inference-optimization"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Multi-LoRA Serving 架构",
+    "content": "关于 Multi-LoRA Serving（同时服务多个 LoRA 适配器），以下哪个说法是正确的？",
+    "options": [
+      "A) Multi-LoRA Serving 每次请求都必须动态加载目标 LoRA 权重并合并到基础模型，因此延迟与 LoRA 数量成正比",
+      "B) Punica 和 S-LoRA 的核心思想是将多个 LoRA 适配器的计算合并为单个更大的矩阵乘法，利用 GPU 的并行计算能力同时处理不同请求的不同 LoRA",
+      "C) Multi-LoRA Serving 只能在不同 GPU 上独立加载不同的 LoRA，单个 GPU 上同时只能服务一个 LoRA",
+      "D) LoRA 适配器在推理时必须始终与基础模型的权重合并，无法在运行时动态切换"
+    ],
+    "answer": "B",
+    "hints": [
+      "Punica（Chen et al. 2023）提出的 Segmented Gather-MatMul-Scatter 操作将多个 LoRA 计算合并为一次大的 batched GEMM",
+      "S-LoRA 将 PagedAttention 扩展到 LoRA 层面，支持在同一批次中服务数千个 LoRA 适配器"
+    ],
+    "tags": [
+      "LoRA",
+      "Multi-LoRA",
+      "模型服务",
+      "推理优化"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Disaggregated Inference（分离式推理架构）",
+    "content": "什么是 Disaggregated Inference（分离式推理）？为什么需要将 Prefill 和 Decode 阶段分离到不同的节点上？这种架构带来了哪些工程挑战？",
+    "answer": "答案：Disaggregated Inference 将 LLM 推理的 Prefill（预填充）和 Decode（解码）两个阶段部署在不同的 GPU 节点上处理，Prefill 节点优化高计算密度的并行处理，Decode 节点优化低计算密度的自回归生成，通过高速网络连接两个阶段的节点。MoonCake（月之暗面）和 DeepSpeed-FastGen 是这一架构的代表性实践。\n\n解析：Prefill 阶段——处理输入 prompt，计算所有 token 的 KV Cache 和第一个输出 token。特点是计算密集（密集的矩阵乘法），GPU 利用率高，适合用高算力的 GPU。Decode 阶段——逐 token 自回归生成。自回归生成是显存带宽瓶颈（每步只计算一个 token，需要从 HBM 读取模型权重到 SRAM），GPU 利用率低（通常在 3%-15%），适合用显存带宽高但算力相对适中的 GPU。\n\n分离后各自的节点可以独立优化：Prefill 节点可以选择高算力 GPU（如 H100），Decode 节点选择高显存带宽的 GPU。更重要的是，分离后 Prefill 节点不需要等待 Decode 节点逐个生成 token，可以立即处理下一个请求的 Prefill，消除了 Prefill 被 Decode 阻塞的问题。\n\n扩展延伸：工程挑战——1）KV Cache 传输：Prefill 阶段计算好的 KV Cache 需要通过网络传输给 Decode 节点。对于长上下文（如 128K token），KV Cache 可能高达数百 MB，网络传输延迟成为关键瓶颈。MoonCake 使用 RDMA 和 GPU 直接通信技术解决了跨节点 KV Cache 传输延迟。2）调度策略：多个 Prefill 节点需要将请求路由到合适的 Decode 节点，需要感知 Decode 节点的负载和剩余 KV Cache 容量。3）弹性扩缩：Prefill 和 Decode 节点的最优比例随请求类型变化。如果请求以短 prompt 为主，Prefill 节点少一些；如果以长 prompt 为主，Prefill 节点多一些。需要自动扩缩容策略。4）热点 Key-Value 优化：高频请求的 KV Cache 持久化方案，减少重复计算。",
+    "hints": [
+      "Prefill 是计算密集（compute-bound），Decode 是显存带宽密集（memory-bound）——它们对 GPU 的需求完全不同",
+      "KV Cache 的跨节点传输延迟是 Disaggregated Inference 面临的核心工程挑战之一"
+    ],
+    "tags": [
+      "推理架构",
+      "Disaggregated Inference",
+      "MoonCake",
+      "DeepSpeed"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Semi-Structured Sparsity（N:M 稀疏性）与 LLM 推理加速",
+    "content": "什么是 N:M Semi-Structured Sparsity？NVIDIA Ampere 和 Hopper 架构如何通过稀疏张量核心加速 LLM 推理？SparseGPT 和 Wanda 等剪枝方法的核心原理分别是什么？",
+    "answer": "答案：N:M 稀疏性指每连续 M 个权重中强制保留 N 个非零值（如 2:4 稀疏——每 4 个权重中有 2 个为零）。NVIDIA Ampere（A100）和 Hopper（H100）架构的稀疏张量核心（Sparse Tensor Core）原生支持 2:4 稀疏格式，能在不损失精度的情况下使矩阵乘法吞吐量翻倍（利用稀疏模式跳过零值计算）。SparseGPT 和 Wanda 是两种无需训练后训练即可实现 N:M 稀疏的剪枝方法。\n\n解析：SparseGPT（Frantar & Alistarh, 2023）——逐层剪枝算法：1）对 Transformer 的每一层，通过 OBS（Optimal Brain Surgeon）框架计算每个权重对损失的敏感度。2）利用 Hessian 矩阵信息估计剪枝某个权重后需要如何调整其他权重来补偿损失。3）一次性剪枝到目标稀疏率（如 50% = 2:4 稀疏）。SparseGPT 的突破在于剪枝后不需要重新训练（one-shot），且精度损失极小（1% 以内）。\n\nWanda（Sun et al., 2023）——更简化的方法：1）计算每个权重的重要性指标 = |weight| × ||X_row||_2（权重大小 × 对应输入特征的 L2 范数）。2）重要性最低的权重被剪枝。Wanda 不需要 Hessian 矩阵计算，比 SparseGPT 快了数量级，但精度略低于 SparseGPT。\n\n扩展延伸：生产部署考量——1）硬件依赖：2:4 稀疏加速仅在 A100/H100 等支持稀疏张量核心的硬件上生效。在 V100 或 CPU 上推理时稀疏格式可能反而降低速度（需要解压缩）。2）量化 + 稀疏的混合压缩：INT8 量化 + 2:4 稀疏可以叠加使用，权重从 FP16（2 字节）降到 INT8（1 字节），再叠加 2:4 稀疏去 50% 的参数，总显存占用降至原来的 25%。3）SparseGPT 的局限性：虽然不需要重新训练，但对需要密集参数的任务（如细微语义理解、长尾知识回忆），稀疏性可能影响性能。4）更宽泛的稀疏方向：研究人员正在探索激活稀疏性（ReLU 激活天然产生稀疏激活，如 ReLU-Field 等方向）和 MoE 稀疏性（专家路由天然产生计算稀疏）。",
+    "hints": [
+      "SparseGPT 使用 OBS（Optimal Brain Surgeon）框架——剪枝一个权重时同时调整其他权重以补偿损失，这是它精度高的关键",
+      "Wanda 的核心洞察是：一个权重的「重要性」取决于它本身的大小 × 对应输入的幅度，而不需要 Hessian 矩阵"
+    ],
+    "tags": [
+      "模型剪枝",
+      "N:M 稀疏性",
+      "SparseGPT",
+      "推理加速"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "FP8 Training: E4M3 vs E5M2",
+    "content": "FP8 混合精度训练中 E4M3 和 E5M2 两种数据格式有什么区别？在训练中它们各适用于什么场景？FP8 训练的 scale factor 管理有哪些关键策略？",
+    "answer": "答案：E4M3（4 位指数 + 3 位尾数）和 E5M2（5 位指数 + 2 位尾数）是 FP8 的两种编码格式。E4M3 精度高（3 位尾数）但动态范围小（最大 448），适合表达集中的较小数值。E5M2 精度低（2 位尾数）但动态范围大（最大 57344），适合表达分布广（有极端值）的数值。在训练中通常：权重和激活使用 E4M3，梯度使用 E5M2。\n\n解析：FP8 格式细节——E4M3：指数偏置 7，精度 2^-3 + 2^-2 + 2^-1 ≈ 0.875，最大值 448（2^8 × 1.75）。E5M2：指数偏置 15，精度 2^-2 + 2^-1 = 0.75，最大值 57344（2^16 × 1.75）。\n\n训练中格式分配：1）权重（Weight）→ E4M3：权重分布通常较集中，需要更高精度来保证模型质量。2）激活（Activation）→ E4M3：激活值分布也相对集中，且前向传播对精度敏感。3）梯度（Gradient）→ E5M2：梯度分布范围广（某些层梯度极小、某些层极大），需要更大的动态范围。而且梯度的噪声容忍度相对较高（SGD 本身就是随机过程）。\n\n扩展延伸：Scale Factor 管理——FP8 本质是一种块级量化格式，需要每个张量（或每个 tile）配一个 scale factor 将 FP8 的值映射到实际的数值范围。1）Per-tensor scaling：整个张量共用一个 scale factor。最简单但容易出现 outlier 导致的精度损失。2）Per-row/per-channel scaling：每行或每通道独立 scale。适合权重（outlier 通常集中在特定通道）。3）Delayed scaling（NVIDIA Transformer Engine 方案）：基于历史统计量预先计算 scale factor，避免额外的计算开销。关键是要有足够的「预热」和滑动平均策略防止 scale 突变。4）Overflow / underflow 保护：训练过程中 scale 调整不及时会导致 FP8 溢出（值超过 448 或 57344），需要实现溢出检测后自动缩小 scale（fallback 到 FP16）。",
+    "hints": [
+      "E4M3 精度更高但动态范围小——适合权重和激活；E5M2 动态范围大但精度低——适合梯度",
+      "NVIDIA H100 的 Transformer Engine 使用 FP8 训练，核心挑战是 scale factor 的准确估计"
+    ],
+    "tags": [
+      "FP8",
+      "混合精度训练",
+      "E4M3",
+      "E5M2",
+      "H100"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Model Cascading（模型级联）与 LLM 路由",
+    "content": "关于 LLM Model Cascading（模型级联推理），以下哪个说法是正确的？",
+    "options": [
+      "A) Model Cascading 是指将多个相同规模的 LLM 串联推理，每个模型对前一个模型的输出进行校验和优化，总延迟始终等于单模型延迟 × 级联层数",
+      "B) Model Cascading 的核心策略是用一个小模型处理简单查询，仅当小模型对结果「不确定」时再转发到大模型处理，以此节省成本而不显著牺牲质量",
+      "C) Model Cascading 和 Speculative Decoding 是同一个概念的不同命名——都是用小模型快速生成草稿再用大模型验证",
+      "D) Cascade 架构中只能使用确定性路由策略（如基于 query 长度），无法使用基于置信度的动态路由，因为 LLM 无法准确表达自己的不确定性"
+    ],
+    "answer": "B",
+    "hints": [
+      "FrugalGPT（Chen et al. 2023）的核心思路是先用最便宜的模型（如 GPT-3.5-Turbo）回答问题，只在对答案质量不确定时才调用更贵的模型（GPT-4）",
+      "Cascade 与 Speculative Decoding 有本质区别——Cascade 是 request 级别的路由决策，Speculative Decoding 是 token 级别的并行验证"
+    ],
+    "tags": [
+      "Model Cascading",
+      "推理优化",
+      "LLM 路由",
+      "成本优化"
+    ]
   }
 ]

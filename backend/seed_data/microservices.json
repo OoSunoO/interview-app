@@ -1548,5 +1548,100 @@
       "分布式单体",
       "架构设计"
     ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Seata AT 模式分布式事务原理",
+    "content": "Seata AT（Automatic Transaction）模式的实现原理是什么？全局事务的 XID 如何在微服务调用链中传递？AT 模式是如何自动生成回滚 SQL 的？AT 模式与 TCC 模式各自的适用场景有什么区别？",
+    "answer": "答案：Seata AT 通过代理 JDBC DataSource 拦截 SQL，记录 Before Image 和 After Image 到 UNDO_LOG 表。一阶段本地事务提交，二阶段全局提交时清除 UNDO_LOG，全局回滚时根据 Before Image 生成反向 SQL 回滚。\n\n解析：AT 模式流程：1）Transaction Coordinator（TC）维护全局事务状态。2）一阶段——TM 向 TC 开启全局事务获取 XID，RM（被代理的数据源）执行业务 SQL 前记录 Before Image（SELECT 当前数据），执行 SQL 后记录 After Image，将 Before/After/Row ID/XID 写入 UNDO_LOG 表，在同一本地事务中提交。3）二阶段 Commit——TC 通知所有 RM 异步删除对应 UNDO_LOG。4）二阶段 Rollback——TC 通知 RM，RM 读取 UNDO_LOG 的 Before Image，生成补偿 SQL（UPDATE xx SET xxx=before_value WHERE pk=yyy），回滚到修改前的状态。XID 传递——通过 Seata 的 RootContext（ThreadLocal）绑定到当前线程，Dubbo 通过 Filter 在 RPC 请求头传播 XID，Spring Cloud 通过 RestTemplate/Feign 的拦截器传播。\n\n扩展延伸：AT vs TCC 选型：AT——对业务代码无侵入，自动生成回滚 SQL，适合 CRUD 简单操作。但需要数据库支持 SQL 回滚（有锁，性能低于 TCC），不适合非数据库资源（如 Redis/外部 API）。TCC——业务实现 Try（资源预留）、Confirm（确认）、Cancel（补偿释放），适合复杂业务逻辑（如库存预留、账户资金冻结）。TCC 性能更好（无锁），但代码侵入性强，且需处理 Cancel 失败时的补偿（幂等性 + 重试）。实践中建议：简单数据库操作用 AT，涉及资源预留或跨异构资源（数据库 + 消息队列 + 缓存）用 TCC。",
+    "hints": [
+      "AT 模式的 UNDO_LOG 表结构——branch_id、xid、context、rollback_info（before/after image）、log_status、log_created",
+      "TCC 的 Cancel 方法自身失败了怎么办——需要保证 Cancel 的幂等性，配合定时任务补偿（失败重试直到成功）"
+    ],
+    "tags": [
+      "Seata",
+      "AT模式",
+      "分布式事务",
+      "TCC",
+      "XID"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务网格 Sidecar 与 Istio 数据面",
+    "content": "服务网格（Service Mesh）的核心设计理念是什么？Istio 架构中数据面（Data Plane）和控制面（Control Plane）各包含哪些组件？Envoy Sidecar 如何通过 iptables 透明劫持 Pod 的进出流量？",
+    "answer": "答案：服务网格将服务间通信治理从应用代码中剥离到基础设施层（Sidecar 代理）。Istio 控制面是 istiod（Pilot + Citadel + Galley），数据面是 Envoy Sidecar 代理。Envoy 通过 iptables 规则劫持 Pod 的所有进出流量。\n\n解析：核心设计理念：1）透明——应用代码不需要感知服务网格的存在，不修改代码即可获得流量管理、安全、可观测性能力。2）解耦——治理逻辑（重试、超时、熔断、负载均衡）从应用库中移到 Sidecar。3）语言无关——无论服务用 Java/Go/Python/Rust，Sidecar 统一处理。\n\n扩展延伸：Istio 1.5+ 架构组件：istiod 是单体控制面，集成了 Pilot（服务发现 + 流量管理 + xDS 下发）、Citadel（证书签发 + mTLS）、Galley（配置验证）。xDS API：LDS（Listener Discovery——监听端口配置）、RDS（Route Discovery——路由规则）、CDS（Cluster Discovery——后端集群）、EDS（Endpoint Discovery——集群端点列表）。Envoy 流量劫持细节：istio-init init 容器在 Pod 启动时注入 iptables 规则——入站流量重定向到 Envoy 15006 端口，出站流量重定向到 15001 端口。Envoy 根据 istiod 下发的 xDS 规则决定路由目标。注意：Envoy 本身会增加 2-5ms 延迟和额外的 CPU/Memory 开销（每个 Pod 多一个容器）。",
+    "hints": [
+      "Envoy 的 xDS API 为什么是 LDS/RDS/CDS/EDS 四个层面——按关注点分离：监听→路由→集群→端点",
+      "Istio 的 iptables 流量劫持会什么会对某些特殊协议（如 MySQL、Redis）造成问题——协议识别的兼容性"
+    ],
+    "tags": [
+      "服务网格",
+      "Istio",
+      "Envoy",
+      "Sidecar",
+      "xDS"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务注册发现与优雅上下线",
+    "content": "服务注册发现的客户端发现模型和服务端发现模型各有什么优缺点？如何设计微服务的优雅上下线流程防止请求中断？K8s 的 readinessProbe 和 preStop hook 在优雅关闭中各自扮演什么角色？",
+    "answer": "答案：客户端发现（Eureka/Nacos Client）架构简单无中间代理但语言耦合；服务端发现（K8s Service + kube-proxy）客户端轻量但多一跳。优雅上下线需要协调注册中心 + 流量排空 + 连接关闭三个阶段。\n\n解析：客户端发现：服务消费者从注册中心获取实例列表，自行负载均衡选实例（如 Spring Cloud + Ribbon/LoadBalancer）。优势：无额外代理跳转，低延迟。劣势：每种语言都要实现注册发现+负载均衡客户端。服务端发现：通过中间代理（K8s Service + kube-proxy、AWS ALB Nginx + Consul Template）做转发。优势：客户端只有一个 DNS 名或 VIP，不关心服务实例变化。劣势：多一跳增加延迟。\n\n扩展延伸：优雅上下线标准流程：上线阶段：1）Pod 启动 → 业务进程初始化完成 → readinessProbe 探测成功。2）Pod 被加入 Service Endpoint，开始接收流量。3）若有预热（JIT/缓存预热），readinessProbe 的 initialDelaySeconds 延迟接收流量。下线阶段：1）Pod 进入 Terminating 状态，从 Service Endpoint 摘除（不再接收新请求）。2）执行 preStop hook——通常是 sleep 10-30s（等待已分发的请求处理完成）+ 调用应用自身的 graceful shutdown 接口（如 Spring Boot 的 actuator/shutdown）。3）SIGTERM 信号发送给主进程。4）应用关闭线程池、释放连接、关闭资源。5）如果在 terminationGracePeriodSeconds（默认 30s）内未完成，SIGKILL 强制终止。关键配置：terminationGracePeriodSeconds 应大于 preStop sleep + 业务处理最大耗时。readinessProbe 的 failureThreshold 和 periodSeconds 应配置合理，避免 Pod 被过早下线。",
+    "hints": [
+      "preStop hook 中的 sleep 为什么不能省略——Pod 从 Endpoint 摘除和 SIGTERM 之间有竞态条件",
+      "terminationGracePeriodSeconds 设置太短会有什么后果——进程被 SIGKILL 强制杀死，进行中的请求中断"
+    ],
+    "tags": [
+      "服务发现",
+      "优雅关闭",
+      "readinessProbe",
+      "preStop",
+      "K8s"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "API 网关与 BFF 模式",
+    "content": "API 网关和 BFF（Backend For Frontend）模式各自的职责是什么？为什么大型微服务架构中通常同时引入两者？BFF 如何避免自身膨胀为「分布式单体」？BFF 与 GraphQL 的组合架构有什么优势？",
+    "answer": "答案：API 网关负责横切关注点（认证、限流、路由），BFF 负责前端适配（数据聚合、裁剪、编排）。两者组合形成二层架构：外部请求先过网关再到 BFF 再到后端微服务。\n\n解析：API 网关职责：认证鉴权、限流熔断、灰度路由、协议转换（HTTP ↔ gRPC）、日志监控、跨域处理。BFF 职责：数据聚合（一次请求聚合多个微服务数据）、数据裁剪（按前端需要精简字段）、接口适配（将后端接口转换为前端友好的格式）。\n\n扩展延伸：避免 BFF 膨胀的最佳实践：1）BFF 只做编排不做业务逻辑——组合/聚合/转换数据，不包含任何业务规则。2）按端拆分——每个前端（Mobile / Web / MiniProgram / IoT）有独立的 BFF，BFF 之间不共享代码（减少耦合）。3）使用 GraphQL 作为 BFF 的实现——前端通过 GraphQL 声明需要的数据，BFF 充当 Resolver 层自动聚合，避免 BFF 接口膨胀。4）BFF 的代码量应远小于业务服务——如果 BFF 代码超过后端单体服务，说明逻辑放错位置了。BFF + GraphQL 组合：BFF 引入 GraphQL（Apollo Federation/Netflix DGS），前端使用 Query 声明数据需求，BFF 自动解析为多个微服务调用，无需为每个新页面需求新建 BFF 接口。GraphQL 的 DataLoader 解决 N+1 问题。",
+    "hints": [
+      "GraphQL Federation 如何解决 BFF 的跨服务数据聚合问题——子图（Subgraph）按领域拆分，Federation Gateway 统一编排",
+      "BFF 和 API 网关的职责边界如何划分——网关管横切面（安全/限流），BFF 管业务编排（聚合/裁剪）"
+    ],
+    "tags": [
+      "API网关",
+      "BFF",
+      "GraphQL",
+      "架构模式",
+      "微服务"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式配置中心 Apollo vs Nacos 动态刷新原理",
+    "content": "Apollo（携程）和 Nacos（阿里）配置中心实现配置动态刷新的原理各是什么？两者的模型（Namespace/Group/Data ID）有何差异？客户端如何保证配置中心宕机时业务不受影响？配置中心自身的高可用架构如何设计？",
+    "answer": "答案：Apollo 使用长轮询（Long Polling）实现配置变更通知，Nacos 2.0+ 使用 gRPC 双向流推送。两者都提供客户端本地缓存保证 Server 宕机时的可用性。\n\n解析：Apollo 动态刷新：客户端向 Config Service 发起 60 秒长轮询（基于 Spring DeferredResult 异步 Servlet——不占用 Tomcat 线程）。配置发布时，Portal → Admin Service → Config Service → 通知长轮询客户端 → 客户端拉取最新配置。客户端本地缓存为配置文件（snapshot），Server 不可用时直接用本地配置。Nacos 2.0+ 动态刷新：客户端与服务端建立 gRPC 长连接（双向流），配置变更时服务端通过 gRPC Stream 推送给客户端。相比 Apollo 长轮询，gRPC 推送延迟更低（毫秒级 vs 可能有几秒轮询间隔）。客户端也维护本地快照。\n\n扩展延伸：模型差异：Apollo——AppId（应用） + Namespace（配置集，如 application/datasource/redis）+ Key-Value。Namespace 支持私有/公共/关联三种类型。Nacos——Namespace（隔离环境，如 dev/prod） + Group（分组，如 DEFAULT_GROUP） + Data ID（配置文件名，如 application.yaml）。Namespace 是最高隔离级别。高可用设计：Apollo——Config Service 无状态水平扩展 + Admin Service 双节点 + Meta Server 选主。数据库主从。Apollo Portal 支持多环境管理。Nacos——AP 模型（最终一致性）优先，采用 Raft + Distro 协议。Nacos 节点对等（每个节点可以读写），内部通过 Raft 选主 + Distro 节点间同步。两者都建议至少部署 3 节点。",
+    "hints": [
+      "Apollo 长轮询为什么不占用 Tomcat 线程——Spring DeferredResult 将 HTTP 请求异步化，释放 Tomcat 线程处理其他请求",
+      "配置中心和 Spring Cloud Config 的核心区别——Spring Cloud Config 不提供实时推送（需 Spring Cloud Bus + 消息队列）"
+    ],
+    "tags": [
+      "配置中心",
+      "Apollo",
+      "Nacos",
+      "动态配置",
+      "长轮询"
+    ]
   }
 ]

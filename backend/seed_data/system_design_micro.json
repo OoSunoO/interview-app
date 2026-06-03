@@ -1528,5 +1528,100 @@
       "审计",
       "数据分类"
     ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Saga 分布式事务：编排 vs  choreography 模式",
+    "content": "Saga 事务的两种实现模式——编排（Orchestration）和 choreography（ choreography）——有什么区别？各适用于什么场景？如何在 Java 生态中实现？",
+    "answer": "答案：编排模式通过一个协调者（Orchestrator）集中管理 Saga 的流程和补偿，易于理解和调试但引入了中心依赖。 choreography 模式下每个服务监听事件自行决定下一步操作和补偿，去中心化但流程隐式、难以跟踪。\n\n解析：编排模式：1）核心——Orchestrator 服务负责按照 Saga 定义顺序调用各参与服务，失败时按逆序调用补偿操作。2）实现——状态机（定义每个步骤的状态 + 补偿 + 超时），如 Apache Camel Saga、Eventuate Tram、自建状态机。3）优缺点——流程可视化、易于测试、适合复杂流程（7+ 步骤）。缺点：Orchestrator 单点风险（需要高可用部署），增加的额外开发和部署开销。Choreography 模式：1）核心——没有中心协调者。服务 A 完成操作后发送事件，服务 B 监听事件后执行自己的操作，发送下一个事件。失败时每个服务自行触发补偿事件。2）实现——基于消息队列（Kafka/RabbitMQ）的事件驱动架构。3）优缺点——去中心化、松耦合，每个服务只需关心自己相关的「一个」事件。缺点：跨服务流程不直观、端到端测试困难、新增参与者可能影响现有补偿逻辑（事件契约管理问题）。\n\n扩展延伸：选型建议：1）步骤少（2-3 步）且流程稳定的场景→ choreography（简单）。2）步骤多（4+ 步）、有复杂条件分支、补偿逻辑关联强的场景→ 编排（否则 choreography 的事件流难以理解）。3）Java 生态实现——Choreography：Spring Cloud Stream / Axon Framework / 自建事件总线。编排：Camunda（BPMN 工作流引擎，带可视化管理界面）/ 自建状态机。4）实际团队建议：中大型团队用编排（可维护性 > 去中心化崇拜），小型团队 choreography 更轻量（事件契约文档+追踪 ID 保证可追踪性）。",
+    "hints": [
+      "编排模式中 Orchestrator 单点问题怎么解决——无状态部署 + 数据库持久化 Saga 状态",
+      "Choreography 模式的核心挑战是事件契约管理——新增事件消费者会不会影响现有流程"
+    ],
+    "tags": [
+      "微服务",
+      "分布式事务",
+      "Saga",
+      "编排",
+      "Choreography"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CQRS + Event Sourcing 的落地挑战",
+    "content": "CQRS（命令查询职责分离）和 Event Sourcing（事件溯源）通常组合使用，但在生产环境中落地会面临哪些工程挑战？尤其是读写模型同步延迟、事件版本管理、事件存储选型和快照策略。",
+    "answer": "答案：CQRS + Event Sourcing 的核心挑战在于事件管理的工程复杂性——事件版本升级、读写模型不一致的处理、事件存储的性能和事件量的膨胀管理。\n\n解析：1）读写模型同步延迟——写模型产生事件后，读模型异步消费事件构建查询视图。延迟可能来自：MQ 堆积、读模型重建慢、事件处理失败。应对：监控事件处理延迟（lag），设置告警阈值。读模型允许最终一致性（业务接受秒级延迟）。需要「读你自己的写」一致性（Read Your Own Write）的场景——客户端写入后立即读取，需要提供一致性标记或路由到写模型。2）事件版本管理——事件结构会变化（新增字段或修改字段类型），需要兼容旧版本的事件。方案：事件以 JSON 存储且保留原始字段 + Schema Registry（Avro / Protobuf）管理兼容性。版本升级策略：向前兼容（只新增字段不删除，旧消费者忽略新字段）+ 事件升级器（Event Upcaster）将旧版本事件升级为最新版本再消费。3）快照策略——事件会无限增长，每次聚合重建都要从头 replay 所有事件。快照（Snapshot）定期保存聚合的当前状态，重建时从最近快照加载 + replay 之后的事件。快照频率：每 N 个事件或每小时保存一次。快照存储：和事件分开存储（更快读取）。\n\n扩展延伸：其他关键问题：1）事件存储选型——专用事件存储（EventStoreDB）支持事件流和订阅，适合纯事件溯源架构。通用方案（PostgreSQL + 事件表 + Debezium 捕获 CDC 事件）更灵活，团队熟悉度高。ES 索引事件用于查询（但 ES 不是可靠的事件存储）。2）CQRS 的取舍——不是所有模块都需要 CQRS + 事件溯源。建议只在需要审计日志、复杂状态回放或跨服务事件驱动的模块使用（如订单状态机、账户流水、库存变动）。简单 CRUD 模块用传统方式。3）跨服务事件的一致性——每个服务维护自己的事件存储，通过 MQ 广播事件。需要保证「本地事务提交」和「事件发布」的原子性——可以用 Transactional Outbox（事件先写入本地数据库的 outbox 表，CDC 工具读取后发布到 MQ）。",
+    "hints": [
+      "事件数据结构变了，旧事件怎么处理——Upcaster 模式（读取时升级）vs 事件迁移（写入时升级）",
+      "快照频率怎么定——太频繁浪费存储，太少重建慢"
+    ],
+    "tags": [
+      "微服务",
+      "CQRS",
+      "Event Sourcing",
+      "架构",
+      "事件驱动"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "服务网格的数据面与控制面分离原理",
+    "content": "服务网格（Service Mesh）中「数据面」和「控制面」各自的职责是什么？Envoy 作为数据面的核心能力是什么？Istio 的控制面如何管理 Envoy？数据面代理带来的延迟和资源开销如何评估？",
+    "answer": "答案：服务网格的核心思想是将「网络通信能力」从业务进程中剥离到 Sidecar 代理中。控制面负责策略管理和配置下发（大脑），数据面负责实际的流量转发和策略执行（手脚）。\n\n解析：1）数据面（Envoy / Linkerd-proxy）——部署为 Sidecar 容器，通过 iptables 规则透明拦截所有进出容器的流量。核心能力：服务发现（从控制面获取服务实例列表）、负载均衡（支持轮询/最少连接/一致性哈希）、熔断（连续失败 N 次后熔断）、重试与超时、TLS 终止、流量分割（灰度/蓝绿）、分布式追踪、访问日志、指标采集。2）控制面（Istiod）——统一管理数据面配置：服务发现（对接 K8s API Server）、证书签发与管理（Citadel，自动 mTLS）、策略下发（通过 xDS 协议：LDS/CDS/RDS/EDS 分别管理监听器、集群、路由、端点配置）、遥测收集（Mixer 在 Istio 1.5+ 已被吸收到 Envoy 本身的 Wasm 扩展中）。3）xDS 协议——Envoy 通过 xDS（Discovery Service）API 从控制面动态获取配置。Istio 使用 ADS（Aggregated Discovery Service）将所有 xDS 配置汇聚在一个 gRPC 流中下发，避免配置不同步。\n\n扩展延伸：性能评估与优化：1）延迟增加——Sidecar 代理引入的延迟主要是：iptables 规则匹配耗时（微秒级）+ Envoy 连接处理和 TLS 握手（毫秒级）+ 协议编解码。纯代理引入的额外延迟通常 < 5ms（无 TLS 时 < 1ms）。2）资源开销——每个 Sidecar 占用约 50-100MB 内存 + 0.5-1 vCPU（闲置时 < 0.1 vCPU）。每多一个 Sidecar 就多一份开销。3）哪些场景不需要 Mesh——内部服务间调用延迟敏感（如实时竞价场景）不适合全量接入 Mesh，可以考虑只对外部流量做 Mesh 管理。4）从 Spring Cloud 到 Mesh——Spring Cloud 的服务发现、负载均衡、熔断等功能可以由 Mesh 代理接管，业务代码不需要引入 Spring Cloud 依赖。迁移策略：先外围服务、后核心服务、逐步切换。5）Linkerd vs Istio——Linkerd 更轻量（Rust 编写的数据面，资源占用只有 Envoy 的 1/3），功能更少但更简单；Istio 功能丰富但复杂度高。选型看团队需求。",
+    "hints": [
+      "Sidecar 代理接管流量后，业务代码还需要做服务发现和负载均衡吗——不需要了，这些都是 Sidecar 的职责",
+      "为什么 Istio 将 Mixer 的功能吸收到 Envoy Wasm 扩展中——减少一次额外网络调用"
+    ],
+    "tags": [
+      "微服务",
+      "服务网格",
+      "Istio",
+      "Envoy",
+      "Sidecar"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微服务接口的契约测试策略",
+    "content": "微服务架构中多个团队各自维护服务，接口变更经常导致上下游配合问题。如何用契约测试（Contract Testing）保证接口兼容性？Pact 框架的工作原理是什么？Consumer-Driven Contracts 和 Provider-Driven Contracts 的区别？",
+    "answer": "答案：契约测试通过「消费者定义期望」或「提供者声明接口」的方式，在 CI 中自动验证提供者的实现是否满足消费者的需求。核心是发现兼容性问题在部署前而非部署后。\n\n解析：1）Consumer-Driven Contracts（CDC，消费者驱动契约）——消费者定义它对某个 API 的调用期望并生成契约文件，在提供者 CI 中验证提供者是否满足消费者的期望。Pact 是 CDC 的代表框架。工作原理：消费者侧写单元测试（调用 Pact Mock Provider），生成 JSON 契约文件（pact 文件）；提供者侧运行 Pact Verifier，用 pacts 文件中的期望向真实 API 发送请求并验证响应。如果提供者变更导致不满足消费者期望，CI 红灯。2）Provider-Driven Contracts（提供者驱动契约）——提供者定义 API 规范（OpenAPI / AsyncAPI），消费者在 CI 中验证自己的调用是否符合规范。Spring Cloud Contract 同时支持消费者驱动和提供者驱动。3）Pact 的明星特性：Pact Broker——存储和发布契约文件，展示消费者-提供者关系图、验证结果、Webhook 触发验证。可以将 Pact 集成到 CI 流水线：消费者 PR 生成新契约 → Pact Broker 通知提供者 CI 验证 → 两边都通过才能合并。\n\n扩展延伸：工程落地：1）契约测试的选型——Pact（异步消息 + HTTP 支持最好，社区最大）、Spring Cloud Contract（Spring 生态原生）、Microservices UI（Postman / Newman 做 API 测试 + CI 集成）。2）不推荐用 E2E 测试做接口兼容性验证——E2E 测试脆弱且慢。契约测试是微服务 API 兼容性的第一道门禁。3）版本策略——多个版本的消费者可能同时存在（部分客户端尚未升级），提供者需要同时兼容多个契约版本。Pact 通过「pending pacts」机制支持提供者逐步变更API（标记新契约为 pending，在 CI 中警告而非阻断）。4）契约测试的局限性——只能验证功能兼容性（接口签名、响应字段），不能验证性能或安全。需要结合性能测试和安全性检查。",
+    "hints": [
+      "Consumer-Driven Contracts 为什么比 Provider-Driven Contracts 更容易发现不兼容的变更——消费者最清楚它需要什么",
+      "Pact Broker 在 CI/CD 中的位置——契约的中央仓库，连接消费者和提供者的验证"
+    ],
+    "tags": [
+      "微服务",
+      "契约测试",
+      "Pact",
+      "CI/CD",
+      "接口兼容性"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多租户微服务架构设计",
+    "content": "SaaS 平台的微服务架构如何做多租户（Multi-Tenant）设计？三种隔离模式（独立数据库、共享数据库 Schema 隔离、共享数据库共享 Schema）各自优劣？租户路由（Tenant Context）如何在微服务间透传？动态数据源切换哪些细节？",
+    "answer": "答案：多租户设计的三个核心决策：数据隔离粒度（独立库 vs 共享库）、租户上下文传递（ThreadLocal / Header / JWT Claims）、以及资源隔离与配额管理（即如何防止一个租户影响其他租户）。\n\n解析：1）数据隔离模式——独立数据库（每个租户一个 DB）：隔离性最好、数据恢复独立、可单独备份，适合金融/医疗等高合规租户。缺点：连接数多（1000 租户 = 1000 个连接池），资源开销大，DDL 变更要在所有库执行。共享 Schema 隔离（同 DB 不同 Schema，如 public_tenant1、public_tenant2）：中等隔离，PostgreSQL Schema 天然支持。共享表 + tenant_id 列（最常用）：成本最低最灵活，但隔离性差（SQL 漏加 WHERE tenant_id 会导致数据泄漏），数据恢复难（需要从大表中恢复单租户数据），需要强制在 DAO 层注入 tenant_id 过滤。2）租户上下文传递——Web 层：从请求中识别租户（域名、Header X-Tenant-Id、JWT Claims）。使用 Filter 拦截请求，解析租户 ID 存入 ThreadLocal。远程调用：在 RPC 请求 Header（gRPC metadata / HTTP Header）中传递租户 ID，接收端 Filter 提取并存入 ThreadLocal。异步消息：MQ 消息体或 Header 中携带租户 ID，消费者在处理前设置租户上下文。\n\n扩展延伸：工程实践：1）多租户 + ThreadLocal 的内存泄漏风险——线程池复用线程时 ThreadLocal 未清理会导致租户 A 的请求读取到租户 B 的数据。解决方案：请求结束在 finally 中清理 ThreadLocal（Filter 的 afterCompletion），或者在异步任务提交时显式复制上下文。2）数据源切换——共享库模式需要在运行时动态切换 DataSource 或 Schema。MyBatis-Plus 的多租户插件自动在 SQL 后追加 AND tenant_id = ?。Hibernate 的 MultiTenancyInterceptor 支持 Schema 隔离模式。3）资源隔离——CPU/内存隔离：不同租户的 Pod 独立部署（成本高但隔离好），或限制单个租户的最大连接数/并发数。4）功能隔离——不同租户的功能权限不同（Feature Toggle 按租户控制），配置中心中 Tenant-Toggle 映射。5）SLA 隔离——白金租户允许的最大延迟更低，需要将白金租户部署到独立的资源池。",
+    "hints": [
+      "ThreadLocal 传递租户上下文在多线程/异步场景下有什么风险——线程池复用 + 异步回调的上下文丢失",
+      "共享表 + tenant_id 隔离模式最怕什么——漏加 WHERE tenant_id 导致数据泄漏"
+    ],
+    "tags": [
+      "微服务",
+      "多租户",
+      "SaaS",
+      "架构",
+      "数据隔离"
+    ]
   }
 ]

@@ -1557,5 +1557,115 @@
       "state-management",
       "memory-optimization"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "策略模式在支付场景中的实战应用",
+    "content": "一个支付系统需要支持微信支付、支付宝、银联三种支付方式，每种方式的支付流程、回调处理、退款逻辑都不同。请用代码结构说明策略模式如何组织这些支付方式，以及策略模式与简单工厂模式如何配合使用。",
+    "answer": "答案：策略模式将每种支付方式封装为独立的策略类，通过统一的接口调用。工厂模式负责根据条件选择具体的策略实现。\n\n代码结构示意：\n\n```\n// 策略接口\ninterface PaymentStrategy {\n    PaymentResult pay(PayRequest request);\n    CallbackResult handleCallback(CallbackData data);\n    RefundResult refund(RefundRequest request);\n}\n\n// 具体策略\nclass WechatPayStrategy implements PaymentStrategy { /* 微信支付逻辑 */ }\nclass AlipayStrategy implements PaymentStrategy { /* 支付宝逻辑 */ }\nclass UnionPayStrategy implements PaymentStrategy { /* 银联逻辑 */ }\n\n// 策略工厂\nclass PaymentStrategyFactory {\n    private Map<String, PaymentStrategy> strategies = new HashMap<>();\n    \n    public PaymentStrategyFactory() {\n        strategies.put(\"wechat\", new WechatPayStrategy());\n        strategies.put(\"alipay\", new AlipayStrategy());\n        strategies.put(\"unionpay\", new UnionPayStrategy());\n    }\n    \n    public PaymentStrategy getStrategy(String type) {\n        PaymentStrategy strategy = strategies.get(type);\n        if (strategy == null) throw new IllegalArgumentException(\"不支持的支付方式\");\n        return strategy;\n    }\n}\n\n// 使用方（业务代码无需知道具体支付逻辑）\nclass PaymentService {\n    private PaymentStrategyFactory factory;\n    \n    public PaymentResult pay(String type, PayRequest request) {\n        PaymentStrategy strategy = factory.getStrategy(type);\n        return strategy.pay(request);\n    }\n}\n```\n\n如果不用策略模式而用 if-else，代码会变成：\n```\nif (\"wechat\".equals(type)) {\n    // 30 行微信支付逻辑\n} else if (\"alipay\".equals(type)) {\n    // 30 行支付宝逻辑\n} else if (\"unionpay\".equals(type)) {\n    // 30 行银联逻辑\n}\n```\n\n每增加一种支付方式就要修改现有代码（违反开闭原则），且 if-else 中的逻辑无法独立测试。\n\n策略模式的优点：\n1）开闭原则——新增支付方式只需增加新的策略类，无需修改现有代码。\n2）独立测试——每种支付策略可以独立单元测试。\n3）运行时切换——可以在运行时根据条件切换策略。\n4）消除条件判断——业务代码从「根据 type 做不同的事」变成「让策略对象做它的事」。\n\n解析：策略模式+工厂模式是实际项目中最常用的组合之一，广泛用于支付、通知、配送、优惠券等「多路分支」场景。注意：如果策略数量少且不太可能扩展（如只有 2 种且确定不会新增），用 if-else 反而更简单——模式不是银弹，引入复杂度需要理由。\n\n扩展延伸：策略模式的高级用法——策略枚举（Enum Strategy）：把策略定义在枚举中（结合 enum 的 constant-specific method implementation），减少类数量。Spring 中通过 @Autowired Map<String, Strategy> 自动注入所有策略 Bean，连工厂都不需要手写。",
+    "hints": [
+      "策略模式解决的是「多个类做同一件事但方式不同」的问题",
+      "工厂模式和策略模式组合使用时，工厂负责「选」策略，策略负责「做」",
+      "开闭原则：对扩展开放、对修改关闭——策略模式让新增支付方式不用改现有代码"
+    ],
+    "tags": [
+      "设计模式",
+      "策略模式",
+      "工厂模式",
+      "支付",
+      "开闭原则"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "多渠道通知系统的模式选择",
+    "content": "你需要设计一个通知系统，支持邮件、短信、App Push、站内信四种渠道。每种渠道发送逻辑不同但调用方式一致。未来可能增加 Webhook 渠道。不同类型的通知（验证码、营销消息、系统告警）需要路由到不同渠道（验证码优先走短信，营销走邮件，告警全部渠道发送）。应选择哪种设计模式组合？",
+    "options": [
+      "A) 工厂模式 + 单例模式——Factory 创建不同的渠道实例，每个渠道是 Singleton",
+      "B) 策略模式 + 责任链模式——每个渠道是一个策略，用责任链决定通知按什么顺序尝试渠道",
+      "C) 观察者模式 + 建造者模式——发布通知事件，各渠道作为观察者订阅并发送",
+      "D) 模板方法模式 + 工厂模式——抽象模板定义发送流程骨架，子类实现具体渠道逻辑，工厂创建实例"
+    ],
+    "answer": "B",
+    "hints": [
+      "问题的关键有两个：1）每个渠道发送逻辑不同但接口一致（策略模式）；2）通知路由有优先级和链式判断（验证码优先短信→失败？→站内信）",
+      "责任链模式可以让每个渠道决定是否能处理该通知，不能处理则传递给下一个渠道"
+    ],
+    "tags": [
+      "设计模式",
+      "策略模式",
+      "责任链模式",
+      "通知系统",
+      "架构设计"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "代理模式与装饰器模式的本质区别",
+    "content": "代理模式（Proxy）和装饰器模式（Decorator）都通过包装对象来扩展功能，类图非常相似。请从意图（Intent）、职责（Responsibility）、控制权（Control）三个维度详细说明两者的本质区别，并用实际场景说明什么情况下该用 Proxy 而非 Decorator，反之亦然。",
+    "answer": "答案：Proxy 和 Decorator 结构相似但意图完全不同。\n\n1）意图（Intent）区别：\n- Proxy 的目的是「控制访问」——控制客户端对真实对象的访问方式。代理站在客户端和真实对象之间，决定是否转发请求、何时转发、转发前做什么。\n- Decorator 的目的是「增强功能」——在不改变接口的前提下给对象动态添加新行为。装饰器不控制是否调用真实对象，而是在转发调用的前后附加行为。\n\n2）职责（Responsibility）区别：\n- Proxy 关注的是对象的生命周期、访问权限、延迟加载等「管理性」职责。典型：虚拟代理（Virtual Proxy——延迟创建大对象）、保护代理（Protection Proxy——控制访问权限）、远程代理（Remote Proxy——隐藏远程调用的复杂性）。\n- Decorator 关注的是功能的叠加和组合。典型：Java I/O 中的 BufferedInputStream(new FileInputStream(file))——Buffer 功能装饰 FileInputStream。每个装饰器只增加一个维度的能力，多个装饰器可以自由组合。\n\n3）控制权（Control）区别：\n- Proxy 决定「被代理对象是否被调用」——代理可以完全拦截请求、缓存结果、拒绝访问。代理不一定会把请求转发给真实对象（如缓存代理命中时直接返回）。\n- Decorator 不决定真实对象是否被调用——装饰器的职责是添加行为，最终还是调用被装饰对象的方法。装饰器默认会转发请求（super.method() 或 component.method()），只是在前/后附加操作。\n\n实际场景对比：\n\n用 Proxy 的场景：\n- 图片懒加载：用 Virtual Proxy 代替真实图片对象，用户请求时才创建真实图片对象。\n- API 缓存：用 Caching Proxy 在请求前检查缓存是否命中，命中直接返回。\n- RPC/远程调用：用 Remote Proxy 让本地代码像调用本地方法一样调用远程服务。\n\n用 Decorator 的场景：\n- Java I/O：new BufferedReader(new FileReader(file))——FileReader 读取文件，BufferedReader 添加缓冲功能，可以再套 LineNumberReader 添加行号功能。\n- 中间件：Express/Koa 的中间件机制——每个中间件是装饰器，在 HTTP 请求处理前后添加功能（日志、认证、压缩）。\n- 日志和监控：在一个已有的 Service 上装饰日志记录和耗时统计功能，不改原有代码。\n\n解析：判断标准很简单——问自己「我是在控制对对象的访问，还是在给对象加功能？」如果是前者用 Proxy，后者用 Decorator。Proxy 和 Decorator 有时可以互换实现（都在调用前后加逻辑），但意图不同决定了后续的可维护性和可理解性。\n\n扩展延伸：JDK 中的动态代理（Dynamic Proxy）是 Proxy 模式的 Java 实现，而 Spring AOP 本质上是一个装饰器——把横切关注点织入到目标对象的方法前后。AOP 和 Decorator 的关系：AOP 是 Decorator 模式在横切关注点上的泛化。",
+    "hints": [
+      "Proxy 回答「要不要调用」，Decorator 回答「调用前后做什么」",
+      "Proxy 可以完全拦截请求不转发，Decorator 一定会转发",
+      "想清楚意图——是控制访问还是增强功能——再选模式"
+    ],
+    "tags": [
+      "设计模式",
+      "代理模式",
+      "装饰器模式",
+      "Proxy",
+      "Decorator"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "可扩展数据处理框架的架构模式选择",
+    "content": "你正在设计一个数据处理框架，需要支持用户在核心处理流程中插入自定义逻辑（如数据清洗、格式转换、异常检测）。用户可以注册多个插件，插件有执行顺序，且一个插件可以决定是否中断后续流程。以下哪种架构模式组合最适合？",
+    "options": [
+      "A) 策略模式——每个插件是一个策略，由框架统一调度执行",
+      "B) 责任链模式——每个插件是一个链上的处理器，处理器可以选择把请求传给下一个或中断",
+      "C) 管道过滤器模式——每个插件是一个过滤器，数据依次流过管道中的每个过滤器",
+      "D) 观察者模式——框架发布处理事件，插件作为观察者订阅并按优先级执行"
+    ],
+    "answer": "B",
+    "hints": [
+      "关键需求是「一个插件可以决定是否中断后续流程」——这不是管道过滤器（数据必须流过所有过滤器）能做到的",
+      "责任链模式中每个处理器可以决定处理请求、转发或终止"
+    ],
+    "tags": [
+      "设计模式",
+      "责任链模式",
+      "管道过滤器",
+      "插件架构",
+      "框架设计"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "状态模式与策略模式的区别和选型判断",
+    "content": "状态模式（State Pattern）和策略模式（Strategy Pattern）的类图几乎一样——都使用组合 + 接口多态。但两者的目的和适用场景完全不同。请通过一个「订单状态流转」的例子说明状态模式的本质（状态之间的迁移和上下文相关行为切换），对比策略模式（算法独立替换，不关心上下文状态），并总结一段代码出现什么特征时说「这里应该用 State 而不是 Strategy」。",
+    "answer": "答案：State 和 Strategy 结构相同但意图相反——State 是「内在状态驱动行为切换」，Strategy 是「外部注入算法替换」。\n\n订单状态流转的例子（State Pattern）：\n\n订单有多个状态：待支付、已支付/待发货、已发货/待收货、已收货/已完成、已取消。每个状态下，相同操作的行为不同：\n- 「取消」操作：待支付状态可以取消（退款），已发货状态不能取消（只能退货）, 已完成状态不能取消。\n- 「支付回调」操作：待支付状态下处理支付结果，已支付状态下不应该再来支付回调。\n\nState Pattern 的实现：\n```\ninterface OrderState {\n    void pay(OrderContext context, PayData data);     // 支付\n    void cancel(OrderContext context);                 // 取消\n    void ship(OrderContext context);                   // 发货\n    void confirmReceive(OrderContext context);         // 确认收货\n}\n\nclass PendingPaymentState implements OrderState {\n    void pay(OrderContext context, PayData data) {\n        // 处理支付逻辑\n        context.setState(new PaidState());  // → 状态迁移到已支付\n    }\n    void cancel(OrderContext context) {\n        // 处理取消逻辑（退款）\n        context.setState(new CancelledState());  // → 状态迁移到已取消\n    }\n    void ship(OrderContext context) {\n        throw new IllegalStateException(\"未支付不能发货\");\n    }\n    // ...\n}\n```\n关键特征：状态对象知道下一个状态是什么（状态迁移逻辑封装在状态类中），Context 根据当前状态委托行为，行为执行后可能切换到新状态。\n\n对比 Strategy Pattern：\n```\ninterface SortStrategy {\n    void sort(int[] data);\n}\nclass QuickSort implements SortStrategy { /* 快速排序算法 */ }\nclass MergeSort implements SortStrategy { /* 归并排序算法 */ }\n\nclass Sorter {\n    private SortStrategy strategy;\n    void setStrategy(SortStrategy strategy) { this.strategy = strategy; }\n    void sort(int[] data) { strategy.sort(data); }\n}\n// 使用方决定用什么策略：sorter.setStrategy(new QuickSort());\n```\n关键特征：策略不关心 Context 的状态，不会改变 Context 的状态，策略之间没有迁移关系。使用方从外部决定用哪个策略。\n\n判断标准——出现以下特征时用 State 而不是 Strategy：\n1）同一个操作在不同「场景/状态」下行为不同——「取消」在待支付时可以，已支付时需要额外扣费，已发货时不能。\n2）行为执行后会改变后续行为——支付后「取消」的行为变了，说明状态发生了迁移。\n3）对象有明确的「状态生命周期」——状态的流转有方向和约束（待支付→已支付→已发货→已完成，不能跳转）。\n4）你发现代码中有大量的 if/switch 判断「当前是什么状态然后做什么」——这是典型的「状态模式引入信号」：`if (state == PENDING) { ... } else if (state == PAID) { ... }`\n\n如果只是「我想让算法可以自由替换，算法之间没有顺序和迁移关系」，用 Strategy。\n如果行为根据对象的内在状态不同，且行为会改变状态，用 State。\n\n解析：一句话总结——Strategy 是「怎么做的选择」（算法替换），State 是「什么时候做什么」（状态驱动的行为切换）。选错的话，用 Strategy 实现订单状态会变成在 Strategy 里维护全量的 if-else 判断，失去了模式的意义。",
+    "hints": [
+      "State 模式中状态对象知道下一个状态是什么（迁移逻辑在状态类中），Strategy 中策略不知道其他策略的存在",
+      "代码中出现大量 switch(state) 说明你应该用 State 模式了",
+      "Strategy 是行为选择（怎么做），State 是行为变更（什么时候做什么）"
+    ],
+    "tags": [
+      "设计模式",
+      "状态模式",
+      "策略模式",
+      "State",
+      "Strategy"
+    ]
   }
 ]

@@ -1521,5 +1521,108 @@
       "attention",
       "quantization"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "In-Context Learning (ICL) 的机制理解",
+    "content": "关于 In-Context Learning（上下文学习），以下哪个说法是目前被实证研究最广泛支持的？",
+    "options": [
+      "A) ICL 的本质是 LLM 在推理时对示例进行梯度下降式的隐式微调，通过在注意力层中模拟权重更新来实现 few-shot 学习",
+      "B) ICL 主要依赖于示例的标签（Label），而非输入-输出的格式模式（Format Pattern），去除标签后 ICL 效果基本消失",
+      "C) ICL 的核心机制是 LLM 通过示例建立输入-输出的映射模式（Meta-Learning），并从注意力层的 Key-Value 结构中检索与查询最相似的示例模式来完成预测",
+      "D) ICL 的效果与示例数量呈严格正相关，增加示例总能提升性能，且示例中引入错误标签几乎不影响最终表现"
+    ],
+    "answer": "C",
+    "hints": [
+      "研究（Min et al. 2022, Dai et al. 2023）发现，即使替换示例的真实标签为随机标签，ICL 仍能保持相当的性能，说明标签本身并不是关键",
+      "ICL 被广泛理解为一种隐式的元学习（Meta-Learning）过程，Attention 机制在其中起到类似检索和模式匹配的作用"
+    ],
+    "tags": [
+      "ICL",
+      "In-Context Learning",
+      "Mechanistic Interpretability",
+      "LLM"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Test-Time Compute Scaling（推理时计算扩展）",
+    "content": "什么是 Test-Time Compute Scaling（推理时计算扩展）？它与传统的 scaling law 有什么不同？实现 extended thinking 的主要技术路线有哪些？",
+    "answer": "答案：Test-Time Compute Scaling 是指在推理阶段通过增加计算量来提升模型输出质量，与传统的 Training Scaling Law（增加训练数据和模型参数提升性能）不同，它关注的是推理时的计算资源分配。OpenAI o1、DeepSeek-R1 等模型代表了这一范式的实践突破。\n\n解析：核心思路是让 LLM 在推理时「想得更久」——不是一步生成最终答案，而是先生成大量中间推理步骤（Chain-of-Thought），经过搜索、验证、回溯后再给出最终答案。推理计算量和输出质量之间存在类似训练阶段的 scaling 关系。\n\n技术路线主要有三种：1）隐式 Extended Thinking——模型在训练阶段学习生成长链推理链（Chain-of-Thought），推理时通过增加 max_tokens 和特殊的 think 标记让模型输出更长的推理过程。DeepSeek-R1 使用强化学习训练模型在输出中用 「thinking」 标记包围推理过程。2）搜索式推理（Search-based Reasoning）——推理时用 Tree-of-Thought、蒙特卡洛树搜索（MCTS）等方法探索多条推理路径，通过 Process Reward Model（PRM）对中间步骤打分和回溯。类似 AlphaGo 的搜索策略应用于 LLM 推理。3）验证器重排（Verifier Reranking）——先生成 N 个候选答案（N 越大计算量越大），然后用验证器或奖励模型选择或加权投票得出最佳答案（Self-Consistency 的扩展）。\n\n扩展延伸：Staff+ 面试中的关键考量——1）效率-质量 trade-off：Extended Thinking 在以数学推理、编程竞赛等明确答案的任务上效果显著，但在创意写作、翻译等开放性任务上收益递减。需要设计自适应策略（根据任务复杂度动态分配推理计算量）。2）成本挑战：o1 模型的推理成本是 GPT-4o 的 3-10 倍。工程上需要设计「轻思考 vs 重思考」路由——简单查询走快速推理，复杂任务走 extended thinking。3）与 Agent 系统的结合：Test-Time Compute Scaling 自然适合 Agent 场景——Agent 的每步推理都可以受益于 thinking 模式，尤其是在需要多步推理和工具调用的复杂任务中。Anthropic 的 Claude Extended Thinking、Google 的 Gemini Thinking 都是这一方向的产品化实践。",
+    "hints": [
+      "o1 和 GPT-4o 的核心区别之一是推理时计算量的分配——o1 隐含地使用了 test-time compute scaling",
+      "Process Reward Model（PRM）在搜索式推理中起到什么作用——它对每个推理步骤打分，而不是给最终结果打分"
+    ],
+    "tags": [
+      "LLM",
+      "推理时计算",
+      "Extended Thinking",
+      "Scaling Law"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Constitutional AI / Self-Play RL 对齐方法",
+    "content": "关于 Constitutional AI（CAI）和 Self-Play 对齐方法，以下哪个说法是正确的？",
+    "options": [
+      "A) Constitutional AI 完全不需要人类标注数据，模型通过自我修订（Self-Revision）和偏好学习两步即可完成对齐，且效果始终优于 RLHF",
+      "B) Self-Play RL（如 SPIN）的核心是将当前模型生成的样本与训练数据混合，让模型学会区分「自己生成」和「人类生成」，通过这种对抗训练提升生成质量",
+      "C) Constitutional AI 的 Principles 和 DPO 的偏好对数据是等价的——区别只是 DPO 需要成对偏好数据而 CAI 需要一组原则文本",
+      "D) Self-Play 方法在 LLM 对齐中的效果已完全被 DPO 和 RLHF 覆盖，不存在额外的性能提升空间"
+    ],
+    "answer": "B",
+    "hints": [
+      "SPIN（Self-Play Fine-Tuning, Chen et al. 2024）借鉴了 GAN 的思想——模型作为生成器和判别器交替训练，主模型区分自身生成和人类生成的数据",
+      "Constitutional AI 仍然需要少量人类反馈来训练偏好模型，但核心创新在于用原则（Constitution）指导模型自我修订，减少了对人类标注的依赖"
+    ],
+    "tags": [
+      "Constitutional AI",
+      "Self-Play",
+      "对齐",
+      "RLHF"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Sparse Autoencoders (SAE) 与 LLM 可解释性",
+    "content": "Sparse Autoencoders（稀疏自编码器）在 LLM 可解释性中的作用是什么？SAE 如何从模型内部表示中提取可解释的特征？",
+    "answer": "答案：Sparse Autoencoders 通过将 LLM 隐藏层的激活向量分解为稀疏的、可解释的特征向量，破解神经网络的「黑箱」，找到对应具体概念（如「法律文本」、「喜悦情绪」、「代码语法结构」）的神经元方向。Anthropic 的 Golden Gate Claude 是 SAE 可解释性研究的一个重要里程碑。\n\n解析：核心思路——1）LLM 的中间层激活是稠密向量 h ∈ R^d，每个维度并不对应一个可理解的概念。SAE 学习一个过完备字典 f(h) = ReLU(We h + be)，将 h 投影到更高维（d' >> d，如 d=4096, d'=65536）的稀疏表示。2）稀疏约束（L1 正则化）保证每个输入只激活少量特征（通常 ~5-50 个）。每个特征对应一个字典向量，通过分析激活该特征的输入文本可以理解该特征代表什么概念。3）训练后可以观察：某个特征在哪些文本上激活 → 给该特征语义标签（如「特征 4732 在提到 Python 异常处理时激活」）。\n\n扩展延伸：SAE 在 AI 安全中的应用——1）监控（Monitoring）：在推理时实时检测模型是否产生了不安全的行为。如果某个 SAE 特征对应「欺骗性推理」，可以在模型产生该思维时介入。2）控制（Steering）：通过干预 SAE 特征方向来改变模型行为。例如，增强「有帮助」特征、抑制「有害」特征。3）理解（Understanding）：分析模型的内部结构，验证模型是否学到了人类可理解的表示（或是在用我们不理解的方式推理）。\n\n局限性：SAE 需要大量计算资源训练（每个模型每层需要单独训练 SAE）；稀疏率（L1 系数）需要精细调节；部分特征可能对应多个不同概念（多语义特征）。TopK SAE（只保留 Top-K 激活）和 Gated SAE 是改进版本，改善了重建质量和可解释性。",
+    "hints": [
+      "Anthropic 的 Golden Gate Claude 通过修改一个特定的 SAE 特征成功让模型在任何回答中都提到金门大桥，证明 SAE 特征确实对应可操控的概念",
+      "SAE 的过完备字典为什么比 PCA 更适合可解释性——PCA 的每个主成分仍然包含多种信号，而稀疏性迫使每个特征只代表一个特定概念"
+    ],
+    "tags": [
+      "可解释性",
+      "Sparse Autoencoder",
+      "Mechanistic Interpretability",
+      "AI 安全"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Large Concept Models (LCM) 与超越 Token 预测",
+    "content": "Meta 的 Large Concept Model（LCM）与传统的 Token 级别 LLM 有什么本质区别？LCM 选择什么作为基本语义单元？这种设计带来的优势和挑战是什么？",
+    "answer": "答案：LCM 不在 Token 级别进行预测，而是在「概念（Concept）」级别——一个抽象的、与具体语言无关的语义表示空间中进行建模和生成。Meta 选择 SONAR 嵌入空间（一个多语言、多模态对齐的嵌入空间）中的句子嵌入作为基本概念单元，而非传统 Token。模型预测的是概念序列，然后通过条件生成模型将概念「解码」为具体语言文本。\n\n解析：核心设计——1）概念空间（Concept Space）：使用 SONAR 句子嵌入（200 多种语言 + 语音的共享嵌入空间），每个句子被编码为一个固定维度的向量。同一语义在不同语言中映射到相似的概念向量。2）架构：LCM 使用 Diffusion 模型（而非自回归 Transformer）在概念空间中生成句子嵌入序列，支持在概念空间中进行编辑、插值和组合操作。3）语言无关推理：因为概念空间是跨语言对齐的，LCM 不需要为每种语言单独训练——理解和推理在概念空间完成，最后才解码为具体语言。\n\n扩展延伸：LCM 的优势——1）多语言零样本迁移：在英文上训练的推理能力直接泛化到其他 100+ 语言。2）更高层次的语义控制：可以在概念空间直接操作语义（合并、拆分、修改概念）。3）推理效率：概念序列远短于 Token 序列（一句话一个向量 vs 几十个 Token），但生成每个概念的计算成本更高。\n\n挑战与局限——1）信息损失：将句子压缩成一个向量必然丢失细节（句法结构、修辞手法）。细粒度控制不如 Token 级别生成。2）概念边界定义：「概念」对应句子还是子句还是段落？边界选择直接影响模型能力。3）生成质量：概念空间解码为文本目前的质量低于 SOTA 自回归模型。4）混合架构趋势：实际产品可能采用 Token + Concept 混合方式——在高层用概念推理，在低层用 Token 生成精细文本。",
+    "hints": [
+      "SONAR 嵌入空间的核心优势是跨语言对齐——同一句话的不同语言翻译映射到相似的嵌入空间中",
+      "LCM 不一定会取代 Token 级别的 LLM，更可能的演进方向是 Token-Concept 混合架构"
+    ],
+    "tags": [
+      "Large Concept Model",
+      "Meta",
+      "SONAR",
+      "语义模型",
+      "跨语言"
+    ]
   }
 ]

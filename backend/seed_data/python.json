@@ -1557,5 +1557,112 @@
       "元编程",
       "属性访问"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python asyncio 事件循环实现细节与协程调度",
+    "content": "Python asyncio 的事件循环内部是如何调度协程的？就绪队列和 I/O 等待队列如何协同工作？如何实现协程的超时和取消？为什么 CPU 密集型协程会阻塞整个事件循环，解决方案是什么？",
+    "answer": "答案：asyncio 事件循环的核心是一个调度循环，维护一个就绪队列（ready queue）和一个 I/O 等待队列。每次迭代中，事件循环处理完就绪队列中的所有协程，然后通过 selector 模块（封装了 epoll/kqueue/IOCP）检查 I/O 事件，将 I/O 就绪的回调加入就绪队列，最后挂起等待新的 I/O 事件（如果没有就绪协程）。\n\n解析：协程调度细节——1）当一个协程执行 await 时，它挂起当前协程，将控制权交还给事件循环。2）事件循环从就绪队列弹出下一个协程继续执行。3）I/O 操作通过 loop.add_reader(fd, callback) 注册到 selector，当 fd 可读时 callback 被加入就绪队列。4）超时通过 call_later(delay, callback) 实现——维护一个最小堆（按到期时间排序），每次循环前检查堆顶是否到期，到期则将对应回调加入就绪队列。协程取消——通过 Task.cancel() 实现：在 Task 对象内部设置一个 cancelled 标志，下次该协程执行 await 时抛出 CancelledError。被取消的协程可以在 except CancelledError 中执行清理后重新抛出（如 asyncio.shield() 保护关键操作不被取消）。\n\n扩展延伸：CPU 密集型协程的问题——如果一个协程运行 CPU 密集型计算（如大数循环、图像处理），它不会主动 yield 给事件循环，导致其他协程饥饿、I/O 响应延迟。解决方案：1）loop.run_in_executor() 将 CPU 密集型任务交给线程池或进程池执行，不阻塞事件循环。2）手动插入 await asyncio.sleep(0) 主动让出控制权（但需要代码配合）。3）使用 multiprocessing 模块创建独立进程处理。uvloop——将事件循环替换为 libuv 实现（Node.js 同一底层），asyncio 的纯 Python 实现替换为 C 扩展，性能提升 2-4 倍。uvloop 在处理大量并发连接时表现优异（接近 Node.js 的性能水平）。",
+    "hints": [
+      "run_in_executor 如何让 CPU 密集型任务不阻塞事件循环——交给线程池/进程池",
+      "uvloop 为什么比默认事件循环快——基于 libuv 的 C 扩展实现"
+    ],
+    "tags": [
+      "Python",
+      "asyncio",
+      "事件循环",
+      "协程",
+      "并发"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Python GIL 移除计划与自由线程",
+    "content": "关于 Python 3.13 引入的自由线程（Free-Threaded）模式（--disable-gil），以下说法错误的是：",
+    "options": [
+      "A) 自由线程模式允许 Python 程序真正并行利用多核 CPU 执行 Python 字节码",
+      "B) 自由线程模式下单线程 Python 程序的运行性能相比有 GIL 版本会有所下降",
+      "C) 自由线程模式下所有 C 扩展模块无需修改即可安全运行",
+      "D) 自由线程模式通过细粒度锁（Per-Object Lock）替代全局锁来保证线程安全"
+    ],
+    "answer": "答案：C) 自由线程模式下所有 C 扩展模块无需修改即可安全运行\n\n解析：说法 C 错误。自由线程模式下，C 扩展模块需要修改才能安全运行。Python 的核心 C 扩展（如 numpy、pandas、Cython 生成的扩展）通常假设 GIL 的存在，在自由线程模式下会出现竞争条件。Python 社区正在推动 C 扩展添加 Py_mod_gil 标志，声明是否支持自由线程。不支持自由线程的模块在导入时会触发警告或错误。\n\n扩展延伸：自由线程模式（PEP 703）的技术挑战——1）引用计数不再全局安全，需要改为每对象引用计数（biased reference counting）或移向垃圾回收器管理。2）C 扩展需要显式声明线程安全性。3）垃圾回收器需要更复杂的标记清除算法应对线程竞争。4）单线程性能下降约 5-15%（因为增加了细粒度锁的开销）。当前状态——Python 3.13 将自由线程标记为实验性（--disable-gil 编译选项），3.14 将进一步优化。生产环境建议：2026 年前仍假设 GIL 存在。多线程 CPU 密集型任务仍推荐 multiprocessing 方案。",
+    "hints": [
+      "C 扩展模块为什么需要修改才能在自由线程模式下安全运行——模块代码通常假设 GIL 存在",
+      "自由线程模式下单线程性能为什么会下降——细粒度锁的开销"
+    ],
+    "tags": [
+      "Python",
+      "GIL",
+      "自由线程",
+      "并发",
+      "CPython"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 引用计数与垃圾回收调优",
+    "content": "Python 的引用计数机制有哪些性能开销？gc 模块的 set_threshold 如何调优？为什么大量创建临时对象会导致 GC 频繁触发？如何分析和优化 Python 的内存使用？",
+    "answer": "答案：引用计数的性能开销——1）每次赋值、传参、容器操作都需要更新 ob_refcnt（原子操作，多线程下开销更大）。2）循环引用无法被引用计数处理（漏网）。3）引用计数本身不释放内存，需要 GC 补充。CPython 使用以引用计数为主、分代 GC 为辅的策略。\n\n解析：gc 模块的调优——gc.get_threshold() 返回 (700, 10, 10) 的含义：第 0 代分配了 700 个对象时触发 GC；第 0 代 GC 触发 10 次后触发第 1 代 GC；第 1 代 GC 触发 10 次后触发第 2 代 GC。调优场景：如果程序频繁创建大量临时对象（如数据处理管道、ORM 批量操作），第 0 代阈值 700 可能太低，导致 GC 频繁触发。可调高阈值：gc.set_threshold(5000, 10, 10) 降低 GC 频率。但阈值太高可能导致内存峰值过高。\n\n扩展延伸：分析和优化工具——1）gc.get_objects() 获取所有被 GC 追踪的对象，用于排查内存泄漏。2）objgraph 模块可视化对象引用图。3）tracemalloc（Python 3.4+）跟踪内存分配的 traceback，定位大内存的源头。4）pympler 提供更详细的内存统计。优化实践——1）减少临时对象创建：使用生成器替代列表、字符串拼接用 join 而非 +、使用 __slots__。2）手动触发 GC：在批量处理结束后调用 gc.collect() 立即回收。3）禁用 GC：对不产生循环引用的短期脚本可以 gc.disable()。4）使用 weakref 避免非预期的循环引用（如回调中的 self 引用）。5）Line Profiler 和 memory_profiler 定位热点。注意：Python 的 GC 不是 JVM 的 GC——它只处理容器对象间的循环引用，不管理普通内存（那是引用计数的工作）。",
+    "hints": [
+      "gc.set_threshold(5000, 10, 10) 如何降低批量创建临时对象场景的 GC 频率",
+      "tracemalloc 如何帮助定位 Python 内存泄漏——记录每次内存分配的 traceback"
+    ],
+    "tags": [
+      "Python",
+      "GC",
+      "垃圾回收",
+      "引用计数",
+      "内存优化"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 描述符协议深入：数据描述符与非数据描述符",
+    "content": "请详细解释 Python 的描述符协议。数据描述符（Data Descriptor）与非数据描述符（Non-Data Descriptor）的区别是什么？属性访问的完整查找顺序是怎样的？@property、@classmethod、@staticmethod 在底层如何通过描述符实现？",
+    "answer": "答案：描述符是实现了 __get__、__set__、__delete__ 中至少一个方法的对象。数据描述符实现了 __get__ 和 __set__(或 __delete__)，非数据描述符只实现了 __get__。属性访问优先级：数据描述符 > 实例 __dict__ > 非数据描述符 > 类 __dict__。\n\n解析：属性查找的完整顺序（以 obj.attr 为例）——1）如果 type(obj).__mro__ 上有 attr 且是数据描述符（同时有 __get__ 和 __set__），调用其 __get__。2）如果 attr 在 obj.__dict__ 中（实例属性），返回它。3）如果 type(obj).__mro__ 上有 attr 且是非数据描述符（只有 __get__），调用其 __get__。4）如果 type(obj).__mro__ 上有 attr 且不是描述符（普通类属性），返回它。5）抛出 AttributeError。关键区别：数据描述符优先级高于实例属性，这是 @property 能正常工作的基础。因为 property() 是数据描述符（实现了 __get__ 和 __set__），所以即使实例 __dict__ 中有同名属性，访问时仍会触发 property 的 __get__。非数据描述符优先级低于实例属性——所以如果实例 __dict__ 中有同名属性，方法（非数据描述符）的绑定会被覆盖。\n\n扩展延伸：内置描述符的实现——1）@property：是数据描述符（包含 fget、fset、fdel）。prop = property(getter, setter, deleter, doc)，访问 obj.prop 时调用 property.__get__() 触发 fget。2）@classmethod：是非数据描述符。在 __get__ 中忽略实例/类，始终将第一个参数绑定为 cls。3）@staticmethod：是非数据描述符。__get__ 直接返回原始函数，不做任何绑定。描述符工程应用——1）类型校验：class Integer: def __set_name__(self, owner, name): self.name = name; def __get__(self, obj, cls): return obj.__dict__[self.name]; def __set__(self, obj, val): if not isinstance(val, int): raise TypeError; obj.__dict__[self.name] = val。2）延迟计算属性（LazyProperty）：在 __get__ 中将实例 dict 中的值替换为计算结果，后续访问走实例 dict 跳过描述符。3）ORM 中字段定义（SQLAlchemy/Django 的 Field 描述符）。4）Python 3.6+ 的 __set_name__ 协议在类创建时自动调用，告知描述符它被赋值的属性名。",
+    "hints": [
+      "数据描述符优先级高于实例属性，非数据描述符优先级低于实例属性——这个差异是关键",
+      "@property 是数据描述符，@classmethod 和 @staticmethod 是非数据描述符"
+    ],
+    "tags": [
+      "Python",
+      "描述符",
+      "Descriptor",
+      "property",
+      "元编程"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Python __slots__ 的内存优化机制",
+    "content": "关于 Python 类的 __slots__ 机制，以下说法正确的是：",
+    "options": [
+      "A) __slots__ 通过将实例属性存储在字典中但禁用动态添加属性来节省内存",
+      "B) __slots__ 通过将实例属性存储在类似于 C 结构体的固定数组中，完全消除实例的 __dict__ 来节省内存",
+      "C) __slots__ 会提升属性访问速度，因为省去了属性查找链中的步骤",
+      "D) __slots__ 定义的子类如果也定义了 __slots__，会自动继承父类的 __slots__ 而无需手动合并"
+    ],
+    "answer": "答案：B) __slots__ 通过将实例属性存储在类似于 C 结构体的固定数组中，完全消除实例的 __dict__ 来节省内存\n\n解析：__slots__ 声明后，Python 不为实例创建 __dict__（默认的字典存储），而是为每个 __slots__ 中的名称在实例上预留一个固定偏移量的存储位（通过描述符访问，类似 C 结构体的成员）。由于不再存储字典（字典是哈希表，负载因子 ~2/3，每个条目额外开销 ~50 字节），每个实例可节省 50-70% 的内存。说法 A 错误——__slots__ 消除 __dict__ 而非「存储在字典中」。说法 C 正确——属性访问确实更快（省去了字典查找的哈希计算和冲突解决），但这不是主要目的。说法 D 错误——子类如果定义了 __slots__，父类的 __slots__ 不会自动合并到子类中，子类需要显式包含父类的 slots：__slots__ = (*ParentClass.__slots__, 'child_attr')。\n\n扩展延伸：__slots__ 的注意事项——1）定义了 __slots__ 的类不支持 __weakref__（除非在 __slots__ 中显式包含 '__weakref__'）。2）不能动态添加未在 __slots__ 中列出的属性（AttributeError）。3）多继承时如果多个父类定义了非空的 __slots__，需要手动合并（且不能有重复名称）。4）__slots__ 对属性访问速度的提升在 CPython 上约为 10-20%（因为省去了 LOAD_ATTR 中的字典查找）。适用场景——大量创建的同构对象：ORM 模型行（Django 的 Model）、数据类（dataclass 的 slots=True 参数）、游戏引擎中的实体。不适用场景——小型脚本、类数量不多的场景（优化过度且失去灵活性）。Python 3.10+ 的 dataclass 支持 slots=True：@dataclass(slots=True) 自动生成 __slots__。",
+    "hints": [
+      "__slots__ 消除 __dict__ 是省内存的关键——字典的哈希表结构本身开销很大",
+      "使用 __slots__ 的类为什么不能动态添加属性——没有 __dict__ 来存储新属性"
+    ],
+    "tags": [
+      "Python",
+      "__slots__",
+      "内存优化",
+      "性能",
+      "CPython"
+    ]
   }
 ]
