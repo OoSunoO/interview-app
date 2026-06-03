@@ -2077,5 +2077,110 @@
       "jep-350",
       "startup-performance"
     ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ConstantDynamic (Condy) 引导方法调用的缓存时机",
+    "content": "关于 ConstantDynamic (Condy) 引导方法调用的时机和缓存行为，以下哪项描述是正确的？\nA) 引导方法在 JVM 启动阶段对所有 Condy 常量执行批量调用\nB) 引导方法在包含 Condy 的类被链接（linking）时执行，结果缓存在运行时常量池\nC) 引导方法在 CONSTANT_Dynamic 条目首次被字节码指令实际访问时执行，结果被 JVM 缓存\nD) 引导方法在每次包含 Condy 的字段或方法被访问时都重新执行",
+    "answer": "C) ConstantDynamic 的引导方法采用懒解析（lazy resolution）策略。只有当 CONSTANT_Dynamic 常量池条目首次被某条字节码指令实际访问时，JVM 才调用对应的 bootstrap method。引导方法返回的值被缓存在运行时常量池中，此后所有对该 Condy 常量的访问都直接返回缓存值，不会再次调用引导方法。这与 invokedynamic 的引导方法行为类似，区别在于 Condy 返回的是常量值而非 CallSite 对象。",
+    "hints": [
+      "Condy 的懒解析语义意味着从未被实际使用的 Condy 条目永远不会触发引导方法调用，这在应用启动性能上有优势",
+      "Condy 与 invokedynamic 共享 BootstrapMethods 属性，但解析后的缓存粒度不同：Condy 缓存结果值，invokedynamic 缓存 CallSite"
+    ],
+    "tags": [
+      "ConstantDynamic",
+      "Condy",
+      "引导方法",
+      "懒解析",
+      "常量池"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ForkJoinPool.commonPool 默认并行度计算规则",
+    "content": "ForkJoinPool.commonPool() 在未显式设置 parallelism 参数时，其默认并行度是如何确定的？\nA) Runtime.getRuntime().availableProcessors()，即 CPU 核心数\nB) Runtime.getRuntime().availableProcessors() - 1，即 CPU 核心数减一\nC) Math.max(2, availableProcessors())，最少为 2\nD) 始终为 4，与 CPU 核心数无关",
+    "answer": "B) ForkJoinPool.commonPool() 的默认并行度为 Runtime.getRuntime().availableProcessors() - 1，最小值为 1（单核 CPU 上为 1）。设计理由：ForkJoinPool 用于 CPU 密集型并行计算，预留一个核心给调用线程或其他系统任务使用。当 availableProcessors() 返回 1（单核环境）时，并行度为 1，即所有任务在调用线程中串行执行。可通过系统属性 java.util.concurrent.ForkJoinPool.common.parallelism 覆盖此默认值。",
+    "hints": [
+      "commonPool 的并行度与虚拟线程的 carrier 线程池（ForkJoinPool）不同——虚拟线程调度使用不同的 ForkJoinPool，其并行度通常等于 availableProcessors()",
+      "通过 -Djava.util.concurrent.ForkJoinPool.common.parallelism=N 可覆盖默认并行度"
+    ],
+    "tags": [
+      "ForkJoinPool",
+      "commonPool",
+      "并行度",
+      "线程池",
+      "并发"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "基于值的类在 JDK 16+ 的同步限制",
+    "content": "JDK 16（JEP 390）对基于值的类（Value-Based Class）的同步操作进行了强制限制。以下哪项描述了这一限制的具体行为？\nA) 仅产生编译警告，运行时不产生任何影响\nB) 编译时报错，拒绝编译对基于值的类进行 synchronized 的代码\nC) 运行时抛出 IllegalMonitorAccessException 或类似异常\nD) 编译器和运行期都静默忽略 synchronized 块",
+    "answer": "C) JDK 16（JEP 390）将对基于值的类（Value-Based Class）的同步操作（synchronized 块或 synchronized 方法）从编译警告升级为运行时抛出 IllegalMonitorStateException。Value-Based Class 包括 java.util.Optional、java.time.LocalDate、java.math.BigInteger 等，它们被设计为不可变的、无标识的（identity-less）值对象。未来 Project Valhalla 的 primitive class 将无法进行同步，提前施加限制是为了防止依赖同步行为的代码在值类型迁移后出现静默错误。",
+    "hints": [
+      "通过 jdk.internal.ValueBased 注解标记哪些类是 value-based class，运行时同步检测基于该注解",
+      "常用的 value-based class：LocalDate、LocalDateTime、Optional、BigInteger、Instant、Period 等"
+    ],
+    "tags": [
+      "Value-Based Class",
+      "JEP 390",
+      "同步限制",
+      "Valhalla",
+      "值类型"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Lookup.defineClass 与 ClassLoader.defineClass 的核心权限区别",
+    "content": "关于 MethodHandles.Lookup.defineClass（JDK 9+）与 ClassLoader.defineClass 在类定义权限上的核心区别，以下哪项描述是正确的？\nA) Lookup.defineClass 可以定义任意包中的类，而 ClassLoader.defineClass 只能在 caller 的包中定义\nB) ClassLoader.defineClass 不需要字节码参数，可以直接从类名加载\nC) Lookup.defineClass 只能在 Lookup 对象所在类的同一模块中定义类，且不触发类链接的完整流程\nD) Lookup.defineClass 与 ClassLoader.defineClass 功能完全相同",
+    "answer": "C) Lookup.defineClass 的方法签名是 MethodHandles.Lookup.defineClass(byte[] bytes)，它只能在 Lookup 对象所在类的同一模块中定义类。该方法的限制：目标类必须在同一运行期包（runtime package）中，且不触发完整的类链接流程（即类被定义但未被完全解析和初始化）。相比之下，ClassLoader.defineClass 更灵活——可以将类定义到任意包中（受 SecurityManager 约束），并触发完整的类加载和链接流程。Lookup.defineClass 的主要优势是更轻量——它不需要经过 ClassLoader 的 findClass/loadClass 循环，直接在 Lookup 的上下文中定义类，适合在 Lambda 表达式和动态代理等需要快速定义小类的场景中使用。",
+    "hints": [
+      "Lookup.defineClass 定义的类不能包含包名称与 Lookup 所在类不同的包",
+      "Lookup.defineClass 返回的 Class 对象尚未经过验证和准备阶段——它仅在被首次使用时才触发链接"
+    ],
+    "tags": [
+      "Lookup.defineClass",
+      "ClassLoader",
+      "类定义",
+      "模块系统",
+      "动态代理"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "JVM TI RetransformClasses 对已加载方法的替换时机",
+    "content": "JVM TI（Tool Interface）的 RetransformClasses 函数用于重新变换已经加载的类。关于该方法替换后对正在执行的方法的影响，以下哪项描述是正确的？\nA) 重新变换后，当前所有已激活栈帧中的方法字节码被立即替换\nB) 已在栈上执行的方法继续运行原始字节码，新调用使用变换后的版本\nC) 在最近的安全点（SafePoint）对所有活跃方法执行 OSR（On-Stack Replacement）替换\nD) 重新变换仅在下次 JVM 重启后生效",
+    "answer": "B) 根据 JVMS 和 JVM TI 规范，RetransformClasses 对已加载类进行字节码变换后，当前已经在调用栈上执行的方法（活动栈帧）继续运行变换前的原始字节码。对于这些方法的新调用（后续的重新进入），将使用变换后的字节码。这与常规模块类替换的逻辑一致——方法体被替换但不影响正在执行的调用。如果要影响当前正在执行的代码，需要结合支持栈上替换（OSR）的特定工具更为复杂的处理。提示：RetransformClasses 不能添加/移除字段或方法，只能修改方法体。",
+    "hints": [
+      "RetransformClasses 只能修改方法体（Method body），不能增加/删除字段、方法或修改类签名",
+      "重变换的关键应用场景包括 APM（应用性能监控）的字节码插桩、AOP 框架的热替换"
+    ],
+    "tags": [
+      "JVM TI",
+      "RetransformClasses",
+      "字节码",
+      "代理",
+      "热替换"
+    ],
+    "options": [],
+    "company": ""
   }
 ]

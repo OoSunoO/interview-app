@@ -1834,5 +1834,113 @@
       "skip-list",
       "concurrency"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap.reduceValuesToLong 批量操作的批次边界语义",
+    "content": "请详细解释 ConcurrentHashMap 的 reduceValuesToLong、reduceKeysToLong、reduceEntriesToLong 等批量操作（bulk operation）的批次边界语义。这些方法的 parallelismThreshold 参数如何控制任务拆分？当映射在 reduce 过程中被其他线程并发修改时，reduce 结果的语义是什么？",
+    "answer": "ConcurrentHashMap 的 reduceValuesToLong 等方法采用 ForkJoinPool 进行并行批量操作。parallelismThreshold 参数控制拆分策略：当预计映射中的元素数量超过阈值时，任务被拆分为子任务并行执行；当元素数量不超过阈值时，在当前线程中串行执行。Long.MAX_VALUE 作为阈值表示始终串行。批次边界的核心语义：每个子任务处理一个 Segment-like 的 bin 范围（内部基于 CounterHashCell 的分布）。当映射在 reduce 过程中被其他线程并发修改时，reduce 操作展现的是「弱一致性」语义——它基于遍历的时刻快照（但非一致性快照，而是遍历过程中的所见修改），结果等效于对某个时间点的映射状态进行 reduce，但不保证反映任何单个一致的时间点。具体而言：遍历过程中出现在某个 bin 中的元素会被处理，新添加的元素可能被包含也可能不被包含，被替换的元素可能观察到旧值也可能观察不到。这与 ConcurrentHashMap 迭代器的「弱一致性」一致。如果要求严格的一致性，需要在外部加锁进行 reduce。",
+    "hints": [
+      "reduceValuesToDouble(long parallelismThreshold, ToDoubleFunction<? super V> transformer, DoubleBinaryOperator reducer) 中的 transformer 不能返回 null——如果映射中所有值都被过滤为 null，reduce 返回 identity 值",
+      "JDK 9 后这些批量操作的内部实现做了优化，使用更精细的拆分粒度（基于 CounterCell 而非整个 ConcurrentHashMap）"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "reduceValuesToLong",
+      "批量操作",
+      "弱一致性",
+      "并行"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "TreeMap.descendingMap 逆序视图的 subMap 范围反转规则",
+    "content": "关于 TreeMap.descendingMap() 返回的逆序视图（descending map）及其 subMap 方法的行为，以下哪项描述是正确的？\nA) descendingMap 返回的 subMap 参数顺序不变：subMap(fromKey, toKey) 中的 fromKey 仍然小于 toKey\nB) descendingMap 返回的 subMap 参数自动反转：subMap(fromKey, toKey) 实际表示从 toKey 到 fromKey 的范围\nC) descendingMap 不支持 subMap 操作，调用会抛出 UnsupportedOperationException\nD) descendingMap 的 subMap 行为与正向视图完全一致，不存在差异",
+    "answer": "B) TreeMap.descendingMap() 返回一个 NavigableMap，其 subMap 方法的参数语义自动反转。在 descendingMap 上调用 subMap(fromKey, toKey) 时，fromKey 应大于 toKey（因为视图是逆序的），操作结果表示逆序映射中从原本的 toKey 到 fromKey 的范围（在正向视图中是从 fromKey 到 toKey 的子范围）。具体而言：descendingMap().subMap(highKey, lowKey) 相当于正向视图的 subMap(lowKey, highKey)。NavigableMap 的 descendingMap 文档明确说明「如果指定了参数，则 less 和 greater 的含义在交换后的映射中会被反转」。这一设计使得逆序视图的 subMap 参数签名保持一致——fromKey 仍然表示子范围的「下界」，但这个下界在逆序中对应的是更大的 key。",
+    "hints": [
+      "descendingMap 的 headMap/toKey 的行为也反转：descendingMap().headMap(x) 返回正向视图中大于等于 x 的部分",
+      "descendingMap 返回的是原 TreeMap 的视图而非副本，对视图的修改直接反映在原映射中"
+    ],
+    "tags": [
+      "TreeMap",
+      "descendingMap",
+      "NavigableMap",
+      "subMap",
+      "逆序视图"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Collections.newSetFromMap 的并发安全性陷阱",
+    "content": "Collections.newSetFromMap(Map<E, Boolean> map) 可以将任何 Map 转换为 Set 视图。请说明以下哪种使用方式是不安全的，为什么？\n方式一：newSetFromMap(new ConcurrentHashMap<>()) — 在并发环境中使用返回的 Set\n方式二：newSetFromMap(new HashMap<>()) — 在并发环境中使用返回的 Set\n方式三：newSetFromMap(new LinkedHashMap<>()) — 在单线程环境中使用返回的 Set\n请详细解释 newSetFromMap 的内部实现机制及其并发安全保障的边界。",
+    "answer": "方式二是不安全的——在并发环境中使用由 HashMap 支撑的 Set。Collections.newSetFromMap(map) 直接返回 map 的 keySet() 视图，所有 add/remove/contains 操作代理到 map 的 put/remove/containsKey。它不在代理方法上添加任何同步机制。因此：\n方式一（ConcurrentHashMap 支撑）——线程安全，因为 ConcurrentHashMap 的 put/remove/containsKey 是线程安全的。\n方式二（HashMap 支撑）——线程不安全，多线程并发 add/remove 会导致 HashMap 的内部结构损坏（死循环、丢失元素等），因为 HashMap 的 put 操作涉及 resize 和链表/树的修改，没有任何内部同步。\n方式三（LinkedHashMap 支撑）——单线程安全，但注意 LinkedHashMap 非线程安全，仅适用于单线程。\n核心原理：newSetFromMap 返回的是 Map 内部类 KeySet 的视图，自己不维护任何数据结构。Set 的所有操作直接委托给 Map。因此 Set 的线程安全性完全由传入的 Map 的线程安全性决定。常见的误用是将不支持并发的 Map（HashMap、TreeMap、LinkedHashMap）传入后在多线程环境中使用返回的 Set。",
+    "hints": [
+      "newSetFromMap 也继承 Map 的大小限制——如果 Map 不允许 null key，则 Set 不允许 null 元素",
+      "ConcurrentHashMap.newKeySet() 是 newSetFromMap(new ConcurrentHashMap<>()) 的等效快捷方式，语义完全一致"
+    ],
+    "tags": [
+      "Collections",
+      "newSetFromMap",
+      "线程安全",
+      "ConcurrentHashMap",
+      "视图"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "AbstractCollection.toString 自引用集合 StackOverflowError",
+    "content": "如果集合直接或间接包含对自身的引用（例如 Set 中包含自身），调用该集合的 toString() 方法会递归进入 StackOverflowError。",
+    "answer": "A) 正确",
+    "hints": [
+      "AbstractCollection.toString() 通过迭代器遍历元素，对每个元素调用 String.valueOf()，如果元素是集合自身则递归调用 toString()",
+      "即使使用 ArrayList，如果某个元素是 list 自身，list.toString() 会触发无限递归：toString -> [..., list.toString(), ...] -> [..., [..., list.toString(), ...], ...]"
+    ],
+    "tags": [
+      "AbstractCollection",
+      "toString",
+      "StackOverflowError",
+      "递归",
+      "集合"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "List.of 与 Collections.unmodifiableList 序列化实现差异",
+    "content": "关于 List.of（JDK 9+）返回的不可变列表与 Collections.unmodifiableList 在序列化方面的差异，以下哪项描述是正确的？\nA) List.of 和 Collections.unmodifiableList 的序列化形式完全相同\nB) List.of 返回的列表通过自定义 writeReplace 方法将序列化委托为数组或普通列表，而 unmodifiableList 序列化的是其内部的包装结构\nC) List.of 返回的列表不支持序列化，会抛出 NotSerializableException\nD) Collections.unmodifiableList 的序列化形式直接输出其包装的源列表",
+    "answer": "B) List.of（以及 Set.of、Map.of）返回的不可变集合是 JDK 内部实现类，它们通过 writeReplace() 方法将序列化代理替换为普通数组或标准集合表示——例如 List.of 返回的 ImmutableCollections.List12 在序列化时使用 SerializedList 作为代理，反序列化时重新构造为 List.of 的不可变实例。Collections.unmodifiableList 则序列化其内部的包装结构——它输出 UnmodifiableCollection 序列化代理，反序列化时重新包装。核心区别：List.of 的序列化不保留包装链，直接序列化底层数据元素；而 unmodifiableList 的序列化保留了包装语义，反序列化后仍然是 unmodifiable 的包装视图。这一差异在涉及远程调用和缓存对象序列化的场景中很重要。",
+    "hints": [
+      "List.of() 返回的 ImmutableCollections 内部类的序列化流格式与 ArrayList 不同——数据以紧凑数组形式写入，无容量预留字段",
+      "Collections.unmodifiableList 的反序列化创建的是包装视图而非深拷贝，修改源列表会反映在反序列化后的对象中（如果源仍然活跃）"
+    ],
+    "tags": [
+      "List.of",
+      "unmodifiableList",
+      "序列化",
+      "不可变集合",
+      "writeReplace"
+    ],
+    "options": [],
+    "company": ""
   }
 ]

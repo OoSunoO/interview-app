@@ -1708,5 +1708,102 @@
       "Flink",
       "机器学习"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计全局一致分布式快照系统",
+    "content": "分布式系统中如何对多个节点的状态生成全局一致的快照？请介绍 Chandy-Lamport 快照算法的原理及其适用场景。",
+    "answer": "Chandy-Lamport 利用 Marker 消息在分布式系统中捕捉一致状态。\n\n原理：1）任意节点记录本地状态并向外发送 Marker 消息。2）收到 Marker 的节点：如果是首次收到该通道的 Marker，则记录本地状态并将 Marker 继续转发给所有出边邻居；如果已经记录状态，则记录该通道在 Marker 之后收到的消息（即 in-flight 消息）。3）所有节点记录完本地状态后，组合成全局快照。\n\n关键特性：1）不要求全局时钟——Marker 替代时间同步，记录的是逻辑一致状态而非物理同一时刻。2）快照中包含通道中正在传输的消息（in-flight messages），保证因果一致性（无 Cause-Effect 反转）。3）快照对应的可能不是一个物理时间点，但保证分布式状态的一致性。\n\n适用场景：1）分布式数据库的定期备份与恢复。2）Apache Flink 的 Checkpoint 机制（基于 Chandy-Lamport 变体 Barrier）。3）分布式状态机的定期检查点，用于故障恢复。\n\n局限性：1）快照生成期间需要暂停处理或引入性能开销。2）在大规模集群中快照文件大，需要高效存储和清理机制。3）对实时性要求高的系统，快照频率和系统吞吐之间存在权衡。\n\n扩展延伸：Flink 的 Checkpoint 使用 Barrier（对齐屏障）替代 Marker，通过异步增量快照减少暂停时间。Google Spanner 使用 TrueTime API + MVCC 实现外部一致性快照，避免全局暂停。",
+    "hints": [
+      "Marker 消息在 Chandy-Lamport 算法中起什么作用",
+      "Flink 的 Barrier 对齐和 Chandy-Lamport Marker 有什么异同"
+    ],
+    "tags": [
+      "分布式系统",
+      "快照",
+      "Chandy-Lamport",
+      "Flink"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计实时 AB 测试与实验分析平台",
+    "content": "如何设计一个支持数百万用户实时分桶的 AB 测试平台？核心挑战包括流量分割、实验隔离、统计显著性和数据延迟。",
+    "answer": "AB 测试平台的核心架构包括流量接入层、实验配置层、数据采集层与统计分-析层。\n\n解析：1）流量分桶——基于用户 ID 一致性哈希（Hash 取模）确定性分桶。采用分层分桶架构：互斥层（同层实验互斥）和重叠层（不同层实验正交），Google Overlapping Experiment Infrastructure 使用「层」的概念，通过正交 Hash 函数使不同层的实验互不干扰。2）实验配置——配置中心实时推送实验开关（Feature Flag），SDK 侧缓存配置并监听变更。配置结构包含实验 ID、层 ID、分桶规则（如 0%-10% 实验组、10%-100% 对照组）。3）数据采集——客户端/服务端埋点上报（批量+实时双链路），消息队列削峰（Kafka）。实时指标通过 Flink 计算，离线指标通过 Hive/Spark 批量计算。4）统计分析——核心指标：转化率、均值、方差。使用 T 检验/Z 检验判断统计显著性（p-value < 0.05）。多臂对比需 Bonferroni 校正。5）实验监控——SRM（Sample Ratio Mismatch）检测分桶均匀性，追踪指标异常波动。\n\n扩展延伸：AA 测试（实验开始前的对照组对比对照组）验证分桶是否均匀。MDE（Minimum Detectable Effect）决定实验所需样本量。网络效应场景需使用分流设计（如社交网络中的 Cluster-based Randomization）。",
+    "hints": [
+      "分层分桶如何保证正交性和互斥性",
+      "SRM 检测为什么是实验平台的关键监控项"
+    ],
+    "tags": [
+      "系统设计",
+      "AB测试",
+      "实验平台",
+      "统计"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计数据血缘与溯源系统",
+    "content": "什么是数据血缘（Data Lineage）？设计一个跨数据管线的血缘追踪系统有哪些核心挑战和技术方案？",
+    "answer": "数据血缘是记录数据从产生到消费完整生命周期的依赖关系和变换过程。\n\n解析：核心挑战：1）跨系统追踪——数据在 Flume/Kafka/Spark/Hive/BI 等多系统间流动（ETL Pipeline），需要统一的元数据模型打通各系统。2）列级血缘——字段级别的映射比表级复杂得多，如 SELECT a+b AS c FROM t 需要解析 SQL 语法树（AST）提取字段级依赖。3）变更影响分析——上游表结构变更时，快速找到受影响的下游任务和报表。4）血缘正确性——静态解析（SQL Parser）与运行时追踪（拦截执行计划）两种方式各有优劣。\n\n技术方案：1）Apache Atlas——Hadoop 生态的血缘引擎，通过 Hook 采集 Hive/Spark/Sqoop 的血缘信息。2）DataHub（LinkedIn 开源）——基于 OpenLineage 标准，支持实时血缘上报和影响分析。3）自建方案——解析 SQL AST（ANTLR/Apache Calcite）提取表和字段依赖。运行时通过 Presto/Spark 插件拦截执行计划获取精确血缘。\n\n扩展延伸：血缘的两种模式：解析型（解析 SQL 提取依赖）覆盖面广但不准确（动态 SQL 解析失败）；执行型（从实际执行计划提取）准确但需要任务运行。生产环境通常组合使用。列级血缘的存储模型：使用图数据库（Neo4j）存储血缘 DAG，支持深度遍历影响分析。",
+    "hints": [
+      "列级血缘和表级血缘的实现难度差异有多大",
+      "静态解析和运行时追踪各有什么局限"
+    ],
+    "tags": [
+      "数据血缘",
+      "数据治理",
+      "元数据",
+      "ETL"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计多活数据中心双向复制系统",
+    "content": "如何设计跨地域多活的数据库双向复制系统？面临的核心挑战是什么？如何解决数据冲突？",
+    "answer": "多活双向复制的核心挑战是数据冲突和写入延迟。\n\n解析：架构模式：1）基于数据库层原生复制——MySQL 双向复制（A↔B 互为主从），配置 auto_increment_increment 和 auto_increment_offset 避免主键冲突。问题：循环复制、数据冲突时无自动解决策略。2）基于中间件的复制——Canal（解析 binlog）+ MQ + 回放组件。通过 DC ID 给每条数据打标签，回放时跳过本地产生的数据。3）基于应用层双写——应用同时写入多数据中心，通过分布式事务协调，性能开销大。\n\n冲突检测与解决：1）LWW（Last-Write-Win）——依赖物理时钟（有时钟 skew 风险）或混合逻辑时钟（HLC）。2）CRDT（无冲突数据类型）——自动合并，适合计数器、Set 类型，但对复杂数据结构支持有限。3）自定义合并策略——业务层实现冲突处理逻辑或人工介入。4）Google Spanner 方案——TrueTime 提供全局外部一致性，所有写入在同一 leader 完成，彻底避免冲突。\n\n扩展延伸：阿里的异步双向复制方案：Canal 从 binlog 提取变更→MQ 异步 Replicate→对端回放。每个表只允许一个中心写（分片归属），逻辑上规避冲突。OceanBase 通过 Paxos 组实现强同步，不需要冲突解决。",
+    "hints": [
+      "binlog 循环复制如何识别和避免",
+      "CRDT 为什么不适用于所有数据类型"
+    ],
+    "tags": [
+      "多活",
+      "数据复制",
+      "冲突解决",
+      "异地多活"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "分布式共识协议选型对比",
+    "content": "关于分布式共识协议 Raft、Paxos、ZAB 和 Gossip，以下哪一项描述最准确？",
+    "options": [
+      "A) Raft 的 Leader 选举速度严格快于 ZAB，因为 Raft 最多只需要一轮 RPC",
+      "B) Paxos 比 Raft 更难理解，但 Paxos 在节点故障下的可用性严格优于 Raft",
+      "C) Raft 和 ZAB 都基于 Leader + 多数派写入，但 ZAB 以事务 ID（zxid）排序，Raft 以 Term + Log Index 排序",
+      "D) Gossip 协议可以达到强一致性，且比 Raft 更适合跨 WAN 部署"
+    ],
+    "answer": "C",
+    "hints": [
+      "Raft 和 ZAB 在 Leader 选举流程上本质是否相同",
+      "Gossip 是强一致还是最终一致协议"
+    ],
+    "tags": [
+      "分布式共识",
+      "Raft",
+      "Paxos",
+      "ZAB",
+      "Gossip"
+    ]
   }
 ]

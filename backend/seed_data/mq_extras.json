@@ -1770,5 +1770,103 @@
       "zstd",
       "lz4"
     ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kafka 客户端配额与请求限流",
+    "content": "Kafka 提供了客户端配额（Quota）机制来限制生产者和消费者的使用资源。请说明 Kafka Quota 的类型（网络带宽配额和请求速率配额）、配置方式和动态调整机制，以及当客户端触发配额限制时的具体行为。",
+    "answer": "答案：Kafka Quota 分为两类：1）网络带宽配额（Network Bandwidth Quota）——限制生产者和消费者的字节速率。2）请求速率配额（Request Rate Quota）——限制客户端每秒请求数（CPU 利用率间接控制）。\n\n解析：配置粒度支持 user、client-id、(user, client-id) 和默认级别。配置方式：动态配置通过 kafka-configs.sh 或 AdminClient 修改 ZK/KRaft 中的 /config/users/ 和 /config/clients/ 节点（不需要重启集群）。触发配额限制时，Kafka 服务端会 delay 客户端的响应（throttling），通过 throttle.time.ms 告知客户端被限流时长。监控通过 kafka.server:type=Produce/Consumer metrics 观察 throttle-rate 和 throttle-time。\n\n扩展延伸：配额配置示例——kafka-configs.sh --bootstrap-server localhost:9092 --alter --add-config 'producer_byte_rate=1048576' --entity-type clients --entity-name my-client。多租户 Kafka 集群中 Quota 是隔离保障的关键机制。注意：Quota 是服务端限流，与客户端的 max.in.flight.requests.per.connection 配置无直接关系。",
+    "hints": [
+      "Kafka Quota 有哪两种类型",
+      "触发配额时服务端如何处理"
+    ],
+    "tags": [
+      "Kafka",
+      "Quota",
+      "限流",
+      "多租户"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 事务协调器与事务日志原理",
+    "content": "Kafka 的事务机制依赖事务协调器（Transaction Coordinator）和事务日志（Transaction Log）。请说明事务协调器的选主机制、事务日志的存储方式，以及事务从开始到提交/中止的完整生命周期。",
+    "answer": "答案：Kafka 的事务协调器是运行在每个 broker 上的组件，负责处理事务的初始化、提交和中止。每个 producer 通过 transactional.id 确定唯一的事务协调器（由 transaction.coordinator 协议计算）。\n\n解析：事务生命周期：1）InitTransactions——producer 向协调器发起 InitProducerIdRequest，获取 producer_id（PID）和 producer_epoch（单调递增）。2）AddPartitionsToTxn——添加事务涉及的分区，协调器在事务日志中记录分区列表。3）Produce——发送数据时附加 batch 的 PID、epoch 和 sequence number。4）commitTransaction——协调器开始两阶段提交：先写入 PREPARE_COMMIT 到事务日志，然后向每个参与分区写入 commit marker。abortTransaction 同理写入 PREPARE_ABORT 和 abort marker。事务日志存储在内置 topic __transaction_state（默认 50 个分区），通过 Kafka 自身的复制机制保证高可用。\n\n扩展延伸：事务超时由 transaction.timeout.ms（默认 60000ms）控制，超时后协调器自动中止事务。协调器宕机后新的协调器从事务日志恢复所有进行中事务的状态并决定是否超时中止。transactional.id 的唯一性保障了 Zombie Producer 的 fencing——旧 producer 的 epoch 低于当前，其请求被拒绝。",
+    "hints": [
+      "事务协调器如何定位",
+      "__transaction_state topic 的作用"
+    ],
+    "tags": [
+      "Kafka",
+      "事务",
+      "协调器",
+      "Exactly-Once",
+      "事务日志"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "RocketMQ 5.0 Pop 消费模式与 gRPC 协议",
+    "content": "关于 RocketMQ 5.0 引入的新消费模式 Pop 和 gRPC 协议，以下说法正确的是？",
+    "answer": "答案：B) Pop 消费模式将 Rebalance 逻辑从客户端移到 Broker 端，由服务端决定消息分配给哪个消费者\n\n解析：RocketMQ 5.0 的 Pop 消费模式（轻量级消费模式）核心变化：传统 Pull 模式中客户端自行 Rebalance（消费组内分区分配），Pop 模式下 Broker 维度的 Pop 循环从队列取出消息推给消费者，服务端负责分配。gRPC 协议替代了传统的 remoting 协议，支持多语言 SDK 标准化（Java、Go、C++、Python、Node.js 等），使用 Protobuf 定义请求响应。Pop 模式适合弹性伸缩场景（如 K8s 下消费者动态扩缩），避免 Rebalance 过程中的消费停顿。\n\n扩展延伸：RocketMQ 5.0 支持两种模式共存——传统 Pull（长轮询）和 Pop。Pop 模式下消息 visibilityTimeout 概念替代了传统 consume_timeout，超时未 ack 的消息对其他消费者可见（类似 Kafka 的 consumer group + partition revoke）。自动批量 Pop 由 broker 控制，减少客户端频繁请求。对比 Kafka 的 Cooperative Rebalance，Pop 模式更彻底地消除了 rebalance 带来的消费中断。",
+    "options": [
+      "A) Pop 消费模式将 Rebalance 放在客户端执行，与传统模式相同",
+      "B) Pop 消费模式将 Rebalance 逻辑从客户端移到 Broker 端，由服务端决定消息分配给哪个消费者",
+      "C) Pop 模式不支持消息重试",
+      "D) gRPC 协议只在 Pop 模式下可用，传统模式仍用旧协议"
+    ],
+    "hints": [
+      "Pop 模式下 Rebalance 逻辑在哪里",
+      "gRPC 协议在 5.0 中的作用"
+    ],
+    "tags": [
+      "RocketMQ",
+      "Pop模式",
+      "gRPC",
+      "消费模式",
+      "RocketMQ 5.0"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Pulsar Key_Shared 订阅类型与消息顺序保证",
+    "content": "Apache Pulsar 提供了 Key_Shared 订阅类型。请说明 Key_Shared 的 routing 机制、消息顺序保证模型，以及它和 Exclusive、Failover、Shared 订阅类型的关键区别。sticky hash range 是如何工作的？",
+    "answer": "答案：Key_Shared 是 Pulsar 4.8.0+ 引入的订阅类型，将同一 key 的消息路由到同一个消费者，实现 key 级别的有序消费。\n\n解析：Key_Shared 内部使用 Hashing Scheme 将 message key 映射到固定的 hash range（0-65535），每个消费者负责一个或多个 hash range。连接新消费者时会自动重新划分 hash range 范围，确保同一 key 始终由同一消费者处理。与 Exclusive（所有消息给一个消费者）、Failover（主备模式）、Shared（轮询分发）的关键区别：Key_Shared 保证相同 key 的消息按顺序送达同一消费者，不同 key 可以并行由不同消费者处理。当消费者断开时，其 hash range 会被重新分配给其他消费者。\n\n扩展延伸：Hash range 的自动重平衡策略有两种——AutoSplitHashRange（自动分裂/合并 hash range）和固定范围分配。Key_Shared 的局限性：如果某个 key 的消息量特别大（hot key），会导致该消费者成为瓶颈。Pulsar 3.0+ 支持 Consistent Hashing 模式的 Key_Shared 以改进 hot key 场景。Batching 在 Key_Shared 模式下需要注意：批量消息中的消息可能具有不同的 key，可能导致 key 分散到不同消费者的 batch 中。",
+    "hints": [
+      "Key_Shared 如何保证 key 级别的有序性",
+      "hash range 的分配和重分配机制"
+    ],
+    "tags": [
+      "Pulsar",
+      "Key_Shared",
+      "消息顺序",
+      "订阅类型"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RabbitMQ Shovel 跨集群消息中继",
+    "content": "RabbitMQ 的 Shovel 插件实现了跨集群的消息中继功能。请说明 Shovel 的工作原理、动态 Shovel 和静态 Shovel 的区别，以及它在跨数据中心消息复制中的典型架构和可靠性保证。",
+    "answer": "答案：RabbitMQ Shovel 是一个插件（rabbitmq_shovel + rabbitmq_shovel_management），负责从一个 RabbitMQ 集群（源）消费消息并发布到另一个集群（目标），实现可靠的跨集群消息中继。\n\n解析：工作原理：Shovel 作为 AMQP 0-9-1 消费者连接到源集群，消费消息后作为 AMQP 生产者发布到目标集群。分两种模式：1）静态 Shovel——在 rabbitmq.config 中预配置，shovel 随 broker 启动而创建；2）动态 Shovel——通过 HTTP API 或 rabbitmqctl 运行时创建，支持参数动态更新。Shovel 支持 AMQP 0-9-1 和 AMQP 1.0 协议互转，支持 TLS 加密传输。可靠性通过内部确认机制保证：Shovel 在确认消息已成功发布到目标集群后才向源队列发送 ack。\n\n扩展延伸：Shovel 与 Federation 的对比：Federation 是 AMQP 协议级别的转发（exchange 到 exchange 或 queue 到 queue，不保证事务性），Shovel 是消息级别的转发（queue 到 queue 或 exchange，更可靠但延迟更高）。跨数据中心场景：通常在每个数据中心部署 Shovel 实例，消息从生产集群 Shovel 到消费集群。Shovel 支持重连和断点续传（从上次确认的位置继续），但需要考虑网络延迟和 WAN 带宽限制。",
+    "hints": [
+      "Shovel 在源端是作为消费者还是生产者",
+      "Shovel 和 Federation 的主要区别"
+    ],
+    "tags": [
+      "RabbitMQ",
+      "Shovel",
+      "跨集群",
+      "消息中继"
+    ]
   }
 ]

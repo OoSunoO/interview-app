@@ -1745,5 +1745,98 @@
       "不可变更新",
       "状态管理"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React flushSync 的强制同步刷新与第三方库集成",
+    "content": "React 18+ 引入的 flushSync 函数的作用是什么？请详细解释：\n1) flushSync 如何突破 React 的自动批处理（Automatic Batching）机制强制执行同步 DOM 提交；\n2) flushSync 的典型使用场景（如第三方库 DOM 操作、DOM 测量、滚动位置同步）；\n3) flushSync 的参数和返回值——传入回调中多个 setState 的批处理行为；\n4) flushSync 对 React Concurrent Mode 的破坏性——为什么它被设计为「escape hatch」而非日常 API；\n5) 在 React 19 中 flushSync 的行为是否有变化？",
+    "answer": "flushSync(callback) 强制 React 同步刷新回调中的状态更新，确保 DOM 在回调返回时已是最新状态。\n\n1) 破坏自动批处理：\n- React 18 默认启用自动批处理——setTimeout、Promise、原生事件处理器中的多次 setState 合并为一次重渲染。\n- flushSync 包裹后，回调内的 setState 立即提交，每次 flushSync 调用触发独立的同步渲染周期。\n- 注意：flushSync 嵌套调用时，内部 flushSync 完成后外部才继续。\n\n2) 典型使用场景：\n- 第三方 DOM 库集成（如 D3、Chart.js、Leaflet）：需要 DOM 节点在库初始化时已渲染。\n- DOM 测量：getBoundingClientRect() 前需确保布局已完成。\n- 滚动位置同步：列表插入元素后需立即滚动到特定位置。\n- 输入法/IME 组合状态同步。\n\n3) 参数与批处理：\nflushSync(() => {\n  setA(1);\n  setB(2);  // 这两个 setState 会在一次同步提交中合并\n});\nflushSync(() => {\n  setC(3);  // 独立的同步提交，会导致两次渲染\n});\n多次 flushSync 会产生多个独立的渲染周期（不可合并），性能开销大。\n\n4) 对 Concurrent Mode 的破坏：\n- flushSync 强制中断 concurrent 渲染，使优先级抢占、时间切片等功能在此区间不可用。\n- 它绕过了 React 的调度器，直接将更新插入同步队列。\n- React 文档明确标识为 escape hatch，仅用于「必须同步」的互操作场景。\n- 滥用 flushSync 会消除 Concurrent Mode 的大部分性能优势。\n\n5) React 19 变化：\n- React 19 中 flushSync 的行为基本保持稳定。\n- 注意与 useSyncExternalStore 的分工：外部 store 的同步读取应使用 useSyncExternalStore，而非依赖 flushSync 的 side effect。\n- React 19 的 useActionState 内置了 flushSync 行为以支持表单提交的立即反馈。",
+    "hints": [
+      "flushSync 的名字已经说明了它的本质——先 flush（强制刷新），然后同步等待 DOM 提交完成。",
+      "如果在一个 Click Handler 中用三个独立的 flushSync 包裹三个 setState，会触发几次渲染？"
+    ],
+    "tags": [
+      "React",
+      "批处理",
+      "Concurrent Mode",
+      "DOM",
+      "React 18"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "React createPortal 的 Context 继承机制",
+    "content": "关于 React createPortal 的以下叙述，哪个是正确的？\n\nA) Portal 渲染的内容在 DOM 结构上位于父组件之外，因此无法访问父组件的 Context 值\nB) Portal 的内容在 React 虚拟 DOM 树中仍然遵从父组件的 Context 链（即 Provider 的值对 Portal 子节点可见），但由于实际 DOM 位置在外，事件冒泡不遵循 React 树而是遵循 DOM 树\nC) createPortal 会将 Portal 内容附加到 document.body 节点，不允许自定义 container 参数\nD) Portal 中的事件会沿着 DOM 树冒泡到实际父节点，因此如果 Portal 在 document.body 下挂载，事件不会到达 React 父组件",
+    "answer": "B) Portal 的内容在 React 虚拟 DOM 树中仍然遵从父组件的 Context 链（即 Provider 的值对 Portal 子节点可见），但由于实际 DOM 位置在外，事件冒泡不遵循 React 树而是遵循 DOM 树。\n\n解析：\nA 错误：Portal 的 React 树位置（即 createPortal 被调用的位置）决定了 Context 可见性——它仍能从祖先 Provider 获得值。这是 Portal 的核心设计：React 树（逻辑位置）与 DOM 树（渲染位置）解耦。\nB 正确：React 的 context 链基于 Fiber 树，与 DOM 位置无关；Portal 渲染在子 fiber 节点下，所以 context 传递正常。但事件冒泡遵循 DOM 树结构，因此无法从 Portal DOM 位置的祖先捕获事件（除非通过 Portal 自己的根节点）。\nC 错误：createPortal 的第二个参数是 container 节点，可以传入任意 DOM 元素，不限于 document.body。第三个参数是 key（可选）。\nD 错误：事件冒泡沿 DOM 树向上，不会「到达 React 父组件」（因为 React 父组件在 DOM 树的不同分支），但会到达 container 的 DOM 祖先。React 的合成事件系统在 Portal 容器节点的 DOM 树层捕获事件，而非 React 树层。\n\n应用场景：modal、tooltip、dropdown 等通常使用 Portal 避免 z-index/overflow 问题，且需要 context 保持可见。",
+    "hints": [
+      "Portal 有两棵树：React 树（控制 Context、props 传递）和 DOM 树（控制渲染位置、事件冒泡）。",
+      "Modal 组件中的 Context 是否可用？关键是 createPortal 在哪棵树的什么位置被调用。"
+    ],
+    "tags": [
+      "React",
+      "Portal",
+      "Context",
+      "事件系统"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Fragment 的 key 属性与编译优化行为",
+    "content": "React Fragment（<></> 或 <Fragment>）何时需要 key 属性？为何 Fragment 的 key 只能通过 <Fragment key={...}>（显式导入）形式传递而不能通过简写语法 <></>？在 React 19 的 React Compiler（自动记忆化）背景下，Fragment 的编译优化有何变化？在大型列表渲染中，使用 Fragment 包装多个元素而不添加额外 DOM 节点的做法对渲染性能有何具体影响？",
+    "answer": "React Fragment 在不引入额外 DOM 节点的情况下聚合多个子元素。\n\n1) key 的需求时机：\n- Fragment 仅在使用 map() 渲染列表时需要 key——当 Fragment 作为数组的直接元素且需要 React 协调（reconciliation）追踪时。\n- 例如：items.map(item => <Fragment key={item.id}><h2>{item.title}</h2><p>{item.desc}</p></Fragment>)。\n- 单次（非循环）使用 Fragment 不需要 key，也不建议添加。\n\n2) 简写语法 <></> 不能传递 key：\n- <></> 是 JSX 编译器的语法糖，编译为 React.createElement(React.Fragment, null, children)。\n- 因为是语法糖，不支持传递属性（包括 key）。\n- 需要使用 key 时必须显式写 <Fragment key={...}> 或 React.createElement(React.Fragment, { key })。\n- 这是 JSX 规范的限制——<> 不解析属性对象。\n\n3) React 19 + React Compiler 的影响：\n- React Compiler 自动记忆化能识别 Fragment 结构，在重新渲染时复用子节点 VNode。\n- Compiler 会对 Fragment 直接输出的多个子元素应用「数组键化」优化，减少协调开销。\n- 在编译阶段，Compiler 可消除不必要的 Fragment 包装（空 Fragment 优化）。\n\n4) 列表渲染中的性能影响：\n- 优点：避免添加多余的 DOM 包裹元素（如 div），减少 DOM 树深度和样式计算开销。\n- 缺点：Fragment 不返回单一 DOM 节点，在某些 CSS 选择器（:first-child/:last-child）和 transition 动画中可能产生意外行为。\n- 在大型列表（1000 行以上）中，减少 DOM 层级对 Layout 和 Paint 阶段的性能有可测量的正向影响。\n- map() + Fragment 比 map() + div 的 HTML 输出更扁平，浏览器 Layout 树更浅，reflow 开销更小。",
+    "hints": [
+      "<></> 是语法糖——它编译后不创建属性对象，因此无法传递 key。",
+      "为什么 <div key={id}> 可以而 <>key 无法同时存在？因为 <> 没有属性插槽。"
+    ],
+    "tags": [
+      "React",
+      "JSX",
+      "性能优化",
+      "React Compiler"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "React 严格模式 (StrictMode) 双重调用策略与副作用检测",
+    "content": "关于 React StrictMode 在开发模式下的双重调用（Double Invocation）行为，以下哪一项是错的？\n\nA) StrictMode 会故意双重调用 reducer（useReducer 的 reducer 函数），以帮助开发者发现 reducer 中的不纯操作\nB) StrictMode 双重调用会执行 useEffect 的 cleanup 函数后重新运行该 useEffect，以验证 effect cleanup 是否正确\nC) StrictMode 的双重调用仅在开发模式下生效，生产构建不会影响实际执行逻辑\nD) StrictMode 会对 useState 的初始值函数（initializer function）进行双重调用来检查初始化逻辑的纯度",
+    "answer": "A) 这是错误的。\n\n解析：\nA 错误：StrictMode 不会双重调用 useReducer 的 reducer 函数。StrictMode 会双重调用的是组件函数体本身（即 render 函数）、useState 的 initializer 函数、useMemo/useCallback 的回调。reducer 在双重渲染过程中也会被执行两次，但这只是双重渲染的自然结果，而非 StrictMode 的显式检查目标。\nB 正确：每个 useEffect 在 StrictMode 中执行「挂载 → 卸载 → 挂载」流程：运行 effect → cleanup → 再次运行 effect。这是为了确保 cleanup 被正确实现。\nC 正确：StrictMode 的双重调用仅发生在 development 构建（process.env.NODE_ENV === 'development'）。production 构建中 StrictMode 不做双重调用。\nD 正确：useState 的 initializer 函数（如 useState(() => computeExpensive())）在 StrictMode 下会被调用两次，虽然是惰性初始化但 StrictMode 依然会调用两次以检查纯度。\n\n补充：React 19 中 StrictMode 的行为更加细致——双重调用会记录并比较两次渲染的结果树来检测不纯度。遇到双重渲染导致的弹窗/通知重复问题，说明副作用未放在 useEffect 中。",
+    "hints": [
+      "注意题目问的是「哪一项是错的」。",
+      "StrictMode 的核心机制是 double-render + double-effect，但 reducer 本身不是被刻意「双重调用」来检查的。"
+    ],
+    "tags": [
+      "React",
+      "StrictMode",
+      "调试",
+      "副作用",
+      "React 19"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 自定义渲染器 (react-reconciler) 架构",
+    "content": "React 的自定义渲染器（react-reconciler / React Reconciler）允许将 React 的声明式编程模型渲染到任意宿主环境（非 DOM）。请详细说明：\n1) react-reconciler 包的核心职责和协调器（Reconciler）的架构分层——从 ReactElement 到 Fiber 树再到宿主更新的完整流程；\n2) 实现一个自定义渲染器时必须实现的宿主配置接口（HostConfig）的关键方法（如 createInstance、appendInitialChild、commitUpdate、finalizeInitialChildren 等）；\n3) 常见的非 DOM 渲染器实例（如 React Native、React Three Fiber、Ink 终端渲染器）的宿主环境差异；\n4) 实现中的难点——如何处理事件系统、文本节点（TextComponent）和根节点挂载的约定（Container 的类型要求）。",
+    "answer": "react-reconciler 是 React 体系的核心包，它将声明式描述（ReactElement）转化为宿主平台的实际渲染操作。\n\n1) 架构分层与流程：\n- Input 层：React.createElement / JSX 产生 ReactElement 结构。\n- Reconciler 层（react-reconciler）：ReactElement 被创建为 Fiber 节点，形成 Fiber 树。Fiber 节点携带工作优先级（lane）、副作用标记（flags）。Reconciler 执行 diff 算法（beginWork → completeWork）生成副作用列表（effect list）。\n- Renderer 层：HostConfig 接口——Reconciler 调用宿主配置的方法（如 createInstance）完成实际渲染。\n\n2) 核心 HostConfig 方法：\n- createInstance(type, props, rootContainerInstance, hostContext)：为给定类型创建宿主节点（如 DOM 的 createElement）。\n- createTextInstance(text, rootContainer, hostContext)：创建文本节点。\n- appendInitialChild(parentInstance, child)：初始挂载时添加子节点。\n- finalizeInitialChildren(instance, type, props, rootContainer)：初始化属性/事件绑定，返回是否需要在 commit 阶段更新。\n- prepareUpdate(instance, type, oldProps, newProps, rootContainer)：判断是否需要更新，返回更新 payload。\n- commitUpdate(instance, updatePayload, type, oldProps, newProps)：实际提交属性更新。\n- appendChild / insertBefore / removeChild：子节点管理。\n- clearContainer：清空容器（React 18 的新要求）。\n- supportsMutation：是否支持变动操作（true 为 DOM 模型，false 为持久化模型如 Canvas）。\n\n3) 常见自定义渲染器：\n- React Native：使用 Yoga 引擎将 Flexbox 布局映射到原生 UI 组件（UIView/TextView），事件系统通过 JS Bridge 通信。\n- React Three Fiber（R3F）：将 React 组件映射到 Three.js 场景图对象——createInstance 创建 Mesh/Material 等 Three.js 对象，commitUpdate 更新 position/rotation 等属性。\n- Ink（终端渲染器）：将组件渲染为终端文本输出——createInstance 创建 Text 对象，appendChild 控制终端输出行列。\n\n4) 实现难点：\n- 事件系统：React 在 DOM 中使用合成事件，自定义渲染器需自行实现事件绑定和委托机制——要么映射到宿主事件模型（React Native 通过原生事件），要么完全自定义（R3F 通过 RAF 循环）。\n- 文本节点：某些宿主无「独立文本节点」概念（如 Canvas），需将文本作为属性而非子节点处理。\n- Container 约束：createContainer 的 container 参数必须来自宿主环境（DOM 渲染器接收 HTMLElement，Ink 接收 TerminalStream 等）。\n- 优先级调度：渲染器需配合 React Scheduler 实现帧对齐、时间切片等。\n- 生产环境注册：自定义渲染器必须全局注册（包括 devTools 钩子），否则 devTools 无法连接。",
+    "hints": [
+      "react-reconciler 的 HostConfig 约 30-40 个方法——取决于 supportsMutation 和 supportsPersistence 的配置。",
+      "自定义渲染器最难的部分不是「渲染」而是「事件」——因为 React 的事件委托（event delegation）模型依赖 DOM 的冒泡机制。"
+    ],
+    "tags": [
+      "React",
+      "react-reconciler",
+      "架构",
+      "自定义渲染器",
+      "中间件"
+    ]
   }
 ]

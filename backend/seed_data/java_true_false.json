@@ -1788,5 +1788,125 @@
       "concurrency",
       "api-design"
     ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "匿名类捕获的 effectively-final 局部变量传递机制",
+    "content": "匿名类捕获的 effectively-final 局部变量通过编译器合成的 synthetic 方法（而非构造函数参数）传递给匿名类实例。",
+    "answer": "B) 错误",
+    "hints": [
+      "匿名类捕获的局部变量在编译后成为匿名类构造函数的参数，在匿名类内部存储为 private final 字段，而非通过 synthetic 方法传递",
+      "可以通过反射获取匿名类的构造方法参数类型和字段列表来验证：被捕获的变量会出现在构造参数和字段中"
+    ],
+    "tags": [
+      "匿名类",
+      "变量捕获",
+      "effectively-final",
+      "编译器",
+      "内部类"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "子类中定义与父类 final 方法同名方法的合法性",
+    "content": "父类的 final 实例方法不能被覆盖（override），但子类中可以定义与父类 final 方法同名的方法——这会导致父类方法在子类中被隐藏（hiding），子类实例调用时执行的是子类定义的方法。",
+    "answer": "B) 错误",
+    "hints": [
+      "final 实例方法既不能被覆盖也不能被隐藏——无论是从子类外部还是子类内部，都无法定义与父类 final 实例方法相同签名的方法",
+      "这与静态方法不同：静态方法可以被隐藏（子类定义相同签名的静态方法），但 final 修饰的静态方法不能被隐藏"
+    ],
+    "tags": [
+      "final",
+      "方法覆盖",
+      "隐藏",
+      "继承",
+      "JLS"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "StackWalker RETAIN_CLASS_REFERENCE 对 Class 回收的影响",
+    "content": "使用 StackWalker.Option.RETAIN_CLASS_REFERENCE 选项获取的 StackFrame 中包含对 Class 对象的强引用，这些 Class 对象在 StackFrame 引用被垃圾回收前不会被卸载。",
+    "answer": "A) 正确",
+    "hints": [
+      "RETAIN_CLASS_REFERENCE 让 StackWalker 在返回的 StackFrame 中保存 live Class 引用而非类名字符串——这避免每次获取类信息时重新加载类",
+      "长时间持有 StackFrame 引用会阻止对应 Class 被 GC 卸载，在频繁创建和卸载自定义类加载器的场景中可能造成元空间泄漏"
+    ],
+    "tags": [
+      "StackWalker",
+      "RETAIN_CLASS_REFERENCE",
+      "GC",
+      "类卸载",
+      "元空间"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "字符串 switch 语句的 hashCode 冲突两阶段保护",
+    "content": "Java 中 switch 语句的字符串实现在字节码层面采用 hashCode 散列定位加 equals 二次验证的两阶段匹配策略，因此即使不同的 case 标签字符串产生相同的 hashCode，也能在运行时通过 equals 验证跳转到正确的分支。",
+    "answer": "A) 正确",
+    "hints": [
+      "编译器将 case 标签按 hashCode 分组生成 lookupswitch/tableswitch，每个 case 块内部使用 equals() 验证防止误匹配",
+      "hashCode 冲突的 case 标签被分在同一组内，通过链式 equals 验证查找匹配项，未匹配时 fall through 到 default"
+    ],
+    "tags": [
+      "switch",
+      "字符串",
+      "hashCode",
+      "equals",
+      "字节码"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "ConcurrentHashMap forEachKey 阈值 Long.MAX_VALUE 的并行行为",
+    "content": "ConcurrentHashMap 的 forEachKey(long parallelismThreshold, Consumer action) 方法在 parallelismThreshold 参数设置为 Long.MAX_VALUE 时，始终使用 ForkJoinPool.commonPool 进行并行执行。",
+    "answer": "B) 错误",
+    "hints": [
+      "ConcurrentHashMap 批量操作的阈值语义是：当预计元素数量小于或等于阈值时，在当前线程串行执行",
+      "Long.MAX_VALUE 作为阈值意味着任何映射规模的元素数都小于等于该值，因此始终在当前线程串行执行，不会触发任务拆分"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "forEachKey",
+      "并行阈值",
+      "ForkJoinPool",
+      "批量操作"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
   }
 ]

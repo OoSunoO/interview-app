@@ -1679,5 +1679,101 @@
       "字符串",
       "区间 DP"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "寻找二叉树所有重复子树",
+    "content": "给定一棵二叉树，返回所有重复的子树。重复子树是指具有相同结构和相同节点值的子树。返回每种重复子树的根节点（每种只返回一份）。\n\n例如：\n        1\n       / \\\n      2   3\n     /   / \\\n    4   2   4\n       /\n      4\n\n子树 2-4 出现了两次，子树 4 出现了两次。",
+    "answer": "核心思路：后序遍历 + 序列化 + 哈希表计数。\n\n```java\npublic List<TreeNode> findDuplicateSubtrees(TreeNode root) {\n    List<TreeNode> result = new ArrayList<>();\n    Map<String, Integer> map = new HashMap<>();\n    serialize(root, map, result);\n    return result;\n}\n\nprivate String serialize(TreeNode node, Map<String, Integer> map, List<TreeNode> result) {\n    if (node == null) return \"#\";\n    String key = node.val + \",\" + serialize(node.left, map, result)\n                 + \",\" + serialize(node.right, map, result);\n    map.put(key, map.getOrDefault(key, 0) + 1);\n    if (map.get(key) == 2) {  // 第二次出现时加入，保证每种只加一次\n        result.add(node);\n    }\n    return key;\n}\n```\n\n时间复杂度 O(n^2) 最坏（字符串拼接），空间 O(n)。\n\n优化——三元组 UID 法：每个子树用 (当前节点值, 左子树 UID, 右子树 UID) 三元组唯一标识，全局递增 ID 编号。将三元组存入 HashMap 实现 O(n) 时间。\n\n扩展延伸：本题本质是「树结构相等判定」的应用。Morris 遍历不适合本题，因为需要后序序列化。面试中先给出 O(n^2) 版再优化到 O(n) 版可以展现递进思考能力。",
+    "hints": [
+      "如何唯一标识一棵子树的结构和值",
+      "字符串序列化方式的时间和空间瓶颈在哪里"
+    ],
+    "tags": [
+      "二叉树",
+      "哈希",
+      "序列化",
+      "后序遍历"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "平面最近点对的分治算法",
+    "content": "给定平面上 n 个点，找出欧氏距离最近的两个点。请解释该问题的分治算法思想、时间复杂度以及关键优化点。",
+    "answer": "平面最近点对问题的分治算法由 Preparata 和 Shamos 提出，时间复杂度 O(n log n)。\n\n算法流程：1）排序——所有点按 x 坐标排序（O(n log n)）。2）分治——按 x 中位数将点集分为左右两个子集，递归求解左右两边的最近点对距离 d = min(d_left, d_right)。3）合并——考虑跨左右两边的点对：筛选出距离中线 x_mid 小于 d 的点（带状区域）。将这些点按 y 坐标排序，对每个点只检查 y 坐标差小于 d 的后续点。\n\n关键优化：1）合并步骤中按 y 排序后，每个点只需检查后面的常数个点（几何证明：在一个 d x 2d 的矩形内最多包含 6-7 个点，否则左右两边内会出现更短距离）。2）n 较小时（如 n <= 3）直接暴力计算。3）实现优化：合并时不必每次都完整排序，可以用归并方式同时维护 y 序。\n\n扩展延伸：三维最近点对可用类似分治，但合并的带状区域是 d x 2d x 2d 的立方体。工程中常用随机增量法（Randomized Incremental）或 KD-Tree 近似查找。分治算法也是 Voronoi 图构建的基础。",
+    "hints": [
+      "为什么合并步骤中每个点只需要检查常数个邻居",
+      "O(n log n) 中两个 log 各来自哪里"
+    ],
+    "tags": [
+      "分治",
+      "计算几何",
+      "最近点对",
+      "算法"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "单词拆分 II（输出所有拆分方案）",
+    "content": "给定一个非空字符串 s 和一个包含非空单词列表的字典 wordDict，在字符串中添加空格构造出所有可能的句子（输出所有拆分方案）。",
+    "answer": "核心思路：DFS + 记忆化搜索，缓存从每个位置开始的所有拆分方案。\n\n```java\npublic List<String> wordBreak(String s, List<String> wordDict) {\n    Set<String> dict = new HashSet<>(wordDict);\n    Map<Integer, List<String>> memo = new HashMap<>();\n    return dfs(s, 0, dict, memo);\n}\n\nprivate List<String> dfs(String s, int start, Set<String> dict,\n                         Map<Integer, List<String>> memo) {\n    if (memo.containsKey(start)) return memo.get(start);\n    List<String> result = new ArrayList<>();\n    if (start == s.length()) {\n        result.add(\"\");  // 空字符串标记结束\n        return result;\n    }\n    for (int end = start + 1; end <= s.length(); end++) {\n        String word = s.substring(start, end);\n        if (dict.contains(word)) {\n            List<String> subList = dfs(s, end, dict, memo);\n            for (String sub : subList) {\n                result.add(word + (sub.isEmpty() ? \"\" : \" \" + sub));\n            }\n        }\n    }\n    memo.put(start, result);\n    return result;\n}\n```\n\n时间复杂度：最坏 O(n * 2^n)（如 s=aaaa... dict={a,aa,...}）。\n\n优化：1）剪枝——先用 DP（boolean[] dp）判断是否可拆分，避免无用 DFS。2）Trie 前缀树加速单词查找。3）StringBuilder 减少字符串拼接开销。\n\n扩展延伸：如果只需要返回一种拆分方案（单词拆分 I），用 DP + 回溯路径记录，O(n^2)。面试时先写「单词拆分 I」再扩展到 II 输出全部方案，展现递进思维能力。",
+    "hints": [
+      "记忆化搜索如何避免重复计算相同的子问题",
+      "什么情况下输出方案的数量是指数级的"
+    ],
+    "tags": [
+      "动态规划",
+      "DFS",
+      "回溯",
+      "记忆化搜索"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前缀函数与 Z 算法的原理对比",
+    "content": "字符串匹配中，前缀函数（Prefix Function / π 数组）和 Z 算法（Z-array）分别是什么？它们的核心思想有何异同？如何互相转化？",
+    "answer": "前缀函数（π 数组）和 Z 数组都是字符串预处理技术，都能在线性时间 O(n) 内完成计算。\n\n解析：前缀函数 π[i] = 前缀 s[0..i] 的最长相等真前缀和真后缀的长度（即 s[0..k-1] == s[i-k+1..i] 的最大 k）。KMP 算法基于前缀函数进行模式匹配。计算原理：维护当前最长匹配长度 j，如果 s[i+1] != s[j] 则回退到 π[j-1]。\n\nZ 算法：Z[i] = s 和 s[i..] 的最长公共前缀（LCP）长度。即从 i 位置开始的后缀与整个字符串的最长匹配前缀。计算原理：维护区间 [L, R] 表示与 s 前缀匹配的最远后缀区间，利用之前计算的 Z 值高效递推。\n\n异同点：1）π[i] 关注前缀与后缀的匹配，Z[i] 关注后缀与整个字符串的匹配。2）前缀函数用于 KMP，Z 算法用于 Z-algorithm 字符串搜索。3）两者可互相转化：可以通过 Z 数组推导出 π 数组，也可以通过 π 数组推导出 Z 数组。\n\n扩展延伸：前缀函数的迭代性质可构建「失配自动机」，自动机具有 O(n * alphabet) 状态。Z 算法在处理字符串周期性问题时更直观：字符串周期 = n - Z[n] 如果 n % (n - Z[n]) == 0。",
+    "hints": [
+      "前缀函数和 Z 算法各自的核心递推思路是什么",
+      "字符串周期检测用哪个算法更直观"
+    ],
+    "tags": [
+      "字符串",
+      "KMP",
+      "Z算法",
+      "前缀函数"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "排序算法稳定性与工程场景选型",
+    "content": "以下关于排序算法的稳定性与工程选型的描述，哪一项是正确的？",
+    "options": [
+      "A) 快速排序是不稳定的，因此它在任何场景下都不适合作为工程排序的唯一算法",
+      "B) TimSort 是稳定排序，但最坏时间复杂度 O(n^2)，因此不适合大规模数据",
+      "C) 归并排序的稳定性和 O(n log n) 最坏复杂度使其成为对象排序的首选，但 O(n) 空间是主要限制",
+      "D) 计数排序是稳定排序，但时间复杂度和数据范围相关，当数据范围小于 n 时比 O(n log n) 算法更差"
+    ],
+    "answer": "C",
+    "hints": [
+      "Java 的 Arrays.sort(Object[]) 和 Arrays.sort(int[]) 分别使用什么排序",
+      "TimSort 的最坏时间复杂度是多少"
+    ],
+    "tags": [
+      "排序",
+      "稳定性",
+      "TimSort",
+      "归并排序"
+    ]
   }
 ]

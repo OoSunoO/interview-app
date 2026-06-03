@@ -1768,5 +1768,113 @@
       "jep-429",
       "java-21"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Thread.onSpinWait() 自旋提示语义与 JIT 编译器的优化响应",
+    "content": "请详细解释 Thread.onSpinWait() 方法（JDK 9+）的核心语义。它在 JIT 编译器层面产生了什么影响？在 x86 平台上它被编译成什么指令？与 Thread.yield() 在行为上有哪些本质区别？适用场景是什么？",
+    "answer": "Thread.onSpinWait() 向 JIT 编译器发出「当前线程正在自旋等待」的提示，在 x86 平台上被编译为 PAUSE 指令（AArch64 上映射为 ISB 或 YIELD 指令）。核心语义包括：1) 提示处理器当前正在执行自旋循环，减少内存顺序违规（memory order violation）导致的流水线冲刷性能惩罚——PAUSE 指令告诉 CPU 不要对自旋循环进行激进的内存排序推测；2) 允许 JIT 编译器调整自旋循环的优化策略，例如避免过度循环展开、在自旋循环中插入定时器中断检查等。与 Thread.yield() 的本质区别：yield() 是线程调度提示，可能导致当前线程被切换出 CPU（从 RUNNING 变为 RUNNABLE 但不运行），带来上下文切换开销和调度延迟；而 onSpinWait() 不会触发线程切换——当前线程继续保持运行状态。适用场景：在实现自旋锁、低延迟队列、Phaser 和 StampedLock 等并发原语的短暂等待阶段（预计等待时间远小于线程切换开销时），onSpinWait() 是比 LockSupport.park() 更轻量的选择。",
+    "hints": [
+      "JDK 内部在 Phaser、StampedLock、ForkJoinPool 等并发实现中大量使用 Thread.onSpinWait() 优化短暂自旋",
+      "x86 PAUSE 指令延迟约为 20-40 个周期，能显著降低超线程环境下自旋循环的功耗和内存顺序冲突"
+    ],
+    "tags": [
+      "Thread.onSpinWait",
+      "PAUSE",
+      "自旋优化",
+      "JIT",
+      "并发原语"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ConstantDynamic (Condy) 引导方法解析机制",
+    "content": "ConstantDynamic（Condy，JDK 11+ JEP 309）允许在 class 文件的常量池中定义用户自定义常量。以下关于 Condy 引导方法解析机制的描述，哪项是正确的？\nA) 引导方法在类加载阶段对所有 Condy 常量池条目进行批量调用，并将结果缓存到运行时常量池\nB) 引导方法在 JIT 编译阶段被调用，编译结果直接嵌入机器码，不经过运行时常量池\nC) 引导方法在 CONSTANT_Dynamic 常量池条目首次被解析时调用，结果由 JVM 缓存供后续访问复用\nD) 引导方法每次访问 Condy 常量时都被重新调用，以确保返回值的「新鲜度」",
+    "answer": "C) Condy 的引导方法（bootstrap method）在 class 文件的 BootstrapMethods 属性中定义。当运行时常量池中的 CONSTANT_Dynamic 条目首次被某条字节码指令实际访问时，JVM 调用对应的引导方法并将结果缓存。此后对同一常量池条目的访问直接返回缓存值，不再重复调用引导方法。引导方法的固定签名为 (MethodHandles.Lookup, String, Class<?>)，后续参数由 BootstrapMethods 属性中的参数指定。这意味 Condy 具有懒加载语义——从未被实际使用的 Condy 条目永远不会触发引导方法调用。实际应用包括：延迟初始化编译时常量、实现语言级元编程、提供更灵活的常量定义方式。",
+    "hints": [
+      "Condy 与 invokedynamic 共享 BootstrapMethods 属性，但 Condy 的引导方法不涉及 CallSite 规格化，直接返回常量值",
+      "Condy 的缓存语义由 JVMS 5.4.3.6 定义：解析一旦完成，结果在常量池条目的生命周期内保持不变"
+    ],
+    "tags": [
+      "ConstantDynamic",
+      "Condy",
+      "引导方法",
+      "常量池",
+      "JEP 309"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "VarHandle opaque 模式的内存排序语义",
+    "content": "VarHandle 的 opaque 模式（setOpaque/getOpaque）保证了对变量的原子性访问和完全的有序性保证，即禁止编译器和处理器对该变量相关的所有内存操作进行重排序。",
+    "answer": "B) 错误",
+    "hints": [
+      "Opaque 模式只保证原子性和位的可见性（bitwise consistency），不提供任何跨线程重排序保证——它仅禁止比它更弱的非原子访问（torn read/write）",
+      "VarHandle 的三种内存排序模式强度递增：opaque < acquire/release < full fence（volatile语义）"
+    ],
+    "tags": [
+      "VarHandle",
+      "内存排序",
+      "opaque",
+      "JMM",
+      "JEP 193"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVMCI 与 Graal JIT 编译器集成机制",
+    "content": "请详细解释 JVMCI（JVM Compiler Interface，JEP 243）的作用和架构。Graal JIT 编译器如何通过 JVMCI 与 HotSpot JVM 集成？-XX:+UseJVMCINativeLibrary 参数启用后发生了哪些架构变化？JVMCI 与 JVMTI 的本质区别是什么？",
+    "answer": "JVMCI（JVM Compiler Interface）是 JDK 9（JEP 243）引入的 Java 级 JIT 编译器接口，允许用 Java 语言（而非 C++）编写 JIT 编译器并集成到 HotSpot JVM 中。核心架构：JVMCI 定义了 HotSpot JVM 与编译器之间的双向通信协议——编译器从 JVM 获取编译请求、类型信息、profiling 数据，编译完成后将编译结果（compiled code 安装信息）回传给 JVM。Graal 编译器通过 JVMCI 成为 HotSpot 的顶级 JIT 编译器，可替代 C2（-XX:+UseJVMCICompiler）。-XX:+UseJVMCINativeLibrary（JDK 16+）将 Graal 编译器编译为 native shared library（通过 GraalVM Native Image），通过 JNI 与 HotSpot 通信。这一变化的关键意义在于 Graal 编译器本身不再运行于 HotSpot 之上，解决了「编译自己的编译器」的递归问题，显著降低编译时的 GC 压力和内存占用。与 JVMTI 的本质区别：JVMTI 是 C/C++ 级原生代理接口，用于监控、调试、分析；JVMCI 是为编译器优化而设计的 Java 级 API，提供类型系统、编译器 IR 构建等编译器专用的抽象能力。",
+    "hints": [
+      "JVMCI 在 JDK 9 为实验特性（--add-modules jdk.internal.vm.ci），JDK 16 转正但仍需 --XX:+UnlockExperimentalVMOptions",
+      "GraalVM 的 Native Image 和 Truffle 框架也基于 JVMCI 实现——它不仅是 JIT 接口，更是 Java 与底层 JVM 之间的元编程接口"
+    ],
+    "tags": [
+      "JVMCI",
+      "Graal",
+      "JIT",
+      "编译器接口",
+      "HotSpot"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Continuation 原理解析——虚拟线程挂起与恢复的底层调度原语",
+    "content": "请解释 jdk.internal.vm.Continuation 在虚拟线程实现中的核心作用。什么是「栈冻结」（stack freeze）和「栈解冻」（stack thaw）？为什么虚拟线程在 synchronized 块或 native 方法中被阻塞时会出现「pinned」现象？Continuation 栈与平台线程栈在内存管理上的根本差异是什么？",
+    "answer": "Continuation 是 Project Loom 引入的 JVM 内部可挂起执行原语，能够捕获当前执行栈的状态（方法调用链、局部变量、操作数栈）并保存到堆内存中的 Continuation 对象中。栈冻结（stack freeze）将栈帧从 carrier 线程的 native 栈复制到堆上的 byte[] 数组中（称为 frozen stack），随后 carrier 线程可以运载其他虚拟线程。栈解冻（stack thaw）将堆中的 frozen stack 帧复制回当前 carrier 线程的 native 栈，继续执行。Pinned 现象：当虚拟线程在 synchronized 块或 native 方法中被阻塞时，栈上存在 native 栈帧——Continuation 的栈冻结机制无法安全地捕获和复制 native 栈帧（native 栈帧包含平台相关的寄存器状态和栈布局信息），因此 JVM 无法在该点挂起虚拟线程，导致 carrier 线程被「钉住」（pinned），无法切换到其他虚拟线程。Continuation 栈与平台线程栈的根本差异：平台线程栈是固定在 native 内存中的连续区域（默认 1MB），整个生命周期内不可移动；而 Continuation 的 frozen stack 存储在 GC 可管理的堆中，体积仅与实际调用深度相关（初始仅数百字节），可被 GC 移动和压缩。这使得一个 carrier 线程（通常 ForkJoinPool 中的 worker）可以运载数千个虚拟线程的 Continuation，实现高效的 M:N 调度。",
+    "hints": [
+      "Continuation.yield() 触发栈冻结后控制权返回到虚拟线程调度器，调度器将 carrier 线程分配给其他就绪的虚拟线程",
+      "JDK 21 中虚拟线程在 ReentrantLock 上阻塞不会 pinned——因为 ReentrantLock 使用 LockSupport.park() 而非 synchronized 实现阻塞，park 操作会触发 Continuation.yield()"
+    ],
+    "tags": [
+      "Continuation",
+      "虚拟线程",
+      "栈冻结",
+      "Project Loom",
+      "调度原语"
+    ],
+    "options": [],
+    "company": ""
   }
 ]

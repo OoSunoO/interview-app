@@ -1754,5 +1754,105 @@
       "激活函数",
       "高效推理"
     ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Ring Attention（环状注意力机制）",
+    "content": "解释 Ring Attention（环状注意力机制）在分布式序列处理中的工作原理。它是如何在单 GPU 显存不足的情况下支持超长序列的训练和推理？涉及哪些关键通信策略？",
+    "answer": "Ring Attention 是一种分布式注意力机制，将超长序列按逻辑环拓扑切分到多个 GPU 上处理。每个 GPU 持有序列的一个连续块及其对应的 KV 块。计算流程如下：(1) 各 GPU 并行计算本地 KV 块上的注意力，(2) KV 块在环上轮转——每个 GPU 将其 KV 块发送给下一个 GPU 并接收上一个 GPU 的 KV 块，(3) 计算与通信重叠是关键——在当前 KV 块上计算注意力时，下一个 KV 块正在传输（通过 double buffering 实现计算通信重叠），(4) 经过 N-1 轮轮转（N 为 GPU 数量）后，每个 GPU 已完成对完整序列的注意力计算。关键优势：(1) 模型支持的最大序列长度随 GPU 数量线性扩展，(2) 通过双缓冲（double buffering）实现近乎完美的计算-通信重叠，(3) 相比标准注意力，每个 GPU 没有额外显存开销。Ring Attention 是在 Blockwise Parallel Transformer 的框架下提出的，是训练数百万 Token 上下文长度模型的基础技术。",
+    "hints": [
+      "想象数据在环形拓扑中流转，每个 GPU 同时进行计算和转发结果。",
+      "效率关键在于利用双缓冲 double buffering 让计算和通信重叠。",
+      "该方法能使模型支持的最大序列长度随 GPU 数量线性增长。"
+    ],
+    "tags": [
+      "ring_attention",
+      "distributed_inference",
+      "long_context",
+      "communication_optimization",
+      "sequence_parallelism"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "StreamingLLM 与 Attention Sinks",
+    "content": "什么是 Attention Sinks（注意力沉没现象），StreamingLLM 如何利用该现象实现稳定的无限长文本生成？解释现象成因、原理以及具体利用方式。",
+    "answer": "Attention Sinks 是指大语言模型在训练时因 softmax 注意力机制而出现的现象：初始 Token（尤其是第一个 Token）会获得不成比例的高注意力分数，无论其内容与当前查询的相关性如何。产生原因在于 softmax 强制注意力权重之和为 1，模型学会了将多余的注意力「倾倒」到早期 Token 上，使它们成为注意力沉没（sink）。StreamingLLM 利用这一现象的核心策略：(1) 始终保留最初的 4 个 Token（充当注意力沉没）在 KV Cache 中，(2) 维护一个滑动窗口保存最近的 Token 用于局部上下文，(3) 丢弃中间部分的 Token。这样做的好处是模型无需重计算即可生成任意长度的文本，同时保持高质量。该方法不需要微调，直接作用于预训练模型。关键优势：(1) KV Cache 大小 O(1) 实现无限长生成，(2) 无需修改模型权重，(3) 即使在 400 万 Token 以上依然保持稳定的困惑度。主要局限是丢失了序列中间部分的内容，对于需要全局上下文的任务可能有影响。该工作由 MIT、Meta 和 CMU 的研究者在 2023 年提出。",
+    "hints": [
+      "名称暗示了观察到的行为——早期 Token 像「水槽」（sink）一样吸收了多余的注意力权重。",
+      "由 MIT、Meta 和 CMU 的研究者在研究「大模型为何在超长上下文下崩溃」时发现。",
+      "解决方案只需要修改 KV Cache 中保留哪些 Token，而不需要修改模型权重。"
+    ],
+    "tags": [
+      "streaming_llm",
+      "attention_sink",
+      "long_context",
+      "kv_cache",
+      "infinite_generation"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Chunked Prefill 与 Sarathi 调度",
+    "content": "描述 Chunked Prefill（分块预填充）技术和 Sarathi 调度策略在大模型推理服务中的工作原理。相比传统的 Prefill-then-Decode 批处理，它解决了什么问题？如何提升 GPU 利用率？",
+    "answer": "Chunked Prefill 将长输入序列的 prefill 阶段切分为较小的块，使得不同请求的 prefill 和 decode 操作可以交错执行。传统推理调度器先完成所有请求的完整 prefill，再切换到 decode 模式——这造成严重的 GPU 利用率问题，因为 prefill 是计算密集型（GPU 利用率高）而 decode 是显存带宽密集型（利用率低）。Sarathi（Microsoft Research 提出）是实现 Chunked Prefill 的关键调度策略：(1) 将每个请求的 prefill 按固定大小（如 512 Token）切块，(2) 将不同请求的 prefill 块组成批次，(3) 在同一批次中交错 decode Token 和 prefill 块，(4) 对较短序列进行 padding 确保批次内计算均匀。这种混合批处理确保计算密集的 prefill 工作始终与显存带宽受限的 decode 工作重叠，使 GPU 利用率接近峰值而与请求混合比例无关。关键洞察是 prefill 和 decode 使用相同的 attention kernel——通过分块 prefill，它们可以被一起批量处理，消除了两个阶段之间的利用率悬崖。",
+    "hints": [
+      "思考 prefill（计算密集）和 decode（显存带宽受限）之间的利用率差距。",
+      "调度器需要交错不同请求的不同阶段，而不是简单地批量同阶段请求。",
+      "该技术来自 Splitwise 论文和 Microsoft Research 的 Sarathi 系统。"
+    ],
+    "tags": [
+      "chunked_prefill",
+      "sarathi",
+      "inference_scheduling",
+      "gpu_utilization",
+      "llm_serving"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "LayerSkip: 层跳跃推理加速",
+    "content": "LayerSkip 是大模型推理加速的一种技术。以下哪个最佳描述了其核心思路？\nA) 根据输入难度动态跳过 Transformer 层——简单输入跳过多层，困难输入使用所有层。\nB) 在每层 Transformer 上附加早期退出分类器，当输出置信度足够高时可提前停止计算。\nC) 推理时完全丢弃注意力层，替换为学习到的线性投影，减少每个 Token 的计算量。\nD) 推理时随机丢弃跨层 KV Cache 条目，减少显存带宽消费而不显著影响精度。",
+    "answer": "B",
+    "hints": [
+      "该方法在训练时就加入退出分类器，让模型学会从早期层就产生高质量输出。",
+      "自推测解码（self-speculative decoding，草稿模型为层子集）与此概念相关。",
+      "Meta 的论文在 Llama 模型上实现约 2 倍加速，精度损失极小。"
+    ],
+    "tags": [
+      "layer_skip",
+      "early_exit",
+      "inference_acceleration",
+      "speculative_decoding",
+      "meta_ai"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Skeleton-of-Thought（SoT: 思维骨架并行解码）",
+    "content": "Skeleton-of-Thought (SoT) 是一种大模型并行解码方法。其核心思想是什么？它是如何实现生成加速的？\nA) 将 Transformer 骨干替换为由残差连接构成的「骨架」，减少每层计算量。\nB) 先让 LLM 生成一个由关键点组成的骨架大纲，然后通过批量解码并行填充每个要点，从而显著降低文本生成的端到端延迟。\nC) 将模型参数剪枝为骨架（最小可行模型），保留原始模型大部分生成质量。\nD) 在骨架阶段仅处理 Transformer 的第一层和最后一层，然后插值中间层表示。",
+    "answer": "B",
+    "hints": [
+      "该方法将生成重构为两个阶段：规划（串行）和展开（并行）。",
+      "类比人类写文章的方式——先列提纲，再分段填充内容。",
+      "加速来源于将通常逐个 Token 串行生成的部分并行化。"
+    ],
+    "tags": [
+      "skeleton_of_thought",
+      "parallel_decoding",
+      "inference_acceleration",
+      "speculative_decoding",
+      "text_generation"
+    ]
   }
 ]

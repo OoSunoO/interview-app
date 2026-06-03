@@ -1755,5 +1755,105 @@
       "KEYS",
       "性能"
     ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "MySQL 8.0 ALGORITHM=INSTANT 即时 DDL",
+    "content": "关于 MySQL 8.0 的 ALGORITHM=INSTANT DDL，以下说法正确的是？",
+    "answer": "答案：C) ALGORITHM=INSTANT 只修改数据字典而不重建表，部分 DDL 操作（如加列）可以使用该算法\n\n解析：MySQL 8.0.12+ 引入 ALGORITHM=INSTANT，支持的 DDL 操作包括在表末尾加列（非 array 类型）、加/删索引（但索引操作实质用 INPLACE）、修改列的默认值等。INSTANT 只修改数据字典（metadata），不重建表，因此不阻塞 DML。OLTP 场景下 CTAS 或 LOCK=DEFAULT 可能触发 INSTANT 或回退到 INPLACE。\n\n扩展延伸：INSTANT 加列不会回填历史数据，新列在老记录的 Record Header 中以「隐含默认值」标记。8.0.29+ 支持 INSTANT DROP COLUMN，但 8.0.29 以下版本只能加不能删。同一张表使用 INSTANT 加列次数受 row_format 和列数限制（通常约 64 次）。",
+    "options": [
+      "A) ALGORITHM=INSTANT 和 ALGORITHM=INPLACE 完全相同",
+      "B) ALGORITHM=INSTANT 会在 DDL 执行期间阻塞所有 DML",
+      "C) ALGORITHM=INSTANT 只修改数据字典而不重建表，部分 DDL 操作（如加列）可以使用该算法",
+      "D) ALGORITHM=INSTANT 重建整个表但比 COPY 快"
+    ],
+    "hints": [
+      "INSTANT 加列后老数据行如何表示新列",
+      "INSTANT 操作有次数限制吗"
+    ],
+    "tags": [
+      "MySQL",
+      "DDL",
+      "在线变更",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 8.0 CTE 与递归公用表表达式",
+    "content": "MySQL 8.0 引入了公用表表达式（CTE）和递归 CTE。请说明 CTE 与派生表、临时表的区别，以及递归 CTE 的工作原理、递归深度限制和典型使用场景。",
+    "answer": "答案：CTE（Common Table Expression）使用 WITH 子句定义，生成临时结果集仅对当前查询可见，不重复计算引擎多次引用时的执行结果（相比派生表多次引用可能多次执行）。\n\n解析：非递归 CTE 语法：WITH cte_name AS (SELECT ...) SELECT ... FROM cte_name。递归 CTE 语法：WITH RECURSIVE cte AS (SELECT ... -- 基项 UNION ALL SELECT ... FROM cte WHERE ... -- 递归项) SELECT ... FROM cte。执行流程：先计算基项（非递归部分），结果作为初始工作集；每次递归项基于当前工作集计算下一轮结果，直到递归返回空。递归深度由 cte_max_recursion_depth（默认 1000）控制。\n\n扩展延伸：典型场景包括树形结构遍历（组织架构、分类树）、斐波那契数列/日期维度生成、以及图路径搜索。与 Oracle CONNECT BY 不同，MySQL 的递归 CTE 不支持 LEVEL 伪列和 SYS_CONNECT_BY_PATH 函数，需要手动维护深度。",
+    "hints": [
+      "CTE 和派生表的执行引擎重利用有什么区别",
+      "递归 CTE 的基项和递归项的执行顺序"
+    ],
+    "tags": [
+      "MySQL",
+      "CTE",
+      "递归查询",
+      "SQL优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 8.0 JSON 数据类型与 Multi-Value Index",
+    "content": "MySQL 8.0 的 JSON 类型支持 Multi-Value Index（多值索引）。请说明 Multi-Value Index 的作用、创建方式，以及它如何加速 JSON 数组的查询。与传统的 Generated Column + 索引方案相比有何优势？",
+    "answer": "答案：Multi-Value Index 是 MySQL 8.0.17+ 引入的二级索引，专门用于对 JSON 数组中的值创建索引，支持对 JSON 数组元素的等值查询和 MEMBER OF、JSON_CONTAINS 等操作进行索引加速。\n\n解析：创建语法：CREATE INDEX idx ON t((CAST(data->'$.tags' AS UNSIGNED ARRAY)))；核心原理是将 JSON 数组中每个元素作为单独的索引条目存储，查询时通过数组值直接定位到主键。相比 Generated Column + 索引方案：Multi-Value Index 不需要预先定义虚拟列，对 JSON 结构变化更灵活。但它只能用在二级索引（不能做聚簇索引或全文索引），且仅支持等值查询、MEMBER OF、JSON_CONTAINS 等特定操作，不支持范围查询。\n\n扩展延伸：使用限制——只能对一个数组字段创建、被索引的 JSON 路径必须是数组类型、索引列必须是显式的 CAST(... AS type ARRAY)、一个表最多 64 个 Multi-Value Index（受索引总数限制）。适用于标签系统、分类 ID 列表等场景。",
+    "hints": [
+      "Multi-Value Index 是针对 JSON 哪个结构设计的",
+      "与虚拟列索引方案对比的优势是什么"
+    ],
+    "tags": [
+      "MySQL",
+      "JSON",
+      "多值索引",
+      "索引优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "MySQL 8.0 CHECK 约束",
+    "content": "MySQL 8.0.16 开始支持 CHECK 约束，但 CHECK 约束只对 INSERT 操作生效，对 UPDATE 操作无效。",
+    "answer": "答案：错误\n\n解析：MySQL 8.0.16+ 的 CHECK 约束对 INSERT 和 UPDATE 操作都生效。当插入新行或更新现有行时，如果 CHECK 约束条件不满足则操作被拒绝。MySQL 对 CHECK 约束的实现符合 SQL 标准，支持列级约束和表级约束。在 8.0.16 之前 MySQL 虽然解析 CHECK 子句但不会实际验证数据。\n\n扩展延伸：CHECK 约束可以包含复杂表达式（如 JSON_VALID、多个列的比较），但不可包含子查询和存储函数。启用/禁用约束需要重建表（ALTER TABLE ... ALTER CHECK ... ENFORCED/NOT ENFORCED）。推荐使用 CHECK 约束而非触发器来实现简单的列值校验，因为 CHECK 约束优化器感知且执行效率更高。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "CHECK 约束对哪种 DML 操作生效",
+      "MySQL 8.0.16 之前 CHECK 子句是什么行为"
+    ],
+    "tags": [
+      "MySQL",
+      "CHECK约束",
+      "数据校验",
+      "DDL"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "MySQL Thread Pool 线程池架构",
+    "content": "MySQL 企业版和 Percona Server 的 Thread Pool 将连接分组管理。每个连接被分配到 ___ 组中，每组保持 ___ 个工作线程。核心参数 ___ 控制线程组总数，___ 参数用于判断线程是否因死锁等原因被阻塞并触发新线程创建。当组内所有线程都忙时，新请求进入 ___ 队列。",
+    "answer": "{\"correct\":[[\"固定数量/固定数目\"],[\"一个/1/单个\"],[\"thread_pool_size\"],[\"thread_pool_stall_limit\",\"stall_limit\"],[\"等待/排队\"]],\"distractors\":[\"随机分配\",\"动态变化\",\"innodb_thread_concurrency\",\"max_connections\",\"thread_cache_size\",\"thread_pool_high_priority\",\"先进先出\"]}",
+    "hints": [
+      "stall_limit 参数如何检测线程是否卡住",
+      "Thread Pool 和连接池的区别"
+    ],
+    "tags": [
+      "MySQL",
+      "Thread Pool",
+      "连接管理",
+      "并发控制"
+    ]
   }
 ]

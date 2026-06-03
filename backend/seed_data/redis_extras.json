@@ -1771,5 +1771,101 @@
       "jemalloc",
       "性能"
     ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis RESP3 协议与 HELLO 握手",
+    "content": "Redis 6.0 引入了 RESP3 协议。RESP3 相比 RESP2 有哪些核心改进？HELLO 命令在新的协议协商中扮演什么角色？RESP3 对客户端库设计有什么影响？",
+    "answer": "答案：RESP3（REdis Serialization Protocol version 3）相比 RESP2 的核心改进是引入更丰富的数据类型——Map、Set、Push、Bool、Null、Double、Big Number、Streamed String 等，使客户端无需猜测响应语义。\n\n解析：HELLO 命令是 RESP3 的协议协商入口：客户端发送 HELLO 3 协商切换到 RESP3，HELLO 2 降级为 RESP2。RESP3 的关键类型：Map（有序键值对，替代 RESP2 的 flat array 表示）、Push（服务器主动推送的类型，用于 Pub/Sub 和 Client-side caching invalidation 消息）、Set（无序集合）、Null（区分 nil 和空数组）。RESP3 也支持客户端缓存（Client-side Caching）的推送通知。\n\n扩展延伸：RESP3 使用 $? 前缀表示空值、% 前缀表示 Map、> 前缀表示 Push。客户端库需要重新实现解析器，但不是所有 Redis 命令都使用了 RESP3 类型（很多仍返回 RESP2 兼容格式）。Redis 6+ 默认仍使用 RESP2。",
+    "hints": [
+      "RESP3 比 RESP2 多了哪些数据类型",
+      "HELLO 命令的作用是什么"
+    ],
+    "tags": [
+      "Redis",
+      "RESP3",
+      "协议",
+      "客户端"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis WAITAOF 命令与持久化确认",
+    "content": "Redis 7.2 引入了 WAITAOF 命令。请说明 WAITAOF 的作用、使用场景和实现原理，以及它与 WAIT 命令的异同。",
+    "answer": "答案：WAITAOF 命令阻塞当前客户端直到所有之前执行的写命令的 AOF 日志被写入指定数量的从节点磁盘（fsync 完成）。\n\n解析：WAITAOF 解决了从节点宕机后 AOF 日志落后导致的数据丢失问题。语法：WAITAOF numreplicas timeout。与 WAIT 命令的区别：WAIT 等待的是从节点确认已接收（写入内存），不保证 fsync 到磁盘；WAITAOF 等待从节点确认已将 AOF buffer fsync 到磁盘文件。实现原理：主节点在写命令传播后，跟踪每个从节点的 AOF fsync 状态。当从节点返回 REPLCONF ack 同时携带 fsync 偏移量，主节点与 WAITAOF 请求的期待偏移量比较，达到要求后唤醒阻塞的客户端。\n\n扩展延伸：WAITAOF 仅对开启了 AOF 的从节点有效。如果从节点没有开启 AOF，WAITAOF 不考虑它。timeout=0 表示无限等待。配合 Redis 7.2 的 AOF on-disk SHA 校验使用可以实现端到端的持久化确认。",
+    "hints": [
+      "WAITAOF 等待的是什么粒度的确认",
+      "WAITAOF 与 WAIT 的核心区别是什么"
+    ],
+    "tags": [
+      "Redis",
+      "AOF",
+      "持久化",
+      "数据安全"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis SWAPDB 命令与数据库切换",
+    "content": "关于 Redis SWAPDB 命令，以下说法正确的是？",
+    "answer": "答案：B) SWAPDB 使用 O(1) 操作交换两个数据库的全部键空间，无需遍历数据\n\n解析：SWAPDB db1 db2 通过原子交换两个数据库的 dict 指针实现，不复制或迁移实际数据。执行后 db1 和 db2 的内容互换，对其他连接的可见性由 Redis 的事务原子性保证。此命令常用于数据库「挪移」——先在新编号写数据，然后原子交换到旧编号，实现零停机切换。\n\n扩展延伸：SWAPDB 不会触发过期键检查或主动淘汰，但交换后键的过期时间保持不变。交换过程中 Redis 是阻塞的（单线程执行命令）。FLUSHDB 配合 SWAPDB 可设计无阻塞的清空方案：FLUSHDB db1 后 SAVE/RDB 仍存在问题，但 SWAPDB 到临时编号+FLUSHDB 原编号在某些模式中很实用。",
+    "options": [
+      "A) SWAPDB 会遍历整个数据库逐个复制键值",
+      "B) SWAPDB 使用 O(1) 操作交换两个数据库的全部键空间，无需遍历数据",
+      "C) SWAPDB 交换后键的过期时间会被重置",
+      "D) SWAPDB 只能交换当前选中的数据库"
+    ],
+    "hints": [
+      "SWAPDB 的数据结构基础是什么",
+      "SWAPDB 的典型使用场景"
+    ],
+    "tags": [
+      "Redis",
+      "SWAPDB",
+      "运维",
+      "原子操作"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis MIGRATE 命令与槽迁移原理",
+    "content": "Redis 的 MIGRATE 命令如何实现 key 在实例间的迁移？在 Cluster 模式下，MIGRATE 与 CLUSTER SETSLOT 如何配合完成槽迁移？MIGRATE 的原子性和性能特性是什么？",
+    "answer": "答案：MIGRATE 是一条原子命令，将指定 key 从当前实例序列化传输到目标实例并删除本地副本。语法：MIGRATE host port key| destination-db timeout [COPY] [REPLACE] [KEYS key1 ...]。\n\n解析：Cluster 槽迁移流程：1）CLUSTER SETSLOT slot IMPORTING src-node（目标节点标记槽为 importing）。2）CLUSTER SETSLOT slot MIGRATING dst-node（源节点标记槽为 migrating）。3）对槽内每个 key 执行 MIGRATE 传输。4）MIGRATE 内部使用 DUMP + RESTORE 命令——先序列化 key 的 RDB 格式数据到缓冲区，传输到目标调用 RESTORE，然后在本地 DEL。5）传输完成后 CLUSTER SETSLOT slot NODE dst-node 广播槽归属变更。使用 COPY 选项可保留源端 key（用于复制而非迁移）。REPLACE 选项覆盖目标已存在的 key。\n\n扩展延伸：MIGRATE 是阻塞命令，传输大 key 会导致 Redis 卡顿。批量迁移使用 MIGRATE ... KEYS key1 key2（Redis 3.0.6+）。Redis Cluster 的 live rehashing 在迁移过程中源节点仍可处理该槽请求，找不到 key 时返回 ASK 转向，客户端需要实现 ASK redirection。",
+    "hints": [
+      "MIGRATE 内部使用了哪两个命令",
+      "Cluster 槽迁移中 IMPORTING 和 MIGRATING 状态的作用"
+    ],
+    "tags": [
+      "Redis",
+      "MIGRATE",
+      "集群迁移",
+      "Cluster"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis ACL LOG 与安全审计",
+    "content": "Redis 6.0 引入了 ACL LOG 机制。请说明 ACL LOG 的作用、日志条目包含哪些信息，以及它与普通 Redis 日志的区别。如何通过 ACL 机制实现生产环境的安全审计？",
+    "answer": "答案：ACL LOG 是 Redis 6.0 ACL 子系统的一部分，记录因 ACL 权限不足被拒绝的命令以及其他 ACL 相关事件，帮助运维人员定位配置问题。\n\n解析：ACL LOG 通过 ACL LOG 命令查看，ACL LOG RESET 清除。日志条目包含以下字段：count（同一类违规次数）、reason（违规原因——command/role/user/auth）、object（违规的命令名/用户名）、username（发起用户）、age（距上次违规的秒数）、time（首次违规时间戳）、client-id/client-name。它与 Redis 普通日志的区别：ACL LOG 保存在内存中的循环缓冲区（由 acllog-max-len 控制，默认 128 条），不是写入文件日志，专门用于 ACL 审计，不记录其他系统事件。\n\n扩展延伸：ACL LOG 支持多种 reason：auth（认证失败）、command（命令无权限）、role（角色问题）、selinux（忽略）、no-perms（无权限认证）等。安全审计建议：将 acllog-max-len 调大，定期通过 ACL LOG 检查异常访问模式，结合监控系统报警频繁的 ACL 拒绝事件。ACL 配置文件（users.acl）建议启用 aclfile 模式而非 config 模式以确保持久化。",
+    "hints": [
+      "ACL LOG 保存在内存还是文件",
+      "ACL LOG 包含了哪些违规原因类型"
+    ],
+    "tags": [
+      "Redis",
+      "ACL",
+      "安全审计",
+      "访问控制"
+    ]
   }
 ]

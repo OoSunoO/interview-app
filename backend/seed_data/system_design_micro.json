@@ -1714,5 +1714,95 @@
       "高可用",
       "熔断"
     ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务 API 兼容性管理与版本演进",
+    "content": "微服务架构中 API 版本管理有哪些策略？如何在不中断现有客户端的情况下平滑演进 API？",
+    "answer": "API 版本管理的核心策略包括 URL 路径版本、Header 版本、Consumer-Driven Contract 和兼容性规则。\n\n解析：1）URL 路径版本（/v1/orders, /v2/orders）——最直观，服务端共存不同版本实现。缺点：URL 污染，语义上表示的是资源版本而非协议版本。2）Header 版本（Accept: application/vnd.myapp.v1+json）——RESTful 风格，不改变 URL。缺点：调试不便（需查看请求头），网关解析成本高。3）Query 参数版本（?version=1）——实现简单但容易混乱，不推荐生产使用。4）Consumer-Driven Contract——由消费者定义所需的 API 契约，提供者用契约测试保证不破坏已有消费者。\n\n兼容性规则：1）向后兼容（Backward Compatible）——新增字段不影响旧客户端（客户端忽略未知字段）。2）向前兼容（Forward Compatible）——旧服务可处理新版本客户端的请求（服务端忽略未知字段）。3）破坏性变更清单——删除字段、修改字段类型、将可选变为必填、降低响应保证。\n\n扩展延伸：Protobuf 的字段编号机制天然支持兼容演进（新增字段用新编号，不可复用已删除编号）。gRPC 最佳实践：不更改现有字段编号和类型。GraphQL 的版本管理：无版本号，通过 Deprecation + 字段演进实现平滑迁移。",
+    "hints": [
+      "Protobuf 的字段编号为什么不能被复用",
+      "向后兼容和向前兼容各自的侧重点是什么"
+    ],
+    "tags": [
+      "微服务",
+      "API版本",
+      "兼容性",
+      "gRPC"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务间异步事件的 Schema 治理",
+    "content": "在事件驱动的微服务架构中，如何对消息队列中的事件 Schema 进行版本管理与治理？如何保证生产者升级 Schema 后不影响老消费者？",
+    "answer": "事件 Schema 治理的核心是 Schema Registry 与兼容性策略的组合。\n\n解析：架构设计：1）Schema Registry——中央仓储存储所有事件类型的 Schema 定义。生产者发送消息时只携带 Schema ID（或版本号），消费者通过 Schema ID 拉取对应 Schema 进行反序列化。Apache Avro + Confluent Schema Registry 是最常见组合。2）兼容性策略——Backward（新 Schema 可读旧数据，推荐）、Forward（旧 Schema 可读新数据）、Full（双向兼容）、None（不校验）。生产环境通常用 Backward 模式：只允许新增可选字段，不允许删除和修改已有字段。3）Schema 版本演进——每次 Schema 变更需在 Registry 注册新版本并通过兼容性校验，不合规变更在 CI 阶段即被拦截。\n\n工程实践：1）Protobuf 最佳实践——预留字段编号 1-15（占 1 字节）, 16-2047 保留。新增字段用新编号，删除字段用 reserved 标记。2）JSON Schema + Schema Registry——定义事件结构并在 Registry 中注册做兼容性检查。3）AsyncAPI——事件驱动架构的 OpenAPI 等价物，定义事件契约。4）反压与降级——旧消费者来不及处理新格式时，需设计降级策略（如忽略未知字段、发送到死信队列）。",
+    "hints": [
+      "Avro Schema Registry 如何通过 Compatibility Check 防止破坏性变更",
+      "Backward 和 Forward 兼容性策略在什么场景下选择"
+    ],
+    "tags": [
+      "事件驱动",
+      "Schema",
+      "兼容性",
+      "Schema Registry"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "基于自定义指标的弹性伸缩设计",
+    "content": "Kubernetes 中 HPA 如何基于自定义指标（如消息队列积压、gRPC 请求延迟）进行自动扩缩？KEDA 的核心原理是什么？",
+    "answer": "自定义指标弹性伸缩的核心是 Custom Metrics API + 指标适配器的组合。\n\n解析：Kubernetes HPA 原生支持 CPU/内存指标。自定义指标需要通过 Metrics Adapter 暴露 Custom/External Metrics API。架构流程：1）指标采集——Prometheus 从 Pod 维度采集自定义指标（如 RabbitMQ 队列深度、gRPC P99 延迟）。2）指标适配——Prometheus Adapter 将 Prometheus 指标转换为 Kubernetes Custom Metrics API 格式。3）HPA 评估——HPA Controller 周期（默认 15s）调用 Custom Metrics API 获取 Pod 指标值，计算期望副本数：desiredReplicas = ceil[currentReplicas * (currentMetricValue / desiredMetricValue)]。4）弹性操作——Deployment 副本数调整，新 Pod 启动到 Ready 可能需要几十秒。\n\nKEDA（Kubernetes Event-Driven Autoscaling）——红帽/微软开源的基于事件的弹性伸缩框架。核心原理：1）Scaler——内置 50+ 触发器（Kafka、RabbitMQ、Redis、Prometheus、Azure Queue 等）。2）ScaledObject CRD——定义伸缩规则（触发器类型、阈值、冷却期）。3）KEDA Operator——监控 Scaler 指标值，超过阈值时创建或调整 HPA 对象。4）场景——消息积压时从 0 扩容到 N，消费完后缩回 0（Scale-to-Zero）。\n\n扩展延伸：弹性设计注意事项：1）冷却期（Cooldown）防止频繁抖动（HPA 的 stabilizationWindowSeconds）。2）扩容快、缩容慢——突发流量快速扩容，流量下降时逐步缩容。3）结合 Readiness Probe + Startup Probe 确保 Pod 预热完成后再接收流量。",
+    "hints": [
+      "HPA 伸缩公式中的 targetMetricValue 如何确定",
+      "KEDA 的 Scale-to-Zero 对哪些场景特别有价值"
+    ],
+    "tags": [
+      "K8s",
+      "弹性伸缩",
+      "KEDA",
+      "自定义指标"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微服务发布与回滚的自动化流程设计",
+    "content": "设计一个支持金丝雀发布、一键回滚的自动化发布系统。核心组件和关键设计点是什么？",
+    "answer": "自动化发布系统的核心包括部署策略控制、流量切换、健康检查和回滚自动化。\n\n解析：系统组件：1）发布编排引擎——管理发布流程状态（初始化→灰度扩→灰度验证→全量→完成），支持暂停/继续/回滚操作。2）部署策略控制器——支持滚动更新（Rolling Update）、蓝绿发布（Blue/Green）、金丝雀（Canary）。3）流量路由层——基于 Service Mesh（Istio VirtualService）权重路由。金丝雀阶段将 5%-10% 流量导向新版本，自动验证通过后逐步增加到 100%。4）健康检查与指标监控——结合 Readiness Probe 和业务指标（错误率、延迟、成功率）。新版本错误率超过基线 1.5 倍时自动暂停或回滚。5）回滚机制——记录每个发布的版本快照（Deployment YAML + ConfigMap），一键回滚通过 kubectl rollout undo 或自定义回滚流程。数据库变更回滚更复杂（Flyway undo 或增量回退脚本）。\n\n扩展延伸：高级设计要点：1）自动回滚触发条件——错误率+延迟+无响应 Pod 数+业务指标组合判断。2）灰度策略——按实例比例、按区域、按用户标签。3）审计与审批——灰度通过后需审批才全量发布。4）数据库兼容——新版本新增列时，回滚后旧版本需要兼容新增列（避免 column not found 错误）。",
+    "hints": [
+      "金丝雀发布时流量权重如何逐步调整",
+      "数据库 Schema 变更在发布回滚时如何处理"
+    ],
+    "tags": [
+      "发布",
+      "金丝雀",
+      "回滚",
+      "部署"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式追踪头采样与尾采样策略对比",
+    "content": "在大规模微服务系统中，全量分布式追踪的数据量过大，如何设计采样策略？头采样（Head-Based）和尾采样（Tail-Based）各有什么优劣？",
+    "answer": "分布式追踪的采样策略直接决定链路数据的覆盖率和存储成本。\n\n解析：1）头采样（Head-Based）——在请求入口处根据规则决定是否采样（如概率采样、速率限制）。优点是配置简单、开销小。缺点是无法区分重要请求（如慢请求、错误请求），可能漏掉需要排查的 trace。实现：Jaeger 的 probabilistic sampling（固定概率如 1%），OpenTelemetry 的 ParentBased + RateLimiting。\n\n2）尾采样（Tail-Based）——让所有请求先完整执行产生 trace，然后在收集端根据结果条件（如延迟超过阈值、错误状态码、特定 Span 属性）决定保留哪些 trace。优点是不遗漏重要的异常 trace。缺点是需要缓冲大量原始数据，对后端存储和网络带宽压力大。实现：OpenTelemetry Collector 的 tail_sampling 处理器 + Jaeger 后端。\n\n3）混合策略——头采样保留低概率但均匀覆盖的采样数据（用于整体性能统计），尾采样对有问题的 trace 全量捕获（用于故障排查）。实际生产中最推荐的做法是二者结合。\n\n4）自适应采样——根据系统负载动态调整采样率。负载低时全量采样，负载高时降低采样率。数据近似性可以通过权重补偿在聚合计算中修正。\n\n扩展延伸：采样率确定法则——根据每秒总请求数和存储预算计算。例如总 QPS 10 万，预算每天 100GB 存储（约 1000 万条 trace），采样率约 0.12%。核心服务差异化采样（重要服务 100% 采样，非核心 0.1%）。",
+    "hints": [
+      "头采样为什么可能漏掉重要的慢请求",
+      "尾采样需要多大的缓冲和存储资源"
+    ],
+    "tags": [
+      "分布式追踪",
+      "采样",
+      "可观测性",
+      "OpenTelemetry"
+    ]
   }
 ]

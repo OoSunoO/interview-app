@@ -1759,5 +1759,97 @@
       "一致性",
       "微服务"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "解释器模式在 DSL 设计中的应用",
+    "content": "请详细解释解释器模式（Interpreter Pattern）的核心结构和适用场景。解释器模式适合解决什么样的问题？它与 Visitor 模式有什么区别和联系？结合 Spring SpEL（Spring Expression Language）或 SQL 解析的场景，说明解释器模式的具体设计方式以及它的局限性（性能问题、文法复杂度爆炸）。",
+    "answer": "答案：解释器模式（Interpreter Pattern）为语言文法定义表达式类层次结构，每个文法规则对应一个表达式类，通过递归组合解析语法树。\n\n解析：解释器模式的结构包括 AbstractExpression（抽象表达式，定义 interpret 方法）、TerminalExpression（终结符表达式——文法中的最小单元）、NonterminalExpression（非终结符表达式——由子表达式组合而成）、Context（上下文——存储解析过程中的全局状态）。\n\n经典示例：四则运算解析。文法：expression ::= number | expression '+' expression | expression '-' expression | expression '*' expression | expression '/' expression。每个规则映射为一个类：NumberExpression（终结符）、AddExpression/SubtractExpression/MultiplyExpression/DivideExpression（非终结符）。`3 + 5 * 2` 解析为 AddExpression(Number(3), MultiplyExpression(Number(5), Number(2)))。\n\n与 Visitor 模式的对比：Visitor 模式在固定的类结构上增加新的操作（操作易扩展，结构难扩展），Interpreter 模式在固定的操作上增加新的表达式（结构易扩展，操作难扩展）。实际中两者经常组合——用 Interpreter 解析文法构建 AST，用 Visitor 遍历 AST 执行语义分析。\n\n适用场景：1）DSL 解析（Spring SpEL、JPQL、Liquibase 的变更日志 DSL）——文法简单且变化不频繁时非常适合；2）配置文件解析（如正则表达式引擎）；3）计算公式引擎（如业务规则引擎中的公式求值）。\n\n局限性：1）文法规则多时类数量爆炸——每个规则一个类；2）性能问题——递归解释深度大时效率低（大量虚函数调用和对象创建）；3）维护困难——文法复杂后解释器代码极难调试。\n\n实际建议：简单的 DSL 用 Interpreter 模式清晰可控；复杂的语言解析请直接用 ANTLR/PEG 解析器生成器，不要手写解释器模式。",
+    "hints": [
+      "Interpreter 模式和 Visitor 模式在 AST 处理中如何分工——Interpreter 建树、Visitor 遍历",
+      "解释器模式的性能瓶颈在哪里——递归深度大时的对象创建开销和虚函数调用"
+    ],
+    "tags": [
+      "解释器模式",
+      "Interpreter",
+      "DSL",
+      "设计模式"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "注册模式（Registry）的设计与实战",
+    "content": "请解释注册模式的设计目的和实现方式。注册模式和享元模式（Flyweight）有什么关联和区别？与 Service Locator 有什么区别？结合 MyBatis 的 TypeAliasRegistry 或 Spring 的 Singleton Bean 注册表，说明注册模式的实际应用。",
+    "answer": "答案：注册模式（Registry）提供一个全局的、集中式的对象存储和查找机制，允许通过键（Key）快速获取共享实例。核心功能是「登记 + 查找」。\n\n解析：注册模式的核心结构非常简单——一个全局 Map，key 为标识（字符串/Class/枚举），value 为共享对象实例。\n\n```java\npublic class ServiceRegistry {\n    private final Map<String, Object> services = new ConcurrentHashMap<>();\n    public void register(String name, Object service) { services.put(name, service); }\n    @SuppressWarnings(\"unchecked\")\n    public <T> T get(String name) { return (T) services.get(name); }\n}\n```\n\n与享元模式的关系：Registry 是实现享元模式的核心基础设施。享元模式通过 Registry 管理共享的享元对象池，确保相同的外部状态对象不被重复创建。区别：Registry 是一种结构型/创建型模式（专注于存储和查找），Flyweight 是一种优化模式（专注于内存节省）。\n\n与 Service Locator 的区别：Service Locator 是 Registry 的演进版——除了查询功能外还封装了创建逻辑（如果找不到则创建并注册）。Registry 被动接收注册，Service Locator 主动管理生命周期。\n\n实战案例：1）MyBatis TypeAliasRegistry——registerAlias(\"integer\", Integer.class) 将类型别名注册到 Map；2）Spring 的 DefaultSingletonBeanRegistry——三级缓存解决循环依赖；3）枚举 Registry——CommandRegistry 注册命令处理器，避免庞大的 switch-case。\n\n设计考量：1）Registry 本质上是全局状态（有点像全局变量），过度使用会破坏依赖清晰度；2）线程安全——ConcurrentHashMap 是标配；3）初始化时机——静态初始化块 / Spring @PostConstruct。",
+    "hints": [
+      "Registry 和 Service Locator 的区别——Registry 只管查询，Service Locator 还能自动创建",
+      "Registry 的全局状态问题是它的最大缺点——依赖关系变得隐式"
+    ],
+    "tags": [
+      "注册模式",
+      "Registry",
+      "Service Locator",
+      "设计模式"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "备忘录模式与事务回滚设计",
+    "content": "请深入解释备忘录模式（Memento Pattern）的设计结构和应用场景。备忘录模式如何实现「不破坏封装性的前提下保存和恢复对象内部状态」？它和命令模式（Command Pattern）在实现撤销（Undo）时的分工合作是怎样的？在数据库事务回滚或分布式 Saga 补偿事务中，如何借鉴备忘录模式的设计思想？",
+    "answer": "答案：备忘录模式在不暴露对象内部实现的前提下捕获并外部化其内部状态，以便之后可以将对象恢复到之前的状态。\n\n解析：三角色结构——1）Originator（原发器）：需要保存状态的对象，负责创建 Memento 和从 Memento 恢复状态；2）Memento（备忘录）：存储 Originator 内部状态的不透明对象（对外只暴露窄接口，对 Originator 暴露宽接口）；3）Caretaker（管理者）：负责保存 Memento 但不操作其内容。\n\n```java\n// 窄接口——对外部可见\npublic interface Memento {}\n// 宽接口——仅 Originator 使用\nclass ConcreteMemento implements Memento {\n    private final String state;\n    ConcreteMemento(String state) { this.state = state; }\n    String getState() { return state; }\n}\nclass Originator {\n    private String state;\n    public Memento save() { return new ConcreteMemento(state); }\n    public void restore(Memento m) { state = ((ConcreteMemento) m).getState(); }\n}\n```\n\n与命令模式的协作：Command 模式存储「操作」，Memento 模式存储「状态」。实现支持撤销的命令时，Command 在执行前调用 Originator.save() 保存状态到 Memento，撤销时调用 Originator.restore(memento) 恢复。Caretaker 维护一个 Memento 栈实现多级撤销。\n\n在事务回滚中的应用：1）本地事务——数据库的 Undo Log 本质上是 Memento 模式的实现（保存修改前的数据映像）；2）Saga 补偿事务——每个 Saga 步骤记录补偿操作（State Memento），失败时从 Memento 栈中依次执行逆操作。\n\n设计考量：1）Memento 可能很大（如包含整个对象图的快照）——可用差异存储（只保存变化的部分）或增量快照优化；2）封装性——Java 中用包级访问权限或内部类确保只有 Originator 能访问 Memento 内部状态。",
+    "hints": [
+      "Memento 的「宽窄接口」设计如何保证封装——Originator 能读写，Caretaker 只能存",
+      "数据库 Undo Log 是备忘录模式的思想体现——记录修改前的状态用于回滚"
+    ],
+    "tags": [
+      "备忘录模式",
+      "Memento",
+      "事务回滚",
+      "Undo",
+      "设计模式"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "惰性初始化模式（Lazy Initialization）",
+    "content": "请详细解释惰性初始化（Lazy Initialization Pattern）的核心设计思想、实现方式以及适用场景。延迟初始化和单例模式结合时需要注意什么问题？在 Spring 中 @Lazy 注解的工作原理是什么？MyBatis 的延迟加载（Lazy Loading）是如何实现的？",
+    "answer": "答案：惰性初始化模式将对象的创建从「类加载时」推迟到「首次使用时」，以节省资源、减少启动时间。核心思想是将创建开销从初始化阶段平摊到首次使用时刻。\n\n解析：基本实现方式——1）简单延迟初始化（非线程安全）：判断引用是否为 null，为 null 则创建；2）同步延迟初始化（synchronized）：线程安全但每次访问都有锁开销；3）双重检查锁定（Double-Checked Locking）；4）Holder 模式（Class Holder Idiom）——利用 JVM 类加载机制，静态内部类在首次被引用时才加载和初始化。\n\n```java\npublic class LazySingleton {\n    private LazySingleton() {}\n    private static class Holder {\n        static final LazySingleton INSTANCE = new LazySingleton();\n    }\n    public static LazySingleton getInstance() {\n        return Holder.INSTANCE;\n    }\n}\n```\n\n与单例模式结合的问题：饿汉式单例在类加载时立即创建实例，即使从未使用。懒汉式单例（延迟初始化 + 单例）可以避免这种浪费，但必须处理线程安全。建议使用 Holder 模式或枚举类实现线程安全的懒加载单例。\n\nSpring @Lazy 注解：1）作用于 @Bean 时——Bean 不在容器启动时创建，在首次注入时才创建；2）作用于 @Configuration 时——该配置类中所有 @Bean 都延迟初始化；3）作用于 @Component 时——该组件延迟初始化；4）作用于 @Autowired/@Inject 时——创建代理对象注入，首次调用代理时才真正解析依赖。底层通过 CglibSubclassingInstantiationStrategy + LazyResolutionProxyFactoryBean 实现。\n\nMyBatis 延迟加载：配置 lazyLoadingEnabled=true 后，MyBatis 为关联对象（如 association/collection）创建 Javassist 或 Cglib 代理对象。首次访问关联属性时，代理触发 SQL 查询填充实际对象。\n\n注意事项：1）延迟初始化不适合「首次访问延迟敏感」的场景（如在请求处理路径中触发耗时的初始化）；2）内存泄漏风险——延迟创建的对象持有上下文引用可能导致 GC 无法回收。",
+    "hints": [
+      "Holder 模式为什么既是线程安全的又能延迟初始化——JVM 保证静态内部类的类加载线程安全",
+      "Spring @Lazy 创建的代理对象在首次调用时才解析依赖，这是如何实现的"
+    ],
+    "tags": [
+      "惰性初始化",
+      "Lazy Initialization",
+      "性能优化",
+      "多线程"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "双重检查锁定（DCL）的正确实现与陷阱",
+    "content": "双重检查锁定（Double-Checked Locking, DCL）是一种在延迟初始化场景中减少锁竞争的优化手段。为什么在 Java 中 DCL 的「经典写法」是错误的？volatile 关键字如何修复 DCL？在 JDK 9+ 中 VarHandle 对 DCL 有什么影响？为什么 Holder 模式和枚举单例通常比 DCL 更推荐？",
+    "answer": "答案：经典 DCL 写法 `if (instance == null) { synchronized(this) { if (instance == null) { instance = new Instance(); } } }` 在 Java 5 之前是错的，问题根源在于「指令重排序」。\n\n解析：`instance = new Instance()` 在 JVM 中分解为三个步骤：1）分配内存空间（allocate）；2）调用构造方法初始化对象（initialize）；3）将引用指向分配的内存地址（assign）。在不做特殊处理的情况下，JVM 可能将步骤 2 和 3 重排序——另一个线程在第 3 步完成后、第 2 步完成前获取到引用，读到的是「部分构造的对象」（部分字段为默认值而非构造方法设置的值）。\n\n修复方案：将 instance 声明为 volatile。Java 5 之后 volatile 语义增强，volatile 写操作会插入 Store-Store 和 Store-Load 屏障，禁止步骤 2 和 3 的重排序。同时 volatile 保证可见性——一个线程修改后其他线程立即可见。\n\n```java\npublic class CorrectDCL {\n    private static volatile CorrectDCL instance;\n    public static CorrectDCL getInstance() {\n        CorrectDCL result = instance;\n        if (result == null) {\n            synchronized (CorrectDCL.class) {\n                result = instance;\n                if (result == null) {\n                    instance = result = new CorrectDCL();\n                }\n            }\n        }\n        return result;\n    }\n}\n```\n注意：方法内将 instance 赋值给局部变量 result 可以避免每次访问都读 volatile（减少约 25% 的 volatile 读开销）。\n\nJDK 9+ VarHandle：VarHandle 提供了更底层的语义——MethodHandles.lookup().findStaticVarHandle(X.class, \"instance\", X.class).getAcquire() 和 .setRelease(o) 可以替代 volatile 实现更细粒度的内存排序语义。\n\n为什么 Holder 模式和枚举单例更推荐：1）Holder 模式利用 JVM 类加载的线程安全机制——<clinit> 在类首次被引用时由 JVM 保证线程安全地执行；2）枚举单例（enum Singleton { INSTANCE }）——JVM 保证枚举实例的线程安全创建，天然防止反射攻击和序列化破坏。DCL 代码复杂、容易出错，除非需要精细控制初始化时机，否则优先选 Holder 或枚举。",
+    "hints": [
+      "DCL 问题的本质是「指令重排序」——构造方法在引用赋值之后才执行",
+      "volatile 如何修复 DCL——Java 5 之后 volatile 写禁止与之前的普通写重排序"
+    ],
+    "tags": [
+      "双重检查锁定",
+      "DCL",
+      "并发",
+      "JMM",
+      "volatile"
+    ]
   }
 ]

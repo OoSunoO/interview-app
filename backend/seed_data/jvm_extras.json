@@ -1773,5 +1773,98 @@
       "MethodHandle",
       "字节码"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "invokedynamic 指令与 Lambda 底层实现",
+    "content": "invokedynamic 指令在 Java 7 引入，是 Java 7 的五大新指令之一。Java 8 的 Lambda 表达式正是通过 invokedynamic 实现的。请详细说明 invokedynamic 的工作原理以及 Lambda 表达式如何通过它实现。",
+    "answer": "答案：invokedynamic 是 JVM 指令集中最灵活的调用指令，它允许在运行时动态确定方法调用目标（调用点 CallSite）。Lambda 表达式通过 invokedynamic + java.lang.invoke.LambdaMetafactory 实现延迟翻译和轻量级实现。\n\n解析：传统的方法调用指令（invokevirtual/invokeinterface/invokestatic/invokespecial）在编译时就必须有固定的目标方法签名和类。invokedynamic 将方法查找延迟到运行时：编译器只在常量池中生成一个方法句柄（MethodHandle）的引导方法（Bootstrap Method，BSM），JVM 首次执行 invokedynamic 时调用 BSM 返回一个 CallSite 对象（包含 MethodHandle），后续执行直接通过 CallSite 调用，不再重复引导。\n\nLambda 的实现过程：1）编译器将 Lambda 体（如 x -> x + 1）编译为一个静态方法（如 lambda$0(int)int）或一个 invokedynamic 调用点。2）运行时首次执行时，JVM 调用 LambdaMetafactory.metafactory() 引导方法，该工厂方法根据 Lambda 的签名和目标函数式接口动态生成一个内部类（通过 ASM 生成字节码或使用 Unsafe.defineAnonymousClass 生成隐藏类）。3）生成的内部类实现目标函数式接口（如 Function<Integer,Integer>），其中的函数式方法委托给 Lambda 体对应的静态方法。\n\n扩展延伸：Lambda 的 invokedynamic 实现的一大优势是捕获变量（capture）的成本分摊——引导方法只被调用一次，捕获变量的值通过构造函数参数传递给内部类实例，避免了匿名内部类每次创建都要加载一个新类的开销。另外 JDK 17+ 使用隐藏类（Hidden Class，JEP 371）替代了匿名类用于 Lambda 实现，进一步增强了安全性和生命周期可控性。invokedynamic 也被用于 Java 14+ 的 Record 模式和模式匹配（Pattern Matching）等新特性。",
+    "hints": [
+      "invokedynamic 的引导方法（BSM）只在首次执行时被调用一次",
+      "Lambda 通过 LambdaMetafactory 动态生成内部类实现函数式接口委托"
+    ],
+    "tags": [
+      "JVM",
+      "字节码",
+      "invokedynamic",
+      "Lambda",
+      "Java 8"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JFR（Java Flight Recorder）原理与实践",
+    "content": "JFR（Java Flight Recorder）是什么？它为什么被认为对 JVM 性能影响极小？JFR 的架构和核心组件有哪些？如何分析 JFR 记录？",
+    "answer": "答案：JFR 是 Oracle 开发的 JVM 内置的极低开销的事件记录和分析框架，设计目标是运行时开销低于 1%，可用于生产环境的连续监控。其核心思想是：JVM 内部的各种事件（GC、锁竞争、方法采样、IO、类加载等）在发生时写入一个循环缓冲区，需要时 dump 出来做离线分析。\n\n解析：JFR 架构包含三个核心组件：\n1）事件生产者（Event Producer）——JVM 内部的事件源（GC、JIT、线程调度、锁等），以及 Java 应用层的自定义事件（通过 jdk.jfr.Event API）。事件类型分为三种：瞬时事件（Duration Event，有持续时间的事件，如 GC 暂停）、定时事件（Timed Event，按时间间隔检查的事件）、即时事件（Instant Event，瞬时发生的事件，如线程创建）。\n2）核心记录引擎——JVM 内置的基于本地线程的缓冲区系统。每个线程在本地缓冲区中写入事件，缓冲区满后 flush 到全局缓冲区。事件写入和读取通过无锁化设计（每个线程独立写入自己的缓冲区）尽可能减少同步开销。\n3）数据输出——持续记录到循环缓冲区（默认在 JVM 内存中，内存大小由 -XX:FlightRecorderBufferSize 控制），或记录到磁盘文件（-XX:StartFlightRecording 指定）。可以被其他程序通过 MBean 或 jcmd 命令动态启停。\n\n极低开销的原因：1）采样为主——JFR 大量使用采样（Sampling）而非插桩（Instrumentation），如方法调用热点分析默认每 20ms 采样一次线程栈。2）无锁化设计——写入路径无锁（Thread Local Buffer + CAS-free）。3）环形缓冲区的异步消费——事件生产者和消费者之间没有同步阻塞，即使消费者跟不上也只是丢弃旧事件。4）JVM 内部集成——直接在 JVM 的 hot path 上插入记录点比外部代理（如 BTrace）开销低得多。\n\n扩展延伸：JFR 在 JDK 11+ 已完全开源且免费可用。常用命令：jcmd <pid> JFR.start name=myrecording（启动记录）、jcmd <pid> JFR.dump name=myrecording filename=recording.jfr（转储）、jcmd <pid> JFR.stop name=myrecording（停止）。JDK Mission Control（JMC）是官方分析工具，支持自动分析和事件关联。JFR 事件多达 200+，核心分析场景包括：GC 暂停分析、热点方法采样、锁竞争分析、IO 延迟分析、内存泄漏趋势。",
+    "hints": [
+      "JFR 的开销宣言 <1%——主要得益于采样+无锁缓冲区+循环写入",
+      "JMC 是 JFR 的主要可视化分析工具，提供自动问题检测（自动化规则引擎）"
+    ],
+    "tags": [
+      "JVM",
+      "JFR",
+      "监控",
+      "性能",
+      "JMC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java Agent 与 Instrumentation 机制",
+    "content": "Java Instrumentation 机制是什么？如何编写一个 Java Agent？Instrumentation 的核心 API 有哪些？它和 AOP、字节码增强有什么关系？",
+    "answer": "答案：Java Instrumentation 是 JVM 提供的在类加载前后修改字节码的机制（JSR 163）。通过 Java Agent（-javaagent 指定），开发者可以在类加载前拦截类的字节码并做修改（如添加监控代码、插桩 APM 探针）。核心 API 由 java.lang.instrument.Instrumentation 接口提供。\n\n解析：Java Agent 有两种加载方式：\n1）启动时加载（Premain）——在 JVM 启动时通过 -javaagent:agent.jar 指定。Agent 需要实现 premain(String agentArgs, Instrumentation inst) 方法。在类加载之前执行，因此可以重新定义类（通过 ClassFileTransformer 转换字节码）。\n2）动态加载（Agentmain）——在运行时通过 Attach API 加载到已运行的 JVM 中。Agent 需要实现 agentmain 方法。动态加载的 Agent 不能重新转换已经被加载的类的字节码（除非调用 retransformClasses，但限制较多）。\n\n核心 API 包括：addTransformer(ClassFileTransformer) 注册字节码转换器；retransformClasses(Class<?>...) 对已加载的类重新转换；redefineClasses(ClassDefinition...) 重新定义类（只能升级，不能增删字段/方法）；getObjectSize(Object) 获取对象的浅堆大小；canRetransform/canRedefineClasses 检查 JVM 能力。\n\n扩展延伸：Instrumentation 的生产应用——1）APM 探针（SkyWalking、Pinpoint、New Relic）：通过 Agent 拦截业务方法，无侵入地采集调用链 Trace 数据。2）热加载 IDE（IntelliJ IDEA 的 HotSwap、JRebel）：通过 retransformClasses 实现方法级别的热替换。3）性能诊断（Arthas 的 watch/trace）：通过 Agent + ByteBuddy/ASM 动态注入监控代码。\n\n注意：Instrumentation 依赖底层的字节码操作框架（ASM、ByteBuddy、Javassist）。ClassFileTransformer 每次调用都会传入类字节码数组，回调方法必须在很小的开销内完成（否则拖累类加载速度）。常见的 APM Agent 在启动时用 ByteBuddy 构建拦截规则，运行时只做匹配和委托，不加额外转换。",
+    "hints": [
+      "premain 在类加载前执行——所以可以拦截所有类的加载过程",
+      "retransformClasses 是动态诊断工具的热替换核心——但只能修改方法体，不能增删字段/方法"
+    ],
+    "tags": [
+      "JVM",
+      "Agent",
+      "Instrumentation",
+      "字节码",
+      "APM"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "自动装箱与 Integer 缓存池",
+    "content": "Java 的自动装箱（Autoboxing）和拆箱（Unboxing）的底层实现机制是什么？Integer 缓存池的范围是多少？自动装箱有哪些可能被忽视的性能陷阱？",
+    "answer": "答案：自动装箱和拆箱是 Java 编译器提供的语法糖——编译器在编译时插入 Integer.valueOf()/Integer.intValue() 等桥接方法调用。Integer 缓存池默认缓存 -128~127 之间的 Integer 对象。自动装箱在循环和频繁转换场景下可能产生大量不必要的中间对象，导致 GC 压力和性能下降。\n\n解析：自动装箱/拆箱的编译期行为——\n1）装箱（Boxing）：Integer i = 100 编译后变为 Integer i = Integer.valueOf(100)。编译为调用 valueOf 静态方法（boolean/short/byte/char/int/long 的 valueOf 方法都使用缓存池，Double/Float 没有缓存池）。\n2）拆箱（Unboxing）：int n = i 编译后变为 int n = i.intValue()。编译为调用对应类型的 xxxValue 方法（intValue、longValue、doubleValue 等）。\n\nInteger 缓存池：-128 到 127（下限固定不可调，上限可通过 -XX:AutoBoxCacheMax 调大，JDK 6u14+ 支持）。缓存池在 Integer 类首次加载时初始化，存储为 Integer[] 数组。用 == 比较两个 Integer 时，如果值在缓存范围内返回 true，范围外返回 false。推荐始终用 equals() 比较整型包装类。\n\n性能陷阱与避免：1）循环装箱——for (Integer i = 0; i < 100000; i++) 每次迭代都会创建一个新的 Integer 对象（i = i + 1 拆箱 + 计算 + 装箱），产生大量 GC 垃圾。应使用基本类型 int。\n2）混合计算中的频繁装箱/拆箱——Long sum = 0L; for (long i = 0; ...) { sum += i; } 每次迭代拆箱相加后装箱回 Long，产生大量临时 Long 对象。\n3）集合中装箱——将基本类型放入泛型集合（如 List<Integer>）会装箱，取出使用会拆箱。在性能敏感路径上使用 Trove/Agrona 的 primitive 集合或使用数组替代。\n4）Null 拆箱——包装类为 null 时拆箱会抛出 NullPointerException（编译不能发现，运行时触发）。\n\n扩展延伸：JIT 通过逃逸分析和标量替换可以在某些情况下消除装箱对象的堆分配（逃逸分析识别出装箱对象未逃逸时，直接在栈上分配），但依赖 JIT 的优化程度。推荐的原则：性能敏感路径一律使用基本类型；方法参数和返回值尽量使用基本类型；集合考虑使用 primitive 集合库。",
+    "hints": [
+      "Integer.valueOf() 使用了享元模式（Flyweight）——-128~127 共享对象",
+      "循环内自动装箱是最常见的性能陷阱——每次循环创建新对象，大量 GC 压力"
+    ],
+    "tags": [
+      "Java",
+      "自动装箱",
+      "缓存池",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "StackMapTable 与类型检查验证",
+    "content": "StackMapTable 属性是什么？它在 JVM 类文件验证中起什么作用？为什么 StackMapTable 的引入改变了 Java 编译的兼容性？以及它在 JDK 7+ 中对类型检查验证（Type-Checking Verification）的优化效果。",
+    "answer": "答案：StackMapTable 是 Class 文件中的一个属性（Attribute），描述了方法体中各个指令执行前栈帧（Stack Frame）的类型映射信息。它在 JDK 6 引入（JSR 202），JDK 7 开始对版本号 >= 51 的类文件强制要求。StackMapTable 加速了类型检查验证（Type-Checking Verifier），替代了传统的类型推导验证（Type-Inference Verifier）。\n\n解析：传统的类型推导验证（JDK 6 及以前）——类型推导验证器（也称为数据流验证器，Split-Verifier）通过数据流分析（Dataflow Analysis）模拟每条指令执行前后的栈帧类型。它从方法入口处的已知类型开始，沿着所有分支（分支/合并）模拟执行。如果某个指令的操作数栈或局部变量表中的类型与指令期望的类型不匹配，则验证失败。这种方法的优点是准确，缺点是复杂、验证慢（需要模拟全部路径）。\n\nStackMapTable 引入后——类型检查验证器不再做推导，而是直接读取 Class 文件中的 StackMapTable 属性获得每个程序点的栈帧类型。它的工作方式：从方法起始帧和 StackMapTable 条目开始，逐条指令检查当前栈帧类型是否匹配，如果遇到分支合并点，StackMapTable 提供了该合并点的期望帧类型，验证器只做检查不做推导。由于 StackMapTable 是由编译器一次性生成的，验证器不再需要符号执行（Dataflow Analysis），验证速度大幅提升。\n\n对编译兼容性的影响——StackMapTable 由 javac 生成（编译时），验证器在运行时读取。如果第三方工具（如字节码框架、代码混淆器、AspectJ 等）生成的字节码没有正确维护 StackMapTable 信息，会导致 VerifyError。这被称为 StackMapTable 兼容性问题，是 JDK 7/8 迁移中最常见的类文件验证失败原因。解决方案：使用 -noverify 参数关闭验证（JDK 13 已删除该参数），或者使用 -XX:-UseSplitVerifier 回退到旧验证器（JDK 8 及以前有效）。\n\n扩展延伸：StackMapTable 加速了 JVM 的启动过程（减少验证时间），是 JDK 7+ 默认开启类型检查验证的基础。字节码操作框架（ASM、ByteBuddy）必须正确处理 StackMapTable——更新字节码后需要重新计算（通过 ClassWriter.COMPUTE_FRAMES 让 ASM 自动计算）。StackMapTable 的一个设计考量是安全性：类型检查验证器比推导验证器更严格、更安全，可以有效防止类型混淆攻击（Type Confusion Attack，如利用非法字节码绕过程序访问控制）。",
+    "hints": [
+      "StackMapTable 让验证器从推导验证变为检查验证——更快更安全",
+      "字节码操作工具如果不同步更新 StackMapTable 会导致 VerifyError——需要 COMPUTE_FRAMES"
+    ],
+    "tags": [
+      "JVM",
+      "Class文件",
+      "StackMapTable",
+      "验证"
+    ]
   }
 ]

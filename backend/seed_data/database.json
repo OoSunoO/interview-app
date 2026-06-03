@@ -1782,5 +1782,106 @@
       "InnoDB",
       "性能优化"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "MySQL Metadata Lock 元数据锁机制",
+    "content": "关于 MySQL 元数据锁（Metadata Lock，MDL）的说法，以下哪个是正确的？",
+    "answer": "答案：D) MDL 在 5.5 版本引入，任何表操作前都需要获取，且 DDL 等待 MDL 会阻塞后续所有该表的请求\n\n解析：MySQL 5.5 引入了元数据锁机制，在执行任何表操作（SELECT、INSERT、DML、DDL）前都会获取 MDL。MDL 的等待队列有优先级——写锁（如 DDL）优先级高于读锁。当一个 DDL 等待 MDL 时，后续所有对该表的读操作都会被阻塞，这是线上 DDL 引发「连坐」阻塞的常见原因。\n\n扩展延伸：MDL 的等待超时由 lock_wait_timeout（默认 31536000 秒即 1 年）控制，实际生产中出现 MDL 阻塞应通过 performance_schema.metadata_locks 表定位源头会话。",
+    "options": [
+      "A) MDL 只在 DDL 执行时获取，DML 不会触发 MDL",
+      "B) MDL 的锁类型只有共享锁一种",
+      "C) MDL 等待队列中，读锁请求优先级高于写锁请求",
+      "D) MDL 在 5.5 版本引入，任何表操作前都需要获取，且 DDL 等待 MDL 会阻塞后续所有该表的请求"
+    ],
+    "hints": [
+      "MDL 是在 MySQL 哪个版本引入的",
+      "DDL 等待 MDL 时为什么会导致连锁阻塞"
+    ],
+    "tags": [
+      "MySQL",
+      "Metadata Lock",
+      "DDL",
+      "锁机制"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL Clone Plugin 克隆插件实现原理",
+    "content": "MySQL 8.0.17 引入了 Clone Plugin，请说明其工作原理：克隆的三种模式（本地克隆、远程克隆、捐赠者模式）各有什么特点？它如何实现一致性快照？与传统备份工具相比有哪些优势？",
+    "answer": "答案：Clone Plugin 利用 InnoDB 的 page copy-on-write 机制，通过后台线程以 page 为单位复制数据文件，同时跟踪复制过程中修改的 page（通过 redo log 的 adjusted LSN 追踪）。\n\n解析：三种模式：1）本地克隆（CLONE LOCAL DATA DIRECTORY）：在本地创建实例的数据目录快照。2）远程克隆（CLONE INSTANCE FROM donor）：从捐赠者实例拉取数据。3）捐赠者模式：被克隆方无需额外配置。克隆过程分三个阶段：INIT（初始化克隆上下文和权限校验）、FILE COPY（逐 page 复制数据文件，跟踪增量变化）、PAGE COPY（复制增量变化的 page）、REDO COPY（复制剩余的 redo log）、DONE（完成并重启目标实例）。\n\n扩展延伸：Clone Plugin 相比备份+恢复添加从库的优势：全自动化、GTID 位置自动同步、更快的速度（物理 page 级复制 vs 逻辑导出）。限制：源和目标 InnoDB page size 必须相同、不支持部分数据库选择。",
+    "hints": [
+      "Clone Plugin 如何保证文件复制过程中的一致性",
+      "克隆的三个阶段分别做了什么"
+    ],
+    "tags": [
+      "MySQL",
+      "Clone Plugin",
+      "备份",
+      "InnoDB"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL Group Replication 认证与冲突检测机制",
+    "content": "MySQL Group Replication（MGR）在多主模式下如何检测和解决事务冲突？请说明认证阶段（Certification）的工作原理，以及 conflict detection 的判定依据。",
+    "answer": "答案：MGR 每个成员独立执行事务，在提交前将事务的写集（Write Set）通过 Group Communication 广播给所有成员，由每个成员独立运行认证过程。\n\n解析：认证阶段核心流程：1）事务提交时生成 Write Set（记录每行修改的主键 ID 和对应的事务快照）。2）通过 Paxos 协议广播到组内所有节点。3）每个节点独立运行 certifier：检查 incoming transaction 的 Write Set 与本地已认证事务的 Write Set 是否存在 key 冲突。4）冲突判定：若新事务的写集与已认证的写集有交集且事务时间戳冲突，则标记为冲突，回滚该事务（仅回滚在多主模式下检测到的写冲突，读不冲突）。5）certified 的事务才允许应用和提交。\n\n扩展延伸：冲突检测粒度是行级（通过主键/唯一键的 hash 值）。单主模式下不存在冲突认证（所有写操作在主节点）。多主模式建议避免同时对同一行进行操作，否则事务吞吐量会因回滚大幅下降。",
+    "hints": [
+      "Certification 基于什么粒度进行冲突检测",
+      "单主和多主模式在冲突检测上的区别"
+    ],
+    "tags": [
+      "MySQL",
+      "Group Replication",
+      "冲突检测",
+      "认证",
+      "MGR"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 8.0 Resource Group 资源组管理",
+    "content": "MySQL 8.0 引入了 Resource Group 功能，它能做什么？如何创建和管理资源组？资源组对线程的 CPU 和优先级控制的具体实现机制是什么？",
+    "answer": "答案：Resource Group 允许 DBA 将运行中的 MySQL 线程分组，并为每组分配不同的 CPU 核心和优先级，实现对查询的精细化资源管控。\n\n解析：资源组分为两类：system_group（系统内部线程，如 IO 线程）和 user_group（用户会话/查询线程）。创建语法：CREATE RESOURCE GROUP rg_name TYPE = USER VCPU = 0-3 THREAD_PRIORITY = -10；通过 RESOURCE_GROUP 会话变量或 SET RESOURCE GROUP 分配线程。VCPU 绑定通过 Linux sched_setaffinity 实现，线程优先级在 Linux 下映射为 nice 值（-20 到 0 之间，仅 USER 类型支持）。\n\n扩展延伸：典型场景——将慢查询自动路由到低优先级的资源组，避免影响 OLTP 主路径。Resource Group 需要 CAP_SYS_NICE 权限（Linux），MySQL 8.0.23+ 支持 Windows Job Objects。Resource Group 对 IO 没有控制能力，仅限 CPU 和优先级。",
+    "hints": [
+      "Resource Group 控制的是 CPU 还是 IO 还是内存",
+      "如何将查询自动分配到指定资源组"
+    ],
+    "tags": [
+      "MySQL",
+      "Resource Group",
+      "性能优化",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "MySQL 8.0 EXPLAIN ANALYZE 实际执行时间",
+    "content": "MySQL 8.0.18 引入的 EXPLAIN ANALYZE 输出的实际执行时间（actual time）包含了锁等待和 IO 等待的时间。",
+    "answer": "答案：正确\n\n解析：EXPLAIN ANALYZE 在 MySQL 8.0.18+ 中通过实际执行查询并计时，输出每个迭代器的 actual startup time 和 actual total time。这些时间是基于 wall-clock 的测量值，包含该迭代器及其所有子迭代器中花费的全部时间——包括 CPU 执行时间、IO 等待时间、锁等待时间、以及行级锁等待。因此它反映的是真实执行时间而非优化器估算值，对于定位实际瓶颈非常有帮助。\n\n扩展延伸：EXPLAIN ANALYZE 执行实际查询（DML 会执行写操作），使用 FORMAT=TREE 输出树形执行计划。相比 EXPLAIN FORMAT=TREE（仅输出估算值），EXPLAIN ANALYZE 额外输出 actual rows 和 actual time。注意：EXPLAIN ANALYZE 会使查询实际运行，对于大表生产操作需谨慎。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "EXPLAIN ANALYZE 是基于实际执行还是估算",
+      "actual time 是 wall-clock 还是 CPU time"
+    ],
+    "tags": [
+      "MySQL",
+      "EXPLAIN ANALYZE",
+      "查询优化",
+      "性能诊断"
+    ]
   }
 ]

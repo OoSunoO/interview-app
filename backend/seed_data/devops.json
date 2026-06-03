@@ -1744,5 +1744,105 @@
       "构建缓存",
       "Dockerfile"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Docker BuildKit 与 buildx 多平台构建",
+    "content": "关于 Docker BuildKit 和 buildx 多平台构建，以下说法正确的是？",
+    "answer": "答案：A) BuildKit 是下一代 Docker 构建引擎，通过并发构建、LLB 中间表示和缓存导入导出加速镜像构建过程\n\n解析：BuildKit 是 Docker Engine 从 18.09 开始集成的下一代构建引擎（DOCKER_BUILDKIT=1 启用），核心改进：1）并发构建——解析依赖 DAG 后并行执行无依赖的构建步骤。2）LLB（Low-Level Build）中间表示——将 Dockerfile 转换成 LLB 后优化执行计划。3）导入/导出缓存（inline/registry/local 等多种缓存模式）。4）前端支持多种前端（gateway）——不仅限 Dockerfile。buildx 是 BuildKit 的 CLI 封装，核心功能：跨平台构建（--platform linux/amd64,linux/arm64）通过 QEMU 模拟或远程 builder 实例实现。\n\n扩展延伸：buildx bake 支持 HCL/JSON/YAML 格式定义多服务构建配置。构建缓存共享：--cache-from type=registry,ref=image:cache --cache-to type=registry,ref=image:cache,mode=max。多平台镜像不是真正的 multi-arch manifest（manifest list）而是通过 manifest list 引用多个平台的镜像。BuildKit 的 --secret 和 --ssh 参数解决了构建中安全传递证书和 SSH key 的问题。",
+    "options": [
+      "A) BuildKit 是下一代 Docker 构建引擎，通过并发构建、LLB 中间表示和缓存导入导出加速镜像构建过程",
+      "B) buildx 是独立的构建引擎，不依赖 Docker 守护进程",
+      "C) BuildKit 不支持多阶段构建",
+      "D) buildx 多平台构建必须在同一台机器上使用 QEMU 模拟"
+    ],
+    "hints": [
+      "BuildKit 的 LLB 是什么",
+      "buildx 如何实现跨架构构建"
+    ],
+    "tags": [
+      "Docker",
+      "BuildKit",
+      "buildx",
+      "镜像构建",
+      "CI/CD"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Crossplane 基础设施控制平面",
+    "content": "Crossplane 是一种基础设施控制平面的开源框架。请说明 Crossplane 的核心架构（包括 Provider、Composition、Claim 和 XRD 的关系），以及它如何实现「基础设拖即代码」和「平台工程」理念。与 Terraform 相比有哪些本质区别？",
+    "answer": "答案：Crossplane 是基于 Kubernetes 的 CNCF 项目，通过 K8s CRD 和 Operator 模式将云资源（AWS RDS、GCP CloudSQL 等）以 K8s API 对象的形式暴露，实现「声明式基础设施管理」。\n\n解析：核心抽象：1）Provider——封装云厂商 API 的 Controller，watch CR 并调谐实际云资源。2）Managed Resource（MR）——Provider 管理的单个云资源（如一个 RDS 实例）。3）Composite Resource（XR）——由 Composition 定义的多个资源组合。4）Composition——定义 XR 的模板，用 patches 和 transforms 将 Claim 参数注入子资源。5）Claim（XRC）——最终用户通过 namespace 隔离的轻量级 API。6）XRD（CompositeResourceDefinition）——定义 XR 的 schema。Terraform 对比：Terraform 用 HCL + statefile，是执行驱动工具；Crossplane 用 K8s API + controller reconcile，是持续调谐的控制平面。Crossplane 不需要 CI/CD 触发 apply/plan，controller 自动保持期望状态。\n\n扩展延伸：Crossplane 与 ArgoCD/GitOps 天然集成（因为资源都是 K8s 对象）。功能包（Package）机制通过 provider-xxx 镜像分发 Provider。Composition Functions（Crossplane 1.14+）支持用 Python/Go 编写自定义资源转换逻辑。作为平台工程工具，Crossplane 让平台团队定义 Composition + XRD，应用开发者只创建 Claim（简单的 YAML），无需关心底层云资源细节。",
+    "hints": [
+      "Crossplane 的 XRD、Composition、Claim 三层抽象关系",
+      "Crossplane 与 Terraform 的设计哲学区别"
+    ],
+    "tags": [
+      "Crossplane",
+      "IaC",
+      "平台工程",
+      "Kubernetes",
+      "基础设施"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DevContainer 开发容器规范",
+    "content": "DevContainer（Development Container）正在成为标准化的开发环境规范。请说明 DevContainer 的核心概念（devcontainer.json 的关键配置项），以及它如何解决「在我机器上能跑」的问题。与传统 Docker Compose 开发方案相比有什么优势？",
+    "answer": "答案：DevContainer 是 Microsoft 主导的开放规范（现归 CNCF），通过 devcontainer.json 描述开发容器的配置，支持 VS Code、JetBrains、GitHub Codespaces、Gitpod 等环境。\n\n解析：devcontainer.json 关键配置：image/build（基础镜像或 Dockerfile 构建）、extensions（IDE 插件预装）、settings（编辑器配置）、postCreateCommand（容器创建后运行的脚本）、forwardPorts（端口转发）、mounts（额外挂载卷）、features（开箱即用的功能包——Java、Python、Docker-in-Docker 等）。Features 机制是 DevContainer 的核心创新：一个声明即可安装完整工具链，无需手写 Dockerfile RUN 命令。\n\n扩展延伸：DevContainer 规范支持三种模式——本地（Docker）、远程（SSH/远程机器）、云（Codespaces/Gitpod）。相比传统 Docker Compose 方案：DevContainer 提供 IDE 感知（自动安装插件，自动配置调试器）、postCreate 钩子（环境初始化自动完成）、Feature 生态（社区共享的工具安装配方）。缺点：对 Docker 依赖较强，资源占用较高，对于轻量开发环境可能过于臃肿。spec 目前由 devcontainer-spec 维护。",
+    "hints": [
+      "DevContainer 的 Features 机制解决了什么问题",
+      "DevContainer 的三种运行模式是什么"
+    ],
+    "tags": [
+      "DevContainer",
+      "开发环境",
+      "容器化",
+      "IDE"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Falco 容器运行时安全",
+    "content": "Falco 是 CNCF 的容器运行时安全项目。请说明 Falco 的工作原理（包括驱动层、规则引擎和输出管道），它如何利用 eBPF 或内核模块进行系统调用监控，以及规则（Rule）的编写方法。",
+    "answer": "答案：Falco 通过监控 Linux 系统调用实现容器运行时威胁检测，核心原理是：捕获所有系统调用 → 解析系统调用上下文（进程、容器、命名空间信息） → 通过规则引擎匹配异常行为 → 输出告警。\n\n解析：驱动层三种模式：1）kernel module——falco-probe 内核模块，性能最佳但需要加载内核模块。2）eBPF probe（推荐）——通过 BPF 程序挂载到 tracepoint/sys_enter 和 sys_exit，无需内核模块。3）modern eBPF——利用 CO-RE (Compile Once Run Everywhere) 和 BPF iterator，支持 5.10+ 内核。规则引擎使用 Falco Rules（YAML 格式），每个规则包含 condition（用 Sysdig 过滤语法编写）、output（告警输出格式化字符串）、priority（emergency/alert/critical/error/warning/notice/info/debug）。规则示例：condition: evt.type=execve and proc.name!=bash and container.id!=host。\n\n扩展延伸：Falco 输出支持多种方式——stdout、Syslog、gRPC、Webhook、Falcosidekick（对接 Slack/PagerDuty/AWS SQS/Elasticsearch 等）。Falco 规则集分为默认规则（异常 shell、特权容器、敏感路径访问）和自定义规则。Falco 的优先级：macro（可复用的条件片段）> list（可复用的元素列表）> rule（完整的检测规则）。Falco 0.36+ 支持 Plugins，可扩展到非系统调用事件源（如 Kubernetes audit log、AWS CloudTrail）。",
+    "hints": [
+      "Falco 的三种驱动模式及各自的优缺点",
+      "Falco 规则的 condition 语法基础"
+    ],
+    "tags": [
+      "Falco",
+      "运行时安全",
+      "eBPF",
+      "容器安全",
+      "CNCF"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes Descheduler 与节点负载均衡",
+    "content": "Kubernetes Descheduler 的作用是什么？请说明 Descheduler 的策略类型（RemoveDuplicates、LowNodeUtilization、RemovePodsViolatingInterPodAntiAffinity 等）以及每个策略的触发机制。如何将 Descheduler 与 Cluster Autoscaler 配合使用？",
+    "answer": "答案：Kubernetes Descheduler 是一个可选的调度优化组件（目前为 sig-scheduling 子项目），通过周期性扫描当前 Pod 分布，根据配置策略找到不合理的调度决策并驱逐 Pod，由 Scheduler 重新调度到更适合的节点。\n\n解析：主要策略（v1alpha2 API）：1）RemoveDuplicates——将同属于一个 ReplicaSet/Deployment 的多个 Pod 分散到不同节点。2）LowNodeUtilization——找出资源利用率低的节点，从高利用率节点驱逐 Pod 并调度到低利用率节点实现负载均衡。3）RemovePodsViolatingInterPodAntiAffinity——移除违反 Pod 反亲和性策略的 Pod。4）RemovePodsViolatingNodeAffinity——移除因节点标签变更而不再满足 Node Affinity 的 Pod。5）RemovePodsViolatingTopologySpreadConstraint——移除违反拓扑分布约束的 Pod（v1alpha2+）。6）PodLifeTime——驱逐运行时间超过阈值的 Pod。每个策略可配置包括 evictionTimeGroup（策略执行间隔）、thresholds（资源利用率阈值）等参数。\n\n扩展延伸：Descheduler + Cluster Autoscaler 配合：Descheduler 通过 Pod 驱逐创建可调度空间，Cluster Autoscaler 检测到节点利用率低后缩容节点，实现全局弹性。注意：Descheduler 本身用 Eviction API（遵循 PDB），不会触发 PDB 不允许的驱逐。Descheduler 的 v1alpha2（1.24+）支持策略配置文件（Profile）模式，可定义多个策略集。生产注意事项：Graduated to beta in 1.21，但仍建议先通过 dry-run 模式观察影响。",
+    "hints": [
+      "Descheduler 和 Scheduler 的关系是什么",
+      "Descheduler 如何与 Cluster Autoscaler 联动"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Descheduler",
+      "调度",
+      "负载均衡",
+      "Cluster Autoscaler"
+    ]
   }
 ]

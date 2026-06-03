@@ -2175,5 +2175,110 @@
       "initialization-safety",
       "concurrency"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "ConcurrentHashMap.search 系列方法的短路终止语义",
+    "content": "ConcurrentHashMap 的 search 系列方法（search / searchKeys / searchValues / searchEntries）提供了在映射上应用搜索的并行操作。以下关于这些方法的正确描述是哪些？（多选）\nA) search 方法接受一个函数，应用到映射的每个元素上，返回第一个非 null 的函数结果\nB) 当任一分区找到非 null 结果后，其他正在执行的分区任务会被取消或忽略其返回结果\nC) search 方法会捕获函数中抛出的异常，继续在其他元素上执行搜索\nD) 搜索函数返回的非 null 结果被严格保证是「映射中第一个」满足条件的元素（按迭代顺序）\nE) searchEntries 的搜索函数接收 Map.Entry 作为参数，而 search 接收键值对",
+    "answer": "A)、B)",
+    "hints": [
+      "search 系列的短路行为是基于 ForkJoinTask 的 complete() 方法实现的——当找到一个结果时，调用 complete() 设置结果并通知 ForkJoinPool 取消未执行的任务",
+      "如果 search 函数对所有元素都返回 null（即未找到匹配项），search 返回 null"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "search",
+      "短路",
+      "并行",
+      "ForkJoinPool"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Collectors.teeing 多路聚合的特性",
+    "content": "Collectors.teeing(Collector, Collector, BiFunction) 是 JDK 12 引入的 Collector。以下关于 teeing 的正确描述是哪些？（多选）\nA) 可以将同一个流中的元素同时发送到两个不同的 Collector 中进行聚合\nB) 两个下游 Collector 共享同一个中间结果容器\nC) 最终通过一个 BiFunction 将两个下游 Collector 的结果合并为一个结果\nD) teeing 要求两个下游 Collector 的类型和中间结果类型完全相同\nE) 在并行流中，teeing 要求两个 Collector 都是 CONCURRENT 且 UNORDERED",
+    "answer": "A)、C)",
+    "hints": [
+      "Teeing 的经典用例：同时计算流的统计信息——Collectors.teeing(summingInt(), counting(), (sum, count) -> sum / count) 计算平均值",
+      "两个下游 Collector 各自独立维护自己的中间结果容器，它们互不干扰"
+    ],
+    "tags": [
+      "Collectors",
+      "teeing",
+      "Stream API",
+      "聚合",
+      "JDK 12"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Spliterator 特性标志对 Stream 并行拆分策略的影响",
+    "content": "Spliterator 的特性标志（characteristics）通过 trySplit() 方法控制 Stream 的并行拆分行为。以下关于特性标志影响的正确描述是哪些？（多选）\nA) SIZED + SUBSIZED 保证通过 trySplit() 拆分得到的两个子 Spliterator 的大小精确可知\nB) CONCURRENT 特征表示元素源可以被其他线程并发修改，因此在拆分时不能依赖 trySplit 的稳定性\nC) IMMUTABLE 特征保证元素源在 Spliterator 的遍历期间不会发生结构变更\nD) ORDERED 特征要求 Spliterator 拆分时必须保持遇到顺序（encounter order）\nE) NONNULL 特征表示 Spliterator 会在遍历时自动跳过 null 元素",
+    "answer": "A)、B)、C)",
+    "hints": [
+      "SUBSIZED 是 SIZED 的增强版本——不仅当前 Spliterator 大小已知，且任何由 trySplit() 产生的子 Spliterator 也报告已知大小",
+      "CONCURRENT 和 IMMUTABLE 是互斥的特征——一个流不能同时被其他线程修改又是不可变的"
+    ],
+    "tags": [
+      "Spliterator",
+      "特性标志",
+      "并行流",
+      "trySplit",
+      "Stream API"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "BlockingQueue.drainTo 方法的并发语义保证",
+    "content": "BlockingQueue.drainTo(Collection<? super E> c) 和 drainTo(Collection<? super E> c, int maxElements) 用于将队列中的元素批量转移到目标集合。以下关于 drainTo 并发语义的正确描述是哪些？（多选）\nA) drainTo 将队列中「当前可用」的元素一次性转移到目标集合\nB) drainTo(Collection, int maxElements) 最多转移 maxElements 个元素\nC) 相比循环调用 poll，drainTo 可以减少锁获取次数，提高批量元素获取效率\nD) drainTo 执行期间其他线程添加的元素一定会被包含在本次转移中\nE) drainTo 会在没有可用元素时阻塞等待新元素到达",
+    "answer": "A)、B)、C)",
+    "hints": [
+      "drainTo 不阻塞等待新元素——它只转移当前可用的元素。如果需要等待，使用 take() 或 poll(timeout, unit)",
+      "drainTo 常用于批量消费消息队列中的可用消息，减少锁竞争的同时提高吞吐量"
+    ],
+    "tags": [
+      "BlockingQueue",
+      "drainTo",
+      "并发",
+      "批量操作",
+      "锁竞争"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Map.Entry 实现类与 Map.entry 工厂方法的行为对比",
+    "content": "关于 AbstractMap.SimpleEntry、AbstractMap.SimpleImmutableEntry 和 Map.entry(K, V) 工厂方法（JDK 9+），以下哪些描述是正确的？（多选）\nA) SimpleEntry 是可变的——setValue(V value) 修改 Entry 内部的值并返回旧值\nB) SimpleImmutableEntry 的 setValue 方法抛出 UnsupportedOperationException\nC) Map.entry(K, V) 返回的 Entry 支持 setValue 方法修改值\nD) SimpleEntry 和 SimpleImmutableEntry 都重写了 equals 和 hashCode 方法，基于键值对进行比较\nE) SimpleImmutableEntry 的 key 和 value 使用 final 修饰",
+    "answer": "A)、B)、D)、E)",
+    "hints": [
+      "Map.entry() 返回的是一个私有实现（不可变的），其 setValue 抛出 UnsupportedOperationException——常用于 Stream 中生成不可变 Entry",
+      "SimpleEntry 的 equals 比较：Objects.equals(key, other.key) && Objects.equals(value, other.value)，不涉及对象标识"
+    ],
+    "tags": [
+      "Map.Entry",
+      "SimpleEntry",
+      "SimpleImmutableEntry",
+      "Map.entry",
+      "不可变Entry"
+    ],
+    "options": [],
+    "company": ""
   }
 ]

@@ -1721,5 +1721,105 @@
       "MTP",
       "训练目标"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "BitNet b1.58: 1.58-bit 模型量化原理",
+    "content": "解释 BitNet b1.58（又称三元大语言模型）的核心思想，包括其权重的表示方式、与传统量化（INT4/INT8）及全精度训练的区别，以及在推理时的关键优势。",
+    "answer": "BitNet b1.58 提出了三元权重，取值仅为 {-1, 0, +1}，每参数仅需约 1.58 bit。其核心创新在于推理时三元权重与激活向量的矩阵乘法简化为仅含加减法运算，完全消除乘法操作。实现方式是在训练中对每个权重张量使用逐通道缩放因子进行量化和截断：W_ternary = Round(Clip(W / α, -1, 1))，其中 α 为逐通道权重绝对值均值。与 INT4/INT8 线性量化的关键区别在于：BitNet 的权重量化是训练感知的（在整个训练过程中维护三元权重），而非训练后量化。训练时使用直通估计器（STE）处理不可导的取整操作。主要优势包括：(1) 消除矩阵乘法大幅降低推理能耗，(2) 显著节省显存，(3) 支持端侧和边缘部署大模型，(4) 在 3B+ 参数量级上保持与全精度模型接近的准确率。该工作由 Microsoft Research 于 2024 年发表。",
+    "hints": [
+      "思考比二值（binary）更灵活但比 INT4 更简化的最低比特表示是什么。",
+      "关注当权重被约束为 {-1, 0, +1} 时矩阵乘法拆解为了什么运算。",
+      "Microsoft Research 在 2024 年发表该工作，验证了 3.9B 参数量级依然可行。"
+    ],
+    "tags": [
+      "model_quantization",
+      "ternary_weight",
+      "bitnet",
+      "extreme_compression",
+      "inference_efficiency"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Joint Embedding Predictive Architecture (JEPA)",
+    "content": "解释 Yann LeCun 提出的联合嵌入预测架构（JEPA）。JEPA 与传统的生成式模型和对比学习方法有何不同？该架构的关键组件是什么，以及它的主要优势有哪些？",
+    "answer": "JEPA（Joint Embedding Predictive Architecture）是一种自监督学习方法，其核心创新在于在抽象表示空间中做预测，而非在像素或 Token 空间。与生成式模型（如 MAE、扩散模型）预测像素、以及对比学习方法最大化视图间一致性的思路不同，JEPA 在 learned embedding space 中预测输入的一部分从另一部分得到的表示。架构包含三个核心组件：(1) 编码器（Encoder）将输入 x 映射为表示 s，(2) 预测器（Predictor）从上下文表示 s_x 预测目标表示 s_y，(3) 目标编码器（通常为动量更新的版本）。关键优势包括：(1) 避免建模像素空间中高熵的无关细节，(2) 高效学习抽象语义表示，(3) 支持跨模态的多种预测任务。主要挑战是防止表示崩塌（representation collapse），通过方差-协方差正则化（VICReg）、非对称架构（stop-gradient）或动量编码器等技术来解决。LeCun 认为 JEPA 是迈向类人学习的关键一步，通过抽象预测来构建世界模型（world model）。",
+    "hints": [
+      "比较预测发生的位置——在像素空间还是在潜在空间。",
+      "思考 LeCun 所说的「世界模型」的含义，以及抽象预测与人类认知的关系。",
+      "架构名称本身就揭示了核心思想：Joint Embedding（联合嵌入）+ Predictive（预测）。"
+    ],
+    "tags": [
+      "self_supervised_learning",
+      "jepa",
+      "representation_learning",
+      "world_model",
+      "yann_lecun"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Consistency Models（一致性模型）",
+    "content": "关于生成式 AI 中的 Consistency Models（一致性模型），以下哪个描述是正确的？\nA) 它们是一类使用一致性损失的扩散模型，确保模型输出对输入的小扰动保持不变。\nB) 它们通过学习一个一致性函数，将扩散轨迹上的任意噪声点直接映射回原始数据分布，从而单步生成。\nC) 它是一种集成技术，多个模型对最终输出投票，确保不同随机种子下的预测一致性。\nD) 它们通过在时间维度上施加帧级一致性损失来保证视频生成的时间一致性。",
+    "answer": "B",
+    "hints": [
+      "OpenAI 的宋飏（Song Yang）提出了该方法，目标是无需对抗训练即可实现单步或少步生成。",
+      "核心思想是学习函数 f(x_t, t)，将扩散 ODE 轨迹上的任意含噪样本 x_t 映射到同一个干净数据点 x_0。",
+      "该方法在快速 GAN 式生成与高质量扩散式生成之间架起了桥梁。"
+    ],
+    "tags": [
+      "generative_model",
+      "consistency_model",
+      "diffusion_acceleration",
+      "single_step_generation",
+      "song_yang"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Diffusion Forcing（扩散强迫）",
+    "content": "Diffusion Forcing 是一种结合扩散模型与序列建模的新架构。以下哪个选项正确描述了其核心创新？\nA) 它用扩散来增强训练数据，通过一致性过滤器强制合成样本通过检测。\nB) 它对序列中的每个 Token 应用独立的扩散过程，并在去噪后的潜在表示上计算下一个 Token 预测损失，从而在单一框架中统一生成与序列建模。\nC) 它通过在去噪输出上添加对抗判别器损失，强制扩散模型生成精确重建。\nD) 它用基于扩散的 Token 混合层取代了 Transformer 中的标准自注意力。",
+    "answer": "B",
+    "hints": [
+      "MIT CSAIL 于 2024 年发表该工作，以前所未有的方式结合了扩散与下一个 Token 预测。",
+      "它将序列中的每个时间步视为拥有独立的噪声水平，实现了灵活的 Token 级控制。",
+      "该框架统一了视频生成、序列插值和规划任务。"
+    ],
+    "tags": [
+      "diffusion_forcing",
+      "sequence_modeling",
+      "mit_csail",
+      "unified_framework",
+      "generative_modeling"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Representation Engineering（表征工程）",
+    "content": "什么是表征工程（Representation Engineering / RepE），它与传统的微调和提示工程方法在控制大模型行为方面有何不同？描述其核心方法及主要应用场景。",
+    "answer": "表征工程（RepE）是一种无需训练的模型行为控制方法，通过直接操纵模型内部表示来引导其行为，而非修改权重（微调）或输入文本（提示工程）。核心方法包括四个步骤：(1) 收集对比输入对，触发目标概念（如诚实 vs 不诚实），(2) 提取模型隐藏层在对比输入下的激活差异，(3) 计算表示空间中代表该概念方向的控制向量（control vector），(4) 在推理时对隐藏状态加上或减去该向量来偏置模型行为。与提示工程的关键区别：RepE 能控制提示词无法可靠触发的行为（如潜意识偏见）。与微调的关键区别：无需梯度计算，无需训练，推理时即时切换。主要应用包括：增强真实性（truthfulness）、减少谄媚（sycophancy）、移除有害能力、控制情感语气、提升事实性——所有这些都在推理时完成，不修改模型权重。RepE 代表了提示工程和微调之外的第三种对齐范式，由 MIT、Stanford 等机构在 2023-2024 年系统化提出。",
+    "hints": [
+      "核心洞察：大模型内部表示中，诚实、有害性等概念编码为激活空间中的方向向量。",
+      "与 RLHF 或微调不同，该方法只需前向传播对比数据对，完全不需要训练。",
+      "MIT、Stanford 等机构在 2023-2024 年将其系统化，也被称为 activation steering（激活引导）。"
+    ],
+    "tags": [
+      "representation_engineering",
+      "activation_steering",
+      "mechanistic_interpretability",
+      "ai_alignment",
+      "training_free"
+    ]
   }
 ]

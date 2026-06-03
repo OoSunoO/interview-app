@@ -1771,5 +1771,105 @@
       "上下文优化",
       "Token 压缩"
     ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 语义漂移检测与持续监控",
+    "content": "在 AI Agent 上下文中什么是语义漂移（semantic drift）？生产环境中可以使用哪些技术来检测和监控它？解释数据漂移（data drift）、概念漂移（concept drift）与 Agent 语义漂移的区别。",
+    "answer": "Agent 系统的语义漂移指 Agent 行为随时间的逐渐退化或意外变化，即使模型权重本身不变。与传统机器学习的数据漂移（输入分布变化）或概念漂移（标签分布变化）不同，语义漂移影响 Agent 的推理质量、工具使用模式和输出连贯性。在 Agent 系统中具体表现为：(1) 推理漂移——相同问题类型下 Agent 使用不同（通常更差）的推理路径，(2) 工具选择漂移——Agent 逐渐偏向次优甚至错误的工具选择，(3) 输出漂移——回复风格、语气或结构逐渐变化。检测技术包括：(1) 基于嵌入的监控——计算近期 Agent 嵌入与同任务基线嵌入的余弦距离，(2) 行为回归测试——定期运行固定 Agent 评测集并跟踪通过率，(3) 输出分布监控——跟踪指标如回复长度、工具调用频率、拒绝率和置信度分数随时间的趋势，(4) 冻结参考 Agent A/B 对比——部署一个使用原始系统提示的影子 Agent 与当前 Agent 并行比较，(5) 语义相似度分析——使用嵌入模型对比当前 Agent 输出与标准测试用例的期望输出。根本原因通常是系统提示更新、上游工具 API 变化或模型 API 版本变化。",
+    "hints": [
+      "漂移发生在模型本身不变的情况下——这与系统动态有关。",
+      "思考如何量化地判断 Agent 是否「仍然像上周一样表现」。",
+      "基于嵌入的相似度指标 + 定期评测集是主要检测工具。"
+    ],
+    "tags": [
+      "semantic_drift",
+      "agent_monitoring",
+      "production_observability",
+      "behavioral_regression",
+      "ml_ops"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Multi-Model Agent 架构: 规划器与执行器分离",
+    "content": "在规划器-执行器分离的 Multi-Model Agent 架构中，以下哪个选项最准确地描述了其设计原理和实现方式？\nA) 单一大型模型同时处理规划和执行，但执行在独立线程中并行运行。\nB) 强大的（通常更大的）LLM 作为规划器，将任务分解为子任务并决定工具编排；小而快的 LLM 作为执行器完成每个子任务——规划器低频调用，执行器高频运行以降低延迟和成本。\nC) 规划器是专门微调的模型用于任务分解，执行器是从历史执行数据库中搜索最佳动作的检索模型。\nD) 规划器和执行器是同一个模型，但使用不同的系统提示——规划器用「plan」提示，执行器用「act」提示。",
+    "answer": "B",
+    "hints": [
+      "该模式通过为不同认知负载使用不同模型层级来优化成本-延迟-质量的权衡。",
+      "类比人类分工：昂贵的 CEO（规划器）定方向，便宜的员工（执行器）干活。",
+      "规划器的产出（计划）通常是高价值低频次的，而执行器调用是海量的。"
+    ],
+    "tags": [
+      "multi_model_agent",
+      "planner_executor",
+      "architecture_pattern",
+      "cost_optimization",
+      "model_selection"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent Process Mining（过程挖掘）",
+    "content": "什么是 Agent Process Mining（Agent 过程挖掘），它如何应用于理解和改进多 Agent 系统？描述关键数据源、分析技术以及可产出的 actionable insights。",
+    "answer": "Agent Process Mining 将传统的业务流程挖掘技术应用于分析 Agent 执行轨迹。核心思想是从日志事件中重建和分析实际的决策过程，而非依赖于 Agent 系统的设计预期。关键数据源包括：(1) 带时间戳和参数的工具调用事件，(2) Agent 决策点和推理轨迹，(3) 多 Agent 系统间的消息传递，(4) Agent 工作流中的状态转换，(5) 错误事件和重试记录。分析技术包括：(1) 轨迹一致性检查（trace conformance checking）——比较实际 Agent 行为与预期工作流或 SOP，(2) 性能瓶颈识别——发现高延迟、频繁重试或高 Token 消耗的步骤，(3) 变体发现（variant discovery）——识别常见的路径偏离（如「Agent 在什么情况下偏离最优路径」），(4) Agent 决策挖掘——分析影响 Agent 路由决策的因素，(5) 多 Agent 社交网络分析——识别通信模式、瓶颈和枢纽 Agent。可操作的洞察包括：(1) 发现未在文档中记录但实际有效的模式并加以固化，(2) 识别跨轨迹共有的失败模式，(3) 优化 Agent 工作流结构，(4) 根据实际使用模式设计更好的工具 Schema，(5) 通过挖掘成功执行轨迹来改进 Agent 训练数据。",
+    "hints": [
+      "类比业务流程挖掘如何从事件日志中发现实际流程，而非设计流程。",
+      "每条 Agent 轨迹（工具调用和决策序列）就是传统过程挖掘中的一个流程实例。",
+      "这可以揭示令人惊讶的模式——Agent 可能发展出设计者从未预料到的有效策略。"
+    ],
+    "tags": [
+      "process_mining",
+      "agent_observability",
+      "trace_analysis",
+      "multi_agent_debugging",
+      "behavioral_insights"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 成本归因与配额管理体系",
+    "content": "描述生产环境 Agent 部署中的成本归因与配额管理系统。应该跟踪哪些指标？如何在用户、团队和功能之间分配成本？",
+    "answer": "一套完整的 Agent 成本归因系统需要按多个维度跟踪细粒度成本数据。核心指标包括：(1) 按模型层级（GPT-4 vs GPT-3.5 vs 开源模型）分拆的 Token 成本（输入/输出），(2) 按工具维度（尤其是外部 API 调用如搜索、数据检索、代码执行）的每次执行成本，(3) 延迟成本（首 Token 时间、总执行时间），(4) 每次请求的调用深度（交互轮数、工具调用次数）。追踪维度包括：用户 ID、团队/部门、功能/集成点、会话 ID、模型版本、工具类别和时间桶。系统通常由以下组件构成：(1) 中间件层——拦截所有 LLM 和工具调用并记录用量，(2) 成本聚合服务——按维度分桶归集成本，(3) 限流器和预算执行器——在执行高成本操作前检查当前消费是否超出配额，(4) 预算系统——允许管理员设置按用户/团队/功能的预算，支持多种策略（硬停止、软警告、限流）。配额管理策略包括：(1) 分级配额（免费层使用廉价模型，高级层使用最佳模型），(2) 功能级预算（关键功能获得更高配额），(3) 动态限流（高峰期间降低模型质量），(4) 成本感知路由（接近预算上限时路由到更便宜模型）。",
+    "hints": [
+      "类比云成本管理工具，但专门针对 LLM Token 和工具调用粒度。",
+      "每次 Agent 调用就是一笔需要成本账目的「交易」。",
+      "系统既要跟踪历史也要实时执行未来的预算限制。"
+    ],
+    "tags": [
+      "cost_attribution",
+      "quota_management",
+      "production_agents",
+      "cost_optimization",
+      "token_budgeting"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "自进化 Agent 提示词优化",
+    "content": "自进化 Agent 提示词（self-evolving prompts，也称 prompt self-optimization 或 meta-prompting）使 Agent 能够自动改进自身提示词。以下哪个选项最准确地描述了这种方法的实际工作方式？\nA) Agent 使用另一个 LLM（「提示词工程师」模型）每 N 个请求后根据这些请求的聚合反馈重写其系统提示词。\nB) Agent 维护一个候选提示词池，用变异算子对提示词进行变异，在预留的任务集上评估每个候选，然后迭代选择最优的——这是将神经进化（neuro-evolution）应用于提示词文本。\nC) Agent 将每次遇到的错误追加到系统提示词中作为「教训」，使提示词无限增长。\nD) Agent 将提示词翻译为向量嵌入，在嵌入空间中执行梯度下降以找到最优提示向量。",
+    "answer": "B",
+    "hints": [
+      "该方法将提示词本身视为可训练参数，通过迭代变异和选择来优化。",
+      "类比将遗传算法或进化策略应用于自然语言提示词。",
+      "DSPy 等框架将提示词优化形式化为程序化编译（programmatic compilation）。"
+    ],
+    "tags": [
+      "self_evolving_prompt",
+      "prompt_optimization",
+      "meta_prompting",
+      "evolutionary_algorithm",
+      "dspy"
+    ]
   }
 ]

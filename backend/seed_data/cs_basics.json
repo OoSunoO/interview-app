@@ -1770,5 +1770,97 @@
       "HTTP",
       "连接管理"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "TCP TIME_WAIT 状态的设计目的、危害与优化策略",
+    "content": "TCP 四次挥手中主动关闭方进入 TIME_WAIT 状态。请详细说明：\n1) TIME_WAIT 的设计目的（至少两个）；\n2) 在并发连接数高的服务端，TIME_WAIT 过多带来的具体问题；\n3) Linux 系统层面和应用层面的优化手段（包括 tcp_tw_reuse、tcp_tw_recycle、SO_LINGER 等方案的原理与缺陷）。",
+    "answer": "TIME_WAIT 主要有两个设计目的：第一，确保被动关闭方能收到最后一次 ACK（若 ACK 丢失，被动方重发 FIN，主动方需在 TIME_WAIT 中重发 ACK）；第二，使旧连接的报文在网络中自然消亡（2MSL），避免新连接收到旧连接的延迟报文。\n\n过多 TIME_WAIT 的危害：导致本地端口耗尽（ephemeral port 耗尽），无法发起新连接；在反向代理（如 Nginx）中表现尤为明显。\n\n优化策略：\n- net.ipv4.tcp_tw_reuse：允许在 TIME_WAIT 状态的端口用于发起新的出站连接，前提是时间戳递增，安全但仅适用于客户端场景。\n- net.ipv4.tcp_tw_recycle：更快回收 TIME_WAIT，但依赖时间戳且在 NAT 环境下会误判（同一 NAT 后不同主机的 timestamp 不同），已在 Linux 4.10 中移除。\n- SO_LINGER 设置为 0：直接发送 RST 而非 FIN，跳过四次挥手，但可能丢失数据。\n- 增大端口范围（net.ipv4.ip_local_port_range）。\n- 使用连接池复用长连接，减少连接创建/销毁频率。",
+    "hints": [
+      "TIME_WAIT 持续时间是 2MSL，MSL 是报文最大生存时间（通常 30s-2min）。",
+      "tcp_tw_recycle 在 NAT 环境下会导致哪些问题？同一公网 IP 后不同主机的 TCP 时间戳不同。"
+    ],
+    "tags": [
+      "TCP",
+      "网络协议",
+      "Linux 内核",
+      "高并发",
+      "传输层"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Linux seccomp 安全机制与系统调用过滤",
+    "content": "关于 Linux seccomp（Secure Computing Mode）的叙述，以下哪一项是正确的？\n\nA) seccomp 通过限制文件系统访问路径来实现安全隔离，与 chroot 原理相同\nB) seccomp-bpf 允许用户通过 BPF（Berkeley Packet Filter）规则动态限制进程可调用的系统调用\nC) seccomp 只能工作在 strict 模式下，白名单仅允许 read、write、exit 和 rt_sigreturn 四个系统调用\nD) seccomp 与 namespace 完全等价，两者选其一即可实现容器安全",
+    "answer": "B) seccomp-bpf 允许用户通过 BPF 规则动态限制进程可调用的系统调用。\n\n解析：\nA 错误：seccomp 限制的是系统调用层面而非文件系统路径；chroot 限制的是文件系统根路径，两者原理完全不同。\nB 正确：seccomp-bpf 模式使用 BPF 规则过滤系统调用，支持黑名单/白名单策略，Docker 和 Chrome 均使用此技术。\nC 错误：seccomp 有两种模式——STRICT（仅允许 4 个系统调用）和 FILTER（即 seccomp-bpf，支持自定义 BPF 规则）。\nD 错误：namespace 和 seccomp 是互补而非等价关系，容器安全需要两者结合（namespace 隔离资源视图，seccomp 限制系统调用面）。",
+    "hints": [
+      "seccomp 工作在系统调用层，与 Capabilities 和 namespace 的隔离维度不同。",
+      "Chrome 浏览器和 Docker 容器都使用 seccomp-bpf 来收缩攻击面。"
+    ],
+    "tags": [
+      "Linux 内核",
+      "安全",
+      "容器",
+      "系统调用"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CPU 同时多线程 (SMT/Hyper-Threading) 的原理与性能影响",
+    "content": "请解释 Intel Hyper-Threading（即同时多线程 SMT）的硬件实现原理。它为何能提升吞吐量？在哪些场景下 SMT 不仅无益反而可能降低性能？L1/L2 缓存在 SMT 的硬件线程间是如何共享或隔离的？",
+    "answer": "SMT 通过在一个物理核心中复制指令获取、解码和提交逻辑单元（即多个架构状态寄存器组），但共享执行单元（ALU、FPU、加载/存储单元），使一个物理核被操作系统识别为多个逻辑核。\n\n收益：当一个硬件线程发生缓存缺失（cache miss）、分支误预测或等待内存访问时，另一线程可占用空闲执行单元，提高流水线利用率和整体 IPC（每时钟周期指令数）。\n\n可能降低性能的场景：\n1) 两个线程同时竞争共享的执行单元（如密集型浮点运算），导致各自执行时间延长。\n2) 缓存竞争加剧，尤其是 L1/L2 在 SMT 线程间完全共享（无隔离），导致互相驱逐对方的热数据。\n3) 安全敏感场景（如密码学操作），同一核心另一线程可能通过侧信道攻击（如 PortSmash）窃取信息。\n\n缓存共享情况：L1 数据缓存和指令缓存、L2 缓存均在 SMT 线程间完全共享；L3 缓存为所有核心共享。这意味着无缓存隔离，SMT 线程的缓存行为会相互干扰，这也是某些云厂商在性能敏感型实例中禁用 HT 的原因。",
+    "hints": [
+      "SMT 复制了架构状态（寄存器组），但共享执行资源。",
+      "密码学场景中，微软和某些云厂商选择在物理核心上禁用 HT。"
+    ],
+    "tags": [
+      "CPU 架构",
+      "计算机体系结构",
+      "性能优化",
+      "虚拟化"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "ACPI 电源管理中 C-State 与 P-State 的区别",
+    "content": "在 ACPI 电源管理中，C-State（C0、C1、C1E、C3、C6、C7 等）控制 CPU 的运行频率和电压组合以实现性能与功耗的平衡，而 P-State（P0、P1、P2 等）控制 CPU 核心的空闲深度（是否暂停时钟、是否关闭缓存）。\n\nA) 正确\nB) 错误",
+    "answer": "B) 错误。\n\n关键概念区分：\n- C-State（Idle State，空闲状态）：控制 CPU 核心的空闲深度，从 C0（工作态）到更深度的 C1（暂停时钟）、C3（关闭 L2/L3 缓存）、C6（保存架构状态并降低电压）、C7（清空 L3 cache 分片）。C-State 数值越大，系统需更长时间从该状态恢复到工作态（退出延迟越大），但功耗越低。\n- P-State（Performance State，性能状态）：在 C0（工作态）前提下，控制 CPU 的运行频率和电压组合。P0 为最高性能/最高功耗，P1 以降频降压依次递减。\n\n常见误区：两者的混淆很常见。C-State 决定「是否休眠」，P-State 决定「醒着时跑多快」。操作系统通常在轻负载时切换到高 C-State 以节能，在需要时调整 P-State 以匹配性能需求。",
+    "hints": [
+      "注意 C-State 和 P-State 分别控制的是 CPU 的哪个维度——一个是「深度」，一个是「速度」。",
+      "CPU 在 P3 状态下能否进入 C6 状态？思考两者的独立性。"
+    ],
+    "tags": [
+      "操作系统",
+      "电源管理",
+      "ACPI",
+      "CPU 架构"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Intel SGX 可信执行环境 (TEE) 的原理与局限",
+    "content": "请阐述 Intel SGX (Software Guard Extensions) 的核心技术原理，包括 enclave 的内存加密保护机制、认证（attestation）过程和密钥层次结构。同时分析 SGX 在实际部署中的主要局限（至少三个），并与 AMD SEV-SNP 或 ARM TrustZone 做简要对比。",
+    "answer": "SGX 允许应用程序在硬件级隔离的 enclave 中运行，保护代码和数据免受更高特权级（包括 OS、VMM、SMM）的访问。\n\n核心原理：\n1) 受保护内存区域（EPC/Enclave Page Cache）被内存控制器加密，使用 MEE（Memory Encryption Engine）在 CPU 内部解密，DRAM 中的数据始终以密文形式存在。\n2) 密钥层次从 CPU 熔丝的 Fuse Key 派生，每 CPU 唯一；包含 Seal Key（持久化加密）、Provision Key（平台证明）等。\n3) 认证（Remote Attestation）：enclave 代码生成签名报告，Intel 认证服务（IAS/DCAP）验证后确认该 enclave 在真实 SGX 硬件上运行且代码未被篡改。\n\n主要局限：\n1) EPC 大小严重受限（早期仅 128MB，SGX2 约 512MB），超出内容需使用软件交换（paging），但 paging 的加密密钥需由 CPU 管理，性能开销极大。\n2) 侧信道攻击（如 SGX-Step、Plundervolt 通过电压篡改、L1TF 等），针对 SGX 的攻击论文密集。\n3) 平台认证依赖 Intel 在线服务，DCAP（数据中心版）虽支持本地认证但配置复杂。\n4) 微码复杂度高增加 TCB，漏洞频发（如 Foreshadow、LVI 等）。\n\n对比：AMD SEV-SNP 以虚拟机级别加密（而非进程级），支持更灵活的虚拟机间隔离；ARM TrustZone 将 SoC 划分为安全/非安全两个世界，硬件模型更简单但灵活度低于 SGX。",
+    "hints": [
+      "SGX 的内存保护依赖于 CPU 片上的 MEE，而非软件——内存中的数据在 DRAM 上是加密的。",
+      "SGX 的 EPC 大小限制是最主要的部署瓶颈，思考为什么这个问题难以通过增加 DRAM 解决。"
+    ],
+    "tags": [
+      "安全",
+      "CPU 架构",
+      "硬件安全",
+      "可信执行环境",
+      "加密"
+    ]
   }
 ]

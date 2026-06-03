@@ -1629,5 +1629,95 @@
       "ExitOnOutOfMemoryError",
       "CrashOnOutOfMemoryError"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "G1 Mixed GC 的触发时机",
+    "content": "G1 GC 的 Mixed GC 在___标记完成后触发，回收范围包括年轻代 Region 和___（按回收收益排序的部分老年代 Region）。G1 通过参数___（默认 45%）控制触发并发标记的堆占用阈值。Mixed GC 会分___次完成（通过-XX:G1MixedGCCountTarget控制），避免单次停顿过长。如果 Mixed GC 回收速度跟不上老年代分配速度，最终退化为___。",
+    "answer": "{\"correct\":[[\"并发\",\"并发标记\"],[\"高价值老年代 Region\",\"垃圾最多的老年代 Region\"],[\"-XX:InitiatingHeapOccupancyPercent\",\"IHOP\"],[\"多\",\"多次\"],[\"Full GC\",\"Serial Old Full GC\"]],\"distractors\":[\"初始\",\"所有 Region\",\"-XX:MaxGCPauseMillis\",\"Young GC\"]}",
+    "hints": [
+      "IHOP 默认值 45% 表示堆使用率达到 45% 时触发并发标记",
+      "Mixed GC 分多次执行是为了满足 -XX:MaxGCPauseMillis 的停顿时间目标"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "GC",
+      "Mixed GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "空间分配担保机制",
+    "content": "Minor GC 前 JVM 会检查老年代___大小是否大于新生代___总和。如果大于，说明老年代有空间容纳晋升对象，Minor GC 安全。如果小于，则检查___是否允许担保失败（JDK 6+ 默认___）。如果允许，继续 Minor GC 但风险是___（老年代空间不足导致 Full GC）；如果不允许，直接触发 Full GC。JDK 6 Update 24 后该参数失效，担保判断由___自动决定。",
+    "answer": "{\"correct\":[[\"最大可用连续空间\",\"最大连续空间\"],[\"所有对象\",\"全部对象\"],[\"-XX:-HandlePromotionFailure\",\"HandlePromotionFailure\"],[\"开启\",\"true\",\"允许\"],[\"担保失败\",\"Promotion Failed\"],[\"JVM\",\"GC 自适应\"]],\"distractors\":[\"最小可用空间\",\"存活对象\",\"-XX:+UseAdaptiveSizePolicy\",\"关闭\"]}",
+    "hints": [
+      "担保失败（Promotion Failed）会导致老年代无法容纳晋升对象，触发 Full GC",
+      "JDK 6u24 之后 -XX:HandlePromotionFailure 已失效，由 JVM 自动决策"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "晋升",
+      "担保"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Full GC 的常见触发条件",
+    "content": "Full GC 的常见触发条件包括：1）老年代___不足（对象晋升或大对象分配失败）；2）___空间不足（类加载过多或动态代理频繁生成类）；3）___（Concurrent Mode Failure，CMS 并发回收期间老年代被填满）；4）调用___（显式 GC，通过 System.gc() 或 JNI 触发，可通过___参数禁用）；5）G1 的___分配失败（超过 Region 大小 50% 的对象无法分配到 Humongous Region）。",
+    "answer": "{\"correct\":[[\"空间\",\"连续空间\"],[\"元空间\",\"Metaspace\"],[\"CMS 并发模式失败\"],[\"System.gc()\",\"System.gc\"],[\"-XX:+DisableExplicitGC\"],[\"大对象\",\"Humongous\"]],\"distractors\":[\"时间\",\"堆外内存\",\"Runtime.gc()\",\"-XX:-UseTLAB\"]}",
+    "hints": [
+      "System.gc() 在 RMI 或 NIO 框架中可能被自动调用，生产环境建议 -XX:+DisableExplicitGC",
+      "Concurrent Mode Failure 是 CMS 特有的 Full GC 触发原因，G1 不存在此问题"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "Full GC",
+      "调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JIT 方法内联的限制条件",
+    "content": "JIT 方法内联受到多个参数限制：默认最大内联方法体大小为___字节（-XX:MaxInlineSize），热方法最大内联大小为___字节（-XX:MaxFreqInlineSize）。嵌套内联深度限制为___层（-XX:MaxInlineLevel）。接口/虚方法的内联需要通过___确保只有一种实现，否则插入___作为兜底。递归方法不会被无限内联，JIT 通过___深度限制防止栈溢出。",
+    "answer": "{\"correct\":[[\"35\",\"35 字节\"],[\"325\",\"325 字节\"],[\"9\",\"9 层\"],[\"CHA\",\"类层次分析\"],[\"类型检查守卫\",\"type guard\"],[\"MaxRecursiveInlineLevel\"]],\"distractors\":[\"50\",\"500\",\"15\",\"MaxInlineSize\"]}",
+    "hints": [
+      "MaxInlineLevel 默认 9 层——超过 9 层嵌套调用的方法不会被内联",
+      "虚方法内联通过 CHA 检测——如果只有一个实现类则内联，否则使用 guard 条件检查"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "方法内联",
+      "编译优化"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Graal JIT 编译器",
+    "content": "Graal JIT 编译器是 Oracle 用___语言实现的 JIT 编译器（替代 C2）。它在 JDK 17+ 中作为___（实验性特性）可用。Graal 的核心优势是___（更激进的优化如自动向量化、部分逃逸分析）和___（可以作为提前编译 AOT 和即时编译 JIT 的统一编译器框架）。在 JDK 21+ 中 Graal 可通过___参数启用。与 C2 相比，Graal 在___（代码生成速度）上通常优于 C2。",
+    "answer": "{\"correct\":[[\"Java\",\"纯 Java\"],[\"实验性特性\"],[\"更强的优化能力\",\"更好的优化\"],[\"可嵌入性\",\"通用性\"],[\"-XX:+EnableExperimentalVMOptions -XX:+UseJVMCICompiler\",\"JVMCICompiler\"],[\"编译速度\"]],\"distractors\":[\"C++\",\"正式特性\",\"-XX:+UseZGC\",\"代码质量\"]}",
+    "hints": [
+      "Graal 用 Java 实现——面临自举（bootstrapping）问题，需要 HotSpot C2 先启动",
+      "GraalVM 底层也使用了 Graal JIT 编译器，支持 Polyglot（多语言混编）"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "Graal",
+      "编译器"
+    ]
   }
 ]

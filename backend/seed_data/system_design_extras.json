@@ -1750,5 +1750,105 @@
       "Watermark",
       "Event Time"
     ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计实时特征存储平台",
+    "content": "机器学习在线推理场景中，如何设计一个支持毫秒级获取、近实时更新的特征存储（Feature Store）平台？核心挑战是什么？",
+    "answer": "特征存储平台是 ML 工程化的核心基础设施，目标是统一离线训练和在线推理的特征一致性。\n\n核心架构：1）存储层——高频特征使用 Redis/Redis Cluster KV 模式（Key=entity_id:feature_name），批处理特征使用 HBase/Cassandra 列式存储支持范围扫描。Embedding 类特征使用专用向量数据库（FAISS/Milvus）。2）数据管道——离线特征通过 Spark 批量计算写入 KV 存储；实时特征通过 Flink 流式计算写入存储。双链路保证特征时效性。3）特征服务——统一 gRPC/HTTP API，封装批量获取逻辑。支持特征聚合（如过去 7 天平均值、滑动窗口计数）。4）特征注册与元数据——特征定义统一注册到元数据中心，包括特征名、类型、计算逻辑、来源表、新鲜度 SLA。5）时间点正确性（Point-in-Time Correctness）——离线训练时需确保使用和在线推理一致的特征切片，避免数据泄露。通过时间戳对齐来解决。\n\n扩展延伸：开源方案对比：Feast（基于 Redis + BigQuery/GCS）、Tecton（企业级完整 Feature Store）、ByteDance 自研（Flink + KV 存储实现毫秒级特征获取）。核心挑战始终是离线/在线一致性——训练时使用的特征时间切片必须严格等于推理时能获取到的特征。",
+    "hints": [
+      "为什么离线训练和在线推理的特征一致性是个难题",
+      "实时特征和批量特征如何保证时间戳对齐"
+    ],
+    "tags": [
+      "特征工程",
+      "机器学习",
+      "Feature Store",
+      "Redis"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计分布式速率自适应限流系统",
+    "content": "如何设计一个能根据系统负载动态调整限流阈值的自适应限流系统？核心指标和算法是什么？",
+    "answer": "自适应限流不再依赖静态 QPS 阈值，而是根据系统实时负载指标动态调整允许的请求量。\n\n解析：核心指标：1）CPU 使用率——超过阈值（如 80%）时降低限流阈值。2）平均 RT（响应时间）——RT 突增说明系统过载，触发降流。3）请求成功率/错误率——4xx/5xx 增加时触发降流。4）Inflight 请求数——正在处理中的请求数，类似 TCP 拥塞窗口的概念，Tomcat 的 maxConnections + backlog。5）系统 Load（1min/5min/15min）——Unix Load Average 作为过载信号。\n\n算法：1）Google SRE 的 Concurrency Limiter——基于请求排队深度动态调整并发上限，使用 Gradient 下降算法逼近最优并发数。2）TCP Vegas 风格——比较实际吞吐量和期望吞吐量，偏差大时降流。3）Netflix 自适应限流——监控排队延迟（类似 TCP RTT），当排队延迟超过阈值时降低限流窗口。4）Sentinel 的系统自适应保护——综合 Load、CPU、平均 RT、入口 QPS、并发线程数，通过滑动窗口+规则链计算是否触发限流。\n\n工程实践：Alibaba Sentinel 的 SystemSlot——采集系统指标→根据规则计算最大 QPS→与当前 QPS 对比决定是否限流。自适应阈值有冷却期（刚启动时不限流，等统计数据积累后再生效）。",
+    "hints": [
+      "静态限流和自适应限流各自的优缺点是什么",
+      "Concurrency Limiter 为什么比 QPS Limiter 更适合过载保护"
+    ],
+    "tags": [
+      "限流",
+      "自适应",
+      "过载保护",
+      "Sentinel"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Saga 事务中的隔离级别与语义锁",
+    "content": "在 Saga 分布式事务模式中，以下关于隔离级别与语义锁的描述哪一项是正确的？",
+    "options": [
+      "A) Saga 天然支持 Read Committed 隔离级别，不需要任何额外的锁机制",
+      "B) 语义锁（Semantic Lock）通过给记录加事务状态标记来防止脏读，事务完成后释放",
+      "C) 补偿操作（Compensation）天然确保幂等，不需要额外设计",
+      "D) Saga 的反向操作（Countermeasure）是指在事务开始时锁定所需资源保证隔离性"
+    ],
+    "answer": "B",
+    "hints": [
+      "Saga 子事务提交后对其他事务是否可见",
+      "补偿操作天然幂等吗？需要哪些额外设计"
+    ],
+    "tags": [
+      "分布式事务",
+      "Saga",
+      "隔离级别",
+      "语义锁"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "分布式系统中 Exactly-Once 投递的关键机制",
+    "content": "消息队列实现 Exactly-Once 语义需要生产者和消费者两端配合。生产者端通过___（机制）确保消息不丢失不重复；消费者端通过___（机制）确保幂等消费；Broker 端通过___（机制）确保消息持久化不丢。在 Kafka 中，Exactly-Once 语义通过___（配置参数）和事务 API 共同实现。",
+    "answer": "{\"correct\":[[\"事务 ID / 幂等生产者\"],[\"去重表 / 幂等消费者\"],[\"ACK + 刷盘\"],[\"enable.idempotence=true\"]],\"distractors\":[\"消息回调\",\"死信队列\",\"主从复制\",\"acks=all\"]}",
+    "hints": [
+      "幂等生产者的实现原理是用什么机制去重",
+      "Kafka 的 enable.idempotence=true 具体做了哪些保证"
+    ],
+    "tags": [
+      "消息队列",
+      "Exactly-Once",
+      "幂等",
+      "Kafka"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "缓存与数据库最终一致性保证机制",
+    "content": "使用 Cache Aside 模式时，先更新数据库再删除缓存的策略在任何并发情况下都不会出现缓存与数据库不一致的问题。",
+    "answer": "错误。解析：Cache Aside 模式（先写 DB 再删缓存）在极端并发场景下仍然可能出现不一致。具体场景：线程 A 更新数据库（写新值）→ 线程 B 读缓存（缓存未命中）→ 线程 B 从数据库读到旧值（因为 A 的事务未提交或其他延迟）→ 线程 B 将旧值写入缓存 → 线程 A 删除缓存。最终结果是缓存中保留了旧值。解决方案：1）延迟双删——更新 DB 后先删缓存，等待一段时间（如 500ms）再删一次。2）设置缓存过期时间——即使出现不一致也会自动恢复。3）使用 CDC（Canal binlog）+ MQ——订阅 binlog 变更后异步删除/更新缓存，保证最终一致。4）强一致方案——更新时加分布式锁，保证读写串行化。终极方案：使用 Read-Through/Lazy-Propagation + TTL，接受短时间的不一致窗口。",
+    "hints": [
+      "为什么先更新数据库再删缓存仍然会出现不一致",
+      "延迟双删的等待时长如何确定"
+    ],
+    "tags": [
+      "缓存一致性",
+      "Cache Aside",
+      "延迟双删",
+      "CDC"
+    ],
+    "options": [
+      "正确",
+      "错误"
+    ]
   }
 ]

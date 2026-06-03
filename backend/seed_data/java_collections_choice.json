@@ -2077,5 +2077,110 @@
       "popcnt",
       "performance"
     ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Collections.checkedQueue 动态类型检查的作用范围",
+    "content": "Collections.checkedQueue(Queue<E> queue, Class<E> type) 在 JDK 8 中引入，用于在运行时动态检查放入队列的元素类型。其类型检查的作用范围是以下哪项？\nA) 在 offer/add 插入元素时检查类型，在 poll/remove 取出元素时不检查\nB) 在 offer/add 插入和 poll/remove 取出时都检查类型\nC) 仅在迭代队列元素时检查\nD) 通过编译期泛型保证，运行时无额外检查",
+    "answer": "A) Collections.checkedQueue 包装的队列在 offer(E) 和 add(E) 方法插入元素时执行 Class.cast() 类型检查——如果插入的元素类型与声明的 Class<E> type 不匹配，抛出 ClassCastException。poll/remove 等取出方法的返回值不做类型检查，因为这些元素已经通过插入检查（或被保证为正确类型）。checkedQueue 的价值在于防止因泛型擦除导致的类型安全问题——泛型信息在运行期被擦除，如果通过未检查的绕行方式（如原始类型或反射）插入错误类型的元素，checkedQueue 能在插入点立即捕获错误，避免在后续取出时出现隐蔽的 ClassCastException。",
+    "hints": [
+      "checkedQueue 检查的底层实现是内部类 CheckedQueue 重写 offer/add/addAll 方法，在调用源队列方法之前执行 Class.cast()",
+      "checkedCollection、checkedList、checkedSet、checkedMap、checkedSortedMap 等系列方法提供相同的运行时类型安全检查"
+    ],
+    "tags": [
+      "checkedQueue",
+      "类型安全",
+      "泛型擦除",
+      "Collections",
+      "运行时检查"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ConcurrentHashMap.newKeySet 底层实现机制",
+    "content": "ConcurrentHashMap.newKeySet()（JDK 8+）返回一个线程安全的 Set。该 Set 的底层实现机制是以下哪项？\nA) 独立于 ConcurrentHashMap 的 HashSet 实现，使用读写锁保证线程安全\nB) 基于 ConcurrentHashMap 的键视图（keySet），值统一使用 Boolean.TRUE 作为占位虚拟值\nC) 使用独立的 ConcurrentSkipListSet 实现\nD) 通过 Collections.synchronizedSet 包装的 HashSet 实现",
+    "answer": "B) ConcurrentHashMap.newKeySet() 返回的是 ConcurrentHashMap.KeySetView，其底层就是一个 ConcurrentHashMap，所有 add/remove/contains 操作转换为对应 ConcurrentHashMap 的 put/remove/containsKey 操作。每次 add(element) 调用 put(element, Boolean.TRUE)，remove(element) 调用 remove(element)，contains(element) 调用 containsKey(element)。KeySetView 实际上是 ConcurrentHashMap 内部 keySet 视图的一个特殊变体，它提供额外的 addAll/removeAll 等方法，但底层仍然是同一个 ConcurrentHashMap。这一设计复用 ConcurrentHashMap 的全部并发能力（分段锁/红黑树/CAS 操作）而无需额外实现，且能保证键集合的弱一致性迭代。newKeySet() 等价于 Collections.newSetFromMap(new ConcurrentHashMap<>()) 但提供了更明确的类型约束。",
+    "hints": [
+      "KeySetView 还提供了 getMappedValue() 方法返回虚拟值 Boolean.TRUE——这是与普通 keySet 视图的一个重要区别",
+      "ConcurrentHashMap.newKeySet(int initialCapacity) 创建时可以指定初始容量，底层 ConcurrentHashMap 以此容量初始化"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "newKeySet",
+      "KeySetView",
+      "线程安全",
+      "Set"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ArrayDeque 环形数组头尾指针的位运算回绕原理",
+    "content": "ArrayDeque 内部使用环形数组（circular array）实现高效的头尾双端操作。其头指针和尾指针在数组边界上的回绕实现方式是以下哪项？\nA) 头指针始终为 0，元素出队时使用 System.arraycopy 整体前移\nB) 通过位运算 `head = (head - 1) & (elements.length - 1)` 和 `tail = (tail + 1) & (elements.length - 1)` 实现无分支回绕\nC) 使用双向链表实现头尾操作\nD) 通过取模运算 `head = (head - 1) % elements.length` 实现回绕",
+    "answer": "B) ArrayDeque 内部使用 long 数组（JDK 17+ 优化后）作为环形缓冲区，数组容量始终为 2 的幂。头指针 head 指向队列头元素，尾指针 tail 指向下一个空闲插入位置。在头部插入时 head 左移：`head = (head - 1) & (elements.length - 1)`；在尾部插入时 tail 右移：`tail = (tail + 1) & (elements.length - 1)`。由于数组长度始终是 2 的幂，`elements.length - 1` 是一个全 1 的掩码（mask），位运算 AND 等价于取模操作但无需分支判断——无论是正数还是负数（head - 1 可能为 -1），位运算都能正确回绕。这一设计比取模运算（%）更快，是基于整数的无分支（branch-free）实现，对 JIT 编译友好，避免条件分支预测失败的性能惩罚。",
+    "hints": [
+      "ArrayDeque 在容量不足时扩容为原来的 2 倍（始终保持2的幂），扩容时通过 System.arraycopy 分两段复制头尾元素",
+      "JDK 17 将 ArrayDeque 的底层存储从 Object[] 改为 @Stable 注释的 long[] 数组以支持更好的 JIT 编译优化"
+    ],
+    "tags": [
+      "ArrayDeque",
+      "环形数组",
+      "位运算",
+      "无分支代码",
+      "数据结构"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "IdentityHashMap 默认序列化后引用恒等性的恢复",
+    "content": "IdentityHashMap 使用引用恒等性（==）而非 equals() 比较键。在默认 Java 序列化/反序列化过程中，其引用恒等语义能否恢复？\nA) 序列化会按照 key 的 equals/hashCode 重新组织数据，反序列化后失去引用恒等语义\nB) 通过自定义 writeObject/readObject 保持键值对的数组结构，反序列化后仍然使用 == 比较\nC) IdentityHashMap 不支持序列化，调用 writeObject 会抛出 NotSerializableException\nD) 反序列化后会自动转换为 HashMap",
+    "answer": "B) IdentityHashMap 实现了自定义的 writeObject() 和 readObject() 方法（通过 Serializable 接口的自定义序列化协议），在序列化时将键值对以平坦数组的形式写出，反序列化时重建内部数组并依次插入元素。由于反序列化过程中键对象本身也被反序列化（即创建新的对象实例），因此同一个 IdentityHashMap 中两次被引用的同一个键对象在反序列化后不再是同一个对象——序列化只保留值语义不保留对象标识。但 IdentityHashMap 本身的数据结构仍然使用 == 比较键，所以反序列化后的 IdentityHashMap 继续使用引用相等性。这一点与 HashMap 的序列化机制不同：HashMap 序列化依赖键的 hashCode/equals，而 IdentityHashMap 序列化仅依赖于键对象在字节流中的引用路径。",
+    "hints": [
+      "如果序列化流中同一键对象被多次引用，IdentityHashMap 反序列化后这些引用不再指向同一内存地址，因为每个键被独立反序列化为不同实例",
+      "IdentityHashMap 的序列化格式不兼容于标准 Map 序列化格式——它是 IdentityHashMap 专用的私有不兼容格式"
+    ],
+    "tags": [
+      "IdentityHashMap",
+      "序列化",
+      "引用恒等",
+      "==比较",
+      "自定义序列化"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "NavigableMap headMap 两个重载版本的边界包含性差异",
+    "content": "NavigableMap 提供了两个重载的 headMap 方法：headMap(K toKey) 和 headMap(K toKey, boolean inclusive)。以下关于两者边界处理差异的描述，哪项是正确的？\nA) headMap(toKey) 包含 toKey，headMap(toKey, inclusive) 的包含性由 boolean 参数控制\nB) headMap(toKey) 不包含 toKey，headMap(toKey, inclusive) 的包含性由 boolean 参数控制\nC) 两个版本都包含 toKey\nD) 两个版本都不包含 toKey",
+    "answer": "B) NavigableMap.headMap(K toKey) 返回的视图中的键严格小于 toKey（不包含 toKey）。NavigableMap.headMap(K toKey, boolean inclusive) 返回的视图中的键小于等于（inclusive=true）或小于（inclusive=false）toKey，由 boolean 参数显式控制。这套设计风格贯穿 NavigableMap 的全部边界方法：\n- headMap(toKey) = headMap(toKey, false)，即默认不包含\n- tailMap(fromKey) = tailMap(fromKey, true)，即默认包含\n- subMap(fromKey, toKey) = subMap(fromKey, true, toKey, false)，即包含下界不包含上界\n- subMap(fromKey, fromInclusive, toKey, toInclusive) 由 boolean 参数控制两端包含性\n- 同理，descendingMap 的 headMap/tailMap 边界语义也对应反转。",
+    "hints": [
+      "SortedMap（NavigableMap 的父接口）的 subMap(fromKey, toKey) 约定为包含下界、不包含上界，NavigableMap 的 4 参数版本提供了更灵活的控制",
+      "向 subMap 中插入键时，如果键不在子范围边界内，会抛出 IllegalArgumentException"
+    ],
+    "tags": [
+      "NavigableMap",
+      "headMap",
+      "边界包含性",
+      "SortedMap",
+      "范围查询"
+    ],
+    "options": [],
+    "company": ""
   }
 ]

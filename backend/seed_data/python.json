@@ -1767,5 +1767,99 @@
       "PEP 695",
       "3.12"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 3.12 subinterpreters 与 Per-Interpreter GIL",
+    "content": "Python 3.12 引入的 Per-Interpreter GIL（PEP 684 / PEP 554）改变了 Python 并发的底层模型。请解释：\n1) subinterpreters 与传统 threading（共享同一个 GIL）的并发模型差异；\n2) Per-Interpreter GIL 在 CPython 解释器层面的主要实现变更（包括 PyInterpreterState、PyGILState 的改动）；\n3) 如何通过 _xxsubinterpreters 模块（PEP 554）在 Python 中创建和通信 subinterpreters；\n4) 为什么 subinterpreters 之间的数据隔离既是优势也是限制——具体到哪些数据类型可以安全传递、哪些不可传递；\n5) 与 multiprocessing 相比，subinterpreters 的资源开销和通信延迟差异。",
+    "answer": "subinterpreters 实现了「每个解释器实例独享 GIL」的模型，比 threading 模型中「全局唯一 GIL」显著提高了多核心利用率。\n\n1) 并发模型差异：\n- threading：所有线程共享同一个 PyInterpreterState，共享 GIL，任意时刻仅一个线程执行 Python bytecode。\n- subinterpreters：每个 subinterpreter 拥有独立的 GIL 和 Python 对象空间（独立的对象图、模块命名空间），多个 subinterpreters 可并行执行 bytecode——GIL 不再成为全局瓶颈。\n\n2) CPython 实现变更：\n- PyInterpreterState 扩展了 gil 字段——从全局单例变为每个解释器持有自己的 GIL 锁。\n- PyGILState 的 Ensure()/Release() 逻辑更新为绑定到当前解释器而非全局状态。\n- Python 对象分配：obmalloc 的内存分区从进程全局变为按解释器隔离。\n- free-threaded builds（--disable-gil）在 3.13 以后选择不同路径，与 subinterpreters 互补。\n\n3) PEP 554 的编程模型：\nimport _xxsubinterpreters as interpreters\ninterp = interpreters.create()\ninterpreters.run_string(interp, 'x = 1')\nqueue = interpreters.create_queue()\ninterpreters.run_string(interp, f'queue.put(\"hello\")')\nresult = queue.get()\n\n4) 数据隔离与传递限制：\n- 可安全传递的：基本类型（int、float、str、bytes、None）、通过 Queue 序列化（pickle）的对象。\n- 不可传递的：函数、类、模块、文件句柄、socket 等——这些对象在子解释器中无意义。\n- 优势：无共享可变对象带来的 race condition，天然规避线程安全问题。\n- 缺陷：状态传递需序列化/反序列化，大对象传输有开销。\n\n5) 与 multiprocessing 对比：\n- 子解释器是进程内线程级隔离——资源开销远低于 multiprocessing（后者需 fork 完整进程）。\n- 通信延迟：子解释器 Queue 使用共享内存（序列化后 copy），低于 multiprocessing 的 IPC（pipe/socket）。\n- 子解释器不支持 os.fork，与某些 C 扩展不兼容。",
+    "hints": [
+      "subinterpreters 解决的核心问题是「全局 GIL 导致的多核利用率」，而非异步 I/O。",
+      "与 multiprocessing 相比，subinterpreters 在同一个进程内，资源开销更少但隔离级别也更低。"
+    ],
+    "tags": [
+      "Python",
+      "并发",
+      "GIL",
+      "CPython",
+      "subinterpreters"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Python __new__ 与 __init__ 的对象创建控制",
+    "content": "关于 Python 中 __new__ 与 __init__ 的关系，以下哪一项是正确的？\n\nA) __init__ 是真正的构造函数，负责分配内存和初始化对象；__new__ 仅在 __init__ 之前被调用，负责返回初始化的实例\nB) 在元类中重写 __new__ 可以控制类的创建行为（如注册所有子类），而 __init__ 永远不能返回除 None 以外的值\nC) 如果 __new__ 返回了该类的一个实例（即 isinstance(result, cls) 为真），__init__ 将不会被自动调用\nD) __new__ 是类的静态方法（但不需要 @staticmethod），第一个参数是 cls；__init__ 是实例方法，第一个参数是 self，两者都不能继承",
+    "answer": "B) 在元类中重写 __new__ 可以控制类的创建行为（如注册所有子类），而 __init__ 永远不能返回除 None 以外的值。\n\n解析：\nA 错误：__new__ 才是真正的分配内存的「构造函数」，它负责创建并返回新实例；__init__ 是「初始化器」，在 __new__ 返回实例后被调用。\nB 正确：元类的 __new__ 可在创建类对象时拦截（如自动收集子类），__init__ 若返回非 None 值会引发 TypeError。\nC 错误：如果 __new__ 返回的对象是 cls 类型的实例，__init__ 会被自动调用（传入相同的参数）。仅当 __new__ 返回非 cls 类型的对象时，__init__ 才不被调用。\nD 错误：__new__ 确实无需 @staticmethod（隐式静态方法），且两者的继承行为不同——__new__ 可被子类覆盖，__init__ 也遵循 MRO 规则正常继承。\n\n实际应用示例：\n- 单例模式：__new__ 返回已缓存的实例。\n- 不可变类型（如 tuple、str）：只能在 __new__ 中初始化（__init__ 在不可变对象创建后无法修改属性）。\n- 元类的 __new__：用于 ORM 框架的 Model 基类注册（如 Django ORM）。",
+    "hints": [
+      "__new__ 创建对象并选择是否返回给 __init__ 初始化；__init__ 仅初始化已创建的对象。",
+      "str 和 tuple 为什么没有 __init__ 的行为？因为不可变类型必须在创建时固定状态。"
+    ],
+    "tags": [
+      "Python",
+      "元编程",
+      "对象模型",
+      "类机制"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 抽象基类 (abc.ABC) 与 Protocol 的选用策略",
+    "content": "Python 提供了两种「接口」定义机制：abc.ABC（抽象基类）和 typing.Protocol（结构子类型/鸭子类型协议）。请从以下维度对比二者：\n1) 检查机制——isinstance 检查 vs 结构兼容性检查；\n2) 运行时行为——@abstractmethod 的强制继承 vs @runtime_checkable 的结构匹配；\n3) 层次化设计——显式的「IS-A」关系 vs 隐式的「duck-like」关系；\n4) 跨库兼容性。\n在编写数据处理 Pipeline 时，什么情况下应选择 ABC，什么情况下应选择 Protocol？",
+    "answer": "ABC 和 Protocol 代表了两种不同的类型设计哲学：名义子类型（Nominal Subtyping）和结构子类型（Structural Subtyping）。\n\n1) 检查机制：\n- ABC：通过继承建立显式的 is-a 关系。isinstance(obj, MyABC) 仅在 obj 的类继承自 MyABC 时为真。支持 register() 实现虚拟子类注册。\n- Protocol：通过结构兼容性检查。若一个类具有 Protocol 中声明的所有方法/属性签名，则 @runtime_checkable 装饰后 isinstance 也为真，无需显式继承。\n\n2) 运行时行为：\n- ABC：@abstractmethod 标记的方法必须在子类中实现（否则实例化时抛出 TypeError），这是强制契约。\n- Protocol：默认仅用于静态类型检查（mypy、pyright）。仅当标记 @runtime_checkable 后才能用于 isinstance 检查，且此时不验证方法签名——仅验证方法名的存在性。\n\n3) 设计语义：\n- ABC：表达「X is a Y」的层次关系，例如 class Cat(Animal) 表达猫是一种动物。适合有自然继承层次或需要共享实现的场景。\n- Protocol：表达「X behaves like a Y」，例如任何有 .read() 方法的对象都可作为文件类对象使用。适合跨库、跨框架的类型兼容。\n\n4) 选用建议：\n- 选 ABC：需要共享实现（__mro__ 中的基类方法）、需要在 isinstance 检查中建立层次、需要 @abstractmethod 的强制验证、类之间有明显「is-a」关系。\n- 选 Protocol：关注行为兼容而非类型层次、需要与已有第三方库无缝集成（无需修改第三方类的 MRO）、使用静态类型检查为主、需要鸭子类型的最大灵活性。\n\n在数据处理 Pipeline 中：如果处理器之间有明确的转换层次（如 BaseTransformer → Normalizer → StandardScaler），用 ABC 更合适；如果只需要「任何有 transform 方法的对象即可作为 transformer」，Protocol 更灵活。",
+    "hints": [
+      "ABC 靠「继承」建立关系，Protocol 靠「长什么样」建立关系。",
+      "Protocol 的 @runtime_checkable 仅检查方法存在性，不验证方法签名——这是设计上的权衡。"
+    ],
+    "tags": [
+      "Python",
+      "类型系统",
+      "设计模式",
+      "抽象基类",
+      "Protocol"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python functools.lru_cache 的 C 层实现原理",
+    "content": "Python 的 @functools.lru_cache(maxsize=128) 是一个功能强大的记忆化（memoization）装饰器。请从源码和实现角度详细说明：\n1) 它的底层数据结构是什么——为什么使用双向链表 + 哈希表的组合而非单一字典？\n2) LRU 淘汰策略在选择驱逐对象时 O(1) 的算法实现细节；\n3) typed=True 参数的作用和在装饰函数中是如何影响缓存键生成的；\n4) maxsize=None 时的特殊实现（使用普通 dict）；\n5) lru_cache 最适用的函数特征和不适用场景（如函数参数包含可变对象）。\n另外，functools.cache 与 lru_cache(maxsize=None) 是否等价？",
+    "answer": "lru_cache 使用双向链表 + 字典（实际上是 OrderedDict 的变体）实现 LRU 淘汰策略的 O(1) 操作。\n\n1) 数据结构设计：\n- 核心是一个循环双向链表（link 所有缓存条目）和一行字典，字典键为参数（经过可哈希化处理），值为链表节点。\n- 每次访问将节点移到链表头部（O(1) 操作，因节点持有 prev/next 指针），淘汰时移除链表尾部节点。\n- 为什么不用单一 dict：dict 没有顺序概念，无法区分「最近使用」和「最久未使用」。链表的访问顺序自然编码了 LRU 顺序。\n- 为什么用 dict：O(1) 的查找。链表负责顺序，dict 负责快速定位。\n\n2) LRU 淘汰 O(1) 算法：\n- 缓存命中：从 dict 获取节点，将其从链表当前位置摘除（prev.next = next, next.prev = prev，均为 O(1)），插入链表头部。\n- 缓存未命中且需要淘汰：达到 maxsize，移除链表尾部节点（tail.prev 即为最久未使用），从 dict 中同步删除该节点的 key，再将新节点插入头部并加入 dict。\n- 全程无遍历操作，全部 O(1)。\n\n3) typed=True 参数：\n- 缓存键生成时不仅考虑参数值，还考虑参数类型。\n- 例如：f(1) 和 f(1.0) 在 typed=False 时缓存相同（键相同）；typed=True 时分开缓存。\n- 实现原理：在键元组末尾追加一个 type 信息元组（如 (args, frozenset(kwargs.items()), types)）。\n\n4) maxsize=None 的特殊实现：\n- 退化为普通 dict——不维护链表，不执行 LRU 淘汰。\n- 等价于 functools.cache（Python 3.9+），后者语义更清晰表达「无限制缓存」。\n\n5) 适用场景与限制：\n最适用：纯函数（相同参数始终返回相同结果）、CPU 密集型重复计算（如斐波那契、动态规划、递归树搜索）。\n不适用：函数参数包含不可哈希对象（list、dict、set）——会导致 TypeError；函数有副作用的；需要定时失效的缓存场景（此时需自己实现 TTL 逻辑）。\n\nfunctools.cache 与 lru_cache(maxsize=None) 在 CPython 中的实现完全一致——cache 就是 lru_cache(maxsize=None) 的别名。",
+    "hints": [
+      "lru_cache 在 maxsize>0 时使用双向链表 + 字典实现 O(1) 的访问和淘汰——这是 LRU 缓存的标准实现方式。",
+      "为什么 maxsize=None 时会使用更简单的实现？思考链表操作的开销在此场景下是否是浪费的。"
+    ],
+    "tags": [
+      "Python",
+      "functools",
+      "缓存",
+      "LRU",
+      "CPython 实现"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Python sys.settrace 与调试器/覆盖率工具实现钩子",
+    "content": "关于 Python sys.settrace 与 sys.setprofile 的以下叙述，哪一项是正确的？\n\nA) sys.settrace 设置的追踪函数在每个字节码指令执行后都会被调用，因此对性能影响极大，不适合生产环境使用\nB) sys.settrace 设置的 trace 函数接收三个参数（frame, event, arg），事件类型包括 'call'、'line'、'return'、'exception'、'opcode' 以及 C 函数的 'c_call'、'c_return'、'c_exception'\nC) coverage.py 使用 sys.setprofile（而非 sys.settrace）收集行覆盖率，因为 profile 函数性能开销更低\nD) sys.settrace 设置的追踪函数是全局的——一个进程中只能设置一个 trace 函数，后设置的会覆盖之前的",
+    "answer": "B) sys.settrace 设置的 trace 函数接收三个参数（frame, event, arg），事件类型包括 'call'、'line'、'return'、'exception'、'opcode' 以及 C 函数的 'c_call'、'c_return'、'c_exception'。\n\n解析：\nA 错误：trace 函数不是按字节码粒度——默认配置下它仅在事件触发（call、line、return、exception）时被调用，而非每个字节码。但这确实影响性能（CPython 需额外检查 Python 层面），非调试时不应开启。\nB 正确：这是 CPython 3.12+ 中 sys.settrace 事件的准确描述。注意 'opcode' 是 3.12 新增（PEP 669），允许在任意字节码前触发。\nC 错误：coverage.py 使用 sys.settrace（或 3.12 后使用 sys.monitoring，PEP 669），而非 sys.setprofile。sys.setprofile 的 profile 函数仅接收 call/return 事件，不支持 line 事件，因此无法用于行覆盖率。\nD 错误：sys.settrace 是「线程本地」设置——每个线程可以独立设置自己的 trace 函数。当前线程的设置不影响其他线程。\n\n补充（PEP 669 低开销监控，Python 3.12+）：\nsys.monitoring 使用零成本的工具检测（不需要 Python 层面的事件循环），性能开销远低于 sys.settrace（微秒级 vs 百微秒级），适合生产环境的性能分析和覆盖率收集。",
+    "hints": [
+      "PEP 669 (sys.monitoring) 在 3.12 中引入的零成本监控器与旧的 sys.settrace 有数量级的性能差异。",
+      "sys.settrace 的 profile 和 trace 函数各接收哪些事件？trace 接收 line 事件而 profile 不接收。"
+    ],
+    "tags": [
+      "Python",
+      "调试",
+      "覆盖率",
+      "CPython",
+      "性能分析"
+    ]
   }
 ]

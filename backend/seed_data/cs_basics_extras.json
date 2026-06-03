@@ -1756,5 +1756,96 @@
       "文件系统",
       "存储"
     ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ASLR 与地址空间布局随机化机制",
+    "content": "请详细说明 ASLR（Address Space Layout Randomization）的工作机制：包括堆、栈、mmap 基址、可执行文件基址（PIE）的随机化策略。内核中各粒度的随机熵位是多少？ASLR 为何无法完全防御篡改返回地址的攻击（如 ROP/JOP）？在 x86 与 x86_64（AMD64）上，ASLR 的有效性差异源于哪些硬件因素？如果需要绕过 ASLR，常见的手法有哪些？",
+    "answer": "ASLR 通过随机化进程地址空间的关键区域基址来增加攻击者预测特定地址的难度。\n\n各区域的随机化策略与熵位（x86_64 Linux）：\n- 栈：22 位熵，随机偏移 0-16MB。\n- mmap 基址（含共享库）：28 位熵（0x7f0000000000 区间），粒度约 4KB。\n- 堆起始地址：13 位熵。\n- 可执行文件基址：PIE 启用时约 28 位熵。\n\nASLR 的局限：\n1) 仍存在信息泄露向量——一次地址泄露可完全绕过。\n2) ROP/JOP 攻击不需要代码注入——攻击者从现有代码中搜索 gadget（工具片段），即使基址随机，gadget 与基址的相对偏移固定，通过一次泄露整个 ROP 链即可构造。\n3) 32 位系统（x86）的地址空间仅 4GB，随机熵位低（如栈仅 8-19 位），枚举攻击可行；x86_64 的 48 位有效地址空间提供更高熵。\n\n常见绕过手法：\n- 使用 JavaScript 侧信道精确推测地址（如 JIT 编译器泄露）。\n- 堆喷射（Heap Spraying）增大命中概率。\n- /proc/PID/maps 或 kernel info leak（如 Meltdown 漏洞）直接读取内存布局。\n- 基于硬件 side-channel（Prefetch、Flush+Reload）探测地址。",
+    "hints": [
+      "ASLR 的熵位在 32 位和 64 位系统上有显著差异——思考 32 位为什么不够安全。",
+      "ROP 不需要代码注入——它利用现有代码中的 gadget，为什么 ASLR 对 ROP 的防御有限？"
+    ],
+    "tags": [
+      "安全",
+      "操作系统",
+      "内存管理",
+      "漏洞利用"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "STUN/TURN/ICE 与 NAT 穿透协议",
+    "content": "关于 WebRTC 中 NAT 穿透技术的描述，以下哪一项是正确的？\n\nA) STUN 协议通过服务器中继所有媒体流量，因此延迟较高但穿透成功率最高\nB) TURN 协议仅在端到端直连 P2P 失败时作为 relay 兜底方案，其工作原理与 STUN 完全一样\nC) ICE 是一个框架协议，通过收集 Candidate（Host/Server Reflexive/Relay）并按优先级排序尝试连接，底层可同时使用 STUN 和 TURN\nD) STUN 可以穿透所有类型的 NAT（包括对称 NAT），因为它利用 UDP 打洞技术",
+    "answer": "C) ICE 是一个框架协议，通过收集 Candidate（Host/Server Reflexive/Relay）并按优先级排序尝试连接，底层可同时使用 STUN 和 TURN。\n\n解析：\nA 错误：STUN 不自中继流量，它仅帮助端发现其对端公网地址和端口（反射地址）。中继流量的 TURN 才有延迟问题。\nB 错误：TURN 的工作原理与 STUN 不同——TURN 在服务器端分配一个 relay 地址，所有数据经服务器转发。STUN 帮助建立直连（P2P）。\nC 正确：ICE 先收集 Host（本机）、Server Reflexive（STUN 反射）和 Relay（TURN）三类 Candidate，按优先级排序后通过连通性检查（STUN binding request/response）逐对测试，选择最佳路径。\nD 错误：STUN 对大部分 NAT 类型有效，但对对称 NAT（Symmetric NAT）无效——对称 NAT 会基于目的 IP:端口分配不同的映射端口，STUN 无法预测。TURN 是对称 NAT 下唯一保证可用的方案。",
+    "hints": [
+      "ICE 的 Candidate 有三类：Host、Server Reflexive、Relay。",
+      "对称 NAT 为什么对 STUN 无解？思考 NAT 映射规则的区别——对称 NAT 如何分配端口？"
+    ],
+    "tags": [
+      "网络协议",
+      "WebRTC",
+      "NAT 穿透",
+      "实时通信"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "IP 分片与路径 MTU 发现 (PMTUD)",
+    "content": "关于 IPv4 分片与路径 MTU 发现（PMTUD，Path MTU Discovery）的叙述，以下哪一项是错的？\n\nA) IPv4 路由器在需要分片且 DF（Don't Fragment）标志位未设置时，将数据报分片后转发，分片重组由目的主机完成\nB) IPv6 中间路由器不再执行分片操作，IPv6 仅在源主机通过分段扩展头（Fragment Extension Header）进行分片\nC) PMTUD 利用 ICMPv6「Packet Too Big」（Type 2）消息进行，发送方收到后逐步降低猜测的 MTU，直到数据包不再被 ICMP 拒绝\nD) 中间路由器在 IPv4 中设置 DF 标志的数据报超过出站接口 MTU 时，按 MTU 分片并设置 MF（More Fragments）标志后继续转发",
+    "answer": "D) 这是错误的叙述。\n\n解析：\nA 正确：IPv4 中路由器可在 DF=0 时分片，分片重组由目的主机 IP 层完成。\nB 正确：IPv6 取消了中间路由器分片能力，源主机必须通过 PMTUD 或使用最小 MTU（1280 字节）发送，使用分段扩展头发送超出 MTU 的数据。\nC 正确：IPv6 的 PMTUD 通过 ICMPv6 Type 2（Packet Too Big）消息通知源主机，源主机调整发送大小。\nD 错误：DF=1 的数据报超过 MTU 时，IPv4 路由器不执行分片，而是丢弃数据包并发送 ICMPv3 Type 3 Code 4（Destination Unreachable - Fragmentation Needed and DF set）消息给源主机。源主机据此减小发送数据包大小。\n\n补充：PMTUD 在实际网络中常因 ICMP 被防火墙过滤而失效，导致 TCP 连接无响应（black hole PMTUD），这是现代 TCP 协议栈实现 PLPMTUD (Packetization Layer Path MTU Discovery) 的原因。",
+    "hints": [
+      "注意题目问的是「哪一项是错的」。",
+      "IPv4 路由器在 DF=1 且超过 MTU 时做了什么？不是分片——它是直接丢弃并通知源主机。"
+    ],
+    "tags": [
+      "网络协议",
+      "TCP/IP",
+      "IPv4",
+      "IPv6",
+      "MTU"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Linux Auditd 审计框架与规则配置",
+    "content": "Linux Auditd 审计框架由内核层的 ________ → 守护进程 ________ → 报告工具 ________ 三层架构组成。编写审计规则监控 /etc/passwd 文件被 openat 系统调用写入，规则应为：________。若需监控所有 64 位架构上执行的 execve 系统调用并记录用户身份，规则为：________。",
+    "answer": "{\"correct\": [[\"audit subsystem\"], [\"auditd\"], [\"ausearch\", \"aureport\"], [\"-w /etc/passwd -p wa -k passwd_monitor\"], [\"-a always,exit -F arch=b64 -S execve -k exec_monitor\"]], \"distractors\": [\"systemd-journald\", \"syslog-ng\", \"rsyslog\", \"logrotate\"]}",
+    "hints": [
+      "Auditd 的三层结构请从「内核 → 用户态守护进程 → 审计分析工具」三个层面填空。",
+      "审计规则的 -p 选项关注文件权限操作（读、写、执行、属性变更）。"
+    ],
+    "tags": [
+      "Linux 安全",
+      "审计",
+      "系统管理",
+      "安全合规"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "进程退出码规范与 waitpid 宏解析",
+    "content": "在 Linux 系统中，当子进程通过 exit(42) 正常终止时，父进程调用 waitpid(&status, ...) 后，使用 WEXITSTATUS(status) 宏获得退出码为 42；WIFEXITED(status) 返回真；如果子进程被信号 11 (SIGSEGV) 终止，WIFEXITED(status) 返回假且 WIFSIGNALED(status) 返回真，此时 WTERMSIG(status) 返回 11，且 WCOREDUMP(status) 也可能返回真。\n\nA) 正确\nB) 错误",
+    "answer": "A) 正确。\n\n细节解析：\n1) 正常退出（exit / _exit）：WIFEXITED 为真，WEXITSTATUS 提取低 8 位（0-255），exit(42) 返回 42。\n2) 信号终止（如 SIGSEGV = 11）：WIFSIGNALED 为真，WTERMSIG 获取终止信号编号（11），WCOREDUMP 判断是否生成 core dump。\n3) 进程暂停/恢复：WIFSTOPPED/WIFCONTINUED 分别由 SIGTSTP/SIGCONT 触发。\n4) status 编码方式：正常退出时低 8 位为 0，高 8 位为退出码；信号终止时低 7 位存信号编号，第 8 位标记 core dump。这解释了为何退出码范围仅 0-255。\n\n实践建议：推荐使用 0 表示成功，非 0 表示不同错误，避免 128+signal 的返回码与 shell 信号处理语义冲突。",
+    "hints": [
+      "Linux 退出码仅保留低 8 位，范围 0-255。",
+      "shell 中 $? 为 130 意味着什么？（128 + SIGINT = 130）"
+    ],
+    "tags": [
+      "Linux",
+      "进程管理",
+      "系统编程",
+      "信号处理"
+    ]
   }
 ]

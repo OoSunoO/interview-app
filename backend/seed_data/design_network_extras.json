@@ -1746,5 +1746,95 @@
       "Spine-Leaf",
       "ECMP"
     ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式事务的 CAP 理论与最终一致性方案",
+    "content": "CAP 理论的本质是什么？为什么说「CA」在分布式系统中不可能？在微服务架构中，有哪些实现最终一致性的实践方案？",
+    "answer": "答案：CAP 理论指出分布式系统在 Consistency（强一致性）、Availability（可用性）、Partition Tolerance（分区容忍性）三者中最多同时满足两个。网络分区（P）在分布式系统中是必然发生的，所以实际上是在 CP 和 AP 之间做选择。「CA」只在不允许网络分区的单机系统中存在，但分布式系统必须容忍网络分区，所以 CA 在分布式系统中不可能。\n\n解析：CAP 的深入理解：1）C（Consistency）——所有节点在同一时刻看到相同的数据。严格来说等同于线性一致性（Linearizability）。2）A（Availability）——每个请求都能在有限时间内获得非错误的响应（但不保证是最新数据）。3）P（Partition Tolerance）——系统中任意节点间的网络通信中断时，系统仍能继续运行。网络分区是事实，所以 P 必须选，因此实质是 CP vs AP 的选择。\n\n最终一致性的实现方案：1）TCC（Try-Confirm/Cancel）——业务层面的两阶段提交。Try 阶段预留资源，Confirm 阶段确认执行，Cancel 阶段回滚。适用于短事务、高一致性场景。2） Saga 模式——将一个长事务拆分为多个本地事务，每个事务有对应的补偿操作。Saga 又分两种编排方式：Choreography（事件驱动，每个服务监听事件并触发下一步）和 Orchestration（一个协调者集中管理）。3）事件驱动 + 本地消息表——利用消息队列实现异步解耦。本地事务和消息发送在同一个事务中完成（或使用 Transactional Outbox 模式），消费者端保证幂等消费。4）最大努力通知——不断重试直到成功，适合对一致性要求不高但需要最终送达的场景（如发送通知）。\n\n扩展延伸：面试中常见追问：「互联网金融场景怎么选？」——核心交易用 TCC 或 Saga 保证强一致性，非核心环节（积分、通知）用异步消息。注意：不要教条地认为 AP 一定优于 CP（ZooKeeper 就是 CP 系统，选择了强一致性牺牲了部分可用性），选择取决于业务场景——如果 100 元的转账不能出现两边都扣钱（需要强一致），如果新闻推荐暂时不一致影响不大（适合 AP）。",
+    "hints": [
+      "CAP 中 P（分区容忍性）是必须选的——分布式系统不可能避免网络分区，所以实质是 CP vs AP",
+      "ACID 的 C（一致性约束）和 CAP 的 C（线性一致性）不是同一个概念——ACID 关注数据库约束，CAP 关注多节点数据一致性"
+    ],
+    "tags": [
+      "分布式",
+      "CAP",
+      "最终一致性",
+      "Saga"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式追踪系统（Distributed Tracing）的原理与选型",
+    "content": "在微服务架构中，一个请求会经过多个服务。分布式追踪系统是如何实现跨服务请求追踪的？OpenTelemetry、Jaeger、Zipkin 之间是什么关系？",
+    "answer": "答案：分布式追踪的核心思想是为每个请求生成一个全局唯一的 Trace ID，在请求经过每个服务时创建 Span（追踪单元），通过 Trace ID 将所有 Span 串联起来，还原请求在微服务之间的完整调用链路。OpenTelemetry 是数据采集标准，Jaeger 和 Zipkin 是后端存储和可视化平台。\n\n解析：核心数据结构——1）Trace：代表一个完整的请求链路。2）Span：链路中的一个工作单元（如一次 RPC 调用、一次数据库查询）。每个 Span 记录操作名称、开始时间、结束时间、状态。3）Span Context：跨进程传递的追踪上下文，包含 Trace ID、Span ID、Baggage（用户自定义 KV）。\n\n跨服务传递：当一个服务调用另一个服务时，Span Context 通过 HTTP Header（如 W3C Trace Context 标准的 traceparent 头）或 RPC 元数据传递。接收方从请求中提取 Trace ID，创建新的 Span 并关联到父 Span。\n\nOpenTelemetry vs Jaeger vs Zipkin：1）OpenTelemetry（OTel）——CNCF 孵化项目，统一了 OpenTracing 和 OpenCensus，提供 SDK、API 和 Collector，负责数据采集和导出。它不负责存储和可视化。2）Jaeger——Uber 开源的分布式追踪系统，CNCF 毕业项目，提供存储（Elasticsearch/Cassandra/Badger）和 UI。可以接收 OTel 格式的数据。3）Zipkin——Twitter 开源的分布式追踪系统，功能类似 Jaeger，更轻量。\n\n扩展延伸：选型建议——新项目优先选 OpenTelemetry（业界标准） + Jaeger（成熟度高）。如果已经在用 Prometheus + Grafana，Jaeger 可以很好地集成到 Grafana 的 observability 体系中。带宽和采样率是全量采集还是采样采集？高流量系统通常使用头采样（Head Sampling，在请求入口决定采不采样）或自适应采样（根据流量动态调整采样率）。数据量预估：一个高频请求（如 10000 QPS）全量采集可能需要 TB 级的存储，所以 1-10% 的采样率是常见的折中。",
+    "hints": [
+      "Trace ID 在服务间通过 HTTP Header / RPC 元数据传递——接收方从请求中提取并创建关联 Span",
+      "OpenTelemetry 是标准（负责数据采集），Jaeger/Zipkin 是后端（负责存储和展示）——两者是上下游关系"
+    ],
+    "tags": [
+      "分布式追踪",
+      "OpenTelemetry",
+      "Jaeger",
+      "微服务"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "API 网关在微服务架构中的核心职责",
+    "content": "API 网关在微服务架构中承担哪些核心职责？比较传统的单体网关（如 Kong）和云原生网关（如 Envoy、Spring Cloud Gateway）的异同。",
+    "answer": "答案：API 网关是微服务架构的入口层，负责请求路由、认证鉴权、限流熔断、协议转换和可观测性等横切关注点。它将对多个微服务的调用统一暴露为对客户端的单一入口，简化客户端调用逻辑。\n\n解析：API 网关核心功能：1）请求路由——根据请求路径、Header、域名等将请求转发到对应的后端服务。支持动态路由更新而无需重启网关。2）认证鉴权——统一的身份认证（OAuth2/JWT 验证）和权限校验，避免每个服务重复实现。3）限流熔断——对超出阈值的请求进行限流，对下游故障的服务进行熔断（Circuit Breaker），保护后端服务不被流量冲垮。4）协议转换——将外部协议（HTTP/HTTPS/WebSocket）转换为内部协议（gRPC/Thrift），或反向代理。5）可观测性——统一收集请求的指标（延迟、错误率、QPS）和日志，输出到监控系统。\n\n传统网关 vs 云原生网关：1）传统网关（Kong/Nginx + Lua）——基于 Nginx + 插件机制，成熟稳定，性能优异。通过 Lua 脚本或插件扩展功能。优点：生态成熟、文档丰富、性能好。缺点：配置热更新需要 reload（Kong 通过 DB 解决了部分问题）、扩展性受限于 Lua 生态。2）云原生网关（Envoy/Spring Cloud Gateway）——Envoy 是用 C++ 写的 L7 代理和服务网格的数据面，动态配置（xDS API），适用于 Kubernetes 和 Service Mesh 环境。Spring Cloud Gateway 基于 Spring WebFlux（Reactive），适合 Java 技术栈团队。优点：动态配置、与 Kubernetes 深度集成、丰富的可观测性。缺点：运维复杂度较高。\n\n扩展延伸：API 网关的演进趋势——从单一网关走向服务网格（Service Mesh）。服务网格将网关的流量治理能力下沉到 Sidecar Proxy（Envoy/Istio），应用代码不再需要感知网关逻辑。Gateway API（Kubernetes 的新一代 Ingress API）提供了更标准化的网关配置方式。注意：不要滥用 API 网关——不要将业务逻辑塞入网关层。网关负责基础设施级的横切关注点，业务逻辑（如消息格式转换、业务规则校验）应该放在后端服务中而不是网关中。",
+    "hints": [
+      "API 网关负责「横切关注点」（认证/限流/路由/监控）——不要把业务逻辑塞进网关层",
+      "从传统网关到 Service Mesh 的演进趋势是将流量治理能力从中心化网关下沉到 Sidecar Proxy"
+    ],
+    "tags": [
+      "微服务",
+      "API网关",
+      "Envoy",
+      "Service Mesh"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "微服务架构中的服务发现机制对比",
+    "content": "以下关于微服务架构中服务发现（Service Discovery）的说法，哪一项是正确的？\n\nA) 客户端发现模式中，客户端直接从注册中心获取服务实例列表并自行负载均衡，如 Netflix Eureka + Ribbon\nB) 服务端发现模式通过负载均衡器（如 AWS NLB）隐藏注册中心细节，客户端只需知道负载均衡器地址即可\nC) Zookeeper 基于 ZAB 协议保证强一致性，适合作为注册中心，在服务大规模上下线时性能不会出现瓶颈\nD) Kubernetes Service 本质上是服务端发现模式，kube-proxy 通过 iptables/IPVS 将请求负载均衡到后端 Pod",
+    "answer": "答案：正确的是 A、B、D。\n\n解析：A 正确——客户端发现模式中，服务实例启动时向注册中心注册，客户端从注册中心获取可用实例列表，客户端自身实现负载均衡（如 Ribbon、Spring Cloud LoadBalancer）。优势：减少了网络跳数，部署拓扑简单。缺点：客户端需要集成发现逻辑，不同语言需要不同的实现。\n\nB 正确——服务端发现模式中，客户端不直接感知注册中心，而是通过负载均衡器（AWS ALB/NLB、Kubernetes Service）发起请求。负载均衡器将请求转发到健康的服务实例。优势：客户端逻辑简单（只需知道负载均衡器地址），语言无关。缺点：多了一次网络跳转，负载均衡器可能成为瓶颈。\n\nC 错误——Zookeeper 基于 ZAB 协议保证强一致性（CP 系统），但在服务大规模上下线时，注册信息的变更导致 ZK 集群频繁进行 Leader 选举和状态同步，可能产生脑裂和性能瓶颈。这也是为什么 Netflix 从 ZooKeeper 迁移到 Eureka（AP 系统）的原因。\n\nD 正确——Kubernetes Service 是典型服务端发现模式。Service 有 Cluster IP，kube-proxy 通过 iptables/IPVS 规则将发往 Cluster IP 的请求负载均衡到后端 Pod 实例。客户端不需要关注后端实例的变化，所有发现逻辑由 Kubernetes 基础设施完成。\n\n扩展延伸：当今服务发现的主要选择包括：Kubernetes 自带 DNS + Service（云原生首选）、Consul（支持多数据中心和健康检查）、Eureka（Spring Cloud 传统方案，AP 优先）。选型建议：如果已经在用 Kubernetes，优先使用 Kubernetes Service（天然的服务发现）；如果是在非 K8s 环境（如传统 IDC），可以考虑 Consul 或 Eureka。注意区分注册中心和健康检查的职责——注册中心负责存储可用实例，健康检查负责判断实例是否存活。",
+    "hints": [
+      "客户端发现需要客户端集成负载均衡逻辑，服务端发现多一次网络跳转但客户端更简单",
+      "ZooKeeper 做注册中心的性能瓶颈在于大规模变更时的 Leader 选举和同步"
+    ],
+    "tags": [
+      "微服务",
+      "服务发现",
+      "Eureka",
+      "Kubernetes"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "容器网络（CNI）原理对比",
+    "content": "关于容器网络接口（CNI）和 Kubernetes 网络模型的描述，以下哪一项是不正确的？\n\nA) Calico 基于 BGP 协议实现容器间三层路由，不依赖 Overlay 隧道，性能损耗较低\nB) Flannel 的 VXLAN 模式工作在二层，在每个 Node 之间建立 VXLAN 隧道封装容器流量\nC) Cilium 基于 eBPF 实现网络策略和可观测性，性能优于 iptables 模式，但不支持 L7 网络策略\nD) Kubernetes 网络模型要求所有 Pod 可以直接通信（无需 NAT），无论是否在同一个 Node 上",
+    "answer": "答案：C 不正确。\n\n解析：A 正确——Calico 使用 BGP 协议在 Node 之间交换容器路由信息，不需要 Overlay 封装，数据包的源/目的 IP 就是容器 IP，性能损耗小。适合对网络性能要求高的场景。也存在 IPIP 隧道的跨子网模式。\n\nB 正确——Flannel 的 VXLAN 模式将二层帧封装到 UDP 包（VXLAN）中，在 Node 之间通过 VXLAN 隧道传输。优点是跨子网通信不需要三层路由，缺点是 VXLAN 封装（额外 50 字节头部）带来一定的性能损耗。\n\nC 错误——Cilium 不仅支持 L3/L4 网络策略，还支持 L7 网络策略（HTTP/gRPC/Kafka 等协议的请求级控制）。Cilium 基于 eBPF 实现了比 iptables 模式更高性能的数据平面，并且提供了 API 级别的可观测性（Hubble）。Cilium 是目前 CNCF 生态中最活跃的 CNI 插件之一，被认为是 iptables 模式的下一代替代。\n\nD 正确——Kubernetes 网络模型的三个基本要求：1）所有 Pod 可以不经过 NAT 与所有其他 Pod 通信。2）所有 Node 可以不经过 NAT 与所有 Pod 通信。3）Pod 看到的自己的 IP 与别人看到的其 IP 相同。这个模型简化了应用迁移（从 VM 到容器）和微服务架构中服务间通信。\n\n扩展延伸：CNI 选型建议：1）如果对性能要求极高且团队有网络背景 → Calico（BGP 模式）。2）大部分通用场景 → Flannel（VXLAN 模式）或 Calico（IPIP 模式），简单可靠。3）如果需要高级网络策略（L7 策略、API 级可观测性、加密）→ Cilium（基于 eBPF，代表了 K8s 网络的未来方向）。4）AWS 环境 → AWS VPC CNI（每个 Pod 分配 VPC 真实 IP，性能最好）。注意：CNI 选型与 Kubernetes 版本、云平台和团队运维能力密切相关，没有绝对的最优选择。从 iptables 到 eBPF 的迁移是 Kubernetes 网络发展的主要趋势——Cilium 的使用率在持续快速上升。",
+    "hints": [
+      "Calico 用 BGP 直接路由（不封装），Flannel VXLAN 用隧道封装——两者各有适用场景",
+      "Cilium 的 eBPF 模式不仅支持 L7 策略而且性能优于 iptables——是 K8s 网络的未来方向"
+    ],
+    "tags": [
+      "容器网络",
+      "CNI",
+      "Calico",
+      "Cilium"
+    ]
   }
 ]

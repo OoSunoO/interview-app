@@ -1621,5 +1621,95 @@
       "BlockingQueue",
       "无锁"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CopyOnWriteArrayList 的适用场景与原理",
+    "content": "CopyOnWriteArrayList 的底层通过一个___数组存储元素。写操作（add/set/remove）时，会先获取___（ReentrantLock），然后___（复制一个新数组），在新数组上执行修改，最后将___引用指向新数组。读操作直接在___数组上执行（不加锁）。适用场景：___远多于写操作的并发场景。缺点包括：写操作代价___（每次写都复制整个数组）、___（数组副本可能占用双倍内存）、数据___（读操作可能读到旧数据）。",
+    "answer": "{\"correct\":[[\"volatile\",\"volatile 数组\"],[\"锁\",\"ReentrantLock\"],[\"复制数组\",\"拷贝数组\"],[\"volatile 数组引用\",\"array\"],[\"源\",\"volatile\"],[\"读操作\",\"读取\"],[\"大\",\"高\"],[\"内存占用高\",\"内存开销大\"],[\"弱一致性\",\"不一致\",\"最终一致性\"]],\"distractors\":[\"CAS\",\"写\",\"ReentrantReadWriteLock\",\"强一致性\"]}",
+    "hints": [
+      "CopyOnWriteArrayList 读多写少场景——如白名单、事件监听器列表",
+      "迭代器是快照式（snapshot）的——创建迭代器后数据变化不会反映到已有迭代器"
+    ],
+    "tags": [
+      "并发",
+      "CopyOnWriteArrayList",
+      "集合",
+      "无锁读"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "LongAdder 与 Striped64 高性能计数器",
+    "content": "LongAdder 是 JDK 8 引入的高性能计数器，其内部类继承自___（Striped64）。在低并发时通过___变量更新计数。高并发时通过维护一个___（Cell 数组），将线程通过___映射到不同 Cell 上更新，最后通过___方法汇总所有 Cell 的值。比 AtomicLong 更适合___场景。热点分离的设计思想类似___中的分段锁。",
+    "answer": "{\"correct\":[[\"Striped64\"],[\"base\"],[\"Cell 数组\",\"槽位数组\"],[\"hash\",\"线程哈希\"],[\"sum()\",\"sum\"],[\"高并发写\",\"写多\"],[\"ConcurrentHashMap\",\"JDK 7 ConcurrentHashMap\"]],\"distractors\":[\"AtomicLong\",\"CAS\",\"get()\",\"ForkJoinPool\"]}",
+    "hints": [
+      "LongAdder 通过分段计数减少 CAS 竞争——热点分散到不同 Cell",
+      "sum() 调用时可能读到不同 Cell 的快照——sum 不是强一致性的"
+    ],
+    "tags": [
+      "并发",
+      "LongAdder",
+      "Striped64",
+      "无锁"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CompletionService 异步任务完成排序",
+    "content": "ExecutorCompletionService 将___和___结合起来，通过___（BlockingQueue）来保存已完成的任务结果（Future）。提交任务（submit）时，每个任务完成回调将 Future 放入队列。调用___方法从队列中取出已完成任务的 Future（按完成顺序，而非提交顺序）。这解决了直接使用 ExecutorService 时无法获取最先完成的任务结果的问题——不需要轮询所有 Future。底层依赖___将任务包装为 RunnableFuture。",
+    "answer": "{\"correct\":[[\"Executor\",\"ExecutorService\"],[\"BlockingQueue\",\"阻塞队列\"],[\"已完成 Future 队列\",\"CompletionQueue\"],[\"take()\",\"poll()\",\"take/poll\"],[\"FutureTask\",\"newTaskFor\"]],\"distractors\":[\"ThreadPoolExecutor\",\"ArrayList\",\"submit()\",\"Runnable\"]}",
+    "hints": [
+      "take() 阻塞等待下一个完成的任务，poll() 非阻塞尝试获取",
+      "ExecutorCompletionService 的实际应用：多线程爬虫/查询合并，谁先完成先处理谁"
+    ],
+    "tags": [
+      "并发",
+      "CompletionService",
+      "Executor",
+      "Future"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "线程中断机制与中断响应",
+    "content": "线程中断是一种___机制（线程间协作，不是强制终止）。通过调用线程对象的___方法设置中断标志位。线程可以通过___方法检查中断状态（并清除标志位），或通过___方法仅检查不清除。如果线程处于___（sleep/wait/join）状态时被中断，会抛出___并清除中断标志位。LockSupport.park() 遇到中断会直接返回（不抛异常），但中断标志位___。处理中断的两种正确策略：传递中断（___）或恢复中断（___）。",
+    "answer": "{\"correct\":[[\"协作式\",\"合作式\"],[\"interrupt()\"],[\"Thread.interrupted()\"],[\"isInterrupted()\"],[\"阻塞\",\"WAITING\",\"TIMED_WAITING\"],[\"InterruptedException\"],[\"保留\",\"为 true\"],[\"抛出 InterruptedException\",\"传播\"],[\"重置中断标志位\",\"调用 Thread.currentThread().interrupt()\"]],\"distractors\":[\"stop()\",\"checkInterrupt()\",\"运行状态\",\"Exception\"]}",
+    "hints": [
+      "InterruptedException 被捕获后中断标志位会被清除——如果想上层调用方能感知中断，需要恢复标志位",
+      "轻量级阻塞（如 LockSupport.park）不会抛出 InterruptedException——通过中断标志位判断"
+    ],
+    "tags": [
+      "并发",
+      "中断",
+      "InterruptedException",
+      "线程"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Executors 工厂方法的常见陷阱",
+    "content": "Executors 工厂方法创建的线程池存在多个陷阱：___返回无界线程池（核心=0，最大=MAX_VALUE，SynchronousQueue），任务堆积太多会创建过多线程导致___。___返回无界队列线程池（核心=最大=nThreads，LinkedBlockingQueue），任务堆积可能导致___。___返回单线程池，发生异常后线程会___（但 Executors 会创建新线程替代）。建议直接使用___构造器显式指定所有参数，避免默认参数带来的隐患。",
+    "answer": "{\"correct\":[[\"newCachedThreadPool()\"],[\"OOM\",\"资源耗尽\"],[\"newFixedThreadPool()\"],[\"OOM\",\"内存溢出\"],[\"newSingleThreadExecutor()\"],[\"异常终止\",\"退出\"],[\"ThreadPoolExecutor\"]],\"distractors\":[\"newScheduledThreadPool()\",\"newWorkStealingPool()\",\"继续执行\",\"Executors\"]}",
+    "hints": [
+      "newCachedThreadPool() 的 SynchronousQueue 配合 maximumPoolSize=MAX_VALUE——可以创建任意多线程",
+      "newFixedThreadPool() 的 LinkedBlockingQueue 默认无界——任务堆积可能撑爆内存"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "Executors",
+      "陷阱"
+    ]
   }
 ]

@@ -1733,5 +1733,100 @@
       "迁移",
       "Jakarta"
     ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Dubbo 3.0 应用级服务发现与 triple 协议",
+    "content": "Dubbo 3.0 是一个重大架构升级。请说明 Dubbo 3.0 引入的应用级服务发现（Application-level Service Discovery）相比 2.7 的接口级服务发现的本质变化，以及 triple 协议（基于 HTTP/2 + gRPC）的设计思路和兼容性策略。",
+    "answer": "答案：Dubbo 3.0 的应用级服务发现将注册中心的元数据从「接口粒度」降维到「应用粒度」，大幅减少了注册中心的存储和推送压力。\n\n解析：应用级服务发现原理：2.7 及之前每个接口（如 com.example.UserService）都在注册中心注册一个 URL，一个微服务有 N 个接口就注册 N 条数据。3.0 改为只注册应用实例（IP:port），接口元数据通过 MetadataService（另一个 gRPC 接口）按需拉取——实现类似 Kubernetes 的 EndpointSlice + 元数据分离，去掉注册中心的数据瓶颈。triple 协议：基于 HTTP/2 和 gRPC wire format，完全兼容 gRPC（可用 grpc-client 调用 triple-server），同时保持 Dubbo 的路由和集群能力。支持 Uni（请求-响应）、Server Stream、Client Stream、Bidirectional Stream 四种通信模型。\n\n扩展延伸：迁移兼容性：3.0 兼容 2.7 协议（dubbo://），可以「双注册」——同时注册接口级和应用级元数据，逐步迁移。triple 对比旧 dubbo 协议：HTTP/2 多路复用（一个连接并发请求，旧 dubbo 是单一请求 blocked）、gRPC 兼容性（集成 Protobuf 和 gRPC 生态）、tls 原生支持。MetadataService 是 Dubbo 3.0 的核心创新，实现了微调治理的控制面和数据面分离。",
+    "hints": [
+      "Dubbo 3.0 为什么从接口级发现改为应用级发现",
+      "triple 协议如何兼容 gRPC"
+    ],
+    "tags": [
+      "Dubbo",
+      "服务发现",
+      "gRPC",
+      "HTTP/2",
+      "Dubbo 3.0"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Envoy xDS 协议与动态配置管理",
+    "content": "Envoy 通过 xDS 协议实现动态配置管理。请说明 xDS 的各个维度（LDS、RDS、CDS、EDS、SDS、HDS 等）各自管理什么配置，以及 ADS（Aggregated Discovery Service）和增量 xDS（Delta xDS）相比传统 xDS 的改进。",
+    "answer": "答案：xDS 是 Envoy 的服务发现和配置分发协议族，每个维度负责不同类型的配置下发，通过控制平面（如 Istio Pilot）统一管理。\n\n解析：xDS 各维度：1）LDS（Listener Discovery Service）——定义监听器（端口、协议、过滤器链）。2）RDS（Route Discovery Service）——定义路由规则（域名到集群的映射、匹配条件、流量策略）。3）CDS（Cluster Discovery Service）——定义上游集群（端点发现方式、负载均衡策略、连接池、TLS 设置）。4）EDS（Endpoint Discovery Service）——定义集群的端点列表（IP:port，含权重、健康状态）。5）SDS（Secret Discovery Service）——定义 TLS 证书（CA 证书、服务端/客户端证书和私钥）。6）HDS（Health Discovery Service）——端点健康检查（Envoy 作为 health checker 向 control plane 上报端点状态）。ADS（Aggregated Discovery Service）将所有类型的发现服务聚合到一个 gRPC 流中，保证配置更新的全局一致性和顺序。Delta xDS（1.8+）从全量更新改为增量更新——只发送变化的字段而非全部配置，减少网络和 CPU 开销。\n\n扩展延伸：xDS 协议起源于 Envoy，现在通过 gRPC 作为通用数据面 API（UDPA/xDS API）被标准化。xDS 的关键设计：最终一致性模型——不同 Envoy 实例可能在短时间内配置不一致。Istio 的 Pilot 通过 ADS 确保更新顺序（先 LDS→RDS→CDS→EDS）。配置热加载热更新——Envoy 不重启即完成配置切换。xDS 3.0（UDPA）的演进方向是更加严格的 schema 验证和更高效的传输。",
+    "hints": [
+      "ADS 解决了 xDS 的什么问题",
+      "Delta xDS 在全量更新下解决了什么性能问题"
+    ],
+    "tags": [
+      "Envoy",
+      "xDS",
+      "服务网格",
+      "动态配置",
+      "控制平面"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Istio Ambient Mesh 无 Sidecar 数据面",
+    "content": "Istio Ambient Mesh 是 Istio 的无 Sidecar 数据面模式。请说明 Ambient Mesh 的核心架构组件（ztunnel、waypoint proxy），它与传统 Sidecar 模式相比在资源消耗、安全模型和运维复杂度上的优劣，以及它如何实现四层和七层流量管理。",
+    "answer": "答案：Ambient Mesh 是 Istio 在 1.22+ 进入 Beta 的数据面新模式，用轻量级节点代理（ztunnel）替代了每个 Pod 的 Envoy Sidecar，大幅降低网格的资源开销。\n\n解析：核心架构：1）ztunnel（Zero-Trust Tunnel）——每个节点运行一个 ztunnel 实例，处理该节点上所有 Pod 的四层流量（TCP、TLS），实现 mTLS、身份认证和四层鉴权。2）waypoint proxy——为需要七层能力的命名空间（或 ServiceAccount）部署的 Envoy 实例，处理 L7 流量（HTTP、gRPC、重试、超时、故障注入）。Ambient 模式将数据面从「每 Pod 一个 Sidecar」拆为「每节点一个 ztunnel（L4）+ 按需 waypoint（L7）」。资源优化：传统 Sidecar 模式每个 Pod 额外消耗约 40-100MB 内存，Ambient 只需每个节点固定几个 ztunnel 和按需的 waypoint。\n\n扩展延伸：Ambient 使用 HBONE（HTTP-Based Overlay Network Encapsulation）隧道协议进行跨节点流量转发。安全模型：Pod 之间的流量默认经过 ztunnel 加密。waypoint 通过 K8s Gateway API 路由到特定工作负载。局限性：需要控制面升级到新版本、ztunnel 用 Rust 实现（与 Go 的 Envoy 不同代码库）、社区采用率还在增长中。Ambient 的 HBONE 在 L4 上没有额外的 mtel 开销。Ambient 模式中服务间的 RBAC（AuthorizationPolicy）仍然有效，L4 的授权在 ztunnel 执行，L7 在 waypoint 执行。",
+    "hints": [
+      "Ambient Mesh 如何降低资源消耗",
+      "ztunnel 和 waypoint proxy 分别处理什么层级"
+    ],
+    "tags": [
+      "Istio",
+      "Ambient Mesh",
+      "Sidecar",
+      "服务网格",
+      "数据面"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Spring Cloud Function 与事件驱动编程",
+    "content": "Spring Cloud Function 是 Spring 生态中的函数式编程抽象层。请说明 Spring Cloud Function 的核心概念（Function、Consumer、Supplier），它如何实现多种传输协议的透明绑定（通过 Spring Cloud Stream），以及在 AWS Lambda、Azure Functions 等 FaaS 平台上的适配机制。",
+    "answer": "答案：Spring Cloud Function 将业务逻辑抽象为独立于传输协议的 Function<IN, OUT> / Consumer<IN> / Supplier<OUT> 接口，通过函数式编程模型统一处理流式、消息和 Serverless 场景。\n\n解析：核心概念：1）Function<T, R>——接收输入返回输出（请求-响应），通过 apply() 调用。2）Consumer<T>——消费输入无返回（发送消息），通过 accept() 调用。3）Supplier<R>——生产输出无输入（定期轮询或流式），通过 get() 调用。透明绑定通过 Spring Cloud Stream 实现：在 application.yml 中配置 spring.cloud.function.definition 声明函数组合，Stream binder（Kafka 或 RabbitMQ）自动将消息队列连接到函数的出入参。组合式函数：Function<Flux<T>, Flux<R>> 支持响应式流，例如 functionA | functionB 的管道组合。\n\n扩展延伸：Serverless 适配：Spring Cloud Function Adapter 将函数打包为 AWS Lambda（通过 RequestStreamHandler）、Azure Functions（通过 FunctionInvoker）的运行时兼容 Handler。输入类型路由——通过 routing function 实现单一入口分发到不同业务函数。编译和缓存：function 被编译为 Java 8 Function 实例，首次调用编译缓存后性能接近手写 Handler。限制：Spring Context 启动开销在 FaaS 冷启动场景中较大（需要通过 Spring Cloud Function 的 GraalVM native image 优化）。",
+    "hints": [
+      "Spring Cloud Function 的三种函数式接口是什么",
+      "Spring Cloud Stream 如何与 Spring Cloud Function 配合"
+    ],
+    "tags": [
+      "Spring Cloud Function",
+      "Serverless",
+      "事件驱动",
+      "FaaS",
+      "Spring"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Dapr 分布式应用运行时架构",
+    "content": "Dapr（Distributed Application Runtime）是 CNCF 孵化项目，提供构建微服务的标准化 API。请说明 Dapr 的边车（Sidecar）架构、核心构建块（Building Blocks）——包括服务调用、状态管理、发布订阅、绑定、Actor 模型、以及可观测性——以及它如何通过 Placement Service 实现 Actor 的分布和重新平衡。",
+    "answer": "答案：Dapr 以 Sidecar 模式与应用程序并行运行，通过 HTTP/gRPC API 暴露分布式能力，让开发者无需引入特定 SDK 即可使用服务调用、状态管理和消息代理等功能。\n\n解析：核心构建块：1）Service Invocation——mDNS/name resolution + mTLS 实现服务到服务的调用，支持重试和熔断。2）State Management——抽象多种状态存储（Redis、Cassandra、MongoDB、Azure CosmosDB），提供最终一致性/强一致性选项和并发控制（ETag）。3）Pub/Sub——统一的消息发布订阅抽象，支持 CloudEvents 1.0 规范。4）Input/Output Bindings——连接外部系统（Kafka、Cron、K8s events）的触发器。5）Actors——虚拟 Actor 模型（类似 Orleans），通过 Placement Service 决定 Actor 所在的 Sidecar 实例。6）Secrets——统一的密钥管理。Placement Service 负责 Actor 分布：每个 Actor Type 的 Actor 实例通过一致性哈希分布到 Dapr Sidecar 中。Placement Service 维护 Actor 分布表（哈希环），Sidecar 定期报告心跳。当 Sidecar 加入/离开时重新平衡 Actor 分布。\n\n扩展延伸：Dapr 的分布式运行方式：Multi-Runtime（mecha）架构，一个 Sidecar 支持多个应用共享（Dapr 1.12+ 的 multi-app run）。与 Istio 的集成：Dapr 管理应用层逻辑（Actor、状态管理），Istio 管理通信层（mTLS、流量路由），两者互补。Concepts：Dapr 的 API 版本化（v1.0 稳定）、组件模型（components-contrib 仓库包含 100+ 组件实现）。限制：Actor 模型的再入问题、状态存储的 provider 锁定风险。",
+    "hints": [
+      "Dapr 的 Sidecar 暴露什么协议给应用",
+      "Placement Service 如何管理 Actor 分布"
+    ],
+    "tags": [
+      "Dapr",
+      "Actor",
+      "运行时",
+      "分布式应用",
+      "CNCF"
+    ]
   }
 ]

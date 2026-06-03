@@ -1720,5 +1720,105 @@
       "UX",
       "模式"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 自我博弈优化（Self-Play for Agent）",
+    "content": "解释 AI Agent 的自我博弈优化（Self-Play Optimization，又称 Agent Self-Training 或 Agent Self-Play）。它如何在不依赖人工标注的情况下提升 Agent 性能？描述其核心训练循环及主要挑战。",
+    "answer": "Agent 自我博弈优化将 Agent 自身的生成轨迹作为训练数据，迭代提升能力。典型循环（由 AgentTuning、SPIN、Self-Rewarding LLM 等工作开创）：(1) Agent 在一组任务上运行并产生轨迹（工具调用、推理步骤、最终答案），(2) 同时收集成功轨迹（任务完成）和失败轨迹，(3) 推导奖励信号——来自环境反馈（任务完成率）、奖励模型或 Agent 自我评估，(4) 使用偏好优化（如 DPO）在成功轨迹上微调 Agent，失败轨迹作为负例。主要挑战包括：(1) 奖励黑客（reward hacking）——Agent 可能学习捷径而非真正提升能力，(2) 模式坍塌（mode collapse）——Agent 收敛到狭窄的策略集，(3) 确认偏误（confirmation bias）——Agent 强化已有模式而不探索新策略，(4) 评估噪声——环境奖励可能无法捕捉工具使用质量的微妙差异。进阶方法包括：对抗性任务生成（生成当前 Agent 难以应对的更难任务）、多 Agent 自我博弈（Agent 相互竞争或协作）、基于树搜索的迭代自训练。",
+    "hints": [
+      "类比 AlphaGo 的自我博弈机制，将相同原理映射到语言 Agent 的工具使用任务。",
+      "关键瓶颈是如何在没有人工判断的情况下获得可靠的奖励信号。",
+      "SPIN（Self-Play Fine-Tuning）和 AgentTuning 是该方向的代表性论文。"
+    ],
+    "tags": [
+      "self_play",
+      "agent_training",
+      "reinforcement_learning",
+      "autonomous_improvement",
+      "preference_optimization"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Mixture-of-Agents (MoA) 参考架构",
+    "content": "Mixture-of-Agents (MoA) 是一种多 Agent 架构。以下哪个选项正确描述了其核心设计思路，以及它与标准多 Agent 编排的区别？\nA) MoA 将 LLM 骨干替换为路由器，将每个任务分配给专门的微调 Agent 模型。\nB) MoA 将多个 LLM 分层级联——每个层的 Agent 基于上一层的输出生成内容，聚合模型合成最终回复。\nC) MoA 在任务负载超过预设阈值时动态生成新的 Agent 实例。\nD) MoA 在 Agent 的 LLM 骨干内部使用混合专家架构来选择不同的推理策略。",
+    "answer": "B",
+    "hints": [
+      "Together AI 等机构发表该方法，展示了通过组合较弱模型超越 GPT-4 的效果。",
+      "该架构涉及多层协作，而非单轮投票。",
+      "类比小组讨论的过程：每个参与者听了别人的意见后修正自己的观点。"
+    ],
+    "tags": [
+      "mixture_of_agents",
+      "multi_agent",
+      "collaboration",
+      "model_cascade",
+      "ensemble_method"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Code-as-Plan: Agent 规划的代码表达范式",
+    "content": "什么是 AI Agent 的「Code-as-Plan」（代码即规划）范式？它与基于自然语言的规划方式有何不同？在执行可靠性、错误恢复和工具编排方面有哪些优势？",
+    "answer": "Code-as-Plan 是 Agent 使用可执行代码（通常为 Python 伪代码或可执行脚本）而非自然语言来表达规划和多步推理的范式。Agent 不是写「首先搜索 X，然后过滤结果 Y，然后调用 API Z」，而是直接写出 Python 函数调用、条件分支和循环来表达相同的逻辑。该范式（以 CodeAct、Voyager 等系统为代表）的优势包括：(1) 确定性——代码每次执行结果一致，而 NL 需要每步重新解释，(2) 错误处理——try/catch 提供结构化错误恢复，无需重新调用 LLM，(3) 组合性——可自然包含循环、条件和函数组合，(4) 可验证性——代码在执行前可静态分析语法错误，(5) 可复用性——成功的代码规划可缓存为工具本身。与 NL 规划的本质区别在于从「LLM 每步重新解释意图」转向「执行预定的确定性逻辑」。主要挑战是 LLM 必须生成语法正确的代码和准确的 API Schema，对代码生成能力要求较高。",
+    "hints": [
+      "比较「then call the API」（NL）和「response = call_api(…)」（代码）之间的可靠性差异。",
+      "Voyager（Minecraft）和 CodeAct 是该范式的代表性系统。",
+      "该方法还支持将成功的规划缓存并复用为新工具。"
+    ],
+    "tags": [
+      "code_as_plan",
+      "agent_planning",
+      "execution_reliability",
+      "code_act",
+      "tool_orchestration"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Agent 路由与模型选择器架构",
+    "content": "Agent Router（Agent 网关/路由器）是大规模 Agent 部署中的重要设计模式。以下哪个选项最准确地描述了它的核心功能和设计目的？\nA) Agent Router 是一个负载均衡器，将 Agent 请求分发到多个 GPU 实例以实现水平扩展。\nB) Agent Router 是一个智能调度器，解析传入任务并根据任务复杂度、成本预算和延迟要求，将其路由到最合适的 Agent 专长、模型层级或执行策略。\nC) Agent Router 是一个网络代理，转换不同的 Agent 通信协议（MCP、A2A、OpenAI function calling）。\nD) Agent Router 是一个缓存层，存储之前的 Agent 回复，将重复查询直接路由到缓存结果而不调用 Agent。",
+    "answer": "B",
+    "hints": [
+      "类比 API 网关将请求路由到不同微服务，但增加了对任务难度和模型成本的智能判断。",
+      "简单/便宜的任务走小模型；复杂任务走拥有更多工具的强大 Agent。",
+      "该模式是生产环境 Agent 系统处理多样化请求类型时成本优化的关键。"
+    ],
+    "tags": [
+      "agent_router",
+      "model_selection",
+      "task_routing",
+      "cost_optimization",
+      "production_agents"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Self-Discover 推理框架",
+    "content": "解释 Self-Discover（自我发现）提示框架在复杂推理中的应用。它与 Chain-of-Thought (CoT) 和 Tree-of-Thought (ToT) 的区别是什么？Self-Discover 的关键阶段有哪些？",
+    "answer": "Self-Discover（Google DeepMind, 2024）是一种两阶段推理框架：LLM 先针对特定问题自行发现结构化的推理结构，再应用该结构解决问题。与 CoT（使用通用的「逐步思考」提示）和 ToT（通过树搜索探索多条推理路径）的核心区别在于：Self-Discover 让模型在解决之前先自行组装定制化的推理模块。两个阶段如下：\n\n(1) DISCOVER（发现阶段）——模型从给定的推理原语池中选取、改编和组合推理原语（原语包括：「拆解为子问题」、「逐步思考」、「批判性思维」、「反向推理」、「类比推理」等），生成针对具体任务定制的推理结构。\n\n(2) SOLVE（解决阶段）——模型应用发现阶段产出的推理结构来解决实际问题，遵循自己定义的原子步骤逐步推理。\n\n关键优势：(1) 推理结构是任务自适应而非固定模板，(2) 在单一框架中组合多种推理策略，(3) 发现的结构是可解释的，且可为类似任务复用。Self-Discover 在复杂推理基准上已被证明优于 CoT、ToT 和其他提示方法。",
+    "hints": [
+      "关键区别在于双阶段设计：先设计推理过程，再执行推理过程。",
+      "在数学和常识推理任务上它超过标准 CoT 和 ToT。",
+      "模型「发现」组合哪些推理原语，而不是遵循预设模板。"
+    ],
+    "tags": [
+      "self_discover",
+      "reasoning_framework",
+      "prompting_strategy",
+      "deepmind",
+      "complex_reasoning"
+    ]
   }
 ]

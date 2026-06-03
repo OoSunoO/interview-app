@@ -1759,5 +1759,113 @@
       "string",
       "java-15"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Bridge 方法合成——桥接方法的生成规则与泛型擦除的运行时适配",
+    "content": "请解释 Java 编译器在什么情况下会生成 Bridge Method（桥接方法）？桥接方法解决了泛型擦除带来的什么问题？请以「子类继承泛型接口或泛型父类并指定具体类型参数」为例，说明编译器如何通过桥接方法维持多态性。",
+    "answer": "桥接方法由 Java 编译器在以下情况自动生成：当一个类继承泛型父类或实现泛型接口，并指定了具体类型参数时，编译器会合成一个签名与父类/接口泛型方法擦除后签名一致的 synthetic 方法，该方法内部调用子类中实际定义的类型特定方法。例如：class StringList implements List<String> { public void add(String s) {...} } 中，编译器合成 public void add(Object o) { add((String) o); }——方法体执行强制向下转型并调用类型特定的 add(String)。桥接方法解决了泛型擦除带来的多态破坏：JVM 在运行期只能识别擦除后的方法签名（add(Object)），没有桥接方法则子类的 add(String) 与父接口的 add(Object) 签名不匹配，无法通过 vtable 分派实现正确的多态覆盖。此外，桥接方法也用于协变返回类型——子类覆盖父类方法但返回更具体类型时也会合成桥接方法。",
+    "hints": [
+      "桥接方法在字节码中带有 ACC_BRIDGE 和 ACC_SYNTHETIC 标志，反射中可通过 Method.isBridge() 和 Method.isSynthetic() 检测",
+      "协变返回类型（Covariant Return Type）也依赖桥接方法实现：例如 Object clone() 被子类重写为返回更具体的类型时"
+    ],
+    "tags": [
+      "泛型",
+      "桥接方法",
+      "类型擦除",
+      "多态",
+      "编译器"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "编译时常量表达式跨编译单元内联对二进制兼容性的影响",
+    "content": "以下关于 Java 编译时常量表达式跨编译单元内联行为的描述，哪项是正确的？\nA) 编译时常量（static final 基本类型或 String）在编译期会被直接内联到使用处的字节码中，因此修改常量定义类的值后只需重新编译定义类，无需重新编译引用类\nB) 编译时常量在编译期内联后，修改常量定义类的值时必须重新编译所有引用该常量的类，否则引用类使用的仍然是旧值\nC) 编译时常量表达式仅对同一编译单元（同一源文件）内的引用进行内联，跨类的常量引用不会内联\nD) Java 编译器不会对编译时常量进行跨类内联，常量引用在运行期通过动态链接解析",
+    "answer": "B) 编译时常量（static final 基本类型和 String 常量，当初始化表达式是 JLS 15.29 定义的「常量表达式」时）会在编译期被内联到所有引用该常量的类的字节码中。这意味着修改定义类中的常量值后，已编译的引用类仍然使用旧值，直到所有引用类被重新编译。这是 Java 二进制兼容性的常见陷阱之一——开发者修改了常量值但只重新编译了定义类，导致不同类使用不同版本的常量值。注意：static final 字段不一定是编译时常量——例如 static final int x = someMethod() 不是编译时常量表达式，不会触发内联。",
+    "hints": [
+      "判断编译期常量表达式的标准见 JLS 4.12.4：仅字面量、final 变量和常量运算符的组合才算常量表达式",
+      "JDK 11 的 ConstantDynamic (Condy) 提供了一种新的常量定义机制，其解析延迟到运行期，避开了编译期内联的二进制兼容性问题"
+    ],
+    "tags": [
+      "编译时常量",
+      "常量折叠",
+      "二进制兼容性",
+      "JLS",
+      "跨编译单元"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "strictfp 关键字与跨平台浮点运算确定性",
+    "content": "使用 strictfp 修饰的方法或类，其中所有的浮点运算（float 和 double）在任何 JVM 实现上都会产生完全相同的位级（bitwise）结果。",
+    "answer": "A) 正确",
+    "hints": [
+      "strictfp 强制使用 IEEE 754 严格模式，禁止 JIT 使用 x87 80 位扩展精度寄存器等中间精度优化",
+      "JDK 17+ 默认启用 strictfp 语义，但显式 strictfp 关键字仍可用于强调代码的可移植性要求"
+    ],
+    "tags": [
+      "strictfp",
+      "IEEE 754",
+      "浮点运算",
+      "跨平台",
+      "JLS"
+    ],
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "company": ""
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "接口默认方法菱形冲突的三级解决规则",
+    "content": "当一个类同时实现的两个接口提供了相同签名的默认方法时，Java 按照哪三条规则解决冲突？请详细解释每条规则的含义和优先级，并说明「覆盖抽象方法」规则适用的具体场景。",
+    "answer": "Java 接口默认方法菱形冲突的三条解决规则（优先级从高到低）：\n1) 类优先（Class Wins）——如果类或其父类（超类）中已经定义了具体方法（非抽象），即使接口有同名默认方法，也使用类中的实现。注意：如果父类中的方法是抽象的，则不适用此规则——接口默认方法可以「补上」父类抽象方法的实现。\n2) 最具体优先（Most Specific）——如果两个接口都提供了同名默认方法，且其中一个接口是另一个的子接口（继承关系），则使用更具体的子接口的默认方法。例如 interface B extends A，两者都有同名默认方法时，B 的版本胜出。\n3) 覆盖抽象方法（Override Abstract）——如果两个接口的同名方法中一个是默认方法（有实现）另一个是抽象方法（无实现），或互不继承的两个接口都有默认方法，则子类必须显式覆盖该方法（使用 InterfaceName.super.methodName() 语法选择使用哪个实现），否则编译报错。该规则的核心逻辑：默认方法的实现不能自动满足抽象方法的契约，子类必须通过显式覆盖来明确如何满足该契约。",
+    "hints": [
+      "类优先规则的边界案例：如果父类提供的是抽象方法而非具体方法，不触发类优先——接口默认方法可以补位",
+      "在最具体优先规则中，编译器通过子类型关系（subtyping relationship）判断哪个默认方法更具体，而非方法的实现内容"
+    ],
+    "tags": [
+      "接口",
+      "默认方法",
+      "菱形冲突",
+      "多继承",
+      "JLS"
+    ],
+    "options": [],
+    "company": ""
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "数组协变与 ArrayStoreException 运行时类型检查",
+    "content": "请分析以下代码的执行结果并解释原因：\n```\npublic class ArrayCovariance {\n    public static void main(String[] args) {\n        Integer[] ints = new Integer[1];\n        Number[] numbers = ints;\n        numbers[0] = 3.14;\n        System.out.println(ints[0]);\n    }\n}\n```\n问题：(1) 这段代码能否通过编译？(2) 运行时会输出什么或抛出什么异常？(3) 请从数组协变、泛型不变性的设计角度解释原因。",
+    "answer": "(1) 能通过编译。因为 Java 数组是协变的——Integer 是 Number 的子类，因此 Integer[] 也被视为 Number[] 的子类型，赋值 Number[] numbers = ints 编译通过。3.14 自动装箱为 Double，而 Double 是 Number 的子类，编译期检查通过。\n(2) 运行时会抛出 java.lang.ArrayStoreException: java.lang.Double。代码无法执行到 System.out.println。\n(3) 原因：Java 数组在运行时保存着创建时声明的实际元素类型（reified type）。Integer[] 的实际运行时类型是 Integer[]，JVM 在每次数组写入（aastore 指令）时都会插入动态类型检查——检查待写入的值是否是数组实际元素类型的子类或相同类型。3.14 装箱为 Double，Integer[] 不兼容 Double，因此抛出 ArrayStoreException。\n设计对比：数组协变是 Java 1.0 的设计决策，允许 Object[] arr = new String[1] 以便于排序等通用方法的编写，但代价是运行时类型检查的开销和异常风险。而 Java 5 的泛型采用不变性（invariance）——List<String> 不是 List<Number> 的子类型——将所有类型安全检查提前到编译期，避免了运行时的 ArrayStoreException 风险。通过通配符（? extends / ? super）泛型提供了安全的协变/逆变支持。",
+    "hints": [
+      "数组的运行时类型信息存储在对象头中，JVM 的 aastore 指令会检查存储类型兼容性，不兼容时抛出 ArrayStoreException",
+      "可用 List<Integer> list = new ArrayList<>(); List<? extends Number> nums = list; nums.add(3.14); // 编译错误 对比理解泛型通配符的安全性"
+    ],
+    "tags": [
+      "数组协变",
+      "ArrayStoreException",
+      "泛型不变性",
+      "类型安全",
+      "aastore"
+    ],
+    "options": [],
+    "company": ""
   }
 ]

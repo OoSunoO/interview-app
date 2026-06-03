@@ -1736,5 +1736,100 @@
       "BFS",
       "接雨水"
     ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "二叉树的最大宽度",
+    "content": "给定一棵二叉树，求其最大宽度。宽度定义为每一层的节点数，包括中间的空节点（null 节点也要计入位置）。二叉树的最大宽度是所有层的最大宽度。",
+    "answer": "核心思路：对节点进行编号（类似堆的索引），利用 BFS 层序遍历计算每层首个和末尾节点的编号差。\n\n```java\npublic int widthOfBinaryTree(TreeNode root) {\n    if (root == null) return 0;\n    Queue<Pair<TreeNode, Integer>> queue = new LinkedList<>();\n    queue.offer(new Pair<>(root, 1));  // 根节点编号为 1\n    int maxWidth = 1;\n\n    while (!queue.isEmpty()) {\n        int size = queue.size();\n        int left = queue.peek().getValue();  // 当前层最左节点编号\n        int right = left;\n\n        for (int i = 0; i < size; i++) {\n            Pair<TreeNode, Integer> pair = queue.poll();\n            TreeNode node = pair.getKey();\n            int idx = pair.getValue();\n            right = idx;\n\n            if (node.left != null) {\n                queue.offer(new Pair<>(node.left, idx * 2));\n            }\n            if (node.right != null) {\n                queue.offer(new Pair<>(node.right, idx * 2 + 1));\n            }\n        }\n        maxWidth = Math.max(maxWidth, right - left + 1);\n    }\n    return maxWidth;\n}\n```\n\n时间复杂度 O(n)，空间 O(n)。\n\n关键细节：1）如果树的深度很大（如 1000 层），编号指数级增长会导致整数溢出。解决方案：每层偏移归一化——将最左节点的编号重新映射为 1。2）DFS 解法也通用，用 Map<level, firstIndex> 记录每层第一个节点编号。\n\n扩展延伸：如果题目问的是「二叉树最大宽度（不考虑空节点）」则是简单的每层 BFS 计数。本题的难点在于空节点也计入位置——堆编号法是直观解法。",
+    "hints": [
+      "为什么要用堆编号的方式而不是简单的层节点计数",
+      "树的深度很大时编号溢出如何解决"
+    ],
+    "tags": [
+      "二叉树",
+      "BFS",
+      "宽度",
+      "编号"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "用 Rand7 实现 Rand10",
+    "content": "已有 API rand7() 可以等概率生成 1 到 7 的随机整数，请实现 rand10() 等概率生成 1 到 10 的随机整数。不允许使用系统随机函数。分析期望调用次数。",
+    "answer": "核心思路：拒绝采样（Rejection Sampling）——用 rand7() 生成更大范围的等概率整数。\n\n```java\npublic int rand10() {\n    while (true) {\n        int row = rand7();\n        int col = rand7();\n        int idx = (row - 1) * 7 + col;  // 生成 1..49 等概率\n        if (idx <= 40) {\n            return (idx - 1) % 10 + 1;\n        }\n        // idx 为 41..49，拒绝并重试\n    }\n}\n```\n\n期望调用次数：每次生成需要 2 次 rand7()，接受概率 40/49 ≈ 81.6%，期望调用 rand7 次数 = 2 * 49/40 = 2.45 次。\n\n优化：拒绝的 9 个值（41..49）不直接丢弃，而是映射为 1..9 再次采样：\n```java\npublic int rand10() {\n    while (true) {\n        int a = rand7();\n        int b = rand7();\n        int idx = (a - 1) * 7 + b;\n        if (idx <= 40) return (idx - 1) % 10 + 1;\n\n        a = idx - 40;  // 1..9\n        b = rand7();   // 1..7\n        idx = (a - 1) * 7 + b;  // 1..63\n        if (idx <= 60) return (idx - 1) % 10 + 1;\n\n        a = idx - 60;  // 1..3\n        b = rand7();\n        idx = (a - 1) * 7 + b;  // 1..21\n        if (idx <= 20) return (idx - 1) % 10 + 1;\n    }\n}\n```\n\n扩展延伸：通用解法——用 randM 实现 randN。如果 M >= N，直接拒绝采样；如果 M < N，多次调用组合扩展范围。核心原则是保证每个候选值等概率生成。",
+    "hints": [
+      "(row - 1) * 7 + col 为什么能生成 1..49 的等概率分布",
+      "拒绝采样的期望运行时间如何计算"
+    ],
+    "tags": [
+      "随机数",
+      "拒绝采样",
+      "概率"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LFU 缓存淘汰策略的数据结构设计",
+    "content": "设计并实现一个 LFU（Least Frequently Used）缓存，支持 O(1) 时间的 get 和 put 操作。核心数据结构如何设计？",
+    "answer": "LFU 的核心挑战是在 O(1) 时间内同时维护「访问频率」和「访问时间」两个维度。\n\n经典解法——双哈希表 + 频率链表：1）keyToNode——HashMap<Key, Node>。Node 包含 key、value、freq、prev、next 指针。2）freqToList——HashMap<Frequency, DoubleLinkedList>。每个频率对应一个双向链表，同一频率的节点按最近访问时间排序（头部最新，尾部最旧）。3）minFreq——全局变量记录当前最小频率，用于 O(1) 淘汰。\n\n操作逻辑：1）get(key)——存在则 freq++，将节点从原 freq 链表移到 freq+1 链表头部。如果原链表为空且 freq == minFreq，则 minFreq++。2）put(key, value)——key 已存在则更新 value 并升级 freq。key 不存在时检查容量，满则淘汰 minFreq 链表尾节点（同一频率中最久未访问的）。插入新节点，freq=1，minFreq=1。\n\n```java\nclass LFUCache {\n    int capacity, minFreq, size;\n    Map<Integer, Node> keyToNode;\n    Map<Integer, DoublyLinkedList> freqToList;\n\n    public LFUCache(int capacity) { ... }\n\n    public int get(int key) {\n        Node node = keyToNode.get(key);\n        if (node == null) return -1;\n        updateFreq(node);\n        return node.value;\n    }\n\n    public void put(int key, int value) { ... }\n\n    void updateFreq(Node node) {\n        freqToList.get(node.freq).remove(node);\n        if (freqToList.get(node.freq).isEmpty() && node.freq == minFreq) {\n            minFreq++;\n        }\n        node.freq++;\n        freqToList.computeIfAbsent(node.freq, k -> new DoublyLinkedList())\n                  .addFirst(node);\n    }\n}\n```\n\n扩展延伸：LFU 的缺点——缓存污染：某个 key 被高频访问后即使不再使用也会长期存在。解决方案：LFU-Aging（频率定期衰减）或 Window-TinyLFU（Caffeine 使用的策略，结合频率和新鲜度）。",
+    "hints": [
+      "LFU 相比 LRU 多维护了哪个维度信息",
+      "同一频率内有多个节点时淘汰哪个"
+    ],
+    "tags": [
+      "缓存",
+      "LFU",
+      "数据结构",
+      "O(1)"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "位运算实现集合幂运算与子集枚举",
+    "content": "如何用位运算高效地枚举一个集合的所有子集？请解释「枚举子集的子集」的二进制技巧及其时间复杂度分析。",
+    "answer": "用整数的二进制位表示集合，子集枚举是位运算高效算法的基石。\n\n基本技巧：1）枚举所有子集——for (int mask = 0; mask < (1 << n); mask++)，mask 的二进制位表示元素选/不选。2）枚举子集的子集（Submask Enumeration）——对给定集合 mask，枚举其所有子集：for (int sub = mask; sub > 0; sub = (sub - 1) & mask)。该循环从 mask 本身开始，每次将最低位的 1 转化为 0 并填充后续位，跳到下一个子集。\n\n时间复杂度分析：枚举所有集合的子集的子集的总复杂度是 O(3^n)。证明：每个元素有三种状态——「不在 mask 中」「在 mask 中且在 sub 中」「在 mask 中但不在 sub 中」，总枚举量为 ΣC(n,k)*2^k = (1+2)^n = 3^n。\n\n常用模式：1）状态压缩 DP（如 TSP）——dp[mask][i] 表示经过集合 mask 个城市且最后到达城市 i 的最短路径。2）容斥原理——利用子集枚举计算并集的大小。3）SOS DP（Sum Over Subsets）——对每个 mask 计算其所有子集的贡献之和。\n\n```java\n// 枚举 mask 的所有子集（循环包含空集）\nfor (int sub = mask; ; sub = (sub - 1) & mask) {\n    // 处理 sub\n    if (sub == 0) break;\n}\n```\n\n扩展延伸：Gray Code（格雷码）枚举子集——相邻子集只差一个元素，适合需要增量计算差异的场景。",
+    "hints": [
+      "sub = (sub - 1) & mask 这一步为什么能跳过无效组合",
+      "3^n 的时间复杂度推导过程是什么"
+    ],
+    "tags": [
+      "位运算",
+      "子集枚举",
+      "状态压缩",
+      "SOS DP"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "图着色问题与贪心近似算法",
+    "content": "对于一个无向图 G，以下关于图着色问题（Graph Coloring）的描述哪一项是正确的？",
+    "options": [
+      "A) 图着色问题是 P 类问题，贪心算法总能找到最优解",
+      "B) Welsh-Powell 算法的核心思想是按度数降序着色，每次选择可用的最小颜色编号，但不保证最优",
+      "C) 四色定理证明任何平面图都可以用最多 5 种颜色着色，贪心算法可以找到最优解",
+      "D) 图着色问题与最大团问题的关系是：团的颜色数等于团的大小"
+    ],
+    "answer": "B",
+    "hints": [
+      "图着色问题的计算复杂度属于哪个类",
+      "四色定理的具体结论是什么"
+    ],
+    "tags": [
+      "图着色",
+      "贪心算法",
+      "NP完全",
+      "Welsh-Powell"
+    ]
   }
 ]

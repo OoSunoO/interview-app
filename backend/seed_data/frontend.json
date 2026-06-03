@@ -1692,5 +1692,97 @@
       "国际化",
       "Intl API"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "View Transitions API 的 SPA 与 MPA 模式实现",
+    "content": "请详细说明 Cross-document View Transitions API（跨文档视图过渡）在 MPA（Multi-Page Application）和 SPA（Single-Page Application）两种架构下的实现差异。重点阐述：\n1) MPA 模式下的 @view-transition 规则与 page-reveal/page-hide 事件的作用；\n2) SPA 模式下 document.startViewTransition() 的调用时机与 Promise 链管理；\n3) 浏览器如何实现旧快照与新快照之间的 morph（变形）动画以及伪元素树（::view-transition-group / ::view-transition-image-pair / ::view-transition-old / ::view-transition-new）的层级结构；\n4) 在视口改变（如响应式布局切换）时如何处理快照尺寸不一致的问题。",
+    "answer": "View Transitions API 提供了浏览器级别的 DOM 状态过渡动画能力。\n\nMPA 模式：\n- 页面通过 <meta name=\"view-transition\" content=\"same-origin\"> 或 CSS @view-transition { navigation: auto; } 启用。\n- 浏览器在导航过程中自动捕获旧页面的截图（旧快照）和渲染新页面截图（新快照），执行过渡动画。\n- page-reveal（新页面内容稳定后触发）和 page-hide（旧页面隐藏前触发）事件允许开发者微调过渡时刻。\n- 跨文档场景受同源策略限制，仅限同源导航。\n\nSPA 模式：\n- 调用 document.startViewTransition(callback) 传入 DOM 更新回调。\n- 浏览器在回调执行前捕获当前 DOM 截图（旧状态），回调执行后捕获新 DOM 截图（新状态）。\n- callback 为同步或返回 Promise——浏览器在新状态渲染完成且 Promise resolve 后开始捕捉新快照。\n- 开发者需确保 Promise resolve 时 DOM 已反映最终状态。\n\n伪元素层级（从外到内）：\n::view-transition（根容器，覆盖在视口上方）\n  └─ ::view-transition-group(name)（每个命名的过渡组独立控制）\n      └─ ::view-transition-image-pair(name)（新旧快照的堆叠容器）\n          ├─ ::view-transition-old(name)（旧状态截图，opacity 逐渐过渡到 0）\n          └─ ::view-transition-new(name)（新状态截图，opacity 从 0 到 1）\n\n快照尺寸不一致处理：\n- 默认行为是 cross-fade（交叉淡入淡出）而非 morph。\n- 使用 CSS 动画 override ::view-transition-old 和 ::view-transition-new 的样式。\n- object-fit/object-position 控制缩放行为。\n- 响应式布局下推荐使用 view-transition-name: root 作为整体过渡，或对变化容器单独命名。\n- 容器的 contain: layout 确保快照捕获不受子元素影响。",
+    "hints": [
+      "MPA 和 SPA 模式下触发 View Transition 的入口机制完全不同——一个靠声明式 CSS 规则，一个靠 JS API。",
+      "四个伪元素形成了 1-1-2 的嵌套树结构——理解根、分组、图片对、新旧四层的职责。"
+    ],
+    "tags": [
+      "浏览器 API",
+      "动画",
+      "前端架构",
+      "跨文档过渡"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CSS @layer 规则与层叠优先级精细化控制",
+    "content": "请阐述 CSS @layer 规则的设计动机和使用方式。当多个 @layer 存在时，浏览器如何决定层叠优先级？使用 @layer 与传统的通过选择器特异性（Specificity）或 !important 来控制样式覆盖的方式相比有何优势？在 Web 组件和第三方样式集成场景中，@layer 解决了哪些具体难题？此外，未分层样式（unlayered styles）与分层样式的优先级关系是怎样的？",
+    "answer": "CSS @layer 提供了一种声明式的层叠优先级控制方式。\n\n核心原理：\n1) @layer 按声明顺序决定优先级，后声明的 layer 优先级高于先声明的——与 CSS 通常的源顺序原则一致。\n2) layer 内部的样式仍遵循特异性规则，但 layer 自身的优先级始终高于 layer 层外同特异性的样式——实际上，未分层样式的优先级高于所有分层样式（这是常见的反直觉点）。\n3) 可通过 @layer reset, base, components, utilities; 先声明各层名称（定义顺序），再在不同文件或代码块中填充内容。\n\n优先级全序：\n!important 标记翻转：内联样式 > 未分层 !important > 分层 !important（分层内的 !important 按 layer 声明顺序）。\n正常权重：未分层样式 > 分层样式（分层内按 layer 声明顺序，同一 layer 内按特异性再按源顺序）。\n\n解决的问题：\n1) CSS 框架整合（如 Bootstrap + Tailwind）：以往需提高特异性或使用 !important 强行覆盖，现在将框架放入低优先级 layer，业务样式放入高优先级 layer。\n2) Web 组件：Shadow DOM 中的样式无法被外部覆盖，但使用 constructable stylesheets 配合 @layer 可建立更清晰的覆盖契约。\n3) 第三方样式侵入问题——无需 !important 污染即可合理降级优先级。\n\n注意事项：\n- @layer 中定义的 @keyframes 不受 layer 优先级影响。\n- 浏览器支持（截至 2025 年底）已在主流浏览器中稳定。",
+    "hints": [
+      "未分层样式与分层样式之间的优先级关系与直观感受相反——未分层样式实际上具有最高的正常权重。",
+      "考虑在一个团队中，reset.css、组件库、业务样式三个来源的优先级应该如何分配？"
+    ],
+    "tags": [
+      "CSS",
+      "样式管理",
+      "前端工程化",
+      "Web 组件"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Trusted Types 与基于策略的 DOM XSS 防御",
+    "content": "Content Security Policy (CSP) 的 Trusted Types 指令（require-trusted-types-for 'script'）是一种什么样的防御机制？它与传统的基于正则的 XSS 过滤（如 DOMPurify）在防御哲学上有何根本区别？请详细说明：\n1) Trusted Types 如何通过拦截 innerHTML、document.write、eval 等 DOM XSS 向下的 sink API 来阻止注入；\n2) TrustedTypePolicy 工厂的定义方式与验证策略；\n3) 与 CSP report-uri/report-to 结合实现 XSS 攻击的事中监控与上报；\n4) 在 Svelte、React 等前端框架中集成 Trusted Types 的兼容性考虑和最佳实践。",
+    "answer": "Trusted Types 通过锁定 DOM XSS sink API，使它们只能接受特定的「可信类型」对象而非任意字符串，从根本上消除基于字符串拼接的注入能力。\n\n防御哲学差异：\n- 传统方案（DOMPurify、escapeHTML）：只能在运行时处理「已到达」sink 的字符串——通过正则/解析器剥离危险内容，属于「事后消杀」。\n- Trusted Types：强制 sink API 不接受普通字符串，只接受 TrustedHTML、TrustedScript 或 TrustedScriptURL 类型的对象，从架构层面消除注入面——属于「事前预防」。\n\n原理：\n1) 启用 CSP 头：Content-Security-Policy: require-trusted-types-for 'script'。\n2) 浏览器拦截以下 API：innerHTML、outerHTML、insertAdjacentHTML、document.write、document.writeln、Element.setAttribute（部分）、eval、setTimeout/setInterval（字符串形式）。\n3) 这些 API 接收普通字符串时会抛出 TypeError，拒绝执行。\n\nPolicy 定义：\nconst escapePolicy = trustedTypes.createPolicy('escape', {\n  createHTML: (input) => { return input.replace(/</g, '<').replace(/>/g, '>').replace(/\"/g, '&quot;'); }\n});\nel.innerHTML = escapePolicy.createHTML(userInput);\n\n上报集成：\nContent-Security-Policy: require-trusted-types-for 'script'; report-uri /csp-report\n违反时浏览器 POST JSON 报告（包含 violating node、source file、policy name），可用于 CI 门禁和告警。\n\n框架集成：\n- Svelte 5：模板编译已自动处理，但 {@html} 和 {@script} 需配置 Trusted Types policy。\n- React：dangerouslySetInnerHTML 直接绕过 Trusted Types 检查，需配合 policy.createHTML 包装。\n- Angular：内置 DomSanitizer 与 Trusted Types 兼容性好。\n\n注意事项：\n- Trusted Types 不能防御基于属性的反射型 XSS（通过 setAttribute('onerror', ...)），但 CSP 的 script-src 补充防御。\n- polyfill（如 trusted-types）可在不支持的浏览器中提供兼容。",
+    "hints": [
+      "Trusted Types 拦截的是 sink 端（DOM API 接收端），而不是 source 端（数据来源）。",
+      "如果 innerHTML 不接受任意字符串，攻击者即使控制了某个变量的值也无法注入——这就是「消灭注入面」的思路。"
+    ],
+    "tags": [
+      "安全",
+      "CSP",
+      "DOM XSS",
+      "前端安全",
+      "浏览器安全"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JavaScript Temporal API 与现代日期时间处理",
+    "content": "JavaScript 的 Temporal API（自 2025 年起逐步进入 Stage 4 / 浏览器稳定版本）旨在替代 Date 对象的哪些核心缺陷？请对比 Temporal.PlainDate、Temporal.ZonedDateTime、Temporal.Duration 与 Date 在以下场景的处理差异：\n1) 时区转换；\n2) 日期算术（如加一个月到 1 月 31 日）；\n3) 日期比较；\n4) 序列化/反序列化。\n此外，Temporal.Now 与 Date.now() 的区别是什么？",
+    "answer": "Date 的核心缺陷：\n1) 年份从 1900 开始编号（getYear() 的遗留问题），月份从 0 开始（0=1月），极易出错。\n2) 字符串解析行为不可靠（new Date('2025-01-01') 与 new Date('2025/01/01') 结果未必一致，且隐式基于 UTC 或本地时区的规则混淆）。\n3) 日期算术不支持 DST 安全——setMonth 直接修改月字段不处理时区偏移变化。\n4) 无不可变性——所有 set* 方法修改原始对象，导致意外的可变性问题。\n5) 缺乏纯日期（无时间成分）、纯时间、带时区的完整时间等不同类型的区分。\n\nTemporal 类型与 Date 对比：\n\n1) 时区转换：\n- Date 仅表示时间戳（UTC），toLocaleString 转换基于本地时区，无法安全操作任意时区。\n- Temporal.ZonedDateTime 明确关联 TimeZone，通过 .withTimeZone() 安全转换。\n\n2) 日期算术：\n- Date：new Date('Jan 31').setMonth(1) 自动溢出到 3 月 3 日（因为 2 月没有 31 日）。\n- Temporal：PlainDate.from('2025-01-31').add({ months: 1 }) 默认使用溢出约束模式抛出错误，或使用 overflow: 'constrain' 自动将日期限制到 2 月 28/29 日，行为可预期。\n\n3) 日期比较：\n- Date：getTime() 转换为数字再比较，需手动剔除时区影响。\n- Temporal：直接支持比较运算符（.equals()、.since()、.until()），且 PlainDate 直接比较日历年月日。\n\n4) 序列化：\n- Date：toJSON() 输出 ISO 字符串，但丢失时区信息。\n- Temporal：ZonedDateTime.toString() 包含时区偏移，支持 RFC 9557 扩展格式。\n\nTemporal.Now.instant() 返回精确时刻（epoch 纳秒），Temporal.Now.zonedDateTimeISO() 返回带时区的当前时间，而 Date.now() 返回 epoch 毫秒数。Temporal.Now 提供更丰富的上下文。\n\n浏览器支持状况（2026 年中）：Chrome 和 Firefox 稳定支持，Safari 17+ 开始支持，polyfill（@js-temporal/polyfill）质量较高。",
+    "hints": [
+      "Date 的月份从 0 开始而日期从 1 开始——这个不一致是最常见 bug 来源。",
+      "Temporal 有 10+ 种不同的类型（PlainDate、PlainTime、PlainDateTime、ZonedDateTime、Instant、Duration 等）——思考为什么要区分 PlainDate 和 ZonedDateTime？"
+    ],
+    "tags": [
+      "JavaScript",
+      "日期时间",
+      "浏览器 API",
+      "前端开发"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Compression Streams API 与浏览器端流式数据压缩",
+    "content": "Compression Streams API 提供了浏览器端的原生数据压缩能力。请详细说明：\n1) CompressionStream 和 DecompressionStream 的构造函数支持的压缩格式（gzip、deflate、deflate-raw）之间的具体差异及使用场景；\n2) 如何将 CompressionStream 与 fetch API 的 ReadableStream 结合实现上传数据的流式实时压缩；\n3) 该 API 与 Node.js zlib 模块的异同；\n4) 在大型文件上传（如视频、日志）场景中，流式压缩比全量压缩的内存优势和性能考量。\n另外，deflate-raw 与 deflate 的 header 差异和校验和差异是什么？",
+    "answer": "Compression Streams API 通过 TransformStream 接口实现数据压缩和解压。\n\n1) 压缩格式差异：\n- gzip：包含 10 字节头部（magic number、mtime、flags、OS type）和 8 字节尾部（CRC-32 校验和 + 原始大小），适用于 HTTP 传输、文件存档。\n- deflate：即 zlib 格式——2 字节头部（CMF + FLG）+ 原始 deflate 数据流 + 4 字节 Adler-32 校验和尾部，传统 HTTP Content-Encoding: deflate 使用的格式。\n- deflate-raw：纯粹的 deflate 压缩数据流（LZ77 + Huffman），无头部/尾部，无校验和，适用于已有封装的场景（如 PNG IDAT chunk 内部使用的就是 deflate-raw）。\n\n2) 流式上传压缩示例：\nconst compressedStream = file.stream()\n  .pipeThrough(new CompressionStream('gzip'))\n  .pipeThrough(new TextEncoderStream());\nconst compressedResponse = await fetch('/upload', {\n  method: 'POST',\n  body: compressedStream,\n  headers: { 'Content-Encoding': 'gzip' }\n});\n数据在浏览器端边读边压缩边发送，无需将整个文件读入内存。\n\n3) 与 Node.js zlib 的异同：\n- API 形式不同：zlib 为回调/流式（zlib.createGzip() 返回 Transform），Compression Streams 为 Web Streams API 标准的 TransformStream。\n- 算法核心相同：均使用 zlib/libzip 库的 deflate 算法。\n- Compression Streams 无法控制压缩级别（level）和内存级别（memLevel），而 zlib 提供精细参数控制。\n- 浏览器端 Compression Streams 无法处理 Node.js 独有的 brotli（待标准化）。\n\n4) 性能考量：\n- 流式压缩内存占用仅为压缩窗口大小（通常 32KB），全量压缩需将整个文件加载到内存中。\n- 劣势：压缩比略低（流式无法全局优化匹配距离），但通常可接受。\n- 适合大文件上传、实时通信数据压缩、增量同步场景。\n\ndeflate-raw vs deflate 头部差异：\ndeflate-raw 无任何头部/尾部，原始 deflate 数据流直接输出；deflate（zlib）在原始 deflate 数据前加 2 字节（CMF: Compression Method and Flags, FLG: Flags）并在尾部追加 4 字节 Adler-32 校验和。因此 deflate 可检测数据完整性，deflate-raw 不自带校验能力。",
+    "hints": [
+      "CompressionStream 实现了 TransformStream 接口——这意味着它天然适用于 pipeThrough 链式调用。",
+      "gzip、deflate（zlib）、deflate-raw 三者在头部和校验和上有递进关系——gzip 信息最多，deflate-raw 最少。"
+    ],
+    "tags": [
+      "浏览器 API",
+      "数据压缩",
+      "流式处理",
+      "前端性能",
+      "网络传输"
+    ]
   }
 ]

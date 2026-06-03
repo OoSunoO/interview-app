@@ -1703,5 +1703,97 @@
       "加密",
       "KMS"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes Server-Side Apply 与字段管理",
+    "content": "Kubernetes 1.22+ 将 Server-Side Apply（SSA）升级为稳定版本。请说明 SSA 的核心原理——字段所有权（Field Ownership）和 merge strategy，以及它相比 Client-Side Apply 解决了哪些关键问题。",
+    "answer": "答案：Server-Side Apply 将 Apply 操作从 kubectl 客户端移到 API Server 执行，通过字段所有权机制（managedFields）跟踪每个字段的修改来源，自动处理冲突。\n\n解析：核心原理：1）每次 Apply 请求以完整对象声明期望状态，API Server 通过字段级比较计算差异，只更新实际变化的字段。2）字段所有权——每个字段由「管理者」标识（fieldManager，通常是 kubectl、控制器或用户），API Server 维护每个字段的 ownership。3）冲突检测——当两个 manager 修改同一字段时，默认拒绝（可指定 force 覆盖）。4）Merge Strategy——SSA 使用 strategic merge patch 或 merge-patch，正确处理 map 和 list 类型字段。相比 Client-Side Apply（Kubernetes 1.8 前）：CSA 在客户端计算 patch（三路合并），无法处理并发编辑冲突、注释遗留问题（kubectl.kubernetes.io/last-applied-configuration annotation 膨胀）。\n\n扩展延伸：SSA 的交互方式：kubectl apply --server-side --field-manager=my-manager。查看字段所有权：kubectl describe 的 Managed Fields 字段。SSA 改变了声明式管理的生态——ArgoCD 等 GitOps 工具已支持 SSA。注意：SSA 需要 etcd 中存储 managedFields 信息（默认开启）。SSA 还引入了 ApplyConfiguration 模式（client-go 的 apply API）。",
+    "hints": [
+      "SSA 如何跟踪字段的修改者",
+      "SSA 和 CSA 的核心区别是什么"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Server-Side Apply",
+      "API",
+      "声明式管理"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes API Priority and Fairness 请求流控",
+    "content": "Kubernetes 1.20+ 将 API Priority and Fairness（APF）升级为 Beta，1.29 中进入稳定。请说明 APF 如何替代 MaxRequestsInFlight 实现更精细的 API 请求流控，它的核心概念（FlowSchema、PriorityLevelConfiguration）和排队模型的工作原理。",
+    "answer": "答案：API Priority and Fairness（APF）是 Kubernetes API Server 的请求队列和优先级系统，替代了旧的 MaxRequestsInFlight 全局限制（仅区分读/写请求量），通过多级队列和公平调度防止单个客户端耗尽 API 资源。\n\n解析：核心概念：1）FlowSchema——根据请求属性（user、verb、resource、namespace 等）将入站请求分类到不同的 Flow。2）PriorityLevelConfiguration——定义每个优先级级别的资源配额（并发度）和排队参数。每个 PriorityLevel 内部包含多个 Queue（队列数由 queuingConfig 中的 queues 参数决定），每个队列按 FIFO 顺序处理请求，多个队列之间使用轮询公平调度。排队模型基于「公平排队 + 优先级调度」（借鉴了网络 QoS 的算法）。APF 使用两个并发限制：concurrency shares（总的 API Server 并发处理能力被拆分为 shares 分配给每个 PriorityLevel）和 execution parallelism（每个 PriorityLevel 的并行执行数）。\n\n扩展延伸：默认 PriorityLevel：workload-high、workload-low、system、leader-election 等。APF 状态通过 /debug/api_priority_and_fairness/dump_priority_levels 查看。排队的队列使用「随机入队 + 轮询出队」保证同一用户的请求不会集中在同一队列。生产建议：不要禁用 APF，为控制面组件（kubelet、controller-manager）设置高优先级，为观测类请求（kubectl get pods）设置低优先级。APF 的弃用通知：MaxRequestsInFlight 已在 1.29 标记为弃用。",
+    "hints": [
+      "FlowSchema 和 PriorityLevelConfiguration 分别负责什么",
+      "APF 的排队模型如何防止单客户端饿死"
+    ],
+    "tags": [
+      "Kubernetes",
+      "API Priority and Fairness",
+      "API Server",
+      "流控"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes Downward API 与 Pod 元数据暴露",
+    "content": "Kubernetes Downward API 允许 Pod 中的容器获取自身元数据。请说明 Downward API 的两种暴露方式（环境变量和 Volume 挂载），以及它能够暴露哪些 Pod 和 Container 字段（如 Pod IP、Node 名称、资源请求/限制、标签等）。",
+    "answer": "答案：Downward API 通过两种方式将 Pod/Container 元数据注入到容器中，无需外部 API 查询：环境变量（用于静态标量值）和 Downward API Volume（用于动态值和大数据量）。\n\n解析：支持暴露的字段：1）Pod 级别——metadata.name、metadata.namespace、metadata.uid、metadata.labels、metadata.annotations、spec.nodeName、spec.serviceAccountName、status.podIP。2）Container 级别——resource limits/requests（CPU、内存）、metadata.labels['key'] 和 metadata.annotations['key']（通过 fieldRef.resourceFieldPath）。环境变量方式：valueFrom.fieldRef.fieldPath 只能暴露标量值。Volume 方式：通过 downwardAPI.items 定义多个字段写入文件，支持字段级别修改 mode。\n\n扩展延伸：典型用途——Pod IP 注入给 Java 的 -Djava.rmi.server.hostname、注册中心暴露 Pod IP。资源限制注入给 JVM 的 -XX:MaxRAMPercentage。Downward API 不支持暴露 Resource field 通过 env（只能用 volume）。注意：downward API volume 中的标签和注释更新后不会自动同步到容器文件系统（API Server 不 watch 它们的变化）。替代方案：Kubernetes Downward API 之外的方案是使用 K8s API 查询自身状态（但需要 RBAC 权限和额外的依赖）。",
+    "hints": [
+      "Downward API 的两种暴露方式分别适用于什么场景",
+      "Downward API 不能暴露哪些 Pod 元数据"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Downward API",
+      "Pod",
+      "配置注入"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes Device Plugin 设备管理扩展",
+    "content": "Kubernetes Device Plugin 框架如何实现对 GPU、FPGA、SR-IOV NIC 等特殊硬件资源的管理和调度？请说明 Device Plugin 的工作流程、与 kubelet 的 gRPC 交互（ListAndWatch / Allocate），以及它与静态 CPU Manager、拓扑管理器（Topology Manager）的关系。",
+    "answer": "答案：Device Plugin 是 Kubernetes 的扩展机制（Alpha 在 1.8，Beta 在 1.10，GA 在 1.26），允许第三方厂商通过 gRPC 协议向 kubelet 注册特殊硬件设备，实现资源发现、健康检查和分配生命周期管理。\n\n解析：工作流程：1）Device Plugin pod 部署后通过 Unix Socket（/var/lib/kubelet/device-plugins/) 向 kubelet 注册。2）ListAndWatch——kubelet 调用此 gRPC 方法获取设备列表（含设备 ID 和健康状态），建立 watch 持续监控变更。3）Allocate——当 Pod 请求 resource（如 nvidia.com/gpu: 1）时，kubelet 调用 Allocate 方法，Device Plugin 返回容器运行时所需的设备映射、环境变量和挂载点（如 NVIDIA_VISIBLE_DEVICES、LD_LIBRARY_PATH、/dev/dri 等）。4）kubelet 将分配结果传递给 CRI runtime（containerd/CRI-O）创建容器。与 CPU Manager 的关系：CPU Manager 负责 CPU pinning，Device Plugin 负责其他硬件资源；Topology Manager（拓扑管理器）协调 CPU Manager、Device Manager 和 Hint Provider，确保资源分配感知 NUMA 拓扑（避免跨 NUMA 节点分配导致性能下降）。\n\n扩展延伸：常见 Device Plugin 实现：NVIDIA/k8s-device-plugin（GPU）、Intel/cpu-device-plugin（CPU）、Intel/sriov-network-device-plugin（SR-IOV NIC）。Device Plugin 的限制：不支持设备间的亲和性调度、不支持设备热插拔（需要重启 kubelet）、只能分配整设备（不支持设备分片）。从 1.26 开始 DRA（Dynamic Resource Allocation）作为更灵活的资源管理替代方案进入 Alpha，支持跨 pod 共享资源和参数化资源分配。",
+    "hints": [
+      "Device Plugin 与 kubelet 通过什么协议交互",
+      "Topology Manager 如何与 Device Plugin 协作"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Device Plugin",
+      "GPU",
+      "硬件资源",
+      "扩展机制"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes Volume Snapshot 与 CSI 快照恢复",
+    "content": "Kubernetes VolumeSnapshot 和 VolumeSnapshotContent API 实现了持久化卷的快照与恢复功能。请说明 VolumeSnapshotClass、VolumeSnapshot 和 VolumeSnapshotContent 三层资源的关系，以及 CSI 驱动如何实现 CreateSnapshot 和 RestoreVolume 操作。",
+    "answer": "答案：Kubernetes VolumeSnapshot 是 PV 快照的标准 API（GA 于 1.20），通过 CSI 驱动提供的快照功能实现卷的时间点备份。\n\n解析：三层资源：1）VolumeSnapshotClass——类似于 StorageClass，定义快照的参数（如 deletionPolicy、driver 名称、快照参数）。2）VolumeSnapshot（用户创建）——声明要快照的 PVC，作为命名空间内的请求。3）VolumeSnapshotContent（集群资源）——由 CSI 控制器或 VolumeSnapshot Controller 自动创建，绑定到真实的后端快照。创建流程：用户创建 VolumeSnapshot → VolumeSnapshot Controller 创建 VolumeSnapshotContent → CSI 外部-provisioner 调用 CSI 驱动 CreateSnapshot → 存储后端创建快照并返回快照 ID → 绑定。恢复流程：创建 PVC 指定 dataSource: snapshotRef → CSI 驱动调用 CreateVolume 并传递 Snapshot ID → 存储后端从快照创建新卷。\n\n扩展延伸：关键功能：1）deletionPolicy——Delete 删除 VolumeSnapshot 时同时删除后端快照；Retain 保留后端快照。2）VolumeSnapshotContent 的 source 可以是 VolumeHandle（已有卷）或 SnapshotHandle（已有快照）。3）限制：跨 CSI driver 快照不可移植、不支持快照一致性组（consistency group）、CSI 1.0 不支持卷回滚到快照（需要手动创建新卷并迁移数据）。VolumeGroupSnapshot（KEP-2491）正在 alpha 阶段解决一致性问题。开源工具：Velero 利用 VolumeSnapshot API 实现集群备份恢复。",
+    "hints": [
+      "VolumeSnapshot 和 VolumeSnapshotContent 的对应关系",
+      "从快照恢复卷时 CSI 驱动的哪个 gRPC 被调用"
+    ],
+    "tags": [
+      "Kubernetes",
+      "VolumeSnapshot",
+      "CSI",
+      "备份恢复",
+      "存储"
+    ]
   }
 ]
