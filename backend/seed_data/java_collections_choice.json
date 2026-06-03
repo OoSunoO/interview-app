@@ -1344,5 +1344,70 @@
       "建堆",
       "heapify"
     ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "WeakHashMap 的 Entry 何时被回收",
+    "content": "WeakHashMap 中的 Entry（键值对）在什么条件下会被 GC 回收？",
+    "answer": "A) 当 WeakHashMap 对象被 GC 回收时\nB) 当调用 WeakHashMap.clear() 时\nC) 当键（Key）不再被强引用指向时\nD) 当值（Value）不再被强引用指向时",
+    "correct": "C",
+    "hints": [
+      "WeakHashMap 的 Key 使用 WeakReference 包装",
+      "当 Key 只有 WeakReference 指向时，下次 GC 就会回收 Entry"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ConcurrentSkipListMap 的数据结构",
+    "content": "ConcurrentSkipListMap 基于什么数据结构实现？",
+    "answer": "A) 红黑树\nB) B+ 树\nC) 跳表（Skip List）\nD) 哈希表 + 链表",
+    "correct": "C",
+    "hints": [
+      "跳表是一种多层链表结构，支持 O(log n) 的查找、插入和删除",
+      "ConcurrentSkipListMap 是有序的并发 Map（不需要锁的树结构）"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Collections.unmodifiableMap 的特点",
+    "content": "关于 Collections.unmodifiableMap() 返回的不可修改 Map，以下哪项描述是正确的？",
+    "answer": "A) 返回的 Map 是深度不可变的（所有值对象也变为不可变）\nB) 对原始 Map 的修改会反映在不可变视图上\nC) 不可修改 Map 是线程安全的\nD) 对不可修改 Map 调用 put() 方法会被忽略（不做任何操作）",
+    "correct": "B",
+    "hints": [
+      "unmodifiableMap 返回的是原 Map 的视图包装器，底层仍然是原 Map",
+      "对视图调用修改方法会抛 UnsupportedOperationException（不是被忽略）"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "EnumMap 的内部存储",
+    "content": "EnumMap 在内部使用什么数据结构存储键值对？",
+    "answer": "A) 红黑树\nB) 哈希表\nC) 数组\nD) 链表",
+    "correct": "C",
+    "hints": [
+      "EnumMap 内部使用两个长度等于 enum 常量个数的数组（keys[] 和 values[]）",
+      "因为 enum 的 ordinal 是连续的整数，可以直接作为数组下标访问"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "TreeSet 的底层实现",
+    "content": "TreeSet 在 Java 中基于什么数据结构实现？",
+    "answer": "A) 哈希表\nB) 红黑树（通过 TreeMap 实现）\nC) 数组\nD) 跳表",
+    "correct": "B",
+    "hints": [
+      "TreeSet 内部使用 TreeMap 作为底层存储（TreeSet 是 TreeMap 的包装）",
+      "TreeMap 使用红黑树实现，所以 TreeSet 也是红黑树"
+    ]
   }
 ]

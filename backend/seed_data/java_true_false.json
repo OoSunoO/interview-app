@@ -1095,5 +1095,65 @@
       "GC",
       "JVM"
     ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "接口默认方法的冲突",
+    "content": "如果一个类实现了两个接口，这两个接口有同名的默认方法，代码会编译失败。",
+    "answer": "true",
+    "hints": [
+      "Java 要求类必须显式重写冲突的默认方法来解决二义性",
+      "通过 接口名.super.方法名() 语法指定调用的具体实现"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Integer 缓存池",
+    "content": "Java 中 Integer 缓存池默认覆盖 -128 到 127 的范围，在这个范围内使用 == 比较两个 Integer 自动装箱值返回 true。",
+    "answer": "true",
+    "hints": [
+      "Integer.valueOf() 使用缓存池（可配置 -XX:AutoBoxCacheMax 调整上限）",
+      "自动装箱使用 valueOf()，所以 -128~127 的 Integer 使用 == 比较相等"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "try-with-resources 与 suppress 异常",
+    "content": "在 try-with-resources 中，如果 try 块抛出异常且 close() 也抛出异常，close() 的异常会被抑制（suppressed）。",
+    "answer": "true",
+    "hints": [
+      "try-with-resources 的 close() 异常被压制（添加为 try 块异常的 suppressed 异常）",
+      "可以通过 Throwable.getSuppressed() 获取所有被压制的异常"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Math.round 的舍入规则",
+    "content": "Java 中 Math.round(11.5) 返回 12，Math.round(-11.5) 返回 -11。",
+    "answer": "true",
+    "hints": [
+      "Math.round() 对正数：加 0.5 后向下取整；对负数：加 0.5 后向下取整",
+      "-11.5 + 0.5 = -11.0，向下取整为 -11"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "ArrayList 的 subList 视图",
+    "content": "ArrayList 的 subList() 返回的是一个独立的新 ArrayList。",
+    "answer": "false",
+    "hints": [
+      "subList() 返回的是原 List 的 SubList 视图（内部视图类），不是独立副本",
+      "对 SubList 的修改会反映到原 List 上"
+    ]
   }
 ]

@@ -1087,5 +1087,100 @@
       "CBO",
       "执行计划"
     ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LSM-Tree 的合并策略",
+    "content": "请介绍 LSM-Tree（Log-Structured Merge-Tree）的几种合并（Compaction）策略及 trade-off。",
+    "answer": "答案：LSM-Tree 通过延迟写入和后台合并来优化写性能。合并策略直接影响读写性能平衡。\n\nLSM-Tree 的基本结构：\n- MemTable：内存中的写缓冲（有序结构，如红黑树或跳表）\n- Immutable MemTable：只读的 MemTable（等待刷盘）\n- SSTable：磁盘上的有序键值对文件\n- Compaction：后台合并 SSTable 的过程\n\n合并策略：\n\n1. Size-Tiered Compaction（大小分层合并）：\n   - 原理：每层有多个 SSTable，当某一层的 SSTable 数量达到阈值时触发合并\n   - 合并：将同一层的小文件合并为更大的文件，提升到下一层\n   - 代表：Cassandra、HBase（早期）\n   - 优点：写放大小（写入时只需追加）\n   - 缺点：读放大、空间放大（同一 key 可能在多层都有数据）\n\n2. Leveled Compaction（分层合并）：\n   - 原理：每层只有一个 SSTable，key 范围不重叠\n   - Level 0：刚刷盘的 SSTable（范围可重叠）\n   - Level 1+：每层有序无重叠，层大小指数递增（如 10 倍）\n   - 合并：Level 0 满后合并到 Level 1，Level 1 满后合并到 Level 2...\n   - 代表：LevelDB、RocksDB\n   - 优点：读放大、空间放大都较小（每层 key 不重叠）\n   - 缺点：写放大较大（每次合并涉及上层文件的重写）\n\n3. Tiered + Leveled 混合：\n   - 原理：低层用 Size-Tiered（减少写放大），高层用 Leveled（减少读放大）\n   - 代表：RocksDB 的 Universal Compaction、Cassandra 新版\n   - 优点：在前两者间取得平衡\n\n关键指标：\n| 策略 | 写放大 | 读放大 | 空间放大 |\n|------|--------|--------|----------|\n| Size-Tiered | 小 | 大 | 大 |\n| Leveled | 大 | 小 | 小 |\n| 混合 | 中 | 中 | 中 |\n\n扩展延伸：RocksDB 提供了丰富的合并策略配置。实际调优中还需要考虑 Bloom Filter（减少读放大）、Block Cache（缓存热点数据）等配套优化。",
+    "hints": [
+      "LSM-Tree 结构：MemTable → Immutable MemTable → SSTable，后台 Compaction 合并",
+      "Size-Tiered：小写放大但读/空间放大；Leveled：小读/空间放大但写放大；混合取中间",
+      "RocksDB 支持多种合并策略配置，还需配合 Bloom Filter 和 Block Cache"
+    ],
+    "tags": [
+      "数据库",
+      "LSM-Tree",
+      "Compaction",
+      "RocksDB"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MongoDB 与关系型数据库的差异",
+    "content": "请介绍 MongoDB 与关系型数据库（MySQL/PostgreSQL）在数据模型、查询方式和一致性方面的核心差异。",
+    "answer": "答案：MongoDB 是一种文档型 NoSQL 数据库，与关系型数据库有本质差异。\n\n1. 数据模型差异：\n\n关系型：\n- 行（Row）和列（Column）\n- 需要预先定义 Schema（表结构）\n- 范式化设计，通过外键关联\n\nMongoDB：\n- 文档（Document，BSON 格式）\n- 无 Schema（Schemaless），同一集合的文档可以有不同的字段\n- 嵌入式文档和数组（JSON 风格嵌套）\n- 推荐去范式化（Denzionalization），通过嵌入减少 JOIN 操作\n\n2. 查询方式：\n\n关系型：\n- SQL 声明式查询（SELECT ... JOIN ... WHERE ... GROUP BY）\n- 支持复杂 JOIN、子查询\n\nMongoDB：\n- 链式方法构造查询（find().sort().limit()）\n- 使用聚合管道（Aggregation Pipeline）实现复杂查询\n- 不支持 JOIN（通过 $lookup 实现左外连接，但效率低）\n- 支持 2D 地理空间查询（GeoJSON）\n\n3. 一致性：\n\n关系型：\n- 默认强一致（ACID 事务）\n- MySQL InnoDB 支持行级锁\n\nMongoDB：\n- 默认最终一致（Replica Set 读从库时）\n- 支持可调一致性（Write Concern, Read Concern）\n- 支持多文档事务（4.0+），但性能不如关系型\n\n4. 扩展性：\n\n关系型：\n- 垂直扩展为主，水平扩展分库分表复杂\n- 读写分离\n\nMongoDB：\n- 原生分片（Sharding）\n- 自动数据再均衡\n- 更适合水平扩展\n\n选择建议：\n- 数据结构灵活、原型快速迭代 → MongoDB\n- 强一致性要求、复杂关联查询 → 关系型\n- 大量嵌套数据、JSON 为主 → MongoDB\n- 需要 ACID 事务 → 关系型\n- 大规模水平扩展 → MongoDB\n\n扩展延伸：实际系统中常见混合使用——核心事务数据（订单、支付）用 MySQL，非结构化数据（日志、配置、用户画像）用 MongoDB。",
+    "hints": [
+      "数据模型：MongoDB 文档（BSON、无 Schema、支持嵌套）vs 关系型 行+列、预定义 Schema",
+      "查询：MongoDB 链式 API + 聚合管道 vs 关系型 SQL + JOIN",
+      "一致性：MongoDB 最终一致 + 可调一致性 vs 关系型 ACID 强一致"
+    ],
+    "tags": [
+      "数据库",
+      "MongoDB",
+      "NoSQL",
+      "文档数据库"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis vs Memcached 对比",
+    "content": "请对比 Redis 和 Memcached 的核心差异和适用场景。",
+    "answer": "答案：Redis 和 Memcached 都是内存缓存系统，但设计目标和能力差异很大。\n\n核心差异：\n\n| 维度 | Redis | Memcached |\n|------|-------|-----------|\n| 数据结构 | 丰富（String, Hash, List, Set, Sorted Set, HyperLogLog, GEO, Stream） | 仅 Key-Value（值只能是字符串） |\n| 持久化 | RDB（快照）, AOF（日志） | 不支持 |\n| 主从复制 | 支持 | 不支持 |\n| 集群 | Redis Cluster（去中心化哈希槽） | 客户端分片（一致性哈希） |\n| 内存淘汰 | 8 种策略（LRU, LFU, TTL, Random 等） | LRU 为主 |\n| 线程模型 | 6.x 前单线程，6.x 后多线程 I/O | 多线程（多线程处理 I/O + 多线程处理命令） |\n| 事务 | 支持（MULTI/EXEC，WATCH 乐观锁） | 不支持 |\n| Lua 脚本 | 支持 | 不支持 |\n| 发布订阅 | 支持 | 不支持 |\n| 内存效率 | 较高（数据结构有额外开销） | 高（纯 KV，开销最小） |\n\nRedis 优势：\n- 丰富的数据结构支持复杂业务逻辑\n- 持久化保证数据不丢失\n- 主从复制和集群实现高可用\n- 适合从简单缓存到复杂业务场景\n\nMemcached 优势：\n- 多线程处理，在多核机器上 CPU 利用更充分\n- 纯 KV 设计，内存效率最高\n- 实现极简单，定位非常纯粹\n- 在大值缓存场景下性能更好\n\n选择建议：\n- 需要缓存以外的能力（数据结构、持久化、Pub/Sub）→ Redis\n- 超大并发、超大缓存（纯 KV 场景）→ Memcached\n- 默认选择 → Redis（生态更丰富、社区更活跃）\n\n扩展延伸：Redis 的定位已经从缓存进化为实时数据平台（Real-Time Data Platform）。Redis Stack（RedisJSON, RedisSearch, RedisTimeSeries, RedisGraph）进一步扩展了能力边界。",
+    "hints": [
+      "Redis：丰富数据结构、持久化、主从复制、集群、Lua 脚本（通用缓存+数据平台）",
+      "Memcached：纯 KV、多线程、高内存效率（简单纯粹的大缓存）",
+      "新系统默认选 Redis，纯 KV 超大缓存场景才考虑 Memcached"
+    ],
+    "tags": [
+      "数据库",
+      "Redis",
+      "Memcached",
+      "缓存"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TiDB 架构与 HTAP",
+    "content": "请介绍 TiDB 的架构设计及其如何实现 HTAP（混合事务/分析处理）。",
+    "answer": "答案：TiDB 是一款分布式 NewSQL 数据库，同时支持 OLTP 和 OLAP。\n\n核心架构：\n\n1. TiDB Server（计算层）：\n   - SQL 解析和优化（MySQL 协议兼容）\n   - 分布式执行计划生成\n   - 无状态，可水平扩展\n   - 通过 PD 获取元数据\n\n2. PD Server（调度层）：\n   - 基于 Raft 的元数据管理\n   - 全局时间戳分配（TSO）\n   - 数据调度和负载均衡\n   - Region 分裂和合并管理\n\n3. TiKV（行存引擎）：\n   - 键值对存储（基于 RocksDB）\n   - Raft 一致性复制（三副本）\n   - Region 自动分裂和调度\n   - 面向 OLTP 的行存\n\n4. TiFlash（列存引擎）：\n   - 列式存储（面向 OLAP）\n   - Raft Learner（异步复制 TiKV 数据）\n   - 支持向量化计算\n   - 对 TiDB 透明（自动选择行存/列存）\n\nHTAP 实现原理：\n\n1. 行列混合存储：\n   - 同一份数据同时以行存（TiKV）和列存（TiFlash）存储\n   - TiFlash 作为 Raft Learner 从 TiKV 实时同步数据\n   - 写入 TiKV 通过 Raft 复制到 TiFlash，秒级延迟\n\n2. 智能查询路由：\n   - TiDB 优化器根据查询类型自动选择引擎\n   - 点查和小范围查询 → TiKV（行存，低延迟）\n   - 分析型大查询 → TiFlash（列存，向量化）\n   - 同一 SQL 可以同时访问两个引擎\n\n3. 全局一致性快照：\n   - PD 提供全局 TSO\n   - TiFlash 通过 Raft 保证数据一致性\n   - 读请求获得一致性快照\n\n扩展延伸：TiDB 的 HTAP 能力使企业可以将 TP 和 AP 统一在一个数据库上，减少数据搬运（不需要 ETL 到数仓）。但在极端场景下，专用 OLAP（ClickHouse）和专用 OLTP（MySQL）的组合仍有性能优势。",
+    "hints": [
+      "四层架构：TiDB（SQL 计算）+ PD（调度/元数据）+ TiKV（行存/OLTP）+ TiFlash（列存/OLAP）",
+      "HTAP：Raft Learner 异步复制行存→列存，优化器自动选择行存/列存引擎",
+      "优势：单库支持 TP+AP，减少 ETL。劣势：极端场景不如专用引擎"
+    ],
+    "tags": [
+      "数据库",
+      "TiDB",
+      "HTAP",
+      "NewSQL"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分库分表中间件对比",
+    "content": "请对比 ShardingSphere、MyCAT 和 Vitess 三种分库分表方案的核心差异。",
+    "answer": "答案：三种方案分别代表了不同的实现路径——JDBC 层、Proxy 层和云原生。\n\nShardingSphere：\n\n架构：\n- JDBC 层（ShardingSphere-JDBC）：增强 JDBC 驱动，应用直连数据库\n- Proxy 层（ShardingSphere-Proxy）：独立代理服务，MySQL 协议兼容\n- 混合部署（Hybrid）：两者可同时使用\n\n特点：\n- JDBC 模式性能最高（无网络跳转）\n- 支持丰富分片策略（Hash、Range、Time、自定义）\n- 支持分布式事务（Local XA、Seata AT）\n- 支持读写分离、数据加密、SQL 审计\n- 不兼容所有 SQL（部分复杂 JOIN 和子查询不支持）\n\nMyCAT：\n\n架构：\n- Proxy 层实现（类似 MySQL Router）\n- 客户端连接 MyCAT 就像连接 MySQL\n\n特点：\n- 对应用透明（应用不需要修改任何代码）\n- 基于 Cobar（阿里开源）演进\n- 配置通过 XML 管理\n- 分片策略较简单\n- 社区活跃度下降\n\nVitess：\n\n架构：\n- 云原生方案（CNCF 毕业项目）\n- Topology（元数据管理）→ VTGate（SQL 路由）→ VTTablet（数据节点）\n- 基于 Kubernetes 部署\n\n特点：\n- 为超大规模设计（YouTube 生产验证）\n- 自动分片管理（Resharding 自动化）\n- 深度 K8s 集成\n- 连接池管理强大（VTTablet 管理 MySQL 连接）\n- 学习成本高、部署复杂\n\n对比：\n| 维度 | ShardingSphere | MyCAT | Vitess |\n|------|---------------|-------|--------|\n| 架构 | JDBC + Proxy | Proxy | Proxy（K8s 原生） |\n| SQL 兼容 | 好 | 中 | 好 |\n| 性能 | 高（JDBC） | 中（Proxy） | 中（Proxy） |\n| 部署复杂度 | 低 | 低 | 高（K8s） |\n| 分片自动管理 | 手动 | 手动 | 自动 |\n| 生态 | Apache 活跃 | 一般 | CNCF 活跃 |\n| 学习成本 | 中 | 低 | 高 |\n\n选择建议：\n- 小团队、简单分片 → ShardingSphere-JDBC\n- 需要零改造 → ShardingSphere-Proxy 或 MyCAT\n- 超大规模云原生 → Vitess",
+    "hints": [
+      "ShardingSphere：JDBC+Proxy 双架构，SQL 兼容好，性能高，社区活跃",
+      "MyCAT：纯 Proxy，零改造配置简单，但社区活跃度下降",
+      "Vitess：CNCF 云原生，K8s 深度集成，自动分片管理，适合超大规模"
+    ],
+    "tags": [
+      "数据库",
+      "分库分表",
+      "ShardingSphere",
+      "Vitess"
+    ]
   }
 ]

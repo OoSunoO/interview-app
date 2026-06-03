@@ -1046,5 +1046,101 @@
       "CDN",
       "视频"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "最终一致性缓存与数据库一致性",
+    "content": "设计一个保证缓存（Redis）和数据库（MySQL）最终一致性的方案，列举几种常见策略及其 trade-off。",
+    "answer": "答案：保证缓存与数据库最终一致性的常见方案有以下几种：\n\n1. Cache-Aside + 延迟双删：\n   - 流程：写请求 → 删除缓存 → 更新数据库 → 延迟（如 500ms）→ 再次删除缓存\n   - 目的：解决并发场景下旧缓存被重新写入的问题\n   - 问题：延迟时间难以确定；延迟期间仍可能读到旧数据\n   - 变体：异步延迟双删（MQ 消息触发二次删除）\n\n2. 订阅 Binlog（监听 MySQL 变更日志）:\n   - 流程：MySQL 写入 → Binlog → Canal（解析）→ MQ → 消费端删除/更新缓存\n   - 优点：与业务代码解耦；不入侵写路径\n   - 缺点：引入 Canal 和 MQ 增加复杂度；有秒级延迟\n   - 注意：只保证最终一致性\n\n3. Write-Through / Write-Behind：\n   - Write-Through：先写缓存再写数据库（缓存同步代理）\n   - Write-Behind：只写缓存，异步批量写数据库\n   - 适用：对一致性要求不高的场景（如用户行为记录）\n\n4. 基于 Lease 的缓存一致性（类比 Facebook）:\n   - 缓存项关联一个 Lease（租约标识）\n   - 更新时缓存标记为 stale，并发新 lease\n   - 读请求触发异步回源 + 验证 lease\n   - 优点：不会出现 Stale Read（读到的数据一定是最新的）\n   - 缺点：实现复杂，需要中心化的 lease 管理\n\n5. 读写锁分离：\n   - 写操作获取写锁（阻塞所有读写）\n   - 读操作获取读锁（可并发读）\n   - 一致性最强但性能最差（分布式锁的开销）\n\n总结 trade-off：\n| 方案 | 一致性 | 复杂度 | 延迟 | 吞吐 |\n|------|--------|--------|------|------|\n| Cache-Aside | 弱 | 低 | 低 | 高 |\n| Binlog 监听 | 最终 | 中 | 中(~1s) | 高 |\n| Write-Through | 强 | 中 | 高 | 中 |\n| Lease | 强+最终 | 高 | 低 | 高 |\n| 读写锁 | 强 | 高 | 高 | 低 |\n\n扩展延伸：实际生产通常组合使用：Cache-Aside 作为基础方案 + Binlog 异步同步 + 热点 Key 用 Lease 强一致。关键原则：不要试图让缓存和数据库完全一致（强一致性场景直接用数据库查询，不要缓存）。",
+    "hints": [
+      "Cache-Aside + 延迟双删是最常见的低成本方案，但延迟窗口内仍可能读到旧数据",
+      "Binlog 订阅（Canal）与业务解耦，最终一致性方案中最可靠",
+      "强一致性场景：不要用缓存，直接读数据库"
+    ],
+    "tags": [
+      "系统设计",
+      "缓存一致性",
+      "Redis",
+      "MySQL"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "API Gateway 的核心功能",
+    "content": "请列举 API Gateway 的核心功能及其在微服务架构中的作用。",
+    "answer": "答案：API Gateway 是微服务架构的入口层，承担统一的路由和横切关注点。\n\n核心功能：\n\n1. 路由与负载均衡：\n   - 根据请求路径/Header 将请求转发到对应的后端服务\n   - 集成服务发现（Consul、Nacos、K8s Service）\n   - 支持多种负载均衡策略（轮询、权重、一致性哈希）\n\n2. 认证与授权：\n   - 统一鉴权（JWT/OAuth2/SAML 验证）\n   - 将认证逻辑从业务服务中剥离\n   - 支持 API Key 管理\n\n3. 限流与熔断：\n   - 速率限制（令牌桶/漏桶算法，基于 IP/用户/API）\n   - 熔断保护（Hystrix/Resilience4j 模式）\n   - 降级策略（返回缓存/默认值）\n\n4. 协议转换：\n   - HTTP → gRPC（Restful 请求转为内部 RPC 调用）\n   - 请求/响应格式转换（JSON ↔ Protobuf）\n   - 支持多协议接入（WebSocket、MQTT）\n\n5. 横切关注点：\n   - 日志采集：统一请求日志（ELK 管道）\n   - 监控 Metrics：请求量、延迟、错误率（Prometheus）\n   - 分布式追踪：注入 Trace ID（Jaeger/Zipkin）\n   - 请求/响应日志切片\n\n6. 高级功能：\n   - 灰度发布：根据 Header/Cookie/百分比路由到不同版本\n   - 缓存：对幂等接口做响应缓存\n   - 请求聚合：合并多个后端请求减少客户端调用\n   - CORS 管理和跨域策略\n\n在微服务中的作用：\n- 服务边界清晰：客户端只与 Gateway 通信，不感知后端拆分\n- 关注点分离：横切逻辑集中在 Gateway，业务服务聚焦业务\n- 安全保障：在入口层统一防护（SQL 注入过滤、DDoS 防护）\n\n扩展延伸：Gateways 的演进——Spring Cloud Gateway（传统微服务）、Kong（基于 Nginx + Lua）、云原生 API Gateway（K8s Ingress Controller + Istio Gateway）。趋势是向统一入口网格（Gateway API + Service Mesh）演进。",
+    "hints": [
+      "六大功能：路由+负载均衡、认证授权、限流熔断、协议转换、日志监控、灰度发布",
+      "作用：客户端只与 Gateway 通信，横切逻辑集中处理，业务服务聚焦业务",
+      "趋势：Gateway API + Service Mesh 的融合统一"
+    ],
+    "tags": [
+      "系统设计",
+      "API Gateway",
+      "微服务",
+      "架构"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式 ID 生成方案对比",
+    "content": "请对比 Twitter Snowflake、美团 Leaf、百度 UidGenerator 三种分布式 ID 生成方案。",
+    "answer": "答案：三种分布式 ID 生成方案各有侧重和适用场景。\n\nTwitter Snowflake：\n\n结构（64-bit long）：\n| 1-bit 符号位 | 41-bit 时间戳（毫秒） | 10-bit 工作节点 | 12-bit 序列号 |\n\n特点：\n- 不依赖外部组件，完全本地生成\n- 趋势递增（时间戳高位）\n- 10-bit 工作节点支持最多 1024 节点\n- 12-bit 序列号支持每节点每毫秒 4096 个 ID\n- 问题：\n  a) 时钟回拨会导致 ID 冲突\n  b) 工作节点需要手动分配或 ZK 协调\n  c) 趋势递增但不严格单调递增（跨节点无法保证严格递增）\n\n美团 Leaf：\n\n两种模式：\n\na) Leaf-Segment（号段模式）：\n   - 从数据库批量取号段（如 step=1000）\n   - 内存递增分配，用完再取\n   - 优点：吞吐高、实现简单\n   - 缺点：依赖 DB（DB 宕机影响可用性），趋势递增\n\nb) Leaf-Snowflake（雪花模式）：\n   - 基于 Snowflake，但通过 ZooKeeper 管理工作节点\n   - 自带时钟回拨检测和等待机制\n   - 解决 Snowflake 的节点管理和时钟回拨问题\n\n特点：\n- 双模式灵活切换\n- 业务友好：可包含业务标识\n- 需要 ZK 依赖\n\n百度 UidGenerator：\n\n结构（Snowflake 变体）：\n| 时间戳 | 工作节点 | 序列号 |\n\n特点：\n- 时间戳以秒为单位（不是毫秒），单节点每秒可分配更多 ID\n- 工作节点通过 DB 分配（自动注册 + RingBuffer 缓存）\n- 内部使用 RingBuffer 预生成 ID，提升性能\n- 对时间戳回拨有容忍机制（回拨 < 1 秒可容忍）\n- 支持自定义位分配（调整时间/节点/序列号的位数）\n\n核心对比：\n| 方案 | 外部依赖 | 趋势递增 | 时钟回拨处理 | 吞吐 |\n|------|----------|----------|-------------|------|\n| Snowflake | 无 | 是 | 不处理 | 高 |\n| Leaf-Segment | DB | 是 | 不影响 | 高 |\n| Leaf-Snowflake | ZK | 是 | 回拨等待 | 高 |\n| UidGenerator | DB | 是 | 回拨容忍 | 极高 |\n\n扩展延伸：UUID 作为最简单的方案但非递增、非数字（索引性能差）。当前趋势是默认用 Snowflake 变体（无外部依赖）或 Leaf-Segment（业务友好）。",
+    "hints": [
+      "Snowflake：无外部依赖，本地生成，但需处理时钟回拨和工作节点分配",
+      "美团 Leaf 双模式：号段模式（依赖 DB，高吞吐）和雪花模式（ZK 管理节点）",
+      "百度 UidGenerator：秒级时间戳 + DB 节点管理 + RingBuffer 预生成，吞吐极高"
+    ],
+    "tags": [
+      "系统设计",
+      "分布式ID",
+      "Snowflake",
+      "Leaf"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式事务：TCC 与 Saga 对比",
+    "content": "请对比 TCC（Try-Confirm-Cancel）和 Saga 两种分布式事务模式的设计思路和适用场景。",
+    "answer": "答案：TCC 和 Saga 是两种主流的分布式事务模式，分别适用于不同的场景。\n\nTCC（Try-Confirm-Cancel）：\n\n三阶段：\n1. Try：预留资源（如冻结库存、预扣余额）\n2. Confirm：确认执行（真正减库存）\n3. Cancel：回滚释放（解冻库存）\n\n设计特点：\n- 业务侵入性强：需要为每个操作实现 Try/Confirm/Cancel 三个方法\n- 资源隔离粒度好：Try 阶段即持有资源直到 Confirm/Cancel\n- 强一致性：通过资源预留避免并发冲突\n- 适用于短事务（秒级完成）\n- 常见实现：ByteTCC、Seata TCC\n\n缺点：\n- 业务代码耦合度高\n- 需要处理悬挂、空回滚等异常情况\n- Try 阶段持有资源时间可能很长（影响并发）\n\nSaga：\n\n核心模式：\n- 将一个长事务拆分为多个本地事务\n- 每个本地事务对应一个补偿事务（Compensation）\n- 正向执行：T1 → T2 → T3\n- 失败回滚：调用补偿 C3 → C2 → C1\n\n两种协调方式：\n1. 编排（Choreography）：各服务通过 MQ 异步响应\n   - 优点：松耦合\n   - 缺点：事务状态难追踪\n2. 协调器（Orchestrator）：中心协调器驱动各步骤\n   - 优点：状态可视化\n   - 缺点：协调器单点\n\n设计特点：\n- 最终一致性（中间状态对外可见）\n- 适用于长事务（分钟级甚至更久）\n- 补偿操作可以异步执行\n\n核心对比：\n| 维度 | TCC | Saga |\n|------|-----|------|\n| 一致性 | 相对强 | 最终一致 |\n| 事务时长 | 秒级（短事务） | 分钟级（长事务） |\n| 业务侵入 | 高（三方法） | 中（两方法） |\n| 中间状态 | 不可见 | 可见 |\n| 并发控制 | Try 即隔离 | 需额外幂等处理 |\n| 典型场景 | 支付、抢购 | 订单、审批流 |\n\n扩展延伸：选择依据——资源持有时间和隔离性要求。短时间持有资源、需要强隔离 → TCC。长周期、容忍最终一致 → Saga。没有分布式事务是完美的，最好的策略是\"避免分布式事务\"（通过合理的服务拆分设计）。",
+    "hints": [
+      "TCC：Try 冻结 → Confirm 确认 → Cancel 释放，资源持有型短事务，相对强一致",
+      "Saga：多个本地事务 + 补偿，长事务最终一致，编排/协调器两种模式",
+      "选择：短事务+强隔离→TCC；长事务+最终一致→Saga；最好避免分布式事务"
+    ],
+    "tags": [
+      "系统设计",
+      "分布式事务",
+      "TCC",
+      "Saga"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "DDD 的边界上下文与聚合设计",
+    "content": "请介绍 DDD 中边界上下文（Bounded Context）和聚合（Aggregate）的核心概念及其设计原则。",
+    "answer": "答案：DDD（领域驱动设计）通过边界上下文和聚合来管理复杂业务模型的边界和一致性。\n\n边界上下文（Bounded Context）：\n\n定义：\n- 一个显式的边界，内部有统一的领域模型和通用语言（Ubiquitous Language）\n- 同一个概念在不同边界上下文中可能有不同的含义和属性\n- 例：在“订单”上下文中 Customer 有地址和支付信息；在“客服”上下文中 Customer 有历史工单和偏好\n\n上下文映射（Context Map）：\n- Partnership：两个上下文协同演进\n- Shared Kernel：共享核心模型\n- Customer-Supplier：上下游关系（上游变更影响下游）\n- Conformist：下游被动跟随上游\n- Anticorruption Layer：防腐层，隔离外部上下文的影响\n- Open Host Service：开放服务（如 REST API）\n\n边界划分原则：\n- 语言边界：如果两个团队对同一个词有不同的理解，应该分属不同上下文\n- 变更边界：变更频率和原因不同的功能应该分离\n- 部署边界：独立部署的模块天然是不同上下文\n\n聚合（Aggregate）：\n\n定义：\n- 一组相关对象的集群，作为一个整体进行数据变更\n- 通过聚合根（Aggregate Root）访问聚合内的所有对象\n\n设计原则（Eric Evans 和 Vernon 的规则）：\n1. 聚合根保护业务不变条件（Invariants）\n   - 例：订单聚合根保证“订单项总金额 = 订单金额”\n2. 外部只能通过聚合根引用聚合内部对象\n3. 聚合内强一致性，聚合间最终一致性\n4. 一个事务只修改一个聚合\n5. 聚合要尽量小（减少事务冲突）\n\n事务边界：\n- 聚合内：同一事务（强一致）\n- 聚合间：通过领域事件（Domain Event）实现最终一致\n- 例：创建订单（Order 聚合）→ 发布 OrderCreated 事件 → 库存（Inventory 聚合）异步扣减\n\n扩展延伸：\n- 聚合设计与数据库设计的区别：数据库范式强调数据冗余最少；聚合更强调业务一致性和性能\n- 常见错误：聚合设计得太大（成为上帝对象）或太小（失去业务约束能力）\n- 推荐：先用 Event Storming 识别领域事件和聚合边界，再做详细设计",
+    "hints": [
+      "边界上下文：显式业务边界（独立团队/语言/模型），通过防腐层隔离外部影响",
+      "聚合根：业务一致性边界，一个事务只改一个聚合，内部强一致、间最终一致",
+      "聚合设计原则：尽量小 + 通过根访问 + 保护不变条件 + 领域事件通信"
+    ],
+    "tags": [
+      "系统设计",
+      "DDD",
+      "边界上下文",
+      "聚合",
+      "领域驱动设计"
+    ]
   }
 ]

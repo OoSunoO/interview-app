@@ -1096,5 +1096,100 @@
       "Apollo",
       "Nacos"
     ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Raft 协议：Leader 选举与日志复制",
+    "content": "请介绍 Raft 共识协议的 Leader 选举过程和日志复制机制。",
+    "answer": "答案：Raft 是一种易于理解的分布式共识协议，通过 Leader 选举和日志复制保证集群一致性。\n\n节点状态：\n1. Leader（领导者）：处理客户端请求，管理日志复制\n2. Follower（跟随者）：被动响应 Leader 和 Candidate 的请求\n3. Candidate（候选者）：竞选下一任 Leader\n\nLeader 选举：\n\n触发条件：\n- Follower 在 Election Timeout（随机 150~300ms）内未收到 Leader 的 AppendEntries\n\n选举过程：\n1. Follower → Candidate：\n   - 增加 currentTerm\n   - 给自己投票\n   - 向其他节点发送 RequestVote RPC\n2. Candidate 获胜条件：\n   - 获得大多数节点（N/2+1）投票\n   - 同一 Term 内每个节点最多投一票\n3. 如果多个 Candidate 同时参选（Split Vote）：\n   - 没有人获得大多数\n   - 等待随机 Election Timeout 后重新发起选举\n4. 新 Leader 上任：\n   - 立即发送 AppendEntries（心跳）通知其他节点\n   - 建立新的 Term\n\n日志复制：\n\n流程：\n1. 客户端请求 → Leader\n2. Leader 追加日志到本地日志\n3. Leader 并行发送 AppendEntries RPC 到所有 Follower\n4. 日志提交条件：\n   - Leader 确认日志被复制到多数节点\n   - Leader 将该日志标记为 committed\n   - 应用到状态机（apply）\n5. Leader 在下一个 AppendEntries（或心跳）通知 Follower 提交\n\n日志一致性保证：\n- 如果两个日志条目有相同的 term 和 index，则它们的内容相同（Leader 在给定 term 和 index 最多创建一条日志）\n- 如果日志条目在给定 index 已提交，则所有之前的日志条目都已提交\n\n安全性（Safety）：\n- Leader 完整性：如果一个日志条目在某个 term 提交，它一定存在于所有后续 term 的 Leader 中\n- 选举限制：Candidate 的日志必须至少跟大多数节点一样新（否则无法当选）\n- 只有当前 term 的日志条目通过提交计数（多数复制）来决定是否提交\n\n扩展延伸：Raft 的简化体现在 Leader 强约束——所有日志流都经过 Leader，简化了共识逻辑但牺牲了写吞吐（所有写请求经过单一 Leader）。读优化：Raft 支持 ReadIndex（Leader 确认自己仍是 Leader 后直接在本地读）和 Lease Read。",
+    "hints": [
+      "选举：随机超时（150-300ms）→ Candidate → 多数投票获胜 → 定期心跳维持任期",
+      "日志复制：Leader 追加 → 并行复制到 Follower → 多数提交 → 应用到状态机",
+      "安全性：日志只能从 Leader 到 Follower（单向），新 Leader 必须日志最新"
+    ],
+    "tags": [
+      "系统设计",
+      "Raft",
+      "共识",
+      "分布式系统"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CQRS 与事件源架构",
+    "content": "请介绍 CQRS（命令查询职责分离）和事件源（Event Sourcing）架构的设计思路及其配合使用的方式。",
+    "answer": "答案：CQRS 和事件源是两种可以独立使用但经常配合的架构模式。\n\nCQRS（Command Query Responsibility Segregation）：\n\n核心思想：\n- 将读操作（Query）和写操作（Command）分离到不同的模型\n- 命令（Command）：改变状态的请求（返回状态码而非数据）\n- 查询（Query）：读取状态的请求（不改变状态）\n\n设计要点：\n- 命令模型针对写优化（强一致、完整性约束）\n- 查询模型针对读优化（反范式、投影表、缓存友好）\n- 命令和查询可以有不同的数据存储（甚至不同数据库类型）\n- 读写之间的数据同步通过异步机制（事件、消息队列）\n\n适用场景：\n- 读操作远多于写操作（如内容系统）\n- 读写负载差异大（如写 TPS 高但读需要毫秒响应）\n- 复杂领域逻辑需要专门的写模型\n\n不适用场景：\n- 简单的 CRUD（只有一个模型就够了）\n- 对一致性要求极高的系统\n\n事件源（Event Sourcing）：\n\n核心思想：\n- 不存储当前状态，而是存储所有状态变更事件\n- 当前状态 = 对所有事件的归约（Replay）\n- 事件是不可变的、追加写入的日志\n\n设计要点：\n- Event Store：专用的事件存储（如 EventStoreDB、基于 Kafka 实现）\n- 事件是业务事实（如 OrderPlaced、PaymentReceived）\n- 快照（Snapshot）：定期对事件做归约，避免每次从头回放\n- 投影（Projection）：从事件流构建查询模型\n\n优势：\n- 完整的审计日志（事件不可变）\n- 时间旅行（回到任意历史状态）\n- 松耦合（事件发布，消费者独立定义投影）\n\nCQRS + Event Sourcing 的组合：\n\n典型架构：\n1. 命令端：验证命令 → 生成事件 → 写入 Event Store\n2. 事件总线：发布事件到 MQ / Stream\n3. 投影端：消费事件，构建查询数据库（可以是 Redis、ES、MySQL 等）\n4. 查询端：从查询数据库读取，返回给客户端\n\n优势叠加：\n- 写路径：Event Store（完美追加性能）\n- 读路径：自定义投影（查询优化、缓存友好）\n- 扩展性：读/写独立扩缩容\n\n挑战：\n- 最终一致性（写入事件到查询可见有时间差）\n- Event Store 的运维复杂度\n- 事件模式演进难（事件是不可变的）\n\n扩展延伸：CQRS 不必须配合 Event Sourcing。可以只用 CQRS（读写分离的数据源）不用 Event Sourcing，也可以只用 Event Sourcing 不用 CQRS。两者配合是最强组合但也是最高复杂度。",
+    "hints": [
+      "CQRS：读写分离为不同模型（命令模型强一致，查询模型反范式），可异步同步",
+      "事件源：存储事件序列而非当前状态，通过事件回放恢复状态",
+      "组合：命令→事件→投影（构建查询视图）→查询。最灵活但复杂度最高"
+    ],
+    "tags": [
+      "系统设计",
+      "CQRS",
+      "Event Sourcing",
+      "架构模式"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "漏斗分析方法与 SQL 实现",
+    "content": "如何用 SQL 高效实现用户转化漏斗分析？请介绍几种常见的漏斗实现方案。",
+    "answer": "答案：用户漏斗分析是产品分析的常用方法，SQL 实现方案取决于数据规模和实时性要求。\n\n方案一：基于时间窗口的条件累加（简单漏斗）\n\n适用场景：少量步骤（3-5步），事件时间有序\n\n```sql\nSELECT\n    COUNT(DISTINCT CASE WHEN step1_time IS NOT NULL THEN user_id END) AS step1,\n    COUNT(DISTINCT CASE WHEN step2_time IS NOT NULL THEN user_id END) AS step2,\n    COUNT(DISTINCT CASE WHEN step3_time IS NOT NULL THEN user_id END) AS step3\nFROM (\n    SELECT\n        user_id,\n        MIN(CASE WHEN event = 'page_view' THEN time END) AS step1_time,\n        MIN(CASE WHEN event = 'click_button' THEN time END) AS step2_time,\n        MIN(CASE WHEN event = 'submit_form' THEN time END) AS step3_time\n    FROM events\n    WHERE event IN ('page_view', 'click_button', 'submit_form')\n    GROUP BY user_id\n) t\n```\n\n限制：只能处理线性漏斗，不能保证步骤顺序\n\n方案二：基于窗口函数的漏斗（Flink 风格）\n\n```sql\nSELECT\n    level,\n    COUNT(DISTINCT user_id) AS users\nFROM (\n    SELECT\n        user_id,\n        SUM(CASE\n            WHEN event = 'step1' AND prev_event IS NULL THEN 1\n            WHEN event = 'step2' AND prev_event = 'step1' THEN 1\n            WHEN event = 'step3' AND prev_event = 'step2' THEN 1\n            ELSE 0\n        END) OVER (PARTITION BY user_id ORDER BY time) AS level\n    FROM events\n) t\nWHERE level > 0\nGROUP BY level\n```\n\n方案三：用 ClickHouse 的 windowFunnel 函数\n\nClickHouse 内置了漏斗函数：\n```sql\nSELECT\n    level,\n    count() AS users,\n    round(users / first_value(users) OVER (ORDER BY level), 2) AS conversion_rate\nFROM (\n    SELECT\n        user_id,\n        windowFunnel(86400)(time, event = 'step1', event = 'step2', event = 'step3') AS level\n    FROM events\n    GROUP BY user_id\n)\nGROUP BY level\n```\n\n实际生产方案：\n1. 实时漏斗（Flink SQL）：在流上计算窗口函数\n2. 离线漏斗（Spark/Hive）：每日汇总到漏斗结果表\n3. 预聚合（Druid / ClickHouse）：物化视图\n\n扩展延伸：漏斗分析的关键设计点——时间窗口（用户完成整个漏斗的最长时间）、步骤顺序（严格线性 vs 跳步允许）、去重策略（用户粒度 vs session 粒度）。推荐用 ClickHouse 或 Druid 等 OLAP 引擎做漏斗，在大规模数据上性能差距很大。",
+    "hints": [
+      "简单漏斗：Group By 用户 + MIN CASE WHEN，适合 3-5 步的顺序事件",
+      "窗口函数漏斗：基于 OVER PARTITION BY 计算步骤，控制步骤连续性",
+      "生产方案：Flink 做实时、Spark 做离线、ClickHouse 做 ad-hoc 查询"
+    ],
+    "tags": [
+      "系统设计",
+      "漏斗分析",
+      "SQL",
+      "数据分析"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Gossip 协议原理与应用",
+    "content": "请介绍 Gossip 协议的核心原理及其在分布式系统中的应用。",
+    "answer": "答案：Gossip 协议是一种去中心化的节点间通信协议，用于信息传播和状态同步。\n\n核心原理：\n\n节点交互方式：\n1. Push：节点 A 将信息推送给随机选择的 B\n2. Pull：节点 A 向随机选择的 B 拉取信息\n3. Push-Pull：A 与 B 交换各自缺失的信息（最常用）\n\n传播机制：\n- 每个周期，节点随机选择 f 个其他节点\n- 交换各自已知的最新信息\n- 收到新信息的节点会在下一周期继续传播\n\n收敛特性：\n- 反熵（Anti-Entropy）：节点间的状态差异指数级减少\n- 传播速度：指数级扩散（类似病毒传播）\n- 在足够多的周期后，所有节点最终会收到信息\n\n容错性：\n- 节点故障不影响整体收敛性\n- 只要至少一个节点存活且网络部分连通，信息就能传播\n- 节点加入/离开不需要特殊处理\n\n应用场景：\n1. 服务发现：Consul（使用 SWIM gossip 协议）\n   - 节点间通过 Gossip 传播成员变更\n   - 分布式健康检查\n2. 分布式数据库节点同步：Cassandra、DynamoDB\n   - 节点间的元数据同步\n   - Hinted Handoff 的传播\n3. 集群故障检测：\n   - 通过超时和间接健康检查\n\nGossip vs 中心化方案：\n| 维度 | Gossip | 中心化（ZK/Etcd） |\n|------|--------|-------------------|\n| 一致性 | 最终一致 | 强一致 |\n| 可用性 | 高（去中心化） | 中（Leader 依赖） |\n| 复杂度 | 实现复杂 | 部署简单 |\n| 规模 | 适合大规模 | 适合小规模 |\n\n扩展延伸：SWIM 是 Gossip 的增强版，加入了 Ping/PingReq 间接探测机制和 Suspicion 机制（延迟判定节点死亡，避免误判）。Consul 的 Serf 底层使用 SWIM。",
+    "hints": [
+      "去中心化通信：每个周期随机选节点交换信息，指数级传播",
+      "反熵：节点间差异指数减少，最终所有节点收到",
+      "应用：Consul（服务发现）、Cassandra（元数据同步）、集群故障检测"
+    ],
+    "tags": [
+      "系统设计",
+      "Gossip",
+      "分布式协议",
+      "一致性"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 分布式锁的可靠性与 Redlock",
+    "content": "请分析基于 Redis 实现分布式锁的可靠性问题，并介绍 Redlock 算法的原理。",
+    "answer": "答案：Redis 分布式锁是最常用的分布式锁方案之一，但在可靠性方面存在一些争议。\n\n基础方案（单实例 SETNX）：\n- 加锁：SET key uuid NX PX 30000（原子操作）\n- 解锁：Lua 脚本验证 UUID 后 DEL（避免删别人的锁）\n- 问题：Redis 主从异步复制时，Master 宕机后锁可能丢失\n\n基础方案的风险：\n1. 锁丢失：Master 写入锁但未复制到 Slave 就宕机，新 Master 没有锁记录\n2. 锁超时：业务执行超过锁 TTL（需要在业务中检测续期）\n3. 时钟漂移：不同节点时钟不一致\n4. GC/Pause：业务线程 STW 超过锁有效期\n\nRedlock 算法：\n\n算法步骤：\n1. 记录当前时间 T1\n2. 串行向 N 个（通常 5 个）独立 Redis 实例获取锁\n   - 每个实例 SET key uuid NX PX <timeout>\n   - 每个实例的获取超时远小于锁 TTL（如 TTL=10s, 超时=50ms）\n3. 计算获取锁的总耗时：elapsed = T2 - T1\n4. 判断：如果 ≥ N/2+1 个实例成功 且 elapsed < TTL，则加锁成功\n5. 真正的锁有效期 = TTL - elapsed\n6. 如果失败，向所有实例发送解锁\n\nRedlock 的争议点：\n\nMartin Kleppmann（《DDIA》作者）的观点：\n- Redlock 不提供 fencing token，无法保证互斥\n- 解决方案：配合 fencing token 使用\n- 批评：分布式锁应该提供 lease（租约）语义，不是简单的过期\n\nRedis 作者 antirez 的反驳：\n- Fencing token 不是所有场景都需要\n- Redlock 在合理假设下可以工作\n- 如果时钟误差过大，任何分布式锁方案都会有问题\n\n实际生产建议：\n1. 对 Redis 分布式锁期望不要超过其能力范围\n2. 对于严格的互斥要求：使用 ZooKeeper / Etcd\n3. 无论如何锁设计，业务层做好幂等和补偿",
+    "hints": [
+      "基础问题：Redis 主从异步复制导致锁丢失，GC/Pause 导致锁超时被误释放",
+      "Redlock：向 N 个独立实例获取锁，多数成功才算加锁成功",
+      "核心争议：缺乏 fencing token，无法真正保证互斥"
+    ],
+    "tags": [
+      "系统设计",
+      "分布式锁",
+      "Redis",
+      "Redlock"
+    ]
   }
 ]

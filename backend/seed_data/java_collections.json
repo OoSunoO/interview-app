@@ -1147,5 +1147,100 @@
       "不可变集合",
       "同步"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ConcurrentLinkedQueue 的无锁实现",
+    "content": "请介绍 ConcurrentLinkedQueue 的无锁（Lock-Free）实现原理。它是如何用 CAS 操作实现线程安全队列的？ABA 问题是如何解决的？",
+    "answer": "答案：ConcurrentLinkedQueue 是基于 Michael-Scott 队列算法的无界无锁并发队列，使用 CAS（Compare-And-Swap）操作而非锁实现线程安全。\n\n核心数据结构：\n- Node：每个节点持有 item 和 next 指针（volatile 修饰）\n- head：指向队列头节点（延迟删除——head 可能指向已出队的节点）\n- tail：指向队列尾节点（延迟更新——tail 不一定指向真正的尾节点）\n\n入队（offer）逻辑：\n1. 创建新节点\n2. 循环尝试：找到尾节点（从 tail 开始往后找真正的尾节点）\n3. CAS(p.next, null, newNode) ——尝试将新节点链接到尾节点之后\n4. 如果 CAS 成功，再 CAS(tail, p, newNode) 更新 tail（此步可能被其他线程完成）\n5. 如果 CAS 失败，重新定位尾节点再试\n\n出队（poll）逻辑：\n1. 循环尝试：从 head 找到第一个 item 不为 null 的节点\n2. CAS(item, null, item) ——将 item 置为 null 标记出队\n3. 如果成功，更新 head 并返回 item\n4. 如果失败（其他线程抢了），重新定位 head 再试\n\n延迟更新策略：\n- tail 不总是指向真正的尾节点（减少 CAS 竞争）\n- 当 tail.next 不为 null 时，说明 tail 落后了，使用「哨兵节点」方式定位真正的尾节点\n- 当 tail.next 为 null 且 tail 落后超过一个节点时，CAS 更新 tail\n\nABA 问题与解决：\n- ABA 问题：一个值从 A 变成 B 再变回 A，CAS 误以为没有变化\n- ConcurrentLinkedQueue 的解决：Node 的 next 指针是单向的，不影响数据一致性\n- 内部使用 AtomicReferenceFieldUpdater 操作 Node 的 volatile 字段\n- 部分 JVM 实现使用 AtomicMarkableReference 处理特定场景\n\n性能特点：\n- 无锁 + CAS 操作在低竞争下性能很好\n- 高竞争下 CAS 的循环重试会增加 CPU 消耗（自旋）\n- 无限制增长（无界），不适合生产者速度 > 消费者速度的场景\n\n扩展延伸：ConcurrentLinkedQueue 适合多生产者-多消费者场景，但无界性质限制了它在生产环境的使用。LinkedBlockingQueue 提供有界阻塞队列，但使用锁。最佳实践：如果能接受有界，用 LinkedBlockingQueue 或 ArrayBlockingQueue；如果需要无锁且无界，用 ConcurrentLinkedQueue。",
+    "hints": [
+      "ConcurrentLinkedQueue = Michael-Scott 队列算法，CAS 实现线程安全（无锁）",
+      "延迟更新策略：tail 不总指向真正尾节点（减少 CAS 竞争），出队更新 head",
+      "无锁：低竞争性能好；高竞争 CAS 自旋消耗 CPU；无界不适合生产者快于消费者的场景"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentLinkedQueue",
+      "CAS"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LinkedHashMap 与 LRU 缓存",
+    "content": "请介绍 LinkedHashMap 的实现原理。如何利用 LinkedHashMap 实现一个 LRU（Least Recently Used）缓存？accessOrder 参数的作用是什么？",
+    "answer": "答案：LinkedHashMap 继承 HashMap，在 HashMap 的基础上维护了双向链表以记录元素顺序。\n\n核心原理：\n- 数据结构：HashMap（数组+链表/红黑树）+ 双向链表（before/after 指针维护顺序）\n- 两种模式：\n  1. insertionOrder（默认）：按插入顺序排列（accessOrder=false）\n  2. accessOrder：按访问顺序排列（最近访问的元素移到末尾，accessOrder=true）\n- 双向链表不增加额外存储开销（before/after 指针复用 Node 的成员变量）\n\n插入顺序 vs 访问顺序：\n// 插入顺序：a → b → c → d（按插入顺序）\n// 访问顺序（accessOrder=true）：\n// 初始：a → b → c → d\n// 访问 b 后：a → c → d → b（b 移到末尾）\n\nLRU 缓存的实现：\npublic class LRUCache<K, V> extends LinkedHashMap<K, V> {\n    private final int maxCapacity;\n\n    public LRUCache(int maxCapacity) {\n        super(maxCapacity, 0.75f, true);  // accessOrder=true\n        this.maxCapacity = maxCapacity;\n    }\n\n    @Override\n    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {\n        return size() > maxCapacity;  // 超过容量时删除最老的元素（链表头部）\n    }\n}\n\nremoveEldestEntry 的调用时机：\n- 每次 put/putAll 后调用\n- 返回 true 表示删除最老的元素（链表头节点）\n- 默认返回 false（不自动删除）\n\n性能特点：\n- get 操作：O(1)（HashMap 的 get + 如果 accessOrder 则移动节点到末尾）\n- put 操作：O(1)（HashMap 的 put + 如果需要删除最老节点）\n- 移动节点到末尾：O(1)（双向链表的断开和重连）\n\n与普通 HashMap 的区别：\n- HashMap：不保证顺序\n- LinkedHashMap：保证遍历顺序（插入顺序或访问顺序）\n- TreeMap：按自然顺序或 Comparator 排序\n\n扩展延伸：removeEldestEntry 可以实现其他策略——按时间过期（检查 eldest 的时间戳）、按条目数量限制、按总大小限制（LRU 的变体）。LinkedHashMap 不是线程安全的，LRU 缓存在高并发下需要加锁或使用 ConcurrentLinkedHashMap（Guava Cache / Caffeine 内部使用类似的算法）。",
+    "hints": [
+      "LinkedHashMap = HashMap + 双向链表（before/after 指针复用 Node）",
+      "两种模式：insertionOrder（插入顺序，默认）和 accessOrder（访问顺序，用于 LRU）",
+      "LRU 缓存：accessOrder=true + 重写 removeEldestEntry(size() > maxCapacity) 自动删除最老元素"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "LinkedHashMap",
+      "LRU"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TreeMap 的红黑树实现",
+    "content": "请介绍 TreeMap 的实现原理。红黑树的五条性质是什么？TreeMap 如何保证 O(log n) 的查找、插入和删除性能？",
+    "answer": "答案：TreeMap 基于红黑树（Red-Black Tree）实现，是一个有序的键值对集合，所有操作的时间复杂度为 O(log n)。\n\n红黑树的五条性质：\n1. 每个节点是红色或黑色\n2. 根节点是黑色\n3. 叶子节点（NIL）是黑色\n4. 红色节点的子节点必须是黑色（不能有两个连续的红色节点）\n5. 任意节点到其所有叶子节点的路径包含相同数量的黑色节点（黑高相等）\n\n这些性质保证：最长路径不超过最短路径的 2 倍 → 树的高度 ≤ 2log₂(n+1) → O(log n) 操作。\n\nTreeMap 的核心实现：\n- Entry<K,V>：包含 key、value、left、right、parent、color\n- Comparator：用户自定义排序规则（或 key 的自然顺序）\n- 查找：标准的二叉搜索树查找（比较 key 大小，左小右大）\n\n插入逻辑（put）：\n1. 标准 BST 插入：从根开始，比较 key 大小，找到插入位置\n2. 插入节点默认为红色（不破坏黑高性质）\n3. 修复红黑树性质：\n   - 如果父节点是黑色 → 插入完成（不破坏任何性质）\n   - 如果父节点是红色 → 需要修复（出现连续红色）\n   - 修复方式：旋转 + 颜色翻转\n   - 三种 case：叔叔节点是红色 → 上移红色/叔叔节点是黑色且当前节点在外侧 → 单旋/在内侧 → 双旋\n\n删除逻辑（remove）：\n1. 标准 BST 删除（找到后继节点替换）\n2. 如果删除的节点是黑色 → 破坏黑高性质，需要修复\n3. 修复方式：旋转 + 颜色调整（情况比插入复杂）\n\nNavigableMap 接口提供的功能：\n- lowerKey/floorKey/ceilingKey/higherKey：基于比较的导航\n- subMap/headMap/tailMap：范围视图\n- firstKey/lastKey/pollFirstEntry/pollLastEntry\n\n性能特点：\n- TreeMap 的操作在有序数据上需要 O(log n) 比较\n- HashMap 是 O(1)，但在需要有序遍历时，TreeMap 是唯一选择\n- 内存比 HashMap 大（每个节点额外存储 left/right/parent/color 指针 + boolean）\n\n扩展延伸：TreeMap 适合需要有序性的场景（范围查询、按顺序遍历、导航操作）。LinkedHashMap 维护插入顺序而非自然顺序。ConcurrentSkipListMap 是 TreeMap 的并发替代方案（基于跳表实现，O(log n) 的并发安全操作）。TreeMap 的 Comparator 实现必须与 equals 一致，否则可能违反 Map 接口的约定。",
+    "hints": [
+      "TreeMap = 红黑树实现的有序 Map，所有操作 O(log n)",
+      "红黑树五性质：根黑+叶黑+红不连+黑高相等（保证最长路径≤最短路径的2倍）",
+      "插入修复：BST 插入（红节点）→ 旋转+颜色翻转（父红→叔红上移/叔黑单旋双旋）"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap",
+      "红黑树"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Deque 与 ArrayDeque 设计",
+    "content": "请介绍 Java 中的 Deque（双端队列）接口及其核心实现 ArrayDeque。ArrayDeque 的循环数组设计是如何实现高效的头部和尾部操作的？",
+    "answer": "答案：Deque（Double Ended Queue）支持在队列的头部和尾部进行插入和删除操作。ArrayDeque 使用循环数组实现。\n\nDeque 接口的方法：\n- 头部操作：addFirst/offerFirst/removeFirst/pollFirst/getFirst/peekFirst\n- 尾部操作：addLast/offerLast/removeLast/pollLast/getLast/peekLast\n- 栈操作：push（=addFirst）/pop（=removeFirst）/peek（=peekFirst）\n- 双端迭代器：descendingIterator（从尾部向前遍历）\n\nArrayDeque 的循环数组设计：\n- 内部维护 Object[] elements（数组）和 head/tail 指针\n- head：队列头元素在数组中的索引\n- tail：队列尾元素的下一个插入位置（tail == head 时表示队列为空或满）\n- 容量始终为 2 的幂（方便位运算取模）\n\n循环操作的核心：\n- 头部入队（addFirst）：head = (head - 1) & (elements.length - 1)\n  - 减 1 后与容量掩码位与，实现循环回绕\n  - 示例：容量 16，head=0→ addFirst → head=(0-1)&15 = 15\n- 尾部入队（addLast）：elements[tail] = e; tail = (tail + 1) & (elements.length - 1)\n  - 如果 tail == head 则扩容\n- 头部出队（pollFirst）：elements[head] = null; head = (head + 1) & (len - 1)\n- 尾部出队（pollLast）：tail = (tail - 1) & (len - 1); elements[tail] = null\n\n扩容策略：\n- 当 tail == head 时（队列满），扩容为原来的 2 倍\n- 先分配新数组（2× 旧容量）\n- 分两段复制（head 到数组末尾 + 0 到 tail-1）\n- 重置 head=0, tail=旧长度\n\n性能对比：\n| 操作 | ArrayDeque | LinkedList |\n|------|-----------|------------|\n| 头部插入/删除 | O(1) 摊销 | O(1) |\n| 尾部插入/删除 | O(1) 摊销 | O(1) |\n| 内存开销 | 小（数组 + 2 个指针） | 大（每个节点有 prev/next/item 指针）|\n| 随机访问 | O(1) 但需遍历 | O(n) |\n| 局部性 | 好（连续内存） | 差（分散节点）|\n\n扩展延伸：ArrayDeque 是 Java 官方推荐的 Stack 和 Queue 实现（比 Stack 快，比 LinkedList 快）。Stack extends Vector 是遗留类（性能差，加锁浪费），应该用 Deque（new ArrayDeque<>()）。LinkedList 也是 Deque 的实现，但 ArrayDeque 在大多数场景下性能更好（内存紧凑，缓存友好）。",
+    "hints": [
+      "Deque = 双端队列（头尾都可插入/删除），ArrayDeque 使用循环数组实现",
+      "核心：head/tail 指针 + 容量 2 的幂 + (index) & (len-1) 实现循环回绕",
+      "ArrayDeque 比 Stack 和 LinkedList 性能更好（内存紧凑，缓存友好）"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Deque",
+      "ArrayDeque"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HashMap 的死循环与树化",
+    "content": "请介绍 HashMap 的并发死循环问题（JDK 1.7）。为什么在并发 put 时会出现死循环？JDK 1.8 的尾插法 + 红黑树如何解决了这个问题？",
+    "answer": "答案：HashMap 的死循环是 JDK 1.7 的经典问题，在多线程并发 put 导致扩容时可能出现。\n\nJDK 1.7 死循环的根因：\n1. 头插法（Head Insertion）：扩容时迁移元素采用头插法（新节点始终插入链表头部）\n2. 多线程并发扩容：两个线程同时执行 transfer()，同时操作链表\n3. 环形链表：头插法在并发下会导致链表形成环\n4. 死循环：后续 get/put 遍历链表时进入死循环（CPU 100%）\n\n头插法的流程：\n// 扩容时迁移：遍历旧 table 每个桶的链表\n// 对新 table 的头插入：e.next = newTable[i]; newTable[i] = e;\n// 结果：链表顺序反转（原链表 A→B→C 变成 C→B→A）\n\n并发问题的成因：\n- 线程 1 执行到 e.next = newTable[i] 后暂停\n- 线程 2 完成整个扩容（链表已反转并迁移到新数组）\n- 线程 1 恢复执行，基于旧的引用继续操作\n- 结果：A.next = B, B.next = A → 环形链表\n\nJDK 1.8 的修复：\n1. 尾插法：扩容时使用尾插法，保持元素顺序不变\n2. 具体：维护 loHead/loTail（低位链表）和 hiHead/hiTail（高位链表），遍历旧链表逐个接到尾部\n3. 尾插法即使并发也不形成环（因为不会出现 A.next = B, B.next = A 的交叉引用）\n\n树化的引入（JDK 1.8）：\n- 当桶中链表长度 ≥ 8 时，链表转为红黑树\n- 条件：链表长度 > 8 且数组长度 ≥ 64\n- 如果数组长度 < 64，先扩容（期望元素分散到更多桶）\n- 树化的目的：防止恶意哈希攻击（构造大量相同哈希值的 key 导致 O(n) 性能退化）\n- 红黑树搜索：O(log n) vs 链表：O(n)\n\n树化的阈值选择（为什么是 8？）：\n- 泊松分布：在随机哈希下，桶中元素个数的概率分布符合泊松分布\n- 链表长度 = 8 的概率约为 0.00000006（几乎不会发生）\n- 所以正常情况不会触发树化，树化是为了防御哈希碰撞攻击\n- 树退化回链表的阈值为 6（避免频繁转换）\n\n扩展延伸：HashMap 仍然不是线程安全的——JDK 1.8 修复了死循环，但并发 put 仍可能导致数据丢失（put 覆盖）。线程安全方案：ConcurrentHashMap（分段锁/CAS）、Collections.synchronizedMap（全表锁）、HashTable（遗留类，全表锁）。",
+    "hints": [
+      "JDK 1.7 死循环根因：头插法 + 并发扩容 → 环形链表 → get() 死循环",
+      "JDK 1.8 修复：尾插法（保持顺序）+ 引入红黑树（链表≥8→红黑树，防御哈希攻击）",
+      "树化阈值=8 的原因：泊松分布下概率极低（正常不会树化，树化为防恶意哈希碰撞攻击）"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "HashMap",
+      "并发"
+    ]
   }
 ]

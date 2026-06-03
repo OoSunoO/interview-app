@@ -1075,5 +1075,100 @@
       "条件计算",
       "稀疏"
     ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Triton Inference Server 架构",
+    "content": "请介绍 NVIDIA Triton Inference Server 的核心架构及其关键特性。",
+    "answer": "答案：Triton Inference Server 是 NVIDIA 开源的推理服务框架，支持多模型、多框架、多硬件的统一部署。\n\n核心架构：\n1. 模型管理模块：\n   - 模型仓库（Model Repository）：存储模型文件、配置\n   - 模型生命周期管理：加载/卸载/版本控制\n   - 支持模型流水线（Model Ensemble / BLS）\n\n2. 请求调度模块：\n   - 动态批处理（Dynamic Batching）：将多个请求合并为一个 batch\n   - 序列批处理（Sequence Batching）：处理有状态模型的序列请求\n   - 并发控制：配置每个模型的最大并发数\n\n3. 后端引擎：\n   - TensorRT：NVIDIA 优化引擎，GPU 上最高性能\n   - ONNX Runtime：跨平台推理\n   - PyTorch / TF：原生框架推理\n   - Custom Backend：自定义 C++/Python 后端\n   - FIL：基于树的模型（XGBoost、LightGBM）\n\n4. 通信层：\n   - HTTP / gRPC 同步推理\n   - 流式推理（gRPC streaming）\n   - C API：直接 C 接口调用\n   - 共享内存（Shared Memory）：低延迟通信\n\n关键特性：\n- 并发模型执行：多个模型、多个实例在多个 GPU 上并发\n- 模型版本管理：自动切换版本，A/B 测试\n- Metrics 暴露：Prometheus 格式监控指标（延迟、吞吐、队列深度）\n- 模型 Warmup：加载时预热，避免首次推理延迟\n- 调度策略：默认的轮询（Round Robin）和优先级队列\n\n扩展延伸：Triton 与 KServe（Kubeflow 的推理组件）深度集成，大规模生产部署通常使用 KServe + Triton 的组合。",
+    "hints": [
+      "四个核心模块：模型管理、请求调度、后端引擎、通信层",
+      "动态批处理自动合并请求，序列批处理支持有状态模型",
+      "支持多种后端：TensorRT（最高性能）、ONNX、PyTorch、自定义"
+    ],
+    "tags": [
+      "AI",
+      "推理服务",
+      "Triton",
+      "NVIDIA"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "SGLang vs vLLM 对比",
+    "content": "请比较 SGLang 和 vLLM 在 LLM 推理框架上的设计理念和核心差异。",
+    "answer": "答案：SGLang 和 vLLM 是当前最流行的两个 LLM 推理框架，设计理念有显著差异。\n\nvLLM：\n- 核心理念：高性能推理引擎，关注吞吐和显存效率\n- 关键创新：PagedAttention（分页注意力）\n  - 将 KV Cache 分页管理，像操作系统虚拟内存一样\n  - 消除 KV Cache 碎片，接近 100% 显存利用率\n  - 支持 Copy-on-Write 实现高效并行采样\n- 架构：纯 Serving 引擎，通过 OpenAI 兼容 API 提供服务\n- 调度：Continuous Batching（持续批处理）\n- 语言支持：Python + C++/CUDA kernel\n- 生态：被多家公司采用，生态成熟\n\nSGLang：\n- 核心理念：推理程序化，将 LLM 推理视为可编程的后端\n- 关键创新：\n  a) RadixAttention：用 Radix Tree 管理 KV Cache，实现高效前缀匹配和复用\n  b) Structured Generation：通过约束解码（JSON Schema / Grammar）实现结构化输出\n  c) 前端语言：Python DSL 描述推理流程（类似编程而非 API 调用）\n- 架构：编程式推理（Serving + 前端编程语言）\n- 调度：优化了前缀共享场景的调度策略（Tree-structured batching）\n- 语言：Python 前端 DSL + CUDA backend\n- 特色：多模态支持更好，内置 vision-language 模型优化\n\n核心差异对比：\n| 维度 | vLLM | SGLang |\n|------|------|--------|\n| 核心抽象 | 高性能 Serving 引擎 | 编程式推理框架 |\n| Cache 管理 | PagedAttention | RadixAttention |\n| 结构化输出 | 有限的 guidance | 原生支持（约束解码） |\n| 生态成熟度 | 更成熟，更广泛 | 快速追赶 |\n| 前缀共享 | 基础支持 | 深度优化（Radix Tree） |\n\n扩展延伸：SGLang 的作者是 vLLM 的第一作者，后来转向 SGLang 项目。两者目前都在快速迭代中，很多差异化功能正在互相借鉴。选择取决于场景——纯 Serving 选 vLLM，需要复杂推理逻辑或多模态选 SGLang。",
+    "hints": [
+      "vLLM：PagedAttention（分页 KV Cache，减少碎片），纯 Serving 引擎",
+      "SGLang：RadixAttention（树形前缀共享）+ 编程式推理 DSL + 结构化输出",
+      "vLLM 生态更成熟，SGLang 在多模态和结构化生成上更强"
+    ],
+    "tags": [
+      "AI",
+      "推理",
+      "vLLM",
+      "SGLang"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM 推理中的投机解码",
+    "content": "请介绍投机解码（Speculative Decoding）的原理、优势及实现方式。",
+    "answer": "答案：投机解码是一种加速 LLM 推理的技术，通过小模型草稿 + 大模型验证的方式加速生成。\n\n核心原理：\n1. 草稿模型（Draft Model）快速生成 K 个 token（可以用小模型、N-gram 或单层 Transformer）\n2. 目标模型（Target/Large Model）并行验证这 K 个 token\n3. 拒绝采样：如果某个 token 被拒绝，从该位置回滚并重新生成\n\n为什么能加速：\n- 自回归解码的瓶颈是串行性（一次一个 token）\n- 投机解码用草稿模型做串行预测（快），大模型做并行验证（一次验证所有草稿 token）\n- 大模型的并行前向传播比串行 K 次快很多\n\n接受率（Acceptance Rate）：\n- 草稿 token 被目标模型接受的概率\n- 如果草稿模型和目标模型分布一致，接受率 = 1（完美加速）\n- 通常接受率在 0.6-0.9 之间\n- K 的取值需要在加速比和浪费之间权衡（典型值 K=3~5）\n\n实现方式：\n1. 独立草稿模型：训练一个小型辅助模型作为 draft model\n2. 自草稿（Self-Speculative）：同一模型的不同层（浅层作为草地，深层作为验证）\n3. N-gram 猜测：基于历史统计的 N-gram 作为草稿\n4. Medusa：在模型 head 添加多个预测头（Draft Head）并行预测多个未来 token\n\n优势：\n- 理论上可以无损加速（拒绝采样保证输出分布与原始模型一致）\n- 不需要修改模型架构\n- 对批处理友好（多个请求的草稿可以一起验证）\n\n扩展延伸：投机解码的加速比受限于草稿模型与目标模型的分布对齐程度。后续改进如 Lookahead Decoding（直接并行预测多步而非逐个草稿）和 Eagle（基于 feature 预测而非 token 预测）进一步提升了加速效果。",
+    "hints": [
+      "小模型草稿 K 个 token → 大模型并行验证 → 接受则加速，拒绝则回滚",
+      "加速关键：大模型并行验证 K 个 token 比串行生成 K 次快得多",
+      "无损失加速——拒绝采样保证输出分布与原始模型一致"
+    ],
+    "tags": [
+      "AI",
+      "推理加速",
+      "投机解码",
+      "LLM"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM 量化技术对比",
+    "content": "请对比 GPTQ、AWQ 和 GGUF（GGML）三种 LLM 量化技术的核心区别。",
+    "answer": "答案：GPTQ、AWQ 和 GGUF 是三种主流的 LLM 后训练量化技术。\n\nGPTQ（GPT Post-Training Quantization）：\n- 原理：基于最优化理论的权重量化（逐层最小化量化误差的二次损失）\n- 方法：\n  1. 用少量校准数据（如 128 个样本）\n  2. 逐层进行 Hessian 感知的权重量化\n  3. 使用 Optimal Brain Quantization（OBQ）的优化版本\n- 特点：\n  - 权重只能量化到 4-bit 或 3-bit（不支持激活量化）\n  - 需要在 GPU 上进行量化过程（需要校准数据）\n  - 推理时仍然需要 GPU（通过 CUDA kernel）\n  - 精度损失小，4-bit 时基本无感\n\nAWQ（Activation-aware Weight Quantization）：\n- 原理：不是所有权重都同等重要——少数 channels 对激活更重要\n- 方法：\n  1. 观察激活值分布，识别对激活影响大的权重 channel\n  2. 对这些重要 channel 保留更高精度（缩放保护）\n  3. 对非重要 channel 进行更激进的量化\n- 特点：\n  - 精度优于 GPTQ（同等 bit 宽度）\n  - 量化速度快（不需要迭代优化）\n  - 对校准数据量不敏感\n  - 推理效率高（有高效的 kernel 实现）\n\nGGUF（GGML Universal Format）：\n- 原理：统一的模型格式，包含量化方案和模型文件打包\n- GGUF 是 GGML 的进化版本（解决 GGML 版本兼容性问题）\n- 支持多种量化类型：Q2_K, Q3_K, Q4_K, Q5_K, Q6_K, Q8_0 等\n- K_表示根据层的类型选择不同的量化精度（注意力层 vs FFN 层）\n- 特点：\n  - 面向 CPU 推理优化（也可用 GPU 辅助）\n  - 量化存在模型中，一次下载即可使用\n  - 主要用于 llama.cpp 生态\n  - 量化过程需要 CPU 内存较大（加载原模型后做量化）\n\n选择建议：\n| 场景 | 推荐 | 原因 |\n|------|------|------|\n| GPU 推理，高吞吐 | GPTQ / AWQ | 利用 GPU kernel 加速 |\n| CPU 推理，边缘部署 | GGUF | 天然适配 llama.cpp |\n| 精度优先 | AWQ | 同等 bit 下精度最高 |\n| 快速实验 | AWQ | 量化速度快 |\n\n扩展延伸：量化正在从 W4A16（4-bit 权重，16-bit 激活）向 W4A4（全 4-bit）演进。W4A4 推理需要特殊的硬件或 kernel 支持，目前仍在小规模探索阶段。",
+    "hints": [
+      "GPTQ：Hessian 感知的权重量化，GPU 推理，需要校准数据",
+      "AWQ：激活感知的权重量化——保护对激活影响大的 channel，精度最高",
+      "GGUF：统一模型格式，面向 CPU（llama.cpp 生态），多种量化精度可选"
+    ],
+    "tags": [
+      "AI",
+      "LLM",
+      "量化",
+      "推理优化"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Ray 分布式框架核心概念",
+    "content": "请介绍 Ray 分布式计算框架的核心概念和典型应用场景。",
+    "answer": "答案：Ray 是一个通用分布式计算框架，设计目标是让分布式开发像单机编程一样简单。\n\n核心概念：\n1. Task（任务）：无状态并行函数\n   - @ray.remote 装饰器将普通函数转为远程任务\n   - 自动调度到集群中的可用节点\n   - 支持依赖和返回值传递\n\n2. Actor（角色）：有状态并行服务\n   - 在集群中创建一个有状态的工作节点\n   - 适合模型推理服务、环境模拟器\n   - Actor 间通过 remote() 调用通信\n\n3. Object Store（对象存储）：\n   - 基于 Apache Arrow 的分布式共享内存\n   - 零拷贝序列化（高效数据传输）\n   - ObjectRef：对象的分布式引用（类似 Future）\n\n4. Placement Group（放置组）：\n   - 调度策略控制：PACK（打包）、SPREAD（分散）、STRICT_SPREAD（严格分散）\n   - 确保分布式训练的拓扑感知调度\n\n典型应用场景：\n1. 超参数调优（Ray Tune）：多 trial 并行搜索\n2. 分布式训练（Ray Train）：PyTorch DDP 的多节点编排\n3. 模型推理服务（Ray Serve）：弹性扩缩容的推理 pipeline\n4. 强化学习（RLlib）：环境模拟器 + 策略训练的分布式循环\n5. 数据处理（Ray Data）：批处理 + 流处理，类似 Spark 但更适合 ML 工作流\n\n扩展延伸：Ray 的核心优势在于将调度层（Task/Actor）、执行层（Object Store）和生态层（Tune/Train/Serve）统一在一个平台上。相比 Spark 更适合 ML 场景，因为 ML 工作流的特征是计算图不规则、中间状态多、需要 GPU 亲和调度。",
+    "hints": [
+      "三大核心抽象：Task（无状态任务）、Actor（有状态服务）、Object Store（分布式共享内存）",
+      "生态组件：Ray Tune（调参）、Ray Train（训练）、Ray Serve（推理服务）",
+      "相比 Spark：更适合 ML 场景（不规则计算图、GPU 亲和、有状态服务）"
+    ],
+    "tags": [
+      "AI",
+      "分布式",
+      "Ray",
+      "ML Infrastructure"
+    ]
   }
 ]

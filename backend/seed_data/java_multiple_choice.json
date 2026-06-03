@@ -1398,5 +1398,92 @@
       "AQS",
       "线程"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Java 中创建对象的合法方式",
+    "content": "以下哪些方式可以在 Java 中合法地创建对象（新实例）？",
+    "answer": "A) 使用 new 关键字\nB) 调用 Class.newInstance()\nC) 调用 Constructor.newInstance()\nD) 调用 Object.clone()\nE) 使用 Unsafe.allocateInstance()",
+    "correct": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E"
+    ],
+    "hints": [
+      "所有选项都是 Java 中创建对象的合法方式",
+      "new 和反射（newInstance）会调用构造器，clone 和 Unsafe 不调用构造器"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Lambda 表达式的限制",
+    "content": "以下哪些是 Java Lambda 表达式的限制？",
+    "answer": "A) Lambda 表达式不能有命名的局部变量（必须有名称）\nB) Lambda 表达式引入的局部变量必须是 effectively final\nC) Lambda 表达式不能定义默认方法\nD) Lambda 表达式不能捕获 this 引用\nE) Lambda 表达式不能使用 return 语句",
+    "correct": [
+      "B",
+      "C"
+    ],
+    "hints": [
+      "Lambda 捕获的局部变量必须是 effectively final（或事实上的 final）",
+      "Lambda 本质是函数式接口的匿名实现，不能有默认方法"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "不可变类的设计要求",
+    "content": "设计一个不可变类（Immutable Class）需要满足哪些条件？",
+    "answer": "A) 类声明为 final（防止子类修改）\nB) 所有字段声明为 final\nC) 不提供修改字段值的方法（setter）\nD) 在 getter 中返回字段的防御性拷贝\nE) 类必须实现 Serializable",
+    "correct": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "hints": [
+      "A-D 都是不可变类的必要条件（保护性拷贝返回引用类型字段）",
+      "Serializable 不是不可变类的必要条件"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Stream API 的中间操作",
+    "content": "以下哪些是 Java Stream API 的中间操作（Intermediate Operation）？",
+    "answer": "A) filter()\nB) map()\nC) collect()\nD) sorted()\nE) forEach()",
+    "correct": [
+      "A",
+      "B",
+      "D"
+    ],
+    "hints": [
+      "中间操作返回新的 Stream，延迟执行（惰性求值），直到遇到终止操作才执行",
+      "collect() 和 forEach() 是终止操作（Terminal Operation），触发 Stream 执行"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "ServiceLoader 的特点",
+    "content": "关于 Java 的 ServiceLoader（SPI 机制），以下哪些描述是正确的？",
+    "answer": "A) ServiceLoader 通过 META-INF/services/ 目录下的配置文件加载服务实现\nB) ServiceLoader 是延迟加载的（lazy loading），遍历时才实例化\nC) ServiceLoader 加载的服务实现必须是 public 且有无参构造器\nD) ServiceLoader 是线程安全的\nE) ServiceLoader 支持服务的卸载和重新加载",
+    "correct": [
+      "A",
+      "B",
+      "C"
+    ],
+    "hints": [
+      "ServiceLoader 基于约定：META-INF/services/接口全限定名 文件列出实现类",
+      "ServiceLoader 不是线程安全的，且不支持卸载已加载的服务"
+    ]
   }
 ]

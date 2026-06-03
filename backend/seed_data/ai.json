@@ -1042,5 +1042,101 @@
       "MQA",
       "GQA"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Prompt Chaining 与路由",
+    "content": "请对比 Prompt Chaining 和 Prompt Routing 两种策略的适用场景和优缺点。",
+    "answer": "答案：Prompt Chaining（提示链）和 Prompt Routing（提示路由）是两种不同的 LLM 编排策略。\n\nPrompt Chaining：\n- 概念：将一个复杂任务拆解为多个步骤，每一步的 LLM 输出作为下一步的输入\n- 示例：用户输入 → 意图分类 → 实体提取 → 生成回答 → 格式整理\n- 优点：每一步可以独立优化、调试；中间结果可控；适合固定流程\n- 缺点：延迟累加（串行）；错误传播（上步错下步跟着错）\n- 适用场景：文档处理流水线、多步推理、代码生成（先规划再生成）\n\nPrompt Routing：\n- 概念：根据输入特征将请求路由到不同的 prompt 或模型\n- 示例：分类器判断用户问题类型 → 路由到对应的领域 prompt\n- 优点：并行处理；可以混合使用不同模型（简单问题用小模型省钱）\n- 缺点：路由决策本身有成本；分类错误导致路径选错\n- 适用场景：多领域客服、混合难度查询、A/B 测试 prompt 版本\n\n扩展延伸：两者的组合使用更常见——路由层决定走哪条链。例如：\n1. 路由层（分类器）判断问题类型\n2. Chain A（简单问题）：单步快速回答\n3. Chain B（复杂问题）：多步推理链 + 工具调用\n4. Chain C（代码问题）：COT + Sandbox 执行验证\n\n这种路由+链的组合架构是生产级 LLM 应用的常见模式。",
+    "hints": [
+      "Chaining = 串行多步，每一步依赖上一步输出，适合固定流程",
+      "Routing = 根据输入特征分流到不同路径，可混用不同模型",
+      "生产常用路由+链的组合：先分类，再走对应的处理链"
+    ],
+    "tags": [
+      "AI",
+      "LLM",
+      "Prompt Engineering",
+      "系统设计"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Implicit Reward 与 RLHF 对齐",
+    "content": "RLHF 中的 Reward Model 如何训练？什么是 Implicit Reward 的概念？DPO 相比 RLHF 有什么优势？",
+    "answer": "答案：RLHF（基于人类反馈的强化学习）和 DPO（直接偏好优化）是 LLM 与人类偏好对齐的两种方法。\n\nRLHF 的 Reward Model 训练：\n1. 收集人类偏好数据：对同一 prompt 生成多个回答，人工排序（如 A > B > C）\n2. 训练 Reward Model：输入（prompt, response），输出一个标量分数\n3. 损失函数：Bradley-Terry 模型——最大化偏好排序的对数似然\n4. 用训练好的 RM 作为奖励信号，通过 PPO 优化策略模型\n\nRLHF 的问题：\n1. 需要维护 Reward Model 和 Policy Model 两套模型\n2. PPO 训练不稳定，对超参数敏感\n3. Reward Hacking：策略模型可能找到 RM 的漏洞而非真正的优化方向\n\nDPO（Direct Preference Optimization）的核心创新：\n- 不需要显示训练 Reward Model\n- 直接从偏好数据中优化策略\n- 关键洞察：Bradley-Terry 偏好模型的最优策略存在闭式解\n- 损失函数直接作用于策略模型：最大化偏好回答的概率，最小化非偏好回答的概率\n\nImplicit Reward：\n- DPO 虽然不训练 Reward Model，但实际上隐式定义了 Reward（从策略模型的隐式偏好中）\n- Implicit Reward = 偏好策略的对数概率比（奖励隐含在策略的倾向性中）\n- 数学上：r(x,y) ∝ log(π(y|x)/π_ref(y|x))\n\nDPO 的优势：\n1. 更简单：不需要单独训练 RM，不需要 PPO 的复杂工程\n2. 更稳定：直接在策略上优化，没有 RM 和策略之间的对抗\n3. 更高效：单阶段训练（SFT 风格）\n\n扩展延伸：DPO 的局限——没有 RM 意味着无法在推理时做 best-of-N 采样。后续工作如 Iterative DPO、KTO 等进一步改进了 DPO。",
+    "hints": [
+      "RLHF：训练一个 RM（Reward Model）+ 用 PPO 优化策略，两阶段、不稳定",
+      "DPO：直接从偏好数据优化策略，隐式定义了奖励函数（Implicit Reward）",
+      "DPO 更简单稳定，但无法做 best-of-N 采样（因为没有显式 RM）"
+    ],
+    "tags": [
+      "AI",
+      "LLM",
+      "RLHF",
+      "DPO",
+      "对齐"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "BPE vs WordPiece vs SentencePiece",
+    "content": "请比较 BPE、WordPiece 和 SentencePiece 三种 Tokenizer 的核心区别。",
+    "answer": "答案：BPE、WordPiece、SentencePiece 是三种最常用的 Tokenizer 方法。\n\nBPE（Byte Pair Encoding）：\n- 原理：自底向上合并最频繁的字节对\n- 训练过程：从字符级开始，反复合并出现频率最高的相邻 token 对\n- 代表模型：GPT 系列（GPT-2、GPT-3、GPT-4）\n- 特点：贪心合并，简单高效；输出是确定的\n\nWordPiece：\n- 原理：基于概率的语言模型合并（不是频率，而是最大化训练数据的似然）\n- 训练过程：每次合并使得语言模型困惑度下降最多的 token 对\n- 代表模型：BERT、DistilBERT\n- 特点：合并策略更精细（考虑增益而非频率）；需要先验词表\n\nSentencePiece：\n- 原理：将原始文本（包括空格）视为字符流，不进行预分词\n- 训练过程：可以使用 BPE 或 Unigram LM 两种算法\n- 代表模型：T5、LLaMA（部分版本使用 SentencePiece）\n- 特点：不依赖语言预分词（对中文友好）；支持直接处理原始文本\n- 独特：将空格编码为特殊字符（如 _），统一了不同语言的 tokenization\n\n核心区别对比：\n| 维度 | BPE | WordPiece | SentencePiece |\n|------|-----|-----------|---------------|\n| 合并依据 | 频率 | 似然增益 | BPE 或 Unigram |\n| 预分词 | 需要 | 需要 | 不需要 |\n| 输出确定性 | 确定 | 确定 | 概率（Unigram模式） |\n| 中文支持 | 一般 | 一般 | 好 |\n\n扩展延伸：Tokenizer 的选择对模型效果有显著影响。一个好的 tokenizer 应该高效（少量 token 表示常见词）且无损（任意字符串都可编码）。LLaMA 2 使用 BPE（GPT 风格），LLaMA 3 改用 tiktoken（更高效）。",
+    "hints": [
+      "BPE = 按 token 对出现频率合并（GPT 系列），WordPiece = 按似然增益合并（BERT 系列）",
+      "SentencePiece = 不预分词，直接将文本当字符流处理（对中文友好）",
+      "核心差异：合并策略（频率 vs 概率）和是否预分词"
+    ],
+    "tags": [
+      "AI",
+      "NLP",
+      "Tokenizer",
+      "LLM"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM 上下文窗口扩展技术",
+    "content": "请介绍扩展 LLM 上下文窗口的几种主流技术方法及其原理。",
+    "answer": "答案：扩展 LLM 上下文窗口的主流技术包括 RoPE 扩展、位置插值、Ring Attention、LongLoRA 等。\n\n1. RoPE 位置编码扩展：\n- 原理：RoPE（旋转位置编码）通过旋转矩阵编码位置信息\n- 限制：RoPE 有一定的外推能力，但超出训练长度后效果快速下降\n- 改进：调整 RoPE base frequency（如 base=10000 → 500000）\n- 代表：YaRN、NTK-aware 插值\n\n2. 位置插值（Position Interpolation）：\n- 原理：将更长序列的位置编码压缩到模型已训练的位置范围内\n- 方法：假设模型训练时最大位置 L，推理时需要 2L，将位置 i 映射到 i/2\n- 优点：只需要少量微调即可扩展到更长上下文\n- 缺点：位置分辨率降低（相邻位置的区分度下降）\n\n3. Ring Attention：\n- 原理：分布式注意力计算，将长序列分片到多个设备\n- 方法：设备间以 ring 方式传递 key-value 分片\n- 优点：理论上可扩展到任意长度（受限于设备数量）\n- 缺点：需要分布式训练/推理基础设施\n\n4. LongLoRA：\n- 原理：Shifted Sparse Attention + LoRA 微调\n- 方法：普通的全注意力作为短上下文，Shifted Sparse Attention 处理长上下文\n- 优点：训练成本大幅降低（只有 LoRA 的参数量可训练）\n- 缺点：稀疏注意力可能丢失部分长距离依赖\n\n5. 激活选择（激活 Beacon / Cache 压缩）：\n- 原理：对 KV Cache 做选择性保留（不保留所有历史 token）\n- 方法：根据注意力分数选择重要 token 的 KV 对\n- 代表：H2O（Heavy Hitter Oracle）、SnapKV\n- 优点：可以减少推理时的显存占用\n\n扩展延伸：目前的趋势是混合使用多种技术。例如：RoPE base 调大 + 位置插值微调 + 推理时 KV Cache 压缩。DeepSeek-V2 的 Multi-head Latent Attention（MLA）也是一种高效的上下文扩展方案。",
+    "hints": [
+      "RoPE 扩展/位置插值：修改位置编码的映射方式，让模型支持更长的位置",
+      "Ring Attention：分布式分片，跨设备 ring 传递 KV，可扩展到任意长度",
+      "KV Cache 压缩：不保留所有历史 token，只保留注意力分数高的"
+    ],
+    "tags": [
+      "AI",
+      "LLM",
+      "上下文窗口",
+      "Transformer"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MoE 的负载均衡与专家退化",
+    "content": "MoE（Mixture of Experts）架构中如何解决负载均衡问题和专家退化（Expert Collapse）问题？",
+    "answer": "答案：MoE 架构通过路由器（Router/Gate）将 token 分配到不同专家网络，核心挑战是负载均衡和专家退化。\n\n负载均衡问题：\n- 问题描述：路由器倾向于把 token 分配给少数能力强/偏好度高的专家，导致其他专家饥饿\n- 解决方法：\n  a) 辅助损失（Auxiliary Loss）：在训练总损失中加入负载均衡惩罚项\n     - Switch Transformer：每个 token 只选 top-1 专家，加 load balancing loss\n     - 公式：importance_loss = CV(每个专家被选中的总概率)\n  b) Expert Choice（由专家选 token）：反向路由，每个专家选择要处理的 token\n     - 天然保证每个专家处理相同数量的 token\n  c) Z-loss：限制路由器 logit 的幅度，防止路由器输出极端概率\n\n专家退化（Expert Collapse）：\n- 问题描述：所有 token 都路由到少数专家，其他专家几乎不被使用\n- 原因：\n  a) 初始路由偏差：初始化导致某些专家获得初始优势\n  b) 自强化循环：被选中的专家训练更充分 → 更受路由器偏好 → 更多 token 分配\n  c) 同质化：未被选中的专家退化，造成计算浪费\n- 解决方法：\n  a) 随机路由（Stochastic Routing）：在路由中加入噪声，强制探索\n  b) 辅助损失的合理权重（权重太小无效，太大影响主任务）\n  c) 容量因子（Capacity Factor）：限制每个专家最多处理的 token 数\n  d) 特殊的初始化策略确保所有专家平等\n\n3. 现代 MoE 的改进方案：\n- DeepSeek-MoE：细粒度专家分割，将每个专家进一步拆分为子专家\n- Mixtral 8×7B：top-2 路由 + 负载均衡损失，效果媲美 dense 模型\n- DeepSeek-V2：Shared Expert + Routed Expert 分离，共享专家捕获通用知识\n\n扩展延伸：负载均衡的极致方案是 MegaBlocks（无辅助损失实现完美负载均衡），但引入了稀疏计算的工程挑战。实践中需要在负载均衡和模型效果之间做 trade-off。",
+    "hints": [
+      "负载均衡：辅助损失 + 容量因子 + Expert Choice（从选 token 改为由 token 被选）",
+      "专家退化：随机路由 + 精细初始化 + 容量限制，防止少数专家垄断",
+      "现代方案：DeepSeek Shared Expert + Routed Expert 分离，Mixtral top-2 路由"
+    ],
+    "tags": [
+      "AI",
+      "MoE",
+      "稀疏模型",
+      "负载均衡"
+    ]
   }
 ]

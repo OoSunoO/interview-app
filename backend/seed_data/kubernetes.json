@@ -1062,5 +1062,101 @@
       "RBAC",
       "ServiceAccount"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 控制器模式与 Operator",
+    "content": "请介绍 Kubernetes 控制器模式（Controller Pattern）的原理以及 Operator 的扩展方式。",
+    "answer": "答案：K8s 控制器模式是集群自动化的核心设计哲学。\n\n控制器模式：\n\n原理：\n- 声明式 API：用户声明期望状态（Desired State）\n- 控制器持续观察当前状态（Current State）\n- 控制器尝试将当前状态调整为期望状态（Reconcile）\n\n核心循环（Reconciliation Loop）：\n```\nfor {\n  desired := getDesiredState()\n  current := getCurrentState()\n  if desired != current {\n    applyChanges()\n  }\n  waitForNextEvent()\n}\n```\n\n常见控制器：\n- ReplicaSet Controller：确保 Pod 副本数匹配\n- Deployment Controller：管理 ReplicaSet 的滚动更新\n- Endpoint Controller：Service 的变化更新 Endpoint\n- Node Controller：节点故障检测和 Pod 迁移\n\nOperator 模式：\n\n定义：\n- Operator = 自定义资源（CRD）+ 自定义控制器\n- 将领域知识编码到 K8s 控制器中\n- 自动化复杂的运维操作\n\nOperator 能做：\n1. 自动部署和升级（Elasticsearch 从 7.10 → 7.11）\n2. 自动备份和恢复（数据库定时备份）\n3. 自动扩缩容（根据业务指标 Scale）\n4. 自动故障恢复（节点宕机后重新调度）\n5. 自动配置变更（配置更新后滚动重启）\n\n示例：\n- prometheus-operator：管理 Prometheus 实例\n- elastic-operator：管理 ES 集群\n- cert-manager：自动签发和管理 TLS 证书\n\n实现方式：\n1. kubebuilder（Go）：标准框架，生产级\n2. Operator SDK（Ansible/Helm）：用 Ansible 或 Helm 实现\n3. Kopf（Python）：轻量级 Python 实现\n\n扩展延伸：Operator 是 K8s 生态系统中最强大的扩展机制。判断是否需要 Operator：如果管理某个有状态应用需要进行以下操作的组合——创建/删除、扩缩容、备份、升级、故障恢复，那么 Operator 是合适的。",
+    "hints": [
+      "控制器模式：声明式期望状态 → 持续调和（Reconcile）当前状态 → 自动修复偏差",
+      "Operator = CRD（自定义资源）+ 控制器：运维知识编码到 K8s 中",
+      "常见 Operator：prometheus-operator、elastic-operator、cert-manager"
+    ],
+    "tags": [
+      "K8s",
+      "控制器模式",
+      "Operator",
+      "CRD"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 调度器原理与自定义调度",
+    "content": "请介绍 Kubernetes 调度器的默认调度流程以及如何实现自定义调度策略。",
+    "answer": "答案：K8s 调度器负责将 Pod 分配到最优节点。\n\n默认调度流程（Scheduling Cycle + Binding Cycle）：\n\n1. 过滤（Filtering / Predicates）：\n   - 筛选出满足 Pod 基本需求的节点\n   - 检查：资源充足（CPU/Memory）、端口冲突、污点容忍、节点选择器\n   - 常见 Predicates：PodFitsResources、PodFitsHostPorts、MatchNodeSelector\n\n2. 打分（Scoring / Priorities）：\n   - 对通过过滤的节点进行评分（0-100）\n   - 优先级因素：\n     - LeastRequestedPriority：优先选择资源利用率低的节点（分散）\n     - MostRequestedPriority：优先选择资源利用率高的节点（集中）\n     - BalancedResourceAllocation：CPU 和内存使用最均衡\n     - ImageLocalityPriority：优先选择已有所需镜像的节点\n   - 最终选择最高分的节点\n\n3. 绑定（Binding）：\n   - 调度器将 Pod 的 nodeName 写入 API Server\n   - 节点上的 kubelet 检测到 Pod 调度到本节点后启动容器\n\n调度框架（Scheduling Framework, 1.15+）：\n\n可扩展点：\n| 阶段 | 时机 | 扩展方式 |\n|------|------|----------|\n| PreFilter | 过滤前 | 预处理调度信息 |\n| Filter | 过滤中 | 自定义过滤逻辑 |\n| PostFilter | 过滤后 | 处理不可调度情况 |\n| PreScore | 打分前 | 生成打分需要的状态 |\n| Score | 打分中 | 自定义打分逻辑 |\n| Reserve | 预留 | 分配资源但不绑定 |\n| Permit | 许可 | 允许/拒绝绑定 |\n| PreBind | 绑定前 | 绑定前处理（如挂载卷） |\n| Bind | 绑定 | 自定义绑定逻辑 |\n\n自定义调度策略的方式：\n1. 配置默认调度器的 Policy（已弃用）：\n   - 通过 --policy-config-file 配置\n2. 调度框架 Plugins：\n   - 编写自定义 Plugin 实现扩展点\n   - 编译进调度器\n3. 多调度器：\n   - 部署多个调度器实例（默认 + 自定义）\n   - Pod 通过 schedulerName 选择调度器\n4. 调度器扩展（Extender）：\n   - 通过 HTTP 请求扩展默认调度器\n   - 实现 Filter/Preempt/Bind 扩展\n\n扩展延伸：高级调度功能——Pod 拓扑分布约束（Pod Topology Spread Constraints）、节点亲和性（Node Affinity）、Pod 间亲和性和反亲和性（Pod Affinity/Anti-Affinity）。生产环境中建议使用 Pod 拓扑分布约束确保高可用。",
+    "hints": [
+      "默认流程：过滤（满足基本需求）→ 打分（最优节点）→ 绑定（写入 nodeName）",
+      "调度框架扩展点：PreFilter/Filter/Score/Bind 等阶段可注入自定义逻辑",
+      "高级调度：节点亲和性、Pod 亲和/反亲和、拓扑分布约束"
+    ],
+    "tags": [
+      "K8s",
+      "调度器",
+      "调度框架",
+      "Pod"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 网络模型与 CNI 插件",
+    "content": "请介绍 Kubernetes 的网络模型要求以及主流 CNI 插件的实现差异。",
+    "answer": "答案：K8s 网络模型是集群通信的基础，CNI 是标准化的网络插件接口。\n\nK8s 网络模型的要求：\n1. 每个 Pod 有独立 IP（Pod-to-Pod 直接通信，无需 NAT）\n2. 节点上的所有 Pod 可以与本节点的所有 Pod 通信\n3. 不使用 NAT 的 Pod 间通信\n4. Pod 看到的自己的 IP 与其他 Pod 看到的该 Pod IP 相同\n\nCNI（Container Network Interface）原理：\n- kubelet 调用 CNI 插件创建/删除网络命名空间\n- CNI 插件配置网络接口和 IP 分配\n- 标准化的二进制插件调用方式\n\n主流 CNI 插件对比：\n\n1. Flannel：\n   - 最简单，overlay 网络\n   - 使用 VXLAN 封装（UDP 封装）\n   - 性能损耗 5-10%\n   - 不支持 NetworkPolicy\n   - 适合：小型集群、学习环境\n\n2. Calico：\n   - 纯三层路由（BGP 分发路由）\n   - 没有 overlay 封装（性能损耗极小）\n   - 原生支持 NetworkPolicy\n   - 支持 eBPF 模式（更高性能）\n   - 适合：生产环境、需要网络策略\n\n3. Cilium：\n   - 基于 eBPF 实现\n   - 高性能网络和服务负载均衡\n   - 丰富的网络安全策略（L3-L7）\n   - 可观测性（Hubble）\n   - 支持 Service Mesh（替代 Sidecar）\n   - 适合：现代化生产环境、安全敏感\n\n4. Weave Net：\n   - 易用（一条命令安装）\n   - 加密通信\n   - 性能一般\n   - 适合：小规模快速部署\n\n性能对比：\n| 插件 | 延迟 | 吞吐 | 封装 | NetworkPolicy |\n|------|------|------|------|---------------|\n| Flannel | 中 | 中 | VXLAN | 不支持 |\n| Calico (BGP) | 低 | 高 | 无 | 支持 |\n| Cilium (eBPF) | 极低 | 极高 | 无 | 支持（L3-L7） |\n| Weave | 中 | 中 | VXLAN | 部分支持 |\n\n扩展延伸：Service Mesh 和 CNI 的融合是趋势——Cilium 已经通过 eBPF 实现服务网格能力（取代 Sidecar Proxy）。Calico 也开始支持 eBPF 模式。新集群推荐使用 Cilium。",
+    "hints": [
+      "K8s 网络要求：Pod 独立 IP、无 NAT 通信、IP 一致性",
+      "CNI 对比：Flannel（简单 overlay）、Calico（BGP 三层路由+NetworkPolicy）、Cilium（eBPF 高性能+L7 策略）",
+      "趋势：Cilium（eBPF）逐渐成为新一代标准，兼具网络+安全+可观测性"
+    ],
+    "tags": [
+      "K8s",
+      "CNI",
+      "Calico",
+      "Cilium",
+      "Flannel"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 存储架构与 CSI 插件",
+    "content": "请介绍 Kubernetes 的存储架构、PV/PVC 体系以及 CSI 插件的工作机制。",
+    "answer": "答案：K8s 存储体系通过声明式 API 和插件化架构解耦应用和基础设施。\n\nPV/PVC 体系：\n\n- PV（PersistentVolume）：管理员创建的存储资源\n- PVC（PersistentVolumeClaim）：用户的存储请求\n- StorageClass：动态 PV 供给模板\n\n生命周期：\n1. 管理员创建 StorageClass（定义后端存储类型）\n2. 用户创建 PVC（声明存储需求：大小、访问模式）\n3. 系统根据 StorageClass 自动创建 PV（动态供给）\n4. Pod 引用 PVC 挂载存储\n5. PVC 删除后 PV 的回收策略（Retain/Delete/Recycle）\n\n访问模式：\n- ReadWriteOnce（RWO）：单节点读写\n- ReadOnlyMany（ROX）：多节点只读\n- ReadWriteMany（RWX）：多节点读写（共享存储）\n- ReadWriteOncePod（RWOP, 1.22+）：单 Pod 读写\n\nCSI（Container Storage Interface）：\n\n架构组件：\n1. CSI Controller：控制面操作（创建/删除/快照/扩容）\n   - 作为 StatefulSet 部署\n   - 处理 CreateVolume、DeleteVolume、CreateSnapshot 等\n2. CSI Node：节点面操作（挂载/格式化）\n   - 作为 DaemonSet 部署\n   - 处理 NodePublishVolume、NodeGetVolumeStats 等\n3. Sidecar Containers：\n   - attacher：处理 VolumeAttachment\n   - provisioner：处理 PV 创建\n   - resizer：处理 PVC 扩容\n   - snapshotter：处理 VolumeSnapshot\n\n工作流程：\n1. 用户创建 PVC\n2. Provisioner Sidecar 检测到 PVC 创建\n3. Provisioner 调用 CSI Controller 的 CreateVolume\n4. CSI Controller 在后端存储创建卷\n5. Attacher Sidecar 调用 CSI Controller 的 ControllerPublishVolume\n6. Kubelet 调用 CSI Node 的 NodePublishVolume（挂载到 Pod）\n\n常见 CSI 驱动：\n- AWS EBS CSI（RWO，块存储）\n- AWS EFS CSI（RWX，文件存储）\n- GCP PD CSI（RWO）\n- Ceph RBD CSI（RWO/RWX）\n- NFS CSI（RWX）\n- Longhorn（轻量分布式存储）\n\n扩展延伸：RWX 通常依赖网络文件系统（NFS、CephFS、EFS、GlusterFS），性能通常不如 RWO（本地/块存储）。有状态应用的存储选型：数据库（RWO + 块存储）、日志/文件（RWX + 文件存储）。",
+    "hints": [
+      "PV/PVC：声明式存储——PVC 声明需求，StorageClass 决定后端，PV 绑定供给",
+      "CSI 三组件：Controller（控制面，StatefulSet）、Node（节点面，DaemonSet）、Sidecar（辅助容器）",
+      "RWX 通常依赖网络文件系统（NFS/CephFS），性能不如 RWO 块存储"
+    ],
+    "tags": [
+      "K8s",
+      "PVC",
+      "CSI",
+      "存储"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 安全上下文与 Pod 安全策略",
+    "content": "请介绍 Kubernetes 的安全上下文（SecurityContext）配置以及 Pod 安全标准的演进。",
+    "answer": "答案：K8s 安全体系通过多层配置实现最小权限原则。\n\nSecurityContext（安全上下文）：\n\nPod 级别安全设置：\n```yaml\nspec:\n  securityContext:\n    runAsUser: 1000          # 容器进程以 UID 1000 运行\n    runAsGroup: 3000         # 容器进程以 GID 3000 运行\n    fsGroup: 2000            # 数据卷的组所有权\n    supplementalGroups: [4000]\n    seccompProfile:          # seccomp 限制系统调用\n      type: RuntimeDefault\n```\n\nContainer 级别安全设置：\n```yaml\nspec:\n  containers:\n  - name: app\n    securityContext:\n      runAsUser: 1000\n      runAsNonRoot: true     # 禁止以 root 运行\n      readOnlyRootFilesystem: true  # 只读根文件系统\n      privileged: false      # 禁止特权模式\n      capabilities:\n        drop: [ALL]         # 删除所有 Linux Capability\n        add: [NET_BIND_SERVICE]  # 仅添加需要的\n      allowPrivilegeEscalation: false  # 禁止提权\n```\n\nPod 安全策略的演进：\n\n1. PodSecurityPolicy（PSP，已弃用 1.21，移除 1.25）：\n   - 过于复杂、易用性差\n   - 更新 Pod 时不触发策略检查\n   - 容易导致授权范围过大\n\n2. Pod Security Admission（PSA, 1.23+）：\n   - 取代 PSP，内置于 API Server\n   - 三个预设级别：\n     a) Privileged：不受限制（信任的/系统级 Pod）\n     b) Baseline：最小限制，避免已知提权（默认推荐）\n     c) Restricted：最严格，遵循 Pod 安全最佳实践\n   - 三种模式：enforce（强制）、audit（审计）、warn（告警）\n\n3. 第三方策略引擎：\n   - OPA/Gatekeeper：可编程策略规则（Rego 语言）\n   - Kyverno：K8s 原生策略引擎（YAML 规则）\n   - 比 PSA 更灵活，适合企业级策略管控\n\n最佳实践：\n1. 始终以非 root 用户运行\n2. 删除所有不需要的 Capability\n3. 只读根文件系统\n4. 禁止 Privilege Escalation\n5. 使用 Restricted 级别 PSA\n6. 扫描镜像 CVE（运行时安全）\n\n扩展延伸：运行时安全工具——Falco（CNCF，系统调用级别的入侵检测）可以检测容器内的异常行为（如反向 shell、访问敏感文件）。结合 K8s 审计日志和 Falco 可以构建完整的容器安全体系。",
+    "hints": [
+      "SecurityContext：runAsNonRoot、capabilities drop/add、readOnlyRootFilesystem、privileged",
+      "PSA 三大级别：Privileged（信任 Pod）、Baseline（基本安全）、Restricted（最严格）",
+      "企业级策略：OPA/Gatekeeper（可编程 Rego 规则）或 Kyverno（YAML 原生）"
+    ],
+    "tags": [
+      "K8s",
+      "安全",
+      "PSA",
+      "OPA"
+    ]
   }
 ]

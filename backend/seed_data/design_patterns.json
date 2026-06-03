@@ -1090,5 +1090,100 @@
       "结构型",
       "兼容性"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "单例模式的多种实现方式",
+    "content": "请介绍单例模式（Singleton）的多种实现方式及其优缺点。",
+    "answer": "答案：单例模式确保一个类只有一个实例并提供全局访问点。\n\n饿汉式（Eager Initialization）：\n\n实现：\n```java\npublic class Singleton {\n    private static final Singleton INSTANCE = new Singleton();\n    private Singleton() {}\n    public static Singleton getInstance() { return INSTANCE; }\n}\n```\n优点：简单、线程安全\n缺点：类加载时就创建，可能造成资源浪费\n\n懒汉式（Lazy Initialization）：\n\n实现：\n```java\npublic class Singleton {\n    private static Singleton instance;\n    private Singleton() {}\n    public static synchronized Singleton getInstance() {\n        if (instance == null) instance = new Singleton();\n        return instance;\n    }\n}\n```\n优点：延迟创建\n缺点：synchronized 方法造成性能开销\n\n双重检查锁定（Double-Checked Locking）：\n\n实现：\n```java\npublic class Singleton {\n    private static volatile Singleton instance;\n    private Singleton() {}\n    public static Singleton getInstance() {\n        if (instance == null) {\n            synchronized (Singleton.class) {\n                if (instance == null) instance = new Singleton();\n            }\n        }\n        return instance;\n    }\n}\n```\n关键：volatile 禁止指令重排序（new 对象不是原子操作）\n\n静态内部类（Bill Pugh）：\n\n```java\npublic class Singleton {\n    private Singleton() {}\n    private static class Holder {\n        static final Singleton INSTANCE = new Singleton();\n    }\n    public static Singleton getInstance() { return Holder.INSTANCE; }\n}\n```\n优点：延迟加载（Holder 类在 getInstance 时才加载）、线程安全\n\n枚举实现：\n\n```java\npublic enum Singleton {\n    INSTANCE;\n    // 添加方法\n}\n```\n最安全的方式：防止反射攻击、序列化安全、天然单例\n\n对比：\n| 方式 | 延迟加载 | 线程安全 | 防反射 | 序列化安全 |\n|------|----------|----------|--------|------------|\n| 饿汉式 | 否 | 是 | 否 | 否 |\n| 懒汉式 | 是 | 是（锁）| 否 | 否 |\n| DCL | 是 | 是（volatile）| 否 | 否 |\n| 静态内部类 | 是 | 是 | 否 | 否 |\n| 枚举 | 否 | 是 | 是 | 是 |\n\n扩展延伸：现代框架中单例模式被依赖注入容器（Spring IoC）管理，无需手动实现单例。Spring 默认 Bean 的作用域就是 singleton。框架层面的单例管理更灵活（可以随时切换为 prototype 作用域）。",
+    "hints": [
+      "五种实现：饿汉式（简单但无延迟）、懒汉式（有延迟但需同步）、DCL（volatile 防重排）",
+      "最推荐：静态内部类（延迟+线程安全）和枚举（防反射+序列化安全）",
+      "框架层面：Spring IoC 默认单例，比手动单例更灵活"
+    ],
+    "tags": [
+      "设计模式",
+      "单例模式",
+      "Java",
+      "多线程"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "工厂模式系列（简单/工厂/抽象工厂）",
+    "content": "请介绍简单工厂、工厂方法和抽象工厂三种模式的区别和适用场景。",
+    "answer": "答案：工厂模式是一组创建对象的模式，核心是\"将对象的创建和使用分离\"。\n\n简单工厂（Simple Factory）：\n\n结构：\n- 一个工厂类，根据参数创建不同产品\n- 产品类都实现同一个接口\n\n```java\npublic class SimpleFactory {\n    public Product create(String type) {\n        if (type.equals(\"A\")) return new ProductA();\n        if (type.equals(\"B\")) return new ProductB();\n        throw new IllegalArgumentException();\n    }\n}\n```\n优点：简单、客户端无需知道产品类的创建细节\n缺点：添加新产品需修改工厂类（违反开闭原则）\n\n工厂方法（Factory Method）：\n\n结构：\n- 抽象工厂类定义创建方法（但不实现）\n- 子类决定实例化哪个具体产品\n\n```java\npublic abstract class Factory {\n    public abstract Product createProduct();\n}\npublic class FactoryA extends Factory {\n    public Product createProduct() { return new ProductA(); }\n}\n```\n优点：符合开闭原则（添加新产品只需新增子类）\n缺点：每增加一个产品就需要增加一个工厂子类\n\n抽象工厂（Abstract Factory）：\n\n结构：\n- 一个工厂创建一组相关产品（产品族）\n- 客户端使用同一个工厂创建整组产品\n\n```java\npublic interface GUIFactory {\n    Button createButton();\n    TextField createTextField();\n}\npublic class WinFactory implements GUIFactory {\n    public Button createButton() { return new WinButton(); }\n    public TextField createTextField() { return new WinTextField(); }\n}\n```\n优点：确保产品族的兼容性\n缺点：扩展产品族困难（新增产品类型需修改所有工厂）\n\n对比：\n| 模式 | 目的 | 扩展方式 | 复杂度 |\n|------|------|----------|--------|\n| 简单工厂 | 集中创建逻辑 | 修改工厂类 | 低 |\n| 工厂方法 | 子类决定产品类型 | 新增子类 | 中 |\n| 抽象工厂 | 创建整组相关产品 | 新增实现 | 高 |\n\n扩展延伸：Spring 中 BeanFactory 是工厂方法模式的经典应用。MyBatis 的 SqlSessionFactory 也是工厂方法。实际工程中建议从简单工厂开始，当需要扩展时再重构为工厂方法或抽象工厂。",
+    "hints": [
+      "简单工厂：一个方法根据参数创建不同产品（违反开闭原则，适合简单场景）",
+      "工厂方法：抽象工厂类 + 子类决定具体产品（符合开闭原则，一对一的工厂层次）",
+      "抽象工厂：创建一组兼容产品（产品族），如跨平台 UI 组件"
+    ],
+    "tags": [
+      "设计模式",
+      "工厂模式",
+      "抽象工厂",
+      "创建型"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "观察者模式与发布订阅模式",
+    "content": "请介绍观察者模式（Observer）和发布订阅模式（Pub/Sub）的区别及各自的应用场景。",
+    "answer": "答案：两者都是事件驱动的设计模式，但在耦合度和通信方式上有本质区别。\n\n观察者模式（Observer）：\n\n结构：\n- Subject（主题）：维护观察者列表，通知状态变化\n- Observer（观察者）：接收主题的通知\n- 观察者直接注册到主题上\n\n```java\n// Subject\ninterface Subject {\n    void registerObserver(Observer o);\n    void removeObserver(Observer o);\n    void notifyObservers();\n}\n// Observer\ninterface Observer {\n    void update(String data);\n}\n```\n\n特点：\n- 主题和观察者直接耦合（主题知道观察者的存在）\n- 通信是同步的（主题通知时观察者立即响应）\n- 实现简单\n- 扩展困难（新增观察者类型需要修改主题）\n\n发布订阅模式（Pub/Sub）：\n\n结构：\n- Publisher（发布者）：发布事件到消息通道\n- Subscriber（订阅者）：从消息通道订阅事件\n- Broker/EventBus（事件总线）：解耦发布者和订阅者\n\n```javascript\n// Event Bus\nclass EventBus {\n    constructor() { this.subscribers = {}; }\n    subscribe(event, callback) {\n        if (!this.subscribers[event]) this.subscribers[event] = [];\n        this.subscribers[event].push(callback);\n    }\n    publish(event, data) {\n        this.subscribers[event]?.forEach(cb => cb(data));\n    }\n}\n```\n\n特点：\n- 发布者和订阅者完全解耦（通过 Broker）\n- 可以异步通信（消息队列）\n- 可扩展性强\n- 调试困难（事件流难以追踪）\n\n对比：\n| 维度 | 观察者模式 | 发布订阅模式 |\n|------|-----------|-------------|\n| 耦合度 | 高（主题知观察者） | 低（通过 Broker） |\n| 通信方式 | 同步 | 同步或异步 |\n| 实现复杂度 | 低 | 高 |\n| 调试容易度 | 容易 | 较难 |\n| 典型场景 | GUI 事件监听 | 微服务间消息通信 |\n\n实际应用：\n- 观察者模式：Java AWT/Swing 事件监听、React 的 props 变化通知\n- 发布订阅模式：消息队列（Kafka/RabbitMQ）、EventBus（Guava/GreenRobot）、Redis Pub/Sub\n\n扩展延伸：响应式编程（RxJS）结合了两种模式——Observable 是发布者，Observer 是订阅者，通过操作符链（pipe）实现数据流的变换。Vue 的响应式系统也是观察者模式的变体（Proxy 监听数据变化，通知依赖更新）。",
+    "hints": [
+      "观察者模式：主题直接通知观察者（高耦合、同步、简单）——GUI 事件监听",
+      "发布订阅模式：通过 Broker 解耦发布者和订阅者（松耦合、可异步）——消息队列",
+      "响应式编程（RxJS）是两者的结合：Observable + Observer + 操作符链"
+    ],
+    "tags": [
+      "设计模式",
+      "观察者模式",
+      "发布订阅",
+      "事件驱动"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "策略模式与状态模式",
+    "content": "请介绍策略模式（Strategy）和状态模式（State）的区别及各自的应用场景。",
+    "answer": "答案：策略模式和状态模式结构相似（都使用组合替代继承），但意图完全不同。\n\n策略模式（Strategy）：\n\n意图：定义一系列算法，使它们可以互相替换。\n\n结构：\n- Context（上下文）：持有策略引用，委托策略执行算法\n- Strategy（策略接口）：定义算法接口\n- ConcreteStrategy（具体策略）：实现具体算法\n\n```java\n// 策略接口\ninterface PaymentStrategy {\n    void pay(int amount);\n}\n// 具体策略\nclass CreditCardPayment implements PaymentStrategy {\n    public void pay(int amount) {\n        // 信用卡支付逻辑\n    }\n}\nclass WechatPayment implements PaymentStrategy {\n    public void pay(int amount) {\n        // 微信支付逻辑\n    }\n}\n// 上下文\nclass Order {\n    private PaymentStrategy strategy;\n    public void setStrategy(PaymentStrategy strategy) {\n        this.strategy = strategy;\n    }\n    public void checkout(int amount) {\n        strategy.pay(amount);\n    }\n}\n```\n\n适用：\n- 同一行为有多种实现方式\n- 需要避免 if-else 或 switch 分支\n- 策略在运行时切换（由客户端决定）\n\n状态模式（State）：\n\n意图：允许对象在内部状态变化时改变其行为。\n\n结构：\n- Context（上下文）：持有状态引用，委托状态处理行为\n- State（状态接口）：定义状态相关的行为\n- ConcreteState（具体状态）：实现状态特定的行为\n\n```java\n// 状态接口\ninterface OrderState {\n    void pay();\n    void ship();\n    void cancel();\n}\n// 具体状态\nclass PaidState implements OrderState {\n    public void pay() { throw new IllegalStateException(\"已支付\"); }\n    public void ship() { /* 发货逻辑，切换到 ShippedState */ }\n    public void cancel() { /* 取消逻辑，切换到 CancelledState */ }\n}\n// 上下文\nclass Order {\n    private OrderState state = new PendingState();\n    public void pay() { state.pay(); }\n    public void ship() { state.ship(); }\n}\n```\n\n适用：\n- 对象的行为随状态变化\n- 有多个状态的转换逻辑\n- 状态由对象内部自动转换（而非客户端控制）\n\n核心区别：\n| 方面 | 策略模式 | 状态模式 |\n|------|----------|----------|\n| 意图 | 可替换的算法 | 随状态变化的行为 |\n| 谁决定切换 | 客户端 | 状态内部自动转换 |\n| 数量 | 通常固定 | 按状态流转 |\n| 关系 | 并列关系 | 转换关系 |\n\n扩展延伸：在工程实践中，状态模式经常和策略模式结合使用。Spring StateMachine（状态机框架）结合了两种模式——每个状态定义了该状态下可执行的策略，状态转换由 DSL 配置驱动。",
+    "hints": [
+      "策略模式：客户端选择算法（并列可替换，如支付方式选择）",
+      "状态模式：状态内部驱动转换（流转不可选，如订单状态机）",
+      "核心区别：策略由客户端选，状态自动转换"
+    ],
+    "tags": [
+      "设计模式",
+      "策略模式",
+      "状态模式",
+      "行为型"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "代理模式与装饰器模式",
+    "content": "请介绍代理模式（Proxy）和装饰器模式（Decorator）的区别及其应用场景。",
+    "answer": "答案：代理模式和装饰器模式结构相似（都包装了目标对象），但目的不同。\n\n代理模式（Proxy）：\n\n意图：控制对目标对象的访问。\n\n结构：\n- Subject（抽象接口）：定义代理和真实对象的共同接口\n- RealSubject（真实对象）：实际执行业务的对象\n- Proxy（代理）：持有 RealSubject 引用，控制对其的访问\n\n```java\ninterface Image {\n    void display();\n}\nclass RealImage implements Image {\n    private String filename;\n    public RealImage(String filename) {\n        this.filename = filename;\n        loadFromDisk();  // 昂贵的操作\n    }\n    public void display() { /* 显示图片 */ }\n}\nclass ImageProxy implements Image {\n    private RealImage realImage;\n    private String filename;\n    public ImageProxy(String filename) { this.filename = filename; }\n    public void display() {\n        if (realImage == null) realImage = new RealImage(filename);\n        realImage.display();\n    }\n}\n```\n\n常见类型：\n1. 虚拟代理（Virtual Proxy）：延迟加载（图片懒加载）\n2. 保护代理（Protection Proxy）：权限控制\n3. 远程代理（Remote Proxy）：RPC/RMI\n4. 智能引用代理（Smart Reference）：引用计数、日志\n\n装饰器模式（Decorator）：\n\n意图：动态为对象添加功能，而不影响其他对象。\n\n结构：\n- Component（组件接口）：定义对象的接口\n- ConcreteComponent（具体组件）：基础对象\n- Decorator（装饰器）：持有一个 Component 引用，实现相同接口\n- ConcreteDecorator（具体装饰器）：添加具体功能\n\n```java\ninterface Coffee {\n    double cost();\n    String description();\n}\nclass SimpleCoffee implements Coffee {\n    public double cost() { return 10; }\n    public String description() { return \"咖啡\"; }\n}\nabstract class CoffeeDecorator implements Coffee {\n    protected Coffee coffee;\n    public CoffeeDecorator(Coffee coffee) { this.coffee = coffee; }\n}\nclass MilkDecorator extends CoffeeDecorator {\n    public double cost() { return coffee.cost() + 3; }\n    public String description() { return coffee.description() + \" + 牛奶\"; }\n}\n```\n\n核心区别：\n| 维度 | 代理模式 | 装饰器模式 |\n|------|----------|------------|\n| 目的 | 控制访问（限制、增强、延迟） | 添加功能（扩展行为） |\n| 创建时机 | 代理在编译时确定 | 装饰器在运行时动态组合 |\n| 关系 | 代理和真实对象的关系固定 | 装饰器可以多层嵌套 |\n| 客户端感知 | 客户端不知道代理的存在 | 客户端知道（需要传入被装饰对象） |\n\n扩展延伸：Spring AOP 的 JDK 动态代理和 CGLIB 代理是代理模式的经典应用。Java I/O 流是装饰器模式的经典应用（BufferedInputStream -> FileInputStream 的多层嵌套）。实际工程中代理模式负责横切关注点（日志、事务、安全），装饰器负责纵向功能扩展（缓存、校验、格式化）。",
+    "hints": [
+      "代理模式：控制访问——延迟加载、权限控制、远程代理（编译时确定，客户端无感知）",
+      "装饰器模式：动态扩展功能——多层嵌套组合（运行时组合，客户端知道在装饰）",
+      "经典应用：代理=Spring AOP，装饰器=Java I/O 流（BufferedInputStream 包装 FileInputStream）"
+    ],
+    "tags": [
+      "设计模式",
+      "代理模式",
+      "装饰器模式",
+      "结构型"
+    ]
   }
 ]

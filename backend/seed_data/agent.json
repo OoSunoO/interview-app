@@ -1050,5 +1050,100 @@
       "社交",
       "上下文"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 的规划与任务分解策略",
+    "content": "请介绍 AI Agent 常用的规划（Planning）和任务分解（Task Decomposition）策略。",
+    "answer": "答案：规划能力是 Agent 区别于简单 LLM 调用的核心特征。\n\n任务分解策略：\n\n1. Chain of Thought（CoT，思维链）：\n   - 让 LLM 逐步推理，将复杂问题拆解为中间步骤\n   - Zero-shot CoT：只需在 prompt 加 \"Let's think step by step\"\n   - Few-shot CoT：提供推理示例\n   - 改进：数学、逻辑推理任务效果显著\n\n2. Plan-and-Solve（计划与执行）：\n   - 先制定完整计划，再逐步执行\n   - 每个步骤可调整（Re-planning）\n   - 适合：多步骤、有依赖关系的任务\n\n3. ReAct（Reasoning + Acting）：\n   - 交替执行：思考（Thought）→ 行动（Action）→ 观察（Observation）\n   - 将推理轨迹和工具调用交织在一起\n   - 代表：AutoGPT、LangChain Agent\n   - 优势：可解释性强（能看到 Agent 的思考过程）\n\n4. Tree of Thoughts（ToT，思维树）：\n   - 在多个推理路径上并行探索\n   - 每个节点代表一个中间思考状态\n   - 使用 BFS/DFS 搜索最优路径\n   - 适合：需要探索多种可能的任务（创意写作、数学证明）\n\n5. Plan-and-Execute：\n   - Planner：制定高层次计划（任务 DAG）\n   - Executor：按依赖关系执行子任务\n   - 支持动态调整（子任务失败时重新规划）\n\n动态规划与自适应：\n- 当子任务失败 → 重新规划（Re-planning）\n- 当环境反馈变化 → 调整剩余步骤\n- 人类介入点规划：在关键决策点请求人类确认\n\n扩展延伸：规划能力的上限受限于 LLM 的基础推理能力。当前 Agent 框架（LangGraph、CrewAI、AutoGen）提供了规划的基础设施，但高质量规划仍然依赖底层模型的推理质量。未来的方向是规划 + 反思（Self-Reflection）的循环。",
+    "hints": [
+      "CoT（思维链，逐步推理）→ ReAct（推理+行动交替）→ ToT（思维树，多路径探索）",
+      "关键能力：任务分解 + 动态重规划 + 执行反馈",
+      "框架：LangGraph、CrewAI、AutoGen 提供规划基础设施"
+    ],
+    "tags": [
+      "AI Agent",
+      "规划",
+      "任务分解",
+      "ReAct"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 的工具使用与函数调用",
+    "content": "请介绍 AI Agent 的工具使用（Tool Use）机制以及 Function Calling 的实现原理。",
+    "answer": "答案：工具使用使 Agent 能够与外部世界交互，是 Agent 的核心能力之一。\n\nFunction Calling 机制：\n\n原理：\n- LLM 在生成回复时，不仅可以生成文本，还可以生成工具调用请求\n- 工具定义以 JSON Schema 格式传递给模型\n- 模型决定何时调用哪个工具以及传递什么参数\n\n流程：\n1. 系统消息 + 工具定义 + 用户请求 → LLM\n2. LLM 返回结构化工具调用（tool_name, arguments）\n3. 应用程序执行工具函数，获取结果\n4. 工具结果作为新消息回传给 LLM\n5. LLM 结合工具结果生成最终回复\n\n工具定义（OpenAI 格式）：\n```json\n{\n  \"type\": \"function\",\n  \"function\": {\n    \"name\": \"search_web\",\n    \"description\": \"Search the web for information\",\n    \"parameters\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"query\": {\"type\": \"string\", \"description\": \"Search query\"}\n      },\n      \"required\": [\"query\"]\n    }\n  }\n}\n```\n\n关键设计考量：\n\n1. 工具选择策略：\n   - 一次性暴露所有工具 vs 分层暴露（先大类后具体）\n   - 工具数量多时影响模型性能（注意力分散）\n   - 建议：分组归类，动态选择相关工具\n\n2. 工具执行安全：\n   - 验证参数：防止注入攻击\n   - 超时控制：工具调用不应无限等待\n   - 错误处理：工具失败时提供优雅的降级方案\n   - 权限控制：敏感操作需要用户确认\n\n3. 多工具协作（Parallel Tool Calls）：\n   - 同时调用多个独立工具\n   - 依赖关系处理：B 依赖 A 的结果 → 先 A 后 B\n\n扩展延伸：工具定义的质量直接影响 Agent 表现。好的工具定义 = 清晰的名称 + 精确的描述 + 合理的参数 Schema。Claude 的 Tool Use 支持并行调用（Beta）、流式工具调用（Streaming）和思考（Extended Thinking）。",
+    "hints": [
+      "流程：工具定义→LLM 决策调用→执行工具→结果回传 LLM→生成最终回复",
+      "关键设计：工具选择策略（分类管理）+ 执行安全（验证/超时/权限）",
+      "工具定义质量三要素：清晰名称 + 精确描述 + 合理参数 Schema"
+    ],
+    "tags": [
+      "AI Agent",
+      "Tool Use",
+      "Function Calling",
+      "LLM"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAG 技术的核心流程与优化",
+    "content": "请介绍 RAG（Retrieval-Augmented Generation）的核心流程及其主要优化方向。",
+    "answer": "答案：RAG 通过检索外部知识增强 LLM 的生成能力，解决知识截止和幻觉问题。\n\n核心流程：\n\n1. 文档预处理（Indexing）：\n   - 文档分块（Chunking）：将长文档拆分为合适大小的块\n   - 向量化（Embedding）：将文本块转换为向量\n   - 存储到向量数据库（Milvus、Pinecone、Chroma）\n\n2. 检索（Retrieval）：\n   - 用户查询向量化\n   - 在向量数据库中搜索最相似（余弦相似度/内积）的 K 个文档块\n   - 支持混合检索（向量 + 关键词 BM25）\n\n3. 增强生成（Generation）：\n   - 将检索到的文档块作为上下文注入 prompt\n   - LLM 基于上下文生成答案\n   - 要求 LLM 在无法回答时明确说明（减少幻觉）\n\n优化方向：\n\n1. 分块策略：\n   - 固定大小分块（简单但可能截断语义）\n   - 语义分块（按段落/标题分块）\n   - 重叠分块（减少边界信息的丢失）\n   - 分块大小建议：256-1024 tokens\n\n2. 检索增强：\n   - Query 重写：改写用户查询以提高检索质量（HyDE：假设文档嵌入）\n   - 多路召回：向量检索 + 关键词检索 + 重排序\n   - Re-ranking：用交叉编码器（Cross-Encoder）对召回结果重排序\n   - 检索后过滤：按元数据（时间、来源）过滤\n\n3. 上下文管理：\n   - 压缩（Compression）：只保留最相关的部分\n   - 摘要（Summarization）：将多个文档块合并为摘要\n   - 结构化引用：标注每个答案片段的来源\n\n4. 高级 RAG：\n   - Self-RAG：让 LLM 判断是否需要检索\n   - Corrective RAG：检索结果质量不够时自动修正查询\n   - Agentic RAG：将检索作为 Agent 的工具，支持多步检索\n\n扩展延伸：RAG 的评估指标——命中率（Hit Rate）、MRR（Mean Reciprocal Rank）、忠实度（Faithfulness）。RAG 和 Fine-tuning 不是互斥的：RAG 负责事实知识，Fine-tuning 负责风格和格式。",
+    "hints": [
+      "核心流程：文档分块→向量化→检索→注入上下文→生成",
+      "优化三板斧：Query 重写、多路召回+Re-ranking、上下文压缩",
+      "RAG（事实知识）+ Fine-tuning（风格格式）= 最佳组合"
+    ],
+    "tags": [
+      "AI Agent",
+      "RAG",
+      "向量检索",
+      "LLM"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 的记忆与上下文管理",
+    "content": "请介绍 AI Agent 的记忆系统和上下文管理策略。",
+    "answer": "答案：Agent 的记忆系统解决了 LLM 上下文窗口有限和持续性记忆的问题。\n\n记忆分层：\n\n1. 短期记忆（上下文窗口）：\n   - 当前对话的所有消息\n   - 直接可用，但受限于上下文窗口大小\n   - 策略：消息摘要、滑动窗口\n\n2. 长期记忆（外部存储）：\n   - 跨会话持久化存储\n   - 使用向量数据库或结构化数据库\n   - 支持检索和更新\n\n3. 工作记忆：\n   - 当前任务相关的临时信息\n   - 如：正在执行的计划步骤、已获取的中间结果\n   - 任务完成后可清理\n\n上下文管理策略：\n\n1. 滑动窗口（Sliding Window）：\n   - 只保留最近 N 轮对话\n   - 丢弃最早的消息\n   - 实现简单，但会丢失早期上下文\n\n2. 摘要压缩（Summarization）：\n   - 当上下文接近窗口限制时，对早期内容进行摘要\n   - 用摘要替代原始内容\n   - 不同的摘要粒度（对话摘要 vs 关键事实摘要）\n\n3. 结构化记忆：\n   - 提取关键信息（用户偏好、已完成任务）存入结构化存储\n   - 每次会话开始时加载相关记忆\n   - 更新记忆时检测冲突和重复\n\n4. 检索增强记忆：\n   - 将历史对话编码为向量\n   - 根据当前上下文检索相关历史\n   - [回忆]->[检索]->[更新] 循环\n\n关键挑战：\n\n1. 记忆的重要性判断：\n   - 什么信息值得记住？\n   - 什么信息应该遗忘？\n   - 策略：基于频率、时效性、明确指示\n\n2. 记忆的冲突解决：\n   - 用户在不同时间给出矛盾信息\n   - 策略：时间戳优先、置信度评估\n\n3. 记忆的隐私：\n   - 跨会话记忆可能包含敏感信息\n   - 策略：用户明确的记忆管理权限\n\n扩展延伸：MemGPT（记忆增强 GPT）将操作系统层次化内存管理引入 Agent——虚拟上下文（> 上下文窗口）通过分页机制管理和检索。Microsoft 的 GraphRAG 将知识图谱的结构化优势引入 RAG 系统。",
+    "hints": [
+      "三层记忆：短期（上下文窗口）+ 长期（持久化存储）+ 工作记忆（当前任务）",
+      "上下文管理：滑动窗口（简单丢早）、摘要压缩（失精度）、检索增强（最佳）",
+      "关键挑战：重要性判断（记什么）、冲突解决（矛盾信息）、隐私控制"
+    ],
+    "tags": [
+      "AI Agent",
+      "记忆系统",
+      "上下文管理",
+      "MemGPT"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 的评估与基准测试",
+    "content": "请介绍 AI Agent 的评估方法和主流基准测试。",
+    "answer": "答案：Agent 评估比传统 NLP 评估更复杂，需要多维度衡量。\n\n评估维度：\n\n1. 任务完成度（Task Success）：\n   - 最终目标是否达成\n   - 完成质量（正确性、完整性）\n   - 可自动化评估（规则检查）或人工评估\n\n2. 效率（Efficiency）：\n   - 完成任务的步骤数\n   - Token 消耗量\n   - 工具调用次数\n   - 完成时间\n\n3. 鲁棒性（Robustness）：\n   - 异常处理能力\n   - 错误恢复能力\n   - 对模糊指令的处理\n   - 对干扰信息的抵抗\n\n4. 安全性（Safety）：\n   - 拒绝执行危险指令\n   - 工具调用的安全边界\n   - 输出不存在有害内容\n\n5. 可解释性（Interpretability）：\n   - 推理过程的清晰度\n   - 行动决策的合理性\n\n评估方法：\n\n1. 自动化评估：\n   - 单元测试：每个工具调用的正确性\n   - 集成测试：完整任务的端到端验证\n   - 模拟环境：在可控环境中测试\n\n2. 人工评估：\n   - 领域专家评分\n   - A/B 测试\n   - 用户满意度调查\n\n3. LLM-as-Judge：\n   - 用另一个 LLM 评估 Agent 的输出质量\n   - 提供评分标准（Rubric）\n   - 需要校准避免偏差\n\n主流基准：\n- GAIA：通用 AI Agent 的综合基准（日常任务）\n- SWE-Bench：软件工程任务基准\n- WebArena / VisualWebArena：Web 交互任务\n- ToolBench：工具使用基准\n- AgentBench：多维度 Agent 能力基准\n\n扩展延伸：Agent 评估的最大挑战是评估本身的成本——人工评估太贵，自动化评估可能遗漏重要维度（如用户体验、推理质量）。推荐的实践是分层评估：单元测试（快速）+ 场景测试（关键路径）+ 人工评估（抽检）。",
+    "hints": [
+      "五维评估：任务完成度 + 效率 + 鲁棒性 + 安全性 + 可解释性",
+      "三种方法：自动化（快但可能遗漏）+ 人工（准但贵）+ LLM-as-Judge（折中）",
+      "主流基准：GAIA（通用）、SWE-Bench（编码）、WebArena（Web 交互）、ToolBench（工具使用）"
+    ],
+    "tags": [
+      "AI Agent",
+      "评估",
+      "基准测试",
+      "LLM-as-Judge"
+    ]
   }
 ]

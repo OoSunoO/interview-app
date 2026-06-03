@@ -1026,5 +1026,105 @@
       "状态",
       "JVM"
     ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "同步队列 SynchronousQueue",
+    "content": "SynchronousQueue 是一个特殊的 BlockingQueue，其容量为 ____。",
+    "answer": {
+      "correct": [
+        [
+          "0",
+          "零"
+        ]
+      ]
+    },
+    "hints": [
+      "SynchronousQueue 内部不存储任何元素",
+      "每个 put 操作必须等待一个 take 操作（反之亦然），直接交付"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "锁消除优化",
+    "content": "JIT 编译器的锁消除（Lock Elision）优化基于 ____ 分析技术来检测锁对象是否为线程局部。",
+    "answer": {
+      "correct": [
+        [
+          "逃逸分析",
+          "Escape Analysis"
+        ]
+      ]
+    },
+    "hints": [
+      "JIT 通过逃逸分析判断对象在方法内部创建且不会逃逸到其他线程",
+      "如果锁对象是线程局部的，JIT 可以消除锁操作（不实际加锁）"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "锁粗化优化",
+    "content": "当 JIT 检测到同一个锁被一个线程连续加锁解锁多次，会将锁的范围扩大到整个操作序列，这种优化称为____。",
+    "answer": {
+      "correct": [
+        [
+          "锁粗化",
+          "Lock Coarsening"
+        ]
+      ]
+    },
+    "hints": [
+      "锁粗化合并连续加锁/解锁操作为一次加锁/解锁",
+      "避免短时间内重复加锁解锁的开销"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "偏向锁的撤销",
+    "content": "当多个线程竞争偏向锁时，偏向锁会升级为轻量级锁。偏向锁的撤销需要在____点执行。",
+    "answer": {
+      "correct": [
+        [
+          "全局安全点",
+          "安全点",
+          "SafePoint"
+        ]
+      ]
+    },
+    "hints": [
+      "偏向锁撤销需要暂停所有线程（STW）",
+      "撤销偏向锁的开销较大，JDK 15 起默认禁用了偏向锁"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "读写锁的锁降级",
+    "content": "在 ReentrantReadWriteLock 中，从写锁降级为读锁的过程称为____。写锁持有者可以获取读锁（降级），但读锁持有者____获取写锁（升级）。",
+    "answer": {
+      "correct": [
+        [
+          "锁降级",
+          "Lock Downgrade"
+        ],
+        [
+          "不能",
+          "无法"
+        ]
+      ]
+    },
+    "hints": [
+      "写锁 → 读锁：允许（降级，读锁可用性更高）",
+      "读锁 → 写锁：不允许（升级会导致死锁）"
+    ]
   }
 ]

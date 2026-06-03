@@ -1100,5 +1100,100 @@
       "AppCDS",
       "启动优化"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "StructuredTaskScope 结构化并发",
+    "content": "请介绍 Java 21 引入的 StructuredTaskScope（结构化并发 / JEP 453）。结构化并发解决了什么问题？StructuredTaskScope 与 ExecutorService 的区别是什么？",
+    "answer": "答案：结构化并发将并发任务的生命周期与代码块绑定——子任务在代码块结束前必须完成，避免任务泄漏和取消传播问题。\n\n解决的问题：\n- 任务泄漏：提交给 ExecutorService 的任务可能在主线程结束后仍然运行（孤儿线程）\n- 取消传播：一个子任务失败时，其他相关子任务得不到通知，继续运行浪费资源\n- 错误处理：传统编程需要手动管理所有 Future 的取消、超时和异常合并\n\nStructuredTaskScope 的核心：\n- try-with-resources 管理生命周期：Scope 关闭时自动等待所有子任务完成或取消\n- 子任务与 Scope 绑定：子任务在 Scope 内创建，Scope 关闭前必须全部 Join\n\n基本用法：\ntry (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n    Future<String> user = scope.fork(() -> fetchUser(id));\n    Future<String> order = scope.fork(() -> fetchOrder(id));\n    scope.join();              // 等待所有任务\n    scope.throwIfFailed();     // 如果有任务失败，抛出异常\n    return user.resultNow() + order.resultNow();\n}  // Scope 自动关闭，未完成的任务被取消\n\n两种策略：\n1. ShutdownOnFailure：任一子任务失败 → 取消其他未完成的任务（适合「并发请求，一个失败全取消」的场景）\n2. ShutdownOnSuccess：任一子任务成功 → 取消其他未完成的任务（适合「并发请求，取最快响应」的场景）\n\n与 ExecutorService 的对比：\n- ExecutorService.submit()：任务提交后返回 Future，需要调用方手动 cancel 和处理异常\n- StructuredTaskScope.fork()：任务与 Scope 绑定，scope.join() 统一等待，scope 关闭自动清理\n- 结构化并发保证：所有子任务的生命周期不会超过创建它的代码块\n\n扩展延伸：StructuredTaskScope + 虚拟线程 = 最佳实践——每个子任务对应一个虚拟线程，创建成本极低。自定义策略：可以继承 StructuredTaskScope 实现自定义的关闭策略（如「多数投票成功即可」）。结构化并发是 Java 对 Go 的 errgroup 和 Kotlin 的 coroutineScope 概念的实现。",
+    "hints": [
+      "结构化并发 = 子任务生命周期与代码块绑定（try-with-resources），Scope 关闭前所有子任务必须完成",
+      "两种策略：ShutdownOnFailure（一个失败全取消）+ ShutdownOnSuccess（一个成功全取消）",
+      "vs ExecutorService：自动管理取消、异常合并、统一 Join，避免任务泄漏"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "StructuredTaskScope",
+      "结构化并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Vector API 向量计算",
+    "content": "请介绍 Java 22 正式发布的 Vector API（Project Panama 的一部分 / JEP 460）。Vector API 的作用是什么？如何在 Java 中利用 SIMD 指令加速计算？",
+    "answer": "答案：Vector API 让 Java 程序可以显式利用 CPU 的 SIMD（Single Instruction Multiple Data）指令集，在循环计算中获得显著的性能提升（2-16 倍）。\n\nSIMD 原理：\n- 普通代码（SISD）：一条指令处理一个数据元素\n- SIMD：一条指令同时处理多个数据元素（如一次处理 8 个 int 或 4 个 double）\n- 现代 CPU 都支持：x86 的 AVX-512（512 位）、ARM 的 NEON（128 位）、SVE（可变长度）\n\n传统做法的问题：\n- JIT 编译器会自动向量化一些简单循环（如数组求和），但条件复杂时无法自动向量化\n- 无法利用新指令集（如 AVX-512 的掩码操作）\n\nVector API 示例：\n\n// 传统标量计算\nfloat[] a, b, c;\nfor (int i = 0; i < N; i++) c[i] = a[i] * b[i] + c[i];  // 一次一个元素\n\n// Vector API 向量计算\nvar species = FloatVector.SPECIES_256;  // 256 位 = 8 个 float\nfor (int i = 0; i < N; i += species.length()) {\n    var va = FloatVector.fromArray(species, a, i);\n    var vb = FloatVector.fromArray(species, b, i);\n    var vc = FloatVector.fromArray(species, c, i);\n    va.mul(vb).add(vc).intoArray(c, i);  // 一次 8 个元素\n}\n\n性能提升场景：\n1. 矩阵乘法：2-4 倍加速\n2. 图像处理（像素操作）：4-8 倍加速\n3. 神经网络推理：2-4 倍加速\n4. 加密算法：3-6 倍加速\n5. 科学计算（FFT、卷积）：4-16 倍加速\n\nVector Species（向量宽度）：\n- FloatVector.SPECIES_128 / 256 / 512：对应 128/256/512 位宽\n- FloatVector.SPECIES_MAX：使用 CPU 支持的最大宽度\n- 不同 CPU 支持不同宽度，Vector API 自动适配\n\n扩展延伸：Vector API 经过多次迭代（JEP 414 孵化 → JEP 417 再次孵化 → JEP 426 预览 → JEP 438 第二次预览 → JEP 460 正式版）。Vector API 不是替代 JIT 自动向量化的——自动向量化处理简单场景，Vector API 处理 JIT 无法处理的复杂场景。实际使用建议：先在性能热点上用 Vector API 重写，用 JMH 验证加速效果。",
+    "hints": [
+      "Vector API = Java 中显式利用 CPU SIMD 指令（一条指令处理多个数据），实现 2-16 倍性能提升",
+      "示例：FloatVector.SPECIES_256 一次处理 8 个 float，替代 for 循环一个一个处理",
+      "适用场景：矩阵乘法/图像处理/神经网络/科学计算；JIT 能自动向量化简单的场景不需要 Vector API"
+    ],
+    "tags": [
+      "Java",
+      "Vector",
+      "SIMD",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CompletableFuture 深度：异步编排与线程模型",
+    "content": "请深入介绍 CompletableFuture 的异步编排能力。thenApply 与 thenApplyAsync 的线程模型有什么区别？如何处理多个 CompletableFuture 的组合和异常？",
+    "answer": "答案：CompletableFuture 是 Java 8 引入的异步编程工具，Java 9+ 进一步增强，支持丰富的任务编排和灵活的线程模型。\n\n线程模型（关键！！！）：\n- thenApply/Fnally/accept：由上一个阶段的完成线程执行（不切换线程）\n- thenApplyAsync/FnallyAsync/acceptAsync：由 ForkJoinPool.commonPool()（或指定 Executor）执行\n- 区别：Async 版本保证在新的线程池中执行，非 Async 版本可能在调用线程或已完成线程中执行\n\n规则：\n1. 如果前一阶段已完成，当前回调在执行代码的线程中立即执行（非 Async）\n2. 如果前一阶段未完成，当前回调在完成前一阶段的线程中执行（非 Async）\n3. Async 版本始终在指定线程池中执行\n\n任务编排方法：\n\n1. 串行编排：\n   CompletableFuture.supplyAsync(() -> fetchUser())\n       .thenApply(user -> process(user))       // 同一线程\n       .thenApplyAsync(user -> save(user))      // 新线程池\n       .exceptionally(e -> handleError(e));\n\n2. 并行编排：\n   // 两个并行任务 + 结果合并\n   CompletableFuture<String> f1 = CompletableFuture.supplyAsync(() -> fetchA());\n   CompletableFuture<String> f2 = CompletableFuture.supplyAsync(() -> fetchB());\n   f1.thenCombine(f2, (a, b) -> a + b);        // 两者都完成\n\n3. 任意完成：\n   CompletableFuture.anyOf(f1, f2, f3)          // 任一完成即返回\n\n4. 全部完成：\n   CompletableFuture.allOf(f1, f2, f3).thenRun(() -> /* all done */)\n\n异常处理：\n- exceptionally(e -> defaultValue)：类似 catch，对异常提供默认值\n- handle((result, e) -> ...)：不管成功/失败都调用，返回新结果\n- whenComplete((result, e) -> ...)：类似 finally，不改变结果\n\n常见陷阱：\n1. 默认线程池（ForkJoinPool.commonPool()）是所有并行流的共享池，阻塞操作会导致整个池阻塞\n2. 必须使用 Async 版本 + 自定义线程池处理阻塞 I/O\n3. CompletableFuture.get() 阻塞调用线程 → 应使用 thenApply 链式调用避免阻塞\n4. get() 抛出的异常包装在 ExecutionException 中，需要拆开\n\n扩展延伸：Java 21 的 StructuredTaskScope 是 CompletableFuture 的替代方案——更适合虚拟线程场景。CF 的链式调用与虚拟线程的「每个请求一个线程」是两种不同的并发模型。在虚拟线程时代，StructuredTaskScope 通常比 CF 更优（代码更简单、更容易理解）。",
+    "hints": [
+      "线程模型：thenApply（不切换线程，在完成线程执行）vs thenApplyAsync（始终在线程池执行）",
+      "串行：thenApply/thenCompose；并行：thenCombine；任意：anyOf；全部：allOf",
+      "陷阱：commonPool 被阻塞阻塞整个 JVM；Async + 自定义线程池处理阻塞 I/O；get() 阻塞"
+    ],
+    "tags": [
+      "Java",
+      "CompletableFuture",
+      "异步",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ScopedValue 与线程局部变量对比",
+    "content": "请介绍 Java 21 预览的 ScopedValue（JEP 446 / Project Loom）。ScopedValue 与 ThreadLocal 相比有什么优势？ScopedValue 如何解决 ThreadLocal 的内存泄漏和传递问题？",
+    "answer": "答案：ScopedValue 是 ThreadLocal 的现代化替代方案，不可变、安全、支持虚拟线程，解决 ThreadLocal 的多个根本问题。\n\nThreadLocal 的问题：\n1. 内存泄漏：ThreadLocal 中的值存活时间 = 线程生命周期（特别在线程池中，线程复用导致泄漏）\n2. 可修改性：用 ThreadLocal 传递的上下文可以被任何代码修改（安全隐患）\n3. 虚拟线程不可用：虚拟线程数量巨大（百万级），每个 ThreadLocal 占用的内存不可接受\n4. 传递困难：线程池中新建的线程不继承父线程的 ThreadLocal（需要手动传递）\n\nScopedValue 的设计：\n- 不可变（Immutable）：值在绑定后不能被修改\n- 有限生命周期：值存活在 try-with-resources 代码块内（超出范围自动释放）\n- 继承语义：子线程自动继承 ScopedValue（剪枝继承——只继承被捕获的值的快照）\n- 轻量级：虚拟线程可以安全使用（不会被 Pin 住）\n\n使用方式：\n// 定义 ScopedValue（静态常量）\nprivate static final ScopedValue<User> CURRENT_USER = ScopedValue.newInstance();\n\n// 绑定值（只能在一个线程内绑定一次）\nScopedValue.where(CURRENT_USER, user)  // 绑定用户到当前上下文\n    .run(() -> {\n        // 在这个 lambda 中可读取 CURRENT_USER.get()\n        handleRequest();\n    });  // 离开 run 后 CURRENT_USER 自动释放\n\n// 读取\nUser user = CURRENT_USER.get();\n\n// 不可修改：在 run() 中不能调用 CURRENT_USER.set(user2)（没有 set 方法）\n// 重新绑定（嵌套）：ScopedValue.where(CURRENT_USER, admin).run(() -> { ... })\n\n对比总结：\n| 特性 | ThreadLocal | ScopedValue |\n|------|------------|-------------|\n| 可变性 | 可修改 | 不可变 |\n| 生命周期 | 线程生命周期 | 代码块生命周期 |\n| 虚拟线程 | 不友好（内存大） | 友好（轻量） |\n| 内存泄漏 | 常见 | 不会（超出自动释放） |\n| 继承 | 不可靠 | 可靠（值捕获） |\n\n扩展延伸：ScopedValue 在 Web 框架中可以替代 ThreadLocal 做请求上下文的传递（当前用户、请求 ID、租户）。在虚拟线程时代，ThreadLocal 被设计为「不推荐使用」（deprecate），ScopedValue 是推荐的替代方案。ScopedValue 还支持 rebind（重新绑定），用于在不改变父作用域值的情况下，创建子作用域的新值。",
+    "hints": [
+      "ThreadLocal 的问题：内存泄漏（线程池）、可修改（不安全）、虚拟线程不友好、线程间传递困难",
+      "ScopedValue 的设计：不可变 + try-with-resources 有限生命周期 + 自动继承 + 虚拟线程友好",
+      "最佳实践：ScopedValue 替代 ThreadLocal 做请求上下文传递（用户/请求ID/租户）"
+    ],
+    "tags": [
+      "Java",
+      "ScopedValue",
+      "ThreadLocal",
+      "Loom"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Continuation 与栈恢复",
+    "content": "请介绍 Java 中 Continuation（协程的底层机制）的概念。Continuation 与虚拟线程的关系是什么？什么是栈恢复（Stack Recovery）？",
+    "answer": "答案：Continuation 是虚拟线程的底层实现机制，是一种可以暂停和恢复执行的计算状态。\n\nContinuation 的概念：\n- Continuation 表示程序执行到某个点的状态（包括局部变量、栈帧、程序计数器）\n- 可以暂停（yield）当前执行，保存状态\n- 稍后从暂停点恢复执行（resume）\n\nContinuation 与虚拟线程：\n- 虚拟线程的底层使用 Continuation 实现（JDK 内部 jdk.internal.vm.Continuation）\n- 当虚拟线程执行阻塞操作（如 I/O、锁）时，Continuation 自动 yield（保存当前栈帧）\n- 当阻塞操作完成时，Continuation resume（恢复栈帧，继续执行）\n- 这种机制称为 JVM 内部的栈恢复（Stack Recovery）\n\n栈恢复（Stack Recovery）的原理：\n1. 虚拟线程运行在 Carrier 线程上，执行到阻塞调用时\n2. Continuation.yield() 被调用——虚拟线程的栈帧从 Carrier 的栈上拷贝到堆内存（拷贝栈）\n3. Carrier 线程被释放，可以执行其他虚拟线程\n4. 阻塞操作完成后（如 I/O 数据就绪）\n5. Continuation.resume() 被调用——堆内存中的栈帧恢复回某个 Carrier 线程的栈\n\n栈恢复的技术挑战：\n1. 栈帧拷贝：需要将 native 栈帧拷贝到堆（JVM 内部有完善的机制）\n2. 栈回滚（Stack Unwalk）：virtual thread 在 yield 时需要 unwalk 栈\n3. Pin 问题：在 synchronized 块或 native 方法中无法 yield（栈帧 pinned）\n\n扩展延伸：Continuation 是编程语言层面的协程原语。Kotlin 的协程（suspend/resume）也是基于类似 Continuation 的概念。Java 的 Continuation 在 JDK 内部使用（不对外公开 API），是虚拟线程的基石。理解 Continuation 有助于理解为什么虚拟线程在 synchronized 块中会被 Pin 住（因为 synchronized 的栈帧结构阻止了安全的 yield）。",
+    "hints": [
+      "Continuation = 程序执行状态的保存和恢复（暂停/恢复），是虚拟线程的底层实现",
+      "栈恢复（Stack Recovery）：虚拟线程阻塞时栈帧从 Carrier 拷贝到堆，完成后恢复回栈",
+      "Pin 问题：synchronized 块中无法 Yield（栈帧结构阻止安全的 Continuation 操作）"
+    ],
+    "tags": [
+      "Java",
+      "Continuation",
+      "虚拟线程",
+      "Loom"
+    ]
   }
 ]

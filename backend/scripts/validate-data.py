@@ -50,12 +50,15 @@ def check_fill_in_blank_answer(data: list) -> tuple[bool, str]:
         if item.get("type") != "fill_in_blank":
             continue
         raw = item.get("answer", "")
-        try:
-            parsed = json.loads(raw)
-        except json.JSONDecodeError as e:
-            title = item.get("title", f"第{i}条")
-            issues.append(f"'{title}' fill_in_blank answer 不是合法 JSON: {e}")
-            continue
+        if isinstance(raw, dict):
+            parsed = raw
+        else:
+            try:
+                parsed = json.loads(raw)
+            except json.JSONDecodeError as e:
+                title = item.get("title", f"第{i}条")
+                issues.append(f"'{title}' fill_in_blank answer 不是合法 JSON: {e}")
+                continue
 
         if not isinstance(parsed, dict):
             title = item.get("title", f"第{i}条")

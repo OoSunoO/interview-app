@@ -1088,5 +1088,100 @@
       "用户体验",
       "数据闭环"
     ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LangGraph 的状态管理与图编排",
+    "content": "请介绍 LangGraph 的状态管理（State Management）和图编排（Graph Orchestration）原理。",
+    "answer": "答案：LangGraph 是 LangChain 的有状态 Agent 编排框架，用有向图（DAG + 循环）表示 Agent 逻辑。\n\n核心概念：\n\n1. State（状态）：\n   - 整个图的共享状态，在节点间传递\n   - 类型化（TypedDict/Pydantic）\n   - 支持 reducer（状态合并策略）\n   - 默认覆盖，可自定义（如列表追加）\n\n2. Node（节点）：\n   - 图中的一个处理步骤\n   - 接收 State，返回 State 的更新\n   - 可以是 LLM 调用、工具执行、条件判断\n\n3. Edge（边）：\n   - 连接节点的路径\n   - 普通边：固定顺序\n   - 条件边：根据 State 动态选择下一步\n\n4. Graph（图）：\n   - StateGraph：主图类\n   - 编译后生成 Runnable\n   - 支持 checkpoint 保存/恢复\n\n状态管理机制：\n\n```python\nfrom typing import TypedDict, Annotated, List\nimport operator\n\nclass AgentState(TypedDict):\n    messages: Annotated[List, operator.add]  # 追加模式\n    next_agent: str  # 覆盖模式（默认）\n    steps: int\n```\n\n消息管理：\n- 支持消息追加（operator.add reducer）\n- 支持消息修改（通过 ID 定位）\n- 可自定义序列化\n\n图编排模式：\n\n1. Chain（链式）：\n   - 最简单的线性流程 A -> B -> C\n   - 无分支，顺序执行\n\n2. Router（路由）：\n   - 条件分支：根据 LLM 输出选择下一节点\n   - 多 Agent 路由：根据任务类型分配\n\n3. Loop（循环）：\n   - Agent 循环：思考→行动→观察 循环\n   - 直到满足终止条件\n\n4. Parallel（并行）：\n   - 扇出（Fan-out）：多个节点并行执行\n   - 扇入（Fan-in）：结果合并\n\n扩展延伸：LangGraph 的关键优势是有状态——天然支持人机协作（Human-in-the-Loop，通过中断等待用户输入）、持久化（Checkpointer 支持 Postgres/SQLite）、流式输出（Streaming）。CrewAI 和 AutoGen 也提供类似的编排能力，但 LangGraph 的图模型最灵活。",
+    "hints": [
+      "核心：State（共享状态 + reducer）+ Node（处理步骤）+ Edge（条件/固定边）",
+      "状态管理：TypedDict 定义 + operator.add 追加/覆盖 + Checkpoint 持久化",
+      "四种编排模式：Chain（顺序）、Router（条件分支）、Loop（循环）、Parallel（并行）"
+    ],
+    "tags": [
+      "AI Agent",
+      "LangGraph",
+      "状态管理",
+      "编排"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多 Agent 协作模式与通信",
+    "content": "请介绍多 Agent 系统的协作模式和通信协议设计。",
+    "answer": "答案：多 Agent 系统通过分工协作完成单个 Agent 难以处理的任务。\n\n协作模式：\n\n1. 主从模式（Orchestrator-Worker）：\n   - 一个 Orchestrator Agent 调度多个 Worker Agent\n   - Orchestrator 负责任务分解、分配、结果汇总\n   - Worker 专注于执行具体任务\n   - 代表：AutoGPT、CrewAI 的 Process.hierarchical\n\n2. 对等模式（Peer-to-Peer）：\n   - Agent 之间直接通信、协商\n   - 没有中心调度节点\n   - 通过消息传递协调\n   - 代表：ChatDev、MetaGPT\n\n3. 辩论模式（Debate）：\n   - 多个 Agent 对同一问题提出不同观点\n   - 相互质疑和辩论\n   - 最终通过投票或仲裁达成共识\n   - 代表：Multi-Agent Debate、Duplex\n\n4. 流水线模式（Pipeline）：\n   - 各 Agent 按固定顺序处理\n   - 前一 Agent 的输出是后一 Agent 的输入\n   - 适合：有明确上下游依赖的任务\n\n5. 市场模式（Market）：\n   - Agent 发布任务和报价\n   - 其他 Agent 竞标和接单\n   - 动态分配和定价\n\n通信协议设计：\n\n1. 消息格式：\n   - 标准化的消息结构（sender, receiver, content, metadata）\n   - 支持结构化数据（JSON Schema）\n   - 消息优先级和超时\n\n2. 通信模式：\n   - 同步：等待对方回复（适合关键决策）\n   - 异步：发送后继续其他工作（适合耗时任务）\n   - 广播：向所有 Agent 发送（适合状态更新）\n   - 组播：向特定 Agent 组发送\n\n3. 上下文共享：\n   - 共享工作区（Shared Workspace）\n   - 消息历史\n   - 部分可见 vs 全局可见\n\n扩展延伸：多 Agent 通信的效率挑战——每增加一个 Agent，通信复杂度（消息数量）按 O(n^2) 增长。解决方案：（1）分层通信（组间少通信）；（2）共享黑板模式（Blackboard）替代点对点通信；（3）结构化通信协议减少冗余消息。",
+    "hints": [
+      "五种模式：主从（Orchestrator-Worker）、对等（P2P）、辩论（Debate）、流水线（Pipeline）、市场（Market）",
+      "通信设计：标准化消息格式 + 同步/异步/广播模式 + 上下文共享策略",
+      "效率挑战：通信复杂度 O(n^2)，解决方案：分层/黑板模式/结构化通信"
+    ],
+    "tags": [
+      "AI Agent",
+      "多Agent协作",
+      "通信协议",
+      "编排"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 的安全防护与提示注入防御",
+    "content": "请介绍 AI Agent 面临的安全威胁及提示注入的防御策略。",
+    "answer": "答案：Agent 的安全威胁比传统 LLM 更大（Agent 可以执行工具调用）。\n\n主要威胁：\n\n1. 直接提示注入（Direct Prompt Injection）：\n   - 用户输入中包含恶意指令\n   - 试图覆盖系统提示\n   - \"Ignore previous instructions and...\"\n\n2. 间接提示注入（Indirect Prompt Injection）：\n   - Agent 从外部工具/API 获取的内容包含恶意指令\n   - 如：网页文本中的隐藏指令\n   - 更危险（Agent 信任的输入源被污染）\n\n3. 工具滥用：\n   - Agent 在非授权情况下调用危险工具\n   - 参数注入：参数中包含恶意内容\n\n4. 数据泄露：\n   - Agent 将敏感信息写入工具/外部系统\n   - Agent 在日志中记录密码等\n\n防御策略：\n\n1. 输入净化（Input Sanitization）：\n   - 从外部源注入前标注内容来源\n   - 使用分隔符区分用户输入和系统指令\n   - 对来自不可信源的内容进行转义\n\n2. 权限最小化（Least Privilege）：\n   - 每个工具只分配完成任务所需的最小权限\n   - 敏感工具需要用户确认\n   - 对工具参数进行校验（白名单）\n\n3. 输出验证（Output Verification）：\n   - 在工具调用前验证参数合法性\n   - 在执行敏感操作前要求用户确认\n   - 使用沙箱执行不可信代码\n\n4. 提示加固（Prompt Hardening）：\n   - 明确系统指令和用户输入的边界\n   - 指示 Agent 忽略输入中的指令（指令冲突处理）\n   - 使用 XML 标签分隔不同来源的内容\n\n5. 监控和审计（Monitoring）：\n   - 记录所有工具调用的日志\n   - 异常检测（如短时间内大量文件删除）\n   - 敏感操作的审批流\n\n扩展延伸：Anthropic 提出的 Constitutional AI（Constitutional Classifier）是一种用于检测提示注入的防御方法——在输入到达模型前先用分类器判断是否包含注入攻击。OWASP 发布了 LLM Top 10 安全风险清单，是 Agent 安全建设的重要参考。",
+    "hints": [
+      "两大威胁：直接注入（用户恶意输入）+ 间接注入（外部工具内容带恶意指令）",
+      "四道防线：输入净化（标注来源）、权限最小化（工具权限）、输出验证、提示加固",
+      "监控：记录所有工具调用 + 异常检测 + 敏感操作审批"
+    ],
+    "tags": [
+      "AI Agent",
+      "安全",
+      "提示注入",
+      "OWASP"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 的微调与适配策略",
+    "content": "请介绍针对特定任务的 Agent 微调策略及其与 Prompt Engineering 的关系。",
+    "answer": "答案：微调（Fine-tuning）和提示工程（Prompt Engineering）是优化 Agent 行为的两种互补方式。\n\nPrompt Engineering vs Fine-tuning：\n\n| 维度 | Prompt Engineering | Fine-tuning |\n|------|-------------------|-------------|\n| 成本 | 低（只需 API 调用） | 高（训练 + 推理） |\n| 灵活性 | 高（可随时修改） | 低（修改后需重新训练） |\n| 效果上限 | 受限于模型基础能力 | 可突破（模型学新行为） |\n| 推理速度 | 较长 prompt（慢） | 短 prompt（快） |\n| 适用阶段 | 原型验证 | 生产优化 |\n\n微调策略：\n\n1. 全参数微调（Full Fine-tuning）：\n   - 更新模型所有权重\n   - 效果最好但最贵\n   - 需要大量数据和计算资源\n\n2. LoRA（Low-Rank Adaptation）：\n   - 冻结原权重，插入低秩矩阵\n   - 训练参数量减少到 0.1-1%\n   - 效果接近全参数微调\n   - 支持多任务切换（热插拔 LoRA 模块）\n\n3. QLoRA：\n   - LoRA + 4-bit 量化\n   - 在单张消费级 GPU 上训练大模型\n   - 内存需求降低到原模型的 1/4\n\nAgent 微调的数据：\n\n1. 工具调用格式数据：\n   - 输入：用户请求 + 工具定义\n   - 输出：正确的工具调用序列\n\n2. 推理轨迹：\n   - 输入：任务描述\n   - 输出：Thought → Action → Observation 的轨迹\n\n3. 错误恢复：\n   - 输入：任务 + 错误信息\n   - 输出：正确的恢复步骤\n\n评估微调效果：\n- 工具调用格式准确率\n- 任务完成率\n- 错误恢复成功率\n- 对比基线（微调前）\n\n扩展延伸：LoRA 的组合性——多个 LoRA 模块可以叠加（如：工具调用 LoRA + 安全对齐 LoRA + 领域知识 LoRA）。模型合并（Model Merging）是另一种低成本优化方式：将多个微调模型的权重合并为一个。",
+    "hints": [
+      "Prompt Engineering（灵活、低成本、原型阶段）vs Fine-tuning（高效、高成本、生产阶段）",
+      "LoRA 是首选微调方案：低秩矩阵插入，训练参数减少 99%，效果接近全参数",
+      "微调数据三件套：工具调用格式、推理轨迹、错误恢复"
+    ],
+    "tags": [
+      "AI Agent",
+      "微调",
+      "LoRA",
+      "Prompt Engineering"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 的流式输出与中间过程展示",
+    "content": "请介绍 Agent 的流式输出机制以及如何向前端展示 Agent 的中间思考过程。",
+    "answer": "答案：Agent 的思考过程展示对用户信任和体验至关重要。\n\n流式输出的类型：\n\n1. Token 流（Token Streaming）：\n   - 逐 token 输出 LLM 生成的文本\n   - Server-Sent Events（SSE）传输\n   - 在前端实现打字机效果\n\n2. 事件流（Event Streaming）：\n   - 不同类型的结构化事件\n   - 如：开始思考、调用工具、工具结果、生成回复\n   - 每个事件有类型和数据\n\n3. 状态流（State Streaming）：\n   - 每步 Agent 状态的完整快照\n   - 包含：当前步骤、已调用的工具、中间结果\n   - 适合调试和复盘\n\n展示 Agent 思考过程：\n\n1. 思考链展示：\n   - 显示 \"思考中...\" → \"正在调用工具X\" → \"工具返回结果Y\" → \"生成最终答案\"\n   - 每个步骤有状态指示（运行中/完成/失败）\n\n2. 工具调用可视化：\n   - 显示工具名称、入参、出参\n   - 参数可以折叠/展开\n   - 请求耗时显示\n\n3. 树形展示：\n   - Agent 的推理路径可以用树状结构展示\n   - 分支与回溯可视化\n   - 适合 Tree of Thoughts 等复杂推理\n\n实现方案：\n\n前端：\n- EventSource / fetch + ReadableStream\n- WebSocket（双向通信）\n- 增量更新 DOM\n\n后端：\n- FastAPI StreamResponse / Generator\n- LangChain 的 .stream() / .astream_events()\n- LangGraph 的 .astream_events()\n\n```python\n# FastAPI SSE 示例\nfrom fastapi import FastAPI\nfrom sse_starlette.sse import EventSourceResponse\n\n@app.get(\"/agent/chat\")\nasync def agent_chat(query: str):\n    async def event_generator():\n        async for event in agent.astream_events(query):\n            yield {\n                \"event\": event[\"event\"],\n                \"data\": event[\"data\"]\n            }\n    return EventSourceResponse(event_generator())\n```\n\n扩展延伸：思考过程的安全考量——Agent 的中间推理可能暴露敏感信息（API Key 构造方式、内部数据）。建议对中间过程做脱敏处理后再发送到前端。Anthropic 的 Extended Thinking 在 API 层面提供了思考过程的 token 流，可以与最终回复分开处理。",
+    "hints": [
+      "三种流：Token 流（逐字输出）、事件流（思考/调用/结果结构化）、状态流（完整快照）",
+      "展示方式：步骤链（当前状态指示）+ 工具调用（名称/耗时/参数可展开）",
+      "实现：SSE（EventSource）+ FastAPI StreamResponse + LangChain astream_events"
+    ],
+    "tags": [
+      "AI Agent",
+      "流式输出",
+      "SSE",
+      "LangChain"
+    ]
   }
 ]

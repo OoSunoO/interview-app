@@ -1074,5 +1074,100 @@
       "异地多活",
       "高可用"
     ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微服务中的舱壁隔离模式",
+    "content": "请介绍微服务架构中舱壁隔离模式（Bulkhead Pattern）的实现方式和适用场景。",
+    "answer": "答案：舱壁隔离模式（Bulkhead Pattern）是一种通过资源隔离来防止故障扩散的设计模式。\n\n核心思想：\n- 轮船的舱壁将船体分成多个独立隔间——一个隔间进水不会淹没整艘船\n- 在微服务中，将资源（线程池、连接池、内存）划分为独立的隔离区\n- 一个服务的故障不会耗尽所有资源，从而保护其他服务\n\n实现方式：\n\n1. 线程池隔离（最常见）：\n   - 为每个下游服务分配独立的线程池\n   - 场景：支付服务宕机时，线程池满但只会阻塞支付池，订单池仍可用\n   - 库：Hystrix、Resilience4j\n\n2. 信号量隔离：\n   - 用信号量控制并发数（共享线程池但限制同时调用数）\n   - 优势：轻量，无线程切换开销\n\n3. 连接池隔离：\n   - 不同服务使用不同的数据库连接池\n   - 保证一个服务的慢查询不会耗尽所有数据库连接\n\n4. 队列隔离：\n   - 不同优先级/不同来源的请求放入不同的队列\n\n与熔断的关系：\n- 熔断：在连续失败时快速拒绝请求（状态机：Closed→Open→Half-Open）\n- 舱壁：防止资源耗尽（先于熔断生效）\n- 通常组合使用\n\n扩展延伸：舱壁的粒度选择——太粗失去隔离意义，太细管理成本高。推荐：按下游重要性和资源消耗分组。",
+    "hints": [
+      "将资源划分为独立隔离区，一个故障不耗尽全部资源",
+      "默认实现：Hystrix 线程池隔离、Resilience4j 信号量/线程池隔离",
+      "粒度建议：关键/非关键/外部三组"
+    ],
+    "tags": [
+      "系统设计",
+      "微服务",
+      "舱壁模式",
+      "Resilience4j"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "gRPC 流式通信模式",
+    "content": "请介绍 gRPC 的四种流式通信模式及其适用场景。",
+    "answer": "答案：gRPC 基于 HTTP/2 和 Protobuf，支持四种通信模式。\n\n1. Unary RPC（一元 RPC）：\n   - 客户端发送一个请求，服务端返回一个响应\n   - 类比：RESTful API 的 request/response\n   - 适用：绝大多数请求-响应场景\n\n2. Server Streaming RPC（服务端流式）：\n   - 客户端发送一个请求，服务端返回一个流（多个响应消息）\n   - 适用：大数据量分页返回、实时推送、长时间计算中间结果\n\n3. Client Streaming RPC（客户端流式）：\n   - 客户端发送一个流（多个请求消息），服务端返回一个响应\n   - 适用：上传大文件、批量提交数据、IoT 数据上报\n\n4. Bidirectional Streaming RPC（双向流式）：\n   - 客户端和服务端各自独立发送流，可以同时读写\n   - 适用：实时聊天、游戏状态同步、实时协作编辑\n\nHTTP/2 对 gRPC 的支持：\n- 多路复用：一个连接上同时处理多个流\n- 头部压缩：HPACK 压缩 HTTP 头部\n- 流优先级：可以设置流优先级\n\n扩展延伸：gRPC Web 不支持全部四种模式——只支持 Unary 和 Server Streaming。浏览器中的双向流需要用 WebSocket 或 SSE 替代。",
+    "hints": [
+      "Unary = 1请求1响应；Server Streaming = 1请求→多响应（推送）",
+      "Client Streaming = 多请求→1响应（上传）；Bidirectional = 双向独立流（聊天）",
+      "gRPC-Web 只支持前两种模式"
+    ],
+    "tags": [
+      "系统设计",
+      "gRPC",
+      "流式通信",
+      "Protobuf"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微服务的数据库设计策略",
+    "content": "请介绍微服务架构下的数据库设计策略，包括每个服务独立数据库和各服务共享数据库的 trade-off。",
+    "answer": "答案：微服务架构中数据库设计的核心原则是数据私有（Data Ownership），每个服务拥有自己的数据存储。\n\n策略一：每个服务独立数据库（Database per Service）\n\n实现方式：\n- 每个微服务拥有独立的数据库实例（或独立的 Schema）\n- 服务间不允许直接访问对方的数据库\n- 通过 API 或事件进行数据交换\n\n优势：\n- 数据封装和自治性\n- 独立扩展和独立选型\n- 故障隔离\n\n劣势：\n- 跨服务 JOIN 变成 API 调用\n- 分布式事务（最终一致性）\n- 运维成本高\n\n策略二：共享数据库（Shared Database）\n\n适用场景：\n- 单体向微服务过渡\n- 强一致性要求高的业务\n- 小团队、小规模阶段\n\n风险：\n- Schema 变更影响其他服务\n- 数据库成为瓶颈\n\n实际策略：\n1. 事件驱动同步：Outbox Pattern + CDC\n2. API Composition：聚合层组合多服务数据\n3. CQRS：独立的查询数据库\n\n扩展延伸：数据库拆分的路径——先功能边界拆分 Schema，再拆分到独立数据库实例，最后按领域做读写分离。不要追求一步到位。",
+    "hints": [
+      "核心原则：每个服务拥有自己的数据，通过 API 交换数据",
+      "权衡：自治性/敏捷性 vs 跨服务查询/分布式事务复杂",
+      "实际方案：事件驱动同步（Outbox/CDC）+ API Composition + CQRS"
+    ],
+    "tags": [
+      "系统设计",
+      "微服务",
+      "数据库",
+      "数据拆分"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Seata AT 事务模式的实现原理",
+    "content": "请介绍 Seata AT（Automatic Transaction）模式的分布式事务实现原理。",
+    "answer": "答案：Seata AT 是一种自动化的分布式事务模式，对业务代码侵入性极小。\n\n框架角色：\n- TC（Transaction Coordinator）：事务协调器，独立部署\n- TM（Transaction Manager）：事务管理器，嵌入在应用内\n- RM（Resource Manager）：资源管理器，嵌入在应用内\n\nAT 模式的执行流程：\n\n第一阶段（Branch Register）：\n- TM 向 TC 申请全局事务 ID（XID）\n- 业务 SQL 执行前，RM 向 TC 注册分支事务\n- RM 解析 SQL，生成 Before Image（执行前快照）\n- 执行业务 SQL\n- 生成 After Image（执行后快照）\n- 在同一个本地事务中，将 Undo Log 写入 undo_log 表\n- 提交本地事务（数据对外可见，但全局事务尚未确认）\n\n第二阶段 Commit：\n- TM 通知 TC 全局提交\n- TC 通知所有 RM 异步删除 undo_log\n\n第二阶段 Rollback：\n- TM 通知 TC 全局回滚\n- TC 通知所有 RM 执行回滚\n- RM 读取 Before Image，恢复数据到执行前状态\n\n关键技术点：\n1. SQL 解析：自动生成逆向 SQL\n2. Undo Log 管理：包含前后镜像\n3. 全局写隔离：通过 TC 侧的全局锁实现\n\nAT 与 TCC 的对比：\nAT：低业务侵入，自动生成补偿，适用 CRUD\nTCC：高业务侵入，需实现三方法，适用复杂业务",
+    "hints": [
+      "三角色：TC（事务协调器）+ TM（事务管理器）+ RM（资源管理器）",
+      "两阶段：一阶段执行业务 SQL + Undo Log；二阶段 Commit 删除 / Rollback 恢复",
+      "通过全局写锁实现隔离性，通过 Undo Log 的前后镜像实现自动补偿"
+    ],
+    "tags": [
+      "系统设计",
+      "Seata",
+      "分布式事务",
+      "AT模式"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式链路追踪设计",
+    "content": "请设计一个分布式链路追踪系统，包括核心数据结构和采样策略。",
+    "answer": "答案：分布式链路追踪（Distributed Tracing）用于追踪请求在微服务间的完整调用链路。\n\n核心数据结构：\n\n1. Trace（追踪）：一次完整请求的调用链路\n2. Span（跨度）：链路中的一个步骤（一个服务调用）\n3. Span Context：\n   - Trace ID：唯一标识一次请求\n   - Span ID：唯一标识当前 Span\n   - Parent Span ID：父 Span 的 ID\n   - Baggage：跨 Span 传递的上下文数据\n\n典型的 Span 数据：\n{\n  traceId: \"abc123\",\n  spanId: \"def456\",\n  parentSpanId: \"xyz789\",\n  operationName: \"POST /api/orders\",\n  startTime: 1234567890000,\n  duration: 150,  // ms\n  tags: {\n    http.method: \"POST\",\n    http.status_code: 200,\n    peer.service: \"order-service\"\n  },\n  logs: [\n    { timestamp: 1234567890050, event: \"cache.miss\" }\n  ]\n}\n\n采样策略：\n1. 固定比率采样：所有请求按固定概率采样（如 1%）\n   - 优点：简单、统计意义明确\n   - 缺点：低流量服务样本太少\n\n2. 自适应采样：根据流量动态调整采样率\n   - 高流量：降低采样率（如 0.1%）\n   - 低流量：提高采样率（如 100%）\n   - 目标：保持稳定的样本量\n\n3. 优先级采样：对重要请求全采样\n   - 错误请求（status >= 400）全采样\n   - 慢请求（duration > p99）全采样\n   - 特定业务请求（如支付）全采样\n\n4. 头部采样（Head-Based）：在入口处决定是否采样\n   - 优点：可以重建完整链路\n   - 缺点：无法针对特定 Span 采样\n\n5. 尾部采样（Tail-Based）：收集所有数据后再决定是否采样\n   - 优点：可以根据完整链路信息做采样决策\n   - 缺点：需要缓冲所有数据\n\n扩展延伸：开源实现——Jaeger（CNCF，Go 实现）、Zipkin（开源最早，Java 实现）、OpenTelemetry（统一标准，推荐使用）。选型建议：新项目直接用 OpenTelemetry + Jaeger。",
+    "hints": [
+      "核心结构：Trace（整条链路）+ Span（单个步骤）+ Trace ID/Span ID/Parent Span ID",
+      "采样策略：固定比率、自适应、优先级（错误/慢请求全采样）、头部/尾部采样",
+      "生产方案：OpenTelemetry SDK 埋点 + Jaeger 存储和查询"
+    ],
+    "tags": [
+      "系统设计",
+      "链路追踪",
+      "可观测性",
+      "OpenTelemetry"
+    ]
   }
 ]

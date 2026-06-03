@@ -1087,5 +1087,100 @@
       "复制",
       "RDB/AOF"
     ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 内存淘汰策略实现",
+    "content": "请详细介绍 Redis 的 8 种内存淘汰策略及其底层实现原理。",
+    "answer": "答案：Redis 在内存达到 maxmemory 限制时，根据配置的策略淘汰 key。\n\n8 种淘汰策略：\n\n1. noeviction（默认）：\n   - 不淘汰，写入直接返回错误\n   - 适用：缓存不允许丢失的场景\n\n2. allkeys-lru：\n   - 对所有 key 使用近似 LRU 淘汰\n   - 实现：维护一个 16/24 大小的候选池，采样（默认 5 个）淘汰最久未用的\n   - 近似 LRU 而非精确 LRU（节省内存）\n\n3. volatile-lru：\n   - 仅对设置了 TTL 的 key 使用近似 LRU\n\n4. allkeys-random：\n   - 对所有 key 随机淘汰\n   - 实现：在哈希表中随机选 key 删除\n   - 适用：缓存被均匀访问，无明显热点\n\n5. volatile-random：\n   - 仅对设置了 TTL 的 key 随机淘汰\n\n6. volatile-ttl：\n   - 淘汰 TTL 最短的 key（即将过期的）\n   - 实现：采样后选最小剩余 TTL\n\n7. allkeys-lfu（4.0+）：\n   - 对所有 key 使用 LFU（最不经常使用）淘汰\n\n8. volatile-lfu（4.0+）：\n   - 仅对设置了 TTL 的 key 使用 LFU\n\nLRU 近似实现（Approximated LRU）：\n- 精确 LRU 需要维护双向链表 + 哈希表（内存开销大）\n- Redis 的做法：\n  1. 每个对象维护一个 24-bit 的 lru 字段（记录上次访问时间戳，精度分钟级）\n  2. 淘汰时：从哈希表随机选 N 个 key（默认采样 5 个）\n  3. 放入淘汰候选池（大小 16），保留最久未用的\n  4. 从池中选择最合适的淘汰\n\nLFU 实现：\n- 复用 lru 字段（24-bit）拆分为：\n  - 高 16 位：上次衰减时间（分钟级时间戳）\n  - 低 8 位：计数器（对数增长，最大值 255）\n- 计数器增长：每次访问根据概率递增（近似对数增长）\n- 计数器衰减：访问频率随时间衰减（基于时间差）\n\n扩展延伸：Redis 4.0 引入 LFU 后，大多数场景推荐使用 LFU（allkeys-lfu）。LFU 比 LRU 更抗突发流量冲击（一次批量查询不会把热点数据冲掉）。",
+    "hints": [
+      "8 种策略：noeviction, *-lru, *-lfu, *-random, volatile-ttl（两维度：范围×算法）",
+      "近似 LRU：对象存 24-bit 访问时间戳，淘汰时采样（默认 5 个）+ 候选池（16 个）",
+      "LFU：24-bit 拆为 16-bit 衰减时间 + 8-bit 对数计数器，抗突发访问"
+    ],
+    "tags": [
+      "Redis",
+      "内存淘汰",
+      "LRU",
+      "LFU"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 主从复制与哨兵机制",
+    "content": "请介绍 Redis 主从复制的完整流程以及哨兵（Sentinel）实现高可用的原理。",
+    "answer": "答案：Redis 从 2.8 版本开始支持完整的主从复制和哨兵高可用方案。\n\n主从复制流程：\n\n1. 连接建立：\n   - SLAVEOF 命令触发从节点发起连接\n   - 从节点发送 PING 检查主节点状态\n   - 身份认证（如果主节点配置了密码）\n\n2. 全量复制（首次连接或断连太久）：\n   - 主节点执行 BGSAVE 生成 RDB\n   - 主节点将 RDB 发送给从节点\n   - 从节点清空数据 + 加载 RDB\n   - 主节点将复制缓冲区的增量命令发给从节点\n\n3. 增量复制（断线重连）：\n   - 从节点记录主节点的 replid 和 offset\n   - 主节点维护 repl_backlog_buffer（环形缓冲区）\n   - 断线后从节点发送 PSYNC replid offset\n   - 如果 offset 仍在 backlog 中 → 增量同步\n   - 如果 offset 已不在 backlog 中 → 全量同步\n\n4. 命令传播：\n   - 主节点每收到写命令，写入复制缓冲区\n   - 异步发送给从节点\n   - 从节点确认接收\n\n哨兵（Sentinel）高可用：\n\n架构：\n- Sentinel 是一个独立的进程，监控所有 Redis 节点\n- 通常部署 3 个 Sentinel（奇数个，避免脑裂）\n\n工作流程：\n1. 监控：通过 PING 定期检测主节点和从节点状态\n2. 主观下线（SDOWN）：\n   - 单个 Sentinel 节点在 down-after-milliseconds 内未收到 PONG\n3. 客观下线（ODOWN）：\n   - 多数 Sentinel（quorum）认为主节点下线\n4. Leader 选举：\n   - Sentinel 间通过 Raft 选出一个 Leader\n5. 故障转移：\n   - 从从节点中选一个新主节点（优先级高 → offset 新 → runid 小）\n   - Sentinel Leader 发送 SLAVEOF NO ONE 给新主\n   - 其他从节点指向新主\n   - 原主恢复后成为新主的从节点\n\n扩展延伸：主从复制是异步的（Redis 默认），可能导致主节点写入成功但从节点尚未收到。Redis 3.2 引入 WAIT 命令实现同步复制（等待至少 N 个从节点确认）。",
+    "hints": [
+      "全量复制：RDB + 增量命令；增量复制：基于 repl_backlog_buffer 环形缓冲区的 offset 追赶",
+      "哨兵流程：PING 监控 → SDOWN（单节点断连）→ ODOWN（多数确认）→ Raft 选 Leader → 故障转移",
+      "主从复制默认异步，WAIT 命令可实现同步复制"
+    ],
+    "tags": [
+      "Redis",
+      "主从复制",
+      "Sentinel",
+      "高可用"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis Pipeline vs 事务 vs Lua 脚本",
+    "content": "请对比 Redis Pipeline、事务（MULTI/EXEC）和 Lua 脚本三种批量操作方式的差异。",
+    "answer": "答案：三种方式都能实现 Redis 的批量操作，但语义和适用场景不同。\n\nPipeline（管道）：\n\n原理：\n- 客户端将多个命令打包发送，减少网络 RTT\n- 服务端按顺序执行并返回所有结果\n\n特点：\n- 不保证原子性（命令之间可能插入其他客户端的命令）\n- 不保证所有命令都执行（中间命令失败不影响后续）\n- 减少网络延迟（批量发送）\n- 适合：无依赖关系的批量操作\n\n事务（MULTI/EXEC/WATCH）：\n\n原理：\n- MULTI 开始事务，命令入队不执行\n- EXEC 触发批量执行\n- WATCH 实现乐观锁（监视 key 变化）\n\n特点：\n- 原子性（EXEC 时所有命令连续执行，中间不插入其他命令）\n- 不支持回滚（如果命令有语法错误，全部不执行；运行时错误不影响其他）\n- 所有命令在 EXEC 前仅入队（不执行），所以不能做条件逻辑\n- 适合：需要原子执行的命令集合\n\nLua 脚本（EVAL/EVALSHA）：\n\n原理：\n- 将 Lua 脚本上传到 Redis 服务端执行\n- 脚本中调用 Redis 命令\n\n特点：\n- 原子性（脚本执行期间其他命令不插入）\n- 支持逻辑控制（if/else/for 等编程逻辑）\n- 脚本可以读取当前数据做决策\n- 脚本结果可以直接作为后续命令的输入\n- 适合：需要条件判断和计算逻辑的复杂操作\n\n对比：\n| 维度 | Pipeline | 事务 | Lua |\n|------|----------|------|-----|\n| 原子性 | 否 | 是 | 是 |\n| 条件逻辑 | 否 | 否 | 是 |\n| 可读入数据 | 否 | 否 | 是 |\n| 回滚 | 部分失败 | 部分失败 | 全部失败 |\n| 网络 RTT | 1 | 2（入队+执行） | 1 |\n\n选择建议：\n- 简单批量、无依赖 → Pipeline\n- 需要原子性、无条件 → 事务\n- 需要条件判断、复杂逻辑 → Lua 脚本\n\n扩展延伸：Redis 7.0 引入 Functions（脚本库），替代 EVAL 的脚本管理方式。Functions 支持脚本复用、自动同步到从节点、可管理（FUNCTION LIST/FUNCTION DELETE）。",
+    "hints": [
+      "Pipeline：打包减少网络 RTT，不保证原子性",
+      "事务：MULTI/EXEC 保证原子性但无条件逻辑，不支持回滚",
+      "Lua 脚本：原子性 + 条件逻辑 + 可读数据，功能最强"
+    ],
+    "tags": [
+      "Redis",
+      "Pipeline",
+      "Lua",
+      "事务"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Cluster 哈希槽与重分片",
+    "content": "请介绍 Redis Cluster 的哈希槽（Hash Slot）机制以及在线重分片（Resharding）的原理。",
+    "answer": "答案：Redis Cluster 通过哈希槽实现去中心化的数据分片。\n\n哈希槽（Hash Slot）机制：\n\n分片方案：\n- 固定 16384 个哈希槽（0~16383）\n- 每个 key 通过 CRC16(key) % 16384 计算所属槽位\n- 每个节点负责一部分哈希槽\n- 槽位到节点的映射关系存储在 Cluster 总线中\n\n哈希标签（Hash Tag）：\n- 如果 key 包含 {} 大括号，只对 {} 内的内容计算哈希\n- 例：{user:123}:profile 和 {user:123}:cart 在同一个槽\n- 作用：将相关 key 强制分配到同一节点（支持多 key 操作）\n\n槽位分配：\n- 每个节点广播自己的槽位信息（通过 Gossip 协议）\n- 客户端通过 CLUSTER SLOTS 命令获取槽位映射\n- 客户端缓存映射表，直接路由到对应节点\n- 重定向：节点返回 MOVED 错误（永久迁移）或 ASK 错误（临时迁移）\n\n在线重分片（Resharding）流程：\n\n1. 迁移准备：\n   - 确定要迁移的槽位和目标节点\n   - 通过 CLUSTER SETSLOT 标记迁移状态（migrating/importing）\n\n2. 数据迁移：\n   - 源节点：MIGRATE 命令将 key 批量移动到目标节点\n   - MIGRATE 是原子操作（RESTORE + DEL）\n   - 迁移过程中，key 的读写仍然可以处理\n\n3. 增量迁移：\n   - 迁移期间，如果 key 在源节点被修改\n   - 增量触发重新迁移\n   - 重复直到所有 key 迁移完成\n\n4. 完成：\n   - 通知所有节点更新槽位映射\n   - CLUSTER SETSLOT 标记槽位稳定\n\n迁移期间的请求处理：\n- 源节点收到该槽位的请求时：\n  - 如果 key 已迁移 → 返回 ASK 重定向到目标节点\n  - 如果 key 尚未迁移 → 直接处理\n- 目标节点收到该槽位的请求时：\n  - 如果在导入状态 → 处理\n  - 如果不在导入状态 → MOVED 到源节点\n\n扩展延伸：16384 这个数字选取得很有讲究——每个节点的心跳包需要包含槽位位图（16384 bit ≈ 2KB），2KB 的心跳包刚好适合大多数 MTU 限制。更大的槽位数会增大心跳开销。",
+    "hints": [
+      "16384 固定槽位：CRC16(key) % 16384，Cluster 总线中维护槽位→节点映射",
+      "哈希标签 {}：大括号内内容计算哈希，相关 key 绑定到同一节点",
+      "重分片：MIGRATE 命令源→目标，MIGRATE/ASK 重定向处理迁移中的请求"
+    ],
+    "tags": [
+      "Redis",
+      "Cluster",
+      "哈希槽",
+      "重分片"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 缓存雪崩、穿透与击穿",
+    "content": "请介绍 Redis 缓存的雪崩、穿透、击穿三种故障模式及对应的解决方案。",
+    "answer": "答案：这是 Redis 缓存的三个经典问题，发生原因和解决方案各不相同。\n\n缓存雪崩（Cache Avalanche）：\n\n现象：大量缓存在同一时间过期，请求全部打到数据库\n\n原因：\n- 大量 key 设置了相同的过期时间（如同时写入时 TTL 相同）\n- 缓存节点宕机\n\n解决方案：\n1. 过期时间加随机值：base_TTL + random(0, 300s)\n2. 多级缓存：本地缓存（Caffeine）→ Redis → 数据库\n3. 热点 key 不过期（后台异步更新）\n4. 熔断/降级：数据库压力大时直接返回旧缓存\n\n缓存穿透（Cache Penetration）：\n\n现象：请求的数据在缓存和数据库中都不存在，每次请求都打到数据库\n\n原因：\n- 恶意攻击（遍历不存在的 ID）\n- 查询的条件本身没有数据\n\n解决方案：\n1. 缓存空值（Null Object）：即使查不到数据也缓存空结果（短 TTL）\n2. 布隆过滤器（Bloom Filter）：请求前先判断 key 是否存在\n3. 参数校验：过滤明显不合法的请求（如负数 ID）\n\n缓存击穿（Cache Breakdown / Hotspot Invalidation）：\n\n现象：单个热点 key 过期，大量并发请求同时打到数据库\n\n原因：\n- 热点 key 过期瞬间，高并发场景下所有请求都回源数据库\n\n解决方案：\n1. 互斥锁（Mutex Key）：只让一个请求回源，其他等待\n   - SETNX 获取锁，成功后回源重建缓存\n   - 其他请求自旋等待\n2. 热点 key 不过期：\n   - 物理上不设过期时间\n   - 逻辑过期：数据内嵌过期时间，异步线程检查更新\n3. 提前预热：在高峰期前主动刷新热点 key\n\n对比：\n| 问题 | 原因 | 方案 |\n|------|------|------|\n| 雪崩 | 大量 key 同时过期 | 随机 TTL、多级缓存 |\n| 穿透 | 查不存在的数据 | 空值缓存、布隆过滤器 |\n| 击穿 | 热点 key 过期 | 互斥锁、热点不过期 |\n\n扩展延伸：这三个问题可能叠加出现——比如雪崩时大量 key 过期 + 击穿的某个热点 key，数据库同时承受多种压力。实际生产中需要多层防御：本地缓存 + Redis + 熔断 + 限流 + 数据库连接池保护。",
+    "hints": [
+      "雪崩：大量 key 同时过期 → 随机 TTL、多级缓存；宕机 → 熔断降级",
+      "穿透：查不存在的数据 → 空值缓存、布隆过滤器",
+      "击穿：热点 key 过期 → 互斥锁重建、热点不过期（逻辑过期）"
+    ],
+    "tags": [
+      "Redis",
+      "缓存雪崩",
+      "缓存穿透",
+      "缓存击穿"
+    ]
   }
 ]

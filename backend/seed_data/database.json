@@ -1096,5 +1096,101 @@
       "Undo Log",
       "Binlog"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL MVCC 实现原理",
+    "content": "请介绍 MySQL InnoDB 的 MVCC（多版本并发控制）实现原理。",
+    "answer": "答案：MVCC 是 InnoDB 实现 RC（读已提交）和 RR（可重复读）隔离级别的核心机制。\n\n核心组件：\n\n1. 隐藏列：\n   - DB_TRX_ID：最近修改该行的事务 ID\n   - DB_ROLL_PTR：回滚指针，指向 Undo Log 中的上一版本\n   - DB_ROW_ID：隐式自增行 ID（无主键时使用）\n\n2. Undo Log（回滚日志）：\n   - Insert Undo：插入操作的回滚日志（事务提交后可直接删除）\n   - Update Undo：更新/删除操作的回滚日志（用于 MVCC 快照读）\n   - 多个版本的记录通过 DB_ROLL_PTR 链式连接\n\n3. Read View（读视图）：\n   - 创建快照时活跃事务的集合\n   - 关键字段：\n     - low_limit_id：当前已分配的最大事务 ID + 1\n     - up_limit_id：活跃事务中的最小事务 ID\n     - creator_trx_id：创建该 Read View 的事务 ID\n     - m_ids：活跃事务 ID 列表\n\n可见性判断规则：\n- 比较 DB_TRX_ID 与 Read View 的边界：\n  1. DB_TRX_ID < up_limit_id：该版本在 Read View 创建前已提交 → 可见\n  2. DB_TRX_ID >= low_limit_id：该版本在 Read View 创建后生成 → 不可见\n  3. DB_TRX_ID 在 m_ids 中：该版本由活跃事务生成 → 不可见\n  4. DB_TRX_ID == creator_trx_id：当前事务自己的修改 → 可见\n  5. 其他：该版本由已提交事务生成 → 可见\n\nRC vs RR 的区别：\n- RC：每次 SELECT 都生成新的 Read View\n- RR：事务中第一次 SELECT 生成 Read View，后续复用\n\n扩展延伸：MVCC 只解决了快照读（普通 SELECT）的幻读问题。当前读（SELECT FOR UPDATE/UPDATE/DELETE）通过 Gap Lock（间隙锁）防止幻读。这也是 RR 级别能防止幻读的原因。",
+    "hints": [
+      "三个核心组件：隐藏列（DB_TRX_ID/DB_ROLL_PTR）、Undo Log（版本链）、Read View（活跃事务快照）",
+      "可见性：比较行版本的 DB_TRX_ID 与 Read View 的边界，决定哪个版本可见",
+      "RC vs RR：RC 每次 SELECT 建新 Read View，RR 复用第一次的 Read View"
+    ],
+    "tags": [
+      "数据库",
+      "MySQL",
+      "MVCC",
+      "InnoDB"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 索引下推与 MRR",
+    "content": "请介绍 MySQL 的索引下推（Index Condition Pushdown, ICP）和多范围读（Multi-Range Read, MRR）优化技术。",
+    "answer": "答案：ICP 和 MRR 是 MySQL 优化索引扫描的两种技术。\n\n索引下推（ICP）：\n\n定义：\n- 将 WHERE 条件下推到存储引擎层过滤，减少回表次数\n- 适用于：联合索引 + 范围条件（范围条件后的列无法用于索引查询）\n\n示例：\n- 索引 (name, age)，查询 WHERE name LIKE '张%' AND age = 25\n- 无 ICP：先按 name 范围扫描索引，找到所有 name 以张开头的记录，回表后过滤 age\n- 有 ICP：在索引遍历时同时检查 age = 25，只满足两个条件的才回表\n\n条件：\n- 需要 ICP 的列不是索引的最左前缀列\n- 适用于 range/ref/eq_ref/ref_or_null 访问方法\n- InnoDB 和 MyISAM 都支持\n\n多范围读（MRR）：\n\n定义：\n- 将随机回表转为顺序回表，减少磁盘 I/O\n\n原理：\n1. 从索引中收集一批主键值（rowid）\n2. 对主键值排序（变为有序）\n3. 按主键顺序回表读取完整行\n4. 磁盘读取从随机 I/O 变为顺序 I/O\n\n优化效果：\n- 机械硬盘（HDD）：显著提升（随机 I/O 比顺序慢 10 倍）\n- SSD：提升有限但仍有（减少随机读取）\n\n条件：\n- 适用于 range/ref 等扫描大量行的情况\n- 由 MRR 优化器开关控制（optimizer_switch 中的 mrr 和 mrr_cost_based）\n\n对比：\n| 技术 | 优化点 | 减少什么 |\n|------|--------|----------|\n| ICP | 提前过滤 | 回表次数 |\n| MRR | 排序回表 | 随机 I/O 变为顺序 I/O |\n\n扩展延伸：两者可以同时生效——ICP 减少需要回表的行数，MRR 优化必须回表的行的读取顺序。在分析型查询（范围大、回表多）中效果尤其明显。",
+    "hints": [
+      "ICP：下推 WHERE 过滤到索引扫描层，减少回表次数（适用于联合索引范围查询后的列）",
+      "MRR：收集主键值后排序再回表，将随机 I/O 变顺序 I/O",
+      "两者可以同时生效，ICP 减量，MRR 优化读取顺序"
+    ],
+    "tags": [
+      "数据库",
+      "MySQL",
+      "索引优化",
+      "ICP",
+      "MRR"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库三范式的定义与反范式",
+    "content": "请介绍数据库设计中的三个范式（1NF、2NF、3NF）的定义以及反范式设计的适用场景。",
+    "answer": "答案：数据库范式是减少数据冗余和避免更新异常的设计规范。\n\n第一范式（1NF）：\n- 定义：每个列都是不可再分的原子值\n- 违反示例：一个字段存储多个电话号码（1, 2, 3）\n- 目标：确保每行每列只有一个值\n\n第二范式（2NF）：\n- 前提：满足 1NF\n- 定义：所有非主键列完全依赖于主键（消除部分依赖）\n- 违反示例：（学生ID, 课程ID）作为联合主键，但\"学生姓名\"只依赖学生ID（部分依赖）\n- 方法：将部分依赖的列拆分到新表\n- 适用：联合主键的场景\n\n第三范式（3NF）：\n- 前提：满足 2NF\n- 定义：非主键列不传递依赖于主键（消除传递依赖）\n- 违反示例：订单表包含（客户ID、客户姓名、客户地址）→ 客户姓名/地址通过客户ID传递依赖于订单ID\n- 方法：将传递依赖的列拆分到客户表\n- 目标：非键列之间不互相依赖\n\n范式的 trade-off：\n- 高范式（3NF+）：数据冗余少、更新异常少、查询需要关联多表\n- 低范式（反范式）：数据冗余多、更新开销大、查询效率高（减少 JOIN）\n\n反范式设计的适用场景：\n1. 读多写少：如内容系统、数据仓库（冗余字段减少 JOIN）\n2. 报表/分析：宽表设计减少关联查询\n3. 高性能查询：预留冗余字段避免大表 JOIN\n4. 数据仓库：星型模型和雪花模型本质上是反范式设计\n\n扩展延伸：实际系统中通常混合使用——核心业务表（订单、支付）保持高范式，查询频繁的聚合表/冗余表使用反范式。不要为范式牺牲性能，也不要全盘反范式导致数据不一致。",
+    "hints": [
+      "1NF：列不可再分；2NF：非主键列完全依赖于主键（消除部分依赖）；3NF：非主键列不传递依赖",
+      "高范式减少冗余但查询慢，反范式查询快但有冗余和一致性问题",
+      "实际系统：核心表高范式，查询聚合表反范式"
+    ],
+    "tags": [
+      "数据库",
+      "范式",
+      "反范式",
+      "设计"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "PostgreSQL 与 MySQL 核心差异",
+    "content": "请比较 PostgreSQL 和 MySQL 的核心差异和各自的优势场景。",
+    "answer": "答案：PostgreSQL 和 MySQL 是两种最流行的开源关系型数据库。\n\n核心差异对比：\n\n| 维度 | PostgreSQL | MySQL |\n|------|-----------|-------|\n| 协议 | 进程模型（每个连接一个进程） | 线程模型（每个连接一个线程） |\n| SQL 标准 | 更严格遵循 | 有扩展和偏离 |\n| 索引类型 | B-tree, Hash, GiST, GIN, BRIN | B-tree（InnoDB） |\n| 存储引擎 | 统一存储引擎 | 插件式（InnoDB, MyISAM 等） |\n| 并发控制 | MVCC（多版本存储） | MVCC（InnoDB） |\n| 复制 | 流复制（物理/逻辑） | 异步/半同步复制，Group Replication |\n| JSON 支持 | JSONB（二进制，可索引） | JSON（文本存储，部分可索引） |\n| 全文检索 | 内置（tsvector） | 内置（InnoDB） |\n| GIS 支持 | PostGIS（业界最强） | 基础 Spatial 扩展 |\n| 分区表 | 声明式分区（10+） | 分区表（5.7+） |\n| 外部数据 | FDW（Foreign Data Wrappers） | FEDERATED 引擎 |\n\nPostgreSQL 优势：\n- 复杂查询优化器更好（嵌套循环/哈希连接/合并连接选择更智能）\n- 高级索引（部分索引、表达式索引、GiST/GIN 支持全文/GIS）\n- CTE 递归查询、窗口函数支持更全面\n- 扩展性强（PostGIS, TimescaleDB, Citus 等生态）\n- 更适合 OLAP 和数据仓库场景\n\nMySQL 优势：\n- 简单查询性能更好（读写分离、主从复制成熟）\n- 生态更广泛（几乎所有语言框架都优先支持 MySQL）\n- 运维工具更丰富（Percona Toolkit, Orchestrator）\n- 分区和分库分表方案成熟（MyCAT, ShardingSphere）\n- 更适合高并发 OLTP 场景\n\n选择建议：\n- OLTP + 简单查询 → MySQL（更成熟的读写分离和分片方案）\n- OLAP + 复杂查询 → PostgreSQL（更好的优化器和高级功能）\n- GIS/JSON/全文检索 → PostgreSQL\n- 新项目无特殊要求 → PostgreSQL（功能更丰富）\n\n扩展延伸：云数据库时代，RDS/Aurora 同时支持 MySQL 和 PostgreSQL，选择更多取决于团队的熟悉度和生态需求。",
+    "hints": [
+      "PostgreSQL：进程模型、严格 SQL 标准、高级索引（GiST/GIN/BRIN）、扩展性强（PostGIS/TimescaleDB）",
+      "MySQL：线程模型、插件式引擎、成熟读写分离、丰富分库分表方案",
+      "OLTP+简单查询→MySQL；OLAP+复杂查询/GIS→PostgreSQL"
+    ],
+    "tags": [
+      "数据库",
+      "PostgreSQL",
+      "MySQL",
+      "对比"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库连接池设计要点",
+    "content": "设计一个高性能数据库连接池，需要考虑哪些关键参数和机制？",
+    "answer": "答案：连接池是提升数据库性能的关键组件，通过复用连接减少频繁创建/关闭的开销。\n\n关键参数：\n\n1. 最小/最大连接数：\n   - minIdle：保持的最小空闲连接数（突发流量缓冲）\n   - maxActive：最大活跃连接数（受数据库 max_connections 限制）\n   - 建议：min=2~5, max=CPU核数×2+1（公式源自 PostgreSQL 社区）\n\n2. 连接超时：\n   - connectTimeout：建立 TCP 连接的超时（通常 1~5s）\n   - socketTimeout：等待数据库响应的超时（通常 5~30s）\n   - idleTimeout：空闲连接的最大存活时间（通常 10~60min）\n   - maxLifetime：连接的最大生命周期（通常 30~60min，避免连接泄漏）\n\n3. 等待队列：\n   - 当所有连接忙时，请求是等待还是立即失败\n   - maxWait：最大等待时间（通常 1~10s，-1 表示无限等待）\n   - 队列策略：FIFO（公平）或公平竞争\n\n核心机制：\n\n1. 连接有效性检查：\n   - 定时检测：定期执行 SELECT 1 或 ping\n   - 惰性检测：获取连接时才检查（减少检测开销）\n   - 推荐：惰性检测 + 定时清理无效连接\n\n2. 连接泄漏检测：\n   - 记录连接借出时间戳\n   - 超过阈值未归还的打印告警日志和堆栈\n\n3. 动态伸缩：\n   - 低负载：缩小到 minIdle（释放数据库连接资源）\n   - 高负载：逐步扩展到 maxActive（避免雪崩）\n   - 平滑伸缩：使用信号量或令牌桶控制伸缩速度\n\n4. 数据库自适应：\n   - 检测数据库负载，自动调整连接数上限\n   - 检测数据库故障（宕机/主从切换），快速清空连接池\n\n5. 连接亲和性：\n   - 读写分离：读连接池连接到从库，写连接池连接到主库\n   - 事务绑定：事务内的所有操作使用同一连接\n\n扩展延伸：HikariCP 是目前性能最好的 Java 连接池实现。其核心优化——利用 FastList 替代 ArrayList、利用 ConcurrentBag 实现无锁连接获取、利用 JNDI 延迟初始化。生产环境中推荐 HikariCP。",
+    "hints": [
+      "关键参数：minIdle/maxActive、各类超时（connect/socket/idle/maxLifetime）、等待策略",
+      "核心机制：连接有效性检查、泄漏检测、动态伸缩、数据库自适应",
+      "推荐：HikariCP（Java 最快连接池，FastList + ConcurrentBag 等优化）"
+    ],
+    "tags": [
+      "数据库",
+      "连接池",
+      "HikariCP",
+      "性能优化"
+    ]
   }
 ]

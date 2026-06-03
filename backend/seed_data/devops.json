@@ -1063,5 +1063,101 @@
       "Istio",
       "Sidecar"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GitOps 工作流与工具链",
+    "content": "请介绍 GitOps 的核心原则和主流的 GitOps 工具链。",
+    "answer": "答案：GitOps 是一种以 Git 仓库为唯一事实来源（Single Source of Truth）的运维模式。\n\n核心原则：\n1. 声明式配置：系统的期望状态用配置（YAML/JSON）声明\n2. 版本控制：所有配置存储在 Git 中，不可变、可审计\n3. 自动同步：变更推送到 Git 后，自动同步到实际环境\n4. 自愈：实际环境偏离 Git 状态时自动修复（Drift Detection）\n\n工作流：\n1. 开发者修改 K8s YAML → 提交 PR\n2. 代码审查（CI 检查 + 人工 review）\n3. 合并到主分支\n4. GitOps Operator 检测到 Git 变更\n5. Operator 将新状态应用到 K8s 集群\n6. 持续监控（Drift Detection + 自愈）\n\n工具链：\n\n1. Argo CD：\n   - 最流行的 K8s GitOps 工具\n   - 支持多集群管理\n   - Web UI 直观\n   - Sync 策略：自动/手动\n2. Flux：\n   - 轻量级、无需数据库\n   - 深度 K8s 集成（Kustomize、Helm 原生支持）\n   - 支持多租户\n3. Jenkins X：\n   - 全栈 CI/CD + GitOps\n   - 自动化环境管理和预览环境\n   - 学习成本高\n\nGit vs OCI 存储：\n- 传统 GitOps：YAML 存储在 Git\n- OCI 制品（如 Helm Chart）：存储在 OCI Registry\n- 趋势：Git 存源码 + Helm/Manifest，OCI Registry 存构建产物\n\n扩展延伸：GitOps 的价值不仅在于自动化部署——更关键的是灾难恢复（从 Git 重建整个集群）和审计合规（每一次变更都有 Git commit 记录）。",
+    "hints": [
+      "核心原则：Git 为唯一事实源 + 声明式配置 + 自动同步 + 漂移自愈",
+      "主流工具：Argo CD（最流行，多集群）、Flux（轻量，K8s 原生）",
+      "关键价值：灾难恢复（从 Git 重建集群）和审计合规（Git commit 记录）"
+    ],
+    "tags": [
+      "DevOps",
+      "GitOps",
+      "Argo CD",
+      "Flux"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CI/CD 流水线设计原则",
+    "content": "请介绍 CI/CD 流水线的设计原则以及常见的流水线阶段拆分。",
+    "answer": "答案：CI/CD 流水线是软件交付的核心基础设施，设计质量直接影响交付效率。\n\n设计原则：\n\n1. 快速反馈：\n   - 构建和测试应在 10 分钟内完成\n   - 失败时立即通知（Slack/邮件）\n   - 分阶段：快速检查在前，耗时验证在后\n\n2. 幂等性：\n   - 同一代码版本、同一流水线 → 同样结果\n   - 重复运行不产生副作用\n   - 依赖是显式的（不依赖环境状态）\n\n3. 不可变产物：\n   - 构建一次，多次部署（Build Once, Deploy Many）\n   - 产物带版本号（semver 或 commit SHA）\n   - 产物仓库（Nexus/Artifactory/Docker Registry）\n\n4. 左移（Shift Left）：\n   - 问题越早发现成本越低\n   - 静态检查、单元测试在提交阶段\n   - 安全扫描、性能测试在前置阶段\n\n典型流水线阶段：\n\n1. 代码提交：\n   - lint / format check\n   - 静态类型检查\n   - 单元测试 + 覆盖率收集\n\n2. 构建和集成：\n   - 编译/打包\n   - 构建 Docker 镜像\n   - API 集成测试\n   - 安全扫描（SAST/SCA）\n\n3. 测试环境部署：\n   - 部署到 Dev/Test 环境\n   - 端到端测试\n   - 性能基线测试\n   - 安全扫描（DAST）\n\n4. 预发布验证：\n   - Staging 环境部署\n   - 集成验收测试\n   - 数据迁移验证\n   - 回滚演练\n\n5. 生产发布：\n   - 金丝雀/蓝绿发布\n   - 监控观察（错误率、延迟）\n   - 自动回滚条件\n\n工具选型：\n- CI 引擎：GitHub Actions（推荐）、GitLab CI、Jenkins\n- 产物存储：Docker Registry、Nexus\n- 安全扫描：SonarQube（SAST）、Trivy（容器扫描）、Snyk（SCA）\n- 发布策略：Argo Rollouts、Flagger\n\n扩展延伸：流水线的效率瓶颈通常不是工具本身，而是测试速度。合理的做法是做测试分层——单元测试快跑（必须通过）、集成测试精选（核心路径）、E2E 测试按需触发。",
+    "hints": [
+      "原则：快速反馈（10 分钟内）、幂等性、不可变产物、左移",
+      "阶段：提交检查 → 构建+安全扫描 → 测试部署 → 预发布 → 金丝雀→ 全量",
+      "瓶颈通常是测试速度——测试分层：单元快跑、集成精选、E2E 按需"
+    ],
+    "tags": [
+      "DevOps",
+      "CI/CD",
+      "流水线",
+      "GitHub Actions"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Docker 镜像构建最佳实践",
+    "content": "请列出 Docker 镜像构建的最佳实践及其原因。",
+    "answer": "答案：良好的 Docker 镜像构建直接影响构建速度、镜像大小和安全性。\n\n1. 多阶段构建（Multi-stage Build）：\n   - 示例：第一阶段（用 Maven 镜像编译 + 测试），第二阶段（用 JRE 镜像运行）\n   - 好处：最终镜像只包含运行所需内容，不包含构建工具\n   - 效果：可减少 50-80% 的镜像大小\n\n2. 优化层缓存（Layer Caching）：\n   - 将很少变更的层放在前面（系统依赖 → 包安装 → 应用代码）\n   - 常用技巧：先 COPY package.json 再 RUN npm install，最后 COPY 源码\n   - 原因：Docker 层的 Cache 机制——层变更后所有后续层都需要重构建\n\n3. 选择基础镜像：\n   - Alpine：最小（5MB），但有 C 库兼容问题\n   - Slim：Debian 精简版，兼容性好\n   - Distroless（Google）：不可变，安全性最高\n   - 原则：够用就好，不需要完整 OS\n\n4. 安全实践：\n   - 以非 root 用户运行（USER appuser）\n   - 定期扫描 CVE（Trivy / Grype）\n   - 固定基础镜像版本（不用 latest）\n   - 最小化安装（--no-install-recommends）\n\n5. .dockerignore：\n   - 忽略 node_modules、.git、.env、__pycache__ 等\n   - 减少构建上下文大小\n   - 避免敏感文件不小心打包进镜像\n\n6. HEALTHCHECK：\n   - 定义健康检查命令\n   - K8s 自动检测容器健康状态\n\n7. LABEL 元数据：\n   - 添加 maintainer、构建日期、git commit、version 等\n   - 便于运维管理和问题排查\n\n示例 Dockerfile 结构：\n```dockerfile\nFROM node:20-slim AS build\nWORKDIR /app\nCOPY package.json .\nRUN npm ci --only=production\nFROM gcr.io/distroless/nodejs20-debian12\nCOPY --from=build /app /app\nUSER 1000\nEXPOSE 3000\nHEALTHCHECK --interval=30s CMD wget --no-verbose --tries=1 localhost:3000/health\nCMD [\"app.js\"]\n```\n\n扩展延伸：现代容器构建的趋势是使用 BuildKit（Docker 内置，支持并行构建和更好的缓存）和 Kaniko（在 K8s 内安全构建镜像，无需 Docker daemon）。",
+    "hints": [
+      "多阶段构建大幅减少镜像大小，分层顺序优化缓存命中",
+      "选择合适的基础镜像（Alpine 最小、Slim 兼容、Distroless 最安全）",
+      "关键实践：非 root 用户、.dockerignore、固定版本、CVE 扫描"
+    ],
+    "tags": [
+      "DevOps",
+      "Docker",
+      "容器",
+      "镜像优化"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "SRE 的核心原则与实践",
+    "content": "请介绍 SRE（Site Reliability Engineering）的核心原则和关键实践。",
+    "answer": "答案：SRE 是 Google 提出的将软件工程应用于运维的方法论。\n\n核心原则：\n\n1. 服务等级目标（SLO）：\n   - SLI（服务质量指标）：延迟、错误率、吞吐、饱和度\n   - SLO（目标）：99.9% 请求在 200ms 内完成\n   - SLA（协议）：对客户的承诺，通常比 SLO 宽松\n   - 错误预算 = 100% - SLO（如 99.9% SLO → 0.1% 的允许错误）\n\n2. 错误预算（Error Budget）：\n   - 核心思想：可用性是产品特性，不是绝对目标\n   - 消耗完错误预算 → 冻结新功能发布（专注稳定性）\n   - 平衡可靠性和创新速度\n\n3. 减少运维琐事（Toil）：\n   - 手工操作如重启、扩容等应通过自动化\n   - 目标：运维工程时间 ≤ 50%\n\n4. 监控和告警：\n   - 日志（Logs）：发生了什么\n   - 指标（Metrics）：计量什么\n   - 追踪（Traces）：单个请求的路径\n   - 告警规则：Page（立即处理）→ Ticket（工作时间处理）→ Log（记录不告警）\n\n5. 变更管理：\n   - 渐进式发布（金丝雀 → 逐步放量）\n   - 自动化回滚\n   - 变更评审\n\n5. 应急响应：\n   - 不可变基础设施：出现问题时直接替换而非修复\n   - 事后总结（Postmortem）：无责备的文化\n   - 行动项跟踪落地\n\n关键实践：\n\n1. 容量规划：基于 SLO 的容量预测和自动扩缩\n2. 混沌工程（Chaos Engineering）：主动注入故障验证系统韧性\n3. 部署自动化：滚动更新、蓝绿部署\n4. 自愈系统：自动检测和恢复常见故障\n\n扩展延伸：SRE 和传统运维的区别——SRE 不是岗位名称而是方法论。核心区别在于：SRE 用软件工程的方法解决运维问题（写代码替代手动操作），传统运维偏重流程和规则管理。",
+    "hints": [
+      "三大核心：SLO（目标）、SLI（指标）、错误预算（可用性容忍度）",
+      "关键原则：减少 Toil、监控三支柱（Logs/Metrics/Traces）、事后无责备",
+      "SRE ≠ 运维岗位——是用软件工程方法解决运维问题的方法论"
+    ],
+    "tags": [
+      "DevOps",
+      "SRE",
+      "可靠性",
+      "监控"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "基础设施即代码的工具链",
+    "content": "请对比 Terraform、Pulumi 和 Ansible 三种基础设施即代码（IaC）工具的设计理念和使用方式。",
+    "answer": "答案：三种工具代表了 IaC 的不同设计方向——声明式、编程式和配置管理。\n\nTerraform：\n\n类型：声明式 IaC（Hashicorp Configuration Language）\n\n原理：\n- 通过 HCL 声明期望状态\n- Terraform Core 解析配置 → 构建资源图 → 生成执行计划 → Apply\n- 维护状态文件（State）跟踪实际资源\n\n特点：\n- 不可变基础设施（资源被修改时先销毁再重建）\n- Provider 插件化（AWS、Azure、GCP、K8s 等数千个）\n- 状态文件管理（本地/远程 + 锁）\n- 模块化和工作空间（Module / Workspace）\n- 适用：云资源创建和管理\n\nPulumi：\n\n类型：编程式 IaC（通用编程语言：TS/ Python/Go/Java）\n\n原理：\n- 使用 Python/TypeScript/Go 等语言编写基础设施配置\n- 自动推断依赖关系和执行顺序\n- 自动管理状态\n\n特点：\n- 通用编程语言的表达能力（循环、条件、函数、类）\n- 不需要学习 DSL（已有语言技能）\n- 可测试性（单元测试基础设施代码）\n- 适用：需要复杂逻辑的基础设施编排\n\nAnsible：\n\n类型：配置管理 + 编排（声明式 Playbook + 命令式模块）\n\n原理：\n- 通过 SSH 连接到目标机器执行任务\n- 幂等性设计（多次执行结果一致）\n- Agentless（不需要在目标机安装代理）\n\n特点：\n- YAML Playbook 语法\n- 面向现有服务器的配置管理\n- 应用部署和配置编排\n- 适用：服务器配置、应用部署\n\n对比：\n| 维度 | Terraform | Pulumi | Ansible |\n|------|-----------|--------|--------|\n| 范式 | 声明式 DSL | 编程式 | Playbook |\n| 状态管理 | 有（State File） | 有 | 无（幂等） |\n| 执行方式 | API 调用 | API 调用 | SSH 执行 |\n| 不可变 | 是 | 是 | 否（可变） |\n| 学习成本 | 中（HCL） | 高（语言+库） | 低（YAML） |\n\n选择建议：\n- 云资源管理 → Terraform（最成熟的生态）\n- 需要编程逻辑 → Pulumi\n- 服务器配置管理 → Ansible\n- 完美组合：Terraform 创建基础设施 + Ansible 配置服务器",
+    "hints": [
+      "Terraform：HCL 声明式，不可变基础设施，状态文件管理，最成熟的 IaC 生态",
+      "Pulumi：通用编程语言（TS/Python/Go），表达能力更强",
+      "Ansible：Agentless SSH 配置管理，适合服务器配置而非云资源创建"
+    ],
+    "tags": [
+      "DevOps",
+      "Terraform",
+      "Pulumi",
+      "Ansible",
+      "IaC"
+    ]
   }
 ]

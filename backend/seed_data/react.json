@@ -1060,5 +1060,100 @@
       "事件委托",
       "SyntheticEvent"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Fiber 架构",
+    "content": "请介绍 React Fiber 架构的设计目标及其如何实现可中断渲染。",
+    "answer": "答案：React Fiber 是 React 16 引入的新协调引擎，实现了可中断的异步渲染。\n\n设计目标：\n1. 将渲染拆分为可中断的小单元\n2. 为不同类型的更新分配优先级\n3. 支持并发模式（Concurrent Mode）\n\nFiber 节点：\n- 每个组件对应一个 Fiber 节点\n- Fiber 节点构成链表树（child、sibling、return）\n- 包含组件的状态、props、DOM 信息\n\n双缓冲（Double Buffering）：\n- current Fiber 树：当前屏幕上显示的内容\n- workInProgress Fiber 树：正在构建的新视图\n- 提交阶段（Commit）将 workInProgress 切换为 current\n\n工作流程：\n\n1. 协调阶段（Reconciliation Phase / Render Phase）：\n   - 可中断\n   - 遍历 Fiber 树，收集变更（增删改 DOM）\n   - 构建 workInProgress 树\n   - 调用 render 函数，返回新的子元素\n\n2. 提交阶段（Commit Phase）：\n   - 不可中断（同步执行）\n   - 将变更应用到 DOM\n   - 执行生命周期方法（componentDidMount/Update）\n   - 切换 Fiber 树\n\n优先级调度（Scheduler）：\n- Immediate：同步执行（最高优先级）\n- UserBlocking：用户交互（点击、输入）\n- Normal：普通更新\n- Low：低优先级（数据预取）\n- Idle：空闲时执行\n\n时间分片（Time Slicing）：\n- 每帧（16ms）预留 5ms 给 React\n- 5ms 到期后暂停渲染，让出主线程处理用户输入/动画\n- 浏览器空闲时继续渲染\n\nFiber 链表遍历：\n- 顶节点开始 → child → sibling → 回到父节点（return）\n- 深度优先遍历\n- 使用链表结构实现暂停和恢复（记录当前遍历位置）\n\n扩展延伸：React 18 的并发特性（startTransition、useDeferredValue、Suspense）都依赖 Fiber 架构。\"并发\"的本质是：更高优先级的更新可以中断正在进行的低优先级渲染。",
+    "hints": [
+      "Fiber 架构的目标：可中断渲染 + 优先级调度 + 并发模式",
+      "双 Fiber 树：current（当前屏幕） + workInProgress（构建中），Commit 后切换",
+      "两个阶段：Render Phase（可中断，收集变更） + Commit Phase（不可中断，应用到 DOM）"
+    ],
+    "tags": [
+      "React",
+      "Fiber",
+      "并发",
+      "渲染"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 状态管理策略对比",
+    "content": "请对比 React 的几种状态管理方案：Context、Redux、Zustand 和 Jotai。",
+    "answer": "答案：React 状态管理方案从内置到第三方，各有适用场景。\n\nReact Context：\n\n原理：\n- React 内置的跨组件数据传递机制\n- Provider 提供值，useContext 消费\n- 值变化时所有消费该 Context 的组件重新渲染\n\n优点：\n- 无需额外依赖\n- 使用简单\n\n缺点：\n- 不适合高频更新（所有消费者都会被通知）\n- 没有选择性子订阅（不能只监听部分值）\n- 无法避免中间组件的无关重渲染\n\n适用：主题、语言、用户认证信息等低频更新数据\n\nRedux / Redux Toolkit：\n\n原理：\n- 单向数据流：Action → Reducer → Store\n- 单一 Store，纯函数更新\n- 中间件处理副作用（Redux Thunk/Saga）\n\n优点：\n- 状态变化可预测、可追踪（DevTools）\n- 生态丰富\n- 适合复杂状态逻辑\n\n缺点：\n- 样板代码多（即使有了 Toolkit）\n- 概念较多（Action、Reducer、Middleware）\n- 学习曲线\n\n适用：复杂的大型应用、需要时间旅行调试的场景\n\nZustand：\n\n原理：\n- 基于 Flux 思想的轻量状态管理\n- create 创建 store，useStore 消费\n- 支持选择性子订阅\n\n优点：\n- 极简 API，无样板代码\n- 不依赖 Provider 包裹\n- 选择性子订阅避免不必要的重渲染\n\n适用：中小型应用、优先开发体验\n\nJotai：\n\n原理：\n- 原子状态模型（Atom-based）\n- 每个原子独立管理，组件按需订阅\n- 支持派生原子（atom 依赖另一个 atom）\n\n优点：\n- 细粒度订阅（只更新使用该原子的组件）\n- 组合灵活\n- 与 React 模型更自然\n\n适用：需要细粒度状态控制的场景\n\n选择建议：\n- 简单跨组件传值 → Context\n- 复杂应用需要 DevTools → Redux Toolkit\n- 追求开发体验 → Zustand\n- 细粒度性能优化 → Jotai\n\n扩展延伸：React 19 的 use() hook 可以直接读取 Context（use(Context)），取消了 useContext 的限制条件。Server Components 的出现改变了状态管理的格局——数据源从客户端状态转向服务端数据请求。",
+    "hints": [
+      "Context：内置、简单、不适合高频更新（主题/语言/用户信息）",
+      "Redux：单一 Store、可预测、生态丰富（复杂大型应用）",
+      "Zustand：极简 API、选型订阅；Jotai：原子模型、细粒度控制"
+    ],
+    "tags": [
+      "React",
+      "状态管理",
+      "Redux",
+      "Zustand"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React hooks 的规则与实现原理",
+    "content": "请介绍 React hooks 的使用规则及其链式调用实现的底层原理。",
+    "answer": "答案：Hooks 是 React 16.8 引入的函数组件状态和副作用机制。\n\n使用规则：\n\n1. 只在函数组件或自定义 Hook 中调用 Hook\n2. 只在顶层调用 Hook（不能在条件、循环、嵌套函数中调用）\n3. 命名以 use 开头（自定义 Hook 的约定）\n\n为什么不能条件调用：\n- Hook 的调用顺序是 React 关联状态和组件的关键\n- 每次渲染，Hook 按相同的顺序执行\n- 若条件跳过某个 Hook，顺序错乱导致状态错位\n\n实现原理（基于 Fiber）：\n\n1. 链表结构：\n   - 每个 Fiber 节点维护一个 memorizedState 链表\n   - 链表的每个节点对应一个 Hook\n   - 节点包含：state、queue（更新队列）、next（指向下一个 Hook）\n\n2. 挂载阶段（mount）：\n   - mountState（useState）：创建 Hook 节点，初始化 state\n   - mountEffect（useEffect）：创建 Hook 节点，保存 effect 回调\n   - mountRef（useRef）：创建 Hook 节点，初始化 ref\n\n3. 更新阶段（update）：\n   - 按顺序遍历 Hook 链表\n   - updateState：取当前 Hook 节点的 state\n   - updateEffect：比对依赖数组，决定是否重新执行\n\n关键 Hook 的实现：\n\nuseState：\n- 内部基于 useReducer\n- dispatch 将更新加入 queue\n- 调度重新渲染\n\nuseEffect：\n- 存储 effect 对象（create、deps、destroy）\n- 提交阶段执行上一个 effect 的 destroy\n- 提交阶段后执行当前 effect 的 create\n\nuseRef：\n- 返回 { current: initialValue }\n- 同一个对象（复用 Fiber 节点）\n\nuseMemo/useCallback：\n- 存储依赖数组和计算结果\n- 比对依赖决定是否重新计算\n\n扩展延伸：React 19 的 use() Hook 是一个新原语——可以直接在条件/循环中使用。它还支持读取 Promise（替代 useEffect + fetch 模式）和 Context（替代 useContext）。",
+    "hints": [
+      "规则：只在函数组件顶层调用（不在条件/循环中），保证每次渲染的调用顺序一致",
+      "实现：Fiber 的 memorizedState 链表，每次渲染按顺序遍历链表取状态",
+      "核心 Hook 原理：useState（基于 useReducer + dispatch 调度）、useEffect（create/destroy 在 Commit 前后执行）"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "Fiber",
+      "useState"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 合成事件与事件委托",
+    "content": "请介绍 React 的合成事件（SyntheticEvent）系统及其事件委托机制。",
+    "answer": "答案：React 合成事件是跨浏览器兼容的封装事件系统。\n\n合成事件（SyntheticEvent）：\n\n是什么：\n- React 对原生 DOM 事件的跨浏览器封装\n- 统一的接口（符合 W3C 规范）\n- 自动处理浏览器差异（事件属性、默认行为阻止方式）\n\n特点：\n- 事件池机制：SyntheticEvent 对象会被重用\n- 事件回调执行后，合成事件对象的属性被清空\n- 异步访问事件需要 event.persist()（React 17 后淘汰了事件池）\n\n事件委托：\n\nReact 16 的做法：\n- 所有事件绑定到 document 上\n- React 16.4 后绑定到 root 的 DOM 容器（#root）\n\nReact 17+ 的做法：\n- 绑定到 React 挂载的根节点（rootNode）\n- 而非 document\n\n好处：\n- 减少事件监听器数量（无论多少子组件，只绑定一个根监听器）\n- 内存优化\n- 动态添加/删除元素不需要重新绑定事件\n\n为什么 React 17 改为绑定到 root：\n- 多个 React 版本共存时（嵌套微前端），document 监听器互相干扰\n- root 监听器只会收到该 React 树内部冒泡的事件\n- 更安全、更隔离\n\n事件处理流程：\n1. 原生事件触发（浏览器创建原生 Event）\n2. 事件冒泡到 root 节点\n3. React 的 root 监听器收听到事件\n4. React 创建 SyntheticEvent 对象\n5. 遍历 Fiber 树，收集事件处理的回调（从触发节点到 root）\n6. 按顺序执行回调（捕获阶段从上到下，冒泡阶段从下到上）\n7. SyntheticEvent 对象被回收\n\n扩展延伸：React 18 自动批处理（Automatic Batching）与事件系统协同——在合成事件中的多次 setState 自动批处理为一组更新。在 setTimeout、Promise、原生事件中也会自动批处理（不再需要 unstable_batchedUpdates）。",
+    "hints": [
+      "SyntheticEvent：跨浏览器封装，统一接口，自动处理浏览器差异",
+      "事件委托：React 17+ 绑定到 root 节点（非 document），单监听器代理所有事件",
+      "React 18 自动批处理：合成事件中多次 setState 自动合并为一次更新"
+    ],
+    "tags": [
+      "React",
+      "合成事件",
+      "事件委托",
+      "SyntheticEvent"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 的 Refs 与 forwardRef",
+    "content": "请介绍 React 中 Ref 的多种使用方式、forwardRef 的作用以及 useImperativeHandle 的用途。",
+    "answer": "答案：Ref（Reference）提供了一种直接访问 DOM 节点或 React 组件实例的方式。\n\nRef 的使用方式：\n\n1. useRef：\n   - 函数组件的 ref 创建方式\n   - 返回 { current: initialValue } 的可变对象\n   - current 变化不触发重新渲染\n   - 用途：DOM 引用、保存可变值（闭包陷阱解决）\n\n2. createRef：\n   - 类组件的 ref 创建方式\n   - 每次渲染创建新对象\n   - 不推荐在函数组件中使用\n\n3. callback ref：\n   - 更精细的控制\n   - 组件挂载时调用回调（参数为 DOM 元素）\n   - 卸载时调用回调（参数为 null）\n   - 可封装为 useEffect 的依赖\n\nforwardRef：\n\n为什么需要：\n- Ref 属性不是 prop，不会自动传递\n- 函数组件默认没有实例，不能直接接收 ref\n\n用法：\n```jsx\nconst Child = forwardRef((props, ref) => {\n  return <input ref={ref} />\n})\n// 父组件：<Child ref={inputRef} />\n```\n\nuseImperativeHandle：\n\n作用：\n- 自定义暴露给父组件的实例值\n- 限制父组件可以调用的方法\n- 不暴露整个 DOM 或组件实例\n\n```jsx\nconst Child = forwardRef((props, ref) => {\n  useImperativeHandle(ref, () => ({\n    focus: () => inputRef.current.focus(),\n    validate: () => { /* 验证逻辑 */ }\n  }))\n  return <input ref={inputRef} />\n})\n```\n\nRef 的典型应用场景：\n1. 管理焦点（输入框自动聚焦）\n2. 触发动画\n3. 集成第三方 DOM 库（D3、Chart.js）\n4. 视频/音频播放控制\n5. 测量 DOM 尺寸（getBoundingClientRect）\n\nReact 19 的 ref 改进：\n- ref 可以作为 prop 直接传递（不再需要 forwardRef）\n- 函数组件可以直接接收 ref prop\n- \\<input ref={ref} /> 在任何组件中都可以工作（如果组件内部透传了 ref）\n\n扩展延伸：ref 转发在组件库开发中非常常见——高定组件需要将 ref 传递到实际的 DOM 元素。Headless UI 库（如 Radix UI）广泛使用 forwardRef + useImperativeHandle 来提供受控 API。",
+    "hints": [
+      "useRef：函数组件创建 ref，返回 { current } 可变对象（不触发重渲染）",
+      "forwardRef：将 ref 透传给子组件（函数组件不自带 ref 接收能力）",
+      "useImperativeHandle：限制暴露给父组件的方法（安全封装）"
+    ],
+    "tags": [
+      "React",
+      "Ref",
+      "forwardRef",
+      "useImperativeHandle"
+    ]
   }
 ]

@@ -1076,5 +1076,100 @@
       "分段",
       "分页"
     ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CPU 缓存一致性协议（MESI）",
+    "content": "请介绍 CPU 缓存一致性协议 MESI 的四种状态以及缓存一致性优化（Store Buffer、Invalidation Queue）。",
+    "answer": "答案：MESI 协议是维护多核 CPU 缓存一致性的核心协议。\n\nMESI 四种状态：\n\n1. M（Modified，已修改）：\n   - 该缓存行只在当前核的缓存中\n   - 数据已被修改，与主存不一致\n   - 写回主存前不能有其他核读取\n\n2. E（Exclusive，独占）：\n   - 该缓存行只在当前核的缓存中\n   - 数据与主存一致\n   - 其他核读取时变为 S\n\n3. S（Shared，共享）：\n   - 该缓存行在多个核的缓存中都存在\n   - 数据与主存一致\n   - 任何核修改时需要通知其他核失效\n\n4. I（Invalid，无效）：\n   - 该缓存行无效\n   - 需要读取时必须从主存或其他核获取\n\n状态转换（总线嗅探）：\n- Local Read：读本地缓存\n- Local Write：写本地缓存\n- Remote Read：其他核读取该缓存行\n- Remote Write：其他核写入该缓存行\n\n伪共享（False Sharing）：\n- 两个不同变量在同一缓存行中\n- 核 A 修改变量 X → 整行标记为 M\n- 核 B 修改变量 Y → 需要重新加载整行\n- 频繁失效导致性能下降\n- 解决：缓存行填充（@Contended / padding）\n\nStore Buffer（存储缓冲区）：\n- 问题：M 状态的缓存行失效前，写操作需要等待其他核的 Invalidate ACK\n- 解决：写操作先写入 Store Buffer，CPU 继续执行\n- 副作用：Store Buffer 导致写操作的乱序（CPU 看到自己的写，但其他核看不到）\n\nInvalidation Queue：\n- 问题：Invalide 消息的处理需要时间\n- 解决：收到 Invalidate 请求时先入队，立即返回 ACK\n- 副作用：Invalidation Queue 导致读操作的乱序（CPU 读到的可能是过期值）\n\n内存屏障（Memory Barrier）：\n- 写屏障（Store Barrier）：确保 Store Buffer 中的操作刷到缓存\n- 读屏障（Load Barrier）：确保 Invalidation Queue 中的请求被处理\n- 全屏障：同时保证读写有序\n\n扩展延伸：Java volatile 关键字的底层实现：volatile 写 = 插入 StoreStore + StoreLoad 屏障；volatile 读 = 插入 LoadLoad + LoadStore 屏障。",
+    "hints": [
+      "MESI 四种状态：Modified（已修改）、Exclusive（独占）、Shared（共享）、Invalid（无效）",
+      "伪共享：不同变量在同一个缓存行中，频繁失效影响性能（通过 padding 解决）",
+      "Store Buffer → 写乱序；Invalidation Queue → 读乱序；内存屏障解决乱序"
+    ],
+    "tags": [
+      "计算机体系结构",
+      "CPU",
+      "缓存一致性",
+      "MESI"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RAID 级别的原理与对比",
+    "content": "请介绍常见的 RAID 级别（RAID 0/1/5/6/10）的原理、性能和容错能力。",
+    "answer": "答案：RAID（Redundant Array of Independent Disks）通过多块磁盘组合提供性能或容错。\n\n各 RAID 级别：\n\nRAID 0（条带化，Striping）：\n- 原理：数据分块写入多块磁盘\n- 容量：N × 单盘容量（100% 利用率）\n- 性能：读写都大幅提升（并行读写）\n- 容错：无（一块盘坏 = 所有数据丢失）\n- 最少磁盘：2 块\n\nRAID 1（镜像，Mirroring）：\n- 原理：数据同时写入两块或多块磁盘\n- 容量：单盘容量（50% 利用率）\n- 性能：读提升（可从多盘读）、写无提升\n- 容错：N-1 块盘故障\n- 最少磁盘：2 块\n\nRAID 5（分布式奇偶校验）：\n- 原理：数据和校验信息分布在所有磁盘\n- 容量：N-1 × 单盘容量\n- 性能：读好、写差（需要计算校验）\n- 容错：1 块盘故障\n- 最少磁盘：3 块\n- 写惩罚：4 次 I/O（读旧数据、读旧校验、写新数据、写新校验）\n\nRAID 6（双奇偶校验）：\n- 原理：类似 RAID 5，但使用两种不同校验算法\n- 容量：N-2 × 单盘容量\n- 性能：读好、写更差\n- 容错：2 块盘故障\n- 最少磁盘：4 块\n- 写惩罚：6 次 I/O\n\nRAID 10（RAID 1+0，先镜像后条带）：\n- 原理：先做 RAID 1 镜像组，再做 RAID 0 条带\n- 容量：N/2 × 单盘容量（50% 利用率）\n- 性能：读写都好\n- 容错：每个镜像组中坏一块\n- 最少磁盘：4 块\n\n对比：\n| 级别 | 容量 | 读性能 | 写性能 | 容错 | 用途 |\n|------|------|--------|--------|------|------|\n| RAID 0 | 100% | 高 | 高 | 无 | 临时数据、缓存 |\n| RAID 1 | 50% | 高 | 中 | N-1 | 系统盘、日志 |\n| RAID 5 | (N-1)/N | 高 | 低 | 1 | 文件存储 |\n| RAID 6 | (N-2)/N | 高 | 最低 | 2 | 重要数据 |\n| RAID 10 | 50% | 最高 | 高 | 每组 1 | 数据库 |\n\n扩展延伸：现代存储系统中硬件 RAID 卡有缓存（BBU）可以吸收写惩罚。分布式存储系统（Ceph、HDFS）的纠删码（Erasure Coding）是 RAID 5/6 的泛化，支持更灵活的 N+M 冗余策略。",
+    "hints": [
+      "RAID 0（条带，无容错）、RAID 1（镜像，50% 利用率）、RAID 5（分布式奇偶校验，1 盘容错）",
+      "RAID 10 = RAID 1+0（先镜像后条带，读写都好，数据库推荐）",
+      "写惩罚：RAID 5=4 次 I/O，RAID 6=6 次 I/O（硬件 RAID 卡缓存可以缓解）"
+    ],
+    "tags": [
+      "计算机体系结构",
+      "RAID",
+      "存储",
+      "磁盘"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "字符编码与 Unicode",
+    "content": "请介绍 ASCII、Unicode、UTF-8 和 UTF-16 的关系以及乱码问题的原因。",
+    "answer": "答案：字符编码是计算机表示文本的核心基础设施。\n\nASCII（American Standard Code for Information Interchange）：\n- 7 位编码，128 个字符（0-127）\n- 包含英文字母、数字、标点和控制字符\n- 1 个字节存储（高位为 0）\n- 局限：只能表示英文和基本符号\n\nUnicode：\n- 字符集（不是编码方式），给每个字符分配唯一的码点（Code Point）\n- 格式：U+XXXX（如 U+4E2D 表示\"中\"）\n- 当前版本包含超过 15 万个字符\n- 平面（Plane）：BMP（基本多文种平面，U+0000~U+FFFF）包含常用字符\n\nUTF-8（Unicode Transformation Format - 8-bit）：\n- 变长编码（1~4 字节）\n- 兼容 ASCII（ASCII 字符用 1 字节表示）\n- 编码规则：\n  | 码点范围 | 字节数 | 格式 |\n  |----------|--------|------|\n  | U+0000~U+007F | 1 | 0xxxxxxx |\n  | U+0080~U+07FF | 2 | 110xxxxx 10xxxxxx |\n  | U+0800~U+FFFF | 3 | 1110xxxx 10xxxxxx 10xxxxxx |\n  | U+10000~U+10FFFF | 4 | 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx |\n- Internet 上最流行的编码（HTML/JSON/XML 默认）\n\nUTF-16：\n- 变长编码（2 或 4 字节）\n- BMP 字符用 2 字节，辅助平面用 4 字节（代理对）\n- Windows/Java 内部使用\n\n乱码原因：\n1. 编码/解码不一致：GBK 编码的文本用 UTF-8 解码\n2. 字节序错误：UTF-16 大小端不匹配\n3. 双重编码：UTF-8 文本被再次当作其他编码解码\n4. 缺字：字体缺少该字符的 glyph（显示为方框/问号）\n\n最佳实践：\n- 存储和传输统一使用 UTF-8\n- HTML 使用 <meta charset=\"UTF-8\">\n- JSON 默认 UTF-8\n- 数据库连接设置 UTF-8 字符集\n\n扩展延伸：Emoji 的编码是 Unicode 的有趣案例——Emoji 使用辅助平面（U+1F600+），在 UTF-8 中占 4 字节。零宽连接符（ZWJ, U+200D）可以将多个 Emoji 组合成一个（如 👨‍👩‍👧 = 👨 + ZWJ + 👩 + ZWJ + 👧）。",
+    "hints": [
+      "ASCII（7 位，128 字符）→ Unicode（字符集，每个字符有唯一码点）→ UTF-8（变长编码，兼容 ASCII，互联网主流）",
+      "UTF-8 规则：0x00-0x7F 用 1 字节，中文字符用 3 字节，Emoji 用 4 字节",
+      "乱码 = 编码和解码方式不一致，统一使用 UTF-8 是最佳实践"
+    ],
+    "tags": [
+      "计算机基础",
+      "字符编码",
+      "Unicode",
+      "UTF-8"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "中断与异常的处理流程",
+    "content": "请介绍 CPU 中断和异常的区别以及 Linux 的中断处理流程。",
+    "answer": "答案：中断和异常是 CPU 响应外部事件和内部错误的机制。\n\n中断（Interrupt）：\n\n定义：\n- 由硬件设备触发（异步）\n- 与当前执行的指令无关\n- 发生时间不可预测\n\n类型：\n- 外部中断：I/O 设备（键盘、网卡、磁盘）\n- 内部中断：CPU 内部（时钟中断、温度告警）\n- NMI（不可屏蔽中断）：严重硬件错误\n\n异常（Exception）：\n\n定义：\n- 由正在执行的指令触发（同步）\n- 与当前指令直接相关\n- 可重现（相同条件产生相同异常）\n\n类型：\n- 故障（Fault）：可修复的异常，修复后重新执行原指令\n  - 缺页异常（Page Fault）\n  - 除零错误\n- 陷阱（Trap）：主动触发，用于系统调用\n  - int 0x80 / syscall\n- 终止（Abort）：不可恢复的严重错误\n\nLinux 中断处理流程：\n\n1. 硬件中断信号到达 CPU\n2. CPU 保存当前上下文（寄存器、程序计数器）\n3. CPU 查找中断向量表（IDT），找到对应的处理函数\n4. 上半部（Top Half）：\n   - 快速处理硬件相关操作（确认中断、清除中断标志）\n   - 在关中断状态下执行\n   - 必须尽快完成\n5. 下半部（Bottom Half / SoftIRQ）：\n   - 执行实际的数据处理\n   - 在开中断状态下执行\n   - 可被其他中断抢占\n6. 恢复上下文，继续执行被中断的程序\n\n下半部的实现方式：\n- SoftIRQ：软中断（网络 RX/TX、定时器）\n- Tasklet：基于 SoftIRQ 的简化接口\n- Workqueue：可休眠的工作队列（进程上下文）\n\n扩展延伸：NAPI（New API）是现代网卡驱动的中断优化：高负载时自动从中断模式切换到轮询模式，减少中断风暴。MSI-X（Message Signaled Interrupts）让设备直接将中断写入指定 CPU，实现中断的负载均衡。",
+    "hints": [
+      "中断（异步，硬件触发）vs 异常（同步，指令触发）",
+      "异常分三类：Fault（可修复，重新执行）、Trap（系统调用）、Abort（不可恢复）",
+      "Linux 中断分两半：上半部（关中断，快速处理硬件）+ 下半部（开中断，实际数据处理）"
+    ],
+    "tags": [
+      "操作系统",
+      "中断",
+      "异常",
+      "Linux 内核"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "DNS 解析的完整过程",
+    "content": "请描述在浏览器输入网址后，DNS 解析的完整过程。",
+    "answer": "答案：DNS（Domain Name System）将域名解析为 IP 地址，是互联网的基础设施。\n\nDNS 解析的完整过程：\n\n1. 浏览器缓存检查：\n   - 浏览器先检查自己的 DNS 缓存\n   - Chrome：chrome://net-internals/#dns\n   - 命中则直接返回\n\n2. 操作系统缓存检查：\n   - 浏览器未命中 → 检查 OS 的 DNS 缓存\n   - Linux：nscd 或 systemd-resolved\n   - Windows：ipconfig /displaydns\n   - 命中则返回\n\n3. 本地 hosts 文件：\n   - OS 缓存未命中 → 检查 /etc/hosts\n   - 可手动添加域名映射\n   - 命中则返回\n\n4. 递归 DNS 查询（Local DNS Server）：\n   - 通常由 ISP 提供（如 114.114.114.114）\n   - 或配置的公共 DNS（8.8.8.8/1.1.1.1）\n   - 如果 Local DNS 缓存命中 → 直接返回\n\n5. 迭代查询（从根域名服务器开始）：\n   - Local DNS 向根域名服务器查询\n   - 根服务器返回顶级域名服务器地址（如 .com 的 TLD 服务器）\n   - Local DNS 向 TLD 服务器查询\n   - TLD 服务器返回权威域名服务器地址\n   - Local DNS 向权威域名服务器查询\n   - 域名服务器返回 IP 地址\n\n6. 返回结果：\n   - Local DNS 缓存结果\n   - 返回给操作系统\n   - 返回给浏览器\n   - 浏览器发起 HTTP 请求\n\nDNS 记录类型：\n- A：域名 → IPv4 地址\n- AAAA：域名 → IPv6 地址\n- CNAME：域名 → 另一个域名（别名）\n- MX：邮件交换记录\n- NS：域名服务器记录\n- TXT：文本记录（SPF、DKIM 验证）\n\n扩展延伸：DNS 优化技术——DNS 预解析（<link rel=\"dns-prefetch\">）、HTTP/3 的连接迁移减少 DNS 重新解析、Anycast 技术让同一 IP 在全球多个节点响应（如 1.1.1.1 和 8.8.8.8）。",
+    "hints": [
+      "解析顺序：浏览器缓存 → OS 缓存 → hosts 文件 → Local DNS → 根/TLD/权威服务器",
+      "递归查询（Local DNS 代表客户端查询）vs 迭代查询（逐级返回下一级服务器地址）",
+      "DNS 记录：A（IPv4）、AAAA（IPv6）、CNAME（别名）、MX（邮件）、TXT（验证）"
+    ],
+    "tags": [
+      "网络",
+      "DNS",
+      "域名解析",
+      "HTTP"
+    ]
   }
 ]

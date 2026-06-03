@@ -1341,5 +1341,70 @@
       "内联类",
       "值类型"
     ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Volatile 的内存语义",
+    "content": "在 Java 内存模型中，对 volatile 变量的写操作具有什么内存语义？",
+    "answer": "A) 只刷新写线程的本地缓存\nB) 将更改立即刷新到主内存，并使其他线程的该变量缓存失效\nC) 只对当前线程可见\nD) 在单核 CPU 上不生效",
+    "correct": "B",
+    "hints": [
+      "volatile 写 = 释放语义（Release），volatile 读 = 获取语义（Acquire）",
+      "volatile 禁止指令重排序（LoadLoad/StoreStore/LoadStore/StoreLoad 屏障）"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ScheduledThreadPoolExecutor 的核心",
+    "content": "ScheduledThreadPoolExecutor 使用什么数据结构来管理待执行的定时任务？",
+    "answer": "A) 红黑树\nB) 哈希表\nC) 延迟队列（DelayQueue/DelayedWorkQueue）\nD) 循环数组",
+    "correct": "C",
+    "hints": [
+      "DelayQueue 内部使用小顶堆（PriorityQueue）实现，堆顶是最早到期的任务",
+      "每次从队列中取任务时检查堆顶任务的延迟时间是否已到"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ForkJoinPool 的工作窃取调度",
+    "content": "ForkJoinPool 的工作窃取（Work-Stealing）算法中，每个工作线程从哪里获取任务？",
+    "answer": "A) 只从全局共享队列获取\nB) 优先处理自己的双向队列的头部任务，窃取时从其他线程队列的尾部获取\nC) 优先处理自己的双向队列的尾部任务，窃取时从其他线程队列的头部获取\nD) 所有线程从同一个优先队列中竞争获取任务",
+    "correct": "C",
+    "hints": [
+      "工作线程用自己的 LIFO 栈（尾部），窃取时从对方队列的头部（FIFO）",
+      "这种设计减少窃取时的竞争（窃取者和所有者操作队列的不同端）"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ThreadLocal 的内存泄漏",
+    "content": "ThreadLocal 内存泄漏的根本原因是什么？",
+    "answer": "A) ThreadLocalMap 的 Entry 强引用 Key\nB) ThreadLocalMap 的 Entry 的 Key 是 WeakReference，但 Value 是强引用\nC) 线程池中的线程永远不会被回收\nD) ThreadLocal 变量本身不会被 GC 回收",
+    "correct": "B",
+    "hints": [
+      "Entry 继承 WeakReference<ThreadLocal>，Key 是弱引用可被 GC 回收",
+      "但 Value 是强引用且 Entry 在线程池的线程中长期存活 → Value 泄漏"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "AQS 独占锁的获取流程",
+    "content": "在 AQS（AbstractQueuedSynchronizer）中，独占锁（如 ReentrantLock）的获取流程第一步是什么？",
+    "answer": "A) 直接进入等待队列\nB) 尝试 CAS 获取锁（state 0→1）\nC) 阻塞当前线程\nD) 检查等待队列是否为空",
+    "correct": "B",
+    "hints": [
+      "AQS 先尝试 CAS 获取锁（快速路径），失败后才进入等待队列",
+      "这种设计减少了锁竞争不激烈时的入队开销"
+    ]
   }
 ]

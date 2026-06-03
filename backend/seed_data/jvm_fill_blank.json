@@ -1033,5 +1033,117 @@
       "堆外内存",
       "NIO"
     ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "GC 停顿类型",
+    "content": "在 G1 GC 中，____ 停顿进行年轻代垃圾回收，____ 停顿进行全局并发标记和混合回收。",
+    "answer": {
+      "correct": [
+        [
+          "YGC",
+          "Young GC",
+          "年轻代GC"
+        ],
+        [
+          "Mixed GC",
+          "混合GC"
+        ]
+      ]
+    },
+    "hints": [
+      "G1 的 YGC 是 Stop-The-World 的，但通常非常快",
+      "Mixed GC 处理年轻代和老年代的混合回收，分多次完成"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "对象头 Mark Word",
+    "content": "在 64 位 JVM 中，对象头的 Mark Word 占用 ____ 字节。处于偏向锁状态时，Mark Word 中存储的是____。",
+    "answer": {
+      "correct": [
+        [
+          "8",
+          "8字节"
+        ],
+        [
+          "持有偏向锁的线程ID",
+          "线程ID"
+        ]
+      ]
+    },
+    "hints": [
+      "Mark Word 是 JVM 实现锁机制的关键数据结构，长度等于机器字长",
+      "偏向锁模式：存储线程 ID + epoch + 分代年龄 + 偏向锁标志位"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "方法区与 MetaSpace",
+    "content": "JDK 8 中永久代（PermGen）被移除，替代的是____。它与永久代的最大区别是使用____内存而非 JVM 堆内存。",
+    "answer": {
+      "correct": [
+        [
+          "元空间",
+          "MetaSpace",
+          "Metaspace"
+        ],
+        [
+          "本地内存",
+          "本地内存（Native Memory）",
+          "堆外"
+        ]
+      ]
+    },
+    "hints": [
+      "MetaSpace 使用操作系统本地内存（Native Memory），默认无上限",
+      "避免 PermGen 的 OOM（PermGen 大小固定且有限）"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ZGC 染色指针",
+    "content": "ZGC 使用____位地址空间来编码对象状态（标记、重映射、最终化），称为染色指针（Colored Pointers）。",
+    "answer": {
+      "correct": [
+        [
+          "64",
+          "64位",
+          "全"
+        ]
+      ]
+    },
+    "hints": [
+      "ZGC 将 64 位地址的高几位用于编码对象状态（而非直接寻址）",
+      "染色指针使 ZGC 可以在不访问对象的前提下判断对象状态"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "类加载双亲委派",
+    "content": "JVM 的类加载双亲委派模型中，如果一个类加载器收到类加载请求，它首先将请求____。防止 Java 核心 API 被篡改。",
+    "answer": {
+      "correct": [
+        [
+          "委派给父加载器",
+          "交给父加载器",
+          "委托给父类加载器"
+        ]
+      ]
+    },
+    "hints": [
+      "每个加载器先将请求委派给父加载器（依次向上到 Bootstrap ClassLoader）",
+      "父加载器找不到类时，子加载器才尝试自己加载"
+    ]
   }
 ]

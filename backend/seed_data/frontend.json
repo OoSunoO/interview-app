@@ -1046,5 +1046,100 @@
       "ES Module",
       "Tree Shaking"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "浏览器渲染流程与重排重绘",
+    "content": "请介绍浏览器从 HTML 到屏幕像素的渲染流程以及重排（Reflow）和重绘（Repaint）的区别。",
+    "answer": "答案：浏览器渲染引擎将 HTML/CSS 转化为屏幕上的像素。\n\n渲染流程：\n\n1. HTML 解析（Parse HTML）：\n   - 将 HTML 解析为 DOM 树（Document Object Model）\n   - 遇到 <script> 时暂停解析（默认阻塞）\n   - 遇到 <link> 时并行下载 CSS\n\n2. CSS 解析（Parse CSS）：\n   - 将 CSS 解析为 CSSOM 树（CSS Object Model）\n   - CSSOM 是反向的（从最具体的选择器开始）\n   - 构建 CSSOM 会阻塞渲染\n\n3. 合并（Attachment）：\n   - 将 DOM 树和 CSSOM 树合并为 Render 树\n   - Render 树只包含可见元素（display:none 不包含）\n   - 包含每个节点的样式和几何信息\n\n4. 布局（Layout / Reflow）：\n   - 计算每个可见元素的几何信息（位置、尺寸）\n   - 相对单位 → 绝对单位（如 rem → px）\n   - 盒模型计算（margin、border、padding、content）\n\n5. 绘制（Paint）：\n   - 将 Render 树绘制为像素\n   - 分层绘制（Paint Layers）\n   - 每个层独立绘制\n\n6. 合成（Composite）：\n   - 将多个层合成为最终图像\n   - 由合成线程完成（不占用主线程）\n\n重排（Reflow）：\n- 元素的几何属性发生改变时触发\n- 操作：修改宽高、边距、字体大小、添加/删除 DOM\n- 代价：需要从步骤 4 开始重新执行\n- 优化：\n  - 使用 class 替代多次 style 修改\n  - 使用 documentFragment 批量修改\n  - 使用 display:none 暂存再显示\n  - 将动画元素设为 fixed/absolute（不触发其他元素重排）\n\n重绘（Repaint）：\n- 元素的视觉属性改变但不影响布局\n- 操作：修改颜色、背景色、visibility、outline\n- 代价：只需要执行步骤 5\n- 比重排轻量\n\n合成（Composite）：\n- 使用 transform、opacity 触发的动画\n- 只在合成线程处理（不阻塞主线程）\n- 最佳性能：仅触发合成的属性（will-change 提示）\n\n扩展延伸：CSS 的 contain 属性可以限制某个元素的渲染影响范围（contain: layout style paint），告诉浏览器该元素的变更不会影响外部。这对于大型列表和复杂组件的优化非常有效。",
+    "hints": [
+      "渲染流程：HTML 解析 → CSS 解析 → Render 树 → Layout → Paint → Composite",
+      "重排（Reflow，几何变化，代价最高）→ 重绘（Repaint，视觉变化，代价中等）→ Composite（仅合成，最佳）",
+      "优化：transform/opacity 只触发合成、批量 DOM 操作、contain 限制影响范围"
+    ],
+    "tags": [
+      "前端",
+      "浏览器",
+      "渲染",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "跨域资源共享（CORS）",
+    "content": "请介绍浏览器的同源策略和跨域资源共享（CORS）机制。",
+    "answer": "答案：CORS 是浏览器实现跨域请求的安全机制。\n\n同源策略：\n\n定义：\n- 协议、域名、端口三者相同 → 同源\n- 不同源的页面不能互相读取资源\n- 例：https://a.com 不能读取 https://b.com 的数据\n\n限制：\n- Cookie、LocalStorage 不能跨域读取\n- DOM 不能跨域操作\n- AJAX 请求受同源策略限制\n\n不受限制的：\n- <script src=...>（JSONP 的基础）\n- <link rel=\"stylesheet\" href=...>\n- <img src=...>\n- <iframe src=...>\n\nCORS（Cross-Origin Resource Sharing）：\n\n简单请求：\n- 条件：GET/HEAD/POST + Content-Type 为 text/plain 等\n- 浏览器自动在请求头加 Origin\n- 服务器返回 Access-Control-Allow-Origin\n\n预检请求（Preflight）：\n- 条件：PUT/DELETE 或自定义 Content-Type 等\n- 浏览器先发 OPTIONS 请求（预检）\n- 服务器返回允许的 Method、Header、Origin\n- 浏览器确认后再发实际请求\n\n关键响应头：\n- Access-Control-Allow-Origin：允许的域名（* 或具体域名）\n- Access-Control-Allow-Methods：允许的 HTTP 方法\n- Access-Control-Allow-Headers：允许的自定义头\n- Access-Control-Allow-Credentials：是否允许携带 Cookie\n- Access-Control-Max-Age：预检结果缓存时间\n\n带 Cookie 的跨域请求：\n- withCredentials: true\n- Access-Control-Allow-Origin 不能为 *（必须是具体域名）\n- Access-Control-Allow-Credentials: true\n\n常见解决方案：\n1. 后端设置 CORS 头（最标准）\n2. Nginx 反向代理（同源代理跨域 API）\n3. JSONP（仅支持 GET，已逐渐淘汰）\n4. WebSocket（不受同源策略限制）\n\n扩展延伸：CORS 保护的是用户而非服务器。恶意脚本可以通过 CORS 发送请求（请求会到达服务器），但不能读取响应。CSRF 攻击的防护需要额外的 Token 验证（CORS 不防 CSRF）。",
+    "hints": [
+      "同源策略：协议+域名+端口必须一致，AJAX 跨域受限，<script>/<img>/<link> 不受限",
+      "简单请求：直接发带 Origin 头；预检请求：先 OPTIONS 再发实际请求",
+      "关键头：Access-Control-Allow-Origin、Allow-Methods、Allow-Credentials"
+    ],
+    "tags": [
+      "前端",
+      "CORS",
+      "安全",
+      "浏览器"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端性能优化关键指标",
+    "content": "请介绍前端性能优化的核心指标和优化策略。",
+    "answer": "答案：前端性能优化围绕用户体验的关键指标展开。\n\n核心指标（Web Vitals）：\n\n1. LCP（Largest Contentful Paint，最大内容绘制）：\n   - 衡量页面主要内容加载完成的时间\n   - 目标：≤ 2.5s\n   - 关注：首屏最大元素（图片、标题、视频）\n\n2. FID（First Input Delay，首次输入延迟）：\n   - 衡量页面交互响应速度\n   - 目标：≤ 100ms\n   - 关注：JavaScript 执行阻塞主线程\n   - 已被 INP（Interaction to Next Paint）取代\n\n3. CLS（Cumulative Layout Shift，累积布局偏移）：\n   - 衡量页面视觉稳定性\n   - 目标：≤ 0.1\n   - 关注：图片无尺寸导致的布局跳动\n\n4. TTFB（Time to First Byte，首字节时间）：\n   - 衡量服务器响应速度\n   - 目标：≤ 800ms\n\n5. FCP（First Contentful Paint，首次内容绘制）：\n   - 衡量页面首次有内容显示\n   - 目标：≤ 1.8s\n\n优化策略：\n\n1. 加载优化：\n   - 代码分割（Code Splitting）：按路由懒加载\n   - 图片优化：WebP/AVIF 格式、懒加载（loading=\"lazy\"）\n   - 资源预加载：<link rel=\"preload/prefetch/preconnect\">\n   - 压缩：Gzip/Brotli\n\n2. 渲染优化：\n   - 关键 CSS 内联（Critical CSS）\n   - 异步 JS：<script async/defer>\n   - 减少重排/重绘：transform 替代 top/left\n   - 虚拟列表：大量 DOM 时只渲染可见区域\n\n3. 缓存优化：\n   - Service Worker 缓存\n   - HTTP 缓存（Cache-Control、ETag）\n   - CDN 缓存\n\n4. JavaScript 优化：\n   - Tree Shaking 移除无用代码\n   - 长任务拆分（requestIdleCallback）\n   - 避免内存泄漏\n\n扩展延伸：Performance API 可以精确测量指标（performance.mark/measure）。Lighthouse 是最常用的性能审计工具。Core Web Vitals 是 Google 的 SEO 排名因素。",
+    "hints": [
+      "核心指标：LCP（加载，≤2.5s）、FID/INP（交互，≤100ms）、CLS（布局偏移，≤0.1）",
+      "加载优化：代码分割、图片压缩（WebP）、预加载、Brotli 压缩",
+      "渲染优化：Critical CSS 内联、异步 JS、transform 动画、虚拟列表"
+    ],
+    "tags": [
+      "前端",
+      "性能优化",
+      "Web Vitals",
+      "Lighthouse"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "浏览器缓存策略",
+    "content": "请介绍浏览器 HTTP 缓存的实现机制（强缓存和协商缓存）及缓存策略配置。",
+    "answer": "答案：浏览器 HTTP 缓存分为强缓存和协商缓存，通过响应头控制。\n\n强缓存（不需要请求服务器）：\n\n1. Expires（HTTP/1.0）：\n   - 指定绝对过期时间\n   - 例：Expires: Wed, 21 Oct 2025 07:28:00 GMT\n   - 问题：依赖客户端时间，可能不准确\n\n2. Cache-Control（HTTP/1.1，优先级更高）：\n   - max-age：相对过期时间（秒）\n   - 例：Cache-Control: max-age=3600\n   - public：允许所有代理缓存\n   - private：只允许浏览器缓存\n   - no-cache：每次需要向服务器验证（但可以缓存）\n   - no-store：禁止缓存\n   - immutable：资源永远不会变（配合长 max-age）\n\n协商缓存（需要向服务器询问是否可用）：\n\n1. Last-Modified / If-Modified-Since：\n   - 服务器返回 Last-Modified（文件最后修改时间）\n   - 客户端下次请求带 If-Modified-Since\n   - 服务器比较时间：未修改 → 304 Not Modified；已修改 → 200 + 新资源\n   - 问题：时间精度（秒级）、可能无意义修改\n\n2. ETag / If-None-Match（优先级更高）：\n   - 服务器返回 ETag（文件内容哈希）\n   - 客户端下次请求带 If-None-Match\n   - 服务器比较哈希：一致 → 304；不一致 → 200 + 新资源\n   - 精确校验（内容不变则 ETag 不变）\n\n缓存策略配置：\n\n| 资源类型 | 策略 | 说明 |\n|----------|------|------|\n| HTML | no-cache | 每次验证 |\n| JS/CSS | max-age=3600 + 文件名哈希 | 部署时文件名变化自动更新 |\n| 图片 | max-age=31536000 + 文件名哈希 | 一年缓存，变化时改名 |\n| API 响应 | no-cache 或短 max-age | 根据数据实时性要求 |\n\n缓存位置（从快到慢）：\n1. Service Worker（可编程缓存，最灵活）\n2. Memory Cache（内存缓存，页面关闭后清除）\n3. Disk Cache（磁盘缓存，持久化，最常用）\n4. Push Cache（HTTP/2 推送缓存，生命周期极短）\n\n扩展延伸：Service Worker 可以实现离线可用（Cache-First 策略：优先从缓存读取，网络更新缓存）。Workbox 是封装 Service Worker 缓存的工具库，支持多种策略（Stale-While-Revalidate、Network-First、Cache-Only）。",
+    "hints": [
+      "强缓存：Expires（绝对时间）/Cache-Control max-age（相对时间），不走服务器",
+      "协商缓存：Last-Modified/If-Modified-Since（时间）和 ETag/If-None-Match（哈希），返回 304",
+      "最佳实践：HTML 用 no-cache，JS/CSS/图片用文件名哈希 + 长期 max-age"
+    ],
+    "tags": [
+      "前端",
+      "缓存",
+      "HTTP",
+      "浏览器"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端模块化发展历程",
+    "content": "请介绍前端模块化方案的发展历程：IIFE、CommonJS、AMD、ES Module 的演进和差异。",
+    "answer": "答案：前端模块化经历了从全局变量到标准模块系统的演进。\n\nIIFE（立即执行函数表达式）：\n原理：利用函数作用域创建私有变量\n```javascript\nvar Module = (function() {\n  var privateVar = 0;\n  return { get: function() { return privateVar; } };\n})();\n```\n局限：依赖全局变量传递依赖\n\nCommonJS：\n原理：同步加载，module.exports 导出，require 导入\n适用：Node.js（服务端）\n```javascript\n// a.js\nmodule.exports = { foo: 1 };\n// b.js\nconst a = require('./a');\n```\n优点：语法简单\n缺点：同步加载不适用于浏览器（导致阻塞）\n\nAMD（Asynchronous Module Definition）：\n原理：异步加载，define 定义，require 导入\n代表：RequireJS\n```javascript\ndefine(['dep'], function(dep) {\n  return { foo: dep.bar };\n});\n```\n优点：异步加载适用于浏览器\n缺点：语法复杂，过早优化\n\nES Module（ESM）：\n原理：静态分析，import/export 关键字\n适用：浏览器和 Node.js（现代标准）\n```javascript\n// a.js\nexport const foo = 1;\n// b.js\nimport { foo } from './a.js';\n```\n优点：静态分析（Tree Shaking）、循环依赖处理良好、语法简洁\n\nUMD（Universal Module Definition）：\n兼容 CommonJS + AMD + 全局变量\n通常由构建工具（Webpack/Rollup）自动生成\n\n对比：\n| 方案 | 加载方式 | 适用环境 | 静态分析 |\n|------|----------|----------|----------|\n| IIFE | 同步 | 所有 | 否 |\n| CommonJS | 同步 | Node.js | 否 |\n| AMD | 异步 | 浏览器 | 否 |\n| ESM | 异步 | 浏览器+Node | 是（Tree Shaking） |\n\n扩展延伸：ES Module 是现代前端标准，得到所有主流浏览器和 Node.js（12+）的原生支持。Vite 开发模式利用 ESM 实现极快的冷启动（无需打包整个项目），生产模式使用 Rollup 打包。",
+    "hints": [
+      "IIFE（全局变量依赖）-> CommonJS（同步，Node.js）-> AMD（异步，浏览器）-> ES Module（标准，Tree Shaking）",
+      "ES Module 是现代标准，支持静态分析（Tree Shaking 的基础）",
+      "Vite 利用 ESM 实现极速冷启动（不需要先打包整个项目）"
+    ],
+    "tags": [
+      "前端",
+      "模块化",
+      "ES Module",
+      "CommonJS"
+    ]
   }
 ]

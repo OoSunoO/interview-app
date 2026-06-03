@@ -1033,5 +1033,100 @@
       "二叉树",
       "遍历"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Treap 的原理与操作",
+    "content": "请介绍 Treap（树堆）的数据结构原理及其核心操作的实现思路。",
+    "answer": "答案：Treap 是一种随机化的二叉搜索树，结合了 BST（二叉搜索树）和 Heap（堆）的性质。\n\n核心原理：\n1. 每个节点存储（key, priority）二元组\n   - key 满足 BST 性质：左子树 key < 节点 key < 右子树 key\n   - priority 满足 Heap 性质：父节点 priority > 子节点 priority（大顶堆）\n2. priority 随机生成（如随机整数），保证树的高度期望为 O(log n)\n\n核心操作：\n\n1. 插入（Insert）：\n   - 按 BST 规则插入新节点\n   - 如果优先级违反 heap 性质，旋转调整\n   - 通过左旋/右旋将节点上浮（类似堆的向上调整）\n\n2. 删除（Delete/Erase）：\n   - 将目标节点旋转到叶子位置\n   - 如果左子树存在，右旋（让左孩子上来）；如果右子树存在，左旋\n   - 重复直到节点成为叶子，直接删除\n\n3. 分裂（Split）与合并（Merge）——实现区间操作的基础：\n   - Split(root, key)：将树分裂为 ≤ key 和 > key 的两棵树\n     - 如果 root.key ≤ key：递归分裂右子树\n     - 如果 root.key > key：递归分裂左子树\n   - Merge(left, right)：合并两棵树（left 所有 key ≤ right 所有 key）\n     - 以 priority 为依据决定新根\n\n扩展延伸：\n- 无旋 Treap（FHQ Treap）用 Split + Merge 实现所有操作，省去旋转逻辑\n- 相比 Splay：Treap 的期望复杂度稳定，没有\"摊还\"的不确定性\n- 相比红黑树：实现更简单，但常数稍大\n- 应用：区间反转（文艺平衡树）、可持久化平衡树",
+    "hints": [
+      "每个节点有 key（BST）+ priority（Heap），priority 随机生成",
+      "核心操作：旋转维护堆性质，Split/Merge 实现区间操作",
+      "FHQ Treap（无旋 Treap）只用 Split + Merge，实现更简洁"
+    ],
+    "tags": [
+      "算法",
+      "数据结构",
+      "Treap",
+      "平衡树"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "DP 优化：凸包优化与李超树",
+    "content": "请介绍 DP 优化中的凸包优化（Convex Hull Trick）和李超线段树的原理及适用场景。",
+    "answer": "答案：凸包优化（CHT）和李超树是处理具有线性递推特性的 DP 优化的两种方法。\n\n凸包优化（Convex Hull Trick）：\n- 适用场景：DP[i] = min/max(a[i]*x[j] + b[j]) 形式\n  - 其中 a[i] 是查询斜率，x[j] 和 b[j] 来自之前的 DP 状态\n\n- 核心思想：将每个转移视为一条直线 y = mx + b，DP 查询等价于求给定 x 处的直线最值\n\n- 变体：\n  a) 斜率单调 + 查询单调：双端队列维护凸包（O(n)）\n  b) 斜率有序 + 查询任意：二分查找（O(n log n)）\n  c) 斜率任意 + 查询任意：动态凸包 / Li Chao Tree（O(n log C)）\n\n- 斜率单调时维护凸包：\n  - 插入新直线时检查队尾两条线与新线的交点，弹出不会贡献的线\n  - 查询时根据 x 的单调性移动队首指针\n\n李超线段树（Li Chao Segment Tree）：\n- 核心思想：线段树每个节点维护一条最优直线（在区间中点处取最值）\n- 插入直线：递归比较——如果新直线在区间中点更优，替换并下传旧直线\n- 查询点：沿根到叶子的路径，一路取 max/min 值\n- 复杂度：O(log C) 每次插入/查询（C 是值域范围）\n\n- 优势：不需要斜率或查询的单调性，可以处理任意直线\n- 扩展：支持线段（区间插入）+ 持久化\n\n扩展延伸：\n- DP 优化的常见路径：暴力 DP → 单调队列 → 斜率优化 → CHT → Li Chao\n- 当决策变量同时出现在斜率和截距中时（斜率优化），还需要看单调性决定用哪种子方法\n- 近年竞赛中 Li Chao Tree 更受欢迎（处理任意场景，实现相对固定）",
+    "hints": [
+      "CHT：将 DP 转移视为直线最值查询，斜率/查询单调可 O(n)",
+      "李超树：线段树维护最优直线，支持任意斜率和查询，O(log C)",
+      "Li Chao Tree 更通用但常数大；CHT 在单调条件下更快更简单"
+    ],
+    "tags": [
+      "算法",
+      "DP优化",
+      "凸包",
+      "李超树"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "树上启发式合并",
+    "content": "请介绍树上启发式合并（DSU on Tree / Sack）的原理、复杂度分析和适用场景。",
+    "answer": "答案：树上启发式合并（DSU on Tree）是一种离线处理子树查询问题的算法，由 Lomsat gelral 问题推广。\n\n核心原理：\n- 问题模型：对树上每个节点，查询其子树中满足某种条件的信息\n- 朴素做法：对每个节点 DFS 遍历子树 O(n²)\n- 关键洞察：只处理每个节点的\"轻\"子树，重子树的结果可以直接复用\n\n算法步骤：\n1. 计算每个节点的重儿子（size 最大的子节点）\n2. DFS 遍历：\n   a) 先处理所有轻儿子（处理完清除贡献）\n   b) 处理重儿子（保留贡献不清除）\n   c) 遍历所有轻子树的节点，将其贡献添加到当前答案\n   d) 当前节点的答案 = 已维护的信息\n   e) 如果是父节点的轻儿子，清除当前子树所有贡献\n\n复杂度分析：\n- 关键：每个节点被添加/清除的次数 = 它到根的路径上轻边数量 = O(log n)\n- 每个节点最多被处理 O(log n) 次\n- 总复杂度 O(n log n)\n- 空间复杂度 O(n)\n\n适用场景：\n1. 子树众数查询（经典 Lomsat gelral）\n2. 子树中不同颜色数量\n3. 子树中满足某种条件的节点对数\n4. 每一层节点的分类统计\n\n限制：\n- 只能处理离线查询\n- 只能处理子树查询（不能处理路径查询）\n- 需要可以在 O(1) 或 O(log n) 时间内增删贡献的维护结构\n\n扩展延伸：\n- 与莫队的关系：DSU on Tree 本质上是树上的莫队算法\n- 与长链剖分的区别：长链剖分优化的是深度相关 DP，DSU 优化的是子树查询\n- 当维护结构不支持删除时（如并查集），可以用长链剖分替代",
+    "hints": [
+      "思想：重儿子贡献保留，轻儿子贡献清除。每个节点被处理 O(log n) 次（到根路径轻边数）",
+      "适用于离线子树查询问题，复杂度 O(n log n)",
+      "限制：只支持子树查询，不支持路径查询；需要可增删的维护结构"
+    ],
+    "tags": [
+      "算法",
+      "树上启发式合并",
+      "DSU on Tree",
+      "树"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Pollard-Rho 质因数分解",
+    "content": "请介绍 Pollard-Rho 质因数分解算法的原理及其时间复杂度。",
+    "answer": "答案：Pollard-Rho 是一种概率算法，用于对大整数进行快速质因数分解。\n\n核心原理：\n1. 生日悖论：在 1~N 的范围内随机取数，期望约 √(πN/2) 次就会遇到重复\n2. 假设 p 是 N 的一个小因子，随机取两个数 x ≡ y (mod p) 的概率远高于 x ≡ y (mod N)\n3. 用 GCD 检测碰撞：如果 gcd(|x-y|, N) > 1，则找到了一个因子\n\n算法流程：\n1. 先用 Miller-Rabin（确定性）判断 N 是否为质数\n2. 如果是质数：直接返回\n3. 如果不是：\n   a) 自定义伪随机函数 f(x) = (x² + c) mod N\n   b) Floyd 判圈算法（快慢指针）生成序列\n   c) 当快指针追上慢指针或检测到因子时退出\n   d) 如果找到因子 d（1 < d < N），递归分解 d 和 N/d\n   e) 如果没找到，更换参数 c 重试\n\nFloyd 判圈实现：\n- slow = f(slow), fast = f(f(fast))\n- d = gcd(|slow - fast|, N)\n- 参数调整：c 从 1 开始递增\n\n时间复杂度：\n- 期望 O(n^(1/4))，n 为 N 的位数\n- 实际表现：分解 10^18 量级的数只需毫秒级\n- 最坏情况（N 是质数）：由 Miller-Rabin 判断后立即返回\n\n变体改进：\n- Brent 改进：用乘积累积避免频繁 GCD（批处理 gcd）\n- 分段 GCD：每积攒一定数量的差值才做一次 GCD，减少大数取模开销\n\n扩展延伸：\n- Pollard-Rho + Miller-Rabin 组合是竞赛中处理大数质因数分解的标准方案\n- Python 的 sympy.ntheory.factorint 使用的就是 Pollard-Rho + Miller-Rabin\n- 量子计算背景下，Shor 算法可以多项式时间分解大数，但目前不可行",
+    "hints": [
+      "生日悖论 + 随机碰撞检测：用 GCD(|x-y|, N) 寻找小因子",
+      "Floyd 判圈 + 伪随机函数 f(x) = (x²+c) mod N 生成序列",
+      "期望复杂度 O(n^(1/4))，通常配合 Miller-Rabin 先判断质数"
+    ],
+    "tags": [
+      "算法",
+      "质因数分解",
+      "Pollard-Rho",
+      "数论"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Splay 树的核心操作与旋转",
+    "content": "请介绍 Splay 树的核心操作逻辑以及 Zig、Zig-Zig、Zig-Zag 三种旋转的触发条件。",
+    "answer": "答案：Splay 树是一种自调整的二叉搜索树，通过将最近访问的节点旋转到根来优化后续访问。\n\n核心思想：\n- 每次访问（查找/插入/删除）后将被访问节点旋转到根\n- 摊还复杂度 O(log n)，但单次最坏 O(n)\n- 不需要维护额外信息（如红黑树的颜色、Treap 的优先级）\n\n三种旋转操作：\n\n1. Zig（单旋转）：\n   - 条件：目标节点是根的直接子节点（父节点是根）\n   - 操作：单次左旋或右旋\n   - 示例：如果 x 是根的左孩子 → 右旋（rotateRight(parent)）\n\n2. Zig-Zig（同向双旋转）：\n   - 条件：目标节点、父节点、祖父节点在一条直线上（都是左孩子或都是右孩子）\n   - 操作：先旋转父节点和祖父节点，再旋转目标节点和父节点\n   - 即：两次同向旋转\n   - 效果：将目标节点提升两层\n\n3. Zig-Zag（反向双旋转）：\n   - 条件：目标节点和父节点的方向相反（如父是左孩子，目标是有孩子）\n   - 操作：先旋转目标节点和父节点，再旋转目标节点和祖父节点\n   - 即：两次反向旋转\n   - 效果：将目标节点提升两层\n\n核心操作：\n\n1. Splay(x)：将节点 x 旋转到根\n   - 循环直到 x 成为根\n   - 当前层决定用 Zig / Zig-Zig / Zig-Zag\n\n2. Find(key)：\n   - 按 BST 规则查找\n   - 查找完成后 Splay 最终访问的节点到根\n\n3. Insert(key)：\n   - 按 BST 规则插入\n   - Splay 新插入的节点到根\n\n4. Delete(key)：\n   - Splay 目标节点到根\n   - 将左右子树合并（左子树的 max 作为新的根）\n\n5. Split/Merge：\n   - Split(key)：Splay(key) 后以根为界分开\n   - Merge(left, right)：Splay(left 的最大节点到根，接上 right）\n\n扩展延伸：Splay 在 LCT（Link-Cut Tree）中是不可或缺的基础——LCT 中的 Expose 操作本质就是 Splay。相比 Treap，Splay 的摊还分析更复杂，但支持区间反转等高级操作（文艺平衡树）。",
+    "hints": [
+      "Zig：父节点是根 → 单次旋转；Zig-Zig：同向路径 → 旋转父再旋子",
+      "Zig-Zag：反向路径 → 先旋子再旋父（两次反向旋转）",
+      "摊还复杂度 O(log n)，常用于 LCT（Link-Cut Tree）的基础"
+    ],
+    "tags": [
+      "算法",
+      "数据结构",
+      "Splay",
+      "平衡树"
+    ]
   }
 ]

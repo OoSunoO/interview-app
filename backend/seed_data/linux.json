@@ -1059,5 +1059,100 @@
       "工具",
       "火焰图"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 进程调度策略",
+    "content": "请介绍 Linux 的进程调度策略（SCHED_OTHER/SCHED_FIFO/SCHED_RR）及其适用场景。",
+    "answer": "答案：Linux 的进程调度策略分为普通进程和实时进程两大类。\n\n默认分时调度策略：\n\n1. SCHED_OTHER（SCHED_NORMAL）：\n   - 完全公平调度（CFS，Completely Fair Scheduler）\n   - 基于虚拟运行时间（vruntime）的红黑树\n   - 优先级由 nice 值控制（-20 ~ +19，默认 0）\n   - 分配时间片 = 公平共享 × nice 权重\n   - 适用：普通用户进程\n\n2. SCHED_BATCH：\n   - 类似 SCHED_OTHER，但更适合批量任务\n   - 更少唤醒抢占（减少上下文切换）\n   - 适用：批处理、后台编译\n\n3. SCHED_IDLE：\n   - 最低优先级，只在系统空闲时运行\n   - 适用：低优先级后台任务\n\n实时调度策略：\n\n1. SCHED_FIFO（先入先出）：\n   - 优先级范围 1-99（数值越大优先级越高）\n   - 一旦运行，除非被更高优先级抢占或主动让出 CPU\n   - 没有时间片限制（可以一直运行）\n   - 适用：需要严格实时响应的任务（如硬实时）\n\n2. SCHED_RR（轮转）：\n   - 类似 SCHED_FIFO，但有固定时间片\n   - 时间片用完后放回同优先级队列末尾\n   - 适用：同优先级进程都需要执行的实时场景\n\n3. SCHED_DEADLINE（3.14+）：\n   - 基于 EDF（Earliest Deadline First）算法\n   - 参数：周期、运行时间、截止时间\n   - 最严格的实时保证\n   - 适用：有明确截止时间要求的任务\n\n调度策略优先级：\nSCHED_DEADLINE > SCHED_FIFO/RR（实时）> SCHED_OTHER（普通）\n\nCFS 关键实现：\n- 红黑树按 vruntime 排序（最左侧的进程是最应该运行的）\n- vruntime 增长速率受 nice 权重影响\n- 调度周期：默认 6ms（桌面）到 0.75ms（服务器）× 进程数\n- 支持 CPU 亲和性（sched_setaffinity）\n\n扩展延伸：容器环境下的调度——CFS 配额（cpu.cfs_quota_us）用于限制容器 CPU 使用上限。K8s 的 CPU limit 底层就是通过 CFS 配额实现的。过度限制会导致进程被强制节流（Throttling）。",
+    "hints": [
+      "普通策略：SCHED_OTHER（CFS 完全公平，nice 控制优先级）、SCHED_BATCH（批量）、SCHED_IDLE（空闲）",
+      "实时策略：SCHED_FIFO（无时间片，严格优先级）、SCHED_RR（有时间片，轮转）、SCHED_DEADLINE（EDF）",
+      "K8s CPU limit 底层通过 CFS 配额（cfs_quota_us）实现"
+    ],
+    "tags": [
+      "Linux",
+      "进程调度",
+      "CFS",
+      "实时调度"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 零拷贝技术",
+    "content": "请介绍 Linux 中的零拷贝技术（Zero Copy）及其实现方式（sendfile、mmap、splice）。",
+    "answer": "答案：零拷贝技术用于减少数据在内核和用户空间之间的拷贝次数。\n\n传统 I/O 路径（4 次拷贝）：\n1. 磁盘 → 内核缓冲区（DMA）\n2. 内核缓冲区 → 用户缓冲区（CPU）\n3. 用户缓冲区 → Socket 缓冲区（CPU）\n4. Socket 缓冲区 → 网卡（DMA）\n\n共 4 次上下文切换（read/write 系统调用）和 4 次拷贝（2 次 DMA + 2 次 CPU）。\n\n零拷贝实现方式：\n\n1. sendfile：\n   - 直接从文件到 Socket 的传输\n   - 路径：磁盘 → 内核缓冲区（DMA）→ Socket 缓冲区 → 网卡（DMA）\n   - 减少到 2 次拷贝（全部 DMA，无需 CPU 拷贝）\n   - 适用：文件服务器（Nginx 静态文件）\n\n```c\n// 从文件描述符直接发到 Socket\nssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);\n```\n\n2. mmap：\n   - 将文件映射到进程地址空间\n   - 路径：磁盘 → 内核缓冲区（DMA）→ 映射到用户地址空间 → Socket\n   - 比传统少一次 CPU 拷贝（内核到用户的拷贝被映射替代）\n   - 但写 Socket 时仍有一次 CPU 拷贝\n   - 适用：需要部分读写文件的场景\n\n3. splice：\n   - 在两个文件描述符之间移动数据（不经过用户空间）\n   - 路径：磁盘 → 内核缓冲区（DMA）→ pipe → Socket（DMA）\n   - 零 CPU 拷贝\n   - 适用：任意两个 fd 之间的数据传输\n\n4. 写时复制（COW）：\n   - 当多个进程共享相同内存页时\n   - 只在写入时才拷贝\n   - 减少不必要的拷贝\n\n实际应用中的零拷贝：\n- Nginx：sendfile on; 启用零拷贝静态文件服务\n- Kafka：利用 FileChannel.transferTo() 实现零拷贝\n- MySQL：O_DIRECT 绕过 PageCache（减少一次拷贝）\n\n扩展延伸：零拷贝技术的代价——sendfile 无法对数据做处理（如加密、压缩）。如果需要处理数据，必须经过用户空间。DPDK 实现了用户空间的网卡驱动（零拷贝 + 零中断），适用于极高吞吐场景（如核心网）。",
+    "hints": [
+      "传统 I/O：4 次拷贝（2 DMA + 2 CPU），零拷贝减少 CPU 拷贝",
+      "sendfile：磁盘→内核→Socket，CPU 零拷贝（Nginx 静态文件）",
+      "mmap：文件映射到用户空间，省一次 CPU 拷贝；splice：任意 fd 间零拷贝"
+    ],
+    "tags": [
+      "Linux",
+      "零拷贝",
+      "sendfile",
+      "mmap"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 网络协议栈与 epoll",
+    "content": "请介绍 Linux 网络协议栈从网卡到应用的数据流以及 epoll 的实现原理。",
+    "answer": "答案：理解网络数据从硬件到应用的路径是性能调优的基础。\n\n数据接收流程：\n\n1. 网卡接收：\n   - 数据到达网卡 → DMA 写入 Ring Buffer\n   - 网卡触发硬件中断（IRQ）\n\n2. 中断处理：\n   - 上半部（Top Half）：快速处理硬件中断（禁止中断嵌套）\n   - 下半部（Bottom Half / SoftIRQ）：执行实际的协议栈处理\n   - NAPI（New API）：合并多个中断为轮询模式（减少中断次数）\n\n3. 协议栈处理：\n   - IP 层：路由查找、IP 分片重组\n   - TCP 层：序列号检查、流量控制、拥塞控制\n   - 从 Socket 接收队列中取出数据\n\n4. 应用层读取：\n   - 通过系统调用（read/recv/epoll_wait）\n   - 数据从内核缓冲区拷贝到用户态缓冲区\n\neventpoll（epoll）实现原理：\n\n数据结构：\n- epoll 实例维护三个结构：\n  1. 红黑树（rbr）：存储所有注册的文件描述符\n  2. 就绪链表（rdllist）：存储有事件发生的 fd\n  3. wait queue：等待 epoll_wait 的进程\n\n核心操作：\n1. epoll_create：创建 epoll 实例\n2. epoll_ctl：向红黑树注册/修改/删除 fd\n   - EPOLL_CTL_ADD：将 fd 加入红黑树\n   - 注册回调函数（当 fd 有事件时，回调将 fd 加入就绪链表）\n3. epoll_wait：\n   - 如果就绪链表非空 → 直接返回（不阻塞）\n   - 如果就绪链表为空 → 当前进程加入 wait queue 休眠\n   - 唤醒条件：事件到达（fd 有数据可读/写）\n\n触发模式：\n- LT（水平触发）：fd 还有未读数据就继续通知（默认安全）\n- ET（边缘触发）：只在状态变化时通知一次（高性能，需非阻塞 I/O）\n\n扩展延伸：SO_REUSEPORT 支持多进程监听同一端口（内核级负载均衡）。RPS（Receive Packet Steering）将软中断分到多个 CPU 核心。XDP（eXpress Data Path）在网卡驱动层直接处理数据包（绕过协议栈），适用于 DDoS 防护和负载均衡。",
+    "hints": [
+      "接收路径：网卡 DMA → 中断（NAPI 轮询）→ 协议栈（IP/TCP）→ Socket 队列 → 应用系统调用",
+      "epoll 三结构：红黑树（注册 fd）+ 就绪链表（有事件 fd）+ 等待队列（休眠进程）",
+      "LT 模式（水平触发，安全默认）vs ET 模式（边缘触发，需非阻塞 I/O 配合）"
+    ],
+    "tags": [
+      "Linux",
+      "epoll",
+      "网络协议栈",
+      "NAPI"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux cgroup 资源隔离",
+    "content": "请介绍 Linux cgroup（v1/v2）的资源隔离机制及其在容器化中的应用。",
+    "answer": "答案：cgroup（Control Groups）是 Linux 内核的资源隔离和限制机制，是容器技术的基石。\n\ncgroup v1：\n\n子系统（每个资源类型独立层级树）：\n- cpu：CPU 时间分配（CFS 配额、权重）\n- cpuacct：CPU 使用统计\n- memory：内存限制和统计\n- blkio：块设备 I/O 限制\n- devices：设备访问控制\n- net_cls：网络流量分类\n- pids：进程数限制\n- freezer：进程冻结/恢复\n\n问题：\n- 层级树不统一（每个子系统一个树）\n- 管理复杂（多个挂载点）\n- 控制器间的进程归属可能冲突\n\ncgroup v2（4.5+，5.2 后推荐）：\n\n统一层级树（Single Hierarchy）：\n- 所有控制器在同一个层级树中\n- 通过 /sys/fs/cgroup 统一挂载\n\n关键改进：\n```\n/sys/fs/cgroup/\n├── cpu.max           # CPU 配额（类似 v1 的 cpu.cfs_quota_us）\n├── memory.max        # 内存上限\n├── memory.current    # 当前内存使用\n├── io.max            # I/O 限制\n├── pids.max          # 进程数限制\n└── cgroup.controllers # 该节点可用的控制器列表\n```\n\n改进点：\n- 写时回传（Writeback）：脏页回写计入正确的 cgroup\n- 统一统计：内存统计包含内核内存和用户内存\n- PSI（Pressure Stall Information）：资源压力信息（cpu.pressure, memory.pressure, io.pressure）\n\n在容器化中的应用：\n\nDocker：\n- --cpus：CPU 限制（通过 CFS 配额）\n- --memory：内存限制（通过 memory cgroup）\n- --device-write-bps：磁盘写入限速\n\nKubernetes：\n- CPU request/limit → cgroup cpu.weight / cpu.max\n- Memory request/limit → cgroup memory.min / memory.max\n- Guaranteed/Burstable/BestEffort QoS 类 → 不同 cgroup 配置\n\n关键配置：\n- memory.min（v2）：保证最小可用内存\n- memory.high（v2）：触发内存回收的水位线\n- memory.swap.max（v2）：swap 上限\n\n扩展延伸：PSI（Pressure Stall Information）是 cgroup v2 的重要特性——通过 /proc/pressure/{cpu,memory,io} 可以查看系统是否在等待资源。当 memory.pressure > 0.5 时，说明系统在频繁回收内存，需要增加内存限制或优化内存使用。",
+    "hints": [
+      "cgroup v1：多层级树（每个子系统独立），管理复杂",
+      "cgroup v2：统一层级树（/sys/fs/cgroup），写回传、PSI 压力信息，推荐使用",
+      "K8s 底层：CPU request/limit → cgroup cpu.weight/cpu.max；Memory → memory.min/memory.max"
+    ],
+    "tags": [
+      "Linux",
+      "cgroup",
+      "容器",
+      "资源隔离"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Linux 中查看系统性能的命令",
+    "content": "请列举 Linux 中常用的系统性能查看命令及其关注指标。",
+    "answer": "答案：Linux 系统性能分析遵循 USE 方法论（Utilization、Saturation、Errors）。\n\nCPU 相关：\n- top / htop：实时进程视图（CPU%、内存%）\n- mpstat -P ALL：每个 CPU 核心的使用率\n- pidstat：每个进程的 CPU 使用详情\n- 关注指标：user%、sys%、iowait%、idle%\n\n内存相关：\n- free -h：物理内存和 swap 使用\n- vmstat：内存页换入换出、swap I/O\n- /proc/meminfo：内存详细状态\n- 关注指标：available、cached、buffers、swap used\n\n磁盘 I/O：\n- iostat -x：设备级 I/O 统计（IOPS、延迟、队列长度）\n- iotop：进程级 I/O 使用\n- 关注指标：%util、await、svctm、r/s、w/s、aqu-sz\n\n网络：\n- ss -tuln：Socket 状态（TCP/UDP 连接）\n- netstat -s：网络协议统计（重传、丢包）\n- sar -n DEV：网络接口统计（带宽、包量）\n- nload / iftop：实时网络流量\n- 关注指标：重传率、队列溢出、带宽使用\n\n系统整体：\n- dstat：综合统计（CPU/内存/磁盘/网络合一）\n- sar：历史性能数据收集和报告\n- uptime：负载均值（load 1/5/15）\n- /proc/loadavg：系统负载\n\n进程级：\n- strace：系统调用追踪\n- ltrace：库函数调用追踪\n- perf top：CPU 热点采样\n- /proc/PID/status：进程详细状态\n\n内存分析：\n- valgrind：内存泄漏检测\n- pmap：进程内存映射\n- slabtop：内核 Slab 分配器状态\n\n扩展延伸：Netflix 的性能分析工具集——Vector（性能数据可视化）、FlameGraph（CPU/内存火焰图）、Atlas（时间序列监控）。perf 是 Linux 最强大的性能采样工具，支持 CPU 周期、缓存未命中、分支预测等硬件事件采样。",
+    "hints": [
+      "CPU：top/mpstat（user/sys/iowait）；内存：free/vmstat（available/swap）",
+      "磁盘：iostat（%util/await）；网络：ss/sar（重传率/带宽）",
+      "USE 方法论：检查 Utilization（利用率）、Saturation（饱和度）、Errors（错误）"
+    ],
+    "tags": [
+      "Linux",
+      "性能",
+      "监控",
+      "调试"
+    ]
   }
 ]
