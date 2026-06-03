@@ -148,5 +148,55 @@
     "answer": "答案：四种存储机制从容量、作用域、API 类型等方面各有不同。\n\n解析：1）Cookie——容量 4KB，每次请求自动发送到服务端。适用：身份认证信息（Session ID / JWT Token），HttpOnly 防 XSS 读取。特点：可设置 domain/path/expires/SameSite。2）localStorage——容量 5MB，持久化存储（不主动清除不删除），仅客户端访问。适用：用户偏好、缓存数据。特点：同步 API，只能存字符串。3）sessionStorage——容量 5MB，标签页级隔离，关闭标签页清除。适用：临时表单数据。4）IndexedDB——容量无上限（取决于磁盘），异步 API 支持事务和索引。适用：离线数据、大文件（图片/文档）、结构化数据。\n\n扩展延伸：选型建议：需要服务端读取 → Cookie。简单键值持久化 → localStorage。标签页级临时数据 → sessionStorage。大量结构化/离线数据 → IndexedDB（引入 idb 库简化 Promise 封装）。性能注意：localStorage 的同步读写阻塞主线程，高频操作建议用内存缓存做中间层。",
     "hints": ["localStorage 在多标签页场景下的同步问题", "IndexedDB 相比 localStorage 的核心优势是什么"],
     "tags": ["存储", "Web API"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端性能监控与 Core Web Vitals",
+    "content": "请解释 Google Core Web Vitals 的核心指标及其优化方法。",
+    "answer": "答案：Core Web Vitals 是 Google 定义的三项用户体验量化指标：LCP、FID/INP、CLS。\n\n解析：1）LCP（Largest Contentful Paint）——最大内容绘制时间，衡量加载性能。目标 < 2.5s。优化：优化图片（压缩/WebP/懒加载）、预加载关键资源、消除渲染阻塞资源、使用 CDN。2）FID（First Input Delay）/ INP（Interaction to Next Paint）——衡量交互响应。目标 < 100ms（INP < 200ms）。优化：拆分长任务（requestIdleCallback）、减少 JS 执行时间、代码分割、用 Web Worker 处理密集型计算。3）CLS（Cumulative Layout Shift）——累积布局偏移，衡量视觉稳定性。目标 < 0.1。优化：给图片和广告位显式设置尺寸、避免动态插入内容在已有内容上方、使用 transform 做动画。\n\n扩展延伸：性能监控手段：RUM（Real User Monitoring）用 PerformanceObserver API 采集真实用户数据，Lighthouse 做实验室测试。影响：Google 将 Core Web Vitals 纳入搜索排名算法。工具链：web-vitals 库、Lighthouse CI、Chrome DevTools Performance 面板。指标只是结果，真正的优化需要理解「为什么慢」——是网络、渲染、还是 JS 执行瓶颈。",
+    "hints": ["LCP、FID、CLS 分别对应什么用户体验维度", "PerformanceObserver API 如何采集性能数据"],
+    "tags": ["性能", "监控", "Core Web Vitals"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微前端架构方案",
+    "content": "请介绍微前端架构的核心思想和主流实现方案。",
+    "answer": "答案：微前端将前端应用拆分为多个独立交付的子应用，每个子应用可独立开发、测试、部署，最终由主框架组合为一个整体。\n\n解析：核心价值：1）技术栈无关——不同子应用可用不同框架（React/Vue/Angular）。2）独立部署——每个子应用可独立 CI/CD，降低协调成本。3）团队自治——大团队按业务拆分为小团队，各自负责自己的子应用。\n\n主流方案对比：1）iframe——最天然的隔离方案，但体验差（URL 不同步、弹窗/全局事件无法跨 iframe、性能开销大）。2）Module Federation（Webpack 5）——运行时加载远程模块，共享依赖减少重复加载。适合中大型项目。3）qiankun（基于 single-spa）——阿里方案，自带沙箱隔离和样式隔离，接入成本低。4）Micro-app（京东）——基于 CustomElement 的 Web Components 方案，更轻量。\n\n扩展延伸：微前端的代价：1）包体积——公共依赖难去重（除非 Module Federation）。2）通信复杂度——子应用间状态共享（用 URL/CustomEvent/全局 Store）。3）样式隔离——CSS Scoping（Shadow DOM / CSS Modules / BEM）。4）测试复杂度——集成测试场景多。不建议在小型项目上用微前端——它解决的问题（大团队协作/独立部署）在项目 < 5 万行代码时不存在。",
+    "hints": ["iframe 方案有哪些不可接受的缺点", "Module Federation 和 qiankun 的核心区别是什么"],
+    "tags": ["架构", "微前端"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端无障碍（a11y）",
+    "content": "为什么前端无障碍很重要？前端开发中如何做好无障碍？",
+    "answer": "答案：前端无障碍（Accessibility，a11y）确保所有用户（包括残障人士）都能使用产品。全球约 15% 人口有不同程度残疾，做好无障碍既是道德责任也是法律要求。\n\n解析：WCAG（Web Content Accessibility Guidelines）四大原则（POUR）：1）Perceivable（可感知）——信息必须以用户能感知的方式呈现。做法：非文本内容（图片/图标）提供替代文本（alt 属性）、视频提供字幕、颜色不唯一信息载体。2）Operable（可操作）——用户必须能操作界面。做法：所有交互元素可用键盘操作（Tab 顺序 + focus 样式）、提供跳过导航链接（Skip to Content）、避免闪烁内容（癫痫风险）。3）Understandable（可理解）——信息和操作必须可理解。做法：使用语义化 HTML（button/heading/landmark 标签）、错误提示明确、语言声明（lang 属性）。4）Robust（可健壮）——内容必须能被辅助工具（屏幕阅读器）解读。做法：使用 ARIA 属性补充语义（role/aria-label/aria-describedby）、遵循标准 HTML 规范。\n\n扩展延伸：工程化实践：1）ESLint 插件 eslint-plugin-jsx-a11y 可以在开发阶段发现问题。2）自动化测试工具——axe-core 可集成到 CI。3）常用检查清单——所有图片有 alt、所有表单输入有关联 label、Tab 顺序合理、焦点可见、颜色对比度 >= 4.5:1。4）Screen Reader 测试（NVDA/VoiceOver）是发现无障碍问题最直接的方式。无障碍不是「额外工作」，而是好工程的标配——语义化 HTML 对 SEO、可维护性、无障碍都是有益的。",
+    "hints": ["WCAG 的 POUR 四大原则是什么", "ARIA 属性在什么场景下使用"],
+    "tags": ["无障碍", "a11y", "规范"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端测试策略",
+    "content": "请描述前端测试的分层策略和常用工具。",
+    "answer": "答案：前端测试按粒度分层：单元测试 → 组件测试 → 集成测试 → E2E 测试。遵循测试金字塔原则——底层多、上层少。\n\n解析：1）单元测试——测试纯函数、工具函数、业务逻辑。工具：Vitest / Jest。特点：运行快，无 DOM 环境，适合覆盖边界条件。2）组件测试——测试组件的渲染输出和交互行为。工具：Testing Library + Vitest。原则：以用户视角测试（不测实现细节，如 state 值，而测渲染结果）。3）集成测试——测试多个组件/模块协作。工具：Testing Library + MSW（Mock Service Worker）模拟 API。覆盖关键用户流程。4）E2E 测试——模拟真实用户在浏览器中操作。工具：Playwright / Cypress。覆盖核心用户旅程（注册→登录→下单），运行慢但置信度最高。\n\n扩展延伸：测试策略建议：1）对业务逻辑关键代码写单元测试（覆盖率不是目的，覆盖核心风险点才是）。2）对每个页面/功能的「happy path」和主要边界写集成测试。3）对 3-5 个最核心的用户旅程写 E2E 测试。4）组件测试避免测试框架实现细节（用 Testing Library 而非 shallow render）。5）Mock 外部 API（用 MSW）保持测试确定性。测试不是为了覆盖率数字好看，而是为了保障——改代码时敢于重构而不担心破坏现有功能。",
+    "hints": ["测试金字塔各层的最佳比例是多少", "为什么要用 Testing Library 而不是测试组件内部 state"],
+    "tags": ["测试", "质量"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端模块化：ESM vs CommonJS",
+    "content": "请对比 ES Module（ESM）和 CommonJS（CJS）的区别及其对构建的影响。",
+    "answer": "答案：ESM 是 ECMAScript 标准模块系统，CommonJS 是 Node.js 的传统模块系统。两者在语法、加载方式、静态分析能力上有本质区别。\n\n解析：1）语法——CJS 使用 require/module.exports（运行时加载），ESM 使用 import/export（静态结构）。2）加载时机——CJS 同步加载（require 时执行模块），ESM 异步加载（import 声明提升，模块在解析阶段就确定了依赖关系）。3）值传递——CJS 导出的是值的浅拷贝（exports 对象），ESM 导出的是值的实时绑定（live binding），导入导出共享同一内存位置。4）静态分析——ESM 的静态结构使打包工具能做 Tree Shaking（删除未使用的导出），CJS 无法静态分析导出，Tree Shaking 几乎不可能。5）循环依赖——CJS 在循环依赖中可能拿到未初始化的值（undefined），ESM 通过 live binding 可以正确处理。\n\n扩展延伸：实际项目中的混合使用：1）package.json 的 type 字段——type: \"module\" 启用 ESM，type: \"commonjs\" 或省略用 CJS。2）.mjs / .cjs 扩展名强制指定模块系统。3）Node.js 从 12.x 开始稳定支持 ESM，16.x 成为推荐。4）打包工具的处理——Vite 开发环境用 ESM（原生浏览器模块），构建用 Rollup（转 CJS + Tree Shaking）；Webpack 把所有模块包装为自己的运行时。5）动态导入——CJS 没有原生动态方案（require 本身就是动态），ESM 的 import() 返回 Promise，支持代码分割。",
+    "hints": ["为什么 ESM 能做 Tree Shaking 而 CJS 不能", "循环依赖在 CJS 和 ESM 中的表现差异"],
+    "tags": ["JavaScript", "模块化", "构建"]
   }
 ]

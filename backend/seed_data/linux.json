@@ -247,5 +247,55 @@
       "远程连接",
       "安全"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Bash 脚本编程基础",
+    "content": "请介绍 Bash 脚本中的变量、条件判断和循环结构的用法。",
+    "answer": "答案：Bash 脚本中变量赋值等号两侧不能有空格，条件判断用 if/test/[ ]/[[ ]]，循环结构 for/while/until 各有适用场景。\n\n解析：1）变量——`name=\"value\"` 赋值，`$name` 或 `${name}` 引用。数字变量用 `$((算术运算))`。局部变量用 `local` 修饰。2）条件判断——`if [ condition ]; then ... fi`。文件判断：`-f`（文件存在）、`-d`（目录存在）、`-x`（可执行）。字符串比较：`= != -z -n`。数字比较：`-eq -ne -lt -gt -le -ge`。双中括号 `[[ ]]` 支持正则 `=~` 和模式匹配。3）循环——`for i in list; do ... done`（遍历列表）、`for ((i=0; i<10; i++)); do ... done`（C 风格）、`while [ condition ]; do ... done`（条件循环）、`until [ condition ]; do ... done`（直到条件成立）。\n\n扩展延伸：脚本中容易踩的坑：1）变量引用不加引号导致含空格时拆分 —— 总是写 `\"$var\"` 而非 `$var`。2）`[ $? -eq 0 ]` 不如直接用 `if command; then`。3）`set -e` 让脚本遇到错误时退出（防止错误被忽略），`set -u` 让使用未定义变量时报错。4）脚本首行 `#!/bin/bash` 指定解释器。5）调试技巧：`bash -x script.sh` 跟踪执行过程，逐行打印命令。",
+    "hints": ["Bash 中单中括号 [ ] 和双中括号 [[ ]] 的区别", "set -e 和 set -u 分别有什么作用"],
+    "tags": ["Shell", "Bash", "脚本"]
+  },
+  {
+    "category": "linux",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Linux 文件系统层次结构",
+    "content": "请解释 Linux 文件系统主要目录的作用：/bin、/etc、/var、/proc、/tmp。",
+    "answer": "答案：Linux 的文件系统从根目录 `/` 开始，遵循 FHS（Filesystem Hierarchy Standard）规范组织各目录的用途。\n\n解析：1）`/bin` 和 `/usr/bin`——用户可执行命令（ls、cp、cat 等），系统启动必需的二进制文件。`/sbin` 是系统管理命令（fdisk、mkfs）。2）`/etc`——系统配置文件。网络配置（/etc/network/）、用户密码（/etc/passwd、/etc/shadow）、软件配置（/etc/nginx/nginx.conf）。大部分配置文件的修改需要 root 权限。3）`/var`——变化的数据文件。日志（/var/log/syslog）、数据库（/var/lib/mysql）、缓存（/var/cache/apt）、打印队列。日志文件可能填满磁盘，需要定期清理或 logrotate 管理。4）`/proc`——虚拟文件系统，内核数据结构的运行时视图。`/proc/cpuinfo`（CPU 信息）、`/proc/meminfo`（内存信息）、`/proc/PID/`（每个进程的信息）。修改 `/proc/sys/` 下的文件可动态调整内核参数（如 `sysctl -w net.ipv4.ip_forward=1`）。5）`/tmp`——临时文件目录，重启后通常清空。所有用户可写但不可互相删除（粘滞位）。\n\n扩展延伸：`/dev`——设备文件（/dev/sda1 是磁盘分区），`/sys`——比 /proc 更结构化的内核对象视图（硬件拓扑），`/opt`——第三方软件安装目录（如 google-chrome、JetBrains IDE），`/home`——用户家目录。理解这些目录便于排查问题：日志放 /var/log、配置文件改 /etc、临时文件放 /tmp、性能数据查 /proc。",
+    "hints": ["/proc 和 /sys 有什么区别", "为什么 /tmp 目录有粘滞位（sticky bit）"],
+    "tags": ["文件系统", "基础"]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "iptables/nftables 防火墙",
+    "content": "请解释 iptables 的链表和表结构，以及如何用 iptables 实现基本的网络访问控制。",
+    "answer": "答案：iptables 是 Linux 内核 netfilter 框架的用户态工具，按表（Table）→ 链（Chain）→ 规则（Rule）三级组织。主流 Linux 发行版已转向 nftables 作为新一代替代。\n\n解析：1）iptables 的表链结构——Filter 表（INPUT/OUTPUT/FORWARD 链）做包过滤，NAT 表（PREROUTING/POSTROUTING/OUTPUT 链）做地址转换，Mangle 表修改包头部。2）常用命令——`iptables -L -n -v`（列出当前规则及计数）、`iptables -A INPUT -p tcp --dport 22 -j ACCEPT`（允许 SSH 访问）、`iptables -A INPUT -s 10.0.0.0/8 -j ACCEPT`（允许内网）、`iptables -P INPUT DROP`（默认拒绝入站）。3）策略——默认策略 ACCEPT + 逐条拒绝（白名单要改为默认 DROP + 逐条允许）。4）持久化——`iptables-save > /etc/iptables/rules.v4` 保存，`iptables-restore` 恢复。\n\n扩展延伸：nftables 是 iptables 的替代品（Debian 11+ / RHEL 8+ 默认）。核心区别：nftables 用单一命令行工具 nft，链和表都在 nftables 框架内统一管理（不再分 filter/nat/mangle 表），语法更简洁——`nft add rule inet filter input tcp dport 22 accept`。配置存储在 `/etc/nftables.conf`。iptables 的规则是线性匹配的，规则越多性能越低；nftables 引入了 set 和 map 数据结构可一次匹配多个条件。生产环境建议直接使用 nftables 而非 iptables。",
+    "hints": ["iptables 的 filter、NAT、Mangle 表分别负责什么", "iptables 和 nftables 的核心区别"],
+    "tags": ["网络", "防火墙", "安全"]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux 性能分析工具：perf 与火焰图",
+    "content": "请介绍 Linux 性能分析工具 perf 的用法，以及如何生成火焰图。",
+    "answer": "答案：perf 是 Linux 内核自带的性能分析工具，基于性能监控单元（PMU）和内核跟踪点，支持 CPU 采样、硬件计数器、tracepoint 追踪、动态探针。\n\n解析：1）常用 perf 命令——`perf top`（实时显示热点函数，类似 top 但看到的是内核和进程内部的函数）、`perf record -a -g -- sleep 60`（全系统采样 60 秒，-g 记录调用栈，-a 所有 CPU）、`perf report`（分析采样数据，查看热点函数和调用栈）、`perf stat -a -e cycles,instructions,cache-misses -- sleep 5`（统计硬件计数器）。2）perf 适用场景——CPU 性能瓶颈定位（哪些函数占 CPU）、缓存命中率分析（cache-misses 高说明内存访问模式有问题）、上下文切换频率。\n\n扩展延伸：火焰图（Flame Graph）是 Brendan Gregg 发明的可视化 CPU 采样结果的方法。生成步骤：`perf record -a -g -- sleep 60` → `perf script > out.perf` → 用 FlameGraph 工具集的 stackcollapse-perf.pl 和 flamegraph.pl 生成 SVG。火焰图解读：X 轴是函数调用栈宽度（占 CPU 时间比例），Y 轴是调用深度（从底部到顶部的调用链）。宽方块是重点优化对象——一个函数占的宽度越大，优化它收益越高。注意区分：CPU 火焰图（采样 CPU 周期）vs Off-CPU 火焰图（采样睡眠时间，用于定位 IO/锁瓶颈）。",
+    "hints": ["perf top 和 perf record/report 的区别", "火焰图的 X 轴和 Y 轴分别表示什么"],
+    "tags": ["性能", "分析", "工具"]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LVM 逻辑卷管理",
+    "content": "请介绍 Linux LVM（逻辑卷管理）的概念和常用操作。",
+    "answer": "答案：LVM 在物理磁盘和文件系统之间增加一层抽象，将多个物理磁盘组合为卷组（VG），再从卷组中划分逻辑卷（LV），实现灵活的磁盘空间管理。\n\n解析：1）三层结构——PV（Physical Volume，物理卷）：磁盘或分区初始化后的 LVM 单元。VG（Volume Group，卷组）：多个 PV 组成的存储池。LV（Logical Volume，逻辑卷）：从 VG 中划分的逻辑磁盘，格式化后挂载使用。2）常用命令——`pvcreate /dev/sdb`（创建 PV）、`vgcreate myvg /dev/sda /dev/sdb`（创建 VG）、`lvcreate -L 100G -n mylv myvg`（创建 100G 的 LV）、`mkfs.ext4 /dev/myvg/mylv`（格式化）、`mount /dev/myvg/mylv /mnt/data`（挂载）。3）核心优势——`lvextend -L +50G /dev/myvg/mylv`（在线扩展 LV，不需停机）、`lvresize -L -20G /dev/myvg/mylv`（缩减空间需先卸载）。\n\n扩展延伸：快照功能——`lvcreate -L 10G -s -n snap /dev/myvg/mylv` 创建只读快照用于备份。生产环境中 LVM 的典型场景：1）数据库服务器磁盘不够用——加新硬盘 → pvcreate → vgextend → lvextend → 文件系统扩容，不停机完成。2）快照备份——创建 LVM 快照 → 挂载快照做备份 → 删除快照。注意：LVM 快照的性能取决于原始数据变化量，变化越多快照越慢。LVM 不是替代 RAID——RAID 解决的是冗余和性能，LVM 解决的是空间灵活管理，两者常配合使用（LVM over RAID）。",
+    "hints": ["LVM 的 PV/VG/LV 三层结构分别是什么", "LVM 快照的性能特点和适用场景"],
+    "tags": ["存储", "磁盘", "LVM"]
   }
 ]

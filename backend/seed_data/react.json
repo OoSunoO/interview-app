@@ -163,5 +163,55 @@
       "'use client' 声明对 bundle 体积有什么影响"
     ],
     "tags": ["React", "Server Components", "架构"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Portals",
+    "content": "请解释 React Portal 的作用和使用场景。Portal 中的事件冒泡行为是什么样的？",
+    "answer": "答案：Portal 将子节点渲染到父组件 DOM 树之外的 DOM 节点中，但保持 React 组件树上下文不变。\n\n解析：`ReactDOM.createPortal(children, domNode)` 将 children 渲染到 domNode 元素下（通常在 `document.body` 或独立容器中），而非父组件的 DOM 层级下。典型场景：模态框、工具提示、弹出菜单、通知 toast。\n\n扩展延伸：Portal 的事件冒泡行为——尽管 DOM 位置在父组件之外，但事件冒泡仍然遵循 React 组件树（而非真实 DOM 树）。这意味着父组件能捕获 Portal 内冒泡出来的事件。这一设计让 Portal 的上下文行为保持一致。React 17+ 将 Portal 的合成事件附加到 Portal 容器而非 document，使事件行为更接近直觉。注意：Portal 的样式继承（CSS 继承属性如 font-family）仍然基于真实 DOM 位置，而非组件树——所以可能需要额外重置样式。",
+    "hints": ["Portal 中事件冒泡遵循 React 组件树还是真实 DOM 树", "Portal 在什么场景下比绝对定位更合适"],
+    "tags": ["React", "Portal"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "useReducer vs useState",
+    "content": "什么情况下应该使用 useReducer 而不是 useState？两者如何选择？",
+    "answer": "答案：useReducer 适合复杂 state 逻辑、state 依赖另一个 state、深层更新场景。useState 适合简单独立的状态值。\n\n解析：useReducer 的优势：1）复杂 state 结构——state 是对象有多个字段（如表单状态含 name/email/errors/isSubmitting）。2）更新逻辑依赖当前 state——Reducer 接收 prevState，没有闭包陷阱。3）更新逻辑可复用——Reducer 是纯函数，可单独测试，可在多个组件间共享。4）性能优化——dispatch 引用稳定，传给子组件不会引起不必要重渲染（与 useCallback 配合更佳）。\n\n扩展延伸：对比清单：用 useState 的场景——简单的 toggle、单个数字/字符串、更新逻辑简单。用 useReducer 的场景——多字段表单、购物车操作（增删改查）、undo/redo 历史记录。自定义 Hook 封装 + useState 可以达到类似 useReducer 的效果。Immer 配合 useReducer（useImmerReducer）可以让复杂 state 更新更简洁。",
+    "hints": ["useReducer 的 dispatch 为什么不需要加 useCallback", "useReducer 和 useState 在性能优化上的区别"],
+    "tags": ["React", "Hooks", "状态管理"]
+  },
+  {
+    "category": "react",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "高阶组件（HOC）模式",
+    "content": "请解释高阶组件（Higher-Order Component）的概念、用途和局限性。",
+    "answer": "答案：高阶组件是接收一个组件并返回一个新组件的函数。它是一种复用组件逻辑的模式，在 React Hooks 流行之前广泛使用。\n\n解析：本质：`const EnhancedComponent = higherOrderComponent(WrappedComponent)`。典型用途：1）权限控制——检查用户权限后决定是否渲染子组件。2）数据获取——在 HOC 中获取数据，将数据通过 props 注入子组件。3）日志/埋点——自动在组件挂载时发送日志。4）Redux 的 connect——`connect(mapStateToProps, mapDispatchToProps)(Component)` 是最经典的 HOC 例子。\n\n扩展延伸：HOC 的局限性：1）Props 命名冲突——HOC 注入的 props 可能与子组件已有的 props 重名。2）静态方法丢失——HOC 不自动传递子组件的静态方法，需手动 hoist-non-react-statics。3）ref 不穿透——ref 默认指向 HOC 外层容器而非子组件，需 React.forwardRef 解决。4）多层嵌套地狱——多个 HOC 叠加使调试困难（wrapper hell）。HOC vs Hooks：Hooks 解决了 HOC 的大部分痛点（无命名冲突、无静态方法丢失、无嵌套），是 HOC 的主流替代方案。选择原则：新代码优先用 Hooks，遗留代码维护时理解 HOC 模式即可。",
+    "hints": ["HOC 和 Render Props 模式有什么区别", "为什么 Hooks 能替代 HOC"],
+    "tags": ["React", "HOC", "模式"]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Testing Library 测试策略",
+    "content": "如何使用 React Testing Library 测试组件？测试组件的最佳实践是什么？",
+    "answer": "答案：React Testing Library 以用户视角测试组件——关注渲染输出和交互行为，不测试实现细节。\n\n解析：核心原则：测试用户能看到什么、能操作什么，而非组件内部 state、生命周期方法或 Hook 调用。常用 API：`render(<Component />)`（渲染组件）、`screen.getByText/ByRole/ByTestId`（查询元素，优先 ByRole 语义化查询）、`fireEvent.click()` 或 `userEvent.click()`（模拟用户交互，userEvent 更接近真实行为）。\n\n```jsx\nimport { render, screen } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\ntest('shows greeting after name input', async () => {\n  render(<Greeting />);\n  await userEvent.type(screen.getByLabelText('Name'), 'Alice');\n  expect(screen.getByText('Hello, Alice!')).toBeInTheDocument();\n});\n```\n\n扩展延伸：最佳实践：1）查询优先级：getByRole > getByLabelText > getByPlaceholderText > getByText > getByTestId（`data-testid` 是最后的手段）。2）测试行为而非实现——不要测 state 值，测页面渲染了正确的内容。3）用 `waitFor` 和 `findBy` 处理异步渲染。4）用 MSW（Mock Service Worker）模拟 API 调用，不 mock fetch/axios。5）覆盖有价值的场景——Happy path（正常流程）、Error state（错误处理）、Edge case（空数据、边界值）。6）避免测试过于碎片化——测试组件在用户视角下的行为，而非逐个方法测试。",
+    "hints": ["Testing Library 查询元素的优先级顺序", "React Testing Library 和 Enzyme 的核心差异是什么"],
+    "tags": ["React", "测试"]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Suspense 与数据获取模式",
+    "content": "请介绍 React Suspense 在数据获取场景下的使用方式和最佳实践。",
+    "answer": "答案：Suspense 是一种声明式的加载状态处理机制，组件可以「等待」异步操作，同时显示 fallback 内容。\n\n解析：传统模式：组件内用 useEffect 获取数据，手动管理 loading/error/success 三种状态。Suspense 模式：异步操作在组件外或渲染过程中触发，Suspense 边界自动捕获未完成的异步依赖并显示 fallback。\n\n```jsx\n<Suspense fallback={<Loading />}>\n  <UserProfile userId={id} />\n</Suspense>\n```\n\n用户 profile 数据未加载完时显示 Loading，加载完成后显示 UserProfile。错误边界通过 Error Boundary 统一处理——`<ErrorBoundary fallback={<ErrorPage />}><Suspense><UserProfile /></Suspense></ErrorBoundary>`。\n\n扩展延伸：React 19 的 `use()` Hook 是 Suspense 数据获取的重要简化：`const data = use(fetchDataPromise)`，可在组件渲染过程中直接读取 Promise，Suspense 会自动处理挂起状态。流式 SSR（Streaming SSR）结合 Suspense 实现 HTML 流式输出——每个 Suspense 边界独立流式传输，用户无需等待整个页面加载完成即可看到已渲染部分。最佳实践：1）合理划分 Suspense 边界——太粗导致大块区域 loading，太细导致布局反复跳变。2）配合 useDeferredValue 让旧数据保持可见直到新数据就绪。3）并发模式下 Suspense 的嵌套 loading 会以「揭示」模式（reveal sequence）自动处理——嵌套的 Suspense 边界同时显示。",
+    "hints": ["use() Hook 和传统 useEffect + useState 的数据获取有什么区别", "流式 SSR 如何改善用户体验"],
+    "tags": ["React", "Suspense", "数据获取", "React 19"]
   }
 ]
