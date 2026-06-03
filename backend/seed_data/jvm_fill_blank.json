@@ -1539,5 +1539,95 @@
       "内存泄漏",
       "调优"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM HeapDump 自动触发参数",
+    "content": "JVM 在 OOM 时自动生成堆转储文件的参数是___。指定转储文件路径用___。JDK 9+ 中在 OOM 后强制 JVM 立即退出用___。jmap -dump 子参数中___表示只转储存活对象（触发 Full GC 后转储）。HeapDumpOnOutOfMemoryError 生成的转储包含___（所有对象 / 仅存活对象）。",
+    "answer": "{\"correct\": [[\"-XX:+HeapDumpOnOutOfMemoryError\", \"HeapDumpOnOutOfMemoryError\"], [\"-XX:HeapDumpPath=\", \"HeapDumpPath\"], [\"-XX:+ExitOnOutOfMemoryError\", \"ExitOnOutOfMemoryError\"], [\"live\"], [\"所有对象\"]], \"distractors\": [\"-XX:+DumpOnOOM\", \"-XX:HeapDumpDir\", \"-Xdump:heap\", \"-XX:+CoreDumpOnOOM\", \"-XX:+StopOnOOM\", \"all\", \"active\", \"仅存活对象\"]}",
+    "hints": [
+      "HeapDumpOnOutOfMemoryError 生成的 hprof 文件默认包含所有对象（含不可达对象），生成时不会触发 Full GC",
+      "ExitOnOutOfMemoryError 让 JVM 在 OOM 时立即退出，避免不可恢复状态下的继续运行"
+    ],
+    "tags": [
+      "JVM",
+      "OOM",
+      "HeapDump",
+      "jmap"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM 容器资源检测参数",
+    "content": "JDK 10 引入的___参数（JEP 293，JDK 8u191 回移植并默认开启）使 JVM 自动读取 cgroup 的 CPU 和内存限制。JVM 据此调整默认值和并行线程数量。___参数显式设置 JVM 使用的处理器数量并覆盖自动检测结果。当容器配置内存限制且未设置 -Xmx 时，默认最大堆约为容器内存的___。JDK 8u131+ 引入的___是容器堆大小检测的实验性前身参数。部分旧版本 JDK 中 JVM 在容器内检测到宿主机核数过多会导致___过多。",
+    "answer": "{\"correct\": [[\"-XX:+UseContainerSupport\", \"UseContainerSupport\"], [\"-XX:ActiveProcessorCount\", \"ActiveProcessorCount\"], [\"25%\", \"四分之一\", \"1/4\"], [\"-XX:+UseCGroupMemoryLimitForHeap\", \"UseCGroupMemoryLimitForHeap\"], [\"GC 线程\", \"并行线程\", \"编译器线程\", \"JIT 编译线程\"]], \"distractors\": [\"-XX:+ContainerSupport\", \"-XX:+CGroupSupport\", \"-XX:ProcessorLimit\", \"-XX:CPUCount\", \"50%\", \"一半\", \"75%\", \"1/2\", \"-XX:+CGroupMemoryForHeap\", \"-XX:+ContainerMemory\", \"堆内存\", \"GC 暂停\"]}",
+    "hints": [
+      "JDK 8u191 之前的容器内 Java 应用常见问题：检测到宿主机 64 核但容器只分配 4 核，ParallelGCThreads 和 CICompilerCount 过高",
+      "ActiveProcessorCount 不仅影响 GC 线程，还影响 JIT 编译器线程数、ForkJoinPool 并行度等"
+    ],
+    "tags": [
+      "JVM",
+      "容器",
+      "UseContainerSupport",
+      "cgroup"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Compact Strings 字符串内部表示",
+    "content": "JDK 9 引入的 Compact Strings（JEP 254，由___参数控制，默认开启）将 String 的内部存储从___（UTF-16 char[]，每字符 2 字节）改为___（byte[] + coder 编码标志位）。当字符串所有字符可用 Latin-1 表示时，coder 标志值为___，每字符仅占 1 字节；否则 coder 值为___，每字符 2 字节。压缩后典型字符串对象内存占用减少约___。JDK 6 中 String 的 offset 和 count 字段用于___（子串共享 / 内存压缩），Compact Strings 替代了该方案。",
+    "answer": "{\"correct\": [[\"-XX:+CompactStrings\", \"CompactStrings\"], [\"char[]\", \"char 数组\"], [\"byte[]\", \"byte 数组\"], [\"0\", \"LATIN1\", \"Latin-1\"], [\"1\"], [\"50%\", \"一半\"], [\"子串共享\"]], \"distractors\": [\"-XX:+CompressStrings\", \"-XX:+StringCompression\", \"-XX:StringCompact\", \"int[]\", \"short[]\", \"UTF8[]\", \"-1\", \"LATIN\", \"2\", \"UTF16\", \"90%\", \"25%\", \"30%\", \"内存压缩\", \"字符串去重\", \"字符串驻留\"]}",
+    "hints": [
+      "Compact Strings 与 String Deduplication（G1 的 -XX:+UseStringDeduplication）是两个不同特性",
+      "coder 字段存储在 String 对象的 value 属性之前，作为单独的 byte 字段"
+    ],
+    "tags": [
+      "JVM",
+      "String",
+      "Compact Strings",
+      "内存优化"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CodeCache 代码缓存管理",
+    "content": "Code Cache 是 JVM 中存储___（JIT 编译后的本地机器码）的内存区域。默认最大大小由___参数控制（JDK 8 默认 240MB）。Code Cache 分为三个区域：___（non-method code，存放 JVM 内部适配器和 stubs）、___（profiled nmethods，C1 编译代码）、和___（non-profiled nmethods，C2 编译代码）。当 Code Cache 满时 JVM 的行为由___控制（默认启用，尝试清理过时代码）。若清理失败则 JVM 降级为只解释执行不再编译，并输出___警告。InitialCodeCacheSize 控制 Code Cache 的___大小。",
+    "answer": "{\"correct\": [[\"本地机器码\", \"编译后的代码\", \"JIT 编译代码\"], [\"-XX:ReservedCodeCacheSize\", \"ReservedCodeCacheSize\"], [\"non-method\", \"非方法代码\"], [\"profiled nmethod\", \"profiled 代码\", \"C1 编译代码\"], [\"non-profiled nmethod\", \"non-profiled 代码\", \"C2 编译代码\"], [\"-XX:+UseCodeCacheFlushing\", \"UseCodeCacheFlushing\"], [\"CodeCache is full\", \"CodeCache 已满\"], [\"初始\", \"最小\"]], \"distractors\": [\"字节码\", \"类元数据\", \"堆内存\", \"-XX:MaxCodeCache\", \"-XX:CodeCacheSize\", \"-XX:CacheSize\", \"静态代码\", \"非方法区\", \"C0 代码\", \"C3 代码\", \"non-opt 代码\", \"-XX:-UseCodeCacheFlush\", \"-XX:CodeCacheFlushSize\", \"Compilation failed\", \"JIT 关闭\", \"CodeCache 溢出\", \"运行时\"]}",
+    "hints": [
+      "JDK 9 将 Code Cache 分段的目的是不同生命周期不同 GC 策略——non-method 代码几乎不更新，profiled 代码可能被更频繁地刷新",
+      "Code Cache 满的典型表现是 JIT 编译日志中大量「CodeCache is full. Compiler has been disabled」警告，之后系统性能持续下降"
+    ],
+    "tags": [
+      "JVM",
+      "CodeCache",
+      "JIT",
+      "编译"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JVM OOM 应急钩子与退出策略",
+    "content": "JVM 的___参数指定在 OOM 发生时自动执行指定脚本或命令（如自动重启应用或触发诊断脚本），命令通过___（子进程 / JVM 内线程）执行。___参数（JDK 9+）使 JVM 在首次 OOM 时立即退出进程并返回错误码。___参数（JDK 9+）使 JVM 在首次 OOM 时生成 core dump 并退出。当应用因 OOM 进入不可恢复状态时，使用___参数可以避免「空转」——JVM 仍然运行但无法响应请求。生产环境推荐将___与 HeapDumpOnOutOfMemoryError 配合使用来构建完整的故障捕获方案。",
+    "answer": "{\"correct\": [[\"-XX:OnOutOfMemoryError\", \"OnOutOfMemoryError\"], [\"子进程\", \"外部进程\"], [\"-XX:+ExitOnOutOfMemoryError\", \"ExitOnOutOfMemoryError\"], [\"-XX:+CrashOnOutOfMemoryError\", \"CrashOnOutOfMemoryError\"], [\"ExitOnOutOfMemoryError\", \"-XX:+ExitOnOutOfMemoryError\"], [\"OnOutOfMemoryError\", \"-XX:OnOutOfMemoryError\"]], \"distractors\": [\"-XX:OnError\", \"-XX:FatalErrorLog\", \"-XX:OOMAction\", \"-XX:+OnOOMExit\", \"JVM 线程\", \"GC 线程\", \"系统线程\", \"-XX:+CoreOnOOM\", \"-XX:+CreateCoreDump\", \"-XX:+GenerateCoreOnOOM\", \"RunOnOutOfMemoryError\", \"CoreOnOutOfMemoryError\", \"-XX:DumpOnOOM\"]}",
+    "hints": [
+      "OnOutOfMemoryError 的参数格式为 -XX:OnOutOfMemoryError=\"<command> <args>\"，命令会在 JVM 子进程中执行",
+      "ExitOnOutOfMemoryError 结合 HeapDumpOnOutOfMemoryError 可以实现「OOM 时先 dump 再退出」，避免不可恢复状态下的继续运行"
+    ],
+    "tags": [
+      "JVM",
+      "OOM",
+      "ExitOnOutOfMemoryError",
+      "CrashOnOutOfMemoryError"
+    ]
   }
 ]

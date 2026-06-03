@@ -1669,5 +1669,104 @@
       "模块系统",
       "反射"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JFR 自定义事件开发",
+    "content": "Java Flight Recorder (JFR) 自 JDK 14 起已开源（JEP 349），允许用户自定义事件。请说明创建和提交一个 JFR 自定义事件所需的步骤：使用的基类是什么？需要哪些注解？事件的生命周期（配置 -> 创建 -> 提交）是怎样的？",
+    "answer": "创建 JFR 自定义事件的步骤：\n1. 创建一个继承 `jdk.jfr.Event` 的类\n2. 使用 `@Label`、`@Description`、`@Timestamp`、`@MemoryAddress` 等注解标记字段（字段类型支持 boolean、int、long、float、double、String、Class、Thread 等）\n3. 可选：使用 `@Category` 给事件分组，使用 `@Enabled(true/false)` 控制默认启用状态\n4. 在使用处实例化事件对象（轻量操作，远轻于 log4j 日志），调用 event.begin()（可选）、设置字段值、调用 event.commit() 提交\n5. 事件提交后字段值被快照到 JFR 内部环形缓冲区，之后事件对象可被 GC\n6. 运行期可通过 `-XX:StartFlightRecording:settings=...` 启用或通过 JCMD 动态控制\n需要注意的是：事件类以 `jdk.jfr.Event` 引用时，JIT 会将其分配路径内联优化为极低开销（纳秒级），这是 JFR 低开销的核心机制。",
+    "hints": [
+      "JFR 事件框架通过 JIT 内联和 allocation merging 实现极低开销，与普通 Java 对象的分配路径不同",
+      "事件启用/禁用可由配置 files（.jfc 文件）或 programmatic configuration 控制，禁用的事件几乎零开销（只生成一个空方法调用）"
+    ],
+    "tags": [
+      "jfr",
+      "jep-349",
+      "event",
+      "profiling",
+      "monitoring"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "JDK 9+ String 拼接 invokeDynamic 优化",
+    "content": "在 JDK 9+ 中，Java 编译器将 String 的 + 拼接操作符编译为 invokedynamic 调用，而非传统的 StringBuilder。以下关于这种优化的描述，哪项是正确的？\nA) invokedynamic 方式在每次运行时都通过反射构造 StringBuilder，因此比 JDK 8 的显式 StringBuilder 更慢\nB) invokedynamic 方式使用 StringConcatFactory 作为 bootstrap method，在首次调用时生成最优的拼接实现策略，后续调用直接使用生成的 MethodHandle，JIT 可进一步内联优化\nC) invokedynamic 方式仅适用于 String 字面量的拼接，变量拼接仍然使用 StringBuilder\nD) 拼接结果仍然通过 StringBuilder.toString() 返回，只是创建 StringBuilder 的方式改用了 invokedynamic",
+    "answer": "B) invokedynamic 方式使用 StringConcatFactory 作为 bootstrap method，在首次调用时根据参数数量和类型选择最优策略（如直接构造字符数组、StringBuilder 或 StringBuffer），生成并缓存 MethodHandle。JIT 可以进一步将生成的拼接代码内联到调用点，消除方法分派开销。这种方式比 JDK 8 固定使用 StringBuilder 更灵活且性能更优。",
+    "hints": [
+      "invokedynamic 的核心优势在于延迟决策——编译期不确定的策略在运行期首次调用时选择并固化",
+      "bootstrap method 返回的是一个 MethodHandle，不是反射调用——这是关键区别"
+    ],
+    "tags": [
+      "string-concatenation",
+      "invokedynamic",
+      "stringconcatfactory",
+      "jep-280",
+      "java-9"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "JIT 分层编译中 C1 和 C2 的协作机制",
+    "content": "HotSpot VM 的分层编译（Tiered Compilation）将编译分为 5 个级别（0-4）。以下关于各编译级别之间协作机制的描述，哪项是正确的？\nA) 代码从 level 0（解释器）直接升级到 level 4（C2），中间不经过带 profiling 的编译级别\nB) level 2（C1 不带 profiling）和 level 3（C1 带 profiling）是可选的中间状态；C2 编译基于 level 3 收集的类型 profiling 信息做出更激进的优化决策，如虚方法内联和分支预测\nC) C1 编译的所有级别（1-3）都不记录运行时类型信息，这些信息仅在解释器中收集\nD) level 3 带 profiling 的 C1 代码与 level 4 C2 代码可以共存，但 JVM 不会自动从 level 4 回退到较低级别",
+    "answer": "B) level 2（C1 不带 profiling）和 level 3（C1 带 profiling）是可选中间状态。典型的升级路径是：0（解释器）-> 3（C1 带 profiling）-> 4（C2）。C1 的 level 3 收集方法调用频次、分支走向 profile、类型接收者分布等关键数据；C2 利用这些 profile 信息进行激进的优化，包括内联、锁消除、标量替换、循环展开等。所以 B 正确。A 错误——分层编译从 level 0 逐步升级。C 错误——C1 在 level 3 会收集 profiling。D 前半句正确，但 JVM 确实不会从 4 回退到更低级别（deoptimization 会回到解释器，不是回到 C1）。",
+    "hints": [
+      "分层编译各级别：0=解释器, 1=C1 简单, 2=C1 受限, 3=C1 全 profile, 4=C2",
+      "C2 的优化质量依赖 C1 收集的 profile 数据——包括分支命中率和类型接收者分布"
+    ],
+    "tags": [
+      "jit",
+      "tiered-compilation",
+      "c1",
+      "c2",
+      "hotspot-profile"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "Epsilon GC 在内存耗尽时的行为",
+    "content": "Epsilon GC（JEP 318）是一种无操作（no-op）垃圾收集器。当堆内存耗尽时，Epsilon GC 不会触发任何垃圾收集，而是直接抛出 OutOfMemoryError。如果堆中仍有大量可回收的不可达对象，Epsilon GC 也不会回收它们。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A) 正确",
+    "hints": [
+      "Epsilon GC 的设计目标就是零开销的内存分配——它只负责分配，不做任何回收",
+      "JEP 318 明确指出 Epsilon GC 适用于短生命周期的服务、性能测试和延迟敏感场景"
+    ],
+    "tags": [
+      "epsilon-gc",
+      "jep-318",
+      "gc",
+      "no-op-gc",
+      "outofmemoryerror"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ScopedValue 与 ThreadLocal 核心区别",
+    "content": "ScopedValue（JEP 429，JDK 21+）是 JDK 新引入的线程上下文传值机制。请说明 ScopedValue 与 ThreadLocal 在以下三个方面的核心区别：1) 可变性约束 2) 生命周期范围 3) 对虚拟线程继承行为的支持。",
+    "answer": "1) 可变性约束：ThreadLocal 的值可通过 set() 方法任意修改；ScopedValue 的值是不可变的——一旦在 `where(key, value).run(...)` 中绑定，在该 Runnable 执行期间不能修改，保证了数据的不变性。\n2) 生命周期范围：ThreadLocal 的值从 set() 到 remove() 一直存在（或直到线程死亡），容易出现内存泄漏（尤其在线程池场景）；ScopedValue 的值的生命周期严格限定在 Callable/Runnable 的执行范围内，执行完成后自动释放，从根本上消除了内存泄漏风险。\n3) 对虚拟线程继承：ThreadLocal 的可继承性（InheritableThreadLocal）在线程池场景下语义混乱，且虚拟线程中不推荐使用；ScopedValue 天然支持虚拟线程的「不切割上下文」语义——虚拟线程可以透明地访问其创建者的 ScopedValue，不需要显式的继承机制。",
+    "hints": [
+      "从不可变性和确定性角度看，ScopedValue 更像是方法的隐式参数，而不是可变的线程局部变量",
+      "ScopedValue 的 bounded 模式（rebind）虽然允许在嵌套作用域中绑定新值，但仍遵循 stack-like 的进出规则"
+    ],
+    "tags": [
+      "scopedvalue",
+      "threadlocal",
+      "virtual-threads",
+      "jep-429",
+      "java-21"
+    ]
   }
 ]

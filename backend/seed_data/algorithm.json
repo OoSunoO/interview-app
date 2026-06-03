@@ -1590,5 +1590,94 @@
       "Zset",
       "时间复杂度"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "二维前缀和与差分数组",
+    "content": "请解释二维前缀和（2D Prefix Sum）和二维差分数组的原理。它们在处理子矩阵求和和区域更新问题中如何做到 O(1) 查询和 O(1) 更新？给出典型应用场景。",
+    "answer": "答案：二维前缀和可以在 O(1) 时间内计算任意子矩阵的元素和。二维差分数组可以在 O(1) 时间内对子矩阵做批量加减操作。两者是互逆操作——对差分数组求前缀和就得到原数组。\n\n解析：1）二维前缀和——定义 pre[i][j] = sum of matrix[0..i-1][0..j-1]。递推：pre[i][j] = pre[i-1][j] + pre[i][j-1] - pre[i-1][j-1] + matrix[i-1][j-1]。子矩阵 (r1,c1) 到 (r2,c2) 的和 = pre[r2+1][c2+1] - pre[r1][c2+1] - pre[r2+1][c1] + pre[r1][c1]。O(1) 查询的核心是利用「容斥原理」——通过四个角的前缀和加减得到任意子矩阵的和。\n\n2）二维差分——定义 diff[i][j] 使得 matrix 是 diff 的前缀和。对子矩阵 (r1,c1) 到 (r2,c2) 加 val 的操作：diff[r1][c1] += val；diff[r1][c2+1] -= val；diff[r2+1][c1] -= val；diff[r2+1][c2+1] += val。最后对整个 diff 做前缀和还原出 matrix（一次 O(n*m) 的遍历即可得到批量操作后的矩阵）。\n\n应用场景：1）图像处理：多个矩形区域的亮度调整。2）游戏地图：多次矩形区域伤害/治疗计算。3）范围统计：多个矩形查询的离线聚合。4）LeetCode 典型题目：Range Sum Query 2D - Immutable（二维前缀和）、Stamping the Grid（二维差分 + 前缀和）。",
+    "hints": [
+      "一维前缀和到二维的扩展——容斥原理在 O(1) 查询中的关键作用",
+      "差分数组和前缀和为什么是互逆操作"
+    ],
+    "tags": [
+      "前缀和",
+      "差分",
+      "二维数组",
+      "容斥原理"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "找到字符串中所有字母异位词",
+    "content": "给定两个字符串 s 和 p，找到 s 中所有 p 的字母异位词的子串起始索引。字母异位词指字母相同但排列不同的字符串。返回所有起始索引的列表。",
+    "answer": "```java\npublic List<Integer> findAnagrams(String s, String p) {\n    List<Integer> res = new ArrayList<>();\n    if (s.length() < p.length()) return res;\n    int[] need = new int[26];\n    int[] window = new int[26];\n    for (char c : p.toCharArray()) need[c - 'a']++;\n    int left = 0, right = 0;\n    while (right < s.length()) {\n        char rc = s.charAt(right);\n        window[rc - 'a']++;\n        right++;\n        // 窗口大小等于 p 的长度时检查\n        if (right - left == p.length()) {\n            if (Arrays.equals(need, window)) res.add(left);\n            char lc = s.charAt(left);\n            window[lc - 'a']--;\n            left++;\n        }\n    }\n    return res;\n}\n```\n时间复杂度 O(n)，空间复杂度 O(1)（固定 26 长度的计数数组）。核心技巧：固定长度滑动窗口，用字符计数数组比较窗口和目标的字符构成。优化点：使用 diff 变量记录 need 和 window 的差异计数，避免每次比较整个数组。",
+    "hints": [
+      "固定长度滑动窗口 + 计数数组是最直观的解法",
+      "如何用 diff 变量（差异计数）优化避免数组全量比较"
+    ],
+    "tags": [
+      "字符串",
+      "滑动窗口",
+      "哈希表"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "后缀数组与 LCP 数组原理",
+    "content": "请解释后缀数组（Suffix Array）和最长公共前缀（LCP）数组的原理与构造方法。后缀数组在字符串处理中有哪些经典应用？DC3/SA-IS 算法的核心思想是什么？",
+    "answer": "答案：后缀数组 SA 是字符串所有后缀按字典序排序后的起始下标数组。LCP 数组记录排序后相邻两个后缀的最长公共前缀长度。两者结合可以高效解决大多数字符串子串问题（O(n log n) 构造后 O(1) 或 O(log n) 查询）。\n\n解析：1）后缀数组构造——最直观的方法是将所有后缀排序（O(n² log n)，太慢）。倍增法（Doubling Algorithm）O(n log n)：每轮按长度为 2^k 的前缀排序，利用上一轮的排序结果快速得到本轮排序。基数排序（Counting Sort）优化后达到 O(n log n)。\n\n2）LCP 数组构造——Kasai 算法 O(n)：利用性质 LCP[i] >= LCP[i-1] - 1。从第一个后缀开始，计算其与排序后前一个后缀的公共前缀长度，利用已知信息避免重复比较。\n\n3）DC3/SA-IS（O(n) 构造）——DC3（Difference Cover mod 3）将下标按 mod 3 分为三组，递归构造后合并。SA-IS（Induced Sorting）是目前最快的线性构造算法，通过诱导排序（Induced Sorting）和 LMS（Left-Most Sorted）子串递归。这些算法主要用于理论竞赛和极致性能场景（如基因组序列处理），工程中倍增法已足够。\n\n典型应用：1）最长重复子串：扫描 LCP 最大值。2）最长公共子串（两个字符串）：拼接后查 LCP 最大且分属两个串。3）不同子串的个数：sum(len - SA[i] - LCP[i])。4）字符串匹配（类似二分查 SA 范围）。5）回文子串的最长长度等。",
+    "hints": [
+      "倍增法构造后缀数组时基数排序为什么能达到 O(n log n)",
+      "LCP 数组的 Kasai 算法中 LCP[i] >= LCP[i-1] - 1 的性质为什么成立"
+    ],
+    "tags": [
+      "字符串",
+      "后缀数组",
+      "LCP",
+      "SA-IS"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "实现一致性哈希环",
+    "content": "实现一个一致性哈希（Consistent Hashing）环，支持 addNode(nodeId) 和 removeNode(nodeId) 操作。要求：1）数据 key 映射到顺时针最近的节点。2）支持虚拟节点解决分布不均问题。3）实现数据迁移查询（getKeysForNode 返回该节点负责的所有 key 列表）。",
+    "answer": "```java\npublic class ConsistentHashRing {\n    private final TreeMap<Integer, String> ring = new TreeMap<>();\n    private final int virtualNodes;\n    private final Map<String, List<Integer>> nodePositions = new HashMap<>();\n\n    public ConsistentHashRing(int virtualNodes) {\n        this.virtualNodes = virtualNodes;\n    }\n\n    public void addNode(String nodeId) {\n        List<Integer> positions = new ArrayList<>();\n        for (int i = 0; i < virtualNodes; i++) {\n            int hash = hash(nodeId + \"#\" + i);\n            ring.put(hash, nodeId);\n            positions.add(hash);\n        }\n        nodePositions.put(nodeId, positions);\n    }\n\n    public void removeNode(String nodeId) {\n        List<Integer> positions = nodePositions.remove(nodeId);\n        if (positions != null) positions.forEach(ring::remove);\n    }\n\n    public String getNode(String key) {\n        if (ring.isEmpty()) return null;\n        int hash = hash(key);\n        Map.Entry<Integer, String> entry = ring.ceilingEntry(hash);\n        if (entry == null) entry = ring.firstEntry(); // 环状回绕\n        return entry.getValue();\n    }\n\n    public List<String> getKeysForNode(String nodeId, List<String> allKeys) {\n        List<String> result = new ArrayList<>();\n        for (String key : allKeys) {\n            if (getNode(key).equals(nodeId)) result.add(key);\n        }\n        return result;\n    }\n\n    private int hash(String key) {\n        // 使用 FNV-1a 或 MurmurHash 保证均匀分布\n        return key.hashCode() & 0x7fffffff;\n    }\n}\n```\n\n时间复杂度：addNode/removeNode O(V)（V 是每个节点的虚拟节点数），getNode O(log VN)。核心数据结构：TreeMap（红黑树）的 ceilingEntry 实现「顺时针找最近节点」。虚拟节点数量推荐为物理节点数的 100-200 倍。\n\n注意：生产环境中的哈希函数应使用 MurmurHash 或 CityHash 而非 hashCode（分布更均匀）。TreeMap 可以用跳跃表优化但 Java 标准库只有 TreeMap。",
+    "hints": [
+      "TreeMap 的 ceilingEntry 为什么适合实现一致性哈希的顺时针查找",
+      "虚拟节点数量如何确定——太多和太少分别有什么影响"
+    ],
+    "tags": [
+      "哈希",
+      "一致性哈希",
+      "TreeMap",
+      "分布式"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "分割回文串 II",
+    "content": "给定一个字符串 s，将其分割成若干个子串，使得每个子串都是回文串。求最少分割次数。例如 s = \"aab\"，最少分割 1 次（\"aa\", \"b\"）。",
+    "answer": "```java\npublic int minCut(String s) {\n    int n = s.length();\n    // g[i][j] = true if s[i..j] is palindrome\n    boolean[][] g = new boolean[n][n];\n    for (int len = 1; len <= n; len++) {\n        for (int i = 0; i + len - 1 < n; i++) {\n            int j = i + len - 1;\n            if (s.charAt(i) == s.charAt(j) && (len <= 2 || g[i+1][j-1])) {\n                g[i][j] = true;\n            }\n        }\n    }\n    // dp[i] = min cuts for s[0..i-1]\n    int[] dp = new int[n];\n    Arrays.fill(dp, Integer.MAX_VALUE);\n    for (int i = 0; i < n; i++) {\n        if (g[0][i]) {\n            dp[i] = 0; // 本身就是回文，不需要切割\n        } else {\n            for (int j = 0; j < i; j++) {\n                if (g[j+1][i]) {\n                    dp[i] = Math.min(dp[i], dp[j] + 1);\n                }\n            }\n        }\n    }\n    return dp[n-1];\n}\n```\n时间复杂度 O(n²)，空间复杂度 O(n²)。核心：先用 DP 预处理所有子串是否为回文（区间 DP），再用第二个 DP 求最少分割次数。dp[i] 表示前缀 s[0..i] 的最少分割次数，转移方程：dp[i] = min(dp[j] + 1) 当 s[j+1..i] 是回文。\n\n优化：可以将空间优化到 O(n)（中心扩展法同时进行 DP 更新），但 O(n²) 已足够应对大多数输入（n <= 2000 级别）。",
+    "hints": [
+      "为什么需要两次 DP——预处理回文信息和计算最少分割",
+      "如何从 O(n²) 空间优化到 O(n)——中心扩展时动态更新 dp"
+    ],
+    "tags": [
+      "动态规划",
+      "回文",
+      "字符串",
+      "区间 DP"
+    ]
   }
 ]

@@ -1670,5 +1670,105 @@
       "副本",
       "日志截断"
     ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Kafka 消费者客户端参数配置影响",
+    "content": "在 Kafka 消费者配置中，以下哪个组合可以在保证较高吞吐的同时，确保消息在被业务处理完成后再提交 Offset？",
+    "options": [
+      "A) enable.auto.commit=true, auto.commit.interval.ms=1000",
+      "B) enable.auto.commit=false, 手动在业务处理完成前调用 commitAsync",
+      "C) enable.auto.commit=false, 业务处理完成后调用 commitSync 或 commitAsync",
+      "D) enable.auto.commit=true, auto.offset.reset=earliest"
+    ],
+    "answer": "答案：C) enable.auto.commit=false, 业务处理完成后调用 commitSync 或 commitAsync\n\n解析：Kafka 消费者提交 Offset 的最佳实践是关闭自动提交（enable.auto.commit=false），在业务逻辑处理完后再手动提交 Offset。这样可以确保消息被成功处理后才记录消费进度，避免消息丢失。A 是自动提交，业务宕机时已提交但未处理的消息会丢失。B 在业务处理前提交 Offset，业务处理失败时已提交的 Offset 无法回退，导致消息丢失。D 的 auto.offset.reset=earliest 只在 Offset 不存在时生效（新建消费者组或 Offset 过期），与提交方式无关。\n\n扩展延伸：commitSync vs commitAsync：commitSync（同步提交）会阻塞直到提交完成，保证提交成功但会降低吞吐（每次 poll 后等待提交完成）。commitAsync（异步提交）不会阻塞，吞吐更高但提交可能失败（回调中处理失败或重试）。推荐组合：正常情况用 commitAsync（高吞吐），在关闭消费者或 Rebalance 前用 commitSync 确保最后一批 Offset 提交成功。At-least-once 语义下，消息可能被重复消费，消费端必须做好幂等处理。",
+    "hints": [
+      "commitSync 和 commitAsync 各自适用什么场景",
+      "关闭消费者前为什么需要用 commitSync 提交最后一次 Offset"
+    ],
+    "tags": [
+      "Kafka",
+      "消费者",
+      "Offset"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 日志段索引与稀疏索引策略",
+    "content": "Kafka 的日志段（Log Segment）中的索引文件（.index）为什么采用稀疏索引而非密集索引？索引条目怎么生成？查找消息时的二分查找路径是怎样的？",
+    "answer": "答案：Kafka 的 .index 文件采用稀疏索引——每写满约 4KB 消息数据才添加一条索引条目（而非每条消息都建索引）。log.index.interval.bytes（默认 4096 即 4KB）控制索引间隔。稀疏索引在索引文件大小和查找速度之间做了平衡。\n\n解析：索引条目格式：每条索引条目 8 字节——前 4 字节记录相对于 base offset 的相对偏移量，后 4 字节记录消息在 .log 文件中的物理偏移量。因为索引是稀疏的，索引文件很小（约为日志文件的 1/4096，加上 8 字节每条），可以完全缓存在操作系统 Page Cache 中。查找流程：1）通过 Segment 文件名（base offset）二分查找找到目标 offset 所在的 Segment。2）在 .index 文件中进行二分查找，找到 ≤ target offset 的最大索引条目。3）从索引条目记录的物理位置开始，在 .log 文件中顺序扫描直到找到目标消息。\n\n扩展延伸：为什么不用密集索引？如果每条消息都建索引，8 字节每记录，加上 4KB 的索引间隔本身就是避免密集索引的工程设计。忽略索引文件会非常大（与日志文件成正比例增长），浪费磁盘空间和 Page Cache。时间戳索引（.timeindex）也是稀疏的，每条记录 12 字节（8 字节时间戳 + 4 字节相对 offset），间隔同 .index。Kafka 的索引设计体现了：用少量的顺序扫描换取极小的索引内存占用。现代硬件上，在 4KB 区间内顺序扫描日志是极其高效的（Page Cache 命中率高）。生产参数调整：log.index.interval.bytes 影响索引密度——间隔越小索引越密集（查找更快）但索引文件越大；间隔越大索引越稀疏（查找更慢但索引更省空间）。默认 4096 已经过充分测试，一般不需要修改。",
+    "hints": [
+      "Kafka 为什么选择稀疏索引而不是每条消息都建索引",
+      "目标消息的二分查找路径"
+    ],
+    "tags": [
+      "Kafka",
+      "索引",
+      "日志存储"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RocketMQ 消息重试队列与死信队列机制",
+    "content": "RocketMQ 的消息重试机制是如何工作的？重试队列和死信队列（DLQ）的设计原理是什么？默认 16 次重试失败后消息进入死信队列，后续如何处理？",
+    "answer": "答案：RocketMQ 的消息重试针对集群模式下的消费失败。当消费者返回 ConsumeConcurrentlyStatus.RECONSUME_LATER 或抛出异常时，Broker 会将消息放入重试队列（Retry Topic，名为 %RETRY%{consumerGroup}）。重试次数默认 16 次，每次重试的延迟时间依次递增（第 1 次 10s，第 2 次 30s，第 3 次 1m，直到第 16 次 2h）。16 次重试全部失败后，消息进入死信队列（Dead Letter Queue，名为 %DLQ%{consumerGroup}）。\n\n解析：重试延迟级别：RocketMQ 不支持自定义延迟，而是使用内置的 18 个延迟级别。消息重试时 Broker 会根据重试次数选择对应的延迟级别投递。如果消息在第 N 次重试成功，则该消息的消费流程结束。16 次重试都失败后消息进入死信队列，死信队列也支持普通消费——监控程序或人工运维通过单独的死信消费者消费这些消息进行分析或补偿。\n\n扩展延伸：死信队列的管理：1）监控死信队列的消息数量——当死信队列中出现消息时及时告警。2）如果死信消息是因为代码 Bug 导致，修复后重新消费（重置消费位点到死信队列）。3）如果死信消息是业务上不可恢复的错误，手动在控制台跳过。特殊场景：顺序消息的重试——顺序消息的监听器是 MessageListenerOrderly，重试时不会跳过后续消息，而是阻塞当前队列所有后续消息的消费，直到当前消息重试成功或达到最大重试次数（这保证了顺序不会因为重试而改变）。注意：广播模式下 RocketMQ 不提供重试能力——消息失败后不可重试。",
+    "hints": [
+      "顺序消息的重试为什么是阻塞式的",
+      "死信队列的消息如何人工重新消费"
+    ],
+    "tags": [
+      "RocketMQ",
+      "重试",
+      "死信队列",
+      "DLQ"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "消息队列跨机房容灾架构设计",
+    "content": "如何设计消息队列的跨机房容灾架构？Kafka 的 MirrorMaker 2 和 RocketMQ 的 DLedger 多副本方案各自的优劣是什么？跨机房同步的延迟和一致性如何保证？",
+    "answer": "答案：消息队列跨机房容灾有几种主流方案：1）Kafka 的 MirrorMaker 2（MM2，主动复制）——在源集群每个 Topic 的每个 Partition 上消费消息，写入目标集群的对应 Partition。支持双向复制和循环复制检测。2）RocketMQ 的多副本（DLedger）方案——基于 Raft 协议，消息写入多数节点后才确认。可以对等部署跨机房节点组成 Raft 组。3）Pulsar 的跨地域复制（Geo-Replication）——存算分离架构原生支持，配置简单。\n\n解析：MirrorMaker 2 的架构和优劣：1）架构——MM2 作为 Kafka Connect Connector 运行，消费源集群的消息，生产到目标集群。2）优势——功能成熟、社区广泛使用、支持 Topic 自动创建和配置同步、支持消费者偏移量同步（故障切换后可继续消费）。3）劣势——端到端延迟通常在秒级（取决于网络和消费-生产速度）、复制引入的延迟可能导致主集群切换时数据不一致、需要额外维护 Connect 集群。\n\n扩展延伸：RocketMQ DLedger 跨机房部署：1）将 5 个 DLedger 节点跨两个机房部署（如机房 A 3 节点，机房 B 2 节点）。正常时机房 A 的节点担任 Leader。2）机房 A 整体故障时，机房 B 的 2 节点无法组成多数派，集群不可用（Raft 的制约）。3）配置变更将机房 B 的 2 节点升级为 3 节点全量部署才能恢复。所以跨机房的 Raft 部署需要奇数节点分布在至少 3 个机房（或伪 3 机房）以容忍单机房故障。跨机房方案的选择：异地容灾的期望 RPO（Recovery Point Objective）< 1 分钟时考虑双活部署（Raft 跨机房）；RPO < 5 秒且能容忍秒级延迟的异步复制 → MM2 或 RocketMQ 异步复制通道；RPO < 1 秒且同城双活 → 同城 Raft 三节点（跨两个可用区）。最终建议：大多数场景选择异步跨机房复制（MM2/双集群同步）即可，Raft 跨机房部署复杂性高、运维成本大，只在极端关键场景下使用。",
+    "hints": [
+      "MirrorMaker 2 和 Raft 跨机房方案在数据一致性上的差异",
+      "为什么 Raft 跨机房需要至少奇数个机房？只两个机房时有什么限制？"
+    ],
+    "tags": [
+      "消息队列",
+      "容灾",
+      "MirrorMaker",
+      "Raft"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Kafka 消息格式与压缩方式",
+    "content": "关于 Kafka 的消息压缩，以下说法正确的是？",
+    "options": [
+      "A) Kafka 不支持消息压缩，需要在客户端自行压缩和解压缩",
+      "B) 消息压缩只在生产者端进行，Broker 和消费者端不需要解压缩",
+      "C) 生产者端可配置 gzip/snappy/lz4/zstd 压缩，Broker 端存储压缩后的消息，消费者端自动解压缩",
+      "D) Kafka 只支持 Snappy 压缩，其他压缩算法需要额外插件"
+    ],
+    "answer": "答案：C) 生产者端可配置 gzip/snappy/lz4/zstd 压缩，Broker 端存储压缩后的消息，消费者端自动解压缩\n\n解析：Kafka 0.8+ 支持消息压缩，生产者在发送消息时可以配置压缩类型（compression.type = gzip/snappy/lz4/zstd）。压缩在生产者端对消息批量进行，Broker 端存储压缩后的字节流（不重新解压和压缩，除非 Broker 端的 compression.type 配置与生产者不一致才需要解压再压缩）。消费者端自动解压缩，对消费者完全透明。\n\n扩展延伸：压缩性能对比：zstd（Facebook 开源）压缩比最高（约 2.5 倍于 gzip），压缩速度也最快（比 gzip 快数倍）。lz4 压缩速度快但压缩比不如 zstd。snappy 是 Google 开源的追求速度的压缩算法，速度极快但压缩比一般。gzip 压缩比和压缩速度折中。建议：追求高压缩比（节省带宽和存储）→ zstd；追求低延迟（CPU 敏感）→ lz4。不同压缩算法对吞吐的影响：Kafka 的压缩是批量的（一个 batch 压缩为一个 record），消息小且批量大时压缩效率最高。生产建议：如果消息是 JSON 文本（压缩比高）且带宽有限 → zstd（producer compression.type=zstd）。CPU 核心多而带宽充裕 → lz4。",
+    "hints": [
+      "Broker 端在什么情况下需要重新压缩消息",
+      "zstd 和 lz4 的压缩比与速度对比"
+    ],
+    "tags": [
+      "Kafka",
+      "压缩",
+      "zstd",
+      "lz4"
+    ]
   }
 ]

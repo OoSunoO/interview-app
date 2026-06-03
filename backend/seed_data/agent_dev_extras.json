@@ -1673,5 +1673,103 @@
       "工作流编排",
       "LangGraph"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "content": "在生产环境中测试 Agent 行为需要在模拟环境中执行。Agent 仿真测试（Agent Simulation Testing）有哪些实现方法？与传统的单元测试和端到端测试相比，仿真测试解决了哪些独特的挑战？",
+    "answer": "答案：Agent 仿真测试通过在可控模拟环境中运行 Agent，验证其在复杂场景下的行为正确性和鲁棒性。相比单元测试（测单个工具调用）和 E2E 测试（测完整流程），仿真测试解决了环境动态性和交互不确定性的验证难题。主流方法包括基于状态机仿真、LLM-as-Environment、和用户行为模拟。\n\n解析：仿真测试的三种方法——1）基于状态机仿真：将外部环境建模为有限状态机，Agent 的每个工具调用触发状态转移。优点是可复现、确定性、无需外部依赖。缺点是状态建模工作量随复杂度增长，无法覆盖非预期交互。2）LLM-as-Environment：用 LLM 模拟外部系统（数据库、API、用户）的响应。Agent 调用「查询订单」工具时，LLM 生成模拟的订单数据。优点是灵活、覆盖范围大。缺点是响应随机性导致测试不可复现，LLM 模拟可能产生非典型行为。3）用户行为模拟：用 LLM 或行为树模拟终端用户与 Agent 的交互，验证 Agent 是否正确理解用户意图、处理模糊请求、以及在用户纠正时调整行为。适用于客服 Agent、销售 Agent 等面向用户的场景。\n\n扩展延伸：仿真测试的工程实践——1）录放（Record & Replay）：先在生产环境录制真实的 Agent-User 交互轨迹，然后在仿真环境中回放，验证新版本 Agent 的行为一致性。2）对抗性仿真：用 LLM 作为 Red Team 自动生成边缘情况和攻击场景测试 Agent（Prompt Injection、拒绝服务等）。3）度量指标：除了任务完成率，还应度量仿真测试中的幻觉率、工具错误调用率、超出轮次限制率、回退率。4）覆盖度分析：通过变异测试（Mutation Testing）评估仿真测试集对 Agent 行为空间的覆盖程度。挑战——仿真环境始终是真实环境的简化，存在仿真与生产环境之间的 gap，需要持续用生产数据进行校准。",
+    "hints": [
+      "LLM-as-Environment 如何保证测试的可复现性",
+      "仿真测试和 E2E 测试在 Agent 测试金字塔中的位置关系是什么"
+    ],
+    "tags": [
+      "Agent",
+      "测试",
+      "仿真",
+      "QA"
+    ],
+    "title": "Agent 仿真测试与模拟环境"
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 工作流的事务语义与补偿机制",
+    "content": "Agent 的多步工作流（Multi-Step Workflow）中如何实现事务语义（Transactional Semantics）？当工作流中途失败时，补偿机制（Compensation）如何设计来保证数据一致性？",
+    "answer": "答案：Agent 工作流的事务语义借鉴分布式系统中的 Saga 模式——将工作流分解为多个本地事务，每个事务有对应的补偿操作（Compensating Action）。当工作流中某一步失败时，按逆序执行已完成步骤的补偿操作来撤销变更。由于 Agent 的工具调用涉及外部系统（数据库、API、文件系统），需要显式的补偿处理。\n\n解析：Saga 模式在 Agent 中的应用——1）Choreography Saga（编排模式）：Agent 自主管理事务边界，通过 Sequence Diagram 或 Workflow DSL 定义补偿步骤。Agent 在执行每一步时同时记录该步的补偿操作。2）Orchestration Saga（协调模式）：由 Workflow Engine（如 Temporal、LangGraph 的持久化模式）统一管理事务和补偿。Engine 记录每个步骤的执行状态，在失败时自动触发补偿。\n\n补偿操作的挑战——1）外部系统的幂等性：补偿操作必须是幂等的（多次执行不会产生副作用）。例如 「删除订单」的补偿是「恢复订单」，但订单被删除后可能已被其他流程处理。2）非事务性 API：许多第三方 API 不支持事务回滚（如发送邮件不可撤销）。对策：将「发送确认邮件」这类不可逆操作放在工作流的最后（Phase Finalization）。3）补偿操作的失败：补偿操作本身也可能失败。需要设计补偿的补偿（本质上是一个递归问题，在实际工程中通常设定最大重试次数后人工介入）。\n\n扩展延伸：工程实践——1）Checkpointing（状态检查点）：在每个步骤完成后保存 Agent 状态快照。失败时可以从最近检查点恢复（重放模式），而非完全回退（比 Saga 便宜）。2）Write-Ahead Log（预写日志）：Agent 在执行工具调用前先记录意图，工具调用完成后记录结果。失败时通过日志判断需要补偿的操作。3）空操作检测：如果某步骤没有副作用（如只读查询），不需要补偿。4）Auto-fallback：某些场景下可以自动降级（如数据库写入失败则降级为写本地文件），避免中断工作流。5）最终一致性：在 Agent 场景下，强事务往往过于严格，最终一致性配合补偿通常是更实际的方案。",
+    "hints": [
+      "Saga 模式和两阶段提交（2PC）在 Agent 场景下的适用性对比",
+      "如何判断一个 Agent 工具调用是否需要补偿"
+    ],
+    "tags": [
+      "Agent",
+      "工作流",
+      "事务",
+      "Saga",
+      "补偿"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "跨域 Agent 编排与联邦调度",
+    "content": "在大型组织中，不同部门部署了各自独立的 Agent 系统。如何设计跨域 Agent 编排（Cross-Domain Agent Orchestration）与联邦调度（Federated Scheduling）架构？涉及哪些关键问题？",
+    "answer": "答案：跨域 Agent 编排是指在多个独立管理的 Agent 域之间协调任务执行，类似微服务中的服务网格（Service Mesh）概念在 Agent 场景的映射。核心架构模式包括中央调度器、联邦协商和点对点路由。关键问题包括身份联邦、权限委派、数据隔离和跨域语义理解。\n\n解析：架构模式——1）中央调度器（Central Orchestrator）：一个主 Agent 作为全局调度器，维护所有可用 Agent 域的能力目录，将任务路由到对应的域 Agent。优点是全局可见性，缺点是单点故障和缩放瓶颈。2）联邦协商（Federated Negotiation）：每个域独立自治，通过 A2A 协议协商任务分配。没有中央节点，Agent 域之间通过 Capability Advertisement（能力广播）互相发现。类似去中心化联邦。3）点对点路由（Peer-to-Peer Routing）：Agent 域以 P2P 网络形式连接，任务根据 Domain 图拓扑逐跳路由。适用于跨域链路固定的场景（如零售→物流→支付）。\n\n关键问题——1）身份联邦：不同组织使用不同的身份系统（OAuth、SAML、LDAP），跨域 Agent 调用需要统一的身份联邦。Alice 在域 A 的 Agent 调用域 B 的服务时，域 B 需要验证 Alice 的身份和权限。2）权限委派（Delegated Authorization）：Agent 代表用户执行操作时需要委派权限。可以用 OAuth 2.0 Token Exchange 或 UMA（User-Managed Access）协议实现。3）数据隔离：跨域 Agent 交换数据时需要保证数据隐私和合规性（HIPAA、GDPR）。最小化数据原则——只传输完成当前任务必需的数据。4）跨域语义理解：不同域可能使用不同的术语和本体（Domain A 的「订单」和 Domain B 的「订单」含义不同）。需要 semantic mediation 层或 Ontology Mapping。",
+    "hints": [
+      "跨域 Agent 编排与微服务编排有什么相似和不同",
+      "Agent 联邦的 Capability Advertisement 协议如何设计"
+    ],
+    "tags": [
+      "Agent",
+      "编排",
+      "联邦",
+      "跨域",
+      "A2A"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 性能分析与瓶颈定位",
+    "content": "在生产环境中，诊断 Agent 性能瓶颈需要关注哪些关键指标？造成 Agent 响应慢的常见原因有哪些？如何系统性地定位和优化 Agent 性能问题？",
+    "answer": "答案：Agent 性能分析需要覆盖全链路——从用户输入到最终响应的每个环节。关键指标包括 LLM TTFT（Time to First Token）和 TPOT（Time per Output Token）、工具调用延迟、RAG 检索延迟、串行 vs 并行效率。常见瓶颈有 LLM 推理慢、工具链式调用串行化、上下文过长导致 attention 计算量激增。\n\n解析：关键指标维度——1）LLM 推理时间：TTFT、TPOT、总推理 Token 数。对比不同层（gpt-4 vs gpt-4o-mini）的延迟差异。2）工具调用延迟：单个工具调用的 P50/P95/P99 延迟，外部 API 的网络延迟和重试开销。3）RAG 检索延迟：Embedding 生成时间、向量检索时间（HNSW/IVF）、Re-ranking 时间。4）编排框架开销：Agent 框架的消息处理、状态管理、安全检查等环节的耗时。5）轮次效率：完成一个任务需要多少轮 Agent-Loop（典型的「思考→调用→观察→思考」循环）。轮次越多，延迟越大。\n\n常见瓶颈——1）串行工具调用：Agent 默认顺序调用工具，独立工具可以并行化。2）过长上下文：Agent 每轮都将历史全部注入 LLM，随着轮次增加上下文呈线性增长，Attention 计算量呈平方增长。3）LLM 选择不当：简单任务用了最强模型（延迟高+成本高），应该用小模型 + Fallback 到强模型。4）外部依赖慢：第三方 API 延迟不可控，需要合理超时和降级策略。\n\n系统性优化思路——1）Profile 埋点：在 Agent 框架的关键路径（LLM 调用前/后、工具调用前/后、检索前/后）埋入 OpenTelemetry Span。2）Flame Graph 分析：将全链路追踪数据汇总到可视化 Flame Graph，直观看到时间花在哪。3）分层优化：先优化最大的瓶颈（通常是 LLM 推理耗时），再往下。4）缓存策略：语义缓存（命中相似问题时直接返回缓存）和精确缓存（相同输入命中缓存）可以大幅降低重复查询代价。",
+    "hints": [
+      "OpenTelemetry 在 Agent 性能追踪中的 Span 设计",
+      "语义缓存如何影响 Agent 响应延迟的 P95"
+    ],
+    "tags": [
+      "Agent",
+      "性能",
+      "监控",
+      "优化"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Agent 提示词压缩与上下文窗口优化",
+    "content": "关于 Agent 提示词压缩（Prompt Compression）和上下文窗口优化，以下哪个说法是错误的？",
+    "options": [
+      "A) LLMLingua 和 Selective Context 等方法通过压缩 System Prompt 中的冗余内容来减少 token 消耗，可将上下文压缩至原来的 20%-30% 而保持大部分性能",
+      "B) Agent 每轮对话都将全部历史消息重新发送给 LLM 是最优策略，因为 LLM 能自动过滤掉不相关的历史信息",
+      "C) 上下文窗口优化策略包括：历史摘要压缩、滑动窗口丢弃、关键信息提取和分层记忆检索",
+      "D) 过长的上下文不仅增加推理成本（Token 计费），还会降低模型的召回准确率（Lost-in-the-Middle 现象）"
+    ],
+    "answer": "B",
+    "hints": [
+      "LLM 存在 Lost-in-the-Middle 效应，中间位置的信息容易被忽略",
+      "历史消息压缩通常使用 LLM 对过去 N 轮对话生成摘要，替代原始对话"
+    ],
+    "tags": [
+      "Agent",
+      "提示词",
+      "上下文优化",
+      "Token 压缩"
+    ]
   }
 ]

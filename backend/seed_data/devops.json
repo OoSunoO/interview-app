@@ -1643,5 +1643,106 @@
       "Traces",
       "Collector"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Kubernetes Node 压力驱逐顺序",
+    "content": "当 Kubernetes 节点因内存不足触发节点压力驱逐（Node Pressure Eviction）时，以下哪种 Pod 会被优先驱逐？",
+    "options": [
+      "A) 设置了 Guaranteed QoS 的关键业务 Pod",
+      "B) Pod Priority 最高且设置了 Guaranteed QoS 的 Pod",
+      "C) 未设置 resources requests/limits 的 BestEffort Pod",
+      "D) 使用节点 HostNetwork 模式的 Pod"
+    ],
+    "answer": "答案：C) 未设置 resources requests/limits 的 BestEffort Pod\n\n解析：Kubelet 在节点资源不足（内存/磁盘/PID 耗尽）时启动节点压力驱逐，驱逐顺序严格按 QoS 等级从低到高：BestEffort（未设置任何 resources）→ Burstable（至少设置了 requests 但未全部等于 limits）→ Guaranteed（requests == limits）。同一 QoS 等级内，按 Pod 使用资源相对于请求的比例从高到低驱逐。PriorityClass 只影响抢占（Preemption）——调度时高优 Pod 抢占低优 Pod，不影响驱逐顺序。HostNetwork 模式不影响驱逐顺序。\n\n扩展延伸：驱逐触发条件：eviction-hard 硬阈值触发时立即驱逐（如 memory.available<100Mi），eviction-soft 软阈值触发后有宽限期（eviction-soft-grace-period）才驱逐。驱逐过程：Kubelet 先尝试回收节点级资源（删除死掉的 Pod、删除不再使用的镜像），不够再驱逐 Pod。驱逐时终止 Pod 并通知 API Server，被驱逐的 Pod 的 status.phase 变为 Failed，reason=Evicted。API Server 重新创建 Pod（由 Deployment/StatefulSet 控制器执行），但可能仍然调度到同一节点（如果节点资源已恢复）。被驱逐的 Pod 建议用 PriorityClass 保证关键服务优先调度。避免关键服务被驱逐：设置合理的 requests/limits（Guaranteed QoS）和高优先级（PriorityClass）。",
+    "hints": [
+      "QoS 类驱逐顺序：BestEffort -> Burstable -> Guaranteed",
+      "eviction-hard 和 eviction-soft 触发时的行为差异"
+    ],
+    "tags": [
+      "K8s",
+      "驱逐",
+      "QoS",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "容器镜像仓库 Harbor 架构与镜像复制策略",
+    "content": "企业级容器镜像仓库 Harbor 的核心架构是怎样的？Harbor 如何实现跨数据中心的镜像复制（Replication）？镜像清理策略如何设计？",
+    "answer": "答案：Harbor 是 CNCF 孵化的企业级镜像仓库，核心组件包括：Proxy（Nginx，TLS 终止和请求转发）、Core Service（API/Auth/UI/Token Service，核心业务）、Registry（Docker Distribution，镜像存储，支持 OCI 标准）、Database（PostgreSQL，存储元数据/用户/项目信息）、Job Service（异步任务执行，如复制、GC、扫描）、Trivy/Clair（漏洞扫描器）、Storage（S3/Azure/OSS/NFS/本地文件系统）。\n\n解析：跨数据中心镜像复制：1）Push-based 模式——在源 Harbor 配置目标 Harbor 的地址和凭证，源 Harbor 主动推送镜像到目标。2）Pull-based 模式——在目标 Harbor 配置源 Harbor 地址，目标 Harbor 主动拉取。3）Replication Rule——定义需要复制的镜像过滤条件（仓库/标签/版本），触发方式（手动/定时/事件驱动）。4）复制依赖 Job Service 执行异步任务，支持断点续传和重试。\n\n扩展延伸：镜像清理策略（Garbage Collection，GC）：1）Harbor 2.5+ 支持在线 GC（不需要停机）。2）清理对象：未被任何标签引用的 Blob（不可变镜像层）、已删除的镜像的 Blob。3）自动清理策略：按保留数量（保留最近 N 个标签）、按保留天数（保留最近 N 天内的标签）、按正则过滤（如只保留带 v 前缀的标签）。4）标签不可变（Tag Immutability）——指定仓库中的标签不可覆盖（防止生产环境镜像被误覆盖）。5）安全扫描策略：镜像推送后自动触发漏洞扫描、标记不可信镜像阻止部署（阻断 CI/CD 流水线）。配置建议：定期自动清理（每周）+ 保留最近 30 天的所有镜像标签 + 生产镜像不可变。",
+    "hints": [
+      "Harbor 跨数据中心复制的两种模式",
+      "镜像仓库的 GC 回收的是什么数据"
+    ],
+    "tags": [
+      "Harbor",
+      "镜像仓库",
+      "复制",
+      "GC"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes ServiceAccount 与权限绑定最佳实践",
+    "content": "如何在 Kubernetes 中为每个微服务创建独立的 ServiceAccount 并绑定最小权限？RBAC 的 Role/ClusterRole、RoleBinding/ClusterRoleBinding 如何正确选择？",
+    "answer": "答案：Kubernetes 安全性最佳实践要求每个微服务使用独立的 ServiceAccount，通过 RBAC 绑定最小权限，避免使用默认的 default ServiceAccount（该账号通常没有任何资源访问限制）。\n\n解析：1）创建 ServiceAccount：为每个服务创建一个 SA（如 kubectl create sa order-service）。2）选择 Role 还是 ClusterRole：如果服务只需要访问特定 Namespace 的资源（如读取本 Namespace 的 Pod），使用 Role（Namespace 级别）；如果需要跨 Namespace 访问（如查看所有 Namespace 的 Pod），使用 ClusterRole。3）RoleBinding vs ClusterRoleBinding：RoleBinding 将 Role/ClusterRole 绑定到特定 Namespace 的用户/SA/Group；ClusterRoleBinding 授予集群级别权限（不限 Namespace）。推荐组合：用 ClusterRole 定义公共权限集合（如 pod-reader），在各自 Namespace 中用 RoleBinding 引用该 ClusterRole 并绑定到本 Namespace 的 SA。4）最小权限示例：SA order-service 只需要查看本 Namespace 的 Pod 和 Endpoint（服务发现），不需要创建/删除 Pod。\n\n扩展延伸：自动化 RBAC 管理工具：1）kube-rbac-proxy——保护 Prometheus metrics 端点，要求请求带 SA 的 Token。2）OPA/Gatekeeper——强制检查 Pod 是否设置了 automountServiceAccountToken: false 限制不需要访问 API 的服务。3）rbac-manager（ReactiveOps）——按声明式配置自动管理 RBAC 资源。排查 RBAC：当 Pod 中的应用调用 K8s API 返回 403 Forbidden 时，首先检查 Pod 使用的 SA、然后确认 RoleBinding/ClusterRoleBinding 是否创建正确。kubectl auth can-i --list --as=system:serviceaccount:<ns>:<sa> 可测试 SA 的权限。",
+    "hints": [
+      "为什么不用 default ServiceAccount 比用最小权限的独立 SA 更危险",
+      "RoleBinding + ClusterRole 组合如何实现跨 Namespace 资源的最小权限访问"
+    ],
+    "tags": [
+      "K8s",
+      "RBAC",
+      "ServiceAccount",
+      "安全"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes 网络策略与 Cilium NetworkPolicy 增强",
+    "content": "Kubernetes 标准 NetworkPolicy 只能控制 L3/L4 层（IP+Port），如何实现 L7 层（HTTP 方法/路径/gRPC 服务）的网络策略？Cilium 的 NetworkPolicy 做了哪些增强？",
+    "answer": "答案：标准 K8s NetworkPolicy 只支持 L3/L4 过滤（基于 IP、Port、协议）。要实现 L7 网络策略（如只允许 GET /api/orders 路径的流量），需要借助支持 L7 策略的 CNI 插件（如 Cilium）或 Service Mesh（如 Istio AuthorizationPolicy）。Cilium 基于 eBPF 提供了标准 NetworkPolicy 的增强，支持 HTTP/gRPC/Kafka/DNS 等协议级别的规则。\n\n解析：Cilium 的 NetworkPolicy 增强：1）HTTP 规则——允许匹配特定 HTTP 路径、方法、Host 头的流量。示例规则允许 GET /api/orders HTTP/1.1 请求进入 Service A，拒绝其他路径或 POST 方法。2）gRPC 规则——按 service/method 匹配，如拒绝 mTLS 未认证的 gRPC 调用访问特定服务。3）Kafka 规则——按 Topic 和 ClientID 过滤 Kafka 请求，实现 topic 级别的 Kafka 访问控制。4）DNS 规则——基于 DNS 域名（FQDN）的总出站流量控制，而非使用 IP CIDR（IP 可能变化）。\n\n扩展延伸：Istio AuthorizationPolicy 也做 L7 策略但架构不同：Istio 通过 Envoy Sidecar 执行策略（需要注入 Sidecar），Cilium 通过 eBPF 在内核层面执行策略（无需 Sidecar，性能更高）。CiliumNetworkPolicy（CRD）是 Cilium 扩展的自定义资源，用法与标准 NetworkPolicy 类似但支持更多字段。生产实践：大部分场景下标准 NetworkPolicy 已足够（限制 namespace 间互相访问、限制特定端口）。只有需要 HTTP 路径级别或 gRPC 方法级别控制时才用 CiliumNetworkPolicy。CiliumNetworkPolicy 可以单独使用也可以与标准 NetworkPolicy 叠加——两者取交集（都允许才算允许）。",
+    "hints": [
+      "Cilium 如何通过 eBPF 实现 L7 网络策略",
+      "CiliumNetworkPolicy 和标准 NetworkPolicy 的叠加规则"
+    ],
+    "tags": [
+      "K8s",
+      "Cilium",
+      "NetworkPolicy",
+      "L7"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Docker 镜像构建缓存层命中规则",
+    "content": "Docker 构建镜像时缓存命中规则是什么？以下哪个操作会使得后续层的缓存全部失效？",
+    "options": [
+      "A) 在 Dockerfile 中改变了 COPY 指令复制的文件内容",
+      "B) 在 Dockerfile 中使用 ADD 指令添加一个永不改变的 tar.gz 压缩包",
+      "C) 在 Dockerfile 中插入了 ENV 指令设置环境变量 KEY=VALUE",
+      "D) 在 RUN apt-get update 之前添加了一条注释"
+    ],
+    "answer": "答案：A) 在 Dockerfile 中改变了 COPY 指令复制的文件内容\n\n解析：Docker 构建缓存命中规则基于指令和上下文的完整性检查。对于 COPY/ADD 指令，Docker 计算被复制文件的 checksum（校验和）并比较——如果文件内容发生变化，则该层和所有后续层缓存失效。对于 RUN 指令，缓存命中取决于上一条指令是否命中缓存，以及 RUN 命令的字符串是否改变。ENV 指令如果内容（KEY=VALUE）发生变化，该层缓存失效。注释不影响（注释在构建时被忽略，不会产生层）。\n\n扩展延伸：Dockerfile 的位置影响：经常变化的内容（源码）放 Dockerfile 后面，不常变化的内容（apt 安装、pip 安装依赖）放前面，最大化利用缓存。示例顺序：1）FROM base。2）RUN apt-get update && apt-get install（缓存稳定，除非改 apt 命令）。3）COPY package.json /app/（依赖配置文件，相对稳定）。4）RUN npm install（利用上一层的 package.json 变化缓存）。5）COPY . /app/（源码经常变化，放最后）。如果 COPY . 放前面，每次源码变化后 apt-get install 也重新执行。额外的缓存失效因素：ARG 或 ENV 值变化也会使引用它们的后续层缓存失效。docker build --no-cache 强制跳过所有缓存。docker build --cache-from 指定外部镜像作为缓存源（CI/CD 中加速构建）。",
+    "hints": [
+      "COPY 指令缓存失效的判定依据（checksum 变化）",
+      "Dockerfile 中元素排列顺序对缓存命中率的影响"
+    ],
+    "tags": [
+      "Docker",
+      "构建缓存",
+      "Dockerfile"
+    ]
   }
 ]

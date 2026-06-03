@@ -1647,5 +1647,94 @@
       "RoaringBitmap",
       "压缩"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "回溯算法的剪枝技巧",
+    "content": "请总结回溯算法中常见的剪枝策略。什么是可行性剪枝（Feasibility Pruning）和最优化剪枝（Bounds Pruning / Branch and Bound）？在 N 皇后、数独、排列生成等问题中如何应用剪枝？",
+    "answer": "答案：回溯算法的核心是深度优先搜索 + 状态回退，但暴力回溯的时间复杂度通常是指数级的。剪枝是在递归过程中提前判断某条路径不可能产生有效解（可行性剪枝）或不可能产生更优解（最优化剪枝），从而跳过该分支。\n\n解析：1）可行性剪枝（Feasibility Pruning）——判断当前部分解已经违反约束条件，不再继续递归。经典案例：N 皇后中检查当前位置是否被已有皇后攻击（同行/同列/同对角线）。数独中检查当前位置的数字是否与所在行/列/宫格冲突。排列生成中检查是否出现过重复元素。\n\n2）最优化剪枝（Bounds Pruning / Branch and Bound）——搜索最优解时，如果当前路径已经不可能优于已知最优解，提前终止。经典案例：TSP（旅行商）问题中，当前路径长度 + 剩余节点的最小可能长度 ≥ 已知最优解 → 剪枝。背包问题中，当前价值 + 剩余物品的最大可能价值 ≤ 已知最优解 → 剪枝。\n\n3）其他常见剪枝——顺序剪枝：优先搜索分枝数少的分支（如数独中先填候选数最少的空格——Minimum Remaining Values 启发式）。对称剪枝：利用对称性减少搜索空间（如 N 皇后中首行只搜索一半）。重复状态剪枝：使用记忆化（Memoization）避免重复搜索相同状态（如单词拆分问题）。\n\n典型剪枝效率对比：以 N 皇后为例，纯回溯（无剪枝）枚举所有放置方案为 O(N!)，加上对角线检查剪枝后降为 O(N!) 但常数大幅降低。N=15 时，纯回溯需要数小时，而剪枝后的版本几秒即可跑完。",
+    "hints": [
+      "可行性剪枝和最优化剪枝的本质区别——一个找「可不可行」，一个找「优不优秀」",
+      "数独中 Minimum Remaining Values（MRV）启发式策略为什么能显著加速搜索"
+    ],
+    "tags": [
+      "回溯",
+      "剪枝",
+      "搜索",
+      "优化"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "二叉树中的最大路径和",
+    "content": "二叉树中的路径被定义为一条节点序列，序列中每对相邻节点之间都有边相连。同一个节点在一条路径序列中至多出现一次。路径和是路径中各节点值的总和。给定一棵二叉树 root，返回其最大路径和。注意路径不一定经过根节点。",
+    "answer": "```java\nclass Solution {\n    private int maxSum = Integer.MIN_VALUE;\n\n    public int maxPathSum(TreeNode root) {\n        maxGain(root);\n        return maxSum;\n    }\n\n    private int maxGain(TreeNode node) {\n        if (node == null) return 0;\n        // 递归计算左右子树的最大贡献值（只有正值才采用）\n        int leftGain = Math.max(maxGain(node.left), 0);\n        int rightGain = Math.max(maxGain(node.right), 0);\n        // 经过当前节点的路径和 = 当前节点 + 左贡献 + 右贡献\n        int price = node.val + leftGain + rightGain;\n        maxSum = Math.max(maxSum, price);\n        // 向父节点返回最大贡献（只能选左或右的一支）\n        return node.val + Math.max(leftGain, rightGain);\n    }\n}\n```\n时间复杂度 O(n)，空间复杂度 O(h)（递归栈深度）。核心思想：后序遍历，每个节点计算经过自己的最大路径和（节点值 + 左子最大贡献 + 右子最大贡献），更新全局最大值。同时向上返回「从该节点出发的最大单向贡献」——只能选择左或右的一支（因为路径不能分叉）。\n\n注意：树节点值可能为负数，所以计算贡献时与 0 取 max（负贡献不取）。这是 LeetCode 第 124 题（Hard）的经典解法。",
+    "hints": [
+      "为什么向父节点返回时只能选左右子树中的一支——路径不能分叉",
+      "节点值为负数时如何处理——贡献值与 0 取 max 的含义"
+    ],
+    "tags": [
+      "树",
+      "二叉树",
+      "递归",
+      "后序遍历"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "斯坦纳树与最小生成图",
+    "content": "请解释斯坦纳树（Steiner Tree）问题与最小生成树（MST）的区别。在图中找连接指定点集的最小网络（斯坦纳树），为什么比 MST 更复杂？它在实际工程中有哪些应用？",
+    "answer": "答案：斯坦纳树问题：给定图 G 和一组必达节点（Terminal Set），找到一棵包含所有必达节点的最小权重树。MST 是斯坦纳树的特例（当所有顶点都是必达节点时）。斯坦纳树允许引入额外的「斯坦纳点」来降低总权重——这是它比 MST 更优但也更复杂的原因。\n\n解析：1）MST vs 斯坦纳树——MST 连接图中所有顶点，使用 |V|-1 条边。斯坦纳树只需连接必达节点集合（|T| 个点），可以使用不在 T 中的中间节点（斯坦纳点）来降低总边权。举例：三个必达节点排成等边三角形，中心有一个中间节点。MST 会选两条直连边（总长 2a），斯坦纳树可以从中心连接三个节点（总长 1.732a）。\n\n2）复杂度——MST 可以在 O(E log V) 内求解（Prim/Kruskal）。斯坦纳树是 NP-hard 问题（即使是一般图也是 NP-hard）。平面图的欧几里得斯坦纳树同样 NP-hard。但对于固定数量的必达节点 k，有 O(3^k * V + 2^k * V log V) 的 DP 算法（Dreyfus-Wagner 算法）。\n\n3）Dreyfus-Wagner DP 思路——dp[mask][v] = 连接 mask 表示的必达节点集合且以 v 为根的树的最小权重。转移：dp[mask][v] = min(dp[sub][v] + dp[mask ^ sub][v])（两个子集在当前根合并），以及 dp[mask][v] = min(dp[mask][u] + dist(u,v))（从其他节点扩展过来）。\n\n扩展延伸：工程应用——1）VLSI 布线设计：芯片上连接指定引脚的最短金属线网络（斯坦纳树减去冗余）。2）网络组播路由：连接一组目标节点的最小成本树。3）交通规划：在新路建设中连接几个关键地点的最小成本方案。4）近似算法：对于无法精确求解的大规模实例，使用 MST 作为 2-近似（斯坦纳树权重 ≤ MST 权重，且 MST 可以在 O(E log V) 内求解）。此外有更优的近似算法（如 MST-based 1.39-近似）。",
+    "hints": [
+      "斯坦纳树为什么可以比 MST 更优——引入中间节点（斯坦纳点）减少总边权",
+      "为什么当必达节点数固定时斯坦纳树可以在多项式时间内求解"
+    ],
+    "tags": [
+      "图论",
+      "斯坦纳树",
+      "MST",
+      "NP-hard"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "交错字符串",
+    "content": "给定三个字符串 s1、s2、s3，请判断 s3 是否由 s1 和 s2 交错组成。交错：保持 s1 和 s2 中各字符在原串中的相对顺序，交替取 s1 和 s2 的字符组成新串。例如 s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbcbcac\" → true。",
+    "answer": "```java\npublic boolean isInterleave(String s1, String s2, String s3) {\n    int m = s1.length(), n = s2.length();\n    if (m + n != s3.length()) return false;\n    // dp[i][j] = 是否可以用 s1[0..i-1] 和 s2[0..j-1] 交错组成 s3[0..i+j-1]\n    boolean[][] dp = new boolean[m+1][n+1];\n    dp[0][0] = true;\n    // 只用 s1 匹配\n    for (int i = 1; i <= m; i++) dp[i][0] = dp[i-1][0] && s1.charAt(i-1) == s3.charAt(i-1);\n    // 只用 s2 匹配\n    for (int j = 1; j <= n; j++) dp[0][j] = dp[0][j-1] && s2.charAt(j-1) == s3.charAt(j-1);\n    // DP 转移\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            dp[i][j] = (dp[i-1][j] && s1.charAt(i-1) == s3.charAt(i+j-1))\n                    || (dp[i][j-1] && s2.charAt(j-1) == s3.charAt(i+j-1));\n        }\n    }\n    return dp[m][n];\n}\n```\n时间复杂度 O(m*n)，空间复杂度 O(m*n)（可优化到 O(n)）。核心思想：二维 DP，dp[i][j] 表示 s1 的前 i 个字符和 s2 的前 j 个字符能否交错组成 s3 的前 i+j 个字符。转移：s3[i+j-1] 要么来自 s1[i-1]（需要 dp[i-1][j] 为 true），要么来自 s2[j-1]（需要 dp[i][j-1] 为 true）。\n\n空间优化：因为 dp[i][j] 只依赖 dp[i-1][j] 和 dp[i][j-1]，可以压缩到一维数组：dp[j] = (dp[j] && s1[i-1] == s3[i+j-1]) || (dp[j-1] && s2[j-1] == s3[i+j-1])。",
+    "hints": [
+      "二维 DP 的状态定义——dp[i][j] 表示 s1 前 i 个 + s2 前 j 个能否表示 s3 前 i+j 个",
+      "为什么可以优化到一维 DP——当前状态只依赖上一行和同一行前一列"
+    ],
+    "tags": [
+      "动态规划",
+      "字符串",
+      "DP"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "接雨水 II (Trapping Rain Water II)",
+    "content": "给定一个 m x n 的矩阵，其中的值代表每个单元格的高度。请你计算该矩阵形状能够接住的最大雨水量（三维接雨水）。",
+    "answer": "解题思路：三维接雨水不能直接使用二维接雨水的双指针法，需要使用最小堆（优先队列）从边界向内BFS。\n\n算法步骤：1）将矩阵最外圈的所有单元格加入最小堆（按高度排序），并标记为已访问。2）初始化总水量为0，边界最高水位为堆顶最小高度。3）从堆中弹出最低的单元格，检查其四个方向邻居。4）如果邻居高度低于当前边界水位，则水量 += 边界水位 - 邻居高度；否则更新边界水位。5）将邻居加入堆并标记已访问。6）重复直到堆为空。\n\n关键思路：水从边界向内流，永远从最低的缺口处向外溢。所以用最小堆保证每次处理的是当前所有边界中最矮的点。\n\n复杂度：O(m*n*log(m+n)) 时间，O(m*n) 空间。",
+    "hints": [
+      "为什么三维接雨水不能直接复用二维的左右双指针解法",
+      "最小堆中存储的元素应该包含哪些信息——坐标和高度，为什么高度用于决定水位"
+    ],
+    "tags": [
+      "算法",
+      "堆",
+      "BFS",
+      "接雨水"
+    ]
   }
 ]

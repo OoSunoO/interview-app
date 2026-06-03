@@ -1669,5 +1669,109 @@
       "MethodHandle",
       "字节码"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "JVM 容器感知与资源检测",
+    "content": "JVM 在容器环境（Docker/Kubernetes）中运行时，需要正确检测 CPU 和内存限制。以下哪个参数是控制 JVM 自动读取 cgroup 容器资源限制并调整自身行为的关键开关？",
+    "answer": "答案：A) -XX:+UseContainerSupport（JDK 10 引入 JEP 293，JDK 8u191 回移植，默认启用）。\n解析：UseContainerSupport 控制 JVM 是否读取 cgroup 的 CPU 和内存限制。启用后 JVM 自动检测容器分配的 CPU 数量（cpu.shares）和内存上限（memory.limit_in_bytes），据此调整默认堆大小、GC 线程数、JIT 编译器线程数等。若没有该参数，JVM 会检测到宿主机 64 核但容器只分配 4 核，导致 GC 线程数过多和性能问题。B) -XX:+UseCGroupMemoryLimitForHeap 是 JDK 8u131 引入的实验性参数，仅影响堆大小计算，不涉及 CPU 检测。C) 和 D) 都是虚构参数。",
+    "options": [
+      "A) -XX:+UseContainerSupport（JDK 10+ 默认开启，读取 cgroup 的 CPU 和内存限制）",
+      "B) -XX:+UseCGroupMemoryLimitForHeap（仅控制堆大小计算，不涉及 CPU）",
+      "C) -XX:+ContainerAwareness（通用容器感知开关）",
+      "D) -XX:+DetectContainerLimits（完整的资源检测参数）"
+    ],
+    "hints": [
+      "容器中如果未配置此参数，JVM 会检测到宿主机全部核数",
+      "JDK 8u191 将此参数回移植，建议容器内 Java 应用升级至此版本以上"
+    ],
+    "tags": [
+      "JVM",
+      "容器",
+      "UseContainerSupport",
+      "cgroup"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Graal JIT 编译器与 JVMCI",
+    "content": "关于 JDK 17+ 中 Graal JIT 编译器（JVMCI，JEP 243）的描述，以下哪一项是正确的？",
+    "answer": "答案：A) Graal 编译器是用纯 Java 编写的 JIT/AOT 编译器，可以通过 JVMCI 接口作为 C2 Server Compiler 的替代，使用 -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler 启用。\n解析：Graal 由 Oracle Labs 开发，完全用 Java 编写。它使用 Sea-of-Nodes 中间表示（比 C2 的 Ideal Graph 更激进）实现更深的优化。Graal 既可作为 JIT 编译器（通过 JVMCI），也可作为 AOT 编译器（通过 Native Image 的 Substrate VM）。B 错误——Graal JIT 在标准 OpenJDK 中也可用（作为实验性特性），不限于 GraalVM 发行版。C 错误——Graal 替代的是 C2 编译器而非解释器。D 错误——Graal 既支持 JIT（运行时编译热点方法）也支持 AOT（提前编译）。",
+    "options": [
+      "A) Graal 是用 Java 编写的 JIT/AOT 编译器，可通过 JVMCI 接口作为 C2 的替代，使用 -XX:+UseJVMCICompiler 启用",
+      "B) Graal 编译器只能在 GraalVM 发行版中使用，不能在标准 Oracle/OpenJDK 中使用",
+      "C) Graal 编译器完全替代了解释器，所有代码都通过 Graal 编译执行而不经解释阶段",
+      "D) Graal 编译器是纯 AOT 编译器，只能在构建时使用，不能在运行时动态编译热点代码"
+    ],
+    "hints": [
+      "Graal 的 JVMCI 接口是 JDK 9 引入的插件式编译器接口（JEP 243）",
+      "Graal 编译器最重要的特点是「用 Java 写 Java 编译器」——这是自我优化的关键"
+    ],
+    "tags": [
+      "JVM",
+      "Graal",
+      "JIT",
+      "JVMCI"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM JFR 架构与事件采集机制",
+    "content": "JVM 的 Java Flight Recorder（JFR）是什么？它如何实现极低开销（<1%）的运行时事件采集？JFR 的持续事件、定时事件、即时事件三类事件分别在什么场景下使用？",
+    "answer": "答案：JFR 是 JDK 7 引入（JDK 11 开源免费）的基于事件的内置性能监控框架，内置于 HotSpot JVM，支持连续采集运行时事件。其典型开销 <1%，可生产环境默认开启。\n\n解析：低开销实现机制包括：1）每个线程使用本地缓冲区（Thread Local Buffer）写入事件，完全无锁。缓冲区写满后通过 CAS 发布到全局缓冲区列表。2）热路径通过采样替代插桩——高频路径（如方法进入/退出）不做每事件写入，而是通过采样线程定期采集。3）事件存储在预分配的原生缓冲区中（Native Memory 而非 Java 堆），不触发 GC。4）事件定义在 JVM 本地代码（C++）层面，通过 JVM 级别的回调写入，无需经过 JNI 调用。\n\n三类事件：1）持续事件（Duration Event）——记录有持续时间的操作，记录开始和结束时间戳并计算耗时。适用于 GC 停顿、锁等待、Socket IO 等。2）定时事件（Timed Event）——通过采样线程定期采集 JVM 状态快照（默认每 20ms）。适用于 CPU 负载采样、对象分配采样、线程统计。3）即时事件（Instant Event）——记录无持续时间的瞬间状态变化。适用于异常抛出、类加载、线程状态变化。\n\n扩展延伸：JFR 数据可通过 jcmd JFR.dump 转储为 .jfr 文件，用 JMC（JDK Mission Control）可视化分析，或编程解析。JDK 9+ 支持 -XX:StartFlightRecording 启动时自动开启录制。自定义应用事件通过继承 jdk.jfr.Event 实现。JFR 的连续录制模式（Continuous Recording）默认保留最近数小时数据，适合保留在生产环境作为「黑匣子」。",
+    "hints": [
+      "JFR 为什么能实现 <1% 开销——无锁设计 + 采样替代插桩 + 原生内存分配",
+      "三种事件类型对应不同场景：持续事件=有持续时间操作，定时事件=周期性采样，即时事件=瞬间状态"
+    ],
+    "tags": [
+      "JVM",
+      "JFR",
+      "监控",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM Adaptive Sizing Policy 自适应调整",
+    "content": "JVM 的 Adaptive Sizing Policy（-XX:+UseAdaptiveSizePolicy）是什么？它是如何根据 GC 性能统计自动调整新生代大小、Survivor 比例和晋升阈值的？什么场景下建议关闭自适应调整？",
+    "answer": "答案：Adaptive Sizing Policy 是 Parallel Scavenge 收集器的自动化调优机制（默认开启），根据实时 GC 指标（吞吐量、停顿时间、GC 频率）自动调整堆的代区大小和 GC 参数，无需人工干预。\n\n解析：工作机制——GC 发生后，Adaptive Sizing Policy 分析以下数据：GC 耗时、每次回收量、晋升对象大小、吞吐量（应用时间 / GC 时间）。基于分析结果决定：1）自动增大/减小新生代（-Xmn 未手动设置时）。停顿过长则减小新生代（Eden 变小减少每轮 GC 工作量）；GC 频率过高则增大新生代。2）调整 SurvivorRatio——确保 Survivor 区有足够空间容纳晋升对象，避免对象过早晋升到老年代引发 Full GC。3）动态调整晋升阈值（MaxTenuringThreshold）——如果 Survivor 区溢出频繁，降低阈值让对象尽早进入老年代。4）调整吞吐量目标（-XX:GCTimeRatio，默认 99，即 GC 时间占总时间的 <1%）。\n\n扩展延伸：关闭自适应调整的场景：1）应用的内存分配模式非常稳定，需要精确控制各代区大小——手动设置 -Xmn、-XX:SurvivorRatio、-XX:MaxTenuringThreshold 并禁用 -XX:-UseAdaptiveSizePolicy。2）低延迟敏感应用——自适应调整可能导致代区大小波动，引发 GC 行为突变。注意：AdaptiveSizePolicy 只对 Parallel Scavenge（-XX:+UseParallelGC）有效。G1、ZGC、Shenandoah 使用各自的内置自适应策略（G1 的停顿预测模型、InitialHeapOccupancyPercent 等），不依赖此参数。",
+    "hints": [
+      "UseAdaptiveSizePolicy 默认开启，是 Parallel GC「自调优」特性的核心",
+      "手动设置 -Xmn、-XX:SurvivorRatio 等参数时会覆盖自适应策略的对应决策"
+    ],
+    "tags": [
+      "JVM",
+      "AdaptiveSizePolicy",
+      "GC",
+      "Parallel GC",
+      "调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "invokedynamic 指令与 Lambda 表达式编译",
+    "content": "JVM 的 invokedynamic 指令（JDK 7 引入，JSR 292）是什么？它与传统 invokevirtual/invokestatic 指令的核心区别是什么？Java 8 的 Lambda 表达式是如何借助 invokedynamic 和 LambdaMetafactory 实现的？",
+    "answer": "答案：invokedynamic 是 JVM 指令集的第 186 条指令，允许在运行时通过引导方法（Bootstrap Method, BSM）自定义方法调用的链接规则。Lambda 表达式利用 invokedynamic 将闭包创建延迟到首次调用时，避免编译期生成匿名内部类。\n\n解析：与传统 invoke 指令的核心区别——invokevirtual/invokestatic 的调用目标在编译期基本确定（类加载解析阶段将符号引用转为直接引用，或通过虚方法表运行时查找）。invokedynamic 的调用目标在编译期完全未知：首次执行时 JVM 调用 BSM，BSM 返回一个 CallSite（封装 MethodHandle），将调用点与目标方法链接。后续执行直接跳转，BSM 不再参与。\n\nLambda 编译流程：1）编译阶段——javac 将 Lambda 表达式编译为 invokedynamic 指令 + 一个私有静态方法（包含 Lambda 体代码）。2）首次调用——invokedynamic 触发 LambdaMetafactory.metafactory() BSM，传入函数式接口类型、实现方法名和私有静态方法的 MethodHandle。3）BSM 使用 ASM 字节码生成技术动态生成适配器类（实现函数式接口，方法体中调用私有静态方法），返回 ConstantCallSite 指向该适配器。4）后续调用——invokedynamic 直接跳转到已链接的 CallSite，BSM 无需再次执行。这种方案实现了「Lambda 的运行时生成成本只在首次调用时发生一次」——后续调用与普通方法调用无异。\n\n扩展延伸：invokedynamic 的其他应用——JDK 9 的字符串拼接（StringConcatFactory 替代 StringBuilder）、JDK 14 的 Record 类 equals/hashCode/toString 生成。底层依赖 java.lang.invoke.MethodHandle（方法句柄），比反射更轻量级（编译期类型检查）。VarHandle（JDK 9，JEP 193）也基于 MethodHandle 语法提供了类型安全的字段原子操作替代 sun.misc.Unsafe。",
+    "hints": [
+      "invokedynamic 的 BSM 在首次执行时运行一次，后续直接跳转到已链接的 CallSite",
+      "LambdaMetafactory 使用 ASM 运行时生成适配器类，这比编译期生成匿名内部类更高效"
+    ],
+    "tags": [
+      "JVM",
+      "invokedynamic",
+      "Lambda",
+      "MethodHandle",
+      "字节码"
+    ]
   }
 ]

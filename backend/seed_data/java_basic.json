@@ -1661,5 +1661,103 @@
       "基本类型",
       "变量初始化"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Pattern Matching for instanceof 流分析作用域",
+    "content": "在 JDK 17+（JEP 394）中，Pattern Matching for instanceof 引入了基于流分析（Flow Analysis）的变量作用域规则。以下哪项描述是正确的？\nA) 模式匹配变量的作用域严格限定在匹配成功的代码块内（if 的 true 分支），从不扩展到 else 分支或 if 语句之后\nB) 当 if 条件为 `!(obj instanceof X x)` 且 true 分支必然抛出异常或返回时，模式变量 x 在 if 语句之后可见\nC) 模式匹配变量只能在 if 语句中使用，不能在 switch 规则或 while 循环条件中使用\nD) 模式匹配变量在 switch 箭頭規則（->）右侧表达式中不可直接引用，必须放在大括号代码块中",
+    "answer": "B) 当 if 条件为 `!(obj instanceof X x)` 且 true 分支必然抛出异常或返回时，模式变量 x 在 if 语句之后可见。JDK 17+ 的流分析能够判断：如果匹配条件为 false 的分支必然异常终止，则模式变量在后续代码中「确定已赋值」(definitely assigned)。这一机制也适用于 switch 规则、循环条件等场景。",
+    "hints": [
+      "流分析关注的是变量的「确定赋值」状态——编译器会追踪所有控制流路径",
+      "当 negated pattern 的 true 分支 abrupt completion（抛出异常或返回）时，false 分支的后续代码中变量是确定赋值的"
+    ],
+    "tags": [
+      "pattern-matching",
+      "instanceof",
+      "flow-analysis",
+      "scope",
+      "jep-394"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Switch 表达式穷举性与 null 处理",
+    "content": "关于 JDK 17+ 中 Switch 表达式（含 Pattern Matching for switch）的穷举性（Exhaustiveness）和 null 处理，以下哪项是正确的？\nA) Switch 表达式要求穷举所有可能值，编译器自动为 switch 表达式插入 null 检查，如果输入为 null 则默认进入 default 分支\nB) 传统 colon 語法的 switch 也要求穷举性检查，与箭頭語法规则相同\nC) 使用 sealed class 作为 switch 目标时，编译器会检查所有 permitted 子类是否都已覆盖，如果已穷举则无需 default 分支；但 null 值在没有 default 时会抛出 NullPointerException\nD) 箭頭語法 switch 不需要穷举，只需包含 default 分支即可编译",
+    "answer": "C) 使用 sealed class 作为 switch 目标时，编译器会逐个检查所有 permitted 子类是否都已覆盖；如果穷举了所有子类则不需要 default 分支。但是当输入为 null 时，若 switch 没有 default 分支（尽管已穷举），会抛出 NullPointerException。这是穷举性规则的常见陷阱。",
+    "hints": [
+      "穷举性（exhaustiveness）是 switch 表达式的要求，switch 语句没有穷举性要求；sealed class 的穷举检查需覆盖所有 permitted 直接子类",
+      "null 值的处理独立于穷举性——穷举不覆盖 null，这是容易遗漏的细节"
+    ],
+    "tags": [
+      "switch-expression",
+      "exhaustiveness",
+      "sealed-class",
+      "null",
+      "jep-441"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Sealed class 对 permitted 子类的限制",
+    "content": "在 Java 17+ 中，定义 sealed class 或 sealed interface 时，permits 子句指定的子类必须满足什么关键字约束？请列出三种可能的关键字并简要解释各自含义。",
+    "answer": "每个 permitted 子类必须声明为以下三者之一：\n1) final——禁止继续继承，适用于不再需要扩展的场景\n2) sealed——继续作为密封类，需要在 permits 子句中指定自己的子类\n3) non-sealed——取消密封约束，打开继承，允许任意子类自由扩展\n此外，如果 permitted 子类是 record 或 enum，则隐式为 final（record 不能继承，enum 不能继承），因此不需也不能显式声明上述关键字。",
+    "hints": [
+      "思维框架：permits 子类必须在「完全封闭」「继续密封」「开放继承」三者中选其一",
+      "record 和 enum 作为 permitted 子类时有特殊规则"
+    ],
+    "tags": [
+      "sealed-class",
+      "inheritance",
+      "jep-409",
+      "java-17",
+      "permitted-subclasses"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "复合赋值运算符的隐式窄化转换",
+    "content": "对于 Java 中的复合赋值运算符（如 +=、-=、*= 等），存在隐式的窄化类型转换（narrowing primitive conversion）。给定 `short s = 1;`，语句 `s += 1;` 编译通过并正确执行，但 `s = s + 1;` 会报编译错误。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A) 正确",
+    "hints": [
+      "复合赋值运算符 `E1 op= E2` 等价于 `E1 = (T) ((E1) op (E2))`，其中 T 是 E1 的类型",
+      "二元数值提升（binary numeric promotion）会使 `s + 1` 的结果类型提升为 int"
+    ],
+    "tags": [
+      "compound-assignment",
+      "type-conversion",
+      "narrowing",
+      "binary-numeric-promotion"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Text Block 前导空白去除规则",
+    "content": "Java 15+ 的 Text Block（\"\"\"...\"\"\"）编译器会在编译期对内容做规范化处理，其中一步是「去除公共前导空白」(strip indent)。请说明编译器确定「公共前导空白」量的具体算法规则，以及 closing \"\"\" 的位置在其中扮演的角色。",
+    "answer": "确定公共前导空白量的算法分两步：\n1. 将 closing \"\"\" 前的空白长度作为第一候选——如果 closing \"\"\" 单独占一行，其左侧的空白列数记为「基准缩进」\n2. 对所有非空内容行，计算每行前导空白长度，取其中的最小值与基准缩进比较，取较小的那个作为最终要去除的空白量\n3. 如果某个非空行的前导空白量小于最终去除量（只可能出现在无 closing \"\"\" 定界的场景），则该行不做去除\nstripIndent() 方法在运行期实现了相同的算法。此外 Text Block 还会将 `\\` 开头的行尾转义符去掉（用于避免行尾空白被 trim），并在末尾追加一个换行符。",
+    "hints": [
+      "closing \"\"\" 的位置决定了「算法建议的最大去除量」，但实际去除量不会超过最短内容行的前导空白",
+      "Text Block 的规范化包括三个步骤：1) 行尾空白去除 2) 公共前导空白去除 3) 末尾追加换行"
+    ],
+    "tags": [
+      "text-block",
+      "strip-indent",
+      "jep-378",
+      "string",
+      "java-15"
+    ]
   }
 ]

@@ -1664,5 +1664,108 @@
       "性能",
       "CPython"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python logging 模块的组件架构与日志传播机制",
+    "content": "请说明 Python logging 模块的四层组件架构（Logger、Handler、Formatter、Filter）如何协作。日志记录在 Logger 层级之间的传播（Propagation）机制是怎样的？如何避免日志重复输出？",
+    "answer": "答案：Logger 是应用使用的入口（记录消息）；Handler 将日志发送到目的地（文件、控制台、网络）；Formatter 格式化日志内容（时间、级别、消息）；Filter 基于额外条件过滤日志。Logger 有层级父子关系（如 'app.module' 是 'app' 的子 Logger），日志默认向父 Logger 传播（propagate=True），如果父 Logger 也有匹配的 Handler，同一日志会被多次记录，这是日志重复的常见原因。\n\n解析：四层组件详解——1）Logger：应用通过 logging.getLogger(name) 获取 Logger。Logger 按名称的 '.' 分隔符形成树结构（根 Logger 是树根）。Logger 有自己的日志级别（Level），低于级别的消息被忽略。Logger 的基本方法：debug/info/warning/error/critical。2）Handler：决定日志的去向。StreamHandler（控制台）、FileHandler（文件）、RotatingFileHandler（按大小轮转）、TimedRotatingFileHandler（按时间轮转）、SMTPHandler（邮件）、HTTPHandler（HTTP 推送）。3）Formatter：使用 % 格式或 str.format 格式定义日志模板。标准格式：'%(asctime)s - %(name)s - %(levelname)s - %(message)s'。4）Filter：通过 filter(record) 方法返回 True/False 决定日志是否输出，可实现更细粒度的过滤（如只包含特定 User-Agent 的请求日志）。\n\n扩展延伸：传播机制与重复排查——1）传播路径：子 Logger 的日志默认向父 Logger 传播。如果 app 的 Logger 有控制台 Handler，app.module 也有控制台 Handler，则 app.module 中的一条日志在两个 Logger 上各输出一次 → 控制台显示两条相同消息。2）解决方案：为不同 Logger 设置 propagate=False，或只在根 Logger 配置 Handler，其他 Logger 只设置级别不设 Handler。3）最佳实践配置：在应用入口（如 __main__）中执行一次 basicConfig() 或显式配置根 Logger，非根 Logger 只获取 Logger 实例并使用（不添加 Handler）。\n\n进阶模式——1）dictConfig：使用 logging.config.dictConfig 声明式配置所有 Logger/Handler/Formatter/Filter，避免散落在代码各处的 addHandler 调用。2）Filter 的应用：在 Web 应用中实现请求级别的日志上下文（结合 ContextVar 传递 trace_id、user_id）。3）JSON 日志结构化：使用 python-json-logger 输出 JSON 格式日志，方便日志系统（ELK/Loki）解析。4）性能注意事项：在 DEBUG 级别的大量日志中使用 logger.debug('msg: %s', expensive_computation()) 改为 logger.debug('msg: %s', expensive_computation()) when... 实际上应该使用 logger.debug('msg: %s', expensive_computation()) 但更好的做法是检查级别：if logger.isEnabledFor(logging.DEBUG): logger.debug('msg: %s', expensive_computation())。",
+    "hints": [
+      "日志重复输出的最常见原因——Handler 在父子 Logger 上各附加了一次，propagate 导致叠加",
+      "logging.config.dictConfig 相比散落在代码中的 addHandler 调用有何优势"
+    ],
+    "tags": [
+      "Python",
+      "logging",
+      "日志",
+      "调试"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "@functools.singledispatch 泛函数与类型分发",
+    "content": "关于 Python 中 @functools.singledispatch 装饰器，以下说法正确的是？",
+    "options": [
+      "A) singledispatch 根据函数参数的名称进行分派，参数名不同则调用不同的实现",
+      "B) singledispatch 的默认实现处理任意类型，register() 注册的类型专属实现优先级高于默认实现",
+      "C) singledispatch 只能用于类方法，不能在普通函数上使用",
+      "D) singledispatch 在运行时检查参数的类型注解（type hint）来决定调用哪个实现"
+    ],
+    "answer": "答案：B) singledispatch 的默认实现处理任意类型，register() 注册的类型专属实现优先级高于默认实现。\n\n解析：@functools.singledispatch 将普通函数转换为泛函数（Generic Function）——根据第一个参数的实际运行时类型（type(first_arg)）来分派到不同的函数实现。默认实现（不带 register 的原始函数）是兜底的，适用于所有类型。通过 @func.register(type) 装饰器注册特定类型的处理函数。A 选项错误：分派基于第一个参数的类型，而非参数名。C 选项错误：singledispatch 用于普通函数（且是函数，不是类方法）。D 选项错误：分派基于运行时类型（isinstance 检查），与类型注解（type hints）无关。\n\n扩展延伸：使用方式——\n```python\nfrom functools import singledispatch\n\n@singledispatch\ndef to_json(obj):\n    raise TypeError(f'Unsupported type: {type(obj)}')\n\n@to_json.register(int)\ndef _(obj):\n    return str(obj)\n\n@to_json.register(list)\ndef _(obj):\n    return '[' + ', '.join(to_json(x) for x in obj) + ']'\n\n@to_json.register(dict)\ndef _(obj):\n    items = ', '.join(f'{k!r}: {to_json(v)}' for k, v in obj.items())\n    return '{' + items + '}'\n```\n\nsingledispatchmethod（Python 3.8+）——用于类方法分派：@singledispatchmethod 装饰类方法，根据 self 之后的第一个参数类型分派。适用于 __init__ 重载（模拟构造函数重载）。对比多分派——singledispatch 是单分派（只有一个参数参与类型判断），functools.singledispatch 的变体没有多分派版本，PEP 443 明确只支持单分派。如果需要多分派（多个参数类型组合决定调用哪个实现），可以使用第三方库 multipledispatch。\n\n常见应用场景——1）实现类型安全的序列化/反序列化函数（如自定义 JSON 编码器）。2）在访问者模式（Visitor Pattern）中替代类型判断的 if-elif 链。3）解析 AST 节点时按不同节点类型调用不同的处理函数。",
+    "hints": [
+      "singledispatch 根据哪个参数的类型进行分派——位置还是名称",
+      "singledispatchmethod 与普通 singledispatch 在分派逻辑上的区别"
+    ],
+    "tags": [
+      "Python",
+      "functools",
+      "泛函数",
+      "类型分派"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python AST 模块的节点类型与代码变换 Pipeline",
+    "content": "Python 的 ast 模块提供了抽象语法树的解析和操作能力。请说明 ast.parse() 输出的节点树结构、NodeVisitor 与 NodeTransformer 的区别，以及如何实现一个代码变换（如将所有 print 调用替换为 logging 调用）。",
+    "answer": "答案：ast.parse(source) 将 Python 源代码解析为 AST 节点树，根节点是 ast.Module。NodeVisitor 遍历树时通过 visit_NodeType 方法模式匹配节点类型（不修改树）。NodeTransformer 继承 NodeVisitor 并在 visit 方法中返回新节点替代旧节点（实现 AST 变换）。代码变换的核心流程：parse → transform → unparse（ast.unparse 将 AST 转回源代码）。\n\n解析：AST 节点树结构——ast.parse('x = 1 + 2') 的输出：Module(body=[Assign(targets=[Name(id='x')], value=BinOp(left=Constant(value=1), op=Add(), right=Constant(value=2)))]), type_ignores=[]。常用节点类型：Module, FunctionDef, ClassDef, Return, Assign, For, While, If, BinOp, Compare, Call, Name, Constant, Attribute, Subscript。NodeVisitor 的使用——\n```python\nclass PrintFinder(ast.NodeVisitor):\n    def visit_Call(self, node):\n        if isinstance(node.func, ast.Name) and node.func.id == 'print':\n            print(f'Found print at line {node.lineno}')\n        self.generic_visit(node)  # 继续遍历子节点\n```\nNodeTransformer 的使用——实现 print → logging 替换：在 visit_Call 中检查是否是 print 调用，创建 logging.info(...) 的 AST 节点替换之。必须调用 self.generic_visit(node) 确保子节点也被变换。\n\n扩展延伸：实际应用——1）代码分析工具（flake8 插件、pylint 规则）使用 NodeVisitor 检查代码风格和潜在问题。2）代码变换工具（2to3、pyupgrade、autoflake）使用 NodeTransformer 自动升级语法。3）性能分析注入：自动向函数入口/出口插入性能计时代码。4）Pytest 的 fixture 重写机制（pytest 在 import hook 中通过 AST 变换修改测试代码）。\n\n高级用法——1）ast.parse 的 type_comments=True 参数支持类型注释。2）feature_version 控制解析器支持的最低 Python 语法版本。3）lineno 和 col_offset 属性在每个节点上标记源代码位置，便于错误报告。4）ast.increment_lineno(node, n) 在代码生成时调整行号。注意：AST 操作不执行语义分析（不检查类型），只管语法层面。对于类型安全的变换（如重命名变量），需要配合符号表和作用域分析。",
+    "hints": [
+      "NodeTransformer 的 visit 方法与 NodeVisitor 的 visit 方法在返回值上的关键区别",
+      "为什么 AST 变换只保证语法正确性而不保证语义正确性"
+    ],
+    "tags": [
+      "Python",
+      "AST",
+      "元编程",
+      "代码分析"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 序列化方案的技术选型：pickle 的局限与 protobuf 的优势",
+    "content": "Python 有 pickle、JSON、msgpack、protobuf 等多种序列化方案。请分析 pickle 的安全风险和设计局限，对比 protobuf 在跨语言场景下的优势。在微服务架构中，序列化方案应该如何选择？",
+    "answer": "答案：pickle 在序列化和反序列化期间会解析并执行任意的 Python 对象（通过 __reduce__ / __reduce_ex__ 协议重建对象），因此存在严重的安全风险——恶意 pickle 数据可以执行任意代码（无需特殊权限，只需 pickle.loads 恶意的 pickle 字节流）。JSON 安全但性能较差（纯 Python 实现解析），且不支持 bytes/自定义类型。msgpack 提供了比 JSON 更好的性能和更小的体积但同样缺乏 Schema 约束。protobuf 通过 .proto Schema 定义生成跨语言代码，提供强类型约束和向后兼容的字段编号机制。\n\n解析：pickle 的底层协议——pickle 支持 0-5 五个协议版本（Python 3.8 默认 4，3.8+ 新增 Protocol 5 用于 out-of-band 数据）。pickle 流本质上是一个栈虚拟机指令集（PUSH、POP、PUT、GET、REDUCE、STACK_GLOBAL 等）。REDUCE 指令调用 __reduce__ 返回的 (callable, args) 恢复对象，callable 可以是任意可调用对象（包括 os.system、subprocess.check_output）。这就是 pickle 不安全的根源。\n\nprotobuf 的优势——1）Schema 版本兼容：通过字段编号（field number）实现向前/向后兼容（新增字段不影响旧客户端）。2）跨语言：.proto 编译为 C++/Java/Python/Go/Rust 等语言的源码，保持数据一致性。3）压缩率高：varint 编码使小整数仅占 1-2 字节，TLV（Type-Length-Value）格式无需包含字段名。4）二进制格式：比 JSON 小 3-10 倍，解析快 10-100 倍。5）显式字段规则：optional/repeated/map 明确字段的约束。Protobuf 的 Python 实现——protobuf 官方 Python 实现使用纯 Python 反射 API 或 C 扩展（upb，更快）。\n\n扩展延伸：选型建议——1）进程内部或同一信任域的管道通信：pickle 可以使用（如 multiprocessing 的默认序列化就是 pickle），但绝不接受外部输入的 pickle 数据。2）HTTP API（RESTful）：JSON（标准最广，调试方便）。3）内部微服务 RPC（gRPC）：protobuf（强制 Schema、高性能、双向流）。4）缓存（Redis）：msgpack 或 protobuf（体积小、性能好）。5）消息队列（Kafka）：protobuf 或 Avro（Schema Registry 确保数据兼容性）。\n\n安全性警示——1）永远不要对不受信任的输入调用 pickle.loads()。2）使用 jsonpickle（在 JSON 中序列化 Python 对象）时同样注意避免 eval 风险。3）一些框架（如 Flask 的 session cookie 使用 pickle）需要确保 SECRET_KEY 不泄露，否则攻击者可构造恶意 session 数据实现 RCE。",
+    "hints": [
+      "pickle 的栈虚拟机指令集如何被用于构造任意的反序列化攻击载荷",
+      "为什么 protobuf 的字段编号（field number）设计对 Schema 演变更友好"
+    ],
+    "tags": [
+      "Python",
+      "序列化",
+      "pickle",
+      "protobuf",
+      "安全"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Python 3.12 PEP 695 类型别名语法与 typing.override 装饰器",
+    "content": "Python 3.12 引入的 PEP 695 改进了类型别名的声明方式。以下关于 Python 3.12+ 类型系统新特性的说法，正确的是？",
+    "options": [
+      "A) PEP 695 的新 type 语句(type X = int)与旧的 X = TypeAlias(int)在运行时行为完全相同，没有任何区别",
+      "B) typing.override 装饰器在运行时强制检查子类方法是否真的覆盖了父类方法，不匹配则抛出 RuntimeError",
+      "C) type 语句支持泛型参数(type ListOrValue[T] = list[T] | T)，而旧语法(TypeAlias)不支持",
+      "D) @override 装饰器只能用于抽象方法(abstractmethod)的覆盖，不能用于普通方法"
+    ],
+    "answer": "答案：C) type 语句支持泛型参数(type ListOrValue[T] = list[T] | T)，而旧语法(TypeAlias)不支持。\n\n解析：PEP 695（Python 3.12）引入的 type 语句显式声明类型别名，支持泛型参数——type Maybe[T] = T | None 等价于 Maybe = TypeAlias('Maybe', T | None) 但更简洁且支持泛型。A 选项错误：旧语法(X = TypeAlias(int))在 Python 3.10-3.11 中需要 from typing import TypeAlias 注解，且不支持泛型参数，而在 Python 3.12 中 type 语句是新的语法元素（解析器级别支持，非运行时）。B 选项错误：typing.override（Python 3.12，或通过 from typing import override 导入）只是一个标记，供静态类型检查器（mypy、pyright）使用。它在运行时没有任何检查——装饰器只是将函数的 __override__ 属性设为 True，运行时无强制行为。D 选项错误：override 可以用于任何方法覆盖，不限于抽象方法。\n\n扩展延伸：Python 3.12 的 typing 改进——1）TypeVar 的 new-style 语法：旧的 T = TypeVar('T', bound=int) 可以写为 type[T: int] 参数或直接使用 type 语句的泛型约束。2）PEP 698（Python 3.12）的 @override 装饰器：\n```python\nfrom typing import override\n\nclass Base:\n    def method(self) -> int: ...\n\nclass Derived(Base):\n    @override\n    def method(self) -> int: ...  # 正确\n    \n    @override\n    def methood(self) -> int: ...  # 静态检查器报错：没有覆盖任何父类方法\n```\n3）PEP 695 的 type 语句与泛型类和函数的泛型语法统一：class Box[T]: 替代 class Box(Generic[T]): 。4）向后兼容——旧式 TypeVar/Generic 用法仍然支持，mypy/pyright 对 PEP 695 已全面支持。\n\n其他 Python 3.12 类型相关改进——1）TypeVarTuple（可变泛型，PEP 646）在 3.12 中更稳定。2）Unpack 用于可迭代参数展开。3）@override 在 mypy 1.0+ 和 pyright 1.1.320+ 中支持检查。生产建议——Python 3.12+ 项目中用 type 声明别名，用 class Box[T]: 替代 class Box(Generic[T]): ，并在方法覆盖处使用 @override 让静态检查器捕获拼写错误和重构后的断链。",
+    "hints": [
+      "PEP 695 的 type 语句是新的语法元素还是 typing 模块修改——运行时层面没有变化",
+      "@override 在纯运行时 Python 中有没有效果——为什么被称为「静态检查」的装饰器"
+    ],
+    "tags": [
+      "Python",
+      "类型系统",
+      "PEP 695",
+      "3.12"
+    ]
   }
 ]

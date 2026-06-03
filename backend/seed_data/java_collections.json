@@ -1735,5 +1735,104 @@
       "缓存",
       "集合框架"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Spliterator 特性对遍历性能的影响",
+    "content": "Spliterator 接口定义了 `characteristics()` 方法，返回一个 int 掩码，包含 ORDERED、DISTINCT、SORTED、SIZED、NONNULL、IMMUTABLE、CONCURRENT、SUBSIZED 等特性。请解释为什么 ORDERED 特性会降低并行 Stream 的性能，以及 SIZED 和 SUBSIZED 如何影响拆分（splitting）行为。",
+    "answer": "ORDERED 特性会降低并行 Stream 性能的根本原因：它要求最终结果保持 encounter order。当 Spliterator 带有 ORDERED 特性时，ForkJoinPool 的各个工作线程必须保持分割的顺序（即使任务已经在不同线程处理，合并时必须按照原始顺序重组）。这使得某些优化不可用——例如 map/filter 操作不能使用「任意顺序」的线程本地结果合并，必须使用更昂贵的顺序保持合并策略。极端情况下可能完全抵消并行化的收益。\n\nSIZED 的作用：标记 Spliterator 知道要遍历的元素确切数量（`estimateSize()` 返回精确值）。这允许 ForkJoinPool 在做工作窃取（work-stealing）时更精确地分割任务，避免过度拆分或拆分不足。SUBSIZED 是增强特性——不仅当前 Spliterator 是 SIZED，而且 trySplit() 产生的所有子 Spliterator 也保持 SIZED 特性。这意味着整个拆分树都可以精确估计大小，最适合对拆分粒度有严格控制的场景如 Arrays.stream() 的底层实现。",
+    "hints": [
+      "ORDERED 的代价在于「必须保留原始顺序」，这意味著不能简单地先独立处理再随机合并",
+      "SIZED 和 SUBSIZED 的区分在递归拆分场景下变得关键——SUBSIZED 保证拆分后的每一片都保持精确大小"
+    ],
+    "tags": [
+      "spliterator",
+      "characteristics",
+      "parallel-stream",
+      "ordered",
+      "sized"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ConcurrentHashMap mappingCount 与 size 的设计意图",
+    "content": "ConcurrentHashMap 同时提供了 `size()`（返回 int）和 `mappingCount()`（返回 long）两个方法。以下关于二者区别的描述，哪项是正确的？\nA) size() 和 mappingCount() 功能完全相同，都是返回映射数量；mappingCount() 只是为兼容 Map 接口而保留的命名别名\nB) size() 返回的是桶数组的容量（capacity），不是映射数量；mappingCount() 才是真正的映射计数\nC) size() 存在因 int 溢出而丢失精度的问题（当映射数超过 Integer.MAX_VALUE 时），mappingCount() 用 long 返回避免此问题——这是二者同时存在的根本原因；在 JDK 8+ 实现中，size() 内部直接调用 mappingCount() 并截断为 int\nD) size() 是弱一致性视图（可能不反映最新状态），mappingCount() 是强一致性的精确计数",
+    "answer": "C) ConcurrentHashMap 在 JDK 8+ 的实现中，size() 方法是 `return (int) mappingCount()` 的简单包装。二者都返回映射条目数，都基于内部的 `sumCount()` 方法计算（弱一致性视图，不是实时精确值，但在并发场景下足够精确）。存在两个方法的原因是历史兼容——Map 接口定义 size() 返回 int，但 JDK 设计者意识到大内存场景下 ConcurrentHashMap 可能包含超过 Integer.MAX_VALUE 个映射，因此添加了返回 long 的 mappingCount()。",
+    "hints": [
+      "想一想：HashMap 的 size() 返回 int，但如果 map 中超过 21 亿条目会怎样？",
+      "这个问题的历史背景是：JDK 8 引入了 mappingCount() 作为 future-proof 的改进"
+    ],
+    "tags": [
+      "concurrenthashmap",
+      "size",
+      "mappingcount",
+      "int-overflow",
+      "api-design"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LinkedTransferQueue transfer() 阻塞语义",
+    "content": "LinkedTransferQueue 提供了 `transfer(E e)` 和 `tryTransfer(E e)` 方法。请解释 transfer() 的阻塞语义：调用线程在什么条件下返回？它与 SynchronousQueue 的核心行为有什么本质区别？在什么场景下选择使用 LinkedTransferQueue 而非 SynchronousQueue？",
+    "answer": "transfer() 的阻塞语义：调用线程将元素直接交给一个等待的消费者线程，如果没有消费者在等待，则当前线程阻塞直到有消费者取走该元素。与 SynchronousQueue 的核心区别：LinkedTransferQueue 可以同时作为普通队列使用（通过 offer/poll 等非阻塞方法），而 SynchronousQueue 不支持缓冲——每个 put 必须等待一个 take。LinkedTransferQueue 的 transfer() 方法相当于在队列上实现了一种「有条件阻塞」的生产者-消费者模式。\n\n选择 LinkedTransferQueue 而非 SynchronousQueue 的场景：\n1) 需要灵活切换阻塞和非阻塞模式的场景——同一队列有时需要 transfer（阻塞等待消费）、有时需要 offer（丢弃或异步）\n2) 需要批量缓冲能力的同时，某些消息需要确保直接交付\n3) 需要遍历或检查队列内容的场景（LinkedTransferQueue 支持 O(n) 遍历，SynchronousQueue 不支持）\nLinkedTransferQueue 的内部实现使用 dual-queue 结构和 slot-based 匹配算法，比 SynchronousQueue 的 transferer 实现更高效且功能更丰富。",
+    "hints": [
+      "transfer() = 阻塞版 offer + 等待消费确认的结合体",
+      "LinkedTransferQueue 的实现被称为 Dual Queue——同时支持同步交付和异步缓冲两种模式"
+    ],
+    "tags": [
+      "linkedtransferqueue",
+      "transfer",
+      "synchronousqueue",
+      "blocking-queue",
+      "concurrency"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "DelayQueue 的领导者-跟随者模式",
+    "content": "java.util.concurrent.DelayQueue 内部使用了领导者-跟随者（Leader-Follower）模式来优化等待延迟到期的元素：当多个消费者线程同时调用 take() 时，只有一个线程（Leader）会执行阻塞等待，其他线程（Followers）不会阻塞，而是自旋等待 Leader 完成任务。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B) 错误",
+    "hints": [
+      "DelayQueue 的 take() 实现确实使用了领导者-跟随者模式来避免「惊群效应」(thundering herd)",
+      "但 Followers 不是「自旋等待」，而是通过 condition.await() 进入阻塞状态，让出 CPU"
+    ],
+    "tags": [
+      "delayqueue",
+      "leader-follower",
+      "thundering-herd",
+      "blocking-queue",
+      "concurrency"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "ConcurrentSkipListSet 的范围查询方法",
+    "content": "ConcurrentSkipListSet 继承了 NavigableSet 接口的 lower(e)、floor(e)、ceiling(e)、higher(e) 方法。请说明这四个方法的精确语义（包括对 null 和不存在元素的处理），并写一段代码示例展示如何使用它们在一组高并发写入的评分数据中查询给定分数的相邻排名。",
+    "answer": "四个方法的精确语义（与 TreeSet 完全一致）：\n- lower(e): 返回最大的严格小于 e 的元素，如果不存在返回 null\n- floor(e): 返回最大的小于或等于 e 的元素，如果不存在返回 null\n- ceiling(e): 返回最小的大于或等于 e 的元素，如果不存在返回 null\n- higher(e): 返回最小的严格大于 e 的元素，如果不存在返回 null\n\n所有这些方法都不接受 null 参数（ConcurrentSkipListSet 不允许 null 元素），传入 null 会抛出 NullPointerException。\n\n代码示例：\n```java\nConcurrentSkipListSet<Integer> scores = new ConcurrentSkipListSet<>();\n// 高并发的写入场景下，多个线程同时添加分数\nscores.addAll(Set.of(85, 92, 78, 95, 88, 70));\n\nint target = 88;\n// 查询相邻排名\nInteger lower = scores.lower(target);       // 85\nInteger floor = scores.floor(target);       // 88\nInteger ceiling = scores.ceiling(target);   // 88\nInteger higher = scores.higher(target);     // 92\n\nSystem.out.println(\"低于 88 的最高分: \" + lower);     // 85\nSystem.out.println(\"88 及以下的最高分: \" + floor);    // 88\nSystem.out.println(\"88 及以上的最低分: \" + ceiling);  // 88\nSystem.out.println(\"高于 88 的最低分: \" + higher);    // 92\n\n// 当目标分数不存在于集合中时：\nint target2 = 80;\nSystem.out.println(scores.ceiling(80));  // 85（大于 80 的最小值）\nSystem.out.println(scores.floor(80));    // 78（小于 80 的最大值）\nSystem.out.println(scores.higher(80));   // 85\nSystem.out.println(scores.lower(80));    // 78\n```\n\n注意：在 ConcurrentSkipListSet 上调用这些方法时，由于并发写入，结果可能在方法返回的瞬间就已经「过期」——这是无锁并发数据结构的弱一致性语义。",
+    "hints": [
+      "concurrent 集合的 NavigableSet 方法也是弱一致性的——获得结果后该元素可能已被其他线程移除",
+      "这四个方法构成了一个以目标值为中心的「开区间/闭区间」语义体系"
+    ],
+    "tags": [
+      "concurrentskiplistset",
+      "navigableset",
+      "range-query",
+      "skip-list",
+      "concurrency"
+    ]
   }
 ]

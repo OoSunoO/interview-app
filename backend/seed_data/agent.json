@@ -1623,5 +1623,102 @@
       "通信协议",
       "互操作性"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Multi-Agent 仿真与生成式 Agent（Generative Agents）",
+    "content": "什么是生成式 Agent 架构？Stanford「AI 小镇」实验中 Agent 的感知、记忆和反射机制如何工作？这种仿真架构对现实 Agent 系统有什么借鉴意义？",
+    "answer": "答案：Generative Agents 是 Park et al.（2023, Stanford）提出的一种 Agent 架构，将 LLM 嵌入 AI Agent 使其在模拟环境中表现出可信的社会行为——日常活动、社交互动、信息传播和记忆驱动的决策。核心创新在于「记忆流」（Memory Stream）+ 「反射」（Reflection）机制让 Agent 能积累经验并改变行为。\n\n解析：架构三组件——1）感知流：Agent 持续感知环境和自身状态，生成结构化的「体验记录」（Experience），包含时间戳和描述。每个体验被异步加入记忆流。2）记忆流与检索：所有体验按时间顺序存储。检索时综合考虑三个因素：Recency（最近性，时间衰减权重）、Relevance（相关性，与当前上下文的语义相似度）、Importance（重要性，Agent 对体验重要性的自我评分）。检索结果组成当前工作记忆。3）反射机制：Agent 定期对记忆流中的体验进行高层总结和推理（LLM 驱动），生成「反射」——比原始体验更抽象的洞见（如「我注意到张三最近经常在图书馆，他可能在准备考试」）。反射本身也被注入记忆流，影响后续决策。\n\n扩展延伸——Plan-and-React 的融合：Agent 每天早上根据记忆和身份（Identity，预定义的背景设定）制定当天计划（Plan），执行过程中根据 Observation 动态调整。这种「晚上反思 → 早上计划 → 白天执行」的节奏启发了现实 Agent 系统的设计。对工业界的借鉴——1）Memory 分层的通用性（Working Memory → Episodic Memory → Reflective Memory 结构被 LangGraph、CrewAI 等框架借鉴）。2）Reflection Loop 被广泛应用在 Code Agent、Writing Agent 中。3）Importance Scoring 机制可直接用于 RAG 系统的记忆筛选。4）但需要大量 LLM 调用（成本高），且仿真可信度受限于 LLM 的常识推理能力。",
+    "hints": [
+      "Reflection 机制如何让 Agent 产生超越原始经验的洞见",
+      "记忆检索的三要素（Recency / Relevance / Importance）如何调优"
+    ],
+    "tags": [
+      "Agent",
+      "Generative Agents",
+      "仿真",
+      "记忆",
+      "反射"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 预测性预执行（Speculative Agent Execution）",
+    "content": "什么是 Speculative Agent Execution（推测性 Agent 预执行）？它如何减少 Agent 在多步推理中的端到端延迟？实现上的关键挑战是什么？",
+    "answer": "答案：Speculative Agent Execution 是一种推理时优化技术，Agent 框架在 LLM 推理工具调用结果的同时，并行预测（Speculate）可能的后续步骤并提前执行，用空间换时间。如果预测命中则延迟归零，若预测错误则丢弃预执行结果。\n\n解析：核心思想——Agent 多步推理的端到端延迟往往受限于 LLM 串行生成+工具调用的顺序结构。如果 LLM 正在查询数据库 A 的同时，框架可以预测接下来可能调用工具 B 并提前执行。典型场景——1）RAG Agent：LLM 发送查询到检索系统等待结果时，框架预测接下来可能需要的文档正文并提前读取。2）代码 Agent：等待当前代码运行结果时，预测下一个要编辑的文件并提前打开。3）多轮搜索 Agent：预测下一轮搜索词，提前发出搜索请求。\n\n实现方式——1）基于历史模式的预测：统计历史轨迹中工具 A 之后最常跟的工具 B（马尔可夫链模型）。2）基于轻量模型的预测：用一个高效的小模型（如 200M 参数）预测下一步工具选择，代替主 LLM 做推理。3）贪婪/启发式预测：对于特定场景（如 RAG 检索→文档读取）直接编码为确定性预测规则。\n\n关键挑战——1）预测准确率：错误预测浪费计算资源和 API 配额。需要在激进预测和保守预测之间平衡。2）副作用管理：预执行必须是无副作用的（Idempotent）或可撤销的。写操作（数据库写入、文件修改）不应预执行。3）资源消耗：同时运行多个预执行路径会消耗大量内存和 API token。4）结果合并：预测路径和实际路径的中间结果如何合并或丢弃。",
+    "hints": [
+      "什么样的工具调用适合预执行，什么样的不适合",
+      "预测准确率低于多少时预执行的收益会变成负数"
+    ],
+    "tags": [
+      "Agent",
+      "推理优化",
+      "预执行",
+      "延迟优化"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 知识图谱集成（Graph RAG + Agent）",
+    "content": "为什么纯向量检索（Vector RAG）对 Agent 的多跳推理场景存在局限？引入知识图谱（Graph RAG）如何增强 Agent 的推理能力？Graph RAG 与 Agent 集成的实践模式有哪些？",
+    "answer": "答案：纯向量检索对多跳关系查询（如「A 公司的创始人投资的 B 公司有哪些产品」）效果差，因为向量检索偏语义相似度而非结构化关系。Graph RAG 显式建模实体间关系，使 Agent 能通过图遍历执行精确的多跳推理。\n\n解析：Vector RAG 的局限——1）语义检索擅长「找相似的」但不擅长「找有关联的」。例如「特斯拉的 CEO 创立的另一家公司」需要两次跳转，向量检索无法表达这种关系约束。2）实体消歧困难：同名实体（如 Python 语言 vs Python 蛇）在纯向量空间中可能混淆。3）关系缺失：向量检索返回文档片段，丢失了文档间的引用和依赖关系。\n\nGraph RAG（Microsoft，2024）——1）构建阶段：从源文档中提取实体和关系（LLM 驱动的信息抽取），构建属性图（Entity → Relation → Entity）。2）索引方式：同时构建向量索引（实体描述）和图索引（邻接关系）。3）检索方式：找到种子实体后，沿关系边做 BFS/DFS 多跳扩展，返回子图。Agent 可基于子图执行推理。\n\nAgent 集成模式——1）Graph as Tool：Agent 的 Toolset 中包含一个图查询工具（Cypher/SPARQL），Agent 根据用户问题动态生成图查询。适合结构化的知识密集型任务。2）Graph Augmented RAG：Agent 的 RAG 流程先做向量检索定位种子实体，再通过图展开获取关联上下文，两者融合后送入 LLM。3）Graph as Memory：Agent 将历史对话中出现的实体和关系动态构建成图，作为长期记忆的补充。LangGraph 和 LlamaIndex 的 PropertyGraphIndex 均支持此模式。",
+    "hints": [
+      "Graph RAG 相比 Vector RAG 在构建和维护成本上的差异",
+      "Agent 如何决定什么时候用向量检索、什么时候用图查询"
+    ],
+    "tags": [
+      "Agent",
+      "RAG",
+      "知识图谱",
+      "Graph RAG"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 工具调用评估基准（BFCL / ToolBench）",
+    "content": "Agent 工具调用能力评估有哪些主流基准？BFCL（Berkeley Function Calling Leaderboard）的设计思路是什么？工具调用评估面临的主要挑战是什么？",
+    "answer": "答案：主流工具调用评估基准包括 BFCL（Berkeley Function Calling Leaderboard）、ToolBench、API-Bank 和 ToolAlpaca。BFCL 是目前最广泛引用的函数调用能力评测，覆盖单工具、多工具、并行调用和 Relevance Detection 等多个维度。评测的核心挑战在于评估指标的设计——函数的非确定性调用顺序、参数等价性、Side Effect 验证。\n\n解析：BFCL（Berkeley Function Calling Leaderboard，2024）——设计思路——1）多维度评测：Single-turn（单轮单工具）、Multi-turn（多轮对话中记录和引用上下文）、Parallel Function（多工具并行调用）、Multiple Choice（从多个选项中选择正确调用）、Relevance（判断是否需要调用工具）、Long Context（长上下文中准确调用）。2）数据构建：人工编写真实的 API 场景，不依赖自动生成，保证测试质量。3）自动评分：函数调用结果与预期 JSON 做精确匹配，支持参数顺序无关的等价性判断。4）覆盖多种语言和框架（OpenAI、Anthropic、Google、Mistral 等模型格式）。\n\nToolBench（2023，清华）-——1）使用 ChatGPT 从 RapidAPI Hub 的 16,000+ API 生成训练和评估数据。2）包含单工具、多工具和意图识别的评估。3）注重实际 API 调用的复杂性。\n\nAPI-Bank——更注重多轮对话中的工具调用连贯性。ToolAlpaca——关注工具学习的泛化能力（在未见过的工具上表现）。\n\n主要挑战——1）评估粒度：工具调用的正确性不仅是参数 JSON 格式正确，更需要功能等价性判断（两个不同的 SQL 查询可能返回相同的正确结果）。2）顺序无关性：并行工具调用返回的顺序不影响正确性，但评估时需要排序后比较。3）Side Effect 检测：正确调用了 API 但引发了负面副作用（如无意中创建了重复记录），当前基准无法检测。4）语言多样性：现有基准以英文为主，跨语言的工具调用能力评估缺失。",
+    "hints": [
+      "BFCL 的 Relevance Detection 维度检测模型的什么能力",
+      "工具调用评估中如何判断两个功能等价的调用"
+    ],
+    "tags": [
+      "Agent",
+      "评估",
+      "工具调用",
+      "Function Calling"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Agent 交互设计模式：确认、澄清与转交",
+    "content": "关于 Agent 交互设计中的核心模式（确认、澄清、转交），以下哪个说法是错误的？",
+    "options": [
+      "A) 确认模式（Confirmation Pattern）用于 Agent 在执行关键操作前向用户请求确认，适用于删除、支付等不可逆操作",
+      "B) 澄清模式（Clarification Pattern）在用户意图不明确时主动追问，而不是猜测执行",
+      "C) 转交模式（Handoff Pattern）只适用于人机交互，不适用于 Agent-Agent 交互",
+      "D) 转交模式允许 Agent 将超出自身能力范围的请求路由到更合适的 Agent 或人工客服"
+    ],
+    "answer": "C",
+    "hints": [
+      "Agent-Agent 转交（A2A Handoff）是多 Agent 系统的核心通信模式之一",
+      "确认模式需要平衡安全性和用户体验——过多的确认步骤会导致交互疲劳"
+    ],
+    "tags": [
+      "Agent",
+      "交互设计",
+      "UX",
+      "模式"
+    ]
   }
 ]

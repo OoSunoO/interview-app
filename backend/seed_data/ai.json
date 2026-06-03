@@ -1624,5 +1624,102 @@
       "语义模型",
       "跨语言"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Thinking / Reasoning Models（o1/R1 风格推理模型）",
+    "content": "请解析 OpenAI o1 / DeepSeek R1 这类推理模型的训练范式和推理机制。它们与传统 LLM 的核心区别是什么？",
+    "answer": "答案：Reasoning Model 通过强化学习训练模型在推理时生成「扩展思维链」（Extended CoT），在回答前进行自我反思、回溯和验证。与传统 LLM 一步生成答案不同，推理模型将推理过程内化为模型行为，在推理阶段消耗更多计算资源换取更高的复杂推理准确率。\n\n解析：核心训练范式——1）RL-based Reasoning Training：使用分组相对策略优化（GRPO / RLOO / PURE）等方法训练模型生成推理轨迹，奖励函数基于最终答案正确性和推理过程质量。2）推理时 Scaling：推理阶段允许模型生成数百到数千 token 的推理链，通过「思考预算」（Thinking Budget）控制推理深度。3）Long Chain-of-Thought：模型在内部生成自我质疑（「等等，这不对...」）、回溯（「换个思路...」）、验证（「检查一下...」）等推理行为。\n\n核心区别——1）推理行为内化：传统 LLM 的 CoT 是通过 Prompt 引导的（外部推理），模型被训练直接输出答案；Reasoning Model 的 CoT 是通过 RL 训练的（内部推理），模型学会了在必要时进行深度思考。2）计算分配：传统 LLM 每个 token 计算成本相同，Reasoning Model 在困难问题上自动分配更多推理计算。3）性能特征：在数学竞赛（AIME）、编程竞赛（Codeforces）、科学推理（GPQA Diamond）上显著领先，但在简单事实问答上可能过度思考。\n\n扩展延伸：目前已出现的推理模型系列——o1（OpenAI，2024.9）、o3（2025.1）、DeepSeek R1（2025.1，开源，验证了纯 RL 训练推理能力的可行性）、Qwen-QwQ、Kimi k1.5。开源社区已复现出简化版（如 OpenR1、TinyZero、Logic-RL）。技术挑战：推理长度控制（无限制思考导致高延迟和高成本）、推理可解释性（模型「思考」了但人类难以理解）、推理与知识边界的区分（模型是在推理还是在回忆）。",
+    "hints": [
+      "GRPO 和 PPO 在训练推理模型时的区别是什么",
+      "推理模型的「思考预算」如何影响输出质量和延迟"
+    ],
+    "tags": [
+      "LLM",
+      "推理模型",
+      "Reasoning",
+      "RL",
+      "CoT"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Process Reward Model（过程奖励模型）",
+    "content": "Process Reward Model（PRM）与 Outcome Reward Model（ORM）有什么区别？PRM 在 LLM 推理中如何发挥作用？实现 PRM 面临哪些挑战？",
+    "answer": "答案：PRM 对推理过程的每一步进行细粒度评分，ORM 只对最终结果评分。PRM 提供过程级别的监督信号，在数学推理、代码生成等多步推理任务中显著优于 ORM。\n\n解析：ORM（Outcome Reward Model）：传统做法，对整个推理轨迹输出一个单一的奖励值（正确/错误）。问题在于稀疏奖励——中间步骤错了但最终结果对了（或反之），无法定位具体哪一步出错。PRM（Process Reward Model）：对推理过程的每个步骤（Step）或每个 Token 输出一个奖励值。优点——1）密集监督信号，每个步骤都有反馈。2）搜索时可以用 PRM 剪枝，提前丢弃错误路径。3）训练时更容易收敛。训练 PRM 需要步骤级别的标注数据，通常通过人工标注或自动标注（MCTS 模拟、蒙特卡洛 Rollout）生成。\n\n扩展延伸：PRM 的三种主流实现——1）显式 PRM：独立训练一个步骤评分模型，输入是推理步骤文本，输出是该步骤正确概率。代表：Math-Shepherd（Meta，2024）、AutoPSV。2）隐式 PRM：用 LLM 自身的置信度作为步骤评分。如让 LLM 对每个步骤生成「正确概率」或直接询问「这一步有问题吗？」。3）MC Dropout / Self-Consistency 方法：多次采样同一问题，统计每个步骤的分布一致性作为奖励。Token-level Reward（如 DPO 的变体）也可以看作一种过程奖励。挑战：标注成本高（每步标注 vs 只标最终答案）；步骤边界定义不统一（以句号分？以逻辑步分？）；PRM 的评分偏差可能被放大到最终决策。Leo Gao 等人发表于 2024 的论文《Process or Outcome?》对 PRM 和 ORM 做了系统对比，结论是 PRM 在搜索场景下优势明显，但直接作为训练信号时优势不显著。",
+    "hints": [
+      "PRM 需要的步骤级标注数据如何自动生成",
+      "PRM 在 CoT 搜索中的剪枝效果有多显著"
+    ],
+    "tags": [
+      "LLM",
+      "强化学习",
+      "Reward Model",
+      "推理"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Scaling Laws（缩放定律）与 Chinchilla 最优分配",
+    "content": "请解释 LLM 领域的 Scaling Laws（缩放定律），以及 Chinchilla 提出的「计算最优训练」的含义。这如何指导实际的大模型训练决策？",
+    "answer": "答案：Scaling Laws 揭示模型参数量、数据量和计算量之间存在幂律关系，三者按特定比例增长才能达到最优效果。Chinchilla 发现多数模型过参数化而欠训练，提出「计算最优」模型应在固定算力预算下同步扩大模型和数据。\n\n解析：Kaplan Scaling Laws（OpenAI，2020）——1）模型性能与 N（参数量）、D（数据量）、C（计算量}之间存在平滑幂律关系。2）在合理范围内，增大参数、数据和计算都能可预测地降低 Loss。3) 模型参数量和数据量需要平衡，单独增大一个维度收益递减。\n\nChinchilla 的更新——1）DeepMind（2022）重新研究了同样问题，发现此前的研究高估了模型参数的重要性，低估了数据量的需求。2）结论：给定计算预算 C，最优分配是参数量 N* ≈ C^0.5，数据量 D* ≈ C^0.5，即两者等比例增长。3）具体：训练 Chinchilla 70B 时用了 1.4T token，而同样规模的 GPT-3 只用 300B token。\n\n扩展延伸：后 Chinchilla 时代的讨论——1）数据瓶颈：当前实践中的主要瓶颈不再是算力而是高质量数据。人类产生的文本总量有限，合成数据（如 phi-1/phi-3 用合成数据训练小模型）成为方向。2）Scaling Laws 的迁移：Scaling Laws 是否适用于新的训练范式（RL 训练、推理模型）？初步研究表明推理模型可能遵循不同的 Scaling Laws（推理时计算 vs 训练时计算）。3）小模型数据配比：实际训练中通常对数据做重采样（如 The Pile、RedPajama 的领域配比），超出 Chinchilla 最优点的「过度训练」（Overtraining）小模型也表现出良好的性能。4）MuP（Maximal Update Parameterization）让 Scaling Laws 的预测更准确。",
+    "hints": [
+      "Chinchilla 之前和之后的模型训练数据量有什么变化",
+      "当前大模型训练面临的主要瓶颈是什么"
+    ],
+    "tags": [
+      "LLM",
+      "Scaling Laws",
+      "训练优化",
+      "Chinchilla"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "模型校准与置信度估计",
+    "content": "关于 LLM 的模型校准（Calibration）和置信度估计，以下哪个说法是正确的？",
+    "options": [
+      "A) 模型校准的目的是让模型的预测准确率与输出的置信度分数一致，例如预测为 80% 置信度时应有约 80% 的正确率",
+      "B) 大型语言模型天生就是良好校准的，不需要额外的校准步骤",
+      "C) 温度参数（Temperature）调高可以改善模型校准，因为 softmax 输出分布更平滑",
+      "D) 模型校准只对分类任务有意义，对生成式任务不适用"
+    ],
+    "answer": "A",
+    "hints": [
+      "温度参数主要影响输出的锐利程度而非校准质量",
+      "生成式任务中可以通过 P(True)、熵、Self-Consistency 等方法做校准"
+    ],
+    "tags": [
+      "LLM",
+      "校准",
+      "置信度",
+      "不确定性"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Multi-Token Prediction（多 Token 预测）",
+    "content": "什么是 Multi-Token Prediction（MTP）？它与传统的 Next Token Prediction 有什么本质区别？MTP 在训练和推理阶段分别如何工作？",
+    "answer": "答案：Multi-Token Prediction 是一种训练目标，模型在每一步不仅预测下一个 token，还同时预测未来 n 个 token（通过多个共享或独立的输出头）。Meta 在 2024 年发表的论文证明 MTP 可以显著提升模型推理性能，尤其在代码生成和数学推理任务上。\n\n解析：传统 Next Token Prediction——每个位置只预测下一个 token，损失函数为交叉熵。模型只学习局部依赖，对长程规划和推理结构不敏感。MTP——每个位置同时预测 t+1, t+2, ..., t+n token。实现方式——1）独立输出头（Independent Heads）：每个预测位置有一个独立的 LM Head，共享 Transformer 主干。2）垂直播送头（Vertical Heads）：用额外的 Transformer 层逐步预测后续 token。Meta 的论文（2024.4）使用 n=2 的 MTP（预测接下来两个 token），在 HumanEval（+12%）和 MBPP（+8%）上显著提升，且推理速度没有明显下降。\n\n扩展延伸：MTP 的机制分析——1）为什么有效：强制模型在编码当前 token 时就考虑它对后续 token 的影响，诱导更丰富的表示学习。本质上给模型一个「规划」的训练信号。2）推理时机制：MTP 在推理时可以通过辅助头做投机解码（Speculative Decoding），两个头配合实现自推测（Self-Speculative Decoding），提升推理速度。3）DeepSeek V2/V3 采用了 MTP：DeepSeek 在多篇技术报告中确认使用了 Multi-Token Prediction 作为训练目标之一，对提升性能有贡献。4）关系与其他技术：MTP 与填空式预训练（如 ELECTRA、T5）的思路不同，MTP 只预测连续的未来 token，不依赖掩码或降噪。",
+    "hints": [
+      "MTP 如何用于推理阶段的加速（自推测解码）",
+      "MTP 的输出头设计有哪几种主流方案"
+    ],
+    "tags": [
+      "LLM",
+      "预训练",
+      "MTP",
+      "训练目标"
+    ]
   }
 ]

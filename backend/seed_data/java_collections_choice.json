@@ -1982,5 +1982,100 @@
       "引用队列",
       "集合框架"
     ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Collections.newSetFromMap 的 null 处理",
+    "content": "`Collections.newSetFromMap(Map<E, Boolean> map)` 创建一个由指定 Map 支持的 Set。以下关于该方法的描述，哪项是正确的？\nA) 如果传入的 map 是 HashMap，返回的 Set 不允许 null 元素\nB) 传入的 map 在创建时必须为空（为空则抛出 IllegalArgumentException），且对返回 Set 的操作会委托给底层的 map；如果底层 map 允许 null key（如 HashMap），则返回的 Set 也允许 null 元素\nC) 该方法只能传入 ConcurrentHashMap，因为实现内部假设该 map 是并发安全的\nD) 返回的 Set 的 add() 方法会调用 map.put(key, Boolean.TRUE)，如果 put 返回 null 则视为添加成功；如果 put 返回 Boolean.FALSE 则视为重复元素",
+    "answer": "B) 传入的 map 在创建时必须为空（否则 Set 的行为不可预测，但规范未强制抛出异常）。返回的 Set 的 add() 委托给 map.put(e, Boolean.TRUE)，remove() 委托给 map.remove(e)，contains() 委托给 map.containsKey(e) 等。底层 map 的特性直接决定了 Set 的特性：如果传入 HashMap 则允许 null 元素且非线程安全；如果传入 ConcurrentHashMap 则得到一个并发安全的 Set（这正是该方法的典型用途——创建 ConcurrentHashSet，因为 JDK 没有直接的 ConcurrentHashSet 类）。",
+    "hints": [
+      "思考：为什么 JDK 提供了 java.util.concurrent.ConcurrentSkipListSet 但不提供 ConcurrentHashSet？",
+      "newSetFromMap 是「适配器模式」在集合框架中的经典应用——把 Map 适配为 Set"
+    ],
+    "tags": [
+      "collections",
+      "newsetfrommap",
+      "set",
+      "concurrenthashmap",
+      "adapter-pattern"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "AbstractList 的 modCount 与子列表结构修改一致性",
+    "content": "AbstractList 通过 modCount 实现 fail-fast 迭代器机制。对于通过 `subList(from, to)` 返回的子列表视图，以下关于结构修改（structural modification）一致性保证的描述，哪项是正确的？\nA) 对子列表的 add/remove 操作如果在父列表上通过迭代器执行，会导致子列表抛出 ConcurrentModificationException\nB) 通过子列表的 add/remove 修改元素时，父列表的 modCount 也会同步增加，父列表的迭代器在下次访问时会抛出 ConcurrentModificationException\nC) 子列表和父列表共享同一个 modCount——子列表的每次结构修改会增加父列表的 modCount；但通过父列表直接修改（如直接调用父列表的 add），子列表的状态不会被更新，但不会抛出异常\nD) 子列表和父列表共享同一个 modCount——子列表的任何结构修改均会更新父列表的 modCount，反之亦然；如果迭代器遍历子列表过程中父列表发生了结构修改，迭代器会抛出 ConcurrentModificationException",
+    "answer": "D) SubList 内部持有对父列表的引用，并共享同一个 modCount。子列表的任何结构修改（add/remove）都通过父列表的相应方法完成，因此更新的是同一个 modCount 计数器。同样，通过父列表直接进行的结构修改也会增加 modCount。如果遍历子列表（通过子列表的 Iterator）期间父列表发生了结构修改，modCount 会与子列表迭代器创建时记录的 expectedModCount 不一致，从而抛出 ConcurrentModificationException。这也是 SubList 视图一致性保证的基础——它不是快照而是实时视图。",
+    "hints": [
+      "SubList 不是独立的列表——它持有 root（父列表）的引用并共享 modCount",
+      "思考：ArrayList 的 SubList 是 RandomAccess 的吗？这会影响什么性能决策？"
+    ],
+    "tags": [
+      "abstractlist",
+      "sublist",
+      "modcount",
+      "fail-fast",
+      "concurrentmodification"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "PriorityQueue Spliterator 遍历顺序",
+    "content": "PriorityQueue 实现了 Iterable 接口，提供了 iterator() 和 spliterator() 方法。以下关于 PriorityQueue 的 Spliterator 遍历顺序的描述，哪项是正确的？\nA) PriorityQueue 的 Spliterator 保证按优先级顺序（堆序）遍历元素\nB) PriorityQueue 的 Spliterator 不保证任何特定顺序——它使用 late-binding 策略，按底层数组的物理顺序遍历，不保证优先级顺序；如果需要按优先级顺序遍历，必须使用 poll() 循环\nC) PriorityQueue 的 Spliterator 保证以 SORTED 特性按自然顺序遍历\nD) PriorityQueue 的 Spliterator 默认以并行方式遍历，但不保证线程安全",
+    "answer": "B) PriorityQueue 的 Spliterator 使用 late-binding 策略（在首次遍历或拆分时才绑定到数据源），遍历时按底层 Object[] queue 数组的物理存储顺序顺序扫描，而不是按堆序（优先级顺序）输出。这一点与 iterator() 的行为一致——PriorityQueue 的 iterator() 也不保证按优先级顺序遍历。如果需要按优先级顺序获取元素，必须使用 poll() 方法循环取出。此外，PriorityQueue 的 Spliterator 带有 SIZED、SUBSIZED（如果未拆分时）特性，但不带有 SORTED 或 ORDERED 特性。",
+    "hints": [
+      "PriorityQueue 使用堆（heap）结构存储，数组的物理顺序≠堆的逻辑顺序",
+      "poll() 方法每次移除堆顶元素（最高优先级）后重建堆序，这是唯一能保证按优先级顺序遍历的方式"
+    ],
+    "tags": [
+      "priorityqueue",
+      "spliterator",
+      "heap",
+      "traversal-order",
+      "sorting"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Collections.asLifoQueue 与 Deque 互操作",
+    "content": "`Collections.asLifoQueue(Deque<T> deque)` 将 Deque 适配为 LIFO 队列视图。以下关于该方法的行为描述，哪项是正确的？\nA) asLifoQueue 返回一个队列，其中 add() 调用 deque.addLast()，remove() 调用 deque.removeLast()，element() 调用 deque.getLast()\nB) asLifoQueue 返回的 Queue 的 add() 方法实际调用的是 deque 的 addFirst()，remove() 调用 removeFirst()，element() 调用 getFirst()——与栈的后进先出语义一致\nC) asLifoQueue 是一个独立的数据结构，在返回时复制了 Deque 的所有元素\nD) asLifoQueue 的 add() 方法抛出 UnsupportedOperationException，因为 LIFO 队列的语义与 Queue 接口的 FIFO 语义冲突",
+    "answer": "A) asLifoQueue 将 Queue 接口的标准方法映射到 Deque 的操作上以实现 LIFO 语义：\n- Queue.add(e) → Deque.addLast(e)（在队列末尾添加）\n- Queue.remove() → Deque.removeLast()（从队列末尾移除——先进的后出）\n- Queue.element() → Deque.getLast()（查看队尾）\n- Queue.offer(e) → Deque.offerLast(e)\n- Queue.poll() → Deque.pollLast()\n- Queue.peek() → Deque.peekLast()\n\n这种映射实现了 LIFO：最后添加（addLast）的元素最先被移除（removeLast）。典型的应用场景：将 ArrayDeque 包装为 LIFO Queue 传递给需要 Queue 接口的 API。",
+    "hints": [
+      "关键洞察：Deque 接口既有 addLast/removeLast（作为队列）也有 addFirst/removeFirst（作为栈）的能力",
+      "asLifoQueue 选用了 Last 系列操作方法来实现 Queue 接口的 LIFO 语义"
+    ],
+    "tags": [
+      "collections",
+      "aslifoqueue",
+      "deque",
+      "lifo",
+      "adapter-pattern"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "BitSet 字长优化与 cardinality 性能",
+    "content": "java.util.BitSet 在内部使用 long[] words 存储位数据，并通过字长（word-size）优化实现高性能位运算。以下关于 BitSet.cardinality() 方法的描述，哪项是正确的？\nA) cardinality() 遍历所有 bit 位逐一检查 true/false，时间复杂度为 O(n) 其中 n 是总位数\nB) cardinality() 使用内置的 Long.bitCount() 和 JDK 9+ 的 Integer.bitCount() 对每个 word 计算 population count，调用 words 数组的长度次；同时 BitSet 维护了一个 volatile 的 sizeInBits 缓存，在每次 set/clear 时更新，避免遍历\nC) cardinality() 在第一次调用时计算并缓存结果，后续调用直接返回缓存值；但如果中间有 set/clear 操作，缓存会失效\nD) cardinality() 使用并行算法——当 words 数组长度超过阈值时，使用 ForkJoinPool 并行计算各段的 bitCount",
+    "answer": "B) BitSet.cardinality() 的实现对内部 long[] words 数组的每个有效的 long word 调用 Long.bitCount()，对各 word 的 population count 求和。Long.bitCount() 在 HotSpot JIT 中会被编译为 x86 的 POPCNT 指令（如果 CPU 支持），或者使用 JDK 内置的分治算法实现。JDK 20+ 中 BitSet 内部对 cardinality() 的结果做了缓存（volatile 修饰的字段），set/clear/flip 等修改方法会重置缓存，保证 cardinality() 在无修改时的重复调用为 O(1)。JDK 20 之前的版本没有此优化，每次调用都遍历所有 words。",
+    "hints": [
+      "Long.bitCount 在 x86 上会被 JIT 编译成 POPCNT 指令（如果支持），吞吐量极高",
+      "JDK 20+ 对 BitSet 的 cardinality() 增加了缓存机制——说明了缓存一致性在并发下的处理方式"
+    ],
+    "tags": [
+      "bitset",
+      "cardinality",
+      "bitcount",
+      "popcnt",
+      "performance"
+    ]
   }
 ]

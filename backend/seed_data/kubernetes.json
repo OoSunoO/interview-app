@@ -1614,5 +1614,94 @@
       "eBPF",
       "Calico"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes 资源拓扑分布约束",
+    "content": "什么是 Kubernetes 的 TopologySpreadConstraints（拓扑分布约束）？它和 PodAntiAffinity 的区别是什么？如何确保 Pod 均匀分布在不同可用区？",
+    "answer": "答案：TopologySpreadConstraints（拓扑分布约束，K8s 1.19+ 稳定版）是一种声明式约束，控制 Pod 在集群中不同拓扑域（如节点、可用区、地域）之间的分布均匀性。与 PodAntiAffinity 的区别：PodAntiAffinity 是硬性或软性约束，要求 Pod不要调度到同一拓扑域，但无法精确控制分布「均匀」到什么程度。TopologySpreadConstraints 通过 maxSkew（最大偏差）参数精确控制分布差异。\n\n解析：TopologySpreadConstraints 的配置字段：1）topologyKey——拓扑域的标签键（如 topology.kubernetes.io/zone 表示可用区）。2）maxSkew——各拓扑域之间 Pod 数量的最大差值。例如 maxSkew=1 表示最多相差 1 个 Pod。3）whenUnsatisfiable——「不能满足」时的行为：DoNotSchedule（硬约束，不调度）或 ScheduleAnyway（软约束，尽量满足但不强制）。4）labelSelector——用于匹配 Pod 的标签选择器。\n\n扩展延伸：配置示例——将部署的 Pod 均匀分布到 3 个可用区，最多偏差 1：\ntopologySpreadConstraints:\n- maxSkew: 1\n  topologyKey: topology.kubernetes.io/zone\n  whenUnsatisfiable: DoNotSchedule\n  labelSelector:\n    matchLabels:\n      app: my-app\n场景：3 个可用区各 5 个节点，期望 3 副本均衡分布在 3 个可用区。节点可用区分布不均衡时（如 1 区有 30 个节点，2 区有 5 个节点），简单的 PodAntiAffinity 可能导致 Pod 分布在 1 区内的不同节点上，而不是分布在不同的可用区。TopologySpreadConstraints 精确控制了可用区层面的均匀分布。注意：TopologySpreadConstraints 和 NodeSelector/NodeAffinity/Affinity 同时使用时存在优先级和叠加关系——调度器会综合所有约束求解。",
+    "hints": [
+      "TopologySpreadConstraints 的 maxSkew 参数如何控制分布均匀性",
+      "PodAntiAffinity 和 TopologySpreadConstraints 的核心区别"
+    ],
+    "tags": [
+      "Kubernetes",
+      "调度",
+      "拓扑分布"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes 临时容器与调试",
+    "content": "什么是 Kubernetes 的 Ephemeral Container（临时容器）？它与普通 Sidecar 容器有什么不同？如何使用临时容器调试不可用（CrashLoopBackOff）的 Pod？",
+    "answer": "答案：Ephemeral Container（临时容器，K8s 1.23+ Alpha，1.25+ Beta）是一种特殊的容器类型，可以在已经运行的 Pod 中临时添加，用于故障排查和调试。与普通 Sidecar 容器的区别：临时容器没有资源限制（requests/limits），不会重启，不参与 Pod 生命周期，不会被自动注入到 Pod 的 Service/Endpoint 中。\n\n解析：核心特性：1）kubectl alpha debug（K8s 1.20+）创建临时容器，或直接用 kubectl debug 命令（K8s 1.23+）。2）临时容器共享 Pod 的 Network/Mount/IPC/PID Namespace，可以访问其他容器的文件系统和进程。3）临时容器中可以使用 nsenter 进入其他容器的网络命名空间。调试崩溃 Pod：当 Pod 处于 CrashLoopBackOff 状态时，普通的 kubectl exec 无法使用（容器即刻崩溃退出）。使用 kubectl debug pod-name --image=ubuntu --target=container-name 启动临时容器，探索崩溃容器的文件系统（如 /proc/1/root 路径访问原容器根文件系统）、检查环境变量、配置文件。\n\n扩展延伸：高级调试场景：1）kubectl debug node/node-name（K8s 1.20+）——在节点上运行特权 Pod 用于调试节点问题（如网络插件故障）。2）kubectl debug pod-name --copy-to=debug-pod --container=container-name ——复制 Pod 并替换命令（如将 nginx 启动命令改为 sleep 1h 以排查启动参数问题）。3）临时容器与容器的交互：共享 PID Namespace 时可以看到其他容器的进程。4）网络调试：共享 Network Namespace 时可以在临时容器中使用 tcpdump/curl/nc 等工具调试网络。注意：临时容器需要启用 EphemeralContainers feature gate（K8s 1.23+ 默认开启）。临时容器在 Pod 删除后自动删除，不残留。",
+    "hints": [
+      "kubectl debug 和 kubectl exec 在 CrashLoopBackOff 场景下的差异",
+      "临时容器为什么不能设置资源 requests/limits"
+    ],
+    "tags": [
+      "Kubernetes",
+      "临时容器",
+      "调试",
+      "Ephemeral"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes 优雅关闭与终止行为详解",
+    "content": "当 Kubernetes 删除一个 Pod 时，Pod 内的进程经历了怎样的终止流程？terminationGracePeriodSeconds、preStop Hook、SIGTERM/SIGKILL 的顺序关系是什么？如何实现优雅关闭？",
+    "answer": "答案：Kubernetes 删除 Pod 时按以下顺序执行：1）Pod 状态变为 Terminating，从 Service Endpoint 中移除（不再接收新流量）。2）执行 preStop Hook（如果有）。3）向 Pod 中主进程（PID 1）发送 SIGTERM 信号。4）等待 terminationGracePeriodSeconds（默认 30s），若在这段时间内进程退出则流程结束。5）超时后发送 SIGKILL 强制终止。\n\n解析：详细时序：kubectl delete pod → API Server 标记 Pod 为 Terminating → Endpoint Controller 从 Service Endpoints 中移除 Pod IP → kubelet 收到 Pod 更新 → 执行 preStop Hook → 发送 SIGTERM → 等待宽限期 → 超出宽限期发送 SIGKILL。preStop Hook 是一个阻塞操作——kubelet 会等待它完成（最多等待 terminationGracePeriodSeconds 时长）。如果 preStop Hook 执行了 60 秒而宽限期是 30 秒，则实际最多等 30 秒（preStop 被截断），然后直接 SIGKILL。\n\n扩展延伸：优雅配置实践：1）调整 terminationGracePeriodSeconds 为业务最大处理时间的 1.5-2 倍（如 Spring Boot 应用可能需要 60s）。2）preStop Hook 设置为 sleep 10（给负载均衡器时间摘除 Pod 端点）或调用应用的 graceful shutdown API。3）Spring Boot 的 server.shutdown=graceful + spring.lifecycle.timeout-per-shutdown-phase=30s。4）Nginx 用 preStop Hook 执行 nginx -s quit 而非 SIGTERM（nginx 收到 SIGTERM 直接退出不处理请求）。5）应用内部注册 Shutdown Hook（Runtime.getRuntime().addShutdownHook）处理资源释放和请求完成等待。检查实际终止时间：kubectl describe pod 查看 Events 中的 Killing 事件（记录了 SIGKILL 强制终止的时间）。如果看到 pod 被 SIGKILL，说明 terminationGracePeriodSeconds 不够长或 preStop Hook 执行时间过长。",
+    "hints": [
+      "PreStop Hook 和 terminationGracePeriodSeconds 的时间关系",
+      "SIGTERM 和 SIGKILL 的间隔时间内应用应该做什么"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Pod",
+      "优雅关闭",
+      "终止"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes PodDisruptionBudget 与自愿扰动",
+    "content": "什么是 Kubernetes PodDisruptionBudget（PDB）？它解决什么问题？PDB 如何与节点维护和集群自动伸缩协同工作？",
+    "answer": "答案：PodDisruptionBudget（PDB）是 Kubernetes 的一种资源，定义在自愿扰动（Voluntary Disruption）场景下，一个应用中最多可以有多少个 Pod 同时不可用。自愿扰动包括：节点维护（kubectl drain）、集群自动缩容（Cluster Autoscaler 节点缩容）、Descheduler 重调度等。PDB 保证应用在这些场景下仍能维持一定的可用 Pod 数量。非自愿扰动（节点硬件故障、内核 panic 等）不受 PDB 控制。\n\n解析：PDB 有两种配置方式：1）minAvailable——最小可用 Pod 数量（绝对值或百分比）。如 minAvailable: 2 表示至少要有 2 个 Pod 正常可用。2）maxUnavailable——最多不可用 Pod 数量（绝对值或百分比）。如 maxUnavailable: 1 表示最多允许 1 个 Pod 被自愿扰动。PDB 通过 labelSelector 匹配 Pod。使用 kubectl drain node 时，kubelet 检查待驱逐 Pod 的 PDB 规则——如果驱逐后不可用 Pod 数超过 PDB 允许范围，则 drain 命令阻塞（等待或超时）。\n\n扩展延伸：PDB 的最佳实践：1）生产关键服务建议配置 PDB（如 minAvailable: 2 或 maxUnavailable: 1）。2）PDB 不是万能的——如果节点数量太少（如只有一个节点上的 1 个 Pod），PDB 形同虚设。3）PDB 与 Cluster Autoscaler 的交互：CA 在缩容节点时检查 PDB——如果缩容会导致某个应用的可用 Pod 低于 PDB 阈值，CA 跳过该节点。4）PDB 不能保护有状态应用的所有场景——单个节点上的 StatefulSet 的 PDB 仅保证 Pod 不被自愿驱逐，但不能保证有状态应用的数据不丢失。5）查看 PDB 状态：kubectl get pdb 查看 CURRENT HEALTHY 列表示当前符合 PDB 约束的 Pod 数。6）PDB 配合 HPA 使用：HPA 扩容增加 Pod 副本数后，PDB 的 minAvailable 参考基数也相应增大（百分比模式）。",
+    "hints": [
+      "自愿扰动和非自愿扰动在 PDB 控制上的区别",
+      "kubectl drain 与 PDB 的交互是什么"
+    ],
+    "tags": [
+      "Kubernetes",
+      "PDB",
+      "高可用",
+      "节点维护"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes Secret 加密存储方案",
+    "content": "Kubernetes Secret 默认在 etcd 中是 Base64 编码而非加密存储的，如何实现 etcd 中 Secret 的静态加密？有哪些加密方案可选？如何与外部密钥管理服务集成？",
+    "answer": "答案：Kubernetes Secret 默认只做 Base64 编码（非加密），任何能访问 etcd 的人都能读取 Secret。K8s 1.13+ 提供 EncryptionConfiguration 实现静态加密（Encryption at Rest）。支持 AES-CBC（密钥存储在 API Server 内存）/KMS（外部密钥管理服务，如 AWS KMS/Azure Key Vault/GCP Cloud KMS）等多种加密方案。\n\n解析：EncryptionConfiguration 是一种 API Server 配置，定义加密 Provider 的优先级和密钥。配置流程：1）创建 EncryptionConfiguration YAML，指定 providers（aescbc/kms/secretbox/identity）。推荐 KMS Provider——密钥由外部 KMS 管理，API Server 不直接接触明文密钥。2）将 EncryptionConfiguration 文件挂载到 kube-apiserver Pod。3）修改 kube-apiserver 启动参数 --encryption-provider-config 指向该文件。4）加密仅对新写入的数据生效——已有数据需要手动遍历重写才能加密。\n\n扩展延伸：External Secrets Operator（ESO）是集成外部密钥管理服务（AWS Secrets Manager / Azure Key Vault / GCP Secret Manager / HashiCorp Vault）与 K8s Secret 的流行方案。工作原理：1）创建 ExternalSecret CRD，声明需要从外部 KMS 中引用哪些密钥。2）ESO 控制器读取 ExternalSecret 资源，从外部 KMS 拉取密钥。3）ESO 创建或更新 K8s Secret 对象。4）Pod 通过标准 Secret Volume/Env 使用密钥。优势：密钥不在 Git 仓库中、支持自动轮换、审计日志记录密钥访问。另一个方案：Sealed Secrets（Bitnami）——将 Secret 加密为 SealedSecret CRD 存入 Git，集群内解密为 Secret。注意：EncryptionConfiguration 加密的是 etcd 中的静态数据，不加密网络传输（TLS 是另一层）。Secret 数据在 API Server 内存中是明文，有内存 dump 权限的人仍能读取。",
+    "hints": [
+      "EncryptionConfiguration 加密只在 etcd 层面生效，API Server 内存中是明文",
+      "External Secrets Operator 如何实现密钥的自动轮换"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Secret",
+      "加密",
+      "KMS"
+    ]
   }
 ]

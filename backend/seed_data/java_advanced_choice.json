@@ -1982,5 +1982,100 @@
       "反射",
       "模块系统"
     ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "StackWalker RETAIN_CLASS_REFERENCE 性能开销",
+    "content": "StackWalker API（JDK 9+）提供了两种获取实例的方式。关于 `StackWalker.getInstance()` 和 `StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE)` 之间的区别，以下哪项描述是正确的？\nA) 两者功能完全一致，RETAIN_CLASS_REFERENCE 仅用于在获取 StackFrame 时额外保留方法的 Class 引用，供后续反射调用使用\nB) 使用 RETAIN_CLASS_REFERENCE 的 StackWalker 可以获取 `StackFrame.getDeclaringClass()` 返回的 `Class<?>` 对象；不使用此选项则调用该方法会抛出 UnsupportedOperationException。RETAIN_CLASS_REFERENCE 的额外开销在于 SecurityManager 权限检查和 JVM 内部 Class 对象的解析\nC) RETAIN_CLASS_REFERENCE 仅影响 frames 的遍历速度，不影响返回的 StackFrame 对象的可用方法\nD) 不使用 RETAIN_CLASS_REFERENCE 的 StackWalker 不能调用 walk() 方法，只能调用 forEach()",
+    "answer": "B) 使用 RETAIN_CLASS_REFERENCE 选项的 StackWalker 允许调用 `StackFrame.getDeclaringClass()` 来获取 Class<?> 对象，而不使用该选项时此方法抛出 UnsupportedOperationException。RETAIN_CLASS_REFERENCE 额外的性能开销来自于：JVM 需要为每个 frame 加载和解析 Class 对象，这涉及类加载器的查找和可能触发的类加载——对于短生命周期的大量栈帧遍历场景，累计开销显著。",
+    "hints": [
+      "getDeclaringClass() 需要额外的 JVM 内部操作来解析 Class 引用，这是 RETAIN_CLASS_REFERENCE 的主要开销来源",
+      "如果不需要 Class 引用，使用默认的 StackWalker 可以避免类加载器查找和 Class 对象解析"
+    ],
+    "tags": [
+      "stackwalker",
+      "stack-frame",
+      "class-reference",
+      "jep-259",
+      "performance"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "VarHandle 内存排序模式选择",
+    "content": "VarHandle（JDK 9+）提供了四种内存排序访问模式：plain、opaque、acquire/release、volatile。以下关于这些模式的描述，哪项是正确的？\nA) plain 和 opaque 模式都保证原子性但不保证任何内存排序；acquire/release 保证线程间传递性；volatile 保证全排序（total order）\nB) opaque 模式既保证原子性又保证跨线程的可见性（立即对其他线程可见），但不阻止指令重排；plain 模式既不保证原子性也不保证排序\nC) opaque 模式保证原子性和同一个线程内的 bitwise 一致性，但不保证跨线程的可见性——其他线程可能永远看不到 opaque 的写入\nD) 所有四种模式都保证对引用类型和原始类型的原子性（连 long/double 也不例外），区别仅在于内存排序语义",
+    "answer": "C) opaque 模式（也称为「位一致」模式）保证：1) 原子性——对引用和所有原始类型包括 long/double 的读写都是原子的（plain 模式不保证 long/double 的原子性）2) 同一个线程内的 data-race-free 一致性——不会读到「撕裂值」(torn value) 3) 但 opaque 模式不保证跨线程的顺序和可见性——另一个线程可能无限期地看不到 opaque 写入的值。这是 JEP 193 定义的 varhandle 内存排序层级中最基础但最容易被误解的一层。",
+    "hints": [
+      "plain 模式不保证 long/double 的原子性（可能读到 torn value），但 opaque 保证所有类型的原子性",
+      "opaque 的关键特性是「自洽」——本线程看到的自己的写入顺序不变，但其他线程可能看不到"
+    ],
+    "tags": [
+      "varhandle",
+      "memory-ordering",
+      "jep-193",
+      "opaque",
+      "atomics"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "MethodHandle invoke 与 invokeExact 的区别",
+    "content": "MethodHandle（JDK 7+）提供了 invoke 和 invokeExact 两种调用方式。以下哪项正确描述了两者的区别？\nA) invoke 和 invokeExact 在功能上完全相同，invokeExact 只是 invoke 的别名，为了 API 可读性而存在\nB) invoke 允许 JVM 在调用时进行参数和返回值的类型适配（如装箱、拆箱、类型转换），而 invokeExact 要求调用点的类型签名与 MethodHandle 的类型签名完全匹配，否则抛出 WrongMethodTypeException\nC) invokeExact 比 invoke 性能差，因为 invokeExact 在每次调用时都要做完整的类型检查\nD) invoke 只能用在 invokeExact 不支持的场景中，即当方法句柄指向可变参数方法时",
+    "answer": "B) invoke 在调用时如果参数类型不完全匹配，JVM 会进行类型适配转换（包括引用类型的强制转换、基本类型的扩展/缩窄转换、装箱/拆箱等），然后执行调用。而 invokeExact 要求调用点的签名（包括参数类型和返回类型）与 MethodHandle 自身的 type() 完全匹配——如果不匹配，在调用时抛出 WrongMethodTypeException，不做任何自动适配。这种精确匹配让 JIT 可以做更激进的优化（如完全内联消除方法句柄调用），因此 invokeExact 性能通常优于 invoke。",
+    "hints": [
+      "invokeExact 不进行类型适配——调用前需要通过 MethodHandle.asType() 手动转换",
+      "JIT 对 invokeExact 的优化程度更高，因为类型在调用点就已完全确定"
+    ],
+    "tags": [
+      "methodhandle",
+      "invoke",
+      "invokeexact",
+      "jep-277",
+      "reflection"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "JPMS requires transitive 传递性规则",
+    "content": "在 Java Platform Module System（JPMS, JDK 9+）中，`requires transitive` 用于声明模块依赖的「隐式可读性」。以下关于其传递规则的描述，哪项是正确的？\nA) 模块 A `requires transitive B`，意味着 A 的传递依赖模块 C 自动获得对 B 的读取权限\nB) 模块 A `requires transitive B`，那么任何 `requires A` 的模块自动获得对 B 的读取权限（包括其 exported 包），无需显式 `requires B`\nC) requires transitive 的效果仅限于同一模块图内的编译期，运行期不生效\nD) requires transitive 只能应用于 java.base 模块，对自定义模块使用会导致模块系统不兼容",
+    "answer": "B) 这是 requires transitive 的核心语义。如果模块 A 声明 `requires transitive B`，那么任何读取 A 的模块会隐式地也读取 B。这典型用于：当 A 的 public API 的方法签名中暴露了 B 中的类型时，A 应该用 `requires transitive B`，这样使用 A 的模块不需要额外再写 `requires B` 就能使用这些类型。例如 java.sql 模块 `requires transitive java.xml`，所以使用 JDBC 的代码可以直接使用 org.xml 包中的类型而无需显式 requires。",
+    "hints": [
+      "需要 transitive 的关键判断是：我的 API 是否在 public 方法签名中暴露了依赖模块的类型？",
+      "不恰当地使用 requires transitive 会导致不必要的传递依赖，增加模块耦合"
+    ],
+    "tags": [
+      "jpms",
+      "module-system",
+      "requires-transitive",
+      "encapsulation",
+      "java-9"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "动态 CDS 存档内容范围",
+    "content": "JDK 13+（JEP 350）引入了动态 CDS（Class Data Sharing）存档功能，允许在应用退出时自动创建归档。关于动态 CDS 存档的内容范围，以下哪项描述是正确的？\nA) 动态 CDS 存档只包含 JDK 内置类（如 java.lang.String），不包含应用的类\nB) 动态 CDS 存档在应用退出时自动捕获所有已加载的类（包括应用类和库类），但默认存档路径是临时目录，不会影响后续启动\nC) 动态 CDS 存档通过 `-XX:ArchiveClassesAtExit` 指定输出路径，存档内容包含应用运行过程中加载的所有非布尔类（non-boolean classes），并在后续启动时通过 `-XX:SharedArchiveFile` 加载以提升启动速度\nD) 动态 CDS 存档与 AppCDS 完全独立，二者不能同时使用",
+    "answer": "C) 动态 CDS 存档通过在 JVM 退出时使用 `-XX:ArchiveClassesAtExit=<path>` 生成。存档内容包含：app class loader 加载的所有类 + platform class loader 和 bootstrap class loader 加载的类（排除布尔类、已存档在静态 CDS 中的类等）。后续启动时通过 `-XX:SharedArchiveFile=<path>` 加载，JVM 会验证存档的兼容性（如类路径是否匹配），兼容时直接从共享内存映射加载类，跳过类文件解析和验证阶段，显著减少启动时间和内存占用。",
+    "hints": [
+      "动态 CDS 的核心价值在于免去了手动 dump class list 和创建 archive 的 AppCDS 三步流程",
+      "使用动态 CDS 时 JVM 会自动检测类路径变化并 fallback 到非存档模式，保证不会因存档不兼容而启动失败"
+    ],
+    "tags": [
+      "cds",
+      "appcds",
+      "class-data-sharing",
+      "jep-350",
+      "startup-performance"
+    ]
   }
 ]

@@ -1529,5 +1529,97 @@
       "Exchanger",
       "JUC"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "ExecutorCompletionService 完成服务",
+    "content": "ExecutorCompletionService 将___和___解耦。内部维护一个___（阻塞队列）来存储已完成任务的 Future。提交任务时包装为___（FutureTask 的子类），任务完成后结果自动入队。调用 take() 会___直到有任务完成并返回其 Future；poll() 会___返回完成的 Future（无完成任务时返回 null）。与直接使用 Future 列表轮询相比，CompletionService 的优势是___。",
+    "answer": "{\"correct\": [[\"任务提交\", \"异步任务提交\"], [\"结果获取\", \"结果消费\"], [\"BlockingQueue\", \"阻塞队列\", \"CompletionQueue\"], [\"QueueingFuture\", \"Future 包装类\"], [\"阻塞等待\", \"阻塞\"], [\"立即返回\", \"不阻塞\", \"超时返回\"], [\"按完成顺序获取结果\", \"先完成先获取\", \"无需轮询\"]], \"distractors\": [\"线程管理\", \"任务调度\", \"任务执行\", \"List\", \"Set\", \"ArrayBlockingQueue\", \"LinkedBlockingQueue\", \"FutureTask\", \"FutureAdapter\", \"CompletionFuture\", \"轮询等待\", \"超时等待\", \"一直阻塞\", \"提高执行速度\", \"增加并行度\"]}",
+    "hints": [
+      "ExecutorCompletionService 相当于 Future 列表 + 一个 Completion Queue——哪个 Future 先完成就排到队列前面",
+      "take() 适用于必须等待下一个完成结果的场景，poll() 适用于非阻塞轮询的监控场景"
+    ],
+    "tags": [
+      "并发",
+      "CompletionService",
+      "ExecutorCompletionService",
+      "Future"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "ThreadPoolExecutor 生命周期管理",
+    "content": "ThreadPoolExecutor 的生命周期状态（基于 AtomicInteger 的高 3 位存储）：___（CTL 值 < 0，接收新任务并处理队列任务）、___（不再接收新任务但继续处理队列中已有任务）、___（不再接收新任务且不处理队列任务，尝试中断执行中的线程）、___（所有任务终止、工作线程数为 0，terminated() 尚未执行）和 TERMINATED。shutdown() 将状态切换到___。shutdownNow() 将状态切换到___并返回___（队列中未执行的任务列表）。awaitTermination() 在超时时间内___等待线程池终止。",
+    "answer": "{\"correct\": [[\"RUNNING\"], [\"SHUTDOWN\"], [\"STOP\"], [\"TIDYING\"], [\"SHUTDOWN\"], [\"STOP\"], [\"List<Runnable>\", \"未执行任务列表\", \"等待执行的任务\"], [\"阻塞\", \"阻塞地\"]], \"distractors\": [\"ACTIVE\", \"READY\", \"START\", \"INIT\", \"SHUTTING_DOWN\", \"STOPPING\", \"TERMINATING\", \"CLEANUP\", \"List<Future>\", \"NULL\", \"空列表\", \"正在执行的任务\", \"轮询\", \"非阻塞\", \"休眠\"]}",
+    "hints": [
+      "ThreadPoolExecutor 使用 AtomicInteger 的 ctl 变量同时存储线程池状态（高 3 位）和工作线程数（低 29 位）",
+      "RUNNING < SHUTDOWN < STOP < TIDYING < TERMINATED——数字越大表示生命周期越靠后"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "ThreadPoolExecutor",
+      "生命周期"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "VarHandle 变量句柄与安全 CAS",
+    "content": "VarHandle 是 JDK 9 引入的（JEP 193），旨在替代___的字段原子操作，提供类型安全的___操作。VarHandle 通过___（反射查找器）获取目标字段的访问句柄，编译期检查类型安全性。与 Unsafe 相比，VarHandle 的优势包括：___（编译期类型检查）、___（不需要安全管理器权限）、以及对___（原子字段更新组合操作）的支持。VarHandle 的 compareAndSet / getAndSet 语义上等价于___类。对数组元素的原子操作通过___（工厂方法 + 数组类型和索引）方式实现。",
+    "answer": "{\"correct\": [[\"sun.misc.Unsafe\", \"Unsafe\"], [\"CAS\", \"compare-and-swap\", \"原子\"], [\"MethodHandles.Lookup\", \"MethodHandles\"], [\"类型安全\", \"编译期类型检查\"], [\"无需权限\", \"无需显式权限\"], [\"原子字段更新组合\", \"多个字段的原子操作\"], [\"AtomicIntegerFieldUpdater\", \"AtomicReferenceFieldUpdater\"], [\"MethodHandles.arrayElementVarHandle\", \"arrayElementVarHandle\"]], \"distractors\": [\"AtomicInteger\", \"Lock\", \"volatile\", \"反射\", \"Reflection\", \"FieldAccessor\", \"FieldFinder\", \"运行时检查\", \"签名多态性\", \"Java 反射\", \"需要安全管理器\", \"AtomicStampedReference\", \"LongAdder\", \"VarHandle.varHandleForArray\", \"数组句柄模式\"]}",
+    "hints": [
+      "VarHandle 的方法签名是「签名多态」的——编译期根据调用点参数类型确定完整签名，执行时通过 MethodHandle 分派",
+      "VarHandle 的 Memory Fence 方法（fullFence、acquireFence、releaseFence）提供了细粒度的内存排序控制"
+    ],
+    "tags": [
+      "并发",
+      "VarHandle",
+      "CAS",
+      "Unsafe",
+      "原子操作"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "DelayQueue 延迟队列原理",
+    "content": "DelayQueue 是一个无界的___，内部元素必须实现___接口（提供 getDelay() 和 compareTo() 方法）。内部使用___（优先级队列）按到期时间排序——延迟最短的元素在队首。take() 方法___直到队首元素到期。poll()___阻塞——如队首元素未到期则立即返回 null。getDelay() 返回值的单位是___（TimeUnit）。DelayQueue 底层使用了___（作为锁和条件通知）来实现等待/通知机制。典型应用场景包括___和___。",
+    "answer": "{\"correct\": [[\"BlockingQueue\", \"阻塞队列\"], [\"Delayed\", \"java.util.concurrent.Delayed\"], [\"PriorityQueue\", \"优先级队列\"], [\"阻塞等待\", \"阻塞\"], [\"不会\", \"不\"], [\"纳秒\", \"nanoseconds\", \"TimeUnit.NANOSECONDS\"], [\"ReentrantLock\", \"Lock\", \"可重入锁\"], [\"定时任务调度\", \"过期缓存清理\"], [\"连接池超时管理\", \"延迟消息队列\"]], \"distractors\": [\"普通队列\", \"同步队列\", \"Comparable\", \"Runnable\", \"Scheduled\", \"Deque\", \"双端队列\", \"TreeSet\", \"红黑树\", \"会\", \"可能\", \"毫秒\", \"秒\", \"Synchronized\", \"AQS 条件队列\", \"信号量\", \"CountDownLatch\", \"任务执行\", \"消息推送\", \"异步回调\"]}",
+    "hints": [
+      "DelayQueue 内部使用 PriorityQueue 排序——线程在 take() 时等待的是条件（Condition）队列上的 signal",
+      "ScheduledThreadPoolExecutor 内部使用了 DelayQueue 来管理延迟任务"
+    ],
+    "tags": [
+      "并发",
+      "DelayQueue",
+      "BlockingQueue",
+      "Delayed"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "LinkedTransferQueue 传输队列",
+    "content": "LinkedTransferQueue 是 JDK 7 引入的 BlockingQueue，基于___（无锁链表 + CAS）实现 TransferQueue 接口。其核心方法 transfer(E) 的功能是___——阻塞直到消费者取走元素。与 SynchronousQueue 相比，LinkedTransferQueue 可以___（既支持直接交付也支持排队缓冲）。tryTransfer(E) 在没有消费者等待时___。hasWaitingConsumer() 返回___（是否有消费者在等待）。LinkedTransferQueue 在并发算法上使用___（结合了 Dual Data Structures 和 M&S 队列的设计）实现高性能无阻塞。JDK 11 中 LinkedTransferQueue 新增了___方法支持批量操作。",
+    "answer": "{\"correct\": [[\"无锁\", \"lock-free\", \"无锁链表\"], [\"交付元素并等待消费者\", \"直接将元素交给消费者\", \"等待消费者取走\"], [\"同时支持缓冲和无缓冲模式\", \"有容量\", \"既可缓冲也可直接交付\"], [\"直接返回 false\", \"立即失败\", \"不等待\"], [\"true\"], [\"Dual Queue\", \"双重队列\", \"Dual 数据结构\"], [\"forEachRemaining\", \"批量处理\"]], \"distractors\": [\"双向链表\", \"数组\", \"加锁\", \"CLH 队列\", \"put 和 add\", \"等待超时\", \"抛出异常\", \"返回 null\", \"只支持无缓冲\", \"只支持有缓冲\", \"false\", \"null\", \"大于 0\", \"M&S Queue\", \"Michael-Scott Queue\", \"CLH Queue\", \"iterator\", \"spliterator\"]}",
+    "hints": [
+      "LinkedTransferQueue 的设计融合了 SynchronousQueue（直接交付）和 LinkedBlockingQueue（排队缓冲）两种模式",
+      "Dual Queue 的核心思想：将每个操作分为两步——先发布一个「请求/数据」节点，再等待匹配"
+    ],
+    "tags": [
+      "并发",
+      "LinkedTransferQueue",
+      "TransferQueue",
+      "BlockingQueue",
+      "无锁"
+    ]
   }
 ]

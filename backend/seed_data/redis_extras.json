@@ -1669,5 +1669,107 @@
       "Redis Cluster",
       "分片"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis 换页策略与内存碎片整理对比",
+    "content": "关于 Redis 内存碎片整理（Active Defragmentation）和内存淘汰（Eviction），以下说法正确的是？",
+    "options": [
+      "A) 内存碎片整理和内存淘汰都在内存不足时触发，两者的作用相同",
+      "B) 内存碎片整理通过移动对象合并空闲内存，内存淘汰通过删除 key 释放空间",
+      "C) 开启 activedefrag 后可以完全避免内存碎片，不需要监控碎片率",
+      "D) 内存碎片整理只在主从切换时触发一次"
+    ],
+    "answer": "答案：B) 内存碎片整理通过移动对象合并空闲内存，内存淘汰通过删除 key 释放空间\n\n解析：内存碎片整理（Active Defrag）和内存淘汰是 Redis 两种完全不同的机制。内存碎片整理（activedefrag yes）在后台进程中扫描并移动 Redis 对象，将分散的空闲内存合并为连续可用内存，解决的是内存利用率低的问题（碎片率高时虽然 used_memory 不大但 RSS 占用很高）。内存淘汰（Eviction）是在内存达到 maxmemory 阈值时，根据淘汰策略删除 key 来释放内存——它解决的是内存不足的问题。\n\n扩展延伸：Active Defrag 的参数控制：active-defrag-ignore-bytes 100MB（碎片大小超过此值启动）、active-defrag-threshold-lower 10（碎片率超过 10% 启动）。碎片整理期间 CPU 使用率会上升，可通过 active-defrag-cycle-min/max 控制 CPU 时间占比。主动碎片整理无法完全消除碎片——当碎片率过高（> 1.5）且影响系统稳定性时，最佳方案是主从切换或重启（重新加载 RDB 后内存连续）。mem_fragmentation_ratio = used_memory_rss / used_memory，大于 1.5 需关注，小于 1 说明使用了 swap（危险）。",
+    "hints": [
+      "mem_fragmentation_ratio > 1.5 和 < 1 各代表什么",
+      "RDB 重加载为什么能解决碎片问题"
+    ],
+    "tags": [
+      "Redis",
+      "内存碎片",
+      "主动整理",
+      "淘汰策略"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Cluster 集群脑裂与数据丢失",
+    "content": "Redis Cluster 在网络分区时可能发生脑裂（Split-brain）吗？Cluster 模式下主节点宕机导致数据丢失的场景有哪些？如何配置减少数据丢失风险？",
+    "answer": "答案：Redis Cluster 在设计上存在脑裂窗口。当主节点（Master）与集群中大多数节点网络隔离时，Cluster 会从该主节点的从节点（Slave）中选举新主。但原主节点可能认为自己是合法的，继续接受写入请求。网络恢复后，原主节点降级为从节点，其数据被新主节点覆盖（脑裂期间写入的数据丢失）。这是 Redis Cluster 在 AP 和 CP 之间权衡的结果——保证可用性优先于强一致性。\n\n解析：除了脑裂，主节点宕机时数据丢失的场景包括：1）未同步的数据：主节点宕机时，从节点的数据未追上主节点（复制滞后），新主节点的数据比原主节点少。2）异步复制：Redis 主从复制默认是异步的，主节点返回客户端写入成功时数据可能还没复制到从节点。3）全量同步覆盖：从节点重新同步时，如果持久化配置不当，重启后加载到旧的 RDB 文件。\n\n扩展延伸：减少数据丢失风险的配置：1）min-replicas-to-write 1（至少有一个从节点连接时才可写）和 min-replicas-max-lag 10（从节点延迟超过 10s 时禁止写入）。这两个配置让主节点在从节点数量不足或延迟过大时拒绝写入，减少脑裂和复制滞后导致的数据丢失。2）设置合适的 repl-backlog-size（默认 1MB，建议增大到 64-256MB）让从节点在断线重连后有更大的概率做部分重同步而非全量同步。3）开启主节点和从节点的 AOF 持久化（appendfsync everysec）。注意：这些配置不能完全消除数据丢失，只能将丢失窗口缩小到秒级。对于不能接受任何数据丢失的场景，应考虑 ZooKeeper/etcd 等强一致性系统。",
+    "hints": [
+      "min-replicas-to-write 如何减少脑裂造成的数据丢失",
+      "repl-backlog-size 为什么影响部分重同步的成功率"
+    ],
+    "tags": [
+      "Redis",
+      "Cluster",
+      "脑裂",
+      "数据丢失"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 客户端缓存（Client-side Caching）",
+    "content": "什么是 Redis 6.0+ 的客户端缓存（Client-side Caching，也称 Tracking）？它是如何工作的？与本地缓存相比有什么优势？",
+    "answer": "答案：Redis 6.0+ 的客户端缓存（Tracking）是一种服务器端协助的客户端缓存机制。Redis 服务端跟踪客户端访问了哪些 key，当 key 发生变更时主动通知客户端使失效缓存。这解决了传统客户端缓存中缓存一致性的难题——客户端不再需要设置固定的过期时间来猜测缓存何时失效。\n\n解析：两种模式：1）默认模式（Tracking 非连接关联）——服务端记录全局映射表（key → client ID），当 key 被修改时向所有缓存了该 key 的客户端发送 invalidation 消息。2）OPTIN/OPTOUT 模式——客户端通过 CLIENT TRACKING ON|OFF 控制是否参与缓存跟踪。\n\n扩展延伸：实现机制：1）客户端通过 HELLO 3（RESP3 协议）或 CLIENT TRACKING ON 启用。2）服务端在 Internally maintained 的 Tracking Table（全局失效表）中记录每个 client 缓存的 key 列表。3）当 key 被修改（SET/EXPIRE/DEL/FLUSHDB 等）时，服务端广播 Invalidation Message 到相关客户端。4）客户端收到 Invalidation Message 后淘汰本地缓存，下次读取时重新从 Redis 获取。优势：相比本地缓存的固定 TTL（要么不一致要么过短频繁刷新），Redis Tracking 实现了「精准失效」——key 没变就一直用缓存，变了立刻通知。劣势：Tracking Table 占 Redis 内存（每个被缓存的 key 存一条记录），且网络分区时可能丢失失效消息。适用场景：高并发读少写场景（如配置信息、数据字典）。",
+    "hints": [
+      "Redis Tracking 与等过期时间本地缓存的本质区别",
+      "Tracking Table 的内存开销如何控制"
+    ],
+    "tags": [
+      "Redis",
+      "客户端缓存",
+      "Tracking",
+      "RESP3"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 阻塞命令排查与异步化改造",
+    "content": "Redis 单线程模型下，哪些命令会导致长时间阻塞？如何排查阻塞原因？Redis 4.0+ 的懒删除（Lazy Free）机制如何缓解阻塞？",
+    "answer": "答案：Redis 是单线程执行命令，以下操作会长时间阻塞主线程：O(N) 命令（KEYS *、SMEMBERS、HGETALL 等在大集合上执行）、大 key 删除（DEL 一个包含数百万元素的 Set/List/ZSet）、大 key 的阻塞弹出（BRPOP/BLPOP 等）、AOF rewrite 和 RDB bgsave 的 fork 子进程（fork 本身可能阻塞数十毫秒到秒级）、慢查询（如复杂的 Lua 脚本）。\n\n解析：排查阻塞的方法：1）SLOWLOG GET——查看慢查询日志，检查执行时间超过阈值的命令。2）LATENCY DOCTOR/GRAPH/HISTORY——Redis 内建延迟诊断工具，自动分析延迟峰值的原因。3）redis-cli --intrinsic-latency 100——测试 Redis 服务器的原生延迟。4）INFO COMMANDSTATS——查看各命令的调用次数和总耗时。5）MONITOR（生产慎用，本身消耗性能）。\n\n扩展延伸：懒删除（Lazy Free，Redis 4.0+）：将大 key 的释放操作放到后台线程执行，避免阻塞主线程。命令：UNLINK（替代 DEL，O(1) 返回，后台异步释放内存）、FLUSHDB ASYNC / FLUSHALL ASYNC（异步清空数据库）。LAZY-FREE 的相关配置：lazyfree-lazy-eviction（淘汰数据时异步释放）、lazyfree-lazy-expire（过期 key 异步释放）、lazyfree-lazy-server-del（隐式 DEL 操作异步化）、replica-lazy-flush（从节点全量同步时异步清空旧数据）。注意：UNLINK 不保证立即释放内存——后台线程需要时间回收。但主线程的操作是 O(1) 的，不阻塞。对于大 Hash 的字段删除，使用 HSCAN + HDEL 分批处理，或直接用 UNLINK 删除整个 key 再重新构建。",
+    "hints": [
+      "如何通过 SLOWLOG 和 LATENCY 命令定位阻塞来源",
+      "UNLINK 和 DEL 的本质区别"
+    ],
+    "tags": [
+      "Redis",
+      "阻塞",
+      "Lazy Free",
+      "排查"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis 内存碎片形成原因",
+    "content": "以下哪种操作最容易导致 Redis 产生内存碎片？",
+    "options": [
+      "A) 持续写入固定长度的 String 类型数据",
+      "B) 频繁创建和删除不同大小的 key，且 key 的大小分布离散",
+      "C) 只使用 List 类型进行 LPUSH/LPOP 操作（队列模式）",
+      "D) 在 Cluster 模式下，所有 key 均匀分布到各节点"
+    ],
+    "answer": "答案：B) 频繁创建和删除不同大小的 key，且 key 的大小分布离散\n\n解析：Redis 使用 jemalloc 内存分配器，它通过固定 size class（如 8、16、32、64、128、256、512 字节等）分配内存。当 key 的值大小与分配器的 size class 不完全匹配时会产生内部碎片。频繁创建和删除不同大小的 key，且 key 大小离散分布时，jemalloc 的底层 page（连续内存块）会被拆分成不同大小的 chunk，后续分配时无法完全利用这些碎片空间，形成外部碎片。例如：先存一个 100 字节的值（占用 128B size class，浪费 28 字节），然后删除它，再存一个 200 字节的值（占用 256B size class），100 字节留下的 128B 碎片无法被 200 字节利用。\n\n扩展延伸：选项分析：A：固定长度的 String 持续写入会产生可预测的分配模式，碎片较少（每次分配同样的 size class，删除后新分配可以复用）。C：LPUSH/LPOP 操作队列模式，对象大小基本固定且生命周期短，碎片率低。D：Cluster 分片与内存碎片没有直接关系（数据分布到不同节点不影响单个节点的内存分配模式）。减少碎片的实践：1）尽量统一 key 的 value 大小分布（避免又大又小混杂）。2）对于已知会频繁增删的 key，考虑预留一定空间。3）碎片率 > 1.5 时开启 activedefrag，或通过主从切换重新加载 RDB。",
+    "hints": [
+      "为什么 key 大小离散比 key 大小统一更容易产生碎片",
+      "jemalloc 的 size class 机制如何影响碎片率"
+    ],
+    "tags": [
+      "Redis",
+      "内存碎片",
+      "jemalloc",
+      "性能"
+    ]
   }
 ]

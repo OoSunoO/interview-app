@@ -1602,5 +1602,95 @@
       "CRP",
       "性能优化"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web 字体加载策略：font-display、WOFF2 压缩与 Unicode 范围子集化",
+    "content": "Web 字体加载对页面性能有显著影响，尤其是中文字体。请介绍 font-display 描述符的几种取值策略（swap、block、fallback、optional）的区别，以及字体子集化和 WOFF2 压缩如何优化加载性能。",
+    "answer": "答案：font-display 控制自定义字体加载期间的备选字体显示策略。swap 立即用备选字体显示文本，自定义字体加载完成后替换（FOUT——Flash of Unstyled Text）；block 在字体加载期间隐藏文本（最多 3 秒回退到 swap），产生 FOIT（Flash of Invisible Text）；fallback 介于两者之间（100ms 隐藏后使用备选，3 秒内加载完成则替换）；optional 给浏览器最大自由度，根据网络条件决定是否使用自定义字体。字体子集化通过只包含页面实际使用的字符（中文字体从 2 万字精简到几百个常用字）将字体文件体积从数 MB 减少到几十 KB。WOFF2 压缩比 WOFF 高约 30%，比 TTF 格式减少 50% 以上传输体积。\n\n解析：每种 font-display 策略的影响——1）swap：最常用策略，保证文本立即可见，代价是备选字体和自定义字体切换时的布局变化（FOUT）。适合图标字体和品牌字体（切换频闪可接受）。2）block：避免 FOUT 但代价是 3 秒空白（FOIT）。用户体验从「文本不可见」到「文本可用」的突变更严重。应避免在正文上使用。3）fallback：混合策略，100ms 内如果字体已加载则使用自定义字体（无闪），否则使用备选字体。自定义字体稍后到达时如果时间还短（3s 内）则替换。适合正文文本。4）optional：最弱策略，浏览器根据网络状况（慢速连接或节省流量模式）完全忽略自定义字体。\n\n扩展延伸：字体子集化的实现——1）手动子集化：使用 glyphhanger（基于 fonttools）或 subfont 分析 HTML 中使用的 Unicode 范围，提取子集字体。2）自动化：Webpack 的 google-fonts-plugin、Vite 的 vite-plugin-font-subset。3）中文网站的终极方案：对中文字体（如 Noto Sans SC）按页面使用场景（首页 vs 详情页）分别子集化，首页通常只需要几百个常用字。4）Unicode-range 描述符：@font-face 的 unicode-range 属性告诉浏览器字体文件覆盖的字符范围，浏览器只下载需要的字体文件。WOFF2 的优势——WOFF2 使用 Brotli 压缩算法（比 gzip 更好）、自定义字形轮廓的预处理器（将轮廓坐标量化和预测编码），对中文和复杂字形压缩效果拔群。Google Fonts 的 API 支持自动选择 WOFF2 格式。",
+    "hints": [
+      "FOUT（Flash of Unstyled Text）和 FOIT（Flash of Invisible Text）对用户体验的影响差异",
+      "中文字体子集化为什么比西文字体的优化空间大得多"
+    ],
+    "tags": [
+      "前端",
+      "性能优化",
+      "字体",
+      "Web 性能"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端性能预算(Performance Budget)的量化指标与 CI 门禁集成",
+    "content": "什么是前端性能预算（Performance Budget）？如何制定合理的性能预算指标？在 CI/CD 流程中如何设置性能预算门禁（Performance Budget Gate）？",
+    "answer": "答案：性能预算是对页面各项性能指标设置的量化上限，超过上限则视为回归（Regression），应阻止合并或触发告警。常见的预算维度包括：JS 总大小（< 300KB gzip）、首屏 HTML 大小（< 50KB）、最大图片大小、LCP（< 2.5s）、TBT（Total Blocking Time < 200ms）、请求总数（< 50 个 HTTP 请求）。CI 门禁集成通过 Lighthouse CI、WebPageTest API 或自定义 Bundle Analyzer 检查体积阈值来实现。\n\n解析：如何制定预算——1）基于行业基准：参考 Google 的 Core Web Vitals 阈值（LCP 2.5s, INP 200ms, CLS 0.1）。2）基于当前基线：用工具测量当前版本的关键指标，设置「不比现在更差」的阈值（如 JS 体积不超过当前值的 110%）。3）分场景设置：首页（核心体验）预算严格，内部页面可适当放宽。4）分资源类型：JS bundle（按路由分割后首屏 < 150KB）、CSS（< 30KB）、图片（< 200KB LCP 图片）、字体（< 50KB 子集化 WOFF2）。\n\n扩展延伸：CI 门禁集成方案——1）Lighthouse CI：通过 lhci collect 收集分数和指标，lhci assert 断言阈值（score > 0.9, lcp < 2500, tbt < 200）。LHCI 支持 GitHub Actions 自动 comment PR 差异。2）Webpack/Vite Bundle Analyzer + CI 检查：在 CI 中运行 analyze 插件，用 size-limit 库对比 PR 的 bundle 增量。3）自定义脚本：使用 puppeteer 打开页面 +性能 API（performance.getEntriesByType('paint')）采集指标，与基线对比。4）性能监控平台：SpeedCurve、Calibre、DareBoost 等 RUM 工具提供持续的性能预算监视面板。常见陷阱——1）预算过于严格：频繁触发告警导致团队麻木（Budget Fatigue），最终被忽略。初期应只设置 3-5 个核心指标，逐步收紧。2）忽略移动端：移动端 CPU 和网络延迟是模拟器的 2-5 倍，移动端预算应比桌面端严格 20-30%。3）预算不更新：随着功能迭代，预算应定期评审和调整，避免过期预算失去约束力。",
+    "hints": [
+      "移动端性能预算应比桌面端严格多少——网络延迟和 CPU 性能差异",
+      "Lighthouse CI 的 assert 命令如何使用断言检查 Core Web Vitals"
+    ],
+    "tags": [
+      "前端",
+      "性能优化",
+      "CI",
+      "性能预算"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "SourceMap 的工作原理与安全风险",
+    "content": "请解释 Source Map 的生成原理、映射格式（VLQ 编码和 JSON 结构），以及在生产环境中部署 Source Map 的安全风险和最佳实践。",
+    "answer": "答案：Source Map 是连接压缩/转译后代码与原始源代码的映射文件。核心格式是 JSON，包含 version（版本）、sources（源码路径）、names（变量名列表）、mappings（VLQ 编码的映射字符串）。mappings 字段通过 Base64 VLQ（Variable Length Quantity）编码，用分号分隔行（;），逗号分隔段（,），每段记录生成代码位置到源码位置的对应关系。安全风险：生产环境部署 Source Map 会导致源码泄露（攻击者和竞争对手可还原原始逻辑）。最佳实践：仅在错误监控系统中内部使用 Source Map，不对公网暴露映射文件。\n\n解析：Source Map 格式细节——mappings 字符串示例：AAAA 表示生成代码第 0 行第 0 列对应源码第 0 行第 0 列。每段用 VLQ 编码 1-5 个字段：1）生成列号（相对前一段的偏移），2）sources 数组索引（如果在 mappings 中首次引用则为原始文件索引），3）源码行号（相对偏移），4）源码列号（相对偏移），5）names 数组索引（可选的符号名）。VLQ 编码：将数字编码为 Base64 字符，最高位（continuation bit）表示是否需要继续读下一个字符，低位 5 位存储数值。这种变长编码使 Source Map 体积大幅缩小。\n\n扩展延伸：安全实践——1）错误监控内部使用：将 .map 文件上传到 Sentry/DataDog 等错误监控平台，不部署到 CDN（或 CDN 上仅允许内网 IP 访问）。2）符号化（Symbolication）服务：搭建内部 Source Map 服务器来进行错误堆栈还原，不对外开放。3）去除敏感信息：在生成 Source Map 前审查 sources 字段，排除包含 API 密钥、业务敏感逻辑或注释中的秘密内容。4）Nginx 限制：location ~* .js\\.map$ { deny all; } 或 internal 指令限制仅内部重定向访问。5）部分前端框架的 .env 配置：GENERATE_SOURCEMAP=false（CRA）/ sourcemap: 'hidden'（Webpack）/ build.sourcemap: 'hidden'（Vite），生成但不对外部署。现代化错误监控——利用 Source Map 还原错误到源代码行的能力是 debug 生产环境问题的关键。Sentrry 的 Upload Source Maps 说明文档推荐在 CI 中自动上传。前端监控中 Source Map + Stack Trace API 是错误排查的标准方案。",
+    "hints": [
+      "VLQ 编码中 continuation bit 的作用——如何实现变长整数编码",
+      "生产环境 Source Map 隐藏（hidden）模式与完全不生成的区别"
+    ],
+    "tags": [
+      "前端",
+      "SourceMap",
+      "安全",
+      "构建"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "requestIdleCallback 的浏览器空闲调度与长任务分片策略",
+    "content": "请介绍 requestIdleCallback (rIC) 的回调触发时机和参数（IdleDeadline.timeRemaining() / didTimeout），以及它与 requestAnimationFrame (rAF) 在任务调度上的配合关系。如何利用 rIC 分割长任务优化 INP（Interaction to Next Paint）？",
+    "answer": "答案：requestIdleCallback 在浏览器一帧的空闲时间调用回调函数。IdleDeadline.timeRemaining() 返回当前帧剩余时间（通常上限 50ms），didTimeout 表示回调是否因超时而被强制执行。rAF 在帧开始时执行渲染准备（样式计算、布局、绘制），rIC 在帧末尾的空闲时段执行低优先级任务（数据上报、日志写入、预计算）。通过将长任务切片到多个 rIC 中执行，避免长时间阻塞主线程，降低 INP。\n\n解析：调度时机——浏览器的事件循环每帧包含：1）Input Events（处理用户输入）→ 2）requestAnimationFrame（渲染准备）→ 3）Style/Layout/Paint（关键渲染步骤）→ 4）requestIdleCallback（空闲回调）。如果第 1-3 步占用了全部帧时间（16.6ms），则 rIC 不会在此帧执行，回调排队到下一帧的空闲时间。timeRemaining() 在每个空闲回调中动态递减，代表当前帧剩余的可用时间（约 50ms 上限，因为超过 50ms 的任务被视为长任务）。当浏览器检测到空闲帧不足时，可以设置 timeout 参数强制执行回调。\n\n扩展延伸：长任务分片（Yield 策略）——1）传统长任务：function processLargeArray(items) { for (const item of items) { heavyProcess(item); } }。如果 items 有 10000 个，这个循环可能执行 500ms，阻塞主线程导致 INP 升高。2）分片模式：function processInChunks(items, chunkSize = 50) { let i = 0; function doChunk() { const end = Math.min(i + chunkSize, items.length); while (i < end) { heavyProcess(items[i]); i++; } if (i < items.length) requestIdleCallback(doChunk, { timeout: 2000 }); } requestIdleCallback(doChunk); }。3）Scheduler.postTask（实验性 API）：允许显式设置优先级（user-blocking / user-visible / background），比 rIC 更精细。4）`<script type=\"importmap\">` 配合动态 import() 也可以将 JS 执行分割到不同帧。\n\nrIC 的局限——1）支持度：Safari 尚未支持 requestIdleCallback（需 polyfill 使用 setTimeout fallback）。2）回调中不应操作 DOM（可能导致强制同步布局，破坏 rAF 的结果）。3）timeRemaining() 不精确——宏任务之间、iframe 之间、Web Worker 消息处理都会消耗 idle 时间。4）React 18 的并发模式（Scheduler）内部实现了类似 rIC 的 yield 机制，但使用 MessageChannel 实现（优先级更高，不受 Safari 限制）。",
+    "hints": [
+      "rAF（帧开始）和 rIC（帧末尾）的单帧调度顺序",
+      "为什么在 rIC 中操作 DOM 可能导致强制同步布局（Forced Reflow）"
+    ],
+    "tags": [
+      "前端",
+      "浏览器",
+      "性能优化",
+      "调度"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "前端国际化(i18n)方案的演进：从 gettext 到 Intl API 与 ICU 消息格式",
+    "content": "前端国际化的核心挑战是什么？请对比传统 i18n 方案（gettext、i18next）和现代方案（Intl API、ICU MessageFormat）的差异。Intl.ListFormat、Intl.RelativeTimeFormat 等新型 Intl API 如何帮助前端自动处理复数、列表和时间格式？",
+    "answer": "答案：前端国际化的核心挑战包括：字符串的复数规则（pluralization）、性别处理、数字格式（千分位、货币）、日期/时间格式、文本方向（RTL）、列表的连接方式。传统方案如 gettext 使用 %d 占位符和 .po 文件，对复数只支持 2-3 个形式（singular/plural）。现代方案如 ICU MessageFormat 支持完整的 CLDR（Common Locale Data Repository）复数规则（阿拉伯语有 6 种复数形式），Intl API 是浏览器内置的国际化引擎（基于 ICU），无需额外引入库就能正确处理日期、数字、相对时间、列表格式。\n\n解析：各 Intl API 的功能——1）Intl.DateTimeFormat：format(date) 自动根据 locale 输出不同格式（en-US: '6/4/2026', zh-CN: '2026/6/4'）。支持 dateStyle/timeStyle 简化配置（full/long/medium/short）。2）Intl.NumberFormat：处理千分位、货币、百分比、单位（format(1234567.89) → en-US: '1,234,567.89', de-DE: '1.234.567,89'）。3）Intl.ListFormat：自动处理列表连接符（en: 'A, B, and C' 带 Oxford comma；zh: 'A、B和C'）。4）Intl.RelativeTimeFormat：将时间戳转为「2 小时前」「昨天」「3 个月后」等自然语言表达。5）Intl.PluralRules：获取特定语言和数字的复数分类（zero/one/two/few/many/other），用于自定义复数消息。\n\n扩展延伸：工程化方案——1）轻量方案：直接用 Intl API + 简单 key-value 消息映射，无需引入大库。2）ICU MessageFormat + intl-messageformat（FormatJS 生态）：支持嵌套的选择和复数格式，{count, plural, one {# item} other {# items}}。3）Fluent（Mozilla）：声明式 i18n 语言，比 ICU MF 更可读。4）Vue I18n / react-intl / i18next：成熟的框架集成方案。注意——1）ICU MessageFormat 编译后的 AST 处理需要运行时库。2）构建时编译（compile → AST bundle）比运行时解析更高效。3）Tree Shaking：只引入使用的 locale 数据，避免全量 CLDR 数据的体积开销（使用 @formatjs/intl-locale 的按需加载）。金科玉律：永远不要在运行时拼接翻译字符串（「你好, 」+ name + 「, 欢迎回来!」）——不同语言的语序完全不同。",
+    "hints": [
+      "为什么直接拼接字符串做多语言是不对的——日语和阿拉伯语的语序与中文完全不同",
+      "Intl.PluralRules 的 six categories 在不同语言下的映射"
+    ],
+    "tags": [
+      "前端",
+      "i18n",
+      "国际化",
+      "Intl API"
+    ]
   }
 ]

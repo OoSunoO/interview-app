@@ -1656,5 +1656,99 @@
       "SFU",
       "低延迟"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据生命周期管理与分层存储策略",
+    "content": "在数据量持续增长的业务系统中，如何设计数据生命周期管理制度？热/温/冷数据如何分层存储？数据归档、过期清理和合规保留的冲突如何解决？",
+    "answer": "答案：数据生命周期管理（DLM）的核心是「按数据价值决定存储成本和访问性能的平衡」。分层设计：热数据（SSD，高性能，保留最近 30-90 天）、温数据（HDD/SSD 混合，保留 3-12 个月）、冷数据（对象存储/磁带，保留 1-7 年或更久）。过期数据按合规要求安全删除。\n\n解析：1）分层策略——热数据（访问频繁、响应要求毫秒级）：全量在线，存储在 SSD 或内存数据库。温数据（偶尔访问、分钟级延迟可接受）：迁移到 HDD 或压缩存储，查询时需要额外加载时间。冷数据（极少访问，仅用于审计/合规）：迁移到对象存储（S3/OSS/COS）或归档存储（Glacier/OSS Archive），按量付费。\n\n2）数据迁移——自动迁移通道：定时任务（如每天凌晨扫描数据时间戳，标记过期数据）→ 迁移到下一层 → 更新元数据。推荐模式：应用程序写入时不分层（写热存储），后台异步迁移（Read-Before-Migrate：查询时如果数据已在冷层，回填到热层缓存的「Promotion」策略）。\n\n3）合规保留——金融/医疗行业有监管要求（数据保留 5-7 年不可删除）。冲突解决：WORM（Write Once Read Many）存储特性——冷存储开启对象锁定（Object Lock），在规定保留期内不可删除或覆盖。过期数据必须通过安全删除（Secure Erase/逻辑删除）确保不可恢复。\n\n扩展延伸：具体实现方案：MySQL/PostgreSQL 分区表按时间分区（PARTITION BY RANGE），历史分区 DETACH 后转存到冷存储。ES 索引生命周期管理（ILM）自动将索引从 Hot → Warm → Cold → Delete。HBase/Iceberg 的时间分区 + 快照过期策略。关键注意点：删除操作要考虑 GDPR「被遗忘权」—必须物理删除且同步到所有副本和备份。",
+    "hints": [
+      "WORM（Write Once Read Many）存储特性在合规场景中的价值",
+      "ILM（Index Lifecycle Management）的 Hot → Warm → Cold → Delete 阶段如何配置"
+    ],
+    "tags": [
+      "存储",
+      "数据治理",
+      "生命周期",
+      "合规"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "分布式系统 Schema 演进策略",
+    "content": "某微服务使用 Kafka 作为事件总线，不同服务通过 Avro/Protobuf Schema 约束事件格式。现在需要在事件中新增一个字段，同时保证旧消费者不兼容新格式。以下哪种 Schema 演进策略最安全？",
+    "options": [
+      "A) 直接在新版本的事件 Producer 中添加字段，旧消费者启动时自动丢弃不认识的新字段",
+      "B) 使用 Schema Registry 控制演进规则，新增字段设为 optional 并设默认值，FORWARD 兼容模式下先升级 Consumer 再升级 Producer",
+      "C) 新开一个 Topic (事件_v2) 让新旧事件并行存在，等到所有消费者迁移后再关闭旧 Topic",
+      "D) 通过配置中心下发开关，使 Producer 决定使用新/旧 Schema，各消费者根据自身版本选择消费哪个 Schema"
+    ],
+    "answer": "答案：B) 使用 Schema Registry 控制演进规则，新增字段设为 optional 并设默认值，FORWARD 兼容模式下先升级 Consumer 再升级 Producer\n\n解析：Schema Registry（如 Confluent Schema Registry 或自建）管理 Avro/Protobuf/JSON Schema 的版本和兼容性检查。FORWARD 兼容性（前向兼容）——新 Schema 可以读取旧数据：新增字段必须设为 optional 且有默认值，删除字段则不允许。演进顺序：先升级 Consumer（能理解新格式）→ 再升级 Producer（开始发送新格式）。\n\nA 选项的风险：没有 Schema Registry 约束，如果旧消费者库不支持自动忽略未知字段（如 Java Protobuf 生成代码未设置 `allowUnknownFields`），反序列化会直接报错。没有「默认值」的新增字段可能导致旧消费者因找不到该字段而抛异常。C 选项的问题：并行运行两套 Topic 的运维成本高，数据一致性难保证（同一业务事件需要同时写入两个 Topic），迁移周期长。D 选项的问题：配置开关增加了运行时复杂度，操作失误可能导致 Producer/Consumer Schema 不匹配。",
+    "hints": [],
+    "tags": [
+      "Schema 演进",
+      "Avro",
+      "Protobuf",
+      "兼容性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计多级存储架构",
+    "content": "面对 PB 级数据增长，如何设计一套成本可控的多级存储架构？访问频率、性能和存储成本三者的 trade-off 如何量化？数据在不同层级间的自动迁移规则如何设计？",
+    "answer": "答案：多级存储架构的核心是「按数据温度自动迁移」，每个层级有明确的 SLA 和成本模型。典型分层：L1 内存/SSD（$/GB/月 高，延迟 <1ms）、L2 本地 HDD 或网络 SSD（$/GB/月 中，延迟 <10ms）、L3 对象存储（$/GB/月 低，延迟 <100ms）、L4 归档存储（$/GB/月 很低，延迟数分钟）。\n\n解析：1）成本量化模型——延迟每增加一个数量级，存储成本大约降低一个数量级。以 AWS 为例：EBS gp3 SSD 约 $0.08/GB/月，S3 Standard 约 $0.023/GB/月，S3 Glacier Deep Archive 约 $0.001/GB/月。迁移决策需要量化：如果该数据在过去 N 天内被访问次数 < M 次 → 降级到下一层。反之（被频繁访问）→ 提升到上一层。\n\n2）自动迁移机制——写入时进入 L1，后台巡检服务扫描数据的最后访问时间：7 天未访问 → 标记为温数据（异步迁移到 L2）；30 天未访问 → 冷数据（迁移到 L3）；90 天未访问 → 归档（迁移到 L4）。迁移过程要求：零停机、数据不丢失、迁移期间访问可降级到副本。\n\n扩展延伸：3）查询路由——数据访问层需要感知数据位置：先去 L1 查（memcached/Redis），未命中查 L2（本地 DB/ES），未命中查 L3（对象存储）。如果 L3 也没有，从归档恢复（需要队列等待）。每一层缓存下一层的「热数据」。4）写优化——新写入的数据在 L1 累积一段时间后，后台批量压缩后写入 L2/L3。对用户呈现「最终一致性」——写入后立即读可能延迟（数据正在从 L1 同步到 L2 的过程中）。5）全局二级索引——数据分散在各层级后，需要全局索引（Elasticsearch / Cassandra wide row）来定位数据在哪一层。索引本身要带上数据位置的标识。",
+    "hints": [
+      "数据温度的判定标准除了访问时间外还可以考虑哪些维度",
+      "全局二级索引在多级存储中如何保证数据位置的一致性"
+    ],
+    "tags": [
+      "存储架构",
+      "冷热分离",
+      "成本优化",
+      "数据分层"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "服务网格的流量路由组件",
+    "content": "服务网格中的流量管理由两个核心平面组成：___（负责实际流量转发、负载均衡和健康检查，通常以 Sidecar Proxy 形式部署）和___（负责管理 Sidecar 的配置下发、证书管理和访问策略定义，如 Istio 的 Pilot/istiod）。流量路由的规则配置通常包括 ___（按权重分配流量到不同版本）和 ___（按 HTTP Header 将特定请求路由到特定版本，用于金丝雀发布）。",
+    "answer": "{\"correct\":[[\"数据平面\",\"Data Plane\"],[\"控制平面\",\"Control Plane\"],[\"权重路由\",\"Weighted Routing\"],[\"条件路由\",\"Header-based Routing\",\"Content-based Routing\"]],\"distractors\":[\"业务平面\",\"配置平面\",\"轮询\",\"IP Hash\"]}",
+    "hints": [
+      "Envoy 和 Istiod 分别属于哪个平面",
+      "条件路由和权重路由如何组合实现金丝雀发布"
+    ],
+    "tags": [
+      "服务网格",
+      "Istio",
+      "流量管理",
+      "Envoy"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "流处理系统中的延时与乱序处理",
+    "content": "在使用 Apache Flink 进行实时流处理时，如果使用 Processing Time（处理时间）而非 Event Time（事件时间），那么水位线（Watermark）机制就不再需要。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：Processing Time 模式下 Flink 使用当前机器的系统时钟来驱动时间窗口，确实不需要 Watermark 来处理乱序。但正因为不关心事件的实际发生时间，当数据到达顺序紊乱时（例如网络延迟导致先发的事件后到），窗口计算结果会不准确——一个本应属于前一个窗口的事件因为到达时间晚而被计入了后一个窗口。Watermark 只有在 Event Time 语义下才有意义，它是用来表示「在这个时间戳之前的事件已经全部到达」的机制。\n\n结论：Processing Time 模式下没有乱序处理机制，所以不需要 Watermark。但 Processing Time 本身无法正确处理乱序数据——它不是「不需要解决乱序」，而是「从根本上忽略了事件发生时间，所以也无法保证时间窗口的准确性」。因此，对于需要精确时间窗口分析的场景（如风控、交易统计），必须使用 Event Time + Watermark。对于不关心事件实际发生时间的场景（如简单计数），Processing Time 延迟更低。",
+    "hints": [],
+    "tags": [
+      "Flink",
+      "流处理",
+      "Watermark",
+      "Event Time"
+    ]
   }
 ]

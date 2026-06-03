@@ -1623,5 +1623,96 @@
       "架构",
       "数据隔离"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "重试策略：指数退避与抖动",
+    "content": "微服务间调用失败时，重试策略应该如何设计？为什么指数退避（Exponential Backoff）需要配合随机抖动（Jitter）使用？不恰当的抖动会导致什么问题？",
+    "answer": "答案：指数退避的核心公式：delay_n = min(base_delay * factor^n, max_delay)。每次重试的等待时间指数增长，避免频繁重试压垮下游。抖动（Jitter）在退避时间上增加随机偏移：delay_with_jitter = delay + random(0, jitter_range)。\n\n解析：为什么需要抖动——没有抖动时，多个同时失败的客户端会以完全相同的节奏重试（如同一个下游因网络抖动超时后，所有上游同时按 1s/2s/4s/8s 重试），形成「重试风暴」（Thundering Herd）。抖动将这些重试请求分散到时间轴上，降低峰值负载。\n\n主流抖动策略：1）Full Jitter（完全随机）：sleep = random(0, min(cap, base * 2^n))。最常用，AWS SDK 采用此策略。2）Equal Jitter（等分随机）：sleep = min(cap, base * 2^n) / 2 + random(0, min(cap, base * 2^n) / 2)。比 Full Jitter 稍保守。3）Decorrelated Jitter（去相关抖动）：sleep = min(cap, random(base, sleep_prev * 3))。适合长时间重试场景，Google 的 gRPC 重试策略使用。\n\n扩展延伸：重试场景下的关键考虑：1）幂等性——只有幂等操作才允许重试。非幂等操作（如创建订单）不能自动重试，需要业务层去重。2）最大重试次数——通常限制在 3-5 次（超过说明下游故障持续时间可能较长，需要熔断而非重试）。3）重试与熔断配合——下游错误率超过熔断阈值时，直接快速失败，不再浪费重试时间。4）重试预算——滑动窗口内限制重试次数比例（如每分钟最多重试 1000 次），防止重试流量放大问题。5）Backpressure——当客户端队列已经积压时，不应再进行重试（新请求先排队处理，重试只会增加压力）。",
+    "hints": [
+      "为什么 Full Jitter 比纯指数退避更优——「重试风暴」如何形成",
+      "重试和熔断的配合关系——什么情况下应该重试、什么情况下应该熔断"
+    ],
+    "tags": [
+      "微服务",
+      "重试",
+      "指数退避",
+      "抖动",
+      "容错"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "事件驱动微服务的消息幂等性",
+    "content": "事件驱动架构中消费者可能收到重复消息（at-least-once 语义），如何保证消息处理的幂等性？去重表、幂等键和事务性 outbox 分别解决了什么问题？",
+    "answer": "答案：消息幂等性的核心是「同一消息多次处理结果与一次处理相同」。实现方式分层：业务层幂等（利用业务唯一键去重）、基础设施层幂等（消息队列的去重机制）、应用层幂等（幂等表 + 唯一约束）。\n\n解析：1）幂等键（Idempotent Key）——每条消息携带全局唯一 ID（Message ID / Event ID）。消费者在处理前记录处理状态（处理中/已完成/失败）到去重表（Redis 或 DB 唯一索引）。`INSERT INTO processed_events(event_id, status) VALUES('xxx', 'processing') ON CONFLICT(event_id) DO NOTHING`。如果冲突说明已处理过，跳过。\n\n2）去重表方案——DB 唯一键约束天然去重。缺点：需要额外数据库操作，增加延迟。优化：先去 Redis 查（事件 ID 是否在已处理集合中），不在再到 DB 插。Redis SET NX + TTL（保留 7 天）解决大量历史数据膨胀问题。\n\n3）Transactional Outbox 模式——业务操作和发消息在同一个本地事务中：INSERT INTO order + INSERT INTO outbox(event_id, payload)。独立的 Outbox Publisher 轮询 outbox 表，将未发送的消息发布到消息队列。保证业务操作和消息发送的原子性（不会出现业务成功但消息没发的情况），也天然提供了幂等基础（outbox 表的主键约束避免了重复消息）。\n\n扩展延伸：4）去重窗口——消息队列通常不会在短时间内重复投递同一消息，所以去重不需要永久保留。保留 5-10 分钟的已处理消息 ID 即可覆盖大部分重复场景（Kafka 的 producer retry 窗口通常数秒）。但业务幂等往往是永久性的（如订单号不能重复），所以业务幂等键（如订单号）使用唯一索引，消息去重 ID 使用 TTL 缓存。5）消费者端重试——消息处理失败时，不要直接回复 ACK（会导致消息丢失），而应该等待重试或进入死信队列。Kafka 的 Consumer 通过 seek 到失败 offset 重试，RocketMQ 通过重试队列。",
+    "hints": [
+      "Transactional Outbox 如何保证业务操作和消息发送的原子性",
+      "消息去重 ID 的过期时间和业务幂等键的永久性为什么需要区分"
+    ],
+    "tags": [
+      "微服务",
+      "事件驱动",
+      "幂等性",
+      "Outbox"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式系统的脑裂问题与 Fencing 机制",
+    "content": "什么是脑裂（Split-Brain）？在分布式系统中脑裂会导致什么严重后果？Leader 选举和 Fencing（隔离）机制如何防止脑裂？STONITH 和 Fencing Token 分别是什么？",
+    "answer": "答案：脑裂指分布式系统中因网络分区导致集群分裂为多个互相不知道对方存在的子集群，每个子集群都可能选举出自己的 Leader 并独立对外提供服务。脑裂的严重后果：数据不一致（两个 Leader 同时写同一份数据）、重复处理（如任务调度系统中同一任务被两个 Worker 执行两次）。\n\n解析：Fencing（隔离）机制的核心是在确定前一个 Leader 已经「死亡」之前，不允许新的 Leader 接管。两种隔离方式：\n\n1）资源层面的 Fencing（STONITH——Shoot The Other Node In The Head）：通过物理手段强制停止旧 Leader。例如：通过带外管理（IPMI/iLO）关闭旧 Leader 的电源、通过 SAN 存储的 SCSI Reserve 阻止旧 Leader 写磁盘、通过虚拟化平台强制关闭虚拟机。STONITH 最彻底但依赖硬件/基础设施层支持。\n\n2）分布式层面的 Fencing（Fencing Token / Generation Clock）：每次 Leader 选举产生一个递增的 epoch/generation number。Leader 在写数据时必须携带当前 epoch，存储层（如 ZooKeeper / etcd / 数据库）只接受 epoch ≥ 当前记录的写入。旧的 Leader 由于持有更小的 epoch，其写入被存储层拒绝（即使它还活着也无法破坏数据）。Kafka Controller epoch、HDFS NameNode generation stamp、ZooKeeper 的 ZXID 都是 Fencing Token 的实现。\n\n扩展延伸：工程实践：1）etcd / ZooKeeper 的 Lease 机制——Leader 持有 Lease，Lease 过期后自动放弃 Leader 身份。如果旧 Leader 网络分区后仍在工作（无法更新 Lease），Lease 到期后自动失能。2）Raft 协议的 safety 保证——Raft 通过 Term（任期号）实现了天生的 Fencing：只有当前 Term 的 Leader 才能提交日志条目，旧 Term 的 Leader 即使发出 AppendEntries 也会被 Follower 拒绝（因为 Term 小于当前 Term）。3）现实中的脑裂案例——Elasticsearch 集群脑裂导致索引损坏（通过 discovery.zen.minimum_master_nodes = N/2 + 1 预防）。4）Fencing 的「最后防线」价值：即使上述机制都失败了（如 ZooKeeper 也脑裂了），物理层的 STONITH 是兜底方案。",
+    "hints": [
+      "Raft 的 Term（任期号）为什么天然提供了 Fencing 能力",
+      "STONITH 为什么被称为最彻底的 Fencing 方式，但为什么生产环境不常用"
+    ],
+    "tags": [
+      "分布式",
+      "脑裂",
+      "Fencing",
+      "Leader 选举"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务分布式缓存一致性策略",
+    "content": "微服务架构中多个服务共享同一缓存层（Redis）时，如何保证缓存与数据库之间的一致性？在多服务同时更新同一数据的情况下，怎么防止读到脏缓存？淘汰缓存和更新缓存的策略各有什么适用场景？",
+    "answer": "答案：分布式缓存一致性没有银弹，选择何种策略取决于对一致性强度和可用性的要求。核心策略分为：Cache Aside（旁路缓存，读时回填写时淘汰）、Read/Write Through（缓存代理读写，缓存负责同步 DB）、Write Behind（异步写回，允许短暂不一致但性能最好）。微服务环境下推荐「延迟双删 + 最终一致」。\n\n解析：1）Cache Aside——读流程：读缓存 → miss → 读 DB → 回填缓存 → 返回。写流程：写 DB → 淘汰缓存（不是更新缓存）。为什么淘汰而不是更新：并发写场景下，两个写请求先后到达，先写缓存后写 DB 会导致缓存与 DB 不一致。淘汰更安全，下次读时自然回填最新值。\n\n2）延迟双删——先淘汰缓存 → 写 DB → sleep(比如 500ms) → 再淘汰缓存。解决「读请求在写请求淘汰缓存后、写 DB 前回填了旧数据」的并发问题。第二次淘汰确保读请求在写 DB 前回填的脏缓存被清除。\n\n3）缓存一致性理论极限——Cache 和 DB 无法在任何情况下达到强一致性（CAP 理论约束）。实际以最终一致性为目标：让不一致的窗口期尽可能短。通过可靠的 MQ 异步淘汰（写 DB → 发 MQ 消息 → 消费者淘汰缓存）保证最终一致。使用 CDC（Change Data Capture, 如 Canal 监听 MySQL binlog）自动同步数据变更到缓存。\n\n扩展延伸：4）多服务并发更新——多服务同时写同一个数据时，需要分布式锁协调（Redis Redlock 或 ZooKeeper 锁）。但锁有性能开销，降级方案：使用版本号/时间戳乐观锁——更新时检查数据版本，版本不符则重试。5）热点 key 问题——流量高峰期某一个缓存 key 被大量请求同时命中（缓存失效后所有请求穿透到 DB）。解决方案：互斥锁（只有一个请求查 DB 回填缓存，其他等待或返回旧值）、永不过期 + 后台异步更新（缓存永不删除，定时任务周期更新缓存值）。6）缓存穿透 vs 击穿 vs 雪崩——穿透：查不存在的数据（布隆过滤器解决）。击穿：热点 key 过期（互斥锁或永不过期解决）。雪崩：大量 key 同时过期（均匀设置过期时间，加随机偏移）。",
+    "hints": [
+      "延迟双删为什么能解决并发读写导致的缓存不一致——两次淘汰之间的间隔时间如何确定",
+      "CDC（Change Data Capture）同步缓存相比应用层主动淘汰缓存的优势是什么"
+    ],
+    "tags": [
+      "缓存",
+      "一致性",
+      "微服务",
+      "Redis"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "优雅降级与渐进式增强模式",
+    "content": "微服务系统中，当依赖的下游服务出现故障或性能下降时，如何设计降级策略来保护系统整体可用性？「渐进式增强」的含义是什么？降级粒度和策略应如何分层定义？",
+    "answer": "答案：降级的核心目标是「牺牲非核心功能保核心功能」。设计原则：明确故障时的行为（Fallback）、明确哪些功能可降级、降级后的表现对用户友好。渐进式增强是指在核心链路可用的基础上，逐步恢复非核心功能，而不是在恢复时一刀切的全量恢复。\n\n解析：1）降级分类——功能性降级：关闭非核心功能（如个性化推荐、评论展示、历史记录）。数据性降级：返回缓存/静态/默认数据（如商品详情用缓存版本而非实时数据）。体验性降级：简化交互流程（如取消动画、减少图片加载）。\n\n2）降级策略分级——L0（完全可用）：所有功能正常。L1（轻度降级）：非核心功能降级（关闭推荐、弹窗、营销信息），核心功能正常。L2（中度降级）：部分核心功能降级（搜索用缓存结果、商品详情用静态页），交易链路保留。L3（重度降级）：只保留核心交易流程（下单和支付），其余全部关闭。L4（紧急降级）：只展示公告页面，暂停所有业务功能。\n\n3）降级实施——配置中心集中管理降级开关（Apollo/Nacos），推送降级配置到所有服务实例。客户端 SDK 监听配置变更，根据降级级别动态调整行为。每个降级开关有默认值（未获取到配置时使用默认值，通常是全功能开启）。\n\n扩展延伸：4）渐进式增强（Progressive Enhancement）——恢复时采取「慢启动」策略，而不是一次性恢复所有功能。原因：故障期间积压了大量请求，全量恢复会导致瞬间流量打满资源，引发二次故障。做法：先恢复 5% 流量 → 观察系统指标 → 逐步扩大到 25% → 50% → 100%。5）旁路 Fallback——降级时返回的兜底数据应该由业务定义，而不是简单地返回错误码。例如：「当前评论系统繁忙，暂时无法加载评论」比 500 错误对用户友好得多。6）降级的自动化——基于指标触发自动降级（熔断器检测错误率超过阈值 → 自动触发降级），避免人工操作延迟。混沌工程定期演练，验证降级策略的有效性。",
+    "hints": [
+      "降级的粒度控制——功能级、接口级、服务级、实例级应该分别怎么设计",
+      "渐进式增强中如何确定恢复步长——过快和过慢分别有什么风险"
+    ],
+    "tags": [
+      "微服务",
+      "降级",
+      "高可用",
+      "熔断"
+    ]
   }
 ]

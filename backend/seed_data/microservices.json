@@ -1643,5 +1643,95 @@
       "动态配置",
       "长轮询"
     ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Seata AT 模式自动补偿原理",
+    "content": "Seata AT（Auto Transaction）模式的分布式事务是如何实现的？它如何自动生成回滚 SQL？全局锁（Global Lock）和分支事务的作用是什么？",
+    "answer": "答案：Seata AT 模式是 Seata 的核心方案，通过拦截和分析 SQL 语句，自动生成回滚 SQL，实现业务代码零侵入的分布式事务。AT 模式在一阶段提交本地事务，二阶段根据结果执行提交或回滚。\n\n解析：AT 模式流程：1）一阶段（Branch Register）：TM（事务管理器）向 TC（事务协调器）开启全局事务，RM（资源管理器，即数据库代理）执行业务 SQL 前，先解析 SQL 生成 Before Image（执行前的数据快照），执行业务 SQL 后再生成 After Image，将 Undo Log（Before Image + After Image + Row ID）写入 undo_log 表（与业务数据在同一本地事务中）。本地事务提交后释放本地锁。2）二阶段提交：TC 通知所有 RM 全局事务提交。RM 收到提交请求后，异步删除对应的一阶段 Undo Log（不需要其他操作）。3）二阶段回滚：TC 通知 RM 全局事务回滚。RM 通过 Undo Log 中的 Before Image 和 After Image 生成逆向 SQL 并执行，将数据恢复到事务开始前的状态。\n\n扩展延伸：全局锁（Global Lock）——在 AT 模式的一阶段，Seata 还会在 TC 中注册一个全局锁（锁定该行记录的 XID）。如果其他事务也尝试修改同一行，会被全局锁阻塞或冲突检测。在全局事务提交前，这行记录上的全局锁不释放，防止其他全局事务（不是本地事务）的脏写。全局锁范围：作用于同一行记录在 TC 全局维度。脏写场景：全局事务 A 修改了 id=1 的记录（未提交全局事务），全局事务 B 也修改 id=1 的记录——全局锁阻止了 B 的修改。AT 模式的限制：1）要求数据库支持本地 ACID 事务（InnoDB）。2）业务表必须要有主键。3）不支持 DDL 语句的回滚（只能回滚 DML）。4）大并发下全局锁竞争可能成为瓶颈。",
+    "hints": [
+      "Seata AT 模式 Before Image 和 After Image 如何生成回滚 SQL",
+      "全局锁（Global Lock）与本地行锁的区别"
+    ],
+    "tags": [
+      "Seata",
+      "AT模式",
+      "分布式事务",
+      "全局锁"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务架构中的 Saga 编排实现",
+    "content": "在微服务架构中实现 Saga 编排模式（Orchestration-based Saga）时，Orchestrator（编排器）如何设计？Saga 的执行状态如何持久化和恢复？补偿操作的幂等性和空补偿问题怎么处理？",
+    "answer": "答案：编排模式 Saga 的核心是一个 Orchestrator 服务，它通过状态机（State Machine）驱动 Saga 的执行流程。Orchestrator 向每个参与者发送执行命令（或消息），如果某个步骤失败，Orchestrator 按照步骤的逆序发送补偿命令。Orchestrator 的状态持久化在数据库中（事件溯源或状态快照），确保故障后能恢复执行。\n\n解析：Orchestrator 的状态机设计：1）每个 Saga 实例有唯一 ID，状态存储在 Saga Log 表（ID、当前步骤、状态、入参、结果等）。2）Orchestrator 发送命令到参与者（通过消息队列或 RPC），等待响应（同步或异步回调）。3）步骤成功 → 状态推进到下一步；步骤失败 → 触发补偿流程（逆序执行补偿操作）。4）补偿操作的幂等性——每条补偿命令携带全局唯一的 Saga 实例 ID 和步骤 ID，参与者记录已处理的补偿操作（幂等表）。重复的补偿命令（网络重试导致）直接忽略。\n\n扩展延伸：空补偿问题（Null Compensation）——如果执行命令与补偿命令在异步通信中出现到达顺序错乱（补偿命令先于执行命令到达），或者执行命令从未到达但补偿却已触发。处理方案：参与者维护每个 Saga 步骤的执行状态（PENDING / EXECUTED / COMPENSATED）。如果收到补偿命令但发现该步骤尚未执行（状态为 PENDING），参与者将状态标记为 COMPENSATED（空补偿），不做任何实际操作。幂等和空补偿是 Saga 模式中最容易被忽视的两个陷阱。TCC 模式的 Try/Confirm/Cancel 三阶段比 Saga 更早预留资源，但侵入性更强。实践中建议：如果使用事件驱动的 Saga，Eventuate Tram（Chris Richardson 推荐）提供了成熟的框架；如果使用 Seata，Saga 模式是内置支持的。",
+    "hints": [
+      "空补偿问题和幂等性的区别与解决方案",
+      "Orchestrator 如何保证在自身宕机后 Saga 能恢复执行"
+    ],
+    "tags": [
+      "微服务",
+      "Saga",
+      "编排模式",
+      "补偿"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "流量染色与全链路灰度发布",
+    "content": "什么是全链路灰度发布？如何通过流量染色（Traffic Tagging）实现请求级别的灰度路由？Istio 和 Spring Cloud 各自如何实现全链路灰度？",
+    "answer": "答案：全链路灰度发布是指将一个请求在整个微服务调用链（A→B→C）上都路由到灰度版本，而不是只在入口处按灰度比例分配。实现本质是：在请求入口打上「灰度标签」（Tag），该标签在服务间调用时透传，各服务根据标签路由到灰度实例/版本。\n\n解析：流量染色的关键：1）入口染色——网关层根据规则（Header/Cookie/用户 ID hash/随机比例）为请求添加灰度标签（如 x-version: gray）。2）标签透传——在服务间调用时（Feign/gRPC/消息队列），灰度标签必须自动传递。Feign 可以通过 RequestInterceptor 实现，MQ 消息在 Header 中添加，gRPC 通过 Metadata。3）服务路由——每个服务根据灰度标签选择调用灰度版本还是 Baseline 版本。4）数据隔离——灰度版本可能需要访问灰度数据库或灰度缓存，需要中间件支持（如 ShardingSphere 的标签路由）。\n\n扩展延伸：Istio 的全链路灰度方案：1）入口灰度——VirtualService 按 Header/权重进行流量分配（weight: 5 到 gray subset）。2）版本定义——DestinationRule 定义 subset（version: baseline 和 version: gray）。3）标签透传——Envoy 自动传递 x-request-id 等 Header，灰度标签通过 Istio 的 request.headers 传播。4）K8s Service + Pod Label 做实例分组。Spring Cloud 的实现：1）Nacos 注册中心的 metadata 字段标记版本。2）Spring Cloud LoadBalancer 的自定义 Rule 根据请求 Header 选择实例组。3）Feign 拦截器自动传递灰度 Header。注意：消息队列的灰度——灰度请求产生的 MQ 消息要路由到灰度消费者，需要 MQ 的 Tag 机制（RocketMQ 的 Tag）或 Queue 隔离。全链路灰度的难度在于：每个环节都需要对灰度标签敏感，哪一环掉了灰度就变成「部分灰度」。",
+    "hints": [
+      "为什么说全链路灰度的难点在于标签的透传",
+      "Istio VirtualService 的 weight 路由如何与灰度标签配合"
+    ],
+    "tags": [
+      "微服务",
+      "灰度",
+      "流量染色",
+      "Istio"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式 ID 生成方案选型与实战",
+    "content": "微服务分布式场景下有哪些主流的全局唯一 ID 生成方案？雪花算法（Snowflake）的时钟回拨问题如何解决？Leaf（美团）和 Tinyid（滴滴）的设计优化点在哪里？",
+    "answer": "答案：分布式 ID 的主流方案：UUID（128 位，不递增，不适合做数据库主键）、雪花算法（Snowflake，64 位长整型，趋势递增，依赖机器时间）、号段模式（Leaf Segment，预取 ID 段，依赖 DB）、Redis INCR（简单但 ID 趋势递增不够）、UUID 变体（如 ULID，可排序）。\n\n解析：雪花算法结构：1 bit 符号位（固定 0）+ 41 bit 时间戳（毫秒，约 69 年）+ 10 bit 机器 ID（最多 1024 节点）+ 12 bit 序列号（每毫秒最多 4096 个 ID）。问题：时钟回拨（机器时间被回调）会导致 ID 重复或乱序。解决策略：1）等待（short wait）——回拨时间不长时（< 几百毫秒），阻塞等待时间追上。2）使用备用序号——记录上一次生成 ID 的时间戳，如果发现时间回拨，在回拨时间段内使用备用序列号（增加序列号位数）。3）ZooKeeper 分配工作 ID——如果回拨超过阈值，主动报错重分配机器 ID。\n\n扩展延伸：Leaf（美团开源）——两个核心方案：1）Leaf Segment（号段模式）：从 DB 中预先取一批 ID（步长 1000），缓存在内存中分配。每次分配完一批后再从 DB 取。解决了雪花算法的时钟依赖问题，ID 是递增的（适合数据库索引），但需要维护 DB。2）Leaf Snowflake（雪花算法）：Leaf 对雪花算法做了改进——通过 ZooKeeper 动态分配机器 ID（持久顺序节点），运行时定时上报时间戳到 ZK。如果检测到时钟回拨，Leaf 会将机器 ID 从 ZK 中删除（触发重分配），并等待时间追平。Tinyid（滴滴开源）——在 Leaf Segment 基础上改进：1）使用 HTTP 协议获取 ID 段（Leaf 是 Thrift）。2）多 DB 支持（支持多数据源配置）。3）ID 段缓存机制避免热点。生产建议：中小规模使用雪花算法（自己实现或 Leaf Snowflake）；大规模（QPS 万级以上）使用 Leaf Segment（号段预取，性能最好）。Leaf 和 Tinyid 都支持 HTTP 获取，集成简单。",
+    "hints": [
+      "雪花算法时钟回拨的三种应对策略",
+      "号段模式（Leaf Segment）相比雪花算法的优势（无时间依赖、性能更高）"
+    ],
+    "tags": [
+      "分布式ID",
+      "雪花算法",
+      "Leaf",
+      "Tinyid"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Spring Cloud 2023 新特性与迁移要点",
+    "content": "Spring Cloud 2023（及最新版本）相比 2020/2021 版本有哪些重要变更？迁移时需要注意哪些 Breaking Changes？Spring Cloud 生态目前推荐哪些组件组合？",
+    "answer": "答案：Spring Cloud 近几个版本的核心变化：1）Spring Cloud 2022.0.x（代号 Kilburn）和 2023.0.x（代号 Leyton）——适配 Spring Boot 3.x，全面基于 Jakarta EE（从 javax.* 迁移到 jakarta.*）。2）移除对 Netflix OSS 组件（Eureka 除外）的默认支持（Zuul/Ribbon/Hystrix 已在 2020 版进入维护模式）。3）Spring Cloud Circuit Breaker 内置 Resilience4J（移除 Hystrix 支持）。4）Spring Cloud LoadBalancer 完全取代 Ribbon。5）Spring Cloud Gateway 是推荐的网关方案（替代 Zuul）。6）Spring Cloud Sleuth 迁移到 Micrometer Tracing（2022+）。\n\n解析：迁移要点（Spring Boot 2.7 → 3.x / Spring Cloud 2021 → 2023）：1）Java 17 最低要求（Spring Boot 3.x 要求 Java 17+）。2）javax 包迁移——所有 javax.persistence / javax.validation / javax.servlet 替换为 jakarta.persistence / jakarta.validation / jakarta.servlet。3）Spring Cloud Commons 的 RestTemplate 默认不再自动注入 LoadBalanced（需要手动配置）。4）OpenFeign 的自动配置变更——spring-cloud-starter-openfeign 需要额外引入 feign-micrometer 才能支持可观测性。5）Spring Cloud Gateway 的 CORS 配置从 CorsGlobalConfiguration 变更为更简单的 properties 配置。6）Spring Cloud Gateway 对 Spring WebFlux 的依赖版本需要同步升级（要求 Reactor 2023.0.x 版本）。\n\n扩展延伸：当前推荐组件组合（2024+）：注册中心 → Nacos（AP/CP 灵活）或 Consul；配置中心 → Nacos Config 或 Apollo；网关 → Spring Cloud Gateway；服务调用 → OpenFeign；负载均衡 → Spring Cloud LoadBalancer；熔断降级 → Sentinel 或 Resilience4J；链路追踪 → Micrometer Tracing + Zipkin（或 SkyWalking）；事务 → Seata AT 模式。微服务全栈选项对比：Spring Cloud Alibaba（Nacos + Sentinel + Seata 功能最全）vs Spring Cloud + Consul（最简单的 Spring 生态原生方案）vs Service Mesh（Istio 完全解耦）。注意：升级 Spring Cloud 版本时必须同步升级 Spring Boot 配套版本（不能 Cross Version），参考 spring.io/projects/spring-cloud#adding-spring-cloud-to-an-existing-spring-boot-application 的版本矩阵。",
+    "hints": [
+      "Spring Boot 3.x 的 Jakarta EE 迁移是最核心的 Breaking Change",
+      "Spring Cloud 2023 推荐组件与已过时组件的对照"
+    ],
+    "tags": [
+      "Spring Cloud",
+      "2023",
+      "迁移",
+      "Jakarta"
+    ]
   }
 ]

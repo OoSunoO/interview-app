@@ -1657,5 +1657,102 @@
       "LLM 路由",
       "成本优化"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "AI Compiler Stack（XLA/MLIR/Triton）",
+    "content": "AI 编译器栈（XLA、MLIR、Triton）在深度学习推理优化中分别扮演什么角色？它们如何协同工作来提升 LLM 推理效率？",
+    "answer": "答案：XLA 将计算图编译为高效底层 kernel，MLIR 提供多级中间表示的模块化编译框架，Triton 让开发者用 Python 编写高性能 GPU kernel。三者形成从高层图优化到低层 kernel 生成的编译流水线。\n\n解析：XLA（Accelerated Linear Algebra，Google，2017）——将 PyTorch/JAX 计算图编译为目标硬件优化代码。核心优化：算子融合（Fusion）、缓冲区分析（Buffer Analysis）、代数简化。XLA 的输入是 HLO（High-Level Operations），输出是 LLVM IR 或 PTX。\n\nMLIR（Multi-Level Intermediate Representation，Google，2019）——解决 XLA 的两级 IR（HLO → LLVM）跨度过大的问题。引入多层次 IR 表示（从高层的 Linalg、TOSA 到低层的 Affine、SCF），逐层 Lowering，每层都可以做领域特定的优化。已被 PyTorch 2.0 的 torch.compile 采用（通过 Torch-MLIR 或 Dynamo 直接生成）。\n\nTriton（OpenAI，2021）——一种类 Python 的 DSL，用于编写高效的 GPU kernel，自动处理内存合并、共享内存分配、Warp 调度等 GPU 细节。相比 CUDA，Triton 将生产力提升了 5-10 倍。核心概念：程序化（Programmatic）kernel 编写——开发者写逐元素操作，编译器自动并行化和 tile 化。\n\n扩展延伸：三者的协作关系——1）前端（torch.compile / JAX）：将模型计算图捕获为高层 IR。2）MLIR 层：从高层 IR（TorchIR / HLO）逐层 Lowering，做算子融合、内存规划、形状推断等优化。3）Kernel 生成层：XLA（HLO → LLVM）或 Triton（生成 TMA 代码）。对于 LLM 推理场景，典型优化路径：Flash Attention 的 Triton 实现 → 通过 torch.compile 捕获 → MLIR 层做融合 → Triton GPU kernel。当前主流框架的部署方案：PyTorch 作为前端，通过 torch.export 导出，经 MLIR 优化后生成 TensorRT Engine 或 XLA 编译产物。",
+    "hints": [
+      "Triton 相比 CUDA 的主要优势是什么",
+      "MLIR 的多级 IR 如何解决传统编译器的一步编译问题"
+    ],
+    "tags": [
+      "推理优化",
+      "编译器",
+      "XLA",
+      "MLIR",
+      "Triton"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CPU-GPU 异构推理与模型卸载",
+    "content": "在显存受限场景下，CPU-GPU 异构推理（Model Offloading）的工作原理是什么？它面临的核心挑战和优化策略有哪些？",
+    "answer": "答案：CPU-GPU 异构推理将模型层或参数按需在 GPU 显存和 CPU 内存之间动态迁移（Offloading），在有限显存下运行超大模型。核心挑战是 PCIe 带宽瓶颈（CPU→GPU 传输延迟），优化策略包括预取、量化传输和计算-传输重叠。\n\n解析：主流实现方案——1）llama.cpp / Ollama：将模型参数存储在 CPU 内存中，GPU 只保留当前计算的层。每层计算前从 CPU 加载到 GPU，计算后丢弃。通过 mmap 内存映射文件实现零拷贝加载。2）DeepSpeed Inference / Accelerate（HuggingFace）：提供更精细的 offload 策略——参数 offload（参数存在 CPU）、优化器状态 offload（ZeRO-Offload）、激活值 offload。3）FlexGen（Stanford，2023）：针对批处理场景优化 Offloading，通过 IO-Aware 调度策略最大化吞吐。\n\n核心挑战——1）PCIe 带宽瓶颈：PCIe 4.0 x16 约为 32 GB/s，而 GPU 显存带宽（A100 约 2 TB/s）差了两个数量级。每次层加载都能成为瓶颈。2）内存层次：CPU→GPU 延迟在微秒级，CPU 内存（DRAM）访问延迟约 100ns，但跨 PCIe 传输的延迟远高于此。3）异步执行与调度：需要精确的流水线调度以隐藏传输延迟。\n\n优化策略——1）量化传输（Quantized Offloading）：传输 INT4/INT8 量化参数而非 FP16，传输量减少 2-4 倍。2）计算-传输重叠（Compute-Transfer Overlap）：当前层在 GPU 计算时，预取下一层到 GPU。需要双缓冲（Double Buffering）支持。3）层分组与模型压缩：将层按依赖关系分组传输；利用稀疏性跳过无关参数。4）异构内存管理（Unified Memory）：CUDA Unified Memory 允许自动 page fault 驱动的按需传输，但性能不如手动管理。",
+    "hints": [
+      "计算-传输重叠的实现需要什么样的流水线",
+      "llama.cpp 在 CPU 和 GPU 间如何做 layer 调度"
+    ],
+    "tags": [
+      "推理优化",
+      "异构计算",
+      "Offloading",
+      "显存优化"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "自推测解码（Self-Speculative Decoding）与 Medusa",
+    "content": "自推测解码（Self-Speculative Decoding）和 Medusa 的工作原理是什么？它们与传统推测解码（Speculative Decoding）相比有什么优势？",
+    "answer": "答案：自推测解码和 Medusa 利用模型自身的结构或附加头并行生成候选 token，代替传统推测解码中独立的草稿模型（Draft Model），省去了训练和维护额外模型的成本。Medusa 在模型最后附加多个并行预测头，每个头预测不同偏移的后续 token。\n\n解析：传统推测解码——需要一个独立的小草稿模型（如 100M 参数的草稿模型为大模型提前生成候选 token），草稿模型和大模型之间的分布差异过大时接受率低，且需要额外训练和部署草稿模型。\n\n自推测解码——1）利用模型的浅层或深层参数：裁剪模型的前几层作为草稿模型（Block-Level Speculative Decoding），或使用模型内部的早期退出（Early Exit）机制。2）不需要训练额外的模型，减少维护成本。3）缺点是草稿质量可能不如专门训练的草稿模型。\n\nMedusa（2024，UIUC/NVIDIA）——1）在 LLM 顶部添加多个并行的预测头（Medusa Head），每个头负责预测第 k 个位置的 token（k=1 是原始 LM Head）。2）训练时：固定主干参数，只训练 Medusa Head，需要少量原始训练数据（约 1-5B tokens）。3）推理时：模型一次生成当前 token 和多个后续候选 token，组成候选树（Tree Attention），用树注意力并行验证所有候选路径。4）典型加速比：在 LLAMA-7B 上达到 2-2.5x 加速。5）Medusa-2 进一步联合训练主干和 Medusa Head，接近 3x 加速。6）Lookahead Decoding（2024）：另一种并行解码方案，利用 Jacobi 迭代法并行猜测多个位置。\n\n扩展延伸：实践建议——Medusa 适合 batch_size=1 的在线推理场景（单个请求延迟敏感）。高吞吐批处理场景下 Continuous Batching 和 Medusa 可以互补使用。Medusa 的候选树结构设计（如何选取各头的 Top-K）显著影响接受率和加速比。",
+    "hints": [
+      "Medusa Head 的 Tree Attention 如何并行验证多个候选路径",
+      "自推测解码和传统推测解码的草案质量如何比较"
+    ],
+    "tags": [
+      "推理加速",
+      "推测解码",
+      "Medusa",
+      "解码优化"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "弹性推理与动态 GPU 资源调度",
+    "content": "在 LLM 推理服务中，弹性推理（Elastic Inference）要解决什么核心问题？动态 GPU 资源调度的关键技术和挑战是什么？",
+    "answer": "答案：弹性推理解决推理服务的负载波动问题，在请求量低谷时释放 GPU 资源，高峰期自动扩缩以维持 SLO。关键技术包括请求排队与批处理调度、GPU 分时复用、推理实例热迁移和基于预测的自动伸缩。\n\n解析：弹性推理的核心问题——LLM 推理服务具有明显的流量波动（如工作日白天 vs 夜间、产品发布会等高流量事件），GPU 资源昂贵且不可压缩——闲置 GPU 是纯成本浪费，但响应延迟超过 SLO 会导致用户体验下降。\n\n关键技术——1）请求排队与动态批处理：将传入请求排队，等待积累到足够大小后执行批推理。调度器在延迟-吞吐之间做 trade-off，支持优先级调度。2）GPU 分时复用（Temporal Sharing）：多个模型推理任务共享一个 GPU，通过 MPS（Multi-Process Service）或 MIG（Multi-Instance GPU，A100/H100 支持）实现。3）基于预测的自动伸缩（Predictive Autoscaling）：利用历史流量数据预测未来负载，提前准备资源，避免 Reactive Scaling 的滞后性。4）推理实例热迁移：将一个正在进行的推理请求从一台 GPU 迁移到另一台，需要在迁移时保存模型状态（包括 KV Cache）。目前技术还不成熟，多数方案采用「优雅完成当前请求后摘除实例」的策略。\n\n挑战——1）状态迁移困难：推理实例有 KV Cache 等状态，不能在请求中间迁移。2）冷启动延迟：GPU 实例启动需要约 30-60 秒（加载模型权重 + JIT 编译），远长于 CPU 实例。3）显存碎片：频繁创建 / 销毁推理实例导致显存碎片化。4）区域亲和性：如果跨区域调度，需要考虑 GPU 间通信延迟和 PCIe 拓扑。",
+    "hints": [
+      "推理实例的冷启动延迟如何优化",
+      "KV Cache 状态如何影响推理实例的热迁移"
+    ],
+    "tags": [
+      "推理服务",
+      "弹性伸缩",
+      "GPU 调度",
+      "部署优化"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "激活稀疏性与 ReLU 复兴",
+    "content": "关于 Transformer/Large Language Model 中的激活稀疏性（Activation Sparsity），以下哪个说法是正确的？",
+    "options": [
+      "A) 激活稀疏性是指模型中的大部分神经元在给定输入下输出为零，可以利用这一点跳过部分 FFN 计算来加速推理",
+      "B) 所有 Transformer 架构都天然具有 90% 以上的激活稀疏性，不需要任何特殊设计",
+      "C) 激活稀疏性与权重稀疏性（Weight Sparsity）是同一个概念，都是指模型参数中的零值",
+      "D) ReLU 激活函数会降低激活稀疏性，因为它会把负数变为零"
+    ],
+    "answer": "A",
+    "hints": [
+      "ReLU 激活函数天然将负数截断为零，产生激活稀疏性",
+      "SwiGLU 等门控激活函数也会产生一定程度的稀疏性，但程度低于 ReLU"
+    ],
+    "tags": [
+      "推理优化",
+      "稀疏性",
+      "激活函数",
+      "高效推理"
+    ]
   }
 ]

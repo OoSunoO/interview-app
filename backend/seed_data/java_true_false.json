@@ -1673,5 +1673,120 @@
       "ArrayList",
       "内存管理"
     ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "String 拼接 invokedynamic 优化起始版本",
+    "content": "从 JDK 9 开始，Java 编译器将 String 的 + 拼接操作符的字节码生成策略从 StringBuilder 替换为 invokedynamic + StringConcatFactory，使得拼接策略可以在运行期根据目标 JVM 能力动态选择最优实现。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A) 正确",
+    "hints": [
+      "JEP 280: Indify String Concatenation 在 JDK 9 中实现，将 String 拼接改为 invokedynamic 调用",
+      "bootstrap method（StringConcatFactory）在首次调用时选择策略，后续调用使用缓存的 MethodHandle"
+    ],
+    "tags": [
+      "string-concatenation",
+      "invokedynamic",
+      "jep-280",
+      "java-9",
+      "bytecode"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "CompletableFuture.obtrudeValue 修改已完成状态",
+    "content": "CompletableFuture 提供了 obtrudeValue(T value) 和 obtrudeException(Throwable ex) 方法，即使 CompletableFuture 已经处于完成状态，obtrudeValue 也可以强制修改其结果值。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A) 正确",
+    "hints": [
+      "obtrude 系列方法在 Javadoc 中标注为「用于侵入式地修改结果」——即使已完成的任务也可以被改写",
+      "这个方法名称中的 obtrude（强行闯入）准确地表达了其语义——与 complete() 不同，complete() 只在未完成时生效"
+    ],
+    "tags": [
+      "completablefuture",
+      "obtrudevalue",
+      "completion",
+      "concurrency",
+      "api"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "ForkJoinPool.commonPool 延迟初始化",
+    "content": "ForkJoinPool.commonPool() 在 JVM 启动时立即被创建，以保证并行流（parallel stream）操作随时可用。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B) 错误",
+    "hints": [
+      "commonPool 是懒初始化（lazy initialization）的——在第一次调用 commonPool() 或第一次使用并行流时才创建",
+      "JVM 启动参数 -Djava.util.concurrent.ForkJoinPool.common.parallelism=N 需要在 commonPool 被首次使用前设置才有效"
+    ],
+    "tags": [
+      "forkjoinpool",
+      "commonpool",
+      "lazy-initialization",
+      "parallel-stream",
+      "concurrency"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Collectors.toUnmodifiableList 返回真正不可变列表",
+    "content": "JDK 10+ 中 Collectors.toUnmodifiableList() 返回的 Collector 所生成的 List 完全不可修改——调用其 add()、set()、remove() 等方法会抛出 UnsupportedOperationException。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A) 正确",
+    "hints": [
+      "Collectors.toUnmodifiableList 内部使用 ArrayList 收集后，通过 Collections.unmodifiableList 包装",
+      "这与 Stream.toList()（JDK 16+）相似但实现不同——Stream.toList() 返回的是 Arrays.asList() 变体。二者都是不可修改的"
+    ],
+    "tags": [
+      "collectors",
+      "tounmodifiablelist",
+      "immutable",
+      "java-10",
+      "stream-api"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "ThreadGroup 的线程安全性",
+    "content": "java.lang.ThreadGroup 是线程安全的——它的所有 public 方法都经过了适当的同步处理，可以在多线程环境下安全使用。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B) 错误",
+    "hints": [
+      "ThreadGroup 有多个已知的线程安全问题，如 destroy() 检查和 activeCount() 返回数量与实际状态不一致",
+      "自 JDK 14 起 ThreadGroup 已被标记为废弃（deprecated for removal），JDK 17+ 中默认使用 virtual threads 时不再推荐使用 ThreadGroup"
+    ],
+    "tags": [
+      "threadgroup",
+      "thread-safety",
+      "deprecated",
+      "concurrency",
+      "api-design"
+    ]
   }
 ]

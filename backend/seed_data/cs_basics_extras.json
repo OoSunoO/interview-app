@@ -1654,5 +1654,107 @@
       "崩溃恢复",
       "事务"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "fork() 系统调用的写时复制(COW)原理",
+    "content": "fork() 系统调用创建子进程时，子进程的地址空间最初___父进程的物理页面。这是因为内核使用了___（技术名称）机制。当父子进程中任意一方修改页面时，内核会___，然后将物理页标记为双方各自独立。这种设计的优势在于避免了大量无意义的___（几乎所有 fork 后立即 exec 的场景）。",
+    "answer": "{\"correct\":[[\"共享\",\"复用\",\"共享指向\"],[\"写时复制\",\"Copy-on-Write\",\"COW\"],[\"触发缺页中断\",\"触发 Page Fault\",\"触发页错误\"],[\"内存拷贝\",\"页面拷贝\",\"内存复制\"]],\"distractors\":[\"复制\",\"预拷贝\",\"触发段错误\",\"进程阻塞\"]}",
+    "hints": [
+      "为什么 fork 后立即 exec 的场景受益最大——COW 省去了无意义的内存复制",
+      "COW 如果对只读页面也使用会有什么问题"
+    ],
+    "tags": [
+      "操作系统",
+      "Linux",
+      "进程",
+      "内存管理"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "SSD 与 HDD 在随机 I/O 上的性能差异",
+    "content": "关于 SSD 和 HDD 在 I/O 性能上的差异，以下说法正确的是？",
+    "options": [
+      "A) SSD 的顺序读写和随机读写性能差异很小，而 HDD 的顺序读写性能远优于随机读写",
+      "B) SSD 和 HDD 的随机读写性能都远低于顺序读写性能",
+      "C) HDD 的随机 I/O 性能在 IOPS 上通常优于 SSD",
+      "D) SSD 和 HDD 的 4KB 随机写入性能几乎没有差别"
+    ],
+    "answer": "答案：A) SSD 的顺序读写和随机读写性能差异很小，而 HDD 的顺序读写性能远优于随机读写。\n\n解析：HDD（机械硬盘）依赖磁头在盘片上物理寻道，随机 I/O 每次需要磁头移动（Seek Time 约 4-15ms）+ 盘片旋转到目标扇区（Rotational Latency 约 2-5ms 按 7200RPM 计算），总延迟约 7-20ms。而顺序 I/O 只需一次寻道后连续读写，带宽接近介质极限（约 200MB/s for HDD）。因此 HDD 的随机 I/O 性能（约 100-200 IOPS）比顺序 I/O（约 10000+ IOPS）低两个数量级以上。SSD（NAND Flash）没有机械寻道部件，随机访问通过 FTl（Flash Translation Layer）将逻辑地址映射到物理页。随机读延迟约 50-100μs，顺序读延迟约 20-50μs，差距不到一个数量级。\n\n扩展延伸：IOPS 对比——1）典型 HDD 随机读写 IOPS：约 100-200。2）SATA SSD 随机读写 IOPS：约 10K-50K。3）NVMe SSD 随机读写 IOPS：约 500K-1M+（使用多队列和多核并行）。SSD 的写入放大（Write Amplification, WA）——由于 NAND Flash 不能原地覆盖，必须擦除整个 Block（通常 4MB）后再写入，即使只修改 4KB 数据也要重写整个 Block。Trim 命令可以提前通知 SSD 哪些逻辑页已无效，减少写入放大。文件系统和数据库的选型差异——HDD 优化的 B-Tree（读多写少）和 SSD 优化的 LSM-Tree（写多读少）的选择受底层存储介质特性影响。",
+    "hints": [
+      "SSD 的写入放大（Write Amplification）为什么会影响随机写入性能",
+      "文件系统在设计上如何适应 HDD 和 SSD 的不同特性"
+    ],
+    "tags": [
+      "存储",
+      "SSD",
+      "HDD",
+      "I/O",
+      "性能"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux VFS（虚拟文件系统）的四层抽象",
+    "content": "Linux 的 VFS（Virtual File System）/DENTRY（目录项）机制是文件系统实现的核心抽象层。请说明 VFS 的超级块（Super Block）、inode、dentry、file 四层对象的职责，以及它们之间的协作关系。",
+    "answer": "答案：VFS 的四层抽象是 Linux 支持多样化文件系统（ext4、XFS、NFS、tmpfs）的关键。超级块管理整个文件系统的元数据（块大小、总 inode 数、挂载点）；inode 管理单个文件/目录的元数据（权限、大小、数据块指针）；dentry 管理文件路径名到 inode 的映射和目录树缓存；file 管理进程打开的文件实例（读写位置、打开模式）。\n\n解析：四层对象的职责——1）超级块（Super Block, struct super_block）：每个文件系统实例对应一个超级块，存储文件系统的全局信息（类型、块大小、操作函数表）。ext4 的超级块在磁盘上有多个备份（block group 0 和块组描述符）。2）inode（struct inode）：每个文件/目录对应一个 inode，存储元数据（权限、时间戳、块地址）。inode 不包含文件名（文件名在 dentry 中）。硬链接使多个 dentry 指向同一个 inode。3）dentry（struct dentry）：维护路径名和 inode 的映射，不是磁盘数据结构（纯内存），用于加速路径解析。dentry 缓存（dcache）是 VFS 性能的关键。4）file（struct file）：进程每打开一个文件创建一个 file 实例，包含 file_operations（read/write/mmap 等）、当前读写位置 f_pos、flags。多个 file 实例可以指向同一个 inode（同一个文件被打开多次）。\n\n扩展延伸：协作流程——当进程调用 read(fd, buf, len) 时：1）通过 fd 在当前进程的 files_struct 中找到对应的 file 实例。2）file 实例通过 f_dentry（或 f_path）找到 dentry。3）dentry 通过 d_inode 找到 inode。4）inode 通过 i_mapping（address_space）找到页缓存中的数据块。5）如果页缓存不命中，则通过 inode 的 i_sb（超级块）找到具体文件系统的 readpage 函数，从磁盘读取数据。dentry 缓存（dcache）——LRU 维护最近使用的 dentry，加速路径解析（从 /usr/local/bin/program 逐级查找时，中间目录的 dentry 可能已在缓存中）。路径遍历优化：挂载点（Mount Point）的 dentry 通过 d_mounted 标记，VFS 遇到挂载点后切换到被挂载文件系统的根 dentry，实现目录树的统一命名空间。",
+    "hints": [
+      "dentry 和 inode 在硬链接场景下的多对一关系",
+      "为什么 dentry 是纯内存结构而 inode 有磁盘副本"
+    ],
+    "tags": [
+      "操作系统",
+      "Linux",
+      "文件系统",
+      "VFS"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "epoll 的边沿触发(ET)与水平触发(LT)模式的选择策略",
+    "content": "epoll 支持水平触发（LT, Level Triggered）和边沿触发（ET, Edge Triggered）两种模式。请说明两者的核心区别、各自的使用注意事项，以及 ET 模式下需要非阻塞 I/O 的根源。",
+    "answer": "答案：LT 模式下，只要 fd 还有数据可读，epoll_wait 会持续返回该 fd；ET 模式下，fd 的读缓冲区从无数据变为有数据时（状态变化）才通知一次，后续即使数据未读完也不再通知。ET 模式必须使用非阻塞 I/O，因为需要一次性循环读尽直到返回 EAGAIN 才能触发下一次通知。\n\n解析：LT（Level Triggered）——epoll 的默认模式。当 fd 可读时，epoll_wait 返回该 fd；如果应用只读了部分数据，下次 epoll_wait 仍会返回该 fd。行为类似 select/poll，编程简单——读多少算多少。适合：一次通知处理少量数据的传统模式。ET（Edge Triggered）——仅在状态变化时通知：缓冲区从空→非空（可读），或从非满→满（可写）。如果 ET 模式下读了部分数据但不触发更多通知。必须在每次通知时循环读直到 EAGAIN。这就是 ET 模式下必须使用非阻塞 fd 的原因——如果使用阻塞 fd，最后一次读操作会阻塞在 read 系统调用上（因为缓冲区已空，没有数据），导致整个线程挂起。\n\n扩展延伸：非阻塞 I/O 的必要性——ET + 非阻塞 I/O + while 循环：while ((n = read(fd, buf, size)) > 0) { process(buf, n); } if (n == -1 && errno == EAGAIN) break;。如果 fd 是阻塞模式，最后一次 read 没有数据时会阻塞，线程永远无法返回事件循环。ET 模式的优势——1）系统调用次数更少：LT 模式只要有数据就通知，可能多次 epoll_wait 返回同一个 fd；ET 模式只在状态变化时通知一次。2）配合 Nginx 等高性能服务器中使用 ET + 非阻塞 I/O + 一次事件循环处理大量数据。3）减少饥饿风险：LT 模式中如果优先级高的 fd 持续有数据，低优先级 fd 可能被饿死（虽然 epoll 没有优先级概念，但频繁通知的 LT fd 可能抢占处理时间）。性能实测——在万兆网络场景下 ET 比 LT 提升约 5-10%（减少 epoll_wait 返回次数和用户态/内核态切换）。选择建议：简单低并发场景用 LT（编程简单），高性能服务（Nginx、Redis 内部模型）用 ET + 非阻塞 I/O。",
+    "hints": [
+      "ET 模式下为什么必须在 while 循环中读完所有数据——不读完下次不会再有通知",
+      "阻塞 fd 在 ET 模式下为什么会导致线程挂起——最后一次 read 会在缓冲区为空时阻塞"
+    ],
+    "tags": [
+      "操作系统",
+      "Linux",
+      "I/O",
+      "epoll",
+      "高性能"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "稀疏文件(Sparse File)与文件空洞的实现原理",
+    "content": "在 Linux ext4 文件系统中，通过 lseek() 跳过一段区域写入数据会创建稀疏文件（Sparse File）。稀疏文件的磁盘占用与逻辑大小完全相同，因为文件系统不会对未写入的区域做特殊优化。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "答案：B) 错误\n\n解析：稀疏文件的核心特性就是逻辑大小远大于实际磁盘占用。当程序写入数据时跳过中间区域（使用 lseek 和 write，而非在空洞区域写入全零），文件系统不会为空洞部分分配实际的磁盘块。这些空洞区域在读取时返回零字节，但不占用任何磁盘空间。这是稀疏文件的基本原理。\n\n扩展延伸：实现机制——1）ext4 的 extent tree 中，空洞部分没有对应的物理块映射。当读取空洞区域时，文件系统检测到 extent 缺失，直接返回零填充的页面。2）du 与 ls 的区别：ls -l 显示文件的逻辑大小（st_size），du 统计实际分配的物理块数量（st_blocks × 512）。对于一个大空洞文件，du 显示的值远小于 ls 显示的值。3）创建稀疏文件的方式：dd if=/dev/zero of=sparse.img bs=1M count=0 seek=100 ——创建一个逻辑大小 100MB 但磁盘占用为 0 的文件。\n\n工程应用——1）虚拟机磁盘镜像：QEMU 的 qcow2 格式和 RAW 稀疏模式利用稀疏特性，创建时分配最大容量但只占用实际写入的物理空间。2）数据库预分配：InnoDB 的 ibdata 文件在裸设备或稀疏文件上预分配大空间，避免运行时动态扩容的性能抖动。3）Docker 的 overlay2 存储驱动在创建容器层时使用稀疏文件减少磁盘占用。陷阱——cp 命令默认不保持稀疏特性（cp sparse.img copy.img → copy.img 逻辑大小相同但磁盘占用膨胀为全部分配）。应使用 cp --sparse=always 或 tar -S 保留稀疏属性。rsync 的 --sparse / -S 选项控制稀疏传输。",
+    "hints": [
+      "ls -l 和 du 在稀疏文件上显示的数值为什么差异巨大",
+      "cp 命令复制稀疏文件时如何避免空间膨胀"
+    ],
+    "tags": [
+      "操作系统",
+      "Linux",
+      "文件系统",
+      "存储"
+    ]
   }
 ]

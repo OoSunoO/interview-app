@@ -1680,5 +1680,107 @@
       "分布式ID",
       "雪花算法"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "MySQL 二级索引叶子节点存储内容",
+    "content": "关于 MySQL InnoDB 二级索引（Secondary Index）的叶子节点，以下哪个说法是正确的？",
+    "options": [
+      "A) 二级索引的叶子节点存储整行数据",
+      "B) 二级索引的叶子节点存储指向聚簇索引的物理地址指针",
+      "C) 二级索引的叶子节点存储索引列的值和对应主键值",
+      "D) 二级索引的叶子节点存储数据的磁盘文件偏移量"
+    ],
+    "answer": "答案：C) 二级索引的叶子节点存储索引列的值和对应主键值\n\n解析：InnoDB 的二级索引（非聚簇索引）叶子节点存储的是索引列的值 + 对应的主键值（而非行数据的物理地址）。通过二级索引查询时，先找到主键值，再到聚簇索引中通过主键查找完整行数据（这个过程称为回表）。如果查询的列都在二级索引中则不需要回表（覆盖索引）。A 描述的是聚簇索引的特性，B 和 D 是 MyISAM 引擎的实现方式。\n\n扩展延伸：InnoDB 的聚簇索引（主键索引）叶子节点直接存储整行数据，而二级索引叶子节点存储「索引列 + 主键」。这意味着主键越小，二级索引占用的空间也越小（每个二级索引条目都包含主键值）。这也是为什么 InnoDB 推荐使用自增整数主键而非 UUID 的原因之一。",
+    "hints": [
+      "二级索引回表的完整路径是什么",
+      "为什么主键越小二级索引性能越好"
+    ],
+    "tags": [
+      "MySQL",
+      "索引",
+      "InnoDB"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "MySQL ICP 与最左前缀的关系",
+    "content": "MySQL 的索引下推（Index Condition Pushdown，ICP）可以在联合索引不满足最左前缀原则时，仍然使用索引中后续列的过滤条件减少回表次数。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确\n\n解析：索引下推（ICP）是 MySQL 5.6 引入的优化。当使用联合索引（a, b, c）查询时，如果 WHERE 条件为 a = 1 AND c LIKE '%keyword%'，由于 c 的查询不满足最左前缀（跳过了 b），传统方式只能通过 a 列定位到记录后回表，再在 Server 层过滤 c 条件。开了 ICP 后，存储引擎在索引遍历时就能用 c 条件过滤一部分记录，减少回表次数。\n\n扩展延伸：EXPLAIN 输出中 Extra 列显示 Using index condition 表示 ICP 生效。ICP 只对二级索引有效（聚簇索引不需要回表，所以不适用）。ICP 对范围查询（>、<、BETWEEN）也能生效，但条件必须来自同一个索引。ICP 不适用于子查询、存储函数等复杂场景。",
+    "hints": [
+      "EXPLAIN 中 Extra 列的 Using index condition 代表什么",
+      "ICP 为什么只对二级索引有效"
+    ],
+    "tags": [
+      "MySQL",
+      "索引下推",
+      "ICP"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 大表 DDL 在线变更方案",
+    "content": "线上 MySQL 大表（1 亿行）需要加索引或修改列，如何在线执行而不影响读写？pt-online-schema-change 和 gh-ost 的原理是什么？",
+    "answer": "答案：MySQL 大表 DDL 的在线变更方案主要有两种：pt-online-schema-change（Percona Toolkit）和 gh-ost（GitHub Online Schema Migration）。两者都通过创建影子表、同步数据、切换表名的方式实现无锁 DDL。\n\n解析：pt-online-schema-change 原理：1）在原表上创建触发器（AFTER INSERT/UPDATE/DELETE），将增量变更同步到影子表。2）创建一张结构相同的影子表，在影子表上执行 DDL 变更。3）通过 INSERT ... SELECT ... LOCK IN SHARE MODE 分批将原表数据拷贝到影子表。4）拷贝完成后，通过 RENAME TABLE 原子切换原表和影子表。5）删除原表和触发器。问题：触发器带来的额外负载较高（每个 DML 操作多一次触发器执行），在主从延迟大的场景下可能触发 GTID 错误。\n\nextending gh-ost 原理：1）不依赖触发器，直接读取 MySQL binlog（作为伪从库连接主库或从库）。2）创建影子表执行 DDL，通过 binlog 流式同步增量变更。3）分批拷贝存量数据（通过 SELECT ... WHERE id BETWEEN ? AND ?）。4）数据追平后自动切换。优势：无触发器（对源库影响更小）、支持暂停/恢复/动态控制节流、可审计和回滚。\n\n扩展延伸：MySQL 8.0 原生的 Instant DDL：支持 ALTER TABLE ... ALTER COLUMN ... SET DEFAULT/DROP DEFAULT、ADD INDEX（仅 B-Tree 索引）等操作的即时完成（仅修改元数据，不重建表）。但大多数 DDL（增删列、修改列类型）仍然需要重建表。InnoDB 的 Online DDL（ALGORITHM=INPLACE）比传统 COPY 方式好，但在大表上仍然有长锁等待和日志暴涨的风险。生产建议：1 亿行以上的表，优先使用 gh-ost（无触发器，安全性高），配置 max-load 和 throttle 参数控制迁移速度。",
+    "hints": [
+      "pt-online-schema-change 的触发器方案有什么风险",
+      "gh-ost 如何通过 binlog 实现无触发器的数据同步"
+    ],
+    "tags": [
+      "MySQL",
+      "DDL",
+      "运维"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "MySQL 事务两阶段提交崩溃恢复",
+    "content": "在 MySQL 两阶段提交（Prepare + Commit）过程中，如果写完 Redo Log（Prepare 阶段）和 Binlog 之后、写入 Redo Log Commit 标记之前，服务器崩溃恢复后该事务的状态是什么？",
+    "options": [
+      "A) 事务回滚，Binlog 中的记录被清除",
+      "B) 事务自动提交，恢复时重做 Redo Log 中已 prepare 的事务",
+      "C) 事务保持 prepare 状态，需要人工介入处理",
+      "D) 崩溃恢复时判断 Binlog 已写入则事务提交，否则回滚"
+    ],
+    "answer": "答案：D) 崩溃恢复时判断 Binlog 已写入则事务提交，否则回滚\n\n解析：MySQL 两阶段提交的核心目的是保证 Redo Log 和 Binlog 的一致性。崩溃恢复时的判断逻辑：1）如果 Redo Log 中事务的状态是 COMMIT（已提交）——直接提交。2）如果 Redo Log 中事务的状态是 PREPARE（已准备）——检查对应的 Binlog 是否完整写入：Binlog 已写入 → 事务提交（因为 Binlog 已持久化，从库可能已经同步）；Binlog 未写入或写入不完整 → 事务回滚（保证主从数据一致）。\n\n扩展延伸：两阶段提交流程：① 事务执行阶段（写入 Redo Log 但未刷盘）。② Prepare 阶段（Redo Log 刷盘，状态标记为 PREPARE）。③ 写入 Binlog（Binlog 刷盘）。④ Commit 阶段（Redo Log 状态标记为 COMMIT）。崩溃可能发生在任何一步，但通过 Redo Log 和 Binlog 的交叉比对，总能恢复到一致状态。Binlog 有 XID event（事务 ID），用于与 Redo Log 中的事务对应。这个机制保证了即使主库崩溃，从库通过 Binlog 同步数据也不会出现不一致。",
+    "hints": [
+      "两阶段提交的四个步骤顺序",
+      "崩溃恢复时如何判断事务是否提交"
+    ],
+    "tags": [
+      "MySQL",
+      "事务",
+      "崩溃恢复"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL Buffer Pool 优化策略",
+    "content": "InnoDB Buffer Pool 是如何工作的？什么是冷热分离（LRU 链表分区）？Buffer Pool 过大或过小各有什么问题？如何监控 Buffer Pool 的命中率？",
+    "answer": "答案：Buffer Pool 是 InnoDB 在内存中缓存数据和索引的区域，是 MySQL 性能的核心。InnoDB 将 Buffer Pool 中的 LRU 链表分为两个区域：旧（Old）区域占 3/8，新（New）区域占 5/8。新读取的页先放入 Old 区域的 midpoint，只有当页在 Old 区域存活超过 innodb_old_blocks_time（默认 1000ms）且再次被访问时才移到 New 区域（LRU 头部）。这种冷热分离设计防止全表扫描等一次性大量读取冲掉热点数据。\n\n解析：Buffer Pool 过小：磁盘 I/O 频繁，查询性能差。Buffer Pool 过大：占用过多内存导致系统内存不足（触发 swap 或 OOM）。经验值：专用 MySQL 服务器上 Buffer Pool = 物理内存的 60-80%（加上 Redo Log 和操作系统缓存），云服务器上建议不超过可用内存的 70%。监控命令：SHOW ENGINE INNODB STATUS 中的 Buffer pool hit rate —— 如果 < 99% 说明 Buffer Pool 太小或需要优化查询减少读取量。\n\n扩展延伸：MySQL 8.0 的 Buffer Pool 增强：1）Buffer Pool 支持动态调整大小（INNODB_BUFFER_POOL_RESIZE_STATUS 监控）。2）多个 Buffer Pool Instance（innodb_buffer_pool_instances）减少并发竞争——当 Buffer Pool > 1GB 时建议设置多实例（默认 8）。3）Buffer Pool 预热：MySQL 8.0 支持在服务重启后自动预热（从 Redo Log 和 Doublewrite Buffer 恢复），或通过 SELECT ... INTO OUTFILE / LOAD DATA 预加载到 Buffer Pool。监控指标：Innodb_buffer_pool_read_requests（总读请求数）、Innodb_buffer_pool_reads（从磁盘读取次数，非命中），命中率 = (1 - buffer_pool_reads / buffer_pool_read_requests) * 100%。",
+    "hints": [
+      "Buffer Pool 冷热分离如何防止全表扫描冲掉热点数据",
+      "SHOW ENGINE INNODB STATUS 中哪些指标反映 Buffer Pool 健康度"
+    ],
+    "tags": [
+      "MySQL",
+      "Buffer Pool",
+      "InnoDB",
+      "性能优化"
+    ]
   }
 ]

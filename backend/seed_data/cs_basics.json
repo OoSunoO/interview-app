@@ -1672,5 +1672,103 @@
       "线性一致性",
       "最终一致性"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TCP PSH（推送）标志位与 URG（紧急指针）的功能差异与使用场景",
+    "content": "TCP 头部中有 PSH（Push）和 URG（Urgent）两个标志位。请说明这两个标志位的作用、区别，以及各自的使用场景。为什么现代应用层协议中这两个标志位的作用相对减弱了？",
+    "answer": "答案：PSH 标志位通知接收端立即将数据提交给应用层（不等待缓冲区填满），URG 标志位标记数据中的紧急字节（优先处理）。两者的区别在于 PSH 是批量数据的提交优化，而 URG 是带外（Out-of-Band）数据的信令机制。\n\n解析：PSH 标志——发送方设置 PSH=1 时，TCP 协议栈不再等待缓冲区填满，立即将已接收的段提交到上层。接收方收到 PSH=1 的段后，立即将 TCP 接收缓冲区中的数据交付给应用进程，不等待后续数据填满 MSS。在没有 Nagle 算法干扰的情况下，交互式应用（如 SSH、Telnet）通常在每次用户输入后设置 PSH 标志。URG 标志——设置 URG 时将 TCP 头部的 Urgent Pointer 字段生效，标记紧急数据在段中的结束位置。接收方收到 URG=1 时，优先处理紧急数据，触发进程的 SIGURG 信号（需配合 SO_OOBINLINE 和 SIOCATMARK）。\n\n扩展延伸：为何现代应用层协议很少依赖 PSH/URG——1）Socket API 不直接暴露这些标志位，应用层难以控制（Nagle 算法、Delayed ACK、TCP Segment Coalescing 都在内核中自动合并处理）。2）URG 的语义模糊：不同操作系统对紧急指针的解读不一致（BSD 和 Linux 在 OOB 数据长度上的处理不同），跨平台移植时容易出问题。3）HTTP/2 和 QUIC 的流优先级和帧机制替代了传统的 TCP 紧急数据语义。4）实际工程中，应用层更倾向于使用额外的控制连接或应用层心跳来实现紧急数据传递。",
+    "hints": [
+      "PSH 和 URG 在 TCP 头部中是一起使用还是互斥的",
+      "URG 标志在 WebSocket 和 QUIC 中有对应的设计吗"
+    ],
+    "tags": [
+      "网络",
+      "TCP",
+      "传输层"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Linux 进程的七态模型：就绪、运行、阻塞、挂起",
+    "content": "关于 Linux 进程状态，以下说法正确的是？",
+    "options": [
+      "A) TASK_RUNNING 状态的进程一定正在 CPU 上执行",
+      "B) TASK_INTERRUPTIBLE 状态的进程在条件满足时自动变为 TASK_RUNNING",
+      "C) TASK_STOPPED 状态对应进程收到 SIGKILL 信号后的状态",
+      "D) TASK_ZOMBIE 状态表示进程正在被调度执行"
+    ],
+    "answer": "答案：B) TASK_INTERRUPTIBLE 状态的进程在条件满足时自动变为 TASK_RUNNING\n\n解析：TASK_INTERRUPTIBLE（可中断睡眠）是 Linux 中最常见的睡眠状态。进程在等待资源（如 I/O 完成、信号量释放）时进入此状态，条件满足或收到信号时被内核唤醒回到 TASK_RUNNING（就绪态）。TASK_RUNNING 只表示进程处于可运行队列中（包括正在 CPU 执行和等待 CPU 时间片），并非一定正在执行。TASK_STOPPED 是通过 SIGSTOP/SIGTSTP/SIGTTIN/SIGTTOU 信号暂停的，SIGKILL 直接终止进程（不能捕获）。TASK_ZOMBIE（僵尸态）是进程已终止但父进程尚未调用 wait() 获取退出状态的中间状态，不执行任何代码。\n\n扩展延伸：Linux 内核 2.6 之后的实际状态包括：TASK_RUNNING（就绪+运行）、TASK_INTERRUPTIBLE（可中断睡眠）、TASK_UNINTERRUPTIBLE（不可中断睡眠——常见于 NFS 挂载场景，即 D 状态进程）、TASK_STOPPED（暂停）、TASK_TRACED（被 ptrace 跟踪，如 GDB 调试中）、EXIT_ZOMBIE（僵尸）、EXIT_DEAD（正在被回收）。其中 D 状态（Uninterruptible Sleep）的进程不能被信号杀死，是内核中无法规避的「死锁」场景（如 NFS 服务器宕机时，等待 NFS 响应的进程持续 D 状态，只能重启解决）。",
+    "hints": [
+      "D 状态（TASK_UNINTERRUPTIBLE）为什么不能被信号杀死",
+      "如何排查和清理僵尸进程"
+    ],
+    "tags": [
+      "操作系统",
+      "Linux",
+      "进程管理"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux 内核中断下半部的实现方式对比：Softirq、Tasklet、Workqueue",
+    "content": "Linux 内核的中断处理为什么要分为上半部（Top Half）和下半部（Bottom Half）？Softirq、Tasklet、Workqueue 这三种中断下半部实现方式的区别是什么？各自的适用场景？",
+    "answer": "答案：中断上半部在关中断状态下执行（快速、紧急、短），下半部在开中断状态下执行（可延迟、可休眠）。三种下半部机制从执行上下文、可休眠性、并发度三个维度区分：Softirq 在软中断上下文执行（不可休眠、同类型可在多核并行）、Tasklet 基于 Softirq（不可休眠、同类型串行）、Workqueue 在进程上下文执行（可休眠、可阻塞）。\n\n解析：为什么需要上下半部——中断处理程序执行时必须关中断（防止嵌套中断导致栈溢出和优先级反转）。如果中断处理程序执行时间过长（如网卡驱动需要复杂的协议栈处理），会严重影响系统实时性。因此中断处理分两个阶段：上半部快速处理硬件相关操作（保存寄存器、拷贝数据到内存缓冲区），标记下半部后开中断返回；下半部在更安全的环境中处理耗时逻辑。\n\n三种机制对比——1）Softirq（软中断）：在软中断上下文（softirq context）中执行，不能休眠、不能持有信号量。同类型的 Softirq 可以在多个 CPU 上并行执行！因此 Softirq 的处理函数必须是可重入的（reentrant），需要自旋锁保护共享数据。Softirq 在编译时静态分配（如 NET_TX_SOFTIRQ、NET_RX_SOFTIRQ、TASKLET_SOFTIRQ）。2）Tasklet：基于 TASKLET_SOFTIRQ 实现，本质是对 Softirq 的封装。同类型的 Tasklet 在同一时刻只能在一个 CPU 上执行（串行化），降低了并发设计的复杂度。Tasklet 可以动态注册和注销。3）Workqueue：在进程上下文（内核线程）中执行，可以休眠、可以持有信号量、可以执行阻塞 I/O。Workqueue 本质上是内核线程池（kworker/n），执行 work 函数。\n\n扩展延伸：选型建议——1）对实时性要求高、处理时间极短、不需要休眠 → Tasklet（最简单）。2）高性能网络场景（如网卡驱动收包路径）→ Softirq（多核并行，Linux 网络栈就在 NET_RX_SOFTIRQ 中处理）。3）需要执行阻塞操作（如磁盘 I/O、获取信号量）→ Workqueue。4）Linux 内核还在演进：2020 年起 Tasklet 被标记为 deprecated，新代码推荐用 Softirq 或 Workqueue。软中断上下文中不能触发缺页中断（不能访问用户空间数据），这是软中断和进程上下文的本质区别。",
+    "hints": [
+      "Softirq 的多核并行执行要求处理函数必须是可重入的——与 Tasklet 的串行化有何区别",
+      "Workqueue 为什么可以休眠——进程上下文 vs 软中断上下文的界限"
+    ],
+    "tags": [
+      "操作系统",
+      "Linux",
+      "中断",
+      "内核"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CPU Cache 的平均访存时间(AMAT)公式与优化方向",
+    "content": "请解释 CPU 存储层次中平均访存时间（AMAT, Average Memory Access Time）的计算公式。L1/L2/L3 三级缓存的命中率差异如何影响整体性能？在现代多核 CPU 上优化 AMAT 的方向有哪些？",
+    "answer": "答案：AMAT = L1 命中时间 + L1 缺失率 × (L2 命中时间 + L2 缺失率 × (L3 命中时间 + L3 缺失率 × 主存访问时间))。由于各层访问延迟差异巨大（L1 ~1ns, L2 ~4ns, L3 ~10ns, 主存 ~100ns），缓存的命中率对 AMAT 影响极大。优化的根本方向是提高程序的时间局部性和空间局部性。\n\n解析：AMAT 的分层递推——对三级缓存：AMAT = L1_hit_time + L1_miss_rate × (L2_hit_time + L2_miss_rate × (L3_hit_time + L3_miss_rate × MEM_access_time))。一个典型数据：L1 hit=1ns, miss_rate=5%, L2 hit=4ns, miss_rate=20%, L3 hit=10ns, miss_rate=50%, MEM=100ns → AMAT = 1 + 0.05×(4 + 0.2×(10 + 0.5×100)) = 1 + 0.05×(4 + 0.2×60) = 1 + 0.05×16 = 1.8ns。如果 L1 miss_rate 上升到 10%（差 5%），AMAT = 1 + 0.1×16 = 2.6ns（增加了 44%）。这说明 L1 命中率的小幅下降对整体性能有显著影响。\n\n扩展延伸：优化方向——1）提高空间局部性：连续内存访问使用数组而非链表，遍历按行而非按列（C 语言行优先）。2）提高时间局部性：热点数据尽量在小循环中复用，避免反复加载同一缓存行。3）Cache Line 对齐：64 字节对齐的关键数据结构可以避免跨缓存行访问（使用 __attribute__((aligned(64)))）。4）避免伪共享（False Sharing）：多线程访问同一缓存行中的不同变量导致缓存行颠簸，在并发数据结构中加入 Padding。5）Prefetch 指令：软件预取（__builtin_prefetch）提前通知 CPU 加载数据到缓存，掩盖内存访问延迟。6）大页面（Huge Page）：减少 TLB miss（TLB miss 会触发多级页表遍历，代价等同 L3 cache miss）。数据库和大型工作集应用可显著受益。",
+    "hints": [
+      "AMAT 公式中 L1 命中率下降 1% 对整体性能影响的放大器效应",
+      "为什么伪共享（False Sharing）的核心缓解手段是缓存行填充（Cache Line Padding）"
+    ],
+    "tags": [
+      "计算机组成",
+      "CPU",
+      "缓存",
+      "性能"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "TCP Keepalive 与 HTTP Keep-Alive 的机制差异",
+    "content": "TCP Keepalive 和 HTTP Keep-Alive 都是通过定期发送探测包来维持连接活性，它们在实现机制和目的上是相同的。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "答案：B) 错误\n\n解析：TCP Keepalive 和 HTTP Keep-Alive 虽然名字相似，但在机制层次、目的和行为上有本质区别。TCP Keepalive 是传输层的机制（由操作系统内核实现），用于检测对端是否存活（探测死连接并回收资源）。HTTP Keep-Alive 是应用层的机制（由 HTTP 协议规定），用于复用 TCP 连接传输多个 HTTP 请求/响应，减少连接建立的开销。\n\n扩展延伸：核心差异——1）层级不同：TCP Keepalive 在传输层（OS 内核），HTTP Keep-Alive 在应用层（HTTP 协议）。2）目的不同：TCP Keepalive 检测对端崩溃或网络断开（回收僵尸连接），默认关闭，需通过 setsockopt 的 SO_KEEPALIVE 启用。HTTP Keep-Alive 复用连接（减少三次握手和慢启动），是 HTTP/1.1 的默认行为（Connection: keep-alive），HTTP/2 更是单一长连接复用。3）探测频率不同：TCP Keepalive 默认闲置 2 小时后发第一个探测包（net.ipv4.tcp_keepalive_time=7200），间隔 75 秒（tcp_keepalive_intvl=75），最多 9 次（tcp_keepalive_probes=9），总探测时间约 2 小时 11 分钟。HTTP Keep-Alive 的超时由应用层控制（如 Nginx 的 keepalive_timeout=65 秒），时间远超 TCP Keepalive 探测间隔。4）实际工程中：负载均衡器和反向代理通常在应用层做 HTTP Keep-Alive 超时控制，同时启用 TCP Keepalive 作为兜底清理手段。在微服务和容器环境中，TCP Keepalive 的默认超时太长会导致连接泄漏，建议调低 tcp_keepalive_time（如 300 秒）配合 L7 健康检查使用。",
+    "hints": [
+      "TCP Keepalive 的默认探测间隔长达 2 小时——为什么这个默认值在现代容器化环境中不合适",
+      "HTTP Keep-Alive 超时关闭后底层 TCP 连接如何被回收"
+    ],
+    "tags": [
+      "网络",
+      "TCP",
+      "HTTP",
+      "连接管理"
+    ]
   }
 ]
