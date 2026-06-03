@@ -78,5 +78,57 @@
     "answer": "答案：Re-ranking 用更精确的模型对初检结果重排，弥补第一阶段检索的精度不足。Bi-encoder 负责高效初检，Cross-encoder 负责精确重排。\n\n解析：第一阶段（Retrieval）使用 Bi-encoder（如 BGE、E5）——查询和文档独立编码，向量可预计算和建索引，适合大规模快速检索（百毫秒级），但独立编码丢失了查询-文档间的交互信息。第二阶段（Re-ranking）使用 Cross-encoder（如 BGE-reranker、Cohere Rerank）——查询和文档拼接后一起编码，能捕捉细粒度匹配信号，精度更高但无法预计算，只能对小规模候选集（如 Top-100）重排。\n\n扩展延伸：两阶段设计是效率和精度的最优平衡——Bi-encoder 从百万级文档召回 Top-100，Cross-encoder 对 Top-100 精排取 Top-5/10 送入 LLM。实际部署注意事项：1）Re-ranker 通常选择轻量模型（如 6 层 Transformer）控制延迟。2）可以多路召回（BM25 + 稠密检索 + 其他策略）后统一重排。3）Cohere Rerank API 和 BGE-reranker 是常用选项。",
     "hints": ["为什么不用 Cross-encoder 直接做全量检索", "多路召回后统一重排的架构"],
     "tags": ["RAG", "Re-ranking", "检索"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "推测解码（Speculative Decoding）",
+    "content": "什么是推测解码（Speculative Decoding）？它如何加速 LLM 推理而不损失生成质量？",
+    "answer": "答案：推测解码用一个小草稿模型快速生成多个候选 token，大模型（目标模型）并行验证并接受或修正。加速效果取决于草稿模型的接受率，典型加速 2-3 倍，输出分布与目标模型一致。\n\n解析：标准自回归解码每步只生成 1 个 token，GPU 利用率极低（尤其小 batch 时）。推测解码让草稿模型（draft model，小 10-100 倍）先生成 K 个候选 token（如 K=5），然后目标模型对这 K 个候选做一次前向传播（并行计算），用 rejection sampling 逐个决定接受或拒绝。被拒绝的位置用目标模型的真实分布采样替换。关键点：接受率 γ 决定加速倍数——加速比 = 1/(1 - γ + γ/K + overhead)。\n\n扩展延伸：实践要点：1）草稿模型的选择——可以和目标模型共享 tokenizer，架构类似但层数更少（如 LLaMA 68M 作为 LLaMA 7B 的草稿），或用独立的小模型（如 Medusa 在 LLM head 上加多个预测头）。2）草稿模型接受率低时（冷门 token 预测不准），推测解码退化回普通解码。3）自推测解码（Self-Speculative）——用目标模型的浅层作为草稿，不需要额外训练草稿模型。4）草稿模型开销——草稿模型也需要占用显存和计算，需要在接受率和开销间权衡。",
+    "hints": [
+      "Rejection Sampling 如何保证输出分布不偏差",
+      "推测解码的加速倍数受什么因素限制"
+    ],
+    "tags": ["LLM", "推理优化", "推测解码"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LLM 量化技术",
+    "content": "请介绍 LLM 权重量化的主要方法（GPTQ、AWQ、GGUF）及其原理。",
+    "answer": "答案：量化将模型权重从 FP16 降至 INT4/INT8，减少显存占用和计算量。主流方法：PTQ（训练后量化，如 GPTQ/AWQ）和动态量化（如 GGUF 的自定义格式）。\n\n解析：1）GPTQ（Post-Training Quantization，2022）——基于 OBS（Optimal Brain Surgeon）理论，逐层量化权重。核心思想：量化一个权重后，通过调整同一行的其他权重来补偿精度损失（逆 Hessian 矩阵近似）。支持 INT4 和 INT3，量化 175B 模型仅需 4 小时（单 A100）。2）AWQ（Activation-Aware Weight Quantization，2023）——观察发现权重的不同 channel 对精度影响不均，保留影响大的 channel 的 FP16 缩放因子（仅 0.1% 的参数），其余量化到 INT4。精度优于 GPTQ 且速度持平。3）GGUF（GPT-Generated Unified Format，2023）——llama.cpp 的量化格式，支持从 Q2_K 到 Q8_0 多个级别。_K 后缀表示混合精度（部分层量化更低以平衡精度）。\n\n扩展延伸：量化的适用决策：1）服务端（A100/H100）→ AWQ/GPTQ 的 INT4 或 FP8（H100 原生支持）。2）本地/边缘（Mac/CPU）→ GGUF+llama.cpp，利用 Apple Silicon 的 Unified Memory 运行大模型。3）端侧手机 → INT4 量化 + 剪枝 + 蒸馏组合。4）KV Cache 量化（FP16→INT8）也值得做（显存大头在 KV Cache，尤其长上下文时）。量化精度排序（从高到低）：FP16 > INT8 > INT4-GPTQ/AWQ > INT4-GGUF。",
+    "hints": [
+      "INT4 量化为什么比 INT8 更敏感",
+      "Activation-Aware 和 Weight-Only 量化的区别"
+    ],
+    "tags": ["LLM", "量化", "推理优化", "GPTQ", "AWQ"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "张量并行与流水线并行",
+    "content": "请解释 LLM 分布式推理中的张量并行（TP）和流水线并行（PP）的区别和适用场景。",
+    "answer": "答案：张量并行（TP）将单层计算切分到多 GPU，流水线并行（PP）将不同层分配到不同 GPU。TP 降低单 GPU 显存和计算负载但需要高带宽互联，PP 减少 GPU 间通信但引入流水线气泡。\n\n解析：1）张量并行（Tensor Parallelism，Megatron-LM 方案）——将 Transformer 层的参数按行/列切分到多 GPU。Self-Attention：将 QKV 权重按列切分（每 GPU 一份），计算后 All-Reduce 合并；MLP：按行切分，计算后 All-Reduce。通信量大（每层两个 All-Reduce），需要 NVLink/NVSwitch 高速互联。2）流水线并行（Pipeline Parallelism）——将模型层数分组分配到不同 GPU（如 LLaMA 32 层分到 4 卡，每卡 8 层）。每张卡只存其负责的层，显存节省多。缺点是流水线气泡（GPU 空闲等待上下游）——GPipe 的同步模式气泡大，1F1B（One-Forward-One-Backward）调度显著减小气泡。\n\n扩展延伸：实际部署中的组合策略：1）小集群（2-4 GPU）→ 可以用 TP，单卡装不下模型时 TP+PP 组合。2）大集群（8+ GPU × 多节点）→ 3D 并行（TP+PP+DP）：节点内 TP（NVLink 高速通信），节点间 PP，数据 DP 并行处理不同 batch。3）DeepSpeed 的 ZeRO Stage 3 也是一种分布式策略——参数、梯度、优化器状态分片到各 GPU，按需通信。4）推理 vs 训练——推理的激活值不需要反向传播，显存需求更低，所以推理时 TP 张数和 PP 阶段数可以比训练少。",
+    "hints": [
+      "TP 为什么需要 NVLink 等高带宽互联",
+      "流水线气泡是什么？1F1B 如何减少气泡"
+    ],
+    "tags": ["LLM", "分布式", "推理优化", "TP", "PP"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM Serving 框架对比",
+    "content": "请对比 vLLM、TGI、TensorRT-LLM 等主流 LLM 推理/服务框架的核心优化方向。",
+    "answer": "答案：vLLM 以 PagedAttention 优化显存为核心，TGI 以 HuggingFace 生态集成和 Continuous Batching 见长，TensorRT-LLM 以极致算子优化和多后端部署为目标。\n\n解析：1）vLLM（UC Berkeley，2023）——核心优化：PagedAttention 解决 KV Cache 碎片，显存利用率 95%（传统方式仅 20-40%）；支持 Prefix Caching（共享系统 prompt 的 KV Cache）。性能：LLM 推理速度比 HF Transformers 快 14-24 倍。生产准备度：OpenAI 兼容 API、Docker 化部署、Prometheus 监控。2）TGI（Text Generation Inference，HuggingFace）——核心优化：Simple Continuous Batching、Tensor Parallelism、Flash Attention、Model 热加载。优势：HuggingFace 模型即用（自动下载和适配）、Rust 写的路由层性能好。3）TensorRT-LLM（NVIDIA）——核心优化：TensorRT 编译优化（kernel fusion、int8/fp8 量化）、Inflight Batching（执行中动态调度 batch）、多 GPU 多节点部署。优势：NVIDIA GPU 上性能极致，适合 H100/A100 大规模部署。\n\n扩展延伸：开源生态中的其他框架：1）SGLang（2024）——RadixAttention（基于 Trie 的 KV Cache 自动复用），支持结构化 Prompt 生成（类似 Guidance 但集成在 vLLM 内），支持 JSON Mode、约束解码。2）LLama.cpp——CPU/Apple Silicon 首选，无 GPU 依赖，GGUF 量化格式生态成熟。3）Ollama——基于 llama.cpp 的上层封装，用户体验最好（一条命令部署），适合开发和测试环境。选型建议：API 服务生产部署 → vLLM；NVIDIA 专用硬件极致性能 → TensorRT-LLM；HuggingFace 模型快速实验 → TGI；个人电脑/CPU 推理 → llama.cpp/Ollama。",
+    "hints": [
+      "vLLM 的 PagedAttention 和 TGI 的 Continuous Batching 优化的是同一个问题的不同方面吗",
+      "TensorRT-LLM 为什么在非 NVIDIA 硬件上无法使用"
+    ],
+    "tags": ["LLM", "推理优化", "vLLM", "TGI", "TensorRT-LLM"]
   }
 ]

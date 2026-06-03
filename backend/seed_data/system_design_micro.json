@@ -68,5 +68,57 @@
     "answer": "答案：配置中心核心组件包括配置存储、管理后台、客户端 SDK 和推送通道。实现方式分推模式和拉模式。\n\n解析：拉模式（Polling）：客户端定时从配置中心拉取全量或增量配置。实现简单，客户端主动控制刷新频率。缺点：实时性不够（有延迟窗口），频繁拉取浪费资源（即使配置没变）。推模式（Long Polling/WebSocket）：服务端在配置变更时主动推送。Apollo 使用 Http Long Polling（客户端发起长连接请求，服务端hold住，60s 超时或配置变更时返回）。Nacos 支持 Push 和 Pull 双模式。\n\n扩展延伸：主流配置中心对比：1）Apollo（携程）——功能最全，多环境/多集群/灰度发布/权限管控，配置变更实时推送，架构相对重。2）Nacos（阿里）——配置中心 + 注册中心合一体，支持配置变更 Hook 回调。3）Consul（HashiCorp）——生态好（Service Mesh 集成），KV Store 做配置。配置中心的设计要点：1）配置变更的版本管理和回滚。2）配置变更的审计日志。3）灰度发布——只推送给部分实例验证。4）配置热加载——Spring Cloud Config 的 @RefreshScope + /actuator/refresh。5）监听机制——配置变更后执行回调。",
     "hints": ["Apollo 的长轮询实现原理", "配置中心和注册中心能否合并"],
     "tags": ["系统设计", "配置中心", "微服务"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计分布式链路追踪系统",
+    "content": "如何设计一个分布式链路追踪系统？Trace、Span、SpanContext 的核心概念是什么？",
+    "answer": "答案：Trace 代表一次完整的请求链路（树状结构），Span 是链路中的一个操作单元，SpanContext 携带元数据在服务间传递。核心设计：全局唯一的 TraceID + 每个 Span 的 SpanID + ParentSpanID 构建层级关系。实现方式：在请求入口生成 TraceID，通过 HTTP Header（如 `x-request-id`、`uber-trace-id`）透传到下游服务，每经过一个服务创建一个子 Span。\n\n解析：Google Dapper 论文（2010）奠定了分布式追踪的理论基础，核心设计包括：1）采样——全部追踪会产生海量数据（高 QPS 服务每秒数万 Span），通常用自适应采样（根据流量动态调整采样率）或头部采样（只采样最慢的请求）。2）数据收集——Span 数据异步上报到 Collector，不阻塞业务逻辑。3）数据存储——Elasticsearch（全文搜索）、Cassandra（高写入）、ClickHouse（OLAP 分析）。\n\n扩展延伸：主流实现对比：1）Jaeger（CNCF 毕业项目，Uber 开源）——支持 OpenTelemetry 协议，All-in-One 模式适合小团队。2）Zipkin（Twitter 开源）——较早的分布式追踪系统，功能稳定但生态不如 Jaeger 活跃。3）SkyWalking（Apache，中国广泛使用）——无需业务代码侵入（Java Agent 自动注入），支持多种后端存储。推荐现在开始使用 OpenTelemetry API（统一规范，厂商无关），后端用 Jaeger 或 SkyWalking。",
+    "hints": [
+      "TraceID 如何在 HTTP 和 RPC 调用间传递",
+      "为什么需要采样？100% 采样有什么问题"
+    ],
+    "tags": ["系统设计", "可观测性", "链路追踪", "OpenTelemetry"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计一个 S3 兼容的对象存储系统",
+    "content": "如果让你设计一个简化的对象存储系统（类似 S3/MinIO），核心架构怎么设计？",
+    "answer": "答案：对象存储的核心组件：Gateway（API 层）→ Metadata Service（元数据管理）→ Storage Nodes（数据存储）+ Data Placement（数据放置策略）。\n\n解析：对象存储的关键设计维度：1）数据分片——文件分块（如 64MB 一块），每块独立存储和冗余。去重（Deduplication）：相同内容的块只存一份。2）元数据管理——存对象名 → 分块列表 → 节点位置。瓶颈点：元数据服务的扩展性和读写性能。设计上（像 HDFS 的 NameNode 一样）需要 HA 架构（主备 + Raft 协议）。3）数据放置策略——三副本（简单但存储成本 3 倍）或纠删码（Erasure Coding，如 Reed-Solomon 12+4：16 块中任意 12 块可恢复，存储成本仅 1.33 倍）。4）数据一致性——写操作的 Read-after-write 一致性保证。5）小文件优化——大量小文件会导致元数据膨胀和磁盘 IOPS 瓶颈，合并存储 + 预加载缓存是常用优化。\n\n扩展延伸：真实系统架构参考：1）MinIO——轻量级对象存储，用纠删码实现高可用，支持 S3 API，适合私有化部署。2）Ceph RADOS——CRUSH 算法实现无中心寻址（不需中心元数据节点），对象直接通过哈希计算确定位置。3）AWS S3 的单区/跨区存储类设计（标准 vs IA vs Glacier 冷存储）。4）对象存储不适合的场景：高随机 IOPS 的小文件读写（数据库类型负载）。",
+    "hints": [
+      "纠删码和副本的存储成本差异",
+      "小文件对象存储的性能瓶颈在哪里"
+    ],
+    "tags": ["系统设计", "对象存储", "S3", "MinIO"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计一个通知推送系统",
+    "content": "如何设计一个支持多渠道（邮件、短信、App Push）的通知推送系统？",
+    "answer": "答案：核心架构：API 网关接收请求 → 消息队列削峰 → 路由模块分发到对应渠道适配器 → 第三方发送 → 回调处理 + 重试机制。\n\n解析：关键设计维度：1）统一消息格式——发送方只需指定 recipient、title、body、channel（邮件/SMS/Push）、template_id，不关心具体渠道实现。渠道适配器负责转换格式和调用第三方 API。2）去重机制——业务方可能重复请求，用唯一 ID（message_id）做幂等处理。已经发送过的消息不再发送。3）优先级和限流——系统通知 > 营销推送；每个渠道有限流配置（如短信 10 条/分钟/人），防止打到接口上限。4）重试机制——发送失败 → 进入重试队列（指数退避：30s、2min、10min、1h、24h）。超过最大重试次数进入死信队列人工处理。5）死信队列 —— 多次发送失败的请求进入死信，人工介入或补偿处理。6）反馈回传——每个渠道回传送达/已读/失败状态，供业务方查询。\n\n扩展延伸：高可用设计：1）第三方通道冗余——每个渠道至少配置两个供应商（如短信用阿里云 + 腾讯云），主通道故障自动切换。2）模板管理——消息模板支持变量替换（`{user_name}` → 张三），审核流程（防止误发营销消息）。3）灰度发布——新模板先发给 1% 用户验证，没问题再全量。4）注意合规——营销短信要带退订链接，邮件要符合 CAN-SPAM 法案，App Push 需要用户授权。",
+    "hints": [
+      "如何保证消息不重复发送（至少一次）",
+      "第三方通道故障时如何自动切换"
+    ],
+    "tags": ["系统设计", "通知", "推送", "消息"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计一个实时直播系统",
+    "content": "请设计一个支持百万并发观看的直播系统架构，包括推流和拉流流程。",
+    "answer": "答案：推流端 → 接入层（负载均衡） → 转码集群 → CDN → 拉流端观看。核心流程：推流（RTMP/WebRTC）→ 转码（HLS/DASH）→ 分发（CDN 边缘节点）。\n\n解析：1）推流协议——RTMP（Adobe，低延迟但 TCP 长连接，手机端支持差）、WebRTC（端到端延迟 <1s，适合连麦和互动直播，P2P 节省带宽，需信令服务器 + SFU/MCU）、SRT（基于 UDP 的可靠传输，适合不稳定网络）。2）转码（Transcoding）——拉流端设备多样，需转出多码率（如 1080p/720p/480p/360p），HLS 切分成 5-10 秒的 TS 分片。HLS 延迟较高（10-30s），LL-HLS（Low-Latency HLS）可降到 2-5s。3）分发——自建源站 + CDN 边缘节点（就近拉流）。CDN 厂商如果同时服务推流和拉流，回源带宽是瓶颈。4）关键挑战——首帧延迟优化（预加载 + 快速启动）、大规模并发时源站带宽、动态自适应码率（ABR，根据客户端网络状况切换码率）。\n\n扩展延伸：架构升级路径：1）百万级——单区域 CDN 分发足够，源站 3-5 台服务器做转码。2）千万级——多区域源站部署，DNS 或 Anycast 路由到最近区域；转码集群弹性伸缩；热门流提前预热到 CDN 边缘。3）亿级——P2P 分发（多人同时观看同一直播时，互相分享数据块，降低 CDN 带宽，如 WebRTC 的 data channel 或自研 P2P 插件）。4）亚马逊 Twitch 实践中：视频分块多线程并行下载、客户端预测缓冲、自适应码率决策引擎。",
+    "hints": [
+      "HLS 和 RTMP 的延迟差异和适用场景",
+      "CDN 分发直播流时回源压力如何解决"
+    ],
+    "tags": ["系统设计", "直播", "CDN", "流媒体"]
   }
 ]
