@@ -198,5 +198,70 @@
     "answer": "答案：ESM 是 ECMAScript 标准模块系统，CommonJS 是 Node.js 的传统模块系统。两者在语法、加载方式、静态分析能力上有本质区别。\n\n解析：1）语法——CJS 使用 require/module.exports（运行时加载），ESM 使用 import/export（静态结构）。2）加载时机——CJS 同步加载（require 时执行模块），ESM 异步加载（import 声明提升，模块在解析阶段就确定了依赖关系）。3）值传递——CJS 导出的是值的浅拷贝（exports 对象），ESM 导出的是值的实时绑定（live binding），导入导出共享同一内存位置。4）静态分析——ESM 的静态结构使打包工具能做 Tree Shaking（删除未使用的导出），CJS 无法静态分析导出，Tree Shaking 几乎不可能。5）循环依赖——CJS 在循环依赖中可能拿到未初始化的值（undefined），ESM 通过 live binding 可以正确处理。\n\n扩展延伸：实际项目中的混合使用：1）package.json 的 type 字段——type: \"module\" 启用 ESM，type: \"commonjs\" 或省略用 CJS。2）.mjs / .cjs 扩展名强制指定模块系统。3）Node.js 从 12.x 开始稳定支持 ESM，16.x 成为推荐。4）打包工具的处理——Vite 开发环境用 ESM（原生浏览器模块），构建用 Rollup（转 CJS + Tree Shaking）；Webpack 把所有模块包装为自己的运行时。5）动态导入——CJS 没有原生动态方案（require 本身就是动态），ESM 的 import() 返回 Promise，支持代码分割。",
     "hints": ["为什么 ESM 能做 Tree Shaking 而 CJS 不能", "循环依赖在 CJS 和 ESM 中的表现差异"],
     "tags": ["JavaScript", "模块化", "构建"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TypeScript 类型系统核心",
+    "content": "TypeScript 的类型系统有哪些核心概念？泛型、联合类型、交叉类型、工具类型（Partial/Pick/Omit）分别如何使用？",
+    "answer": "答案：TypeScript 类型系统在 JavaScript 基础上增加了静态类型检查。核心概念包括接口（interface）、类型别名（type）、泛型（generics）、联合类型（|）、交叉类型（&）、字面量类型、类型守卫、条件类型和映射类型。\n\n解析：1）联合类型——A | B 表示值可以是 A 或 B 类型，通过类型守卫（typeof、instanceof、in）或可辨识联合（Discriminated Union）收缩类型范围。2）交叉类型——A & B 表示同时满足 A 和 B 类型，常用于合并多个对象的类型。3）泛型——<T> 定义类型参数，函数/类/接口可以接受多种类型，同时保持类型安全。常用泛型约束 extends。4）工具类型——Partial<T>（所有属性可选）、Required<T>（所有属性必填）、Pick<T, K>（选取部分属性）、Omit<T, K>（排除部分属性）、Exclude<T, U>（从联合类型中排除）、ReturnType<T>（获取函数返回类型）。\n\n扩展延伸：高级类型技巧：1）条件类型——T extends U ? X : Y，根据条件推断类型（三目运算符在类型层面的等价）。2）infer 关键字——在条件类型中提取类型的某一部分（如提取 Promise<T> 中的 T）。3）模板字面量类型——`${string}-${number}` 格式的字符串类型。4）类型体操的意义——极端的类型技巧（ts-challenges）在生产代码中应谨慎使用，目标是增强类型安全，不是炫技。生产建议：优先使用 interface（Open 原则——可合并声明），联合/交叉类型用 type。复杂工具类型优先从 utility-types 库取，不自己写。",
+    "hints": [
+      "interface 和 type 互相可以继承/扩展吗",
+      "infer 关键字在条件类型中的典型用途是什么"
+    ],
+    "tags": ["TypeScript", "类型", "泛型"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Hooks 实现原理",
+    "content": "请解释 React Hooks（useState/useEffect/useCallback）的底层实现原理。为什么 Hooks 不能写在条件语句中？",
+    "answer": "答案：Hooks 的底层是基于单向链表实现的。每个组件对应一个 Fiber 节点，Fiber 节点上维护一个 Hooks 链表（memoizedState）。每次渲染时，React 按 Hooks 调用顺序依次从链表中读取/更新状态。\n\n解析：useState 实现：1）首次渲染——按调用顺序在 Fiber.memoizedState 上创建 Hook 节点（包含 state 和 queue，queue 中存放本次更新需要处理的动作）。2）更新（setState）——将新 state 更新放入 Hook 节点的 queue 链表中，标记组件需要重新渲染。3）重新渲染（Re-render）——按 Hook 调用顺序遍历链表，合并 queue 中的更新计算出新的 state。这就是为什么 Hooks 不能写在条件语句或循环中——因为每次渲染 Hooks 调用顺序必须一致，否则 React 无法将当前 Hook 与链表中的节点正确匹配。\n\n扩展延伸：useEffect 的实现：同样在 memoizedState 链表上，但存储的是 effect 对象（包含 create/destroy/deps）。每次渲染后，React 比较 deps 是否变化，变化则重新执行 effect。Layout 时机：useEffect 是异步（commit 之后执行的），useLayoutEffect 是同步（commit 阶段同步执行的）。useMemo/useCallback：useMemo 缓存计算结果，useCallback 缓存函数引用。两者都依赖 deps 比较——浅比较（Object.is）。React 18 的自动批处理：多次 setState 在一个事件处理函数中会合并为一次 re-render，这与 Hooks 链表的工作方式无关，而是 Scheduler 层的行为。",
+    "hints": [
+      "React 中为什么不能在条件语句中使用 Hooks",
+      "useMemo 和 useCallback 的缓存依赖比较机制"
+    ],
+    "tags": ["React", "Hooks", "Fiber", "原理"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HTTP 协议演进",
+    "content": "请对比 HTTP/1.1、HTTP/2、HTTP/3 的核心区别和性能优化点。",
+    "answer": "答案：HTTP/1.1 文本协议 + 串行请求；HTTP/2 二进制分帧 + 多路复用；HTTP/3 QUIC（基于 UDP） + 0-RTT 连接。三代协议的核心演进方向是降低延迟、提升并发。\n\n解析：HTTP/1.1 的问题：1）队头阻塞（Head-of-Line Blocking）——一个连接上请求串行执行，前面的请求没返回后面的无法发送。2）冗余头部（无状态压缩）——每个请求携带完整 HTTP Headers 信息。3）只能用多个 TCP 连接（通常 6-8 个）缓解。\n\nHTTP/2 的改进：1）二进制分帧——将 HTTP 消息拆为 HEADERS 帧和 DATA 帧，所有帧在一个 TCP 连接上多路复用（双向并发）。2）头部压缩（HPACK）——客户端和服务端维护相同的静态/动态头部表，只传输索引差异。3）服务器推送（Server Push）——服务端提前推送客户端需要的资源（如 HTML 中的 CSS/JS），减少请求往返。问题：TCP 层的队头阻塞仍然存在（TCP 丢包时所有帧等待重传）。\n\n扩展延伸：HTTP/3（QUIC，基于 UDP）：1）0-RTT 连接——首次连接 1-RTT，再次连接 0-RTT（缓存会话信息）。2）无队头阻塞——UDP 无 TCP 的严格序列号要求，一个流丢包不影响其他流。3）连接迁移——通过 Connection ID 标识连接，IP 地址变化（如 WiFi 切移动网络）不中断连接。4）内置 TLS 1.3——加密是强制的（HTTP/2 的加密是可选的）。部署现状：Google（YouTube/Search）和 Meta 全面使用 QUIC，CDN 厂商（Cloudflare/Akamai）广泛支持 HTTP/3。浏览器兼容：Chrome/Firefox/Safari/Edge 都已支持 HTTP/3。",
+    "hints": [
+      "HTTP/2 的多路复用解决了什么问题、没解决什么问题",
+      "QUIC 的 0-RTT 连接是如何实现的安全前提是什么"
+    ],
+    "tags": ["HTTP", "协议", "网络", "HTTP/2", "HTTP/3"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端包体积优化",
+    "content": "如何进行前端包体积优化？Tree Shaking、Code Splitting、资源压缩分别是如何工作的？",
+    "answer": "答案：包体积优化的核心策略：Tree Shaking 删除未使用的代码，Code Splitting 将包拆为按需加载的 chunk，资源优化（压缩/图片优化/格式选择）减少传输体积。Vite/Rollup 和 Webpack 都支持这些功能。\n\n解析：1）Tree Shaking——依赖 ES Module 的静态结构（import/export 在文件顶部声明，运行时不能再修改）。打包工具通过 AST 分析标记「被使用的导出」，未使用的模块级代码（文件顶层声明但未被 import）在压缩阶段被移除（dead code elimination）。注意：CommonJS 的 require 无法 Tree Shaking——因为运行时才能确定 require 了什么。副作用标记——package.json 的 sideEffects: false 告诉打包工具「我这个模块可以安全地 Tree Shake」。2）Code Splitting——通过动态 import()（import('./LazyComponent')）将代码拆为独立的 chunk。Vite/Rollup 基于路由分割（每个页面一个 chunk），Webpack 支持更细粒度的 splitChunks 配置（缓存组、第三方库抽离、共享模块去重）。\n\n扩展延伸：具体优化手段和效果：1）JS 压缩——TerserPlugin（Webpack）/ esbuild（Vite）删除注释、缩短变量名，减少 30-50%。2）CSS 压缩——CSS Nano/Optimizer，减少 10-30%。3）图片优化——WebP/AVIF 格式替代 JPEG/PNG（压缩 25-35%），响应式图片（srcSet + sizes 根据屏幕尺寸加载不同大小）。4）字体优化——字体子集化（只加载使用的字符，如中文只加载 2K 常用字而非全量 2 万字）、woff2 格式。5）CDN——部署到 CDN 使资源接近用户，gzip/br 压缩（带宽减少 70-80%）。监控指标：bundle size 超过 500KB（未压缩）应关注，1MB 以上应优化。使用 bundle-analyzer 工具定期检查。",
+    "hints": [
+      "webpack 的 splitChunks 的 chunks: 'all' 和 'async' 有什么区别",
+      "如何发现和移除项目中未被使用的依赖（dead dependencies）"
+    ],
+    "tags": ["性能优化", "Tree Shaking", "Code Splitting", "构建"]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计模式在前端的应用",
+    "content": "请举例说明观察者模式、单例模式、工厂模式、策略模式在前端开发中的实际应用场景。",
+    "answer": "答案：观察者模式（事件发布订阅）、单例模式（全局状态/唯一实例）、工厂模式（UI 组件工厂/API 工厂）、策略模式（表单验证/排序策略）。\n\n解析：1）观察者模式（Observer/Pub-Sub）——EventEmitter/EventTarget 浏览器原生支持。应用：自定义事件（dispatchEvent + addEventListener）、状态管理（Redux/Zustand 的 subscribe + notify）、跨组件通信（mitt/EventBus）。Vue 的响应式系统基于观察者模式（getter 收集依赖，setter 通知更新）。2）单例模式——全局只需一个实例的场景。应用：Vuex/Pinia Store（一个应用一个 store）、Axios 实例（全局统一的拦截器配置）、日志记录器、浏览器全局对象（window/document）。ES Module 的模块缓存天然具有单例特性——同一模块多处 import 共享同一实例。3）工厂模式——根据参数创建不同类型的对象。应用：React 的 createElement（创建不同类型的虚拟 DOM）、图标组件工厂（根据 type 属性返回不同图标的组件）、API 请求工厂（根据 method 和 url 创建不同的请求配置）。4）策略模式——一组可互换的算法类。应用：表单验证策略（不同字段用不同的验证规则）、排序/筛选策略（用户选择「价格升序」或「时间倒序」时切换不同的处理函数）、动画缓动函数（ease-in / ease-out / linear 作为策略互换）。\n\n扩展延伸：设计模式在前端的定位：前端框架（React/Vue）已经内置了大部分常用模式（观察者、策略通过 props/callbacks，工厂通过 JSX 动态组件）。学习设计模式的意义不是「套用模式」，而是培养对抽象和解耦的认知——将变化的逻辑封装起来，不要写死。模式反例：过度设计——一个简单的状态管理不需要上 Redux 的观察者模式；一个简单的弹框不需要 Builder 模式。",
+    "hints": [
+      "观察者模式和发布订阅模式有什么细微区别",
+      "ES Module 的缓存特性如何自然实现了单例模式"
+    ],
+    "tags": ["设计模式", "JavaScript", "架构"]
   }
 ]

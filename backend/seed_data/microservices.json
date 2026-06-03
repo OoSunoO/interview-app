@@ -213,5 +213,70 @@
       "TraceID 如何在跨服务调用中传播"
     ],
     "tags": ["可观测性", "Metrics", "Logs", "Traces", "OpenTelemetry"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Spring Cloud 负载均衡演进",
+    "content": "Spring Cloud 的负载均衡客户端从 Ribbon 演进到 Spring Cloud LoadBalancer 的原因是什么？LoadBalancer 的工作原理是什么？",
+    "answer": "答案：Ribbon（Netflix）进入维护模式后，Spring Cloud 官方推出了 Spring Cloud LoadBalancer（SCL）作为替代。SCL 基于 Reactor 的响应式编程模型，支持阻塞和非阻塞两种模式，默认使用轮询算法。\n\n解析：Ribbon 的命运：2020 年 Netflix 将 Ribbon 等组件置于维护模式，Spring Cloud 2020.0 版（Ilford）开始默认使用 SCL 替代 Ribbon。Rabbit 的工作原理：1）从注册中心获取服务实例列表（如 Nacos 的服务列表缓存）。2）根据负载均衡策略选择实例。3）返回选中的实例 URI。SCL 的配置：spring.cloud.loadbalancer.ribbon.enabled=false（显式禁用 Ribbon）。默认轮询策略（RoundRobinLoadBalancer），可通过 @LoadBalancerClient 自定义策略。\n\n扩展延伸：与 OpenFeign 的配合：Feign 自动使用 LoadBalancer 进行实例选择（负载均衡对应用层透明）。自定义负载均衡策略：1）实现 ReactorServiceInstanceLoadBalancer 接口。2）@Configuration 类中定义 @Bean 返回自定义策略。SCL 的健康检查：默认开启 ping 模式检查实例存活，可配置 spring.cloud.loadbalancer.health-check.interval 控制检测间隔。注意：SCL 的功能比 Ribbon 少（没有区域感知权重、没有重试过滤器等核心高级功能），需要额外依赖 spring-retry 和 Resilience4j 重试实现完整的重试逻辑。",
+    "hints": [
+      "Ribbon 进入维护模式后为什么要迁移到 SCL 而不是继续使用 Ribbon",
+      "SCL 的重试机制与 Ribbon 的 RetryHandler 有什么不同"
+    ],
+    "tags": ["Spring Cloud", "负载均衡", "Ribbon", "LoadBalancer"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务限流算法",
+    "content": "常见的限流算法有哪些？令牌桶、漏桶、滑动窗口分别适用于什么场景？",
+    "answer": "答案：三种主流限流算法：令牌桶（允许突发流量）、漏桶（平滑流量）、滑动窗口（精确控制时间窗口内的请求数）。Sentinel 融合了多种算法——默认用滑动窗口做 QPS 限流，Warm Up 用令牌桶。\n\n解析：1）令牌桶（Token Bucket）——固定速率向桶中添加令牌，每个请求消耗一个令牌。桶有最大容量，所以可以应对突发流量（桶满时积累大量令牌）。适用：允许短时间突发、长期均值受限的场景（如秒杀后恢复期）。2）漏桶（Leaky Bucket）——请求以任意速率进入，以固定速率流出（处理）。超出桶容量的请求被丢弃/排队。适用于需要严格平滑流量的场景（如数据库写入限流，防止写流量飙升）。Nginx 的 limit_req 模块使用漏桶算法。3）滑动窗口（Sliding Window）——将时间分为多个小窗口（如 1s 分为 10 个 100ms 子窗口），维护最近一个完整时间窗口内的请求计数。相比固定窗口（临界突变问题——窗口切换瞬间可能被两倍流量打穿），滑动窗口更加平滑。\n\n扩展延伸：Sentinel 的限流实现——默认用滑动窗口（StatisticSlot + LeapArray），支持直接拒绝/Warm Up（令牌桶，冷启动时速率逐步提升）/匀速排队（漏桶，请求等间隔通过）。Guava RateLimiter 实现的是令牌桶算法（SmoothBursty）和预热器（SmoothWarmingUp）。限流的粒度：接口级别、参数级别（如针对某个商品 ID 限流）、来源级别（如针对某个调用方限流）。限流架构层级：网关层限流（Nginx/Sentinel/Spring Cloud Gateway）+ 应用层限流（Sentinel/Resilience4j）+ 底层资源限流（Redis/数据库连接池限流），层层防护。",
+    "hints": [
+      "固定窗口限流在窗口切换时为什么会被打穿",
+      "Sentinel 的 Warm Up 模式使用了哪种算法变体"
+    ],
+    "tags": ["限流", "令牌桶", "漏桶", "Sentinel"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "重试机制与退避策略",
+    "content": "微服务调用中重试机制的设计原则是什么？指数退避和抖动（Jitter）的作用是什么？",
+    "answer": "答案：重试由失败检测 + 重试次数 + 退避策略 + 幂等性保证四个要素构成。指数退避让重试间隔逐步增大（避免雪崩），Jitter 在退避中加随机偏移（避免惊群效应）。\n\n解析：1）重试的触发条件——只有幂等的请求可以重试（GET 天然幂等、写请求需满足业务幂等）。非幂等操作不要自动重试（如支付扣款）。2）重试次数——通常 1-3 次。超过 3 次大概率说明故障不是瞬时的，重试也没用。3）指数退避（Exponential Backoff）——每次重试的等待时间是上一次的 2 倍：第 1 次 1s，第 2 次 2s，第 3 次 4s，第 4 次 8s。优点：给下游恢复时间，同时不会在恢复后立即涌入大量请求。4）Jitter（抖动）——在退避时间基础上加随机偏移（如 ±50%）：sleep = base * 2^n + random(0, base * 2^n)。效果：大量客户端同时重试时，请求不会同时到达（惊群效应），而是均匀分布。\n\n扩展延伸：重试的实施层级：1）应用层（Feign 重试）——适合业务级别的重试控制。配置：maxRetries=3, maxRetriesOnNextServer=1。2）基础设施层（K8s Readiness Probe + Service）——Pod 不可用时自动从 Service 摘除，请求被其他健康 Pod 接收。3）网络层（TCP 重试）——网络超时 TCP 自动重传，与应用层重试叠加可能导致「重试风暴」（重试放大效应）。上游重试 + 下游超时时间设置不当 → 请求量爆炸。典型错误：Feign 重试 3 次 + 网关重试 2 次 = 单个请求可能产生 6 倍以上的后端请求。原则：只在最外层或最内层做重试。",
+    "hints": [
+      "指数退避的 base 时间应该如何设定",
+      "重试风暴产生的条件和如何预防"
+    ],
+    "tags": ["重试", "退避", "幂等", "稳定性"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "配置中心对比",
+    "content": "请对比 Apollo、Nacos、Spring Cloud Config 三种配置中心的架构差异和适用场景。",
+    "answer": "答案：三者的核心差异：Apollo 功能最全（配置管理平台），Nacos 配置与注册中心一体化，Spring Cloud Config 最简单但功能最弱。\n\n解析：1）Apollo（携程）——架构：ConfigService（无状态，提供配置读取）+ AdminService（管理配置）+ Portal（管理界面）+ 数据库存储。核心优势：配置管理功能全面——多环境/多集群/多 Namespace、配置灰度发布、配置变更 WebHook、权限管理、配置回滚、内容对比。适合企业级集中配置管理。2）Nacos（阿里巴巴）——架构：Nacos Server（内置配置存储和注册发现）。核心优势：与注册中心统一部署，降低运维成本；长轮询实现实时配置更新（即时性优于 Apollo 的周期性拉取）；HTTP API 简单。适合与阿里云/Spring Cloud Alibaba 生态搭配。3）Spring Cloud Config——架构：Config Server（读取 Git 仓库）→ 客户端（首次启动时拉取，后续通过 /monitor 或 Bus 刷新）。核心优势：与 Spring 生态深度集成、支持 Git 做配置版本管理。缺点：默认不支持配置管理界面、无权限控制、不支持灰度、配置变更需配合 Bus 才能推送到所有实例。\n\n扩展延伸：选型建议：大型企业（多环境/多团队/强管控需求）→ Apollo。与 Nacos 注册中心搭配 → Nacos Config。Spring Boot 中小项目已用 Git 管理配置 → Spring Cloud Config。配置推送时效：Apollo 实时推送（WebSocket 长连接）≈ Nacos 长轮询（1s 内感知）> Spring Cloud Config 轮询（默认每分钟，需 Bus 加速实时推送）。生产配置管理切记：所有配置变更应走审批流程（Apollo/Nacos 的灰度发布和权限审批是安全基础）。",
+    "hints": [
+      "Apollo 为什么要将 ConfigService 和 AdminService 分离",
+      "配置中心配置变更的灰度发布流程怎么设计"
+    ],
+    "tags": ["配置中心", "Apollo", "Nacos", "Spring Cloud Config"]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务监控实战架构",
+    "content": "一个完整的微服务监控体系应该包含哪些层次？Metrics + 链路 + 日志如何协同工作？",
+    "answer": "答案：完整微服务监控分四层：基础设施层监控（节点/网络/存储）→ 平台层监控（容器/K8s/中间件）→ 应用层监控（服务/API/业务指标）→ 用户体验层监控（前端/APP）。三层可观测性工具（Metrics/Traces/Logs）通过 TraceID 关联。\n\n解析：各层监控工具及关注点：1）基础设施层——Node Exporter + Prometheus 监控 CPU/内存/磁盘/网络，Grafana 可视化。关注节点健康、网络延迟、磁盘空间。2）平台层——K8s 监控（kube-state-metrics + cAdvisor）监控 Pod/Deployment 状态、集群资源利用率。中间件监控（Redis/MySQL/Kafka 的 Exporter）。3）应用层——JVM 监控（Micrometer + Prometheus JVM Exporter），关注 GC/线程/内存；业务监控（自定义 Metrics：订单量/支付成功率/QPS/P99 延迟）。4）用户体验层——RUM（Real User Monitoring）采集 LCP/FID/CLS，Apdex 评分衡量满意度。\n\n扩展延伸：三者的协同方式：1）Metrics 发现全局异常（P99 延迟飙升）→ 查看 Dashboard 确定异常服务和时间段。2）Traces 定位具体链路的瓶颈（按 TraceID 查看异常请求的调用链——慢在哪一个服务/哪个方法）。3）Logs 分析根因（从 TraceID 关联的日志中找到具体的错误消息和堆栈）。OpenTelemetry 统一方案：SDK 集成后自动生成 Metrics + Traces + Logs。存储选型：Metrics → Prometheus + Thanos（长期存储），Traces → Jaeger/Tempo，Logs → Loki（成本低，与 Prometheus 标签无缝关联）。",
+    "hints": [
+      "Metrics → Traces → Logs 三层联动排查问题的典型流程",
+      "OpenTelemetry Collector 在整个监控架构中充当什么角色"
+    ],
+    "tags": ["监控", "可观测性", "Micrometer", "OpenTelemetry"]
   }
 ]

@@ -213,5 +213,70 @@
       "什么时候应该用 Operator 而不是 Helm"
     ],
     "tags": ["K8s", "Operator", "Controller", "自动化"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Docker 底层原理：Namespace 与 Cgroup",
+    "content": "Docker 实现资源隔离和限制的底层技术是什么？Namespace 和 Cgroup 分别起什么作用？",
+    "answer": "答案：Docker 利用 Linux Namespace 实现资源隔离（容器看到独立的进程/网络/文件系统），利用 Cgroup 实现资源限制（CPU/内存/IO 配额）。UnionFS（OverlayFS）实现分层镜像。\n\n解析：Namespace 隔离的七种资源：1）PID Namespace——容器内进程树独立（PID 从 1 开始，看不到宿主机其他进程）。2）Network Namespace——独立网络栈（网卡、路由表、iptables）。3）Mount Namespace——独立文件系统挂载点。4）UTS Namespace——独立主机名和域名。5）IPC Namespace——独立进程间通信资源（信号量/消息队列）。6）User Namespace——独立用户 ID 映射（容器内 root 可映射为宿主机非 root 用户）。7）Cgroup Namespace（Linux 4.6+）——独立 Cgroup 视图。\n\n扩展延伸：Cgroup（Control Groups）资源限制：1）cpu.shares——CPU 时间分配权重。2）memory.limit_in_bytes——内存上限（超过触发 OOM Kill）。3）blkio.throttle.read_bps_device——磁盘 IO 读取速度限制。4）cpuset——绑定特定 CPU 核心（对性能敏感的容器使用）。Cgroup 版本：Cgroup v1（传统）和 Cgroup v2（Linux 4.5+，RHEL 8+/Ubuntu 21.10+ 默认）。v2 简化了层级结构（统一到一个层次树），解决了 v1 中不同控制器分属不同层级导致的问题。Docker 未实现的隔离——共享内核（所有容器共享宿主机内核），所以不能运行与宿主机不同操作系统的容器（如 Linux Docker 上不能跑 Windows 容器）。",
+    "hints": [
+      "Docker 的 Namespace 隔离为什么不包括时间",
+      "Cgroup v1 和 v2 的核心架构区别是什么"
+    ],
+    "tags": ["Docker", "Namespace", "Cgroup", "容器原理"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "CI 工具对比",
+    "content": "对比 Jenkins、GitHub Actions、GitLab CI 的核心差异和适用场景。",
+    "answer": "答案：Jenkins 老牌自托管 CI/CD、功能强大但运维复杂；GitHub Actions 云原生 CI（与 GitHub 仓库深度集成）；GitLab CI 一体化 DevOps 平台（代码仓库+CI/CD 集成度最高）。\n\n解析：1）Jenkins——最成熟的 CI 工具，插件生态极其丰富。Java 实现的 Master/Agent 架构，支持分布式构建。优势：灵活（Pipeline as Code 的 Groovy DSL、共享库），支持任意构建环境，插件 1800+。劣势：配置复杂（UI 配置多），需要自己维护 Master 和 Agent，插件版本兼容问题。适合：企业自建 CI/CD 已有大量存量 Pipeline。2）GitHub Actions——通过 .github/workflows/*.yml 定义流水线，HCL 语法。优势：零运维（云执行）、与 GitHub 原生集成（PR/Issue/Release 触发）、市场有大量共享 Actions。劣势：不支持自托管 Runner 时执行环境受限（硬盘/网络）、并发限制（免费版 20 并发）、调试不方便。适合：GitHub 托管的开源项目和中型团队。3）GitLab CI——.gitlab-ci.yml YAML 流水线。优势：一个平台管代码 + CI + CD + 容器仓库（无需集成多个系统），自托管 Runner 部署简单。适合：使用 GitLab 企业版的全栈 DevOps 团队。\n\n扩展延伸：现代 CI 核心诉求：速度（构建缓存、并行 Stage/Job、只构建变更部分）、开发者体验（Pull Request 内直接看到测试结果）、安全（密钥管理（Settings → Secrets）、Dependency Review）。CI 流水线设计的反模式：Pipeline 过长（超过 30 分钟应该考虑拆分）、在 CI 中跑 E2E 全量测试（应分层到不同的 Pipeline）、CI 与 CD 混在一起（CI 做构建测试校验，CD 做部署发布——职责分离）。",
+    "hints": [
+      "自托管 Runner 和云执行 Runner 的选择标准",
+      "CI Pipeline 速度和可靠性如何平衡"
+    ],
+    "tags": ["CI/CD", "Jenkins", "GitHub Actions", "GitLab CI"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 网络模型：CNI 与插件对比",
+    "content": "请解释 K8s 网络模型的基本要求。Calico、Flannel、Cilium 各自的特点和适用场景是什么？",
+    "answer": "答案：K8s 网络模型要求：每个 Pod 有独立 IP（Pod 间不经过 NAT 直接通信）、节点上 Pod 可访问所有节点上的所有 Pod。CNI（Container Network Interface）是实现这一模型的插件标准。\n\n解析：CNI 核心职责：1）分配 Pod IP（从 IP 池中取）。2）配置 Pod 网络（在 Pod 的网络命名空间中配置网卡/路由）。3）保证跨节点 Pod 通信。主流 CNI 插件对比：1）Flannel——覆盖网络（Overlay），使用 VXLAN 或 host-gw（网关模式）。最简配置，性能中等。适用：中小规模集群（< 50 节点），对网络性能不敏感、追求部署简单。2）Calico——基于 BGP 路由协议（没有 Overlay 封装，直接在三层路由），性能优（原生路由带宽损耗 < 5%）。支持 NetworkPolicy（K8s 原生网络策略），支持 eBPF（Calico v3.13+）提升性能。适用：大规模集群、对性能敏感、需要 NetworkPolicy 的场景。3）Cilium——基于 eBPF（Linux 内核扩展），所有网络/安全/可观测性功能都用 eBPF 实现。性能极高（绕过 iptables，直接在内核中处理转发）。支持 NetworkPolicy、可观测性（Hubble）、L7 协议感知（HTTP/gRPC/Kafka 流量可视化）。适用：K8s 1.20+、Linux 5.10+ 内核、追求极致性能和安全、需要深度可观测性的生产集群。\n\n扩展延伸：CNI 的选择因素：1）性能——Overlay（VXLAN）有封装开销（约 10-15% 带宽损失）。纯路由（BGP/Calico）或 eBPF（Cilium）接近原生性能。2）功能需求——需要 NetworkPolicy → Calico/Cilium。需要 L7 流量可视化 → Cilium + Hubble。需要多网络接口（Multus 插件）。3）基础设施——在公有云上（AWS/Azure/GCP），云厂商自带的 CNI（如 AWS VPC CNI、Azure CNI）集成度最高（Pod IP = VPC IP，不经过 NAT 或 tunneling）。建议：新集群首选 Cilium（eBPF 是未来趋势），中大规模 Calico 也是非常成熟稳定的选择。",
+    "hints": [
+      "Overlay 网络（VXLAN）为什么会有性能损耗",
+      "Calico 的 BGP 模式和 IPIP 模式有什么区别"
+    ],
+    "tags": ["K8s", "CNI", "Calico", "Cilium", "Flannel"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "FinOps 与云成本优化",
+    "content": "什么是 FinOps？云原生架构下如何做成本优化和成本治理？",
+    "answer": "答案：FinOps（Finance + DevOps）是将财务责任引入云消费的文化和操作框架，核心是让工程团队对云成本负责。三阶段：Inform（可见性）→ Optimize（优化）→ Operate（持续运营）。\n\n解析：1）Inform（可见性）——建立成本分摊能力。关键做法：给所有云资源打标签（Tag/Label，如 team=payment, env=prod, project=order），按团队/服务/环境维度拆分成本。工具：多云成本管理平台。2）Optimize（优化）——识别浪费和降低成本。常见策略：利用预留实例（Reserved Instance）或节省计划（Savings Plans）可节省 30-60%、使用 Spot 实例处理无状态容错工作负载（节省 60-90%）、自动停止非生产环境的闲置资源（夜间/周末）、K8s 集群垂直/水平 Pod 自动伸缩（HPA/VPA 减少资源过量配置）。3）Operate（持续运营）——预算告警（设置预算阈值，超支自动通知）、成本异常检测（ML 驱动的成本异常告警）、定期成本审查会议（每周 Review 成本趋势和优化机会）。\n\n扩展延伸：K8s 成本优化实战：1）资源 requests/limits 合理性——KRR（Kubernetes Resource Recommender）根据历史数据推荐合理的资源申请，通常可减少 30-50% 资源浪费。2）Cluster Autoscaler 配置——确保节点池在低负载时自动缩容（避免长时间空跑）。3）利用 K8s 提供的成本分摊方案——OpenCost（CNCF 项目，按 Namespace/Deployment/Pod 粒度分摊成本）。4）对象存储替代持久卷——日志/备份等冷数据用对象存储（S3/OSS）替代 PV，成本降低 80%+。注意：成本优化不能以牺牲可靠性为代价——预留实例覆盖率不过高（留一定比例的按需应对突增）。",
+    "hints": [
+      "为什么强调成本分摊（Chargeback/Showback）是 FinOps 的第一步",
+      "OpenCost 如何计算 K8s 中每个 Pod 的精确成本"
+    ],
+    "tags": ["FinOps", "成本", "云原生", "优化"]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 集群版本升级策略",
+    "content": "Kubernetes 集群升级的最佳实践是什么？如何安全地跨小版本升级？升级过程中应该注意哪些风险？",
+    "answer": "答案：K8s 升级遵循「Never Upgrade Two Minor Versions at Once」原则——只能逐小版本升级（如 1.27 → 1.28 → 1.29）。核心流程：先升级控制面组件，再升级节点。\n\n解析：升级前的准备工作：1）检查 API 弃用——每个版本会移除一些已弃用的 API 版本（APIRemoval）。用 `kubectl convert` 检查集群中是否还在使用即将移除的 API。2）备份 etcd——升级前对 etcd 做快照（etcdctl snapshot save），这是升级失败后的关键回滚手段。3）检查 Pod Security 策略——升级前后 PSS/PodSecurity 的行为可能变化。4）集群只读——升级期间避免关键变更。\n\n升级步骤（以 kubeadm 为例）：1）更新 kubeadm 版本 → kubeadm upgrade plan（查看可升级版本和注意事项）。2）升级控制面：kubeadm upgrade apply v1.28.x → 升级 kubelet/kubectl → 重启 kubelet。3）等待控制面稳定（所有 API Server/Scheduler/Controller-Manager Pod 正常）。4）升级 Worker 节点：先封锁节点（kubectl cordon）→ drain 驱逐 Pod → 升级 kubelet/kube-proxy → 重启 kubelet → 解除封锁（uncordon）。\n\n扩展延伸：升级风险与缓解：1）API 兼容性破坏——提前运行 `kubectl convert` + `kubent`（Kube No Trouble 工具）扫描已弃用 API。2）升级过程中断——控制面升级不影响已有 Pod（Pod 继续运行），只影响控制面自身的可用性（创建/更新资源不可用）。3）回滚——如果升级失败，用 etcd 快照恢复 + 降级 kubeadm/kubelet 版本。工具化升级：1）Kops——自动逐节点滚替，控制面先升级再节点。2）Kubespray——Ansible 驱动的升级，可配置升级策略。3）托管的 K8s（EKS/AKS/GKE）——云厂商一键升级，但 Worker 节点仍有滚动。注意：不要跨多个次版本升级（如 1.26 → 1.28）。如果确实需要，先升级到 1.27 再升 1.28。",
+    "hints": [
+      "控制面升级期间为什么已有 Pod 不受影响",
+      "kubeadm upgrade apply 和 kubeadm upgrade node 的区别"
+    ],
+    "tags": ["K8s", "升级", "运维", "高可用"]
   }
 ]
