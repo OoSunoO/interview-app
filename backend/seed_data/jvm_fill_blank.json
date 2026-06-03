@@ -1093,5 +1093,85 @@
       "每个加载器先将请求委派给父加载器（依次向上到 Bootstrap ClassLoader）",
       "父加载器找不到类时，子加载器才尝试自己加载"
     ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JVM 对象结构",
+    "content": "在 HotSpot JVM 中，一个 Java 对象在堆中的结构由三部分组成：对象头（包含 ___(1)___ 和 ___(2)___）、实例数据和对齐填充。",
+    "answer": "{\"correct\": [[\"Mark Word\", \"标记字\"], [\"Klass Pointer\", \"类指针\", \"类型指针\"]], \"distractors\": [[\"对象头\"], [\"实例数据\"]]}",
+    "hints": [
+      "对象头包括运行时元数据和类型指针两部分"
+    ],
+    "tags": [
+      "JVM",
+      "对象",
+      "内存"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "GC 停顿分析",
+    "content": "JVM Full GC 通常包括标记、___(1)___ 和 ___(2)___ 三个阶段。",
+    "answer": "{\"correct\": [[\"清扫\", \"Sweep\"], [\"压缩\", \"Compact\", \"Compaction\"]], \"distractors\": [[\"复制\"], [\"整理\"]]}",
+    "hints": [
+      "Mark-Sweep-Compact 是 Full GC 的三个典型阶段"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "停顿"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM 命令行诊断工具",
+    "content": "在排查 JVM 问题时常使用命令行工具：___(1)___ 查看虚拟机进程，___(2)___ 导出堆快照。",
+    "answer": "{\"correct\": [[\"jps\", \"jps -l\"], [\"jmap\", \"jmap -dump\"]], \"distractors\": [[\"jstack\"], [\"jstat\"]]}",
+    "hints": [
+      "jps 和 jmap 是最常用的 JVM 诊断工具"
+    ],
+    "tags": [
+      "JVM",
+      "诊断",
+      "工具"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JVM 编译模式",
+    "content": "HotSpot JIT 编译模式包括 ___(1)___（客户端编译器）、___(2)___（服务端编译器）和 Tiered Compilation（分层编译）。",
+    "answer": "{\"correct\": [[\"C1\", \"Client Compiler\"], [\"C2\", \"Server Compiler\", \"Opto\"]], \"distractors\": [[\"Graal\"], [\"AOT\"]]}",
+    "hints": [
+      "C1 注重启动速度，C2 注重峰值性能"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "编译"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "直接内存与零拷贝",
+    "content": "Java NIO 使用 ___(1)___ 进行直接内存分配，零拷贝通常通过 ___(2)___ 或 transferTo 方法实现。",
+    "answer": "{\"correct\": [[\"ByteBuffer.allocateDirect\", \"DirectByteBuffer\", \"allocateDirect\"], [\"FileChannel\", \"FileChannel.map\"]], \"distractors\": [[\"MappedByteBuffer\"], [\"SocketChannel\"]]}",
+    "hints": [
+      "allocateDirect 在堆外分配内存，FileChannel.transferTo 实现零拷贝"
+    ],
+    "tags": [
+      "JVM",
+      "NIO",
+      "内存"
+    ]
   }
 ]

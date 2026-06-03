@@ -1183,5 +1183,95 @@
       "happens-before",
       "内存模型"
     ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 调优常用参数分类",
+    "content": "请分类介绍 JVM 调优的常用参数。",
+    "answer": "答案：JVM 调优参数大致分为堆配置、GC 选择、日志诊断和性能优化四类\n\n解析：堆配置：-Xms（初始堆大小，通常设为与 -Xmx 相同避免运行时调整）、-Xmx（最大堆，通常为系统内存的 50-70%）、-Xmn（年轻代大小，常用堆的 1/3-1/4）、-XX:MetaspaceSize/-XX:MaxMetaspaceSize（元空间）。GC 选择：-XX:+UseG1GC（JDK 9 默认，低延迟）、-XX:+UseParallelGC（高吞吐，适合批处理）、-XX:+UseZGC（极低延迟，适合大堆 >100GB）。G1 特有参数：-XX:MaxGCPauseMillis（默认 200ms，G1 尽量满足的目标 GC 暂停时间）、-XX:InitiatingHeapOccupancyPercent（默认 45%，触发并发标记的堆占用率，G1 根据目标调整）。\n\n扩展延伸：日志和诊断：-Xlog:gc*（JDK 9+ 统一日志）、-XX:+PrintGCDetails/-Xloggc:gc.log（JDK 8）、-XX:+HeapDumpOnOutOfMemoryError（OOM 时自动生成 heap dump）、-XX:HeapDumpPath。性能调优：-XX:+AlwaysPreTouch（启动时预分配物理内存，减少运行时缺页中断）、-XX:+UseStringDeduplication（String 去重，节省重复字符串内存）、-XX:+UseCompressedOops（默认开启，压缩对象指针至 32 位省内存）。典型云环境起步参数（JDK 17+，4C8G 容器）：-Xms4g -Xmx4g -XX:+UseZGC -XX:MaxGCPauseMillis=10 -Xlog:gc*:file=gc.log。注意 -Xmx 不应超过容器内存的 75%。",
+    "hints": [
+      "-Xms 和 -Xmx 设相同的值有什么好处",
+      "AlwaysPreTouch 的性能影响是什么"
+    ],
+    "tags": [
+      "JVM",
+      "调优",
+      "参数"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "字符串常量池与 intern",
+    "content": "请解释 JVM 字符串常量池的工作原理以及 String.intern() 方法的用途。",
+    "answer": "答案：字符串常量池是 JVM 堆中用于存储字符串字面量的特殊区域，intern() 将运行时字符串手动加入池中\n\n解析：字符串常量池在 JDK 7 后被移到 Java 堆中（之前放在方法区的运行时常量池）。编译期确定的字符串字面量（如 \"hello\"）自动进入常量池，JVM 保证相同内容的字符串字面量在常量池中只有一个引用。通过 new String(\"hello\") 会在堆上创建新的 String 对象，但字面量 \"hello\" 仍指向常量池中的字符串。intern() 方法运行时将字符串加入常量池：如果常量池中已有相同内容的字符串，返回池中的引用；否则将当前字符串的引用加入池中并返回。\n\n扩展延伸：String.intern() 的适用场景：程序中存在大量内容相同的运行时字符串（如从配置文件或网络读取的重复字符串），使用 intern 去重可以节省大量内存。但自 JDK 7+ 字符串常量池在堆上，intern 的字符串不会被 GC，大量唯一的字符串会导致常量池溢出（可以本地缓存 ConcurrentHashMap 用弱引用实现去重来代替 intern）。默认常量池大小（-XX:StringTableSize）在 JDK 6 是 1009（固定桶数），JDK 7+ 默认为 60013，可以通过该参数在大量字符串去重场景下调整哈希冲突。注意：字符串常量池使用哈希表实现（fixed size），intern 操作插入和查找都是 O(1) 均摊。不要在密集的不同字符串上使用 intern——那会使 hash table 过大，导致堆内存泄漏。替代方案：Guava 的 Interners.newWeakInterner() 用弱引用自动回收不被引用的字符串。",
+    "hints": [
+      "new String('hello') 创建了几个对象",
+      "为什么大量 intern 唯一字符串不是好做法"
+    ],
+    "tags": [
+      "JVM",
+      "字符串",
+      "常量池"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 锁膨胀过程",
+    "content": "请解释 JVM 中 synchronized 锁从偏向锁到重量级锁的膨胀过程。",
+    "answer": "答案：synchronized 锁根据竞争程度经历无锁→偏向锁→轻量级锁→重量级锁的渐进升级\n\n解析：1）偏向锁（Biased Locking）— 对象头的 Mark Word 记录偏向线程 ID，同一线程再次进入同步块时无需任何同步操作。撤销偏向锁时需在全局安全点暂停有偏向线程。2）轻量级锁（Lightweight Locking）— 偏向锁被撤销后升级，线程在自己的栈帧中创建 Lock Record，通过 CAS 操作将 Mark Word 替换为指向 Lock Record 的指针。如果 CAS 成功，获得轻量级锁；失败则膨胀为重量级锁。3）重量级锁（Heavyweight Locking，即 Mutex Lock）— 通过操作系统互斥量实现，线程会进入操作系统内核态的等待队列，涉及用户态/内核态上下文切换。重量级锁下未竞争到锁的线程进入 BLOCKED 状态（轻量级锁自旋失败再膨胀）。\n\n扩展延伸：锁升级是不可逆的——锁只能从偏向锁->轻量级->重量级方向升级，不能降级。一旦膨胀为重量级锁，下次即使无竞争仍然是重量级锁。JDK 15+ 废弃偏向锁后，默认从轻量级锁开始。锁粗化（Lock Coarsening）：JIT 将连续对同一个锁的加锁/解锁合并为一次加锁/解锁，减少锁操作次数（StringBuffer.append 连续调用场景）。锁消除（Lock Elimination）：JIT 逃逸分析确定对象不会逃逸则消除锁。对象头中的 Mark Word 在不同锁状态下存储不同数据：偏向锁存线程 ID+epoch，轻量级锁存指向 Lock Record 的指针，重量级锁存指向 Monitor 对象的指针。自旋适应性自旋：JVM 根据锁竞争历史的统计动态调整自旋次数。",
+    "hints": [
+      "为什么锁只能升级不能降级",
+      "自旋适应性自旋怎么确定自旋次数"
+    ],
+    "tags": [
+      "JVM",
+      "synchronized",
+      "锁"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "JVM 双亲委派模型",
+    "content": "以下关于类加载器双亲委派模型的说法，正确的是？",
+    "options": [
+      "A) 应用程序类加载器的父类是启动类加载器",
+      "B) 扩展类加载器的父类是应用程序类加载器",
+      "C) 双亲委派模型要求先让父加载器尝试加载类，不成功才让子加载器加载",
+      "D) 双亲委派模型中，子加载器加载过的类父加载器可以再次加载"
+    ],
+    "answer": "C",
+    "hints": [
+      "应用程序类加载器的父类加载器是扩展类加载器，扩展类加载器的父类是启动类加载器"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "双亲委派"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 安全点与安全区域",
+    "content": "请解释 JVM 安全点（Safepoint）和安全区域的概念及其作用。",
+    "answer": "答案：安全点是 JVM 进行 GC、偏向锁撤销、Code Deoptimization 等操作的线程暂停点\n\n解析：安全点是所有线程必须暂停到可安全操作的执行位置才能进行全局操作的点位。安全点位置在 JIT 编译的代码中选取：通常选在方法返回前、循环回跳点、可能抛出异常的指令后。HotSpot 通过主动式安全点实现：JIT 编译的代码检查一个全局的内存页（安全点轮询，polling page），当需要暂停线程时将内存页设为不可读，线程执行到检查点时触发 SIGSEGV 信号，JVM 信号处理器将线程挂起。安全区域（Safe Region）解决线程长时间不执行（如阻塞在 sleep、LockSupport.park）时的暂停问题——线程进入这类状态时主动标记自己在安全区域内，GC 不需要等待它到达安全点。安全区域的结束由线程退出阻塞时检查全局 GC 状态决定是否等待。\n\n扩展延伸：安全点对延迟的影响——在高吞吐应用中，安全点轮询的汇编指令本身开销很小（在 x86 上是一条比较指令），但安全点到达时的停顿（尤其是全局安全点同步）可能导致应用暂停数十到数百毫秒。JMH 的 -XX:+PrintGCApplicationStoppedTime 可以打印安全点暂停日志。导致长安全点暂停的常见原因：1）JIT 编译大量方法（CodeCache 满时的 deoptimization）2）大堆 GC 前的 finalization 3）线程数量多导致所有线程到达安全点的时间长。VM Thread 负责协调安全点，-XX:+PrintSafepointStatistics 输出安全点统计。减少安全点暂停时间：-XX:GuaranteedSafepointInterval（默认 1000ms，设为 0 关闭定期安全点但影响偏向锁等功能）、-XX:+UseBiasedLocking 等。",
+    "hints": [
+      "JIT 怎么选择安全点位置",
+      "安全区域和阻塞中的线程之间有什么关系"
+    ],
+    "tags": [
+      "JVM",
+      "安全点",
+      "GC"
+    ]
   }
 ]

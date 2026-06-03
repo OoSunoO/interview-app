@@ -1158,5 +1158,90 @@
       "PSA",
       "OPA"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 服务发现 DNS 原理",
+    "content": "请解释 Kubernetes 中 CoreDNS 服务发现的工作原理。",
+    "answer": "答案：K8s 服务发现基于 DNS，每个 Service 自动分配 DNS 名称，Pod 通过 DNS 解析 Service 名获得 Cluster IP\n\n解析：K8s 集群运行 CoreDNS（kube-system 命名空间中的 Deployment），通过 ConfigMap 配置 Corefile 定义插件链。Service 的 DNS 记录格式：<service>.<namespace>.svc.cluster.local，解析到 Service 的 Cluster IP。Headless Service（clusterIP=None）不分配 Cluster IP，DNS 返回所有 Pod IP 列表（A/AAAA 记录对应每个就绪 Pod）。Pod 也有 DNS 记录：pod-ip.<namespace>.pod.cluster.local。外部域名解析：CoreDNS 通过 forward 插件转发到上游 DNS（/etc/resolv.conf 中的 nameserver）。ndots 选项控制域名的搜索域解析顺序，优化不当会导致大量额外 DNS 查询。\n\n扩展延伸：DNS 策略（dnsPolicy）：ClusterFirst（默认，先查询集群 DNS 再转发）、Default（使用节点 DNS）、None（自定义 dnsConfig）。ndots 优化：Pod 中 /etc/resolv.conf 的 ndots 默认 5，域名中点数 <5 时先尝试添加搜索域（svc.cluster.local 等），>5 时先当 FQDN 查询。优化：对于外部域名访问多的服务，可设置 ndots:1 或使用 dnsConfig 直接指定 nameserver。存根域（Stub Domain）和上游 DNS 用于 Hybrid Cloud 环境（私有 DNS 解析）。CoreDNS 性能：建议给 CoreDNS Pod 分配充足的 CPU，使用 NodeLocal DNSCache（每节点 DaemonSet 缓存 DNS 解析，减少跨节点查询）优化大规模集群的 DNS 性能。K8s 1.27+ 的 Service 就绪状态感知：未就绪的 Pod 的 DNS 记录会被移除。",
+    "hints": [
+      "Headless Service 的 DNS 解析方式与普通 Service 有什么不同",
+      "ndots 设置不合理会导致什么问题"
+    ],
+    "tags": [
+      "K8s",
+      "DNS",
+      "CoreDNS"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s StatefulSet 有状态服务管理",
+    "content": "请解释 StatefulSet 的设计原理及其与 Deployment 的核心区别。",
+    "answer": "答案：StatefulSet 为有状态 Pod 提供稳定的网络标识和持久化存储，保证 Pod 的启动和停止顺序\n\n解析：StatefulSet 生成每个 Pod 有唯一的网络标识（<statefulset-name>-<ordinal-index>），Pod 重建后名称和主机名不变，对应的 PVC 重新绑定保证数据不丢失。三个核心特性：1）有序部署和扩缩容 — Pod 按 0→N-1 顺序启动，缩容时按 N-1→0 逆序删除；2）稳定的网络标识 — 每个 Pod 有独立的 DNS 名称（pod_name.service_name.namespace.svc.cluster.local），对应稳定的 PVC；3）滚动更新策略 — OrderedReady（逐个更新）或 Parallel（同时更新）。典型应用：数据库有状态集群（MySQL Group Replication、Cassandra、Elasticsearch、ZooKeeper/etcd）。\n\n扩展延伸：Headless Service 是 StatefulSet 的常用伴侣——StatefulSet 的 `serviceName` 引用 Headless Service，每个 Pod 的 DNS 记录 `<pod>.<service>.svc.cluster.local` 独立解析。PersistentVolume 管理：volumeClaimTemplates 为每个 Pod 创建独立的 PVC（Pod-0 -> PVC-0），Pod 重建时自动绑定之前的 PVC 保留数据。状态管理案例——Elasticsearch StatefulSet：每个 ES Pod 通过环境变量设置的 Node Name 保持稳定，使用 init container 基于 ordinal index 配置是否参选 master 节点。扩缩容风险：缩容 StatefulSet 不会自动删除 PVC，需要手动处理孤立的 PVC（可以用 kubectl delete pvc 或设置 PVC 回收策略）。",
+    "hints": [
+      "StatefulSet 缩容时 PVC 为什么不会自动删除",
+      "StatefulSet 的滚动更新怎么控制更新顺序"
+    ],
+    "tags": [
+      "K8s",
+      "StatefulSet",
+      "有状态"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s Pod 安全上下文与 Seccomp",
+    "content": "请解释 Pod 安全上下文的配置以及 seccomp 在容器安全中的作用。",
+    "answer": "答案：Pod Security Context 定义了进程在容器中运行的安全约束，seccomp 限制容器可执行的系统调用\n\n解析：Pod 安全上下文在 Pod 或 Container 级别配置：runAsUser（容器进程的用户 ID，禁止 root 运行）、runAsNonRoot（强制禁止 root）、capabilities（添加/移除 Linux Capabilities，如 NET_ADMIN 限制网络配置）、readOnlyRootFilesystem（只读根文件系统）、privileged（完全特权模式，不推荐使用）。K8s Pod Security Standards 定义了三个安全级别：Privileged（无限制）、Baseline（基本安全加固）、Restricted（严格安全）。Pod Security Admission（K8s 1.23+）取代了 PodSecurityPolicy，通过标签在命名空间级别强制执行安全策略。\n\n扩展延伸：seccomp（Secure Computing Mode）允许容器限制可用的系统调用。在 /var/lib/kubelet/seccomp/ 配置 profile：RuntimeDefault（Docker/containerd 的默认配置屏蔽了约 44 个危险系统调用，如 kexec_load、swapon）、Localhost（自定义 profile，通过挂载 JSON 文件）。Seccomp Profile 编写：使用 strace 或 auditd 采集应用所需的系统调用，生成白名单 profile。Demo 中可直接用 RuntimeDefault profile。避免使用 privileged: true——这会将所有安全机制关闭（seccomp、capabilities 限制等），相当于逃逸了容器沙箱。注意：K8s 1.19+ 默认启动了 seccomp（RuntimeDefault），之前版本需手动配置 annotation。工具推荐：Inspektor Gadget 审计容器 seccomp 信息。",
+    "hints": [
+      "Seccomp RuntimeDefault 屏蔽了哪些类型的安全敏感系统调用",
+      "Pod Security Admission 的三种安全级别各适合什么场景"
+    ],
+    "tags": [
+      "K8s",
+      "安全",
+      "Seccomp"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 资源对象 OwnerReference",
+    "content": "请解释 OwnerReference 在 K8s 资源级联删除中的工作原理。",
+    "answer": "答案：OwnerReference 定义了 K8s 资源的父子关系，父资源删除时控制子资源的 GC 行为\n\n解析：OwnerReference 是资源对象 metadata 中的字段，表达式如 `ownerReferences: [{apiVersion, kind, name, uid, blockOwnerDeletion: true}]`。K8s 垃圾回收器（Garbage Controller）定期扫描集群资源，当发现某个资源的所有者（owner）被删除时，根据级联删除策略决定子资源的命运：1）前台级联（Foreground Deletion）— 设置 deletionTimestamp，等待所有 ownerReferences 中 blockOwnerDeletion 的子资源删除后再删除父资源 2）后台级联（Background Deletion）— 立即删除父资源，GC 异步删除子资源。ReplicaSet -> Pod、Deployment -> ReplicaSet、Job -> Pod 这些关系都通过 OwnerReference 实现。\n\n扩展延伸：跨 Namespace 的 OwnerReference 不支持（OwnerReference 隐含要求 owner 和 dependent 在同一 namespace）。孤儿对象（Orphaned Resource）：设置 foreground orphan（DeletionPropagation=Orphan）删除 Deploy 时保留 Pods，这些 Pods 离开 OwnerReference 后就变成孤儿资源。K8s GC 的工作原理：控制器启动时列出全集群资源，标记每个 uid 的子资源数量。删除事件触发后续检查。controllerRef（控制器引用）是 OwnerReference 的一种特殊形式，确保每个 Pod 只被一个 ReplicaSet/Job 控制器管理。垃圾回收的拓扑排序：GC 总是先删除依赖（子）再删除所有者（父），保证有状态应用的安全销毁顺序。",
+    "hints": [
+      "Foreground 和 Background 级联删除策略的核心区别",
+      "跨 Namespace 的 OwnerReference 为什么不支持"
+    ],
+    "tags": [
+      "K8s",
+      "GC",
+      "OwnerReference"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 存储架构与 CSI 插件机制",
+    "content": "请解释 Kubernetes CSI（Container Storage Interface）插件的架构和存储供给流程。",
+    "answer": "答案：CSI 是 K8s 对接外部存储系统的标准接口，允许存储厂商以插件形式提供持久化存储\n\n解析：CSI 架构分为三部分：1）CSI Controller（负责创建/删除/快照/克隆卷的管控操作，通常是 Deployment 部署，通过 StatefulSet 确保有状态一致性）2）CSI Node（在每台节点作为 DaemonSet 运行，负责挂载/卸载/格式化卷到节点目录，完成 NodeStageVolume/NodePublishVolume 操作）3）Sidecar Containers——external-provisioner（监听 PVC 创建事件调用 CSI CreateVolume）、external-attacher（监听 VolumeAttachment 调用 CSI ControllerPublishVolume）、external-resizer（监听 PVC 扩容）、external-snapshotter（快照 CR）。attach/detach 操作由 attachdetach controller（K8s controller-manager 中的一个）协调。\n\n扩展延伸：存储供给流程——用户创建 PVC（带 StorageClass）-> external-provisioner 调 CSI Controller: CreateVolume -> K8s PV 创建 -> Pod 调度到节点后 kubelet 触发 NodeStageVolume（格式化）+ NodePublishVolume（挂载到 Pod）。Raw Block Volume：CSI 也支持裸块设备挂载（volumeMode: Block），绕过了文件系统层。CSI 的 SKU：从 in-tree 迁移到 CSI 是存储相关驱动力。原 in-tree 存储插件（如 AWSEBS、GCEPD）现在也作为 CSI Driver 更新维护。流行 CSI Driver：AWS EBS/EFS CSI Driver、GCE PD CSI Driver、Rook/Ceph CSI、Longhorn（轻量分布式存储）、Portworx、OpenEBS。卷快照和卷克隆：CSI 的 Snapshot 功能允许创建卷的瞬间快照，通过 VolumeSnapshot CRD 管理。恢复 Volume 从 VolumeSnapshot 创建新的 PVC。",
+    "hints": [
+      "CSI 的 Controller Plugin 和 Node Plugin 分别运行在什么 K8s Workload 上",
+      "external-provisioner 和 external-attacher 的职责分工"
+    ],
+    "tags": [
+      "K8s",
+      "存储",
+      "CSI"
+    ]
   }
 ]

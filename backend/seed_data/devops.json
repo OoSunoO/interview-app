@@ -1159,5 +1159,95 @@
       "Ansible",
       "IaC"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DevOps 度量指标 DORA 与 SPACE",
+    "content": "请解释 DORA 和 SPACE 两种 DevOps 度量框架的核心指标。",
+    "answer": "答案：DORA 关注交付速度与稳定性指标，SPACE 补充了人本和组织维度的度量\n\n解析：DORA（2014 年 Google DevOps 报告）四项关键指标：1）部署频率（Deploy Frequency）— 吞吐量指标，精英团队按需部署，低效团队月/季度部署 2）变更前置时间（Lead Time for Change）— 从代码提交到生产上线的时长 3）变更失败率（Change Fail Rate）— 部署导致的服务降级/故障比例 4）故障恢复时间（Time to Restore Service）— 从故障发现到恢复的时长。DORA 根据指标表现将团队分为精英、高、中、低四个级别。SPACE（2021 年 Nicole Forsgren 等提出）补充了 DORA 未覆盖的五个维度：S（满意度与福祉）、P（绩效）、A（活动）、C（沟通协作）、E（效率与流程）。\n\n扩展延伸：实际落地：1）不追求所有指标同时最优——部署频率提高可能增加变更失败率，需找到组织的平衡点 2）指标需要结合行业和团队上下文，如金融行业变更失败率应远低于创业公司 3）避免指标游戏化（只看数据不看人）和局部优化（只提频次不考虑质量）。DORA 基准（精英团队）：部署频率每日多次、前置时间 <1天、变更失败率 <5%、恢复时间 <1小时。工具链：GitLab DORA API（自动从 Git 事件和部署计算）、Harness（DevOps 平台集成 DORA）、自定义（从 Jira + Jenkins + PagerDuty 聚合数据）。SPACE 的满意度/福祉指标需通过 匿名调查收集，不能完全靠自动化数据。",
+    "hints": [
+      "为什么部署频率和变更失败率是矛盾的",
+      "DORA 精英团队的四项指标基准线是多少"
+    ],
+    "tags": [
+      "DevOps",
+      "度量",
+      "DORA"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ArgoCD 与 GitOps 实践",
+    "content": "请解释 ArgoCD 的工作原理及其在 GitOps 流程中的核心作用。",
+    "answer": "答案：ArgoCD 是 K8s 上实现 GitOps 的工具，确保集群状态与 Git 仓库中的声明式配置一致\n\n解析：核心原理：ArgoCD 通过持续监控 Git 仓库中的 K8s 清单（Helm/Kustomize/纯 YAML），将仓库中的期望状态与集群中的实际状态对比，检测到差异时自动同步（Auto Sync）或提示手动同步。架构：ArgoCD 以 Operator 模式运行在 K8s 集群中（argocd-server + argocd-repo-server + argocd-application-controller），提供 Web UI 和 CLI 管理应用。Repository 存储应用定义的配置，通过 webhook 实现自动同步（当 Git 仓库有变更时触发 ArgoCD 同步）。同步策略：1）Prune（删除集群中不在 Git 中的资源）2）Self-Heal（检测到集群状态被人为修改时自动恢复）3）Sync Waves（控制资源创建/更新的顺序）。\n\n扩展延伸：多环境管理：Staging 和 Production 共用同一 repo 但分支不同（staging/main），Staging 用自动同步，Production 用手动同步 + 审批。应用集：ArgoCD ApplicationSet 利用模板生成多个 Application（每个环境/集群一个），简化多集群管理。与 Kustomize 配合：Git 仓库 base/overlays 目录结构（base 定义通用资源，overlays/dev/staging/prod 各环境的 patch）。与 Helm 配合：repo 中存储 values 文件，Chart 引用自 Helm Repo。Pull 模式 vs Push 模式：传统 CI 推送到集群，GitOps 用 Git 作为单一事实来源，ArgoCD 从仓库拉取——避免外部 CI 对集群的直接写入，安全性更高。安全性：ArgoCD 支持 SSO（OIDC/OAuth2）、RBAC、Project 隔离。",
+    "hints": [
+      "GitOps 中 Git 仓库作为单一真实来源的含义",
+      "ArgoCD 的 Self-Heal 机制和 Prune 策略有什么风险"
+    ],
+    "tags": [
+      "GitOps",
+      "ArgoCD",
+      "K8s"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Dockerfile 层构建",
+    "content": "以下 Dockerfile 指令中，哪一项不会创建新的镜像层？",
+    "options": [
+      "A) RUN apt-get update && apt-get install -y python3",
+      "B) COPY app.py /app/",
+      "C) ENV APP_HOME=/usr/src/app",
+      "D) FROM python:3.11-slim"
+    ],
+    "answer": "C",
+    "hints": [
+      "ENV、CMD、ENTRYPOINT、EXPOSE、LABEL 等元数据指令不增加层"
+    ],
+    "tags": [
+      "Docker",
+      "镜像",
+      "优化"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "持续交付与持续部署的区别",
+    "content": "请解释持续交付（Continuous Delivery）和持续部署（Continuous Deployment）的区别。",
+    "answer": "答案：两个概念的差异在于生产环境部署是否经过人工审批\n\n解析：持续交付：代码合并到主分支后自动经过构建、测试和预发布阶段，但部署到生产环境需要人工点击确认按钮。持续交付确保每次提交的代码都是可发布状态的（随时可以发布到生产），但出于业务节奏或风险控制考虑保留人工审批环节。持续部署：代码合并到主分支后全流程自动从构建、测试、部署直到上线，没有人工干预。持续部署是持续交付的进一步自动化，适用于需要快速迭代的产品（SaaS、Web 应用）。两者共同的前提：高质量自动化测试套件（单元、集成、E2E）+ 良好的部署策略（滚动更新/蓝绿部署）+ 完善的监控和回滚能力。\n\n扩展延伸：成熟的持续交付 pipeline 阶段：Commit -> 单元测试 -> 静态分析/代码扫描 -> Build -> 集成测试 -> 制件管理（Artifactory/Nexus）-> 部署到 Staging -> 验收/性能测试 -> 预生产镜像 -> 批准 -> 部署到生产 -> 监控/告警。什么时候不适合持续部署：1）传统金融/医疗受监管行业（需要 Change Approval Board 审批）2）客户端应用（App Store/Google Play 审核周期长，无法频繁发布）3）嵌入式/硬件固件。工具链实践：持续交付常用 Spinnaker（多云部署，支持金丝雀发布）；持续部署在 K8s 上用 Argo Rollouts（渐进式交付，流量渗透）。",
+    "hints": [
+      "持续交付和持续部署的最终区别在哪里",
+      "什么团队才适合做真正的持续部署"
+    ],
+    "tags": [
+      "CI/CD",
+      "持续交付",
+      "DevOps"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "云成本优化 FinOps",
+    "content": "请介绍 FinOps 的核心理念和云成本优化实践。",
+    "answer": "答案：FinOps 将财务管理与 DevOps 结合，通过跨团队协作实现云支出最大化价值\n\n解析：FinOps 三阶段生命周期：1）Inform（可见性）— 成本归因到团队/项目/服务，对每个资源打标签（tagging），通过云厂商的 Cost Explorer 或第三方工具（CloudHealth/Spot by NetApp）可视化。建立成本中心和预算规则。2）Optimize（优化）— 识别闲置/浪费资源（未绑定的 EBS、低利用率实例、orphaned Load Balancer），调整实例类型到合适的规格。承诺使用优惠（Reserved Instance / Savings Plans）对稳态负载降 30-60%。利用 Spot 实例运行容错/无状态工作负载。3）Operate（持续运营）— 设置预算告警（当支出超过阈值时自动通知），定期的成本评审会议优化架构。建立成本文化：工程团队享有成本可见性并对自身资源消耗负责。\n\n扩展延伸：K8s 成本优化：利用 HPA/VPA 自动调整副本和资源，利用 Karpenter/Cluster Autoscaler 自动扩缩集群，使用 node pool 分离 spot 和 on-demand 工作负载。K8s 成本分摊难点——多租户下的计算资源如何分摊到团队：基于 request 分配（和调度一致但未考虑实际使用），基于指标（Prometheus 采集实际使用量，OpenCost 推荐）。云原生 FinOps 工具：Kubecost（实时 K8s 成本可视化）、Crane（腾讯开源 FinOps 平台，推荐率和扩缩容建议）。降本案例：合理配置 HPA request 从 2:1 降到 1.2:1 利用率为 60->80% 节省 25%，小实例合并大实例（200 台 2c4g->80 台 8c16g）集群整体利用率提升。",
+    "hints": [
+      "Reserved Instance 和 Spot Instance 分别适合什么负载",
+      "FinOps 中工程团队需要什么级别的成本可见性"
+    ],
+    "tags": [
+      "FinOps",
+      "云成本",
+      "优化"
+    ]
   }
 ]

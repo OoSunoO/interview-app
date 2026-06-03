@@ -1140,5 +1140,95 @@
       "CPM：通过 ES/EF/LS/LF 计算浮动时间，浮动时间为 0 的任务构成关键路径",
       "关键路径上的延迟直接导致项目延期——重点监控"
     ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "工程效能度量体系",
+    "content": "请解释 DORA 指标和 SPACE 框架，以及它们在衡量工程效能时的作用。",
+    "answer": "答案：DORA 指标衡量交付效能（速度），SPACE 框架衡量开发者体验（可持续性），两者互补\n\n解析：DORA（DevOps Research and Assessment）由 Google 提出，核心四个指标：1）部署频率（Deployment Frequency）— 多久部署一次（Elite：按需/日部署）2）变更前置时间（Lead Time for Change）— 从代码提交到生产上线的时间（Elite：<1 小时）3）变更失败率（Change Failure Rate）— 部署导致的事故比例（Elite：<5%）4）故障恢复时间（Time to Restore Service）— 从事故到恢复的时间（Elite：<1 小时）。DORA 将团队分为 Elite/High/Medium/Low 四个等级。SPACE 框架由 Microsoft Research 提出，包含五个维度：Satisfaction（满意度）、Performance（效能）、Activity（活动）、Communication（协作）、Efficiency（效率）。SPACE 强调不能只看输出（比如代码行数），还要看结果和开发者体验。\n\n扩展延伸：DORA 指标的应用场景：1）基线评估——当前的部署频率和失败率相比行业水平如何 2）改善目标——Elite 级别的指标是努力方向 3）回归监控——指标恶化意味着过程有问题。DORA 的局限性：1）不适合所有团队（硬件开发、数据团队的周期不同）2）过度优化指标可能走偏（为追求部署频率盲目拆分 PR）。SPACE 的补充：开发者的幸福感（Satisfaction）和协作效率（Communication）同样是效能的组成部分。工程效能的「北极星」不是「更快」，而是「更快的业务价值交付 + 可持续的团队健康」。效能改进的实践：缩短 PR Review 时间（从 2 天到 2 小时），改善 CI/CD Pipeline（从 30 分钟到 5 分钟），提升测试覆盖率减少故障率。",
+    "hints": [
+      "DORA 四大指标中哪个对线上质量最重要",
+      "SPACE 框架补充了 DORA 没有覆盖的哪些维度"
+    ],
+    "tags": [
+      "效能",
+      "DORA",
+      "度量"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "技术项目管理 vs 业务项目管理",
+    "content": "请对比技术项目（基础设施迁移、架构重构）和业务项目管理方式的主要差异。",
+    "answer": "答案：技术项目的风险更隐蔽、收益更难量化，需要不同的管理方法和沟通策略\n\n解析：差异维度：1）目标量化——业务项目（如「用户注册转化率提升 10%」）容易量化，技术项目（如「数据库从 MySQL 迁移到 TiDB」）的收益（可扩展性、维护成本降低）难以直接量化。需要将技术收益转化为业务语言：迁移后查询延迟从 200ms 降到 20ms，预计页面前端加载时间缩短 X%，转化率可能提升 Y%。2）风险——技术项目的风险更大（迁移失败可能导致数据丢失或长时间宕机），需要更详细的回滚方案和灰度计划。3）干系人——业务项目的干系人（产品经理、运营、市场）更容易理解项目目标；技术项目的干系人（CTO、架构师）关注技术指标。4）Timeline——技术项目的估算难度更大（不确定性因素更多），需要更多 Buffer。\n\n扩展延伸：技术项目管理的最佳实践：1）定义明确的技术成功标准（如 P99 延迟 < 50ms、可用性 99.99%）2）设置 Checkpoint 和 Go/No-Go 决策点（每个阶段做技术验证再决定是否继续）3）制定详细的灰度方案和回滚计划（分阶段切流量，每个阶段观察 24 小时无异常再继续）4）提前准备故障预案（Runbook、值班人员、沟通模板）。技术项目的沟通：面向业务方时用业务语言（「这次重构后订单处理速度提升 3 倍，双十一不用担心系统扛不住」），面向技术团队时用技术细节。重构的「大厨法则」——不要一边重构一边加新功能，一次只做一件事。重构的 Strangler Fig 模式（绞杀者模式）是数据库/服务迁移的最安全方式——逐步将流量从旧系统迁移到新系统，旧系统保留作为回滚选项。",
+    "hints": [
+      "技术项目最难向业务方解释的是什么",
+      "数据库迁移项目为什么要做灰度切流而不是一次性切换"
+    ],
+    "tags": [
+      "项目管理",
+      "技术",
+      "重构"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "敏捷团队成熟度评估",
+    "content": "以下哪个特征表明一个敏捷团队已经达到较高成熟度？",
+    "options": [
+      "A) 团队严格按照 Scrum 流程召开所有仪式",
+      "B) 每个迭代都能交付完整的可用增量，团队自主决定改进流程",
+      "C) 团队的 Velocity 每个迭代都在增长",
+      "D) 所有需求都在迭代开始前完全明确"
+    ],
+    "answer": "B",
+    "hints": [
+      "高成熟度团队的表现是交付稳定、流程自主优化、每个迭代都产生业务价值，而不是死板遵循流程"
+    ],
+    "tags": [
+      "敏捷",
+      "成熟度",
+      "团队"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "项目复盘方法与文化",
+    "content": "请描述你如何组织一个有效的项目复盘（Postmortem / Retrospective），以及如何建立无责备复盘文化。",
+    "answer": "答案：有效复盘的核心是「从事故中学习」而非「追责」，通过结构化分析找到系统缺陷并改进\n\n解析：复盘流程：1）准备——收集时间线（Timeline）、相关日志、聊天记录。列出所有关键事件的时间点。2）复盘的五个阶段：a）What happened — 按时间线回顾事实，不评价 b）Impact Assessment — 评估影响范围（多少用户受影响、多久、什么功能不可用）c）Root Cause Analysis — 使用 5 Whys 或因果分析找到根因（问 5 个「为什么」穿透表面原因）d）Action Items — 每个根因对应一个可执行的改进项（RCA -> Action Item，指定负责人和截止时间）e）Blame-free Close — 明确复盘不是追责。3）持续跟进——Action Items 在后续 Sprint 中追踪完成。无责备文化的关键：管理者公开为事故承担管理责任（「是我们没有给团队足够的测试环境支持」），而不是追问「谁改的」。\n\n扩展延伸：Google 的 Site Reliability Engineering 中将 Postmortem 作为核心文化——没有 Blameless Postmortem 就没有真正的可靠性文化。Etsy 的 Deploy 文化：每次故障后的 Postmortem 公开分享，工程师以 Postmortem 写作质量自豪。好的 Postmortem 文档结构：Title / Status / Summary / Impact / Timeline / Root Cause / Action Items / Lessons Learned。复盘的频率：1）正式复盘——每次 P0/P1 事故必须做 2）Sprint Retrospective——每个迭代结束做 3）项目复盘（Project Retro）——大型功能上线后。Blameless Postmortem 的「禁忌」：不要在复盘文档中提到人名（用 Person A/B 代替），不在复盘会议中问「谁干的」。事后诸葛亮偏差（Hindsight Bias）——复盘时要避免「当时就应该知道」的说法，理解当时决策者的信息局限。",
+    "hints": [
+      "Blameless Postmortem 中最重要的是什么",
+      "5 Whys 分析根因时的常见错误"
+    ],
+    "tags": [
+      "复盘",
+      "文化",
+      "改进"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "跨项目资源协调与依赖管理",
+    "content": "当多个项目同时进行且共享有限的工程师资源时，如何做资源协调？",
+    "answer": "答案：跨项目资源协调需要建立统一的项目依赖地图（Dependency Map）、优先级对齐机制和资源调配流程\n\n解析：资源协调的步骤：1）建立项目全景图——画所有并行项目的 Timeline、里程碑和资源需求，识别重叠和依赖 2）优先级对齐——所有项目排一个统一的优先次序（不是各项目内部优先级而是跨项目的全局优先级），基于公司 OKR 和战略目标 3）资源分配——关键资源（高频瓶颈）如后端工程师、QA、设计师分配到最高优先级的项目 4）依赖管理——A 项目依赖 B 项目的 API，B 的交付时间直接影响 A 的进度——用 CR（关键资源）和 CPM（关键路径法）管理 5）设立 Buffer——每个项目在关键路径上加 10-20% 的 Buffer（关键链项目管理 CCPM 的方法）。工具：Jira Portfolio / RICE / Capacity Planning Spreadsheet。\n\n扩展延伸：资源调配的几种模式：1）Dedicated（专职）— 每个项目有固定团队，效率高但利用率低 2）Pooled（共享池）— 资源池动态分配，利用率高但切换成本高 3）Hybrid — 核心成员专职，支持角色共享。跨项目资源冲突的解决：1）向上求助——让 VP/CTO 做决策（提供数据：各项目的 ROI、风险、依赖关系）2）资源置换——用低优先级项目的资源换高优先级项目的关键资源 3）延期——低优先级的项目延期，释放资源。康威定律（Conway's Law）在资源协调中的体现——组织沟通结构决定系统架构，跨项目资源协调困难可能是组织架构问题的反映。团队拓扑学（Team Topologies）提出四种团队类型：Stream-aligned / Enabling / Complicated-subsystem / Platform，合理的团队划分可以减少跨项目资源依赖。",
+    "hints": [
+      "多个项目争抢同批工程师时怎么确定优先级",
+      "专职团队和共享资源池各有什么优缺点"
+    ],
+    "tags": [
+      "资源",
+      "协调",
+      "多项目"
+    ]
   }
 ]

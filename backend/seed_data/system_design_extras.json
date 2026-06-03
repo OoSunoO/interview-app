@@ -1191,5 +1191,95 @@
       "Redis",
       "Redlock"
     ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多区域部署与异地容灾",
+    "content": "请设计一个多区域（Multi-Region）高可用部署方案，要求跨区域容灾。",
+    "answer": "答案：多区域高可用部署的核心挑战是跨区域延迟和最终一致性，需要合理的流量调度和数据同步策略\n\n解析：主流模式：1）Active-Passive（主备模式）— 一个 Region 处理所有写流量，备 Region 实时同步数据但不对外服务，主 Region 故障后手动/自动切到备 Region。写流量简单（单点写无冲突），但切换可能有分钟级延迟，且备 Region 资源利用率低。2）Active-Active（双活/多活）— 多个 Region 同时处理读写流量，通过 DNS 或 Global Load Balancer 路由用户到最近的 Region。需要解决跨 Region 的数据冲突问题——使用 CRDT 或无冲突方案，或按用户 ID 哈希分区（每个用户的写固定在一个 Region）。3）Read-Only Replicas（读写分离多区域）— 写在一个 Region，读在多个 Region 有 Replica（通过 CDC/Redshift 复制）。\n\n扩展延伸：DNS 流量调度：使用 AWS Route 53 / GCP Cloud DNS 的 Geo Routing 或 Latency-based Routing。数据同步：1）同步方式—— MySQL Binlog Replication / Kafka Cluster Linking / MongoDB Replica Set 跨 Region 节点 2）延迟——跨区域同步通常有 100ms-500ms 延迟，设计上需容忍最终一致性。故障切换流程：1）监测——Health Check 每隔几秒探测各 Region 的 API 健康状态 2）切换——DNS TTL 设短（30-60s）或直接用流量调度的 API 切换 3）回切——主 Region 恢复后持续观察，确认正常后切回。一致性权衡：多 Region 部署中强一致性 = 高延迟（因为需要跨 Region 协商），通常选择最终一致性。Google Spanner 用 TrueTime API 实现跨 Region 强一致性，但成本极高。实际方案：核心业务（支付/订单）用 Active-Passive（保证强一致），非核心业务（评论/通知）用 Active-Active（用户就近读写，容忍异步同步）。",
+    "hints": [
+      "多活架构最大的技术挑战是什么",
+      "DNS 切换为什么会有延迟"
+    ],
+    "tags": [
+      "多区域",
+      "容灾",
+      "高可用"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "缓存与数据库一致性方案",
+    "content": "请解释缓存（Redis）和数据库（MySQL）之间的数据一致性问题及主流解决方案。",
+    "answer": "答案：缓存和数据库的一致性问题源于两者的原子操作无法保证——读取时可能拿到缓存旧数据或数据库未提交的数据\n\n解析：更新缓存的常见模式：1）Cache-Aside（旁路缓存）— 读取：先读缓存，miss 则读 DB 并写缓存。更新：先更新 DB，再删除缓存（或更新缓存）。写多读少的场景删除缓存比更新缓存好（淘汰比更新简单，避免竞争条件）。2）Read-Through / Write-Through — 缓存层代理 DB 操作。3）Write-Behind — 异步写回 DB（高吞吐但有丢失风险）。Cache-Aside 的问题：并发写时先更新 DB 再删缓存，如果删缓存失败，旧数据留在缓存中。解决：延迟双删（先删缓存 -> 更新 DB -> 延迟 N 毫秒再删一次缓存），或使用 Change Data Capture（监听 Binlog 变更后异步删缓存）。\n\n扩展延伸：Cache-Aside 中「先更新 DB 再删缓存」和「先删缓存再更新 DB」哪个更好？主流推荐「先更新 DB 再删缓存」——因为先删缓存再更新 DB 可能导致并发读时缓存被其他线程写回旧数据（A 删缓存 -> B 读 DB（旧数据）写缓存 -> A 更新 DB）。使用 RabbitMQ 或 Redis Stream 做可靠删除——删缓存失败的消息入队列，异步重试。也可以使用 Read/Write Lock——读操作读取时加读锁防止写并发。业务容忍度：大多数场景缓存短时间不一致是可接受的（最终一致性），只有强一致场景（如库存、余额）才需要特殊处理。Facebook 的论文《Scaling Memcache at Facebook》描述了 Cache-Aside + 异步删除的实践——通过 MCRouter 做缓存代理 + 后台 Daemon 监听 DB 更新异步删缓存。Garnet（微软开源的缓存系统）支持更强的一致性模型。",
+    "hints": [
+      "先更新 DB 再删缓存和先删缓存再更新 DB 各自的并发问题",
+      "延迟双删中延迟时间怎么确定"
+    ],
+    "tags": [
+      "缓存",
+      "一致性",
+      "数据库"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数据库读写分离与主从延迟",
+    "content": "数据库读写分离架构中如何处理主从延迟导致的读写不一致问题？",
+    "answer": "答案：主从延迟导致写后读不一致——用户写入主库后立即读取从库可能读到旧数据\n\n解决方案：1）读写分离强制读主——对一致性要求高的查询（如支付完成后查看订单状态）强制路由到主库，使用「读主库」标记或 Hint。2）数据版本号——写入时在 Redis 记录「用户 X 的最后写入时间」，读从库时检查该时间与从库的 Seconds_Behind_Master，如果延迟超过阈值则读主库。3）数据库中间件（ShardingSphere / MyCat）— 实现写后读一致性（Write-Read Separation），写入后 N 毫秒内的同一用户请求路由到主库。4）业务层面容忍——对于不关键的查询（如商品详情页的评论数），允许短暂不一致（因为评论数从 99 变成 101 用户看不出来）。\n\n扩展延伸：主从延迟的常见原因：1）从库硬件性能不如主库 2）从库执行大事务（批量更新）导致延迟 3）从库在做备份或 Analyzing 表 4）从库的 CPU/IO 被其他查询占用。延迟监控：在从库执行 SHOW SLAVE STATUS 监控 Seconds_Behind_Master。如果持续超过阈值（如 30 秒）发出告警。半同步复制（Semi-Sync Replication）：主库等待至少一个从库确认收到 Binlog 后才提交事务，保证数据至少在一个从库上可用。MySQL Group Replication 或 InnoDB Cluster 提供更强的一致性保证。读写分离的架构演进：应用层实现（多数据源配置）-> 数据库中间件（如 ProxySQL）-> 云服务（RDS 的读写分离自动路由）。缓存 + 读写分离组合：用户写入主库后同时更新 Redis 缓存，读从库 + 读缓存补偿——用户查询走 Redis 缓存（读写后缓存强一致），如果缓存 miss 再查询从库。",
+    "hints": [
+      "从库 Seconds_Behind_Master 是怎么计算的",
+      "半同步复制相比异步复制在性能上有什么牺牲"
+    ],
+    "tags": [
+      "读写分离",
+      "主从",
+      "延迟"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "技术设计评审要点",
+    "content": "以下哪项不是技术设计评审（Design Review）时应重点关注的维度？",
+    "options": [
+      "A) 方案是否满足功能需求",
+      "B) 方案的可扩展性和演进路径",
+      "C) 代码的命名规范和行数",
+      "D) 方案的安全性和异常处理"
+    ],
+    "answer": "C",
+    "hints": [
+      "Design Review 关注架构级问题（可扩展性、安全性、可靠性），代码风格和命名规范是 Code Review 的关注点"
+    ],
+    "tags": [
+      "设计评审",
+      "Architecture",
+      "Review"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "API 限流策略设计",
+    "content": "请设计一套 API 限流方案，支持多维度限流（用户/IP/接口）并提供友好拒绝体验。",
+    "answer": "答案：API 限流需要多维度限流规则 + 滑动窗口算法 + 友好的限流响应\n\n解析：限流维度：1）用户级别——每个用户每秒/每分钟的 API 请求配额（如 100 QPS per user）2）IP 级别——防止单个 IP 恶意攻击（如 1000 QPS per IP）3）接口级别——不同接口不同配额（如写接口比读接口限流更严格）4）全局级别——保护整个系统的最大吞吐。算法选择：滑动窗口（Sliding Window Log 或 Sliding Window Counter）比固定窗口（每分钟重置计数器）更平滑，防抖动。Token Bucket 适合允许突发流量的场景。实现方式：1）Redis + Lua 脚本保证原子性（INCR + EXPIRE）2）分布式限流需要 Redis Cluster 或 Sentinel 3）SENTINEL 模式下的限流推荐本地 Token Bucket（减少网络开销）+ Redis 做全局协调。\n\n扩展延伸：友好的限流响应：HTTP 429 Too Many Requests + Retry-After Header 告知客户端何时重试。限流信息的传递：通过 X-RateLimit-Limit / X-RateLimit-Remaining / X-RateLimit-Reset Headers（GitHub API 风格）。分级限流策略：1）L1—Nginx 层（IP 限流）2）L2—API Gateway（用户 + 接口限流）3）L3—业务层（根据业务复杂度的动态限流）。分布式限流的挑战：Redis 单点瓶颈（每个请求都查 Redis）。优化策略：本地预分配 + 周期性同步（Token Bucket 定时从 Redis 获取配额配额到本地）。降级响应：限流后返回友好提示（「系统繁忙，请稍后再试」）+ 缓存的历史数据（如有）。限流的动态调整：根据系统负载（CPU/内存/延迟）自动调整配额。Sentinel / Resilience4j 在应用层实现限流和熔断。",
+    "hints": [
+      "滑动窗口相比固定窗口限流有什么优势",
+      "分布式限流中每次请求都查 Redis 的性能问题怎么解决"
+    ],
+    "tags": [
+      "限流",
+      "API",
+      "设计"
+    ]
   }
 ]

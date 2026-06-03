@@ -1155,5 +1155,95 @@
       "forwardRef",
       "useImperativeHandle"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 合成事件与原生事件",
+    "content": "请解释 React 合成事件（SyntheticEvent）的工作原理以及它与原生 DOM 事件的区别。",
+    "answer": "答案：合成事件是 React 对浏览器原生事件对象的跨浏览器封装，提供一致的接口和性能优化\n\n解析：React 16 在 document 上注册事件监听（事件委托），React 17+ 改为在 React 根容器上注册。所有事件都通过事件冒泡到达根容器后统一处理——这减少了大量事件监听器的内存占用。合成事件对象（SyntheticEvent）实现了 W3C 事件规范，抹平了不同浏览器的事件差异（如 stopPropagation、preventDefault 各浏览器实现不同）。关键特性：1）合成事件池（Event Pooling，React 16）——事件回调完成后，合成事件对象的属性被置 null 并被回收，异步访问需调用 event.persist()（React 17 后废弃此优化）。2）原生事件在冒泡阶段触发合成事件（stopPropagation 行为符合 React 组件树而不是 DOM 树 3）React 17 不再需要事件委托到 document，避免多个 React 应用同页面冲突。\n\n扩展延伸：在 React 组件中混用原生事件监听（ref.addEventListener）和合成事件需注意执行顺序：原生事件的捕获/冒泡先执行，然后在根容器上触发合成事件处理。stopPropagation() 在合成事件中只能阻止同层级的合成事件不能阻止原生事件。Passive 事件监听（{ passive: true }）用于优化滚动性能，touchstart/touchmove 默认 passive: true 不能被动调用 preventDefault。React 18 的并发模式中，合成事件在并发渲染下可能被优先处理（事件触发更高优先级的更新）。React 19 正式版中，合成事件系统进一步优化了内存使用并与并发渲染深度集成。",
+    "hints": [
+      "React 17 为什么把事件委托从 document 改到根容器",
+      "合成事件池（Event Pooling）在 React 17 中为什么被移除"
+    ],
+    "tags": [
+      "React",
+      "事件",
+      "合成事件"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Error Boundary 原理",
+    "content": "请解释 React Error Boundary 的实现原理和使用限制。",
+    "answer": "答案：Error Boundary 是捕获子组件树 JavaScript 错误并显示降级 UI 的 React 组件\n\n解析：类组件实现 componentDidCatch(error, errorInfo) 或 static getDerivedStateFromError(error) 即可成为 Error Boundary。getDerivedStateFromError 用于渲染降级 UI，componentDidCatch 用于记录错误日志。Error Boundary 不能捕获的错误：1）事件处理中的错误（try-catch 自行处理）2）异步代码（setTimeout、requestAnimationFrame、Promise）中的错误 3）服务端渲染中的错误 4）Error Boundary 自身抛出的错误（需嵌套另一个 Error Boundary）。在 React 生产模式下，未捕获的错误会触发全局的 React error event。\n\n扩展延伸：Error Boundary 的捕获范围：以虚拟 DOM 树为边界，不是 React 组件层级中的实际边界。边界只在其子树内的渲染、生命周期和构造方法中生效。多个 Error Boundary 可以嵌套使用——子边界未处理时错误冒泡到父边界。React 错误恢复机制——React 18 并发模式中，Error Boundary 在渲染阶段发生的错误可以在后续重试渲染。对于函数组件，React 没有提供 Error Boundary 的 hook 形式（始终不支持函数组件直接作为 Error Boundary），但可以用高阶组件（withErrorBoundary）封装。React 18+ 的 suspense + error boundary 组合用于数据请求错误场景：Suspense 处理 loading，Error Boundary 处理错误。React 19 不再有新错误边界 API，但 Error Recovery 方面做了改进（减少 catch 遗漏导致的白屏问题）。",
+    "hints": [
+      "为什么函数组件不能直接作为 Error Boundary",
+      "Error Boundary 为什么不能捕获异步代码错误"
+    ],
+    "tags": [
+      "React",
+      "错误处理",
+      "Error Boundary"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Context 性能优化",
+    "content": "请分析 React Context 在重渲染时的性能问题及优化方案。",
+    "answer": "答案：Context 值变化会导致所有消费该 Context 的组件及其子组件重新渲染\n\n解析：当 Context Provider 的 value 引用变化时，所有使用了 useContext(Context) 的 consumer 组件会重新渲染（即使它们只关心 value 中的部分字段）。因为 Context 没有内置选择性的订阅机制，context value 的任何变化都会触发所有 consumer 的更新。这会导致 consumer 组件树中的子组件无关联渲染（即使用 React.memo 包裹的子组件也会因为父组件更新而重新渲染——因为 consumer 组件对子组件的 render 返回新 JSX 破坏了 memo 的引用优化）。\n\n扩展延伸：优化方案：1）将频繁变化的值和不常变化的值分到不同的 Context（如 ThemeContext + UserSettingsContext 分离）2）使用 useMemo 包裹 value 对象避免不必要的引用变化 3）在 consumer 中配合 useMemo/React.memo 局部优化 4）使用状态管理库替代 Context（Zustand/Jotai 基于订阅模式只更新使用该 state 的组件 5）使用 use-context-selector（React 官方 RFC 中 proposed 的 API，通过 proxy 实现选择性订阅）。Recompose / Reusable Context Selector 实践中常用拆分多个 Context 的策略。最推荐的做法：如果 conumer 数量多且价值变化频繁，考虑使用 Zustand（基于 immmer + selector）或 Jotai（原子化 state）替代 Context。Zustand 的 selector useStore(store, s => s.count) 只在 count 变化时重渲染。",
+    "hints": [
+      "Context value 中的部分字段变化时为什么所有 consumer 都重渲染",
+      "拆分多个 Context 是怎么解决重渲染问题的"
+    ],
+    "tags": [
+      "React",
+      "Context",
+      "性能"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "React 批处理更新",
+    "content": "在 React 18 中，以下哪个场景会触发多次渲染而非自动批处理？",
+    "options": [
+      "A) setTimeout 中的多个 setState",
+      "B) Promise 回调中的多个 setState",
+      "C) 原生 DOM 事件处理中的多个 setState",
+      "D) 以上所有场景在 React 18 中都自动批处理"
+    ],
+    "answer": "D",
+    "hints": [
+      "React 18 在 createRoot 模式下，所有场景（包括 setTimeout/Promise/原生事件）都会自动批处理"
+    ],
+    "tags": [
+      "React",
+      "批处理",
+      "渲染"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Portal 事件冒泡",
+    "content": "请解释 React Portal 的事件冒泡机制及其与 DOM 树的关系。",
+    "answer": "答案：Portal 中触发的事件会按照 React 组件树而非 DOM 树进行冒泡\n\n解析：ReactDOM.createPortal(children, domNode) 将 children 渲染到 DOM 树的不同位置（如 document.body），但事件冒泡仍遵循 React 组件树结构。这意味着 Portal 内部触发的合成事件会冒泡到组件树中 Portal 的父级组件，而不是按照 DOM 层级在 Portal 的 DOM 父元素上捕获。这一行为对于实现模态框、弹窗、悬浮层非常关键：模态框虽然渲染在 document.body 下，但事件仍能冒泡到其逻辑父组件。合成事件委托（在 React 根容器上）自然会捕获到 Portal 内冒泡的事件。\n\n扩展延伸：React 16 实现 Portal 时，事件在虚拟 DOM 树沿 fiber 节点逐层冒泡（从 Portal 内部的 fiber 节点父级逐级向上），这就是保持原有冒泡序列的原因。如果用原生 DOM API 在 Portal 容器手动添加事件监听，监听的是 Portal 渲染到的实际 DOM 位置，而不是组件树中的位置（需要区分合成事件和原生事件）。Portal 的典型问题：在 Modal 中使用 onMouseLeave 可能不会如预期触发——因为鼠标移动到 Modal 外部时在 DOM 层级是从 Modal 的子元素移出 body，但 React 的冒泡并不按 DOM 层级。React 17 的事件委托改到根容器上，Portal 的冒泡机制不变。React 19 中 Portal 的行为保持兼容。",
+    "hints": [
+      "Portal 渲染到 document.body 但事件怎么冒泡到父组件",
+      "在 Portal 内用原生事件监听需要注意什么"
+    ],
+    "tags": [
+      "React",
+      "Portal",
+      "事件"
+    ]
   }
 ]

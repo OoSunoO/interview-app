@@ -1242,5 +1242,101 @@
       "HashMap",
       "并发"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HashMap 树化与红黑树",
+    "content": "请解释 HashMap 在 Java 8 中引入的红黑树化机制及其触发条件。",
+    "answer": "答案：当哈希冲突严重导致链表过长时，HashMap 将链表转换为红黑树（TreeNode）以优化查找性能\n\n解析：当链表长度超过 TREEIFY_THRESHOLD（默认 8）且 table 长度 >= MIN_TREEIFY_CAPACITY（64）时，HashMap 将链表转换为红黑树。树化的前提条件要求 table 长度至少 64——如果 table 太小（< 64）即使链表长度超过 8 也不树化，而是优先扩容（resize）以减少冲突。红黑树节点（TreeNode）约为普通 Node 的 2 倍大小，所以树化以空间换时间——链表查找 O(N) 退化为红黑树 O(log N)。当 remove 或 resize 导致红黑树节点数 < UNTREEIFY_THRESHOLD（默认 6）时，红黑树退化为链表（6 和 8 之间差 2 防止频繁转换抖动）。\n\n扩展延伸：为什么阈值选 8？来自泊松分布的统计结果——在随机哈希码下，链表长度达 8 的概率极低（约 0.00000006），意味着树化只在极极端的哈希冲突情况下触发（如恶意构造的哈希碰撞 DoS 攻击或 Key 的 hashCode 实现极差）。HashMap 的树化和退化逻辑只对 static class TreeNode 节点生效，红黑树使用左旋/右旋和变色维持平衡。在 Java 8 之前 HashMap 直接使用 Entry 链表，没有树化保护，构造大量哈希冲突的 key 可以将 HashMap 的 get 复杂度从 O(1) 降为 O(N)。ConcurrentHashMap 也有类似的树化机制但处理更复杂（在 treeifyBin 时需加锁保证线程安全）。",
+    "hints": [
+      "树化阈值为什么是 8 而不是其他数字",
+      "table 长度小于 64 时链表超长会怎样"
+    ],
+    "tags": [
+      "Java",
+      "HashMap",
+      "红黑树"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ArrayList vs LinkedList",
+    "content": "以下关于 ArrayList 和 LinkedList 的性能比较，错误的是？",
+    "options": [
+      "A) ArrayList 的 get(index) 是 O(1)，LinkedList 是 O(N)",
+      "B) ArrayList 尾部插入是均摊 O(1)，LinkedList 尾部插入是 O(1)",
+      "C) LinkedList 头部插入是 O(1)，ArrayList 头部插入是 O(N)",
+      "D) ArrayList 和 LinkedList 的 remove(Object) 都是 O(N)"
+    ],
+    "answer": "D",
+    "hints": [
+      "LinkedList 的 remove(Object) 需要遍历链表查找元素（O(N)），ArrayList 也需要遍历数组查找（O(N)）"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ArrayList",
+      "LinkedList"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HashMap 扩容与 rehash",
+    "content": "请解释 HashMap 在 Java 7 和 Java 8 中扩容机制的差异。",
+    "answer": "答案：Java 8 对 HashMap 的扩容做了重要优化，引入了尾插法和重新计算位置优化\n\n解析：Java 7 的扩容（transfer 方法）使用头插法将旧数组的链表节点搬到新数组：遍历旧 table 每个 bucket 的链表，将节点 rehash 后以头插方式插入新 table。头插法在并发扩容时可能导致循环链表（死循环），因为两个线程同时 transfer 时可能互相覆盖 next 引用形成环形结构。Java 8 改为尾插法（使用 loHead/loTail 和 hiHead/hiTail 两个链表分别收集扩容后位置不变和位置变化的节点），保持了原链表的顺序。并且利用优化：元素在新 table 中的位置要么在原位置（hash & oldCap == 0），要么是原位置 + oldCap（hash & oldCap == 1），不需要重新计算 hash。这一优化基于扩容是 2 倍扩容（oldCap * 2）的特性。\n\n扩展延伸：扩容阈值 threshold = capacity * loadFactor（默认 0.75）。loadFactor 0.75 的时间和空间的折中：太高（如 1）空间利用率高但冲突增加，太低（如 0.5）扩容频繁但冲突少。扩容时间：当 table 从 16 到 32、64、128……每次扩容都需 rehash 所有元素，大量元素时可能触发耗时操作（当 HashMap 包含数十万条记录时，扩容耗时可达毫秒级）。预判容量：new HashMap<>(expectedSize) 设置 initialCapacity 减少扩容次数。最佳 initialCapacity = expectedSize / 0.75 + 1。Java 8+ HashMap 不再死循环但扩容仍然不是线程安全的（丢失数据），并发环境仍然使用 ConcurrentHashMap。",
+    "hints": [
+      "Java 7 的死循环是怎么通过链表节点形成环的",
+      "扩容后元素在新数组中的位置怎么通过 hash & oldCap 确定"
+    ],
+    "tags": [
+      "Java",
+      "HashMap",
+      "扩容"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap JDK7 vs JDK8",
+    "content": "请对比 ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现差异。",
+    "answer": "答案：JDK 8 对 ConcurrentHashMap 进行了全面重构，从分段锁改为 CAS + synchronized\n\n解析：JDK 7 使用 Segment 数组（默认 16 个 Segment 继承 ReentrantLock），每个 Segment 对应一个 HashEntry 数组。写操作只需锁住一个 Segment，理论上支持 16 线程并发写。Segment 数量一经初始化不可变，扩容在每个 Segment 内部独立进行。JDK 8 移除了 Segment 设计，采用 CAS + synchronized 实现更细粒度的并发：1）使用 volatile 修饰 Node 数组保证可见性 2）插入 bucket 时如果该位置为空则通过 CAS 写入，否则加 synchronized 锁住链表/红黑树头节点 3）锁粒度从 Segment 级降为 bucket 级，并发度更高 4）引入了红黑树优化长链表。\n\n扩展延伸：JDK 8 的 key 计数（mappingCount/size 方法）改用 CounterCell 数组（类似 LongAdder）来维护元素总数，多个线程更新时分散到不同 Cell 减少 CAS 冲突。helpTransfer 方法允许多个线程协助数据迁移（扩容时），提高扩容效率。transfer 方法支持多线程并发扩容：每个线程负责一部分桶的迁移，通过 ForwardingNode 标记已迁移的桶。JDK 8 的 CHM 在弱一致性上做得更好：由于 get 操作不加锁，读取节点时看到的可能是过时的数据状态（但最终一致性保证）。因此，ConcurrentHashMap 的 size() 和 isEmpty() 方法也是弱一致的（这是特意设计的trade-off）。",
+    "hints": [
+      "Segments 锁分段相比 CAS + synchronized 有什么劣势",
+      "get 方法不加锁的安全性怎么保证"
+    ],
+    "tags": [
+      "Java",
+      "ConcurrentHashMap",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Collections.unmodifiableList vs List.of",
+    "content": "关于 Collections.unmodifiableList 和 List.of 返回的不可变列表，以下说法正确的是？",
+    "options": [
+      "A) List.of 返回的列表支持 add 操作",
+      "B) Collections.unmodifiableList 包装的原始列表变化后，unmodifiableList 也会变化",
+      "C) Collections.unmodifiableList 返回的列表本身是可变的",
+      "D) List.of 和 Collections.unmodifiableList 的底层实现完全相同"
+    ],
+    "answer": "B",
+    "hints": [
+      "Collections.unmodifiableList 是视图包装器，原始列表变化会反映到 unmodifiable 视图上"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "不可变"
+    ]
   }
 ]

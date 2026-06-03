@@ -1188,5 +1188,96 @@
       "表达式",
       "穷举性"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 值传递与引用传递",
+    "content": "请解释 Java 中「值传递」的含义及其对方法参数传递的影响。",
+    "answer": "答案：Java 只有值传递（pass-by-value），没有引用传递\n\n解析：对于基本类型（int/boolean/char 等），方法参数传递的是值的副本，方法内修改不会影响原变量。对于引用类型（对象/数组/List），传递的是引用值的副本——即对象的地址，所以方法内通过引用修改对象属性会影响原对象，但如果将引用指向新对象（在方法内 new 一个对象赋值给参数），外部的引用不会改变。这一点常被误解为「引用传递」，实际上传递的是引用变量的副本的值，指针本身是按值传递的。对比 C++ 的 int& 真正的引用传递（引用本身不可变，且操作的就是原变量）。\n\n扩展延伸：String 的特殊性：String 是不可变对象，方法内修改 String 参数（s = \"new\") 实际上是创建新对象并让局部变量指向它，不影响外部引用。所以 String 的效果类似基本类型。自动装箱拆箱中也有类似陷阱：Integer i = 128 在方法内赋值不会影响外部（Java 缓存 -128~127 的 Integer 对象）。在需要修改调用方的基本类型时使用返回新值或 atomic 引用（AtomicReference）。Java 没有 C++ 的指针的指针（int**）等价物。",
+    "hints": [
+      "String 参数在方法内部重新赋值时为什么不会影响外部",
+      "Integer 在缓存范围内的赋值行为是否不同"
+    ],
+    "tags": [
+      "Java",
+      "值传递",
+      "基础"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java final 关键字的含义",
+    "content": "以下关于 Java final 关键字的描述，错误的是？",
+    "options": [
+      "A) final 方法不能被重写（Override）",
+      "B) final 类不能被继承",
+      "C) final 变量赋值后不能被修改",
+      "D) final 字段必须在构造方法或声明时显式初始化"
+    ],
+    "answer": "C",
+    "hints": [
+      "final 引用变量不能指向其他对象，但对象本身的状态可以修改",
+      "final 的实例字段可以在构造方法中初始化"
+    ],
+    "tags": [
+      "Java",
+      "final",
+      "基础"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 内部类分类",
+    "content": "请对比 Java 的四种内部类：静态内部类、成员内部类、局部内部类和匿名内部类。",
+    "answer": "答案：四种内部类有不同的访问权限、生命周期和使用场景\n\n解析：1）静态内部类（static class Inner）— 不持有外部类的隐式引用，不能访问外部类的实例成员，可以独立于外部类实例创建。典型应用：Builder 模式（如 StringBuilder 中的 Builder 静态内部类）。2）成员内部类（class Inner）— 持有外部类的 this 引用，可以访问外部类的所有成员（包括 private）。创建时需要外部实例：outer.new Inner()。3）局部内部类（方法内定义的类）— 作用域在方法内，可以访问方法中的 final/effectively final 局部变量。4）匿名内部类（new Interface() {}）— 没有类名，适合一次性使用的回调/事件监听器，Java 8+ 被 Lambda 表达式取代。\n\n扩展延伸：内部类的编译产物：每个内部类编译为独立的 .class 文件（Outer$Inner.class）。成员内部类持有外部类引用可能导致内存泄漏（如果内部类比外部类生命周期长）。局部内部类和匿名内部类在 Java 8 之前要求捕获的局部变量必须是 final，Java 8+ 允许 effectively final（变量初始化后没被修改）。匿名内部类 vs Lambda：匿名内部类创建一个新类实例，Lambda 使用 invokedynamic，Lambda 更轻量（不创建额外 .class 文件）。",
+    "hints": [
+      "成员内部类为什么可能导致内存泄漏",
+      "局部内部类访问的局部变量为什么需要是 effectively final"
+    ],
+    "tags": [
+      "Java",
+      "内部类",
+      "面向对象"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 序列化机制",
+    "content": "请解释 Java 序列化的底层机制以及 serialVersionUID 的作用。",
+    "answer": "答案：Java 序列化将对象转换为字节流以便存储或传输，反序列化将字节流恢复为对象\n\n解析：实现 java.io.Serializable 接口的对象可以通过 ObjectOutputStream.writeObject() 序列化。序列化过程使用反射获取对象的实例字段（包括父类非 transient 字段）及其类型信息，递归序列化所有引用对象（如果也实现了 Serializable）。反序列化：从字节流读取类元数据（不调用构造方法），使用 native 方法直接分配内存并恢复字段值。serialVersionUID 是类的版本标识，在序列化时写入流，反序列化时校验当前类的 UID 与流中的 UID 是否一致（不一致抛 InvalidClassException）。显式声明 private static final long serialVersionUID 防止类结构变化后默认生成不同而导致的反序列化失败。\n\n扩展延伸：transient 关键字标记的字段不会被序列化，适合密码、连接等不应持久化的字段。自定义序列化：通过 writeObject()/readObject() 方法自定义序列化逻辑（如加密敏感字段）。Externalizable 接口通过 writeExternal()/readExternal() 完全自定义序列化过程，比 Serializable 更灵活但需自行处理父类和类型信息。序列化的安全问题：反序列化可能执行恶意代码（通过构造恶意字节流触发类中的潜在漏洞），所以反序列化的数据必须来自可信来源。替代方案：JSON（Jackson/Gson）、Protocol Buffers、Kryo 等现代序列化方案跨语言兼容、性能更好且更安全。Java 9+ 的 filter 机制（ObjectInputFilter）允许在反序列化时校验类名白名单。",
+    "hints": [
+      "serialVersionUID 的显式声明为什么比默认生成更好",
+      "为什么推荐用 JSON 或 Protobuf 替代 Java 原生序列化"
+    ],
+    "tags": [
+      "Java",
+      "序列化",
+      "IO"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 反射机制原理",
+    "content": "请解释 Java 反射机制的工作原理及其常见的性能和安全问题。",
+    "answer": "答案：反射使程序在运行时获取类的结构信息并操作类/对象，基于 JVM 的类元数据\n\n解析：JVM 加载类时将类的元数据（Class 对象）存储在方法区（Java 8 后是 Metaspace）。Class.forName() 或 对象.getClass() 返回这个 Class 对象的引用。通过 Class 对象可以获取字段（Field）、方法（Method）、构造方法（Constructor），调用 setAccessible(true) 可以绕过 Java 访问控制检查（使 private 成员也可访问）。Method.invoke() 通过 JNI（Java Native Interface）调用 native 方法（sun.reflect.MethodAccessor.invoke），相当于动态分派与直接调用的组合。在 HotSpot 中，反射调用次数少时使用委派（DelegatingMethodAccessorImpl），调用次数超过 15 次阈值时生成字节码实现（GeneratedMethodAccessor），接近直接调用的性能。\n\n扩展延伸：反射性能开销：1）类型安全检查（每次调用检查访问权限）2）自动装箱/拆箱 3）可变参数数组创建 4）JIT 无法内联优化。优化手段：缓存 Method/Field 对象复用、setAccessible(true) 减少安全检查。反射的现代替代：Java 17 引入的 MethodHandle（java.lang.invoke）类似反射但更轻量（JIT 可内联），用于 Lambda 表达式和框架内部实现。VarHandle 访问字段和数组元素。模块系统（JPMS）通过反射限制——非 open 模块中的私有成员反射访问在 Java 17+ 默认被限制（除非启动参数 --add-opens）。框架（Spring）内部广泛使用反射，性能影响在大厂框架下通常可接受（核心 bean 在启动时预先反射调用一次，运行时不再反射）。",
+    "hints": [
+      "MethodHandles 相比传统反射的优势是什么",
+      "Java 模块系统为什么限制反射访问"
+    ],
+    "tags": [
+      "Java",
+      "反射",
+      "JVM"
+    ]
   }
 ]

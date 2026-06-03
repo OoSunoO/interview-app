@@ -1185,5 +1185,95 @@
       "矩阵快速幂",
       "递推"
     ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "回文子串计数与 Manacher 算法",
+    "content": "请解释 Manacher 算法计算回文子串数量的原理及其时间复杂度分析。",
+    "answer": "答案：Manacher 算法利用回文的对称性在 O(N) 时间内找出所有回文子串\n\n解析：Manacher 的核心思想是维护一个当前最右回文边界（center, right），利用已计算的回文半径避免重复扩展。预处理：在字符间插入分隔符（如 #）使奇偶回文统一处理。定义 p[i] 为以 i 为中心的回文半径（包括 i 本身）。遍历字符串时，如果 i 在当前最右回文范围内（i < right），利用对称性得到 p[i] 的初始值 p[i] = min(right-i, p[2*center-i])，然后尝试向两边扩展。当扩展后的回文右边界超过当前 right 时更新 center 和 right。每个字符最多被扩展失败一次（当扩展到新的右边界时），所以总扩展次数 O(N)。总复杂度 O(N)，空间 O(N)。回文子串总数 = Σ(p[i] // 2)（经过分隔符处理后的真实回文数量）。\n\n扩展延伸：Manacher 与中心扩展法对比：中心扩展 O(N²)，Manacher O(N)。在实际面试中，如果 N ≤ 10^5 且只需要最长回文（而不是计数），中心扩展 + 优化也可用（P[i][j] DP O(N²) 不可行）。回文相关问题：1）最长回文子串（Manacher 跟踪最大 p[i]）2）回文子串数量（Σp[i]//2）3）分割回文串（回文 DP + 回溯或 Manacher 预处理）。本质上 Manacher 可以一步到位得到所有回文中心的最长回文半径。KMP、Z-algorithm、Manacher 三者本质上是同一类算法——利用前缀后缀的对称信息避免重复比较。面试中 Manacher 的写法复杂度高于中心扩展法，但理解原理后不难写。",
+    "hints": [
+      "Manacher 预处理插入分隔符的作用是什么",
+      "p[i] 的初始值为什么可以设置为 min(right-i, p[2*center-i])"
+    ],
+    "tags": [
+      "字符串",
+      "回文",
+      "Manacher"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数组中的逆序对计数",
+    "content": "请解释使用归并排序计算数组中逆序对数量的原理。",
+    "answer": "答案：在归并排序合并阶段统计逆序对——当右半边元素小于左半边时，左半边剩余元素都与该元素构成逆序\n\n解析：在归并排序的合并过程中，左右两个子数组已经分别有序（升序）。当从右半边取元素放入结果数组时，如果右半边的当前元素小于左边当前元素，则左半边从当前到末尾的所有元素都与这个右半边元素构成逆序对（因为左半边元素 > 右半边当前元素，且左半边所有元素的原始索引都在右半边当前元素之前）。在 merge 步骤中统计 count += mid - i + 1 即可累加。算法总复杂度 O(N log N)（归并排序本身），额外空间 O(N)（归并用的临时数组）。\n\n扩展延伸：逆序对数等于冒泡排序的交换次数（每次相邻交换恰好消除一个逆序对），也反映数组有序程度。Predecessor 问题：求每个元素在前面有多少个比它大的元素（前缀逆序），可以用 Fenwick Tree（树状数组）或 Segment Tree 在线查询（离散化 + BIT，从右向左遍历，对每个元素查询 BIT 中比它小的数量）。更一般的扩展：求数组中满足 a[i] > a[j] * k 的逆序对（带权重），BIT 同样适用。LeetCode 315（Count of Smaller Numbers After Self）即求每个元素右边的逆序数量——从右向左遍历，离散化后用 BIT 维护频次即可 O(N log N)。三元素逆序对（a[i] > a[j] > a[k], i<j<k）可以用两次 BIT——分别维护「以 j 结尾的逆序对数量」和「以 k 结尾的三元组数量」。",
+    "hints": [
+      "归并排序合并时统计逆序对的时机和累加公式",
+      "树状数组怎么在线计算每个元素右边的比它小的元素个数"
+    ],
+    "tags": [
+      "数组",
+      "逆序对",
+      "归并排序"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "二维矩阵搜索策略",
+    "content": "在一个每行从左到右递增且每列从上到下递增的矩阵中搜索目标值，最优算法的复杂度是？",
+    "options": [
+      "A) O(M*N) 暴力搜索",
+      "B) O(M*logN) 每行二分",
+      "C) O(M+N) 从右上角开始搜索",
+      "D) O(log(M*N)) 全局二分"
+    ],
+    "answer": "C",
+    "hints": [
+      "从右上角开始，比目标大向左移，比目标小向下移，每次排除一行或一列"
+    ],
+    "tags": [
+      "矩阵",
+      "搜索",
+      "算法"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "字符串循环移位",
+    "content": "请解释字符串循环移位（Rotate String）的高效实现方法。",
+    "answer": "答案：字符串循环移位可以通过三次反转（Three-Reverse）在 O(N) 时间和 O(1) 额外空间实现\n\n解析：将字符串 s 循环左移 k 位的方法：1）反转前 k 个字符 2）反转剩余的 N-k 个字符 3）反转整个字符串。例如 s = \"abcdef\", k=2：反转前 2 个 \"ab\"→\"ba\"，反转后 4 个 \"cdef\"→\"fedc\"，得到 \"bafedc\"，再全部反转得到 \"cdefab\"。原理：XY -> (X^T Y^T)^T = YX。另一种方法：使用 s[(i+k)%N] = s[i] 的原地置换（类似循环队列），但需要 gcd 知识——如果 N 和 k 的最大公约数为 g，则需进行 g 轮循环（每轮从 i 开始跳 k 步直到回到 i）。Python 和 Java 中也可以 s = s[k:] + s[:k] 一行实现但 O(N) 空间。\n\n扩展延伸：循环移位相关的问题：1）字符串旋转匹配（s1 旋转后能否等于 s2）——判断 s2 in s1+s1 即可 2）字符串环的最小表示法（求循环同构串中字典序最小的表示）——用双指针 O(N) 算法（最小表示法）3）旋转后数组的二分搜索——旋转数组搜索 target（LeetCode 33），先二分找旋转点再二分搜索。KMP 算法也可以用于旋转匹配（判断 s1+s1 不拼接而用模式匹配）。手写原地循环移位的 gcd 版本：内层 for j in range(g), i=j, tmp=s[i], do{next=(i+k)%N, swap(s[next], tmp), i=next} while i!=j。工程中优先使用三步反转法（简洁且 cache-friendly）。",
+    "hints": [
+      "三步反转法为什么能实现循环移位",
+      "判断 s1 旋转后能否等于 s2 为什么可以用 s1+s1 包含 s2 来判断"
+    ],
+    "tags": [
+      "字符串",
+      "旋转",
+      "算法"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "最近公共祖先 LCA 算法",
+    "content": "请解释二叉树中最近公共祖先（LCA）的递归算法和离线 Tarjan 算法。",
+    "answer": "答案：LCA 递归算法在 DFS 过程中判断目标节点是否在左右子树中，Tarjan 算法使用并查集离线处理所有查询\n\n解析：递归法：从根节点 DFS，如果当前节点等于 p 或 q 则返回当前节点。递归查询左右子树，如果左子树返回非空且右子树也返回非空，说明 p 和 q 分别在左右子树中，当前节点就是 LCA。如果只有一侧返回非空，则 LCA 在那侧。复杂度 O(N) 每次查询，适合少量查询。空间取决于树高（递归栈深度）。Tarjan 离线 LCA：一次 DFS 处理所有查询。DFS 遍历树时，用并查集将已回溯的节点与父节点合并。当访问到一个节点时，检查所有与该节点相关的查询——如果另一个节点已被访问过，则 find(另一个节点) 就是它们的 LCA。复杂度 O(N + Q*α(N))，其中 Q 是查询数。\n\n扩展延伸：LCA 的其他方法：1）Binary Lifting（倍增法）— 预处理每个节点往上跳 2^k 步的祖先，每次查询 O(log N)。预处理 O(N log N)。2）RMQ + Euler Tour — 树的欧拉序转化为区间最小值查询（Sparse Table 或 Segment Tree），查询 O(1)（RMQ 预处理 O(N log N)）。在算法竞赛中，Binary Lifting 是最常用的——实现简单且支持在线的 O(log N) 查询。Tarjan 适合离线处理大量查询的场景。树上差分（Differential on Tree）用到 LCA——给路径上的所有节点加权的经典方法：diff[u]++, diff[v]++, diff[lca]-=2。注意 diff[lca] 的减 2 是回退 lca 本身被重复计算的路径。实际工程中 LCA 还可用于求树上两点间距离（dist = depth[u] + depth[v] - 2*depth[lca]）。",
+    "hints": [
+      "递归找 LCA 为什么 p 和 q 分别在左右子树时当前节点就是 LCA",
+      "Binary Lifting 的 up[v][k] 数组怎么递推"
+    ],
+    "tags": [
+      "树",
+      "LCA",
+      "算法"
+    ]
   }
 ]

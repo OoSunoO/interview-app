@@ -1141,5 +1141,90 @@
       "ES Module",
       "CommonJS"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "WebAssembly (Wasm) 原理与应用",
+    "content": "请解释 WebAssembly 的编译原理及其在前端的典型应用场景。",
+    "answer": "答案：WebAssembly 是一种低级的二进制指令格式，可在浏览器中以接近原生速度执行\n\n解析：Wasm 的编译流程：C/C++/Rust/Go 等语言通过 LLVM 编译为 .wasm 二进制文件（.wasm 是抽象的栈式指令集的编码，非特定 CPU 架构的机器码）。浏览器加载 .wasm 后，JavaScript 中的 WebAssembly.instantiate() 将二进制编译为对应平台的机器码（JIT 或 AOT 编译）。Wasm 设计目标：1）加载快 — 二进制格式比 JS 文本小很多，解析时间极短 2）执行快 — 比 JS 更接近机器码，可达原生速度的 60-80% 3）安全 — 沙箱隔离，无文件/网络直接访问权限（需 JS 桥接传递）。Wasm 的线性内存模型：一个连续的 ArrayBuffer，通过导出函数操作内存数据，不能直接操作 DOM 或 JS 对象。\n\n扩展延伸：应用场景：1）计算密集型任务 — 图像/视频编码（FFmpeg.wasm）、3D 渲染（Unity/Unreal Engine 游戏导出为 Wasm）、数据压缩（zlib/brotli Wasm 版）2）代码复用 — 将 C/C++/Rust 的现有库移植到浏览器（SQLite Wasm 版、TensorFlow.js 使用 Wasm 后端加速）3）云端 Offload 计算 — Figma 使用 Wasm 加速浏览器内矢量图形渲染（原 C++ 引擎编译为 Wasm）。Wasm 的限制：不能直接操作 DOM、需经过 JS 桥接有开销、字符串处理不如 JS 原生方便、调试体验不如 JS。WASI（WebAssembly System Interface）允许 Wasm 在浏览器外运行（Node.js/边缘计算/Serverless），访问文件系统/网络等。Wasm GC（Wasm Garbage Collection）提案将允许不支持线性内存的高层语言（Kotlin/Dart/Java）直接编译为 Wasm 运行在浏览器。",
+    "hints": [
+      "WebAssembly 为什么比 JavaScript 执行更快",
+      "Wasm 不能直接操作 DOM 的设计考虑是什么"
+    ],
+    "tags": [
+      "WebAssembly",
+      "Wasm",
+      "性能"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Service Worker 与离线缓存",
+    "content": "请解释 Service Worker 的工作原理及其在 PWA 离线缓存中的应用。",
+    "answer": "答案：Service Worker 是浏览器在后台独立于网页运行的脚本，作为网络请求的代理层\n\n解析：Service Worker 的核心能力：1）生命周期：注册（register）→ 安装（install，缓存预置资源）→ 激活（activate，清理旧缓存）→ 运行（fetch 事件拦截请求）。2）作为代理：在 fetch 事件中决定每个网络请求的响应来源（网络优先/缓存优先/仅缓存/仅网络/后台同步）。3）离线支持：使用 Cache API（caches.open/caches.put/caches.match）将资源缓存到浏览器缓存存储（不是 HTTP Cache，是独立的 Cache Storage）。4）后台同步：SyncManager API 允许在离线时积累操作，联网后一次性执行。5）推送通知：Push API 让服务器推送消息到 Service Worker 再显示通知。\n\n扩展延伸：PWA 离线策略选择：1）Cache First（缓存优先）— 静态资源（JS/CSS/字体/图片），离线也能访问，更新后通过版本化缓存更新 2）Network First（网络优先）— API 调用，超时后降级到缓存（show stale data if network fails）3）Stale-While-Revalidate — 先立即返回缓存数据，同时发起网络请求更新缓存，下次显示新数据（最推荐，平衡了速度和新鲜度）。SW 调试需要注意：未通过 HTTPS 加载的页面不能注册 SW、SW 更新后需等待所有页面关闭后新 SW 才会接管、chrome://inspect/#service-workers 可调试。Workbox（Google 的 Service Worker 库）封装了上述缓存策略，自动生成 SW 脚本，适合与 webpack/vite 集成使用。SW 存储限制：每个来源的存储空间由浏览器自动管理（通常该来源分配一块存储配额），超出后浏览器触发 storage 事件通知清理。",
+    "hints": [
+      "Cache First 和 Network First 分别适合什么资源",
+      "Stale-While-Revalidate 策略在用户体验上的优势"
+    ],
+    "tags": [
+      "PWA",
+      "Service Worker",
+      "离线"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端构建工具 Vite 原理",
+    "content": "请解释 Vite 的开发服务器和构建打包原理。",
+    "answer": "答案：Vite 利用浏览器原生 ES Module 支持实现开发服务器秒级启动，使用 Rollup 做生产构建\n\n解析：开发阶段：Vite 不对代码做整体打包，而是利用浏览器 <script type=\"module\"> 支持按需加载 ES Module。当浏览器请求一个 .vue 或 .tsx 文件时，Vite 开发服务器实时转译该文件（用 esbuild 预构建依赖包，用 Plugin 转译 SFC/TS/JSX 等）并返回给浏览器。由于不用打包，启动速度与项目大小无关（O(1)）。热更新（HMR）同样直达模块粒度：修改一个组件后只替换该模块，不会重新构建其他模块。生产构建阶段：Vite 使用 Rollup 打包（比 esbuild 树摇更准确、产出更小），通过多页配置、代码分割、CSS 代码提取等得到优化后的产出文件。\n\n扩展延伸：esbuild 预构建：Vite 自动将 CommonJS/UMD 依赖转换为 ES Module 并缓存到 node_modules/.vite/deps 目录，使用 esbuild（Go 编写的 bundler，比 Webpack 快 10-100 倍）完成这个预构建。开发服务器通过 Koa 中间件处理请求，每个文件转译结果缓存到内存和文件系统双缓存（304 响应快速刷新）。HMR 机制：使用 WebSocket 通信，修改文件后 Vite 服务端发送模块更新信息，客户端（注入的 HMR runtime）重新请求该模块并 patch 应用。Vite vs Webpack：Vite 在开发阶段明显快（不需要全量打包），Webpack 的 tree-shaking 和 lazy-loading 在打包层面更成熟但开发服务器重启慢。Vite 插件系统兼容 Rollup 插件接口（@rollup/plugin-xxx 大多可以用），同时提供 Vite 专有 hooks（handleHotUpdate 等）。",
+    "hints": [
+      "Vite 为什么开发服务器启动比 Webpack 快",
+      "esbuild 预构建解决什么问题"
+    ],
+    "tags": [
+      "Vite",
+      "构建工具",
+      "ES Module"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Server Component 架构",
+    "content": "请解释 React Server Component（RSC）的设计理念和它与客户端组件的关系。",
+    "answer": "答案：React Server Component 允许组件在服务器端渲染且不发送 JavaScript 到客户端\n\n解析：RSC 的核心思想：划分组件为服务器组件和客户端组件，服务器组件仅在服务器运行，直接访问数据源（数据库/文件系统/微服务），渲染为流式 HTML/序列化树发送到客户端。客户端组件仍然是交互式 UI（拥有 useState/useEffect/onClick）。服务器组件可以 import 客户端组件并作为其子组件，但服务器组件自身不能使用 React Hooks 或浏览器 API。文件约定：Next.js App Router 中的 server components 是默认的，客户端用 'use client' 声明。服务器组件序列化为 JSON 树（不是 HTML！），包含客户端组件的占位符和 props，通过 React 流式协议（React Flight）传输到客户端。\n\n扩展延伸：RSC 的优势：1）减少 JS 包体积 — 服务器组件代码完全不会发送到客户端（Markdown 渲染、日期格式化库、数据获取逻辑全在服务器执行）2）直接访问后端资源 — 不需要 REST API/GraphQL 来暴露数据，组件直接读 DB 或文件系统 3）流式渲染 — Suspense 边界允许按需流式传输，首屏更快。RSC 的挑战：1）服务器组件和客户端组件之间的 props 必须是 JSON 可序列化的（不能传函数/Date 实例）2）客户端组件不能 import 服务器组件（但反之可以，而且通过 children props 的组合模式传递）3）需要在服务器和客户端间保持一致的组件树。Next.js App Router 中的 react-server-dom-webpack 编译器处理 'use client' 边界切割：遇到 'use client' 自动在此处创建打包分割点。RSC 不是 SSR 的替代品，而是正交的优化！RSC 控制 JS 包体积，SSR 控制首屏渲染时间。",
+    "hints": [
+      "RSC 和 SSR 在解决什么问题上的差异",
+      "RSC 怎么减少发送到客户端的 JavaScript 量"
+    ],
+    "tags": [
+      "React",
+      "RSC",
+      "服务器组件"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端错误监控 Sentry 原理",
+    "content": "请解释前端错误监控系统（如 Sentry）的实现原理。",
+    "answer": "答案：前端错误监控核心是错误捕获 + 上下文收集 + 堆栈解析 + 远程上报\n\n解析：捕获方式：1）try-catch — 主动包裹可能错误的代码块 2）window.onerror — 捕获运行时错误（语法错误、引用错误等），提供错误信息/行号 3）window.addEventListener('unhandledrejection') — 捕获未处理的 Promise reject 4）特定框架的错误边界：React ErrorBoundary（componentDidCatch/static getDerivedStateFromError）5）重写原生 API（setTimeout/fetch/XMLHttpRequest 等在回调中发生的错误）。上下文收集：用户代理、URL、时间戳、用户 ID、浏览器/OS 版本、页面加载性能（Navigation Timing API）、用户操作栈（Instrumentation for breadcrumbs）。\n\n扩展延伸：SourceMap 解析：生产环境 JS 是压缩的（单行/变量名被缩短），需上传 SourceMap 反向映射。Sentry 使用 symbolication 将压缩后的行号还原为源码位置和原始变量名。但 SourceMap 可能让未授权者反编译源码，所以 Sentry 支持只上传不公开的 SourceMap（对外不可见）。数据上报策略：批量上报（合并多条错误在一定延迟后一次性上传）、采样上报（重复错误按频率采样避免打满日志）、错误去重（相同错误合并计数）。性能监控配合：Sentry 的 Performance 功能通过 tracing 将错误与性能关联，记录错误发生时的完整 trace 和 span（用户操作链 + API 请求等）。告警策略：根据错误类型、频率、影响用户数配置不同告警通道。自建轻量方案：前端用 Sentry SDK 采集，或自建通过 Image Beacon（new Image().src=reportURL）上报，后端用 ELK 或自建聚合分析。",
+    "hints": [
+      "为什么 SourceMap 不能直接暴露在生产环境",
+      "window.onerror 和 unhandledrejection 分别捕获什么错误"
+    ],
+    "tags": [
+      "错误监控",
+      "Sentry",
+      "可观测性"
+    ]
   }
 ]

@@ -1182,5 +1182,96 @@
       "缓存穿透",
       "缓存击穿"
     ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 异步持久化 AOF 重写与 RDB 持久化对比",
+    "content": "请详细对比 Redis RDB 和 AOF 两种持久化方式的实现原理和选型建议。",
+    "answer": "答案：RDB 是快照持久化，AOF 是追加日志持久化，两者有不同的性能和可靠性特征\n\n解析：RDB（Redis Database Backup）通过 fork 子进程将内存数据全量写入临时 RDB 文件，写完后原子替换旧文件。COW（写时复制）机制使子进程和父进程共享物理内存页，子进程持久化期间父进程修改的页会被复制。AOF（Append Only File）将每条写命令追加到 AOF 缓冲区，根据 appendfsync 策略（always/everysec/no）刷盘。AOF 文件随运行时间增长，由 bgrewriteaof 命令触发重写（同样 fork 子进程读取内存生成最小命令集重写 AOF）。Redis 4.0+ 支持混合持久化（aof-use-rdb-preamble yes）：AOF 重写时先生成 RDB 快照写入 AOF 文件头，后续增量命令用 AOF 格式追加。\n\n扩展延伸：选型建议：1）允许少量数据丢失（分钟级）选 RDB，适合缓存场景 2）需要高可靠性选 AOF（everysec 最多丢 1 秒数据）3）最佳实践：两者都开启（RDB 做定期备份 + AOF 做崩溃恢复）。AOF 文件比 RDB 文件大且有更多写入开销，但可读性强适合手动分析。RDB 在加载大数据集时比 AOF 快（AOF 需逐条回放命令）。fork 子进程在使用大内存时（>10GB）可能阻塞主进程数十到数百毫秒，需要合理设置 auto-aof-rewrite-percentage 避免频繁重写。RDB 不适合做恢复的唯一手段因为两次快照间数据丢失较多。",
+    "hints": [
+      "RDB 的 COW 机制在写密集场景下会有什么影响",
+      "AOF 的 everysec 最多丢 1 秒数据的依据是什么"
+    ],
+    "tags": [
+      "Redis",
+      "持久化",
+      "RDB",
+      "AOF"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Cluster 节点通信协议",
+    "content": "请解释 Redis Cluster 节点之间的通信机制，包括 Gossip 协议和配置同步。",
+    "answer": "答案：Redis Cluster 节点间通过 Gossip 协议异步交换节点状态信息\n\n解析：每个 Redis 节点维护 cluster 状态信息（节点列表、角色（master/slave）、hash slot 分配）。节点通过两个 TCP 端口工作：数据端口（6379）+ 集群总线端口（16379，用于节点间通信）。Gossip 消息类型包括：MEET（新节点加入）、PING（探测节点健康）、PONG（回复 PING/MEET 或主动广播）、FAIL（投票判定节点下线）。每秒随机选择 5 个节点发送 PING，传输自身状态 + 已知的 2-3 个其他节点随机信息。如果在规定时间内（cluster-node-timeout）没有收到 PONG 响应，则标记疑似下线（PFAIL）。多个 master 节点在超时时间内对疑似节点投票，半数以上同意则标记 FAIL。\n\n扩展延伸：Hash Slot 分配：16384 个 hash slot 均匀分布到 N 个 master 节点，槽位分配信息通过 Gossip 同步。节点间关系记录在 cluster-state 中，客户端通过 CLUSTER NODES / CLUSTER SLOTS 获取映射关系后缓存到本地进行智能路由。槽位迁移：通过 resharding 将 slot 从源节点移动到目标节点，迁移过程中源节点维护 migrating 状态，目标节点维护 importing 状态，客户端收到 MOVED 重定向后更新本地缓存。新节点加入流程：redis-cli --cluster add-node 发起 MEET 消息，Gossip 协议扩散到全集群。Redis 7.0 引入集群连接共享（cluster link），减少大规模集群的元数据流量。",
+    "hints": [
+      "PFAIL 和 FAIL 两种下线状态有什么区别",
+      "16384 个 hash slot 这个数字是怎么确定的"
+    ],
+    "tags": [
+      "Redis",
+      "Cluster",
+      "Gossip"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis 原子操作",
+    "content": "以下哪个 Redis 操作组合是原子执行的？",
+    "options": [
+      "A) GET + SET",
+      "B) WATCH + MULTI + EXEC",
+      "C) WATCH + GET + SET",
+      "D) MULTI + GET + DISCARD"
+    ],
+    "answer": "B",
+    "hints": [
+      "WATCH 配合事务实现了乐观锁的效果，CAS 语义"
+    ],
+    "tags": [
+      "Redis",
+      "事务",
+      "原子性"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 内存碎片处理",
+    "content": "请解释 Redis 内存碎片的成因以及清理策略。",
+    "answer": "答案：Redis 内存碎片来自申请和释放内存不连续导致的空闲内存无法被有效利用\n\n解析：Redis 使用 jemalloc 作为默认内存分配器，当键值对频繁创建和删除、大小各异时会产生外部碎片（空闲内存小块分散在各处无法合并为大块）。通过 INFO memory 的 mem_fragmentation_ratio（used_memory_rss / used_memory）指标判断碎片率：该值约 1.0-1.2 表示正常，>1.5 表示碎片严重，<1.0 表示内存换出。Redis 4.0+ 提供 MEMORY PURGE 命令尝试释放碎片内存，但常用策略是：1）开启自动碎片整理 activedefrag yes（6.0+ 默认关闭）2）配置 active-defrag-threshold-lower（碎片率触发阈值，默认 10%）3）配置 active-defrag-cycle-min/max（CPU 占用比例）\n\n扩展延伸：自动碎片整理原理：主线程利用空闲时间对碎片区域进行数据搬移（复制-释放），类似 GC 的标记-压缩，但逐一移动 key/value 是耗时操作，需要限制对主线程的影响。碎片整理对高负载实例有一定性能影响（尤其是 active-defrag-cycle-max 设置过大时）。预防碎片的最佳方式：1）使用大小接近的 key/value 减少跨类别碎片 2）定期重启实例（从 RDB/AOF 重新加载可以彻底解决碎片）3）考虑使用 Redis on Flash 等具有独立内存管理的方案。注意：RSS 是进程实际占用的物理内存，used_memory 是 Redis 自身统计的申请总量，两者的差值并非全部是碎片，也包括 jemalloc 的内部碎片和元数据开销。",
+    "hints": [
+      "mem_fragmentation_ratio 大于 1.0 正常，但超过多少需要处理",
+      "自动碎片整理对 Redis 性能的影响"
+    ],
+    "tags": [
+      "Redis",
+      "内存",
+      "优化"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 7.0 新特性",
+    "content": "请介绍 Redis 7.0 引入的核心新特性和改进。",
+    "answer": "答案：Redis 7.0 是功能丰富的重大版本更新，包含多项性能优化和新功能\n\n解析：1）Function（函数）— 在服务端运行 Lua 脚本的更好方式，支持库管理（FUNCTION LOAD/FUNCTION LIST），脚本可作为一等公民独立于 Redis 版本管理，比 EVAL 更强大 2）ACL v2 — 细粒度命令权限控制（如限制 String 类但允许 GET/SET），支持 key 空间权限通配符 3）集群改进 — 集群连接共享（Cluster Link Management）在大规模集群中减少元数据连接数；节点间消息自动压缩减少带宽 4）AOF 改进 — 支持 AOF 文件时间戳和可选 CRC32 校验，改进 AOF 加载可靠性 5）新命令 — ZINTERCARD（集合交集的基数估算）、LCS（最长公共子序列）、SPUBLISH（Sharded Pub/Sub 跨集群发布）等 6）性能提升 — 网络处理栈优化，单线程模式下可达 15% 吞吐提升。\n\n扩展延伸：Sharded Pub/Sub 解决传统 Pub/Sub 在集群模式下消息广播的开销问题——每条消息只在单个 slot 范围内发布，接收者也只订阅该 slot，跨节点消息不广播。Function 和 EVAL 对比：Function 可以管理多个库（每个库包含多个函数），支持函数列表和代码复用；EVAL 每次发脚本字符串难以管理。Redis 7.2 进一步引入了 Redis Stack（集成了 Search/JSON/TimeSeries 等模块）、自动调参（Auto-tuning of active-defrag 参数）、RDB 文件兼容性增强。Redis 7.4 引入向量搜索能力。",
+    "hints": [
+      "Function 替代 EVAL 有什么好处",
+      "Sharded Pub/Sub 解决集群模式的什么问题"
+    ],
+    "tags": [
+      "Redis",
+      "新特性",
+      "版本"
+    ]
   }
 ]

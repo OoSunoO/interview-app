@@ -1409,5 +1409,115 @@
       "TreeSet 内部使用 TreeMap 作为底层存储（TreeSet 是 TreeMap 的包装）",
       "TreeMap 使用红黑树实现，所以 TreeSet 也是红黑树"
     ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Java Collection 迭代器快速失败",
+    "content": "关于 Java 集合的快速失败（fail-fast）迭代器，以下说法正确的是？",
+    "options": [
+      "A) fail-fast 迭代器在检测到结构性修改时抛出 ConcurrentModificationException",
+      "B) modCount 变更检测是精确的，每次修改都会触发异常",
+      "C) ConcurrentHashMap 的迭代器也是 fail-fast",
+      "D) 单线程中迭代时使用 Iterator.remove() 也会触发 fail-fast"
+    ],
+    "answer": "A",
+    "hints": [
+      "modCount 的检测依赖于预期值，不保证精确；单线程中使用 Iterator.remove() 不会触发异常"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "迭代器"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashSet 与 TreeSet",
+    "content": "关于 HashSet 和 TreeSet 的区别，以下说法错误的是？",
+    "options": [
+      "A) HashSet 基于 HashMap 实现，元素作为 HashMap 的 key",
+      "B) TreeSet 基于 TreeMap 实现，元素按自然顺序或 Comparator 排序",
+      "C) HashSet 允许 null 元素，TreeSet 不允许 null",
+      "D) HashSet 的插入/删除/查找均为 O(log N)"
+    ],
+    "answer": "D",
+    "hints": [
+      "HashSet 基于 HashMap（O(1) 均摊），不是 O(log N)"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Set"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "TreeMap 红黑树特征",
+    "content": "以下哪个不是红黑树（TreeMap 底层结构）的约束条件？",
+    "options": [
+      "A) 每个节点是红色或黑色",
+      "B) 根节点总是黑色",
+      "C) 每个叶子节点（NIL）到根路径上的黑色节点数相同",
+      "D) 所有叶节点都是红色"
+    ],
+    "answer": "D",
+    "hints": [
+      "红黑树的叶节点（NIL）是黑色的，不是红色"
+    ],
+    "tags": [
+      "Java",
+      "红黑树",
+      "TreeMap"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "PriorityQueue 实现",
+    "content": "关于 PriorityQueue 的实现原理，以下说法正确的是？",
+    "options": [
+      "A) PriorityQueue 基于红黑树实现，保证 O(log N) 的插入和删除",
+      "B) PriorityQueue 基于最小堆（二叉堆）实现，使用数组存储",
+      "C) PriorityQueue 支持 O(1) 随机访问任意元素",
+      "D) PriorityQueue 默认使用自然顺序，不支持自定义比较器"
+    ],
+    "answer": "B",
+    "hints": [
+      "PriorityQueue 通过 siftUp/siftDown 维护堆序，底层使用 Object[] 数组"
+    ],
+    "tags": [
+      "Java",
+      "队列",
+      "PriorityQueue"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Stack 与 Deque",
+    "content": "Java 官方推荐的栈实现方式是什么？",
+    "options": [
+      "A) 继承 java.util.Stack<E>",
+      "B) 使用 ArrayList 手动实现后进先出",
+      "C) 使用 LinkedList 作为栈",
+      "D) 使用 ArrayDeque<E> 代替 Stack"
+    ],
+    "answer": "D",
+    "hints": [
+      "Stack 继承 Vector 是线程安全的但性能较差，ArrayDeque 是官方推荐的双端队列实现"
+    ],
+    "tags": [
+      "Java",
+      "栈",
+      "ArrayDeque"
+    ]
   }
 ]

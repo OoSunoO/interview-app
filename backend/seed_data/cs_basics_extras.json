@@ -1171,5 +1171,95 @@
       "域名解析",
       "HTTP"
     ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RCU 读-复制-更新机制",
+    "content": "请解释 Linux 内核中的 RCU（Read-Copy-Update）同步机制的原理。",
+    "answer": "答案：RCU 允许读操作无锁并行，写操作通过替换指针和延迟回收实现线程安全\n\n解析：RCU 的核心思想：多个读者可以同时访问共享数据而无锁，写者创建新数据副本替换指针，等待所有正在访问旧数据的读者完成后回收旧数据。三个基本机制：1）发布-订阅（Publish-Subscribe）— 写者通过 rcu_assign_pointer() 发布新指针，读者通过 rcu_dereference() 安全读取（配合内存屏障保证可见性）2）宽限期（Grace Period）— 所有当前正在 RCU 保护区（rcu_read_lock..rcu_read_unlock）执行读操作的读者完成前的期间 3）延迟回收（Synchronize and Reclaim）— synchronize_rcu() 阻塞直到宽限期结束，然后安全释放旧数据；call_rcu() 注册回调在宽限期结束后异步执行。\n\n扩展延伸：RCU 的优势：1）读者零开销（无锁、无原子操作、无内存屏障，仅需编译器屏障禁止优化），在高并发读场景中吞吐极高 2）无死锁风险（读者不阻塞不等待锁）3）在 READ-heavy 工作负载（如路由表、文件系统 dentry cache、网络协议栈）中优势巨大。RCU 的适用条件：1）数据结构采用指针访问（需动态分配旧数据）2）写操作不频繁（数据复制开销不小）。Linux 内核中的 rculist.h 和 rcu_tree.h 提供了 RCU 保护链表的 API。用户空间 RCU（Userspace RCU，urcu 库）也提供类似 API 但需要新的系统调用或信号机制。seqlock（顺序锁）的读取同样无锁化但要求读者在读取失败时重试。",
+    "hints": [
+      "RCU 的读者为什么不需要加锁",
+      "RCU 在写频繁的场景性能如何"
+    ],
+    "tags": [
+      "Linux",
+      "同步",
+      "RCU"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "tcpdump 与网络抓包分析",
+    "content": "请解释 tcpdump 的抓包过滤原理及常见性能分析场景。",
+    "answer": "答案：tcpdump 基于 libpcap 库捕获网络接口的原始数据包，支持 BPF 过滤表达式\n\n解析：tcpdump 工作流程：1）设置网络接口为混杂模式（收到非本机 MAC 的包也接收）2）BPF（Berkeley Packet Filter）在内核中编译过滤表达式为伪指令（虚拟机解释执行），只将匹配的包通过套接字复制到用户空间 3）libpcap 读取包数据并反解析各层协议头（Ethernet/IP/TCP/UDP）。常用表达式：host 1.2.3.4（特定主机）、tcp port 80（特定端口）、src net 10.0.0.0/8（源网段）。有效过滤表达式在内核过滤，抓包的同时不影响应用处理其它包。数据包先到达内核的 PF_PACKET 套接字，再由 tcpdump 读取，比 iptables NFQUEUE 性能好得多（没有路由检查等额外处理）。\n\n扩展延伸：常用诊断：1）TCP 三次握手分析（-S 打印绝对序列号）通过 SYN/SYN-ACK 的 seq/ack 确认握手正常 2）TCP 重传检测（tcp.analysis.retransmission 在 Wireshark 中，tcpdump 看序列号重复和乱序到达判断重传）3）延迟分析（-ttt 输出行间时间差，看包与包之间的间隔定位延迟）4）丢包定位（Duplicate ACK 和 Fast Retransmission 系列）。高级用法：-w file.pcap 保存文件后用 Wireshark 图形化分析、-X/ -A 看包内容（HTTP 请求/响应明文）。tcpdump vs tcpflow vs ngrep：tcpdump 看到包级别信息，tcpflow 重建 TCP 流（适合抓 HTTP body），ngrep 同时支持包层和 Shell 正则（适合深层次分析应用协议）。性能注意：高速网卡（10Gbps+）需开启 RX 流分发协商（RSS）避免单核打满丢包；配合 netmap/DPDK/AF_XDP 让用户空间直接访问网卡绕过内核协议栈。",
+    "hints": [
+      "BPF 在内核态和用户态分别做什么",
+      "丢包分析时怎么看 Duplicate ACK 和 Retransmission"
+    ],
+    "tags": [
+      "网络",
+      "抓包",
+      "tcpdump"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "IEEE 754 浮点数标准",
+    "content": "请解释 IEEE 754 浮点数标准的表示方法和精度问题。",
+    "answer": "答案：IEEE 754 用科学记数法表示实数，分为符号位、指数位和尾数位\n\n解析：32 位单精度（float）格式：1 位符号（S）+ 8 位指数（E）+ 23 位尾数（M），值 = (-1)^S × 2^(E-127) × 1.M（规格化数）。64 位双精度（double）格式：1 + 11 + 52 位。指数全 1 尾数全 0 表示无穷大（Inf），指数全 1 尾数非 0 表示 NaN，指数全 0 尾数 0 表示 0，指数全 0 尾数非 0 表示非规格化数（Denormalized，渐进下溢）。精度问题来源：1）某些十进制小数（0.1）无法用二进制精确表示，导致 0.1+0.2≠0.3 2）大数加小数时大数的指数大，小数需要对齐导致低位移出丢失 3）相减抵消（subtractive cancellation）导致有效数字减小。\n\n扩展延伸：浮点数比较的正确方式：不要直接用 ==，使用绝对误差 |a-b| < eps（epsilon 根据场景取 1e-6 或 1e-9）或相对误差比较。ULP（Unit in the Last Place）可以更好地满足浮点数比较。数值稳定性：避免两个相近的大数相减，尽量使用算法上稳定的公式重新组织计算。Kahan 求和补偿算法通过维护一个补偿项部分抵消浮点累积的舍入误差。竞赛/评测中对浮点输出误差的需求：绝对误差或者相对误差小于 1e-6 通过——用 epsilon 比较。浮点的 printf 格式化：最好用 fmt(%.10g) 让编译器决定科学计数法或标准计数。IEEE 754 的舍入模式：round-to-nearest（最近舍入，最常用）、round-toward-zero（截断舍入）、round-up/down。",
+    "hints": [
+      "0.1 + 0.2 != 0.3 的根本原因是什么",
+      "Kahan 求和补偿算法怎样减少误差"
+    ],
+    "tags": [
+      "浮点数",
+      "IEEE 754",
+      "精度"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "浮点数表示",
+    "content": "IEEE 754 单精度浮点数中，若符号位=0，指数位=10000001，尾数位=01000000000000000000000，该值约为？",
+    "options": [
+      "A) 2.5",
+      "B) 3.0",
+      "C) 5.0",
+      "D) 6.5"
+    ],
+    "answer": "C",
+    "hints": [
+      "指数=129-127=2，尾数二进制 1.01 = 1.25，所以值是 1.25 × 2² = 5.0"
+    ],
+    "tags": [
+      "浮点数",
+      "IEEE 754",
+      "计算"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "虚拟化技术 KVM 与 Hyper-V",
+    "content": "请解释 KVM 和 Hyper-V 两种虚拟化技术的工作原理和关键区别。",
+    "answer": "答案：KVM（Linux 内核模块）和 Hyper-V 都是 Type-2 Hypervisor，但架构差异显著\n\n解析：KVM 是 Linux 内核模块（同 Linux 一起作为管理程序运行），将 Linux 变为 VMM（虚拟机监视器）。每个虚拟机是一个普通的 Linux 进程（qemu-kvm），通过 /dev/kvm 接口进行 VM Entry/Exit 控制。KVM 利用 Intel VT-x 或 AMD-V 硬件虚拟化扩展：VMEntry（CPU 进入客户模式执行客户指令）、VMExit（客户指令需要超级用户权限或产生中断时 CPU 自动回到主控模式由 KVM 处理）。通过 KVM 的虚拟 MTRR 设备实现 nested page tables（EPT/NPT），减少客户操作系统仿真页表的管理开销。Hyper-V 是 Windows 上通过 Hyper-V 角色启用的 Type-1 Hypervisor，是 Windows Server 的微内核化 Hypervisor 层（去除设备驱动和系统服务的精简内核）。\n\n扩展延伸：性能对比：两者现在都已接近原生性能（硬件虚拟化扩展消除大部分捕获型指令）。KVM 的优势：开源生态丰富、可深度定制（QEMU/KVM/libvirt/OpenStack 全栈方案）、与 Linux 内核安全协同漏洞处理。Hyper-V 的优势：与 Windows 深度集成（动态内存管理、在线调整资源、嵌套虚拟化）、企业级故障转移集群支持更好。半虚拟化驱动：KVM 使用 virtio（paravirtualized 驱动标准，前后端 Buffer 共用减少拷贝），Hyper-V 使用 VMBus（Hyper-V 特定的合成设备驱动接口）。嵌套虚拟化：KVM 和 Hyper-V 都支持虚拟化中再运行虚拟化，用于容器或内部教学。实时迁移（Live Migration）：KVM 通过 QEMU 的内存预拷贝 + 最后一轮停机时间压缩 + VDSM（oVirt）管理集群间无缝迁移；Hyper-V 通过 SMB Direct（RDMA）压缩和 SMB 多通道负载均衡实现低延迟实时迁移。",
+    "hints": [
+      "KVM 怎么通过硬件虚拟化指令（VT-x/AMD-V）提升性能",
+      "virtio 半虚拟化驱动怎么减少 IO 开销"
+    ],
+    "tags": [
+      "虚拟化",
+      "KVM",
+      "Hyper-V"
+    ]
   }
 ]

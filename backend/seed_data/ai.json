@@ -1138,5 +1138,100 @@
       "稀疏模型",
       "负载均衡"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Attention Mask 与 Causal Attention",
+    "content": "请解释 Transformer 中 Attention Mask 的作用，特别是 Causal Attention（因果掩码）的实现原理。",
+    "answer": "答案：Attention Mask 控制注意力计算中哪些位置可以互相关注，Causal Attention 确保每个 token 只能看到当前位置及之前的 token\n\n解析：在 Transformer 的自注意力计算中，score = softmax(QK^T / sqrt(d) + Mask)，Mask 是一个上三角矩阵（右上角为 -inf，左下角为 0）。-inf 的位置经过 softmax 后权重为 0，保证当前位置 i 在计算注意力时只能看到位置 1..i 的 token（不能看到未来的 token）。这在自回归生成（GPT 系列）中至关重要——训练时通过 Mask 实现并行计算，每个 position 只能 attend 到之前的位置。Padding Mask 用于忽略填充（pad）token：将填充位置的 attention score 设为 -inf 使其注意力权重为 0。不同类型的 Mask：1）Causal Mask（自回归生成）2）Padding Mask（变长序列批处理）3）Prefix Mask（编码器-解码器交叉注意力中的可见范围控制）4）Sparse Mask（稀疏注意力，Longformer/BigBird 中部分可见）。Flash Attention 在分块计算中通过 block-level mask 实现了因果掩码的高效计算。\n\n扩展延伸：在 Prefix LM（如 GLM、T5）中，Mask 矩阵更复杂——输入部分（prefix）可以互相看到，生成部分只能看到之前的内容。在 Encoder-Decoder 架构中，Encoder 使用双向注意力（无 Causal Mask），Decoder 使用 Causal Mask 的 Self-Attention + Cross-Attention。AliBi（Attention with Linear Biases）在注意力分数上加偏置代替位置编码，不需要额外的 Causal Mask 逻辑。NTK-aware scaling 中的 RoPE 位置编码与 Causal Mask 结合时也需要调整 mask 的注意力范围。",
+    "hints": [
+      "Causal Mask 在训练时如何实现并行计算",
+      "Flash Attention 中的 Mask 计算有什么优化"
+    ],
+    "tags": [
+      "Transformer",
+      "Attention Mask",
+      "Causal"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "PPO 与强化学习微调",
+    "content": "请解释 PPO（Proximal Policy Optimization）算法在 RLHF 中的应用原理。",
+    "answer": "答案：PPO 是一种策略梯度强化学习算法，通过裁剪（Clipping）机制限制策略更新的幅度，在 RLHF 中用于微调语言模型\n\n解析：PPO 的核心是目标函数 L^CLIP(θ) = E_t[min(r_t(θ)A_t, clip(r_t(θ), 1-ε, 1+ε)A_t)]，其中 r_t(θ) = π_θ(a_t|s_t)/π_θ_old(a_t|s_t) 是新旧策略的概率比，A_t 是优势函数估计。clip 操作将概率比限制在 [1-ε, 1+ε] 范围内，防止单步更新过大破坏策略稳定性。在 RLHF 中，RL 阶段使用 PPO 训练语言模型：1）初始化策略 π_θ 为 SFT 模型 2）基于当前策略采样生成文本 3）Reward Model 给生成结果打分 4）PPO 更新策略参数以最大化奖励。同时加入 KL 惩罚项 β*KL(π_θ||π_ref) 防止模型偏离 SFT 模型太远（奖励黑客）。\n\n扩展延伸：PPO 相比 TRPO（Trust Region Policy Optimization）的优势：TRPO 用 KL 散度约束（二阶优化，计算 Fisher 信息矩阵开销大），PPO 用 clip 实现一阶优化更简单。RLHF 中 PPO 的「炼丹」细节：1）Reward 归一化（Group-wise normalization）2）KL 惩罚系数 β 的动态自适应调整（通过目标 KL 散度）3）Value Function 的共享参数和目标网络。PPO 的变体：DPO（Direct Preference Optimization）绕过了显式的 Reward Model，直接用偏好对优化策略（不需要 PPO 的复杂训练流程）。GRPO（Group Relative Policy Optimization，DeepSeek-R1 使用）去除 Value Model，通过组内相对奖励计算优势。PPO 的 Memory 消耗：在 RLHF 中同时加载 Policy Model、Reference Model、Reward Model 和 Value Model（4 个模型的显存占用），使用 LoRA 或模型卸载缓解。",
+    "hints": [
+      "PPO 的 clip 机制与 TRPO 的 KL 约束相比有什么优势",
+      "RLHF 中 KL 惩罚项为什么是必要的"
+    ],
+    "tags": [
+      "RL",
+      "PPO",
+      "RLHF"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Embedding 维度选择",
+    "content": "关于词向量/嵌入（Embedding）维度的选择，以下说法错误的是？",
+    "options": [
+      "A) 嵌入维度越大，模型容量越大，但过大会导致过拟合",
+      "B) Transformer 中 d_model 的选择与注意力头数相关，需能被 num_heads 整除",
+      "C) 嵌入维度总是越大越好",
+      "D) 较小数据集的嵌入维度通常应小于大数据集"
+    ],
+    "answer": "C",
+    "hints": [
+      "嵌入维度太大在数据量不足时会导致过拟合，且增加计算开销"
+    ],
+    "tags": [
+      "Embedding",
+      "维度",
+      "模型设计"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Beam Search 与采样解码策略",
+    "content": "请对比 Beam Search、Top-k 采样和 Top-p（Nucleus）采样的原理和适用场景。",
+    "answer": "答案：Beam Search 是确定性搜索，Top-k 和 Top-p 是随机采样策略，各自在不同场景下适用\n\n解析：Beam Search 在每个时间步保留概率最高的 k 个候选序列（beam），最终选择整体概率最高的序列。Beam Search 倾向于生成高概率但较「安全」和重复的文本，适合机器翻译、语音识别等有确定正确答案的任务。Beam width 越大搜索越充分但计算量线性增长，过大反而可能降低质量（长序列概率乘积偏向短序列，需 length normalization）。Top-k 采样从概率最高的 k 个 token 中采样，k 的选择关键——k 太小导致生成单一（多样性差），k 太大可能采样到低概率 token（不连贯）。Top-p（Nucleus）采样选择累积概率超过 p 的最小 token 集合，再重新归一化后采样。Top-p 根据上下文动态调整候选集合大小——确定性强时候选少，不确定时候选多。\n\n扩展延伸：实际应用中常组合使用：Top-k + Top-p（先取 top-k 再截断到 top-p）或 Temperature + Top-p。Temperature（温度）通过 softmax 除以温度系数控制概率分布的尖锐程度——温度低（<1）使高概率 token 更突出（确定性提高），温度高（>1）使分布更均匀（多样性提高）。典型配置：代码生成 temperature=0.2~0.4，创意写作 temperature=0.7~0.9，翻译/事实型任务 temperature=0。Contrastive Search（对比搜索）在每一步选择与历史分布最不同的高概率 token。Mirostat（用于 Llama 系列）动态调整采样的 entropy 水平。重复惩罚（Repetition Penalty）对已出现 token 的概率做折扣。\n\n扩展延伸：典型应用场景——Beam Search 适合翻译（BLEU 指标高）、摘要（ROUGE 指标高），Top-k/Top-p 适合对话和创意生成（多样性高）。Greedy Search（贪心搜索，k=1 的 Beam Search）大多数场景下效果不好。",
+    "hints": [
+      "Beam Search 为什么翻译任务效果好但创意写作不好",
+      "温度参数怎么影响 Token 概率分布的"
+    ],
+    "tags": [
+      "解码",
+      "Beam Search",
+      "采样"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "分类模型的评估指标选择",
+    "content": "在不平衡分类问题中（正类仅占 1%），以下哪个指标最能准确评估模型性能？",
+    "options": [
+      "A) Accuracy（准确率）",
+      "B) Precision-Recall AUC",
+      "C) ROC AUC",
+      "D) Log Loss"
+    ],
+    "answer": "B",
+    "hints": [
+      "Accuracy 在极度不平衡数据中会失真（全部预测为负类也有 99% 准确率），PR AUC 对稀有类更敏感"
+    ],
+    "tags": [
+      "评估",
+      "指标",
+      "分类"
+    ]
   }
 ]

@@ -1169,5 +1169,90 @@
       "可观测性",
       "OpenTelemetry"
     ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务拆分粒度与时机",
+    "content": "请解释微服务架构中服务拆分的粒度原则——什么粒度最合适，以及什么时候不应该拆分微服务？",
+    "answer": "答案：微服务拆分粒度与业务领域、团队规模和系统复杂度相关，过度拆分和拆分不足各有问题\n\n解析：拆分的指导原则：1）业务边界（DDD Bounded Context）——一个限界上下文内的功能应在一个服务内，跨上下文的通过接口通信。一个服务围绕一个业务能力（如订单服务、支付服务、库存服务）。2）团队结构（Conway 定律）——每个服务由一个 2-Pizza Team（6-8 人）负责。如果团队很小（3-5 人），服务不宜太多。3）变更频率——经常一起变的功能应放在同一服务（否则每次跨服务变更需要协调部署）。很少变化的稳定功能和频繁迭代的功能分开。4）数据独立性——如果两个功能的数据高度相关（经常做 join 查询），应先放在同一服务。什么时候不该拆：1）项目早期（MVP）——业务逻辑不确定，频繁的接口变更成本大于微服务的收益 2）团队没有 DevOps 能力——微服务需要 CI/CD、容器化、监控等基础设施 3）数据强一致性要求高——跨服务的事务（分布式事务）代价远高于单库事务 4）小团队（<10 人）——每个服务至少 1-2 人维护，服务过多稀释维护人力。\n\n扩展延伸：拆分过度的「微服务地狱」症状：1）一个简单的功能需要跨 5-6 个服务调用 2）查询数据需要多次聚合 3）跨服务的事务经常出问题 4）部署一个功能需要协调多个服务一起上线。Sam Newman 在《Building Microservices》中建议从合适的服务数量开始（不是越多越好），随着对领域的理解加深逐渐拆分。Strangler Fig 模式——从单体开始，每次剥离一小部分为独立服务。拆分的策略：1）按业务能力拆分（推荐）2）按子域名拆分（DDD）3）按数据边界拆分。不拆微服务可以使用 Modular Monolith（模块化单体）作为微服务的前置方案——模块化单体中代码按业务模块组织但部署为一个进程，在需要时可以将模块剥离为独立服务。Kubernetes 部署的微服务每个服务一个 Deployment，太小的服务浪费集群资源（每个 Pod 有开销）。",
+    "hints": [
+      "什么时候应该优先用单体架构而不是微服务",
+      "DDD 的 Bounded Context 怎么决定微服务的边界"
+    ],
+    "tags": [
+      "微服务",
+      "拆分",
+      "粒度"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "服务依赖治理与链路优化",
+    "content": "在一个有 50 个以上微服务的系统中，如何做服务依赖治理和调用链路优化？",
+    "answer": "答案：服务依赖治理通过依赖分析、调用链可视化和合约测试减少不合理的依赖关系\n\n解析：服务依赖治理的步骤：1）依赖可视化——使用 OpenTelemetry 收集调用链数据，生成服务依赖图（Service Dependency Graph）。发现循环依赖（A->B->C->A）和僵尸依赖（A 调用 B 但实际不需要 B 的返回值）。2）依赖等级分类——Essential（核心依赖，B 不可用则 A 不可用）、Optional（非核心依赖，B 挂 A 降级仍可用）、Data-only（只需要数据，可以用缓存）3）治理措施——消除循环依赖（通过事件驱动打破循环，A 调用 B，B 发布事件，A 消费事件）、用异步替代同步（对 Optional 依赖使用消息队列解耦）、引入 BFF（Frontend 不需要直接调用 5 个后端服务，BFF 聚合数据）。4）持续监控——每次上线前对比依赖图的变化，防止引入未经评审的新依赖。\n\n扩展延伸：服务治理的工具：1）Netflix 的 Chaos Monkey + Simian Army 做故障注入测试 2）Envoy / Istio 的 Service Dashboard 显式服务间调用关系 3）Consumer-Driven Contracts（Spring Cloud Contract / Pact）确保接口变更不破坏消费者。反向依赖治理：定期清理不再使用的 API 端点（僵尸 API），在新版本 API 上线后逐步下架旧版本。团队级别的依赖治理：每个团队维护自己的 Owner List（拥有哪些服务、依赖哪些服务），依赖变更需要通知被依赖的团队。Async First 设计原则：服务间的同步调用改为事件驱动（Kafka/RabbitMQ），极大减少依赖耦合。治理的反模式：过度治理导致服务不敢依赖任何其他服务，增加大量冗余代码（每个服务自己实现认证、权限、配置管理等功能）。",
+    "hints": [
+      "发现循环依赖后怎么通过事件驱动打破循环",
+      "Consumer-Driven Contracts 在依赖治理中的作用"
+    ],
+    "tags": [
+      "依赖",
+      "治理",
+      "微服务"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务配置中心设计",
+    "content": "请设计一个微服务架构中的配置中心（Configuration Center），支持动态配置下发和版本管理。",
+    "answer": "答案：配置中心管理所有微服务的配置，支持动态变更（热更新）、版本回滚和环境隔离\n\n解析：核心功能：1）配置存储——分层结构：environment（dev/staging/prod）/ service（order/payment）/ config_key。每个配置项带版本号，支持回滚。2）配置下发——客户端 SDK 通过长轮询（Long Polling）或 WebSocket 监听配置变化。当配置变更时推送新配置到所有相关服务实例。3）变更管理——配置变更记录 Audit Log（谁在什么时候改了什么），变更审批流程（敏感配置需要审批）。4）环境隔离——不同环境（dev/staging/prod）的配置相互隔离，支持配置继承（prod 继承 staging 配置 + 部分覆盖）。5）安全性——敏感配置（数据库密码、API Key）加密存储，传输加密。\n\n扩展延伸：开源方案选型：1）Nacos（阿里）——小规模首选，支持配置管理 + 服务发现 2）Apollo（携程开源）——功能强大，支持维度丰富的配置管理 3）Spring Cloud Config + Bus + Git——Spring 生态原生，版本管理依赖 Git 4）Consul / etcd——配置 + 服务发现 + KV Store。配置变更的风险：1）错误配置下发的回滚（Apollo 支持一键回滚）2）灰度发布配置——先下发到少量实例观察，没问题再全量下发 3）配置校验——应用启动时校验配置格式和必填项。配置类型：1）普通配置——开关、阈值、URL（变化频率低）2）敏感配置——密码、Token（加密存储）3）动态配置——需要频繁调整的参数（如限流阈值）。配置即代码（Configuration as Code）：将配置纳入 Git 管理，通过 CI/CD Pipeline 下发。K8s ConfigMap 适合 Kubernetes 场景的静态配置管理。",
+    "hints": [
+      "配置变更是怎么确保不下发到错误环境的",
+      "配置中心中敏感配置的加密和权限控制怎么设计"
+    ],
+    "tags": [
+      "配置中心",
+      "微服务",
+      "设计"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "事件驱动架构与消息可靠投递",
+    "content": "请解释事件驱动架构（Event-Driven Architecture）中的消息可靠投递保障机制。",
+    "answer": "答案：事件驱动架构的消息可靠性通过生产者确认（ACK）、消费者 Offset 管理和重试机制保障\n\n解析：消息投递的三种语义：1）At-Most-Once（最多一次）— 消息可能丢失但不重复，高性能场景使用 2）At-Least-Once（至少一次）— 消息不会丢失但可能重复，需要消费者幂等 3）Exactly-Once（恰好一次）— 不丢不重，成本最高，通常用 Kafka EOS + 幂等消费者实现。Kafka 的可靠性机制：1）生产者——acks=all（等待所有 ISR 确认后才算提交成功）+ enable.idempotence=true（幂等生产者）2）消费者——手动提交 Offset（处理完业务逻辑再提交），使用 auto.offset.reset=earliest（读取最早的消息）。3）Broker——min.insync.replicas（至少 N 个副本同步才算成功）配合 replication.factor（副本因子）。\n\n扩展延伸：事件驱动架构的关键模式：1）Transactional Outbox——在业务数据库中维护一个 outbox 表，业务操作和事件写入在同一个本地事务中完成，另一个服务（CDC 或定时任务）从 outbox 读取事件并发布到消息队列。避免「先更新 DB 再发消息」的分布式事务问题。2）Dead Letter Queue（DLQ）— 多次重试仍失败的消息进入死信队列，人工或自动补偿处理。3）Idempotent Consumer——每个消息带唯一 Message ID，消费者通过消息去重表（message_id -> processed_at）或幂等键保证同一个消息只被处理一次。4）Saga 分布式事务——每个参与服务执行本地事务并发布事件，失败时通过补偿事务回滚。可靠性工程需考虑背压（Consumer 处理不过来时 Producer 是否削峰填谷）和消息积压的告警（Consumer Lag 超过阈值触发告警）。工具对比：Kafka（高吞吐持久化，适合事件流）、RabbitMQ（低延迟灵活路由，适合业务消息）、Pulsar（分层存储，支持更大规模的 Topic）。",
+    "hints": [
+      "Transactional Outbox 如何彻底解决双写问题",
+      "消息的 At-Least-Once 投递下消费者端如何保证幂等"
+    ],
+    "tags": [
+      "事件驱动",
+      "消息",
+      "可靠性"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式日志采集与分析平台",
+    "content": "请设计一个支持每日百 TB 级别日志的分布式日志采集、存储和分析平台。",
+    "answer": "答案：分布式日志平台的核心是日志采集、传输、存储、检索和分析的全链路设计\n\n解析：经典 ELK（Elasticsearch + Logstash + Kibana）架构：1）采集（Agent）— 每台机器部署 Filebeat/Fluentd 采集应用日志（stdout + 日志文件），支持多行合并（Exception Stack Trace 需要合并为一条事件）2）传输（Buffer + Transport）— 采集的日志发送到 Kafka（作为缓冲层，削峰填谷），Logstash 从 Kafka 消费日志，做解析（Grok 提取结构化字段）、过滤、格式化 3）存储（Storage）— 结构化日志写入 Elasticsearch 集群，按时间分索引（如 logs-YYYY.MM.dd），设置索引生命周期管理（ILM，自动删除 30 天前的索引）4）查询（Search）— Kibana 可视化查询、聚合和 Dashboard。\n\n扩展延伸：ELK 架构的演进和替代方案：1）EFK（Elasticsearch + Fluentd + Kibana）——Fluentd 比 Logstash 更轻量、更省内存 2）Grafana Loki ——轻量级日志平台，使用与 Prometheus 一样的 Label 模式，适合存储 Web 服务日志（不适合多行日志和复杂查询）3）ClickHouse + Vector/Grafana ——高性能日志方案，ClickHouse 的列存和压缩比极高（日志压缩率 10:1），查询速度比 ES 更快。4）Datadog / Splunk ——商业方案，开箱即用的日志分析。日志平台的扩展要点：1）日志分类——应用日志（json 格式）、访问日志（Nginx/Apache）、系统日志（syslog）、审计日志（数据库操作）2）采样和降级——极高流量时采样式采集而不是全量采集（如只采 error 全量，info 按 1% 采样）3）日志上下文关联——使用 Trace ID 串联微服务调用链中的日志（OpenTelemetry 自动注入 trace_id 到 MDC）4）日志安全性——敏感数据脱敏（身份证号、支付卡号在日志中自动遮蔽）。日志平台的容量规划：1 条日志约 0.5-2KB（原始）-> ES 中约 2-5KB（含索引），1 万 QPS 的服务每天约 1-2TB / 天。",
+    "hints": [
+      "日志采集链路中 Kafka 缓冲层的作用是什么",
+      "为什么 ClickHouse 比 Elasticsearch 更适合日志存储"
+    ],
+    "tags": [
+      "日志",
+      "采集",
+      "ELK"
+    ]
   }
 ]

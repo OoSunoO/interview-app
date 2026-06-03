@@ -1086,5 +1086,85 @@
       "写锁 → 读锁：允许（降级，读锁可用性更高）",
       "读锁 → 写锁：不允许（升级会导致死锁）"
     ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "CAS 的 ABA 问题",
+    "content": "CAS 操作的 ABA 问题是指值从 A 变为 B 又变回 A，可通过添加 ___(1)___ 或 ___(2)___ 来解决。",
+    "answer": "{\"correct\": [[\"版本号\", \"Version\", \"stamped\"], [\"时间戳\", \"Timestamp\"]], \"distractors\": [[\"自旋\"], [\"锁\"]]}",
+    "hints": [
+      "AtomicStampedReference 使用版本号，AtomicMarkableReference 使用布尔标记"
+    ],
+    "tags": [
+      "并发",
+      "CAS",
+      "ABA"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "volatile 与重排序",
+    "content": "volatile 关键字防止的重排序类型是 ___(1)___（编译时重排序）和 ___(2)___（运行时重排序）。volatile 写-读通过插入内存屏障禁止重排序。",
+    "answer": "{\"correct\": [[\"指令重排序\", \"编译器重排序\", \"Compile-time Reordering\"], [\"处理器重排序\", \"CPU 重排序\", \"Runtime Reordering\"]], \"distractors\": [[\"数据依赖重排序\"], [\"控制依赖重排序\"]]}",
+    "hints": [
+      "volatile 通过内存屏障同时限制编译期和运行期的指令重排"
+    ],
+    "tags": [
+      "并发",
+      "volatile",
+      "重排序"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "锁分段技术",
+    "content": "锁分段技术将锁的粒度减小以提高并发性能，典型实现是 ConcurrentHashMap 的 ___(1)___（JDK 7）和 ___(2)___（JDK 8）。",
+    "answer": "{\"correct\": [[\"Segment\", \"分段锁\"], [\"CAS + synchronized\", \"CAS+synchronized\", \"桶锁\"]], \"distractors\": [[\"读锁\"], [\"写锁\"]]}",
+    "hints": [
+      "JDK 7 用 Segment 继承 ReentrantLock，JDK 8 用 CAS + synchronized"
+    ],
+    "tags": [
+      "并发",
+      "锁分段",
+      "ConcurrentHashMap"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "CompletableFuture 方法",
+    "content": "CompletableFuture 中，___(1)___ 用于异步不返回结果的任务，___(2)___ 将两个 CompletableFuture 的结果合并。",
+    "answer": "{\"correct\": [[\"runAsync\", \"runAsync()\"], [\"thenCombine\", \"thenCombine()\"]], \"distractors\": [[\"supplyAsync\"], [\"thenApply\"]]}",
+    "hints": [
+      "runAsync 执行 Runnable（无返回值），thenCombine 合并两个 CF 的结果"
+    ],
+    "tags": [
+      "并发",
+      "CompletableFuture",
+      "异步"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ReadWriteLock 与读写锁",
+    "content": "读写锁 ReadWriteLock 允许多个 ___(1)___ 线程同时访问，但 ___(2)___ 线程独占。",
+    "answer": "{\"correct\": [[\"读\", \"read\"], [\"写\", \"write\"]], \"distractors\": [[\"共享\"], [\"独占\"]]}",
+    "hints": [
+      "读写锁分离读和写操作，读读不互斥，读写/写写互斥"
+    ],
+    "tags": [
+      "并发",
+      "锁",
+      "ReadWriteLock"
+    ]
   }
 ]

@@ -1192,5 +1192,101 @@
       "HikariCP",
       "性能优化"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 自适应哈希索引 AHI",
+    "content": "请解释 MySQL InnoDB 的自适应哈希索引（AHI）的工作原理和适用场景。",
+    "answer": "答案：AHI 是 InnoDB 根据索引页访问模式自动构建的哈希索引，用于加速等值查询\n\n解析：InnoDB 监测对 B+ 树索引页的访问模式，当发现某个索引页的访问满足一定条件（如连续 100 次通过 B+ 树访问同一页）且通过哈希访问有明显优势时，自动为该页构建哈希索引。AHI 使用分区哈希表（由 innodb_adaptive_hash_index_parts 控制分区数，默认 8）减少锁冲突。哈希索引基于 B+ 树索引的搜索键构建，只支持等值查询（= 和 IN），对范围查询无加速效果。\n\n扩展延伸：AHI 的收益在 高并发等值查询场景（如主键或唯一索引等值查找）明显。但也不是没有代价：1）哈希索引维护有额外开销（写操作需同时维护 B+ 树和哈希结构）2）哈希表锁争用（分区越多越好）3）占用的 buffer pool 内存不可用于缓存数据页。MySQL 5.7 起可通过 PERFORMANCE_SCHEMA 监控 AHI 使用率。在写密集型或范围查询为主的场景，禁用 AHI（innodb_adaptive_hash_index=OFF）可能获得更好性能。AHI 在 MySQL 8.0 中进一步优化，减少了全局锁的争用。",
+    "hints": [
+      "AHI 在什么查询场景下收益最大",
+      "为什么写密集型场景可能更适合禁用 AHI"
+    ],
+    "tags": [
+      "MySQL",
+      "索引",
+      "InnoDB"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "MySQL 加锁规则",
+    "content": "以下关于 MySQL InnoDB 加锁规则的说法，正确的是？",
+    "options": [
+      "A) 使用主键索引的 UPDATE 语句只对命中行加行锁",
+      "B) REPEATABLE READ 隔离级别下所有查询都会加间隙锁",
+      "C) UPDATE 语句的 WHERE 条件列没有索引时，会对所有行加行锁",
+      "D) 唯一索引搜索只会加记录锁，不会加间隙锁"
+    ],
+    "answer": "A",
+    "hints": [
+      "间隙锁只在 REPEATABLE READ 及以上级别出现",
+      "唯一索引等值搜索确实只加记录锁"
+    ],
+    "tags": [
+      "MySQL",
+      "锁",
+      "InnoDB"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "MySQL 主从同步线程",
+    "content": "以下关于 MySQL 主从同步的线程的说法，错误的是？",
+    "options": [
+      "A) 主库有 binlog dump 线程负责推送二进制日志给从库",
+      "B) 从库 IO 线程负责接收主库推送的 binlog 并写入 relay log",
+      "C) 从库 SQL 线程负责读取 relay log 并在从库上重放",
+      "D) 主库的 binlog dump 线程由从库发起连接请求时创建"
+    ],
+    "answer": "A",
+    "hints": [
+      "binlog dump 线程是在主库上创建的，但需要从库连接才启动"
+    ],
+    "tags": [
+      "MySQL",
+      "主从",
+      "复制"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 双写缓冲区 DoubleWrite Buffer",
+    "content": "请解释 MySQL InnoDB 的双写缓冲区（DoubleWrite Buffer）的作用和原理。",
+    "answer": "答案：双写缓冲区是 InnoDB 用于解决页写入部分失效（partial page write）问题的机制\n\n解析：InnoDB 的数据页通常是 16KB，而磁盘写入的最小单位是 512 字节（扇区）。当操作系统/磁盘在写入 16KB 页的过程中崩溃（写了一半），会导致页的部分数据被覆盖而部分未被写，形成损坏的页（页撕裂）。双写缓冲区在这种情况发生前先备份整页到双写缓冲区文件，然后再写入实际位置。崩溃恢复时通过扫描 doublewrite 检查页是否损坏并用备份修复。双写缓冲区位于系统表空间，大小约 2MB（128 个页 × 2 个区）。\n\n扩展延伸：性能影响：双写带来额外的写入开销（数据先写到 doublewrite buffer 再写回实际位置，放大写操作），但 InnoDB 通过合并写入（fsync 一次写出 batch）缓解。如果文件系统支持原子写入（如 ZFS、某些 SSD 开启了原子写），可以禁用双写缓冲区（innodb_doublewrite=OFF）。Percona 优化的并行双写提升了并发场景下的吞吐。MySQL 8.0.20+ 对双写缓冲区进行了并行化重构，允许各 buffer pool instance 独立写入双写缓冲区，显著减少了并发写入的瓶颈。",
+    "hints": [
+      "partial page write 在什么场景下发生",
+      "为什么 SSD 场景仍然建议开启双写"
+    ],
+    "tags": [
+      "MySQL",
+      "InnoDB",
+      "可靠性"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库分库分表中间件对比",
+    "content": "请对比 ShardingSphere、MyCAT 和 Vitess 三种分库分表方案。",
+    "answer": "答案：三种方案各有不同的架构哲学和适用场景\n\n解析：ShardingSphere — 提供 JDBC 驱动层分片（Sharding-JDBC）和代理层（Sharding-Proxy），JDBC 方式无需额外部署，应用直连数据库性能好；支持分布式事务（SEATA/本地事务）、读写分离、数据加密、影子库压测等功能。MyCAT — 基于 AOP 的数据库中间件，类似 Cobar，支持分片、全局序列号、跨库 JOIN 和全局表。作为独立代理部署，应用通过 MySQL 协议连接 MyCAT，对应用透明。但文档和技术生态相对落后。Vitess — YouTube 开源的数据库集群系统，基于 SQL 层的连接代理和分布式路由。使用 VTGate（查询路由器）+ VTTablet（表管理器）架构，支持水平分片、自动重分片、元数据管理等。\n\n扩展延伸：选型建议：1）Java 生态项目优先考虑 ShardingSphere（功能丰富、社区活跃、JDBC 方式部署简单）2）大规模 MySQL 集群推荐 Vitess（生产验证广泛，Kubernetes 集成好，自动重分片功能成熟）3）传统项目需要数据库中间件且对性能要求不高可选 MyCAT。分布式场景的核心挑战：跨分片事务（尽量用单分片事务）、跨分片查询（需聚合层）、分片键选择（关系型频繁查询的维度）、扩容和重分片（数据迁移工具成熟度）。",
+    "hints": [
+      "Sharding-JDBC 相比代理模式有什么优势",
+      "Vitess 的 VTGate 和 VTTablet 各负责什么"
+    ],
+    "tags": [
+      "数据库",
+      "分片",
+      "中间件"
+    ]
   }
 ]

@@ -1154,5 +1154,95 @@
       "监控",
       "调试"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 文件权限与 ACL",
+    "content": "请解释 Linux 文件权限模型（Owner/Group/Other）和 ACL 扩展权限。",
+    "answer": "答案：Linux 传统文件权限基于 User-Group-Other 三元组 + rwx 权限位，ACL 提供更细粒度的控制\n\n解析：传统权限：每个文件有 12 个权限位（3 位 suid/sgid/sticky + 9 位 rwx 分别对应 owner/group/other）。rwx 对文件含义：r（读内容）、w（修改内容）、x（执行文件）；对目录含义：r（列出目录内容）、w（创建/删除目录内文件）、x（进入目录）。chmod 用数字模式（如 755 = rwxr-xr-x）或符号模式（u+x）设置。umask 控制新建文件的默认权限（文件 666-umask，目录 777-umask）。ACL 通过 setfacl/getfacl 设置：setfacl -m u:alice:rwx file（对特定用户 alice 设置权限）、setfacl -m g:devteam:rx file（对组设置）。ACL 通过 ACL mask 限制最大权限。\n\n扩展延伸：特殊权限：SUID（chmod u+s）— 运行时以文件所有者的身份执行（如 /usr/bin/passwd 普通用户也能改密码）；SGID（chmod g+s）— 文件上表示运行时以文件组身份执行，目录上表示该目录下新建文件继承目录的组；Sticky Bit（chmod o+t）— 目录下只有文件所有者和 root 才能删除文件（如 /tmp）。文件属性（chattr）：+i 不可修改（包括 root 也不能删）、+a 只追加（日志安全）。lsattr 查看。安全增强：SELinux（强制访问控制，通过安全上下文标签策略限制进程对文件的访问）和 AppArmor（路径级 MAC）。chmod 的局限性：无法对单个用户/组分配权限，大规模团队共享目录时必须用 ACL 或 LDAP 统一管理。",
+    "hints": [
+      "SUID 权限的安全风险是什么",
+      "chmod 和 ACL 的适用边界在哪里"
+    ],
+    "tags": [
+      "Linux",
+      "权限",
+      "ACL"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux 命名空间与 cgroup",
+    "content": "请解释 Linux 命名空间（Namespace）和控制组（cgroup）在容器化中的作用。",
+    "answer": "答案：Namespace 提供资源隔离，cgroup 提供资源限制，两者是容器技术的基础\n\n解析：Namespace 隔离进程的视图：Mount（文件系统挂载点，每个容器自己的 /）、PID（进程编号空间，容器只能看到自己的进程）、Network（网络栈，每个容器有自己的 lo/eth0 和路由表）、IPC（进程间通信隔离）、UTS（主机名和域名）、User（用户和 UID 映射，容器内 root 可以映射到宿主机非 root 用户）、Cgroup（cgroup 视图隔离，容器看不到宿主机的 cgroup 树）、Time（容器内时间可独立设置）。创建新进程时通过 clone 系统调用指定 CLONE_NEWNS | CLONE_NEWPID 等 flags，或用 unshare 工具。\n\n扩展延伸：cgroup v1 vs v2：v1 各控制器独立层级树，管理复杂（内存、CPU、IO 分散在不同目录）；v2 统一层级树（统一根 /sys/fs/cgroup 下的子目录），接口一致，支持线程级资源控制。cgroup 子系统包括：cpu（CPU 时间分配/带宽）、memory（内存上限+软限制+OOM 优先级）、io（IOPS+吞吐量限制）、pids（进程数上限）。cgroup 的 child 也受限制：cgroup 是层次树结构，子 cgroup 的资源使用计入父级。Docker / runc 通过 cgroup 限制容器的资源使用。cgroup 的 cpu.shares（相对权重，并非硬限制）vs cpu.cfs_quota_us（硬上限 U 秒/周期，限制 CPU 使用率上限）。cgroup v2 的 IO 控制引入 IO.weight（相对权重）和 IO.max（硬限制 IOPS 和 BPS）。生产环境通过 cgroup 防止容器之间互相抢占资源。",
+    "hints": [
+      "Namespace 和 cgroup 分别解决什么核心问题",
+      "cgroup v2 相比 v1 的关键改进是什么"
+    ],
+    "tags": [
+      "Linux",
+      "容器",
+      "Namespace"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux strace 与性能分析",
+    "content": "请解释 strace 的工作原理及其在性能分析中的使用技巧。",
+    "answer": "答案：strace 使用 ptrace 系统调用来跟踪进程的系统调用和信号\n\n解析：strace 通过 ptrace(PTRACE_TRACEME / PTRACE_ATTACH) 附加到目标进程，当目标进程执行系统调用或接收信号时会暂停，strace 打印调用信息再将控制权还给进程。常用选项：-f（跟踪子线程/子进程）、-e trace=network,file（过滤追踪类别）、-c（统计各系统调用耗时和次数）、-p PID（attach 到运行中进程）、-T（显示每个系统调用的耗时）。常见用法：strace -p 12345 -e trace=read,write 跟踪某个进程的 IO。strace -c -p 12345 统计系统调用的分布。使用 strace 分析慢查询：strace -T -e trace=read,write -p $PID 看到 read/write 调用耗时长的位置。\n\n扩展延伸：strace 的局限：1）ptrace 附加会影响性能（因为每次系统调用都会触发两次上下文切换），不适合高生产环境使用 2）只能看到系统调用和信号，不能追踪内核中的函数和内部状态 3）对快速高频调用场景会丢失输出（可通过 -o logfile 落文件避免丢失）。替代/补充工具：perf（轻量级性能剖析，通过硬件 PMU 和内核 tracepoint 收集数据，对应用影响小，支持 CPU 采样、tracepoint、function graph 等）、bpftrace（基于 eBPF 的动态追踪，可以跟踪内核函数和用户空间函数，安全且高效）、ltrace（跟踪库调用）。生产环境排查推荐 perf 或 bpftrace 而非 strace。perf top -p PID 实时查看最热函数。perf record / perf report: 采样分析。",
+    "hints": [
+      "strace 为什么在高频调用场景会严重影响性能",
+      "perf 比 strace 更适合生产环境的理由是什么"
+    ],
+    "tags": [
+      "Linux",
+      "调试",
+      "性能"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Linux 进程状态",
+    "content": "以下哪个 Linux 进程状态表示进程在等待 I/O 完成？",
+    "options": [
+      "A) S（Interruptible Sleep）",
+      "B) D（Uninterruptible Sleep）",
+      "C) R（Running/Runnable）",
+      "D) T（Stopped）"
+    ],
+    "answer": "B",
+    "hints": [
+      "D 状态（不可中断睡眠）通常意味着进程在内核态等待 IO 完成"
+    ],
+    "tags": [
+      "Linux",
+      "进程",
+      "状态"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 文件系统 VFS",
+    "content": "请解释 Linux 虚拟文件系统（VFS）的架构和作用。",
+    "answer": "答案：VFS 是 Linux 内核的抽象层，为上层应用提供统一的文件操作接口，屏蔽底层具体文件系统差异\n\n解析：VFS 定义了通用文件模型，核心对象：1）super_block — 已挂载文件系统的信息（类型、大小、操作函数指针等）2）dentry（目录项）— 路径名和 inode 的映射，缓存目录结构，dcache 加速路径解析 3）inode — 文件的元数据（权限、所有者、大小、数据块位置，不包含文件名）4）file — 打开的文件描述符状态（当前读写位置、打开模式）。VFS 将系统调用（如 read/write/open）转发到具体文件系统（如 ext4、XFS、tmpfs）的实现函数。文件系统通过注册超级块操作（super_operations）和 inode 操作（inode_operations）嵌入 VFS。\n\n扩展延伸：VFS 的页缓存（page cache）：VFS 层为所有基于文件的 IO 提供统一的缓存机制，减少磁盘访问。数据先写入 page cache，内核按需或定期刷到磁盘（通过 bdflush/pdflush/flusher 线程）。Dentry Cache（dcache）缓存路径名到 dentry 的解析结果，下次访问同一路径直接命中。inode 缓存缓存在内存中减少磁盘读取 inode 表。/proc 和 /sys 也是基于 VFS 实现的虚拟文件系统——不占用磁盘空间，文件和目录在内核中动态生成。FUSE（用户空间文件系统）允许在用户态实现文件系统（通过 libfuse + 内核 FUSE 模块），如 s3fs（挂载 S3）、rclone mount。FUSE 的瓶颈是用户态/内核态切换开销，只适合 IOPS 要求不高的场景。",
+    "hints": [
+      "VFS 的 dentry 和 inode 缓存分别解决什么问题",
+      "FUSE 文件系统的性能瓶颈在哪里"
+    ],
+    "tags": [
+      "Linux",
+      "VFS",
+      "文件系统"
+    ]
   }
 ]

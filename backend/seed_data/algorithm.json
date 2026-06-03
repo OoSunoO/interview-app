@@ -1128,5 +1128,95 @@
       "Splay",
       "平衡树"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Dijkstra 与负权边",
+    "content": "请解释为什么 Dijkstra 算法不能处理负权边，以及 Bellman-Ford 算法如何解决这个问题。",
+    "answer": "答案：Dijkstra 基于贪心策略（每次选当前距离最小的节点），负权边会破坏贪心的正确性；Bellman-Ford 通过对所有边松弛 N-1 轮保证正确性\n\n解析：Dijkstra 使用优先队列每次选出当前距离源点最近的节点，标记为已确定（visited），后续不再更新该节点。当存在负权边时，一个节点可能被标记确定后，又有一条负权边通向它而使距离更小，但 Dijkstra 不会更新已确定节点。例如 A→B（-5），A→C（2），C→B（1）——Dijkstra 从 A 出发先确定 A（d=0），更新 B=-5, C=2，选 B（d=-5）标记确定，但 C 到 B 的路径 A→C→B 总距离=3，不如直接 A→B=-5——这个 case 下 Dijkstra 反而正确。Dijkstra 出错的典型场景是负权环或先大后小路径：A→B=1, B→C=-3, C→A=2（负环），或 A→B=1, A→C=4, C→B=-3（Dijkstra 走 A→B=1 标记 B，错过 A→C→B=1+(-3)=1，结果相等但如果在更复杂图中会错过更优路径）。\n\n扩展延伸：Bellman-Ford 算法：1）初始化 dist[源点]=0，其余 = INF 2）对 V-1 轮（V 为顶点数），每轮对每条边做松弛操作——if dist[u] + w < dist[v] 则更新 dist[v] = dist[u] + w 3）第 V 轮如果还能松弛说明存在负权环。时间复杂度 O(VE)。优化：SPFA（Shortest Path Faster Algorithm，队列优化 Bellman-Ford），用队列维护被更新的节点，平均 O(E) 最坏仍 O(VE)。Johnson 算法在全源最短路径中先用 Bellman-Ford 计算势能（处理负权），再用 Dijkstra 算每对顶点。Dijkstra + 势能变换来处理负权边：对所有边加上偏移量使所有权重非负但会改变最短路径的选择（正确做法是通过 Johnson 的势能函数）。实际工程中，如果知道图没有负权边，始终使用 Dijkstra（O(E log V) 用二叉堆，O(E + V log V) 用斐波那契堆）。",
+    "hints": [
+      "Dijkstra 的 visited 标记为什么在负权边时会出错",
+      "Bellman-Ford 为什么恰好需要 V-1 轮"
+    ],
+    "tags": [
+      "算法",
+      "最短路径",
+      "Dijkstra"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "状态压缩 DP 原理",
+    "content": "请解释状态压缩动态规划（Bitmask DP）的原理和典型应用场景。",
+    "answer": "答案：状态压缩 DP 用二进制位表示集合的状态，通过位运算高效地进行状态转移\n\n解析：核心思想是用一个整数的二进制位表示「元素是否被选中」——如 mask = 0b1010 表示第 1 和第 3 个元素已被使用（从 0 开始索引）。位运算操作：1）检查第 i 位是否已选：mask >> i & 1 2）选取第 i 个元素：mask | (1 << i) 3）取消选择：mask & ~(1 << i) 4）枚举子集：for sub = mask; sub; sub = (sub-1) & mask。典型应用：旅行商问题（TSP）——dp[mask][v] 表示经过 mask 集合中的城市最后在 v 的最短距离，转移 dp[mask|1<<u][u] = min(dp[mask][v] + dist[v][u])。状态数 O(2^N * N)，当 N <= 20 时适用。\n\n扩展延伸：常见 Bitmask DP 问题：1）Hamiltonian Path（哈密顿路径）— 每个节点恰好一次 2）集合划分（Partition Equal Subset Sum 的 N<=20 版本）3）排列计数问题（如安排 N 个任务，每个任务有依赖关系）4）Bipartite Matching（二分图最大匹配 N<=20 时用匈牙利算法或 DP 均可）。优化技巧：1）提前计算 popcount（__builtin_popcount）判断是否满足条件 2）使用 lowbit（mask & -mask）快速枚举已选中的 bit 3）预处理每对元素之间的兼容性（如 cost[i][j] 二维数组）4）滚动数组：如果转移只依赖更少元素的状态可以压缩一维。N=20 时总状态数 ~100 万（2^20 * 20），在现代 CPU 上 1 秒内可完成。N=25 时需要 meet-in-the-middle 或分支限界。实际面试中，状态压缩 DP 的难点在于「如何将问题映射为集合覆盖模型」，而不是位运算本身。",
+    "hints": [
+      "TSP 问题中 dp[mask][v] 的状态数为什么是 N*2^N",
+      "枚举子集 sub = (sub-1) & mask 的复杂度是多少"
+    ],
+    "tags": [
+      "DP",
+      "状态压缩",
+      "Bitmask"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "稳定排序与非稳定排序",
+    "content": "以下排序算法中，哪个是稳定的排序算法？",
+    "options": [
+      "A) 快速排序",
+      "B) 堆排序",
+      "C) 归并排序",
+      "D) 选择排序"
+    ],
+    "answer": "C",
+    "hints": [
+      "稳定排序保证相等元素的相对顺序不变。归并排序在 merge 时控制相等时先取左边的就能保持稳定"
+    ],
+    "tags": [
+      "排序",
+      "稳定性",
+      "基础"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DFS 与 BFS 遍历策略对比",
+    "content": "请对比深度优先搜索（DFS）和广度优先搜索（BFS）在实现方式和适用场景上的差异。",
+    "answer": "答案：DFS 使用栈（递归或显式栈）深度优先探索，BFS 使用队列逐层遍历\n\n解析：DFS 沿着一条路径走到底再回溯，空间复杂度 O(h) 其中 h 为树深（递归隐式栈），适合：1）路径搜索（如迷宫是否连通）2）拓扑排序 3）连通分量 4）回溯法（全排列、组合、N皇后）5）二分图判定。BFS 从起点逐层向外扩展，空间复杂度 O(w) 其中 w 为最大宽度，适合：1）无权图最短路 2）层序遍历 3）拓扑排序（Kahn 算法）4）二分图判定 5）最短路径步数。DFS 可以很容易地通过递归实现，但递归深度过大时可能导致栈溢出（Python 默认递归限制 1000，Java 默认栈深度约 10000）。BFS 中 queue 可能非常大（如完全二叉树最后一层有 N/2 个节点）。\n\n扩展延伸：双向 BFS（Bidirectional BFS）— 从起点和终点同时 BFS，每次扩展节点较少的一端，复杂度从 O(b^d) 降到 O(b^(d/2))（d 是层数）。迭代加深 DFS（IDDFS）— 结合 DFS 的空间效率和 BFS 的最优性，适合深度不确定的大型搜索空间（如博弈树）。记忆化 DFS（DFS + Memoization = 动态规划）— 在 DFS 的基础上缓存子问题结果。检测路径存在性用 DFS，找最短路径用 BFS（无权图）或 Dijkstra（带权图）。DFS 的递归写法简单但需要注意回溯时的状态还原（Backtracking 核心——修改、递归、撤销修改）。",
+    "hints": [
+      "DFS 和 BFS 的空间复杂度差异来源（栈 vs 队列）",
+      "双向 BFS 为什么能把复杂度从 O(b^d) 降到 O(b^(d/2))"
+    ],
+    "tags": [
+      "图",
+      "DFS",
+      "BFS"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分治算法与 Master Theorem",
+    "content": "请解释分治算法的时间复杂度分析方法——主定理（Master Theorem）及其应用。",
+    "answer": "答案：主定理分析形如 T(N) = aT(N/b) + f(N) 的递归式复杂度，其中 a>=1, b>1\n\n解析：主定理将问题分解为 a 个规模为 N/b 的子问题，合并开销为 f(N)。比较 f(N) 与 N^log_b(a) 的大小决定复杂度：1）如果 f(N) = O(N^(log_b(a)-ε))，则 T(N) = Θ(N^log_b(a))（合并开销小于子问题开销）2）如果 f(N) = Θ(N^log_b(a) * log^k(N))，则 T(N) = Θ(N^log_b(a) * log^(k+1)(N))（合并开销与子问题同量级）3）如果 f(N) = Ω(N^(log_b(a)+ε)) 且满足正则条件 a*f(N/b) ≤ c*f(N) 对某个 c<1 成立，则 T(N) = Θ(f(N))（合并开销占主导）。\n\n扩展延伸：典型应用：1）归并排序 T(N)=2T(N/2)+O(N)—a=2, b=2, log_b(a)=1, f(N)=O(N)，属于 case 2（k=0），复杂度 Θ(N log N) 2）二分查找 T(N)=T(N/2)+O(1)—a=1, b=2, log_b(a)=0, f(N)=O(1) 属于 case 2（k=0），复杂度 Θ(log N) 3）快速排序平均 T(N)=2T(N/2)+O(N) 同归并，但最坏 T(N)=T(N-1)+O(N)=O(N²)（不均匀划分，主定理不适用）4）矩阵乘法的 Strassen 算法 T(N)=7T(N/2)+O(N²)—log_2(7)≈2.81 > 2，case 1，复杂度 O(N^2.81) 5）Karatsuba 乘法 T(N)=3T(N/2)+O(N)—log_2(3)≈1.585 > 1，case 1，复杂度 O(N^1.585)。主定理不适合的情况：1）a 不是常数（如递归树搜索）2）T(N)=T(N-1)+f(N) 形式（线性递归）——需用递归树或直接求和。递归树方法：画出递归的层次树，每层求和后再总体求和。",
+    "hints": [
+      "归并排序的递归树有多少层，每层合并开销是多少",
+      "快速排序最坏情况下为什么不满足主定理的条件"
+    ],
+    "tags": [
+      "算法",
+      "分治",
+      "复杂度"
+    ]
   }
 ]

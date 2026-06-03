@@ -1485,5 +1485,125 @@
       "ServiceLoader 基于约定：META-INF/services/接口全限定名 文件列出实现类",
       "ServiceLoader 不是线程安全的，且不支持卸载已加载的服务"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Java 并发工具类",
+    "content": "以下哪些类属于 JUC（java.util.concurrent）包中的并发工具？（多选）",
+    "options": [
+      "A) CountDownLatch",
+      "B) CyclicBarrier",
+      "C) Semaphore",
+      "D) ThreadPoolExecutor",
+      "E) FileOutputStream",
+      "F) ConcurrentHashMap"
+    ],
+    "answer": "ABCDF",
+    "hints": [
+      "所有选项除了 E (FileOutputStream 属于 java.io) 都在 JUC 中。答案是 ABCDF"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "JUC"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Java Optional 用法",
+    "content": "以下关于 Java Optional 的用法，哪些是错误的？（多选）",
+    "options": [
+      "A) Optional.of(null) 会抛出 NullPointerException",
+      "B) Optional.ofNullable(null) 返回 Optional.empty()",
+      "C) optional.isPresent() 可以检查值是否存在",
+      "D) optional.get() 在值为空时返回 null",
+      "E) optional.orElse(null) 在值为空时返回 null",
+      "F) optional.map(x -> x.toString()) 支持链式调用"
+    ],
+    "answer": "D",
+    "hints": [
+      "optional.get() 在值为空时抛出 NoSuchElementException；其他选项都是正确的。答案是 D"
+    ],
+    "tags": [
+      "Java",
+      "Optional",
+      "函数式"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Java 函数式接口",
+    "content": "以下哪些是 java.util.function 包中定义的标准函数式接口？（多选）",
+    "options": [
+      "A) Predicate<T>",
+      "B) Supplier<T>",
+      "C) Callable<T>",
+      "D) Function<T, R>",
+      "E) Consumer<T>",
+      "F) ActionListener"
+    ],
+    "answer": "ABDE",
+    "hints": [
+      "Callable 属于 java.util.concurrent，ActionListener 属于 java.awt.event。答案是 ABDE"
+    ],
+    "tags": [
+      "Java",
+      "函数式",
+      "接口"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Java IO 流分类",
+    "content": "以下哪些属于字节流（Byte Stream）？（多选）",
+    "options": [
+      "A) FileInputStream",
+      "B) FileReader",
+      "C) BufferedOutputStream",
+      "D) DataInputStream",
+      "E) InputStreamReader",
+      "F) FileOutputStream"
+    ],
+    "answer": "ACDF",
+    "hints": [
+      "FileReader/InputStreamReader 是字符流。答案是 ACDF"
+    ],
+    "tags": [
+      "Java",
+      "IO",
+      "流"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Java Lambda 限制",
+    "content": "以下关于 Lambda 表达式的限制，哪些是正确的？（多选）",
+    "options": [
+      "A) Lambda 表达式不能访问非 effectively final 的局部变量",
+      "B) Lambda 表达式不能访问默认方法",
+      "C) Lambda 表达式捕获的变量必须是 final 或 effectively final",
+      "D) Lambda 表达式中不能使用 this（this 指向匿名类对象）",
+      "E) Lambda 表达式目标类型必须是函数式接口",
+      "F) Lambda 表达式必须至少有一个参数"
+    ],
+    "answer": "ACE",
+    "hints": [
+      "Lambda 的 this 指向外部类而非 Lambda 自身；无需参数 () -> expr 是合法 Lambda。答案是 ACE"
+    ],
+    "tags": [
+      "Java",
+      "Lambda",
+      "函数式"
+    ]
   }
 ]

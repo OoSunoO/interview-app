@@ -1182,5 +1182,95 @@
       "ShardingSphere",
       "Vitess"
     ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Otter 与 Canal 数据同步方案",
+    "content": "请解释阿里巴巴 Canal 和 Otter 在数据同步中的作用和工作原理。",
+    "answer": "答案：Canal 解析 MySQL binlog 获取增量变更，Otter 基于 Canal 实现多机房数据同步\n\n解析：Canal 伪装成 MySQL 从库向主库请求 binlog，解析 binlog 的 ROW 格式事件，将数据库变更（INSERT/UPDATE/DELETE）转换为结构化消息输出到 MQ（Kafka/RocketMQ）或其他下游。Canal 支持过滤库/表、字段掩码、自定义 deserializer 等。核心能力：1）binlog 位置持久化（ZooKeeper/Memory），断点续传 2）高可用（多 Instance 竞争消费）3）支持多种输出格式（protobuf/JSON）。Otter 是分布式数据同步平台，基于 Canal 获取变更后通过 Pipeline 将数据同步到目标数据库（支持单向/双向同步），解决数据冲突用基于负载优先或时间戳的策略。\n\n扩展延伸：Canal 的典型应用场景：1）缓存与数据库一致性（变更后更新 Redis）2）异构数据同步（MySQL -> ES/HBase）3）实时数据仓库（CDC 入湖）4）数据库审计（记录所有变更）5）CQRS 事件源。Otter 在阿里巴巴内部用于异地多活数据同步：多个机房部署，通过 Otter 保证跨机房的数据最终一致性，支持数据对比和修复工具。CDC（Change Data Capture）方案对比：Canal（MySQL binlog）、Debezium（基于 Kafka Connect 支持多种数据库）、Maxwell（轻量级 MySQL binlog 同步到 Kafka），选择取决于集群规模和生态集成需求。",
+    "hints": [
+      "Canal 伪装成 MySQL 从库的原理是什么",
+      "Otter 怎么处理双向同步的数据冲突"
+    ],
+    "tags": [
+      "数据同步",
+      "Canal",
+      "CDC"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "NewSQL 与云原生数据库",
+    "content": "请介绍 NewSQL 和云原生数据库的代表产品及其技术特点。",
+    "answer": "答案：NewSQL 试图融合 NoSQL 的分布式弹性和传统 RDBMS 的 SQL/ACID 特性\n\n解析：代表性 NewSQL 产品：1）Google Spanner — TrueTime API + 2PC + Paxos，全球级强一致性分布式数据库，核心创新是用 GPS + 原子钟实现的 TrueTime 时钟解决了分布式一致性问题 2）TiDB — 基于 Raft 协议，PD 管理元数据和调度，TiKV（KV 存储）+ TiDB（SQL 层）分离架构，兼容 MySQL 协议，支持在线扩缩容 3）CockroachDB — 类似 Spanner 但用混合逻辑时钟（HLC）替代 TrueTime，支持跨地域多活。云原生数据库代表：Amazon Aurora（计算存储分离，存储层自愈 6 副本）、Snowflake（SaaS 数仓，存算分离极致弹性）、Serverless DB（按需付费 Auto-scaling）。\n\n扩展延伸：存储计算分离架构：计算节点无状态，可秒级弹性扩缩；存储层分布式共享（S3/EBS），数据持久化不依赖计算节点。TiDB 架构深入：TiKV 按 Region 分片（默认 96MB），PD 自动进行 Region 调度（热点/负载均衡/扩容），TiFlash 提供列存引擎支持 HTAP。NewSQL 的权衡：强一致性不如原生 RDBMS 严格、分布式事务在跨地域场景下延迟较高、复杂 JOIN 查询性能不如单机数据库。什么时候选 NewSQL：数据量 TB 级+，需要在线弹性扩缩容，需要强一致性和 SQL 支持。",
+    "hints": [
+      "Spanner 的 TrueTime 怎么解决时钟问题",
+      "计算存储分离为什么是云原生数据库的趋势"
+    ],
+    "tags": [
+      "NewSQL",
+      "分布式",
+      "云原生"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "SQL 注入攻击与防护",
+    "content": "请解释 SQL 注入攻击的原理以及在各层的最佳防御实践。",
+    "answer": "答案：SQL 注入是通过拼接未过滤的用户输入到 SQL 查询中执行恶意代码的攻击\n\n解析：攻击原理：应用层将用户输入直接拼接到 SQL 语句中（如 WHERE id = '\" + userInput + \"'），攻击者通过输入 ' OR 1=1 -- 等 payload 改变查询语义，获取未授权数据或执行破坏操作。常见注入类型：1）UNION 注入 — 利用 UNION 追加查询窃取数据 2）盲注 — 通过布尔/时间判断逐字符猜解数据 3）堆叠注入 — 执行多条语句 4）报错注入 — 通过报错信息泄露数据 5）二阶注入 — 先存入恶意数据，后续操作触发。\n\n扩展延伸：防御最佳实践（多层防御）：1）第一层 — 预编译语句（Prepared Statement / Parameterized Query）是根除 SQL 注入最有效的手段，SQL 语句模板和参数分开传输，数据库执行时参数永远不参与编译 2）第二层 — ORM 框架（MyBatis/MP/JPA）规范使用 #{} 而非 ${}，严格过滤动态表名和 ORDER BY 子句（用白名单校验）3）第三层 — 数据库权限最小化（应用账号只赋予 INSERT/SELECT/UPDATE/DELETE 特定表权限，禁止 DROP/CREATE/ALTER）4）第四层 — WAF 检测和拦截 SQL 注入 payload（阿里云 WAF/Cloudflare/ModSecurity）。注意：存储过程如果内部使用动态 SQL 拼接同样有注入风险，不能作为防御手段依赖。",
+    "hints": [
+      "预编译语句为什么能防止 SQL 注入",
+      "为什么存储过程不能完全防止 SQL 注入"
+    ],
+    "tags": [
+      "安全",
+      "SQL注入",
+      "数据库"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "数据库范式",
+    "content": "一个关系表 R(A, B, C, D)，函数依赖为 AB→C, B→D，该表最高属于第几范式？",
+    "options": [
+      "A) 第一范式（1NF）",
+      "B) 第二范式（2NF）",
+      "C) 第三范式（3NF）",
+      "D) 巴斯科德范式（BCNF）"
+    ],
+    "answer": "A",
+    "hints": [
+      "存在部分函数依赖 B→D（B 是候选键 AB 的真子集）说明不满足 2NF"
+    ],
+    "tags": [
+      "数据库",
+      "范式",
+      "设计"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数据库透明加密 TDE",
+    "content": "请解释数据库透明加密（TDE）的原理及其在数据安全中的作用。",
+    "answer": "答案：TDE 在数据库存储层透明地加密数据文件，防止物理介质泄露导致的数据泄露\n\n解析：TDE 的核心原理是在数据写入磁盘时加密、读取时解密，对上层应用完全透明。MySQL 的 TDE 实现（MySQL Enterprise TDE / Percona Server）：使用表空间加密（tablespace encryption），每个表空间有自己的加密密钥，主密钥保存在 KMIP 或文件系统中。InnoDB 在将缓冲池中的 dirty page 写入磁盘前用 AES-256 加密，读入时解密。redo log 和 undo log 也加密。性能影响：加密/解密在 CPU 上进行，选用 AES-NI 指令集的 CPU 可大幅降低开销（通常 3-5% 性能影响）。\n\n扩展延伸：密钥层次架构：主密钥（Master Key） -> 表空间密钥（Tablespace Key）。主密钥由外部 KMS（密钥管理服务）管理，表空间密钥由主密钥加密后存储在表空间头部。层次化设计的优势在于：更换主密钥时只需重新加密表空间密钥（Key Rotation），无需重新加密整个数据库。合规要求：TDE 是 PCI-DSS、GDPR、HIPAA 等合规审查中的常见要求。TDE 的局限：不能防护传输过程中的攻击（需配合 TLS）、不能防护 SQL 注入和数据访问权限滥用（需配合访问控制和审计）。在云环境中建议使用云厂商的 KMS（AWS KMS / Azure Key Vault / 阿里云 KMS）管理主密钥。",
+    "hints": [
+      "TDE 为什么使用两层密钥架构",
+      "TDE 能防御哪些攻击场景"
+    ],
+    "tags": [
+      "数据库",
+      "加密",
+      "安全"
+    ]
   }
 ]

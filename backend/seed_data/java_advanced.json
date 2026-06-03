@@ -1195,5 +1195,95 @@
       "虚拟线程",
       "Loom"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JMM 与 happens-before 规则",
+    "content": "请解释 Java 内存模型（JMM）中的 happens-before 规则及其在并发编程中的作用。",
+    "answer": "答案：happens-before 是 JMM 保证多线程操作可见性和有序性的核心规则\n\n解析：happens-before 规则定义了一组操作之间的偏序关系。如果操作 A happens-before 操作 B，则 A 对所有后续线程的可见效果在 B 执行前已确定。关键规则包括：1）程序顺序规则——同一个线程中的每个操作 happens-before 该线程的后续操作（as-if-serial 语义）2）监视器锁规则——对一个锁的解锁 happens-before 后续对该锁的加锁 3）volatile 规则——对 volatile 变量的写 happens-before 后续对该 volatile 变量的读 4）传递性——A happens-before B 且 B happens-before C，则 A happens-before C 5）线程启动/中断/终止规则——Thread.start() happens-before 新线程的任意操作，线程中操作 happens-before Thread.join() 返回。\n\n扩展延伸：JMM 不要求时间上的先后顺序（物理时间上 A 先执行 B 不一定意味着 A happens-before B），只保证可见性和有序性。重排序在满足 happens-before 时是安全的：编译器/CPU 可以在不违反 happens-before 的前提下自由对指令重排以提高性能。volatile 实现原理：JVM 在 volatile 写之前插入 StoreStore 屏障（禁止前面的写与 volatile 写重排），写后插入 StoreLoad 屏障（强制刷新到主存）。synchronized 实现：Java 1.6 后大量优化（偏向锁、轻量级锁、锁粗化、锁消除），在无竞争时代价很小。hb(volatile写) -> hb(volatile读) —— 这道保证是双检锁（DCL）单例模式可以配合 volatile 使用的理论基础。",
+    "hints": [
+      "dcl 双检锁单例模式中 volatile 关键字的含义",
+      "重排序在满足 happens-before 时如何保证安全"
+    ],
+    "tags": [
+      "JMM",
+      "并发",
+      "happens-before"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java Fork/Join 框架",
+    "content": "请解释 Fork/Join 框架的工作窃取算法及其适用场景。",
+    "answer": "答案：Fork/Join 框架通过分治法和工作窃取算法高效利用多核 CPU\n\n解析：核心概念：将大任务（ForkJoinTask）递归拆分为子任务，子任务的结果再合并（Join）。工作窃取（Work-Stealing）算法：每个工作线程拥有一个双端队列（Deque）存放自己的子任务，线程从队头取任务执行；空闲线程从其他线程的队尾窃取任务执行。这种设计减少了线程之间的竞争（头尾互不冲突）。ForkJoinPool 维护一个全局提交队列，通过 execute/submit/invoke 提交外部任务。任务类型：RecursiveAction（无返回值，如数组排序）、RecursiveTask（有返回值，如求和）。ForkJoinTask 在 Java 8 中作为并行流（Parallel Stream）的底层实现。\n\n扩展延伸：Fork/Join 适合纯计算密集型且任务可独立拆分的场景——数组/列表的排序、遍历、矩阵运算、归并操作。不适合：IO 密集型任务（因为在等待 IO 时无法窃取别人的任务）。ForkJoinPool 的线程数默认 = Runtime.availableProcessors() - 1。阈值（Threshold）选择：任务拆分的最小大小，太小任务拆分开销大，太大无法充分利用多核。通常经过实验确定（如数组排序任务拆分到 10000 个元素作为基准）。工作窃取可能导致更多缓存缺失（因为线程从一个核心窃取数据到另一个核心）。Common Pool（ForkJoinPool.commonPool()）被 CompletableFuture 和 Parallel Stream 共享，应避免阻塞操作（如 sleep 或同步 IO 阻塞公共池中的线程）。ManagedBlocker 接口用于在公共池中处理阻塞操作。",
+    "hints": [
+      "工作窃取为什么从双端队列的队尾窃取",
+      "ForkJoinPool 的线程数怎么确定以及为什么不适合 IO 密集"
+    ],
+    "tags": [
+      "Fork/Join",
+      "并发",
+      "工作窃取"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Java 内存泄漏场景",
+    "content": "以下哪个场景不会导致 Java 堆内存泄漏？",
+    "options": [
+      "A) 静态集合类持有不再使用的对象",
+      "B) 未关闭的数据库连接和文件流",
+      "C) ThreadLocal 中 set 了值但没有 remove",
+      "D) 某个局部变量在方法执行完成后未被回收"
+    ],
+    "answer": "D",
+    "hints": [
+      "局部变量在方法栈帧弹出后自动成为垃圾回收目标，不会泄漏"
+    ],
+    "tags": [
+      "JVM",
+      "内存",
+      "泄漏"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 伪共享 False Sharing",
+    "content": "请解释 Java 并发编程中的伪共享（False Sharing）问题以及常见的解决方案。",
+    "answer": "答案：伪共享是指多个线程修改同一缓存行的不同变量导致不必要的缓存同步\n\n解析：CPU 缓存以缓存行（Cache Line，通常 64 字节）为单位从内存加载数据。当两个线程运行在不同 CPU 核心上，各自修改同一缓存行中的不同变量时，缓存一致性协议（MESI）会让两个核心的缓存行在每次写入时互相失效。即使线程操作的是不同变量（逻辑上无关），物理上在同一缓存行仍会触发缓存行状态的频繁切换，导致严重的性能下降（可能降低 10-100 倍）。解决方案的核心是缓存行填充（Padding）：在变量前后填充无用字节，确保不同线程操作的变量位于不同缓存行。\n\n扩展延伸：Java 中的解决方案演进：1）Java 8 前手动填充（long p1, p2, ... p7 在 volatile long value 前后）2）Java 8 引入 @Contended 注解（JVM 参数 -XX:-RestrictContended 开启），自动填充到缓存行对齐。3）JCTools（Java Concurrency Tools）等并发库内部广泛使用了缓存行填充。Log4j 2 的 RingBuffer（LMAX Disruptor）架构是避免伪共享的经典实践。检测伪共享：使用 Linux perf（查看 cache-misses 指标）和 JDK Flight Recorder 分析缓存行为。现代 CPU 的 MESI 优化方向：不同 Intel 微架构的各级缓存命中/失效行为不同，伪共享的惩罚在不同 CPU 上不同（从几纳秒到几百纳秒）。",
+    "hints": [
+      "@Contended 注解怎么实现缓存行填充",
+      "Disruptor 框架是怎么解决伪共享的"
+    ],
+    "tags": [
+      "并发",
+      "缓存",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 偏置锁撤销机制",
+    "content": "请解释 Java 偏向锁的撤销过程和 JDK 15 后偏置锁被禁用的原因。",
+    "answer": "答案：偏向锁减少同一线程重复获取锁的 CAS 开销，但撤销成本高且复杂\n\n解析：偏向锁在对象头 Mark Word 中存储偏向线程 ID，当该线程再次获取同一锁时无需任何 CAS 操作。偏向锁撤销发生在另一个线程尝试竞争该锁时：1）检查偏向线程是否存活 2）如果存活，在全局安全点暂停偏向线程 3）检查偏向线程是否仍在持有该锁（如果已退出同步块，则撤销 4）如果是，将偏向锁升级为轻量级锁或膨胀为重量级锁。回退方案：如果偏向线程已释放，可退回到无锁状态或轻量级锁。撤销操作需要在全局安全点暂停所有线程，触发所有线程的 Stop-The-World 暂停，这在高并发应用中可能显著增加延迟。\n\n扩展延伸：JDK 15 通过 JEP 374 默认禁用了偏向锁（-XX：-UseBiasedLocking）。原因：1）偏向锁的撤销必须在全局安全点进行，在高吞吐应用（如 Web 应用）中，持有同一个锁的线程竞争很常见，撤销频繁导致 STW 暂停 2）现代应用的同步块趋向于短时间，轻量级锁 CAS 开销已经很小 3）偏向锁的代码复杂度显著增加了 JVM 的维护成本。JDK 21 移除了偏向锁代码。替代方案：对于有大量锁竞争且没有线程偏向的场景，默认使用轻量级锁（通过 CAS 加锁）就足够了。对于非常明确是单线程访问的锁，可以考虑消除锁（Lock Elimination）——JIT 通过逃逸分析自动优化。",
+    "hints": [
+      "偏向锁撤销发生在什么时候",
+      "JDK 15 移除偏向锁的根本原因是什么"
+    ],
+    "tags": [
+      "Java",
+      "锁",
+      "偏向锁"
+    ]
   }
 ]

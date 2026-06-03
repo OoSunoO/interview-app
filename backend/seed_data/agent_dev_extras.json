@@ -1183,5 +1183,95 @@
       "SSE",
       "LangChain"
     ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 异常重试与退避策略",
+    "content": "请解释 Agent 系统中工具调用失败的重试策略设计，包括退避算法和熔断机制。",
+    "answer": "答案：Agent 的重试策略需要区分临时故障和永久故障，使用指数退避和熔断防止级联失败\n\n解析：工具调用的失败类型：1）临时故障——网络超时、API 限流（429）、服务暂时不可用（503）2）永久故障——无效参数（400）、权限不足（403）、资源不存在（404）。对临时故障使用重试，对永久故障不应重试（直接报错）。指数退避（Exponential Backoff）：第 i 次重试等待 base_delay * 2^i + jitter 毫秒。jitter（随机抖动）防止多个请求同时重试造成 thundering herd。最大重试次数（通常 3 次）和最大等待时间（通常 30 秒）需要设置上限。熔断器（Circuit Breaker）：连续失败次数超过阈值后断开电路（快速失败），经过冷却时间后半开（允许少量请求探测是否恢复），恢复成功则关闭电路。熔断可以保护下游服务不被拖垮。\n\n扩展延伸：Agent 重试的特殊性：1）幂等性检查——重试前确认操作是否真的失败（如数据库写入可能实际成功但返回超时）2）替代策略——第一次用工具 A 失败后，第 2-3 次尝试用工具 B（替代工具），3 次都失败则告诉用户暂时无法完成 3）语义重试——如果 API 返回非 JSON（LLM 输出格式错误），修正 prompt 后重试而不是简单重试 4）分级重试——L1 立即重试（瞬态错误）、L2 等待后重试（限流）、L3 降级处理（不可恢复的错误）。Step Functions / Temporal 工作流中的重试：AWS SDK 的 RetryMode（Standard/Adaptive）和 Exponential Backoff。重试预算：限制单位时间内总重试次数防止无限消耗 Token 和 API 配额。超时瀑布（Timeout Cascade）问题——如果上游服务超时 10 秒，Agent 等待 10 秒后重试 3 次总耗时 > 30 秒，用户感知明显延迟。",
+    "hints": [
+      "临时故障和永久故障怎么区分",
+      "为什么重试需要 jitter（随机抖动）"
+    ],
+    "tags": [
+      "Agent",
+      "重试",
+      "熔断"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 语义缓存设计",
+    "content": "请解释 Agent 系统中语义缓存的设计原理及其与普通缓存的关键区别。",
+    "answer": "答案：语义缓存基于语义相似度匹配而非精确键匹配，相似的查询返回相同的结果\n\n解析：普通缓存（Redis / Memcached）使用精确的 key-value 匹配——用户输入完全相同的 query 才命中。语义缓存将用户 query 转为向量，从缓存中找到语义最相似的 query 的缓存结果。如果相似度超过阈值（如 cosine > 0.95），直接返回缓存结果，跳过 LLM 调用。实现步骤：1）将用户 query 用 Embedding 模型转为向量 2）在向量数据库中查询最相似的缓存项 3）如果最高相似度 > 阈值，返回缓存的结果 4）如果未命中，正常调用 LLM 后将 query 和结果向量化写入缓存。缓存失效：基于时间（TTL，通常 LLM 回答 5-30 分钟）、基于事件（如数据源更新时清除相关缓存）。\n\n扩展延伸：语义缓存的挑战：1）阈值选择——阈值太高命中率低，阈值太低可能返回不相关的结果（在准确性和命中率间平衡）2）多轮对话——需要考虑对话上下文（query + 历史）而非单轮输入 3）缓存存储大小——向量索引 + 原始文本的双重存储，设置 LRU 淘汰策略 4）缓存结果可能过时（实时信息查询不应缓存太长时间）。GPTCache 是开源的 LLM 语义缓存框架——使用 Embedding 模型（如 all-MiniLM-L6-v2）生成向量，用 FAISS 或 Milvus 做相似度搜索。Cache 层的设计也需要考虑成本：Embedding 模型调用也有延迟和成本，所以对简单 query 先用精确匹配（hash）过滤，再用语义匹配补充。KV Cache 与语义缓存不同——KV Cache 缓存 LLM 推理的中间状态（加速生成），语义缓存缓存最终答案（跳过生成）。",
+    "hints": [
+      "语义缓存的相似度阈值设太高或太低分别有什么问题",
+      "语义缓存和 KV Cache 有什么不同"
+    ],
+    "tags": [
+      "Agent",
+      "缓存",
+      "语义"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent A/B 测试框架设计",
+    "content": "请解释如何为 Agent 系统设计和实现 A/B 测试框架。",
+    "answer": "答案：Agent A/B 测试需要同时评估输出质量和行为轨迹，设计方面包括实验分组、指标采集和评估方法\n\n解析：Agent A/B 测试的特殊性在于输出不是固定格式——同样的 prompt 可能生成不同轨迹（不同的工具调用顺序、不同的推理路径），传统前端 A/B 测试的指标（点击率、转化率）不完全适用。框架设计：1）实验分组——用户/会话级随机分组将流量分配到 Control（当前版本）和 Treatment（实验版本）2）指标体系——质量指标（回答准确率、用户满意度评分、幻觉率）、效率指标（端到端延迟、Token 消耗、工具调用次数、重试率）、业务指标（任务完成率、用户留存）3）离线评估——用测试数据集对两个版本自动评分（LLM-as-judge 或标注员评分），在线评估收集真实用户反馈。\n\n扩展延伸：Agent A/B 的实践挑战：1）评估的自动化和标准化——Agent 输出是对话形式，传统 BLEU/ROUGE 无法衡量质量，需要用更强的 LLM（如 GPT-4）对 Agent 输出评分 2）实验隔离——同时运行的实验可能互相干扰（共享上下文、工具），需要设计隔离层或基于用户的随机分配 3）长周期任务——任务执行时间可能很长（数分钟到数小时），用户可能无法等到实验完成 4）冷启动——新 Agent 版本需要积累足够数据才能达到统计显著性。Statsig / LaunchDarkly 等 Feature Flag 平台支持服务和模型层面的实验。评估数据集设计：Gold Standard（人工标注的完美回答），使用 RAGAS（Faithfulness, Answer Relevance, Context Relevance）等评估框架。LLM-as-Judge 的自动化评估：在实验组和对照组之间做 Pairwise 对比，用 Elo 评分（Chatbot Arena 方法）或 Bradley-Terry 模型计算胜率。",
+    "hints": [
+      "Agent A/B 测试的指标为什么不能简单用点击率",
+      "LLM-as-Judge 评估 Agent 输出时的注意事项"
+    ],
+    "tags": [
+      "Agent",
+      "A/B 测试",
+      "评估"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Agent 记忆持久化策略",
+    "content": "对于跨会话记忆持久化，以下哪种存储方案最适合存储 Agent 记忆？",
+    "options": [
+      "A) 仅使用 LLM 上下文窗口（Context Window）",
+      "B) 使用内存中的 Python 字典存储",
+      "C) 向量数据库 + 关系数据库分层存储",
+      "D) 仅使用文件系统保存对话日志"
+    ],
+    "answer": "C",
+    "hints": [
+      "向量数据库存储会话嵌入用于语义检索，关系数据库存储结构化元数据（时间戳、重要性评分等），两者组合覆盖不同的记忆检索需求"
+    ],
+    "tags": [
+      "Agent",
+      "记忆",
+      "持久化"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 灰度发布与回滚策略",
+    "content": "请解释 Agent 系统的灰度发布（Canary Release）策略和快速回滚机制。",
+    "answer": "答案：灰度发布将新版本 Agent 逐步暴露给用户，回滚在发现问题时快速切回旧版本\n\n解析：灰度发布的核心步骤：1）准备两个版本——Control（稳定版）和 Canary（新版，含新提示词、新工具调用策略或新模型）2）流量分配——初始 Canary 分配 1% 流量，逐步提升到 5%、10%、25%、50%、100% 3）每个阶段验证关键指标——回答质量（LLM-as-judge 评分）、错误率、延迟、用户反馈、成本变化 4）如果指标异常（如错误率上升 1% 或用户负反馈增加），暂停并将流量切回 Control。快速回滚机制：1）版本管理——每个 Deploy 对应一个版本号（Git Commit + Docker Image Tag），保留最近 N 个版本的 Artifact 2）回滚脚本 ——kubectl rollout undo 或切换 Service 的 Selector 指向旧版本 3）数据回滚——如果新版修改了数据库 Schema，需要设计前向兼容的 Schema 变更（向后兼容的加列而不是删改）。\n\n扩展延伸：Agent 灰度发布的特有风险：1）LLM 升级的不可预测性——同一个 prompt 在不同模型版本下输出差异大（即使是小版本升级也可能改变行为）2）评估延迟——LLM-as-judge 评分需要时间，可能导致发现问题滞后 3）记忆/上下文的冲突——同一用户可能在不同灰度版本间切换导致上下文不一致（会话级灰度固定）。实战经验：使用 Feature Flag 作为灰度开关（LaunchDarkly / Flagr），支持按用户 ID、按地域、按会话 ID 分发。回滚 Checklist：1）Service 回滚到上一个镜像 2）数据库 Schema 回滚（如果有）3）清除可能已被污染的缓存 4）通知用户已回滚（如果是可见的功能变化）。CI/CD Pipeline 中的自动回滚：部署后监控错误率，如果 NewRelic / Datadog 告警触发（如 5xx 比例 > 1% 持续 2 分钟），自动触发回滚。",
+    "hints": [
+      "Agent 灰度发布比普通服务灰度发布多哪些风险",
+      "不同灰度阶段分别验证哪些核心指标"
+    ],
+    "tags": [
+      "Agent",
+      "灰度",
+      "回滚"
+    ]
   }
 ]

@@ -1155,5 +1155,105 @@
       "subList() 返回的是原 List 的 SubList 视图（内部视图类），不是独立副本",
       "对 SubList 的修改会反映到原 List 上"
     ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "JVM 栈上分配",
+    "content": "Java 虚拟机通过逃逸分析可能将对象分配在栈上而非堆上。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A",
+    "hints": [
+      "JVM 通过逃逸分析，对未逃逸的对象进行栈上分配和标量替换"
+    ],
+    "tags": [
+      "JVM",
+      "逃逸分析",
+      "优化"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Java 枚举线程安全",
+    "content": "Java 枚举在序列化时，JVM 保证每个枚举常量只有单一实例。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A",
+    "hints": [
+      "Java 专门处理了枚举类型的序列化，使用 enum 的 name 而不是序列化枚举类的字段"
+    ],
+    "tags": [
+      "Java",
+      "枚举",
+      "序列化"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "Java 静态内部类加载时机",
+    "content": "持有静态内部类 SingletonHolder 的单例模式中，SingletonHolder 类在外部类加载时即被初始化。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "静态内部类只有在首次被引用时才加载和初始化，从而实现懒加载"
+    ],
+    "tags": [
+      "Java",
+      "单例",
+      "类加载"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Java 受检异常",
+    "content": "RuntimeException 及其子类是受检异常（Checked Exception），必须显式捕获或声明抛出。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "RuntimeException 是非受检异常，不需要显式处理。受检异常是 Exception 的子类（不含 RuntimeException）"
+    ],
+    "tags": [
+      "Java",
+      "异常",
+      "基础"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Java String 不变性",
+    "content": "String 被声明为 final 的主要目的之一是防止被继承后破坏不可变性。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A",
+    "hints": [
+      "如果 String 可被继承，子类可能覆盖方法改变字符串内容，破坏不可变性"
+    ],
+    "tags": [
+      "Java",
+      "String",
+      "不变性"
+    ]
   }
 ]

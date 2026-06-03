@@ -1183,5 +1183,96 @@
       "流量控制",
       "弹性"
     ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 幂等与事务",
+    "content": "请解释 Kafka 的幂等性生产和事务性消息的实现原理。",
+    "answer": "答案：Kafka 通过 Producer ID（PID）+ 序列号机制实现幂等，通过事务协调器实现跨分区原子写入\n\n解析：幂等性（enable.idempotence=true）：每个 Producer 启动时分配唯一 PID，每条消息附带递增的序列号。Broker 端为每个 PID 维护最近的序列号，收到小于等于已记录的序列号的消息直接拒绝，避免网络重试导致的消息重复。幂等性保证 exactly-once 写入到单个分区。事务性消息在幂等基础上扩展：引入事务协调器（Transaction Coordinator，从 __transaction_state topic 选举），Producer 通过 FindCoordinator 请求找到协调器。事务流程：InitTransactions -> BeginTransaction -> 发送消息到目标分区 -> 原子提交/回滚（写入 commit/abort marker）。Consumer 通过 isolation.level 参数控制读到事务消息的可见性：read_committed 跳过未提交的事务消息。\n\n扩展延伸：事务性协调器的选主：Kafka 会从 __transaction_state 内部 topic 的分区 leader 中选举一个副本作为事务协调器。事务超时：transaction.timeout.ms 控制单个事务最大时长，防止挂起事务阻塞其他操作。事务的局限：1）不能跨 Producer 做事务 2）在 read_committed 模式下 brokers 会额外缓存事务元数据增加内存 3）幂等性和事务都强制 acks=all。在流处理（Kafka Streams）中事务实现 exactly-once 端到端语义：源 topic 读取的 offset 和 sink topic 写入结果在同一个事务中原子化提交。",
+    "hints": [
+      "PID 和序列号怎么保证消息不重复",
+      "read_committed 模式下 consumer 如何判断消息是否已提交"
+    ],
+    "tags": [
+      "Kafka",
+      "事务",
+      "幂等"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RocketMQ 存储与刷盘机制",
+    "content": "请解释 RocketMQ 的消息存储架构和刷盘机制。",
+    "answer": "答案：RocketMQ 使用零拷贝和文件系统进行高效的消息持久化\n\n解析：RocketMQ 将所有消息追加到 CommitLog 文件（顺序写，单文件约 1GB，写满后切新文件），ConsumerQueue 作为索引文件（定长结构 → 记录 CommitLog offset + size + tag hash）。索引分离的设计使消息写入以顺序 IO 为主，性能极高。刷盘策略：1）同步刷盘（SYNC_FLUSH）— 消息写入 PageCache 后立即调用 Flush 刷盘，返回 ACK，可靠性最高但 TPS 下降约 30-50% 2）异步刷盘（ASYNC_FLUSH）— 消息写入 PageCache 即返回 ACK，后台线程定期刷盘（默认 500ms），性能接近纯 PageCache 写入速度。数据读取：先查 ConsumerQueue 定位 CommitLog offset，再读 CommitLog 取消息。利用 PageCache + 预读机制实现高效读取。\n\n扩展延伸：存储 IO 路径：写入是最关键的优化点——CommitLog 顺序写磁盘（磁道顺序移动，机械盘也能高吞吐），配合 1M 大小的 page cache 批量刷出。内存映射文件（MappedFile）映射 CommitLog，每个文件对应一个 MappedFile 对象。内存限制：RocketMQ 依赖 PageCache 做缓存，为 Broker 进程分配 40-50% 系统内存。RocketMQ 的 TransientStorePool（暂存池）机制在写多读少场景下通过堆外内存缓冲写入减少 GC 压力。顺序消费和并发消费：顺序消费场景利用 ConsumerQueue 单线程处理模式下的顺序性保证。存储与索引文件可挂载在 SSD 上以获得最低的 IO 延迟。",
+    "hints": [
+      "RocketMQ 为什么用 CommitLog 单独存储消息而不是按 Topic 存储",
+      "同步刷盘和异步刷盘的适用场景"
+    ],
+    "tags": [
+      "RocketMQ",
+      "存储",
+      "IO"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RabbitMQ 死信队列与延时队列",
+    "content": "请解释 RabbitMQ 的死信队列（DLQ）机制和如何实现延时消息。",
+    "answer": "答案：死信队列用于处理无法正常消费的消息，延时队列通过死信 + TTL 实现\n\n解析：消息变为死信的三种情况：1）basic.reject / basic.nack 且 requeue=false 2）消息 TTL 过期（expiration 属性或队列的 x-message-ttl）3）队列达到最大长度（x-max-length / x-max-length-bytes）。可配置死信交换器（x-dead-letter-exchange）和死信路由键（x-dead-letter-routing-key），死信被重新发布到指定交换器。延时队列的实现：没有直接支持延时消息的原生功能，常用方案是通过死信交换器组合 TTL 实现：一个不绑定消费者的队列设置 TTL，消息过期后通过 dead-letter-exchange 路由到真实消费队列。\n\n扩展延伸：延时队列的 TTL 方案有两种：1）每条消息设置 expiration 属性（若队列中前端消息过期时间长、后排消息过期时间短，需要等前端消息过期后才能检查后排，有不精确的插队问题）2）整个队列设置 x-message-ttl（所有消息统一 TTL）。RabbitMQ 3.12+ 引入了原生延时交换器插件（rabbitmq_delayed_message_exchange），支持直接在交换器层处理延时路由，不再需要死信 + TTL 组合。生产环境建议使用插件版本避免 TTL 方案的插队问题。死信队列的监控：排空死信队列的速率和死信发生原因需重点监控，大量死信可能表示消费者处理逻辑有问题。",
+    "hints": [
+      "TTL + DLX 实现延时队列的局限性是什么",
+      "死信队列堆积大量消息意味着什么"
+    ],
+    "tags": [
+      "RabbitMQ",
+      "死信",
+      "延时"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "消息队列可靠性对比",
+    "content": "以下关于消息队列可靠性保障的说法，正确的是？",
+    "options": [
+      "A) Kafka acks=all 且 ISR 同步复制时能保证消息不丢失",
+      "B) RabbitMQ 的 Publisher Confirm 能保证消息持久化到磁盘后返回 ack",
+      "C) RocketMQ 同步刷盘 + SYNC_MASTER 模式下单机故障可能丢失已提交消息",
+      "D) Kafka 开启 min.insync.replicas=2 能完全避免 Leader 切换导致的数据丢失"
+    ],
+    "answer": "B",
+    "hints": [
+      "同步复制下 Isr 也并非零数据丢失，极端场景仍需关注",
+      "Kafka 即使配置 min.insync.replicas 仍然有丢数据的极端场景"
+    ],
+    "tags": [
+      "消息队列",
+      "可靠性",
+      "对比"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息队列与数据库的一致性保障",
+    "content": "请解释如何保证发送消息的操作和数据库事务的一致性（本地消息表 vs 事务消息）。",
+    "answer": "答案：本地消息表和事务消息是最常见的两种保证数据库和消息队列最终一致性的方案\n\n解析：本地消息表（eBay 模式）：业务操作和写消息表在同一个本地事务中完成，独立的消息投递服务轮询消息表并将未发送的消息投递到 MQ，投递成功后在消息表中标记已发送。投递过程需做幂等（消息 ID 去重）。事务消息（RocketMQ）：将 prepare 消息发送到 MQ（半消息），执行本地事务，根据本地事务结果 commit 或 rollback 消息。MQ 通过反向回查机制探测那些长时间未提交的半消息的状态（回查接口由业务方实现）。Kafka 的事务性 API 使用事务协调器实现类似的原子写入（前述）。\n\n扩展延伸：两种方案比较：本地消息表方案简单可靠但需额外轮询服务增加了架构复杂度，事务消息方案更简洁但依赖 MQ 的事务特性（RocketMQ 原生支持，Kafka 需要事务 API 配合）。常见问题：1）消息投递了但数据库回滚（prepare 后本地事务失败，事务消息回查机制解决 2）数据库提交了但消息没发出去（本地消息表中标记状态和轮询补偿解决）。订阅方消费也需设计幂等（处理中因消费失败重试导致消息重复）。发件箱模式（Outbox Pattern）：CDC（Canal/Debezium）监听业务数据库的 outbox 表变更同步到 MQ，与本地消息表本质相同但简化了轮询逻辑。",
+    "hints": [
+      "RocketMQ 事务消息的回查机制是怎么避免消息丢失的",
+      "发件箱模式相比本地消息表有什么改进"
+    ],
+    "tags": [
+      "消息队列",
+      "事务",
+      "一致性"
+    ]
   }
 ]

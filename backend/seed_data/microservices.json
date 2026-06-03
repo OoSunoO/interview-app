@@ -1182,5 +1182,90 @@
       "分布式事务",
       "编排模式"
     ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "优雅停机与无损下线",
+    "content": "请解释微服务架构中优雅停机（Graceful Shutdown）的实现方案。",
+    "answer": "答案：优雅停机确保服务关闭时正在处理的请求能正常完成，而不是被强制中断\n\n解析：K8s 环境下优雅停机流程：Pod 收到 SIGTERM 信号 → 移除 Service Endpoint（通过 readiness probe 返回失败，停止接收新请求）→ 服务进程开始关闭（完成进行中的请求，关闭连接池、线程池、数据库连接等资源）→ 规定时间（terminationGracePeriodSeconds，默认 30 秒）后发送 SIGKILL 强制终止剩余连接。代码层面：注册 JVM ShutdownHook / Signal Handler 拦截 SIGTERM，等待请求处理完成后释放资源。Spring Cloud 通过 @PreDestroy / ContextClosedEvent 监听关闭事件，逐步关闭 Embedded Web Server。\n\n扩展延伸：无损下线的挑战：1）在 TPS 较高时优雅停机窗口内仍有新请求进来（因为客户端 DNS/Cache 未刷新），需配合服务发现机制（Nacos/Consul）移除状态后等待一定时间（drain 期）再关闭 2）Enovy Sidecar 场景需协调容器退出顺序（preStop 钩子先通知 Sidecar 不再接受新连接再关闭应用）3）消息队列消费端的优雅停机：暂停消费、等待消费完成后再关闭通道。分布式中 kill 长连接需要预先停止心跳检测。蓝绿部署时的新版本替换旧版本：Argo Rollout 自动执行 scale down 前的等待和流量 Drain。",
+    "hints": [
+      "terminationGracePeriodSeconds 设置的合理性怎么判断",
+      "Sidecar 模式下优雅停机有什么额外注意点"
+    ],
+    "tags": [
+      "微服务",
+      "优雅停机",
+      "K8s"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "配置中心配置热更新实现",
+    "content": "请解释配置中心（Nacos/Consul）实现配置热更新的原理。",
+    "answer": "答案：配置热更新的核心是监听配置变更并动态注入到运行时环境，无需重启服务\n\n解析：两种实现模式：1）Pull 模式（定时轮询）— 客户端定期（如 5 秒）向配置中心拉取配置版本号，如果版本比本地的更新则拉取新配置并刷新。实现简单，但有延迟和轮询开销。2）Push 模式（长轮询或 WebSocket）— 客户端发起一个长时间保持的连接请求（如 Nacos 的 30 秒长轮询），配置中心有变更时立即推送或超时后重新建立。Java 应用中的热更新通过在 @RefreshScope（Spring Cloud）标注的 Bean 上重建实例实现：配置变更 -> Environment 更新 -> RefreshScope 刷新 Bean -> Bean 重建时读取新配置。@Value 标注会自动从 Environment 获取最新值。\n\n扩展延伸：热更新的隔离边界：1）基本类型字段（如线程池大小、超时时间）可安全热更新 2）连接池资源（数据库连接池、HTTP 连接池）需通过回调销毁旧连接再创建新连接 3）某些配置变更需要灰度推送（先推送少量实例观察效果再全量推送）。配置版本管理：配置中心支持配置历史版本管理，变更可追溯和回滚。Apollo（携程开源配置中心）的创新：多环境/多集群配置管理，灰度发布原生支持通过 Namespace 和 Tag 组合。Nacos 配置变更事件（NacosConfigService.getConfigAndSignListener）通过 Listener 回调触发本地刷新。安全性：敏感配置加密传输（AES/DES）和存储。",
+    "hints": [
+      "@RefreshScope 的刷新原理是什么——Scope 的缓存重建",
+      "连接池类配置热更新时需要怎么处理旧的连接"
+    ],
+    "tags": [
+      "配置中心",
+      "热更新",
+      "Nacos"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式链路追踪采样策略",
+    "content": "请解释分布式链路追踪中的采样策略及其对成本和质量的影响。",
+    "answer": "答案：链路追踪采样必须在不丢失关键异常请求和高昂存储成本之间做权衡\n\n解析：方案：1）头部一致性采样（Head-based Sampling）— 在请求入口处根据 traceId 哈希决定是否采样，一次决定整个调用链。优点：同一 trace 的所有 span 采样一致。缺点：低流量场景采样量太少，无法捕捉异常；高流量场景采样过多。2）尾部采样（Tail-based Sampling）— 所有 span 先缓冲（短时间内存）+ 实时聚合，在调用结束后再决定是否保存。侧重关心慢请求（p99/p999）和错误请求的完整 trace，其余丢弃。优点：精准捕捉关键 trace。缺点：缓冲有内存开销。3）概率采样（固定比例如 1%）+ 规则覆盖（慢请求/错误请求全采）— 常见的混合策略。\n\n扩展延伸：存储优化：全量采样转采样的 pipeline——全量吞吐但仅 I/M 倍线索存储（如 1% trace 采样率 + 100% error trace 采样）。OpenTelemetry 的 Sampler：AlwaysOn（调试用）、AlwaysOff、TraceIdRatioBased、ParentBased（继承父 span 决策）。多级采样决策示例：只全采来自高价值客户且响应时间 > 1s 或含 error 的 trace。采样率也关系到预算（存储 + 传输带宽成本），典型环境：预发布全采（调试）、线上 1-5%（头部一致性）+ 尾部采样捕获异常。Jaeger 支持自适应采样（通过 hot spots detection 动态调整频率）。链路完整性：用户最终在登陆页->调用 23 个服务->返回，如果采样只采了 22 个，那条 trace 的完整性被打断——所以一致性采样在聚合场景更有用。",
+    "hints": [
+      "头部一致性采样和尾部采样的核心区别",
+      "什么场景下需要提高采样率"
+    ],
+    "tags": [
+      "微服务",
+      "链路追踪",
+      "采样"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式 Session 管理",
+    "content": "请对比分布式系统中多种 Session 管理方案的实现和优缺点。",
+    "answer": "答案：分布式 Session 管理的核心问题是将用户登录状态在多个服务实例间共享\n\n解析：常见方案：1）Session 黏滞（Sticky Session）— 负载均衡器按用户 IP/Session 固定分发到同一实例。优点：简单无需改造应用。缺点：实例宕机会话丢失、无法平滑扩缩容。2）Session 集中存储（Redis/Memcached）— 各实例从同一存储读取 Session。所有 Web 服务共享 Session 数据（如 Spring Session + Redis）。优点：无单点、扩容友好。缺点：引入外部存储依赖、网络开销。3）无状态 Token（JWT）— 将用户身份信息编码到 Token 中，每次请求携带。服务器端无需保存 Session 信息。优点：天然无状态、跨语言跨平台、扩展性好。缺点：Token 不可撤销（需要黑名单）、payload 大小限制（影响带宽）、密钥管理需注意安全。\n\n扩展延伸：Spring Session 实现细节——通过 SessionRepositoryFilter 拦截 HttpServletRequest，包装为 SessionRepositoryRequestWrapper，getSession() 方法改为从 Redis 获取。Session 序列化建议用 JSON（可读性好）而非 Java 序列化。Session 刷新策略：定时更新缓存的 TTL（如每次操作刷新过期时间为 30 分钟）。Token 无状态方案最佳实践：access token（短期 15 min）+ refresh token（长期 7 天），access token 纯无状态（通过 JWT 自验证），refresh token 保存 Redis 用于验证和续期。多端登录控制：限制同一账号设备数用 Redis set 存储活跃 token，超限则淘汰最早的 token。",
+    "hints": [
+      "JWT 相比 Redis Session 的核心优势和劣势",
+      "refresh token + access token 的双 Token 设计为什么好"
+    ],
+    "tags": [
+      "微服务",
+      "Session",
+      "JWT"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "一致性哈希与虚拟节点",
+    "content": "请解释一致性哈希算法在分布式微服务中的应用和虚拟节点设计。",
+    "answer": "答案：一致性哈希解决分布式缓存/服务中增减节点时大量数据/请求迁移的问题\n\n解析：一致性哈希将哈希值空间组织成环状（0 到 2^32-1），节点根据 IP/名称哈希在环上定位。数据/请求根据 key 哈希找到环上的位置，沿顺时针方向找到第一个节点即为目标节点。哈希环只有少量数据需要重新映射（只有新增节点的相邻节点受影响）。虚拟节点（每个物理节点对应 100-200 个虚拟节点分布在环上）解决节点不均匀分布导致的负载不均问题。Redis Cluster 使用的是 hash slot（16384 槽）思想而非一致性哈希环。\n\n扩展延伸：应用场景：1）分布式缓存（Memcached/Redis）的 key 分布 2）负载均衡（HTTP 路由器基于请求 URI 哈希到固定后端）3）数据库分片（ShardingSphere 支持虚拟节点一致性哈希）。最小化数据迁移：新增节点时原始节点只有部分数据搬移到该节点，其他数据不动——这一点在大规模集群（百台级）中优势显著。一致性哈希的突变：Chord 协议中每个节点维护长度为 O(log N) 的 finger table 实现高效查找，跳表结构保证了 O(log N) 的路由复杂度。实践中常常使用取模分片 + 预留 slot 减少重 hash 成本。Java 实现：TreeMap（红黑树）模拟哈希环（ceilingKey 找后继节点），虚拟节点用后缀编号区分。",
+    "hints": [
+      "虚拟节点为什么能解决负载不均的问题",
+      "一致性哈希在节点数量很少时（如 3 台）的均匀性如何"
+    ],
+    "tags": [
+      "分布式",
+      "一致性哈希",
+      "负载均衡"
+    ]
   }
 ]

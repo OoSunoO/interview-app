@@ -1406,5 +1406,117 @@
       "AQS 先尝试 CAS 获取锁（快速路径），失败后才进入等待队列",
       "这种设计减少了锁竞争不激烈时的入队开销"
     ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Java 模块化 exports 和 opens",
+    "content": "在 Java 模块化系统中，关于 exports 和 opens 的区别，正确的是？",
+    "options": [
+      "A) exports 允许其他模块反射访问私有成员",
+      "B) opens 允许编译期访问类型，反射时仍需检查",
+      "C) exports 允许编译期访问类型，反射时仍受限",
+      "D) exports 和 opens 功能完全相同"
+    ],
+    "answer": "C",
+    "hints": [
+      "exports 允许编译期访问公共类型，反射时仍受限；opens 允许反射深度访问"
+    ],
+    "tags": [
+      "Java",
+      "模块化",
+      "JPMS"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "G1 GC 混合回收",
+    "content": "关于 G1 GC 的 Mixed GC 阶段，以下说法正确的是？",
+    "options": [
+      "A) Mixed GC 只回收年轻代",
+      "B) Mixed GC 同时回收年轻代和部分老年代（CSet 包含一定比例的老年代 Region）",
+      "C) Mixed GC 相当于 Full GC",
+      "D) Mixed GC 在 G1 的整个生命周期持续运行"
+    ],
+    "answer": "B",
+    "hints": [
+      "Mixed GC 在初始标记和并发标记之后进行，CSet 同时包含年轻代和老年代 Region"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Java 17 新特性",
+    "content": "以下哪些特性是 Java 17（LTS）引入或正式确定的？（多选）",
+    "options": [
+      "A) 密封类（Sealed Classes）",
+      "B) 模式匹配 for switch（正式特性）",
+      "C) 记录类（Records）转为正式特性",
+      "D) 文本块（Text Blocks）转为正式特性",
+      "E) 虚拟线程（Virtual Threads）",
+      "F) 外部函数与内存 API（Foreign Function & Memory API）孵化"
+    ],
+    "answer": "A",
+    "hints": [
+      "Java 17 正式确定了密封类。Record 和 Text Block 在 Java 16 已正式化。模式匹配 switch 在 Java 17 是预览。虚拟线程在 Java 21 正式化。选择仅 A"
+    ],
+    "tags": [
+      "Java",
+      "版本",
+      "新特性"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java Switch 表达式",
+    "content": "关于 Java 14+ 的 switch 表达式，以下说法错误的是？",
+    "options": [
+      "A) switch 表达式可以用箭头语法 -> 代替冒号",
+      "B) switch 表达式可以使用 yield 返回值",
+      "C) 箭头语法不会穿透（fall-through）",
+      "D) switch 表达式只能用于枚举类型"
+    ],
+    "answer": "D",
+    "hints": [
+      "switch 表达式支持 int、String、枚举以及任意类型（模式匹配 switch）"
+    ],
+    "tags": [
+      "Java",
+      "switch",
+      "表达式"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "JVM 即时编译 OSR",
+    "content": "关于 JVM 即时编译（JIT）的栈上替换（OSR，On-Stack Replacement），说法正确的是？",
+    "options": [
+      "A) OSR 将正在执行的热点方法替换为编译后的版本，无需等待方法返回",
+      "B) OSR 只在方法调用时触发",
+      "C) OSR 编译模式与标准 C2 编译完全相同",
+      "D) OSR 只能用于 C1 编译"
+    ],
+    "answer": "A",
+    "hints": [
+      "OSR 用于长运行循环中的方法——当循环体达到编译阈值时，在循环回边处跳转到编译后代码"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "OSR"
+    ]
   }
 ]

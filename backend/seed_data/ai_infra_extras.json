@@ -1170,5 +1170,95 @@
       "Ray",
       "ML Infrastructure"
     ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "推理服务冷启动优化",
+    "content": "请解释 LLM 推理服务的冷启动问题以及常见的优化策略。",
+    "answer": "答案：冷启动指推理服务从启动到就绪的延迟，主要来自模型加载、编译优化和显存预热\n\n解析：LLM 服务冷启动的典型过程：1）模型权重从磁盘加载到 GPU 显存（70B 模型使用 FP16 需约 140GB 显存，在多卡间分配）2）JIT 编译优化（CUDA Graph 捕获、算子融合、Triton 编译）3）KV Cache 预分配和预热。冷启动时间可能从数十秒到数分钟。优化策略：1）模型预热（Warm-up）——启动后发送一批伪请求让 GPU 完成 CUDA Graph 捕获和算子编译，后续请求即可零开销执行 2）模型持久化——使用模型池（Model Pool）保持推理进程常驻，避免反复加载 3）前缀缓存（Prefix Cache / RadixAttention）——共享公共前缀的 KV Cache（如 System Prompt），SGLang 的 RadixAttention 和 vLLM 的 Prefix Caching 可以跨请求复用 KV Cache 4）弹性伸缩策略——预热 min replicas 保持常驻实例，根据 CUDA Graph 编译完成后才将实例标记为就绪。\n\n扩展延伸：Serverless 推理的冷启动挑战更严峻——每次函数调用都拉起新容器。优化手段：1）SavedModel + TensorFlow Serving / Triton 的模型仓库热加载 2）使用 Nvidia CUDA Graph 捕获提前编译 3）推理框架的 FastAPI + Async IO 避免阻塞。GPU 显存分配器（如 vLLM 的 PagedAttention 显存管理）启动时预分配大部分显存（~90%），减少运行时碎片和 OOM 风险。LoRA 权重热切换：通过 S-LoRA 或 Punica 在服务中动态加载/卸载 LoRA adapter，避免重新加载 Base Model。Pod 的就绪探针（Readiness Probe）在推理框架报告 warm-up 完成后才接收流量。",
+    "hints": [
+      "CUDA Graph 捕获为什么需要预热请求",
+      "Prefix Caching 跨请求复用 KV Cache 的原理"
+    ],
+    "tags": [
+      "推理",
+      "冷启动",
+      "优化"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 算子融合与计算优化",
+    "content": "请解释 GPU 算子融合（Operator Fusion）的原理及其在深度学习推理中的优化效果。",
+    "answer": "答案：算子融合将多个连续 GPU 内核（Kernel）合并为一个，减少显存带宽开销和 Kernel Launch 延迟\n\n解析：在深度学习中，一个简单的计算图（如 y = a * b + c）如果不融合，GPU 需要启动两个 kernel：先执行乘法 Kernel 将结果写入显存，再执行加法 Kernel 读取中间结果并写入最终结果。每个 Kernel 启动有固定开销（~几微秒，大规模模型累积达毫秒级），且中间结果在显存中读写消耗带宽。算子融合将乘法和加法合并为 FusedMulAdd 一个 Kernel，中间结果在寄存器中传递（无需写回显存），Kernel Launch 次数减半。GPU 内存层次的特点决定了算子的瓶颈往往是「内存带宽」而非「计算」——融合有效避免了中间结果的显存读写。\n\n扩展延伸：常见的融合模式：1）Layer Normalization + Residual Add（LayerNorm 前先做残差连接）2）Attention 中的 QKV 投影融合（一个矩阵乘法同时计算 Q/K/V）3）Bias + Activation（如 nn.Linear 后接 ReLU——bias 和 ReLU 在同一个 Kernel 中完成）4）Softmax + Mask + Dropout（Flash Attention 中的块级融合）5）Convolution + BatchNorm + ReLU（CNN 的经典融合模式）。编译器级融合：XLA 和 torch.compile 自动对计算图做算子融合。TVM / TensorRT / ONNX Runtime 的图优化（Graph Optimization）在模型编译阶段做融合。Flash Attention 是算子融合的极致案例——整个注意力计算通过 tiling + 融合在一个 CUDA Kernel 中完成。NVIDIA TensorRT 的 Plugin 允许手写融合 Kernel 替换标准算子。",
+    "hints": [
+      "算子融合主要减少的是计算延迟还是访存开销",
+      "Flash Attention 中做了哪些关键融合"
+    ],
+    "tags": [
+      "GPU",
+      "算子融合",
+      "优化"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型量化校准数据集",
+    "content": "请解释模型量化中的校准数据集（Calibration Dataset）的作用以及在不同量化方法中的差异。",
+    "answer": "答案：校准数据集用于确定量化参数（缩放因子 scale 和零点 zero point），使量化误差最小化\n\n解析：在 PTQ（训练后量化）中，需要少量无标签数据来统计每层激活值的分布范围（min/max 或百分位）。校准数据通过模型前向传播收集每层的激活统计量，决定每个 tensor 的量化参数。校准数据集的选择直接影响量化质量：1）数据分布应与目标任务分布一致（语言模型用领域文本校准，不要用随机噪声）2）通常需要 100-1000 个样本 3）样本多样性很重要（覆盖不同的输入模式）。GPTQ 使用少量校准数据（128 个样本）通过 Hessian 矩阵（二阶信息）逐层确定量化权重——对每个权重行进行 Optimal Brain Quantization 更新来补偿量化误差。AWQ（Activation-aware Weight Quantization）的关键发现是权重中只有 1% 的「salient channels」（对应高 activation 特征的重要通道）对精度敏感，校准数据用来识别这些重要通道并保留 FP16。\n\n扩展延伸：不同量化方法对校准数据的需求：1）MinMax（静态量化）— 校准数据少，但对异常值敏感 2）Percentile — 需要更多校准数据但更鲁棒 3）KL 散度（NVIDIA TensorRT 使用）— 通过最小化校准数据在 FP16 和 INT8 下的输出分布 KL 散度 4）GPTQ — 需要校准数据计算 Hessian，数据量少但质量重要 5）AWQ — 校准数据用于识别重要 channels 6）SmoothQuant — 校准数据统计 activation 的 per-channel max。QAT（量化感知训练）不需要校准数据——在训练中模拟量化效果让模型适应量化误差。校准数据过少可能导致量化参数偏差，过多则增加校准时间。注意：校准数据绝对不能包含训练数据中的敏感信息（隐私泄漏风险，因为量化参数可能间接反映校准数据分布）。",
+    "hints": [
+      "GPTQ 用校准数据计算 Hessian 矩阵的目的是什么",
+      "AWQ 为什么只需要识别 1% 的重要通道"
+    ],
+    "tags": [
+      "量化",
+      "校准",
+      "PTQ"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "AllReduce 与分布式训练通信",
+    "content": "请解释分布式训练中的 AllReduce 通信模式，特别是 Ring AllReduce 的实现原理。",
+    "answer": "答案：AllReduce 是分布式训练中用于聚合多 GPU 梯度的高效通信模式，Ring AllReduce 将通信量从 2(N-1) 降低到 2(N-1)/N 每 GPU\n\n解析：在数据并行分布式训练中，每个 GPU 计算完自己的梯度后需要将所有 GPU 的梯度求和（平均）再更新模型。Naive 的 AllReduce 实现（如 Parameter Server 架构）是 PS 收集所有梯度再广播回去，通信复杂度 O(N)。Ring AllReduce 由 Baidu 提出（2017），将所有 GPU 排成一个逻辑环，分为两步：1）Scatter-Reduce — 梯度分块后沿环传递，每个 GPU 接收相邻 GPU 的块并累加，经过 N-1 步后每个 GPU 持有整合了整个梯度的「一块」2）AllGather — 将每个 GPU 上的完整块广播给所有 GPU，经过 N-1 步后每个 GPU 拥有完整梯度。每步通信量是总梯度大小 / N，总通信量固定（与 GPU 数量无关），带宽利用率最优。NVIDIA NCCL 库实现了 Ring AllReduce 并通过 NVLink、InfiniBand 等高速互联优化。\n\n扩展延伸：AllReduce 的变体：1）Tree AllReduce（也称为 Rabenseifner 算法）— ReduceScatter 阶段用蝶形交换，通信量相同 2）Butterfly AllReduce — N 个 GPU 通信量 O(log N) 步，常用于 NCCL 的混合策略 3）2D-Torus AllReduce — 适合 TPU Pod 的 2D 网格拓扑。NCCL 的通信优化：使用 NVLink 带宽（~600GB/s H100）远高于 PCIe（~64GB/s Gen5），NCCL 通过拓扑感知自动选择最优通信路径（NVLINK → PCIe → InfiniBand → Ethernet）。Hierarchical AllReduce：在节点内（NVLink）先做 Reduce，再节点间（IB/RoCE）做 AllReduce，减少跨节点通信量。通信计算重叠：通过 Bucket 将梯度分成小桶，在计算反向传播的同时启动 AllReduce（梯度一产生就开始通信），大幅隐藏通信延迟。Mixed Precision 训练中 FP16 梯度通信量减半（相对 FP32）。",
+    "hints": [
+      "Ring AllReduce 的总通信量与 GPU 数量无关的原理",
+      "通信计算重叠是如何实现的"
+    ],
+    "tags": [
+      "分布式训练",
+      "AllReduce",
+      "NCCL"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "模型服务弹性伸缩策略",
+    "content": "在 GPU 推理服务中，以下哪种弹性伸缩策略最为合理？",
+    "options": [
+      "A) 基于 CPU 使用率的 HPA（Horizontal Pod Autoscaler）",
+      "B) 基于 GPU 显存使用率的 HPA",
+      "C) 基于请求队列深度（Queue Depth）的自定义指标伸缩",
+      "D) 固定副本数，不做弹性伸缩"
+    ],
+    "answer": "C",
+    "hints": [
+      "GPU 推理服务的瓶颈通常是显存和请求处理速率，队列深度直接反映实际负载压力；CPU 使用率不是好指标因为推理时 GPU 密集"
+    ],
+    "tags": [
+      "推理",
+      "弹性伸缩",
+      "部署"
+    ]
   }
 ]
