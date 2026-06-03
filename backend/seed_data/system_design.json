@@ -98,5 +98,70 @@
     "answer": "固定窗口（简单但有突刺问题）、滑动窗口（更平滑）、漏桶算法（恒定速率，适合平滑突发流量）、令牌桶（允许突发，适合大部分场景）。实现方式：Guava RateLimiter、Redis+Lua、Sentinel。限流维度：QPS、并发数、CPU 负载。",
     "hints": ["限流和熔断的区别", "分布式限流如何实现"],
     "tags": ["高并发", "限流"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分布式 ID 生成方案",
+    "content": "请介绍分布式系统中唯一 ID 生成的常见方案及各自的优缺点。",
+    "answer": "UUID（全局唯一、不依赖中心，但无序且太长，不适合做数据库索引）、Snowflake（64位自增 ID，时间戳+机器ID+序列号，高性能趋势递增，但依赖时钟同步）、DB 号段模式（批量取号，性能好但依赖 DB）、Redis incr（性能高但有持久化问题）。",
+    "hints": [
+      "Snowflake 时钟回拨问题如何解决",
+      "美团 Leaf 和滴滴 TinyID 对 Snowflake 做了什么改进"
+    ],
+    "tags": ["分布式", "ID生成"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "心跳机制与故障检测",
+    "content": "请解释分布式系统中的心跳机制和故障检测策略。",
+    "answer": "心跳：节点定期发送心跳信号表示存活。故障检测策略：超时判定（固定超时/自适应超时）、Phi-Accrual 故障检测（基于历史心跳分布计算怀疑度 φ，φ = -log10(当前时间距上次心跳的概率)），当 φ 超过阈值判定节点宕机。Cassandra 和 Akka 使用 Phi-Accrual。",
+    "hints": [
+      "固定超时和自适应超时的优缺点",
+      "Phi-Accrual 为什么比固定超时更可靠"
+    ],
+    "tags": ["分布式", "高可用"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CQRS 与事件溯源",
+    "content": "请解释 CQRS（命令查询职责分离）和 Event Sourcing（事件溯源）的概念及适用场景。",
+    "answer": "CQRS：将写操作（Command）和读操作（Query）分离到不同模型，可独立优化（如写用 RDS、读用 Elasticsearch）。Event Sourcing：将状态变更存储为事件序列，当前状态由事件重放得到。两者常结合使用：Command 产生事件，事件更新读模型。适用场景：审计日志、复杂领域逻辑（如金融交易）、需要时间回溯。",
+    "hints": [
+      "CQRS 和 Event Sourcing 一定要一起用吗",
+      "事件溯源的快照机制解决了什么问题"
+    ],
+    "tags": ["架构", "CQRS", "事件驱动"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务网格（Service Mesh）",
+    "content": "请解释 Service Mesh 的架构原理和核心组件。",
+    "answer": "Service Mesh 将服务间通信从业务代码中抽离到基础设施层。核心组件：数据平面（Sidecar Proxy，如 Envoy，拦截所有进出流量，处理服务发现、负载均衡、熔断、重试）和控制平面（如 Istiod，管理代理配置、下发证书和路由规则）。优势：对应用透明，无需修改业务代码即可实现可观测性、安全通信和流量控制。",
+    "hints": [
+      "Sidecar 模式为什么适合 Service Mesh",
+      "Istio 和 Linkerd 的设计理念有什么不同"
+    ],
+    "tags": ["微服务", "Service Mesh"]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "蓝绿部署与金丝雀发布",
+    "content": "请比较蓝绿部署、滚动更新和金丝雀发布的区别。",
+    "answer": "蓝绿部署：维护两套完整环境，切流量完成发布，回滚快但资源成本翻倍。滚动更新：逐步替换旧实例，资源利用率高但回滚慢。金丝雀发布：先让一小部分流量进入新版本，验证无误后全量发布，风险最低但发布周期长、监控要求高。",
+    "hints": [
+      "蓝绿部署数据库兼容性问题如何解决",
+      "金丝雀发布如何决定放量比例"
+    ],
+    "tags": ["部署", "高可用"]
   }
 ]

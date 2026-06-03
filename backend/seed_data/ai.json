@@ -160,5 +160,70 @@
       "LLM",
       "微调"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "扩散模型（Diffusion Model）原理",
+    "content": "请解释扩散模型（如 DDPM、Stable Diffusion）的核心原理。",
+    "answer": "扩散模型包含前向过程和反向过程。前向过程：逐步向数据加高斯噪声，最终变成纯噪声。反向过程：学习去噪，从噪声逐步还原数据。Stable Diffusion 在潜在空间（Latent Space）执行扩散过程，通过 VAE 将图像压缩到潜在空间，用 UNet 预测噪声，Text Encoder（CLIP）提供文本条件。相比 GAN，扩散模型生成质量更高、训练更稳定，但推理速度较慢。",
+    "hints": [
+      "为什么去噪扩散模型的目标函数可以简化为噪声预测",
+      "Classifier-Free Guidance（CFG）如何控制生成质量"
+    ],
+    "tags": ["深度学习", "生成模型", "扩散模型"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "RAG（检索增强生成）",
+    "content": "请解释 RAG（Retrieval-Augmented Generation）的基本流程和作用。",
+    "answer": "RAG 让 LLM 在生成前先检索外部知识库，将检索结果作为上下文注入 prompt 后生成答案。流程：用户查询 → 向量化 → 从向量数据库检索最相关文档 → 文档+查询拼入 prompt → LLM 生成。作用：解决 LLM 知识截止、幻觉、私有数据无法访问的问题。核心组件：Embedding 模型、向量数据库（如 Milvus/Pinecone/FAISS）、Chunking 策略。",
+    "hints": [
+      "Chunk 大小对检索质量有什么影响",
+      "Hybrid Search（向量+关键词）为什么比纯向量搜索好"
+    ],
+    "tags": ["LLM", "RAG"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Prompt Engineering 的主要策略",
+    "content": "请介绍 Prompt Engineering 的核心策略。",
+    "answer": "核心策略：1）Chain-of-Thought（思维链）让模型逐步推理，显著提升复杂推理准确率。2）Few-shot：给几个示例引导模型输出格式和风格。3）Role Prompting：设定角色约束行为。4）结构化 Prompt：用 XML/Markdown 分隔指令、上下文和输出格式。5）Self-Consistency：多次采样取多数答案提升稳定性。进阶：Tree-of-Thought（探索多条推理路径）、ReAct（推理+行动交替）。",
+    "hints": [
+      "Zero-shot CoT 为什么有效（加一句 let's think step by step）",
+      "Prompt 越长推理质量一定越高吗"
+    ],
+    "tags": ["LLM", "Prompt"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "多模态模型的技术路线",
+    "content": "请介绍多模态模型的主流技术路线。",
+    "answer": "主流路线：1）CLIP 类——双塔结构，图文分别编码后在对比学习中对齐，实现零样本分类。2）Flamingo——将预训练视觉编码器（Vision Encoder）的输出作为 cross-attention 插入 frozen LLM，用少量图文对即可训练。3）LLaVA——用 MLP 将视觉编码器的输出映射到 LLM 的输入空间，端到端微调。4）GPT-4V/Gemini——原生多模态训练，统一处理文本、图像、音频。关键问题：模态对齐、训练数据规模、推理效率。",
+    "hints": [
+      "CLIP 的训练损失是什么（对比学习损失）",
+      "为什么视觉编码器和 LLM 之间需要 Projection Layer"
+    ],
+    "tags": ["多模态", "LLM"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型蒸馏（Knowledge Distillation）",
+    "content": "请解释知识蒸馏的原理和应用场景。",
+    "answer": "原理：用小模型（Student）学习大模型（Teacher）的输出分布。除了真实标签的硬目标，学生还要拟合教师输出的软概率分布（Soft Targets），通常用 Temperature Softmax 软化概率分布：p_i = exp(z_i/T) / Σ exp(z_j/T)。T 越大分布越平滑，包含更多暗知识（类别间相似性）。应用场景：模型压缩（如 DistilBERT 参数量减半、速度提升 60%）、边缘端部署、集成模型蒸馏。",
+    "hints": [
+      "Temperature 参数在蒸馏中起到什么作用",
+      "为什么软标签比硬标签包含更多信息"
+    ],
+    "tags": ["模型压缩", "蒸馏"]
   }
 ]

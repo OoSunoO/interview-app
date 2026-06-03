@@ -158,5 +158,72 @@
       "排序",
       "海量数据"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "滑动窗口最大值",
+    "content": "给定一个整数数组 nums 和滑动窗口大小 k，请找出所有滑动窗口中的最大值。",
+    "answer": "```java\npublic int[] maxSlidingWindow(int[] nums, int k) {\n    if (nums.length == 0) return new int[0];\n    int[] res = new int[nums.length - k + 1];\n    Deque<Integer> deque = new ArrayDeque<>(); // 存下标，保持单调递减\n    for (int i = 0; i < nums.length; i++) {\n        while (!deque.isEmpty() && deque.peek() < i - k + 1) deque.poll();\n        while (!deque.isEmpty() && nums[deque.peekLast()] < nums[i]) deque.pollLast();\n        deque.offer(i);\n        if (i >= k - 1) res[i - k + 1] = nums[deque.peek()];\n    }\n    return res;\n}\n```",
+    "hints": [
+      "暴力解法的时间复杂度是多少",
+      "双端队列为什么能优化到 O(n)"
+    ],
+    "tags": ["滑动窗口", "队列"],
+    "company": "字节跳动,Amazon"
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "回溯算法的核心框架",
+    "content": "请解释回溯算法的核心思想，并以全排列为例写出框架。",
+    "answer": "核心：构建决策树，做选择→递归→撤销选择。全排列框架：```java\nvoid backtrack(List<Integer> path, int[] nums, boolean[] used) {\n    if (path.size() == nums.length) { res.add(new ArrayList<>(path)); return; }\n    for (int i = 0; i < nums.length; i++) {\n        if (used[i]) continue;\n        used[i] = true; path.add(nums[i]);\n        backtrack(path, nums, used);\n        path.remove(path.size() - 1); used[i] = false;\n    }\n}\n```剪枝是回溯的优化关键——提前终止不合法分支。",
+    "hints": [
+      "回溯和 DFS 有什么关系",
+      "N 皇后问题如何表示棋盘约束"
+    ],
+    "tags": ["回溯", "递归"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前缀树（Trie）的原理与应用",
+    "content": "请解释 Trie 树的数据结构原理和典型应用场景。",
+    "answer": "Trie（前缀树/字典树）是多叉树，每条路径表示一个字符串，节点共用前缀。插入和查询复杂度 O(L)（L 为字符串长度），与数据量无关。典型应用：搜索引擎自动补全、拼写检查、IP 路由最长前缀匹配、词频统计。空间优化：压缩 Trie（Radix Tree）、用数组代替哈希表存储子节点。",
+    "hints": [
+      "Trie 和哈希表在字符串查找上各自的优劣",
+      "如何在 Trie 上实现前缀匹配搜索"
+    ],
+    "tags": ["树", "设计"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "并查集（Union-Find）",
+    "content": "请实现并查集数据结构，支持路径压缩和按秩合并优化。",
+    "answer": "```java\nclass UnionFind {\n    int[] parent, rank;\n    public UnionFind(int n) { parent = new int[n]; rank = new int[n];\n        for (int i = 0; i < n; i++) parent[i] = i; }\n    public int find(int x) {\n        if (parent[x] != x) parent[x] = find(parent[x]); // 路径压缩\n        return parent[x];\n    }\n    public boolean union(int x, int y) {\n        int rx = find(x), ry = find(y);\n        if (rx == ry) return false;\n        if (rank[rx] < rank[ry]) parent[rx] = ry;\n        else if (rank[rx] > rank[ry]) parent[ry] = rx;\n        else { parent[ry] = rx; rank[rx]++; } // 按秩合并\n        return true;\n    }\n}\n```两种优化同时使用时，操作时间复杂度接近 O(α(n))（反阿克曼函数）。",
+    "hints": [
+      "路径压缩为什么能降低树高",
+      "什么场景需要离线计算连通分量"
+    ],
+    "tags": ["图", "并查集"]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "字符串匹配算法",
+    "content": "请介绍 KMP 算法的核心思想和 next 数组的作用。",
+    "answer": "KMP 利用匹配失败时的部分匹配信息，让模式串尽量右移，避免从头比较。next 数组记录模式串每个位置的最长公共前后缀长度。匹配失败时，模式串右移 j - next[j-1] 位，j 回退到 next[j-1]。时间复杂度 O(n+m)，空间 O(m)。",
+    "hints": [
+      "暴力匹配为什么慢",
+      "next 数组如何通过递推构建"
+    ],
+    "tags": ["字符串", "搜索"],
+    "company": "字节跳动"
   }
 ]
