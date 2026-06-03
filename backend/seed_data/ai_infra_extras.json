@@ -234,5 +234,95 @@
       "Visual token 数量如何影响多模态模型的推理效率"
     ],
     "tags": ["多模态", "LLaVA", "视觉", "架构"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型部署优化：TensorRT 与 ONNX",
+    "content": "ONNX 和 TensorRT 在模型部署中分别扮演什么角色？TensorRT 的优化技术有哪些？为什么要使用 FP16/INT8 量化推理？",
+    "answer": "答案：ONNX（Open Neural Network Exchange）是模型交换格式，负责模型在不同框架间的转换。TensorRT 是 NVIDIA 的推理优化引擎，接收 ONNX 模型后执行图优化和内核自动调优，生成针对特定 GPU 的高效推理引擎。核心优化技术包括张量融合（Kernel Fusion）、精度校准（FP16/INT8/INT4 量化）、内存复用、自动流调度。\n\n解析：推理管道路径：训练框架（PyTorch/TF）→ 导出 ONNX → TensorRT 解析 ONNX → 优化引擎 → 推理执行。TensorRT 的关键优化——1）张量融合：将连续小算子合并为单一 Kernel（如 Conv+Bias+ReLu → CBR Fusion），减少 Kernel Launch 开销和内存带宽消耗。2）自动精度校准（PTQ）：通过校准集确定 FP32 激活值的动态范围，映射到 INT8/INT4。3）动态形状支持：可变 batch size 和输入尺寸。4）CUDA Graph：捕获完整推理图，减少 CPU 启动开销。\n\n扩展延伸：为什么用 FP16/INT8——1）FP16：显存减半、带宽减半、计算吞吐翻倍（Tensor Core 的 FP16 算力是 FP32 的 2-8 倍）。2）INT8 进一步减半。3）量化损失：PTQ 通常 < 1% accuracy 损失，QAT（量化感知训练）< 0.5%。其他框架——ONNX Runtime（微软，跨平台推理）、Triton Inference Server（NVIDIA，高性能推理服务）。注意：TensorRT 依赖 GPU 型号，ONNX 算子兼容性问题是常见痛点。",
+    "hints": [
+      "为什么 INT8 量化推理能显著提升吞吐量",
+      "ONNX 和 TensorRT 各自的定位是什么"
+    ],
+    "tags": [
+      "模型部署",
+      "TensorRT",
+      "ONNX",
+      "量化"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 显存管理与优化",
+    "content": "大模型训练和推理中 GPU 显存主要消耗在哪里？显存不足时有哪些优化手段？ZeRO、Activation Checkpointing、显存卸载分别解决什么问题？",
+    "answer": "答案：显存消耗主要三部分：模型参数 + 优化器状态（Adam 的 momentum + variance）+ 中间激活值。推理时主要是参数 + KV Cache。优化手段：ZeRO 分片优化器状态（ZeRO-1/2/3）、Activation Checkpointing（用计算换显存，只保存部分激活值，反向传播时重算）、显存卸载（CPU Offloading，将参数或优化器状态卸载到 CPU 内存）。\n\n解析：显存分解（以 LLaMA 7B FP16 为例）：1）模型参数——7B × 2B = 14GB。2）Optimizer States（Adam）——14B × 4B × 2 = 56GB（FP32 momentum + variance）。3）Gradients——7B × 2B = 14GB。4）Activation——取决于序列长度和 batch size，通常与上面总量相当。总计单卡训练约需 100GB+，一卡 A100（80GB）放不下，刚需分布式训练。ZeRO（DeepSpeed）：ZeRO-1 分片优化器状态（显存减少 4 倍）；ZeRO-2 分片优化器状态 + 梯度；ZeRO-3 分片优化器状态 + 梯度 + 模型参数。\n\n扩展延伸：显存卸载——ZeRO-Offload 将优化器状态和梯度卸载到 CPU 内存，适合 GPU 显存有限场景。Activation Checkpointing——只保存部分 Activation（隔 N 层存一个 checkpoint），反向传播时重算，节省 60-70% 激活显存，增加约 30% 计算时间。混合精度训练（AMP）——参数副本存 FP32（主权重），前向/反向用 FP16，配合 Loss Scaling。Flash Attention——Attention 显存占用由 O(n²) 降到 O(n)。推荐用 torch.cuda.memory_summary() 定位显存瓶颈。",
+    "hints": [
+      "为什么 7B 模型单卡 A100（80GB）训练放不下——主要卡在优化器状态",
+      "Activation Checkpointing 如何用计算换显存"
+    ],
+    "tags": [
+      "GPU",
+      "显存",
+      "ZeRO",
+      "DeepSpeed"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式训练策略对比：DDP / FSDP / DeepSpeed",
+    "content": "PyTorch DDP、FSDP 和 DeepSpeed 三种分布式训练策略的核心区别是什么？各适用于什么场景？",
+    "answer": "答案：DDP——每个 GPU 持有完整模型副本，独立前向+反向，通过 AllReduce 同步梯度。FSDP（Fully Sharded Data Parallel）——将模型参数、梯度、优化器状态分片到各 GPU（ZeRO-3 思路），用到时才 AllGather 收集完整参数。DeepSpeed——微软的分布式训练框架，提供 ZeRO（1/2/3）、流水线并行、张量并行等多种并行策略的组合。\n\n解析：DDP（数据并行）——最简单，每个 GPU 有完整模型参数。训练循环：每卡独立计算梯度 → AllReduce 求平均 → 每卡独立更新参数。优点：实现简单、通信高效（一次 AllReduce）。缺点：受单卡显存限制。适合：单卡能容纳模型的场景。FSDP（ZeRO-3）——模型参数分片到各 GPU。前向时逐层 AllGather 收集参数，用完释放。反向时同样。优点：突破单卡显存限制，原生 PyTorch 支持。缺点：通信量大（额外 AllGather + ReduceScatter）。\n\n扩展延伸：DeepSpeed 三大并行——1）数据并行（ZeRO-1/2/3，ZeRO-3 Infinity 支持 NVMe 卸载）。2）流水线并行（PP）——以 Layer 为粒度切分模型，1F1B 调度减少气泡率。3）张量并行（TP）——以矩阵为粒度切分层（如 Attention 的 QKV 头分到不同 GPU），需要 NVLink/NVSwitch。选型建议：单卡能容纳 → DDP。13B 以内 → FSDP/ZeRO-2。百亿以上 → Megatron + DeepSpeed（TP + PP）。",
+    "hints": [
+      "为什么 FSDP 是 DDP 的显存换通信方案",
+      "流水线并行和张量并行的核心区别是什么"
+    ],
+    "tags": [
+      "分布式训练",
+      "DDP",
+      "FSDP",
+      "DeepSpeed"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Prompt Engineering 核心技巧",
+    "content": "Prompt Engineering 有哪些核心技巧？Few-shot、Chain-of-Thought（COT）、ReAct 框架分别适用于什么场景？",
+    "answer": "答案：核心技巧：指令明确（Role Prompting）、Few-shot（示例引导）、Chain-of-Thought（推理链）、ReAct（推理+行动循环）、分而治之（多步 Prompt 拆解）。Few-shot 适合需要输出格式化的场景，COT 适合数学/逻辑推理，ReAct 适合需要调用工具的复合任务。\n\n解析：1）指令明确——角色设定 + 约束条件。2）Few-shot——提供 2-5 个输入输出示例，显著提升输出格式准确性。3）Chain-of-Thought——引导 LLM 逐步推理。Zero-shot COT：Prompt 后加「让我们一步一步地思考」。Few-shot COT：给出带推理步骤的示例。适用于数学问题（GSM8K 上 Zero-shot COT 将准确率从 20% 提升到 70%+）。4）ReAct（Reasoning + Acting）——LLM 在推理链中穿插调用外部工具：Thought → Action → Observation → Thought → ... → Final Answer。典型实现：LangChain 的 Agent。\n\n扩展延伸：5）分而治之——将复杂任务拆分为多个子任务：先分类、再回答、最后总结。6）Self-Consistency——多次采样推理路径，投票选出最一致的答案。7）Prompt Template——将 Prompt 结构化为模板（System + User + Context + Constraints）。注意：Prompt 需要迭代测试（A/B 测试不同表达方式）。精确的 Prompt 比无约束的 Prompt 效果好——必要的约束不能省略。",
+    "hints": [
+      "Zero-shot COT 和 Few-shot COT 的区别",
+      "ReAct 框架如何让 LLM 与外部工具交互"
+    ],
+    "tags": [
+      "Prompt Engineering",
+      "COT",
+      "ReAct",
+      "LLM"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM 模型评估与基准测试",
+    "content": "评估 LLM 性能有哪些主流基准（Benchmark）和指标？自动评估和人肉评估（Human Evaluation）各自的优缺点是什么？",
+    "answer": "答案：主流基准——MMLU（多领域知识）、HellaSwag（常识推理）、HumanEval/GSM8K（代码/数学能力）、MT-Bench/Chatbot Arena（对话能力）。指标——Perplexity（困惑度）、ROUGE/BLEU（生成重合度）、Pass@k（代码通过率）。自动评估高效但不一定反映真实质量；人肉评估准确但成本高。\n\n解析：基准分类——1）知识和推理：MMLU（57 个学科多选题）、ARC（科学推理）、WinoGrande（代词消解）。2）编码：HumanEval（164 题 Pass@k）、MBPP（974 题）。3）数学：GSM8K（小学多步推理）、MATH（竞赛级）。4）对话：MT-Bench（80 道多轮，GPT-4 评分）、AlpacaEval（LLM 自动评分）、Chatbot Arena（人工投票 ELO 评分）。自动评估——优点：成本低、可重复、可用于 CI。缺点：LLM-as-Judge 有 biases（偏好长回答、格式偏好、self-enhancement bias）；BLEU/ROUGE 在开放生成任务中几乎无意义。\n\n扩展延伸：人肉评估（Human Evaluation）——Chatbot Arena 是规范化众包评估：用户与两个匿名模型对话后投票。优点：最接近真实体验，能捕捉细微差异。缺点：成本高、速度慢。组合策略：自动评估做回归检测 → MT-Bench 做语义质量 → Chatbot Arena 作为最终门禁。注意评估陷阱：1）Benchmark 过拟合（训练数据可能含测试集）。2）同模型不同提示词的结果差异可超过 10%。3）单指标不能代表整体能力。最佳评估是在实际使用场景中对实际任务做 A/B 测试。",
+    "hints": [
+      "为什么 Chatbot Arena 比人工编写测试题更有参考价值",
+      "自动评估（LLM-as-Judge）为什么有 self-enhancement bias"
+    ],
+    "tags": [
+      "模型评估",
+      "Benchmark",
+      "LLM",
+      "MMLU"
+    ]
   }
 ]

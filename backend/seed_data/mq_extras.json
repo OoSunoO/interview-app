@@ -352,5 +352,95 @@
       "流量控制",
       "背压"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 日志存储与分段策略",
+    "content": "Kafka 的日志（Log）是如何存储的？为什么 Kafka 将日志分为多个 Segment？Segment 的滚动条件是什么？如何进行日志清理？",
+    "answer": "答案：Kafka 为每个 Topic 分区维护一个 Log 目录，日志由多个 Segment 组成。每个 Segment 包含 .log（消息数据）、.index（偏移量索引）和 .timeindex（时间戳索引）三个文件。Segment 满时关闭并只读，新消息写入新 Segment。日志清理支持 delete（超时或超大小后删除旧 Segment）和 compact（按 Key 保留最新值）。\n\n解析：Segment 的结构：1）.log——顺序追加消息（含 offset、长度、CRC、消息体）。2）.index——稀疏索引（每写入约 4KB 消息添加一条），记录 (offset, physical_position) 映射。3）.timeindex——记录 (timestamp, offset) 映射，支持按时间戳查找。Segment 滚动条件：1）大小达到 segment.bytes（默认 1GB）。2）时间达到 segment.ms（默认 7 天）。3）偏移量索引满。\n\n扩展延伸：日志查找——消费者要消费 offset=123456：1）二分查找所有 Segment 找到包含该 offset 的 Segment（文件名以 base offset 命名）。2）二分查找 .index 找到 ≤ 123456 的最大索引条目获取物理位置。3）从该物理位置扫描 .log 找到目标消息。清理策略——delete：保留 log.retention.hours（默认 7 天）范围内日志。compact：对同一个 Key 只保留最新消息值（适用于 KV 变更日志，如 Kafka Connect 的 config topic）。性能注意：大量小 Segment 会降低查询效率，建议 segment.bytes 不要过小。",
+    "hints": [
+      "为什么 Kafka 用稀疏索引而不是密集索引",
+      "Compact 策略适用于什么场景"
+    ],
+    "tags": [
+      "消息队列",
+      "Kafka",
+      "日志存储",
+      "Segment"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RocketMQ 延迟消息原理",
+    "content": "RocketMQ 的延迟消息（Delay Message）是如何实现的？为什么只支持 18 个固定延迟级别？Kafka 为什么不原生支持延迟消息？",
+    "answer": "答案：RocketMQ 的延迟消息通过将消息存储在 ConsumeQueue 中特定的延迟队列（SCHEDULE_TOPIC_XXXX）实现，Broker 定时任务扫描延迟队列，到期后将消息投递到目标 Topic。目前支持 18 个固定延迟级别（1s/5s/10s/30s/1m/2m/3m/4m/5m/6m/7m/8m/9m/10m/20m/30m/1h/2h）。\n\n解析：消息流程——1）Producer 设置延迟级别（delayLevel=1-18）。2）Broker 将消息写入 SCHEDULE_TOPIC_XXXX（延迟 Topic 名 = SCHEDULE_TOPIC_ + 延迟级别编号）。3）消息的原始 Topic 和 queueId 保存在消息属性中。4）后台线程（ScheduleMessageService）每秒扫描每个延迟级别的 ConsumeQueue，到期则从 CommitLog 读取原始消息，恢复原始 Topic 和 queueId 重新投递。为什么只有 18 个级别——实现简单，不需时间轮管理精确延迟时间。\n\n扩展延伸：RocketMQ 延迟消息的局限——只能固定级别，不能任意精度。如果需要精确定时，可以用消息的到期时间字段配合消费者轮询。Kafka 不原生支持的理由——Kafka 设计哲学是分布式日志，延迟消息需要状态管理。社区方案：Kafka Streams 或 Kafka + Redis（Sorted Set 管理延迟）。RocketMQ 5.0 引入了 Timer Message（基于时间轮），支持任意精度的延迟消息。",
+    "hints": [
+      "RocketMQ 延迟消息为什么用 18 个固定级别而不是时间轮",
+      "Kafka 不原生支持延迟消息的根本原因是什么"
+    ],
+    "tags": [
+      "消息队列",
+      "RocketMQ",
+      "延迟消息",
+      "定时消息"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Apache Pulsar 架构与特性",
+    "content": "Apache Pulsar 的核心架构与 Kafka 有什么本质不同？它的「存算分离」架构带来了哪些好处？BookKeeper 在其中扮演什么角色？",
+    "answer": "答案：Pulsar 采用存算分离架构——Broker 层（计算/无状态）和 BookKeeper 层（存储/有状态）分离。这与 Kafka 的存算一体有本质区别。好处：独立扩缩容、无缝分区扩容（无 Rebalance）、原生分层存储、多租户隔离。BookKeeper 是底层存储层，提供分布式 WAL 系统。\n\n解析：Pulsar 的两层架构——1）Broker 层：消息路由、消费管理、权限控制、负载均衡，无状态可水平快速扩缩。2）BookKeeper 层：消息持久化，数据以 Entry 形式顺序写入 BookKeeper 的 Ledger，Ledger 多副本分布在多台 Bookie 节点。Topic 中的消息存储在由多个 Segment（Ledger）组成的链表上。存算分离的优势——1）分区数不受 Broker 资源限制，可支持百万级 Topic。2）扩容无需数据重平衡：新 Broker 加入自动接管流量。3）分层存储：旧数据自动卸载到 S3/GCS。\n\n扩展延伸：Pulsar 订阅模型：独占（Exclusive）、共享（Shared，轮询分发）、失效（Failover，主备）、Key_Shared（同一 Key 到同一 Consumer）。Kafka vs Pulsar——Kafka 适合大吞吐量日志管道；Pulsar 适合百万 Topic、多租户、跨地域复制的云原生场景（延迟高于 Kafka）。Pulsar Functions——轻量级流处理。Pulsar IO——Source/Sink Connector 框架。",
+    "hints": [
+      "Pulsar 存算分离的分区扩容为什么不需要 Rebalance",
+      "Pulsar 的 BookKeeper 多副本写入是怎样的写入流程"
+    ],
+    "tags": [
+      "消息队列",
+      "Pulsar",
+      "BookKeeper",
+      "存算分离"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MQ 消息轨迹与全链路追踪",
+    "content": "消息队列的消息轨迹（Message Trace）是什么？如何实现消息从生产到消费的端到端追踪？为什么会丢失消息——如何定位丢失发生在哪个环节？",
+    "answer": "答案：消息轨迹记录消息的完整生命周期：生产时间、存储位置、消费时间、消费结果。通过在生产端和消费端埋点，将轨迹数据发送到专用的 Trace Topic。丢失定位依赖全链路 Tracing——消息进出每个环节记录 timestamp + 状态。\n\n解析：消息轨迹核心数据——1）生产阶段：消息 ID、发送时间、Send 结果、Broker 地址。2）存储阶段：Topic、Partition/Queue、Offset、存储时间。3）消费阶段：消费开始/结束时间、消费结果、是否重试。实现方式——1）嵌入式：Broker 内置轨迹插件（RocketMQ 的 traceTopic）。2）拦截器方式：Producer/Consumer 端通过拦截器异步发送轨迹数据。3）OpenTelemetry 集成：将 MQ 操作作为 Span 上报到 Jaeger/Zipkin。\n\n扩展延伸：消息丢失排查：1）生产阶段——确认 send() 同步等待结果（acks=all）。2）Broker 阶段——确认副本数（replication.factor ≥ 2）、min.insync.replicas。3）消费阶段——确认手动提交 Offset（enable.auto.commit=false + 业务处理完再提交）。自动提交可能导致处理中崩溃 → Offset 已提交 → 消息丢失。4）网络——启用重试 + 幂等性。全链路 Tracing：推荐 OpenTelemetry，通过 TraceId 串联生产-存储-消费三个阶段。RocketMQ 自带轨迹控制台；Kafka 需用 Kafka Lag Exporter + OpenTelemetry。",
+    "hints": [
+      "为什么自动提交 Offset 可能导致消息丢失",
+      "RocketMQ 的 traceTopic 是如何收集轨迹数据的"
+    ],
+    "tags": [
+      "消息队列",
+      "消息轨迹",
+      "追踪",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka Controller 与 Leader 选举",
+    "content": "Kafka 集群中的 Controller 是什么？Broker 的 Leader 和 Partition 的 Leader 选举分别是怎么进行的？KRaft（Kafka Raft）模式下有什么变化？",
+    "answer": "答案：Controller 是 Kafka 集群中的一个 Broker 角色，负责管理整个集群的元数据和协调（分区分配、Leader 选举、Broker 上下线处理）。Broker 的 Leader 选举通过 ZooKeeper 临时节点选主（2.8-）或 KRaft 的 Raft 协议选 Controller（2.8+），Partition 的 Leader 由 Controller 从 ISR 中选举。\n\n解析：ZooKeeper 模式下的 Controller 选举（Kafka 2.8 以前）：1）多个 Broker 在 ZK 的 /controller 路径创建临时节点。2）第一个创建成功的成为 Controller。3）Controller 通过 ZK Watch 监听 Broker 和 Topic 变化。4）Controller 宕机时 ZK 删除临时节点触发新选举。Partition Leader 选举——1）当 Partition 的 Leader 宕机时，Controller 从 ISR 中选举新 Leader。2）如果 ISR 为空，根据 unclean.leader.election.enable 决定是否允许非 ISR 副本成为 Leader（允许则可能丢数据，不允许则 Partition 不可用）。3）选举策略：ISR 中第一个副本成为新 Leader。\n\n扩展延伸：KRaft 模式（Kafka 2.8+ 引入，3.5+ 生产就绪）：1）去除 ZooKeeper，Controller 使用 Raft 一致性协议管理元数据。2）KRaft Controller 集群（奇数节点）确保元数据强一致性。3）元数据变更以 Event 形式通过 Metadata Log（内部 Topic __cluster_metadata）在 Controller 间同步。优势：更简单的部署架构、更快的故障转移、更安全的安全模块。注意：KRaft 3.5+ 可以生产使用，但大规模场景（1000+ Partition）建议等更成熟版本。",
+    "hints": [
+      "Broker Controller 和 Partition Leader 是两种不同层面的选举",
+      "unclean.leader.election 的取舍——可用性 vs 一致性"
+    ],
+    "tags": [
+      "消息队列",
+      "Kafka",
+      "Controller",
+      "Leader选举"
+    ]
   }
 ]
