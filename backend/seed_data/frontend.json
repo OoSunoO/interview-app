@@ -1412,5 +1412,101 @@
       "资源加载",
       "性能优化"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Vite HMR 的热更新原理",
+    "content": "请解释 Vite 开发服务器中 HMR（Hot Module Replacement）的实现原理。Vite 的 HMR 相比 Webpack 的 HMR 有什么本质区别？Vite 在浏览器端是如何利用 ESM 实现模块热替换的？",
+    "answer": "答案：Vite 的 HMR 基于浏览器原生 ESM（ES Module）支持，无需像 Webpack 那样预先打包整个应用。开发时 Vite 将每个文件作为独立的 ESM 模块提供给浏览器，模块变更时只重新请求变更模块及其热更新边界。相比之下 Webpack 需要全量打包并维护模块运行时才能实现 HMR。\n\n解析：Vite 开发服务器的架构——1）依赖预构建：启动时用 esbuild 将 CommonJS/UMD 依赖预构建为 ESM 格式并缓存。2）源码按需编译：浏览器通过 <script type=\"module\"> 加载入口，遇到 import 语句向 Vite 服务器发起 HTTP 请求，服务器即时编译该模块（SFC 组件编译、TS 转译）并返回 ES module。3）HMR 通道：浏览器和 Vite 服务器之间通过 WebSocket 建立双向通信。当文件变更时，Vite 在服务器端计算受影响的模块边界，通过 WebSocket 推送更新指令（hotUpdate）。4）运行时热更新：Vite 在浏览器端注入轻量级的 HMR 运行时（约 1KB），接收更新指令后通过动态 import() 重新加载变更模块。热点边界判定是 Vite 的核心——对于 Vue SFC 每个组件自动成为 HMR 边界；对于纯 JS 模块，遵循 import.meta.hot.accept() 定义的回调。\n\n扩展延伸：Vite vs Webpack HMR 的本质区别——Webpack 在开发阶段也会将整个应用打包为 bundle（即使有增量编译），模块运行时在浏览器中维护模块注册表，HMR 时需要反序列化更新模块的 chunk。Vite 利用浏览器原生模块系统，不需要打包和运行时模块注册表，因此大型项目启动速度极快（无需全量打包），HMR 速度与项目大小无关（始终只编译变更文件）。Vite 的冷启动时间通常在 1 秒以内，而 Webpack 需要数十秒。Vite 的 esbuild 预构建不仅将 CommonJS 转为 ESM，还合并了细碎依赖以减少 HTTP 请求数。",
+    "hints": [
+      "ESM 为何让 Vite 无需开发时打包",
+      "esbuild 预构建解决什么问题"
+    ],
+    "tags": [
+      "前端",
+      "Vite",
+      "HMR",
+      "ESM",
+      "构建"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "浏览器渲染管线与合成层",
+    "content": "请解释浏览器渲染管线中「合成」（Composite）阶段的作用。什么是合成层（Compositing Layer）？哪些 CSS 属性会触发合成层创建？合成层过多会带来什么问题？如何利用合成优化动画性能？",
+    "answer": "答案：合成是将不同图层（Layer）在 GPU 上合并为最终页面的阶段。每个合成层对应一个 GPU 纹理（Texture），独立的层可以让浏览器只重绘变化的部分而不影响其他层。transform 和 opacity 触发合成层且不触发重排重绘，是实现高性能动画的关键。但合成层过多会导致 GPU 内存爆炸和层管理开销。\n\n解析：浏览器渲染管线（关键渲染路径）——JavaScript → Style → Layout → Paint → Composite。传统属性（如 left、width）变化会触发 Layout + Paint + Composite 三个阶段。而 transform 和 opacity 只触发 Composite 阶段——它们的变化由 GPU 直接处理，不涉及主线程的布局和绘制。\n\n触发合成层的条件——1）元素有 3D 变换（transform: translateZ(0)、transform: rotateX()）。2）元素有 will-change: transform 或 will-change: opacity。3）元素有 position: fixed。4）元素有 opacity < 1（可能触发）。5）元素有 CSS 滤镜（filter）。6）<video>、<canvas>、<iframe> 元素。7）有滚动条的容器。\n\n扩展延伸：合成层过多的问题——每个合成层在 GPU 上对应一个纹理（通常与视口大小相同），过多的层会耗尽 GPU 内存（尤其是移动设备），导致层光栅化时出现卡顿。Chrome DevTools 的 Layers 面板可以查看和诊断合成层。性能优化建议——1）只对需要动画的元素提升合成层。2）使用 will-change 主动告知浏览器哪些属性会变化，但用完清除提示（过度声明 will-change 会提前分配 GPU 内存）。3）避免在合成层上应用大量像素变化效果（如 box-shadow、border-radius），这些会增加光栅化开销。4）利用 GPU 栅格化处理固定背景和滚动容器。",
+    "hints": [
+      "transform 动画为何比 left 动画流畅",
+      "合成层过多会耗尽 GPU 内存",
+      "移动设备上合成层过多尤其危险"
+    ],
+    "tags": [
+      "浏览器",
+      "渲染",
+      "合成层",
+      "GPU",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web Worker 与浏览器多线程",
+    "content": "请解释浏览器中 Web Worker 的线程模型。主线程与 Worker 之间如何通信？通信性能瓶颈在哪里？SharedArrayBuffer 和 Atomics API 如何突破这个瓶颈？使用 SharedArrayBuffer 需要满足什么安全条件？",
+    "answer": "答案：Web Worker 在独立线程运行，与主线程通过 postMessage 传递消息（结构化克隆算法，Structured Clone Algorithm），数据是深拷贝的。SharedArrayBuffer 允许主线程和 Worker 共享同一块内存缓冲区，配合 Atomics API 实现零拷贝的线程间通信。但 SharedArrayBuffer 要求网站启用跨源隔离（Cross-Origin Isolation）：COOP + COEP 头。\n\n解析：Web Worker 通信机制——1）postMessage 结构化克隆：主线程和 Worker 各持有一份数据副本。传递大对象（如 Canvas 像素数据、大型 ArrayBuffer）时有显著的序列化和克隆开销。数据传输时间随对象大小线性增长。2）可转移对象（Transferable Objects）：使用 transferList 参数将 ArrayBuffer、MessagePort、ImageBitmap 的所有权转移给接收方，而不是克隆。之后发送方不能再访问该对象。对大块数据的传递性能有很大提升（零拷贝，所有权转移）。\n\nSharedArrayBuffer + Atomics——SharedArrayBuffer 是共享内存的核心机制：1）主线程和 Worker 创建同一个 SharedArrayBuffer，双方都可以直接读写（无需消息传递）。2）Atomics API 提供原子操作（Atomics.load/store/add/sub/compareExchange）和同步原语（Atomics.wait/notify 实现条件变量）。3）避免了 postMessage 的序列化开销，适合高频数据传输场景（如 WebAssembly 音频处理、实时视频处理）。4）隔离要求：由于 Spectre/Meltdown 等侧信道攻击风险，浏览器要求页面设置 HTTP 头 Cross-Origin-Opener-Policy: same-origin 和 Cross-Origin-Embedder-Policy: require-corp（即 COOP + COEP 跨源隔离）。\n\n扩展延伸：其他 Worker 类型——1）Service Worker：网络代理，拦截和缓存 HTTP 请求，实现离线功能（PWA），不与页面直接交互。2）Worklet：轻量级线程，运行在渲染管线的特定阶段（如 AudioWorklet、PaintWorklet、AnimationWorklet）。适用选型——纯计算密集型任务：Web Worker；高频共享内存需要：Worker + SharedArrayBuffer；网络缓存和离线：Service Worker；渲染管道自定义：Worklet。",
+    "hints": [
+      "转移对象避免大消息克隆开销",
+      "SharedArrayBuffer 为何需跨源隔离"
+    ],
+    "tags": [
+      "浏览器",
+      "Web Worker",
+      "多线程",
+      "SharedArrayBuffer",
+      "性能"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CSS Containment 与渲染隔离",
+    "content": "请解释 CSS contain 属性的作用。contain: layout、contain: paint、contain: size、contain: style 各隔离了什么？content-visibility: auto 如何利用 Containment 实现长列表的懒渲染？",
+    "answer": "答案：CSS contain 属性指示浏览器元素的子树在布局、绘制、大小计算等方面与文档其余部分独立，允许浏览器将渲染工作限制在子树上而不影响外部。content-visibility: auto 结合 contain-intrinsic-size 实现视口外元素的懒渲染，大幅提升长列表的首屏加载性能。\n\n解析：contain 的四个维度——1）contain: layout——元素内部的布局变化不影响外部元素（外部元素不会因为内部布局变化而重新布局）。浏览器将元素的盒子视为独立的布局上下文（类似 BFC 的更强形式）。2）contain: paint——元素的子节点不会绘制到元素边界之外（裁剪超出部分）。浏览器可以在元素不可见时完全跳过绘制子树。3）contain: size——元素大小仅由显式宽高决定，忽略子元素内容的影响。这对于懒渲染非常重要——浏览器不需要计算子元素来确定父元素尺寸。4）contain: style——元素内部的计数器和引号生成不影响外部。注意：contain: style 目前仅有部分浏览器支持。\n\ncontent-visibility: auto 的原理——1）它是 contain: layout + contain: paint + contain: style 的快捷方式，并添加了「跳过渲染」（skips rendering）行为。2）当元素不在视口内时，浏览器跳过该元素及其子树的布局、绘制和合成工作。3）元素首次进入视口时渲染一次，之后不再触发渲染（除非内容变化）。4）结合 contain-intrinsic-size 提供元素的预估占位尺寸，防止滚动条抖动。实测长列表场景下可减少 50-70% 的首屏渲染时间。\n\n扩展延伸：contain-intrinsic-size——为 content-visibility: auto 的元素设置预估尺寸，浏览器在元素未渲染时用此尺寸占据空间，防止滚动条长度跳动。最佳实践：对长列表中的列表项、评论区、折叠面板等不立即可见的内容应用 content-visibility: auto。注意：不要对首屏可见（above the fold）的内容使用——因为它会让元素先以「跳过渲染」状态加载导致闪烁。",
+    "hints": [
+      "contain:paint 跳过不可见元素绘制",
+      "content-visibility 加速长列表"
+    ],
+    "tags": [
+      "CSS",
+      "渲染",
+      "性能优化",
+      "布局",
+      "浏览器"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HTTP 缓存策略与缓存失效模式",
+    "content": "请系统性地分析浏览器 HTTP 缓存机制。强缓存和协商缓存的区别是什么？Cache-Control 中 max-age、s-maxage、no-cache、no-store、must-revalidate、immutable 分别控制什么行为？stale-while-revalidate 和 stale-if-error 扩展指令如何优化缓存命中率？CDN 场景下的缓存层级策略如何设计？",
+    "answer": "答案：HTTP 缓存分为强缓存（直接读本地缓存，不发请求）和协商缓存（向服务器验证缓存是否有效）。强缓存由 Cache-Control: max-age 控制过期时间，协商缓存通过 ETag/If-None-Match 和 Last-Modified/If-Modified-Since 实现。stale-while-revalidate 允许在后台异步验证过期缓存时立即返回过期内容，实现零等待的缓存更新。\n\n解析：Cache-Control 指令详解——1）max-age=N：缓存有效期 N 秒，从响应生成时刻算起。2）s-maxage=N：覆盖 max-age，仅对共享缓存（CDN/代理）生效。3）no-cache：每次请求必须验证（发请求到服务器检查是否过期），但验证通过可用缓存。4）no-store：完全禁止缓存，敏感数据（如银行交易）使用。5）must-revalidate：过期后必须向服务器验证，不能直接使用过期缓存。6）immutable：响应内容在过期时间内不会改变（适合哈希命名的静态资源），浏览器刷新时不会发起验证请求。\n\n扩展延伸：stale-while-revalidate 和 stale-if-error——1）stale-while-revalidate=N：在缓存过期后 N 秒内，可以立即返回过期内容，同时在后台异步发起验证请求更新缓存。用户体验上几乎无延迟，同时保持内容的最终一致性。典型值 Cache-Control: max-age=3600, stale-while-revalidate=86400。2）stale-if-error=N：源站不可用时（5xx），N 秒内可以使用过期缓存返回降级内容，提升可用性。\n\nCDN 缓存层级策略——1）多级缓存：浏览器缓存 → CDN 边缘节点缓存 → CDN 中间层缓存 → 源站。2）每个层级设置不同的 max-age/s-maxage：浏览器短缓存（秒级，避免 CDN 被打满）、CDN 长缓存（小时级）、中间层更长。3）版本化资源（如 bundle.abc123.js）使用长期缓存（max-age=31536000, immutable）。4）HTML 使用 no-cache 或短 max-age + ETag 确保即时更新。5）Cache Busting：资源内容变更时通过更新 URL（hash 指纹）强制获取新版本，而不是依赖过期。",
+    "hints": [
+      "过期缓存不等待验证直接返回",
+      "immutable 指令让浏览器跳过验证"
+    ],
+    "tags": [
+      "HTTP",
+      "缓存",
+      "CDN",
+      "性能优化",
+      "浏览器"
+    ]
   }
 ]

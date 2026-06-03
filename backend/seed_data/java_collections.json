@@ -1533,5 +1533,117 @@
       "removeEldestEntry",
       "doubly-linked-list"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HashMap在Java 8中的扩容与树化机制",
+    "content": "详细说明HashMap在Java 8中的resize()过程。与Java 7相比，Java 8的扩容在数据迁移上做了什么关键优化？为什么不再需要rehash每个节点？链表树化的阈值为什么是8？",
+    "answer": "Java 8的resize()将桶数组长度翻倍，数据迁移的核心优化是：利用新容量是2的幂次这一特性，节点在新桶中的索引要么不变（oldIndex），要么是oldIndex + oldCap。判断依据是看节点hash值的新增最高位（oldCap对应位）是0还是1——0则留在原位，1则移动到oldIndex+oldCap位置。这避免了Java 7中每个节点都要重新计算hash和取模的开销（rehash），同时保证链表节点在迁移后仍然保持原有相对顺序，解决了Java 7多线程并发扩容时可能形成环形链表的问题。\n\n树化阈值选8的依据：遵循泊松分布，在负载因子0.75且随机哈希码的假设下，同一个桶中链表长度达到8的概率极低（约0.00000006），此时树化是值得的。长度降到6时退化为链表，中间留7作为缓冲避免频繁转换。",
+    "hints": [
+      "2的幂扩容从位视角而非取模视角",
+      "Java 8前rehash会打乱节点顺序",
+      "泊松分布决定阈值8与6的差值"
+    ],
+    "tags": [
+      "HashMap",
+      "resize",
+      "扩容",
+      "treeify",
+      "hash"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Fail-Fast与Fail-Safe迭代器",
+    "content": "以下关于Java集合迭代器的描述，哪一项是正确的？",
+    "options": [
+      "A) ArrayList的迭代器是fail-fast的，迭代期间任何修改都会立即抛出ConcurrentModificationException",
+      "B) CopyOnWriteArrayList的迭代器是fail-safe的，基于快照不会抛出ConcurrentModificationException",
+      "C) HashMap的迭代器在单线程通过remove()方法删除元素时也会抛出ConcurrentModificationException",
+      "D) ConcurrentHashMap的keySet()迭代器是fail-fast的"
+    ],
+    "answer": "B",
+    "hints": [
+      "ArrayList检查modCount计数",
+      "修改时创建新的底层数组",
+      "迭代器remove会更新modCount"
+    ],
+    "tags": [
+      "fail-fast",
+      "fail-safe",
+      "ConcurrentModificationException",
+      "迭代器"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "TreeMap与红黑树",
+    "content": "TreeMap的底层实现基于红黑树（Red-Black Tree），能保证所有操作（get、put、remove）的最坏情况时间复杂度为O(log n)。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A",
+    "hints": [
+      "红黑树是近似平衡的二叉搜索树",
+      "与AVL树比红黑树旋转次数更少",
+      "自平衡防止最坏情况退化成链表"
+    ],
+    "tags": [
+      "TreeMap",
+      "红黑树",
+      "NavigableMap",
+      "SortedMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap禁止null值的设计决策",
+    "content": "为什么ConcurrentHashMap不允许null作为key或value，而HashMap允许？这一设计决策除了面向并发场景的安全性考虑外，还涉及哪些深层次的设计一致性考量？",
+    "answer": "ConcurrentHashMap禁止null值的核心原因：\n\n1) 歧义性问题（最主要）：多线程环境下，map.get(key)返回null时，无法区分是key不存在还是value就是null。在单线程的HashMap中，可以通过containsKey()来解除歧义。但在ConcurrentHashMap中，containsKey()调用后、执行后续逻辑前，另一个线程可能已经插入了该key，导致判断失效。这种to-check-then-act的组合不是原子的。\n\n2) 设计一致性：Doug Lea的并发集合框架中，ConcurrentMap接口明确禁止null值，与支持null的HashMap在语义上划清界限。\n\n3) 底层机制：CHM内部使用CAS和volatile读，需要明确的空值哨兵来标记空槽和删除标记（ForwardingNode、ReservationNode等），null值会干扰这些内部机制。\n\n相比之下，HashMap是单线程或不保证并发的场景，允许null作为value的便利性超过了对歧义的担忧。",
+    "hints": [
+      "get返回null有两种含义",
+      "containsKey和get不是原子的",
+      "CHM中null有特殊语义含义"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "null",
+      "并发设计",
+      "Doug Lea"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "synchronizedMap与ConcurrentHashMap对比",
+    "content": "关于Collections.synchronizedMap()和ConcurrentHashMap的选择，以下描述哪一项是正确的？",
+    "options": [
+      "A) synchronizedMap对所有方法使用synchronized互斥，读操作也需要锁；ConcurrentHashMap读操作无锁，写操作只锁对应桶，读多写少场景下并发度更高",
+      "B) 两者性能等价，因为ConcurrentHashMap内部也是使用synchronized实现同步",
+      "C) synchronizedMap支持null值，而ConcurrentHashMap也支持null值",
+      "D) ConcurrentHashMap支持全量操作如size()、containsValue()的常数时间复杂度"
+    ],
+    "answer": "A",
+    "hints": [
+      "synchronizedMap是粗粒度锁",
+      "CHM桶粒度锁提升写入并发度",
+      "size()需要遍历桶或累加器"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "synchronizedMap",
+      "性能",
+      "并发"
+    ]
   }
 ]

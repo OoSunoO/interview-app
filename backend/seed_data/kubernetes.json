@@ -1425,5 +1425,99 @@
       "自动扩缩容",
       "HPA"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes Controller Manager 工作模式",
+    "content": "K8s Controller Manager 中的「控制器模式」（Controller Pattern）是什么？请说明控制器的工作原理：Informer、WorkQueue、Reconciler 三者的关系。",
+    "answer": "答案：控制器模式是 K8s 控制面的核心设计理念——控制器通过控制循环（Control Loop）持续观测系统的当前状态（Actual State）与期望状态（Desired State）的差异，并通过调谐（Reconcile）操作使实际状态向期望状态收敛。Informer（监听资源变更）、WorkQueue（缓存变更事件）、Reconciler（执行调谐逻辑）三者配合实现控制器的增量同步。\n\n解析：1）Informer——通过 ListWatch API 监听指定资源（如 Pod、Deployment）的变更事件（Added/Updated/Deleted）。Informer 将事件刷新到本地缓存（Indexer），避免每次 Reconcile 都调用 API Server。2）WorkQueue——Informer 将需要处理的事件 key（namespace/name）放入每秒限速的 WorkQueue。WorkQueue 支持延迟入队和限速重试（Rate Limiting），避免失败事件频繁重试。3）Reconciler——从 WorkQueue 取出 key，查询本地缓存获取最新对象，比较当前状态与期望状态，执行 Create/Update/Delete 操作使状态收敛。执行完成后将新的期望状态写入 API Server。\n\n扩展延伸：K8s 内置了 30+ 控制器（DeploymentController、ReplicaSetController、NodeController、ServiceController、NamespaceController 等），每个控制器关注一种或几种资源。控制器的高可用：通过 --leader-elect 参数控制，多个 Controller Manager 实例同时运行，只有一个实例（Leader）实际执行 Reconcile，其他实例待命。自定义控制器：通过 client-go 的 informer/workqueue 框架编写 Custom Controller，监听 CRD（Custom Resource Definition）实现自定义的调谐逻辑。注意：控制器应幂等——Reconcile 可能对同一事件执行多次，必须保证操作幂等。",
+    "hints": [
+      "Informer 的 ListWatch 如何保证事件不丢失",
+      "WorkQueue 的 Rate Limiting 如何处理失败事件的重试频率"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Controller Manager",
+      "Informer",
+      "控制器模式"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes Scheduler 调度算法详解",
+    "content": "K8s Scheduler 如何选择 Pod 应该调度到哪个 Node 上？请说明调度框架的两阶段（Predicates + Priorities / Filtering + Scoring）工作流程，以及如何实现自定义调度器。",
+    "answer": "答案：K8s Scheduler 分为两个阶段：筛选阶段（Filtering/Predicates）——从所有 Node 中过滤掉不满足 Pod 调度条件的 Node；评分阶段（Scoring/Priorities）——对通过的 Node 按优先级打分，选择最高分 Node。K8s 1.15+ 引入的 Scheduling Framework 支持通过 Plugin 机制扩展调度流程。\n\n解析：默认调度器（default-scheduler）的 Filtering 阶段检查：Node 资源是否充足（CPU/Memory/GPU）、端口是否冲突、NodeSelector 和 NodeAffinity 是否匹配、Pod 的 Toleration 能否容忍 Node 的 Taint、Volume 是否可用（Local/CSI 卷的拓扑限制）、Inter-Pod 的反亲和性（PodAntiAffinity）是否冲突。Scoring 阶段计算：资源利用率均衡（LeastRequestedPriority——尽量将 Pod 分散到负载较低的 Node）、 Pod 分布亲和性（SelectorSpreading）、节点亲和性的权重打分等。最终选择综合得分最高的 Node。\n\n扩展延伸：Scheduling Framework 的扩展点：QueueSort（队列排序）、PreFilter（预处理 Pod 信息）、Filter（过滤 Node）、PostFilter（扩展 Node 满足条件）、PreScore（评分前预处理）、Score（评分，每个 Node 返回 0-100 分）、NormalizeScore（分数归一化）、Reserve（预留资源）、Permit（等待外部审批）、PreBind（绑定前钩子）、Bind（绑定 Pod 到 Node）。自定义调度器实现方式：1）编写独立的调度器二进制，通过 K8s 的 Scheduler Extender 接入。2）使用 Scheduling Framework 的 Plugin 机制编译到 default-scheduler 中。3）使用 Koordinator、Volcano 等第三方调度器。注意：调度器的高可用通过 leader election 实现，同一时刻只有一个调度器执行调度。调度器绑定 Pod 是通过将 Pod 的 spec.nodeName 字段写入 API Server 完成的。",
+    "hints": [
+      "Filtering 阶段和 Scoring 阶段各有哪些默认插件",
+      "如何让 Pod 调度到 GPU 标签的 Node 上"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Scheduler",
+      "调度",
+      "Scheduling Framework",
+      "Plugin"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes 网络模型与 CNI 实现",
+    "content": "K8s 网络模型要求：每个 Pod 有独立 IP、Pod 之间可直接通信（无需 NAT）、Node 与 Pod 之间可直接通信。请说明 Pod 的网络命名空间创建过程、CNI 插件的调用链，以及 kube-proxy 三种模式（userspace/iptables/IPVS）的实现区别。",
+    "answer": "答案：K8s 网络模型通过 CNI 插件实现。Pod 创建时，Kubelet 调用 CNI 插件完成网络配置：创建 Network Namespace → 分配 IP → 配置 veth pair 和路由。kube-proxy 将 Service 的 ClusterIP 转为具体的 Pod IP，提供三种代理模式——userspace（用户态转发，已废弃）、iptables（默认，基于 iptables NAT 规则）、IPVS（基于内核 IPVS 模块，性能最优）。\n\n解析：Pod 网络创建流程：1）Kubelet 在 Pod Sandbox 创建阶段调用 CRI 创建 Network Namespace。2）Kubelet 通过 CNI 配置文件（/etc/cni/net.d/）确定使用的 CNI 插件链。3）CNI 插件依次执行 ADD 操作：先调用 bridge 插件创建 veth pair（一端在 Pod 的 netns，另一端在宿主机的 cbr0/cni0 bridge），再调用 host-local/calico-ipam 插件分配 IP 地址，最后配置路由。kube-proxy 模式对比：1）iptables 模式——为每个 Service 创建 iptables DNAT 规则，随机选择一个后端 Pod。规则更新是原子替换（iptables-restore）。问题：集群大时（>5000 Service）iptables 规则更新性能差（全量刷新）。2）IPVS 模式（K8s 1.11+ GA）——使用内核哈希表实现负载均衡，时间复杂度 O(1)。支持更多负载均衡算法（rr/wlc/lblc 等）。在大规模集群中性能远优于 iptables 模式。\n\n扩展延伸：ClusterIP 的通信：通过 kube-proxy 在宿主机上设置的路由和 DNAT 规则，Pod 访问 ClusterIP 时请求被 DNAT 到后端 Pod。NodePort：在 ClusterIP 基础上，在所有 Node 上打开一个端口（30000-32767），从 NodePort 入站的流量同样 DNAT 到后端 Pod。ExternalName Service：直接通过 DNS CNAME 重定向到外部地址，不走 kube-proxy。关键配置：kube-proxy 的 mode 参数（iptables/IPVS）。建议集群规模 >100 节点时切换为 IPVS 模式。注意：IPVS 模式下 kube-proxy 需要加载 ip_vs 内核模块，且默认 rr 调度算法可能在某些场景下需要调整。",
+    "hints": [
+      "iptables 模式在集群规模扩大时为什么性能下降",
+      "IPVS 和 iptables 在负载均衡实现上的本质区别是什么"
+    ],
+    "tags": [
+      "Kubernetes",
+      "CNI",
+      "kube-proxy",
+      "IPVS",
+      "网络模型"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kubernetes 存储模型与动态供给",
+    "content": "请说明 K8s 中的 PV（PersistentVolume）、PVC（PersistentVolumeClaim）和 StorageClass 之间的关系。动态供给（Dynamic Provisioning）如何工作？什么是卷绑定模式（Volume Binding Mode）中的 Immediate 和 WaitForFirstConsumer？",
+    "answer": "答案：PVC 是用户对存储资源的请求声明（指定大小、访问模式），PV 是集群中的存储资源，StorageClass 定义了如何动态创建 PV（指定存储类型、参数、回收策略）。PVC 通过匹配 PV 或触发 StorageClass 动态供给来绑定到 PV。Immediate 立即绑定 PV，WaitForFirstConsumer 延迟到第一个使用该 PVC 的 Pod 被调度时才绑定。\n\n解析：存储供给流程：1）用户创建 PVC（如 10Gi，ReadWriteOnce）。2）如果匹配到已有 PV，直接绑定。3）如果没有匹配的 PV 且 PVC 指定了 StorageClass，StorageClass 的 Provisioner（如 kubernetes.io/aws-ebs、csi-hostpath）自动创建 PV。4）PV 与 PVC 绑定后 Pod 即可挂载使用。5）PVC 删除后 PV 的回收策略（Reclaim Policy：Retain/Delete/Recycle）决定 PV 的处理方式。\n\n扩展延伸：WaitForFirstConsumer 为什么重要——某些存储后端（如 GCE PD、AWS EBS、Azure Disk）只能挂载到同一可用区的 Node 上。如果使用 Immediate 模式，PV 可能在创建时绑定到某个区域的 PV（导致 Pod 被调度到该区域），但 Pod 可能更适合调度到另一个区域。WaitForFirstConsumer 延迟绑定直到 Pod 被调度——此时调度器知道 Pod 应该在哪个 Node 上运行，StorageClass 在该 Node 所在区域创建 PV，确保 PV 与 Pod 在同一区域。适合此类延迟绑定的存储：云厂商的块存储（只能挂载到同一可用区）、Local PV（节点本地存储）。StorageClass 的重要参数：provisioner（驱动）、parameters（存储类型/IOPS/大小）、reclaimPolicy（Retain/Delete）、volumeBindingMode（Immediate/WaitForFirstConsumer）、allowVolumeExpansion（允许扩容）。",
+    "hints": [
+      "WaitForFirstConsumer 解决了跨区域存储的什么问题",
+      "Retain 和 Delete 回收策略在什么场景下选择 Retain"
+    ],
+    "tags": [
+      "Kubernetes",
+      "PV",
+      "PVC",
+      "StorageClass",
+      "存储"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubernetes 安全：RBAC、Pod Security、NetworkPolicy",
+    "content": "请说明 K8s 安全的三个层次：RBAC（基于角色的访问控制）、Pod 安全标准（PSA / Pod Security Admission）和 NetworkPolicy（网络策略）各自解决的问题和配置方式。",
+    "answer": "答案：RBAC 控制「谁能操作哪些 API 资源」（认证和鉴权）；Pod Security Standards（以 Pod Security Admission 方式在 K8s 1.23+ 取代 PSP）控制 Pod 的安全配置（如是否允许特权容器、是否可以挂载宿主目录）；NetworkPolicy 控制 Pod 之间的网络通信规则（默认允许所有流量，通过 Label Selector 定义哪些 Pod 可以访问）。\n\n解析：1）RBAC——通过 ClusterRole（集群级别权限）、Role（命名空间级别权限）、ClusterRoleBinding / RoleBinding（将角色绑定到用户/组/ServiceAccount）实现。Principle of Least Privilege：为每个 ServiceAccount 授予最小所需权限。常见错误：给 default ServiceAccount 分配 cluster-admin 权限。2）Pod Security Admission（PSA，K8s 1.23+ GA）——三个级别：Privileged（无限制）、Baseline（最少限制，阻止已知特权升级）、Restricted（严格限制，遵循 Pod 安全最佳实践）。通过命名空间标签 pod-security.kubernetes.io/enforce=restricted 强制命名空间内的 Pod 满足指定标准。3）NetworkPolicy——Kubernetes 原生的 L3/L4 网络访问控制。通过 spec.podSelector（选择策略应用的 Pod）、ingress/egress 规则（from/to + ports）定义允许的流量方向。必须由 CNI 插件（Calico/Cilium/Antrea）实现网络策略，Flannel 不原生支持 NetworkPolicy。\n\n扩展延伸：K8s 安全的深度实践：1）审计日志——启用 kube-apiserver 的 Audit 策略记录所有 API 调用（包括谁、做了什么、什么时间）。2）Secret 加密——K8s 1.13+ 支持 kube-apiserver 级加密存储 Secret（EncryptionConfiguration）。3）准入控制器（Admission Controller）——在请求被持久化之前拦截修改或校验请求。推荐开启的控制器：NamespaceLifecycle、LimitRanger、ServiceAccount、NodeRestriction、MutatingAdmissionWebhook、ValidatingAdmissionWebhook。注意：PodSecurityPolicy（PSP）在 K8s 1.21 中已被弃用，1.25 中移除，请迁移到 Pod Security Admission 或第三方准入控制器（如 OPA Gatekeeper / Kyverno）。",
+    "hints": [
+      "RBAC 中 Role 和 ClusterRole 的区别是什么",
+      "Pod Security Admission 的三个安全级别如何选择"
+    ],
+    "tags": [
+      "Kubernetes",
+      "RBAC",
+      "Pod Security",
+      "NetworkPolicy",
+      "安全"
+    ]
   }
 ]

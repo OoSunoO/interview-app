@@ -1406,5 +1406,106 @@
       "ITIL",
       "项目控制"
     ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Managing a project that is 30% behind schedule",
+    "content": "You are 3 months into a 6-month platform migration project. Due to an unforeseen dependency — a third-party API deprecation that requires a rewrite of the data import layer — you are 30% behind schedule. The original deadline is firm because of a regulatory compliance date. Walk through how you would recover the schedule.",
+    "answer": "Step 1: Quantify the impact (within 48 hours).\n- Work with engineering to produce a revised estimate. Is the 30% delay recoverable, partially or fully?\n- Identify which deliverables are on the critical path vs. parallelizable work.\n\nStep 2: Apply schedule recovery techniques.\n- Critical path compression: Identify tasks on the critical path and see if they can be parallelized or fast-tracked.\n- Crashing: Add resources to the data import layer rewrite. Can a second team take non-dependent work while the primary team handles the rewrite?\n- Scope triage: What is the minimum viable migration that satisfies the regulatory date? Can non-essential features (e.g., new dashboard UI, reporting enhancements) be deferred to a Phase 2?\n\nStep 3: Risk mitigation.\n- Build in testing buffers: the data import layer is now riskier due to the rewrite. Allocate time for regression testing.\n- Rollback plan: ensure the old system can continue operating past the original deadline if the migration is incomplete, even if it means manual compliance reporting temporarily.\n\nStep 4: Stakeholder communication.\n- Be transparent with the compliance officer and leadership. Propose: 「We will meet the compliance deadline with core data migrated. Reporting dashboards and advanced features will follow 4 weeks later.」\n- Weekly progress dashboards tracking the critical path.\n\nContingency: If even the reduced scope can't meet the deadline, prepare a manual compliance reporting process as a bridge and communicate this as a worst-case scenario upfront.",
+    "hints": [
+      "Distinguish between the regulatory requirement and the nice-to-have features in the project scope.",
+      "Think about resource elasticity — can you borrow engineers from other teams temporarily?"
+    ],
+    "tags": [
+      "schedule-recovery",
+      "critical-path",
+      "stakeholder-communication",
+      "risk-management",
+      "scope-triage"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Team member consistently misses sprint commitments",
+    "content": "A junior developer on your team has missed their sprint commitments for 3 consecutive sprints. They work hard (visible late nights) but consistently underestimate complexity. Your project is at risk of missing a quarterly OKR. What is the BEST approach?",
+    "options": [
+      "A) Formally warn them about performance and put them on a PIP to document the issue.",
+      "B) Pair them with a senior developer next sprint and break their tasks into smaller, estimated chunks with daily check-ins.",
+      "C) Reassign all their tasks to the senior developers and have the junior shadow instead.",
+      "D) Escalate to engineering management so they can be reassigned to a different project."
+    ],
+    "answer": "B",
+    "hints": [
+      "The root cause appears to be estimation skill and complexity management — not effort or motivation.",
+      "Consider what intervention helps the individual grow while also protecting the project timeline."
+    ],
+    "tags": [
+      "team-management",
+      "estimation",
+      "junior-developer",
+      "sprint-planning",
+      "coaching"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Cross-team dependency resolution without formal authority",
+    "content": "You are leading a project that requires the Data team to deliver a new analytics pipeline before your team can build the reporting dashboard. The Data team is already at 120% capacity and their manager keeps deprioritizing your request. You have no formal authority over them. How do you unblock the dependency?",
+    "answer": "Framework: Influence without authority requires building alignment around shared goals.\n\nStep 1: Understand their reality.\n- Schedule a 1:1 with the Data team manager. Ask: what is on their plate? Where does your request rank in their priority stack? What would make it higher priority?\n- Understand their constraints: is it headcount, technical debt, or competing executive requests?\n\nStep 2: Reframe the ask in terms of their interests.\n- Connect your project to the Data team's own OKRs. If the analytics pipeline enables self-serve reporting, that reduces Data team's ad-hoc query load — a direct benefit to them.\n- If the Data team has a visibility problem, offer to co-present the project benefits to leadership.\n\nStep 3: Find creative paths.\n- Can your team contribute engineering support for the pipeline (e.g., writing the ingestion code while Data handles schema design)?\n- Is there a simpler interim solution — even a manual CSV export process — that lets your team start dashboard development on sample data?\n- Can the Data team provide a read replica of the source data so your team builds the pipeline themselves?\n\nStep 4: Escalate constructively.\n- If alignment fails, prepare a one-pager showing the blocked dependency, the business impact, and the options you've explored. Present it to both managers together.\n- Frame it as: 「We need a joint decision on priority — both teams have legitimate constraints.」\n\nKey principle: Make it easy for them to say yes. The path of least resistance should align with your goal.",
+    "hints": [
+      "Think about what the Data team gains from helping you, not just what you need from them.",
+      "Consider interim solutions that decouple your team's work from the dependency."
+    ],
+    "tags": [
+      "cross-team-dependency",
+      "influence-without-authority",
+      "stakeholder-alignment",
+      "conflict-resolution",
+      "dependency-management"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Implementing agile in a team that prefers waterfall",
+    "content": "Your engineering team of 8 has been doing waterfall releases for 5 years. Management mandates a switch to Scrum. The team is resistant — senior engineers feel daily standups are micromanaging, and the QA lead insists that 「you can't test something that's still changing.」 As the project manager, how do you lead this transition?",
+    "answer": "Approach: Meet the team where they are, introduce agile practices incrementally, and connect each practice to a problem they already feel.\n\nPhase 1 (Month 1): Diagnose and build trust.\n- Hold individual 1:1s with each team member. Listen to specific concerns. Often resistance masks fear of losing autonomy or past bad experiences with cargo-cult agile.\n- Identify the team's actual pain points with waterfall: long feedback cycles, late discovery of issues, scope creep in multi-month releases.\n\nPhase 2 (Month 2): Introduce lightweight practices.\n- Don't start with the full Scrum framework. Begin with two practices:\n  1) Bi-weekly planning session (not sprint planning — call it 「2-week milestone kickoff」 to avoid jargon)\n  2) 15-min daily check-in (not standup — framed as a coordination sync, not a status report to management)\n- Address the QA concern directly: introduce test automation in the same sprint as development, not after. Show how parallel QA catches issues earlier.\n\nPhase 3 (Months 3-4): Formalize the process.\n- Once the team experiences shorter feedback loops, introduce retrospectives. Let the team identify what to improve.\n- Gradually add Sprint Review and backlog refinement as the team sees their value.\n- Customize: if the team hates rigid sprint boundaries, try a kanban-style flow with WIP limits instead.\n\nKey principle: The goal is agility, not agile compliance. The team should feel that the new process solves real problems, not that they're being forced through a certification checklist.",
+    "hints": [
+      "Resistance to agile often comes from past experiences with poorly implemented agile.",
+      "Consider introducing practices one at a time rather than the full framework at once."
+    ],
+    "tags": [
+      "agile-transition",
+      "change-management",
+      "scrum",
+      "team-dynamics",
+      "process-improvement"
+    ]
+  },
+  {
+    "category": "project_mgmt",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Post-mortem for a production incident caused by process shortcuts",
+    "content": "A critical production outage occurred because a developer bypassed code review and deployed directly to production on a Friday evening. The outage lasted 2 hours and affected all paying customers. Your CEO wants accountability. How do you run the post-mortem and what systemic changes would you recommend?",
+    "answer": "Post-mortem principles: Blameless investigation focused on systemic gaps, not individual mistakes.\n\nStep 1: Establish timeline and facts.\n- Gather: deploy logs, access records, monitoring graphs, chat history.\n- Document the exact sequence: what was deployed, when, who approved (or didn't), how the failure manifested, how it was detected, and how it was resolved.\n- The developer's motivation matters: did they feel pressured by a deadline? Were they blocked waiting for review? Did they think it was a low-risk change?\n\nStep 2: Conduct the post-mortem meeting.\n- Ground rule: no individual blame. The question is always: 「What in our system allowed this to happen?」\n- Attendees: the developer, the team lead, QA, DevOps, and a facilitator (you).\n- Five Whys analysis:\n  1. Why did the deploy cause an outage? ─ No tests caught the regression.\n  2. Why was there no review? ─ Reviewer queue was 24h+ backlogged.\n  3. Why did the developer bypass process? ─ Urgent customer bug fix with no expedited review path.\n  4. Why was Friday chosen? ─ Implicit pressure to 「close the ticket.」\n  5. Why was the deploy not rolled back faster? ─ No canary deployment or automated rollback.\n\nStep 3: Systemic changes (not punitive).\n- Technical: implement CI/CD pipeline with mandatory review gate. Add canary deployment with automated rollback on error rate spikes. Add pre-commit hooks and required status checks.\n- Process: establish an expedited review process for hotfixes (2-hour SLA for review). Ban Friday deployments unless explicitly approved by on-call lead.\n- Cultural: reinforce blameless culture from the CEO down. Share the post-mortem broadly so others learn.\n\nStep 4: CEO communication.\n- Present findings and action items before the CEO asks. Show that accountability means fixing the system, not punishing the individual.\n- If the CEO insists on individual accountability, explain that punishing this person will make future incidents go unreported — the next one could be worse.\n\nKey outcome: The post-mortem is successful if the team emerges with stronger processes and no fear of surfacing the next incident.",
+    "hints": [
+      "Blameless post-mortems are more effective at preventing future incidents than punitive ones.",
+      "The Five Whys technique helps uncover root causes that go deeper than the immediate mistake."
+    ],
+    "tags": [
+      "post-mortem",
+      "incident-management",
+      "blameless-culture",
+      "deployment-process",
+      "site-reliability"
+    ]
   }
 ]

@@ -1443,5 +1443,116 @@
       "Transformer",
       "GPU"
     ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "张量并行与流水线并行对比",
+    "content": "关于张量并行（Tensor Parallelism）和流水线并行（Pipeline Parallelism），以下哪个说法是正确的？",
+    "options": [
+      "A) 张量并行将模型的不同层分配到不同设备上，而流水线并行将同一层内的矩阵运算拆分到多个设备",
+      "B) 流水线并行的主要开销是通信（all-reduce），而张量并行的主要开销是空转气泡（bubble）",
+      "C) 张量并行需要在每一层的前向/反向传播中都做同步通信（all-reduce），通信量与隐藏层维度成正比；流水线并行只在层边界通信，通信量约为 O(hidden_dim) 乘以微批次数",
+      "D) 张量并行不需要任何通信，因为每个设备独立计算自己分配到的部分"
+    ],
+    "answer": "C",
+    "hints": [
+      "想想张量并行把一个矩阵乘法拆到多个 GPU 上需要哪些通信操作",
+      "流水线并行的气泡问题可以通过什么方法缓解",
+      "两者的通信模式和通信量有本质区别"
+    ],
+    "tags": [
+      "distributed-training",
+      "model-parallelism",
+      "tensor-parallelism",
+      "pipeline-parallelism"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Continuous Batching 工作原理解析",
+    "content": "解释 Continuous Batching（持续批处理）在 LLM 推理服务中的工作原理。它与传统静态批处理有何不同？为什么它对 LLM 推理效率至关重要？",
+    "answer": "Continuous Batching（也称 iteration-level batching 或 inflight batching）的核心思想是：在 LLM 自回归解码的每一轮迭代中，动态决定哪些请求参与批处理，不需要等待整个批次的请求全部完成才处理下一批。\n\n传统静态批处理的工作方式：\n- 收集一批请求 → 全部处理完（seq_len 个迭代） → 返回全部结果 → 收集下一批。\n- 问题：不同请求的输出长度不同，短序列必须等待长序列完成，造成 GPU 利用率低下。\n\nContinuous Batching 的工作方式：\n- 在每个解码步骤结束时，检查当前有哪些请求已完成或新到达。\n- 完成的请求立即移除并返回结果，新到达的请求立即加入批次。\n- 每一轮的批处理大小动态变化，最大化 GPU 利用率。\n\n为什么至关重要：\n1. LLM 的 prefill（预填充）和 decode（解码）阶段计算特性完全不同。Continuous batching 允许将 prefill 和 decode 混合在同一个批次中。\n2. 在真实负载下，请求到达时间是随机的，continuous batching 能将 GPU 利用率从 20-30% 提升到 60-80% 以上。\n3. 显著降低 P99 延迟，因为短请求不再被长请求阻塞。\n4. 它是现代 LLM 推理框架（vLLM、TensorRT-LLM、TGI）的核心调度技术。",
+    "hints": [
+      "考虑自回归解码中不同请求生成长度的差异问题",
+      "GPU 利用率低下的主要原因是等待还是计算",
+      "如果每个解码步骤都可以动态调整批次会怎样"
+    ],
+    "tags": [
+      "llm-serving",
+      "continuous-batching",
+      "inference",
+      "throughput",
+      "vllm"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ZeRO 各阶段内存优化策略",
+    "content": "关于 ZeRO（Zero Redundancy Optimizer）各阶段的内存优化策略，以下哪个说法是错误的？",
+    "options": [
+      "A) ZeRO Stage 1 只分片优化器状态（optimizer states），将每张卡的优化器状态显存占用从 8ψ 降低到 8ψ/N，其中 ψ 是参数量，N 是 GPU 数",
+      "B) ZeRO Stage 2 在 Stage 1 基础上额外分片梯度（gradients），反向传播时通过 reduce-scatter 归并梯度，每张卡只保留自己负责的分片",
+      "C) ZeRO Stage 3 进一步分片模型参数（parameters），每张卡只存储自己负责的部分，在计算每层前向/反向时通过 all-gather 获取完整参数",
+      "D) ZeRO Stage 3 完全消除了所有通信开销，因为每个参数只存储在单张卡上，不需要跨卡同步"
+    ],
+    "answer": "D",
+    "hints": [
+      "考虑 ZeRO Stage 3 在计算每一层时需要什么数据",
+      "通信开销是 ZeRO 的核心设计挑战之一",
+      "Stage 3 用额外通信换取内存节省"
+    ],
+    "tags": [
+      "zero",
+      "distributed-training",
+      "memory-optimization",
+      "deepspeed",
+      "data-parallelism"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Expert Parallelism 原理与通信模式",
+    "content": "解释 MoE（Mixture of Experts）模型中 Expert Parallelism 的原理、通信模式及其在训练和推理中的异同。",
+    "answer": "Expert Parallelism 是 MoE 模型的专用并行策略。在 MoE 中，每个 token 由 router 选择 top-k 个 expert 处理，Expert Parallelism 将不同的 expert 分配到不同的设备上。\n\n原理：\n- 每个 GPU 持有部分 expert 的完整参数。\n- 输入 token 经过 router 后，根据路由结果将 token 发送到对应 expert 所在的设备（all-to-all 通信）。\n- 每个设备上的 expert 处理被路由到它的所有 token。\n- 处理完成后，结果通过 all-to-all 通信送回原始设备。\n\n通信模式：\n- 核心通信原语是 all-to-all（或 permutation），不是常见 all-reduce。\n- 每个设备向所有其他设备发送 token 的隐藏状态（dispatch），并接收被路由到本地 expert 的 token。\n- 反向传播需要逆向的 all-to-all 通信。\n- 关键挑战：负载不均衡——某些 expert 可能收到远多于平均的 token，造成 expert 热点。\n\n训练和推理的异同：\n相同点：都需要 all-to-all 通信，都面临负载不均衡问题。\n不同点：\n1. 训练时需要同时处理 dispatch 和 combine（前向和反向），推理只需要前向。\n2. 训练中 expert 容量可以灵活调整（设置 capacity factor > 1），推理中通常使用固定容量。\n3. 训练时添加 auxiliary loss（如 load balancing loss）来鼓励均衡路由。推理时不再需要。\n4. 推理中可以使用 expert 剪枝或专家缓存——只激活最常用的 expert，跳过不活跃的。\n5. 训练时通常结合数据并行和 expert 并行（DP + EP），推理时通常使用 EP + TP。",
+    "hints": [
+      "MoE 中 token 需要从 router 移动到 expert 所在设备",
+      "all-to-all 通信是 expert parallelism 的核心原语",
+      "负载不均衡会导致某些 GPU 成为瓶颈"
+    ],
+    "tags": [
+      "moe",
+      "expert-parallelism",
+      "distributed-training",
+      "mixture-of-experts",
+      "all-to-all"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "QAT 与 PTQ 的比较与选型",
+    "content": "比较 Quantization-Aware Training（QAT）和 Post-Training Quantization（PTQ）的技术原理、精度表现和工程成本。什么场景下应该优先选择 QAT 而不是 PTQ？",
+    "answer": "PTQ（训练后量化）：\n- 原理：训练完成后，使用少量校准数据统计激活值分布，计算量化参数（scale, zero-point）。常用方法包括 MinMax、Percentile、KL 散度校准、GPTQ、AWQ 等。\n- 精度表现：INT8 量化通常损失 <1% 精度。INT4 量化损失在 1-3%，取决于校准数据质量和具体方法。\n- 工程成本：低。只需一次校准过程，通常几百到几千条校准样本，不需要重新训练。\n\nQAT（量化感知训练）：\n- 原理：训练中插入 fake quantization（伪量化）算子，模拟量化误差，让模型参数适应量化噪声。使用直通估计器（STE）处理量化函数的不可微问题。\n- 精度表现：通常比 PTQ 高 1-3%，尤其在 INT4 和更低 bit-width 下优势明显。对敏感层（如 attention 输出层）更鲁棒。\n- 工程成本：高。需要完整训练流程和额外 GPU 时间，需要调参和控制量化插入位置。\n\n选择 QAT 的场景：\n1. 目标 bit-width 在 INT4 或更低（INT3/INT2）时，PTQ 精度损失不可接受。\n2. 模型对量化高度敏感（小模型、特定注意力结构、量化后出现显著 outlier 退化）。\n3. 部署场景对精度要求极高（如医疗、金融领域的决策模型）。\n4. 有充足的 GPU 资源和训练 pipeline，QAT 的额外成本可控。\n5. 需要在模型上进行量化友好的微调来补偿量化误差（如 LLM-QAT 方法）。",
+    "hints": [
+      "PTQ 是事后补救，QAT 是训练中让模型提前适应量化",
+      "量化的 bit-width 越低，QAT 的优势越明显",
+      "考虑部署约束和开发周期的 trade-off"
+    ],
+    "tags": [
+      "quantization",
+      "qat",
+      "ptq",
+      "model-compression",
+      "inference-optimization"
+    ]
   }
 ]

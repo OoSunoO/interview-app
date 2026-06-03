@@ -1430,5 +1430,111 @@
       "流式渲染",
       "Transition"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 并发模式（Concurrent Features）原理",
+    "content": "请解释 React 18 并发模式（Concurrent Mode/Concurrent Features）的核心原理。useTransition、useDeferredValue、Suspense 和 startTransition 分别在什么场景下使用？并发渲染如何实现任务中断和恢复？并发模式对 useEffect、useLayoutEffect 的执行时机有什么影响？",
+    "answer": "答案：React 并发模式的核心是「可中断渲染」（Interruptible Rendering）。渲染过程可以被打断、暂停、恢复或放弃，让高优先级更新（如用户输入）先于低优先级更新（如列表渲染）完成。useTransition 标记低优先级的状态更新可降级，useDeferredValue 延迟更新某个值，Suspense 协调异步数据的加载状态。并发模式下渲染被分割为可中断的单元，通过时间切片（Time Slicing）和优先级调度实现。\n\n解析：并发模式的核心机制——1）时间切片（Time Slicing）：React 将渲染工作分割为 5ms 左右的小单元，每执行一个单元检查是否有更高优先级的任务（如用户事件）需要处理。有的话暂停当前渲染，优先处理高优先级更新。2）优先级调度：React 使用 Lane 模型（32 条车道 Lane 表示不同优先级）。输入事件（InputDiscrete）优先级最高，Transition 更新（如导航切换、列表过滤）优先级最低。高优先级的更新可以打断低优先级的渲染。3）双缓冲 Fiber 树：React 维护 current Fiber 树（已提交到屏幕）和 workInProgress Fiber 树（正在构建）。可中断渲染发生在 workInProgress 树上，current 树不受影响，因此用户始终看到一致的状态。\n\nAPI 详解——1）startTransition：将状态更新标记为 Transition（低优先级过渡更新），通知 React 可以被打断。典型场景：输入框输入时过滤长列表。2）useTransition：返回 [isPending, startTransition]。isPending 告知用户加载状态，允许在等待时显示过渡反馈。3）useDeferredValue：接收一个值，返回延迟版本的值（优先使用旧值，在新值准备好后切换）。适合「将某数据的更新降级」——如搜索输入即时显示，搜索结果延迟渲染。4）Suspense：定义数据加载边界。子组件抛出 Promise（如 React.lazy、Relay、SWR），Suspense 捕获并显示 fallback。并发模式下 Suspense 更加强大：多个 Suspense 边界可以嵌套、组合、并行等待。\n\n对 Effect 的影响——useEffect（被动同步）在并发模式下仍然在浏览器完成布局和绘制后的 commit 阶段执行，行为不变。useLayoutEffect（主动同步）在 DOM 突变后同步执行，阻塞浏览器绘制。并发模式下，如果高优先级更新打断低优先级的提交，低优先级的 useLayoutEffect cleanup 会先执行，再执行高优先级的 useLayoutEffect。这与传统模式（批处理更新，一次性提交）不同。",
+    "hints": [
+      "时间切片每 5ms 检查一次高优任务",
+      "Lane 模型中输入优先级最高"
+    ],
+    "tags": [
+      "React",
+      "并发模式",
+      "useTransition",
+      "Fiber",
+      "时间切片"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "React Server Components 架构设计",
+    "content": "关于 React Server Components（RSC）的描述，以下哪个是错误的？",
+    "options": [
+      "A) RSC 在服务器端渲染，不包含交互逻辑，不会向客户端发送 JavaScript bundle",
+      "B) RSC 可以自然地访问后端资源（数据库、文件系统、微服务 API），无需额外 API 路由",
+      "C) RSC 与 SSR（Server-Side Rendering）是同一概念，它们都在服务器端生成 HTML 发送给客户端",
+      "D) RSC 的「use client」指令标志着该文件的组件树边界——此边界内的所有组件在客户端运行"
+    ],
+    "answer": "C",
+    "hints": [
+      "RSC 返回虚拟 DOM 树而非 HTML",
+      "Server Component 不产 JS 字节"
+    ],
+    "tags": [
+      "React",
+      "Server Components",
+      "RSC",
+      "SSR",
+      "架构"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 合成事件系统与事件委托",
+    "content": "请解释 React 的合成事件（SyntheticEvent）系统。React 17 之前和之后的事件委托机制有什么变化？合成事件池（SyntheticEvent Pooling）在 React 17 前后的区别是什么？React 事件系统和原生 DOM 事件系统如何共存？",
+    "answer": "答案：React 的合成事件是跨浏览器包装层，抹平了不同浏览器的事件 API 差异。React 17 之前所有事件委托在 document 上，React 17 之后委托到 root DOM 容器（React 挂载点），不再依赖 document。React 17 也移除了合成事件池的复用机制——不再需要 e.persist() 来阻止事件对象回收。\n\n解析：事件委托机制——React 不会将事件处理器直接绑定到对应的 DOM 元素上，而是通过事件委托在根容器上统一监听。当事件冒泡到委托节点时，React 根据事件的目标元素找到对应的 Fiber 节点，遍历 Fiber 树执行匹配的事件处理器。\n\nReact 17 的变化（根部委托变更）——1）React 16 将所有事件绑定到 document.addEventListener。问题：多个 React 版本嵌套时（微前端场景），子版本的事件会冒泡到父版本的 document 监听器，互相干扰。React Native + React DOM 的混用也受影响。2）React 17 将事件委托到 ReactDOM.createRoot() 的 root 容器上（通常是 <div id=\"root\">）。多版本共存时各版本的事件互不干扰。\n\n合成事件池的变化——React 16 中，合成事件对象被池化复用。事件回调执行完毕后事件对象的所有属性被清空（返回 null）。如果异步访问事件属性（如 setTimeout 中），需要调用 e.persist() 从池中取出。React 17 完全移除了事件池机制——每次事件创建新的事件对象，不再需要 e.persist()。\n\n扩展延伸：React 事件与原生事件共存——1）React 的 stopPropagation() 阻止的是合成事件的冒泡，不阻止原生 DOM 事件冒泡——需要同时调用原生 e.nativeEvent.stopPropagation()。2）如果 DOM 元素上直接绑定了原生事件监听，React 的合成事件不会自动覆盖它。3）在 React 18 的自动批处理（Automatic Batching）中，合成事件回调内的状态更新自动批处理，但原生事件回调内的状态更新不在 React 调度范围内，需要手动 flushSync。",
+    "hints": [
+      "React 17 事件委托改到 root 节点",
+      "React 17 移除了事件对象池"
+    ],
+    "tags": [
+      "React",
+      "合成事件",
+      "事件委托",
+      "微前端"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "React Hook 的底层实现机制",
+    "content": "React Hooks（如 useState、useEffect）在 Fiber 架构中的底层实现依赖于什么机制来保证每次渲染时 Hook 的正确顺序和状态读取？",
+    "options": [
+      "A) React 在组件函数中通过 Proxy 代理拦截 Hook 调用，自动解析依赖",
+      "B) React 通过 Fiber 节点上的单向链表存储 Hook 状态，每次渲染时按调用顺序遍历链表读取",
+      "C) React 在全局维护一个「当前组件」的状态栈，Hook 调用时从栈顶读取数据",
+      "D) React 通过闭包将每个 Hook 的状态封装在独立的闭包作用域中"
+    ],
+    "answer": "B",
+    "hints": [
+      "Fiber 上 Hook 链表按顺序遍历",
+      "Hook 状态存在 Fiber 而非闭包中"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "Fiber",
+      "实现原理"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Refs 完整体系与 forwardRef",
+    "content": "请全面分析 React 中 ref 的演进和完整体系。字符串 ref（已废弃）、回调 ref、createRef、useRef、forwardRef、useImperativeHandle 各自的作用和底层实现原理是什么？ref 在类组件和函数组件中的行为有什么不同？forwardRef 解决了什么根本问题？",
+    "answer": "答案：ref 是 React 获取 DOM 节点或组件实例的「逃生舱」。演进路径：字符串 ref（React 16 前，问题多已废弃）→ 回调 ref → createRef（类组件）→ useRef（函数组件）→ forwardRef（转发 ref 到子组件 DOM）→ useImperativeHandle（限制暴露给父组件的实例方法）。ref 的本质是一个 Fiber 节点上的属性，在 commit 阶段由 React 赋值或执行回调。\n\n解析：各类 ref 的实现原理——1）字符串 ref（已废弃）：this.refs.myRef 访问，问题——字符串不被静态检查、可能重复、性能差（需要遍历 Fiber 树查找）。已被废弃。2）回调 ref：<div ref={el => this.myRef = el}>，更灵活——在组件挂载时调用（参数为 DOM 元素），卸载时调用（参数为 null）。回调 ref 是最底层的 ref 形式，其他 ref 都是它的封装。3）createRef：React.createRef() 返回 { current: null } 对象，React 在 commit 阶段将 DOM 节点赋值给 current。本质上是对回调 ref 的封装。4）useRef：useRef(initialValue) 返回一个在整个组件生命周期内保持引用的 mutable 对象。底层实现：在 Fiber 节点的 memoizedState 链表上创建一个新的 Hook 节点，初始值存储在 Hook.memoizedState 中。每次渲染返回同一个对象引用（不是新建）。useRef 的值变化不会触发 re-render。\n\nforwardRef——React.forwardRef 返回一个经过特殊处理的 React 元素类型。其 Fiber 节点标记了特殊 flag 指示渲染阶段应将父组件传入的 ref 传递给子组件的渲染函数。没有 forwardRef 时函数组件不接收 ref（因为函数组件没有实例，不同于类组件）。forwardRef 解决了「函数不能接收 ref」的问题。\n\nuseImperativeHandle——与 forwardRef 配合使用，限制父组件能调用的子组件方法。子组件通过 useImperativeHandle(ref, () => ({ focus, scrollTo })) 定义暴露的 API。底层：创建了一个闭包包装的 ref 对象，只有显式返回的属性能被父组件访问。\n\n扩展延伸：ref 的最佳实践——1）避免过度使用 ref，React 提倡「声明式编程」而非命令式。2）动画控制、焦点管理、第三方库集成（如 D3、Chart.js）是 ref 的合理使用场景。3）ref 转发在组件库开发中异常重要——Input、Modal、Tooltip 等需要对外暴露 DOM 操作方法。4）React 18 的 useSyncExternalStore 避免了使用 ref 同步外部状态的需要。",
+    "hints": [
+      "回调 ref 是所有 ref 形式的底层",
+      "函数组件没有实例无法直接接收 ref",
+      "useRef 变化不触发 re-render"
+    ],
+    "tags": [
+      "React",
+      "ref",
+      "forwardRef",
+      "useImperativeHandle",
+      "架构"
+    ]
   }
 ]

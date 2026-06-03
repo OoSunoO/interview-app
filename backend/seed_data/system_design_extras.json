@@ -1459,5 +1459,97 @@
       "全链路",
       "容量规划"
     ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "变更数据捕获（CDC）管道设计",
+    "content": "请说明变更数据捕获（Change Data Capture, CDC）的核心原理和架构设计。对比基于日志解析（如 Debezium/Canal）和基于轮询（如 Polling）两种 CDC 方案的区别。CDC 管道在「全量初始化 + 增量同步」场景下如何保证数据一致性和不丢不重？",
+    "answer": "答案：\nCDC 通过捕获数据源的变更事件（插入/更新/删除），实时或准实时地将变更同步到下游系统，是构建实时数据管道和数据中台的核心技术。\n\n解析：\n**两种方案对比**：\n| 维度 | 日志解析（Log-Based） | 轮询（Polling-Based） |\n| 原理 | 解析数据库事务日志（Binlog / WAL / Redo Log） | 定期查询业务表（SELECT WHERE update_time > ?） |\n| 延迟 | 毫秒级（实时） | 秒-分级（取决于轮询间隔） |\n| 入侵性 | 无（读日志，不碰业务表） | 高（需要业务表有 update_time 字段） |\n| 删除捕获 | 天然支持 | 需要逻辑删除或墓碑表 |\n| 一致性 | 事务级一致（同一事务的变更原子性捕获） | 可能读到事务中间状态 |\n| 典型工具 | Debezium（MySQL/PostgreSQL/MongoDB）、Canal（阿里开源）、Maxwell | 自定义轮询任务 |\n\n**全量初始化 + 增量同步的流程**（以 Debezium 为例）：\n1. 全量快照：Connector 启动时先做 SELECT * 全量扫描，记录快照时的 Binlog 位置（GTID / LSN）。\n2. 增量接续：全量完成后，从记录的 Binlog 位置开始消费增量事件。\n3. 一致性保证：快照过程中产生的增量变更不会丢失（在快照前记录 Binlog 位置，快照后再从这个位置消费增量）。\n4. 至少一次语义（At-Least-Once）：Debezium 每条变更记录有唯一 offset（Binlog 文件名 + 位置），写入 Kafka 后记录 offset。Consumer 重启时从上次记录的 offset 恢复。\n5. 幂等消费：下游消费端做幂等处理（如 Upsert），保证即使偶发重复也不会产生数据不一致。\n\n**关键设计考量**：\n- Schema 变更传播：源表加列后，CDC Connector 需要能动态更新 Schema 并同步到下游（Debezium 通过 History Topic 记录 Schema 变更）。\n- 数据过滤：支持按库/表/列级别过滤（减少不必要的数据流量）。\n- 数据转换：在管道中嵌入 SMT（Single Message Transform）或使用 Kafka Streams 做轻量转换。\n- 故障恢复：Connector 故障重启后，从上次提交的 offset 继续消费（可能出现少量重复，但不丢数据）。",
+    "hints": [
+      "CDC 的核心不是数据同步技术，而是「事务日志的顺序回放」——这保证了一致性",
+      "为什么基于日志解析的方案能做到事务级一致性而轮询做不到——日志记录的是事务提交后的最终状态"
+    ],
+    "tags": [
+      "CDC",
+      "Debezium",
+      "Canal",
+      "数据同步",
+      "实时数据"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数据质量监控系统设计",
+    "content": "请设计一个数据质量监控系统，能够对数据仓库/数据湖中的海量数据进行自动化质量检测。包括：\n1. 质量维度定义（完整性、准确性、一致性、及时性等）；\n2. 质量规则引擎架构（规则定义、调度执行、结果评估）；\n3. 异常检测与告警（静态阈值 vs 动态基线）；\n4. 数据质量分数模型（如何综合评价一个数据集的质量）。",
+    "answer": "答案：\n数据质量监控系统通过定义可量化的质量规则，自动化地对数据资产进行持续检测和评估，确保数据可信可用。\n\n解析：\n**1. 质量维度**：\n- 完整性（Completeness）：非空比例、必填字段缺失率。\n- 准确性（Accuracy）：值与真实世界的符合程度（如用户年龄不能超过 150）。\n- 一致性（Consistency）：跨系统同一数据值是否一致（如 A 系统的订单金额 = B 系统的支付金额）。\n- 及时性（Timeliness）：数据从产生到可用的延迟（SLA：T+1 早上 8 点前需可用）。\n- 唯一性（Uniqueness）：主键无重复、业务唯一键无冲突。\n- 有效性（Validity）：数据格式/取值范围符合业务规则（如邮箱格式、枚举值范围）。\n\n**2. 规则引擎架构**：\n- 规则定义 DSL：YAML/JSON 定义质量规则，例如：\n  name: order_amount_not_null\n    type: completeness\n    target: dwd.orders.pay_amount\n    condition: is not null\n    threshold: 0.99  # 非空比例 > 99%\n    schedule: daily_8am\n- 规则存储：Git（规则即代码）+ 数据库（运行实例和结果）。\n- 执行引擎：Spark 批处理（日/小时级别的大规模扫描）+ Flink 流处理（实时检测）。\n  - 设计原则：规则执行不扫描全表——利用分区裁剪 + 抽样（大数据集可用 STRATIFY 采样）。\n- 结果评估：每次执行生成 Quality Report（统计值、通过/失败、偏差百分比）。\n\n**3. 异常检测**：\n- 静态阈值：人工配置上下限（如非空率 > 99%、金额 > 0）。\n- 动态基线：基于历史数据自动计算波动范围（均值 +/- 3sigma / 移动平均）。\n  - 适用场景：数据量波动大、没有绝对阈值（如日常 DAU 波动在 +/-5% 以内，但活动期间可能 +50%——动态基线会排除活动日期）。\n- 告警分级：P0（数据不可用——阻断下游任务）、P1（质量下降——需确认）、P2（轻微偏差——仅通知）。\n\n**4. 数据质量分数**：\n- 基础模型：每条规则的加权分值（通过得满分，未通过按偏差比例扣分）。\n- 权重设计：核心表（如订单表）权重 > 维度表 > 中间表。关键维度（完整性 + 准确性）权重 > 辅助维度。\n- 综合评分 = sum(规则评分 * 规则权重 * 表权重) / sum(权重)。\n- 展示：数据目录中每个表显示质量标签（优秀/良好/警告/不达标）和趋势图。\n\n扩展延伸：\n开源工具：Great Expectations（Python，规则即代码 + Data Docs）、Deequ（AWS 开源，基于 Spark）。建议将数据质量监控作为数据 Pipeline（如 Airflow DAG）的最后一步任务。",
+    "hints": [
+      "数据质量检测的最大挑战是「大规模全表扫描的成本」——必须利用分区裁剪、采样和增量检测",
+      "动态基线在异常检测中的核心价值是「自适应」——业务有正常波动时不会误报"
+    ],
+    "tags": [
+      "数据质量",
+      "数据治理",
+      "监控",
+      "规则引擎"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "审计日志与合规追踪系统",
+    "content": "请设计一个企业级的审计日志系统（Audit Trail），用于满足合规要求（如 SOX、GDPR、PCI-DSS）。需要覆盖：\n1. 审计事件的采集（数据分类——谁在什么时间对什么数据做了什么操作）；\n2. 日志的防篡改保证（Immutable Log + 完整性校验链）；\n3. 高效的查询与检索（万亿级审计事件的搜索）；\n4. 合规报告自动化（权限访问报告、数据变更报告）。",
+    "answer": "答案：\n审计日志系统的核心要求是「不可否认性」——日志一旦写入，事后不能否认或篡改。设计围绕「写不可逆、查可高效、存可长久」展开。\n\n解析：\n**1. 审计事件采集**：\n- 标准化事件模型（CloudEvents 格式扩展）：\n  event_id: uuid\n  timestamp: 2026-06-04T10:00:00Z\n  actor: user_id: u123, ip: 10.0.0.1, session_id: s456\n  action: UPDATE\n  resource: type: ORDER, id: ord789\n  detail: changed_fields: status: from: PENDING, to: PAID\n  result: SUCCESS\n- 采集点：API 网关拦截（统一入口）、数据库触发器 / CDC、应用层 SDK 埋点。\n- 性能考虑：采集对业务代码的侵入性要最小化——使用 AOP / 拦截器 + 异步发送（消息队列）。\n\n**2. 防篡改保证**：\n- 方式一：Write-Once Storage（只写一次存储，如 AWS S3 Object Lock / 华为 GaussDB 的 Append-Only 表）。\n- 方式二：哈希链（Hash Chain / Blockchain-light）：\n  - 每条日志记录包含前一条日志的 SHA256 哈希值。\n  - 定期生成 Merkle Tree Root，将 Root Hash 发布到公开可验证的渠道（如区块链 / 报纸 / 公共 DNS TXT 记录）。\n  - 验证时：给定任意日志条目，从该条目沿哈希链走到最近的 Merkle Root，计算路径哈希是否匹配。\n- 方式三：数字签名——每条日志落盘前用 HSM（硬件安全模块）签名。\n- 访问控制：审计日志本身只能追加（Append-Only），DELETE/UPDATE 在数据库层面禁止（通过 Trigger/RDS 权限/存储过程）。\n\n**3. 高效查询**：\n- 存储架构分层：\n  - 热存储（近 30 天）：Elasticsearch，按时间 + actor + resource_type 建索引。\n  - 温存储（30 天 - 1 年）：对象存储 + 列存格式（Parquet），通过 Presto/Trino 查询。\n  - 冷存储（> 1 年）：压缩归档到 Glacier / 冷存，需要时从归档恢复。\n- 分区策略：按日期分区 + 按 resource_type 二级分区。\n- 常用查询模式预优化：「用户 X 在时间范围内对 Y 资源做了什么」——建立 (actor_id, date) 复合索引。\n- 万亿级场景：使用时序数据库（如 TimescaleDB）或日志专用存储（如 Loki / Elasticsearch 冷热分离架构）。\n\n**4. 合规报告自动化**：\n- 预定义报告模板：权限访问报告（谁在什么时间访问了什么数据）、数据变更报告（敏感字段修改记录）、管理员操作报告。\n- 定时生成 + 邮件/消息推送。\n- 支持自定义报告：SQL + 图表（接入 BI 工具如 Grafana / Metabase）。\n- 法律保留（Legal Hold）：对涉及诉讼的数据，标记为保留状态——即使常规清理策略也不能删除。\n\n扩展延伸：\nGDPR 特别要求：审计日志本身包含个人数据（如 IP 地址），也需要符合 GDPR 的「数据最小化」和「保留期限」要求——日志中的个人信息需在保留期后自动匿名化。",
+    "hints": [
+      "哈希链（Hash Chain）为什么能防篡改——修改任意一条日志会导致其后所有日志的哈希不匹配",
+      "审计日志是「写优化」系统——写一次再也不改，所以写入吞吐是主要性能指标"
+    ],
+    "tags": [
+      "审计日志",
+      "合规",
+      "安全",
+      "防篡改",
+      "数据治理"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "云成本管理（FinOps）系统",
+    "content": "请设计一个云成本管理与优化系统（Cloud Cost Management / FinOps Platform）。需要覆盖：\n1. 多账号多云的成本数据采集与归一化（AWS/Azure/GCP/阿里云等）；\n2. 成本分摊模型（按标签/按项目/按业务线的分账能力）；\n3. 预算管理与异常告警（预测与实际对比、突发费用检测）；\n4. 成本优化建议引擎（识别闲置资源、RI/Spot 实例推荐、存储降配）。",
+    "answer": "答案：\n云成本管理系统的核心价值是「让每一分云支出都有归属、有控制、有优化空间」。企业上云后面临的最大挑战不是技术，而是成本失控——FinOps 是一套将财务责任下放到工程团队的运营框架。\n\n解析：\n**1. 成本数据采集与归一化**：\n- 数据源：AWS CUR（Cost and Usage Report）、Azure 成本管理 API、GCP BigQuery 导出、阿里云 BSS API。\n- 采集方案：定时任务（每日/每时）拉取各云厂商的账单文件。\n- 归一化：将不同厂商的计费项映射到统一模型（如 region、service、resource_id、usage_type、cost、tags）。\n- 存储：ClickHouse / StarRocks 做实时聚合分析（按时间、厂商、服务类型、标签等多维汇总）。\n- 资源元数据关联：将账单中的资源 ID 关联到 CMDB（配置管理数据库），获取资源的负责人、业务线等信息。\n\n**2. 成本分摊**：\n- 标签策略（Tagging Strategy）：规范资源标签（cost_center、project、environment、owner）。\n  - 未打标资源 = 无法分摊 = 成本黑洞 -> 强制标签策略（打标才能创建资源）。\n- 分摊模型：\n  - 直接分摊：通过标签直接归属到项目/部门。\n  - 按比例分摊：共享资源（如 RDS 共享实例、K8s 集群节点）按 CPU/Memory 使用比例分到各业务线。\n  - 固定比例分摊：基础设施费用按固定比例分配给所有业务线。\n- Showback 与 Chargeback：Showback（仅展示成本数据，不扣预算）-> Chargeback（实际扣减预算）。\n\n**3. 预算与告警**：\n- 预算设置：月度/季度/年度预算，分配到成本单元。\n- 实际 vs 预算对比：实时/每日对比（月度已使用预算百分比）。\n- 预测：基于过去 90 天的消费趋势预测月末总成本。\n- 告警阈值：50% -> 80% -> 100% -> 120% 阶梯告警。\n- 异常检测：机器学习检测意外费用峰值（如某一夜 EC2 费用翻倍——可能是新环境未打标、或被攻击）。\n\n**4. 优化建议引擎**：\n- 闲置资源检测：检测低利用率的资源（如 CPU < 5% 的 EC2、空负载的 Load Balancer、未绑定的 EBS 卷）。\n- 实例规格优化（Rightsizing）：基于过去 30 天的 CPU/Memory/Network 峰值，推荐更合适的实例规格。\n- RI/SP 推荐（预留实例/节省计划）：基于稳定的基础用量推荐购买 RI（1 年或 3 年）。\n- Spot 实例推荐：对可中断的工作负载（Flink 计算、Spark 任务、CI/CD）推荐使用 Spot（可节省 60-90%）。\n- 存储降配：EBS 冷数据卷推荐从 gp3 降级到 sc1、S3 超过 N 天未访问的对象自动过渡到 Infrequent Access / Glacier。\n- 节省金额量化：每条建议附带「预估月节省金额」和「实施难度」，帮助优先级排序。\n\n扩展延伸：\n开源工具：OpenCost（K8s 原生成本监控）、Cloud Custodian（策略引擎，自动停止闲置资源）。商业方案：Vantage、CloudHealth、Spot by NetApp。建议从「标签覆盖 + 成本可视化」起步，先让成本可见，再推动优化。",
+    "hints": [
+      "FinOps 的核心不是技术问题而是组织和流程问题——让工程师看到自己的成本，承担优化责任",
+      "成本分摊中最难解决的问题是「共享基础设施的分摊模型」——没有一个模型所有人都满意"
+    ],
+    "tags": [
+      "FinOps",
+      "云成本",
+      "成本优化",
+      "Cloud Cost"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "全局唯一 ID 生成器设计",
+    "content": "在分布式系统中设计一个全局唯一 ID 生成器，要求：全局唯一、趋势递增、高可用（99.999%）、低延迟（<5ms）。对比 Snowflake 算法和基于 Redis/数据库号段模式的方案。",
+    "answer": "Snowflake 方案：41bit 时间戳（毫秒级，可使用 69 年）+ 10bit 工作节点 ID（最多 1024 节点）+ 12bit 序列号（每毫秒 4096 个 ID）。优点：本地生成无需网络调用，延迟极低（微妙级），趋势递增。缺点：强依赖机器时钟，时钟回拨会导致 ID 冲突；节点数受限。\n\n号段模式：从数据库或 Redis 批量获取 ID 号段（如步长 1000），应用本地自增分配。优点：实现简单，无时钟问题，适合 MySQL 生态。缺点：依赖数据库/Redis 可用性；重启可能丢失未用完的号段。\n\n最佳实践：Leaf（美团）方案 = Snowflake（时钟回拨通过 1s 等待 + 未来时间补偿）+ 号段模式（双 Buffer 预加载，切换监控）。",
+    "hints": [
+      "Snowflake 时钟回拨问题的几种解决策略以及它们的 trade-off",
+      "号段模式中极端高并发下的号段用尽如何兜底"
+    ],
+    "tags": [
+      "分布式ID",
+      "Snowflake",
+      "号段模式",
+      "高可用"
+    ]
   }
 ]

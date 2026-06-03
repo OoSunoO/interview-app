@@ -1410,5 +1410,103 @@
       "通道管理",
       "高并发"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Data Lakehouse 架构",
+    "content": "请解释 Data Lakehouse（湖仓一体）架构的核心设计理念。它试图解决 Data Lake 和 Data Warehouse 各自存在的什么问题？Lakehouse 的关键技术支柱是什么（如事务层、元数据层、查询引擎）？对比 Iceberg、Delta Lake、Hudi 三种主流实现的核心差异。",
+    "answer": "答案：\nData Lakehouse 在 Data Lake 的低成本存储（对象存储/S3/HDFS）之上叠加 Data Warehouse 的 ACID 事务和 Schema 管理能力，实现「一份数据，多种分析负载」。\n\n解析：\n**Data Lake 的问题**：缺乏 ACID 事务（并发写会导致不一致）、不支持高效更新/删除、无 Schema 强制（读时 Schema -> 数据沼泽）、查询性能依赖外部引擎拼接。\n\n**Data Warehouse 的问题**：存储成本高（专有格式+压缩效率不如 Parquet/ORC）、数据导入导出烦琐、难以支持非结构化数据和 ML 训练。\n\n**Lakehouse 的三层架构**：\n1. 存储层：对象存储/S3/HDFS，以开放列存格式（Parquet/ORC）存储数据。\n2. 事务层（Table Format Layer）：在文件之上提供 ACID 事务、时间旅行（Time Travel）、Schema 演化。这是 Lakehouse 的核心创新。\n3. 查询层：Spark / Presto / Trino / Flink 等引擎直接读取事务层数据。\n\n**三大实现对比**：\n- **Delta Lake**（Databricks）：事务日志存储在 `_delta_log` 目录（JSON + Checkpoint Parquet）。特色：Schema 演化、Generate 功能（生成 Synapse/Presto 兼容的 Manifest）。深度集成 Spark。\n- **Apache Iceberg**（Netflix 开源）：REST Catalog / Hive Metastore / JDBC Catalog。特色：分区演化（分区可以后来修改）、Hidden Partitioning（自动推断分区）、表格式标准化的先行者。社区支持最广（Trino、Flink、Spark、Doris 等都原生支持）。\n- **Apache Hudi**（Uber 开源）：MOR（Merge on Read）和 COW（Copy on Write）两种文件布局。特色：增量查询（Incremental Query）、流式摄取。适合 CDC 和近实时场景。\n\n扩展延伸：\n选型建议：新项目优先考虑 Iceberg（生态最广、厂商中立）；已在 Databricks 生态用 Delta Lake；需要近实时摄取能力用 Hudi。",
+    "hints": [
+      "Lakehouse 和 Data Warehouse 最本质的差异在「存储格式」还是「事务层」？",
+      "Parquet 本身不支持 ACID 事务，Lakehouse 如何在这个问题上增加事务能力？"
+    ],
+    "tags": [
+      "Data Lakehouse",
+      "Iceberg",
+      "Delta Lake",
+      "Hudi",
+      "架构设计"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "混沌工程方法论",
+    "content": "请解释混沌工程（Chaos Engineering）的核心原则和成熟度模型。与传统的故障注入测试有什么本质区别？请描述一个完整的混沌实验流程（从稳态假设到爆炸半径控制）。并讨论在生产环境运行混沌实验的注意事项。",
+    "answer": "答案：\n混沌工程是一门在系统上开展实验以暴露其薄弱环节的学科。核心原则是「通过受控实验增强系统信心」，而非简单制造破坏。\n\n解析：\n**与传统故障测试的本质区别**：\n- 传统故障注入：设计好的故障场景 -> 验证已知的容错机制是否生效（验证已知）。\n- 混沌工程：提出稳态假设 -> 引入不可预测的扰动 -> 观察系统行为 -> 发现未知的脆弱点（探索未知）。\n\n**核心理念**：系统的「稳态」应该可度量（如请求成功率、P99 延迟），实验的目的是验证系统在扰动下仍能维持稳态。\n\n**完整实验流程**：\n1. 定义稳态（Steady State）：确定系统正常时的关键指标（如支付成功率 > 99.95%）。\n2. 提出假设：「当某台订单服务实例宕机时，系统仍能保持支付成功率 > 99.95%」。\n3. 引入故障变量：如随机 Kill 一个 Pod、注入网络延迟 1000ms、模拟 CPU 100%。\n4. 对照实验：实验组（注入故障）vs 对照组（不注入），确保实验结果不是由外部变化导致的。\n5. 缩小爆炸半径（Blast Radius）：从小规模开始，渐进扩大。先从一台实例开始，确认安全后再扩大到可用区级。\n6. 自动回滚（Auto-Rollback）：监控指标触发阈值（如错误率翻倍）时自动停止实验并恢复。\n\n**生产环境注意事项**：\n- 从低风险实验开始（不影响数据写入的只读接口）。\n- 工作时间之外执行，或采用金丝雀发布式的 Chaos（只影响内部用户/测试流量）。\n- 必须配备自动熔断机制——指标触达阈值立即停止。\n- 做好实验记录（时间、注入的故障、系统响应、任何异常）。\n- 使用专用平台：Chaos Mesh（K8s）、Litmus、Gremlin。\n\n扩展延伸：\n- 成熟度模型 Level 0-4：0 -> 无混沌实践；1 -> 线下环境随机注入；2 -> 生产环境受控实验；3 -> 自动化实验流水线集成到 CI/CD；4 -> 自愈系统（实验发现弱点 -> 自动修复 -> 再次验证）。\n- Netflix Chaos Monkey 是第一代，现在演进为 Fullourmity（包括 Latency Monkey、Conformity Monkey、Security Monkey 等全套）。",
+    "hints": [
+      "混沌工程和压力测试的本质区别是什么——一个是验证，一个是探索",
+      "为什么混沌工程强调「爆炸半径控制」——先从小范围实验开始"
+    ],
+    "tags": [
+      "混沌工程",
+      "Chaos Engineering",
+      "故障注入",
+      "高可用"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "分布式任务调度选型",
+    "content": "在设计一个分布式的定时任务调度平台时，调度器（Scheduler）和执行器（Executor）的关系应如何设计？如果要支持秒级精度的海量任务调度（每天数千万任务），以下哪种架构最合适？",
+    "answer": "答案：D) 调度器层做时间轮分片 + 执行器层无状态化，通过一致性哈希分配任务\n\n解析：最适用的架构是「分片调度器 + 无状态执行器」。调度器维护时间轮（Timing Wheel），按时间窗口将到期的任务分片后下发。执行器只需执行任务，不需要持久化任务状态。一致性哈希保证同一任务的多次调度路由到同一执行器（便于缓存和资源复用）。\n\nA 的 Quartz 集群通过 DB 行锁实现调度协调，在秒级数千万任务的量级下 DB 写锁竞争会直接打死库。B 让每个执行器独立轮询 DB 同样存在 DB 压力问题。C 的单调度器是单点瓶颈，无法处理每秒数万次调度。\n\n实际上，业界方案如 Elastic-Job（分片策略）和 XXL-JOB（调度中心 + 执行器）都遵循调度与执行分离的原则，调度器分片是解决超大规模调度的关键。",
+    "hints": [
+      "Quartz 集群通过 DB 行锁协调调度，在海量任务场景下 DB 会成为瓶颈",
+      "时间轮（Timing Wheel）将时间槽落盘到 DB 还是内存——调度器分片后每个调度器独立维护时间轮"
+    ],
+    "tags": [
+      "任务调度",
+      "分布式",
+      "调度器",
+      "系统设计"
+    ],
+    "options": [
+      "A) 使用 Quartz 集群 + DB 行锁保证调度器一致性，每个调度器独立轮询数据库获取待执行任务",
+      "B) 调度器只做任务注册，由每台执行器定期轮询数据库获取属于自己的任务",
+      "C) 单一调度器负责所有任务出队和分发，执行器只负责执行和结果回传",
+      "D) 调度器层做时间轮分片 + 执行器层无状态化，通过一致性哈希分配任务"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计跨区域文件同步系统",
+    "content": "请设计一个支持全球多数据中心部署的文件同步系统，类似 Dropbox 或 Google Drive 的同步盘功能。重点阐述：\n1. 文件分块与增量同步（Delta Sync）的算法设计；\n2. 冲突检测与自动合并策略；\n3. 跨区域延迟优化（边缘节点、差异传输）；\n4. 版本管理和历史回溯的存储设计。",
+    "answer": "答案：\n文件同步系统的核心挑战是「在有限的带宽和网络延迟下，保持全球多个设备间的文件一致性」。\n\n解析：\n**1. 文件分块与增量同步**：\n- 固定分块（Fixed-Size Chunking）：将文件切成固定大小（如 4MB）的块，每个块计算 SHA256 哈希。\n  - 问题：插入或删除少量字节会导致后续所有分块的哈希变化——传送大量数据。\n- 可变分块（Content-Defined Chunking / CDC）：基于文件内容的滑动窗口决定切分点（如 Rabin Fingerprint）。\n  - 优点：数据偏移只影响局部块，增量同步效率高。\n- 同步流程：客户端向服务端发送分块哈希列表 -> 服务端比对返回缺少的块 -> 客户端只上传差异块。\n\n**2. 冲突检测与合并**：\n- 检测：基于版本向量（Version Vector / Vector Clock），每个设备维护其他设备的最新版本号。\n- 简单冲突（两个设备同时修改同一文件的不同行）：自动合并。\n- 真正冲突（同一区域被同时修改）：标记冲突，保留两个版本供用户选择。\n- 文件夹冲突：根据目录结构自动合并（不同目录同文件名 -> 保留两个副本加冲突标记）。\n\n**3. 跨区域优化**：\n- 多区域写入（就近接入）：用户选择就近区域上传，区域内写主副本。\n- 跨区域异步复制：主副本通过 Kafka/Pulsar 异步复制到其他区域。\n- 差异传输（Diff / Patch）：传输二进制差异（bsdiff/xdelta）而非完整文件。\n- LAN Sync 加速：同一局域网内的设备优先通过 P2P 同步（如 Dropbox 的 LAN Sync 协议）。\n\n**4. 版本管理**：\n- 写时复制（Copy-on-Write）：每次修改产生新版本，保留旧版本文件块（去重共享）。\n- 版本链：只存储增量差异（Delta Chain），但链过长时读性能下降——定期生成全量快照（Snapshot Checkpoint）。\n- 存储成本控制：自动清理超过 N 天或超出配额的历史版本（Google Drive 的「空垃圾桶」策略）。\n- 企业版：无限版本保留 + 法律保留（Legal Hold）防止删除。\n\n扩展延伸：\n- Dropbox 的 Magic Pocket：自建存储系统，分块大小 4MB，每个块有 3 副本跨可用区分布。\n- Google Drive 的「优先级同步」：大文件先传前几 MB + 缩略图，让用户尽快看到内容。",
+    "hints": [
+      "内容定义分块（CDC）为什么比固定分块更适合增量同步——少量插入不改变后续块的哈希",
+      "向量时钟（Vector Clock）如何解决多设备冲突检测——每个设备独立递增版本号，合并时取最大值"
+    ],
+    "tags": [
+      "文件同步",
+      "分布式存储",
+      "CDC",
+      "冲突解决",
+      "系统设计"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计数据目录系统（Data Catalog）",
+    "content": "请设计一个企业级数据目录系统（Data Catalog），类似于 Apache Atlas、DataHub 或 Amundsen。包含以下功能：\n1. 元数据采集与自动发现（各类数据源的表/列/分区/血缘）；\n2. 数据血缘（Lineage）的解析与展示（字段级血缘的追踪方法）；\n3. 搜索与发现（搜索索引设计与排名）；\n4. 元数据管理（标签、描述、等级分类、合规标记）。",
+    "answer": "答案：\n数据目录系统是数据平台的数据门户，核心目标解决「数据在哪里」、「数据怎么来的」、「数据可不可信」、「谁能用」四个问题。\n\n解析：\n**1. 元数据采集架构**：\n- 采集器（Ingestion Framework）：支持可插拔的 Source Connector 架构。\n  - RDBMS 元数据：JDBC 直连读取 information_schema（表/列/主键/索引）。\n  - Hive/Spark Metastore：通过 HMS Thrift API 获取表 Schema 和分区信息。\n  - Kafka：读取 Schema Registry 获取 Topic 的 Avro/Protobuf Schema。\n  - 数据管道工具（Airflow/Dagster）：通过 hook 抓取 DAG 结构和调度信息。\n- 增量采集：监听 WAL / 定期轮询 / 事件通知（如 Kafka 消息触发采集）。\n- 元数据持久化：以 Neo4j（图数据库）为核心存储实体关系和血缘，以 ES 做搜索，以 MySQL 做管理属性。\n\n**2. 数据血缘（Column-Level Lineage）**：\n- SQL 解析方案：用语法解析器（如 Calcite、ANTLR）解析 ETL SQL。\n  - 解析 SELECT 子句的列级映射：`SELECT a.col1 + b.col2 AS result FROM a JOIN b ON a.id = b.id`。\n  - 逐层回溯：表 -> View -> ETL 脚本 -> 源表，形成完整的字段级血缘图。\n- 无法解析 SQL 的情况：通过运行时追踪（Spark QueryExecutionListener / Flink 的 Operator 级别 Lineage）。\n- 血缘图的存储：图数据库（Neo4j / JanusGraph），节点 = Dataset/Field，边 = 转换/派生关系。\n- 展示：DAG 图（可展开 / 收缩 / 高亮关键路径），支持从一张表向上游溯源、向下游评估影响。\n\n**3. 搜索与发现**：\n- 索引结构：ES 索引，字段包括表名、列名、描述、标签、拥有者、最后更新时间。\n- 排名策略（Relevance Scoring）：\n  - 精确匹配（表名/列名）> 前缀匹配 > 全文匹配。\n  - 被引用次数（表的访问频率）加权。\n  - 人工置顶（Curated / Certified 数据资产优先显示）。\n- 高级搜索：支持 `col:user_id`、`db:analytics`、`tag:PII` 等过滤语法。\n\n**4. 元数据管理功能**：\n- 分级分类（Data Classification）：自动 vs 手动标记（如 PII < 手机号/身份证号 >、敏感、公开）。\n- 标签系统（Tags / Glossary）：层次化业务术语表（Business Glossary），将技术表名映射到业务概念。\n- 数据质量分数：对接数据质量监控，每条数据资产显示质量评分（完整性/一致性/时效性）。\n- 审批工作流：Schema 变更、标签修改、等级变更需审批。\n\n扩展延伸：\n开源对比：DataHub（LinkedIn）——实时性最好，基于 Kafka + ES + Neo4j，搜索体验优秀。Amundsen（Lyft）——搜索友好，但血缘能力弱于 DataHub。Atlas（Apache）——Hadoop 生态深度集成，但用户体验和性能较差。数据目录是一个「业务价值高但投入回报周期长的系统」——建议从搜索 + 基础血缘起步，逐步建设。",
+    "hints": [
+      "Data Catalog 的元数据模型是图结构（实体 + 关系）而非传统的表和关联表",
+      "字段级血缘解析的核心难点在于 SQL 中嵌套子查询、UDF、CASE WHEN 等复杂结构"
+    ],
+    "tags": [
+      "Data Catalog",
+      "元数据管理",
+      "数据血缘",
+      "数据治理"
+    ]
   }
 ]

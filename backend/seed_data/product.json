@@ -1415,5 +1415,106 @@
       "北极星指标",
       "指标树"
     ]
+  },
+  {
+    "category": "product",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Prioritizing features with conflicting stakeholder goals",
+    "content": "You are a PM for an enterprise collaboration tool. Your largest customer (30% of revenue) demands a compliance audit feature that would take 3 sprints to build, but your user research shows 70% of self-serve users are churning due to poor mobile notifications. Engineering can only staff one initiative next quarter. Walk through how you would prioritize and what framework you would use.",
+    "answer": "I would use a weighted framework combining business impact, user impact, and strategic alignment:\n\n1. Quantify the stakes: Losing the enterprise customer = 30% revenue hit (~$X). Reducing churn by even 5% among self-serve users = $Y recurring. Calculate the expected value of each investment over 6-12 months.\n\n2. De-risk the compliance feature: Instead of 3 full sprints, scope a MVP for the enterprise customer. Ask: what is the minimum compliance feature that retains them? Offer them a phased delivery: basic audit log in 1 sprint, advanced reporting in 2 more.\n\n3. Address churn with a smaller investment: Engineer input may reveal that 1 sprint of focused work on notifications (e.g., push infrastructure, priority levels) might resolve the biggest pain points. Ship that first.\n\n4. Communicate transparently: Schedule a joint roadmap call with the enterprise customer. Explain that compliance will start in Q2 with an MVP in March, while the next sprint focuses on platform reliability that also benefits their audit data delivery.\n\n5. Use RICE scoring: Reach (users affected), Impact (conversion/retention delta), Confidence (how sure are we of the data), Effort (engineering cost). Run both initiatives through RICE and let the data guide the decision.\n\nResult: Likely a split strategy — 1 sprint for minimum notification fix + 1 sprint for compliance MVP, deferring the full compliance suite.",
+    "hints": [
+      "Think about de-risking the estimated effort — is there a smaller experiment for each path?",
+      "Consider negotiation with the enterprise customer — what is their actual deadline vs. their ask?"
+    ],
+    "tags": [
+      "prioritization",
+      "stakeholder-management",
+      "RICE-framework",
+      "enterprise-vs-consumer",
+      "trade-offs"
+    ]
+  },
+  {
+    "category": "product",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Measuring success for a zero-to-one product launch",
+    "content": "Your company is launching a brand new AI-powered meeting notes product. It has zero users today. You need to define success metrics for the first 3 months post-launch. What metrics would you track and why? How would they change in months 6-12?",
+    "answer": "Phase 1 (Months 1-3): Activation & Retention — Focus on product-market fit signals.\n\nCore metrics:\n- Activation rate: % of signups who complete the core flow (install integration + generate ≥3 notes). Target: >40%.\n- D7 retention: % of activated users who return within 7 days. Target: >30% (baseline for SaaS).\n- NPS among weekly active users: measure delight directly.\n- Time-to-value: minutes from signup to first useful note generated. Target: <5 min.\n- Qualitative: conduct 10-15 customer discovery calls per week with active users.\n\nPhase 2 (Months 6-12): Growth & Engagement — Shift to scale and monetization readiness.\n\nCore metrics:\n- MAU growth rate: week-over-week organic growth.\n- Notes-per-user-per-week: engagement depth. Target: increasing trend.\n- Sharing/viral coefficient: % of users who invite teammates. Target: >0.3 for organic growth.\n- Paid conversion rate: trial-to-paid, once pricing is introduced.\n- Feature adoption: % of users using advanced features (search, templates, integrations).\n- Churn rate: monthly churn should be <5% before monetization.\n\nKey principle: In the zero-to-one phase, qualitative signals (user love, spontaneous referrals) matter as much as quantitative metrics. Don't optimize for revenue until retention is proven.",
+    "hints": [
+      "Distinguish between vanity metrics and actionable metrics for early-stage products.",
+      "Think about the transition from qualitative signal-seeking to quantitative growth optimization."
+    ],
+    "tags": [
+      "product-metrics",
+      "zero-to-one",
+      "product-launch",
+      "retention",
+      "north-star-metric"
+    ]
+  },
+  {
+    "category": "product",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Handling the 「low usage」feature request from a power user",
+    "content": "A power user at a key account emails you directly requesting a complex reporting feature that only their team would use. The feature would take 2 sprints to build and you know less than 2% of users would benefit. What is the BEST response?",
+    "options": [
+      "A) Decline the request immediately since the ROI doesn't justify the cost for 2% of users.",
+      "B) Build it as a premium add-on that the customer pays for, offsetting the engineering cost.",
+      "C) Schedule a call to understand the underlying problem, then evaluate if a simpler solution exists that could serve the user's need without building the full feature.",
+      "D) Add it to the roadmap and estimate a delivery date 2 quarters out, hoping the user forgets about it."
+    ],
+    "answer": "C",
+    "hints": [
+      "The user's stated request may not match their actual need.",
+      "Consider whether there is a cheaper path (configuration, existing feature, 3rd party integration) before building custom code."
+    ],
+    "tags": [
+      "stakeholder-management",
+      "feature-request",
+      "prioritization",
+      "enterprise-sales",
+      "customer-research"
+    ]
+  },
+  {
+    "category": "product",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "A/B test design for a pricing page change",
+    "content": "Your team wants to move the monthly plan option above the annual plan on the pricing page, hypothesizing that showing the lower monthly price first will increase overall conversion. Design an A/B test for this change. What would you measure, how long would you run it, and what risks should you watch for?",
+    "answer": "Test Design:\n\nHypothesis: Placing the monthly plan before the annual plan increases overall signup conversion by surfacing the lower upfront cost.\n\nVariants:\n- Control: Current layout — annual shown first (status quo)\n- Treatment: Monthly shown first, annual second\n\nPrimary metric: Overall signup conversion rate (click-to-paid, within 24h of landing on pricing page).\n\nSecondary metrics:\n- Monthly vs. annual plan selection ratio (to check for plan-type shift)\n- Revenue-per-visitor (ARR basis — critical: higher signups mean nothing if they skew heavily monthly and LTV drops)\n- Bounce rate on pricing page\n- Average time spent on page\n\nDuration: Minimum 2 full weeks to capture a full business cycle (weekday/weekend effects). Run until both variants reach statistical significance (p<0.05, 80% power).\n\nRisks:\n1. Revenue dilution: More signups at lower monthly price could actually reduce total ARR. Counteract by computing blended ARPU per visitor as the ultimate success metric.\n2. Order effect bias: Users may choose whichever option is listed first regardless of price. Mitigate by testing the inverse ordering separately in a follow-up experiment.\n3. Segment differences: New visitors vs. returning visitors may react differently. Pre-register segment analysis.\n4. Seasonality: Don't run during Black Friday or known promotion periods unless the control group sees the same conditions.\n\nNovelty effect: New layout may get an initial bump that fades. Only declare results after at least one full week of stable data.",
+    "hints": [
+      "Higher conversion on a cheaper plan doesn't necessarily mean higher revenue.",
+      "Think about statistical power — how many visitors do you need per variant?"
+    ],
+    "tags": [
+      "a-b-testing",
+      "experimentation",
+      "pricing",
+      "conversion-optimization",
+      "statistical-significance"
+    ]
+  },
+  {
+    "category": "product",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Product strategy for an AI feature that underdelivers",
+    "content": "Six months ago your team shipped an AI-powered search feature. Users love the concept but the accuracy is only 72% on internal benchmarks, leading to frustrating experiences. Engineering says improving to 90% requires a complete model retraining pipeline (4 months). The CEO wants to feature it in an upcoming marketing campaign. What is your product strategy?",
+    "answer": "Strategy: Manage expectations while investing in quality — don't kill the feature, but don't over-promise.\n\nImmediate actions (next 2 weeks):\n1. Ship UX improvements to manage user expectations: show confidence scores per result, offer fallback to keyword search when AI confidence is low, add 「Was this helpful?」feedback buttons to collect ground truth data.\n2. Design a progressive enhancement plan: the 72% model can still handle 「easy」cases well. Route simple queries (factual, known-entity) to AI and leave complex/long-tail queries on the existing search.\n\nCEO communication:\n- Present data showing the retention impact of the AI feature — even at 72%, does it improve overall search success rate for any user segment?\n- Recommend the marketing campaign focus on the 「assistive」aspect: 「AI-powered suggestions to get you started」rather than 「perfect answers every time.」\n- Commit to a public beta label until accuracy hits 90%, making the limitation transparent.\n\nProduct changes (next 1-4 months):\n- While engineering builds the retraining pipeline, collect feedback data to create a labeled dataset for the new model. This accelerates the timeline.\n- Build a hybrid search: combine keyword relevance + AI ranking, allowing the AI to add suggestions above keyword results without fully replacing them.\n- Define the success bar together with engineering — what does 90% mean? Is it precision@1, top-3 recall, or user-reported satisfaction?\n\nRisk: If the CEO insists on featuring the current version as polished, push for a controlled campaign — only show it to a subset of users with a 「beta」tag, so reputation risk is contained.",
+    "hints": [
+      "How do you balance executive pressure against shipping a subpar user experience?",
+      "Think about hybrid approaches that combine the old system with the new AI system."
+    ],
+    "tags": [
+      "ai-product",
+      "quality-strategy",
+      "stakeholder-management",
+      "mvp-iteration",
+      "executive-communication"
+    ]
   }
 ]

@@ -1474,5 +1474,119 @@
       "AutoBoxCacheMax",
       "JVM-parameter"
     ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "String常量池与new String()引用比较",
+    "content": "String s1 = 「Hello」; String s2 = new String(「Hello」); 执行后，s1 == s2 返回true，因为字符串常量池会复用字面量。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "new String在堆上创建新对象",
+      "==比较引用地址而非内容",
+      "s1指向常量池s2指向堆对象"
+    ],
+    "tags": [
+      "String",
+      "常量池",
+      "intern",
+      "引用比较"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "编译时常量与类初始化触发",
+    "content": "访问类的final static常量（编译时常量）会触发该类的初始化，包括执行静态代码块。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "编译时常量被内联到常量池",
+      "JLS规定不触发类初始化",
+      "static final String是编译时常量"
+    ],
+    "tags": [
+      "类加载",
+      "初始化",
+      "编译时常量",
+      "JLS"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "try-with-resources的资源关闭顺序",
+    "content": "在try-with-resources语句中，多个资源按声明顺序依次关闭。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "资源关闭顺序与声明顺序相反",
+      "后声明的资源可能依赖前者",
+      "先关闭外层再关闭内层如栈"
+    ],
+    "tags": [
+      "try-with-resources",
+      "AutoCloseable",
+      "异常处理"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "JNI引用的GC Root地位",
+    "content": "在Java的垃圾回收根（GC Root）枚举中，正在被JNI调用（Native方法）引用的Java对象不会被判定为垃圾。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A",
+    "hints": [
+      "GC Root包括JNI全局局部引用",
+      "本地方法栈引用属于活跃引用",
+      "JNI引用阻止回收其引用链"
+    ],
+    "tags": [
+      "GC Root",
+      "JNI",
+      "垃圾回收",
+      "可达性分析"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "finalize()方法的执行保证",
+    "content": "如果重写了Object.finalize()方法，JVM保证在对象被GC回收前该方法一定会被执行完毕。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "finalize可能不被执行",
+      "JDK 9已弃用finalize",
+      "对象可能在finalize中复活"
+    ],
+    "tags": [
+      "finalize",
+      "GC",
+      "对象复活",
+      "JVM"
+    ]
   }
 ]

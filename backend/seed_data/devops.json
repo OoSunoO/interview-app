@@ -1428,5 +1428,112 @@
       "Grafana",
       "可观测性"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux Namespace 与 Cgroups 容器隔离原理",
+    "content": "Docker 容器利用 Linux 内核的 Namespace 和 Cgroups 实现资源隔离与限制。请说明 Namespace 提供了哪几种隔离维度？Cgroups 可以限制哪些资源？它们各自解决了什么安全问题？",
+    "answer": "答案：Namespace 提供 8 种隔离维度——PID（进程号）、Network（网络栈）、Mount（文件系统挂载点）、UTS（主机名和域名）、IPC（进程间通信）、User（用户和 UID）、Cgroup（cgroup 根目录）、Time（系统时间，Linux 5.6+）。Cgroups 限制 CPU、内存、磁盘 I/O、网络带宽和 PID 数量。Namespace 解决「进程只能看到隔离后的视图」的问题，Cgroups 解决「进程不能使用超出限制的资源」的问题。\n\n解析：Namespace 的工作原理——每个进程关联一组 Namespace，系统调用 clone() 或 unshare() 时指定 CLONE_NEWNS/NEWPID/NEWNET 等标志创建新 Namespace。PID Namespace：进程在容器内看到的 PID 从 1 开始，但宿主机上映射为普通 PID。Mount Namespace：容器有独立的文件系统挂载点，容器内 /proc 只显示自己的进程。Network Namespace：容器有独立的网络栈（lo、veth pair），容器间通过 veth bridge 通信。Cgroups（Control Groups）的 v1/v2 版本：通过/sys/fs/cgroup/ 下的子系统控制资源。cpu.shares 控制 CPU 权重，memory.limit_in_bytes 限制内存上限，blkio.throttle 控制磁盘读写速率。\n\n扩展延伸：安全性考量：1）Namespace 隔离不是安全边界——容器内仍可通过/proc、sysfs 等内核接口逃逸（如 CVE-2022-0492 cgroup 逃逸）。2）Cgroups 无法阻止资源竞争的侧信道攻击（如 L1TF 推测执行）。3）生产环境建议：不使用 privileged 容器、使用 Seccomp 限制系统调用、使用 AppArmor/SELinux 做强制访问控制、使用 User Namespace 将容器内 root 映射为宿主机非特权用户。注意：Namespace 和 Cgroups 只提供「资源隔离」功能，不提供严格安全隔离。需要更强隔离时考虑 Kata Containers（轻量虚拟机）或 gVisor（用户态内核）。",
+    "hints": [
+      "Namespace 隔离和安全隔离的区别——为什么说 Namespace 不是安全边界",
+      "User Namespace 如何将容器内 root 映射为宿主机普通用户"
+    ],
+    "tags": [
+      "Docker",
+      "Namespace",
+      "Cgroups",
+      "容器",
+      "安全"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "CI/CD 流水线方案对比",
+    "content": "关于 Jenkins Pipeline、GitLab CI/CD 和 GitHub Actions 三种主流 CI/CD 方案的对比，以下说法正确的是？",
+    "options": [
+      "A) GitHub Actions 只能用于 GitHub 托管的仓库，不支持自托管 Runner",
+      "B) GitLab CI/CD 的 Runner 只能由 GitLab 官方托管，不支持私有化部署",
+      "C) Jenkins Pipeline 通过 Jenkinsfile 定义流水线，支持复杂的有状态流水线和人工审批节点，但需要自行维护 Jenkins 服务",
+      "D) GitLab CI/CD 使用 YAML 描述流水线，但完全不支持并行 Job 执行"
+    ],
+    "answer": "答案：C) Jenkins Pipeline 通过 Jenkinsfile 定义流水线，支持复杂的有状态流水线和人工审批节点，但需要自行维护 Jenkins 服务\n\n解析：Jenkins Pipeline 使用 Groovy 语法定义声明式或脚本式流水线——支持条件分支、循环、异常处理、人工审批（input 指令）、跨 Job 共享工作空间等复杂场景。对复杂的部署流水线（如多环境审批发布、金丝雀+全量、数据库迁移等）支持最好。缺点是需要自行维护 Jenkins 服务（Master + Agent 集群），CI 配置用 Groovy DSL，学习曲线较陡。\n\n扩展延伸：其他选项的问题：A) GitHub Actions 既支持 GitHub 托管的 Runner（免费额度），也支持自托管 Runner（self-hosted runner）在自己的服务器上执行 Job。B) GitLab CI/CD 的 Runner 可以私有化部署（通过 gitlab-runner 注册到 GitLab 实例），也是部署最常见的方案。C) GitLab CI/CD 支持并行 Job（parallel 关键字）和 DAG（needs 关键字实现有向无环图编排）。选型建议：代码在 GitHub 上→GitHub Actions（与 GitHub 深度集成）；团队使用 GitLab Self-Managed →GitLab CI/CD（开箱即用）；有复杂的发布审批和状态管理需求→Jenkins（最成熟灵活）；简单云原生场景→直接使用 ArgoCD + K8s（GitOps 模式）。",
+    "hints": [
+      "Jenkins Pipeline 的 Groovy DSL 相比 YAML 的优劣",
+      "三种 CI/CD 方案在自托管 Runner 能力上的差异"
+    ],
+    "tags": [
+      "CI/CD",
+      "Jenkins",
+      "GitLab CI",
+      "GitHub Actions",
+      "DevOps"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "蓝绿部署、滚动更新与金丝雀发布的对比",
+    "content": "请对比蓝绿部署（Blue-Green Deployment）、滚动更新（Rolling Update）和金丝雀发布（Canary Release）三种发布策略的实现原理、优缺点以及各自的适用场景。",
+    "answer": "答案：蓝绿部署维护两套完全独立的环境（蓝/绿），通过切换流量入口瞬时完成版本切换。滚动更新分批替换旧版本 Pod，逐步用新版本取代旧版本，始终保持一定数量实例可用。金丝雀发布先让少量用户使用新版本，验证稳定后再逐步扩大范围到全量。\n\n解析：1）蓝绿部署——维护两套全量环境（蓝=当前版本，绿=新版本），发布时部署绿环境，验证通过后瞬间切换负载均衡指向绿环境。优点：切换速度快（秒级）、回滚简单（切回蓝环境即可）。缺点：资源需求翻倍（两套全量环境同时运行）、数据库兼容性需同时支持新旧版本。适用：对业务中断敏感、资源充足的场景。2）滚动更新（K8s Deployment 默认策略）——逐步替换 Pod：先起一个新 Pod，等就绪后停一个旧 Pod，重复直到全部替换。K8s 通过 maxSurge 和 maxUnavailable 控制更新速率。优点：资源需求不变、可设置自动回滚。缺点：新旧版本短暂共存，需处理兼容性问题。适用：大多数无状态服务。3）金丝雀发布——通常结合服务网格（Istio）或网关（Nginx/Gateway）做流量权重分配：初始 1% 流量到新版本→5%→25%→50%→100%。优点：风险最小（影响面可控）、可结合监控和告警做自动化判断。缺点：实现复杂、流量分发和监控需要基础设施支持。适用：核心业务、影响面大的关键变更。\n\n扩展延伸：结合实践——大多数公司对核心服务使用「金丝雀+滚动更新」的组合：金丝雀阶段验证功能和性能，全量切换时用滚动更新秒级过渡。数据库变更的发布策略最为棘手——建议遵循「前向兼容、后向兼容」原则，即先加后删。CRUD 操作的发布步骤：1）新版本代码兼容旧表结构。2）执行数据库变更（加列）。3）旧版本代码做好兼容。4）发布新版本代码使用新列。5）清理旧代码路径。6）删除不再需要的旧列。",
+    "hints": [
+      "蓝绿部署中数据库兼容性问题如何解决",
+      "金丝雀发布如何结合 Prometheus 指标自动判断是否继续放量"
+    ],
+    "tags": [
+      "部署",
+      "蓝绿部署",
+      "金丝雀发布",
+      "滚动更新",
+      "发布策略"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CNI 容器网络模型与实现方案",
+    "content": "容器网络的 CNI（Container Network Interface）模型是什么？Flannel 和 Calico 两种常见的 CNI 实现方案在数据平面和控制平面上有什么根本区别？",
+    "answer": "答案：CNI 是容器网络的标准接口规范，定义了两个核心操作——ADD（将容器加入网络）和 DEL（将容器移出网络），由 Container Runtime（Kubelet）调用 CNI 插件实现网络配置。Flannel 使用 Overlay 网络（VXLAN 封装），Calico 使用纯三层路由（BGP+Bird，无 Overlay 封装）实现 Pod 间通信。\n\n解析：Flannel 的工作原理：1）每个节点分配一个独立的子网（如 10.1.1.0/24）。2）节点上的 flanneld 通过 etcd/K8s API 协调子网分配。3）跨节点通信时，原始数据包被 VXLAN/UDP 封装后通过宿主机网络传输（Overhead 约 20-50 字节，带来约 5-15% 性能损耗）。Flannel 的优点是简单、与 K8s 集成好、无需额外基础设施。Calico 的工作原理：1）每个节点充当纯三层路由器（通过 BGP 协议交换路由）。2）Pod 到 Pod 的通信直接通过宿主机内核路由表转发（不需要 Overlay 封装），性能接近宿主机网络。3）通过 iptables/IPVS 实现 NetworkPolicy 的网络策略控制。\n\n扩展延伸：性能对比：Calico（无 Overlay）≈ 宿主机原生网络 98% 吞吐，Flannel（VXLAN）≈ 宿主机原生网络 85-90% 吞吐。选型建议：对性能敏感的生产集群→Calico（推荐 BGP 模式或 IPIP 模式）；中小集群或网络基础设置不支持 BGP→Flannel（简单可靠）；需要 NetworkPolicy 策略控制→Calico（Flannel 需要额外集成 Canal/Kube-router）。Calico 的两种数据路径：eBPF 模式（性能最优，内核 5.3+）和标准 iptables 模式。注意：Calico 需要 BGP 基础设施支持（在公有云中可能需要配合其他网络方案，或使用 VXLAN+Calico 混合模式）。",
+    "hints": [
+      "Calico 的 BGP 模式为什么比 Flannel 的 VXLAN 性能更好",
+      "Overlay 网络（VXLAN）和纯三层路由各自的性能损耗因素"
+    ],
+    "tags": [
+      "CNI",
+      "Flannel",
+      "Calico",
+      "容器网络",
+      "Kubernetes"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "IaC 工具选型与不可变基础设施",
+    "content": "关于基础设施即代码（IaC）和不可变基础设施（Immutable Infrastructure）的实践，以下说法正确的是？",
+    "options": [
+      "A) 不可变基础设施意味着服务器上的配置永远不可更改，即使需要打安全补丁也必须重新部署整个镜像",
+      "B) Terraform 只支持声明式配置管理，不支持 Shell 脚本等过程式操作",
+      "C) 不可变基础设施与可变基础设施的核心区别在于：前者通过重新创建实例来应用变更，后者通过 SSH 登录已运行实例修改配置",
+      "D) Ansible 和 Terraform 都只能管理云资源，不能管理内部数据中心"
+    ],
+    "answer": "答案：C) 不可变基础设施与可变基础设施的核心区别在于：前者通过重新创建实例来应用变更，后者通过 SSH 登录已运行实例修改配置\n\n解析：不可变基础设施的核心原则：任何时候都不修改已运行的服务器。需要任何变更（更新软件、修改配置、打补丁）时，从基线镜像创建新实例，验证后替换旧的。这消除了配置漂移（Configuration Drift）问题，保证了环境的一致性和可重现性。相比之下，可变基础设施中运维人员通过 SSH 登录服务器执行命令修改配置，随着时间的推移，服务器的实际状态与代码定义的状态越来越不一致（配置漂移），且难以自动化回滚。\n\n扩展延伸：其他选项的分析：A）不可变基础设施并不意味着完全不打安全补丁——补丁通过更新基础镜像版本并重新部署实例来应用，而非在运行中的实例上打补丁。这是一个「重新创建还是原地修改」的哲学差异。B）Terraform 支持 provisioner（remote-exec/local-exec）执行脚本和 Shell 命令，但官方不推荐将 provisioner 用作核心配置手段——违背了声明式原则。D）Ansible 和 Terraform 都支持管理物理机、虚拟机和私有云（OpenStack/vSphere）——不限于公有云。工具选型：Terraform——基础设施资源编排（声明式创建/管理云资源）；Ansible/Puppet——配置管理（在现有机器上安装软件/管理配置）；Packer——创建不可变镜像（从 ISO 或基础镜像自动化构建机器镜像）。",
+    "hints": [
+      "不可变基础设施如何解决配置漂移（Configuration Drift）问题",
+      "Terraform 的 Provisioner 为什么官方不推荐作为核心配置手段"
+    ],
+    "tags": [
+      "IaC",
+      "Terraform",
+      "Ansible",
+      "不可变基础设施",
+      "DevOps"
+    ]
   }
 ]

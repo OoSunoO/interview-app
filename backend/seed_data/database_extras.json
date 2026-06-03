@@ -1452,5 +1452,107 @@
       "查询优化",
       "性能"
     ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "InnoDB 行锁与间隙锁类型详解",
+    "content": "InnoDB 在 REPEATABLE READ 隔离级别下实现了多种锁类型：Record Lock、Gap Lock、Next-Key Lock、Insert Intention Lock。请说明这四种锁的区别，以及 Next-Key Lock 如何解决幻读问题。",
+    "answer": "答案：Record Lock 锁住索引记录本身；Gap Lock 锁住索引记录之间的间隙（不锁记录）；Next-Key Lock = Record Lock + Gap Lock 的组合，锁住记录及其前的间隙；Insert Intention Lock 是插入操作在插入前获取的一种特殊间隙锁（多个事务的 Insert Intention Lock 互不阻塞除非间隙上有 Gap Lock）。\n\n解析：1）Record Lock——锁住单条索引记录（不是行，而是索引记录）。InnoDB 的所有行锁都是基于索引实现的——如果 SQL 没有用到索引，InnoDB 会使用聚簇索引（相当于锁表）。2）Gap Lock——锁住两条索引记录之间的空间，防止其他事务在间隙中插入新行，解决幻读。Gap Lock 只存在于 RR 级别（RC 级别禁用）。3）Next-Key Lock——默认的 RR 级别锁算法，锁住一个左开右闭区间（前一个值, 当前值]。当查询走唯一索引的等值条件时退化为 Record Lock。4）Insert Intention Lock——插入操作特有，多个事务在间隙上插入不同位置时互不阻塞（提高插入并发），但如果间隙上有 Gap Lock 则等待。\n\n扩展延伸：Next-Key Lock 如何解决幻读：以 WHERE id > 5 FOR UPDATE 为例，InnoDB 锁住 (5, +∞) 范围内的所有间隙和记录。当另一个事务 INSERT id=10 时，Insert Intention Lock 与 Gap Lock 冲突而等待。这样当前事务再次 SELECT 时不会多出幻影行。注意：RC 级别下没有 Gap Lock，所以无法通过 Next-Key Lock 防止幻读。RR 级别下并非所有 SQL 都加 Gap Lock——唯一索引等值匹配退化为 Record Lock。",
+    "hints": [
+      "唯一索引等值查询时 Next-Key Lock 退化为 Record Lock 的条件是什么",
+      "为什么 RC 级别无法通过 Gap Lock 防止幻读"
+    ],
+    "tags": [
+      "MySQL",
+      "InnoDB",
+      "行锁",
+      "间隙锁",
+      "Next-Key Lock"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "InnoDB 多范围读取（MRR）",
+    "content": "Multi-Range Read（MRR）是 MySQL 5.6 引入的优化，适用于通过{{____}}索引查询大量数据时的场景。MRR 先将满足条件行的{{____}}收集到缓冲区中按{{____}}排序，然后批量回表读取数据行。MRR 将回表的{{____}}I/O 转化为{{____}}I/O，大幅减少磁盘寻道次数。MRR 的开启通过{{____}}优化器开关控制。",
+    "answer": "{\"correct\":[[\"二级\",\"辅助\"],[\"主键值\",\"RowID\"],[\"主键\",\"RowID\"],[\"随机\"],[\"顺序\"],[\"mrr\"]],\"distractors\":[\"聚簇\",\"索引值\",\"时间\",\"顺序\",\"随机\",\"index_merge\"]}",
+    "hints": [
+      "MRR 在什么场景下收益最大——大量的范围扫描需要回表时",
+      "MRR 和索引下推（ICP）可以同时使用吗"
+    ],
+    "tags": [
+      "MySQL",
+      "MRR",
+      "SQL优化",
+      "回表",
+      "随机I/O"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "MySQL 8.0 降序索引",
+    "content": "关于 MySQL 8.0 的降序索引（Descending Index），以下说法正确的是？",
+    "options": [
+      "A) MySQL 8.0 之前的版本已经支持降序索引，但优化器不会使用它",
+      "B) 降序索引通过在 B+ Tree 中按降序存储键值，避免了 ORDER BY col DESC 的文件排序",
+      "C) 降序索引只支持 InnoDB 引擎，MyISAM 不支持",
+      "D) 降序索引不能与复合索引一起使用"
+    ],
+    "answer": "答案：B) 降序索引通过在 B+ Tree 中按降序存储键值，避免了 ORDER BY col DESC 的文件排序\n\n解析：MySQL 8.0 之前，虽然可以指定 DESC 创建索引（如 INDEX idx (a DESC)），但 MySQL 实际仍然按升序存储，优化器忽略 DESC 关键字。当查询需要降序排列时，MySQL 必须在内存或磁盘中做额外排序（filesort）。MySQL 8.0 真正实现降序索引——B+ Tree 中相邻叶子按降序排列，ORDER BY a DESC 可以直接走索引避免 filesort。\n\n扩展延伸：降序索引的最大价值在复合索引中：假设有索引 (a ASC, b DESC)，查询 WHERE a=1 ORDER BY b DESC 可以直接利用索引的有序性升序遍历 a、降序遍历 b，无需额外排序。反之，如果只有 (a, b) 普通索引，ORDER BY a ASC, b DESC 无法利用 b 列的索引顺序，需要 filesort。适用场景：需要正反混合排序的列（如按时间升序查询但某列降序排列）。空间开销：与升序索引相同，无额外存储成本。注意：降序索引在 MySQL 8.0 中仍不如升序索引高效，因为 B+ Tree 本质上更适合按升序遍历。",
+    "hints": [
+      "复合索引中混合排序（ASC + DESC）如何利用降序索引避免 filesort",
+      "MySQL 8.0 之前指定 DESC 索引为什么被优化器忽略"
+    ],
+    "tags": [
+      "MySQL",
+      "降序索引",
+      "Descending Index",
+      "SQL优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 半连接优化（Semi-join）",
+    "content": "MySQL 对 IN、EXISTS 等子查询实现了半连接（Semi-join）优化。请说明 Semi-join 有哪几种执行策略？优化器如何选择？DISTINCT 和 Semi-join 有什么关系？",
+    "answer": "答案：Semi-join 是 MySQL 5.6+ 对 IN/EXISTS 子查询的优化——不是先执行子查询再过滤外层查询，而是将子查询与外层查询做半连接（只返回外层表的行，且每行最多返回一次）。Semi-join 五种策略：Duplicate Weedout、FirstMatch、LooseScan、Materialization、Materialization-Scan。\n\n解析：1）Duplicate Weedout——子查询和外层 JOIN 后通过临时表去重（主键或唯一键），保证外层行只出现一次。适用：外层数据量大且需要去重。2）FirstMatch——外层逐行遍历，匹配到子查询的第一条满足记录就返回，不再继续匹配。效率高但依赖外层到子查询的索引。3）LooseScan——子查询的索引上有重复值，每个重复组只取一个值参与连接。4）Materialization——将子查询结果物化成临时表，再与外层表做连接。适合子查询结果集小、外层无索引的场景。5）Materialization-Scan——Materialization 的变体，扫描物化表而不是在物化表上建立索引查找。\n\n扩展延伸：Semi-join 通过 optimizer_switch 中 semijoin=on/off 控制。EXPLAIN 中的 Extra 字段显示 Start/End materialization、FirstMatch(t1) 等标记。DISTINCT 与 Semi-join 的关系：Semi-join 天然包含去重语义（外层表行只会被返回一次），与 IN 子查询的语义一致。如果 SQL 写为 WHERE EXISTS (SELECT 1 ...)，MySQL 也会转化为 Semi-join。不能优化的子查询：子查询中使用 LIMIT、UNION 等复杂操作时 Semi-join 可能失效。",
+    "hints": [
+      "FirstMatch 和 Duplicate Weedout 各自的适用场景",
+      "Semi-join 为什么不适用于子查询含 LIMIT 的场景"
+    ],
+    "tags": [
+      "MySQL",
+      "Semi-join",
+      "子查询优化",
+      "SQL优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "InnoDB 独立表空间与共享表空间",
+    "content": "将 InnoDB 的系统表空间（ibdata1）和用户表的独立表空间（.ibd 文件）分离部署，使用 innodb_file_per_table=ON 时，可以独立回收每个表的磁盘空间。因此，DROP TABLE 或者 TRUNCATE TABLE 后，系统表空间中的对应空间也会自动释放回操作系统。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "DROP TABLE 操作释放的是独立表空间（.ibd）还是系统表空间（ibdata1）",
+      "ibdata1 中存储了哪些不会随 DROP TABLE 释放的数据"
+    ],
+    "tags": [
+      "MySQL",
+      "InnoDB",
+      "表空间",
+      "存储管理"
+    ]
   }
 ]

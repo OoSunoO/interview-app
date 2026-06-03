@@ -1441,5 +1441,106 @@
       "项目管理",
       "沟通"
     ]
+  },
+  {
+    "category": "behavioral_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Managing a direct report who is a high performer but toxic to the team",
+    "content": "You manage a senior engineer who consistently delivers outstanding technical work — 2x the output of anyone else — but they are dismissive in code reviews, refuse to collaborate with junior team members, and have caused two junior developers to request transfers off the team. How do you handle this?",
+    "answer": "Framework: Separate performance from behavior — both matter, and tolerating toxicity erodes the team faster than losing output.\n\nStep 1: Gather objective data.\n- Document specific incidents: code review comments that were dismissive, instances of refusing pairing requests, exit interview feedback from the two juniors.\n- Quantify the cost: replacement cost of two juniors, onboarding time, team morale impact (survey or 1:1 feedback from remaining members).\n\nStep 2: The feedback conversation.\n- Frame: 「Your technical contributions are valuable, and I need your engineering excellence on this team. But there is a problem.」\n- Present specific examples with impact: 「When you said 『this code is garbage』in John's PR review, he spent 3 days doubting his work. He transferred teams last week.」\n- Use the 「keep you / fix this」frame: 「I want to keep you on this team because of your technical strength, but I cannot keep you if the behavior doesn't change — because I have a responsibility to the whole team.」\n\nStep 3: Create a clear improvement plan.\n- Specific behavioral expectations: \n  1. Code review comments must focus on code, not the person. No personal language.\n  2. One paired session per sprint with a junior developer.\n  3. Monthly 1:1 check-in focused on team collaboration, not technical output.\n- Timeline: 30-60 days for measurable improvement.\n\nStep 4: Escalation if no improvement.\n- If after 60 days the behavior hasn't changed, initiate formal performance management. The behavior IS a performance issue.\n- Work with HR on options: reassignment to an individual contributor role with less team interaction, or separation.\n\nHardest lesson: Letting a high performer go is painful, but I've seen teams lose MORE productivity from the ripple effects of toxicity — reduced collaboration, juniors leaving, seniors spending energy avoiding the person — than they gain from the individual's output. The math almost always favors team health.\n\nIf they do change: many toxic high performers have never received direct feedback. With clear expectations, some transform into team leaders. Give them that chance — but hold the line.",
+    "hints": [
+      "Quantify the hidden cost of toxicity — it often exceeds the visible output benefit.",
+      "The conversation must link the behavior to specific team impact, not abstract criticism."
+    ],
+    "tags": [
+      "performance-management",
+      "toxic-behavior",
+      "leadership",
+      "team-health",
+      "difficult-conversations"
+    ]
+  },
+  {
+    "category": "behavioral_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Handling an ethical disagreement with your manager",
+    "content": "Your manager asks you to include misleading metrics in a quarterly report to make the team's performance look better. The metric is technically correct but the way it's presented would deceive stakeholders. How do you handle this?",
+    "answer": "Approach: Raise the concern privately, propose an alternative, and escalate only if necessary.\n\nStep 1: Clarify understanding.\n- First, I make sure I understand the request correctly. 「I want to make sure I understand — are you asking me to present metric X without the context of Y, even though Y significantly changes the interpretation?」\n- Sometimes the manager may not realize the presentation is misleading. Framing it as a clarification gives them an exit if it was unintentional.\n\nStep 2: Raise the concern constructively.\n- In private: 「I'm concerned that presenting the metric this way could mislead the leadership team. If they make a decision based on this and discover the real picture later, our team's credibility will take a hit.」\n- Propose an alternative: 「How about we present the metric with a footnote explaining the context? Or we show both numbers side by side with the caveat? That way we're transparent and still show our progress.」\n\nStep 3: If the manager insists.\n- If they say 「leadership doesn't need the caveat, just report the number,」 I escalate:\n  - 「I understand your position, but I'm not comfortable presenting this without context. I'd like to check with the compliance or legal team to make sure our reporting is aligned with company policy.」\n  - This signals that I'm not just being difficult — I have a genuine ethical concern.\n\nStep 4: Escalation path.\n- If the manager still insists, I document the request and my concerns, then escalate to the skip-level manager or the ethics/compliance team.\n- I would NOT include the misleading metric as requested. My professional reputation and integrity are not negotiable.\n\nKey principle: Ethical lines are clearer than they feel in the moment. When you're asking yourself 「is this misleading?」 you already know the answer. Trust that instinct and act on it early, before you rationalize it away.",
+    "hints": [
+      "Give your manager an off-ramp — they may not have thought through the implications.",
+      "Propose a concrete alternative that achieves their goal without the ethical issue."
+    ],
+    "tags": [
+      "ethics",
+      "integrity",
+      "stakeholder-communication",
+      "leadership",
+      "difficult-conversations"
+    ]
+  },
+  {
+    "category": "behavioral_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Rebuilding trust after a major mistake",
+    "content": "You made a configuration error that caused a 4-hour production outage, affecting all paying customers. After the incident was resolved, several stakeholders lost confidence in you. How did you rebuild trust with your team, your manager, and the affected stakeholders?",
+    "answer": "Approach: Trust is rebuilt through accountability, systemic fixes, and consistent behavior over time.\n\nImmediate (within 24 hours):\n1. Own the mistake publicly: 「I made this configuration change at 2 PM. It was my error. Here's exactly what I did wrong and why.」 No hedging, no blame-shifting.\n2. Fix the immediate issue: rolled back the change, verified service health, and stayed on-call until the system was stable for 6+ hours.\n3. Communicate to stakeholders: drafted a transparent status update explaining what happened, what was done to fix it, and when the post-mortem would be shared.\n\nWithin 1 week:\n1. Post-mortem (blameless but accountable): documented the root cause, contributing factors (lack of staging environment for that specific config), and preventative measures.\n2. Systemic fix: implemented a configuration review process — config changes require a second pair of eyes and a canary deployment. Also added automated validation that would have caught the specific error.\n3. Presented the post-mortem to the affected teams and leadership. I shared the slides personally, including my own mistake clearly, and walked through the systemic fixes.\n\nWithin 1 month:\n1. Consistent behavior: showed up reliably, met all commitments, and volunteered for on-call rotations.\n2. One-on-one conversations with key stakeholders: 「I know I lost some trust after the outage. I want you to know what I've learned and what's changed.」\n3. Rebuilt through small wins: I took on a high-visibility reliability improvement project and executed it flawlessly.\n\nWhat I learned:\n- The cover-up is worse than the mistake. Full transparency immediately earns more trust than trying to manage the narrative.\n- Systemic fixes matter more than apologies. Stakeholders want to know it won't happen again — show them the proof.\n- Trust recovery takes time. You can't talk your way out of something you behaved your way into. Consistent delivery over weeks rebuilt what one apology couldn't.\n\nSix months later, my manager told me the outage was a turning point — the team's operational practices improved significantly, and she trusted me more because she saw how I handled accountability.",
+    "hints": [
+      "Focus on the systemic changes you made, not just the apology.",
+      "Trust recovery requires time and consistent behavior — what did you do to demonstrate reliability day by day?"
+    ],
+    "tags": [
+      "trust-rebuilding",
+      "accountability",
+      "incident-response",
+      "resilience",
+      "professional-growth"
+    ]
+  },
+  {
+    "category": "behavioral_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Responding to scope creep from a key stakeholder",
+    "content": "You are halfway through a 3-month project. The VP of Product asks you to add a significant new feature that was explicitly out of scope in the signed-off spec. Adding it would push the deadline by 6 weeks. The PM is concerned about scope creep but doesn't want to say no to the VP. What is the BEST course of action?",
+    "options": [
+      "A) Add the feature since the VP asked for it — they control the budget and priorities.",
+      "B) Push back firmly and explain that the spec was agreed upon and changes will not be accepted mid-project.",
+      "C) Schedule a meeting with the VP and PM to discuss the trade-offs: present the impact on timeline, quality, and resources, and ask them to make an explicit prioritization decision.",
+      "D) Quietly work overtime to deliver both the original scope and the new feature, keeping the VP happy."
+    ],
+    "answer": "C",
+    "hints": [
+      "The VP may not be aware of the full trade-off implications — their job is to say yes to opportunities.",
+      "The question tests whether you can turn a directive into a collaborative prioritization conversation."
+    ],
+    "tags": [
+      "scope-creep",
+      "stakeholder-management",
+      "prioritization",
+      "communication",
+      "trade-offs"
+    ]
+  },
+  {
+    "category": "behavioral_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Leading through organizational change and layoffs",
+    "content": "Your company announces a 15% workforce reduction. Your team of 12 will lose 3 members. The remaining team is demoralized, and the workload doesn't decrease — it gets redistributed. As the team lead, how do you lead the team through this period?",
+    "answer": "Phase 1: The immediate aftermath (first 2 weeks).\n\nAcknowledge the reality: I start with honesty. In a team meeting, I acknowledge: 「This is hard, it sucks, and it's OK to feel angry or scared. I don't have all the answers, but here's what I know and here's what I'm doing to figure out the rest.」\n\nSupport the departing members: I personally help them with transition packages, reference letters, and connections. How the company treats departing employees is watched closely by those who stay.\n\nProtect the team from rumors: I commit to weekly updates with everything I know, even if the news is 「I don't know yet.」 Silence breeds the worst rumors.\n\nPhase 2: Rebuilding stability (weeks 3-8).\n\nRedefine priorities with the PM: We cannot do 12 people's work with 9. We review all commitments and explicitly deprioritize or defer 25% of the work. Nothing is assumed to continue.\n\nGive the team agency: I involve the team in deciding what to cut. They know the work best. This restores a sense of control in a situation where they feel powerless.\n\nIndividual conversations: Each remaining team member gets a 1:1 focused on their concerns, not project status. 「How are you doing? What do you need from me?」\n\nPhase 3: New normal (months 2-3).\n\nCelebrate small wins: After a heavy period, every shipped milestone gets acknowledged. Progress helps rebuild confidence.\n\nRebuild team identity: A team of 9 is different from a team of 12. New pairings, new responsibilities. Help the team find its new rhythm rather than grieving the old one.\n\nWatch for burnout: With redistributed workload, I watch for overtime patterns. I protect the team from additional requests relentlessly — say no to everything that isn't essential.\n\nWhat I've learned from experiencing this:\n- Transparency is the only path. People can handle bad news; they can't handle uncertainty and silence.\n- The team is watching what you do, not what you say. If you say you'll protect them and then accept more work, you lose them.\n- Post-layoff retention of top talent depends entirely on whether they feel the new situation is sustainable and meaningful. Give them reasons to stay.",
+    "hints": [
+      "How you treat the people leaving is watched closely by those who remain.",
+      "The team needs agency somewhere — involve them in deciding what to cut."
+    ],
+    "tags": [
+      "change-management",
+      "leadership",
+      "layoffs",
+      "team-morale",
+      "resilience"
+    ]
   }
 ]

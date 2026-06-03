@@ -1396,5 +1396,99 @@
       "快速选择",
       "堆"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "单词接龙",
+    "content": "字典 wordList 中从单词 beginWord 到 endWord 的转换序列是一个按下述规格形成的序列 beginWord -> s1 -> s2 -> ... -> sk：\n1. 每一对相邻的单词之差一个字母。\n2. 每个 si 都在 wordList 中。\n3. 每步只能改变一个字母。\n请计算从 beginWord 到 endWord 的最短转换序列的长度（端点包含在内）。如果不存在这样的转换序列，返回 0。",
+    "answer": "```java\npublic int ladderLength(String beginWord, String endWord, List<String> wordList) {\n    Set<String> wordSet = new HashSet<>(wordList);\n    if (!wordSet.contains(endWord)) return 0;\n    \n    Queue<String> queue = new LinkedList<>();\n    queue.offer(beginWord);\n    Set<String> visited = new HashSet<>();\n    visited.add(beginWord);\n    \n    int level = 1;\n    while (!queue.isEmpty()) {\n        int size = queue.size();\n        for (int i = 0; i < size; i++) {\n            String current = queue.poll();\n            if (current.equals(endWord)) return level;\n            \n            char[] chars = current.toCharArray();\n            for (int j = 0; j < chars.length; j++) {\n                char original = chars[j];\n                for (char c = 'a'; c <= 'z'; c++) {\n                    if (c == original) continue;\n                    chars[j] = c;\n                    String next = new String(chars);\n                    if (wordSet.contains(next) && !visited.contains(next)) {\n                        visited.add(next);\n                        queue.offer(next);\n                    }\n                }\n                chars[j] = original;\n            }\n        }\n        level++;\n    }\n    return 0;\n}\n```\n时间复杂度 O(M^2 * N)，其中 M 是单词长度，N 是单词总数。逐字母替换（26 种可能）比枚举 wordList 中所有单词做差异检查更快。空间复杂度 O(N)。\n\n优化思路：双向 BFS（从 beginWord 和 endWord 同时搜索），可以将搜索空间从指数级收缩到平方根级，实际加速 5-10 倍。双向 BFS 的做法是：两端各一个队列和 visited 集合，每次扩展较小的一端，当两端 visited 有交集时返回结果。",
+    "hints": [
+      "为什么用「逐字母替换」而不是「与每个单词比较」——枚举 26*M 种变化而非检查 N 个单词",
+      "双向 BFS 为什么更快——同时从起点和终点搜索，搜索空间从 b^d 降到 2*b^(d/2)"
+    ],
+    "tags": [
+      "BFS",
+      "图",
+      "最短路径",
+      "字符串"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "删除无效的括号",
+    "content": "给你一个由若干括号和字母组成的字符串 s，删除最小数量的无效括号，使得输入的字符串有效。返回所有可能的结果。答案可以按任意顺序返回。\n\n示例：\n- 输入：\"()())()\"\n- 输出：[\"()()()\", \"(())()\"]",
+    "answer": "```java\npublic List<String> removeInvalidParentheses(String s) {\n    List<String> result = new ArrayList<>();\n    // 先计算需要删除的左括号和右括号数\n    int leftRemove = 0, rightRemove = 0;\n    for (char c : s.toCharArray()) {\n        if (c == '(') leftRemove++;\n        else if (c == ')') {\n            if (leftRemove > 0) leftRemove--;\n            else rightRemove++;\n        }\n    }\n    dfs(s, 0, leftRemove, rightRemove, 0, new StringBuilder(), result);\n    return result;\n}\n\nprivate void dfs(String s, int index, int leftRemove, int rightRemove,\n                 int open, StringBuilder path, List<String> result) {\n    if (index == s.length()) {\n        if (leftRemove == 0 && rightRemove == 0 && open == 0) {\n            result.add(path.toString());\n        }\n        return;\n    }\n    char c = s.charAt(index);\n    int len = path.length();\n    // 1) 删除当前字符\n    if (c == '(' && leftRemove > 0) {\n        dfs(s, index + 1, leftRemove - 1, rightRemove, open, path, result);\n    }\n    if (c == ')' && rightRemove > 0) {\n        dfs(s, index + 1, leftRemove, rightRemove - 1, open, path, result);\n    }\n    // 2) 保留当前字符\n    path.append(c);\n    if (c != '(' && c != ')') {\n        // 普通字母直接保留\n        dfs(s, index + 1, leftRemove, rightRemove, open, path, result);\n    } else if (c == '(') {\n        dfs(s, index + 1, leftRemove, rightRemove, open + 1, path, result);\n    } else if (open > 0) { // c == ')' 且可以闭合\n        dfs(s, index + 1, leftRemove, rightRemove, open - 1, path, result);\n    }\n    path.setLength(len);\n}\n```\n时间复杂度 O(2^n)，空间 O(n)。\n\n核心思路：先计算最少需要删除的左右括号数（leftRemove, rightRemove），再用 DFS 尝试所有删除方案。剪枝：只有还有剩余删除配额时才删除。open 变量追踪当前已用的左括号数，确保不会出现右括号多余左括号的情况。\n\n去重优化：如果连续遇到相同括号（如 ')' 连续出现），删除第一个和删除第二个产生的结果相同。可以在 DFS 中增加去重判断：跳过连续重复的括号删除操作（只删除连续相同括号的第一个）。",
+    "hints": [
+      "先计算最少需要删除的左括号数和右括号数，然后用 DFS 尝试所有删除方案",
+      "如何避免重复结果——连续相同的括号删除其中任意一个会产生相同结果"
+    ],
+    "tags": [
+      "DFS",
+      "回溯",
+      "字符串",
+      "括号"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "数据流的中位数",
+    "content": "中位数是有序整数列表中的中间值。如果列表的大小是偶数，则没有中间值，中位数是中间两个数的平均值。\n\n设计一个支持以下两种操作的数据结构：\n- void addNum(int num) —— 从数据流中添加一个整数到数据结构中。\n- double findMedian() —— 返回目前所有元素的中位数。\n\n要求 addNum O(log n) 或更优，findMedian O(1)。",
+    "answer": "```java\nclass MedianFinder {\n    // 最大堆：存储较小的一半元素\n    private PriorityQueue<Integer> maxHeap;\n    // 最小堆：存储较大的一半元素\n    private PriorityQueue<Integer> minHeap;\n    \n    public MedianFinder() {\n        maxHeap = new PriorityQueue<>((a, b) -> b - a);\n        minHeap = new PriorityQueue<>();\n    }\n    \n    public void addNum(int num) {\n        // 先插入最大堆\n        maxHeap.offer(num);\n        // 平衡：确保最大堆的所有元素 <= 最小堆的所有元素\n        minHeap.offer(maxHeap.poll());\n        // 保持最大堆的大小 >= 最小堆（方便取中位数）\n        if (maxHeap.size() < minHeap.size()) {\n            maxHeap.offer(minHeap.poll());\n        }\n    }\n    \n    public double findMedian() {\n        if (maxHeap.size() > minHeap.size()) {\n            return maxHeap.peek();\n        } else {\n            return (maxHeap.peek() + minHeap.peek()) / 2.0;\n        }\n    }\n}\n```\naddNum 时间复杂度 O(log n)，findMedian O(1)。空间复杂度 O(n)。\n\n核心思路：用两个堆将数据分成两半——最大堆存较小的一半元素，最小堆存较大的一半元素。两个堆的大小差不超过 1，且最大堆的所有元素都不大于最小堆的所有元素。中位数即为两个堆顶的均值（或较大那个堆的堆顶）。\n\n进阶：如果数据流中有 99% 的元素在已知范围内（如 0-100），可以用计数数组（Count Sort + 桶）实现 O(1) 的 addNum——但需要知道数据范围。另一种进阶方法是使用「堆 + 延迟删除」支持删除操作（带删除标记的堆 + 延迟清理）。",
+    "hints": [
+      "两个堆如何分工——最大堆放较小的一半，最小堆放较大的一半，中位数就是堆顶的组合",
+      "插入时如何维护两个堆的平衡——始终保证两个堆的大小差不超过 1"
+    ],
+    "tags": [
+      "堆",
+      "优先队列",
+      "数据流",
+      "设计"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "设计内存文件系统",
+    "content": "设计一个内存文件系统，支持以下操作：\n- List<String> ls(String path)：列出给定路径下的文件和目录。如果路径指向文件，返回该文件的文件名。\n- void mkdir(String path)：根据给定路径创建目录。路径中的中间目录不存在时也一并创建。\n- void addContentToFile(String filePath, String content)：在文件末尾追加内容。\n- String readContentFromFile(String filePath)：读取文件内容。\n\n假设所有路径以 / 开头且不包含连续的 /。",
+    "answer": "```java\nclass FileSystem {\n    class Node {\n        String name;\n        boolean isFile;\n        StringBuilder content;\n        Map<String, Node> children;\n        \n        Node(String name) {\n            this.name = name;\n            this.isFile = false;\n            this.content = new StringBuilder();\n            this.children = new TreeMap<>();  // TreeMap 保证 ls 按字典序排列\n        }\n    }\n    \n    private Node root;\n    \n    public FileSystem() {\n        root = new Node(\"/\");\n    }\n    \n    private Node traverse(String path) {\n        if (path.equals(\"/\")) return root;\n        String[] parts = path.split(\"/\");\n        Node curr = root;\n        for (String part : parts) {\n            if (part.isEmpty()) continue;\n            if (!curr.children.containsKey(part)) {\n                curr.children.put(part, new Node(part));\n            }\n            curr = curr.children.get(part);\n        }\n        return curr;\n    }\n    \n    public List<String> ls(String path) {\n        Node node = traverse(path);\n        if (node.isFile) {\n            return Arrays.asList(node.name);\n        }\n        return new ArrayList<>(node.children.keySet());\n    }\n    \n    public void mkdir(String path) {\n        traverse(path);\n    }\n    \n    public void addContentToFile(String filePath, String content) {\n        Node node = traverse(filePath);\n        node.isFile = true;\n        node.content.append(content);\n    }\n    \n    public String readContentFromFile(String filePath) {\n        Node node = traverse(filePath);\n        return node.content.toString();\n    }\n}\n```\n\n每个操作的时间复杂度 O(n)（n 是路径深度），空间复杂度 O(N)（N 是总节点数）。\n\n核心设计：用 Trie（前缀树 / 路径树）来组织文件系统。每个节点表示一个目录或文件，`children` 使用 `TreeMap`（有序 Map）保证 ls 命令按字典序输出。`traverse` 方法实现路径解析和节点创建（自动创建中间目录），是所有操作的基础。\n\n设计要点：\n1. 路径分割：`path.split(\"/\")` 跳过空字符串（处理 `/a/b/c` 中 split 产生的开头的空串）。\n2. 文件和目录的区分：`isFile` 布尔标志。\n3. 文件内容追加：用 StringBuilder 以支持多次追加。\n4. ls 对文件的处理：如果 path 指向文件，只返回文件名而非文件内容。",
+    "hints": [
+      "文件系统的路径结构本质上是 Trie（前缀树）——每个节点是目录或文件",
+      "TreeMap 替代 HashMap 保证 ls 命令输出按字典序排序"
+    ],
+    "tags": [
+      "设计",
+      "Trie",
+      "文件系统",
+      "树"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "海量数据 TopK 的高效求解",
+    "content": "从 1 亿个 32 位整数中找出最大的 100 个数。请比较以下方案的优缺点：1）全局排序，2）堆（最小堆），3）快速选择，4）位图/Bitmap。数据量超出单机内存时又该如何处理？",
+    "answer": "方案对比：\n1）全局排序 O(NlogN)：最简单但效率最低，需要全部数据在内存中。\n2）最小堆 O(NlogK)：K=100 时近乎 O(N)，空间 O(K)，是单机场景最优方案。实现：构建大小为 100 的最小堆，每次与堆顶比较，比堆顶大则替换并调整。\n3）快速选择 O(N) 平均：基于 partition 将第 K 大元素放到正确位置，左侧为比它大的元素。缺点：最坏 O(N²)，且会修改原数组顺序。\n4）位图：不适合求 TopK（只能判断存在性），适合海量数据去重。\n\n数据超单机内存时：MapReduce（分而治之）——将数据分片到多台机器，每台用最小堆求局部 Top100，然后合并所有局部 Top100 再做全局 Top100。文件太大也可先分片到磁盘文件再处理。",
+    "hints": [
+      "最小堆方案的时间复杂度 O(NlogK) 中 logK 仅仅是 ~7(当K=100时)，理解为什么这意味着近乎线性",
+      "如果数据中有大量重复值，上述方案需要做什么调整"
+    ],
+    "tags": [
+      "TopK",
+      "堆",
+      "海量数据",
+      "分治"
+    ]
   }
 ]

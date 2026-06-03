@@ -1454,5 +1454,99 @@
       "Euler Tour Tree",
       "并查集"
     ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "火星词典（Alien Dictionary）",
+    "content": "现有一种使用英语字母的外星语言，这门语言的字母顺序与英语顺序不同。给定一个按「新字母顺序」排序的该语言单词列表 words，请返回这门语言的排序后的字母顺序。如果排序不合法（存在循环依赖），返回空字符串。",
+    "answer": "```java\npublic String alienOrder(String[] words) {\n    Map<Character, Set<Character>> graph = new HashMap<>();\n    Map<Character, Integer> inDegree = new HashMap<>();\n    \n    // 初始化所有出现的字母\n    for (String word : words) {\n        for (char c : word.toCharArray()) {\n            graph.putIfAbsent(c, new HashSet<>());\n            inDegree.putIfAbsent(c, 0);\n        }\n    }\n    \n    // 比较相邻单词，提取边\n    for (int i = 0; i < words.length - 1; i++) {\n        String w1 = words[i], w2 = words[i + 1];\n        int minLen = Math.min(w1.length(), w2.length());\n        boolean found = false;\n        for (int j = 0; j < minLen; j++) {\n            char c1 = w1.charAt(j), c2 = w2.charAt(j);\n            if (c1 != c2) {\n                if (!graph.get(c1).contains(c2)) {\n                    graph.get(c1).add(c2);\n                    inDegree.put(c2, inDegree.get(c2) + 1);\n                }\n                found = true;\n                break;\n            }\n        }\n        // 处理前缀相同但 w1 比 w2 长的情况（如 w1=\"abc\", w2=\"ab\" -> 非法）\n        if (!found && w1.length() > w2.length()) return \"\";\n    }\n    \n    // Kahn 算法拓扑排序\n    Queue<Character> queue = new LinkedList<>();\n    for (char c : inDegree.keySet()) {\n        if (inDegree.get(c) == 0) queue.offer(c);\n    }\n    \n    StringBuilder sb = new StringBuilder();\n    while (!queue.isEmpty()) {\n        char c = queue.poll();\n        sb.append(c);\n        for (char next : graph.get(c)) {\n            inDegree.put(next, inDegree.get(next) - 1);\n            if (inDegree.get(next) == 0) queue.offer(next);\n        }\n    }\n    \n    return sb.length() == inDegree.size() ? sb.toString() : \"\";\n}\n```\n时间复杂度 O(C)（C 是所有单词的总字符数），空间复杂度 O(1)（最多 26 个字母）。\n\n核心思路：比较相邻单词找到第一个不同的字母，构建有向边（c1 -> c2 表示 c1 在 c2 之前）。用拓扑排序（Kahn 算法）确定字母顺序。如果图中存在环（排序结果字符数少于总字符数），说明排序非法。\n\n边界情况：如果 w1 是 w2 的前缀且 w1 比 w2 长（如 w1=\"abcd\", w2=\"abc\"），排序非法——因为按排序规则短单词应该在更前面。",
+    "hints": [
+      "如何从有序单词列表推断字母顺序——比较相邻单词的第一个不同字母",
+      "拓扑排序检测循环依赖——Kahn 算法中如果排序结果不全说明有环"
+    ],
+    "tags": [
+      "拓扑排序",
+      "图",
+      "Kahn",
+      "字符串"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "设计搜索自动补全系统",
+    "content": "设计一个搜索自动补全系统（Search Autocomplete System）。用户输入句子时，系统返回排名前 3 的热门补全建议。\n\n实现 AutocompleteSystem 类：\n- AutocompleteSystem(String[] sentences, int[] times)：系统初始化时给定历史句子及其出现次数。\n- List<String> input(char c)：用户输入一个字符。如果 c == '#'，表示输入结束，将当前输入的句子记录到系统（次数 +1），返回空列表。否则返回前缀匹配且排名前 3 的补全建议。\n\n排名规则：先按热度（出现次数）降序，次数相同按句子的字典序升序。",
+    "answer": "```java\nclass AutocompleteSystem {\n    class TrieNode {\n        Map<Character, TrieNode> children = new HashMap<>();\n        Map<String, Integer> freqMap = new HashMap<>(); // 以该前缀开头的所有句子及其热度\n    }\n    \n    private TrieNode root;\n    private StringBuilder currentInput;\n    private TrieNode currentNode;\n    \n    public AutocompleteSystem(String[] sentences, int[] times) {\n        root = new TrieNode();\n        currentInput = new StringBuilder();\n        currentNode = root;\n        for (int i = 0; i < sentences.length; i++) {\n            addSentence(sentences[i], times[i]);\n        }\n    }\n    \n    private void addSentence(String sentence, int freq) {\n        TrieNode node = root;\n        for (char c : sentence.toCharArray()) {\n            node.children.putIfAbsent(c, new TrieNode());\n            node = node.children.get(c);\n            node.freqMap.put(sentence, node.freqMap.getOrDefault(sentence, 0) + freq);\n        }\n    }\n    \n    public List<String> input(char c) {\n        if (c == '#') {\n            String sentence = currentInput.toString();\n            addSentence(sentence, 1);\n            currentInput = new StringBuilder();\n            currentNode = root;\n            return new ArrayList<>();\n        }\n        currentInput.append(c);\n        if (!currentNode.children.containsKey(c)) {\n            currentNode.children.put(c, new TrieNode());\n        }\n        currentNode = currentNode.children.get(c);\n        \n        // 取热度前 3\n        PriorityQueue<Map.Entry<String, Integer>> pq = new PriorityQueue<>(\n            (a, b) -> a.getValue() == b.getValue() \n                ? b.getKey().compareTo(a.getKey())  // 字典序降序（为了让优先队列弹出较大的）\n                : a.getValue() - b.getValue()        // 热度升序\n        );\n        for (Map.Entry<String, Integer> entry : currentNode.freqMap.entrySet()) {\n            pq.offer(entry);\n            if (pq.size() > 3) pq.poll();\n        }\n        \n        List<String> result = new ArrayList<>();\n        while (!pq.isEmpty()) {\n            result.add(0, pq.poll().getKey()); // 逆序加入使结果按热度降序\n        }\n        return result;\n    }\n}\n```\n\n时间复杂度：input 操作 O(N * log 3) = O(N)（N 是以当前前缀开头的句子数），addSentence 操作 O(L)（L 是句子长度）。\n\n核心设计：每个 Trie 节点存储以该前缀开头的所有句子及其频率（freqMap）。用户在输入过程中逐字符走 Trie，在 end 节点收集所有候选并按规则排序取前 3。\n\n优化思路：\n- 如果热门句子集合是静态的，可以在每个节点预计算 Top 3（离线计算，查询 O(1)）。\n- 如果句子数量极大（百万级），freqMap 的内存占用会很大——可以将匹配限制在 Top K 范围内，用堆或布隆过滤器剪枝。\n- 实际搜索引擎的自动补全使用「Trie + 预计算 Top N + LRU 缓存」的组合方案。",
+    "hints": [
+      "Trie 的每个节点存储以该前缀开头的所有句子的频率——空间换时间",
+      "Top 3 可以用最小堆维护——堆大小固定为 3，每次弹出最小的"
+    ],
+    "tags": [
+      "Trie",
+      "设计",
+      "堆",
+      "字符串"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "最小窗口子序列",
+    "content": "给定字符串 S 和 T，请在 S 中找到最短的连续子串，使得 T 是该子串的「子序列」（Subsequence，即 T 中字符按顺序出现在子串中，不一定连续）。如果不存在返回空字符串。\n\n注意：本题与「最小覆盖子串（Minimum Window Substring）」不同——后者要求子串包含 T 的所有字符（可乱序），本题要求子串包含 T 作为子序列（必须按顺序）。",
+    "answer": "```java\npublic String minWindow(String S, String T) {\n    int m = S.length(), n = T.length();\n    // dp[i][j]：S 的前 i 个字符中，匹配 T 的前 j 个字符作为子序列时，\n    //          子序列在 S 中的「起始位置的最大值」（最靠右的起始位置）\n    // 初始化为 -1 表示不可达\n    int[][] dp = new int[m + 1][n + 1];\n    for (int[] row : dp) Arrays.fill(row, -1);\n    for (int i = 0; i <= m; i++) dp[i][0] = i; // T 为空串时，起始位置就是 i\n    \n    int minLen = Integer.MAX_VALUE;\n    int start = -1;\n    \n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= Math.min(i, n); j++) {\n            if (S.charAt(i - 1) == T.charAt(j - 1)) {\n                dp[i][j] = dp[i - 1][j - 1]; // 字符匹配，继承 T[0..j-2] 的起始位置\n            } else {\n                dp[i][j] = dp[i - 1][j];     // 不匹配，跳过 S[i-1]\n            }\n        }\n        // 检查是否完整匹配了 T\n        if (dp[i][n] != -1) {\n            int len = i - dp[i][n];\n            if (len < minLen) {\n                minLen = len;\n                start = dp[i][n];\n            }\n        }\n    }\n    \n    return start == -1 ? \"\" : S.substring(start, start + minLen);\n}\n```\n\n时间复杂度 O(m * n)，空间复杂度 O(m * n)（可优化为 O(n)）。\n\n核心思想：dp[i][j] 表示对于 T[0..j-1] 作为子序列，在 S[0..i-1] 中的「起始位置」——注意是起始位置，不是是否存在。值越大表示起始位置越靠右（即子串越短），因为 dp[i][n] 记录的是匹配完整 T 时 S 中子序列的最靠右的起始位置。\n\n优化的子序列匹配方式：如果字符匹配（S[i-1] == T[j-1]），则匹配位置回溯到 dp[i-1][j-1]（T 的前 j-1 个字符匹配时的起始位置）；如果不匹配，沿用 dp[i-1][j]（跳过 S 的当前字符）。\n\n另一种解法：对 T 中每个字符在 S 中的出现位置建立索引，再用「跳表」思路（next 数组）逐字符跳跃查找——适用于 S 很长但 T 很短的情况。",
+    "hints": [
+      "本题和「最小覆盖子串」的关键区别——子序列要求按顺序，子串要求包含所有字符（可乱序）",
+      "DP 中 dp[i][j] 定义为起始位置而非长度——这是为了支持「最短」的约束"
+    ],
+    "tags": [
+      "动态规划",
+      "字符串",
+      "子序列",
+      "双指针"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "戳气球",
+    "content": "有 n 个气球，编号为 0 到 n - 1，每个气球上都标有一个数字，这些数字存在数组 nums 中。\n\n现在要求你戳破所有的气球。戳破第 i 个气球，你可以获得 nums[i - 1] * nums[i] * nums[i + 1] 枚硬币。这里的 i - 1 和 i + 1 代表和 i 相邻的两个气球的序号。如果 i - 1 或 i + 1 超出了数组的边界，那么就当它是一个数字为 1 的气球。\n\n求所能获得硬币的最大数量。",
+    "answer": "```java\npublic int maxCoins(int[] nums) {\n    int n = nums.length;\n    // 数组边界扩展为 1\n    int[] arr = new int[n + 2];\n    arr[0] = 1;\n    arr[n + 1] = 1;\n    for (int i = 0; i < n; i++) arr[i + 1] = nums[i];\n    \n    // dp[i][j]：戳破 (i, j) 范围（不包含 i 和 j）内所有气球的最大硬币数\n    int[][] dp = new int[n + 2][n + 2];\n    \n    // len 是区间长度，从 1 到 n\n    for (int len = 1; len <= n; len++) {\n        for (int i = 1; i <= n - len + 1; i++) {\n            int j = i + len - 1;\n            // 枚举区间中最后一个被戳破的气球 k\n            for (int k = i; k <= j; k++) {\n                // arr[i-1] * arr[k] * arr[j+1]：戳破 k 时，它的左右邻居是 i-1 和 j+1\n                // （因为 i..j 中其他气球已经被戳破了，k 是最后一个）\n                int coins = dp[i][k - 1] + arr[i - 1] * arr[k] * arr[j + 1] + dp[k + 1][j];\n                dp[i][j] = Math.max(dp[i][j], coins);\n            }\n        }\n    }\n    return dp[1][n];\n}\n```\n时间复杂度 O(n^3)，空间复杂度 O(n^2)。\n\n核心思路：经典区间 DP。关键转换——不决定「第一个戳破谁」，而是决定「最后一个戳破谁」。如果 k 是区间 [i, j] 中最后一个被戳破的气球，那么戳破它时，它的左右邻居是 i-1 和 j+1（因为区间内的其他气球都已经被戳破了）。所以分数贡献 = arr[i-1] * arr[k] * arr[j+1]。加上左右子区间的最大分数 dp[i][k-1] + dp[k+1][j]。\n\n这个「反向思考」是本题的精华——传统的「先戳破谁」思路会导致子问题互相依赖（因为戳破一个后左右邻居变化了），而「最后戳破谁」的思路让左右子区间完全独立。",
+    "hints": [
+      "区间 DP 的关键是「最后一个被戳破的气球是谁」而不是「第一个被戳破的是谁」",
+      "为什么「最后一个」比「第一个」好——最后一个被戳破时，其左右邻居是固定的（区间的左右边界）"
+    ],
+    "tags": [
+      "动态规划",
+      "区间DP",
+      "分治"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "计算右侧小于当前元素的个数",
+    "content": "给你一个整数数组 nums，按要求返回一个新数组 counts。其中 counts[i] 的值是 nums[i] 右侧小于 nums[i] 的元素的数量。\n\n要求时间复杂度 O(n log n)。",
+    "answer": "```java\npublic List<Integer> countSmaller(int[] nums) {\n    int n = nums.length;\n    Integer[] result = new Integer[n];\n    Arrays.fill(result, 0);\n    \n    // 归并排序的同时计算右侧小于当前元素的个数\n    int[] indices = new int[n];\n    for (int i = 0; i < n; i++) indices[i] = i;\n    \n    mergeSort(nums, indices, 0, n - 1, result);\n    return Arrays.asList(result);\n}\n\nprivate void mergeSort(int[] nums, int[] indices, int left, int right, Integer[] result) {\n    if (left >= right) return;\n    int mid = left + (right - left) / 2;\n    mergeSort(nums, indices, left, mid, result);\n    mergeSort(nums, indices, mid + 1, right, result);\n    merge(nums, indices, left, mid, right, result);\n}\n\nprivate void merge(int[] nums, int[] indices, int left, int mid, int right, Integer[] result) {\n    int[] temp = new int[right - left + 1];\n    int i = left, j = mid + 1, k = 0;\n    int rightCount = 0; // 右侧已归并的元素中，小于当前左侧元素的个数\n    \n    while (i <= mid && j <= right) {\n        if (nums[indices[j]] < nums[indices[i]]) {\n            // 右侧元素小于左侧元素，归并右侧，增加 rightCount\n            temp[k++] = indices[j++];\n            rightCount++;\n        } else {\n            // 左侧元素 <= 右侧元素，归并左侧\n            result[indices[i]] += rightCount;\n            temp[k++] = indices[i++];\n        }\n    }\n    while (i <= mid) {\n        result[indices[i]] += rightCount;\n        temp[k++] = indices[i++];\n    }\n    while (j <= right) {\n        temp[k++] = indices[j++];\n    }\n    \n    System.arraycopy(temp, 0, indices, left, temp.length);\n}\n```\n时间复杂度 O(n log n)，空间复杂度 O(n)。\n\n核心思路：在归并排序的过程中，当左侧元素被放入辅助数组时，右侧已经放入了多少个比它小的元素？答案就是在那个时刻已经归并进去的右侧元素个数（rightCount）。\n\n算法框架：\n1. 不直接对 nums 排序，而是对索引数组 indices 排序。\n2. 在合并过程中，如果右侧当前元素小于左侧当前元素，则 rightCount++（表示「还有一个更小的右侧元素」）。\n3. 当左侧元素被归并时，result[原索引] += rightCount。\n\n另一种解法：Fenwick 树（树状数组）/ 线段树。从右向左遍历 nums，离散化后维护已遍历元素的频次 BIT，查询比当前元素小的个数 = query(currentValue - 1)。复杂度同为 O(n log n)。两种解法都需要掌握：归并排序解法考察「分治思维」，BIT 解法考察「数据结构应用」。",
+    "hints": [
+      "归并排序解法为什么能计数？——合并时，左侧元素归并时右侧已归并的元素数就是比它小的右侧元素数",
+      "Fenwick 树解法怎么做？——从右向左遍历，已遍历的元素插入 BIT，查询比当前小的数量"
+    ],
+    "tags": [
+      "归并排序",
+      "分治",
+      "树状数组",
+      "数组"
+    ],
+    "options": []
   }
 ]

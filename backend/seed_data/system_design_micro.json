@@ -1433,5 +1433,100 @@
       "测试策略",
       "契约测试"
     ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "实时流处理架构设计",
+    "content": "请设计一个实时流处理平台，基于 Flink 或类似的流处理引擎。包括：\n1. 数据接入层如何支持多种数据源（Kafka/Pulsar/CDC 流）的统一接入；\n2. 状态管理与 Checkpoint 机制的原理（如何保证 Exactly-Once 语义）；\n3. 大状态场景下的优化策略（RocksDB State Backend、增量 Checkpoint）；\n4. 反压（Back Pressure）的检测与处理。",
+    "answer": "答案：\n实时流处理平台的核心挑战是「无限数据 + 有限内存 + 故障恢复」三者间的平衡。Flink 通过 Checkpoint + State Backend 实现可靠的有状态流处理。\n\n解析：\n**1. 统一数据接入层**：\n- 连接器框架（Source/Sink Connector）：Flink 提供可插拔的 Source 接口（SourceFunction / SourceReader）。\n- 常用 Source：Kafka Source（动态分区发现）、Pulsar Source（无缝故障切换）、CDC Source（Debezium 集成）。\n- 数据格式：统一使用 Avro / Protobuf 作为内部传输格式，通过 Schema Registry 管理。\n- 事件时间与水位线（Event Time & Watermark）：保证乱序数据的正确窗口聚合。\n\n**2. 状态管理与 Checkpoint 机制**：\n- 状态类型：ValueState / ListState / MapState / BroadcastState。\n- Checkpoint（分布式快照）：基于 Chandy-Lamport 算法的变体（Barrier Alignment）。\n  - JobManager 周期性向所有 Source 插入 Checkpoint Barrier。\n  - Barrier 随数据流传播，每个 Operator 收到所有输入流的 Barrier 后快照当前状态。\n  - 所有 Operator 快照完成后 Checkpoint 完成。\n- Exactly-Once 保证：Source 端（Kafka Offset 保存在 Checkpoint）+ 状态端（状态快照）+ Sink 端（两阶段提交 / Idempotent Writer）。\n\n**3. 大状态优化**：\n- RocksDB State Backend：将状态存储在 RocksDB（LSM-Tree，磁盘 + 内存缓存），支持管理 GB ~ TB 级状态。\n  - 对比：HashMap State Backend 所有状态在 JVM 堆内（适合小状态 < 10GB，GC 友好）。\n- 增量 Checkpoint（Incremental Checkpoint）：只传输上次 Checkpoint 以来修改过的 SST 文件，而非全量。\n  - 效果：将分钟级的 Checkpoint 时间降到秒级。\n- 状态 TTL（Time-To-Live）：自动清理过期状态——避免无界增长。\n- 状态更细粒度划分：将一个大状态拆为多个子状态，减少单次快照的数据量。\n\n**4. 反压检测与处理**：\n- 检测指标：Flink Web UI / Metrics 中的「繁忙率」（Busy %)——如果 Source 的繁忙率持续 100%，说明下游处理能力不足。\n- 处理策略：\n  - 自动：Flink 通过网络缓冲区（Netty Buffer）自然反压——下游处理慢时，上游发送端缓冲区满 -> BackPressure -> Source 消费速率自动降低。\n  - 主动：配置最大并发数降低、增加 Operator 并行度、优化算子性能（KeyBy 倾斜优化）。\n  - 预警：设置反压告警（Source 繁忙率持续 100% > 5 分钟时告警）。\n\n扩展延伸：\nFlink + Kafka 是最主流的流处理组合。对于超大规模（> 10 万 TPS 且有状态），建议使用 RocksDB State Backend + 增量 Checkpoint + 配置合理的 Checkpoint 间隔（如 30s-60s）。",
+    "hints": [
+      "Flink 的 Checkpoint Barrier 为什么能保证一致性快照——Barrier 卡住所有上游直到对齐的所有输入流都到达",
+      "反压不是问题而是一个安全信号——它告诉系统「我处理不过来了，请慢点发」"
+    ],
+    "tags": [
+      "流处理",
+      "Flink",
+      "状态管理",
+      "Checkpoint",
+      "反压"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "即席查询平台设计",
+    "content": "请设计一个即席查询（Ad-Hoc Query）平台，允许分析师通过 SQL 直接查询数据湖/数仓中的海量数据。需要涵盖：\n1. 查询引擎选型（Presto/Trino vs SparkSQL vs ClickHouse 的适用场景）；\n2. 多租户资源隔离（如何防止一个查询打满集群资源）；\n3. 查询治理（慢查询检测、大查询自动取消、资源队列）；\n4. 联邦查询（跨数据源——MySQL + Hive + ES 的联合查询）。",
+    "answer": "答案：\n即席查询平台的核心矛盾是「查询的自由度」与「集群的稳定性」之间的冲突。设计目标是让分析师能快速探索数据，又不被一个写歪了的 SQL 拖垮整个集群。\n\n解析：\n**1. 查询引擎选型**：\n| 引擎 | 适用场景 | 典型延迟 | 擅长 |\n| Trino/Presto | 大规模联邦查询、湖仓查询 | 秒-分级 | 多数据源 Join、列存格式 |\n| SparkSQL | ETL 批处理、大规模离线分析 | 分级 | 数据量大但不要求交互式 |\n| ClickHouse | 实时 OLAP、固定报表 | 毫秒-秒级 | 单表聚合、时序数据 |\n| Doris/StarRocks | 实时 OLAP + 即席查询混合 | 毫秒-秒级 | 高并发点查 + 多表 Join |\n- 选型建议：标准 Ad-Hoc 查询首选 Trino（生态广、性能优秀、多源联邦能力强）。\n\n**2. 多租户资源隔离**：\n- 资源组（Resource Groups）：Trino 的资源组支持按用户/来源/查询类型分配到不同组，每组有 CPU/内存上限。\n  - 配置例：analyst_group（CPU 权重 50，内存上限 60%）vs engineer_group（CPU 权重 100，内存上限 80%）。\n- 队列式调度：大查询（扫描量 > 100GB）自动分配到慢队列，优先执行小查询。\n- 临时表空间限制：每个用户的临时数据（Intermediate Data）不超过配额。\n\n**3. 查询治理**：\n- 查询熔断：\n  - 扫描行数阈值（如 > 10 亿行自动取消）。\n  - 执行时间阈值（如 > 30 分钟自动终止）。\n  - 内存使用阈值（如 > 20GB 自动 kill）。\n- 慢查询日志：记录所有查询的 SQL、扫描量、执行时间、资源消耗，定期复盘优化。\n- 查询历史与分析：按月统计活跃用户数、人均查询次数、P50/P95/P99 延迟。\n- 查询预算：为每个用户设定每小时/每日的「扫描额度」（如 500GB/天），超限后降级或拒绝。\n\n**4. 联邦查询**：\n- Connector 架构：Trino 的 MySQL Connector / Hive Connector / Elasticsearch Connector / BigQuery Connector。\n- 下推优化（Predicate Pushdown）：将 WHERE 条件下推到各数据源，减少跨源数据传输。\n  - 例子：SELECT * FROM mysql.orders JOIN hive.users ON ... WHERE orders.date > '2026-01-01'——只传输 date 过滤后的数据。\n- 性能注意事项：联邦查询的瓶颈通常不在 Trino，而在数据源的读取能力（MySQL 全表扫描是灾难）。\n  - 建议：对频繁联邦查询的数据做同步，在湖中集中存储一份副本。\n\n扩展延伸：\n开源方案：Trino + Hive Metastore + 对象存储。商业方案：Databricks SQL Analytics / Dremio。安全补充：通过 Ranger / Atlas 对 SQL 做行级/列级数据权限过滤。",
+    "hints": [
+      "即席查询的核心不是 SQL 语法有多强，而是「怎么防止一个分析师拖垮整个集群」",
+      "联邦查询的瓶颈在你 join 的各端——每个数据源的扫描能力决定了整体延迟"
+    ],
+    "tags": [
+      "即席查询",
+      "Trino",
+      "联邦查询",
+      "OLAP",
+      "查询治理"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Schema Registry 与数据契约设计",
+    "content": "请设计一个 Schema Registry 系统，用于管理 Kafka/消息系统中的数据契约。覆盖：\n1. Schema 的注册与版本管理（兼容性策略——向后兼容、向前兼容、完全兼容）；\n2. Schema 的演进规则（新增字段、删除字段、修改字段类型的兼容性判断）；\n3. Wire Format 设计（Avro / Protobuf / JSON Schema 的选型对比）；\n4. Schema 与消息序列化/反序列化的集成方式。",
+    "answer": "答案：\nSchema Registry 是事件驱动架构中「生产者 — 消费者」之间的契约管理器。它解决的核心问题是：当生产者改了 Schema 后，消费者那边的代码可能还在用旧 Schema 解析新消息，导致反序列化失败。\n\n解析：\n**1. Schema 注册与版本管理**：\n- 注册流程：生产者注册 Schema -> Registry 检查兼容性策略 -> 通过则分配 Schema ID（int id）-> 返回给生产者。\n- 版本管理：每次 Schema 变更产生新版本（v1, v2, v3...），旧版本保留不可删除（演进历史）。\n- 兼容性策略：\n  - BACKWARD（向后兼容，默认）：使用新 Schema 的 Consumer 能读旧 Schema 的数据。要求：不能删字段，新增字段必须有默认值。\n  - FORWARD（向前兼容）：使用旧 Schema 的 Consumer 能读新 Schema 的数据。要求：只能删不能增。\n  - FULL（完全兼容）：同时满足 BACKWARD 和 FORWARD。要求：只能新增有默认值的字段，可删有默认值的字段。\n  - NONE（不兼容）：不检查——生产者和消费者需自行协调升级。\n  - BACKWARD_TRANSITIVE / FORWARD_TRANSITIVE / FULL_TRANSITIVE：检查所有历史版本，而非仅检查上一个版本。\n\n**2. Schema 演进规则**（以 Avro 为例）：\n- 安全：新增有默认值的字段、删除有默认值的字段、修改字段默认值。\n- 不安全：删除字段（无默认值时）、修改字段类型（string -> int）、重命名字段（writer 用旧名 reader 用新名）。\n- 半安全：新增无默认值的字段（违反 BACKWARD）但符合 FORWARD。\n\n**3. Wire Format 对比**：\n| 维度 | Avro | Protobuf | JSON Schema |\n| Schema 注册流行度 | Confluent Schema Registry（最广泛） | Buf / Apicurio | 自实现 |\n| 序列化大小 | 小（无字段名） | 最小（字段编号） | 大（字段名完整） |\n| 兼容性模型 | 内建兼容性检查 | 手动管理 | 需外部工具 |\n| 动态 Schema 支持 | 强（Schema 随数据一起发送的模型） | 中等 | 强（自描述） |\n| Kafka 生态集成 | 最好（AvroSerializer / AvroDeserializer） | 好（ProtobufSerializer） | 一般 |\n\n**4. 序列化集成方式**：\n- Serializer 端：Kafka Producer 调用 AvroSerializer.serialize() -> 从 Schema Registry 获取 Schema ID -> 消息头部写入 Schema ID（通常 4 字节） + 序列化数据。\n- Deserializer 端：Kafka Consumer 调用 AvroDeserializer -> 从消息头部读取 Schema ID -> Registry 获取对应 Schema -> 反序列化。\n- 要点：消息体很精简（只含 Schema ID，不含 Schema 本身），减少带宽开销。\n\n扩展延伸：\nConfluent Schema Registry 是业界最成熟的方案。当 Schema 版本数量超过 1000+ 后需注意 Registry 性能。跨数据中心场景：每个数据中心部署本地 Registry 做缓存，通过事件同步 Schema 变更。",
+    "hints": [
+      "Schema Registry 本质上是一个「版本化的类型系统」——它保证了生产者和消费者之间的类型契约",
+      "兼容性策略选 BACKWARD 还是 FORWARD，取决于你的升级顺序——先升级 Consumer 还是 Producer"
+    ],
+    "tags": [
+      "Schema Registry",
+      "Avro",
+      "Protobuf",
+      "消息契约",
+      "兼容性"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数据 Pipeline 可观测性设计",
+    "content": "请设计一个数据 Pipeline 的可观测性系统（Data Pipeline Observability），用于监控和维护数百条 ETL/ELT 数据管道的健康运行。需要覆盖：\n1. Pipeline 的 DAG 级监控（任务依赖关系状态、端到端延迟、SLA 达标率）；\n2. 数据质量在 Pipeline 中的嵌入（在每步 ETL 后自动校验质量指标）；\n3. 异常自动诊断（数据延迟、数据量异常、Schema 变更的影响分析）；\n4. 根本原因分析（Root Cause Analysis）——当下游报表数据异常时，如何快速定位到是上游哪一步出了问题。",
+    "answer": "答案：\n数据 Pipeline 可观测性区别于传统监控的关键在于：不仅知道「Pipeline 跑没跑完」，还要知道「数据对不对、快不快、有没有变化」。\n\n解析：\n**1. DAG 级监控**：\n- 数据采集：Airflow / Dagster / 自研调度器的 DAG Run 状态 + 运行时间 + 输出行数。\n- 核心指标：\n  - DAG 成功率（日/周趋势）。\n  - 端到端延迟：数据产生时间 -> 完成所有 ETL -> 可查询时间（SLA：T+1 8:00 AM）。\n  - 任务依赖延迟：每个任务的实际开始时间与计划开始时间的差值。\n- 依赖图可视化：DAG 视图 + 节点着色（绿色 = 正常，黄色 = 延迟，红色 = 失败）。\n- 影响范围推断：当某个上游任务失败时，自动标注下游所有「受影响」的任务和数据表。\n\n**2. 数据质量嵌入**：\n- 每步 ETL 执行后自动触发质量检测（作为 DAG 中的下一个任务）。\n- 检测类型：\n  - 行数波动：与历史同一时段对比（如日均 100 万行，今天 50 万行 -> 警告）。\n  - 空值率突变：某字段非空率从 99% 降到 80%。\n  - 主键重复：是否有重复 ID。\n  - 数据新鲜度：数据的最新时间戳与当前时间的差距。\n- 质量门禁（Quality Gate）：质量检测未通过时 -> 阻塞下游任务 / 发送告警 / 自动发送邮件给数据负责人。\n\n**3. 异常自动诊断**：\n- 数据延迟诊断：\n  - Source 端延迟（源系统未按时产出数据）。\n  - 计算延迟（ETL 任务执行时间变长——可能是数据量暴增或资源竞争）。\n  - 写入延迟（目标 DB/数仓写入变慢——锁竞争、存储瓶颈）。\n- Schema 变更检测：自动比较上游表 Schema 和下游消费方的预期 Schema，发现新增列/删除列/类型变化时告警。\n- 数据量异常：基于过去 N 天的行数做移动平均 + 标准差检测（+/-3sigma 法则），排除已知的周期性波动（如周末数据量下降）。\n\n**4. 根本原因分析（RCA）**：\n- 逆向血缘追踪：从出问题的下游报表出发，沿数据血缘反方向递归向上查找。\n  - 例：报表 A 数据异常 -> 上游表 B 在昨天少了一行 -> 再上游 ETL 任务 C 在昨天运行到凌晨 3 点还多了 10 分钟 -> 再上游 Source D 的数据发送延迟。\n- 时间线投射：将所有相关事件的时序（任务运行时间、数据写入完成时间、质量检测时间）投射到同一时间线，辅助定位因果顺序。\n- 自动分析引擎：基于规则（如果上游任务失败且下游数据异常，RCA 结论 = 上游失败）+ 机器学习（学习历史故障模式，自动匹配）。\n- 「What If」分析：当检测到 Schema 变更时，自动推算会影响哪些下游表、报表和仪表盘。\n\n扩展延伸：\n商业方案：Monte Carlo / Sifflet / Bigeye。开源方案：Great Expectations + Airflow + OpenLineage。建议从「SLA 监控 + 行数波动检测」起步，逐步建设 RCA 能力。",
+    "hints": [
+      "数据 Pipeline 可观测性和应用监控的区别：应用监控看服务是否正常，数据监控看数据是否正确",
+      "根本原因分析（RCA）的核心是将数据血缘和事件时序结合起来——知道哪个上游变化影响了哪个下游"
+    ],
+    "tags": [
+      "数据 Pipeline",
+      "可观测性",
+      "SLA",
+      "血缘",
+      "数据质量"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数据湖权限与合规管理",
+    "content": "请设计数据湖/Lakehouse 的权限与合规管理系统，解决「谁可以对哪些数据执行什么操作」的问题。需要覆盖：\n1. 数据访问控制模型（RBAC / ABAC / 列级/行级权限）；\n2. 数据脱敏策略（静态脱敏 vs 动态脱敏——运行时的 Column Masking / Row Filter）；\n3. 数据访问审计（谁在什么时间查了什么数据、下了什么 SQL）；\n4. 合规标记与数据分类（自动识别敏感数据——PII/PHI/PCI）。",
+    "answer": "答案：\n数据湖权限管理的核心矛盾是「数据的使用便利性」和「安全的控制粒度」之间的平衡。经典问题：分析师需要访问用户数据做分析，但手机号和身份证号不能暴露。\n\n解析：\n**1. 数据访问控制模型**：\n- 三层权限模型：\n  1. 基础设施层（IaaS）：S3 Bucket Policy / IAM Role 控制谁能访问哪个 Bucket/Prefix。\n  2. 引擎层（Query Engine）：Trino/Spark 的 Access Control 插件实现表/列级权限。\n  3. 数据层（Table Format）：Iceberg 的 Catalog 权限 + Delta Lake 的 ACL。\n- 推荐模型：RBAC（角色基）做粗粒度 + ABAC（属性基）做细粒度。\n  - RBAC：分析师角色（可以读 dwd.*）、工程师角色（可以读写所有表）。\n  - ABAC：policy: allow read on column:phone_number if user.department == 'security' and time >= working_hours。\n- 开源方案：Apache Ranger（Hadoop 生态最成熟）、Privacera（Ranger 的商业版本）。\n\n**2. 数据脱敏策略**：\n- 静态脱敏（Static Masking）：ETL 时将原始数据脱敏后写入脱敏表。\n  - 缺点：数据冗余、脱敏规则变更后需要重新 ETL。\n  - 适用：数据分发（给外部合作伙伴时只能给脱敏数据）。\n- 动态脱敏（Dynamic Masking / Column Masking）：查询时实时应用脱敏规则，存储层数据不变。\n  - 实现：Trino 的 Column Masking Policy / Spark 的 Column Transform。\n  - 例：phone_number 在普通用户查询时显示 138xxxx1234。\n- 行级过滤（Row Filter）：不同用户看到不同的行。\n  - 例：业务线 A 的销售只能看 A 区域的订单。\n  - 实现：Trino 的 Row Filter Policy / Hive 的 View 封装。\n\n**3. 数据访问审计**：\n- 审计采集点：\n  - 入口层：Trino/Spark 的 Query Audit Log（记录了谁、什么时候、执行了什么 SQL、扫描了多少数据）。\n  - 数据层：S3 Access Log / Iceberg Commit Log。\n- 审计存储：ELK / 专门的审计日志数据库（与常规日志分开，保留期限更长）。\n- 异常行为检测：\n  - 某用户在凌晨 3 点下载了 10GB 的用户数据。\n  - 某用户一周内从未查询过，突然连续查询敏感表。\n  - 导出数据量异常大（可能是数据泄露）。\n- 合规报告：定期的权限检查报告（「哪些用户有访问 PII 数据的权限」）、数据访问频率报告。\n\n**4. 敏感数据自动发现**：\n- 规则匹配（基于正则）：身份证号、手机号（1[3-9]\\d{9}）、邮箱、信用卡号（Luhn 算法校验）。\n- 机器学习分类器：训练的 NLP 模型识别列名和列值中的敏感信息（如识别到列名 ssn、passport 等）。\n- 数据分类标签：\n  - PII（个人身份信息）：姓名、手机、身份证、邮箱。\n  - PHI（受保护的健康信息）：病历、诊断记录。\n  - PCI（支付卡信息）：信用卡号、CVV。\n  - 内部（Internal）：非敏感的业务数据。\n  - 公开（Public）：对外公开数据。\n- 自动标记：发现敏感列后自动打标签 -> 触发默认脱敏策略（如新发现的 PII 列自动启用动态脱敏）。\n\n扩展延伸：\n对于构建数据平台的团队，建议优先解决「权限控制的从无到有」——先实现表级 RBAC，再逐步引入列级/行级权限和动态脱敏。脱敏不足导致数据泄露的风险，远大于脱敏过度影响分析效率的风险。",
+    "hints": [
+      "动态脱敏比静态脱敏更适合数据湖场景——数据只有一份，但不同人看到不同结果",
+      "数据权限不是纯技术问题，70% 是组织问题——需要定义清楚角色和数据分类"
+    ],
+    "tags": [
+      "数据安全",
+      "权限",
+      "脱敏",
+      "审计",
+      "数据分类"
+    ]
   }
 ]

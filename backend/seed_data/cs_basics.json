@@ -1463,5 +1463,109 @@
       "sendfile",
       "DMA"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "NUMA 架构与内存访问亲和性",
+    "content": "什么是 NUMA（Non-Uniform Memory Access）架构？NUMA 系统中本地内存和远端内存的访问延迟差异如何产生？生产环境中如何优化线程/进程的 CPU 亲和性绑定以提升 NUMA 性能？",
+    "answer": "答案：NUMA 将物理内存划分为多个节点（Node），每个 CPU Socket 拥有本地内存控制器和内存插槽。访问本地内存延迟约 100ns，访问远端内存需跨 Node 互连（QPI/Infinity Fabric），延迟增加 30-50%。优化关键：将线程绑定到固定 CPU 核心并确保其内存在同 Node 分配，避免跨 Node 访问。\n\n解析：NUMA 系统结构——每个 Node 包含一组 CPU 核心和本地内存控制器。不同 Node 通过高速互连（Intel QPI / AMD Infinity Fabric）通信。当进程访问其所在 Node 的内存时，通过本地内存控制器直接访问，延迟最低。当进程访问其他 Node 的内存时，数据必须经过跨 Node 互连链路，每跳增加约 40ns 的延迟。socket 间通信的带宽也低于 Node 内带宽。\n\n扩展延伸：NUMA 优化策略——1）CPU 亲和性绑定（CPU Pinning）：用 taskset 或 sched_setaffinity() 将线程绑定到特定核心，避免线程在不同 Node 间迁移引发的缓存和内存访问局部性问题。2）内存分配策略：numactl --localalloc 优先分配本地 Node 内存，--interleave=all 跨 Node 交错分配（适合内存密集但跨 Node 访问均匀的工作负载）。3）数据库优化：MySQL 在 NUMA 上典型问题是默认分配策略从远端 Node 分配内存导致性能下降 20-30%，解决方案禁用 zone_reclaim_mode + 使用 numactl。4）DPDK 要求网卡、内存池、处理线程三者绑定到同一 Node。5）中断亲和性：将网卡中断绑定到同一 Node 的 CPU 核心，避免网络数据跨 Node 传输。",
+    "hints": [
+      "NUMA 为何区分本地和远端内存",
+      "DPDK 为什么要求 NUMA 亲和性"
+    ],
+    "tags": [
+      "计算机组成",
+      "NUMA",
+      "性能优化",
+      "内存",
+      "CPU"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "RCU（Read-Copy-Update）同步机制",
+    "content": "RCU（Read-Copy-Update）是 Linux 内核中的一种同步机制，读者在访问 RCU 保护的数据时不需要获取任何锁，也不需要执行原子操作。写者通过「复制原数据、修改副本、原子替换指针」的方式更新，并在 Grace Period 结束后回收旧数据。因此 RCU 在大量读操作的场景下性能远优于读写锁。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A",
+    "hints": [
+      "RCU 读者不做任何原子操作",
+      "Grace Period 如何判断读者结束"
+    ],
+    "tags": [
+      "操作系统",
+      "并发",
+      "RCU",
+      "Linux 内核"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "零拷贝技术（Zero-Copy）实现原理",
+    "content": "请解释零拷贝技术（Zero-Copy）的原理。传统 I/O 路径（文件到网络）中数据经历了哪些拷贝和上下文切换？sendfile、mmap、splice 等零拷贝方式的工作原理各是什么？",
+    "answer": "答案：传统路径中，数据经历四次拷贝（两次 DMA + 两次 CPU 拷贝）和四次上下文切换（两次系统调用）。零拷贝通过消除 CPU 参与的冗余拷贝来提升 I/O 吞吐量。sendfile 结合 SG-DMA 可实现完全零 CPU 拷贝，仅需两次 DMA 操作。\n\n解析：传统 I/O 路径（以文件发送到网络为例）——1）磁盘→内核读缓冲区（DMA 拷贝）。2）内核读缓冲区→用户缓冲区（CPU 拷贝，read 系统调用）。3）用户缓冲区→内核套接字缓冲区（CPU 拷贝，write 系统调用）。4）内核套接字缓冲区→网卡（DMA 拷贝）。共四次拷贝，两次系统调用（四次上下文切换）。\n\n零拷贝实现方式——1）mmap：文件映射到用户地址空间，绕过内核到用户区的 CPU 拷贝。仍需要一次 CPU 拷贝（内核读缓冲区→套接字缓冲区），但减少了一半 CPU 拷贝。2）sendfile(socket_fd, file_fd, ...)：完全绕过用户空间，直接从内核读缓冲区拷贝到套接字缓冲区。一次系统调用，两次上下文切换。如果网卡支持 SG-DMA（Scatter-Gather DMA），数据可从内核读缓冲区直接 DMA 到网卡——真正零 CPU 拷贝。3）splice：基于 pipe 的零拷贝，在两个文件描述符间移动数据而不经过用户空间，更通用但需要管道作为中转。4）DPDK：绕过内核协议栈，在用户态直接通过轮询模式驱动操作网卡，完全避免系统调用和数据拷贝。\n\n扩展延伸：零拷贝的适用场景——大文件传输（CDN、文件服务器）、高速网络（40GbE+）、消息队列、Kafka 的文件传输、Nginx 静态文件服务。Nginx 的 sendfile 配置开启后大文件吞吐提升显著。但小文件场景下零拷贝优势不明显（上下文切换和 DMA 设置开销相对较大）。",
+    "hints": [
+      "SG-DMA 如何实现零 CPU 拷贝",
+      "mmap 比传统 I/O 少几次拷贝"
+    ],
+    "tags": [
+      "I/O",
+      "零拷贝",
+      "Linux",
+      "性能优化",
+      "操作系统"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "eBPF 架构与内核可编程能力",
+    "content": "关于 eBPF（extended Berkeley Packet Filter）技术的描述，以下哪个是正确的？",
+    "options": [
+      "A) eBPF 程序只能用于网络包过滤，通过在内核中运行 C 代码实现高性能包处理",
+      "B) eBPF 程序在内核验证器检查安全性后，通过 JIT 编译为本地机器码在沙箱中执行，并通过 Maps 与用户态程序交互",
+      "C) eBPF 程序编译后直接在内核态以原始字节码形式解释执行，不需要 JIT 编译",
+      "D) eBPF 程序运行在用户态，通过 mmap 共享内存与内核态高性能通信"
+    ],
+    "answer": "B",
+    "hints": [
+      "eBPF 验证器检查哪些安全性",
+      "eBPF Maps 如何与用户态通信"
+    ],
+    "tags": [
+      "eBPF",
+      "Linux",
+      "内核",
+      "网络",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux Capabilities 与最小权限原则",
+    "content": "请解释 Linux Capabilities 机制的原理。传统 Unix 超级用户/普通用户二元模型有什么缺陷？Capabilities 如何实现更细粒度的权限控制？在实际生产环境和容器安全中如何运用？",
+    "answer": "答案：Linux Capabilities 将 root 用户的超级权限拆分为约 40 种独立的能力（Capability），每个能力控制一种特定特权操作。进程不再需要以 root 运行即可获得所需特权，实现了最小权限原则。例如 Web 服务器只需要 CAP_NET_BIND_SERVICE 绑定 80/443 端口，不需要整个 root 权限。\n\n解析：传统 root/non-root 二元模型的缺陷——以 root 运行的进程拥有所有系统权限（CAP_SYS_ADMIN 涵盖 30+ 种操作），一旦被攻破攻击者即可完全控制系统。最小权限原则要求每个程序只拥有完成其功能所必需的最小权限集。\n\n常见 Capability——CAP_NET_BIND_SERVICE：绑定低于 1024 的端口。CAP_NET_RAW：使用原始套接字（ping、tcpdump）。CAP_DAC_OVERRIDE：绕过文件权限检查。CAP_SYS_ADMIN：大量管理操作（最强大的 Cap，应尽量避免）。CAP_SETUID/CAP_SETGID：改变用户/组 ID。CAP_SYS_PTRACE：对任意进程进行 ptrace。CAP_NET_ADMIN：网络管理（iptables、IP 配置）。CAP_SYS_MODULE：加载内核模块（高危）。\n\n扩展延伸：Capabilities 的三种集合——有效集（Effective）：内核实际检查的集合。许可集（Permitted）：进程可以提升到有效集的上限。可继承集（Inheritable）：exec() 可传递给新程序。边界集（Bounding）：系统级 Capability 上限。文件 Capability——通过 setcap 为可执行文件绑定特定 Capability（如 setcap cap_net_bind_service=+ep /usr/bin/node），使普通用户运行的程序也能绑定特权端口，代替 setuid。容器安全——Docker 默认删除所有高危 Capability（--cap-drop ALL），然后按需添加（--cap-add NET_BIND_SERVICE）。Kubernetes 的 Pod Security Policy（现为 Pod Security Admission）也基于 Capabilities 实现安全隔离。",
+    "hints": [
+      "Capabilities 拆分 root 权限",
+      "setcap 代替 setuid 实现最小权限"
+    ],
+    "tags": [
+      "Linux",
+      "安全",
+      "权限",
+      "容器",
+      "操作系统"
+    ]
   }
 ]

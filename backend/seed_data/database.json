@@ -1473,5 +1473,107 @@
       "自适应哈希",
       "索引"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 索引合并（Index Merge）优化原理",
+    "content": "当一条 SQL 查询的 WHERE 条件涉及多个独立索引列时，MySQL 优化器可以选择 Index Merge（索引合并）优化。请说明 Index Merge 的三种算法（Intersection、Union、Sort-Union）的工作原理，以及什么情况下 Index Merge 反而比使用单个复合索引更差。",
+    "answer": "答案：MySQL 5.1+ 引入的 Index Merge 优化允许单条查询同时使用多个索引，通过 Intersection、Union 或 Sort-Union 三种算法合并结果。优化器选择 Index Merge 的前提是合并后成本低于全表扫描或使用单个索引。\n\n解析：三种算法：1）Intersection（交集）——适用于 WHERE a=1 AND b=1 场景，索引 a 和 b 各自获取 RowID 集合后求交集。两个条件都必须有索引且选择性都好，合并后显著减少回表次数。2）Union（并集）——适用于 WHERE a=1 OR b=1 场景，各自获取 RowID 集合后求并集（去重）。3）Sort-Union——适用于无法直接合并的场景（如 a > 1 OR b > 1），先对 RowID 排序再合并。\n\n扩展延伸：Index Merge 并非总是最优——多个索引扫描本质上仍是大量随机 I/O，不如一个覆盖索引高效。优化策略：1）用复合索引替代多个单列索引（让一个索引同时覆盖多个条件）。2）关闭 Index Merge 优化器开关（optimizer_switch 中 index_merge=off）强制优化器选择复合索引。3）EXPLAIN 中 Extra 字段显示 Using intersect/union/sort_union 说明触发了 Index Merge。注意：Index Merge 不适用于全文索引。",
+    "hints": [
+      "EXPLAIN 中 Extra 的 Using intersect 和 Using union 分别对应什么 SQL 模式",
+      "Index Merge 为什么比单个复合索引更差的情况发生在什么时候"
+    ],
+    "tags": [
+      "MySQL",
+      "索引合并",
+      "Index Merge",
+      "SQL优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 8.0 直方图统计信息",
+    "content": "MySQL 8.0 引入了直方图（Histogram）统计信息。直方图解决了优化器选择执行计划时的什么问题？singleton 和 equi-height 两种直方图类型有什么区别？如何创建和维护直方图？",
+    "answer": "答案：MySQL 8.0 的直方图为非索引列提供数据分布信息，帮助优化器更准确地估计 WHERE 条件的选择性（Selectivity），解决数据分布严重倾斜时优化器选错执行计划的问题。Singleton 为每个不同值创建一个 bucket（适合枚举值少的列），Equi-height 按值排序后均分到定数 bucket（适合连续值列）。\n\n解析：没有直方图时，优化器假设列数据均匀分布→当实际分布严重倾斜时（如 99% 行 status='active'，仅 1% 行 status='inactive'），优化器可能误认为 status='inactive' 条件需要扫描大量行，错误选择全表扫描而非索引。直方图将列值划分为多个 bucket，每个 bucket 记录区间内行数、频次等统计信息，优化器据此做出更准确的成本估算。\n\n扩展延伸：创建语法：ANALYZE TABLE t UPDATE HISTOGRAM ON col1, col2 WITH 100 BUCKETS。删除：ANALYZE TABLE t DROP HISTOGRAM ON col1。查看：SELECT * FROM INFORMATION_SCHEMA.COLUMN_STATISTICS。注意事项：1）直方图只对非索引列有意义（索引列已有更精确的 Cardinality 统计）。2）统计数据非实时——数据大量变更后需要手动更新直方图。3）直方图存储为 JSON 格式，在 MySQL 8.0 数据字典中。应用建议：对数据倾斜严重且频繁参与 WHERE 条件查询的非索引列创建直方图，可显著改善 JOIN 和子查询的执行计划。",
+    "hints": [
+      "直方图为什么只对非索引列有用",
+      "equi-height 直方图的 overflow bucket 处理什么极端场景"
+    ],
+    "tags": [
+      "MySQL",
+      "直方图",
+      "Histogram",
+      "优化器",
+      "统计信息"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "InnoDB Purge 历史版本清理机制",
+    "content": "关于 InnoDB 的 Purge 线程清理 Undo Log 中历史版本数据的行为，以下描述正确的是？",
+    "options": [
+      "A) 事务执行 COMMIT 后，Purge 线程立即清理该事务的所有 Undo Log，保证 undo 表空间尽快释放",
+      "B) Purge 线程只清理已提交事务中、且在所有当前活跃事务的 ReadView 中均不可见的历史版本",
+      "C) Purge 线程数量通过 innodb_purge_threads 配置，MySQL 8.0 中最大只能配置为 1",
+      "D) Purge 操作由用户事务线程在提交时同步触发，不存在独立的后台 Purge 线程"
+    ],
+    "answer": "答案：B) Purge 线程只清理已提交事务中、且在所有当前活跃事务的 ReadView 中均不可见的历史版本\n\n解析：InnoDB 的 Purge 采用延迟清理策略——事务提交后不会立即删除 Undo Log 中的历史版本。只有当一个历史版本不再被任何活跃事务的 ReadView 需要时（既不属于活跃事务，也不在任何活跃事务的可视范围内），Purge 线程才会将其清理。这是 MVCC 的核心设计：长时间运行的事务会阻止 Purge 进度，导致 Undo Log 膨胀。\n\n扩展延伸：Purge 相关配置：innodb_purge_threads（MySQL 8.0 默认 4，最大可配 32）控制并发 Purge 线程数。innodb_max_purge_lag——当 Purge 落后超过此阈值时限制新事务进入速度。监控关键指标：SHOW ENGINE INNODB STATUS 中的 HISTORY LIST LENGTH——未 Purge 的事务数，持续增长说明 Purge 落后。Purge 落后的后果：Undo 表空间无法收缩、聚簇索引中产生大量标记删除的旧版本占用额外空间。优化建议：避免长事务、innodb_purge_threads 根据并发写入负载调整。",
+    "hints": [
+      "Purge 线程的延迟清理策略为什么可能导致 Undo 表空间膨胀",
+      "HISTORY LIST LENGTH 持续增长说明什么问题"
+    ],
+    "tags": [
+      "MySQL",
+      "InnoDB",
+      "Purge",
+      "MVCC",
+      "Undo Log"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL Hash Join 实现原理与优化",
+    "content": "MySQL 8.0.18+ 引入了 Hash Join 算法。请说明 Hash Join 的工作原理、与 Nested Loop Join 相比的优势和劣势，以及优化器如何选择使用哪种 JOIN 算法。",
+    "answer": "答案：Hash Join 适用于等值连接且关联列上无索引或选择性差的场景，用小表构建内存哈希表、大表逐行探测。相比 Nested Loop Join（适合小表驱动且有索引的场景），Hash Join 在无索引的大表关联场景下性能远优于 NLJ，但需要额外内存构建哈希表，不支持非等值连接。\n\n解析：Hash Join 执行流程：1）选择较小的表作为构建表，计算 join 列的 hash 值构建内存哈希表。如果构建表超过 join_buffer_size（默认 256KB），MySQL 会分块写入临时文件（分批 on-disk Hash Join）。2）扫描探测表（另一个表），逐行计算 hash 值在哈希表中查找匹配。In-Memory 一次完成，On-Disk 分块进行（部分写入磁盘再合并），性能显著下降。\n\n扩展延伸：MySQL 优化器选择 JOIN 算法的决策因素：1）关联列有索引且驱动表小 → Nested Loop Join。2）关联列无索引且表较大 → Hash Join。3）/*+ HASH_JOIN(t1) */ 和 /*+ NO_HASH_JOIN(t1) */ 可提示优化器。Hash Join 的限制：不支持非等值连接（如 >、<、LIKE）。注意：Hash Join 只在 join_buffer_size 足够存放构建表时性能最优，内存不足时的分块模式可能大幅退化。OLAP 大表关联场景 Hash Join 效果最显著，OLTP 短查询中 NLJ 仍然占主导。",
+    "hints": [
+      "Hash Join 在内存不足时的分块模式如何工作",
+      "什么情况下 Nested Loop Join 仍然优于 Hash Join"
+    ],
+    "tags": [
+      "MySQL",
+      "Hash Join",
+      "SQL优化",
+      "JOIN"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "MySQL 分区表的查询剪裁限制",
+    "content": "MySQL 分区表在查询时自动触发分区剪裁（Partition Pruning），排除不包含目标数据的分区。因此，对于任何 SQL 查询，分区表的性能都一定优于等价的非分区表。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "分区剪裁在什么情况下不会生效——WHERE 条件与分区键的关系",
+      "分区表为什么可能在有些场景下比非分区表性能更差"
+    ],
+    "tags": [
+      "MySQL",
+      "分区表",
+      "Partition Pruning",
+      "SQL优化"
+    ]
   }
 ]

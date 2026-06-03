@@ -1417,5 +1417,109 @@
       "MDP",
       "MCTS"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ReAct Agent Loop 设计要点",
+    "content": "解释 ReAct（Reasoning + Acting）模式中 Agent Loop 的设计。Agent 如何在「思考 → 行动 → 观察」的循环中保持状态一致性？如何处理工具调用失败的情况？",
+    "answer": "ReAct 模式的核心是将思考推理与行动执行交织在一起：\n\n基本循环流程：\n1. Thought（思考）：LLM 基于当前上下文分析下一步需要做什么。\n2. Action（行动）：LLM 生成工具调用（如搜索、计算器、API 请求）。\n3. Observation（观察）：工具执行结果的返回。\n4. 回到步骤 1，将新的观察纳入上下文，继续推理。\n\n保持状态一致性的策略：\n1. 所有历史（Thought/Action/Observation 三元组）拼接到 LLM 的上下文窗口中，确保每次推理时看到完整历史。\n2. 可选中间摘要机制——当上下文过长时，对历史进行压缩或摘要。\n3. 调用时明确传递 session ID 或 conversation ID 来隔离不同 Agent 实例的状态。\n4. 在 Action 中携带前序推理结果的上下文标识，确保工具调用不是孤立的。\n\n工具调用失败的处理：\n1. 重试策略：自动重试可恢复的失败（如网络超时），带指数退避（exponential backoff）。\n2. 错误观察：将错误信息作为 Observation 返回给 LLM，让 LLM 分析失败原因并尝试替代方案。\n3. Fallback：预先定义的降级策略（如搜索失败时换用缓存或知识库查询）。\n4. 最大重试限制：超过 N 次失败后切换到放弃模式，告知用户无法完成。\n5. 验证性行动：在关键行动前插入验证步骤（如先查询再执行）。\n\n关键设计权衡：\n- 允许的循环次数 vs 延迟和成本。\n- 上下文窗口大小 vs 历史信息的完整度。\n- 工具调用的并行度 vs 控制流清晰度。",
+    "hints": [
+      "思考 LLM 的上下文窗口如何承载 Agent 的执行历史",
+      "工具调用失败后，LLM 本身能否从错误中恢复",
+      "无限循环是 Agent 设计中的经典问题"
+    ],
+    "tags": [
+      "react",
+      "agent-loop",
+      "tool-calling",
+      "reasoning",
+      "llm-agent"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MCP 协议与 Agent-Tool 集成标准化",
+    "content": "解释 MCP（Model Context Protocol）的核心设计理念、协议架构以及它如何解决 Agent 与外部工具集成中的标准化问题。相比自定义工具集成方案，MCP 带来了哪些关键优势？",
+    "answer": "MCP 是由 Anthropic 提出的开放协议，旨在标准化 LLM 应用（尤其是 Agent）与外部工具和数据源的集成方式。\n\n核心设计理念：\n- MCP 采用 client-server 架构，类比于 USB-C 接口——为 LLM 提供一个标准化的插拔式工具集成接口。\n- Host（主机）：LLM 应用程序（如 Claude Desktop、Agent 框架），负责管理连接和权限。\n- Client（客户端）：在 Host 内部运行，与 MCP Server 建立一对一连接。\n- Server（服务器）：暴露特定工具、数据源或资源的服务，实现标准化接口。\n\n协议架构：\n- 传输层：支持 stdio（本地子进程通信）和 SSE（Server-Sent Events，远程通信）。\n- Resource（资源）：暴露只读数据（文件、数据库、API 响应），类似 GET 端点。\n- Tool（工具）：暴露可调用的函数式接口，带 JSON Schema 参数定义，类似 POST 端点。\n- Prompt（提示）：暴露可复用的提示模板，带参数插槽。\n- 生命周期：初始化（capability negotiation）→ 操作（工具调用/资源读取）→ 关闭。\n\n相比自定义工具集成的关键优势：\n1. 标准化和互操作性：任何 MCP 兼容的 Host 可以无缝使用任何 MCP Server 的工具。\n2. 动态发现：Server 启动时向 Client 声明其能力，Agent 可以动态获取可用工具列表。\n3. 安全性：Host 可对工具调用实现统一的权限控制、审批流和审计日志。\n4. 隔离性：Server 运行在独立进程中（stdio 模式），工具崩溃不会影响 Agent 核心。\n5. 生态共享：工具开发者只需实现一次 MCP Server，就能被整个生态使用。",
+    "hints": [
+      "MCP 就像 LLM 世界的 USB-C 接口——一个通用的连接标准",
+      "思考没有标准化之前，开发 Agent 工具集成有哪些重复工作",
+      "协议设计中的生命周期和 capability negotiation 解决了什么问题"
+    ],
+    "tags": [
+      "mcp",
+      "protocol",
+      "agent-tools",
+      "standardization",
+      "model-context-protocol"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Agent 评估框架与方法",
+    "content": "关于 Agent 评估框架和方法的讨论中，以下哪个说法最准确？",
+    "options": [
+      "A) Agent 评估与传统 NLP 评估完全相同，只需用 BLEU/ROUGE 等指标衡量最终输出与参考答案的匹配度即可",
+      "B) Agent 评估只需要关注最终任务完成率（success rate），中间过程的效率和质量并不重要",
+      "C) 有效的 Agent 评估需要多维度指标组合：任务完成率（success rate）、效率（steps/tokens 成本）、稳健性（错误恢复能力）和安全合规性（工具调用合规率），并且需要通过轨迹级别的评估来发现策略缺陷",
+      "D) LLM-as-Judge 方法在 Agent 评估中完全不可靠，应永远不要使用"
+    ],
+    "answer": "C",
+    "hints": [
+      "Agent 有过程（工具调用序列）和结果（最终产出）两个评估维度",
+      "单一指标无法全面反映 Agent 的行为质量",
+      "考虑评估需要覆盖的完整维度范围"
+    ],
+    "tags": [
+      "agent-evaluation",
+      "llm-as-judge",
+      "testing",
+      "quality-assurance",
+      "benchmark"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多 Agent 编排模式对比",
+    "content": "比较至少三种多 Agent 编排模式（Multi-Agent Orchestration Patterns），分析它们的适用场景、优缺点以及如何选择合适的模式。",
+    "answer": "三种主流的多 Agent 编排模式：\n\n1. Supervisor/Orchestrator 模式（中心化编排）\n- 原理：一个中央 Supervisor Agent 负责任务分解、Agent 调度和结果汇总。Sub-agent 各自执行子任务。\n- 适用场景：任务结构清晰、步骤可预定义的场景（如代码生成：需求分析 Agent → 架构 Agent → 编码 Agent → 测试 Agent）。\n- 优点：控制流程清晰、可审计、避免 Agent 间的混乱冲突。\n- 缺点：单点瓶颈（Supervisor 的上下文窗口和决策速度限制）、灵活性不够。\n\n2. 辩论/讨论模式（Peer-to-Peer 协作）\n- 原理：多个 Agent 独立生成答案并进行交叉评审和讨论，最终达成共识或产生少数报告。\n- 适用场景：需要多角度分析、需要减少幻觉的场景（如事实核查、研究问题、排序任务）。\n- 优点：答案质量高、可以通过辩论暴露不同视角。\n- 缺点：成本高（多轮 LLM 调用）、延迟高、可能陷入无休止的辩论循环。\n\n3. 市场/拍卖模式（动态任务分配）\n- 原理：任务管理器发布任务，多个 specialized Agent 竞标/认领任务，按能力匹配分配。\n- 适用场景：任务类型多样且不可预测、Agent 能力异构的场景（如智能客服系统）。\n- 优点：高度灵活、可扩展、天然负载均衡。\n- 缺点：任务分配策略复杂、需要可靠的 Agent 能力声明和验证机制。\n\n如何选择：\n- 任务可预测性：确定性高 → Supervisor 模式；不确定 → 市场模式。\n- 质量要求：需要交叉验证 → 辩论模式；线性流程 → Supervisor 模式。\n- 成本敏感度：低 → 辩论模式；高 → Supervisor 模式。\n- Agent 数量：少（2-5 个）→ 任何模式；多（10+）→ 市场模式。\n- 实际系统中经常混合使用：Supervisor 将子任务委派给小团队，小团队内部用辩论模式决策。",
+    "hints": [
+      "考虑控制流是集中的还是分散的",
+      "不同模式对应不同的通信拓扑结构",
+      "实际系统中经常混合使用多种模式"
+    ],
+    "tags": [
+      "multi-agent",
+      "orchestration",
+      "agent-patterns",
+      "supervisor",
+      "collaboration"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 长期记忆管理：RAG 与记忆压缩",
+    "content": "对比 Agent 系统中基于 RAG 的外部记忆与基于内部压缩的长期记忆两种方案的优缺点，以及它们各自的适用场景。",
+    "answer": "RAG 方案的优点：检索质量可控，可结合 embedding + 排序提升精度，更新方便（替换文档即可），适合事实类知识。缺点：检索延迟较高，上下文窗口受限，对检索质量敏感。\n\n记忆压缩方案：通过定期总结、提取关键信息并压缩存储到上下文窗口或专用记忆模块中。优点：延迟低，信息密度高，适合维护对话历史和用户偏好。缺点：压缩过程可能丢失细节，更新策略复杂（何时压缩、保留多少）。\n\n混合方案通常将两者结合：RAG 负责事实知识，压缩记忆负责对话上下文和用户模型。",
+    "hints": [
+      "两种方案在信息密度、检索延迟和更新频率上的本质差异是什么",
+      "多轮对话场景中长期记忆的过期策略和优先级应该怎么设计"
+    ],
+    "tags": [
+      "Agent",
+      "记忆管理",
+      "RAG",
+      "长期记忆"
+    ]
   }
 ]

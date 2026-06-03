@@ -1459,5 +1459,110 @@
       "类卸载",
       "内存管理"
     ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "JVM 常量池索引设计",
+    "content": "Java Class 文件中常量池的索引从什么数字开始编号？为什么这样设计？",
+    "options": [
+      "A) 从 1 开始，因为 0 被保留用于表示「不引用任何常量」",
+      "B) 从 1 开始，因为 Java 数组默认从 1 开始编号",
+      "C) 从 0 开始，与 C 语言数组索引一致",
+      "D) 从 1 开始，因为常量池第 0 项存储当前类的全限定名"
+    ],
+    "answer": "A",
+    "hints": [
+      "常量池索引 0 是无效索引——思考什么场景下需要表示「没有引用任何常量」",
+      "查看 class 文件中指令的操作数——指向常量池的索引 0 表示不引用"
+    ],
+    "tags": [
+      "JVM",
+      "Class文件",
+      "常量池",
+      "字节码"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ZGC 染色指针与最大堆限制",
+    "content": "ZGC 使用染色指针（Colored Pointer）技术在 64 位指针的高位编码对象状态。在 Linux/x64 平台上（48 位虚拟地址空间），ZGC 支持的最大堆大小约为多少？",
+    "options": [
+      "A) 4TB，因为 64 位指针中 4 位用于染色标记，剩余地址空间受限",
+      "B) 4TB，与压缩指针（Compressed Oops）的最大 32GB 相比，4TB 是合理扩展",
+      "C) 16TB，因为 48 位虚拟地址减去 4 位染色指针后剩 44 位，2^44 = 16TB",
+      "D) 8TB，因为染色指针占用 6 位（含预留位），剩余 42 位可寻址空间"
+    ],
+    "answer": "C",
+    "hints": [
+      "Linux x64 使用 48 位虚拟地址空间（高位需符号扩展）",
+      "ZGC 的 4 个颜色位（Finalizable/Remapped/Marked0/Marked1）占用指针的 bits 44-47"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "染色指针",
+      "GC"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 逆优化（Deoptimization）机制",
+    "content": "什么是 JIT 逆优化（Deoptimization）？在什么场景下会发生逆优化？JVM 如何从编译执行安全回退到解释执行？",
+    "answer": "逆优化（Deoptimization）是 JIT 编译器在执行过程中发现编译时所做的假设不再成立时，将当前执行点从编译后的机器码回退到解释执行的机制。\n\n解析：逆优化通常发生在以下场景：1）类层次分析（CHA）被打破——C2 编译器假设某个接口只有一个实现类并做了方法内联，但运行时新的实现类被加载，内联假设不再成立。2）罕见陷阱（Uncommon Trap）——编译优化的某个分支假设被违反。3）通过诊断参数可手动触发。\n\n实现机制：逆优化通过 SafePoint 实现。当 JIT 发现假设失效时，标记相关方法为「不可进入」，并在该方法的 SafePoint 处触发回退。正在栈上执行编译代码的线程通过 OSR（栈上替换）将当前执行帧中的状态恢复到解释器可以理解的形式，然后跳转到解释器继续执行。关键资源（寄存器中的局部变量和操作数栈值）必须从寄存器或栈帧位置安全地复原到解释器栈帧。\n\n扩展延伸：逆优化是分层编译能够安全运行的关键保障——C1 编译器收集 profiling 数据后传递给 C2，C2 基于 profiling 做激进优化。如果 profiling 数据因代码路径变化而失效，逆优化确保程序能正确降级运行。过多的逆优化（称为「逆优化风暴」Deoptimization Storm）会导致性能急剧下降，通常由动态类加载频繁触发，可通过 -XX:PerMethodTrapLimit 控制每个方法允许的陷阱次数。",
+    "hints": [
+      "CHA（Class Hierarchy Analysis）假设被打破是逆优化最常见的触发场景",
+      "C2 做激进优化基于 profiling 数据，当数据失效时需要回退保护"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "逆优化",
+      "Deoptimization",
+      "C2"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 虚方法分派与 vtable",
+    "content": "JVM 如何处理虚方法调用（invokevirtual）？vtable（虚方法表）的作用是什么？它与接口方法调用（invokeinterface）的区别是什么？",
+    "answer": "虚方法分派（Dynamic Dispatch）是 JVM 处理 invokevirtual 指令的关键机制。每个类在方法区存储一个 vtable（虚方法表），按固定顺序排列该类及其父类的所有虚方法的入口地址。invokevirtual 通过接收者对象的实际类型在 vtable 中定位方法入口，实现运行时的多态分派。\n\n解析：\n1）vtable 的构建——子类的 vtable 复制父类的 vtable，然后覆盖被重写的方法入口，新增的方法追加到末尾。vtable 的索引在类加载时确定，之后不再变化。这使得虚方法分派的性能开销极低——只需要一次数组索引访问。\n\n2）invokevirtual vs invokeinterface：invokevirtual 的分派路径较短（vtable 索引已知，O(1) 访问），而 invokeinterface 需要先在实现类的方法表中搜索匹配的接口方法（JDK 8 前为线性搜索，JDK 8 后通过 itable 优化）。JDK 8 为每个类引入 itable（接口方法表），记录该类实现的接口列表及其方法偏移量，invokeinterface 通过 itable 实现 O(1) 分派。\n\n3）JIT 优化——C2 编译器通过 CHA（Class Hierarchy Analysis）检测接口/父类的实现类数量。如果只有一个实现类，JIT 可以将虚分派转为直接调用并内联（同时插入类型检查 guard 以防新的实现类被加载）。",
+    "hints": [
+      "vtable 的索引在类加载时确定——子类追加自己的方法到父类 vtable 末尾",
+      "invokeinterface 比 invokevirtual 慢的根源在于接口方法的分派路径更长"
+    ],
+    "tags": [
+      "JVM",
+      "vtable",
+      "虚方法",
+      "invokevirtual",
+      "itable"
+    ]
+  },
+  {
+    "category": "jvm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "G1 Mixed GC 的触发与选区策略",
+    "content": "G1 垃圾回收器的 Mixed GC 在什么条件下触发？它是如何选取参与回收的老年代 Region 的？Mixed GC 为什么需要分多次（多轮）执行？",
+    "answer": "Mixed GC 在 G1 的并发标记（Concurrent Marking）完成后触发，目标是同时回收年轻代和部分高价值的老年代 Region。\n\n触发条件：1）并发标记阶段完成。2）老年代已用空间占比超过 -XX:InitiatingHeapOccupancyPercent（IHOP，默认 45%）时，G1 启动并发标记。标记完成后，如果预估的老年代回收收益（垃圾量）满足停顿时间目标，则启动 Mixed GC。\n\n选区策略（CSet Selection）：G1 基于「垃圾最多优先」原则选择老年代 Region。并发标记阶段 G1 统计每个 Region 的存活对象比例（Live Data Percent）。Mixed GC 选择存活率最低（即垃圾最多）的 Region 优先回收——同样的停顿时间内能释放最多的空间。CSet 的构建受 -XX:G1MixedGCLiveThresholdPercent（默认 85%，存活率高于此值的 Region 不参与 Mixed GC）和 -XX:G1HeapWastePercent（默认 5%，可回收空间占比小于此值时停止 Mixed GC）控制。\n\n多轮执行的原因：G1 的停顿目标（-XX:MaxGCPauseMillis，默认 200ms）限制了单次 Mixed GC 能回收的 Region 数量。如果有大量高价值的 Region 需要回收，G1 分多轮 Mixed GC 逐渐回收——每一轮选一部分 Region，直到老年代可用空间足够或所有有价值 Region 都被回收。一轮 Mixed GC 的组成 = Eden + Survivor + 选中的老年代 Region。\n\n扩展延伸：如果 Mixed GC 的回收速度跟不上新晋升对象的速度，老年代空间持续增长，最终触发 G1 Full GC（退化到 Serial Old 做单线程 Full GC）。GC 日志中显示为「Pause Full (G1 Evacuation Pause)」。解决办法包括增大堆大小、降低 IHOP 提早开始并发标记、或调整 G1MixedGCCountTarget（目标轮数，默认 8 轮）。",
+    "hints": [
+      "Mixed GC 的选区依据存活率——存活率越低（垃圾越多）的 Region 优先回收",
+      "IHOP（Initiating Heap Occupancy Percent）控制并发标记的触发时机"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "Mixed GC",
+      "GC调优",
+      "Region"
+    ]
   }
 ]

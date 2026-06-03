@@ -1456,5 +1456,106 @@
       "MVVM",
       "MVP"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Refactoring god class with Strategy and Factory patterns",
+    "content": "You have inherited a PaymentProcessor class with 3,000 lines of code. It handles credit card payments, PayPal, cryptocurrency, bank transfers, and gift cards — all in a single class with switch statements scattered across 15 methods. The class is brittle and adding a new payment method requires touching 8+ files. How would you refactor this using design patterns?",
+    "answer": "Refactoring plan using Strategy + Factory patterns:\n\nStep 1: Identify the Strategy interface.\nExtract a common interface IPaymentStrategy with methods:\n- validate()\n- authorize(amount: Money)\n- capture(authorizationId: String)\n- refund(transactionId: String)\n- getFee(): Money\n\nEach payment method becomes a concrete strategy implementing IPaymentStrategy: CreditCardStrategy, PayPalStrategy, CryptoStrategy, BankTransferStrategy, GiftCardStrategy.\n\nStep 2: Create a PaymentStrategyFactory.\n- The factory takes a payment type enum and returns the appropriate strategy.\n- Strategy selection is centralized in one place instead of scattered switch statements.\n- New payment methods = new strategy class + factory registration — no existing code changes (Open/Closed Principle).\n\nStep 3: Refactor PaymentProcessor into a Context class.\n- PaymentProcessor now holds a reference to the current IPaymentStrategy.\n- It delegates all payment operations to the strategy.\n- It handles cross-cutting concerns: logging, metrics, transaction orchestration.\n\nStep 4: Extract shared behavior.\n- Some strategies share logic (e.g., credit/debit card validation, 3D Secure). Use Template Method pattern: create AbstractCardPaymentStrategy with shared card validation, letting specific card types override only their differences.\n\nStep 5: Handle stateful flows.\n- If payment flows have states (initiated, authorized, captured, refunded), introduce a State pattern inside each strategy or use a lightweight state machine.\n\nResult: PaymentProcessor drops from 3000 lines to ~100 lines of orchestration. Each strategy is 100-400 lines, independently testable, and new payment methods require zero changes to existing strategies.",
+    "hints": [
+      "The core problem is that different payment methods vary in implementation but share the same interface contract.",
+      "Think about which pattern handles object creation vs. which handles algorithm selection."
+    ],
+    "tags": [
+      "strategy-pattern",
+      "factory-pattern",
+      "refactoring",
+      "open-closed-principle",
+      "god-class"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Choosing the right pattern for event notification system",
+    "content": "You are designing a system where multiple components need to be notified when a user completes a purchase: email service, analytics service, inventory service, and loyalty points service. These services are independently deployed and may be added or removed without affecting the purchase flow. Which design pattern BEST fits this scenario?",
+    "options": [
+      "A) Chain of Responsibility — each service tries to handle the event and passes it along if it can't.",
+      "B) Observer — the purchase system maintains a list of subscribers and notifies them when an event occurs.",
+      "C) Command — encapsulate the purchase event as a command object with all necessary data.",
+      "D) Decorator — wrap the purchase system with additional behavior for each service."
+    ],
+    "answer": "B",
+    "hints": [
+      "The key requirement is that services can be added/removed independently without changing the purchase flow.",
+      "Think about which pattern explicitly supports a one-to-many dependency where changes to one object require notifying others."
+    ],
+    "tags": [
+      "observer-pattern",
+      "event-driven",
+      "loose-coupling",
+      "distributed-systems",
+      "pub-sub"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Applying patterns to handle API rate limiting across services",
+    "content": "Your microservices architecture calls a third-party API that has a strict rate limit of 100 requests per minute per API key. You have 5 services that all need to call this API. Currently, each service manages its own retries, leading to frequent 429 errors and wasted quota. Design a solution using appropriate design patterns.",
+    "answer": "Solution combining Proxy, Singleton, and Decorator patterns:\n\nCore pattern: Proxy-based rate limiter.\n\nLayer 1: RateLimiterProxy (Proxy pattern)\n- Stands between the 5 services and the third-party API.\n- All API calls go through this proxy instead of directly.\n- The proxy enforces the rate limit and queues/retries requests.\n\nLayer 2: Token Bucket Algorithm (implemented within the proxy)\n- A single token bucket instance manages the shared pool of 100 requests/minute.\n- Each request consumes a token; if no tokens available, the request is queued or rejected with a friendly retry-after header.\n- Tokens refill at a steady rate (100 per 60 seconds = ~1.67 tokens/sec).\n\nLayer 3: Singleton for the token bucket state.\n- The rate limiter state must be shared across all service instances. Use a distributed singleton (e.g., Redis) rather than an in-memory singleton, because services run on different nodes.\n- Redis: a sorted set or counter with TTL stores each service's usage, or a simple INCR with EXPIRE for a sliding window.\n\nLayer 4: Decorator for observability.\n- Wrap the proxy with a decorator that logs rate limit hits, measures latency, and emits metrics (e.g., requests queued, requests rejected, average wait time).\n- This keeps observability concerns out of the rate limiter logic.\n\nAlternative approach: Circuit Breaker (from stability patterns)\n- If rate limits are consistently hit, a circuit breaker trips and prevents all calls for a cooldown period, giving the quota time to recover.\n- This can be combined with the proxy: the proxy checks the circuit breaker before attempting to consume a token.\n\nResult: Services call the rate limiter proxy as if it were the original API. They don't need to know about rate limits at all. Adding a new service requires zero rate-limit configuration changes.",
+    "hints": [
+      "The proxy pattern controls access to an object, which is exactly what rate limiting needs.",
+      "A distributed system requires a shared state mechanism — in-memory singletons won't work across services."
+    ],
+    "tags": [
+      "proxy-pattern",
+      "singleton-pattern",
+      "rate-limiting",
+      "distributed-systems",
+      "resilience-patterns"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "When NOT to use design patterns — real-world trade-off",
+    "content": "A junior engineer on your team wants to introduce the Abstract Factory pattern to create different types of database connections (MySQL, PostgreSQL, MongoDB). Currently the app only uses PostgreSQL and there are no firm plans to add another database. The proposed pattern would add 6 new classes and increase setup complexity. How do you evaluate this design decision?",
+    "answer": "Evaluation framework: Apply YAGNI (You Ain't Gonna Need It) and consider the cost of abstraction.\n\nArguments against the Abstract Factory:\n1. Premature abstraction: YAGNI principle says don't build extensibility until you need it. Adding a database switch is speculative.\n2. Concrete cost: 6 new classes, a DI configuration change, more complex testing setup (you now need factory mocks). Every developer touching this code pays this cost forever.\n3. Actual extensibility: Real-world database migrations rarely just swap a connection. Each database has different query syntax, transaction semantics, and optimization strategies. An Abstract Factory over connection objects gives false confidence — the real work is in the query layer, not the connection layer.\n4. Conway's Law: The architecture encourages treating databases as interchangeable, which may not reflect the actual business domain.\n\nWhen you MIGHT accept the pattern:\n- If the app is a library/framework meant to be deployed by different customers with different DB requirements.\n- If the team has a concrete roadmap item for multi-DB support in the next quarter.\n- If the PostgreSQL code already has hardcoded references that would be painful to extract later (technical debt value).\n\nAlternative: A much simpler abstraction — a single DatabaseAdapter interface with one PostgresAdapter implementation. If (and only if) a second database is ever needed, the interface is already in place without the factory complexity. Cost: 2 classes instead of 8.\n\nKey lesson: Design patterns solve problems — don't introduce them because they look clean or future-proof. The simplest solution that works today is often the best long-term choice.",
+    "hints": [
+      "YAGNI is specifically about not building for speculative future requirements.",
+      "Consider the maintenance burden of the abstraction itself, not just its benefits."
+    ],
+    "tags": [
+      "yagni",
+      "over-engineering",
+      "abstract-factory",
+      "design-tradeoffs",
+      "simplicity"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Implementing undo/redo with the Command and Memento patterns",
+    "content": "You are building a diagram editor (like draw.io or Figma lite) where users can add, move, resize, and delete shapes. You need to support undo (Ctrl+Z) and redo (Ctrl+Shift+Z) with unlimited history, but storing full state snapshots would be too memory-intensive. How would you implement undo/redo using design patterns?",
+    "answer": "Hybrid approach: Command pattern for actions + Memento pattern for selective state capture.\n\nCore architecture: Command pattern.\n\n1. Define a Command interface with: execute(), undo(), and optionally redo().\n2. Each user action becomes a concrete command:\n   - AddShapeCommand(shapeData)\n   - MoveShapeCommand(shapeId, oldPosition, newPosition)\n   - ResizeShapeCommand(shapeId, oldDimensions, newDimensions)\n   - DeleteShapeCommand(shapeData) — stores the full shape data for undo\n3. Maintain two stacks: undoStack (past commands) and redoStack (undone commands).\n4. When a command executes → push to undoStack, clear redoStack.\n5. Undo: pop from undoStack, call command.undo(), push to redoStack.\n6. Redo: pop from redoStack, call command.execute(), push to undoStack.\n\nMemory optimization: Instead of storing full state, each command stores only the delta (old/new values). For MoveShapeCommand, you store shapeId + oldX/Y + newX/Y — not the entire canvas state. This is where Command pattern shines over storing snapshots.\n\nWhen Memento is needed (for complex operations):\n- Some operations affect many objects (e.g., group delete, paste with 50 shapes). Storing per-object deltas could be costly.\n- Alternative: for grouped operations, use a CompositeCommand that wraps multiple commands. Undo of CompositeCommand iterates child commands in reverse.\n- For irreversible operations (e.g., rasterizing a vector layer), use the Memento pattern: capture the affected objects' state before the operation, and restore the memento on undo.\n\nPractical limit: Cap the undo stack at 500 commands. For cases exceeding this, periodically save a full canvas snapshot as a baseline and keep subsequent commands as deltas (checkpoint-based undo).\n\nBonus: Use Prototype pattern to deep-clone shape objects for mementos, avoiding shared reference bugs.",
+    "hints": [
+      "Storing inverse operations is much cheaper than storing full state snapshots.",
+      "Think about what minimal information each command type needs to reverse itself."
+    ],
+    "tags": [
+      "command-pattern",
+      "memento-pattern",
+      "undo-redo",
+      "state-management",
+      "memory-optimization"
+    ]
   }
 ]

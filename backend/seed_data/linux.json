@@ -1430,5 +1430,106 @@
       "IO多路复用",
       "网络编程"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux 虚拟内存与缺页中断处理",
+    "content": "请说明 Linux 虚拟内存地址空间布局、MMU 分页机制、缺页中断（Page Fault）的几种类型以及处理流程。OOM Killer 在什么时候被触发？如何选择被 kill 的进程？",
+    "answer": "答案：Linux 虚拟内存将进程地址空间分为内核空间（高地址）和用户空间（低地址），通过 MMU 将虚拟地址映射到物理地址。缺页中断（Page Fault）分为三种类型：Major（页不在内存，需磁盘 I/O 读入）、Minor（页在内存但未建立映射）、Invalid（访问非法地址导致段错误）。OOM Killer 在系统物理内存耗尽且无法通过内存回收满足申请时触发，通过 oom_badness 打分选择要 kill 的进程。\n\n解析：虚拟地址空间布局（x86-64 典型）：用户空间 0x0000000000000000-0x00007fffffffffff（约 128TB），内核空间 0xffff800000000000 以上。用户态通过页表（Page Table）多级映射（x86-64 使用 4 级页表）访问物理内存，各段包含：Text（代码段）、Data（全局/静态变量）、Heap（堆）、Memory Mapping（mmap 映射区）、Stack（栈）。缺页中断处理流程：1）MMU 发现页表项的 Present 位为 0，触发缺页异常。2）内核检查虚拟地址是否合法。3）如果是 Minor Fault——页已在 swap/page cache 中但页表未建立映射，只需建立映射即可。4）如果是 Major Fault——页不在内存中，需要从磁盘读取（swap 换入或文件 mmap 读取），进程被阻塞等待 I/O 完成。\n\n扩展延伸：OOM Killer 触发条件——当 /proc/sys/vm/overcommit_memory=0（默认）时，内核允许一定程度的内存超卖（overcommit）。当物理内存+swap 耗尽且无法直接回收时，触发 OOM Killer。打分标准：进程占用的内存量（越大分越高）、运行时间（越短分越高）、是否是 root 进程（加分）。通过 /proc/PID/oom_score 查看当前分数，oom_score_adj（-1000 到 1000）可手动调整优先级。调优建议：设置 vm.overcommit_memory=2（禁止 overcommit，malloc 时严格检查）避免 OOM Killer 触发；调整 oom_score_adj 保护重要进程（如设置 -1000 让 OOM Killer 永不 kill）。注意：OOM Killer 只解决内核无法分配内存的问题，不能解决内存泄漏——需要配合监控工具（如 top/htop/vmstat）定位泄漏源。",
+    "hints": [
+      "Major Page Fault 和 Minor Page Fault 对性能的影响差异",
+      "OOM Killer 如何通过 oom_score_adj 保护关键进程"
+    ],
+    "tags": [
+      "Linux",
+      "虚拟内存",
+      "MMU",
+      "缺页中断",
+      "OOM Killer"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Linux inode 与文件链接",
+    "content": "关于 Linux 文件系统中的 inode、软链接和硬链接，以下说法正确的是？",
+    "options": [
+      "A) 硬链接可以跨文件系统创建，且可以链接目录",
+      "B) 删除源文件后，指向该文件的软链接仍然可以正常访问文件内容",
+      "C) inode 包含文件的元数据（权限、所有者、时间戳、数据块指针）但不包含文件名",
+      "D) 硬链接会复制文件内容到新的 inode，因此会占用双倍磁盘空间"
+    ],
+    "answer": "答案：C) inode 包含文件的元数据（权限、所有者、时间戳、数据块指针）但不包含文件名\n\n解析：inode（索引节点）存储文件的元信息：文件类型和权限、所有者 UID/GID、时间戳（atime/ctime/mtime）、硬链接计数、文件大小、数据块指针（直接/间接/双重间接指针）。文件名存储在目录文件中（作为项关联文件名和 inode 号）。这种分离设计使得硬链接（多个文件名指向同一 inode）成为可能。\n\n扩展延伸：其他选项的分析：A) 硬链接不能跨文件系统（因为 inode 号只在同一个文件系统内唯一），也不能链接目录（防止形成循环）。B) 删除源文件后，软链接成为悬挂链接（dangling link）——访问它返回 No such file or directory 错误。这是因为软链接存储的是目标文件的路径字符串，而非 inode 号。D) 硬链接不复制文件内容——所有硬链接共享同一个 inode 和数据块。只有删除所有硬链接（link count 降为 0）时文件内容才真正释放。创建硬链接：ln target link_name（新目录项指向同一 inode，link count +1）。创建软链接：ln -s target link_name（新文件，inode 类型为 symbolic link，内容存储目标路径字符串）。软链接的应用场景：快捷方式、跨文件系统链接、目录链接。",
+    "hints": [],
+    "tags": [
+      "Linux",
+      "inode",
+      "硬链接",
+      "软链接",
+      "文件系统"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux 进程间通信（IPC）机制对比",
+    "content": "Linux 提供了多种进程间通信（IPC）机制：管道（Pipe）、消息队列（Message Queue）、共享内存（Shared Memory）、信号量（Semaphore）、信号（Signal）、Socket。请说明这些机制的通信模式和各自的适用场景。",
+    "answer": "答案：Linux IPC 机制可分为三类：数据传输（管道、消息队列、Socket）、共享内存（Shared Memory + 信号量做同步）、信号驱动（Signal）。不同的 IPC 机制在传递数据量、通信速度和编程复杂度上有显著差异。\n\n解析：1）管道（Pipe）——半双工通信，父子进程间使用（匿名管道），任意两个进程间使用（命名管道/FIFO）。数据流模型，无消息边界。适用：简单的数据流传输（如 shell 命令的 | 操作）。2）消息队列（POSIX/System V）——有消息边界，支持优先级。数据在内核空间传递（需要两次拷贝：用户→内核→用户）。适用：需要消息边界的少量数据传输。3）共享内存（SHM，POSIX/System V）——多个进程共享同一物理内存页，不需要系统调用传递数据（最快 IPC）。需配合信号量或互斥锁同步。适用：大量数据的高速共享（如数据库缓冲池、视频帧共享）。4）信号量（Semaphore）——不是数据传输 IPC，而是同步原语（解决进程间对共享资源的互斥访问）。支持 P/V 操作。5）信号（Signal）——异步事件通知机制，但携带信息量极少（仅信号编号），且信号处理函数存在重入问题。适用：进程终止通知、定时器到期、用户态中断。6）Socket——支持本地通信（Unix Domain Socket）和远程通信（TCP/UDP Socket）。Unix Domain Socket 使用文件系统路径作为地址，数据传输直接在内核中完成（不经过网络协议栈），性能优于 TCP Socket。\n\n扩展延伸：性能对比（单机场景，从快到慢）：共享内存 > Unix Domain Socket > TCP Socket (localhost) > 管道 > 消息队列 > 信号。并发场景的选择原则：需要进程间共享大块数据→共享内存 + 信号量；需要可靠的字节流通信→Unix Domain Socket（兼具性能和灵活性）；需要简单父子进程数据流→匿名管道；需要事件通知→信号或 eventfd。注意：共享内存虽然最快，但需要自行处理同步和并发访问的复杂性。epoll 配合 Unix Domain Socket 是实现高性能本地 IPC 的推荐组合。",
+    "hints": [
+      "共享内存为什么是最快的 IPC 机制",
+      "Unix Domain Socket 为什么比 TCP Loopback 更快"
+    ],
+    "tags": [
+      "Linux",
+      "IPC",
+      "共享内存",
+      "管道",
+      "Socket"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Linux I/O 多路复用 select/poll/epoll",
+    "content": "关于 Linux 的 I/O 多路复用机制 select/poll/epoll，以下说法正确的是？",
+    "options": [
+      "A) select 和 poll 使用相同的内部实现，唯一的区别是 select 支持的最大文件描述符数量不同",
+      "B) epoll 通过 mmap 在用户态和内核态之间共享事件表，避免了数据拷贝",
+      "C) select 注册的文件描述符在内核中会修改 fd_set，因此每次调用都需要重新传入",
+      "D) epoll 的 LT（Level-Triggered）模式和 ET（Edge-Triggered）模式相比，ET 模式更容易编程但效率更高"
+    ],
+    "answer": "答案：C) select 注册的文件描述符在内核中会修改 fd_set，因此每次调用都需要重新传入\n\n解析：select 的内核实现将传入的 fd_set 参数直接修改（只保留有事件的 fd），因此用户态需要在每次调用 select 前重新构建 fd_set。这是 select 接口设计的一个「副作用」——开发者必须记住每次重新设置 fd_set。poll 接口通过 struct pollfd 的 events 和 revents 分离输入输出，避免了这种破坏性修改。\n\n扩展延伸：其他选项的分析：A) select 和 poll 的实现不同。select 使用位图操作（FD_SET/FD_CLR）且受限于 FD_SETSIZE（默认 1024）；poll 使用链表管理 pollfd 结构体，无最大数量限制。但两者都需要全量遍历 fd 列表检查事件（O(n) 复杂度）。B) epoll 不使用 mmap 共享事件表——epoll 通过红黑树管理注册的 fd，通过就绪链表（rdllist）返回活跃事件。性能优势在于只返回有事件的 fd（O(1) 而非 O(n)）。D) LT（水平触发）模式是默认模式——只要 fd 上有未处理的数据，epoll_wait 就会一直返回该 fd（简单、不易出错）。ET（边缘触发）模式只在状态变化（从无数据到有数据）时通知一次，需要配合非阻塞 I/O 循环读取直到 EAGAIN。ET 模式更高效但更容易漏掉事件（编程复杂度高，容易 bug）。epoll 的优势：1）O(1) 复杂度检查就绪事件。2）无最大 fd 数限制。3）通过事件回调机制避免全量遍历。",
+    "hints": [],
+    "tags": [
+      "Linux",
+      "I/O多路复用",
+      "select",
+      "poll",
+      "epoll"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux 内核参数调优与系统优化",
+    "content": "生产环境中常用的 Linux 内核参数调优涉及哪些方面？请从网络栈、内存管理、文件系统、进程调度四个维度说明关键参数及其影响。",
+    "answer": "答案：Linux 内核参数通过 /etc/sysctl.conf 或 sysctl -w 运行时调整，覆盖网络、内存、文件系统、进程调度等子系统。合理的参数调优可以显著提升高并发应用的性能和稳定性，但错误配置可能导致系统不稳定或性能下降。\n\n解析：1）网络栈（应对高并发 TCP 连接）：net.core.somaxconn（listen 队列上限，默认 128，高并发服务建议 1024+）；net.ipv4.tcp_tw_reuse（允许重用 TIME_WAIT 状态的 socket 用于新连接，减少端口耗尽）；net.ipv4.tcp_fin_timeout（TIME_WAIT 超时时间，默认 60s，可调整为 15-30s）；net.core.rmem_max/wmem_max（TCP 收发缓冲区上限）；net.ipv4.tcp_rmem/tcp_wmem（TCP 自动缓冲区调优参数，min/default/max）。注意：tcp_tw_recycle 已在 Linux 4.12 中移除（因 NAT 环境下有严重 bug）。2）内存管理：vm.swappiness（控制使用 swap 的积极程度，默认 60，数据库服务器建议 1-10）；vm.dirty_ratio/dirty_background_ratio（脏页占内存比例触发同步写回，大内存服务器需调低减少延迟抖动）；vm.overcommit_memory（内存超卖策略）。\n\n扩展延伸：3）文件系统：fs.file-max（系统级最大文件描述符数，根据并发连接数调整）；fs.nr_open（进程级最大 fd 数）；fs.inotify.max_user_watches（inotify 监听限制，如 IDE 监听大量文件时需要提高）。4）进程调度：kernel.sched_migration_cost_ns（进程迁移成本，NUMA 架构下调整影响性能）；kernel.numa_balancing（NUMA 自动平衡，延迟敏感应用建议关闭）。注意：参数调优应先监控后调整——使用 perf/FlameGraph、/proc/schedstat、netstat -s 等工具定位瓶颈，再有针对性地调参。网络优化清单建议：net.ipv4.tcp_tw_reuse=1、net.ipv4.tcp_fastopen=3（启用 TCP Fast Open，减少握手延迟）、net.core.somaxconn=4096。JVM 相关：vm.max_map_count（mmap 上限，ES/Lucene 建议 262144+）。",
+    "hints": [
+      "tcp_tw_reuse 和 tcp_tw_recycle 的区别——为什么 tcp_tw_recycle 被移除",
+      "vm.swappiness 为什么在数据库服务器上建议设置为 1-10"
+    ],
+    "tags": [
+      "Linux",
+      "内核参数",
+      "网络调优",
+      "内存管理",
+      "系统优化"
+    ]
   }
 ]

@@ -1456,5 +1456,111 @@
       "原子性",
       "复制"
     ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Function 脚本引擎与 Lua EVAL 的对比",
+    "content": "Redis 7.0 引入了 Function（函数）功能作为 Lua 脚本的新执行方式。请说明 Redis Function 与传统的 EVAL/EVALSHA 的核心区别，以及 Function 解决了什么痛点。",
+    "answer": "答案：Redis Function 是 Redis 7.0 引入的脚本管理框架，允许用户注册命名函数到 Redis 服务端（通过 FUNCTION LOAD），然后通过 FCALL 调用。与 EVAL/EVALSHA 相比，Function 解决了脚本管理、复制安全性和跨库迁移的痛点。\n\n解析：传统 EVAL/EVALSHA 的问题：1）脚本管理分散——每个客户端各自 SCRIPT LOAD，不同客户端之间的脚本缓存不共享。2）重启丢失——Redis 重启后所有已缓存的脚本丢失，客户端需重新加载（NOSCRIPT 错误）。3）跨 Cluster 节点不一致——不同节点的脚本缓存可能不同步。Function 的改进：1）集中式注册——函数注册后存储在 Redis 服务器（通过 RDB/AOF 持久化），重启后仍然可用。2）复制安全——函数在写入 AOF 或同步到从节点时自动传播，无需担心 EVALSHA 的脚本缓存同步问题。3）库（Library）管理——支持按库组织函数，可通过 FUNCTION LIST/FUNCTION DELETE 管理。\n\n扩展延伸：Function 注册语法：FUNCTION LOAD REPLACE \"#!lua name=mylib\\nredis.register_function('myfunc', function(keys, args) return redis.call('GET', keys[1]) end)\"。FCALL 调用语法：FCALL myfunc 1 mykey。Function 仍然在沙箱中执行（与 EVAL 相同），且同样具有原子性。注意：Function 不是 Lua 语言的变化——它只是脚本管理和分发方式的改进。Redis 7.0+ 建议新项目优先使用 Function 替代 EVAL/EVALSHA。",
+    "hints": [
+      "为什么 EVALSHA 在 Redis Cluster 中容易出现 NOSCRIPT 错误",
+      "Function 如何解决跨节点脚本缓存不一致的问题"
+    ],
+    "tags": [
+      "Redis",
+      "Function",
+      "Lua",
+      "Redis 7.0",
+      "脚本"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis 异步删除（lazy-free）机制",
+    "content": "关于 Redis 4.0+ 引入的 lazy-free（异步释放内存）机制，以下说法正确的是？",
+    "options": [
+      "A) lazy-free 默认开启，所有删除操作都会异步执行",
+      "B) UNLINK 命令会立即将 key 从键空间中删除，并在后台线程释放内存，因此不会阻塞主线程",
+      "C) lazy-free 只对 DEL 命令生效，对 EXPIRE 命令不生效",
+      "D) FLUSHALL ASYNC 与 FLUSHALL 性能完全一致"
+    ],
+    "answer": "答案：B) UNLINK 命令会立即将 key 从键空间中删除，并在后台线程释放内存，因此不会阻塞主线程\n\n解析：Redis 4.0 引入 lazy-free 机制（lazyfree-lazy-user-del=no 默认关闭），通过 UNLINK 命令显式触发异步删除，主线程 O(1) 从键空间中摘除 key 后立即返回，实际内存回收在后台线程逐步进行。DEL 命令默认是同步的（大 key 的 DEL 可能阻塞 Redis 数十秒）。lazy-free 相关配置：1）lazyfree-lazy-eviction=yes——淘汰 key 时异步释放。2）lazyfree-lazy-expire=yes——过期 key 异步释放。3）lazyfree-lazy-server-del=yes——隐式删除（如 rename 覆盖）异步释放。4）replica-lazy-flush=yes——从节点全量同步时的 FLUSHALL 异步释放。\n\n扩展延伸：UNLINK 的底层实现：先判断 key 的类型和大小。如果 key 很小（如短的 String），UNLINK 退化为同步 DEL（后台线程开销 > 直接释放）。只有大 key（集合类元素多或值大的 String）才会真正异步释放。后台线程通过 BIO（Background I/O）线程池执行释放操作，避免主线程阻塞。监控：INFO stats 中的 lazy_free_passes 和 lazy_freed_objects 统计异步释放的对象数。",
+    "hints": [
+      "lazy-free 何时退化为同步 DEL——UNLINK 的判断条件是什么",
+      "lazyfree-lazy-eviction 和 lazyfree-lazy-expire 分别控制什么场景的异步删除"
+    ],
+    "tags": [
+      "Redis",
+      "lazy-free",
+      "UNLINK",
+      "性能",
+      "阻塞"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis listpack 如何解决 ziplist 的连锁更新问题",
+    "content": "Redis 7.0 用 listpack 全面取代了 ziplist。ziplist 存在什么连锁更新（Cascade Update）问题？listpack 是如何解决这个问题的？",
+    "answer": "答案：ziplist 的连锁更新问题源于其节点的 prevlen 字段采用可变长度编码——当新增或修改一个节点导致其后续节点的 prevlen 需要从 1 字节扩展到 5 字节时，可能引发一连串的 prevlen 重新计算。listpack 通过去除前向长度字段，改为每个节点记录自身长度（包含尾部），消除了连锁更新的根源。\n\n解析：ziplist 的连锁更新：1）ziplist 每个节点包含 prevlen（前一个节点的长度）和 encoding+data。2）prevlen 的编码规则：如果前一个节点长度 < 254 字节，prevlen 用 1 字节；>= 254 字节则用 5 字节（第一个字节 0xFE 作为标记）。3）连锁更新触发场景：往 ziplist 中间插入一个 253 字节的节点后，其后续节点需要扩展 prevlen；如果扩展后该节点也达到 254 字节，再后续的节点也需要扩展——形成链式反应。最坏情况下复杂度 O(n²)。listpack 的改进：listpack 每个节点只记录 self-length（自身长度，通过 encoding 字段尾部计算出总长度），不依赖前一个节点的信息来定位。因此插入或删除一个节点时不需要级联更新后续节点的头部字段。\n\n扩展延伸：listpack 的遍历方式：通过每个节点末尾的 total-bytes 信息反向定位前一个节点（从尾部开始减），不需要 forward/backward 指针。listpack 在 Redis 7.0 中替换了 ziplist 的所有使用场景：Hash 的 field 少时用 listpack、Zset 元素少时用 listpack、List 的 quicklist 节点内用 listpack（替代 ziplist）。连锁更新的实际影响：虽然在典型场景下发生的概率很低，但一旦发生会造成不可预测的延迟抖动。listpack 从数据结构层面根除了此问题。",
+    "hints": [
+      "ziplist 的 prevlen 为什么使用可变长度编码",
+      "listpack 如何在不存储前向长度的情况下反向遍历"
+    ],
+    "tags": [
+      "Redis",
+      "listpack",
+      "ziplist",
+      "连锁更新",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Redis 7.0 Sharded Pub/Sub",
+    "content": "关于 Redis 7.0 引入的 Sharded Pub/Sub（SSUBSCRIBE/SPUBLISH），以下说法正确的是？",
+    "options": [
+      "A) Sharded Pub/Sub 对所有订阅者广播消息，与传统 Pub/Sub 功能完全相同",
+      "B) Sharded Pub/Sub 将消息分片到固定的哈希槽，确保同一频道消息在不同槽位均匀分布",
+      "C) Sharded Pub/Sub 将频道按 key 的哈希槽映射到集群节点，消息只广播到同一槽位的节点上，避免跨节点扩散",
+      "D) Sharded Pub/Sub 使用 Stream 作为消息存储后端"
+    ],
+    "answer": "答案：C) Sharded Pub/Sub 将频道按 key 的哈希槽映射到集群节点，消息只广播到同一槽位的节点上，避免跨节点扩散\n\n解析：传统 PUB/SUB 在 Redis Cluster 中有一个严重问题——当客户端通过任意节点 PUBLISH 消息时，该节点必须将消息广播到集群内所有其他节点（cluster links），以确保所有订阅该频道的客户端都能收到。这意味着集群中每个 PUBLISH 都会产生 N-1 次内部节点间转发，在频道多、消息频繁的集群中造成巨大的内部网络开销。Sharded Pub/Sub（Redis 7.0+）通过 SSUBSCRIBE/SPUBLISH 解决：频道名按 CRC16 计算哈希槽，消息只发送到负责该槽位的节点上，订阅该频道的客户端也必须连接到该节点。这样避免跨节点广播，消除了内部转发开销。\n\n扩展延伸：SSUBSCRIBE 与传统 SUBSCRIBE 的区别：1）S 版本的消息只在单节点处理，不跨节点广播。2）客户端需要连接到正确的节点（负责频道对应 slot 的节点）。3）SPUBLISH 不会广播给集群内其他节点——这消除了 Cluster 模式下 Pub/Sub 的扩展性瓶颈。适用场景：高频道数+高发布频率的 Redis Cluster 场景。迁移注意：传统 SUBSCRIBE 和 SSUBSCRIBE 是两套独立的频道空间——同一个频道名在两组中的消息互不传递。",
+    "hints": [
+      "传统 Pub/Sub 在 Cluster 模式下为什么会产生 N-1 次内部转发",
+      "Sharded Pub/Sub 如何确保客户端连接到正确的节点"
+    ],
+    "tags": [
+      "Redis",
+      "Sharded Pub/Sub",
+      "Redis 7.0",
+      "Cluster"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 无盘复制（Diskless Replication）",
+    "content": "Redis 全量同步时主节点需要生成 RDB 快照传给从节点。传统方式使用磁盘 RDB，Redis 7.0+ 优化了无盘复制。请说明 diskless replication 的工作原理，以及它解决了什么问题。",
+    "answer": "答案：Diskless Replication（无盘复制）是 Redis 2.8.18+ 引入的优化（通过 repl-diskless-sync yes 开启），主节点在生成 RDB 快照后不写入磁盘文件，而是通过 Socket 直接流式发送给从节点，减少磁盘 I/O 开销和延迟。Redis 7.0+ 进一步优化了无盘复制的并发处理能力。\n\n解析：传统 RDB 全量同步：1）主节点 fork 子进程生成 RDB 文件到磁盘。2）子进程完成 RDB 写入后通知主进程。3）主进程读取 RDB 文件并逐块发送给从节点。问题：RDB 文件写入磁盘和从磁盘读取都是 I/O 密集型操作，磁盘成为瓶颈，且父进程在读取 RDB 时可能因大文件读取阻塞事件循环。无盘复制：1）主节点 fork 子进程后，子进程直接将 RDB 内容写入从节点的 Socket（不经过磁盘）。2）数据从内存直接到网络，避免了两次磁盘 I/O（写 RDB 文件 + 读 RDB 文件）。\n\n扩展延伸：Redis 7.0+ 的改进：repl-diskless-sync-max-replicas（默认 0，表示不限制）——主节点等待更多从节点同时发起全量同步，一次 RDB 生成服务多个从节点，进一步降低 fork 频率。延迟补偿：无盘复制中主节点会先将生成的 RDB 写入一个中间 Socket 缓冲区（repl-backlog），断开重连的从节点可以从中追回部分数据，减少全量同步频率。适用建议：磁盘慢（如 HDD 或共享存储）但网络带宽充足的场景优先开启无盘复制；磁盘快（NVMe SSD）且从节点少的场景两者差异不大。",
+    "hints": [
+      "无盘复制为什么能减少主节点的延迟抖动",
+      "repl-diskless-sync-max-replicas 参数的作用是什么"
+    ],
+    "tags": [
+      "Redis",
+      "无盘复制",
+      "Diskless Replication",
+      "主从复制",
+      "全量同步"
+    ]
   }
 ]

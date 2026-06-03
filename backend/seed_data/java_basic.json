@@ -1468,5 +1468,111 @@
       "java15",
       "string"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "String不可变性的设计考量",
+    "content": "Java中String被设计为final不可变类，请列举至少三个不可变性的设计好处，并说明String常量池（String Pool）与不可变性之间的关系。",
+    "answer": "1) 线程安全：不可变对象天然线程安全，无需同步；\n2) 常量池复用：不可变性使得JVM可以安全地将字符串字面量驻留（intern），相同内容的字符串可共享同一内存地址，节省内存；\n3) 安全性：String被广泛用于类名加载、URL、网络连接等敏感参数，不可变性防止恶意篡改；\n4) HashMap键的稳定性：作为哈希表的键，不可变性保证hashCode值固定不变。\nString Pool依赖不可变性——只有当字符串内容不会改变时，JVM才能安全地将不同变量指向同一个内部char[]数组。",
+    "hints": [
+      "安全性和类加载机制是重要维度",
+      "哈希表中不可变对象有何优势",
+      "多线程下不可变对象的同步开销"
+    ],
+    "tags": [
+      "String",
+      "immutability",
+      "String Pool",
+      "JVM"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "equals()与hashCode()协变契约",
+    "content": "以下关于equals()和hashCode()的描述，哪一项是正确的？",
+    "options": [
+      "A) 两个对象equals()返回true，则hashCode()必须返回相同的值，反过来也成立",
+      "B) 两个对象hashCode()相同，则equals()必须返回true",
+      "C) 两个对象equals()返回true，但hashCode()可以返回不同的值",
+      "D) 两个对象equals()返回true，则hashCode()必须返回相同的值；但hashCode()相同不代表equals()为true"
+    ],
+    "answer": "D",
+    "hints": [
+      "hashCode是哈希表的索引允许冲突",
+      "equals为true时哈希值应当一致",
+      "哈希碰撞不意味着对象相等"
+    ],
+    "tags": [
+      "equals",
+      "hashCode",
+      "Object",
+      "contract"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "双重检查锁定实现线程安全单例",
+    "content": "用Java实现一个线程安全的单例模式，要求使用双重检查锁定（Double-Checked Locking），确保懒加载、线程安全且高性能。请完整写出代码，包括必要的volatile关键字和防御性处理。",
+    "answer": "public class Singleton {\n    private static volatile Singleton instance;\n\n    private Singleton() {\n        if (instance != null) {\n            throw new IllegalStateException(\"Already instantiated\");\n        }\n    }\n\n    public static Singleton getInstance() {\n        if (instance == null) {\n            synchronized (Singleton.class) {\n                if (instance == null) {\n                    instance = new Singleton();\n                }\n            }\n        }\n        return instance;\n    }\n}\n\n关键细节：\n1) instance必须声明为volatile，防止指令重排导致半初始化对象被读取；\n2) 构造器中防御性检查防止反射攻击；\n3) 第一层检查避免不必要的同步开销。",
+    "hints": [
+      "volatile在JDK 5后解决了DCL问题",
+      "new关键字三步可能被指令重排",
+      "反射攻击的防线在构造器中"
+    ],
+    "tags": [
+      "singleton",
+      "volatile",
+      "多线程",
+      "设计模式",
+      "DCL"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "基本类型默认值与局部变量",
+    "content": "Java中局部变量与成员变量有相同的默认值规则——int类型局部变量未初始化时默认值为0。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "局部变量和成员变量初始化规则不同",
+      "尝试编译未初始化的局部变量看看结果"
+    ],
+    "tags": [
+      "primitive",
+      "默认值",
+      "JLS",
+      "initialization"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "char[]比String更适合存储密码的原因",
+    "content": "安全编码规范中常建议用char[]而非String存储密码，请从JVM内存管理角度解释根本原因，并说明JDK 9之后Compact Strings对这一建议有何影响。",
+    "answer": "根本原因是String是不可变的，密码以String形式存在后，即使使用完毕也无法主动清除其内容，它会一直留在堆内存中直到被GC回收，而GC回收时机不可控。如果有人dump了堆内存，密码就会泄露。而char[]是可变的，使用完毕后可以手动填充覆盖（Arrays.fill()）清除敏感数据。\n\nJDK 9引入的Compact Strings（JEP 254）将String内部存储从char[]改为byte[]，并增加编码标志位，这使得String占用的内存更少，但并没有改变String的不可变性和无法主动清除的问题，因此该建议仍然适用。",
+    "hints": [
+      "不可变对象无法被修改包括清空",
+      "堆转储是常见的入侵分析手段",
+      "可变数组可手动覆写内容"
+    ],
+    "tags": [
+      "String",
+      "security",
+      "char[]",
+      "Compact Strings",
+      "JVM"
+    ]
   }
 ]

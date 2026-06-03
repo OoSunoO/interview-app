@@ -1344,5 +1344,97 @@
       "锁升级",
       "JVM"
     ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "线程池健康监控指标",
+    "content": "监控 ThreadPoolExecutor 运行状态的关键方法包括：___（返回当前池中线程数）、___（返回正在执行任务的线程数）、___（返回任务队列中积压的任务数）、___（返回已累计完成的任务数）。根据这些指标判断线程池是否健康——如果___持续接近 maximumPoolSize 且队列持续增长，说明任务提交速度超过处理能力，需要评估是否要拒绝任务或扩容。",
+    "answer": "{\"correct\":[[\"getPoolSize()\",\"getPoolSize\"],[\"getActiveCount()\",\"getActiveCount\"],[\"getQueue().size()\",\"getQueue size\",\"队列大小\"],[\"getCompletedTaskCount()\",\"getCompletedTaskCount\"],[\"getActiveCount()\",\"活跃线程数\",\"activeCount\"]],\"distractors\":[\"getCorePoolSize()\",\"getLargestPoolSize()\",\"getRejectedExecutionCount()\",\"getTaskCount()\",\"getQueue().remainingCapacity()\",\"getPoolSize()\"]}",
+    "hints": [
+      "activeCount 接近 maximumPoolSize 且队列持续增长说明线程池过载",
+      "completedTaskCount 增长停滞说明任务被拒绝或线程池已关闭"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "监控",
+      "ThreadPoolExecutor"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Happens-Before 规则应用示例",
+    "content": "在以下场景中：线程 A 执行 x = 1; 然后释放锁 L。线程 B 获取锁 L 后读取 x。线程 B 一定能读到 x = 1，因为释放锁 L___获取锁 L（这是 happens-before 规则中的___规则）。同理，线程 A 对 volatile 变量 flag 的写___线程 B 对同一 volatile 变量 flag 的读，因此线程 B 在读到 flag = true 后一定能看到线程 A 在写入 flag 之前对共享变量的所有更新。",
+    "answer": "{\"correct\":[[\"happens-before于\",\"发生在之前\",\"先于\"],[\"锁\",\"monitor\",\"释放锁-获取锁\"],[\"happens-before于\",\"先于\",\"发生在\"]],\"distractors\":[\"同时于\",\"不happens-before\",\"同步\",\"内存屏障\",\"传递性\",\"可见性\",\"有序性\",\"后于\"]}",
+    "hints": [
+      "锁规则是 happens-before 的核心规则之一——释放锁的操作 happens-before 后续的获取同一锁的操作",
+      "volatile 写-读规则同样建立跨线程的 happens-before 关系"
+    ],
+    "tags": [
+      "并发",
+      "JMM",
+      "Happens-Before",
+      "volatile",
+      "锁"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CopyOnWriteArrayList 读写分离原理",
+    "content": "CopyOnWriteArrayList 的写操作（add/set/remove）会先获取___，然后将底层数组___一份，在新数组上执行修改，最后将新数组赋值给___（volatile 引用），然后释放锁。读操作完全不加锁，直接读取当前 volatile 数组引用——因此读___（会/不会）被写操作阻塞。这种方案适用于___（读多写少/写多读少）场景。缺点是每次写操作都会产生 O(n) 的___，且短暂存在数据不一致窗口。",
+    "answer": "{\"correct\":[[\"锁\",\"ReentrantLock\"],[\"复制\",\"拷贝\"],[\"array\",\"数组\"],[\"不会\",\"不\"],[\"读多写少\"],[\"内存开销\",\"数组拷贝开销\",\"复制开销\"]],\"distractors\":[\"synchronized\",\"CAS\",\"锁定\",\"引用\",\"成员变量\",\"会\",\"可能\",\"读少写多\",\"读写均衡\",\"副本\",\"空间浪费\"]}",
+    "hints": [
+      "CopyOnWriteArrayList 的核心权衡——牺牲写性能换取读操作的完全无锁",
+      "volatile 数组引用保证了读线程能立即看到写线程发布的新数组"
+    ],
+    "tags": [
+      "并发",
+      "CopyOnWriteArrayList",
+      "读写分离",
+      "无锁读"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "ThreadPoolExecutor 的钩子方法",
+    "content": "ThreadPoolExecutor 提供了三个可重写的保护性钩子方法：___（任务执行前调用，常用于记录开始时间或初始化 ThreadLocal）、___（任务执行后调用，无论正常完成还是异常退出都会执行，常用于记录耗时）、以及___（任务被拒绝时调用，比 RejectedExecutionHandler 更灵活，支持将任务重新入队）。线程池终止时回调的方法是___。",
+    "answer": "{\"correct\":[[\"beforeExecute()\",\"beforeExecute\"],[\"afterExecute()\",\"afterExecute\"],[\"rejectedExecution()\",\"rejectedExecution\"],[\"terminated()\",\"terminated\"]],\"distractors\":[\"preStartCoreThread()\",\"preExecute()\",\"postExecute()\",\"shutdown()\",\"awaitTermination()\",\"onShutdown()\",\"ThreadFactory()\"]}",
+    "hints": [
+      "beforeExecute 和 afterExecute 配合可以精确统计每个任务的执行耗时",
+      "terminated() 在所有任务完成且线程池关闭后调用，适合做清理工作"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "钩子方法",
+      "ThreadPoolExecutor"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "LockSupport 与 Object.wait/notify 对比",
+    "content": "LockSupport.park() 与 Object.wait() 的核心区别：1）park()___（需要/不需要）在同步块中调用。2）park() 的唤醒机制是___（面向线程/面向对象/面向信号）的——unpark(thread) 精确唤醒指定线程，不会出现「惊群效应」。3）unpark()___（可以/不可以）在 park() 之前调用——许可证可以累积（最多 1 个）。4）响应中断时，park()___（抛出 InterruptedException/静默返回），因此调用后需要通过 Thread.interrupted() 检查中断标志位。",
+    "answer": "{\"correct\":[[\"不需要\"],[\"面向线程\"],[\"可以\"],[\"静默返回\",\"直接返回\",\"不抛异常\"]],\"distractors\":[\"需要\",\"必须\",\"面向对象\",\"面向信号\",\"不可以\",\"不可以\",\"根据 JVM 实现\",\"抛出 InterruptedException\",\"抛出异常\",\"继续阻塞\",\"暂停\"]}",
+    "hints": [
+      "LockSupport 的许可证机制——unpark 相当于发放许可证，park 相当于消费许可证",
+      "AQS 的底层线程阻塞/唤醒完全基于 LockSupport.park/unpark 实现"
+    ],
+    "tags": [
+      "并发",
+      "LockSupport",
+      "线程阻塞",
+      "AQS",
+      "Object.wait"
+    ]
   }
 ]

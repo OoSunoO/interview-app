@@ -1411,5 +1411,115 @@
       "zero-shot",
       "图文对齐"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "FlashAttention 核心思想",
+    "content": "解释 FlashAttention 的核心思想及其对 Transformer 训练和推理的影响。它解决了什么问题？关键技术创新是什么？",
+    "answer": "FlashAttention 的核心思想是通过 tiling（分块）将注意力计算分块进行，避免将完整的 N×N 注意力矩阵写入 HBM（高带宽内存），而是在 SRAM 中完成整个计算过程后再写回 HBM。它解决了 Transformer 中注意力机制的 IO 瓶颈问题——标准注意力计算需要 O(N²) 的内存访问，而 FlashAttention 将其降低到 O(N² / B) 其中 B 是 SRAM 块大小。\n\n关键技术创新：\n1. Tiling（分块）：将 Q、K、V 矩阵分块，在 SRAM 中逐块计算注意力，避免大矩阵的 HBM 读写。\n2. Recomputation（重计算）：在前向传播中不保存完整的注意力矩阵，反向传播时重新计算，减少内存占用。\n3. Online softmax 算法：安全地在分块上计算 softmax，保证数值稳定性。\n\n影响：\n- 训练速度提升 2-4 倍（在 BERT/GPT 上实测）\n- 内存占用从 O(N²) 降到 O(N)\n- 使得长序列（128K+）的 Transformer 训练成为可能\n- FlashAttention-2 进一步优化了并行度和 warp 利用率",
+    "hints": [
+      "思考 Transformer 训练中哪部分最耗费内存和带宽",
+      "注意力矩阵的 N×N 大小对长序列意味着什么",
+      "分块计算 softmax 有什么数值挑战"
+    ],
+    "tags": [
+      "attention",
+      "transformer",
+      "optimization",
+      "flash-attention",
+      "io-aware"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "LoRA 与全参数微调对比",
+    "content": "关于 LoRA（Low-Rank Adaptation）与全参数微调的对比，以下哪个说法是错误的？",
+    "options": [
+      "A) LoRA 通过低秩分解矩阵 ΔW = BA 来近似全参数更新的变化量，其中 B ∈ R^{d×r}, A ∈ R^{r×k}，训练时冻结原权重 W₀",
+      "B) LoRA 的秩 r 决定了可调整参数数量和表达能力之间的 trade-off，通常 r 设置为 8 或 16",
+      "C) LoRA 的推理延迟与基础模型相比有显著增加，因为需要额外计算两个低秩矩阵的乘积来补偿原始权重",
+      "D) LoRA 在多数任务上的表现可以接近甚至超过全参数微调，尤其是在数据量有限的情况下"
+    ],
+    "answer": "C",
+    "hints": [
+      "考虑推理时 LoRA 权重是否可以合并到原权重中",
+      "LoRA 的核心优势之一就是推理零开销"
+    ],
+    "tags": [
+      "lora",
+      "fine-tuning",
+      "peft",
+      "parameter-efficient"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Muon 优化器设计原理",
+    "content": "解释 Muon（Momentumized Newton-like）优化器的核心设计思想、与 Adam 的关键区别，以及它为什么在某些大规模训练场景中表现出色。",
+    "answer": "Muon 优化器的核心思想是用矩阵的极分解（polar decomposition）替代逐元素的梯度缩放，利用矩阵的结构信息来加速优化。它的 Newton-like 性质体现在：Muon 对梯度矩阵做正交投影（通过 SVD 计算 U V^T），用这个正交分量作为更新方向，这等价于在矩阵流形上进行自然梯度下降。\n\n与 Adam 的关键区别：\n1. Adam 对每个参数做逐元素的动量 + RMS 归一化，忽略参数之间的结构关系。\n2. Muon 保持参数矩阵的整体结构，通过正交投影保留矩阵的旋转信息。\n3. Adam 需要维护两个状态（m, v），Muon 只需要一个动量状态。\n\nMuon 出色的原因：\n1. 对于权重矩阵（如线性层、注意力投影），参数空间具有自然的矩阵流形结构。Muon 的极分解尊重这种结构，在流形上沿测地线方向更新，而非在欧几里得空间走直线。\n2. 泛化性能更好——Muon 隐式地对参数空间施加了正交约束的正则化效果。\n3. 在大规模语言模型训练中，Muon 通常能用更少的步数达到与 AdamW 相同的损失值。\n4. 计算开销集中在 SVD/QR 分解上，但对于常见 LLM 权重形状（宽矩阵），该开销相对前向/反向传播是可控的。",
+    "hints": [
+      "想想 Adam 对每个参数独立做归一化的局限性",
+      "矩阵的极分解和 SVD 有什么关系",
+      "在参数矩阵形成的流形上，欧几里得梯度更新可能不是最优方向"
+    ],
+    "tags": [
+      "optimizer",
+      "muon",
+      "adam",
+      "training",
+      "matrix-manifold"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "DPO 与 RLHF 对比",
+    "content": "关于 Direct Preference Optimization（DPO）与传统 RLHF（PPO-based）的对比，以下哪个说法是正确的？",
+    "options": [
+      "A) DPO 仍然需要训练一个独立的奖励模型，但不需要在线采样，因此比 RLHF 更稳定",
+      "B) DPO 的核心贡献是将偏好优化转化为一个简单的分类损失函数，避免了 RLHF 三阶段流程中的强化学习环节",
+      "C) DPO 的损失函数是 L_DPO = -E[log σ(β(log π_θ(y_w|x) - log π_ref(y_w|x) - β(log π_θ(y_l|x) - log π_ref(y_l|x))))]，其中 β 是控制 KL 散度惩罚强度的超参数",
+      "D) DPO 在数学上等价于 RLHF 当奖励模型为 Bradley-Terry 模型时，但 DPO 的训练效率低于 RLHF"
+    ],
+    "answer": "B",
+    "hints": [
+      "DPO 的数学推导直接绕过了奖励模型",
+      "认真看 DPO 的损失函数公式是否存在符号错误",
+      "DPO 的最大优势是简化了训练流程"
+    ],
+    "tags": [
+      "dpo",
+      "rlhf",
+      "preference-optimization",
+      "alignment",
+      "llm"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "KV Cache 压缩与优化技术",
+    "content": "列举并比较至少三种主流的 KV Cache 压缩或优化技术，说明它们各自的原理、适用场景和局限性。",
+    "answer": "以下是主流的 KV Cache 优化技术：\n\n1. Multi-Query Attention (MQA) 和 Grouped-Query Attention (GQA)\n- 原理：所有注意力头（MQA）或每组注意力头（GQA）共享一套 Key/Value 投影。将 KV Cache 大小从 O(n_heads × seq_len × d_head) 减少到 O(n_groups × seq_len × d_head)。\n- 适用场景：推理时显存受限的场景，尤其是长序列生成。\n- 局限性：MQA 会降低模型表达能力，GQA 在 groups 数量适中时是好的 trade-off。需要从头训练或 fine-tune 适配。\n\n2. KV Cache 量化（INT8/FP8）\n- 原理：将缓存中的 KV 值从 FP16 量化到 INT8 或 FP8，将内存占用减少 2 倍（INT8）或接近 2 倍（FP8）。常用 per-channel 或 per-token 量化，结合 outlier 处理来减少精度损失。\n- 适用场景：任何推理部署场景，插拔式优化，无需重新训练。\n- 局限性：精度损失在长序列中可能累积，影响生成质量。需要量化校准和 outlier 管理。\n\n3. 窗口缓存（如 StreamingLLM）\n- 原理：只保留最近 N 个 token 的 KV 值，丢弃早期 token。StreamingLLM 额外保留几个初始 token 作为注意力池（attention sink）来稳定模型。\n- 适用场景：超长上下文但只需要关注局部信息的任务（如对话、实时流处理）。\n- 局限性：丢失远程依赖信息，不适合需要精确全局上下文的场景（如文档摘要）。\n\n4. 稀疏淘汰策略（如 H2O - Heavy Hitter Oracle）\n- 原理：根据历史注意力分数，识别并保留重击者（heavy hitter）token 的 KV 值，主动丢弃不重要的 token。\n- 适用场景：需要自适应压缩比且不想做量化的场景。\n- 局限性：存在误淘汰关键信息的风险，实现复杂度较高。",
+    "hints": [
+      "从减少头数、量化精度、淘汰策略、窗口截断这几个方向思考",
+      "每种技术都有自己的适用场景，没有银弹",
+      "考虑这些优化对内存、速度、生成质量的影响"
+    ],
+    "tags": [
+      "kv-cache",
+      "transformer",
+      "inference-optimization",
+      "attention",
+      "quantization"
+    ]
   }
 ]

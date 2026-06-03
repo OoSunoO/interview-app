@@ -1863,5 +1863,133 @@
       "segment-lock",
       "java8"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "线程安全集合的识别",
+    "content": "以下哪些类或方法是线程安全的？（请选出所有正确选项）",
+    "options": [
+      "A) java.util.Vector",
+      "B) java.util.Hashtable",
+      "C) java.util.Collections.synchronizedList(new ArrayList<>())",
+      "D) java.util.concurrent.CopyOnWriteArrayList"
+    ],
+    "answer": "A,B,C,D",
+    "hints": [
+      "Vector和Hashtable是遗留同步集合",
+      "synchronizedXxx包装所有方法",
+      "CopyOnWriteArrayList是JUC的"
+    ],
+    "tags": [
+      "线程安全",
+      "集合",
+      "Vector",
+      "Hashtable",
+      "CopyOnWriteArrayList"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Map实现的关键特性对比",
+    "content": "以下关于Java Map实现类的描述，哪些是正确的？（请选出所有正确选项）",
+    "options": [
+      "A) HashMap允许一个null key和多个null value",
+      "B) Hashtable不允许null key和null value",
+      "C) LinkedHashMap可以按插入顺序或访问顺序迭代",
+      "D) TreeMap基于红黑树，键必须实现Comparable或在构造时提供Comparator"
+    ],
+    "answer": "A,B,C,D",
+    "hints": [
+      "所有选项均为Map经典特性",
+      "注意null在不同Map中的处理差异",
+      "accessOrder控制迭代顺序"
+    ],
+    "tags": [
+      "HashMap",
+      "Hashtable",
+      "LinkedHashMap",
+      "TreeMap"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "ConcurrentHashMap的安全操作",
+    "content": "以下哪些ConcurrentHashMap（Java 8+）的操作在并发环境下是安全的？（请选出所有正确选项）",
+    "options": [
+      "A) get(key)",
+      "B) put(key, value)",
+      "C) computeIfAbsent(key, mappingFunction)",
+      "D) forEach(biConsumer)"
+    ],
+    "answer": "A,B,C,D",
+    "hints": [
+      "CHM所有API都是线程安全的",
+      "computeIfAbsent保证原子执行",
+      "forEach遍历的是快照还是实时数据"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "computeIfAbsent",
+      "线程安全",
+      "CAS"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Stream终端操作的识别",
+    "content": "以下哪些Stream操作属于终端操作（terminal operation），调用后Stream被消费无法再次使用？（请选出所有正确选项）",
+    "options": [
+      "A) collect()",
+      "B) filter()",
+      "C) forEach()",
+      "D) reduce()"
+    ],
+    "answer": "A,C,D",
+    "hints": [
+      "终端操作触发流水线执行",
+      "filter是中间操作惰性求值",
+      "forEach是终端消费操作"
+    ],
+    "tags": [
+      "Stream",
+      "terminal",
+      "collect",
+      "reduce",
+      "forEach"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "CompletableFuture异步编排方法",
+    "content": "以下哪些关于CompletableFuture的描述是正确的？（请选出所有正确选项）",
+    "options": [
+      "A) thenApply()可以将前一个阶段的结果转换为新值，返回CompletableFuture",
+      "B) thenCompose()用于将前一个阶段的Result展开为新的CompletableFuture，避免嵌套Future",
+      "C) allOf()返回在所有给定CompletableFuture完成后完成的CompletableFuture，但当任一Future异常完成时不会立即失败",
+      "D) exceptionally()仅在阶段异常完成时提供回退值"
+    ],
+    "answer": "A,B,D",
+    "hints": [
+      "thenApply类似map的操作",
+      "allOf等待全部但不聚合异常",
+      "exceptionally类似catch块"
+    ],
+    "tags": [
+      "CompletableFuture",
+      "异步",
+      "Future",
+      "编排",
+      "异常处理"
+    ]
   }
 ]

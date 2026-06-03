@@ -1446,5 +1446,108 @@
       "事务",
       "分布式系统"
     ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "CPU 分支预测与性能影响",
+    "content": "以下哪种场景下 CPU 分支预测失败带来的性能惩罚最大？",
+    "options": [
+      "A) 循环中 if 判断条件 95% 为真，5% 为假，模式固定",
+      "B) 循环中 if 判断条件 50% 为真，50% 为假，模式完全随机",
+      "C) 循环中 if 判断条件始终为真（100% 恒定）",
+      "D) switch 语句中 10 个分支均匀分布，每次执行随机跳转"
+    ],
+    "answer": "B",
+    "hints": [
+      "分支预测失败要清空流水线",
+      "排序数组为何比未排序快数倍"
+    ],
+    "tags": [
+      "CPU",
+      "分支预测",
+      "性能",
+      "计算机组成"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux Namespace 隔离原理",
+    "content": "请解释 Linux Namespace 的实现原理。Docker 容器使用了哪些 Namespace 实现资源隔离？每种 Namespace 隔离了什么资源？创建新 Namespace 的底层系统调用有哪些？",
+    "answer": "答案：Linux Namespace 是内核级别的资源隔离机制，将全局系统资源封装为独立实例，使进程只看到自己的那套资源视图。Docker 组合使用 PID、Network、Mount、UTS、IPC、User、CGroup 等 Namespace 实现操作系统级虚拟化。\n\n解析：8 种 Namespace——1）PID Namespace：隔离进程 ID 空间。容器内进程 PID 从 1 开始（看起来像 init 进程），看不到宿主机或其他容器的进程。宿主机可以看到所有容器的进程，但 PID 不同。2）Network Namespace：隔离网络栈——独立网络设备、IP 地址、路由表、iptables 规则、端口空间。Docker 通过 veth pair（虚拟以太网对）一端在容器内一端在宿主机 bridge 上实现网络连通。3）Mount Namespace：隔离文件系统挂载点。每个容器有独立的根文件系统、/proc、/sys 挂载视图。这是 chroot 的增强方案。4）UTS Namespace：隔离主机名和域名（hostname）。5）IPC Namespace：隔离 System V IPC 和 POSIX 消息队列，防止跨容器 IPC 干扰。6）User Namespace：隔离用户和组 ID 空间。容器内 root（UID 0）映射为宿主机非特权用户，是容器安全的关键机制（容器内 root ≠ 宿主机 root）。7）CGroup Namespace：隔离 CGroup 根目录，避免容器看到宿主机 CGroup 信息。8）Time Namespace（Linux 5.6+）：隔离系统时间。\n\n扩展延伸：创建 Namespace 的系统调用——1）clone()：创建新进程时指定 CLONE_NEWPID | CLONE_NEWNET | CLONE_NEWNS 等标志。2）unshare()：当前进程移入新 Namespace，不创建新进程。3）setns()：当前进程加入已有的 Namespace。Docker 启动流程中先 clone() 创建各项 Namespace，再通过 setns() 让容器内不同进程加入同一组 Namespace。ls -la /proc/[pid]/ns/ 可查看每个 Namespace 的 inode 号——两个进程的同一 Namespace inode 号相同说明在同一个 Namespace 中。",
+    "hints": [
+      "User NS 隔离容器与宿主机 root",
+      "veth pair 如何连通容器和宿主机"
+    ],
+    "tags": [
+      "Linux",
+      "容器",
+      "Namespace",
+      "Docker",
+      "操作系统"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CAS 原子操作与 ABA 问题",
+    "content": "请解释 CAS（Compare-And-Swap）原子操作的原理和 ABA 问题。ABA 问题在什么场景下会导致严重的并发错误？有哪些解决方案？",
+    "answer": "答案：CAS 是一种原子操作——比较内存值是否等于预期值，相等则更新为新值。ABA 问题是 CAS 的经典陷阱：值从 A 变为 B 又变回 A，CAS 比较时认为「没变过」，但实际上中间已发生变化。解决方案包括带版本号的引用（AtomicStampedReference）、垃圾回收、Hazard Pointer 等。\n\n解析：CAS 操作原理——CPU 提供专用指令实现：x86 的 CMPXCHG（Compare and Exchange）、ARM 的 LDREX/STREX。Java 通过 Unsafe.compareAndSwapInt() 和 AtomicInteger 使用。CAS 是无锁数据结构的基石（如 ConcurrentLinkedQueue、ConcurrentHashMap）。\n\nABA 问题的经典案例——无锁栈（Treiber Stack，1993）：线程 1 读取栈顶为节点 A（A.next = B），准备 CAS(stack, A, B)。在线程 1 执行 CAS 前，线程 2 弹出 A、弹出 B、再入栈 A（此时栈顶仍为 A 但 A.next 变为 null）。线程 1 的 CAS 成功（stack 仍指向 A），将栈顶设为 B——但 B 已被弹出并可能被回收，导致栈损坏。这是手动内存管理下无锁数据结构的最经典 BUG。\n\n扩展延伸：解决方案——1）AtomicStampedReference（Java）：在引用上附加版本号，每次 CAS 同时比较引用和版本号（double-width CAS），版本号单调递增。每次栈操作递增版本戳，即使相同节点再次入栈，版本戳也不同。2）垃圾回收语言（Java、Go、Haskell）中，对象被引用时不会被回收——ABA 问题只在手动内存管理和对象重用场景出现。3）Hazard Pointer：线程在访问无锁数据结构前注册当前正在访问的指针，回收线程检查全局危险指针表，延迟释放被引用的内存。4）RCU：Linux 内核的延迟回收机制，通过 Grace Period 确保所有读者完成后再回收。",
+    "hints": [
+      "ABA 是值没变还是没变过",
+      "版本戳如何让 ABA 无所遁形"
+    ],
+    "tags": [
+      "并发",
+      "无锁",
+      "CAS",
+      "ABA",
+      "同步"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "缓冲区溢出攻击与栈保护机制",
+    "content": "现代操作系统通过 ASLR（地址空间布局随机化）和 NX（No-eXecute）位两种机制的完整组合，可以完全阻止所有形式的缓冲区溢出攻击。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "B",
+    "hints": [
+      "NX 位为何挡不住 ROP 攻击",
+      "Stack Canary 如何检测栈溢出"
+    ],
+    "tags": [
+      "安全",
+      "缓冲区溢出",
+      "操作系统",
+      "漏洞",
+      "ROP"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CPU 流水线与指令级并行",
+    "content": "CPU 流水线将指令执行分为取指、译码、执行、访存、写回等多个阶段。数据冒险中的 RAW（Read After Write）是真依赖，现代 CPU 通过___①___技术将 ALU 结果直接送入下一条指令的输入。编译器可通过___②___重新排布指令顺序，插入无关指令隔开依赖对。超标量（Superscalar）架构允许 CPU 每周期发射___③___条指令。Intel 超线程（SMT）在一个核心上运行___④___个线程，利用流水线空闲资源提升吞吐量。",
+    "answer": "{\"correct\":[[\"转发\",\"Forwarding\",\"旁路\",\"Bypassing\"],[\"指令重排\",\"指令调度\",\"Instruction Scheduling\",\"重排指令\"],[\"多\",\"2\",\"多条\",\"3\",\"4\"],[\"2\",\"两\",\"多\",\"多个\"]],\"distractors\":[\"乱序执行\",\"寄存器重命名\",\"1\",\"1个\"]}",
+    "hints": [
+      "转发如何解决 RAW 数据冒险",
+      "编译器如何重排指令避免流水线停顿"
+    ],
+    "tags": [
+      "CPU",
+      "流水线",
+      "指令级并行",
+      "计算机组成"
+    ]
   }
 ]

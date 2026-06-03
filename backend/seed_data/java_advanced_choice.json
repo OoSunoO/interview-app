@@ -1767,5 +1767,131 @@
       "java22",
       "integrator"
     ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "G1GC与ZGC核心区别",
+    "content": "关于G1GC和ZGC两款低延迟垃圾收集器的对比，以下描述哪一项是错误的？",
+    "options": [
+      "A) ZGC的最大暂停时间目标通常远低于G1GC，可达毫秒级",
+      "B) G1GC基于Region分代收集，ZGC基于染色指针和读屏障实现并发",
+      "C) ZGC在JDK 21中引入了分代模式（Generational ZGC），进一步提升性能",
+      "D) G1GC使用标记-整理算法不产生内存碎片，ZGC使用标记-复制算法会产生碎片"
+    ],
+    "answer": "D",
+    "hints": [
+      "G1GC可能退化到Full GC",
+      "染色指针是ZGC的核心创新",
+      "ZGC标记-复制在Region级别操作"
+    ],
+    "tags": [
+      "G1GC",
+      "ZGC",
+      "GC",
+      "pause time",
+      "JVM调优"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Happens-Before关系判定",
+    "content": "假设线程A执行：x = 1; synchronized(lock) { flag = true; }\n线程B执行：synchronized(lock) { if(flag) { int r = x; } }\n其中x和flag初始值分别为0和false。以下关于happens-before关系的描述哪项是正确的？",
+    "options": [
+      "A) 线程A中x=1与flag=true之间不存在happens-before关系，因此线程B中r不一定为1",
+      "B) synchronized块的解锁与加锁构成happens-before关系，线程B一定看到x=1",
+      "C) 由于flag不是volatile，线程B不一定能看到flag=true，但看到后一定能看到x=1",
+      "D) 程序顺序规则保证x=1 happens-before flag=true，管程锁定规则保证解锁happens-before后续加锁，传递性保证r=1"
+    ],
+    "answer": "D",
+    "hints": [
+      "程序顺序规则作用于单线程内",
+      "解锁和加锁构成happens-before",
+      "happens-before具有传递性"
+    ],
+    "tags": [
+      "JMM",
+      "happens-before",
+      "synchronized",
+      "可见性"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "synchronized的可重入性",
+    "content": "以下关于synchronized关键字可重入性的描述，哪一项是正确的？",
+    "options": [
+      "A) synchronized不支持可重入，同一个线程重复持有同一把锁会导致死锁",
+      "B) synchronized支持可重入，每个锁关联持有线程和计数器，重入时递增退出时递减",
+      "C) synchronized的可重入性只对同一个方法有效，跨方法调用不适用",
+      "D) synchronized的可重入性仅在同步代码块中有效，同步方法不支持重入"
+    ],
+    "answer": "B",
+    "hints": [
+      "考虑子类调用父类synchronized方法",
+      "每个锁对象对应一个Monitor",
+      "计数器归零时才真正释放锁"
+    ],
+    "tags": [
+      "synchronized",
+      "reentrant",
+      "monitor",
+      "锁"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "volatile的内存可见性保证",
+    "content": "以下关于volatile关键字的描述，哪一项是错误的？",
+    "options": [
+      "A) volatile变量写操作会插入StoreLoad屏障，强制将写缓冲刷新到主存",
+      "B) volatile变量的读操作会令当前CPU缓存行失效，强制从主存读取最新值",
+      "C) volatile可以保证复合操作如count++的原子性",
+      "D) volatile禁止了JIT编译器对相关指令的重排序优化"
+    ],
+    "answer": "C",
+    "hints": [
+      "count++是读改写的三步非原子操作",
+      "屏障保证可见性但不保证互斥",
+      "用AtomicInteger实现原子递增"
+    ],
+    "tags": [
+      "volatile",
+      "内存屏障",
+      "可见性",
+      "原子性"
+    ]
+  },
+  {
+    "category": "java_advanced_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "死锁的四个必要条件",
+    "content": "以下关于死锁四个必要条件的描述，哪一项是正确的？\n① 互斥条件：资源不能被共享\n② 请求与保持：线程持有资源的同时请求其他资源\n③ 不可剥夺：已分配的资源不能被强制剥夺\n④ 循环等待：存在一条循环等待链",
+    "options": [
+      "A) 只有①③④",
+      "B) 只有①②④",
+      "C) ①②③④全部是必要条件，缺少任何一个均不会发生死锁",
+      "D) 只有①②③"
+    ],
+    "answer": "C",
+    "hints": [
+      "破坏任意必要条件即可打破死锁",
+      "数据库锁破坏不可剥夺条件防死锁",
+      "资源有序分配法破坏循环等待"
+    ],
+    "tags": [
+      "deadlock",
+      "并发",
+      "锁",
+      "操作系统"
+    ]
   }
 ]

@@ -1767,5 +1767,130 @@
       "higher",
       "lower"
     ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "PriorityQueue的排序与迭代顺序",
+    "content": "关于PriorityQueue的行为，以下描述正确的是哪一项？",
+    "options": [
+      "A) PriorityQueue默认使用元素的自然顺序排序，迭代器遍历按优先级顺序输出",
+      "B) PriorityQueue的peek()和poll()返回优先级最小的元素，但iterator()不保证遍历顺序",
+      "C) PriorityQueue基于最小堆实现，offer()和remove(Object)时间复杂度均为O(log n)",
+      "D) PriorityQueue允许插入null元素，但不支持非Comparable元素"
+    ],
+    "answer": "B",
+    "hints": [
+      "iterator遍历底层数组顺序",
+      "堆中只有堆顶是最小元素",
+      "PriorityQueue不允许null"
+    ],
+    "tags": [
+      "PriorityQueue",
+      "heap",
+      "Comparator",
+      "Queue"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "LinkedHashMap实现LRU缓存的原理",
+    "content": "关于LinkedHashMap的access-order模式用于LRU缓存的实现原理，以下哪项描述是错误的？",
+    "options": [
+      "A) accessOrder=true时，每次get操作会通过afterNodeAccess()将被访问条目移动到双向链表尾部",
+      "B) removeEldestEntry()在每次put之后被调用，若返回true则删除链表头部条目",
+      "C) LinkedHashMap同样使用Node数组加链表或红黑树存储哈希冲突，双向链表仅维护遍历顺序",
+      "D) access-order模式下，put操作不会改变已有条目的链表位置"
+    ],
+    "answer": "D",
+    "hints": [
+      "put已有key触发afterNodeAccess",
+      "继承了HashMap的内部结构",
+      "链表尾部代表最近被使用的条目"
+    ],
+    "tags": [
+      "LinkedHashMap",
+      "LRU",
+      "access-order",
+      "缓存"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "NavigableMap的ceilingEntry查找",
+    "content": "给定NavigableMap<Integer, String> map包含键值对{1 -> 「A」, 3 -> 「C」, 5 -> 「E」, 7 -> 「G」}，调用map.ceilingEntry(4).getValue()的返回值是什么？",
+    "options": [
+      "A) null",
+      "B) 「C」",
+      "C) 「E」",
+      "D) 抛出NullPointerException"
+    ],
+    "answer": "C",
+    "hints": [
+      "ceilingEntry返回最小上限键",
+      "数值4位于键3和键5之间",
+      "TreeMap实现NavigableMap"
+    ],
+    "tags": [
+      "NavigableMap",
+      "ceilingEntry",
+      "TreeMap",
+      "查找"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "CopyOnWriteArrayList的快照语义",
+    "content": "以下关于CopyOnWriteArrayList的描述，哪一项是正确的？",
+    "options": [
+      "A) CopyOnWriteArrayList的迭代器在创建后，如果原List有其他线程通过add()修改，迭代器会立刻看到新元素",
+      "B) CopyOnWriteArrayList的迭代器基于不变的快照数组，不会抛出ConcurrentModificationException，也不反映创建后的修改",
+      "C) CopyOnWriteArrayList的add()方法使用synchronized块保证互斥",
+      "D) CopyOnWriteArrayList适用于写多读少的并发场景"
+    ],
+    "answer": "B",
+    "hints": [
+      "快照迭代器创建时引用数组副本",
+      "适合读多写极少的场景",
+      "add方法使用ReentrantLock"
+    ],
+    "tags": [
+      "CopyOnWriteArrayList",
+      "snapshot",
+      "fail-safe",
+      "并发集合"
+    ]
+  },
+  {
+    "category": "java_collections_choice",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Collectors.toMap的重复键处理",
+    "content": "使用Collectors.toMap()将Stream转换为Map时，如果Stream中包含重复键，以下处理方式哪项是正确的？",
+    "options": [
+      "A) toMap()默认采用后出现的值覆盖先出现的值，不会抛出异常",
+      "B) toMap()默认抛出IllegalStateException，可通过提供mergeFunction参数解决冲突",
+      "C) toMap()默认抛出IllegalArgumentException，因为键重复违反了Map契约",
+      "D) toMap()不支持重复键的处理，必须使用toConcurrentMap()来替代"
+    ],
+    "answer": "B",
+    "hints": [
+      "toMap有两个重载版本参数不同",
+      "merge函数是BinaryOperator",
+      "异常来自默认toMap实现"
+    ],
+    "tags": [
+      "Collectors",
+      "Stream",
+      "toMap",
+      "merge"
+    ]
   }
 ]

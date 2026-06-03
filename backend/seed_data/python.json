@@ -1452,5 +1452,110 @@
       "性能",
       "描述器"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 元类（Metaclass）与类创建机制",
+    "content": "请解释 Python 元类（Metaclass）的实现原理。元类与装饰器在修改类行为上有什么本质区别？`type()` 和 `__new__` 在元类中如何协作？元类在 ORM、序列化框架（如 Django ORM、SQLAlchemy、Pydantic）中如何应用？",
+    "answer": "答案：元类是「创建类的类」，其核心机制是当 Python 遇到 class 语句时，会调用元类的 __new__ 和 __init__ 方法创建类对象。默认元类是 type。元类在类定义时（而非实例化时）拦截类的创建过程，用于自动注册、验证字段、注入方法等元编程需求。\n\n解析：类的创建过程——当 Python 执行 class Foo(Bar): 语句时，解释器依次进行：1）收集类体中的属性和方法放入 namespace（类定义命名空间）。2）确定元类：如果类或父类中定义了 __metaclass__（Python 2）/ metaclass（Python 3），则使用指定的元类，否则使用 type。3）调用 metaclass.__new__(mcs, name, bases, namespace) 创建类对象。4）调用 metaclass.__init__(cls, name, bases, namespace) 初始化类。5）将创建好的类对象绑定到类名称。\n\n元类 vs 类装饰器的区别——1）元类在类创建时（class 语句执行时）拦截，类装饰器在类创建之后拦截。元类可以修改类被创建之前的状态（如 namespace 中的内容），而装饰器只能处理已经创建好的类对象。2）元类通过继承机制自动传播给子类（子类继承父类的 metaclass），装饰器需要手动应用到每个类。3）元类适合跨层级自动注册和约束验证的场景。\n\n扩展延伸：Django ORM 的 Model 元类——用户定义 class User(models.Model): name = CharField() 时，ModelBase 元类在类创建阶段将 CharField 从类中移除，替换为 descriptor，同时将字段信息注册到 _meta 中。SQLAlchemy 的 DeclarativeMeta 元类——将 Table、Mapper 和类关联起来，在类创建时自动生成 __tablename__、__table__ 等。Pydantic 的 ModelMetaclass——BaseModel 使用 __init_subclass__（Python 3.6+ 提供的替代元类的钩子）来收集字段类型注解并生成校验逻辑。现代 Python 中 __init_subclass__ 和 描述符协议在很多场景下可以作为元类的更轻量替代。",
+    "hints": [
+      "元类在类定义那一刻拦截",
+      "Django ORM 如何用元类定义表结构"
+    ],
+    "tags": [
+      "Python",
+      "元类",
+      "Metaclass",
+      "元编程",
+      "ORM"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Python 弱引用与内存管理",
+    "content": "Python 中 weakref 模块的作用是允许引用对象但不增加引用计数，当对象仅剩弱引用时 GC 会回收它。以下关于弱引用的描述，哪个是正确的？",
+    "options": [
+      "A) 弱引用可以引用任意 Python 对象，包括 int、str、tuple 等内置不可变类型",
+      "B) weakref.ref 的回调函数在对象被回收时自动调用，用于清理相关资源",
+      "C) weakref.WeakValueDictionary 的键被回收时，对应的条目自动删除",
+      "D) 弱引用指向的对象被回收后，调用弱引用返回 None，但访问回调函数仍可行"
+    ],
+    "answer": "B",
+    "hints": [
+      "不可变对象不能被弱引用",
+      "WeakValue 值被自动回收"
+    ],
+    "tags": [
+      "Python",
+      "内存管理",
+      "弱引用",
+      "GC"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python Asyncio 调度器与事件循环原理",
+    "content": "请解释 Python asyncio 的事件循环（Event Loop）调度机制。Task、Future、Coroutine 三者的关系是怎样的？事件循环如何从一个协程切换到另一个协程？await 关键字底层发生了什么？asyncio 在 CPU 密集型任务场景下有什么限制？",
+    "answer": "答案：asyncio 的事件循环是一个单线程调度器，维护一个就绪队列（Ready Queue）和 I/O 等待列表。协程通过 await 挂起自身，将控制权交还给事件循环；事件循环从就绪队列中选择下一个协程执行。Task 是 Future 的子类，它将协程包装为可调度的任务，并管理协程的执行状态和结果。asyncio 在 await 处通过生成器 yield 机制挂起协程，本质上是协作式多任务——协程必须主动让出控制权。\n\n解析：Coroutine / Task / Future 的关系——1）Coroutine（协程）：async def 定义的协程函数，调用后返回一个 coroutine 对象。协程本身不可直接执行，需要被 await 或包装为 Task 才能运行。2）Future：底层抽象，代表一个「将来会有的结果」。它有状态（pending/finished/cancelled），通过 set_result() 设置结果、add_done_callback() 注册回调。对外部代码来说 Future 是一个可等待对象（awaitable）。3）Task：Future + Coroutine，是事件循环调度的实际单元。创建 Task 时（asyncio.create_task(coro)），事件循环将 coro 注册到调度器中，并在就绪队列中排队。\n\n事件循环的调度过程——1）事件循环从就绪队列取出一个 Task，调用 task.__step() 方法。2）task.__step() 通过 coro.send(None) 驱动协程执行，直到遇到 await 表达式。3）在 await 处，如果等待的 Future 未就绪（如 socket 数据未到达），事件循环将当前 Task 挂起并注册回调，切换到就绪队列中的下一个 Task。4）当 Future 就绪（如 I/O 完成），回调将 Task 重新放回就绪队列。5）这个循环就是事件循环的本质——单线程、协作式、非抢占的多任务调度。\n\n扩展延伸：asyncio 的 I/O 模型——基于 epoll（Linux）、kqueue（macOS）、IOCP（Windows）实现非阻塞 I/O。asyncio 把系统 I/O 操作注册到 selector，事件循环在 poll 时检查哪些 fd 就绪。await asyncio.sleep(0) 的效果是主动让出当前时间片，立即切换到就绪队列中下一个 Task——类似于线程的 yield。asyncio 的局限性——CPU 密集型任务会阻塞事件循环（协程不主动让出控制权时，事件循环无法切换），需要将 CPU 密集型任务交给 concurrent.futures.ProcessPoolExecutor 或 ThreadPoolExecutor 执行。Python 3.13 的 no-GIL 模式对 asyncio 的影响：在自由线程模式下，asyncio 仍然在单线程运行，CPU 密集型瓶颈不变，但 I/O 回调可以在不同线程并行执行。",
+    "hints": [
+      "协程必须 await 才能让出控制权",
+      "CPU 密集任务会阻塞事件循环"
+    ],
+    "tags": [
+      "Python",
+      "Asyncio",
+      "事件循环",
+      "协程",
+      "并发"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python C 扩展与 ctypes/cffi",
+    "content": "Python 调用 C/C++ 代码有 ctypes、cffi、Cython、Pybind11 等多种方式。请比较它们的核心原理、性能差异和适用场景。CPython 的 Python C API 是什么层次的概念？编写 C 扩展时需要注意哪些 GIL 相关问题？",
+    "answer": "答案：ctypes 在纯 Python 层面加载动态库并调用函数（不需要 C 编译），适合简单封装但调用开销大、类型安全检查弱。cffi 提供更完善的类型系统支持，支持 ABI 和 API 两种模式。Cython 将 Python 代码编译为 C 扩展模块，可内联 C 类型声明实现接近原生的性能。Pybind11 是 C++ 绑定工具（基于现代 C++11/14/17），轻量级且类型安全。编写 C 扩展时必须在阻塞操作前释放 GIL（Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS），防止阻塞整个 Python 进程。\n\n解析：各方案对比——1）ctypes：在 Python 运行时加载 .so/.dylib/.dll，通过 FFI（Foreign Function Interface）调用 C 函数。每个函数调用涉及参数封送（marshalling）和类型转换。对于简单函数调用，ctypes 的开销约 100-200ns，远高于原生 Python 函数调用。优点：无需 C 编译器编译扩展、纯 Python 实现、动态加载。缺点：类型错误在运行时暴露、不支持 C++ ABI、性能有限。2）cffi：提供 API 模式和 ABI 模式。API 模式需要用 C 编译器但能内联 C 代码，性能接近原生 C 扩展。支持更完善的 struct/union 到 Python 对象的转换。3）Cython：将 Python（或 Python-like）代码编译为 C 扩展。通过添加类型声明（cdef int x），可以生成高度优化的 C 代码。性能可达原生 C 的 80-90%。适合对性能关键路径做增量优化——先在 .py 中实现原型，再逐步添加类型声明用 Cython 编译。NumPy、Pandas 等科学计算库大量使用 Cython。4）Pybind11：C++ 绑定工具，自动处理 C++ 与 Python 之间的类型转换（包括 STL 容器、智能指针、自定义类继承）。使用模板元编程在编译期生成类型映射代码。\n\nGIL 相关——C 扩展的阻塞操作（磁盘 I/O、网络 I/O、CPU 密集计算）必须释放 GIL，否则整个 Python 进程被阻塞。宏 Py_BEGIN_ALLOW_THREADS 释放 GIL，Py_END_ALLOW_THREADS 重新获取。释放后 Python 其他线程可以执行，但 C 代码不能再访问 Python 对象（因为引用计数不安全）。Pybind11 中的 py::call_guard<py::gil_scoped_release>() 自动管理。如果 C 扩展不释放 GIL，Python 多线程程序在这个扩展调用期间完全无法并发。",
+    "hints": [
+      "C 扩展阻塞操作必须释放 GIL",
+      "Cython 通过类型声明实现原生性能"
+    ],
+    "tags": [
+      "Python",
+      "C扩展",
+      "ctypes",
+      "Cython",
+      "性能"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Python 描述符协议与属性访问",
+    "content": "关于 Python 描述符协议（Descriptor Protocol）的描述，以下哪个是错误的？",
+    "options": [
+      "A) 实现了 __get__ 方法的对象称为非数据描述符，实现了 __get__ 和 __set__ 或 __delete__ 的称为数据描述符",
+      "B) 数据描述符的优先级高于实例属性（instance.__dict__），非数据描述符的优先级低于实例属性",
+      "C) @property 是使用数据描述符实现的，因此实例属性无法覆盖 property 的行为",
+      "D) @staticmethod 和 @classmethod 都是通过非数据描述符实现的"
+    ],
+    "answer": "D",
+    "hints": [
+      "数据描述符优先级高于实例属性",
+      "@staticmethod 底层是数据描述符"
+    ],
+    "tags": [
+      "Python",
+      "描述符",
+      "元编程",
+      "属性访问"
+    ]
   }
 ]

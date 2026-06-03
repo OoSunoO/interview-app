@@ -1459,5 +1459,117 @@
       "gRPC",
       "序列化"
     ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "LangGraph 与 CrewAI 架构对比",
+    "content": "关于 LangGraph 和 CrewAI 在 Agent 编排架构上的差异，以下哪个说法是错误的？",
+    "options": [
+      "A) LangGraph 的核心抽象是 StateGraph——将 Agent 工作流建模为带状态的有向图，节点是计算步骤，边是状态转移",
+      "B) CrewAI 采用 「Crew → Agent → Task」 的层级抽象，强调基于角色的协作和任务委派，比 LangGraph 更侧重声明式配置",
+      "C) LangGraph 和 CrewAI 都完全不支持 human-in-the-loop（人在回路）的交互模式",
+      "D) LangGraph 更底层、更灵活，适合需要精细控制流和状态管理的场景；CrewAI 更高层、更易用，适合快速搭建角色协作型 Agent 应用"
+    ],
+    "answer": "C",
+    "hints": [
+      "LangGraph 的 interrupt 机制支持人在回路",
+      "两个框架的抽象层次不同",
+      "一个适合做精细控制流，一个适合快速协作"
+    ],
+    "tags": [
+      "langgraph",
+      "crewai",
+      "agent-framework",
+      "orchestration",
+      "comparison"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 记忆系统分层设计",
+    "content": "解释 Agent 记忆系统的分层设计。短期记忆、长期记忆和工具/工作记忆各扮演什么角色？如何实现它们的信息检索和更新？",
+    "answer": "Agent 记忆系统的分层设计借鉴了人类记忆的认知科学：\n\n1. 短期记忆（Short-term Memory / Context Window）\n- 角色：存储当前会话的完整交互历史，包括 Thought/Action/Observation 循环和对话历史。\n- 实现：直接将最近的历史拼接到 LLM 的上下文窗口中。\n- 检索：按时间顺序排列，最新事件优先。超出窗口长度的内容被截断或压缩。\n- 更新：每次 Agent 执行一步就追加一条记录。\n\n2. 长期记忆（Long-term Memory / 外部存储）\n- 角色：存储跨会话的持久化知识——用户偏好、历史任务结果、重要学习结论。\n- 实现：通常用向量数据库（如 Chroma、Pinecone、Weaviate）存储嵌入，结合 SQLite 或 Redis 做元数据和关系管理。\n- 检索：基于语义相似度的向量检索——用户提到某个话题时，从长期记忆中召回相关片段。\n- 更新：使用记忆合并策略（memory consolidation）——新信息与已有记忆对比，去重、合并、推理更新。\n\n3. 工具/工作记忆（Tool / Working Memory）\n- 角色：存储 Agent 当前正在操作的数据和工具执行中的中间状态。\n- 实现：键值存储（如内存 dict、Redis），key 是 task_id/step_id，value 是中间结果。\n- 检索：按任务 ID 精确查找。支持工具之间传递中间数据。\n- 更新：任务完成后清理，避免内存泄漏。\n\n实际架构模式：\n- 分层缓存策略：短期记忆（内存最快）→ 长期记忆（向量 DB 次快）→ 归档存储（慢但完整）。\n- 记忆刷新技术：将长期记忆中的重要信息定期刷新到短期记忆中（类似人类的工作记忆刷新）。\n- 记忆优先级：为记忆条目打重要性分数，压缩优先级低的记忆。",
+    "hints": [
+      "考虑人类记忆的分层——工作记忆、短期记忆、长期记忆",
+      "不同层次的记忆有不同的存储介质和检索方式",
+      "向量检索是长期记忆的核心技术"
+    ],
+    "tags": [
+      "memory",
+      "agent-memory",
+      "retrieval",
+      "long-term-memory",
+      "short-term-memory"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Structured Output 与 Tool Calling 比较",
+    "content": "在 Agent 开发中，Structured Output（结构化输出）和 Tool Calling（工具调用/函数调用）都用于让 LLM 产生结构化的数据。比较这两种方式的技术原理、可靠性差异和各自的最佳使用场景。",
+    "answer": "两种方法的详细比较：\n\nStructured Output（结构化输出）：\n- 原理：通过 JSON mode 或 constrained decoding（如 Outlines、Llama.cpp grammar、JSON Schema guidance）约束 LLM 输出，使其严格匹配预定义的 JSON Schema。\n- 底层实现：在 token 级别做约束——只允许生成符合 schema 的下一个 token（通过 logit 掩码实现）。\n- 可靠性：极高，格式违规率接近 0%（使用 token 级约束时）。\n- 灵活性：可以定义任意复杂的 JSON 结构，但无法触发外部系统执行。\n- 最佳场景：需要从 LLM 回复中提取精确结构化信息的场景（如信息提取、分类、生成配置）。\n\nTool Calling（工具调用/函数调用）：\n- 原理：模型在 API 层面原生支持定义工具规范（JSON Schema），生成时模型可以选择调用一个或多个工具，API 返回结构化的工具调用请求。\n- 底层实现：通过 fine-tune（模型原生支持的工具调用能力）或 prompt-based 模拟。原生工具调用在训练阶段就已经纳入。\n- 可靠性：依赖模型的原生能力。现代模型（GPT-4、Claude 3+）工具调用准确率高，但仍有格式误差和幻觉参数的问题。\n- 灵活性：不仅能产生结构化输出，还能触发外部操作——工具可以绑定实际执行函数。\n- 最佳场景：Agent 需要执行具体操作（API 调用、数据库查询、文件操作）的场景。\n\n关键差异：\n1. 执行 vs 输出：工具调用可以绑定实际执行逻辑（有副作用），结构化输出只是格式约束。\n2. 约束级别：token 级 constrained decoding 比 prompt-based 工具调用更可靠（格式违规率更低）。\n3. 组合能力：工具调用支持并行多工具调用和工具间数据依赖；结构化输出通常是单次响应。\n4. 实际结合使用：先用结构化输出决定「做什么」，再用工具调用「执行它」的架构模式越来越流行。",
+    "hints": [
+      "考虑两种方法对输出格式的约束力有何不同",
+      "工具调用有副作用（实际执行），结构化输出没有",
+      "两种技术可以互补使用"
+    ],
+    "tags": [
+      "structured-output",
+      "tool-calling",
+      "function-calling",
+      "constrained-decoding",
+      "agent-dev"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "生产环境函数调用可靠性最佳实践",
+    "content": "在生产环境中部署 LLM Agent 的函数调用功能，以下哪个选项最准确地描述了提高可靠性的最佳实践？",
+    "options": [
+      "A) 使用更长的参数描述和更小的模型，因为小模型对参数细节更敏感，更容易遵循函数规范",
+      "B) 将函数定义简化到最少参数（只保留必需参数），全部使用 string 类型以减少类型错误，让 LLM 自由发挥",
+      "C) 采用防御性策略：使用 constrained decoding 保证格式合规，设计宽松的 optional-heavy schema，实现执行前验证（pre-execution validation）+ 自动回退机制（auto-retry with refined schema），并在系统提示中明确参数约束和默认值",
+      "D) 将所有函数合并为一个超级函数，让 LLM 用 JSON payload 区分不同操作，因为单次调用比多次调用更可靠"
+    ],
+    "answer": "C",
+    "hints": [
+      "考虑格式保证和失败恢复的组合策略",
+      "参数太多容易出错，参数太少会丢失语义",
+      "生产环境需要的是系统化的可靠性策略，不是单一技巧"
+    ],
+    "tags": [
+      "function-calling",
+      "production",
+      "reliability",
+      "best-practices",
+      "llm-agent"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 系统可观测性与 Tracing 设计",
+    "content": "解释 Agent 系统的可观测性挑战以及如何设计和实现有效的 tracing 方案。与传统的微服务 tracing 相比，Agent 可观测性有什么独特的难点和需求？",
+    "answer": "Agent 系统的可观测性面临独特挑战，超出了传统微服务可观测性的范畴：\n\n核心难点：\n1. 非确定性执行路径：每次 Agent 运行的任务流不完全相同（LLM 输出有随机性），trace 是动态生成的 DAG 而非固定调用链。\n2. LLM 调用是黑盒：能看到输入输出，但无法直接观测 LLM 内部的推理过程。\n3. 复合嵌套调用：Agent → Tool Call → LLM 处理 Observation → 嵌套 Sub-agent → 多步推理，形成复杂的嵌套执行树。\n4. 成本归因困难：一个 Agent 任务可能包含几十次 LLM 调用，每次 token 消耗和延迟不同。\n5. 故障模式多样：工具超时、LLM 格式错误、推理错误、无限循环——每种故障的排查方式不同。\n\n有效 tracing 方案的设计：\n\n1. 事件驱动的 trace 结构：用 spanning tree（而非固定调用链）表示 Agent 的执行。每个事件（LLM 调用、工具调用、推理步骤）是一个 span，通过 parent-child 关系连接。\n\n2. 关键跟踪指标：\n- Token 消耗跟踪：每次 LLM 调用的输入/输出 token 数，按 Agent 任务汇总。\n- 延迟分解：LLM 推理延迟 vs 工具执行延迟 vs Agent 思考延迟。\n- 工具调用统计：调用频率、成功率、平均延迟、故障模式分布。\n- 循环次数：Thought-Action-Observation 循环的轮数，检测无限循环。\n\n3. 有效日志策略：\n- 记录每次 LLM 调用的完整消息（包括 system prompt、上下文、工具定义）。\n- 记录工具的完整输入输出（返回数据量大的工具做摘要）。\n- 记录每个 Agent 步的决策依据。\n\n4. 专用工具：\n- LangSmith：原生 Agent tracing，支持 LangGraph 调用可视化。\n- Weights & Biases Prompts：追踪 prompt 版本和 LLM 调用。\n- Arize Phoenix：开源 LLM 可观测性平台。\n- OpenTelemetry 扩展：越来越多 Agent 框架实现 OTel 兼容的 tracing。",
+    "hints": [
+      "Agent 的执行路径是不可预测的，不像传统 API 调用链是固定的",
+      "需要追踪的是决策过程，而不仅仅是结果",
+      "每个 LLM 调用都是一个可能的故障点"
+    ],
+    "tags": [
+      "observability",
+      "tracing",
+      "monitoring",
+      "debugging",
+      "llm-ops"
+    ]
   }
 ]

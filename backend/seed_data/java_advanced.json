@@ -1475,5 +1475,111 @@
       "java21",
       "collection-framework"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "泛型LRU缓存实现",
+    "content": "用Java实现一个泛型LRU缓存，满足以下要求：\n1) 支持泛型<K, V>；\n2) get()和put()时间复杂度为O(1)；\n3) 线程安全；\n4) 当容量超出时淘汰最近最少使用的条目。\n请写出完整实现并解释原理。",
+    "answer": "public class LRUCache<K, V> {\n    private final int capacity;\n    private final LinkedHashMap<K, V> cache;\n\n    public LRUCache(int capacity) {\n        this.capacity = capacity;\n        this.cache = new LinkedHashMap<K, V>(capacity, 0.75f, true) {\n            @Override\n            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {\n                return size() > LRUCache.this.capacity;\n            }\n        };\n    }\n\n    public synchronized V get(K key) {\n        return cache.get(key);\n    }\n\n    public synchronized void put(K key, V value) {\n        cache.put(key, value);\n    }\n}\n\n核心原理：LinkedHashMap的access-order=true开启访问顺序模式，每次get/put会将节点移到链表尾部（最近使用），头部即为淘汰候选。removeEldestEntry()在插入后检查容量，超限时淘汰头部。access-order模式将访问行为转化为链表操作，实现O(1)淘汰。",
+    "hints": [
+      "access-order参数是实现关键",
+      "removeEldestEntry在put后回调",
+      "synchronized取决于并发场景"
+    ],
+    "tags": [
+      "LRU",
+      "LinkedHashMap",
+      "缓存",
+      "O(1)"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap读操作为何无锁",
+    "content": "Java 8的ConcurrentHashMap在get()操作中完全不使用锁（lock-free），请从内部数据结构和volatile使用的角度解释其实现原理。Node的val和next字段用了什么机制保证内存可见性？",
+    "answer": "Java 8 ConcurrentHashMap的get()无锁实现依赖以下机制：\n\n1) Node<K,V>的val和next字段声明为volatile，保证一个线程写入的值对其他线程立即可见；\n2) table数组引用本身也是volatile，保证扩容后新数组的可见性；\n3) 读取时先通过槽位的volatile读找到头节点，然后遍历链表/树（next同样volatile），读取节点的val；\n4) 写操作（put/remove）使用synchronized锁定桶的头节点，保证并发写入互斥；\n5) 写完成后对volatile字段的写入会建立happens-before关系，后续读必然看到最新值。\n\n简言之：写用锁保证原子性，volatile保证写结果对读可见，读通过volatile读保证看到最新链表结构，无需额外加锁。",
+    "hints": [
+      "volatile保证直接写入主存",
+      "写线程修改后读线程如何感知",
+      "JDK 8简化了Segment架构"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "volatile",
+      "lock-free",
+      "JMM",
+      "concurrency"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "volatile与synchronized语义差异",
+    "content": "关于volatile关键字和synchronized关键字的区别，以下哪项描述是正确的？",
+    "options": [
+      "A) volatile保证原子性和可见性，synchronized仅保证可见性",
+      "B) volatile保证可见性和有序性，但不保证原子性；synchronized保证可见性、有序性和原子性",
+      "C) volatile和synchronized都保证可见性和有序性，但只有synchronized可以禁止指令重排",
+      "D) volatile只能修饰基本类型，synchronized只能修饰方法"
+    ],
+    "answer": "B",
+    "hints": [
+      "volatile不保证count++的原子性",
+      "synchronized通过Monitor实现互斥",
+      "volatile通过屏障禁止指令重排"
+    ],
+    "tags": [
+      "volatile",
+      "synchronized",
+      "JMM",
+      "可见性",
+      "原子性"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "ThreadLocal内存泄漏风险",
+    "content": "ThreadLocal在使用后若不显式调用remove()，在线程池场景下可能导致内存泄漏，其根本原因是Entry的key（ThreadLocal实例）是弱引用，但value是强引用。",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "answer": "A",
+    "hints": [
+      "弱引用回收时value不会自动释放",
+      "线程池中线程长期存活引用链不断"
+    ],
+    "tags": [
+      "ThreadLocal",
+      "memory leak",
+      "WeakReference",
+      "thread pool"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "有界阻塞队列实现",
+    "content": "用synchronized + wait/notify机制实现一个有界阻塞队列（BoundedBlockingQueue），支持put()和take()操作，容量固定，队列满时put阻塞，队列空时take阻塞。考虑单一锁vs两把锁的设计选择。",
+    "answer": "public class BoundedBlockingQueue<E> {\n    private final Object[] items;\n    private int takeIndex, putIndex, count;\n\n    public BoundedBlockingQueue(int capacity) {\n        if (capacity <= 0) throw new IllegalArgumentException();\n        items = new Object[capacity];\n    }\n\n    public synchronized void put(E e) throws InterruptedException {\n        while (count == items.length) {\n            wait();\n        }\n        items[putIndex] = e;\n        if (++putIndex == items.length) putIndex = 0;\n        count++;\n        notifyAll();\n    }\n\n    @SuppressWarnings(\"unchecked\")\n    public synchronized E take() throws InterruptedException {\n        while (count == 0) {\n            wait();\n        }\n        E e = (E) items[takeIndex];\n        items[takeIndex] = null;\n        if (++takeIndex == items.length) takeIndex = 0;\n        count--;\n        notifyAll();\n        return e;\n    }\n}\n\n关键点：\n1) 使用while循环而非if来检查条件（对付虚假唤醒）；\n2) 循环数组实现环形缓冲区，避免内部数组搬移；\n3) 使用notifyAll()而非notify()，防止信号丢失；\n4) 单一锁实现简单，但吞吐量不如ArrayBlockingQueue的两把锁（takeLock/putLock）分离方案。",
+    "hints": [
+      "虚假唤醒是pthreads规范允许的",
+      "环形缓冲区索引如何回绕到起点",
+      "notify可能在什么场景丢失信号"
+    ],
+    "tags": [
+      "blocking queue",
+      "wait/notify",
+      "并发",
+      "环形缓冲区"
+    ]
   }
 ]
