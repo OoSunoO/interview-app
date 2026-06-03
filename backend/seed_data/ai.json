@@ -275,5 +275,55 @@
     "answer": "Word2Vec 基于上下文预测（局部窗口），GloVe 基于全局共现矩阵分解，FastText 引入子词信息解决 OOV 问题。\n\n解析：1）Word2Vec（Mikolov, 2013）——CBOW：根据上下文词预测目标词。Skip-gram：根据目标词预测上下文词。Skip-gram 对低频词效果更好但训练更慢。负采样（Negative Sampling）是加速训练的关键技巧——每次只更新少量负样本而非整个词表。2）GloVe（Pennington, 2014）——利用全局词共现矩阵，将词向量学习转化为矩阵分解（共现概率比的拟合，目标是让词向量的点积等于共现概率的对数）。优势：全局统计信息捕捉更好。3）FastText（Bojanowski, 2016）——将每个词表示为字符 n-gram 向量的和，未登录词（OOV）也能通过子词组合得到向量。对形态丰富的语言（如中文、德文）效果更好。\n\n扩展延伸：静态词嵌入 vs 上下文词嵌入：Word2Vec/GloVe/FastText 生成的是静态向量（同义词在不同上下文中不变），BERT/ELMo 等预训练语言模型生成的是上下文向量（根据上下文动态变化）。2018 年后 NLP 主流已转向预训练语言模型（BERT/GPT），但静态词嵌入在某些场景仍然有用——文本分类的特征提取、计算速度要求极高的场景、资源受限环境。",
     "hints": ["Word2Vec 的负采样解决了什么问题", "静态词嵌入和上下文词嵌入的区别是什么"],
     "tags": ["NLP", "词嵌入", "Word2Vec", "GloVe"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "状态空间模型与 Mamba",
+    "content": "请解释状态空间模型（SSM）在深度学习中是什么？Mamba 模型相比 Transformer 有什么优势和局限？",
+    "answer": "答案：状态空间模型（SSM）源自控制理论，将序列建模为隐藏状态随时间演化的过程。Mamba 是结构化状态空间序列模型（S6），通过选择性扫描机制实现线性时间复杂度的序列建模，是 Transformer 的一种高效替代方案。\n\n解析：1）SSM 基础——将输入 u(t) 映射到输出 y(t)，中间通过隐藏状态 h(t) 传递：h'(t) = Ah(t) + Bu(t), y(t) = Ch(t) + Du(t)。在深度学习中，A/B/C/D 是可学习的参数矩阵。2）S4（Structured State Space Sequence Model）——将 A 矩阵初始化为 HiPPO 矩阵（能捕捉长距离依赖），通过结构化分解实现高效计算。优势：长序列上 O(n) 的计算复杂度（Transformer 是 O(n²)），且能捕捉长达 16K+ 的依赖。3）Mamba（S6）——S4 的改进，核心创新是「选择性机制」：让 SSM 的参数（A/B/C 矩阵中的 delta）依赖输入（input-dependent），使模型能选择性地关注或遗忘信息。解决了 SSM 在内容感知（content-aware reasoning）上的弱点。实现上使用硬件感知的并行扫描算法。\n\n扩展延伸：Mamba vs Transformer：优势——1）长序列推理时显存线性增长（Transformer 平方增长）。2）推理时不需要 KV Cache（历史信息通过隐状态传递），首 token 生成延迟不随上下文增长。局限——1）预训练生态不如 Transformer 成熟（没有 TensorFlow/JAX 的主流支持）。2）在需要「内容定位」的任务（如 MMLU 中的特定知识检索）中不如 Transformer。3）尚不支持多模态的标准化方案。趋势：Transformer 仍然统治大模型，但 Mamba 在超长序列（基因组、音频、时间序列）和边缘端部署场景中展现潜力。2025 年的纯 Mamba 大模型尚未超越同参数量的 Transformer，但 Mamba-Transformer 混合架构（如 Jamba）已被验证是有效的折中方案。",
+    "hints": ["Mamba 的「选择性机制」解决了 S4 的什么问题", "为什么 Mamba 推理不需要 KV Cache"],
+    "tags": ["SSM", "Mamba", "深度学习", "架构"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "对比学习（Contrastive Learning）",
+    "content": "请解释对比学习的核心思想和主要算法（SimCLR、MoCo、CLIP）。为什么对比学习在多模态领域特别成功？",
+    "answer": "答案：对比学习通过拉近相似样本（正样本对）、推远不相似样本（负样本对）来学习有意义的表征。核心是构造正负样本对和设计对比损失（NT-Xent 或 InfoNCE Loss）。\n\n解析：对比学习的基本流程：1）数据增强——同一张图做两种不同的数据增强（裁剪、翻转、颜色抖动）得到正样本对（x_i, x_j）。2）编码器——将增强后的图像映射到特征空间（ResNet/ViT）。3）投影头（Projection Head）——将特征映射到对比空间（MLP，训练后丢弃）。4）对比损失——最大化正样本对的相似度，最小化负样本对的相似度。SimCLR（2020, Google）：端到端训练，大 batch size（4096+）需要大量负样本。MoCo（Momentum Contrast，何恺明）：用动量编码器维护负样本队列，解耦 batch size 和负样本数量，训练更稳定。CLIP（2021, OpenAI）：图文对比学习——4 亿图文对，用 InfoNCE Loss 拉近匹配的图文对、推开不匹配的。\n\n扩展延伸：对比学习成功的关键：1）数据增强的选择至关重要——SimCLR 实验发现随机裁剪和色彩失真对正样本对构建最有效。2）负样本的数量和质量——MoCo 的队列机制证明更多负样本提升表征质量。3）CLIP 的多模态成功——自然语言监督提供了比人工标注更丰富的学习信号（对比 ImageNet 1K 类的硬标签，CLIP 的文本描述提供了无限类别的软标签）。下游应用：零样本分类（CLIP）、视觉特征预训练（自监督）、多模态检索、图文生成的基础编码器。对比学习已成为多模态学习的核心范式。",
+    "hints": ["对比学习为什么需要大量负样本", "CLIP 的图文对比学习与 SimCLR 的自监督对比学习有什么本质区别"],
+    "tags": ["对比学习", "Self-Supervised", "CLIP", "SimCLR"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型量化：INT8、GPTQ、AWQ",
+    "content": "请解释大模型量化的原理。INT8 量化、GPTQ、AWQ 各有什么不同？量化对模型性能有什么影响？",
+    "answer": "答案：模型量化通过降低权重和激活值的精度（如 FP16 → INT8/INT4）来减少模型大小和加速推理。量化方法分为训练后量化（PTQ）和量化感知训练（QAT）。\n\n解析：1）量化原理——将 FP16 的数值范围映射到更小的整数范围（如 INT8 的 -128~127）。映射公式：q = round(r / s) + z，其中 r 是原始浮点数，s 是缩放因子（scale），z 是零点偏移（zero-point）。s = (rmax - rmin) / (qmax - qmin)。量化误差来源于舍入误差和截断误差（超出映射范围的数值被截断）。\n\n2）INT8 量化——最常见的量化精度，模型大小减半（FP16 的 50%），推理速度提升 1.5-2x（取决于硬件支持）。Weight-only 量化（只量化权重，激活用 FP16）精度损失小，适合大多数场景。Weight + Activation 量化更难（激活值分布变化大）。\n\n3）GPTQ（2023, Frantar et al.）——基于 OBD（Optimal Brain Damage）的权重量化方法。原理：逐层量化，利用 Hessian 矩阵信息寻找最优量化方案——每次量化一个权重后，调整其他未量化权重补偿量化误差。支持 INT4 和 INT3，FP16→INT4 下 LLM 的困惑度损失很小。\n\n4）AWQ（2024, MIT）——激活感知的权重量化。核心发现：权重的不同通道对精度的影响不均等——约 1% 的「显著权重通道」在保持模型性能中起关键作用。AWQ 将显著通道的 scale 因子做小幅度保护缩放（不直接保留为 FP16，而是降低量化误差），其他通道正常量化。INT4 下精度优于 GPTQ。\n\n扩展延伸：量化选型建议：1）INT8 Weight-only——几乎无精度损失的首选。2）INT4（GPTQ/AWQ）——需要在质量-速度-显存之间权衡时。3）GGUF/GGML（llama.cpp 生态）——CPU 推理的主流格式。4）量化感知训练（QAT）——对精度要求极高时在训练中模拟量化效果，精度最好但需要额外训练成本。趋势：硬件支持的精度在扩展（H100 的 FP8、Blackwell 的 FP4），未来量化到 INT2 甚至比特级。量化 + 蒸馏 + 剪枝三者组合可达到 10x+ 的模型压缩比。",
+    "hints": ["为什么 Activation 量化比 Weight 量化难得多", "GPTQ 和 AWQ 的核心区别是什么"],
+    "tags": ["模型压缩", "量化", "推理优化"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "迁移学习与预训练-微调范式",
+    "content": "请解释迁移学习的核心思想。预训练-微调范式为什么是深度学习的革命性突破？",
+    "answer": "答案：迁移学习的核心是将在一个任务上学习到的知识迁移到另一个相关任务上。预训练-微调范式先在大规模通用数据上预训练模型，再在特定任务的小规模数据上微调，显著降低了对标注数据的依赖。\n\n解析：1）迁移学习的核心假设——不同任务之间存在共享的底层特征/知识。早期迁移学习以特征提取为主（用预训练模型的中间层特征训练小模型），现在以微调为主（用预训练模型权重做初始化，在所有层上继续训练）。2）预训练-微调范式的发展：CV 领域——ImageNet 预训练的 ResNet 在分类→检测→分割等下游任务上微调成为 CV 标配。NLP 领域——BERT 在大规模语料上预训练（Masked Language Model + Next Sentence Prediction），在下游任务上微调（分类、NER、QA），推动了 NLP 的 BERT 时代。LLM 时代——GPT-3 证明 In-context Learning（不用微调，给几个示例即可），Claude/GPT-4 进一步证明 Scaling Law 下涌现能力。但特定任务上监督微调（SFT）仍然有效。\n\n扩展延伸：微调策略的演进：1）全量微调——更新所有参数，效果好但训练成本高。2）Adapter 微调——在 Transformer 层间插入小 Adapter 模块，只训练 Adapter。3）Prompt Tuning——固定模型，只训练软 prompt（可学习的 embedding）。4）LoRA 系列（LoRA、QLoRA、DoRA）——低秩适配方法，已成为主流。迁移学习的核心贡献：大幅降低了数据门槛——ImageNet 预训练让下游任务只需要几百张标注图片；BERT/GPT 预训练让 NLP 任务只需要几千条标注数据。没有迁移学习，今天的深度学习应用规模会小得多。预训练阶段的「训练-数据-算力」投入巨大，但微调阶段的成本相对可控。",
+    "hints": ["为什么预训练-微调范式比从头训练更高效", "Scaling Law 下预训练模型的涌现能力对迁移学习有什么影响"],
+    "tags": ["迁移学习", "预训练", "微调", "深度学习"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MoE（混合专家模型）架构",
+    "content": "请解释 MoE（Mixture of Experts）架构的原理。为什么 MoE 能训练更大的模型但推理更高效？Switch Transformer 和 DeepSeekMoE 有什么创新？",
+    "answer": "答案：MoE 将模型分解为多个专家子网络（Experts），每个输入只激活部分专家（通过门控网络 Router 选择 Top-K 专家），在不增加推理计算量的情况下大幅增加模型参数量。\n\n解析：1）MoE 原理——每一层 MoE 包含 N 个 Expert（每个 Expert 是一个 FFN）和一个 Router（门控网络）。Router 对输入 x 计算所有 Expert 的得分，选择得分最高的 Top-K 专家（通常 K=1 或 2），将输入的加权和作为输出。未选中的 Expert 不参与计算。2）优势——总参数量大（如 Mixtral 8×7B ≈ 47B 总参数），但每次推理只激活约 2 个专家（≈ 13B 活跃参数），所以推理速度和计算成本只相当于 13B 模型。允许训练更大规模的模型，而推理成本却远低于同等效果的密集模型。3）挑战——负载均衡（Expert 崩溃问题——Router 可能总是选择少数几个 Expert，其他 Expert 得不到训练）。解决方式：负载均衡损失（auxiliary load balancing loss）约束 Router 分配均匀。通信瓶颈——MoE 需要 All-to-All 通信做 Expert 分发，跨机训练时通信瓶颈显著。\n\n扩展延伸：业界 MoE 实践：1）GShard（Google, 2020）——首个大规模 MoE，将 Transformer 的 FFN 层替换为 MoE，Top-2。条件计算支持跨 TPU 分片。2）Switch Transformer（Google, 2021）——Top-1（只选一个 Expert），简化计算和通信。提出 Expert 容量（Expert Capacity）防止 Expert 过载。3）Mixtral 8×7B（Mistral, 2023）——开源 MoE 里程碑，总参 47B 活跃 13B，性能超越 LLaMA 2 70B。4）DeepSeekMoE（2024）——细粒度 Expert 分割（Fine-Grained Segmentation）+ 共享 Expert（Shared Expert）。将传统 MoE 的一个 Expert 拆为多个更小的 Expert，部分 Expert 作为共享 Expert 不被 Router 选择（所有输入共享），提高参数效率。DeepSeek-V2 的 MoE 架构显著降低 KV Cache。趋势：MoE 正在成为大模型的主流架构（GPT-4 也被广泛认为使用了 MoE），密集模型在大规模场景下逐渐被 MoE 替代。",
+    "hints": ["MoE 的 Expert 负载均衡问题如何解决", "DeepSeekMoE 的细粒度 Expert 分割和共享 Expert 对参数效率有什么提升"],
+    "tags": ["MoE", "架构", "大规模模型", "效率"]
   }
 ]
