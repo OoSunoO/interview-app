@@ -398,5 +398,55 @@
     "answer": "答案：全量备份保存完整数据，增量备份保存自上次备份以来的变更，差异备份保存自上次全量备份以来的变更。PITR（Point-In-Time Recovery）通过全量备份 + binlog 回放恢复到任意时间点。\n\n解析：1）全量备份（Full Backup）——备份整个数据库或所有表。物理备份（直接复制数据文件，速度快，用 xtrabackup/mysqldump），逻辑备份（导出 SQL 或分隔符文本，跨版本可用）。频率：通常每天一次（凌晨低峰期）。2）增量备份（Incremental Backup）——只备份自上次备份（全量或增量）以来的变更。速度快、占用空间小，但恢复时需要依次恢复全量 → 增量1 → 增量2 → …… 恢复链长，任一增量损坏导致后面不可用。3）差异备份（Differential Backup）——只备份自上次全量备份以来的所有变更。恢复时只需全量 + 最新一次差异。空间比增量大，但恢复简单可靠。\n\n生产策略示例：每周日凌晨 2 点全量备份、每天凌晨 2 点差异备份、每 30 分钟 binlog 备份 + 保留 7 天。PITR 流程：还原最近一次全量备份 → 还原最近的差异备份（或依次还原增量备份）→ 重放 binlog 到目标时间点（`mysqlbinlog --stop-datetime`）。\n\n扩展延伸：MySQL 备份工具对比：1）mysqldump——逻辑备份，`--single-transaction` 对 InnoDB 做一致性快照（不锁表），适合小到中型数据库。2）XtraBackup——物理备份（Percona 出品），支持热备份 InnoDB（不锁库），速度快，适合大型数据库。3）MySQL Shell——MySQL 8.0 的 util.dumpInstance()/util.loadDump() 支持并行备份/恢复。备份验证：定时做恢复演练（至少每月一次），确保备份文件可用。3-2-1 原则：3 份副本、2 种介质（如本地 + 云端）、1 份异地。",
     "hints": ["mysqldump 的 --single-transaction 如何保证一致性", "为什么增量备份的恢复链越长风险越大"],
     "tags": ["MySQL", "备份", "恢复"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 慢查询优化：从 EXPLAIN 到索引优化",
+    "content": "当发现 MySQL 查询缓慢时，如何分析和优化？EXPLAIN 输出的关键字段（type、Extra、rows、key）怎么解读？",
+    "answer": "答案：MySQL 慢查询优化的标准流程：1）开启慢查询日志识别慢 SQL。2）用 EXPLAIN 分析执行计划。3）根据 type、key、rows、Extra 等字段判断优化方向。4）加索引或改写 SQL。EXPLAIN 输出中 type 从好到差：system > const > eq_ref > ref > range > index > ALL。Extra 出现 Using filesort 或 Using temporary 通常是优化信号。\n\n解析：1）慢查询日志——set global slow_query_log = ON；设置 long_query_time（通常 1 秒）。用 mysqldumpslow 或 pt-query-digest 分析慢查询日志找出最常见的慢 SQL。2）EXPLAIN 解读——type：访问方法，const（唯一索引等值查询）→ ref（普通索引等值查询）→ range（索引范围查询）→ index（索引全扫描）→ ALL（全表扫描）。ALL 是危险信号。key：实际使用的索引，如果为 NULL 表示没有使用索引。rows：预估扫描行数，这个值越小越好（但不精确，只是估算）。Extra：Using index（覆盖索引，好）、Using where（在索引上过滤后还要回表检查条件）、Using filesort（需要额外排序，考虑加排序索引）、Using temporary（使用临时表，通常需要优化）。\n\n扩展延伸：索引优化策略——1）复合索引的最左前缀原则：索引 (a,b,c) 能加速 a、a,b、a,b,c 的查询，但不能加速 b、c 的查询。2）覆盖索引：索引包含查询需要的所有列（Extra 出现 Using index），避免回表。3）索引选择性：SELECT COUNT(DISTINCT col)/COUNT(*) 越高越好（低选择性如性别字段不适合加索引）。4）索引下推（ICP）：MySQL 5.6+ 的优化，减少回表次数。5）MRR（Multi-Range Read）：将随机 IO 转为顺序 IO。避免索引失效的常见情况：对索引列使用函数、隐式类型转换、LIKE 以 % 开头、OR 条件中有非索引列、不等于（!=）操作。",
+    "hints": ["EXPLAIN 中 type 字段 const->ref->range->index->ALL 的优化级别", "什么是覆盖索引——为什么 Extra 显示 Using index 是好事"],
+    "tags": ["MySQL", "SQL优化", "索引", "EXPLAIN"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 分区表",
+    "content": "请介绍 MySQL 分区表的原理和类型。分区表适合什么场景？分区在什么情况下反而会降低性能？",
+    "answer": "答案：MySQL 分区表将一张大表的数据物理拆分为多个分区，每个分区可以独立管理和存储。分区方式包括：RANGE（按范围）、LIST（按值列表）、HASH（哈希）、KEY（MySQL 内部哈希）。适合需要按时间归档的场景，但不适合跨分区查询和频繁更新的场景。\n\n解析：1）分区类型——RANGE 分区：按连续区间划分，如 PARTITION p2023 VALUES LESS THAN (20240000)。适合按日期、ID 范围归档历史数据。LIST 分区：按离散值列表划分，如 PARTITION p_south VALUES IN ('GD','GX','HN')。HASH 分区：按用户定义表达式的哈希值取模，适合均匀分布数据。KEY 分区：类似 HASH 但由 MySQL 内置哈希函数处理。2）分区优势——分区裁剪（Partition Pruning）：查询只扫描相关分区，不是全表扫描。历史数据管理：删除旧分区 DROP PARTITION 比 DELETE 快得多（元数据操作，物理删除文件）。并行扫描：多分区查询可以并行扫描。3）分区劣势——跨分区查询性能差（扫描所有分区，不如非分区表的全表扫描）。分区键选择不当导致数据倾斜（某分区数据远超其他分区）。分区表不支持外键、全文索引（InnoDB 分区限制）。分区数量不宜过多（建议不超过 1024）。\n\n扩展延伸：分区 vs 分表 vs 分库——1）分区：在同一个数据库实例内部，将一个表的数据分到多个物理文件中。对应用透明（SQL 不需要改）。2）分表（水平分表）：将一张表拆成多个结构相同的物理表。应用需要感知分表规则。3）分库（分片，Sharding）：拆分到不同数据库实例。需要中间件（MyCAT、ShardingSphere）或应用层路由。MySQL 8.0 开始分区表也支持一些改进——支持分区表的 Transportable Tablespace（可移动表空间，方便数据迁移）。但总体来说，分区表在 MySQL 中的定位比较尴尬——大多数场景下用分表分库或 NoSQL 替代。Oracle 的分区比 MySQL 成熟得多。",
+    "hints": ["分区表的分区裁剪（Partition Pruning）是如何减少扫描数据的", "为什么分区数量不宜过多"],
+    "tags": ["MySQL", "分区", "性能优化"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库连接池",
+    "content": "为什么应用程序需要数据库连接池？连接池的核心参数（最小连接数、最大连接数、连接超时、空闲回收）如何配置？连接池泄露如何诊断和预防？",
+    "answer": "答案：数据库连接池复用 TCP 连接，避免频繁创建/销毁连接的开销（TCP 三次握手 + MySQL 认证 每次约 100ms）。核心参数配置：最小连接数（保持活跃连接数）、最大连接数（防止打垮数据库）、连接超时（等待连接的超时时间）、空闲回收（空闲连接超过时间后关闭）。\n\n解析：1）为什么需要连接池——建立数据库连接的开销大：TCP 三次握手（1 RTT）、MySQL 认证（用户名密码验证、权限检查）、连接初始化（设置默认字符集、autocommit 等）。不使用连接池时每次请求都创建新连接，延迟高且数据库连接数暴增。2）核心参数——最小空闲连接（minimumIdle）：保持空闲连接数，应对突发流量（一般设为 5-10）。最大连接数（maximumPoolSize）：池子最大容纳的连接数，避免用尽数据库连接（一般设为 20-100，取决于数据库规格）。连接超时（connectionTimeout）：应用等待从池中获取连接的最长时间（一般 5-30 秒）。空闲超时（idleTimeout）：超过此时间未使用的连接被回收。最大存活时间（maxLifetime）：连接的最大存活时间（建议小于数据库的 wait_timeout）。\n\n扩展延伸：连接池泄露——应用获取连接后没有归还（调用 close()），导致连接池中可用连接逐渐耗尽。症状：应用卡死、获取连接超时、数据库连接数打满。诊断：监控连接池的 active 连接数是否持续增长。预防：1）事务中必须用 try-with-resources 或 try-finally 确保 close()。2）设置连接池的 leakDetectionThreshold（HikariCP）——连接被持有超过此时间输出警告堆栈。3）设置连接池的 validate（验证连接有效性）和 testWhileIdle。主流的 Java 连接池：HikariCP（Spring Boot 默认，性能最好、轻量）、Druid（监控功能丰富，国内常用）、Tomcat JDBC Pool。原则：连接池的最大连接数不是越大越好——过大的连接数会导致数据库端上下文切换开销增加（MySQL 的线程模型是 1 连接 1 线程）。",
+    "hints": ["最大连接数设置太大为什么反而会降低性能", "如何在代码层面防止连接池泄露"],
+    "tags": ["数据库", "连接池", "性能", "HikariCP"]
+  },
+  {
+    "category": "database",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "乐观锁与悲观锁",
+    "content": "请解释乐观锁（Optimistic Locking）和悲观锁（Pessimistic Locking）的区别。各自适用于什么场景？在数据库中如何实现乐观锁？",
+    "answer": "答案：悲观锁假设并发冲突频繁发生，每次操作都加锁防止冲突（SELECT ... FOR UPDATE）。乐观锁假设并发冲突较少，操作时不加锁，在提交时检查冲突（通过版本号或条件更新）。乐观锁适合并发冲突少的场景，悲观锁适合冲突多的场景。\n\n解析：1）悲观锁——读取数据时立即加锁（行锁或表锁），其他事务必须等待。在 MySQL 中使用 SELECT ... FOR UPDATE（行锁排他锁）实现。缺点：并发性能差（锁等待），可能死锁。适用：库存扣减（票务系统）、金融交易、冲突频繁的场景。2）乐观锁——不加锁，在更新时检查数据是否被修改过。实现方式：用版本号字段（version，更新时 SET version = version + 1 WHERE version = oldVersion）或时间戳（更新时检查时间戳是否不变）或 CAS。如果更新影响行数为 0，说明冲突发生，需要重试。优点：没有锁等待和死锁，并发性能好。缺点：冲突频繁时重试次数多，性能急剧下降。\n\n扩展延伸：乐观锁的 CAS 问题和 ABA 问题：1）CAS（Compare-And-Swap，比较并交换）在数据库层面的实现是 UPDATE ... WHERE version = oldVersion，如果版本不匹配则更新 0 行。2）ABA 问题——一个值从 A 变成 B 又变回 A，版本号 CAS 会被绕过（因为值没变）。解决方案：使用持久版本号（单调递增，不循环使用）。3）重试策略——乐观锁冲突后的重试：立即重试 + 间隔重试（指数退避）+ 最大重试次数。4）并发控制选择图谱——读多写少冲突少 → 乐观锁。写多冲突多 → 悲观锁。超高并发（库存扣减）→ Redis Lua 脚本 + 最终一致。不需要强一致 → 无锁 + 异步补偿。先尝试乐观锁，冲突频繁时降级为悲观锁——这种「先乐后悲」策略在很多系统中使用。",
+    "hints": ["乐观锁在高冲突场景下为什么性能会急剧下降", "ABA 问题在数据库乐观锁场景中是否真的会出现"],
+    "tags": ["数据库", "锁", "并发控制"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 死锁检测与预防",
+    "content": "什么是数据库死锁？MySQL InnoDB 如何检测死锁？如何通过 SQL 设计和业务逻辑预防死锁？",
+    "answer": "答案：死锁是两个或多个事务各自持有对方需要的资源，互相等待无法继续执行。InnoDB 通过等待图（Wait-For Graph）检测死锁，检测到后回滚代价较小的事务（持有锁较少、事务较小）。预防死锁的关键是统一锁的获取顺序和减少锁的范围。\n\n解析：1）死锁的四个必要条件——互斥（资源一次只能一个事务用）、持有并等待（持有锁并等待其他锁）、不可剥夺（已获取的锁不能强行剥夺）、循环等待（每个事务在等待另一个事务持有的锁）。2）InnoDB 死锁检测——等待图（WFG）：节点是事务，边是等待关系（T1 → T2 表示 T1 在等待 T2 释放锁）。InnoDB 周期性地检测等待图中是否存在环（深度优先搜索）。检测到死锁后选择「牺牲者」（victim）回滚——选择 undo 量最小的事务回滚。SHOW ENGINE INNODB STATUS 可以查看最后的死锁信息。3）预防死锁——统一的锁获取顺序：如果总是先锁表 A 再锁表 B，就不会出现 T1 锁 A 等 B、T2 锁 B 等 A 的死锁。缩小事务范围和锁持有时间：长事务持有锁的时间长，增加死锁概率。尽量使用等值条件（行锁）而不是范围条件（间隙锁）。\n\n扩展延伸：死锁的常见模式和处理：1）不同表加锁顺序不同——解决：约定全局加锁顺序。2）同一表的不同行——T1 先锁 row1 再锁 row2，T2 先锁 row2 再锁 row1。解决：操作行时按主键排序。3）间隙锁导致的死锁——在 RR 隔离级别下，范围查询会加间隙锁阻止幻读，但间隙锁不互斥——插入意向锁与间隙锁冲突。解决：不一定需要 RR 级别时可降级为 RC（binlog_format=ROW 时 RC 也安全）。4）超时兜底——设置 innodb_lock_wait_timeout（默认 50 秒），超时回滚。虽然是被动方式，但作为死锁防御的最后防线。5）实际常见做法：代码层重试（检测到 DeadlockException 时重试整个事务），大部分死锁在重试一次后即可解决。",
+    "hints": ["InnoDB 如何决定死锁时回滚哪个事务", "为什么 RR 级别下的间隙锁容易导致死锁"],
+    "tags": ["MySQL", "死锁", "事务", "并发"]
   }
 ]

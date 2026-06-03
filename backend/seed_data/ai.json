@@ -325,5 +325,55 @@
     "answer": "答案：MoE 将模型分解为多个专家子网络（Experts），每个输入只激活部分专家（通过门控网络 Router 选择 Top-K 专家），在不增加推理计算量的情况下大幅增加模型参数量。\n\n解析：1）MoE 原理——每一层 MoE 包含 N 个 Expert（每个 Expert 是一个 FFN）和一个 Router（门控网络）。Router 对输入 x 计算所有 Expert 的得分，选择得分最高的 Top-K 专家（通常 K=1 或 2），将输入的加权和作为输出。未选中的 Expert 不参与计算。2）优势——总参数量大（如 Mixtral 8×7B ≈ 47B 总参数），但每次推理只激活约 2 个专家（≈ 13B 活跃参数），所以推理速度和计算成本只相当于 13B 模型。允许训练更大规模的模型，而推理成本却远低于同等效果的密集模型。3）挑战——负载均衡（Expert 崩溃问题——Router 可能总是选择少数几个 Expert，其他 Expert 得不到训练）。解决方式：负载均衡损失（auxiliary load balancing loss）约束 Router 分配均匀。通信瓶颈——MoE 需要 All-to-All 通信做 Expert 分发，跨机训练时通信瓶颈显著。\n\n扩展延伸：业界 MoE 实践：1）GShard（Google, 2020）——首个大规模 MoE，将 Transformer 的 FFN 层替换为 MoE，Top-2。条件计算支持跨 TPU 分片。2）Switch Transformer（Google, 2021）——Top-1（只选一个 Expert），简化计算和通信。提出 Expert 容量（Expert Capacity）防止 Expert 过载。3）Mixtral 8×7B（Mistral, 2023）——开源 MoE 里程碑，总参 47B 活跃 13B，性能超越 LLaMA 2 70B。4）DeepSeekMoE（2024）——细粒度 Expert 分割（Fine-Grained Segmentation）+ 共享 Expert（Shared Expert）。将传统 MoE 的一个 Expert 拆为多个更小的 Expert，部分 Expert 作为共享 Expert 不被 Router 选择（所有输入共享），提高参数效率。DeepSeek-V2 的 MoE 架构显著降低 KV Cache。趋势：MoE 正在成为大模型的主流架构（GPT-4 也被广泛认为使用了 MoE），密集模型在大规模场景下逐渐被 MoE 替代。",
     "hints": ["MoE 的 Expert 负载均衡问题如何解决", "DeepSeekMoE 的细粒度 Expert 分割和共享 Expert 对参数效率有什么提升"],
     "tags": ["MoE", "架构", "大规模模型", "效率"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RLHF：基于人类反馈的强化学习",
+    "content": "请解释 RLHF（Reinforcement Learning from Human Feedback）的原理和训练流程。和直接监督微调（SFT）相比有什么优势？RLHF 有哪些局限？",
+    "answer": "答案：RLHF 通过人类偏好数据训练奖励模型，再用强化学习（PPO 算法）微调语言模型，使模型输出更符合人类偏好。相比 SFT，RLHF 能更好地对齐人类价值观，减少有害输出。主要局限在于训练复杂、奖励模型可能被利用。\n\n解析：RLHF 的三阶段流程：1）SFT（Supervised Fine-Tuning）——在高质量人工标注数据上对预训练模型做监督微调，让模型学会期望的输出格式和风格。这是 RLHF 的基础，没有好的 SFT 模型，RLHF 效果有限。2）奖励模型（Reward Model, RM）训练——收集人类比较数据（对同一 prompt 的多个模型输出做偏好排序，如 Elo 评分或 Pairwise Comparison），训练一个奖励模型来预测人类偏好。奖励模型通常与策略模型同规模或小一级。3）PPO（Proximal Policy Optimization）微调——使用强化学习算法 PPO 优化策略模型，目标是最大化奖励模型的得分，同时加入 KL 散度惩罚项防止模型偏离 SFT 模型太远（避免奖励黑客行为）。PPO 优势：相比 Policy Gradient 更稳定（信任区域约束，clipping 机制防止更新步长过大）。\n\n扩展延伸：RLHF 的挑战和变体：1）奖励黑客（Reward Hacking）——模型学会「欺骗」奖励模型而不是真正改进输出。例如，用更长的回答、更讨好的语气来提高分数。缓解方式：KL 散度约束、奖励模型的 Ensemble。2）偏好数据偏差——标注者的偏好未必代表所有用户群体。不同文化、不同背景的人对「好回答」的定义不同。DPO（Direct Preference Optimization, 2023）——无需显式训练奖励模型，直接在偏好数据上优化策略，简化了 RLHF 流程。被 Claude、Gemini 等广泛采用。3）Constitutional AI（Claude 的方法）——用 AI 自生成批评和修订数据代替人类标注，减少对人工标注的依赖。4）KTO（Kahneman-Tversky Optimization）——只需要「好/坏」标签而不是成对比较，更贴近现实场景。",
+    "hints": ["为什么 RLHF 需要 KL 散度惩罚来防止奖励黑客", "DPO 相比 PPO 的 RLHF 简化在哪里"],
+    "tags": ["RLHF", "强化学习", "对齐", "PPO"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多模态模型：架构与训练",
+    "content": "请介绍多模态大模型的主流架构。CLIP、Florence、GPT-4V 等模型是如何处理图像和文本的？图像编码和文本编码如何对齐？",
+    "answer": "答案：多模态模型将视觉和文本信息映射到统一表示空间。CLIP 使用双塔结构（独立图像编码器+文本编码器）做对比学习对齐；Florence 使用统一视觉语言模型；GPT-4V 等多模态 LLM 将图像特征通过 Projection Layer 注入 LLM 的输入序列。\n\n解析：1）双塔架构（Dual-Encoder）——CLIP（2021, OpenAI）是代表作。图像编码器（ResNet/ViT）和文本编码器（Transformer）各自输出 embedding，通过对比学习（InfoNCE Loss）拉近匹配图文对的距离，推远不匹配图文对。好处：图像和文本可独立编码和检索。零样本分类能力：对 ImageNet 的零样本分类达到 ResNet50 水平。2）融合架构（Fusion Encoder）——Florence（Microsoft）用一个统一的视觉编码器（Swin Transformer）处理图像，然后用一个联合编码器融合视觉和语言信息。优势：跨模态理解更深入（VQA、Captioning 等任务表现更好）。3）多模态 LLM（GPT-4V、LLaVA、Qwen-VL）——使用预训练的视觉编码器（如 CLIP ViT）提取图像特征，通过 Projection Layer（通常是 MLP 或 Q-Former）将视觉特征映射到 LLM 的 embedding 空间，作为 prefix 或 interleaved 输入到 LLM 中。LLaVA 的架构最简单：CLIP ViT + Linear Projection + Vicuna LLM。\n\n扩展延伸：多模态训练的挑战：1）数据对齐——如何获得高质量的图像-文本对。LAION-5B 是最大的公开数据集，但噪声大。人工标注的 COCO、CC12M 质量好但规模小。2）模态对齐难度——图片是否包含复杂关系（空间关系、计数、属性绑定）时对齐困难。图像中的物体之间的位置关系（「左边的猫右边的狗」）对多模态模型是长期挑战。3）Resolution——高分辨率图像细节丰富但计算量大。低分辨率图像会丢失细节（小字、小物体）。解决方案：动态分辨率（切 patch 处理）、双编码器（低分辨率全局视图 + 高分辨率局部视图）。",
+    "hints": ["CLIP 双塔架构和 GPT-4V 融合架构各自的优缺点", "Projection Layer（如 Q-Former）的作用是什么"],
+    "tags": ["多模态", "CLIP", "视觉语言模型", "LLaVA"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "扩散模型：原理与应用",
+    "content": "请解释扩散模型（Diffusion Model）的核心原理。DDPM 和 DDIM 有什么区别？扩散模型在图像生成之外的领域有哪些应用？",
+    "answer": "答案：扩散模型通过向数据逐步添加噪声（前向过程）再学习逆向去噪（反向过程）来生成数据。DDPM 是基本的马尔可夫链扩散过程，DDIM 通过非马尔可夫过程实现更快的采样。应用已扩展到视频生成、音频合成、3D 生成、分子设计等领域。\n\n解析：1）核心原理——前向过程（Forward/Diffusion Process）：对原始图像 x₀ 逐步添加高斯噪声，经过 T 步后变成纯噪声 x_T（近似标准正态分布）。这个过程中 q(x_t|x_{t-1}) 是已知的（给定上一步，加噪后分布是高斯分布）。反向过程（Reverse/Denoising Process）：模型学习从噪声中逐步去噪恢复原始数据。神经网络（通常用 UNet 或 Transformer）预测每一步的噪声 ε_θ(x_t, t)，然后用预测的噪声减去当前数据得到 x_{t-1}。训练目标：最小化预测噪声和实际添加噪声之间的 MSE。2）DDPM vs DDIM——DDPM（Denoising Diffusion Probabilistic Models）：标准扩散过程，生成时需完整 T 步（通常 1000 步），生成质量高但速度慢。DDIM（Denoising Diffusion Implicit Models）：通过非马尔可夫过程允许跳步采样（如从 1000 步减少到 50 步），生成速度提升 20 倍，质量轻微下降。DDIM 的采样过程是确定性的（给定初始噪声，生成结果固定）。3）条件生成——通过 Classifier Guidance（需要额外分类器引导）或 Classifier-Free Guidance（训练时随机丢弃条件，推理时用条件和非条件预测的差值引导），控制生成结果满足特定条件（如文本描述「一只蓝色的猫」）。\n\n扩展延伸：扩散模型的应用拓展：1）文本到图像（Text-to-Image）——Stable Diffusion 将扩散过程在 Latent Space 中进行（Latent Diffusion Model），大幅降低计算量，使消费级 GPU 也能运行。2）视频生成——Sora（OpenAI）将扩散模型应用于视频生成，在时空 patch 上进行扩散。3）音频——AudioLDM 将扩散模型应用于文本到音频/音乐生成。4）3D 生成——Point-E、DreamFusion 用扩散模型生成 3D 模型。5）分子设计——扩散模型生成满足特定化学性质的分子结构。趋势：流匹配（Flow Matching）和一致性模型（Consistency Models）正在挑战扩散模型的统治地位——流匹配训练更稳定，一致性模型实现一步生成。",
+    "hints": ["为什么 DDIM 能用更少的采样步骤达到近似 DDPM 的质量", "Stable Diffusion 的 Latent Diffusion 如何降低计算量"],
+    "tags": ["扩散模型", "DDPM", "DDIM", "生成模型"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "注意力机制：从 Soft Attention 到 Flash Attention",
+    "content": "请介绍注意力机制（Attention Mechanism）的演进。从原始的 Soft Attention 到 Self-Attention、Multi-Head Attention，再到 Flash Attention，每一步解决了什么问题？",
+    "answer": "答案：注意力机制让模型在处理序列数据时动态聚焦于重要部分。演进路线：Soft Attention（机器翻译对齐）→ Self-Attention（Transformer 核心）→ Multi-Head Attention（多视角表示）→ Flash Attention（IO 感知的高效实现）。\n\n解析：1）Soft Attention（Bahdanau Attention, 2014）——在 Encoder-Decoder 框架中，Decoder 每一步从 Encoder 的所有隐状态中计算加权和作为上下文向量。权重由对齐模型（alignment model）计算当前 Decoder 隐状态与每个 Encoder 隐状态的相似度后 softmax 得到。解决了原始 Seq2Seq 只能依赖固定长度上下文向量的瓶颈。复杂度 O(Td)（T=序列长度，d=维度）。2）Self-Attention（Vaswani et al., 2017, 「Attention Is All You Need」）——Query、Key、Value 都来自同一个序列。计算 QK^T 得到注意力分数矩阵，softmax 后与 V 加权求和。复杂度 O(T²d)。优势：每个位置都能直接关注到任意其他位置（解决了 RNN 的长距离依赖问题），可高度并行化。3）Multi-Head Attention——将 Q、K、V 投影到 h 个不同的子空间（h 个头），在每个头上独立做注意力计算，然后拼接结果再投影回原始维度。每个头可以关注不同类型的关系（语法关系、语义关系、位置关系）。4）Flash Attention（2022, Dao et al.）——核心洞察：注意力计算慢的原因是对 HBM 的频繁读写（O(T²) 的读写量）。Flash Attention 通过 tiling（分块计算）和 recomputation（重计算）技术，利用 SRAM 存储中间结果，将 HBM 读写量从 O(T²) 降低到 O(T²d⁻¹)（近似线性）。\n\n扩展延伸：注意力机制的进一步演进：1）Sparse Attention——降低 QK 计算范围（如局部窗口注意力、全局稀疏注意力）。代表：Longformer、BigBird。2）Linear Attention——用核方法（kernel trick）将 O(T²) 复杂度降低到 O(T)。代表：Performer（FAVOR+）、Linear Transformer。3）Sliding Window Attention——每个 token 只关注固定窗口内的邻居，Mistral 等模型使用。4）Grouped Query Attention（GQA）——在 Multi-Query Attention（MQA, 所有 Query 共用一个 Key/Value 头）和标准 MHA 之间折中，减少 KV Cache 大小，LLaMA 2/3 使用。5）Multi-head Latent Attention（MLA, DeepSeek-V2）——通过低秩压缩减少 KV Cache，DeepSeek-V2/V3 使用。",
+    "hints": ["Flash Attention 通过什么思路减少了 HBM 访问", "GQA 是如何平衡推理速度和质量的"],
+    "tags": ["注意力", "Transformer", "Flash Attention"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "知识蒸馏：原理与方法",
+    "content": "请解释知识蒸馏（Knowledge Distillation）的原理。什么是 Soft Label 蒸馏？什么是 Feature-based 蒸馏？蒸馏在大模型场景下有什么特殊挑战？",
+    "answer": "答案：知识蒸馏用大模型（Teacher）的知识训练小模型（Student）。Soft Label 蒸馏让学生模仿 Teacher 的软概率输出，Feature-based 蒸馏让学生模仿 Teacher 的中间层特征。大模型蒸馏的挑战在于 Teacher-Student 能力差距过大和蒸馏数据的来源与质量。\n\n解析：1）知识蒸馏基本原理（Hinton, 2015）——Teacher 模型（通常是大模型）在训练数据上生成软标签（Soft Label，即各类别的概率分布，通过温度参数 T 软化：T 越高分布越平滑），Student 模型同时学习硬标签（ground truth）和软标签（Teacher 的知识）。蒸馏损失 = α * 交叉熵（Student 输出 vs 软标签）+ (1-α) * 交叉熵（Student 输出 vs 硬标签）。温度 T 和权重 α 是蒸馏的超参数。为什么软标签有效：软标签包含了类别间的相似性信息（例如一张猫的图片，Teacher 预测「猫」90%，「狗」7%，「老虎」3%——这告诉了 Student 猫和狗比猫和汽车更相似）。2）Feature-based 蒸馏——不仅模仿 Teacher 的输出，还让 Student 的中间层特征图匹配 Teacher 对应的中间层特征。常用于视觉模型（FitNet 方法）和检测模型。需要设计特征对齐的映射函数（因为 Teacher 和 Student 的维度可能不同）。3）Online Distillation——Teacher 和 Student 同时训练。适用于没有预训练好的 Teacher 的场景。\n\n扩展延伸：大模型时代的知识蒸馏：1）数据挑战——Teacher 需要高质量蒸馏数据，研究表明 Teacher 生成的合成数据比原始训练数据效果更好。数据质量和多样性直接影响 Student 的性能。2）能力差距——如果 Teacher 和 Student 的容量差距太大（如 70B → 1.5B），蒸馏效果有限。缓解方式：渐进式蒸馏（Intermediate-Task Distillation + 多阶段蒸馏）。3）流行方法：DistilBERT——预训练阶段蒸馏，保留 BERT 97% 性能但体积减半。TinyLLaMA——在 LLaMA 2 的基础上用 QLoRA 蒸馏。4）蒸馏 vs 量化 vs 剪枝——三种模型压缩技术的比较：蒸馏改变模型权重/结构（需要重新训练），量化降低权重精度（不需训练但可能损失精度），剪枝移除冗余参数。三者可以结合使用。",
+    "hints": ["为什么 Soft Label 比 Hard Label 包含更多信息", "大模型蒸馏中 Teacher 和 Student 能力差距太大会有什么问题"],
+    "tags": ["知识蒸馏", "模型压缩", "Soft Label", "Student-Teaacher"]
   }
 ]

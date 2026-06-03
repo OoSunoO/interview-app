@@ -272,5 +272,55 @@
     "answer": "答案：Group Commit 将多个事务的 Redo Log 刷盘操作合并成一次 fsync 调用，减少磁盘 I/O 次数，显著提高高并发场景下的事务处理吞吐量。\n\n解析：问题背景——事务提交时 Redo Log 需要 fsync 刷盘。fsync 是昂贵的磁盘 I/O 操作（SSD 上约 10-100 微秒，HDD 上 5-10 毫秒）。如果每个事务提交都做一次 fsync，TPS 上限受限于 fsync 的延迟。Group Commit 的原理——多个事务同时提交时，它们进入队列。队列中第一个事务（Leader）负责为整个组执行 Redo Log 刷盘操作。其他事务（Follower）在 Leader 完成刷盘后直接从提交队列返回。一次 fsync 服务多个事务，大幅提升吞吐量。\n\n扩展延伸：MySQL 8.0 的 Group Commit 三个阶段（由 binlog_group_commit_sync_delay 和 binlog_group_commit_sync_no_delay_count 控制）：1）FLUSH 阶段——将每个事务的 binlog 写入内存缓冲区，Leader 等待达到 count 或 delay 阈值。2）SYNC 阶段——Leader 调用 fsync 将 binlog 刷盘。3）COMMIT 阶段——在存储引擎层提交事务。优化参数：binlog_group_commit_sync_delay（微秒）——Leader 等待更多事务加入组的时间（建议 500-1000μs）。binlog_group_commit_sync_no_delay_count——组内事务数达到此值立即提交。注意：如果关闭了 binlog，Group Commit 在 InnoDB 层通过 log_flusher 线程实现。",
     "hints": ["为什么 Group Commit 能显著提升高并发下的 TPS", "binlog_group_commit_sync_delay 和 sync_no_delay_count 如何配合使用"],
     "tags": ["MySQL", "Group Commit", "事务", "性能优化"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 执行计划分析：filesort 与临时表优化",
+    "content": "EXPLAIN 输出中 Extra 字段出现 Using filesort 或 Using temporary 表示什么？如何通过索引优化避免这两种情况？",
+    "answer": "答案：Using filesort 表示 MySQL 需要额外的排序操作（使用文件排序或在内存中排序），Using temporary 表示 MySQL 需要使用临时表来处理查询。两者都表示查询性能可能存在问题，通常可以通过创建合适的复合索引来避免。\n\n解析：Using filesort——当 ORDER BY 的列与 WHERE 条件使用的索引不一致时，MySQL 无法利用索引有序性获得排序结果，需要自己排序。排序方式：内存排序（sort_buffer_size 足够时）或文件排序（数据量大时使用磁盘临时文件）。优化：创建包含 WHERE 条件和 ORDER BY 列的复合索引（利用索引本身就是有序的）。如 SELECT * FROM t WHERE a=1 ORDER BY b，可以创建索引 (a,b)，这样数据按 a 过滤后自然按 b 有序，不需要额外排序。Using temporary——当查询需要去重（DISTINCT）、分组（GROUP BY）或需要子查询结果时，MySQL 需要创建临时表。优化：同样通过合适的索引减少临时表的需求。GROUP BY 走索引可以减少临时表。\n\n扩展延伸：避免 filesort 和 temporary 的最佳实践：1）最左前缀原则：组合索引的顺序需要匹配 WHERE + ORDER BY 的列顺序。2）ORDER BY 列需要和 WHERE 条件中的索引列形成最左前缀（如索引 (a,b,c)，WHERE a=1 ORDER BY b → 利用索引；WHERE a=1 ORDER BY c → 无法利用索引的 b → 需要 filesort）。3）GROUP BY 优化：GROUP BY 的列如果是索引的一部分并且满足最左前缀，可以避免临时表。4）尽量减少 ORDER BY 和 GROUP BY 的列宽。5）适当增大 sort_buffer_size 避免磁盘排序。注意：不要指望完全消除 filesort——当查询结果集很大或排序需求复杂时，filesort 是必要的。关键是从全表扫描 + 磁盘排序优化为索引扫描 + 内存排序或免排序。",
+    "hints": ["Using filesort 为什么通常意味着需要优化", "复合索引的列顺序如何影响 ORDER BY 的优化"],
+    "tags": ["MySQL", "SQL优化", "filesort", "执行计划"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NoSQL 数据库选型：Redis、MongoDB、HBase、Cassandra",
+    "content": "请比较 Redis、MongoDB、HBase、Cassandra 这四种 NoSQL 数据库的核心特性和适用场景。什么场景下应该使用 NoSQL 而不是关系型数据库？",
+    "answer": "答案：Redis——内存键值数据库，支持丰富的数据结构，适合缓存和实时数据。MongoDB——文档数据库，灵活的 Schema，适合快速原型和内容管理。HBase——列族数据库，基于 HDFS，适合海量数据实时读写。Cassandra——宽列存储，去中心化架构，适合全球多活部署。\n\n解析：1）Redis——全内存 + 可持久化，单线程处理命令（原子性），支持 String/Hash/List/Set/Sorted Set/Bitmap/HyperLogLog，支持事务和 Lua 脚本，发布订阅，主从+哨兵+集群。延迟通常在微秒级。适合：缓存、Session 存储、实时排行榜、分布式锁、消息队列。不适合：数据量超过内存的场景、需要复杂查询（多条件过滤）的场景。2）MongoDB——BSON 文档存储，支持二级索引和聚合管道，分片（水平扩展），无 Schema 约束（集合中的文档结构可以不统一）。适合：内容管理（CMS）、实时分析、IoT 数据采集、快速原型开发。不适合：强事务（ACID）要求、多表 JOIN 频繁、大量数据更新操作。\n\n扩展延伸：3）HBase——列族（Column Family）存储，按 Row Key 排序。Region Server 自动分片，强一致性（CP，基于 ZK）。适合：海量数据的实时随机读写（每秒百万级请求）、时序数据（监控指标）、大表（数十亿行×数百万列）。不适合：关系型查询模式、数据量小（HDFS 最小块 128MB，小数据量场景浪费空间）。4）Cassandra——分区键 + 聚类列，无主节点（所有节点平等），最终一致性（AP，可调一致性级别），Gossip 协议 + 去中心化。Write 性能极高（追加写入 CommitLog + MemTable）。适合：物联网设备数据、时序数据、全球多活（Multi-DC 同步）、写多读少的场景。不适合：强事务和复杂查询、数据一致性要求高于可用性。NoSQL 不是银弹——大多数业务场景的最佳选择是 MySQL（关系型）为主 + Redis（缓存）为辅。只在特定场景（海量数据、灵活 Schema、极高并发）才考虑 MongoDB/HBase/Cassandra。",
+    "hints": ["什么场景应该用 Redis、MongoDB、HBase 或 Cassandra", "CAP 定理如何指导 NoSQL 数据库选型"],
+    "tags": ["NoSQL", "Redis", "MongoDB", "HBase", "Cassandra"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库事务隔离级别与实现",
+    "content": "请详细解释 SQL 标准定义的四种事务隔离级别：读未提交（RU）、读已提交（RC）、可重复读（RR）、串行化（Serializable）。MySQL InnoDB 如何实现这些隔离级别？Oracle 和 PostgreSQL 的默认隔离级别是什么？",
+    "answer": "答案：四种隔离级别分别解决不同的并发问题：RU（脏读）、RC（不可重复读）、RR（可重复读）、Serializable（幻读）。InnoDB 默认 RR 级别，通过 MVCC + Next-Key Lock 实现。Oracle 默认 RC，PostgreSQL 默认 RC。\n\n解析：1）脏读——事务 A 读取了事务 B 未提交的数据，事务 B 回滚后导致 A 读到了脏数据。RU 级别可以发生脏读，RC 及以上级别通过读取已经提交的快照避免脏读。2）不可重复读——事务 A 内两次读取同一行数据，在两次读取之间事务 B 修改并提交了该行，导致 A 两次读取结果不同。RC 级别不可重复读，RR 级别通过在事务开始创建一致性快照（MVCC，多个版本并发控制）实现可重复读。3）幻读——事务 A 内两次范围查询，事务 B 在 A 两次查询期间插入了新行，导致 A 第二次多出了一行。RR 级别在 InnoDB 中通过间隙锁（Gap Lock）和 Next-Key Lock 防止幻读（但仅对当前读有效，快照读不受幻读影响）。Serializable 级别通过对所有读加锁强制串行。\n\n扩展延伸：实现机制——1）MVCC（多版本并发控制）：每行数据有多个版本（通过 Undo Log 维护），每行记录创建的事务 ID 和删除的事务 ID。事务开始时获取一个 Read View（活跃事务列表），通过可见性规则判断应该读哪个版本。快照读（普通的 SELECT）不加锁，通过 MVCC 获得一致快照。当前读（SELECT ... FOR UPDATE / UPDATE / DELETE）需要加锁。2）Next-Key Lock = 行锁 + 间隙锁，是 InnoDB RR 级别防止幻读的关键——锁住行以及行之间的间隙，阻止其他事务在间隙中插入新行。3）不同 DB 的默认隔离级别：MySQL InnoDB 默认 RR（可重复读），Oracle 默认 RC（读已提交），PostgreSQL 默认 RC（读已提交），SQL Server 默认 RC（读已提交）。MySQL 选择 RR 作为默认是为了兼容 binlog 基于 statement 格式时的复制安全——但现在推荐使用 ROW 格式+RC 级别。",
+    "hints": ["MVCC 如何实现读不阻塞写、写不阻塞读", "为什么 MySQL InnoDB 使用 RR 作为默认隔离级别而 Oracle 却用 RC"],
+    "tags": ["数据库", "事务", "隔离级别", "MVCC"]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "数据库连接池连接数优化",
+    "content": "数据库连接池的最大连接数设置为多少合适？为什么不是越多越好？如何根据应用类型（OLTP vs OLAP）调整连接池参数？",
+    "answer": "答案：连接池的最大连接数不是越多越好——过大的连接数会导致数据库端上下文切换增加、资源竞争加剧，反而降低吞吐量。OLTP（在线事务处理）适合小连接数，OLAP（在线分析处理）可能需要大连接数但场景相对孤立。建议最大连接数 = CPU 核心数 × 2 + 磁盘数量的小公式作为起点。\n\n解析：1）连接不是越多越好——每个数据库连接都消耗资源（MySQL 每个连接一个线程，占用内存和 CPU 上下文切换）。当活跃连接数超过 CPU 核心数时，线程切换成本急剧增加。大量连接竞争 InnoDB 的行锁会导致锁等待加剧。2）HikariCP（Spring Boot 默认）的推荐公式：maximumPoolSize = ((core_count × 2) + effective_spindle_count)。其中 effective_spindle_count 是磁盘数量（SSD 视为 1，HDD 可设更高）。这个公式的前提是数据库和应用在同一台机器或同机房低延迟网络。对于 OLTP 应用（简短快速的事务），5-10 个连接通常足够。超过这个数字后，数据库更多是在处理锁竞争和线程切换而不是实际工作。\n\n扩展延伸：3）连接池参数调整——不同负载类型：OLTP（高并发、短查询、低延迟要求）：小连接池（10-20）、短超时（3-5 秒）、最小空闲连接保持 5-10。OLAP（复杂查询、数据量大、单个查询时间长）：可能需要更大的连接池或单独配置连接到分析库。混用场景（OLTP + 少量 OLAP）：分别配置两个数据源（一个给 OLTP 用小连接池，一个给 OLAP 用大连接池）。4）监控连接池：活跃连接数（active）、空闲连接数（idle）、等待获取连接的线程数（pending）。如果 pending > 0 持续上升，说明连接池过小；如果 active 一直远小于 maximum，说明连接池过大。5）数据库端上限：MySQL 的 max_connections（默认 151）需要大于所有应用实例连接池大小的总和。",
+    "hints": ["为什么 CPU 核心数 × 2 + 磁盘数 是一个连接池大小参考公式", "OLTP 应用连接池为什么不宜超过 CPU 核心数的 2-3 倍"],
+    "tags": ["MySQL", "连接池", "性能", "OLTP"]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ShardingSphere 与数据库分片中间件",
+    "content": "请介绍数据库分片（Sharding）的几种策略。ShardingSphere、MyCAT 等分片中间件的工作原理是什么？分片后有哪些常见问题和挑战？",
+    "answer": "答案：数据库分片将数据水平拆分到多个数据库实例上，以突破单机存储和性能上限。分片策略包括：哈希分片（取模/一致性哈希）、范围分片（按 ID 或时间范围）、映射表（维护分片路由关系）。ShardingSphere 作为分片中间件，基于数据库协议层做 SQL 解析→路由→改写→执行→结果归并。\n\n解析：1）分片策略——哈希分片：对分片键取模（如 user_id % 16）→ 映射到 16 个库。数据分布均匀，但扩缩容需要重新分布数据（一致性哈希可减少迁移量）。范围分片：按分片键的范围映射到不同库（如 user_id 1-1000 万在库1，1000万-2000万在库2）。扩缩容容易（加新范围即可），但可能出现数据倾斜（活跃用户集中在某一范围）。映射表：维护分片键到数据库的映射关系。路由最灵活但需要查表（额外性能开销）。2）分片中间件——客户端模式（ShardingSphere-JDBC）：在 JDBC 层嵌入，应用直连数据库，无网络代理。优点：部署简单、性能高。缺点：每个应用都需要集成。代理模式（ShardingSphere-Proxy / MyCAT / DBLE）：独立的代理服务器，应用连接代理像连接数据库一样。\n\n扩展延伸：分片后的挑战和解决方案——1）跨分片查询：跨多个数据库的 JOIN 和排序效率低。解决：尽量按分片键查询（避免跨分片）；用 ES 做宽表冗余；应用层聚合。2）分布式事务：跨分片的事务需要分布式事务支持（Seata、XA、TCC）。尽量避免跨分片事务，或者通过最终一致性+补偿机制处理。3）全局主键：自增 ID 在分片下不适用。解决：雪花算法（Snowflake ID）、UUID、号段模式（Leaf/美团分布式ID）。4）分片键选择：必须根据查询模式选择分片键。如果分片键选错了，很多查询需要广播到所有分片。5）数据迁移：分片扩容（从 8 分片扩到 16）需要重新分布数据——停机迁移或双写迁移。一致性哈希可以最小化迁移量。分片是最后的优化手段——在分片前先尝试读写分离、缓存、分区表等更简单的方案。",
+    "hints": ["分片后跨分片查询和分布式事务是最难解决的问题", "为什么一致性哈希在分片扩容时比简单取模更好"],
+    "tags": ["数据库", "分片", "ShardingSphere", "分布式"]
   }
 ]

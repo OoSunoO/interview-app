@@ -454,5 +454,65 @@
       "TCP"
     ],
     "company": "华为"
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HTTP 与 HTTPS 的区别",
+    "content": "请详细介绍 HTTP 和 HTTPS 的区别。HTTPS 的 TLS/SSL 握手过程是怎样的？中间人攻击（MITM）如何防御？",
+    "answer": "答案：HTTPS = HTTP + TLS/SSL 加密。HTTP 以明文传输，HTTPS 通过证书验证 + 对称加密保护通信安全。TLS 握手过程：客户端发送支持的加密套件列表 → 服务端选择并返回证书 → 客户端验证证书并生成对称密钥 → 用服务端公钥加密密钥发给服务端 → 双方用对称密钥加密通信。\n\n解析：1）HTTP 的问题——数据明文传输（可被窃听）、不验证通信方身份（可被冒充）、不验证数据完整性（可被篡改）。HTTPS 通过加密（防窃听）、证书（防冒充）、MAC（防篡改）解决这三个问题。2）TLS 1.3 握手过程（简化版）：Client Hello——客户端发送支持的 TLS 版本和加密套件列表。Server Hello——服务端选择加密套件并发送证书（包含公钥）。证书验证——客户端验证证书链（CA 签名），确认服务端身份。密钥交换——客户端用服务端公钥加密 Pre-Master Secret 发送给服务端，双方各自计算 Session Key。加密通信——之后用 Session Key 对称加密通信。TLS 1.3 相比 1.2 减少了握手轮次（1-RTT，之前 2-RTT），并移除了不安全的加密套件。\n\n扩展延伸：HTTPS 的性能问题：1）TLS 握手有额外延迟（1-RTT 或 0-RTT 的 Session Resumption）。2）加密解密有 CPU 开销（现代硬件 AES-NI 指令集下影响较小）。3）优化：Session Resumption（Session ID/Ticket，恢复会话免去完整握手）、OCSP Stapling（服务端缓存证书状态检查）、HTTP/2 + HTTPS（多路复用减少连接数）。中间人攻击（MITM）防御核心：证书验证。浏览器内置了受信任的 CA 根证书列表。如果攻击者伪造证书，浏览器会警告「证书不合法」。防范 MITM 的关键是不要忽略证书警告，不在不安全的网络（公共 Wi-Fi）上信任未知证书。",
+    "hints": ["HTTPS 的证书验证机制如何防止中间人攻击", "为什么 TLS 1.3 比 1.2 快了一个 RTT"],
+    "tags": ["网络", "HTTP", "HTTPS", "TLS"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "进程、线程与协程",
+    "content": "请解释进程（Process）、线程（Thread）和协程（Coroutine/Fiber）三者的区别。各自的创建开销、上下文切换开销和适用场景是什么？",
+    "answer": "答案：进程是资源分配的最小单位，线程是 CPU 调度的最小单位，协程是用户态的轻量级线程（协程调度在用户空间完成不在内核）。创建开销：进程 > 线程 > 协程。\n\n解析：1）进程——拥有独立的地址空间（页表、文件描述符、信号等），进程间通信需要 IPC（管道、消息队列、共享内存、Socket）。上下文切换最重（TLB 刷新、CPU 缓存失效）。适合：隔离性要求高的场景（浏览器多 Tab、微服务）。2）线程——同一进程内的线程共享地址空间（堆、静态变量、文件描述符），拥有独立的栈和寄存器。上下文切换较轻（不需要切换地址空间），但创建和销毁仍有系统调用开销。适合 I/O 密集型任务（Web 服务器处理请求）。3）协程——用户态调度，不依赖内核。协程切换只需保存/恢复少量寄存器和栈，不需要系统调用。一个线程可以运行成千上万个协程。适合：高并发 I/O 场景（网络编程、爬虫）。Go 语言的 goroutine 本质上是协程（由 Go runtime 调度）。\n\n扩展延伸：各语言的协程实现：1）Python（asyncio）——基于事件循环的 async/await，IO 密集型友好但计算密集型不友好（GIL 限制）。2）Go（goroutine）——M:N 调度模型（M 个 goroutine 映射到 N 个 OS 线程），栈初始仅 2KB 可动态增长。3）Kotlin（Coroutine）——基于编译器的 CPS（Continuation Passing Style）变换。4）Java（Virtual Threads, JDK 21）——Project Loom 产物，类似 goroutine 的 M:N 调度。选择依据：需要强隔离用进程、需要真正的并行计算用线程、需要高并发 I/O 用协程。协程不能替代所有线程使用场景——计算密集型任务仍然依赖线程实现真正的并行。",
+    "hints": ["进程/线程/协程的上下文切换成本差异的根本原因是什么", "协程能不能利用多核 CPU 并行计算"],
+    "tags": ["操作系统", "进程", "线程", "协程"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "网络 IO 模型：BIO、NIO、AIO 和多路复用",
+    "content": "请介绍 Unix 系统的五种 IO 模型：阻塞 IO（BIO）、非阻塞 IO（NIO）、IO 多路复用（select/poll/epoll）、信号驱动 IO 和异步 IO（AIO）。在 Java 中怎么体现？",
+    "answer": "答案：五种 IO 模型的核心区别在于「谁来等数据」和「什么时候通知」。阻塞 IO 在数据就绪前一直阻塞；非阻塞 IO 轮询返回；多路复用用 select/epoll 同时监控多个 fd；信号驱动用 SIGIO 信号通知；异步 IO 由内核完成全部操作后通知。Java 中通过 NIO（Selector）和 AIO（AsynchronousChannel）实现。\n\n解析：1）BIO（Blocking IO）——应用程序调用 recvfrom 系统调用后一直阻塞，直到内核将数据从内核空间拷贝到用户空间才返回。每个连接需要一个线程处理。缺点：大量连接时线程数多，上下文切换开销大。2）NIO（Non-Blocking IO）——调用 recvfrom 时立即返回（如果数据未准备好返回 EAGAIN/EWOULDBLOCK）。应用程序需要轮询检查数据是否就绪。缺点：轮询浪费 CPU。3）IO 多路复用——select/poll/epoll 可以同时监控多个文件描述符。应用程序阻塞在 select/epoll_wait 上，当任意 fd 就绪时返回。\n\n扩展延伸：select/poll/epoll 对比：Select——有最大 fd 数量限制（1024），需要遍历整个 fd 列表，O(N) 复杂度。每次调用需要将 fd 列表从用户态拷贝到内核态。Poll——用链表代替 select 的位图，没有 1024 限制，但其他问题同 select。Epoll（Linux 专属）——使用事件驱动机制，注册 fd 时只关注感兴趣的事件。通过回调机制只返回就绪的 fd，O(1) 复杂度。使用 mmap 共享内核空间和用户空间的 eventpoll 数组，减少数据拷贝。水平触发（LT）vs 边缘触发（ET）：LT 模式下只要 fd 还有数据就重复通知，ET 模式只在状态变化时通知一次（必须一次性读完）。4）AIO（Async IO）——应用程序发起 read 后立即返回，内核完成数据从内核空间到用户空间的拷贝后通知应用程序。Java AIO（AsynchronousChannel）在 Linux 上基于 epoll 模拟（并非真正的 POSIX AIO），Windows 上基于 IOCP（真正内核级异步 IO）。",
+    "hints": ["epoll 为什么比 select/poll 高效——事件驱动、mmap 共享内存", "边缘触发（ET）和水平触发（LT）的区别和选择"],
+    "tags": ["网络", "IO", "操作系统", "多路复用"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DNS 解析过程",
+    "content": "请详细介绍 DNS（Domain Name System）的解析过程。从浏览器输入 URL 到获取 IP 地址，经过了哪些步骤？DNS 缓存和 CDN 如何配合？",
+    "answer": "答案：DNS 解析过程是层次化的：浏览器缓存 → 操作系统缓存（/etc/hosts）→ 本地 DNS 服务器（ISP/公司）→ 根 DNS 服务器 → 顶级域名服务器（TLD）→ 权威 DNS 服务器。最终返回目标 IP 地址。\n\n解析：1）递归查询——浏览器先去缓存查找域名对应的 IP（浏览器自身 DNS 缓存）。未命中时查询操作系统缓存（hosts 文件）。仍未命中时向本地 DNS 服务器（Local DNS Server，通常是 ISP 或公司网络配置的 DNS Server）发起递归查询。2）迭代查询——本地 DNS 服务器向根 DNS 服务器查询（根服务器返回顶级域名服务器地址）。向顶级域名服务器（如 .com 服务器）查询（返回权威 DNS 服务器地址）。向权威 DNS 服务器（如 example.com 的 DNS 服务器）查询（返回域名对应的 IP 地址）。3）缓存——各级 DNS 服务器和客户端都会缓存 DNS 结果。TTL（Time To Live）控制缓存时间。CDN 利用 DNS 解析的灵活性——权威 DNS 服务器根据用户 IP 的地理位置返回不同的 IP（最近的 CDN 节点 IP），实现流量调度。\n\n扩展延伸：DNS 记录类型：A 记录（IPv4 地址）、AAAA 记录（IPv6 地址）、CNAME 记录（别名，将一个域名指向另一个域名）、MX 记录（邮件服务器）、NS 记录（域名服务器）、TXT 记录（文本信息，多用于验证）。DNS 安全：DNSSEC（DNS Security Extensions，对 DNS 响应做数字签名防止伪造）、DNS over HTTPS（DoH）/ DNS over TLS（DoT，加密 DNS 查询防止窃听和篡改）。DNS 是互联网基础设施中最脆弱的环节之一——DNS 劫持、DDoS 攻击（如 2016 年 Dyn DNS 攻击）能瘫痪大量网站。",
+    "hints": ["DNS 解析中递归查询和迭代查询分别由谁完成", "CDN 如何利用 DNS 实现流量调度"],
+    "tags": ["网络", "DNS", "CDN", "协议"]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "TCP 与 UDP 的区别",
+    "content": "以下关于 TCP 和 UDP 的区别，说法正确的是？",
+    "answer": "答案：A) TCP 是面向连接的可靠传输，UDP 是无连接的不可靠传输。\n\n解析：TCP（Transmission Control Protocol）提供面向连接、可靠、有序、字节流服务。具有连接建立（三次握手）和释放（四次挥手）、确认与重传、流量控制（滑动窗口）、拥塞控制（慢启动、拥塞避免、快速重传）等机制。UDP（User Datagram Protocol）无连接，尽最大努力交付，不保证可靠有序。适合对实时性要求高、允许丢包的应用（视频直播、语音通话、在线游戏、DNS 查询）。TCP 用 20 字节固定头，UDP 用 8 字节固定头。",
+    "options": [
+      "A) TCP 是面向连接的可靠传输，UDP 是无连接的不可靠传输",
+      "B) TCP 和 UDP 都是面向连接的可靠传输",
+      "C) TCP 是无连接的，UDP 是面向连接的",
+      "D) TCP 和 UDP 都不可靠"
+    ],
+    "hints": [
+      "视频通话为什么用 UDP 而不是 TCP",
+      "QUIC（基于 UDP）既可靠又低延迟——是不是矛盾？"
+    ],
+    "tags": ["网络", "TCP", "UDP"],
+    "company": "华为,腾讯"
   }
 ]

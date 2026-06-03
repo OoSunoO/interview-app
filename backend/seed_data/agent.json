@@ -263,5 +263,55 @@
     "answer": "答案：Agent 的版本管理比传统应用更复杂——不仅管理代码，还要管理 Prompt、工具定义、模型版本和评测结果。核心实践：将 Prompt 视为代码、工具定义纳入版本控制、灰度发布 + 回滚能力。\n\n解析：1）Prompt 版本管理——System Prompt 存储在代码库中（Markdown 或 YAML 文件），与代码一起做版本控制。每次修改走 Code Review 流程。Prompt 的元信息：版本号、变更原因、生效时间、关联评测结果。2）工具定义的版本管理——Function Schema 放在代码中（Python 的 dataclass 或 JSON 文件），随版本发布。兼容性分析：工具参数变化时需考虑对已有对话的影响（用户上一轮调用的工具在当前版本还存在吗？）。3）灰度发布——新 Prompt 或新工具先让 5-10% 用户使用，观察核心指标（成功率、用户满意度、转人工率）后再逐步扩量。4）A/B 测试——两个 Prompt 版本同时在线，对比效果。需注意：A/B 测试需要足够的样本量才能有统计意义。5）回滚——每次变更有对应的上一次稳定版本快照，发现问题快速回滚（Feature Flag + 版本切换）。\n\n扩展延伸：Agent 的 CI/CD 流水线：1）Stage 1：Prompt 更新后自动在测试集上跑分（正确率、工具选择准确率）。2）Stage 2：评分高于特定阈值（如正确率 > 85%）才能进入下一步。3）Stage 3：自动部署到 staging 环境，用模拟用户流量做回归测试。4）Stage 4：灰度发布到生产环境。5）Stage 5：监控生产指标，自动回滚（指标下降超过阈值）。评测数据集的维护和扩增是 Agent 持续迭代的最大瓶颈——没有好的评测集，Prompt 优化就是「盲人摸象」。建议建立用户反馈闭环（满意/不满意标注）持续扩充评测集。",
     "hints": ["Prompt 做版本管理和代码做版本管理的共同点和差异", "灰度发布 Agent 时应该观察哪些核心指标"],
     "tags": ["Agent", "版本管理", "CI/CD", "运维"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 评估框架与评测方法",
+    "content": "如何全面评估一个 Agent 系统的性能？有哪些主流评估框架和指标？如何避免 Agent 评测中的过拟合？",
+    "answer": "答案：Agent 评估需要从任务完成度、效率、鲁棒性、安全性、用户体验等多个维度综合衡量。主流框架包括 AgentBench、GAIA、SWE-bench 等。避免过拟合的关键是使用多样化、动态更新的评测集。\n\n解析：Agent 评估比传统 NLP 评估复杂得多——Agent 有多个执行路径、依赖外部环境、需要多轮交互。评估维度：1）任务完成度（Task Success Rate）——Agent 是否达成了用户的最终目标。这是最重要的指标。但注意：成功率需要明确定义「成功」的标准（精确匹配还是用户确认）。2）效率指标——完成任务所需的轮次（Turns）、执行时间（Latency）、Token 消耗量。在相同成功率下，更少的轮次和更低的成本代表更好的 Agent。3）鲁棒性——面对异常输入（模糊指令、错误信息、API 故障）时的表现。Agent 是否能优雅降级而非直接崩溃。4）安全性——Agent 是否会被 prompt 注入攻击、是否会执行危险操作、是否会泄露敏感信息。5）主流评测集：AgentBench（多环境多任务）、GAIA（通用 AI 助手）、SWE-bench（软件工程任务）、ToolBench（工具使用）、WebArena（网页交互）、ALFWorld（家居任务）。\n\n扩展延伸：避免 Agent 评测过拟合的方法：1）环境随机化——每次评测随机化环境的初始状态和分支路径，防止 Agent 记住特定路径。2）任务模板化——用参数化模板生成不同变体的任务，而不是固定任务列表。3）对抗性评测——动态生成困难案例测试 Agent 的边界。4）人类参与评测（Human-in-the-loop）——自动指标不能完全替代人工判断。推荐流程：自动评测做回归检测 → 合成任务做泛化测试 → 人工评测做最终验证。",
+    "hints": ["为什么 Agent 评测比传统 NLP 评测更复杂", "如何防止 Agent 在评测集中记住特定路径而非真正理解任务"],
+    "tags": ["Agent", "评估", "评测"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 系统的安全风险与防护",
+    "content": "Agent 系统面临哪些特有的安全威胁？如何防御 Prompt 注入、工具滥用和数据泄露？",
+    "answer": "答案：Agent 面临的安全威胁包括：Prompt 注入（恶意指令覆盖系统提示）、工具滥用（Agent 被诱导调用危险工具）、数据泄露（Agent 拼接敏感信息到响应中）。防护策略包括：最小权限原则、输入输出过滤、人类确认机制。\n\n解析：1）Prompt 注入——攻击者将恶意指令嵌入外部内容（网页、邮件、文档）中，Agent 在处理这些内容时被诱导执行非预期操作。间接注入（Indirect Prompt Injection）：攻击者不需要直接与 Agent 对话，而是通过污染 Agent 读取的外部数据来实现。防护：将系统指令与外部内容在提示词中明确分隔（用特殊标记分隔），对 Agent 接管的工具执行「需要确认才执行」策略。2）工具滥用——Agent 被诱导调用具有破坏性的工具（删除文件、修改数据库、发送邮件）。防护：工具调用鉴权——每个工具定义其允许的操作范围（Scope）；敏感操作需要用户二次确认（Confirmation Gate）；工具调用频率限制。3）数据泄露——Agent 在处理用户数据时，可能将数据拼接到响应中泄露给第三方（搜索引擎、API 调用）。防护：输出过滤器（Output Guard）检查响应中是否包含预期外的敏感信息；最小化工具传参，只传递必要的数据。\n\n扩展延伸：Agent 安全架构的最佳实践：1）Least Privilege——Agent 使用独立的低权限服务账号，仅授予完成任务所需的最小权限。2）Human-in-the-Loop——删除操作、发送消息、支付等高风险操作必须经过人类确认。3）内容安全过滤——输入侧过滤恶意指令（Input Guard），输出侧过滤敏感内容（Output Guard），可用独立的安全检测模型作为 Guardrails。4）审计日志——所有 Agent 的工具调用、输入输出都记录到不可篡改的审计日志中，用于事后追溯。5）红队测试（Red Teaming）——定期对 Agent 进行对抗性安全测试。",
+    "hints": ["为什么间接 Prompt 注入（Indirect Injection）比直接注入更难防御", "Agent 的最小权限原则如何与灵活性需求平衡"],
+    "tags": ["Agent", "安全", "Prompt注入"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Multi-Agent 协作模式",
+    "content": "请介绍 Multi-Agent（多智能体）系统的主要协作模式。什么场景适合使用 Multi-Agent 架构？有哪些挑战？",
+    "answer": "答案：Multi-Agent 系统通过多个专业化 Agent 协作完成复杂任务。主流协作模式包括：主从模式（Orchestrator-Worker）、议会模式（Debate）、流水线模式（Pipeline）、市场模式（Market）。适用于复杂跨领域任务，但引入了一致性、通信开销等挑战。\n\n解析：1）主从模式（Orchestrator-Worker）——一个主 Agent（Orchestrator）负责任务分解、调度和结果整合，多个工作 Agent（Worker）各司其职（如一个做搜索、一个做数据分析、一个做报告撰写）。优势：架构清晰，易于管理和监控。劣势：Orchestrator 成为单点瓶颈和故障点。代表：AutoGPT、BabyAGI。2）议会模式（Debate）——多个 Agent 对同一问题各自推理和讨论，互相辩论直到达成共识。优势：提高决策质量和事实准确性（多个角度交叉验证）。劣势：Token 消耗大、对话轮次多、不一定能达成一致。代表：ChatDev、AgentVerse。3）流水线模式（Pipeline）——任务按阶段依次处理，每个阶段由专门的 Agent 负责，上一个 Agent 的输出是下一个 Agent 的输入。优势：适合有明确步骤的工作流。劣势：错误会累积传播。代表：工程任务中的需求分析→设计→编码→测试 Agent 链。4）市场模式（Market）——Agent 之间通过竞价/任务发布的方式协作，没有中央调度器。\n\n扩展延伸：Multi-Agent 的核心挑战：1）通信效率——Agent 之间传递的信息量和频率需要平衡。完全自由对话会产生大量无关内容。建议：结构化消息格式（JSON Schema 定义消息协议）。2）一致性——多个 Agent 可能给出矛盾的结论。需要仲裁机制（投票、优先级、最终决策者）。3）幻觉传播——一个 Agent 的幻觉可能被其他 Agent 当成事实。验证链（Verification Chain）和引用溯源可以缓解。4）成本——多个 LLM 调用叠加成本可能远超单 Agent。建议在简单任务上使用单 Agent，只在确实需要多角色协作时启用 Multi-Agent。",
+    "hints": ["什么情况下 Multi-Agent 比单 Agent 更有优势", "Multi-Agent 的一致性和幻觉传播问题如何解决"],
+    "tags": ["Agent", "Multi-Agent", "协作"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 的工具使用与 Function Calling",
+    "content": "Agent 如何调用外部工具？Function Calling 的原理是什么？如何设计好的工具描述让 Agent 正确调用？",
+    "answer": "答案：Agent 通过 Function Calling（函数调用）机制与外部工具交互。LLM 根据工具描述生成结构化调用请求（函数名 + 参数），系统执行后返回结果给 LLM 继续推理。好的工具描述需要清晰、准确、包含示例。\n\n解析：1）Function Calling 原理——开发者向 LLM 注册一系列工具（以 JSON Schema 描述函数签名），LLM 在推理过程中判断「是否需要调用工具」，如果需要则输出一个结构化 JSON（指定函数名和参数），系统执行该函数并将结果注入到对话中让 LLM 继续处理。LLM 不直接执行代码，只生成调用请求。2）工具描述设计要点：函数名要直观（search_flights 比 func1 好），参数描述要清晰（包含格式约束和示例），参数类型要准确（string/number/array 等），必需的参数标记 required。提供少量示例（Few-shot examples）能显著提高调用准确率。3）工具选择的策略：ReAct（Reasoning + Acting）——LLM 交替进行推理（Reasoning）和行动（Action），每次行动后观察结果再决定下一步。Plan-then-Execute——先生成完整计划再逐步执行工具调用。\n\n扩展延伸：Function Calling 的优化技巧：1）工具数量管理——一次提供的工具不宜过多（建议 < 20 个），超过时需要对工具分组或分层（先选类别再选具体工具）。2）参数注入——避免将敏感参数（API Key、用户密码）作为工具参数暴露给 LLM。应使用固定参数（fixed parameters）或服务端注入。3）错误处理——工具可能返回空结果或错误。工具描述中应说明可能的错误场景和处理方式。4）并行工具调用——部分 LLM（如 GPT-4）支持一次性返回多个工具调用，适合不依赖彼此的任务。",
+    "hints": ["Function Calling 中 LLM 是执行函数还是只生成调用请求", "为什么一次提供的工具数量不宜过多"],
+    "tags": ["Agent", "工具使用", "Function Calling"]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 的规划与任务分解能力",
+    "content": "Agent 如何实现复杂的任务规划？有哪些规划策略（ReAct、Plan-and-Execute、Tree-of-Thought）？各自适用什么场景？",
+    "answer": "答案：Agent 的规划策略包括：ReAct（交替推理和行动，适合动态环境）、Plan-and-Execute（先计划后执行，适合步骤明确的任务）、Tree-of-Thought（多路径探索，适合需要创造性探索的问题）。\n\n解析：1）ReAct（Reasoning + Acting）——Agent 在每一步交替进行：推理（当前状态、下一步做什么）和行动（调用工具或给出回复）。观察工具返回结果后进入下一轮推理-行动循环。优势：灵活，能根据中间结果调整计划。劣势：短视（只考虑下一步，无法保证全局最优）。适用：搜索信息、客服对话、需要频繁调整的场景。2）Plan-and-Execute——Agent 在开始执行前先生成完整计划（步骤列表），然后逐步骤执行，每步完成后标记进度。优势：全局视角（能规划需要 5-10 步的复杂任务），可解释性好（用户可以查看计划并调整）。劣势：计划可能不准确（如果环境动态变化，初始计划可能失效），灵活性不如 ReAct。适用：数据处理流水线、需要严格顺序的任务。3）Tree-of-Thought（ToT）——Agent 在每一步同时探索多个可能的推理路径，形成推理树。使用 BFS/DFS 或评估函数选择最有希望的路径继续探索。\n\n扩展延伸：规划的高级技术：1）分层规划（Hierarchical Planning）——将任务分解为高层子任务和低层执行步骤。高层 Planner 做抽象规划，低层 Worker 负责具体执行。2）反思机制（Reflection）——Agent 在执行完成后回顾整个过程，识别错误和改进点，将反思结果用于下次规划。3）自我纠错（Self-Correction）——Agent 在执行中检测到错误时主动回退和修正。4）规划反馈循环——用户或验证器在规划阶段给出反馈（提出修改建议），Agent 根据反馈调整计划后执行。评估规划质量的标准：计划是否覆盖了所有必需步骤、是否存在不必要的重复、是否有明确的错误恢复路径。",
+    "hints": ["ReAct 和 Plan-and-Execute 在什么场景下各有优势", "Tree-of-Thought 的搜索空间膨胀问题如何控制"],
+    "tags": ["Agent", "规划", "任务分解", "ReAct"]
   }
 ]
