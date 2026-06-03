@@ -466,25 +466,6 @@
     "category": "algorithm",
     "difficulty": "medium",
     "type": "coding",
-    "title": "最长回文子串",
-    "content": "给你一个字符串 s，找到 s 中最长的回文子串。你可以假设 s 的最大长度为 1000。请实现一个 O(n²) 或更优的算法。",
-    "answer": "```java\npublic String longestPalindrome(String s) {\n    if (s == null || s.length() < 2) return s;\n    int n = s.length();\n    boolean[][] dp = new boolean[n][n];\n    int start = 0, maxLen = 1;\n    \n    // 所有长度为 1 的子串都是回文\n    for (int i = 0; i < n; i++) dp[i][i] = true;\n    \n    // 按长度从小到大遍历\n    for (int len = 2; len <= n; len++) {\n        for (int i = 0; i <= n - len; i++) {\n            int j = i + len - 1;\n            if (s.charAt(i) == s.charAt(j)) {\n                if (len == 2 || dp[i+1][j-1]) {\n                    dp[i][j] = true;\n                    if (len > maxLen) {\n                        start = i;\n                        maxLen = len;\n                    }\n                }\n            }\n        }\n    }\n    return s.substring(start, start + maxLen);\n}\n```\n解法一（中心扩散法，O(n²) O(1)）：遍历每个位置作为中心，向两边扩散检查回文。分奇数长度和偶数长度两种情况。解法二（动态规划，O(n²) O(n²)）：dp[i][j] 表示 s[i..j] 是否为回文，状态转移 dp[i][j] = (s[i]==s[j]) && (j-i<2 || dp[i+1][j-1])。解法三（Manacher 算法）：O(n) 时间 O(n) 空间，利用回文的对称性优化。",
-    "hints": [
-      "中心扩散法如何同时处理奇数长度和偶数长度的回文",
-      "Manacher 算法利用了什么对称性质"
-    ],
-    "tags": [
-      "字符串",
-      "回文",
-      "动态规划"
-    ],
-    "options": [],
-    "company": "字节跳动,腾讯,Amazon"
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
     "title": "买卖股票的最佳时机",
     "content": "给定一个数组 prices，它的第 i 个元素 prices[i] 表示一支给定股票第 i 天的价格。你只能选择某一天买入这只股票，并选择在未来的某一天卖出。求你能获得的最大利润。如果你不能获得任何利润，返回 0。",
     "answer": "```java\npublic int maxProfit(int[] prices) {\n    if (prices == null || prices.length < 2) return 0;\n    int minPrice = prices[0];\n    int maxProfit = 0;\n    \n    for (int i = 1; i < prices.length; i++) {\n        if (prices[i] < minPrice) {\n            minPrice = prices[i];\n        } else {\n            maxProfit = Math.max(maxProfit, prices[i] - minPrice);\n        }\n    }\n    return maxProfit;\n}\n```\n时间复杂度 O(n)，空间复杂度 O(1)。核心思路：遍历过程中维护历史最低股价 minPrice，同时计算当天卖出能获得的最大利润（prices[i] - minPrice），更新全局最大利润。变体延伸：1）可以多次买卖（无限次）——只要 prices[i] > prices[i-1] 就累加利润。2）最多两次买卖——拆成左右两段，分别计算左段和右段的最大利润。3）含冷冻期——状态机 DP（持有、不持有冷冻、不持有不冷冻三种状态）。4）含手续费——DP 状态转移中减去手续费。",
@@ -498,24 +479,6 @@
     ],
     "options": [],
     "company": "字节跳动,微软,Amazon"
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
-    "title": "全排列",
-    "content": "给定一个不含重复数字的数组 nums，返回其所有可能的全排列。你可以按任意顺序返回答案。",
-    "answer": "```java\npublic List<List<Integer>> permute(int[] nums) {\n    List<List<Integer>> res = new ArrayList<>();\n    boolean[] used = new boolean[nums.length];\n    backtrack(nums, new ArrayList<>(), used, res);\n    return res;\n}\n\nprivate void backtrack(int[] nums, List<Integer> path, boolean[] used, List<List<Integer>> res) {\n    if (path.size() == nums.length) {\n        res.add(new ArrayList<>(path));\n        return;\n    }\n    for (int i = 0; i < nums.length; i++) {\n        if (used[i]) continue;\n        used[i] = true;\n        path.add(nums[i]);\n        backtrack(nums, path, used, res);\n        path.remove(path.size() - 1);\n        used[i] = false;\n    }\n}\n```\n时间复杂度 O(n×n!)，空间复杂度 O(n)。核心是回溯思想：逐层选择未使用的元素，递归到下一层，撤消选择（回溯）。用 used 数组标记已选择的元素避免重复使用。剪枝优化：如果 nums 包含重复数字，需要先排序，然后剪枝——if (i > 0 && nums[i] == nums[i-1] && !used[i-1]) continue;（保证相同数字在同一层只用一次，即「同层去重」）。",
-    "hints": [
-      "回溯算法的三要素：选择、约束、终止条件",
-      "有重复数字的全排列剪枝条件为什么要 !used[i-1]"
-    ],
-    "tags": [
-      "回溯",
-      "排列"
-    ],
-    "options": [],
-    "company": "字节跳动,微软,Google"
   },
   {
     "category": "algorithm",
@@ -554,46 +517,6 @@
     ],
     "options": [],
     "company": "字节跳动,Google,Amazon,微软"
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
-    "title": "三数之和",
-    "content": "给定一个整数数组 nums，判断是否存在三元组 [nums[i], nums[j], nums[k]] 满足 i != j、i != k 且 j != k，并且 nums[i] + nums[j] + nums[k] == 0。找出所有不重复的三元组。",
-    "answer": "答案：排序 + 双指针。先对数组排序，然后固定第一个数（去重），用双指针找后两个数。\n\n解析：排序后每个外层循环固定一个数 nums[i]，用左右指针 j=i+1, k=n-1 寻找两个数和为 -nums[i]。和 > 0 则 k--，和 < 0 则 j++。注意跳过重复元素。\n\n扩展延伸：时间 O(N^2)，空间 O(log N)（排序）。变种：最接近的三数之和（LeetCode 16）、四数之和（LeetCode 18）。\n\n```java\nclass Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        List<List<Integer>> res = new ArrayList<>();\n        Arrays.sort(nums);\n        for (int i = 0; i < nums.length - 2; i++) {\n            if (i > 0 && nums[i] == nums[i-1]) continue;\n            int target = -nums[i], j = i+1, k = nums.length-1;\n            while (j < k) {\n                int sum = nums[j] + nums[k];\n                if (sum == target) {\n                    res.add(Arrays.asList(nums[i], nums[j], nums[k]));\n                    while (j < k && nums[j] == nums[j+1]) j++;\n                    while (j < k && nums[k] == nums[k-1]) k--;\n                    j++; k--;\n                } else if (sum < target) j++;\n                else k--;\n            }\n        }\n        return res;\n    }\n}\n```",
-    "options": [],
-    "company": "Amazon, ByteDance",
-    "hints": [
-      "排序后固定第一个数，双指针寻找后两个数——去重是这道题的核心难点",
-      "为什么要先排序——排序让双指针找两个数之和成为可能"
-    ],
-    "tags": [
-      "算法",
-      "双指针",
-      "排序",
-      "数组"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "hard",
-    "type": "coding",
-    "title": "接雨水",
-    "content": "给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。",
-    "answer": "答案：双指针法。左右指针向中间移动，维护左右两侧的最大高度，计算当前位置能接的雨水量。\n\n解析：瓶颈效应——某位置能接的雨水取决于「左右两侧最高柱子中较矮的那根」。用 leftMax 和 rightMax 记录左右两侧的最高柱子。如果左指针处 leftMax < rightMax，则左指针位置能接 leftMax - height[left] 雨水，左指针右移；否则类似。\n\n扩展延伸：时间 O(N)，空间 O(1)。其他解法：单调栈（在调试 O(N) 维护递减栈，遇到比栈顶高的位置时计算雨水）。\n\n```java\nclass Solution {\n    public int trap(int[] height) {\n        int left = 0, right = height.length - 1;\n        int leftMax = 0, rightMax = 0, ans = 0;\n        while (left < right) {\n            leftMax = Math.max(leftMax, height[left]);\n            rightMax = Math.max(rightMax, height[right]);\n            if (leftMax < rightMax) {\n                ans += leftMax - height[left];\n                left++;\n            } else {\n                ans += rightMax - height[right];\n                right--;\n            }\n        }\n        return ans;\n    }\n}\n```",
-    "options": [],
-    "company": "Google, Amazon, Microsoft",
-    "hints": [
-      "瓶颈效应——每个位置能接的雨水由左右两侧最高柱子的较矮者决定",
-      "双指针法为什么不需要额外的数组——leftMax 和 rightMax 在遍历中动态更新"
-    ],
-    "tags": [
-      "算法",
-      "双指针",
-      "数组",
-      "单调栈"
-    ]
   },
   {
     "category": "algorithm",
@@ -659,22 +582,6 @@
     "category": "algorithm",
     "difficulty": "medium",
     "type": "coding",
-    "title": "合并区间",
-    "content": "LeetCode 56. 以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi]。请你合并所有重叠的区间，并返回一个不重叠的区间数组。",
-    "answer": "```java\nclass Solution {\n    public int[][] merge(int[][] intervals) {\n        if (intervals.length == 0) return new int[0][];\n        \n        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);\n        \n        List<int[]> merged = new ArrayList<>();\n        int[] current = intervals[0];\n        merged.add(current);\n        \n        for (int[] interval : intervals) {\n            if (interval[0] <= current[1]) {\n                current[1] = Math.max(current[1], interval[1]);\n            } else {\n                current = interval;\n                merged.add(current);\n            }\n        }\n        \n        return merged.toArray(new int[merged.size()][]);\n    }\n}\n```\n\n**时间复杂度**：O(n log n)，排序是主要开销。\n\n**空间复杂度**：O(log n) 用于排序栈空间（Java 的 TimSort），结果不计入。",
-    "options": [],
-    "company": "Facebook",
-    "tags": [
-      "算法",
-      "区间",
-      "排序",
-      "数组"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
     "title": "单词拆分",
     "content": "LeetCode 139. 给你一个字符串 s 和一个字符串列表 wordDict 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 s，则返回 true。注意：字典中的单词可以重复使用。",
     "answer": "```java\nclass Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        Set<String> wordSet = new HashSet<>(wordDict);\n        int n = s.length();\n        boolean[] dp = new boolean[n + 1];\n        dp[0] = true;\n        \n        for (int i = 1; i <= n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (dp[j] && wordSet.contains(s.substring(j, i))) {\n                    dp[i] = true;\n                    break;\n                }\n            }\n        }\n        \n        return dp[n];\n    }\n}\n```\n\n**时间复杂度**：O(n^2)，其中 n 为字符串长度。\n\n**空间复杂度**：O(n + k)，n 为 dp 数组长度，k 为字典大小。",
@@ -685,22 +592,6 @@
       "动态规划",
       "字符串",
       "哈希表"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "easy",
-    "type": "coding",
-    "title": "最大子数组和",
-    "content": "LeetCode 53. 给你一个整数数组 nums，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。",
-    "answer": "```java\nclass Solution {\n    public int maxSubArray(int[] nums) {\n        int maxSoFar = nums[0];\n        int maxEndingHere = nums[0];\n        \n        for (int i = 1; i < nums.length; i++) {\n            maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);\n            maxSoFar = Math.max(maxSoFar, maxEndingHere);\n        }\n        \n        return maxSoFar;\n    }\n}\n```\n\n**时间复杂度**：O(n)，一次遍历。\n\n**空间复杂度**：O(1)，仅使用常量额外空间。",
-    "options": [],
-    "company": "ByteDance",
-    "tags": [
-      "算法",
-      "动态规划",
-      "数组",
-      "分治"
     ]
   },
   {
@@ -736,163 +627,376 @@
     ]
   },
   {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
-    "title": "合并区间",
-    "content": "LeetCode 56. 以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi]。请你合并所有重叠的区间，并返回一个不重叠的区间数组。",
-    "answer": "```java\nclass Solution {\n    public int[][] merge(int[][] intervals) {\n        if (intervals.length == 0) return new int[0][];\n        \n        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);\n        \n        List<int[]> merged = new ArrayList<>();\n        int[] current = intervals[0];\n        merged.add(current);\n        \n        for (int[] interval : intervals) {\n            if (interval[0] <= current[1]) {\n                current[1] = Math.max(current[1], interval[1]);\n            } else {\n                current = interval;\n                merged.add(current);\n            }\n        }\n        \n        return merged.toArray(new int[merged.size()][]);\n    }\n}\n```\n\n**时间复杂度**：O(n log n)，排序是主要开销。\n\n**空间复杂度**：O(log n) 用于排序栈空间（Java 的 TimSort），结果不计入。",
-    "options": [],
-    "company": "Facebook",
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Manacher 算法与最长回文子串",
+    "content": "请解释 Manacher 算法求最长回文子串的线性时间原理。",
+    "answer": "答案：Manacher 算法利用回文的对称性和已计算信息避免重复中心扩展\n\n解析：传统中心扩展法 O(N^2)，每个中心向两边扩展。Manacher 核心思想：在已找到的回文范围内，利用对称性直接获得内部位置的部分回文半径，减少不必要的扩展。具体使用一个数组 P 记录每个位置的回文半径，维护当前最右回文边界 R 和对应中心 C。遍历时若 i 在 R 范围内，P[i] = min(R-i, P[2*C-i])（对称位置的回文半径），然后继续扩展。插入分隔符（如 #）统一处理奇偶回文。总复杂度 O(N)。\n\n扩展延伸：Manacher 本质上是 DP 的思想 + 对称性剪枝。相比中心扩展法的提升在于利用已计算结果的镜像信息跳过重复检查。扩展应用：1）最长回文子串长度 2）判断子串 s[l:r] 是否为回文（需同时记录原始索引信息）3）回文子串计数。注意 Manacher 不适用于旋转回文或非相邻回文问题。",
+    "hints": [
+      "奇偶回文怎么统一处理",
+      "P[i] = min(R-i, P[mirror]) 为什么成立"
+    ],
     "tags": [
-      "算法",
-      "区间",
-      "排序",
-      "数组"
+      "字符串",
+      "回文",
+      "Manacher"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "KMP 字符串匹配算法",
+    "content": "请解释 KMP 算法的核心思想和 next 数组的构建方法。",
+    "answer": "答案：KMP 利用模式串的部分匹配信息避免主串指针回溯\n\n解析：暴力匹配在主串不匹配时从头开始，KMP 利用已匹配部分（前缀后缀最长公共长度）来确定模式串向右滑动的位数。next 数组（部分匹配表）记录了模式串每个前缀的最长公共前后缀长度。构建 next 数组时用两个指针 i（后缀）和 j（前缀），若匹配则 j++ 并赋值，不匹配则 j 回到 next[j-1]（递归利用已计算出的信息）。匹配时主串指针 i 不回溯，模式串指针 j 根据不匹配位置跳到 next[j-1]。\n\n扩展延伸：时间复杂度 O(N+M)，空间 O(M)。next 数组的变种：1）next 数组不含自身版本（第一个位置 = 0）用于求循环节 2）优化版 nextval 避免连续相同字符的无效跳转。循环节计算：len(P) - next[len(P)] 为最小循环节长度，能整除 len(P) 表示字符串是循环周期串。KMP 的局限性：含通配符的问题不适合，更复杂的字符串匹配可用 Z 算法或后缀数组。",
+    "hints": [
+      "next 数组构建时字符不匹配为什么 j = next[j-1]",
+      "KMP 怎么判断字符串是否由循环节构成"
+    ],
+    "tags": [
+      "字符串",
+      "匹配",
+      "KMP"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "线段树（Segment Tree）",
+    "content": "请解释线段树的数据结构、核心操作和典型应用。",
+    "answer": "答案：线段树是用于区间查询和区间更新的二叉树，每个节点代表一个区间\n\n解析：线段树将数组区间递归二分，叶子节点存单点值，父节点合并子节点信息（和、最大值、最小值的统计量）。核心操作：1）建树 — O(N)，递归建树，父节点 = merge(左子, 右子) 2）区间查询（query）— O(log N) 3）单点/区间更新（update）— O(log N)。懒标记（Lazy Propagation）使区间更新 O(log N)：更新时标记暂不推送到子节点，查询时才下推，避免每次都更新整个子树。空间通常开 4N。\n\n扩展延伸：线段树的泛化：维护的信息必须满足结合律（求和、最大值、gcd 等）。动态开点线段树 — 不预先开完整 4N 空间，适用于值域大的离散场景。线段树变种：1）权值线段树（维护值出现的频次，用于求第 K 大）2）可持久化线段树（主席树/函数式线段树，每个版本建 log N 个新节点）3）线段树套平衡树（二维区间查询）。线段树 vs 树状数组：线段树功能更强（区间更新 + 区间查询），树状数组代码更短、常数更小。",
+    "hints": [
+      "懒标记怎么保证区间更新的效率",
+      "线段树的 4N 空间是怎么推导的"
+    ],
+    "tags": [
+      "线段树",
+      "区间查询",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "树状数组（Fenwick Tree）",
+    "content": "请解释树状数组（Fenwick Tree/BIT）的原理及与线段树的对比。",
+    "answer": "答案：树状数组用巧妙的前缀和思想实现 O(log N) 单点更新和前缀查询\n\n解析：树状数组利用 lowbit(x) = x & -x 确定索引覆盖范围。数组 BIT[i] 维护 (i - lowbit(i), i] 区间的和。核心操作：1）add(i, val) — 从 i 开始不断 i += lowbit(i) 更新所有覆盖该位置的节点 O(log N) 2）sum(i) — 从 i 开始不断 i -= lowbit(i) 累加前缀和。区间查询 [l, r] = sum(r) - sum(l-1)。lowbit 的原理是利用补码表示，取最低位的 1 及其后的 0。\n\n扩展延伸：树状数组扩展应用：1）区间更新 + 单点查询（用差分数组构建 BIT，更新区间 [l,r] 时 add(l, val) 和 add(r+1, -val)，单点查询就是前缀和）2）区间更新 + 区间查询（需要两个 BIT 配合）3）求逆序对（离散化后按值插入 BIT，统计大于当前值的数量）4）二维 BIT（处理矩阵前缀和）。树状数组的局限：维护的信息必须可逆（求和、异或可用，最值不可用），不支持区间赋值操作（需用线段树）。常数和代码量均优于线段树。",
+    "hints": [
+      "lowbit(x) = x & -x 为什么能得到最低位的 1",
+      "树状数组能处理区间最值查询吗"
+    ],
+    "tags": [
+      "树状数组",
+      "Fenwick",
+      "BIT"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "布隆过滤器（Bloom Filter）",
+    "content": "请解释布隆过滤器的原理、优缺点和应用场景。",
+    "answer": "答案：布隆过滤器用位数组 + 多个哈希函数判断元素是否存在，允许一定误判\n\n解析：初始化长度为 m 的位数组（全 0），添加元素时用 k 个独立哈希函数将元素映射到 k 个位，置为 1。查询时同样计算 k 个哈希位，如果全部为 1 则认为元素存在（可能有误判），任一为 0 则确定不存在。误判率 p 与位数组长度 m、哈希函数数量 k、插入元素数量 n 相关：p ≈ (1 - e^(-kn/m))^k。最优哈希函数数 k = (m/n)*ln2。布隆过滤器不能删除元素（标准版），计数布隆过滤器（Counting Bloom Filter）用计数器数组替代位数组支持删除。\n\n扩展延伸：应用场景：1）缓存穿透保护 — 查不存在的 key 时先用布隆过滤器拦截 2）垃圾邮件过滤 / URL 去重 3）防止缓存穿透（Redis 布隆过滤器模块 4）Bigtable/Cassandra 用布隆过滤器减少磁盘 I/O。参数选择：m 越大误判率越低但也越占空间，通常 m/n = 10 时误判率约 1%。实际使用建议：使用前预估数据量 n，根据可接受的误判率 p 反推 m 和 k。Python 的 pybloom_live 和 RedisBloom 提供现成实现。",
+    "hints": [
+      "布隆过滤器能不能支持删除操作",
+      "误判率怎么在时间和空间之间权衡"
+    ],
+    "tags": [
+      "布隆过滤器",
+      "概率",
+      "缓存"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "medium",
-    "type": "coding",
-    "title": "单词拆分",
-    "content": "LeetCode 139. 给你一个字符串 s 和一个字符串列表 wordDict 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 s，则返回 true。注意：字典中的单词可以重复使用。",
-    "answer": "```java\nclass Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        Set<String> wordSet = new HashSet<>(wordDict);\n        int n = s.length();\n        boolean[] dp = new boolean[n + 1];\n        dp[0] = true;\n        \n        for (int i = 1; i <= n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (dp[j] && wordSet.contains(s.substring(j, i))) {\n                    dp[i] = true;\n                    break;\n                }\n            }\n        }\n        \n        return dp[n];\n    }\n}\n```\n\n**时间复杂度**：O(n^2)，其中 n 为字符串长度。\n\n**空间复杂度**：O(n + k)，n 为 dp 数组长度，k 为字典大小。",
-    "options": [],
-    "company": "Amazon",
+    "type": "short_answer",
+    "title": "零钱兑换 II（组合数）",
+    "content": "请解决零钱兑换 II（LeetCode 518）问题。与零钱兑换 I（最少硬币数）的核心区别是什么？如何避免排列和组合的计数混淆？",
+    "answer": "答案：零钱兑换 II 求组成目标金额的组合数（顺序不同的组合视为相同）。\n\n核心区别：\n- 零钱兑换 I（LeetCode 322）：最少硬币数（Min）\n- 零钱兑换 II（LeetCode 518）：组合数（Count）\n\n如何避免排列和组合的混淆（关键！）：\n- 组合（外层循环硬币，内层循环金额）：\n  for (int coin : coins) {\n      for (int j = coin; j <= amount; j++) {\n          dp[j] += dp[j - coin];\n      }\n  }\n  这样每个硬币只被考虑一次，不会重复选择相同硬币的不同顺序。\n\n- 排列（外层循环金额，内层循环硬币）：\n  for (int j = 1; j <= amount; j++) {\n      for (int coin : coins) {\n          if (coin <= j) dp[j] += dp[j - coin];\n      }\n  }\n  这样 1+2 和 2+1 被视为两种不同的方式。\n\ndp[0] = 1（金额 0 只有一种方式：什么都不选）\n转移方程：dp[j] = dp[j] + dp[j-coin]\n\n扩展延伸：完全背包问题的两种遍历顺序——先物品（组合数） vs 先容量（排列数）。这个区别在很多 DP 题中都会出现（如爬楼梯里 1 步+2 步和 2 步+1 步被视为不同）。LeetCode 377 组合总和 IV 是求排列数（顺序不同算不同）。",
+    "hints": [
+      "外层硬币（组合）vs 外层金额（排列）——顺序决定结果类型",
+      "dp[0]=1，dp[j] += dp[j-coin]"
+    ],
     "tags": [
       "算法",
       "动态规划",
-      "字符串",
-      "哈希表"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "easy",
-    "type": "coding",
-    "title": "最大子数组和",
-    "content": "LeetCode 53. 给你一个整数数组 nums，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。",
-    "answer": "```java\nclass Solution {\n    public int maxSubArray(int[] nums) {\n        int maxSoFar = nums[0];\n        int maxEndingHere = nums[0];\n        \n        for (int i = 1; i < nums.length; i++) {\n            maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);\n            maxSoFar = Math.max(maxSoFar, maxEndingHere);\n        }\n        \n        return maxSoFar;\n    }\n}\n```\n\n**时间复杂度**：O(n)，一次遍历。\n\n**空间复杂度**：O(1)，仅使用常量额外空间。",
-    "options": [],
-    "company": "ByteDance",
-    "tags": [
-      "算法",
-      "动态规划",
-      "数组",
-      "分治"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
-    "title": "字母异位词分组",
-    "content": "LeetCode 49. 给你一个字符串数组，请你将字母异位词组合在一起。可以按任意顺序返回结果列表。字母异位词是由重新排列源单词的所有字母得到的一个新单词。",
-    "answer": "```java\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        Map<String, List<String>> map = new HashMap<>();\n        \n        for (String s : strs) {\n            char[] chars = s.toCharArray();\n            Arrays.sort(chars);\n            String key = new String(chars);\n            \n            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);\n        }\n        \n        return new ArrayList<>(map.values());\n    }\n}\n```\n\n**时间复杂度**：O(n × k log k)，其中 n 是字符串数量，k 是字符串最大长度。\n\n**空间复杂度**：O(n × k)，存储结果需要的空间。",
-    "options": [],
-    "company": "Google",
-    "tags": [
-      "算法",
-      "哈希表",
-      "字符串",
-      "排序"
+      "零钱兑换",
+      "组合"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "hard",
-    "type": "coding",
-    "title": "二叉树的序列化与反序列化",
-    "content": "LeetCode 297. 请设计一个算法来实现二叉树的序列化与反序列化。序列化是将一个二叉树转换成字符串，反序列化是将字符串还原成原来的二叉树。",
-    "answer": "```java\npublic class Codec {\n\n    public String serialize(TreeNode root) {\n        StringBuilder sb = new StringBuilder();\n        serializeHelper(root, sb);\n        return sb.toString();\n    }\n    \n    private void serializeHelper(TreeNode root, StringBuilder sb) {\n        if (root == null) {\n            sb.append(\"null,\");\n            return;\n        }\n        sb.append(root.val).append(\",\");\n        serializeHelper(root.left, sb);\n        serializeHelper(root.right, sb);\n    }\n\n    public TreeNode deserialize(String data) {\n        Queue<String> queue = new LinkedList<>(Arrays.asList(data.split(\",\")));\n        return deserializeHelper(queue);\n    }\n    \n    private TreeNode deserializeHelper(Queue<String> queue) {\n        String val = queue.poll();\n        if (val.equals(\"null\")) return null;\n        \n        TreeNode node = new TreeNode(Integer.parseInt(val));\n        node.left = deserializeHelper(queue);\n        node.right = deserializeHelper(queue);\n        return node;\n    }\n}\n```\n\n**时间复杂度**：O(n)，每个节点访问一次。\n\n**空间复杂度**：O(n)，递归栈空间和队列存储。",
-    "options": [],
-    "company": "Microsoft",
+    "type": "short_answer",
+    "title": "单词搜索 II",
+    "content": "请解决单词搜索 II（LeetCode 212）问题。如何在二维网格中高效搜索多个单词？Trie 和回溯的组合是如何加速搜索的？",
+    "answer": "答案：单词搜索 II 在二维字母网格中查找多个单词。\n\n高效的解法：Trie + 回溯\n\n1. 将所有单词构建为 Trie（前缀树）\n2. 遍历网格的每个位置作为起点\n3. DFS 回溯搜索四个方向，同时遍历 Trie\n4. 如果当前字符不在 Trie 的子节点中，剪枝\n5. 如果到达 Trie 中标记为单词结束的节点，记录结果\n6. 优化：找到单词后从 Trie 中删除（前缀标记清除避免重复）\n\n为什么 Trie + 回溯更快：\n- 暴力法：对每个单词执行一次 DFS，复杂度 O(N × M × 4^L)\n- Trie 法：所有单词共享前缀搜索，合并剪枝\n- 当搜索到网格中的字符不在 Trie 的路径上时，所有以此前缀开头的单词都被剪枝\n- 多个单词共用搜索路径，避免重复遍历\n\n剪枝优化：\n1. 当前字符不在 Trie 的子节点中\n2. 到达网格边界\n3. 已经访问过的位置\n4. 匹配到单词后，从 Trie 中删除该单词的标记\n\n扩展延伸：LeetCode 79 单词搜索（单个单词，直接 DFS+回溯即可）。Word Search II 的 Trie + DFS 是典型的多模式匹配算法。复杂度：O(M × N × 4^L) 最坏，但实际远小于此（大量剪枝）。",
+    "hints": [
+      "Trie + DFS 回溯 = 多模式匹配的标准解法",
+      "共享前缀剪枝大幅减少搜索空间"
+    ],
     "tags": [
       "算法",
-      "二叉树",
-      "序列化",
-      "BFS"
+      "Trie",
+      "回溯",
+      "网格搜索"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "medium",
-    "type": "coding",
-    "title": "合并区间",
-    "content": "LeetCode 56. 以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi]。请你合并所有重叠的区间，并返回一个不重叠的区间数组。",
-    "answer": "```java\nclass Solution {\n    public int[][] merge(int[][] intervals) {\n        if (intervals.length == 0) return new int[0][];\n        \n        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);\n        \n        List<int[]> merged = new ArrayList<>();\n        int[] current = intervals[0];\n        merged.add(current);\n        \n        for (int[] interval : intervals) {\n            if (interval[0] <= current[1]) {\n                current[1] = Math.max(current[1], interval[1]);\n            } else {\n                current = interval;\n                merged.add(current);\n            }\n        }\n        \n        return merged.toArray(new int[merged.size()][]);\n    }\n}\n```\n\n**时间复杂度**：O(n log n)，排序是主要开销。\n\n**空间复杂度**：O(log n) 用于排序栈空间（Java 的 TimSort），结果不计入。",
-    "options": [],
-    "company": "Facebook",
+    "type": "short_answer",
+    "title": "太平洋大西洋水流",
+    "content": "请解决太平洋大西洋水流问题（LeetCode 417）。如何从边界出发反向搜索找到能同时流向两个海洋的位置？",
+    "answer": "答案：从边界出发反向搜索——从能流入太平洋/大西洋的边界位置开始 BFS/DFS。\n\n思路：\n1. 太平洋流入：从左边和上边边界开始，逆流搜索（下一个格子高度 >= 当前格子高度）\n2. 大西洋流入：从右边和下边边界开始，逆流搜索\n3. 两个可达集合的交集就是既能流入太平洋又能流入大西洋的位置\n\n代码框架：\npublic List<List<Integer>> pacificAtlantic(int[][] heights) {\n    int m = heights.length, n = heights[0].length;\n    boolean[][] pacific = new boolean[m][n];\n    boolean[][] atlantic = new boolean[m][n];\n    \n    // 从边界开始 DFS\n    for (int i = 0; i < m; i++) {\n        dfs(heights, pacific, i, 0);      // 太平洋：左边界\n        dfs(heights, atlantic, i, n-1);   // 大西洋：右边界\n    }\n    for (int j = 0; j < n; j++) {\n        dfs(heights, pacific, 0, j);      // 太平洋：上边界\n        dfs(heights, atlantic, m-1, j);   // 大西洋：下边界\n    }\n    \n    // 交集\n    List<List<Integer>> res = new ArrayList<>();\n    for (int i = 0; i < m; i++)\n        for (int j = 0; j < n; j++)\n            if (pacific[i][j] && atlantic[i][j])\n                res.add(List.of(i, j));\n    return res;\n}\n\nvoid dfs(int[][] h, boolean[][] visited, int i, int j) {\n    visited[i][j] = true;\n    int[][] dirs = {{0,1},{0,-1},{1,0},{-1,0}};\n    for (int[] d : dirs) {\n        int ni = i + d[0], nj = j + d[1];\n        if (ni >= 0 && ni < h.length && nj >= 0 && nj < h[0].length \n            && !visited[ni][nj] && h[ni][nj] >= h[i][j]) {\n            dfs(h, visited, ni, nj);\n        }\n    }\n}\n\n扩展延伸：逆向思维——从终点（边界）开始反向搜索比从每个点正向搜到海洋高效得多（一次 DFS 覆盖所有可达点）。类似的逆向思维在算法题中很常见（如 Dijkstra 的反向建图求多点到单点的最短路径）。",
+    "hints": [
+      "反向 DFS——从边界向中心搜索，逆流而上（高度递增）",
+      "太平洋和大西洋可达集合的交集即为答案"
+    ],
     "tags": [
       "算法",
-      "区间",
-      "排序",
-      "数组"
+      "DFS",
+      "BFS",
+      "反向搜索"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "medium",
-    "type": "coding",
-    "title": "单词拆分",
-    "content": "LeetCode 139. 给你一个字符串 s 和一个字符串列表 wordDict 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 s，则返回 true。注意：字典中的单词可以重复使用。",
-    "answer": "```java\nclass Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        Set<String> wordSet = new HashSet<>(wordDict);\n        int n = s.length();\n        boolean[] dp = new boolean[n + 1];\n        dp[0] = true;\n        \n        for (int i = 1; i <= n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (dp[j] && wordSet.contains(s.substring(j, i))) {\n                    dp[i] = true;\n                    break;\n                }\n            }\n        }\n        \n        return dp[n];\n    }\n}\n```\n\n**时间复杂度**：O(n^2)，其中 n 为字符串长度。\n\n**空间复杂度**：O(n + k)，n 为 dp 数组长度，k 为字典大小。",
-    "options": [],
-    "company": "Amazon",
+    "type": "short_answer",
+    "title": "克隆图",
+    "content": "请解决克隆图问题（LeetCode 133）。如何对图进行深拷贝？哈希表在图的深拷贝中起什么作用？",
+    "answer": "答案：克隆图——对图进行深拷贝（Deep Copy），即完全复制所有节点和边。\n\n使用哈希表（HashMap）映射：原节点 → 克隆节点。\n\nDFS 递归解法：\n1. 如果节点已经克隆，从哈希表中返回克隆节点\n2. 创建克隆节点，加入哈希表\n3. 递归克隆所有邻居，并添加到克隆节点的邻居列表\n\n代码：\npublic Node cloneGraph(Node node) {\n    if (node == null) return null;\n    Map<Node, Node> map = new HashMap<>();\n    return dfs(node, map);\n}\n\nprivate Node dfs(Node node, Map<Node, Node> map) {\n    if (map.containsKey(node)) return map.get(node);\n    Node clone = new Node(node.val);\n    map.put(node, clone);\n    for (Node neighbor : node.neighbors) {\n        clone.neighbors.add(dfs(neighbor, map));\n    }\n    return clone;\n}\n\nBFS 迭代解法：\n1. 使用队列进行 BFS 遍历\n2. 同样使用哈希表管理映射\n3. 遍历时处理邻居的克隆\n\n哈希表的作用：\n1. 防止重复克隆（避免循环图导致的无限递归）\n2. 维护原图和克隆图的对应关系\n3. 确保同一条边在克隆图中也是同一个对象引用\n\n扩展延伸：序列化和反序列化图（类似于二叉树序列化但更复杂）。带权图的深拷贝也一样（额外存储权重）。LeetCode 138 复制带随机指针的链表——使用同样的 HashMap 技巧（三次遍历或一次遍历 + 原地复制）。",
+    "hints": [
+      "HashMap 映射原节点→克隆节点，防止循环图重复克隆",
+      "DFS 或 BFS 均可实现图的深拷贝"
+    ],
     "tags": [
       "算法",
-      "动态规划",
-      "字符串",
-      "哈希表"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "easy",
-    "type": "coding",
-    "title": "最大子数组和",
-    "content": "LeetCode 53. 给你一个整数数组 nums，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。",
-    "answer": "```java\nclass Solution {\n    public int maxSubArray(int[] nums) {\n        int maxSoFar = nums[0];\n        int maxEndingHere = nums[0];\n        \n        for (int i = 1; i < nums.length; i++) {\n            maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);\n            maxSoFar = Math.max(maxSoFar, maxEndingHere);\n        }\n        \n        return maxSoFar;\n    }\n}\n```\n\n**时间复杂度**：O(n)，一次遍历。\n\n**空间复杂度**：O(1)，仅使用常量额外空间。",
-    "options": [],
-    "company": "ByteDance",
-    "tags": [
-      "算法",
-      "动态规划",
-      "数组",
-      "分治"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "coding",
-    "title": "字母异位词分组",
-    "content": "LeetCode 49. 给你一个字符串数组，请你将字母异位词组合在一起。可以按任意顺序返回结果列表。字母异位词是由重新排列源单词的所有字母得到的一个新单词。",
-    "answer": "```java\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        Map<String, List<String>> map = new HashMap<>();\n        \n        for (String s : strs) {\n            char[] chars = s.toCharArray();\n            Arrays.sort(chars);\n            String key = new String(chars);\n            \n            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);\n        }\n        \n        return new ArrayList<>(map.values());\n    }\n}\n```\n\n**时间复杂度**：O(n × k log k)，其中 n 是字符串数量，k 是字符串最大长度。\n\n**空间复杂度**：O(n × k)，存储结果需要的空间。",
-    "options": [],
-    "company": "Google",
-    "tags": [
-      "算法",
-      "哈希表",
-      "字符串",
-      "排序"
+      "图",
+      "深拷贝",
+      "DFS"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "hard",
-    "type": "coding",
-    "title": "二叉树的序列化与反序列化",
-    "content": "LeetCode 297. 请设计一个算法来实现二叉树的序列化与反序列化。序列化是将一个二叉树转换成字符串，反序列化是将字符串还原成原来的二叉树。",
-    "answer": "```java\npublic class Codec {\n\n    public String serialize(TreeNode root) {\n        StringBuilder sb = new StringBuilder();\n        serializeHelper(root, sb);\n        return sb.toString();\n    }\n    \n    private void serializeHelper(TreeNode root, StringBuilder sb) {\n        if (root == null) {\n            sb.append(\"null,\");\n            return;\n        }\n        sb.append(root.val).append(\",\");\n        serializeHelper(root.left, sb);\n        serializeHelper(root.right, sb);\n    }\n\n    public TreeNode deserialize(String data) {\n        Queue<String> queue = new LinkedList<>(Arrays.asList(data.split(\",\")));\n        return deserializeHelper(queue);\n    }\n    \n    private TreeNode deserializeHelper(Queue<String> queue) {\n        String val = queue.poll();\n        if (val.equals(\"null\")) return null;\n        \n        TreeNode node = new TreeNode(Integer.parseInt(val));\n        node.left = deserializeHelper(queue);\n        node.right = deserializeHelper(queue);\n        return node;\n    }\n}\n```\n\n**时间复杂度**：O(n)，每个节点访问一次。\n\n**空间复杂度**：O(n)，递归栈空间和队列存储。",
-    "options": [],
-    "company": "Microsoft",
+    "type": "short_answer",
+    "title": "外观数列",
+    "content": "请解决外观数列（Count and Say, LeetCode 38）问题。如何根据前一个序列生成后一个序列？这个数列有什么数学性质？",
+    "answer": "答案：外观数列是一个递归序列，每一项从前一项通过\"读\"数字的连续出现次数得到。\n\n规则：\n- n=1: \"1\"\n- n=2: 读 \"1\" = 一个 1 → \"11\"\n- n=3: 读 \"11\" = 两个 1 → \"21\"\n- n=4: 读 \"21\" = 一个 2，一个 1 → \"1211\"\n- n=5: 读 \"1211\" = 一个 1，一个 2，两个 1 → \"111221\"\n\n实现（迭代）：\npublic String countAndSay(int n) {\n    String s = \"1\";\n    for (int i = 2; i <= n; i++) {\n        StringBuilder sb = new StringBuilder();\n        int count = 1;\n        for (int j = 1; j < s.length(); j++) {\n            if (s.charAt(j) == s.charAt(j-1)) {\n                count++;\n            } else {\n                sb.append(count).append(s.charAt(j-1));\n                count = 1;\n            }\n        }\n        sb.append(count).append(s.charAt(s.length()-1));\n        s = sb.toString();\n    }\n    return s;\n}\n\n数学性质：\n1. 序列中永远不会出现 4 及以上的数字（只能出现 1、2、3）\n2. 序列的极限长度增长率约 λ^n，其中 λ ≈ 1.303577（John Conway 发现的常数，称为 Cosmological Constant）\n3. 该序列由 John Conway（康威生命游戏的发明者）在 1986 年研究，他提出了\"音频活性\"（Audioactive）的描述\n4. 序列最终会分解为 92 个基本原子（basic elements）的组合——这是 Conway 的主要发现\n\n扩展延伸：外观数列是\"游程编码（Run-Length Encoding）\"的递归应用。游程编码是一种简单的数据压缩算法，将连续重复的字符替换为\"计数+字符\"。JPEG、MP3 等压缩算法中也使用了类似的游程编码。",
+    "hints": [
+      "外观数列 = 游程编码的递归应用",
+      "Conway 发现该数列最终分解为 92 个原子的组合"
+    ],
     "tags": [
       "算法",
-      "二叉树",
-      "序列化",
-      "BFS"
+      "字符串",
+      "游程编码",
+      "递归"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "螺旋矩阵",
+    "content": "请解决螺旋矩阵问题（LeetCode 54）。如何按顺时针螺旋顺序遍历矩阵？如何处理边界收缩？",
+    "answer": "答案：按顺时针螺旋顺序遍历矩阵，需要动态维护上下左右四个边界。\n\n思路：\n1. 定义四个边界：top=0, bottom=m-1, left=0, right=n-1\n2. 按四个方向循环遍历：\n   - 从左到右（top 行）：遍历后 top++\n   - 从上到下（right 列）：遍历后 right--\n   - 从右到左（bottom 行）：遍历后 bottom--\n   - 从下到上（left 列）：遍历后 left++\n3. 每完成一个方向遍历，边界向内收缩一层\n4. 当 top > bottom 或 left > right 时结束\n\n代码：\npublic List<Integer> spiralOrder(int[][] matrix) {\n    List<Integer> res = new ArrayList<>();\n    int top = 0, bottom = matrix.length - 1;\n    int left = 0, right = matrix[0].length - 1;\n    \n    while (top <= bottom && left <= right) {\n        for (int j = left; j <= right; j++) res.add(matrix[top][j]); top++;\n        for (int i = top; i <= bottom; i++) res.add(matrix[i][right]); right--;\n        if (top <= bottom) {\n            for (int j = right; j >= left; j--) res.add(matrix[bottom][j]); bottom--;\n        }\n        if (left <= right) {\n            for (int i = bottom; i >= top; i--) res.add(matrix[i][left]); left++;\n        }\n    }\n    return res;\n}\n\n关键点：\n- 每个方向遍历后，检查边界是否仍然有效（top <= bottom && left <= right）\n- 从右到左和从下到上的遍历需要额外的边界检查（防止单行或单列重复遍历）\n- 边界收缩的方向：遍历后缩小相关边界\n\n扩展延伸：LeetCode 59 螺旋矩阵 II（生成螺旋矩阵）——用户创建一个 n×n 的螺旋矩阵。LeetCode 885 螺旋矩阵 III。螺旋遍历是矩阵处理的经典问题，也出现在图像处理中（如 JPEG 的 Zigzag 扫描）。",
+    "hints": [
+      "四边界（top/bottom/left/right）动态缩小",
+      "从右到左和从下到上需要额外边界检查"
+    ],
+    "tags": [
+      "算法",
+      "矩阵",
+      "螺旋",
+      "模拟"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "矩阵置零",
+    "content": "请解决矩阵置零问题（LeetCode 73）。如何在 O(1) 额外空间下将矩阵中含有 0 的行和列全部置零？",
+    "answer": "答案：将矩阵中值为 0 的元素所在行和列都置零。\n\n要求 O(m×n) 时间，O(1) 额外空间。\n\nO(1) 空间方案（使用第一行和第一列作为标记）：\n1. 遍历矩阵，遇到 matrix[i][j] == 0：\n   - 标记 matrix[i][0] = 0（该行需要置零）\n   - 标记 matrix[0][j] = 0（该列需要置零）\n2. 特例：用额外变量 firstRow/col 标记第一行/第一列本身是否需要置零\n   - 因为 matrix[0][0] 同时属于第一行和第一列\n3. 根据标记置零行（从第 1 行开始）\n4. 根据标记置零列（从第 1 列开始）\n5. 最后根据额外变量处理第一行和第一列\n\n代码框架：\npublic void setZeroes(int[][] matrix) {\n    int m = matrix.length, n = matrix[0].length;\n    boolean firstRow = false, firstCol = false;\n    \n    // 检查第一行和第一列是否包含 0\n    for (int j = 0; j < n; j++) if (matrix[0][j] == 0) firstRow = true;\n    for (int i = 0; i < m; i++) if (matrix[i][0] == 0) firstCol = true;\n    \n    // 用第一行和第一列标记需要置零的行列\n    for (int i = 1; i < m; i++)\n        for (int j = 1; j < n; j++)\n            if (matrix[i][j] == 0) { matrix[i][0] = 0; matrix[0][j] = 0; }\n    \n    // 置零\n    for (int i = 1; i < m; i++) if (matrix[i][0] == 0) Arrays.fill(matrix[i], 0);\n    for (int j = 1; j < n; j++) if (matrix[0][j] == 0)\n        for (int i = 0; i < m; i++) matrix[i][j] = 0;\n    \n    if (firstRow) Arrays.fill(matrix[0], 0);\n    if (firstCol) for (int i = 0; i < m; i++) matrix[i][0] = 0;\n}\n\n为什么不能用两次遍历直接置零？\n- 如果第一次遍历遇到 0 就立即置零整行整列，后面的元素会被错误地标记为 0\n- 需要先标记，再统一置零\n\n扩展延伸：O(m+n) 空间的方案更容易（使用两个布尔数组分别标记行和列）。O(1) 空间的关键是利用矩阵本身的第一行和第一列作为标记数组。类似的\"复用矩阵自身空间\"技巧也出现在 LeetCode 289 生命游戏和 LeetCode 41 缺失的第一个正数中。",
+    "hints": [
+      "O(1) 空间：用第一行和第一列作为标记",
+      "需要额外变量记录第一行/列本身是否置零"
+    ],
+    "tags": [
+      "算法",
+      "矩阵",
+      "O(1) 空间",
+      "模拟"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "文本左右对齐",
+    "content": "请解决文本左右对齐问题（LeetCode 68）。如何实现单词的均匀分布和左右对齐？最后一行的特殊对齐规则是什么？",
+    "answer": "答案：文本左右对齐将单词按每行最大宽度 maxWidth 分配，并均匀分布空格。\n\n规则：\n1. 一行包含尽可能多的单词（不能拆分单词）\n2. 单词之间均匀分布空格：如果空格不能均匀分配，左侧的空格比右侧多\n3. 最后一行左对齐：单词之间一个空格，右侧填充剩余空格\n\n实现步骤：\n1. 按行分组：从单词列表中选择尽可能多的单词填入当前行\n2. 计算空格：总空格数 = maxWidth - 单词总长度\n   - 如果只有一个单词：左对齐，右侧补空格\n   - 如果是最后一行：左对齐，单词间一个空格\n   - 否则：均匀分布，多余的从左边开始分配\n\n分配空格的判断：\n- 单词数 = wordCount，单词间空隙数 = wordCount - 1\n- 基础空格数 = 总空格数 / 空隙数\n- 额外空格数 = 总空格数 % 空隙数\n- 前 extraSpaces 个空隙各多一个空格\n\n代码框架：\npublic List<String> fullJustify(String[] words, int maxWidth) {\n    List<String> res = new ArrayList<>();\n    int i = 0;\n    while (i < words.length) {\n        int j = i, len = 0;\n        while (j < words.length && len + words[j].length() + (j-i) <= maxWidth) {\n            len += words[j].length();\n            j++;\n        }\n        \n        int wordCount = j - i;\n        int totalSpaces = maxWidth - len;\n        \n        StringBuilder sb = new StringBuilder();\n        if (j == words.length || wordCount == 1) {  // 最后一行或单行\n            for (int k = i; k < j; k++) {\n                sb.append(words[k]);\n                if (k < j-1) sb.append(' ');\n            }\n            while (sb.length() < maxWidth) sb.append(' ');\n        } else {\n            int baseSpaces = totalSpaces / (wordCount - 1);\n            int extraSpaces = totalSpaces % (wordCount - 1);\n            for (int k = i; k < j; k++) {\n                sb.append(words[k]);\n                if (k < j-1) {\n                    for (int s = 0; s < baseSpaces; s++) sb.append(' ');\n                    if (k - i < extraSpaces) sb.append(' ');\n                }\n            }\n        }\n        res.add(sb.toString());\n        i = j;\n    }\n    return res;\n}\n\n扩展延伸：这道题模拟了文本编辑器（如 Word、Vim）的文字对齐功能。排版引擎（如 TeX）使用更复杂的算法（Knuth-Plass line breaking）。文本对齐在 HTML/CSS 的 text-align: justify 中有相同效果。",
+    "hints": [
+      "非最后一行：均匀分配空格，左侧空隙多一个",
+      "最后一行和单行单词：左对齐，右侧补空格"
+    ],
+    "tags": [
+      "算法",
+      "字符串",
+      "模拟",
+      "文本处理"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "数组中的第 K 个最大元素",
+    "content": "请解决 LeetCode 215 数组中的第 K 个最大元素。堆排序和快速选择各有什么优劣？什么时候用堆，什么时候用 Quick Select？",
+    "answer": "答案：查找无序数组中第 K 个最大元素。\n\n解法一：最小堆（Min-Heap）\n- 维护一个大小为 K 的最小堆，遍历数组\n- 当前元素 > 堆顶时，弹出堆顶，插入当前元素\n- 最后堆顶就是第 K 大元素\n- 时间复杂度：O(n log K)，空间 O(K)\n\npublic int findKthLargest(int[] nums, int k) {\n    PriorityQueue<Integer> heap = new PriorityQueue<>();\n    for (int num : nums) {\n        heap.offer(num);\n        if (heap.size() > k) heap.poll();\n    }\n    return heap.peek();\n}\n\n解法二：快速选择（Quick Select）\n- Partition 后如果 pivot 的位置 == n-k，返回\n- 递归搜索包含第 K 大的那一侧\n- 平均 O(n)，最坏 O(n²)\n\n堆 vs 快速选择：\n- 堆：\n  - 稳定 O(n log K)，没有最坏情况\n  - 适合数据流（动态增加，不需要一次性获取所有数据）\n  - 空间 O(K)\n- 快速选择：\n  - 平均 O(n)，更快（常数因子小）\n  - 需要全部数据（不能用于流式数据）\n  - 最坏 O(n²)（随机 pivot 概率很低）\n  - 空间 O(1)\n\n选择建议：\n- 小 K（K=1,2,3）：堆更简单，O(n log 3) ≈ O(n)\n- K 接近 n/2：快速选择更快\n- 数据流场景：堆（不需要全部数据）\n- 大批量数据：堆更稳定\n\n扩展延伸：第 K 小元素——大顶堆（Max-Heap）维护 K 个最小元素。Top K Frequent Elements（LeetCode 347）结合了频率统计和堆。Kth Largest in a Stream（LeetCode 703）使用堆实时维护流中第 K 大元素。",
+    "hints": [
+      "堆 O(n log K) 稳定，适用数据流",
+      "快速选择平均 O(n) 更快，需要全部数据"
+    ],
+    "tags": [
+      "算法",
+      "第 K 大",
+      "堆",
+      "快速选择"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "颜色分类（荷兰国旗）",
+    "content": "请解决颜色分类问题（LeetCode 75）。荷兰国旗问题的三路快排思想是什么？如何在一次遍历（One Pass）中完成排序？",
+    "answer": "答案：颜色分类（荷兰国旗问题）——数组中只有 0、1、2 三种元素，排序使所有 0 在前，1 在中，2 在后。\n\n要求：一次遍历（One Pass），常数空间。\n\n三指针（三路快排思想）：\n- left = 0（指向下一个 0 应该放的位置）\n- right = n-1（指向下一个 2 应该放的位置）\n- curr = 0（当前遍历指针）\n\n循环直到 curr > right：\n- if nums[curr] == 0：swap(nums[curr], nums[left])；left++；curr++\n- if nums[curr] == 1：curr++\n- if nums[curr] == 2：swap(nums[curr], nums[right])；right--\n  （注意，curr 不前进，因为交换回来的元素需要继续判断）\n\n代码：\npublic void sortColors(int[] nums) {\n    int left = 0, right = nums.length - 1, curr = 0;\n    while (curr <= right) {\n        if (nums[curr] == 0) {\n            swap(nums, curr++, left++);\n        } else if (nums[curr] == 2) {\n            swap(nums, curr, right--);  // curr 不前进\n        } else {\n            curr++;\n        }\n    }\n}\n\n为什么交换 2 时不前进 curr？\n- 从 right 交换回来的元素可能是 0、1 或 2\n- 如果是 0，需要进一步交换到前面\n- 如果是 2，需要再次交换到后面\n- 如果是 1，curr 前进\n\n扩展延伸：三路快排（3-Way Quick Sort）处理大量重复元素的场景。通过将数组分为 < pivot、= pivot、> pivot 三部分，在重复元素多时效率极高。荷兰国旗问题的思想也可以用于实现快排的 3-Way Partition。LeetCode 905 按奇偶排序数组、LeetCode 283 移动零都使用了类似的双指针技巧。",
+    "hints": [
+      "三指针：left（0 的位置）、curr（遍历）、right（2 的位置）",
+      "交换 2 时 curr 不前进（交换回来的元素需要继续判断）"
+    ],
+    "tags": [
+      "算法",
+      "三路快排",
+      "荷兰国旗",
+      "双指针"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "搜索旋转排序数组",
+    "content": "请解决搜索旋转排序数组问题（LeetCode 33）。如何在旋转排序数组中实现 O(log n) 的二分搜索？如何判断哪一边是有序的？",
+    "answer": "答案：旋转排序数组是升序数组在某个未知点旋转（如 [4,5,6,7,0,1,2]）。要求 O(log n)。\n\n核心思路：二分搜索的变体——每次找到有序的那一半。\n\n判断有序：\n- 如果 nums[left] <= nums[mid]：左半部分有序\n- 否则：右半部分有序\n\n然后在有序的那一半上判断 target 是否在其中：\n1. 左半部分有序（nums[left] <= nums[mid]）：\n   - 如果 nums[left] <= target < nums[mid]：在左边搜索（right = mid-1）\n   - 否则：在右边搜索（left = mid+1）\n2. 右半部分有序（nums[mid] < nums[right]）：\n   - 如果 nums[mid] < target <= nums[right]：在右边搜索（left = mid+1）\n   - 否则：在左边搜索（right = mid-1）\n\n代码：\npublic int search(int[] nums, int target) {\n    int left = 0, right = nums.length - 1;\n    while (left <= right) {\n        int mid = left + (right - left) / 2;\n        if (nums[mid] == target) return mid;\n        \n        if (nums[left] <= nums[mid]) {  // 左半部分有序\n            if (target >= nums[left] && target < nums[mid]) right = mid - 1;\n            else left = mid + 1;\n        } else {  // 右半部分有序\n            if (target > nums[mid] && target <= nums[right]) left = mid + 1;\n            else right = mid - 1;\n        }\n    }\n    return -1;\n}\n\n扩展：LeetCode 81 搜索旋转排序数组 II（有重复元素）。区别在于当 nums[left] == nums[mid] == nums[right] 时无法判断哪边有序，需要 left++, right-- 缩小边界。LeetCode 153 寻找旋转排序数组中的最小值——同样的二分搜索在不同条件下的应用。",
+    "hints": [
+      "每次二分找到有序的那一半，判断 target 是否在其中",
+      "条件判断是 nums[left] <= nums[mid] 还是 nums[mid] < nums[right]"
+    ],
+    "tags": [
+      "算法",
+      "二分搜索",
+      "旋转数组",
+      "O(log n)"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "正则表达式匹配",
+    "content": "请解决正则表达式匹配问题（LeetCode 10）。如何用动态规划实现 '.' 和 '*' 的模式匹配？'*' 的三种匹配方式是什么？",
+    "answer": "答案：正则表达式匹配——支持 '.'（任意单个字符）和 '*'（前一个字符的零个或多个）。\n\n动态规划解法：\ndp[i][j] 表示 s[0..i-1] 与 p[0..j-1] 是否匹配。\n\n初始化：\n- dp[0][0] = true（空串匹配空模式）\n- 处理模式中有 * 可以匹配零个前导字符的情况\n\n状态转移：\n1. 当前字符匹配（p[j-1] == '.' || p[j-1] == s[i-1]）：\n   dp[i][j] = dp[i-1][j-1]\n2. 当前模式字符是 '*'（p[j-1] == '*'）：\n   a. 匹配零个前导字符：dp[i][j] = dp[i][j-2]\n   b. 匹配一个或多个前导字符（前提是前导字符匹配当前 s 字符）：\n      dp[i][j] = dp[i][j] || dp[i-1][j]\n      且 p[j-2] == '.' || p[j-2] == s[i-1]\n\n代码：\npublic boolean isMatch(String s, String p) {\n    int m = s.length(), n = p.length();\n    boolean[][] dp = new boolean[m+1][n+1];\n    dp[0][0] = true;\n    for (int j = 2; j <= n; j++) {\n        if (p.charAt(j-1) == '*') dp[0][j] = dp[0][j-2];\n    }\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            if (p.charAt(j-1) == '*') {\n                dp[i][j] = dp[i][j-2];  // 零个匹配\n                if (p.charAt(j-2) == '.' || p.charAt(j-2) == s.charAt(i-1)) {\n                    dp[i][j] = dp[i][j] || dp[i-1][j];  // 一个或多个匹配\n                }\n            } else if (p.charAt(j-1) == '.' || p.charAt(j-1) == s.charAt(i-1)) {\n                dp[i][j] = dp[i-1][j-1];\n            }\n        }\n    }\n    return dp[m][n];\n}\n\n扩展延伸：LeetCode 44 通配符匹配——* 匹配任意序列（不是前一个字符的 *），? 匹配任意单个字符。正则表达式引擎的实现是编译原理的经典课题——NFA（Thompson 构造法）或 DFA。实际 regex 引擎（如 PCRE）支持的功能远超 LeetCode 10（如回溯引用、前瞻/后瞻断言）。",
+    "hints": [
+      "dp[i][j] = s[0..i-1] 与 p[0..j-1] 是否匹配",
+      "'*' 三种匹配：零个（跳过）、一个或多个（重复匹配前导字符）"
+    ],
+    "tags": [
+      "算法",
+      "DP",
+      "正则匹配",
+      "字符串"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "搜索二维矩阵 II",
+    "content": "请解决搜索二维矩阵 II 问题（LeetCode 240）。如何在行和列分别有序的矩阵中实现 O(m+n) 的搜索？Z 字形搜索的原理是什么？",
+    "answer": "答案：矩阵每行从左到右递增，每列从上到下递增。要求在 O(m+n) 时间内搜索目标值。\n\nZ 字形搜索：从右上角开始搜索。\n\n原理：\n- 从右上角 (0, n-1) 开始\n- 如果当前值 == target：返回 true\n- 如果当前值 > target：向左移动（列减 1），因为下方的值更大，只能向左找更小的\n- 如果当前值 < target：向下移动（行加 1），因为左方的值更小，只能向下找更大的\n- 直到超出边界\n\n为什么从右上角开始？\n- 右上角的左边元素更小，下边元素更大——两个方向提供了两种选择\n- 左下角也可（上边更小，右边更大）\n- 左上角不行（两个方向都更大）\n\n代码：\npublic boolean searchMatrix(int[][] matrix, int target) {\n    int m = matrix.length, n = matrix[0].length;\n    int i = 0, j = n - 1;  // 右上角\n    while (i < m && j >= 0) {\n        if (matrix[i][j] == target) return true;\n        if (matrix[i][j] > target) j--;\n        else i++;\n    }\n    return false;\n}\n\n时间复杂度：O(m+n)——每次向左或向下移动，最多 m+n 步。\n\n扩展延伸：LeetCode 74 搜索二维矩阵（每行头一个元素大于上一行最后一个元素）——可以视为展开的一维数组，直接用标准二分搜索。LeetCode 378 有序矩阵中第 K 小的元素——可以使用优先队列（归并排序）或二分搜索 + 计数。",
+    "hints": [
+      "从右上角开始 Z 字形搜索",
+      "当前值大→左移，当前值小→下移，O(m+n)"
+    ],
+    "tags": [
+      "算法",
+      "矩阵",
+      "Z 字形",
+      "搜索"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "两数相加（链表）",
+    "content": "请解决两数相加问题（LeetCode 2）。如何使用链表表示的大整数进行加法运算？进位是如何处理的？",
+    "answer": "答案：两个非空链表表示的非负整数，每个节点存储一位数字，逆序存储。要求求和并返回同样格式的链表。\n\n逆序存储的优势：表头就是最低位，可以直接从头开始相加。\n\n思路：\n1. 使用 dummyHead 简化边界处理\n2. 遍历两个链表，对应位相加，加上进位\n3. 创建新节点存放 (sum % 10)\n4. 更新进位 carry = sum / 10\n5. 继续遍历下一位\n6. 遍历结束后，如果 carry > 0，追加一个节点\n\n代码：\npublic ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n    ListNode dummy = new ListNode(0);\n    ListNode curr = dummy;\n    int carry = 0;\n    \n    while (l1 != null || l2 != null || carry != 0) {\n        int x = (l1 != null) ? l1.val : 0;\n        int y = (l2 != null) ? l2.val : 0;\n        int sum = x + y + carry;\n        \n        carry = sum / 10;\n        curr.next = new ListNode(sum % 10);\n        curr = curr.next;\n        \n        if (l1 != null) l1 = l1.next;\n        if (l2 != null) l2 = l2.next;\n    }\n    \n    return dummy.next;\n}\n\n关键技巧：\n1. dummyHead：避免处理头节点为空的特殊情况\n2. while 条件包含 carry != 0：保证最后一位进位被处理\n3. 长度不同时短的用 0 补齐\n\n扩展延伸：LeetCode 445 两数相加 II（正序存储）——反转链表后计算，或使用栈。LeetCode 67 二进制求和——相同思路，但用二进制（carry = sum / 2）。LeetCode 43 字符串相乘——更复杂的大整数计算，涉及每位相乘和错位相加。",
+    "hints": [
+      "逆序链表从表头对齐最低位，进位自然传递",
+      "while 条件包含 carry!=0 确保最后一位进位被处理"
+    ],
+    "tags": [
+      "算法",
+      "链表",
+      "大整数",
+      "数学"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "盛最多水的容器",
+    "content": "请解决盛最多水的容器问题（LeetCode 11）。如何使用双指针（Two Pointers）在 O(n) 时间内找到两条线之间最大的容器面积？为什么双指针方法不会错过最优解？",
+    "answer": "答案：盛最多水的容器——在整数数组中找两条线，使它们和 x 轴形成的容器面积最大。\n\n思路：双指针从两端向中间移动。\n\n算法：\n1. left = 0, right = n-1\n2. 计算当前面积：min(height[left], height[right]) × (right - left)\n3. 移动较矮的那一侧（因为容器的高度受限于较矮的线）\n4. 更新最大面积\n5. 重复直到 left >= right\n\n代码：\npublic int maxArea(int[] height) {\n    int left = 0, right = height.length - 1;\n    int maxArea = 0;\n    while (left < right) {\n        int area = Math.min(height[left], height[right]) * (right - left);\n        maxArea = Math.max(maxArea, area);\n        if (height[left] < height[right]) left++;\n        else right--;\n    }\n    return maxArea;\n}\n\n为什么双指针不会错过最优解：\n- 假设 height[left] < height[right]，我们移动 left\n- 不移动 right 的原因是：所有包含 right 且 left 更靠右的组合，容器宽度都更小\n- 如果移动 right，容器高度不会超过 height[left]（因为高度受限于较矮的线），宽度也在减小\n- 所以在 height[left] < height[right] 时，所有以 left 为左边界的组合都不可能比当前（left, right）更优\n- 这就是双指针的数学保证——每次排除一行或一列不可能的组合\n\n时间复杂度：O(n)，空间复杂度：O(1)\n\n扩展延伸：LeetCode 42 接雨水——类似的双指针思想但计算的是凹槽中的积水量。双指针技巧也用于快速排序的 Partition 和三数之和等问题。",
+    "hints": [
+      "双指针从两端向中间移动，每次移动较矮的一侧",
+      "移动较矮一侧的数学保证——不会错过最优解"
+    ],
+    "tags": [
+      "算法",
+      "双指针",
+      "数组",
+      "贪心"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "每日温度",
+    "content": "请解决每日温度问题（LeetCode 739）。如何使用单调栈（Monotonic Stack）找到每个元素右边第一个比它大的元素？单调递增栈和单调递减栈的区别是什么？",
+    "answer": "答案：每日温度——给定温度数组，返回每个温度需要等多少天才会出现更高的温度。\n\n单调栈解法：\n1. 维护一个单调递减栈（栈底到栈顶温度递减），栈中存储下标\n2. 遍历温度数组：\n   - 当前温度 > 栈顶温度：说明找到了栈顶元素右边第一个更高的温度\n   - 弹出栈顶，计算天数差（当前下标 - 弹出的下标）\n   - 继续检查新的栈顶\n   - 当前温度入栈\n\n代码：\npublic int[] dailyTemperatures(int[] temperatures) {\n    int n = temperatures.length;\n    int[] answer = new int[n];\n    Deque<Integer> stack = new ArrayDeque<>();\n    \n    for (int i = 0; i < n; i++) {\n        while (!stack.isEmpty() && temperatures[i] > temperatures[stack.peek()]) {\n            int prev = stack.pop();\n            answer[prev] = i - prev;\n        }\n        stack.push(i);\n    }\n    // 栈中剩余的元素右边没有更高的温度，answer 默认为 0\n    return answer;\n}\n\n单调递增栈 vs 单调递减栈：\n- 单调递增栈（栈底到栈顶递增）：找到左边/右边第一个更小的元素\n- 单调递减栈（栈底到栈顶递减）：找到左边/右边第一个更大的元素\n- 每日温度使用单调递减栈（找右边第一个更大的元素）\n- 典型应用：\n  - 下一个更大元素（LeetCode 496）：单调递减栈\n  - 下一个更小元素：单调递增栈\n  - 柱状图中的最大矩形（LeetCode 84）：单调递增栈\n\n时间复杂度：O(n)——每个元素入栈和出栈最多一次\n空间复杂度：O(n)\n\n扩展延伸：循环数组中的下一个更大元素（LeetCode 503）——遍历两倍长度的数组，下标取模。单调栈是算法中典型的空间换时间策略——用栈记录未处理的元素，空间 O(n) 换取时间 O(n)。",
+    "hints": [
+      "单调递减栈：栈底到栈顶递减，找右边第一个更大的元素",
+      "每个元素入栈和出栈各一次，O(n) 时间"
+    ],
+    "tags": [
+      "算法",
+      "单调栈",
+      "数组",
+      "栈"
     ]
   }
 ]

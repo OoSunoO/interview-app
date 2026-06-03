@@ -628,23 +628,6 @@
     "category": "kubernetes",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "RBAC 权限模型",
-    "content": "请介绍 Kubernetes RBAC 权限模型的核心概念以及如何最小权限原则配置权限。",
-    "answer": "答案：Kubernetes RBAC 通过四种资源控制权限：Role（命名空间内角色）、ClusterRole（集群级角色）、RoleBinding（命名空间内角色绑定）、ClusterRoleBinding（集群级角色绑定）。权限 = 主体（User/ServiceAccount/Group）+ 角色（Role/ClusterRole）+ 资源（Pod/Service/Deployment 等）+ 操作（get/list/create/delete 等）。\n\n解析：Role 定义一组权限规则（verbs + resources），RoleBinding 将 Role 绑定到主体。ClusterRole 有更广泛的权限范围，可被 RoleBinding 引用（在命名空间内生效）或被 ClusterRoleBinding 引用（集群全局生效）。最小权限实践：1）优先用 Role + RoleBinding（限制在命名空间内而非集群）。2）避免使用 cluster-admin 等高权限 ClusterRole。3）每个应用使用独立 ServiceAccount，不共用 default ServiceAccount。4）结合 Pod Security Admission（原 PSP）限制 Pod 安全上下文。\n\n扩展延伸：RBAC 排错常用命令：kubectl auth can-i --list（当前用户权限列表）、kubectl auth can-i create deployments（测试某操作是否有权限）、kubectl describe rolebinding/clusterrolebinding（查看绑定详情）。审计日志：API Server 开启 --audit-log-path 记录所有 RBAC 鉴权结果。多集群 RBAC 管理：使用 kubelogin（OIDC 集成）或 AWS IAM Roles for Service Accounts（IRSA）等云厂商服务集成外部身份认证。",
-    "hints": [
-      "Role 和 ClusterRole 的核心区别是什么",
-      "如何排查 RBAC 权限不足的问题"
-    ],
-    "tags": [
-      "Kubernetes",
-      "RBAC",
-      "安全"
-    ]
-  },
-  {
-    "category": "kubernetes",
-    "difficulty": "medium",
-    "type": "short_answer",
     "title": "HPA 自动伸缩机制",
     "content": "请介绍 Kubernetes HPA（Horizontal Pod Autoscaler）的工作原理、扩缩容策略以及使用注意事项。",
     "answer": "答案：HPA 根据 Pod 的 CPU/内存利用率或自定义指标（如 QPS、连接数）自动调整 Deployment/StatefulSet 的副本数。HPA 周期性（默认 15s）计算期望副本数 = 当前副本数 x (当前指标值 / 目标指标值)，然后更新工作负载的 replicas 字段。\n\n解析：HPA 核心配置：1）指标类型——ResourceMetric（CPU/内存利用率）、ObjectMetric（自定义指标，如 Prometheus 暴露的 QPS）、ExternalMetric（外部系统指标，如 SQS 队列长度）。2）扩缩容行为——稳定窗口（stabilizationWindowSeconds）防止频繁抖动、策略（scaleUp/scaleDown 的优先级和限制）、冷却时间。3）多指标取最大值——同时配置 CPU 和 QPS 时，HPA 按每个指标计算期望副本数，取最大值。\n\n扩展延伸：HPA 的限制：1）基于 CPU 的 HPA 需要所有容器设置 requests。2）自定义指标需要部署 Metrics Adapter（如 Prometheus Adapter 或 Kubernetes Metrics Server）和自定义指标 API。3）HPA 不能缩容到 0（0 副本需要 Vertical Pod Autoscaler 配合或 KEDA）。4）HPA 的默认冷却时间（--horizontal-pod-autoscaler-downscale-stabilization=5m）导致缩容有延迟。VPA（Vertical Pod Autoscaler）调整 Pod 的资源 requests/limits（而非副本数），与 HPA 配合使用时需注意冲突——建议同一工作负载只使用 HPA 或 VPA 其中之一。KEDA（Kubernetes Event-Driven Autoscaling）是 HPA 的增强版，支持事件驱动伸缩（如 Kafka 消息积压量、RabbitMQ 队列长度）。",
@@ -884,6 +867,109 @@
       "Service",
       "iptables",
       "IPVS"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "cgroup v2 对 Kubernetes 的影响",
+    "content": "请解释 cgroup v2 的核心变化及其对 Kubernetes 节点资源管理的影响。",
+    "answer": "答案：cgroup v2 是 Linux 内核的新一代资源控制机制，相比 cgroup v1 有三大核心变化：1) 统一层级结构——所有控制器挂载在同一个 cgroup 树（/sys/fs/cgroup）下，消除了 v1 中不同控制器挂载不同子树导致的资源泄漏和一致性问题；2) 安全写时复制——支持非特权进程将子 cgroup 委托给容器运行时，无需 root；3) 改进的资源接口——memory.max、io.weight、pids.current 等接口更精确。对 Kubernetes 的影响：Kubernetes 1.24+ 默认启用 cgroup v2，改善了内存压力驱逐的准确性，CPU 压制更平滑（cgroup v2 使用 CPUSF 调度器），并且使 Pod 的资源统计更可靠。\n\n解析：cgroup v2 的 unified hierarchy 解决了 v1 中一个进程可以属于多个不同层级 cgroup 的问题，这在容器嵌套场景（如 Docker in Docker）中尤为重要。Node 上运行 cat /sys/fs/cgroup/cgroup.controllers 可以查看支持的控制器。cgroup v2 的 freezer 控制器使 Pod 级别的暂停/恢复操作更高效，kubelet 利用它在 Pod 删除前优雅关闭容器。\n\n扩展延伸：cgroup v2 还引入了 PSI（Pressure Stall Information）接口，kubelet 可以基于 PSI 指标更早地检测到内存/IO 压力，做出更精准的驱逐决策。CNI 插件也需要适配 cgroup v2 的网络流控（通过 clsact 和 BPF）。建议节点内核版本至少 5.10 以上以获得完整的 cgroup v2 支持。",
+    "hints": [
+      "cgroup v2 为什么称为 unified hierarchy？",
+      "Kubernetes 从哪个版本开始默认使用 cgroup v2？"
+    ],
+    "tags": [
+      "Kubernetes",
+      "cgroup",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Pod Overhead 机制",
+    "content": "请解释 Kubernetes Pod Overhead 的概念、配置方式及其作用。",
+    "answer": "答案：Pod Overhead 是 Kubernetes 1.24+（GA）引入的特性，用于解决运行时（Runtime）消耗的额外资源未被正确计入 Pod 资源配额的问题。当使用 RuntimeClass（如 gVisor、Kata Containers、Firecracker）时，每个 Pod 需要额外的内存和 CPU 来运行虚拟机监控器或沙箱进程，这些开销如果在调度阶段不被计入，会导致节点过载。配置方式：在 RuntimeClass 资源中通过 overhead 字段声明每个 Pod 的额外开销——overhead.podFixed.cpu 和 overhead.podFixed.memory。kube-scheduler 在计算节点资源可用量时，将 Pod Overhead 与容器资源请求一同计入 Pod 的资源占用总和。\n\n解析：Pod Overhead 与 RuntimeClass 深度绑定。使用 gVisor（runsc）时，每个 Pod 需要约 30-50MB 的额外内存。Kata Containers 需要额外的内核和虚拟机内存（约 128-256MB）。如果不用 Pod Overhead，调度器只会计算容器 spec 中的 requests，导致同一节点上可能调度过多 Pod，触发实际 OOM 或 CPU 节流。验证方式：kubectl get runtimeclass <name> -o jsonpath='{.overhead}'。\n\n扩展延伸：Pod Overhead 的另一关键场景是 Sidecar 资源分类——从 Kubernetes 1.29 开始，sidecar 容器可以使用 restartPolicy: Always 被正确归类，配合 Pod Overhead 能让资源模型更精确。在资源紧张的集群中，建议对使用非 runc 运行时的 Pod 都配置 Overhead。约 35% 的生产集群使用了至少一种非标准 RuntimeClass。",
+    "hints": [
+      "Pod Overhead 和 RuntimeClass 的关系",
+      "不加 Pod Overhead 会导致什么调度问题？"
+    ],
+    "tags": [
+      "Kubernetes",
+      "RuntimeClass",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Ephemeral Containers 调试机制",
+    "content": "请介绍 Kubernetes Ephemeral Containers 的用途、工作原理和限制。",
+    "answer": "答案：Ephemeral Containers（临时容器）是 Kubernetes 1.16+（alpha）引入、1.25+（GA）稳定的调试功能，允许在正在运行的 Pod 中临时添加一个容器来排查问题，无需重启 Pod。与普通容器不同，临时容器没有资源请求/限制声明、不会重启、不会被 Pod 生命周期管理。典型用途：1) Pod 中只有 distroless 镜像（没有 shell）时，注入一个包含 shell/tools 的调试容器；2) 网络诊断——注入包含 curl/iperf/tcpdump 的容器并使用 Pod 网络命名空间；3) 文件系统检查——调试容器挂载 shared volume 检查持久化数据。\n\n解析：使用命令 kubectl debug <pod> -it --image=busybox 启动调试。--target 指定共享哪个容器的网络命名空间。注意：临时容器的 /proc 和 /sys 指向的是宿主机的命名空间而非调试目标容器的，部分调试工具可能受限。临时容器运行结束后仍在 Pod 中存在（kubectl describe pod 可见）。\n\n扩展延伸：Ephemeral Containers 与 kubectl debug 是 Kubernetes 集群内调试的推荐方式，替代了过去用 SSH 到节点再 docker exec 的不安全做法。生产集群建议安装 ephemeral-containers 准入控制器以审计谁在何时对哪个 Pod 做了调试。对于多租户集群，创建临时容器需要 pods/ephemeralcontainers 资源的 create 权限。",
+    "hints": [
+      "临时容器的使用场景——distroless 镜像调试",
+      "临时容器和普通容器的生命周期差异"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Pod",
+      "调试"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Topology Spread Constraints",
+    "content": "请解释 Kubernetes Topology Spread Constraints 的工作原理、配置字段和使用场景。",
+    "answer": "答案：Topology Spread Constraints（拓扑分布约束）是 Kubernetes 1.19+（GA）的调度特性，用于实现 Pod 在集群各拓扑域（节点、可用区、Region）之间的均匀分布，替代了 PodAntiAffinity 的硬编码方式。核心字段：1) maxSkew——任意两个拓扑域之间最大可容忍的 Pod 数量差异；2) topologyKey——拓扑域划分依据的节点标签；3) whenUnsatisfied——约束不满足时的行为，DoNotSchedule（硬约束）或 ScheduleAnyway（软约束）；4) labelSelector——用于识别属于同一组的 Pod。\n\n解析：典型配置：可用区级高可用部署——maxSkew=1, topologyKey=topology.kubernetes.io/zone，确保 Pod 在三个可用区之间均匀分布。节点级 Pod 打散——maxSkew=1, topologyKey=kubernetes.io/hostname，确保不会有两个同组 Pod 在同一节点。与 PodAntiAffinity 的核心区别：Spread Constraints 支持多拓扑域，而 PodAntiAffinity 只检查单个 topologyKey。多个 Spread Constraints 可以组合使用。\n\n扩展延伸：Topology Spread Constraints 与 Cluster Autoscaler 配合时需要谨慎——当集群有多节点池时，Spread Constraints 可能导致 Pod 无法调度（因为无法同时满足 node 级与 zone 级 spread），Cluster Autoscaler 则会扩容新节点。建议将 Spread Constraints 设置为 ScheduleAnyway 并结合节点优先级策略来避免调度死锁。对于 StatefulSet，结合 PodManagementPolicy=Parallel 和 Spread Constraints 可实现真正的高可用部署。",
+    "hints": [
+      "maxSkew 和 topologyKey 的作用",
+      "Spread Constraints 与 PodAntiAffinity 的区别"
+    ],
+    "tags": [
+      "Kubernetes",
+      "调度",
+      "高可用"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RuntimeClass 与安全容器",
+    "content": "请介绍 Kubernetes RuntimeClass 的概念、配置方法以及 gVisor 与 Kata Containers 的区别。",
+    "answer": "答案：RuntimeClass 是 Kubernetes 用于选择不同容器运行时的资源对象，允许集群管理者为不同负载指定不同的运行时实现（如 gVisor、Kata Containers、Firecracker、WASM 运行时等），而无需修改 Pod 的容器镜像或部署配置。配置方式：1) 集群中预定义 RuntimeClass 资源；2) 节点上配置 containerd 或 CRI-O 的 runtime handler；3) Pod 通过 runtimeClassName 字段引用。gVisor 使用用户态内核（Sentry）拦截应用系统调用并代理到宿主机内核，性能开销较低但兼容性有限；Kata Containers 为每个 Pod 启动一个轻量级虚拟机，提供完整的 Linux ABI 兼容性，但启动时间和内存开销更大。\n\n解析：RuntimeClass 的典型架构是 Pod -> RuntimeClass -> Runtime Handler -> 底层运行时。选择依据：如果负载需要完整的 Linux 兼容性（如涉及 eBPF、内核模块），选 Kata Containers；如果对性能敏感且应用本身就是用户态程序（Go/Java/Python 应用），gVisor 更高效。Firecracker 则更轻量（每个 MicroVM 仅 5MB 内存开销），适合 FaaS/Serverless 场景。\n\n扩展延伸：RuntimeClass 结合 Pod Overhead 和安全策略可以构建分级运行时策略——生产核心服务用 runc，多租户非可信代码用 gVisor，需要完整内核隔离的场景用 Kata。Kubernetes 1.29 引入了 RuntimeClass 的默认配置机制，可以通过 Admission Controller 为未指定 runtimeClassName 的 Pod 自动注入默认运行时。",
+    "hints": [
+      "RuntimeClass 通过哪个字段与 Pod 关联？",
+      "gVisor 和 Kata 在系统调用处理上的本质差异"
+    ],
+    "tags": [
+      "Kubernetes",
+      "RuntimeClass",
+      "安全容器"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 安全上下文与 Pod 安全标准",
+    "content": "请解释 Kubernetes Pod 安全上下文（Security Context）和 Pod 安全标准（Pod Security Standards）的关系。如何从 PodSecurityPolicy 迁移到 Pod Security Admission？",
+    "answer": "答案：Pod 安全上下文是 Pod/Container 级别的安全配置，Pod 安全标准是集群级别的安全准入控制框架。\n\nSecurity Context（安全上下文）：\n1. Pod 级别：runAsUser、runAsGroup、fsGroup、SELinuxOptions\n2. Container 级别：privileged、capabilities（add/drop）、readOnlyRootFilesystem、allowPrivilegeEscalation\n3. Container 级覆盖 Pod 级（如果都设置）\n\nPod Security Standards（PSS）：\n- Privileged：不受限制（信任的集群基础设施组件）\n- Baseline：最小限制（防止已知的特权升级，适用于大部分应用）\n- Restricted：严格遵循 Pod 加固最佳实践（最安全，可能影响兼容性）\n\nPod Security Admission（PSA）：\n1. K8s 1.23+ 内置，替代废弃的 PSP（PodSecurityPolicy）\n2. 基于标签（Label）的命名空间级别控制\n3. 三种模式：enforce（拒绝）、audit（记录告警，不拒绝）、warn（给用户警告）\n\n从 PSP 到 PSA 的迁移：\n1. 评估现有 PSP 策略\n2. 使用 kubectl convert 或 PSP Migration Tool 将 PSP 转换为 PSS\n3. 为命名空间添加标签：\n   pod-security.kubernetes.io/<MODE>=<LEVEL>: <VERSION>\n4. 按命名空间分阶段切换（warn → audit → enforce）\n\n扩展延伸：Kyverno 和 OPA/Gatekeeper 提供比 PSA 更灵活的策略引擎，支持自定义校验和变更（Mutation）。OpenShift 的 Security Context Constraints（SCC）与 PSA 类似但更早。安全上下文是 Pod 安全的最后一道防线（容器运行时级别）。",
+    "hints": [
+      "PSA 是 K8s 内置的 Pod 安全准入框架（替代废弃的 PSP）",
+      "Security Context = 容器级别，PSA = 集群准入级别"
+    ],
+    "tags": [
+      "Kubernetes",
+      "安全",
+      "PSA",
+      "Security Context"
     ]
   }
 ]

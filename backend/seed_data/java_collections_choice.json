@@ -553,29 +553,6 @@
     "category": "java_collections",
     "difficulty": "medium",
     "type": "choice",
-    "title": "ConcurrentHashMap 的 size() 方法",
-    "content": "关于 ConcurrentHashMap 的 size() 方法，JDK 8 的实现与 JDK 7 相比有什么重要变化？",
-    "answer": "答案：B) JDK 7 先无锁尝试再加锁，JDK 8 使用 CounterCell 数组 + baseCount 维护计数，size() 直接累加，性能更好。解析：JDK 7 的 ConcurrentHashMap 的 size() 先尝试无锁统计 Segment 的 count，如果前后两次结果不一致则加锁重试。JDK 8 改用 CounterCell 数组进行分段计数，put/remove 时通过 CAS 更新 CounterCell，size() 直接累加 CounterCell 的值和 baseCount。JDK 8 的 size() 是 O(N)（N 为 CounterCell 数量，通常很小），不需要锁。注意：JDK 8 的 mappingCount() 返回 long 类型（比 size() 的 int 更准确）。",
-    "options": [
-      "A) JDK 7 和 JDK 8 的 size() 实现没有区别",
-      "B) JDK 7 先无锁尝试再加锁，JDK 8 使用 CounterCell 数组 + baseCount 维护计数，size() 直接累加，性能更好",
-      "C) JDK 8 的 size() 是 O(1) 的，直接返回一个变量",
-      "D) JDK 7 的 size() 不需要加锁，JDK 8 的 size() 需要加锁"
-    ],
-    "hints": [
-      "JDK 8 的 CounterCell 分段计数如何避免多线程竞争下的计数瓶颈"
-    ],
-    "tags": [
-      "ConcurrentHashMap",
-      "并发",
-      "计数",
-      "集合"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "choice",
     "title": "ArrayList subList 陷阱",
     "content": "关于 ArrayList 的 subList() 方法，以下说法正确的是？",
     "answer": "答案：D) subList 返回的是原列表的视图（View），对 subList 的修改（如 clear()）会直接反映到原列表，对原列表的结构性修改会导致 subList 抛出 ConcurrentModificationException。解析：subList() 返回内部类 SubList，持有原 List 的引用，没有创建新数组。修改 subList（如 subList.clear() 清空指定范围）直接操作原列表的 elementData。但对原列表做结构性修改（如 add/remove 改变大小）会使 SubList 的 modCount 和原 List 不一致，再次操作 subList 时抛出 ConcurrentModificationException。正确做法：需要独立列表时用 new ArrayList<>(list.subList(from, to))。",
@@ -880,123 +857,6 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "ConcurrentHashMap computeIfAbsent 方法",
-    "content": "关于 ConcurrentHashMap 的 computeIfAbsent(key, mappingFunction) 方法，下列描述正确的是？",
-    "answer": "答案：B) mappingFunction 在并发场景下可能被多次执行，但只有第一个计算结果被采用。解析：computeIfAbsent 的 mappingFunction 在 key 不存在时才会执行，且是在加锁状态下执行。但在并发场景中，多个线程可能同时发现 key 不存在，各自执行 mappingFunction，最终只有一个结果被放入 Map，其余结果被丢弃。这是 ConcurrentHashMap 的弱一致性体现之一。\n\n扩展延伸：JDK 9 修复了 computeIfAbsent 在红黑树节点下的死锁问题（JDK-8062841）。使用 computeIfAbsent 应确保 mappingFunction 是轻量且幂等的，避免在 mappingFunction 中操作同一个 Map 导致死循环。",
-    "options": [
-      "A) mappingFunction 只会在第一个线程访问时执行一次，后续线程直接获取缓存结果",
-      "B) mappingFunction 在并发场景下可能被多次执行，但只有第一个计算结果被采用",
-      "C) mappingFunction 执行期间不会阻塞其他线程对该 key 的读操作",
-      "D) computeIfAbsent 和 putIfAbsent 的语义完全相同"
-    ],
-    "hints": [
-      "考虑多线程同时发现 key 不存在时的竞争",
-      "JDK 9 修复了红黑树下的死锁问题"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "ConcurrentHashMap"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "HashMap 的 key 为可变对象时的行为",
-    "content": "如果将已放入 HashMap 的自定义对象作为 key，随后修改了该对象的属性（影响 equals/hashCode 结果），以下哪项描述是正确的？",
-    "answer": "答案：D) 该 key 可能无法被正确查找，因为其 hashCode 已改变，而 HashMap 仍使用原哈希值定位。解析：HashMap 在 put 时计算 key 的 hashCode 并确定桶位置。如果 key 对象在 put 之后被修改，导致 hashCode 发生变化，HashMap 不会重新计算哈希，因此 get 时在新哈希值对应的桶中找不到该 Entry，导致内存泄漏。这也是为什么推荐使用不可变对象（如 String、Integer）作为 HashMap 的 key。\n\n扩展延伸：当 hashCode 变化的对象位于链表中时，即使能通过 equals 匹配到，也可能因为哈希值不同而搜索到错误的桶，造成节点永远无法被访问到。使用 mutable 对象作为 key 是常见的 Java 内存泄漏场景之一。",
-    "options": [
-      "A) HashMap 会自动检测 key 的变化并重新计算哈希",
-      "B) 修改 key 的属性不会影响已经存储的值",
-      "C) 只有 equals 方法受影响，hashCode 不会变化",
-      "D) 该 key 可能无法被正确查找，因为其 hashCode 已改变，而 HashMap 仍使用原哈希值定位"
-    ],
-    "hints": [
-      "HashMap 只在 put 时计算 hashCode",
-      "不可变对象更适合作为 Map key"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "HashMap"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "ConcurrentHashMap 弱一致性迭代器",
-    "content": "关于 ConcurrentHashMap 的迭代器特性，下列哪项是正确的？",
-    "answer": "答案：D) 迭代器具有弱一致性，遍历过程中可以看到部分已完成的并发修改，但不会抛出 ConcurrentModificationException。解析：ConcurrentHashMap 的迭代器是弱一致性的（weakly consistent），而非 fail-fast。它基于遍历时刻的数组快照进行遍历，反映了迭代器创建时或遍历过程中的某个时间点的状态。并发 put 或 remove 操作不会导致 ConcurrentModificationException，但迭代器可能无法反映最新的修改。\n\n扩展延伸：ConcurrentHashMap 的 Size()、isEmpty()、containsValue() 等方法也是弱一致性的。HashMap 的迭代器是 fail-fast 的，并发修改时会抛出 ConcurrentModificationException。",
-    "options": [
-      "A) 迭代器是 fail-fast 的，并发修改会立即抛出 ConcurrentModificationException",
-      "B) 迭代器是强一致性的，能反映所有已完成修改",
-      "C) 迭代器不支持遍历过程中的 remove 操作",
-      "D) 迭代器具有弱一致性，遍历过程中可以看到部分已完成的并发修改，但不会抛出 ConcurrentModificationException"
-    ],
-    "hints": [
-      "fail-fast 适用于非线程安全的集合",
-      "弱一致性：不一定反映最新状态"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "ConcurrentHashMap"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "HashMap 树化退化条件",
-    "content": "关于 HashMap 的树化（链表转红黑树）与退化（红黑树转链表），下列描述正确的是？",
-    "answer": "答案：A) 当链表长度 >= 8 且数组长度 >= 64 时触发树化；当 remove 后红黑树节点数 <= 6 时触发退化。解析：树化有两个条件：链表长度 >= TREEIFY_THRESHOLD（8）且数组长度 >= MIN_TREEIFY_CAPACITY（64）。如果数组长度 < 64，即使链表长度 >= 8，HashMap 会选择扩容（resize）而非树化。退化条件是：扩容时或 remove 操作后，红黑树节点数 <= UNTREEIFY_THRESHOLD（6）时退化为链表。8 和 6 之间保留 2 的差值是为了避免频繁的树化/退化震荡。\n\n扩展延伸：树化的根本目的是解决哈希碰撞严重时的性能退化（链表查询 O(n) → 红黑树 O(log n)）。当 hashCode 分布均匀时，树化几乎不会触发。",
-    "options": [
-      "A) 当链表长度 >= 8 且数组长度 >= 64 时触发树化；当 remove 后红黑树节点数 <= 6 时触发退化",
-      "B) 当链表长度 >= 8 时立即触发树化，与数组长度无关",
-      "C) 当链表长度 >= 8 时触发树化，当红黑树节点数 < 8 时退化",
-      "D) 树化和退化阈值相同，都是 8"
-    ],
-    "hints": [
-      "树化需要同时满足链表长度和数组长度两个条件",
-      "8 和 6 之间的差值是为了避免震荡"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "HashMap",
-      "红黑树"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "Map merge 方法",
-    "content": "关于 Map 接口的 merge(key, value, remappingFunction) 方法，下列哪个说法是错误的？",
-    "answer": "答案：C) merge 方法是线程安全的，可以在 ConcurrentHashMap 上无锁使用且结果完全可预测。解析：merge 方法在 HashMap 中不是线程安全的，需要外部同步。在 ConcurrentHashMap 上 merge 是原子的（线程安全），但具有弱一致性语义——多个线程并发 merge 同一个 key 时，remappingFunction 可能被执行多次，最终只有一个结果被保留。因此选项 C 中的“结果完全可预测”不准确。merge 的行为：key 不存在 → 直接放入 value；key 存在且 remappingFunction 返回 null → 删除该 key；key 存在且 remappingFunction 返回非 null → 用新值替换旧值。\n\n扩展延伸：ConcurrentHashMap 的 merge 底层通过 CAS + synchronized 保证原子性。remappingFunction 不应有副作用或操作同一个 Map。",
-    "options": [
-      "A) 当 key 不存在时，merge 方法直接将 value 放入 Map",
-      "B) 当 remappingFunction 返回 null 时，merge 会删除该 key",
-      "C) merge 方法是线程安全的，可以在 ConcurrentHashMap 上无锁使用且结果完全可预测",
-      "D) 当 remappingFunction 返回非 null 时，merge 会用新值替换旧值"
-    ],
-    "hints": [
-      "注意 merge 在 ConcurrentHashMap 上的弱一致性",
-      "remappingFunction 在并发竞争时可能被多次执行"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "Map",
-      "ConcurrentHashMap"
-    ]
-  },
-  {
-    "category": "java_collections",
     "difficulty": "easy",
     "type": "choice",
     "title": "Queue 与 Deque 的用法区别",
@@ -1113,6 +973,271 @@
       "集合",
       "ConcurrentHashMap",
       "Bug"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "NavigableSet 的 floor 方法",
+    "content": "给定一个 NavigableSet<Integer> 包含 [1, 3, 5, 7, 9]，调用 floor(6) 返回什么？",
+    "options": [
+      "A) 5",
+      "B) 6",
+      "C) 7",
+      "D) null"
+    ],
+    "answer": "答案：A) 5\n\n解析：NavigableSet.floor(e) 返回集合中小于或等于 e 的最大元素。floor(6) 在 [1,3,5,7,9] 中，<=6 的最大元素是 5。相似方法——ceiling(e)：>= e 的最小元素（ceiling(6) = 7）。lower(e)：< e 的最大元素（lower(6) = 5，floor 返回 <=，lower 返回 <，如果集合包含 6，floor(6)=6 但 lower(6)=5）。higher(e)：> e 的最小元素（higher(6) = 7）。\n\n扩展延伸：这些导航方法在二分查找和范围查询场景非常有用。例如在时间线应用中查找最近时间点：floor 用于向前查找，ceiling 用于向后查找。TreeSet 实现了 NavigableSet，所有这些方法都是 O(log n) 时间。如果集合为空，所有导航方法返回 null。",
+    "hints": [
+      "floor 返回 <= e 的最大元素",
+      "ceiling 返回 >= e 的最小元素"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "NavigableSet",
+      "TreeSet"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ArrayDeque 的扩容机制",
+    "content": "ArrayDeque 默认初始容量是多少？当容量不够时如何扩容？",
+    "options": [
+      "A) 默认 10，扩容时增加 50%",
+      "B) 默认 16，扩容时翻倍",
+      "C) 默认 10，扩容时翻倍",
+      "D) 默认 8，扩容时增加 75%"
+    ],
+    "answer": "答案：B) 默认 16，扩容时翻倍\n\n解析：ArrayDeque 底层是循环数组（Circular Array），默认初始容量是 16（与 HashMap 不同，不是 10 或 8）。当容量不足时（head 和 tail 重合），扩容为当前容量的两倍（左移一位）。容量始终是 2 的幂（便于位运算计算索引：elements.length - 1 & head/tail）。容量大于 2^30 时抛出 IllegalStateException（越界）。注意：ArrayDeque 不会像 ArrayList 那样自动收缩容量。如果确定元素数量，建议使用 new ArrayDeque<>(numElements) 指定足够大的初始容量。\n\n扩展延伸：ArrayDeque 的构造函数——1）无参：容量 16。2）new ArrayDeque<>(numElements)：实际容量为 >= numElements 的 2 的最小幂（allocateElements 方法计算）。3）new ArrayDeque<>(collection)：按集合大小分配。对比 HashMap——默认 16，负载因子 0.75，扩容翻倍。ArrayList——默认 10，扩容 1.5 倍。",
+    "hints": [
+      "ArrayDeque 初始容量 16，2 的幂",
+      "扩容翻倍（左移一位）"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ArrayDeque",
+      "扩容"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "checkedList 抛异常的场景",
+    "content": "假设执行以下代码，哪一行会抛出 ClassCastException？\nList raw = new ArrayList();\nList<String> checked = Collections.checkedList(raw, String.class);\nraw.add(42);                          // 行1\nchecked.add(\"hello\");                 // 行2\nchecked.add(42);                       // 行3\nString s = (String) raw.get(0);        // 行4",
+    "options": [
+      "A) 行1",
+      "B) 行2",
+      "C) 行3",
+      "D) 行4"
+    ],
+    "answer": "答案：C) 行3\n\n解析：row 1——直接操作 raw list（原始类型），add(42) 成功（无泛型检查）。row 2——checked.add(\"hello\")，类型为 String，类型检查通过。row 3——checked.add(42)，42 不是 String 类型的实例，checked 包装在插入时检测到类型不匹配，立即抛出 ClassCastException（提示 Attempt to insert element of type java.lang.Integer into collection with element type class java.lang.String）。row 4——raw.get(0) 获取的是 Integer（row 1 存入的 42），强制转型为 String 才会抛出 ClassCastException。（row 3 已经提前执行并抛出了异常）。\n\n扩展延伸：checked 包装的关键价值是 fail-fast——在错误的源头（插入时）立即失败，而不是在使用时（取出时）才发现。这大大简化了调试。行 1 成功的原因是 raw 上的 add 使用了 raw type，绕过了泛型检查，这是遗留代码与泛型代码整合时的常见问题。使用 checked 包装时注意：必须只使用 checked 视图的引用进行写入操作（不要保留 raw 引用），否则 raw 引用仍然可以绕过检查。",
+    "hints": [
+      "checked 包装在插入时检查类型，立即 fail-fast",
+      "通过 raw type 引用可以直接插入，绕过 checked 检查"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "checkedList",
+      "类型安全"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "Collections.shuffle 的效果",
+    "content": "以下关于 Collections.shuffle(List<?> list) 的描述，哪一个是不正确的？",
+    "options": [
+      "A) shuffle 会随机打乱列表元素的顺序",
+      "B) shuffle 使用 Fisher-Yates 算法",
+      "C) shuffle 会创建新的列表，不修改原列表",
+      "D) shuffle 可以接受自定义 Random 种子来控制随机序列"
+    ],
+    "answer": "答案：C) shuffle 会创建新的列表，不修改原列表\n\n解析：Collections.shuffle() 是就地修改（in-place）操作，直接打乱传入的列表，不会创建新列表。A 正确——shuffle 的功能是随机打乱元素。B 正确——内部使用 Fisher-Yates 算法（从后向前遍历，每个位置随机选一个 0~i 的位置交换）。D 正确——shuffle(List, Random) 重载版本可传入自定义 Random（在测试时使用固定种子确保可复现）。常见误解——很多人以为 shuffle 返回新列表。实际上 Collections 的算法方法（sort、shuffle、reverse、rotate、fill）都是就地修改。如果你需要保留原始顺序，应该先创建副本：var copy = new ArrayList<>(original); Collections.shuffle(copy);\n\n扩展延伸：shuffle 的时间复杂度 O(n)。Fisher-Yates 算法的优势是每个排列的概率相等（均匀分布），且每个元素恰好交换一次。相关的老式算法（如 naive 的每个位置随机再交换）会产生偏斜分布（不是均匀分布）。注意：默认的 shuffle() 使用 Random，不保证密码学安全性。如果需要对敏感数据打乱，考虑使用 shuffle(list, SecureRandom) 或 Collections.shuffle(list, ThreadLocalRandom.current())。",
+    "hints": [
+      "shuffle 是就地修改（in-place）操作",
+      "需要保留原始顺序时先 copy 再 shuffle"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections",
+      "shuffle"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Stack 和 Deque 的栈操作对比",
+    "content": "以下关于 java.util.Stack 和 java.util.Deque 作为栈使用时的说法，错误的是？",
+    "options": [
+      "A) Stack 继承自 Vector，Deque 是接口",
+      "B) Deque 可以用 push/pop/peek 实现栈操作",
+      "C) Stack 的 push 方法不是 synchronized 的",
+      "D) ArrayDeque 作为栈使用时性能优于 Stack"
+    ],
+    "answer": "答案：C) Stack 的 push 方法不是 synchronized 的\n\n解析：Stack 的所有方法（push、pop、peek、empty、search）都是 synchronized 的，因为 Stack 继承了 Vector，Vector 的所有 public 方法都是 synchronized。A 正确——Stack extends Vector，Deque 是接口。B 正确——Deque 接口提供了 push（头部插入）、pop（头部移除）、peek（查看头部）等完整的栈操作方法。D 正确——ArrayDeque 在单线程场景下性能远优于 Stack（无同步开销，内存紧凑），这正是官方推荐使用 ArrayDeque 替代 Stack 的原因。\n\n扩展延伸：Stack 类从 JDK 1.0 就存在，是 Java 的遗留类。官方 Javadoc 已经明确说明：\"Deque 接口及其实现提供了更完整和一致的 LIFO 栈操作集，应该优先使用。\" ArrayDeque 作为栈的默认实现，其 push/pop 均摊时间复杂度 O(1)，并且可以调整初始容量避免扩容次数。当需要使用 LIFO 队列（栈）时，ArrayDeque 是通用最佳选择。",
+    "hints": [
+      "Stack 的所有方法都是 synchronized（继承自 Vector）",
+      "Java 官方文档推荐用 ArrayDeque 替代 Stack"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Stack",
+      "Deque",
+      "ArrayDeque"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "HashMap 树化退化",
+    "content": "当 HashMap 的红黑树节点数小于多少时会退化为链表？",
+    "options": [
+      "A) 8",
+      "B) 7",
+      "C) 6",
+      "D) 5"
+    ],
+    "answer": "答案：C) 6。\n\n解析：HashMap 中树化阈值为 8（链表→红黑树），退化阈值为 6（红黑树 → 链表）。中间保留 1 的余量（7），避免在链表和红黑树之间频繁切换。\n\n如果树化阈值和退化阈值相同（都是 8），那么在 8 这个临界点上，插入元素触发树化、删除元素触发退化，反复操作会导致性能抖动。\n\nA 错误：8 是树化阈值（链表→红黑树）。\nB 错误：7 不是官方阈值，是用于缓冲的中间值。\nD 错误：5 太低，红黑树在节点 5-7 时的性能优势还不如链表。\n\n扩展延伸：红黑树节点（TreeNode）大约是普通链表节点（Node）的 2 倍大小。红黑树在极端哈希冲突场景下（如恶意哈希攻击）保证查找性能 O(log n)。JDK 8+ 对 String 和 Integer 等类型的 hashCode 做了扰动函数优化以减少哈希冲突。",
+    "hints": [
+      "退化阈值 6，树化阈值 8，差值为缓冲",
+      "避免频繁的树化↔退化切换"
+    ],
+    "tags": [
+      "Java",
+      "HashMap",
+      "树化",
+      "红黑树"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ConcurrentHashMap computeIfAbsent",
+    "content": "ConcurrentHashMap 的 computeIfAbsent 方法在 JDK 8 中可能存在什么问题？",
+    "options": [
+      "A) 它不是线程安全的",
+      "B) 当 mappingFunction 耗时较长时会导致其他线程阻塞",
+      "C) 它不支持 null 值",
+      "D) 它不能保证原子性"
+    ],
+    "answer": "答案：B) 当 mappingFunction 耗时较长时会导致其他线程阻塞。\n\n解析：JDK 8 的 ConcurrentHashMap.computeIfAbsent() 在 key 对应的槽位为 null 时，会锁定该槽位（对链表头或树根加 synchronized），然后执行 mappingFunction。如果 mappingFunction 耗时较长（如访问数据库、调用远程 API），其他尝试操作同一个槽位的线程会被阻塞。\n\nJDK 9 修复了这个问题——mappingFunction 不会在锁内执行，而是先创建占位对象（ ReservationNode），释放锁后再执行。\n\nA 错误：computeIfAbsent 是线程安全的。\nC 错误：ConcurrentHashMap 不支持 null 值（但这不是 computeIfAbsent 特有的问题）。\nD 错误：computeIfAbsent 是原子操作。\n\n扩展延伸：JDK 9 的修复原理：先 CAS 放入 ReservationNode（占位标记），释放锁后执行 mappingFunction，执行完再用真实节点替换 ReservationNode。这被记录为 JDK bug JDK-8062841。类似问题还可能出现在 merge()、compute() 等方法中。",
+    "hints": [
+      "JDK 8 中 computeIfAbsent 在锁内执行 mappingFunction",
+      "JDK 9 改为先放占位节点再执行"
+    ],
+    "tags": [
+      "Java",
+      "ConcurrentHashMap",
+      "computeIfAbsent",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Comparable vs Comparator",
+    "content": "关于 Comparable 和 Comparator 的区别，以下说法正确的是？",
+    "options": [
+      "A) Comparable 在类外部实现，Comparator 在类内部实现",
+      "B) Comparable 用于定义自然排序，Comparator 用于定义定制排序",
+      "C) Comparator 使用 compareTo() 方法，Comparable 使用 compare() 方法",
+      "D) Comparable 和 Comparator 都位于 java.util 包中"
+    ],
+    "answer": "答案：B) Comparable 用于定义自然排序，Comparator 用于定义定制排序。\n\n解析：\n\nB 正确：Comparable 定义类的\"自然排序顺序\"（如 String 的字典序、Integer 的数值序）。Comparator 用于在不修改类的情况下定义额外的排序顺序（如按长度排序、按日期排序）。\n\nA 错误：Comparable 需要由目标类实现（类内部），Comparator 在类外部实现（独立的类或 Lambda）。\nC 错误：Comparable 使用 compareTo()，Comparator 使用 compare()。\nD 错误：Comparable 在 java.lang 包，Comparator 在 java.util 包。\n\n扩展延伸：Comparator 提供了大量链式方法：thenComparing()、reversed()、nullsFirst()/nullsLast()。TreeSet/TreeMap 同时支持两种排序方式（构造时传入 Comparator 则优先使用）。Stream.sorted() 也支持两者。",
+    "hints": [
+      "Comparable 是\"内部比较器\"，Comparator 是\"外部比较器\"",
+      "Comparator 在 java.util，Comparable 在 java.lang"
+    ],
+    "tags": [
+      "Java",
+      "Comparable",
+      "Comparator",
+      "排序"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "LinkedHashMap 访问顺序",
+    "content": "LinkedHashMap 的 accessOrder 参数设置为 true 时，最常访问的元素会移动到链表的最（__）位置？",
+    "options": [
+      "A) 头部",
+      "B) 尾部",
+      "C) 中间",
+      "D) 随机"
+    ],
+    "answer": "答案：B) 尾部。\n\n解析：LinkedHashMap 在 accessOrder = true 时，每次调用 get()/put() 访问某个 Entry 后，该 Entry 会被移动到双向链表的尾部（tail）。因此链表头部的元素是最久未访问的，尾部的元素是最近访问的。\n\n这一特性使 LinkedHashMap 非常适合实现 LRU（Least Recently Used）缓存。只需继承 LinkedHashMap 并重写 removeEldestEntry() 方法，当缓存大小超过阈值时自动移除链表头部的 Entry。\n\n扩展延伸：构造 LinkedHashMap(initialCapacity, loadFactor, accessOrder)。removeEldestEntry(Map.Entry) 返回 true 时移除最旧的 Entry。Guava Cache 和 Caffeine 提供了更强大的 LRU 实现（包括基于时间和容量的过期策略）。",
+    "hints": [
+      "accessOrder=true 时，最近访问的元素移到链表尾部",
+      "链表头部是最久未访问的元素"
+    ],
+    "tags": [
+      "Java",
+      "LinkedHashMap",
+      "LRU",
+      "缓存"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ConcurrentSkipListMap 数据结构",
+    "content": "ConcurrentSkipListMap 的底层实现基于什么数据结构？",
+    "options": [
+      "A) 红黑树",
+      "B) B+树",
+      "C) 跳表（Skip List）",
+      "D) 哈希表"
+    ],
+    "answer": "答案：C) 跳表（Skip List）。\n\n解析：ConcurrentSkipListMap 使用跳表（Skip List）实现，是一种有序的并发 Map。跳表是一种概率性数据结构（通过抛硬币决定层次），在有序链表上构建多层索引来实现 O(log n) 的查找/插入/删除。\n\nA 错误：红黑树是 TreeMap 的底层实现。虽然红黑树也能保证 O(log n)，但在并发环境下实现复杂（需要锁）。\nB 错误：B+树是数据库索引的常见实现。\nD 错误：哈希表是 HashMap 的底层实现，不维护顺序。\n\n为什么并发场景用跳表：1）跳表使用 CAS 实现无锁并发，不需要像红黑树那样复杂的锁机制；2）跳表的插入/删除只影响局部节点，而红黑树可能触发全局的再平衡。\n\n扩展延伸：跳表的空间复杂度 O(n log n)。ConcurrentSkipListSet 是并发有序 Set。跳表在 LevelDB、Redis（有序集合）中也有应用。ConcurrentSkipListMap 实现了 ConcurrentNavigableMap 接口。",
+    "hints": [
+      "ConcurrentSkipListMap 基于跳表实现",
+      "跳表通过 CAS 实现无锁并发"
+    ],
+    "tags": [
+      "Java",
+      "ConcurrentSkipListMap",
+      "跳表",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "IdentityHashMap 比较方式",
+    "content": "IdentityHashMap 使用什么方式比较 key 的相等性？",
+    "options": [
+      "A) equals() 方法",
+      "B) hashCode() + equals()",
+      "C) 引用相等性（==）",
+      "D) Comparator"
+    ],
+    "answer": "答案：C) 引用相等性（==）。\n\n解析：IdentityHashMap 使用引用相等性（==）而不是 equals() 来比较 key。也就是说，只有当两个 key 是同一个对象引用时，才被视为相等。\n\n这与常规 Map（HashMap、TreeMap 等）不同，后者使用 equals() 进行逻辑相等性比较。IdentityHashMap 也不使用 hashCode()，而是使用 System.identityHashCode()。\n\n典型用途：\n1. 序列化/深度拷贝——跟踪已经处理过的对象（防止循环引用）\n2. 代理/拦截框架——按实例跟踪对象\n3. 调试工具——分析对象的引用关系\n\n扩展延伸：IdentityHashMap 的 hashCode 实现是 identityHashCode（System 方法，基于内存地址的默认 hashCode）。与 HashMap 不同，IdentityHashMap 使用线性探测法（开放定址法）解决哈希冲突，而不是链地址法。它继承 AbstractMap 但不是通用 Map，违反了一些 Map 接口的约定。",
+    "hints": [
+      "IdentityHashMap 使用 == 而非 equals() 比较 key",
+      "使用 System.identityHashCode() 而非 hashCode()"
+    ],
+    "tags": [
+      "Java",
+      "IdentityHashMap",
+      "引用比较",
+      "==="
     ]
   }
 ]

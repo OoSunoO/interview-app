@@ -487,24 +487,6 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "服务网格与 Sidecar 模式",
-    "content": "服务网格中的 Sidecar 模式解决了什么问题？Sidecar 和 Ambassador 边车模式有什么区别？Sidecar 的优缺点有哪些？",
-    "answer": "答案：Sidecar 模式是将辅助功能（服务发现、负载均衡、监控、日志、认证、加密等）从应用容器中剥离，放在同一 Pod 的独立容器中。服务网格（Istio/Linkerd）用 Sidecar Proxy 统一处理服务间通信，应用无需感知。\n\n解析：Sidecar vs Ambassador——两种边车模式的定位不同：Sidecar 与主容器并行运行（「在我身边」），处理流量和横切关注点。Ambassador 是代理模式（「在我前面」），作为应用的入口代理转发请求到应用（更适合传统应用代理改造）。Sidecar 通常对所有流量透明拦截（iptables 透明代理），Ambassador 需要应用显式连接代理。\n\n扩展延伸：优缺点——优点：1）横切关注点（监控、日志、限流、认证）与业务逻辑解耦。2）多语言友好：不同语言的服务通过 Sidecar 获得一致的可观测性。3）热升级：Sidecar 独立重启不影响主进程。4）一致性：整个集群的网络行为一致。缺点：1）资源开销：每个 Pod 多一个 Sidecar 容器（内存 50-200MB）。2）延迟增加：多一跳网络（增加约 2ms P99）。3）调试复杂度：流量路径更长（应用 → Sidecar → Sidecar → 应用）。",
-    "hints": [
-      "Sidecar 和服务治理的关系——把 SDK 从应用代码中移到独立的进程里",
-      "Sidecar 的 iptables 透明流量拦截如何做到应用零感知"
-    ],
-    "tags": [
-      "设计模式",
-      "Sidecar",
-      "服务网格",
-      "架构"
-    ]
-  },
-  {
-    "category": "system_design",
     "difficulty": "easy",
     "type": "short_answer",
     "title": "仓库模式（Repository）",
@@ -905,6 +887,118 @@
       "MVC",
       "消息队列",
       "Mediator"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "访问者模式（Visitor Pattern）",
+    "content": "请解释访问者模式（Visitor Pattern）的核心概念。它适用于哪些场景（如编译器 AST 遍历、税计算引擎）？访问者模式如何实现在不修改已有类的情况下增加新操作？它的优缺点是什么？",
+    "answer": "答案：访问者模式将数据结构和对数据的操作分离，允许在不修改已有类的情况下增加新的操作。核心是定义 Visitor 接口（声明各种元素类型的访问方法），ConcreteVisitor 实现具体操作，Element 接口声明 accept(Visitor) 方法。\n\n解析：经典结构——1）Visitor（访问者接口）：为每个具体的元素类声明一个 visit 方法（如 visitConcreteElementA()、visitConcreteElementB()）。2）ConcreteVisitor（具体访问者）：实现每个 visit 方法，定义对元素的具体操作。3）Element（元素接口）：声明 accept(Visitor visitor) 方法。4）ConcreteElement（具体元素）：实现 accept 方法——调用 visitor.visit(this)，将自身传递给访问者。5）ObjectStructure（对象结构）：持有元素的集合（如 List），遍历所有元素调用 accept。双分派（Double Dispatch）——访问者模式的核心机制：accept 调用由元素类型决定（第一次分派），visit 调用由访问者类型决定（第二次分派）。\n\n扩展延伸：应用场景——1）编译器 AST 遍历：编译器将源代码解析为 AST（抽象语法树，由不同节点类型组成——IfStatement、WhileStatement、VariableDeclaration 等）。每种节点类型的处理逻辑（代码生成、类型检查、优化）可以封装在不同的 Visitor 中。新增一种编译器优化——只需要新增一个 Visitor，不需要修改所有 AST 节点类。2）税计算引擎：不同国家/地区、不同商品类型的税率计算逻辑不同。TaxCalculatorVisitor 访问商品对象，根据商品类型和国家计算税额。新增国家税制时只需新增 Visitor。3）文件系统操作：ArchiveVisitor（压缩文件）、PrintVisitor（打印文件树）、SearchVisitor（搜索文件），每种操作作为一个 Visitor，不需要修改 File/Directory 类。缺点——1）新增元素类需要修改所有 Visitor 接口（修改 Visitor 接口的 visit 方法），违反开闭原则。2）违反依赖倒置原则：Visitor 依赖于具体元素类而非抽象。3）Visitor 需要能访问元素的内部状态（可能破坏封装）。",
+    "hints": [
+      "为什么访问者模式需要双分派（Double Dispatch）——两次分派分别由什么决定",
+      "新增元素类型 vs 新增操作——访问者模式在哪一个方向上更容易扩展"
+    ],
+    "tags": [
+      "设计模式",
+      "访问者",
+      "Visitor",
+      "双分派",
+      "AST"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "桥接模式（Bridge Pattern）",
+    "content": "请解释桥接模式（Bridge Pattern）的核心概念。桥接模式如何将抽象和实现解耦？JDBC 驱动和 SLF4J 日志框架中桥接模式是如何应用的？",
+    "answer": "答案：桥接模式将抽象部分和实现部分分离，使两者可以独立变化。核心思想是「用组合代替继承」，通过抽象持有实现的引用来桥接两者。\n\n解析：经典结构——1）Abstraction（抽象类）：定义抽象接口，持有 Implementor 的引用。2）RefinedAbstraction（扩展抽象类）：扩展 Abstraction 定义的功能。3）Implementor（实现接口）：定义实现类的接口，通常比 Abstraction 更细粒度。4）ConcreteImplementor（具体实现类）：实现 Implementor 接口，提供具体实现。JDBC 中的桥接模式——1）DriverManager 是 Abstraction，提供 getConnection() 统一的接口。2）Driver 是 Implementor 接口（java.sql.Driver），定义 connect() 方法。3）不同数据库厂商提供具体实现（MySQL Driver、PostgreSQL Driver、Oracle Driver）。4）客户端通过 DriverManager.getConnection() 获取连接，无需知道底层是哪个数据库。新增数据库类型时只需实现 Driver 接口注册到 DriverManager。\n\n扩展延伸：SLF4J 中的桥接模式——1）SLF4J（Simple Logging Facade for Java）是 Abstraction，提供统一的日志接口（Logger、LoggerFactory）。2）不同的日志框架是 Implementor（Logback、Log4j、java.util.logging）。3）SLF4J 使用桥接模块（如 slf4j-log4j12、log4j-slf4j-impl）桥接到具体的日志实现。4）应用程序只需面向 SLF4J 编程，切换日志框架时不需要修改代码。桥接模式与适配器模式的区别——1）桥接模式在设计阶段使用，目的是让抽象和实现独立演化。2）适配器模式在后期使用，目的是让不兼容的接口协同工作（事后补救）。桥接模式的优点——1）分离抽象和实现，各自独立扩展。2）符合开闭原则（新增抽象或实现不需要修改另一侧）。3）组合替代继承，避免类爆炸（如果没有桥接模式，N 种抽象 × M 种实现 = N×M 个类）。",
+    "hints": [
+      "JDBC Driver 接口为什么是桥接模式的典型应用——数据库厂商各自实现 Driver 接口",
+      "桥接模式和适配器模式的核心区别——设计阶段 vs 补救阶段"
+    ],
+    "tags": [
+      "设计模式",
+      "桥接",
+      "Bridge",
+      "JDBC",
+      "解耦"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "组合模式（Composite Pattern）",
+    "content": "请解释组合模式（Composite Pattern）的核心概念。它如何让客户端一致地处理单个对象和组合对象？在 UI 组件树和文件系统中组合模式是如何应用的？",
+    "answer": "答案：组合模式将对象组合成树形结构以表示「部分-整体」的层次结构，让客户端用一致的方式处理单个对象和组合对象。核心是定义统一的 Component 接口，Leaf（叶子节点）和 Composite（组合节点）都实现该接口。\n\n解析：经典结构——1）Component（组件接口）：声明所有子类共有的操作（如 display()、getName()）。可以定义 add()、remove()、getChild() 等管理子组件的方法。2）Leaf（叶子节点）：没有子节点的具体组件，实现 Component 接口的业务方法（如 File 的 display() 显示文件大小和名称）。3）Composite（组合节点）：有子节点的具体组件，维护子组件列表（List），实现业务方法时递归调用子组件的方法（如 Folder 的 display() 先显示自身，再遍历子组件调用 display()）。4）客户端（Client）：通过 Component 接口操作对象，不需要区分是 Leaf 还是 Composite。\n\n扩展延伸：应用场景——1）UI 组件树（Java AWT/Swing、React/Vue 的虚拟 DOM）：Window 包含 Panel，Panel 包含 Button 和 TextField。调用 repaint() 时，窗口递归重绘所有子组件。React 的组件树也是组合模式——父组件渲染子组件，客户端不需要区分是原生 DOM 节点还是自定义组件。2）文件系统：File（叶子节点，具体文件）和 Directory（组合节点，文件夹）。计算文件夹大小时递归遍历所有子文件和子文件夹。删除文件夹时递归删除所有内容。3）组织结构：Employee（叶子，普通员工）和 Department（组合，部门），计算部门总工资时递归统计所有员工。4）XML/JSON 解析：Element（组合，包含子元素）和 TextNode（叶子，纯文本）。遍历时一致处理。安全组合 vs 透明组合——1）透明组合：Component 接口声明了 add/remove/getChild 等管理方法，Leaf 类也需要实现但抛出 UnsupportedOperationException。优点：客户端一致对待。2）安全组合：Component 接口不声明管理方法，Composite 单独提供。优点：Leaf 类不需要处理无用方法。缺点：客户端需要 instanceof 判断。",
+    "hints": [
+      "安全组合和透明组合的区别——客户端是否需要 instanceof 判断",
+      "React 组件树为什么也属于组合模式——父组件递归渲染子组件"
+    ],
+    "tags": [
+      "设计模式",
+      "组合",
+      "Composite",
+      "树结构",
+      "UI组件"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "外观模式（Facade Pattern）",
+    "content": "请解释外观模式（Facade Pattern）的核心概念。外观模式如何为复杂子系统提供统一的简化接口？Spring Data JPA 和 SLF4J 中外观模式是如何应用的？",
+    "answer": "答案：外观模式为子系统中的一组接口提供一个统一的高层接口，使子系统更易使用。核心思想是「封装复杂性，提供简化视图」——客户端只需要与外观对象交互，不需要了解子系统的内部细节。\n\n解析：经典结构——1）Facade（外观类）：提供简化的方法，内部将请求委托给子系统的各个组件处理。外观类知道哪些子系统类负责哪些请求。2）Subsystem Classes（子系统类）：实现子系统的功能，处理 Facade 委托的任务。子系统类不知道 Facade 的存在（不持有 Facade 的引用）。3）Client（客户端）：只与 Facade 交互，不再直接调用子系统类。Spring Data JPA 中的外观模式——1）客户端只需定义 Repository 接口（如 UserRepository extends JpaRepository<User, Long>）。2）Spring Data JPA 的底层处理由多个子系统协作完成：EntityManager（ORM 核心）、JPQL Query 生成器、事务管理器、数据源连接池、代理生成器（JDK 动态代理/CGLIB）。3）客户端通过 Repository 接口调用 save()、findAll() 等方法时，外观层封装了 EntityManager 的 persist()、JPQL 生成、事务开启/提交、异常转换等复杂流程。\n\n扩展延伸：SLF4J 的外观模式——1）SLF4J 提供统一日志接口（Logger.info()、Logger.error()），封装了日志框架初始化和桥接等细节。2）客户端调用 logger.info('msg') 时，外观层处理：消息格式化、调用底层日志框架（Logback/Log4j）、处理日志级别过滤、输出到配置的 Appender。3）如果哪天需要切换日志框架，只需改依赖，代码不需要修改。外观模式的优点——1）降低客户端使用复杂度（一个方法代替一系列调用）。2）实现客户端与子系统的松耦合（客户端只依赖 Facade）。3）提供了子系统使用的入口点，有助于分层架构中的层次划分。外观模式 vs 中介者模式——1）外观模式：单向关系（客户端 → Facade → 子系统），Facade 封装复杂度。2）中介者模式：多向关系（同事对象之间通过 Mediator 通信），Mediator 协调交互。外观模式的注意事项——1）外观不应该成为上帝类（God Class），不要把子系统的所有功能都通过外观暴露，应该只提供客户端需要的方法。2）客户端仍然可以绕过 Facade 直接访问子系统（门面模式不限制直接访问，这与适配器模式不同）。",
+    "hints": [
+      "外观模式和中介者模式的核心区别——单向封装 vs 多向协调",
+      "SLF4J 如何通过外观模式实现日志框架的可切换性"
+    ],
+    "tags": [
+      "设计模式",
+      "外观",
+      "Facade",
+      "SLF4J",
+      "封装"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DAO 与 Repository 模式辨析",
+    "content": "DAO（Data Access Object）和 Repository 模式有什么区别？两者都是数据访问抽象，但它们的设计意图和使用场景有何不同？DDD 中的 Repository 和传统 DAO 有什么本质区别？",
+    "answer": "答案：DAO（Data Access Object）是数据持久化的底层抽象，负责封装对数据源的访问（CRUD 操作），使业务层不需要知道底层存储的具体实现。Repository 是领域驱动设计（DDD）中的概念，在集合的语义上操作领域对象，是领域层的一部分。两者的核心区别在于抽象层次和设计意图——DAO 面向数据表（Table），Repository 面向领域集合（Collection）。\n\n解析：DAO 模式——1）每个 DAO 对应一个数据表（如 UserDAO → user 表），提供 insert、update、delete、findById 等方法。2）DAO 是纯粹的数据访问层技术，不知道业务逻辑的存在。3）DAO 返回的数据通常是数据传输对象（DTO）或数据实体，不包含业务行为。4）典型实现：MyBatis 的 Mapper、Spring JDBC Template 封装的 DAO 类。Repository 模式——1）Repository 是领域对象的集合，提供像集合一样的操作接口（add、remove、get），客户端不关心底层是数据库、内存还是外部 API。2）Repository 是领域层的组成部分，可以包含业务规则（如 findAvailableRooms() 包含可用房间的业务判断逻辑）。3）Repository 返回的是领域对象（Aggregate Root），包含业务行为。4）Repository 的接口定义在领域层，实现放在基础设施层（依赖倒置）。\n\n扩展延伸：何时使用哪种模式——1）简单 CRUD 应用、表结构驱动的开发：使用 DAO（如 MyBatis Mapper）。2）复杂业务逻辑、DDD 项目：使用 Repository。3）Repository 的实现内部可以包含 DAO——Repository 是更高层的抽象，调用 DAO 来完成实际的数据库操作。4）Spring Data JPA 中 @Repository 注解的接口实际上是 Repository 模式（通过 JPA EntityManager 实现），但很多人把它当作 DAO 使用。5）测试角度：Repository 更容易 Mock（领域层定义接口，测试时用 Mock 实现），DAO 的 Mock 仍然暴露了数据访问的实现细节。实用建议：在中小型项目中直接使用 DAO 或 Spring Data JPA Repository 就足够了。只有在业务逻辑复杂、需要领域模型驱动设计时才需要引入 DDD 风格的 Repository。",
+    "hints": [
+      "DAO 面向数据表（Table），Repository 面向领域集合（Collection）——抽象层次不同",
+      "为什么 Repository 的接口定义在领域层，实现在基础设施层——依赖倒置原则"
+    ],
+    "tags": [
+      "设计模式",
+      "DAO",
+      "Repository",
+      "DDD",
+      "数据访问"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "空对象模式",
+    "content": "请解释空对象模式（Null Object Pattern）的用途和实现方式。它如何避免空指针异常？与 Optional 的区别是什么？",
+    "answer": "答案：空对象模式用一个不做任何操作或返回默认值的对象替代 null 引用，避免调用方每次都要做 null 检查。\n\n实现方式：定义一个接口和两个实现——真实对象（Real Object）和空对象（Null Object）。空对象实现接口的所有方法但行为是\"空操作\"或返回默认值。\n\n示例：interface Logger { void log(String msg); }\nclass FileLogger implements Logger { void log(String msg) { writeToFile(msg); } }\nclass NullLogger implements Logger { void log(String msg) { /* no-op */ } }\n\n与 Optional 的区别：\n1. 设计意图不同：空对象提供默认行为（\"什么都不做\"），Optional 表示值可能缺失\n2. 使用场景不同：空对象适用于策略/行为（日志、缓存、通知），Optional 适用于数据返回值\n3. 空对象是结构型模式，Optional 是容器类型\n\n扩展延伸：空对象模式在 Java 标准库中的应用：java.io.InputStream.nullInputStream()、Console.nullWriter()。Reactive 编程中的 Mono.empty() 和 Flux.empty() 也类似。空对象在日志框架（Log4j 的 NullAppender）、缓存（通读缓存的 NullCache）中常见。",
+    "hints": [
+      "空对象模式用\"什么都不做的对象\"替代 null 引用",
+      "Optional 表示值可能缺失，空对象提供默认行为"
+    ],
+    "tags": [
+      "设计模式",
+      "空对象",
+      "Null Object"
     ]
   }
 ]

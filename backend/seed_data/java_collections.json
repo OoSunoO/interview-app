@@ -785,105 +785,6 @@
     "category": "java_collections",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？",
-    "content": "ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？",
-    "answer": "答案：JDK 7 采用 Segment（分段锁） + HashEntry 数组实现，JDK 8 采用 Node 数组 + 链表/红黑树 + synchronized + CAS 实现。\n\n解析：\nJDK 7：将 HashMap 分成多个 Segment（继承 ReentrantLock），每个 Segment 维护一个 HashEntry 数组。并发度 = Segment 数量（默认 16），不同 Segment 可并发操作。写操作需要获取 Segment 的锁，读操作通过 volatile 保证可见性。\nJDK 8：摒弃了分段锁设计，改用 synchronized + CAS 来保证并发安全。锁粒度从 Segment 级别降为单个数组元素（桶）级别，显著提升了并发度。当链表长度 >= 8 且数组长度 >= 64 时，链表会树化为红黑树以降低查询时间复杂度。\n\n扩展延伸：JDK 8 的 put 流程：先检查 table 是否初始化 → CAS 插入空桶 → synchronized 锁定首节点进行链表/红黑树插入 → 检查是否需要树化。JDK 8 的 size() 方法通过 baseCount 和 CounterCell 数组统计元素个数，不再需要遍历所有 Segment。",
-    "hints": [
-      "JDK 7 的分段锁基于 ReentrantLock",
-      "JDK 8 改用 synchronized + CAS，锁粒度更细",
-      "JDK 8 引入了红黑树优化"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "并发",
-      "ConcurrentHashMap"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "CopyOnWriteArrayList 的原理和适用场景是什么？",
-    "content": "CopyOnWriteArrayList 的原理和适用场景是什么？",
-    "answer": "答案：CopyOnWriteArrayList 是基于写时复制（Copy-On-Write）策略的线程安全 List。所有写操作（add/set/remove）都会复制底层数组，修改后替换引用。读操作无锁且直接访问原数组。\n\n解析：\n核心原理：内部维护一个 volatile 的 Object[] array。add 方法先获取 ReentrantLock 锁，复制一个新数组（长度 +1），在新数组上写入新元素，最后将新数组赋值给 array 引用。读操作不加锁，直接读 array 引用指向的数组。\n优点：读操作完全无锁，适合读多写少的场景。迭代器遍历时不会抛出 ConcurrentModificationException（快照迭代）。\n缺点：写操作成本高（数组复制），内存占用双倍，数据最终一致（不能保证实时一致性）。\n\n扩展延伸：适合场景：白名单/黑名单、事件监听器列表、缓存配置等读多写少的场景。不适合场景：写频繁、对数据实时一致性要求高的场景。类似原理的还有 CopyOnWriteArraySet（内部委托 CopyOnWriteArrayList）。",
-    "hints": [
-      "写时复制策略：每次修改复制新数组",
-      "读操作无锁，直接读 volatile 数组引用",
-      "适合读多写少场景"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "并发",
-      "CopyOnWriteArrayList"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "BlockingQueue 的 put/take 与 offer/poll 有什么区别？",
-    "content": "BlockingQueue 的 put/take 与 offer/poll 有什么区别？",
-    "answer": "答案：put/take 是阻塞方法，队列满时 put 阻塞，队列空时 take 阻塞。offer/poll 是非阻塞方法，提供返回值标识操作结果，支持超时版本。\n\n解析：\nput(E e)：队列满时阻塞等待，直到有空间可用。不返回 boolean 值。\ntake()：队列空时阻塞等待，直到有元素可取。返回取出的元素。\noffer(E e)：队列满时立即返回 false，不阻塞。不会抛出异常。\noffer(E e, long timeout, TimeUnit unit)：在指定时间内等待可用空间，超时返回 false。\npoll(long timeout, TimeUnit unit)：在指定时间内等待元素，超时返回 null。\n\n扩展延伸：BlockingQueue 还有 add/remove 方法——队列满时 add 抛出 IllegalStateException，队列空时 remove 抛出 NoSuchElementException。drainTo(Collection) 方法可将队列中所有可用元素一次性转移到集合中，减少批处理时的锁竞争。",
-    "hints": [
-      "put/take 是阻塞的，offer/poll 非阻塞",
-      "offer/poll 有带超时参数的重载版本",
-      "add/remove 失败直接抛异常"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "并发",
-      "BlockingQueue"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "TreeMap 的底层红黑树原理是什么？",
-    "content": "TreeMap 的底层红黑树原理是什么？",
-    "answer": "答案：TreeMap 底层基于红黑树（Red-Black Tree）实现，是一种自平衡的二叉查找树。它保证元素的插入、删除和查找的时间复杂度均为 O(log n)。\n\n解析：\n红黑树的性质：1）每个节点是红色或黑色；2）根节点是黑色；3）叶子节点（NIL）是黑色；4）红色节点的子节点必须是黑色（不能有连续的红色节点）；5）从任一节点到其每个叶子的所有路径包含相同数量的黑色节点（黑高平衡）。\nTreeMap 使用 Comparator 或 Comparable 来决定元素顺序。插入和删除后通过左旋/右旋 + 颜色翻转来维持红黑树的平衡性质。\n\n扩展延伸：TreeMap 提供了丰富的导航方法：lowerKey()/higherKey()、floorKey()/ceilingKey()、firstKey()/lastKey()、subMap()/headMap()/tailMap()。TreeMap 不是线程安全的，可通过 Collections.synchronizedSortedMap 包装。与 HashMap 相比，TreeMap 在需要有序遍历时更有优势，但插入和查找速度较慢（O(log n) vs O(1)）。",
-    "hints": [
-      "红黑树是一种自平衡二叉查找树",
-      "5 条关键性质保证了 O(log n) 时间复杂度",
-      "导航方法（lowerKey/higherKey）是 TreeMap 的特色"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "TreeMap",
-      "红黑树"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Collections 工具类有哪些常用方法？",
-    "content": "Collections 工具类有哪些常用方法？",
-    "answer": "答案：Collections 工具类提供排序、查找、同步包装、不可变集合创建、线程安全包装等静态方法。\n\n解析：\n排序与操作：sort(List)、reverse(List)、shuffle(List)、swap(List, i, j)、rotate(List, distance)、fill(List, T)\n查找与极值：binarySearch(List, key)、max(Collection)、min(Collection)、frequency(Collection, Object)、indexOfSubList/s LastIndexOfSubList\n同步包装：synchronizedCollection/synchronizedList/synchronizedMap/synchronizedSet/synchronizedSortedMap/synchronizedSortedSet——返回由用户提供的集合包装的线程安全视图\n不可变包装：unmodifiableList/unmodifiableMap/unmodifiableSet/unmodifiableCollection——修改操作会抛出 UnsupportedOperationException\n创建空集合/单元素集合：emptyList/emptyMap/emptySet、singletonList/singletonMap/singleton\n\n扩展延伸：Collections.synchronizedList 包装的 List 在迭代时仍需在 synchronized 块中手动同步。不可变集合在 Java 9+ 中多使用 List.of()/Set.of()/Map.of() 等工厂方法替代。emptyList() 返回的是 EMPTY_LIST 常量，不会分配新对象。",
-    "hints": [
-      "同步包装方法返回线程安全视图",
-      "unmodifiable 系列封装不可变视图",
-      "Java 9+ 推荐使用 of() 工厂方法替代部分 Collections 方法"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "Collections"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "LinkedHashMap 实现 LRU 缓存的原理",
     "content": "请解释如何利用 LinkedHashMap 实现一个 LRU（最近最少使用）缓存。LinkedHashMap 的哪些特性支持这个功能？",
     "answer": "答案：LinkedHashMap 通过 accessOrder=true 构造参数 + 重写 removeEldestEntry() 实现 LRU 缓存。\n\n解析：LinkedHashMap 默认 accessOrder=false（按插入顺序迭代），设为 true 后每次 get 或 put 已存在的 key 会将对应 Entry 移到链表尾部（访问顺序）。removeEldestEntry(Map.Entry) 方法在每次 put 后调用，返回 true 时移除链表头部的 Entry（最久未访问）。典型实现是重写该方法并限制缓存大小：protected boolean removeEldestEntry(Map.Entry eldest) { return size() > MAX_ENTRIES; }。\n\n扩展延伸：LinkedHashMap 的 LRU 实现不是线程安全的——并发场景下需要 Collections.synchronizedMap 包装或使用 ConcurrentHashMap 配合 ConcurrentLinkedDeque 实现。Guava Cache（Caffeine）提供了更强大的 LRU/LFU/ARC 缓存实现，支持过期时间、自动加载、最大权重等特性。Caffeine 使用 Window TinyLFU 淘汰算法，性能优于 LinkedHashMap 的 LRU。",
@@ -970,6 +871,191 @@
       "EnumSet",
       "EnumMap",
       "性能"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NavigableSet 和 TreeSet 的倒序遍历",
+    "content": "请介绍 NavigableSet 接口和它的实现 TreeSet。如何高效地倒序遍历 TreeSet？NavigableSet 有哪些常用方法？",
+    "answer": "答案：NavigableSet 是 JDK 6 扩展的 SortedSet 子接口，提供了导航方法（ceiling、floor、higher、lower、descendingIterator 等），TreeSet 是其标准实现。倒序遍历通过 descendingIterator() 或 descendingSet() 实现。\n\n解析：NavigableSet 的核心方法——1）定向查找：ceiling(e)（>= 的最小元素）、floor(e)（<= 的最大元素）、higher(e)（> 的最小元素）、lower(e)（< 的最大元素）。2）子集视图：subSet(from, fromInclusive, to, toInclusive)、headSet(to, toInclusive)、tailSet(from, fromInclusive)。3）倒序视图：descendingSet() 返回逆序视图（对视图的操作映射到原集合），descendingIterator() 返回逆序迭代器。\n\n扩展延伸：TreeSet 基于 TreeMap（红黑树），操作时间复杂度 O(log n)。与 HashSet（O(1)）和 LinkedHashSet（O(1)）不同，TreeSet 维护了元素的有序性（按 Comparator 或自然排序）。倒序遍历 TreeSet 的性能——descendingIterator() 内部从红黑树的最右节点开始中序遍历（右-根-左），时间复杂度 O(n)、空间 O(log n)（递归栈深度）。注意：TreeSet 的 add/remove/contains 都是 O(log n)，如果频繁查找，要评估是否值得维护有序性的成本。",
+    "hints": [
+      "NavigableSet 是 SortedSet 的子接口，增加了导航方法",
+      "descendingSet() 返回的是视图，修改操作会反映到原集合"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "NavigableSet",
+      "TreeSet",
+      "红黑树"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ArrayDeque 和 LinkedList 的区别",
+    "content": "请从数据结构、性能和使用场景三个方面对比 ArrayDeque 和 LinkedList。作为队列或双端队列使用时，应该选哪个？",
+    "answer": "答案：ArrayDeque 基于循环数组（Circular Array），LinkedList 基于双向链表（Doubly Linked List）。作为队列/双端队列，ArrayDeque 通常比 LinkedList 性能更好。\n\n解析：ArrayDeque——底层是 Object[] 循环数组，head 和 tail 指针指示有效范围。扩容时翻倍（double capacity）。特性：1）随机访问快速（但 Deque 不常用随机访问）。2）内存紧凑——只有数据，没有节点对象开销。3）头尾插入删除 O(1) 均摊。4）不支持 null 元素。LinkedList——底层是双向链表节点（Node<E> 有 prev/next/item 三个字段）。特性：1）头尾插入删除 O(1)。2）中间插入删除 O(n)（需要遍历到位置）。3）支持 null 元素。4）实现了 List 和 Deque 两个接口。5）每个元素额外占用 24+ 字节的节点对象（对象头 + 两个引用 + item）。\n\n扩展延伸：实际性能对比——1）队列操作（offer/poll/peek）：ArrayDeque 比 LinkedList 快 2-3 倍（无节点分配开销、缓存友好）。2）内存占用：100 万个元素，ArrayDeque ≈ 8MB（仅数据），LinkedList ≈ 32MB（数据 + 节点对象）。3）作为栈：ArrayDeque 比 Stack 快，也比 LinkedList 快。Java 文档明确推荐：\"当需要 Deque 时，ArrayDeque 通常优于 LinkedList\"。使用建议：需要队列/双端队列时用 ArrayDeque；需要中间插入删除或需要 List 功能时用 LinkedList。",
+    "hints": [
+      "ArrayDeque 是循环数组，内存连续、缓存友好",
+      "LinkedList 每个元素都有节点对象开销（对象头 + 指针）"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ArrayDeque",
+      "LinkedList",
+      "Deque"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "为什么应该用 Deque 替代 Stack",
+    "content": "Java 官方文档推荐使用 Deque 替代 Stack，请解释原因。Stack 有什么问题？Deque 作为栈使用时有哪些优势？",
+    "answer": "答案：Stack 是 JDK 1.0 遗留类，继承自 Vector（线程安全但效率低），官方推荐使用 ArrayDeque 替代。Deque 接口提供了完整的栈操作（push/pop/peek），性能更好且设计更合理。\n\n解析：Stack 的问题——1）继承 Vector：Stack 是类继承（is-a 关系）而非接口实现，继承了 Vector 的所有方法（包括不入栈的 add/get/remove 等），破坏了栈的封装性。用户可以调用 stack.add(0, elem) 在栈底插入元素，破坏 LIFO 语义。2）线程安全的代价：Vector 方法全部 synchronized，单线程场景下产生不必要的同步开销。3）遗留设计：基于动态数组（容量不够翻倍），扩容时全量复制。Deque 的优势——1）接口设计（Deque<E>）：定义清晰的 LIFO 操作（push 在头部插入、pop 从头部移除、peek 查看头部）。2）多种实现选择：ArrayDeque（高性能栈实现，默认容量 16 动态扩展）、LinkedList（也实现 Deque）。3）可以禁用不必要的操作：通过 Collections.asLifoQueue(deque) 获取严格 LIFO 视图。\n\n扩展延伸：性能对比——1000 万次 push/pop，ArrayDeque 比 Stack 快约 2-3 倍（无锁竞争、内存局部性更好）。Stack 的遗留影响：JVM 内部的\"栈\"（操作数栈、本地变量表）与 java.util.Stack 类无关。JVM 的 Stack 帧使用虚拟机的栈结构，不是 java.util.Stack。Deque 在 JDK 6 引入，ArrayDeque 从 JDK 6 开始可用。",
+    "hints": [
+      "Stack 继承 Vector，可以调用非栈方法破坏 LIFO 结构",
+      "ArrayDeque 作为栈使用时没有同步开销，性能更好"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Stack",
+      "Deque",
+      "ArrayDeque"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Collections 工具类的常用算法方法",
+    "content": "请介绍 java.util.Collections 工具类中常用的算法方法（rotate、shuffle、fill、reverse、swap 等）。它们分别有什么作用？",
+    "answer": "答案：Collections 提供了大量操作集合的静态算法方法，包括旋转（rotate）、打乱（shuffle）、填充（fill）、反转（reverse）、交换（swap）等，它们都在 O(n) 时间内完成。\n\n解析：核心算法方法——1）reverse(List)：反转列表元素顺序。2）shuffle(List) / shuffle(List, Random)：随机打乱列表，Fisher-Yates 算法，默认使用 SecureRandom。3）fill(List, Object)：用指定值替换列表的所有元素。4）rotate(List, distance)：旋转列表（将 distance 位置的元素移到前面）。正数右旋，负数左旋。如 rotate([1,2,3,4], 1) → [4,1,2,3]。5）swap(List, i, j)：交换列表中 i 和 j 位置的元素。6）replaceAll(List, oldVal, newVal)：替换所有匹配的元素。\n\n扩展延伸：其他重要方法——排序和搜索：sort（归并排序/Timsort）、binarySearch（二分查找，要求有序列表）、indexOfSublist/lastIndexOfSublist（子列表搜索）。不可变集合：unmodifiableList/unmodifiableSet/unmodifiableMap（只读视图）。线程安全包装：synchronizedList/synchronizedSet/synchronizedMap。类型安全包装：checkedList/checkedSet/checkedMap。频率方法：frequency(Collection, Object) 统计出现次数，disjoint(Collection, Collection) 判断是否不相交。注意：shuffle 中使用的 Random 建议显式提供 seed（如 new Random(seed)）以便可复现的测试场景。",
+    "hints": [
+      "Collections.rotate 基于三次反转算法实现",
+      "Collections.shuffle 使用 Fisher-Yates 算法"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections",
+      "工具类",
+      "算法"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Collections.checkedList 类型安全视图",
+    "content": "请介绍 Collections.checkedList/checkedSet/checkedMap 的用途和工作原理。它们解决了什么问题？与普通集合有什么区别？",
+    "answer": "答案：checkedList/checkedSet/checkedMap 提供类型安全（Type Safety）视图，在运行时检查插入元素的类型，防止因为 unchecked 警告绕过的类型安全问题。\n\n解析：工作原理——Java 泛型通过类型擦除实现，运行时集合不保存泛型类型信息。通过 unchecked 操作（如原始类型 raw type 赋值）可以在泛型集合中插入错误类型元素（运行时不报错，取出时报 ClassCastException）。checked 包装在运行时保存类型信息（Class<E>），add/put 等操作时对元素进行动态类型检查，插入时立即抛出 ClassCastException。用法：List<String> safeList = Collections.checkedList(new ArrayList<>(), String.class);\n\n扩展延伸：典型场景——1）遗留代码整合：oldCode.getList() 返回 raw type List，newCode 期望 List<String>，checked 包装可以立即发现遗留代码的错误插入。2）序列化反序列化安全检查：反序列化时可能插入任意类型的对象，checked 包装可以防御。3）第三方库接口：当需要确保传递给第三方库的集合不被插入错误类型时。性能影响：checked 包装引入了动态类型检查开销（非常小，仅每次修改时 instanceof 检查）。注意：checked 视图是只读类型检查——通过原始集合直接添加仍然可以绕过（所以要在构造后只保留 checked 引用）。类似地，也可以使用 Collections.checkedQueue、checkedSortedSet、checkedNavigableSet 等。",
+    "hints": [
+      "泛型擦除后运行时无类型信息，checked 包装在运行时添加类型检查",
+      "checked 包装在插入时立即抛出错误，而不是在取出时才报错"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "类型安全",
+      "泛型",
+      "Collections"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap size 方法演进",
+    "content": "请解释 ConcurrentHashMap 的 size() 方法在 JDK 7 和 JDK 8 中的实现差异。为什么 size() 在并发环境下未必精确？",
+    "answer": "答案：JDK 7 的 size() 先尝试不加锁地累加每个 Segment 的 count（最多重试 3 次），如果两次结果不一致则加锁累加。JDK 8 使用 baseCount（CAS 更新）和 CounterCell 数组（冲突时扩容）实现分段计数。sumCount() 累加 baseCount + 所有 CounterCell 的值。\n\nsize() 不精确的原因：在多线程并发环境下，调用 size() 的过程中仍然有线程在 put/remove，size() 返回的是\"近似值\"（弱一致性）。这在并发集合中是预期行为。\n\n扩展延伸：JDK 8 的 size() 映射到 mappingCount()（返回 long，JDK 8 新增）。对于精确监控场景（如线程池队列大小），使用 LinkedBlockingQueue.size()（加锁的精确值）更合适。LongAdder 采用了相同的分段计数思想。",
+    "hints": [
+      "JDK 7 使用 Segment count，JDK 8 使用 baseCount + CounterCell",
+      "size() 返回的是弱一致性的近似值"
+    ],
+    "tags": [
+      "Java",
+      "ConcurrentHashMap",
+      "size",
+      "计数"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HashMap resize 扩容机制",
+    "content": "请详细解释 HashMap 的 resize() 扩容机制的完整流程。JDK 8 中扩容后链表元素的分布规律是什么？为什么扩容后元素要么在原位置要么在原位置+旧容量的位置？",
+    "answer": "答案：resize() 在元素数量超过阈值（容量 × 负载因子）时触发。\n\nJDK 8 扩容流程：\n1. 创建容量为原容量 2 倍的新数组\n2. 遍历每个桶位（数组元素）\n3. 如果桶位是单个节点，直接重新计算位置放入新数组\n4. 如果桶位是红黑树，执行 split() 方法拆分树\n5. 如果桶位是链表，将链表拆分为 lo 链表（低位，原位）和 hi 链表（高位，原位+旧容量）\n\n扩容后元素分布规律：key 在新数组中的位置 = hash & (newCap-1)。设旧容量为 16（二进制 10000），新容量为 32（100000）。hash & (32-1) 只需要看 hash 的第 5 位：第 5 位 = 0 → 位置不变；第 5 位 = 1 → 位置 = 原位置 + 16。\n\nJDK 8 使用尾插法（保持元素顺序）避免了 JDK 7 头插法在多线程下的死循环问题。\n\n扩展延伸：负载因子默认 0.75（空间和时间的权衡）。扩容是 HashMap 中最耗性能的操作（数组拷贝 + 重哈希），预估数据量时指定初始容量可以避免多次扩容。最大容量为 1 << 30（2^30）。",
+    "hints": [
+      "扩容后元素要么在原位置，要么在原位置+旧容量",
+      "JDK 8 使用尾插法避免死循环"
+    ],
+    "tags": [
+      "Java",
+      "HashMap",
+      "resize",
+      "扩容"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "PriorityQueue 堆实现",
+    "content": "请解释 PriorityQueue 的底层实现原理。它是最大堆还是最小堆？插入和删除操作的时间复杂度是多少？",
+    "answer": "答案：PriorityQueue 底层使用 Object[] 数组实现最小二叉堆（小顶堆——堆顶始终是最小元素）。\n\n实现细节：\n- 使用数组存储完全二叉树，节点 i 的左子节点为 2i+1，右子节点为 2i+2\n- 堆属性：每个父节点的值 <= 子节点的值\n\n插入（offer/add）：O(log n)\n1. 将新元素添加到数组末尾\n2. 执行上滤（siftUp）：与父节点比较，如果小于父节点则交换，重复直到满足堆属性\n\n删除堆顶（poll）：O(log n)\n1. 取出堆顶元素\n2. 将最后一个元素移到堆顶\n3. 执行下滤（siftDown）：与较小的子节点比较，如果大于子节点则交换，重复直到满足堆属性\n\n查看堆顶（peek）：O(1)\n\n扩展延伸：PriorityQueue 通过 Comparator 或元素的自然顺序（Comparable）决定优先级。线程安全的替代：PriorityBlockingQueue。PriorityQueue 不支持 null 和非 Comparable 元素。迭代器不保证顺序（只能通过 poll() 获取有序元素）。",
+    "hints": [
+      "PriorityQueue 基于最小堆实现，堆顶始终是最小元素",
+      "插入和删除都是 O(log n)，查看堆顶 O(1)"
+    ],
+    "tags": [
+      "Java",
+      "PriorityQueue",
+      "堆",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "HashSet 底层实现",
+    "content": "请解释 HashSet 的底层实现原理。HashSet 如何保证元素不重复？LinkedHashSet 和 TreeSet 与其有什么不同？",
+    "answer": "答案：HashSet 底层使用 HashMap 实现。\n\n实现原理：\n- HashSet 内部维护一个 HashMap<E, Object> map\n- 添加元素时调用 map.put(e, PRESENT)，PRESENT 是一个虚拟的 Object 常量\n- HashMap 的 key 保证唯一性（通过 hashCode() 和 equals()）\n- 元素迭代顺序不保证\n\nLinkedHashSet：继承 HashSet，底层使用 LinkedHashMap。维护了双向链表记录插入顺序，迭代顺序 === 插入顺序。\n\nTreeSet：底层使用 TreeMap（红黑树）。元素按自然顺序或 Comparator 顺序排序。操作 O(log n)，而 HashSet O(1)。\n\n扩展延伸：HashSet 的 add() 返回 boolean——如果元素已存在返回 false。HashSet 允许 null（最多一个）。数组容量等 HashMap 参数可以通过 HashSet 构造方法间接设置。性能关键：需要良好的 hashCode() 分布。",
+    "hints": [
+      "HashSet 底层是 HashMap（元素作为 key）",
+      "LinkedHashSet 保持插入顺序，TreeSet 保持排序顺序"
+    ],
+    "tags": [
+      "Java",
+      "HashSet",
+      "Set",
+      "集合"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NavigableMap 接口",
+    "content": "请介绍 NavigableMap 和 TreeMap 提供的导航方法（lowerKey/floorKey/ceilingKey/higherKey、headMap/subMap/tailMap）。这些方法在实际开发中有哪些用途？",
+    "answer": "答案：NavigableMap 扩展了 SortedMap，提供了查找匹配 key 的导航方法。TreeMap 实现了 NavigableMap。\n\n导航方法：\n- lowerKey(key)：严格小于给定 key 的最大 key\n- floorKey(key)：小于等于给定 key 的最大 key\n- ceilingKey(key)：大于等于给定 key 的最小 key\n- higherKey(key)：严格大于给定 key 的最小 key\n\n范围视图：\n- headMap(toKey, inclusive)：小于 toKey 的子映射\n- subMap(fromKey, fromInclusive, toKey, toInclusive)：中间范围的子映射\n- tailMap(fromKey, inclusive)：大于等于 fromKey 的子映射\n\n实际用途：\n1. 时间序列数据——查询某个时间点之前/之后的数据\n2. 范围查询——按分数段查找学生、按价格区间查找商品\n3. 最近邻查找——查找与输入值最接近的元素\n4. 分页查询——从指定 key 开始获取后续 N 条记录\n5. 区间统计——统计某个范围内的数据量\n\n扩展延伸：NavigableSet 是 Set 对应的版本（TreeSet 实现）。descendingMap() 返回逆序视图。descendingKeySet() 返回逆序 key 集。ConcurrentSkipListMap 是 NavigableMap 的并发实现。",
+    "hints": [
+      "lower/floor/ceiling/higher 四对方法用于查找临近 key",
+      "范围视图包括 headMap/subMap/tailMap"
+    ],
+    "tags": [
+      "Java",
+      "NavigableMap",
+      "TreeMap",
+      "导航"
     ]
   }
 ]

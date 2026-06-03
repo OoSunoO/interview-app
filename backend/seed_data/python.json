@@ -559,24 +559,6 @@
   },
   {
     "category": "python",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Python GIL 原理与规避",
-    "content": "Python GIL（Global Interpreter Lock）的原理是什么？GIL 为什么存在？如何规避 GIL 的限制以实现真正的并行计算？",
-    "answer": "答案：GIL 是 CPython 解释器中的一把全局锁——同一时刻只能有一个线程执行 Python 字节码。GIL 的存在是为了保证 CPython 内存管理的线程安全（引用计数操作不需要额外的锁）。GIL 导致 CPU 密集型多线程程序无法利用多核。规避方式：多进程（multiprocessing）、C 扩展（不使用 GIL）、异步 IO（asyncio）、JIT 编译（PyPy 的 STM）。\n\n解析：GIL 原理——1）CPython 内存管理使用引用计数（Reference Counting），引用计数需要原子操作。不加 GIL 的话需要为每个对象加细粒度锁（开销巨大）。GIL 选择「单锁简化整个解释器」。2）GIL 的释放：IO 操作自动释放 GIL（IO 密集的线程可以并发）。CPU 密集操作每执行 100 个字节码指令（sys.getcheckinterval）或每 5 毫秒释放 GIL。3）由于 GIL 的存在，Python 多线程在 CPU 密集场景下甚至可能比单线程慢（锁竞争开销）。\n\n扩展延伸：规避方式——1）multiprocessing：多进程（每个进程有独立的 GIL），利用多核 CPU。缺点：进程间通信代价高（需要 pickle 序列化）。适用：CPU 密集型任务。2）C 扩展：C 扩展在调用时释放 GIL（Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS）。NumPy/Cython 等库在内部释放 GIL。3）asyncio：单线程并发，不受 GIL 影响。适合 IO 密集型。4）PyPy / Jython / IronPython：Jython（Java 实现）和 IronPython（.NET 实现）没有 GIL。PyPy 的 STM（Software Transactional Memory）试图移除 GIL。5）Python 3.12+ 的 nogil 编译选项（实验性），Python 3.13+ 作为可选编译模式。注意——大多数场景下不用过度关注 GIL。IO 密集型（Web 请求/数据库/文件读写）程序多线程效果很好。CPU 密集型才需要考虑多进程/C 扩展。",
-    "hints": [
-      "GIL 同一时刻只能执行一个线程的字节码——CPU 密集多线程不能利用多核，但 IO 密集可以（IO 操作释放 GIL）",
-      "规避 GIL 三板斧——多进程（CPU 密集）、asyncio（IO 密集）、C 扩展（numpy/cython 释放 GIL）"
-    ],
-    "tags": [
-      "Python",
-      "GIL",
-      "并发",
-      "CPython"
-    ]
-  },
-  {
-    "category": "python",
     "difficulty": "easy",
     "type": "short_answer",
     "title": "Python 的 import 机制",
@@ -609,24 +591,6 @@
       "性能优化",
       "cProfile",
       "JIT"
-    ]
-  },
-  {
-    "category": "python",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Python 的垃圾回收机制",
-    "content": "Python 的垃圾回收（GC）机制有哪些？引用计数（Reference Counting）和分代回收（Generational GC）的关系？循环引用如何被处理？gc 模块的用法？",
-    "answer": "答案：Python 使用引用计数为主、分代收集为辅的 GC 策略。引用计数：每个对象维护 ob_refcnt（引用计数），为 0 时立即回收。分代收集：处理循环引用（引用计数无法处理）。Python 将对象分为 3 代（0/1/2 代），新对象在第 0 代，每次 GC 存活的对象升代。\n\n解析：引用计数——1）引用增加：赋值给变量、加入容器、作为参数传递等。2）引用减少：变量离开作用域、从容器删除、del 显式删除等。3）优点：实时性好（引用计数为 0 时立即回收，不需要等待 GC 触发）。4）缺点：额外的计数维护开销、循环引用没法处理（需要分代收集辅助）。\n\n扩展延伸：分代收集（gc 模块）——1）阈值（gc.get_threshold()）：默认 (700, 10, 10)。第 0 代分配数量减去回收数量超过 700 时触发第 0 代 GC。第 0 代 GC 发生 10 次触发第 1 代 GC，第 1 代 GC 发生 10 次触发第 2 代 GC。2）循环引用判断：gc 模块从 GC Roots（栈/全局变量等）出发遍历所有可达对象，不可达的对象形成判定为循环引用的垃圾。3）手动控制：gc.collect() 强制触发 GC。gc.disable() 关闭分代收集（引用计数仍然工作）。gc.set_debug(gc.DEBUG_LEAK) 调试内存泄漏。注意——自定义类实现 __del__ 方法时循环引用会导致对象无法被 GC 回收（Python 3.4+ 的 PEP 442 解决了此问题）。对象被回收时 __del__ 的调用顺序不确定。",
-    "hints": [
-      "引用计数实时回收（为 0 立即回收，即时性好）但无法处理循环引用——分代收集辅助解决循环引用",
-      "gc 模块的阈值(700, 10, 10)——每分配 700 个对象减回收数触发第 0 代 GC"
-    ],
-    "tags": [
-      "Python",
-      "垃圾回收",
-      "GC",
-      "内存"
     ]
   },
   {
@@ -904,6 +868,133 @@
       "性能",
       "profile",
       "优化"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "TaskGroup 与结构化并发",
+    "content": "Python 3.11 中引入的 TaskGroup 是什么？与传统 asyncio.gather 相比有什么优势？用 ExceptionGroup 如何处理并发任务中的多异常？",
+    "answer": "答案：TaskGroup（通过 asyncio.TaskGroup 上下文管理器使用）是 Python 3.11 中引入的结构化并发原语，保证所有子任务在退出上下文时全部完成，且自动传播异常。相比 asyncio.gather，TaskGroup 提供了更强的安全保证。\n\n解析：asyncio.gather 的问题——1）如果其中一个任务抛异常，其他任务不会被自动取消（成为「孤儿任务」，在后台默默运行）。2）需要手动管理任务创建和收集，容易遗漏某些任务的异常。TaskGroup 的设计——用 async with asyncio.TaskGroup() as tg: 创建任务组，通过 tg.create_task(coro()) 添加任务。退出上下文时：等待所有子任务完成；如果有任务抛异常，立即取消所有其他任务；收集所有异常到 ExceptionGroup 中抛出。这保证了任务组不存在「既不知道成功也不知道失败」的任务。\n\n扩展延伸：ExceptionGroup——Python 3.11 引入的新异常类型，可以包含多个异常实例。用 except* 语法捕获：except* ValueError as eg:。在 TaskGroup 中如果多个任务抛出不同类型的异常，ExceptionGroup 会统一包装。TimeoutGroup——Python 3.12 引入了 asyncio.timeout() 上下文管理器，与 TaskGroup 配合使用效果更好。结构化并发（Structured Concurrency）的核心理念——Triol 库率先提出，后被 trio、anyio 采用，最终 Python 官方引入。原则：并发任务的生命周期不会超过其父作用域，异常不会遗失。这对于编写健壮的异步代码至关重要。",
+    "hints": [
+      "asyncio.gather 的 return_exceptions=True 参数和 ExceptionGroup 有何不同",
+      "结构化并发为什么说比传统的 fire-and-forget 模式更安全"
+    ],
+    "tags": [
+      "Python",
+      "asyncio",
+      "TaskGroup",
+      "ExceptionGroup",
+      "并发"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "match 语句与结构模式匹配",
+    "content": "Python 3.10 引入的 match/case 语句（结构模式匹配）的语法是什么？它和传统的 if/elif/else 相比有什么优势？支持哪些模式匹配类型？",
+    "answer": "答案：match/case 是 Python 3.10 引入的结构模式匹配（Structural Pattern Matching），语法为 match subject: case pattern: action。它允许基于数据结构形状的匹配，而非仅值比较，是 Python 多年来最重要的语法增强之一。\n\n解析：六种匹配模式——1）字面量模式：case 42:、case 'hello':。2）捕获模式：case x:（匹配任意值并绑定到变量 x）。3）通配符模式：case _:。4）序列模式：case [x, y, *rest]:。5）映射模式：case {'key': value}:。6）类模式：case Point(x=0, y=y):。守卫（Guards）：在 case 后加 if 条件，如 case [x, y] if x > y:。与 if/elif/else 对比的优势——1）更清晰地表达基于数据形状的分支逻辑（如解析 AST、处理 JSON 消息）。2）嵌套解构赋值和条件检查合成一个表达式。3）编译器可做模式穷尽性检查（对枚举/联合类型）。4）可读性提升——用形如 case {'type': 'circle', 'radius': r}: 取代 chain of dict 键检查和 isinstance 调用。\n\n扩展延伸：应用场景——1）AST 处理：lint 工具、编译器、代码分析器（替代 ast.NodeVisitor 的大量 if isinstance）。2）JSON 消息路由：根据消息的 type 字段执行不同处理逻辑。3）HTTP 请求转发：根据 method 和 path 模式路由。4）状态机实现。注意：匹配顺序——case 按从上到下顺序匹配，第一个匹配成功即执行。匹配失败不会 fall through（不像 C 语言的 switch 需要 break）。虽然 match/case 让代码更简洁，但对简单值比较（单个变量 vs 几个常量）仍优先用 if/elif——不要为了用新语法而用。",
+    "hints": [
+      "match/case 中的通配符 _ 和捕获模式有什么不同——为什么顺序很重要",
+      "类模式匹配时 __match_args__ 特殊属性的作用是什么"
+    ],
+    "tags": [
+      "Python",
+      "模式匹配",
+      "match/case",
+      "3.10+"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Self 类型与类型注解增强",
+    "content": "Python 3.11 中引入的 Self 类型解决了什么问题？TypeVarTuple 和 ParamSpec 分别用于什么场景？",
+    "answer": "答案：Self 类型允许在类方法中注解返回值类型为「当前类的实例」，支持更准确的继承类型推断。TypeVarTuple 用于可变长度泛型元组的类型注解，ParamSpec 用于对可调用对象参数类型的泛型表达。\n\n解析：Self 类型的价值——在 Python 3.11 之前，类方法返回 self 或其子类实例时，类型检查器无法准确推断实际类型。如 class A: def copy(self) -> 'A'; class B(A): ...，B.copy() 的返回类型被推断为 A（而非 B），需要强制类型转换。用 Self：def copy(self) -> Self，类型检查器自动推断 B.copy() 返回 B。TypeVarTuple——用在需要表示任意数量类型参数的场景（如元组解包、*args 泛型）。语法：Ts = TypeVarTuple('Ts')，用于 def zip(x: *Ts) -> tuple[*Ts]。ParamSpec——用在装饰器场景，需要捕获和转发原函数的参数类型。语法：P = ParamSpec('P')，用于 def decorator(f: Callable[P, R]) -> Callable[P, R]。\n\n扩展延伸：3.10+ 的其他类型注解增强——1）类型联合简写 int | str（而非 Union[int, str]）。2）TypeGuard：自定义类型窄化函数，如 def is_str_list(val: list[object]) -> TypeGuard[list[str]]。3）typing.Protocol：支持鸭子类型的结构化子类型（Structural Subtyping）。4）@typing.overload 装饰器：重载函数签名。在实际项目中，mypy 或 pyright 是类型检查的标准工具，建议在新项目中启用 strict 模式。类型注解主要服务于工具（IDE 补全、静态检查、代码审查），而非运行时（虽然 pydantic 等库利用注解做运行时校验）。",
+    "hints": [
+      "Self 类型和 TypeVar(bound=...) 有什么区别",
+      "TypeVarTuple 在什么场景下比传统的 Tuple[Any, ...] 更有优势"
+    ],
+    "tags": [
+      "Python",
+      "类型注解",
+      "Self",
+      "TypeVarTuple",
+      "ParamSpec"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "itertools 高效迭代工具",
+    "content": "Python 标准库 itertools 中有哪些实用的迭代工具？product、permutations、combinations、groupby 的用法各是什么？itertools 为什么被称为「迭代器的瑞士军刀」？",
+    "answer": "答案：itertools 是 Python 标准库中用于高效操作迭代器的工具集。核心工具：product 笛卡尔积、permutations 排列、combinations 组合、groupby 分组。此外还有 count、cycle、chain、zip_longest、islice、takewhile、dropwhile、accumulate 等实用工具。\n\n解析：详细用法——product(*iterables, repeat=1)：生成输入可迭代对象的笛卡尔积，等价于嵌套 for 循环。示例：product('AB', '12') → ('A','1'),('A','2'),('B','1'),('B','2')。permutations(iterable, r)：从 iterable 中选 r 个元素的所有排列，考虑顺序。combinations(iterable, r)：所有组合，不考虑顺序。combinations_with_replacement(iterable, r)：允许元素重复的组合。groupby(iterable, key=None)：将连续相同 key 的元素分组，生成 (key, group_iterator) 对。注意：groupby 只对连续相同 key 分组，使用前通常需要按同一 key 排序。\n\n扩展延伸：itertools 的设计哲学——所有函数返回迭代器（惰性求值），不占用额外内存（不像列表推导式会创建临时列表）。与生成器表达式配合使用可构建高效的数据管道。工程实用组合——1）accumulate：累积运算（前缀和、累计乘积）。2）chain.from_iterable：展平嵌套可迭代对象。3）islice：切片迭代器（替代列表切片，节省内存）。4）takewhile/dropwhile：按条件切分序列。性能提示——itertools 的函数是用 C 实现的，性能远优于纯 Python 手写循环。如果是大数据量的遍历，优先考虑 itertools 实现。在数据分析中，itertools.groupby + sorted 可以实现 SQL 的 GROUP BY 功能（虽然 pandas 更直接）。",
+    "hints": [
+      "itertools.groupby 和 SQL 的 GROUP BY 有什么不同",
+      "product 和嵌套 for 循环在性能上对比如何"
+    ],
+    "tags": [
+      "Python",
+      "itertools",
+      "迭代器",
+      "性能"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "zoneinfo 与时区处理",
+    "content": "Python 3.9+ 中的 zoneinfo 模块是什么？它如何解决了 datetime 时区处理的痛点？pytz 和 zoneinfo 有什么区别？",
+    "answer": "答案：zoneinfo 是 Python 3.9 引入的标准库模块，提供 IANA 时区数据库支持（使用系统时区数据或 tzdata 包）。它正式替代了第三方库 pytz，成为 Python 时区处理的标准方案。\n\n解析：传统 datetime 的时区问题——naive datetime（无时区信息的 datetime）在比较和计算时会导致微妙错误。pytz 的局限性：1）pytz 对本地化时间（localize）和归一化（normalize）有特殊要求——不能直接用 datetime 构造函数设定时区（如 datetime(2024, 1, 1, tzinfo=pytz.timezone('Asia/Shanghai')) 会得到错误结果——需要 tz.localize(dt)）。2）pytz 不是标准库，需要额外安装。zoneinfo 的优势——1）标准库，零外部依赖。2）可以直接在 datetime 构造函数中使用 tzinfo=zoneinfo.ZoneInfo('Asia/Shanghai')。3）正确处理夏令时（DST）转换（自动处理重复和缺失的时间点）。4）ZoneInfo 对象是可哈希的，可作为 dict 的 key。\n\n扩展延伸：使用示例——1）创建带时区的 datetime：from zoneinfo import ZoneInfo; dt = datetime(2024, 6, 15, 12, 0, tzinfo=ZoneInfo('Asia/Shanghai'))。2）时区转换：dt_utc = dt.astimezone(ZoneInfo('UTC'))。3）获取当前时间（推荐）：datetime.now(ZoneInfo('Asia/Shanghai'))。4）不支持的系统：macOS（10.15 前）/某些 Linux 发行版——需要 pip install tzdata 补充时区数据库。常见陷阱——1）给 naive datetime 添加时区应该用 dt.replace(tzinfo=ZoneInfo(...)) 而非 dt.astimezone()（astimezone 要求源 datetime 已有 tzinfo）。2）夏令时转换边界：每年 DST 切换那天某些时间不存在或重复，zoneinfo 按 IANA 规则正确处理。3）Python 3.9+ 项目中新代码应优先使用 zoneinfo 而非 pytz。需要兼容 Python 3.8 及以下的旧项目可以继续使用 pytz。",
+    "hints": [
+      "为什么说 pytz 的 localize 和 normalize 是使用陷阱",
+      "zoneinfo 在哪些系统上需要额外安装 tzdata 包"
+    ],
+    "tags": [
+      "Python",
+      "zoneinfo",
+      "时区",
+      "datetime"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 描述符协议",
+    "content": "请解释 Python 描述符（Descriptor）协议及其应用。@property、@classmethod、@staticmethod 底层都是描述符吗？",
+    "answer": "答案：描述符是实现了 __get__()、__set__()、__delete__() 中任意一个方法的类。当描述符被赋值给类属性时，访问该属性会触发描述符协议。\n\n完整描述符协议：\n- object.__get__(self, instance, owner) → value：访问属性时调用\n- object.__set__(self, instance, value)：赋值时调用\n- object.__delete__(self, instance)：删除时调用\n\n只实现了 __get__ 的是\"非数据描述符\"，同时实现了 __get__ 和 __set__（或 __delete__）的是\"数据描述符\"。数据描述符优先于实例属性。\n\n@property 是数据描述符（实现了 __get__ 和 __set__/__deleter__）。\n@classmethod 是数据描述符（绑定方法到类）。\n@staticmethod 是数据描述符（返回原始函数）。\n\n扩展延伸：描述符是 Python 很多高级特性的底层机制。Django ORM 的模型字段使用描述符实现延迟加载。类型注解（type hints）不通过描述符实现（它们是元数据，不是行为控制）。slot（__slots__）阻止描述符的默认 __getattribute__ 行为。",
+    "hints": [
+      "描述符定义 __get__/__set__/__delete__ 方法",
+      "property/classmethod/staticmethod 都是描述符"
+    ],
+    "tags": [
+      "Python",
+      "描述符",
+      "协议"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MRO 与 C3 线性化",
+    "content": "请解释 Python 的方法解析顺序（MRO）和 C3 线性化算法。为什么 Python 使用 C3 算法？钻石继承（菱形继承）在 Python 中如何处理？",
+    "answer": "答案：MRO 决定了在类层次结构中搜索方法的顺序。Python 2.3+ 使用 C3 线性化算法。\n\nC3 算法的三个原则：\n1. 子类优先于父类\n2. 多个父类按定义顺序\n3. 单调性——某个类的 MRO 在子类中保持\n\n钻石继承问题：\nclass D(B, C) 其中 B 和 C 都继承自 A。\n- Python 的 MRO：D → B → C → A\n- 调用 super() 时，B 中的 super() 会调用 C 中的方法，C 中的 super() 调用 A\n- 这就是\"协作式多继承\"——super() 不一定是调用直接父类，而是 MRO 链上的下一个类\n\n为什么 C3：保证了单调性和局部优先顺序。不像深度优先（DFS）会重复访问基类，也不像广度优先（BFS）在多继承中破坏局部顺序。\n\n扩展延伸：D.mro() 查看 MRO 列表。super() 的本质是 super(type, object-or-type)——根据 MRO 找到 type 的下一个类。多个父类中有同名方法时，在 MRO 中先出现的类的方法被调用。尽量避免复杂的多继承——优先使用 Mixin 类和组合。",
+    "hints": [
+      "Python MRO 使用 C3 线性化算法",
+      "super() 不一定是直接父类，而是 MRO 链上的下一类"
+    ],
+    "tags": [
+      "Python",
+      "MRO",
+      "C3",
+      "多继承"
     ]
   }
 ]

@@ -1116,5 +1116,125 @@
       "异常",
       "try-with-resources"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ZGC 的核心特点",
+    "content": "关于 ZGC 的特点，以下哪个描述是错误的？",
+    "options": [
+      "A) ZGC 使用染色指针（Colored Pointers）在指针中编码状态",
+      "B) ZGC 通过读屏障（Load Barrier）实现并发标记和并发重定位",
+      "C) ZGC 的停顿时间会随着堆大小增加而线性增长",
+      "D) ZGC 在 JDK 11 以实验性功能引入，JDK 15 正式发布"
+    ],
+    "answer": "答案：C) ZGC 的停顿时间会随着堆大小增加而线性增长\n\n解析：ZGC 的核心卖点是停顿时间与堆大小无关（无论 1GB 还是 1TB，停顿时间都在 10ms 以下），这是它区别于 G1 和 CMS 的根本优势。A 正确——染色指针在 64 位指针的高 4 位编码 Marked0/Marked1/Remapped/Finalizable 等状态。B 正确——读屏障在对象引用加载时执行检查，是实现并发标记和并发重定位自愈机制的关键。D 正确——ZGC 在 JDK 11 作为实验特性发布（JEP 333），JDK 15 转为正式特性（JEP 377）。\n\n扩展延伸：ZGC 的停顿时间主要来自初始标记（Mark Start）和最终标记（Mark End）的根扫描，这部分时间与 GC Roots 数量有关，与堆大小无关。而并发标记阶段的线程是和应用线程并行运行的，不产生停顿。",
+    "hints": [
+      "ZGC 的设计目标就是极低且可预测的停顿时间",
+      "ZGC 的停顿时间不受堆大小影响"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC",
+      "低延迟"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "虚拟线程与平台线程的区别",
+    "content": "以下关于虚拟线程（Virtual Threads）和平台线程（Platform Threads）的说法，正确的是？",
+    "options": [
+      "A) 虚拟线程由操作系统调度，平台线程由 JVM 调度",
+      "B) 虚拟线程在 synchronized 块中阻塞时不会被 pinned",
+      "C) 虚拟线程适合 CPU 密集型任务，平台线程适合 IO 密集型任务",
+      "D) 虚拟线程使用 Continuation 实现上下文保存和恢复"
+    ],
+    "answer": "答案：D) 虚拟线程使用 Continuation 实现上下文保存和恢复\n\n解析：A 错误——虚拟线程由 JVM 调度（用户态线程），平台线程由操作系统调度（内核线程）。B 错误——虚拟线程在 synchronized 块中阻塞时会被 pinned（固定在载体线程上），因为 synchronized 在 JVM 层面使用了 MonitorEnter/MonitorExit 字节码，与载体的平台线程深度绑定。C 错误——虚拟线程适合 IO 密集型任务（创建和切换开销低），对于 CPU 密集型任务，虚拟线程没有优势（CPU 计算本身是绑定的），平台线程反而更直接。D 正确——虚拟线程的核心机制是 Continuation（可暂停/恢复的执行上下文），通过 Yield 操作实现虚拟线程的挂起和恢复。\n\n扩展延伸：虚拟线程的 pinned 场景还包括执行 native 方法或调用 JNI 时。避免 pinned 的方法是使用 ReentrantLock 替代 synchronized。JDK 21 正式发布虚拟线程（JEP 444），同时也引入了 StructuredTaskScope 实现结构化并发。",
+    "hints": [
+      "虚拟线程是用户态线程，由 JVM 调度而非 OS",
+      "synchronized 块中的阻塞会导致虚拟线程 pinned"
+    ],
+    "tags": [
+      "JVM",
+      "虚拟线程",
+      "Loom",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "结构化并发（Structured Concurrency）",
+    "content": "关于 JDK 21 引入的结构化并发（StructuredTaskScope），以下哪个描述是错误的？",
+    "options": [
+      "A) 结构化并发将并发任务的生命周期绑定到代码块的词法作用域",
+      "B) StructuredTaskScope.shutdownOnSuccess() 在任一子任务成功时关闭所有其他子任务",
+      "C) 结构化并发中，子任务抛出的异常会自动传播到父作用域",
+      "D) 结构化并发只适用于虚拟线程，不适用于平台线程"
+    ],
+    "answer": "答案：D) 结构化并发只适用于虚拟线程，不适用于平台线程\n\n解析：结构化并发（JEP 428，JDK 21 预览，JDK 22 第二次预览）是一种编程范式，将并发任务的生命周期与代码块的作用域绑定。核心类 StructuredTaskScope 适用于任意线程（包括平台线程和虚拟线程），不限于虚拟线程。A 正确——新的 StructuredTaskScope 会在所有子任务完成（或 scope 关闭）后才返回，确保没有任务泄漏（Task Leak）。B 正确——shutdownOnSuccess() 在任一子任务成功时关闭 scope，取消其他未完成的子任务，典型的\"抢答模式\"（如多个微服务副本之间的重试）。C 正确——子任务的异常会被统一处理，结构化并发提供了更好的错误传播和控制。\n\n扩展延伸：使用 StructuredTaskScope 的模式——try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { Future<Integer> f1 = scope.fork(() -> fetchFromA()); Future<String> f2 = scope.fork(() -> fetchFromB()); scope.join(); scope.throwIfFailed(); return combine(f1.resultNow(), f2.resultNow()); }——scope 关闭等待所有子任务完成，没有泄漏风险。",
+    "hints": [
+      "结构化并发解决的是任务泄漏（子任务生命周期超过父作用域）问题",
+      "StructuredTaskScope 的 fork-join 模式类似结构化编程中的 try-with-resources"
+    ],
+    "tags": [
+      "JVM",
+      "结构化并发",
+      "Loom",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Scoped Values 的作用",
+    "content": "关于 JDK 21 正式发布的 Scoped Values（JEP 446），以下说法正确的是？",
+    "options": [
+      "A) ScopedValues 可以修改值，而且修改后对所有线程可见",
+      "B) ScopedValues 是 ThreadLocal 的替代方案，设计为不可变且更安全",
+      "C) ScopedValues 只能在虚拟线程中使用",
+      "D) ScopedValues 的值在线程间自动共享，不需要显式传递"
+    ],
+    "answer": "答案：B) ScopedValues 是 ThreadLocal 的替代方案，设计为不可变且更安全\n\n解析：Scoped Values 是 ThreadLocal 的替代方案——1）不可变性（Immutable）：值一旦绑定，在作用域内不可修改（不像 ThreadLocal 可以随时 set/get，容易产生混乱）。2）确定性：值通过调用栈向下传播，子线程自动继承父线程的 Scoped Values（相比 ThreadLocal 的子线程继承行为更明确）。3）轻量级：设计上比 ThreadLocal 更轻量，特别适合虚拟线程场景（大量线程时 ThreadLocal 的内存开销和与管理问题）。A 错误——Scoped Values 不可修改（Immutable），不能在绑定后改变值。C 错误——Scoped Values 同样适用于平台线程（不限于虚拟线程）。D 错误——值需要显式创建和绑定作用域（通过 ScopedValue.where(key, value).run(() -> {...})），在线程间通过调用栈传播。\n\n扩展延伸：使用方式——public static final ScopedValue<User> LOGGED_IN_USER = ScopedValue.newInstance(); ScopedValue.where(LOGGED_IN_USER, user).run(() -> handleRequest()); ——在 run 方法内部及其调用的所有方法中都可以通过 LOGGED_IN_USER.get() 获取用户信息。与传统 ThreadLocal 相比，ScopedValue 不存储可修改的状态，每次绑定创建一个新的作用域，避免了 ThreadLocal 常见的值意外泄漏和忘记清理的问题。",
+    "hints": [
+      "ScopedValues 是不可变的，通过调用栈传播",
+      "ScopedValues 解决了 ThreadLocal 在虚拟线程场景下的问题"
+    ],
+    "tags": [
+      "JVM",
+      "ScopedValues",
+      "ThreadLocal",
+      "Loom"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "jlink 和 jdeps 的用途",
+    "content": "以下关于 JDK 工具 jlink 和 jdeps 的说法，正确的是？",
+    "options": [
+      "A) jdeps 用于创建自定义 Java 运行时镜像，jlink 用于分析类文件的依赖",
+      "B) jlink 用于创建自定义 Java 运行时镜像，jdeps 用于分析类文件的依赖",
+      "C) jlink 和 jdeps 都用于性能分析，只是角度不同",
+      "D) jlink 用于生成 JVM 堆转储，jdeps 用于线程转储"
+    ],
+    "answer": "答案：B) jlink 用于创建自定义 Java 运行时镜像，jdeps 用于分析类文件的依赖\n\n解析：jlink（JEP 282，JDK 9 引入）——将模块和其依赖打包成自定义运行时镜像，只包含应用需要的模块。常用于 Docker 镜像瘦身（将 300MB+ 的 JDK 裁剪到 40MB 左右）。用法：jlink --module-path $JAVA_HOME/jmods:target --add-modules my.module --output custom-runtime。jdeps（JDK 8 引入）——分析 .class 文件和 JAR 包的依赖关系。可以找出类级别的依赖、模块依赖、以及 JDK 内部 API 的引用（对排查 IllegalAccessError 有帮助）。用法：jdeps -summary -recursive myapp.jar。\n\n扩展延伸：jlink 的输出是一个独立的目录结构，包含 bin/conf/lib 等子目录，可以直接运行（./custom-runtime/bin/java --module my.module/MyMain）。结合 jdeps 可以先分析应用的模块依赖，再用 jlink 裁剪最小运行时。jlink 还支持 --compress 和 --strip-debug 等选项进一步优化体积。注意：使用 jlink 要求应用及其依赖全部模块化（module-info.java）。非模块化应用可以考虑 jdeps 的 --generate-module-info 选项生成模块描述符。",
+    "hints": [
+      "jlink 用于构建最小运行时镜像（裁剪 JDK）",
+      "jdeps 用于依赖分析（找出模块依赖和内部 API 使用）"
+    ],
+    "tags": [
+      "JVM",
+      "jlink",
+      "jdeps",
+      "模块化"
+    ]
   }
 ]

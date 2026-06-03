@@ -921,5 +921,90 @@
       "pt-osc",
       "在线变更"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LSM 树存储引擎",
+    "content": "请解释 LSM-Tree（日志结构合并树）的读写原理及其在 NoSQL 中的应用。",
+    "answer": "答案：LSM-Tree 通过顺序写 + 分层合并实现高写入性能，广泛应用于现代 NoSQL 数据库\n\n解析：写入流程：数据先写内存中的 MemTable（有序结构，常为跳表或红黑树）和 WAL（Write Ahead Log 保证持久化）。MemTable 满了后冻结为不可变的 SSTable（Sorted String Table）写入磁盘。后台 Compaction 线程不断将小 SSTable 合并排序成大 SSTable并删除冗余数据。多个 SSTable 层级（Level 0 -> Level 1 -> ...），上层的 SSTable 被合并到下层。读取流程：先查 MemTable（活跃 MemTable + 冻结中的 MemTable），然后从最新到最旧查各层 SSTable。为了解决读放大问题，使用布隆过滤器（快速判断数据是否在 SSTable 中）、块索引（稀疏索引定位块偏移）、块缓存。\n\n扩展延伸：LSM-Tree vs B+ Tree：LSM 写入性能高（顺序写替代随机写），读性能差（需查多层 SSTable），写放大会消耗大量 IO（Compaction），写入量是实际数据量的 10-50 倍。RocksDB/LevelDB（Google）是 LSM 实现的代表，LevelDB Level 0 有 4 个 SSTable，第 N 层容量是第 N-1 层的 10 倍，每层覆盖范围越来越大。Compaction 策略：Size-Tiered Compaction（Cassandra，按大小合并 SSTable，写放大较小但读放大较大）vs Leveled Compaction（LevelDB/RocksDB，按层合并，读放大较小但写放大较大）。WiscKey 提出 KV 分离技术，大 Value 存专门文件只在 LSM 中存地址，进一步优化读写性能。",
+    "hints": [
+      "LSM-Tree 的写放大和读放大的来源是什么",
+      "布隆过滤器在 LSM 读取优化中起什么作用"
+    ],
+    "tags": [
+      "存储引擎",
+      "LSM-Tree",
+      "NoSQL"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MVCC 实现机制",
+    "content": "请详细解释 MVCC（多版本并发控制）在 InnoDB 中的实现原理。",
+    "answer": "答案：MVCC 是多版本并发控制机制，通过数据多版本实现读不阻塞写、写不阻塞读\n\n解析：InnoDB 中每行数据包含两个隐藏列：DB_TRX_ID（创建/最后一次修改这条记录的事务 ID）和 DB_ROLL_PTR（回滚指针，指向 undo log 中上一个版本）。每次事务修改记录时会创建一个新版本并通过回滚指针链接旧版本形成版本链。Read View（读视图）决定事务能看到哪些版本：trx_ids（当前活跃事务 ID 列表，包括自身吗？不包括）、low_limit_id（当前最大事务 ID+1）、up_limit_id（trx_ids 中最小事务 ID）、creator_trx_id（创建 Read View 的事务 ID）。可见性规则：如果一个版本的事务 ID < up_limit_id，可见；如果事务 ID = creator_trx_id，可见；如果事务 ID 在活跃列表，不可见（需要沿 undo log 找更老的版本）；如果事务 ID > low_limit_id，不可见。\n\n扩展延伸：MVCC 与隔离级别：读未提交直接用最新行，不创建 Read View；读已提交在每次语句执行时创建 Read View，所以同一事务内两次查询可能看到不同结果（不可重复读）；可重复读在事务开始第一次查询时创建 Read View（快照），事务内一直用同一个快照，解决了不可重复读但可能出现幻读。MVCC 的局限性：对于 UPDATE/DELETE 需要加锁（行锁 + Gap Lock）才能真正防止幻读。Read View 的创建时机（RR 级别下）是第一个读操作创建 Snapshot，不是事务开始。所以如果在 RR 级别先 UPDATE 再 SELECT，SELECT 用的是当前读（current read）而非快照读。快照读 vs 当前读：快照读（普通的 SELECT）不加锁利用 MVCC，当前读（SELECT FOR UPDATE/UPDATE/DELETE）加锁读最新版本。",
+    "hints": [
+      "事务开始和 Read View 创建是同一时刻吗",
+      "快照读和当前读分别使用什么机制"
+    ],
+    "tags": [
+      "MySQL",
+      "MVCC",
+      "事务"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "查询优化器工作原理",
+    "content": "请解释数据库查询优化器的工作流程和执行计划生成过程。",
+    "answer": "答案：查询优化器将 SQL 语句转化为最优执行计划，决定如何访问数据和做连接\n\n解析：查询优化分为逻辑优化（RBO，基于规则的优化）和物理优化（CBO，基于代价的优化）。逻辑优化基于关系代数等价变换规则：1）谓词下推（Predicate Pushdown）— 尽早过滤数据减少后续处理数据量 2）投影下推 — 只读取需要的列 3）子查询扁平化（Subquery Unnesting）— 将子查询转换为 JOIN 使其更优执行 4）常量折叠 — 计算常量表达式 5）外连接转内连接 — 在语义允许时。物理优化：枚举多种执行计划（不同的 JOIN 顺序、访问路径、算法选择），用代价模型估算各计划的 CPU + IO 成本，选择最低者。\n\n扩展延伸：MySQL 的优化器在估算时依赖统计信息（cardinality、表行数、数据分布直方图），统计信息过期会导致选错索引。表连接算法：Nested Loop Join（小表驱动大表）、Hash Join（等值连接大表，MySQL 8.0 引入）、Sort-Merge Join（排好序的数据连接）。索引选择：优化器不一定选择（主要看 Cardinality 估算）。通过 FORCE INDEX/IGNORE INDEX 干预，或 ANALYZE TABLE 更新统计信息改善选择。MySQL Optimizer Trace（SET optimizer_trace='enabled=on'）跟踪优化器每一步决策细节。Oracle 的优化器有更丰富的统计信息和灵活性（自适应游标共享、动态采样）。",
+    "hints": [
+      "为什么统计信息过时会导致索引选错",
+      "Hash Join 和 Nested Loop Join 各自的适用场景"
+    ],
+    "tags": [
+      "MySQL",
+      "查询优化",
+      "执行计划"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库连接池原理",
+    "content": "请解释数据库连接池的工作原理和关键配置参数。",
+    "answer": "答案：连接池维护一组已建立好的数据库连接，供应用重复使用，避免频繁创建和销毁连接的开销\n\n解析：核心机制：初始化时创建一定数量的数据库连接（称为初始连接数/initialSize），应用从池中获取连接（getConnection），使用完毕归还（close -> 释放回池而非真正关闭）。当所有连接被占用时，后续请求等待其他连接归还（池满等待，通过 maxWait 配置超时）。池中的空闲连接超过 maxIdle 时关闭多余连接节省资源；当请求量增加时创建新连接直到最大连接数（maxActive）。工作流程也可以总结为：1）获取连接：检查是否有空闲连接，有空闲则取一个；没有则检查是否达到 maxActive，未达到则创建新连接；已达上限则等待有连接释放 2）归还连接：检查空闲数是否超过 maxIdle，超过则真正关闭，否则放回空闲队列 3）连接保活：定期发送测试查询（如 SELECT 1）验证连接有效性，清理断开的连接。\n\n扩展延伸：常见连接池框架：HikariCP（Spring Boot 默认，性能极高、字节码优化）、Druid（阿里开源，功能全面SQL监控/防火墙）、Tomcat JDBC Pool（Tomcat 内置）。连接池配置：1）maximumPoolSize 不是越大越好，过大会增加数据库负载和连接管理开销 2）minimumIdle 和 maximumPoolSize 建议相等（避免动态创建的风险，HikariCP 推荐）3）maxLifetime 应小于数据库连接超时时间（MySQL wait_timeout，通常 8 小时）4）connectionTimeout 不宜太长（默认 30 秒，可设为 5-10 秒让用户快速失败而不是无限等待）。事务和服务线程数的协调：连接池大小一般等于服务线程数，避免太多并发连接压垮数据库。",
+    "hints": [
+      "连接池最大连接数设置过大会有什么问题",
+      "MySQL 的 wait_timeout 和连接池 maxLifetime 的关系"
+    ],
+    "tags": [
+      "数据库",
+      "连接池",
+      "性能"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分片策略详解",
+    "content": "请详细分析各种数据库分片（Sharding）策略的优缺点及实现要点。",
+    "answer": "答案：分片将大型数据库拆分为多个独立的小型数据库实例以突破单机性能瓶颈\n\n解析：分片策略：1）范围分片（Range Sharding）— 按 ID/时间范围将数据分配到不同分片。优点：实现简单、范围查询高效、可扩展（增加新分片无需迁移）。缺点：写热点（最近数据集中在最新分片）、数据分布不均匀。2）哈希分片（Hash Sharding）— 对分片键取模/hash。优点：数据分布均匀、写压力分散。缺点：扩缩容需要大规模数据迁移（N 变 N' 群迁移问题），范围查询失效。3）一致性哈希分片 — 每个分片对应哈希环上多个虚拟节点。优点：增减节点只影响相邻节点，迁移量最小。4）基于目录的分片 — 维护表映射关系。优点：灵活。缺点：映射表有单点风险。\n\n扩展延伸：分片键选择：最优的分片键使大部分业务查询落在单个分片上，分散写入热点同时保证读性能。通常选用户 ID、商户 ID 等业务实体 ID。常见反模式：按时间分片（大量历史数据冷热不均），按随机 ID 分片（跨分片查询多）。分布式主键：分片后无法用自增 ID，需用 Snowflake/UUID/Segment 模式。跨分片查询难点：1）跨分片 JOIN — 应用层聚合或数据冗余 2）分布式事务 — 使用 Saga 或 TCC 3）全局排序/分页 — 各分片分别取结果后在应用层合并排序。扩缩容方案：1）停机迁移（传统但影响业务）2）MySQL N -> 2N 加倍迁移策略（数据迁移时只搬一半数据）3）基于 Proxy 的在线迁移（通过中间件逐步路由到新分片）。中间件选型：ShardingSphere-JDBC（客户端直连，去中间层无额外网络跳转）、MyCat（服务端代理，对应用透明）、Vitess（K8s 原生，云原生分片方案）。",
+    "hints": [
+      "范围分片为什么会出现热点问题",
+      "分片扩容时数据迁移量如何最小化"
+    ],
+    "tags": [
+      "数据库",
+      "分片",
+      "分布式"
+    ]
   }
 ]

@@ -702,22 +702,6 @@
     "category": "java_advanced",
     "difficulty": "medium",
     "type": "fill_in_blank",
-    "title": "死锁的四个必要条件",
-    "content": "产生死锁必须同时满足四个条件：____（资源一次只能被一个线程占用）、____（线程持有资源的同时请求其他资源）、____（资源不能被强制剥夺）和____（多个线程形成闭合等待链）。",
-    "answer": "{\"correct\":[[\"互斥条件\",\"互斥\"],[\"请求与保持\",\"占有并等待\"],[\"不剥夺\",\"非抢占\"],[\"循环等待\",\"循环等待条件\"]],\"distractors\":[[\"同步条件\",\"共享条件\",\"阻塞条件\"],[\"请求与等待\",\"保持与释放\",\"申请与释放\"],[\"剥夺条件\",\"分配条件\",\"抢占条件\"],[\"顺序等待\",\"并行等待\",\"异步等待\"]]}",
-    "hints": [
-      "破坏任意一个条件即可预防死锁",
-      "最常用的预防方法是资源顺序化——破坏循环等待条件"
-    ],
-    "tags": [
-      "并发",
-      "死锁"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
     "title": "volatile 的语义",
     "content": "volatile关键字保证多线程间的____（每次读取都从主存获取，写操作立即刷新到主存），禁止____（通过插入内存屏障实现），但____原子性（如count++操作仍需加锁）。",
     "answer": "{\"correct\":[[\"可见性\",\"内存可见性\"],[\"指令重排序\",\"重排序\",\"指令重排\"],[\"不保证\",\"无法保证\"]],\"distractors\":[[\"有序性\",\"持久性\",\"一致性\",\"可缓存性\"],[\"指令流水线\",\"指令预测\",\"指令缓存\",\"分支预测\"],[\"保证\",\"完全保证\",\"部分保证\",\"视情况保证\"]]}",
@@ -760,22 +744,6 @@
     "tags": [
       "并发",
       "AQS"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "线程池核心参数",
-    "content": "ThreadPoolExecutor的核心构造参数包括：corePoolSize表示____、maximumPoolSize表示____、keepAliveTime表示____、workQueue表示____。",
-    "answer": "{\"correct\":[[\"核心线程数\"],[\"最大线程数\"],[\"空闲存活时间\",\"空闲时间\",\"存活时间\"],[\"工作队列\",\"阻塞队列\",\"任务队列\"]],\"distractors\":[[\"最小线程数\",\"初始线程数\",\"活跃线程数\",\"缓冲线程数\"],[\"峰值线程数\",\"极限线程数\",\"弹性线程数\",\"扩缩线程数\"],[\"最大空闲时间\",\"超时时间\",\"等待时间\",\"调度周期\"],[\"缓冲队列\",\"延迟队列\",\"调度队列\",\"优先队列\"]]}",
-    "hints": [
-      "核心线程数满了后新任务会先放入工作队列",
-      "拒绝策略包括AbortPolicy、CallerRunsPolicy、DiscardPolicy、DiscardOldestPolicy"
-    ],
-    "tags": [
-      "并发",
-      "线程池"
     ]
   },
   {
@@ -863,6 +831,130 @@
       "CAS",
       "Atomic",
       "原子类"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Stream 并行流的工作原理",
+    "content": "Java 8 Stream 的并行流（Parallel Stream）通过___方法开启，底层使用___（默认线程池）来并行处理元素。并行流的正确使用需要满足两个核心条件：数据源的___性（如数组、ArrayList）、以及操作的无状态性和关联性。并行流不适合有阻塞操作或大量___操作的场景。",
+    "answer": "{\"correct\":[[\"parallel()\",\"parallelStream()\"],[\"ForkJoinPool\",\"ForkJoinPool.commonPool()\"],[\"可分割\",\"Splittable\",\"高效分割\"],[\"IO\",\"I/O\",\"文件\",\"网络\"]],\"distractors\":[[\"stream()\",\"parallel() 或 parallelStream()\",\"并发流\"],[\"ThreadPoolExecutor\",\"Executors\",\"ForkJoinPool.commonPool\"],[\"可变\",\"有序\",\"并发\"],[\"计算\",\"CPU\",\"内存\"]]}",
+    "hints": [
+      "并行流的默认线程池是 ForkJoinPool.commonPool()（线程数 = CPU 核数 - 1）",
+      "ArrayList 和数组的可分割性最好（可以精确按索引拆分）"
+    ],
+    "tags": [
+      "Java 8",
+      "Stream",
+      "并行流",
+      "ForkJoinPool"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Lambda 表达式的变量捕获",
+    "content": "Lambda 表达式可以捕获外围作用域的变量，但要求被捕获的变量必须是___（effectively final）——即在初始化后不再被修改。Lambda 表达式内部对类字段和静态变量没有这个限制，因为类字段和静态变量存储在___中，而局部变量存储在___上。JDK 8 之前，匿名内部类访问外部变量需要显式声明为___。",
+    "answer": "{\"correct\":[[\"事实不可变\",\"effectively final\",\"有效 final\"],[\"堆\",\"堆内存\"],[\"栈\",\"栈内存\",\"虚拟机栈\"],[\"final\",\"final 变量\"]],\"distractors\":[[\"final\",\"不可变\",\"不可修改\"],[\"栈\",\"方法区\",\"局部变量表\"],[\"堆\",\"方法区\",\"寄存器\"],[\"static\",\"volatile\",\"不可变\"]]}",
+    "hints": [
+      "effectively final 是 JDK 8 引入的概念——变量虽然没有 final 修饰符，但未被重新赋值",
+      "局部变量存在栈上，Lambda 捕获时拷贝了变量的值（不是引用）"
+    ],
+    "tags": [
+      "Java 8",
+      "Lambda",
+      "变量捕获",
+      "effectively final"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "方法引用的四种类型",
+    "content": "Java 8 方法引用（Method Reference）有四种形式：1）___——引用类的静态方法，如 Integer::parseInt；2）___——引用特定对象的实例方法，如 str::length；3）___——引用特定类型的任意对象的实例方法，如 String::length；4）___——引用构造方法，如 ArrayList::new。",
+    "answer": "{\"correct\":[[\"静态方法引用\",\"Class::staticMethod\",\"引用静态方法\"],[\"实例方法引用（特定对象）\",\"object::instanceMethod\",\"特定对象的方法引用\"],[\"实例方法引用（任意对象）\",\"Class::instanceMethod\",\"特定类型的实例方法\"],[\"构造方法引用\",\"Class::new\",\"构造器引用\",\"引用构造方法\"]],\"distractors\":[[\"类方法引用\",\"静态引用\",\"静态方法\"],[\"对象方法引用\",\"实例引用\",\"方法引用\"],[\"类型方法引用\",\"类实例方法\",\"ClassMethod::method\"],[\"new 引用\",\"构造函数引用\",\"构造器\"]]}",
+    "hints": [
+      "方法引用是 Lambda 表达式的更简洁写法，编译后生成同样的字节码",
+      "四种类型对应：类静态方法、特定对象方法、任意对象方法、构造器"
+    ],
+    "tags": [
+      "Java 8",
+      "方法引用",
+      "Lambda",
+      "语法糖"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Optional 的链式操作",
+    "content": "Java 8 Optional 提供链式操作避免 null 检查。常用方法包括：ofNullable() 创建可以包含 null 的 Optional；map() 对值进行转换（返回 Optional）；flatMap() 避免嵌套 Optional，要求转换函数返回___；orElse() 和___提供默认值；filter() 按条件过滤；ifPresent() 在值存在时执行 Consumer；___在值不存在时执行 Runnable。",
+    "answer": "{\"correct\":[[\"Optional\",\"Optional 对象\"],[\"orElseGet()\",\"orElseGet\"],[\"ifPresentOrElse()\",\"or\",\"orElseThrow()\"]],\"distractors\":[[\"值\",\"对象\",\"非 Optional\"],[\"orElseThrow()\",\"orElseThrow\",\"get()\"],[\"ifPresent()\",\"isPresent()\",\"get()\"]]}",
+    "hints": [
+      "flatMap 用于避免 Optional<Optional<T>> 的嵌套结构",
+      "orElse 不论值是否存在都会执行（即使值不为 null），orElseGet 是惰性求值"
+    ],
+    "tags": [
+      "Java 8",
+      "Optional",
+      "函数式",
+      "空安全"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CompletableFuture 的异步回调组合",
+    "content": "CompletableFuture 用于异步编程的回调组合。thenApply 对结果做转换（Function）；thenAccept 消费结果（Consumer，返回___）；thenCompose 用于将两个___的 CompletableFuture 扁平化（类似 flatMap）；thenCombine 将两个___的 CompletableFuture 的结果合并（BiFunction）；allOf 等待所有 CompletableFuture 完成（返回___）；anyOf 等待任意一个完成（返回第一个完成的结果）。",
+    "answer": "{\"correct\":[[\"Void\",\"CompletableFuture<Void>\"],[\"依赖\",\"有依赖关系\",\"链式\"],[\"独立\",\"无依赖\",\"独立并行\"],[\"CompletableFuture<Void>\"]],\"distractors\":[[\"null\",\"空\",\"空值\",\"void\"],[\"独立\",\"并行\",\"无依赖\"],[\"依赖\",\"串行\",\"关联\"],[\"CompletableFuture<Object>\",\"Void\",\"Object\"]]}",
+    "hints": [
+      "thenCompose 是 flatMap——每个 CompletableFuture 的执行依赖前一个的结果",
+      "thenCombine 是 zip——两个独立的 CompletableFuture 并行执行完成后合并结果"
+    ],
+    "tags": [
+      "Java 8",
+      "CompletableFuture",
+      "异步",
+      "回调"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ThreadPoolExecutor prestart 方法",
+    "content": "prestartCoreThread() 方法___（会/不会）预先启动一个核心线程使其等待任务。prestartAllCoreThreads() 启动___。allowCoreThreadTimeOut() 设置为 true 后核心线程也会在空闲超过___后被回收。",
+    "answer": "{\"correct\":[[\"会\"],[\"所有核心线程\"],[\"keepAliveTime\"]],\"distractors\":[\"不会\",\"一个\",\"最大线程数\",\"任务数\"]}",
+    "hints": [
+      "prestartCoreThread 默认线程池启动时没有线程，有任务才创建",
+      "allowCoreThreadTimeOut 适用于线程使用率波动大的场景"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "prestart"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "异步编程 CompletableFuture 异常处理",
+    "content": "CompletableFuture 的异常处理方法：exceptionally() 在异常时提供___值；handle() 无论正常或异常都执行，可以处理结果或异常；whenComplete() 在完成时执行，不能___结果。所有异常传播到 get() 时包装为___Exception。",
+    "answer": "{\"correct\":[[\"默认\",\"替代\"],[\"修改\"],[\"Execution\"]],\"distractors\":[\"备用\",\"返回\",\"Runtime\",\"Completion\"]}",
+    "hints": [
+      "exceptionally 类似 catch，handle 类似 try-finally",
+      "CompletionException 包装原始异常，通过 getCause() 获取"
+    ],
+    "tags": [
+      "并发",
+      "CompletableFuture",
+      "异常处理"
     ]
   }
 ]

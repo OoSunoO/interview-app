@@ -703,92 +703,6 @@
     "category": "java_advanced",
     "difficulty": "hard",
     "type": "fill_in_blank",
-    "title": "ZGC 的核心阶段",
-    "content": "ZGC 的垃圾回收过程包括三个主要阶段：___、___和___。",
-    "answer": "{\"correct\": [[\"并发标记\", \"Mark\"], [\"并发重定位\", \"Relocate\"], [\"重映射\", \"Remap\"]], \"distractors\": [\"并发清除\", \"标记-复制\", \"并发整理\", \"并发压缩\", \"根扫描\", \"并发过滤\", \"并发引用更新\"]}",
-    "hints": [
-      "ZGC 的所有 GC 阶段几乎都是并发的",
-      "重映射通常在下一轮 GC 中完成，与标记阶段合并"
-    ],
-    "tags": [
-      "JVM",
-      "ZGC",
-      "GC阶段"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "Shenandoah GC 的关键技术",
-    "content": "Shenandoah GC 使用___指针实现并发压缩，每次 GC 开始时在对象头前插入一个___字段，GC 移动对象后只需更新该字段。Shenandoah GC 的屏障是___屏障。",
-    "answer": "{\"correct\": [[\"Brooks\"], [\"转发\", \"forwarding\"], [\"写\", \"write\"]], \"distractors\": [\"染色\", \"Colored\", \"标记\", \"读\", \"read\", \"引用\", \"偏移\", \"标记位\", \"内存\"]}",
-    "hints": [
-      "Shenandoah 的指针技术不同于 ZGC 的染色指针",
-      "Shenandoah 通过更新指针实现并发移动"
-    ],
-    "tags": [
-      "JVM",
-      "Shenandoah",
-      "GC"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "CDS 归档加载方式",
-    "content": "CDS 全称为___，它创建___文件（扩展名为___）来存储类元数据。AppCDS 在此之上增加了对类加载器加载的应用类和___库的支持。",
-    "answer": "{\"correct\": [[\"Class Data Sharing\"], [\"共享归档\", \"归档\"], [\"jsa\"], [\"第三方\", \"third-party\", \"third party\"]], \"distractors\": [\"Class Dependency Sharing\", \"类数据共享\", \"预编译类\", \"jar\", \"class\", \"zip\", \"系统\", \"JDK内部\", \"标准\"]}",
-    "hints": [
-      "CDS 文件的后缀名",
-      "AppCDS 扩展了 CDS 的应用范围"
-    ],
-    "tags": [
-      "JVM",
-      "CDS",
-      "AppCDS",
-      "类加载"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "JIT 分层编译层次",
-    "content": "JVM 的分层编译共分为___层。第 0 层是___执行；第 1 层是___简单编译；第 4 层是___编译器编译（优化最深）。",
-    "answer": "{\"correct\": [[\"5\", \"五\"], [\"解释\"], [\"C1\", \"Client\"], [\"C2\", \"Server\"]], \"distractors\": [\"4\", \"四\", \"3\", \"三\", \"编译\", \"JIT\", \"即时\", \"Graal\"]}",
-    "hints": [
-      "C1 编译占用层数多于 C2",
-      "解释执行是第 0 层，C2 是最后一层"
-    ],
-    "tags": [
-      "JVM",
-      "JIT",
-      "分层编译"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "JVM 调优关键参数",
-    "content": "JVM 调优中，设置堆大小的参数是___和___；设置栈大小的参数是___；设置元空间大小的参数是___。",
-    "answer": "{\"correct\": [[\"-Xms\"], [\"-Xmx\"], [\"-Xss\"], [\"-XX:MetaspaceSize\"]], \"distractors\": [\"-Xmn\", \"-XX:MaxHeap\", \"-XX:HeapSize\", \"-XX:MaxRAM\", \"-XX:StackSize\", \"-XX:ThreadStack\", \"-XX:MaxMetaspaceSize\", \"-XX:PermSize\", \"-XX:MaxPermSize\"]}",
-    "hints": [
-      "-X 开头的参数是 JVM 标准参数",
-      "元空间参数以 -XX: 开头"
-    ],
-    "tags": [
-      "JVM",
-      "调优",
-      "参数"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
     "title": "CMS GC 工作阶段",
     "content": "CMS 垃圾回收器的工作流程分为：___（STW 暂停，标记 GC Roots 直接引用的对象）、___（与应用并发运行，从已标记的对象出发继续标记）、___（STW 暂停，修正并发标记期间变动的对象引用）和并发清理。",
     "answer": "{\"correct\":[[\"初始标记\",\"Initial Mark\"],[\"并发标记\",\"Concurrent Mark\"],[\"重新标记\",\"Final Remark\",\"Remark\"]],\"distractors\":[[\"最终标记\",\"预清理\",\"并发预清理\",\"预标记\"],[\"并发预清理\",\"并行标记\",\"串行标记\"],[\"并发重标记\",\"并行重标记\",\"并发清理\",\"重置\"]]}",
@@ -868,6 +782,186 @@
       "JVM",
       "类加载",
       "生命周期"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JIT 编译的触发条件",
+    "content": "JIT 编译的触发基于方法调用计数和循环回边计数。当方法在解释执行时调用次数超过___阈值（默认 10000 次 for C2）时，该方法会排队等待 JIT 编译。每个方法有两个计数器：即___计数器和___计数器。方法在安全点（Safepoint）处检查计数器状态决定是否触发编译。",
+    "answer": "{\"correct\":[[\"MethodInvocationThreshold\",\"方法调用阈值\",\"调用计数器阈值\",\"Tier4InvocationThreshold\"],[\"调用\",\"方法调用\",\"调用次数\"],[\"回边\",\"循环回边\",\"BackEdge\"]],\"distractors\":[[\"编译阈值\",\"OSR 阈值\"],[\"编译\",\"JIT\",\"循环\"],[\"栈上替换\",\"OSR\",\"BackEdgeThreshold\"]]}",
+    "hints": [
+      "C2 的编译触发阈值为 10000（Tier4InvocationThreshold），但实际会经过 C1 warmup",
+      "循环回边计数器触发 OSR（栈上替换）编译"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "编译",
+      "计数器"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "类加载器的双亲委派模型",
+    "content": "Java 类加载器的双亲委派模型（Parent Delegation Model）的工作流程：当一个类加载器收到类加载请求时，它首先将请求委派给___类加载器加载。只有当父加载器无法加载（抛出___异常）时，子加载器才尝试自己加载。三个核心类加载器从顶层到下层依次是：___、扩展类加载器（JDK 9 后为平台类加载器）和___。",
+    "answer": "{\"correct\":[[\"父\",\"父类\",\"parent\",\"父加载器\"],[\"ClassNotFoundException\"],[\"启动类加载器\",\"Bootstrap ClassLoader\"],[\"应用类加载器\",\"Application ClassLoader\",\"系统类加载器\",\"System ClassLoader\"]],\"distractors\":[[\"子\",\"子加载器\",\"根\"],[\"NoClassDefFoundError\",\"ClassCastException\"],[\"扩展类加载器\",\"平台类加载器\",\"自定义类加载器\"],[\"上下文类加载器\",\"线程上下文类加载器\",\"ExtClassLoader\"]]}",
+    "hints": [
+      "双亲委派模型保证了 Java 核心库的类型安全（防止自定义的 java.lang.String 替代核心类）",
+      "JDK 9 模块化后扩展类加载器（ExtClassLoader）被平台类加载器（Platform ClassLoader）替代"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "双亲委派",
+      "ClassLoader"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "String 常量池的位置变化",
+    "content": "String 常量池（String Pool / StringTable）在不同 JDK 版本中的位置不同：JDK 6 及之前位于___（通过 -XX:PermSize 控制）；JDK 7 之后移到了___（因为永久代空间太小导致 intern 失败）；JDK 8 移除永久代后，常量池在___中分配。",
+    "answer": "{\"correct\":[[\"永久代\",\"PermGen\",\"PermGen space\",\"方法区\"],[\"堆\",\"Java堆\",\"堆内存\"],[\"堆\",\"Java堆\",\"堆内存\"]],\"distractors\":[[\"堆\",\"栈\",\"元空间\"],[\"元空间\",\"字符串常量池\",\"永久代\"],[\"元空间\",\"Metaspace\",\"永久代\"]]}",
+    "hints": [
+      "JDK 6 中 PermGen 默认只有 64MB，大量 intern 容易 OOM",
+      "String 常量池也是垃圾回收的一部分（GC 会清理没有引用的 String 对象）"
+    ],
+    "tags": [
+      "JVM",
+      "String",
+      "常量池",
+      "内存"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM 堆内存参数设置",
+    "content": "JVM 堆内存相关的关键参数：-Xms 设置___；-Xmx 设置___；-Xmn 设置___大小；-XX:NewRatio 设置___与老年代的比例（默认 1:2 即年轻代占堆的 1/3）；-XX:SurvivorRatio 设置 Eden 与___区的比例（默认 8:1:1）。",
+    "answer": "{\"correct\":[[\"初始堆大小\",\"堆初始值\",\"最小堆内存\"],[\"最大堆大小\",\"堆最大值\",\"最大堆内存\"],[\"年轻代\",\"新生代\",\"年轻代大小\"],[\"年轻代\",\"新生代\"],[\"Survivor\",\"存活区\",\"Survivor 区\"]],\"distractors\":[[\"堆最大值\",\"最大堆\",\"堆初始\"],[\"堆初始值\",\"初始堆\",\"堆内存\"],[\"老年代\",\"Eden\",\"Survivor\"],[\"老年代\",\"Eden\",\"Survivor\"],[\"Eden\",\"老年代\"]]}",
+    "hints": [
+      "官方建议 -Xms 和 -Xmx 设置为相同值避免运行时扩容开销",
+      "-Xmn 越小，Young GC 越频繁但每次暂停越短；-Xmn 越大，GC 频率降低但单次暂停变长"
+    ],
+    "tags": [
+      "JVM",
+      "内存",
+      "参数",
+      "调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "GC 日志相关 JVM 参数",
+    "content": "JDK 8 中开启 GC 日志的核心参数：-XX:+PrintGCDetails（打印 GC 详细信息）、-XX:+PrintGCDateStamps（打印 GC 发生的___）、-Xloggc:gc.log（指定 GC 日志的___）。JDK 9+ 使用统一的日志系统：-Xlog:gc*:file=gc.log:time,uptime,level,tags。通过 GC 日志可以分析___GC 频率、Full GC 频率、___和晋升情况。",
+    "answer": "{\"correct\":[[\"时间戳\",\"日期\",\"日期时间\",\"时间\"],[\"输出文件\",\"文件名\",\"文件路径\",\"文件\"],[\"Young\",\"年轻代\",\"Minor\",\"新生代\"],[\"堆内存变化\",\"堆变化\",\"内存使用\",\"GC 暂停时间\"]],\"distractors\":[[\"堆大小\",\"GC 次数\"],[\"输出位置\",\"日志级别\",\"日志格式\"],[\"Major\",\"Old\",\"Mixed\",\"Full\"],[\"线程数\",\"类加载数\",\"编译时间\"]]}",
+    "hints": [
+      "JDK 8 和 JDK 9+ 的 GC 日志参数格式完全不同",
+      "-XX:+PrintGCDetails 是 JDK 8 最常用的 GC 日志选项"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "日志",
+      "调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "GC 根节点枚举",
+    "content": "GC 根节点（GC Roots）枚举需要在___（安全点/安全区域）进行。OopMap 记录了栈帧中哪些位置是___引用。在___（解释/编译）代码中 OopMap 更易维护。SafePoint 轮询通过___实现（读取一个内存页）。默认安全点间隔参数为___。",
+    "answer": "{\"correct\":[[\"安全点\"],[\"对象\"],[\"解释\"],[\"内存陷阱页\",\"轮询内存页\"],[\"1000ms\",\"1 秒\"]],\"distractors\":[\"安全区域\",\"变量\",\"编译\",\"超时检测\",\"500ms\"]}",
+    "hints": [
+      "OopMap 记录栈和寄存器中的对象引用位置",
+      "安全点轮询通常通过读取故障页（signal handler 处理）实现"
+    ],
+    "tags": [
+      "JVM",
+      "GC Roots",
+      "OopMap",
+      "SafePoint"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "记忆集与卡表",
+    "content": "GC 中的记忆集（Remembered Set）用于记录___（跨代/跨 Region）引用，避免扫描整个堆。卡表（Card Table）是记忆集的实现方式之一——将堆划分为多个___（512 字节），通过___（写屏障）在对象引用变更时标记对应卡页为脏页。G1 使用___（Per-Region Remembered Set）更精确地记录跨 Region 引用。卡表的写屏障是一种___（精确/近似）的内存屏障。",
+    "answer": "{\"correct\":[[\"跨代\",\"跨区域\"],[\"卡页\",\"Card\"],[\"写屏障\"],[\"PRS\"],[\"近似\"]],\"distractors\":[\"对象\",\"物理\",\"读屏障\",\"精确\"]}",
+    "hints": [
+      "卡表写屏障标记脏页（不精确但性能好）",
+      "G1 的 PRS（Per-Region Remembered Set）比 CMS 的 Card Table 更精确"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "记忆集",
+      "卡表"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Stop-The-World 机制",
+    "content": "JVM 进行 Full GC 时所有用户线程会进入___状态。这个机制称为___（STW / Stop-The-World）。在___（安全点/安全区域）线程的状态信息是完整一致的。STW 是通过在___代码中插入安全点检查实现的。JVM 通过___信号机制中断长时间未到达安全点的线程。",
+    "answer": "{\"correct\":[[\"暂停\",\"阻塞\"],[\"STW\"],[\"安全点\"],[\"JIT 编译\"],[\"SafepointTimeoutInMs\",\"超时中断\"]],\"distractors\":[\"运行\",\"SafePoint\",\"解释\",\"信号\"]}",
+    "hints": [
+      "安全点通常设置在方法返回、循环回边、异常抛出的位置",
+      "长时间 STW 是 GC 调优的核心关注点"
+    ],
+    "tags": [
+      "JVM",
+      "STW",
+      "安全点",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "类加载器 API",
+    "content": "Class.forName() 默认使用调用者的类加载器并___（执行/不执行）类的初始化。ClassLoader.loadClass() 加载类___（执行/不执行）初始化。线程上下文类加载器通过___方法设置，用于___（破坏双亲委派/加载 SPI 实现类）。URLClassLoader 可以从___路径加载类。",
+    "answer": "{\"correct\":[[\"执行\"],[\"不执行\"],[\"Thread.currentThread().setContextClassLoader()\"],[\"破坏双亲委派\"],[\"远程\"]],\"distractors\":[\"不执行\",\"执行\",\"getContextClassLoader()\",\"加载 SPI 实现类\",\"本地\"]}",
+    "hints": [
+      "Class.forName 和 ClassLoader.loadClass 的区别在于是否执行初始化",
+      "SPI 机制的核心是 ServiceLoader + 线程上下文类加载器"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "ClassLoader",
+      "SPI"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "方法区结构",
+    "content": "JDK 8 中方法区移到了___（本地内存）。方法区存储：___（类的版本、字段、方法、接口信息）、运行时常量池（字面量和符号引用）、___（JIT 编译后的代码）、JNI 相关数据。___（-XX:MaxMetaspaceSize）控制方法区的最大大小。如果类加载过多导致方法区溢出，会抛出___。",
+    "answer": "{\"correct\":[[\"元空间\",\"Metaspace\"],[\"类型信息\",\"类元数据\"],[\"Code Cache\",\"JIT 代码缓存\"],[\"-XX:MaxMetaspaceSize\"],[\"OutOfMemoryError: Metaspace\"]],\"distractors\":[\"堆\",\"堆外内存\",\"直接内存\",\"常量\",\"字符串\"]}",
+    "hints": [
+      "JDK 8 将永久代替换为元空间——类型信息移到本地内存",
+      "类加载泄漏（类加载器未被 GC）是 Metaspace OOM 的常见原因"
+    ],
+    "tags": [
+      "JVM",
+      "方法区",
+      "元空间",
+      "Metaspace"
     ]
   }
 ]

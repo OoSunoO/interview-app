@@ -618,24 +618,6 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "服务注册与发现",
-    "content": "服务注册与发现的核心组件包括{{____}}（存储服务地址信息）、{{____}}（注册和注销服务）、{{____}}（从注册中心获取服务地址并缓存）。常见的注册中心有{{____}}、{{____}}、{{____}}。客户端服务发现模式中，客户端直接从注册中心获取服务地址并{{____}}。服务端发现模式中，客户端通过{{____}}获取服务地址。",
-    "answer": "{\"correct\":[[\"注册中心\"],[\"服务提供者\"],[\"服务消费者\"],[\"Nacos\"],[\"Zookeeper\"],[\"Consul\"],[\"自行负载均衡\"],[\"负载均衡器（Load Balancer）\"]],\"distractors\":[[\"配置中心\",\"API网关\",\"监控中心\"],[\"服务消费者\",\"注册中心\",\"负载均衡器\"],[\"注册中心\",\"服务提供者\",\"负载均衡器\"],[\"Redis\",\"MySQL\",\"Kafka\"],[\"Eureka\",\"etcd\",\"Redis\"],[\"Eureka\",\"etcd\",\"Redis\"],[\"忽略缓存\",\"直接返回\",\"抛弃代理\"],[\"DNS\",\"配置中心\",\"服务网格\"]]}",
-    "hints": [
-      "客户端发现（Consumer 自己做负载均衡）vs 服务端发现（通过 Load Balancer 转发）",
-      "Nacos 支持 CP+AP 模式切换——AP 模式优先可用性，CP 模式优先一致性"
-    ],
-    "tags": [
-      "系统设计",
-      "服务发现",
-      "注册中心",
-      "微服务"
-    ]
-  },
-  {
-    "category": "system_design",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "异地多活架构的数据一致性挑战",
@@ -919,6 +901,110 @@
       "CRDT",
       "最终一致性",
       "冲突解决"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计分布式锁服务",
+    "content": "请设计一个高可靠的分布式锁服务，对比基于 Redis 和 ZooKeeper 的实现方案。",
+    "answer": "答案：分布式锁核心是互斥 + 可重入 + 容错\n\n解析：Redis 实现：SET key uuid NX PX 30000 加锁，Lua 脚本释放。优点：性能高、简单。缺点：主从切换可能丢失锁、没有自带续期机制。ZooKeeper 实现：创建临时顺序节点，监听前一个节点释放后获取锁。优点：强一致性、自带监听机制。缺点：性能低于 Redis、羊群效应。Redlock 算法：向大多数 Redis 节点同时申请锁，超过半数成功才算加锁成功，解决 Redis 单点问题但对时钟敏感。\n\n扩展延伸：续期机制：Redis 用 Watch Dog（守护线程在锁过期前续期）；ZK 无需续期（临时节点与会话绑定，会话断开自动释放）。可重入：加锁时记录线程身份和重入计数。公平锁 vs 非公平锁：ZK 天然公平（排队），Redis 需额外有序集合实现。最佳实践：业务场景容忍短暂不一致用 Redis，要求严格一致性用 ZK。",
+    "hints": [
+      "Redis 主从切换导致锁丢失怎么解决",
+      "Redlock 算法的争议点是什么"
+    ],
+    "tags": [
+      "分布式",
+      "锁",
+      "一致性"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计全局排行榜系统",
+    "content": "请设计一个支持亿级用户的实时全局排行榜系统。",
+    "answer": "答案：实时排行榜核心是高效的数据结构 + 分片 + 缓存\n\n解析：核心数据结构：Redis ZSet 是有序集合，基于跳表 + 哈希表实现，支持 O(log N) 的插入和范围查询。单 ZSet 理论可存上亿成员（需足够内存），写入压力大时需分片。分片策略：按用户 ID 哈希分到多个 ZSet 实例，查询全局排行时需合并结果。更新时间：用户在游戏/活动结束后更新，而非每次操作都更新。近似排行：对要求不高的场景，可用近似排行（布隆过滤器估算位数 + 概率性排序）。\n\n扩展延伸：实时 vs 准实时：全局排行允许数分钟延迟，用离线计算（MapReduce/Spark）+ Redis 缓存结果。榜单类型：积分榜、段位榜、社交榜（好友排名用 ZInterStore 取交集）。历史榜单归档：按赛季/时间段存储快照到 MySQL/HBase。防止刷榜：限制更新频率限流、数据校验、异常行为检测。ZSet 的 skip list 实现中，每个节点维护多层指针，平均层数约 1.33，插入时通过随机层数决策保证平衡。",
+    "hints": [
+      "上亿用户用单 ZSet 有哪些风险",
+      "多分片的全局排行如何合并"
+    ],
+    "tags": [
+      "分布式",
+      "排行榜",
+      "Redis"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多租户 SaaS 系统设计",
+    "content": "请设计一个多租户 SaaS 系统，支持资源隔离、租户定制和弹性扩缩。",
+    "answer": "答案：多租户核心是隔离模式 + 租户上下文 + 计量计费\n\n解析：隔离模式：1）Database per Tenant — 隔离性最好、备份恢复独立，适合大客户但每个租户一个 DB 运维成本高 2）Schema per Tenant — 共享数据库独立 Schema 3）Shared Table — 通过 tenant_id 列隔离，成本最低但数据恢复困难。数据库中间件层支持连接路由（根据租户 ID 选择 DB/Schema）。应用层：上下文透传（Token/Header 中的 tenant_id），租户定制通过元数据配置表而非硬编码。\n\n扩展延伸：租户资源限制：按租户级别做限流（令牌桶）、配额管理（API 调用次数、存储空间上限）。弹性：K8s HPA 根据整体负载自动扩缩。数据迁移：租户从共享表升级到独立 DB（数据迁移 + DNS 切换）。计量计费：实时采集租户资源使用量（API 调用量、存储量），写入时序库，定时结算。SaaS 成熟度模型 Level 1-4：从单租户单实例到多租户弹性平台。",
+    "hints": [
+      "三种隔离模式各自的运维复杂度差异",
+      "租户升级迁移时如何保证数据不丢失"
+    ],
+    "tags": [
+      "SaaS",
+      "多租户",
+      "架构"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计实时协同编辑系统",
+    "content": "请设计一个支持多人实时协同编辑的系统（类似 Google Docs），重点说明冲突解决策略。",
+    "answer": "答案：协同编辑核心是 OT 或 CRDT 算法 + WebSocket 通信\n\n解析：操作转换（OT）是 Google Docs 使用的经典方案，每个操作移动光标位置，服务端维护操作版本号，并发操作发生时对操作进行转换使其在各自文档上下文中语义正确。OT 难点在于正确实现所有操作类型的转换函数（insert/delete/format）。CRDT（无冲突可复制数据类型）则通过数据结构设计使并发写入天然可合并，不需要中心化转换。Yjs 的实现基于 CRDT，每个字符携带唯一 ID（客户端 ID + 逻辑时钟），在本地排序后合并。\n\n扩展延伸：通信架构通过 WebSocket 建立长连接，操作以批处理方式同步（按一定间隔或操作数合并发送以减少网络开销）。文本选区（Selection/Cursor）同步通过广播位置信息实现。服务端存储全量操作日志（Operation Log）用于回放和历史回溯。离线编辑：本地积累操作，联网后批量同步合并。性能关键：避免不必要的全量 diff，增量更新操作序列即可。Google Docs 使用 OT + 服务端集中式架构，VS Code Live Share 使用 CRDT。",
+    "hints": [
+      "OT 和 CRDT 的核心区别是什么",
+      "协同编辑中的光标位置怎么同步"
+    ],
+    "tags": [
+      "协同",
+      "实时",
+      "CRDT",
+      "OT"
+    ]
+  },
+  {
+    "category": "system_design_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计功能开关/特性标记系统",
+    "content": "请设计一个功能开关（Feature Flag/Feature Toggle）系统，支持灰度发布、A/B 测试和动态配置。",
+    "answer": "答案：特性标记系统核心是标记管理 + 目标匹配 + 动态生效\n\n解析：标记存储使用分布式配置中心（如 Nacos/etcd）保存标记规则，支持结构化配置（JSON/YAML）。目标匹配规则包括：按用户 ID（范围/白名单）、按百分比、按地域/客户端版本/设备类型等属性。标记评估在客户端或服务端完成：1）服务端评估 — 统一规则，安全性高，但延迟较高 2）客户端评估 — 缓存标记规则到本地，毫秒级响应，适合移动端。架构采用 SDK（集成到业务应用）+ 管理后台（可视化标记管理面板）+ 存储层。\n\n扩展延伸：标记的推出策略：ops 操作（百分比递增发布，从 1% -> 5% -> 50% -> 100%），自动回滚（监控到错误率上升自动关闭标记）。标记生命周期：创建 -> 评估 -> 稳定 -> 清理（技术债务：长期不清理的标记累积增加代码复杂度）。LaunchDarkly 商业方案的核心：流式（Streaming）推送规则变化，SDK 连接流通道实时接收更新。多环境管理：dev/staging/production 每个环境独立标记值。",
+    "hints": [
+      "功能标记长期不清理会有什么问题",
+      "客户端评估和服务端评估各有什么优缺点"
+    ],
+    "tags": [
+      "特性标记",
+      "灰度发布",
+      "A/B测试"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式消息队列系统设计",
+    "content": "请设计一个分布式消息队列系统（如 Kafka/Pulsar）。如何实现高吞吐的消息写入和持久化？如何保证消息不丢失？",
+    "answer": "答案：分布式消息队列的核心是分区（Partition）和日志（Log）的抽象。\n\n高吞吐消息写入：\n1. 顺序写入磁盘：所有消息追加写入日志文件末尾，避免随机 I/O。顺序磁盘 I/O 性能优于随机内存访问。\n2. 分区并行：每个 Topic 分为多个 Partition，Partition 分布在不同的 Broker 上，实现负载均衡\n3. 批量发送和压缩：Producer 端批量发送消息（batch），Broker 端批量落盘。批量压缩（gzip/snappy/zstd）减少网络传输和磁盘存储量。\n4. 零拷贝（Zero-Copy）：Consumer 读取数据时直接从 Page Cache 到网卡，跳过用户态内存拷贝。\n5. 页缓存（Page Cache）：利用操作系统的页缓存，Broker 进程不维护独立缓存\n\n消息不丢失保证：\n1. 持久化确认：Producer 端设置 acks=all（所有副本写入成功才算确认）\n2. ISR（In-Sync Replica）：只有 ISR 集合中的副本参与 Leader 选举，保证数据不丢失\n3. 幂等写入：Producer 携带唯一 ID（ProducerId + Sequence Number），Broker 去重\n4. 事务 API：跨分区原子写入（Producer 端事务协调器）\n5. 消费端偏移量管理：消费完成后才提交偏移量，防止重启重复消费\n\n扩展延伸：Pulsar 使用计算存储分离架构——Broker 只处理计算，BookKeeper 负责持久化存储。Kafka 的 Partition 是有序的消息序列（类似于日志），消费者维护偏移量（Offset）追踪消费位置。Kafka 3.0+ 的 KRaft 模式移除了对 ZooKeeper 的依赖。",
+    "hints": [
+      "顺序 IO + 页缓存 + 零拷贝 = Kafka 高吞吐的三大支柱",
+      "ISR + acks=all + 幂等 Producer 保证消息不丢失"
+    ],
+    "tags": [
+      "系统设计",
+      "消息队列",
+      "Kafka",
+      "高吞吐"
     ]
   }
 ]

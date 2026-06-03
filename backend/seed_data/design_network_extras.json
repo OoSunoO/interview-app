@@ -488,42 +488,6 @@
     "category": "java_advanced",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "状态模式（State）",
-    "content": "状态模式（State Pattern）和策略模式（Strategy Pattern）在结构上很相似，它们的本质区别是什么？状态模式在实际项目中如何应用？",
-    "answer": "答案：两种模式结构相似（都使用组合+多态），但意图不同：状态模式中状态之间可以转换（状态决定行为，行为改变状态），策略模式中策略由客户端选择且不改变（策略是外部注入的算法，状态是对象自身的模式转换）。\n\n解析：状态模式的核心——1）Context（上下文）持有当前状态的引用，将请求委托给当前状态对象处理。2）State（抽象状态）定义行为接口。3）ConcreteState（具体状态）实现行为，并且在行为中可以切换到另一个状态（改变 Context 的状态引用）。状态转换——可以用状态图来表示。转换逻辑放在状态对象中（每个状态知道自己的后续状态），也可以放在 Context 中（集中管理所有转换规则）。\n\n扩展延伸：策略模式 vs 状态模式——策略：客户端决定用什么策略（传哪个算法进去），策略通常没有内部状态，用完即弃。状态：状态对象内部决定下个状态（状态的改变是自动的），外部不需要知道具体状态。应用场景——1）订单状态机：新建 → 待支付 → 已支付 → 已发货 → 已完成（每个状态的行为和可转换的下个状态都有明确规则）。2）TCP 连接状态：CLOSED → SYN_SENT → ESTABLISHED → ...3）游戏角色状态：站立 → 跑动 → 跳跃 → 倒地。Spring 的 StateMachine（状态机框架）基于状态模式构建。也可用枚举 + 状态转换表实现更简单的状态机（对比模式：Simple State Machine vs State Pattern）。",
-    "hints": [
-      "状态模式的状态转换放在状态对象中还是 Context 中——两种方案分别适用什么场景",
-      "策略模式是外部选择策略，状态模式是内部自动转换"
-    ],
-    "tags": [
-      "设计模式",
-      "状态模式",
-      "状态机",
-      "State"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "桥接模式（Bridge）",
-    "content": "桥接模式（Bridge Pattern）解决什么问题？它和适配器模式（Adapter Pattern）有什么区别？",
-    "answer": "答案：桥接模式将抽象部分和实现部分分离，使它们可以独立变化。解决「类爆炸」问题——如果抽象有 M 种变化、实现有 N 种变化，直接继承需要 M×N 个类，桥接模式只需要 M+N 个类。\n\n解析：结构——Abstraction（抽象）持有 Implementor（实现接口）的引用，通过组合而非继承来解耦。Abstraction 负责高层逻辑，Implementor 负责底层实现。示例：Shape 是抽象（Circle/Square），Color 是实现（Red/Blue）。Shape 持有 Color 引用，说「画红色的圆形」时，Circle 调用 Color 的「应用红色」方法。\n\n扩展延伸：桥接 vs 适配器——适配器解决「接口不兼容」问题（把旧的接口适配到新的期望接口），目的是让不兼容的类可以协作。桥接解决「抽象与实现耦合」问题，目的是让抽象和实现可以独立扩展。适配器是事后补救（让已存在的类工作起来），桥接是事前设计（让未来的变化更灵活）。JDK 中的桥接模式：JDBC Driver——DriverManager（抽象）+ 各数据库 Driver（实现）。Java 的 List 接口 + AbstractList + ArrayList/LinkedList（虽然不是经典桥接，但体现了「抽象与实现分离」的思想）。",
-    "hints": [
-      "桥接模式为什么能避免 M 乘以 N 的类爆炸——从继承到组合的思维转变",
-      "JDBC Driver 如何体现了桥接模式——同一个 API 对接不同数据库"
-    ],
-    "tags": [
-      "设计模式",
-      "桥接",
-      "Bridge",
-      "解耦"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
     "title": "观察者模式（Observer）与发布订阅模式",
     "content": "观察者模式（Observer Pattern）和发布订阅模式（Pub-Sub）有什么区别？Java 中的 Observable/Observer 为什么被标记为 Deprecated？",
     "answer": "答案：观察者模式是 Subject 直接持有 Observer 列表并通知，发布订阅模式通过 Broker/Event Channel 解耦发布者和订阅者。两者的本质区别：观察者模式是「直接通信」（观察者知道 Subject），发布订阅是「间接通信」（双方不知道对方）。\n\n解析：观察者模式——Subject 维护 Observer 列表，状态变化时调用所有 Observer 的 update() 方法。同步、直接。缺点：Subject 和 Observer 紧耦合（Subject 需要知道 Observer 的存在和接口）。发布订阅模式——Publisher → Event Channel/Broker → Subscriber。发布者将消息发到 Channel，订阅者从 Channel 接收。两者完全解耦（通过中间层。Publisher 不关心谁在订阅，Subscriber 不关心谁在发布）。\n\n扩展延伸：Java 的 Observable/Observer 为什么被标记为 deprecated（Java 9+）？1）Observable 是类而非接口，限制了子类的灵活性（Java 单继承限制）。2）事件通知顺序未定义，不支持多线程安全。3）没有提供更细粒度的事件过滤。4）替代方案：PropertyChangeListener（Java Beans）、RxJava/Reactive Streams（响应式流）。实际应用中的替代——现在几乎没有人在 Java 中用 Observable/Observer。Spring 的 ApplicationEvent/ApplicationListener 是发布订阅模式，Guava 的 EventBus 也是发布订阅。消息队列（Kafka/RabbitMQ）是分布式发布订阅的典型实现。",
@@ -904,6 +868,127 @@
       "TLS",
       "安全",
       "Service Mesh"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "QUIC 与 HTTP/3 协议",
+    "content": "请解释 QUIC 协议的核心特性和 HTTP/3 相比 HTTP/2 的优势。",
+    "answer": "答案：QUIC 基于 UDP 实现了类似 TCP 的可靠传输 + TLS 1.3 加密 + 多路复用\n\n解析：QUIC 核心设计：1）基于 UDP — 避免 TCP 在操作系统内核实现的升级困难，可在用户态快速迭代 2）内置 TLS 1.3 — 加密默认且不可协商，握手比 TCP+TLS 少 1 个 RTT（0-RTT 可复用）3）连接迁移 — 用 Connection ID 而非 IP:Port 标识连接，切换网络（WiFi 切 4G）不断连 4）多路复用无队头阻塞 — 单个流丢包不影响其他流。HTTP/3 将 HTTP/2 的 HPACK 头部压缩改为 QPACK（适应乱序到达），帧和流模型基本继承 HTTP/2。\n\n扩展延伸：0-RTT：已连接过的客户端可携带加密数据和 HTTP 请求同时发出，服务端可直接回复，但存在重放攻击风险（幂等性检查）。多级流优先级：HTTP/3 引入了比 HTTP/2 更细粒度的 Extensible Priorities（Urgency + Incremental 标记）。QUIC 丢包检测：使用更精确的 RTT 计算和更快的丢包重传（基于包序号单调递增而非 TCP 的序列号+ACK 歧义）。QUIC 应用的现状：Google 内部（YouTube/Chrome）已广泛使用，CDN 覆盖逐步扩大但仍有中间设备（防火墙/负载均衡器）阻止 UDP 流量的问题。",
+    "hints": [
+      "QUIC 如何解决 TCP 队头阻塞问题",
+      "0-RTT 的重放攻击风险怎么缓解"
+    ],
+    "tags": [
+      "QUIC",
+      "HTTP/3",
+      "网络协议"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "BGP 协议基础",
+    "content": "请解释 BGP（边界网关协议）的基本原理和路由决策过程。",
+    "answer": "答案：BGP 是互联网核心路由协议，在不同自治系统（AS）之间交换可达性信息\n\n解析：BGP 是路径向量协议，不同于 OSPF/IS-IS 等内部网关协议（IGP）。每个 BGP 路由更新包含目标网络前缀 + AS_PATH（经过的 AS 序列）+ 其他路径属性。路径选择依据多条属性决策过程（BGP Best Path Selection）：1）最高 Weight（本地 Cisco 特有）2）最高 Local_Preference（AS 内策略）3）本地起源（network/aggregate）优于重分布 4）最短 AS_PATH 5）最低 Origin Type（IGP < EGP < Incomplete）6）最低 MED（跨 AS 度量）7）eBGP 优于 iBGP 8）最近的 IGP 下一跳等等共 13 步。\n\n扩展延伸：iBGP vs eBGP：eBGP 在 AS 间交换路由，默认 TTL=1；iBGP 在 AS 内部保证一致路由视图。iBGP 要求全连接（full mesh），通过 Route Reflector 或 Confederation 解决扩展性问题。路由策略和流量工程：通过 Local_Preference 控制出站流量，通过 MED/AS_PATH Prepending 控制入站流量。BGP 安全问题：路由劫持（前缀劫持）通过 RPKI（Resource Public Key Infrastructure，资源公钥基础设施）验证路由源 AS 合法性缓解。BGP convergence 在大规模拓扑中较慢，需要各种优化技术（BGP PIC、前缀独立收敛）。",
+    "hints": [
+      "Local_Preference 和 MED 分别控制什么方向的流量",
+      "BGP Route Reflector 解决什么问题"
+    ],
+    "tags": [
+      "BGP",
+      "路由",
+      "网络"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Anycast 原理与应用",
+    "content": "请解释 Anycast 路由原理及其在 CDN/DNS 中的应用。",
+    "answer": "答案：Anycast 将同一 IP 地址从多个地点同时宣告，路由器自动将用户导向最近的节点\n\n解析：原理：多个节点（不同地理位置）通过 BGP 宣告同一 IP 前缀段，互联网路由器根据 BGP 选路规则自动选择“最近”的节点（通常是最短 AS_PATH）。用户无需感知，访问同一 IP 就被分流到最近的服务节点。核心优势：1）自动故障切换 — 某个节点宕机后 BGP 撤销路由，流量自动切换 2）负载分散 — 用户请求分散到不同节点 3）低延迟 — 流量自然路由到最近节点。典型应用：DNS Root Server（13 个根服务器地址实际有 1000+ 个 Anycast 节点），CDN 加速（用户访问 CDN 的边缘节点），DDoS 防护（Cloudflare/AWS Shield 将攻击流量分散到全球节点消化）。\n\n扩展延伸：Anycast 的问题：1）路由不稳定 — BGP 路由抖动会导致长连接中断（TCP 连接因路由变化断开），对实时应用不友好 2）TCP 连接状态不共享 — 后续请求可能到达不同节点，需设计无状态服务或共享 session 3）路由不对称 — 请求和响应可能走不同路径，需要应用层容错。L4 负载均衡中的 Anycast 实践：Facebook 的 L4LB 利用 Anycast 将流量分配到多个 Linux 负载均衡器（均接受同一 VIP）。Unicast vs Multicast vs Broadcast vs Anycast：Unicast 一对一，Multicast 一对多组，Broadcast 一对全部，Anycast 一对最近。",
+    "hints": [
+      "Anycast 中 TCP 长连接遇到路由改变会怎样",
+      "DDoS 防护用 Anycast 的原理是什么"
+    ],
+    "tags": [
+      "Anycast",
+      "路由",
+      "CDN"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DNS 解析深入",
+    "content": "请详细解析 DNS 递归解析和迭代解析的过程及优化方法。",
+    "answer": "答案：DNS 解析将域名转换为 IP 地址，依缓存层级逐级查询\n\n解析：递归解析（通常客户端到本地 DNS 递归器）：客户端问本地 DNS 解析器，解析器负责完成全部分析返回结果。迭代解析（递归器向权威服务器查询的典型模式）：根域名服务器 -> TLD 顶级域服务器（.com/.cn）-> 权威域名服务器（example.com），每一步返回下一步要查询的服务器的地址。解析器的多级缓存：浏览器缓存 -> 操作系统缓存（hosts 文件）-> 本地 DNS 解析器缓存（运营商/公共 DNS 如 8.8.8.8）-> 权威服务器。缓存失效：每个 DNS 记录有 TTL（通常在 60-86400 秒），在 TTL 内缓存结果，过期则重新查询。\n\n扩展延伸：DNS 优化：1）预解析（<link rel=\"dns-prefetch\">）提前解析域名 2）抢占解析（Chrome 的 Predictor，在用户悬停链接时解析）3）HTTP/2 Server Push 可能包含域名解析信息 4）CDN 通过 CNAME 将域名指向 CDN 的 GSLB（全局负载均衡器），自动选择最优 CDN 节点。DNS 扩展机制（EDNS）：支持 DNSSEC（防止缓存投毒）、ECS（EDNS Client Subnet，让 CDN 根据客户端实际 IP 而非解析器位置响应）。解析器类型：运营商 DNS（延迟低但可能缓存污染）、公共 DNS（8.8.8.8/1.1.1.1 可靠但延迟略高）、DoH/DoT（加密 DNS 解析防止窥探/篡改）。",
+    "hints": [
+      "递归解析和迭代解析的区别在哪里",
+      "ECS（EDNS Client Subnet）解决什么问题"
+    ],
+    "tags": [
+      "DNS",
+      "网络协议",
+      "优化"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CDN 边缘计算",
+    "content": "请解释 CDN 的工作原理以及边缘计算在 CDN 中的演进。",
+    "answer": "答案：CDN 通过在全球部署边缘节点缓存静态内容，使用户就近获取数据\n\n解析：CDN 核心架构：1）边缘节点（Edge/Edge POP）— 部署在全球各地，存储热点缓存，响应终端用户请求 2）中间层（Mid-tier）— 边缘未命中时回源到中间层，多层缓存减轻源站压力 3）源站（Origin）— 存储原始内容。流量调度通过 GSLB 分配最近的 CDN 节点（基于 DNS 或 Anycast）。缓存策略：CDN 规则控制(TTL + 缓存控制头)、预热(预拉取)、分层回源。从纯粹的内容缓存演进到边缘计算：边缘节点上运行代码(Cloudflare Workers/AWS Lambda@Edge/阿里云 EdgeScript)处理请求，可直接在边缘执行 JS/Python/WebAssembly 函数而不必回源站。\n\n扩展延伸：边缘计算的核心价值：1）减少延迟 — 在离用户最近的节点处理计算逻辑，跳过回源的长距离网络 2）降低源站成本 — 源站只需提供数据和核心逻辑 3）弹性 — 利用 CDN 的全球资源实现按需扩缩。使用场景：JWT 验证/请求转发、图像优化（WebP 转换/缩放）、A/B 测试路由、API 聚合与响应组装、内容个性化。限制：运行环境受限（CPU/内存/存储有限）、无状态（持久化需回源）、不支持某些系统调用（文件系统/线程）。新兴趋势：Wasm（WebAssembly 沙箱）在边缘的部署，比 JavaScript 隔离更安全、启动更快。",
+    "hints": [
+      "CDN 多层缓存怎么避免缓存风暴",
+      "边缘计算为什么适合做请求聚合和协议转换"
+    ],
+    "tags": [
+      "CDN",
+      "边缘计算",
+      "缓存"
+    ]
+  },
+  {
+    "category": "network",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TCP BBR 拥塞控制",
+    "content": "请解释 TCP BBR（Bottleneck Bandwidth and Round-trip propagation time）拥塞控制算法的原理。BBR 与传统的基于丢包的拥塞控制（如 CUBIC）有什么本质区别？",
+    "answer": "答案：BBR 是 Google 提出的基于模型（Model-based）的拥塞控制算法。\n\n原理：BBR 周期性测量两个关键参数：\n1. 带宽（Bottleneck Bandwidth, BtlBw）：链路的最大传输速率\n2. 往返时间（Round-trip Propagation Time, RTprop）：链路的最小 RTT\n\n通过这两个参数计算最佳工作点：带宽 × 延迟 = 管道容量（BDP）\nBBR 的目标是让发送速率维持在 BDP 附近，既不造成排队也不浪费带宽。\n\nBBR 与传统算法（CUBIC/Reno）的本质区别：\n- 传统算法：基于丢包检测——填满缓冲区直到发生丢包才降低速率\n- 问题：引入大量延迟（Bufferbloat），带宽利用率在丢包率高时骤降\n- BBR：基于带宽和延迟建模——主动控制发送速率以避免排队\n- 优势：延迟更低（减少 50-90%），吞吐量更稳定（尤其在高丢包率链路）\n\n工作阶段：\n1. Startup：指数增长探测带宽上限\n2. Drain：降低速率排空 Startup 积累的队列\n3. ProbeBW：稳定状态下周期性探测带宽变化\n4. ProbeRTT：进入小窗口探测最小 RTT\n\n扩展延伸：BBR 在 YouTube 和 Google Cloud 中广泛使用。BBRv3 进一步改进了与 CUBIC 的公平性。BBR 不适合延迟敏感场景（如实时音视频）。考虑使用 WebRTC 的 GCC（Google Congestion Control）。",
+    "hints": [
+      "BBR 基于带宽×延迟模型，而非丢包检测",
+      "BBR 主动避免排队→延迟更低，吞吐更稳定"
+    ],
+    "tags": [
+      "网络",
+      "TCP",
+      "BBR",
+      "拥塞控制"
+    ]
+  },
+  {
+    "category": "network",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "eBPF 网络观测",
+    "content": "请介绍 eBPF（extended Berkeley Packet Filter）在网络安全和观测中的应用。eBPF 如何实现无侵入的应用监控？XDP 和 TC 钩子的区别是什么？",
+    "answer": "答案：eBPF 是 Linux 内核的沙箱虚拟机技术，允许在不修改内核源码或加载内核模块的情况下安全地执行用户自定义代码。\n\n无侵入应用监控：\n1. 内核探针（kprobe/tracepoint）：监控系统调用、网络事件、文件系统操作\n2. 用户态探针（uprobe）：在用户态函数的入口/出口插入探针\n3. eBPF 程序在内核中执行，收集数据后通过 map 或 perf_event 传递到用户态\n4. 不需要修改应用代码、重启进程或加载内核模块\n\nXDP（eXpress Data Path）：\n- 在网络驱动层（NIC 驱动收到数据包后最早的时刻）执行\n- 在协议栈处理之前，性能最高\n- 应用：DDoS 防护（最快丢弃包）、负载均衡（Cilium）、包过滤\n\nTC（Traffic Control）钩子：\n- 在内核协议栈处理过程中执行（ingress/egress）\n- 可以访问已解析的协议头、进行修改和重定向\n- 应用：容器网络策略（Cilium NetworkPolicy）、流量加密、协议转换\n\nXDP vs TC：XDP 更早期（驱动层），提供纳秒级处理；TC 更后期（协议栈内），可以修改包内容。\n\n扩展延伸：Cilium 基于 eBPF 实现的 Kubernetes CNI 插件——替代 kube-proxy、实现 NetworkPolicy、提供可观测性。Falco 使用 eBPF 实现容器运行时安全。Pixie 使用 eBPF 实现 Kubernetes 应用的可观测性。eBPF 是云原生网络和安全的核心技术。",
+    "hints": [
+      "eBPF 通过内核探针实现无侵入监控",
+      "XDP（驱动层）比 TC（协议栈层）更早期性能更高"
+    ],
+    "tags": [
+      "网络",
+      "eBPF",
+      "XDP",
+      "Cilium"
     ]
   }
 ]

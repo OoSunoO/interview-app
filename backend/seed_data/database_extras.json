@@ -912,5 +912,90 @@
       "分区键",
       "一致性哈希"
     ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "时序数据库设计",
+    "content": "请解释时序数据库（Time-Series Database）的设计特点和存储优化策略。",
+    "answer": "答案：时序数据库针对时间戳数据的写入和查询做了专门优化\n\n解析：时序数据特征：持续写入、按时间排序、很少更新、数据按时间范围查询和分析。存储优化：1）列式存储 — 按列而非行存储，同一列的数据类型相同可高效压缩（差值编码/游程编码/Snappy）。2）LSM-Tree 写入优化 — 利用顺序写高吞吐，支持海量并发写入。3）时间分区 — 按时间范围分区表，过期数据直接删除分区文件（无需 DELETE + VACUUM）。4）降采样（Downsampling）— 自动将原始数据聚合为较粗粒度的统计值（Rollups），如原始 1 秒精度数据保留 7 天，7 天后聚合成 1 分钟精度保留 30 天。5）数据压缩 — InfluxDB 使用整数的 Simple8b 和浮点数的 XOR 压缩（基于 Facebook Gorilla 论文），压缩比可达 10:1-30:1。\n\n扩展延伸：时序数据库对比：InfluxDB（专用 TSDB，强大查询语言 Flux，但开源版集群功能有限）、TimescaleDB（基于 PostgreSQL 扩展的时序数据库，可利用 PG 生态，自动分区和压缩）、Prometheus（Pull 模型采集 + 内置 Alertmanager，适合监控场景，但有单点限制）。时序数据库建模：Metric（指标名） + Tags（维度标签，可索引） + Timestamp + Value。宽表 vs 窄表：时序数据通常用宽表（每行一个时间点 + 所有字段），但标签应建模为 metric 维度而非列。查询优化：预聚合（Continuous Aggregate 定时计算常用查询的聚合结果）、倒排索引（按标签快速过滤时间序列）。",
+    "hints": [
+      "时序数据库的列式压缩为什么比行式压缩更高效",
+      "Prometheus 的 Pull 模型和 Push 模型适用场景对比"
+    ],
+    "tags": [
+      "时序数据库",
+      "TSDB",
+      "存储"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "向量数据库索引",
+    "content": "请介绍向量数据库的索引结构以及近似最近邻搜索（ANN）的算法。",
+    "answer": "答案：向量数据库通过专门索引结构实现高维向量的近似最近邻搜索\n\n解析：ANN 主要算法：1）IVF（倒排文件）— 先对向量集做 K-means 聚类，查询时只搜索最近几个聚类中心的向量，用 PQ（乘积量化）压缩向量减少内存。IVF-PQ 是经典组合，速度快但召回率有损。2）HNSW（分层可导航小世界图）— 构建多层的近邻图，上层抽象跳跃到更远距离，底层精确查找。搜索从上到下逐步精确。HNSW 召回率高、搜索速度快，但索引构建慢、内存占用高。3）DiskANN — 基于 Vamana 图，使用 SSD 存储索引，平衡内存和磁盘。4）LSH（位置敏感哈希）— 将相近的向量以高概率映射到同一个桶中，小众但理论保证好。\n\n扩展延伸：量化方法：PQ（Product Quantization，乘积量化）将向量空间分解为多个子空间分别量化，用码本中的 ID 近似表示子向量，极大压缩（如 128 维向量可用 8-bit*8=64 bits 表示）。元数据过滤：搜索时先或后按用户标签过滤候选集，常见后过滤（先 ANN 搜索再按元数据过滤）可能导致 100 召回但空结果，前过滤（在搜索时就加上约束）更好但可能降低搜索效率。向量数据库对比：Milvus（支持 GPU 加速，云原生）、Pinecone（全托管 SaaS）、Weaviate（内置对象存储和 GraphQL）、Qdrant（Rust 实现，高并发）。Scann（Google）：使用空间感知的分层量化，在中等召回率区域比 HNSW 更快。混合搜索：BM25 文本检索 + 向量语义检索的融合（RRF 加权融合），这是 RAG 系统的核心实践。",
+    "hints": [
+      "HNSW 的层级图为什么能加速搜索",
+      "后过滤元数据会导致什么问题"
+    ],
+    "tags": [
+      "向量数据库",
+      "ANN",
+      "索引"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "列式存储与行式存储",
+    "content": "请对比列式存储和行式存储的存储格式、压缩机制和适用场景。",
+    "answer": "答案：列式存储按列组织数据，行式存储按行组织数据，各自适配不同的工作负载\n\n解析：行式存储（MySQL InnoDB 页面）：同一行的所有列连续存储，适合 OLTP（点查询、频繁增删改、事务）。列式存储（Parquet/ORC）：同一列的所有值连续存储，适合 OLAP（聚合查询、批量扫描）。列存优势：1）查询只需读取涉及列 2）同一列数据类型一致，高压缩比（Run-Length Encoding、差值编码、字典编码）3）向量化执行（SIMD 加速列处理）。行存优势：1）单行所有字段一次 I/O 即可获取 2）插入/更新整行效率高 3）事务处理天然友好。列存劣势：重建完整行需多列数据合并。行存劣势：读取大量行的少数列时浪费 I/O 和缓存。\n\n扩展延伸：Parquet 列式格式：数据以 Row Group 组织，每个 Column Chunk 内按 Page 分页（Data Page、Dictionary Page）。Parquet 支持复杂的嵌套数据类型（JSON、Struct、List）。ORC（Hive 优化的列存格式）比 Parquet 有更好的索引（Bloom Filter、Min/Max 统计索引）和更高压缩比（按 stripe 组织数据，stripe 内有 index data 区）。列式数据库：ClickHouse（列存 + 向量化执行，单表聚合极快）、Snowflake（混合列存 + 微分区）、DuckDB（嵌入式 OLAP，列存引擎）。HTAP（混合事务/分析处理）：TiDB（行存 TiKV + 列存 TiFlash，数据自动同步）、MySQL HeatWave、SingleStore 通过双格式存储同时支持 OLTP 和 OLAP。",
+    "hints": [
+      "列式存储的压缩为什么比行式存储好",
+      "ClickHouse 的快是依赖列式存储还是向量化执行"
+    ],
+    "tags": [
+      "列式存储",
+      "OLAP",
+      "存储格式"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "NewSQL 数据库架构",
+    "content": "请解释 NewSQL 数据库的架构设计及其与传统数据库和 NoSQL 的对比。",
+    "answer": "答案：NewSQL 融合 NoSQL 的扩展性和 SQL 的 ACID 事务能力，典型代表是 TiDB、CockroachDB\n\n解析：NewSQL 诞生背景：传统单体数据库（MySQL/Oracle）扩展能力有限，NoSQL（MongoDB/HBase）牺牲了 SQL 能力和强一致性。NewSQL 致力于在分布式架构上实现完整的 SQL 支持和 ACID 事务。架构设计：1）计算与存储分离 — SQL 计算节点无状态、可水平扩展，存储节点自动分片（Region/Range）2）自动分片（Auto-Sharding）— 数据按 Key Range 自动分片，跨节点重新均衡 3）分布式事务 — 基于 Percolator（TiDB）或 Calvin 的分布式事务协议提供 ACID 保证 4）MVCC 实现快照隔离（SI）或可序列化隔离。\n\n扩展延伸：TiDB 架构：TiDB（SQL 层，兼容 MySQL 协议）负责 SQL 解析和分布式执行计划，PD（Placement Driver）负责元数据管理和调度，TiKV（存储层，基于 RocksDB 的 LSM-Tree）存储实际数据。TiFlash 是 TiKV 的列存副本，支持 HTAP。CockroachDB 使用 Range 分片（类似 Spanner），通过 Raft 共识算法跨 3 个及以上副本复制，自动故障切换。NewSQL vs 分库分表中间件（如 ShardingSphere）：分库分表方案应用层做路由，分布式事务能力有限；NewSQL 原生分布式架构，应用无需感知分片存在。NewSQL 的挑战：1）分布式事务的延迟高于单体事务 2）跨节点 JOIN 的性能开销 3）节点数量增大后网络通信成本。",
+    "hints": [
+      "NewSQL 的自动分片和手动分库分表的核心区别",
+      "TiDB 的 TiFlash 列存如何实现 HTAP"
+    ],
+    "tags": [
+      "NewSQL",
+      "TiDB",
+      "分布式数据库"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "变更数据捕获（CDC）",
+    "content": "请解释 CDC（Change Data Capture）的原理、实现方案和典型应用场景。",
+    "answer": "答案：CDC 实时捕获数据库的数据变更并同步到其他系统\n\n解析：CDC 实现方式：1）基于日志解析 — 解析数据库的事务日志（MySQL Binlog / PostgreSQL WAL / MongoDB Oplog），提取 INSERT/UPDATE/DELETE 操作。主流方案。优点：对业务无侵入、捕获完整、延迟低。缺点：需要运维 Binlog 解析组件。代表工具：Debezium（Kafka Connect Connector，支持 MySQL/PostgreSQL/MongoDB 等）。2）基于触发器 — 在源表创建触发器记录变更到 changelog 表。优点：实现简单、可定制。缺点：侵入性高、性能开销大。3）基于时间戳查询（增量查询）— 按时间戳字段轮询查询变更数据。优点：最简单。缺点：无法捕获 DELETE、对业务表有侵入、实时性差。\n\n扩展延伸：CDC 典型应用场景：1）数据同步 — 从 OLTP 数据库实时同步到 OLAP 数仓（ClickHouse/Doris），通过 Kafka 或 Pulsar 流处理实现近实时分析 2）缓存失效/更新 — 数据库数据变化后通过 CDC 通知缓存系统更新/删除缓存 3）微服务事件驱动 — 将数据库变更发布为领域事件，其他服务订阅响应（Transaction Outbox 模式的替代方案）4）搜索索引同步 — DB 数据变化后实时更新 Elasticsearch 索引。Debezium 工作机制：连接 MySQL 读取 Binlog（Row 格式），以 Schema Registry 管理数据类型，将每个行变更发布为 Kafka 消息（消息包含 before 和 after 字段）。一致性保证：CDC 通常提供 at-least-once 语义，需要消费者侧做好幂等处理。Binlog 格式对比：STATEMENT（记录 SQL）、ROW（记录行变更详情，CDC 必需）、MIXED（混合模式）。",
+    "hints": [
+      "Debezium 读取 Binlog 时的初始快照如何保证一致性",
+      "CDC 消费者侧如何处理重复消息"
+    ],
+    "tags": [
+      "CDC",
+      "数据同步",
+      "Binlog"
+    ]
   }
 ]

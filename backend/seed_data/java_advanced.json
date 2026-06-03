@@ -919,5 +919,96 @@
       "缓存池",
       "常量池"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ZGC 的并发标记与重定位原理",
+    "content": "请详细解释 ZGC（Z Garbage Collector）的并发标记和并发重定位（Relocation）是如何实现的。ZGC 为什么能做到极低的暂停时间？",
+    "answer": "答案：ZGC 通过染色指针（Colored Pointers）和读屏障（Load Barrier）实现并发标记和并发重定位，暂停时间与堆大小无关。\n\n解析：ZGC 的核心创新——1）染色指针（Colored Pointers）：在 64 位指针的高 4 位（Linux 仅使用 42 位地址，AMD64 虚拟地址空间高 18 位未使用）中编码标记信息。指针的 4 个额外位分别是 Finalizable、Remapped、Marked1、Marked0。通过这些位判断对象的标记状态，无需对象头额外空间。2）读屏障（Load Barrier）：每次从堆中读取对象引用时执行检查。根据指针的染色位决定是否需要处理（如标记或重映射），处理成本极低。3）并发重定位：ZGC 在重定位期间通过读屏障拦截访问，如果访问到已移动的对象，读屏障自动将引用更新为新地址（自愈，Self-Healing）。\n\n扩展延伸：ZGC 的标记阶段分为 Mark Start（STW，初始化标记根）、Concurrent Mark（并发遍历对象图，使用染色指针标记）、Mark End（STW，处理漏标的根）、Concurrent Prepare Relocation（计算要回收的 Region）、Concurrent Relocate（并发重定位存活对象到其他 Region）。重定位中读屏障自愈机制——访问旧地址时通过读屏障检测到 Remapped 位未设置，触发转发到新地址并更新引用，后续访问直接命中新地址。ZGC 适用于大堆（TB 级）和低延迟（<10ms 暂停）要求的场景，与 G1 相比牺牲了吞吐量换取更低的延迟。",
+    "hints": [
+      "染色指针在 64 位指针的高 4 位编码状态信息",
+      "读屏障在对象引用加载时执行，实现自愈"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC",
+      "低延迟"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Shenandoah GC 原理",
+    "content": "请介绍 Shenandoah GC 的工作原理。它与 ZGC 有什么异同？",
+    "answer": "答案：Shenandoah 是 OpenJDK 的另一种低延迟 GC，通过 Brooks Pointer（转发指针）实现并发压缩，暂停时间与堆大小无关。\n\n解析：Shenandoah 的核心机制——1）Brooks Pointer：在对象头部增加一个转发指针（forward pointer），初始指向自身。对象被移动后，转发指针更新为新地址。所有对象访问通过 Brooks Pointer 间接寻址。2）读屏障：Shenandoah 使用读屏障（-XX:+UseShenandoahGC 后默认开启），每次对象读取都检查 Brooks Pointer 是否需要转发。3）并发压缩：Shenandoah 可以并发地移动对象、压缩堆，不需要像 CMS 那样在 Remark 阶段 STW。\n\n扩展延伸：Shenandoah 与 ZGC 的对比——相同点：都实现并发标记和并发重定位，暂停时间与堆大小无关，目标 <10ms 暂停。不同点：1）屏障位置：ZGC 在读引用时（Load Barrier），Shenandoah 在读写对象时（Brooks Pointer Access Barrier）。2）指针技术：ZGC 用染色指针（利用高位 bit），Shenandoah 用 Brooks Pointer（对象头额外字段）。3）JDK 支持：ZGC 在 JDK 11 实验性引入（JDK 15 正式），Shenandoah 在 JDK 12 实验性引入（JDK 15 正式）。4）堆大小限制：ZGC 最大支持 16TB，Shenandoah 支持大堆但性能在 TB 级不如 ZGC。",
+    "hints": [
+      "Brooks Pointer 在对象头中存储转发地址",
+      "Shenandoah 使用读屏障 + 写屏障（取决于版本）"
+    ],
+    "tags": [
+      "JVM",
+      "Shenandoah",
+      "GC",
+      "低延迟"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Project Valhalla 与值类型（Value Types）",
+    "content": "请介绍 Project Valhalla 引入的值类型（Value Types / Inline Types）概念。它解决了什么问题？对 Java 性能有何影响？",
+    "answer": "答案：Project Valhalla 旨在为 Java 引入值类型（Value Types，JEP 401），让开发者可以定义没有对象身份（Identity）的轻量级数据类型，消除对象头的内存开销和间接访问。\n\n解析：值类型用 value 关键字声明（如 value record Point(int x, int y)），特性——1）无对象身份：值类型实例没有对象头（Mark Word + Klass Pointer），只有字段数据。在栈上、数组中和作为其他对象的字段时直接内联存储（Flattened），而不是通过引用间接访问。2）不可变：值类型字段隐式为 final，实例创建后不可变（有利于 JIT 优化和并发安全）。3）可为空值类型（Nullable Value Types）：通过包装引用实现，可赋值为 null。\n\n扩展延伸：性能优势——1）内存减少：值类型数组直接存储数据（如 Point[] 直接存 x,y 整数对），而对象数组存引用 + 堆中对象（多一层间接和对象头开销）。2）缓存局部性改善：连续内存存储，无指针跳跃。3）JIT 优化：内联特性使得逃逸分析、标量替换更有效。现状：Project Valhalla 仍在预览阶段（JDK 22+ 有预览 JEP），需要等到 JDK 24+ 才可能正式发布。与原始类型（int, long）不同，值类型是用户自定义的，编译器会将其视为原始类型的扩展。",
+    "hints": [
+      "值类型没有对象身份，没有对象头，没有引用语义",
+      "值类型在多维数组和集合中性能提升最明显"
+    ],
+    "tags": [
+      "JVM",
+      "Project Valhalla",
+      "值类型",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "虚拟线程（Virtual Threads）的原理与应用",
+    "content": "请解释 Project Loom 引入的虚拟线程（Virtual Threads）的原理。虚拟线程和平台线程（Platform Threads）有什么区别？使用虚拟线程需要注意什么？",
+    "answer": "答案：虚拟线程是 JDK 21 正式发布的轻量级线程（JEP 444），由 JVM 调度而非操作系统，数百万个虚拟线程可以在少量平台线程上运行。\n\n解析：虚拟线程的核心机制——1）载体线程（Carrier Thread）：虚拟线程在平台线程（称为载体）上运行。当虚拟线程执行阻塞操作（如 I/O、锁等待）时，虚拟线程从载体线程上 yield（卸载），载体线程去执行其他虚拟线程。2）Continuation：虚拟线程的底层实现是 Continuation（可暂停和恢复的执行上下文）。JVM 在虚拟线程阻塞时保存 Continuation 状态，切换出来；阻塞完成后恢复执行。3）ForkJoinPool：虚拟线程的调度器是 ForkJoinPool，它管理载体线程池。\n\n扩展延伸：与平台线程的对比——1）创建成本：平台线程 ≈ 1MB 栈空间 + OS 内核线程；虚拟线程 ≈ 几百字节。2）最大数量：平台线程数千到数万；虚拟线程百万级。3）适用场景：虚拟线程适合大量 IO 密集型任务，特别适合 Web 服务器（每个请求一个虚拟线程）。注意事项：1）避免 synchronized 阻塞（pinned 问题——虚拟线程阻塞在 synchronized 上时会 pinned 到载体线程，使载体线程不可用，影响吞吐量）。建议使用 ReentrantLock 替代。2）避免 CPU 密集型任务（虚拟线程切换也有开销）。3）谨慎使用 ThreadLocal（虚拟线程数量巨大时 ThreadLocal 内存量巨大）。",
+    "hints": [
+      "虚拟线程是 JVM 管理的用户态线程，非 OS 线程",
+      "synchronized 和 native 方法会导致虚拟线程 pinned"
+    ],
+    "tags": [
+      "JVM",
+      "Project Loom",
+      "虚拟线程",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Foreign Function & Memory API（FFM API）",
+    "content": "请介绍 Java 的 Foreign Function & Memory API（FFM API, JEP 454）以及它的前身。它和 JNI 相比有什么优势？",
+    "answer": "答案：FFM API（JDK 22 正式发布，JEP 454）是 Java 用于调用外部函数和访问外部内存的新 API，取代 JNI 更安全、更易用。\n\n解析：FFM API 分为两部分——1）Foreign Memory API（java.lang.foreign.MemorySegment）：提供安全的内存访问，支持堆内、堆外和映射文件内存。MemorySegment 具有空间和时间边界检查，防止野指针和 use-after-free。2）Foreign Function API（java.lang.foreign.Linker）：允许 Java 代码调用 C 库函数（如调用操作系统 API），不需要写 C 头文件和 JNI 胶水代码。通过 SymbolLookup 查找库函数，通过 MethodHandle 调用。\n\n扩展延伸：与 JNI 对比——1）安全性：FFM API 有类型检查和内存边界检查，JNI 出现错误时可能导致 JVM 崩溃。2）性能：FFM API 调用开销比 JNI 低（无线程状态切换开销）。3）易用性：FFM API 从 Java 侧直接声明函数签名和内存布局，不需要 C 编译器和平台特定的头文件处理。4）依赖：JNI 需编写 C 代码、编译成动态库；FFM API 只需 Java 代码。典型应用：Panama 项目（FFM API 是其成果）使得 Java 可以直接调用 C 标准库、OS API、GPU 库（CUDA）等，为 Java 在底层系统编程和高性能计算领域打开新空间。",
+    "hints": [
+      "FFM API 是 Panama 项目的一部分，标准库替代 JNI",
+      "MemorySegment 提供内存边界检查，防止野指针"
+    ],
+    "tags": [
+      "JVM",
+      "FFM",
+      "JNI",
+      "Panama",
+      "外部内存"
+    ]
   }
 ]

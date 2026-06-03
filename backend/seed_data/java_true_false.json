@@ -695,111 +695,6 @@
     ]
   },
   {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "ConcurrentHashMap 读操作需要加锁",
-    "content": "JDK 8 的 ConcurrentHashMap 在读操作（get）时也需要加锁以保证线程安全。",
-    "answer": "答案：错误。\n\n解析：JDK 8 的 ConcurrentHashMap 的 get 操作不需要加锁。它通过 volatile 关键字保证数组引用和 Node 的 val/next 属性的可见性，从而在不加锁的情况下安全读取。get 方法会先定位桶，如果桶的首节点是目标 key 则直接返回；如果是红黑树节点则通过 TreeBin 查找；否则遍历链表查找。整个过程不需要加锁。\n\n扩展延伸：虽然 get 操作是 lock-free 的，但在扩容迁移过程中访问到的节点如果处于 forwarding 状态，get 会调用 find 方法到新数组中继续查找。",
-    "options": [
-      "正确",
-      "错误"
-    ],
-    "hints": [
-      "volatile 保证可见性",
-      "红黑树的 TreeBin 通过读写锁保证安全"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "ConcurrentHashMap"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "CopyOnWriteArrayList 写操作复制数组",
-    "content": "CopyOnWriteArrayList 在执行 add 操作时，会复制一份全新的底层数组，在副本上添加元素后替换原数组引用。",
-    "answer": "答案：正确。\n\n解析：CopyOnWriteArrayList 的 add 方法先获取 ReentrantLock 锁，然后复制当前数组（长度 +1），在新数组的末尾写入新元素，最后将新数组赋值给 volatile 的 array 引用。这种写时复制策略保证了读操作可以完全无锁进行，但写操作在数组较大时开销较高。\n\n扩展延伸：复制数组使用 Arrays.copyOf 方法。每次 add 都涉及数组复制和 GC 开销，因此不适合写频繁的场景。迭代器创建后基于当时的数组快照，修改原 list 不会影响已创建的迭代器。",
-    "options": [
-      "正确",
-      "错误"
-    ],
-    "hints": [
-      "Copy-On-Write 的核心就是写时复制",
-      "读操作不加锁，写操作加锁并复制"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "CopyOnWriteArrayList"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "TreeMap 基于哈希表",
-    "content": "TreeMap 的底层是基于哈希表实现的。",
-    "answer": "答案：错误。\n\n解析：TreeMap 的底层是基于红黑树（Red-Black Tree）实现的，而非哈希表。红黑树是一种自平衡的二叉查找树，保证了插入、删除、查找操作的时间复杂度为 O(log n)。TreeMap 的元素按键的自然顺序或传入的 Comparator 排序。与基于哈希表实现的 HashMap 不同，TreeMap 提供了有序的键值对存储，以及 lowerKey、ceilingKey、headMap/tailMap/subMap 等导航方法。\n\n扩展延伸：HashMap 基于哈希表，时间复杂度为 O(1)，但元素无序。两个 Map 各有优劣，选择时需根据是否需要有序遍历来决定。LinkedHashMap 则是两者的结合——哈希表 + 双向链表。",
-    "options": [
-      "正确",
-      "错误"
-    ],
-    "hints": [
-      "TreeMap 与 HashMap 的底层数据结构不同",
-      "TreeMap 提供了键的排序和导航功能"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "TreeMap"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "BlockingQueue drainTo 方法",
-    "content": "BlockingQueue 的 drainTo(Collection) 方法是一次性将队列中所有可用元素转移到指定集合，是线程安全的。",
-    "answer": "答案：正确。\n\n解析：drainTo 方法是 BlockingQueue 提供的一个原子批量移除操作，它会一次性将队列中当前所有可用元素转移到传入的 Collection 中，并在操作期间持有内部锁，确保线程安全。使用 drainTo 可以避免逐个 poll 的元素多次获取锁带来的性能开销，是批量消费队列元素的高效方式。\n\n扩展延伸：drainTo 还有带数量限制的重载版本 drainTo(Collection, int)。注意 drainTo 的目标 Collection 不能是队列本身，否则可能产生不可预知的行为。drainTo 在批处理场景下非常有用，如从消息队列中批量取出消息进行处理。",
-    "options": [
-      "正确",
-      "错误"
-    ],
-    "hints": [
-      "drainTo 在持有锁时一次完成所有转移",
-      "比循环 poll 更高效"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "BlockingQueue"
-    ]
-  },
-  {
-    "category": "java_collections",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "Collections.unmodifiableList 完全不可修改",
-    "content": "Collections.unmodifiableList 返回的集合是绝对不可修改的，任何尝试修改的操作都会抛出 UnsupportedOperationException。",
-    "answer": "答案：错误。\n\n解析：Collections.unmodifiableList 返回的是原 List 的不可修改视图（unmodifiable view），直接调用 add/remove/set 等方法时会抛出 UnsupportedOperationException。但是，如果原始 List 本身是可修改的，那么对原始 List 的修改会影响这个不可修改视图。换句话说，unmodifiableList 并不保证原始 List 不被修改，它只是阻止了通过该视图的修改操作。要保证真正的不可变，需要确保原始 List 也不被修改，或使用 Java 9+ 的 List.of() 创建真正的不可变集合。\n\n扩展延伸：类似的还有 unmodifiableMap/unmodifiableSet/unmodifiableCollection。这些方法返回的视图在序列化时也会保持不可修改的特性。",
-    "options": [
-      "正确",
-      "错误"
-    ],
-    "hints": [
-      "unmodifiable 系列是视图（view）而非副本",
-      "原始集合的修改会反映到不可修改视图上"
-    ],
-    "tags": [
-      "Java",
-      "集合",
-      "Collections"
-    ]
-  },
-  {
     "category": "java_advanced",
     "difficulty": "medium",
     "type": "true_false",
@@ -903,6 +798,227 @@
       "Java",
       "泛型",
       "数组"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "G1 GC 是分代垃圾回收器",
+    "content": "G1（Garbage First）垃圾回收器也是一种分代（Generational）垃圾回收器，拥有年轻代和老年代的概念。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：G1 虽是分区（Region）设计，但仍然保留分代概念。G1 中的 Region 分为 Eden Region、Survivor Region、Old Region 和 Humongous Region。Eden 和 Survivor 构成年轻代，Old 构成老年代。G1 的 Young GC 回收 Eden + Survivor，Mixed GC 回收年轻代 + 部分老年代 Region。注意 G1 与传统的分代 GC（如 Parallel、CMS）的区别——传统分代 GC 中年轻代和老年代是连续的内存块，G1 的 Region 可以动态改变角色（Eden 用完可以变成 Old）。\n\n扩展延伸：ZGC 和 Shenandoah（某些配置下）是不分代的（Non-generational），即没有年轻代和老年代的概念，所有对象在同一个堆中处理。不过 ZGC 的 JEP 439（Generational ZGC，JDK 21 引入）又重新引入了分代概念，以提升性能（减少了 Full GC 频率，降低了 CPU 开销）。这也说明了分代假设（大多数对象朝生夕死）对于 GC 性能的重要性。",
+    "hints": [
+      "G1 的 Region 角色可以是 Eden、Survivor、Old、Humongous",
+      "G1 有 Young GC 和 Mixed GC（回收年轻代 + 部分老年代）"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "GC",
+      "分代"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "TreeSet 使用 equals 判断元素是否相等",
+    "content": "TreeSet 使用元素的 equals() 方法来判断两个元素是否相等。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：TreeSet 不使用 equals() 判断元素相等，而是使用 Comparator（如果构造时提供了）或元素的 Comparable.compareTo() 方法。当 compareTo()（或 compare()）返回 0 时，TreeSet 认为两个元素相等（即使 equals() 返回 false）。这是有序集合（SortedSet）与普通 Set 的重要区别。根据 Java 规范，推荐情况是 compareTo 返回 0 时 equals 也返回 true（即自然排序与 equals 一致），否则 TreeSet 会违反 Set 接口的通用约定（不允许重复元素）。\n\n扩展延伸：HashSet 使用 hashCode() + equals() 判断相等。LinkedHashSet（继承 HashSet）相同。TreeSet 使用 Comparator/Comparable。这是为什么如果自定义类同时用于 TreeSet 和 HashSet 时，需要确保 compareTo 和 equals 一致。例如 BigDecimal 的 compareTo(\"1.0\").equals(\"1.0\") 是 false（因为 scale 不同），所以 TreeSet<BigDecimal> 中 1.0 和 1.00 只能共存一个，但 HashSet<BigDecimal> 可以同时存这两个。",
+    "hints": [
+      "TreeSet 根据 compareTo/compare 的返回值判断是否相等（0 表示相等）",
+      "HashSet 使用 equals() + hashCode() 判断相等"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeSet",
+      "Comparable",
+      "equals"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "ConcurrentHashMap 允许 null key",
+    "content": "ConcurrentHashMap 的 key 和 value 都允许为 null。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：ConcurrentHashMap 不允许 null key 和 null value，这是它和 HashMap 的重要区别（HashMap 允许一个 null key 和多个 null value）。原因是 ConcurrentHashMap 的作者 Doug Lea 认为：在多线程环境下，可以通过 get(key) 返回 null 来推断两种情况——1）该 key 不存在；2）该 key 对应的 value 就是 null。这两种情况的含义完全不同，但在并发环境下无法简单区分（因为可能其他线程正在修改）。HashMap 的 containsKey() 方法可以区分，但 CHM 在多线程中不能可靠使用 containsKey 来判断。所以 CHM 直接禁止 null value，避免歧义。\n\n扩展延伸：Hashtable 也不允许 null key/value（作为线程安全的遗留类，JDK 1.0 就如此设计）。HashMap 允许 null：null key 的 hashCode 为 0，存储在 index 0 的桶中。ConcurrentSkipListMap 允许 null key 吗？不允许（NavigableMap 的实现通常不允许 null key，因为比较器在排序时无法处理 null）。",
+    "hints": [
+      "Doug Lea 认为 null value 在并发 Map 中会导致二义性问题",
+      "HashMap 允许 null key/value，但 ConcurrentHashMap 和 Hashtable 都不允许"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "ConcurrentHashMap",
+      "null"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Collections.unmodifiableList 返回不可修改的列表",
+    "content": "通过 Collections.unmodifiableList() 包装后的列表完全不可修改，任何尝试修改的操作都会抛出 UnsupportedOperationException。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：unmodifiableList() 返回原列表的只读视图（Unmodifiable List），所有修改操作（add、set、remove、clear 等）都抛出 UnsupportedOperationException。但注意：如果原列表在外部被修改，unmodifiable 视图的内容也会变化（因为是视图模式）。真正的\"不可变\"需要同时确保原列表不再被修改——要么丢弃原引用，要么在包装前复制一份：Collections.unmodifiableList(new ArrayList<>(original))。\n\n扩展延伸：JDK 9 引入了 List.of() 工厂方法创建真正的不可变列表（Immutable List）。与 unmodifiableList 的区别——1）List.of() 返回的列表本身就是不可变的，没有原列表引用（真正不可变）。2）unmodifiableList 只是视图，如果原列表改变，视图跟着变。3）List.of() 不支持 null 元素，unmodifiableList 可以（前提是原列表允许）。相似的包装方法：unmodifiableSet、unmodifiableMap、unmodifiableCollection、unmodifiableSortedSet 等。Guava 的 ImmutableList 也是真正的不可变列表（有独立的拷贝）。",
+    "hints": [
+      "unmodifiableList 是视图模式的只读包装，原列表改变会反映到视图",
+      "真正的不可变列表应该用 List.of() 或 unmodifiableList(new ArrayList<>(original))"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "unmodifiableList",
+      "不变性"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "ArrayDeque 是线程安全的",
+    "content": "ArrayDeque 是线程安全的集合类，可以在多线程环境下安全使用。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：ArrayDeque 不是线程安全的。它是单线程环境下的高性能双端队列实现，没有内部同步机制。多线程并发访问时，如果没有外部同步，会导致数据损坏（元素丢失、内部数据结构损坏等）。如果需要线程安全的 Deque，可以使用：1）Deque<String> safe = new LinkedBlockingDeque<>()（阻塞双端队列，线程安全）。2）Deque<String> safe = Collections.synchronizedDeque(new ArrayDeque<>())（同步包装视图）。3）ConcurrentLinkedDeque（非阻塞并发双端队列，基于 CAS 操作，无锁实现）。\n\n扩展延伸：java.util 包中的非线程安全集合包括：ArrayList、LinkedList、HashSet、TreeSet、HashMap、TreeMap、ArrayDeque 等。线程安全集合包括：Vector、Hashtable、ConcurrentHashMap、CopyOnWriteArrayList、CopyOnWriteArraySet、LinkedBlockingDeque、ConcurrentLinkedDeque、ConcurrentSkipListMap 等。设计原则：默认集合类是非线程安全的（避免不必要的同步开销），需要时才使用并发集合类或同步包装。",
+    "hints": [
+      "ArrayDeque 没有内部同步，不是线程安全的",
+      "需要线程安全的 Deque 可以使用 LinkedBlockingDeque 或 ConcurrentLinkedDeque"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ArrayDeque",
+      "线程安全"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "JVM 内存溢出类型",
+    "content": "OutOfMemoryError 只会发生在堆内存耗尽时。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：OOM 可以在多个区域发生：堆（Java heap space）、元空间（Metaspace）、直接内存（Direct buffer memory）、栈（unable to create new native thread）、GC 开销超限（GC overhead limit exceeded）、请求的数组大小超过限制（Requested array size exceeds VM limit）。\n\n不同 OOM 的排查方向不同：堆 OOM 看堆 Dump（排查内存泄漏），元空间 OOM 看类加载数（排查类加载泄漏），直接内存 OOM 查看 DirectByteBuffer 的分配，无法创建线程 OOM 看操作系统线程限制。\n\n扩展延伸：-XX:+HeapDumpOnOutOfMemoryError 在 OOM 时生成堆 Dump。资源泄漏（未关闭的 InputStream、Connection）也会导致 OOM。线程 OOM 不一定是代码问题——可能是操作系统 ulimit 限制。",
+    "hints": [
+      "OOM 可以发生在堆、元空间、直接内存、栈等多个区域",
+      "不同的 OOM 有不同的排查方法"
+    ],
+    "tags": [
+      "Java",
+      "JVM",
+      "OOM",
+      "内存"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "标记接口",
+    "content": "Cloneable 和 Serializable 是标记接口（Marker Interface），它们没有任何方法需要实现。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：标记接口是不包含任何方法声明的接口，用于在运行期通过 instanceof 检查类是否具有某种能力。\n\nCloneable：指示 Object.clone() 可以合法地对该类进行逐字段复制。如果没有实现 Cloneable 而调用 clone()，会抛出 CloneNotSupportedException。\n\nSerializable：指示该类可以被 ObjectOutputStream 序列化。如果试图序列化一个未实现 Serializable 的对象，会抛出 NotSerializableException。\n\n扩展延伸：标记接口的替代方案：注解（@Override、@Deprecated）。Effective Java 建议优先使用注解标记而非标记接口——但 Cloneable 和 Serializable 是 Java 早期设计，使用标记接口。现代 Java 中，Serializable 的实现者需要声明 serialVersionUID。",
+    "hints": [
+      "标记接口用 instanceof 检查能力",
+      "Cloneable 和 Serializable 是最常见的标记接口"
+    ],
+    "tags": [
+      "Java",
+      "标记接口",
+      "Cloneable",
+      "Serializable"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "String 不可变性",
+    "content": "String 对象是不可变的（immutable），但 StringBuffer 和 StringBuilder 是可变的。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：String 是不可变类——创建后内容和长度都不能修改（底层 char[]/byte[] 数组用 final 修饰且不暴露）。String 的 replace()、substring() 等\"修改\"方法都返回新 String 对象。\n\nStringBuffer（线程安全）和 StringBuilder（非线程安全）是可变的——append()、insert()、delete() 等操作修改对象自身内容。\n\n为什么 String 设计为不可变：1）字符串常量池（String Pool）可在多个引用间共享；2）安全性——String 被广泛用作参数（类加载、网络连接、数据库 URL）；3）不可变对象天然线程安全；4）不可变 String 的 hashCode 可以缓存（懒计算后缓存）。\n\n扩展延伸：StringBuilder 在单线程下性能优于 StringBuffer（不需要 synchronized）。JDK 9 将 String 底层从 char[] 改为 byte[] + coder（Latin-1 vs UTF-16 编码标记），节省内存。编译器对字符串拼接（+）自动优化为 StringBuilder。",
+    "hints": [
+      "String 不可变，StringBuffer/StringBuilder 可变",
+      "String 不可变性使常量池共享成为可能"
+    ],
+    "tags": [
+      "Java",
+      "String",
+      "StringBuilder",
+      "不可变"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "静态内部类",
+    "content": "静态内部类（static nested class）的实例可以独立于外部类实例存在。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：静态内部类（static nested class）与外部类的实例无关——创建静态内部类的实例不需要外部类实例。这与普通内部类（inner class）不同——普通内部类隐式持有外部类实例的引用，创建时需要外部类实例。\n\n静态内部类的特性：\n- 可以有自己的静态成员（静态字段、静态方法）\n- 只能访问外部类的静态成员（包括 private static）\n- 不持有外部类实例的引用（不会导致内存泄漏）\n\n普通内部类的特性：\n- 不能有静态成员\n- 可以访问外部类的实例成员和静态成员\n- 持有外部类实例的引用（外部类被回收前内部类不会回收）\n\n扩展延伸：匿名内部类中使用的局部变量必须是 final/effectively final。Lambda 表达式的 this 指向外部类实例（与匿名类不同）。静态内部类的经典应用：Builder 模式（如 StringBuilder、构建器）、Map.Entry（独立于 HashMap）、ArrayList 的 Itr 子类。",
+    "hints": [
+      "静态内部类不依赖外部类实例",
+      "普通内部类持有外部类引用"
+    ],
+    "tags": [
+      "Java",
+      "内部类",
+      "静态内部类",
+      "嵌套类"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "泛型类型擦除",
+    "content": "Java 泛型在运行期会擦除类型参数，因此 ArrayList<String> 和 ArrayList<Integer> 在运行期是相同的 Class 对象。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：Java 泛型通过类型擦除实现——编译期进行类型检查，生成字节码时擦除类型参数（替换为 Object 或边界类型），并插入必要的强制类型转换。\n\n因此 ArrayList<String>.class 和 ArrayList<Integer>.class 都是 ArrayList.class。\n\n类型擦除带来的限制：\n1. 不能使用 instanceof 检查泛型类型（如 list instanceof ArrayList<String> 编译错误）\n2. 不能创建泛型数组（new T[] 编译错误）\n3. 静态字段和方法中不能使用类的类型参数\n4. 不能实例化泛型类型（new T() 编译错误）\n\n扩展延伸：擦除后的桥接方法（bridge method）由编译器自动生成以维持多态。Reifiable 类型（如 List<?>、原始类型）的类型信息在运行期完全保留。为避免类型擦除问题，可以使用 TypeToken（Gson/Jackson 中的类型信息捕获技术）。",
+    "hints": [
+      "Java 泛型在运行期擦除类型参数",
+      "类型擦除带来 instanceof、new T[] 等限制"
+    ],
+    "tags": [
+      "Java",
+      "泛型",
+      "类型擦除",
+      "编译"
     ]
   }
 ]

@@ -877,5 +877,96 @@
       "SEO",
       "元数据"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "useSyncExternalStore 原理与使用场景",
+    "content": "useSyncExternalStore 是 React 18 中新增的 Hook，它的设计目的是什么？解决了什么问题？在什么场景下需要使用它？",
+    "answer": "答案：useSyncExternalStore 是提供给外部状态库集成 React 的官方 Hook，确保外部 store 的更新在并发模式下能正确触发重渲染，避免 tearing（撕裂）问题。\n\n解析：tearing（视觉撕裂）问题——在 Concurrent Mode 下渲染过程可能被中断，如果外部 store 的值在中断期间发生变化，不同组件可能看到不同版本的值（tearing）。useSyncExternalStore 强制在同步时（commit 阶段）外部 store 的值与 React 保持一致。使用方式：const value = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot?)——subscribe 订阅 store 变化回调，getSnapshot 返回当前快照值，getServerSnapshot 用于 SSR。React 内部通过 forceStoreRerender 机制在 subscribe 回调触发时标记组件需要重新渲染，并在 commit 阶段校验 getSnapshot 的返回值是否一致（如果值变化了会抛错提示缺少订阅）。\n\n扩展延伸：哪些库需要用它——1）Zustand：内部已使用了 useSyncExternalStore。2）Redux：@reduxjs/toolkit 中的 useSelector 在 React 18+ 中自动使用它。3）Valtio/Jotai：这些状态库都在底层依赖它。4）如果你想写一个自定义的外部状态管理，也应该用 useSyncExternalStore 而非 useSyncExternalStore（后者还有一个已废弃的 forceUpdate hack）。对比 useSyncExternalStore vs useState vs useReducer——useState/useReducer 是 React 内部状态，自然没有 tearing 问题。当状态在 React 树之外管理（如全局 store、浏览器 API、WebSocket 数据流）时，useSyncExternalStore 是最佳选择。",
+    "hints": [
+      "Concurrent Mode 下不使用 useSyncExternalStore 会有什么问题",
+      "useSyncExternalStore 的 getSnapshot 为什么要求返回不可变快照"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "Concurrent Mode",
+      "外部状态"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "createRoot vs hydrateRoot",
+    "content": "React 18 中 createRoot 和 hydrateRoot 有什么区别？在什么场景下分别使用？hydrateRoot 的工作机制是什么？",
+    "answer": "答案：createRoot 用于客户端渲染（CSR），hydrateRoot 用于服务端渲染（SSR）后的水合（Hydration）。两者都是 React 18 中替换 ReactDOM.render 的新入口 API。\n\n解析：createRoot——创建一个 React 根节点，接管 DOM 节点的管理。调用 root.render(<App />) 渲染组件树。默认启用并发特性（Transitions、Automatic Batching、Suspense 等）。返回值 Root 对象有 render() 和 unmount() 方法。hydrateRoot——在 SSR 生成的静态 HTML 上附加事件监听和状态。工作原理：服务端返回的 HTML 被浏览器直接渲染（用户立即看到内容），然后 hydrateRoot 在客户端运行时复用已有的 DOM 节点，附加事件处理器和初始化状态，将静态 HTML 激活为可交互的应用。hydrateRoot 的约束——客户端第一次渲染的输出必须与服务端生成的 HTML 匹配（否则 React 会做一次全量重渲染）。React 18 的 hydrateRoot 相比 ReactDOM.hydrate 的改进：支持 selective hydration（选择性水合），允许用 Suspense 包裹的部分延迟水合。\n\n扩展延伸：SSR 架构演变——1）传统 SSR（React 16-17）：hydrate 一次完成所有组件的水合，大页面会阻塞交互。2）Streaming SSR（React 18）：renderToPipeableStream 支持流式传输 HTML，用户更快看到首屏。3）Selective Hydration：用 Suspense 包裹的组件可以按优先级分块水合，不需要全部加载完成。4）Server Components（React 19）：更进一步，部分组件在服务端完成渲染不发送 JavaScript 到客户端。选择策略：纯客户端应用用 createRoot；需要 SEO 和首屏性能的用 hydrateRoot + Streaming SSR；最新方案考虑 RSC（React Server Components）。",
+    "hints": [
+      "Hydration 不匹配（Mismatch）会发生什么",
+      "Selective Hydration 如何提升首屏交互体验"
+    ],
+    "tags": [
+      "React",
+      "createRoot",
+      "hydrateRoot",
+      "SSR"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Server Components 与流式渲染",
+    "content": "React Server Components（RSC）的核心设计理念是什么？它和传统 SSR 有何本质区别？流式渲染（Streaming SSR）如何工作？",
+    "answer": "答案：React Server Components 允许组件仅在服务端渲染，不发送 JavaScript 到客户端。传统 SSR 在服务端生成 HTML 但在客户端仍然需要水合所有组件的 JS；RSC 的服务端组件完全不需要客户端 JS，只发送渲染结果（序列化的 React 树）。\n\n解析：核心区别——传统 SSR：所有组件既是服务端组件也是客户端组件，都需要下载 JS 并在客户端水合。RSC：将组件分为服务端组件（只运行在服务端，可访问 DB/文件系统，不产生 JS bundle）和客户端组件（标注 'use client'，在客户端交互）。RSC 的序列化格式不是 HTML，而是一种特殊的 JSON 格式（React Flight），包含了虚拟 DOM 树的结构、客户端组件的位置和 props。流式渲染——renderToPipeableStream（Node.js）或 renderToReadableStream（Web Stream）将 HTML 分块传输给浏览器。Suspense 边界允许不重要的内容先返回 fallback（如 loading 骨架屏），重要内容先渲染。Streaming SSR + RSC 的组合使页面加载极快：服务端组件的结果和 HTML 同时逐步到达客户端。\n\n扩展延伸：RSC 的实际收益——1）零客户端开销：Markdown 渲染、日期格式化、权限校验等服务端做完，客户端不下载相关库。2）直接访问数据层：不再需要 REST/GraphQL 中间层，服务端组件直接读取数据库或文件系统。3）自动代码分割：客户端组件自动拆分为独立 chunk，按需加载。当前框架支持——Next.js App Router（默认 RSC）、Remix 的 loader（类似 RSC 理念但实现不同）。注意：RSC 不是替代传统 SSR 或 CSR，而是一种新的组件模型。对于交互密集型应用（如设计工具），大部分组件仍然是客户端组件。RSC 最适合的是数据获取和静态内容展示场景。",
+    "hints": [
+      "RSC 中服务端组件和客户端组件的边界在哪——为什么 'use client' 是传染性的",
+      "React Flight（RSC 的传输协议）和 HTML 有什么不同"
+    ],
+    "tags": [
+      "React",
+      "Server Components",
+      "Streaming SSR",
+      "Next.js"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "useId 与 SSR Hydration 稳定性",
+    "content": "React 18+ 中 useId 的作用是什么？它如何解决 SSR 水合时 ID 不匹配的问题？和手动生成随机 ID 有什么区别？",
+    "answer": "答案：useId 是 React 18 引入的 Hook，用于生成在服务端和客户端一致的唯一 ID 字符串，解决 SSR 水合时 ID 不匹配的问题。\n\n解析：SSR ID 不匹配的问题——在客户端渲染时用 Math.random() 或 uuid 生成 ID 没问题，但在 SSR 场景下：1）服务端渲染时会生成一个随机 ID。2）客户端水合时 React 期望服务端 HTML 和客户端首次渲染完全一致。3）但 hydrateRoot 也会调用 useId，生成不同于服务端的 ID（因为 Math.random() 每次结果不同）。4）React 抛出 hydration mismatch 错误，并执行一次全量重渲染——意味着 SSR 的首次渲染优化完全失效。useId 的解决方案——useId 不与随机数相关，而是基于组件在组件树中的层级位置（类似一个路径）加上前缀生成 ID 字符串。在服务端和客户端，只要组件树结构相同，useId 生成的值就相同：服务端渲染用这个 ID，客户端水合也用这个 ID，完全匹配。useId 还考虑到了多应用共存（不同 root 前缀不同）和 fragment 元素。\n\n扩展延伸：useId 的格式——生成如 ':r1:'、':r2:' 这样的冒号包裹的字符串，确保在 CSS 选择器和 HTML id 属性中安全。使用场景：1）表单 label 的 htmlFor 和 input id 的关联：<label htmlFor={id}><input id={id} />。2）ARIA 属性的关联：aria-describedby、aria-labelledby。3）需要唯一 ID 的 SVG 元素。注意：useId 不适合用作列表渲染的 key（它生成的 ID 在组件重新排列时会变化）。如果确实需要全局唯一且稳定的 ID（如数据库主键），应该由服务端生成而非 useId。",
+    "hints": [
+      "useId 生成的 ID 是全局唯一的还是组件树内唯一的",
+      "为什么 Math.random() 不适合 SSR 场景下的 ID 生成"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "useId",
+      "SSR",
+      "Hydration"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Compiler 自动记忆化原理",
+    "content": "React Compiler（原 React Forget）是做什么的？它如何在编译阶段自动实现记忆化？这意味着开发者可以不再手动使用 useMemo/useCallback 吗？",
+    "answer": "答案：React Compiler 是 React 团队开发的编译时工具，在构建阶段自动分析组件中的值是否需要在重渲染时保持稳定（memoize），自动插入 useMemo/useCallback 调用，无需开发者手动优化。\n\n解析：工作原理——React Compiler 会构建一个「编译时记忆化」（Compile-time Memoization）的依赖分析图：1）分析组件中每个 JSX 片段和表达式，追踪它对哪些 props、state、hooks 返回值有依赖。2）如果一个值的依赖在两次渲染间没有变化，编译器自动将其结果缓存。3）一个值的缓存失效会传播到依赖它的其他值——比如某个 state 变化，只有依赖该 state 的 JSX 部分会标记为需要重渲染。与传统手动优化的区别——传统：开发者手动用 useMemo/useCallback/memo 包裹，需要理解引用相等性、闭包陷阱、何时真正需要优化。React Compiler：自动分析依赖图，确保更新粒度精确到「依赖变化的表达式」而非「整个组件」。\n\n扩展延伸：实际使用情况——React Compiler 目前（2025-2026）在 Instagram 的生产环境中已使用，但尚未作为正式发布版本对外提供。使用方式：Babel 插件或独立的编译工具，做「零改动接入」（理论上现有代码无需修改即可获得优化）。潜在挑战：1）不是所有代码模式都能被编译器正确分析——一些高度动态的模式（如 computed property names、Proxy 对象）可能需要开发者提供 hint。2）编译后的代码体积可能变大（因为插入了更多的缓存逻辑）。3）对于已手动优化良好的应用，收益不明显。长期愿景——React 团队希望编译器能完全消除 useMemo/useCallback/memo 的手动使用，让开发者专注于业务逻辑。但对性能关键路径，理解底层原理仍然重要。",
+    "hints": [
+      "React Compiler 怎么处理闭包中的过期值（Stale Closure）问题",
+      "编译时记忆化和运行时记忆化（如 useMemo）的区别是什么"
+    ],
+    "tags": [
+      "React",
+      "Compiler",
+      "Memoization",
+      "React Forget"
+    ]
   }
 ]

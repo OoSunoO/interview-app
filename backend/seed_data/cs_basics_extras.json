@@ -900,5 +900,90 @@
       "ECC",
       "TLS"
     ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAID 级别详解",
+    "content": "请对比不同 RAID 级别（RAID 0/1/5/6/10）的特点和适用场景。",
+    "answer": "答案：RAID 通过多块磁盘组合实现性能提升和/或冗余保护\n\n解析：RAID 0（条带化）— 数据分块写入多盘，读写性能最高（理论 N 倍），但无冗余，一块坏了全挂。适合对性能要求高且可容忍数据丢失的场景（如临时文件存储）。RAID 1（镜像）— 数据完全复制到两块盘，写入慢一倍读取可并行提升。成本高（利用率 50%），但容错好（坏一块 完全恢复）。适合 OS 系统盘、日志存储。RAID 5（条带+奇偶校验）— N 块盘用 1 块盘等效容量存校验，单盘故障可重建。写操作需读旧数据、旧校验、写新数据和新校验（写惩罚 4 次 IO）。适合文件服务器、视频存储。RAID 6（双奇偶校验）— 可坏两块盘，写惩罚更大（6 次 IO），适合大容量存储。\n\n扩展延伸：RAID 10（RAID 1+0）— 先镜向后条带，兼具 RAID 0 的性能和 RAID 1 的可靠性，兼顾读写，推荐用于数据库等核心业务。写惩罚对比：RAID 0 无惩罚，RAID 1（写 2 次），RAID 5（写 4 次 IO），RAID 6（写 6 次 IO）。重建风险：大容量（>10TB）RAID 5 重建时间长，重建时再坏盘会丢失数据，所以大容量盘建议 RAID 6 或 RAID 10。硬件 RAID vs 软件 RAID：硬件 RAID 有专用芯片（如 LSI/Broadcom）不占用 CPU，带缓存电池保护；软件 RAID 虽然 CPU 开销但灵活（Linux mdadm/ZFS）。ZFS RAID-Z：类似 RAID 5/6 但无写漏洞（避免了 RAID 5 的写入洞问题）。",
+    "hints": [
+      "RAID 5 的写惩罚 4 次 IO 怎么算的",
+      "什么场景选 RAID 10 而不是 RAID 5"
+    ],
+    "tags": [
+      "RAID",
+      "存储",
+      "磁盘"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "SIMD vs MIMD",
+    "content": "请解释 SIMD 和 MIMD 的区别以及它们在 Flynn 分类法中的位置。",
+    "answer": "答案：Flynn 分类法根据指令流和数据流的数量划分计算机架构\n\n解析：Flynn 四类：1）SISD（单指令单数据）— 传统单核 CPU，每个时钟周期执行一条指令处理一个数据 2）SIMD（单指令多数据）— 一条指令同时操作多个数据，利用数据级并行。典型代表：CPU 的 SSE/AVX 向量指令集、GPU 的 warps/wavefronts 3）MISD（多指令单数据）— 多条指令处理同一数据，极少使用，仅见于某些容错系统 4）MIMD（多指令多数据）— 多个处理器各自执行不同指令处理不同数据，最通用的并行架构。典型代表：多核 CPU、分布式集群。SIMD 适合数据并行计算（图像处理、矩阵运算），MIMD 适合任务并行。\n\n扩展延伸：SIMT（单指令多线程）是 NVIDIA GPU 使用的执行模型，是 SIMD 的变体。32 个线程组成一个 warp，共享程序计数器，执行同一指令但每个线程有自己的寄存器。分支发散（Branch Divergence）：warp 中线程走不同分支时会串行执行，降低效率，是 GPU 编程的优化关键点。向量化：编译器自动将循环转换为 SIMD 指令（-O3 -mavx2），需确保数据对齐和循环无依赖。现代 CPU 的 SIMD 宽度：SSE（128 位）、AVX2（256 位）、AVX-512（512 位），人工智能推理中广泛使用 AVX-512 VNNI 加速。",
+    "hints": [
+      "GPU 的 SIMT 和 CPU 的 SIMD 有什么不同",
+      "什么是 warp 分支发散及其影响"
+    ],
+    "tags": [
+      "体系结构",
+      "并行计算",
+      "SIMD"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "内存映射文件（Memory-Mapped File）",
+    "content": "请解释内存映射文件（mmap）的原理及其与常规文件 IO 的对比。",
+    "answer": "答案：mmap 将文件内容映射到进程的虚拟地址空间，通过指针直接读写文件\n\n解析：原理：调用 mmap 时操作系统创建与文件对应的页表映射，访问映射地址时触发缺页中断，内核从磁盘读取相应页到物理内存。写入修改标记脏页，内核或 msync 将脏页写回磁盘。相比 read/write 系统调用的优势：1）避免用户态和内核态的两次数据拷贝（read 从磁盘->内核页缓存->用户缓冲区），mmap 直接在页缓存中操作 2）多个进程映射同一文件可共享物理页（共享内存的一种实现）3）支持懒加载（按需分页），不需要一次性读入整个文件。\n\n扩展延伸：mmap 使用场景：1）文件快速随机访问（数据库缓冲池、索引文件）2）进程间大数据共享 3）加载大文件的一部分。缺点：1）文件大小受虚拟地址空间限制（32 位系统尤其明显）2）小文件读写开销大（页对齐要求）3）段错误风险（文件截断后访问映射地址）4）脏页写回时机不由用户控制。Page Cache 关联：mmap 直接使用 page cache，write 系统调用也写入 page cache，两者本质共享同一套缓存。注意点：映射大小是页面对齐的，大于实际文件的映射部分访问会触发 SIGBUS。",
+    "hints": [
+      "mmap 相比 read/write 减少了几次数据拷贝",
+      "多进程 mmap 同一文件有什么用途"
+    ],
+    "tags": [
+      "操作系统",
+      "内存",
+      "文件系统"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "NUMA 架构",
+    "content": "请解释 NUMA（非均匀内存访问）架构的原理及其对程序性能的影响。",
+    "answer": "答案：NUMA 是解决多核处理器内存带宽瓶颈的内存架构，每个 CPU 有本地内存，访问远端内存延迟更高\n\n解析：UMA 架构中所有 CPU 共享统一内存控制器，随着核数增加引发内存带宽争抢。NUMA 将 CPU 划分为多个 Node，每个 Node 拥有独立内存控制器和本地内存插槽。CPU 访问本地内存延迟低，访问远端 Node 内存需通过互联通道（QPI/UPI/Infinity Fabric），延迟高约 30-50%。Linux 中通过 numactl 工具查看和管理 NUMA 拓扑。OS 调度器默认优先分配本地内存（local allocation），DAMON/自动 NUMA 平衡（AutoNUMA）定期迁移内存页到访问最频繁的 Node。\n\n扩展延伸：NUMA 感知编程：内存分配时应尽量在本 Node 分配，绑定线程到固定 CPU（sched_setaffinity），避免线程迁移导致的大量远端内存访问。NUMA 陷阱：1）数据库场景中多个连接由不同 CPU 处理，可能导致频繁的远端内存访问 2）批量数据处理时跨 Node 访问降低有效内存带宽 3）中断处理落在不同 Node 导致数据重定位。解决：禁用自动 NUMA 平衡、显式绑核绑内存、池化线程避免迁移。Intel Sub-NUMA Clustering（SNC）将同一个 socket 进一步划分为多个 NUMA 域，增加局部性。现代服务器通常有 2-8 个 NUMA Node，无感知运行可能导致 20-50% 性能损失。",
+    "hints": [
+      "UMA 到 NUMA 演进的根本原因是什么",
+      "数据库类应用怎么做 NUMA 感知优化"
+    ],
+    "tags": [
+      "体系结构",
+      "NUMA",
+      "内存"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 架构基础",
+    "content": "请介绍 GPU 的核心架构特点及其与 CPU 的差异。",
+    "answer": "答案：GPU 通过大量简单核并行执行实现高吞吐计算，核心是 SIMT 执行模型\n\n解析：NVIDIA GPU 架构层次：多个 GPC（图形处理集群）-> 每个 GPC 含多个 TPC -> 每个 TPC 含 2 个 SM（流多处理器）。SM 是独立执行单元，包含：CUDA Core（FP32/INT32）、Tensor Core（矩阵加速）、Shared Memory、Warp Scheduler、Register File。执行模型：32 个线程组成一个 warp，warp 中的线程执行同一指令（SIMT）。一个 SM 可同时调度多个 warp，通过 zero-overhead warp switching 隐藏内存延迟。与 CPU 核心区别：CPU 核大而强（大缓存、强分支预测、乱序执行、大而少的核），GPU 小而多（小缓存、简单控制逻辑、小而多的核），GPU 因此计算密度高但不适合控制密集任务。\n\n扩展延伸：内存层次：Global Memory（大容量高延迟 ~200-400 cycle）、Shared Memory（低延迟 ~30 cycle，需显式管理）、Register File（最快，但每个线程分配有限）、Local Memory（寄存器溢出时使用）、Constant Memory（缓存只读数据）、Texture Memory（空间局部性优化）。CUDA 编程模型：Thread -> Block（共享内存通信）-> Grid，Blocks 分配到不同的 SM 上执行，Block 内线程通过 __syncthreads() 同步。Occupancy（占用率）：SM 上活跃 warp 数与最大支持的比值，越高越能隐藏延迟，但过度占用会减少每线程资源（寄存器/共享内存）。AMD GPU 使用 SIMD（wavefront = 64 threads），Intel GPU 使用 SIMD（subslice = 7+ threads）。",
+    "hints": [
+      "GPU 的 SIMT 模型如何隐藏内存访问延迟",
+      "CUDA 中 Thread/Block/Grid 三级并行的含义"
+    ],
+    "tags": [
+      "GPU",
+      "体系结构",
+      "并行计算"
+    ]
   }
 ]

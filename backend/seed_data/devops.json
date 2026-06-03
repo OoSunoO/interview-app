@@ -736,24 +736,6 @@
   },
   {
     "category": "devops",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "混沌工程原理与实践",
-    "content": "什么是混沌工程？它和传统软件测试（单元测试、集成测试）有什么本质区别？混沌工程的核心原则是什么？Netflix 的 Chaos Monkey 是如何工作的？",
-    "answer": "答案：混沌工程通过在生产环境中主动注入故障，验证系统在面对不可预测的故障时是否具备弹性。与传统测试不同，混沌工程不是验证功能正确性，而是探索系统的脆弱性——「已知的未知」和「未知的未知」。核心原则：在生产环境实验、控制爆炸半径、自动化持续运行。\n\n解析：混沌工程的核心原则（Principles of Chaos Engineering）：1）构建稳定状态的假设——定义系统的「正常」行为基线（如 P99 延迟 < 200ms、错误率 < 0.1%）。2）引入真实世界的故障——注入故障类型包括：实例崩溃（Chaos Monkey 随机杀掉 EC2 实例）、网络延迟和分区（网络丢包/延迟注入）、资源耗尽（CPU 打满、磁盘写满）、DNS 故障、证书过期。3）在生产环境中运行——（或镜像生产流量的预发环境），因为只有真实流量模式才能暴露真实问题。4）自动化持续运行——混沌实验不是一次性的，而是持续的流程。5）控制爆炸半径——最小化影响范围，设置自动熔断机制（如果 SLO 被违反则自动停止实验）。\n\n扩展延伸：Netflix Chaos Engineering 工具链——Chaos Monkey（随机终止实例）+ Chaos Kong（模拟 AWS Region 故障）+ Latency Monkey（注入延迟）+ Conformity Monkey（检测不符合最佳实践的实例）。开源替代：Chaos Mesh（K8s 原生，支持 Pod 级别故障注入）、Litmus（云原生混沌工程平台）、Gremlin（商业版）。工程实践：1）从最不危险的故障开始（如只杀一个边缘服务的 Pod）。2）先有监控告警再开始混沌实验。3）实验前设置「实验假设是否被违反」的判断条件。4）从预发 -> 灰度小范围 -> 生产全量逐步推进。重要提醒：混沌工程不等于「瞎搞」（不设护栏的随机破坏），而是在可控范围内系统性验证。",
-    "hints": [
-      "混沌工程的「假设」是如何验证的——如何定义一个实验成功或失败",
-      "Chaos Monkey 为什么选择随机终止实例而不通知（随机性的意义）"
-    ],
-    "tags": [
-      "混沌工程",
-      "Chaos Engineering",
-      "Chaos Monkey",
-      "弹性"
-    ]
-  },
-  {
-    "category": "devops",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "容量规划与弹性伸缩",
@@ -882,6 +864,112 @@
       "OPA",
       "Gatekeeper",
       "Policy as Code",
+      "安全"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GitOps 与 ArgoCD 实践",
+    "content": "请介绍 GitOps 的概念、核心原则以及 ArgoCD 的工作原理和关键特性。",
+    "answer": "答案：GitOps 是由 Weaveworks 提出的云原生运维模式，以 Git 仓库作为声明式基础设施和应用的唯一真实来源。核心原则：1) 声明式描述——整个系统的期望状态以 Kubernetes manifests、Helm Chart 或 Kustomize 形式定义在 Git 仓库中；2) 版本化和可审计——Git 历史记录每一次变更；3) 自动同步——Operator/GitOps Agent 持续比较集群实际状态与 Git 期望状态；4) Pull-based 部署——Agent 从 Git Pull 而非 CI Push 到集群。ArgoCD 是 CNCF 毕业项目，工作原理：1) 通过 Git Repository Connection 连接到 Git；2) 使用 Application CRD 定义从哪个 Repo 的哪个路径部署到哪个目标集群；3) Controller 持续运行 Diff 循环，比较集群状态和 Git 状态；4) Auto Sync + Auto Prune 自动删除 Git 中已移除的资源。\n\n解析：ArgoCD 与 Flux v2 的主要区别：ArgoCD 提供功能全面的 Web UI + Dashboard，适合团队可视化运维；Flux v2 更注重轻量和 sdk-led 设计，使用 Kubernetes 扩展资源，不依赖 CRD 之外的组件。选择依据：需要 Web UI 和 ApplicationSet 选 ArgoCD；追求轻量、使用 OCI 制品、希望与 Flux 的 SOPS 原生集成选 Flux v2。ArgoCD 的 App of Apps 模式适合大规模多团队集群。\n\n扩展延伸：GitOps 进入生产环境的常见模式：1) 单一仓库——所有环境配置在同一个 Git 仓库中，通过目录划分；2) 应用仓库 + 配置仓库分离；3) 配合 Kustomize Overlay 实现环境差异化。安全性增强：通过 ArgoCD Vault Plugin / Sealed Secrets 管理敏感配置。推荐阅读：ArgoCD 的 Progressive Delivery with Analysis（蓝绿发布 + 自动回滚）功能。",
+    "hints": [
+      "GitOps 的 Push-based 和 Pull-based 部署模式区别",
+      "ArgoCD 持续 Diff 的调和逻辑"
+    ],
+    "tags": [
+      "DevOps",
+      "GitOps",
+      "ArgoCD"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Helm Chart 最佳实践",
+    "content": "请介绍 Helm Chart 的最佳实践，包括 Values 设计、模板化技巧和 Chart 版本管理。",
+    "answer": "答案：Helm Chart 是 Kubernetes 应用的包管理格式，最佳实践涵盖以下方面：1) Values 设计——a) 使用全局和特定值分离的原则，global 值可以被子 Chart 继承；b) 为每个重要字段提供注释说明；c) 使用 YAML 锚点和别名减少重复；d) 定义完整示例 values.yaml。2) 模板化技巧——a) 优先使用 include 而非 template；b) 使用 named templates 封装重复逻辑；c) 使用 required 确保关键值存在；d) 使用 toYaml 输出结构化配置段；e) 使用 lookup 函数实现条件式创建。3) Chart 版本——a) 遵循 SemVer2，appVersion 和 chartVersion 分开；b) 使用 Chart.lock 锁定依赖版本。\n\n解析：Helm Chart 的典型文件结构：Chart.yaml（元信息）/values.yaml（默认配置）/charts/（依赖子 Chart）/templates/（Go 模板）/templates/NOTES.txt。最佳实践补充：使用 _helpers.tpl 定义通用命名模板；hooks 使用 annotation helm.sh/hook-weight 控制执行顺序；使用 condition 和 tags 控制可选依赖。避免：硬编码 Namespace、在模板中使用 .、忽略资源请求限制的配置项。\n\n扩展延伸：生产级 Helm 工作流：使用 helm-template 插件 + CI 验证模板渲染结果；使用 helm-docs 自动从 values.yaml 注释生成 README；使用 helm-unittest 插件测试模板输出；将 Chart 发布到 OCI Registry；使用 helmfile 或 ArgoCD 管理 Helm Release 的生命周期。CNCF Artifact Hub 是 Helm Chart 的分发中心。安全检查：helm lint + kubeval 在 CI 中验证 Chart 的合法性。",
+    "hints": [
+      "Values 文件中 global 字段的作用",
+      "include 和 template 在 Helm 模板中的区别"
+    ],
+    "tags": [
+      "DevOps",
+      "Helm",
+      "Kubernetes"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GitOps 工作原理",
+    "content": "请解释 GitOps 的工作原理和核心优势。GitOps 与传统 CI/CD 在部署方式上有什么本质区别？ArgoCD 是如何实现 GitOps 的？",
+    "answer": "答案：GitOps 是以 Git 仓库作为唯一的声明式基础设施和应用的真相来源（Source of Truth）的运维模式。\n\n工作原理：\n1. 运维人员在 Git 仓库中声明期望的系统状态（K8s YAML、Helm Chart）\n2. GitOps Operator（如 ArgoCD、Flux）持续监控 Git 仓库的变化\n3. 当 Git 仓库发生变化时，Operator 自动将集群状态同步到 Git 中描述的状态\n4. 如果集群状态被手动修改，Operator 会自动恢复到 Git 中声明的状态（自愈）\n\nGitOps vs 传统 CI/CD：\n- 传统 CI/CD：CI 构建产物（镜像），CD 推送到集群（推模式 Push-based）\n- GitOps：Git 仓库存储期望状态，Operator 从 Git 拉取并同步（拉模式 Pull-based）\n- GitOps 不依赖 CI 系统的网络连接到集群，安全性更好\n\nArgoCD 实现：\n1. 应用定义（Application CRD）：指定 Git 仓库路径、目标集群、同步策略\n2. Sync 机制：将 Git 仓库中的 manifest 应用到集群\n3. Sync 策略：自动/手动/自动修剪（Prune）\n4. 健康检查：评估应用的健康状态并进行回滚\n\n扩展延伸：GitOps 的核心优势——可审计（所有变更都在 Git 中）、可回滚（git revert）、团队协作（PR 审查）。Flux 是另一个流行的 GitOps 工具（更轻量）。GitOps 不仅适用于 K8s，也适用于 Terraform 等基础设施管理（如 Terraform Cloud 的 VCS-driven workflow）。",
+    "hints": [
+      "GitOps = Git 仓库作为 Source of Truth + Operator 持续同步",
+      "ArgoCD 采用 Pull-based 模式，不依赖 CI 网络连接到集群"
+    ],
+    "tags": [
+      "DevOps",
+      "GitOps",
+      "ArgoCD",
+      "持续部署"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Terraform 状态管理",
+    "content": "请解释 Terraform 的状态（State）文件的作用和远程状态管理方案。Terraform 如何处理团队协作中的状态冲突？State Locking 是如何实现的？",
+    "answer": "答案：Terraform 状态文件记录基础设施的当前状态，是 Terraform 决定如何变更的核心依据。\n\nState 文件的作用：\n1. 将配置中的资源与真实世界的基础设施进行映射\n2. 存储元数据（依赖关系、属性值）\n3. 性能优化——避免每次 plan 都调用云 API 列出所有资源\n\n远程状态管理方案：\n1. S3 + DynamoDB（AWS）：最常用的方案\n2. Terraform Cloud/Enterprise：托管的远程状态和锁\n3. Azure Storage Blob + Lease\n4. Google Cloud Storage + Object Versioning\n\n状态冲突处理：\n1. State Locking：在运行 terraform apply 时锁定状态，防止并发操作\n2. 后端类型：DynamoDB（AWS）、Consul、Terraform Cloud 提供锁定\n3. 如果锁被占用，terraform 会等待并重试\n4. 强制解锁：terraform force-unlock <LOCK_ID>（需要谨慎使用）\n\nState Locking 实现：\n- DynamoDB：使用 DynamoDB 的 ConditionExpression（attribute_not_exists(LockID)）实现原子操作\n- 获取锁：PutItem（条件写入）\n- 释放锁：DeleteItem\n- 锁超时：通常没有自动超时，防止被异常释放\n\n扩展延伸：Terraform Workspace 管理不同环境（dev/staging/prod）的状态隔离。状态文件包含敏感信息（如数据库密码），需要加密存储。Terragrunt 是 Terraform 的封装工具，提供 DRY 配置和更好的状态管理。",
+    "hints": [
+      "Terraform 状态文件映射配置与真实资源，是变更的核心依据",
+      "DynamoDB 通过 ConditionExpression 实现 State Locking"
+    ],
+    "tags": [
+      "DevOps",
+      "Terraform",
+      "状态管理",
+      "IaC"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "容器镜像安全扫描",
+    "content": "请介绍容器镜像安全扫描的实践方法。如何在 CI/CD 流水线中集成镜像安全扫描？Trivy 和 Snyk 有什么区别？",
+    "answer": "答案：容器镜像安全扫描是 DevSecOps 的核心实践。\n\n扫描内容：\n1. 操作系统漏洞（CVE）：检测基础镜像中的已知漏洞\n2. 依赖库漏洞：检测应用依赖（npm、pip、maven）中的已知漏洞\n3. 密钥泄漏：检测镜像中是否包含密钥、Token 等敏感信息\n4. 恶意软件：检测镜像中是否包含恶意文件\n5. 许可证合规：检测依赖的开源许可证\n\nCI/CD 集成：\n1. Push 时扫描：代码提交后自动构建并扫描镜像\n2. 合并门禁：扫描结果中高危漏洞数量超过阈值时阻止合并\n3. 定期扫描：对已部署的镜像进行定期扫描\n4. 运行时扫描：使用 Falco 等工具检测容器运行时异常\n\nTrivy vs Snyk：\n- Trivy：开源免费，使用 Aqua 维护的漏洞数据库。速度快，集成简单（单二进制文件）。适合自建 DevSecOps 流水线。\n- Snyk：商业产品，有免费层。漏洞数据库更全面。提供 IDE 插件、PR 检查和修复建议。适合企业级全面安全方案。\n\n扩展延伸：Docker Scout 是 Docker 官方的镜像安全分析工具。Google Container Analysis 与 Artifact Registry 集成。最小化基础镜像（Distroless、Alpine、Scratch）从源头减少漏洞面。多阶段构建确保最终镜像不包含构建工具。Sigstore（Cosign）实现镜像签名和验证。",
+    "hints": [
+      "Trivy 开源免费轻量，Snyk 商业全面提供修复建议",
+      "多阶段构建和最小基础镜像从源头减少漏洞面"
+    ],
+    "tags": [
+      "DevOps",
+      "安全",
+      "容器",
+      "Trivy"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s RBAC 最佳实践",
+    "content": "请解释 Kubernetes RBAC（基于角色的访问控制）的设计原则和最佳实践。如何实现最小权限原则？ServiceAccount 和 User 的区别是什么？",
+    "answer": "答案：K8s RBAC 通过 Role/ClusterRole 和 RoleBinding/ClusterRoleBinding 控制对集群资源的访问。\n\n核心概念：\n- Role：命名空间内的权限规则（如对 Pod 的 get/list/watch 权限）\n- ClusterRole：集群级别的权限规则（如对 Node、PV 的访问，或对所有命名空间资源的访问）\n- RoleBinding：将 Role 绑定到 User/Group/ServiceAccount\n- ClusterRoleBinding：将 ClusterRole 绑定到集群级别的 User/Group/ServiceAccount\n\nServiceAccount vs User：\n- User：真实的人。通过外部认证（OIDC、X.509 证书）管理，K8s 没有 User 资源对象\n- ServiceAccount：Pod 使用的身份。有对应的 K8s 资源对象，自动挂载到 Pod\n- Pod 通过 /var/run/secrets/kubernetes.io/serviceaccount/token 使用 SA Token\n\n最小权限原则：\n1. 从零开始：不给任何权限，按需授予\n2. 使用 Role 而非 ClusterRole：除非确实需要集群级别的权限\n3. 细化资源粒度：verbs（get/list/watch/create/update/delete）和 resources（pods/services）具体化\n4. 只开放需要的 API 组：apps/v1、batch/v1、networking.k8s.io/v1\n5. Aggregation Rule：通过 ClusterRole 聚合组合多个 Role\n6. 定期审计：使用 kubectl auth can-i --list 或 kubectl audit\n\n扩展延伸：RBAC 不足以覆盖所有安全需求——配合 Pod Security Admission（PSA）、NetworkPolicy、OPA/Gatekeeper 实现多层安全。审计日志（Audit Log）记录所有 API 请求，用于安全审计。kubectl auth reconcile 同步 RBAC 配置。",
+    "hints": [
+      "SA 是 Pod 的身份，User 是人的身份",
+      "最小权限：从零开始，按需授予，定期审计"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "RBAC",
       "安全"
     ]
   }

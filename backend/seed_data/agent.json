@@ -683,182 +683,277 @@
   },
   {
     "category": "agent",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "多智能体编排模式",
-    "content": "请详细解释多智能体系统中常见的编排模式（Orchestration vs Choreography），分别适用于什么场景？以 AutoGen、CrewAI 或类似框架为例说明。",
-    "answer": "答案：多智能体编排主要有两种模式：\n1. Orchestration（中央编排）：由一个控制器统一调度各智能体的执行顺序和通信。适用于工作流固定、需要强一致性保证的场景，如文档处理流水线。\n2. Choreography（协作编排）：各智能体通过事件或消息自主协作，没有中心控制器。适用于任务动态变化、需要灵活扩展的场景，如开放式对话系统。\n\n解析：AutoGen 支持两种模式：OrderedSequentialChat（顺序编排）和 GroupChat（群聊协作）。CrewAI 通过 Process.sequential 和 Process.hierarchical 实现。Orchestration 的优点是可控性强、易于调试，缺点是中心节点可能成为瓶颈。Choreography 的优点是弹性好、去中心化，缺点是需要处理分布式一致性问题。\n\n扩展延伸：实际生产环境中常采用混合模式——用 Orchestration 管理顶层流程，用 Choreography 处理子任务内部的协作。Microsoft 的 Magentic-One 使用 Orchestrator 统一调度，而 OpenAI 的 Swarm 更倾向于 Choreography。",
-    "hints": [
-      "思考中心化调度和去中心化协作各自的优缺点",
-      "对比 AutoGen 的 GroupChat 和 Sequential 模式"
-    ],
-    "tags": [
-      "AI Agent",
-      "多智能体",
-      "编排模式",
-      "AutoGen"
-    ]
-  },
-  {
-    "category": "agent",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "工具调用的可靠性设计",
-    "content": "AI Agent 在调用外部工具（API、数据库、文件系统）时可能面临哪些失败场景？如何设计可靠的工具调用机制？",
-    "answer": "答案：工具调用的失败场景包括：1）工具不存在或参数错误（Tool not found）；2）工具执行超时；3）工具返回异常结果；4）工具副作用导致状态不一致；5）工具调用顺序依赖冲突。\n\n可靠性设计策略：1）工具注册时做 Schema 校验，确保参数合法；2）设置合理的超时时间（Timeout）和重试机制（Retry with backoff）；3）实现工具执行的事务性——要么全部成功，要么回滚；4）对工具调用做幂等设计（Idempotency），防止重复执行；5）维护工具调用日志，支持审计和回放。\n\n扩展延伸：高级方案包括：1）Semantic Kernel 的 Planners 会自动编排工具调用并处理依赖；2）LangChain 的 Callbacks 机制可以监控工具调用全链路；3）在工具定义中加入输入输出约束的 Natural Language Guardrails，如 NeMo Guardrails。",
+    "title": "人在回路中（Human-in-the-Loop）的 Agent 交互设计",
+    "content": "请解释人机协同中 Human-in-the-Loop（HITL）的设计模式，包括审批节点、纠错确认、人工接管等机制，以及如何平衡 Agent 自主性和人工干预。",
+    "answer": "答案：Human-in-the-Loop（HITL）是一种交互设计模式，在 Agent 工作流的特定节点引入人工判断。核心场景包括——1）高风险操作前的审批（如发邮件、支付、删除资源）；2）Agent 不确定时的确认请求（如意图不明确的指令）；3）异常情况的人工接管（如 Agent 连续失败后转人工）。HITL 的设计目标是让 Agent 尽可能自主地完成常规任务，同时在关键节点引入人工决断。\n\n解析：HITL 的实现模式——1）审批节点（Approval Gate）：Agent 完成某个子任务后暂停，向用户发送审批请求（含上下文和决策建议），用户批准或拒绝后继续。2）纠错确认（Confirmation Loop）：Agent 在执行不可逆操作前要求用户二次确认（如「您确定要删除项目 X 吗？」），带有 Confirmation Prompt。3）异常接管（Escalation）：Agent 检测到无法处理的情况（超出知识范围、连续重试失败），自动升级到人工，提供当前状态摘要。4）渐进式自主：新场景下 Agent 先走审批模式 → 在类似场景中积累足够成功案例 → 逐渐过渡到自主模式（类似驾驶辅助的 Level 1→Level 5）。\n\n扩展延伸：设计原则——1）尽量减少人工干预次数，每次干预都需要提供足够上下文（Agent 做了什么、为什么需要干预、建议的操作）。2）超时处理：如果用户长时间不回应（超时 30 秒/5 分钟/1 小时），Agent 应有默认策略（安全地暂停或降级执行）。3）批量处理：相似审批请求可合并为批量操作（如「有 10 封邮件需要审批，一键全部批准/拒绝」）。4）用户信任：早期阶段多设置审批节点建立信任，随着用户对 Agent 能力的了解逐步放宽。",
     "hints": [
-      "考虑网络超时、参数错误、结果异常等场景",
-      "幂等设计和事务性回滚是关键技术"
+      "HITL 的核心矛盾是效率 vs 安全——每次人工干预都降低效率但提高安全",
+      "渐进式自主是新功能上线的推荐策略——先走审批再逐步放松"
     ],
     "tags": [
-      "AI Agent",
-      "工具调用",
-      "可靠性",
-      "容错"
-    ]
-  },
-  {
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "RAG 系统的检索优化策略",
-    "content": "RAG（Retrieval-Augmented Generation）系统中，检索质量直接影响最终生成效果。请列举并解释至少 5 种检索优化策略。",
-    "answer": "答案：5 种检索优化策略：\n1. Chunking 优化：根据文档类型选择合适的分块策略（语义分块、递归分块、基于 LLM 的分块），块大小通常在 256-1024 tokens 之间。\n2. Embedding 模型微调：针对特定领域对 Embedding 模型做微调（Fine-tune），提升语义相似度的准确性。\n3. Hybrid Search：结合稀疏检索（BM25，精确关键词匹配）和稠密检索（向量相似度，语义匹配），用 RRF（Reciprocal Rank Fusion）融合排序。\n4. Multi-hop Retrieval：对于复杂问题，先检索再根据结果进行二次检索（Iterative Retrieval），如 LangChain 的 MultiVectorRetriever。\n5. Reranking：初检后使用 Cross-encoder 模型对结果重排序，纠正 Embedding 相似度的偏差（如 Cohere Rerank、BGE Reranker）。\n\n扩展延伸：高阶优化还包括：Query Rewriting（改写用户查询以提升检索质量）、HyDE（通过假设文档编码提升检索准确率）、Self-RAG（让 LLM 判断是否需要检索以及检索结果是否相关）。",
-    "hints": [
-      "从数据预处理、检索策略、后处理三个环节思考",
-      "Hybrid Search 结合了关键词和语义匹配"
-    ],
-    "tags": [
-      "RAG",
-      "检索增强生成",
-      "信息检索",
-      "Embedding"
+      "Agent",
+      "HITL",
+      "Human-in-the-Loop",
+      "交互设计",
+      "安全"
     ]
   },
   {
     "category": "agent",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "Prompt Injection 攻击与防御",
-    "content": "什么是 Prompt Injection 攻击？AI Agent 系统中面临哪些 Prompt Injection 风险？如何从架构层面进行防御？",
-    "answer": "答案：Prompt Injection 攻击是通过向 LLM 的输入注入恶意指令，使模型偏离预期行为。AI Agent 系统中主要面临：\n1. 间接注入：攻击者将恶意指令藏于外部数据（网页、文档、数据库）中，Agent 检索时触发。\n2. 直接注入：用户输入中直接包含攻击性提示。\n3. 越狱攻击：通过特殊编码或角色扮演绕越安全护栏。\n\n防御策略：1）权限最小化——Agent 仅授予执行任务必需的工具权限；2）输入输出隔离——严格区分用户指令和外部数据，对外部数据做过滤和转义；3）使用独立的安全评估 LLM 审查 Agent 的推理链和输出；4）实现 Human-in-the-Loop：高危操作（写数据库、发邮件）需人工确认；5）采用结构化指令格式（如 XML 标签包裹不同来源的内容），让模型区分指令边界。\n\n扩展延伸：OpenAI 的 Instruction Hierarchy 是一种系统级防御——为不同来源的指令赋予不同优先级（系统 > 用户 > 工具输出）。Anthropic 的 Constitutional AI 也在模型层面提供了对抗 Prompt Injection 的能力。",
+    "title": "多 Agent 通信协议设计：消息路由、同步与协调",
+    "content": "请设计一个多 Agent 系统的通信协议，包括消息格式、路由策略、同步/异步通信模型、以及 Agent 间的状态同步和冲突解决机制。",
+    "answer": "答案：多 Agent 通信协议需要定义消息格式（信封 + 荷载）、路由机制（直接路由/发布订阅）、通信模式（同步请求-响应 / 异步事件驱动）和状态协调。常用架构有两种——1）星型（中央协调器）：所有消息通过协调器转发，适合小规模（<10 Agent），协调器是单点也最容易管控。2）分布式（点对点/P2P）：Agent 直接通信，通过注册中心（如 MQ）实现发现和路由，适合大规模。\n\n解析：消息格式设计——1）Header：message_id（全局唯一，UUID）、sender_id、receiver_id（可多播 /topic 或 all）、timestamp、ttl、correlation_id（关联回复的消息）。2）Body：payload（JSON/Protobuf 序列化的实际数据）、content_type（如 task_request、task_result、status_report、error）。3）Metadata：priority（优先级，影响路由排序）、version（协议版本）、requires_ack（是否需要确认）。路由策略——1）直接路由：点对点（receiver_id 直接指定）；2）话题路由：基于 Topic 的 Pub/Sub（一组 Agent 订阅同一 Topic），适合广播通知（如「所有 Agent 停止当前任务」）；3）内容路由：根据消息内容动态决定目标 Agent（如根据任务类型路由到不同的 Specialist Agent）。\n\n扩展延伸：同步与冲突解决——1）同步通信：Agent 发送请求后挂起等待回复，适合短耗时、需要即时结果的场景（如查询信息）。2）异步通信：事件驱动，Agent 发出消息后继续自己的任务，收到回复时处理。适合长耗时任务或松耦合场景。3）冲突解决：当多个 Agent 操作同一资源时需协调——悲观锁（仅一个 Agent 操作，其他等待）、乐观锁（版本号校验，冲突时重试）、主 Agent 仲裁（指定一个 Agent 作为冲突裁决者）。4）状态传播：Agent 的状态变更通过事件广播同步，接收方决定如何处理。Google OR-CHA 的 Agent-to-Agent 协议、AutoGen 的对话式消息传递是业界参考实现。",
     "hints": [
-      "区分直接注入和间接注入两种攻击路径",
-      "架构防御比模型防御更可靠"
+      "通信协议设计的核心是解耦——消息格式版本化、路由策略灵活",
+      "同步通信适合即时查询，异步通信适合事件驱动和长任务"
     ],
     "tags": [
-      "AI Agent",
+      "Agent",
+      "多Agent",
+      "通信协议",
+      "编排",
+      "协调"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "工具使用的安全性设计：沙箱、权限与行为控制",
+    "content": "在 Agent 系统中，如何确保工具调用的安全性？包括工具权限模型（Allow/Deny List）、参数校验、敏感操作二次确认（Consent）、以及代码执行沙箱的实践方案。",
+    "answer": "答案：Agent 工具调用的安全设计需要从三个层面考虑。1）工具注册阶段：定义工具访问控制清单（Allow/Deny）。2）调用阶段：参数校验、敏感操作二次确认。3）执行阶段：沙箱隔离执行环境，限制系统调用和资源访问。\n\n解析：工具权限模型——1）Allow List（白名单）：Agent 只能调用明确授权的工具集（推荐）。实施在 Agent 框架层面——在调用任何工具前检查名称是否在 Allow List 中。2）Deny List（黑名单）：禁止调用某些高风险工具（如 rm -rf、DROP TABLE），不推荐作为唯一防御。3）分级权限：不同角色的 Agent 有不同工具权限（Admin Agent 可访问敏感操作，普通 Agent 只能读）。参数校验——1）参数类型校验：工具定义的参数 Schema 在运行时校验（JSON Schema 校验参数类型、格式、枚举值）。2）范围校验：检查参数值是否在可接受范围内（如金额不超过 10000、IP 不在内网段）。3）注入防御：对 SQL、Shell 命令参数做安全转义。\n\n扩展延伸：代码执行沙箱——1）使用 Docker 容器：每个代码执行步骤在独立的临时容器中运行，限制 CPU/内存/网络/文件系统。2）受限的 Python 运行时：使用 RestrictedPython、PyPy Sandbox 限制可调用的模块和内置函数。3）WebAssembly（Wasm）沙箱：使用 Wasmtime/WasmEdge 运行用户代码，天然限权（无法访问系统调用）。以 Anthropic 的 Tool Use 安全设计为例——工具定义时通过 description 告诉 LLM 什么情况下使用什么工具，运行时通过参数校验拒绝恶意参数，高风险操作（如发送邮件、执行命令）需要用户确认（approval）。",
+    "hints": [
+      "Allow List 比 Deny List 更安全——只允许已知安全的操作",
+      "沙箱的核心是限制——代码执行在容器中，不能访问宿主机的资源"
+    ],
+    "tags": [
+      "Agent",
+      "工具安全",
+      "沙箱",
+      "权限",
+      "安全设计"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "反思循环（Reflection Loop）：Agent 的自我改进机制",
+    "content": "请解释 Agent 的反思循环（Reflection Loop / Self-Reflection）的工作原理，包括结果评估、错误分析、行为修正和自适应学习。反思循环如何提升 Agent 的长期表现？",
+    "answer": "答案：反思循环是 Agent 在执行后对自己行为和结果进行评估、分析和改进的过程。核心流程——1）执行动作并收集结果；2）评估结果是否达到预期（成功/失败/部分成功）；3）分析失败或不足之处（哪个环节出错、根因分析）；4）制定改进策略（调整 Prompt、选择不同工具、修改参数）；5）改进策略在下一次类似任务中应用。反思循环使 Agent 不再「每次从头开始」，而是在经验中不断进步。\n\n解析：反思循环的实现方式——1）单次反思（Reflexion，ACL 2023 论文）：在单轮任务中，Agent 执行 → 拿到结果 → 将结果与预期对比 → 生成反思文本 → 反思作为下一轮执行的额外上下文。适用于代码生成、QA 等任务（第一次跑出错 → 反思错误 → 第二次修复）。2）结构化反思：定义反思 Schema —— success/failure、root_cause、lesson_learned、improvement_suggestion。结构化反思更容易分析、检索和复用。3）经验池反思（Episodic Reflection）：多个任务的经验汇总到经验池（向量化存储），Agent 在新任务开始时检索相关经验作为参考。\n\n扩展延伸：反思循环的优化——1）太频繁的反思（每步都反思）增加 Token 消耗和延迟。设计反思触发条件：仅在失败或结果不理想时反思（异常触发），而非总是反思。2）反思的深度：浅层反思（换一个 API 重试），深层反思（分析为什么选了错误的工具，调整 Prompt）。根据失败严重性选择反思深度。3）自我纠正的限制：有些错误 Agent 无法自我纠正（如训练数据中的知识盲区），需要人类反馈。4）实现框架——LangGraph 的 checkpoint + 条件跳转可实现反思循环，AutoGen 的 assistant agent 和 Critic Agent 分工也体现了反思模式。",
+    "hints": [
+      "反思循环是「执行 → 评估 → 分析 → 改进」的迭代过程",
+      "结构化反思（Schema）比自由文本反思更容易检索和复用"
+    ],
+    "tags": [
+      "Agent",
+      "反思循环",
+      "Reflection",
+      "自我改进",
+      "错误分析"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "ReAct 推理模式的深入解析",
+    "content": "请深度解析 ReAct（Reasoning + Acting）推理模式的工作机制，包括 Thought-Action-Observation 循环、它与 CoT（Chain-of-Thought）的区别，以及 ReAct 在哪些场景下容易出现推理失败。",
+    "answer": "答案：ReAct（Reasoning + Acting）由 Shunyu Yao 等人在 ICLR 2023 提出，将推理（Reasoning）和行动（Acting）交织进行。其核心是迭代的 Thought-Action-Observation 循环——1）Thought（思考）：分析当前状态，确定下一步做什么。2）Action（行动）：调用工具或收集信息。3）Observation（观察）：工具执行返回的结果。4）进入下一轮思考。相比 CoT（语言模型自己生成推理链条，不与环境交互），ReAct 可以通过工具调用获取外部信息来修正自己的推理，减少幻觉。\n\n解析：ReAct 的触发机制——Agent 框架在执行过程中通常会保持一个循环（while not done），每次 LLM 生成的内容中（OpenAI 模式）或从 Tool Calls 判断（Claude 模式），决定是继续调用工具还是给出最终答案。Thought 的关键作用——Thought 帮助 LLM 回忆目标状态、评估当前进度、计划下一步。没有 Thought 步骤的 Agent 容易陷入短视（贪心地做一步但偏离全局目标）。Observation 的反馈价值——Observation 可能包含新的信息，推翻之前的推理假设。例如 Agent 搜索「当前天气」，Observation 返回「今天没有天气数据」，Agent 需要重新思考替代方案。\n\n扩展延伸：ReAct 的失败模式——1）思考过深（Overthinking）：Agent 花费大量 Token 去推理一个简单问题（如「打开灯」→ 思考是否要站起来、走过去、找到开关...）。解决方案：设置最低思考层级或使用快捷方式。2）观察循环（Observation Loop）：Action → Observation 没有带来新的信息 → 重复相同 Action → 无限循环。解决方案：检测重复模式，N 次重复后强制改变策略。3）推理偏差（Reasoning Bias）：Observation 与预期不符时，Agent 拒绝相信 Observation 并继续按自己假设推理。解决方案：设置「Observation Override」规则——Observation 的优先级高于 LLM 的内在知识。4）ReAct vs 规划模式：对于可以提前规划好的任务（如 Web 爬取固定页面），先用规划模式定好计划再 ReAct 执行比纯 ReAct 更高效。",
+    "hints": [
+      "ReAct 的核心创新是 Thought-Action-Observation 循环——推理和行动相互促进",
+      "ReAct 的失败模式包括 Overthinking、Observation Loop、Reasoning Bias"
+    ],
+    "tags": [
+      "Agent",
+      "ReAct",
+      "推理",
+      "CoT",
+      "Thought-Action-Observation"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 智能体编排",
+    "content": "请解释 Agent 编排（Orchestration）的几种模式。顺序编排、路由编排和并行编排分别适用于什么场景？Agent 编排和传统工作流引擎的区别是什么？",
+    "answer": "答案：Agent 编排是在多步骤任务中协调多个 Agent 或工具执行的模式。\n\n编排模式：\n1. 顺序编排（Chain）：Agent A 的输出作为 Agent B 的输入，串行执行。\n   - 适用：信息提取→分析→报告生成等线性流程\n2. 路由编排（Router）：根据分类结果将任务路由到不同的处理 Agent。\n   - 适用：客服系统中的投诉/咨询/退款分类处理\n3. 并行编排（Parallel）：多个 Agent 同时执行独立子任务，结果聚合。\n   - 适用：同时搜索网页、查数据库、调用 API，汇总结果\n4. 编排编排（Orchestrator）：中央 Agent 负责规划、派发和监控子任务。\n   - 适用：复杂任务有依赖关系，子任务间需要协作\n\nAgent 编排 vs 传统工作流引擎：\n- 传统工作流引擎（如 Camunda、Temporal）：流程固定，节点类型预定义，适合确定性的业务流程\n- Agent 编排：流程动态生成（LLM 决定下一步），节点可以自适应调整，适合不确定性的任务\n- Agent 编排天然支持 LLM 的回退和重试\n\n扩展延伸：LangGraph 提供基于图的编排能力——节点是 Agent/工具，边是条件跳转。AutoGen 的 GroupChat 实现多 Agent 对话编排。编排模式的选择取决于任务的确定性和复杂度。",
+    "hints": [
+      "Agent 编排动态自适应，传统工作流固定确定",
+      "四种模式：顺序、路由、并行、中央编排"
+    ],
+    "tags": [
+      "Agent",
+      "编排",
+      "工作流",
+      "LangGraph"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 人机协同",
+    "content": "请解释 Agent 系统中的人机协同（Human-in-the-Loop）设计模式。什么情况下需要人工介入？如何设计平稳的自主→人工切换？",
+    "answer": "答案：人机协同是在 Agent 执行过程中在关键节点引入人工判断的质量保障机制。\n\n需要人工介入的场景：\n1. 高风险决策：财务交易、法律建议、医疗诊断\n2. 权限边界：删除资源、修改配置、发送大量消息\n3. 不确定性高：Agent 置信度低于阈值、上下文不明确\n4. 异常处理：Agent 连续重试失败、检测到矛盾信息\n5. 监督审核：生成的内容需要人工审核后才能发布\n\n自主→人工切换设计：\n1. 分级介入：从旁路监控（Monitor）→ 异常告警（Alert）→ 需要确认（Confirm）→ 强制接管（Override）\n2. 超时机制：Agent 尝试 N 次后仍未解决，自动转人工\n3. 上下文传递：将 Agent 的执行日志、决策轨迹、已尝试的方案完整传递给人工\n4. 平滑切换：允许人工中途加入查看，而不必等 Agent 失败才介入\n\n扩展延伸：LangChain 的 Human-in-the-Loop 通过 Tool 的 handle_tool_error 和 Suspended 状态实现。AutoGen 通过用户代理（UserProxyAgent）模拟人工介入。人工介入的频率是衡量 Agent 成熟度的关键指标——比率越低，Agent 越自主。",
+    "hints": [
+      "高风险/低置信度/权限边界=需要人工介入",
+      "分级介入：监控→告警→确认→接管"
+    ],
+    "tags": [
+      "Agent",
+      "人机协同",
+      "HITL",
+      "安全"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 记忆检索策略",
+    "content": "请介绍 Agent 系统中长期记忆的检索策略。RAG、向量检索、图检索、时间线检索各适用于什么场景？如何实现记忆的优先级和遗忘机制？",
+    "answer": "答案：Agent 的长期记忆系统需要多种检索策略的组合。\n\n检索策略：\n1. 向量检索（Vector Search）：基于语义相似度检索相似记忆。\n   - 适用：回忆相关事实、查找类似问题的解决方案\n2. 图检索（Graph Retrieval）：基于实体关系的结构化检索。\n   - 适用：人物关系、实体间的关联、知识图谱导航\n3. 时间线检索（Timeline）：基于时间顺序检索。\n   - 适用：最近对话上下文、事件序列、历史操作日志\n4. 混合检索（Hybrid）：向量+关键词+时间，多路检索后重排序。\n   - 适用：需要高精度查全率的复杂查询\n\n记忆优先级和遗忘：\n1. 重要性评分：根据访问频率、用户反馈、任务完成情况给记忆打分\n2. 层级存储：高频（工作记忆）→ 中频（近期记忆）→ 低频（长期记忆/外部存储）\n3. 遗忘机制：\n   - 时间衰减：长时间未访问的记忆自动降级或删除\n   - 容量限制：记忆数量超过阈值时淘汰最不重要的\n   - 摘要压缩：将多个相关记忆压缩为单条摘要\n\n扩展延伸：MemGPT（Letta）实现了虚拟上下文管理——将 LLM 上下文类比为操作系统内存。Mem0 是 Agent 的记忆管理库。记忆检索的延迟是 Agent 响应时间的关键瓶颈——需要缓存策略。",
+    "hints": [
+      "四种检索策略：向量、图、时间线、混合，互补使用",
+      "遗忘机制：重要性评分+时间衰减+容量限制"
+    ],
+    "tags": [
+      "Agent",
+      "记忆",
+      "检索",
+      "RAG"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 成本优化策略",
+    "content": "请介绍 Agent 系统的成本优化策略。如何减少 LLM API 的调用次数和 Token 消耗？缓存策略和模型路由在 Agent 成本控制中的作用是什么？",
+    "answer": "答案：Agent 系统的主要成本来自 LLM API 调用。\n\n减少调用次数：\n1. 语义缓存：相同或相似请求命中缓存直接返回，无需调用 LLM\n2. 请求合并：将多个独立的小请求合并为一次调用（批量处理）\n3. 预判短路：简单问题直接使用规则匹配或小模型，不需要大模型\n4. 结果复用：同一上下文的多次推理结果缓存复用\n\n减少 Token 消耗：\n1. 上下文压缩：定期总结历史对话，用压缩后的摘要替代完整历史\n2. 选择性记忆：只保留高相关性记忆，低相关性记忆移到外部存储\n3. Prompt 精简：去除不必要的指令和示例，使用更简洁的表达\n4. 结构化输出控制：使用 JSON Schema 限定输出格式，减少冗长回复\n\n模型路由策略：\n1. 查询分类：简单任务→小模型（GPT-4o-mini/Claude Haiku），复杂任务→大模型\n2. 自适应路由：小模型置信度不足时升级到大模型\n3. 成本预算控制：设置每次会话的 API 成本上限，超限后降级\n\n扩展延伸：缓存命中率是 Agent 成本优化的核心指标。Redis 或 Momento 提供低延迟的语义缓存。OpenRouter/LiteLLM 提供统一的路由和成本跟踪。Token 压缩技术（如 LLMLingua）可以在推理前压缩 Prompt。",
+    "hints": [
+      "三种优化：减少调用次数、减少 Token、模型路由",
+      "语义缓存 + 上下文压缩 + 模型分级是最有效的组合"
+    ],
+    "tags": [
+      "Agent",
+      "成本优化",
+      "缓存",
+      "模型路由"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 可观测性深度实践",
+    "content": "请介绍 Agent 系统的可观测性设计。与传统应用相比，Agent 的可观测性面临哪些独特挑战？如何追踪 Agent 的推理链和决策过程？",
+    "answer": "答案：Agent 可观测性需要追踪从用户请求到最终响应的完整推理和执行链。\n\n独特挑战：\n1. 非确定性：同一输入可能产生不同的推理路径，难以复现\n2. 多步骤：一个请求可能涉及多次 LLM 调用、工具调用、外部 API\n3. 循环和递归：Agent 可能自我反思、重试，产生复杂的调用树\n4. 上下文巨大：LLM 的输入/输出可能包含大量 Token（需要存储和检索）\n\n追踪推理链的方案：\n1. OpenTelemetry Span：每次 LLM 调用、工具调用、子 Agent 调用都创建一个 Span\n2. 树形追踪（Trace Tree）：根 Span = 用户请求，子 Span = 推理步骤、工具调用、中间结果\n3. 决策日志：在每个决策点记录 LLM 的思考过程、选择的理由、备选方案\n4. 输入/输出快照：记录每次 LLM 调用的完整 Prompt 和 Response\n\n关键技术：\n1. Trace ID 传播：在整个调用链中传递 Trace ID\n2. 异步追踪：Agent 的并行调用需要正确的 Span 嵌套和上下文传播\n3. 采样策略：对失败的 Trace 全量采样，成功的 Trace 按比例采样\n\n扩展延伸：LangSmith 和 LangFuse 是专门为 LLM/Agent 应用设计的可观测性平台。Weights & Biases Prompts 提供 LLM 调用的追踪和对比。Agent 的可观测性数据也是调试 Prompt 和改进推理策略的核心依据。",
+    "hints": [
+      "Agent 可观测性的独特挑战：非确定性和多步骤调用链",
+      "树形追踪（OpenTelemetry Span）记录每次 LLM 调用和工具调用的完整链路"
+    ],
+    "tags": [
+      "Agent",
+      "可观测性",
+      "Tracing",
+      "OpenTelemetry"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 安全防护体系",
+    "content": "请介绍 Agent 系统的安全防护体系。Prompt Injection、数据泄露、工具滥用等安全威胁如何防范？Agent 的安全策略应该包含哪些层次？",
+    "answer": "答案：Agent 安全防护需要从输入、模型、工具、输出四个层次构建。\n\n威胁类型：\n1. Prompt Injection：恶意用户输入试图操纵 Agent 的行为\n   - 直接注入：用户输入包含\"忽略之前的指令\"\n   - 间接注入：Agent 读取的外部内容包含恶意指令\n2. 数据泄露：敏感信息通过 LLM 输出或工具调用暴露\n3. 工具滥用：Agent 被诱导执行危险操作（删除、写入、权限提升）\n4. 供应链攻击：Agent 使用的第三方工具或插件被攻陷\n\n防护层次：\n1. 输入层：\n   - 输入过滤和清洗，检测已知攻击模式\n   - 隔离用户指令和系统指令（使用特殊分隔符或结构化 Prompt）\n2. 模型层：\n   - Guardrails：定义 Agent 行为边界（禁止主题、允许的操作）\n   - 内容安全过滤：拒绝生成有害内容\n3. 工具层：\n   - 权限最小化：工具只暴露所需的最小操作集\n   - 参数校验：工具调用前验证参数合法性\n   - 人工确认：高危操作需要人工审批\n4. 输出层：\n   - PII 脱敏：在输出中自动遮盖敏感信息\n   - 输出审计：记录所有输出用于事后审计\n\n扩展延伸：NIST AI Risk Management Framework 提供了 AI 系统安全治理框架。OWASP Top 10 for LLM Applications 是 LLM/Agent 安全威胁清单。Lakera Guard 和 Rebuff 提供 Prompt Injection 检测。",
+    "hints": [
+      "Agent 安全四层次：输入、模型、工具、输出",
+      "OWASP Top 10 for LLM 是最权威的 Agent 安全威胁参考"
+    ],
+    "tags": [
+      "Agent",
       "安全",
       "Prompt Injection",
-      "护栏"
+      "Guardrails"
     ]
   },
   {
     "category": "agent",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "Agent 评估体系设计",
-    "content": "AI Agent 系统的评估比传统 NLP 任务更复杂，因为它涉及多步决策和与环境的交互。请设计一套完整的 Agent 评估体系，包括评估指标和测试方法。",
-    "answer": "答案：完整的 Agent 评估体系包括三层次：\n1. 任务级评估：Success Rate（成功率）、Task Completion Time（完成时间）、Cost（Token 消耗和 API 调用次数）。\n2. 推理级评估：Relevance（每一步是否相关）、Correctness（中间推理是否准确）、Efficiency（是否走了最短路径）。\n3. 安全级评估：Harmlessness（是否产生有害输出）、Robustness（对抗 Prompt Injection 的鲁棒性）、Alignment（行为是否符合用户意图）。\n\n测试方法：1）Unit Testing——逐一验证工具调用的参数和返回值；2）Scenario Testing——构建端到端的测试场景（如 AgentBench、GAIA）；3）Trajectory Evaluation——评估 Agent 的完整推理轨迹而非仅最终结果；4）Adversarial Testing——用对抗样本测试 Agent 的鲁棒性。\n\n扩展延伸：推荐评估框架：LangSmith（追踪 + 评估）、Weights & Biases Prompts（可视化 + 对比）、Ragas（RAG 评估）。对于多轮交互场景，Human Evaluation 仍然是最可靠的方式。",
+    "title": "Agent 工具调用可靠性",
+    "content": "请介绍提高 Agent 工具调用可靠性的方法。如何处理工具返回的异常结果？工具 Schema 设计的最佳实践是什么？",
+    "answer": "答案：工具调用是 Agent 连接外部世界的桥梁，其可靠性直接影响整个系统的稳定性。\n\n提高可靠性的方法：\n1. 重试机制：工具调用失败时自动重试（指数退避）\n2. 超时控制：为每种工具设置合适超时时间，避免长时间等待\n3. 结果验证：调用后验证返回结果是否符合预期格式\n4. 降级方案：主工具失败时自动切换到备选工具\n5. 熔断保护：工具连续失败超过阈值后不再调用\n\n异常结果处理：\n1. 网络错误：重试 N 次后转人工\n2. 率限制（Rate Limit）：等待后重试或使用其他端点\n3. 业务异常：将错误信息返回给 Agent，让它决定下一步\n4. 空结果：同样返回给 Agent，Agent 可以调整查询条件或尝试其他工具\n5. 授权失败：检查 Token 是否过期（自动刷新或提示用户重新授权）\n\n工具 Schema 设计最佳实践：\n1. 参数命名清晰：使用有语义的名称，方便 LLM 理解\n2. 提供参数描述：每个参数标注用途、格式、取值范围\n3. 参数验证：使用 JSON Schema 严格验证输入\n4. 必要参数和可选参数的合理划分\n5. 减少参数数量：一个工具不超过 5-7 个参数\n6. 提供示例：复杂参数给出使用示例\n\n扩展延伸：Function Calling 的可靠性在不同模型间差异很大——Claude 和 GPT-4 的工具调用最稳定。Anthropic 的 Tool Use Best Practices 指南是重要的参考。Function Calling 的测试框架——使用模拟工具或录制回放进行测试。",
     "hints": [
-      "区分任务级、推理级、安全级三个评估层次",
-      "轨迹评估比仅评估最终结果更有洞察力"
+      "工具调用可靠性：重试、超时、验证、降级、熔断",
+      "工具 Schema 设计：参数描述清晰、JSON Schema 验证、示例"
     ],
     "tags": [
-      "AI Agent",
-      "评估",
-      "测试",
-      "质量管理"
-    ]
-  },
-  {
-    "category": "agent",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "多智能体编排模式",
-    "content": "请详细解释多智能体系统中常见的编排模式（Orchestration vs Choreography），分别适用于什么场景？以 AutoGen、CrewAI 或类似框架为例说明。",
-    "answer": "答案：多智能体编排主要有两种模式：\n1. Orchestration（中央编排）：由一个控制器统一调度各智能体的执行顺序和通信。适用于工作流固定、需要强一致性保证的场景，如文档处理流水线。\n2. Choreography（协作编排）：各智能体通过事件或消息自主协作，没有中心控制器。适用于任务动态变化、需要灵活扩展的场景，如开放式对话系统。\n\n解析：AutoGen 支持两种模式：OrderedSequentialChat（顺序编排）和 GroupChat（群聊协作）。CrewAI 通过 Process.sequential 和 Process.hierarchical 实现。Orchestration 的优点是可控性强、易于调试，缺点是中心节点可能成为瓶颈。Choreography 的优点是弹性好、去中心化，缺点是需要处理分布式一致性问题。\n\n扩展延伸：实际生产环境中常采用混合模式——用 Orchestration 管理顶层流程，用 Choreography 处理子任务内部的协作。Microsoft 的 Magentic-One 使用 Orchestrator 统一调度，而 OpenAI 的 Swarm 更倾向于 Choreography。",
-    "hints": [
-      "思考中心化调度和去中心化协作各自的优缺点",
-      "对比 AutoGen 的 GroupChat 和 Sequential 模式"
-    ],
-    "tags": [
-      "AI Agent",
-      "多智能体",
-      "编排模式",
-      "AutoGen"
-    ]
-  },
-  {
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "工具调用的可靠性设计",
-    "content": "AI Agent 在调用外部工具（API、数据库、文件系统）时可能面临哪些失败场景？如何设计可靠的工具调用机制？",
-    "answer": "答案：工具调用的失败场景包括：1）工具不存在或参数错误（Tool not found）；2）工具执行超时；3）工具返回异常结果；4）工具副作用导致状态不一致；5）工具调用顺序依赖冲突。\n\n可靠性设计策略：1）工具注册时做 Schema 校验，确保参数合法；2）设置合理的超时时间（Timeout）和重试机制（Retry with backoff）；3）实现工具执行的事务性——要么全部成功，要么回滚；4）对工具调用做幂等设计（Idempotency），防止重复执行；5）维护工具调用日志，支持审计和回放。\n\n扩展延伸：高级方案包括：1）Semantic Kernel 的 Planners 会自动编排工具调用并处理依赖；2）LangChain 的 Callbacks 机制可以监控工具调用全链路；3）在工具定义中加入输入输出约束的 Natural Language Guardrails，如 NeMo Guardrails。",
-    "hints": [
-      "考虑网络超时、参数错误、结果异常等场景",
-      "幂等设计和事务性回滚是关键技术"
-    ],
-    "tags": [
-      "AI Agent",
+      "Agent",
       "工具调用",
       "可靠性",
-      "容错"
+      "Function Calling"
     ]
   },
   {
     "category": "agent",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "RAG 系统的检索优化策略",
-    "content": "RAG（Retrieval-Augmented Generation）系统中，检索质量直接影响最终生成效果。请列举并解释至少 5 种检索优化策略。",
-    "answer": "答案：5 种检索优化策略：\n1. Chunking 优化：根据文档类型选择合适的分块策略（语义分块、递归分块、基于 LLM 的分块），块大小通常在 256-1024 tokens 之间。\n2. Embedding 模型微调：针对特定领域对 Embedding 模型做微调（Fine-tune），提升语义相似度的准确性。\n3. Hybrid Search：结合稀疏检索（BM25，精确关键词匹配）和稠密检索（向量相似度，语义匹配），用 RRF（Reciprocal Rank Fusion）融合排序。\n4. Multi-hop Retrieval：对于复杂问题，先检索再根据结果进行二次检索（Iterative Retrieval），如 LangChain 的 MultiVectorRetriever。\n5. Reranking：初检后使用 Cross-encoder 模型对结果重排序，纠正 Embedding 相似度的偏差（如 Cohere Rerank、BGE Reranker）。\n\n扩展延伸：高阶优化还包括：Query Rewriting（改写用户查询以提升检索质量）、HyDE（通过假设文档编码提升检索准确率）、Self-RAG（让 LLM 判断是否需要检索以及检索结果是否相关）。",
+    "title": "Agent 评估指标体系",
+    "content": "请介绍 Agent 系统的评估指标体系。与传统 NLU 系统相比，Agent 评估面临哪些额外挑战？任务完成率、效率、鲁棒性等指标如何设计？",
+    "answer": "答案：Agent 评估需要从多个维度衡量系统的综合能力。\n\n评估维度：\n1. 任务完成率（Task Success Rate）：任务是否成功完成\n   - 硬指标：预期结果是否达成（如 SQL 查询是否返回正确结果）\n   - 软指标：用户满意度评分\n2. 效率（Efficiency）：完成任务所需的资源和时间\n   - 步骤数、API 调用次数、LLM Token 消耗、响应时间\n3. 鲁棒性（Robustness）：面对异常和干扰时的稳定表现\n   - 输入干扰、工具故障、LLM 幻觉时的恢复能力\n4. 安全性（Safety）：是否产生有害行为\n   - 拒绝率、Prompt Injection 成功率、敏感信息泄露\n\n与传统 NLU 系统的区别：\n- 传统 NLU：单轮评估（输入→输出匹配），静态数据集\n- Agent：多轮交互评估，状态依赖，结果受中间步骤影响\n- Agent 评估需要端到端测试（E2E），不能仅评估单步\n\n评估方法：\n1. 单元测试：测试单个工具调用或推理步骤\n2. 场景测试：预定义的完整任务场景（Gold Dataset）\n3. 对抗测试：注入干扰或异常看 Agent 如何处理\n4. A/B 测试：在生产环境中对比不同版本的效果\n\n扩展延伸：AgentBench 和 GAIA 是 Agent 评估的基准数据集。LangSmith 支持 Agent 评估的数据集管理和自动化评估。Braintrust 提供 AI 应用的评估和实验管理平台。评估数据飞轮——将生产环境中的失败案例加入评估数据集。",
     "hints": [
-      "从数据预处理、检索策略、后处理三个环节思考",
-      "Hybrid Search 结合了关键词和语义匹配"
+      "Agent 评估四维度：完成率、效率、鲁棒性、安全性",
+      "Agent 评估需要端到端的多轮交互测试（比 NLU 更复杂）"
     ],
     "tags": [
-      "RAG",
-      "检索增强生成",
-      "信息检索",
-      "Embedding"
-    ]
-  },
-  {
-    "category": "agent",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Prompt Injection 攻击与防御",
-    "content": "什么是 Prompt Injection 攻击？AI Agent 系统中面临哪些 Prompt Injection 风险？如何从架构层面进行防御？",
-    "answer": "答案：Prompt Injection 攻击是通过向 LLM 的输入注入恶意指令，使模型偏离预期行为。AI Agent 系统中主要面临：\n1. 间接注入：攻击者将恶意指令藏于外部数据（网页、文档、数据库）中，Agent 检索时触发。\n2. 直接注入：用户输入中直接包含攻击性提示。\n3. 越狱攻击：通过特殊编码或角色扮演绕越安全护栏。\n\n防御策略：1）权限最小化——Agent 仅授予执行任务必需的工具权限；2）输入输出隔离——严格区分用户指令和外部数据，对外部数据做过滤和转义；3）使用独立的安全评估 LLM 审查 Agent 的推理链和输出；4）实现 Human-in-the-Loop：高危操作（写数据库、发邮件）需人工确认；5）采用结构化指令格式（如 XML 标签包裹不同来源的内容），让模型区分指令边界。\n\n扩展延伸：OpenAI 的 Instruction Hierarchy 是一种系统级防御——为不同来源的指令赋予不同优先级（系统 > 用户 > 工具输出）。Anthropic 的 Constitutional AI 也在模型层面提供了对抗 Prompt Injection 的能力。",
-    "hints": [
-      "区分直接注入和间接注入两种攻击路径",
-      "架构防御比模型防御更可靠"
-    ],
-    "tags": [
-      "AI Agent",
-      "安全",
-      "Prompt Injection",
-      "护栏"
-    ]
-  },
-  {
-    "category": "agent",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Agent 评估体系设计",
-    "content": "AI Agent 系统的评估比传统 NLP 任务更复杂，因为它涉及多步决策和与环境的交互。请设计一套完整的 Agent 评估体系，包括评估指标和测试方法。",
-    "answer": "答案：完整的 Agent 评估体系包括三层次：\n1. 任务级评估：Success Rate（成功率）、Task Completion Time（完成时间）、Cost（Token 消耗和 API 调用次数）。\n2. 推理级评估：Relevance（每一步是否相关）、Correctness（中间推理是否准确）、Efficiency（是否走了最短路径）。\n3. 安全级评估：Harmlessness（是否产生有害输出）、Robustness（对抗 Prompt Injection 的鲁棒性）、Alignment（行为是否符合用户意图）。\n\n测试方法：1）Unit Testing——逐一验证工具调用的参数和返回值；2）Scenario Testing——构建端到端的测试场景（如 AgentBench、GAIA）；3）Trajectory Evaluation——评估 Agent 的完整推理轨迹而非仅最终结果；4）Adversarial Testing——用对抗样本测试 Agent 的鲁棒性。\n\n扩展延伸：推荐评估框架：LangSmith（追踪 + 评估）、Weights & Biases Prompts（可视化 + 对比）、Ragas（RAG 评估）。对于多轮交互场景，Human Evaluation 仍然是最可靠的方式。",
-    "hints": [
-      "区分任务级、推理级、安全级三个评估层次",
-      "轨迹评估比仅评估最终结果更有洞察力"
-    ],
-    "tags": [
-      "AI Agent",
+      "Agent",
       "评估",
-      "测试",
-      "质量管理"
+      "Eval",
+      "测试"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 上下文管理",
+    "content": "请介绍 Agent 系统中上下文窗口的管理策略。上下文窗口满了怎么办？如何实现上下文的分层管理和压缩？",
+    "answer": "答案：LLM 的上下文窗口有限，Agent 需要精心管理上下文以避免丢失关键信息。\n\n上下文管理策略：\n1. 滑动窗口：只保留最近的 N 轮对话，更早的历史自动丢弃\n   - 简单有效，但可能丢失早期的关键信息\n2. 摘要压缩：当上下文接近窗口限制时，将历史对话总结为摘要\n   - 将原始对话替换为摘要，保留最核心的信息\n3. 分层管理：\n   - Level 1（工作记忆）：当前轮次的完整对话\n   - Level 2（近期记忆）：最近几轮的摘要\n   - Level 3（长期记忆）：历史任务的关键信息（外部存储 + 按需检索）\n4. 关键信息提取：从每轮对话中提取关键信息（决策、数据、结论）单独存储\n\n上下文满了的处理：\n1. 自动触发压缩：当 Token 使用量超过阈值（如 80%）时自动进行摘要\n2. 滚动窗口：最旧的对话被压缩为摘要，仍在上下文中的较低优先级位置\n3. 信息检索：Agent 需要早期信息时从外部存储检索\n\n上下文分区：\n- System Prompt（固定不变的高优先级）\n- 任务指令（当前任务的指令）\n- 对话历史（压缩后的摘要 + 最近的轮次）\n- 检索信息（从外部存储检索的相关片段）\n- 工具结果（工具调用的输入输出）\n\n扩展延伸：Gemini 的 1M Token 上下文窗口减少了压缩需求但不完全解决。高质量 Prompt 设计（最相关的内容放最前面/后面）利用 LLM 的注意力偏差。MemGPT 将上下文管理抽象为操作系统内存管理。",
+    "hints": [
+      "三层上下文：工作记忆（完整）、近期记忆（摘要）、长期记忆（外部检索）",
+      "上下文满时自动压缩最旧的内容为摘要"
+    ],
+    "tags": [
+      "Agent",
+      "上下文管理",
+      "记忆",
+      "窗口"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 数据隐私保护",
+    "content": "请介绍 Agent 系统中用户数据隐私保护的挑战和方案。Agent 如何处理包含敏感信息的用户数据？如何实现数据最小化原则？",
+    "answer": "答案：Agent 系统通常需要处理用户数据，隐私保护是重要的设计约束。\n\n隐私挑战：\n1. 数据暴露给 LLM API：用户数据通过 Prompt 发送给第三方 LLM 服务\n2. 上下文持久化：历史对话存储中可能包含敏感信息\n3. 工具调用泄露：Agent 调用外部工具时可能携带敏感数据\n4. 间接泄露：Agent 的回答可能泄露训练数据或其他用户的信息\n\n处理敏感数据的方案：\n1. 数据脱敏：在发送给 LLM 前自动识别并遮盖 PII（姓名、身份证号、银行卡号等）\n2. 敏感字段隔离：不在 Prompt 中发送完整敏感字段，使用占位符或脱敏版本\n3. 本地化部署：使用私有部署的 LLM（如 Llama、Qwen 的本地版本）\n4. 联邦学习/本地处理：敏感数据在本地处理，只将非敏感的结果发送给 LLM\n\n数据最小化原则：\n1. 需要知道原则：只发送与当前任务最相关的数据，不发送全部用户数据\n2. 数据裁剪：在 Prompt 中只包含必要的字段\n3. 自动过期：设置自动清理策略，对话数据在一定时间后自动删除\n4. 用户控制：允许用户查看、导出和删除自己的对话数据\n\n扩展延伸：GDPR、CCPA 等隐私法规对 Agent 系统提出了合规要求。Anthropic 的隐私政策和数据处理条款强调不将 API 数据用于训练。Microsoft 的 Azure OpenAI 提供了数据隔离和私有网络选项。OpenAI 的隐私模式（不记录 API 数据）适用于敏感场景。",
+    "hints": [
+      "Agent 隐私保护：数据脱敏、最小化、本地化、自动过期",
+      "关键原则：只发送最相关的数据（Need-to-know）"
+    ],
+    "tags": [
+      "Agent",
+      "隐私",
+      "安全",
+      "合规"
     ]
   }
 ]

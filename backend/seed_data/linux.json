@@ -878,5 +878,91 @@
       "虚拟文件系统",
       "系统排查"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "perf top/stat/record 性能分析工具",
+    "content": "请介绍 Linux perf 工具的三个主要子命令 top/stat/record 的用途和工作原理。",
+    "answer": "答案：perf 是基于 Linux 内核 perf_event 子系统（PMU + 软件事件）的性能分析工具。三种主要子命令：1) perf top——实时显示当前系统中 CPU 热点函数（采样模式），默认每秒采样 4000 次（-F 4000），适合快速定位 CPU 热点；2) perf stat——一次性统计指定命令或多个进程的性能计数器数据（CPU 周期、指令数、缓存命中率、上下文切换等），适合评估程序整体性能特征；3) perf record——将采样数据记录到 perf.data 文件，之后通过 perf report/report -g 进行离线深入分析。底层原理：perf_event_open 系统调用创建性能事件文件描述符，通过 mmap 将采样缓冲区映射到用户空间。\n\n解析：常见用法：perf top -p <PID> 按进程分析；perf stat -d <cmd> 显示更多指标（LLC 命中、FLOPS）；perf record -F 99 -g -p <PID> --sleep 30 以 99Hz 采样并记录调用栈用于生成火焰图。perf 还支持 tracepoint（静态跟踪点），通过 perf list 列出所有可用事件。perf 对 NUMA 感知的支持：perf stat --numa 显示各 NUMA 节点的内存访问统计。\n\n扩展延伸：perf 是 Linux 性能分析的第一入口，但采样周期模式的 perf top 在空闲系统上可能产生较大开销。在虚拟机内（如 AWS Nitro），硬件 PMU 事件可能不可用，此时只能用软件事件和 tracepoint。现代内核 5.10+ 中的 perf 支持 BPF 模式（perf record --bpf），在 BPF 中执行采样过滤器。火焰图生成工具 FlameGraph 配合 perf script 使用。",
+    "hints": [
+      "perf top 和 perf record 在数据采集方式上的本质区别",
+      "perf stat -d 额外输出哪些指标"
+    ],
+    "tags": [
+      "Linux",
+      "perf",
+      "性能分析"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "strace 系统调用跟踪",
+    "content": "请介绍 strace 的 -c、-e、-p、-f 等关键参数及其典型使用场景。",
+    "answer": "答案：strace 是基于 ptrace 系统调用的跟踪工具，拦截并记录进程发起的系统调用及其信号。关键参数：1) -c（count）——在程序退出时汇总各系统调用的次数、耗时、错误数，适合性能分析和瓶颈定位；2) -e（expression）——按系统调用名过滤跟踪范围，如 -e trace=open,read,write（文件操作）、-e trace=network（网络相关）；3) -p <PID>——附加到已在运行的进程进行跟踪；4) -f（follow forks）——跟踪子进程，对多进程/多线程程序必须开启；5) -t/-tt/-ttt 添加时间戳；6) -T 显示每个系统调用的耗时。\n\n解析：strace 使用 ptrace(PTRACE_SYSCALL, pid) 在系统调用入口和返回处分别暂停目标进程两次，被跟踪的程序运行速度会显著下降（典型情况慢 10-100 倍），因此不适合生产环境长期使用。替代方案：生产环境用 perf trace（基于 perf_event，开销更低）或 bpftrace（基于 BPF，安全且开销小）。容器内 strace 需要 SYS_PTRACE capability。\n\n扩展延伸：strace 的 -z 参数可以只显示错误返回的系统调用。高级用法：strace -e trace=openat -P /etc/passwd 只跟踪对特定文件的操作。ltrace 则跟踪库函数调用。对于系统调用级别的跟踪，现代替代是 eBPF 工具如 opensnoop（跟踪文件打开）、tcpconnect（跟踪 TCP 连接）。",
+    "hints": [
+      "strace 的 -c 参数与默认模式的核心区别",
+      "strace 为什么不适合生产环境长期运行"
+    ],
+    "tags": [
+      "Linux",
+      "strace",
+      "调试"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "bpftrace 动态追踪",
+    "content": "请介绍 bpftrace 的原理、编程模型和典型使用场景。",
+    "answer": "答案：bpftrace 是一种基于 eBPF（Extended Berkeley Packet Filter）的高级动态追踪语言/工具，允许用户以类似 awk 的单行脚本在内核中安全地挂载探针（kprobe/uprobe/tracepoint/USDT）并获取系统运行时数据。原理：bpftrace 脚本经 Clang/LLVM 编译为 BPF 字节码，通过 bpf() 系统调用加载到内核，BPF 验证器确保程序终止（有界循环、不访问非法内存）、不会导致内核崩溃。编程模型：BEGIN -> 探针定义 -> 动作 -> END（退出时聚合输出）。内置函数：count()、sum()、hist()（直方图）、kstack()/ustack()（调用栈）。\n\n解析：典型单行命令：bpftrace -e 'kprobe:do_sys_open { @[comm] = count(); }' 统计各进程的 open 调用次数；bpftrace -e 'tracepoint:syscalls:sys_enter_read { @[pid, comm] = sum(args->count); }' 统计各进程读取字节量。bpftrace 的一行模式适合快速问题定位，脚本模式（.bt 文件）功能更强。bpftrace 依赖内核支持 BTF（BPF Type Format，5.4+）。\n\n扩展延伸：bpftrace 的前身是 DTrace（Solaris）和 SystemTap（Linux），但 eBPF 提供了安全性和可移植性。bpftrace 的限制：不能做无限循环、不能写文件系统、不能做阻塞操作。生产环境中，bpftrace 开销极小（微秒级）且安全。BCC（BPF Compiler Collection）是 bpftrace 的底层库，提供 Python/Lua 接口的 eBPF 编程框架。",
+    "hints": [
+      "bpftrace 的探针类型（kprobe/uprobe/tracepoint）的区别",
+      "eBPF 验证器如何保证安全性"
+    ],
+    "tags": [
+      "Linux",
+      "bpftrace",
+      "eBPF",
+      "追踪"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "io_uring 异步 I/O 框架",
+    "content": "请介绍 Linux io_uring 的原理、核心数据结构及其相比传统 AIO 和 epoll 的优势。",
+    "answer": "答案：io_uring 是 Linux 5.1 引入的异步 I/O 框架，核心设计是两个共享的环形缓冲区（ring buffer）在用户态和内核态之间共享内存——SQ（Submission Queue）存放 I/O 请求，CQ（Completion Queue）存放完成事件。提交和收割 I/O 时无需系统调用（通过 MMAP 共享内存 + 内存屏障即可），仅在需要唤醒内核时使用 io_uring_enter()。三种操作模式：1) 中断驱动模式（默认）；2) 轮询模式（IORING_SETUP_IOPOLL）——用户态主动轮询 CQ；3) 内核轮询模式（IORING_SETUP_SQPOLL）——内核线程轮询 SQ，用户态完全不需要系统调用。\n\n解析：io_uring 相比 libaio 的优势：libaio 只支持 O_DIRECT 文件（跳过页缓存），不支持 buffered I/O、socket、pipe；io_uring 支持所有文件类型且通过 IOSQE_FIXED_FILE 和预注册缓冲区进一步减少开销。相比 epoll 的优势：epoll 只做事件通知（告诉你 FD 可读/可写），数据读写仍需同步系统调用；io_uring 将通知 + 数据读写在一个接口中完成。\n\n扩展延伸：io_uring 生态日益成熟：liburing 提供了用户态辅助库。内核 5.19+ 引入了 IORING_SETUP_COOP_TASKRUN 和 IORING_SETUP_DEFER_TASKRUN（减少不必要的 IPI）。Redis 6.2+ 支持 io_uring 后端，在 NVMe 场景下吞吐提升 20-40%。RocksDB、ScyllaDB 也相继支持 io_uring。推荐内核 5.19+ 使用 io_uring。",
+    "hints": [
+      "io_uring 如何实现零系统调用 I/O？",
+      "io_uring 与 epoll 在数据模型上的本质差异"
+    ],
+    "tags": [
+      "Linux",
+      "io_uring",
+      "异步I/O"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "/sys 文件系统详解",
+    "content": "请介绍 Linux /sys 文件系统的结构和用途，以及它和 /proc 的主要区别。",
+    "answer": "答案：/sys（sysfs）是 Linux 2.6 引入的虚拟文件系统，将内核对象以文件和目录形式暴露给用户空间。目录结构：/sys/class/——按设备功能分类（block、net、drm、tty、input）；/sys/devices/——所有设备真正的硬件拓扑路径；/sys/bus/——按总线类型（pci、usb、i2c、spi）将设备与驱动关联；/sys/block/——块设备；/sys/module/——已加载的内核模块参数；/sys/fs/——文件系统对象（如 /sys/fs/cgroup）；/sys/kernel/——内核全局参数；/sys/power/——电源管理状态控制。核心特征：文件内容通常是单行可读的；部分文件支持写入以修改内核行为。\n\n解析：/sys 与 /proc 的区别：/proc 按进程组织（/proc/[pid]/），展示每个进程的资源（mm、fd、maps、status），虽有 /proc/cpuinfo、/proc/meminfo 等系统信息但结构混乱；/sys 按内核对象类型组织，结构清晰。关键原则：/sys 暴露的是内核对象（device、driver、bus）的属性和关系，/proc 暴露的是进程和系统状态。\n\n扩展延伸：sysfs 由内核驱动通过 kobject_create_and_add() 在驱动初始化时注册。用户空间可以通过 udev（systemd）监听 uevent（通过 netlink 广播的设备增删事件）来实现动态设备管理。新版本内核（6.x）中 /sys 还增加了对 CXL 内存设备、IOMMU 硬件分区的支持。在容器中 /sys 通常被限制（通过 cgroup 和 mount namespace），容器内的 /sys 仅反映当前 cgroup 子树的视图。",
+    "hints": [
+      "/sys/class/ 和 /sys/devices/ 的组织逻辑差异",
+      "/sys 与 /proc 在信息组织方式上的本质区别"
+    ],
+    "tags": [
+      "Linux",
+      "/sys",
+      "文件系统"
+    ]
   }
 ]

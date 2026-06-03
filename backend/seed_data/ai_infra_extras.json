@@ -613,294 +613,377 @@
     ]
   },
   {
-    "category": "ai",
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型并行策略对比",
+    "content": "大模型训练和推理中常用的并行策略有哪些？请分别解释其原理和适用场景。",
+    "answer": "答案：主要并行策略：\n1. Data Parallelism（数据并行）：每个设备持有完整模型副本，切分数据批次，通过 AllReduce 同步梯度。最简单但模型必须能装进单卡。\n2. Tensor Parallelism（张量并行）：将单个 Transformer 层的权重沿 hidden 维度切分到多卡，每卡只计算一部分。需要卡间高频通信（AllReduce），适用于单机多卡场景。\n3. Pipeline Parallelism（流水线并行）：将模型按层切分成多个 Stage，每个 Stage 放在不同设备上。通信量低但存在 Bubble 问题（空闲等待）。\n4. Sequence Parallelism（序列并行）：沿序列长度维度切分，解决长序列训练的显存不足问题（Ring Attention）。\n\n扩展延伸：实际训练混合使用多种并行：3D Parallelism（Data + Tensor + Pipeline）是 Megatron-LM 的核心策略。FSDP（Fully Sharded Data Parallelism）是 Data Parallel 的进阶——将模型参数、梯度、优化器状态分片到各设备，需要时才 AllGather，是 Data Parallel 和 Tensor Parallel 的折中。",
+    "hints": [
+      "不同并行策略切分的维度不同：数据、层、参数、序列",
+      "训练大模型通常混合使用多种并行"
+    ],
+    "tags": [
+      "并行计算",
+      "分布式训练",
+      "Megatron",
+      "FSDP"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 显存优化技术",
+    "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
+    "answer": "答案：主流 GPU 显存优化技术：\n1. KV Cache：缓存 Attention 中已计算好的 K 和 V 矩阵，避免每次生成重复计算。但 KV Cache 会随序列长度线性增长，是长上下文推理的主要瓶颈。\n2. PagedAttention/vLLM：操作系统的虚拟内存分页思想——将 KV Cache 分页管理，按需分配，消除内部碎片和外部碎片。vLLM 因此比常规推理方案显存效率提升 2-4 倍。\n3. FlashAttention：通过 Tiling（分块）技术，将 Q、K、V 分块存入 SRAM 而非 HBM 计算，减少 HBM 访问次数，节省显存的同时加速（IO-Aware 算法）。\n4. Memory Offloading：将暂时不用的参数/状态卸载到 CPU 内存，需要时再加载回 GPU。如 DeepSpeed Offload。\n5. Activation Recomputation（Checkpointing）：训练时丢弃中间激活值，反向传播时重新计算，以时间换空间。\n\n扩展延伸：KVCache 的进一步优化包括 Multi-Query Attention（MQA，多个 Query Head 共享一个 KV Head）和 Grouped-Query Attention（GQA，折中方案，LLaMA 2/3 使用）。投机解码（Speculative Decoding）也通过减少模型调用次数间接减少显存压力。",
+    "hints": [
+      "KV Cache 是长上下文推理的主要瓶颈",
+      "vLLM 的分页管理是近年最重要的显存优化创新"
+    ],
+    "tags": [
+      "GPU",
+      "显存优化",
+      "vLLM",
+      "FlashAttention"
+    ]
+  },
+  {
+    "category": "ai_infra",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "GPU 显存管理与优化",
-    "content": "深度学习训练中 GPU 显存主要被哪些部分占用？如何优化显存使用？梯度检查点（Gradient Checkpointing）、混合精度训练（Mixed Precision）、卸载（Offloading）分别解决了什么？",
-    "answer": "答案：显存占用主要来自：模型参数（权重）+ 优化器状态（Adam 的动量+方差）+ 激活值（每一层的中间输出）+ 梯度。其中激活值在训练大模型时占显存最大（与 batch size 和序列长度成正比）。优化策略：混合精度训练（FP16/BF16 减少参数显存）、梯度检查点（用计算换显存、减少激活存储）、ZeRO（分片优化器状态）。\n\n解析：各策略的显存节省——1）混合精度训练（AMP）：模型参数和激活值使用 FP16/BF16 存储，显存减半。维护 FP32 的权重副用于梯度更新。GPU 的 Tensor Cores 对 FP16/BF16 有 8-16x 加速。（需要 Volta+ 架构）。2）梯度检查点（Activation Checkpointing）：不保存所有层的激活值（通常占用显存最大），只保存关键检查点的激活值。反向传播时从最近的检查点重新计算缺失的激活值。时间换空间：约增加 20% 训练时间，减少 50-70% 激活显存。3）CPU Offloading（卸载）：将优化器状态和参数暂时移出 GPU 到 CPU 内存。需要时再加载回 GPU。\n\n扩展延伸：其他技巧——1）torch.compile：PyTorch 2.0 编译优化，通过算子融合减少显存分配和 GPU Kernel 启动开销。2）Flash Attention：IO 感知的注意力算法，减少 HBM（高带宽内存）访问量，提升训练速度并减少显存。3）Sequence Parallelism（序列并行）：超长序列切分到多个 GPU。4）Recomputation：在反向传播中重算部分操作（非检查点方式）。工具——nvidia-smi 查看显存使用。PyTorch 的 torch.cuda.memory_summary() 详细分析显存分配。",
+    "title": "vLLM 的架构与优势",
+    "content": "vLLM 是当前最流行的 LLM 推理引擎之一。请解释 vLLM 的核心架构创新和相比传统方案的优势。",
+    "answer": "答案：vLLM 的核心创新是 PagedAttention 算法——将 KV Cache 按固定大小的 Block（通常 16 个 Token）分页管理，类似操作系统虚拟内存的分页机制。每次生成 Token 时只需要分配新 Block，Block 内的物理内存不要求连续。\n\n优势：1）显存利用率从传统方案的 20-40% 提升到 90% 以上，消除了内部和外部碎片；2）支持 Copy-on-Write，多个 Sequence 共享相同 Prompt 时共用 KV Cache（如 Beam Search）；3）支持高效的请求调度（Continuous Batching——随时将新到达的请求加入正在运行的 Batch 中，无需等当前 Batch 全部完成）；4）实现了近乎完美的内存共享和请求级抢占。\n\n扩展延伸：vLLM 还支持 prefix caching（前缀缓存，命中相同前缀时复用 KV Cache）、multimodal（图片输入）、LoRA serving（同一批请求使用不同的 LoRA 模块）。与其他推理引擎的比较：TGI 不支持 PagedAttention，TensorRT-LLM 性能接近但配置复杂，MindIE（华为）针对昇腾做了优化。",
     "hints": [
-      "梯度检查点为什么能节省显存——不保存激活值，反向传播时重算（时间换空间）",
-      "Flash Attention 为什么能同时提升训练速度和减少显存——减少显存读写（IO 感知）而非 FLOPs"
+      "PagedAttention 是 vLLM 的核心，类比 OS 虚拟内存",
+      "Continuous Batching 大幅提升吞吐量"
+    ],
+    "tags": [
+      "vLLM",
+      "推理引擎",
+      "PagedAttention",
+      "推理优化"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NVIDIA Triton Inference Server 的作用",
+    "content": "NVIDIA Triton Inference Server 在 AI 推理基础设施中扮演什么角色？它的核心功能和优势是什么？",
+    "answer": "答案：Triton Inference Server 是一个高性能推理服务器，支持多种框架（TensorRT、PyTorch、ONNX、vLLM 等）和硬件（GPU、CPU、AWS Inferentia）。核心功能：\n1. 多模型管理：同时服务多个模型，支持模型版本管理（A/B 测试和金丝雀发布）。\n2. 动态批处理：自动将并发请求合并为 Batch（Dynamic Batching），支持延迟-吞吐量权衡配置。\n3. 模型流水线（Ensemble/Business Logic Scripting）：将多个模型串联成处理流水线，如 Detector → Classifier → Post-process。\n4. 并发执行模型实例：同一个模型加载多个实例（Model Instance），利用 GPU 并行能力。\n5. 指标和监控：内置 Prometheus 指标（延迟、吞吐量、队列长度）。\n\n优势：1）框架无关性——不同框架的模型可以在同一个推理服务中运行；2）高性能——TensorRT + 动态批处理 + 异步 I/O 的组合；3）企业级功能——模型预热、Graceful Shutdown、Rate Limiting。\n\n扩展延伸：Triton 的并发模型与 vLLM 的 Continuous Batching 互补——Triton 管理请求路由和批处理，vLLM 负责 LLM 推理内核的优化。多模型场景下 Triton + vLLM 的组合是推荐架构。",
+    "hints": [
+      "Triton 的核心价值是多框架支持和企业级特性",
+      "动态批处理是提升吞吐量的关键技术"
+    ],
+    "tags": [
+      "Triton",
+      "推理服务",
+      "模型部署",
+      "NVIDIA"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 上的 AI 工作负载调度",
+    "content": "在 Kubernetes 上部署 AI 训练和推理工作负载时，哪些特殊的调度策略和资源配置需要关注？",
+    "answer": "答案：AI 工作负载在 K8s 上的特殊调度策略：\n1. GPU 资源管理：使用 Device Plugin（NVIDIA/k8s-device-plugin）将 GPU 暴露为可调度资源，通过 resource.limit 指定卡数。需要处理 GPU 显存隔离问题（多个 Pod 不能共享同一 GPU，除非使用 MIG 或 MPS）。\n2. 节点亲和性和拓扑调度：数据并行训练需要将 Pod 调度到同一节点（低延迟 NVLink/NVSwitch）或同一机架（高带宽网络）。使用 NodeAffinity + TopologyManager 实现。\n3. Volcano 批量调度：原生 K8s Scheduler 不支持批量调度（Gang Scheduling）——分布式训练需要所有 Pod 同时就绪才能开始，否则等待的 Pod 会浪费资源。Volcano 的 Gang Scheduling 确保所有 Pod 同时分配。\n4. 优先级和抢占：推理服务需要高优先级保证延迟敏感，训练任务可以使用较低优先级。通过 PriorityClass + Preemption 实现。\n5. 存储：训练需要高性能共享存储（NFS/Lustre/Longhorn），推理需要快速加载模型。使用 PVC + ReadWriteMany。\n\n扩展延伸：Kubeflow 提供了完整的 ML on K8s 工具链，包括 Training Operator（分布式训练）、Katib（超参调优）、KFServing（推理服务）。LWS（LeaderWorkerSet）是 Google 新推出的专为分布式训练设计的 Workload API。",
+    "hints": [
+      "GPU 调度和拓扑感知调度是 AI 工作负载的特殊需求",
+      "Gang Scheduling 是分布式训练的必要条件"
+    ],
+    "tags": [
+      "Kubernetes",
+      "GPU",
+      "AI 基础设施",
+      "Volcano",
+      "调度"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MLflow 与机器学习生命周期管理",
+    "content": "请介绍 MLflow 在机器学习生命周期管理中的作用和核心功能。",
+    "answer": "答案：MLflow 是开源 MLOps 平台，覆盖实验跟踪、模型管理、部署和注册全流程\n\n解析：MLflow 四大组件：1）MLflow Tracking — 记录实验参数、指标、代码版本、模型产物，提供 Web UI 比较不同实验。API 支持自动记录（autolog）常用框架（TensorFlow/PyTorch/scikit-learn）。2）MLflow Projects — 将代码打包为可复现的运行格式（conda.yaml/Dockerfile），标准化运行环境。3）MLflow Models — 统一模型打包格式，支持多框架，方便推理部署。4）MLflow Model Registry — 模型版本管理，阶段管理（Staging/Production/Archived），支持审批流程和部署 CI/CD。\n\n扩展延伸：与分布式训练集成：在 PyTorch DDP 设置中保活 tracking，每个 rank 独立记录 metrics，避免重复记录。Serving 部署：MLflow 模型可部署到 REST API（mlflow models serve）或导出为 Docker 镜像运行在 K8s 上。MLflow vs Kubeflow：MLflow 更轻量专注于实验管理和模型注册，Kubeflow 更重承载整套 K8s 原生 ML 工作流 pipeline。替代方案：Weights & Biases（实验跟踪更强）、Neptune.ai。MLflow 的局限：无原生 pipeline 编排、UI 功能相对基础。",
+    "hints": [
+      "MLflow Tracking 和 Model Registry 的关系是什么",
+      "MLflow 和 Kubeflow 如何配合使用"
+    ],
+    "tags": [
+      "MLOps",
+      "MLflow",
+      "模型管理"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kubeflow 与 ML Pipeline",
+    "content": "请介绍 Kubeflow 的架构及其在机器学习工作流编排中的作用。",
+    "answer": "答案：Kubeflow 是运行在 Kubernetes 上的端到端 ML 平台，编排从数据准备到模型部署的全流程\n\n解析：核心组件：1）Kubeflow Pipelines — 基于 Argo Workflows 的 DAG 式 pipeline 编排，每个 step 是 K8s Pod，支持组件复用、缓存和条件执行 2）KFServing/KServe — 模型推理服务，支持多框架(TensorRT/PyTorch)、自动扩缩（根据 GPU 负载 HPA）、金丝雀发布 3）Katib — 超参数调优和 NAS（神经网络架构搜索），支持 Bayesian Optimization/TPE/随机搜索 4）TensorBoard / Jupyter Notebook — 集成开发环境。Pipeline 定义可用 DSL（Python SDK）编译为 YAML 提交执行。\n\n扩展延伸：架构分层：底层 K8s 资源管理 -> Kubeflow 控制面 -> ML 工作负载。组件间通信通过 Persistent Volume（大数据）+ MinIO（对象存储）共享。与 MLflow 的集成：Kubeflow Pipeline 中每个 step 调用 MLflow Tracking 记录 metrics，最终模型注册到 MLflow Registry。成本与挑战：Kubeflow 部署运维复杂（需管理多个 Operator），小团队建议先用轻量方案（MLflow + 简单 K8s 部署）。替代方案：Flyte（更通用的数据/ML pipeline 编排器）、Airflow + MLflow（更成熟稳定）。",
+    "hints": [
+      "Kubeflow Pipeline 和 Airflow 的定位有什么区别",
+      "KServe 如何实现模型的金丝雀发布"
+    ],
+    "tags": [
+      "MLOps",
+      "Kubeflow",
+      "K8s"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "特征存储（Feature Store）设计",
+    "content": "请解释特征存储（Feature Store）在 ML 基础设施中的作用和设计要点。",
+    "answer": "答案：特征存储是机器学习特征的中央仓库，统一离线和在线特征的管理和分发\n\n解析：核心作用：1）特征共享 — 避免不同团队重复造相同的特征 2）离在线一致性 — 训练时的离线特征和推理时的在线特征使用同一份定义和逻辑 3）特征回溯（Time Travel）— 支持按时间戳回溯特征，确保训练数据没有未来信息泄露 4）特征血缘追踪 — 知道每个特征来自哪个源、经过哪些处理转换。流行方案：Feast（开源，基于 Redis/OBS 存储）、Tecton（商业，企业级）、ByteDance 的 Feature Store。\n\n扩展延伸：架构分层：离线存储（Parquet 文件/Hive/Spark 批量计算）用批处理引擎每日/小时生成特征，写入宽表或特征文件；在线存储（Redis/DynamoDB）提供低延迟实时特征读取。特征服务通过 gRPC/REST API 提供在线获取。双写入（dual-write）：实时特征更新同时写入离线和在线存储。时间窗口特征（如过去 7 天点击率）通过滑动窗口计算，离线用 Spark 回溯，在线用 Flink 实时计算。Feature Validation：特征漂移检测、完整性检查、新鲜度监控。",
+    "hints": [
+      "离线特征和在线特征一致性怎么保证",
+      "时间窗口特征的离线和在线计算如何保持对齐"
+    ],
+    "tags": [
+      "MLOps",
+      "特征工程",
+      "Feature Store"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型注册表（Model Registry）设计",
+    "content": "请设计一个模型注册表系统，支持模型版本管理、元数据追踪和部署审核。",
+    "answer": "答案：模型注册表是模型从训练到部署的中央治理平台，管理版本、元数据、状态和审批\n\n解析：核心功能：1）版本管理 — 每次注册生成新版本号（语义版本 v1.0.0），存储模型文件（artifact）到对象存储（S3/MinIO）2）元数据追踪 — 模型架构、训练参数、训练数据集、评估指标（准确率/延迟/模型大小）、框架和运行时信息 3）状态管理 — 生命周期状态：Draft（草稿）-> Staging（预发布）-> Production（生产）-> Archived（归档）-> Deprecated（弃用），可配置审批流程 4）部署集成 — 通过 Webhook 通知部署系统新版本就绪，支持回滚到历史版本 5）血缘 — 记录模型 -> 实验 -> 代码 -> 数据集的完整关联。\n\n扩展延伸：存储设计：元数据存关系数据库（PostgreSQL），模型文件存对象存储，大文件分块上传。性能优化：模型文件通过内容寻址（SHA256 哈希）避免重复存储。模型安全：模型文件签名校验，防止篡改；访问控制：按项目和角色控制哪些用户可以部署到生产。可复现性：记录完整的训练环境（Docker 镜像、Python 依赖、超参数），确保任意版本可回放复现。审计日志：记录谁在什么时候将哪个模型部署到什么环境。与其他系统集成：CI/CD（GitOps 触发模型部署）、监控系统（关联模型版本和推理指标）。",
+    "hints": [
+      "模型注册表怎么保证训练的可复现性",
+      "模型状态流转的审批流程怎么设计"
+    ],
+    "tags": [
+      "MLOps",
+      "模型注册",
+      "治理"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "A/B 测试平台设计（模型评估）",
+    "content": "请设计一个面向 ML 模型的 A/B 测试平台，支持在线实验评估和模型对比。",
+    "answer": "答案：ML 模型 A/B 测试平台核心是流量分配 + 实验管理 + 指标评估\n\n解析：流量分配：根据用户 ID/设备 ID 的一致性哈希分流，保证同一用户始终进入同一实验组，避免交叉干扰。分层实验（Overlapping Experiments）：多个实验同时运行时用正交层分配（每个层独立随机分桶），层间无交互效应。配置管理：实验参数通过功能标记/配置中心下发，实时开关无需重启服务。指标评估：核心指标（CTR/准确率/收入等）和护栏指标（延迟/P99/错误率）实时采集，用统计检验（t 检验/Mann-Whitney U 检验）评估显著性。\n\n扩展延伸：实验周期计算：事先用功效分析（Power Analysis）确定所需样本量，避免提前结束得到假阳性/假阴性结果。Interleaving 实验：搜索/推荐场景可直接让用户同时看到 A/B 两组结果混合排列，用户隐式投票，灵敏度远高于传统 A/B 测试。网络效应处理：社交产品中实验组和对照组用户间会互相影响（流量漂移或 SUTVA 违反），需用群体随机化（Cluster-based Randomization）或网络邻居划分。多重假设检验校正：多个指标同时对比需 Benjamini-Hochberg 校正控制 FDR。统计显著 vs 业务显著：p<0.05 未必代表有实际业务价值，需结合效应量（Effect Size）判断。",
+    "hints": [
+      "多个实验同时跑时怎么避免互相干扰",
+      "Interleaving 实验和传统 A/B 测试的对比"
+    ],
+    "tags": [
+      "A/B测试",
+      "实验",
+      "ML评估"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "张量并行原理",
+    "content": "请解释张量并行（Tensor Parallelism）的原理。Megatron-LM 如何在 Transformer 层内部实现张量切分？Column-wise 和 Row-wise 切分的通信量分别是多少？",
+    "answer": "答案：张量并行在层内部（intra-layer）切分权重矩阵，将单个 Transformer 层的计算分布到多个 GPU 上。\n\nMegatron-LM 的张量并行策略：\n\n1. MLP 的切分：\n   - 两个权重矩阵：A (ffn_dim × hidden) 和 B (hidden × ffn_dim)\n   - Column-wise 切分（切分 A）：将 A 按列分为 A1 和 A2，每个 GPU 持有部分列\n     - 前向：X·A = [X·A1, X·A2] → 需要 All-Gather 收集结果\n     - 反向：需要 Reduce-Scatter\n   - Row-wise 切分（切分 B）：将 B 按行分为 B1 和 B2，每个 GPU 持有部分行\n     - 前向：Z = [X1, X2]·[B1, B2]^T → 先计算局部结果，再 All-Reduce\n     - 反向：需要 All-Reduce\n\n2. Attention 的切分：\n   - 将注意力头分配到不同 GPU（每个 GPU N//t 个注意力头）\n   - QKV 的列切分 + 输出层的行切分\n\n通信量分析：\n- Column-wise（切分 A）：前向不需要通信（每个 GPU 独立计算自己的部分），反向需要 Reduce-Scatter\n- Row-wise（切分 B）：前向需要 All-Reduce，反向也需要 All-Reduce\n- Megatron 组合使用：A 用 Column-wise，B 用 Row-wise——这样前向在 A 之后和 B 之前需要一次 All-Gather，而反向在 B 之后和 A 之前需要一次 Reduce-Scatter\n- 总共：每个 MLP 块两次通信（f 和 f* 各一次）\n\n扩展延伸：张量并行 + 流水线并行 + 数据并行 = 3D 并行。Megatron-LM 的张量并行在最底层 GPU（同一节点内）使用，因为通信量最大（需要 NVLink 或高速互联）。序列并行（Sequence Parallelism）在 LayerNorm 和 Dropout 上沿序列维度切分，减少激活显存。",
+    "hints": [
+      "张量并行在层内部切分权重矩阵（列切分/行切分）",
+      "Megatron-LM 组合列切分+行切分优化通信"
     ],
     "tags": [
       "AI",
-      "GPU",
-      "显存",
-      "训练优化"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "模型并行策略对比",
-    "content": "大模型训练和推理中常用的并行策略有哪些？请分别解释其原理和适用场景。",
-    "answer": "答案：主要并行策略：\n1. Data Parallelism（数据并行）：每个设备持有完整模型副本，切分数据批次，通过 AllReduce 同步梯度。最简单但模型必须能装进单卡。\n2. Tensor Parallelism（张量并行）：将单个 Transformer 层的权重沿 hidden 维度切分到多卡，每卡只计算一部分。需要卡间高频通信（AllReduce），适用于单机多卡场景。\n3. Pipeline Parallelism（流水线并行）：将模型按层切分成多个 Stage，每个 Stage 放在不同设备上。通信量低但存在 Bubble 问题（空闲等待）。\n4. Sequence Parallelism（序列并行）：沿序列长度维度切分，解决长序列训练的显存不足问题（Ring Attention）。\n\n扩展延伸：实际训练混合使用多种并行：3D Parallelism（Data + Tensor + Pipeline）是 Megatron-LM 的核心策略。FSDP（Fully Sharded Data Parallelism）是 Data Parallel 的进阶——将模型参数、梯度、优化器状态分片到各设备，需要时才 AllGather，是 Data Parallel 和 Tensor Parallel 的折中。",
-    "hints": [
-      "不同并行策略切分的维度不同：数据、层、参数、序列",
-      "训练大模型通常混合使用多种并行"
-    ],
-    "tags": [
-      "并行计算",
       "分布式训练",
-      "Megatron",
-      "FSDP"
+      "张量并行",
+      "Megatron-LM"
     ]
   },
   {
-    "category": "ai_infra",
+    "category": "ai",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "GPU 显存优化技术",
-    "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
-    "answer": "答案：主流 GPU 显存优化技术：\n1. KV Cache：缓存 Attention 中已计算好的 K 和 V 矩阵，避免每次生成重复计算。但 KV Cache 会随序列长度线性增长，是长上下文推理的主要瓶颈。\n2. PagedAttention/vLLM：操作系统的虚拟内存分页思想——将 KV Cache 分页管理，按需分配，消除内部碎片和外部碎片。vLLM 因此比常规推理方案显存效率提升 2-4 倍。\n3. FlashAttention：通过 Tiling（分块）技术，将 Q、K、V 分块存入 SRAM 而非 HBM 计算，减少 HBM 访问次数，节省显存的同时加速（IO-Aware 算法）。\n4. Memory Offloading：将暂时不用的参数/状态卸载到 CPU 内存，需要时再加载回 GPU。如 DeepSpeed Offload。\n5. Activation Recomputation（Checkpointing）：训练时丢弃中间激活值，反向传播时重新计算，以时间换空间。\n\n扩展延伸：KVCache 的进一步优化包括 Multi-Query Attention（MQA，多个 Query Head 共享一个 KV Head）和 Grouped-Query Attention（GQA，折中方案，LLaMA 2/3 使用）。投机解码（Speculative Decoding）也通过减少模型调用次数间接减少显存压力。",
+    "title": "流水线并行调度",
+    "content": "请介绍流水线并行（Pipeline Parallelism）的调度策略。GPipe、PipeDream 和 1F1B（One-Forward-One-Backward）调度各有什么优劣？",
+    "answer": "答案：流水线并行将模型按层切分为多个 Stage，每个 Stage 分配给不同的 GPU。\n\nGPipe（Google）：\n- 将 batch 分为多个 micro-batch\n- 所有 micro-batch 先完成前向，再完成后向（F_tot → B_tot）\n- 调度简单，但存在大量空闲气泡（Bubble）——极端情况下气泡占比 (P-1)/(P+M-1)\n- 每个 device 需要保存所有 micro-batch 的激活值（显存占用大）\n\nPipeDream（Microsoft）：\n- 交替执行前向和后向（一个 micro-batch 的前向 + 一个 micro-batch 的后向交替）\n- 减少空闲气泡\n- 每个 device 只需要保存一个 micro-batch 的激活值（显存节省）\n- 问题：权重版本不一致（前向使用的权重和后向更新的权重不同步）——需要权重缓存\n\n1F1B（One-Forward-One-Backward，PipeDream 的改进）：\n- 预热：前向执行若干 micro-batch 填充流水线\n- 稳定：交替执行一个前向和一个后向（1F1B）\n- 排空：完成后向处理剩余 micro-batch\n- 气泡比 GPipe 小，显存比 GPipe 省\n- 是当前流水线并行的事实标准\n\n调度对比：\n| 方法 | 气泡率 | 显存 | 实现复杂度 |\n|------|--------|------|-----------|\n| GPipe | 高 | 高 | 简单 |\n| PipeDream | 低 | 低 | 复杂（版本管理）|\n| 1F1B | 中等 | 低 | 中等 |\n\n扩展延伸：VPP（Virtual Pipeline）通过将流水线划分为更细的 stage 进一步降低气泡率。Chimera 是对称的流水线调度，适合 2 路 GPU 并行。DeepSpeed 的流水线引擎（DeepSpeed-2）提供自动流水线并行。",
     "hints": [
-      "KV Cache 是长上下文推理的主要瓶颈",
-      "vLLM 的分页管理是近年最重要的显存优化创新"
+      "1F1B（One-Forward-One-Backward）是流水线并行的事实标准调度策略",
+      "GPipe 气泡率高显存大，PipeDream 气泡率低但版本管理复杂"
     ],
     "tags": [
-      "GPU",
-      "显存优化",
-      "vLLM",
-      "FlashAttention"
+      "AI",
+      "分布式训练",
+      "流水线并行",
+      "1F1B"
     ]
   },
   {
-    "category": "ai_infra",
+    "category": "ai",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "vLLM 的架构与优势",
-    "content": "vLLM 是当前最流行的 LLM 推理引擎之一。请解释 vLLM 的核心架构创新和相比传统方案的优势。",
-    "answer": "答案：vLLM 的核心创新是 PagedAttention 算法——将 KV Cache 按固定大小的 Block（通常 16 个 Token）分页管理，类似操作系统虚拟内存的分页机制。每次生成 Token 时只需要分配新 Block，Block 内的物理内存不要求连续。\n\n优势：1）显存利用率从传统方案的 20-40% 提升到 90% 以上，消除了内部和外部碎片；2）支持 Copy-on-Write，多个 Sequence 共享相同 Prompt 时共用 KV Cache（如 Beam Search）；3）支持高效的请求调度（Continuous Batching——随时将新到达的请求加入正在运行的 Batch 中，无需等当前 Batch 全部完成）；4）实现了近乎完美的内存共享和请求级抢占。\n\n扩展延伸：vLLM 还支持 prefix caching（前缀缓存，命中相同前缀时复用 KV Cache）、multimodal（图片输入）、LoRA serving（同一批请求使用不同的 LoRA 模块）。与其他推理引擎的比较：TGI 不支持 PagedAttention，TensorRT-LLM 性能接近但配置复杂，MindIE（华为）针对昇腾做了优化。",
+    "title": "序列并行",
+    "content": "请介绍序列并行（Sequence Parallelism）的原理。Transformer 的 LayerNorm 和 Dropout 为什么可以沿序列维度切分？Ring Attention 如何实现超长序列的训练？",
+    "answer": "答案：序列并行沿序列维度（Sequence Length）切分计算和显存。\n\nTransformer 中的序列并行：\n- Self-Attention 的输出形状为 (batch × seq_len × d_model)，序列维度越大显存越大\n- LayerNorm 和 Dropout 是逐 token 独立操作（没有 token 间依赖）\n- 因此可以沿序列维度切分：每个 GPU 处理部分 token\n- 切分后只需在 Attention 层做一次 All-Reduce（收集所有 GPU 的 attention 输出）\n\n注意：Self-Attention 本身不能沿序列维度切分（每个 token 需要关注所有 token）——除非使用张量并行来切分注意力头。\n\nRing Attention：\n- 将序列分为多个块，分布在不同的设备上\n- 通过 Ping-Pong 方式在各设备间轮转传递 KV 块\n- 每个设备维护完整的 Q 块，在循环中逐步接收所有设备的 KV 块并计算局部 attention\n- 不需要将完整的 QKV 存在单 GPU 内存中\n- 可以处理远超单 GPU 显存上限的超长序列（如 100K+ token）\n\n序列并行 vs 张量并行：\n- 张量并行：切分权重矩阵，减少计算量\n- 序列并行：切分序列维度，减少激活显存\n- 两者互补，可以同时使用\n\n扩展延伸：DeepSpeed Ulysses 结合了序列并行 + ZeRO。Deepspeed 的 SP 实现通过沿序列维度切分实现高效长序列训练。序列并行在长上下文 LLM（如 128K, 1M token）训练中至关重要，因为激活值随序列长度线性增长。",
     "hints": [
-      "PagedAttention 是 vLLM 的核心，类比 OS 虚拟内存",
-      "Continuous Batching 大幅提升吞吐量"
+      "LayerNorm/Dropout 可沿序列维度切分（逐 token 独立）",
+      "Ring Attention 通过循环轮转 KV 块实现超长序列训练"
     ],
     "tags": [
-      "vLLM",
-      "推理引擎",
-      "PagedAttention",
+      "AI",
+      "序列并行",
+      "Ring Attention",
+      "长上下文"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Flash Attention 深入",
+    "content": "请深入解释 Flash Attention 的原理。它如何通过 Tiling（分块计算）减少 HBM 读写？Flash Attention 的 Forward 和 Backward 分别如何实现？",
+    "answer": "答案：Flash Attention 通过分块计算和重计算（Recomputation）减少 GPU 显存读写。\n\nGPU 内存层次：\n- HBM（High Bandwidth Memory）：~1.5 TB/s，容量大\n- SRAM（片上共享内存）：~19 TB/s，容量极小（几十 KB）\n- 瓶颈：标准 Attention 将 S=P=QK^T（N×N 矩阵）写回到 HBM，这是最耗时的操作\n\nFlash Attention 如何优化：\n1. Tiling（分块）：\n   - 将 Q、K、V 分块（block），每块大小由 SRAM 容量决定\n   - 在 SRAM 中逐块计算 S_block = Q_block × K_block^T\n   - 在 SRAM 中计算 P_block = softmax(S_block) 和 output_block = P_block × V_block\n   - 所有计算在 SRAM 中完成，不需要将整个 S 矩阵写回 HBM\n   \n2. Online Softmax（Safe Softmax）：\n   - 传统 softmax 需要两次 HBM 读写（先算 max，再算 sum）\n   - Online softmax 在一次 pass 中同时计算 max 和 sum\n   - 通过增量更新实现分块 softmax 的合并\n\nForward Pass：\n- 逐块加载 Q/K/V 到 SRAM → 计算块内 Attention → 合并结果\n- 只需将最终的 O 和中间状态（用于 backward）写回 HBM\n- HBM 访问量：从 O(N²) 减少到 O(N²/d)（d=块大小，通常 64-128）\n\nBackward Pass：\n- 需要 Q、K、V、O、∂O 来计算梯度\n- 不保存 S 和 P 矩阵（节省 N² 显存），而是重计算\n- 重计算量略大但显存节省显著\n\n扩展延伸：Flash Attention 2 进一步优化了线程块分配和 Warp 调度，比 v1 快 2x。Flash Attention 3 增加了对 BF16 和 FP8 的支持。xFormers（Meta）实现了类似的 Memory-Efficient Attention。Flash Attention 是长上下文 LLM 的基石技术。",
+    "hints": [
+      "Flash Attention = Tiling（分块）+ Online Softmax + 重计算",
+      "将 S=P=QK^T 矩阵的 HBM 读写从 O(N²) 减少到 O(N²/d)"
+    ],
+    "tags": [
+      "AI",
+      "Flash Attention",
+      "推理优化",
+      "显存"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型服务自动伸缩",
+    "content": "请介绍模型推理服务的自动伸缩（Auto Scaling）策略。基于请求率的伸缩和基于 GPU 利用率的伸缩各有什么优劣？如何实现推理服务的零宕机部署？",
+    "answer": "答案：模型推理服务的自动伸缩需要平衡延迟、吞吐和成本。\n\n伸缩策略：\n1. 基于请求率（Request Rate）：\n   - 根据每秒请求数（RPS）的监控指标自动调整 Pod 数量\n   - 优点：直接响应负载变化，适合有规律波动的场景\n   - 缺点：指标滞后（请求激增时响应不够快），需要考虑冷启动延迟\n\n2. 基于 GPU 利用率：\n   - 根据 GPU 利用率（计算/显存）自动调整\n   - 优点：更精确地反应实际负载\n   - 缺点：利用率高不一定是超载（可能是 batch size 大）\n\n3. 基于队列深度（Queue Depth）：\n   - 监控请求队列长度，队列变长时扩容，变短时缩容\n   - 比 RPS 更快检测到负载变化\n\n4. 预测性伸缩（Predictive Scaling）：\n   - 基于历史负载模式预测未来负载，提前扩容\n   - 适合有日用/周用负载模式的服务\n\n零宕机部署策略：\n1. 滚动更新（Rolling Update）：逐步替换旧版本 Pod，新版本启动后才停止旧版本\n2. 蓝绿部署：同时运行新旧两个版本，测试新版本通过后切换流量\n3. 预热（Warm-up）：新 Pod 启动后先发送少量请求预热模型缓存，再接入正式流量\n   - 需要模型加载和 GPU 预热时间（可能 30s-5min）\n4. 优雅关闭：SIGTERM 后断开负载均衡，等待进行中的请求完成（配置 terminationGracePeriodSeconds）\n\n扩展延伸：Kubernetes HPA + Custom Metrics（Prometheus Adapter）实现自定义伸缩指标。Knative 提供 Serverless 风格的自动伸缩（缩容到零）。KEDA 支持基于事件驱动的伸缩（如消息队列长度）。",
+    "hints": [
+      "请求率/RPS 直接但滞后，队列深度更灵敏，预测性伸缩提前响应",
+      "零宕机部署 = 滚动更新 + 预热 + 优雅关闭"
+    ],
+    "tags": [
+      "AI",
+      "推理服务",
+      "自动伸缩",
+      "Kubernetes"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GPU 显存分析与优化",
+    "content": "请介绍 GPU 显存的使用分析和优化方法。训练大模型时显存被哪些部分占用？如何通过 Activation Checkpointing（梯度检查点）和 Offloading 优化显存？",
+    "answer": "答案：大模型训练中 GPU 显存的五大占用部分。\n\n显存占用构成：\n1. 模型参数（Weights）：FP16 下 2 bytes/参数，70B 模型 ≈ 140GB\n2. 梯度（Gradients）：与参数同等大小，额外 2 bytes/参数\n3. 优化器状态（Optimizer States）：Adam 需要动量和方差，每个参数 8 bytes（FP32）+ 8 bytes（动量和方差）+...\n   - ZeRO 1/2/3 通过划分优化器状态减少冗余\n4. 激活值（Activations）：前向传播时保存的中间结果，用于反向传播计算梯度\n   - 在长序列训练中激活值是最主要的显存消耗\n   - 序列长度 8192, batch=1, hidden=4096: 激活值可能占 30GB+\n5. 临时缓冲区（Temp Buffers）：通信和计算时的临时存储\n\nActivation Checkpointing（梯度检查点）：\n- 原理：不保存前向计算的激活值，反向传播时重新计算\n- 节省：激活值显存从 O(L) 减少到 O(√L) 或 O(1)\n- 代价：增加约 33% 的计算量（重计算）\n- 是\"时间换空间\"的经典策略\n- 选择性 checkpointing：只对部分层使用 checkpoint，平衡显存和速度\n\nCPU Offloading：\n- 将优化器状态、梯度或部分参数卸载到 CPU 内存\n- 利用 CPU 内存大但带宽低的特点\n- DeepSpeed ZeRO-Offload：优化器状态在 CPU，参数和梯度在 GPU\n- 训练速度比纯 GPU 慢，但可以训练更大模型\n\n扩展延伸：PyTorch 的 Activation Checkpointing 通过 torch.utils.checkpoint 实现。DeepSpeed ZeRO-3 会自动将参数分片到所有 GPU 上。混合精度训练（AMP）将 FP16 激活值存储而非 FP32，节省一半激活显存。",
+    "hints": [
+      "训练显存五部分：参数、梯度、优化器状态、激活值、临时缓冲区",
+      "激活检查点用 33% 重计算换显存，CPU Offloading 用 CPU 内存扩展 GPU"
+    ],
+    "tags": [
+      "AI",
+      "GPU 显存",
+      "激活检查点",
+      "Offloading"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Flash Attention 2/3 演进",
+    "content": "请介绍 Flash Attention 从 v1 到 v3 的演进。Flash Attention 2 在哪些方面优化了 v1？Flash Attention 3 对 FP8 的支持带来了哪些改进？",
+    "answer": "答案：Flash Attention 的版本演进——更高效、更精确、更灵活。\n\nFlash Attention v1（2022）：\n- 核心创新：Tiling（分块计算）+ Online Softmax + Kernel Fusion\n- HBM 访问从 O(N²) 减少到 O(N²×d_model⁻¹)\n- 训练加速：2-4×\n- 局限：对某些 GPU 架构（A100）的优化不够精细\n\nFlash Attention v2（2023）：\n1. 减少非矩阵计算（Non-matmul）：将 Softmax 的 rescaling 从 12 次 R/W 减少到 2 次\n2. 更好的线程块划分（Block Partitioning）：沿序列维度和嵌入维度分割，提高计算效率\n3. 减少 Warp 同步开销：每个 Warp 独立计算部分结果，取消不必要的同步\n4. 更小的 Q 块和更大的 K/V 块：提高 SRAM 利用率\n5. 加速比 v1：1.5-2×\n\nFlash Attention v3（2024，Hopper GPU）：\n1. FP8 支持：利用 H100 的 FP8 Tensor Core 获得 2× 计算吞吐提升\n2. WGMMA（Warp Group Matrix Multiply-Accumulate）指令：H100 的新张量指令，更高效的矩阵乘法\n3. 异步处理（Async Pipeline）：将数据加载到 SRAM 和计算同步进行，减少 stalls\n4. 更低精度容忍度：通过块级别的缩放因子保持精度\n\n对 FP8 的支持：\n- FP8 Tensor Core 比 FP16 快 2×（吞吐翻倍）\n- 块级别量化：每块单独计算缩放因子，减少精度损失\n- 需要特殊处理：在线 softmax 在 FP8 下的数值稳定性\n\n扩展延伸：Flash Attention 的贡献不仅在于加速——通过减少 HBM 访问也减少了能耗。FlexAttention（PyTorch）提供 Flash Attention 的自定义掩码支持。Flash Attention 已经集成到大多数 LLM 框架（PyTorch 2.0+、Hugging Face、vLLM）。",
+    "hints": [
+      "FA v2 优化线程块划分和 Warp 调度，FA v3 支持 FP8 和新 Hopper 指令",
+      "FA v3 通过块级别量化和异步管线实现 FP8 的高效 Attention"
+    ],
+    "tags": [
+      "AI",
+      "Flash Attention",
+      "FP8",
+      "Hopper"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "KV Cache 量化",
+    "content": "请介绍 KV Cache 量化技术。为什么 KV Cache 占用了大模型推理的大部分显存？KIVI 和 INT8 KV Cache 如何在不显著降低精度的情况下压缩 KV Cache？",
+    "answer": "答案：KV Cache 是自回归推理中存储历史 Key/Value 的缓存，在长上下文中成为显存瓶颈。\n\n为什么 KV Cache 占用大：\n- 每个 token 需要存储 2 × n_layers × n_heads × d_head × precision (bytes)\n- 70B 模型（80 层，8*128 头，FP16）：每个 token 约 2.5MB\n- 输出 4096 个 tokens：KV Cache ≈ 10GB\n- 在长上下文场景（32K、128K），KV Cache 显著大于模型参数\n\nINT8 KV Cache：\n- 对称量化：每个 K/V 列用 8 位整数表示（按 token 或按通道量化）\n- 显存减半（FP16 → INT8）\n- 精度损失小（LLM 的 KV Cache 对量化比较鲁棒）\n\nKIVI（2024，更先进的 KV Cache 量化方案）：\n- 非对称量化策略：\n  - Key：按通道量化（per-channel），保留不同注意力头之间的差异\n  - Value：按 token 量化（per-token），保留局部信息\n- Hybrid 精度：部分重要通道保留 FP16，其他通道 INT8/INT4\n- 混合精度 KV Cache = 在精度和压缩之间取得更好的平衡\n\n其他优化：\n1. KV Cache 剪枝：删除不重要的 KV 条目（基于 attention score 或 token 重要性）\n2. 窗口 KV Cache：只保留最近 N 个 token 的 KV（滑动窗口）\n3. 共享 KV Cache：Multi-Query Attention（MQA）和 Grouped-Query Attention（GQA）通过共享 KV 头减少 Cache 大小\n\n扩展延伸：vLLM 通过 PageAttention 解决 KV Cache 的内存碎片问题但没有减少总量。KV Cache 量化可以和 PageAttention 结合使用。推测解码（Speculative Decoding）也减少了 KV Cache 的压力（因为减少了解码步数）。",
+    "hints": [
+      "KV Cache 在长上下文下是主要显存消耗（比模型参数还大）",
+      "INT8 量化减半显存，KIVI 用非对称量化更好的平衡精度和压缩"
+    ],
+    "tags": [
+      "AI",
+      "KV Cache",
+      "量化",
       "推理优化"
     ]
   },
   {
-    "category": "ai_infra",
+    "category": "ai",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "NVIDIA Triton Inference Server 的作用",
-    "content": "NVIDIA Triton Inference Server 在 AI 推理基础设施中扮演什么角色？它的核心功能和优势是什么？",
-    "answer": "答案：Triton Inference Server 是一个高性能推理服务器，支持多种框架（TensorRT、PyTorch、ONNX、vLLM 等）和硬件（GPU、CPU、AWS Inferentia）。核心功能：\n1. 多模型管理：同时服务多个模型，支持模型版本管理（A/B 测试和金丝雀发布）。\n2. 动态批处理：自动将并发请求合并为 Batch（Dynamic Batching），支持延迟-吞吐量权衡配置。\n3. 模型流水线（Ensemble/Business Logic Scripting）：将多个模型串联成处理流水线，如 Detector → Classifier → Post-process。\n4. 并发执行模型实例：同一个模型加载多个实例（Model Instance），利用 GPU 并行能力。\n5. 指标和监控：内置 Prometheus 指标（延迟、吞吐量、队列长度）。\n\n优势：1）框架无关性——不同框架的模型可以在同一个推理服务中运行；2）高性能——TensorRT + 动态批处理 + 异步 I/O 的组合；3）企业级功能——模型预热、Graceful Shutdown、Rate Limiting。\n\n扩展延伸：Triton 的并发模型与 vLLM 的 Continuous Batching 互补——Triton 管理请求路由和批处理，vLLM 负责 LLM 推理内核的优化。多模型场景下 Triton + vLLM 的组合是推荐架构。",
+    "title": "模型服务监控指标",
+    "content": "请介绍模型推理服务的核心监控指标（KPIs）。如何衡量推理服务的性能、质量和成本？P50/P99 延迟和 TTFT/TPOT 分别代表什么？",
+    "answer": "答案：推理服务监控需要覆盖性能、质量、成本和可用性四个维度。\n\n性能指标（延迟和吞吐）：\n1. TTFT（Time To First Token）：用户发出请求到收到第一个 token 的时间。\n   - 影响用户感知的首屏时间\n   - 主要取决于 Prefill 阶段的计算和 I/O\n2. TPOT（Time Per Output Token）：生成每个输出 token 的平均时间。\n   - 影响生成速度和用户流畅感\n   - 主要取决于 Decode 阶段的计算和显存带宽\n3. P50/P95/P99 延迟：\n   - P50（中位数）：大部分用户的体验\n   - P99：最慢 1% 的用户体验（长尾延迟）\n   - 推理服务通常关注 P99 而非 P50\n4. 吞吐量：每秒处理的请求数（RPS）或每秒生成的 Token 数（TPS）\n\n质量指标：\n1. 首 Token 准确性：第一个 token 的质量（关系后续生成）\n2. 生成一致性：多轮生成结果的稳定性\n3. 拒绝率：模型拒绝回答的比例\n4. 用户反馈评分\n\n成本指标：\n1. 每百万 Token 推理成本\n2. 每次请求的 Token 消耗\n3. GPU 利用率（计算利用率和显存利用率）\n4. 成本/请求（$ per request）\n\n可用性指标：\n1. 请求成功率（非 5xx 错误的请求比例）\n2. 健康检查通过率\n3. 自动恢复时间\n\n扩展延伸：全链路追踪——从 Nginx/API Gateway → 推理服务 → GPU Kernel 的完整链路。Grafana + Prometheus 是监控的标准方案。NVIDIA DCGM 提供 GPU 级别的指标采集。LangFuse 和 LangSmith 提供 LLM 应用层面的监控。",
     "hints": [
-      "Triton 的核心价值是多框架支持和企业级特性",
-      "动态批处理是提升吞吐量的关键技术"
+      "TTFT（首 Token 延迟）和 TPOT（每 Token 时间）是推理服务的核心性能指标",
+      "监控四维度：性能（延迟/吞吐）、质量（准确性）、成本（GPU 利用率）、可用性"
     ],
     "tags": [
-      "Triton",
-      "推理服务",
-      "模型部署",
-      "NVIDIA"
+      "AI",
+      "监控",
+      "延迟",
+      "推理服务"
     ]
   },
   {
-    "category": "ai_infra",
+    "category": "ai",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "K8s 上的 AI 工作负载调度",
-    "content": "在 Kubernetes 上部署 AI 训练和推理工作负载时，哪些特殊的调度策略和资源配置需要关注？",
-    "answer": "答案：AI 工作负载在 K8s 上的特殊调度策略：\n1. GPU 资源管理：使用 Device Plugin（NVIDIA/k8s-device-plugin）将 GPU 暴露为可调度资源，通过 resource.limit 指定卡数。需要处理 GPU 显存隔离问题（多个 Pod 不能共享同一 GPU，除非使用 MIG 或 MPS）。\n2. 节点亲和性和拓扑调度：数据并行训练需要将 Pod 调度到同一节点（低延迟 NVLink/NVSwitch）或同一机架（高带宽网络）。使用 NodeAffinity + TopologyManager 实现。\n3. Volcano 批量调度：原生 K8s Scheduler 不支持批量调度（Gang Scheduling）——分布式训练需要所有 Pod 同时就绪才能开始，否则等待的 Pod 会浪费资源。Volcano 的 Gang Scheduling 确保所有 Pod 同时分配。\n4. 优先级和抢占：推理服务需要高优先级保证延迟敏感，训练任务可以使用较低优先级。通过 PriorityClass + Preemption 实现。\n5. 存储：训练需要高性能共享存储（NFS/Lustre/Longhorn），推理需要快速加载模型。使用 PVC + ReadWriteMany。\n\n扩展延伸：Kubeflow 提供了完整的 ML on K8s 工具链，包括 Training Operator（分布式训练）、Katib（超参调优）、KFServing（推理服务）。LWS（LeaderWorkerSet）是 Google 新推出的专为分布式训练设计的 Workload API。",
+    "title": "Prompt 优化技术",
+    "content": "请介绍 Prompt 优化的主要技术。Hard Prompt Tuning 和 Soft Prompt Tuning 的区别是什么？AutoPrompt 和 OPRO 如何自动搜索最优 Prompt？",
+    "answer": "答案：Prompt 优化在保持模型权重不变的前提下提升 LLM 输出质量。\n\nHard Prompt vs Soft Prompt：\n\nHard Prompt（离散 Prompt）：\n- 自然语言的词元序列（人类可读）\n- 优化方法：人工书写、启发式搜索、自动生成\n- 可以迁移到不同模型（通用性）\n- 例子：\"请用中文回答\"、\"逐步思考\"\n\nSoft Prompt（连续 Prompt）：\n- 可学习的嵌入向量（不可读）\n- 在输入层之前插入虚拟 Token，其嵌入向量参与训练\n- 需要为每个任务训练专属的 soft prompt\n- 嵌入在特定模型的嵌入空间中，不能迁移\n\n自动 Prompt 搜索：\n\nAutoPrompt：\n- 基于梯度的触发词搜索\n- 在 Prompt 的特定位置（如 <mask>）搜索最优标记\n- 使用模型的反向梯度选择候选词\n- 找到使目标任务概率最大化的 trigger tokens\n\nOPRO（Optimization by PROmpting，2023）：\n- 使用 LLM 自身作为优化器来优化 Prompt\n- 迭代过程：\n  1. 当前 Prompt → LLM 生成 → 评估效果\n  2. 将评估结果 + 历史 Prompt 作为 LLM 的输入\n  3. LLM 生成改进后的新 Prompt\n- 不需要梯度计算，仅需调用 LLM 推理\n- 可以找到反直觉的但有效的 Prompt\n\n其他优化方法：\n1. Chain-of-Thought（思维链）提示词优化\n2. Few-shot example selection（选择最佳示例）\n3. 指令（System Prompt）优化\n4. Prompt Chaining（链式 Prompt）\n\n扩展延伸：DSPy 提供声明式的 Prompt 优化框架（自动选择示例、自动调整 Prompt 结构）。Semantic Kernel 支持自动的 Prompt 工程。Prompt 优化效果通常有 5-20% 的准确率提升。",
     "hints": [
-      "GPU 调度和拓扑感知调度是 AI 工作负载的特殊需求",
-      "Gang Scheduling 是分布式训练的必要条件"
+      "Hard Prompt（自然语言可读可迁移）vs Soft Prompt（嵌入向量需训练）",
+      "AutoPrompt 用梯度搜索，OPRO 用 LLM 自身优化 Prompt"
     ],
     "tags": [
-      "Kubernetes",
-      "GPU",
-      "AI 基础设施",
-      "Volcano",
-      "调度"
+      "AI",
+      "Prompt 优化",
+      "AutoPrompt",
+      "Soft Prompt"
     ]
   },
   {
-    "category": "ai_infra",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "模型并行策略对比",
-    "content": "大模型训练和推理中常用的并行策略有哪些？请分别解释其原理和适用场景。",
-    "answer": "答案：主要并行策略：\n1. Data Parallelism（数据并行）：每个设备持有完整模型副本，切分数据批次，通过 AllReduce 同步梯度。最简单但模型必须能装进单卡。\n2. Tensor Parallelism（张量并行）：将单个 Transformer 层的权重沿 hidden 维度切分到多卡，每卡只计算一部分。需要卡间高频通信（AllReduce），适用于单机多卡场景。\n3. Pipeline Parallelism（流水线并行）：将模型按层切分成多个 Stage，每个 Stage 放在不同设备上。通信量低但存在 Bubble 问题（空闲等待）。\n4. Sequence Parallelism（序列并行）：沿序列长度维度切分，解决长序列训练的显存不足问题（Ring Attention）。\n\n扩展延伸：实际训练混合使用多种并行：3D Parallelism（Data + Tensor + Pipeline）是 Megatron-LM 的核心策略。FSDP（Fully Sharded Data Parallelism）是 Data Parallel 的进阶——将模型参数、梯度、优化器状态分片到各设备，需要时才 AllGather，是 Data Parallel 和 Tensor Parallel 的折中。",
-    "hints": [
-      "不同并行策略切分的维度不同：数据、层、参数、序列",
-      "训练大模型通常混合使用多种并行"
-    ],
-    "tags": [
-      "并行计算",
-      "分布式训练",
-      "Megatron",
-      "FSDP"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "GPU 显存优化技术",
-    "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
-    "answer": "答案：主流 GPU 显存优化技术：\n1. KV Cache：缓存 Attention 中已计算好的 K 和 V 矩阵，避免每次生成重复计算。但 KV Cache 会随序列长度线性增长，是长上下文推理的主要瓶颈。\n2. PagedAttention/vLLM：操作系统的虚拟内存分页思想——将 KV Cache 分页管理，按需分配，消除内部碎片和外部碎片。vLLM 因此比常规推理方案显存效率提升 2-4 倍。\n3. FlashAttention：通过 Tiling（分块）技术，将 Q、K、V 分块存入 SRAM 而非 HBM 计算，减少 HBM 访问次数，节省显存的同时加速（IO-Aware 算法）。\n4. Memory Offloading：将暂时不用的参数/状态卸载到 CPU 内存，需要时再加载回 GPU。如 DeepSpeed Offload。\n5. Activation Recomputation（Checkpointing）：训练时丢弃中间激活值，反向传播时重新计算，以时间换空间。\n\n扩展延伸：KVCache 的进一步优化包括 Multi-Query Attention（MQA，多个 Query Head 共享一个 KV Head）和 Grouped-Query Attention（GQA，折中方案，LLaMA 2/3 使用）。投机解码（Speculative Decoding）也通过减少模型调用次数间接减少显存压力。",
-    "hints": [
-      "KV Cache 是长上下文推理的主要瓶颈",
-      "vLLM 的分页管理是近年最重要的显存优化创新"
-    ],
-    "tags": [
-      "GPU",
-      "显存优化",
-      "vLLM",
-      "FlashAttention"
-    ]
-  },
-  {
-    "category": "ai_infra",
+    "category": "ai",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "vLLM 的架构与优势",
-    "content": "vLLM 是当前最流行的 LLM 推理引擎之一。请解释 vLLM 的核心架构创新和相比传统方案的优势。",
-    "answer": "答案：vLLM 的核心创新是 PagedAttention 算法——将 KV Cache 按固定大小的 Block（通常 16 个 Token）分页管理，类似操作系统虚拟内存的分页机制。每次生成 Token 时只需要分配新 Block，Block 内的物理内存不要求连续。\n\n优势：1）显存利用率从传统方案的 20-40% 提升到 90% 以上，消除了内部和外部碎片；2）支持 Copy-on-Write，多个 Sequence 共享相同 Prompt 时共用 KV Cache（如 Beam Search）；3）支持高效的请求调度（Continuous Batching——随时将新到达的请求加入正在运行的 Batch 中，无需等当前 Batch 全部完成）；4）实现了近乎完美的内存共享和请求级抢占。\n\n扩展延伸：vLLM 还支持 prefix caching（前缀缓存，命中相同前缀时复用 KV Cache）、multimodal（图片输入）、LoRA serving（同一批请求使用不同的 LoRA 模块）。与其他推理引擎的比较：TGI 不支持 PagedAttention，TensorRT-LLM 性能接近但配置复杂，MindIE（华为）针对昇腾做了优化。",
+    "title": "ML Pipeline 设计与编排",
+    "content": "请介绍机器学习 Pipeline 的设计和编排方案。如何设计可重现的 ML Pipeline？Kubeflow、Airflow、MLflow 在 ML Pipeline 中各扮演什么角色？",
+    "answer": "答案：ML Pipeline 将数据准备、训练、评估、部署等步骤自动化，确保可重现性和可审计性。\n\nPipeline 核心步骤：\n1. 数据提取：从数据源获取原始数据\n2. 数据验证：检查数据质量（模式校验、统计分布、异常值检测）\n3. 数据预处理 & 特征工程：清洗、变换、特征提取\n4. 训练：模型训练和超参数调优\n5. 评估：在验证集和测试集上评估\n6. 模型注册：将模型版本注册到模型仓库\n7. 部署：将模型部署到推理服务\n8. 监控：部署后的模型性能和数据漂移监测\n\n可重现设计：\n1. 数据版本化：使用 DVC 或 LakeFS 管理数据集版本\n2. 代码版本化：Git - 每个 Pipeline 运行对应一个 Git Commit\n3. 环境版本化：Docker/Singularity 容器化训练环境\n4. 参数记录：所有超参数、配置写入实验日志\n5. 随机种子：固定所有随机种子\n\n工具角色分工：\n- Kubeflow：在 Kubernetes 上编排 ML Pipeline 的端到端平台。Pipeline 组件运行在 K8s Pod 中。\n- Airflow：通用工作流调度。适合数据 ETL 和批处理 Pipeline。ML Pipeline 中负责数据准备和特征工程的编排。训练任务通过 KubernetesPodOperator 启动。\n- MLflow：实验跟踪（Tracking）、模型注册（Registry）、部署（Serving）。不负责 Pipeline 编排，而是记录实验和模型生命周期管理。\n\n三者可以组合使用：Airflow 调度 ETL → Kubeflow 管理训练 Pipeline → MLflow 记录实验和模型。\n\n扩展延伸：TFX（TensorFlow Extended）是 Google 的端到端 ML 平台。Kedro 是面向数据科学的 Pipeline 框架（强调模块化和可重现）。Flyte 是 Kubernetes 原生的 ML 和数据处理工作流编排平台。持续训练（Continuous Training）通过自动 Pipeline 实现模型的定期重训。",
     "hints": [
-      "PagedAttention 是 vLLM 的核心，类比 OS 虚拟内存",
-      "Continuous Batching 大幅提升吞吐量"
+      "ML Pipeline = 数据→特征→训练→评估→注册→部署→监控",
+      "Kubeflow 编排 ML、Airflow 调度流程、MLflow 记录实验和模型"
     ],
     "tags": [
-      "vLLM",
-      "推理引擎",
-      "PagedAttention",
-      "推理优化"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "NVIDIA Triton Inference Server 的作用",
-    "content": "NVIDIA Triton Inference Server 在 AI 推理基础设施中扮演什么角色？它的核心功能和优势是什么？",
-    "answer": "答案：Triton Inference Server 是一个高性能推理服务器，支持多种框架（TensorRT、PyTorch、ONNX、vLLM 等）和硬件（GPU、CPU、AWS Inferentia）。核心功能：\n1. 多模型管理：同时服务多个模型，支持模型版本管理（A/B 测试和金丝雀发布）。\n2. 动态批处理：自动将并发请求合并为 Batch（Dynamic Batching），支持延迟-吞吐量权衡配置。\n3. 模型流水线（Ensemble/Business Logic Scripting）：将多个模型串联成处理流水线，如 Detector → Classifier → Post-process。\n4. 并发执行模型实例：同一个模型加载多个实例（Model Instance），利用 GPU 并行能力。\n5. 指标和监控：内置 Prometheus 指标（延迟、吞吐量、队列长度）。\n\n优势：1）框架无关性——不同框架的模型可以在同一个推理服务中运行；2）高性能——TensorRT + 动态批处理 + 异步 I/O 的组合；3）企业级功能——模型预热、Graceful Shutdown、Rate Limiting。\n\n扩展延伸：Triton 的并发模型与 vLLM 的 Continuous Batching 互补——Triton 管理请求路由和批处理，vLLM 负责 LLM 推理内核的优化。多模型场景下 Triton + vLLM 的组合是推荐架构。",
-    "hints": [
-      "Triton 的核心价值是多框架支持和企业级特性",
-      "动态批处理是提升吞吐量的关键技术"
-    ],
-    "tags": [
-      "Triton",
-      "推理服务",
-      "模型部署",
-      "NVIDIA"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "K8s 上的 AI 工作负载调度",
-    "content": "在 Kubernetes 上部署 AI 训练和推理工作负载时，哪些特殊的调度策略和资源配置需要关注？",
-    "answer": "答案：AI 工作负载在 K8s 上的特殊调度策略：\n1. GPU 资源管理：使用 Device Plugin（NVIDIA/k8s-device-plugin）将 GPU 暴露为可调度资源，通过 resource.limit 指定卡数。需要处理 GPU 显存隔离问题（多个 Pod 不能共享同一 GPU，除非使用 MIG 或 MPS）。\n2. 节点亲和性和拓扑调度：数据并行训练需要将 Pod 调度到同一节点（低延迟 NVLink/NVSwitch）或同一机架（高带宽网络）。使用 NodeAffinity + TopologyManager 实现。\n3. Volcano 批量调度：原生 K8s Scheduler 不支持批量调度（Gang Scheduling）——分布式训练需要所有 Pod 同时就绪才能开始，否则等待的 Pod 会浪费资源。Volcano 的 Gang Scheduling 确保所有 Pod 同时分配。\n4. 优先级和抢占：推理服务需要高优先级保证延迟敏感，训练任务可以使用较低优先级。通过 PriorityClass + Preemption 实现。\n5. 存储：训练需要高性能共享存储（NFS/Lustre/Longhorn），推理需要快速加载模型。使用 PVC + ReadWriteMany。\n\n扩展延伸：Kubeflow 提供了完整的 ML on K8s 工具链，包括 Training Operator（分布式训练）、Katib（超参调优）、KFServing（推理服务）。LWS（LeaderWorkerSet）是 Google 新推出的专为分布式训练设计的 Workload API。",
-    "hints": [
-      "GPU 调度和拓扑感知调度是 AI 工作负载的特殊需求",
-      "Gang Scheduling 是分布式训练的必要条件"
-    ],
-    "tags": [
-      "Kubernetes",
-      "GPU",
-      "AI 基础设施",
-      "Volcano",
-      "调度"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "模型并行策略对比",
-    "content": "大模型训练和推理中常用的并行策略有哪些？请分别解释其原理和适用场景。",
-    "answer": "答案：主要并行策略：\n1. Data Parallelism（数据并行）：每个设备持有完整模型副本，切分数据批次，通过 AllReduce 同步梯度。最简单但模型必须能装进单卡。\n2. Tensor Parallelism（张量并行）：将单个 Transformer 层的权重沿 hidden 维度切分到多卡，每卡只计算一部分。需要卡间高频通信（AllReduce），适用于单机多卡场景。\n3. Pipeline Parallelism（流水线并行）：将模型按层切分成多个 Stage，每个 Stage 放在不同设备上。通信量低但存在 Bubble 问题（空闲等待）。\n4. Sequence Parallelism（序列并行）：沿序列长度维度切分，解决长序列训练的显存不足问题（Ring Attention）。\n\n扩展延伸：实际训练混合使用多种并行：3D Parallelism（Data + Tensor + Pipeline）是 Megatron-LM 的核心策略。FSDP（Fully Sharded Data Parallelism）是 Data Parallel 的进阶——将模型参数、梯度、优化器状态分片到各设备，需要时才 AllGather，是 Data Parallel 和 Tensor Parallel 的折中。",
-    "hints": [
-      "不同并行策略切分的维度不同：数据、层、参数、序列",
-      "训练大模型通常混合使用多种并行"
-    ],
-    "tags": [
-      "并行计算",
-      "分布式训练",
-      "Megatron",
-      "FSDP"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "GPU 显存优化技术",
-    "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
-    "answer": "答案：主流 GPU 显存优化技术：\n1. KV Cache：缓存 Attention 中已计算好的 K 和 V 矩阵，避免每次生成重复计算。但 KV Cache 会随序列长度线性增长，是长上下文推理的主要瓶颈。\n2. PagedAttention/vLLM：操作系统的虚拟内存分页思想——将 KV Cache 分页管理，按需分配，消除内部碎片和外部碎片。vLLM 因此比常规推理方案显存效率提升 2-4 倍。\n3. FlashAttention：通过 Tiling（分块）技术，将 Q、K、V 分块存入 SRAM 而非 HBM 计算，减少 HBM 访问次数，节省显存的同时加速（IO-Aware 算法）。\n4. Memory Offloading：将暂时不用的参数/状态卸载到 CPU 内存，需要时再加载回 GPU。如 DeepSpeed Offload。\n5. Activation Recomputation（Checkpointing）：训练时丢弃中间激活值，反向传播时重新计算，以时间换空间。\n\n扩展延伸：KVCache 的进一步优化包括 Multi-Query Attention（MQA，多个 Query Head 共享一个 KV Head）和 Grouped-Query Attention（GQA，折中方案，LLaMA 2/3 使用）。投机解码（Speculative Decoding）也通过减少模型调用次数间接减少显存压力。",
-    "hints": [
-      "KV Cache 是长上下文推理的主要瓶颈",
-      "vLLM 的分页管理是近年最重要的显存优化创新"
-    ],
-    "tags": [
-      "GPU",
-      "显存优化",
-      "vLLM",
-      "FlashAttention"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "vLLM 的架构与优势",
-    "content": "vLLM 是当前最流行的 LLM 推理引擎之一。请解释 vLLM 的核心架构创新和相比传统方案的优势。",
-    "answer": "答案：vLLM 的核心创新是 PagedAttention 算法——将 KV Cache 按固定大小的 Block（通常 16 个 Token）分页管理，类似操作系统虚拟内存的分页机制。每次生成 Token 时只需要分配新 Block，Block 内的物理内存不要求连续。\n\n优势：1）显存利用率从传统方案的 20-40% 提升到 90% 以上，消除了内部和外部碎片；2）支持 Copy-on-Write，多个 Sequence 共享相同 Prompt 时共用 KV Cache（如 Beam Search）；3）支持高效的请求调度（Continuous Batching——随时将新到达的请求加入正在运行的 Batch 中，无需等当前 Batch 全部完成）；4）实现了近乎完美的内存共享和请求级抢占。\n\n扩展延伸：vLLM 还支持 prefix caching（前缀缓存，命中相同前缀时复用 KV Cache）、multimodal（图片输入）、LoRA serving（同一批请求使用不同的 LoRA 模块）。与其他推理引擎的比较：TGI 不支持 PagedAttention，TensorRT-LLM 性能接近但配置复杂，MindIE（华为）针对昇腾做了优化。",
-    "hints": [
-      "PagedAttention 是 vLLM 的核心，类比 OS 虚拟内存",
-      "Continuous Batching 大幅提升吞吐量"
-    ],
-    "tags": [
-      "vLLM",
-      "推理引擎",
-      "PagedAttention",
-      "推理优化"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "NVIDIA Triton Inference Server 的作用",
-    "content": "NVIDIA Triton Inference Server 在 AI 推理基础设施中扮演什么角色？它的核心功能和优势是什么？",
-    "answer": "答案：Triton Inference Server 是一个高性能推理服务器，支持多种框架（TensorRT、PyTorch、ONNX、vLLM 等）和硬件（GPU、CPU、AWS Inferentia）。核心功能：\n1. 多模型管理：同时服务多个模型，支持模型版本管理（A/B 测试和金丝雀发布）。\n2. 动态批处理：自动将并发请求合并为 Batch（Dynamic Batching），支持延迟-吞吐量权衡配置。\n3. 模型流水线（Ensemble/Business Logic Scripting）：将多个模型串联成处理流水线，如 Detector → Classifier → Post-process。\n4. 并发执行模型实例：同一个模型加载多个实例（Model Instance），利用 GPU 并行能力。\n5. 指标和监控：内置 Prometheus 指标（延迟、吞吐量、队列长度）。\n\n优势：1）框架无关性——不同框架的模型可以在同一个推理服务中运行；2）高性能——TensorRT + 动态批处理 + 异步 I/O 的组合；3）企业级功能——模型预热、Graceful Shutdown、Rate Limiting。\n\n扩展延伸：Triton 的并发模型与 vLLM 的 Continuous Batching 互补——Triton 管理请求路由和批处理，vLLM 负责 LLM 推理内核的优化。多模型场景下 Triton + vLLM 的组合是推荐架构。",
-    "hints": [
-      "Triton 的核心价值是多框架支持和企业级特性",
-      "动态批处理是提升吞吐量的关键技术"
-    ],
-    "tags": [
-      "Triton",
-      "推理服务",
-      "模型部署",
-      "NVIDIA"
-    ]
-  },
-  {
-    "category": "ai_infra",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "K8s 上的 AI 工作负载调度",
-    "content": "在 Kubernetes 上部署 AI 训练和推理工作负载时，哪些特殊的调度策略和资源配置需要关注？",
-    "answer": "答案：AI 工作负载在 K8s 上的特殊调度策略：\n1. GPU 资源管理：使用 Device Plugin（NVIDIA/k8s-device-plugin）将 GPU 暴露为可调度资源，通过 resource.limit 指定卡数。需要处理 GPU 显存隔离问题（多个 Pod 不能共享同一 GPU，除非使用 MIG 或 MPS）。\n2. 节点亲和性和拓扑调度：数据并行训练需要将 Pod 调度到同一节点（低延迟 NVLink/NVSwitch）或同一机架（高带宽网络）。使用 NodeAffinity + TopologyManager 实现。\n3. Volcano 批量调度：原生 K8s Scheduler 不支持批量调度（Gang Scheduling）——分布式训练需要所有 Pod 同时就绪才能开始，否则等待的 Pod 会浪费资源。Volcano 的 Gang Scheduling 确保所有 Pod 同时分配。\n4. 优先级和抢占：推理服务需要高优先级保证延迟敏感，训练任务可以使用较低优先级。通过 PriorityClass + Preemption 实现。\n5. 存储：训练需要高性能共享存储（NFS/Lustre/Longhorn），推理需要快速加载模型。使用 PVC + ReadWriteMany。\n\n扩展延伸：Kubeflow 提供了完整的 ML on K8s 工具链，包括 Training Operator（分布式训练）、Katib（超参调优）、KFServing（推理服务）。LWS（LeaderWorkerSet）是 Google 新推出的专为分布式训练设计的 Workload API。",
-    "hints": [
-      "GPU 调度和拓扑感知调度是 AI 工作负载的特殊需求",
-      "Gang Scheduling 是分布式训练的必要条件"
-    ],
-    "tags": [
-      "Kubernetes",
-      "GPU",
-      "AI 基础设施",
-      "Volcano",
-      "调度"
+      "AI",
+      "ML Pipeline",
+      "Kubeflow",
+      "MLflow"
     ]
   }
 ]

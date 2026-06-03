@@ -912,5 +912,96 @@
       "关键字",
       "JVM"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "hashCode 和 equals 的契约",
+    "content": "请说明 Java 中 hashCode() 和 equals() 的约定关系。为什么重写 equals() 时必须同时重写 hashCode()？如果不这样做会有什么问题？",
+    "answer": "答案：根据 Java 对象约定，两个对象 equals() 返回 true 时，它们的 hashCode() 必须返回相同的值。反之不成立（哈希碰撞允许不同对象有相同哈希码）。重写 equals() 时也必须重写 hashCode()，否则会违反一致性约定，导致基于哈希的集合（HashMap、HashSet、HashTable）行为异常。\n\n解析：Object 规范对 hashCode 的约定——1）同一对象多次调用 hashCode() 应返回相同整数（equals 比较中使用的信息未修改的前提下）。2）如果两个对象 equals() 返回 true，它们的 hashCode() 必须相等。3）如果两个对象 equals() 返回 false，它们的 hashCode() 可以相等（哈希碰撞，但应尽量减少碰撞以提高性能）。\n\n扩展延伸：不重写 hashCode() 的后果——如果只重写 equals() 不重写 hashCode()，HashMap 的 put 和 get 会出问题。因为 HashMap 先根据 hashCode() 定位桶，再用 equals() 比较同一桶中的元素。两个对象 equals() 相等但 hashCode() 不同，会被放入不同的桶，导致在同一个 HashMap 中同时存在两个逻辑相等的 key（无法正确 get）。编写 hashCode 的常见方法：Objects.hash(field1, field2) 或使用 31 质数乘法（如 result = 31 * result + (field != null ? field.hashCode() : 0)）。Lombok 的 @EqualsAndHashCode 也可以自动生成。",
+    "hints": [
+      "散列表（HashMap、HashSet）依赖 hashCode() 定位桶位置",
+      "两个 equals 相等的对象散列到不同桶会导致内存泄漏和逻辑错误"
+    ],
+    "tags": [
+      "Java",
+      "Object",
+      "hashCode",
+      "equals",
+      "契约"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Comparable 和 Comparator 的区别",
+    "content": "请说明 Comparable 和 Comparator 两个接口的区别。各自的使用场景是什么？哪种方式更灵活？",
+    "answer": "答案：Comparable 定义自然排序（compareTo 方法，一个类只能有一种自然排序），Comparator 定义外部比较器（compare 方法，一个类可以有多种排序方式）。Comparator 更灵活，适合多维度排序和不修改原类代码的场景。\n\n解析：Comparable——java.lang.Comparable<T>，compareTo(T o) 方法。对象自身实现该接口定义\"自然排序\"（Natural Ordering）。适用场景：类有明确的排序逻辑（如 String 的字典序、Integer 的数字序）。缺点是只能有一种排序方式。Comparator——java.util.Comparator<T>，compare(T o1, T o2) 方法。独立于被比较对象的外部比较器。适用场景：1）需要多种排序方式（按姓名、按年龄、按日期）。2）不能或不想修改原类代码。3）需要在排序时使用特定逻辑（如忽略大小写、倒序）。\n\n扩展延伸：JDK 8 后 Comparator 有丰富的链式方法——Comparator.comparing(Person::getName).thenComparing(Person::getAge).reversed()。支持 null 值处理——nullsFirst() 和 nullsLast()。当使用 TreeSet 或 TreeMap 时，如果没有提供 Comparator，则使用元素的 Comparable（否则抛出 ClassCastException）。Comparable 和 Comparator 都与 equals() 保持一致性的建议：compareTo 返回 0 时 equals 也返回 true（虽然不是强制要求，但不一致会导致有序集合（SortedSet）的行为异常）。",
+    "hints": [
+      "Comparable 是\"内部比较器\"，Comparator 是\"外部比较器\"",
+      "Comparator 的链式调用（comparing.thenComparing.reversed）非常灵活"
+    ],
+    "tags": [
+      "Java",
+      "Comparable",
+      "Comparator",
+      "排序"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "构造器链与 this/super 关键字",
+    "content": "请解释 Java 中构造器的调用链是如何形成的。this() 和 super() 在构造器中的使用规则是什么？",
+    "answer": "答案：Java 构造子类对象时，会形成从子类到根父类的构造器链（Constructor Chaining），保证所有父类的初始化先于子类。每个构造器的第一行必须是 this()（调用同类其他构造器）或 super()（调用直接父类构造器），不加时编译器隐式插入 super()。\n\n解析：构造器链规则——1）子类构造器默认第一行是 super()（调用父类无参构造器）。如果父类没有无参构造器，则必须在第一行显式调用 super(参数)。2）this(参数) 调用同类重载构造器，被调用的构造器最终仍然会调用 super()。3）this() 和 super() 不能同时出现在同一个构造器中（它们都必须放在第一行）。4）构造器不能被继承（不能 override），但子类可以通过 super() 调用父类构造器。\n\n扩展延伸：构造器链执行顺序——以 new Child() 为例，执行顺序是：父类静态代码块 → 子类静态代码块 → 父类实例变量初始化 → 父类构造器代码 → 子类实例变量初始化 → 子类构造器代码。注意静态代码块只在类加载时执行一次。final 字段的保证：在构造器中，如果通过 this 引用将当前对象传递出去（逸出），可能导致其他线程看到未完成构造的对象——这个逸出问题被称为\"构造器中的 this 逸出\"，是并发编程中的常见陷阱。",
+    "hints": [
+      "编译器会在构造器第一行隐式插入 super()",
+      "构造器链的执行顺序是父类先于子类"
+    ],
+    "tags": [
+      "Java",
+      "构造器",
+      "继承",
+      "初始化"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "协变返回类型（Covariant Return Type）",
+    "content": "请解释 Java 中的协变返回类型（Covariant Return Type）。它是从哪个 JDK 版本引入的？有什么作用？",
+    "answer": "答案：协变返回类型允许子类重写方法时返回父类方法返回类型的子类型，提升了 API 的灵活性和类型安全性。JDK 5 引入。\n\n解析：基本原理——父类定义 Object clone()，子类重写为 MyClass clone()（返回子类型）。编译器在字节码层面生成一个桥接方法（Bridge Method，返回父类声明类型，调用返回子类型的实际方法）。这样既保持了字节码兼容性（Java 字节码方法签名包含返回类型），又提供给调用方更具体的返回类型。\n\n扩展延伸：JDK 5 之前的赋值需要强制转型：((MyClass) obj.clone())。协变返回类型后可以直接 MyClass copy = obj.clone()（不需要转型）。协变返回类型实际上利用了泛型中的桥接方法机制。常见应用实例：1）Object.clone() → 任何类重写时返回自己的类型。2）工厂方法——abstract Animal create() → Dog create(), Cat create()。注意：返回类型是协变的，参数类型是逆变的（但 Java 不支持参数类型的逆变——重写时参数类型必须完全一致，否则变成重载）。",
+    "hints": [
+      "编译器在字节码中生成桥接方法来实现协变返回类型",
+      "协变返回类型避免了调用者的强制类型转换"
+    ],
+    "tags": [
+      "Java",
+      "多态",
+      "协变",
+      "重写"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "可变参数（Varargs）与静态导入",
+    "content": "请说明 Java 可变参数（Varargs）的语法规则和注意事项。静态导入（Static Import）的使用场景是什么？",
+    "answer": "答案：可变参数用类型... 声明（如 void method(String... args)），允许传入任意数量的参数（包括零个）；静态导入（import static）允许直接使用导入的静态成员，无需类名前缀。\n\n解析：可变参数——实质是语法糖，编译后转换为数组。规则：1）一个方法只能有一个可变参数。2）可变参数必须是方法签名的最后一个参数。3）调用时可以传数组、传多个参数或不传参（空数组）。4）重载时的优先级：固定参数方法优先于可变参数方法。常见陷阱：性能问题（每次调用都创建数组），频繁调用应使用方法重载替代。静态导入——import static java.lang.Math.max; 或 import static java.lang.Math.*; 之后可以直接使用 max(1, 2)，不需要 Math.max(1, 2)。适用场景：工具类方法（Math、Collections、Arrays）和常量使用频繁时。\n\n扩展延伸：可变参数——JDK 5 引入。在反射和方法句柄（MethodHandle）中广泛使用。注意数组兼容性：如果调用时传入 null，方法内部会得到 null 而非空数组（这是一个常见的 NPE 来源）。静态导入——过度使用会降低代码可读性（破坏命名空间），建议仅用于频繁使用且语义清晰的静态成员（如 Assert 中的 assertEquals）。也可导入常量和枚举值。",
+    "hints": [
+      "可变参数编译后就是数组，每次调用创建新数组",
+      "静态导入过度使用会让代码难以阅读和理解来源"
+    ],
+    "tags": [
+      "Java",
+      "Varargs",
+      "Static Import",
+      "语法糖"
+    ]
   }
 ]

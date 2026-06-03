@@ -731,106 +731,6 @@
     "category": "java_advanced",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "ZGC 的核心原理与染色指针技术",
-    "content": "ZGC 的核心原理是什么？染色指针（Colored Pointer）在其中起什么作用？",
-    "answer": "答案：ZGC 是一种以低延迟为首要目标的并发垃圾回收器，核心原理是通过读屏障 + 染色指针技术实现大部分 GC 阶段与应用线程并发执行，STW 时间不超过 10ms。\n\n解析：\n染色指针（Colored Pointer）：ZGC 在 64 位指针的高 4 位中存储标记信息（Finalizable、Remapped、Marked1、Marked0），利用这些标志位来标识对象的状态，无需在对象头中额外存储 GC 信息。通过染色指针，ZGC 可以在指针层面直接判断对象所处的 GC 阶段，避免了对象头的频繁访问和修改。\n核心设计：1）基于 Region 的内存布局（动态创建和销毁，非固定大小）；2）并发标记（Mark）——通过读屏障更新染色指针的标志位；3）并发重定位（Relocate）——将存活对象复制到新 Region 并更新引用，旧内存可以立即回收；4）重映射（Remap）——修正所有指向旧地址的引用。\n\n扩展延伸：ZGC 最大支持 4TB 堆内存（64 位系统，染色指针占 4 位后还剩 42 位可用，42^2 = 4TB）。ZGC 适用于对延迟敏感的大内存应用（如金融交易系统、实时推荐系统）。ZGC 的读屏障是“标量替换友好”的，JIT 可以内联优化。JDK 21 中 ZGC 已将分代模式作为默认（分代 ZGC 进一步降低了 CPU 开销）。",
-    "hints": [
-      "染色指针利用 64 位指针的高 4 位存储 GC 状态",
-      "ZGC 的目标是 STW 不超过 10ms",
-      "读屏障 + 染色指针代替了写屏障 + 对象头标记"
-    ],
-    "tags": [
-      "JVM",
-      "ZGC",
-      "GC",
-      "染色指针"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Shenandoah GC 与 ZGC 的对比",
-    "content": "Shenandoah GC 与 ZGC 有什么区别和联系？",
-    "answer": "答案：Shenandoah 和 ZGC 都是面向低延迟的并发 GC，但实现技术不同。ZGC 使用染色指针 + 读屏障，Shenandoah 使用 Brooks 指针 + 写屏障。两者都能将 STW 控制在 10ms 以内。\n\n解析：\nShenandoah：由 RedHat 开发，JDK 12 引入（JDK 15 GA），核心是通过 Brooks 转发指针（forwarding pointer）实现并发压缩。每个对象头前增加一个转发指针字段，指向对象实际地址，GC 移动对象时只需更新该指针。使用写屏障（而非 ZGC 的读屏障）检查并修复引用。\n区别：\n1）指针技术：ZGC 染色指针（占用高 4 位） vs Shenandoah Brooks 指针（对象头前额外字段）；\n2）屏障类型：ZGC 读屏障 vs Shenandoah 写屏障（Shenandoah JDK 13+ 引入了读屏障优化）；\n3）内存管理：ZGC 基于 Region 动态分配 vs Shenandoah 沿用传统分代 Region；\n4）堆大小：ZGC 最大 4TB vs Shenandoah 最大也是 TB 级但受限于 64 位寻址；\n5）成熟度：ZGC 在 JDK 21 已支持分代模式，Shenandoah 的分代模式在 JDK 21 中孵化。\n\n扩展延伸：Shenandoah 在 JDK 15+ 已成为生产特性（-XX:+UseShenandoahGC）。对于大堆低延迟场景，两者都是好的选择：ZGC 在吞吐量方面略优，Shenandoah 在某些场景下 CPU 开销更低。选择取决于具体业务场景和 JDK 版本支持情况。",
-    "hints": [
-      "两者的核心区别是指针技术和屏障类型",
-      "ZGC 用读屏障 + 染色指针，Shenandoah 用写屏障 + Brooks 指针"
-    ],
-    "tags": [
-      "JVM",
-      "Shenandoah",
-      "ZGC",
-      "GC对比"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "CDS（Class Data Sharing）原理",
-    "content": "CDS（Class Data Sharing）是什么？它如何提升 JVM 启动速度？",
-    "answer": "答案：CDS（Class Data Sharing）是 JVM 的一项功能，它将核心类库的预处理元数据转储到一个共享归档文件中，后续 JVM 实例启动时直接加载该存档，避免重复的类加载和解析过程，从而显著缩短启动时间。\n\n解析：\n原理：JDK 5 引入，最初只支持 Bootstrap ClassLoader 加载的类。Java 安装时运行 Class Data Sharing 工具将系统类（rt.jar 等）处理成共享归档（classes.jsa）。后续 JVM 启动时通过内存映射文件直接读取归档中的类元数据，跳过类加载、验证、解析等步骤。\n优势：1）减少启动时间（可达 30-50%）；2）多个 JVM 进程共享同一个归档文件的只读内存页，降低内存占用。\nJDK 12+：默认开启 CDS，归档文件为 classes.jsa。\n\n扩展延伸：CDS 的前提条件是需要固定的类路径。如果类路径变化，归档需要重新生成。CDS 对于短生命周期的 Java 应用（如 CLI 工具、微服务快速启动）收益最大。长期运行的 Web 应用收益较小（启动时间占比低）。JDK 12+ 的默认 CDS 归档文件位于 ${JAVA_HOME}/lib/server/classes.jsa。",
-    "hints": [
-      "CDS 通过共享归档避免重复类加载",
-      "对短生命周期应用收益最大",
-      "多个 JVM 进程可共享内存页"
-    ],
-    "tags": [
-      "JVM",
-      "CDS",
-      "类加载",
-      "启动优化"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "AppCDS 与 CDS 的区别",
-    "content": "AppCDS（Application Class Data Sharing）和 CDS 有什么区别？",
-    "answer": "答案：AppCDS 是 CDS 的扩展，不仅支持 Bootstrap ClassLoader 加载的系统类，还支持 Application ClassLoader 加载的应用类，进一步提升了启动速度。\n\n解析：\nCDS：仅归档 Bootstrap ClassLoader 加载的核心 JRE 类（rt.jar 等）。\nAppCDS（JDK 8u40+，商用特性；JDK 12+ 开源免费）：归档范围扩展为：1）Bootstrap ClassLoader 加载的 JDK 内部类；2）Platform ClassLoader 加载的模块类；3）Application ClassLoader 加载的用户应用类和第三方库。\n工作流程：1）使用 -XX:DumpLoadedClassList 生成类列表；2）使用 -Xshare:dump -XX:SharedArchiveFile 基于类列表创建归档；3）使用 -Xshare:auto -XX:SharedArchiveFile 指定归档文件启动应用。\n\n扩展延伸：动态 CDS 归档（JDK 13+）：通过 -XX:ArchiveClassesAtExit 在应用退出时自动转储加载的类为归档，无需先 dump 类列表。AppCDS 在微服务架构中的典型应用：每次部署新版本时，先运行一次训练（dumping）生成归档，作为应用启动参数的一部分。Spring Boot 应用使用 AppCDS 可减少 20-40% 启动时间。",
-    "hints": [
-      "AppCDS 在 CDS 基础上扩展了应用类的归档",
-      "JDK 13+ 支持动态 CDS 归档",
-      "对微服务和 Spring Boot 应用的快速启动有显著效果"
-    ],
-    "tags": [
-      "JVM",
-      "AppCDS",
-      "CDS",
-      "类加载"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "JIT 编译层次与分层编译",
-    "content": "JVM 的 JIT 编译层次（C1/C2/分层编译）是什么？它们如何配合工作？",
-    "answer": "答案：JVM 的 JIT 编译器分为 C1（Client Compiler）和 C2（Server Compiler）两种，分层编译（Tiered Compilation）是两者的协同工作模式，综合了 C1 启动快和 C2 优化深的优点。\n\n解析：\n编译层次（共 5 层）：\n0 层：解释执行（Interpreter）——启动时全部解释执行，收集运行时 profiling 信息。\n1 层：C1 简单编译——开启基础优化（方法内联、死代码消除等），但不做 profiling。\n2 层：C1 编译 + 完整 profiling——收集控制流、类型信息等。\n3 层：C1 编译 + 部分 profiling——仅收集必要信息，降低 profiling 开销。\n4 层：C2 编译——在 C1 收集的 profiling 信息基础上做激进优化（如高级内联、循环展开、逃逸分析、自动向量化等），优化程度最高但编译耗时最长。\n\n工作流程：方法从 0 层逐步升级。C1（1-3 层）快速编译收集信息，当方法达到 JIT 阈值（默认 10000 次调用）时，C2 利用 profiling 信息进行深度优化编译。如果 profiling 信息不充分，降级到 C1 重新收集。\n\n扩展延伸：-XX:TieredStopAtLevel=1 可禁用 C2 编译（仅使用 C1）。C2 是传统的“长跑冠军”，适合长时间运行的服务器应用。Graal JIT 编译器（JDK 17+实验性，JDK 21+ 通过 incubator）可作为 C2 的替代方案。分层编译在 JDK 8 中默认启用（-XX:+TieredCompilation）。",
-    "hints": [
-      "5 层编译体系：解释执行 → C1 → C2",
-      "C1 启动快优化浅，C2 启动慢优化深",
-      "分层编译结合了两者的优势"
-    ],
-    "tags": [
-      "JVM",
-      "JIT",
-      "C1",
-      "C2",
-      "分层编译"
-    ],
-    "options": []
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "JVM 的指针压缩技术（Compressed OOPs）",
     "content": "请解释 JVM 中的指针压缩（Compressed OOPs / 压缩普通对象指针）技术的原理和收益。",
     "answer": "答案：Compressed OOPs（压缩普通对象指针）将 64 位对象指针压缩为 32 位存储，减少内存占用和缓存未命中。\n\n解析：在 64 位 JVM 中，对象指针默认是 8 字节（64 位）。开启压缩后（JDK 8 默认开启，-XX:+UseCompressedOops），指针压缩为 4 字节（32 位），但实际访问时左移 3 位（乘以 8，因为 Java 对象按 8 字节对齐）恢复为 64 位地址。这样堆最大可寻址 32GB（2^32 * 8 = 32GB）。注意：压缩只对普通对象指针有效，对静态字段和 Class 指针无效。\n\n扩展延伸：指针压缩的收益：1）减少内存占用——每个引用减少 4 字节，堆中大量引用字段节省可观空间。2）改善缓存局部性——相同缓存行可以容纳更多引用（如数组）。局限性：堆超过 32GB 后需要关闭压缩（-XX:+UseCompressedOops 通常需要 -XX:-UseCompressedOops 手动关闭），指针回到 8 字节，此时内存占用上升 10-20%。超过 32GB 应考虑使用 ZGC 或调整架构。",
@@ -916,6 +816,187 @@
       "三色标记",
       "CMS",
       "G1"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 的分层编译（Tiered Compilation）机制",
+    "content": "请解释 JVM 的分层编译（Tiered Compilation）机制。一共有几个编译层次？各层次之间的升级条件是什么？",
+    "answer": "答案：分层编译将代码执行过程划分为 5 个层次（0-4），从纯解释执行到最高优化的 C2 编译，逐层收集 profiling 信息并优化代码。\n\n解析：五个层次——0：解释执行（Interpreter），不收集 profiling 信息。1：简单 C1 编译（无 profiling），快速但优化少。2：受限的 C1 编译（部分 profiling），仅收集部分信息。3：完整 C1 编译（全部 profiling），收集所有 profiling 信息，用于指导 C2 优化。4：C2 编译（最优优化），使用完整的 profiling 信息进行激进优化。升级流程——方法开始时在 level 0 解释执行。达到调用阈值后进入 level 3（完整 profiling C1 编译）。C1 编译收集 profiling（分支概率、类型信息、方法调用频率等）。达到 C2 阈值后升级到 level 4，生成高度优化的机器码。特殊情况：level 1 适用于简单方法（不需要 profiling 时的快速 C1）。level 2 常用于内部编译器的过渡。\n\n扩展延伸：分层编译在 JDK 7 引入（默认开启 -XX:+TieredCompilation，JDK 8+ 默认开启）。JIT 开关参数：-Xint（纯解释，无 JIT）、-Xcomp（纯编译，不解释）。C1 的编译阈值：-XX:Tier3InvocationThreshold / -XX:Tier3MinInvocationThreshold。C2 的编译阈值：-XX:Tier4InvocationThreshold（默认 5000）。C1 用的 profiling 缓冲区大小：-XX:MethodDataSize。分层编译的好处是启动速度（解释 + C1 快速响应）与峰值性能（C2 激进优化）之间的平衡。",
+    "hints": [
+      "level 0 解释 → level 3 C1 带完整 profiling → level 4 C2 高优化",
+      "C1 编译收集 profiling 信息，C2 利用这些信息做激进优化"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "分层编译",
+      "C1",
+      "C2"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "OSR（On-Stack Replacement）栈上替换",
+    "content": "请解释 JVM JIT 编译中的 OSR（On-Stack Replacement）栈上替换技术。它的作用是什么？什么场景下会触发 OSR？",
+    "answer": "答案：OSR（On-Stack Replacement）是 JVM 在方法正在执行时替换其编译版本的技术，允许正在解释执行的长运行循环直接切换到编译后的机器码，不需要等待方法返回。\n\n解析：工作原理——当方法中的循环成为热点时（循环回边计数达到 OSR 阈值），JVM 背编译该方法的循环体（OSR 编译）。编译完成后，JVM 将栈帧中正在解释执行的代码替换为编译后的机器码。这需要保存和恢复执行状态（局部变量表、操作数栈等），因为解释帧和编译帧的布局不同。OSR 编译不同于标准编译：标准编译对整个方法编译，OSR 编译只编译循环体部分（从循环入口到循环出口）。\n\n扩展延伸：OSR 的触发条件——-XX:BackEdgeThreshold（循环回边阈值）配合 -XX:OnStackReplacePercentage。默认情况下 OSR 的编译触发阈值约为标准编译阈值的 1/10。OSR 的局限——1）OSR 编译后的代码可能不如标准编译优化充分（因为只能看到循环内的代码上下文）。2）OSR 编译需要更多的栈帧处理（JVM 内部需要 OSR 适配器处理栈帧转换）。观察 OSR——使用 -XX:+PrintCompilation 可以看到 osr 标记的编译条目（如 120  2 % MyClass::hotMethod @ 15）。如果循环足够长，OSR 编译会先被执行（先获得 OSR 版本的优化），然后方法退出后的下次调用获得标准编译版本。",
+    "hints": [
+      "OSR 替换正在执行的循环代码，不需要等循环结束",
+      "OSR 编译阈值默认为标准编译阈值的 1/10"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "OSR",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 去优化（Deoptimization）机制",
+    "content": "请解释 JVM JIT 编译中的去优化（Deoptimization）机制。为什么会发生去优化？去优化后发生了什么？",
+    "answer": "答案：去优化（Deoptimization）是 JVM 将从 JIT 编译的高优化代码回退到解释执行的过程，发生在优化假设被打破时（如类加载改变了类型层级、profiling 信息失效等）。\n\n解析：去优化的原因——C2 编译器在做优化时会基于一些假设（Speculative Assumptions）：1）类层次（Class Hierarchy）假设：接口只有一个实现类时，虚方法调用被去虚化（Devirtualize）优化为直接调用。如果后续加载了新子类，这个假设被打破，需要去优化。2）profiling 信息假设：观察到某个分支 99% 不走，C2 会把该分支优化掉（代码外提）。如果运行中分支走了异常路径，需要去优化。3）类型假设：对象总是某个具体类型（类型 profiling），如果遇到新的类型变体，需要去优化。\n\n扩展延伸：去优化过程——JVM 在编译时会在代码中插入去优化陷阱（Deoptimization Trap/Safepoint）。当假设被打破时，执行到该陷阱触发去优化。JVM 将正在执行的编译代码栈帧恢复（回滚）到解释执行对应的执行状态（包含局部变量、操作数栈等），然后从对应的解释执行点继续执行。去优化不是错误——它是动态编译的正常机制，JIT 可以在后续重新编译（使用更新后的 profiling 信息）。频繁去优化（如 -XX:+PrintDeoptimization 可见大量 deopt）是代码存在多态性的信号，影响性能。使用 -XX:CompileCommand=exclude 可以排除某些方法避免过度去优化。",
+    "hints": [
+      "去优化是 C2 基于假设优化的必然代价",
+      "频繁去优化说明代码多态性高，影响峰值性能"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "去优化",
+      "Deoptimization"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "偏向锁的废弃与移除",
+    "content": "请介绍 Java 偏向锁（Biased Locking）的演变历史。为什么 JDK 15 默认关闭偏向锁？JDK 18 以后完全移除了吗？",
+    "answer": "答案：偏向锁是 JDK 6 引入的锁优化，在 JDK 15 默认关闭（JEP 374），JDK 18 废弃（JEP 421），JDK 21 移除相关代码。原因是偏向锁的维护成本（STW 暂停）超过了其带来的收益。\n\n解析：偏向锁的原理——如果锁一直被同一个线程持有，对象头的 Mark Word 记录该线程 ID，后续进入同步块时无需 CAS 操作（线程检查 Mark Word 是自己的 ID 即成功），减少锁获取的开销。问题——偏向锁需要全局 Safepoint 才能进行偏向锁撤销（Revocation）。在高并发应用中，锁竞争激烈导致偏向锁频繁撤销，反而增加了 STW 暂停时间。且高并发应用的线程通常都是不同线程竞争锁，偏向锁几乎没有命中，徒增撤销开销。\n\n扩展延伸：废除历程——JDK 15：-XX:+UseBiasedLocking 默认关闭。JDK 18：标记为废弃（Deprecated，JEP 421）。JDK 21：移除了偏向锁相关代码（-XX:+UseBiasedLocking 参数不再可用）。影响评估——1）没有偏向锁不会影响正确性（只是少了这个优化）。2）之前的偏向锁场景（单线程重复获取同一锁）对应的代码量极少，影响微乎其微。3）改善：移除了偏向锁后，JVM 不再需要 Safepoint 执行偏向锁批量撤销操作，减少了全局暂停。移除偏向锁后 volatile 写的性能也有提升（因为偏向锁的 Mark Word 不再需要特殊处理）。",
+    "hints": [
+      "偏向锁撤销需要全局 Safepoint，在高竞争场景下得不偿失",
+      "JDK 15 默认关闭，JDK 18 废弃，JDK 21 移除"
+    ],
+    "tags": [
+      "JVM",
+      "偏向锁",
+      "锁优化",
+      "Safepoint"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 监控工具与调优实践",
+    "content": "请介绍常用的 JVM 监控和诊断工具（jps、jstat、jmap、jstack、jcmd、jhsdb）。各自的主要用途和使用场景是什么？",
+    "answer": "答案：JDK 内置了丰富的 JVM 监控和诊断工具，帮助开发者定位内存泄漏、线程死锁、GC 性能等问题。\n\n解析：核心工具——1）jps（JVM Process Status）：列出当前用户的所有 Java 进程 PID 和主类名。2）jstat（JVM Statistics Monitoring）：实时监控 GC 和类加载情况。常用：jstat -gcutil <pid> 1s（每秒查看 GC 使用率百分比）。3）jmap（Memory Map）：堆转储和堆信息查看。常用：jmap -dump:live,format=b,file=heap.hprof <pid>（触发 Full GC 后 dump 存活对象）。jmap -histo:live <pid>（查看对象统计）。4）jstack（Thread Stack）：线程转储，查看线程状态、锁等待、死锁检测。5）jcmd（JDK 7+ 的诊断命令工具）：统一的诊断命令入口，功能覆盖以上所有工具。jcmd <pid> help 查看所有支持的命令。常用：jcmd <pid> GC.heap_dump heap.hprof、jcmd <pid> Thread.print、jcmd <pid> VM.native_memory summary。6）jhsdb（JDK 9+ 的 HSDB 替代）：JVM 故障排除和调试，可以 attach 到崩溃的 JVM 进程。\n\n扩展延伸：其他工具——1）jinfo：查看和修改 JVM 参数（-XX:+PrintFlagsFinal）。2）jvisualvm（JDK 6-8 内置图形工具）：集成 CPU/内存/线程/GC 监控。3）JMC（JDK Mission Control，JDK 7-8 需单独下载，Oracle JDK 11+ 商用）：飞行记录器 JFR 的图形分析工具。4）Native Memory Tracking（NMT，-XX:NativeMemoryTracking=summary/detail）：监控 JVM 本地内存使用。推荐使用 jcmd <pid> VM.native_memory summary 查看。5）Java Flight Recorder（JFR，JDK 8 需解锁）：低开销的事件记录系统，用于生产环境性能分析。容器环境注意：Java 10+ 支持 -XX:+UseContainerSupport 自动感知容器内存/CPU 限制。",
+    "hints": [
+      "jstat 监控 GC 实时情况，jmap 分析堆内存，jstack 分析线程",
+      "jcmd 是统一的诊断命令入口，推荐优先使用"
+    ],
+    "tags": [
+      "JVM",
+      "监控",
+      "工具",
+      "调优"
+    ]
+  },
+  {
+    "category": "jvm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "安全点日志分析",
+    "content": "如何通过 JVM 的安全点日志诊断应用暂停时间过长的问题？安全点日志中 \"Application time\" 和 \"Total time\" 分别代表什么？",
+    "answer": "答案：安全点日志通过 -XX:+PrintSafepointStatistics -XX:PrintSafepointStatisticsCount=1 -XX:+LogVMOutput -XX:LogFile=safepoint.log 开启。\n\n关键指标：\n- \"Application time\"：自上次安全点以来应用实际执行的时间（单位：ms）\n- \"Total time\"：当前安全点暂停的总时间（所有线程都到达安全点到最后一个线程离开安全点）\n- \"Summary\" 行：安全点的具体原因和各个阶段的耗时\n\n异常分析：\n- Application time 占比 < 90%：安全点频率过高或每次安全点暂停时间过长\n- Total time > 100ms：安全点暂停时间太长，可能导致应用延迟飙升\n- 频繁的 BulkRevokeBias（偏向锁撤销）：JDK 15 之前常见，升级 JDK 版本解决\n- 频繁的 G1CollectForAllocation：GC 太频繁，需要调整堆大小或 GC 策略\n\n扩展延伸：安全点日志中的线程状态：running（正在执行）、blocked（已到达安全点）。JVM 通过主动中断（SafepointTimeoutInMs）检测长时间未到达安全点的线程。减少安全点时间的方法：增大 -XX:GuaranteedSafepointInterval（默认 1000ms，增加安全点间隔）。",
+    "hints": [
+      "Application time 占比低 = 安全点暂停过多",
+      "频繁的 BulkRevokeBias 是 JDK 15 前的常见问题"
+    ],
+    "tags": [
+      "JVM",
+      "安全点",
+      "暂停",
+      "性能分析"
+    ]
+  },
+  {
+    "category": "jvm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GC 日志分析与调优",
+    "content": "请解释如何通过 GC 日志分析 JVM GC 性能。需要关注哪些关键指标？如何根据 GC 日志的表现调整 JVM 参数？",
+    "answer": "答案：通过 -Xlog:gc*（JDK 9+）或 -verbose:gc -XX:+PrintGCDetails（JDK 8）开启 GC 日志。\n\n关键指标：\n1. GC 频率：Minor GC 间隔（正常几秒一次，过频繁则新生代太小）\n2. GC 暂停时间：每次 GC 暂停耗时（目标 < 200ms，G1 默认目标 200ms）\n3. 吞吐量：应用运行时间 / (应用运行时间 + GC 暂停时间)，目标 > 95%\n4. 晋升情况：每次 Minor GC 后有多少对象从 Eden 晋升到老年代\n5. Full GC 频率：Full GC 应极少发生（最坏情况 < 几分钟一次）\n\n根据 GC 日志调整：\n- 频繁 Minor GC：增大新生代（-Xmn）或调整 Eden:Survivor 比\n- 频繁 Full GC（CMS）：检查老年代是否碎片化，增大老年代或切换到 G1\n- G1 的 Humongous Allocation：大对象频繁触发 GC，增大 G1HeapRegionSize\n- GC 后可用空间骤降：可能存在内存泄漏\n\n扩展延伸：GC 日志分析工具：GCeasy、GCViewer、GCEasy。统一的 GC 日志格式（JDK 9+）：-Xlog:gc*:file=gc.log:time,uptime,level,tags。通用推荐：G1 在堆 > 4GB 时替代 Parallel GC。",
+    "hints": [
+      "GC 频率、暂停时间、吞吐量是三个核心指标",
+      "Full GC 频繁通常意味着有问题需要排查"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "日志",
+      "调优"
+    ]
+  },
+  {
+    "category": "jvm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Native Memory Tracking",
+    "content": "请解释 JVM 的 Native Memory Tracking（NMT）的功能和使用方式。它如何帮助排查堆外内存泄漏？NMT 的 overhead 有多大？",
+    "answer": "答案：NMT 跟踪 JVM 内部的所有原生内存（Native Memory）分配，包括堆内、堆外、Code Cache、GC、编译器、元空间等各个区域。\n\n启用方式：-XX:NativeMemoryTracking=summary（汇总模式）或 =detail（详细模式）。\n\n查看方式：\n1. jcmd <pid> VM.native_memory summary/detail baseline/diff\n2. 先设置基线：jcmd <pid> VM.native_memory baseline\n3. 运行一段时间后查看差异：jcmd <pid> VM.native_memory summary.diff\n\nNMT 跟踪的区域包括：Java Heap、Class、Thread、Code、GC、Compiler、Internal、Symbol、Native Memory Tracking、Arena Chunk。\n\n排查堆外内存泄漏：\n1. 使用 jcmd VM.native_memory 查看各区域的内存分配\n2. 重点检查 Internal（内部缓冲区泄漏）、Arena（内存池泄漏）\n3. 配合 pmap 查看进程内存映射\n4. 使用 jemalloc 的 heap profiling 功能跟踪 C++ 级别的内存分配\n\n扩展延伸：NMT 的 overhead 约 5-10%。生产环境建议开启 summary 模式（detail 模式 overhead 更高）。NMT 不能精确跟踪 JNI 调用中的原生内存分配——这需要 valgrind/ASAN 等外部工具。",
+    "hints": [
+      "NMT 通过 jcmd VM.native_memory 查看",
+      "NMT 跟踪堆外内存：Thread、Code Cache、GC、Compiler 等"
+    ],
+    "tags": [
+      "JVM",
+      "NMT",
+      "内存",
+      "监控"
+    ]
+  },
+  {
+    "category": "jvm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 参数优化常见模式",
+    "content": "请介绍 JVM 参数优化的常见模式：如何设置堆大小？如何选择 GC 算法？生产环境推荐开启哪些参数？",
+    "answer": "答案：\n\n堆大小设置：\n- -Xms = -Xmx（避免运行时扩容/缩容，建议设置为物理内存的 50-70%）\n- -Xmn（新生代大小，建议为堆的 25-50%）\n- -XX:MetaspaceSize 和 -XX:MaxMetaspaceSize（元空间阈值和上限）\n\nGC 算法选择：\n- 堆 < 4GB + 追求吞吐量：Parallel GC（-XX:+UseParallelGC）\n- 堆 > 4GB + 延迟敏感：G1 GC（JDK 9+ 默认）-XX:+UseG1GC\n- 超大堆 + 超低延迟：ZGC（JDK 21+）-XX:+UseZGC\n- 有 GC 暂停极限要求：Shenandoah -XX:+UseShenandoahGC\n\n生产环境推荐参数：\n- -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path\n- -Xlog:gc*:file=gc.log（JDK 9+ GC 日志）\n- -XX:+PrintCommandLineFlags（打印最终生效的 JVM 参数）\n- -XX:+AlwaysPreTouch（启动时预分配所有内存，减少运行期 Page Fault）\n- -Djava.security.egd=file:/dev/urandom（加速 SecureRandom 初始化）\n\n扩展延伸：配置验证——java -XX:+PrintFlagsFinal -version 打印所有 JVM 参数值。容器环境推荐 -XX:+UseContainerSupport（JDK 8u191+，JDK 10+ 默认开启），使 JVM 感知容器内存和 CPU 限制。",
+    "hints": [
+      "堆大小设固定值（Xms = Xmx），避免扩容开销",
+      "GC 选择：小堆+吞吐量→Parallel，大堆+低延迟→G1/ZGC"
+    ],
+    "tags": [
+      "JVM",
+      "调优",
+      "参数",
+      "生产环境"
+    ]
+  },
+  {
+    "category": "jvm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 线程模型与调度",
+    "content": "请解释 JVM 的线程模型（1:1 线程模型 vs N:M 绿色线程）。HotSpot 为什么采用 1:1 线程模型？JDK 21 虚拟线程的调度机制是怎样的？",
+    "answer": "答案：\n\n1:1 线程模型（HotSpot）：每个 Java 线程对应一个操作系统原生线程（pthread/LWP）。优点：简单、能充分利用 OS 调度器、适合 CPU 密集型任务。缺点：线程数受 OS 限制、创建和上下文切换成本高。\n\nN:M 绿色线程（早期 Solaris 的 JVM、Go Goroutine）：M 个用户线程映射到 N 个内核线程。优点：线程数可以很大、切换成本低。缺点：实现复杂、I/O 阻塞可能导致整个进程阻塞。\n\nHotSpot 选择 1:1 的原因：Solaris 环境的成熟 LWP（轻量级进程）支持、更好的兼容性（JNI、Native 调用）。\n\n虚拟线程（JDK 21）的调度机制：\n- 虚拟线程是用户态线程（JVM 管理），搭载到平台线程（Carrier Thread）上执行\n- 使用 ForkJoinPool（默认 parallelism = 可用处理器数）作为调度器\n- 阻塞操作（I/O、锁等待）触发 unmount（栈从平台线程拷贝到堆，平台线程释放）\n- 操作完成时触发 mount（栈从堆拷贝回平台线程）\n- synchronized 和 native 方法中的阻塞会导致 pinning（不执行 unmount）\n\n扩展延伸：虚拟线程的调度类似 N:M 模型但更高效（通过 JVM 的辅助 VM 操作而不是内核级调度）。Park/Unpark 机制基于 LockSupport。使用 jcmd <pid> Thread.dump_to_file 可以 dump 虚拟线程栈。",
+    "hints": [
+      "HotSpot 使用 1:1 线程模型（Java 线程 = OS 线程）",
+      "虚拟线程是用户态线程，通过 mount/unmount 机制调度"
+    ],
+    "tags": [
+      "JVM",
+      "线程",
+      "虚拟线程",
+      "调度"
     ]
   }
 ]

@@ -865,5 +865,94 @@
       "CSS",
       "响应式"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Shadow DOM 与 Custom Elements 生命周期",
+    "content": "请解释 Shadow DOM 的作用和 Custom Elements 的生命周期回调函数。Shadow DOM 如何实现样式隔离？",
+    "answer": "答案：Shadow DOM 是 Web Components 的核心规范之一，通过创建独立的 DOM 子树和样式作用域实现封装。Custom Elements 生命周期包括：constructor（元素创建）、connectedCallback（挂载到文档）、disconnectedCallback（从文档移除）、attributeChangedCallback（观察的属性变化）。\n\n解析：Shadow DOM 的样式隔离机制——Shadow Host 外部的 CSS 选择器无法穿透到 Shadow Tree 内部（除非使用 :host 或 CSS Parts），Shadow Tree 内部的样式也不会影响外部。这解决了长期以来 CSS 全局作用域带来的样式冲突问题。Custom Elements 的注册通过 customElements.define() 完成，每个元素必须继承 HTMLElement 或其子类（如 HTMLButtonElement）。attributeChangedCallback 需要通过 static get observedAttributes() 声明要监听的属性列表。connectedCallback 中应避免阻塞操作（如同步 AJAX），因为此时元素可能还未添加到主文档的渲染树。\n\n扩展延伸：Web Components 的浏览器兼容性——2024 年后所有主流浏览器均已原生支持（Chrome 2016+、Firefox 2020+、Safari 2021+）。Shadow DOM 的实现模式：封闭模式（closed mode，Shadow Root 对外部不可见，通过 attachShadow({mode: 'closed'}) 创建）和开放模式（open mode，可通过 element.shadowRoot 访问）。实际应用：UI 组件库（如 Lit、Stencil）、微前端中的样式隔离、第三方嵌入组件（如客服 Widget）。框架集成：React 18+ 支持在 Shadow Root 中渲染，Angular 的 Emulated ViewEncapsulation 模拟了 Shadow DOM 的行为但并非原生。",
+    "hints": [
+      "Shadow DOM 的 open mode 和 closed mode 有什么区别",
+      "Custom Elements 在什么时候应该做 DOM 操作——constructor 还是 connectedCallback"
+    ],
+    "tags": [
+      "Web Components",
+      "Shadow DOM",
+      "Custom Elements"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ES Modules vs CommonJS",
+    "content": "请比较 ES Modules（ESM）和 CommonJS（CJS）的核心差异，包括加载时机、语法、循环依赖处理和 Tree-shaking 支持。",
+    "answer": "答案：ESM 是静态编译时加载，支持异步导入和 Tree-shaking；CJS 是运行时动态加载，同步阻塞，不支持 Tree-shaking。\n\n解析：核心差异列表——1）加载时机：ESM 在编译阶段进行静态解析（import 声明被提升到模块顶部），CJS 在运行时执行 require() 时才加载。2）输出方式：ESM 输出的是值的引用（只读动态绑定），CJS 输出的是值的拷贝。3）异步 vs 同步：ESM 支持顶层 await 和异步加载，适合浏览器环境；CJS 是同步的，设计之初为服务端（Node.js）。4）循环依赖处理：ESM 处理循环依赖更可靠（因为提前建立了模块映射），CJS 在循环依赖中可能读到未初始化完的导出（undefined）。5）Tree-shaking：ESM 的静态结构使打包工具可以分析哪些导出未被使用并删除（摇树优化），CJS 的动态特性使这一步无法可靠执行。\n\n扩展延伸：Node.js 中 .mjs 后缀强制 ESM，.cjs 后缀强制 CJS，.js 文件由 package.json 的 type 字段决定（“type” 为 “module” 时）。ESM 和 CJS 互操作的限制——CJS 可以 require() ESM Module（但只能通过动态 import()），ESM 可以 import CJS 但只能使用 default 导入。在实际工程中，库作者通常同时输出 ESM 和 CJS 两种格式（通过构建工具如 Rollup/esbuild 生成），在 package.json 中通过 exports 字段分发。一般来说新项目推荐使用 ESM。",
+    "hints": [
+      "为什么 ESM 支持 Tree-shaking 而 CJS 不支持",
+      "Node.js 中 ESM 和 CJS 互相引用时需要注意什么"
+    ],
+    "tags": [
+      "JavaScript",
+      "ES Modules",
+      "CommonJS",
+      "模块化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CSS Houdini Paint API",
+    "content": "什么是 CSS Houdini？Paint API（CSS Painting API）的工作原理是什么？它如何突破传统 CSS 的能力边界？",
+    "answer": "答案：CSS Houdini 是一组底层浏览器 API，允许开发者扩展 CSS 的渲染能力。Paint API 允许通过 JavaScript 编写自定义的 CSS 绘图函数，在 CSS 中直接调用，实现传统 CSS 无法完成的复杂视觉效果。\n\n解析：Paint API 的核心机制——通过 registerPaint('name', class) 注册一个 Paint Worklet，其中类必须实现 paint(ctx, geometry, properties) 方法。CSS 中使用 paint(name) 函数引用它，如 background-image: paint(myPattern)。与传统 CSS 相比的优势：1）动态参数——通过 CSS 变量（CSS Custom Properties）传递参数，实现实时响应式渲染效果。2）像素级控制——直接操作 CanvasRenderingContext2D，类似 Canvas API 的全部能力。3）高性能——Paint Worklet 在浏览器的渲染线程执行，不影响主线程。4）复用性——自定义绘图函数可以像内置 CSS 函数一样在任意元素上使用。\n\n扩展延伸：CSS Houdini 的其他重要 API——1）Layout API：自定义 display 行为（如瀑布流布局、masonry 布局），通过 registerLayout 注册自定义布局算法。2）Properties & Values API：通过 CSS.registerProperty() 定义带类型的 CSS 自定义属性，支持初始值设定和继承控制。3）Typed OM（CSS Typed Object Model）：将 CSS 值表示为类型化的 JS 对象而非字符串，提升性能并减少类型转换错误。4）Animation Worklet：支持高性能的动画运行在独立线程。浏览器兼容性：Paint API 在 Chrome/Edge 中已支持（2018+），Firefox 和 Safari 的支持仍不完整。生产环境中建议作为渐进增强使用。",
+    "hints": [
+      "Paint Worklet 运行在哪个线程——为什么这很重要",
+      "Houdini 和 Canvas/SVG 的使用场景有何区别"
+    ],
+    "tags": [
+      "CSS Houdini",
+      "Paint API",
+      "CSS",
+      "浏览器渲染"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Tree-shaking 实现原理",
+    "content": "Tree-shaking（摇树优化）的实现原理是什么？哪些因素会导致 Tree-shaking 失效？如何编写对 Tree-shaking 友好的代码？",
+    "answer": "答案：Tree-shaking 依赖 ES Modules 的静态结构——打包工具在编译时分析模块的导入导出关系，标记未使用的导出为 dead code，最终在压缩（minification）阶段移除。\n\n解析：实现原理——1）ESM 的 import/export 是语言层面的声明，不能在运行时动态改变（对比 CJS 的 require 是表达式）。这使打包工具（Webpack/Rollup/esbuild）可以在编译阶段构建模块依赖图。2）打包工具标记所有顶层语句的副作用（side effects）。如果一个导出从未被其他模块引用，且其语句无副作用（如纯函数定义），则标记为 unused。3）最终通过 terser/swc 等压缩工具进行 Dead Code Elimination（DCE），移除未被引用的导出代码。\n\n扩展延伸：导致 Tree-shaking 失效的常见原因——1）副作用（Side Effects）：模块顶级语句有副作用（如全局样式 import './style.css'、polyfill、全局变量修改）。在 package.json 中配置 sideEffects: false 或明确列出有副作用的文件。2）Babel 转译 CJS：@babel/preset-env 默认将 ESM 转为 CJS，CJS 的 require 是动态的，Tree-shaking 失效。解决方案：设置 modules: false 让 Babel 保留 ESM。3）动态导入路径：import(variable) 使打包工具无法静态分析。4）类库未配置 module 字段：好的类库在 package.json 中配置 module 字段指向 ESM 构建产物。5）对象/命名空间重导出：export * from 'library' 比 export { specificFn } from 'library' 更难 Tree-shake。",
+    "hints": [
+      "package.json 中 sideEffects 字段的作用是什么",
+      "为什么 lodash 和 lodash-es 的 Tree-shaking 效果完全不同"
+    ],
+    "tags": [
+      "Tree-shaking",
+      "构建优化",
+      "Webpack",
+      "Rollup"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAIL 模型与 Web 性能评估",
+    "content": "请解释 Google 提出的 RAIL 性能模型。TTI、TBT、CLS、INP 这些核心 Web 指标在 RAIL 模型中分别对应什么？",
+    "answer": "答案：RAIL 是 Response（响应）、Animation（动画）、Idle（空闲）、Load（加载）四个首字母缩写，定义了用户对性能感知的四个维度和目标阈值。\n\n解析：四个维度的目标——Response：用户交互后 50ms 内给出视觉反馈（处理事件的时间窗口）；Animation：每帧在 10ms 内完成渲染（16ms 一帧中预留 6ms 给浏览器）；Idle：利用空闲时间（requestIdleCallback）处理非紧急任务，每次不超过 50ms；Load：首屏内容在 1.5 秒内完成加载（对移动端慢速网络）。核心 Web 指标（Core Web Vitals）与 RAIL 的对应关系——LCP（Largest Contentful Paint）对应 Load 维度，衡量首屏主要内容加载速度；FID（First Input Delay）/ 替代指标 INP（Interaction to Next Paint）对应 Response 维度，衡量用户交互响应速度；CLS（Cumulative Layout Shift）衡量视觉稳定性；TBT（Total Blocking Time）对应 Load 维度中的主线程阻塞时间；TTI（Time to Interactive）衡量页面何时完全可交互。\n\n扩展延伸：Perf 工具链——1）Lighthouse：基于 RAIL 模型生成性能审计报告，给出评分和建议。2）Web Vitals Library：JS 库可在实际用户中采集 Core Web Vitals 指标。3）Chrome DevTools Performance 面板：记录时间线，分析每帧中主线程在做什么。4）性能预算（Performance Budget）：开发阶段设定指标阈值（如 JS Bundle < 200KB），CI 中当打包后 JS 体积超限时告警。RAIL 模型的核心思想是以用户为中心——不是追求绝对的加载速度（如 100ms vs 200ms 用户感知不到差异），而是关注用户感知到的延迟（User-centric Performance）。",
+    "hints": [
+      "RAIL 模型中为什么 Response 的时间窗口是 50ms 而非 16ms",
+      "性能预算应该在项目的什么阶段设定"
+    ],
+    "tags": [
+      "性能",
+      "RAIL",
+      "Core Web Vitals",
+      "Lighthouse"
+    ]
   }
 ]

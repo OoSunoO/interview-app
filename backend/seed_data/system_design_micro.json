@@ -422,24 +422,6 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "设计分布式配置中心",
-    "content": "如何设计一个分布式配置中心（类似 Apollo/Nacos Config）？配置的推拉模型和实时生效是怎么实现的？",
-    "answer": "答案：配置中心的核心功能：配置的集中存储和管理 → 配置变更实时推送到客户端 → 配置的版本管理和回滚。架构分层：配置管理端（Admin/Portal）→ 配置存储层（DB + Cache）→ 配置分发层（Config Server）→ 客户端 SDK（长轮询/监听器）。\n\n解析：推拉结合模型——1）拉模式（Pull）：客户端定期从 Config Server 拉取最新配置。优点：实现简单。缺点：有更新时间差。2）推模式（Push）：客户端与 Config Server 建立长连接，配置变化时服务端主动推送。Apollo 使用长轮询——客户端发起 HTTP 请求到 Config Server，无更新时服务端 hold 住请求（最长 60s），有更新时立即返回。3）客户端更新本地内存中的配置（Bean 属性重新注入），无需重启应用。\n\n扩展延伸：配置中心的高阶设计：1）配置分环境（Dev/Test/Staging/Prod）通过 Namespace 隔离。2）灰度发布——先推送到小部分机器验证。3）配置审计和回滚——每次变更记录操作人，支持一键回滚。4）监听器——配置变更时通知应用执行回调（如刷新 Log Level）。5）容灾——本地缓存快照文件。常见开源方案：Apollo（携程，功能最全）、Nacos Config（阿里，轻量，Spring Cloud 原生集成）、Etcd/Consul（云原生，Raft 强一致性）。",
-    "hints": [
-      "长轮询（Long Polling）实现配置实时推送的原理",
-      "配置中心如何实现配置变更的灰度发布和回滚"
-    ],
-    "tags": [
-      "系统设计",
-      "配置中心",
-      "Apollo",
-      "Nacos"
-    ]
-  },
-  {
-    "category": "system_design",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "分布式任务调度系统",
@@ -898,6 +880,109 @@
       "Debezium",
       "binlog",
       "数据同步"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "API 网关模式详解",
+    "content": "请详细介绍 API 网关在微服务架构中的作用、功能和最佳实践。",
+    "answer": "答案：API 网关是微服务的统一入口，负责请求路由、横切关注点和协议转换\n\n解析：核心功能：1）路由转发 — 根据请求路径/Header 将请求分发到对应的微服务实例 2）身份认证 — OAuth2/JWT Token 校验，统一鉴权 3）限流熔断 — 防止下游服务被突发流量压垮 4）协议转换 — HTTP 转 gRPC，REST 转 WebSocket 5）请求/响应转换 — 聚合多个微服务数据、字段映射。常见的网关选型：Kong（基于 OpenResty/Nginx，支持插件扩展）、Spring Cloud Gateway（响应式，WebFlux）、APISIX（高性能，多语言支持）、Envoy Proxy。\n\n扩展延伸：BFF（Backend For Frontend）模式：每个前端（移动端、Web、第三方）有专属网关，按需聚合和裁剪数据。性能优化：网关应是无状态的水平扩展，缓存路由表和 JWT 公钥避免每次转发都查库。安全性：网关层过滤 SQL 注入/XSS，限制请求体大小，防御 DDoS。网关与服务网格的关系：网关处理南北向流量，Sidecar 处理东西向流量，而统一入口层还可加 Global Load Balancer 做流量分发。",
+    "hints": [
+      "网关和负载均衡器的区别是什么",
+      "BFF 模式和单网关的优缺点对比"
+    ],
+    "tags": [
+      "微服务",
+      "API网关",
+      "路由"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Saga 编排模式 vs 协作模式",
+    "content": "请对比 Saga 事务模式的编排（Orchestration）和协作（Choreography）两种实现方式。",
+    "answer": "答案：Saga 通过本地事务 + 补偿事务实现分布式事务，有两种协作方式\n\n解析：编排模式（Orchestration）：一个中心协调器（Orchestrator）负责告诉每个参与者做什么，监听回复后决定下一步或触发补偿。优点：流程逻辑集中、易于管理和监控、适合复杂流程。缺点：协调器有单点风险。协作模式（Choreography）：各服务通过事件总线异步通信，每个服务监听事件并决定执行本地事务或触发补偿。优点：松耦合、去中心化、适合简单流程。缺点：流程逻辑分散在各服务中，难以跟踪和调试。\n\n扩展延伸：实现注意事项：1）每个本地事务必须幂等（网络重试导致多次执行）2）补偿事务必须能正确回滚（业务语义上撤销）3）事务追踪 ID（Saga ID）串联所有步骤 4）挂起 Saga 的处理（重试有限次数后进入人工处理队列）。对比 2PC：Saga 是最终一致性，适合长事务；2PC 强一致但锁定资源时间长，适合短事务。Seata 的 Saga 模式通过状态机 DSL 定义编排流程，支持可视化监控。",
+    "hints": [
+      "什么场景选编排，什么场景选协作",
+      "Saga 的悬挂事务问题怎么处理"
+    ],
+    "tags": [
+      "微服务",
+      "分布式事务",
+      "Saga"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "熔断器模式（Circuit Breaker）",
+    "content": "请解释熔断器模式的工作原理、状态机和最佳实践。",
+    "answer": "答案：熔断器是保护服务调用链路防止级联故障的关键弹性模式\n\n解析：熔断器有三种状态：1）CLOSED（关闭）— 正常状态，请求正常通过，失败计数累加 2）OPEN（打开）— 失败数达到阈值，请求快速失败（不发起实际调用）3）HALF_OPEN（半开）— 经过超时时间后尝试放行一个请求探测下游是否恢复。半开后成功则转为 CLOSED，失败则转回 OPEN 并重置超时时间。关键配置：失败阈值（例如 10 秒内 50% 请求失败）、半开超时（例如 30 秒后尝试恢复）。\n\n扩展延伸：熔断 vs 降级：熔断是当检测到故障后自动断开的机制，降级是熔断触发后的兜底策略（返回缓存/默认值）。Hystrix 线程池隔离 vs 信号量隔离：线程池每个依赖分配独立线程池完全隔离，但带来线程切换开销；信号量在调用线程执行，适合高扇出低延迟场景。Resilience4j 基于信号量实现，配置更灵活。渐进式熔断：根据下游延迟而非仅失败率来触发。",
+    "hints": [
+      "半开状态下探测请求失败后应该怎么做",
+      "线程池隔离的线程数怎么配置"
+    ],
+    "tags": [
+      "微服务",
+      "熔断",
+      "弹性"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Service Mesh Sidecar 模式",
+    "content": "请解释 Service Mesh 中的 Sidecar 模式及其工作原理。",
+    "answer": "答案：Sidecar 是服务网格的数据面组件，以独立容器与业务容器同 Pod 部署\n\n解析：Sidecar 拦截所有进出容器的网络流量（通过 iptables 规则透明劫持），接管服务发现、负载均衡、熔断限流、TLS 加密、链路追踪等功能，业务代码无需关注这些基础设施。控制面（如 Istiod）通过 xDS 协议下发配置给 Sidecar（Envoy）。Sidecar 与服务的关系：1 个 Pod 带 1 个 Sidecar 容器 + 1 个业务容器。核心优势：业务逻辑与基础设施完全解耦，团队可以统一升级治理能力。\n\n扩展延伸：性能开销：Sidecar HTTP 代理每跳增加 2-5ms 延迟（第一连接 + TLS 握手），长连接下增加 <1ms。Istio 通过 Envoy 的 LDS/RDS/CDS/EDS 实现动态热更新路由规则。Ambient Mesh（无 Sidecar 模式）：Istio 的无 Sidecar 模式，通过 ztunnel 节点代理减少资源开销，但功能比 Sidecar 模式少。Sidecar 的局限性：每个请求多一跳增加延迟，资源消耗（每 Pod 增加约 50MB 内存）。",
+    "hints": [
+      "Sidecar 透明劫持流量的原理是什么",
+      "Ambient Mesh 相比 Sidecar 模式有什么优势"
+    ],
+    "tags": [
+      "微服务",
+      "服务网格",
+      "Sidecar"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "集中式日志系统设计",
+    "content": "请设计一个微服务环境下的集中式日志系统，支持海量日志的采集、存储和检索。",
+    "answer": "答案：集中式日志系统核心是采集 -> 传输 -> 存储 -> 检索的全链路设计\n\n解析：采集层：每个 Pod/VM 部署 Filebeat/Fluentd 代理采集日志文件，支持多源（stdout、日志文件、事件日志）。传输层：轻量代理 -> 消息队列（Kafka）缓冲削峰，保证不丢日志。Kafka 按 topic 分日志类型，分区数按日志量调整。存储与检索：Elasticsearch 集群存储倒排索引，按时间索引（如 logstash-YYYY.MM.dd）方便过期删除。可视化层：Kibana 提供查询和看板。\n\n扩展延伸：关键挑战：1）日志格式统一 — 所有服务输出结构化日志（JSON 格式，包含 service/traceId/spanId/level/timestamp 等字段）2）日志降级 — 日志量过大时降采样（只记录 ERROR 和部分 INFO），不影响业务 3）多行日志（栈追踪）处理用 multiline 配置合并 4）冷热分离 — 近期日志在 SSD 热节点，历史日志在 HDD 冷节点。全量日志 vs 采样日志：全量存短期（7 天），采样存长期（30 天）。成本优化：Loki（Grafana 的日志方案）只索引元数据不做全文索引，成本远低于 ELK。",
+    "hints": [
+      "Kafka 在日志系统中的角色是什么",
+      "Elasticsearch 和 Loki 的存储原理对比"
+    ],
+    "tags": [
+      "微服务",
+      "日志",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计限流系统",
+    "content": "请设计一个分布式限流系统。令牌桶 vs 漏桶算法的区别是什么？分布式限流如何保证全局一致性？",
+    "answer": "答案：限流系统保护后端服务不被过量请求压垮。\n\n令牌桶 vs 漏桶：\n- 令牌桶：以固定速率向桶中添加令牌，请求消耗令牌。桶有容量上限。允许突发流量（桶满时有 N 个令牌可用）。\n- 漏桶：请求以固定速率从桶中流出（处理），超出容量的请求被丢弃。无论流量多突发，处理速率恒定。\n- 适用场景：令牌桶（允许突发，Web API）、漏桶（平滑流量，数据库写入）\n\n分布式限流的挑战和方案：\n1. 中心化方案（Redis + Lua）：所有节点从 Redis 获取许可。Redis 原子操作确保全局一致性。\n   - 问题：Redis 单点瓶颈，延迟增加\n   - 优化：本地令牌桶 + 周期同步（每个节点拥有配额，用完再从中心获取）\n2. 本地近似方案：每个节点独立限流（如果负载均衡均匀，总体控制足够精确）\n   - 不需要中心化协调，性能最好\n   - 问题：负载不均衡时出现偏差\n3. 分层方案：全局水位（Redis） + 本地缓冲\n   - 每个节点维护本地令牌桶（周期性从全局桶获取配额）\n   - 全局桶用 Redis Lua 脚本实现原子操作\n\n限流策略：\n1. 基于用户：每个用户/API Key 独立计数\n2. 基于 IP：按请求来源限流\n3. 基于服务：按目标服务或 API 分组限流\n4. 自适应限流（Adaptive）：根据系统负载（CPU、队列深度）动态调整限流阈值\n\n扩展延伸：Google 的 GAINS 算法（gRPC Adaptive）实现自适应限流。Resilience4j 提供 RateLimiter 模块。Sentinel 支持实时的滑动窗口限流。Token Bucket 的并发安全实现——用 CAS 或 Redisson 的 RRateLimiter。",
+    "hints": [
+      "令牌桶允许突发，漏桶平滑流量",
+      "分布式限流：Redis Lua（强一致）或本地采样（高性能）"
+    ],
+    "tags": [
+      "系统设计",
+      "限流",
+      "令牌桶",
+      "分布式"
     ]
   }
 ]

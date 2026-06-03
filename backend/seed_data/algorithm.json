@@ -683,180 +683,265 @@
     "category": "algorithm",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "字典树 Trie 的原理与应用",
-    "content": "请介绍 Trie（字典树/前缀树）的数据结构原理、时间复杂度，以及典型的面试应用场景。",
-    "answer": "答案：Trie 是一种多叉树结构，用于高效存储和检索字符串集合中的键。每个节点代表一个字符（或前缀），从根到叶子节点的路径表示一个完整的字符串。每个节点可以标记是否为单词结尾。\n\n时间复杂度：插入和查询均为 O(K)，K 为字符串长度，与集合大小无关。空间复杂度为 O(N×K)，其中 N 为字符串数量。\n\n典型应用：1）搜索引擎的自动补全（Auto-complete）和拼写纠错；2）IP 路由表的最长前缀匹配；3）T9 输入法预测；4）字符串集合的词频统计和排序。\n\n扩展延伸：Trie 的优化变体包括：Compressed Trie（Radix Tree/Patricia Tree）压缩单分支节点以减少空间；Ternary Search Trie 结合了 BST 和 Trie 的优点；AC 自动机（Aho-Corasick）在 Trie 上添加失败指针实现多模式匹配。",
+    "title": "滑动窗口算法技巧",
+    "content": "请解释滑动窗口算法的核心思想和常见应用场景。",
+    "answer": "答案：滑动窗口是数组/字符串子串问题的常用技巧，通过维护一个动态窗口避免重复计算\n\n解析：核心思路：用两个指针（left/right）表示窗口边界，右指针扩展窗口直到满足/不满足条件，左指针收缩窗口寻找最优解。窗口内维护必要的状态（计数、和、哈希表等），避免每次重新计算整段内容。常见模式：1）定长窗口 — 每次移动固定步长（如固定大小子数组的最大和）2）变长窗口 — 寻找满足条件的最长/最短子串（如无重复字符的最长子串）。时间复杂度 O(N)，空间复杂度 O(1) 或 O(字符集大小)。\n\n扩展延伸：滑动窗口适用条件：问题满足单调性（窗口扩大时条件从不满足到满足）。典型题目：最小覆盖子串（先拓展到满足条件再收缩优化）、字符串排列、找到字符串中所有字母异位词、滑动窗口最大值（单调队列优化）。滑动窗口 vs 双指针：滑动窗口是双指针的特例，双指针还包括相向双指针（两数之和 II、回文串判断）。",
     "hints": [
-      "Trie 以空间换时间，适合处理大量字符串",
-      "前缀匹配是 Trie 的核心优势"
+      "什么条件下才能用滑动窗口",
+      "滑动窗口最大值为什么需要单调队列"
     ],
     "tags": [
-      "Trie",
-      "字典树",
-      "数据结构",
-      "字符串"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "布隆过滤器 Bloom Filter",
-    "content": "请解释 Bloom Filter（布隆过滤器）的原理、优缺点，以及常见的面试考察点。",
-    "answer": "答案：Bloom Filter 是一种空间效率极高的概率型数据结构，用于判断一个元素是否在集合中。原理：\n1. 使用一个长度为 m 的位数组和 k 个哈希函数。\n2. 插入元素时通过 k 个哈希函数计算 k 个位置，将对应位设为 1。\n3. 查询时检查 k 个位置是否全为 1——如果有一个为 0，则元素一定不在集合中；如果全为 1，则元素可能在集合中（存在假阳性）。\n\n优缺点：优点是空间占用极小（不存储元素本身），插入和查询都是 O(k)。缺点是有假阳性率（False Positive），不能删除元素（标准版），无法遍历所有元素。\n\n考察点：1）假阳性率计算：p ≈ (1 - e^(-kn/m))^k；2）最优哈希函数数量：k = (m/n) × ln2；3）误判率随已插入元素数增长而升高；4）应用场景：缓存穿透保护（Redis 缓存）、爬虫 URL 去重、垃圾邮件过滤。\n\n扩展延伸：Counting Bloom Filter（允许删除，用计数器代替位）、Scalable Bloom Filter（动态增长）、Cuckoo Filter（支持删除、性能更优的替代方案）。",
-    "hints": [
-      "假阳性是 Bloom Filter 的核心特性",
-      "Redis 的缓存穿透保护是经典应用"
-    ],
-    "tags": [
-      "Bloom Filter",
-      "概率数据结构",
-      "缓存",
-      "大数据"
+      "数组",
+      "字符串",
+      "滑动窗口"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "跳表 Skip List 的原理",
-    "content": "请解释跳表（Skip List）的数据结构原理、时间复杂度，以及它在实际系统中的应用。",
-    "answer": "答案：跳表是一种基于链表的分层数据结构，通过在有序链表上维护多层索引来加速查找。底层是完整的有序链表，上层是逐层稀疏的索引（Skip 指针）。查找时从最高层开始，快速跳过不需要遍历的节点。\n\n查找、插入、删除的平均时间复杂度均为 O(log n)，空间复杂度 O(n)（额外索引层的空间）。跳表通过随机化（决定节点提升到哪一层）来维持平衡，不需要像 AVL/红黑树那样做复杂的旋转操作。\n\n实际应用：1）Redis 的 ZSet（有序集合）底层实现之一——跳跃表 + 字典的组合，用于高效处理排序和范围查询；2）LevelDB/RocksDB 的 MemTable 使用跳表；3）Lucene 的倒排索引合并。\n\n扩展延伸：跳表在竞争编程中常被用作平衡树的替代品，实现更简单且性能接近。Redis 为什么用跳表而不用红黑树实现 ZSet？因为跳表支持高效的范围查询（ZRANGE 和 ZREVRANGE），而红黑树需要额外维护中序遍历信息。",
+    "title": "二分搜索的变种",
+    "content": "请介绍二分搜索的常见变种及其应用场景。",
+    "answer": "答案：二分搜索变种解决的是「在有序数据中查找边界」的问题\n\n解析：标准二分查找有序数组中是否存在目标值。常见变种：1）查找第一个等于目标值的位置（左边界二分）— mid 等于 target 时继续向左收缩 2）查找最后一个等于目标值的位置（右边界二分）— mid 等于 target 时继续向右收缩 3）查找第一个大于等于目标值的位置（lower_bound）4）查找第一个大于目标值的位置（upper_bound）。这些变种通过调整收缩条件实现，核心区别在于 mid == target 时 left 或 right 的移动方向。\n\n扩展延伸：二分答案法：不直接搜索数组元素，而是搜索答案范围，在单调函数上做二分（求平方根、分割数组的最大值、爱吃香蕉的珂珂）。旋转数组二分：在部分有序数组中二分（先判断 mid 落在哪段有序区间中）。浮点数二分：用 while (right - left > eps) 循环足够多次（如 100 次）保证精度。二分搜索思想也用于非数组场景：跳表查询、一致性哈希上界查找。",
     "hints": [
-      "多层索引是跳表加速查找的关键",
-      "Redis ZSet 是跳表最著名的工业应用"
+      "左边界二分时 mid == target 应该怎么移动",
+      "二分答案适用于什么问题"
     ],
     "tags": [
-      "Skip List",
-      "跳表",
-      "数据结构",
-      "Redis"
+      "搜索",
+      "二分",
+      "数组"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "线段树 Segment Tree",
-    "content": "请介绍线段树（Segment Tree）的数据结构原理、支持的操作和典型面试考题。",
-    "answer": "答案：线段树是一种二叉树结构，用于高效处理区间/段上的查询和更新操作。每个节点代表一个区间 [l, r]，叶子节点代表单点，内部节点存储其子区间合并后的信息（如区间和、最大值、最小值等）。\n\n支持的操作：1）区间查询（Range Query）：O(log n) 查询任意区间的聚合值（和、最大、最小等）；2）单点更新（Point Update）：O(log n) 更新一个元素并向上更新所有相关节点；3）区间更新（Range Update）：O(log n) 配合 Lazy Propagation（懒标记）。\n\n典型考题：1）Range Sum Query with Updates；2）Range Maximum/Minimum Query；3）区间覆盖和染色问题；4）扫描线算法中的矩形面积/周长并；5）区间内不同元素的个数。\n\n扩展延伸：线段树可以用数组实现（左子节点 2i，右子节点 2i+1），也可以用指针/类实现。进阶变体包括：可持久化线段树（主席树，支持历史版本查询）、树状数组（Fenwick Tree，线段树的简化版，仅支持前缀查询）、ZKW 线段树（非递归实现，常数更小）。",
+    "title": "单调栈的原理与应用",
+    "content": "请解释单调栈的原理及其在解决 Next Greater Element 问题中的应用。",
+    "answer": "答案：单调栈维护栈内元素的单调递增或递减性质，常用于寻找下一个更大/更小元素\n\n解析：单调递增栈（栈顶最小）保持从栈底到栈顶单调递增，入栈时遇到破坏单调性的元素就弹出。每个元素入栈和出栈恰好一次，时间复杂度 O(N)。Next Greater Element（下一个更大元素）：从左向右遍历，维护单调递减栈，当前元素大于栈顶元素时，栈顶的下一个更大元素就是当前元素。类似地可求 Previous Greater、Next Smaller、Previous Smaller 只需调整遍历方向或比较符号。\n\n扩展延伸：经典题：柱状图中最大的矩形（对每个高度找左右第一个更小高度的边界）、接雨水（维护递减栈，凹槽积水 = 左右边界 min - 当前高度）。二维扩展：最大全 1 子矩阵（每一行做一次柱状图处理）。单调栈选择递增还是递减取决于要查找更大还是更小元素：找下一个更大用递减栈，找下一个更小用递增栈。哨兵技巧：在数组末尾加最小值/最大值避免栈残留。",
     "hints": [
-      "线段树是动态区间操作的最佳选择",
-      "Lazy Propagation 是实现区间更新的关键"
+      "递减栈找下一个更大元素时为什么能成立",
+      "接雨水问题用单调栈怎么实现"
     ],
     "tags": [
-      "线段树",
-      "数据结构",
-      "区间查询",
-      "算法"
+      "栈",
+      "单调栈",
+      "数组"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "并查集 Union Find",
-    "content": "请介绍并查集（Union-Find/Disjoint Set）的数据结构原理、优化方法以及典型应用场景。",
-    "answer": "答案：并查集是一种树形数据结构，用于处理不相交集合的合并和查询问题。核心操作：\n1. Find(x)：查找元素 x 所在的集合（返回根节点）；\n2. Union(x, y)：将 x 和 y 所在的集合合并。\n\n优化方法：1）路径压缩（Path Compression）：Find 操作中，将沿途所有节点直接指向根节点。时间复杂度摊还后接近 O(α(n))（Ackermann 函数的反函数，近似常数）。2）按秩合并（Union by Rank/Size）：将较矮/较小的树合并到较高/较大的树上，减少树的高度。两者结合使用，可以做到理论上的 O(α(n))。\n\n典型应用：1）图论中的连通分量判定（连通图、冗余连接 Minimal Spanning Tree 的 Kruskal 算法）；2）社交网络的好友关系管理；3）判断无向图是否有环；4）Equations（LeetCode 990）；5）最长连续序列（LeetCode 128，巧妙应用）。\n\n扩展延伸：可持久化并查集支持历史版本的查询（需要按秩合并 + 可持久化数组）。并查集的删除操作比较复杂，可以用时间戳或者换用动态图连通性的离线算法（CDQ 分治 + 可撤销并查集）。",
+    "title": "并查集的路径压缩与按秩合并优化",
+    "content": "请详细解释并查集（Union-Find）的路径压缩和按秩合并两种优化原理。",
+    "answer": "答案：并查集是管理元素分组和连接关系的树形数据结构\n\n解析：核心操作：find(x) 找 x 所属集合的根节点，union(x, y) 合并 x 和 y 所在的集合。两种优化：1）路径压缩 — find 时将路径上所有节点直接指向根，几乎使后续查找 O(1) 2）按秩合并 — 小树合并到大树上（秩为树的深度/大小），保证树的高度 O(log N)。同时使用两种优化可使均摊时间复杂度接近 O(alpha(N))（反阿克曼函数，几乎常数）。Python 实现通常用 parent 数组和 rank/size 数组。\n\n扩展延伸：应用场景：1）图连通分量（省份数量、冗余连接）2）检测图中的环（Kruskal 最小生成树中判断两点是否连通）3）并查集离线查询区间连通性（离线 + 并查集撤销，需要可撤销并查集）4）朋友圈问题（LeetCode 547）。可撤销并查集：用栈记录修改操作，支持回滚到历史状态（需要按秩合并但不用路径压缩，因为路径压缩不可撤销）。并查集也是动态连通性的标准解法。",
     "hints": [
-      "路径压缩 + 按秩合并 = 近似常数的查询时间",
-      "Kruskal 算法是并查集最经典的应用"
+      "路径压缩为什么不是可逆操作",
+      "什么场景必须用按秩合并不能用路径压缩"
     ],
     "tags": [
       "并查集",
-      "Union Find",
-      "图论",
-      "数据结构"
-    ]
-  },
-  {
-    "category": "algorithm",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "字典树 Trie 的原理与应用",
-    "content": "请介绍 Trie（字典树/前缀树）的数据结构原理、时间复杂度，以及典型的面试应用场景。",
-    "answer": "答案：Trie 是一种多叉树结构，用于高效存储和检索字符串集合中的键。每个节点代表一个字符（或前缀），从根到叶子节点的路径表示一个完整的字符串。每个节点可以标记是否为单词结尾。\n\n时间复杂度：插入和查询均为 O(K)，K 为字符串长度，与集合大小无关。空间复杂度为 O(N×K)，其中 N 为字符串数量。\n\n典型应用：1）搜索引擎的自动补全（Auto-complete）和拼写纠错；2）IP 路由表的最长前缀匹配；3）T9 输入法预测；4）字符串集合的词频统计和排序。\n\n扩展延伸：Trie 的优化变体包括：Compressed Trie（Radix Tree/Patricia Tree）压缩单分支节点以减少空间；Ternary Search Trie 结合了 BST 和 Trie 的优点；AC 自动机（Aho-Corasick）在 Trie 上添加失败指针实现多模式匹配。",
-    "hints": [
-      "Trie 以空间换时间，适合处理大量字符串",
-      "前缀匹配是 Trie 的核心优势"
-    ],
-    "tags": [
-      "Trie",
-      "字典树",
-      "数据结构",
-      "字符串"
+      "图",
+      "连通性"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "布隆过滤器 Bloom Filter",
-    "content": "请解释 Bloom Filter（布隆过滤器）的原理、优缺点，以及常见的面试考察点。",
-    "answer": "答案：Bloom Filter 是一种空间效率极高的概率型数据结构，用于判断一个元素是否在集合中。原理：\n1. 使用一个长度为 m 的位数组和 k 个哈希函数。\n2. 插入元素时通过 k 个哈希函数计算 k 个位置，将对应位设为 1。\n3. 查询时检查 k 个位置是否全为 1——如果有一个为 0，则元素一定不在集合中；如果全为 1，则元素可能在集合中（存在假阳性）。\n\n优缺点：优点是空间占用极小（不存储元素本身），插入和查询都是 O(k)。缺点是有假阳性率（False Positive），不能删除元素（标准版），无法遍历所有元素。\n\n考察点：1）假阳性率计算：p ≈ (1 - e^(-kn/m))^k；2）最优哈希函数数量：k = (m/n) × ln2；3）误判率随已插入元素数增长而升高；4）应用场景：缓存穿透保护（Redis 缓存）、爬虫 URL 去重、垃圾邮件过滤。\n\n扩展延伸：Counting Bloom Filter（允许删除，用计数器代替位）、Scalable Bloom Filter（动态增长）、Cuckoo Filter（支持删除、性能更优的替代方案）。",
+    "title": "拓扑排序的Kahn算法与DFS实现",
+    "content": "请解释拓扑排序的Kahn算法与DFS两种实现方式及其应用场景。",
+    "answer": "答案：拓扑排序是将有向无环图（DAG）的所有顶点排成线性序列，每条边从前驱指向后继\n\n解析：两种实现方式：1）Kahn 算法（BFS）— 维护入度表，每次取出入度为 0 的节点加入结果，减少其邻居的入度。如果能处理所有节点则无环，否则存在环。2）DFS 后序遍历 — 对每个节点做 DFS，用 visited 标记（0=未访问，1=正在访问，2=已访问完），遇到正在访问的节点说明有环。访问完节点后加入结果栈，最后反转栈顶到栈底顺序即为拓扑序。两者复杂度都是 O(V+E)。\n\n扩展延伸：拓扑排序的应用：1）课程表/依赖关系解析（LeetCode 207/210）2）编译系统中的头文件依赖排序 3）构建系统中的任务调度（如 Makefile、Bazel）4）包管理器依赖解析 5）Spark 的 DAG 调度器。字典序最小的拓扑排序：将 Kahn 算法的队列换成最小堆。检测环：Kahn 算法若最后还有节点未处理说明有环；DFS 三色标记法也天然检测环。",
     "hints": [
-      "假阳性是 Bloom Filter 的核心特性",
-      "Redis 的缓存穿透保护是经典应用"
+      "Kahn 算法中队列换成堆能得到什么效果",
+      "已知有环怎么找出环的具体路径"
     ],
     "tags": [
-      "Bloom Filter",
-      "概率数据结构",
-      "缓存",
-      "大数据"
+      "图",
+      "拓扑排序",
+      "DAG"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "跳表 Skip List 的原理",
-    "content": "请解释跳表（Skip List）的数据结构原理、时间复杂度，以及它在实际系统中的应用。",
-    "answer": "答案：跳表是一种基于链表的分层数据结构，通过在有序链表上维护多层索引来加速查找。底层是完整的有序链表，上层是逐层稀疏的索引（Skip 指针）。查找时从最高层开始，快速跳过不需要遍历的节点。\n\n查找、插入、删除的平均时间复杂度均为 O(log n)，空间复杂度 O(n)（额外索引层的空间）。跳表通过随机化（决定节点提升到哪一层）来维持平衡，不需要像 AVL/红黑树那样做复杂的旋转操作。\n\n实际应用：1）Redis 的 ZSet（有序集合）底层实现之一——跳跃表 + 字典的组合，用于高效处理排序和范围查询；2）LevelDB/RocksDB 的 MemTable 使用跳表；3）Lucene 的倒排索引合并。\n\n扩展延伸：跳表在竞争编程中常被用作平衡树的替代品，实现更简单且性能接近。Redis 为什么用跳表而不用红黑树实现 ZSet？因为跳表支持高效的范围查询（ZRANGE 和 ZREVRANGE），而红黑树需要额外维护中序遍历信息。",
+    "title": "计数排序",
+    "content": "请介绍计数排序（Counting Sort）的原理和复杂度。计数排序在什么场景下比比较排序更快？它的局限性是什么？",
+    "answer": "答案：计数排序是非比较排序算法，通过计数元素出现次数实现排序。\n\n原理：\n1. 找出数组中的最大值 max 和最小值 min\n2. 创建计数数组 count[max-min+1]，统计每个元素出现次数\n3. 对计数数组做前缀和（presum），得到每个元素在输出数组中的位置\n4. 反向遍历原数组，将元素放入输出数组的正确位置\n\n时间复杂度：O(n + k)，其中 n=元素个数，k=值域范围（max-min+1）\n空间复杂度：O(k)\n\n适用场景（比比较排序快）：\n- 值域范围 k 远小于元素个数 n 时（如考试成绩 0-100，包含索引 n 百万）\n- 整数排序，值域范围相对集中\n- 需要稳定排序时\n\n局限性：\n- 只能排序整数（或可以映射为整数的数据）\n- 当值域范围 k 远大于 n 时浪费空间和时间（如排序 {1, 1000000}）\n- 需要额外的 O(k) 空间\n\n扩展延伸：基数排序（Radix Sort）是对计数排序的扩展——按位（digit）多次计数排序。桶排序（Bucket Sort）将元素分布到桶中，桶内用其他排序算法。Java 的 Arrays.sort() 对 int[] 使用 Dual-Pivot QuickSort，对 Object[] 使用 TimSort（都是比较排序）。",
     "hints": [
-      "多层索引是跳表加速查找的关键",
-      "Redis ZSet 是跳表最著名的工业应用"
+      "计数排序 O(n+k) 在值域远小于元素个数时最快",
+      "只能排序整数，值域过大时效率低"
     ],
     "tags": [
-      "Skip List",
-      "跳表",
-      "数据结构",
-      "Redis"
+      "算法",
+      "计数排序",
+      "非比较排序",
+      "整数排序"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "基数排序",
+    "content": "请介绍基数排序（Radix Sort）的原理。LSD（最低位优先）和 MSD（最高位优先）有什么区别？基数排序与计数排序的关系是什么？",
+    "answer": "答案：基数排序通过按位多次排序来实现完整排序，每次按一位使用稳定排序。\n\n原理：\n- 将整数按位数（个位、十位、百位...）拆分为多个关键字\n- 每个关键字使用稳定的排序算法（通常是计数排序）\n- 从最低位到最高位（LSD）或从最高位到最低位（MSD）逐位排序\n\nLSD vs MSD：\n- LSD（Least Significant Digit）：从个位开始，逐位向高位排序。不需要递归。实现简单，适合等长数字。\n- MSD（Most Significant Digit）：从最高位开始，逐位向低位排序。需要递归（高位相同的数据再低位排序）。适合字符串、不等长数据。\n\n时间复杂度：O(d × (n + k))，d=位数，k=基数（如 10 进制=10）\n空间复杂度：O(n + k)\n\n与计数排序的关系：\n- 基数排序的每一轮都是计数排序（或桶排序）\n- 计数排序是基数排序的\"一轮\"基础操作\n- 基数排序通过按位分解避免了计数排序值域过大的问题\n\n扩展延伸：基数排序对字符串也有效（按字符编码逐位排序）。处理负数需要特殊处理（如偏移到非负数范围）。Java 的 Arrays.sort() 在某些条件下使用基数排序。基数排序是 GPU 排序算法的核心实现。",
+    "hints": [
+      "基数排序 = 多次稳定排序（计数排序）× 每位",
+      "LSD 从低位到高位，MSD 从高位到低位（递归）"
+    ],
+    "tags": [
+      "算法",
+      "基数排序",
+      "非比较排序",
+      "整数"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "桶排序",
+    "content": "请介绍桶排序（Bucket Sort）的原理和适用场景。桶排序如何通过\"分桶\"提升效率？元素的分布对桶排序性能有什么影响？",
+    "answer": "答案：桶排序将元素分配到有限数量的桶中，每个桶内独立排序，最后合并。\n\n原理：\n1. 将元素按值域范围均匀分配到 k 个桶中\n2. 每个桶内使用其他排序算法（如插入排序）\n3. 按桶的顺序遍历，输出所有元素\n\n时间复杂度（平均）：O(n + k) 当元素均匀分布时\n时间复杂度（最坏）：O(n²) 当所有元素进入同一个桶时\n空间复杂度：O(n + k)\n\n分布对性能的影响：\n- 均匀分布（理想）：每个桶中元素接近 n/k 个，总复杂度接近线性\n- 偏斜分布（最坏）：所有元素进入同一个桶，退化为桶内排序算法的复杂度\n- 数据分布决定了桶排序的实际性能\n\n适用场景：\n1. 数据均匀分布（浮点数在 [0,1) 区间）\n2. 外部排序（磁盘数据量大，内存放不下）\n3. 海量数据中位数的近似查找\n\n优化：自适应桶大小——根据数据分布动态决定桶的范围和数量。\n\n扩展延伸：外部排序中的多路归并可以看作桶排序的泛化版本。桶排序的思想也用于数据库的 Hash Join。Java 的 Arrays.sort() 对引用类型的排序使用了类似桶排序的 TimSort（检测有序子序列，每个子序列是一个\"桶\"）。",
+    "hints": [
+      "桶排序适合均匀分布的数据，存储偏斜分布时退化为 O(n²)",
+      "外部排序是桶排序的重要应用场景"
+    ],
+    "tags": [
+      "算法",
+      "桶排序",
+      "非比较排序",
+      "分桶"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "蓄水池抽样",
+    "content": "请介绍蓄水池抽样（Reservoir Sampling）算法。如何在不确定大小的数据流中均匀抽取 k 个元素？它的时间复杂度是多少？",
+    "answer": "答案：蓄水池抽样是从数据流（或大型数据集）中均匀随机抽取 k 个元素的算法。\n\n算法步骤：\n1. 将前 k 个元素放入蓄水池（大小为 k 的数组）\n2. 对于第 i 个元素（i > k），以概率 k/i 决定是否替换蓄水池中的一个元素\n3. 如果决定替换，从蓄水池中随机选择一个元素移除，插入当前元素\n4. 处理完所有元素后，蓄水池中的元素即为均匀抽取的结果\n\n证明概率均匀性：\n- 最终每个元素被选中的概率 = k/n\n- 数学归纳法可证：处理到第 i 个元素时，前 i 个元素被选中的概率 = k/i\n\n时间复杂度：O(n)（每个元素 O(1) 决定是否替换）\n空间复杂度：O(k)\n\n变体：\n1. 带权重的蓄水池抽样：元素有权重，按权重比例抽样\n2. 有序蓄水池抽样：保持蓄水池中元素的有序性\n3. 分布式蓄水池抽样：在分布式系统中的每个分区独立抽样，再合并\n\n扩展延伸：蓄水池抽样在数据库统计信息收集、A/B 测试流量分配、大数据采集中广泛应用。Apache Spark 的 sample() 操作使用了蓄水池抽样的分布式变体。Python random.sample() 对已知大小的序列使用不同的算法（Fisher-Yates 洗牌的部分执行）。",
+    "hints": [
+      "蓄水池抽样在 O(n) 时间内从数据流均匀抽样 k 个元素",
+      "第 i 个元素以概率 k/i 进入蓄水池"
+    ],
+    "tags": [
+      "算法",
+      "蓄水池抽样",
+      "随机采样",
+      "数据流"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "摩尔投票算法",
+    "content": "请介绍摩尔投票算法（Boyer-Moore Majority Vote Algorithm）。如何在 O(n) 时间和 O(1) 空间内找到数组中出现次数超过一半的元素？",
+    "answer": "答案：摩尔投票算法在 O(n) 时间、O(1) 空间内找到数组的多数元素（出现次数超过 n/2 的元素）。\n\n原理（对抗计数法）：\n1. 维护一个候选元素 candidate 和计数 count\n2. 遍历数组：\n   - 如果 count == 0，将当前元素设为 candidate，count=1\n   - 如果当前元素 == candidate，count++\n   - 如果当前元素 != candidate，count--\n3. 遍历结束后，candidate 即为多数元素\n\n为什么正确：\n- 多数元素出现次数超过一半\n- 每个非多数元素与多数元素\"抵消\"一次\n- 多数元素的数量大于其他所有元素数量的总和\n- 所以无论怎样抵消，最后留下的都是多数元素\n\n注意：算法只有在确定存在多数元素时才正确。如果不确定，需要第二遍遍历验证。\n\n扩展：\n- 找到出现次数超过 n/3 的元素：使用两个候选人和两个计数器\n- 验证阶段：再多一次遍历统计 candidate 的实际出现次数\n\n代码框架：\nint majorityElement(int[] nums) {\n    int count = 0, candidate = 0;\n    for (int num : nums) {\n        if (count == 0) candidate = num;\n        count += (num == candidate) ? 1 : -1;\n    }\n    return candidate;\n}\n\n扩展延伸：LeetCode 169 多数元素、LeetCode 229 求众数 II（超过 n/3）。摩尔投票算法的本质是\"配对消除\"——多数元素因为数量优势最终会留下来。该算法由 Robert S. Boyer 和 J Strother Moore 于 1980 年提出。",
+    "hints": [
+      "摩尔投票 = 候选 + 计数，O(n) 时间 O(1) 空间",
+      "核心思想：多数元素在配对抵消后一定会留下"
+    ],
+    "tags": [
+      "算法",
+      "摩尔投票",
+      "多数元素",
+      "O(1) 空间"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "快速选择算法",
+    "content": "请介绍快速选择（Quick Select）算法。如何在 O(n) 平均时间内找到数组中第 K 大的元素？快速选择和快速排序有什么关系？",
+    "answer": "答案：快速选择是快速排序的变体，用于在无序数组中查找第 K 小/大的元素。\n\n原理：\n1. 选择一个基准元素（pivot）\n2. 执行 Partition（分区）：将数组分为小于 pivot、等于 pivot、大于 pivot 三部分\n3. 根据 pivot 的位置与 K 的关系决定下一步：\n   - 如果 pivot 的位置 == K，返回 pivot\n   - 如果 pivot 的位置 > K，在左半部分递归\n   - 如果 pivot 的位置 < K，在右半部分递归\n\n时间复杂度：\n- 平均：O(n)——每次 partition 将搜索范围缩小约一半\n- 最坏：O(n²)——每次选择的 pivot 都是最小或最大的元素\n\n优化：随机选取 pivot（Randomized Quick Select），保证期望 O(n)。\n\n与快排的关系：\n- 快排：递归排序左右两部分，完整排序整个数组 O(n log n)\n- 快速选择：只递归包含第 K 个元素的那部分，不需要完整排序\n- 快速选择 = 快排的 Partition + 二分搜索式的递归\n\n扩展：\n- LeetCode 215 数组中的第 K 个最大元素\n- 第 K 小元素（修改比较逻辑即可）\n- 同时查找最小/最大——扫描两遍 O(n) 或者用锦标赛法\n\n扩展延伸：Java 的 PriorityQueue（堆）可以在 O(n log k) 时间内找到第 K 大元素。当 K 很小时（如 K=1,2,3，堆更高效），当 K 接近 n/2 时（快速选择更高效）。C++ 的 std::nth_element() 内部使用了快速选择算法。",
+    "hints": [
+      "快速选择 = 快排 Partition + 单侧递归，平均 O(n)",
+      "随机 pivot 避免最坏情况 O(n²)"
+    ],
+    "tags": [
+      "算法",
+      "快速选择",
+      "第 K 大",
+      "Partition"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "滚动哈希（Rabin-Karp）",
+    "content": "请介绍 Rabin-Karp 滚动哈希（Rolling Hash）字符串匹配算法。如何设计一个合适的哈希函数来减少哈希碰撞？Rabin-Karp 比 KMP 的优势在哪里？",
+    "answer": "答案：Rabin-Karp 使用哈希函数在文本中搜索模式串。\n\n原理：\n1. 计算模式串的哈希值\n2. 在文本中滑动窗口（窗口大小=模式串长度），计算每个窗口的哈希值\n3. 如果哈希值匹配，进一步验证（防止哈希碰撞）\n4. 通过滚动哈希优化：O(1) 时间从上一个窗口的哈希值计算下一个窗口的哈希值\n\n滚动哈希公式：\nhash = (old_hash - old_char × base^(m-1)) × base + new_char\n其中 base 通常选 31 或 131 等质数。\n\n哈希函数设计：\n1. 选用较大的 base（如 131、1313）减少碰撞\n2. 使用模大质数（如 2^64 利用自然溢出，或 10^9+7）\n3. 双哈希（Double Hashing）：使用两个不同的 base 和 mod 组合\n\n时间复杂度：\n- 平均：O(n + m)——哈希匹配验证很少触发\n- 最坏：O(n × m)——大量哈希碰撞（人为构造数据）\n\nRabin-Karp vs KMP：\n- KMP 保证 O(n) 最坏情况，不需要哈希函数\n- Rabin-Karp 在平均情况下也 O(n)，且更易于实现\n- Rabin-Karp 的优势：可以同时搜索多个模式串（多模式匹配）\n- 多模式匹配：计算所有模式串的哈希值，存储在哈希表中，文本窗口只需查表\n\n扩展延伸：Rabin-Karp 在 Plagiarism Detection（查重）中用于检测大段重复文本。滚动哈希也是实现内容分块（Content-Defined Chunking）的核心技术，在 rsync、Docker 镜像层、CAS 存储中广泛应用。",
+    "hints": [
+      "Rabin-Karp 使用滚动哈希 O(1) 计算滑动窗口哈希值",
+      "Rabin-Karp 可以同时搜索多个模式串（KMP 不能）"
+    ],
+    "tags": [
+      "算法",
+      "字符串",
+      "Rabin-Karp",
+      "滚动哈希"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "线段树 Segment Tree",
-    "content": "请介绍线段树（Segment Tree）的数据结构原理、支持的操作和典型面试考题。",
-    "answer": "答案：线段树是一种二叉树结构，用于高效处理区间/段上的查询和更新操作。每个节点代表一个区间 [l, r]，叶子节点代表单点，内部节点存储其子区间合并后的信息（如区间和、最大值、最小值等）。\n\n支持的操作：1）区间查询（Range Query）：O(log n) 查询任意区间的聚合值（和、最大、最小等）；2）单点更新（Point Update）：O(log n) 更新一个元素并向上更新所有相关节点；3）区间更新（Range Update）：O(log n) 配合 Lazy Propagation（懒标记）。\n\n典型考题：1）Range Sum Query with Updates；2）Range Maximum/Minimum Query；3）区间覆盖和染色问题；4）扫描线算法中的矩形面积/周长并；5）区间内不同元素的个数。\n\n扩展延伸：线段树可以用数组实现（左子节点 2i，右子节点 2i+1），也可以用指针/类实现。进阶变体包括：可持久化线段树（主席树，支持历史版本查询）、树状数组（Fenwick Tree，线段树的简化版，仅支持前缀查询）、ZKW 线段树（非递归实现，常数更小）。",
+    "title": "分组反转链表",
+    "content": "请实现 K 个一组反转链表（LeetCode 25）。如何找到每组的边界并完成反转？递归和迭代两种实现方式的区别是什么？",
+    "answer": "答案：K 个一组反转链表是链表操作的高频面试题。\n\n解题思路（递归）：\n1. 从 head 开始遍历 K 个节点，找到第 K+1 个节点（下一组的头部）\n2. 反转当前 K 个节点（标准的链表反转操作，注意 prev/curr/next 三指针）\n3. 将当前组的尾节点的 next 指向下一组的返回值（递归调用）\n4. 返回当前组的新头（原来的第 K 个节点）\n\n代码框架：\npublic ListNode reverseKGroup(ListNode head, int k) {\n    ListNode curr = head;\n    int count = 0;\n    while (curr != null && count < k) {\n        curr = curr.next;\n        count++;\n    }\n    if (count == k) {\n        ListNode newHead = reverse(head, k);  // 反转前 k 个节点\n        head.next = reverseKGroup(curr, k);   // 递归处理剩余部分\n        return newHead;\n    }\n    return head;  // 不足 k 个，不反转\n}\n\n辅助函数（反转链表的指定长度）：\npublic ListNode reverse(ListNode head, int k) {\n    ListNode prev = null, curr = head;\n    while (k-- > 0) {\n        ListNode next = curr.next;\n        curr.next = prev;\n        prev = curr;\n        curr = next;\n    }\n    return prev;\n}\n\n递归 vs 迭代：\n- 递归：代码简洁，但空间 O(n/k) 的调用栈开销\n- 迭代：使用循环处理每组，空间 O(1)。可以先用一次遍历计算链表长度，确定需要反转的组数。\n- 递归的核心：反转当前组 + 递归下一组 + 连接\"头尾\"\n\n扩展延伸：LeetCode 206 反转链表（基础）、LeetCode 92 反转链表 II（指定区间反转）、LeetCode 24 两两交换链表节点（K=2 的特例）。链表题的通用技巧——dummy head 节点简化边界处理。",
     "hints": [
-      "线段树是动态区间操作的最佳选择",
-      "Lazy Propagation 是实现区间更新的关键"
+      "递归核心：反转当前 K 个节点 → 递归处理下一组 → 连接",
+      "dummy head 简化链表边界处理"
     ],
     "tags": [
-      "线段树",
-      "数据结构",
-      "区间查询",
-      "算法"
+      "算法",
+      "链表",
+      "反转",
+      "递归"
     ]
   },
   {
     "category": "algorithm",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "并查集 Union Find",
-    "content": "请介绍并查集（Union-Find/Disjoint Set）的数据结构原理、优化方法以及典型应用场景。",
-    "answer": "答案：并查集是一种树形数据结构，用于处理不相交集合的合并和查询问题。核心操作：\n1. Find(x)：查找元素 x 所在的集合（返回根节点）；\n2. Union(x, y)：将 x 和 y 所在的集合合并。\n\n优化方法：1）路径压缩（Path Compression）：Find 操作中，将沿途所有节点直接指向根节点。时间复杂度摊还后接近 O(α(n))（Ackermann 函数的反函数，近似常数）。2）按秩合并（Union by Rank/Size）：将较矮/较小的树合并到较高/较大的树上，减少树的高度。两者结合使用，可以做到理论上的 O(α(n))。\n\n典型应用：1）图论中的连通分量判定（连通图、冗余连接 Minimal Spanning Tree 的 Kruskal 算法）；2）社交网络的好友关系管理；3）判断无向图是否有环；4）Equations（LeetCode 990）；5）最长连续序列（LeetCode 128，巧妙应用）。\n\n扩展延伸：可持久化并查集支持历史版本的查询（需要按秩合并 + 可持久化数组）。并查集的删除操作比较复杂，可以用时间戳或者换用动态图连通性的离线算法（CDQ 分治 + 可撤销并查集）。",
+    "title": "零钱兑换问题",
+    "content": "请解释零钱兑换（Coin Change）问题的动态规划解法（LeetCode 322）。如何从暴力递归优化到 DP？贪心算法为什么对某些硬币面额不起作用？",
+    "answer": "答案：零钱兑换问题——给定不同面额的硬币和一个总金额，求组成该金额所需的最少硬币数。\n\n动态规划解法（自底向上）：\n1. 定义 dp[i] = 组成金额 i 所需的最少硬币数\n2. 初始化 dp[0] = 0，其余 dp[i] = 大数（amount+1 表示不可达）\n3. 状态转移：dp[i] = min(dp[i], dp[i-coin] + 1) for each coin in coins\n4. 返回 dp[amount]（如果仍为 amount+1，返回 -1 表示无解）\n\n代码：\npublic int coinChange(int[] coins, int amount) {\n    int[] dp = new int[amount + 1];\n    Arrays.fill(dp, amount + 1);\n    dp[0] = 0;\n    for (int i = 1; i <= amount; i++) {\n        for (int coin : coins) {\n            if (coin <= i) {\n                dp[i] = Math.min(dp[i], dp[i - coin] + 1);\n            }\n        }\n    }\n    return dp[amount] > amount ? -1 : dp[amount];\n}\n\n时间复杂度：O(amount × N)，N=硬币种类数\n空间复杂度：O(amount)\n\n为什么贪心不行：\n- 贪心算法（每次选最大面额）对某些面额不适用\n- 例如 coins=[1,3,4], amount=6：贪心选 4+1+1=3 枚，最优解是 3+3=2 枚\n- 贪心需要硬币面额满足 canonical coin system（如人民币 1,2,5,10 是 canonical)\n\n扩展延伸：LeetCode 518 零钱兑换 II——求组合数（不是最少硬币数）。dp[j] += dp[j-coin]。完全背包问题的变形（硬币数量无限）。BFS 也可以解零钱兑换——从 0 开始逐层扩展金额。",
     "hints": [
-      "路径压缩 + 按秩合并 = 近似常数的查询时间",
-      "Kruskal 算法是并查集最经典的应用"
+      "dp[i] = min(dp[i], dp[i-coin]+1)，完全背包思想",
+      "贪心只对特定面额有效，DP 是通用解法"
     ],
     "tags": [
-      "并查集",
-      "Union Find",
-      "图论",
-      "数据结构"
+      "算法",
+      "动态规划",
+      "背包",
+      "零钱兑换"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "最长连续序列",
+    "content": "请解决最长连续序列问题（LeetCode 128）。如何在 O(n) 时间内找到无序数组中最长连续元素序列的长度？哈希表如何帮助优化？",
+    "answer": "答案：最长连续序列——给定无序数组，找到最长连续元素序列的长度（要求 O(n) 时间）。\n\n思路：使用哈希集合（HashSet）去重，只从每个连续序列的起点开始查找。\n\n算法步骤：\n1. 将所有元素加入 HashSet\n2. 遍历数组，对于每个元素 num：\n   - 如果 num-1 不在集合中（说明 num 是某段连续序列的起点）\n   - 从 num 开始递增计数，直到 num+length 不在集合中\n   - 更新全局最长长度\n\n为什么是 O(n)：\n- 每个元素只被查询两次：一次检查是否为起点，一次向后延伸\n- 内层循环的总执行次数 = 所有连续序列的长度之和 = n\n- 所以整体 O(n)\n\n代码：\npublic int longestConsecutive(int[] nums) {\n    Set<Integer> set = new HashSet<>();\n    for (int num : nums) set.add(num);\n    int longest = 0;\n    for (int num : set) {\n        if (!set.contains(num - 1)) {  // 只从起点开始\n            int current = num;\n            int length = 1;\n            while (set.contains(current + 1)) {\n                current++;\n                length++;\n            }\n            longest = Math.max(longest, length);\n        }\n    }\n    return longest;\n}\n\n扩展延伸：使用并查集（Union-Find）也可以解——相邻元素合并集合，维护每个集合的 size。O(n) 时间的约束排除了排序解法（排序至少 O(n log n)）。优化关键：只从连续序列的起点开始遍历，避免重复访问。",
+    "hints": [
+      "O(n) 的关键：只从连续序列的起点（num-1 不存在）开始查找",
+      "HashSet 去重 + 起点查找保证每个元素只访问两次"
+    ],
+    "tags": [
+      "算法",
+      "哈希",
+      "连续序列",
+      "O(n)"
     ]
   }
 ]

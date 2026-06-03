@@ -447,24 +447,6 @@
   },
   {
     "category": "microservices",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "服务网格与 Sidecar 模式",
-    "content": "什么是 Sidecar 模式？服务网格（Service Mesh）如何通过 Sidecar 实现流量管理和安全通信？Sidecar 模式的主要优缺点是什么？",
-    "answer": "答案：Sidecar 模式将一个辅助容器（Proxy）与应用容器部署在同一 Pod 中，接管应用的所有进出流量。服务网格（如 Istio/Linkerd）通过 Sidecar 实现流量管理、mTLS、可观测性等功能，无需修改应用代码。\n\n解析：Sidecar 的工作机制——1）Sidecar Proxy（Envoy/Linkerd-proxy）通过 iptables 或 eBPF 拦截 Pod 的全部 TCP 流量。所有入站流量重定向到 Sidecar 的入站端口（15006），所有出站流量重定向到出站端口（15001）。2）控制面（Istiod）统一配置下发——路由规则、负载均衡策略、TLS 证书、访问策略通过 xDS API 动态下发给所有 Sidecar。3）应用容器无需感知 Proxy 的存在，代码零改动。\n\n扩展延伸：优点——1）关注点分离：开发人员专注于业务逻辑，运维团队控制流量和安全策略。2）语言无关：任何语言的应用都能获得流量管理、安全、可观测性能力。3）热升级：Sidecar 可以独立于应用重启和升级。缺点——1）资源开销：每个 Pod 多一个 Proxy 容器（约 50-200MB 内存 + 0.5-1 vCPU）。2）延迟增加：每次网络通信多一跳（P99 延迟增加约 2-5ms）。3）调试复杂度：问题排查时多一层（是应用的问题还是 Sidecar 的问题？）。4）启动依赖：Sidecar Ready 后才能处理流量。Sidecar vs Sidecarless（Cilium Ambient Mesh/AWS App Mesh）：eBPF 实现的 Service Mesh 可以在内核层处理流量，无需额外容器。",
-    "hints": [
-      "Sidecar 模式为什么被称为「零侵入」——应用容器完全感知不到 Proxy 的存在",
-      "Sidecar 模式的主要成本——资源开销、延迟增加、调试复杂度"
-    ],
-    "tags": [
-      "微服务",
-      "Service Mesh",
-      "Sidecar",
-      "Istio"
-    ]
-  },
-  {
-    "category": "microservices",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "分布式事务与 Saga 模式",
@@ -533,24 +515,6 @@
       "BFF",
       "架构模式",
       "前端适配"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Spring Cloud 负载均衡演进",
-    "content": "Spring Cloud 中服务调用负载均衡的演进历史？Ribbon → Spring Cloud LoadBalancer 的变迁？LoadBalancer 的负载均衡策略有哪些？",
-    "answer": "答案：Spring Cloud 早期使用 Netflix Ribbon（客户端负载均衡），Ribbon 进入维护状态后 Spring Cloud 推出了 Spring Cloud LoadBalancer（基于 Reactor 的响应式客户端）。Spring Cloud 2020.0.0 开始 Ribbon 被移除，LoadBalancer 成为默认。\n\n解析：Ribbon（已退役）——1）负载均衡策略：RoundRobinRule（轮询）、RandomRule（随机）、WeightedResponseTimeRule（加权响应时间）、RetryRule（带重试）。2）工作方式：Ribbon 从 Eureka/Nacos 等注册中心获取服务实例列表，然后按策略选择一个实例。3）Ribbon 的客户端配置：`service-name.ribbon.listOfServers` 或从注册中心自动拉取。\n\n扩展延伸：Spring Cloud LoadBalancer——1）策略：RoundRobinLoadBalancer（轮询）、RandomLoadBalancer（随机）。2）支持 Reactive（WebClient）和 Imperative（RestTemplate/OpenFeign）。3）可自定义负载均衡策略——实现 ReactorServiceInstanceLoadBalancer 接口。4）与注册中心集成：通过 DiscoveryClient 从 Nacos/Eureka 获取实例列表。OpenFeign 使用——`@FeignClient(name = \"service-a\")` 自动使用 LoadBalancer 进行客户端负载均衡。@LoadBalanced 注解的 RestTemplate 也使用 LoadBalancer。客户端负载均衡 vs 服务端负载均衡（Nginx）——客户端在调用前自己选一个实例发起调用（去中心化），服务端通过反向代理转发请求（中心化）。",
-    "hints": [
-      "Ribbon（Netflix 维护）→ Spring Cloud LoadBalancer（Spring 官方）——Ribbon 已退役",
-      "客户端负载均衡：调用方自己从注册中心拉取实例列表并选择目标（去中心化）"
-    ],
-    "tags": [
-      "微服务",
-      "Spring Cloud",
-      "负载均衡",
-      "Ribbon"
     ]
   },
   {
@@ -911,6 +875,127 @@
       "压测",
       "容量规划",
       "全链路压测"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "事件溯源（Event Sourcing）",
+    "content": "请解释事件溯源模式（Event Sourcing）的原理、优缺点和适用场景。",
+    "answer": "答案：事件溯源以事件序列而非当前状态作为系统记录的唯一真理\n\n解析：核心思想：不存储实体当前状态，而是存储所有状态变更事件（如 OrderCreated, OrderShipped）。需要查询当前状态时从初始状态开始重放所有事件。事件是只追加的不可变记录，天然支持审计追踪和时间旅行（回溯到任意时间点的状态）。CQRS 常与事件溯源配套使用：写模型追加事件，读模型订阅事件构建投影（Projection）视图。事件存储通常用专门的 Event Store 数据库或基于 Kafka 持久化实现。\n\n扩展延伸：优点：1）完整的审计日志，能回答“为什么会变成这样” 2）时间旅行，轻松重建历史状态 3）解耦发布者/订阅者，其他服务可独立订阅事件构建自己的视图 4）在追溯调试和合规审计中价值极高。缺点：1）学习曲线陡峭 2）事件模式演化的复杂性（新版本事件字段增加需处理向前兼容）3）投影的状态与事件存储的一致性需要处理（最终一致性）4）重放大量事件时性能问题需快照（Snapshot）优化。快照策略：每隔 N 个事件或按时间间隔保存当前状态的快照，重放时从最近的快照开始。实践：ES 非常适合金融、订单、版本控制等需要完整操作记录的系统。",
+    "hints": [
+      "事件溯源和普通日志记录的本质区别是什么",
+      "事件模式演化怎么处理"
+    ],
+    "tags": [
+      "微服务",
+      "事件溯源",
+      "CQRS"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CQRS 模式",
+    "content": "请解释 CQRS（命令查询职责分离）模式的原理和实现策略。",
+    "answer": "答案：CQRS 将读操作（查询）和写操作（命令）分离为不同的模型和数据结构\n\n解析：CQRS 分为命令侧（Command Model）和查询侧（Query Model）。命令侧处理数据变更（增删改），返回操作结果不返回数据。查询侧处理数据读取，返回视图模型。两侧可用不同的数据结构写模型用范式化存储保证一致性，读模型用反范式化的视图表或专用的读存储（Elasticsearch/Redis）优化查询性能。CQRS 可与事件溯源强结合（写侧追加事件，读侧构建投影），也可松耦合（写侧更新写数据库后通过 CDC 或消息队列同步到读侧）。\n\n扩展延伸：CQRS 的适用性：1）读写负载差异大（典型的如写入少、查询多且查询复杂）2）团队分工读写分离（领域专家负责命令逻辑，前端团队优化查询模型）3）需要为不同查询场景优化不同读模型。不建议所有服务都用 CQRS，在增删改查简单的 CRUD 场景使用反而增加复杂度。实现注意：一致性延迟（写后读不到最新数据）在业务中是否可接受。数据同步机制：1）同步（同事务更新两侧 — 有损分离意义）2）异步（写模型发事件，读模型监听更新 — 最终一致性，常用方案）。读模型的缓存更新策略：Write-Through vs 订阅变更增量更新 vs 定时全量重建。",
+    "hints": [
+      "CQRS 和普通读写分离有什么根本区别",
+      "CQRS 的最终一致性对业务有哪些影响"
+    ],
+    "tags": [
+      "微服务",
+      "CQRS",
+      "架构"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分布式链路追踪采样策略与数据模型",
+    "content": "请深入分析分布式链路追踪的采样策略和 Trace/Span 数据模型设计。",
+    "answer": "答案：链路追踪是微服务可观测性的三大支柱之一，追踪一个请求经过的所有服务\n\n解析：核心概念：Trace 代表一次完整的请求链路，由一个根 Span 和若干子 Span 组成。Span 是一个逻辑单元（如一个 HTTP 请求或数据库调用），包含 Span ID、Parent Span ID、开始/结束时间戳、Service Name、Operation Name 和 Tags（自定义属性）。每个 Span 通过 Trace ID 关联到同一 Trace。传输模型：Span 数据通过 Header（如 W3C Trace-Context 标准）在服务间传递 Trace ID 和 Parent Span ID。采集的数据发送到链路追踪后端（Jaeger/Zipkin/Tempo）存储和分析。\n\n扩展延伸：采样策略：1）头部采样（Head-based）— 请求入口处决定是否采样，绑定额度。简单但可能丢失长尾慢请求的样本 2）尾部采样（Tail-based）— 收集所有请求后根据规则选择性保存（仅保存 p99 慢请求或错误请求），更精确但成本高 3）概率采样（固定比率 1/100/1000）— 常用于生产环境 4）自适应采样 — 动态调整采样率，错误请求 100% 采样，正常请求低比率采样。OpenTelemetry 是链路追踪的事实标准，定义了统一的 API/SDK 和数据导出格式，支持多后端。实践中，每个 Span 应包含业务相关的 Tags（如订单 ID、用户 ID）方便排查问题。",
+    "hints": [
+      "Trace ID 怎么在多个服务之间传递",
+      "头部采样和尾部采样的优缺点对比"
+    ],
+    "tags": [
+      "微服务",
+      "链路追踪",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "容器编排 vs PaaS",
+    "content": "请对比容器编排平台（Kubernetes）和传统 PaaS 平台（Cloud Foundry/Heroku）的异同。",
+    "answer": "答案：容器编排和 PaaS 都解决应用部署和运维问题，但抽象层级不同\n\n解析：PaaS 提供更高层抽象：开发只需 git push，平台自动感知语言栈（buildpack），调度运行、绑定服务（数据库/缓存），自动扩缩和健康检查。PaaS 牺牲了灵活性换取易用性，用户不能自定义网络/存储/调度策略。Kubernetes（容器编排）提供更细粒度的控制：可以自定义 Pod 资源限制、亲和性规则、服务发现方式、网络策略、存储类型、滚动更新策略等。K8s 学习曲线陡峭但灵活性极高。两大核心技术差异：1）应用管理方式 — PaaS 管理应用实例，K8s 管理容器 2）服务集成 — PaaS 捆绑服务市场，K8s 依赖 Operator/Helm Chart 扩展。\n\n扩展延伸：平台工程（Platform Engineering）趋势：在 K8s 之上构建内部开发者平台（IDP），结合两者的优点 — 对开发者暴露类似 PaaS 的简单接口，底层用 K8s 灵活编排。典型产品：Kubernauts、Railpack、Humanitec、Backstage（Spotify）提供开发者门户。Serverless（FaaS）：比 PaaS 更高层抽象，开发者只需写函数，平台弹性伸缩到零，计费精确到调用次数（AWS Lambda/Google Cloud Functions）。但有限制：冷启动延迟、执行时间限制、无状态。选择建议：小团队/快速原型选 PaaS，大团队/复杂运维需求选 K8s+IDP。",
+    "hints": [
+      "PaaS 平台通常怎么感知应用的编程语言",
+      "内部开发者平台（IDP）解决了什么问题"
+    ],
+    "tags": [
+      "微服务",
+      "K8s",
+      "PaaS"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "金丝雀发布策略",
+    "content": "请详细介绍金丝雀发布（Canary Release）的策略设计和实现要点。",
+    "answer": "答案：金丝雀发布是一种逐步将新版本流量导入生产环境的灰度发布策略\n\n解析：金丝雀发布流程：1）部署新版本到一个或少量实例（金丝雀组）2）将少量用户/流量路由到金丝雀组（例如 1% 流量）3）监控金丝雀组的错误率、延迟、业务指标（如订单转化率）4）验证通过后逐步增加金丝雀组的流量比例（5% -> 20% -> 50% -> 100%）5）完全切换后下线旧版本。流量路由策略：基于权重（Service Mesh 的 VirtualService weight）、基于请求属性（特定 Header/Cookie/地域的用户的流量先进新版本）。\n\n扩展延伸：自动化回滚：监控系统检测到金丝雀组指标异常（错误率 > 0.1% / P99 延迟增加 > 50ms / 业务指标下降），自动停止扩容并回滚。渐进式自动推进：平台根据指标自动决策升级流量比例（如 Spinnaker 的策略）。关键指标选择：1）系统指标 — 内存、CPU、GC 2）业务指标 — 转化率、响应时间、错误数 3）用户反馈。蓝绿部署 vs 金丝雀发布：蓝绿全量切换（两套环境一键切换），回滚快捷但资源消耗翻倍；金丝雀逐步放量，风险更低但发布周期更长。A/B 测试 vs 金丝雀：金丝雀目标是验证稳定性（是否正常？），A/B 测试目标是验证新功能效果（哪个更好？），目标不同可叠加使用。",
+    "hints": [
+      "金丝雀发布期间如何同时比较两组用户的行为数据",
+      "蓝绿部署和金丝雀发布各自的适用场景"
+    ],
+    "tags": [
+      "微服务",
+      "发布",
+      "灰度"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Seata AT 事务模式",
+    "content": "请解释 Seata AT（Automatic Transaction）模式的原理。AT 模式与 TCC 模式的核心区别是什么？AT 模式如何实现全局事务的回滚？",
+    "answer": "答案：Seata AT 模式是分布式事务解决方案，对业务代码无侵入。\n\n原理：\n1. TM（Transaction Manager）：开启全局事务，获取全局事务 ID（XID）\n2. RM（Resource Manager）：分支事务注册到 TC（Transaction Coordinator）\n3. 一阶段（Branch）：业务 SQL 执行前，RM 解析 SQL 生成 UNDO_LOG（记录修改前后的数据快照）。在同一本地事务中执行业务 SQL 并插入 UNDO_LOG。\n4. 二阶段提交：TC 通知所有 RM 提交。RM 异步删除 UNDO_LOG。\n\nAT vs TCC：\n- AT：自动生成补偿操作（基于 UNDO_LOG）。业务代码不需要实现 Try/Confirm/Cancel 接口。\n- TCC：业务代码手动实现 Try（预留资源）、Confirm（确认）、Cancel（回滚）三个方法。更灵活但侵入性强。\n- AT 适合 CRUD 为主的简单业务，TCC 适合需要预留资源的复杂业务（如库存预扣）\n\n全局回滚的实现：\n1. TC 通知所有 RM 回滚\n2. RM 根据 UNDO_LOG 的\"前镜像\"（Before Image）生成补偿 SQL\n3. 补偿 SQL 将数据恢复到修改前的状态\n4. 如果补偿失败（数据被其他事务修改），需要人工接入或重试\n\n扩展延伸：Seata AT 依赖数据库的本地事务（必须是支持 ACID 的关系型数据库）。UNDO_LOG 需要独立的表存储。AT 模式的隔离性——通过全局锁（Global Lock）防止脏写。TCC 的幂等性和空回滚是常见的实现难点。",
+    "hints": [
+      "Seata AT 自动生成 UNDO_LOG 实现无侵入回滚",
+      "AT 适合简单 CRUD，TCC 适合需要预留资源的场景"
+    ],
+    "tags": [
+      "微服务",
+      "Seata",
+      "分布式事务",
+      "AT 模式"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务网格技术栈",
+    "content": "请解释 Istio 服务网格的架构组件。Envoy 代理在数据面中的作用是什么？Istio 的流量管理规则如何实现蓝绿部署和灰度发布？",
+    "answer": "答案：Istio 服务网格分为数据面（Data Plane）和控制面（Control Plane）。\n\n控制面组件：\n1. Pilot：流量管理。下发 Envoy 配置（路由规则、负载均衡策略、故障恢复）。\n2. Citadel：安全。提供服务间 mTLS 证书管理和身份认证。\n3. Galley：配置验证。验证 Istio 配置的正确性。\n4. Istiod（1.5+）：将 Pilot、Citadel、Galley 合并为一个进程。\n\n数据面组件（Envoy Proxy）：\n1. Sidecar 注入到每个 Pod 中，拦截所有进出 Pod 的流量\n2. 实现：负载均衡、熔断、重试、超时、限流\n3. 指标收集：生成请求级别的指标（延迟、流量、错误、饱和度）\n4. mTLS：自动加密服务间通信（透明 mTLS）\n\n流量管理与灰度发布：\n1. VirtualService：定义路由规则（按 header、URI、权重分配）\n2. DestinationRule：定义子集（subset）和后端策略（负载均衡、连接池）\n3. 蓝绿部署：\n   - 创建两个子集（v1=blue, v2=green）\n   - VirtualService 将所有流量路由到 v1（weight: 100）\n   - 验证 v2 后切换（weight: 100 → v2）\n4. 金丝雀发布：\n   - VirtualService 按权重分配：v1=90%, v2=10%\n   - 监控 v2 的指标，逐步增加权重到 100%\n\n扩展延伸：Istio 也支持入口网关（Ingress Gateway）和出口网关（Egress Gateway）。服务网格的引入会增加延迟（Sidecar 代理开销通常是 1-5ms）。eBPF 正在成为服务网格的新方向（Cilium Service Mesh），消除 Sidecar 的性能开销。",
+    "hints": [
+      "Istio 控制面（Pilot/Citadel/Galley）+ 数据面（Envoy Sidecar）",
+      "VirtualService + DestinationRule = 流量策略的声明式配置"
+    ],
+    "tags": [
+      "微服务",
+      "服务网格",
+      "Istio",
+      "Envoy"
     ]
   }
 ]
