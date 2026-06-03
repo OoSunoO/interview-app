@@ -5568,16 +5568,18 @@ export const questions = [
     "category": "java_advanced",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "JVM 常用调优参数",
-    "content": "请列举常用的 JVM 调优参数及其作用，包括堆内存、GC、诊断等方面。",
-    "answer": "答案：堆内存设置 -Xms/-Xmx、GC 选择 -XX:+UseG1GC、诊断 -XX:+HeapDumpOnOutOfMemoryError\n\n解析：堆内存：-Xms2g -Xmx2g（初始和最大堆，建议相等避免扩容开销）、-Xmn512m（新生代大小）、-XX:MaxMetaspaceSize=256m（元空间上限）。GC 相关：-XX:+UseG1GC、-XX:MaxGCPauseMillis=200、-XX:ParallelGCThreads=8。诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof -Xloggc:gc.log。\n\n扩展延伸：典型 4G 堆参数示例：-Xms4g -Xmx4g -Xmn2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+PrintGCDetails -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/dump.hprof。建议最小化参数（只用必要的），逐个调整观察效果。",
+    "title": "JVM 常用参数分类与调优实践",
+    "content": "JVM 调优参数如何分类？请列举各分类下的核心参数，并给出典型的调优配置。",
+    "answer": "答案：JVM 调优参数分为：堆内存设置、GC 选型、日志诊断、性能调优四大类。\n\n解析：1）堆内存设置：-Xms（初始堆大小，一般 = -Xmx 避免动态调整）、-Xmx（最大堆，关键参数）、-Xmn（年轻代大小，典型值 1/3~1/4 堆）、-XX:NewRatio（老年代:年轻代比例，默认 2）、-XX:SurvivorRatio（Eden:Survivor 比例，默认 8）、-XX:MaxMetaspaceSize（元空间上限，不设则无上限）。2）GC 选型：-XX:+UseG1GC（G1 默认 JDK 9+）、-XX:+UseParallelGC（Parallel Scavenge + Parallel Old，默认 JDK 8）、-XX:+UseZGC（JDK 21 推荐）、-XX:MaxGCPauseMillis=200（G1 停顿目标）。3）日志诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/（OOM 自动 dump）、-Xloggc:gc.log（JDK 8 GC 日志）、-Xlog:gc*:file=gc.log（JDK 9+）。4）性能调优：-XX:+AlwaysPreTouch（启动时预申请物理内存，减少运行时缺页中断）、-XX:+DisableExplicitGC（禁止 System.gc()）、-XX:+PrintCommandLineFlags（打印实际生效参数）。\n\n扩展延伸：典型配置示例——4C8G 服务器的 Spring Boot 应用：java -Xms4g -Xmx4g -Xmn1536m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/logs/ -Xloggc:/opt/logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps。\n\n调优黄金原则：先确认问题（GC 频繁/OOM/响应慢），再针对性调参。不要为了调优而调优。调优后用 GC 日志验证效果，持续监控。",
     "hints": [
-      "-Xms 和 -Xmx 为什么不建议设置不同值",
-      "DisableExplicitGC 解决了什么问题"
+      "PreTouch 预申请物理内存为什么能减少运行期延迟抖动",
+      "为什么在容器化环境中 -Xmx 不能超过容器内存限制"
     ],
     "tags": [
       "JVM",
-      "调优"
+      "调优",
+      "参数",
+      "Xmx"
     ],
     "options": [],
     "company": "阿里巴巴"
@@ -11626,12 +11628,12 @@ export const questions = [
     "category": "java_advanced",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "JVM 常用参数分类与调优实践",
-    "content": "JVM 调优参数如何分类？请列举各分类下的核心参数，并给出典型的调优配置。",
-    "answer": "答案：JVM 调优参数分为：堆内存设置、GC 选型、日志诊断、性能调优四大类。\n\n解析：1）堆内存设置：-Xms（初始堆大小，一般 = -Xmx 避免动态调整）、-Xmx（最大堆，关键参数）、-Xmn（年轻代大小，典型值 1/3~1/4 堆）、-XX:NewRatio（老年代:年轻代比例，默认 2）、-XX:SurvivorRatio（Eden:Survivor 比例，默认 8）、-XX:MaxMetaspaceSize（元空间上限，不设则无上限）。2）GC 选型：-XX:+UseG1GC（G1 默认 JDK 9+）、-XX:+UseParallelGC（Parallel Scavenge + Parallel Old，默认 JDK 8）、-XX:+UseZGC（JDK 21 推荐）、-XX:MaxGCPauseMillis=200（G1 停顿目标）。3）日志诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/（OOM 自动 dump）、-Xloggc:gc.log（JDK 8 GC 日志）、-Xlog:gc*:file=gc.log（JDK 9+）。4）性能调优：-XX:+AlwaysPreTouch（启动时预申请物理内存，减少运行时缺页中断）、-XX:+DisableExplicitGC（禁止 System.gc()）、-XX:+PrintCommandLineFlags（打印实际生效参数）。\n\n扩展延伸：典型配置示例——4C8G 服务器的 Spring Boot 应用：java -Xms4g -Xmx4g -Xmn1536m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/logs/ -Xloggc:/opt/logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps。\n\n调优黄金原则：先确认问题（GC 频繁/OOM/响应慢），再针对性调参。不要为了调优而调优。调优后用 GC 日志验证效果，持续监控。",
+    "title": "JVM 调优方法论与核心原则",
+    "content": "JVM 调优应该遵循什么方法论？什么时候需要调优？调优的核心原则是什么？",
+    "answer": "答案：JVM 调优应遵循「问题驱动」原则：先明确症状（GC 频繁/响应抖动/OOM）→ 诊断定位（工具分析）→ 针对性调参 → 验证效果。核心是理解 JVM 的工作原理，而不是死记参数。\n\n解析：调优的前提是明确「为什么需要调优」。常见症状：1）GC 频繁——Young GC 每秒多次或 Full GC 频繁触发。2）响应抖动（Pause）——GC 停顿导致请求延迟突增。3）内存泄漏/OOM——堆内存持续增长无法回收。4）CPU 高但业务 QPS 低——GC 线程或编译线程占 CPU。\n\n诊断工具选型：1）快速排查——jstat -gcutil PID 1000 看 GC 频率和耗时。2）线程问题——jstack 看死锁/卡顿。3）堆分析——jmap -histo 看对象分布，OOM 时 Heap Dump + MAT 分析 Dominator Tree。4）在线诊断——Arthas watch/trace 实时观测方法级调用。5）GC 日志——开启 GC 日志（JDK 8: -Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps；JDK 9+: -Xlog:gc*:file=gc.log），用 GCeasy 在线分析。\n\n扩展延伸：常见调优场景及思路：1）吞吐量优先（批处理/离线计算）→ Parallel Scavenger + Parallel Old，堆设大些减少 GC 次数。2）低延迟优先（在线服务/API）→ G1/ZGC，控制 MaxGCPauseMillis。3）内存占用优先（资源受限）→ 合理设 Xmx，避免内存泄漏。4）容器化环境注意 -Xmx 不能超过容器内存限制，UseContainerSupport（JDK 8u191+ 默认开启）。\n\n黄金原则：不要为了调优而调优——先确认问题，再针对性调参。调优后用 GC 日志验证效果，持续监控。理解 JVM 的内存模型和 GC 算法比记忆具体参数重要得多。",
     "hints": [
-      "PreTouch 预申请物理内存为什么能减少运行期延迟抖动",
-      "为什么在容器化环境中 -Xmx 不能超过容器内存限制"
+      "调优前如何确认 JVM 是否真的需要调优",
+      "容器化环境中 JVM 参数配置需要注意什么"
     ],
     "tags": [
       "JVM",
@@ -11959,7 +11961,7 @@ export const questions = [
     "type": "short_answer",
     "title": "Spring Cloud 微服务核心组件",
     "content": "Spring Cloud 微服务架构中核心组件有哪些？分别承担什么职责？",
-    "answer": "答案：Spring Cloud 体系核心组件包括注册中心（Nacos/Eureka）、配置中心（Nacos/Consul）、网关（Gateway/Zuul）、服务调用（OpenFeign）、熔断降级（Sentinel/Hystrix）、链路追踪（Sleuth+Zipkin/SkyWalking）。\n\n解析：1）注册中心——服务启动时注册自身地址，消费者从注册中心获取服务列表。Nacos 支持 AP/CP 切换，Eureka 纯 AP，Consul CP（Raft）。2）配置中心——集中管理配置文件，支持动态刷新。3）网关——统一入口，路由转发+认证+限流+日志。4）OpenFeign——声明式 HTTP 客户端，整合 Ribbon 做负载均衡。5）Sentinel——熔断/降级/限流一体，细粒度规则配置。6）链路追踪——跨服务调用链可视化，排查延迟和错误。\n\n扩展延伸：Spring Cloud 各版本演进：Netflix 版（已维护模式）→ Alibaba 版（Nacos+Sentinel+Seata 生态）→ Spring 官方（Gateway+LoadBalancer 替代 Zuul+Ribbon）。2026 年推荐：Spring Cloud Alibaba + Spring Cloud Gateway + Resilience4j（替代已停维的 Hystrix）。",
+    "answer": "答案：Spring Cloud 体系核心组件包括注册中心（Nacos/Eureka）、配置中心（Nacos/Consul）、网关（Spring Cloud Gateway）、服务调用（OpenFeign）、熔断降级（Sentinel/Resilience4j）、链路追踪（Micrometer+Zipkin/SkyWalking）。\n\n解析：1）注册中心——服务启动时注册自身地址，消费者从注册中心获取服务列表。Nacos 支持 AP/CP 切换，Eureka 纯 AP，Consul CP（Raft）。2）配置中心——集中管理配置文件，支持动态刷新。3）网关——统一入口，路由转发+认证+限流+日志。4）OpenFeign——声明式 HTTP 客户端，整合 Spring Cloud LoadBalancer 做负载均衡。5）Sentinel——熔断/降级/限流一体，细粒度规则配置。6）链路追踪——跨服务调用链可视化，排查延迟和错误。\n\n扩展延伸：Spring Cloud 各版本演进：Netflix 版（已维护模式）→ Alibaba 版（Nacos+Sentinel+Seata 生态）→ Spring 官方（Gateway+LoadBalancer 替代 Zuul+Ribbon）。2026 年推荐：Spring Cloud Alibaba + Spring Cloud Gateway + Resilience4j。注意：早期 Netflix 组件（Hystrix/Ribbon/Zuul）已进入维护模式，新项目不应引入。",
     "hints": [
       "Netflix 组件（Eureka/Hystrix/Ribbon/Zuul）为什么进入维护模式",
       "Spring Cloud Alibaba 生态 vs Netflix 生态的选型"
@@ -11979,10 +11981,10 @@ export const questions = [
     "type": "short_answer",
     "title": "OpenFeign 声明式服务调用",
     "content": "OpenFeign 的工作原理是什么？它如何整合负载均衡和熔断降级？",
-    "answer": "答案：OpenFeign 通过 JDK 动态代理将接口声明转化为 HTTP 请求，整合 Ribbon/Spring Cloud LoadBalancer 做负载均衡，整合 Sentinel 做熔断降级。\n\n解析：开发者定义 @FeignClient 接口，标注请求方法和路径。OpenFeign 在运行时为每个接口创建动态代理——代理拦截方法调用，根据注解构建 HTTP 请求（URL/Method/Header/Body），通过 RestTemplate/HTTPClient 发送请求。负载均衡由 LoadBalancer 拦截（替换 URL 为服务名→解析实例列表→选一个），熔断由 Sentinel 在调用前后包装。\n\n扩展延伸：Feign 历史：Netflix Feign → Spring Cloud OpenFeign。OpenFeign 底层 HTTP 客户端可选：UrlConnection（默认）、Apache HttpClient（连接池）、OkHttp（高性能）。编码器/解码器：Jackson（默认 JSON）、Gson、自定义。压缩：Feign 支持请求/响应的 GZip 压缩（feign.compression.request.enabled=true）。超时配置：connectTimeout + readTimeout 区分处理。",
+    "answer": "答案：OpenFeign 通过 JDK 动态代理将接口声明转化为 HTTP 请求，整合 Spring Cloud LoadBalancer 做负载均衡，整合 Sentinel 做熔断降级。\n\n解析：开发者定义 @FeignClient 接口，标注请求方法和路径。OpenFeign 在运行时为每个接口创建动态代理——代理拦截方法调用，根据注解构建 HTTP 请求（URL/Method/Header/Body），通过 RestTemplate/HTTPClient 发送请求。负载均衡由 LoadBalancer 拦截（替换 URL 为服务名→解析实例列表→选一个），熔断由 Sentinel 在调用前后包装。\n\n扩展延伸：Feign 历史：Netflix Feign（已停止维护）→ Spring Cloud OpenFeign。OpenFeign 底层 HTTP 客户端可选：UrlConnection（默认）、Apache HttpClient（连接池）、OkHttp（高性能）。编码器/解码器：Jackson（默认 JSON）、Gson、自定义。压缩：Feign 支持请求/响应的 GZip 压缩（feign.compression.request.enabled=true）。超时配置：connectTimeout + readTimeout 区分处理。",
     "hints": [
       "Feign 动态代理中如何解析 URL 中的占位符",
-      "Feign 的负载均衡如何在不引入 Ribbon 的情况下工作"
+      "Feign 的负载均衡如何与 Spring Cloud LoadBalancer 配合工作"
     ],
     "tags": [
       "Spring Cloud",
@@ -11998,8 +12000,8 @@ export const questions = [
     "difficulty": "medium",
     "type": "short_answer",
     "title": "Sentinel 熔断降级与流控",
-    "content": "Sentinel 的熔断降级和流量控制机制是什么？与 Hystrix 相比有什么核心优势？",
-    "answer": "答案：Sentinel 提供三种能力：流量控制（QPS/线程数限流）、熔断降级（RT/异常比例/异常数）、系统自适应保护（系统负载）。相比 Hystrix 的优势是细粒度规则、实时监控和多样化流量控制。\n\n解析：Sentinel 的核心概念是资源（Resource），通过 @SentinelResource 注解定义。流量控制模式：直接/关联/链路（来源链路限流）。效果：快速失败/Warm Up/排队等待。熔断降级状态机与 Hystrix 相同（CLOSE→OPEN→HALF_OPEN→CLOSE），但触发条件更丰富。\n\n扩展延伸：Sentinel vs Hystrix 核心对比：1）线程隔离——Hystrix 用线程池隔离（开销大），Sentinel 用信号量隔离（轻量），支持线程数限流。2）规则持久化——Sentinel 支持推模式（Nacos/APOLLO）、拉模式（文件），Hystrix 需自行实现。3）监控——Sentinel 提供 Dashboard 实时监控，Hystrix 需整合 Turbine。4）流量整形——Sentinel 支持 Warm Up（冷启动）、匀速排队（漏桶），Hystrix 只支持熔断。注意：Hystrix 已进入维护模式（2018 年起），推荐用 Sentinel 或 Resilience4j。",
+    "content": "Sentinel 的熔断降级和流量控制机制是什么？与 Hystrix（已停维）相比有什么核心优势？",
+    "answer": "答案：Sentinel 提供三种能力：流量控制（QPS/线程数限流）、熔断降级（RT/异常比例/异常数）、系统自适应保护（系统负载）。核心优势是细粒度规则、实时监控和多样化的流量控制。\n\n解析：Sentinel 的核心概念是资源（Resource），通过 @SentinelResource 注解定义。流量控制模式：直接/关联/链路（来源链路限流）。效果：快速失败/Warm Up/排队等待。熔断降级状态机：CLOSE→OPEN→HALF_OPEN→CLOSE，触发条件包括慢调用比例、异常比例、异常数。相比 Hystrix（2018 年起进入维护模式），Sentinel 的信号量隔离更轻量，规则支持推模式持久化（Nacos/Apollo），提供 Dashboard 实时监控，并支持 Warm Up、匀速排队等流量整形。\n\n扩展延伸：Sentinel vs 早期 Hystrix 核心对比：1）线程隔离——Hystrix 用线程池隔离（开销大），Sentinel 用信号量隔离（轻量），支持线程数限流。2）规则持久化——Sentinel 支持推模式（Nacos/APOLLO）、拉模式（文件），Hystrix 需自行实现。3）监控——Sentinel 提供 Dashboard 实时监控，Hystrix 需整合 Turbine。4）流量整形——Sentinel 支持 Warm Up（冷启动）、匀速排队（漏桶），Hystrix 只支持熔断。注意：Hystrix 已进入维护模式（2018 年起），推荐用 Sentinel 或 Resilience4j。",
     "hints": [
       "Hystrix 线程池隔离 vs Sentinel 信号量隔离的优劣",
       "Sentinel 的热点参数限流如何配置"
@@ -12020,7 +12022,7 @@ export const questions = [
     "type": "short_answer",
     "title": "Spring Cloud Gateway",
     "content": "Spring Cloud Gateway 的工作原理是什么？它的路由、过滤器和谓词机制如何工作？",
-    "answer": "答案：Spring Cloud Gateway 基于 Spring WebFlux 和 Reactor 实现异步非阻塞网关，路由（Route）由谓词（Predicate）匹配和过滤器（Filter）链组成。\n\n解析：核心概念：1）Route（路由）——ID + 目标 URI + Predicate 集合 + Filter 集合。2）Predicate（谓词）——匹配条件，包括 Path（路径匹配）/ Header（请求头匹配）/ Method（HTTP 方法）/ Query（请求参数匹配）/ Cookie / Host（域名）等。3）Filter（过滤器）——分为 Pre（请求转发前处理）和 Post（响应返回前处理），可修改请求/响应、限流、鉴权。\n\n扩展延伸：Gateway vs Zuul 1.x vs Zuul 2.x：Zuul 1.x 基于 Servlet 同步阻塞，每个请求占一个线程，性能差。Zuul 2.x 基于 Netty 异步非阻塞。Gateway 基于 WebFlux+Reactor，性能最高（RPS 比 Zuul 1.x 高约 3-5 倍）。Gateway 内置限流过滤器 RequestRateLimiter（基于 Redis + Lua 令牌桶），支持动态路由从注册中心自动发现服务。注意：Gateway 基于 WebFlux，因此**不支持 Servlet API**（如 HttpServletRequest），也不支持 Feign（同步阻塞）直接在过滤器中使用。",
+    "answer": "答案：Spring Cloud Gateway 基于 Spring WebFlux 和 Reactor 实现异步非阻塞网关，路由（Route）由谓词（Predicate）匹配和过滤器（Filter）链组成。\n\n解析：核心概念：1）Route（路由）——ID + 目标 URI + Predicate 集合 + Filter 集合。2）Predicate（谓词）——匹配条件，包括 Path（路径匹配）/ Header（请求头匹配）/ Method（HTTP 方法）/ Query（请求参数匹配）/ Cookie / Host（域名）等。3）Filter（过滤器）——分为 Pre（请求转发前处理）和 Post（响应返回前处理），可修改请求/响应、限流、鉴权。\n\n扩展延伸：Gateway 基于 WebFlux+Reactor 异步非阻塞模型，性能优于传统的 Servlet 同步阻塞式网关。早期 Zuul 1.x 基于 Servlet 同步阻塞（每个请求占一个线程），性能差，已停止维护。Gateway 内置限流过滤器 RequestRateLimiter（基于 Redis + Lua 令牌桶），支持动态路由从注册中心自动发现服务。注意：Gateway 基于 WebFlux，因此**不支持 Servlet API**（如 HttpServletRequest），也不支持 Feign（同步阻塞）直接在过滤器中使用。",
     "hints": [
       "Spring Cloud Gateway 为什么不能使用 HttpServletRequest",
       "Gateway 如何与 Nacos 集成实现动态路由"
@@ -12164,7 +12166,7 @@ export const questions = [
     "type": "short_answer",
     "title": "优雅上下线与无损发布",
     "content": "微服务架构中如何实现优雅上下线和无损发布？如何保证发布期间服务不降级？",
-    "answer": "答案：优雅上下线结合 K8s 就绪探针、PreStop Hook、服务注册中心注销和重试机制，保证流量无损切换。\n\n解析：关闭顺序：1）从注册中心注销——进程收到 SIGTERM 后先调用注册中心 deregister 接口（告知消费者不要再发流量过来）。2）等待流量耗尽——结合 K8s PreStop Hook 等待几秒（sleep 30），让正在处理的请求完成。3）关闭线程池——有序关闭（先停接受新请求，再等已有请求完成，超时强制关闭）。4）关闭 Spring 容器。启动顺序：1）注册就绪探针（Readiness Probe）——/actuator/health/readiness 返回 200 后 K8s 才将 Pod 加入 Service 端点。2）慢启动——负载均衡器最终权重递增。3）预热——缓存预热+线程池预热。\n\n扩展延伸：无损发布的全链路保障：网关层（Gateway 重试）→ 服务调用方（Feign 重试+Ribbon 重试，maxAutoRetriesNextServer=1）→ 消息队列（消费者 ACK 机制确保不丢消息）。蓝绿发布：两套完全独立的环境，瞬时切换流量。金丝雀发布：灰度 1%→10%→50%→100%，先验证新版稳定再全量。K8s 滚动更新配置（maxSurge=25%, maxUnavailable=0）保证发布期间始终有足够的 Pod 提供服务。注意：有状态服务（如数据库）的优雅上下线远比无状态服务复杂。",
+    "answer": "答案：优雅上下线结合 K8s 就绪探针、PreStop Hook、服务注册中心注销和重试机制，保证流量无损切换。\n\n解析：关闭顺序：1）从注册中心注销——进程收到 SIGTERM 后先调用注册中心 deregister 接口（告知消费者不要再发流量过来）。2）等待流量耗尽——结合 K8s PreStop Hook 等待几秒（sleep 30），让正在处理的请求完成。3）关闭线程池——有序关闭（先停接受新请求，再等已有请求完成，超时强制关闭）。4）关闭 Spring 容器。启动顺序：1）注册就绪探针（Readiness Probe）——/actuator/health/readiness 返回 200 后 K8s 才将 Pod 加入 Service 端点。2）慢启动——负载均衡器最终权重递增。3）预热——缓存预热+线程池预热。\n\n扩展延伸：无损发布的全链路保障：网关层（Gateway 重试）→ 服务调用方（Feign 重试+LoadBalancer 重试，maxAutoRetriesNextServer=1）→ 消息队列（消费者 ACK 机制确保不丢消息）。蓝绿发布：两套完全独立的环境，瞬时切换流量。金丝雀发布：灰度 1%→10%→50%→100%，先验证新版稳定再全量。K8s 滚动更新配置（maxSurge=25%, maxUnavailable=0）保证发布期间始终有足够的 Pod 提供服务。注意：有状态服务（如数据库）的优雅上下线远比无状态服务复杂。",
     "hints": [
       "Readiness Probe 和 Liveness Probe 的区别",
       "滚动更新中 maxSurge 和 maxUnavailable 如何配置"
@@ -13586,12 +13588,12 @@ export const questions = [
     "category": "database",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "Redis 生产配置最佳实践",
-    "content": "Redis 生产环境有哪些关键配置项？如何做合理的配置选型？",
-    "answer": "答案：关键配置包括内存限制 maxmemory、持久化策略、连接数 timeout、慢查询日志、安全配置、内核参数优化。\n\n解析：1）maxmemory——设置最大内存上限（如 4GB-32GB），建议留 20-30% 余量给内存碎片和复制缓冲。同时配置合理的淘汰策略（maxmemory-policy allkeys-lru）。2）持久化——建议开启混合持久化（Redis 4.0+ 的 aof-use-rdb-preamble yes）。AOF 配置 appendfsync everysec（每秒 fsync，性能与安全的平衡）。AOF rewrite 触发：auto-aof-rewrite-min-size（默认 64MB）+ auto-aof-rewrite-percentage 100（AOF 文件增长 100% 时重写）。3）连接和超时——timeout 300（空闲连接 300s 关闭）、tcp-keepalive 300（TCP Keepalive 探测保活）。4）慢查询——slowlog-log-slower-than 10000（10ms）和 slowlog-max-len 128（保留 128 条最近慢查询）。\n\n扩展延伸：内核参数优化：1）vm.overcommit_memory=1（允许内存超分配，避免 fork 子进程时 COW 失败）。2）net.core.somaxconn=65535（高并发连接 backlog）。3）禁用透明大页（transparent_hugepage=never，大页可能导致 Redis fork 时延迟抖动）。4）设置合理的 swappiness=1（尽量少 swap）。安全配置：设置 requirepass 强密码；rename-command FLUSHALL/FLUSHALL/KEYS 禁用作弊命令。连接数：maxclients 10000（默认 10000，需操作系统 ulimit 配合）。注意：Redis 不建议部署在容器化环境（特别是有 CPU 限流的 K8s Pod），因为 fork 子进程在 CPU 受限环境下耗时大幅增加。",
+    "title": "Redis 生产配置架构原则",
+    "content": "Redis 生产环境部署需要考虑哪些方面？做配置选型时应遵循什么原则？",
+    "answer": "答案：Redis 生产配置的核心原则是「根据业务场景做权衡」，主要考虑内存规划、持久化策略、高可用设计和安全基线，而非照搬参数清单。\n\n解析：1）内存规划——设置 maxmemory 预留 20-30% 余量给碎片和复制缓冲，结合业务访问特征选择淘汰策略（通用场景 allkeys-lru，有明显冷热区分选 allkeys-lfu）。2）持久化选型——权衡性能和数据安全：RDB（快照，适合缓存场景允许丢部分数据）、AOF everysec（每秒 fsync，适合数据敏感场景）、混合持久化（Redis 4.0+，兼顾重启速度和数据安全）。核心原则：允许丢数据 → 只用 RDB 或关持久化；不允许丢 → AOF + RDB 混合。3）高可用设计——主从 + Sentinel（自动故障转移）或 Cluster（自动分片），避免单点。Sentinel 至少 3 节点奇数部署。Cluster 至少 3 主 3 从起步。\n\n扩展延伸：监控和运维：1）关键指标监控——内存碎片率（mem_fragmentation_ratio > 1.5 需关注，< 1 说明用了 swap 危险）、命中率、慢查询、复制延迟。2）安全基线——requirepass、绑定内网 IP、rename-command 禁用作弊命令。3）OS 层面关注点——禁用透明大页（THP 可能导致 fork 延迟抖动）、合理配置 vm.overcommit、设置 swappiness 避免 swap。这些是操作系统常规优化，并非 Redis 特有的参数背诵。4）容器化注意——Redis fork 子进程在 CPU 受限的 K8s Pod 中耗时可能大幅增加，建议持久化由从节点承担。\n\n核心原则：先明确业务对数据安全、可用性、性能的要求，再做配置决策。没有通用的最佳配置，只有适合业务场景的配置。",
     "hints": [
-      "为什么 Redis 不建议在 K8s 容器中部署",
-      "vm.overcommit_memory=1 对 Redis fork 的重要性"
+      "Redis 内存碎片率过高时应如何处理",
+      "持久化选型时 RDB 和 AOF 应该如何权衡"
     ],
     "tags": [
       "Redis",
@@ -13922,7 +13924,7 @@ export const questions = [
     "type": "short_answer",
     "title": "API 网关的作用与设计",
     "content": "API 网关（Gateway）在微服务架构中扮演什么角色？常见的功能有哪些？",
-    "answer": "答案：API 网关是微服务的统一入口，负责路由、认证、限流、协议转换等横切关注点。\n\n解析：API 网关的典型功能：1）路由转发——根据请求路径转发到对应微服务。2）身份认证——统一校验 JWT/OAuth Token，避免每个服务重复实现。3）限流熔断——基于令牌桶/滑动窗口限流，集成 Hystrix/Sentinel 熔断。4）协议转换——HTTP 转 gRPC、外部协议转内部协议。5）日志监控——统一采集请求日志、调用链追踪。6）灰度发布——按 Header/Cookie/IP 路由到特定版本。\n\n扩展延伸：主流网关对比：Nginx + Lua（OpenResty）轻量高性能适合长连接；Kong 和 APISIX 基于 OpenResty 插件化；Spring Cloud Gateway 适合 Java 技术栈；Zuul 性能较差已边缘化。新一代方向是 Sidecar 模式（Service Mesh，如 Istio + Envoy）将网关能力下沉到 Sidecar 代理。",
+    "answer": "答案：API 网关是微服务的统一入口，负责路由、认证、限流、协议转换等横切关注点。\n\n解析：API 网关的典型功能：1）路由转发——根据请求路径转发到对应微服务。2）身份认证——统一校验 JWT/OAuth Token，避免每个服务重复实现。3）限流熔断——基于令牌桶/滑动窗口限流，集成 Sentinel/Resilience4j 熔断。4）协议转换——HTTP 转 gRPC、外部协议转内部协议。5）日志监控——统一采集请求日志、调用链追踪。6）灰度发布——按 Header/Cookie/IP 路由到特定版本。\n\n扩展延伸：主流网关对比：Nginx + Lua（OpenResty）轻量高性能适合长连接；Kong 和 APISIX 基于 OpenResty 插件化；Spring Cloud Gateway 适合 Java 技术栈；KrakenD 提供高性能 API 网关。新一代方向是 Sidecar 模式（Service Mesh，如 Istio + Envoy）将网关能力下沉到 Sidecar 代理。早期的 Zuul 1.x（基于 Servlet 同步阻塞）已停止维护，不推荐新项目使用。",
     "hints": [
       "网关和负载均衡器的区别",
       "Service Mesh 和 API 网关的职责如何划分"

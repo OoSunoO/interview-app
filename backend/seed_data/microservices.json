@@ -5,7 +5,7 @@
     "type": "short_answer",
     "title": "Spring Cloud 微服务核心组件",
     "content": "Spring Cloud 微服务架构中核心组件有哪些？分别承担什么职责？",
-    "answer": "答案：Spring Cloud 体系核心组件包括注册中心（Nacos/Eureka）、配置中心（Nacos/Consul）、网关（Gateway/Zuul）、服务调用（OpenFeign）、熔断降级（Sentinel/Hystrix）、链路追踪（Sleuth+Zipkin/SkyWalking）。\n\n解析：1）注册中心——服务启动时注册自身地址，消费者从注册中心获取服务列表。Nacos 支持 AP/CP 切换，Eureka 纯 AP，Consul CP（Raft）。2）配置中心——集中管理配置文件，支持动态刷新。3）网关——统一入口，路由转发+认证+限流+日志。4）OpenFeign——声明式 HTTP 客户端，整合 Ribbon 做负载均衡。5）Sentinel——熔断/降级/限流一体，细粒度规则配置。6）链路追踪——跨服务调用链可视化，排查延迟和错误。\n\n扩展延伸：Spring Cloud 各版本演进：Netflix 版（已维护模式）→ Alibaba 版（Nacos+Sentinel+Seata 生态）→ Spring 官方（Gateway+LoadBalancer 替代 Zuul+Ribbon）。2026 年推荐：Spring Cloud Alibaba + Spring Cloud Gateway + Resilience4j（替代已停维的 Hystrix）。",
+    "answer": "答案：Spring Cloud 体系核心组件包括注册中心（Nacos/Eureka）、配置中心（Nacos/Consul）、网关（Spring Cloud Gateway）、服务调用（OpenFeign）、熔断降级（Sentinel/Resilience4j）、链路追踪（Micrometer+Zipkin/SkyWalking）。\n\n解析：1）注册中心——服务启动时注册自身地址，消费者从注册中心获取服务列表。Nacos 支持 AP/CP 切换，Eureka 纯 AP，Consul CP（Raft）。2）配置中心——集中管理配置文件，支持动态刷新。3）网关——统一入口，路由转发+认证+限流+日志。4）OpenFeign——声明式 HTTP 客户端，整合 Spring Cloud LoadBalancer 做负载均衡。5）Sentinel——熔断/降级/限流一体，细粒度规则配置。6）链路追踪——跨服务调用链可视化，排查延迟和错误。\n\n扩展延伸：Spring Cloud 各版本演进：Netflix 版（已维护模式）→ Alibaba 版（Nacos+Sentinel+Seata 生态）→ Spring 官方（Gateway+LoadBalancer 替代 Zuul+Ribbon）。2026 年推荐：Spring Cloud Alibaba + Spring Cloud Gateway + Resilience4j。注意：早期 Netflix 组件（Hystrix/Ribbon/Zuul）已进入维护模式，新项目不应引入。",
     "hints": ["Netflix 组件（Eureka/Hystrix/Ribbon/Zuul）为什么进入维护模式", "Spring Cloud Alibaba 生态 vs Netflix 生态的选型"],
     "tags": ["Spring Cloud", "微服务", "架构"]
   },
@@ -15,8 +15,8 @@
     "type": "short_answer",
     "title": "OpenFeign 声明式服务调用",
     "content": "OpenFeign 的工作原理是什么？它如何整合负载均衡和熔断降级？",
-    "answer": "答案：OpenFeign 通过 JDK 动态代理将接口声明转化为 HTTP 请求，整合 Ribbon/Spring Cloud LoadBalancer 做负载均衡，整合 Sentinel 做熔断降级。\n\n解析：开发者定义 @FeignClient 接口，标注请求方法和路径。OpenFeign 在运行时为每个接口创建动态代理——代理拦截方法调用，根据注解构建 HTTP 请求（URL/Method/Header/Body），通过 RestTemplate/HTTPClient 发送请求。负载均衡由 LoadBalancer 拦截（替换 URL 为服务名→解析实例列表→选一个），熔断由 Sentinel 在调用前后包装。\n\n扩展延伸：Feign 历史：Netflix Feign → Spring Cloud OpenFeign。OpenFeign 底层 HTTP 客户端可选：UrlConnection（默认）、Apache HttpClient（连接池）、OkHttp（高性能）。编码器/解码器：Jackson（默认 JSON）、Gson、自定义。压缩：Feign 支持请求/响应的 GZip 压缩（feign.compression.request.enabled=true）。超时配置：connectTimeout + readTimeout 区分处理。",
-    "hints": ["Feign 动态代理中如何解析 URL 中的占位符", "Feign 的负载均衡如何在不引入 Ribbon 的情况下工作"],
+    "answer": "答案：OpenFeign 通过 JDK 动态代理将接口声明转化为 HTTP 请求，整合 Spring Cloud LoadBalancer 做负载均衡，整合 Sentinel 做熔断降级。\n\n解析：开发者定义 @FeignClient 接口，标注请求方法和路径。OpenFeign 在运行时为每个接口创建动态代理——代理拦截方法调用，根据注解构建 HTTP 请求（URL/Method/Header/Body），通过 RestTemplate/HTTPClient 发送请求。负载均衡由 LoadBalancer 拦截（替换 URL 为服务名→解析实例列表→选一个），熔断由 Sentinel 在调用前后包装。\n\n扩展延伸：Feign 历史：Netflix Feign（已停止维护）→ Spring Cloud OpenFeign。OpenFeign 底层 HTTP 客户端可选：UrlConnection（默认）、Apache HttpClient（连接池）、OkHttp（高性能）。编码器/解码器：Jackson（默认 JSON）、Gson、自定义。压缩：Feign 支持请求/响应的 GZip 压缩（feign.compression.request.enabled=true）。超时配置：connectTimeout + readTimeout 区分处理。",
+    "hints": ["Feign 动态代理中如何解析 URL 中的占位符", "Feign 的负载均衡如何与 Spring Cloud LoadBalancer 配合工作"],
     "tags": ["Spring Cloud", "OpenFeign", "服务调用"]
   },
   {
@@ -24,8 +24,8 @@
     "difficulty": "medium",
     "type": "short_answer",
     "title": "Sentinel 熔断降级与流控",
-    "content": "Sentinel 的熔断降级和流量控制机制是什么？与 Hystrix 相比有什么核心优势？",
-    "answer": "答案：Sentinel 提供三种能力：流量控制（QPS/线程数限流）、熔断降级（RT/异常比例/异常数）、系统自适应保护（系统负载）。相比 Hystrix 的优势是细粒度规则、实时监控和多样化流量控制。\n\n解析：Sentinel 的核心概念是资源（Resource），通过 @SentinelResource 注解定义。流量控制模式：直接/关联/链路（来源链路限流）。效果：快速失败/Warm Up/排队等待。熔断降级状态机与 Hystrix 相同（CLOSE→OPEN→HALF_OPEN→CLOSE），但触发条件更丰富。\n\n扩展延伸：Sentinel vs Hystrix 核心对比：1）线程隔离——Hystrix 用线程池隔离（开销大），Sentinel 用信号量隔离（轻量），支持线程数限流。2）规则持久化——Sentinel 支持推模式（Nacos/APOLLO）、拉模式（文件），Hystrix 需自行实现。3）监控——Sentinel 提供 Dashboard 实时监控，Hystrix 需整合 Turbine。4）流量整形——Sentinel 支持 Warm Up（冷启动）、匀速排队（漏桶），Hystrix 只支持熔断。注意：Hystrix 已进入维护模式（2018 年起），推荐用 Sentinel 或 Resilience4j。",
+    "content": "Sentinel 的熔断降级和流量控制机制是什么？与 Hystrix（已停维）相比有什么核心优势？",
+    "answer": "答案：Sentinel 提供三种能力：流量控制（QPS/线程数限流）、熔断降级（RT/异常比例/异常数）、系统自适应保护（系统负载）。核心优势是细粒度规则、实时监控和多样化的流量控制。\n\n解析：Sentinel 的核心概念是资源（Resource），通过 @SentinelResource 注解定义。流量控制模式：直接/关联/链路（来源链路限流）。效果：快速失败/Warm Up/排队等待。熔断降级状态机：CLOSE→OPEN→HALF_OPEN→CLOSE，触发条件包括慢调用比例、异常比例、异常数。相比 Hystrix（2018 年起进入维护模式），Sentinel 的信号量隔离更轻量，规则支持推模式持久化（Nacos/Apollo），提供 Dashboard 实时监控，并支持 Warm Up、匀速排队等流量整形。\n\n扩展延伸：Sentinel vs 早期 Hystrix 核心对比：1）线程隔离——Hystrix 用线程池隔离（开销大），Sentinel 用信号量隔离（轻量），支持线程数限流。2）规则持久化——Sentinel 支持推模式（Nacos/APOLLO）、拉模式（文件），Hystrix 需自行实现。3）监控——Sentinel 提供 Dashboard 实时监控，Hystrix 需整合 Turbine。4）流量整形——Sentinel 支持 Warm Up（冷启动）、匀速排队（漏桶），Hystrix 只支持熔断。注意：Hystrix 已进入维护模式（2018 年起），推荐用 Sentinel 或 Resilience4j。",
     "hints": ["Hystrix 线程池隔离 vs Sentinel 信号量隔离的优劣", "Sentinel 的热点参数限流如何配置"],
     "tags": ["Sentinel", "熔断", "降级", "限流"]
   },
@@ -35,7 +35,7 @@
     "type": "short_answer",
     "title": "Spring Cloud Gateway",
     "content": "Spring Cloud Gateway 的工作原理是什么？它的路由、过滤器和谓词机制如何工作？",
-    "answer": "答案：Spring Cloud Gateway 基于 Spring WebFlux 和 Reactor 实现异步非阻塞网关，路由（Route）由谓词（Predicate）匹配和过滤器（Filter）链组成。\n\n解析：核心概念：1）Route（路由）——ID + 目标 URI + Predicate 集合 + Filter 集合。2）Predicate（谓词）——匹配条件，包括 Path（路径匹配）/ Header（请求头匹配）/ Method（HTTP 方法）/ Query（请求参数匹配）/ Cookie / Host（域名）等。3）Filter（过滤器）——分为 Pre（请求转发前处理）和 Post（响应返回前处理），可修改请求/响应、限流、鉴权。\n\n扩展延伸：Gateway vs Zuul 1.x vs Zuul 2.x：Zuul 1.x 基于 Servlet 同步阻塞，每个请求占一个线程，性能差。Zuul 2.x 基于 Netty 异步非阻塞。Gateway 基于 WebFlux+Reactor，性能最高（RPS 比 Zuul 1.x 高约 3-5 倍）。Gateway 内置限流过滤器 RequestRateLimiter（基于 Redis + Lua 令牌桶），支持动态路由从注册中心自动发现服务。注意：Gateway 基于 WebFlux，因此**不支持 Servlet API**（如 HttpServletRequest），也不支持 Feign（同步阻塞）直接在过滤器中使用。",
+    "answer": "答案：Spring Cloud Gateway 基于 Spring WebFlux 和 Reactor 实现异步非阻塞网关，路由（Route）由谓词（Predicate）匹配和过滤器（Filter）链组成。\n\n解析：核心概念：1）Route（路由）——ID + 目标 URI + Predicate 集合 + Filter 集合。2）Predicate（谓词）——匹配条件，包括 Path（路径匹配）/ Header（请求头匹配）/ Method（HTTP 方法）/ Query（请求参数匹配）/ Cookie / Host（域名）等。3）Filter（过滤器）——分为 Pre（请求转发前处理）和 Post（响应返回前处理），可修改请求/响应、限流、鉴权。\n\n扩展延伸：Gateway 基于 WebFlux+Reactor 异步非阻塞模型，性能优于传统的 Servlet 同步阻塞式网关。早期 Zuul 1.x 基于 Servlet 同步阻塞（每个请求占一个线程），性能差，已停止维护。Gateway 内置限流过滤器 RequestRateLimiter（基于 Redis + Lua 令牌桶），支持动态路由从注册中心自动发现服务。注意：Gateway 基于 WebFlux，因此**不支持 Servlet API**（如 HttpServletRequest），也不支持 Feign（同步阻塞）直接在过滤器中使用。",
     "hints": ["Spring Cloud Gateway 为什么不能使用 HttpServletRequest", "Gateway 如何与 Nacos 集成实现动态路由"],
     "tags": ["Spring Cloud Gateway", "网关", "WebFlux"]
   },
@@ -105,7 +105,7 @@
     "type": "short_answer",
     "title": "优雅上下线与无损发布",
     "content": "微服务架构中如何实现优雅上下线和无损发布？如何保证发布期间服务不降级？",
-    "answer": "答案：优雅上下线结合 K8s 就绪探针、PreStop Hook、服务注册中心注销和重试机制，保证流量无损切换。\n\n解析：关闭顺序：1）从注册中心注销——进程收到 SIGTERM 后先调用注册中心 deregister 接口（告知消费者不要再发流量过来）。2）等待流量耗尽——结合 K8s PreStop Hook 等待几秒（sleep 30），让正在处理的请求完成。3）关闭线程池——有序关闭（先停接受新请求，再等已有请求完成，超时强制关闭）。4）关闭 Spring 容器。启动顺序：1）注册就绪探针（Readiness Probe）——/actuator/health/readiness 返回 200 后 K8s 才将 Pod 加入 Service 端点。2）慢启动——负载均衡器最终权重递增。3）预热——缓存预热+线程池预热。\n\n扩展延伸：无损发布的全链路保障：网关层（Gateway 重试）→ 服务调用方（Feign 重试+Ribbon 重试，maxAutoRetriesNextServer=1）→ 消息队列（消费者 ACK 机制确保不丢消息）。蓝绿发布：两套完全独立的环境，瞬时切换流量。金丝雀发布：灰度 1%→10%→50%→100%，先验证新版稳定再全量。K8s 滚动更新配置（maxSurge=25%, maxUnavailable=0）保证发布期间始终有足够的 Pod 提供服务。注意：有状态服务（如数据库）的优雅上下线远比无状态服务复杂。",
+    "answer": "答案：优雅上下线结合 K8s 就绪探针、PreStop Hook、服务注册中心注销和重试机制，保证流量无损切换。\n\n解析：关闭顺序：1）从注册中心注销——进程收到 SIGTERM 后先调用注册中心 deregister 接口（告知消费者不要再发流量过来）。2）等待流量耗尽——结合 K8s PreStop Hook 等待几秒（sleep 30），让正在处理的请求完成。3）关闭线程池——有序关闭（先停接受新请求，再等已有请求完成，超时强制关闭）。4）关闭 Spring 容器。启动顺序：1）注册就绪探针（Readiness Probe）——/actuator/health/readiness 返回 200 后 K8s 才将 Pod 加入 Service 端点。2）慢启动——负载均衡器最终权重递增。3）预热——缓存预热+线程池预热。\n\n扩展延伸：无损发布的全链路保障：网关层（Gateway 重试）→ 服务调用方（Feign 重试+LoadBalancer 重试，maxAutoRetriesNextServer=1）→ 消息队列（消费者 ACK 机制确保不丢消息）。蓝绿发布：两套完全独立的环境，瞬时切换流量。金丝雀发布：灰度 1%→10%→50%→100%，先验证新版稳定再全量。K8s 滚动更新配置（maxSurge=25%, maxUnavailable=0）保证发布期间始终有足够的 Pod 提供服务。注意：有状态服务（如数据库）的优雅上下线远比无状态服务复杂。",
     "hints": ["Readiness Probe 和 Liveness Probe 的区别", "滚动更新中 maxSurge 和 maxUnavailable 如何配置"],
     "tags": ["无损发布", "优雅上下线", "K8s", "滚动更新"]
   },

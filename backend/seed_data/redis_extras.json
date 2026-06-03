@@ -255,12 +255,12 @@
     "category": "database",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "Redis 生产配置最佳实践",
-    "content": "Redis 生产环境有哪些关键配置项？如何做合理的配置选型？",
-    "answer": "答案：关键配置包括内存限制 maxmemory、持久化策略、连接数 timeout、慢查询日志、安全配置、内核参数优化。\n\n解析：1）maxmemory——设置最大内存上限（如 4GB-32GB），建议留 20-30% 余量给内存碎片和复制缓冲。同时配置合理的淘汰策略（maxmemory-policy allkeys-lru）。2）持久化——建议开启混合持久化（Redis 4.0+ 的 aof-use-rdb-preamble yes）。AOF 配置 appendfsync everysec（每秒 fsync，性能与安全的平衡）。AOF rewrite 触发：auto-aof-rewrite-min-size（默认 64MB）+ auto-aof-rewrite-percentage 100（AOF 文件增长 100% 时重写）。3）连接和超时——timeout 300（空闲连接 300s 关闭）、tcp-keepalive 300（TCP Keepalive 探测保活）。4）慢查询——slowlog-log-slower-than 10000（10ms）和 slowlog-max-len 128（保留 128 条最近慢查询）。\n\n扩展延伸：内核参数优化：1）vm.overcommit_memory=1（允许内存超分配，避免 fork 子进程时 COW 失败）。2）net.core.somaxconn=65535（高并发连接 backlog）。3）禁用透明大页（transparent_hugepage=never，大页可能导致 Redis fork 时延迟抖动）。4）设置合理的 swappiness=1（尽量少 swap）。安全配置：设置 requirepass 强密码；rename-command FLUSHALL/FLUSHALL/KEYS 禁用作弊命令。连接数：maxclients 10000（默认 10000，需操作系统 ulimit 配合）。注意：Redis 不建议部署在容器化环境（特别是有 CPU 限流的 K8s Pod），因为 fork 子进程在 CPU 受限环境下耗时大幅增加。",
+    "title": "Redis 生产配置架构原则",
+    "content": "Redis 生产环境部署需要考虑哪些方面？做配置选型时应遵循什么原则？",
+    "answer": "答案：Redis 生产配置的核心原则是「根据业务场景做权衡」，主要考虑内存规划、持久化策略、高可用设计和安全基线，而非照搬参数清单。\n\n解析：1）内存规划——设置 maxmemory 预留 20-30% 余量给碎片和复制缓冲，结合业务访问特征选择淘汰策略（通用场景 allkeys-lru，有明显冷热区分选 allkeys-lfu）。2）持久化选型——权衡性能和数据安全：RDB（快照，适合缓存场景允许丢部分数据）、AOF everysec（每秒 fsync，适合数据敏感场景）、混合持久化（Redis 4.0+，兼顾重启速度和数据安全）。核心原则：允许丢数据 → 只用 RDB 或关持久化；不允许丢 → AOF + RDB 混合。3）高可用设计——主从 + Sentinel（自动故障转移）或 Cluster（自动分片），避免单点。Sentinel 至少 3 节点奇数部署。Cluster 至少 3 主 3 从起步。\n\n扩展延伸：监控和运维：1）关键指标监控——内存碎片率（mem_fragmentation_ratio > 1.5 需关注，< 1 说明用了 swap 危险）、命中率、慢查询、复制延迟。2）安全基线——requirepass、绑定内网 IP、rename-command 禁用作弊命令。3）OS 层面关注点——禁用透明大页（THP 可能导致 fork 延迟抖动）、合理配置 vm.overcommit、设置 swappiness 避免 swap。这些是操作系统常规优化，并非 Redis 特有的参数背诵。4）容器化注意——Redis fork 子进程在 CPU 受限的 K8s Pod 中耗时可能大幅增加，建议持久化由从节点承担。\n\n核心原则：先明确业务对数据安全、可用性、性能的要求，再做配置决策。没有通用的最佳配置，只有适合业务场景的配置。",
     "hints": [
-      "为什么 Redis 不建议在 K8s 容器中部署",
-      "vm.overcommit_memory=1 对 Redis fork 的重要性"
+      "Redis 内存碎片率过高时应如何处理",
+      "持久化选型时 RDB 和 AOF 应该如何权衡"
     ],
     "tags": [
       "Redis",

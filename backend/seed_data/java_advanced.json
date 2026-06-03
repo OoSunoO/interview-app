@@ -531,16 +531,18 @@
     "category": "java_advanced",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "JVM 常用调优参数",
-    "content": "请列举常用的 JVM 调优参数及其作用，包括堆内存、GC、诊断等方面。",
-    "answer": "答案：堆内存设置 -Xms/-Xmx、GC 选择 -XX:+UseG1GC、诊断 -XX:+HeapDumpOnOutOfMemoryError\n\n解析：堆内存：-Xms2g -Xmx2g（初始和最大堆，建议相等避免扩容开销）、-Xmn512m（新生代大小）、-XX:MaxMetaspaceSize=256m（元空间上限）。GC 相关：-XX:+UseG1GC、-XX:MaxGCPauseMillis=200、-XX:ParallelGCThreads=8。诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof -Xloggc:gc.log。\n\n扩展延伸：典型 4G 堆参数示例：-Xms4g -Xmx4g -Xmn2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+PrintGCDetails -Xloggc:gc.log -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/dump.hprof。建议最小化参数（只用必要的），逐个调整观察效果。",
+    "title": "JVM 常用参数分类与调优实践",
+    "content": "JVM 调优参数如何分类？请列举各分类下的核心参数，并给出典型的调优配置。",
+    "answer": "答案：JVM 调优参数分为：堆内存设置、GC 选型、日志诊断、性能调优四大类。\n\n解析：1）堆内存设置：-Xms（初始堆大小，一般 = -Xmx 避免动态调整）、-Xmx（最大堆，关键参数）、-Xmn（年轻代大小，典型值 1/3~1/4 堆）、-XX:NewRatio（老年代:年轻代比例，默认 2）、-XX:SurvivorRatio（Eden:Survivor 比例，默认 8）、-XX:MaxMetaspaceSize（元空间上限，不设则无上限）。2）GC 选型：-XX:+UseG1GC（G1 默认 JDK 9+）、-XX:+UseParallelGC（Parallel Scavenge + Parallel Old，默认 JDK 8）、-XX:+UseZGC（JDK 21 推荐）、-XX:MaxGCPauseMillis=200（G1 停顿目标）。3）日志诊断：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/（OOM 自动 dump）、-Xloggc:gc.log（JDK 8 GC 日志）、-Xlog:gc*:file=gc.log（JDK 9+）。4）性能调优：-XX:+AlwaysPreTouch（启动时预申请物理内存，减少运行时缺页中断）、-XX:+DisableExplicitGC（禁止 System.gc()）、-XX:+PrintCommandLineFlags（打印实际生效参数）。\n\n扩展延伸：典型配置示例——4C8G 服务器的 Spring Boot 应用：java -Xms4g -Xmx4g -Xmn1536m -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/opt/logs/ -Xloggc:/opt/logs/gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps。\n\n调优黄金原则：先确认问题（GC 频繁/OOM/响应慢），再针对性调参。不要为了调优而调优。调优后用 GC 日志验证效果，持续监控。",
     "hints": [
-      "-Xms 和 -Xmx 为什么不建议设置不同值",
-      "DisableExplicitGC 解决了什么问题"
+      "PreTouch 预申请物理内存为什么能减少运行期延迟抖动",
+      "为什么在容器化环境中 -Xmx 不能超过容器内存限制"
     ],
     "tags": [
       "JVM",
-      "调优"
+      "调优",
+      "参数",
+      "Xmx"
     ],
     "company": "阿里巴巴"
   },

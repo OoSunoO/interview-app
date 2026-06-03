@@ -1,0 +1,217 @@
+# -*- coding: utf-8 -*-
+import json
+
+questions = []
+
+def q(cat, diff, typ, title, content, answer, hints, tags):
+    questions.append({
+        "category": cat,
+        "difficulty": diff,
+        "type": typ,
+        "title": title,
+        "content": content,
+        "answer": answer,
+        "hints": hints,
+        "tags": tags
+    })
+
+# ==================== 设计模式 ====================
+
+q("java_advanced", "medium", "short_answer",
+  "单例模式实现方式对比",
+  "单例模式有哪几种实现方式？各自优缺点是什么？为什么双重检查锁定需要 volatile？",
+  """答案：五种主流实现：饿汉、懒汉（synchronized）、双重检查锁（DCL）、静态内部类、枚举。DCL 需要 volatile 禁止指令重排序（防止拿到未初始化的半成品对象）。
+
+解析：1）饿汉式——类加载时初始化实例，JVM 保证线程安全。缺点：类加载即创建，即使不需要也占用资源（提前初始化）。2）懒汉式（synchronized）——获取实例时同步方法，线程安全但性能差（每次获取都加锁）。3）双重检查锁（DCL）——先检查实例是否已创建（不加锁），再加锁创建。instance 必须用 volatile 修饰（JDK 5+），原因：instance = new Singleton() 不是原子操作——分配内存 → 初始化对象 → 引用赋值。JIT 可能重排序为 1→3→2，线程 B 在赋值后、初始化前读到的是「半初始化」对象。volatile 禁止该重排序。4）静态内部类——静态内部类 SingletonHolder 在调用 getInstance() 时才加载（JLS 保证类加载线程安全）。最推荐的懒加载方式。5）枚举（Enum）——最简洁，JVM 保证单例、线程安全，天然防反射和反序列化破坏。
+
+扩展延伸：反射破坏单例：通过 Constructor.setAccessible(true) 可以反射创建新实例。防御方式：构造方法中检查实例是否已存在，抛出异常。序列化破坏：readObject() 会创建新对象。防御方式：实现 readResolve() 方法返回单例实例。枚举天然免疫这两种攻击。Spring Bean 默认也是单例（singleton scope）——Spring 容器使用 ConcurrentHashMap 缓存 Bean 实例，非 GOF 单例模式但效果相同。""",
+  ["volatile 在 DCL 中起什么作用", "为什么枚举天然防止反射和反序列化攻击"],
+  ["设计模式", "单例", "DCL", "volatile"])
+
+q("java_advanced", "medium", "short_answer",
+  "工厂模式体系",
+  "简单工厂、工厂方法、抽象工厂三种工厂模式的区别是什么？各自适用什么场景？",
+  """答案：简单工厂一个类创建所有产品（违反开闭原则）；工厂方法每个产品对应一个工厂（符合开闭，但类多）；抽象工厂创建产品族（解决多产品的兼容性约束）。
+
+解析：1）简单工厂（Simple Factory）——一个工厂类根据参数返回不同的产品子类。缺点：每增加一个产品需要修改工厂类（开闭原则）。2）工厂方法（Factory Method）——定义创建对象的接口，让子类决定实例化哪个类。每个产品对应一个具体工厂。优点：符合开闭原则（新增产品只需新增工厂类）。缺点：产品种类多时工厂类数量膨胀。3）抽象工厂（Abstract Factory）——提供一个创建一系列相关或相互依赖对象的接口，无需指定具体类。解决产品族（同一品牌的产品集合）的兼容性约束。
+
+扩展延伸：工厂模式在 Spring 中的应用：1）Spring IoC 容器本质上是工厂模式（BeanFactory 工厂接口，ApplicationContext 是其子接口）。2）getBean(name) 根据名称/类型创建并返回 Bean。3）FactoryBean 接口——工厂 Bean，实现类可自定义 Bean 的创建逻辑（如 MyBatis 的 SqlSessionFactoryBean、Spring 的 ProxyFactoryBean）。
+
+在 MyBatis 中的应用：SqlSessionFactory（核心工厂）通过 SqlSessionFactoryBuilder 创建、openSession() 打开 Session。""",
+  ["Spring BeanFactory 和 FactoryBean 的区别", "抽象工厂中如何保证产品族的兼容性"],
+  ["设计模式", "工厂", "简单工厂", "抽象工厂"])
+
+q("java_advanced", "medium", "short_answer",
+  "策略模式与 if-else 重构",
+  "策略模式的核心思想是什么？如何用策略模式重构大段的 if-else/switch 代码？",
+  """答案：策略模式将算法封装为独立的策略类，运行时动态切换。核心是定义策略接口（Strategy）→ 具体策略实现（ConcreteStrategy）→ 上下文（Context）持有策略引用。
+
+解析：重构 if-else 的步骤：1）提取变化的算法为一个接口（如 CalculateStrategy）。2）每个分支创建一个策略实现类（如 NormalStrategy、VipStrategy、PromotionStrategy）。3）上下文持有策略引用，setStrategy() 或构造注入。4）调用端不再用 if-else 判断，直接 context.execute()。
+
+扩展延伸：策略模式的应用场景：1）支付渠道路由——根据用户选择的支付方式（微信/支付宝/银联）切换不同的支付处理。2）促销活动——满减/折扣/返现不同的优惠计算。3）审批流程——不同金额级别走不同审批策略。Spring 中的策略模式：ResourceLoader 根据路径前缀（classpath:/file:/http://）调用不同的 Resource 实现类。Spring Security 的 AuthenticationProvider 根据不同认证方式（表单/JWT/OAuth）切换验证逻辑。注意：策略模式没有消除 if-else，而是将 if-else 从调用代码转移到了策略注册/工厂中。可配合 Spring 的依赖注入（@Autowired Map<String, Strategy>）自动收集所有策略，彻底消除条件分支。""",
+  ["@Autowired Map<String, Strategy> 如何自动注入所有策略实现", "策略模式和状态模式的区别"],
+  ["设计模式", "策略", "重构", "if-else"])
+
+q("java_advanced", "medium", "short_answer",
+  "代理模式与 Spring AOP",
+  "JDK 动态代理和 CGLIB 代理的核心区别是什么？Spring AOP 如何选择使用哪种代理？",
+  """答案：JDK 动态代理通过 InvocationHandler 基于接口生成代理类；CGLIB 通过继承（ASM 字节码增强）生成子类代理。Spring AOP 优先用 JDK 动态代理（Bean 实现接口时），否则用 CGLIB。Spring Boot 2.0 起默认用 CGLIB。
+
+解析：1）JDK 动态代理——要求目标类实现接口。运行时创建实现目标接口的代理类（$Proxy0 等），方法调用转发到 InvocationHandler.invoke()。生成的代理类字节码小。2）CGLIB（Code Generation Library）——不要求接口。通过 ASM 字节码框架生成目标类的子类作为代理，覆盖父类方法，在方法调用前后织入增强逻辑。注意：CGLIB 不能代理 final 方法和 final 类（子类无法重写）。
+
+扩展延伸：AOP 两种代理的底层机制：JDK 动态代理底层调用链：
+proxy.method() → InvocationHandler.invoke() → MethodInterceptor.invoke() → joinPoint.proceed() → target.method()。CGLIB 底层是生成 Enhancer 子类，在子类方法中调用 MethodInterceptor。
+
+性能说明：JDK 8+ 的 JDK 动态代理性能已接近甚至超过 CGLIB（JDK 持续优化代理生成速度和调用性能）。Spring Boot 2.0+ 默认 spring.aop.proxy-target-class=true。AOP 的使用限制：自调用（内部方法调用 this.method()）不会走代理（因为 this 是原始对象不是代理对象），需要注入自身（@Autowired self）或在同一个类内部用 AopContext.currentProxy()。""",
+  ["为什么 Spring Boot 2.0+ 默认用 CGLIB 替代 JDK 动态代理", "AOP 自调用问题如何解决"],
+  ["设计模式", "代理", "AOP", "CGLIB"])
+
+q("java_advanced", "medium", "short_answer",
+  "观察者模式与事件驱动",
+  "观察者模式的核心概念是什么？Spring 框架中基于事件驱动（Event/Listener）的观察者模式是如何工作的？",
+  """答案：观察者模式定义一对多依赖关系，当一个对象（Subject）状态变化时自动通知所有依赖它的观察者（Observer）。Spring 通过 ApplicationEventPublisher + @EventListener 实现事件驱动架构。
+
+解析：经典结构：Subject（主题）维护 Observer 列表，提供了 attach/notify 等方法。Observer（观察者）定义 update() 接口。
+
+Spring 事件机制：1）发布事件——ApplicationEventPublisher.publishEvent()，可发布任意 Object（Spring 4.2+）。2）监听事件——@EventListener 注解标记监听器方法。3）异步监听——配合 @Async 异步执行（默认是同步——发布者阻塞等待所有监听器处理完成再继续）。4）事件继承——监听父事件也会收到子事件。5）@TransactionalEventListener——监听器在事务提交后执行（AFTER_COMMIT/AFTER_ROLLBACK 等阶段）。
+
+扩展延伸：观察者模式的 Java 原生实现：java.util.Observable（已弃用，JDK 9+ 标记废弃）和 java.util.Observer。推荐使用 Guava 的 EventBus（@Subscribe 注解）或 Spring 事件。消息队列 vs 事件驱动：Spring Event 是 JVM 进程内的同步/异步（@Async + 线程池）通知机制；消息队列（Kafka/RocketMQ）是跨进程、跨服务的消息传递，支持持久化、重试和广播。选型：单体应用内解耦用 Spring Event；微服务间解耦用 MQ。""",
+  ["Spring Event 同步和异步两种模式的选择依据", "@TransactionalEventListener 的 AFTER_COMMIT 事务阶段有什么用"],
+  ["设计模式", "观察者", "事件驱动", "Spring Event"])
+
+q("java_advanced", "medium", "short_answer",
+  "模板方法模式与 Spring 模板",
+  "模板方法模式的核心思想是什么？Spring 中的 JdbcTemplate、RestTemplate 是如何应用模板方法模式的？",
+  """答案：模板方法模式在父类定义算法的骨架（流程步骤），将可变部分延迟到子类或回调中实现。Spring 的 XXTemplate 类封装了资源管理的固定部分（创建/释放/异常处理），将业务逻辑通过回调（Callback）交给调用方。
+
+解析：模板方法的结构：AbstractClass（定义 templateMethod 流程骨架，包含 primitiveOperation1() + primitiveOperation2() 等抽象方法由子类实现。
+
+Spring 中的模板方法变体（Callback + Template）：JdbcTemplate.execute() 的流程：1）获取 Connection（从 DataSource 获取）。2）创建 Statement/PreparedStatement。3）执行 SQL，如果传入 PreparedStatementCallback 将 Statement 交给回调处理。4）处理 ResultSet（RowMapper 回调将每行映射为对象）。5）清理资源（关闭 Connection/Statement/ResultSet，异常时回滚事务）。调用方只需要实现回调接口（如 RowMapper<T>），不需要关心 Connection 获取和释放。
+
+扩展延伸：RestTemplate 的工作方式：创建 HttpRequest → 处理请求头/体 → 执行 HTTP 请求（ClientHttpRequestFactory）→ 处理响应（ResponseExtractor）。Spring 5 开始 RestTemplate 标记为维护模式（维护模式：不添加新功能但继续修 bug），推荐使用 WebClient（Reactive 非阻塞）。其他模板类：RedisTemplate（操作 Redis）、MongoTemplate（操作 MongoDB）、RabbitTemplate（操作 RabbitMQ）。注意：模板方法模式在 Spring 中的实现更接近 Strategy（回调函数注入）而不是经典模板方法（子类继承），但思想一致——固定流程 + 可变回调。""",
+  ["JdbcTemplate 为什么不需要手动释放连接", "模板方法模式中继承和回调（Callback）两种方式各有什么优劣"],
+  ["设计模式", "模板方法", "JdbcTemplate", "Spring"])
+
+q("java_advanced", "medium", "short_answer",
+  "责任链模式",
+  "责任链模式的工作原理是什么？Java Web 中的 Filter、Spring Interceptor、Netty Pipeline 有哪些异同点？",
+  """答案：责任链模式将多个处理对象连成链，请求依次经过链上的每个处理器，直到某个处理器终止传递或链结束。核心是每个处理器决定是否处理请求并传递给下一个。
+
+解析：1）Servlet Filter（javax.servlet.Filter）——基于 javax.servlet.FilterChain，doFilter() 方法调用 chain.doFilter() 传递请求。过滤器的执行顺序由 web.xml 或 @WebFilter 的 filterName 排序决定（按字母序）。Filter 作用于所有 Servlet，是粗粒度的（基于 HttpServletRequest/Response）。2）Spring Interceptor（HandlerInterceptor）——在 Spring MVC 的 Handler 执行前后插入处理（preHandle/postHandle/afterCompletion），粒度更细（可以针对特定 URL 模式），可以访问 Spring 容器中的 Bean。3）Netty Pipeline（ChannelPipeline）——责任链的纯正实现：每个 ChannelHandler 处理入站/出站事件，调用 ctx.fireChannelRead() 传播到下一个处理器。支持异步处理和动态增删处理器。
+
+扩展延伸：责任链模式的实现要点：1）链中每个节点决定是否传下去（FilterViolationException 可中断链）。2）Filter 和 Interceptor 的顺序问题：先部署的 Filter 在外层（先执行 doFilter 前/后执行 doFilter 后），Interceptor 按配置顺序执行 preHandler、逆序执行 postHandler。3）Spring Cloud Gateway 的过滤器链基于责任链模式（pre-filter + post-filter 双向处理）。
+
+设计原则：责任链降低了发送者和接收者的耦合度，新增处理器只需新加一个节点。缺点：调试困难（请求穿过多个处理器，链条长时性能下降）。""",
+  ["Filter 和 Interceptor 在 Spring MVC 中的执行顺序", "Netty Pipeline 双向传播（入站/出站）是怎么实现的"],
+  ["设计模式", "责任链", "Filter", "Interceptor"])
+
+q("java_advanced", "medium", "short_answer",
+  "Spring 中的经典设计模式汇总",
+  "Spring 框架中用到了哪些经典设计模式？请列举核心用例。",
+  """答案：Spring 是设计模式的集大成者，核心用到的模式包括：工厂（控制反转 IoC）、单例（Bean 默认作用域）、代理（AOP）、模板（JdbcTemplate）、观察者（事件机制）、适配器（MVC HandlerAdapter）、策略（ResourceLoader 路由）、装饰器（BeanWrapper/DataSource 装饰）。
+
+解析：1）工厂模式——BeanFactory/IoC 容器是工厂模式的最佳实践。getBean() 根据配置或注解创建并组装对象。对比 GOF 工厂模式：Spring IoC 不只是工厂——还管理生命周期、作用域、依赖注入。2）单例模式——Spring Bean 默认 scope=singleton，更准确说是一个 Bean 名称/对象对在容器中是唯一的。与 GOF 单例区别：Spring 控制单例的范围在容器层面，不是 ClassLoader 级别。3）代理模式——AOP 实现原理。@Transactional 声明式事务管理就是 AOP 代理的典型应用——在方法前后自动开启/提交/回滚事务。4）模板方法——JdbcTemplate 封装了 JDBC 固定流程（获取连接→执行 SQL→处理结果→清理资源）。5）观察者——ApplicationEvent + ApplicationListener / @EventListener。6）适配器——Spring MVC 的 HandlerAdapter 将各种 Handler（@Controller/HttpRequestHandler/SimpleControllerHandlerAdapter）统一适配为 ModelAndView。7）策略——ResourceLoader 根据路径前缀（classpath:/file:/http://）选择不同实现。8）装饰器——BeanWrapper 为 Bean 的属性设置提供额外行为。
+
+扩展延伸：掌握这些设计模式对理解 Spring 源码的帮助：读源码时不要逐行读，先识别当前用到的模式，从宏观把握设计意图。Spring 源码本身就是设计模式教学的活教材。""",
+  ["Spring IoC 和 GOF 工厂模式的根本区别在哪", "Spring 的 AOP 代理在什么场景下使用 JDK 动态代理 vs CGLIB"],
+  ["Spring", "设计模式", "IoC", "AOP"])
+
+# ==================== 网络协议 ====================
+
+q("cs_basics", "medium", "short_answer",
+  "HTTP/1.1 vs HTTP/2 vs HTTP/3",
+  "HTTP 各版本（1.1/2/3）的核心区别是什么？HTTP/2 解决了什么问题，又带来了什么新问题？",
+  """答案：HTTP/1.1 文本协议支持持久连接和管线化；HTTP/2 二进制分帧实现多路复用解决队头阻塞；HTTP/3 基于 QUIC（UDP）彻底解决传输层队头阻塞。
+
+解析：HTTP/1.1 的问题：1）队头阻塞（HOL Blocking）——同一连接上的多个请求按序处理，前一个请求阻塞则后续请求等待。2）头部冗余——每次请求携带大量重复的 HTTP 头部（Cookie/User-Agent 等）。3）只能客户端主动发起请求（无服务端推送）。
+
+HTTP/2（基于 SPDY）的改进：1）二进制分帧（Binary Framing）——将 HTTP 消息拆为帧（Headers/Data 等），同一连接上的多个帧交错发送，消除队头阻塞。2）多路复用（Multiplexing）——一个 TCP 连接可同时传输多个 Stream（请求-响应流）。3）服务端推送（Server Push）——服务端可以主动推送资源（如 HTML 中的 CSS/JS）。4）头部压缩（HPACK）——用 Huffman 编码 + 动态/静态索引表减少头部冗余。
+
+扩展延伸：HTTP/2 的问题：TCP 层的队头阻塞仍然存在。TCP 按序传输，底层 TCP 丢包时即使后续数据帧到达也会被缓冲（等待重传），阻塞所有 Stream。HTTP/3 基于 QUIC（Quick UDP Internet Connections）：QUIC 在 UDP 之上实现可靠传输、TLS 1.3 加密和零 RTT 连接。多路复用在 QUIC 级别独立（一条流的丢包不影响其他流）。
+
+注意：HTTP/3 部署需要服务端和客户端都支持，CDN 厂商（Cloudflare/Google/Fastly）已广泛支持，但企业内部系统升级较慢。生产建议：优先升级到 HTTP/2（绝大多数现代浏览器和服务端支持），HTTP/3 作为可选增强。""",
+  ["HTTP/2 的二进制分帧如何解决队头阻塞", "HTTP/2 的 TCP 队头阻塞和 HTTP/3 QUIC 如何解决"],
+  ["HTTP", "HTTP/2", "HTTP/3", "QUIC"])
+
+q("cs_basics", "medium", "short_answer",
+  "gRPC 与 Protocol Buffers",
+  "gRPC 的核心原理是什么？Protocol Buffers 和 HTTP/2 在 gRPC 中分别扮演什么角色？与 REST 相比有什么优势和限制？",
+  """答案：gRPC 基于 HTTP/2 做传输层，Protocol Buffers 做序列化/接口定义语言（IDL）。支持四种通信模式：一元（Unary）、服务端流、客户端流、双向流。适合微服务内部通信。
+
+解析：1）Protocol Buffers——.proto 文件定义服务接口和消息结构，编译为各语言的代码。编码后的二进制消息比 JSON 小 3-10 倍（varint 编码 + 字段序号唯一标识）。序列化/反序列化速度比 JSON 快一个数量级（二进制解析 vs 文本解析）。2）HTTP/2——gRPC 利用 HTTP/2 的 Stream 实现多个请求复用和双向流。每个 gRPC 调用在一个 HTTP/2 Stream 中完成。3）四种通信模式：Unary（客户端发送一个请求，服务端返回一个响应）、Server-side streaming（服务端持续推送数据流）、Client-side streaming（客户端持续上传数据流）、Bidirectional streaming（双方同时发送接收数据流）。
+
+扩展延伸：gRPC vs REST：gRPC 适合高性能微服务间调用（低延迟、高吞吐），但浏览器不支持原生 gRPC（需要 gRPC-Web + Envoy 代理）。REST 以资源为中心，可读性强，适合对外开放的 API（浏览器可以直接调用）。gRPC 的限制：1）服务端负载均衡需要 L7（gRPC 基于 HTTP/2 长连接，L4 轮询失衡），通常需要 Kubernetes + Headless Service + 客户端侧负载均衡或 Envoy Sidecar。2）版本管理——.proto 文件变更要兼容。
+
+注意：gRPC 在 IoT 和移动端也有应用（grpc-java 和 grpc-swift），但 Web 端使用仍需 gRPC-Web 代理转换。""",
+  ["gRPC 为什么比 REST 性能高", "gRPC-Web 为什么需要代理层"],
+  ["gRPC", "Protocol Buffers", "HTTP/2", "微服务"])
+
+q("cs_basics", "hard", "short_answer",
+  "TCP TIME_WAIT 与 CLOSE_WAIT",
+  "TCP 连接关闭中的 TIME_WAIT 和 CLOSE_WAIT 状态分别在什么情况下产生？大量 TIME_WAIT 如何优化？",
+  """答案：TIME_WAIT 出现在主动关闭连接的一方（发送 FIN 并收到对端的 FIN ACK 后），持续 2MSL（默认 60s 在 Linux），确保旧连接的数据包不会干扰新连接。CLOSE_WAIT 是被动关闭方收到 FIN 后未调用 close() 导致。
+
+解析：1）TIME_WAIT 产生——当主动关闭方发送最后的 ACK 确认后进入 TIME_WAIT。两个作用：一是确保最后的 ACK 到达对端（如果 ACK 丢失，对端重传 FIN，主动关闭方会重发 ACK）；二是让本连接的所有延迟数据包在网络中自然消失（MSL = Maximum Segment Lifetime，Linux 默认 30s，2MSL = 60s）。2）CLOSE_WAIT——对端关闭连接（发送 FIN），本端回复 ACK 后进入 CLOSE_WAIT。此时本端应用程序尚未关闭 Socket（未调用 close()），CLOSE_WAIT 不会自动消失。大量 CLOSE_WAIT 通常是代码 bug——未在 finally 或 try-with-resources 中关闭连接。
+
+扩展延伸：大量 TIME_WAIT 优化：1）开启 net.ipv4.tcp_tw_reuse=1（Linux 3.6+，只对客户端发起连接有用——作为客户端主动发起新连接时可以重用 TIME_WAIT 状态的 socket，但前提是时间戳递增）。2）注意：Linux 4.12 移除了 tcp_tw_recycle 参数（因 NAT 环境下时间戳冲突产生问题）。3）减少 TIME_WAIT 的正确方式：如果是客户端（短连接调用方），使用连接池复用连接（如 HTTP 连接池、JDBC 连接池）减少主动关闭次数。4）调整 MSL：tcp_fin_timeout 参数调节 TIME_WAIT 时长（默认 60s，不是直接减 MSL）。5）服务端视角：让客户端主动关闭（Client 发 FIN），服务端做被动关闭方避免 TIME_WAIT（服务端发完数据后调用 shutdownOutput 而不是 close）。
+
+排查命令：netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}' 统计各状态数量。""",
+  ["TIME_WAIT 为什么是 2MSL 而不是别的值", "CLOSE_WAIT 大量堆积通常说明什么问题"],
+  ["TCP", "TIME_WAIT", "CLOSE_WAIT", "网络"])
+
+q("cs_basics", "hard", "short_answer",
+  "HTTPS 与 TLS 1.2 vs 1.3",
+  "TLS 1.2 和 1.3 的握手过程有什么区别？TLS 1.3 在性能和安全上有哪些改进？",
+  """答案：TLS 1.2 完整握手需要 2-RTT（4 次消息），TLS 1.3 只 1-RTT（2 次消息），并提供 0-RTT 会话恢复。TLS 1.3 删除了不安全算法（RSA 密钥交换、CBC 模式等），只支持 PFS（完美前向安全）。
+
+解析：TLS 1.2 完整握手：ClientHello → ServerHello + Certificate + ServerKeyExchange + ServerHelloDone → ClientKeyExchange + ChangeCipherSpec + Finished → ChangeCipherSpec + Finished（2 RTT）。TLS 1.3 完整握手：ClientHello（携带支持的密码套件和 Key Share 猜测）→ ServerHello + Certificate + Finished → Client Finished（1 RTT，客户端在第一个消息中就发送了密钥共享猜测）。
+
+扩展延伸：TLS 1.3 的安全性改进：1）移除 RSA 密钥交换——RSA 不能提供 PFS（私钥泄露后可解密所有历史流量），TLS 1.3 只支持 ECDHE（临时椭圆曲线 Diffie-Hellman）和 DHE。2）移除 CBC 模式加密——此前有 Padding Oracle 攻击（POODLE/Lucky 13）。3）移除 RC4——弱流密码（偏差攻击）。4）减少密码套件数量——从 37 个降为 5 个。
+
+0-RTT（TLS 1.3 会话恢复）：客户端之前在本地缓存了 PSK（Pre-Shared Key），再次连接时可以直接在 ClientHello 中携带加密数据，实现零往返延迟。风险：0-RTT 有重放攻击风险（需要服务端做幂等检查）。HTTPS 性能的优化工具：OCSP Stapling（服务端缓存证书撤销状态，减少客户端额外请求）、False Start（允许客户端在握手未完全完成时提前发送应用数据）。""",
+  ["TLS 1.3 为什么能比 1.2 少一个 RTT", "TLS 1.3 的 0-RTT 会话恢复存在什么安全风险"],
+  ["HTTPS", "TLS", "TLS 1.3", "安全"])
+
+q("cs_basics", "medium", "short_answer",
+  "HTTP 缓存机制",
+  "HTTP 的强缓存和协商缓存的区别是什么？Cache-Control 和 ETag 如何配合实现高效缓存？",
+  """答案：强缓存直接使用本地缓存（不请求服务器），通过 Expires/Cache-Control: max-age 控制。协商缓存向服务器验证缓存是否过期（返回 304 则用本地缓存），通过 Last-Modified/If-Modified-Since 和 ETag/If-None-Match 实现。
+
+解析：1）强缓存——浏览器检查 Cache-Control: max-age=31536000（优先级高于 Expires），如果未过期直接从本地磁盘/内存缓存读取，不发送 HTTP 请求。优先级：Cache-Control > Expires。Expires 是 HTTP/1.0 的过期时间（绝对时间，依赖客户端时钟），Cache-Control 是 HTTP/1.1 的相对时间（max-age 秒数）。2）协商缓存——强缓存过期后，浏览器向服务器发送验证请求。请求头 If-Modified-Since = 上次响应头的 Last-Modified（最近修改时间），服务器比对时间决定返回 304（文件未修改）或 200 + 新文件。请求头 If-None-Match = 上次响应头的 ETag（文件指纹，如 hash/版本号），服务器比对指纹决定。优先级：ETag > Last-Modified（ETag 更精确——能检测到秒级内的修改、inode 变化等 Last-Modified 无法感知的变化）。
+
+扩展延伸：Cache-Control 的其他指令：no-cache（不使用强缓存，但仍可使用协商缓存）、no-store（完全不缓存）、public（任何缓存都可缓存，包括 CDN）、private（仅浏览器可缓存，CDN 不可缓存）、must-revalidate（过期后必须向源服务器验证）。
+
+应用场景：静态资源（CSS/JS/图片）→ 强缓存 + 文件名 hash（webpack 的 contenthash）。HTML → no-cache 确保每次协商验证。API 响应 → 根据业务设置适当的 max-age 或 private/no-store。CDN 配合：静态资源上 CDN，Cache-Control 设置 public + 长 max-age + 文件名 hash + 版本路径。""",
+  ["为什么 ETag 比 Last-Modified 更精确", "Cache-Control: no-cache 和 no-store 的区别是什么"],
+  ["HTTP", "缓存", "Cache-Control", "ETag"])
+
+q("cs_basics", "medium", "short_answer",
+  "TCP Keepalive 与应用层心跳",
+  "TCP Keepalive 和应用层心跳检测机制有什么区别？各自的使用场景是什么？",
+  """答案：TCP Keepalive 是 TCP 协议内置的保活探测（内核实现），默认 2 小时探测一次，适合清理死连接。应用层心跳是应用代码中主动发送的 ping/pong 消息（自定义协议），频率灵活、可携带数据，适合实时检测对端存活状态。
+
+解析：TCP Keepalive（操作系统内核实现）：1）如果连接长时间空闲（默认 tcp_keepalive_time=7200s，即 2 小时），发送一个空的 ACK 探测包。2）连续探测 tcp_keepalive_probes=9 次（每次间隔 tcp_keepalive_intvl=75s）后仍未收到响应，则关闭连接。3）应用层感知到 read() 返回 -1 或 EPIPE 错误。4）缺点：默认周期太长（2 小时），不适合实时检测；仅检测 TCP 连接是否通（不能验证应用层是否正常）；无法携带数据。
+
+扩展延伸：应用层心跳（常见于 WebSocket/IM/微服务场景）：1）WebSocket 的 Ping/Pong 帧（控制帧，不带应用数据）。2）微服务间的健康检查——Spring Boot Actuator 的 /actuator/health 端点（HTTP 请求）。3）自定义心跳——发送轻量 ping 请求，对端回复 pong（可携带时间戳用于计算 RTT 延迟）。4）Nginx 健康检查——每 N 秒发送请求到后端，返回 200 则标记为健康，否则摘除。
+
+选型建议：长连接场景下的实时故障检测→ 必须使用应用层心跳（设置合适的超时，如 10-30s）+ 重试机制。仅为了及时清理系统中已死的 TCP 连接 → 开启 TCP Keepalive（调整内核参数缩短周期，如 tcp_keepalive_time=300s）。实际生产中一般两层都开：TCP Keepalive + 应用心跳，相互补充。注意：微信/QQ 等 IM 的心跳不仅有保活功能，还用于保持 NAT 映射不超时（NAT 映射通常 30-60s 失效）。""",
+  ["TCP Keepalive 为什么默认间隔 2 小时", "WebSocket 的 Ping/Pong 帧和 HTTP 健康检查有什么区别"],
+  ["TCP", "Keepalive", "心跳", "健康检查"])
+
+q("cs_basics", "medium", "short_answer",
+  "从 URL 输入到页面展示的完整过程",
+  "在浏览器中输入 URL 到页面展示的完整过程是怎样的？（经典面试题）",
+  """答案：DNS 解析 → TCP 三次握手 → TLS 握手（HTTPS）→ 发送 HTTP 请求 → 反向代理/负载均衡 → 应用处理 → 响应返回 → 浏览器解析渲染。
+
+解析：1）DNS 解析——浏览器缓存 → 操作系统缓存（hosts 文件）→ 本地 DNS 服务器（递归查询）→ 根 DNS → TLD DNS → 权威 DNS。2）TCP 连接——浏览器找到目标 IP 后，经过三次握手建立 TCP 连接（SYN → SYN+ACK → ACK）。3）TLS 握手（如果是 HTTPS）——通过加密握手协商对称密钥，TLS 1.3 仅需 1 RTT。4）发送 HTTP 请求——构建请求行/请求头/请求体，如果是 HTTP/2 则分帧在 Stream 中传输。5）负载均衡——Nginx/LVS 根据策略分发请求到后端应用服务器。6）应用处理——Spring Boot 等后端处理请求（拦截器→Controller→Service→DAO→数据库），返回响应。7）响应返回——服务端返回 HTML/JSON，通过反向代理回传给浏览器。8）浏览器渲染——解析 HTML 构建 DOM 树 → 解析 CSS 构建 CSSOM → 合并为 Render Tree → 布局（Layout/Reflow）→ 绘制（Paint）→ 合成（Composite）。9）后续资源加载——解析 HTML 时发现外部资源（CSS/JS/图片），发起新的 HTTP 请求并行下载。
+
+扩展延伸：优化点：1）DNS 缓存（浏览器/系统/CDN 预热）减少解析时间。2）CDN 加速静态资源，缩短网络路径。3）HTTP/2 多路复用减少连接开销。4）浏览器关键渲染路径优化：减少回流（Reflow）和重绘（Repaint）、CSS 放 head、JS 放 body 末尾或 async/defer 加载。5）Server-Side Rendering（SSR）加速首屏渲染。6）缓存策略：Service Worker 实现离线缓存和 PWA。注意：这是一个「一根筋」的综合性面试题，面试官想考察的是面试者的广度（网络 + 前端 + 后端 + 浏览器原理）以及是否能讲清楚链路中的关键阻塞点。""",
+  ["DNS 解析流程中浏览器和操作系统的缓存分别在什么阶段", "浏览器关键渲染路径（Critical Rendering Path）包含哪些步骤"],
+  ["网络", "HTTP", "DNS", "渲染"])
+
+# Write properly
+result = json.dumps(questions, ensure_ascii=False, indent=2)
+outpath = '/Users/petersun/DEV/labs/interview-app/backend/seed_data/design_network_extras.json'
+with open(outpath, 'w') as f:
+    f.write(result)
+print(f'Written: {len(questions)} questions to {outpath}')

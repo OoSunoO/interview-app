@@ -6,6 +6,7 @@ validate-data.py — Interview App 种子数据校验
   1. JSON 可解析
   2. 每道题有 title/type/answer 字段
   3. choice/multiple_choice 类型的选项有 A)/B) 前缀
+  4. fill_in_blank 类型的 answer 为合法 JSON（correct + distractors 格式）
 """
 
 import json
@@ -35,6 +36,54 @@ def check_required_fields(data: list, fields: list[str]) -> tuple[bool, str]:
                 missing.append(f"第 {i} 条缺少字段 '{f}'")
     if missing:
         return False, "; ".join(missing[:5])
+    return True, ""
+
+
+def check_fill_in_blank_answer(data: list) -> tuple[bool, str]:
+    """检查 fill_in_blank 的 answer 是否为合法 JSON 格式。
+
+    预期格式：
+      {"correct": [["词1", "同义词1"], ["词2"]], "distractors": ["干扰项1", "干扰项2"]}
+    """
+    issues = []
+    for i, item in enumerate(data):
+        if item.get("type") != "fill_in_blank":
+            continue
+        raw = item.get("answer", "")
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as e:
+            title = item.get("title", f"第{i}条")
+            issues.append(f"'{title}' fill_in_blank answer 不是合法 JSON: {e}")
+            continue
+
+        if not isinstance(parsed, dict):
+            title = item.get("title", f"第{i}条")
+            issues.append(f"'{title}' fill_in_blank answer 不是 JSON 对象")
+            continue
+
+        if "correct" not in parsed:
+            title = item.get("title", f"第{i}条")
+            issues.append(f"'{title}' fill_in_blank answer 缺少 correct 字段")
+        elif not isinstance(parsed["correct"], list) or len(parsed["correct"]) == 0:
+            title = item.get("title", f"第{i}条")
+            issues.append(f"'{title}' fill_in_blank answer.correct 应为非空数组")
+        else:
+            for j, group in enumerate(parsed["correct"]):
+                if not isinstance(group, list) or len(group) == 0:
+                    title = item.get("title", f"第{i}条")
+                    issues.append(f"'{title}' fill_in_blank answer.correct[{j}] 应为非空数组")
+                    break
+
+        if "distractors" not in parsed:
+            title = item.get("title", f"第{i}条")
+            issues.append(f"'{title}' fill_in_blank answer 缺少 distractors 字段")
+        elif not isinstance(parsed["distractors"], list):
+            title = item.get("title", f"第{i}条")
+            issues.append(f"'{title}' fill_in_blank answer.distractors 应为数组")
+
+    if issues:
+        return False, "; ".join(issues[:5])
     return True, ""
 
 
@@ -90,6 +139,12 @@ def main():
                 file_ok = False
 
             ok, err = check_options_prefix(data)
+            if not ok:
+                print(f"  ❌ {rel}: {err}")
+                total_errors += 1
+                file_ok = False
+
+            ok, err = check_fill_in_blank_answer(data)
             if not ok:
                 print(f"  ❌ {rel}: {err}")
                 total_errors += 1

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from collections import defaultdict
 from database import get_db
 from models import ProgressUpdate, StatsOverview
@@ -33,6 +33,13 @@ def sm2_next(quality: int, easiness: float, repetitions: int, interval: int):
 @router.post("/{question_id}")
 async def update_progress(question_id: int, body: ProgressUpdate):
     db = await get_db()
+
+    # Verify question exists
+    cursor = await db.execute("SELECT id FROM questions WHERE id = ?", (question_id,))
+    if not await cursor.fetchone():
+        await db.close()
+        raise HTTPException(status_code=404, detail="Question not found")
+
     cursor = await db.execute(
         "SELECT id, status, wrong_count, easiness, repetitions, next_review_at FROM user_progress WHERE question_id = ?",
         (question_id,),

@@ -1,6 +1,14 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from enum import Enum
+
+
+class ProgressStatus(str, Enum):
+    new = "new"
+    correct = "correct"
+    wrong = "wrong"
+    reviewing = "reviewing"
 
 
 class Question(BaseModel):
@@ -39,7 +47,7 @@ class QuestionDetail(Question):
 
 
 class ProgressUpdate(BaseModel):
-    status: str
+    status: ProgressStatus
     duration_seconds: int = 0
     notes: Optional[str] = None
 

@@ -77,7 +77,7 @@
     "type": "short_answer",
     "title": "API 网关的作用与设计",
     "content": "API 网关（Gateway）在微服务架构中扮演什么角色？常见的功能有哪些？",
-    "answer": "答案：API 网关是微服务的统一入口，负责路由、认证、限流、协议转换等横切关注点。\n\n解析：API 网关的典型功能：1）路由转发——根据请求路径转发到对应微服务。2）身份认证——统一校验 JWT/OAuth Token，避免每个服务重复实现。3）限流熔断——基于令牌桶/滑动窗口限流，集成 Hystrix/Sentinel 熔断。4）协议转换——HTTP 转 gRPC、外部协议转内部协议。5）日志监控——统一采集请求日志、调用链追踪。6）灰度发布——按 Header/Cookie/IP 路由到特定版本。\n\n扩展延伸：主流网关对比：Nginx + Lua（OpenResty）轻量高性能适合长连接；Kong 和 APISIX 基于 OpenResty 插件化；Spring Cloud Gateway 适合 Java 技术栈；Zuul 性能较差已边缘化。新一代方向是 Sidecar 模式（Service Mesh，如 Istio + Envoy）将网关能力下沉到 Sidecar 代理。",
+    "answer": "答案：API 网关是微服务的统一入口，负责路由、认证、限流、协议转换等横切关注点。\n\n解析：API 网关的典型功能：1）路由转发——根据请求路径转发到对应微服务。2）身份认证——统一校验 JWT/OAuth Token，避免每个服务重复实现。3）限流熔断——基于令牌桶/滑动窗口限流，集成 Sentinel/Resilience4j 熔断。4）协议转换——HTTP 转 gRPC、外部协议转内部协议。5）日志监控——统一采集请求日志、调用链追踪。6）灰度发布——按 Header/Cookie/IP 路由到特定版本。\n\n扩展延伸：主流网关对比：Nginx + Lua（OpenResty）轻量高性能适合长连接；Kong 和 APISIX 基于 OpenResty 插件化；Spring Cloud Gateway 适合 Java 技术栈；KrakenD 提供高性能 API 网关。新一代方向是 Sidecar 模式（Service Mesh，如 Istio + Envoy）将网关能力下沉到 Sidecar 代理。早期的 Zuul 1.x（基于 Servlet 同步阻塞）已停止维护，不推荐新项目使用。",
     "hints": ["网关和负载均衡器的区别", "Service Mesh 和 API 网关的职责如何划分"],
     "tags": ["系统设计", "微服务", "网关"]
   },
