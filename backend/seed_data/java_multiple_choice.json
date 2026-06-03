@@ -414,5 +414,100 @@
       "orElse 和 orElseGet 有什么区别"
     ],
     "tags": ["Java 8", "Optional"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "自动装箱与缓存池",
+    "content": "以下代码输出什么？\n```java\nInteger a = 127;\nInteger b = 127;\nInteger c = 128;\nInteger d = 128;\nSystem.out.println(a == b);\nSystem.out.println(c == d);\n```",
+    "answer": "答案：A)。解析：Integer 缓存池（享元模式）默认缓存 [-128, 127] 区间的 Integer 对象。a 和 b 的值在缓存范围内，指向同一个对象，所以 a == b 为 true。c 和 d 的值 128 超出缓存范围，每次自动装箱创建新对象，所以 c == d 为 false。Integer 缓存上限可以通过 -XX:AutoBoxCacheMax 调整。Long 也有同样的缓存范围 [-128, 127]，但 Double 和 Float 没有缓存。",
+    "options": [
+      "A) true false",
+      "B) true true",
+      "C) false true",
+      "D) false false"
+    ],
+    "hints": [
+      "自动装箱调用的是 Integer.valueOf()",
+      "-XX:AutoBoxCacheMax 可以调整缓存上限"
+    ],
+    "tags": ["基础", "装箱", "缓存"]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "静态方法与动态分派",
+    "content": "以下代码输出什么？\n```java\nclass A { String f() { return \"A\"; } }\nclass B extends A { String f() { return \"B\"; } }\npublic class Main {\n  public static void main(String[] args) {\n    A obj = new B();\n    System.out.println(obj.f());\n  }\n}\n```",
+    "answer": "答案：B)。解析：输出 \"B\"。这是 Java 的动态单分派（Dynamic Dispatch）——编译时变量类型是 A（静态类型），但运行时实际对象类型是 B（实际类型）。方法调用根据实际类型决定调用哪个版本的方法。Java 的方法重写（Override）基于运行时类型进行动态分派；方法重载（Overload）基于编译时静态类型进行静态分派。多态的运行时表现。",
+    "options": [
+      "A) A",
+      "B) B",
+      "C) 编译错误",
+      "D) 运行时报错"
+    ],
+    "hints": [
+      "编译看左边（声明类型），运行看右边（实际类型）",
+      "成员变量（字段）没有多态性"
+    ],
+    "tags": ["面向对象", "多态", "继承"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "ConcurrentHashMap 的分段锁",
+    "content": "关于 ConcurrentHashMap 的线程安全机制，以下哪些描述是正确的？",
+    "answer": "答案：A)、B)、C)。解析：JDK 7 ConcurrentHashMap 使用 Segment（分段锁）继承 ReentrantLock，将数据分为 16 段，每段独立加锁，理论上支持 16 个线程并发写。JDK 8 分段锁已被取代：直接使用 Node 数组 + CAS + synchronized（只锁链表/红黑树头节点），并发粒度更细、内存占用更少。JDK 8 还在链表转红黑树时使用 TreeBin 的读写锁优化并发。ConcurrentHashMap 的迭代器是弱一致性（Weakly Consistent）的——迭代期间允许修改，不抛 ConcurrentModificationException。",
+    "options": [
+      "A) JDK 7 中使用 Segment 分段锁实现线程安全",
+      "B) JDK 8 中使用 CAS + synchronized 实现线程安全",
+      "C) 迭代器是弱一致性的，不抛 ConcurrentModificationException",
+      "D) ConcurrentHashMap 不允许 null 键，但允许 null 值"
+    ],
+    "hints": [
+      "分段锁的设计演进",
+      "ConcurrentHashMap 和 HashTable 的性能差异来源"
+    ],
+    "tags": ["并发", "ConcurrentHashMap"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "ThreadLocal 内存泄漏",
+    "content": "以下关于 ThreadLocal 可能导致内存泄漏的描述，哪些是正确的？",
+    "answer": "答案：A)、C)、D)。解析：ThreadLocalMap 的 Entry 继承 WeakReference，key（ThreadLocal 实例）是弱引用，value 是强引用。当 ThreadLocal 对象没有外部强引用时，GC 会回收 key，但 value 仍然存在。此时 Entry 的 key 为 null，value 无法被访问（thread 存活期间不会被回收），造成内存泄漏。最佳实践：每次使用后调用 remove() 清理。Tomcat 等 Web 服务器使用线程池，线程复用会加剧泄漏风险——一个请求的 ThreadLocal 数据可能被下一个请求读到。",
+    "options": [
+      "A) ThreadLocalMap 的 Entry key 是弱引用",
+      "B) ThreadLocal 默认会在线程结束时自动清理所有数据",
+      "C) 线程池场景下 ThreadLocal 内存泄漏风险更大",
+      "D) 推荐每次使用后调用 remove() 方法清理"
+    ],
+    "hints": [
+      "弱引用会在 GC 时被回收",
+      "线程池中线程复用导致 ThreadLocal 值无法被自动回收"
+    ],
+    "tags": ["并发", "ThreadLocal", "内存泄漏"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "JIT 编译优化",
+    "content": "以下关于 JIT（Just-In-Time）编译的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：JIT 将热点代码（HotSpot，执行次数达阈值后）编译为本地机器码，大幅提升执行效率。阈值由 -XX:CompileThreshold 控制（Client 模式 1500，Server 模式 10000）。逃逸分析（Escape Analysis）是 JIT 的关键优化：如果对象不逃逸方法或线程，可做栈上分配（消除堆分配）和同步消除（去掉不必要的锁）。方法内联（Inlining）将小方法体直接嵌入调用处，减少方法调用开销——这是 JIT 最重要的优化之一。JDK 8u40+ 支持分层编译（Tiered Compilation），结合 C1（轻量快速）和 C2（深度优化）的优势。",
+    "options": [
+      "A) JIT 将热点代码编译为本地机器码",
+      "B) 逃逸分析可实现栈上分配和同步消除",
+      "C) 所有代码都会被执行 JIT 编译",
+      "D) 方法内联是 JIT 最重要的优化手段之一"
+    ],
+    "hints": [
+      "JIT 只编译热点代码，不是所有代码",
+      "逃逸分析 -XX:+DoEscapeAnalysis 默认开启"
+    ],
+    "tags": ["JVM", "JIT", "性能优化"]
   }
 ]

@@ -96,7 +96,6 @@
     "type": "short_answer",
     "title": "Horizontal Pod Autoscaler",
     "content": "请解释 HPA（水平 Pod 自动伸缩）的工作原理。",
-    "author": "Peter Sun",
     "answer": "HPA 根据 Pod 的 CPU/内存使用率或自定义指标（如 QPS）自动调整 Deployment 的副本数。原理：HPA 控制器定期（默认 15s）从 Metrics Server 获取 Pod 指标，计算期望副本数 = 当前副本数 × (当前指标值 / 目标指标值)。配合 Cluster Autoscaler 可实现节点级自动扩缩容——Pod 因资源不足 Pending 时自动添加节点。",
     "hints": [
       "Metrics Server 和 Prometheus Adapter 的区别",
@@ -129,5 +128,70 @@
       "ServiceAccount 是 Pod 的身份，不是用户的身份"
     ],
     "tags": ["Kubernetes", "RBAC", "安全"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "DaemonSet / StatefulSet / Deployment",
+    "content": "请比较 DaemonSet、StatefulSet 和 Deployment 的适用场景。",
+    "answer": "Deployment：无状态应用，Pod 可互换、顺序不重要（如 Web Server、API）。StatefulSet：有状态应用，每个 Pod 有唯一标识和稳定网络标识、有序部署和伸缩（如数据库、ZooKeeper、Kafka）。DaemonSet：每个节点上运行一个 Pod 实例，新增节点自动加入（如日志采集 Filebeat、监控 Node Exporter、CNI 网络插件）。StatefulSet 需要配合 Headless Service 使用。",
+    "hints": [
+      "StatefulSet 的 Pod 名称为什么是有序的",
+      "DaemonSet 在节点故障时 Pod 会怎样"
+    ],
+    "tags": ["Kubernetes", "Workload"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "网络策略（NetworkPolicy）",
+    "content": "请解释 Kubernetes NetworkPolicy 的工作原理和典型配置。",
+    "answer": "NetworkPolicy 是 K8s 的 Pod 级网络防火墙，通过标签选择器定义 Pod 的入站（Ingress）和出站（Egress）规则。默认 Pod 间网络互通（全开放），配置 NetworkPolicy 后只允许匹配规则的流量。需要 CNI 插件支持（Calico、Cilium、Weave Net 等）。典型场景：只允许前端 Pod 访问后端 Pod（隔离微服务间流量）、只允许监控系统访问 metrics 端口。",
+    "hints": [
+      "没有 CNI 插件支持时 NetworkPolicy 会生效吗",
+      "Cilium 基于 eBPF 实现的 NetworkPolicy 有什么优势"
+    ],
+    "tags": ["Kubernetes", "网络", "安全"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "污点（Taints）与容忍（Tolerations）",
+    "content": "请解释 Taints 和 Tolerations 的作用及 Node Affinity 的区别。",
+    "answer": "Taint 是标记在 Node 上的属性，表明该节点有特殊约束（如专用 GPU 节点、系统组件专用节点）。Pod 必须有匹配的 Toleration 才能调度到该节点。Taint 效果：NoSchedule（不调度新 Pod）、PreferNoSchedule（尽量不调度）、NoExecute（驱逐已有不匹配的 Pod）。与 Node Affinity 的区别：Affinity 是 Pod 主动选择 Node（吸引），Taint 是 Node 拒绝 Pod（排斥），两者通常结合使用。",
+    "hints": [
+      "master 节点默认有 Taint 防止用户 Pod 调度到上面",
+      "NoExecute 效果会影响已运行的 Pod"
+    ],
+    "tags": ["Kubernetes", "调度", "Taint"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Helm 包管理",
+    "content": "请介绍 Helm 的作用和核心概念。",
+    "answer": "Helm 是 K8s 的包管理器（类比 apt/yum）。核心概念：Chart（K8s 资源模板 + 默认值的打包格式，如 Nginx Chart 包含 Deployment/Service/ConfigMap）、Release（Chart 的一次部署实例，同一 Chart 可部署多次产生不同 Release）、Repository（Chart 仓库）。Helm 通过 Go Template 实现参数化部署——values.yaml 覆盖 Chart 默认值。Helm 3 移除了 Tiller（服务端组件），纯客户端架构更安全。",
+    "hints": [
+      "Helm 2 和 Helm 3 的主要区别",
+      "helm template 命令可以在不实际部署的情况下渲染 YAML"
+    ],
+    "tags": ["Kubernetes", "Helm", "包管理"]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Custom Resource Definition 与 Operator",
+    "content": "请解释 CRD（Custom Resource Definition）和 Operator 模式。",
+    "answer": "CRD 允许用户扩展 K8s API，定义自己的资源类型（如 EtcdCluster、BackupJob）。Operator = CRD + Controller（自定义控制器），实现特定应用的运维自动化。典型 Operator：etcd-operator（自动备份/恢复/扩容）、Prometheus Operator（管理监控实例）、Strimzi（管理 Kafka 集群）。Operator 模式将运维知识编码为软件，让 K8s 以声明式方式管理复杂有状态应用。",
+    "hints": [
+      "CRD 定义的资源能否和原生资源一样用 kubectl",
+      "Operator 与 Helm 的本质区别：Helm 部署时自动化 vs Operator 运行时持续自动化"
+    ],
+    "tags": ["Kubernetes", "CRD", "Operator"]
   }
 ]
