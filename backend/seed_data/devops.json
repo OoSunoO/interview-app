@@ -603,5 +603,189 @@
       "监控",
       "Grafana"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Docker 多阶段构建与 Distroless 镜像",
+    "content": "Docker 多阶段构建如何优化最终镜像大小？为什么 Distroless 镜像比 Alpine 更安全？如何将容器镜像压缩到最小？",
+    "answer": "答案：多阶段构建将构建环境和运行环境分离——第一阶段用完整 SDK 编译，第二阶段用极简基础镜像只复制产物。Distroless 只包含应用和运行时依赖（无 shell、无包管理器、无工具），攻击面最小化。Go 静态编译 + scratch（空镜像）可达 KB 级；Java Spring Boot + GraalVM Native Image + Distroless 可压缩到 50MB 左右。\n\n解析：多阶段构建流程——Dockerfile 多个 FROM 语句，每个 FROM 开始新阶段，AS 命名。COPY --from=前一阶段名复制产物。以 Spring Boot 为例：Stage 1（maven:3.8-eclipse-temurin-17 编译 jar）→ Stage 2（eclipse-temurin:17-jre-alpine 复制 jar）→ 最终镜像约 180MB（对比完整 SDK 镜像 1.2GB）。Distroless vs Alpine——Alpine 基于 musl libc（约 5MB），有 apk 包管理器和 shell。Distroless（Google 维护）基于 Debian 但不含 shell、ls、curl 等工具。如果攻击者通过应用漏洞进入 Distroless 容器，无法执行命令（无 bash、无 apt、无 nc），极大限制横向移动。极端压缩策略——Go：CGO_ENABLED=0 静态编译 + FROM scratch，二进制 < 15MB。Java：Spring Boot + GraalVM Native Image + Distroless Base 约 50MB。\n\n扩展延伸：镜像安全工具——Docker Scout（CVE 匹配）、Trivy（多语言/OS 支持）、Snyk（深度依赖分析）。Distroless 的生产排查问题——无法 docker exec shell 进入容器排障。解决：单独的 debug 容器（同一 Pod 的 sidecar 带完整 shell 工具链）或临时 Ephemeral Container（K8s v1.23+）。GCR Distroless 镜像系列：distroless/java、distroless/nodejs、distroless/python、distroless/cc。生产建议：80% 场景用 Alpine + apk 已足够，高安全要求用 Distroless。",
+    "hints": [
+      "Distroless 镜像没有 shell 如何进容器排查问题",
+      "多阶段构建中 COPY --from 是如何跨阶段复制文件的"
+    ],
+    "tags": [
+      "Docker",
+      "多阶段构建",
+      "Distroless",
+      "镜像安全"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务可观测性三大支柱实战",
+    "content": "日志（Logs）、指标（Metrics）、链路追踪（Traces）三者如何协同工作？OpenTelemetry 如何统一可观测性？如何根据告警快速定位问题根因？",
+    "answer": "答案：三大支柱分工——日志记录离散事件（排障细节），指标聚合趋势（监控告警），链路追踪关联请求（全链路定位）。OpenTelemetry 统一采集 API 和导出标准（OTLP），覆盖三类数据。根因定位流程：告警触发 → 查指标确定影响范围 → 查链路追踪定位异常服务 → 查关联日志定位具体代码。\n\n解析：三大支柱详解——1）日志（Logs）：结构化 JSON 格式（timestamp/level/logger/thread/message/traceId/spanId）。通过 MDC 自动注入 traceId。采集：Filebeat → Logstash → Elasticsearch → Kibana（ELK）。2）指标（Metrics）：时间序列数据（metric, labels, value, timestamp）。Prometheus 四种指标类型——Counter（累计）、Gauge（可增减）、Histogram（延迟分布）、Summary（分位数）。Exporter 采集 → Prometheus Server 拉取 → Alertmanager 告警 → Grafana 展示。3）链路追踪（Traces）：Trace → Span（traceId/spanId/parentSpanId）。Zipkin/Jaeger 存储展示。采样策略——Head-based 采样（在入口处决定）或 Tail-based 采样（根据结果决定是否保留，更精准）。SRE 黄金指标转 PromQL——延迟 p99：histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))。错误率：rate(http_requests_total{status=~\"5..\"}[5m])。饱和度：node_memory_MemAvailable / node_memory_MemTotal。\n\n扩展延伸：OpenTelemetry（CNCF 孵化）——合并 OpenTracing 和 OpenCensus。一次接入（API + SDK），可导出到多种后端。架构：OTel Collector（Agent/Gateway 模式）→ Processor（批处理/过滤/采样）→ Exporter → 后端。OTel 的自动埋点：Java Agent（字节码增强自动拦截框架调用）、Python/SDK、Go SDK。与 Prometheus 集成：OTel 可直接导出到 Prometheus 或通过 OTel Collector 的 Prometheus exporter。",
+    "hints": [
+      "OTel 的自动埋点和手动埋点分别什么时候用",
+      "Tail-based 采样相比 Head-based 有什么优势"
+    ],
+    "tags": [
+      "可观测性",
+      "OpenTelemetry",
+      "Prometheus",
+      "链路追踪",
+      "SRE"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 调度器原理与自定义调度策略",
+    "content": "Kubernetes 调度器如何选择 Pod 应当调度到哪个 Node？如何实现自定义调度、节点亲和性和资源超分？",
+    "answer": "答案：K8s 调度器通过两阶段选择节点——过滤（Filtering）排除不符合条件的节点，打分（Scoring）对剩余节点排序选最优。自定义调度通过 NodeSelector/NodeAffinity/PodAffinity/Taints & Tolerations 实现。资源超分通过设置 requests < limits 实现（存在 OOM 风险）。\n\n解析：调度流程——1）过滤阶段：检查节点资源充足（Pod requests 总和 < 节点可分配量）、端口不冲突、主机名和标签匹配（NodeSelector/NodeAffinity）、Taints/Tolerations（不匹配 taint 的 Pod 不能调度）、PodAffinity/AntiAffinity（同/反亲和性）、卷拓扑约束。2）打分阶段：默认策略 LeastRequestedPriority（资源利用率低的节点优先）和 BalancedResourceAllocation（CPU/内存均衡）。最终选最高分节点。高级调度——NodeSelector：简单的标签匹配。NodeAffinity：requiredDuringScheduling（硬）和 preferredDuringScheduling（软）。PodAffinity/AntiAffinity：将 Pod 调度到一起或分散在不同节点。Taints：NoSchedule/PreferNoSchedule/NoExecute。Tolerations：Pod 声明可容忍的污点。自定义调度器——编写扩展调度器（实现 Extender 接口）+ Scheduler Framework 插件（Filter/Score/PreScore 等扩展点）。\n\n扩展延伸：资源超分与 QoS 等级——Guaranteed（requests=limits，最高优先）、Burstable（requests<limits，中等）、BestEffort（无 requests/limits，节点压力时优先被驱逐）。建议：重要业务用 Guaranteed，批处理用 Burstable 超分。Descheduler 定期重平衡不合理的 Pod 分配。Cluster Autoscaler 基于调度失败事件自动扩缩节点池。Karpenter（AWS 开源）比 Cluster Autoscaler 创建节点更快（秒级 vs 分钟级），直接调用 EC2 API。",
+    "hints": [
+      "Taints 和 Tolerations 如何配合实现节点专用化",
+      "三种 QoS 等级在节点资源紧张时驱逐的先后顺序"
+    ],
+    "tags": [
+      "K8s",
+      "调度器",
+      "亲和性",
+      "QoS",
+      "资源超分"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CI/CD 流水线安全实践",
+    "content": "CI/CD 流水线有哪些常见安全风险？如何保护流水线中的密钥和凭证？如何在流水线中集成安全扫描（SAST/DAST/SCA）？",
+    "answer": "答案：CI/CD 常见安全风险——密钥泄露（硬编码/明文传递）、供应链攻击（依赖被篡改）、镜像漏洞（基础镜像 CVE）、越权执行（PR 触发未授权部署）。密钥保护通过 CI/CD 内置 Secret 变量（加密存储，运行时注入）或外部密钥管理（HashiCorp Vault/AWS Secrets Manager）。安全扫描集成策略：SCA（依赖扫描）→ SAST（静态代码分析）→ 镜像扫描 → DAST（动态安全测试）按阶段依次插入。\n\n解析：六层安全防线——1）代码：SAST 工具（SonarQube/CodeQL/Semgrep）扫描 SQL 注入、XSS、硬编码密码。Quality Gate 设阻断阈值。2）依赖：SCA（Snyk/Dependabot/OWASP Dependency-Check）扫描三方库已知 CVE。Critical 漏洞阻断构建。3）镜像：Trivy/Clair 扫描漏洞。验证镜像签名（Cosign）、非 root 运行。4）部署：策略即代码——OPA/Gatekeeper/Kyverno 验证部署清单（禁止 latest 镜像、必须设资源限制）。5）运行时：Falco（异常检测）、kube-bench（CIS 检查）。6）密钥管理——内置 Secret（GitHub Actions Secrets/GitLab CI/CD Variables）。外部方案：Vault 动态密钥 + 自动轮转。GitHub Actions 中 OIDC token 替代长期密钥（Workload Identity Federation）。\n\n扩展延伸：供应链安全 SLSA 框架——SLSA L1（有构建过程）→ L2（构建隔离 + 出处证明）→ L3（可复现 + 不可变构建）。Sigstore（Cosign 签名 + Fulcio 证书 + Rekor 透明日志）。GitHub Actions 最小权限——每个 Job 独立 token，scope 最小化。零信任 CI/CD——每个步骤最小权限、短期凭证、审计日志、不可变构建。知名攻击案例——Codecov（修改 bash uploader 窃取 CI 环境变量）、SolarWinds（构建系统被植入后门）、log4j（供应链依赖漏洞）。",
+    "hints": [
+      "SLSA 框架在供应链安全中定义了几个等级",
+      "为什么 CI/CD 中的密钥要用外部密钥管理而非环境变量"
+    ],
+    "tags": [
+      "CI/CD",
+      "安全",
+      "SAST",
+      "供应链",
+      "密钥管理"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s HPA 与弹性伸缩体系",
+    "content": "Kubernetes HPA 如何基于指标自动伸缩 Pod 副本数？如何确定合理的资源请求和限制？HPA、VPA、Cluster Autoscaler 如何配合实现完整弹性伸缩？",
+    "answer": "答案：HPA 周期性检查 Pod 指标（CPU/内存/自定义指标）使用率，计算期望副本数（currentMetricValue / desiredMetricValue x currentReplicas），修改 Deployment replicas 实现水平伸缩。资源 requests 基于历史 p99 使用量，limits 按 requests 的 1.5-2 倍设定。HPA（水平 Pod 伸缩）+ VPA（垂直调整 requests/limits）+ Cluster Autoscaler（节点伸缩）三件套实现完整弹性。\n\n解析：HPA 原理——1）默认 15 秒间隔从 Metrics Server 读取 Pod 指标。2）算法：desiredReplicas = ceil[currentReplicas x (currentMetricValue / desiredMetricValue)]。3）冷却逻辑：扩容无延迟，缩容默认 5 分钟冷却（--horizontal-pod-autoscaler-downscale-stabilization）。4）多指标时取最大副本数。自定义指标——Prometheus Adapter 提供 custom.metrics.k8s.io 接口，支持基于 QPS、队列深度、延迟等业务指标伸缩。KEDA（KEDA.sh）扩展事件源——Kafka/RabbitMQ/SQS/Prometheus。资源设定——requests 根据 99 分位历史用量定（保证调度），limits 按 1.5-2 倍设（允许突发峰值）。VPA 的 Recommendation 模式自动分析历史用量给出建议值。Goldilocks 工具可视化推荐值。\n\n扩展延伸：三件套协同流程——1）VPA 离线分析历史数据调整 requests。2）HPA 根据实际用量伸缩 Pod 数。3）Pod 因资源不足 Pending → Cluster Autoscaler 扩容节点池。4）低谷 → HPA 缩容 → CA 识别低负载节点迁移 Pod 后缩容节点。注意：VPA 和 HPA 共用 CPU/内存指标时冲突，标准做法是互斥使用（VPA 管 CPU/内存，HPA 管自定义指标）。Karpenter（AWS）比 Cluster Autoscaler 更快（秒级响应），直接管理 EC2 实例而非节点组。",
+    "hints": [
+      "HPA 计算期望副本数时多条指标如何决定最终值",
+      "VPA 和 HPA 为何不能共享 CPU/内存指标"
+    ],
+    "tags": [
+      "K8s",
+      "HPA",
+      "VPA",
+      "Cluster Autoscaler",
+      "弹性伸缩"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GitOps 工作流与 ArgoCD",
+    "content": "什么是 GitOps？它与传统 CI/CD 有什么本质区别？GitOps 的核心原则是什么？ArgoCD 如何实现 GitOps？",
+    "answer": "答案：GitOps 以 Git 仓库作为声明式基础设施和应用的唯一真相来源（Single Source of Truth），所有环境状态变更通过 Git 操作（Pull Request）驱动，自动同步到目标集群。核心区别：GitOps 是 Pull-based（Agent 从 Git 拉取期望状态），传统 CI/CD 是 Push-based（CI 工具推送到环境）。\n\n解析：GitOps 的核心原则（Weaveworks 定义）——1）声明式描述：整个系统用声明式配置文件定义（K8s YAML、Terraform、Helm Chart），而不是命令式脚本。2）Git 作为唯一真相来源：所有环境（开发、预发、生产）的期望状态都存储在 Git 中。3）自动同步：GitOps Operator（如 ArgoCD、Flux CD）持续对比 Git 中的期望状态和集群中的实际状态，自动（或手动批准）将集群同步到期望状态。4）自愈机制：如果有人在集群中手动修改了资源（配置漂移），Agent 会检测到偏差并自动回滚到 Git 中的状态。\n\n扩展延伸：GitOps 的实践——1）ArgoCD 工作流程：开发修改 K8s Manifest -> PR 审批合并到 main -> ArgoCD 检测到 Git 变更 -> 自动同步到集群（可通过 Sync Policy 控制自动/手动同步）。2）GitOps vs CI/CD：CI/CD 负责「构建和验证」（CI 阶段和 CD 初始化阶段），GitOps 负责「部署和同步」（持续保证集群与 Git 一致）。两者互补。3）多环境管理：Kustomize overlay 或 Helm Value 文件区分开发/预发/生产环境配置。4）渐进式交付：结合 Argo Rollouts 实现蓝绿部署、金丝雀发布、自动化回滚。GitOps 的优势：操作可审计（所有变更通过 Git 有记录）、更好的故障恢复（回滚 = git revert）、开发自服务。",
+    "hints": [
+      "GitOps 中的 Pull-based 部署比 Push-based 有什么优势",
+      "ArgoCD 如何检测和修复配置漂移"
+    ],
+    "tags": [
+      "GitOps",
+      "ArgoCD",
+      "CI/CD",
+      "K8s"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "蓝绿部署与金丝雀发布",
+    "content": "蓝绿部署（Blue-Green Deployment）和金丝雀发布（Canary Release）的策略是什么？各自解决什么问题？如何选择？",
+    "answer": "答案：蓝绿部署维护两套完全相同的生产环境（蓝和绿），新版本部署到空闲环境后，通过切换流量一次性升级。金丝雀发布新版本先让少量用户使用，观察无问题后逐步扩大流量比例。两种策略的目标都是降低发布风险。\n\n解析：蓝绿部署——两套环境：绿环境（当前线上版本），蓝环境（新版本）。部署流程：1）在蓝环境部署新版。2）运行验证测试（smoke test 或健康检查）。3）切换路由/负载均衡器将流量从绿切换到蓝。4）出现问题立即切回绿。优点：切换快（秒级），回滚速度快。缺点：资源成本翻倍（需运行两套环境），数据库兼容（数据库架构变更需向前/向后兼容）。金丝雀发布——1）初始阶段：将 1%-5% 的流量导向新版本（金丝雀实例）。2）监控：观察新版本的错误率、延迟、业务指标。3）逐步扩量：10% -> 25% -> 50% -> 100%。4）评估指标并在任何阶段发现问题时自动回滚。优点：风险可控，影响范围小。缺点：发布周期长，需要完善的监控和自动化。\n\n扩展延伸：选择建议——1）蓝绿部署适合：发布频率低、环境稳定、资源充足的项目。2）金丝雀发布适合：高流量业务、需要灰度验证、对稳定性要求极高的系统（如支付宝、Google 搜索）。3）混合策略：先用金丝雀验证（小流量），确认无误后蓝绿全量切换。K8s 实现——蓝绿：通过 Service Selector 切换 label（version=v1 -> version=v2）。金丝雀：通过 Deployment 创建多个版本 Pod，Service 加权分发（如 Istio/Argo Rollouts 控制流量比例）。",
+    "hints": [
+      "蓝绿部署中数据库变更（Schema Migration）如何兼容——向前兼容和向后兼容",
+      "K8s 原生 Service 能做金丝雀发布吗——为什么需要 Service Mesh（如 Istio）"
+    ],
+    "tags": [
+      "蓝绿部署",
+      "金丝雀发布",
+      "发布策略",
+      "Argo Rollouts"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "混沌工程原理与实践",
+    "content": "什么是混沌工程？它和传统软件测试（单元测试、集成测试）有什么本质区别？混沌工程的核心原则是什么？Netflix 的 Chaos Monkey 是如何工作的？",
+    "answer": "答案：混沌工程通过在生产环境中主动注入故障，验证系统在面对不可预测的故障时是否具备弹性。与传统测试不同，混沌工程不是验证功能正确性，而是探索系统的脆弱性——「已知的未知」和「未知的未知」。核心原则：在生产环境实验、控制爆炸半径、自动化持续运行。\n\n解析：混沌工程的核心原则（Principles of Chaos Engineering）：1）构建稳定状态的假设——定义系统的「正常」行为基线（如 P99 延迟 < 200ms、错误率 < 0.1%）。2）引入真实世界的故障——注入故障类型包括：实例崩溃（Chaos Monkey 随机杀掉 EC2 实例）、网络延迟和分区（网络丢包/延迟注入）、资源耗尽（CPU 打满、磁盘写满）、DNS 故障、证书过期。3）在生产环境中运行——（或镜像生产流量的预发环境），因为只有真实流量模式才能暴露真实问题。4）自动化持续运行——混沌实验不是一次性的，而是持续的流程。5）控制爆炸半径——最小化影响范围，设置自动熔断机制（如果 SLO 被违反则自动停止实验）。\n\n扩展延伸：Netflix Chaos Engineering 工具链——Chaos Monkey（随机终止实例）+ Chaos Kong（模拟 AWS Region 故障）+ Latency Monkey（注入延迟）+ Conformity Monkey（检测不符合最佳实践的实例）。开源替代：Chaos Mesh（K8s 原生，支持 Pod 级别故障注入）、Litmus（云原生混沌工程平台）、Gremlin（商业版）。工程实践：1）从最不危险的故障开始（如只杀一个边缘服务的 Pod）。2）先有监控告警再开始混沌实验。3）实验前设置「实验假设是否被违反」的判断条件。4）从预发 -> 灰度小范围 -> 生产全量逐步推进。重要提醒：混沌工程不等于「瞎搞」（不设护栏的随机破坏），而是在可控范围内系统性验证。",
+    "hints": [
+      "混沌工程的「假设」是如何验证的——如何定义一个实验成功或失败",
+      "Chaos Monkey 为什么选择随机终止实例而不通知（随机性的意义）"
+    ],
+    "tags": [
+      "混沌工程",
+      "Chaos Engineering",
+      "Chaos Monkey",
+      "弹性"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "容量规划与弹性伸缩",
+    "content": "什么是容量规划（Capacity Planning）？它的核心目标和方法是什么？如何结合水平伸缩（HPA）和垂直伸缩（VPA）实现弹性？容量规划中常见的陷阱有哪些？",
+    "answer": "答案：容量规划是通过分析历史负载趋势、设定资源预算、规划未来扩容方案，确保系统在成本可控的前提下满足业务增长和突发流量。核心方法包括业务驱动预测、压测峰值估算、资源利用率建模。弹性伸缩使系统能够根据实际负载自动调整资源。\n\n解析：容量规划的步骤——1）数据收集：采集 CPU/内存/磁盘/网络的使用率、QPS 趋势、请求延迟分布、每月增长速率。2）预测建模：线性回归（稳定增长）、周期性分析（电商有 11.11 高峰，教育有寒暑假高峰）、指数平滑。3）设定阈值和预留：确定资源利用率的预警水位（如 CPU > 70% 预警）、目标水位（如 CPU 目标利用率 50%）、紧急水位（如 CPU > 90% 触发扩缩容）。4）弹性伸缩策略——水平伸缩（HPA，Horizontal Pod Autoscaler）：增加/减少实例数量，受启动时间（冷启动）限制。垂直伸缩（VPA，Vertical Pod Autoscaler）：增加/减少单个实例的资源（CPU/内存），需要重启实例。组合策略：VPA 保证单个 Pod 的资源充足，HPA 保证整体容量弹性。5）突发流量预案：提前预热缓存、扩容临时集群、降级非核心服务、限流保护。\n\n扩展延伸：容量规划的常见陷阱——1）过度规划（Over-provisioning）：按峰值容量长期运行，成本浪费 50%-70%。解决方案：弹性 + 按需购买（云原生）。2）预测偏差：业务增长预测不准（涨得太快或太慢）。解决方案：定期重新评估（每季度/每月）。3）冷启动问题：HPA 扩容时需要拉镜像、JVM 预热，耗时 1-5 分钟。突发流量在这段时间内可能打垮现有实例。解决方案：预先保持适量冗余（Buffer）、使用 PDB（Pod Disruption Budget）保护核心实例、结合 KEDA（基于事件驱动）提前扩容。4）资源争抢：不同业务混部时，一个业务的突发影响其他业务。解决方案：资源隔离（Namespace ResourceQuota）、服务质量分级（Guaranteed/Burstable/BestEffort）。",
+    "hints": [
+      "水平伸缩和垂直伸缩各自适合什么场景——JVM 应用为什么冷启动慢",
+      "Kubernetes HPA 基于 CPU/Metrics 的扩缩容为什么有时不够及时"
+    ],
+    "tags": [
+      "容量规划",
+      "HPA",
+      "VPA",
+      "弹性伸缩"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "可观测性三大支柱",
+    "content": "可观测性（Observability）的三大支柱是什么？它们各自的定位、数据模型和典型工具是什么？可观测性和传统监控的区别是什么？",
+    "answer": "答案：可观测性三大支柱：指标（Metrics）、日志（Logs）、链路追踪（Traces）。传统监控关注「已知可能出问题的地方」（设置阈值告警），可观测性关注「未知的问题」（没有预设阈值的探索式分析），让你在任何时候都能回答「系统现在为什么是这个状态」。\n\n解析：三大支柱详解——1）指标（Metrics）——时序数据，记录系统状态随时间变化。数据模型：指标名 + 标签（Label/Tag）+ 时间戳 + 值。类型：Counter（累计计数，如请求总数）、Gauge（可增可减，如当前连接数）、Histogram（分布统计，如请求延迟分位数 P50/P99）、Summary（预计算的分位数聚合）。典型工具：Prometheus + Grafana。2）日志（Logs）——带时间戳的离散事件，记录应用运行过程中发生的事件。原始格式：非结构化文本或结构化 JSON。集中方案：ELK（Elasticsearch + Logstash + Kibana）/ EFK（Fluentd 替代 Logstash）/ Loki（轻量级日志聚合，与 Prometheus 标签一致）。上下文关联：有 Correlation ID（Trace ID）的日志才能关联到具体请求。3）链路追踪（Traces）——记录一个请求在分布式系统中的完整调用路径。Span：一次远程调用或方法执行（含开始时间、耗时、状态）。Trace：由多个 Span 组成的有向无环图（DAG）。上下文传播：Trace ID 通过 HTTP Header（如 W3C traceparent）在服务间传递。典型工具：Jaeger、Zipkin、OpenTelemetry。\n\n扩展延伸：三大支柱的关联——1）黄金信号：USE（Utilization、Saturation、Errors）、RED（Rate、Errors、Duration）。2）发展方向：OpenTelemetry（统一数据采集标准）。3）成本和选型：小团队 Prometheus + 简单的日志工具 + 有限的链路追踪就够了，不需要一开始上全栈。警惕过度可观测性——每个请求打印十几行日志、采集数十个指标，最终成本远超预期。",
+    "hints": [
+      "Metrics 和 Logs 的区别——什么时候看指标，什么时候看日志",
+      "分布式链路追踪中 Trace ID 如何在服务间传递"
+    ],
+    "tags": [
+      "可观测性",
+      "Prometheus",
+      "链路追踪",
+      "OpenTelemetry"
+    ]
   }
 ]

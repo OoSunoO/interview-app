@@ -617,5 +617,192 @@
       "Spring Cloud Gateway",
       "Kong"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "BFF（Backend For Frontend）模式",
+    "content": "BFF 模式是什么？它解决了什么核心问题？BFF 与 API 网关的关系是怎样的？BFF 的职责边界和常见坑有哪些？",
+    "answer": "答案：BFF（Backend For Frontend）是为每种前端（Web、iOS、Android、小程序）分别提供专属的后端接口层。核心解决「通用后端 API 无法适配不同前端展示需求」的问题。BFF 通常位于 API 网关之后、微服务之前。\n\n解析：为什么需要 BFF——1）前端差异化：移动端需要更轻量的数据（只取部分字段）、不同的接口聚合粒度、特定的数据格式。2）避免前端「自己组装」：没有 BFF 时前端需要调多个微服务 API 再拼接数据（增加端上复杂度、网络开销和延迟）。3）API 拆分的粒度不匹配：微服务负责一个业务域（如订单服务、用户服务），前端的一个页面需要聚合多个微服务的数据——这由 BFF 完成。\n\n扩展延伸：BFF vs API 网关——API 网关是基础设施层（限流、鉴权、路由、日志），BFF 是业务层（接口适配、数据聚合、格式转换）。一个典型层次：客户端 → 网关 → BFF → 微服务。BFF 实现方案——1）Node.js（最常用）：GraphQL 或 REST 聚合层，前端开发者可以写 BFF 逻辑（同语言同团队）。2）Java / Go：适合需要聚合后端业务逻辑的复杂 BFF。3）GraphQL BFF：前端声明需要哪些字段，BFF 解析后调用对应微服务。BFF 的坑——职责模糊（变成银弹，把业务逻辑放进 BFF，导致 BFF 膨胀）。过度裁剪（为每个页面建独立 BFF → 维护成本高）。BFF 数量控制——一般按终端类型分（Web BFF、Mobile BFF、MiniProgram BFF），不按页面分。",
+    "hints": [
+      "BFF 和 API 网关的核心区别是什么——一个属于基础架构层一个属于业务层",
+      "BFF 为什么会膨胀——怎么控制 BFF 的职责边界"
+    ],
+    "tags": [
+      "系统设计",
+      "BFF",
+      "API网关",
+      "微服务"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Saga 分布式事务模式",
+    "content": "Saga 模式是什么？编排（Choreography）和编制（Orchestration）两种实现方式有什么区别？Saga 的补偿机制如何设计？Saga 与 2PC 的核心区别是什么？",
+    "answer": "答案：Saga 是一种分布式事务模式，将长事务拆为多个本地子事务 + 补偿操作（Compensation）。如果某个子事务失败，Saga 执行之前所有子事务的补偿操作来回滚。\n\n解析：两种实现方式——1）编排（Choreography）：每个服务执行完本地事务后发事件触发下一个服务。没有中心协调者。优点：轻量（无单点），适合简单链路。缺点：事务状态分散在多个服务的日志中，难以追踪和调试。2）编制（Orchestration）：一个协调者（Orchestrator）负责告诉每个服务做什么，跟踪状态，失败时触发补偿。优点：集中管理、失败路径清晰。缺点：协调者是单点、可能成为瓶颈。\n\n扩展延伸：补偿设计——补偿操作必须是幂等的且具备业务语义。示例：创建订单 → 扣库存 → 扣余额 → 发货。如果扣库存成功但扣余额失败，则补偿「创建订单」和「扣库存」。补偿操作的正确性——CancelOrder（将订单标记为已取消）+ RestoreStock（恢复库存）。不能简单 DELETE——因为其他服务可能已经引用了订单。Saga vs 2PC——1）2PC 是 XA 规范，使用全局锁（Prepare 阶段锁定资源），并发低，不适合长事务。2）Saga 不持有锁（每个子事务提交即释放资源），并发高，适合跨服务长流程。3）2PC 提供强一致性（ACID），Saga 提供最终一致性（BASE）。4）Saga 需要业务开发者手动实现补偿逻辑（侵入性高），2PC 由事务管理器自动回滚（侵入性低）。Saga 的隔离性（丢失更新/脏读）——Saga 默认无隔离性（因为事务已提交）。通过 Semantic Lock（预留资源）或 Countermeasure（读时检查状态）解决。",
+    "hints": [
+      "编排式和编制式 Saga 在复杂度上的区别是什么",
+      "Saga 补偿操作的幂等性怎么保证——补偿失败怎么处理"
+    ],
+    "tags": [
+      "系统设计",
+      "Saga",
+      "分布式事务",
+      "补偿"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CQRS 与微服务集成",
+    "content": "CQRS 在微服务架构中如何落地？命令侧和查询侧的服务如何拆分？事件如何从命令侧同步到查询侧？CQRS 与 Event Sourcing 的关系是什么？",
+    "answer": "答案：CQRS 在微服务中落地时，将每个微服务的接口拆分为命令接口（Command — 处理写请求）和查询接口（Query — 处理读请求）。命令侧用领域模型（DDD Aggregate），查询侧用读模型（DTO / 物化视图）。通过领域事件（Domain Event）异步同步数据到查询侧。\n\n解析：服务拆分——1）写模型（Command Side）：使用 DDD 聚合根，强一致性校验（如库存不能为负）。适合用 RDBMS（MySQL/PostgreSQL），事务边界在聚合根内。2）读模型（Query Side）：按查询需求设计宽表或 ES 文档，反范式化（冗余字段避免 JOIN）。适合用 Elasticsearch / MongoDB / Redis / ClickHouse。数据同步——命令侧执行成功后发布 Domain Event（如 OrderCreated）→ 事件总线（Kafka / RabbitMQ）→ 查询侧 Event Handler 消费 → 更新读模型（CREATE / UPDATE 物化视图）。最终一致性：事件发布到被查询侧消费之间可能有秒级延迟。\n\n扩展延伸：CQRS vs Event Sourcing——1）CQRS 不一定要用 Event Sourcing（事件溯源）。CQRS 只管读写模型分离，存什么和怎么存是另一回事。2）Event Sourcing 将所有状态变更存为事件流（Event Store），当前状态通过对事件流 replay 得到。3）CQRS + Event Sourcing 是黄金组合：命令侧在 Event Store 中追加事件，查询侧订阅事件构建读模型（完美解决「同一个事件既用于写也用于读」的问题）。CQRS 的适用场景——适合读多写少、读写负载差异大的系统（如电商商品检索页—高频读 / 低频写）。不适合 CRUD 简单的系统（增加复杂度无收益）。",
+    "hints": [
+      "CQRS 中命令侧和查询侧的数据一致性是强一致还是最终一致",
+      "CQRS 一定要和 Event Sourcing 一起用吗"
+    ],
+    "tags": [
+      "系统设计",
+      "CQRS",
+      "微服务",
+      "Event Sourcing"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Sidecar 模式与服务网格",
+    "content": "Sidecar 模式在服务网格（Service Mesh）中是如何工作的？Sidecar 的职责是什么？Envoy 和 Istio 的关系是怎样的？Sidecar 模式的优缺点有哪些？",
+    "answer": "答案：Sidecar 是一个与主服务容器部署在同一 Pod 中的辅助容器，负责拦截该服务的所有入站/出站流量，处理服务发现、负载均衡、熔断、重试、可观测性等基础设施功能。核心思想：将分布式基础设施逻辑从业务代码中解耦到独立进程。\n\n解析：Sidecar 的职责——1）流量管理：路由规则、流量分割、金丝雀发布、灰度。2）弹性：超时、重试（幂等请求）、熔断（Circuit Breaker）、限流。3）安全：mTLS（双向 TLS 加密）、RBAC（基于角色的访问控制）。4）可观测性：指标（Prometheus Metrics）、分布式追踪（Jaeger/Zipkin）、访问日志。Envoy 和 Istio——Envoy 是 Sidecar 代理的具体实现（数据平面），用 C++ 编写，高性能。Istio 是控制平面——管理 Envoy 的配置（Pilot——分发路由规则）、证书（Citadel——mTLS 证书管理）和遥测（Mixer——已弃用，改为 Wasm 扩展）。Envoy（数据平面）从 Istio（控制平面）接收 xDS API 配置。\n\n扩展延伸：Sidecar 的优势——1）无侵入：业务代码不用改就能获得服务治理能力（对遗留系统友好）。2）语言无关：无论业务用 Java/Go/Python/Node，Sidecar 统一处理基础设施。3）独立升级：Sidecar 可独立于业务升级（更新流量策略不涉及业务重启）。Sidecar 的代价——1）增加延迟：每次跨服务调用多一跳（sidecar→sidecar），延迟增加约 1-5ms。2）资源消耗：每个 Pod 多一个容器（额外 CPU ~100m、内存 ~128MB）。3）运维复杂：引入额外的组件（控制面 Istiod、Ingress/Egress Gateway），排障链路过长（需同时看业务日志 + Envoy 日志）。4）不适合延迟极端敏感或资源极度受限的场景（如 IoT 设备）。",
+    "hints": [
+      "Sidecar 代理增加的一次网络跳转（Hop）延迟大概是多少",
+      "Istio 控制平面和数据平面是怎么通信的——xDS 协议的作用"
+    ],
+    "tags": [
+      "系统设计",
+      "Sidecar",
+      "Service Mesh",
+      "Envoy",
+      "Istio"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "金丝雀发布（Canary Release）设计",
+    "content": "金丝雀发布的原理是什么？与蓝绿部署和滚动更新有什么区别？流量路由策略、灰度验证和自动回滚机制如何设计？",
+    "answer": "答案：金丝雀发布（灰度的子集）是让新版本先服务一小部分流量（如 1%-5%），验证无问题后逐步扩大到全量。一旦发现问题，立即将流量切回旧版本（回滚）。核心机制是流量路由 + 渐进式放量 + 可观测性 + 自动决策。\n\n解析：流量路由策略——1）基于权重的流量分割（Kubernetes Service / Istio VirtualService）：weight: 5% → 新版本 v2，weight: 95% → 旧版本 v1。逐步提升权重（5% → 20% → 50% → 100%）。2）基于请求特征的路由：按 Header/Cookie/地域/用户 ID 灰度特定流量到新版本（如只让内部测试用户走新版本）。3）Mirroring（流量镜像）：复制一份流量到新版本但不影响生产（影子流量），验证新版本的输出。\n\n扩展延伸：灰度验证决策——1）监控指标：错误率（5xx 增量）、延迟（P99 恶化）、业务指标（下单转化率、支付成功率）。2）自动回滚触发条件：错误率超过基线 + X%（如 0.1% → 1%），自动切回旧版本。3）金丝雀的时间窗口：简单场景几十分钟内完成，复杂场景（数据库变更）可能需要观察 24-48 小时。实现方案——Kubernetes：Service 的 selector + Deployment 权重调整。Istio：VirtualService + DestinationRule 权重路由。Spring Cloud：Ribbon 权重配置。蓝绿部署 vs 金丝雀——蓝绿部署维护两套完整环境（全量切换），成本高但切换极快（秒级）。金丝雀逐步放量，回滚更精细。滚动更新——逐步替换 Pod，但是由 K8s Deployment Controller 驱动（不是按流量比例）。金丝雀 + 蓝绿结合：先建一套新环境跑新版本（蓝绿），通过金丝雀规则引导 5% 流量过去测试。",
+    "hints": [
+      "金丝雀发布的自动回滚怎么实现——关键指标和阈值如何设定",
+      "流量镜像（Traffic Mirroring）与真正的金丝雀发布有何不同"
+    ],
+    "tags": [
+      "系统设计",
+      "金丝雀发布",
+      "灰度发布",
+      "Istio",
+      "Kubernetes"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "服务网格（Service Mesh）与 Sidecar 原理",
+    "content": "什么是服务网格（Service Mesh）？Sidecar 代理的工作原理是什么？Istio 的核心组件有哪些？服务网格与传统微服务框架（Spring Cloud）相比的优缺点？",
+    "answer": "答案：服务网格是基础设施层，将服务通信关注点从业务代码剥离到 Sidecar 代理。Sidecar 作为独立容器注入到每个 Pod，拦截所有进出流量。Istio 核心：数据平面（Envoy 代理）+ 控制平面（Pilot——服务发现和流量管理、Citadel——安全管理、Galley——配置管理）。优势：无侵入、语言无关、统一流量控制。劣势：增加延迟、运维复杂、调试困难。\n\n解析：Envoy 工作原理——Listener → Filter Chain → Cluster → Endpoint。通过 xDS 协议从控制平面动态获取配置：LDS（Listener）、RDS（Route）、CDS（Cluster）、EDS（Endpoint）。功能：7 层流量管理、熔断、重试、限流、TLS 终结、指标采集。\n\n演进——第一阶段：代码库内置熔断（Hystrix）。第二阶段：通用库（Spring Cloud），需要语言绑定。第三阶段：Sidecar 代理（Envoy），语言无关。第四阶段：控制平面（Istio），统一管理。\n\n扩展延伸：挑战——1）性能：增加 2-5ms 延迟，每个 Sidecar 占用 50-100MB 内存。2）调试：日志分布在所有 Sidecar 上。3）Proxyless Mesh：gRPC 直接集成 xDS 协议。4）服务网格与 API 网关配合：网关处理入口流量，网格处理内部流量。适用边界：大规模多语言场景收益大，小规模单语言用框架更简单。",
+    "hints": [
+      "Sidecar 为什么会增加 2-5ms 延迟——额外网络跳转和 Envoy 处理开销",
+      "服务网格和 API 网关的关系是什么——一个管内部流量一个管入口流量"
+    ],
+    "tags": [
+      "微服务",
+      "服务网格",
+      "Service Mesh",
+      "Istio",
+      "Sidecar"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式事务方案对比与实践",
+    "content": "微服务架构下有哪些分布式事务方案？Seata AT、TCC、Saga、本地消息表的原理和适用场景？如何决策用强一致性还是最终一致性？",
+    "answer": "答案：方案按一致性强度：XA（强一致不推荐）→ Seata AT（自动回滚，适合简单场景）→ TCC（业务补偿，适合资源预留）→ Saga（最终一致，适合长事务）→ 本地消息表（最终一致，适合异步解耦）。选择原则：是否接受中间状态？是否能补偿？\n\n解析：Seata AT——第一阶段本地事务写业务数据 + undo_log。第二阶段 TC 协调：提交则删除 undo_log，回滚则用 undo_log 反向补偿。适合单库多表强一致。局限：跨数据库性能下降。\n\nTCC——Try 预留资源、Confirm 确认执行、Cancel 释放。性能好（无 DB 锁），但业务侵入强——需要实现三个接口。空回滚和幂等是核心难点。\n\nSaga——子事务 + 补偿。编排式（Orchestrator 协调）适合复杂流程，编舞式（事件驱动）适合简单链路。无隔离性（中间结果可见）。\n\n扩展延伸：决策框架——资金类核心链路用 TCC/Seata AT 强一致，边缘用最终一致。订单链路用 Saga 编排。异步解耦用 RocketMQ 事务消息（Prepare 半消息 → 执行本地事务 → Commit/Rollback + 回查）。",
+    "hints": [
+      "TCC 和 Seata AT 的核心区别是什么——业务入侵程度和性能",
+      "Saga 的隔离性问题怎么解决——缺少隔离性时需要业务层处理"
+    ],
+    "tags": [
+      "微服务",
+      "分布式事务",
+      "Seata",
+      "TCC",
+      "Saga"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务弹性设计（Resilience）",
+    "content": "微服务中如何实现弹性设计？熔断、舱壁、重试与退避策略的原理和配置？如何防止级联故障？Elasticity（弹性伸缩）和 Resilience（容错韧性）的区别？",
+    "answer": "答案：弹性设计核心是防止局部故障蔓延。关键模式：熔断器（CLOSED → OPEN → HALF-OPEN 状态机）、舱壁（线程池隔离或信号量隔离）、重试+退避（指数退避+随机抖动）、超时控制。级联故障防护：熔断 + 舱壁 + 限流 + 超时组合使用。\n\n解析：熔断器——三种状态：CLOSED（正常）→ 失败率达阈值（如 50% 滑动窗口 10 秒）→ OPEN（直接拒绝）→ 等待窗口（如 5 秒）→ HALF-OPEN（放行探测）→ 成功则 CLOSED，失败则 OPEN。参数：失败率阈值 50%、窗口 10 秒、最小请求数 5。\n\n舱壁——1）线程池隔离：每个下游独立线程池，A 耗尽不影响 B。开销大（线程切换）。2）信号量隔离：限制并发数不创建线程，开销小，不支持超时。选择：延迟差异大的调用用线程池，低延迟高吞吐用信号量。\n\n重试与退避——指数退避：sleep = base_delay * 2^attempt + random_jitter。base_delay 100ms，最大 10 秒，最多 3 次。重试只用于幂等操作。\n\n扩展延伸：Elasticity vs Resilience——Elasticity 是负载变化时自动增减资源（Scale In/Out），保证成本效率。Resilience 是故障时仍能正常服务。两者互补。",
+    "hints": [
+      "熔断器的 HALF-OPEN 状态的作用是什么——探测下游是否恢复",
+      "重试为什么必须加退避和抖动——防止重试风暴"
+    ],
+    "tags": [
+      "微服务",
+      "弹性设计",
+      "熔断",
+      "舱壁",
+      "Resilience"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微服务可观测性（Observability）",
+    "content": "微服务架构下如何实现可观测性？日志聚合、指标监控、链路追踪如何协作？ELK、Prometheus+Grafana、Jaeger 的架构？OpenTelemetry 统一标准的作用？",
+    "answer": "答案：可观测性三大支柱：日志（Logging——具体事件，ELK/EFK）、指标（Metrics——聚合数值，Prometheus + Grafana）、链路追踪（Tracing——请求调用链，Jaeger/Zipkin）。OpenTelemetry 提供统一标准：Agent/SDK 采集 Span、Metric、Log 三种信号，统一格式发送到后端。\n\n解析：三大支柱配合——1）日志：Fluentd 采集容器日志 → Elasticsearch 索引 → Kibana 展示。结构化 JSON 日志比纯文本更适合分析。2）指标：Prometheus Pull 模式采集 /metrics 端点。关键模型：RED（Rate/Errors/Duration）和 USE（Utilization/Saturation/Errors）。3）链路：Jaeger 采集 OpenTelemetry Trace，每个 Trace 由多个 Span 组成。\n\nOpenTelemetry 架构——API & SDK 埋点 → Collector（过滤/采样/导出）→ Exporter 发送到后端。采样策略：高流量 1-5% 概率采样，错误 Trace 100% 采集。\n\n扩展延伸：实践要点——1）Trace 上下文传播：W3C Trace-Context Header（traceparent/tracestate）。2）统一 Trace ID 从入口透传所有下游。3）日志中打印 trace_id 实现日志↔Tracing 关联。4）统一监控面板：首页 RED 总览 → 钻取 USE → 钻取 Trace。",
+    "hints": [
+      "三大支柱各有什么侧重——为什么不能用一个替代另一个",
+      "采样策略怎么平衡成本和质量——错误链路全采正常链路采样"
+    ],
+    "tags": [
+      "微服务",
+      "可观测性",
+      "OpenTelemetry",
+      "Tracing",
+      "Prometheus"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "API 网关设计与实践",
+    "content": "API 网关在微服务中的高级功能有哪些？动态路由和灰度发布如何实现？网关如何集成认证鉴权？网关的性能瓶颈和高可用方案？",
+    "answer": "答案：API 网关高级功能包括动态路由（按 Path/Header/Weight 分发流量）、灰度发布（按比例/Header 引流新版）、统一认证鉴权（OAuth2/JWT 校验）、限流熔断、请求响应改造（Header 注入、协议转换 HTTP→gRPC）。性能瓶颈：路由匹配算法、插件链长度。高可用：多实例 + 无状态设计 + 配置中心动态更新。\n\n解析：路由策略——动态路由从配置中心（Nacos/etcd）实时拉取规则。优先级：精确路径 > 前缀 > 正则。灰度：按 Header: canary=true 路由新版或按权重。蓝绿：两个 Upstream 一键切换。\n\n认证鉴权——外网请求网关验证 JWT（签名+过期）→ 提取用户信息注入 Header 传下游。内网 mTLS 或内部 Token。OAuth2 集成：网关充当 OAuth2 Client。\n\n扩展延伸：性能优化——1）请求处理顺序：先认证再限流再路由（提前拒绝无效请求）。2）高性能选型：Kong（Nginx + Lua）路由快、Spring Cloud Gateway（Java 生态丰富）、KrakenD（Go 性能好）、Envoy（网格场景）。3）容量评估：按最坏情况（全插件启用）压测。4）高可用：至少 2 实例跨可用区部署 + 云负载均衡自动摘除故障节点。",
+    "hints": [
+      "网关的请求处理顺序为什么是认证→限流→路由——提前拒绝无效请求减少计算",
+      "网关性能瓶颈通常在哪里——路由匹配和插件链长度"
+    ],
+    "tags": [
+      "微服务",
+      "API网关",
+      "路由",
+      "灰度发布",
+      "认证"
+    ]
   }
 ]

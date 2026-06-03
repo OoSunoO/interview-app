@@ -626,5 +626,205 @@
       "元空间",
       "永久代"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ZGC 的核心原理与染色指针技术",
+    "content": "ZGC 的核心原理是什么？染色指针（Colored Pointer）在其中起什么作用？",
+    "answer": "答案：ZGC 是一种以低延迟为首要目标的并发垃圾回收器，核心原理是通过读屏障 + 染色指针技术实现大部分 GC 阶段与应用线程并发执行，STW 时间不超过 10ms。\n\n解析：\n染色指针（Colored Pointer）：ZGC 在 64 位指针的高 4 位中存储标记信息（Finalizable、Remapped、Marked1、Marked0），利用这些标志位来标识对象的状态，无需在对象头中额外存储 GC 信息。通过染色指针，ZGC 可以在指针层面直接判断对象所处的 GC 阶段，避免了对象头的频繁访问和修改。\n核心设计：1）基于 Region 的内存布局（动态创建和销毁，非固定大小）；2）并发标记（Mark）——通过读屏障更新染色指针的标志位；3）并发重定位（Relocate）——将存活对象复制到新 Region 并更新引用，旧内存可以立即回收；4）重映射（Remap）——修正所有指向旧地址的引用。\n\n扩展延伸：ZGC 最大支持 4TB 堆内存（64 位系统，染色指针占 4 位后还剩 42 位可用，42^2 = 4TB）。ZGC 适用于对延迟敏感的大内存应用（如金融交易系统、实时推荐系统）。ZGC 的读屏障是“标量替换友好”的，JIT 可以内联优化。JDK 21 中 ZGC 已将分代模式作为默认（分代 ZGC 进一步降低了 CPU 开销）。",
+    "hints": [
+      "染色指针利用 64 位指针的高 4 位存储 GC 状态",
+      "ZGC 的目标是 STW 不超过 10ms",
+      "读屏障 + 染色指针代替了写屏障 + 对象头标记"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC",
+      "染色指针"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Shenandoah GC 与 ZGC 的对比",
+    "content": "Shenandoah GC 与 ZGC 有什么区别和联系？",
+    "answer": "答案：Shenandoah 和 ZGC 都是面向低延迟的并发 GC，但实现技术不同。ZGC 使用染色指针 + 读屏障，Shenandoah 使用 Brooks 指针 + 写屏障。两者都能将 STW 控制在 10ms 以内。\n\n解析：\nShenandoah：由 RedHat 开发，JDK 12 引入（JDK 15 GA），核心是通过 Brooks 转发指针（forwarding pointer）实现并发压缩。每个对象头前增加一个转发指针字段，指向对象实际地址，GC 移动对象时只需更新该指针。使用写屏障（而非 ZGC 的读屏障）检查并修复引用。\n区别：\n1）指针技术：ZGC 染色指针（占用高 4 位） vs Shenandoah Brooks 指针（对象头前额外字段）；\n2）屏障类型：ZGC 读屏障 vs Shenandoah 写屏障（Shenandoah JDK 13+ 引入了读屏障优化）；\n3）内存管理：ZGC 基于 Region 动态分配 vs Shenandoah 沿用传统分代 Region；\n4）堆大小：ZGC 最大 4TB vs Shenandoah 最大也是 TB 级但受限于 64 位寻址；\n5）成熟度：ZGC 在 JDK 21 已支持分代模式，Shenandoah 的分代模式在 JDK 21 中孵化。\n\n扩展延伸：Shenandoah 在 JDK 15+ 已成为生产特性（-XX:+UseShenandoahGC）。对于大堆低延迟场景，两者都是好的选择：ZGC 在吞吐量方面略优，Shenandoah 在某些场景下 CPU 开销更低。选择取决于具体业务场景和 JDK 版本支持情况。",
+    "hints": [
+      "两者的核心区别是指针技术和屏障类型",
+      "ZGC 用读屏障 + 染色指针，Shenandoah 用写屏障 + Brooks 指针"
+    ],
+    "tags": [
+      "JVM",
+      "Shenandoah",
+      "ZGC",
+      "GC对比"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CDS（Class Data Sharing）原理",
+    "content": "CDS（Class Data Sharing）是什么？它如何提升 JVM 启动速度？",
+    "answer": "答案：CDS（Class Data Sharing）是 JVM 的一项功能，它将核心类库的预处理元数据转储到一个共享归档文件中，后续 JVM 实例启动时直接加载该存档，避免重复的类加载和解析过程，从而显著缩短启动时间。\n\n解析：\n原理：JDK 5 引入，最初只支持 Bootstrap ClassLoader 加载的类。Java 安装时运行 Class Data Sharing 工具将系统类（rt.jar 等）处理成共享归档（classes.jsa）。后续 JVM 启动时通过内存映射文件直接读取归档中的类元数据，跳过类加载、验证、解析等步骤。\n优势：1）减少启动时间（可达 30-50%）；2）多个 JVM 进程共享同一个归档文件的只读内存页，降低内存占用。\nJDK 12+：默认开启 CDS，归档文件为 classes.jsa。\n\n扩展延伸：CDS 的前提条件是需要固定的类路径。如果类路径变化，归档需要重新生成。CDS 对于短生命周期的 Java 应用（如 CLI 工具、微服务快速启动）收益最大。长期运行的 Web 应用收益较小（启动时间占比低）。JDK 12+ 的默认 CDS 归档文件位于 ${JAVA_HOME}/lib/server/classes.jsa。",
+    "hints": [
+      "CDS 通过共享归档避免重复类加载",
+      "对短生命周期应用收益最大",
+      "多个 JVM 进程可共享内存页"
+    ],
+    "tags": [
+      "JVM",
+      "CDS",
+      "类加载",
+      "启动优化"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "AppCDS 与 CDS 的区别",
+    "content": "AppCDS（Application Class Data Sharing）和 CDS 有什么区别？",
+    "answer": "答案：AppCDS 是 CDS 的扩展，不仅支持 Bootstrap ClassLoader 加载的系统类，还支持 Application ClassLoader 加载的应用类，进一步提升了启动速度。\n\n解析：\nCDS：仅归档 Bootstrap ClassLoader 加载的核心 JRE 类（rt.jar 等）。\nAppCDS（JDK 8u40+，商用特性；JDK 12+ 开源免费）：归档范围扩展为：1）Bootstrap ClassLoader 加载的 JDK 内部类；2）Platform ClassLoader 加载的模块类；3）Application ClassLoader 加载的用户应用类和第三方库。\n工作流程：1）使用 -XX:DumpLoadedClassList 生成类列表；2）使用 -Xshare:dump -XX:SharedArchiveFile 基于类列表创建归档；3）使用 -Xshare:auto -XX:SharedArchiveFile 指定归档文件启动应用。\n\n扩展延伸：动态 CDS 归档（JDK 13+）：通过 -XX:ArchiveClassesAtExit 在应用退出时自动转储加载的类为归档，无需先 dump 类列表。AppCDS 在微服务架构中的典型应用：每次部署新版本时，先运行一次训练（dumping）生成归档，作为应用启动参数的一部分。Spring Boot 应用使用 AppCDS 可减少 20-40% 启动时间。",
+    "hints": [
+      "AppCDS 在 CDS 基础上扩展了应用类的归档",
+      "JDK 13+ 支持动态 CDS 归档",
+      "对微服务和 Spring Boot 应用的快速启动有显著效果"
+    ],
+    "tags": [
+      "JVM",
+      "AppCDS",
+      "CDS",
+      "类加载"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 编译层次与分层编译",
+    "content": "JVM 的 JIT 编译层次（C1/C2/分层编译）是什么？它们如何配合工作？",
+    "answer": "答案：JVM 的 JIT 编译器分为 C1（Client Compiler）和 C2（Server Compiler）两种，分层编译（Tiered Compilation）是两者的协同工作模式，综合了 C1 启动快和 C2 优化深的优点。\n\n解析：\n编译层次（共 5 层）：\n0 层：解释执行（Interpreter）——启动时全部解释执行，收集运行时 profiling 信息。\n1 层：C1 简单编译——开启基础优化（方法内联、死代码消除等），但不做 profiling。\n2 层：C1 编译 + 完整 profiling——收集控制流、类型信息等。\n3 层：C1 编译 + 部分 profiling——仅收集必要信息，降低 profiling 开销。\n4 层：C2 编译——在 C1 收集的 profiling 信息基础上做激进优化（如高级内联、循环展开、逃逸分析、自动向量化等），优化程度最高但编译耗时最长。\n\n工作流程：方法从 0 层逐步升级。C1（1-3 层）快速编译收集信息，当方法达到 JIT 阈值（默认 10000 次调用）时，C2 利用 profiling 信息进行深度优化编译。如果 profiling 信息不充分，降级到 C1 重新收集。\n\n扩展延伸：-XX:TieredStopAtLevel=1 可禁用 C2 编译（仅使用 C1）。C2 是传统的“长跑冠军”，适合长时间运行的服务器应用。Graal JIT 编译器（JDK 17+实验性，JDK 21+ 通过 incubator）可作为 C2 的替代方案。分层编译在 JDK 8 中默认启用（-XX:+TieredCompilation）。",
+    "hints": [
+      "5 层编译体系：解释执行 → C1 → C2",
+      "C1 启动快优化浅，C2 启动慢优化深",
+      "分层编译结合了两者的优势"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "C1",
+      "C2",
+      "分层编译"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ZGC 的核心原理与染色指针技术",
+    "content": "ZGC 的核心原理是什么？染色指针（Colored Pointer）在其中起什么作用？",
+    "answer": "答案：ZGC 是一种以低延迟为首要目标的并发垃圾回收器，核心原理是通过读屏障 + 染色指针技术实现大部分 GC 阶段与应用线程并发执行，STW 时间不超过 10ms。\n\n解析：\n染色指针（Colored Pointer）：ZGC 在 64 位指针的高 4 位中存储标记信息（Finalizable、Remapped、Marked1、Marked0），利用这些标志位来标识对象的状态，无需在对象头中额外存储 GC 信息。通过染色指针，ZGC 可以在指针层面直接判断对象所处的 GC 阶段，避免了对象头的频繁访问和修改。\n核心设计：1）基于 Region 的内存布局（动态创建和销毁，非固定大小）；2）并发标记（Mark）——通过读屏障更新染色指针的标志位；3）并发重定位（Relocate）——将存活对象复制到新 Region 并更新引用，旧内存可以立即回收；4）重映射（Remap）——修正所有指向旧地址的引用。\n\n扩展延伸：ZGC 最大支持 4TB 堆内存（64 位系统，染色指针占 4 位后还剩 42 位可用，42^2 = 4TB）。ZGC 适用于对延迟敏感的大内存应用（如金融交易系统、实时推荐系统）。ZGC 的读屏障是“标量替换友好”的，JIT 可以内联优化。JDK 21 中 ZGC 已将分代模式作为默认（分代 ZGC 进一步降低了 CPU 开销）。",
+    "hints": [
+      "染色指针利用 64 位指针的高 4 位存储 GC 状态",
+      "ZGC 的目标是 STW 不超过 10ms",
+      "读屏障 + 染色指针代替了写屏障 + 对象头标记"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC",
+      "染色指针"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Shenandoah GC 与 ZGC 的对比",
+    "content": "Shenandoah GC 与 ZGC 有什么区别和联系？",
+    "answer": "答案：Shenandoah 和 ZGC 都是面向低延迟的并发 GC，但实现技术不同。ZGC 使用染色指针 + 读屏障，Shenandoah 使用 Brooks 指针 + 写屏障。两者都能将 STW 控制在 10ms 以内。\n\n解析：\nShenandoah：由 RedHat 开发，JDK 12 引入（JDK 15 GA），核心是通过 Brooks 转发指针（forwarding pointer）实现并发压缩。每个对象头前增加一个转发指针字段，指向对象实际地址，GC 移动对象时只需更新该指针。使用写屏障（而非 ZGC 的读屏障）检查并修复引用。\n区别：\n1）指针技术：ZGC 染色指针（占用高 4 位） vs Shenandoah Brooks 指针（对象头前额外字段）；\n2）屏障类型：ZGC 读屏障 vs Shenandoah 写屏障（Shenandoah JDK 13+ 引入了读屏障优化）；\n3）内存管理：ZGC 基于 Region 动态分配 vs Shenandoah 沿用传统分代 Region；\n4）堆大小：ZGC 最大 4TB vs Shenandoah 最大也是 TB 级但受限于 64 位寻址；\n5）成熟度：ZGC 在 JDK 21 已支持分代模式，Shenandoah 的分代模式在 JDK 21 中孵化。\n\n扩展延伸：Shenandoah 在 JDK 15+ 已成为生产特性（-XX:+UseShenandoahGC）。对于大堆低延迟场景，两者都是好的选择：ZGC 在吞吐量方面略优，Shenandoah 在某些场景下 CPU 开销更低。选择取决于具体业务场景和 JDK 版本支持情况。",
+    "hints": [
+      "两者的核心区别是指针技术和屏障类型",
+      "ZGC 用读屏障 + 染色指针，Shenandoah 用写屏障 + Brooks 指针"
+    ],
+    "tags": [
+      "JVM",
+      "Shenandoah",
+      "ZGC",
+      "GC对比"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CDS（Class Data Sharing）原理",
+    "content": "CDS（Class Data Sharing）是什么？它如何提升 JVM 启动速度？",
+    "answer": "答案：CDS（Class Data Sharing）是 JVM 的一项功能，它将核心类库的预处理元数据转储到一个共享归档文件中，后续 JVM 实例启动时直接加载该存档，避免重复的类加载和解析过程，从而显著缩短启动时间。\n\n解析：\n原理：JDK 5 引入，最初只支持 Bootstrap ClassLoader 加载的类。Java 安装时运行 Class Data Sharing 工具将系统类（rt.jar 等）处理成共享归档（classes.jsa）。后续 JVM 启动时通过内存映射文件直接读取归档中的类元数据，跳过类加载、验证、解析等步骤。\n优势：1）减少启动时间（可达 30-50%）；2）多个 JVM 进程共享同一个归档文件的只读内存页，降低内存占用。\nJDK 12+：默认开启 CDS，归档文件为 classes.jsa。\n\n扩展延伸：CDS 的前提条件是需要固定的类路径。如果类路径变化，归档需要重新生成。CDS 对于短生命周期的 Java 应用（如 CLI 工具、微服务快速启动）收益最大。长期运行的 Web 应用收益较小（启动时间占比低）。JDK 12+ 的默认 CDS 归档文件位于 ${JAVA_HOME}/lib/server/classes.jsa。",
+    "hints": [
+      "CDS 通过共享归档避免重复类加载",
+      "对短生命周期应用收益最大",
+      "多个 JVM 进程可共享内存页"
+    ],
+    "tags": [
+      "JVM",
+      "CDS",
+      "类加载",
+      "启动优化"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "AppCDS 与 CDS 的区别",
+    "content": "AppCDS（Application Class Data Sharing）和 CDS 有什么区别？",
+    "answer": "答案：AppCDS 是 CDS 的扩展，不仅支持 Bootstrap ClassLoader 加载的系统类，还支持 Application ClassLoader 加载的应用类，进一步提升了启动速度。\n\n解析：\nCDS：仅归档 Bootstrap ClassLoader 加载的核心 JRE 类（rt.jar 等）。\nAppCDS（JDK 8u40+，商用特性；JDK 12+ 开源免费）：归档范围扩展为：1）Bootstrap ClassLoader 加载的 JDK 内部类；2）Platform ClassLoader 加载的模块类；3）Application ClassLoader 加载的用户应用类和第三方库。\n工作流程：1）使用 -XX:DumpLoadedClassList 生成类列表；2）使用 -Xshare:dump -XX:SharedArchiveFile 基于类列表创建归档；3）使用 -Xshare:auto -XX:SharedArchiveFile 指定归档文件启动应用。\n\n扩展延伸：动态 CDS 归档（JDK 13+）：通过 -XX:ArchiveClassesAtExit 在应用退出时自动转储加载的类为归档，无需先 dump 类列表。AppCDS 在微服务架构中的典型应用：每次部署新版本时，先运行一次训练（dumping）生成归档，作为应用启动参数的一部分。Spring Boot 应用使用 AppCDS 可减少 20-40% 启动时间。",
+    "hints": [
+      "AppCDS 在 CDS 基础上扩展了应用类的归档",
+      "JDK 13+ 支持动态 CDS 归档",
+      "对微服务和 Spring Boot 应用的快速启动有显著效果"
+    ],
+    "tags": [
+      "JVM",
+      "AppCDS",
+      "CDS",
+      "类加载"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 编译层次与分层编译",
+    "content": "JVM 的 JIT 编译层次（C1/C2/分层编译）是什么？它们如何配合工作？",
+    "answer": "答案：JVM 的 JIT 编译器分为 C1（Client Compiler）和 C2（Server Compiler）两种，分层编译（Tiered Compilation）是两者的协同工作模式，综合了 C1 启动快和 C2 优化深的优点。\n\n解析：\n编译层次（共 5 层）：\n0 层：解释执行（Interpreter）——启动时全部解释执行，收集运行时 profiling 信息。\n1 层：C1 简单编译——开启基础优化（方法内联、死代码消除等），但不做 profiling。\n2 层：C1 编译 + 完整 profiling——收集控制流、类型信息等。\n3 层：C1 编译 + 部分 profiling——仅收集必要信息，降低 profiling 开销。\n4 层：C2 编译——在 C1 收集的 profiling 信息基础上做激进优化（如高级内联、循环展开、逃逸分析、自动向量化等），优化程度最高但编译耗时最长。\n\n工作流程：方法从 0 层逐步升级。C1（1-3 层）快速编译收集信息，当方法达到 JIT 阈值（默认 10000 次调用）时，C2 利用 profiling 信息进行深度优化编译。如果 profiling 信息不充分，降级到 C1 重新收集。\n\n扩展延伸：-XX:TieredStopAtLevel=1 可禁用 C2 编译（仅使用 C1）。C2 是传统的“长跑冠军”，适合长时间运行的服务器应用。Graal JIT 编译器（JDK 17+实验性，JDK 21+ 通过 incubator）可作为 C2 的替代方案。分层编译在 JDK 8 中默认启用（-XX:+TieredCompilation）。",
+    "hints": [
+      "5 层编译体系：解释执行 → C1 → C2",
+      "C1 启动快优化浅，C2 启动慢优化深",
+      "分层编译结合了两者的优势"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "C1",
+      "C2",
+      "分层编译"
+    ],
+    "options": []
   }
 ]

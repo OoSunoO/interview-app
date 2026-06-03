@@ -622,5 +622,197 @@
       "背压",
       "消费者"
     ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RabbitMQ 核心架构",
+    "content": "请介绍 RabbitMQ 的核心架构概念：Exchange、Binding、Queue、Virtual Host。RabbitMQ 的路由模式有哪些？",
+    "answer": "答案：RabbitMQ 的核心架构组件：Exchange（交换机，接收生产者消息并根据路由规则分发）、Queue（队列，存储消息直到消费者消费）、Binding（绑定，定义 Exchange 到 Queue 的路由关系）、Virtual Host（虚拟主机，隔离租户的资源单元）。消息路由路径：Producer → Exchange → Binding（Routing Key 匹配）→ Queue → Consumer。\n\n解析：Exchange 的四种类型：1）Direct Exchange——按 Routing Key 精确匹配（如 routing key = order.create 绑定到指定 Queue）。2）Topic Exchange——按 Routing Key 模式匹配（通配符：* 匹配一个单词，# 匹配零个或多个单词）。如 order.# 匹配 order.create.success。3）Fanout Exchange——广播，所有绑定到该 Exchange 的 Queue 都会收到消息（忽略 Routing Key）。4）Headers Exchange——按消息的 Header 属性匹配（而非 Routing Key），适用复杂路由条件。\n\n扩展延伸：RabbitMQ 的消息确认机制：1）Producer 端——Publisher Confirm（信道确认模式，消息到达 Exchange 后异步回调确认）。2）Consumer 端——手动 ACK（basic.consume 设置 autoAck=false，业务处理完成后调用 basic.ack 通知 Broker 删除消息）。性能：RabbitMQ 基于 Erlang OTP 平台，延迟低（微秒级），适合低延迟场景。但消息堆积持久化下性能下降较快（不推荐用作日志/大数据管道）。队列分类：临时队列（自动删除，适合回调）、持久队列（重启后恢复）、惰性队列（Lazy Queue，全量磁盘存储，减少内存压力）。",
+    "hints": [
+      "Direct 和 Topic Exchange 核心区别是什么",
+      "RabbitMQ 的 Lazy Queue 解决了什么问题"
+    ],
+    "tags": [
+      "MQ",
+      "RabbitMQ",
+      "Exchange",
+      "路由"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RabbitMQ 消息确认机制",
+    "content": "RabbitMQ 如何保证消息的可靠投递？Publisher Confirm 和 Consumer ACK 机制分别是什么？如何处理消费失败的消息？",
+    "answer": "答案：RabbitMQ 可靠性依赖三端配合——Producer 端 Publisher Confirm（确认消息到达 Exchange）、Broker 端持久化（队列和消息标记为持久化）、Consumer 端手动 ACK（处理成功后才确认消息）。消费失败可通过拒绝（basic.reject/basic.nack）+ 死信策略（DLX）处理。\n\n解析：1）Publisher Confirm——生产者开启信道确认模式（channel.confirmSelect()），消息到达 Exchange 后 Broker 返回 basic.ack（异步回调）。如果消息未到 Exchange（如路由失败），Broker 返回 basic.nack。生产者监听到 nack 或超时后进行重试。2）Consumer ACK——autoAck=false 时，消费者必须显式确认。basic.ack（确认成功，Broker 删除消息）、basic.nack/basic.reject（拒绝消息，可设置 requeue=true 重新入队或 requeue=false 进入死信队列）。3）死信队列（DLX）——设置队列的 dead-letter-exchange 参数，被拒绝/过期/超过队列长度的消息自动转发到死信 Exchange。\n\n扩展延伸：RabbitMQ 可靠性配置组合：1）最高可靠性——队列持久化（durable=true）+ 消息持久化（deliveryMode=2）+ Publisher Confirm + Consumer 手动 ACK + 死信队列。2）性能模式——非持久队列 + 自动 ACK（吞吐高但可能丢消息）。幂等消费：RabbitMQ 没有 Kafka 那样的 Offset 管理，消费者需自实现幂等（唯一键去重/状态机）。RabbitMQ 的流控（Flow Control）：当 Broker 内存/磁盘达到阈值时，主动阻塞生产者连接——这是一种背压机制，防止 Broker 被压垮。",
+    "hints": [
+      "Publisher Confirm 和普通的 txSelect 事务模式有什么优劣",
+      "Requeue 和死信队列各自适用于什么场景"
+    ],
+    "tags": [
+      "MQ",
+      "RabbitMQ",
+      "可靠性",
+      "ACK"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RocketMQ 消息存储机制",
+    "content": "请介绍 RocketMQ 的消息存储机制，CommitLog、ConsumeQueue、IndexFile 各自的作用。RocketMQ 的刷盘策略有哪些？",
+    "answer": "答案：RocketMQ 的存储核心文件：CommitLog（消息的物理存储文件，所有消息顺序写入同一文件）、ConsumeQueue（消费逻辑队列，存储消息在 CommitLog 中的偏移量和大小）、IndexFile（索引文件，按消息 Key 或时间戳查询消息）。CommitLog + ConsumeQueue 分离的架构兼顾了顺序写入和灵活消费。\n\n解析：消息写入 CommitLog 是纯粹的追加写（顺序写盘，高性能）。同时根据消息所属 Topic 和 Queue 生成 ConsumeQueue 条目（在内存中维护）。ConsumeQueue 文件小（每个条目 20 字节：CommitLog 偏移量 8 字节 + 消息长度 4 字节 + Tag Hash 8 字节），可完全缓存到内存。刷盘策略：1）同步刷盘（SYNC_FLUSH）——消息写入 CommitLog 后同步刷到磁盘才返回成功，数据最可靠但性能最差。2）异步刷盘（ASYNC_FLUSH）——写入 OS Page Cache 即返回，后台异步刷盘。默认策略，性能好。两者性能差距约数十倍。\n\n扩展延伸：RocketMQ 的存储高性能核心：CommitLog 顺序写（机械盘也能有 100MB/s+），ConsumeQueue 是逻辑队列（轻量级，可常驻内存）。消息通过 ConsumeQueue 的偏移量快速定位到 CommitLog 中的物理位置。消息过期清理：RocketMQ 定期（默认每天 4 点）扫描 CommitLog 文件，删除超过保留时间（fileReservedTime 默认 72 小时）的文件。对比 Kafka：Kafka 每个 Partition 独立一个日志目录（多个顺序写流），RocketMQ 使用单一 CommitLog（所有 Topic 共享一个顺序写流）。单一 CommitLog 的好处是写入路径更简单（适合 IO 密集型场景），代价是 ConsumeQueue 重建时依赖 CommitLog 的可靠扫描。",
+    "hints": [
+      "RocketMQ 单一 CommitLog 和 Kafka 分区日志各自的优缺点",
+      "同步刷盘和异步刷盘的性能差异有多大"
+    ],
+    "tags": [
+      "MQ",
+      "RocketMQ",
+      "存储",
+      "CommitLog"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Pulsar 分层存储与 Tiered Storage",
+    "content": "Apache Pulsar 的分层存储（Tiered Storage）机制是什么？为什么 Pulsar 能支持无限留存的消息？分层存储在读/写路径上有什么影响？",
+    "answer": "答案：Pulsar 分层存储（Tiered Storage / Offloader）将消息数据分为热层（BookKeeper，高性能本地存储）和冷层（S3/GCS/HDFS，低成本对象存储）。根据数据保留策略，旧数据自动卸载（Offload）到冷存储，实现消息的无限留存。读取时 Broker 透明地从冷热层读取数据，对消费者完全无感。\n\n解析：Pulsar 的分层架构：1）Ledger（BookKeeper 的存储单元）达到阈值（默认 2GB）时关闭生成新的 Ledger。2）已关闭的非活跃 Ledger 满足条件（如超过配置的 offloadThreshold 时间/大小）后触发 Offload 操作。3）Broker 将 Ledger 中的 Entry 异步上传到对象存储（S3/GCS），上传完成后删除 BookKeeper 对应数据释放本地空间。4）消费者读取历史消息时，Broker 透明判断数据位置——本地 BookKeeper 命中直接返回，未命中则从对象存储读取。\n\n扩展延伸：分层存储的优势：1）无限消息保留——不受本地磁盘限制，可保留数年消息（订单审计、数据回放场景）。2）存储成本显著降低——对象存储（S3 约 $0.023/GB/月）远低于 SSD 本地盘（约 $0.16/GB/月）。3）不影响热数据性能——只有过期数据卸载到冷存储，BookKeeper 资源聚焦于最新消息。Offload 触发配置：offloaderTickIntervalMinutes（检查间隔）、offloadThresholdInBytes（按大小触发）、offloadThresholdInSeconds（按时间触发）。读取性能：冷数据读取延迟高于本地 BookKeeper（网络延迟 + 对象存储延迟），但对历史数据重放场景来说通常可接受。注意：Pulsar 分层存储不支持修改已 Offload 的数据——Ledger 写入后不可变。",
+    "hints": [
+      "Pulsar 的 Offloader 是如何决定哪些数据卸载到冷存储的",
+      "分层存储中消费者读取历史数据时 Broker 怎么知道数据在哪"
+    ],
+    "tags": [
+      "MQ",
+      "Pulsar",
+      "分层存储",
+      "Tiered Storage"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MQ 选型综合对比：Kafka vs RocketMQ vs RabbitMQ vs Pulsar",
+    "content": "请从吞吐量、延迟、消息可靠性、功能丰富度、运维复杂度等维度综合对比 Kafka、RocketMQ、RabbitMQ、Pulsar 的选型依据。",
+    "answer": "答案：Kafka 高吞吐适合日志/流处理（百万 TPS 级）；RocketMQ 事务消息和功能丰富适合企业（十万 TPS 级）；RabbitMQ 低延迟适合内部系统通知（万级 TPS，微秒延迟）；Pulsar 存算分离适合云原生多租户场景。选型取决于业务场景、团队能力和运维资源。\n\n解析：多维度对比：\n1）吞吐量——Kafka > Pulsar ≈ RocketMQ > RabbitMQ。Kafka 基于分区+顺序写盘+Page Cache+零拷贝，单机可达百万 TPS。RabbitMQ 基于 Erlang，每条消息需要独立确认，吞吐约数万 TPS。\n2）延迟——RabbitMQ（微秒级）> RocketMQ ≈ Pulsar（毫秒级）> Kafka（毫秒级，批量发送默认会有微批延迟）。RabbitMQ 不批量，发一条收一条，延迟最低。\n3）消息可靠性——RocketMQ ≈ Pulsar > Kafka > RabbitMQ。RocketMQ 支持同步刷盘+事务消息；Pulsar 多副本+BookKeeper 确认写入；Kafka ISR 机制可靠但依赖配置（acks=all）；RabbitMQ Publisher Confirm+持久化需配合。\n4）功能丰富度——RocketMQ > Pulsar > RabbitMQ > Kafka。RocketMQ 原生支持事务消息/延迟消息/死信队列/消息轨迹。Pulsar 支持多种订阅模式/分层存储/Functions。RabbitMQ 路由灵活。Kafka 功能最少（无延迟消息/死信队列），但生态最成熟。\n5）运维复杂度——RabbitMQ < Kafka ≈ RocketMQ < Pulsar。RabbitMQ 最简单的运维（单机可跑）；Kafka 需调优 JVM/OS 参数；RocketMQ 架构轻于 Kafka（用 NameServer 替代 ZK）；Pulsar 存算分离架构使运维复杂（BookKeeper+Broker 两套集群）。\n\n扩展延伸：推荐选型——大数据管道/日志聚合/流计算（Flink）→ Kafka（业界标准）。电商交易/金融/需要事务消息 → RocketMQ（阿里验证，功能最全）。内部系统通知/轻量任务 → RabbitMQ（简单可靠，运维成本最低）。云原生/多租户/需要无限存储 → Pulsar（高起点但团队需有较强运维能力）。通用建议：如果没有特殊需求，Kafka 是最安全的选择（社区最大、人才最多、问题排查成本最低）。",
+    "hints": [
+      "使用 Kafka 处理事务消息场景时如何弥补其功能不足",
+      "Pulsar 的存算分离在运维上带来了哪些额外负担"
+    ],
+    "tags": [
+      "MQ",
+      "Kafka",
+      "RocketMQ",
+      "RabbitMQ",
+      "Pulsar",
+      "选型"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka Exactly-Once 语义的实现原理",
+    "content": "消息队列的投递语义是分布式系统的核心问题。请详细说明 Kafka 如何实现 Exactly-Once 语义，包括：幂等生产者（Idempotent Producer）的机制、事务性消息（Transactional API）的实现原理（事务协调器、事务日志、LSO），以及消费者端 Exactly-Once 的局限性和实现条件。",
+    "answer": "答案：Kafka 的 Exactly-Once 由生产者和消费者端配合实现。\n\n生产者端：幂等生产者（enable.idempotence=true）在每条消息中添加 Producer ID（PID）和序列号（Sequence Number），Broker 按 PID+分区 维度去重，相同序列号的消息只写入一次。事务性消息进一步扩展幂等性 —— Transaction Coordinator 负责管理事务状态，Producer 通过 InitPid→AddOffsetsToTx→EndTx API 实现跨分区原子写入，事务日志存储所有事务元数据（状态为 Ongoing/PrepareCommit/Committed/Aborted）。\n\n消费者端：Kafka 的 Exactly-Once 消费者需要配合事务实现 —— 消费者在事务中提交 offset，使得\"消费-处理-产出\"成为一个原子操作（consume-transform-produce 模式）。isolation.level=read_committed 时消费者只读取已提交的消息，Broker 通过 LSO（Last Stable Offset）标记事务边界。\n\n解析：生产者的 Exactly-Once 通过去重解决\"重试导致的重复写入\"问题，成本较低。消费者的 Exactly-Once 在有状态处理场景下实现复杂且性能开销较大 —— 需要将消费 offset 和业务结果存储在同一个事务性存储系统中（如 Kafka Streams 将状态存储在 RocksDB + changelog topic 中）。\n\n扩展延伸：Pulsar 的 Exactly-Once 通过 Broker 端去重实现 —— 每个消息携带唯一的 message ID，Broker 检测重复。RocketMQ 的事务消息实现方式与 Kafka 不同 —— 使用半消息（Half Message）+ 事务回查机制保证分布式事务。",
+    "hints": [
+      "生产者侧通过 PID+序列号实现幂等写入",
+      "事务性消息依赖 Transaction Coordinator 和事务日志",
+      "消费者端 Exactly-Once 需要\"消费+处理+提交\"原子化"
+    ],
+    "tags": [
+      "mq",
+      "Kafka",
+      "Exactly-Once",
+      "幂等性",
+      "事务"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息轨迹与全链路追踪的设计与实现",
+    "content": "在微服务架构中，一条消息可能经过多个服务节点，消息轨迹追踪是排查问题的重要手段。请说明消息轨迹需要采集哪些关键数据点（生产端、Broker 端、消费端），对比 RocketMQ 和 Kafka 实现消息轨迹的方案差异，并讨论如何将消息轨迹与 OpenTelemetry 标准结合。",
+    "answer": "答案：消息轨迹的三端关键数据点：1) 生产端 —— 消息 ID、Topic、发送时间、发送结果（成功/失败/耗时）、Producer IP；2) Broker 端 —— 存储位置（Queue/Partition）、Offset、存储时间、Broker IP；3) 消费端 —— 消费时间、消费结果（成功/失败/异常）、消费耗时、Consumer IP、重试次数。\n\nRocketMQ 内置消息轨迹支持 —— 通过开启 traceTopic 特性，Broker 自动记录消息轨迹数据到 RMQ_SYS_TRACE_TOPIC 中，客户端通过 Hook 或 Wrapper 采集轨迹数据。支持 OpenMessaging Tracing API。Kafka 没有原生消息轨迹功能，需要基于拦截器（ProducerInterceptor/ConsumerInterceptor）或 AOP 方式自定义实现，将轨迹数据发送到独立的 tracing topic 或外部系统（如 Jaeger）。\n\n与 OpenTelemetry 结合：将消息的生产和消费操作建模为 Span（如 send.msg、process.msg），在消息 Header 中传递 Trace Context（traceparent header 遵循 W3C Trace Context 规范）。服务端收到消息后提取 Trace ID 和 Span ID，建立父子 Span 关系。\n\n解析：消息轨迹的核心价值在于跨服务的消息链路可视化 —— 当一条消息从 A 服务发出到 B 服务处理再到 C 服务，通过 Trace ID 串联所有环节。实际部署中建议对消息轨迹数据进行采样（如 1-10%）而不是全量采集，以控制存储成本。\n\n扩展延伸：RocketMQ 的轨迹数据最终可以接入 OpenTelemetry Collector 统一管理。Kafka 生态的 Kafka Lag Exporter、Burrow 等工具监控消费延迟，与消息轨迹互补。",
+    "hints": [
+      "三端（生产/Broker/消费）的轨迹数据点各不相同",
+      "RocketMQ 内置轨迹，Kafka 需要自定义实现",
+      "OpenTelemetry 的 Trace Context 传播是实现跨服务链路的关键"
+    ],
+    "tags": [
+      "mq",
+      "消息轨迹",
+      "链路追踪",
+      "OpenTelemetry",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "顺序消息的实现原理与挑战",
+    "content": "某些业务场景（如订单状态变更、银行交易流水）要求消息严格按顺序消费。请分析 Kafka 和 RocketMQ 各自如何实现顺序消息（全局顺序 vs 分区顺序），说明在分布式环境下保证严格顺序消费的技术挑战（Rebalance、重试、故障恢复），并讨论顺序消息对性能的影响。",
+    "answer": "答案：Kafka 通过 Partition 内的顺序保证实现分区顺序 —— 同一 Partition 内消息按 Offset 顺序追加和消费，保证分区内有序。全局顺序需要将 Topic 设为单 Partition（牺牲并行度）。Kafka 的顺序消费依赖于：1) 按分区消费 —— 每个分区由同一个 Consumer 消费；2) 顺序提交 offset —— 不能使用异步提交，只能同步提交。\n\nRocketMQ 使用 MessageQueue 选择器实现顺序消息 —— Producer 用自定义选择器（如取订单 ID 的 Hash）将同一业务 ID 的消息发送到同一 Queue，Consumer 使用 MessageListenerOrderly 顺序消费（加锁 + 本地消费队列）。RocketMQ 的顺序消息通过 Broker 端的分布式锁和 Consumer 端的消费队列结合保证。\n\n技术挑战：1) Rebalance —— 消费者组变动导致分区重分配时，旧 Consumer 必须完成当前偏移前的所有消息才能移交分区（Kafka 的 eager rebalance 会打断消费，而 cooperative rebalance 支持渐进式重分配）；2) 重试 —— 顺序消息场景下，一条消息消费失败会阻塞后续消息，必须阻塞等待重试完成（不能跳过）；3) 故障恢复 —— Consumer 崩溃后恢复时需要从正确的 offset 开始重新消费。\n\n解析：顺序消息的代价是吞吐量和可用性的下降。Kafka 单 Partition 顺序消息的吞吐量受限于单个 Partition 的写入能力（约几十 MB/s）。建议只在真正需要顺序的场景中使用，且尽量使用分区顺序（而非全局顺序）。\n\n扩展延伸：高性能场景下的折中方案：1) 在消息中携带 sequence_id，消费端根据业务逻辑自行排序（最终一致）；2) 使用数据库乐观锁 + 重试补偿，而不是依赖 MQ 的严格顺序。",
+    "hints": [
+      "Kafka 的 Partition 内有序，RocketMQ 的 Queue 内有序",
+      "Rebalance 期间顺序保证最容易破坏",
+      "顺序消息的性能代价很高，能用最终一致就尽量别用严格顺序"
+    ],
+    "tags": [
+      "mq",
+      "顺序消息",
+      "Kafka",
+      "RocketMQ",
+      "消息顺序"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "延迟消息的原理与实现方式",
+    "content": "延迟消息（延迟队列）是消息队列的常用功能，广泛应用于订单超时取消、定时任务等场景。请对比 RocketMQ 和 Kafka 在延迟消息支持上的差异，说明 RocketMQ 延迟消息的等级机制和实现原理（ScheduleMessageService），并介绍基于时间轮（Timing Wheel）的纯客户端延迟消息实现方案。",
+    "answer": "答案：RocketMQ 支持 18 个延迟等级（messageDelayLevel=1s/5s/10s/30s/1m/2m/3m/4m/5m/6m/7m/8m/9m/10m/20m/30m/1h/2h），Producer 设置延迟等级后，Broker 将消息投递到 SCHEDULE_TOPIC_XXXX 对应的 Queue。ScheduleMessageService 是一个后台线程，每 100ms 扫描延迟等级队列，将到期的消息重新投递到目标 Topic。\n\nKafka 不原生支持延迟消息。实现方式：1) 基于时间戳 —— 消息中携带目标处理时间戳，消费者端判断，到期才处理；2) 分层时间轮（Timing Wheel）—— 用时间轮维护延迟队列，tick 驱动遍历到期的 Bucket，将到期消息投递到处理 Topic。Kafka 自身的日志压缩（Log Compaction）机制也可间接实现延迟处理。\n\n时间轮实现原理：时间轮是一个环形数组，每个槽（Bucket）存放该时刻到期的任务集合。指针每 tick 移动一次，取出当前槽的所有任务执行。多层级时间轮扩展时间范围（如第一层 tick=1ms 共 20 格仅覆盖 20ms，第二层 tick=20ms 共 20 格覆盖 400ms）。层级之间通过\"降级\"机制关联 —— 高层 Bucket 中的任务到期后降级到低层。\n\n解析：RocketMQ 的延迟消息最大的限制是固定的 18 等级，无法自定义秒级延迟时间。Kafka 的时间轮回方案精度和覆盖范围均可自定义，但需要额外的维护和消费逻辑。Netty 的 HashedWheelTimer 是常用的时间轮实现参考。\n\n扩展延伸：Pulsar 使用 Delayed Message Tracker + 时间轮实现延迟消息。RocketMQ 5.0 支持自定义延迟时间的精确延迟消息（使用基于时间轮的 TimerMessageStore 替代固定等级机制）。",
+    "hints": [
+      "RocketMQ 的延迟等级机制是内建支持的",
+      "Kafka 需借助时间轮或外部系统实现延迟",
+      "分层时间轮以（精度×槽数^层数）覆盖较长时间范围"
+    ],
+    "tags": [
+      "mq",
+      "延迟消息",
+      "时间轮",
+      "RocketMQ",
+      "Kafka"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "死信队列与重试机制的设计",
+    "content": "消息消费失败时的重试和死信处理是消息队列可靠性保障的重要组成部分。请说明 RocketMQ 的重试队列（%RETRY% 前缀 Topic）和死信队列（%DLQ% 前缀 Topic）的工作原理，Kafka 的重试机制实现方式，以及设计死信处理的最佳实践（死信原因分析、手动重投、监控告警）。",
+    "answer": "答案：RocketMQ 的重试机制：消费者组对应的 Broker 端自动创建重试队列（%RETRY%TopicName），消费失败的消息自动投递到重试队列。重试等级与延迟等级一致（第一次重试 1s，第二次 5s…），重试次数耗尽（默认 16 次）后消息投递到死信队列（%DLQ%TopicName）。重试队列和死信队列的结构与普通 Topic 相同。\n\nKafka 没有原生重试队列/死信队列机制。实现方式：1) 客户端重试 —— Consumer 消费失败后记录到本地或外部存储，定时重试；2) 死信 Topic —— 消费者消费失败时将消息写入独立的 dead-letter Topic，由专门的死信处理服务处理；3) 使用 Kafka Streams 的 DeadLetterTopic 配置。\n\n死信处理最佳实践：1) 死信原因分析 —— 死信消息中记录消费失败异常栈和失败时间，便于问题定位；2) 手动重投 —— 提供管理平台从死信队列中选择性地将消息重新投递到原 Topic；3) 监控告警 —— 死信队列积压超过阈值时自动告警，防止死信无限累积；4) 定期清理 —— 设置死信消息的 TTL 超时过期，避免死信队列无限增长。\n\n解析：重试机制需要注意\"重试风暴\"问题 —— 大量的消息同时到达重试时间点，可能打垮系统。解决方案是在重试机制中加入退避策略（指数退避 + 抖动），并限制同时重试的并发量。\n\n扩展延伸：RocketMQ 的高级重试策略支持自定义重试次数和重试间隔（通过设置重试队列的延迟等级序列）。在事务性消息场景中，重试会结合事务回查机制 —— 如果消息消费失败，Producer 端会通过 TransactionCheckListener 回查事务状态。",
+    "hints": [
+      "RocketMQ 的 %RETRY%/%DLQ% Topic 是内建机制",
+      "Kafka 需要自行设计重试和死信管理",
+      "死信不是终点，应配合监控和管理平台形成闭环"
+    ],
+    "tags": [
+      "mq",
+      "死信队列",
+      "重试",
+      "RocketMQ",
+      "可靠性"
+    ]
   }
 ]

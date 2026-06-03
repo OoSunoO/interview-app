@@ -635,5 +635,186 @@
       "Redo Log",
       "InnoDB"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库分片策略与分布式主键",
+    "content": "常见的数据库分片策略有哪些？如何选择分片键？分布式场景下全局唯一主键如何生成？",
+    "answer": "答案：常见分片策略包括范围分片、哈希分片、一致性哈希分片。分片键选择需保证数据均匀分布，常用用户ID、订单ID等高频查询字段。分布式主键方案包括UUID、雪花算法（Snowflake）、数据库分段（segment）、Redis incr。\n\n解析：1）范围分片（Range Sharding）——按连续范围划分数据，如按时间或ID范围。优点：范围查询友好，扩展时只需新增分片。缺点：热点问题——最新数据集中在最后一个分片。2）哈希分片（Hash Sharding）——对分片键取模或一致性哈希。优点：数据分布均匀，写压力分散。缺点：扩缩容需要数据迁移（一致性哈希可缓解范围变化），跨分片范围查询性能差。3）键值映射分片——维护分片键到分片的映射表。优点：灵活调整。缺点：映射表成为瓶颈和单点风险。分布式主键方案：UUID简单但128位过长且无序（影响B+树写入性能）。雪花算法（Snowflake）64位长整型——1bit符号+41bit毫秒时间戳+10bit机器ID+12bit序列号，有序递增、高性能、无中心化依赖。\n\n扩展延伸：分片后的实践挑战——跨分片事务需要分布式事务方案（XA、TCC、Saga）。跨分片查询的聚合问题——全局排序需归并排序、分页需各分片取回再合并、多维度查询需辅助索引（ES）。ShardingSphere 的 Hint 分片支持强制路由到指定分片。生产建议：分片键选择高频等值查询字段，避免使用 JOIN 跨分片，单表数据量超过 2000 万行再考虑分片。",
+    "hints": [
+      "一致性哈希如何减少扩缩容时的数据迁移量",
+      "雪花算法在时钟回拨场景下怎么处理"
+    ],
+    "tags": [
+      "数据库分片",
+      "分片策略",
+      "分布式主键",
+      "雪花算法"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 组复制（MGR）原理",
+    "content": "MySQL Group Replication（MGR）如何实现高可用？与异步复制和半同步复制的核心区别是什么？",
+    "answer": "答案：MGR 基于 Paxos 协议的组通信系统实现多节点强一致性复制。所有节点组成复制组，事务需经组内多数节点同意才能提交。与异步复制（主无条件提交，不等待从库确认）和半同步复制（至少一个从库确认）不同，MGR 要求多数节点确认提交，提供更强的一致性保证。\n\n解析：MGR 采用全连接网状拓扑，节点之间通过 Group Communication System（基于 Paxos）通信。事务提交流程：1）事务在本地执行。2）提交时广播到组内所有节点。3）多数节点 certify 通过后本地提交。4）其余节点异步回放。冲突检测——MGR 对行级并行执行，使用维向量（version vector）检测写冲突。两种模式：单主模式（single-primary）——只有主节点可写，其余为只读节点，简化冲突处理。多主模式（multi-primary）——所有节点可写，但需要应用层处理写冲突。与异步复制区别：异步复制中主机宕机可能丢数据。半同步复制至少保证一个从机确认，但一致性仍弱于 MGR。MGR 保证多数节点有数据，自动故障切换。\n\n扩展延伸：MGR 的限制——写性能受组内最慢节点影响，组内节点数建议 3-5 个（奇数避免平局），不支持级联复制。MGR vs InnoDB Cluster——MGR 是核心组件，InnoDB Cluster 是 MGR + MySQL Router + MySQL Shell 的完整高可用方案。生产建议：使用单主模式 + 3 节点 + MySQL Router 自动读写分离。",
+    "hints": [
+      "单主模式和多主模式下写冲突处理的差异",
+      "为什么 MGR 建议用奇数个节点"
+    ],
+    "tags": [
+      "MySQL",
+      "MGR",
+      "组复制",
+      "高可用"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NoSQL 数据建模核心原则",
+    "content": "NoSQL 数据建模与关系型数据库有哪些根本区别？如何根据不同 NoSQL 类型（键值、文档、列族、图）设计数据模型？",
+    "answer": "答案：NoSQL 数据建模的核心原则是「查询驱动设计」（Query-Driven Design）——先确定查询模式再设计数据模型（RDBMS 反之：先设计数据模型再写查询）。遵循反范式化、聚合导向、避免 JOIN 三大原则。\n\n解析：四种 NoSQL 类型的数据建模特点：1）键值存储（Redis/Memcached）——建模为 Key→Value 映射，无模式约束。Key 命名规范用冒号分隔（user:123:profile），Value 结构根据访问模式选择（JSON 字符串、Hash、Set）。适用：缓存、Session、计数器。2）文档数据库（MongoDB）——建模为 Collection → Document → Field。反范式化嵌入关联数据（Embedding）减少查询次数。设计关键：Embedding vs Referencing——嵌入性能好但有 16MB 文档上限，引用减少冗余但需应用层聚合。3）列族数据库（HBase/Cassandra）——RowKey 设计最重要（影响数据分布和访问效率）。Cassandra 要求先定义查询模式再建表（CQL 表设计以查询为中心）。4）图数据库（Neo4j）——建模为 Node → Relationship → Property。适合社交关系、推荐、知识图谱的深度遍历查询。\n\n扩展延伸：NoSQL 建模的反模式——在文档数据库中做应用层 JOIN（N+1 查询问题）、在 Cassandra 中建过多二级索引（每表不超过 2 个）、在 Redis 中存大 Key（影响集群重新分片和内存管理）。选型建议：支付宝用 OceanBase（NewSQL），微博用 Redis + MySQL，Facebook 用 Cassandra，Google 用 Spanner/Bigtable。",
+    "hints": [
+      "文档数据库中的 Embedding 和 Referencing 如何取舍",
+      "Cassandra 的数据模型设计为什么从查询开始"
+    ],
+    "tags": [
+      "NoSQL",
+      "数据建模",
+      "MongoDB",
+      "Cassandra",
+      "Redis"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "NewSQL 数据库架构与 TiDB 实践",
+    "content": "NewSQL 数据库（如 TiDB、CockroachDB、OceanBase）如何同时保证 ACID 事务和水平扩展？与传统分库分表方案相比有哪些核心优势？",
+    "answer": "答案：NewSQL 采用分布式 SQL 引擎 + 自动分片 + 共识协议（Raft/Paxos）的架构，在保持 SQL 和 ACID 事务的同时实现水平扩展。相比传统分库分表：业务无侵入（无需配置分片键）、跨分片查询透明、数据自动 rebalance、强一致性内置。\n\n解析：以 TiDB 为例——1）TiDB Server：无状态 SQL 层，解析 SQL、生成执行计划、下推算子到存储节点。兼容 MySQL 协议，可直接用 MySQL 客户端连接。2）TiKV Server：分布式 KV 存储引擎，数据按 Range 自动分片为 Region（默认 96MB）。每个 Region 通过 Raft 协议复制到 3 个节点，保证强一致性。Region 自动分裂和合并。3）PD（Placement Driver）：管理 Region 元数据，调度 Region 在节点间均衡分布，监控集群状态。传统分库分表痛点：分片键变更困难、跨分片查询/排序/分页复杂、分布式事务依赖 XA 性能差、扩缩容需迁移数据并配合业务停机。NewSQL 在 SQL 层自动完成分区路由和下推聚合，对应用完全透明。\n\n扩展延伸：主流 NewSQL 产品对比——TiDB（开源，MySQL 兼容，HTAP）、CockroachDB（开源，PostgreSQL 兼容，全球部署能力）、OceanBase（闭源，Oracle 兼容，蚂蚁集团核心系统）、Google Spanner（TrueTime API + 全球强一致）。HTAP（Hybrid Transactional/Analytical Processing）是 NewSQL 发展方向——同一系统同时支持 OLTP 和 OLAP，通过行列混合存储实现（TiDB 的 TiFlash 列存引擎）。",
+    "hints": [
+      "TiDB 中 SQL 层如何将查询下推到存储层",
+      "Raft 协议在 TiKV 中如何保证 Region 内数据一致性"
+    ],
+    "tags": [
+      "NewSQL",
+      "TiDB",
+      "分布式数据库",
+      "Raft",
+      "HTAP"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "读写分离架构与主从延迟处理",
+    "content": "MySQL 读写分离架构如何实现？主从同步延迟会导致哪些问题？有哪些应对策略？",
+    "answer": "答案：读写分离通过将写操作路由到主库、读操作路由到从库实现。核心组件包括中间代理层（Proxy/MaxScale/ProxySQL）或客户端路由（ShardingSphere/Spring @Transactional(readOnly=true)）。主从延迟导致「读到脏数据」——写入后立即读取到的是旧数据。应对策略包括强制读主、延迟容忍、缓存辅助、并行复制。\n\n解析：两种实现模式——1）中间代理层：应用程序连接代理，代理自动路由读写（如 MySQL Router、MaxScale、ProxySQL）。优点：对应用透明。缺点：增加网络一跳，代理成为性能瓶颈和高可用关注点。2）客户端路由：通过数据源框架实现（如 ShardingSphere 读写分离功能、Spring @Transactional(readOnly=true)）。优点：无需额外组件。缺点：每个应用都要配置。主从延迟根因：主库 binlog → 网络传输 → 从库 relay log → SQL 线程回放。延迟触发：从库硬件弱于主库、从库同时服务读请求、大事务（大量 binlog）、DDL 操作。\n\n扩展延伸：应对方案详解——1）强制读主：一致性敏感的请求（支付结果、刚创建的记录）强制路由到主库。2）延迟标记：监控从库延迟（Seconds_Behind_Master），超过阈值自动摘除该从库的读流量。3）缓存辅助：写入后同步更新 Redis 缓存，优先读缓存。4）数据库层面优化：半同步复制（等待至少一个从库确认）、启用并行复制（MySQL 5.7+ 多线程回放，slave_parallel_workers）。5）业务妥协：客户端写入后延迟 100ms 再读。监控：SHOW SLAVE STATUS 的 Seconds_Behind_Master，Percona Monitoring Plugins。建议：一主三从常见配置，从库数建议不超过 5 个。",
+    "hints": [
+      "半同步复制如何平衡一致性和性能",
+      "为什么从库数量不建议超过 5 个"
+    ],
+    "tags": [
+      "读写分离",
+      "主从延迟",
+      "MySQL",
+      "高可用"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "时序数据库与关系数据库的区别",
+    "content": "时序数据库（如 InfluxDB、Prometheus、TimescaleDB）与关系数据库在数据模型、存储结构、查询方式上有什么核心区别？时序数据库适合什么场景？",
+    "answer": "答案：时序数据库专为时间序列数据优化，以时间戳+标签+值的数据模型存储，写入吞吐高、压缩比大，适合监控、IoT、金融行情等场景。\n\n解析：时序数据库的核心特性：1）数据模型——每条数据由时间戳（Timestamp）、标签（Tag，如 host=server1, region=cn-beijing）和字段值（Field）组成。Tag 用于过滤和分组，Field 用于聚合计算。2）写入优化——时序数据写入频繁但很少修改，时序数据库针对 append-only 写入模式优化，写入吞吐可达百万点/秒。3）存储优化——使用列式压缩（差值编码、游程编码、浮点数 XOR 压缩），压缩比可达 10:1 到 50:1。4）查询模式——按时间范围聚合（降采样）、按标签过滤，支持连续查询（Continuous Query）自动聚合。\n\n扩展延伸：关系数据库（如 PostgreSQL + TimescaleDB 插件）也可以存储时序数据，但写入吞吐和压缩比不如专用时序数据库。时序数据库的局限性：不适合复杂 JOIN、事务型场景。选型建议：监控指标用 Prometheus，IoT 设备用 InfluxDB，需要 SQL 兼容用 TimescaleDB。",
+    "hints": [
+      "时序数据的写入模式有什么特点",
+      "时序数据库为什么压缩比高"
+    ],
+    "tags": [
+      "时序数据库",
+      "InfluxDB",
+      "Prometheus",
+      "监控"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "图数据库的核心概念与应用场景",
+    "content": "什么是图数据库？Neo4j 等图数据库的核心概念（节点、关系、属性、遍历）是什么？图数据库适合解决什么问题？",
+    "answer": "答案：图数据库以图结构（节点+边+属性）存储数据，核心概念包括节点（实体）、关系（边）、属性（KV 对）、标签和遍历。擅长处理复杂关联关系和深层次路径查询。\n\n解析：图数据库的核心特性：1）数据模型——节点（Node）代表实体（如人、公司），关系（Relationship）代表实体间的连接（如「任职」「投资」），属性和标签附加在节点和关系上。2）查询语言——Cypher（Neo4j）或 Gremlin，用模式匹配表达图遍历，如 MATCH (a:Person)-[:WORKS_FOR]->(b:Company) WHERE a.name = '张三' RETURN b。关系数据库需要多层 JOIN 才能表达的查询，图数据库一行 Cypher 即可。3）性能优势——关联查询的复杂度与遍历深度相关，与数据总量无关。关系数据库 JOIN 多张千万级表时性能急剧下降，图数据库在深度关联场景快几个数量级。4）存储结构——使用邻接表或邻接矩阵的变体，节点和关系物理上指向相邻节点，无需索引即可快速遍历。\n\n扩展延伸：图数据库的典型场景——社交网络（好友推荐、影响力分析）、反欺诈（异常交易链路检测）、知识图谱（实体关系推理）、推荐系统（协同过滤的图路径计算）。不适用场景：大量聚合统计（如 SUM/COUNT）、全文搜索、OLTP 事务场景。",
+    "hints": [
+      "图数据库为什么在深度关联查询中比关系数据库快",
+      "Cypher 查询语言和 SQL 有什么本质区别"
+    ],
+    "tags": [
+      "图数据库",
+      "Neo4j",
+      "知识图谱"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "列式存储与行式存储的区别",
+    "content": "列式存储（如 ClickHouse、Parquet、ORC）和行式存储（如 MySQL InnoDB）的存储结构和查询性能有什么核心区别？列存为什么在 OLAP 场景中表现更好？",
+    "answer": "答案：行式存储按行组织数据（一行连续存储），适合 OLTP 的点查和更新。列式存储按列组织数据（一列连续存储），适合 OLAP 的大规模聚合和扫描查询。\n\n解析：列式存储的核心优势：1）按需读取——查询只需要少数列时，列存只读取相关列的数据，减少 I/O。行存即使只查一列也要读整行数据。2）压缩率高——同一列的数据类型相同、值分布有规律（如日期列、枚举列），可以使用差值编码、游程编码、字典编码等高效压缩算法。列存压缩比通常为 5:1 到 20:1。3）向量化执行——列存天然适合 SIMD 向量化处理，单条指令可处理多列值。4）编码优化——数据排序后存储可以进一步压缩，如稀疏列可转为位图（Bitmap）存储。\n\n扩展延伸：行式存储 vs 列式存储的工程实践：1）数据更新——列存修改单行开销大（涉及多列文件改写），行存更新高效。2）OLTP（如订单系统）用行存，OLAP（如报表分析）用列存。3）HTAP 数据库（如 TiDB、StarRocks）同时支持行存和列存两种引擎。4）列存的代价：查询少量行时延迟高（需要扫描大量数据才能找到目标行），不适合点查场景。",
+    "hints": [
+      "为什么同一列的数据更容易压缩",
+      "列存为什么不适合频繁更新的场景"
+    ],
+    "tags": [
+      "列式存储",
+      "ClickHouse",
+      "Parquet",
+      "OLAP"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HTAP 数据库的原理与挑战",
+    "content": "什么是 HTAP（Hybrid Transactional/Analytical Processing）？它解决了什么问题？HTAP 数据库在一份数据上同时支持 TP 和 AP 的核心技术挑战是什么？",
+    "answer": "答案：HTAP 指在同一数据库引擎中同时支持 OLTP 事务处理和 OLAP 分析查询，避免传统架构中 TP 库和 AP 库之间的数据搬运（ETL）。核心挑战在于如何在一份数据上同时满足 TP 的低延迟更新和 AP 的高吞吐扫描。\n\n解析：HTAP 的核心技术架构：1）行列混合存储——同时维护行存（高效点查和更新）和列存（高效聚合分析），通过分布式一致性协议（如 Raft）同步数据。写入走行存，分析查询走列存，两套引擎共享同一份最新数据（TiDB 的 TiFlash、MySQL HeatWave）。2）计算存储分离——计算节点无状态可弹性伸缩，存储节点按数据分片存储。TP 查询走计算节点的行存引擎，AP 查询走列存引擎（通过列存副本）。3）实时一致性——列存引擎通过 Raft Learner 或异步复制实时同步行存的数据变更，保证 AP 查询读取的是近实时数据（秒级延迟）。\n\n扩展延伸：主流 HTAP 方案对比——TiDB：行存（TiKV）+ 列存（TiFlash），Raft 同步。StarRocks：三种表模型（明细/聚合/更新），列式存储引擎同时支持 TP 和 AP。Snowflake：计算和存储分离，自动聚类和物化视图优化 AP 性能。ClickHouse：纯列存，通过 CollapsingMergeTree/ReplacingMergeTree 支持轻量级更新。HTAP 的局限：同一份数据难以同时在 TP 延迟和 AP 吞吐上都达到极致，通常是一种折中方案。",
+    "hints": [
+      "HTAP 如何解决 TP 和 AP 之间的数据同步延迟问题",
+      "行列混合存储中的列存副本是怎样实时同步的"
+    ],
+    "tags": [
+      "HTAP",
+      "TiDB",
+      "StarRocks",
+      "行列混合"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库中间件的核心作用",
+    "content": "数据库中间件（如 ShardingSphere、MyCAT、Vitess）在分布式数据库架构中起什么作用？它们解决了哪些问题？有哪些常见的功能分层？",
+    "answer": "答案：数据库中间件位于应用和数据库之间，提供分库分表、读写分离、分布式事务、数据迁移等能力，让业务像访问单库一样访问分布式数据库集群。\n\n解析：数据库中间件的核心功能：1）分库分表（Sharding）——按分片键（Sharding Key）将数据路由到不同的数据库实例或表。策略包括：取模分片、范围分片、一致性哈希分片。对应用透明，SQL 层自动改写和路由。2）读写分离——将 SELECT 请求路由到只读从库，INSERT/UPDATE/DELETE 路由到主库。解决读写分离场景下从库的负载均衡和延迟感知问题。3）分布式事务——支持 XA 事务（两阶段提交）、SEATA（AT/TCC/Saga）等分布式事务方案，保证跨库事务的一致性。4）数据迁移和治理——在线数据迁移、分片策略动态调整、影子库压测、SQL 审计和限流。\n\n扩展延伸：数据库中间件的演进方向——从 Proxy 模式（如 MyCAT、Vitess，独立部署代理层）到 SDK 模式（如 ShardingSphere-JDBC，嵌入应用进程），再到云原生 DBaaS（直接提供分布式数据库实例）。Proxy 模式优势是跨语言兼容，劣势是多一层网络跳转。SDK 模式优势是低延迟（无中间层），劣势是仅 Java 生态。选型建议：小团队用 ShardingSphere-JDBC，大团队/多语言用 ShardingSphere-Proxy 或 Vitess。",
+    "hints": [
+      "Proxy 模式和 SDK 模式各有什么优缺点",
+      "分片键选择不当会导致什么问题"
+    ],
+    "tags": [
+      "数据库中间件",
+      "ShardingSphere",
+      "分库分表",
+      "Vitess"
+    ]
   }
 ]

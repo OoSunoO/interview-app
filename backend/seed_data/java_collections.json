@@ -681,5 +681,203 @@
       "HashMap",
       "红黑树"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？",
+    "content": "ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？",
+    "answer": "答案：JDK 7 采用 Segment（分段锁） + HashEntry 数组实现，JDK 8 采用 Node 数组 + 链表/红黑树 + synchronized + CAS 实现。\n\n解析：\nJDK 7：将 HashMap 分成多个 Segment（继承 ReentrantLock），每个 Segment 维护一个 HashEntry 数组。并发度 = Segment 数量（默认 16），不同 Segment 可并发操作。写操作需要获取 Segment 的锁，读操作通过 volatile 保证可见性。\nJDK 8：摒弃了分段锁设计，改用 synchronized + CAS 来保证并发安全。锁粒度从 Segment 级别降为单个数组元素（桶）级别，显著提升了并发度。当链表长度 >= 8 且数组长度 >= 64 时，链表会树化为红黑树以降低查询时间复杂度。\n\n扩展延伸：JDK 8 的 put 流程：先检查 table 是否初始化 → CAS 插入空桶 → synchronized 锁定首节点进行链表/红黑树插入 → 检查是否需要树化。JDK 8 的 size() 方法通过 baseCount 和 CounterCell 数组统计元素个数，不再需要遍历所有 Segment。",
+    "hints": [
+      "JDK 7 的分段锁基于 ReentrantLock",
+      "JDK 8 改用 synchronized + CAS，锁粒度更细",
+      "JDK 8 引入了红黑树优化"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "ConcurrentHashMap"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CopyOnWriteArrayList 的原理和适用场景是什么？",
+    "content": "CopyOnWriteArrayList 的原理和适用场景是什么？",
+    "answer": "答案：CopyOnWriteArrayList 是基于写时复制（Copy-On-Write）策略的线程安全 List。所有写操作（add/set/remove）都会复制底层数组，修改后替换引用。读操作无锁且直接访问原数组。\n\n解析：\n核心原理：内部维护一个 volatile 的 Object[] array。add 方法先获取 ReentrantLock 锁，复制一个新数组（长度 +1），在新数组上写入新元素，最后将新数组赋值给 array 引用。读操作不加锁，直接读 array 引用指向的数组。\n优点：读操作完全无锁，适合读多写少的场景。迭代器遍历时不会抛出 ConcurrentModificationException（快照迭代）。\n缺点：写操作成本高（数组复制），内存占用双倍，数据最终一致（不能保证实时一致性）。\n\n扩展延伸：适合场景：白名单/黑名单、事件监听器列表、缓存配置等读多写少的场景。不适合场景：写频繁、对数据实时一致性要求高的场景。类似原理的还有 CopyOnWriteArraySet（内部委托 CopyOnWriteArrayList）。",
+    "hints": [
+      "写时复制策略：每次修改复制新数组",
+      "读操作无锁，直接读 volatile 数组引用",
+      "适合读多写少场景"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "CopyOnWriteArrayList"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "BlockingQueue 的 put/take 与 offer/poll 有什么区别？",
+    "content": "BlockingQueue 的 put/take 与 offer/poll 有什么区别？",
+    "answer": "答案：put/take 是阻塞方法，队列满时 put 阻塞，队列空时 take 阻塞。offer/poll 是非阻塞方法，提供返回值标识操作结果，支持超时版本。\n\n解析：\nput(E e)：队列满时阻塞等待，直到有空间可用。不返回 boolean 值。\ntake()：队列空时阻塞等待，直到有元素可取。返回取出的元素。\noffer(E e)：队列满时立即返回 false，不阻塞。不会抛出异常。\noffer(E e, long timeout, TimeUnit unit)：在指定时间内等待可用空间，超时返回 false。\npoll(long timeout, TimeUnit unit)：在指定时间内等待元素，超时返回 null。\n\n扩展延伸：BlockingQueue 还有 add/remove 方法——队列满时 add 抛出 IllegalStateException，队列空时 remove 抛出 NoSuchElementException。drainTo(Collection) 方法可将队列中所有可用元素一次性转移到集合中，减少批处理时的锁竞争。",
+    "hints": [
+      "put/take 是阻塞的，offer/poll 非阻塞",
+      "offer/poll 有带超时参数的重载版本",
+      "add/remove 失败直接抛异常"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "BlockingQueue"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "TreeMap 的底层红黑树原理是什么？",
+    "content": "TreeMap 的底层红黑树原理是什么？",
+    "answer": "答案：TreeMap 底层基于红黑树（Red-Black Tree）实现，是一种自平衡的二叉查找树。它保证元素的插入、删除和查找的时间复杂度均为 O(log n)。\n\n解析：\n红黑树的性质：1）每个节点是红色或黑色；2）根节点是黑色；3）叶子节点（NIL）是黑色；4）红色节点的子节点必须是黑色（不能有连续的红色节点）；5）从任一节点到其每个叶子的所有路径包含相同数量的黑色节点（黑高平衡）。\nTreeMap 使用 Comparator 或 Comparable 来决定元素顺序。插入和删除后通过左旋/右旋 + 颜色翻转来维持红黑树的平衡性质。\n\n扩展延伸：TreeMap 提供了丰富的导航方法：lowerKey()/higherKey()、floorKey()/ceilingKey()、firstKey()/lastKey()、subMap()/headMap()/tailMap()。TreeMap 不是线程安全的，可通过 Collections.synchronizedSortedMap 包装。与 HashMap 相比，TreeMap 在需要有序遍历时更有优势，但插入和查找速度较慢（O(log n) vs O(1)）。",
+    "hints": [
+      "红黑树是一种自平衡二叉查找树",
+      "5 条关键性质保证了 O(log n) 时间复杂度",
+      "导航方法（lowerKey/higherKey）是 TreeMap 的特色"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap",
+      "红黑树"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Collections 工具类有哪些常用方法？",
+    "content": "Collections 工具类有哪些常用方法？",
+    "answer": "答案：Collections 工具类提供排序、查找、同步包装、不可变集合创建、线程安全包装等静态方法。\n\n解析：\n排序与操作：sort(List)、reverse(List)、shuffle(List)、swap(List, i, j)、rotate(List, distance)、fill(List, T)\n查找与极值：binarySearch(List, key)、max(Collection)、min(Collection)、frequency(Collection, Object)、indexOfSubList/s LastIndexOfSubList\n同步包装：synchronizedCollection/synchronizedList/synchronizedMap/synchronizedSet/synchronizedSortedMap/synchronizedSortedSet——返回由用户提供的集合包装的线程安全视图\n不可变包装：unmodifiableList/unmodifiableMap/unmodifiableSet/unmodifiableCollection——修改操作会抛出 UnsupportedOperationException\n创建空集合/单元素集合：emptyList/emptyMap/emptySet、singletonList/singletonMap/singleton\n\n扩展延伸：Collections.synchronizedList 包装的 List 在迭代时仍需在 synchronized 块中手动同步。不可变集合在 Java 9+ 中多使用 List.of()/Set.of()/Map.of() 等工厂方法替代。emptyList() 返回的是 EMPTY_LIST 常量，不会分配新对象。",
+    "hints": [
+      "同步包装方法返回线程安全视图",
+      "unmodifiable 系列封装不可变视图",
+      "Java 9+ 推荐使用 of() 工厂方法替代部分 Collections 方法"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？",
+    "content": "ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？",
+    "answer": "答案：JDK 7 采用 Segment（分段锁） + HashEntry 数组实现，JDK 8 采用 Node 数组 + 链表/红黑树 + synchronized + CAS 实现。\n\n解析：\nJDK 7：将 HashMap 分成多个 Segment（继承 ReentrantLock），每个 Segment 维护一个 HashEntry 数组。并发度 = Segment 数量（默认 16），不同 Segment 可并发操作。写操作需要获取 Segment 的锁，读操作通过 volatile 保证可见性。\nJDK 8：摒弃了分段锁设计，改用 synchronized + CAS 来保证并发安全。锁粒度从 Segment 级别降为单个数组元素（桶）级别，显著提升了并发度。当链表长度 >= 8 且数组长度 >= 64 时，链表会树化为红黑树以降低查询时间复杂度。\n\n扩展延伸：JDK 8 的 put 流程：先检查 table 是否初始化 → CAS 插入空桶 → synchronized 锁定首节点进行链表/红黑树插入 → 检查是否需要树化。JDK 8 的 size() 方法通过 baseCount 和 CounterCell 数组统计元素个数，不再需要遍历所有 Segment。",
+    "hints": [
+      "JDK 7 的分段锁基于 ReentrantLock",
+      "JDK 8 改用 synchronized + CAS，锁粒度更细",
+      "JDK 8 引入了红黑树优化"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "ConcurrentHashMap"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CopyOnWriteArrayList 的原理和适用场景是什么？",
+    "content": "CopyOnWriteArrayList 的原理和适用场景是什么？",
+    "answer": "答案：CopyOnWriteArrayList 是基于写时复制（Copy-On-Write）策略的线程安全 List。所有写操作（add/set/remove）都会复制底层数组，修改后替换引用。读操作无锁且直接访问原数组。\n\n解析：\n核心原理：内部维护一个 volatile 的 Object[] array。add 方法先获取 ReentrantLock 锁，复制一个新数组（长度 +1），在新数组上写入新元素，最后将新数组赋值给 array 引用。读操作不加锁，直接读 array 引用指向的数组。\n优点：读操作完全无锁，适合读多写少的场景。迭代器遍历时不会抛出 ConcurrentModificationException（快照迭代）。\n缺点：写操作成本高（数组复制），内存占用双倍，数据最终一致（不能保证实时一致性）。\n\n扩展延伸：适合场景：白名单/黑名单、事件监听器列表、缓存配置等读多写少的场景。不适合场景：写频繁、对数据实时一致性要求高的场景。类似原理的还有 CopyOnWriteArraySet（内部委托 CopyOnWriteArrayList）。",
+    "hints": [
+      "写时复制策略：每次修改复制新数组",
+      "读操作无锁，直接读 volatile 数组引用",
+      "适合读多写少场景"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "CopyOnWriteArrayList"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "BlockingQueue 的 put/take 与 offer/poll 有什么区别？",
+    "content": "BlockingQueue 的 put/take 与 offer/poll 有什么区别？",
+    "answer": "答案：put/take 是阻塞方法，队列满时 put 阻塞，队列空时 take 阻塞。offer/poll 是非阻塞方法，提供返回值标识操作结果，支持超时版本。\n\n解析：\nput(E e)：队列满时阻塞等待，直到有空间可用。不返回 boolean 值。\ntake()：队列空时阻塞等待，直到有元素可取。返回取出的元素。\noffer(E e)：队列满时立即返回 false，不阻塞。不会抛出异常。\noffer(E e, long timeout, TimeUnit unit)：在指定时间内等待可用空间，超时返回 false。\npoll(long timeout, TimeUnit unit)：在指定时间内等待元素，超时返回 null。\n\n扩展延伸：BlockingQueue 还有 add/remove 方法——队列满时 add 抛出 IllegalStateException，队列空时 remove 抛出 NoSuchElementException。drainTo(Collection) 方法可将队列中所有可用元素一次性转移到集合中，减少批处理时的锁竞争。",
+    "hints": [
+      "put/take 是阻塞的，offer/poll 非阻塞",
+      "offer/poll 有带超时参数的重载版本",
+      "add/remove 失败直接抛异常"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "BlockingQueue"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "TreeMap 的底层红黑树原理是什么？",
+    "content": "TreeMap 的底层红黑树原理是什么？",
+    "answer": "答案：TreeMap 底层基于红黑树（Red-Black Tree）实现，是一种自平衡的二叉查找树。它保证元素的插入、删除和查找的时间复杂度均为 O(log n)。\n\n解析：\n红黑树的性质：1）每个节点是红色或黑色；2）根节点是黑色；3）叶子节点（NIL）是黑色；4）红色节点的子节点必须是黑色（不能有连续的红色节点）；5）从任一节点到其每个叶子的所有路径包含相同数量的黑色节点（黑高平衡）。\nTreeMap 使用 Comparator 或 Comparable 来决定元素顺序。插入和删除后通过左旋/右旋 + 颜色翻转来维持红黑树的平衡性质。\n\n扩展延伸：TreeMap 提供了丰富的导航方法：lowerKey()/higherKey()、floorKey()/ceilingKey()、firstKey()/lastKey()、subMap()/headMap()/tailMap()。TreeMap 不是线程安全的，可通过 Collections.synchronizedSortedMap 包装。与 HashMap 相比，TreeMap 在需要有序遍历时更有优势，但插入和查找速度较慢（O(log n) vs O(1)）。",
+    "hints": [
+      "红黑树是一种自平衡二叉查找树",
+      "5 条关键性质保证了 O(log n) 时间复杂度",
+      "导航方法（lowerKey/higherKey）是 TreeMap 的特色"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap",
+      "红黑树"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Collections 工具类有哪些常用方法？",
+    "content": "Collections 工具类有哪些常用方法？",
+    "answer": "答案：Collections 工具类提供排序、查找、同步包装、不可变集合创建、线程安全包装等静态方法。\n\n解析：\n排序与操作：sort(List)、reverse(List)、shuffle(List)、swap(List, i, j)、rotate(List, distance)、fill(List, T)\n查找与极值：binarySearch(List, key)、max(Collection)、min(Collection)、frequency(Collection, Object)、indexOfSubList/s LastIndexOfSubList\n同步包装：synchronizedCollection/synchronizedList/synchronizedMap/synchronizedSet/synchronizedSortedMap/synchronizedSortedSet——返回由用户提供的集合包装的线程安全视图\n不可变包装：unmodifiableList/unmodifiableMap/unmodifiableSet/unmodifiableCollection——修改操作会抛出 UnsupportedOperationException\n创建空集合/单元素集合：emptyList/emptyMap/emptySet、singletonList/singletonMap/singleton\n\n扩展延伸：Collections.synchronizedList 包装的 List 在迭代时仍需在 synchronized 块中手动同步。不可变集合在 Java 9+ 中多使用 List.of()/Set.of()/Map.of() 等工厂方法替代。emptyList() 返回的是 EMPTY_LIST 常量，不会分配新对象。",
+    "hints": [
+      "同步包装方法返回线程安全视图",
+      "unmodifiable 系列封装不可变视图",
+      "Java 9+ 推荐使用 of() 工厂方法替代部分 Collections 方法"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections"
+    ],
+    "options": []
   }
 ]

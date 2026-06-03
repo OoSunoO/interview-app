@@ -594,5 +594,190 @@
       "构建工具",
       "Vite"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CSS 盒模型深入与包含块计算",
+    "content": "CSS 的 content-box 和 border-box 有何本质区别？包含块（Containing Block）如何决定元素的百分比计算基准？",
+    "answer": "答案：content-box 的 width/height 只包括 content 区域（padding/border 向外扩展）。border-box 的 width/height 包括 content + padding + border（padding/border 向内压缩）。包含块决定百分比值的计算基准——普通流中 width/height/margin/padding 的百分比基于包含块的宽度计算（含上下 margin/padding 也是基于包含块的宽度，这一点常被误解）。\n\n解析：盒模型差异——content-box（默认）：元素实际占宽 = width + padding + border。border-box：元素占宽 = width（padding/border 向内挤）。推荐用 border-box 全局重置（* { box-sizing: border-box }）——更符合布局直觉。包含块判定规则——1）position: static/relative：包含块是最近块级祖先的内容区。2）position: absolute：包含块是最近 position 非 static 祖先的内边距区（padding box）。3）position: fixed：包含块是视口（viewport）。4）position: absolute 且祖先有 transform/filter/perspective ≠ none：包含块改为该祖先的 padding box。关键细节——width 百分比基于包含块的 width，height 百分比基于包含块的 height（但包含块 height: auto 时百分比无效）。margin/padding 的百分比全部基于包含块的 width（含上下方向，常见误解）。\n\n扩展延伸：布局陷阱——1）整除问题（50% + 50% > 100% 因为四舍五入）。2）Flex 子元素百分比宽度：默认 stretch，flex-basis 取代 width。3）Grid 轨道 fr 单位比百分比更灵活。4）百分比高度不生效：父元素 height: auto，子元素 height: 50% 无效（父元素显式高度或绝对定位修复）。CSS 布局演进：float → position → flexbox → grid。现代布局首选 flexbox（一维）和 grid（二维）。",
+    "hints": [
+      "margin-top 的百分比是相对于包含块的宽度还是高度",
+      "为什么 height: 50% 有时不生效"
+    ],
+    "tags": [
+      "CSS",
+      "盒模型",
+      "包含块",
+      "布局",
+      "box-sizing"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JavaScript 内存管理与弱引用",
+    "content": "V8 引擎的垃圾回收（GC）如何工作？WeakMap/WeakSet 和 FinalizationRegistry 有什么用？常见的内存泄漏场景有哪些？",
+    "answer": "答案：V8 采用分代回收——新生代（Scavenge 算法，From 空间复制到 To 空间，适合朝生夕死的对象）和老生代（Mark-Sweep-Compact，标记清除 + 增量标记 + 并发回收）。WeakMap/WeakSet 的 key 是弱引用，不阻止 GC 回收 key 对象，适合 DOM 关联数据和私有属性存储。FinalizationRegistry 注册对象回收后的回调（不保证执行时机，仅用于辅助清理）。\n\n解析：V8 分代回收——1）新生代（1-8MB）：对象首先分配于此。Scavenge（Cheney 算法变体）将存活对象从 From 复制到 To，清空 From 后交换角色。晋升条件：经历两次 Minor GC 仍存活或 To 使用率超 25%。2）老生代（Major GC）：标记阶段从 GC Roots（全局变量/DOM 根/栈变量）出发标记可达对象。清除阶段回收不可达内存。整理阶段移动存活对象消除碎片。增量标记——标记拆成 5-10ms 小步穿插执行，避免长暂停。并发标记（Orinoco 项目）——工作线程辅助标记减少主线程阻塞。3）大对象空间（> 1MB 对象直接分配，不移动）。WeakMap 应用场景——DOM 节点关联数据（节点删除后数据自动被回收）、缓存（key 不再使用时缓存自动失效）、私有属性存储（ES6 class 私有字段的 polyfill 方案）。\n\n扩展延伸：常见内存泄漏——1）闭包中未释放的外部变量引用。2）未清除的定时器/RAF/事件监听器。3）全局变量和无限增长缓存。4）已删除 DOM 仍被 JavaScript 引用。5）分离的 DOM 节点（被 JS 引用但不在树中）。WeakRef（谨慎使用）——允许获取可能已死的对象，不阻止 GC。排查工具——Chrome DevTools Memory 面板（Heap Snapshot 对比 + Allocation Timeline）、Node.js process.memoryUsage() 监控 heapUsed。",
+    "hints": [
+      "WeakMap 的 key 必须是什么类型的值",
+      "为什么不推荐大量使用 WeakRef 和 FinalizationRegistry"
+    ],
+    "tags": [
+      "JavaScript",
+      "GC",
+      "V8",
+      "WeakMap",
+      "内存泄漏"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Tree Shaking 原理与工程化配置",
+    "content": "Tree Shaking 的实现原理是什么？为什么它依赖 ES Module 而不兼容 CommonJS？在 Webpack/Vite 中如何最大化 Tree Shaking 效果？",
+    "answer": "答案：Tree Shaking 通过静态分析 ES Module 的 import/export 依赖图，标记未使用的 export，在压缩阶段（Terser）删除死代码。依赖 ESM 的原因——ESM 的 import/export 是编译期静态结构，CommonJS 的 require/module.exports 是运行时动态的。最大化效果配置：package.json 设置 sideEffects: false、使用 ESM 库、避免破坏 Tree Shaking 的语法模式。\n\n解析：Tree Shaking 原理——1）Webpack/Rollup 构建 Module Graph。2）标记每个 export 是否被 import。未被 import 的 export 标记 /* unused harmony export * /。3）Terser 压缩时删除未被引用的代码。为什么 ESM 必须——CommonJS 可写 if (cond) { require(\"a\") } else { require(\"b\") }，模块依赖在运行才能确定。ESM 必须是顶层声明，静态分析可安全删除。破坏 Tree Shaking 的常见写法——1）import * as utils from \"./utils\"（全量导入命名空间，Webpack 认为全量使用）。2）export default { a, b, c }（整体导出无法分析成员使用情况）。3）Babel 转译 ESM 为 CJS（配置 @babel/preset-env 的 modules: false 避免）。4）副作用导入——import \"./polyfill\"、import \"styles.css\" 在 sideEffects 中声明。\n\n扩展延伸：配置实践——package.json 设 \"sideEffects\": false 或 \"sideEffects\": [\"./polyfill.js\", \"*.css\"]。ESM 库——lodash-es 替代 lodash，antd/es 替代 antd/lib。Webpack vs Vite——Vite 基于 Rollup，Tree Shaking 更彻底（Rollup 天然更优）。但 Vite 开发模式不做 Tree Shaking（仅构建时）。深度优化——webpack-deep-scope-plugin 分析 scope 级使用情况。monorepo 场景：避免库内交叉引用导致 Tree Shaking 失效。分析工具——webpack-bundle-analyzer 打包后检查死代码。",
+    "hints": [
+      "为什么 import * as 会破坏 Tree Shaking",
+      "sideEffects: false 的含义是什么"
+    ],
+    "tags": [
+      "前端",
+      "Tree Shaking",
+      "Webpack",
+      "Vite",
+      "ESM"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web 无障碍合规实践（WCAG & ARIA）",
+    "content": "WCAG 2.1 的四项原则（POUR）是什么？如何实现键盘全操作和屏幕阅读器支持？常见的无障碍违反情形有哪些？",
+    "answer": "答案：WCAG 2.1 四项原则——可感知（Perceivable）、可操作（Operable）、可理解（Understandable）、健壮（Robust）。键盘可操作性要求全部功能通过键盘完成（Tab/Enter/Arrow 导航和激活）。屏幕阅读器支持通过语义化 HTML + ARIA 属性（role/aria-label/aria-live）实现。常见违规：图片无 alt、颜色对比度不足、非语义标签、焦点不可见、缺少表单标签关联。\n\n解析：POUR 逐一展开——1）可感知——文本替代（img alt/label）、时基媒体替代（字幕/音频描述）、可适配（语义结构 + ARIA landmark）、可区分（对比度 >= 4.5:1，文本缩放 200% 不失内容）。2）可操作——键盘全操作（不用 onclick 仅响应鼠标）、足够时间（超时可延）、防癫痫（无 > 3 次/秒闪烁）、可导航（跳过链接、页面 title、焦点顺序、链接目的明确）。3）可理解——语言声明（html lang）、可预测（一致导航）、输入辅助（错误提示/建议）。4）健壮——兼容新旧辅助技术、正确使用 ARIA（不覆盖原生语义、不过度使用）。实践要点——表单：label 通过 for/id 或 aria-labelledby 关联 input，错误用 aria-describedby 提示。动态内容：aria-live=\"polite/assertive\" 声明更新区域。焦点管理：弹窗时焦点移到弹窗，关闭时返回触发元素。React 中管理焦点用 useRef + nextTick。\n\n扩展延伸：检测工具——axe-core（集成到 Cypress/Playwright 做 E2E 断言）、Lighthouse 无障碍评分（建议 > 90）、WAVE 可视化插件。手动测试——Tab 遍历全部可交互元素检查焦点可见性、VoiceOver（macOS）/ NVDA（Windows）读一遍。实施原则——先写语义 HTML 再加样式，交互组件从键盘操作开始，动态内容同步更新 ARIA live region。React 的 aria-* 属性原生支持。Vue 通过 v-bind 绑定。",
+    "hints": [
+      "为什么 `<div role=\"button\">` 不如直接用 `<button>`",
+      "aria-live=\"polite\" 和 \"assertive\" 的区别是什么"
+    ],
+    "tags": [
+      "前端",
+      "无障碍",
+      "WCAG",
+      "ARIA",
+      "a11y"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "关键渲染路径与 Core Web Vitals 优化",
+    "content": "浏览器从收到 HTML 到渲染出画面的关键渲染路径（CRP）包含哪些步骤？如何测量和优化 FCP 和 LCP？",
+    "answer": "答案：关键渲染路径五步——DOM 树构建 → CSSOM 树构建 → Render Tree（DOM + CSSOM 合并）→ Layout（几何位置计算）→ Paint（像素绘制）。FCP（首次内容渲染）优化核心：减少首个请求的阻塞资源（内联关键 CSS、async/defer 非关键 JS、preload 关键资源）。LCP（最大内容渲染）优化核心：优化最大可见元素的加载（图片压缩/预加载、字体优化、消除布局偏移）。\n\n解析：CRP 各步骤——1）DOM 构建：HTML 边下载边解析成 Token → Node → DOM 树。<script>（无 async/defer）阻塞解析。<link href=\"style.css\"> 阻塞渲染（渲染等待 CSSOM 就绪）。2）CSSOM 构建：CSS 默认渲染阻塞。优化：关键 CSS（首屏样式）内联到 <head>，非关键 CSS 异步加载（media=\"print\" 加载后切换或 rel=\"preload\" onload=\"this.rel='stylesheet'\")。3）Render Tree：只含可见元素（display:none 排除，visibility:hidden 包含）。4）Layout：计算尺寸和位置。代价与元素复杂度相关（table 布局重、flex/grid 轻）。触发：DOM/CSSOM 变化、窗口 resize、字体加载。5）Paint：像素绘制。合成（transform/opacity）在合成层 GPU 加速，不触发 Layout/Paint。FCP 优化——消除渲染阻塞资源、CDN 加速、字体显示策略（font-display: swap）、消除重定向。\n\n扩展延伸：Core Web Vitals——LCP（< 2.5s 好）、INP（Interaction to Next Paint，< 200ms 好，2024 年取代 FID）、CLS（累积布局偏移，< 0.1 好）。测量——Lighthouse（模拟）、Chrome DevTools Performance（实测）、web-vitals 库（RUM 真实用户监控）。Performance API——performance.mark()/measure() 手动打点。React/Vue 中优化——React.memo/useMemo 减少不必要渲染、代码分割（dynamic import()）、preconnect/prefetch 预连接。",
+    "hints": [
+      "为什么内联关键 CSS 能优化 FCP",
+      "CLS 是如何计算的，什么场景下 CLS 会升高"
+    ],
+    "tags": [
+      "前端性能",
+      "CRP",
+      "FCP",
+      "LCP",
+      "Core Web Vitals"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微前端架构的实现方案",
+    "content": "什么是微前端？它解决什么问题？主流的微前端实现方案（iframe、Web Components、Module Federation、qiankun/single-spa）分别有什么优缺点？",
+    "answer": "答案：微前端将前端应用拆分为多个独立开发、独立部署的小应用，在主应用中组装运行。核心解决大型前端工程的代码膨胀、团队协作冲突、独立发版需求。主流方案包括 iframe、single-spa/qiankun、Module Federation、Web Components。\n\n解析：主流的微前端方案对比——1）iframe——优点：天然隔离（CSS/JS 互不干扰），部署独立，实现简单。缺点：URL 不同步，通信复杂（postMessage），用户体验差（白屏、滚动条、弹窗越界），SEO 不友好。适合场景：低交互的嵌入式页面（如系统说明书、管理后台的简单页面）。2）single-spa / qiankun——single-spa 通过路由监听加载和卸载子应用。qiankun（基于 single-spa）通过 HTML Entry + Shadow DOM + Sandbox 实现 JS 沙箱和样式隔离。优点：用户体验好，子应用共享主应用的全局上下文。缺点：接入改造成本高，沙箱有时不完善（第三方全局变量污染）。3）Module Federation（Webpack 5）——运行时加载远程模块，子应用直接暴露和消费其他应用的组件。优点：天然支持代码共享，子应用之间可以互相引用组件。缺点：构建工具限制（必须 Webpack 5+），版本同步管理复杂。4）Web Components 封装：浏览器原生组件模型，隔离最好。但生态不成熟、兼容性和 SSR 支持不完善。\n\n扩展延伸：微前端的适用判断——不推荐引入微前端的情况：应用模块小于 5 个、团队人数少于 20 人、没有独立部署需求。微前端应解决的真正问题是「多团队协作的边界管理」而不是「代码拆分」。更轻量的替代方案：Monorepo（nx/turborepo）共享代码 + 独立构建包产物。",
+    "hints": [
+      "qiankun 的 JS 沙箱和样式隔离如何实现",
+      "Module Federation 和 single-spa 的核心区别是什么——谁负责加载子应用"
+    ],
+    "tags": [
+      "微前端",
+      "qiankun",
+      "Module Federation",
+      "single-spa"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web Worker 与多线程",
+    "content": "什么是 Web Worker？它解决了 JavaScript 的什么问题？SharedWorker 和 Service Worker 与 Web Worker 有什么区别？Web Worker 的使用限制是什么？",
+    "answer": "答案：Web Worker 允许在浏览器后台线程中运行 JavaScript，解决 JS 单线程导致的 UI 阻塞问题。不同的 Worker 类型：Web Worker（Dedicated Worker，每个页面一个实例）、SharedWorker（多页面共享）、Service Worker（网络代理，离线缓存和推送通知）。\n\n解析：Web Worker 的核心知识——1）创建和使用：const worker = new Worker('worker.js') ——主线程通过 postMessage() 发送消息，worker 通过 onmessage 接收，结果通过 postMessage 返回。2）限制：Worker 中不能访问 DOM（不能操作 window/document/parent 对象）、不能使用某些 API（如 alert、confirm）。可以访问 XMLHttpRequest/Fetch、IndexedDB、Canvas（OffscreenCanvas）、WebAssembly。3）数据传输：主线程和 Worker 之间的数据传输采用结构化克隆（Structured Clone Algorithm），而不是引用传递。大对象传输有性能开销（需要序列化/反序列化），但 Transferable Objects（如 ArrayBuffer）可以用零拷贝的方式转移所有权。\n\n扩展延伸：三种 Worker 的区别——1）Web Worker（Dedicated Worker）：一个页面一个实例，页面关闭 Worker 随销毁。使用场景：CPU 密集型计算（图像处理、数据排序、加密解密）。2）SharedWorker：多个同源页面共享同一个 Worker 实例，通过 port 通信。使用场景：多标签页之间的数据同步、共享资源池管理。注意：SharedWorker 在浏览器兼容性不如 Dedicated Worker。3）Service Worker：作为浏览器和网络之间的代理服务器，可以拦截和缓存网络请求（离线应用）、接收推送通知。但不处理页面计算——它专注于网络层，不能直接与页面 DOM 交互。生命周期：注册 -> 安装（Install） -> 激活（Activate） -> 运行（Fetch/Message 事件）。使用场景：PWA 离线能力、资源缓存策略（Cache First / Network First / Stale While Revalidate）。",
+    "hints": [
+      "Web Worker 为什么不能访问 DOM——多线程下 DOM 操作的线程安全问题",
+      "Transferable Objects（如 ArrayBuffer）如何实现零拷贝数据传输"
+    ],
+    "tags": [
+      "Web Worker",
+      "Service Worker",
+      "SharedWorker",
+      "多线程"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "虚拟列表（Virtual List）原理与实现",
+    "content": "什么是虚拟列表？它解决什么问题？虚拟列表的核心原理是什么？如何估算滚动位置并动态计算渲染区间？",
+    "answer": "答案：虚拟列表（Virtual Scroll）只渲染可视区域内的 DOM 元素，而非渲染全部列表数据。它解决了大量数据（数万到数十万条）完整渲染导致的 DOM 节点过多、首屏渲染慢、滚动卡顿问题。核心原理：根据滚动偏移量计算当前可见的起始和结束索引，只渲染该区间内的元素。\n\n解析：虚拟列表的实现要点——1）核心三要素：可视区域高度（containerHeight）、列表项高度（itemHeight，固定高度场景）或动态高度、列表总长度（totalCount）。2）基本算法——起始索引 = Math.floor(scrollTop / itemHeight)，结束索引 = Math.min(startIndex + visibleCount + bufferCount, totalCount)。bufferCount 是在可视区域上下多渲染几项（防快速滚动时出现白屏）。3）占位布局：外层容器设置 position: relative，高度为 totalCount * itemHeight（提供滚动条）。内层列表设置 position: absolute，transform: translateY(startIndex * itemHeight) 偏移到可视位置。\n\n扩展延伸：虚拟列表的进阶处理——1）动态高度：组件渲染后才能确定真实高度，需要维护一个高度缓存（如 React 的 CellMeasurer 或自己维护 Map<index, height>）。未缓存的高度用预估默认值，渲染后更新缓存和总高度。2）表格（Grid）：二维虚拟化——横轴和纵轴都虚拟化（如 react-virtualized 的 Grid 组件）。3）大数据集的快速翻页：结合 intersectionObserver（交叉观察器，IntersectionObserver API）检测用户接近底部时预加载。4）痛点：快速滚动时闪烁或白屏（增大 bufferCount），键盘导航或搜索跳转到指定项时需同步滚动位置。热门库：react-window（小巧高性能，固定高度）、react-virtualized（功能完善但体积大）、vue-virtual-scroller（Vue 生态）、tanstack-virtual（框架无关）。",
+    "hints": [
+      "动态高度的虚拟列表如何避免频繁回流——高度缓存更新策略",
+      "快速滚动时为什么需要 buffer（缓冲区）——缓冲区应该设多大"
+    ],
+    "tags": [
+      "虚拟列表",
+      "Virtual Scroll",
+      "前端性能",
+      "大数据量"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "PWA 核心技术",
+    "content": "什么是 PWA（Progressive Web App）？它如何实现离线可用、消息推送和安装到桌面的体验？PWA 的核心文件（Manifest、Service Worker）分别起什么作用？",
+    "answer": "答案：PWA 是一系列技术组合，让 Web 应用具备接近原生 App 的体验——离线可用、消息推送、添加到主屏幕。核心技术：Web App Manifest（应用清单）控制安装行为和外观，Service Worker 控制网络代理和缓存策略。\n\n解析：PWA 的核心文件——1）Manifest（manifest.json）——JSON 文件，定义应用的名称（name/short_name）、图标（icons，多种尺寸 192x192/512x512）、主题色（theme_color）、背景色（background_color）、启动网址（start_url）、显示模式（display: standalone/fullscreen/minimal-ui）。浏览器检测到 Manifest 后，在特定条件下（用户访问 2 次以上、间隔时间超 5 分钟）显示「添加到主屏幕」的提示。2）Service Worker——浏览器独立于网页的 JavaScript 线程，作为网络代理拦截所有请求。生命周期：注册 -> 安装（install 事件，预缓存关键资源） -> 等待（waiting） -> 激活（activate，清理旧缓存） -> 运行中（fetch 事件，处理网络请求）。\n\n扩展延伸：PWA 的缓存策略——1）Cache First（缓存优先）：命中缓存直接返回，未命中再请求网络并缓存。适合不常变化的资源（图片、CSS、JS 文件）。2）Network First（网络优先）：先请求网络，失败时返回缓存。适合需要实时性的内容（文章最新内容）。3）Stale While Revalidate（缓存优先 + 后台更新）：先用缓存快速响应，同时后台请求新版本更新缓存。最适合 HTML 页面。4）Network Only（仅网络）：不需要缓存的请求（用户敏感数据）。PWA 的局限：iOS 支持不完善（推送通知 iOS 16.4+ 才支持）、无法访问全部原生 API（蓝牙、NFC 等）、部分用户习惯原生 App 的交互方式。PWA 的最佳场景：内容型应用（新闻、博客）、工具类应用（计算器、记事本）、电商轻量版。",
+    "hints": [
+      "Service Worker 的 install 和 activate 事件分别适合做什么",
+      "Cache First 和 Network First 分别适合什么类型的资源"
+    ],
+    "tags": [
+      "PWA",
+      "Service Worker",
+      "离线缓存",
+      "Web App"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Vite 与 Webpack 核心原理对比",
+    "content": "Vite 和 Webpack 的核心工作原理有什么区别？为什么 Vite 在开发环境下启动和热更新比 Webpack 快？Vite 的生产构建为什么仍然用 Rollup？",
+    "answer": "答案：Webpack 在开发时将所有模块打包成一个或多个 Bundle，启动慢（需要构建整个依赖图）。Vite 利用浏览器原生 ESM 支持，开发时不打包，按需编译和传输模块，启动和 HMR 几乎是即时的。Vite 的生产构建使用 Rollup 是因为 ESM 在浏览器中加载大量小文件时性能差，生产仍需打包和 Tree Shaking。\n\n解析：核心差异——1）Webpack 的工作原理——Webpack 将所有模块（JS、CSS、图片等）视为依赖图中的节点，从入口开始递归分析依赖，经过 Loader 转换后打包成 Bundle。开发时整个应用（包括暂时不需要的模块）都需要一次打包完成才能启动 dev server。HMR 也需要在修改后重新打包受影响的模块和它的依赖链。2）Vite 的工作原理——开发时：浏览器直接通过 <script type='module'> 加载 ESM 文件，Vite Dev Server 只做两件事：转换（转译 TypeScript、JSX、SFC 等）和按需编译（只编译浏览器当前请求的文件）。依赖预构建：Vite 使用 esbuild 预构建 node_modules 中的依赖（CommonJS -> ESM，依赖合并减少请求数）。esbuild 用 Go 编写，比 Webpack 的 JS 打包快 10-100 倍。3）HMR 速度——Vite 的 HMR 不重建依赖图，只对修改的模块进行实时替换（利用 ESM 的模块热替换）。模块数增加到数千个时，Webpack 的 HMR 耗时随项目规模线性增长，Vite 基本恒定。\n\n扩展延伸：生产构建为什么用 Rollup 而不是 esbuild——esbuild 的 Tree Shaking 不如 Rollup 成熟（Rollup 基于 ES module 的静态分析，Tree Shaking 效果更好）。Vite 在 Rollup 之上做了大量优化：CSS 代码分割、异步 chunk 预加载、自动 Polyfill 注入。Vite 的局限——1）开发模式依赖原生 ESM，不支持 IE。2）某些 CommonJS 包兼容性需要 Vite 的预构建（pre-bundle）处理。3）大型项目（数千个模块）的首屏加载在 ESM 模式下可能有瀑布式请求问题（可通过预构建合并模块缓解）。选型建议：新项目推荐 Vite，Webpack 适合需要复杂自定义插件的存量项目。",
+    "hints": [
+      "Webpack 启动时为什么要先「打包」——大项目启动慢的根本原因是什么",
+      "Vite 开发环境下浏览器请求的 ESM 文件数量太多会导致什么问题（瀑布式请求）"
+    ],
+    "tags": [
+      "Vite",
+      "Webpack",
+      "ESM",
+      "构建工具"
+    ]
   }
 ]

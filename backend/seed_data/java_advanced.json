@@ -647,5 +647,95 @@
       "基础",
       "语法糖"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "动态代理原理",
+    "content": "请解释 JDK 动态代理和 CGLIB 动态代理的实现原理和区别。Spring AOP 默认使用哪种？",
+    "answer": "答案：JDK 动态代理基于接口实现：通过 Proxy.newProxyInstance() 创建代理类，代理类实现了目标接口并在 InvocationHandler.invoke() 中执行增强逻辑。代理类继承 java.lang.reflect.Proxy。\n\nCGLIB 动态代理基于继承实现：通过 ASM 字节码技术生成目标类的子类（代理类），在子类中重写父类方法并织入增强逻辑。\n\n区别：1）JDK 代理只能代理接口，CGLIB 可以代理普通类；2）JDK 代理使用 Java 反射 API，CGLIB 使用 ASM 直接操作字节码；3）CGLIB 不能代理 final 类和方法；4）CGLIB 性能更好（生成代理类后调用时无需反射）。\n\nSpring AOP 默认策略：如果 Bean 实现了接口，使用 JDK 动态代理；如果 Bean 没有实现接口，使用 CGLIB 代理。可以通过 @EnableAspectJAutoProxy(proxyTargetClass=true) 强制使用 CGLIB。\n\n扩展延伸：Spring Boot 2.0+ 默认将 proxy-target-class 设为 true（总是使用 CGLIB），即使 Bean 实现了接口。这是因为 JDK 代理的类转换限制（只能转换到接口类型）在实际开发中容易引发 ClassCastException。",
+    "hints": [
+      "JDK 代理基于接口，CGLIB 基于继承",
+      "Spring Boot 2.0+ 默认使用 CGLIB"
+    ],
+    "tags": [
+      "Java",
+      "动态代理",
+      "AOP",
+      "Spring"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "反射性能优化",
+    "content": "Java 反射的性能开销主要来自哪里？有哪些优化反射性能的方法？",
+    "answer": "答案：反射的性能开销主要来自：\n1. 方法查找：Class.getMethod() 需要遍历类的所有 public 方法，时间复杂度 O(N)。\n2. 安全检查：每次 invoke() 都会进行访问权限校验（AccessibleObject 的 checkAccess）。\n3. 参数装箱/拆箱：反射调用时参数需要包装为 Object[]。\n4. JIT 无法内联：反射调用点无法被 JIT 编译器正常内联优化。\n5. 类型检查：每次调用检查方法签名和参数类型是否匹配。\n\n优化方法：\n1. 缓存 Method 对象：将 getMethod() 结果缓存到 Map 中，避免重复查找。\n2. setAccessible(true)：跳过安全检查，显著加速（可以提升 2-3 倍）。\n3. MethodHandles（Java 7+）：比反射更轻量，JIT 可以内联。\n4. LambdaMetafactory（Java 8+）：生成函数式接口实现，调用性能接近直接调用。\n5. 编译期处理（APT）：在编译期生成代码，零运行期开销（如 MapStruct、Lombok）。\n\n扩展延伸：Spring 5 和 Spring Boot 内部大量使用 MethodHandles 替代传统反射（如 GenericTypeResolver）。LambdaMetafactory 可以将任意方法转换为函数式接口，调用性能比反射高 10 倍以上。",
+    "hints": [
+      "setAccessible(true) 跳过安全检查是最直接的优化",
+      "MethodHandles 和 LambdaMetafactory 是反射的现代替代品"
+    ],
+    "tags": [
+      "Java",
+      "反射",
+      "性能优化",
+      "MethodHandles"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Synchronized 锁优化",
+    "content": "请解释 Java 中 synchronized 关键字的锁升级过程（偏向锁→轻量级锁→重量级锁），以及 JDK 15+ 的变动。",
+    "answer": "答案：synchronized 通过对象头中的 Mark Word 实现锁状态存储，锁升级是单向不可逆的：\n\n1. 偏向锁（Biased Locking）：线程首次获得锁时，Mark Word 记录线程 ID。后续该线程进入同步块时无需 CAS 操作。适用于锁大部分时间被同一个线程持有的场景。\n2. 轻量级锁（Lightweight Lock）：当另一个线程竞争偏向锁时，偏向锁撤销并升级为轻量级锁。线程通过 CAS 在 Mark Word 中记录 Lock Record 地址。适用于少量线程交替获取锁的场景。\n3. 重量级锁（Heavyweight Lock / Mutex Lock）：当 CAS 失败或线程自旋超过阈值（默认 10 次），锁膨胀为重量级锁。线程阻塞，由操作系统管调度，涉及用户态到内核态的切换。\n\nJDK 15+ 的变动：JDK 15 默认禁用了偏向锁（通过 -XX:-UseBiasedLocking）。因为偏向锁的撤销（尤其是遇到批量重偏向和高并发场景时）在高版本 JDK 中的维护成本超过了收益。JDK 21 彻底移除了偏向锁实现。\n\n扩展延伸：synchronized 锁升级的优化思路是尽量在无竞争或低竞争场景下使用轻量级机制（偏向/CAS），只有在高竞争时才使用重量级互斥量。锁粗化（Lock Coarsening）和锁消除（Lock Elimination）是 JIT 编译器做的额外优化。",
+    "hints": [
+      "锁升级方向：偏向锁→轻量级锁→重量级锁，单向不可逆",
+      "JDK 15+ 禁用了偏向锁"
+    ],
+    "tags": [
+      "Java",
+      "synchronized",
+      "锁优化",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Fork/Join 框架",
+    "content": "请解释 Java 7 引入的 Fork/Join 框架的核心原理和适用场景。工作窃取（Work-Stealing）算法是如何工作的？",
+    "answer": "答案：Fork/Join 框架将大任务递归分解（Fork）为小任务并行执行，再合并（Join）结果。核心类：ForkJoinPool（线程池）、ForkJoinTask（任务抽象类）、RecursiveTask（有返回值）/RecursiveAction（无返回值）。\n\n工作窃取（Work-Stealing）算法：每个工作线程维护一个双端队列（Deque），自己从队头拿任务执行。当线程的队列为空时，从其他线程队列的队尾窃取（Steal）任务执行。\n\n优势：1）自动负载均衡——空闲线程帮忙繁忙线程；2）减少了线程间的竞争（窃取从队尾取，正常执行从队头）；3）适合递归分解的分治算法。\n\n适用场景：1）数值计算和科学计算（数组求和、矩阵乘法）；2）排序和搜索（快速排序、二分查找的并行版本）；3）大规模数据处理；4）递归算法（树的遍历和计算）。\n\n扩展延伸：ForkJoinPool.commonPool() 是 JVM 提供的全局 ForkJoinPool（默认 size = CPU 核数 - 1），CompletableFuture 的并行执行也使用这个线程池。Fork/Join 的拆分粒度很重要——任务太小会导致任务创建和调度的开销大于计算本身，一般经验是阈值为 100-10000 个元素。",
+    "hints": [
+      "Fork/Join 的核心设计是工作窃取算法",
+      "拆分粒度太细反而降低性能"
+    ],
+    "tags": [
+      "Java",
+      "Fork/Join",
+      "并行",
+      "Work-Stealing"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "try-with-resources",
+    "content": "请解释 Java 7 引入的 try-with-resources 语句的原理和优势。哪些类可以使用 try-with-resources？",
+    "answer": "答案：try-with-resources 是自动资源管理的语法糖，确保实现了 AutoCloseable 接口的资源在使用完毕后自动调用 close() 方法。\n\n原理：编译器将 try-with-resources 编译为 try-finally 块，在 finally 中按资源声明顺序的逆序关闭资源。如果 try 块和 close() 都抛出了异常，close() 的异常会被抑制（Suppressed）并附加到 try 块的异常上。\n\n哪些类可以使用：所有实现了 java.lang.AutoCloseable 接口的类。常见包括：java.io.InputStream/OutputStream（文件流）、java.sql.Connection/Statement/ResultSet（数据库连接）、java.io.Reader/Writer。AutoCloseable 是 Closeable 的父接口，区别在于 Closeable.close() 声明抛出 IOException 且要求幂等。\n\n优势：1）代码简洁——不用手动在 finally 中写 close()；2）异常处理更完善——不会因为 close() 的异常覆盖掉业务异常；3）防止资源泄漏——即使 try 块异常退出资源也会被关闭。\n\n扩展延伸：Java 9 允许在 try-with-resources 中使用 effectively final 的外部变量（try (conn; stmt) 格式）。可以自定义实现 AutoCloseable 接口来管理非 I/O 资源（如 Redis 连接、Netty Channel）。getSuppressed() 方法可以获取被抑制的异常数组。",
+    "hints": [
+      "try-with-resources 确保 AutoCloseable 资源自动关闭",
+      "关闭异常被抑制（Suppressed）而非覆盖业务异常"
+    ],
+    "tags": [
+      "Java",
+      "try-with-resources",
+      "异常",
+      "最佳实践"
+    ]
   }
 ]

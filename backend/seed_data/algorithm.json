@@ -588,5 +588,275 @@
       "Union-Find",
       "图"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "字典树 Trie 的原理与应用",
+    "content": "请介绍 Trie（字典树/前缀树）的数据结构原理、时间复杂度，以及典型的面试应用场景。",
+    "answer": "答案：Trie 是一种多叉树结构，用于高效存储和检索字符串集合中的键。每个节点代表一个字符（或前缀），从根到叶子节点的路径表示一个完整的字符串。每个节点可以标记是否为单词结尾。\n\n时间复杂度：插入和查询均为 O(K)，K 为字符串长度，与集合大小无关。空间复杂度为 O(N×K)，其中 N 为字符串数量。\n\n典型应用：1）搜索引擎的自动补全（Auto-complete）和拼写纠错；2）IP 路由表的最长前缀匹配；3）T9 输入法预测；4）字符串集合的词频统计和排序。\n\n扩展延伸：Trie 的优化变体包括：Compressed Trie（Radix Tree/Patricia Tree）压缩单分支节点以减少空间；Ternary Search Trie 结合了 BST 和 Trie 的优点；AC 自动机（Aho-Corasick）在 Trie 上添加失败指针实现多模式匹配。",
+    "hints": [
+      "Trie 以空间换时间，适合处理大量字符串",
+      "前缀匹配是 Trie 的核心优势"
+    ],
+    "tags": [
+      "Trie",
+      "字典树",
+      "数据结构",
+      "字符串"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "布隆过滤器 Bloom Filter",
+    "content": "请解释 Bloom Filter（布隆过滤器）的原理、优缺点，以及常见的面试考察点。",
+    "answer": "答案：Bloom Filter 是一种空间效率极高的概率型数据结构，用于判断一个元素是否在集合中。原理：\n1. 使用一个长度为 m 的位数组和 k 个哈希函数。\n2. 插入元素时通过 k 个哈希函数计算 k 个位置，将对应位设为 1。\n3. 查询时检查 k 个位置是否全为 1——如果有一个为 0，则元素一定不在集合中；如果全为 1，则元素可能在集合中（存在假阳性）。\n\n优缺点：优点是空间占用极小（不存储元素本身），插入和查询都是 O(k)。缺点是有假阳性率（False Positive），不能删除元素（标准版），无法遍历所有元素。\n\n考察点：1）假阳性率计算：p ≈ (1 - e^(-kn/m))^k；2）最优哈希函数数量：k = (m/n) × ln2；3）误判率随已插入元素数增长而升高；4）应用场景：缓存穿透保护（Redis 缓存）、爬虫 URL 去重、垃圾邮件过滤。\n\n扩展延伸：Counting Bloom Filter（允许删除，用计数器代替位）、Scalable Bloom Filter（动态增长）、Cuckoo Filter（支持删除、性能更优的替代方案）。",
+    "hints": [
+      "假阳性是 Bloom Filter 的核心特性",
+      "Redis 的缓存穿透保护是经典应用"
+    ],
+    "tags": [
+      "Bloom Filter",
+      "概率数据结构",
+      "缓存",
+      "大数据"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "跳表 Skip List 的原理",
+    "content": "请解释跳表（Skip List）的数据结构原理、时间复杂度，以及它在实际系统中的应用。",
+    "answer": "答案：跳表是一种基于链表的分层数据结构，通过在有序链表上维护多层索引来加速查找。底层是完整的有序链表，上层是逐层稀疏的索引（Skip 指针）。查找时从最高层开始，快速跳过不需要遍历的节点。\n\n查找、插入、删除的平均时间复杂度均为 O(log n)，空间复杂度 O(n)（额外索引层的空间）。跳表通过随机化（决定节点提升到哪一层）来维持平衡，不需要像 AVL/红黑树那样做复杂的旋转操作。\n\n实际应用：1）Redis 的 ZSet（有序集合）底层实现之一——跳跃表 + 字典的组合，用于高效处理排序和范围查询；2）LevelDB/RocksDB 的 MemTable 使用跳表；3）Lucene 的倒排索引合并。\n\n扩展延伸：跳表在竞争编程中常被用作平衡树的替代品，实现更简单且性能接近。Redis 为什么用跳表而不用红黑树实现 ZSet？因为跳表支持高效的范围查询（ZRANGE 和 ZREVRANGE），而红黑树需要额外维护中序遍历信息。",
+    "hints": [
+      "多层索引是跳表加速查找的关键",
+      "Redis ZSet 是跳表最著名的工业应用"
+    ],
+    "tags": [
+      "Skip List",
+      "跳表",
+      "数据结构",
+      "Redis"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "线段树 Segment Tree",
+    "content": "请介绍线段树（Segment Tree）的数据结构原理、支持的操作和典型面试考题。",
+    "answer": "答案：线段树是一种二叉树结构，用于高效处理区间/段上的查询和更新操作。每个节点代表一个区间 [l, r]，叶子节点代表单点，内部节点存储其子区间合并后的信息（如区间和、最大值、最小值等）。\n\n支持的操作：1）区间查询（Range Query）：O(log n) 查询任意区间的聚合值（和、最大、最小等）；2）单点更新（Point Update）：O(log n) 更新一个元素并向上更新所有相关节点；3）区间更新（Range Update）：O(log n) 配合 Lazy Propagation（懒标记）。\n\n典型考题：1）Range Sum Query with Updates；2）Range Maximum/Minimum Query；3）区间覆盖和染色问题；4）扫描线算法中的矩形面积/周长并；5）区间内不同元素的个数。\n\n扩展延伸：线段树可以用数组实现（左子节点 2i，右子节点 2i+1），也可以用指针/类实现。进阶变体包括：可持久化线段树（主席树，支持历史版本查询）、树状数组（Fenwick Tree，线段树的简化版，仅支持前缀查询）、ZKW 线段树（非递归实现，常数更小）。",
+    "hints": [
+      "线段树是动态区间操作的最佳选择",
+      "Lazy Propagation 是实现区间更新的关键"
+    ],
+    "tags": [
+      "线段树",
+      "数据结构",
+      "区间查询",
+      "算法"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "并查集 Union Find",
+    "content": "请介绍并查集（Union-Find/Disjoint Set）的数据结构原理、优化方法以及典型应用场景。",
+    "answer": "答案：并查集是一种树形数据结构，用于处理不相交集合的合并和查询问题。核心操作：\n1. Find(x)：查找元素 x 所在的集合（返回根节点）；\n2. Union(x, y)：将 x 和 y 所在的集合合并。\n\n优化方法：1）路径压缩（Path Compression）：Find 操作中，将沿途所有节点直接指向根节点。时间复杂度摊还后接近 O(α(n))（Ackermann 函数的反函数，近似常数）。2）按秩合并（Union by Rank/Size）：将较矮/较小的树合并到较高/较大的树上，减少树的高度。两者结合使用，可以做到理论上的 O(α(n))。\n\n典型应用：1）图论中的连通分量判定（连通图、冗余连接 Minimal Spanning Tree 的 Kruskal 算法）；2）社交网络的好友关系管理；3）判断无向图是否有环；4）Equations（LeetCode 990）；5）最长连续序列（LeetCode 128，巧妙应用）。\n\n扩展延伸：可持久化并查集支持历史版本的查询（需要按秩合并 + 可持久化数组）。并查集的删除操作比较复杂，可以用时间戳或者换用动态图连通性的离线算法（CDQ 分治 + 可撤销并查集）。",
+    "hints": [
+      "路径压缩 + 按秩合并 = 近似常数的查询时间",
+      "Kruskal 算法是并查集最经典的应用"
+    ],
+    "tags": [
+      "并查集",
+      "Union Find",
+      "图论",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "字典树 Trie 的原理与应用",
+    "content": "请介绍 Trie（字典树/前缀树）的数据结构原理、时间复杂度，以及典型的面试应用场景。",
+    "answer": "答案：Trie 是一种多叉树结构，用于高效存储和检索字符串集合中的键。每个节点代表一个字符（或前缀），从根到叶子节点的路径表示一个完整的字符串。每个节点可以标记是否为单词结尾。\n\n时间复杂度：插入和查询均为 O(K)，K 为字符串长度，与集合大小无关。空间复杂度为 O(N×K)，其中 N 为字符串数量。\n\n典型应用：1）搜索引擎的自动补全（Auto-complete）和拼写纠错；2）IP 路由表的最长前缀匹配；3）T9 输入法预测；4）字符串集合的词频统计和排序。\n\n扩展延伸：Trie 的优化变体包括：Compressed Trie（Radix Tree/Patricia Tree）压缩单分支节点以减少空间；Ternary Search Trie 结合了 BST 和 Trie 的优点；AC 自动机（Aho-Corasick）在 Trie 上添加失败指针实现多模式匹配。",
+    "hints": [
+      "Trie 以空间换时间，适合处理大量字符串",
+      "前缀匹配是 Trie 的核心优势"
+    ],
+    "tags": [
+      "Trie",
+      "字典树",
+      "数据结构",
+      "字符串"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "布隆过滤器 Bloom Filter",
+    "content": "请解释 Bloom Filter（布隆过滤器）的原理、优缺点，以及常见的面试考察点。",
+    "answer": "答案：Bloom Filter 是一种空间效率极高的概率型数据结构，用于判断一个元素是否在集合中。原理：\n1. 使用一个长度为 m 的位数组和 k 个哈希函数。\n2. 插入元素时通过 k 个哈希函数计算 k 个位置，将对应位设为 1。\n3. 查询时检查 k 个位置是否全为 1——如果有一个为 0，则元素一定不在集合中；如果全为 1，则元素可能在集合中（存在假阳性）。\n\n优缺点：优点是空间占用极小（不存储元素本身），插入和查询都是 O(k)。缺点是有假阳性率（False Positive），不能删除元素（标准版），无法遍历所有元素。\n\n考察点：1）假阳性率计算：p ≈ (1 - e^(-kn/m))^k；2）最优哈希函数数量：k = (m/n) × ln2；3）误判率随已插入元素数增长而升高；4）应用场景：缓存穿透保护（Redis 缓存）、爬虫 URL 去重、垃圾邮件过滤。\n\n扩展延伸：Counting Bloom Filter（允许删除，用计数器代替位）、Scalable Bloom Filter（动态增长）、Cuckoo Filter（支持删除、性能更优的替代方案）。",
+    "hints": [
+      "假阳性是 Bloom Filter 的核心特性",
+      "Redis 的缓存穿透保护是经典应用"
+    ],
+    "tags": [
+      "Bloom Filter",
+      "概率数据结构",
+      "缓存",
+      "大数据"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "跳表 Skip List 的原理",
+    "content": "请解释跳表（Skip List）的数据结构原理、时间复杂度，以及它在实际系统中的应用。",
+    "answer": "答案：跳表是一种基于链表的分层数据结构，通过在有序链表上维护多层索引来加速查找。底层是完整的有序链表，上层是逐层稀疏的索引（Skip 指针）。查找时从最高层开始，快速跳过不需要遍历的节点。\n\n查找、插入、删除的平均时间复杂度均为 O(log n)，空间复杂度 O(n)（额外索引层的空间）。跳表通过随机化（决定节点提升到哪一层）来维持平衡，不需要像 AVL/红黑树那样做复杂的旋转操作。\n\n实际应用：1）Redis 的 ZSet（有序集合）底层实现之一——跳跃表 + 字典的组合，用于高效处理排序和范围查询；2）LevelDB/RocksDB 的 MemTable 使用跳表；3）Lucene 的倒排索引合并。\n\n扩展延伸：跳表在竞争编程中常被用作平衡树的替代品，实现更简单且性能接近。Redis 为什么用跳表而不用红黑树实现 ZSet？因为跳表支持高效的范围查询（ZRANGE 和 ZREVRANGE），而红黑树需要额外维护中序遍历信息。",
+    "hints": [
+      "多层索引是跳表加速查找的关键",
+      "Redis ZSet 是跳表最著名的工业应用"
+    ],
+    "tags": [
+      "Skip List",
+      "跳表",
+      "数据结构",
+      "Redis"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "线段树 Segment Tree",
+    "content": "请介绍线段树（Segment Tree）的数据结构原理、支持的操作和典型面试考题。",
+    "answer": "答案：线段树是一种二叉树结构，用于高效处理区间/段上的查询和更新操作。每个节点代表一个区间 [l, r]，叶子节点代表单点，内部节点存储其子区间合并后的信息（如区间和、最大值、最小值等）。\n\n支持的操作：1）区间查询（Range Query）：O(log n) 查询任意区间的聚合值（和、最大、最小等）；2）单点更新（Point Update）：O(log n) 更新一个元素并向上更新所有相关节点；3）区间更新（Range Update）：O(log n) 配合 Lazy Propagation（懒标记）。\n\n典型考题：1）Range Sum Query with Updates；2）Range Maximum/Minimum Query；3）区间覆盖和染色问题；4）扫描线算法中的矩形面积/周长并；5）区间内不同元素的个数。\n\n扩展延伸：线段树可以用数组实现（左子节点 2i，右子节点 2i+1），也可以用指针/类实现。进阶变体包括：可持久化线段树（主席树，支持历史版本查询）、树状数组（Fenwick Tree，线段树的简化版，仅支持前缀查询）、ZKW 线段树（非递归实现，常数更小）。",
+    "hints": [
+      "线段树是动态区间操作的最佳选择",
+      "Lazy Propagation 是实现区间更新的关键"
+    ],
+    "tags": [
+      "线段树",
+      "数据结构",
+      "区间查询",
+      "算法"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "并查集 Union Find",
+    "content": "请介绍并查集（Union-Find/Disjoint Set）的数据结构原理、优化方法以及典型应用场景。",
+    "answer": "答案：并查集是一种树形数据结构，用于处理不相交集合的合并和查询问题。核心操作：\n1. Find(x)：查找元素 x 所在的集合（返回根节点）；\n2. Union(x, y)：将 x 和 y 所在的集合合并。\n\n优化方法：1）路径压缩（Path Compression）：Find 操作中，将沿途所有节点直接指向根节点。时间复杂度摊还后接近 O(α(n))（Ackermann 函数的反函数，近似常数）。2）按秩合并（Union by Rank/Size）：将较矮/较小的树合并到较高/较大的树上，减少树的高度。两者结合使用，可以做到理论上的 O(α(n))。\n\n典型应用：1）图论中的连通分量判定（连通图、冗余连接 Minimal Spanning Tree 的 Kruskal 算法）；2）社交网络的好友关系管理；3）判断无向图是否有环；4）Equations（LeetCode 990）；5）最长连续序列（LeetCode 128，巧妙应用）。\n\n扩展延伸：可持久化并查集支持历史版本的查询（需要按秩合并 + 可持久化数组）。并查集的删除操作比较复杂，可以用时间戳或者换用动态图连通性的离线算法（CDQ 分治 + 可撤销并查集）。",
+    "hints": [
+      "路径压缩 + 按秩合并 = 近似常数的查询时间",
+      "Kruskal 算法是并查集最经典的应用"
+    ],
+    "tags": [
+      "并查集",
+      "Union Find",
+      "图论",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "字典树 Trie 的原理与应用",
+    "content": "请介绍 Trie（字典树/前缀树）的数据结构原理、时间复杂度，以及典型的面试应用场景。",
+    "answer": "答案：Trie 是一种多叉树结构，用于高效存储和检索字符串集合中的键。每个节点代表一个字符（或前缀），从根到叶子节点的路径表示一个完整的字符串。每个节点可以标记是否为单词结尾。\n\n时间复杂度：插入和查询均为 O(K)，K 为字符串长度，与集合大小无关。空间复杂度为 O(N×K)，其中 N 为字符串数量。\n\n典型应用：1）搜索引擎的自动补全（Auto-complete）和拼写纠错；2）IP 路由表的最长前缀匹配；3）T9 输入法预测；4）字符串集合的词频统计和排序。\n\n扩展延伸：Trie 的优化变体包括：Compressed Trie（Radix Tree/Patricia Tree）压缩单分支节点以减少空间；Ternary Search Trie 结合了 BST 和 Trie 的优点；AC 自动机（Aho-Corasick）在 Trie 上添加失败指针实现多模式匹配。",
+    "hints": [
+      "Trie 以空间换时间，适合处理大量字符串",
+      "前缀匹配是 Trie 的核心优势"
+    ],
+    "tags": [
+      "Trie",
+      "字典树",
+      "数据结构",
+      "字符串"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "布隆过滤器 Bloom Filter",
+    "content": "请解释 Bloom Filter（布隆过滤器）的原理、优缺点，以及常见的面试考察点。",
+    "answer": "答案：Bloom Filter 是一种空间效率极高的概率型数据结构，用于判断一个元素是否在集合中。原理：\n1. 使用一个长度为 m 的位数组和 k 个哈希函数。\n2. 插入元素时通过 k 个哈希函数计算 k 个位置，将对应位设为 1。\n3. 查询时检查 k 个位置是否全为 1——如果有一个为 0，则元素一定不在集合中；如果全为 1，则元素可能在集合中（存在假阳性）。\n\n优缺点：优点是空间占用极小（不存储元素本身），插入和查询都是 O(k)。缺点是有假阳性率（False Positive），不能删除元素（标准版），无法遍历所有元素。\n\n考察点：1）假阳性率计算：p ≈ (1 - e^(-kn/m))^k；2）最优哈希函数数量：k = (m/n) × ln2；3）误判率随已插入元素数增长而升高；4）应用场景：缓存穿透保护（Redis 缓存）、爬虫 URL 去重、垃圾邮件过滤。\n\n扩展延伸：Counting Bloom Filter（允许删除，用计数器代替位）、Scalable Bloom Filter（动态增长）、Cuckoo Filter（支持删除、性能更优的替代方案）。",
+    "hints": [
+      "假阳性是 Bloom Filter 的核心特性",
+      "Redis 的缓存穿透保护是经典应用"
+    ],
+    "tags": [
+      "Bloom Filter",
+      "概率数据结构",
+      "缓存",
+      "大数据"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "跳表 Skip List 的原理",
+    "content": "请解释跳表（Skip List）的数据结构原理、时间复杂度，以及它在实际系统中的应用。",
+    "answer": "答案：跳表是一种基于链表的分层数据结构，通过在有序链表上维护多层索引来加速查找。底层是完整的有序链表，上层是逐层稀疏的索引（Skip 指针）。查找时从最高层开始，快速跳过不需要遍历的节点。\n\n查找、插入、删除的平均时间复杂度均为 O(log n)，空间复杂度 O(n)（额外索引层的空间）。跳表通过随机化（决定节点提升到哪一层）来维持平衡，不需要像 AVL/红黑树那样做复杂的旋转操作。\n\n实际应用：1）Redis 的 ZSet（有序集合）底层实现之一——跳跃表 + 字典的组合，用于高效处理排序和范围查询；2）LevelDB/RocksDB 的 MemTable 使用跳表；3）Lucene 的倒排索引合并。\n\n扩展延伸：跳表在竞争编程中常被用作平衡树的替代品，实现更简单且性能接近。Redis 为什么用跳表而不用红黑树实现 ZSet？因为跳表支持高效的范围查询（ZRANGE 和 ZREVRANGE），而红黑树需要额外维护中序遍历信息。",
+    "hints": [
+      "多层索引是跳表加速查找的关键",
+      "Redis ZSet 是跳表最著名的工业应用"
+    ],
+    "tags": [
+      "Skip List",
+      "跳表",
+      "数据结构",
+      "Redis"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "线段树 Segment Tree",
+    "content": "请介绍线段树（Segment Tree）的数据结构原理、支持的操作和典型面试考题。",
+    "answer": "答案：线段树是一种二叉树结构，用于高效处理区间/段上的查询和更新操作。每个节点代表一个区间 [l, r]，叶子节点代表单点，内部节点存储其子区间合并后的信息（如区间和、最大值、最小值等）。\n\n支持的操作：1）区间查询（Range Query）：O(log n) 查询任意区间的聚合值（和、最大、最小等）；2）单点更新（Point Update）：O(log n) 更新一个元素并向上更新所有相关节点；3）区间更新（Range Update）：O(log n) 配合 Lazy Propagation（懒标记）。\n\n典型考题：1）Range Sum Query with Updates；2）Range Maximum/Minimum Query；3）区间覆盖和染色问题；4）扫描线算法中的矩形面积/周长并；5）区间内不同元素的个数。\n\n扩展延伸：线段树可以用数组实现（左子节点 2i，右子节点 2i+1），也可以用指针/类实现。进阶变体包括：可持久化线段树（主席树，支持历史版本查询）、树状数组（Fenwick Tree，线段树的简化版，仅支持前缀查询）、ZKW 线段树（非递归实现，常数更小）。",
+    "hints": [
+      "线段树是动态区间操作的最佳选择",
+      "Lazy Propagation 是实现区间更新的关键"
+    ],
+    "tags": [
+      "线段树",
+      "数据结构",
+      "区间查询",
+      "算法"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "并查集 Union Find",
+    "content": "请介绍并查集（Union-Find/Disjoint Set）的数据结构原理、优化方法以及典型应用场景。",
+    "answer": "答案：并查集是一种树形数据结构，用于处理不相交集合的合并和查询问题。核心操作：\n1. Find(x)：查找元素 x 所在的集合（返回根节点）；\n2. Union(x, y)：将 x 和 y 所在的集合合并。\n\n优化方法：1）路径压缩（Path Compression）：Find 操作中，将沿途所有节点直接指向根节点。时间复杂度摊还后接近 O(α(n))（Ackermann 函数的反函数，近似常数）。2）按秩合并（Union by Rank/Size）：将较矮/较小的树合并到较高/较大的树上，减少树的高度。两者结合使用，可以做到理论上的 O(α(n))。\n\n典型应用：1）图论中的连通分量判定（连通图、冗余连接 Minimal Spanning Tree 的 Kruskal 算法）；2）社交网络的好友关系管理；3）判断无向图是否有环；4）Equations（LeetCode 990）；5）最长连续序列（LeetCode 128，巧妙应用）。\n\n扩展延伸：可持久化并查集支持历史版本的查询（需要按秩合并 + 可持久化数组）。并查集的删除操作比较复杂，可以用时间戳或者换用动态图连通性的离线算法（CDQ 分治 + 可撤销并查集）。",
+    "hints": [
+      "路径压缩 + 按秩合并 = 近似常数的查询时间",
+      "Kruskal 算法是并查集最经典的应用"
+    ],
+    "tags": [
+      "并查集",
+      "Union Find",
+      "图论",
+      "数据结构"
+    ]
   }
 ]

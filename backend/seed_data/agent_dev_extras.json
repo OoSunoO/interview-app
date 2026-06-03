@@ -628,5 +628,278 @@
       "Prompt Injection",
       "防护"
     ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM 缓存策略",
+    "content": "在 Agent 系统中，LLM 调用是主要的延迟和成本来源。请介绍常见的 LLM 缓存策略及其适用场景。",
+    "answer": "答案：常见的 LLM 缓存策略：\n1. Exact Match Cache：对于完全相同的请求直接返回缓存结果。适用于固定模板或常见问题，使用 Redis/Memcached 做 KV 缓存。\n2. Semantic Cache：对于语义相似但表述不同的请求，通过 Embedding 相似度匹配缓存。适用于客服问答等用户表述多样化的场景。\n3. Prefix Cache：缓存 LLM 处理 long prompt 时的 KV Cache 中间状态，加速相同前缀的请求。适用于 System Prompt 固定的场景（Flask、vLLM 支持）。\n4. Chain Cache：缓存 Agent 推理链中的中间结果，当相同子问题出现时直接复用。适用于多步推理场景。\n\n扩展延伸：Semantic Cache 的典型实现是 GPTCache——将 Query 转为 Embedding，用向量数据库（Milvus、Qdrant）检索最相似的历史请求。需要注意 Cache 的 TTL 设置和 Cache Miss 时的降级策略。",
+    "hints": [
+      "从精确匹配和语义匹配两个维度思考",
+      "前缀缓存对 System Prompt 固定的场景特别有效"
+    ],
+    "tags": [
+      "LLM",
+      "缓存",
+      "性能优化",
+      "成本控制"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "结构化输出（Structured Output）的实现方法",
+    "content": "如何确保 LLM 的输出是结构化的 JSON 或特定格式？请比较不同的实现方法。",
+    "answer": "答案：实现结构化输出的主要方法：\n1. Prompt Engineering：在 Prompt 中明确指定输出格式并提供示例（Few-shot），最简单但可靠性最低。\n2. JSON Mode：OpenAI 的 response_format={type:'json_object'} 强制输出 JSON，但不保证 Schema 合规。\n3. Function Calling/Tool Use：定义输出 Schema 为工具参数，让模型通过 Tool Call 输出结构化数据，可靠性较高。\n4. Constrained Decoding：在解码阶段束住输出（如 Outlines、Guidance、LMQL），只生成符合 Schema 的 Token，可靠性最高。\n5. 后处理解析修复：先用 LLM 生成文本，再用代码（如 Zod、Pydantic）校验和解析，不合法时重试。\n\n扩展延伸：OpenAI 的 Structured Outputs（2024 年发布）结合了 Function Calling 和 constrained decoding，通过 strict: true 确保输出 JSON 符合 JSON Schema。Instructor 库是一个好用的封装，支持多种 LLM 后端。",
+    "hints": [
+      "可靠性从 Prompt→JSON Mode→Function Calling→Constrained Decoding 递增",
+      "生产环境常组合使用多种方法"
+    ],
+    "tags": [
+      "LLM",
+      "结构化输出",
+      "JSON Schema",
+      "Function Calling"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Server-Sent Events 流式输出的挑战",
+    "content": "Agent 系统通常需要流式输出推理过程和结果。使用 SSE（Server-Sent Events）实现流式输出时面临哪些技术挑战？如何处理？",
+    "answer": "答案：SSE 流式输出的挑战和处理方案：\n1. 中间结果缓存：Agent 的工具调用结果需要暂存并逐步推送给前端。方案：使用 Ring Buffer 或 Channel 管理流式数据。\n2. 断连重连：用户刷新页面或网络中断导致连接断开。方案：实现断点续传（Resume），客户端记录已接收的 Event ID，重连时从断点继续。\n3. 背压问题：LLM 生成速度与消费速度不匹配。方案：使用 Flow Control（如 Token Bucket）或缓冲队列。\n4. 并发请求控制：多个 Agent 并行执行时流合并。方案：每个 Agent 分配独立 Stream ID，客户端按 ID 归并。\n\n扩展延伸：FastAPI 的 StreamingResponse 配合 async generator 是实现 SSE 的基础。高级方案可以使用 WebSocket 替代 SSE（支持双向通信），但 SSE 的优势是天然支持 HTTP/2 多路复用和更简单的服务端实现。",
+    "hints": [
+      "考虑网络断连、背压、并发合并等实际问题",
+      "对比 SSE 和 WebSocket 的适用场景"
+    ],
+    "tags": [
+      "SSE",
+      "流式输出",
+      "实时通信",
+      "Agent 架构"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Function Calling 的原理",
+    "content": "请解释 LLM Function Calling（工具调用）的原理，以及它在 Agent 系统中的关键作用。",
+    "answer": "答案：Function Calling 的基础原理：\n1. 开发者在 API 调用中定义工具 Schema（包括函数名、参数描述和类型），通过 JSON Schema 格式传入。\n2. LLM 在生成回复时，如果判断需要调用工具，会输出一个特殊的 Tool Call Token，随后生成函数名和参数（以结构化 JSON 形式）。\n3. 开发者解析 LLM 输出的 Tool Call，执行对应的函数，将结果返回给 LLM。\n4. LLM 根据工具返回的结果生成最终回复或发起下一轮工具调用。\n\n关键作用：Function Calling 是 Agent 与外部世界交互的桥梁。没有 Function Calling，LLM 只能依靠训练数据中的知识（存在截止日期和幻觉问题）。有了 Function Calling，Agent 可以实时查询数据库、调用 API、执行业务逻辑，从而解决实际问题。\n\n扩展延伸：主流 LLM 的 Function Calling 实现有差异——OpenAI 采用 Tool Choice 参数，Claude 采用 Tool Use Block，Google Gemini 采用 Function Declaration。各实现的核心逻辑一致，但 Schema 格式和调用方式不同。",
+    "hints": [
+      "思考 LLM 如何表示调用工具的意图",
+      "Function Calling 将 LLM 从知识型变成了行动型"
+    ],
+    "tags": [
+      "LLM",
+      "Function Calling",
+      "工具调用",
+      "Agent"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "向量数据库选型对比",
+    "content": "在构建 Agent 系统的记忆和知识检索层时，向量数据库的选型至关重要。请对比主流向量数据库的异同和选型建议。",
+    "answer": "答案：主流向量数据库对比：\n1. Pinecone：全托管 SaaS，无需运维，支持 Hybrid Search，适合快速原型和中小规模。缺点是成本较高、数据不能脱离平台。\n2. Milvus/Zilliz：开源 + 云托管，支持万亿级向量，丰富的索引类型（IVF、HNSW、DiskANN），适合大规模生产环境。部署和维护复杂度较高。\n3. Qdrant：Rust 实现，性能优秀，支持 Filtering+Vector 混合过滤，单机即可运行。适合中小规模、注重性能的团队。\n4. Chroma：轻量级 Embedded 数据库，Python 原生接口，开发体验好，适合原型和小项目。不适合大规模生产。\n5. Weaviate：支持 Graph + Vector 混合查询，内置模块化架构（含生成模块），适合需要知识图谱的 RAG 场景。\n\n扩展延伸：选型建议：1）< 100万向量且要求低运维 → Chroma/Qdrant；2）100万~1亿向量 → Milvus/Pinecone；3）需要 Hybrid 搜索 → Weaviate/Pinecone；4）自建基础设施 → Milvus/Qdrant。另外可考虑 PostgreSQL + pgvector 扩展，适合已有 Postgres 技术栈的团队。",
+    "hints": [
+      "考虑规模、运维成本、查询特性需求",
+      "pgvector 适合已有 Postgres 的团队"
+    ],
+    "tags": [
+      "向量数据库",
+      "Milvus",
+      "Qdrant",
+      "Pinecone",
+      "Embedding"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM 缓存策略",
+    "content": "在 Agent 系统中，LLM 调用是主要的延迟和成本来源。请介绍常见的 LLM 缓存策略及其适用场景。",
+    "answer": "答案：常见的 LLM 缓存策略：\n1. Exact Match Cache：对于完全相同的请求直接返回缓存结果。适用于固定模板或常见问题，使用 Redis/Memcached 做 KV 缓存。\n2. Semantic Cache：对于语义相似但表述不同的请求，通过 Embedding 相似度匹配缓存。适用于客服问答等用户表述多样化的场景。\n3. Prefix Cache：缓存 LLM 处理 long prompt 时的 KV Cache 中间状态，加速相同前缀的请求。适用于 System Prompt 固定的场景（Flask、vLLM 支持）。\n4. Chain Cache：缓存 Agent 推理链中的中间结果，当相同子问题出现时直接复用。适用于多步推理场景。\n\n扩展延伸：Semantic Cache 的典型实现是 GPTCache——将 Query 转为 Embedding，用向量数据库（Milvus、Qdrant）检索最相似的历史请求。需要注意 Cache 的 TTL 设置和 Cache Miss 时的降级策略。",
+    "hints": [
+      "从精确匹配和语义匹配两个维度思考",
+      "前缀缓存对 System Prompt 固定的场景特别有效"
+    ],
+    "tags": [
+      "LLM",
+      "缓存",
+      "性能优化",
+      "成本控制"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "结构化输出（Structured Output）的实现方法",
+    "content": "如何确保 LLM 的输出是结构化的 JSON 或特定格式？请比较不同的实现方法。",
+    "answer": "答案：实现结构化输出的主要方法：\n1. Prompt Engineering：在 Prompt 中明确指定输出格式并提供示例（Few-shot），最简单但可靠性最低。\n2. JSON Mode：OpenAI 的 response_format={type:'json_object'} 强制输出 JSON，但不保证 Schema 合规。\n3. Function Calling/Tool Use：定义输出 Schema 为工具参数，让模型通过 Tool Call 输出结构化数据，可靠性较高。\n4. Constrained Decoding：在解码阶段束住输出（如 Outlines、Guidance、LMQL），只生成符合 Schema 的 Token，可靠性最高。\n5. 后处理解析修复：先用 LLM 生成文本，再用代码（如 Zod、Pydantic）校验和解析，不合法时重试。\n\n扩展延伸：OpenAI 的 Structured Outputs（2024 年发布）结合了 Function Calling 和 constrained decoding，通过 strict: true 确保输出 JSON 符合 JSON Schema。Instructor 库是一个好用的封装，支持多种 LLM 后端。",
+    "hints": [
+      "可靠性从 Prompt→JSON Mode→Function Calling→Constrained Decoding 递增",
+      "生产环境常组合使用多种方法"
+    ],
+    "tags": [
+      "LLM",
+      "结构化输出",
+      "JSON Schema",
+      "Function Calling"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Server-Sent Events 流式输出的挑战",
+    "content": "Agent 系统通常需要流式输出推理过程和结果。使用 SSE（Server-Sent Events）实现流式输出时面临哪些技术挑战？如何处理？",
+    "answer": "答案：SSE 流式输出的挑战和处理方案：\n1. 中间结果缓存：Agent 的工具调用结果需要暂存并逐步推送给前端。方案：使用 Ring Buffer 或 Channel 管理流式数据。\n2. 断连重连：用户刷新页面或网络中断导致连接断开。方案：实现断点续传（Resume），客户端记录已接收的 Event ID，重连时从断点继续。\n3. 背压问题：LLM 生成速度与消费速度不匹配。方案：使用 Flow Control（如 Token Bucket）或缓冲队列。\n4. 并发请求控制：多个 Agent 并行执行时流合并。方案：每个 Agent 分配独立 Stream ID，客户端按 ID 归并。\n\n扩展延伸：FastAPI 的 StreamingResponse 配合 async generator 是实现 SSE 的基础。高级方案可以使用 WebSocket 替代 SSE（支持双向通信），但 SSE 的优势是天然支持 HTTP/2 多路复用和更简单的服务端实现。",
+    "hints": [
+      "考虑网络断连、背压、并发合并等实际问题",
+      "对比 SSE 和 WebSocket 的适用场景"
+    ],
+    "tags": [
+      "SSE",
+      "流式输出",
+      "实时通信",
+      "Agent 架构"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Function Calling 的原理",
+    "content": "请解释 LLM Function Calling（工具调用）的原理，以及它在 Agent 系统中的关键作用。",
+    "answer": "答案：Function Calling 的基础原理：\n1. 开发者在 API 调用中定义工具 Schema（包括函数名、参数描述和类型），通过 JSON Schema 格式传入。\n2. LLM 在生成回复时，如果判断需要调用工具，会输出一个特殊的 Tool Call Token，随后生成函数名和参数（以结构化 JSON 形式）。\n3. 开发者解析 LLM 输出的 Tool Call，执行对应的函数，将结果返回给 LLM。\n4. LLM 根据工具返回的结果生成最终回复或发起下一轮工具调用。\n\n关键作用：Function Calling 是 Agent 与外部世界交互的桥梁。没有 Function Calling，LLM 只能依靠训练数据中的知识（存在截止日期和幻觉问题）。有了 Function Calling，Agent 可以实时查询数据库、调用 API、执行业务逻辑，从而解决实际问题。\n\n扩展延伸：主流 LLM 的 Function Calling 实现有差异——OpenAI 采用 Tool Choice 参数，Claude 采用 Tool Use Block，Google Gemini 采用 Function Declaration。各实现的核心逻辑一致，但 Schema 格式和调用方式不同。",
+    "hints": [
+      "思考 LLM 如何表示调用工具的意图",
+      "Function Calling 将 LLM 从知识型变成了行动型"
+    ],
+    "tags": [
+      "LLM",
+      "Function Calling",
+      "工具调用",
+      "Agent"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "向量数据库选型对比",
+    "content": "在构建 Agent 系统的记忆和知识检索层时，向量数据库的选型至关重要。请对比主流向量数据库的异同和选型建议。",
+    "answer": "答案：主流向量数据库对比：\n1. Pinecone：全托管 SaaS，无需运维，支持 Hybrid Search，适合快速原型和中小规模。缺点是成本较高、数据不能脱离平台。\n2. Milvus/Zilliz：开源 + 云托管，支持万亿级向量，丰富的索引类型（IVF、HNSW、DiskANN），适合大规模生产环境。部署和维护复杂度较高。\n3. Qdrant：Rust 实现，性能优秀，支持 Filtering+Vector 混合过滤，单机即可运行。适合中小规模、注重性能的团队。\n4. Chroma：轻量级 Embedded 数据库，Python 原生接口，开发体验好，适合原型和小项目。不适合大规模生产。\n5. Weaviate：支持 Graph + Vector 混合查询，内置模块化架构（含生成模块），适合需要知识图谱的 RAG 场景。\n\n扩展延伸：选型建议：1）< 100万向量且要求低运维 → Chroma/Qdrant；2）100万~1亿向量 → Milvus/Pinecone；3）需要 Hybrid 搜索 → Weaviate/Pinecone；4）自建基础设施 → Milvus/Qdrant。另外可考虑 PostgreSQL + pgvector 扩展，适合已有 Postgres 技术栈的团队。",
+    "hints": [
+      "考虑规模、运维成本、查询特性需求",
+      "pgvector 适合已有 Postgres 的团队"
+    ],
+    "tags": [
+      "向量数据库",
+      "Milvus",
+      "Qdrant",
+      "Pinecone",
+      "Embedding"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LLM 缓存策略",
+    "content": "在 Agent 系统中，LLM 调用是主要的延迟和成本来源。请介绍常见的 LLM 缓存策略及其适用场景。",
+    "answer": "答案：常见的 LLM 缓存策略：\n1. Exact Match Cache：对于完全相同的请求直接返回缓存结果。适用于固定模板或常见问题，使用 Redis/Memcached 做 KV 缓存。\n2. Semantic Cache：对于语义相似但表述不同的请求，通过 Embedding 相似度匹配缓存。适用于客服问答等用户表述多样化的场景。\n3. Prefix Cache：缓存 LLM 处理 long prompt 时的 KV Cache 中间状态，加速相同前缀的请求。适用于 System Prompt 固定的场景（Flask、vLLM 支持）。\n4. Chain Cache：缓存 Agent 推理链中的中间结果，当相同子问题出现时直接复用。适用于多步推理场景。\n\n扩展延伸：Semantic Cache 的典型实现是 GPTCache——将 Query 转为 Embedding，用向量数据库（Milvus、Qdrant）检索最相似的历史请求。需要注意 Cache 的 TTL 设置和 Cache Miss 时的降级策略。",
+    "hints": [
+      "从精确匹配和语义匹配两个维度思考",
+      "前缀缓存对 System Prompt 固定的场景特别有效"
+    ],
+    "tags": [
+      "LLM",
+      "缓存",
+      "性能优化",
+      "成本控制"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "结构化输出（Structured Output）的实现方法",
+    "content": "如何确保 LLM 的输出是结构化的 JSON 或特定格式？请比较不同的实现方法。",
+    "answer": "答案：实现结构化输出的主要方法：\n1. Prompt Engineering：在 Prompt 中明确指定输出格式并提供示例（Few-shot），最简单但可靠性最低。\n2. JSON Mode：OpenAI 的 response_format={type:'json_object'} 强制输出 JSON，但不保证 Schema 合规。\n3. Function Calling/Tool Use：定义输出 Schema 为工具参数，让模型通过 Tool Call 输出结构化数据，可靠性较高。\n4. Constrained Decoding：在解码阶段束住输出（如 Outlines、Guidance、LMQL），只生成符合 Schema 的 Token，可靠性最高。\n5. 后处理解析修复：先用 LLM 生成文本，再用代码（如 Zod、Pydantic）校验和解析，不合法时重试。\n\n扩展延伸：OpenAI 的 Structured Outputs（2024 年发布）结合了 Function Calling 和 constrained decoding，通过 strict: true 确保输出 JSON 符合 JSON Schema。Instructor 库是一个好用的封装，支持多种 LLM 后端。",
+    "hints": [
+      "可靠性从 Prompt→JSON Mode→Function Calling→Constrained Decoding 递增",
+      "生产环境常组合使用多种方法"
+    ],
+    "tags": [
+      "LLM",
+      "结构化输出",
+      "JSON Schema",
+      "Function Calling"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Server-Sent Events 流式输出的挑战",
+    "content": "Agent 系统通常需要流式输出推理过程和结果。使用 SSE（Server-Sent Events）实现流式输出时面临哪些技术挑战？如何处理？",
+    "answer": "答案：SSE 流式输出的挑战和处理方案：\n1. 中间结果缓存：Agent 的工具调用结果需要暂存并逐步推送给前端。方案：使用 Ring Buffer 或 Channel 管理流式数据。\n2. 断连重连：用户刷新页面或网络中断导致连接断开。方案：实现断点续传（Resume），客户端记录已接收的 Event ID，重连时从断点继续。\n3. 背压问题：LLM 生成速度与消费速度不匹配。方案：使用 Flow Control（如 Token Bucket）或缓冲队列。\n4. 并发请求控制：多个 Agent 并行执行时流合并。方案：每个 Agent 分配独立 Stream ID，客户端按 ID 归并。\n\n扩展延伸：FastAPI 的 StreamingResponse 配合 async generator 是实现 SSE 的基础。高级方案可以使用 WebSocket 替代 SSE（支持双向通信），但 SSE 的优势是天然支持 HTTP/2 多路复用和更简单的服务端实现。",
+    "hints": [
+      "考虑网络断连、背压、并发合并等实际问题",
+      "对比 SSE 和 WebSocket 的适用场景"
+    ],
+    "tags": [
+      "SSE",
+      "流式输出",
+      "实时通信",
+      "Agent 架构"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Function Calling 的原理",
+    "content": "请解释 LLM Function Calling（工具调用）的原理，以及它在 Agent 系统中的关键作用。",
+    "answer": "答案：Function Calling 的基础原理：\n1. 开发者在 API 调用中定义工具 Schema（包括函数名、参数描述和类型），通过 JSON Schema 格式传入。\n2. LLM 在生成回复时，如果判断需要调用工具，会输出一个特殊的 Tool Call Token，随后生成函数名和参数（以结构化 JSON 形式）。\n3. 开发者解析 LLM 输出的 Tool Call，执行对应的函数，将结果返回给 LLM。\n4. LLM 根据工具返回的结果生成最终回复或发起下一轮工具调用。\n\n关键作用：Function Calling 是 Agent 与外部世界交互的桥梁。没有 Function Calling，LLM 只能依靠训练数据中的知识（存在截止日期和幻觉问题）。有了 Function Calling，Agent 可以实时查询数据库、调用 API、执行业务逻辑，从而解决实际问题。\n\n扩展延伸：主流 LLM 的 Function Calling 实现有差异——OpenAI 采用 Tool Choice 参数，Claude 采用 Tool Use Block，Google Gemini 采用 Function Declaration。各实现的核心逻辑一致，但 Schema 格式和调用方式不同。",
+    "hints": [
+      "思考 LLM 如何表示调用工具的意图",
+      "Function Calling 将 LLM 从知识型变成了行动型"
+    ],
+    "tags": [
+      "LLM",
+      "Function Calling",
+      "工具调用",
+      "Agent"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "向量数据库选型对比",
+    "content": "在构建 Agent 系统的记忆和知识检索层时，向量数据库的选型至关重要。请对比主流向量数据库的异同和选型建议。",
+    "answer": "答案：主流向量数据库对比：\n1. Pinecone：全托管 SaaS，无需运维，支持 Hybrid Search，适合快速原型和中小规模。缺点是成本较高、数据不能脱离平台。\n2. Milvus/Zilliz：开源 + 云托管，支持万亿级向量，丰富的索引类型（IVF、HNSW、DiskANN），适合大规模生产环境。部署和维护复杂度较高。\n3. Qdrant：Rust 实现，性能优秀，支持 Filtering+Vector 混合过滤，单机即可运行。适合中小规模、注重性能的团队。\n4. Chroma：轻量级 Embedded 数据库，Python 原生接口，开发体验好，适合原型和小项目。不适合大规模生产。\n5. Weaviate：支持 Graph + Vector 混合查询，内置模块化架构（含生成模块），适合需要知识图谱的 RAG 场景。\n\n扩展延伸：选型建议：1）< 100万向量且要求低运维 → Chroma/Qdrant；2）100万~1亿向量 → Milvus/Pinecone；3）需要 Hybrid 搜索 → Weaviate/Pinecone；4）自建基础设施 → Milvus/Qdrant。另外可考虑 PostgreSQL + pgvector 扩展，适合已有 Postgres 技术栈的团队。",
+    "hints": [
+      "考虑规模、运维成本、查询特性需求",
+      "pgvector 适合已有 Postgres 的团队"
+    ],
+    "tags": [
+      "向量数据库",
+      "Milvus",
+      "Qdrant",
+      "Pinecone",
+      "Embedding"
+    ]
   }
 ]

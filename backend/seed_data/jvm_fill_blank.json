@@ -612,5 +612,177 @@
       "指针压缩",
       "优化"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ZGC 的核心阶段",
+    "content": "ZGC 的垃圾回收过程包括三个主要阶段：___、___和___。",
+    "answer": "{\"correct\":[[\"并发标记\",\"Mark\"],[\"并发重定位\",\"Relocate\"],[\"重映射\",\"Remap\"]],\"distractors\":[[\"并发清除\",\"标记-复制\",\"并发整理\"],[\"并发压缩\",\"根扫描\",\"并发过滤\"],[\"并发引用更新\",\"标记-清除\",\"并发翻新\"]]}",
+    "hints": [
+      "ZGC 的所有 GC 阶段几乎都是并发的",
+      "重映射通常在下一轮 GC 中完成，与标记阶段合并"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC阶段"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Shenandoah GC 的关键技术",
+    "content": "Shenandoah GC 使用___指针实现并发压缩，每次 GC 开始时在对象头前插入一个___字段，GC 移动对象后只需更新该字段。Shenandoah GC 的屏障是___屏障。",
+    "answer": "{\"correct\":[[\"Brooks\"],[\"转发\",\"forwarding\"],[\"写\",\"write\"]],\"distractors\":[[\"染色\",\"Colored\",\"标记\"],[\"引用\",\"偏移\",\"标记位\"],[\"读\",\"read\",\"内存\"]]}",
+    "hints": [
+      "Shenandoah 的指针技术不同于 ZGC 的染色指针",
+      "Shenandoah 通过更新指针实现并发移动"
+    ],
+    "tags": [
+      "JVM",
+      "Shenandoah",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CDS 归档加载方式",
+    "content": "CDS 全称为___，它创建___文件（扩展名为___）来存储类元数据。AppCDS 在此之上增加了对类加载器加载的应用类和___库的支持。",
+    "answer": "{\"correct\":[[\"Class Data Sharing\"],[\"共享归档\",\"归档\"],[\"jsa\"],[\"第三方\",\"third-party\",\"third party\"]],\"distractors\":[[\"Class Dependency Sharing\",\"Class Data Storage\",\"类数据共享\"],[\"预编译类\",\"类缓存\",\"类快照\"],[\"jar\",\"class\",\"zip\"],[\"系统\",\"JDK内部\",\"标准\"]]}",
+    "hints": [
+      "CDS 文件的后缀名",
+      "AppCDS 扩展了 CDS 的应用范围"
+    ],
+    "tags": [
+      "JVM",
+      "CDS",
+      "AppCDS",
+      "类加载"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JIT 分层编译层次",
+    "content": "JVM 的分层编译共分为___层。第 0 层是___执行；第 1 层是___简单编译；第 4 层是___编译器编译（优化最深）。",
+    "answer": "{\"correct\":[[\"5\",\"五\"],[\"解释\"],[\"C1\",\"Client\"],[\"C2\",\"Server\"]],\"distractors\":[[\"4\",\"四\",\"3\",\"三\"],[\"编译\",\"JIT\",\"即时\"],[\"C2\",\"Server\",\"字节码\"],[\"C1\",\"Client\",\"Graal\"]]}",
+    "hints": [
+      "C1 编译占用层数多于 C2",
+      "解释执行是第 0 层，C2 是最后一层"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "分层编译"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM 调优关键参数",
+    "content": "JVM 调优中，设置堆大小的参数是___和___；设置栈大小的参数是___；设置元空间大小的参数是___。",
+    "answer": "{\"correct\":[[\"-Xms\"],[\"-Xmx\"],[\"-Xss\"],[\"-XX:MetaspaceSize\"]],\"distractors\":[[\"-Xss\",\"-Xmn\",\"-XX:MaxHeap\"],[\"-Xms\",\"-XX:HeapSize\",\"-XX:MaxRAM\"],[\"-Xmx\",\"-XX:StackSize\",\"-XX:ThreadStack\"],[\"-XX:MaxMetaspaceSize\",\"-XX:PermSize\",\"-XX:MaxPermSize\"]]}",
+    "hints": [
+      "-X 开头的参数是 JVM 标准参数",
+      "元空间参数以 -XX: 开头"
+    ],
+    "tags": [
+      "JVM",
+      "调优",
+      "参数"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ZGC 的核心阶段",
+    "content": "ZGC 的垃圾回收过程包括三个主要阶段：___、___和___。",
+    "answer": "{\"correct\": [[\"并发标记\", \"Mark\"], [\"并发重定位\", \"Relocate\"], [\"重映射\", \"Remap\"]], \"distractors\": [\"并发清除\", \"标记-复制\", \"并发整理\", \"并发压缩\", \"根扫描\", \"并发过滤\", \"并发引用更新\"]}",
+    "hints": [
+      "ZGC 的所有 GC 阶段几乎都是并发的",
+      "重映射通常在下一轮 GC 中完成，与标记阶段合并"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC阶段"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Shenandoah GC 的关键技术",
+    "content": "Shenandoah GC 使用___指针实现并发压缩，每次 GC 开始时在对象头前插入一个___字段，GC 移动对象后只需更新该字段。Shenandoah GC 的屏障是___屏障。",
+    "answer": "{\"correct\": [[\"Brooks\"], [\"转发\", \"forwarding\"], [\"写\", \"write\"]], \"distractors\": [\"染色\", \"Colored\", \"标记\", \"读\", \"read\", \"引用\", \"偏移\", \"标记位\", \"内存\"]}",
+    "hints": [
+      "Shenandoah 的指针技术不同于 ZGC 的染色指针",
+      "Shenandoah 通过更新指针实现并发移动"
+    ],
+    "tags": [
+      "JVM",
+      "Shenandoah",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CDS 归档加载方式",
+    "content": "CDS 全称为___，它创建___文件（扩展名为___）来存储类元数据。AppCDS 在此之上增加了对类加载器加载的应用类和___库的支持。",
+    "answer": "{\"correct\": [[\"Class Data Sharing\"], [\"共享归档\", \"归档\"], [\"jsa\"], [\"第三方\", \"third-party\", \"third party\"]], \"distractors\": [\"Class Dependency Sharing\", \"类数据共享\", \"预编译类\", \"jar\", \"class\", \"zip\", \"系统\", \"JDK内部\", \"标准\"]}",
+    "hints": [
+      "CDS 文件的后缀名",
+      "AppCDS 扩展了 CDS 的应用范围"
+    ],
+    "tags": [
+      "JVM",
+      "CDS",
+      "AppCDS",
+      "类加载"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JIT 分层编译层次",
+    "content": "JVM 的分层编译共分为___层。第 0 层是___执行；第 1 层是___简单编译；第 4 层是___编译器编译（优化最深）。",
+    "answer": "{\"correct\": [[\"5\", \"五\"], [\"解释\"], [\"C1\", \"Client\"], [\"C2\", \"Server\"]], \"distractors\": [\"4\", \"四\", \"3\", \"三\", \"编译\", \"JIT\", \"即时\", \"Graal\"]}",
+    "hints": [
+      "C1 编译占用层数多于 C2",
+      "解释执行是第 0 层，C2 是最后一层"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "分层编译"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM 调优关键参数",
+    "content": "JVM 调优中，设置堆大小的参数是___和___；设置栈大小的参数是___；设置元空间大小的参数是___。",
+    "answer": "{\"correct\": [[\"-Xms\"], [\"-Xmx\"], [\"-Xss\"], [\"-XX:MetaspaceSize\"]], \"distractors\": [\"-Xmn\", \"-XX:MaxHeap\", \"-XX:HeapSize\", \"-XX:MaxRAM\", \"-XX:StackSize\", \"-XX:ThreadStack\", \"-XX:MaxMetaspaceSize\", \"-XX:PermSize\", \"-XX:MaxPermSize\"]}",
+    "hints": [
+      "-X 开头的参数是 JVM 标准参数",
+      "元空间参数以 -XX: 开头"
+    ],
+    "tags": [
+      "JVM",
+      "调优",
+      "参数"
+    ]
   }
 ]

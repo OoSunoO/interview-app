@@ -783,5 +783,243 @@
       "函数式",
       "Stream"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "ConcurrentHashMap 特性",
+    "content": "以下关于 ConcurrentHashMap JDK 8 实现的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：JDK 8 的 ConcurrentHashMap 底层采用 Node 数组 + 链表/红黑树实现，摒弃了 JDK 7 的 Segment 分段锁。写操作使用 synchronized 锁住数组桶的首节点，配合 CAS 实现原子操作。ConcurrentHashMap 不允许 null key 和 null value（与 Hashtable 一致）。扩容时多线程协同（transfer 方法支持多线程并行迁移），提高了扩容效率。\n\n扩展延伸：size() 通过 baseCount + CounterCell 统计，是弱一致性的。迭代器也是弱一致性的，不会抛出 ConcurrentModificationException。",
+    "options": [
+      "A) 底层采用 Node 数组 + 链表/红黑树",
+      "B) 写操作使用 synchronized 锁住数组桶的首节点",
+      "C) 允许 null 作为 key 和 value",
+      "D) 扩容时支持多线程协同迁移"
+    ],
+    "hints": [
+      "JDK 8 摒弃了 Segment 分段锁设计",
+      "JDK 8 ConcurrentHashMap 不允许 null"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "CopyOnWriteArrayList 的特性",
+    "content": "以下关于 CopyOnWriteArrayList 的描述，哪些是正确的？",
+    "answer": "答案：A)、C)、D)。解析：CopyOnWriteArrayList 的所有写操作（add/set/remove 等）都通过 ReentrantLock 加锁，复制新数组进行操作后替换引用。读操作不加锁，直接访问 volatile 数组引用。迭代器遍历的是创建时刻的快照，不支持 add/remove 操作（会抛出 UnsupportedOperationException），但遍历过程中不会受并发修改影响。由于读写分离的设计，CopyOnWriteArrayList 适合读多写少的场景。\n\n扩展延伸：CopyOnWriteArrayList 的内存占用较高（写时有两份数组），且数据是最终一致的（读操作可能读不到最新的写入，但能保证最终读到）。",
+    "options": [
+      "A) 写操作通过 ReentrantLock 加锁，复制新数组后替换引用",
+      "B) 读操作需要加锁以保证数据一致性",
+      "C) 迭代器遍历的是快照，不会抛出 ConcurrentModificationException",
+      "D) 适合读多写少的并发场景"
+    ],
+    "hints": [
+      "写时复制策略的核心是读写分离",
+      "迭代器基于快照，修改操作受限"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "CopyOnWriteArrayList",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "TreeMap 与 LinkedHashMap",
+    "content": "以下关于 TreeMap 和 LinkedHashMap 的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、C)。解析：TreeMap 基于红黑树实现，元素按键的自然顺序或 Comparator 排序。LinkedHashMap 继承自 HashMap，通过双向链表维护插入顺序或访问顺序。两者都非线程安全。TreeMap 提供了丰富的导航方法（lowerKey、higherKey、ceilingKey、floorKey、subMap 等）。LinkedHashMap 可设置 accessOrder=true 实现 LRU 缓存（removeEldestEntry 方法）。\n\n扩展延伸：TreeMap 的 put/get/remove 时间复杂度为 O(log n)。LinkedHashMap 的 put/get 时间复杂度为 O(1)。LinkedHashMap 的迭代顺序默认与插入顺序一致，而 TreeMap 始终按键排序。",
+    "options": [
+      "A) TreeMap 基于红黑树实现，元素按键排序",
+      "B) LinkedHashMap 通过双向链表维护迭代顺序",
+      "C) LinkedHashMap 可以用来实现 LRU 缓存",
+      "D) TreeMap 和 LinkedHashMap 都是线程安全的"
+    ],
+    "hints": [
+      "考虑两种 Map 的底层数据结构差异",
+      "LRU 缓存需要 accessOrder 和 removeEldestEntry"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap",
+      "LinkedHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Collections 同步包装方法",
+    "content": "以下关于 Collections.synchronizedList 的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：Collections.synchronizedList 返回的 List 在 add/remove/get 等每个方法上都加了 synchronized 块（mutex 对象锁），因此单个方法是线程安全的。但复合操作（如迭代遍历、判断空后添加）仍需要在外部加 synchronized 块并传入 mutex 对象。返回的 List 的迭代器是 fail-fast 的，在迭代时其他线程修改集合会抛出 ConcurrentModificationException，因此迭代时需要在 synchronized 块中手动同步。synchronizedList 的序列化时会强制要求多线程使用同一个 mutex，因此返回了支持序列化的 Sync 内部类。\n\n扩展延伸：与 CopyOnWriteArrayList 相比，synchronizedList 的读操作也需要加锁，并发读性能较差。但 synchronizedList 的写操作不需要复制数组，写性能更好。",
+    "options": [
+      "A) 每个方法都加了 synchronized 保证单个方法的线程安全",
+      "B) 复合操作仍需外部同步",
+      "C) 迭代器是弱一致性的，不会抛出 ConcurrentModificationException",
+      "D) 迭代时需要手动加锁同步"
+    ],
+    "hints": [
+      "synchronizedList 包装的是同步方法而非同步复合操作",
+      "迭代器本身是 fail-fast 的"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections",
+      "同步"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "BlockingQueue 实现类比较",
+    "content": "以下关于 BlockingQueue 实现类的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：ArrayBlockingQueue 有界、基于数组、FIFO，创建时需指定容量，内部使用同一把 ReentrantLock 控制 put 和 take（读写竞争同一把锁）。LinkedBlockingQueue 可选有界（默认 Integer.MAX_VALUE）、基于链表、FIFO，内部使用两把锁——takeLock 和 putLock，生产者和消费者可以并发操作，吞吐量通常高于 ArrayBlockingQueue。SynchronousQueue 不存储元素，每个 put 必须等待一个 take，每个 take 必须等待一个 put，容量为 0。PriorityBlockingQueue 是无界优先队列，按优先级排序而非 FIFO。\n\n扩展延伸：LinkedBlockingQueue 默认容量为 Integer.MAX_VALUE 可能导致内存溢出。ArrayBlockingQueue 支持公平/非公平访问模式。SynchronousQueue 常用于直接传递场景（如 Executors.newCachedThreadPool）。",
+    "options": [
+      "A) ArrayBlockingQueue 是有界的，使用一把锁控制入队和出队",
+      "B) LinkedBlockingQueue 默认无界，使用 takeLock 和 putLock 两把锁",
+      "C) SynchronousQueue 可以存储一个元素",
+      "D) PriorityBlockingQueue 是无界的，元素按优先级排序"
+    ],
+    "hints": [
+      "LinkedBlockingQueue 的锁分离设计",
+      "SynchronousQueue 容量为 0"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "BlockingQueue",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "ConcurrentHashMap 特性",
+    "content": "以下关于 ConcurrentHashMap JDK 8 实现的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：JDK 8 的 ConcurrentHashMap 底层采用 Node 数组 + 链表/红黑树实现，摒弃了 JDK 7 的 Segment 分段锁。写操作使用 synchronized 锁住数组桶的首节点，配合 CAS 实现原子操作。ConcurrentHashMap 不允许 null key 和 null value（与 Hashtable 一致）。扩容时多线程协同（transfer 方法支持多线程并行迁移），提高了扩容效率。\n\n扩展延伸：size() 通过 baseCount + CounterCell 统计，是弱一致性的。迭代器也是弱一致性的，不会抛出 ConcurrentModificationException。",
+    "options": [
+      "A) 底层采用 Node 数组 + 链表/红黑树",
+      "B) 写操作使用 synchronized 锁住数组桶的首节点",
+      "C) 允许 null 作为 key 和 value",
+      "D) 扩容时支持多线程协同迁移"
+    ],
+    "hints": [
+      "JDK 8 摒弃了 Segment 分段锁设计",
+      "JDK 8 ConcurrentHashMap 不允许 null"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "CopyOnWriteArrayList 的特性",
+    "content": "以下关于 CopyOnWriteArrayList 的描述，哪些是正确的？",
+    "answer": "答案：A)、C)、D)。解析：CopyOnWriteArrayList 的所有写操作（add/set/remove 等）都通过 ReentrantLock 加锁，复制新数组进行操作后替换引用。读操作不加锁，直接访问 volatile 数组引用。迭代器遍历的是创建时刻的快照，不支持 add/remove 操作（会抛出 UnsupportedOperationException），但遍历过程中不会受并发修改影响。由于读写分离的设计，CopyOnWriteArrayList 适合读多写少的场景。\n\n扩展延伸：CopyOnWriteArrayList 的内存占用较高（写时有两份数组），且数据是最终一致的（读操作可能读不到最新的写入，但能保证最终读到）。",
+    "options": [
+      "A) 写操作通过 ReentrantLock 加锁，复制新数组后替换引用",
+      "B) 读操作需要加锁以保证数据一致性",
+      "C) 迭代器遍历的是快照，不会抛出 ConcurrentModificationException",
+      "D) 适合读多写少的并发场景"
+    ],
+    "hints": [
+      "写时复制策略的核心是读写分离",
+      "迭代器基于快照，修改操作受限"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "CopyOnWriteArrayList",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "TreeMap 与 LinkedHashMap",
+    "content": "以下关于 TreeMap 和 LinkedHashMap 的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、C)。解析：TreeMap 基于红黑树实现，元素按键的自然顺序或 Comparator 排序。LinkedHashMap 继承自 HashMap，通过双向链表维护插入顺序或访问顺序。两者都非线程安全。TreeMap 提供了丰富的导航方法（lowerKey、higherKey、ceilingKey、floorKey、subMap 等）。LinkedHashMap 可设置 accessOrder=true 实现 LRU 缓存（removeEldestEntry 方法）。\n\n扩展延伸：TreeMap 的 put/get/remove 时间复杂度为 O(log n)。LinkedHashMap 的 put/get 时间复杂度为 O(1)。LinkedHashMap 的迭代顺序默认与插入顺序一致，而 TreeMap 始终按键排序。",
+    "options": [
+      "A) TreeMap 基于红黑树实现，元素按键排序",
+      "B) LinkedHashMap 通过双向链表维护迭代顺序",
+      "C) LinkedHashMap 可以用来实现 LRU 缓存",
+      "D) TreeMap 和 LinkedHashMap 都是线程安全的"
+    ],
+    "hints": [
+      "考虑两种 Map 的底层数据结构差异",
+      "LRU 缓存需要 accessOrder 和 removeEldestEntry"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap",
+      "LinkedHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Collections 同步包装方法",
+    "content": "以下关于 Collections.synchronizedList 的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：Collections.synchronizedList 返回的 List 在 add/remove/get 等每个方法上都加了 synchronized 块（mutex 对象锁），因此单个方法是线程安全的。但复合操作（如迭代遍历、判断空后添加）仍需要在外部加 synchronized 块并传入 mutex 对象。返回的 List 的迭代器是 fail-fast 的，在迭代时其他线程修改集合会抛出 ConcurrentModificationException，因此迭代时需要在 synchronized 块中手动同步。synchronizedList 的序列化时会强制要求多线程使用同一个 mutex，因此返回了支持序列化的 Sync 内部类。\n\n扩展延伸：与 CopyOnWriteArrayList 相比，synchronizedList 的读操作也需要加锁，并发读性能较差。但 synchronizedList 的写操作不需要复制数组，写性能更好。",
+    "options": [
+      "A) 每个方法都加了 synchronized 保证单个方法的线程安全",
+      "B) 复合操作仍需外部同步",
+      "C) 迭代器是弱一致性的，不会抛出 ConcurrentModificationException",
+      "D) 迭代时需要手动加锁同步"
+    ],
+    "hints": [
+      "synchronizedList 包装的是同步方法而非同步复合操作",
+      "迭代器本身是 fail-fast 的"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections",
+      "同步"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "BlockingQueue 实现类比较",
+    "content": "以下关于 BlockingQueue 实现类的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：ArrayBlockingQueue 有界、基于数组、FIFO，创建时需指定容量，内部使用同一把 ReentrantLock 控制 put 和 take（读写竞争同一把锁）。LinkedBlockingQueue 可选有界（默认 Integer.MAX_VALUE）、基于链表、FIFO，内部使用两把锁——takeLock 和 putLock，生产者和消费者可以并发操作，吞吐量通常高于 ArrayBlockingQueue。SynchronousQueue 不存储元素，每个 put 必须等待一个 take，每个 take 必须等待一个 put，容量为 0。PriorityBlockingQueue 是无界优先队列，按优先级排序而非 FIFO。\n\n扩展延伸：LinkedBlockingQueue 默认容量为 Integer.MAX_VALUE 可能导致内存溢出。ArrayBlockingQueue 支持公平/非公平访问模式。SynchronousQueue 常用于直接传递场景（如 Executors.newCachedThreadPool）。",
+    "options": [
+      "A) ArrayBlockingQueue 是有界的，使用一把锁控制入队和出队",
+      "B) LinkedBlockingQueue 默认无界，使用 takeLock 和 putLock 两把锁",
+      "C) SynchronousQueue 可以存储一个元素",
+      "D) PriorityBlockingQueue 是无界的，元素按优先级排序"
+    ],
+    "hints": [
+      "LinkedBlockingQueue 的锁分离设计",
+      "SynchronousQueue 容量为 0"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "BlockingQueue",
+      "并发"
+    ]
   }
 ]

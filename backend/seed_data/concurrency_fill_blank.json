@@ -607,5 +607,175 @@
       "LockSupport",
       "AQS"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "并发编程三大特性",
+    "content": "并发编程需要保证三个核心特性：___（多个线程同时访问共享变量不会得到错误结果）、___（一个线程对共享变量的修改对其他线程立即可见）、___（代码执行顺序符合预期，不受指令重排序的影响）。",
+    "answer": "{\"correct\":[[\"原子性\",\"Atomicity\"],[\"可见性\",\"Visibility\"],[\"有序性\",\"Ordering\"]],\"distractors\":[\"一致性\",\"持久性\",\"隔离性\",\"稳定性\"]}",
+    "hints": [
+      "volatile 保证可见性和有序性，但不保证原子性",
+      "synchronized 和 Lock 同时保证原子性、可见性和有序性"
+    ],
+    "tags": [
+      "并发",
+      "原子性",
+      "可见性",
+      "有序性"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "可重入锁与不可重入锁",
+    "content": "___（如 ReentrantLock）允许同一个线程多次获取同一把锁而不会死锁，获取几次就需要释放几次。___（如不可重入的自旋锁）不允许同一个线程重复获取同一把锁，否则会导致___。Java 的 synchronized 关键字是一个典型的___锁。",
+    "answer": "{\"correct\":[[\"可重入锁\",\"Reentrant Lock\",\"Reentrant\"],[\"不可重入锁\",\"Non-reentrant Lock\"],[\"死锁\",\"Deadlock\"],[\"可重入\"]],\"distractors\":[\"自旋锁\",\"读写锁\",\"公平锁\",\"共享锁\"]}",
+    "hints": [
+      "ReentrantLock 内部通过 AQS 的 state 记录重入次数——每次 lock() state +1, unlock() state -1",
+      "synchronized 是隐式可重入锁——同一个线程进入 synchronized 方法调用另一个 synchronized 方法不会阻塞"
+    ],
+    "tags": [
+      "并发",
+      "可重入锁",
+      "ReentrantLock",
+      "synchronized"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "BlockingQueue 常用实现",
+    "content": "___（基于链表的阻塞队列，默认无界）适合任务数不确定的场景；___（基于数组的有界阻塞队列）适合控制资源消耗的场景；___（不存储元素，容量为 0）适合任务直接交付工作线程的场景；___（支持延迟获取元素）适合延迟执行或定时任务的场景。",
+    "answer": "{\"correct\":[[\"LinkedBlockingQueue\"],[\"ArrayBlockingQueue\"],[\"SynchronousQueue\"],[\"DelayQueue\"]],\"distractors\":[\"PriorityBlockingQueue\",\"ConcurrentLinkedQueue\",\"TransferQueue\",\"BlockingDeque\"]}",
+    "hints": [
+      "LinkedBlockingQueue 默认容量是 Integer.MAX_VALUE，如果任务生产速度大于消费速度可能导致 OOM",
+      "SynchronousQueue 的 take() 和 put() 必须成对出现——没有缓冲且不存储元素"
+    ],
+    "tags": [
+      "并发",
+      "BlockingQueue",
+      "队列",
+      "线程池"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "MESI 缓存一致性协议",
+    "content": "MESI 协议定义了四种缓存行状态：___（缓存行内容与主存一致，且仅存于当前 CPU 缓存中）、___（缓存行内容与主存一致，但可能存在于多个 CPU 缓存中）、___（缓存行已被修改，与主存不一致，其他 CPU 必须从本缓存读取）、___（缓存行无效，需要从主存或其他 CPU 缓存读取最新数据）。",
+    "answer": "{\"correct\":[[\"Exclusive\",\"独占\",\"E\"],[\"Shared\",\"共享\",\"S\"],[\"Modified\",\"已修改\",\"脏\",\"M\"],[\"Invalid\",\"无效\",\"I\"]],\"distractors\":[\"Owned\",\"Clean\",\"Dirty\",\"Valid\",\"Read\"]}",
+    "hints": [
+      "当某个 CPU 要写 Shared 状态的缓存行时，需要先向所有其他 CPU 发送 Invalid 消息——这是写传播的基本机制",
+      "MESI 协议确保了多核 CPU 缓存的一致性，是 JMM 中 volatile 可见性的底层硬件基础"
+    ],
+    "tags": [
+      "并发",
+      "MESI",
+      "缓存一致性",
+      "CPU"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Semaphore 信号量原理",
+    "content": "Semaphore 基于___的共享模式实现同步控制，通过___方法获取一个许可证（可用许可减 1，许可不足时阻塞），通过___方法释放一个许可证（可用许可加 1，唤醒等待线程）。公平模式下会检查___队列中是否有等待更久的线程，非公平模式则直接尝试___更新 state。",
+    "answer": "{\"correct\":[[\"AQS\",\"AbstractQueuedSynchronizer\"],[\"acquire()\",\"acquire\"],[\"release()\",\"release\"],[\"同步\",\"CLH\"],[\"CAS\",\"compareAndSetState\"]],\"distractors\":[\"ThreadPoolExecutor\",\"LockSupport\",\"park()\",\"unpark()\",\"tryLock()\",\"wait()\"]}",
+    "hints": [
+      "Semaphore 的 permits 支持同时获取多个——acquire(int N) 一次获取 N 个许可",
+      "Semaphore 的释放不要求由获取者执行——可以用于线程间信令，如生产者释放许可通知消费者"
+    ],
+    "tags": [
+      "并发",
+      "Semaphore",
+      "AQS",
+      "信号量"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "死锁的四个必要条件",
+    "content": "产生死锁必须同时满足四个条件：____（资源一次只能被一个线程占用）、____（线程持有资源的同时请求其他资源）、____（资源不能被强制剥夺）和____（多个线程形成闭合等待链）。",
+    "answer": "{\"correct\":[[\"互斥条件\",\"互斥\"],[\"请求与保持\",\"占有并等待\"],[\"不剥夺\",\"非抢占\"],[\"循环等待\",\"循环等待条件\"]],\"distractors\":[[\"同步条件\",\"共享条件\",\"阻塞条件\"],[\"请求与等待\",\"保持与释放\",\"申请与释放\"],[\"剥夺条件\",\"分配条件\",\"抢占条件\"],[\"顺序等待\",\"并行等待\",\"异步等待\"]]}",
+    "hints": [
+      "破坏任意一个条件即可预防死锁",
+      "最常用的预防方法是资源顺序化——破坏循环等待条件"
+    ],
+    "tags": [
+      "并发",
+      "死锁"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "volatile 的语义",
+    "content": "volatile关键字保证多线程间的____（每次读取都从主存获取，写操作立即刷新到主存），禁止____（通过插入内存屏障实现），但____原子性（如count++操作仍需加锁）。",
+    "answer": "{\"correct\":[[\"可见性\",\"内存可见性\"],[\"指令重排序\",\"重排序\",\"指令重排\"],[\"不保证\",\"无法保证\"]],\"distractors\":[[\"有序性\",\"持久性\",\"一致性\",\"可缓存性\"],[\"指令流水线\",\"指令预测\",\"指令缓存\",\"分支预测\"],[\"保证\",\"完全保证\",\"部分保证\",\"视情况保证\"]]}",
+    "hints": [
+      "volatile不保证原子性，复合操作需要加锁或使用Atomic类",
+      "内存屏障类型有StoreStore、StoreLoad、LoadLoad、LoadStore四种"
+    ],
+    "tags": [
+      "并发",
+      "volatile"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CAS 的三元组",
+    "content": "CAS（Compare And Swap）操作的三个操作数分别是：内存位置____、期望值____和新值____。当内存位置的当前值与期望值相等时，CAS会将值更新为新值。",
+    "answer": "{\"correct\":[[\"V\",\"内存地址\",\"内存位置\"],[\"A\",\"期望值\",\"旧值\"],[\"B\",\"新值\"]],\"distractors\":[[\"M\",\"指针\",\"偏移量\",\"索引\",\"地址\"],[\"C\",\"D\",\"比较值\",\"当前值\",\"缓存值\"],[\"C\",\"D\",\"结果值\",\"目标值\",\"写入值\"]]}",
+    "hints": [
+      "CAS是乐观锁的核心实现，通过硬件级的原子指令保证",
+      "ABA问题可以通过版本号或AtomicStampedReference解决"
+    ],
+    "tags": [
+      "并发",
+      "CAS"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "AQS 核心设计",
+    "content": "AQS（AbstractQueuedSynchronizer）的核心是一个____队列（用于管理等待获取锁的线程）和一个____状态位（表示同步资源的占用情况）。",
+    "answer": "{\"correct\":[[\"CLH\",\"同步\",\"FIFO\"],[\"state\",\"int\",\"volatile\"]],\"distractors\":[[\"CHL\",\"LCH\",\"HLC\",\"阻塞\",\"公平\"],[\"flag\",\"lock\",\"status\",\"signal\",\"mutex\"]]}",
+    "hints": [
+      "AQS是Java中几乎所有锁和同步器的基石",
+      "ReentrantLock、CountDownLatch、Semaphore都基于AQS实现"
+    ],
+    "tags": [
+      "并发",
+      "AQS"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "线程池核心参数",
+    "content": "ThreadPoolExecutor的核心构造参数包括：corePoolSize表示____、maximumPoolSize表示____、keepAliveTime表示____、workQueue表示____。",
+    "answer": "{\"correct\":[[\"核心线程数\"],[\"最大线程数\"],[\"空闲存活时间\",\"空闲时间\",\"存活时间\"],[\"工作队列\",\"阻塞队列\",\"任务队列\"]],\"distractors\":[[\"最小线程数\",\"初始线程数\",\"活跃线程数\",\"缓冲线程数\"],[\"峰值线程数\",\"极限线程数\",\"弹性线程数\",\"扩缩线程数\"],[\"最大空闲时间\",\"超时时间\",\"等待时间\",\"调度周期\"],[\"缓冲队列\",\"延迟队列\",\"调度队列\",\"优先队列\"]]}",
+    "hints": [
+      "核心线程数满了后新任务会先放入工作队列",
+      "拒绝策略包括AbortPolicy、CallerRunsPolicy、DiscardPolicy、DiscardOldestPolicy"
+    ],
+    "tags": [
+      "并发",
+      "线程池"
+    ]
   }
 ]

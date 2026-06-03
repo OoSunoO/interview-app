@@ -604,5 +604,188 @@
       "Hooks",
       "useEffect"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Portals 的使用场景与原理",
+    "content": "React Portals 解决了什么问题？如何使用 createPortal？Portal 中的事件冒泡机制和一般的 React 组件树有什么不同？",
+    "answer": "答案：ReactDOM.createPortal(children, domNode) 将子节点渲染到父组件 DOM 树之外的 DOM 节点，但保持 React 组件树中的父子关系（事件冒泡按 React 组件树走，不受 DOM 树位置影响）。\n\n解析：解决什么问题——1）模态框（Modal）——避免父组件的 overflow: hidden / z-index 限制导致弹窗被裁剪。2）悬浮提示（Tooltip/Popover）——需要相对于触发元素定位但不被祖先裁剪。3）全局通知（Toast）——固定在视口顶部/底部，独立于业务组件树。用法——import { createPortal } from 'react-dom'; return createPortal(<Modal />, document.getElementById('modal-root'))。第一个参数是可渲染的 React 子节点，第二个参数是目标 DOM 节点（必须是已存在的 DOM 元素）。\n\n扩展延伸：事件冒泡——Portal 中的事件冒泡遵循 React 组件树而非 DOM 树。虽然 Modal 被渲染到 document.body 下（DOM 层面在 App 外面），但在 Modal 内触发的事件仍然会冒泡到 App 组件（React 的合成事件系统通过虚拟树跟踪嵌套关系）。SSR 注意事项——createPortal 需要 DOM 节点（document.getElementById），SSR 时目标节点不存在。需要在 useEffect 中或仅在客户端渲染 Portal（动态创建容器 + isMounted 判断）。React 18 的 createPortal 无显著变化。",
+    "hints": [
+      "Portal 中的 onClick 能冒泡到父组件吗——React 组件树 vs DOM 树的区别",
+      "SSR 中使用 Portal 会有什么问题"
+    ],
+    "tags": [
+      "React",
+      "Portal",
+      "DOM",
+      "渲染"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React refs 转发（forwardRef）",
+    "content": "forwardRef 的作用是什么？什么场景下需要使用 forwardRef？refs 转发的实现原理是什么？",
+    "answer": "答案：forwardRef 让父组件直接获取子组件内部 DOM 节点或组件实例的 ref。React.forwardRef((props, ref) => ...) 将 ref 作为第二个参数传递给渲染函数。\n\n解析：为什么需要 forwardRef——默认情况下 ref 不是 prop（不会传给子组件），因为 ref 由 React 特殊处理。没有 forwardRef 时，父组件无法直接将 ref 传递给函数组件的子元素。经典场景——1）高阶组件转发 ref——HOC 包装后 ref 指向 HOC 而非被包装组件，需要用 forwardRef 透传。2）封装第三方 UI 库——自定义 Button 组件需要将 ref 传给内部的 <button> 元素，让父组件可以 focus() 该按钮。3）动画库集成——需要直接操作 DOM 进行动画（如 GSAP、Framer Motion 的 useMotionRef）。\n\n扩展延伸：useImperativeHandle——配合 forwardRef 使用，定义暴露给父组件的实例值（限制可调用的方法）：useImperativeHandle(ref, () => ({ focus, reset }), [])。父组件通过 ref.current.focus() 只能调用 focus 和 reset，不能访问内部其他状态/方法。refs 的三种形式——1）回调 ref：<div ref={el => ...}>。2）createRef（类组件）：this.myRef = React.createRef()。3）useRef（函数组件）：const myRef = useRef(null)。React 18 中 useRef 初始值可以是函数：useRef(() => new ResizeObserver(...))。",
+    "hints": [
+      "为什么 ref 不被当作普通 prop 传递",
+      "useImperativeHandle 的作用是什么——与 direct ref 有何区别"
+    ],
+    "tags": [
+      "React",
+      "refs",
+      "forwardRef",
+      "useImperativeHandle"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 高阶组件（HOC）模式",
+    "content": "什么是 React 高阶组件？HOC 解决了什么问题？HOC 与 Render Props、Hooks 相比有什么优缺点？",
+    "answer": "答案：高阶组件（HOC）是一个函数，接受一个组件作为参数并返回一个新的增强组件。HOC = (Component) => EnhancedComponent。用于逻辑复用、横切关注点（权限、日志、数据订阅）。\n\n解析：实现模式——1）Props Proxy（属性代理）：HOC 返回的新组件渲染传入的组件并传递 props（可添加/修改/过滤 props）。React.memo 就是 Props Proxy 式 HOC。2）Inheritance Inversion（反向继承）：HOC 的返回组件继承传入组件，可以修改生命周期、渲染结果（有条件渲染）。不推荐，因为破坏了封装。常见 HOC 场景——Redux 的 connect(mapState, mapDispatch)(Component) 将 store 的 state 和 dispatch 注入为 props。React Router 的 withRouter(Component) 注入 route 相关 props。权限 HOC：withAuth(Component) 检查登录状态，未登录重定向登录页。\n\n扩展延伸：HOC 的问题——1）props 命名冲突：父组件和 HOC 注入的同名 prop 会冲突。2）静态方法丢失：HOC 返回的是新组件，原组件的静态方法不会自动继承（需要 hoist-non-react-statics）。3）嵌套层级：多个 HOC 组合导致组件树深层嵌套（Wrapper Hell），增加调试难度。HOC vs Hooks——Hooks 可以替代大部分 HOC 的需求（useAuth、usePermission、useSubscription）。Hooks 没有命名冲突、嵌套层级问题。但 HOC 在处理渲染劫持（反向继承模式）时仍有不可替代的场景。React 官方推荐优先用 Hooks，HOC 用于库作者提供更友好的 API（如 connect）。",
+    "hints": [
+      "Props Proxy 和 Inheritance Inversion 的区别是什么",
+      "Hooks 如何替代 HOC——如 withAuth → useAuth"
+    ],
+    "tags": [
+      "React",
+      "HOC",
+      "高阶组件",
+      "模式"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Render Props 模式",
+    "content": "React Render Props 是什么？它解决了组件逻辑复用的什么问题？与 HOC 和 Hooks 对比有什么差异？",
+    "answer": "答案：Render Props 是一种通过函数 prop 传递渲染内容的模式：<DataProvider render={(data) => <View data={data} />} />。核心思想是组件不直接决定渲染什么，而是委托给调用方。\n\n解析：使用方式——1）render prop：props.render(data)。2）children 作为函数：<DataProvider>{(data) => <View />}</DataProvider>。3）多个 Render Props：props.renderHeader + props.renderBody + props.renderFooter 实现可定制布局。经典场景——React Router 的 <Route render={(props) => <Component {...props} />} />。React Motion / Framer Motion 的动画配置。Mouse/Timer 等「状态逻辑」的复用（将状态暴露给 render prop）。\n\n扩展延伸：问题与注意事项——1）嵌套地狱（Callback Hell）：多个 Render Props 嵌套时：<Mouse>{(m) => <Theme>{(t) => <View />}</Theme>}</Mouse>。可读性差。2）性能优化：render prop 的函数在每次渲染时是新创建的函数（除非用 useCallback），PureComponent / React.memo 的浅比较无法阻止不必要渲染。解决方案：将 render prop 定义为组件实例方法或用 useCallback 包裹。3）shouldComponentUpdate 干扰：context 的变化可能穿透 Render Props。Render Props vs Hooks——Hooks 通过组合（调用多个 hook）替代 Render Props 的嵌套模式，更简洁、类型推断更好。Hooks 已成为 React 官方推荐的逻辑复用方案，Render Props 主要用于库作者提供更灵活的渲染定制能力（如表格组件的 column renderer）。",
+    "hints": [
+      "children 作为函数与 render prop 的区别",
+      "Render Props 的嵌套问题如何被 Hooks 解决"
+    ],
+    "tags": [
+      "React",
+      "Render Props",
+      "模式",
+      "组件复用"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Fiber 调度机制",
+    "content": "React Fiber 架构是什么？它解决了什么问题？Fiber 节点是如何工作的？任务优先级调度和渲染中断/恢复的机制是什么？",
+    "answer": "答案：React Fiber 是 React 16 引入的新的协调引擎，将渲染工作拆分为可中断的小单元（Fiber 节点），实现了增量渲染和优先级调度。\n\n解析：Fiber 架构的核心——1）Fiber 节点：每个 React 元素对应一个 Fiber 节点，包含类型、key、props、state、副作用标记等。Fiber 构成了一个链表结构（child → sibling → return），支持深度优先遍历。2）双缓冲（Dual Buffering）：WorkInProgress Fiber Tree + Current Fiber Tree。更新时先构建 WorkInProgress 树，构建完成后将 current 指针切换（commit 阶段）。3）可中断渲染：每次帧（约 16.6ms / 60fps）从 MessageChannel / requestIdleCallback 中取回控制权检查剩余时间。时间不够则暂停（yield），下次继续从断点恢复。\n\n扩展延伸：任务优先级——React 定义了 5 个优先级级别：1）Immediate（同步最高，如用户输入）。2）UserBlocking（用户交互，如点击）。3）Normal（普通更新，如数据加载）。4）Low（低优先级，如分析日志）。5）Idle（空闲时执行）。高优先级任务可以打断低优先级任务（低优先级作废或重做）。两阶段过程——1）Render 阶段（可中断）：构建 Fiber 树、收集副作用、调用 render 函数。2）Commit 阶段（不可中断）：将副作用应用到 DOM、执行生命周期函数、调用 useEffect。Concurrent Mode（React 18）— 通过 startTransition 标记非紧急更新（如搜索结果过滤），让高优先级输入不卡顿。Suspense 利用 Fiber 的中断机制实现「等待异步数据就绪再渲染」的体验。",
+    "hints": [
+      "为什么 commit 阶段必须同步完成——中断了会有什么后果",
+      "startTransition 在 Fiber 调度层面的作用是什么"
+    ],
+    "tags": [
+      "React",
+      "Fiber",
+      "调度",
+      "并发",
+      "协调"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 自定义 Hook 的设计模式",
+    "content": "React 自定义 Hook 应该遵循哪些设计原则？如何封装通用逻辑？自定义 Hook 的返回值应该用数组还是对象？组合多个 Hook 的最佳实践是什么？",
+    "answer": "答案：自定义 Hook 是以 use 开头、可调用其他 Hook 的函数，遵循单一职责原则——一个 Hook 只做一件事。组合优于继承——通过多个小 Hook 组合成复杂逻辑。返回值：2-3 个值用数组（类似 useState，调用方可自由命名），多个值用对象（命名清晰）。\n\n解析：设计模式——1）命名约定：useXxx 格式，React 通过命名检测 Hook 规则是否被违反。2）输入参数：用对象参数而非多个独立参数（便于后续扩展）。3）不要返回新引用导致不必要重渲染：用 useRef 缓存稳定引用或用 useMemo 记忆化。4）Hook 内部可以调用其他 Hook，但必须在顶层无条件调用（不能在 if/for 中）。\n\n常见实现——1）useDebounce(value, delay)：useEffect + setTimeout，延迟更新值，适合输入搜索。2）useLocalStorage(key, initialValue)：封装 localStorage 读写，返回 [value, setValue]。3）useToggle(initialValue)：简化布尔状态切换。4）useAsync(asyncFn)：封装请求生命周期（loading/data/error）。\n\n扩展延伸：组合模式——1）useUser()（获取用户数据）+ useAuth()（登录/登出/注册）= useSession()（完整会话管理）。2）自定义 Hook 测试：用 @testing-library/react-hooks 的 renderHook。3）自定义 Hook 的参数类型注解：使用 TypeScript 泛型让类型更精确，如 useLocalStorage<T>(key: string, initialValue: T)。",
+    "hints": [
+      "自定义 Hook 的返回值用数组还是对象——看值的数量和使用方式",
+      "Hook 中调用另一个 Hook 的条件是什么——必须在顶层无条件调用"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "自定义 Hook",
+      "设计模式"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Context 原理与性能优化",
+    "content": "React Context 的工作原理是什么？Context 更新时所有消费组件都会重新渲染吗？如何优化 Context 的性能问题？",
+    "answer": "答案：React Context 通过 Provider 向下传递值，所有使用 useContext 的组件在 Provider value 引用变化时都会重新渲染。Context 通过 Object.is 比较 value 是否变化。性能优化方法：拆分 Context（按职责拆分为多个小 Context）、用 useMemo 稳定 Provider value 引用、将读写 Context 分离。\n\n解析：工作流程——createContext(defaultValue) 创建 Context。Provider 向下传递 value。useContext 消费最近的 Provider 的值。当 Provider 的 value 引用变化时，React 从 Provider 向下遍历找到所有消费组件强制重渲染。即使组件只关心 value 中的部分字段，整个组件也会重渲染。\n\n优化策略——1）拆分 Context：UserContext、ThemeContext、LocaleContext 分开，避免一个巨型 Context 包含所有全局状态。2）稳定 value 引用：value 为对象时用 useMemo 包裹，否则每次父组件渲染都创建新引用。3）分离读写：将 dispatch/setState 放在单独的 Context 中，避免读组件因 dispatch 变化重渲染。\n\n扩展延伸：Context vs 状态管理——1）Context + useReducer 可替代小型 Redux：通过 Context 传递 dispatch。2）Context 不适合高频更新的全局状态（如实时位置），因为每次更新触发大量组件重渲染。高频场景用 Zustand（基于订阅，只更新消费具体字段的组件）或 Jotai（原子状态）。3）React 19 的 use(Context) 可以直接在组件中使用，Context 值为 Promise 时与 Suspense 集成。",
+    "hints": [
+      "Provider value 引用变化为什么会导致所有消费者重渲染——Object.is 比较",
+      "Context 拆分和 value 记忆化的具体做法是什么"
+    ],
+    "tags": [
+      "React",
+      "Context",
+      "性能优化",
+      "useContext"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Suspense 与并发模式",
+    "content": "React Suspense 的工作原理是什么？Suspense 与传统 loading 状态管理相比的优势？React 18 的并发模式中 Suspense 的作用？Suspense 如何与错误边界配合？",
+    "answer": "答案：Suspense 让组件在等待异步操作时声明式显示 fallback。传统方式需要手动管理 if/else loading 状态，Suspense 消除了竞态条件和手工状态。React 18 并发模式下，Suspense 避免「loading 闪烁」——旧 UI 在等待期间保持可见。Suspense 和 Error Boundary 配合：Suspense 处理 loading，Error Boundary 处理错误。\n\n解析：工作原理——组件在数据未就绪时 throw 一个 Promise。React 向上冒泡找到最近的 Suspense 边界显示 fallback。Promise 完成后重新尝试渲染该组件。在并发模式下 React 可在等待时保持旧 UI，避免闪烁。\n\n使用场景——1）React.lazy 代码分割：const LazyComp = React.lazy(() => import('./Comp'))。Suspense 包裹待模块加载。2）数据获取：结合支持 Suspense 的框架（Relay、Next.js、React Router 的数据加载器）。3）流式 SSR（React 18+）：服务端逐步发送 HTML，Suspense 边界内内容独立流式传输。\n\n扩展延伸：并发模式核心——1）可中断渲染：高优先级更新打断低优先级渲染。2）useTransition：const [isPending, startTransition] = useTransition()——将非紧急更新标记为过渡，旧 UI 保持响应。3）useDeferredValue：延迟更新值，适合输入过滤。4）Error Boundary 与 Suspense 对比：Suspense 处理「还不在」的状态，Error Boundary 处理「出错了」的状态。两者可以嵌套组合。",
+    "hints": [
+      "Suspense 抛出一个 Promise 被最近的 Suspense 边界捕获显示 fallback",
+      "useTransition 和 useDeferredValue 在并发模式中的作用是什么"
+    ],
+    "tags": [
+      "React",
+      "Suspense",
+      "并发模式",
+      "React 18",
+      "流式SSR"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "React Error Boundary 错误边界",
+    "content": "React Error Boundary 的作用是什么？如何创建和使用？它能捕获哪些错误？不能捕获哪些？React 19 的错误处理有什么变化？",
+    "answer": "答案：Error Boundary 是捕获子组件树中 JavaScript 错误、显示 fallback UI 而不崩溃整个应用的组件。通过实现 static getDerivedStateFromError() 和 componentDidCatch() 创建（必须用类组件）。捕获：渲染阶段、生命周期、构造函数中的错误。不能捕获：事件处理器、异步代码、SSR、Error Boundary 自身抛出的错误。\n\n解析：实现方式——1）class ErrorBoundary extends React.Component { state = { hasError: false }; static getDerivedStateFromError(error) { return { hasError: true } }; componentDidCatch(error, info) { logError(error, info) } }。2）getDerivedStateFromError 更新状态显示 fallback UI，componentDidCatch 用于副作用（日志上报）。\n\n使用建议——1）全局 Error Boundary 兜底 + 关键模块（聊天、支付）分别加边界隔离。2）细粒度边界好处：一个区域崩溃不影响其他区域。\n\n扩展延伸：无法捕获的错误处理——1）事件处理器：用 try/catch 包裹。2）异步代码：Promise 链加 .catch() 或 async/await 的 try/catch。3）React 19：引入了类似 react-error-boundary 库的模式，支持更灵活的错误处理 API。4）生产环境建议用 react-error-boundary 库（提供 withErrorBoundary、fallbackRender、reset 功能）。",
+    "hints": [
+      "Error Boundary 为什么必须用类组件——函数组件没有 getDerivedStateFromError",
+      "事件处理器中的错误为什么不能被 Error Boundary 捕获"
+    ],
+    "tags": [
+      "React",
+      "Error Boundary",
+      "错误处理",
+      "类组件"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 性能优化全攻略",
+    "content": "React 应用有哪些性能优化手段？React.memo、useMemo、useCallback 的原理和适用场景？虚拟列表和代码分割如何实现？如何诊断性能瓶颈？",
+    "answer": "答案：性能优化分为渲染优化（减少不必要重渲染）和加载优化（减少包体积）。核心 API：React.memo（浅比较 props）、useMemo（记忆化计算）、useCallback（记忆化函数引用）。虚拟列表用 react-window/react-virtuoso，代码分割用 React.lazy + Suspense。诊断工具：React DevTools Profiler。\n\n解析：优化原理——1）React.memo：高阶组件，对 props 做浅比较，未变则跳过渲染。不是对所有组件有效——只有重渲染成本高且 props 常不变时才用。2）useMemo(fn, deps)：deps 变化时重新计算，否则返回缓存值。用于跳过昂贵计算。3）useCallback(fn, deps)：等价于 useMemo(() => fn, deps)，返回缓存函数引用。配合 React.memo 避免子组件因函数引用变化重渲染。\n\n注意：useMemo/useCallback 本身有开销（依赖比较 + 内存），滥用反而降低性能。\n\n加载优化——1）React.lazy：const HeavyComp = React.lazy(() => import('./HeavyComp'))。2）基于路由的代码分割：每个页面对应一个 lazy 组件。3）资源预加载：rel=preload（关键资源）、rel=prefetch（未来导航）、rel=preconnect（第三方连接）。\n\n扩展延伸：诊断方法——1）React DevTools Profiler：录制交互查看每次 commit 的渲染耗时和原因。2）Chrome Performance：火焰图识别长任务和布局抖动。3）列表优化：虚拟列表适合 1000+ 行，100 行以内加 key 即可。4）状态提升 vs Context：多个无关组件共享状态用 Context 避免 prop drilling。",
+    "hints": [
+      "React.memo 对什么场景最有效——props 经常不变且渲染成本高的组件",
+      "useMemo/useCallback 为什么不能滥用——有自己的开销"
+    ],
+    "tags": [
+      "React",
+      "性能优化",
+      "memo",
+      "useMemo",
+      "虚拟列表"
+    ]
   }
 ]

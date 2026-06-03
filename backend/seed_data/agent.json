@@ -590,5 +590,275 @@
       "透明度",
       "安全"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多智能体编排模式",
+    "content": "请详细解释多智能体系统中常见的编排模式（Orchestration vs Choreography），分别适用于什么场景？以 AutoGen、CrewAI 或类似框架为例说明。",
+    "answer": "答案：多智能体编排主要有两种模式：\n1. Orchestration（中央编排）：由一个控制器统一调度各智能体的执行顺序和通信。适用于工作流固定、需要强一致性保证的场景，如文档处理流水线。\n2. Choreography（协作编排）：各智能体通过事件或消息自主协作，没有中心控制器。适用于任务动态变化、需要灵活扩展的场景，如开放式对话系统。\n\n解析：AutoGen 支持两种模式：OrderedSequentialChat（顺序编排）和 GroupChat（群聊协作）。CrewAI 通过 Process.sequential 和 Process.hierarchical 实现。Orchestration 的优点是可控性强、易于调试，缺点是中心节点可能成为瓶颈。Choreography 的优点是弹性好、去中心化，缺点是需要处理分布式一致性问题。\n\n扩展延伸：实际生产环境中常采用混合模式——用 Orchestration 管理顶层流程，用 Choreography 处理子任务内部的协作。Microsoft 的 Magentic-One 使用 Orchestrator 统一调度，而 OpenAI 的 Swarm 更倾向于 Choreography。",
+    "hints": [
+      "思考中心化调度和去中心化协作各自的优缺点",
+      "对比 AutoGen 的 GroupChat 和 Sequential 模式"
+    ],
+    "tags": [
+      "AI Agent",
+      "多智能体",
+      "编排模式",
+      "AutoGen"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "工具调用的可靠性设计",
+    "content": "AI Agent 在调用外部工具（API、数据库、文件系统）时可能面临哪些失败场景？如何设计可靠的工具调用机制？",
+    "answer": "答案：工具调用的失败场景包括：1）工具不存在或参数错误（Tool not found）；2）工具执行超时；3）工具返回异常结果；4）工具副作用导致状态不一致；5）工具调用顺序依赖冲突。\n\n可靠性设计策略：1）工具注册时做 Schema 校验，确保参数合法；2）设置合理的超时时间（Timeout）和重试机制（Retry with backoff）；3）实现工具执行的事务性——要么全部成功，要么回滚；4）对工具调用做幂等设计（Idempotency），防止重复执行；5）维护工具调用日志，支持审计和回放。\n\n扩展延伸：高级方案包括：1）Semantic Kernel 的 Planners 会自动编排工具调用并处理依赖；2）LangChain 的 Callbacks 机制可以监控工具调用全链路；3）在工具定义中加入输入输出约束的 Natural Language Guardrails，如 NeMo Guardrails。",
+    "hints": [
+      "考虑网络超时、参数错误、结果异常等场景",
+      "幂等设计和事务性回滚是关键技术"
+    ],
+    "tags": [
+      "AI Agent",
+      "工具调用",
+      "可靠性",
+      "容错"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAG 系统的检索优化策略",
+    "content": "RAG（Retrieval-Augmented Generation）系统中，检索质量直接影响最终生成效果。请列举并解释至少 5 种检索优化策略。",
+    "answer": "答案：5 种检索优化策略：\n1. Chunking 优化：根据文档类型选择合适的分块策略（语义分块、递归分块、基于 LLM 的分块），块大小通常在 256-1024 tokens 之间。\n2. Embedding 模型微调：针对特定领域对 Embedding 模型做微调（Fine-tune），提升语义相似度的准确性。\n3. Hybrid Search：结合稀疏检索（BM25，精确关键词匹配）和稠密检索（向量相似度，语义匹配），用 RRF（Reciprocal Rank Fusion）融合排序。\n4. Multi-hop Retrieval：对于复杂问题，先检索再根据结果进行二次检索（Iterative Retrieval），如 LangChain 的 MultiVectorRetriever。\n5. Reranking：初检后使用 Cross-encoder 模型对结果重排序，纠正 Embedding 相似度的偏差（如 Cohere Rerank、BGE Reranker）。\n\n扩展延伸：高阶优化还包括：Query Rewriting（改写用户查询以提升检索质量）、HyDE（通过假设文档编码提升检索准确率）、Self-RAG（让 LLM 判断是否需要检索以及检索结果是否相关）。",
+    "hints": [
+      "从数据预处理、检索策略、后处理三个环节思考",
+      "Hybrid Search 结合了关键词和语义匹配"
+    ],
+    "tags": [
+      "RAG",
+      "检索增强生成",
+      "信息检索",
+      "Embedding"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Prompt Injection 攻击与防御",
+    "content": "什么是 Prompt Injection 攻击？AI Agent 系统中面临哪些 Prompt Injection 风险？如何从架构层面进行防御？",
+    "answer": "答案：Prompt Injection 攻击是通过向 LLM 的输入注入恶意指令，使模型偏离预期行为。AI Agent 系统中主要面临：\n1. 间接注入：攻击者将恶意指令藏于外部数据（网页、文档、数据库）中，Agent 检索时触发。\n2. 直接注入：用户输入中直接包含攻击性提示。\n3. 越狱攻击：通过特殊编码或角色扮演绕越安全护栏。\n\n防御策略：1）权限最小化——Agent 仅授予执行任务必需的工具权限；2）输入输出隔离——严格区分用户指令和外部数据，对外部数据做过滤和转义；3）使用独立的安全评估 LLM 审查 Agent 的推理链和输出；4）实现 Human-in-the-Loop：高危操作（写数据库、发邮件）需人工确认；5）采用结构化指令格式（如 XML 标签包裹不同来源的内容），让模型区分指令边界。\n\n扩展延伸：OpenAI 的 Instruction Hierarchy 是一种系统级防御——为不同来源的指令赋予不同优先级（系统 > 用户 > 工具输出）。Anthropic 的 Constitutional AI 也在模型层面提供了对抗 Prompt Injection 的能力。",
+    "hints": [
+      "区分直接注入和间接注入两种攻击路径",
+      "架构防御比模型防御更可靠"
+    ],
+    "tags": [
+      "AI Agent",
+      "安全",
+      "Prompt Injection",
+      "护栏"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 评估体系设计",
+    "content": "AI Agent 系统的评估比传统 NLP 任务更复杂，因为它涉及多步决策和与环境的交互。请设计一套完整的 Agent 评估体系，包括评估指标和测试方法。",
+    "answer": "答案：完整的 Agent 评估体系包括三层次：\n1. 任务级评估：Success Rate（成功率）、Task Completion Time（完成时间）、Cost（Token 消耗和 API 调用次数）。\n2. 推理级评估：Relevance（每一步是否相关）、Correctness（中间推理是否准确）、Efficiency（是否走了最短路径）。\n3. 安全级评估：Harmlessness（是否产生有害输出）、Robustness（对抗 Prompt Injection 的鲁棒性）、Alignment（行为是否符合用户意图）。\n\n测试方法：1）Unit Testing——逐一验证工具调用的参数和返回值；2）Scenario Testing——构建端到端的测试场景（如 AgentBench、GAIA）；3）Trajectory Evaluation——评估 Agent 的完整推理轨迹而非仅最终结果；4）Adversarial Testing——用对抗样本测试 Agent 的鲁棒性。\n\n扩展延伸：推荐评估框架：LangSmith（追踪 + 评估）、Weights & Biases Prompts（可视化 + 对比）、Ragas（RAG 评估）。对于多轮交互场景，Human Evaluation 仍然是最可靠的方式。",
+    "hints": [
+      "区分任务级、推理级、安全级三个评估层次",
+      "轨迹评估比仅评估最终结果更有洞察力"
+    ],
+    "tags": [
+      "AI Agent",
+      "评估",
+      "测试",
+      "质量管理"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多智能体编排模式",
+    "content": "请详细解释多智能体系统中常见的编排模式（Orchestration vs Choreography），分别适用于什么场景？以 AutoGen、CrewAI 或类似框架为例说明。",
+    "answer": "答案：多智能体编排主要有两种模式：\n1. Orchestration（中央编排）：由一个控制器统一调度各智能体的执行顺序和通信。适用于工作流固定、需要强一致性保证的场景，如文档处理流水线。\n2. Choreography（协作编排）：各智能体通过事件或消息自主协作，没有中心控制器。适用于任务动态变化、需要灵活扩展的场景，如开放式对话系统。\n\n解析：AutoGen 支持两种模式：OrderedSequentialChat（顺序编排）和 GroupChat（群聊协作）。CrewAI 通过 Process.sequential 和 Process.hierarchical 实现。Orchestration 的优点是可控性强、易于调试，缺点是中心节点可能成为瓶颈。Choreography 的优点是弹性好、去中心化，缺点是需要处理分布式一致性问题。\n\n扩展延伸：实际生产环境中常采用混合模式——用 Orchestration 管理顶层流程，用 Choreography 处理子任务内部的协作。Microsoft 的 Magentic-One 使用 Orchestrator 统一调度，而 OpenAI 的 Swarm 更倾向于 Choreography。",
+    "hints": [
+      "思考中心化调度和去中心化协作各自的优缺点",
+      "对比 AutoGen 的 GroupChat 和 Sequential 模式"
+    ],
+    "tags": [
+      "AI Agent",
+      "多智能体",
+      "编排模式",
+      "AutoGen"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "工具调用的可靠性设计",
+    "content": "AI Agent 在调用外部工具（API、数据库、文件系统）时可能面临哪些失败场景？如何设计可靠的工具调用机制？",
+    "answer": "答案：工具调用的失败场景包括：1）工具不存在或参数错误（Tool not found）；2）工具执行超时；3）工具返回异常结果；4）工具副作用导致状态不一致；5）工具调用顺序依赖冲突。\n\n可靠性设计策略：1）工具注册时做 Schema 校验，确保参数合法；2）设置合理的超时时间（Timeout）和重试机制（Retry with backoff）；3）实现工具执行的事务性——要么全部成功，要么回滚；4）对工具调用做幂等设计（Idempotency），防止重复执行；5）维护工具调用日志，支持审计和回放。\n\n扩展延伸：高级方案包括：1）Semantic Kernel 的 Planners 会自动编排工具调用并处理依赖；2）LangChain 的 Callbacks 机制可以监控工具调用全链路；3）在工具定义中加入输入输出约束的 Natural Language Guardrails，如 NeMo Guardrails。",
+    "hints": [
+      "考虑网络超时、参数错误、结果异常等场景",
+      "幂等设计和事务性回滚是关键技术"
+    ],
+    "tags": [
+      "AI Agent",
+      "工具调用",
+      "可靠性",
+      "容错"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAG 系统的检索优化策略",
+    "content": "RAG（Retrieval-Augmented Generation）系统中，检索质量直接影响最终生成效果。请列举并解释至少 5 种检索优化策略。",
+    "answer": "答案：5 种检索优化策略：\n1. Chunking 优化：根据文档类型选择合适的分块策略（语义分块、递归分块、基于 LLM 的分块），块大小通常在 256-1024 tokens 之间。\n2. Embedding 模型微调：针对特定领域对 Embedding 模型做微调（Fine-tune），提升语义相似度的准确性。\n3. Hybrid Search：结合稀疏检索（BM25，精确关键词匹配）和稠密检索（向量相似度，语义匹配），用 RRF（Reciprocal Rank Fusion）融合排序。\n4. Multi-hop Retrieval：对于复杂问题，先检索再根据结果进行二次检索（Iterative Retrieval），如 LangChain 的 MultiVectorRetriever。\n5. Reranking：初检后使用 Cross-encoder 模型对结果重排序，纠正 Embedding 相似度的偏差（如 Cohere Rerank、BGE Reranker）。\n\n扩展延伸：高阶优化还包括：Query Rewriting（改写用户查询以提升检索质量）、HyDE（通过假设文档编码提升检索准确率）、Self-RAG（让 LLM 判断是否需要检索以及检索结果是否相关）。",
+    "hints": [
+      "从数据预处理、检索策略、后处理三个环节思考",
+      "Hybrid Search 结合了关键词和语义匹配"
+    ],
+    "tags": [
+      "RAG",
+      "检索增强生成",
+      "信息检索",
+      "Embedding"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Prompt Injection 攻击与防御",
+    "content": "什么是 Prompt Injection 攻击？AI Agent 系统中面临哪些 Prompt Injection 风险？如何从架构层面进行防御？",
+    "answer": "答案：Prompt Injection 攻击是通过向 LLM 的输入注入恶意指令，使模型偏离预期行为。AI Agent 系统中主要面临：\n1. 间接注入：攻击者将恶意指令藏于外部数据（网页、文档、数据库）中，Agent 检索时触发。\n2. 直接注入：用户输入中直接包含攻击性提示。\n3. 越狱攻击：通过特殊编码或角色扮演绕越安全护栏。\n\n防御策略：1）权限最小化——Agent 仅授予执行任务必需的工具权限；2）输入输出隔离——严格区分用户指令和外部数据，对外部数据做过滤和转义；3）使用独立的安全评估 LLM 审查 Agent 的推理链和输出；4）实现 Human-in-the-Loop：高危操作（写数据库、发邮件）需人工确认；5）采用结构化指令格式（如 XML 标签包裹不同来源的内容），让模型区分指令边界。\n\n扩展延伸：OpenAI 的 Instruction Hierarchy 是一种系统级防御——为不同来源的指令赋予不同优先级（系统 > 用户 > 工具输出）。Anthropic 的 Constitutional AI 也在模型层面提供了对抗 Prompt Injection 的能力。",
+    "hints": [
+      "区分直接注入和间接注入两种攻击路径",
+      "架构防御比模型防御更可靠"
+    ],
+    "tags": [
+      "AI Agent",
+      "安全",
+      "Prompt Injection",
+      "护栏"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 评估体系设计",
+    "content": "AI Agent 系统的评估比传统 NLP 任务更复杂，因为它涉及多步决策和与环境的交互。请设计一套完整的 Agent 评估体系，包括评估指标和测试方法。",
+    "answer": "答案：完整的 Agent 评估体系包括三层次：\n1. 任务级评估：Success Rate（成功率）、Task Completion Time（完成时间）、Cost（Token 消耗和 API 调用次数）。\n2. 推理级评估：Relevance（每一步是否相关）、Correctness（中间推理是否准确）、Efficiency（是否走了最短路径）。\n3. 安全级评估：Harmlessness（是否产生有害输出）、Robustness（对抗 Prompt Injection 的鲁棒性）、Alignment（行为是否符合用户意图）。\n\n测试方法：1）Unit Testing——逐一验证工具调用的参数和返回值；2）Scenario Testing——构建端到端的测试场景（如 AgentBench、GAIA）；3）Trajectory Evaluation——评估 Agent 的完整推理轨迹而非仅最终结果；4）Adversarial Testing——用对抗样本测试 Agent 的鲁棒性。\n\n扩展延伸：推荐评估框架：LangSmith（追踪 + 评估）、Weights & Biases Prompts（可视化 + 对比）、Ragas（RAG 评估）。对于多轮交互场景，Human Evaluation 仍然是最可靠的方式。",
+    "hints": [
+      "区分任务级、推理级、安全级三个评估层次",
+      "轨迹评估比仅评估最终结果更有洞察力"
+    ],
+    "tags": [
+      "AI Agent",
+      "评估",
+      "测试",
+      "质量管理"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多智能体编排模式",
+    "content": "请详细解释多智能体系统中常见的编排模式（Orchestration vs Choreography），分别适用于什么场景？以 AutoGen、CrewAI 或类似框架为例说明。",
+    "answer": "答案：多智能体编排主要有两种模式：\n1. Orchestration（中央编排）：由一个控制器统一调度各智能体的执行顺序和通信。适用于工作流固定、需要强一致性保证的场景，如文档处理流水线。\n2. Choreography（协作编排）：各智能体通过事件或消息自主协作，没有中心控制器。适用于任务动态变化、需要灵活扩展的场景，如开放式对话系统。\n\n解析：AutoGen 支持两种模式：OrderedSequentialChat（顺序编排）和 GroupChat（群聊协作）。CrewAI 通过 Process.sequential 和 Process.hierarchical 实现。Orchestration 的优点是可控性强、易于调试，缺点是中心节点可能成为瓶颈。Choreography 的优点是弹性好、去中心化，缺点是需要处理分布式一致性问题。\n\n扩展延伸：实际生产环境中常采用混合模式——用 Orchestration 管理顶层流程，用 Choreography 处理子任务内部的协作。Microsoft 的 Magentic-One 使用 Orchestrator 统一调度，而 OpenAI 的 Swarm 更倾向于 Choreography。",
+    "hints": [
+      "思考中心化调度和去中心化协作各自的优缺点",
+      "对比 AutoGen 的 GroupChat 和 Sequential 模式"
+    ],
+    "tags": [
+      "AI Agent",
+      "多智能体",
+      "编排模式",
+      "AutoGen"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "工具调用的可靠性设计",
+    "content": "AI Agent 在调用外部工具（API、数据库、文件系统）时可能面临哪些失败场景？如何设计可靠的工具调用机制？",
+    "answer": "答案：工具调用的失败场景包括：1）工具不存在或参数错误（Tool not found）；2）工具执行超时；3）工具返回异常结果；4）工具副作用导致状态不一致；5）工具调用顺序依赖冲突。\n\n可靠性设计策略：1）工具注册时做 Schema 校验，确保参数合法；2）设置合理的超时时间（Timeout）和重试机制（Retry with backoff）；3）实现工具执行的事务性——要么全部成功，要么回滚；4）对工具调用做幂等设计（Idempotency），防止重复执行；5）维护工具调用日志，支持审计和回放。\n\n扩展延伸：高级方案包括：1）Semantic Kernel 的 Planners 会自动编排工具调用并处理依赖；2）LangChain 的 Callbacks 机制可以监控工具调用全链路；3）在工具定义中加入输入输出约束的 Natural Language Guardrails，如 NeMo Guardrails。",
+    "hints": [
+      "考虑网络超时、参数错误、结果异常等场景",
+      "幂等设计和事务性回滚是关键技术"
+    ],
+    "tags": [
+      "AI Agent",
+      "工具调用",
+      "可靠性",
+      "容错"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RAG 系统的检索优化策略",
+    "content": "RAG（Retrieval-Augmented Generation）系统中，检索质量直接影响最终生成效果。请列举并解释至少 5 种检索优化策略。",
+    "answer": "答案：5 种检索优化策略：\n1. Chunking 优化：根据文档类型选择合适的分块策略（语义分块、递归分块、基于 LLM 的分块），块大小通常在 256-1024 tokens 之间。\n2. Embedding 模型微调：针对特定领域对 Embedding 模型做微调（Fine-tune），提升语义相似度的准确性。\n3. Hybrid Search：结合稀疏检索（BM25，精确关键词匹配）和稠密检索（向量相似度，语义匹配），用 RRF（Reciprocal Rank Fusion）融合排序。\n4. Multi-hop Retrieval：对于复杂问题，先检索再根据结果进行二次检索（Iterative Retrieval），如 LangChain 的 MultiVectorRetriever。\n5. Reranking：初检后使用 Cross-encoder 模型对结果重排序，纠正 Embedding 相似度的偏差（如 Cohere Rerank、BGE Reranker）。\n\n扩展延伸：高阶优化还包括：Query Rewriting（改写用户查询以提升检索质量）、HyDE（通过假设文档编码提升检索准确率）、Self-RAG（让 LLM 判断是否需要检索以及检索结果是否相关）。",
+    "hints": [
+      "从数据预处理、检索策略、后处理三个环节思考",
+      "Hybrid Search 结合了关键词和语义匹配"
+    ],
+    "tags": [
+      "RAG",
+      "检索增强生成",
+      "信息检索",
+      "Embedding"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Prompt Injection 攻击与防御",
+    "content": "什么是 Prompt Injection 攻击？AI Agent 系统中面临哪些 Prompt Injection 风险？如何从架构层面进行防御？",
+    "answer": "答案：Prompt Injection 攻击是通过向 LLM 的输入注入恶意指令，使模型偏离预期行为。AI Agent 系统中主要面临：\n1. 间接注入：攻击者将恶意指令藏于外部数据（网页、文档、数据库）中，Agent 检索时触发。\n2. 直接注入：用户输入中直接包含攻击性提示。\n3. 越狱攻击：通过特殊编码或角色扮演绕越安全护栏。\n\n防御策略：1）权限最小化——Agent 仅授予执行任务必需的工具权限；2）输入输出隔离——严格区分用户指令和外部数据，对外部数据做过滤和转义；3）使用独立的安全评估 LLM 审查 Agent 的推理链和输出；4）实现 Human-in-the-Loop：高危操作（写数据库、发邮件）需人工确认；5）采用结构化指令格式（如 XML 标签包裹不同来源的内容），让模型区分指令边界。\n\n扩展延伸：OpenAI 的 Instruction Hierarchy 是一种系统级防御——为不同来源的指令赋予不同优先级（系统 > 用户 > 工具输出）。Anthropic 的 Constitutional AI 也在模型层面提供了对抗 Prompt Injection 的能力。",
+    "hints": [
+      "区分直接注入和间接注入两种攻击路径",
+      "架构防御比模型防御更可靠"
+    ],
+    "tags": [
+      "AI Agent",
+      "安全",
+      "Prompt Injection",
+      "护栏"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 评估体系设计",
+    "content": "AI Agent 系统的评估比传统 NLP 任务更复杂，因为它涉及多步决策和与环境的交互。请设计一套完整的 Agent 评估体系，包括评估指标和测试方法。",
+    "answer": "答案：完整的 Agent 评估体系包括三层次：\n1. 任务级评估：Success Rate（成功率）、Task Completion Time（完成时间）、Cost（Token 消耗和 API 调用次数）。\n2. 推理级评估：Relevance（每一步是否相关）、Correctness（中间推理是否准确）、Efficiency（是否走了最短路径）。\n3. 安全级评估：Harmlessness（是否产生有害输出）、Robustness（对抗 Prompt Injection 的鲁棒性）、Alignment（行为是否符合用户意图）。\n\n测试方法：1）Unit Testing——逐一验证工具调用的参数和返回值；2）Scenario Testing——构建端到端的测试场景（如 AgentBench、GAIA）；3）Trajectory Evaluation——评估 Agent 的完整推理轨迹而非仅最终结果；4）Adversarial Testing——用对抗样本测试 Agent 的鲁棒性。\n\n扩展延伸：推荐评估框架：LangSmith（追踪 + 评估）、Weights & Biases Prompts（可视化 + 对比）、Ragas（RAG 评估）。对于多轮交互场景，Human Evaluation 仍然是最可靠的方式。",
+    "hints": [
+      "区分任务级、推理级、安全级三个评估层次",
+      "轨迹评估比仅评估最终结果更有洞察力"
+    ],
+    "tags": [
+      "AI Agent",
+      "评估",
+      "测试",
+      "质量管理"
+    ]
   }
 ]

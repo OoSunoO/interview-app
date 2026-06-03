@@ -588,5 +588,215 @@
       "单例",
       "线程安全"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "ConcurrentHashMap 读操作需要加锁",
+    "content": "JDK 8 的 ConcurrentHashMap 在读操作（get）时也需要加锁以保证线程安全。",
+    "answer": "答案：错误。\n\n解析：JDK 8 的 ConcurrentHashMap 的 get 操作不需要加锁。它通过 volatile 关键字保证数组引用和 Node 的 val/next 属性的可见性，从而在不加锁的情况下安全读取。get 方法会先定位桶，如果桶的首节点是目标 key 则直接返回；如果是红黑树节点则通过 TreeBin 查找；否则遍历链表查找。整个过程不需要加锁。\n\n扩展延伸：虽然 get 操作是 lock-free 的，但在扩容迁移过程中访问到的节点如果处于 forwarding 状态，get 会调用 find 方法到新数组中继续查找。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "volatile 保证可见性",
+      "红黑树的 TreeBin 通过读写锁保证安全"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "CopyOnWriteArrayList 写操作复制数组",
+    "content": "CopyOnWriteArrayList 在执行 add 操作时，会复制一份全新的底层数组，在副本上添加元素后替换原数组引用。",
+    "answer": "答案：正确。\n\n解析：CopyOnWriteArrayList 的 add 方法先获取 ReentrantLock 锁，然后复制当前数组（长度 +1），在新数组的末尾写入新元素，最后将新数组赋值给 volatile 的 array 引用。这种写时复制策略保证了读操作可以完全无锁进行，但写操作在数组较大时开销较高。\n\n扩展延伸：复制数组使用 Arrays.copyOf 方法。每次 add 都涉及数组复制和 GC 开销，因此不适合写频繁的场景。迭代器创建后基于当时的数组快照，修改原 list 不会影响已创建的迭代器。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "Copy-On-Write 的核心就是写时复制",
+      "读操作不加锁，写操作加锁并复制"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "CopyOnWriteArrayList"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "TreeMap 基于哈希表",
+    "content": "TreeMap 的底层是基于哈希表实现的。",
+    "answer": "答案：错误。\n\n解析：TreeMap 的底层是基于红黑树（Red-Black Tree）实现的，而非哈希表。红黑树是一种自平衡的二叉查找树，保证了插入、删除、查找操作的时间复杂度为 O(log n)。TreeMap 的元素按键的自然顺序或传入的 Comparator 排序。与基于哈希表实现的 HashMap 不同，TreeMap 提供了有序的键值对存储，以及 lowerKey、ceilingKey、headMap/tailMap/subMap 等导航方法。\n\n扩展延伸：HashMap 基于哈希表，时间复杂度为 O(1)，但元素无序。两个 Map 各有优劣，选择时需根据是否需要有序遍历来决定。LinkedHashMap 则是两者的结合——哈希表 + 双向链表。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "TreeMap 与 HashMap 的底层数据结构不同",
+      "TreeMap 提供了键的排序和导航功能"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "BlockingQueue drainTo 方法",
+    "content": "BlockingQueue 的 drainTo(Collection) 方法是一次性将队列中所有可用元素转移到指定集合，是线程安全的。",
+    "answer": "答案：正确。\n\n解析：drainTo 方法是 BlockingQueue 提供的一个原子批量移除操作，它会一次性将队列中当前所有可用元素转移到传入的 Collection 中，并在操作期间持有内部锁，确保线程安全。使用 drainTo 可以避免逐个 poll 的元素多次获取锁带来的性能开销，是批量消费队列元素的高效方式。\n\n扩展延伸：drainTo 还有带数量限制的重载版本 drainTo(Collection, int)。注意 drainTo 的目标 Collection 不能是队列本身，否则可能产生不可预知的行为。drainTo 在批处理场景下非常有用，如从消息队列中批量取出消息进行处理。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "drainTo 在持有锁时一次完成所有转移",
+      "比循环 poll 更高效"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "BlockingQueue"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Collections.unmodifiableList 完全不可修改",
+    "content": "Collections.unmodifiableList 返回的集合是绝对不可修改的，任何尝试修改的操作都会抛出 UnsupportedOperationException。",
+    "answer": "答案：错误。\n\n解析：Collections.unmodifiableList 返回的是原 List 的不可修改视图（unmodifiable view），直接调用 add/remove/set 等方法时会抛出 UnsupportedOperationException。但是，如果原始 List 本身是可修改的，那么对原始 List 的修改会影响这个不可修改视图。换句话说，unmodifiableList 并不保证原始 List 不被修改，它只是阻止了通过该视图的修改操作。要保证真正的不可变，需要确保原始 List 也不被修改，或使用 Java 9+ 的 List.of() 创建真正的不可变集合。\n\n扩展延伸：类似的还有 unmodifiableMap/unmodifiableSet/unmodifiableCollection。这些方法返回的视图在序列化时也会保持不可修改的特性。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "unmodifiable 系列是视图（view）而非副本",
+      "原始集合的修改会反映到不可修改视图上"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "ConcurrentHashMap 读操作需要加锁",
+    "content": "JDK 8 的 ConcurrentHashMap 在读操作（get）时也需要加锁以保证线程安全。",
+    "answer": "答案：错误。\n\n解析：JDK 8 的 ConcurrentHashMap 的 get 操作不需要加锁。它通过 volatile 关键字保证数组引用和 Node 的 val/next 属性的可见性，从而在不加锁的情况下安全读取。get 方法会先定位桶，如果桶的首节点是目标 key 则直接返回；如果是红黑树节点则通过 TreeBin 查找；否则遍历链表查找。整个过程不需要加锁。\n\n扩展延伸：虽然 get 操作是 lock-free 的，但在扩容迁移过程中访问到的节点如果处于 forwarding 状态，get 会调用 find 方法到新数组中继续查找。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "volatile 保证可见性",
+      "红黑树的 TreeBin 通过读写锁保证安全"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "CopyOnWriteArrayList 写操作复制数组",
+    "content": "CopyOnWriteArrayList 在执行 add 操作时，会复制一份全新的底层数组，在副本上添加元素后替换原数组引用。",
+    "answer": "答案：正确。\n\n解析：CopyOnWriteArrayList 的 add 方法先获取 ReentrantLock 锁，然后复制当前数组（长度 +1），在新数组的末尾写入新元素，最后将新数组赋值给 volatile 的 array 引用。这种写时复制策略保证了读操作可以完全无锁进行，但写操作在数组较大时开销较高。\n\n扩展延伸：复制数组使用 Arrays.copyOf 方法。每次 add 都涉及数组复制和 GC 开销，因此不适合写频繁的场景。迭代器创建后基于当时的数组快照，修改原 list 不会影响已创建的迭代器。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "Copy-On-Write 的核心就是写时复制",
+      "读操作不加锁，写操作加锁并复制"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "CopyOnWriteArrayList"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "TreeMap 基于哈希表",
+    "content": "TreeMap 的底层是基于哈希表实现的。",
+    "answer": "答案：错误。\n\n解析：TreeMap 的底层是基于红黑树（Red-Black Tree）实现的，而非哈希表。红黑树是一种自平衡的二叉查找树，保证了插入、删除、查找操作的时间复杂度为 O(log n)。TreeMap 的元素按键的自然顺序或传入的 Comparator 排序。与基于哈希表实现的 HashMap 不同，TreeMap 提供了有序的键值对存储，以及 lowerKey、ceilingKey、headMap/tailMap/subMap 等导航方法。\n\n扩展延伸：HashMap 基于哈希表，时间复杂度为 O(1)，但元素无序。两个 Map 各有优劣，选择时需根据是否需要有序遍历来决定。LinkedHashMap 则是两者的结合——哈希表 + 双向链表。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "TreeMap 与 HashMap 的底层数据结构不同",
+      "TreeMap 提供了键的排序和导航功能"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "BlockingQueue drainTo 方法",
+    "content": "BlockingQueue 的 drainTo(Collection) 方法是一次性将队列中所有可用元素转移到指定集合，是线程安全的。",
+    "answer": "答案：正确。\n\n解析：drainTo 方法是 BlockingQueue 提供的一个原子批量移除操作，它会一次性将队列中当前所有可用元素转移到传入的 Collection 中，并在操作期间持有内部锁，确保线程安全。使用 drainTo 可以避免逐个 poll 的元素多次获取锁带来的性能开销，是批量消费队列元素的高效方式。\n\n扩展延伸：drainTo 还有带数量限制的重载版本 drainTo(Collection, int)。注意 drainTo 的目标 Collection 不能是队列本身，否则可能产生不可预知的行为。drainTo 在批处理场景下非常有用，如从消息队列中批量取出消息进行处理。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "drainTo 在持有锁时一次完成所有转移",
+      "比循环 poll 更高效"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "BlockingQueue"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Collections.unmodifiableList 完全不可修改",
+    "content": "Collections.unmodifiableList 返回的集合是绝对不可修改的，任何尝试修改的操作都会抛出 UnsupportedOperationException。",
+    "answer": "答案：错误。\n\n解析：Collections.unmodifiableList 返回的是原 List 的不可修改视图（unmodifiable view），直接调用 add/remove/set 等方法时会抛出 UnsupportedOperationException。但是，如果原始 List 本身是可修改的，那么对原始 List 的修改会影响这个不可修改视图。换句话说，unmodifiableList 并不保证原始 List 不被修改，它只是阻止了通过该视图的修改操作。要保证真正的不可变，需要确保原始 List 也不被修改，或使用 Java 9+ 的 List.of() 创建真正的不可变集合。\n\n扩展延伸：类似的还有 unmodifiableMap/unmodifiableSet/unmodifiableCollection。这些方法返回的视图在序列化时也会保持不可修改的特性。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "hints": [
+      "unmodifiable 系列是视图（view）而非副本",
+      "原始集合的修改会反映到不可修改视图上"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Collections"
+    ]
   }
 ]

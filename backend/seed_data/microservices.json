@@ -624,5 +624,197 @@
       "Istio",
       "Envoy"
     ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "微服务拆分原则与边界",
+    "content": "单体应用拆分为微服务时，有哪些核心的拆分原则和策略？什么情况不适合拆分？",
+    "answer": "答案：微服务拆分三大原则——业务边界（按领域驱动设计的限界上下文）、数据边界（每个服务拥有独立的数据存储）、团队边界（每个服务由一个全功能小团队负责）。拆分策略包括按业务能力拆分、按子域拆分、按变更频率拆分。不适合拆分的场景：业务逻辑简单且稳定、团队规模小（< 10 人）、早期 PMF 未验证阶段。\n\n解析：DDD 限界上下文（Bounded Context）是最推荐的拆分方法——每个限界上下文有明确的职责边界和通用语言，上下文之间通过防腐层（Anti-Corruption Layer）交互。拆分步骤：1）识别核心子域（核心业务逻辑，最需要微服务化）和支撑子域（可外包或通用模块）。2）确定限界上下文的边界。3）每个上下文内部定义实体、值对象、领域事件和聚合根。4）上下文之间通过事件驱动或 API 交互。不适合拆分的信号：跨服务频繁事务操作、服务间强一致要求、服务间大量数据共享。\n\n扩展延伸：Conway 定律——系统架构模仿组织的沟通结构。微服务拆分应与团队结构对齐（反向 Conway 定律：按期望的架构重组团队）。Strangler Fig 模式（绞杀者模式）是最安全的单体拆解方法——逐步用新服务替换旧功能，通过代理/网关路由流量，逐步迁移直到旧系统被完全取代。拆分粒度判断原则：一个服务的职责应该是一个业务人员能理解的完整业务能力。扛不住拆分的信号——你需要在一次发布中同时修改多个服务（说明服务耦合度过高）。",
+    "hints": [
+      "DDD 的限界上下文如何帮助确定服务边界",
+      "Strangler Fig 模式如何逐步替换单体"
+    ],
+    "tags": [
+      "微服务",
+      "拆分",
+      "DDD",
+      "架构"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "服务治理与服务网格",
+    "content": "什么是服务治理？服务网格（Service Mesh，如 Istio）如何解决微服务治理问题？与 Spring Cloud 相比有什么优劣？",
+    "answer": "答案：服务治理是微服务架构中管理服务间通信的一系列机制，包括服务发现、负载均衡、熔断、限流、重试、超时控制、链路追踪和安全认证。服务网格通过 Sidecar 代理（如 Envoy）将治理能力从业务代码中剥离到基础设施层，实现透明代理。\n\n解析：传统治理方案（Spring Cloud）在每个服务内集成 SDK（如 Netflix OSS/Eureka/Hystrix/Ribbon），开发成本高、语言绑定（Java 独占）、SDK 升级需要所有服务重新发布。服务网格（Istio/Linkerd）的架构：1）数据平面——每个 Pod 注入 Sidecar 代理（Envoy），拦截所有进出流量，执行路由/熔断/重试/限流规则。2）控制平面——集中管理配置和策略（Istiod，提供 Pilot/Citadel/Galley 功能）。3）核心能力——流量管理（灰度/蓝绿/金丝雀发布）、安全（mTLS 自动加密）、可观测性（Metrics/Logging/Tracing）、策略执行（限流/ACL）。\n\n扩展延伸：Service Mesh vs Spring Cloud——Service Mesh 优势：语言无关、对业务代码零侵入、统一治理策略管理、可观测性开箱即用。劣势：引入 Sidecar 带来额外延迟（1-3ms 每个请求）、运维复杂度（Envoy/Istio 组件调优）、资源开销（Sidecar 占用 CPU/内存）。适用场景选择：Java 单体微服务团队 → Spring Cloud（成熟生态，学习成本低）。多语言、对治理能力有强需求 → Istio（统一管理，解耦业务）。注意：Service Mesh 不是万能，小团队（< 20 人）引入 Service Mesh 可能得不偿失（运维负担 > 收益）。Istio 2026 年已经成熟，Ambient Mesh（无 Sidecar 模式）进一步降低了资源开销和运维复杂度。",
+    "hints": [
+      "Sidecar 代理模式解决了 SDK 方案的哪些问题",
+      "Service Mesh 带来的额外延迟主要来自什么"
+    ],
+    "tags": [
+      "微服务",
+      "服务治理",
+      "Service Mesh",
+      "Istio"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "熔断降级设计模式",
+    "content": "请介绍微服务中的熔断（Circuit Breaker）和降级（Degradation）模式的区别、状态机以及最佳实践。",
+    "answer": "答案：熔断是防止级联故障的保护机制——当某个下游服务持续故障时，熔断器断开调用链路，快速返回失败或降级响应，避免线程阻塞和资源耗尽。降级是在系统压力过大时主动牺牲非核心功能，保证核心功能可用。熔断是系统保护手段，降级是业务策略选择。\n\n解析：熔断器三状态（经典状态机）：CLOSED（正常，请求正常通过）→ OPEN（熔断开启，请求直接失败/降级，timeout 后进入 HALF_OPEN）→ HALF_OPEN（半开，放行少量探测请求，成功则关闭熔断器，失败则回到 OPEN）。触发条件：错误率/慢调用比例/错误计数超过阈值（如 5 秒内错误率 > 50%）。降级按层次：1）业务降级——非关键功能（如排行榜/推荐）返回缓存或空数据。2）服务降级——取消重试，快速失败。3）数据降级——从写主库降级为读写分离或只读缓存。\n\n扩展延伸：Sentinel vs Resilience4j——Sentinel 支持流量控制（Warm Up/排队等待）、熔断降级（慢调用比例/异常比例/异常数）、热点参数限流、系统自适应保护。Resilience4j 轻量级（纯 Java 无外部依赖），提供熔断器（CircuitBreaker）、限流器（RateLimiter）、重试（Retry）、隔离（Bulkhead）、超时（TimeLimiter）等模块。降级返回设计原则：1）降级数据可以是静态信息或缓存数据（不要让用户看到空白页或错误页）。2）降级决策应基于真实压力信号（CPU/内存/延迟/队列深度）而非人工干预。3）降级和熔断都应有监控告警——不知道发生了降级比降级本身更危险。",
+    "hints": [
+      "熔断器的 HALF_OPEN 状态为什么重要",
+      "降级和限流的区别是什么"
+    ],
+    "tags": [
+      "微服务",
+      "熔断",
+      "降级",
+      "Sentinel"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "链路追踪 Dapper 模型",
+    "content": "请介绍分布式链路追踪的 Dapper 模型核心概念（Trace/Span/Annotation），以及 OpenTelemetry 在链路追踪中的角色。",
+    "answer": "答案：Google Dapper 模型定义了分布式追踪的三个核心概念：Trace（一次完整请求的跨服务调用链路）、Span（链路中的一个基本工作单元，如一次 RPC 调用或数据库查询）、Annotation（Span 中的事件标记，如发生时间、标签）。OpenTelemetry（OTel）是云原生计算基金会（CNCF）的标准，提供统一的 API、SDK 和采集器，用于生成、收集和导出遥测数据（Tracing/Metrics/Logging）。\n\n解析：Trace 以 TraceId 作为唯一标识，跨服务传递。每个 Span 记录 SpanId、ParentSpanId、开始时间、结束时间、服务名、操作名、标签（Tags）和日志（Log/Event）。Span 的关系构成完整的调用拓扑树。W3C Trace Context（traceparent/tracestate HTTP 头）标准化了 TraceId 的跨服务传递。\n\n扩展延伸：链路追踪 vs 日志 vs 指标：三者被合称为可观测性三大支柱。链路追踪——回答这个请求为什么慢（一次请求的完整路径）。指标——回答系统总体的趋势（延迟/错误率/吞吐量趋势）。日志——回答这个错误的具体细节（堆栈/入参/出参）。OpenTelemetry 的架构：OTel API（跨语言的接口定义）→ OTel SDK（实现，负责采样/导出）→ OTel Collector（接收/处理/导出数据到后端）。后端选择：Jaeger（开源自托管，支持采样策略）、Zipkin（轻量级，适合小规模）、SkyWalking（APM 全栈，Java 友好）、Grafana Tempo（与 Prometheus/Grafana 深度集成）。",
+    "hints": [
+      "TraceId 在微服务间如何传递",
+      "W3C Trace Context 标准解决了什么问题"
+    ],
+    "tags": [
+      "微服务",
+      "链路追踪",
+      "Dapper",
+      "OpenTelemetry"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "配置中心设计与实践",
+    "content": "微服务配置中心的作用是什么？常见的配置中心（Nacos/Apollo/Consul）的对比以及配置热更新的实现原理。",
+    "answer": "答案：配置中心（Configuration Center）集中管理微服务的配置，支持配置的动态变更、版本管理、环境隔离和权限控制。核心能力：配置统一管理（替代本地配置文件）、实时推送（配置变更后服务自动感知）、环境隔离（dev/staging/prod 各一套配置）、配置审计（变更历史/回滚）。\n\n解析：主流配置中心对比：1）Nacos——阿里开源，支持注册中心+配置中心双功能，轻量级部署，通过长轮询实现配置变更的实时推送。配置维度：DataId + Group + Namespace（多维隔离）。2）Apollo——携程开源，功能最完善的配置中心，支持配置灰度发布、多环境管理（不同 admin 审批流程）、配置变更监听回调。核心架构：Config Service（无状态，对外提供服务）/ Admin Service（配置 CRUD 和发布）/ Meta Server（服务发现，返回 Config Service 列表）。3）Consul——HashiCorp 开源，服务发现 + KV Store 做配置。使用 Raft 协议保证一致性，健康检查丰富，但配置管理功能不如 Nacos/Apollo 完善。\n\n扩展延伸：配置热更新原理：1）长轮询（Long Polling）——客户端发起配置查询请求，如果配置无变化则服务端挂起连接（默认 30s），配置变更时立即返回响应。Nacos 和 Apollo 均使用长轮询，相比传统轮询（定时拉取）更实时且节省资源。2）Watch 机制——客户端监听配置节点，配置变更时 Watcher 通知客户端。ZooKeeper 和 Consul 使用此方式（ZooKeeper Watch 只触发一次，需重注册）。配置优先级（Spring Cloud 体系）：命令行参数 > Java 系统属性 > 环境变量 > 配置文件（application.yml） > 远程配置中心。注意：敏感配置（数据库密码/API Key）应纳入 Secret 管理工具（Vault/KMS），不应明文存入配置中心。",
+    "hints": [
+      "长轮询和普通轮询相比有什么优势",
+      "配置中心中的敏感信息如何处理"
+    ],
+    "tags": [
+      "微服务",
+      "配置中心",
+      "Nacos",
+      "Apollo"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Istio 服务网格流量管理深度解析",
+    "content": "Istio 是当前最流行的服务网格实现。请详细说明 Istio 的数据面（Envoy Proxy）与控制面（Pilot、Mixer、Citadel、Galley）的架构分工，分析 VirtualService、DestinationRule、ServiceEntry 三种核心 CRD 的作用与配置策略，并说明流量劫持（iptables 透明劫持）的实现原理。",
+    "answer": "答案：Istio 的数据面由 Envoy Proxy 组成，以 Sidecar 模式注入到每个 Pod，拦截所有入站和出站流量。控制面原由四个组件组成：Pilot（流量管理 —— 将高阶路由规则下发为 Envoy 配置）、Mixer（策略和遥测，已废弃，功能合并到 Envoy）、Citadel（证书管理 —— 自动分发 mTLS 证书）、Galley（配置校验 —— 验证 Istio CRD 合法性）。新架构（Istiod）将 Pilot、Citadel、Galley 合并为单一二进制 Istiod。\n\n核心 CRD：1) VirtualService —— 定义流量路由规则（根据 header/path/权重将流量分发到不同 subset），支持重试、超时、故障注入等流量操作；2) DestinationRule —— 定义流量策略（负载均衡算法、连接池大小、断路器阈值、TLS 设置），并定义 subset（用于 VirtualService 引用的目标分组）；3) ServiceEntry —— 将外部服务注册到服务网格中，使网格内的流量可以路由到外部系统并享受同样的流量管理策略。\n\n流量劫持：Init Container 运行 iptables 命令创建规则，将 Pod 内所有出站流量重定向到 Envoy 的 15001 端口，所有入站流量重定向到 15006 端口。Envoy 根据控制面下发的配置处理流量（路由、负载均衡、TLS 终止）。\n\n解析：Istio 的流量管理能力建立在 Envoy 的 L4/L7 代理能力之上。在实践中应优先使用 DestinationRule 的 connectionPool 和 outlierDetection 实现微服务的韧性，而不是在应用代码中重复实现。\n\n扩展延伸：Envoy Filter 允许用户自定义 L4/L7 过滤器逻辑（通过 Lua、Wasm 等），实现 Istio 原生不支持的协议或处理逻辑。Sidecar CRD 可以控制每个 Sidecar 监听哪些服务，减少内存消耗。",
+    "hints": [
+      "数据面 vs 控制面：Sidecar 和 Istiod 的分工",
+      "VirtualService 定义\"走到哪\"，DestinationRule 定义\"怎么走\"",
+      "iptables 透明劫持的端口重定向是流量拦截的底层原理"
+    ],
+    "tags": [
+      "微服务",
+      "Istio",
+      "服务网格",
+      "Envoy",
+      "流量管理"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "优雅上下线与无损发布的实现方案",
+    "content": "微服务架构中，服务实例的上下线是常态。请分析\"无损发布\"的挑战，说明如何通过注册中心主动通知（Kubernetes Readiness Probe + Endpoint 摘除）、服务端优雅下线（PreStop Hook + 慢启动 + 延迟注册）、以及客户端重试/断路器机制三者配合实现流量的无损切换。",
+    "answer": "答案：无损发布的核心挑战在于下线过程中已有连接的处理和新流量的引导。\n\n下线流程：1) K8s 将 Pod 标记为 Terminating，从 Service Endpoint 中摘除；2) PreStop Hook 执行，通知注册中心下线并开始 drain 连接；3) SIGTERM 信号发送给进程，应用开始优雅关闭（停止接受新请求，等待处理中的请求完成）；4) 若超过 terminationGracePeriodSeconds 仍未完成则 SIGKILL 强制终止。\n\n补充优雅下线的关键技术：1) 服务端实现延迟注册（Startup Probe + readinessGate），确保新实例完全就绪后才接收流量；2) 慢启动（Slow Start）—— 刚上线的实例逐步增加被分配的流量权重，避免流量洪峰导致服务不稳定；3) 客户端配合 —— 使用重试机制（Retry）处理时延敏感场景下的短暂连接失败，并使用断路器（Circuit Breaker）隔离异常实例。\n\n注册中心层面：对于非 K8s 场景（如 Nacos、Consul），服务下线前应主动向注册中心发送注销请求，并等待一定时间（deregisterGracePeriod）让注册中心广播给所有消费者。\n\n解析：优雅上下线的责任部分在基础设施（K8s、注册中心）、部分在应用代码。应用层面需正确处理 SIGTERM（不是立即退出）并实现 Graceful Shutdown 逻辑（如 Spring Boot 的 server.shutdown=graceful）。\n\n扩展延伸：高级场景包括蓝绿部署和金丝雀发布 —— 蓝绿部署通过流量标签快速切换，金丝雀发布通过权重逐步调整流量比例。OpenKruise 的 Advanced StatefulSet 提供了原地升级能力，进一步减少发布影响。",
+    "hints": [
+      "从注册中心摘除、连接 drain、SIGTERM 处理三个环节分析",
+      "客户端侧的重试和断路器是用户体验的最后一道防线",
+      "K8s 的 terminationGracePeriodSeconds 是优雅下线的超时控制"
+    ],
+    "tags": [
+      "微服务",
+      "优雅上下线",
+      "无损发布",
+      "Kubernetes",
+      "服务治理"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分布式一致性协议对比：Paxos vs Raft vs Zab",
+    "content": "分布式系统中一致性协议是基础设施的基石。请对比 Paxos（Classic Paxos）、Raft 和 Zab（ZooKeeper Atomic Broadcast）三种协议的核心思想、Leader 选举机制、日志复制过程，以及各自的优缺点和典型应用场景。",
+    "answer": "答案：Paxos 是 Leslie Lamport 提出的一致性协议理论框架。Classic Paxos 通过 Prepare/Promise/Accept/Accepted 两阶段达成共识，Proposer、Acceptor、Learner 三个角色参与。优点是理论完备，缺点是对工程实现不友好 —— 活锁问题需要额外处理，多 Paxos 实例的 Leader 选举没有明确规定。\n\nRaft 在 Paxos 基础上做了工程化改进：1) Leader 选举 —— 使用随机超时时间 + 任期（term）机制，避免活锁；2) 日志复制 —— Leader 将日志条目复制到 Majority Follower，Follower 确认后 Leader 提交；3) 安全性 —— 保证了 Leader Completeness（已经提交的条目必然出现在后续 Leader 的日志中）。Raft 的角色简化到 Leader/Follower/Candidate 三者。优点是易懂易实现，etcd、Consul 等使用 Raft。\n\nZab（ZooKeeper Atomic Broadcast）是为 ZooKeeper 设计的一致性协议，与 Raft 类似但存在差异：1) Zab 通过\"法定同步点\"（Quorum of Followers）来保证全局有序广播；2) Leader 选举使用 Fast Leader Election，优先选拥有最新 ZXID（ZooKeeper Transaction ID）的节点；3) 恢复过程中 Zab 保证\"已被提交的消息永远不会丢失，未被提交的消息不会出现在已提交的视图中\"。\n\n解析：技术选型建议 —— Paxos 适合理论研究和基础组件开发，Raft 适合需要易懂易维护的新项目，Zab 仅在 ZooKeeper 生态中使用。性能方面三者在同等配置下差异不大，瓶颈通常在网络和磁盘 I/O。\n\n扩展延伸：etcd 使用的 Raft 实现（etcd-raft）独立于 etcd 存储层，可被其他 Go 项目引用。近年来 Paxos 的变种（如 Multi-Paxos、Fast Paxos）仍然在学术研究和特定场景中广泛应用（如 AWS DynamoDB 使用 Multi-Paxos 变种）。",
+    "hints": [
+      "Paxos 是理论基础，Raft 是工程化实现，Zab 是 ZooKeeper 定制",
+      "Raft 的随机超时选举和 term 机制是解决 Paxos 活锁问题的关键",
+      "三者都基于 Majority 投票，性能瓶颈不在算法而在磁盘和网络"
+    ],
+    "tags": [
+      "微服务",
+      "分布式系统",
+      "一致性协议",
+      "Paxos",
+      "Raft",
+      "Zab"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "限流算法与 Sentinel 实现分析",
+    "content": "微服务限流是保证系统稳定性的关键。请对比漏桶（Leaky Bucket）、令牌桶（Token Bucket）、滑动窗口（Sliding Window）三种限流算法的原理与适用场景，并分析 Sentinel 的限流实现（包括热点参数限流、集群限流模式）以及限流效果统计的数据结构（LeapArray）。",
+    "answer": "答案：漏桶算法 —— 请求以恒定速率流出，超出桶容量的请求被丢弃。优点是输出流量平滑，适合保护下游系统。缺点是无法应对突发流量（即使系统有空闲资源）。令牌桶算法 —— 以固定速率向桶中添加令牌，请求需消耗令牌才能通过。优点是支持一定程度的突发流量（桶中积累的令牌可以应对短时突增），适合一般 Web 服务场景。滑动窗口算法 —— 将时间窗口划分为更细的格子，每个格子维持计数器，窗口滑动时淘汰过期格子。优点是实现简单、精度可控，但突发流量控制不如令牌桶灵活。\n\nSentinel 的限流实现：1) 基于滑动窗口（LeapArray）—— 将时间窗口划分为多个采样桶（如 1s 窗口分 20 个 50ms 小桶），每个桶维护独立的计数器，窗口向前滑动时复用/新建桶；2) 热点参数限流 —— 对特定参数值（如商品 ID、用户 ID）单独统计和限流，使用 LRU + 滑动窗口机制，防止某个热门 key 打垮系统；3) 集群限流 —— Token Client/Server 模式，客户端向 Token Server 请求 token，实现跨实例的全局限流。\n\n解析：Sentinel 的 FlowRule 支持直接拒绝、Warm Up（预热模式，控制流量缓慢增长）、排队等待三种流量控制效果。DegradeRule 实现熔断降级。Sentinel 的核心数据结构 LeapArray 通过原子数组 + 时间轮实现无锁的高性能统计。\n\n扩展延伸：对比 Hystrix 和 Sentinel：Hystrix 基于线程池隔离和信号量，线程上下文切换成本高；Sentinel 基于并发数控制和响应时间统计，资源开销更小。Sentinel 的规则动态推送支持 Nacos、Apollo、ZooKeeper 等配置中心。",
+    "hints": [
+      "漏桶治\"尖峰\"，令牌桶容\"突发\"，滑动窗口易\"实现\"",
+      "Sentinel 的 LeapArray 是高性能统计的核心",
+      "热点参数限流解决了\"一热就死\"的典型问题"
+    ],
+    "tags": [
+      "微服务",
+      "限流",
+      "Sentinel",
+      "令牌桶",
+      "滑动窗口"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "降级熔断模式（Circuit Breaker）的设计与实现",
+    "content": "Circuit Breaker 模式是微服务韧性的重要组成。请说明 Circuit Breaker 的三种状态（Closed、Open、Half-Open）及其状态转换条件，分析 Hystrix 和 Resilience4j 的实现差异（线程池隔离 vs 信号量隔离），并讨论熔断降级与限流的关系与配合方式。",
+    "answer": "答案：三种状态：Closed（熔断器关闭，请求正常通过，统计错误率/慢调用比例，当达到阈值时切换到 Open）、Open（熔断器打开，请求快速失败，不执行实际调用，等待一段时间后进入 Half-Open）、Half-Open（熔断器半开，允许少量试探请求，如果成功则关闭熔断器，如果失败则重新回到 Open）。\n\nHystrix 使用线程池隔离 —— 每个依赖独立线程池，请求在线程池中执行，超时或线程池满则降级。优点是隔离彻底、一个依赖的问题不会影响其他依赖。缺点是线程上下文切换成本高、每个依赖需要配置线程池大小。Resilience4j 使用信号量隔离 —— 请求在调用方线程中执行，信号量控制并发数。优点是性能开销小、不需要线程池管理。缺点是隔离性不如线程池（共享调用方线程池）。\n\n限流与熔断的配合：限流是\"预防\"手段（在系统达到瓶颈前控制请求速率），熔断是\"止损\"手段（在依赖失败时快速失败防止级联故障）。实践中通常同时使用两者：1) 入口处限流保护整体系统；2) 依赖调用处熔断保护局部依赖；3) 配合重试（Retry）实现熔断后的自动恢复。\n\n解析：断路器的最佳实践是快速失败优于等待超时 —— 熔断器 Open 时立即返回降级响应（Fallback），释放线程资源。熔断器应对非关键依赖生效，对核心依赖（如数据库、缓存）应谨慎配置熔断参数。\n\n扩展延伸：Sentinel 支持半开状态的自动探测和渐进恢复，比 Hystrix 更精细。Istio 的 DestinationRule 中的 outlierDetection 实现了服务网格层面的断路器（逐出异常实例）。",
+    "hints": [
+      "Closed→Open→Half-Open→Closed 的循环转换条件",
+      "线程池隔离牺牲性能换隔离，信号量隔离牺牲隔离换性能",
+      "限流是\"入口控制\"，熔断是\"依赖保护\""
+    ],
+    "tags": [
+      "微服务",
+      "熔断",
+      "降级",
+      "Circuit Breaker",
+      "Hystrix",
+      "Resilience4j"
+    ]
   }
 ]

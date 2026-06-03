@@ -654,5 +654,245 @@
       "图",
       "BFS"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "合并区间",
+    "content": "LeetCode 56. 以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi]。请你合并所有重叠的区间，并返回一个不重叠的区间数组。",
+    "answer": "```java\nclass Solution {\n    public int[][] merge(int[][] intervals) {\n        if (intervals.length == 0) return new int[0][];\n        \n        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);\n        \n        List<int[]> merged = new ArrayList<>();\n        int[] current = intervals[0];\n        merged.add(current);\n        \n        for (int[] interval : intervals) {\n            if (interval[0] <= current[1]) {\n                current[1] = Math.max(current[1], interval[1]);\n            } else {\n                current = interval;\n                merged.add(current);\n            }\n        }\n        \n        return merged.toArray(new int[merged.size()][]);\n    }\n}\n```\n\n**时间复杂度**：O(n log n)，排序是主要开销。\n\n**空间复杂度**：O(log n) 用于排序栈空间（Java 的 TimSort），结果不计入。",
+    "options": [],
+    "company": "Facebook",
+    "tags": [
+      "算法",
+      "区间",
+      "排序",
+      "数组"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "单词拆分",
+    "content": "LeetCode 139. 给你一个字符串 s 和一个字符串列表 wordDict 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 s，则返回 true。注意：字典中的单词可以重复使用。",
+    "answer": "```java\nclass Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        Set<String> wordSet = new HashSet<>(wordDict);\n        int n = s.length();\n        boolean[] dp = new boolean[n + 1];\n        dp[0] = true;\n        \n        for (int i = 1; i <= n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (dp[j] && wordSet.contains(s.substring(j, i))) {\n                    dp[i] = true;\n                    break;\n                }\n            }\n        }\n        \n        return dp[n];\n    }\n}\n```\n\n**时间复杂度**：O(n^2)，其中 n 为字符串长度。\n\n**空间复杂度**：O(n + k)，n 为 dp 数组长度，k 为字典大小。",
+    "options": [],
+    "company": "Amazon",
+    "tags": [
+      "算法",
+      "动态规划",
+      "字符串",
+      "哈希表"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "最大子数组和",
+    "content": "LeetCode 53. 给你一个整数数组 nums，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。",
+    "answer": "```java\nclass Solution {\n    public int maxSubArray(int[] nums) {\n        int maxSoFar = nums[0];\n        int maxEndingHere = nums[0];\n        \n        for (int i = 1; i < nums.length; i++) {\n            maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);\n            maxSoFar = Math.max(maxSoFar, maxEndingHere);\n        }\n        \n        return maxSoFar;\n    }\n}\n```\n\n**时间复杂度**：O(n)，一次遍历。\n\n**空间复杂度**：O(1)，仅使用常量额外空间。",
+    "options": [],
+    "company": "ByteDance",
+    "tags": [
+      "算法",
+      "动态规划",
+      "数组",
+      "分治"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "字母异位词分组",
+    "content": "LeetCode 49. 给你一个字符串数组，请你将字母异位词组合在一起。可以按任意顺序返回结果列表。字母异位词是由重新排列源单词的所有字母得到的一个新单词。",
+    "answer": "```java\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        Map<String, List<String>> map = new HashMap<>();\n        \n        for (String s : strs) {\n            char[] chars = s.toCharArray();\n            Arrays.sort(chars);\n            String key = new String(chars);\n            \n            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);\n        }\n        \n        return new ArrayList<>(map.values());\n    }\n}\n```\n\n**时间复杂度**：O(n × k log k)，其中 n 是字符串数量，k 是字符串最大长度。\n\n**空间复杂度**：O(n × k)，存储结果需要的空间。",
+    "options": [],
+    "company": "Google",
+    "tags": [
+      "算法",
+      "哈希表",
+      "字符串",
+      "排序"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "二叉树的序列化与反序列化",
+    "content": "LeetCode 297. 请设计一个算法来实现二叉树的序列化与反序列化。序列化是将一个二叉树转换成字符串，反序列化是将字符串还原成原来的二叉树。",
+    "answer": "```java\npublic class Codec {\n\n    public String serialize(TreeNode root) {\n        StringBuilder sb = new StringBuilder();\n        serializeHelper(root, sb);\n        return sb.toString();\n    }\n    \n    private void serializeHelper(TreeNode root, StringBuilder sb) {\n        if (root == null) {\n            sb.append(\"null,\");\n            return;\n        }\n        sb.append(root.val).append(\",\");\n        serializeHelper(root.left, sb);\n        serializeHelper(root.right, sb);\n    }\n\n    public TreeNode deserialize(String data) {\n        Queue<String> queue = new LinkedList<>(Arrays.asList(data.split(\",\")));\n        return deserializeHelper(queue);\n    }\n    \n    private TreeNode deserializeHelper(Queue<String> queue) {\n        String val = queue.poll();\n        if (val.equals(\"null\")) return null;\n        \n        TreeNode node = new TreeNode(Integer.parseInt(val));\n        node.left = deserializeHelper(queue);\n        node.right = deserializeHelper(queue);\n        return node;\n    }\n}\n```\n\n**时间复杂度**：O(n)，每个节点访问一次。\n\n**空间复杂度**：O(n)，递归栈空间和队列存储。",
+    "options": [],
+    "company": "Microsoft",
+    "tags": [
+      "算法",
+      "二叉树",
+      "序列化",
+      "BFS"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "合并区间",
+    "content": "LeetCode 56. 以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi]。请你合并所有重叠的区间，并返回一个不重叠的区间数组。",
+    "answer": "```java\nclass Solution {\n    public int[][] merge(int[][] intervals) {\n        if (intervals.length == 0) return new int[0][];\n        \n        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);\n        \n        List<int[]> merged = new ArrayList<>();\n        int[] current = intervals[0];\n        merged.add(current);\n        \n        for (int[] interval : intervals) {\n            if (interval[0] <= current[1]) {\n                current[1] = Math.max(current[1], interval[1]);\n            } else {\n                current = interval;\n                merged.add(current);\n            }\n        }\n        \n        return merged.toArray(new int[merged.size()][]);\n    }\n}\n```\n\n**时间复杂度**：O(n log n)，排序是主要开销。\n\n**空间复杂度**：O(log n) 用于排序栈空间（Java 的 TimSort），结果不计入。",
+    "options": [],
+    "company": "Facebook",
+    "tags": [
+      "算法",
+      "区间",
+      "排序",
+      "数组"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "单词拆分",
+    "content": "LeetCode 139. 给你一个字符串 s 和一个字符串列表 wordDict 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 s，则返回 true。注意：字典中的单词可以重复使用。",
+    "answer": "```java\nclass Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        Set<String> wordSet = new HashSet<>(wordDict);\n        int n = s.length();\n        boolean[] dp = new boolean[n + 1];\n        dp[0] = true;\n        \n        for (int i = 1; i <= n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (dp[j] && wordSet.contains(s.substring(j, i))) {\n                    dp[i] = true;\n                    break;\n                }\n            }\n        }\n        \n        return dp[n];\n    }\n}\n```\n\n**时间复杂度**：O(n^2)，其中 n 为字符串长度。\n\n**空间复杂度**：O(n + k)，n 为 dp 数组长度，k 为字典大小。",
+    "options": [],
+    "company": "Amazon",
+    "tags": [
+      "算法",
+      "动态规划",
+      "字符串",
+      "哈希表"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "最大子数组和",
+    "content": "LeetCode 53. 给你一个整数数组 nums，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。",
+    "answer": "```java\nclass Solution {\n    public int maxSubArray(int[] nums) {\n        int maxSoFar = nums[0];\n        int maxEndingHere = nums[0];\n        \n        for (int i = 1; i < nums.length; i++) {\n            maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);\n            maxSoFar = Math.max(maxSoFar, maxEndingHere);\n        }\n        \n        return maxSoFar;\n    }\n}\n```\n\n**时间复杂度**：O(n)，一次遍历。\n\n**空间复杂度**：O(1)，仅使用常量额外空间。",
+    "options": [],
+    "company": "ByteDance",
+    "tags": [
+      "算法",
+      "动态规划",
+      "数组",
+      "分治"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "字母异位词分组",
+    "content": "LeetCode 49. 给你一个字符串数组，请你将字母异位词组合在一起。可以按任意顺序返回结果列表。字母异位词是由重新排列源单词的所有字母得到的一个新单词。",
+    "answer": "```java\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        Map<String, List<String>> map = new HashMap<>();\n        \n        for (String s : strs) {\n            char[] chars = s.toCharArray();\n            Arrays.sort(chars);\n            String key = new String(chars);\n            \n            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);\n        }\n        \n        return new ArrayList<>(map.values());\n    }\n}\n```\n\n**时间复杂度**：O(n × k log k)，其中 n 是字符串数量，k 是字符串最大长度。\n\n**空间复杂度**：O(n × k)，存储结果需要的空间。",
+    "options": [],
+    "company": "Google",
+    "tags": [
+      "算法",
+      "哈希表",
+      "字符串",
+      "排序"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "二叉树的序列化与反序列化",
+    "content": "LeetCode 297. 请设计一个算法来实现二叉树的序列化与反序列化。序列化是将一个二叉树转换成字符串，反序列化是将字符串还原成原来的二叉树。",
+    "answer": "```java\npublic class Codec {\n\n    public String serialize(TreeNode root) {\n        StringBuilder sb = new StringBuilder();\n        serializeHelper(root, sb);\n        return sb.toString();\n    }\n    \n    private void serializeHelper(TreeNode root, StringBuilder sb) {\n        if (root == null) {\n            sb.append(\"null,\");\n            return;\n        }\n        sb.append(root.val).append(\",\");\n        serializeHelper(root.left, sb);\n        serializeHelper(root.right, sb);\n    }\n\n    public TreeNode deserialize(String data) {\n        Queue<String> queue = new LinkedList<>(Arrays.asList(data.split(\",\")));\n        return deserializeHelper(queue);\n    }\n    \n    private TreeNode deserializeHelper(Queue<String> queue) {\n        String val = queue.poll();\n        if (val.equals(\"null\")) return null;\n        \n        TreeNode node = new TreeNode(Integer.parseInt(val));\n        node.left = deserializeHelper(queue);\n        node.right = deserializeHelper(queue);\n        return node;\n    }\n}\n```\n\n**时间复杂度**：O(n)，每个节点访问一次。\n\n**空间复杂度**：O(n)，递归栈空间和队列存储。",
+    "options": [],
+    "company": "Microsoft",
+    "tags": [
+      "算法",
+      "二叉树",
+      "序列化",
+      "BFS"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "合并区间",
+    "content": "LeetCode 56. 以数组 intervals 表示若干个区间的集合，其中单个区间为 intervals[i] = [starti, endi]。请你合并所有重叠的区间，并返回一个不重叠的区间数组。",
+    "answer": "```java\nclass Solution {\n    public int[][] merge(int[][] intervals) {\n        if (intervals.length == 0) return new int[0][];\n        \n        Arrays.sort(intervals, (a, b) -> a[0] - b[0]);\n        \n        List<int[]> merged = new ArrayList<>();\n        int[] current = intervals[0];\n        merged.add(current);\n        \n        for (int[] interval : intervals) {\n            if (interval[0] <= current[1]) {\n                current[1] = Math.max(current[1], interval[1]);\n            } else {\n                current = interval;\n                merged.add(current);\n            }\n        }\n        \n        return merged.toArray(new int[merged.size()][]);\n    }\n}\n```\n\n**时间复杂度**：O(n log n)，排序是主要开销。\n\n**空间复杂度**：O(log n) 用于排序栈空间（Java 的 TimSort），结果不计入。",
+    "options": [],
+    "company": "Facebook",
+    "tags": [
+      "算法",
+      "区间",
+      "排序",
+      "数组"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "单词拆分",
+    "content": "LeetCode 139. 给你一个字符串 s 和一个字符串列表 wordDict 作为字典。如果可以利用字典中出现的一个或多个单词拼接出 s，则返回 true。注意：字典中的单词可以重复使用。",
+    "answer": "```java\nclass Solution {\n    public boolean wordBreak(String s, List<String> wordDict) {\n        Set<String> wordSet = new HashSet<>(wordDict);\n        int n = s.length();\n        boolean[] dp = new boolean[n + 1];\n        dp[0] = true;\n        \n        for (int i = 1; i <= n; i++) {\n            for (int j = 0; j < i; j++) {\n                if (dp[j] && wordSet.contains(s.substring(j, i))) {\n                    dp[i] = true;\n                    break;\n                }\n            }\n        }\n        \n        return dp[n];\n    }\n}\n```\n\n**时间复杂度**：O(n^2)，其中 n 为字符串长度。\n\n**空间复杂度**：O(n + k)，n 为 dp 数组长度，k 为字典大小。",
+    "options": [],
+    "company": "Amazon",
+    "tags": [
+      "算法",
+      "动态规划",
+      "字符串",
+      "哈希表"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "最大子数组和",
+    "content": "LeetCode 53. 给你一个整数数组 nums，请你找出一个具有最大和的连续子数组（子数组最少包含一个元素），返回其最大和。",
+    "answer": "```java\nclass Solution {\n    public int maxSubArray(int[] nums) {\n        int maxSoFar = nums[0];\n        int maxEndingHere = nums[0];\n        \n        for (int i = 1; i < nums.length; i++) {\n            maxEndingHere = Math.max(nums[i], maxEndingHere + nums[i]);\n            maxSoFar = Math.max(maxSoFar, maxEndingHere);\n        }\n        \n        return maxSoFar;\n    }\n}\n```\n\n**时间复杂度**：O(n)，一次遍历。\n\n**空间复杂度**：O(1)，仅使用常量额外空间。",
+    "options": [],
+    "company": "ByteDance",
+    "tags": [
+      "算法",
+      "动态规划",
+      "数组",
+      "分治"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "字母异位词分组",
+    "content": "LeetCode 49. 给你一个字符串数组，请你将字母异位词组合在一起。可以按任意顺序返回结果列表。字母异位词是由重新排列源单词的所有字母得到的一个新单词。",
+    "answer": "```java\nclass Solution {\n    public List<List<String>> groupAnagrams(String[] strs) {\n        Map<String, List<String>> map = new HashMap<>();\n        \n        for (String s : strs) {\n            char[] chars = s.toCharArray();\n            Arrays.sort(chars);\n            String key = new String(chars);\n            \n            map.computeIfAbsent(key, k -> new ArrayList<>()).add(s);\n        }\n        \n        return new ArrayList<>(map.values());\n    }\n}\n```\n\n**时间复杂度**：O(n × k log k)，其中 n 是字符串数量，k 是字符串最大长度。\n\n**空间复杂度**：O(n × k)，存储结果需要的空间。",
+    "options": [],
+    "company": "Google",
+    "tags": [
+      "算法",
+      "哈希表",
+      "字符串",
+      "排序"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "二叉树的序列化与反序列化",
+    "content": "LeetCode 297. 请设计一个算法来实现二叉树的序列化与反序列化。序列化是将一个二叉树转换成字符串，反序列化是将字符串还原成原来的二叉树。",
+    "answer": "```java\npublic class Codec {\n\n    public String serialize(TreeNode root) {\n        StringBuilder sb = new StringBuilder();\n        serializeHelper(root, sb);\n        return sb.toString();\n    }\n    \n    private void serializeHelper(TreeNode root, StringBuilder sb) {\n        if (root == null) {\n            sb.append(\"null,\");\n            return;\n        }\n        sb.append(root.val).append(\",\");\n        serializeHelper(root.left, sb);\n        serializeHelper(root.right, sb);\n    }\n\n    public TreeNode deserialize(String data) {\n        Queue<String> queue = new LinkedList<>(Arrays.asList(data.split(\",\")));\n        return deserializeHelper(queue);\n    }\n    \n    private TreeNode deserializeHelper(Queue<String> queue) {\n        String val = queue.poll();\n        if (val.equals(\"null\")) return null;\n        \n        TreeNode node = new TreeNode(Integer.parseInt(val));\n        node.left = deserializeHelper(queue);\n        node.right = deserializeHelper(queue);\n        return node;\n    }\n}\n```\n\n**时间复杂度**：O(n)，每个节点访问一次。\n\n**空间复杂度**：O(n)，递归栈空间和队列存储。",
+    "options": [],
+    "company": "Microsoft",
+    "tags": [
+      "算法",
+      "二叉树",
+      "序列化",
+      "BFS"
+    ]
   }
 ]

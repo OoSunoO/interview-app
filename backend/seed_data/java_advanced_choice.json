@@ -759,5 +759,247 @@
       "零拷贝",
       "IO"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "MethodHandle 与 invokeExact",
+    "content": "关于 Java MethodHandle 的签名多态性（Signature Polymorphism），以下说法正确的是？",
+    "answer": "答案：B) MethodHandle 的 invokeExact 方法要求参数类型和返回类型与目标方法严格匹配，不会自动进行类型转换。\n\n解析：MethodHandle 的 invoke 和 invokeExact 是签名多态方法——编译器根据实际调用时的参数类型和返回类型推导方法签名，生成 invokedynamic 指令（而非传统反射的反射调用）。invoke 允许自动类型转换（如 int → Integer 的自动装箱，子类 → 父类的类型宽化），invokeExact 则要求精确匹配——参数类型和返回类型必须与方法句柄的类型（MethodType）完全一致，否则抛出 WrongMethodTypeException。A 错误：JIT 可以对反射调用做内联优化。JDK 8+ 通过 Inflation 机制（反射调用阈值 15 次后切换到动态生成的字节码版本），再经过足够多的调用会被 JIT 内联。C 错误：invoke 和 invokeExact 的性能优势并非「始终优于」反射——首次调用 MethodHandle 的 invokedynamic 也需要引导（bootstrap），在简单场景下反射可能更快。D 错误：invokeExact 的 return 类型也需要精确匹配，不能随意赋值。\n\n扩展延伸：MethodHandle 比反射使用更复杂但更底层——可以通过 asType() 方法生成适配不同签名的 MethodHandle 变体。invokedynamic 的核心应用是 Lambda 表达式和 Java 17+ 的 switch 模式匹配。性能对比：MethodHandle 在复杂调用链场景下比反射快 10-30%，但简单场景差距不大。VarHandle（JDK 9+）替代 Unsafe 的原子操作，也基于 MethodHandle 实现。",
+    "options": [
+      "A) 反射调用方法时 JIT 编译器无法对目标方法做内联优化",
+      "B) MethodHandle 的 invokeExact 方法要求参数类型和返回类型与目标方法严格匹配，不会自动进行类型转换",
+      "C) MethodHandle 的 invoke 方法性能始终优于传统反射",
+      "D) invoke 和 invokeExact 的返回类型可以随意赋值，编译器会自动类型推断"
+    ],
+    "hints": [
+      "invoke 和 invokeExact 在类型匹配上的区别",
+      "为什么 JIT 可以内联反射调用"
+    ],
+    "tags": [
+      "Java",
+      "反射",
+      "MethodHandle",
+      "invokedynamic"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "注解处理与 AbstractProcessor",
+    "content": "关于 Java 注解（Annotation）处理机制，以下说法正确的是？",
+    "answer": "答案：C) 通过 AbstractProcessor 在编译期处理注解时，生成的 Java 源文件会自动参与编译，无需额外的手动编译步骤。\n\n解析：AbstractProcessor 是 JSR 269 注解处理 API 的核心类。通过实现 process() 方法，可以生成新的 Java 源文件（通过 Filer.createSourceFile()）。这些生成的源文件会在当前编译轮次（round）结束后被 javac 自动编译，并参与后续处理轮次。A 错误：@Retention(RetentionPolicy.SOURCE) 的注解只在源码中保留，编译后丢弃，运行时反射无法获取。B 错误：@Target 限制注解使用位置，但违反 @Target 约束的代码会在编译期报错（不是运行时），抛出的不是 RuntimeException，而是编译错误。D 错误：@Repeatable 允许在同一位置重复使用注解，适用于类、方法、字段等任何合理位置，不限于方法和字段。需要定义一个容器注解来存储重复的注解。\n\n扩展延伸：注解生命周期三阶段——SOURCE：源码保留（APT 可在编译期处理）。CLASS：编译到 class 文件但运行时不可反射访问（如在字节码增强框架中使用）。RUNTIME：运行时可通过 getAnnotation() 反射获取（Spring 多数注解）。APT 的实际应用——Lombok（@Getter/@Setter/@Builder 生成代码）、Dagger（依赖注入代码生成）、MapStruct（实体转换代码生成）、Google Auto（自动生成 META-INF/services）。JDK 9+ 的重复注解使用容器注解（@Repeatable 容器容器 Annotation 的 value 方法返回重复注解数组）。",
+    "options": [
+      "A) @Retention(RetentionPolicy.SOURCE) 的注解在运行时可以通过 getAnnotation() 反射获取",
+      "B) @Target 限制注解使用位置，当注解使用在错误目标上时运行时抛出 IllegalAnnotationException",
+      "C) AbstractProcessor 在编译期处理注解时生成的 Java 源文件会自动参与当前编译，无需手动编译",
+      "D) @Repeatable 允许同一个注解在同一位置重复使用，但只适用于方法和字段"
+    ],
+    "hints": [
+      "RetentionPolicy 的三个值分别代表什么阶段",
+      "APT 和运行时反射获取注解的能力有什么区别"
+    ],
+    "tags": [
+      "Java",
+      "注解",
+      "APT",
+      "AbstractProcessor"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "JMM happens-before 规则",
+    "content": "以下关于 Java 内存模型（JMM）happens-before 规则的说法，正确的是？",
+    "answer": "答案：D) 线程 A 中调用 thread.join() 成功返回后，被 join 线程中的所有操作 happens-before 线程 A 中 join() 返回之后的任何操作。\n\n解析：这是 JMM 中线程终止规则（Thread Termination Rule）的准确描述。当一个线程调用另一个线程的 join() 且成功返回时，被 join 线程中已执行的所有操作都建立 happens-before 关系于 join() 之后的代码，保证了被线程修改的共享变量对主线程可见。A 错误：volatile 规则的正确表述是「对 volatile 变量的写操作 happens-before 后续对同一 volatile 变量的读操作」，缺少「后续」限定词导致语义不精确——不是任意读都能看到写，必须是在同步顺序中排在写之后的读。B 错误：synchronized 规则是「对监视器锁的解锁（monitorexit）happens-before 后续对同一锁的加锁（monitorenter）」。B 的选项缺少「同一锁」这个关键限定。C 错误：final 字段的初始化保障需要满足「对象构造过程中不发生 this 引用逸出」（即对象引用不能在构造函数完成前被其他线程访问），否则 final 字段也可能看不见正确值。\n\n扩展延伸：JMM 的六条 happens-before 规则——程序次序规则、管程锁定规则、volatile 变量规则、线程启动规则（start() happens-before 被启动线程中的任何操作）、线程终止规则（join()）、线程中断规则和对象终结规则。happens-before 是偏序关系，具有传递性。常见的可见性保证手段：volatile、synchronized、final + 正确构造、Lock、Atomic 类、Thread.start()/join()。as-if-serial 语义保证单线程内不影响执行结果的重排序是允许的。",
+    "options": [
+      "A) 一个线程对 volatile 变量的写操作 happens-before 任意其他线程对该 volatile 变量的读操作",
+      "B) synchronized 块的释放（解锁）happens-before 后续任意线程进入任意 synchronized 块",
+      "C) 对 final 字段的写入 happens-before 构造函数返回，因此 final 字段在任何情况下对所有线程都立即可见",
+      "D) 线程 A 中调用 thread.join() 成功返回后，被 join 线程中的所有操作 happens-before 线程 A 中 join() 之后的代码"
+    ],
+    "hints": [
+      "happens-before 规则中「后续」和「同一锁」这两个限定词为什么重要",
+      "this 引用逸出对 final 字段的可见性有什么影响"
+    ],
+    "tags": [
+      "Java",
+      "JMM",
+      "happens-before",
+      "内存模型",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "双亲委派模型的局限与 SPI",
+    "content": "关于 Java 双亲委派模型（Parent Delegation Model）和线程上下文类加载器，以下说法正确的是？",
+    "answer": "答案：A) JDBC 驱动加载使用线程上下文类加载器（Thread Context ClassLoader）打破双亲委派模型，因为 DriverManager 在引导类加载器中注册，而具体驱动实现在应用类路径中。\n\n解析：双亲委派模型是类加载器在加载类时先委托父加载器的机制。核心目的：保证核心库的类型安全（如 java.lang.Object 总是同一个类）。局限：当由启动类加载器加载的核心类（如 DriverManager）需要加载由应用类加载器管理的类（如 MySQL JDBC 驱动）时，双亲委派无法逆向委托。解决方案是线程上下文类加载器（TCCL）——核心类通过 TCCL 获取当前线程的类加载器来加载应用类。B 错误：findClass 用于查找而非 loadClass。双亲委派是 loadClass 的逻辑——先委托父加载器，失败后调 findClass。自定义类加载器应重写 findClass 而非 loadClass（违背双亲委派时除外）。C 错误：ClassLoader.getResource() 和 getResources() 也是遵循双亲委派的（先委派父加载器搜索，找不到再自己搜）。D 错误：ThreadContextClassLoader 在 Java 9 模块系统（JPMS）下仍然存在和使用，没有被移除——SPI 加载（ServiceLoader）在 JDK 9+ 中虽然做了模块化改进，但 TCCL 机制仍然保留。\n\n扩展延伸：双亲委派被打破的三种场景——1）SPI 机制（JDBC/JCE/JNDI）通过 TCCL 加载实现。2）Tomcat 的 WebappClassLoader 先加载 Web 应用类再委托（隔离不同 Web 应用）。3）OSGi 模块化框架。Java 9 模块系统（JPMS）引入了模块层概念，ServiceLoader 在模块中可以直接通过 provides/uses 声明服务而不需要 TCCL，但 TCCL 机制向后兼容保留。自定义类加载器典型应用——热部署（每次加载新版本的 class）、加密 class 文件解密、字节码增强。",
+    "options": [
+      "A) JDBC 驱动加载使用线程上下文类加载器（Thread ContextClassLoader）打破双亲委派模型",
+      "B) 自定义类加载器应重写 loadClass 方法以遵循双亲委派模型",
+      "C) ClassLoader 的 getResource() 方法不遵循双亲委派模型，只搜索当前类加载器所在路径",
+      "D) 线程上下文类加载器是 Java 8 引入的机制，在 Java 9 模块系统下已不再需要"
+    ],
+    "hints": [
+      "为什么引导类加载器加载的 DriverManager 需要访问应用类路径上的 JDBC 驱动",
+      "Tomcat 如何实现 Web 应用之间的类隔离"
+    ],
+    "tags": [
+      "Java",
+      "类加载器",
+      "双亲委派",
+      "SPI",
+      "TCCL"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Java 反射在框架中的核心应用",
+    "content": "以下关于 Java 反射在主流框架中应用的说法，错误的是？",
+    "answer": "答案：C) Spring 通过反射调用 Bean 的 setter 方法注入依赖时，优先使用 setAccessible(true) 以调用 setter 方法，但如果 setter 不存在则会直接通过 Field.set() 注入。\n\n解析：Spring IoC 的依赖注入（@Autowired）优先使用字段直接注入（Field.set()）而非 setter 方法。当在字段上标注 @Autowired 时，Spring 通过反射直接设置字段值（Field.setAccessible(true) + Field.set()），不需要 setter 方法。只有在方法上标注 @Autowired 时才通过 Method.invoke() 调用 setter。C 的说法颠倒了主次顺序——Spring 既支持字段注入也支持 setter 注入，但字段注入是更常见的方式，且不依赖 setter 是否存在。A 正确：Jackson（或绝大多数 JSON 库）通过反射获取无参构造器创建实例，然后通过 setter/字段反射填充属性。如果类没有无参构造器会抛出异常（除非有特殊处理如 @JsonCreator）。B 正确：MyBatis 通过 JDK Proxy 动态代理 Mapper 接口，在 InvocationHandler.invoke() 中解析方法上的 @Select/@Insert 等注解，生成对应的 SQL 语句并执行。D 正确：Hibernate 通过反射处理实体类的 @Entity/@Table/@Column 等注解构建对象关系映射，通过反射获取字段值构造 SQL 参数以及从 ResultSet 反射填充实体属性。\n\n扩展延伸：反射在框架中的三大用途——1）类型分析：扫描类上的注解、方法签名、字段信息，用于配置映射（Spring/MyBatis/Hibernate）。2）动态调用：通过 Method.invoke() 动态执行方法（AOP 拦截后调用目标方法）。3）动态创建：Class.newInstance() 或 Constructor.newInstance() 创建对象实例（框架中的 Bean 创建）。JPA 规范要求实体类必须有无参构造器，原因正是 Hibernate 通过反射 Constructor.newInstance() 创建实例。Spring 的 CGLIB 代理生成子类时也需要通过反射调用父类构造器。",
+    "options": [
+      "A) Jackson 通过反射查找无参构造器来反序列化 JSON 为 Java 对象，因此无参构造器缺失会导致反序列化失败",
+      "B) MyBatis 通过 JDK 动态代理创建 Mapper 接口的代理对象，在代理中通过反射解析 @Select/@Insert 等注解生成 SQL",
+      "C) Spring 通过反射调用 Bean 的 setter 方法注入依赖，优先使用 setter，setter 不存在时再通过 Field.set() 注入",
+      "D) Hibernate 通过反射获取实体类上的 @Entity/@Table 注解构建 ORM 映射，并通过反射读写实体属性"
+    ],
+    "hints": [
+      "Spring 的 @Autowired 标注在字段上和标注在 setter 方法上分别怎么注入",
+      "MyBatis Mapper 接口为什么不需要实现类"
+    ],
+    "tags": [
+      "Java",
+      "反射",
+      "Spring",
+      "MyBatis",
+      "Hibernate"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java 泛型类型擦除的边界",
+    "content": "关于 Java 泛型的类型擦除（Type Erasure），以下说法正确的是？",
+    "answer": "答案：D) 泛型方法在被编译为字节码时会生成桥接方法（Bridge Method）来维持多态。解析：类型擦除是 Java 泛型的实现方式——编译器在编译时擦除类型参数，替换为它们的上界（或 Object），并插入必要的类型转换。但为了保持与未擦除前的多态兼容性，编译器会生成桥接方法。例如 class StringList implements List<String> { public void add(String item) {...} } 在类型擦除后 add 方法的参数变为 add(Object)，编译器会生成一个桥接方法 add(Object) -> add(String) 来维持多态。\n\n扩展延伸：桥接方法不仅是泛型的产物——JDK 5 引入协变返回类型后，子类覆盖父类方法返回更具体的类型时也会生成桥接方法。可以通过 javap -c 查看编译后的类文件中的桥接方法（标记为 ACC_BRIDGE + ACC_SYNTHETIC）。",
+    "options": [
+      "A) 泛型类型在运行期可以通过反射获取完整的类型参数信息",
+      "B) 由于类型擦除，运行时 ArrayList<Integer> 和 ArrayList<String> 是同一个 Class 对象",
+      "C) 类型擦除后所有的 T 都被替换为 Object，即使是 T extends Comparable<T> 这样的有界类型参数",
+      "D) 泛型方法在被编译为字节码时会生成桥接方法（Bridge Method）来维持多态"
+    ],
+    "hints": [
+      "桥接方法（Bridge Method）的作用是什么——为什么编译器需要生成它",
+      "有界类型参数和无界类型参数擦除后的替换类型有什么不同"
+    ],
+    "tags": [
+      "Java",
+      "泛型",
+      "类型擦除"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Java SPI 机制",
+    "content": "关于 Java SPI（Service Provider Interface）机制，以下说法正确的是？",
+    "answer": "答案：C) SPI 通过 META-INF/services/ 目录下的配置文件加载接口的实现类，适合框架扩展点的发现。解析：Java SPI（ServiceLoader）的核心机制——接口提供方定义接口，实现方在 jar 包的 META-INF/services/ 目录下创建以接口全限定名为名称的文件，文件内容为实现类的全限定名。ServiceLoader.load(Interface.class) 会扫描 ClassPath 下所有 jar 包中的 SPI 配置文件，加载并实例化实现类。JDBC DriverManager 使用 SPI 加载数据库驱动（mysql-connector-java、postgresql.jar 中的 Driver 实现类）。\n\n扩展延伸：SPI 的经典应用——1）JDBC Driver（最经典）。2）Slf4j 日志门面（通过 SPI 加载 Logback/Log4j 实现）。3）Dubbo 的 ExtensionLoader（增强版 SPI，支持按需加载和自适应扩展）。SPI 的缺陷：ServiceLoader.load() 会加载配置文件中列出的所有实现类（即使暂时不需要），可能造成启动变慢和资源浪费。Dubbo 的 Adaptive SPI 机制解决了这个问题。",
+    "options": [
+      "A) SPI 机制基于注解扫描，需要在接口上标注 @SPI 注解才能被 ServiceLoader 发现",
+      "B) ServiceLoader.load() 会一次性加载并实例化 META-INF/services/ 下配置的所有实现类",
+      "C) SPI 通过 META-INF/services/ 目录下的配置文件加载接口的实现类，适合框架扩展点的发现",
+      "D) SPI 是 Java 9 模块化（JPMS）引入的新功能，Java 8 及以下版本不支持"
+    ],
+    "hints": [
+      "JDBC 驱动加载中 SPI 的作用——mysql-connector-java 是如何被自动加载的",
+      "ServiceLoader 是延迟加载还是立即加载——有什么区别"
+    ],
+    "tags": [
+      "Java",
+      "SPI",
+      "ServiceLoader",
+      "扩展点"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "sun.misc.Unsafe 的核心功能",
+    "content": "关于 sun.misc.Unsafe 类，以下说法正确的是？",
+    "answer": "答案：B) Unsafe 可以通过 getUnsafe() 获取实例，但只有启动类加载器（Bootstrap ClassLoader）加载的类才能直接调用，普通用户代码需要通过反射获取。解析：Unsafe 提供了一系列不安全的底层操作：1）直接内存操作（allocateMemory、putLong、getInt）——绕过堆内存直接访问堆外内存。2）对象字段偏移量（objectFieldOffset）——通过偏移量直接读写对象字段（绕过构造器和访问控制）。3）CAS 操作（compareAndSwapObject、compareAndSwapInt）——硬件级别的原子操作，JUC 包（AtomicInteger、AQS）的基石。4）park/unpark（阻塞和唤醒线程）。\n\n扩展延伸：Unsafe 的应用——Netty 使用 DirectByteBuffer（底层依赖 Unsafe）实现堆外内存零拷贝。Java 9+ 引入 Variable Handles（VarHandle）作为 Unsafe 的安全替代方案，但 Unsafe 仍未被移除，因为大量框架（Spring、Netty、Kafka）深度依赖它。风险：使用 Unsafe 不当会导致 JVM 崩溃（Segment Fault），而不是抛出 Java 异常。",
+    "options": [
+      "A) Unsafe 类的所有方法都是线程安全的，可以直接在高并发场景中使用",
+      "B) Unsafe 可以通过 getUnsafe() 获取实例，但只有启动类加载器加载的类才能直接调用，普通用户代码需要通过反射获取",
+      "C) Unsafe.allocateInstance() 可以创建任何类的实例，并且会执行该类的构造方法",
+      "D) Java 9 之后 Unsafe 的所有功能都被替代，已经废弃不再使用"
+    ],
+    "hints": [
+      "Unsafe 中的 CAS 方法（compareAndSwap）与 AtomicInteger 的关系",
+      "为什么叫 Unsafe——它有什么安全风险"
+    ],
+    "tags": [
+      "Java",
+      "Unsafe",
+      "CAS",
+      "JVM"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java 四种引用类型",
+    "content": "关于 Java 的四种引用类型（强、软、弱、虚），以下说法正确的是？",
+    "answer": "答案：B) WeakReference 对象在 GC 时不管内存是否充足都会被回收，常用于 WeakHashMap 和 ThreadLocal 的 Key。解析：四种引用类型及 GC 行为——1）强引用（Strong Reference）：Object obj = new Object()，只要强引用存在，对象永远不会被 GC 回收（即便 OOM）。2）软引用（SoftReference）：内存充足时不回收，内存不足（即将 OOM）时回收。适合做缓存（如 ImageCache）。3）弱引用（WeakReference）：每次 GC 时都会被回收（不管内存是否充足）。经典应用：WeakHashMap（Key 为弱引用，Map 中的 Entry 在 Key 不再被使用时自动清理）、ThreadLocalMap 的 Entry（Key 是弱引用 ThreadLocal，防止 ThreadLocal 无法被 GC 导致内存泄漏）。4）虚引用（PhantomReference）：最弱的引用，get() 永远返回 null。唯一用途是跟踪对象被 GC 回收的时刻（与 ReferenceQueue 配合），用于堆外内存的回收（NIO DirectByteBuffer）。\n\n扩展延伸：引用类型的实际应用——软引用适合实现缓存（图片缓存、对象池），但注意 JDK 默认的 SoftReference 在最近一次 GC 后可能会被立即回收（取决于 -XX:SoftRefLRUPolicyMSPerMB 参数，默认 1000ms）。WeakHashMap 适合做元数据缓存（如 ClassLoader 的缓存），当 Key 不再被外部引用时 Entry 自动被清理。虚引用必须与 ReferenceQueue 配合使用，在 PhantomReference 被入队时意味着被引用对象已经 finalized 但内存还未被回收。",
+    "options": [
+      "A) SoftReference 引用的对象在任何 GC 发生时都会被立即回收",
+      "B) WeakReference 对象在 GC 时不管内存是否充足都会被回收，常用于 WeakHashMap 和 ThreadLocal 的 Key",
+      "C) PhantomReference 的 get() 方法可以返回被引用的对象，适用于构建对象池",
+      "D) 强引用对象在内存不足时会被 JVM 优先回收以避免 OOM"
+    ],
+    "hints": [
+      "ThreadLocal 的内存泄漏为什么和弱引用有关——Key 是弱引用 Value 是强引用的组合结果",
+      "软引用和弱引用在 GC 行为上的本质区别是什么"
+    ],
+    "tags": [
+      "Java",
+      "引用类型",
+      "GC",
+      "内存管理"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "JMX（Java Management Extensions）",
+    "content": "关于 Java JMX（Java Management Extensions），以下说法正确的是？",
+    "answer": "答案：C) JMX 通过 MBean（Managed Bean）暴露 Java 应用的运行时状态和操作，支持运行时动态修改配置而无需重启应用。解析：JMX 的核心——MBean 是受管 Bean，将应用内部的配置参数、统计指标、操作（如修改日志级别、查看线程堆栈）封装为可暴露的属性和方法。通过 JMX 连接（JConsole、VisualVM、JMX 客户端）可以远程连接 JVM 查看和操作这些 MBean。标准 MBean 需要定义接口（名称以 MBean 结尾），JMX 通过 ObjectName 唯一标识每个 MBean。\n\n扩展延伸：JMX 的工程实践——1）Spring 集成：使用 @ManagedResource/@ManagedAttribute/@ManagedOperation 注解将 Spring Bean 暴露为 MBean。2）Tomcat 通过 JMX 暴露连接池状态、请求统计等指标。3）Kafka 通过 JMX 暴露 broker 和 consumer 指标。4）监控工具（Prometheus JMX Exporter、Datadog）通过 JMX 采集 JVM 和应用的指标。JMX 的局限：无法跨越防火墙（通常需要 JMX RMI 端口映射），安全性较弱（默认无认证，需配置 SSL/密码认证）。现代替代：Micrometer + Prometheus（基于 HTTP，更适合云原生场景）。",
+    "options": [
+      "A) JMX 只能用于监控 JVM 本身（内存、GC、线程），无法暴露应用程序的自定义指标",
+      "B) JMX 的 MBean 定义后只能读取不能修改（只读），如果要修改需要重启应用",
+      "C) JMX 通过 MBean（Managed Bean）暴露 Java 应用的运行时状态和操作，支持运行时动态修改配置而无需重启应用",
+      "D) JMX 已经被 Micrometer 和 Prometheus 完全取代，Java 11 后不再支持"
+    ],
+    "hints": [
+      "JConsole 和 VisualVM 如何连接到本地和远程 JVM——JMX 连接参数是什么",
+      "Spring 中的 @ManagedResource/@ManagedAttribute 注解与 JMX 的关系"
+    ],
+    "tags": [
+      "Java",
+      "JMX",
+      "MBean",
+      "监控"
+    ]
   }
 ]

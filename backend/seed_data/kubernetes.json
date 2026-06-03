@@ -606,5 +606,188 @@
       "K8s",
       "一致性"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Ingress 工作原理与类型",
+    "content": "请介绍 Kubernetes Ingress 的工作原理以及常见的 Ingress Controller 类型。",
+    "answer": "答案：Ingress 是 Kubernetes 的 API 对象，负责将集群外部的 HTTP/HTTPS 流量路由到集群内部 Service。Ingress Controller（如 Nginx Ingress、Traefik、Contour）是实际处理流量的反向代理程序，监听 Ingress 资源变化并动态更新路由配置。\n\n解析：Ingress 资源定义路由规则（域名、路径、TLS 证书），Ingress Controller 读取规则并配置反向代理。典型场景：一个 Ingress 将 api.example.com 路由到 backend Service，将 www.example.com 路由到 frontend Service。Ingress 支持路径重写、会话保持、限流、认证等高级功能。常见的 Ingress Controller：Nginx Ingress（社区最主流，基于 OpenResty 和 Lua）、Traefik（自动服务发现，支持多种后端，原生支持 HTTP/2 和 gRPC）、Contour（基于 Envoy，支持高级路由功能）、AWS ALB Ingress Controller（直接创建 AWS ALB）。\n\n扩展延伸：Ingress 的局限是仅支持 L7（HTTP/HTTPS），L4 流量需要 Service Type=LoadBalancer 或 Gateway API（K8s 1.19+）。Gateway API 是 Ingress 的下一代替代——支持 L4/L7、多团队多协议、更细粒度的流量治理。Ingress 配置 TLS 时，证书存储在 Secret 中，Ingress 引用 Secret 自动配置 HTTPS。性能调优：Nginx Ingress 的 worker-processes、worker-connections、keep-alive、proxy-buffer-size 等参数需根据流量特征调整。",
+    "hints": [
+      "Ingress 和 Service Type=LoadBalancer 的使用场景区别",
+      "Gateway API 解决了 Ingress 的哪些不足"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Ingress",
+      "网络"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RBAC 权限模型",
+    "content": "请介绍 Kubernetes RBAC 权限模型的核心概念以及如何最小权限原则配置权限。",
+    "answer": "答案：Kubernetes RBAC 通过四种资源控制权限：Role（命名空间内角色）、ClusterRole（集群级角色）、RoleBinding（命名空间内角色绑定）、ClusterRoleBinding（集群级角色绑定）。权限 = 主体（User/ServiceAccount/Group）+ 角色（Role/ClusterRole）+ 资源（Pod/Service/Deployment 等）+ 操作（get/list/create/delete 等）。\n\n解析：Role 定义一组权限规则（verbs + resources），RoleBinding 将 Role 绑定到主体。ClusterRole 有更广泛的权限范围，可被 RoleBinding 引用（在命名空间内生效）或被 ClusterRoleBinding 引用（集群全局生效）。最小权限实践：1）优先用 Role + RoleBinding（限制在命名空间内而非集群）。2）避免使用 cluster-admin 等高权限 ClusterRole。3）每个应用使用独立 ServiceAccount，不共用 default ServiceAccount。4）结合 Pod Security Admission（原 PSP）限制 Pod 安全上下文。\n\n扩展延伸：RBAC 排错常用命令：kubectl auth can-i --list（当前用户权限列表）、kubectl auth can-i create deployments（测试某操作是否有权限）、kubectl describe rolebinding/clusterrolebinding（查看绑定详情）。审计日志：API Server 开启 --audit-log-path 记录所有 RBAC 鉴权结果。多集群 RBAC 管理：使用 kubelogin（OIDC 集成）或 AWS IAM Roles for Service Accounts（IRSA）等云厂商服务集成外部身份认证。",
+    "hints": [
+      "Role 和 ClusterRole 的核心区别是什么",
+      "如何排查 RBAC 权限不足的问题"
+    ],
+    "tags": [
+      "Kubernetes",
+      "RBAC",
+      "安全"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HPA 自动伸缩机制",
+    "content": "请介绍 Kubernetes HPA（Horizontal Pod Autoscaler）的工作原理、扩缩容策略以及使用注意事项。",
+    "answer": "答案：HPA 根据 Pod 的 CPU/内存利用率或自定义指标（如 QPS、连接数）自动调整 Deployment/StatefulSet 的副本数。HPA 周期性（默认 15s）计算期望副本数 = 当前副本数 x (当前指标值 / 目标指标值)，然后更新工作负载的 replicas 字段。\n\n解析：HPA 核心配置：1）指标类型——ResourceMetric（CPU/内存利用率）、ObjectMetric（自定义指标，如 Prometheus 暴露的 QPS）、ExternalMetric（外部系统指标，如 SQS 队列长度）。2）扩缩容行为——稳定窗口（stabilizationWindowSeconds）防止频繁抖动、策略（scaleUp/scaleDown 的优先级和限制）、冷却时间。3）多指标取最大值——同时配置 CPU 和 QPS 时，HPA 按每个指标计算期望副本数，取最大值。\n\n扩展延伸：HPA 的限制：1）基于 CPU 的 HPA 需要所有容器设置 requests。2）自定义指标需要部署 Metrics Adapter（如 Prometheus Adapter 或 Kubernetes Metrics Server）和自定义指标 API。3）HPA 不能缩容到 0（0 副本需要 Vertical Pod Autoscaler 配合或 KEDA）。4）HPA 的默认冷却时间（--horizontal-pod-autoscaler-downscale-stabilization=5m）导致缩容有延迟。VPA（Vertical Pod Autoscaler）调整 Pod 的资源 requests/limits（而非副本数），与 HPA 配合使用时需注意冲突——建议同一工作负载只使用 HPA 或 VPA 其中之一。KEDA（Kubernetes Event-Driven Autoscaling）是 HPA 的增强版，支持事件驱动伸缩（如 Kafka 消息积压量、RabbitMQ 队列长度）。",
+    "hints": [
+      "HPA 多指标时如何决定最终副本数",
+      "HPA 和 VPA 能否同时使用"
+    ],
+    "tags": [
+      "Kubernetes",
+      "HPA",
+      "自动伸缩"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Namespace 资源隔离",
+    "content": "请说明 Kubernetes Namespace 的作用、资源配额（ResourceQuota）和限制范围（LimitRange）的使用方法。",
+    "answer": "答案：Namespace 是 Kubernetes 实现多租户隔离的逻辑单元，将集群资源划分为互不干扰的虚拟集群。ResourceQuota 限制命名空间的总资源上限（CPU/内存/PVC 数量/对象数量），LimitRange 设置 Pod 和容器的默认资源 requests/limits 及取值范围。\n\n解析：Namespace 的核心用途：1）环境隔离（dev/staging/prod 各一个 Namespace）。2）团队隔离（每个团队一个 Namespace）。3）权限边界（RBAC 的 Role/ClusterRole 绑定到 Namespace 范围）。ResourceQuota 可限制：CPU/内存的总 requests/limits、持久卷声明（PVC）数量、Service/ConfigMap/Secret 等对象数量、StorageClass 的存储总量。LimitRange 可设置：容器默认 CPU/内存 requests/limits、容器最小最大资源值（超出限制的 Pod 无法创建）。\n\n扩展延伸：NetworkPolicy 与 Namespace 配合：默认 Namespace 内所有 Pod 可互相通信，NetworkPolicy 定义精细的网络隔离策略（允许/拒绝入站/出站流量）。Pod Security Admission（K8s 1.23+）替代 PodSecurityPolicy，通过标签在 Namespace 级别实施安全策略（privileged/baseline/restricted 三种级别）。多个 Namespace 共享同一 Ingress Controller——Ingress 可跨 Namespace 引用 Service。",
+    "hints": [
+      "Namespace 默认的资源隔离能力仅限于什么层面",
+      "ResourceQuota 和 LimitRange 的作用分别是什么"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Namespace",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Pod 健康检查探针",
+    "content": "请介绍 Kubernetes Pod 健康检查的三种探针（Probe）以及最佳实践。",
+    "answer": "答案：Kubernetes 提供三种探针：livenessProbe（存活检查，失败则重启容器）、readinessProbe（就绪检查，失败则从 Service 端点移除）、startupProbe（启动检查，成功前禁用 liveness/readiness 探针）。每种探针支持三种检测方式：HTTP GET（访问端点）、TCP Socket（检查端口连通）、Exec（在容器内执行命令检查退出码）。\n\n解析：三种探针的典型配置：1）livenessProbe——initialDelaySeconds（延迟检查时间）、periodSeconds（检查间隔）、failureThreshold（失败阈值）。适合检测死锁或进程挂起。2）readinessProbe——检测应用是否可接受流量，如 Spring Boot 的 /actuator/health/readiness 端点。失败时 Pod 保留但 Service 不转发流量。3）startupProbe——适用于启动慢的应用（如 Java 应用初始化 60 秒），成功前禁用 liveness 防止误杀。\n\n扩展延伸：探针配置建议：initialDelaySeconds 应大于应用启动时间（避免容器启动阶段被误杀）。timeoutSeconds 默认 1s，超时短的需要适当延长。graceful shutdown：结合 preStop Hook（如 nginx -s quit）+ terminationGracePeriodSeconds（默认 30s），确保 Pod 退出前完成正在处理的请求。探针本身的风险：livenessProbe 过于敏感会导致 Pod 频繁重启，建议 failureThreshold 设置 3 次以上。全链路健康检查：readinessProbe 不仅检查自身状态，还应检查下游依赖（DB/Redis/API）的可用性。",
+    "hints": [
+      "livenessProbe 和 readinessProbe 失败时分别触发什么动作",
+      "startupProbe 适合什么场景"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Pod",
+      "健康检查"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "StatefulSet 有状态应用管理深入解析",
+    "content": "Kubernetes StatefulSet 专为有状态应用设计。请详细说明 StatefulSet 的核心特性（Pod 身份标识、存储卷绑定、启停顺序控制）及其实现原理，并结合实际场景（如部署 etcd 集群、Kafka 集群）说明 StatefulSet 与 Deployment 在设计上的本质区别。",
+    "answer": "答案：StatefulSet 为有状态应用提供稳定的网络标识（Pod 名称固定为 <statefulset-name>-<ordinal>，如 etcd-0、etcd-1）、稳定的持久化存储（每个 Pod 绑定独立的 PVC，删除重建后仍挂载同一卷）、以及可控的启停顺序（按 ordinal 逆序关闭、顺序启动，支持 Partitioned 滚动更新策略）。\n\n解析：StatefulSet 的核心机制在于：1) Pod 名称由 StatefulSet 控制器通过 template 和 ordinal 生成，DNS 解析使用 headless service，每个 Pod 拥有独立的 A/AAAA 记录；2) volumeClaimTemplates 模板产生的 PVC 与 Pod 生命周期解耦，Pod 删除后 PVC 保留，新 Pod 自动绑定原 PVC；3) 启停顺序保证 —— 启动时按 0,1,2… 顺序启动且前一个 Pod Ready 后才启动下一个，关闭时按 N-1,…,0 逆序关闭。Partitioned 更新策略允许只更新 ordinal >= partition 的 Pod，用于灰度发布或金丝雀升级。\n\n扩展延伸：Operator 框架大量依赖 StatefulSet 管理有状态应用。高级实践包括：结合 PodDisruptionBudget 控制自愿扰动、使用 preStop hook 实现优雅迁移、以及通过 Headless Service + SRV 记录实现自定义服务发现。实际生产中需注意 StatefulSet 的 PVC 回收策略 —— 删除 StatefulSet 不会自动删除 PVC，需手动清理。",
+    "hints": [
+      "从 Pod 命名规则、PVC 绑定、启停顺序三个角度分别阐述",
+      "对比 Headless Service 的 DNS 记录格式与普通 Service 的区别",
+      "考虑 Partitioned 更新策略在什么场景下使用"
+    ],
+    "tags": [
+      "kubernetes",
+      "StatefulSet",
+      "有状态应用",
+      "控制器"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Operator 的调谐循环与 Leader 选举机制",
+    "content": "Operator 模式是 Kubernetes 扩展性的核心。请分析 Operator 调谐循环（Reconcile Loop）的设计原理，包括 watch 事件触发机制、调谐队列（Workqueue）的去重与限流策略、以及 Leader 选举（Leader Election）在高可用部署中的实现方式。",
+    "answer": "答案：Operator 调谐循环基于 informer 机制工作：1) Reflector 通过 List/Watch API 监听资源变化；2) Delta FIFO 队列将事件增量推入 informer 的 sharedProcessor；3) 事件触发调谐请求加入 Workqueue；4) Reconcile 循环从队列取出请求执行调谐逻辑。\n\nWorkqueue 提供去重（同一键多次入队只处理一次）、限速（RateLimitingQueue 支持令牌桶、指数退避、最大延迟等策略）、重试（失败自动重新入队）等能力。Leader 选举使用 ConfigMap 或 Lease 资源的选举锁，候选 Pod 通过争夺锁资源确定 Leader，只有 Leader 执行实际调谐，Follower 等待锁释放后参与新一轮选举。\n\n解析：controller-runtime 框架封装了上述机制，开发 Operator 时需要理解 Reconcile 函数的幂等性要求 —— 同一条调谐请求可能因网络中断等原因被多次执行，Reconcile 逻辑必须幂等。Leader 选举的租约到期时间（LeaseDuration）和重试间隔（RenewDeadline、RetryPeriod）需要根据集群稳定性合理配置。\n\n扩展延伸：高级 Operator 实践包括多版本资源管理（通过 Conversion Webhook 处理 CRD 版本升级）、Finalizer 实现资源清理、以及 Admission Webhook 实现校验和默认值注入。社区推荐的 Operator 开发框架有 kubebuilder 和 Operator SDK。",
+    "hints": [
+      "用 Reflector → Delta FIFO → Informer → Workqueue → Reconcile 链路解释事件流动",
+      "区分 Workqueue 的去重限流能力与普通 Channel 的区别",
+      "Lease 对象的 spec.renewTime 和 spec.leaseDurationSeconds 是关键字段"
+    ],
+    "tags": [
+      "kubernetes",
+      "Operator",
+      "调谐循环",
+      "Leader选举",
+      "controller-runtime"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Admission Webhook 开发与实践",
+    "content": "Admission Webhook 是 Kubernetes 的扩展机制，允许在资源持久化前拦截请求。请详细说明 MutatingWebhookConfiguration 与 ValidatingWebhookConfiguration 的区别、Webhook 的调用链路（包括资源变更顺序），并结合实际案例说明如何开发一个同时做资源默认值注入和合规性校验的 Webhook。",
+    "answer": "答案：MutatingWebhookConfiguration 用于修改资源（注入默认值、sidecar 等），ValidatingWebhookConfiguration 用于校验资源（拒绝不合规的配置）。调用顺序为：资源对象序列化 → Authentication → Authorization → Mutating Admission Plugins（含 MutatingWebhook）→ 对象校验 → Validating Admission Plugins（含 ValidatingWebhook）→ 持久化 etcd。多个 Webhook 的执行顺序不保证，但同组 Webhook 可通过 rules 的 matchPolicy 和 objectSelector 控制作用范围。\n\n解析：开发 Webhook 需注意：1) 证书管理 —— Webhook 必须以 HTTPS 提供服务，证书需在集群中注册；2) 超时控制 —— admission webhook 有 30 秒超时限制；3) 幂等性 —— 多个同类型 Webhook 可能反复执行，需通过 annotation 标记已处理来避免重复注入；4) dry-run 处理 —— 对于 dry-run 请求，可跳过某些副作用操作。Webhook 配置中的 failurePolicy 决定当 Webhook 不可用时是 Ignore（允许请求继续）还是 Fail（拒绝请求）。\n\n扩展延伸：生产级 Webhook 需关注：1) 通过 namespaceSelector/objectSelector 缩小作用范围以减少不必要的调用；2) 使用 sidecar 注入模式时配合 PodDisruptionBudget 避免 Webhook 自身成为单点；3) Webhook 因故障导致集群不可用的灾难恢复 —— 删除对应的 WebhookConfiguration 资源即可恢复。",
+    "hints": [
+      "对比 Mutating 和 Validating 的执行顺序和作用",
+      "证书注册、failurePolicy、超时是生产部署的关键参数",
+      "考虑 Webhook 自身的 HA 和故障恢复策略"
+    ],
+    "tags": [
+      "kubernetes",
+      "Admission Webhook",
+      "准入控制",
+      "K8s扩展"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Pod 安全标准演进：从 PSP 到 PSA",
+    "content": "Kubernetes v1.25 移除了 PodSecurityPolicy (PSP)，推荐使用 Pod Security Admission (PSA)。请分析 PSP 的缺陷和 PSA 的优势，说明 PSA 的三种安全级别（Privileged、Baseline、Restricted）的区别，并给出从 PSP 迁移到 PSA 的实践建议。",
+    "answer": "答案：PSP 的缺陷包括：1) 资源模型混乱 —— PSP 是 Cluster-scoped 资源，绑定到用户通过 RBAC 授权，造成\"谁可用\"和\"何时生效\"的割裂；2) 授权复杂 —— 需要创建 Role/ClusterRole 绑定到 ServiceAccount，RBAC 配置出错会导致安全策略失效或 Pod 启动失败；3) 升级困难 —— 切换策略时需要逐个修改 PSP 绑定，缺乏分阶段灰度能力。\n\nPSA 以 Admission Controller 的方式内置在 kube-apiserver 中，通过命名空间标签（pod-security.kubernetes.io/<level>）控制安全级别。三种级别：Privileged 不限制（适合系统组件），Baseline 限制已知特权提升（适合一般工作负载），Restricted 遵循 Pod 安全最强实践（适合高安全场景）。PSA 支持 warn（只告警不拒绝）、Audit（记录审计日志但不拒绝）、Enforce（强制拒绝）三种模式，支持按命名空间分层逐步推广。\n\n解析：迁移路径建议：1) 对所有命名空间添加 Audit 模式标签收集不合规 Pod 信息；2) 分析审计日志，判断哪些命名空间可以升级到 Enforce 模式；3) 将不合规的 Pod 通过 securityContext 字段逐项修复（如取消 privileged、设置 readOnlyRootFilesystem 等）；4) 逐步从 Audit 切换到 Warn 再到 Enforce。\n\n扩展延伸：PSA 的核心限制在于只提供了三个固定的安全级别，无法像 PSP 一样定义细粒度策略。对于需要自定义策略的场景，可结合 OPA/Gatekeeper 或 Kyverno 等 Admission Controller 实现补充。",
+    "hints": [
+      "从资源模型、授权复杂度、灰度能力三个维度对比 PSP 和 PSA",
+      "PSA 的 warn/Audit/Enforce 模式是平滑迁移的关键",
+      "PSA 无法覆盖的场景需要借助 OPA Gatekeeper 等第三方工具"
+    ],
+    "tags": [
+      "kubernetes",
+      "PSP",
+      "PSA",
+      "Pod安全",
+      "安全策略"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多集群流量调度与容灾架构设计",
+    "content": "随着 Kubernetes 集群规模增长，多集群管理成为生产系统的刚需。请分析多集群流量调度的常见模式（Global Load Balancing、Failover、Geo-distributed），对比 Federation v2 和 Cluster API 的架构差异，并设计一个跨可用区的容灾方案。",
+    "answer": "答案：多集群流量调度模式：1) Global Load Balancing —— 通过全局 DNS 或任播 IP 将用户请求路由到最近的集群，适合就近访问场景；2) Failover —— 主集群健康时流量导入主集群，故障时切换到备用集群，适合冷备/热备场景；3) Geo-distributed —— 每个集群处理本地流量，需要数据同步机制（如跨集群数据库复制、事件总线同步）。\n\nFederation v2 通过\"Push\"模型将资源同步到成员集群，控制面管理联邦资源（FederatedDeployment 等），适用于资源统一管理的场景。Cluster API 以声明式 API 管理集群生命周期（创建、升级、销毁），适用于基础设施即代码的场景。两者可互补使用。\n\n容灾方案：应用层采用 Global Load Balancer + 主备切换，数据层使用跨 AZ 数据库同步（如 MySQL Group Replication 或 AWS Aurora Global Database）。Kubernetes 层面：使用 Cluster Autoscaler 确保资源充足，配置 PodDisruptionBudget 保证应用最小可用实例数，使用 Topology Spread Constraints 实现 Pod 在 AZ 间的均匀分布。\n\n解析：多集群的管理复杂度高于单集群数倍，核心挑战包括：1) 网络互通 —— 跨集群 Pod IP 不重叠、Service 互通；2) 状态同步 —— ConfigMap、Secret 等配置的一致性；3) 监控与审计 —— 统一的可观测性视图。\n\n扩展延伸：Istio 的多集群部署（Mesh Federation、Primary-Remote、Multi-Primary）提供了服务网格层面的多集群互联方案。实际生产建议从\"同城双活\"起步，验证多集群运维流程后再扩展到异地多活。",
+    "hints": [
+      "区分 Global Load Balancing 和 Failover 在网络和应用层面的差异",
+      "Federation v2 管理资源，Cluster API 管理集群生命周期",
+      "容灾方案需同时考虑应用层、数据层和控制面三个维度"
+    ],
+    "tags": [
+      "kubernetes",
+      "多集群",
+      "容灾",
+      "Federation",
+      "Cluster API"
+    ]
   }
 ]

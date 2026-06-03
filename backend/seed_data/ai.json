@@ -597,5 +597,275 @@
       "微调",
       "预训练"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "扩散模型的原理",
+    "content": "请解释扩散模型（Diffusion Models）的核心原理，以及它与其他生成模型（GAN、VAE、Autoregressive）相比的优势和劣势。",
+    "answer": "答案：扩散模型的核心原理：通过两个过程实现生成——前向过程逐步向数据添加高斯噪声，将其变为纯噪声；逆向过程学习从噪声中逐步去噪恢复原始数据。训练时最小化预测噪声的 MSE 损失（Simple loss）。\n\n优势：1）生成质量高，超越了 GAN 在图像生成领域的地位；2）训练稳定，没有 GAN 的训练不收敛问题；3）模式覆盖广（High Diversity），不易出现模式坍塌；4）便于条件生成（通过 Classifier-Free Guidance）。\n\n劣势：1）推理速度慢，需要多步迭代去噪（通常 50-1000 步）；2）计算成本高，训练和推理都需要大量计算；3）Latent space 无明确语义结构，难以像 GAN 那样做有意义的隐空间插值。\n\n扩展延伸：改进方向包括：DDIM 减少推理步数、Latent Diffusion（Stable Diffusion）在潜空间做扩散降低计算量、Flow Matching/Rectified Flow 用确定性路径替代随机扩散、Consistency Models 实现单步生成。",
+    "hints": [
+      "对比生成模型家族各成员的典型应用和优劣",
+      "SD 的成功源于 Latent Diffusion + 大语言模型 text encoder"
+    ],
+    "tags": [
+      "扩散模型",
+      "生成模型",
+      "Stable Diffusion",
+      "深度学习"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RLHF 的原理与局限",
+    "content": "请解释 RLHF（Reinforcement Learning from Human Feedback）的原理、训练流程，以及它存在哪些局限和挑战。",
+    "answer": "答案：RLHF 的训练流程分为三步：\n1. SFT（Supervised Fine-Tuning）：在高质量标注数据上微调预训练模型。\n2. Reward Model 训练：收集人类对不同模型输出的偏好排名数据，训练一个 Reward Model（通常初始化为 SFT 模型去掉 LM Head 加上 Regression Head）。\n3. PPO 强化学习：以 Reward Model 作为奖励信号，通过 PPO 算法优化 SFT 模型的策略，同时用 KL 散度惩罚防止模型偏离初始分布太远。\n\n局限和挑战：1）Reward Hacking——模型学会欺骗 Reward Model 而非真正变好；2）Alignment Tax——对齐过程可能降低模型的多样性和创造力；3）偏好数据收集成本高且主观性强；4）Reward Model 无法完美表达人类价值观的全部维度；5）多轮 RLHF 后模型可能出现能力衰退（Catastrophic Forgetting）。\n\n扩展延伸：替代方案包括：DPO（Direct Preference Optimization）直接在偏好数据上优化策略，无需显式训练 Reward Model；Constitutional AI（Anthropic）用 AI 自我修正替代人类反馈；Rejection Sampling（如 Claude 早期版本）简单但有效。",
+    "hints": [
+      "PPO 在 RLHF 中同时做了策略优化和 KL 约束",
+      "DPO 是 RLHF 的重要替代方案"
+    ],
+    "tags": [
+      "RLHF",
+      "强化学习",
+      "PPO",
+      "模型对齐"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LoRA 的原理与应用",
+    "content": "请解释 LoRA（Low-Rank Adaptation）的原理，为什么它能有效微调大模型？LoRA 有哪些关键参数需要调优？",
+    "answer": "答案：LoRA 的核心原理：冻结预训练权重，在 Transformer 层的 Attention 权重矩阵旁添加低秩可训练矩阵（A×B，其中 A 为 d×r，B 为 r×k，r << min(d,k)）。训练时只更新 A 和 B，推理时可以合并回原权重（W' = W + AB），不引入额外推理延迟。\n\n有效性原因：1）大模型的权重矩阵通常存在于低秩（Low-rank）子空间，核心变化可以用少量参数描述；2）可训练参数仅为原模型的 0.1%~1%，显存需求大幅降低；3）支持热插拔——训练多个 LoRA 模块针对不同任务，推理时动态切换。\n\n关键参数：1）r（Rank）：影响表达能力和参数量，通常 4-64，值越大能力越强但可能过拟合；2）alpha：缩放系数，通常为 r 的 1-2 倍；3）target_modules：作用于哪些模块（q_proj、v_proj、k_proj、o_proj 或全部）；4）dropout：防止过拟合，LoRA 的 dropout 效果与全量微调不同。\n\n扩展延伸：LoRA 的变体包括 QLoRA（4-bit NormalFloat + LoRA，可在单张 24GB 显卡上微调 65B 模型）、DoRA（Weight-Decomposed Low-Rank Adaptation，将权重分解为方向和大小）、PiSSA（主成分初始化代替随机初始化）。",
+    "hints": [
+      "低秩矩阵是 LoRA 高效的数学基础",
+      "Rank 是平衡能力和效率的核心超参数"
+    ],
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效",
+      "大模型"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型量化技术",
+    "content": "什么是模型量化（Quantization）？常用的量化方法有哪些？量化对模型性能有何影响？",
+    "answer": "答案：模型量化通过降低权重和激活值的数值精度（如从 FP16 到 INT4）来减少模型内存占用和加速推理。\n\n常用量化方法：\n1. PTQ（Post-Training Quantization）：训练后直接量化，无需额外训练。包括：\n   - 权重量化（Weight-only）：如 GPTQ 用 Hessian 矩阵做二次补偿，精度损失小\n   - 权重+激活量化：如 SmoothQuant 通过对每层做平滑处理减少激活异常值\n2. QAT（Quantization-Aware Training）：在训练中模拟量化效果，精度更高但需要重训练。\n\n影响：1）推理速度提升 2-4 倍（INT4 vs FP16）；2）显存减少 4 倍（INT4 vs FP16）；3）精度通常下降 0.5-2%，取决于量化方法和模型大小——模型越大，量化损失相对越小（因为更多的参数提供冗余）。\n\n扩展延伸：主流量化方案对比：GPTQ（适合 GPU，逐层量化）、AWQ（感知重要通道的量化，优于 GPTQ）、GGUF/llama.cpp（适合 CPU 推理，主要用在本地部署）、BitsAndBytes（QLoRA 中使用的 4-bit 量化）。",
+    "hints": [
+      "区分权重量化和激活量化",
+      "模型越大量化损失越小"
+    ],
+    "tags": [
+      "量化",
+      "模型优化",
+      "推理加速",
+      "GPTQ"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多模态模型的架构设计",
+    "content": "请介绍当前主流的多模态大模型（如 GPT-4V、LLaVA、Qwen-VL）的架构设计思路，以及多模态融合的关键技术。",
+    "answer": "答案：主流多模态架构分三类：\n1. Unified Embedding（统一编码）：如 Fuyu，直接将图像 Patch Embed 送入 LLM，架构最简单但图像理解能力有限。\n2. Cross-Attention（交叉注意力）：如 Flamingo，在 Transformer 层之间插入 Cross-Attention 层处理视觉特征，模型改动大但效果好。\n3. Projector-based（映射器架构，最主流）：如 LLaVA、Qwen-VL、GPT-4V——用预训练的视觉 Encoder（如 CLIP ViT）提取图像特征，通过 Projector（MLP/Q-Former）将视觉特征映射到 LLM 的 Embedding 空间，再与文本 Embedding 拼接送入 LLM。\n\n关键技术：\n- Visual Encoder 选择：CLIP/SigLIP（开集分类预训练）+ 高分辨率适配\n- 分辨率处理：动态分辨率（Qwen-VL 支持多种分辨率输入）、分块编码（InternLM-XComposer2）\n- 多图/视频处理：帧采样 + 时序编码 + 压缩 Token（Perceiver Resampler）\n- 图文对齐训练：先对齐（Image-Text Contrastive Loss + Image-Text Matching），再端到端 SFT\n\n扩展延伸：Video-LLaVA 通过将视频帧压缩为统一表示实现了视频理解。CogVLM 使用 Deep Fusion 方法在每层都进行视觉-语言深度融合。LLaVA-NeXT 改进的高分辨率处理和动态图像分块策略显著提升了 OCR 和细粒度理解能力。",
+    "hints": [
+      "Projector-based 是当前最主流的方案",
+      "视觉 Encoder 的选择和分辨率处理是关键"
+    ],
+    "tags": [
+      "多模态",
+      "视觉语言模型",
+      "LLaVA",
+      "GPT-4V"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "扩散模型的原理",
+    "content": "请解释扩散模型（Diffusion Models）的核心原理，以及它与其他生成模型（GAN、VAE、Autoregressive）相比的优势和劣势。",
+    "answer": "答案：扩散模型的核心原理：通过两个过程实现生成——前向过程逐步向数据添加高斯噪声，将其变为纯噪声；逆向过程学习从噪声中逐步去噪恢复原始数据。训练时最小化预测噪声的 MSE 损失（Simple loss）。\n\n优势：1）生成质量高，超越了 GAN 在图像生成领域的地位；2）训练稳定，没有 GAN 的训练不收敛问题；3）模式覆盖广（High Diversity），不易出现模式坍塌；4）便于条件生成（通过 Classifier-Free Guidance）。\n\n劣势：1）推理速度慢，需要多步迭代去噪（通常 50-1000 步）；2）计算成本高，训练和推理都需要大量计算；3）Latent space 无明确语义结构，难以像 GAN 那样做有意义的隐空间插值。\n\n扩展延伸：改进方向包括：DDIM 减少推理步数、Latent Diffusion（Stable Diffusion）在潜空间做扩散降低计算量、Flow Matching/Rectified Flow 用确定性路径替代随机扩散、Consistency Models 实现单步生成。",
+    "hints": [
+      "对比生成模型家族各成员的典型应用和优劣",
+      "SD 的成功源于 Latent Diffusion + 大语言模型 text encoder"
+    ],
+    "tags": [
+      "扩散模型",
+      "生成模型",
+      "Stable Diffusion",
+      "深度学习"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RLHF 的原理与局限",
+    "content": "请解释 RLHF（Reinforcement Learning from Human Feedback）的原理、训练流程，以及它存在哪些局限和挑战。",
+    "answer": "答案：RLHF 的训练流程分为三步：\n1. SFT（Supervised Fine-Tuning）：在高质量标注数据上微调预训练模型。\n2. Reward Model 训练：收集人类对不同模型输出的偏好排名数据，训练一个 Reward Model（通常初始化为 SFT 模型去掉 LM Head 加上 Regression Head）。\n3. PPO 强化学习：以 Reward Model 作为奖励信号，通过 PPO 算法优化 SFT 模型的策略，同时用 KL 散度惩罚防止模型偏离初始分布太远。\n\n局限和挑战：1）Reward Hacking——模型学会欺骗 Reward Model 而非真正变好；2）Alignment Tax——对齐过程可能降低模型的多样性和创造力；3）偏好数据收集成本高且主观性强；4）Reward Model 无法完美表达人类价值观的全部维度；5）多轮 RLHF 后模型可能出现能力衰退（Catastrophic Forgetting）。\n\n扩展延伸：替代方案包括：DPO（Direct Preference Optimization）直接在偏好数据上优化策略，无需显式训练 Reward Model；Constitutional AI（Anthropic）用 AI 自我修正替代人类反馈；Rejection Sampling（如 Claude 早期版本）简单但有效。",
+    "hints": [
+      "PPO 在 RLHF 中同时做了策略优化和 KL 约束",
+      "DPO 是 RLHF 的重要替代方案"
+    ],
+    "tags": [
+      "RLHF",
+      "强化学习",
+      "PPO",
+      "模型对齐"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LoRA 的原理与应用",
+    "content": "请解释 LoRA（Low-Rank Adaptation）的原理，为什么它能有效微调大模型？LoRA 有哪些关键参数需要调优？",
+    "answer": "答案：LoRA 的核心原理：冻结预训练权重，在 Transformer 层的 Attention 权重矩阵旁添加低秩可训练矩阵（A×B，其中 A 为 d×r，B 为 r×k，r << min(d,k)）。训练时只更新 A 和 B，推理时可以合并回原权重（W' = W + AB），不引入额外推理延迟。\n\n有效性原因：1）大模型的权重矩阵通常存在于低秩（Low-rank）子空间，核心变化可以用少量参数描述；2）可训练参数仅为原模型的 0.1%~1%，显存需求大幅降低；3）支持热插拔——训练多个 LoRA 模块针对不同任务，推理时动态切换。\n\n关键参数：1）r（Rank）：影响表达能力和参数量，通常 4-64，值越大能力越强但可能过拟合；2）alpha：缩放系数，通常为 r 的 1-2 倍；3）target_modules：作用于哪些模块（q_proj、v_proj、k_proj、o_proj 或全部）；4）dropout：防止过拟合，LoRA 的 dropout 效果与全量微调不同。\n\n扩展延伸：LoRA 的变体包括 QLoRA（4-bit NormalFloat + LoRA，可在单张 24GB 显卡上微调 65B 模型）、DoRA（Weight-Decomposed Low-Rank Adaptation，将权重分解为方向和大小）、PiSSA（主成分初始化代替随机初始化）。",
+    "hints": [
+      "低秩矩阵是 LoRA 高效的数学基础",
+      "Rank 是平衡能力和效率的核心超参数"
+    ],
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效",
+      "大模型"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型量化技术",
+    "content": "什么是模型量化（Quantization）？常用的量化方法有哪些？量化对模型性能有何影响？",
+    "answer": "答案：模型量化通过降低权重和激活值的数值精度（如从 FP16 到 INT4）来减少模型内存占用和加速推理。\n\n常用量化方法：\n1. PTQ（Post-Training Quantization）：训练后直接量化，无需额外训练。包括：\n   - 权重量化（Weight-only）：如 GPTQ 用 Hessian 矩阵做二次补偿，精度损失小\n   - 权重+激活量化：如 SmoothQuant 通过对每层做平滑处理减少激活异常值\n2. QAT（Quantization-Aware Training）：在训练中模拟量化效果，精度更高但需要重训练。\n\n影响：1）推理速度提升 2-4 倍（INT4 vs FP16）；2）显存减少 4 倍（INT4 vs FP16）；3）精度通常下降 0.5-2%，取决于量化方法和模型大小——模型越大，量化损失相对越小（因为更多的参数提供冗余）。\n\n扩展延伸：主流量化方案对比：GPTQ（适合 GPU，逐层量化）、AWQ（感知重要通道的量化，优于 GPTQ）、GGUF/llama.cpp（适合 CPU 推理，主要用在本地部署）、BitsAndBytes（QLoRA 中使用的 4-bit 量化）。",
+    "hints": [
+      "区分权重量化和激活量化",
+      "模型越大量化损失越小"
+    ],
+    "tags": [
+      "量化",
+      "模型优化",
+      "推理加速",
+      "GPTQ"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多模态模型的架构设计",
+    "content": "请介绍当前主流的多模态大模型（如 GPT-4V、LLaVA、Qwen-VL）的架构设计思路，以及多模态融合的关键技术。",
+    "answer": "答案：主流多模态架构分三类：\n1. Unified Embedding（统一编码）：如 Fuyu，直接将图像 Patch Embed 送入 LLM，架构最简单但图像理解能力有限。\n2. Cross-Attention（交叉注意力）：如 Flamingo，在 Transformer 层之间插入 Cross-Attention 层处理视觉特征，模型改动大但效果好。\n3. Projector-based（映射器架构，最主流）：如 LLaVA、Qwen-VL、GPT-4V——用预训练的视觉 Encoder（如 CLIP ViT）提取图像特征，通过 Projector（MLP/Q-Former）将视觉特征映射到 LLM 的 Embedding 空间，再与文本 Embedding 拼接送入 LLM。\n\n关键技术：\n- Visual Encoder 选择：CLIP/SigLIP（开集分类预训练）+ 高分辨率适配\n- 分辨率处理：动态分辨率（Qwen-VL 支持多种分辨率输入）、分块编码（InternLM-XComposer2）\n- 多图/视频处理：帧采样 + 时序编码 + 压缩 Token（Perceiver Resampler）\n- 图文对齐训练：先对齐（Image-Text Contrastive Loss + Image-Text Matching），再端到端 SFT\n\n扩展延伸：Video-LLaVA 通过将视频帧压缩为统一表示实现了视频理解。CogVLM 使用 Deep Fusion 方法在每层都进行视觉-语言深度融合。LLaVA-NeXT 改进的高分辨率处理和动态图像分块策略显著提升了 OCR 和细粒度理解能力。",
+    "hints": [
+      "Projector-based 是当前最主流的方案",
+      "视觉 Encoder 的选择和分辨率处理是关键"
+    ],
+    "tags": [
+      "多模态",
+      "视觉语言模型",
+      "LLaVA",
+      "GPT-4V"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "扩散模型的原理",
+    "content": "请解释扩散模型（Diffusion Models）的核心原理，以及它与其他生成模型（GAN、VAE、Autoregressive）相比的优势和劣势。",
+    "answer": "答案：扩散模型的核心原理：通过两个过程实现生成——前向过程逐步向数据添加高斯噪声，将其变为纯噪声；逆向过程学习从噪声中逐步去噪恢复原始数据。训练时最小化预测噪声的 MSE 损失（Simple loss）。\n\n优势：1）生成质量高，超越了 GAN 在图像生成领域的地位；2）训练稳定，没有 GAN 的训练不收敛问题；3）模式覆盖广（High Diversity），不易出现模式坍塌；4）便于条件生成（通过 Classifier-Free Guidance）。\n\n劣势：1）推理速度慢，需要多步迭代去噪（通常 50-1000 步）；2）计算成本高，训练和推理都需要大量计算；3）Latent space 无明确语义结构，难以像 GAN 那样做有意义的隐空间插值。\n\n扩展延伸：改进方向包括：DDIM 减少推理步数、Latent Diffusion（Stable Diffusion）在潜空间做扩散降低计算量、Flow Matching/Rectified Flow 用确定性路径替代随机扩散、Consistency Models 实现单步生成。",
+    "hints": [
+      "对比生成模型家族各成员的典型应用和优劣",
+      "SD 的成功源于 Latent Diffusion + 大语言模型 text encoder"
+    ],
+    "tags": [
+      "扩散模型",
+      "生成模型",
+      "Stable Diffusion",
+      "深度学习"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RLHF 的原理与局限",
+    "content": "请解释 RLHF（Reinforcement Learning from Human Feedback）的原理、训练流程，以及它存在哪些局限和挑战。",
+    "answer": "答案：RLHF 的训练流程分为三步：\n1. SFT（Supervised Fine-Tuning）：在高质量标注数据上微调预训练模型。\n2. Reward Model 训练：收集人类对不同模型输出的偏好排名数据，训练一个 Reward Model（通常初始化为 SFT 模型去掉 LM Head 加上 Regression Head）。\n3. PPO 强化学习：以 Reward Model 作为奖励信号，通过 PPO 算法优化 SFT 模型的策略，同时用 KL 散度惩罚防止模型偏离初始分布太远。\n\n局限和挑战：1）Reward Hacking——模型学会欺骗 Reward Model 而非真正变好；2）Alignment Tax——对齐过程可能降低模型的多样性和创造力；3）偏好数据收集成本高且主观性强；4）Reward Model 无法完美表达人类价值观的全部维度；5）多轮 RLHF 后模型可能出现能力衰退（Catastrophic Forgetting）。\n\n扩展延伸：替代方案包括：DPO（Direct Preference Optimization）直接在偏好数据上优化策略，无需显式训练 Reward Model；Constitutional AI（Anthropic）用 AI 自我修正替代人类反馈；Rejection Sampling（如 Claude 早期版本）简单但有效。",
+    "hints": [
+      "PPO 在 RLHF 中同时做了策略优化和 KL 约束",
+      "DPO 是 RLHF 的重要替代方案"
+    ],
+    "tags": [
+      "RLHF",
+      "强化学习",
+      "PPO",
+      "模型对齐"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LoRA 的原理与应用",
+    "content": "请解释 LoRA（Low-Rank Adaptation）的原理，为什么它能有效微调大模型？LoRA 有哪些关键参数需要调优？",
+    "answer": "答案：LoRA 的核心原理：冻结预训练权重，在 Transformer 层的 Attention 权重矩阵旁添加低秩可训练矩阵（A×B，其中 A 为 d×r，B 为 r×k，r << min(d,k)）。训练时只更新 A 和 B，推理时可以合并回原权重（W' = W + AB），不引入额外推理延迟。\n\n有效性原因：1）大模型的权重矩阵通常存在于低秩（Low-rank）子空间，核心变化可以用少量参数描述；2）可训练参数仅为原模型的 0.1%~1%，显存需求大幅降低；3）支持热插拔——训练多个 LoRA 模块针对不同任务，推理时动态切换。\n\n关键参数：1）r（Rank）：影响表达能力和参数量，通常 4-64，值越大能力越强但可能过拟合；2）alpha：缩放系数，通常为 r 的 1-2 倍；3）target_modules：作用于哪些模块（q_proj、v_proj、k_proj、o_proj 或全部）；4）dropout：防止过拟合，LoRA 的 dropout 效果与全量微调不同。\n\n扩展延伸：LoRA 的变体包括 QLoRA（4-bit NormalFloat + LoRA，可在单张 24GB 显卡上微调 65B 模型）、DoRA（Weight-Decomposed Low-Rank Adaptation，将权重分解为方向和大小）、PiSSA（主成分初始化代替随机初始化）。",
+    "hints": [
+      "低秩矩阵是 LoRA 高效的数学基础",
+      "Rank 是平衡能力和效率的核心超参数"
+    ],
+    "tags": [
+      "LoRA",
+      "微调",
+      "参数高效",
+      "大模型"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型量化技术",
+    "content": "什么是模型量化（Quantization）？常用的量化方法有哪些？量化对模型性能有何影响？",
+    "answer": "答案：模型量化通过降低权重和激活值的数值精度（如从 FP16 到 INT4）来减少模型内存占用和加速推理。\n\n常用量化方法：\n1. PTQ（Post-Training Quantization）：训练后直接量化，无需额外训练。包括：\n   - 权重量化（Weight-only）：如 GPTQ 用 Hessian 矩阵做二次补偿，精度损失小\n   - 权重+激活量化：如 SmoothQuant 通过对每层做平滑处理减少激活异常值\n2. QAT（Quantization-Aware Training）：在训练中模拟量化效果，精度更高但需要重训练。\n\n影响：1）推理速度提升 2-4 倍（INT4 vs FP16）；2）显存减少 4 倍（INT4 vs FP16）；3）精度通常下降 0.5-2%，取决于量化方法和模型大小——模型越大，量化损失相对越小（因为更多的参数提供冗余）。\n\n扩展延伸：主流量化方案对比：GPTQ（适合 GPU，逐层量化）、AWQ（感知重要通道的量化，优于 GPTQ）、GGUF/llama.cpp（适合 CPU 推理，主要用在本地部署）、BitsAndBytes（QLoRA 中使用的 4-bit 量化）。",
+    "hints": [
+      "区分权重量化和激活量化",
+      "模型越大量化损失越小"
+    ],
+    "tags": [
+      "量化",
+      "模型优化",
+      "推理加速",
+      "GPTQ"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多模态模型的架构设计",
+    "content": "请介绍当前主流的多模态大模型（如 GPT-4V、LLaVA、Qwen-VL）的架构设计思路，以及多模态融合的关键技术。",
+    "answer": "答案：主流多模态架构分三类：\n1. Unified Embedding（统一编码）：如 Fuyu，直接将图像 Patch Embed 送入 LLM，架构最简单但图像理解能力有限。\n2. Cross-Attention（交叉注意力）：如 Flamingo，在 Transformer 层之间插入 Cross-Attention 层处理视觉特征，模型改动大但效果好。\n3. Projector-based（映射器架构，最主流）：如 LLaVA、Qwen-VL、GPT-4V——用预训练的视觉 Encoder（如 CLIP ViT）提取图像特征，通过 Projector（MLP/Q-Former）将视觉特征映射到 LLM 的 Embedding 空间，再与文本 Embedding 拼接送入 LLM。\n\n关键技术：\n- Visual Encoder 选择：CLIP/SigLIP（开集分类预训练）+ 高分辨率适配\n- 分辨率处理：动态分辨率（Qwen-VL 支持多种分辨率输入）、分块编码（InternLM-XComposer2）\n- 多图/视频处理：帧采样 + 时序编码 + 压缩 Token（Perceiver Resampler）\n- 图文对齐训练：先对齐（Image-Text Contrastive Loss + Image-Text Matching），再端到端 SFT\n\n扩展延伸：Video-LLaVA 通过将视频帧压缩为统一表示实现了视频理解。CogVLM 使用 Deep Fusion 方法在每层都进行视觉-语言深度融合。LLaVA-NeXT 改进的高分辨率处理和动态图像分块策略显著提升了 OCR 和细粒度理解能力。",
+    "hints": [
+      "Projector-based 是当前最主流的方案",
+      "视觉 Encoder 的选择和分辨率处理是关键"
+    ],
+    "tags": [
+      "多模态",
+      "视觉语言模型",
+      "LLaVA",
+      "GPT-4V"
+    ]
   }
 ]

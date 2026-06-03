@@ -633,5 +633,199 @@
       "注册中心",
       "微服务"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "异地多活架构的数据一致性挑战",
+    "content": "在异地多活架构中，数据一致性面临哪些核心挑战？跨数据中心的数据同步有哪些方案？冲突检测与解决策略（CRDT、LWW、Dynamo 风格向量时钟）如何工作？",
+    "answer": "答案：异地多活的三大核心挑战是数据冲突（同一用户的两条写操作路由到不同数据中心）、延迟（物理距离带来的同步延迟）和故障（数据中心级故障时的数据丢失）。解决方案包括单元化、CRDT 和最终一致性异步同步。\n\n解析：数据同步方案——1）同步复制（同城）：主库写入后等待从库确认，强一致但延迟高（RTT 延迟），不适合异地（几十毫秒延迟无法接受）。2）异步复制（异地）：主库写入后立即返回后台异步同步到异地。高可用但可能丢数据（主库宕机 -> 最后一小批未同步数据丢失）。3）单元化（Unitization）：按用户维度划分（如 user_id % N），每个用户写请求只路由到其归属数据中心。各中心独立数据库，不跨中心做 JOIN。中心间只做元数据/配置同步。CRDT（无冲突复制数据类型）——在数学上保证并发更新最终能自动合并。常见类型：G-Counter（只增计数器只能 merge 为 max）、PN-Counter（增+减）、LWW-Register（Last-Write-Win，最新时间戳获胜）。Dynamo 风格的冲突解决方案——向量时钟（Vector Clock）检测冲突，应用层在读取时根据 context 判断是否有冲突。有冲突时返回所有版本，客户端合并后写回（Read-Repair 机制）。",
+    "hints": [
+      "单元化为什么能避免跨数据中心写冲突——路由策略怎么设计的",
+      "CRDT 和向量时钟分别解决什么问题"
+    ],
+    "tags": [
+      "系统设计",
+      "异地多活",
+      "数据一致性",
+      "CRDT"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "秒杀系统流量调度策略",
+    "content": "秒杀系统的流量调度从客户端到服务端如何分层拦截？流量预热、削峰填谷、限流降级的具体做法是什么？怎么确保最终数据一致性？",
+    "answer": "答案：秒杀流量调度采用「逐级减流」策略——客户端拦截（按钮置灰 + 静态化）→ CDN 缓存 → 网关限流（令牌桶）→ 应用层 Redis 预扣 → MQ 削峰 → 数据库最终校验。\n\n解析：层层调度——1）客户端层：秒杀按钮秒级置灰防重复提交、CDN 缓存商品详情静态页面、JS 随机延迟（如 0-500ms 抖动）分散请求。2）网关层：Nginx + Lua 限流模块（lua-resty-limit-traffic），基于 IP + UserID 做令牌桶/漏桶限流。总开关：手动触发秒杀降级（限流到 0，拒绝所有请求）。3）应用层（Redis 预扣）：Redis DECR 原子扣库存 + Lua 脚本（读库存 → 判断充足 → DECR → 写入预扣集合）。预扣成功后才创建订单。4）消息队列削峰：秒杀请求入 MQ（RocketMQ / Kafka），后端 Worker 异步消费。qps 从万级削到千级。5）数据库层：UPDATE stock SET stock = stock - 1 WHERE stock > 0 AND id = ? ——乐观锁保证最终扣减安全。\n\n扩展延伸：数据一致性保障——1）Redis 预扣 + DB 最终一致性：Redis 只是加速层，最终以 DB 为准（DB 扣减失败时 Redis 回滚预扣）。2）库存回滚：订单未支付超时 → 回滚 DB 库存 + Redis 补回预扣。3）对账：日终跑对账脚本，比较 Redis 预扣记录、订单记录、DB 库存三者一致性。4）兜底：秒杀前做全链路压测，确定每秒能处理的有效峰值；超量强制限流（拒绝而非排队——秒杀不排队）。",
+    "hints": [
+      "Redis 预扣 + DB 最终扣减不一致时怎么处理——对账 + 补偿",
+      "为什么秒杀系统选择「拒绝」策略而非「排队」策略"
+    ],
+    "tags": [
+      "系统设计",
+      "秒杀",
+      "流量调度",
+      "削峰填谷"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "短链系统的数据存储设计",
+    "content": "短链系统的核心数据存储模型是什么？短码生成策略（Hash + 去重 vs 发号器）各有什么优劣？短码的过期和持久化怎么设计？",
+    "answer": "答案：短链系统核心表：short_link(id, short_code, original_url, expire_time, create_time, user_id, click_count)。短码生成策略主要有两种：Hash + 去重（基于原 URL 哈希后 Base62）和发号器（基于自增 ID 转 Base62）。推荐用发号器。\n\n解析：Hash + 去重——1）对原 URL 做 MD5/SHA1 → 取前 6-8 位 → Base62 编码。2）问题：哈希碰撞（需要加盐重试或加长编码）。3）恢复：短码到原始 URL 用 SELECT original_url WHERE short_code = ?（高并发下冷热分离：热数据缓存到 Redis，冷数据查 DB）。发号器方案——1）利用 Redis INCR 或 DB 号段表生成全局唯一 64 位递增 ID。2）自增 ID 转 Base62（0-9a-zA-Z，62 进制）：62^7 ≈ 3.5 万亿，通常 7 位足够。3）优点：无碰撞、短码固定长度、按时间有序（有利于分库分表路由）。4）缺点：ID 递增可预测（可被恶意遍历），但短码不暴露 ID 本身（不可逆推），加上限流不易被利用。\n\n扩展延伸：过期与持久化——1）过期策略：短码设置 expire_time，查询时检查 expire_time < NOW() → 返回 410 Gone。定时任务 + 懒删除（查询时才标记过期 + TTL 定期清理）。2）冷热分离：热点短码（近 N 小时内访问 ≥ M 次）存 Redis，冷数据查 DB + 本地缓存 LRU。3）分库分表：按短码 hash 分片（一致性哈希或 1024 个桶）。4）性能预估：Redis GET 单 QPS 10 万+，DB 兜底。写 QPS 相对低（只创建短链时写入），读压力大（每次访问都查）。",
+    "hints": [
+      "发号器方案为什么比 Hash 碰撞处理更推荐",
+      "短链系统的读写比例是怎样的——缓存应该怎么设计"
+    ],
+    "tags": [
+      "系统设计",
+      "短链",
+      "发号器",
+      "Base62"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "分布式配置中心选型",
+    "content": "某公司有 500+ 微服务实例，需要统一管理配置、支持配置热更新、灰度发布和权限管理。在选择分布式配置中心时，以下哪种方案最合适？",
+    "options": [
+      "A) 使用 MySQL 自建配置表 + 定时刷新配置",
+      "B) Spring Cloud Config (Git 后端) 配合 Spring Cloud Bus",
+      "C) Nacos 配置中心",
+      "D) etcd + 自研 Watch 客户端"
+    ],
+    "answer": "答案：C) Nacos 配置中心\n\n解析：Nacos 配置中心支持热更新（无需重启）、配置灰度（按 IP/Cluster 灰度）、多维隔离（Namespace/Group/DataID）、权限管理（RBAC），且与 Spring Cloud / Dubbo 生态集成度高。MySQL + 定时刷新（选项 A）无热更新、定时轮询延迟大。Spring Cloud Config + Bus（选项 B）依赖 Git 无法做灰度，Bus 依赖消息队列，运维复杂。etcd + 自研 Watch（选项 D）能力不完整、自研成本高。\n\n扩展延伸：Nacos 配置 vs Apollo——Nacos 支持 CP+AP 模式切换，Apollo 更成熟（配置历史、回滚、灰度粒度更细）。选型建议：Java 技术栈 + Spring Cloud → Nacos 或 Apollo。非 Java 栈 → etcd / Consul / Zookeeper。配置推送的底层协议——Nacos 用 gRPC 长连接 + 客户端轮询（HTTP Long Polling 兜底）。Apollo 用 HTTP Long Polling。配置更新后的重试与幂等——客户端收到配置变化通知后拉取完整配置，应用新的配置值；如应用失败则回滚到旧值。Nacos 的多环境管理——Namespace（环境隔离：dev/test/prod）+ Group（业务分组）+ DataID（具体配置文件），三层隔离避免误操作。",
+    "hints": [
+      "Nacos 支持配置灰度发布吗——按 IP 或 Cluster 灰度",
+      "配置中心的配置变更怎么保证不中断业务——原子加载 + 回滚机制"
+    ],
+    "tags": [
+      "系统设计",
+      "配置中心",
+      "Nacos",
+      "选型"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "CQRS 是否一定要分开数据库",
+    "content": "CQRS（命令查询职责分离）模式要求将命令（Command/写操作）和查询（Query/读操作）的数据库完全分开部署，即必须使用不同的数据库实例。这样可以最大化读写性能的独立扩展。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：CQRS 的核心思想是将读模型和写模型分离（代码层面或对象层面），并不强制要求数据库物理分离。完全可以在同一个数据库上用不同的表或不同的数据结构来实现逻辑上的 CQRS——命令端使用规范化的关系表（3NF/BCNF）保证写入一致性和完整性约束，查询端使用宽表/物化视图/读写分离的只读副本来优化查询性能。是否需要物理分离取决于业务场景：高并发读写分离的大型系统（如电商订单系统）会拆分到不同数据库甚至不同存储引擎（写用 MySQL InnoDB、读用 Elasticsearch），而中小型业务在同一个数据库上的逻辑分离就足够了。\n\n扩展延伸：CQRS 的三种分离层次——1）逻辑分离（最简单）：同一代码库、同一数据库，但用不同 Repository / Service 处理读和写。命令端用领域模型（ORM 实体），查询端用轻量查询（直接 SQL 或 DTO 映射）。2）数据库读副本分离：写请求发往主库，读请求发往从库（读写分离），仍然是同一个数据库实例的不同副本。3）物理存储分离（最彻底）：写用 MySQL/PostgreSQL，读用 Elasticsearch / ClickHouse / Redis 等查存系统。写库触发 Event → 异步同步到查询库（最终一致性）。CQRS 不等于 Event Sourcing——CQRS 可以单独使用（只分离读写模型，不记录事件流），Event Sourcing 是另一种模式（记录所有状态变更事件，重建状态）。",
+    "hints": [
+      "CQRS 的核心思想是模型分离还是数据库分离",
+      "逻辑 CQRS 和物理 CQRS 分别适用什么场景"
+    ],
+    "tags": [
+      "系统设计",
+      "CQRS",
+      "读写分离",
+      "架构模式"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多区域高可用（Multi-Region HA）架构设计",
+    "content": "如何设计跨地域的高可用架构？多区域部署的核心挑战是什么？用户就近接入如何实现？跨区域数据复制方案有哪些？故障切换流程是什么？",
+    "answer": "答案：核心挑战是延迟（跨区域 50-200ms）、数据一致性和故障切换复杂度。用户就近接入通过 DNS GSLB 实现。跨区域复制：同步复制（强一致延迟高）或异步复制（最终一致延迟低）。故障切换：监控探测 → 流量切换 → 数据恢复。\n\n解析：架构模式——1）Active-Passive（主备）：一个区域处理所有写流量，其他区域只读。故障时切换，可能丢数据。资源利用率低但实现简单。2）Active-Active（双活/多活）：多区域同时处理读写。数据冲突解决用 CRDT（无需协调合并）或 LWW（Last-Write-Win 依赖时钟）。资源利用率高但实现复杂。\n\n用户就近接入——1）DNS GSLB：根据源 IP 解析到最近区域。2）Anycast：多区域共享相同 IP，BGP 路由到最近区域。3）HTTP 重定向：应用层检测位置返回就近区域 URL。\n\n扩展延伸：故障切换——1）检测：跨区域心跳，多数派判断主区域是否存活。2）决策：分布式一致性协议决定切换。3）切换：DNS TTL 改小（30-60 秒），提前准备切换脚本。4）回切：原区域恢复后等数据追赶完成再切。测试方法：Chaos Engineering（定期断网测试、区域故障演练）。",
+    "hints": [
+      "Active-Passive 和 Active-Active 的核心区别是什么——资源利用率和实现复杂度",
+      "数据冲突解决中 CRDT 和 LWW 的区别是什么"
+    ],
+    "tags": [
+      "系统设计",
+      "多区域",
+      "高可用",
+      "异地多活"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "系统容量规划方法",
+    "content": "如何做系统容量规划？步骤是什么？扩容阈值如何确定？核心估算指标有哪些？如何应对突发流量？",
+    "answer": "答案：步骤：当前水位评估 → 峰值预测（历史 * 增长率 * 安全系数）→ 容量建模 → 压测验证 → 冗余部署。核心指标：CPU > 70%、内存 > 80%、P99 延迟 > 200ms。应对突发：限流 + 弹性伸缩 + 降级非核心。\n\n解析：核心估算指标——1）QPS/TPS、RT（响应时间）、并发数（Little's Law：并发 = QPS * RT）。2）单机 QPS 上限（通过压测得到）、数据库连接池上限、带宽上限。\n\n扩容公式——预估 QPS = 当前峰值 QPS * (1 + 年增长率)^周期 * 冗余系数（1.5-2 倍）。实例数 = 预估 QPS / 单机上限。示例：当前 5000 QPS，年增 100%，支撑 1 年 → 预估 = 5000 * 2 * 2 = 20000 QPS。单机 2000 QPS → 至少 10 台。\n\n扩展延伸：弹性伸缩——1）垂直（Scale Up/Down）：升级机器配置，适合有状态服务。2）水平（Scale Out/In）：增减实例，适合无状态服务。3）自动伸缩：K8s HPA 基于 CPU/请求量。提前扩容：根据业务日历大促前扩容到位。Buffer 策略：预留 30-50% 冗余。核心服务冗余更高。SLO 目标：如「P99 < 200ms 且 QPS > 5000」。70% 容量告警、80% 紧急告警、90% 自动扩容。",
+    "hints": [
+      "Little's Law 在容量规划中怎么用——并发数 = QPS * RT",
+      "扩容公式中的安全系数通常取多少——1.5 到 2 倍"
+    ],
+    "tags": [
+      "系统设计",
+      "容量规划",
+      "扩容",
+      "SLO"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "监控告警体系设计",
+    "content": "如何设计完善的监控告警体系？Metrics、Logging、Tracing 三大支柱的关系？告警规则如何避免告警风暴？On-Call 值班的告警响应流程是什么？",
+    "answer": "答案：三大支柱：Metrics（指标聚合，Prometheus）、Logging（日志搜索，ELK/Loki）、Tracing（链路追踪，Jaeger/Zipkin）。Metrics 看趋势，Tracing 追踪单请求路径，Logging 排查细节。告警分级：P0（立即响应）→ P3（通知）。告警风暴用聚合+静默避免。On-Call：响应确认 → 排查 → 恢复 → 复盘。\n\n解析：指标分层——1）基础设施：CPU、内存、磁盘（Node Exporter）。2）中间件：MySQL 慢查询、Redis 命中率、Kafka 堆积。3）应用：QPS、错误率、P50/P95/P99 延迟、业务指标。4）用户体验：Apdex、LCP（RUM 数据）。\n\n告警设计——1）级别：P0 响应 < 5 分钟、P1 < 15 分钟、P2 < 1 小时、P3 下个工作日。2）避免风暴：聚合相似告警、依赖告警下级不重复上报、30 分钟静默期。3）阈值：基于基线数据动态计算（如 P99 超基线 3 倍），避免静态阈值不灵敏。\n\n扩展延伸：SRE 实践——SLI → SLO → 错误预算。例：API P99 < 200ms，可用性 > 99.95%。超出错误预算冻结发布。On-Call 轮值（1-2 周轮换），Follow-the-Sun 模式。Runbook 关联每个 P0/P1 告警（处理步骤和负责人），减少 MTTR。",
+    "hints": [
+      "三大支柱为什么不能互相替代——Metrics/Tracing/Logging 各有侧重",
+      "错误预算怎么控制发布节奏——SLO 超标时冻结新功能发布"
+    ],
+    "tags": [
+      "系统设计",
+      "监控",
+      "告警",
+      "SRE",
+      "可观测性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "分布式 ID 生成方案选择",
+    "content": "一个电商系统需要生成全局唯一订单 ID，要求趋势递增便于数据库索引、包含时间信息、高并发可用（每秒 10 万+）、不依赖数据库自增。以下哪种方案最合适？",
+    "options": [
+      "A) UUID v4（128 位随机，全球唯一）",
+      "B) Snowflake 算法（64 位，时间戳 + 机器ID + 序列号，趋势递增）",
+      "C) 数据库号段模式（批量获取 ID 段本地分配）",
+      "D) Redis INCR 自增（原子自增后转字符串）"
+    ],
+    "answer": "答案：B) Snowflake 算法（64 位，时间戳 + 机器ID + 序列号，趋势递增）\n\n解析：Snowflake 最适合：1）趋势递增——高位是时间戳，B+tree 索引写入性能好。2）包含时间信息——可按天/小时从 ID 解析创建时间。3）高并发——每毫秒每机 4096 个 ID（12bit 序列号），多机理论可达亿级/秒。4）不依赖 DB——纯内存生成无 IO 瓶颈。\n\nA 选项 UUID v4：128 位不递增，InnoDB 主键导致页分裂，索引占用更大。C 选项号段模式：依赖 DB，号段耗尽时重新申请有网络波动。D 选项 Redis INCR：Redis 有瓶颈，宕机导致 ID 不连续。\n\n扩展延伸：Snowflake 的时钟回拨问题——服务器时钟回拨（NTP 同步）会生成重复 ID。解决：记录上次 ID 生成时间，回拨时等待或抛异常。优化版（美团 Leaf、百度 UidGenerator）：双 Buffer 预取号段 + 自定义序列号分配，通过 Zookeeper 协调机器 ID。",
+    "hints": [],
+    "tags": [
+      "系统设计",
+      "分布式ID",
+      "Snowflake",
+      "选型"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "最终一致性的理解",
+    "content": "最终一致性（Eventual Consistency）保证：如果没有新的写入，所有副本最终会收敛到相同的值。但在网络分区期间如果各分区独立接受写入，恢复后可能产生数据冲突，最终一致性本身不解决冲突，需要额外机制（如 CRDT、LWW、Read Repair）来处理。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：最终一致性只保证「无新写入时所有副本最终一致」，不保证自动解决冲突。网络分区期间各分区独立写入，恢复后出现不同值，需要额外机制：1）LWW（Last-Write-Win，依赖时间戳选择最新写入）。2）CRDT（无冲突数据类型，如 G-Counter、OR-Set，数学保证自动合并）。3）Read Repair（读取时检测不一致并修复）。Dynamo 风格系统通过 R + W > N 的 Quorum 机制折中读写一致性。\n\n扩展延伸：相关机制——反熵（Anti-Entropy）：后台用 Merkle Tree 比较副本数据修复差异。Dynamo 参数调节：W=N,R=1（写强一致）、W=1,R=N（读强一致）、W=Q,R=Q 且 Q > N/2（折中）。实际系统中大部分不是全 CP 或全 AP——用户资料用 AP（短暂不一致可接受），支付库存用 CP（不可用比错误好）。",
+    "tags": [
+      "系统设计",
+      "最终一致性",
+      "分布式",
+      "CAP"
+    ]
   }
 ]

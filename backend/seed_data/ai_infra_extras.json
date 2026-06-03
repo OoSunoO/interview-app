@@ -629,5 +629,278 @@
       "显存",
       "训练优化"
     ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型并行策略对比",
+    "content": "大模型训练和推理中常用的并行策略有哪些？请分别解释其原理和适用场景。",
+    "answer": "答案：主要并行策略：\n1. Data Parallelism（数据并行）：每个设备持有完整模型副本，切分数据批次，通过 AllReduce 同步梯度。最简单但模型必须能装进单卡。\n2. Tensor Parallelism（张量并行）：将单个 Transformer 层的权重沿 hidden 维度切分到多卡，每卡只计算一部分。需要卡间高频通信（AllReduce），适用于单机多卡场景。\n3. Pipeline Parallelism（流水线并行）：将模型按层切分成多个 Stage，每个 Stage 放在不同设备上。通信量低但存在 Bubble 问题（空闲等待）。\n4. Sequence Parallelism（序列并行）：沿序列长度维度切分，解决长序列训练的显存不足问题（Ring Attention）。\n\n扩展延伸：实际训练混合使用多种并行：3D Parallelism（Data + Tensor + Pipeline）是 Megatron-LM 的核心策略。FSDP（Fully Sharded Data Parallelism）是 Data Parallel 的进阶——将模型参数、梯度、优化器状态分片到各设备，需要时才 AllGather，是 Data Parallel 和 Tensor Parallel 的折中。",
+    "hints": [
+      "不同并行策略切分的维度不同：数据、层、参数、序列",
+      "训练大模型通常混合使用多种并行"
+    ],
+    "tags": [
+      "并行计算",
+      "分布式训练",
+      "Megatron",
+      "FSDP"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 显存优化技术",
+    "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
+    "answer": "答案：主流 GPU 显存优化技术：\n1. KV Cache：缓存 Attention 中已计算好的 K 和 V 矩阵，避免每次生成重复计算。但 KV Cache 会随序列长度线性增长，是长上下文推理的主要瓶颈。\n2. PagedAttention/vLLM：操作系统的虚拟内存分页思想——将 KV Cache 分页管理，按需分配，消除内部碎片和外部碎片。vLLM 因此比常规推理方案显存效率提升 2-4 倍。\n3. FlashAttention：通过 Tiling（分块）技术，将 Q、K、V 分块存入 SRAM 而非 HBM 计算，减少 HBM 访问次数，节省显存的同时加速（IO-Aware 算法）。\n4. Memory Offloading：将暂时不用的参数/状态卸载到 CPU 内存，需要时再加载回 GPU。如 DeepSpeed Offload。\n5. Activation Recomputation（Checkpointing）：训练时丢弃中间激活值，反向传播时重新计算，以时间换空间。\n\n扩展延伸：KVCache 的进一步优化包括 Multi-Query Attention（MQA，多个 Query Head 共享一个 KV Head）和 Grouped-Query Attention（GQA，折中方案，LLaMA 2/3 使用）。投机解码（Speculative Decoding）也通过减少模型调用次数间接减少显存压力。",
+    "hints": [
+      "KV Cache 是长上下文推理的主要瓶颈",
+      "vLLM 的分页管理是近年最重要的显存优化创新"
+    ],
+    "tags": [
+      "GPU",
+      "显存优化",
+      "vLLM",
+      "FlashAttention"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "vLLM 的架构与优势",
+    "content": "vLLM 是当前最流行的 LLM 推理引擎之一。请解释 vLLM 的核心架构创新和相比传统方案的优势。",
+    "answer": "答案：vLLM 的核心创新是 PagedAttention 算法——将 KV Cache 按固定大小的 Block（通常 16 个 Token）分页管理，类似操作系统虚拟内存的分页机制。每次生成 Token 时只需要分配新 Block，Block 内的物理内存不要求连续。\n\n优势：1）显存利用率从传统方案的 20-40% 提升到 90% 以上，消除了内部和外部碎片；2）支持 Copy-on-Write，多个 Sequence 共享相同 Prompt 时共用 KV Cache（如 Beam Search）；3）支持高效的请求调度（Continuous Batching——随时将新到达的请求加入正在运行的 Batch 中，无需等当前 Batch 全部完成）；4）实现了近乎完美的内存共享和请求级抢占。\n\n扩展延伸：vLLM 还支持 prefix caching（前缀缓存，命中相同前缀时复用 KV Cache）、multimodal（图片输入）、LoRA serving（同一批请求使用不同的 LoRA 模块）。与其他推理引擎的比较：TGI 不支持 PagedAttention，TensorRT-LLM 性能接近但配置复杂，MindIE（华为）针对昇腾做了优化。",
+    "hints": [
+      "PagedAttention 是 vLLM 的核心，类比 OS 虚拟内存",
+      "Continuous Batching 大幅提升吞吐量"
+    ],
+    "tags": [
+      "vLLM",
+      "推理引擎",
+      "PagedAttention",
+      "推理优化"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NVIDIA Triton Inference Server 的作用",
+    "content": "NVIDIA Triton Inference Server 在 AI 推理基础设施中扮演什么角色？它的核心功能和优势是什么？",
+    "answer": "答案：Triton Inference Server 是一个高性能推理服务器，支持多种框架（TensorRT、PyTorch、ONNX、vLLM 等）和硬件（GPU、CPU、AWS Inferentia）。核心功能：\n1. 多模型管理：同时服务多个模型，支持模型版本管理（A/B 测试和金丝雀发布）。\n2. 动态批处理：自动将并发请求合并为 Batch（Dynamic Batching），支持延迟-吞吐量权衡配置。\n3. 模型流水线（Ensemble/Business Logic Scripting）：将多个模型串联成处理流水线，如 Detector → Classifier → Post-process。\n4. 并发执行模型实例：同一个模型加载多个实例（Model Instance），利用 GPU 并行能力。\n5. 指标和监控：内置 Prometheus 指标（延迟、吞吐量、队列长度）。\n\n优势：1）框架无关性——不同框架的模型可以在同一个推理服务中运行；2）高性能——TensorRT + 动态批处理 + 异步 I/O 的组合；3）企业级功能——模型预热、Graceful Shutdown、Rate Limiting。\n\n扩展延伸：Triton 的并发模型与 vLLM 的 Continuous Batching 互补——Triton 管理请求路由和批处理，vLLM 负责 LLM 推理内核的优化。多模型场景下 Triton + vLLM 的组合是推荐架构。",
+    "hints": [
+      "Triton 的核心价值是多框架支持和企业级特性",
+      "动态批处理是提升吞吐量的关键技术"
+    ],
+    "tags": [
+      "Triton",
+      "推理服务",
+      "模型部署",
+      "NVIDIA"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 上的 AI 工作负载调度",
+    "content": "在 Kubernetes 上部署 AI 训练和推理工作负载时，哪些特殊的调度策略和资源配置需要关注？",
+    "answer": "答案：AI 工作负载在 K8s 上的特殊调度策略：\n1. GPU 资源管理：使用 Device Plugin（NVIDIA/k8s-device-plugin）将 GPU 暴露为可调度资源，通过 resource.limit 指定卡数。需要处理 GPU 显存隔离问题（多个 Pod 不能共享同一 GPU，除非使用 MIG 或 MPS）。\n2. 节点亲和性和拓扑调度：数据并行训练需要将 Pod 调度到同一节点（低延迟 NVLink/NVSwitch）或同一机架（高带宽网络）。使用 NodeAffinity + TopologyManager 实现。\n3. Volcano 批量调度：原生 K8s Scheduler 不支持批量调度（Gang Scheduling）——分布式训练需要所有 Pod 同时就绪才能开始，否则等待的 Pod 会浪费资源。Volcano 的 Gang Scheduling 确保所有 Pod 同时分配。\n4. 优先级和抢占：推理服务需要高优先级保证延迟敏感，训练任务可以使用较低优先级。通过 PriorityClass + Preemption 实现。\n5. 存储：训练需要高性能共享存储（NFS/Lustre/Longhorn），推理需要快速加载模型。使用 PVC + ReadWriteMany。\n\n扩展延伸：Kubeflow 提供了完整的 ML on K8s 工具链，包括 Training Operator（分布式训练）、Katib（超参调优）、KFServing（推理服务）。LWS（LeaderWorkerSet）是 Google 新推出的专为分布式训练设计的 Workload API。",
+    "hints": [
+      "GPU 调度和拓扑感知调度是 AI 工作负载的特殊需求",
+      "Gang Scheduling 是分布式训练的必要条件"
+    ],
+    "tags": [
+      "Kubernetes",
+      "GPU",
+      "AI 基础设施",
+      "Volcano",
+      "调度"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型并行策略对比",
+    "content": "大模型训练和推理中常用的并行策略有哪些？请分别解释其原理和适用场景。",
+    "answer": "答案：主要并行策略：\n1. Data Parallelism（数据并行）：每个设备持有完整模型副本，切分数据批次，通过 AllReduce 同步梯度。最简单但模型必须能装进单卡。\n2. Tensor Parallelism（张量并行）：将单个 Transformer 层的权重沿 hidden 维度切分到多卡，每卡只计算一部分。需要卡间高频通信（AllReduce），适用于单机多卡场景。\n3. Pipeline Parallelism（流水线并行）：将模型按层切分成多个 Stage，每个 Stage 放在不同设备上。通信量低但存在 Bubble 问题（空闲等待）。\n4. Sequence Parallelism（序列并行）：沿序列长度维度切分，解决长序列训练的显存不足问题（Ring Attention）。\n\n扩展延伸：实际训练混合使用多种并行：3D Parallelism（Data + Tensor + Pipeline）是 Megatron-LM 的核心策略。FSDP（Fully Sharded Data Parallelism）是 Data Parallel 的进阶——将模型参数、梯度、优化器状态分片到各设备，需要时才 AllGather，是 Data Parallel 和 Tensor Parallel 的折中。",
+    "hints": [
+      "不同并行策略切分的维度不同：数据、层、参数、序列",
+      "训练大模型通常混合使用多种并行"
+    ],
+    "tags": [
+      "并行计算",
+      "分布式训练",
+      "Megatron",
+      "FSDP"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 显存优化技术",
+    "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
+    "answer": "答案：主流 GPU 显存优化技术：\n1. KV Cache：缓存 Attention 中已计算好的 K 和 V 矩阵，避免每次生成重复计算。但 KV Cache 会随序列长度线性增长，是长上下文推理的主要瓶颈。\n2. PagedAttention/vLLM：操作系统的虚拟内存分页思想——将 KV Cache 分页管理，按需分配，消除内部碎片和外部碎片。vLLM 因此比常规推理方案显存效率提升 2-4 倍。\n3. FlashAttention：通过 Tiling（分块）技术，将 Q、K、V 分块存入 SRAM 而非 HBM 计算，减少 HBM 访问次数，节省显存的同时加速（IO-Aware 算法）。\n4. Memory Offloading：将暂时不用的参数/状态卸载到 CPU 内存，需要时再加载回 GPU。如 DeepSpeed Offload。\n5. Activation Recomputation（Checkpointing）：训练时丢弃中间激活值，反向传播时重新计算，以时间换空间。\n\n扩展延伸：KVCache 的进一步优化包括 Multi-Query Attention（MQA，多个 Query Head 共享一个 KV Head）和 Grouped-Query Attention（GQA，折中方案，LLaMA 2/3 使用）。投机解码（Speculative Decoding）也通过减少模型调用次数间接减少显存压力。",
+    "hints": [
+      "KV Cache 是长上下文推理的主要瓶颈",
+      "vLLM 的分页管理是近年最重要的显存优化创新"
+    ],
+    "tags": [
+      "GPU",
+      "显存优化",
+      "vLLM",
+      "FlashAttention"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "vLLM 的架构与优势",
+    "content": "vLLM 是当前最流行的 LLM 推理引擎之一。请解释 vLLM 的核心架构创新和相比传统方案的优势。",
+    "answer": "答案：vLLM 的核心创新是 PagedAttention 算法——将 KV Cache 按固定大小的 Block（通常 16 个 Token）分页管理，类似操作系统虚拟内存的分页机制。每次生成 Token 时只需要分配新 Block，Block 内的物理内存不要求连续。\n\n优势：1）显存利用率从传统方案的 20-40% 提升到 90% 以上，消除了内部和外部碎片；2）支持 Copy-on-Write，多个 Sequence 共享相同 Prompt 时共用 KV Cache（如 Beam Search）；3）支持高效的请求调度（Continuous Batching——随时将新到达的请求加入正在运行的 Batch 中，无需等当前 Batch 全部完成）；4）实现了近乎完美的内存共享和请求级抢占。\n\n扩展延伸：vLLM 还支持 prefix caching（前缀缓存，命中相同前缀时复用 KV Cache）、multimodal（图片输入）、LoRA serving（同一批请求使用不同的 LoRA 模块）。与其他推理引擎的比较：TGI 不支持 PagedAttention，TensorRT-LLM 性能接近但配置复杂，MindIE（华为）针对昇腾做了优化。",
+    "hints": [
+      "PagedAttention 是 vLLM 的核心，类比 OS 虚拟内存",
+      "Continuous Batching 大幅提升吞吐量"
+    ],
+    "tags": [
+      "vLLM",
+      "推理引擎",
+      "PagedAttention",
+      "推理优化"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NVIDIA Triton Inference Server 的作用",
+    "content": "NVIDIA Triton Inference Server 在 AI 推理基础设施中扮演什么角色？它的核心功能和优势是什么？",
+    "answer": "答案：Triton Inference Server 是一个高性能推理服务器，支持多种框架（TensorRT、PyTorch、ONNX、vLLM 等）和硬件（GPU、CPU、AWS Inferentia）。核心功能：\n1. 多模型管理：同时服务多个模型，支持模型版本管理（A/B 测试和金丝雀发布）。\n2. 动态批处理：自动将并发请求合并为 Batch（Dynamic Batching），支持延迟-吞吐量权衡配置。\n3. 模型流水线（Ensemble/Business Logic Scripting）：将多个模型串联成处理流水线，如 Detector → Classifier → Post-process。\n4. 并发执行模型实例：同一个模型加载多个实例（Model Instance），利用 GPU 并行能力。\n5. 指标和监控：内置 Prometheus 指标（延迟、吞吐量、队列长度）。\n\n优势：1）框架无关性——不同框架的模型可以在同一个推理服务中运行；2）高性能——TensorRT + 动态批处理 + 异步 I/O 的组合；3）企业级功能——模型预热、Graceful Shutdown、Rate Limiting。\n\n扩展延伸：Triton 的并发模型与 vLLM 的 Continuous Batching 互补——Triton 管理请求路由和批处理，vLLM 负责 LLM 推理内核的优化。多模型场景下 Triton + vLLM 的组合是推荐架构。",
+    "hints": [
+      "Triton 的核心价值是多框架支持和企业级特性",
+      "动态批处理是提升吞吐量的关键技术"
+    ],
+    "tags": [
+      "Triton",
+      "推理服务",
+      "模型部署",
+      "NVIDIA"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 上的 AI 工作负载调度",
+    "content": "在 Kubernetes 上部署 AI 训练和推理工作负载时，哪些特殊的调度策略和资源配置需要关注？",
+    "answer": "答案：AI 工作负载在 K8s 上的特殊调度策略：\n1. GPU 资源管理：使用 Device Plugin（NVIDIA/k8s-device-plugin）将 GPU 暴露为可调度资源，通过 resource.limit 指定卡数。需要处理 GPU 显存隔离问题（多个 Pod 不能共享同一 GPU，除非使用 MIG 或 MPS）。\n2. 节点亲和性和拓扑调度：数据并行训练需要将 Pod 调度到同一节点（低延迟 NVLink/NVSwitch）或同一机架（高带宽网络）。使用 NodeAffinity + TopologyManager 实现。\n3. Volcano 批量调度：原生 K8s Scheduler 不支持批量调度（Gang Scheduling）——分布式训练需要所有 Pod 同时就绪才能开始，否则等待的 Pod 会浪费资源。Volcano 的 Gang Scheduling 确保所有 Pod 同时分配。\n4. 优先级和抢占：推理服务需要高优先级保证延迟敏感，训练任务可以使用较低优先级。通过 PriorityClass + Preemption 实现。\n5. 存储：训练需要高性能共享存储（NFS/Lustre/Longhorn），推理需要快速加载模型。使用 PVC + ReadWriteMany。\n\n扩展延伸：Kubeflow 提供了完整的 ML on K8s 工具链，包括 Training Operator（分布式训练）、Katib（超参调优）、KFServing（推理服务）。LWS（LeaderWorkerSet）是 Google 新推出的专为分布式训练设计的 Workload API。",
+    "hints": [
+      "GPU 调度和拓扑感知调度是 AI 工作负载的特殊需求",
+      "Gang Scheduling 是分布式训练的必要条件"
+    ],
+    "tags": [
+      "Kubernetes",
+      "GPU",
+      "AI 基础设施",
+      "Volcano",
+      "调度"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型并行策略对比",
+    "content": "大模型训练和推理中常用的并行策略有哪些？请分别解释其原理和适用场景。",
+    "answer": "答案：主要并行策略：\n1. Data Parallelism（数据并行）：每个设备持有完整模型副本，切分数据批次，通过 AllReduce 同步梯度。最简单但模型必须能装进单卡。\n2. Tensor Parallelism（张量并行）：将单个 Transformer 层的权重沿 hidden 维度切分到多卡，每卡只计算一部分。需要卡间高频通信（AllReduce），适用于单机多卡场景。\n3. Pipeline Parallelism（流水线并行）：将模型按层切分成多个 Stage，每个 Stage 放在不同设备上。通信量低但存在 Bubble 问题（空闲等待）。\n4. Sequence Parallelism（序列并行）：沿序列长度维度切分，解决长序列训练的显存不足问题（Ring Attention）。\n\n扩展延伸：实际训练混合使用多种并行：3D Parallelism（Data + Tensor + Pipeline）是 Megatron-LM 的核心策略。FSDP（Fully Sharded Data Parallelism）是 Data Parallel 的进阶——将模型参数、梯度、优化器状态分片到各设备，需要时才 AllGather，是 Data Parallel 和 Tensor Parallel 的折中。",
+    "hints": [
+      "不同并行策略切分的维度不同：数据、层、参数、序列",
+      "训练大模型通常混合使用多种并行"
+    ],
+    "tags": [
+      "并行计算",
+      "分布式训练",
+      "Megatron",
+      "FSDP"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 显存优化技术",
+    "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
+    "answer": "答案：主流 GPU 显存优化技术：\n1. KV Cache：缓存 Attention 中已计算好的 K 和 V 矩阵，避免每次生成重复计算。但 KV Cache 会随序列长度线性增长，是长上下文推理的主要瓶颈。\n2. PagedAttention/vLLM：操作系统的虚拟内存分页思想——将 KV Cache 分页管理，按需分配，消除内部碎片和外部碎片。vLLM 因此比常规推理方案显存效率提升 2-4 倍。\n3. FlashAttention：通过 Tiling（分块）技术，将 Q、K、V 分块存入 SRAM 而非 HBM 计算，减少 HBM 访问次数，节省显存的同时加速（IO-Aware 算法）。\n4. Memory Offloading：将暂时不用的参数/状态卸载到 CPU 内存，需要时再加载回 GPU。如 DeepSpeed Offload。\n5. Activation Recomputation（Checkpointing）：训练时丢弃中间激活值，反向传播时重新计算，以时间换空间。\n\n扩展延伸：KVCache 的进一步优化包括 Multi-Query Attention（MQA，多个 Query Head 共享一个 KV Head）和 Grouped-Query Attention（GQA，折中方案，LLaMA 2/3 使用）。投机解码（Speculative Decoding）也通过减少模型调用次数间接减少显存压力。",
+    "hints": [
+      "KV Cache 是长上下文推理的主要瓶颈",
+      "vLLM 的分页管理是近年最重要的显存优化创新"
+    ],
+    "tags": [
+      "GPU",
+      "显存优化",
+      "vLLM",
+      "FlashAttention"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "vLLM 的架构与优势",
+    "content": "vLLM 是当前最流行的 LLM 推理引擎之一。请解释 vLLM 的核心架构创新和相比传统方案的优势。",
+    "answer": "答案：vLLM 的核心创新是 PagedAttention 算法——将 KV Cache 按固定大小的 Block（通常 16 个 Token）分页管理，类似操作系统虚拟内存的分页机制。每次生成 Token 时只需要分配新 Block，Block 内的物理内存不要求连续。\n\n优势：1）显存利用率从传统方案的 20-40% 提升到 90% 以上，消除了内部和外部碎片；2）支持 Copy-on-Write，多个 Sequence 共享相同 Prompt 时共用 KV Cache（如 Beam Search）；3）支持高效的请求调度（Continuous Batching——随时将新到达的请求加入正在运行的 Batch 中，无需等当前 Batch 全部完成）；4）实现了近乎完美的内存共享和请求级抢占。\n\n扩展延伸：vLLM 还支持 prefix caching（前缀缓存，命中相同前缀时复用 KV Cache）、multimodal（图片输入）、LoRA serving（同一批请求使用不同的 LoRA 模块）。与其他推理引擎的比较：TGI 不支持 PagedAttention，TensorRT-LLM 性能接近但配置复杂，MindIE（华为）针对昇腾做了优化。",
+    "hints": [
+      "PagedAttention 是 vLLM 的核心，类比 OS 虚拟内存",
+      "Continuous Batching 大幅提升吞吐量"
+    ],
+    "tags": [
+      "vLLM",
+      "推理引擎",
+      "PagedAttention",
+      "推理优化"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "NVIDIA Triton Inference Server 的作用",
+    "content": "NVIDIA Triton Inference Server 在 AI 推理基础设施中扮演什么角色？它的核心功能和优势是什么？",
+    "answer": "答案：Triton Inference Server 是一个高性能推理服务器，支持多种框架（TensorRT、PyTorch、ONNX、vLLM 等）和硬件（GPU、CPU、AWS Inferentia）。核心功能：\n1. 多模型管理：同时服务多个模型，支持模型版本管理（A/B 测试和金丝雀发布）。\n2. 动态批处理：自动将并发请求合并为 Batch（Dynamic Batching），支持延迟-吞吐量权衡配置。\n3. 模型流水线（Ensemble/Business Logic Scripting）：将多个模型串联成处理流水线，如 Detector → Classifier → Post-process。\n4. 并发执行模型实例：同一个模型加载多个实例（Model Instance），利用 GPU 并行能力。\n5. 指标和监控：内置 Prometheus 指标（延迟、吞吐量、队列长度）。\n\n优势：1）框架无关性——不同框架的模型可以在同一个推理服务中运行；2）高性能——TensorRT + 动态批处理 + 异步 I/O 的组合；3）企业级功能——模型预热、Graceful Shutdown、Rate Limiting。\n\n扩展延伸：Triton 的并发模型与 vLLM 的 Continuous Batching 互补——Triton 管理请求路由和批处理，vLLM 负责 LLM 推理内核的优化。多模型场景下 Triton + vLLM 的组合是推荐架构。",
+    "hints": [
+      "Triton 的核心价值是多框架支持和企业级特性",
+      "动态批处理是提升吞吐量的关键技术"
+    ],
+    "tags": [
+      "Triton",
+      "推理服务",
+      "模型部署",
+      "NVIDIA"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 上的 AI 工作负载调度",
+    "content": "在 Kubernetes 上部署 AI 训练和推理工作负载时，哪些特殊的调度策略和资源配置需要关注？",
+    "answer": "答案：AI 工作负载在 K8s 上的特殊调度策略：\n1. GPU 资源管理：使用 Device Plugin（NVIDIA/k8s-device-plugin）将 GPU 暴露为可调度资源，通过 resource.limit 指定卡数。需要处理 GPU 显存隔离问题（多个 Pod 不能共享同一 GPU，除非使用 MIG 或 MPS）。\n2. 节点亲和性和拓扑调度：数据并行训练需要将 Pod 调度到同一节点（低延迟 NVLink/NVSwitch）或同一机架（高带宽网络）。使用 NodeAffinity + TopologyManager 实现。\n3. Volcano 批量调度：原生 K8s Scheduler 不支持批量调度（Gang Scheduling）——分布式训练需要所有 Pod 同时就绪才能开始，否则等待的 Pod 会浪费资源。Volcano 的 Gang Scheduling 确保所有 Pod 同时分配。\n4. 优先级和抢占：推理服务需要高优先级保证延迟敏感，训练任务可以使用较低优先级。通过 PriorityClass + Preemption 实现。\n5. 存储：训练需要高性能共享存储（NFS/Lustre/Longhorn），推理需要快速加载模型。使用 PVC + ReadWriteMany。\n\n扩展延伸：Kubeflow 提供了完整的 ML on K8s 工具链，包括 Training Operator（分布式训练）、Katib（超参调优）、KFServing（推理服务）。LWS（LeaderWorkerSet）是 Google 新推出的专为分布式训练设计的 Workload API。",
+    "hints": [
+      "GPU 调度和拓扑感知调度是 AI 工作负载的特殊需求",
+      "Gang Scheduling 是分布式训练的必要条件"
+    ],
+    "tags": [
+      "Kubernetes",
+      "GPU",
+      "AI 基础设施",
+      "Volcano",
+      "调度"
+    ]
   }
 ]

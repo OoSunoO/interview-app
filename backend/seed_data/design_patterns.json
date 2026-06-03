@@ -628,5 +628,190 @@
       "Sentinel",
       "RateLimiter"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "单例模式全场景分析与防破坏",
+    "content": "除了双重检查锁定和静态内部类，还有哪些实现单例的方式？如何防止反射和序列化破坏单例？Spring 的单例 Bean 与 GOF 单例模式有何不同？",
+    "answer": "答案：单例模式六种实现——饿汉、懒汉（synchronized）、双重检查锁（DCL volatile）、静态内部类、枚举、ThreadLocal 线程级单例。防御破坏：构造器内加标志位（防反射创建第二实例），实现 readResolve()（防反序列化创建新实例）。Spring 单例 Bean 是容器级别的实例管理，同类可注册多个不同 Bean，与 JVM 级别的 GOF 单例本质不同。\n\n解析：六种实现对比——1）饿汉：类加载时初始化（JVM 线程安全），可能浪费资源（提前创建）。2）懒汉（synchronized 方法）：线程安全但对每次访问都加锁，性能差。3）DCL + volatile：JDK 5+ 必需 volatile 禁止 new Singleton() 的指令重排序。4）静态内部类：Holder 模式，JLS 保证类加载线程安全且懒加载，最推荐的懒加载方案。5）枚举：JVM 保证实例唯一，天然免疫反射和反序列化攻击（Enum 的构造器不可反射调用）。6）ThreadLocal 单例：每个线程一个实例（如 SimpleDateFormat）。反序列化破坏：ObjectInputStream 反射 readObject() 创建新实例，通过 readResolve() 返回已有实例防御。反射破坏：Constructor.setAccessible(true) + newInstance()，在构造器中用 boolean 标志位检测。\n\n扩展延伸：Spring 单例的作用域——Spring IoC 容器默认 singleton scope（每个容器一个实例），但可通过 @Scope(\"prototype\") 修改。一个 @Component 类可以注册为多个 Bean（不同名称和配置）。与 GOF 单模式本质区别：谁控制实例创建——GOF 在类内部控制（私有构造器），Spring 在容器外部控制（反射创建）。分布式系统下单例需分布式锁或选主。",
+    "hints": [
+      "为什么枚举可以天然防御反射和反序列化",
+      "Spring 单例和 GOF 单例的实例控制权有何不同"
+    ],
+    "tags": [
+      "设计模式",
+      "单例",
+      "枚举",
+      "Spring",
+      "反序列化"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "工厂模式在主流框架中的实战应用",
+    "content": "Spring、MyBatis、SLF4J 等主流框架中如何实现工厂模式？如何通过工厂模式设计可扩展的插件体系？",
+    "answer": "答案：Spring 的 BeanFactory 是所有 IoC 容器的根接口；MyBatis 的 SqlSessionFactory 创建 SqlSession；SLF4J 的 LoggerFactory 按 Logger 名称创建 Logger。工厂模式实现插件体系的核心机制是「工厂接口 + SPI 注册 + 反射加载」的组合。\n\n解析：框架中的工厂模式——1）Spring BeanFactory：最基础的容器接口，getBean() 通过反射或工厂方法创建实例。FactoryBean 接口自定义创建逻辑（如 FeignClientFactoryBean、MapperFactoryBean）。抽象工厂——BeanDefinitionRegistryPostProcessor 批量注册 BeanDefinition。2）MyBatis SqlSessionFactory：通过 SqlSessionFactoryBuilder 解析配置构建，openSession() 每次打开会话。SqlSessionFactory 是工厂方法，MyBatis-Spring 整合时用 @MapperScan 扫描接口注册 MapperFactoryBean。3）SLF4J LoggerFactory：getLogger(Class) 返回 Logger 实例，底层绑定通过 SPI 查找具体实现（logback/log4j2）。插件化架构模式：定义扩展点接口 → SPI 声明实现 → ServiceLoader 或 @Autowired 注入集合 → 按类型选择实现。Spring 中 @Autowired List<Extension> 自动收集所有扩展实现。\n\n扩展延伸：策略 + 工厂组合模式——Map<String, Strategy> @Autowired 自动注入，通过 getStrategy(type) 选择。在支付网关（微信/支付宝/银联）、审批流（多级别审批策略）、消息推送（短信/邮件/推送）中广泛使用。MyBatis Mapper 动态代理——不是静态工厂而是 JDK Proxy 动态代理，Spring + MyBatis 整合时将 Mapper 接口代理注入为 Bean。",
+    "hints": [
+      "FactoryBean 和 BeanFactory 有什么区别",
+      "为什么 MyBatis 选择动态代理而非静态工厂创建 Mapper"
+    ],
+    "tags": [
+      "设计模式",
+      "工厂",
+      "Spring",
+      "MyBatis",
+      "SPI"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "观察者模式与事件驱动架构的演化",
+    "content": "观察者模式和发布-订阅模式有什么区别？观察者模式如何演变为现代事件驱动架构？Spring 的事件机制是如何实现的？",
+    "answer": "答案：观察者模式中观察者直接注册到主题（一对多，紧耦合）。发布-订阅模式通过消息代理解耦发布者和订阅者。观察者模式是事件驱动架构的雏形。现代 EDA 通过事件总线/消息队列实现异步解耦。Spring 事件机制基于 ApplicationEvent + ApplicationListener + ApplicationEventPublisher，支持同步/异步事件驱动。\n\n解析：观察者模式结构——Subject（维护观察者列表，notify 遍历调用）→ Observer（update 接口）。缺点：Subject 持有 Observer 引用，耦合强，通知均为同步阻塞。发布-订阅演进——引入消息代理（Event Channel/Broker）：Publisher → Broker → Subscriber。优点：完全解耦（Publisher 不知道 Subscriber 存在）、支持异步、支持消息过滤和路由（Topic/Exchange）。Spring 事件机制——1）定义事件类（继承 ApplicationEvent 或使用 GenericApplicationEvent）。2）@EventListener 注解方法（或实现 ApplicationListener 接口）。3）ApplicationEventPublisher.publishEvent() 发布。4）默认同步（同一线程），@Async 实现异步。5）@TransactionalEventListener 支持事务阶段（AFTER_COMMIT/AFTER_ROLLBACK）。\n\n扩展延伸：观察者模式在 GUI 编程中广泛应用（Swing/AWT 的 Listener，JS 的 addEventListener）。现代事件驱动演进路线：观察者模式 → 事件总线（Guava EventBus/Spring Events）→ 消息队列（RabbitMQ/Kafka）→ 事件溯源（Event Sourcing）+ CQRS。微服务中观察者模式升级为服务间事件驱动通信——通过 Kafka/RocketMQ 实现跨服务事件通知和最终一致性。注意：观察者不适用于一对多的强依赖场景（一个 observer 失败影响全部），应改用 CompletableFuture 异步编排或消息队列。",
+    "hints": [
+      "Spring 的 @TransactionalEventListener 有什么用",
+      "观察者模式升级到消息队列解决了哪些问题"
+    ],
+    "tags": [
+      "设计模式",
+      "观察者",
+      "发布订阅",
+      "Spring",
+      "事件驱动"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "建造者模式与流式 API 设计",
+    "content": "建造者模式如何解决构造器参数过多的问题？Lombok @Builder 的底层实现原理是什么？如何在 API 设计中实现流畅的链式调用？",
+    "answer": "答案：建造者模式将复杂对象的构建拆分为多个步骤，实现参数灵活组合、对象不可变、代码可读性高。Lombok @Builder 在编译期生成静态内部 Builder 类（Javac Annotation Processor），每个字段生成同名方法返回 Builder 自身，最后 build() 创建目标对象。流式 API 核心：每个方法返回 this，提供终端方法结束链式调用。\n\n解析：传统方案对比——1）重叠构造器（Telescoping Constructor）：参数数量组合爆炸，类型易混淆。2）JavaBean 模式（无参构造 + setter）：对象可能进入不一致状态（设置一半），final 约束丢失。3）建造者模式：构造器 private，Builder 内部类负责校验和构建。优点：对象不可变（所有字段 final）/ 可分步设置 / 构建前完成校验。Lombok @Builder 原理：APT 在编译时生成 XXXBuilder 内部类，每个字段对应方法返回 Builder，build() 调用全参构造器。核心注解 @Builder.Default 处理默认值。流式 API 设计要点——方法名用 and/with 前缀，提供终端操作（build/execute/collect）结束链式调用，支持条件链式构造（带 if 判断的 addIf）。\n\n扩展延伸：建造者模式在 Java 标准库中的应用——StringBuilder（链式 append）、Stream API（map/filter 链式）、Optional（map/orElse 链式）、OkHttp's Request.Builder。Jackson JsonNodeBuilder。建造者模式与 Lombok @Builder 配合陷阱——@Builder 生成全参构造器，手动写构造器需加 @AllArgsConstructor 或 @Builder.ObtainVia。级联 Builder（子类继承时）需用 self() 返回子类 Builder 类型。Guava 的 ImmutableList.Builder 也是经典实现。",
+    "hints": [
+      "建造者模式如何保证构造出的对象是不可变的",
+      "Lombok @Builder 和 @AllArgsConstructor 的关系"
+    ],
+    "tags": [
+      "设计模式",
+      "建造者",
+      "Lombok",
+      "流式API",
+      "Builder"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "适配器模式与 SLF4J 门面设计",
+    "content": "适配器模式和门面模式（外观模式）有什么区别？SLF4J 作为日志门面如何统一多种日志框架？实际项目中适配器模式的应用场景有哪些？",
+    "answer": "答案：适配器模式解决接口不兼容——将一个接口转为客户端期望的另一个接口。门面模式为子系统提供统一高层接口。SLF4J 通过 SPI 加载底层绑定（logback/log4j2/java.util.logging），每种框架实现 SLF4J 的 Binding 适配器。适配器应用场景：接口兼容（旧系统迁移）、三方库包装、遗留系统集成、分页适配。\n\n解析：适配器模式结构——Target（目标接口）、Adaptee（被适配者）、Adapter（转换器，持有 Adaptee 引用实现 Target 接口）。两种形式：1）类适配器（继承 Adaptee，不推荐，Java 单继承限制）。2）对象适配器（组合 Adaptee，推荐）。SLF4J 架构——SLF4J API（Logger/LoggerFactory）→ SPI 选择绑定 → 具体适配器（logback-classic/log4j-slf4j-impl/jul-to-slf4j）→ 底层日志框架。SLF4J 作为门面（Facade）的优点：1）应用代码只依赖 SLF4J，不依赖具体框架。2）切换日志框架只需替换 jar 包，代码零改动。3）通过桥接 jar（jcl-over-slf4j/log4j-over-slf4j）统一项目中多种日志依赖。门面模式与适配器区别——门面提供新接口简化使用（例如 JdbcTemplate 封装 JDBC 操作），适配器转换已有接口保持兼容。\n\n扩展延伸：适配器在 Spring 中的经典实现——1）HandlerAdapter：MVC 中不同控制器（@Controller/HttpRequestHandler）通过适配器统一调用。2）AOP AdvisorAdapter：将不同通知类型适配到统一拦截器链。门面在 Spring 中的体现——RestTemplate（封装 HTTP 客户端）、JdbcTemplate（封装 JDBC）、TransactionTemplate（声明事务）。适配器 vs 装饰器：装饰器增强功能（BufferedInputStream 增强 FileInputStream），适配器转换接口形式（Arrays.asList 转换数组到 List）。设计原则——适配器模式是「开闭原则」的典型实践：通过适配器扩展而非修改原有类。",
+    "hints": [
+      "SLF4J 的桥接 jar（jcl-over-slf4j）和绑定 jar 有什么区别",
+      "适配器模式和装饰器模式在结构上相似，如何区分它们"
+    ],
+    "tags": [
+      "设计模式",
+      "适配器",
+      "门面",
+      "SLF4J",
+      "Spring MVC"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "状态模式（State Pattern）",
+    "content": "什么是状态模式？它解决什么问题？与策略模式有什么区别？请结合状态机的例子说明状态模式的应用。",
+    "answer": "答案：状态模式允许对象在内部状态改变时改变其行为，看起来就像对象本身的类变了。它通过将每个状态的行为封装到独立的状态类中，消除大量的条件判断语句。\n\n解析：状态模式的结构——1）Context（上下文）：持有当前状态对象的引用，将行为委托给状态对象处理。2）State（抽象状态）：定义所有状态下的行为接口。3）ConcreteState（具体状态）：实现特定状态下的行为，并负责在合适的时候切换到下一个状态。关键区别 vs 策略模式——状态模式的状态之间有关联和流转，状态的切换由状态对象或 Context 管理。策略模式的策略之间独立，由客户端（调用方）选择和切换策略。状态模式的行为变化是自动的（由内部状态驱动），策略模式的行为变化是主动的（由外部选择）。\n\n扩展延伸：经典应用——1）TCP 连接状态机：ESTABLISHED（收发数据）、CLOSE_WAIT（等待关闭）、TIME_WAIT（等待确认）。每个状态对 open/close/acknowledge 等操作有不同的响应。2）订单状态流转：待支付->已支付->已发货->已收货->已完成。每个状态下对「取消」「退款」「修改地址」等操作有不同的处理逻辑。3）游戏角色状态：普通->狂暴->眩晕->隐身，不同状态下移动、攻击等行为不同。状态模式的优点：状态转换逻辑集中管理，新增状态不影响现有代码（开闭原则）。缺点：状态类数量会膨胀。",
+    "hints": [
+      "状态模式和策略模式的结构很像但意图不同——关键在于状态之间是否可以转换",
+      "状态模式如何消除大量的 if-else 或 switch-case"
+    ],
+    "tags": [
+      "状态模式",
+      "State Pattern",
+      "设计模式",
+      "GoF"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "策略模式（Strategy Pattern）",
+    "content": "什么是策略模式？它的使用场景是什么？如何在运行时动态切换策略？请以支付方式或排序算法为例说明。",
+    "answer": "答案：策略模式定义一系列算法（策略），将每个算法封装在独立的策略类中，使它们可以互相替换。客户端可以在运行时选择不同的策略，而不用修改使用策略的上下文代码。\n\n解析：策略模式的结构——1）Strategy（抽象策略）：定义所有策略必须实现的方法。2）ConcreteStrategy（具体策略）：实现具体的算法或行为。3）Context（上下文）：持有一个策略引用，在运行时可以切换策略。运行时切换策略——Context 暴露 setStrategy() 方法，客户端根据条件选择策略并注入。示例：支付系统——策略接口 PayStrategy.processPayment(amount)。具体策略：AlipayStrategy、WechatPayStrategy、CreditCardStrategy。Context（OrderService）保存策略引用，用户选择支付方式时调用 setStrategy(payStrategy) 切换，结算时调用 strategy.processPayment(total)。\n\n扩展延伸：策略模式的典型应用——1）Java Comparator 接口：Collections.sort(list, comparator) 传入不同比较器即不同排序策略。2）Spring ResourceLoader：根据资源类型（classpath:/、file:/、http://）使用不同策略加载资源。3）线程池拒绝策略：AbortPolicy、DiscardPolicy、CallerRunsPolicy 等都是策略模式的体现。与状态模式的区别：策略之间互相独立，没有状态流转（状态模式的状态之间有因果关系）。优点：消除条件判断、符合开闭原则、策略可独立测试和复用。缺点：客户端需要了解不同策略的区别（违反最少知识原则）。",
+    "hints": [
+      "Comparator 接口本身就是策略模式的最佳案例",
+      "为什么策略模式和状态模式结构相似但意图完全不同"
+    ],
+    "tags": [
+      "策略模式",
+      "Strategy Pattern",
+      "设计模式",
+      "GoF"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "模板方法模式（Template Method Pattern）",
+    "content": "什么是模板方法模式？它如何实现「好莱坞原则」（Don't call us, we'll call you）？在框架设计中为什么模板方法模式非常重要？",
+    "answer": "答案：模板方法模式在父类中定义一个操作中的算法骨架（模板方法），将一些步骤延迟到子类中实现。子类可以重新定义算法的某些特定步骤而不改变算法的结构。好莱坞原则体现了「父类调用子类」的控制反转思想。\n\n解析：模板方法模式的结构——1）AbstractClass（抽象类）：定义模板方法（通常是 final，不可重写），其中包含一系列步骤调用。步骤分为两类：抽象方法（子类必须实现）和钩子方法（Hook，子类可选覆盖）。2）ConcreteClass（具体类）：实现抽象方法，可选覆盖钩子方法来控制模板流程中的特定步骤。好莱坞原则——父类（框架）控制算法的整体流程，在适当的时候调用子类（用户代码）的方法。子类不决定何时被调用，而是被动地等待父类调用。\n\n扩展延伸：模板方法模式的经典应用——1）Spring 中的 JdbcTemplate：query() 方法定义了「获取连接->创建 Statement->执行 SQL->处理 ResultSet->关闭连接」的骨架，用户只需实现 RowMapper 回调来处理结果集。2）Servlet 中的 doGet()/doPost()：service() 模板方法处理 HTTP 请求分发，子类覆盖 doGet() 实现具体逻辑。3）Java 的 AbstractList：定义了一系列公共操作，子类只需实现 get() 和 size()。4）JUnit：TestCase 的 runBare() 定义了 setUp()->runTest()->tearDown() 的测试执行骨架。优点：代码复用、扩展方便（修改公共行为只需改父类）。缺点：限制了灵活性（子类必须遵循父类的算法骨架）。",
+    "hints": [
+      "模板方法模式中的钩子（Hook）方法有什么作用——子类如何控制父类算法的执行",
+      "JdbcTemplate 是模板方法模式还是策略模式"
+    ],
+    "tags": [
+      "模板方法",
+      "Template Method",
+      "设计模式",
+      "好莱坞原则"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "命令模式（Command Pattern）",
+    "content": "什么是命令模式？它解决了什么设计问题？命令模式如何实现操作的撤销（Undo）、重做（Redo）和队列化？",
+    "answer": "答案：命令模式将请求封装为对象，使请求的发送者（调用者）和接收者（执行者）解耦。命令对象可以参数化、队列化、持久化、支持撤销和重做。\n\n解析：命令模式的结构——1）Command（抽象命令）：声明 execute() 方法，可选 undo() 方法。2）ConcreteCommand（具体命令）：持有接收者（Receiver）的引用，在 execute() 中调用接收者的业务方法。3）Invoker（调用者）：持有命令对象，在需要时调用 command.execute()。4）Receiver（接收者）：实际执行请求的业务逻辑。撤销和重做——1）每个命令保存执行前的状态（快照或增量），undo() 方法恢复该状态。2）历史记录栈（Undo Stack）：每次 execute() 将命令压栈，撤销时弹栈并调用 undo()。3）重做（Redo）栈：撤销时从 Undo 栈弹出并压入 Redo 栈，重做时从 Redo 栈弹出并重新 execute()。\n\n扩展延伸：命令模式的经典应用——1）编辑器撤销/重做：每个编辑操作（插入字符、删除、替换格式）都是一个命令，保存执行前后的文档快照或操作记录。2）Java Runnable：将代码封装为 Runnable 对象，可提交到线程池执行（线程池是 Invoker）。3）事务回滚：数据库事务中每个写操作记录 undo 日志，回滚时依次执行 undo（Command 模式的工程实践）。4）任务队列和定时执行：将任务封装为命令对象，放入队列异步执行或定时调度。命令模式 vs 策略模式：命令模式关注「做什么」（将操作封装为对象），策略模式关注「怎么做」（将算法封装为对象）。",
+    "hints": [
+      "Undo 操作需要保存哪些信息——快照方式 vs 增量方式各有什么优劣",
+      "Java 的 Runnable 接口是命令模式吗——它缺少什么"
+    ],
+    "tags": [
+      "命令模式",
+      "Command Pattern",
+      "设计模式",
+      "Undo/Redo"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "责任链模式（Chain of Responsibility）",
+    "content": "什么是责任链模式？它如何实现请求发送者和接收者的解耦？请结合 Servlet Filter 或拦截器的例子分析。",
+    "answer": "答案：责任链模式将多个处理对象连成一条链，沿着链传递请求直到有对象处理它。每个处理对象决定自己是否处理以及是否将请求传递给下一个处理者。发送者不需要知道哪个接收者会处理请求。\n\n解析：责任链模式的结构——1）Handler（抽象处理者）：定义处理请求的接口，持有下一个处理者的引用。2）ConcreteHandler（具体处理者）：检查请求是否符合自己的处理条件，符合则处理并终止传递（或继续传递），不符合则传递给下一个。链的构建——可以是链表结构（每个 Handler 持有 next 指针），也可以是集合结构（遍历 Handler 列表逐一尝试）。两种传递模式：纯责任链（一个处理者处理后就终止），不纯责任链（请求经过每个处理者，每个处理者都执行自己的逻辑后再传递，如 Servlet Filter）。\n\n扩展延伸：经典应用——1）Servlet Filter：javax.servlet.Filter 的 doFilter(ServletRequest, ServletResponse, FilterChain) ——每个 Filter 在 doFilter() 中执行前置逻辑，调用 chain.doFilter() 交给下一个 Filter，返回时执行后置逻辑。典型的 AOP 拦截器模式。2）Spring Security Filter Chain：每个 SecurityFilter 负责一种安全检查（认证、授权、CORS、CSRF 等），全部通过后才到达 Controller。3）Java Logger：logger.trace() -> logger.debug() -> logger.info() -> logger.warn() -> logger.error()，每个级别决定是否输出。4）审批流：请假审批——直属主管 -> 部门经理 -> HR -> CEO，每个节点根据自己的权限决定审批或转交。责任链优点：降低耦合、灵活组合处理顺序。缺点：调试困难（请求最终处理者不易跟踪）、过长的链影响性能。",
+    "hints": [
+      "Servlet Filter 与责任链模式的关系——doFilter() 调用 chain.doFilter() 的执行流程",
+      "纯责任链和不纯责任链的区别——Spring Security Filter 属于哪一种"
+    ],
+    "tags": [
+      "责任链模式",
+      "Chain of Responsibility",
+      "设计模式",
+      "Filter"
+    ]
   }
 ]
