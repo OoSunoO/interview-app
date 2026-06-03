@@ -816,5 +816,101 @@
       "分库分表",
       "Vitess"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "TiDB TiKV/TiFlash 存储引擎架构深度剖析",
+    "content": "请深入分析 TiDB 的存储引擎层 TiKV 和 TiFlash 的架构设计，包括 TiKV 的 Raft 复制、Region 调度、MVCC 实现，以及 TiFlash 的列式存储和 Raft Learner 角色。",
+    "answer": "答案：TiDB 是 NewSQL 数据库，采用计算与存储分离的架构。TiKV 是其行式存储引擎，基于 RocksDB（LSM-Tree）本地存储，通过 Raft 共识协议实现多副本强一致性。TiFlash 是 TiKV 的列式存储扩展（Raft Learner），异步复制数据后以列式格式存储，专为 OLAP 查询优化。两者在同一个集群中共存，实现 HTAP 能力。\n\n解析：TiKV 的核心设计：1) 数据以 Region 为单位管理（默认 96MB），每个 Region 有多个副本（通常是 3 副本），副本之间通过 Raft 协议同步写入。Region 是数据调度和负载均衡的基本单元。2) PD（Placement Driver）负责全局元数据管理和 Region 调度 —— 自动拆分/合并 Region、在节点间移动 Region 均衡负载、管理 Raft group 的 Leader 分布。3) MVCC 通过 Key 追加时间戳实现（_key_version），读请求使用 snapshot read 在特定时间戳上执行。TiFlash 的处理：作为 Raft Learner 从 TiKV Raft Group 异步复制数据，不参与 Raft 投票，因此不会影响 TiKV 的写入性能。数据以列式格式存储（Delta Tree 引擎），支持向量化计算。\n\n扩展延伸：TiDB 的适用场景：1) 需要 MySQL 兼容性但数据量超出单机（>1TB）的场景 —— 可直接替代 MySQL，分库分表方案不再必要；2) HTAP 场景 —— 一份数据同时支持 OLTP 和 OLAP，TiFlash 处理分析型查询不影响 TiKV 的 TP 负载；3) 弹性扩展 —— 在线扩容/缩容，Region 自动迁移。限制与注意事项：1) 事务冲突严重的场景性能不佳（乐观事务模型有 conflict 回滚开销）；2) 小表（< 1TB）场景下 TiDB 的分布式开销 > MySQL 单机；3) TiFlash 数据同步有秒级延迟，不适合对实时性要求极高的分析场景。",
+    "hints": [
+      "Region 是 TiKV 数据管理的最小单元，通过 Raft 在多个 TiKV 节点间复制",
+      "PD 负责全局调度，决定 Region 分布在哪些节点上",
+      "TiFlash 是 Raft Learner，不参与写入投票，异步接收数据"
+    ],
+    "tags": [
+      "TiDB",
+      "TiKV",
+      "TiFlash",
+      "NewSQL",
+      "HTAP"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CockroachDB 架构与分布式事务",
+    "content": "请介绍 CockroachDB 的架构设计，包括其 Range 分片机制、Raft 复制、以及基于混合逻辑时钟（HLC）和 Serializable Snapshot Isolation（SSI）的分布式事务实现。",
+    "answer": "答案：CockroachDB 是 Google Spanner 思想的开源实现（但不等同），使用 Range（默认 64MB）自动分片数据。每个 Range 有 3 副本（默认），副本间通过 Raft 共识协议保持一致性。Gossip 协议用于节点发现和元数据分布，无需外部协调服务（对比 TiDB 依赖 PD）。分布式事务基于混合逻辑时钟（Hybrid Logical Clock，HLC）实现 Serializable Snapshot Isolation（SSI）。\n\n解析：CockroachDB 的核心机制：1) Range 分裂与合并 —— 当 Range 超过目标大小时自动分裂成两个 Range；当数据被删除导致 Range 过小时自动合并。分裂/合并不影响集群可用性。2) 事务机制 —— 通过 TCO（Transaction Coordinator Orchestrator）协调分布式事务，使用写入意向（Write Intent，类似锁）标记未提交数据。SSI 通过冲突检测和串行化保证 Serializable 隔离级别。写写冲突通过 Read-Committed 重试机制处理（自动回滚和重试）。3) 时钟 —— HLC 结合物理时钟和逻辑计数器，提供全局序而不依赖物理时钟同步精度（相比 Spanner 的 TrueTime 需要原子钟/GPS）。CockroachDB 默认最大时钟偏移为 500ms，通过 Clock Synchronization 检测防止偏离过大。\n\n扩展延伸：CockroachDB vs TiDB：1) 元数据管理 —— CockroachDB 使用 Gossip 协议，TiDB 使用 PD（中心化），两者各有优劣，Gossip 避免了单点但元数据变更收敛慢；2) 事务隔离 —— CockroachDB 默认 Serializable，TiDB 默认 Snapshot Isolation（SI），SI 在并发写入冲突下有 Write Skew 问题；3) 部署复杂度 —— CockroachDB 单二进制部署更简单，TiDB 需要 TiDB Server、PD、TiKV、TiFlash 四个组件；4) 监控成熟度 —— TiDB 的 Dashboard 和 Grafana 开箱即用更丰富；5) 生态兼容 —— TiDB 兼容 MySQL 协议，CockroachDB 兼容 PostgreSQL 协议。",
+    "hints": [
+      "CockroachDB 使用 Gossip 协议而非中心化元数据服务",
+      "HLC 提供线性一致性而不依赖高精度时钟同步",
+      "Write Intent 是 CockroachDB 的锁机制且支持死锁检测"
+    ],
+    "tags": [
+      "CockroachDB",
+      "分布式数据库",
+      "Raft",
+      "NewSQL"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MongoDB 聚合管道（Aggregation Pipeline）详解",
+    "content": "请详细说明 MongoDB 聚合管道的设计原理、常用阶段操作符（$match、$group、$project、$lookup、$unwind 等）以及性能优化策略。",
+    "answer": "答案：MongoDB 聚合管道（Aggregation Pipeline）是一个数据处理框架，文档依次经过多个阶段（Stage）处理，每个阶段对输入文档执行变换（过滤、分组、投影、关联等），输出结果传递给下一阶段。它基于流式处理模型 —— 阶段之间通过内存或临时文件传递数据，支持大规模文档的批量处理，比 MapReduce 更高效。\n\n解析：常用阶段操作符及作用：1) $match —— 过滤文档，应尽量放在管道前端以减少后续阶段处理量；2) $project —— 投影（保留/排除/重命名字段、添加计算字段）；3) $group —— 按指定键分组聚合（支持 SUM、AVG、MAX、MIN、$push 等累加器）；4) $sort —— 排序，如果在大数据量上排序建议在分组之后做；5) $lookup —— 左外连接（类似 SQL LEFT JOIN），从另一集合关联文档；6) $unwind —— 将数组字段展开为多条文档；7) $bucket —— 分桶聚合（如按年龄分段统计）；8) $facet —— 多维度统计，一次管道输出多个聚合结果；9) $addFields —— 添加计算字段不改变其他字段。\n\n扩展延伸：性能优化：1) 索引利用 —— $match 和 $sort 如果在管道最前面且字段有索引，可以利用索引加速。$lookup 关联的字段（foreignField）应有索引。2) 内存限制 —— 每个阶段默认使用 100MB 内存，超出写入临时文件（allowDiskUse: true 开启允许磁盘）。$group、$bucket、$sort 等有状态阶段消耗内存最多。3) 管道顺序优化 —— 将 $match 和 $limit 尽量前移，尽早减少数据量；4) 避免过大的 $unwind —— 展开大数组会放大数据量数倍，可考虑将 $unwind 后的 $match 合并到前面的阶段；5) 使用 cursor 返回聚合结果而非单个文档（allowDiskUse + batchSize 优化大结果集输出）。",
+    "hints": [
+      "$match 放在管道最前面能利用索引并尽早减少数据量",
+      "$lookup 在 MongoDB 5.1+ 支持关联条件索引自动选择",
+      "面向磁盘的聚合使用 allowDiskUse: true 可突破 100MB 内存限制"
+    ],
+    "tags": [
+      "MongoDB",
+      "聚合管道",
+      "Aggregation",
+      "NoSQL"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HBase Region 分裂与合并机制详解",
+    "content": "请详细说明 HBase 的 Region 分裂（Split）和合并（Merge）机制，包括 Split 策略（ConstantSizeRegionSplitPolicy、IncreasingToUpperBoundRegionSplitPolicy、SteppingSplitPolicy）、分裂步骤，以及合并的触发条件和影响。",
+    "answer": "答案：HBase 的 Region 是表水平分片的基本单元。当 Region 大小超过阈值时触发 Split（自动分裂为两个子 Region），保证数据分布均匀和查询性能。HBase 提供了多种 Split 策略：1) ConstantSizeRegionSplitPolicy —— Region 大小超过 hbase.hregion.max.filesize（默认 10GB）时分裂；2) IncreasingToUpperBoundRegionSplitPolicy（0.94+ 默认）—— 初始阈值随表 Region 数量增加而提高（min(10GB, 2*R^3 * hbase.hregion.memstore.flush.size)）)；3) SteppingSplitPolicy（2.0+ 默认）—— 改进版，初始分裂阈值较小（256MB * 2），随分裂次数递增到 max.filesize，适合初始数据量小的表。\n\n解析：Region 分裂分为三个步骤：1) 在 Zookeeper 中创建分裂 znode 标记 Region 为分裂中（SPLITTING）；2) 父 Region 停止服务，将 Store 中的数据划分为两个子 Region（通过 split key 确定分界点）。HFile 引用机制 —— 子 Region 通过引用文件指向父 Region 的数据文件，直到 Compaction 时再读取实际数据；3) 将子 Region 上线到 RegionServer，更新 META 表记录。合并（Region Merge）是分裂的逆操作，将相邻的两个 Region 合并成一个，通常在大量数据删除后 Region 过小时触发 —— 可手动触发（merge_region CLI）或通过 RegionMerger 自动执行（hbase.region.merging.enabled 启用）。\n\n扩展延伸：生产实践建议：1) Region 数量管理 —— 单 RegionServer 建议 100-200 个 Region，避免过多 Region 导致 RegionServer 元数据膨胀和内存压力；2) 预分裂（Pre-splitting）—— 创建表时根据 rowkey 分布预分 Region，避免刚创建时所有写入集中在单个 Region 上；3) Split 后的 Compaction 风暴 —— 大量 Region 同时分裂后，子 Region 的引用文件触发多次合并，可能产生写放大，建议错峰建表或调整 split 策略；4) Region Hotspot（热点）—— 单调递增 rowkey 导致所有写入集中在最后一个 Region，可通过反转 rowkey 或加盐（salting）解决。",
+    "hints": [
+      "HFile 引用机制使 Split 不涉及实际数据移动，速度快",
+      "预分裂可以避免初始阶段写入集中在单 Region",
+      "单调递增 rowkey 是 Region 热点的最常见原因"
+    ],
+    "tags": [
+      "HBase",
+      "Region",
+      "Split",
+      "Merge"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Cassandra 分区键与数据分布策略",
+    "content": "请介绍 Apache Cassandra 的数据分布机制，包括分区键（Partition Key）和集群键（Clustering Key）的设计原则、分片与复制策略（Partitioners、Replication Strategy）、以及查询优化（二级索引、物化视图、SASI 索引）的最佳实践。",
+    "answer": "答案：Cassandra 是分布式 NoSQL 数据库，使用一致性哈希环进行数据分布。每个表必须有主键，主键的第一部分（Partition Key）决定数据存储在哪个节点（通过哈希计算 token），后续列是 Clustering Key 决定同一分区内的排序顺序。查询时必须包含 Partition Key（WHERE 子句中 = 或 IN），否则需要全集群扫描。\n\n解析：数据分布的核心组件：1) Partitioner —— 计算 Partition Key 的哈希值（Murmur3Partitioner，默认）决定数据在环上的位置。Token 范围环上的每个节点负责一段连续的 token 范围。2) Replication Strategy —— SimpleStrategy（单数据中心，测试用）和 NetworkTopologyStrategy（生产用，可指定每个机架的副本数，机架感知）。3) Snitch —— 感知网络拓扑（机架和数据中心），决定副本放置位置（如 Ec2Snitch、GossipingPropertyFileSnitch）。查询优化策略：二级索引适用于低基数（区分度高的列）且返回结果少（< 100 条）的查询；物化视图（Materialized View）自动维护基于不同列排序的视图；SASI 索引（SSTable Attached Secondary Index）支持全文搜索和范围查询。\n\n扩展延伸：Cassandra 数据建模原则：1) 按查询建表 —— 先分析查询模式再设计表结构，不要试图用 JOIN 或子查询（不支持）；2) 避免大分区 —— 单个分区的数据不宜超过 100MB（否则查询和写入性能都会下降）。分区键应选取区分度高的列，避免\"热点分区\"；3) 删除操作 —— Cassandra 的删除是 tombstone 标记（标记删除），Compaction 时真正清理。大量删除导致 tombstone 过多会降低查询性能；4) 内存和磁盘 —— Cassandra 依赖 OS Page Cache，建议 SSD + 大内存配置，调优 heap 大小和 GC 参数。注意 cqlsh 的 tracing 功能可分析查询性能瓶颈。",
+    "hints": [
+      "Partition Key 的基数（Cardinality）直接决定了数据分布是否均匀",
+      "Cassandra 按查询建表，非按关系建模",
+      "Tombstone 过多（大量删除）是查询性能下降的常见原因"
+    ],
+    "tags": [
+      "Cassandra",
+      "NoSQL",
+      "分区键",
+      "一致性哈希"
+    ]
   }
 ]

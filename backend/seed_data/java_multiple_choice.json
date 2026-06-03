@@ -1021,5 +1021,121 @@
       "BlockingQueue",
       "并发"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "JVM 判定对象可回收的方法",
+    "content": "JVM 判定一个对象是否可回收使用哪些方法？",
+    "answer": "答案：A)、B)。\n\n解析：JVM 判定对象是否可回收主要使用可达性分析（Reachability Analysis）——从 GC Roots 出发，不可达的对象被判定为可回收。引用计数法（Reference Counting）不是 JVM 使用的方法（无法解决循环引用问题）。对象在 finalize() 方法中可能自救（重新被引用），但 finalize() 只执行一次。A 正确——可达性分析是主要方法。B 也正确——对于 G1 和 ZGC 等区域性 GC，还会使用 Remembered Set / Card Table 来跟踪跨代/跨区域引用。C 错误——引用计数法是 Python/Objective-C 使用的方式，JVM 不使用。D 错误——并发标记完成后还有最终标记/重新标记阶段处理并发期间的引用变化。",
+    "options": [
+      "A) 可达性分析（Reachability Analysis）",
+      "B) Remembered Set + 卡表（Card Table）",
+      "C) 引用计数法（Reference Counting）",
+      "D) 并发标记（Concurrent Marking）完成后立即回收"
+    ],
+    "hints": [
+      "主流 JVM 使用可达性分析而非引用计数法",
+      "跨代引用通过 Remembered Set 和卡表跟踪"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "可达性分析"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "JVM 参数分类与内存设置",
+    "content": "以下哪些 JVM 参数用于设置堆内存大小？",
+    "answer": "答案：A)、B)、C)。\n\n解析：A)-Xms 设置初始堆大小，B)-Xmx 设置最大堆大小，C)-Xmn 设置新生代大小（不推荐 JDK 9+，优先用 -XX:NewSize/-XX:MaxNewSize），D)-Xss 设置线程栈大小（不是堆内存）。实际调优中通常将 -Xms 和 -Xmx 设为相同值，避免运行时动态调整堆大小导致性能抖动。E 错误——-XX:PermSize 设置永久代初始大小（JDK 8 之前），JDK 8+ 已不存在。\n\n扩展延伸：其他关键参数——-XX:NewRatio 设置老年代/新生代比例（默认 2，新生代为堆的 1/3）。-XX:SurvivorRatio 设置 Eden 与单个 Survivor 的比例（默认 8）。-XX:MaxMetaspaceSize 和 -XX:MetaspaceSize 控制元空间。容器化环境需注意 UseContainerSupport（JDK 8u191+ 默认开启）使 JVM 感知容器内存限制。",
+    "options": [
+      "A) -Xms",
+      "B) -Xmx",
+      "C) -Xmn",
+      "D) -Xss",
+      "E) -XX:PermSize"
+    ],
+    "hints": [
+      "-X 参数和 -XX 参数的区别是什么",
+      "为什么生产环境通常把 -Xms 和 -Xmx 设相同值"
+    ],
+    "tags": [
+      "JVM",
+      "参数",
+      "调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Java 线程安全实现的层次",
+    "content": "以下哪些是 Java 中实现线程安全的方式？",
+    "answer": "答案：A)、B)、D)。\n\n解析：线程安全实现层次 1）不可变——final + 不可变对象（如 String），天然线程安全。2）互斥同步——synchronized、ReentrantLock、ReadWriteLock（悲观锁）。3）非阻塞同步——CAS + volatile（乐观锁），AtomicInteger 等原子类。4）无同步方案——ThreadLocal（线程本地存储不共享）、可重入代码（不依赖堆上的共享数据）。C 错误——volatile 不保证原子性，不能解决所有线程安全问题（如 i++ 需要原子类或锁）。\n\n扩展延伸：线程安全等级（Brian Goetz 分类）——1）不可变（Immutable）——永远安全。2）绝对线程安全——不管运行时环境如何都不需要额外同步（Java 中几乎没有完全做到，如 Vector 的复合操作仍需外部同步）。3）相对线程安全——单独操作安全（synchronized 修饰方法），但复合操作需要额外同步。4）线程兼容——非线程安全，需要调用方自行同步（ArrayList、HashMap）。5）线程对立——即使调用方同步也无法安全使用（如 Thread.suspend()，已废弃）。",
+    "options": [
+      "A) 使用 synchronized 关键字",
+      "B) 使用 ReentrantLock",
+      "C) 使用 volatile 关键字",
+      "D) 使用 ThreadLocal 实现线程封闭"
+    ],
+    "hints": [
+      "volatile 不能替代锁——它不保证原子性",
+      "ThreadLocal 是线程封闭，不涉及共享"
+    ],
+    "tags": [
+      "并发",
+      "线程安全",
+      "锁"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "G1 GC 的 Mixed GC 过程",
+    "content": "关于 G1 垃圾回收器的 Mixed GC（混合回收）阶段，以下哪些描述是正确的？",
+    "answer": "答案：A)、C)、D)。\n\n解析：G1 的 Mixed GC 在并发标记完成后触发，不仅回收年轻代，还回收标记为垃圾最多的老年代 Region（根据 -XX:G1MixedGCLiveThresholdPercent 判断存活对象比例）。B 错误——Mixed GC 必须依赖并发标记周期（CMS）的结果来确定哪些老年代 Region 值得回收。G1 的工作分为三种类型：Young GC（仅年轻代，Eden 满时触发）、并发标记周期（Concurrent Marking Cycle，CMS，当堆使用率达 -XX:InitiatingHeapOccupancyPercent=45% 时触发）、Mixed GC（回收年轻代 + 部分老年代，在 CMS 后触发）。D 正确——-XX:G1HeapWastePercent（默认 5%）控制并发标记后触发 Mixed GC 的条件——只有当可回收的垃圾比例超过该值时才触发。\n\n扩展延伸：G1 的停顿预测模型基于历史平均停顿时间，通过 -XX:MaxGCPauseMillis（默认 200ms）控制目标。G1 选择回收 Region 时优先选择回收收益大的（垃圾最多的 Region）。如果时间预算允许，继续选择更多 Region 直到时间用完或所有标记的老年代 Region 都回收了。",
+    "options": [
+      "A) Mixed GC 不仅回收年轻代，还回收部分老年代 Region",
+      "B) Mixed GC 不需要并发标记阶段，可以独立触发",
+      "C) G1 的停顿时间目标通过 -XX:MaxGCPauseMillis 控制",
+      "D) G1 通过 -XX:G1HeapWastePercent 控制触发 Mixed GC 的时机"
+    ],
+    "hints": [
+      "Mixed GC 的前提是并发标记周期已完成",
+      "G1 优先回收垃圾比例最多的 Region"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Java 线程的优先级",
+    "content": "以下关于 Java 线程优先级的描述，哪些是正确的？",
+    "answer": "答案：A)、C)、D)。\n\n解析：A 正确——Java 中线程优先级范围是 1（MIN_PRIORITY）到 10（MAX_PRIORITY），默认 5（NORM_PRIORITY）。B 错误——线程优先级不能保证执行顺序！优先级只是给操作系统调度器的建议，实际操作系统（尤其是 Linux）可能忽略 Java 的优先级映射。Windows 有 7 个优先级级别，Linux 默认不将 Java 的优先级映射到原生线程优先级（需要使用实时调度策略或调整 nice 值）。C 正确——优先级高的线程获得更多 CPU 时间片（但不保证）。D 正确——线程优先级依赖具体操作系统和 JVM 实现。\n\n扩展延伸：代码中应避免依赖线程优先级来控制执行顺序——这可能导致跨平台行为不一致。更好的方式是使用显式的同步工具（CountDownLatch、Semaphore 等）控制执行流程。线程优先级在实时系统（Real-Time Java）中有实际意义，但在通用 Linux 服务器上效果有限。",
+    "options": [
+      "A) Java 线程优先级范围是 1~10，默认 5",
+      "B) 设置优先级可以保证高优先级线程先执行",
+      "C) 优先级高的线程获得更多 CPU 时间片的概率更大",
+      "D) 线程优先级在不同操作系统上的表现可能不同"
+    ],
+    "hints": [
+      "线程优先级是建议性的，不同操作系统的映射不同",
+      "不要依赖线程优先级来控制执行顺序——应用锁或同步工具"
+    ],
+    "tags": [
+      "并发",
+      "线程",
+      "优先级"
+    ]
   }
 ]

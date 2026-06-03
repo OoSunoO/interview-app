@@ -814,5 +814,101 @@
       "RocketMQ",
       "可靠性"
     ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka Connect 原理与 ETL 实践",
+    "content": "请详细说明 Kafka Connect 的架构设计（Source/Sink Connector、Worker 分布式模式、REST API），以及如何实现从数据库到消息队列的 CDC（Change Data Capture）数据同步。",
+    "answer": "答案：Kafka Connect 是 Kafka 的流式数据集成框架，通过 Connector 插件从外部系统拉取数据到 Kafka（Source Connector）或将数据从 Kafka 推送到外部系统（Sink Connector）。它运行在 Worker 进程中，支持 Standalone 模式（单进程）和 Distributed 模式（多进程、自动故障转移、任务重分配）。\n\n解析：Kafka Connect 的核心概念：1) Connector —— 定义与外部系统的连接，通过 REST API（POST /connectors）创建和管理；2) Tasks —— Connector 的并行执行单元，Connector 可将工作拆分为多个 Task 实现并行和负载均衡；3) Converters —— 数据序列化/反序列化（Avro、JSON、Protobuf）；4) Transforms —— 在数据进入 Kafka 或写入外部系统前的轻量转换（字段过滤、重命名、路由）。CDC 实践：Debezium 是主流的 Source Connector 实现，它模拟 MySQL/PostgreSQL/MongoDB 的 Slave 角色读取 binlog/oplog，将行变更为 Kafka 消息。数据同步到 Kafka 后，下游可用 Kafka Streams 实时处理，或用 FileStream/S3/JDBC Sink Connector 写入目标系统。\n\n扩展延伸：生产环境优化：1) Offset 管理 —— Connect 通过 Offset Storage Topic（__consumer_offsets 类似）记录已拉取的数据位置，支持故障恢复断点续传；2) 重平衡 —— Distributed 模式下 Worker 增减会触发重平衡，需合理配置 group.id、任务数量和 Worker 资源。3) 监控 —— 通过 JMX MBean 和 Connect REST API（GET /connectors/{name}/status）监控 Task 状态和吞吐量；4) 单表分区策略 —— 为每个业务表创建独立的 Connector，避免单 Connector 配置过于复杂影响 CDC 稳定性。",
+    "hints": [
+      "Debezium 是 CDC 场景最常用的 Source Connector",
+      "Distributed 模式提供高可用，但重平衡期间可能短暂中断",
+      "Connector 的状态和延迟可通过 REST API 和 JMX 监控"
+    ],
+    "tags": [
+      "MQ",
+      "Kafka",
+      "Kafka Connect",
+      "CDC",
+      "Debezium"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka Streams 流处理架构",
+    "content": "请介绍 Kafka Streams 的设计理念、核心抽象（KStream、KTable、GlobalKTable）、状态存储（State Store）以及 Exactly-Once 语义在流处理中的实现。",
+    "answer": "答案：Kafka Streams 是 Kafka 原生的流处理库，将消息处理建模为有向无环图（DAG），提供了 KStream（记录流）和 KTable（变更日志）两种核心抽象。KStream 是无界数据流，每条记录独立处理；KTable 是按键聚合的视图，新记录更新旧记录。GlobalKTable 是每个实例的全量副本，适合小数据集广播。\n\n解析：Kafka Streams 的工作模式：1) 拓扑（Topology）—— 由处理器节点（Processor Node）和边（Stream/Table 之间的连接）构成的有向无环图；2) 无服务器依赖 —— 作为嵌入库直接运行在应用进程中，无需独立的流处理集群；3) 分区并行 —— 一个应用的多个实例自动分配分区，实现线性扩展。状态存储是 KStream 有状态操作（聚合、连接、窗口）的基础，默认使用 RocksDB（磁盘存储，支持大于内存的状态），支持容错 —— 状态变更同时写入 Kafka changelog topic。Exactly-Once 语义通过 transaction.id 和隔离级别实现 —— 在 Kafka 0.11+ 中，write 和 offset commit 放入同一个事务，保证“处理-写入”的原子性。\n\n扩展延伸：Kafka Streams 与 Flink 的选型差异：Kafka Streams 适用于需要与 Kafka 紧密集成、部署简单的场景（如 ETL、实时聚合）；Flink 适用于复杂事件处理（CEP）、大规模窗口计算、多数据源关联等更复杂的场景。Kafka Streams 的监控重点：lag（处理延迟）、state store 大小、线程利用率。常见陷阱：未合理配置 max.poll.records 导致处理超时 rebalance；state store 的 RocksDB 磁盘 IO 成为瓶颈。",
+    "hints": [
+      "KStream 是无界数据流，KTable 是按键聚合的视图",
+      "RocksDB 状态存储使 Kafka Streams 可处理远超内存的数据量",
+      "Exactly-Once 依赖事务和幂等写入的协同工作"
+    ],
+    "tags": [
+      "MQ",
+      "Kafka",
+      "Kafka Streams",
+      "流处理"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RabbitMQ 集群与镜像队列",
+    "content": "请详细说明 RabbitMQ 集群模式（普通集群与镜像队列）的架构差异，以及 v3.8+ 引入的 Quorum Queue 和 Stream Queue 的设计目的和适用场景。",
+    "answer": "答案：RabbitMQ 有两种集群模式：1) 普通集群（Classic Cluster）—— 元数据（交换机、绑定、队列元数据）在所有节点间同步，但队列内容只存储在其所属节点。非所属节点访问队列时需要跨节点转发，存在单点故障风险。2) 镜像队列（Mirrored Queue，v2.6+）—— 每个队列的主副本（Master）和一个或多个镜像副本（Mirrors）运行在多个节点上，Master 故障时自动提升一个 Mirror 为 Master。v3.8+ 引入了 Quorum Queue（基于 Raft 共识的副本队列）替代镜像队列作为高可用方案。\n\n解析：镜像队列的问题：1) 非确定性 —— Master 选择缺乏可预测性；2) 同步阻塞 —— 镜像复制使用 GM（Guaranteed Multicast）协议，Master 需等待所有 Mirror 确认后才向消费者确认，延迟较高；3) 网络分区处理复杂 —— 镜像队列在网络分区时可能出现 split-brain。Quorum Queue 基于 Raft 协议，解决了这些问题：1) Leader 选举明确，多数派写入保证一致性；2) 支持更灵活的成员变更；3) 网络分区下自动选择多数分区继续服务。Stream Queue（v3.9+）是另一种新队列类型，针对日志类消息优化 —— 只追加写入、支持消息回溯、磁盘存储为主，适用于大消息量但不需要立即消费的场景。\n\n扩展延伸：选型建议：1) 重要业务消息（订单、支付）→ Quorum Queue（强一致性、高可用）；2) 日志、事件流 → Stream Queue（高吞吐、消息回溯）；3) 兼容旧版客户端 → Classic Queue。运维参数：Quorum Queue 的 quorum_initial_members 决定初始节点数；流队列需要配置 max_length_bytes 和 max_age 控制存储上限。注意不要在生产环境混用不同队列类型，同一集群建议统一使用相同的队列策略。",
+    "hints": [
+      "Quorum Queue 使用 Raft 替代了镜像队列的 GM 协议",
+      "Stream Queue 适合日志和事件溯源场景",
+      "镜像队列在 RabbitMQ 3.8+ 已被 Quorum Queue 取代"
+    ],
+    "tags": [
+      "MQ",
+      "RabbitMQ",
+      "Quorum Queue",
+      "镜像队列"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MQ 性能调优实践",
+    "content": "请从生产者、Broker、消费者三个维度分析消息队列的性能调优策略，包括批量大小、确认机制、刷盘策略、消费并发等核心参数。",
+    "answer": "答案：MQ 性能调优需要从端到端视角全链路优化。生产者端：1) 批量发送 —— 积累多条消息后批量发送（Kafka 的 batch.size 和 linger.ms，RocketMQ 的批量消息 API）；2) 异步发送 —— 使用异步发送回调避免同步阻塞；3) 压缩 —— 启用 snappy/zstd 压缩减少网络带宽消耗（CPU 换带宽）。Broker 端：1) 刷盘策略 —— 异步刷盘（吞吐优先）vs 同步刷盘（可靠优先）；2) 页缓存 —— 充分利用 OS Page Cache 写入即返回；3) 磁盘 —— 使用 SSD 并分离数据盘和日志盘。消费者端：1) 并发消费 —— 合理设置消费线程数（通常 2-4 倍 CPU 核数）；2) 批量拉取 —— 调整 max.poll.records 和 fetch.max.bytes 减少 RPC 次数；3) 消费模型 —— 推模式（延迟低但容易压垮消费者）与拉模式（可控性好）。\n\n解析：Kafka 特有调优参数：num.io.threads（IO 线程数）、num.network.threads（网络线程数）、log.flush.interval（日志刷盘间隔）、replica.fetch.max.bytes（副本拉取大小）。RocketMQ 特有：transientStorePoolEnable（启用堆外内存写入）、sendMessageThreadPoolNums（发送线程池大小）。RabbitMQ 调优关键参数：hi_watermark（流控水位）、channel_max（通道数上限）、vm_memory_high_watermark（内存阈值）。\n\n扩展延伸：性能压测和监控是调优的基础：1) 使用 JMH 或 MQ 自带压测工具（kafka-producer-perf-test.sh、rocketmq-benchmark）建立基准；2) 监控关键指标 —— 生产者 send 耗时、Broker 的 IO 等待时间（iowait）、消费者 lag；3) 常见瓶颈诊断：CPU 瓶颈 → 检查压缩/序列化是否过度；磁盘瓶颈 → 检查刷盘策略和 Page Cache 命中率；网络瓶颈 → 检查跨 AZ 延迟和带宽；4) 建议压测目标设定为生产峰值的 2 倍以上并留有余量。",
+    "hints": [
+      "批量发送是提升生产端吞吐最有效的策略",
+      "异步刷盘能显著提升写入性能，但增加断电数据丢失风险",
+      "消费者并发数并非越大越好，过多的线程竞争反而降低吞吐"
+    ],
+    "tags": [
+      "MQ",
+      "性能调优",
+      "Kafka",
+      "RocketMQ"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MQ 异地多活与跨机房部署",
+    "content": "请分析消息队列异地多活部署的架构方案、数据同步机制、以及面临的挑战（网络延迟、数据一致性、故障切换）。",
+    "answer": "答案：MQ 异地多活（Multi-Region Active-Active）是指在多个地理区域部署 MQ 集群，实现任意区域故障时消息不丢失并可切换。核心架构方案有主备切换、双活、多活三种模式，常用实现手段包括跨集群数据复制（MirrorMaker 2、RocketMQ DLedger Controller）和消息双写。\n\n解析：各方案的技术实现：1) 主备模式 —— 主集群处理全量读写，通过跨区域同步机制（Kafka MirrorMaker 2、RocketMQ CQ 多集群）将消息复制到备集群，备集群不提供服务直到故障切换。优点是架构简单，缺点是资源利用率低。2) 双活模式 —— 两个区域同时承载流量，消息在本地写入后异步复制到远端，消费者可消费本地或远端消息。需解决消息重复和顺序问题 —— 通过全局 ID 去重、分区级时间戳对齐。3) 多活模式 —— 多个区域同时活跃，依赖底层的一致性协议（如 BookKeeper + Pulsar）实现消息强一致性，复杂度最高。\n\n扩展延伸：异地多活部署的核心挑战：1) 网络延迟 —— 跨区域复制延迟在几十到几百毫秒（取决于地理距离），会影响消息投递的实时性。应用层需做好延迟容忍或使用本地优先策略；2) 数据一致性 —— 异步复制意味着 RPO（恢复点目标）不为零，灾备切换时可能丢失最后几秒消息。可用同步双写但会大幅增加延迟；3) 故障切换 —— 消费偏移量（Offset）的跨区同步是关键问题 —— 切换后消费者需要知道从哪个位置继续消费。建议使用公共的 Offset 存储（如 DB）或定期同步；4) 全链路验证 —— 建设\"混沌工程\"定期演练区域级故障场景，验证切换流程自动化和时间窗口。",
+    "hints": [
+      "MirrorMaker 2 可实现 Kafka 集群间的双向复制和 Offset 同步",
+      "异步复制下 RPO 不为零，需要业务评估可接受的数据丢失量",
+      "故障切换的自动化演练比架构设计本身更重要"
+    ],
+    "tags": [
+      "MQ",
+      "异地多活",
+      "跨机房",
+      "容灾"
+    ]
   }
 ]

@@ -798,5 +798,111 @@
       "集合",
       "Collections"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Arrays.asList 返回的 List 可修改",
+    "content": "Arrays.asList() 返回的 List 支持 add() 和 remove() 操作，可以动态增删元素。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：Arrays.asList() 返回的是基于原数组的固定长度视图（java.util.Arrays.ArrayList 内部类），不支持 add/remove 操作（会抛出 UnsupportedOperationException）。但 set() 方法可以修改元素，且修改会同步反映到原数组。需要可变 List 应使用 new ArrayList<>(Arrays.asList(array))。\n\n扩展延伸：类似的陷阱——List.of()（JDK 9+）返回的也是不可变 List，不支持任何修改操作（包括 set）。subList 返回的视图支持结构修改但受限于原 List。",
+    "hints": [
+      "Arrays.asList 返回的是固定长度视图，不是 ArrayList",
+      "Java 9 的 List.of() 也是不可变的"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Arrays",
+      "陷阱"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Java 8 的 Optional 可以为 null",
+    "content": "Optional.ofNullable() 允许传入 null 值，如果原始值为 null 返回 Optional.empty()。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：Optional.ofNullable(value) 在 value 为 null 时返回 Optional.empty()，不会抛 NPE。而 Optional.of(value) 如果传入 null 会立即抛出 NullPointerException。Optional.ofNullable 是安全创建 Optional 的方式。再次强调——Optional 主要用于返回值类型，不应作为字段、方法参数或集合元素使用。\n\n扩展延伸：Optional 的常见用法——optional.orElse(defaultValue)、optional.orElseGet(() -> expensiveComputation())、optional.orElseThrow(() -> new CustomException())、optional.map(...).filter(...).ifPresent(...)。orElse 和 orElseGet 的区别——orElse 的参数即使值存在也会求值，orElseGet 只在值不存在时执行 Supplier。",
+    "hints": [
+      "ofNullable 与 of 的区别在于是否允许 null",
+      "orElse 和 orElseGet 的求值时机不同"
+    ],
+    "tags": [
+      "Java 8",
+      "Optional"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "finally 块中 return 的不良实践",
+    "content": "finally 块中不应该包含 return 语句，因为 finally 的 return 会覆盖 try/catch 中的 return 或异常。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：finally 块中的 return 语句是 Java 中广为人知的不良实践（阿里巴巴 Java 规范也明确禁止）。原因 1）finally 中的 return 会覆盖 try 块中的 return 值。2）如果 try 块抛出了异常，finally 中的 return 会吞掉该异常（异常不会传播出去）。finally 块的正确用法是仅用于释放资源（关闭文件、释放锁等），不放置业务逻辑。\n\n扩展延伸：finally 中的 return 覆盖规则——try 中 return 1 首先被求值（1 被保存到栈中），然后 finally 执行并 return 3，此时 try 中保存的返回值 1 被丢弃，最终返回 3。异常吞没——try 块异常已经记录但 finally 的 return 直接返回导致异常无法传播到调用方。",
+    "hints": [
+      "finally 中的 return 会覆盖 try 中的 return 和异常",
+      "阿里巴巴 Java 规约禁止在 finally 中使用 return"
+    ],
+    "tags": [
+      "Java",
+      "异常",
+      "finally",
+      "不良实践"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "JVM 栈上分配的条件",
+    "content": "JVM 中所有不逃逸的对象都会被分配到栈上（栈上分配）。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：栈上分配（Stack Allocation）是逃逸分析的优化结果之一，但不是所有不逃逸的对象都会被栈上分配。JVM 的 C2 编译器通过逃逸分析判断对象不逃逸后，实际执行的是标量替换（Scalar Replacement）——将对象分解为多个独立标量（原始类型字段），在栈上分配这些标量，而不是在栈上分配对象本身。标量替换后栈中只有零散的基本类型字段，没有对象实体。\n\n扩展延伸：逃逸分析的三种优化——1）栈上分配（通过标量替换实现）。2）同步消除（Lock Elimination）——去掉不会逃逸到其他线程的锁。3）标量替换本身。并非所有不逃逸对象都会被优化——对象字段过多或太大时，JIT 可能放弃标量替换。逃逸分析是 C2 编译器的优化，C1 仅做有限支持。",
+    "hints": [
+      "栈上分配实际是通过标量替换实现的",
+      "不是所有不逃逸的对象都会被优化"
+    ],
+    "tags": [
+      "JVM",
+      "逃逸分析",
+      "栈上分配"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Java 泛型数组创建的限制",
+    "content": "Java 不允许创建泛型数组，如 new List<String>[10] 会导致编译错误。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：Java 禁止创建泛型数组（new List<String>[10] 编译错误）。原因是泛型通过类型擦除实现——运行时数组元素类型信息不可恢复。如果允许创建泛型数组，可能破坏数组的类型安全。例如：List<String>[] arr = new List<String>[1]; Object[] objArr = arr; objArr[0] = new ArrayList<Integer>(); // 数组协变导致类型安全问题。不过可以创建未泛型的 List[] 或使用通配符 List<?>[]。\n\n扩展延伸：替代方案——1）使用 ArrayList<List<String>> 代替数组。2）使用 Array.newInstance() 反射创建。3）使用 @SuppressWarnings(\"unchecked\") 绕过（内部使用但暴露给外部的 API 应保证类型安全）。PECS 原则（Producer Extends, Consumer Super）与数组无关，但与泛型通配符密切相关。",
+    "hints": [
+      "泛型数组被禁止的原因是类型擦除 + 数组协变不兼容",
+      "ArrayList<List<String>> 是替代方案"
+    ],
+    "tags": [
+      "Java",
+      "泛型",
+      "数组"
+    ]
   }
 ]

@@ -813,5 +813,98 @@
       "设计模式",
       "Filter"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "策略模式与工厂模式的组合应用",
+    "content": "如何将策略模式（Strategy）和工厂模式（Factory）组合使用？这种组合在支付渠道路由、审批流程等场景中如何消除 if-else 分支？请给出具体的代码设计。",
+    "answer": "答案：策略模式定义了算法族并使其可互换，工厂模式负责创建策略实例。两者组合时——工厂根据上下文（如支付方式、审批金额）创建对应的策略实例，调用方无需关心具体是哪个策略。组合的核心是「策略注册表 + 策略工厂」：策略实现类通过注解或配置注册到工厂，工厂根据入参查表返回策略。\n\n解析：组合设计的结构——1）策略接口（PaymentStrategy）：定义 execute() 方法。2）具体策略（AlipayStrategy、WechatStrategy、CardStrategy）：各自实现支付逻辑。3）策略工厂（PaymentStrategyFactory）：持有 Map<String, PaymentStrategy> 映射（如 payType → Strategy Bean）。4）调用方注入工厂，根据 payType 获取策略：factory.getStrategy(payType).execute(order)。Spring 中的实现——1）@Autowired private Map<String, PaymentStrategy> strategyMap；Spring 自动将 PaymentStrategy 的所有实现类注入进来（key 为 Bean 名称）。2）通过策略的 getSupportedType() 方法返回支持的类型，工厂建立类型→Bean 的映射。3）完美消除 if-else：新增支付方式时只需新增一个策略实现类，无需修改任何业务代码（开闭原则）。\n\n扩展延伸：高级组合——1）+ 模板方法：策略中的通用逻辑（如日志记录、事务管理）用模板方法抽象到基类。2）+ 策略链：一个请求可能匹配多个策略（如多个优惠活动叠加），用责任链包装策略。3）+ 注解驱动：通过 @PaymentType('alipay') 注解标注在策略实现类上，启动时自动扫描注册（如通过 Spring 的 BeanPostProcessor）。策略 + 工厂 + 模板方法三组合的典型应用——Spring Security 的 AuthenticationProvider 体系：provider 是策略（多种认证方式），ProviderManager 是工厂（管理 provider 列表）。Spring Cloud LoadBalancer 的 ReactorLoadBalancer 也是策略 + 工厂组合的体现。注意：策略模式消除了调用方的 if-else，但策略注册本身仍需要 if-else 或反射/注解扫描——工厂只是把「选择逻辑」从业务代码集中到了工厂内部，更易于维护。",
+    "hints": [
+      "Spring 中 @Autowired Map 如何实现策略的自动注册",
+      "策略模式 + 工厂组合后新增策略需要修改哪些代码"
+    ],
+    "tags": [
+      "设计模式",
+      "策略模式",
+      "工厂模式",
+      "组合"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "中间件模式：装饰器与责任链的组合",
+    "content": "Web 框架中的中间件（Middleware）机制是装饰器模式和责任链模式的组合应用。请解释这种组合的原理，以及它如何实现请求/响应的横切关注点处理。",
+    "answer": "答案：中间件模式将装饰器模式（增强功能）和责任链模式（链式传递）结合。每个中间件既是责任链上的一环（决定是否继续传递），又是装饰器（在请求处理前后添加行为）。核心结构是 Pipeline——每个中间件持有下一个中间件的引用（或 next 函数），形成链式调用。\n\n解析：中间件的结构——1）中间件接口：Middleware(Context ctx, NextFunction next) → Response。2）每个中间件在调用 next(ctx) 之前执行「前置处理」，调用 next(ctx) 之后执行「后置处理」。3）链路组织：中间件列表按顺序组成链，最后一个中间件之后是真正的业务处理 Handler。责任链的体现——每个中间件决定是否继续传递给下一个（调用 next 或不调用），中间件可以中断链路（如认证失败直接返回 401，不调用 next）。装饰器的体现——每个中间件在 next 前后添加行为（如日志中间件在 next 前记录请求，next 后记录响应时间），多个中间件嵌套装饰。经典实现——1）Express/Koa（Node.js）：app.use(middleware) 添加中间件，洋葱模型（Koa）使得中间件可穿过整个链再回来。2）Spring Boot Filter/Interceptor：FilterChain 调用 doFilter(request, response, chain) 传递，多个 Filter 形成链。3）Go net/http：Handler 接口的 ServeHTTP 包装实现。\n\n扩展延伸：洋葱模型（Koa）——1）从外到内执行所有中间件的「前置代码」，到达业务 Handler。2）从内到外执行所有中间件的「后置代码」。3）执行顺序：中间件 1 前置 → 中间件 2 前置 → … → Handler → … → 中间件 2 后置 → 中间件 1 后置。实际应用——1）日志中间件（前置：打印请求参数，后置：计算耗时）。2）认证中间件（前置：验证 Token，失败后不调用 next 直接返回）。3）限流中间件（前置：检查速率限制）。4）异常处理中间件（用 try-catch 包裹 next(ctx)，捕获所有下游异常）。组合模式 vs 单一模式——如果只用责任链（不 return 给上一层），中间件只能做前置处理（如 Java Filter 默认不做返回路径处理）。如果只用装饰器（层层包装），无法实现「中断」逻辑（如认证失败跳过后续处理）。中间件模式恰好融合了两者。",
+    "hints": [
+      "洋葱模型中请求和响应分别经过中间件链的什么路径",
+      "装饰器不提供中断机制，责任链不提供返回路径处理——中间件如何同时支持两者"
+    ],
+    "tags": [
+      "设计模式",
+      "中间件",
+      "装饰器",
+      "责任链",
+      "洋葱模型"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "代理模式：虚拟代理、保护代理与远程代理",
+    "content": "请介绍代理模式（Proxy）的三种常见变体——虚拟代理、保护代理和远程代理。它们各自解决什么问题？动态代理和静态代理有什么区别？",
+    "answer": "答案：代理模式为另一个对象提供一个替身以控制对该对象的访问。三种常见变体——虚拟代理（延迟加载开销大的对象）、保护代理（控制访问权限）、远程代理（屏蔽远程通信细节）。Java 中的动态代理（JDK Proxy、CGLIB）是实现代理模式的常用技术。\n\n解析：虚拟代理（Virtual Proxy）——1）场景：加载图片、大文件、Hibernate 懒加载。2）原理：代理对象先创建（消耗小），真正需要时再创建真实对象。3）例子：图片查看器中，先显示占位图，代理在后台线程加载高清图，加载完成后替换。保护代理（Protection Proxy）——1）场景：权限控制、访问限制。2）原理：代理在调用真实对象前检查权限，符合条件才放行。3）与装饰器的区别：保护代理控制访问（可以拒绝），装饰器只增强功能（不拒绝）。远程代理（Remote Proxy）——1）场景：RPC 调用（gRPC、Dubbo）、WebService。2）原理：客户端调用本地代理的方法，代理将调用序列化为网络请求，远程服务端反序列化执行并返回结果。3）隐藏了网络通信、序列化/反序列化、异常处理等细节。\n\n扩展延伸：静态代理 vs 动态代理——1）静态代理：手动编写代理类，每个被代理类都需要一个代理类（类爆炸）。2）JDK 动态代理：基于接口，通过 Proxy.newProxyInstance() 在运行时生成代理类，通过 InvocationHandler 统一处理所有方法调用（适合面向接口编程）。3）CGLIB 动态代理：基于继承，通过 Enhancer 在运行时生成被代理类的子类作为代理（不需接口，通过 ASM 字节码技术）。Spring AOP 的选择规则——有接口时用 JDK 动态代理，没有接口时用 CGLIB（可强制使用 CGLIB）。代理的缺陷——调用方法走代理链路有性能开销；CGLIB 代理的 final 方法无法被拦截（final 方法不能被覆盖）。",
+    "hints": [
+      "虚拟代理和惰性初始化（Lazy Initialization）的区别",
+      "JDK 动态代理和 CGLIB 的底层实现差异"
+    ],
+    "tags": [
+      "设计模式",
+      "代理模式",
+      "动态代理",
+      "AOP"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "享元模式：String 常量池与 Integer 缓存",
+    "content": "请解释享元模式（Flyweight）的原理以及它在 Java 中的实践——String 常量池、Integer 缓存和线程池。享元模式如何通过对象共享减少内存占用？",
+    "answer": "答案：享元模式通过共享相同状态的细粒度对象来减少内存使用。核心是区分内部状态（Intrinsic State——可共享、不变）和外部状态（Extrinsic State——随上下文变化、由调用方传入）。Java 标准库中的 String 常量池、Integer 缓存（-128 到 127）、线程池和连接池都是享元模式的经典应用。\n\n解析：Flyweight 的结构——1）Flyweight（享元接口）：定义业务方法，接受外部状态作为参数。2）ConcreteFlyweight（具体享元）：存储内部状态，实现享元接口。3）FlyweightFactory（享元工厂）：维护享元池（通常是一个 ConcurrentHashMap），根据 key 返回已存在的享元对象，不存在则创建。Java 中的实现——1）String 常量池：String s1 = \"hello\"; String s2 = \"hello\"; s1 == s2 为 true。编译期字符串字面量被 intern 在常量池中。2）Integer 缓存：Integer a = 127; Integer b = 127; a == b 为 true（因 -128 到 127 范围内的 Integer 被缓存重用）。3）线程池：ThreadPoolExecutor 复用空闲线程，避免频繁创建销毁线程的开销。\n\n扩展延伸：享元模式的适用条件——1）系统中有大量细粒度对象。2）这些对象的大部分状态可以外部化（存入共享池）。3）对象创建和销毁成本高。何时享元失效——1）如果对象的内部状态占大部分、外部状态很少，共享收益有限。2）如果共享对象需要频繁加锁，可能得不偿失。3）如果外部状态计算复杂，把外部状态传入享元的成本可能超过不共享。享元模式与单例的区别——单例：某个类只有一个实例（全局唯一）。享元：某个类的实例在特定条件下共享复用（可以有多个不同的实例，每个实例代表一组不同的内部状态）。两者的共同点是「复用对象减少创建」。",
+    "hints": [
+      "享元模式的内部状态和外部状态如何划分",
+      "Integer 缓存的范围为什么是 -128 到 127"
+    ],
+    "tags": [
+      "设计模式",
+      "享元模式",
+      "Flyweight",
+      "JVM",
+      "缓存"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "中介者模式：MVC 控制器与消息代理",
+    "content": "请解释中介者模式（Mediator）的原理。MVC 架构中的 Controller 和消息中间件（如 Kafka）如何体现中介者模式？中介者模式与观察者模式有何区别？",
+    "answer": "答案：中介者模式通过引入一个中介对象来封装一组对象的交互，使对象间不再显式引用彼此，从而降低耦合度。中介者承担了「多对多」的交互到「一对多」的转化（Mediator ↔ 各 Colleague）。MVC 中的 Controller 是典型的中介者——它协调 View 和 Model 之间的交互。消息中间件（Kafka/RabbitMQ）是分布式系统中的中介者——生产者/消费者不直接通信，通过 Broker 中介。\n\n解析：中介者模式的结构——1）Mediator（中介者接口）：定义通信方法。2）ConcreteMediator（具体中介者）：协调同事对象之间的交互。3）Colleague（同事接口）：每个同事只知道中介者，不知道其他同事。4）同事之间的所有通信都通过中介者转发。MVC 中的 Mediator——1）View 触发事件（用户点击按钮）→ Controller 接收 → 更新 Model → Model 变化通知 View 更新。2）Controller 就是 View 和 Model 之间的中介。如果不经过 Controller，View 需要直接知道 Model 的结构（紧耦合），或 Model 需要知道 View（也不合理）。消息中间件的 Mediator——1）生产者（Producer）将消息发送到 Broker（Topic/Exchange），不关心哪些消费者会消费。2）消费者（Consumer）从 Broker 订阅消息，不关心消息从哪个生产者来。3）Broker 就是中介者，解耦了生产者和消费者。\n\n扩展延伸：观察者模式 vs 中介者模式——1）观察者模式：一对多通信，被观察者直接通知观察者（Subject ↔ Observer）。2）中介者模式：多对多通信，各同事之间通过中介者间接通信，不直接依赖。3）区别：观察者模式建立了 Subject 到 Observer 的直接通知关系；中介者模式切断了同事之间的直接依赖，「引入了中介者来承接交互责任」。4）两者经常一起使用——中介者内部可以用观察者模式实现事件分发。什么时候用中介者——1）当对象间的交互关系复杂且耦合度高时。2）当交互逻辑经常变化，集中在中介者中修改比分散修改各对象更可控。过度使用的问题——中介者可能变成上帝对象（God Object），承载了过多的交互逻辑导致臃肿、难以维护，称为「中介者膨胀（Mediator Bloat）」。",
+    "hints": [
+      "MVC 中的 Controller 充当什么模式角色",
+      "中介者模式如何避免上帝对象（God Object）问题"
+    ],
+    "tags": [
+      "设计模式",
+      "中介者",
+      "MVC",
+      "消息队列",
+      "Mediator"
+    ]
   }
 ]

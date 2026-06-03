@@ -784,5 +784,90 @@
       "调优",
       "参数"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CMS GC 工作阶段",
+    "content": "CMS 垃圾回收器的工作流程分为：___（STW 暂停，标记 GC Roots 直接引用的对象）、___（与应用并发运行，从已标记的对象出发继续标记）、___（STW 暂停，修正并发标记期间变动的对象引用）和并发清理。",
+    "answer": "{\"correct\":[[\"初始标记\",\"Initial Mark\"],[\"并发标记\",\"Concurrent Mark\"],[\"重新标记\",\"Final Remark\",\"Remark\"]],\"distractors\":[[\"最终标记\",\"预清理\",\"并发预清理\",\"预标记\"],[\"并发预清理\",\"并行标记\",\"串行标记\"],[\"并发重标记\",\"并行重标记\",\"并发清理\",\"重置\"]]}",
+    "hints": [
+      "初始标记和重新标记是 STW 的",
+      "并发标记阶段最长"
+    ],
+    "tags": [
+      "JVM",
+      "CMS",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ZGC 核心概念",
+    "content": "ZGC 的核心技术包括：___（利用指针的未使用位存储元数据）、___（在对象引用读取时执行操作）、以及基于 Region 的动态堆管理。ZGC 使用___指针重映射。",
+    "answer": "{\"correct\":[[\"染色指针\",\"Colored Pointer\"],[\"读屏障\",\"Load Barrier\"],[\"多重映射\",\"Multi-Mapping\"]],\"distractors\":[[\"标记指针\",\"着色指针\",\"写屏障\",\"对象头\"],[\"写屏障\",\"Store Barrier\",\"屏障\",\"内存屏障\"],[\"指针折叠\",\"指针压缩\",\"重映射\",\"自映射\"]]}",
+    "hints": [
+      "染色指针用 64 位地址中高 4 位存储状态信息",
+      "读屏障在对象引用读取时修正指针"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "JVM 对象内存布局",
+    "content": "Java 对象在堆中的内存布局分为三部分：___（存储哈希码、GC 分代年龄、锁状态标志等）、___（指向类元数据的指针，JDK 8+ 默认压缩为 4 字节）、以及___（实例字段数据，按类型对齐）。",
+    "answer": "{\"correct\":[[\"对象头\",\"Mark Word\",\"Header\"],[\"类型指针\",\"Klass Pointer\",\"类指针\"],[\"实例数据\",\"Instance Data\"]],\"distractors\":[[\"方法表\",\"虚方法表\",\"对齐填充\",\"锁记录\"],[\"类型信息\",\"方法指针\",\"类元数据\",\"对象指针\"],[\"对齐填充\",\"Padding\",\"补齐\",\"元数据\"]]}",
+    "hints": [
+      "对象头在 64 位 JVM 上默认占 12 字节（Mark Word 8 字节 + Klass Pointer 4 字节压缩）",
+      "实例数据顺序受字段声明顺序和虚拟机的分配策略影响"
+    ],
+    "tags": [
+      "JVM",
+      "对象",
+      "内存布局"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "G1 GC Region 类型",
+    "content": "G1 将堆划分为多个大小相等的 Region（默认约___MB）。Region 分为三种类型：___（对象分配和 Minor GC 的区域）、___（存储长期存活对象的区域）、以及大对象 Region（存储超过 Region 大小 50% 的对象）。",
+    "answer": "{\"correct\":[[\"1\",\"2\",\"1~2\"],[\"年轻代\",\"Eden\",\"新生代\"],[\"老年代\",\"Old\"]],\"distractors\":[[\"0.5\",\"0.5~1\",\"4\",\"8\",\"16\",\"32\"],[\"Survivor\",\"存活区\",\"From\",\"To\",\"存活\"],[\"巨型\",\"Humongous\",\"大对象\",\"巨型对象\"]]}",
+    "hints": [
+      "Region 大小根据堆大小自动计算（目标 2048 个 Region）",
+      "大对象（Humongous Object）直接分配到 Humongous Region"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "类的生命周期阶段",
+    "content": "类的生命周期分为七个阶段：加载→___→准备→___→初始化→使用→___。其中验证阶段包括四个动作：文件格式验证、___验证、字节码验证和符号引用验证。",
+    "answer": "{\"correct\":[[\"验证\",\"Verification\"],[\"解析\",\"Resolution\"],[\"卸载\",\"Unloading\"]],\"distractors\":[[\"校验\",\"检查\",\"确认\"],[\"编译\",\"连接\",\"链接\",\"绑定\"],[\"销毁\",\"回收\",\"释放\",\"结束\"]]}",
+    "hints": [
+      "解析阶段将符号引用替换为直接引用",
+      "卸载阶段类加载器被 GC 时才可能发生"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "生命周期"
+    ]
   }
 ]

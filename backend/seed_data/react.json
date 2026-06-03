@@ -787,5 +787,95 @@
       "useMemo",
       "虚拟列表"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 19 Actions 与 useActionState",
+    "content": "React 19 引入了 Actions 和 useActionState（原 useFormState）。请解释 Actions 的概念、useActionState 的用法，以及它如何简化表单处理。它与传统的受控组件 + useState 方案相比有什么优势？",
+    "answer": "答案：React 19 Actions 是处理异步状态转换的统一模式，useActionState 是基于 Actions 的表单状态管理 Hook。它允许在表单提交时自动管理 pending 状态、处理错误并获取最新返回数据，无需手动维护多个 state 变量。\n\n解析：Actions 的核心思想——任何异步操作（如表单提交、数据变更）都可以被包装为一个 Action 函数。Action 接收 formData 或参数，返回 Promise。React 会自动追踪其 pending 状态（isPending）和返回结果。useActionState 签名：const [state, formAction, isPending] = useActionState(fn, initialState)。formAction 可以直接传给 <form action={formAction}>，表单提交时会自动调用该函数。\n\n与受控组件 + useState 方案对比——传统方案：需要维护 loading/success/error/数据 四个 state 变量，手动处理 onSubmit → preventDefault → fetch → setState → 捕获异常 的流程。useActionState 方案：一个 Hook 搞定所有状态，isPending 自动切换，formAction 接管提交过程，state 自动获取服务器返回。代码量减少约 50%，且逻辑更集中。\n\n扩展延伸：useActionState 的进阶用法——结合 useOptimistic 实现乐观更新（先显示预期结果，服务器确认后修正）。结合 Server Actions（RSC 中的服务端函数）可以让表单直接在服务端处理数据，无需客户端 API 调用。注意：useActionState 的 formAction 需要配合原生表单的 action 属性，而非 onSubmit 事件——当然也可以用 submit 事件手动调用 formAction(formData)。React 19 中的 useTransition 也支持 Actions，可以用 startTransition 包裹非表单异步操作来获取 isPending 状态。",
+    "hints": [
+      "useActionState 如何同时管理 pending、error 和返回数据",
+      "Server Actions 与 useActionState 如何配合实现无 API 调用的表单提交"
+    ],
+    "tags": [
+      "React",
+      "React 19",
+      "Actions",
+      "Hook"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "useOptimistic 实现乐观更新",
+    "content": "React 19 的 useOptimistic Hook 是做什么的？在什么场景下应该使用乐观更新？请描述使用 useOptimistic 实现即时 UI 更新的模式以及与回退（Rollback）机制的配合。",
+    "answer": "答案：useOptimistic 允许在异步操作完成前「乐观地」显示预期结果，提升用户体验。语法：const [optimisticState, setOptimistic] = useOptimistic(actualState, (currentState, optimisticValue) => newState)。\n\n解析：工作原理——useOptimistic 接受当前真实状态和一个更新函数。当调用 setOptimistic 时，立即用乐观值计算出新的 UI 状态并渲染。异步操作完成后，React 自动将状态回退到真实状态——如果操作成功，真实状态更新到与乐观状态一致；如果失败，状态回退到操作前的值。\n\n典型场景——1）社交应用的点赞/收藏：用户点击后立即点亮图标，然后发起网络请求。如果请求失败，图标恢复为未点亮状态并提示错误。2）即时通讯消息发送：用户发送消息后立即在聊天列表显示（标记为「发送中」），服务端确认后移除标记。3）Todo List 任务完成：勾选复选框后立即划掉，后台同步到服务器。\n\n与 useActionState 配合——useActionState 的 action 函数内调用 setOptimistic：await setOptimistic(optimisticValue); const result = await submitToServer(data); return result;。这样确保 UI 立即更新，服务端请求在后台并发执行。注意：乐观更新必须能够方便地回退——如果操作失败的后果不可逆或回退成本很高（如支付扣款），不应该使用乐观更新。\n\n扩展延伸：React 19 之前实现乐观更新需要手动维护 undo 队列和回退逻辑（保存快照、出错时恢复）。useOptimistic 让这一切标准化。实现原理：React 内部维护了一个「乐观更新栈」，当异步操作完成时自动清理对应的乐观更新。注意 setOptimistic 不会改变实际 state——它只在本次渲染中叠加乐观值，实际 state 仍由服务端或父组件控制。因此 optimisticState 不应作为持久化的数据来源。",
+    "hints": [
+      "乐观更新失败后怎么回滚到之前的状态",
+      "什么场景不适合用乐观更新"
+    ],
+    "tags": [
+      "React",
+      "React 19",
+      "useOptimistic",
+      "Hook"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "use() Hook 直接读取 Promise 与 Context",
+    "content": "React 19 引入的 use() Hook 有什么特殊之处？它如何改变 Promise 和 Context 的读取方式？与 useEffect + useState 的异步数据获取模式相比有什么优势？",
+    "answer": "答案：use() 是 React 19 中一个全新的 Hook，可以同步读取 Promise（结合 Suspense）和 Context 的值，并且可以在条件语句和循环中使用——打破了传统 Hooks 的调用顺序规则。\n\n解析：use() 的两种用法——1）读取 Promise：const data = use(promise)。当 Promise 处于 pending 时，组件会抛出异常被最近的 Suspense 边界捕获显示 fallback；Promise resolve 后，组件自动重新渲染，use 返回数据。这实现了「声明式数据加载」：不需要 useEffect + loading state。2）读取 Context：const value = use(MyContext)。功能上等价于 useContext(MyContext)，但 use() 可以在条件语句中调用，解决了 Context 不能条件调用的限制。\n\n与 useEffect + useState 模式对比——传统模式：定义 state（loading/data/error）→ useEffect 内 fetch → setLoading/setData/setError → 处理竞态条件。use() + Suspense 模式：直接写 const data = use(fetchData())，Suspense 自动处理 loading，Error Boundary 自动处理 error，无需手动管理状态和竞态条件。代码更接近「同步写法」，心智负担更低。\n\n扩展延伸：use() 不遵循 Hooks 调用规则的原因——它不是一个「有状态」的 Hook（不向组件附加状态），而是一个「读取缓存」的工具。React 团队称其为「客户端数据读取原语」。使用限制：use() 不能用在组件顶层之外（如 useCallback、useEffect 内部），必须在渲染阶段调用。实践中通常将 use() 与 Suspense 配合使用，需要将异步数据加载包装在 Suspense 边界内。服务端组件中也可以使用 use() 读取异步数据，这是 RSC 数据获取的推荐方式之一。注意：use() 只负责「读取」——数据的获取（创建 Promise）需要在外部完成（如在组件外或 wrap 在 Suspense 的 fallback 外）。",
+    "hints": [
+      "为什么 use() 可以打破 Hooks 的执行顺序规则",
+      "use() + Suspense 如何消除 useEffect 中的竞态条件"
+    ],
+    "tags": [
+      "React",
+      "React 19",
+      "use()",
+      "Suspense"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "useTransition 与过渡状态详解",
+    "content": "React 18+ 的 useTransition 和 startTransition 解决了什么问题？什么是过渡更新（Transition Update）？如何区分紧急更新和过渡更新？",
+    "answer": "答案：useTransition 用于将某些状态更新标记为「非紧急」的过渡更新，让 React 在紧急更新完成后才处理它们，从而保持 UI 在大量计算或状态变更时的响应性。返回 [isPending, startTransition]。\n\n解析：问题背景——在 React 中，所有 setState 默认都是紧急更新。这意味着当一个耗时操作（如输入框内容变化后过滤大量列表数据）触发渲染时，整个页面会卡住直到渲染完成。用户输入会变得迟钝。\n\n紧急 vs 过渡更新的区分——紧急更新：直接用户交互（输入、点击、拖动），需要立即响应。过渡更新：由紧急更新触发的衍生状态变化（如输入后的列表过滤结果），可以延迟处理。\n\n使用方式：startTransition(() => { setSearchQuery(input); });。React 会立即渲染紧急更新（输入框新值），将过渡更新（过滤后的列表）标记为低优先级。如果过程中有新的紧急更新，React 中断当前过渡渲染，处理紧急更新，然后重新开始过渡渲染。\n\n扩展延伸：useTransition vs useDeferredValue——useTransition 包装的是 setState 调用，useDeferredValue 包装的是值本身（const deferredQuery = useDeferredValue(query)）。两者本质原理相同（标记为低优先级/过渡），但使用场景不同：当你有权控制 setState 时用 useTransition，在 props 传入的值无法控制更新时机时用 useDeferredValue。Concurrent Features 的底层依赖 Fiber 架构的时间切片（Time Slicing）和可中断渲染（Interruptible Rendering），让 React 能在渲染过程中被更高优先级的更新打断。",
+    "hints": [
+      "useTransition 和 useDeferredValue 的使用场景有什么区别",
+      "Concurrent 模式下 React 如何实现可中断渲染"
+    ],
+    "tags": [
+      "React",
+      "Concurrent",
+      "useTransition",
+      "性能"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "React Document Metadata 管理",
+    "content": "在 React 应用中如何管理页面级的元数据（文档标题 <title>、meta 描述、Open Graph 标签等）？React 19 提供了什么原生方案？有哪些第三方库可用？",
+    "answer": "答案：React 19 原生支持在组件树中的任意位置渲染 <title>、<meta> 等文档级标签，React 会自动将它们提升（Hoist）到 <head> 中。无需三方库即可管理元数据。\n\n解析：React 19 之前的方案——1）react-helmet（最流行但维护较少）2）react-helmet-async（helmet 的异步 fork，适合 SSR）3）next/head（Next.js 内置，用于在页面组件中自定义 <head>）4）@unhead/vue/vueuse-head（Vue 生态）——需要引入额外依赖，且可能存在元数据合并/覆盖的兼容性问题。\n\nReact 19 原生方案——直接在组件中写 <title>我的页面</title>，React 渲染时自动将其移动到 <head>。支持多个组件同时渲染 title 时，最后一个渲染的 title 生效（下层组件优先级 > 上层组件）。也支持 <meta>、<link>、<base> 等 head 标签。原理是在 DOM 子树中使用 portal 机制将 head 元素重定向到 <head> 节点（类似 <Head> 概念的原生化）。\n\n扩展延伸：SSR 场景下，原生方案会将 head 标签收集并在服务端渲染时注入到 HTML 中，自动处理客户端水合时的重复 head 标签去重。第三方库在以下场景仍有价值：1）复杂元数据模板（如 structured data JSON-LD 的动态生成）。2）元数据合并策略定制。3）需要向后兼容 React 18 及以下版本。4）微前端场景下的元数据隔离。原生方案的优势是零依赖、自动合并、和 React 渲染生命周期无缝集成。",
+    "hints": [
+      "React 19 原生元数据管理和 react-helmet 的关键区别是什么",
+      "SSR 场景下原生元数据管理如何避免 head 标签重复"
+    ],
+    "tags": [
+      "React",
+      "React 19",
+      "SEO",
+      "元数据"
+    ]
   }
 ]

@@ -826,5 +826,96 @@
       "分层编译"
     ],
     "options": []
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 的指针压缩技术（Compressed OOPs）",
+    "content": "请解释 JVM 中的指针压缩（Compressed OOPs / 压缩普通对象指针）技术的原理和收益。",
+    "answer": "答案：Compressed OOPs（压缩普通对象指针）将 64 位对象指针压缩为 32 位存储，减少内存占用和缓存未命中。\n\n解析：在 64 位 JVM 中，对象指针默认是 8 字节（64 位）。开启压缩后（JDK 8 默认开启，-XX:+UseCompressedOops），指针压缩为 4 字节（32 位），但实际访问时左移 3 位（乘以 8，因为 Java 对象按 8 字节对齐）恢复为 64 位地址。这样堆最大可寻址 32GB（2^32 * 8 = 32GB）。注意：压缩只对普通对象指针有效，对静态字段和 Class 指针无效。\n\n扩展延伸：指针压缩的收益：1）减少内存占用——每个引用减少 4 字节，堆中大量引用字段节省可观空间。2）改善缓存局部性——相同缓存行可以容纳更多引用（如数组）。局限性：堆超过 32GB 后需要关闭压缩（-XX:+UseCompressedOops 通常需要 -XX:-UseCompressedOops 手动关闭），指针回到 8 字节，此时内存占用上升 10-20%。超过 32GB 应考虑使用 ZGC 或调整架构。",
+    "hints": [
+      "压缩 OOPs 将 8 字节指针压缩为 4 字节，有效寻址 32GB 堆",
+      "堆超过 32GB 后压缩失效，内存占用显著增加"
+    ],
+    "tags": [
+      "JVM",
+      "指针压缩",
+      "OOPs",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 的直接内存与 NIO",
+    "content": "JVM 的直接内存（Direct Memory）是什么？它和堆内存有什么区别？如何监控和调优？",
+    "answer": "答案：直接内存是 NIO 在堆外分配的内存，通过 DirectByteBuffer 管理，不受 -Xmx 限制，受 -XX:MaxDirectMemorySize 限制。\n\n解析：直接内存不是 JVM 运行时数据区的一部分，但频繁使用（如 NIO、Netty）时需要注意。分配方式——ByteBuffer.allocateDirect(capacity) 在堆外（Native Memory）分配内存。优势——写入 Socket 或从文件读取时减少一次内存拷贝（直接从堆外内存到内核缓冲区，零拷贝）。劣势——分配和回收成本高（Full GC 触发 DirectByteBuffer 的 Cleaner 回收堆外内存）。\n\n扩展延伸：监控——NMT（Native Memory Tracking，-XX:NativeMemoryTracking=summary/detail）可监控直接内存使用。回收——DirectByteBuffer 使用 PhantomReference + Cleaner 机制，由 Reference Handler 线程在 GC 时触发回收。如果堆外内存泄漏，JVM 的 DirectByteBuffer 抛 OutOfMemoryError: Direct buffer memory。Netty 使用 PooledByteBufAllocator 池化 DirectByteBuffer，避免频繁分配回收。",
+    "hints": [
+      "直接内存默认等于 -Xmx 的大小，通过 -XX:MaxDirectMemorySize 调整",
+      "NMT（Native Memory Tracking）是监控直接内存的主要工具"
+    ],
+    "tags": [
+      "JVM",
+      "直接内存",
+      "NIO",
+      "调优"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 的安全点与安全区域",
+    "content": "请解释 JVM 中的安全点（Safepoint）和安全区域（Safe Region）的区别和联系。为什么需要它们？",
+    "answer": "答案：安全点是线程可以安全执行 GC 操作的位置；安全区域是安全点的扩展，处理线程不执行的场景。\n\n解析：安全点（Safepoint）——JVM 需要在某个位置让所有线程暂停以执行 GC 等操作。线程执行到安全点时检查全局 Safepoint 标志并暂停。安全点的位置：方法调用的返回处、循环的末尾、异常抛出的位置等。安全区域（Safe Region）——线程不执行的代码段（如 Thread.sleep()、阻塞 I/O 等）。此时线程无法进入安全点，安全区域标识该区域内的引用不会变化，GC 可以安全地处理该线程。\n\n扩展延伸：长时间触发 Safepoint 的原因——大数组遍历（无 Safepoint 轮询点的循环）、JIT 编译（编译线程请求 Safepoint 查看编译结果）。查看 Safepoint 耗时——使用 -XX:+PrintSafepointStatistics 和 -XX:PrintSafepointStatisticsCount=1。常见的长时间 Safepoint 原因——1）偏向锁批量撤销（JDK 15 前，已默认禁用）。2）PrintThreads（Thread Dump 触发）。3）Deoptimization。",
+    "hints": [
+      "安全点用于线程正在执行时暂停，安全区域用于线程不执行时",
+      "安全点的位置如何影响 GC 停顿时间"
+    ],
+    "tags": [
+      "JVM",
+      "安全点",
+      "Safepoint",
+      "GC"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 方法内联优化",
+    "content": "请解释 JVM JIT 编译中的方法内联（Method Inlining）优化。哪些情况下方法不会被内联？",
+    "answer": "答案：方法内联是将目标方法的代码直接嵌入到调用方的方法体中，消除方法调用的开销，是 JIT 最重要和基础的优化手段。\n\n解析：内联的好处——消除方法调用（参数压栈、跳转、返回的重排），并使后续优化（如逃逸分析、死代码消除）受益。JIT 根据方法的调用频率和大小决定是否内联。HotSpot 的默认内联阈值：-XX:MaxInlineSize=35（字节码 ≤ 35 的方法强制内联），-XX:FreqInlineSize=325（热点方法 ≤ 325 字节可内联）。\n\n扩展延伸：不被内联的情况——1）大型方法（超过 MaxInlineSize 或 FreqInlineSize）。2）虚方法（需要运行时确定调用目标）——但 JIT 通过类型内联缓存（Inline Cache）或去虚化（Devirtualization）技术，在检测到单态（只有一种实际类型）时仍可内联。3）native 方法。4）构造方法（构造方法可内联但有特殊处理）。5）递归方法（有内联深度限制）。-XX:InlineSmallCode（默认 2000）——超过此大小的编译代码区域不再内联。",
+    "hints": [
+      "方法内联是 JIT 所有优化的基础",
+      "虚方法通过类型内联缓存或去虚化后仍可内联"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "内联",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GC 中的三色标记算法",
+    "content": "请解释 GC 中的三色标记（Tri-Color Marking）算法原理。并发标记时如何解决浮动垃圾和漏标问题？",
+    "answer": "答案：三色标记将对象分为白色（未扫描）、灰色（已扫描自身但未扫描引用）、黑色（自身和引用都已扫描），是并发标记的基石。\n\n解析：标记过程——初始时 GC Roots 为灰色。循环处理：取出灰色对象，标记为黑色，扫描其引用到的白色对象标记为灰色。最终所有白色对象为不可达（可回收）。并发标记的问题：1）浮动垃圾（Floating Garbage）——标记过程中新产生的垃圾对象，留在本次 GC 处理。2）对象漏标——标记过程中，黑色对象新引用了白色对象，而灰色对象到该白色对象的引用被删除。黑色对象不会重新扫描，导致该白色对象被误判为不可达。\n\n扩展延伸：解决漏标的两种方案——1）增量更新（Incremental Update，CMS 使用）：黑对象引用了白对象后，将黑对象重新标记为灰色（下次重新扫描）。2）原始快照（SATB, Snapshot At The Beginning，G1 使用）：在标记开始时拍快照，当灰色对象到白对象的引用被删除时，白对象仍被记录为可达。SATB 的优点是并发标记期间不需要再扫描黑色对象的引用变更。ZGC 使用染色指针完全不需要三色标记。",
+    "hints": [
+      "三色标记的核心问题是并发标记期的漏标",
+      "CMS 用增量更新，G1 用 SATB 解决漏标"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "三色标记",
+      "CMS",
+      "G1"
+    ]
   }
 ]

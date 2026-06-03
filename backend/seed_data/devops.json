@@ -787,5 +787,102 @@
       "链路追踪",
       "OpenTelemetry"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Jenkins Pipeline 共享库设计",
+    "content": "请详细说明 Jenkins Pipeline 共享库（Shared Libraries）的结构设计、加载方式（动态加载 vs 静态加载），以及在大型团队中如何组织共享库实现流水线标准化。",
+    "answer": "答案：Jenkins Shared Library 是一种将流水线公共逻辑抽取为可复用模块的机制。共享库目录结构包括：vars/（定义全局变量/函数，每个 .groovy 文件对应一个可调用步骤）、src/（标准 Java 类结构，用于更复杂的逻辑封装）、resources/（外部资源文件）。团队可将构建、部署、测试等通用步骤封装为共享库，各项目 Jenkinsfile 仅需几行调用即可。\n\n解析：两种加载方式：1) 隐式加载（Global Pipeline Libraries）—— 系统管理员配置共享库名称和仓库地址，所有流水线自动加载，适合组织级通用步骤；2) 动态加载（@Library 注解）—— 每个 Jenkinsfile 通过 @Library('my-shared-lib@version') _ 显式引用，_ 号表示引入所有全局变量。版本管理通过 Git Tag 或分支实现（@Library('my-shared-lib@v1.2.3')）。共享库设计最佳实践：函数的入参使用 Map 参数兼容扩展（如 def call(Map args)）；每个步骤包含版本号用于追溯；步骤内调用其他步骤形成组合模式。\n\n扩展延伸：大型团队中共享库治理要素：1) 版本化 —— 使用 SemVer 管理共享库版本，不同项目可锁定不同版本避免升级影响；2) 测试 —— 引入共享库的单元测试（JenkinsPipelineUnit 框架）确保步骤正确性；3) 评审制度 —— 共享库变更需经过 Code Review，因为一次修改会影响所有引用项目；4) 模块拆分 —— 按场景拆分（构建库、部署库、安全扫描库），避免单一共享库过于庞大；5) 配合 Configuration as Code（JCasC）实现全局配置声明化管理。",
+    "hints": [
+      "vars/ 目录下的 .groovy 文件自动成为流水线可调用的步骤",
+      "隐式加载方便但难以管理版本，动态加载更适合跨版本共存",
+      "JenkinsPipelineUnit 可对共享库步骤编写单元测试"
+    ],
+    "tags": [
+      "DevOps",
+      "Jenkins",
+      "共享库",
+      "Pipeline"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Trunk-Based 开发模式与 Feature Flags",
+    "content": "请说明 Trunk-Based Development（主干开发）的核心原则、短生命周期分支实践，以及 Feature Flags（特性开关）如何配合主干开发实现\"未完成功能\"的安全合入。",
+    "answer": "答案：Trunk-Based Development（TBD）是一种 Git 分支策略，开发者直接或在极短生命周期（<1天）的特性分支上工作，频繁合并到主干（main/trunk）。核心原则是\"频繁提交、小批量合并、减少并行分支\"。TBD 与 GitFlow 等长分支策略形成鲜明对比 —— GitFlow 的 develop/release/hotfix 分支在 TBD 中被简化为只有主干+临时特性分支。\n\n解析：TBD 的关键实践：1) 特性分支不超过 1-2 天，避免分支与主干偏离过大导致合并冲突；2) 每次提交保持可发布状态（deployable），必须通过 CI 验证；3) 未完成的功能通过 Feature Flags（特性开关）隐藏 —— 代码已合入主干但功能未对用户开放。Feature Flags 的实现方式：if (featureToggle.isEnabled(\"new-checkout\")) { newLogic() } else { oldLogic() }。托管服务有 LaunchDarkly、Split.io，也可自建基于配置中心的方案。Feature Flags 分多种类型：发布开关（控制功能发布）、实验开关（A/B 测试）、权限开关（白名单用户可见）、运维开关（动态降级能力）。\n\n扩展延伸：Feature Flags 的风险和最佳实践：1) 技术债 —— 废弃的开关代码需及时清理，避免\"Flags 腐化\"；2) 嵌套开关 —— 多个开关组合的测试组合爆炸，需限制同时活跃的开关数量；3) 开关配置中心 —— 生产环境慎用运行时开关变更，需有权限审批和审计日志；4) TBD + Feature Flags 配合 CI/CD 可实现\"持续发布\"而非\"持续部署\" —— 功能合入主干后，通过开关控制逐步开放给用户，发现问题立即关闭开关回退；5) 推荐使用 LaunchDarkly 等专业平台而非自建复杂的开关系统。",
+    "hints": [
+      "TBD 要求特性分支存活时间不超过 1-2 天",
+      "Feature Flags 让未完成的功能可安全合入主干",
+      "废弃的 Feature Flags 需要纳入技术债管理"
+    ],
+    "tags": [
+      "DevOps",
+      "TBD",
+      "Feature Flags",
+      "Git策略"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "SAST/DAST 与代码安全扫描",
+    "content": "请解释 SAST（静态应用安全测试）和 DAST（动态应用安全测试）的区别、CI/CD 流水线中的集成时机，以及依赖扫描（SCA）和容器镜像扫描在软件供应链安全中的角色。",
+    "answer": "答案：SAST（白盒测试）在开发阶段分析源代码，无需运行程序即发现 SQL 注入、XSS、硬编码密钥等安全漏洞。DAST（黑盒测试）在测试或预发布阶段对运行中的应用发起模拟攻击，检测运行时安全问题（如配置错误、认证绕过）。SCA（Software Composition Analysis）扫描开源依赖的已知漏洞（通过 CVE/NVD 数据库匹配），容器镜像扫描检查基础镜像中的漏洞包。\n\n解析：在 CI/CD 流水线中的集成位置：1) SAST 在开发者提交代码后立即触发（Pre-commit hook 或 CI 的第一步），反馈最快但可能产生误报。常用工具：SonarQube（支持多种语言安全分析）、Semgrep（可自定义规则）、Checkmarx/Fortify（商业）。2) SCA 在依赖安装阶段执行，扫描 pom.xml/package.json/go.mod 等锁定文件。常用工具：OWASP Dependency-Check、Snyk、GitHub Dependabot。3) DAST 在测试环境部署后执行（集成测试阶段）。常用工具：OWASP ZAP、Burp Suite。4) 容器镜像扫描在镜像构建后触发，优先推荐在 Push 到仓库时扫描（Trivy、Clair、Anchore）。\n\n扩展延伸：安全扫描的门禁策略：1) 严重漏洞阻断 —— 发现 CVSS >= 9.0 的漏洞立即阻断流水线；2) 误报管理 —— 建立 Suppression 机制标记误报并附带原因说明；3) 时间窗口 —— 对于无已知利用的高危漏洞可设置修复宽限期（如 7 天）；4) SBOM（Software Bill of Materials）—— 生成 SPDX/CycloneDX 格式的 SBOM 并归档，满足供应链安全合规要求；5) 镜像签名和验证 —— 使用 cosign 对镜像签名，部署时验证签名确保镜像未被篡改。",
+    "hints": [
+      "SAST 在编码阶段执行，DAST 在运行时执行，两者互补",
+      "SCA 扫描的漏洞库需要定期更新才能检测最新漏洞",
+      "SBOM 已成为供应链安全合规的必备产出"
+    ],
+    "tags": [
+      "DevOps",
+      "SAST",
+      "DAST",
+      "安全扫描",
+      "SCA"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Artifactory/Nexus 制品仓库管理",
+    "content": "请介绍制品仓库（Artifact Repository）在 DevOps 中的作用，对比 Sonatype Nexus 和 JFrog Artifactory 的特性，并说明构建物版本管理与清理策略的最佳实践。",
+    "answer": "答案：制品仓库是 DevOps 流水线的核心组件，用于存储和管理构建产物（JAR/WAR、Docker 镜像、npm 包、Python 包等）。它不仅解决了\"依赖从哪里来\"的问题，还承担了版本管理、元数据存储、安全扫描等职责。Nexus Repository OSS（免费开源版）和 JFrog Artifactory（有免费层）是最主流的两种制品仓库。\n\n解析：Nexus 和 Artifactory 的对比：Nexus 支持 Maven、npm、Docker、PyPI、NuGet 等主流格式，开源版功能足够大部分团队使用；Artifactory 支持更多包格式（Helm、Conan、Vagrant 等），提供更丰富的元数据管理和先进的构建集成（Build Integration —— 记录构建的依赖关系和产物映射）。两者都支持代理远程仓库（缓存公网依赖，加速 CI 构建）和本地仓库（存储自研产物）。Nexus 的 Blob Store 实现存储分层（可配置冷热数据分离），Artifactory 支持多站点复制（适合跨国团队）。\n\n扩展延伸：制品管理最佳实践：1) 版本策略 —— 采用 SemVer 语义化版本，快照版本（SNAPSHOT/-SNAPSHOT）仅用于开发迭代，发布版本用 release 仓库；2) 清理策略 —— 设置保留策略（如保留最近 N 个快照版本，定期删除超过 30 天的快照），避免磁盘膨胀；3) 二进制安全 —— 制品上传前自动触发病毒扫描和漏洞扫描；4) 制品签名 —— 使用 GPG 签名确保完整性和来源可信；5) 集成 CI/CD —— 构建成功后自动上传到制品仓库，部署时从制品仓库拉取指定版本。",
+    "hints": [
+      "制品仓库代理上游公共仓库可以显著提升 CI 构建速度和稳定性",
+      "快照版本的自动清理是磁盘空间管理的关键",
+      "构建信息（Build Info/Integrations）是制品追溯的\"黑匣子\""
+    ],
+    "tags": [
+      "DevOps",
+      "Nexus",
+      "Artifactory",
+      "制品管理"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "策略即代码（OPA/Gatekeeper）",
+    "content": "请解释策略即代码（Policy as Code）的理念，详细说明 OPA（Open Policy Agent）和 Gatekeeper 的架构、Rego 策略语言的核心概念，以及在 Kubernetes 场景中的常见策略场景。",
+    "answer": "答案：策略即代码（Policy as Code）是一种将安全策略、合规规则、治理要求以代码形式声明、版本化和自动执行的方法。OPA（Open Policy Agent）是 CNCF 毕业项目，提供统一的策略评估引擎，将策略从具体服务中解耦。Gatekeeper 是基于 OPA 的 Kubernetes Admission Webhook，用于在 K8s 集群中执行策略约束。\n\n解析：OPA 的架构核心是策略决策（Policy Decision）与策略执行（Policy Enforcement）的分离：1) 服务将查询（Query）发给 OPA，传入 JSON 格式的输入数据；2) OPA 根据 Rego 策略计算出决策（allow/deny/自定义）并返回。Rego 语言基于 Datalog 逻辑编程范式，支持数据嵌套遍历、规则映射、否定存在检查等强大表达。Gatekeeper 的工作流：用户创建 ConstraintTemplate（定义策略逻辑的 Rego 模板）→ 创建 Constraint（实例化模板，指定参数和生效范围）→ 资源创建时 Mutation/Validation Webhook 拦截请求 → OPA 进行评估 → 审查通过/拒绝。常见策略：确保所有 Pod 设定 resource limits/requests；禁止 privileged 容器；要求 Pod 指定 securityContext；限制 Ingress 只能使用加密的 TLS；所有镜像必须来自信任仓库。\n\n扩展延伸：Rego 策略编写技巧：1) 使用 deny 变量的赋值（deny[msg]）收集所有违规信息，而非一次性 fail；2) 善用 data.inventory 获取集群全景信息（如检查 Namespace 是否存在）；3) 使用 mock 和测试框架（opa test）为策略编写单元测试。Gatekeeper 的 Dry-Run 模式允许在不阻断的情况下预览策略影响，是推广策略的推荐方式。OPA 不仅用于 K8s，还可用于 Terraform 计划验证（terraform plan 阶段检查基础设施合规性）、API 授权（通过 OPA Envoy Plugin 集成 Envoy）、数据过滤等场景。",
+    "hints": [
+      "OPA 做决策，Gatekeeper 做 K8s 准入控制",
+      "Rego 的 deny[msg] 模式可以收集多条违规信息",
+      "Gatekeeper 的 Dry-Run 模式适合策略的灰度推广"
+    ],
+    "tags": [
+      "DevOps",
+      "OPA",
+      "Gatekeeper",
+      "Policy as Code",
+      "安全"
+    ]
   }
 ]

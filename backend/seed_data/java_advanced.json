@@ -737,5 +737,187 @@
       "异常",
       "最佳实践"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 模块化系统（JPMS）",
+    "content": "请介绍 Java 9 引入的模块化系统（JPMS）的核心概念和优势。模块化对现有代码有何影响？",
+    "answer": "答案：JPMS（Java Platform Module System）通过 module-info.java 定义模块，实现强封装和显式依赖。\n\n解析：模块声明通过 module 关键字定义，exports 导出包给其他模块，requires 声明对其他模块的依赖，opens 允许反射访问。模块化解决了长期以来 JAR 地狱（类路径冲突）和内部 API 无限制访问的问题。未命名模块（unnamed module）中的代码可以访问类路径上的所有 JAR，但命名模块不能访问未命名模块中的类。\n\n扩展延伸：影响 1）JDK 内部 API 被封裝——sun.misc.Unsafe 等需要通过 --add-opens 才能反射访问。2）Spring Boot 2.x 和 3.x 对 JPMS 的支持情况——Spring 5 通过自动模块支持 JPMS。3）迁移策略：先加 module-info.java 到模块路径测试，逐步将类路径迁移到模块路径。4）jlink 工具——基于模块化的自定义 JRE 构建工具，可以生成仅包含所需模块的最小运行时镜像。",
+    "hints": [
+      "module-info.java 中的 exports/requires/opens 分别控制什么",
+      "自动模块和未命名模块的区别"
+    ],
+    "tags": [
+      "Java",
+      "JPMS",
+      "模块化",
+      "JDK 新特性"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "密封类（Sealed Class）",
+    "content": "请介绍 Java 17 正式发布的密封类（Sealed Class）的作用和用法。它与 final 类有什么区别？",
+    "answer": "答案：密封类通过 sealed 关键字限制哪些类或接口可以继承或实现它，提供比访问修饰符更精细的继承控制。\n\n解析：声明语法：sealed class Shape permits Circle, Rectangle, Triangle { }。子类必须使用 final（禁止继续继承）、sealed（继续限制子类）或 non-sealed（开放继承）之一来声明。密封类结合 switch 模式匹配（Java 17+ 预览，Java 21 正式）可以实现穷举检查——编译器确保 switch 覆盖了所有允许的子类型，无需 default 分支。\n\n扩展延伸：密封类在领域驱动设计中的应用——精确建模有限子类型（如支付方式、订单状态）。密封接口（sealed interface）同样支持。与 final 的区别：final 完全禁止继承；密封类允许有限的、可控的继承。框架开发者可以用密封类限制用户只能扩展特定子类。",
+    "hints": [
+      "密封类的三种子类声明方式：final/sealed/non-sealed",
+      "密封类与 switch 模式匹配的结合"
+    ],
+    "tags": [
+      "Java",
+      "密封类",
+      "Sealed Class",
+      "JDK 17"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ZGC 垃圾回收器",
+    "content": "请介绍 ZGC（Z Garbage Collector）的设计目标和核心原理。ZGC 如何做到几乎无停顿？",
+    "answer": "答案：ZGC 是 JDK 11 引入的实验性低延迟垃圾回收器（JDK 15 正式），目标是将 GC 停顿时间控制在 10ms 以内，且停顿时间不随堆大小增长。\n\n解析：核心设计 1）染色指针（Colored Pointer）——对象头中 64 位地址的高 4 位（42-45 bit）存储元数据状态（Finalizable/Remapped/Marked0/Marked1），不需要对象头额外字段。2）读屏障（Load Barrier）——读对象引用时，如果指针状态标记显示需要修正，读屏障会立即修复指针引用到正确地址。3）并发回收——几乎全部阶段（标记、转移、重映射）都是并发的，仅初始标记和最终标记有极短暂的 STW。4）Region 化——堆分为大小 Region（小 2MB、中 32MB、大 N*2MB），动态管理。\n\n扩展延伸：与 Shenandoah 的区别——ZGC 用染色指针实现并发标记和转移；Shenandoah 用 Brooks 转发指针（读/写屏障）。ZGC 在 JDK 16+ 支持了并发栈处理（Concurrent Thread Stack Processing），进一步减少 STW 时间。ZGC 当前不支持分代收集（JDK 21 引入分代 ZGC 实验特性），这意味着如果对象存活率高，全堆遍历还是可能带来一些性能开销。推荐使用参数 -XX:+UseZGC。",
+    "hints": [
+      "染色指针和读屏障是 ZGC 的核心技术",
+      "ZGC 的 STW 阶段有哪些"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "GC",
+      "低延迟"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Shenandoah GC",
+    "content": "请介绍 Shenandoah GC 的核心设计。它和 ZGC 的异同是什么？",
+    "answer": "答案：Shenandoah 是 JDK 12 引入的低延迟 GC（JDK 15 转正），通过 Brooks 转发指针和读/写屏障实现并发转移，目标也是降低停顿时间。\n\n解析：Shenandoah 的核心机制是 Brooks Pointer——对象头部新增一个转发指针字段。当对象被转移后，原对象的转发指针指向新对象。读屏障检查被访问对象的转发指针，如果被转移则跟随转发指针获取新对象。转移过程是并发的，不需要 STW 来移动对象。\n\n与 ZGC 的异同：同——都是几乎全并发的低延迟 GC，目标停顿时间 < 10ms。异 1）实现方式：ZGC 使用染色指针（读屏障检查指针标记位），Shenandoah 使用 Brooks 转发指针（对象头额外字段 + 读/写屏障）。2）堆内存：ZGC 需要额外地址空间做染色指针预留；Shenandoah 没有染色指针开销。3）ZGC 在 JDK 21 前不支持分代，Shenandoah 在 JDK 17+ 支持分代模式（-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational）。4）Shenandoah 的写屏障开销略高。\n\n扩展延伸：Shenandoah 从 JDK 18 开始被包含在 Oracle OpenJDK 中（之前仅在 Red Hat 构建的 OpenJDK 中）。使用参数 -XX:+UseShenandoahGC。",
+    "hints": [
+      "Brooks 转发指针的工作原理",
+      "为什么 Shenandoah 需要写屏障而 ZGC 不需要"
+    ],
+    "tags": [
+      "JVM",
+      "Shenandoah",
+      "GC",
+      "低延迟"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Lambda 表达式的底层实现",
+    "content": "请解释 Java Lambda 表达式在字节码层面的实现原理。它与匿名内部类有何不同？",
+    "answer": "答案：Lambda 表达式通过 invokedynamic 指令在运行时动态生成函数式接口实现，而不是编译为匿名内部类。\n\n解析：编译器将 Lambda 表达式编译为 invokedynamic 指令 + 引导方法（Bootstrap Method）。引导方法调用 LambdaMetafactory.metafactory()，在运行时通过 ASM 生成函数式接口的实现类。生成的类实现了函数式接口的抽象方法，方法体指向 Lambda 表达式体。核心优势 1）没有匿名内部类文件（减少类加载开销和 Metaspace 占用）。2）invokedynamic 链接后的调用点可以像普通方法调用一样被 JIT 内联。3）捕获的变量直接作为方法参数传入生成的实现方法，无需生成额外的实例字段。\n\n扩展延伸：性能对比——匿名内部类每次创建都生成新的 .class 文件，首次使用需要类加载验证准备初始化，Lambda 的 invokedynamic 只在首次调用时执行引导方法，后续调用直接调用已链接的方法句柄（方法句柄可以更容易被 JIT 内联）。序列化——Lambda 表达式不推荐序列化（其实现类是运行时生成的，序列化形式依赖于具体的 JVM 实现）。调试——Lambda 的栈跟踪信息在早期 JDK 8 中较模糊，JDK 8u20+ 通过 -Dlambda.formalized.parameters=true 改善了这个问题。",
+    "hints": [
+      "invokedynamic 指令和 LambdaMetafactory 的作用",
+      "为什么 Lambda 比匿名内部类性能更好"
+    ],
+    "tags": [
+      "Java",
+      "Lambda",
+      "invokedynamic",
+      "JVM"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 代理的三种实现方式对比",
+    "content": "请比较 JDK 动态代理、CGLIB 和字节码增强（Javaassist/ASM）三种代理实现方式的优劣。",
+    "answer": "答案：三种代理方式各有优劣：JDK 动态代理基于接口、CGLIB 基于继承子类、字节码增强直接操作字节码。\n\n解析：1）JDK 动态代理——通过 Proxy.newProxyInstance() 创建，基于 InvocationHandler 反射调用。优点是 JDK 原生支持，不需要额外依赖；缺点是被代理类必须实现接口。2）CGLIB——通过 ASM 生成子类字节码，覆盖父类方法。优点是不需要接口，可以代理普通类；缺点是不能代理 final 类/final 方法，且需依赖 CGLIB 库。3）字节码增强（ASM/Javaassist/ByteBuddy）——直接操作字节码，可以生成任意结构的类。优点是灵活性最高，可以完全控制生成的字节码；缺点是学习成本高，容易出错。\n\n扩展延伸：Spring AOP 默认策略——Spring Boot 2.0+ 强制使用 CGLIB（proxy-target-class=true），即使 Bean 实现了接口。性能对比——JDK 动态代理和 CGLIB 在 JDK 8+ 后性能接近。ByteBuddy 是 CGLIB 的现代替代品，被 Hibernate、Mockito 等广泛使用。实际应用中代理创建的开销通常远小于代理调用的优化收益，不应过度关注微基准测试中的差异。",
+    "hints": [
+      "JDK 动态代理要求目标类实现接口",
+      "Spring Boot 2.0+ 默认使用 CGLIB 而非 JDK 动态代理"
+    ],
+    "tags": [
+      "Java",
+      "代理",
+      "CGLIB",
+      "AOP",
+      "字节码"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 内存泄漏的 8 种典型场景",
+    "content": "请列举 Java 中 8 种典型的内存泄漏场景，以及如何检测和预防。",
+    "answer": "答案：8 种典型内存泄漏场景：1）静态集合类持有对象引用 2）未关闭的资源 3）ThreadLocal 未调用 remove 4）内部类持有外部类引用 5）equals 和 hashCode 不一致 6）String.intern() 滥用 7）类加载器泄漏 8）回调/监听器未注销。\n\n解析：1）静态集合——static List 持有对象，导致对象无法被 GC。2）未关闭资源——InputStream/Connection 未关闭导致堆外内存泄漏。3）ThreadLocal——线程池中线程复用，弱引用 Key 被回收后 Value 仍存活。4）非静态内部类——持有外部类强引用，外部类无法回收。5）equals/hashCode 不一致——HashMap key 无法被访问。6）intern() 滥用——字符串常量池膨胀。7）类加载器泄漏——Tomcat 热部署时 PermGen/Metaspace 上涨。8）监听器/回调——注册后未反注册。\n\n扩展延伸：检测工具——MAT 的 Leak Suspects Report、Dominator Tree 分析、OQL 查询；JProfiler 的堆遍历器；Eclipse Memory Analyzer 的 GC Root 链分析。预防方法——代码审查中加入资源管理检查、使用 try-with-resources、ThreadLocal 用后 remove()、静态内部类代替非静态内部类、使用弱引用或虚引用管理回调。",
+    "hints": [
+      "ThreadLocal 在线程池中造成的泄漏最隐蔽",
+      "类加载器泄漏在 Tomcat 热部署时最明显"
+    ],
+    "tags": [
+      "JVM",
+      "内存泄漏",
+      "排查",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Java 值类型与引用类型的本质区别",
+    "content": "请解释 Java 中值类型（基本类型）和引用类型的本质区别，包括存储方式、传递方式和 GC 行为。",
+    "answer": "答案：基本类型直接存储值在栈上，引用类型存储对象地址在栈上、对象数据在堆上。\n\n解析：存储方式——基本类型变量直接包含值（如 int a = 10 在栈帧中直接存 10）；引用类型变量存储对象在堆中的地址（如 String s = \"hello\" 在栈中存地址，堆中存对象数据）。传递方式——都是值传递：基本类型传递值的副本；引用类型传递引用的副本（地址的副本），所以修改引用指向不影响外部变量，但修改引用指向的对象内部会影响。GC 行为——基本类型随栈帧弹出自动销毁；引用类型的对象由 GC 管理，当没有引用指向时被回收。\n\n扩展延伸：JDK 24 的 Valhalla 项目计划引入值类型（Value Type / Primitive Class），将不可变的对象实例直接内联到栈上或对象字段中（无需通过指针间接访问），大幅减少内存占用和缓存未命中。",
+    "hints": [
+      "基本类型和引用类型在方法参数传递时的行为差异",
+      "Valhalla 项目的值类型计划在未来如何改变这一点"
+    ],
+    "tags": [
+      "Java",
+      "基础",
+      "值类型",
+      "引用类型"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GC 日志分析与调优实践",
+    "content": "如何通过 GC 日志分析 JVM 内存健康状况？关键指标有哪些？如何基于日志进行调优决策？",
+    "answer": "答案：通过 GC 日志分析 Young GC 和 Full GC 频率、单次耗时、堆内存变化趋势来诊断内存问题。\n\n解析：开启 GC 日志——JDK 8：-Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps；JDK 9+：-Xlog:gc*:file=gc.log:time,uptime,level,tags。关键指标：1）Young GC 频率——每秒/每几分钟一次。过高说明新生代过小或分配速率过高。2）Young GC 耗时——正常 < 100ms，过高说明存活对象多（晋升多）。3）Full GC 频率——最好为 0，Full GC 间隔短说明老年代空间不足或存在内存泄漏。4）GC 暂停总时间——GC 耗时占总运行时间的比例（吞吐量损耗）。5）晋升（Promotion）大小——每次 Young GC 升到老年代的对象大小。6）堆使用趋势——持续上涨不回落说明泄漏。\n\n扩展延伸：调优决策——1）Young GC 太频繁（< 1 秒一次）→ 增大 -Xmn 或 -XX:NewRatio。2）晋升过快（老年代短时间被填满）→ 增大 Survivor 空间或晋升阈值 -XX:MaxTenuringThreshold。3）Full GC 太频繁（几十分钟一次）→ 查看老年代使用率是否持续上涨，考虑堆内存泄漏检测。4）CMS 并发模式失败（Concurrent Mode Failure）→ 增大老年代或调低 CMSInitiatingOccupancyFraction。5）G1 的 Mixed GC 暂停长 → 调整 -XX:G1MixedGCLiveThresholdPercent。推荐使用 GCeasy 在线分析工具或 gceasy.io 的 GC 日志分析报告。",
+    "hints": [
+      "Young GC 频率是判断新生代大小是否合适的第一指标",
+      "Full GC 几乎总是需要优化的对象"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "调优",
+      "日志分析"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "String 常量池与 Integer 缓存池的实现差异",
+    "content": "请比较 String 常量池和 Integer 缓存池在实现机制、存储位置和管理方式上的异同。",
+    "answer": "答案：String 常量池在堆中（JDK 7+），存储 String 对象，通过 intern() 管理；Integer 缓存池是 IntegerCache 内部类，缓存 [-128, 127] 的 Integer 对象。\n\n解析：String 常量池——1）存储位置：JDK 6 在永久代，JDK 7+ 在堆中。2）存储内容：String 对象（字面量和 intern 引入的）。3）管理方式：JVM 自身管理，String.intern() 手动入池。4）无大小限制（受堆大小限制）。Integer 缓存池——1）存储位置：堆（IntegerCache 的静态数组）。2）存储内容：Integer 对象（范围 -128~127）。3）管理方式：类加载时创建，通过 Integer.valueOf() 使用。4）上限可通过 -XX:AutoBoxCacheMax 调整。\n\n扩展延伸：String 常量池大小可通过 -XX:StringTableSize 设置（JDK 6 默认 1009，JDK 7+ 默认 60013，可调大减少冲突）。大量不同字符串 intern 会导致常量池膨胀和 GC 压力（因为 StringTable 是固定大小的哈希表）。Integer 缓存池不可变，所有 Integer 在范围内都使用同一组对象。其他包装类也有类似缓存：Boolean（全部布尔值）、Byte/Short/Long（-128~127）、Character（0~127），但只有 Integer 可以配置上限。",
+    "hints": [
+      "String 常量池通过 hashtable 实现，Integer 缓存池通过静态数组实现",
+      "Integer 缓存池大小可以配置，String 常量池在 JDK 7+ 在堆中"
+    ],
+    "tags": [
+      "JVM",
+      "String",
+      "Integer",
+      "缓存池",
+      "常量池"
+    ]
   }
 ]

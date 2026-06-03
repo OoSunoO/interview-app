@@ -825,5 +825,101 @@
       "复制",
       "高可用"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 半同步复制原理与配置",
+    "content": "请说明 MySQL 半同步复制（Semisynchronous Replication）的工作原理、与异步复制的差异，以及在数据一致性要求高的场景下的配置建议。",
+    "answer": "答案：MySQL 半同步复制介于异步复制和全同步复制之间。在异步复制中，主库提交事务后立即返回客户端响应，不等待从库确认；在半同步复制中，主库提交事务后至少等待一个从库（slave）确认收到 binlog 后才返回客户端响应。这确保了事务在主库提交时至少在一个从库上已经有了完整 binlog。\n\n解析：半同步复制的流程：1) 主库执行事务并写入 binlog；2) 主库将 binlog 发送给从库；3) 主库等待从库写入 relay log 并返回 ACK；4) 主库收到 ACK 后提交事务并返回客户端成功。如果在超时时间（rpl_semi_sync_master_timeout，默认 10 秒）内未收到从库 ACK，主库自动降级为异步复制（保证可用性），从库恢复后自动切回半同步。半同步复制有两个版本：AFTER_COMMIT（旧版，在提交后才等待，主库挂了可能丢失最近事务）和 AFTER_SYNC（5.7+ 默认，在 binlog 同步到磁盘后立即等待，确保提交的数据已被从库确认）。\n\n扩展延伸：生产配置建议：1) 至少配置两个从库参与半同步确认 —— 如果唯一的同步从库故障，主库降级为异步；2) 超时时间设置需平衡可用性和一致性 —— 太短容易降级，太长影响主库性能；3) 配合 lossless replication（AFTER_SYNC + rpl_semi_sync_master_wait_point=AFTER_SYNC）实现最大数据保护；4) 半同步复制不是强一致性 —— 它保证事务在主库提交时已有从库确认，但不保证后续从库的查询一定看到最新数据（还需等待从库 SQL Thread 执行）；5) 不建议跨地域部署半同步 —— 网络延迟会严重影响主库写入性能。",
+    "hints": [
+      "半同步复制在超时后自动降级为异步，不会阻塞主库写入",
+      "AFTER_SYNC 模式比 AFTER_COMMIT 提供更强的数据安全",
+      "跨地域部署半同步会因网络延迟严重影响主库性能"
+    ],
+    "tags": [
+      "MySQL",
+      "半同步复制",
+      "主从复制",
+      "数据一致性"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL Group Replication 组复制架构",
+    "content": "请介绍 MySQL Group Replication（MGR）的架构设计、一致性协议（Paxos/Group Communication）、容错模型以及和传统主从复制的核心区别。",
+    "answer": "答案：MySQL Group Replication（MGR）是 MySQL 5.7.17+ 的高可用方案，基于 Paxos 变种（Group Communication System，XCom）实现多节点间的数据一致性。与传统的异步/半同步复制不同，MGR 是多主（Multi-Primary）或单主（Single-Primary）模式的组内复制 —— 每个节点都能写入，组内通过共识协议决定事务提交顺序。\n\n解析：MGR 的核心架构：1) 组通信层（GCS）—— 使用 XCom（基于 Paxos 的组通信系统）实现成员管理、消息广播和原子投递；2) 冲突检测 —— 在 Multi-Primary 模式下，不同节点同时修改同一行时触发冲突检测，通过 certificate 机制决定哪个事务提交哪个回滚（基于行级别的 optimistic 并发控制）；3) 集团成员管理 —— 节点加入/离开时自动协商 group view，更新组成员列表。容错模型：MGR 支持多数派容错 —— 3 节点集群最多容忍 1 个节点故障，5 节点容忍 2 个故障（N > 2F + 1）。\n\n扩展延伸：MGR 与传统复制的对比：1) 传统复制提供最终一致性（异步）或几乎一致（半同步），MGR 提供强一致性（组内多数派确认后提交）；2) Single-Primary 模式下 MGR 与半同步复制的功能等价，但 MGR 的自动故障切换比传统的 MHA 或 Orchestrator 方案更原生；3) MGR 的瓶颈在于组通信延迟 —— 跨 AZ 部署时网络延迟直接影响写入性能（每个事务需要多数派确认），建议 MGR 节点部署在同一机房；4) MGR 的 Multi-Primary 模式限制了 SQL 兼容性 —— 不支持 AUTO_INCREMENT、Foreign Key（级联更新冲突）、LOCK TABLES 等语法；5) MySQL InnoDB Cluster（从 MySQL Shell 创建）是基于 MGR + MySQL Router 的全套高可用方案。",
+    "hints": [
+      "MGR 使用 Paxos/XCom 实现组内共识",
+      "Multi-Primary 模式下需要冲突检测机制",
+      "MGR 建议同机房部署避免网络延迟影响写入性能"
+    ],
+    "tags": [
+      "MySQL",
+      "MGR",
+      "组复制",
+      "高可用"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL Optimizer Trace 与查询优化器深入分析",
+    "content": "请说明如何使用 MySQL Optimizer Trace 调试查询优化器的决策过程，包括 JOIN 顺序选择、索引选择、成本估算等关键信息的解读方法。",
+    "answer": "答案：MySQL Optimizer Trace（优化器追踪）是 5.6+ 提供的一个诊断特性，通过 OPTIMIZER_TRACE 表记录优化器为 SQL 语句生成执行计划时的完整决策过程。启用方式：SET optimizer_trace='enabled=on'; 执行目标 SQL；SELECT * FROM INFORMATION_SCHEMA.OPTIMIZER_TRACE。输出是 JSON 格式的决策树，包含表访问顺序、索引选择、行数估算、成本模型等关键信息。\n\n解析：Optimizer Trace 的主要 JSON 节点解读：1) \"join_preparation\" —— 语法解析和查询重写阶段；2) \"join_optimization\" —— 核心优化阶段，包括条件化简（where_optimization）、表连接顺序枚举（greedy_search）、成本估算（cost_estimation）；3) \"condition_processing\" —— 条件被如何转换（等值传递、常量折叠等）；4) \"considered_execution_plans\" —— 优化器评估过的候选执行计划列表及各自的总成本（cost 字段）。重点关注 complete_candidates（完整候选计划）和 best_so_far（当前最优计划），以及\"cause\"字段解释某个计划被淘汰的原因。\"rows_estimation\"中的成本估算包括 table_scan（全表扫描成本）和 range_scan（范围扫描成本）。\n\n扩展延伸：Optimizer Trace 调试实战：1) 索引选择问题 —— 如果优化器没有选择你认为最优的索引，查看 considered_execution_plans 中各计划的成本比较，看看为什么优化器认为全表扫描更便宜；2) JOIN 顺序异常 —— 查看 greedy_search 中表的排列顺序，是否因行数估算偏差导致顺序选择错误；3) 修正优化器行为 —— 根据 Trace 发现的问题可通过 ANALYZE TABLE（更新统计信息）、FORCE INDEX（强制索引）、STRAIGHT_JOIN（强制连接顺序）纠正；4) 注意 optimizer_trace_offset 和 optimizer_trace_limit 参数控制追踪记录保存数量；5) 生产环境不建议长时间开启优化器追踪（有轻微性能开销），只在调优特定查询时临时启用。",
+    "hints": [
+      "Optimizer Trace 的核心是 join_optimization 阶段的 considered_execution_plans",
+      "行数估算偏差是优化器选择次优计划的最常见原因",
+      "ANALYZE TABLE 可以刷新统计信息改善优化器决策"
+    ],
+    "tags": [
+      "MySQL",
+      "优化器",
+      "Optimizer Trace",
+      "执行计划"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "SQL 注入原理与防护方案",
+    "content": "请说明 SQL 注入攻击的原理和常见形式，以及服务端防范 SQL 注入的完整方案。",
+    "answer": "答案：SQL 注入（SQL Injection）是攻击者将恶意 SQL 代码拼接到应用程序的 SQL 查询中，从而绕过认证、窃取数据或破坏数据库的攻击方式。原理是应用程序在执行 SQL 之前未正确转义或分离数据和代码，用户的输入被解释为 SQL 语句的一部分。\n\n解析：常见注入形式：1) 经典注入 —— ' OR '1'='1 绕过登录验证；2) 联合查询注入 —— UNION SELECT 窃取其他表数据；3) 报错注入 —— 利用数据库报错信息获取数据（如 extractvalue、updatexml 函数）；4) 布尔盲注 —— 通过页面返回真/假逐字符推断数据；5) 时间盲注 —— 通过 SLEEP/BENCHMARK 判断条件真假。防护方案的第一道防线是参数化查询（Prepared Statement）—— 将 SQL 结构（代码）和数据分离，确保用户输入始终作为数据处理而非代码执行。所有主流语言都支持：Java PreparedStatement、Python 的 cursor.execute(sql, params)、Go 的 db.Query(sql, args)、Node.js 的 mysql2/pool.execute。\n\n扩展延伸：纵深防御体系：1) 输入验证 —— 对用户输入做类型校验和白名单过滤（如 ID 必须是整数、邮箱格式检查），作为参数化查询的补充；2) 最小权限 —— 数据库连接使用最小权限账户（只读用户、写用户分离），限制存储过程的执行权限；3) Web 应用防火墙（WAF）—— 检测和拦截 SQL 注入攻击流量；4) 透明加密 —— 敏感字段使用列级加密存储；5) 定期扫描 —— 使用 SQLMap 等自动化工具定期对应用做注入测试。ORM（JPA、MyBatis、GORM、SQLAlchemy）本身不防注入 —— 当使用原生 SQL（@Query 注解、MyBatis 的 ${} 插值、Raw SQL）时仍需使用参数化方式。",
+    "hints": [
+      "参数化查询是防止 SQL 注入最核心的手段",
+      "ORM 中的原生 SQL 仍需手动防范注入",
+      "盲注虽然速度慢但隐蔽性强，WAF 难以检测"
+    ],
+    "tags": [
+      "MySQL",
+      "SQL注入",
+      "安全",
+      "防护"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "gh-ost 与 pt-osc 在线表结构变更原理",
+    "content": "请对比分析 gh-ost（GitHub Online Schema Transformation）和 pt-online-schema-change（pt-osc）的在线 DDL 实现原理，包括数据同步机制、触发器使用、流量影响和回滚能力。",
+    "answer": "答案：两种工具都旨在解决 MySQL 在线 DDL（如 ALTER TABLE）期间锁表或主从延迟问题，但其实现思路不同。pt-osc 通过触发器（Trigger）捕获增量数据变更，gh-ost 通过解析 binlog（伪装为从库）捕获增量变更。两者都创建一个影子表、在影子表上执行 DDL、增量同步数据后切换。\n\n解析：pt-osc 的工作流程：1) 创建与源表结构相同的影子表（_new 结尾）；2) 在源表上创建三个触发器（INSERT/DELETE/UPDATE 各一个），捕获 DDL 执行期间的增量变更；3) 分批从源表拷贝数据到影子表（每次几万行，chunk-size 控制）；4) 触发器确保增量数据同步到影子表；5) 执行 RENAME TABLE 原子切换。gh-ost 的工作流程：1) 创建影子表；2) 连接 MySQL 主库模拟从库（连接 binlog dump thread），实时解析 binlog 获取增量变更；3) 从源表批量拷贝数据；4) 将 binlog 解析的增量变更应用到影子表；5) 完成数据同步后原子切换。\n\n扩展延伸：对比优劣：1) 触发器开销 —— pt-osc 的触发器增加源表的写入延迟（每条 DML 额外触发一次触发器），高写入场景下影响明显。gh-ost 无触发器，通过 binlog 解析同步增量，对源表几乎无影响。2) 主从延迟 —— pt-osc 的触发器在主库执行，增量数据在主库直接写入影子表，主从延迟较小。gh-ost 的 binlog 应用在 gh-ost 进程所在主机上异步执行，不占用主库资源。3) 暂停与恢复 —— gh-ost 支持运行时暂停（—throttle），通过 HTTP 接口或文件控制节流。4) 切换安全 —— gh-ost 在切换前检查复制延迟，若延迟超过阈值则等待；pt-osc 可通过 —check-slave-lag 检查。5) 推荐场景：大表（千万级）且写入量大 → gh-ost（无触发器、可暂停、binlog 驱动）；中小表或对触发器接受度高 → pt-osc（成熟稳定、社区支持广泛）。",
+    "hints": [
+      "pt-osc 使用触发器捕获增量数据，gh-ost 使用 binlog 解析",
+      "gh-ost 对主库写入性能影响更小，适合高压力场景",
+      "pt-osc 的触发器会额外增加每条 INSERT/UPDATE/DELETE 的开销"
+    ],
+    "tags": [
+      "MySQL",
+      "DDL",
+      "gh-ost",
+      "pt-osc",
+      "在线变更"
+    ]
   }
 ]

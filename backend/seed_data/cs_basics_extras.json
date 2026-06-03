@@ -806,5 +806,99 @@
       "哈希",
       "一致性哈希"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HyperLogLog 基数估计",
+    "content": "请解释 HyperLogLog（HLL）算法的原理。它如何用极小的内存估算大量数据的基数（唯一值数量）？误差率如何控制？Redis 的 PFADD/PFCOUNT 如何使用 HLL？",
+    "answer": "答案：HyperLogLog 是一种基数估计（Cardinality Estimation）的近似算法，通过哈希函数将元素映射到固定长度的 Bit 串，利用 Bit 串中前导零的最大数量来估算唯一元素的数量。使用大约 12KB 内存即可估算 2^64 规模的基数，标准误差约 1.04/√m（m 为寄存器数量，通常 m=2^14=16384），即约 0.81% 的误差率。\n\n解析：算法原理——1）观察到这样一个事实：对于一组均匀分布的哈希值，如果前导零的最大位数为 k，那么基数的估计值约为 2^k（例如，看到哈希值以 0000 开头，这样的哈希出现在 1/16 随机值中，说明大约有 16 个唯一元素）。2）HLL 将哈希值分为两部分——前 log2(m) 位用于选择寄存器编号（桶），剩余位用于计算前导零个数。3）每个寄存器（6-bit）存储该桶内的最大前导零数。4）估计值 = 调和平均数 × 寄存器数量 × 修正因子。调和平均数降低个别离群值的影响。误差控制——1）通过增加寄存器数量 m 可以降低误差（误差 ~1.04/√m）。2）小基数修正：当估计值 < 5m/2 时使用线性计数（Linear Counting）。3）大基数修正：当估计值接近 2^32 时切换为 64-bit 编码。\n\n扩展延伸：Redis 的实现——1）PFADD key element：将元素哈希后更新 HLL 数据结构（内部使用 16384 个 6-bit 寄存器）。2）PFCOUNT key：返回 HLL 的估计值。3）PFMERGE destkey sourcekey：合并多个 HLL（取每个寄存器的最大值，得到并集的估计值）。应用场景——1）统计 UV（独立访客）：每天用一个 HLL 记录访问 IP，12KB 内存即可统计数亿级别的 UV，误差 1% 左右。2）大规模爬虫的 URL 去重近似计数。3）数据库的 COUNT DISTINCT 近似估算。HLL 的变体和改进——1）HyperLogLog++（Google）：增加偏差修正（Bias Correction）和稀疏表示（Sparse Representation），小基数时精度更好。2）GeoHLL：带地理维度的 HLL，可以按区域分解 UV。",
+    "hints": [
+      "HLL 为什么用调和平均数而不是算术平均数",
+      "HLL 的 12KB 内存限制可以估算多大的数据量"
+    ],
+    "tags": [
+      "数据结构",
+      "算法",
+      "HyperLogLog",
+      "基数估计",
+      "Redis"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Count-min Sketch 频率估计",
+    "content": "请解释 Count-min Sketch（CMS）算法。它如何用亚线性内存估计数据流中元素的频率？它的误差保证和局限性是什么？有哪些实际应用？",
+    "answer": "答案：Count-min Sketch 是一种概率性数据结构，用于估算数据流中每个元素的出现频率。它使用 d 个哈希函数和 w 个计数器的二维数组（d × w）。每个元素插入时，用 d 个哈希函数映射到每行的某个计数器进行 +1。查询频率时，取 d 个计数器的**最小值**作为估计值。\n\n解析：算法细节——1）初始化 d × w 的全零矩阵 C（d 为行数，对应哈希函数数量；w 为列数，对应计数器范围）。2）插入元素 x：for i in 0..d-1: C[i][hi(x)] += 1。3）查询元素 x：返回 min(C[i][hi(x)] for i in 0..d-1)。4）取最小值的原因是：不同的元素可能被映射到同一个计数器（冲突），导致计数器的值偏高，但不会偏低（即 CMS 只有过估计，不会低估）。误差保证——1）设定 w = ceil(e / ε)，d = ceil(ln(1/δ))，则估计误差 ε × N（N 为总计数）的概率 ≥ 1 - δ。2）例如取 ε = 0.001（误差 0.1%），δ = 0.01（置信度 99%），则 w ≈ 2719，d ≈ 5，所需内存约 5 × 2719 × 4 字节 ≈ 54KB。3）误差与流的总长度相关，不是与特定元素的真实频率相关（这是 CMS 的一个重要特性）。\n\n扩展延伸：CMS vs HLL——1）HLL 估算基数（唯一元素数量），CMS 估算每个元素的频率（出现次数）。2）两者可以组合使用（如同时维护 HLL 和 CMS 获取全局统计信息）。实际应用——1）数据库中查询优化：估算 WHERE 条件的 Selectivity（选择率），帮助查询优化器选择索引。2）网络流量监控（NetFlow）：统计 Top-K 的 IP 地址和端口。3）Stream Processing（Flink/Spark）：近似统计高频词和异常检测。4）数据库索引统计信息（PostgreSQL 的内部统计类似 CMS 思路）。CMS 的局限性——1）只能返回过估计（overestimate），不能返回精确值。2）不支持删除操作（减法会破坏保证）。3）不直接支持 Top-K 查询（需要配合堆结构，如 Count-min Sketch + Heap 得到 Heavy Hitters）。改进——Count-Mean-Min Sketch（CM^2）：减去预期冲突噪声，减少过估计偏差。",
+    "hints": [
+      "Count-min Sketch 为什么取 d 个计数器的最小值作为估计值",
+      "CMS 如何与 Heap 结合得到 Top-K 频繁元素"
+    ],
+    "tags": [
+      "数据结构",
+      "算法",
+      "Count-min Sketch",
+      "概率",
+      "流处理"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LSM-Tree 存储引擎",
+    "content": "请解释 LSM-Tree（Log-Structured Merge-Tree）的设计原理。LevelDB 和 RocksDB 如何使用 LSM-Tree 实现高写入性能？LSM-Tree 的合并（Compaction）策略有哪些？",
+    "answer": "答案：LSM-Tree 的核心思想是将写入操作先缓存在内存（MemTable）中，达到阈值后冻结为不可变的 SSTable（Sorted String Table）刷到磁盘，后台线程周期性将多个 SSTable 合并排序（Compaction），删除重复和过期的数据。这种设计将随机写转换为顺序写，大幅提升写入性能。\n\n解析：LSM-Tree 的数据流——1）写入：数据先写入 WAL（Write-Ahead Log，宕机恢复用），再写入内存中的 MemTable（通常用跳表 SkipList 实现，保持有序）。2）MemTable 满（如 4MB）后变成 Immutable MemTable，开始刷盘（Flush）生成 Level 0 的 SSTable。3）Compaction：Level 0 的 SSTable 达到阈值后，与 Level 1 的有序 SSTable 合并，生成新的 Level 1 文件。4）多层次合并：Level 1 → Level 2 → Level 3，逐层合并，每层大小指数增长（如 L1: 10MB, L2: 100MB, L3: 1GB…）。读取——1）先查 MemTable → 再查 Immutable MemTable → 然后从 Level 0 到 Level N 逐层查找。2）每层使用 Bloom Filter 快速判断 SSTable 中是否包含目标 key（避免无效的磁盘 I/O）。3）Level 0 层内文件可能有重叠，需逐个查找。L1+ 每层内部有序不重叠，只需二分查找。\n\n扩展延伸：Compaction 策略——1）Size-Tiered Compaction（Cassandra 默认）：每个 Level 内文件数量达到阈值后合并为更大的文件。实现简单，但读放大（Read Amplification）较大。2）Leveled Compaction（LevelDB/RocksDB 默认）：每个 Level 有固定大小上限，Level 0 的文件与 Level 1 合并后放入 Level 1，L1 满了再合并到 L2。写放大（Write Amplification）较大（典型值 10-30x），但读放大更小。3）Tiered + Leveled 混合（RocksDB 的 Universal Compaction + FIFO Compaction）：针对不同场景组合使用。RocksDB 的优化——1）Column Family：多个独立的 LSM-Tree，共享 WAL 但独立管理数据和 Compaction。2）Bloom Filter：每个 SSTable 有内置的 Bloom Filter，减少读放大。3）Prefix Bloom：对前缀查询优化。4）Rate Limiter：控制 Compaction 的 I/O 带宽，避免影响前台写入。",
+    "hints": [
+      "LSM-Tree 为什么比 B+ 树写入性能更好",
+      "Leveled Compaction 和 Size-Tiered Compaction 各自的读写放大对比"
+    ],
+    "tags": [
+      "数据结构",
+      "LSM-Tree",
+      "LevelDB",
+      "RocksDB",
+      "存储引擎"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "B+ 树内部机制",
+    "content": "请深入解释 B+ 树的数据结构原理。B+ 树和 B 树的区别是什么？B+ 树在数据库索引中为什么是最常用的数据结构？B+ 树的插入、删除、分裂和合并是如何工作的？",
+    "answer": "答案：B+ 树是一种平衡的多路搜索树，所有数据只存储在叶子节点上，内部节点只存储键值作为路由指针。叶子节点之间通过指针形成有序链表。B+ 树的扇出（Fan-out）很大（典型值每个节点 100-500 个键），树的高度通常为 2-4 层，保证了极低的磁盘 I/O 次数。\n\n解析：B+ 树的结构——1）内部节点（Internal Node）：存储 m 个键值 + m+1 个指向子节点的指针。键值作为「路标」，不存储数据。2）叶子节点（Leaf Node）：存储有序的键值对（或键值+行指针），且叶子节点间通过前驱/后继指针相连（方便范围扫描）。3）阶（Order/M）：每个节点最多有 M 个键，最少有 ceil(M/2) 个键（根节点例外）。插入操作——1）先找到叶子节点，将 Key 插入有序位置。2）如果叶子节点未满（少于 M 个键），插入完成。3）如果叶子节点已满 → 分裂：将键均匀分成两半，中间键提升到父节点，产生新的叶子节点。4）父节点如果也满了，递归分裂上行，直到根节点（根节点分裂则树高度 +1）。\n\n扩展延伸：B+ 树 vs B 树——1）B 树的每个节点都存储数据（或行指针），B+ 树只有叶子节点存数据。2）B+ 树的叶子节点链表支持高效范围查询（如 BETWEEN、ORDER BY），B 树需要中序遍历。3）B+ 树内部节点不存数据，同样大小的 Page 可以容纳更多的键，扇出更大、树更矮。4）实际上数据库（MySQL InnoDB、PostgreSQL、Oracle）和文件系统（ext4 的目录索引）使用的是 B+ 树而非 B 树。B+ 树的删除——1）找到键并删除，如果叶子节点键数 ≥ ceil(M/2) 则完成。2）低于下限：先尝试从兄弟节点借一个键（Rotation）。3）兄弟节点也不够：合并两个节点，父节点删除分隔键，递归检查父节点。B+ 树的优化——1）InnoDB 的 B+ 树索引：聚簇索引（Clustered Index）的叶子节点存整行数据，二级索引的叶子节点存主键值。2）前缀压缩：有序相邻键通常共享前缀，压缩存储减少节点空间。",
+    "hints": [
+      "B+ 树为什么比 B 树更适合数据库索引——从范围查询和扇出两个角度分析",
+      "InnoDB 的聚簇索引和二级索引在 B+ 树结构上有什么区别"
+    ],
+    "tags": [
+      "数据结构",
+      "B+树",
+      "数据库",
+      "索引"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "content": "请对比 RSA、AES 和椭圆曲线加密（ECC）的原理和适用场景。为什么现代系统通常组合使用对称和非对称加密？TLS 握手过程中这些加密算法分别用在哪个环节？",
+    "title": "RSA、AES 与椭圆曲线加密对比",
+    "answer": "答案：RSA 是非对称加密（公钥/私钥），基于大整数分解的数学困难问题。AES 是对称加密（加密解密用同一个密钥），基于替换-置换网络（Substitution-Permutation Network）。ECC（椭圆曲线加密）也是非对称加密，基于椭圆曲线离散对数问题（ECDLP），在同等安全强度下密钥长度远小于 RSA。现代系统组合使用非对称加密（安全传递会话密钥）和对称加密（高效加密大数据），TLS 握手正是这种组合的典型应用。\n\n解析：RSA——1）原理：选择两个大质数 p 和 q，计算 n = p × q，φ(n) = (p-1)(q-1)。选择 e（公钥指数），计算 d（私钥指数）满足 e × d ≡ 1 (mod φ(n))。加密：c = m^e mod n，解密：m = c^d mod n。2）安全强度：2048-bit RSA 相当于 112-bit 对称密钥。3）优劣势：广泛支持、硬件加速成熟，但密钥长（2048-4096 bit）、加密慢（不适合大数据加密）。AES——1）原理：128-bit 块大小，支持 128/192/256-bit 密钥。多轮（10/12/14 轮）替换（SubBytes）→ 行移位（ShiftRows）→ 列混合（MixColumns）→ 轮密钥加（AddRoundKey）。2）模式：GCM（推荐，Authenticated Encryption，带认证的加密，TLS 1.3 使用）、CBC（需配合 HMAC）、CTR（流模式）。3）硬件加速：现代 CPU 有 AES-NI 指令集，加解密速度可达 1GB/s+。ECC（椭圆曲线加密）——1）原理：基于椭圆曲线 y^2 = x^3 + ax + b 上的点构成的群。私钥是随机数 d，公钥 Q = d × G（G 是生成元）。2）安全性：256-bit ECC（secp256r1/P-256）≈ 3072-bit RSA ≈ 128-bit AES。3）优势：密钥短（256-bit vs 2048-bit）、计算快、签名短（适合移动端和证书链）。\n\n扩展延伸：TLS 1.3 中的加密算法应用——1）密钥交换（ECDHE）：客户端和服务器各生成 ECC 临时密钥对，通过 ECDHE（椭圆曲线 Diffie-Hellman Ephemeral）协商共享密钥。使用 X25519（Curve25519）或 P-256 曲线。2）身份认证：服务器用 RSA/ECDSA 签名证明身份（证书签名验证），TLS 1.3 只保留签名，不支持 RSA 密钥交换（因为不支持 PFS）。3）对称加密：使用 AEAD 算法（AES-256-GCM 或 ChaCha20-Poly1305）加密应用数据。4）安全性对比：ECC 正在取代 RSA——Google、Cloudflare 等使用 X25519 进行密钥交换，因为同等安全下性能更好、握手更快。量子安全的前景——RSA 和 ECC 均受 Shor 算法威胁（量子计算），后量子密码学（如 Kyber、Dilithium）是下一代标准。",
+    "hints": [
+      "TLS 1.3 为什么废除了 RSA 密钥交换",
+      "ECC 相比 RSA 在同等安全强度下密钥长度短多少"
+    ],
+    "tags": [
+      "密码学",
+      "RSA",
+      "AES",
+      "ECC",
+      "TLS"
+    ]
   }
 ]

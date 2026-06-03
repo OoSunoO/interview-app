@@ -788,5 +788,129 @@
       "基础",
       "控制流"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 8 函数式接口",
+    "content": "请列举 Java 8 中 java.util.function 包下的常见函数式接口及其用途。",
+    "answer": "答案：常见的函数式接口：Consumer<T>（消费型）、Supplier<T>（供给型）、Function<T,R>（函数型）、Predicate<T>（断言型）、UnaryOperator<T>（一元操作）、BinaryOperator<T>（二元操作）。\n\n解析：Consumer<T>——接收一个参数，无返回值，用于 forEach 等消费操作。Supplier<T>——无参数，返回一个值，用于延迟求值。Function<T,R>——接收一个 T，返回一个 R，用于 map 转换。Predicate<T>——接收一个 T，返回 boolean，用于 filter 过滤。UnaryOperator<T>——T 到 T 的转换，Function 的特例。BinaryOperator<T>——两个 T 合并为一个 T。每个都有对应的 Bi 版本（BiConsumer、BiFunction、BiPredicate）接收两个参数。\n\n扩展延伸：基本类型特化——IntConsumer、LongFunction、DoublePredicate 等避免拆装箱开销。函数式接口可以用方法引用（ClassName::method）或 Lambda 表达式实现。@FunctionalInterface 注解是可选的，编译器检查是否符合函数式接口定义（有且仅有一个抽象方法）。",
+    "hints": [
+      "四大核心函数式接口是 Consumer/Supplier/Function/Predicate",
+      "基本类型特化版本可以避免自动拆装箱"
+    ],
+    "tags": [
+      "Java 8",
+      "函数式",
+      "Lambda"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Java 包（package）的作用",
+    "content": "请说明 Java 中包（package）的作用和使用规范。",
+    "answer": "答案：包用于组织类、避免命名冲突、控制访问权限。\n\n解析：包的作用：1）命名空间管理——不同包中可以有同名类（如 java.util.Date 和 java.sql.Date）。2）访问控制——默认访问权限（package-private）允许同包类访问。3）逻辑组织——按功能模块分组（如 model、service、controller）。命名规范：域名倒写 + 项目名 + 模块名（如 com.example.myapp.service）。import 语句引入其他包的类，静态导入（import static）可以直接使用静态成员。\n\n扩展延伸：Java 9 模块化系统在包之上增加了模块层——module-info.java 通过 exports 控制哪些包对外可见，requires 声明依赖模块。包的目录结构必须与包名匹配（编译时 javac 和运行时 JVM 都依赖此规则）。",
+    "hints": [
+      "访问修饰符和包的关系（default 和 protected）",
+      "JDK 9 模块化下包的访问控制发生了什么变化"
+    ],
+    "tags": [
+      "Java",
+      "基础",
+      "包"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "instanceof 关键字的使用",
+    "content": "请说明 Java 中 instanceof 关键字的用法、原理和注意事项。",
+    "answer": "答案：instanceof 用于检查对象是否是某个类（或接口）的实例，返回 boolean。\n\n解析：语法：obj instanceof ClassName。如果 obj 是 null，返回 false（不会抛 NPE）。原理：JVM 检查对象的 Klass 指针与目标类型的类元数据是否匹配（或存在继承/实现关系）。注意事项：1）instanceof 检查的是运行时类型，不是编译时类型。2）如果 obj 是 null，instanceof 返回 false（安全特性）。3）泛型类型擦除后不能用 instanceof T 或 instanceof List<String>（只能 instanceof List<?> 或原始类型）。4）Java 16+ 支持 instanceof 模式匹配：if (obj instanceof String s) { System.out.println(s.length()); }。\n\n扩展延伸：JDK 16 的 instanceof 模式匹配与 switch 的 pattern matching 结合——可以在一行中完成类型检查和变量赋值。推荐使用模式匹配替代传统的先 instanceof 再强转的写法。",
+    "hints": [
+      "instanceof 对 null 的处理是返回 false",
+      "JDK 16 的模式匹配如何简化 instanceof 的使用"
+    ],
+    "tags": [
+      "Java",
+      "基础",
+      "instanceof",
+      "关键字"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 序列化机制与注意事项",
+    "content": "请解释 Java 序列化机制的工作原理。serialVersionUID 的作用是什么？序列化有哪些安全风险？",
+    "answer": "答案：Java 序列化通过 ObjectOutputStream/ObjectInputStream 将对象转为字节流，实现 Serializable 接口的类才可序列化。\n\n解析：序列化过程——ObjectOutputStream.writeObject() 通过反射获取类信息、字段值，写入字节流。反序列化——ObjectInputStream.readObject() 读取字节流，创建对象（不调构造器），恢复字段值。serialVersionUID——序列化版本号，用于验证反序列化时的类版本兼容性。如果类的结构发生不兼容变更（如增减字段），serialVersionUID 变化会导致 InvalidClassException。建议显式声明 private static final long serialVersionUID，避免依赖编译器生成。\n\n扩展延伸：安全风险——1）反序列化漏洞：攻击者构造恶意字节流触发构造链中的危险代码（如 Apache Commons Collections 反序列化 RCE）。2）修复方法：反序列化白名单过滤、使用 SerialKiller/ValidatingObjectInputStream。替代方案——Protobuf、JSON（Jackson/Gson）、Kryo 等跨语言序列化方案。transient 关键字——修饰的字段不参与序列化，用来排除敏感信息或派生字段。",
+    "hints": [
+      "serialVersionUID 不显式声明时由编译器根据类结构自动生成",
+      "反序列化漏洞的根本原因是什么"
+    ],
+    "tags": [
+      "Java",
+      "序列化",
+      "安全",
+      "Serializable"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "多态的实现原理与性能影响",
+    "content": "请解释 Java 中多态（方法重写）的底层实现原理。它对性能有什么影响？",
+    "answer": "答案：Java 多态通过动态分派（虚方法表）实现，运行时根据对象的实际类型确定调用的方法版本。\n\n解析：JVM 在每个类加载时创建虚方法表（vtable），存储方法的实际入口地址。调用重写方法时，通过对象的 Klass 指针找到虚方法表，从中取出实际方法的地址进行调用。这就是动态分派（Dynamic Dispatch）。相比之下，静态方法、私有方法、构造方法和父类的非重写方法使用静态分派（编译时确定，invokestatic/invokespecial 指令）。\n\n扩展延伸：性能影响——动态分派相比静态分派的额外开销是一次虚方法表查找（约 1-2 个 CPU 指令），可以忽略不计。JIT 会做内联缓存（Inline Cache）优化——当调用点只有少数几种实际类型时，JIT 做类型猜测并直接内联。如果猜测失败则退回到虚分派。接口调用（invokeinterface）比类方法调用的虚分派稍慢（接口方法表 itable 查找比 vtable 多一步）。final 方法或 final 类的方法使用 invokespecial 或 invokestatic，不会动态分派。",
+    "hints": [
+      "虚方法表（vtable）和接口方法表（itable）的区别",
+      "JIT 如何通过内联缓存优化虚方法调用"
+    ],
+    "tags": [
+      "JVM",
+      "多态",
+      "动态分派",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 的四种访问修饰符设计哲学",
+    "content": "请说明 Java 四种访问修饰符的设计意图和使用场景。“访问控制”与“封装”的关系是什么？",
+    "answer": "答案：Java 四种访问级别（public/protected/default/private）体现了信息隐藏和封装的设计原则，控制类成员的可见范围。\n\n解析：设计意图——private（类内部实现细节，不对外暴露）、default/package-private（同包协作，不需要对外公开的实现内部）、protected（允许子类访问但不对外公开）、public（对外 API，稳定接口）。public 和 protected 构成对外接口，private 和 default 是内部实现。封装（Encapsulation）通过访问控制实现——对外公开稳定的接口，隐藏可能变化的实现。这降低了代码耦合，允许内部实现自由修改而不影响调用方。\n\n扩展延伸：最小访问权限原则（Effective Java 第 15 条）——尽可能降低类和成员的访问级别。能 private 不 default，能 default 不 protected，能 protected 不 public。JDK 9 模块化在包级别之上增加了模块访问控制——exports 控制哪些包对外可见，opens 控制哪些包允许反射访问。测试类通常与目标类同包（使用默认访问级别），或通过模块的 opens 语句开放测试包。",
+    "hints": [
+      "最小访问权限原则为什么是良好设计的标志",
+      "JDK 9 模块化如何增强访问控制"
+    ],
+    "tags": [
+      "Java",
+      "封装",
+      "访问控制",
+      "OOP"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "static 关键字的用途",
+    "content": "请说明 Java 中 static 关键字的用途。静态变量、静态方法和静态代码块的加载时机是什么？",
+    "answer": "答案：static 表示类级别（所有实例共享），在类加载时初始化，无需实例即可访问。\n\n解析：static 变量——类的所有实例共享同一份内存，通过类名访问。static 方法——隐含参数没有 this 引用，只能访问 static 成员。static 代码块——在类加载时执行一次，用于初始化静态资源。加载顺序：静态变量声明和静态代码块按代码顺序执行（类加载的准备阶段分配内存赋默认值，初始化阶段执行赋值语句）。实例变量在 new 对象时初始化。\n\n扩展延伸：static 导入——import static java.lang.Math.sin，直接使用 sin() 而不需要 Math.sin()。静态内部类——不持有外部类引用，与普通内部类有本质区别。静态方法的继承——子类可以声明同名静态方法（隐藏父类方法），不支持多态（调用由编译时类型决定）。静态方法不能重写，因为重写基于运行时类型，静态方法基于编译时类型绑定。",
+    "hints": [
+      "静态变量在类加载的准备阶段分配内存赋默认值",
+      "静态方法不能重写（Override）但可以隐藏（Hide）"
+    ],
+    "tags": [
+      "Java",
+      "static",
+      "关键字",
+      "JVM"
+    ]
   }
 ]

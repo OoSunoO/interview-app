@@ -817,5 +817,100 @@
       "原子性",
       "并发"
     ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 布隆过滤器（Bloom Filter）原理与应用",
+    "content": "请详细说明 Redis Bloom Filter 的原理（bit 数组 + 多个哈希函数）、误判率（False Positive）和数学推导、以及 Redis 模块中的 BF 命令使用场景。",
+    "answer": "答案：Bloom Filter 是一种空间效率极高的概率性数据结构，用于判断一个元素是否属于某个集合。优点是无误报（False Negative）—— 若判断不存在则一定不存在；缺点是有误判（False Positive）—— 可能误判不存在元素为存在。其原理是：使用一个长度为 m 的 bit 数组和 k 个独立的哈希函数，插入元素时将 k 个哈希位置 1，查询时检查 k 个位置是否都为 1。\n\n解析：Redis 通过 Rebloom 模块提供 Bloom Filter 支持（BF.ADD、BF.EXISTS、BF.RESERVE 等命令）。BF.RESERVE 可指定误判率（error_rate）和预期容量（capacity），Redis 根据这两个参数自动计算最优的 bit 数组大小和哈希函数数量。数学关系：m = -n*ln(p)/(ln2)^2（m 为 bit 位数，n 为预期元素数，p 为误判率），k = m/n * ln2（哈希函数数）。插入和查询时间复杂度均为 O(k)，非常高效。\n\n扩展延伸：Redis Bloom Filter 的生产应用：1) 缓存穿透防护 —— 将数据库已有主键加载到 Bloom Filter，查询前先检查，不存在则直接返回避免穿透；2) 去重场景 —— 爬虫 URL 去重、已发送消息去重（允许少量误判）；3) 推荐去重 —— 已推荐内容过滤。缩放 Bloom Filter（BF.RESERVE 预估不准时可使用 BF.INSERT 自动扩展）和 Cuckoo Filter（支持删除操作）是 Bloom Filter 的增强变体。注意：Bloom Filter 无法删除元素，若需要删除操作，考虑使用 Cuckoo Filter 或 Redis 的布隆过滤器扩展。",
+    "hints": [
+      "Bloom Filter 的判断结果：不存在是确定的，存在是概率性的",
+      "BF.RESERVE 的 error_rate 和 capacity 直接影响内存占用",
+      "缓存穿透场景中 Bloom Filter 能过滤不存在的 key 查询"
+    ],
+    "tags": [
+      "Redis",
+      "Bloom Filter",
+      "布隆过滤器",
+      "缓存穿透"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis Pipeline vs Transaction vs Lua 脚本对比",
+    "content": "请对比分析 Redis Pipeline（管道）、Transaction（事务/MULTI-EXEC）和 Lua 脚本三种批量操作机制的原理、适用场景和一致性保证。",
+    "answer": "答案：三者都能批量执行 Redis 命令，但原理和适用场景不同。Pipeline 优化网络往返 —— 将多个命令打包一次发送，减少 RTT（Round-Trip Time），但不保证原子性和隔离性。Transaction（MULTI/EXEC）保证原子性 —— 要么全部执行要么全不执行，且通过 WATCH 实现乐观锁，但在 EXEC 之前命令不会实际执行。Lua 脚本在服务端原子执行，一次发送整个脚本文本，Redis 保证脚本运行期间不会被其他命令中断。\n\n解析：Pipeline 的工作机制：客户端将命令写入缓冲区，一次刷出到网络，服务端处理后一次性返回结果。Pipeline 的原子性级别：每一条命令在服务器上仍是串行执行的，但 Pipeline 中的命令之间可能插入了其他客户端的命令——不隔离。Transaction 的机制：MULTI 标记事务开始，后续命令入队不执行，EXEC 一次性按顺序执行所有排队命令。WATCH 实现 CAS（Check and Set）—— 若 WATCH 的 key 在 EXEC 前被修改则事务取消。Lua 脚本：通过 EVAL 或 EVALSHA 发送 Lua 代码，Redis 内部使用 Lua 5.1 引擎执行。脚本中的 read-only 命令也可在 Redis 7.0+ 的 replica 上执行。\n\n扩展延伸：选型建议：1) 需要减少网络延迟但允许非原子执行 → Pipeline（如批量写入缓存）；2) 需要原子性 + 条件执行（乐观锁）→ Transaction + WATCH（如库存扣减）；3) 需要原子性 + 复杂逻辑（条件判断、循环）→ Lua 脚本（如秒杀扣库存、限流计数）。性能比较：Pipeline 延迟最低（无等待）；Transaction 因命令入队和 EXEC 两步略慢；Lua 脚本因服务器端执行，CPU 开销最高但功能最强。注意 Lua 脚本应尽量简短，超时 5 秒会被强制中断。",
+    "hints": [
+      "Pipeline 不保证原子性和隔离性",
+      "Transaction 通过 WATCH 实现乐观锁",
+      "Lua 脚本兼具原子性和表达能力，但不宜过长"
+    ],
+    "tags": [
+      "Redis",
+      "Pipeline",
+      "Transaction",
+      "Lua"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis Sentinel vs Cluster 高可用架构对比",
+    "content": "请从架构设计、数据分片、高可用切换、一致性模型、客户端访问方式等维度对比 Redis Sentinel 和 Redis Cluster。",
+    "answer": "答案：Redis Sentinel 和 Redis Cluster 是 Redis 的两种高可用方案，设计目标和适用场景不同。Sentinel 专注于高可用 —— 自动故障检测和主从切换，但数据只存储在单点上（主库），从库仅作副本和读扩展。Cluster 同时提供高可用和数据分片 —— 数据自动分布到 16384 个 slot，多主节点分摊写入压力。\n\n解析：Sentinel 架构：Sentinel 进程（通常是 3 个或 5 个奇数）通过 Raft 协议选主，监控主从节点的健康状态。当主节点不可达（主观下线后 quorum 确认变为客观下线），Sentinel 执行故障转移 —— 选择一个从库提升为新的主库，更新客户端配置。Cluster 架构：每个节点负责一部分 hash slot，所有节点通过 gossip 协议交换配置信息（PING/PONG 消息）。当主节点故障时，其负责的 slot 自动迁移到从节点，从节点提升为主节点。一致性方面：Sentinel 模式下可能因异步复制丢失未同步的数据（RPO > 0）；Cluster 支持配置 wait 参数等待从节点确认。\n\n扩展延伸：选型建议：1) 数据量在单机内存可容纳、无需水平扩展 → Sentinel + Proxy（如 Codis、Twemproxy）或直接 Sentinel 访问；2) 数据量超出单机内存、需要水平扩展 → Cluster；3) 读写分离要求高 → Sentinel 模式（从库可扩展读），Cluster 模式从库主要用于高可用而非读扩展。运维差异：Sentinel 的配置变更（如修改 maxmemory）在主库执行后从库自动同步，Cluster 的 resharding 需要手动分配 slot。自建环境建议：小集群（<500G）用 Sentinel，大集群用 Cluster。云服务（如阿里云 Redis、AWS ElastiCache）封装了底层差异，提供了企业级管理界面。",
+    "hints": [
+      "Sentinel 不做数据分片，Cluster 自动分片到 16384 个 slot",
+      "Sentinel 用 Raft 选主，Cluster 用 gossip 协议",
+      "Sentinel 适合大内存单机部署，Cluster 适合需要水平扩展的场景"
+    ],
+    "tags": [
+      "Redis",
+      "Sentinel",
+      "Cluster",
+      "高可用"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 缓存预热与缓存副本策略",
+    "content": "请详细说明缓存预热（Cache Warming）的目的和常见的预热方式，以及 Redis 的缓存副本（Replica）在缓存大规模加载场景下的作用。",
+    "answer": "答案：缓存预热是指在系统启动或大规模缓存失效前，主动将热点数据加载到 Redis 中的过程。目的是避免系统启动时大量请求穿透到数据库导致雪崩。常见预热方式：1) 全量预热 —— 系统启动时从数据库全量或按条件批量加载到缓存，适合数据量可控的场景；2) 懒加载 + 触发式预热 —— 用户请求触发缓存未命中时回源加载，同时后台扫描热点数据提前加载；3) 定时预热 —— 配合离线任务周期性刷新缓存（如每日凌晨更新热门商品缓存）。\n\n解析：缓存副本（Replica-cached）是在 Redis 主从架构中，主库承受写入，从库承担读流量，降低主库负载。在大规模缓存预热的场景下，主库同时响应业务写入和预热写入可能导致延迟飙升，此时可通过以下方式保护主库：1) 预热操作直接在从库上执行（但需要注意从库数据可能被主从同步覆盖）；2) 预热期间降低从库的 client-output-buffer-limit 防止缓存区溢出；3) 渐进式预热 —— 分批次预热，避免单次大量写入引发主库 fork RDB 时产生的延迟抖动。\n\n扩展延伸：高级预热策略：1) 二级缓存预热 —— 本地缓存（Caffeine/Guava） + Redis，启动时先预热本地缓存降低 Redis 压力，本地缓存失效再查 Redis；2) Key 过期时间打散 —— 避免大量 Key 同时过期导致缓存雪崩，在 TTL 基础上加上随机偏移（±10-20%）；3) 预热校验 —— 预热完成后对比缓存和数据库的记录数，确保无遗漏；4) 热点探测 —— 在运行时持续统计 Key 的访问频率，将新出现的热点动态预热。使用 Redis Cluster 时注意跨 Slot 批量操作的限制 —— 预热数据需按 Slot 分组发送。",
+    "hints": [
+      "全量预热的单次大批量写入可能触发主库的 fork 和 RDB 生成，导致延迟抖动",
+      "TTL 随机化是避免缓存雪崩的关键",
+      "预热应该作为部署流水线的一部分自动执行，而非手动操作"
+    ],
+    "tags": [
+      "Redis",
+      "缓存预热",
+      "缓存副本",
+      "缓存策略"
+    ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 安全加固：ACL 精细化权限控制与 TLS 加密传输",
+    "content": "请详细说明 Redis 6+ 的 ACL（Access Control List）功能 —— 用户管理、命令权限、键空间权限的配置方法，以及 TLS 加密传输在生产环境的部署配置。",
+    "answer": "答案：Redis 6+ 引入 ACL 取代了 6 之前简单的 requirepass 密码认证。ACL 支持用户级别权限管理，可精确控制每个用户能执行的命令和访问的 Key 空间。TLS（通过 Redis 6+ 的 tls-port 和配套证书配置）实现客户端与 Redis 之间、以及 Redis 实例之间的加密通信。\n\n解析：ACL 的核心概念：1) 用户（User）—— 定义 with/on 状态（启用/禁用）和认证方式（>password 密码认证，resetpass 清除密码）；2) 命令权限 —— +@<category> 允许类别（如 +@read、+@write、+@admin、+@dangerous），-<command> 禁止特定命令；3) 键空间权限 —— ~<pattern> 限制可访问的键模式（如 ~cache:* 只能操作 cache: 前缀的键）。典型配置：ACL SETUSER readonly ON >readonly_pass ~* +@read -FLUSHDB -FLUSHALL（只读用户，只能执行读命令，禁止清库操作）。ACL 规则可持久化到 ACL 文件（aclfile /etc/redis/users.acl）或写入 redis.conf。\n\n扩展延伸：TLS 配置步骤：1) 生成 CA 证书、服务端证书和客户端证书；2) 配置 redis.conf：tls-port 6380、tls-cert-file、tls-key-file、tls-ca-cert-file；3) 设置 tls-auth-clients yes 启用客户端证书验证；4) 客户端连接时使用 rediss:// 协议（rediss://user:password@host:6380）或设置 SSL 上下文。生产建议：1) 不同业务使用独立用户和密码，便于追踪和回收权限；2) Sentinel 和 Cluster 模式下节点间通信也需启用 TLS（tls-replication yes、tls-cluster yes）；3) 性能影响 —— TLS 握手和加解密增加约 10-20% CPU 开销，但可通过 Session 复用和硬件加速（Intel QAT）优化；4) 密码管理 —— ACL 密码建议使用随机生成的高强度密码，通过 Vault/KMS 管理。",
+    "hints": [
+      "ACL 的命令分类（@read/@write/@admin/@dangerous）决定了用户的能力范围",
+      "键空间模式（~cache:*）可以限制用户只能操作特定前缀的 Key",
+      "TLS 会引入额外 CPU 开销，大流量场景需评估性能影响"
+    ],
+    "tags": [
+      "Redis",
+      "安全",
+      "ACL",
+      "TLS"
+    ]
   }
 ]

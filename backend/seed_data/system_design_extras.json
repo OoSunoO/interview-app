@@ -827,5 +827,98 @@
       "分布式",
       "CAP"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "PACELC 定理",
+    "content": "请解释 PACELC 定理及其与 CAP 定理的关系。PACELC 定理如何指导分布式系统的实际选型？",
+    "answer": "答案：PACELC 定理是 CAP 的扩展——在网络分区（P）发生时，系统在可用性（A）和一致性（C）之间权衡；正常运行（Else）时，系统在延迟（L）和一致性（C）之间权衡。完整表述：If there is a partition (P), trade between availability (A) and consistency (C); Else (E), trade between latency (L) and consistency (C).\n\n解析：CAP 定理的局限性——CAP 只回答了网络分区时的选择，但分布式系统 99.99% 的时间没有网络分区。在正常运行状态下，系统仍然面临一致性和延迟的权衡。PACELC 补充了这一缺失。分场景选型——1）PA/EL（分区时选 A，正常时选 L）：DynamoDB/Cassandra，即使数据可能不一致也要保证低延迟。2）PA/EC（分区时选 A，正常时选 C）：PNUTS（Yahoo!），正常时保证一致性以简化开发。3）PC/EC（分区时选 C，正常时选 C）：HBase/ZooKeeper，任何时候都优先一致性。4）PC/EL（分区时选 C，正常时选 L）：某些 NoSQL 数据库在正常运行时为了低延迟放松一致性。\n\n扩展延伸：实际产品分类——DynamoDB 默认 PA/EL（最终一致性读取），但支持强一致性读取选项（用户可在每次查询时选择一致性级别）。Cassandra 也是 PA/EL，通过调整 Quorum 配置可以在一时性和对一致性的权衡之间滑动。Cosmos DB 支持五个一致性级别（从 Strong 到 Eventual），覆盖了 PACELC 的全部区间。设计启示：在设计分布式系统时，不仅要问「分区时怎么办」，更要问「正常运行时我们接受多大的一致性和延迟之间的平衡」。",
+    "hints": [
+      "CAP 定理没有覆盖哪一部分——系统正常运行时的权衡",
+      "DynamoDB 的一致性级别设置如何反映 PACELC"
+    ],
+    "tags": [
+      "分布式",
+      "PACELC",
+      "CAP",
+      "一致性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Quorum 一致性机制",
+    "content": "请解释分布式系统中的 Quorum 机制。W（写副本数）、R（读副本数）、N（总副本数）之间的关系如何影响一致性和可用性？",
+    "answer": "答案：Quorum 机制通过控制读写副本数来权衡一致性和可用性。设总副本数为 N，写操作用 W 个副本确认，读操作用 R 个副本确认。当 W + R > N 时，读写集合必然重叠，保证强一致性。当 W + R ≤ N 时，读写可能不重叠，只能保证最终一致性。\n\n解析：参数配置的影响——1）W = N, R = 1：写时全部副本确认（最慢），读一个副本即可（最快），写入性能瓶颈在慢副本。2）W = 1, R = N：写一个副本即可（最快），读全部副本取最新版本（最慢），写入失败风险低但读取慢。3）W = N/2 + 1, R = N/2 + 1（多数 Quorum）：读写都需半数以上确认，是强一致性最经济的配置（如 Raft 协议要求多数节点写入）。4）W = 1, R = 1：读写最快，但无一致性保证（Dynamo 的默认配置，最终一致性）。分区容错——当分区发生时，如果某个分区内的节点数不足 W（写 Quorum），则该分区无法接受写入，保证了可用分区内的数据是最新的。对等的，读者需要 R 个节点响应才能读取。\n\n扩展延伸：实际应用——Cassandra 的配置：N = 3（默认副本数），可配置 ONE/QUORUM/ALL 级别的读写。读修复（Read Repair）：当 R 个副本返回数据版本不一致时，后台线程用最新版本修复旧副本。Hinted Handoff + Quorum：当一个副本临时不可用时，写请求由另一个节点代为接收（Hint），待该副本恢复后再转发，保证写入 Quorum 不被降级。写入的隐性保证：W + R > N 时，读总能拿到至少一个写入副本的最新数据。允许 N、W、R 按动态调节：DynamoDB 和 Cassandra 允许每次请求指定一致性级别。",
+    "hints": [
+      "为什么 W + R > N 保证强一致性——读写集合必然重叠",
+      "多数 Quorum（W=R=N/2+1）有什么实际例子"
+    ],
+    "tags": [
+      "分布式",
+      "Quorum",
+      "一致性",
+      "副本"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Hinted Handoff 与 Read Repair",
+    "content": "请解释分布式数据库中的 Hinted Handoff（提示移交）和 Read Repair（读修复）机制。它们如何在最终一致性系统中保障数据的可用性和正确性？",
+    "answer": "答案：Hinted Handoff 是指当某个副本节点不可用时，由另一个健康节点代为接收写入数据，并在备注中记录「该数据本应属于节点 X」，待节点 X 恢复后转发给它。Read Repair 是指读取时发现多个副本的数据版本不一致，将最新版本写入到旧副本中。\n\n解析：Hinted Handoff——1）触发条件：写入目标节点的 W 个副本中某些节点超时不可达。2）代收节点：将数据写入本地的 Hint 存储（每个 Hint 包含目标节点 ID、写入数据、时间戳）。3）恢复转发：目标节点恢复后，代收节点通过 Gossip 协议感知到，将 Hinted 数据转发过去。4）Hint 可能有上限（如 Cassandra 默认 3 小时），超过时限的 Hint 可能过期丢弃（转为真正的数据不一致，由 Read Repair 修复）。5）优势：提高了写入可用性，在临时故障时不降级写入 Quorum。Read Repair——1）触发条件：读取时向 R 个副本发请求，比较返回数据的版本向量（Vector Clock）或时间戳。2）同步修复：在读路径上直接返回最新数据，同时用后台线程将最新版本写入旧副本。3）概率修复：并非每次读取都做修复（性能开销），可以设概率（如 10% 的读取触发修复）。4）Dynamo 和 Cassandra 的实现：合并所有返回的版本（兄弟版本），保留版本历史，在后续读取中逐步收敛。\n\n扩展延伸：两者对比——Hinted Handoff 保证了写入可用性（写操作不因单节点临时故障而失败），Read Repair 保证了读取正确性（逐步修复过期副本）。两者结合使 Dynamo 风格的数据库（Cassandra、DynamoDB 早期版本）在高可用的基础上逐步达到一致性。不足——Hinted Handoff 不能处理长时间故障（Hint 超时丢弃后数据永久丢失），此时需要 Hinted Handoff + Read Repair + Anti-Entropy（HASH 树比较）的组合来最终保障数据的完整收敛。",
+    "hints": [
+      "Hinted Handoff 和 Read Repair 各自解决什么问题",
+      "Hint 超时后丢失的数据如何最终修复"
+    ],
+    "tags": [
+      "分布式",
+      "Dynamo",
+      "一致性",
+      "Hinted Handoff",
+      "Read Repair"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Merkle Tree 与 Gossip 协议",
+    "content": "请解释 Merkle Tree（哈希树）在分布式系统中的应用，以及 Gossip 协议的工作原理。两者在 Dynamo/Cassandra 中如何配合实现反熵（Anti-Entropy）？",
+    "answer": "答案：Merkle Tree 是一种用哈希值组织数据的树形结构——叶子节点是数据块的哈希，非叶子节点是其子节点哈希的拼接哈希。Gossip 协议是一种节点间的广播协议，每个节点定期随机选择其他节点交换信息。两者结合实现 Anti-Entropy：用 Gossip 找到不一致的节点对，用 Merkle Tree 高效定位不一致的具体数据范围。\n\n解析：Merkle Tree——1）构建：将数据按 key 范围分成多个 bucket（如 Cassandra 每 256 个 token 范围为一个 bucket），每个 bucket 计算哈希，逐层向上合并建立 Merkle Tree。2）比较：比较两棵树的根哈希，相同则数据一致；不同则递归检查子节点，定位到具体差异的 bucket 范围。3）效率：一个包含百万个数据块的系统，Merkle Tree 比较可以在 O(log n) 次比较内定位到差异，而非逐个数据块比对。Gossip 协议——1）工作机制：每个节点每隔 1 秒随机选取 1-3 个其他节点交换信息（包括节点状态、数据版本等）。2）传播速度：信息在 O(log n) 轮内传播到全体节点（Fan-out = 3 时）。3）三种传播模式：Push（推送信息给对方）、Pull（拉取对方的信息）、Push-Pull（双向交换）。4）Cassandra 使用 Push-Pull Gossip 每秒钟交换节点存活信息和 Schema 变更。\n\n扩展延伸：Anti-Entropy 流程——1）各节点周期性地为本地数据构建 Merkle Tree。2）Gossip 过程中交换 Merkle Tree 的根哈希。3）发现哈希不匹配时，递归比较 tree 的子树定位差异数据范围。4）只同步差异数据，而非全量同步。实践中的权衡——Merkle Tree 的构建计算开销（扫描全部数据），Cassandra 的默认配置是每 5 分钟构建一次 Merkle Tree 用于 Anti-Entropy。对于频繁变动的数据，Hinted Handoff + Read Repair 是更轻量的修复手段，Merkle Tree 作为兜底（确保长期运行后数据仍能收敛）。Gossip 的共识缺陷——Gossip 无法保证消息的有序性和精确一次送达（最终广播式），适用于对一致性要求不高的信息传播，但不能替代 Paxos/Raft 等共识协议。",
+    "hints": [
+      "Merkle Tree 如何高效定位分布式系统中不一致的数据",
+      "Gossip 协议的 O(log n) 传播速度如何推导"
+    ],
+    "tags": [
+      "分布式",
+      "Merkle Tree",
+      "Gossip",
+      "反熵",
+      "Cassandra"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Vector Clock 与 CRDT",
+    "content": "请解释 Vector Clock（向量时钟）和 CRDT（Conflict-free Replicated Data Type）的原理。两者在分布式最终一致性系统中如何解决冲突检测与合并问题？",
+    "answer": "答案：Vector Clock 是一种逻辑时钟，每个节点维护一个向量 [ts1, ts2, ts3, ...]，tsi 是节点 i 的事件计数器。用于检测分布式系统中的事件因果关系（并发还是先后发生）。CRDT 是一种数据结构设计，其合并操作满足交换律、结合律和幂等律（CvRDT 的 Merge 操作），从而在无中央协调的情况下保证多副本最终一致。\n\n解析：Vector Clock——1）每个节点维护一个版本向量（如 [A:3, B:2, C:5]）。2）本地事件：ts_self += 1。3）发送消息：带上当前时钟。4）接收消息：合并向量（逐元素取 max），ts_self += 1。5）因果关系判断：时钟 A 的每个分量 ≤ B 的对应分量 → A 是 B 的因果前驱；各分量存在 A[i]>B[i] 且 A[j]<B[j] → A 和 B 并发。6）Dynamo 使用 Vector Clock 检测同一 key 的多个版本是否存在冲突，如果并发则返回所有版本给客户端做业务层合并。CRDT——1）G-Counter（Grow-only Counter）：每个节点独立计数，合并时取各节点的最大值。用于点赞数等单调递增的场景。2）PN-Counter（Positive-Negative Counter）：G-Counter + 递增/递减分离，内部用两个 G-Counter 分别计增加和减少。3）G-Set（Grow-only Set）：加入的元素永不删除，合并时取并集。4）OR-Set（Observed-Remove Set）：支持删除的 Set，每个元素附带唯一标签（UUID），添加时生成新标签，删除时记录删除的标签集合。\n\n扩展延伸：Vector Clock 的问题——1）版本爆炸：写入频率高时版本向量可能无限增长。Dynamo 的解决方案：设定时钟长度上限（如 10），超过时裁剪最旧的分量，代价是失去了部分因果信息（可能误判为冲突）。2）冲突解决依赖客户端，增加了使用复杂度。CRDT 的选型考虑——1）自动合并：无需业务代码介入合并冲突（不同于 Vector Clock + 业务层合并）。2）适合离线优先（Offline-first）应用：本地修改后上线自动同步合并。3）Riak 数据库同时使用 Vector Clock 和 CRDT：Vector Clock 用于 Key-Value 数据的冲突检测，CRDT 用于计数器/Set/Map 等数据类型的自动合并。CRDT 和 OT 的关系——两者目标相同（无冲突协同），但实现路径不同：OT 变换 Operation，CRDT 变换 State。Figma 使用的是 CRDT 变体。",
+    "hints": [
+      "Vector Clock 如何判断两个事件是并发还是先后关系",
+      "CRDT 的合并操作为什么不需要中央协调"
+    ],
+    "tags": [
+      "分布式",
+      "Vector Clock",
+      "CRDT",
+      "最终一致性",
+      "冲突解决"
+    ]
   }
 ]

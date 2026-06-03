@@ -779,5 +779,91 @@
       "ESM",
       "构建工具"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Service Worker 生命周期与缓存策略",
+    "content": "请描述 Service Worker 的生命周期。在 PWA 中如何利用 Service Worker 实现离线缓存策略（Cache First、Network First、Stale While Revalidate）？",
+    "answer": "答案：Service Worker 生命周期：注册 → 安装（install）→ 激活（activate）→ 运行中（idle/fetch）。安装时预缓存静态资源，激活时清理旧缓存，运行中拦截 fetch 请求按策略响应。\n\n解析：生命周期各阶段的作用——1）注册（Register）：在页面 JS 中调用 navigator.serviceWorker.register()，浏览器下载并解析 SW 文件。2）安装（Install）：SW 首次被下载或更新时触发 install 事件，此时进行预缓存（Precache）静态资源。如果预缓存失败（如资源下载失败），安装阶段失败，SW 不会激活。3）等待（Waiting）：如果已有激活中的 SW，新版本进入 waiting 状态，直到所有页面关闭或调用 skipWaiting()。4）激活（Activate）：旧 SW 停止，新 SW 激活。触发 activate 事件，此时清理旧版本缓存（Cache Migration）。5）运行中：SW 进入 idle 状态，拦截页面请求（fetch 事件）或接收推送消息（push 事件）。\n\n缓存策略详解——1）Cache First（缓存优先）：有缓存直接返回，无缓存则请求网络并缓存。适合不常变动的静态资源（CSS/JS/字体）。2）Network First（网络优先）：先请求网络，成功则返回并更新缓存，失败则回退到缓存。适合对实时性有要求的页面（新闻列表）。3）Stale While Revalidate（滞后更新）：立即返回缓存，同时发起网络请求更新缓存。下次访问使用新缓存。适合更新不敏感的资源（头像、文章正文）。\n\n扩展延伸：SW 的作用域（Scope）由 SW 文件路径决定，默认是 SW 文件所在目录。跨域资源需要 CORS 支持。Cache Storage 有配额限制（通常为可用磁盘的 50%），超出会触发 QuotaExceededError。SW 中不能直接访问 DOM，需要通过 postMessage 与页面通信。Chrome DevTools > Application > Service Workers 面板可调试生命周期。一个常见的性能优化是用 Workbox 库简化缓存策略配置，避免手写 SW 的样板代码。",
+    "hints": [
+      "Service Worker 安装失败后会发生什么",
+      "不同缓存策略分别适合什么场景"
+    ],
+    "tags": [
+      "前端",
+      "PWA",
+      "Service Worker"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "IndexedDB 前端存储方案",
+    "content": "IndexedDB 是什么？与 LocalStorage 相比有什么优势和劣势？请描述 IndexedDB 的核心概念（数据库、对象仓库、索引、事务、游标）以及常见使用场景。",
+    "answer": "答案：IndexedDB 是浏览器内置的非关系型 NoSQL 数据库，支持结构化数据存储、索引查询和事务操作。它不像 LocalStorage 有 5-10MB 的大小限制，可以存储数百 MB 甚至 GB 级数据。\n\n解析：核心概念——1）数据库（Database）：每个域名可以创建多个数据库，用版本号管理 schema 变更（onupgradeneeded 事件）。2）对象仓库（Object Store）：类似关系型数据库的表，存储结构化数据（可以是任意 JS 对象）。3）索引（Index）：在对象仓库的某个字段上创建索引以实现高效查询，支持复合索引。4）事务（Transaction）：所有读写操作在事务中执行，保证 ACID 特性 + 原子性。事务模式有 readonly、readwrite 和 versionchange。5）游标（Cursor）：遍历对象仓库或索引中的多条记录。\n\n与 LocalStorage 对比——优势：① 存储容量大（通常为磁盘 50% 以上）。② 支持结构化数据（直接存对象而非只能存字符串）。③ 支持索引和范围查询，检索效率高。④ 异步 API（不阻塞主线程）。劣势：① API 较复杂（基于事件的回调风格，但可用 Promise 封装）。② 学习曲线高。③ 查询能力不如 SQLite/WebSQL。\n\n扩展延伸：IndexedDB 的常见封装库——Dexie.js（最流行，提供简洁的 Promise API + 版本管理）、idb（轻量 Promise 封装）、localForage（统一存储接口，自动在 IndexedDB/WebSQL/LocalStorage 间降级）。应用场景：离线优先应用的数据持久化（PWA）、用户行为数据本地记录、大文件分块存储、同步缓存（如 IndexedDB + SyncManager 实现后台同步）。注意：IndexedDB 在同源策略下有效，跨域不可访问。",
+    "hints": [
+      "IndexedDB 和 LocalStorage 在存储容量上有什么区别",
+      "为什么 IndexedDB 适合存储用户体验相关的离线数据"
+    ],
+    "tags": [
+      "前端",
+      "IndexedDB",
+      "存储"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "WebSocket 断线重连策略与心跳机制",
+    "content": "在实际项目中，WebSocket 连接可能因网络波动、服务器重启等原因断开。请设计一个健壮的 WebSocket 断线重连策略，包括心跳检测、指数退避重连和消息补偿机制。",
+    "answer": "答案：断线重连策略的核心三要素：心跳保活（检测连接状态）、指数退避重连（避免风暴）、消息队列补偿（确保不丢消息）。\n\n解析：1）心跳机制——客户端定期（如 30s）发送 ping 帧或自定义心跳消息，服务器回复 pong。如果连续 N 次（如 3 次）未收到 pong 响应，判定连接断开，触发重连。如果浏览器原生 WebSocket 支持心跳（ping/pong 帧），优先使用。否则用定时器发送自定义消息实现。心跳也有助于防止代理/网关的空闲超时断开。\n\n2）指数退避重连——首次断开等待 1s，第二次 2s，第三次 4s，呈指数增长直到最大值（如 30s）。加入随机抖动（Jitter，如 ±500ms）避免多个客户端同时重连造成服务器压力。达到最大重试次数（如 10 次）后停止重连，提示用户手动刷新。也可在网络状态变化时（navigator.onLine / window.addEventListener('online', ...)）立即重置重试并尝试重连。\n\n3）消息补偿——客户端维护一个待发送消息队列（可用内存或 IndexedDB 持久化）。WebSocket 断开期间的消息暂存队列。重连成功后，先校验会话有效性，再按序发送队列中的消息。重连时可能需要重新认证（如发送 token）。服务器端需要设计消息去重（幂等性，每个消息带唯一 ID），避免重连后重复处理。\n\n扩展延伸：生产环境建议使用成熟的 WebSocket 重连库（如 reconnecting-websocket、Socket.IO 自带重连机制）。如果使用后者的命名空间（Namespace）和房间（Room）功能，还需在重连后重新订阅 Room。WebSocket 优雅关闭：关闭前发送 close 帧，触发服务器端的清理逻辑。对于关键业务，可用 SSE（Server-Sent Events）作为降级方案。WebSocket 在浏览器中最多支持与同一服务器的 6 个连接（同域限制），超过会阻塞。",
+    "hints": [
+      "指数退避重连为什么需要加入随机抖动（Jitter）",
+      "断线期间的消息怎么保证不丢失和不重复处理"
+    ],
+    "tags": [
+      "前端",
+      "WebSocket",
+      "网络",
+      "可靠性"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web Components 标准",
+    "content": "什么是 Web Components？它由哪三项核心技术组成？与主流前端框架（React/Vue）的组件化方案相比有什么优缺点？",
+    "answer": "答案：Web Components 是浏览器原生组件封装标准，由 Custom Elements（自定义元素）、Shadow DOM（影子 DOM）和 HTML Templates（模板）三项技术组成。\n\n解析：三项技术详解——1）Custom Elements：通过 class 继承 HTMLElement，定义新 HTML 标签（如 <my-card>）。生命周期钩子：connectedCallback（挂载）、disconnectedCallback（卸载）、attributeChangedCallback（属性变化）。需要使用 customElements.define() 注册。2）Shadow DOM：封装的 DOM 子树和样式作用域，外部 CSS 不会泄露进去，内部样式也不会影响外部。通过 element.attachShadow({mode: 'open'}) 创建。3）HTML Templates：<template> 标签定义可复用的 HTML 片段（不会渲染），配合 <slot> 实现内容分发（类似 Vue 的 slot / React 的 children）。\n\n与框架对比——Web Components 优点：① 框架无关——无论使用 React/Vue/Angular，原生组件可以直接嵌入。② 样式隔离——Shadow DOM 天然提供 CSS 作用域，不需要 CSS Modules/Styled Components。③ 轻量——不用加载框架运行时就可用。缺点：① 数据绑定需要手动实现（无响应式系统）。② 状态管理需要自行搭建。③ 与传统 SSR 存在兼容性问题（Shadow DOM 在服务端渲染不支持）。④ 生态系统弱于框架组件。\n\n扩展延伸：Lit 是 Google 开发的 Web Components 轻量框架，提供响应式数据绑定和模板渲染（基于 lit-html）。Web Components 常用于跨框架组件库（如 Ionic、Vaadin）、微前端应用的子应用组件共享、设计系统中的原子组件。注意 Shadow DOM 在表单中的特殊性：Shadow DOM 内部的 <input> 不会自动与外部 <form> 关联，需要通过 FormData API 手动处理。",
+    "hints": [
+      "Shadow DOM 如何解决 CSS 作用域隔离问题",
+      "为什么 Web Components 在表单场景下会有兼容性挑战"
+    ],
+    "tags": [
+      "前端",
+      "Web Components",
+      "组件化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "CSS Container Queries 与响应式设计新范式",
+    "content": "CSS Container Queries（容器查询）是什么？与 Media Queries 有什么本质区别？请给出一个实际使用场景和基本语法。",
+    "answer": "答案：Container Queries 允许组件根据其父容器的尺寸（而非视口尺寸）来调整样式。使用 @container 规则和 container-type 属性定义容器上下文。\n\n解析：核心概念——1）定义容器：在目标父元素上设置 container-type: inline-size（监听内联方向尺寸变化）或 container-type: size（宽高都监听）。也可用 container-name 命名容器。2）容器查询语法：@container (min-width: 400px) { .card { flex-direction: row; } }——当容器宽度 ≥ 400px 时，卡片布局变为行排列。\n\n与 Media Queries 的本质区别——Media Queries 以视口（viewport）为参考系，Container Queries 以最近的容器祖先为参考系。这使得组件可以独立于页面布局自行适配。例如：同一个卡片组件被放在侧边栏（窄）和主内容区（宽）时，通过 Container Queries 自动切换布局，无需写两套样式或在组件层面检测视口。\n\n扩展延伸：Browser Support——Chrome 105+、Safari 16+、Firefox 110+ 已支持，可以安全使用。Container Query Units（cqw/cqh/cqi/cqb/cqmin/cqmax）类似视口单位但基于容器尺寸。典型场景：Dashboard 中的可复用 Widget 卡片、CMS 动态内容区域、电商商品卡片在产品列表页 vs 推荐栏的不同展示形态。与 CSS Grid 结合可以实现真正的「组件级自适应」布局，不再依赖全局断点。",
+    "hints": [
+      "为什么说 Container Queries 解决了 Media Queries 解决不了的组件复用问题",
+      "Container Query 单位和 Viewport 单位有什么区别"
+    ],
+    "tags": [
+      "前端",
+      "CSS",
+      "响应式"
+    ]
   }
 ]

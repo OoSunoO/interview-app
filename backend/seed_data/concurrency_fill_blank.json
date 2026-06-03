@@ -777,5 +777,92 @@
       "并发",
       "线程池"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Java 内存屏障类型",
+    "content": "内存屏障（Memory Barrier）有四种类型：___屏障（保证读操作不重排序）、StoreStore 屏障、___屏障（保证写操作不重排序）、以及___屏障（保证所有之前的内存访问在之后的访问之前完成，最严格）。",
+    "answer": "{\"correct\":[[\"LoadLoad\"],[\"LoadStore\"],[\"StoreLoad\"]],\"distractors\":[[\"ReadRead\",\"Load-Load\",\"读-读\"],[\"StoreRead\",\"写-读\"],[\"FullBarrier\",\"全屏障\",\"全能屏障\",\"内存屏障\"]]}",
+    "hints": [
+      "volatile 写操作前插入 StoreStore，写操作后插入 StoreLoad",
+      "StoreLoad 是最昂贵的屏障类型（通常需要清空写缓冲区）"
+    ],
+    "tags": [
+      "并发",
+      "JMM",
+      "内存屏障"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "happens-before 规则列举",
+    "content": "JMM 的 happens-before 规则包括：程序次序规则（同一线程前一个操作 hb 后一个操作）、___规则（对 volatile 变量的写 hb 后续对该变量的读）、锁规则（解锁 hb 后续对该锁的加锁）、___规则（Thread.start() hb 该线程的任何动作）、___规则（线程的所有操作 hb 其他线程 join() 返回）、传递性规则（A hb B, B hb C ⇒ A hb C）。",
+    "answer": "{\"correct\":[[\"volatile\",\"volatile变量\"],[\"线程启动\",\"start\"],[\"线程终止\",\"join\"]],\"distractors\":[[\"synchronized\",\"final\",\"static\",\"原子\"],[\"线程创建\",\"new\",\"初始化\"],[\"线程等待\",\"wait\",\"线程结束\",\"线程同步\"]]}",
+    "hints": [
+      "volatile 的写-读提供跨线程的可见性保证",
+      "start() 规则保证线程看到的共享变量初始值正确"
+    ],
+    "tags": [
+      "并发",
+      "JMM",
+      "happens-before"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ReentrantLock 与 Condition",
+    "content": "ReentrantLock 在 AQS 上创建条件队列进行线程间协调：通过___方法创建 Condition 对象；___方法将线程放入条件队列等待（释放锁）；___方法唤醒条件队列中的线程（重新竞争锁）。",
+    "answer": "{\"correct\":[[\"newCondition()\"],[\"await()\"],[\"signal()\"]],\"distractors\":[[\"newCondition\",\"condition\",\"getCondition\"],[\"wait()\",\"park()\",\"sleep()\",\"suspend()\"],[\"notify()\",\"notifyAll()\",\"unpark()\",\"wake()\"]]}",
+    "hints": [
+      "Condition 的 await/signal 与 Object 的 wait/notify 对应",
+      "一个 ReentrantLock 可以创建多个 Condition 对象"
+    ],
+    "tags": [
+      "并发",
+      "ReentrantLock",
+      "Condition",
+      "AQS"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Executor 框架核心接口",
+    "content": "Java Executor 框架的核心接口包括：___（最顶层接口，execute 方法提交 Runnable 任务）、___（扩展了 Executor，提供 submit/invokeAll/invokeAny 方法）、以及___（可以调度任务在给定延迟后运行或周期性执行）。",
+    "answer": "{\"correct\":[[\"Executor\"],[\"ExecutorService\"],[\"ScheduledExecutorService\"]],\"distractors\":[[\"ThreadPool\",\"Runnable\",\"Callable\",\"Future\"],[\"CompletionService\",\"Executors\",\"FutureTask\",\"Callable\"],[\"ScheduledThreadPool\",\"DelayQueue\",\"Timer\",\"周期性调度\"]]}",
+    "hints": [
+      "Executor 和 ExecutorService 的主要区别是 submit 方法",
+      "ScheduledExecutorService 比 Timer 更强大更安全"
+    ],
+    "tags": [
+      "并发",
+      "Executor",
+      "线程池"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "CAS 操作的 Atomic 包装类",
+    "content": "Java 中常见的 CAS 原子类包括：___（int 值的原子更新）、AtomicLong、___（引用类型的原子更新）、___（带版本号的原子引用，解决 ABA 问题）。底层依赖 sun.misc.Unsafe 的 compareAndSwap 方法。",
+    "answer": "{\"correct\":[[\"AtomicInteger\"],[\"AtomicReference\"],[\"AtomicStampedReference\"]],\"distractors\":[[\"AtomicBoolean\",\"AtomicLongArray\",\"AtomicFieldUpdater\"],[\"AtomicObject\",\"AtomicValue\",\"AtomicVariable\"],[\"AtomicMarkableReference\",\"AtomicVersionReference\",\"AtomicDouble\",\"AtomicStampReference\"]]}",
+    "hints": [
+      "AtomicStampedReference 通过版本号（stamp）解决 ABA",
+      "AtomicMarkableReference 使用布尔标记解决 ABA（适用于只关心是否被修改过的场景）"
+    ],
+    "tags": [
+      "并发",
+      "CAS",
+      "Atomic",
+      "原子类"
+    ]
   }
 ]

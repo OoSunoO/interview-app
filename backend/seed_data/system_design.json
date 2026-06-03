@@ -779,5 +779,97 @@
       "缓存",
       "DDoS"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计视频流媒体平台（YouTube/Netflix）",
+    "content": "如何设计一个类似 YouTube 或 Netflix 的视频流媒体平台？需要支持视频上传、转码、存储、分发和播放，支撑亿级用户。",
+    "answer": "答案：视频流媒体平台的核心链路是「上传 → 转码 → 存储 → CDN 分发 → 播放」。架构分层包括客户端、API 网关、转码管道、对象存储、CDN 和元数据数据库。\n\n解析：上传模块——1）分片上传（Resumable Upload）：将大视频文件分成 5-10MB 的分片并行上传，支持断点续传。2）上传完成后触发转码管道。转码管道——1）原始视频通常很大（1080p 一小时约 10GB），需转码为多种分辨率（360p/720p/1080p/4K）和编码格式（H.264/H.265/AV1）。2）使用消息队列（如 Kafka）协调转码任务，多 Worker 并行处理。3）DASH/HLS 打包：将视频切成 4-10 秒的切片并生成 M3U8/MPD 播放列表。存储与分发——1）源站使用对象存储（如 S3、Blob Storage）存储原始视频和转码产物。2）CDN 边缘节点缓存热点视频，使用 Cache Miss 回源拉流。3）自建 CDN 场景使用 Consistent Hashing 将同一视频的请求路由到同一节点提高缓存命中率。\n\n扩展延伸：关键设计难点——1）热视频（如热门新番）的播放请求可能达到百万 QPS，CDN 预热（Pre-warm）将热门视频提前推送到边缘节点。2）自适应码率（ABR）：客户端根据当前带宽自动切换视频清晰度，用 BDP（带宽延迟积）估算可用带宽。3）推荐系统：基于用户观看历史和协同过滤构建个性化首页，属于一个独立的复杂子系统。4）直播场景（YouTube Live/Netflix Live）额外需要转码延迟优化和低延迟 HLS。",
+    "hints": [
+      "分片上传如何保证上传效率和断点续传能力",
+      "CDN 预热和边缘节点缓存淘汰策略如何设计"
+    ],
+    "tags": [
+      "系统设计",
+      "视频流媒体",
+      "CDN",
+      "转码"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计实时协作编辑系统（Google Docs）",
+    "content": "如何设计一个类似 Google Docs 的多人实时协作编辑系统？需要支持多个用户同时编辑同一文档、实时看到对方的修改、以及解决编辑冲突。",
+    "answer": "答案：实时协作编辑的核心技术是 OT（Operational Transformation）和 CRDT（Conflict-free Replicated Data Type）。Google Docs 使用 OT（基于 Google Wave 的改造版本），现代协作编辑器如 Figma 和 Atom Teletype 使用 CRDT。\n\n解析：OT（Operational Transformation）——1）每个用户的操作（插入/删除字符）被表示为一个 Operation，通过 WebSocket 发送到服务器。2）服务器作为中央协调者，对并发的 Operations 执行变换（Transform），使得所有客户端最终状态一致。3）OT 的核心是 transform(op1, op2) 函数——当两个操作并发发生时，将 op1 穿越 op2（或反之），使两个操作在不同客户端上应用后得到相同结果。CRDT（无冲突数据类型）——1）每个字符分配一个全局唯一 ID（如 UUID + 位置标识符），字符之间用有序列表（List CRDT）组织。2）用户插入字符时带上 ID 和前驱/后继信息，删除时标记墓碑（Tombstone）而非真正删除。3）无需中央协调即可合并，天然支持 P2P 架构。\n\n扩展延伸：Google Docs 的架构——1）客户端发送操作→服务器→广播给其他客户端（单个房间内）。2）服务器维护文档的权威状态，客户端是「推测执行」——应用本地操作立即渲染（零延迟感觉），同时在网络往返后与服务器状态对齐。3）光标同步：每个用户的光标位置通过 Presence 消息广播，不参与 OT 变换（纯 UI 层）。选型对比——OT 更适合集中式架构（如 Google Docs，服务器做全部 transform），CRDT 更适合去中心化架构（如 Figma 的 livegraph）。OT 的挑战：transform 函数难以覆盖所有边界情况（如嵌套撤销），数学证明复杂。CRDT 的挑战：墓碑膨胀问题、内存占用大。",
+    "hints": [
+      "OT 与 CRDT 各自适合什么架构场景",
+      "Operational Transformation 的核心数学原理是什么"
+    ],
+    "tags": [
+      "系统设计",
+      "协同编辑",
+      "OT",
+      "CRDT",
+      "实时"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计分布式网页爬虫",
+    "content": "如何设计一个分布式网页爬虫？要求能爬取数十亿网页，支持去重、限速、容错和增量更新。请从架构、URL 去重、调度策略和反爬应对等角度回答。",
+    "answer": "答案：分布式爬虫的核心组件包括 URL 种子管理器（Frontier）、调度器（Scheduler）、下载器（Downloader）、解析器（Parser）和存储层。整体架构采用 Master-Worker 或完全分布式设计。\n\n解析：URL 管理（Frontier）——1）URL 队列使用分布式消息队列（如 Kafka 或 Redis List），按优先级调度（深度优先/广度优先/PageRank 优先）。2）URL 去重使用布隆过滤器（Bloom Filter）——数十亿 URL 用 Bitmap 存储，容忍少量误判。3）精准去重配合 RocksDB 或 Redis Set 存储已验证 URL。4）robots.txt 策略：爬取前检查域名粒度的抓取规则。下载器（Worker）——1）每个 Worker 从队列拉取 URL，下载 HTML 内容。2）支持 HTTP/2 多路复用减少连接开销，设置合理的请求间隔（Politeness Policy）。3）应对反爬机制：使用代理 IP 池、轮换 User-Agent、处理 Cookie 和 Session。调度策略——1）多级队列：高优先级（新闻、热门站点）和普通队列分开调度。2）站点限速：对每个域名设置最小抓取间隔（如 1 秒），避免对目标服务器造成压力。3）同域名分配同一 Worker（或 Proxy）；一致性哈希确保同一域名始终由同一节点处理，避免不同节点因限速互相干扰。\n\n扩展延伸：增量爬取——通过 RSS 推送、Sitemap 监控和页面更新检测实现增量更新。URL 去重对布隆过滤器参数的选择：对于 n=10^10 规模，期望误判率 p=0.01，需要约 120GB 的 Bitmap 和 10 个哈希函数。容错——Worker 崩溃导致下载中的任务丢失，通过消息队列的 rebalance 机制由其他 Worker 重新消费；下载失败 URL 进入重试队列（最多重试 3 次）。存储——原始 HTML 存储于对象存储，解析后的结构化数据（标题、正文、链接、元数据）写入搜索引擎的倒排索引系统。",
+    "hints": [
+      "布隆过滤器在 URL 去重中的参数如何选择",
+      "站点限速（Politeness）在分布式爬虫中如何实现"
+    ],
+    "tags": [
+      "系统设计",
+      "爬虫",
+      "分布式",
+      "布隆过滤器"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计通知系统",
+    "content": "如何设计一个支持邮件、短信、App Push 的全渠道通知系统？需要支持亿级用户、模板管理、频率控制和多渠道分发。",
+    "answer": "答案：通知系统的核心流程是「触发 → 聚合 → 频率控制 → 模板渲染 → 渠道适配 → 发送」。架构采用分层设计：接入层、处理层、分发层和渠道层。\n\n解析：接入层——1）通知触发方式：API 调用（业务系统主动触发）、事件驱动（订阅 Kafka 事件自动生成通知）。2）通知类型分类：即时通知（验证码、告警）、批量通知（日报、营销）、定时通知（预约提醒）。处理层——1）聚合（Notification Aggregation）：相同内容的频繁通知合并为一条（如「你有 5 条新消息」），减少对用户的打扰。2）频率控制（Rate Limiter）：同一用户单位时间内的通知次数限制（如每分钟最多 1 条短信），使用滑动窗口算法。3）优先级队列：高优通知（验证码、支付结果）优先发送，低优通知（营销、推荐）可以延迟。4）模板管理：用模板引擎（如 Thymeleaf、Handlebars）填充变量，支持多语言、多渠道的不同模板。分发层——1）渠道路由：根据用户配置和通知类型选择发送渠道（如验证码优先走短信，营销走邮件）。2）渠道降级：某渠道不可用时自动降级到备选渠道。3）退避重试：发送失败指数退避重试（最多 3 次）。渠道层——1）短信：对接多家 SMS 供应商（阿里云、Twilio），支持自动切换。2）邮件：使用 SMTP 或 ESP（SendGrid、SES），处理退信（Bounce）和举报。3）App Push：对接 APNs（iOS）和 FCM（Android），维护设备 Token 和长连接。\n\n扩展延伸：高可用设计——1）异步化：从触发到发送全链路异步，Kafka 缓冲流量峰值。2）幂等性：相同通知内容在超时重试时不会重复发送（基于通知 ID 去重）。3）通知状态跟踪：每个通知有完整的生命周期（待发送→发送中→已送达→已读），Elasticsearch 存储便于检索。用户体验——1）免打扰模式：用户可设置静音时段（如 22:00-08:00）。2）通知偏好中心：用户自定义各渠道的接收开关和频率。",
+    "hints": [
+      "通知聚合（Aggregation）如何减少对用户的打扰",
+      "多渠道发送失败时的降级策略如何设计"
+    ],
+    "tags": [
+      "系统设计",
+      "通知系统",
+      "推送",
+      "高并发"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计附近的人/地点搜索（Yelp/美团）",
+    "content": "如何设计一个基于位置的服务（LBS），支持搜索附近的餐馆、加油站等商户？需要在地图上展示并支持按距离排序和分页。",
+    "answer": "答案：地理位置搜索的核心是空间索引。常见方案包括 GeoHash（编码经纬度为字符串前缀匹配）、Google S2（球面 Hilbert 曲线）、四叉树（Quadtree）和 R-tree。工业界最常用的是 GeoHash 和 Google S2。\n\n解析：GeoHash——1）将经纬度编码为 Base32 字符串，字符串前缀匹配表示相邻区域。2）精度：每增加一位精度提高（1 位≈5000km，6 位≈1km，9 位≈5m）。3）搜索附近地点：计算中心点的 GeoHash，取前缀匹配的所有记录。4）缺点：存在边缘跳跃（Z-order 曲线的性质），需要取周围 8 个相邻格子做补偿查询。Google S2——1）使用 Hilbert 曲线将球面映射到 64 位整数（Cell ID）。2）比 GeoHash 更均匀，邻接关系保持更好。3）支持任意半径的圆形区域查询（不只是矩形），精度控制更灵活。存储方案——1）用 Redis（GEO 命令）做附近搜索：GEORADIUS 支持给定中心和半径返回附近 POI 点，基于有序集合（Zset）内部的 GeoHash 编码实现。2）用支持空间索引的数据库：MongoDB 2dsphere 索引、Elasticsearch geo_distance 查询、PostgreSQL PostGIS。\n\n扩展延伸：实际优化——1）双层索引：先粗粒度 GeoHash（4-5 位）过滤城市级别候选，再细粒度排序过滤。2）冷热分离：热门商圈数据缓存到 Redis，冷门区域查 DB。3）性能指标：GeoHash 前缀查询为 O(log n)，配合 MongoDB 的复合索引可在 10ms 内返回 20km 内的结果。4）动态展示缩放级别：地图缩小（查看城市全景）时聚合展示数量而非单个 POI，使用网格聚合（Google 的 S2 层级聚合）。5）实时位置更新（如外卖骑手追踪）需要 WebSocket 推送 + Redis GEO 实时更新。",
+    "hints": [
+      "GeoHash 的边缘跳跃问题如何解决",
+      "GeoHash 和 Google S2 的核心差异是什么"
+    ],
+    "tags": [
+      "系统设计",
+      "LBS",
+      "GeoHash",
+      "S2",
+      "空间索引"
+    ]
   }
 ]

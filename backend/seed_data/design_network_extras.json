@@ -811,5 +811,99 @@
       "SYN Flood",
       "WAF"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "软件定义网络（SDN）原理",
+    "content": "请解释软件定义网络（SDN）的核心原理。SDN 将控制面（Control Plane）和数据面（Data Plane）分离是什么意思？OpenFlow 和 SDN 的关系是什么？SDN 在数据中心网络中解决了什么问题？",
+    "answer": "答案：SDN（Software-Defined Networking）的核心是将网络设备的控制面（决策如何转发）和数据面（实际转发数据包）分离。控制面集中在 SDN Controller 上运行，数据面保留在交换机/路由器中执行 Controller 下发的转发规则。这种分离使网络管理更加灵活，可以实现编程化、自动化的网络配置。\n\n解析：控制面与数据面分离——1）传统网络：每台交换机独立运行路由协议（OSPF/BGP），自己控制转发决策。控制面和数据面在同一个设备上，配置变更需要逐个设备手动操作。2）SDN：Controller（如 ONOS、OpenDaylight）掌握全网拓扑，计算转发路径，通过南向接口（如 OpenFlow）向交换机下发流表（Flow Table）。交换机只查表转发，不再运行路由协议。SDN 架构分层——1）基础设施层（Infrastructure Layer）：物理/虚拟交换机（如 Open vSwitch），负责数据包转发。2）控制层（Control Layer）：SDN Controller，管理网络状态和拓扑，下发转发规则。3）应用层（Application Layer）：网络应用和服务（如负载均衡、防火墙、流量工程）。4）南向接口（Southbound API）：Controller 和交换机之间的通信协议（OpenFlow、NETCONF）。5）北向接口（Northbound API）：应用层调用控制层功能的 API（RESTful、gRPC）。\n\n扩展延伸：OpenFlow——1）第一个标准化的 SDN 南向协议（最初由 Stanford 提出）。2）定义交换机上的 Flow Table（匹配规则 + 动作）。3）每个 Flow Entry 包含：匹配字段（MAC/IP/端口）、计数器、动作（转发/丢弃/修改头部）。4）OpenFlow 1.3+ 支持多级流表、Group Table 和 Meter Table。SDN 的实际价值——1）数据中心资源池化：网络配置跟随 VM/Container 迁移自动化。2）流量工程：动态调整路径避免拥塞（如 Google B4 使用 SDN 将广域网链路利用率从 30% 提升到接近 100%）。3）网络切片：在同一个物理网络上划分多个逻辑上隔离的虚拟网络。SDN 的局限性——1）Controller 单点瓶颈（有主备方案但复杂度高）。2）南向接口性能瓶颈（OpenFlow 流表下发有延迟，不适合微秒级切换）。3）实际部署中 SDN 更多作为叠加网络（Overlay）的管理面，并非替代所有传统网络协议。",
+    "hints": [
+      "SDN 将控制面和数据面分离的实际好处是什么",
+      "OpenFlow 流表匹配和传统路由表查找有什么区别"
+    ],
+    "tags": [
+      "网络",
+      "SDN",
+      "OpenFlow",
+      "数据中心"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "网络虚拟化：VXLAN 与 Geneve",
+    "content": "请解释 VXLAN 和 Geneve 等 Overlay 网络隧道的原理。它们如何解决传统 VLAN 在大规模云网络中的不足？Overlay 网络和 Underlay 网络的关系是什么？",
+    "answer": "答案：VXLAN（Virtual Extensible LAN）是一种 Overlay 网络技术，将二层以太网帧封装在 UDP 包中传输。它使用 24-bit VNI（VXLAN Network Identifier，支持 1600 万个隔离网络）替代传统 VLAN 的 12-bit VID（仅 4096 个）。Geneve（Generic Network Virtualization Encapsulation）是 VXLAN 的改进版，支持更灵活的 TLV（Type-Length-Value）选项封装。\n\n解析：VXLAN——1）封装格式：原始以太网帧 → VXLAN Header（8 字节，含 24-bit VNI）→ UDP Header（目的端口 4789）→ Outer IP Header → Outer MAC Header。2）VTEP（VXLAN Tunnel Endpoint）：封装/解封装的边界设备，可以是物理交换机、软件交换机（OVS）或 Hypervisor（宿主机内核）。3）通信过程：源宿主的 VTEP 将 VM 发出的原始包封装为 VXLAN UDP 包，通过 Underlay IP 网络传输到目标宿主的 VTEP，解封装后交给目标 VM。4）MAC 学习：VTEP 维护 MAC→VTEP IP 的映射表（可以通过多播或分布式控制平面学习）。Geneve——1）类似 VXLAN 但更灵活：VNI 扩展为 24-bit + 可变长的 TLV 选项。2）选项可携带元数据：如安全上下文（Virtual Domain）、流标识、时间戳。3）UDP 端口 6081。4）主要用于数据中心的可编程 Overlay 场景。\n\n扩展延伸：Overlay 和 Underlay——1）Underlay：物理网络（IP 路由），只负责在 VTEP 之间传输封装后的 UDP 包，不需要知道 VM 的 MAC/IP。2）Overlay：逻辑二层网络（虚拟交换机维持的虚拟网络），VM 看到的是 Overlay 网络拓扑。3）Overlay 解耦了虚拟网络和物理网络——物理网络升级改造不影响虚拟网络拓扑，反之亦然。云网络中的应用——1）OpenStack Neutron：默认使用 VXLAN/Geneve 做网络多租户隔离。2）Kubernetes：部分 CNI 插件（如 Flannel VXLAN 模式、Calico VXLAN 模式）使用 VXLAN 跨节点通信。3）VMware NSX：使用 Geneve 封装（称为 GENEVE/GEN）。VXLAN 的不足之处——1）多播依赖：早期 VXLAN 依赖 IP 多播进行 MAC 学习，很多数据中心不支持多播。解决方案：使用 EVPN（MP-BGP）作为控制面替代多播学习。2）UDP 封装增加了约 50 字节的包头开销，在 MTU 1500 的网络中需要调整 MSS/MRU。",
+    "hints": [
+      "VXLAN 如何突破 VLAN 4096 个隔离网络的限制",
+      "Overlay 网络解耦了虚拟网络和物理网络的什么"
+    ],
+    "tags": [
+      "网络",
+      "VXLAN",
+      "Geneve",
+      "Overlay",
+      "虚拟化"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "L4 与 L7 负载均衡器架构对比",
+    "content": "请对比 L4（传输层）和 L7（应用层）负载均衡器的架构和工作原理。各自适用于什么场景？现代负载均衡器（如 Envoy、Nginx）如何同时支持 L4 和 L7？",
+    "answer": "答案：L4 负载均衡工作在传输层（TCP/UDP），根据 IP 地址和端口做流量分发，不解析应用层协议内容。L7 负载均衡工作在应用层（HTTP/gRPC/WebSocket），可以解析协议内容并根据 URL、Header、Cookie 等做精细路由。L4 性能更高（纯转发），L7 功能更丰富（智能路由、限流、认证、改写）。\n\n解析：L4 负载均衡——1）工作方式：接收客户端 TCP 连接，基于哈希/轮询/最少连接选择一个后端服务器，通过 NAT（DNAT）或 DSR（Direct Server Return）转发流量。2）常用算法：源 IP 哈希（会话保持）、轮询（RR）、最少连接、一致性哈希。3）代表产品：LVS（Linux Virtual Server）、HAProxy 的 TCP 模式、AWS NLB（Network Load Balancer）。4）优势：高吞吐（纯内核态转发，如 DPDK 加速可达百万 PPS），解析简单（不拆包到应用层）。L7 负载均衡——1）工作方式：终止客户端连接（Proxy 模式），解析 HTTP 请求头/体，根据 Host/Path/Cookie 决定路由目标。2）额外功能：TLS 终止、认证（OAuth/JWT 验证）、限流（令牌桶）、重试、熔断、请求/响应改写。3）代表产品：Nginx、HAProxy 的 HTTP 模式、AWS ALB（Application Load Balancer）、Envoy。\n\n扩展延伸：现代负载均衡器（Envoy、Nginx）同时支持 L4 和 L7——1）Envoy 的 Listener 可以配置为 TCP Listener（L4）或 HTTP Connection Manager（L7 Filter）。同一个 Envoy 实例可以同时监听多个端口，分别工作在不同层级。2）Nginx 的 stream 模块做 L4（TCP/UDP 代理），http 模块做 L7。性能对比——L4 典型延迟：微秒级（DPDK 纳秒级）。L7 典型延迟：毫秒级（需要拆包和分析 HTTP 头部）。负载均衡架构模式——1）L4 在前 + L7 在后（分层负载均衡）：L4（如 LVS）做入口流量分发到多个 Nginx/Envoy。2）直连 L7：客户端直接连接 L7 负载均衡器（中小规模场景）。应用场景选择——纯 TCP/UDP 协议转发、高吞吐要求 → L4。HTTP/gRPC 应用、需要智能路由和功能丰富 → L7。",
+    "hints": [
+      "L4 负载均衡的 DSR（Direct Server Return）模式有什么优势",
+      "Envoy 如何同时支持 L4 和 L7 流量处理"
+    ],
+    "tags": [
+      "网络",
+      "负载均衡",
+      "L4",
+      "L7",
+      "Envoy"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "API Gateway 与 Service Mesh 对比",
+    "content": "请对比 API Gateway（网关）和 Service Mesh（服务网格）在微服务架构中的角色。它们各自的职责范围是什么？是否会被替代还是互补共存？",
+    "answer": "答案：API Gateway 是南北向流量（客户端→服务）的入口代理，负责认证、限流、路由、协议转换、聚合等边缘功能。Service Mesh 是东西向流量（服务→服务）的基础设施层，通过 Sidecar Proxy（通常为 Envoy）拦截服务间通信，管理流量控制、服务发现、可观测性和安全。两者解决不同问题，互补共存。\n\n解析：API Gateway 的职责——1）统一入口：所有外部请求经过网关进入内部系统。2）认证授权：验证 JWT/OAuth Token，在网关层统一拦截未认证请求。3）限流/防爬：基于 IP/API Key/用户维度的速率限制。4）协议转换：将外部 HTTP/REST 转为内部 gRPC，或将多种客户端协议统一为内部协议。5）请求聚合：一次外部请求需要调用多个内部服务时，网关做聚合合并减少客户端调用次数。6）典型产品：Kong、Kong API Gateway、AWS API Gateway、Zuul（Netflix）、Spring Cloud Gateway。Service Mesh 的职责——1）流量控制：超时、重试、熔断、流量分割（金丝雀发布）。2）服务发现：自动发现后端服务实例。3）可观测性：调用链（Distributed Tracing）、指标（RED 指标：Rate/Error/Duration）。4）安全：mTLS 自动加密服务间通信、细粒度访问控制（RBAC）。5）典型产品：Istio（Envoy Sidecar）、Linkerd、Consul Connect。\n\n扩展延伸：互补关系——API Gateway 处理「外部进入内部」的公共边界面问题。Service Mesh 处理「内部服务之间」的通信基础设施问题。典型架构——外部请求 → Load Balancer（L4）→ API Gateway（L7 认证/路由）→ Service Mesh Sidecar（东西向流量控制）。API Gateway 的发展——已有集成 Service Mesh 能力的趋势（如 Kong Mesh 整合 Service Mesh 功能）。Service Mesh 不适合所有场景——1）增加了延迟（每次服务调用都多一跳 Sidecar）。2）运维复杂度高（需要管理 Control Plane 和 Sidecar 注入）。3）简单微服务（10 个以下服务）通常不需要 Service Mesh。选择指导——有外部客户端、需要认证/API 管理 → 需要 API Gateway。服务间通信复杂、需要精细化流量控制和可观测性 → 引入 Service Mesh。中小规模系统用 API Gateway 就够了。",
+    "hints": [
+      "南北向流量和东西向流量分别对应什么通信场景",
+      "API Gateway 和 Service Mesh 在哪些场景下有功能重叠"
+    ],
+    "tags": [
+      "网络",
+      "API Gateway",
+      "Service Mesh",
+      "微服务",
+      "Envoy"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "mTLS 双向 TLS 深度解析",
+    "content": "请解释 mTLS（双向 TLS）的原理和实现方式。mTLS 和单向 TLS 的区别是什么？在微服务通信中，mTLS 如何保障服务间的身份认证和通信加密？",
+    "answer": "答案：mTLS（Mutual TLS）是 TLS 的双向认证版本。单向 TLS 只有客户端验证服务器证书（保证服务器身份可信），mTLS 要求客户端也出示证书让服务器验证（保证客户端身份也可信）。在微服务通信中，mTLS 确保只有持有合法证书的服务才能互相通信，同时通信内容通过 TLS 加密。\n\n解析：单向 TLS vs mTLS——1）单向 TLS（标准的 HTTPS）：TLS 握手时服务器发送证书（Certificate），客户端验证服务器身份后协商会话密钥。客户端不需要证书。2）mTLS：服务器发送证书给客户端验证，同时要求客户端发送证书（CertificateRequest）。客户端发送自己的证书给服务器验证（Certificate + CertificateVerify）。双方证书都验证通过后，建立加密连接。mTLS 握手流程——1）ClientHello → ServerHello + Certificate + CertificateRequest。2）客户端验证服务器证书。3）客户端发送 Certificate（自己的证书）+ ClientKeyExchange + CertificateVerify。4）服务器验证客户端证书。5）协商会话密钥 → 建立加密通道。\n\n扩展延伸：mTLS 在微服务中的应用——1）Istio 自动 mTLS：在每个 Sidecar（Envoy）之间建立 mTLS 连接，应用容器完全无感。Istio 的 Citadel 组件负责颁发和管理证书（基于 SPIFFE 标准）。2）证书轮换：短期证书（如 Istio 默认 24 小时过期）降低证书泄漏风险，自动轮换。3）身份标识：证书中的 SAN（Subject Alternative Name）包含服务标识，如 spiffe://cluster.local/ns/default/sa/my-service。mTLS 的挑战——1）证书管理：每个服务都需要证书，大规模部署需要 PKI（公钥基础设施）和自动签发/轮换机制（SPIRE、cert-manager）。2）性能开销：TLS 握手在每次新连接时产生，mTLS 比单向 TLS 多一次证书验证。3）调试困难：证书错误比连接拒绝更难排查。是否需要 mTLS——1）外部 API：不要用 mTLS（管理外部客户证书不现实），使用 JWT/OAuth2 认证。2）内部服务间通信：推荐 mTLS，特别是通过不信任的网络（跨 AZ、跨机房）。3）Kubernetes 集群内：如果网络安全策略（NetworkPolicy）已严格控制，Service Mesh 的 mTLS 是纵深防御。",
+    "hints": [
+      "mTLS 比单向 TLS 多出哪一步握手环节",
+      "Istio 如何自动管理服务间的 mTLS 证书"
+    ],
+    "tags": [
+      "网络",
+      "mTLS",
+      "TLS",
+      "安全",
+      "Service Mesh"
+    ]
   }
 ]

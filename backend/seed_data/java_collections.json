@@ -879,5 +879,97 @@
       "Collections"
     ],
     "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LinkedHashMap 实现 LRU 缓存的原理",
+    "content": "请解释如何利用 LinkedHashMap 实现一个 LRU（最近最少使用）缓存。LinkedHashMap 的哪些特性支持这个功能？",
+    "answer": "答案：LinkedHashMap 通过 accessOrder=true 构造参数 + 重写 removeEldestEntry() 实现 LRU 缓存。\n\n解析：LinkedHashMap 默认 accessOrder=false（按插入顺序迭代），设为 true 后每次 get 或 put 已存在的 key 会将对应 Entry 移到链表尾部（访问顺序）。removeEldestEntry(Map.Entry) 方法在每次 put 后调用，返回 true 时移除链表头部的 Entry（最久未访问）。典型实现是重写该方法并限制缓存大小：protected boolean removeEldestEntry(Map.Entry eldest) { return size() > MAX_ENTRIES; }。\n\n扩展延伸：LinkedHashMap 的 LRU 实现不是线程安全的——并发场景下需要 Collections.synchronizedMap 包装或使用 ConcurrentHashMap 配合 ConcurrentLinkedDeque 实现。Guava Cache（Caffeine）提供了更强大的 LRU/LFU/ARC 缓存实现，支持过期时间、自动加载、最大权重等特性。Caffeine 使用 Window TinyLFU 淘汰算法，性能优于 LinkedHashMap 的 LRU。",
+    "hints": [
+      "accessOrder 参数决定插入顺序还是访问顺序",
+      "removeEldestEntry 的触发时机"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "LinkedHashMap",
+      "LRU",
+      "缓存"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentLinkedQueue 的实现原理",
+    "content": "请解释 ConcurrentLinkedQueue 的线程安全实现原理。它是如何在不加锁的情况下保证线程安全的？",
+    "answer": "答案：ConcurrentLinkedQueue 基于 Michael-Scott 非阻塞链表算法，通过 CAS 原子操作实现无锁并发。\n\n解析：核心设计——head 和 tail 节点使用 volatile 修饰保证可见性。入队操作：创建新节点，使用 CAS 将当前尾节点的 next 从 null 更新为新节点。如果 CAS 成功但其他线程同时插入，当前线程会帮助推进 tail 指针。出队操作：使用 CAS 将 head 指向下一个节点（如果 head 节点被删除则 CAS 更新 head）。size() 方法没有计数器，需要遍历整个链表（O(n)），因为并发环境下维护精确计数需要额外的同步。\n\n扩展延伸：ConcurrentLinkedQueue 的 size() 方法在遍历时可能因并发修改而不准确（弱一致性）。与 BlockingQueue 的区别——ConcurrentLinkedQueue 是非阻塞队列，不支持阻塞操作（take/put）。适合高并发但不需要阻塞等待的场景。迭代器是弱一致性的——遍历时看到的是某个时间点的快照，不会抛 ConcurrentModificationException。",
+    "hints": [
+      "Michael-Scott 算法是并发无锁队列的经典实现",
+      "为什么 ConcurrentLinkedQueue 的 size() 是 O(n)"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "并发",
+      "ConcurrentLinkedQueue",
+      "无锁"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "WeakHashMap 的用途与原理",
+    "content": "请介绍 WeakHashMap 的原理和典型应用场景。它和普通 HashMap 有什么本质区别？",
+    "answer": "答案：WeakHashMap 的 key 使用 WeakReference，当 key 没有外部强引用时会被 GC 自动回收，对应的 Entry 也会从 Map 中移除。\n\n解析：WeakHashMap 的 Entry 继承 WeakReference，key 被包装为弱引用。当 key 对象不再有外部强引用时，GC 会回收 key（弱引用特性）。WeakHashMap 在每次操作（get/put/size 等）时通过 expungeStaleEntries() 方法清理已被 GC 回收 key 的 Entry。典型应用场景：类加载器元数据缓存——当类加载器被卸载时，与之关联的缓存数据自动清除，防止类加载器泄漏。\n\n扩展延伸：与 HashMap 的本质区别——1）引用类型：WeakHashMap key 是弱引用；HashMap key 是强引用。2）自动清理：WeakHashMap 自动清理 key 被回收的 Entry；HashMap 永远不会自动清理。3）使用场景：WeakHashMap 适合缓存元数据和监听器注册；HashMap 适合常规键值存储。注意：value 是强引用——如果 value 引用了 key 本身，会导致 key 无法被回收（需要 WeakReference value 或手动 null）。",
+    "hints": [
+      "WeakHashMap 自动清理 key 不再被外部引用的 Entry",
+      "Tomcat 的类加载器缓存为什么使用 WeakHashMap"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "WeakHashMap",
+      "弱引用"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "IdentityHashMap 的原理与用途",
+    "content": "请介绍 IdentityHashMap 和普通 HashMap 的区别。IdentityHashMap 的应用场景是什么？",
+    "answer": "答案：IdentityHashMap 使用引用相等性（==）而非 equals() 来判断 key 是否相同，适合需要区分对象引用的场景。\n\n解析：HashMap 使用 hashCode() 和 equals() 判断 key 是否相等。IdentityHashMap 使用 System.identityHashCode() 和 == 运算符——只有两个引用指向同一个对象时才算相等。底层实现：IdentityHashMap 不使用哈希表 + 链表/红黑树结构，而是使用线性探测法的开放地址法（Object[] 数组交替存储 key 和 value）。扩容时以 2 的幂为基数（不是 HashMap 的 2 次幂），使用 -1 标记已删除的槽位。\n\n扩展延伸：典型应用场景：1）序列化/深拷贝框架（如 Spring 的深拷贝工具）——避免循环引用。2）调试和监控工具——跟踪对象引用关系。3）代理管理——区分 JDK 动态代理的不同代理实例。4）JVM 内部使用——如 ThreadLocalMap 判断线程局部变量。性能：IdentityHashMap 使用 == 和 identityHashCode，比 equals 和 hashCode 快得多。",
+    "hints": [
+      "IdentityHashMap 用 == 比较 key，用 System.identityHashCode() 计算哈希",
+      "序列化框架为什么用 IdentityHashMap 来跟踪已处理的对象"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "IdentityHashMap"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "EnumSet 和 EnumMap 的原理与优势",
+    "content": "请介绍 EnumSet 和 EnumMap 的实现原理和性能优势。它们和普通 Set/Map 有何不同？",
+    "answer": "答案：EnumSet 和 EnumMap 是专为枚举类型优化的高性能集合实现，底层使用位向量（EnumSet）和数组（EnumMap）。\n\n解析：EnumSet 使用位向量（bit vector / RegularEnumSet 使用 long 的每个 bit 表示一个枚举常量，JumboEnumSet 使用 long[]），操作直接通过位运算完成，极快且极省内存。EnumMap 底层使用 Object[] 数组（长度等于枚举常量个数），key 的 ordinal() 直接作为数组索引——所以 get/put 都是 O(1) 数组访问，没有哈希计算和冲突处理。两者都按枚举常量的声明顺序迭代。\n\n扩展延伸：性能对比——EnumSet 的 contains() 是 O(1) 位运算（远快于 HashSet 的 O(1) 哈希计算）。EnumMap 的 get/put 是直接数组访问（比 HashMap 快 2-3 倍）。两者都不允许 null key（EnumMap 允许 null value）。EnumSet 不是线程安全的，应该在单线程或同步包装下使用。工厂方法——EnumSet.of()、EnumSet.allOf()、EnumSet.range()、EnumSet.complementOf() 提供了便捷的构造方式。",
+    "hints": [
+      "EnumSet 用位向量存储，适合位运算（如 range、complementOf）",
+      "EnumMap 用 ordinal() 作为数组索引，是性能最高的 Map 实现"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "EnumSet",
+      "EnumMap",
+      "性能"
+    ]
   }
 ]

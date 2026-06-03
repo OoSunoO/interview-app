@@ -994,5 +994,125 @@
       "Map",
       "ConcurrentHashMap"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "Queue 与 Deque 的用法区别",
+    "content": "以下关于 Queue 和 Deque 接口的描述，正确的是？",
+    "options": [
+      "A) Deque 不继承 Queue",
+      "B) Queue 的 offer/poll/peek 操作在失败时返回特殊值",
+      "C) Queue 的 add/remove/element 操作在失败时返回特殊值",
+      "D) Deque 不支持栈操作"
+    ],
+    "answer": "答案：B) Queue 的 offer/poll/peek 操作在失败时返回特殊值\n\n解析：Queue 接口有两组方法——add/remove/element（失败抛异常）和 offer/poll/peek（失败返回特殊值，add 返回 false/IllegalStateException，remove 返回 NoSuchElementException，element 返回 NoSuchElementException，offer 返回 false，poll/peek 返回 null）。Deque 继承 Queue 接口，支持双端操作（addFirst/offerFirst/removeFirst/pollFirst/getFirst/peekFirst 等），同时提供 push/pop/peek 栈操作方法。\n\n扩展延伸：ArrayDeque 是 Deque 的数组实现，性能和内存表现优于 Stack（Stack 继承 Vector，使用 synchronized）。Deque 作为栈使用时，push/pop 是 LIFO 行为。作为队列使用时，offer/poll 是 FIFO 行为。",
+    "hints": [
+      "Queue 的两组方法分别对应失败抛异常和返回特殊值",
+      "Deque 继承 Queue，同时支持栈操作"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "Queue",
+      "Deque"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashMap 的扰动函数作用",
+    "content": "HashMap 中 hash 扰动函数 (h = key.hashCode()) ^ (h >>> 16) 的主要目的是？",
+    "options": [
+      "A) 使 key 的哈希值随机化",
+      "B) 让高位参与低位运算，减少哈希碰撞",
+      "C) 防止 hash 值超过 Integer.MAX_VALUE",
+      "D) 提高 hashCode 的计算速度"
+    ],
+    "answer": "答案：B) 让高位参与低位运算，减少哈希碰撞\n\n解析：HashMap 计算桶索引时使用 (n - 1) & hash，由于 n 通常较小（如 16），只有 hash 的低几位参与运算。扰动函数将 hash 的高 16 位与低 16 位异或，让高位信息也影响低位的分布，减少哈希碰撞。JDK 8 简化了 JDK 7 的多次扰动（4 次位运算）为一次，效果足够好且效率更高。\n\n扩展延伸：扰动函数为什么用异或而非与/或——异或能更均匀地混合高低位（与会产生偏 0 的结果，或会产生偏 1 的结果）。扰动后能改善的典型场景——连续整数（hashCode 是 i）直接与 (n-1) 做 & 运算时分布良好，但自定义对象的 hashCode 往往分布不均匀。",
+    "hints": [
+      "桶索引只依赖低几位，高位完全没用——扰动函数把高位信息混到低位",
+      "JDK 8 比 JDK 7 的扰动函数简化了"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "HashMap",
+      "哈希"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "Iterator 遍历时能否删除元素",
+    "content": "使用 Iterator 遍历集合时，以下哪种操作是安全的？",
+    "options": [
+      "A) 遍历时直接调用 list.remove(element)",
+      "B) 遍历时直接调用 list.add(element)",
+      "C) 遍历时调用 iterator.remove()",
+      "D) 遍历时调用 list.clear()"
+    ],
+    "answer": "答案：C) 遍历时调用 iterator.remove()\n\n解析：Iterator 的 remove() 方法会删除当前访问的元素，并保证修改后的 expectedModCount 与集合的 modCount 一致。A 选项 list.remove() 会修改 modCount 但不更新迭代器的 expectedModCount，导致下次 next() 时抛 ConcurrentModificationException。B 选项 list.add() 也会触发 fast-fail。D 选项 clear() 同样触发 fast-fail。\n\n扩展延伸：JDK 8 的 removeIf() 方法也是内部使用迭代器的 remove()，可以安全删除——一行实现批量删除：list.removeIf(x -> x > 10)。for-each 循环底层使用 Iterator，所以同样的规则适用。多线程环境下即使使用 iterator.remove() 也可能抛 ConcurrentModificationException（因为其他线程也在修改）。",
+    "hints": [
+      "for-each 循环遍历时直接 remove 会抛 ConcurrentModificationException",
+      "removeIf() 是 JDK 8 提供的安全删除方式"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "迭代器",
+      "遍历"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "红黑树插入后的自平衡操作",
+    "content": "TreeMap 在插入新元素后，以下哪种不是红黑树自平衡的操作？",
+    "options": [
+      "A) 左旋（Left Rotate）",
+      "B) 右旋（Right Rotate）",
+      "C) 颜色翻转（Color Flip）",
+      "D) 重哈希（Rehash）"
+    ],
+    "answer": "答案：D) 重哈希（Rehash）\n\n解析：红黑树的自平衡操作为了维持 5 条红黑树性质，使用三种操作：左旋（将父节点变为右子节点的左子节点）、右旋（将父节点变为左子节点的右子节点）、颜色翻转（改变节点颜色）。重哈希是 HashMap 的扩容操作，不属于红黑树的自平衡机制。\n\n扩展延伸：红黑树插入后的修复步骤：将新节点设为红色 → 父节点是黑色则不需调整 → 父节点是红色且叔节点红色→颜色翻转向上传递 → 父节点是红色且叔节点黑色→左旋/右旋 + 颜色调整。TreeMap 的 put 操作在插入后调用 fixAfterInsertion() 修复平衡。",
+    "hints": [
+      "红黑树用旋转 + 颜色翻转保持平衡",
+      "HashMap 在扩容时使用 rehash"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap",
+      "红黑树"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ConcurrentHashMap computeIfAbsent 的死锁修复",
+    "content": "JDK 8 的 ConcurrentHashMap 在 computeIfAbsent 方法存在一个已知 bug，以下说法正确的是？",
+    "options": [
+      "A) computeIfAbsent 在红黑树结构下可能触发死锁",
+      "B) computeIfAbsent 可能导致 CPU 100% 的死循环",
+      "C) computeIfAbsent 不能用于 null 值处理",
+      "D) computeIfAbsent 在扩容时会触发 NPE"
+    ],
+    "answer": "答案：A) computeIfAbsent 在红黑树结构下可能触发死锁\n\n解析：JDK 8 的 ConcurrentHashMap 在 computeIfAbsent 方法中，当红黑树（TreeBin）的根节点调用 lockRoot 加锁时，其他线程可能在同一桶上调用 computeIfAbsent 也尝试获取该树的锁，形成死锁。这是 JDK-8062841（已修复）。JDK 9 中的修复引入了新的 ReservationNode 标记节点，在计算期间标记桶首节点为预留状态，防止其他线程操作同一桶。\n\n扩展延伸：这个 bug 在密集并发调用 computeIfAbsent 的代码中才容易被触发（如热点缓存的加载）。修复后 computeIfAbsent 仍保证映射函数最多执行一次（在被放入 map 前），但如果映射函数递归调用了自身（同一个 map 的 computeIfAbsent），仍可能造成 StackOverflowError。",
+    "hints": [
+      "JDK 8 的 computeIfAbsent 在红黑树节点下可能死锁",
+      "JDK 9 用 ReservationNode 修复了此问题"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentHashMap",
+      "Bug"
+    ]
   }
 ]

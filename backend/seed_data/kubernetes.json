@@ -789,5 +789,101 @@
       "Federation",
       "Cluster API"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Pod 优先级与抢占（PriorityClass）",
+    "content": "请详细说明 Kubernetes PriorityClass 的工作原理，包括 Pod 优先级定义、抢占触发机制、抢占策略（PreemptionPolicy），以及 PriorityClass 在资源竞争场景下的行为。",
+    "answer": "答案：PriorityClass 是 Kubernetes 的集群级资源，通过 priority 值（32位整数）定义 Pod 的相对重要性。调度器在资源不足时，会尝试抢占（Preempt）优先级较低的 Pod 来为高优先级 Pod 腾出空间。\n\n解析：PriorityClass 的工作原理：1) 创建 PriorityClass 时指定 value（数值越大优先级越高）和 globalDefault（是否为全局默认）；2) Pod 通过 priorityClassName 字段引用 PriorityClass；3) 调度器在调度队列中按优先级排序，高优先级 Pod 先被调度；4) 当无法调度高优先级 Pod 时，调度器执行抢占逻辑 —— 找到能容纳该 Pod 的节点，驱逐该节点上的低优先级 Pod；5) PreemptionPolicy 可设置为 PreemptLowerPriority（默认）或 Never（永不抢占，等待资源释放）。\n\n扩展延伸：PriorityClass 的典型场景包括：集群关键组件（kube-dns、calico-node 等）设置高优先级确保稳定运行；批处理作业设置低优先级利用空闲资源。需要注意：1) 过度使用高优先级会导致低优先级 Pod 被频繁驱逐，引发\"饿死\"问题；2) 优先级反转 —— 某 Pod 设置了高优先级但调度器发现它的 inter-pod anti-affinity 约束无法满足，导致无法找到可用节点；3) PriorityClass 配合 PodDisruptionBudget 使用时，PDB 可能阻止抢占，需权衡配置。",
+    "hints": [
+      "抢占发生在调度阶段，Node 上已有 Pod 会被驱逐",
+      "PreemptionPolicy: Never 适用于不可中断的工作负载",
+      "优先级反转是实际生产中的常见陷阱"
+    ],
+    "tags": [
+      "Kubernetes",
+      "调度",
+      "PriorityClass",
+      "抢占"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ServiceAccount 与 Pod 身份认证",
+    "content": "请深入讲解 Kubernetes ServiceAccount 的机制，包括自动挂载、Token 卷投射（TokenRequestProjection）、以及 Pod 如何使用 ServiceAccount 访问 API Server。",
+    "answer": "答案：ServiceAccount 是 Kubernetes 为 Pod 提供的身份标识。每个 Namespace 有默认的 default ServiceAccount。Pod 创建时可指定 serviceAccountName，未指定则使用默认值。ServiceAccount 通过 Token 实现认证 —— 早期版本使用 Secret 存储永不过期的 Token，v1.21+ 采用 TokenRequest API 生成有到期时间的投射卷 Token。\n\n解析：Token 卷投射（TokenRequestProjection）的原理：1) kubelet 读取 Pod 的 serviceAccountName；2) 向 TokenRequest API 请求一个绑定了 Pod 身份（含 Pod 名称、Namespace）的有到期时间的 Token；3) 将该 Token 以投射卷的方式挂载到 Pod 的 /var/run/secrets/kubernetes.io/serviceaccount/ 目录；4) Token 到期前 kubelet 会自动刷新。相比传统 Secret 模式，投射 Token 更安全 —— 每个 Token 绑定特定 Pod 和过期时间，即使泄露也只能在此 Pod 生命周期内使用。\n\n扩展延伸：ServiceAccount 与 RBAC 配合实现精细化权限控制：在 Role/ClusterRole 中定义权限，通过 RoleBinding/ClusterRoleBinding 绑定到 ServiceAccount。高级实践包括：1) 每个微服务使用独立的 ServiceAccount，遵循最小权限原则；2) 结合 OIDC 实现外部身份与 ServiceAccount 的映射（ServiceAccount 签名密钥与 OIDC Provider 集成）；3) Pod Identity Webhook 等扩展为云服务（AWS IAM、GCP GSA）提供 Pod 级别的身份管理。",
+    "hints": [
+      "传统 Secret Token 与投射卷 Token 的安全差异",
+      "ServiceAccount 需要配合 RBAC RoleBinding 才能访问 API",
+      "TokenRequest 返回的 Token 绑定了 Pod 身份信息"
+    ],
+    "tags": [
+      "Kubernetes",
+      "ServiceAccount",
+      "RBAC",
+      "身份认证"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "PodDisruptionBudget 与自愿扰动保护",
+    "content": "请解释 PodDisruptionBudget（PDB）的工作原理、配置方式，以及在节点维护、集群升级等场景下的实际作用。",
+    "answer": "答案：PodDisruptionBudget 是 Kubernetes 用于保护应用可用性的资源，确保在自愿扰动（Voluntary Disruption）如节点维护、集群升级、节点缩容时，应用有一定数量的 Pod 始终可用。PDB 通过 minAvailable（最少可用数量/百分比）或 maxUnavailable（最多不可用数量/百分比）定义容忍度。\n\n解析：自愿扰动和非自愿扰动的区别：非自愿扰动（硬件故障、内核 panic 等）PDB 无法阻止；自愿扰动（节点排水、Deployment 更新、HPA 缩容）PDB 可以限制。当执行 kubectl drain 时，drain 命令会检查待驱逐节点上的 Pod 是否满足 PDB 约束 —— 如果驱逐后会导致 PDB 的 minAvailable 不满足，drain 会阻塞等待。Eviction API 是 PDB 的核心机制 —— 通过 Eviction 子资源发起驱逐请求，kube-apiserver 检查 PDB 制约后决定是否允许。\n\n扩展延伸：PDB 的配置陷阱：1) minAvailable 与 replicas 的关系 —— 若 replicas=3、minAvailable=2，则最多允许 1 个 Pod 不可用，缩容+节点排水同时发生时需特别小心；2) 多个 PDB 同时作用于同一 Pod 时取最严格约束；3) PDB 不适用于 DaemonSet（DaemonSet 使用 maxUnavailable 字段直接控制）；4) 集群自动伸缩器（Cluster Autoscaler）也会检查 PDB —— 缩容节点时如果节点上的 Pod 受 PDB 保护且无法迁移，该节点不会被缩容。建议为关键服务（API 网关、认证服务）设置 PDB。",
+    "hints": [
+      "PDB 只约束自愿扰动，不影响非自愿扰动",
+      "kubectl drain 会等待 PDB 条件满足",
+      "Cluster Autoscaler 缩容时也会检查 PDB"
+    ],
+    "tags": [
+      "Kubernetes",
+      "PDB",
+      "可用性",
+      "节点维护"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Node Affinity 与反亲和性调度",
+    "content": "请详细说明 Kubernetes Node Affinity（requiredDuringSchedulingIgnoredDuringExecution 和 preferredDuringSchedulingIgnoredDuringExecution）以及 Pod 间反亲和性（PodAntiAffinity）的语法、调度行为和使用场景。",
+    "answer": "答案：Node Affinity 是增强版的 nodeSelector，通过节点标签选择 Pod 的调度目标节点。requiredDuringSchedulingIgnoredDuringExecution 是硬约束 —— 调度器必须满足条件才能调度 Pod，否则 Pod 处于 Pending 状态。preferredDuringSchedulingIgnoredDuringExecution 是软约束 —— 调度器优先选择满足条件的节点，但不强制。两者在 Pod 运行时（DuringExecution）的变化都会被忽略（Ignored），不会导致已运行的 Pod 被驱逐。\n\n解析：Node Affinity 支持的操作符有 In、NotIn、Exists、DoesNotExist、Gt、Lt。典型场景：1) 将 GPU 密集型 Pod 调度到有 gpu=true 标签的节点（required）；2) 将计算密集型 Pod 优先调度到高配置节点（preferred）；3) 将敏感服务与非敏感服务物理隔离（NotIn + 节点拓扑分区）。PodAntiAffinity 则控制 Pod 之间的分布，支持 requiredDuringScheduling（硬约束）和 preferredDuringScheduling（软约束），通过 topologyKey 指定拓扑域（如 kubernetes.io/hostname、topology.kubernetes.io/zone），确保同一组 Pod 分布在不同的节点或可用区。\n\n扩展延伸：Node Affinity 和 PodAntiAffinity 的协同使用可构建高可用架构：1) 用 Node Affinity 将服务调度到特定机型节点；2) 用 PodAntiAffinity 将服务副本分散到不同节点或可用区；3) 结合 topologySpreadConstraints 实现更精细的 Pod 分布控制（如每个节点最多 N 个 Pod，每个可用区最多 M 个 Pod）。性能注意：PodAntiAffinity 随集群规模增大计算开销显著增长，大规模集群建议优先使用 topologySpreadConstraints。",
+    "hints": [
+      "区分硬约束和软约束在调度阶段的行为差异",
+      "PodAntiAffinity 的 topologyKey 决定了\"不能和谁待在一起\"的范围",
+      "topologySpreadConstraints 在 v1.19+ 中成为更推荐的分布策略"
+    ],
+    "tags": [
+      "Kubernetes",
+      "调度",
+      "NodeAffinity",
+      "PodAntiAffinity"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "kube-proxy 与 Service 流量转发机制",
+    "content": "请详细分析 kube-proxy 的三种模式（userspace、iptables、IPVS）的工作原理、性能差异，以及 Service 的 ClusterIP 如何在集群内部实现流量转发。",
+    "answer": "答案：kube-proxy 是 Kubernetes 每个节点上的网络代理组件，负责实现 Service 的 ClusterIP 流量转发。三种模式：1) userspace（v1.0 首次引入，目前已废弃）—— kube-proxy 作为用户态代理监听随机端口，通过 iptables 将流量重定向到自身再转发到后端 Pod，性能差、需要上下文切换；2) iptables（默认模式，v1.1+）—— kube-proxy 通过 iptables NAT 规则将 ClusterIP 的流量转发到后端 Pod，规则由 kube-proxy 根据 Service 和 Endpoints 的变化动态更新；3) IPVS（v1.10+ GA）—— 使用 Linux 内核的 IPVS 模块实现四层负载均衡，基于哈希表查找，O(1) 时间复杂度，支持更多负载均衡算法（rr、wrr、lc、sh 等）。\n\n解析：iptables 模式的工作原理：对于每个 Service，kube-proxy 创建一条 PREROUTING 链（将 ClusterIP 流量 DNAT 到 Pod IP）和一条 OUTPUT 链（处理本机 Pod 访问 ClusterIP 的流量）。后端 Pod 变化时，kube-proxy 重写所有相关链规则。缺点是集群规模大时（Service 数 > 1000），iptables 规则数量暴涨，更新时延明显。IPVS 模式使用 netfilter 的 hash table，规则更新不会随 Service 数量线性增长。IPVS 还支持连接保持（persistence）、会话亲和性（session affinity）。\n\n扩展延伸：三种模式的选型建议：小集群（< 100 Service）iptables 足够；大集群（> 1000 Service）建议使用 IPVS；userspace 已不再使用。Service 流量的拓扑感知（Topology Aware Routing）—— Kubernetes v1.21+ 支持将流量优先转发到同节点或同可用区的 Pod，减少跨 AZ 的网络延迟和成本。ExternalTrafficPolicy: Local 模式可保留客户端源 IP，但可能导致流量分布不均。",
+    "hints": [
+      "iptables 模式随着 Service 增多，规则更新延迟急剧上升",
+      "IPVS 使用内核哈希表，O(1) 查找性能远优于 iptables 的链式匹配",
+      "Service 的 sessionAffinity 和 ExternalTrafficPolicy: Local 是常见的出口调优点"
+    ],
+    "tags": [
+      "Kubernetes",
+      "kube-proxy",
+      "Service",
+      "iptables",
+      "IPVS"
+    ]
   }
 ]

@@ -783,5 +783,100 @@
       "孤儿进程",
       "SIGCHLD"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "systemd journald 与 journalctl 日志管理",
+    "content": "请介绍 systemd journald 的日志收集机制、日志存储格式，以及 journalctl 的常用查询与维护操作。",
+    "answer": "答案：systemd journald 是 systemd 的日志收集守护进程，负责收集内核日志（dmesg）、系统服务日志（stdout/stderr）、syslog 消息和审计日志。日志以二进制格式（Journal）存储在 /var/log/journal/ 或 /run/log/journal/（非持久化模式）目录下，支持结构化字段（_PID、_COMM、_SYSTEMD_UNIT、PRIORITY 等），比传统文本日志更适合程序化查询和分析。\n\n解析：journalctl 是查询 journal 日志的命令行工具。常用用法：journalctl -u nginx.service（查看指定服务日志）；journalctl -k（仅内核日志）；journalctl --since \"1 hour ago\"（时间范围过滤）；journalctl -p err（按优先级过滤，支持 emerg/debug）；journalctl -f（实时跟踪 tail 模式）；journalctl -o json-pretty（JSON 格式化输出）；journalctl --disk-usage（查看日志磁盘占用）。日志大小控制通过 /etc/systemd/journald.conf 的 SystemMaxUse、SystemMaxFileSize、MaxRetentionSec 等参数配置。\n\n扩展延伸：生产环境建议：1) 持久化存储 —— Journal 默认仅写入内存（/run/log/journal），重启后丢失。需创建 /var/log/journal/ 目录并设置 Systemd 的 Storage=persistent 实现持久化；2) 日志转发 —— journald 支持将日志转发到远程 syslog 服务器或 Elasticsearch 等外部系统（通过 ForwardToSyslog、ForwardToWall 等选项或 journald-upload 工具）；3) 注意日志 IO 性能 —— 高强度日志写入可能因磁盘 IO 受限影响系统性能，可设置 RateLimitIntervalSec 和 RateLimitBurst 限流。",
+    "hints": [
+      "journalctl -u 和 journalctl --since 是最常用的过滤方式",
+      "持久化存储需要创建 /var/log/journal/ 并重启 systemd-journald",
+      "/etc/systemd/journald.conf 控制日志的大小和保留策略"
+    ],
+    "tags": [
+      "Linux",
+      "systemd",
+      "journald",
+      "journalctl"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "systemd timer 定时器配置",
+    "content": "请说明 systemd timer 的工作原理、配置格式，以及与 cron 定时任务相比的优势。",
+    "answer": "答案：systemd timer 是 systemd 的定时器单元（.timer 文件），取代传统 cron 实现周期性或一次性任务调度。每个 .timer 文件绑定一个对应的 .service 文件，timer 到期时 systemd 自动启动对应的 service。支持两种触发方式：Monotonic（相对时间，如启动后 5 分钟）和 Realtime（绝对时间，类似 cron 的日历时间）。\n\n解析：timer 配置示例：OnCalendar=daily 每天执行；OnCalendar=Mon..Fri 09:00:00 周一到周五上午九点；OnUnitActiveSec=1h 服务上次激活后 1 小时（比固定间隔更精确）。AccuracySec 控制定时精度（默认 1 分钟，可设置为 1s）。Persistent=true 允许在系统关机期间错过了触发时间后补执行。RandomizedDelaySec 在触发时间上添加随机延迟，避免\"惊群效应\"（大量定时任务同时触发）。\n\n扩展延伸：systemd timer 相比 cron 的优势：1) 集成 systemd 的日志管理 —— 任务日志由 journald 统一管理，无需单独配置邮件通知；2) 依赖管理 —— 可设置 After=、Requires= 等依赖关系，确保网络等条件满足后执行；3) 错过触发处理 —— 系统关机期间错过的任务，下次开机可通过 Persistent=true 补执行；4) 随机延迟避免高峰 —— RandomizedDelaySec 在分布式系统中尤其有用；5) 支持实时监控 —— 通过 systemctl list-timers 查看所有定时器状态。缺点：配置比 cron 复杂，不适合简单场景。",
+    "hints": [
+      ".timer 文件必须和同名的 .service 文件配对使用",
+      "OnCalendar 接受类似 cron 的日历表达式，但格式不同",
+      "RandomizedDelaySec 用于避免定时任务\"雪崩\""
+    ],
+    "tags": [
+      "Linux",
+      "systemd",
+      "timer",
+      "定时任务"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "rsync 增量同步原理与常用场景",
+    "content": "请详细介绍 rsync 的同步算法、常用选项，以及本地和远程文件同步的常见场景。",
+    "answer": "答案：rsync（Remote Sync）是 Linux 下高效的文件同步工具，核心优势在于增量传输 —— 只传输文件有变化的部分而非整个文件。其算法（rsync algorithm）将文件分成固定大小的块，通过校验和对比识别变化块，仅在网络上传输差异部分，极大节省带宽和时间。\n\n解析：常用选项：-a（归档模式，递归同步并保留权限、时间戳、符号链接等）；-v（显示详情）；-z（传输时压缩）；--delete（删除目标端多余文件，保持两端完全一致）；--exclude 和 --include（文件过滤）；-n（dry-run 预览模式，安全验证）；-P（显示进度并支持断点续传）。远程同步示例：rsync -avz /local/path/ user@host:/remote/path/（推送到远程）；rsync -avz user@host:/remote/path/ /local/path/（从远程拉取）。尾部斜杠的区别：rsync -avz src/ dest/ 表示同步 src/ 目录下的内容到 dest/；去掉斜杠则同步 src 目录本身。\n\n扩展延伸：高级用法：1) rsync + SSH 隧道实现安全加密传输（默认使用 SSH）；2) rsync daemon 模式（rsync:// protocol）适合局域网批量同步；3) --link-dest 选项实现增量备份 —— 基于上一次备份创建新备份，未变化的文件通过硬链接共享存储空间；4) 大文件同步建议配合 --partial 启用断点续传；5) rsync 不适合实时同步场景（实时同步应使用 lsyncd、inotify 或 DRBD）。",
+    "hints": [
+      "尾部斜杠（/）的有无决定了源目录的同步行为",
+      "--delete 参数能保持两端完全一致，但需谨慎使用",
+      "--link-dest 可实现高效的增量备份链"
+    ],
+    "tags": [
+      "Linux",
+      "rsync",
+      "文件同步",
+      "备份"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LVM 高级功能：逻辑卷快照与 Thin Provisioning",
+    "content": "请深入讲解 LVM 的快照（Snapshot）和精简配置（Thin Provisioning）的原理、使用场景和注意事项。",
+    "answer": "答案：LVM Snapshots 利用 COW（Copy-on-Write）机制创建逻辑卷的时间点快照。创建快照后，原始卷修改数据时先将原数据复制到快照预留空间（COW 区域），快照因此能保留创建时刻的数据状态。Snapshots 可用于备份、数据恢复、测试环境快速回滚。Thin Provisioning（精简配置）允许创建比物理存储更大的逻辑卷，数据按需分配（thin pool），仅在写入时才占用物理空间。\n\n解析：LVM Snapshot 的详细原理：创建快照时分配一块 COW 存储空间，初始不占用空间。当原始卷的某个数据块被修改时，该块的原始内容被复制到 COW 区域，快照从 COW 区域读取原始数据。快照大小取决于写入量而非原始卷大小 —— 若写入数据超过 COW 区域，快照会失效（需手动设置 auto extend）。Thin Provisioning 使用 thin_data 和 thin_metadata 两个设备组成 thin pool，元数据设备存储逻辑地址到物理地址的映射。支持虚拟化环境（如 QEMU/KVM 磁盘镜像）、容器存储、开发/测试环境。\n\n扩展延伸：生产环境最佳实践：1) 快照大小建议为原始卷的 15-20%，并通过监控自动扩展（snapshot_autoextend_threshold 和 snapshot_autoextend_percent）；2) Thin Pool 的监控至关重要 —— 当 thin pool 写满时所有 thin volume 变为只读，可能导致应用崩溃，需设置 dmeventd 自动扩展；3) 快照对写性能有影响 —— COW 操作增加写 IO 链长度；4) LVM Thin Snapshots 通过递归方式在同一 thin pool 中创建快照，无需预分配 COW 区域；5) 大批量快照建议使用 Thin Provisioning + Thin Snapshot 组合。",
+    "hints": [
+      "COW 快照的写放大效应对性能的影响",
+      "Thin Pool 写满是生产环境的严重故障，必须监控",
+      "Thin Snapshot 不消耗 COW 空间，依赖 thin pool 的 metadata"
+    ],
+    "tags": [
+      "Linux",
+      "LVM",
+      "快照",
+      "Thin Provisioning"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "/proc 虚拟文件系统深度解析",
+    "content": "请详细说明 Linux /proc 文件系统的架构、核心文件作用，以及在系统排查和性能调优中的常见用法。",
+    "answer": "答案：/proc 是 Linux 内核暴露运行时信息的虚拟文件系统，存储在内存中而非磁盘上。它以文件和目录的形式呈现内核数据结构，包括进程信息（/proc/[pid]/）、系统信息（/proc/cpuinfo、/proc/meminfo）、设备信息、网络信息、内核参数（/proc/sys/）等。读取/proc下的文件时，内核实时生成内容；写入部分文件可动态调整内核行为。\n\n解析：排查和调优中常用的 /proc 文件：/proc/cpuinfo（CPU 型号、核数、标志位）；/proc/meminfo（内存总量、可用量、缓冲区、Swap 等详细指标）；/proc/loadavg（系统负载 —— 1/5/15 分钟平均运行队列长度）；/proc/diskstats（磁盘 IO 统计 —— 可计算 IOPS、延迟、吞吐量）；/proc/net/tcp（TCP 连接状态统计）；/proc/PID/status（进程状态、内存占用 VmRSS/VmSize、线程数）；/proc/PID/fd/（进程打开的文件描述符符号链接）；/proc/PID/smaps（进程内存映射的详细分析，含 PSS/RSS）；/proc/sys/ 下通过 sysctl 可调整内核参数（如 net.ipv4.tcp_tw_reuse、vm.swappiness）。\n\n扩展延伸：高级/特殊文件：/proc/PID/stack（进程内核栈回溯，排查进程卡在内核态的问题）；/proc/PID/maps（进程内存映射，分析共享库加载地址）；/proc/PID/environ（进程环境变量，排查配置问题）；/proc/PID/root（进程根目录符号链接，容器场景下查看另一个容器的文件系统非常有用）。性能排查时常用命令：\"cat /proc/meminfo | grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree|Dirty)'\" 快速查看内存状态；\"cat /proc/softirqs\" 查看软中断分布。",
+    "hints": [
+      "/proc 是伪文件系统，内容实时生成不占用磁盘",
+      "/proc/PID/fd/ 的软连接指向实际文件路径可排查文件泄露",
+      "/proc/PID/root 在容器排查时非常实用"
+    ],
+    "tags": [
+      "Linux",
+      "/proc",
+      "虚拟文件系统",
+      "系统排查"
+    ]
   }
 ]

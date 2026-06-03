@@ -804,5 +804,100 @@
       "灰度发布",
       "认证"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DDD 战术模式：聚合、值对象与领域事件",
+    "content": "请解释领域驱动设计（DDD）中的战术模式：聚合（Aggregate）、值对象（Value Object）和领域事件（Domain Event）的核心概念。它们如何帮助构建清晰的业务模型？",
+    "answer": "答案：聚合（Aggregate）是领域模型的一致性边界，一个聚合是一个事务单元，内部所有修改必须在一次事务中完成。值对象（Value Object）由属性值定义而非身份标识（ID），两值对象所有属性相同即视为相等，不可变。领域事件（Domain Event）记录领域中发生的业务相关事件（如 OrderSubmitted），其他 Bounded Context 可以订阅并响应。\n\n解析：聚合（Aggregate）——1）聚合根（Aggregate Root）是外部访问聚合的唯一入口（如 Order 是 OrderItem 的聚合根）。2）聚合边界内保证最终一致性（强一致），聚合之间保证最终一致性（事件驱动）。3）规则：一个事务只修改一个聚合。跨聚合的修改通过领域事件异步完成。4）设计时要拆大聚合，一个聚合最好不超过 5-10 个实体。值对象（Value Object）——1）不可变：创建后不可修改，需要「新的值」时创建新对象。2）无身份：两个值对象所有字段相同即相等（重写 equals/hashCode）。3）常见例子：Money（金额+货币）、Address（省/市/区/街道）、Range（开始/结束范围）。4）DDD 提倡用值对象而非基本类型表达领域概念，如 用 Email(value) 而非 String email。领域事件（Domain Event）——1）表示「已经发生的业务事实」，命名用过去时（OrderConfirmed、PaymentReceived）。2）包含事件 ID、发生时间戳、业务数据和元数据。3）发布方式：聚合根内有事件的收集机制（如 Spring 的 @DomainEvents），在聚合保存到数据库后统一发布。\n\n扩展延伸：三者协作——聚合内的实体用值对象作为属性，聚合边界由聚合根保证一致性。当聚合内发生了业务操作（如订单已支付），聚合根发布领域事件，其他聚合或限界上下文订阅并做出反应。战术模式在代码中的体现——1）Repository 只操作聚合根（非普通实体）。2）Service 编排跨聚合的工作流。3）Factory 创建复杂的聚合结构。实战建议：不要在一个工程内部硬拆多个 Bounded Context（会导致不必要的分布式调用），DDD 战术模式更适合单体中清晰的边界划分和模块化。",
+    "hints": [
+      "为什么一个事务只能修改一个聚合",
+      "值对象和实体的本质区别是什么"
+    ],
+    "tags": [
+      "DDD",
+      "战术模式",
+      "聚合",
+      "值对象",
+      "领域事件"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Ambassador 模式",
+    "content": "请解释微服务中的 Ambassador（大使）模式。它和 Sidecar 模式有什么区别？Ambassador 模式解决了什么实际问题？",
+    "answer": "答案：Ambassador 模式是在服务消费者一侧创建一个辅助代理容器，负责处理与服务提供者之间的通信横切关注点（重试、超时、熔断、路由、认证、指标收集等）。应用服务只需要向 localhost 发送请求，Ambassador 处理所有外部通信的复杂性。\n\n解析：Ambassador 和 Sidecar 的区别——1）Ambassador 专注于「出站流量」（服务调用其他服务时的代理），Sidecar 是「入站流量」（处理进入服务的请求）。2）Ambassador 在客户端侧运行，Sidecar 在服务端侧运行。3）Istio 中，Sidecar 是 Envoy（拦截进出 Pod 的全部流量），而 Ambassador 作为独立的 API Gateway（如 Emissary-ingress）扮演的是集群入口的 Ambassador 角色。Ambassador 的处理能力——1）重试和退避：失败时自动重试（指数退避 + 抖动）。2）超时控制：统一设置外部调用超时。3）断路器（Circuit Breaker）：检测依赖服务的健康状态。4）负载均衡：在多个服务实例之间分发请求。5）指标采集：自动记录调用链路和延迟。\n\n扩展延伸：Ambassador 的实现——1）在 Kubernetes 中，Ambassador 可以作为 Sidecar 容器注入到 Pod 中（借助 Istio 的 Envoy），也可以作为独立的 DaemonSet 运行。2）应用代码中只需要配置 localhost:PORT 作为目标地址，透明地通过 Ambassador 转发。3）Envoy 是一个高性能的 Ambassador/Sidecar 实现，支持 xDS 协议动态配置。Ambassador 模式的变体——1）Twemproxy（Redis Proxy）：在 Redis 客户端和服务器之间提供路由和分片的 Ambassador。2）数据库 Proxy（如 ProxySQL、PgBouncer）：在应用和数据库之间的 Ambassador，负责连接池管理和读写分离。Sidecar vs Ambassador 的边界模糊——在 Istio 中，同一个 Envoy Proxy 同时处理入站和出站流量，兼具 Sidecar 和 Ambassador 的功能。概念上区分的关键：关注的是入站（Sidecar）还是出站（Ambassador）",
+    "hints": [
+      "Ambassador 和 Sidecar 分别处理哪个方向的流量",
+      "Ambassador 模式如何帮助服务客户端简化通信逻辑"
+    ],
+    "tags": [
+      "微服务",
+      "Ambassador",
+      "Sidecar",
+      "服务网格",
+      "代理"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Saga 编排与协同模式对比",
+    "content": "请对比 Saga 模式的两种实现方式——编排（Choreography）和协同（Orchestration）。各自适用什么场景？如何选择？",
+    "answer": "答案：Saga 是一种管理跨服务长事务的模式，将一个分布式事务拆分为一系列本地事务（每个事务都有对应的补偿操作）。编排模式（Choreography）没有中央协调者，每个服务在执行后发布事件触发下一个服务。协同模式（Orchestration）有一个中央协调者（Orchestrator）负责指令每个服务执行本地事务和补偿操作。\n\n解析：编排模式（Choreography）——1）流程：Order Service 创建订单 → 发布 OrderCreated 事件 → Payment Service 订阅并扣款 → 发布 PaymentCompleted 事件 → Inventory Service 订阅并扣库存… 2）优点：去中心化，服务间松耦合，新增服务只需订阅相关事件。3）缺点：流程隐式（散落在各服务的事件处理器中），难以直观理解和调试；循环依赖可能产生（如订单状态更新触发的事件又回到订单服务）。4）适合场景：服务数量少（2-4 个）、流程简单不易变化、团队对事件驱动熟悉。协同模式（Orchestration）——1）流程：Orchestrator（如 OrderSagaManager）发出 CreateOrder 指令 → OrderService 响应 → Orchestrator 发出 ProcessPayment 指令 → PaymentService 响应 → Orchestrator 发出 ReserveInventory 指令… 2）使用 Saga 状态机管理当前步骤和补偿步骤。3）优点：流程清晰，集中控制，易于管理和监控。4）缺点：Orchestrator 成为中心依赖，新增服务需要修改 Orchestrator。5）适合场景：服务数量多（5+）、流程复杂且经常变化。\n\n扩展延伸：技术实现——编排模式通常依赖消息队列（Kafka/RabbitMQ）的事件驱动；协同模式可以用 AWS Step Functions、Temporal、Camunda 或自建状态机。异常处理——编排模式：每个服务自己实现补偿事件的发布；协同模式：Orchestrator 知道整个流程的补偿顺序。选择指南——1）流程逻辑容易被业务人员理解和修改 → 编排（事件在业务语义层更清晰）。2）需要完整的审计和可见性 → 协同（Orchestrator 记录了完整的执行过程）。3）需要严格的执行顺序和依赖关系 → 协同（避免编排中的循环依赖）。4）追求团队自治、不想引入中央组件 → 编排。很多大型系统会混合使用两种模式。",
+    "hints": [
+      "编排模式如何避免服务间的循环依赖",
+      "Saga 的补偿操作和回滚（Rollback）有什么区别"
+    ],
+    "tags": [
+      "微服务",
+      "Saga",
+      "分布式事务",
+      "编排",
+      "协同"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Transaction Outbox 模式",
+    "content": "请解释 Transaction Outbox（事务发件箱）模式。它解决了微服务架构中的什么问题？如何保证数据库操作和消息发送的原子性？",
+    "answer": "答案：Transaction Outbox 模式的核心思想是：在业务数据库中建一个 outbox 表，业务操作和消息写入放在同一个本地事务中，然后由独立的进程（Message Relay）读取 outbox 表中的消息并投递到消息队列。这样保证了业务数据变更和消息发送的原子性，不需要分布式事务。\n\n解析：问题背景——微服务中常见的场景：保存订单后发送「订单已创建」消息。直接在业务逻辑中先写 DB 再发 MQ，如果 MQ 不可用则订单保存失败；先发 MQ 再写 DB，如果 DB 写入失败则消息已经发送（不一致）。用分布式事务（2PC）太重且性能差。Outbox 的流程——1）应用在同一个本地事务中执行业务 INSERT/UPDATE 和向 outbox 表插入消息记录。2）Message Relay（消息转发器）定期轮询 outbox 表，读取未投递的消息（状态为 pending）。3）Relay 将消息发送到消息队列。4）发送成功后更新 outbox 记录的状态为 sent（或直接删除）。5）发送失败则重试（Relay 会在下次轮询中重新处理）。\n\n扩展延伸：实现方式——1）轮询模式：定时任务（如每 1 秒 SELECT FROM outbox WHERE status='pending' ORDER BY created_at LIMIT 100）。简单但可能导致秒级延迟。2）CDC 模式（推荐）：使用 Change Data Capture（如 Debezium）监听 outbox 表的 binlog 变更，实时捕获新插入的消息并转发到 Kafka。延迟降至毫秒级，且不会对数据库造成轮询压力。3）Outbox 表设计：包含 id、aggregate_id、event_type、payload（JSON）、created_at、status 字段。幂等性——消息队列侧需要幂等消费（因为 Relay 可能重复投递）。最佳实践——1）定期清理已发送的 outbox 记录（如保留 7 天）。2）监控 outbox 表的滞留消息数（超过阈值告警）。3）配合 Kafka 的分区保证同一聚合根的消息有序。",
+    "hints": [
+      "Outbox 模式如何用本地事务解决分布式原子性问题",
+      "CDC 方式的 Outbox 比轮询方式好在哪里"
+    ],
+    "tags": [
+      "微服务",
+      "Outbox",
+      "分布式事务",
+      "CDC",
+      "消息队列"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Change Data Capture（CDC）",
+    "content": "请解释 Change Data Capture（CDC）技术及其在微服务架构中的应用场景。CDC 的常见实现方式有哪些？Debezium 是如何工作的？",
+    "answer": "答案：CDC（变更数据捕获）是一种监听和捕获数据库数据变更（INSERT/UPDATE/DELETE）的技术，将变更事件实时推送给下游消费者。核心价值在于解耦数据生产和消费，实现数据库变更和下游系统之间的异步同步。\n\n解析：CDC 的实现方式——1）基于日志的 CDC（最推荐）：读取数据库的事务日志（MySQL binlog、PostgreSQL WAL、MongoDB oplog）。性能影响最小，不入侵业务表。支持全量和增量同步。Debezium 基于此方式。2）基于触发器的 CDC：在业务表上建触发器，将变更写入审计表。灵活性高但影响数据库写入性能。3）基于轮询的 CDC：定时查询业务表的 updated_at 字段找出变更行。简单但延迟高、对数据库有压力、无法捕获删除操作（需要软删除）。Debezium 工作原理——1）连接器（Connector）配置要监听的数据库和表。2）启动时做快照（Snapshot）读取当前全量数据。3）然后持续读取 binlog/WAL 解析变更事件。4）每个变更事件包含 before（旧值，DELETE/UPDATE）、after（新值，CREATE/UPDATE）、op（操作类型 c/u/d/r）、ts_ms（时间戳）、source（元数据）。5）事件输出到 Kafka（或 Pulsar、Kinesis），下游应用消费。\n\n扩展延伸：应用场景——1）缓存同步：DB 变更 → CDC → 更新 Redis/本地缓存，替代双写（业务代码同时写 DB 和缓存，容易不一致）。2）搜索索引：DB 变更 → CDC → Elasticsearch 更新索引。3）数据仓库：DB 变更 → CDC → Kafka → ETL → 数仓（实时数仓的典型架构）。4）CQRS 的写端到读端同步：写模型变更通过 CDC 传播到读模型（事件溯源外的另一种选择）。5）Outbox 消息转发：结合 Transaction Outbox 模式，CDC 代替轮询 outbox 表。Debezium 在生产中要注意的——1）Schema 变更处理：ALTER TABLE 时 Connector 如何响应，需配置 schema evolution 策略。2）Kafka 连接稳定性：Connector 重启后的偏移量恢复。3）性能：单表写入超过 10k TPS 时注意监控延迟。",
+    "hints": [
+      "基于日志的 CDC 为什么比触发器/轮询实现更好",
+      "CDC 在 CQRS 和 Event Sourcing 架构中扮演什么角色"
+    ],
+    "tags": [
+      "微服务",
+      "CDC",
+      "Debezium",
+      "binlog",
+      "数据同步"
+    ]
   }
 ]
