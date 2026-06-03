@@ -1275,5 +1275,100 @@
       "Bridge",
       "解耦"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "策略模式 vs 状态模式的结构性差异",
+    "content": "策略模式（Strategy）和状态模式（State）在 GoF 分类中都属于行为型模式，且它们的 UML 类图结构非常相似——Context 持有抽象接口引用，具体实现类实现该接口。请深入分析这两种模式在结构上的本质差异，特别是状态转换的控制权归属、策略/状态对象之间的关系，以及这些差异在实际编码中如何判定。",
+    "answer": "答案：策略模式和状态模式在类图结构上几乎一致（都是 Context 持有抽象接口引用，通过组合委托行为），但它们在控制权归属和对象关系上存在本质差异。策略模式由客户端主动选择和切换策略（外部驱动），策略之间彼此独立、互不感知，Context 的行为接口固定、仅实现方式不同。状态模式的状态切换由状态对象自身或 Context 内部管理（内部驱动），状态之间有固定的流转规则，Context 的行为随状态变化而自动变化。\n\n解析：\n\n结构相似性的来源——两种模式都遵循「用组合替代继承」的 GoF 原则。Context 中持有抽象接口字段，所有具体实现类实现该接口。Context 的方法委托给当前持有的对象执行。这导致仅看类图难以区分。\n\n核心差异一：控制权归属。策略模式——客户端（Client）调用 context.setStrategy(strategy) 主动选择和切换策略。策略对象不知道自己何时被切换，也不关心其他策略的存在。例如支付系统中，客户端根据用户选择的支付方式（支付宝/微信/银行卡）动态切换到对应策略。状态模式——状态转换由状态对象自身（在 handle() 方法末尾调用 context.setState(new NextState())）或 Context 内部管理。客户端触发一个操作（如 order.pay()）但无法绕过状态机的流转规则直接切换状态。例如 TCP 连接中 ESTABLISHED 状态收到 close 请求后自动切换到 CLOSE_WAIT。\n\n核心差异二：对象间关系。策略模式——策略之间是并列的、独立的。新增策略（如比特币支付）不需要修改任何现有策略。策略可以被多个 Context 共享（无状态策略常用单例）。状态模式——状态之间有向流转关系（有限状态机）。状态对象之间互相知道对方（StateA 知道自己可以转换到 StateB）。新增状态可能要求修改已有状态的转换逻辑（如订单新增「待审核」状态后，已支付状态需要知道新状态的转换规则）。\n\n核心差异三：Context 的角色。策略模式——Context 是策略的持有者和调用者，不关心策略何时切换、为何切换。Context 的行为接口是固定的（如 execute()），只是行为的具体实现随策略不同而变化。状态模式——Context 需要维护状态引用，行为随内部状态变化而变化。同一个业务方法（如 doAction()）在不同状态下有不同的表现和行为结果。\n\n扩展延伸：\n\n实际编码中的判定方法——如果代码中出现 setState() 且状态转换逻辑在状态实现类内部（state.handle() 中调用 context.setState(new NextState())），是状态模式。如果切换逻辑完全由客户端（调用方）的 if-else 或配置驱动，是策略模式。两者可结合：在状态模式的每个状态内部，可以使用策略模式处理该状态下的不同算法分支。\n\n从抽象层面看——策略模式体现「has-a」（有一个算法）关系，客户端决定用哪个。状态模式体现「is-a-like」关系——对象在不同状态下「像是」不同的东西。这也是为什么状态模式的目标被描述为「允许对象在内部状态改变时改变其行为，看起来像改变了类」。",
+    "hints": [
+      "从「谁调用了 setStrategy/setState」入手分析控制权归属——客户端驱动 vs 状态对象自身驱动",
+      "策略之间没有依赖关系和转换规则，状态之间有固定的流转图——这是判定两种模式的最直接依据"
+    ],
+    "tags": [
+      "设计模式",
+      "策略模式",
+      "状态模式",
+      "GoF",
+      "行为型"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "组合模式的透明性与安全性的取舍",
+    "content": "组合模式（Composite Pattern）有两种常见的设计变体——透明组合（Transparent Composite）和安全组合（Safe Composite）。请解释它们的区别、各自的优缺点和适用场景。在 Java AWT/Swing、React 组件树、文件系统 API 等实际框架中分别采用了哪种变体？",
+    "answer": "答案：透明组合在抽象 Component 接口中声明所有管理子组件的方法（add、remove、getChild），叶子节点也必须继承这些方法（通常抛出 UnsupportedOperationException）。安全组合只在 Composite 类中声明管理子组件的方法，Component 接口只包含业务方法。透明组合追求「客户端统一对待」，安全组合追求「接口隔离和编译时安全」。\n\n解析：\n\n透明组合（Transparent Composite）——Component 接口包含所有方法：业务方法（如 display()）和管理方法（add()、remove()、getChild()）。Leaf 类实现管理方法时抛出 UnsupportedOperationException 或空操作。\n\n优点：1）客户端完全不需要区分 Leaf 和 Composite，所有操作通过 Component 接口完成。2）新增节点类型不需要修改客户端代码。3）非常适合递归遍历场景（如遍历 UI 组件树统一调用 repaint()）。\n\n缺点：1）Leaf 被迫实现它不需要的方法，违反接口隔离原则（ISP）。2）客户端在编译时无法捕获对 Leaf 调用 add() 的错误（运行时才抛出异常）。3）Component 接口承担了过多职责。\n\n安全组合（Safe Composite）——Component 接口只声明业务方法（如 display()、getName()）。add()、remove()、getChild() 只在 Composite 类中定义。Leaf 类没有管理子节点的方法，对 Leaf 调用 add() 会在编译时报错。\n\n优点：1）符合接口隔离原则，Leaf 只包含它需要的方法。2）类型安全——错误在编译时即可发现。3）接口职责清晰。\n\n缺点：1）客户端需要使用 instanceof 或类型转换来区分 Leaf 和 Composite 才能调用管理方法，破坏了组合模式「统一对待」的核心价值。2）遍历操作变得更繁琐（需要 if-else 分支处理不同类型）。\n\n实际框架的选择——\n\n1）Java AWT/Swing：采用透明组合。java.awt.Component 类直接定义了 add() 和 remove() 方法。Button（叶子）可以调用 add()，虽然实际上没有效果。这使得容器（Container）和组件可以统一操作。\n\n2）React/Vue 组件树：更接近安全组合。React 中函数组件和类组件不共享相同的子节点管理 API。父组件通过 children prop 访问子节点，子组件自身没有 addChild 方法。这种设计在编译时就区分了容器组件和展示组件。\n\n3）java.nio.file.FileVisitor：采用安全组合。Files.walkFileTree() 的 FileVisitor 接口为文件和目录提供了不同的回调方法：visitFile() 处理普通文件，preVisitDirectory() 和 postVisitDirectory() 处理目录，调用者自己根据上下文区分类型。\n\n4）XML/JSON DOM 解析器：通常采用透明组合。Node 接口统一了 Element（有子节点）和 TextNode（叶子节点），appendChild() 等方法在 TextNode 上抛出 DOMException。\n\n扩展延伸：\n\n折中方案——在工程实践中，常采用以下折中：1）Component 接口包含最常用的稳定方法（如 getParent()），不常用的管理方法放在 Composite 中。2）使用 Visitor 模式来避免客户端 instanceof 判断，由 Visitor 双分派机制自动区分节点类型。3）在 Component 接口中提供默认实现（Java 8 的 default 方法）——leaf.add(child) 默认抛出异常，composite 重写此方法。\n\n选择决策树——如果系统的核心操作是遍历树并对所有节点执行统一操作（如 UI 渲染），选择透明组合。如果核心操作是安全地构建和修改树结构（如 IDE 的项目文件浏览器），选择安全组合。如果是框架/类库设计（不确定下游如何使用），优先考虑透明组合加默认实现。",
+    "hints": [
+      "透明组合的「统一对待」vs 安全组合的「编译时安全」——这是接口设计中的经典取舍",
+      "Java AWT 的 Component.add() 方法为什么在 Button 上可用但不做任何事——透明组合的设计代价"
+    ],
+    "tags": [
+      "设计模式",
+      "组合模式",
+      "Composite",
+      "结构型",
+      "接口设计"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "访问者模式的双分派机制",
+    "content": "访问者模式（Visitor Pattern）的核心机制是双分派（Double Dispatch）。请解释什么是单分派和双分派，Java 为什么需要访问者模式来模拟双分派，accept/visit 的双层调用是如何实现双分派的，以及双分派解决了什么设计问题。",
+    "answer": "答案：双分派是访问者模式的核心机制——第一次分派由 element.accept(visitor) 根据 Element 的实际运行时类型决定调用哪个 accept 实现；第二次分派由 visitor.visit(this) 根据 Visitor 的实际类型和 this 的编译时类型决定调用哪个 visit 重载方法。双分派解决了「操作依赖于两个对象的具体类型」的问题——即方法的行为同时取决于 Element 的类型和 Visitor 的类型。\n\n解析：\n\n单分派的局限——Java 是单分派语言：方法调用时，只有接收者（receiver）参与动态分派。例如 shape.draw() 调用哪个 draw() 只取决于 shape 的实际类型（Circle 或 Rectangle）。方法参数的重载选择是编译时根据参数的静态类型决定的——不是动态分派。因此，如果直接写 visitor.visit(shape)（其中 shape 是 Element 类型），即使 visitor 是 PDFExporter，也只会调用 visit(Element) 而不会调用 visit(Circle)——因为参数的静态类型是 Element。\n\n访问者模式的双分派实现——分为两步：\n\n第一次分派（Element.accept）：客户端调用 element.accept(visitor)。Java 的多态机制根据 element 的实际运行类型（Circle / Rectangle）动态分派到正确的 accept 方法。关键代码：Circle.accept(Visitor v) 被调用。\n\n第二次分派（Visitor.visit）：在 accept 方法内部，元素调用 visitor.visit(this)。此时 this 的编译时类型是具体的 Element 子类型（在 Circle.accept 中 this 是 Circle 类型）。Java 的重载方法选择是在编译时根据参数的静态类型决定的——visit(Circle c) 被选中（不是 visit(Element e)）。同时 Visitor 的类型被动态分派——如果 visitor 是 PDFExporter，则 PDFExporter.visit(Circle c) 被执行。\n\n代码模拟双分派的完整路径：\n客户端 → element.accept(visitor) → [动态分派] → Circle.accept(visitor) → visitor.visit(this) → [visit 方法重载在编译时绑定到 visit(Circle)，动态分派到 PDFExporter.visit(Circle)]\n\n如果没有访问者模式——要实现「用 PDFExporter 导出 Circle」和「用 JSONExporter 导出 Circle」的组合（2 种元素 × 2 种导出器 = 4 种行为），需要写 instanceof 判断：if (e instanceof Circle) { if (v instanceof PDFExporter) ... }。组合爆炸。\n\n扩展延伸：\n\n双分派解决的核心问题——「操作」和「数据结构」的双向扩展。在传统 OOP 中，新增一种 Element 子类是容易的（只需要修改相应的 visit 方法），但新增一种操作需要修改所有 Element——违反开闭原则。访问者模式的精巧之处在于它反转了这种依赖：新增一种操作（新增 Visitor 子类）不需要修改任何 Element 类。代价是新增一种 Element 子类需要修改所有 Visitor 接口。\n\n其他语言中的多分派——1）C++ 通过 dynamic_cast 手动实现多分派，或使用 std::visit + std::variant 实现编译期多分派。2）C# 4.0+ 使用 dynamic 关键字实现动态分派。3）Common Lisp 的 CLOS 原生支持多分派（方法根据所有参数的类型分派）。4）Kotlin 的 when 表达式 + sealed class 提供了另一种解决思路。\n\nVisitor 的设计代价——1）双向扩展的不对称：新增 Element 困难（需要修改所有 Visitor），新增 Visitor 容易。因此访问者模式适用于 Element 层次结构相对稳定、操作频繁变化的场景（如编译器 AST 遍历）。2）破坏封装：Visitor 需要访问 Element 的内部状态才能完成操作，这意味着 Element 需要暴露内部细节。3）循环依赖：Element 依赖 Visitor 接口，Visitor 依赖具体 Element 类，可能形成双向依赖。\n\n实际应用——ANTLR 的 AST 遍历、ASM 字节码框架的 ClassVisitor/MethodVisitor、Spring 的 BeanDefinitionVisitor、Jackson 的 JsonSerializer/JsonDeserializer 体系。所有这些场景的共同特征：数据结构（AST 节点/字节码元素）相对固定，而操作（代码生成/类型检查/序列化方式）频繁新增和变动。",
+    "hints": [
+      "Java 的方法重载是编译时根据参数静态类型绑定的——v.visit(e) 不会根据 e 的实际类型动态分派，这是为什么需要 accept 做第一次分派的原因",
+      "双分派的本质就是两次单分派叠加——第一次用 accept 的动态分派确定 Element 类型，第二次用 visit 的重载+分派确定 Visitor 类型和 Element 具体类型的组合"
+    ],
+    "tags": [
+      "设计模式",
+      "访问者模式",
+      "Visitor",
+      "双分派",
+      "行为型"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "桥接模式在 JDBC 驱动中的应用",
+    "content": "JDBC（Java Database Connectivity）是桥接模式（Bridge Pattern）的经典工程实现。请详细分析 JDBC 架构中 DriverManager、Driver、Connection、Statement、ResultSet 等核心组件如何体现桥接模式的角色映射，以及这种设计如何实现了「抽象与实现独立变化」。JDBC 的四种驱动类型（Type 1-4）在桥接模式中的实现差异是什么？",
+    "answer": "答案：JDBC 架构是桥接模式在工业界的经典落地——DriverManager 和 JDBC 标准接口（Connection、Statement、ResultSet）构成抽象部分，各数据库厂商实现的 Driver 和对应的具体连接库构成实现部分。桥接模式使应用程序面向 JDBC 标准接口编程，底层数据库实现（MySQL/Oracle/PostgreSQL）可以独立切换和演进，抽象层次和实现层次通过 Driver 接口桥接。\n\n解析：\n\nJDBC 中的桥接模式角色映射：\n\n1）Abstraction（抽象部分）——DriverManager 类是桥接的抽象侧入口。它提供了统一的高层接口 getConnection(url, user, password)，内部维护已注册的 Driver 列表。DriverManager 不依赖具体数据库——它遍历所有已注册的 Driver，调用 driver.connect(url) 直到某个 Driver 成功返回 Connection。\n\n2）RefinedAbstraction（扩展抽象）——Connection、Statement、ResultSet 等 JDBC 标准接口构成了抽象层次的扩展。Connection 负责会话管理（事务、元数据），Statement 负责 SQL 执行，ResultSet 负责结果集遍历。应用程序基于这些接口编写数据访问代码，不依赖任何数据库特有的 API。实际框架（如 MyBatis、Hibernate）进一步扩展了这些抽象，提供了连接池、ORM 映射等高级功能。\n\n3）Implementor（实现接口）——java.sql.Driver 接口定义了实现侧的统一契约。核心方法：connect(String url, Properties info) 建立连接；acceptsURL(String url) 判断该 Driver 是否能处理该 URL；getMajorVersion() / getMinorVersion() 返回版本信息。每个数据库厂商必须实现这个接口。\n\n4）ConcreteImplementor（具体实现）——各数据库厂商的驱动实现：com.mysql.cj.jdbc.Driver、org.postgresql.Driver、oracle.jdbc.OracleDriver 等。每个 Driver 实现类负责：解析 JDBC URL、建立 TCP 连接、完成数据库握手认证协议、返回 Connection 实现类的实例（如 JDBC4Connection 包装了 MySQL 协议实现）。\n\n完整的桥接工作流程：1）驱动加载阶段：通过 Class.forName() 或 Java SPI（META-INF/services/java.sql.Driver）加载 Driver 实现类，每个 Driver 在静态初始化块中调用 DriverManager.registerDriver(this) 完成注册。2）连接建立阶段：应用程序调用 DriverManager.getConnection(url)。DriverManager 遍历已注册的 Driver 列表，调用每个 driver.acceptsURL(url) 筛选出能处理该 URL 的 Driver，然后调用 driver.connect(url, info) 建立连接。3）操作执行阶段：返回的 Connection 实际是 MySQLConnection 或 PostgreSQLConnection 等具体实现，但应用程序通过 JDBC 标准接口操作——createStatement() 返回具体 Statement，executeQuery() 返回具体 ResultSet。\n\n扩展延伸：\n\nJDBC 四种驱动类型与桥接模式——\n\nType 1（JDBC-ODBC Bridge）：过时的桥接实现。JDBC 接口桥接到 ODBC（C 语言 API），再通过 ODBC 驱动访问数据库。性能差、需要配置 ODBC 数据源、已不推荐使用。\n\nType 2（Native API Driver，部分 Java 实现）：桥接模式的适配器变体。Java 的 JDBC 接口通过 JNI 桥接到数据库厂商的原生 C/C++ 客户端库（如 Oracle OCI）。优点：性能较好。缺点：需要安装平台相关库。\n\nType 3（Network Protocol Driver，纯 Java 客户端 + 中间件）：三层桥接。客户端 JDBC 驱动通过纯 Java socket 连接到中间件服务器（如 Sequoia、Athena），中间件再将请求转发到数据库。优点：中间件可以做连接池、读写分离、结果集缓存。缺点：多一次网络跃迁，延迟增加。\n\nType 4（Pure Java Driver，纯 Java 直连）：最纯粹的桥接模式实现。纯 Java 实现，直接通过 TCP Socket 实现数据库通信协议（MySQL Protocol、PG Protocol）。优点：纯 Java、无依赖、性能最好。缺点：每个数据库有自己的协议实现。\n\n桥接模式的收益在 JDBC 架构中的体现——1）数据库厂商可独立实现 Driver——Oracle 不需要知道 MySQL 的实现，只要遵守 Driver 接口契约即可。2）应用代码零改动切换数据库——只需要替换驱动 jar（Classpath）和修改连接 URL，业务代码不需要任何修改。3）JDBC 标准可独立演进——JDBC 3.0→4.0→4.2 增加了批量更新、ROWID、National Character Set 等新特性，各驱动厂商分别适配即可，应用层有计划地升级。4）Connection/Statement/ResultSet 三个抽象接口各自有独立的实现层次，细分了桥接模式中的实现职责——Connection 负责会话生命周期、Statement 负责 SQL 执行策略、ResultSet 负责结果集遍历。",
+    "hints": [
+      "JDBC 的桥接角色映射：DriverManager=Abstraction 入口、Driver=Implementor 接口、各厂商 Driver=ConcreteImplementor、Connection/Statement/ResultSet=RefinedAbstraction",
+      "Type 4 驱动（纯 Java 直连）是最纯粹的桥接模式实现——它不需要任何平台相关库，完全在 Java 层面桥接 JDBC 抽象和数据库协议"
+    ],
+    "tags": [
+      "设计模式",
+      "桥接模式",
+      "JDBC",
+      "Bridge",
+      "结构型"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "中介者模式 vs 观察者模式的事件分发对比",
+    "content": "中介者模式（Mediator）和观察者模式（Observer）都用于对象间的通信和事件分发，但它们的通信拓扑结构、耦合程度和控制流程有本质差异。请对比这两种模式在事件分发机制上的核心区别，分析各自的优缺点，并说明在实际系统（如 MVC、消息队列、Redux）中它们各自的应用形式。",
+    "answer": "答案：观察者模式采用「一对多」的直接通知拓扑——Subject 持有 Observer 引用列表，状态变化时直接遍历通知。中介者模式采用「多对多」的间接通信拓扑——Colleague 之间不直接通信，通过 Mediator 中转转发。核心区别：观察者模式建立了 Subject 到 Observer 的固定订阅关系，发布者知道自己在通知谁；中介者模式的 Colleague 之间互不知晓，所有通信经过 Mediator 协调和转发。\n\n解析：\n\n通信拓扑的差异——观察者模式：星形拓扑变体。Subject 是中心，Observer 是外围节点。事件方向固定（Subject→Observer），不支持 Observer 向 Subject 主动通信（如果需要，则需要额外的机制）。中介者模式：完全的中心化拓扑。Mediator 作为唯一枢纽，所有 Colleague 之间的通信必须经过 Mediator。通信方向完全双向——Colleague A 可以通过 Mediator 向 Colleague B 发送消息，也可以从 Colleague B 接收消息。\n\n耦合程度的差异——观察者模式：Subject 通过抽象 Observer 接口引用 Observer，两者之间存在编译期依赖。Subject 知道自己在通知哪些 Observer（虽然通过接口而非具体类）。Observer 注册和注销需要 Subject 的公共接口支持。中介者模式：Colleague 只依赖 Mediator 接口，不依赖其他 Colleague。Colleague 之间没有任何直接引用关系——完全解耦。但 Mediator 承担了所有的通信协调逻辑，Mediator 因此依赖所有 Colleague 接口（耦合从 Colleague 之间转移到了 Mediator 上）。\n\n控制流程的差异——观察者模式：Subject 发布事件后同步（或通过事件总线异步）通知所有注册的 Observer。每个 Observer 收到完整事件数据，独立处理。Subject 不关心 Observer 的处理顺序和结果（fire-and-forget）。中介者模式：Mediator 收到消息后可以执行复杂的协调逻辑——决定消息的路由目标、转换消息格式、编排多个 Colleague 的执行顺序（如先验证→再存储→后通知）、条件判断是否传递消息。Mediator 是控制流的决策者。\n\n可扩展性的差异——观察者模式：新增 Observer 只需注册到 Subject，Subject 不需要修改（符合开闭原则）。Observer 之间互相独立，新增一个不影响其他。中介者模式：新增 Colleague 可能需要修改 Mediator（如果通信规则涉及新 Colleague）。随着 Colleague 数量增多，Mediator 可能膨胀为 God Object。\n\n扩展延伸：\n\n实际系统中的应用对比——\n\n1）MVC 架构中的 Controller（中介者模式）：Controller 协调 View 和 Model 的交互。View 触发事件→Controller 接收→更新 Model→Model 变化通过观察者机制通知 View 更新。Controller 是 Mediator，Model 和 View 之间的数据绑定（数据变化自动更新 UI）则是观察者模式。两者在这里是互补使用的。\n\n2）消息队列 Kafka/RabbitMQ（中介者模式）：Broker 充当 Mediator，Producer 和 Consumer 完全不直接通信。Broker 负责消息的路由（Topic/Exchange）、持久化、负载均衡和故障转移。Producer 和 Consumer 都可以独立扩缩容。\n\n3）Redux（中介者 + 观察者结合）：Store 是 Mediator——Component dispatch Action → Store 转发给 Reducer → 更新 State → Component 通过 subscribe 观察 State 变化。Store 协调了 Action 的分发和 State 的管理，Component 则通过观察者模式订阅所需的状态片段。\n\n4）Spring ApplicationEvent（观察者模式）：@EventListener 注解的 Bean 作为 Observer，ApplicationEventPublisher 作为 Subject。发布者和监听者通过事件类型解耦，但本质是一对多通知。\n\n5）GUI 对话框（中介者模式）：对话框中的 UI 组件（下拉框、输入框、按钮）不直接交互。选择省份→Mediator 协调→刷新城市下拉框→Mediator 协调→更新区县列表。每个组件只和 Mediator 通信，Mediator 集中管理组件间的协作逻辑。\n\n性能与维护权衡——观察者模式：一对多通知的性能取决于 Observer 数量和单个处理时间。同步模式下慢速 Observer 可能阻塞整个通知链。事件总线（异步观察者）可以缓解此问题。中介者模式：Mediator 成为通信瓶颈和单点故障（SPOF）。Mediator 的逻辑复杂度随 Colleague 数量非线性增长——需要持续重构或拆分 Mediator 的职责。\n\n选择原则——如果通信模式是「一个事件源→多个独立接收者」，选择观察者模式（更轻量）。如果通信需要双向交互、复杂编排或条件路由，选择中介者模式（控制力更强）。在大型系统中，两者通常共存：中介者负责编排流程，观察者负责状态同步通知。",
+    "hints": [
+      "观察者模式的通信是预先建立好的订阅关系（发布者知道自己通知谁），中介者模式的通信经过中心枢纽转发（通信双方互不知晓）",
+      "MVC 中的 Controller 是中介者（协调 View 和 Model），而 Model 变化通知 View 是观察者——这两种模式在 MVC 中是互补共存的"
+    ],
+    "tags": [
+      "设计模式",
+      "中介者模式",
+      "观察者模式",
+      "Mediator",
+      "行为型"
+    ]
   }
 ]

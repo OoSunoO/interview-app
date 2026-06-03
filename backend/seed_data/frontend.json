@@ -1226,5 +1226,96 @@
       "Sentry",
       "可观测性"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CSS 容器查询与媒体查询对比",
+    "content": "CSS Container Queries（容器查询）和 Media Queries（媒体查询）有什么区别？容器查询解决了什么问题？请举例说明如何使用容器查询。",
+    "answer": "答案：媒体查询基于视口（Viewport）尺寸做响应式，容器查询基于父容器（Container）的尺寸做响应式。容器查询使组件能根据自身可用空间自适应布局，不再依赖全局视口。\n\n解析：容器查询的语法——先在父容器声明 container-type: inline-size（或用 container 简写），然后子组件中用 @container (min-width: 400px) { ... } 定义样式。关键区别——媒体查询只能感知浏览器窗口大小，在复杂布局中同一组件在不同位置可能需要不同的响应式断点，媒体查询无法满足。容器查询让组件真正「自包含」，无论放在主栏、侧栏还是弹窗中，都能根据容器宽度做适配。\n\n扩展延伸：浏览器兼容性——Chrome 105+/Safari 16+/Firefox 110+ 已支持，可生产使用。container-type 的可选值：inline-size（只响应内联轴）、size（包含块轴，需注意可能触发布局循环）。容器查询 + CSS Grid 的组合是「组件驱动响应式设计」的核心技术。与 CSS 作用域结合使用时，容器查询让组件库开发者不再需要预设使用场景的断点。",
+    "hints": [
+      "容器查询如何让组件在不同布局位置中自适应",
+      "container-type: inline-size 和 size 有什么区别"
+    ],
+    "tags": [
+      "CSS",
+      "响应式",
+      "容器查询",
+      "布局"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web Worker、Service Worker 与 Worklet 的区别",
+    "content": "请解释 Web Worker、Service Worker 和 Worklet 三者的区别：各自的运行环境、生命周期、能力范围以及典型使用场景。",
+    "answer": "答案：Web Worker：通用后台线程，用于 CPU 密集计算，与主线程通过 postMessage 通信。Service Worker：网络代理，拦截和处理网络请求，支持离线缓存和推送通知，生命周期独立于页面。Worklet：轻量级线程，用于扩展渲染管道（如 CSS Houdini Paint/Animation Worklet）。\n\n解析：Web Worker——每个 Worker 有独立全局上下文（DedicatedWorkerGlobalScope），不能操作 DOM，主线程通过 postMessage/onmessage 通信。典型场景：图像处理、大数计算、数据压缩。Service Worker——运行在 ServiceWorkerGlobalScope，是基于事件的网络代理，可拦截 fetch 事件实现自定义缓存策略。需要 HTTPS、必须先注册后激活（install → activate → fetch 事件）。典型场景：PWA 离线缓存、网络优先策略、后台同步。Worklet——运行在 WorkletGlobalScope，生命周期短（随渲染帧），只能执行特定类型任务。Paint Worklet 自定义绘制、Animation Worklet 创建高性能动画。\n\n扩展延伸：SharedWorker（可跨多个标签页共享）是 Web Worker 的一个变体，通过 MessagePort 通信。三者共享点——都不在主线 UI 线程运行、都不能直接操作 DOM。Service Worker 的缓存策略模式——Cache-Only、Network-Only、Cache-First、Network-First、Stale-While-Revalidate。Cache Storage API + Service Worker 是 PWA 离线能力的基础。",
+    "hints": [
+      "Service Worker 为什么必须使用 HTTPS",
+      "Worklet 的 Paint API 可以自定义哪些 CSS 绘制"
+    ],
+    "tags": [
+      "JavaScript",
+      "Web Worker",
+      "Service Worker",
+      "Worklet",
+      "多线程"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "关键渲染路径（CRP）优化策略",
+    "content": "什么是浏览器关键渲染路径（Critical Rendering Path, CRP）？请列出影响 CRP 的关键资源类型和具体的优化策略。如何测量和评估 CRP 优化效果？",
+    "answer": "答案：关键渲染路径是浏览器从接收到 HTML 到完成首次渲染所经过的一系列步骤：DOM 构建 → CSSOM 构建 → Render Tree → Layout → Paint → Composite。优化目标是尽快完成首次内容渲染。\n\n解析：关键优化策略——1）CSS 阻塞渲染：CSS 被视为渲染阻塞资源，必须放在 head 中用 <link> 尽早加载。关键 CSS 内联（Critical CSS Inline）可减少首次渲染的往返次数。2）JavaScript 阻塞解析：<script>（无 defer/async）会阻塞 DOM 构建。非关键 JS 用 async（下载完即执行，不保证顺序）或 defer（按顺序在 DOM 解析后执行）。3）字体加载：@font-face 加载期间浏览器会隐藏文本（FOIT），用 font-display: swap 减少不可见时间。4）图片优化：懒加载（loading='lazy'）、响应式图片（srcset/sizes）、现代格式（WebP/AVIF）。5）减少重排/重绘：避免频繁读写布局属性（强制回流），使用 transform/opacity 做动画（仅触发合成）。\n\n扩展延伸：CRP 的衡量指标——FCP（First Contentful Paint）、LCP（Largest Contentful Paint）、SI（Speed Index）。工具——Lighthouse 的「消除阻塞资源」建议、WebPageTest 的 Filmstrip 视图、Chrome DevTools Performance 面板。CRP 优化与网络条件的关系——弱网环境下，减少关键资源数量和大小比计算性能优化更重要（如使用 Resource Hints: preload/preconnect/prefetch/dns-prefetch）。",
+    "hints": [
+      "CSS 为什么阻塞渲染而图片不阻塞",
+      "async 和 defer 在 CRP 中的行为差异"
+    ],
+    "tags": [
+      "性能",
+      "浏览器",
+      "渲染",
+      "CRP"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Shadow DOM 与自定义元素生命周期",
+    "content": "请解释 Shadow DOM 的作用机制，以及自定义元素（Custom Elements）的生命周期回调方法有哪些、分别在何时触发。Shadow DOM 的样式隔离是如何实现的？",
+    "answer": "答案：Shadow DOM 提供 DOM 和样式隔离——组件的内部结构被封装在 shadow tree 中，与主 DOM 树隔离，外部 CSS 无法影响内部，内部样式也不会泄漏。自定义元素的生命周期回调：constructor → connectedCallback → disconnectedCallback → adoptedCallback → attributeChangedCallback。\n\n解析：Shadow DOM——通过 element.attachShadow({ mode: 'open'|'closed' }) 创建 shadow root，组件模板插入到 shadow tree 中。open 模式允许外部通过 element.shadowRoot 访问 shadow tree，closed 模式完全隐藏。CSS 隔离的实现原理——shadow tree 中的样式作用域仅限于 shadow tree 内部，外部选择器无法穿透（过去用 #id 或 iframe 实现隔离有很多局限）。\n\n扩展延伸：生命周期详解——1）constructor：元素创建时（此时 DOM 未挂载），适合初始化状态和 attachShadow。2）connectedCallback：元素被插入 DOM 时，适合设事件监听、开始数据请求。3）disconnectedCallback：从 DOM 移除时，适合清理定时器和监听器。4）adoptedCallback：被移动到新文档时。5）attributeChangedCallback：配合 observedAttributes 静态属性，在监听属性变化时触发。slot 机制——让自定义元素支持子元素投影（投影不是移动，是反射）。",
+    "hints": [
+      "open 和 closed 模式的 Shadow DOM 有什么区别",
+      "connectedCallback 和 constructor 分别适合做什么初始化"
+    ],
+    "tags": [
+      "Web Components",
+      "Shadow DOM",
+      "自定义元素",
+      "浏览器"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Performance API 与 Core Web Vitals 测量",
+    "content": "如何使用浏览器 Performance API 测量 Core Web Vitals（核心网页指标）？请说明 LCP、FID/INP、CLS 三个指标各自的含义、测量方法和优化目标。",
+    "answer": "答案：Core Web Vitals 是 Google 定义的三项用户体验指标：LCP（加载性能）≤ 2.5s、FID（交互延迟）/INP ≥ 50ms 取代 FID、CLS（视觉稳定性）≤ 0.1。通过 Performance API 和 PerformanceObserver 测量。\n\n解析：LCP（Largest Contentful Paint）——测量最大可见内容元素的渲染时间，通过 PerformanceObserver 监听 largest-contentful-paint 类型的 entry。优化：优化图片/文字加载、消除阻塞资源、使用 CDN。FID（First Input Delay）——首次交互到事件处理响应的延迟，已被 INP（Interaction to Next Paint）取代。通过 first-input 类型 entry 测量。INP 评估所有交互的延迟。CLS（Cumulative Layout Shift）——累计布局偏移，测量可见元素在渲染帧之间的位移。通过 layout-shift 类型 entry 的 value 累加。优化：为图片/视频设置固定宽高比、避免在已渲染内容上方插入动态内容。\n\n扩展延伸：测量工具——Chrome DevTools Lighthouse / Performance 面板、web-vitals 库（封装了 PerformanceObserver 的跨浏览器兼容处理）、Search Console 的 Core Web Vitals 报告、RUM（Real User Monitoring）方案如 Google Analytics 的 web-vitals 扩展。影响 SEO——Google 自 2021 年起将 CWV 纳入页面体验排名信号。优化优先级：LCP > CLS > FID/INP，但需结合页面类型和用户旅程权衡。",
+    "hints": [
+      "FID 和 INP 有什么本质区别——为什么 Google 要用 INP 取代 FID",
+      "CLS 的分数为什么不是简单累加——它考虑了哪些加权因素"
+    ],
+    "tags": [
+      "性能",
+      "Core Web Vitals",
+      "Performance API",
+      "监控"
+    ]
   }
 ]

@@ -1249,5 +1249,95 @@
       "云成本",
       "优化"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GitOps 工作流详解与 ArgoCD 架构解析",
+    "content": "GitOps 的核心原则是什么？ArgoCD 作为 GitOps 工具是如何工作的？ArgoCD 如何保证集群状态与 Git 仓库中的期望状态一致？",
+    "answer": "答案：GitOps 的核心原则是使用 Git 仓库作为声明式基础设施和应用的单一事实来源（Single Source of Truth），通过自动化工具确保集群的实际状态与 Git 中定义的期望状态一致。ArgoCD 是 Kubernetes 生态中最流行的 GitOps 工具，它持续监控 Git 仓库中的资源配置（K8s Manifest/Helm/Kustomize），自动将集群状态同步到仓库中的定义状态。\n\n解析：1）GitOps 五大原则——声明式描述（整个系统的期望状态通过声明式配置定义）、版本控制（所有配置变更通过 Git 管理，可审计、可回滚）、不可变存储（Git 作为可信的唯一事实来源）、自动同步（自动将声明式配置应用到目标环境）、持续验证（持续监测和修正漂移）。\n\n2）ArgoCD 架构——Application Controller：核心组件，持续对比 Git 中定义的期望状态和集群中的实际状态，检测到差异时触发同步（自动或手动）。API Server：提供 gRPC/REST API，Web UI 和 CLI 通过 API Server 管理应用。Repo Server：缓存 Git 仓库内容，生成 Manifests（支持 Helm/Kustomize/Jsonnet）。Application CRD：定义 Git 仓库路径、目标集群、同步策略等。\n\n扩展延伸：3）同步策略——自动同步（Auto Sync）：检测到配置漂移时自动修正。手动同步：审批后才执行。同步波（Sync Waves）：控制资源创建的先后顺序（先创建 Namespace 再部署应用）。4）Prune 策略——自动清理集群中不在 Git 仓库中定义的资源。5）SSO 集成——ArgoCD 支持 OIDC/LDAP/SAML，集成 RBAC 权限控制。6）对比 Flux（另一个 CNCF GitOps 工具）：ArgoCD 提供 Web UI 更丰富，支持多集群管理更好。Flux 更轻量，依赖少（不需要 CRD）。7）生产建议——禁止直接通过 kubectl 修改集群资源（配置漂移的大敌），所有变更必须走 Git PR 流程。",
+    "hints": [
+      "ArgoCD 的 Auto Sync 和 Manual Sync 分别在什么场景下使用",
+      "配置漂移（Configuration Drift）是指什么——ArgoCD 如何检测和处理"
+    ],
+    "tags": [
+      "GitOps",
+      "ArgoCD",
+      "Kubernetes",
+      "CD"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "金丝雀部署（Canary Deployment）与蓝绿部署的适用场景对比",
+    "content": "金丝雀部署（Canary Deployment）和蓝绿部署（Blue-Green Deployment）是两种常用的发布策略。它们的核心区别是什么？分别在什么场景下适合使用？各自的优缺点是什么？",
+    "answer": "答案：金丝雀部署将新版本逐步引入（先给少量用户使用），观察无问题后逐步扩大到全部流量。蓝绿部署维护两套完整环境（蓝色=当前生产，绿色=新版本），通过切换流量入口一次性将全部流量切换到新环境。金丝雀适合风险控制，蓝绿适合即时切换和快速回滚。\n\n解析：1）金丝雀部署——流程：新版本部署到少量实例 -> 将小比例流量（如 5%）路由到新版本 -> 监控指标（错误率/延迟/业务指标）-> 逐步扩大比例（10% -> 50% -> 100%）-> 发现问题则回滚（将流量切回旧版本）。关键技术：服务网格（Istio 流量权重调整）、K8s 的 Service 流量比例控制、应用层灰度规则（按用户 ID 或地域路由）。优点：风险最小化，影响范围可控，可验证真实流量下的表现。缺点：部署周期长（逐步放量需要时间），需要完善的监控和自动化回滚能力。\n\n2）蓝绿部署——流程：准备好与当前生产（蓝色）完全一致的新环境（绿色）-> 在绿色环境部署新版本并做完整验证 -> 验证通过后将流量入口从蓝色切换到绿色（如更新负载均衡器或 DNS）-> 保留蓝色环境作为回滚备用。优点：切换瞬间完成（秒级），回滚极快（切回蓝色即可），新环境可做完整预验证。缺点：成本高（维护双倍资源），绿色环境长时间闲置浪费资源，数据库架构变更时难以切换（需要向前向后兼容）。\n\n扩展延伸：3）选择建议——需要充分验证新版本且资源充足 -> 蓝绿部署。需要逐步验证、降低影响面、频繁发布 -> 金丝雀部署。4）混合策略——蓝绿验证 + 金丝雀放量：蓝色环境切换到绿色后，先让少量用户流量走绿色环境，逐步放量到 100%。5）注意要点——两种策略都要求数据库变更向后兼容。金丝雀要看关键业务指标而非仅技术指标。蓝绿部署中数据库回滚是最大的挑战。",
+    "hints": [
+      "蓝绿部署中数据库结构变更不能回滚怎么办——向前向后兼容是必须的设计原则",
+      "金丝雀部署中如何设计流量路由规则才不影响用户体验"
+    ],
+    "tags": [
+      "金丝雀部署",
+      "蓝绿部署",
+      "发布策略",
+      "DevOps"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Terraform 状态管理策略与远程后端配置",
+    "content": "Terraform 的状态（State）文件是什么？为什么需要状态管理？常见的远程后端（Remote Backend）有哪些？如何避免状态文件冲突和实现团队协作？",
+    "answer": "答案：Terraform 状态文件（terraform.tfstate）记录了当前基础设施的所有资源及其属性映射，是 Terraform 判断基础设施期望状态与实际状态差异的依据。远程后端将状态文件存储在共享位置（如 S3/GCS/Azure Storage/Consul），通过状态锁（State Locking）防止多人同时执行 terraform apply 导致冲突。\n\n解析：1）状态文件的作用——资源映射：将配置中的 resource 块映射到云平台上的真实资源 ID。性能优化：terraform plan 不需要调用 API 列举所有资源，直接从状态文件读取。依赖关系：通过状态文件中的资源属性传递引用（如 ${aws_instance.web.id}）。\n\n2）远程后端配置——S3 后端：terraform { backend \"s3\" { bucket = \"my-tf-state\" key = \"prod/network/terraform.tfstate\" region = \"us-east-1\" dynamodb_table = \"tf-lock\" } }。DynamoDB 表用于状态锁。GCS 后端：类似 S3，使用 object versioning 保存状态历史。Terraform Cloud/Enterprise 后端：提供内置状态管理、锁、策略即代码（Sentinel）。\n\n扩展延伸：3）状态隔离策略——工作区（Workspace）：同一配置多环境（dev/staging/prod）。每个 Workspace 独立的状态文件。文件结构：按环境/项目分目录，每个目录独立 state。4）State Locking——远程后端通过 DynamoDB/GCS 对象租约/Consul Session 实现。状态锁失败时 terraform apply 会报错退出，不会破坏状态文件。5）敏感信息——状态文件中可能包含明文密码或密钥。使用 S3 加密（SSE）和访问控制保护。terraform state 命令用于操作状态文件（mv/rm/pull/push）。6）最佳实践——永远不要手动编辑状态文件。开启 state versioning（S3 对象版本控制）以便回溯。定期 terraform plan 检查配置漂移。",
+    "hints": [
+      "为什么 Terraform 的状态文件不能放在本地 Git 仓库中管理",
+      "DynamoDB 在 S3 后端的 State Locking 中扮演什么角色"
+    ],
+    "tags": [
+      "Terraform",
+      "状态管理",
+      "IaC",
+      "状态锁"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Docker 多阶段构建优化策略",
+    "content": "什么是 Docker 多阶段构建（Multi-Stage Build）？它解决了什么问题？有哪些最佳实践可以进一步优化 Docker 镜像大小和构建速度？",
+    "answer": "答案：多阶段构建是 Docker 17.05+ 引入的特性，允许在一个 Dockerfile 中使用多个 FROM 语句，每个 FROM 是一个独立的构建阶段。前一阶段的产物可以通过 COPY --from 复制到后一阶段。核心价值在于：编译环境和运行环境分离——编译阶段的工具链（编译器、构建工具）不进入最终镜像，大幅缩小镜像体积。\n\n解析：1）基本用法——Dockerfile 中两个 FROM：编译阶段（使用 Maven/Gradle/Go build 等编译工具）和运行阶段（使用轻量基础镜像如 alpine、distroless）。只有运行阶段的镜像被保存和推送。示例：\n第一阶段 FROM maven:3.8 AS build，编译出 JAR 文件。\n第二阶段 FROM eclipse-temurin:17-jre-alpine，仅包含 JRE 和 COPY --from=build 复制的 JAR 文件。\n\n2）进阶优化——依赖层分离：先 COPY 依赖描述文件（pom.xml/go.mod/requirements.txt）单独构建依赖层（利用 Docker 层缓存避免每次重新下载依赖），再 COPY 源代码。基础镜像选择：alpine（约 5MB）vs slim（约 40MB）vs distroless（约 20MB）。distroless 最安全（没有 shell 和包管理器）但调试困难。\n\n扩展延伸：3）构建缓存——docker build 利用缓存机制：如果某层的构建上下文没有变化，直接复用缓存层。层排列原则：变化最少的指令放在 Dockerfile 最前面（如安装系统包），变化最多的放在最后面（COPY 源代码）。4）Herd（Parallel Build）——构建多平台镜像时使用 docker buildx 并行构建（AMD64 + ARM64）。5）镜像安全——多阶段构建的第二个重要好处：运行镜像不包含构建工具和源代码，攻击面大幅减少。6）调试——为调试镜像添加 bash/curl（使用 debug 标签或单独的 debug 阶段，生产部署时用 minimal 阶段）。",
+    "hints": [
+      "Docker 层缓存机制如何与多阶段构建配合优化构建速度",
+      "为什么 distroless 镜像比 alpine 更安全但调试更困难"
+    ],
+    "tags": [
+      "Docker",
+      "多阶段构建",
+      "镜像优化",
+      "Dockerfile"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Prometheus 记录规则与告警规则的配置与调试",
+    "content": "Prometheus 的记录规则（Recording Rules）和告警规则（Alerting Rules）有什么区别？如何配置和调试？预先计算（Recording Rules）在什么场景下能显著提升查询性能？",
+    "answer": "答案：记录规则（Recording Rules）用于预先计算复杂或频繁执行的 PromQL 表达式，结果作为新的时间序列存储在 Prometheus 中，后续查询直接使用预先计算好的结果。告警规则（Alerting Rules）定义了触发告警的条件表达式，满足条件时 Prometheus 将告警发送到 Alertmanager。记录规则提升查询性能，告警规则实现监控告警。\n\n解析：1）记录规则——配置方式：在 rules.yml 中的 groups 下定义，包含 name、record（新指标名）、expr（PromQL 表达式）、labels（可选附加标签）。示例：groups:\n  - name: node_rules\n    interval: 30s\n    rules:\n      - record: job:node_memory_usage:ratio\n        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))\n适用场景：复杂聚合（多级聚合如机房级 -> 集群级 -> 业务级）、仪表盘共用的 PromQL（团队标准化）、高并发仪表盘（减少 Prometheus 计算压力）。\n\n2）告警规则——配置方式：包含 name、alert（告警名称）、expr（条件表达式）、for（持续时间，防止抖动）、labels（附加标签）、annotations（告警内容）。示例：\n      - alert: NodeMemoryUsageHigh\n        expr: job:node_memory_usage:ratio > 0.9\n        for: 5m\n        annotations:\n          summary: \"Node {{ $labels.instance }} memory usage > 90%\"\n\n扩展延伸：3）告警生命周期——Pending（`for` 持续期内条件满足但未到阈值）-> Firing（条件持续满足超过 `for` 阈值）-> Resolved（条件不再满足）。Alertmanager 处理：分组（grouping）、抑制（inhibition）、静默（silence）。4）调试技巧——直接在 Prometheus UI 的 Graph 页面测试 PromQL 表达式。`for: 5m` 防止网络抖动误告警。5）最佳实践——记录规则命名规范：<level>:<metric_name>:<aggregation>（全局规范如 job:node_memory_usage:ratio）。告警规则配够 annotations（summary/description/runbook_url），便于运维人员响应。避免过多记录规则（每条记录规则消耗存储），只预先计算确实频繁使用的聚合查询。",
+    "hints": [
+      "记录规则和仪表盘中的 PromQL 直接计算相比有什么存储开销的权衡",
+      "告警规则的 for 参数为什么能减少告警疲劳"
+    ],
+    "tags": [
+      "Prometheus",
+      "记录规则",
+      "告警规则",
+      "PromQL"
+    ]
   }
 ]

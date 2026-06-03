@@ -1261,5 +1261,95 @@
       "KVM",
       "Hyper-V"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CAP 理论与分区容错性",
+    "content": "CAP 理论指出分布式系统在 Consistency（一致性）、Availability（可用性）、Partition Tolerance（分区容错性）三者中最多同时满足两个。请解释：网络分区发生时系统为什么必须在 C 和 A 之间做选择？在实际系统中是如何权衡的？",
+    "answer": "答案：当网络分区发生时，分区两侧无法通信。如果选 C（一致性）：需要等待分区恢复或拒绝写入，此时返回错误（牺牲 A）。如果选 A（可用性）：分区两侧各自接受写入，但分区恢复后数据可能冲突（牺牲 C）。\n\n解析：网络分区是分布式系统的必然现实，所以实际上不能选择「放弃 P」——因为网络总可能故障。CA 只在理论上不存在分区时才成立。实际系统都是 CP 或 AP：CP 系统（ZooKeeper、etcd）在分区时拒绝写入保障一致；AP 系统（DNS、Cassandra 在特定配置下）分区时继续服务，后续用最终一致性修复。\n\n扩展延伸：CAP 理论的局限——过于简化，一致性和可用性都是连续谱而非二元选择。PACELC 理论扩展了 CAP：没有分区（Else）时还需在 Latency（延迟）和 Consistency 间权衡。现代分布式数据库（如 TiDB、Spanner）通过 Raft/Paxos 共识协议实现强一致性同时保持高可用，说明 CAP 只是约束而非绝对限制——关键在于多数派仍可运行时系统可同时保证 C 和 A。",
+    "hints": [
+      "CP 系统和 AP 系统在网络分区时各自的行为表现",
+      "PACELC 理论如何扩展了 CAP"
+    ],
+    "tags": [
+      "分布式",
+      "CAP",
+      "一致性",
+      "可用性"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "限流算法：令牌桶与漏桶",
+    "content": "请解释令牌桶（Token Bucket）和漏桶（Leaky Bucket）两种限流算法的工作原理、区别以及各自适用场景。",
+    "answer": "答案：令牌桶——以固定速率向桶中添加令牌，请求到来时消耗令牌，有令牌则通过否则拒绝或等待。漏桶——请求以任意速率进入桶（队列），以固定速率漏出处理，队列满时丢弃新请求。\n\n解析：核心区别——令牌桶允许突发流量（桶中可以累积未使用的令牌），只要桶中有足够令牌就可以一次消耗多个。漏桶强制输出速率恒定，完全平滑了流量突发。漏桶的队列长度限制了最大等待请求数。令牌桶更适合允许短时突发但长期受限的场景；漏桶适合需要严格平滑输出流量的场景（如流量整形）。\n\n扩展延伸：实现方式——令牌桶通常用 last_refill_time + 延迟计算实现，无需定时任务；漏桶常用 FIFO 队列实现。分布式限流——在网关层用 Redis + Lua 脚本实现集中式令牌桶。常用限流框架：Guava RateLimiter（令牌桶、SmoothBursty/SmoothWarmingUp）、Sentinel（滑动窗口 + 令牌桶 + 漏桶融合）。并发限流 vs 速率限流——信号量（Semaphore）限制并发数，令牌桶限制请求速率，二者维度不同。",
+    "hints": [
+      "令牌桶为什么允许突发流量而漏桶不允许",
+      "Guava RateLimiter 的 SmoothWarmingUp 模式解决了什么场景问题"
+    ],
+    "tags": [
+      "分布式",
+      "限流",
+      "算法",
+      "高并发"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Gossip 协议：反熵与谣言传播",
+    "content": "Gossip 协议在分布式系统中如何工作？请解释反熵（Anti-Entropy）和谣言传播（Rumor Mongering）两种 Gossip 策略的区别及各自适用场景。",
+    "answer": "答案：Gossip 协议是一种去中心化的节点间信息传播机制，每个节点周期性地随机选择若干其他节点交换信息，类似流言扩散。反熵是节点间全量数据同步以修复差异；谣言传播是增量广播新到达的信息。\n\n解析：反熵（Anti-Entropy）——节点交换全部或摘要数据（如 Merkle Tree 根哈希）来发现差异并同步。能彻底修复不一致性，但通信开销大。通常使用 Merkle Tree 来高效对比差异，只传输有差异的数据块。谣言传播（Rumor Mongering）——有新信息的节点（Rumor 状态）随机选择其他节点传播消息，收到后继续传播。一定的轮次后（如 logN 轮）大部分节点都知道该消息。开销小、传播快，但不能保证所有节点最终都收到（概率性）。\n\n扩展延伸：Gossip 的三种传播模式——Push（主动向别人推信息）、Pull（主动拉取别人信息）、Push-Pull（双向同步，效率最高）。Gossip 属性——去中心化、容错（节点故障不影响整体）、最终一致性、可扩展（O(logN) 轮可覆盖全集群）。典型应用：Cassandra 节点间集群状态同步、Consul 服务发现、AWS Dynamo 的成员管理、比特币节点发现。",
+    "hints": [
+      "反熵为什么比谣言传播更可靠但通信成本更高",
+      "Gossip 协议需要多少轮才能覆盖整个集群"
+    ],
+    "tags": [
+      "分布式",
+      "协议",
+      "一致性",
+      "Gossip"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "两阶段提交（2PC）协调者故障处理",
+    "content": "两阶段提交（Two-Phase Commit, 2PC）协议是如何工作的？协调者（Coordinator）在哪个阶段故障会导致什么后果？如何处理协调者故障？",
+    "answer": "答案：2PC 分为准备阶段（Voting Phase）和提交阶段（Commit Phase）。第一阶段协调者问所有参与者「能否提交」，参与者在本地写入 Undo/Redo 日志后回复 Yes/No；第二阶段协调者根据投票结果通知所有参与者 Commit 或 Abort。\n\n解析：协调者故障的后果——1）准备阶段故障：参与者超时后自动 Abort，可以自行释放锁和资源，无阻塞问题。2）提交阶段故障（已发送 Prepare 并收到所有 Yes 但未发 Commit 前崩溃）：参与者处于 Ready 状态，既不能提交也不能回滚，必须锁定资源等待协调者恢复——这就是 2PC 的「阻塞问题」。恢复方案：协调者重启后查询事务日志恢复决策，或引入超时协议让参与者在长时间未收到决策时主动询问其他节点（但仍有概率阻塞）。\n\n扩展延伸：2PC 的局限——同步阻塞、单点故障（协调者）、无法处理参与者同时故障。改进方案——三阶段提交（3PC）引入 Pre-commit 阶段减少阻塞窗口；Paxos/Raft 共识协议在多数派存活时即可决策，彻底避免阻塞问题。分布式事务在实践中的选择——XA 协议（传统 2PC，强一致但性能差）、TCC（Try-Confirm/Cancel，业务补偿）、Saga（最终一致性编排）、Seata AT 模式（自动补偿）。",
+    "hints": [
+      "2PC 为什么在提交阶段故障时会阻塞所有参与者",
+      "3PC 如何改进 2PC 的阻塞问题"
+    ],
+    "tags": [
+      "分布式",
+      "事务",
+      "2PC",
+      "一致性"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Paxos 与 Raft 核心设计差异",
+    "content": "Paxos 和 Raft 都是分布式共识协议，但 Raft 号称比 Paxos 更容易理解。请从 Leader 选举、日志复制、安全性保证等方面对比二者的核心设计差异。",
+    "answer": "答案：Raft 通过强 Leader 机制、日志连续性假设和更清晰的阶段划分降低了理解难度；Paxos 允许多个 Proposer 并发提议，无固定 Leader，逻辑更加复杂。\n\n解析：核心差异——1）Leader 机制：Paxos 允许任意节点作为 Proposer 并发提出提案，可能导致多个 Proposer 互相覆盖形成活锁；Raft 强制选出一个 Leader，日志只从 Leader 单向复制到 Follower，简单可控。2）日志复制：Raft 要求所有日志条目连续且不重叠，日志必须按顺序提交；Paxos（Multi-Paxos）不强制日志连续性，允许乱序提议。3）安全性：Raft 通过 Term + Index 唯一标识日志条目，Leader Completeness 保证已提交的条目不会被后续 Leader 覆盖；Classic Paxos 安全性通过 Quorum 交叠保证。4）阶段数：Paxos 基础协议有两阶段（Prepare/Promise + Accept/Accepted），Raft 选举有三阶段（RequestVote/Vote + AppendEntries/Append），但更直观。\n\n扩展延伸：Paxos 变体——Fast Paxos（减少一轮 RTT，但需要更多 Quorum 节点）、EPaxos（不依赖稳定 Leader，能就近处理请求）。Raft 变体——Multi-Raft（数据分片 + 每个分片独立 Raft）、Raft 成员变更的单步 Joint Consensus 方案。实际工业选型：etcd 用 Raft 已证明其可靠性，Google Spanner 用 Paxos。Raft 的正确性不容易形式化验证——即使协议简单，实现细节（如快照、成员变更）仍极易出 Bug，PingCAP/TiKV 团队就曾修复多个 Raft 实现问题。",
+    "hints": [
+      "Paxos 为什么可能产生活锁而 Raft 不会",
+      "Raft 的日志连续性假设简化了哪些问题"
+    ],
+    "tags": [
+      "分布式",
+      "共识",
+      "Paxos",
+      "Raft"
+    ]
   }
 ]

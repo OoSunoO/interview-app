@@ -1288,5 +1288,98 @@
       "分片",
       "中间件"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MySQL 8.0 不可见索引（Invisible Indexes）",
+    "content": "MySQL 8.0 引入了不可见索引（Invisible Indexes）特性。什么是不可见索引？它与普通索引有什么区别？在什么场景下应该使用不可见索引？",
+    "answer": "答案：不可见索引是对优化器不可见的索引，MySQL 8.0 通过 ALTER TABLE t ALTER INDEX idx INVISIBLE/VISIBLE 控制。优化器在生成执行计划时不会考虑不可见索引，但索引数据仍在维护（插入/更新仍需更新索引）。\n\n解析：不可见索引的核心作用——在不删除索引的情况下测试索引对查询性能的影响。传统做法是删除索引 -> 测试性能 -> 需要时重建。删除和重建大表索引消耗巨大（重建索引需要扫描全表重新构建 B+Tree）。不可见索引可以安全地「关闭」一个索引，观察对查询的影响，如果发现性能下降只需 ALTER VISIBLE 重新启用。\n\n扩展延伸：使用场景——1）判断某个索引是否被使用：先设为 INVISIBLE，观察慢查询和性能指标，如果没有变化说明该索引没有被使用，可以安全删除。2）灰度下线索引：先设为不可见观察一段时间，确认无影响再 DROP。3）唯一索引虽然可以设为不可见，但唯一性约束仍然生效——唯一索引的不可见只是对优化器不可见，插入重复值仍然报错。注意事项：系统变量 optimizer_switch 中的 use_invisible_indexes=ON 可以让优化器看到不可见索引（调试用）。主键索引不能被设为不可见（因为 InnoDB 聚簇索引必须有主键）。",
+    "hints": [
+      "不可见索引和普通索引在数据维护上的区别是什么",
+      "为什么唯一索引设为不可见后仍然能阻止重复插入"
+    ],
+    "tags": [
+      "MySQL",
+      "索引",
+      "不可见索引",
+      "MySQL 8.0"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "PostgreSQL MVCC 与 MySQL MVCC 实现差异",
+    "content": "PostgreSQL 和 MySQL InnoDB 都使用 MVCC 实现并发控制，但两者的实现机制有显著不同。请对比分析它们在多版本存储、垃圾回收、事务快照等方面的核心差异。",
+    "answer": "答案：PostgreSQL 将多版本数据直接存储在数据页中（通过元组标记可见性），MySQL InnoDB 将旧版本存储在 Undo Log 中（通过回滚指针链接）。垃圾回收方面：PostgreSQL 使用 VACUUM 回收死元组，MySQL 使用 Purge 线程异步清理 Undo Log。\n\n解析：1）多版本存储——PostgreSQL：每个元组（Tuple）头部包含 xmin（创建事务 ID）和 xmax（删除/更新事务 ID），旧版本和新版本都存在于数据页中。更新时产生新的元组版本，旧版本标记为死亡。MySQL InnoDB：数据页只存储最新版本，旧版本通过 Undo Log 链存储（DB_ROLL_PTR 回滚指针）。更新时写入新数据行到数据页，旧行数据写入 Undo Log。\n\n2）垃圾回收——PostgreSQL VACUUM：需要手动或自动（autovacuum）回收数据页中的死元组空间。VACUUM 不足会导致表膨胀（数据文件持续增大）。MySQL Purge：后台 Purge 线程异步清理 Undo Log 中不再需要的旧版本数据（由系统自动管理，无需人工干预）。\n\n3）事务快照——PostgreSQL 使用全局事务状态（通过 clog 和事务快照结构），MVCC 可见性判断比 MySQL 更复杂。MySQL InnoDB 的 Read View 只需要比较事务 ID 和活跃事务列表。\n\n扩展延伸：4）事务 ID 管理——PostgreSQL 事务 ID 是 32 位（约 42 亿个），有回卷（wraparound）问题，需要定期 FREEZE 防止回卷。MySQL InnoDB 事务 ID 也是 32 位但通过系统表空间管理，不存在回卷问题。5）HOT（Heap-Only Tuple）更新——PostgreSQL 允许同一页内的更新通过 HOT 机制避免索引维护。MySQL InnoDB 没有 HOT，更新二级索引列时需要更新所有相关索引。6）性能影响——PostgreSQL 的 VACUUM 开销在大并发更新场景下显著（IO 和 CPU），MySQL 的 Purge 开销相对较小但 Undo Log 可能增长很快。",
+    "hints": [
+      "PostgreSQL 的 VACUUM 和 MySQL 的 Purge 线程在处理旧版本上的核心区别",
+      "PostgreSQL 事务 ID 回卷（Wraparound）问题是什么"
+    ],
+    "tags": [
+      "PostgreSQL",
+      "MySQL",
+      "MVCC",
+      "数据库对比"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "查询重写与物化查询表（Materialized Query Tables）",
+    "content": "什么是查询重写（Query Rewrite）？物化查询表（Materialized Query Table，MQT）如何加速查询？MySQL 和 PostgreSQL 在物化视图支持上有哪些差异？",
+    "answer": "答案：查询重写是数据库优化器将用户 SQL 转换为更高效执行计划的过程，包括视图展开、谓词推入、子查询去关联等。物化查询表（MQT）预计算并存储查询结果，以空间换时间加速复杂聚合查询。MySQL 不支持原生物化视图（需通过触发器或 Event 模拟），PostgreSQL 支持原生物化视图（MATERIALIZED VIEW）。\n\n解析：1）查询重写的常见类型——常量折叠（WHERE 1=1 被优化掉）、谓词推入（将 WHERE 条件下推到子查询内部）、子查询去关联（将相关子查询改写为 JOIN 或半连接）、视图展开（将视图定义合并到主查询）、OR 条件优化（将 OR 改写为 UNION）。\n\n2）物化查询表（MQT）——在 DB2 等数据库中称为 MQT，在 PostgreSQL 中称为物化视图。预计算并存储查询结果集，读时直接返回已计算好的数据。适用场景：复杂的聚合查询（多表 JOIN + GROUP BY + 多级聚合）、BI 报表查询、大数据量的统计查询。维护成本：MQT 需要刷新（REFRESH MATERIALIZED VIEW），全量刷新代价大，增量刷新（ON COMMIT REFRESH）实时性更好但实现复杂。\n\n扩展延伸：3）MySQL 的物化视图替代方案——MySQL 8.0 支持 CTE 和窗口函数但不支持原生物化视图。替代方案：a) 使用触发器维护汇总表（INSERT/UPDATE/DELETE 时同步更新汇总表）。b) 使用 Event Scheduler 定期执行 INSERT ... SELECT 重建汇总表。c) 使用 Flexviews 第三方工具。4）PostgreSQL 物化视图——REFRESH MATERIALIZED VIEW CONCURRENTLY（PG 9.4+）支持不阻塞读的并发刷新（需要物化视图上建立唯一索引）。5）查询重写优化案例——a) 将 NOT IN 子查询改写为 NOT EXISTS 或 ANTI JOIN（MySQL 8.0 优化器自动处理）。b) 将 UNION 改写为 UNION ALL（如果不需要去重，UNION ALL 避免排序去重开销）。c) 将 COUNT(column) 改写为 COUNT(*)（语义等价时后者性能更好）。",
+    "hints": [
+      "MySQL 为什么没有原生物化视图支持——InnoDB 的 MVCC 和物化视图刷新机制的实现冲突",
+      "PostgreSQL CONCURRENTLY 刷新如何做到不阻塞读"
+    ],
+    "tags": [
+      "查询重写",
+      "物化视图",
+      "MySQL",
+      "PostgreSQL",
+      "优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库链接（DBLink）与跨库查询",
+    "content": "什么是数据库链接（Database Link / DBLink）？MySQL、PostgreSQL、Oracle 分别如何实现跨数据库查询？DBLink 有哪些安全风险和性能限制？",
+    "answer": "答案：数据库链接是一种跨数据库实例访问数据的机制，允许在一个数据库中查询另一个数据库的表。Oracle 原生支持 DBLink（CREATE DATABASE LINK），PostgreSQL 通过 dblink 扩展或 postgres_fdw 实现，MySQL 通过 FEDERATED 存储引擎实现。\n\n解析：各数据库的实现方式——1）Oracle DBLink：最成熟，支持公/私有两种类型，通过 CREATE DATABASE LINK 创建。可通过 DBLink 执行查询、DML、远程过程调用。支持同义词配合使用简化 SQL。2）PostgreSQL：dblink 扩展（较旧，基于函数）和 postgres_fdw（较新，基于 SQL/MED 标准，推荐使用）。postgres_fdw 通过 CREATE FOREIGN TABLE 映射远程表，支持 IMPORT FOREIGN SCHEMA 批量导入，支持排序和 JOIN 下推到远程端（PG 10+）。3）MySQL FEDERATED 引擎：需要创建 FEDERATED 表映射远程表，功能有限（不支持远程 DDL、事务行为复杂、性能较差）。\n\n扩展延伸：安全风险——1）凭据暴露：DBLink 连接字符串中可能包含数据库密码，查看 DBLink 定义的用户可以获取远程库凭据。2）网络攻击面：DBLink 开启跨网络访问，增加了被攻击的风险（远程端可能成为跳板）。3）权限放大：DBLink 通常以固定用户身份连接，如果该用户权限过高，可能导致越权访问。性能限制——1）跨库查询无法使用远程索引优化（需要将数据拉到本地再过滤）。2）网络延迟叠加（多次跨库查询时 RTT 累加）。3）大数据量传输可能压垮网络或内存。4）分布式事务：跨 DBLink 的分布式事务（两阶段提交）在高并发下可能锁等待严重。生产建议——DBLink 适合轻量级、低频率的跨库查询，高频场景应考虑数据同步（CDC + 异构数据库同步工具如 Canal、Debezium）。",
+    "hints": [
+      "postgres_fdw 的查询下推（Pushdown）优化了什么",
+      "FEDERATED 引擎为什么在 MySQL 中较少使用"
+    ],
+    "tags": [
+      "DBLink",
+      "跨库查询",
+      "Oracle",
+      "PostgreSQL",
+      "MySQL"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "SQL 窗口函数：ROWS vs RANGE vs GROUPS 帧",
+    "content": "SQL 窗口函数中的窗口帧（Window Frame）有 ROWS、RANGE、GROUPS 三种定义方式。它们的差异是什么？各自适用于什么场景？请举例说明。",
+    "answer": "答案：ROWS 基于物理行偏移定义帧边界（如 BETWEEN 1 PRECEDING AND 1 FOLLOWING），RANGE 基于逻辑值范围定义边界（如 BETWEEN INTERVAL '7' DAY PRECEDING AND CURRENT ROW），GROUPS 基于分组数定义边界（如 BETWEEN 1 GROUP PRECEDING AND 1 GROUP FOLLOWING）。\n\n解析：三种帧的区别——1）ROWS 帧：最直观，按 ORDER BY 排序后的物理位置计算。ROWS BETWEEN 2 PRECEDING AND CURRENT ROW 表示取当前行和前 2 行共 3 行。适合：移动平均（如近 3 笔交易的平均值）、累计求和。ROWS 帧不考虑并列（Ties）——如果 ORDER BY 值相同，相邻行也属于不同物理行。\n\n2）RANGE 帧：按 ORDER BY 列的值范围计算帧范围。RANGE BETWEEN 100 PRECEDING AND 100 FOLLOWING 表示取当前行值 ±100 范围内的所有行。如果多行的 ORDER BY 值相同，这些行都会被包含在帧中。适合：基于值的窗口计算（如价格 ±10% 范围的平均值）。RANGE 帧要求 ORDER BY 列是单一列且数据类型支持加减运算。\n\n3）GROUPS 帧：SQL:2011 标准新增，按 ORDER BY 值的分组（Group/Peer Group）计算。GROUPS BETWEEN 1 GROUP PRECEDING AND 1 GROUP FOLLOWING 表示取当前行所在的分组及其前后各 1 个分组的所有行。同一值视为同一组。适合：需要按值分组进行窗口计算，且需要考虑组内多行的场景。\n\n扩展延伸：实际应用——1）移动平均（ROWS）：SUM(amount) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) 计算近 7 天的移动总和。2）滑动时间窗口（RANGE）：SUM(revenue) OVER (ORDER BY sale_date RANGE BETWEEN INTERVAL '30' DAY PRECEDING AND CURRENT ROW) 计算过去 30 天的滚动收入。3）分组滑动（GROUPS）：AVG(score) OVER (ORDER BY score GROUPS BETWEEN 1 PRECEDING AND 1 FOLLOWING) 取当前分数段及其前后分数段的平均。MySQL 8.0+ 支持所有三种帧定义。PostgreSQL 也支持全部三种。注意：默认帧（未指定帧时）是 RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW，可能导致意外结果（因为 RANGE 包含并列行）。",
+    "hints": [
+      "RANGE 帧和 ROWS 帧在 ORDER BY 有并列值时的行为差异是什么",
+      "为什么默认窗口帧（RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW）可能导致计算结果不符合预期"
+    ],
+    "tags": [
+      "SQL",
+      "窗口函数",
+      "ROWS",
+      "RANGE",
+      "GROUPS"
+    ]
   }
 ]

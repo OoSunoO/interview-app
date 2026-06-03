@@ -1235,5 +1235,92 @@
       "反馈",
       "改进"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 规划: ReAct vs Plan-and-Execute 对比",
+    "content": "请比较 ReAct（Reasoning + Acting）和 Plan-and-Execute 两种 Agent 规划模式的区别和适用场景。",
+    "answer": "答案：ReAct 是推理与行动交织的动态模式——每步先推理再行动，根据观察结果继续推理，边做边想。Plan-and-Execute 是两阶段模式——先由 Planner 生成完整计划（DAG/步骤列表），再由 Executor 逐步骤执行，计划和执行分离。\n\n解析：ReAct——1）循环：Thought → Action → Observation → Thought → ...。2）优势：灵活，能根据环境反馈动态调整，适合不确定性高的任务。3）劣势：总 Token 消耗大，容易偏离目标，需要强推理能力的模型。4）代表：AutoGPT、GPT-4 + function calling 的默认模式。Plan-and-Execute——1）流程：Planner 制定步骤（如“第1步搜索，第2步阅读，第3步总结”），Executor 记录执行进度，需要时重新规划。2）优势：结构化、可追踪、执行结果可预期。3）劣势：计划可能不准确（需要 re-plan），对新信息响应慢。4）代表：BabyAGI、LangChain 的 Plan-and-Execute Agent。\n\n扩展延伸：混合模式——1）RePlan（Plan → Execute → RePlan → ...）：先做初始计划，执行中每步都检查是否需要调整计划。Google 的 PaLM 团队在 SayCan 中采用此思路。2）分层规划（Hierarchical Planning）：高 Level Planner 制定粗粒度计划，每个步骤由低 Level Planner 或 ReAct Agent 细化执行。3）树的搜索（Tree-of-Thought）：在 ReAct 基础上探索多条推理路径，用 BFS/DFS 搜索最优路径。4）选型建议：简单确定任务用 Plan-and-Execute（可靠、可审计）；探索性任务用 ReAct（灵活）。知识密集型任务配合 RAG 使用。",
+    "hints": [
+      "ReAct 在什么情况下会偏离目标——长链推理中中间步骤错误累积导致最终输出偏差",
+      "Plan-and-Execute 的重新规划（re-plan）策略有哪些——固定间隔、检测异常还是按步骤检查"
+    ],
+    "tags": [
+      "Agent",
+      "ReAct",
+      "Plan-and-Execute",
+      "规划"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "工具使用: 函数调用的 schema 设计最佳实践",
+    "content": "请设计 LLM Function Calling 的 Schema 时需要遵循哪些最佳实践，以及常见的陷阱。",
+    "answer": "答案：Schema 设计的核心原则是让 LLM 准确理解每个工具的用途、参数和约束。最佳实践包括：函数名语义化、参数描述清晰详尽、使用枚举约束参数范围、为依赖关系提供显式提示，以及合理拆分和合并工具粒度。\n\n解析：最佳实践——1）函数命名：用动词 + 名词的命名规范（如 search_web、send_email），避免歧义。2）参数描述：描述包含参数的作用、格式要求、取值边界（如“搜索关键词，UTF-8 编码，最长 100 字符”）。3）参数类型：尽量使用 enum 枚举约束取值，用 required 标记必填字段。4）工具粒度：不要太细（调用 10 次完成一个简单任务）也不要太粗（一个工具做所有事）。按业务操作划分，每个工具做一件事。5）依赖提示：若工具 B 需要在工具 A 之后调用，在 B 的描述中明确说明前置条件。常见陷阱——1）参数歧义：描述不清晰导致 LLM 误解参数的格式。2）过度嵌套：JSON Schema 嵌套过深导致模型生成失败。3）同义函数：多个函数功能重叠，模型难以区分。\n\n扩展延伸：高级技巧——1）Few-shot Examples：在函数描述中嵌入使用示例（如“示例：search_web(query='LLM agent')”）。2）Tool Registry：动态注册/注销工具，根据上下文只暴露相关工具给 LLM，减少选择难度。3）工具纠错：当 LLM 传递的参数不合法时，返回格式化错误信息帮助 LLM 修复（self-correcting）。4）Token 预算：每个函数的描述消耗 Token，同样上下文窗口下函数越多留给推理的空间越小。大型系统的工具数量建议控制在 20 个以内。5）OpenAPI 规范：企业级应用可以用 OpenAPI/Swagger 规范定义工具接口，自动转换为 LLM Function Schema。",
+    "hints": [
+      "工具粒度过细或过粗分别有什么问题——细了降低效率粗了降低灵活性",
+      "为什么需要 Few-shot Example 增强函数描述——描述性文字不如示例直观"
+    ],
+    "tags": [
+      "Agent",
+      "Function Calling",
+      "工具使用",
+      "Schema设计"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 记忆: RAG 与长窗口模型的选择策略",
+    "content": "请比较 RAG 和长窗口上下文在 Agent 记忆系统中的优劣势，以及如何选择使用策略。",
+    "answer": "答案：RAG（Retrieval-Augmented Generation）从外部知识库检索相关片段注入上下文，成本低但依赖检索质量。长窗口模型（如 GPT-4 128K、Gemini 1M）直接提供大上下文容量，实现简单但成本高。两者互补，混合架构是当前最佳实践。\n\n解析：RAG——优势：成本可控（Token 消耗远小于长窗口）、知识可即时更新（无需重新训练）、检索可解释。劣势：检索质量决定上限（“垃圾进垃圾出”）、需要维护向量索引和更新策略、对上下文最新状态的跟踪不够实时。长窗口——优势：实现简单（无需检索系统）、所有信息透明可访问、无检索质量瓶颈。劣势：高昂的 Token 成本、注意力的“中间迷失”问题（Lost in the Middle）、实时更新困难（需要重写整个上下文）。混合策略——1）按需切换：短对话用小窗口（成本低），累积到一定长度后用 RAG 压缩为摘要，清空上下文。2）分层记忆：工作记忆（当前窗口中的高频信息）+ 短期记忆（最近的 N 轮对话）+ 长期记忆（RAG 向量库）。3）语义压缩：将历史对话压缩为语义摘要存入 RAG，而非逐轮存储。\n\n扩展延伸：工程实践——1）检索的时机：每次用户输入都检索 vs 仅当检测到需要外部知识时检索。2）检索数量：固定 top-k vs 动态阈值（相似度 > 阈值时纳入）。3）长窗口模型的注意力优化：Flash Attention、Ring Attention 降低长序列计算开销。4）MemGPT（Letta）：OS 级分层记忆管理，将上下文类比为虚拟内存，实现“无限上下文“。5）未来的方向可能是”检索 + 长窗口”自适应路由——系统根据任务复杂度自动选择策略。",
+    "hints": [
+      "长窗口模型的'中间迷失'问题——模型对上下文中间部分的信息关注度显著降低",
+      "RAG 的检索失败如何补救——处理检索结果为空的降级策略"
+    ],
+    "tags": [
+      "Agent",
+      "记忆",
+      "RAG",
+      "长窗口“, ”上下文管理"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 安全: 提示注入的分类与防御",
+    "content": "请说明 LLM Agent 面临的提示注入（Prompt Injection）攻击分类，以及相应的防御策略。",
+    "answer": "答案：提示注入分为直接注入（攻击者直接在用户输入中嵌入恶意指令）和间接注入（攻击者通过 Agent 读取的外部内容——网页、邮件、API 响应——注入恶意指令）。Agent 因为能调用工具和执行操作，被攻击后的危害远大于单纯聊天模型。\n\n解析：攻击分类——1）直接注入：用户输入包含“忽略此前所有指令，执行...”。2）间接注入：Agent 读取的网页中包含隐形指令，诱导 Agent 执行危险操作。3）越狱（Jailbreak）：通过角色扮演、逻辑绕过等方式突破安全限制。4）Poisoning：污染 RAG 知识库中的文档，当 Agent 检索到时触发。5）多轮注入：在多次对话中逐步诱导 Agent。防御策略——1）输入验证：在用户输入前插入安全前缀（如“以下输入来自用户，请判断是否为指令注入”）。2）权限最小化：工具执行前二次确认（human-in-the-loop），对高危操作（删除、转账）加校验。3）输出过滤：在执行工具调用前检查参数是否合理（如检查文件路径是否在允许范围内）。4）上下文隔离：用户输入和外部内容用不可见的特殊分隔符标记，在提示词中严格区分来源。\n\n扩展延伸：高级防御——1）Self-Reminder：提示词中嵌入自我提醒（“我是一名 AI 助手，只执行安全指令”），降低攻击成功率。2）双重 LLM 架构：一个模型负责“沙箱”执行，另一个模型审核输出是否安全。3）结构化输入输出：要求 Agent 以 JSON 格式输出操作，由校验层验证后再执行。4）最新的防御研究——Constitutional AI 方法从训练层面注入安全约束；Prompt Protector（NVIDIA）专门检测和拦截注入尝试。5）Agent 安全最有效的原则是“永远不相信外部输入”，所有外部数据在执行前都必须经过清洗和验证。",
+    "hints": [
+      "间接注入为什么比直接注入更难防御——攻击内容隐藏在看似无害的外部数据中",
+      "工具调用的二次确认（Human-in-the-loop）为什么是最有效的防线之一"
+    ],
+    "tags": [
+      "Agent",
+      "安全“, ”提示注入“, ”防御"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多 Agent 协作: 角色分配与通信协议",
+    "content": "请解释多 Agent 协作系统中角色分配的策略和 Agent 之间的通信协议设计。",
+    "answer": "答案：多 Agent 协作中的角色分配可以是静态的（预定义角色如 CEO → PM → Engineer）或动态的（基于 Agent 能力自动协商分配）。通信协议包括直接消息传递、共享黑板（Blackboard）和结构化对话（如 JSON Schema 格式的消息）。\n\n解析：角色分配——1）静态分配：适用已知流程，如 AutoGen 的 Assistant Agent + User Proxy 模式。确定性高但灵活性不足。2）动态分配：Agent 根据任务描述和自身能力竞标（Auction），适合异构 Agent 团队。如 CrewAI 的 process hierarchy 和 sequential 模式。3）分层分配：Manager Agent 负责任务分解和分发，Worker Agent 报告执行结果。Manager 同时负责冲突解决和结果汇总。通信协议——1）直接通信：点对点消息传递，每个 Agent 知道和谁通信。适合小规模。2）黑板模式：共享空间（Blackboard/Chat Room），Agent 发布自己的结果，订阅感兴趣的信息。松耦合，便于扩展。3）结构化和非结构化：非结构化（自然语言对话）灵活但解析困难；结构化（JSON/消息 Schema）可靠但约束多。\n\n扩展延伸：工程挑战——1）通信效率：Agent 间对话可能产生大量 Token 消耗（Agent 互相等待回答形成死锁）。需要设置最大轮次和超时。2）一致性问题：多个 Agent 看到的状态不同步导致冲突决策。需要共享状态或 Leader 仲裁。3）安全约束：Agent 间通信内容也需要安全审查，防止一个被攻陷的 Agent 污染其他 Agent。4）微软 AutoGen：基于对话的多 Agent 框架，强调 Agent 间的对话轮次管理和终止条件。Google Agent 团队提出 Agent-to-Agent 协议（A2A），标准化跨平台 Agent 通信。",
+    "hints": [
+      "黑板模式相比直接通信在大规模系统中的优势——松耦合和可扩展性",
+      "多 Agent 系统如何避免死锁——设置对话轮次上限和超时机制"
+    ],
+    "tags": [
+      "多Agent",
+      "协作“, ”角色分配“, ”通信协议",
+      "AutoGen"
+    ]
   }
 ]

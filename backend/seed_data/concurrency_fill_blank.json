@@ -1166,5 +1166,94 @@
       "锁",
       "ReadWriteLock"
     ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Java 21 虚拟线程机制",
+    "content": "Java 21 正式引入的轻量级并发机制是 ___（Virtual Threads），这是一种由 JVM 管理的 ___ 态线程。虚拟线程通过 ___（mount/unmount）机制在平台线程（Carrier Thread）上调度执行。",
+    "answer": "{\"correct\": [[\"虚拟线程\", \"Virtual Threads\", \"VirtualThread\"], [\"用户\", \"用户态\"], [\"挂载\", \"挂载/卸载\", \"mount\"]], \"distractors\": [\"协程\", \"纤程\", \"内核\", \"内核态\", \"系统\", \"绿色线程\"]}",
+    "hints": [
+      "虚拟线程是用户态线程，数量可达百万级，由 JVM 统一调度",
+      "synchronized 和 native 方法中的阻塞会导致 pinning（无法 unmount）"
+    ],
+    "tags": [
+      "并发",
+      "虚拟线程",
+      "Java 21"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ConcurrentHashMap 同步机制",
+    "content": "JDK 8 的 ConcurrentHashMap 使用 ___ 锁定替代全表锁实现高效并发。put 操作在插入空桶时使用 ___ 无锁操作，在桶内插入时使用 ___ 来保证线程安全。链表长度超过 ___ 时转换为红黑树。",
+    "answer": "{\"correct\": [[\"桶锁\", \"CAS+synchronized\", \"CAS + synchronized\", \"细粒度锁\"], [\"CAS\", \"Compare-And-Swap\", \"compareAndSet\"], [\"synchronized\"], [\"8\", \"TREEIFY_THRESHOLD\"]], \"distractors\": [\"分段锁\", \"读写锁\", \"全局锁\", \"ReentrantLock\", \"volatile\", \"16\", \"4\"]}",
+    "hints": [
+      "JDK 8 的 ConcurrentHashMap 用 CAS + synchronized 替代了 JDK 7 的 Segment 分段锁",
+      "红黑树转换仅在链表长度 >= 8 且数组长度 >= 64 时触发"
+    ],
+    "tags": [
+      "并发",
+      "ConcurrentHashMap",
+      "CAS",
+      "synchronized"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Happens-Before 跨线程保障",
+    "content": "___ 确保线程间的 happens-before 关系。volatile 变量的写操作 ___ 后续对该变量的读操作。锁的释放 ___ 同一锁的加锁。所有规则通过 ___ 性规则串联。",
+    "answer": "{\"correct\": [[\"JMM\", \"Java内存模型\", \"Java Memory Model\"], [\"happens-before于\", \"发生在\", \"先于\"], [\"happens-before于\", \"发生在\", \"先于\"], [\"传递\", \"传递性\"]], \"distractors\": [\"类加载器\", \"CPU缓存\", \"发生在之后\", \"同时于\", \"优先于\", \"可见性\", \"有序性\"]}",
+    "hints": [
+      "JMM has-a 共 8 条 happens-before 规则，核心是程序次序、volatile、锁和传递性",
+      "传递性规则是所有 happens-before 关系推导的基础"
+    ],
+    "tags": [
+      "并发",
+      "JMM",
+      "Happens-Before",
+      "volatile"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ForkJoinPool 窃取机制",
+    "content": "ForkJoinPool 使用 ___ 窃取算法，由并发大师 ___ 引入到 Java 并发库中。每个工作线程维护一个 ___（双端队列），自己从头部获取任务，空闲时从 ___ 线程的队列尾部窃取任务。parallelism 参数默认等于 ___。",
+    "answer": "{\"correct\": [[\"工作窃取\", \"Work-Stealing\", \"work stealing\"], [\"Doug Lea\"], [\"Deque\", \"双端队列\", \"work queue\"], [\"其他\", \"空闲\", \"相邻\"], [\"CPU核数\", \"可用处理器数\", \"Runtime.getRuntime().availableProcessors()\"]], \"distractors\": [\"任务抢占\", \"轮询调度\", \"Brian Goetz\", \"Joshua Bloch\", \"所有\", \"头部\", \"栈\", \"2\", \"4\"]}",
+    "hints": [
+      "ForkJoinPool 的 parallelism 控制工作线程数，默认等于 CPU 核数",
+      "工作窃取算法来源于 Cilk，Doug Lea 将其引入 Java 并发库"
+    ],
+    "tags": [
+      "并发",
+      "ForkJoinPool",
+      "Work-Stealing",
+      "Doug Lea"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CyclicBarrier 屏障机制",
+    "content": "___ 屏障（CyclicBarrier）确保所有线程到达同一个同步点后再继续执行。与 CountDownLatch 不同，CyclicBarrier 的计数器可以 ___（通过 reset() 方法重置）。CyclicBarrier 还有一个可选的 ___ 参数，在所有线程到达屏障后首先执行。",
+    "answer": "{\"correct\": [[\"循环\", \"Cyclic\", \"可复用\", \"可重用\"], [\"重置\", \"重用\", \"复位\", \"重复使用\"], [\"barrierAction\", \"屏障动作\", \"Runnable\"]], \"distractors\": [\"一次性\", \"CountDown\", \"释放\", \"等待时间\", \"Callable\", \"计数器\"]}",
+    "hints": [
+      "CyclicBarrier 的重用特性是它与 CountDownLatch 的核心区别",
+      "barrierAction 在所有线程到达屏障后、释放前执行"
+    ],
+    "tags": [
+      "并发",
+      "CyclicBarrier",
+      "屏障",
+      "同步器"
+    ]
   }
 ]

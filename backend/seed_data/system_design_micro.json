@@ -1254,5 +1254,99 @@
       "采集",
       "ELK"
     ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "TCC 与 Saga 分布式事务模式的选型对比",
+    "content": "在微服务架构中，TCC（Try-Confirm-Cancel）和 Saga 是两种主流的分布式事务模式。请对比两者的核心原理、实现复杂度、一致性保证、以及各自的典型应用场景。如果业务要求「最终一致性但尽量减少回滚影响」，你会选择哪一种并如何设计？",
+    "answer": "答案：\nTCC 是「预留-确认」的两阶段操作模式，Saga 是「补偿」模式的编排/协作式长事务。两者都实现最终一致性，但应用场景不同。\n\n解析：\n**TCC 模式**：\n- Try：预留资源（锁定库存、冻结资金）。\n- Confirm：确认执行（资源扣除）。\n- Cancel：如果任一成员 Try 失败，所有已 Try 的资源回滚（释放预留）。\n- 一致性：支持自定义的隔离性，能给业务层「看到锁」的能力。\n- 优点：Try 阶段预检冲突，回滚影响小。\n- 缺点：实现复杂——每个参与方需要实现 Try/Confirm/Cancel 三个接口；业务侵入性强。\n- 适用：短事务、高冲突场景（如库存扣减、资金转账）。\n\n**Saga 模式**：\n- 将长事务拆分为一系列本地事务，每个事务有对应的补偿事务（Compensation）。\n- 编排（Choreography）：事件驱动，各服务通过消息队列通知。\n- 协编（Orchestration）：中心协调器（Orchestrator）调度各步骤。\n- 一致性：最终一致性，无隔离性（需要业务层处理脏读）。\n- 优点：对业务侵入小，适合跨多个微服务的长流程。\n- 缺点：无隔离性（中间状态可见），回滚可能已经走了多步。\n\n**选型建议**：\n- 选择 Saga + 协编模式（Orchestration Saga）——在减少回滚影响的目标下，这是较好平衡。\n- 理由：Saga 不需要业务层实现 Try/Cancel 的「反向逻辑预留」，只需提供正向操作和反向补偿。\n- 在关键步骤前加入「幂等检查层」和「补偿重试机制」增强可靠性。\n- 对于高冲突步骤（如库存），可使用「行级乐观锁」在正向 STEP 检测冲突。\n\n扩展延伸：\n- TCC 本质上是一种「预留型」的事务模式（与 XA 2PC 思想一致），但避免了 XA 的锁持有期过长问题。\n- Saga 的调优重点在于「补偿的可靠性」——补偿本身也可能失败，需要可靠的消息引擎保证补偿最终执行。\n- 如果业务需要读「未提交的数据」（脏读可接受），Saga 的编排模式比 TCC 更适合。\n- 业界实践：Seata AT 模式是 TCC 的自动化变种（自动生成反向 SQL），减少了手动实现 Cancel 的工作量。",
+    "hints": [
+      "TCC 强在「预检」——Try 阶段可以发现冲突并提前回滚",
+      "Saga 强在「长流程」——适合跨多个服务的复杂业务流程"
+    ],
+    "tags": [
+      "TCC",
+      "Saga",
+      "分布式事务",
+      "微服务",
+      "一致性"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Sidecar 模式的资源开销与优化策略",
+    "content": "Service Mesh 中的 Sidecar 模式通过在每个 Pod 旁注入代理（如 Envoy）来处理服务间通信。请量化分析 Sidecar 模式在 CPU、内存、网络延迟维度的资源开销，并讨论在哪些场景下这些开销不可忽视。提出至少 3 种降低 Sidecar 开销的优化策略。",
+    "answer": "答案：\nSidecar 代理的资源开销通常在可接受范围（约 5-10%），但在高吞吐/低延迟场景下需要针对性优化。\n\n解析：\n**量化分析**：\n- CPU：Envoy 单连接热路径约 0.5-2 个核（取决于 TLS 加解密 + 路由规则复杂度）。\n- 内存：Envoy 约 30-80MB（配置+连接+统计），Istio 的 Citadel 等额外约 20MB。\n- 网络延迟：零跳（同 Pod）延迟约 1-3ms（含 mTLS），一跳约增加 5-10% 的 P99 延迟。\n- 总体影响：典型工作负载下 Sidecar 增加 5-10% 的 CPU 和 15-20% 的内存开销。\n\n**不可忽视的场景**：\n- 高吞吐边缘代理场景（API Gateway 旁再加 Sidecar -> 两跳代理）。\n- 延迟敏感型系统（高频交易、实时竞价）。\n- IoT/边缘计算节点（单台只有 256MB/1 核）。\n\n**优化策略**：\n1. **协议优化**：跳过 Sidecar 的 L7 协议处理——对内部用的 gRPC 使用 TCP 代理而非 HTTP 代理。\n2. **连接复用**：减少 Sidecar 的连接管理开销——通过 Envoy 的 HTTP/2 连接池 + 长连接复用。\n3. **按需注入**：不强制所有 Pod 都带 Sidecar——只对需要 mTLS + 精细流量管理的服务注入。\n4. **Proxyless Service Mesh**：将服务网格功能直接集成到应用 SDK 中（gRPC 的 xDS 协议），省掉 Sidecar。\n5. **资源限制**：对 Sidecar 设置 CPU/Memory Limits，防止它挤占业务容器的资源。\n\n扩展延伸：\n- Istio Ambient Mesh（无 Sidecar 模式）：用 per-node 的 ztunnel 替代 per-pod Sidecar，节点级的代理取代 Pod 级——大幅减少资源开销，但隔离性降低。\n- Sidecar 的资源分配不能照搬「按比例分配」——它的负载与 Pod 流量相关而非与 Pod 资源大小相关。\n- 在 K8s 集群中引入 Service Mesh 之前，建议先做「Sidecar 资源评估」——使用 Istio 提供的 Sidecar 资源估算工具或 Load Testing with K6。",
+    "hints": [
+      "Sidecar 的资源开销不是线性的——延迟影响在「每跳」而不是每请求",
+      "优化策略的根本思路：能不经过 Sidecar 的流量就不经过"
+    ],
+    "tags": [
+      "Sidecar",
+      "服务网格",
+      "资源优化",
+      "Envoy",
+      "微服务"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "API 网关与 BFF 模式的职责划分与架构选择",
+    "content": "API Gateway 和 BFF（Backend For Frontend）在微服务前端接入层中扮演不同角色。请阐述两者的核心职责区别、在何种场景下需要同时引入 BFF（而非仅靠 API Gateway），以及如何设计两者的协作关系（如可组合的网关链）。同时讨论「BFF 膨胀」问题及应对策略。",
+    "answer": "答案：\nAPI Gateway 是统一入口层，负责横切关注点；BFF 是前端专属的后端适配层，负责为特定客户端编排。\n\n解析：\n**职责区别**：\n| 维度 | API Gateway | BFF |\n|------|------------|-----|\n| 定位 | 全局入口 | 前端专属适配层 |\n| 主要功能 | 路由、认证、限流、熔断 | 数据聚合、字段裁剪、协议转换 |\n| 业务归属 | 中台/平台团队 | 前端团队 |\n| 变更影响 | 影响所有客户端 | 只影响对应客户端 |\n\n**何时需要 BFF**：\n- 多客户端差异化严重（Web 需要完整数据，Mobile 需要精简数据，IoT 需要二进制协议）。\n- 微服务粒度太细：一个页面需要调用 5-10 个服务 -> BFF 做编排聚合。\n- 客户端协议非 HTTP（如 gRPC-Web、GraphQL）-> BFF 做协议转换。\n- 简单场景仅 API Gateway 足够（< 5 个微服务、单一客户端）。\n\n**协作关系设计**：\n- 链路：Client -> API Gateway（认证+限流）-> BFF（编排+聚合）-> 后端微服务。\n- API Gateway 负责横切关注点（鉴权、限流、审计日志），不包含业务编排逻辑。\n- BFF 负责「客户端需要的具体数据」——给同一个 API 的不同客户端返回不同形状的数据。\n\n**BFF 膨胀问题**：BFF 随时间推移会积累大量「本不属于它」的逻辑，变成「全能中间层」。\n- 应对：每个 BFF 只对应一个客户端（移动 BFF / Web BFF / IoT BFF），严格职责边界。\n- 拆分策略：当 BFF 代码量 > 2000 行或涉及 2 个以上业务域的编排时，拆分为子 BFF。\n\n扩展延伸：\n- GraphQL 可以作为 BFF 的一种实现——客户端声明需要的数据，BFF 解析 GraphQL 请求并聚合。\n- Uber 的「Domain Gateway」模式是 API Gateway + BFF 的进化：每个业务域有自己的入口网关，既是 Gateway 也是 BFF。\n- 「Backend for Frontend」模式并非银弹——对于小型团队（<5 人），BFF 的维护成本可能大于收益，建议用统一的 API Gateway 简化架构。",
+    "hints": [
+      "API Gateway 解决「横切关注点」——BFF 解决「客户端差异化」",
+      "BFF 膨胀的根因是「职责边界模糊」——每个 BFF 只服务一个客户端"
+    ],
+    "tags": [
+      "API网关",
+      "BFF",
+      "微服务",
+      "架构设计"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "配置中心热更新原理与实现机制",
+    "content": "配置中心是微服务架构的基础设施组件，热更新能力是其核心价值。请阐述配置热更新的实现原理，包括：\n1. 被动推送（Client Pull，如 Apollo 长轮询）和主动推送（Server Push，如 Nacos Watch）两种模式；\n2. 配置变更的原子性与一致性保障；\n3. 客户端本地缓存 + 回调刷新机制的设计要点；\n4. 热点配置（高频变化的配置项）的性能优化。",
+    "answer": "答案：\n配置热更新的核心在于「实时感知变更 + 安全刷新运行态」——既不能太慢（影响时效性），也不能太频繁（影响性能）。\n\n解析：\n**1. 推送模式对比**：\n- **长轮询（Long Polling）**：Client 发起 HTTP 请求带 version -> Server 比较 version -> 有变化立即返回 / 无变化 hang 住 30s 再超时 -> Client 重新轮询。\n  - 优点：实现简单、兼容性好（HTTP 协议）。\n  - 缺点：存在 30s 的延迟窗口（可通过缩短超时弥补，但增加 Server 连接压力）。\n  - 代表：Apollo、Spring Cloud Config。\n- **Server Push**：建立长连接（gRPC Stream / WebSocket），Server 有变化时主动推送。\n  - 优点：实时性高（毫秒级），Server 可控推送节奏。\n  - 缺点：连接管理复杂（心跳、重连、连接数）。\n  - 代表：Nacos（gRPC Push）、Etcd（Watch）。\n\n**2. 一致性与原子性**：\n- 原子变更：一个配置的多个版本 -> 通过唯一版本号确保「要么全部更新要么不变」。\n- 读写一致性：如果 Client A 刚写入配置，Client B 应在可接受时间内读到新值——使用 Version Vector 或 Lease。\n- 发布 vs 回滚：每个配置版本保留，支持一键回滚到任意历史版本。\n\n**3. 本地缓存 + 回调**：\n- 配置中心 SDK 维护内存缓存 + 本地文件缓存（备灾）。\n- 当 Server 推送/轮询到变更时 -> SDK 比较 version -> 触发注册的 Listener -> 应用执行刷新逻辑。\n- 设计要点：Listener 必须是「幂等的、可重入的、永不抛异常」——刷新失败不应阻塞下次配置更新。\n- 预热（Warm-up）：应用启动时先从本地缓存加载配置，以减少启动时的网络依赖。\n\n**4. 热点配置优化**：\n- 配置分组：高频配置（如「限流阈值」）单独分组，不与低频配置共用一个 watch。\n- Client 端去抖动（Debounce）：1s 内的多次配置变更合并为一次推送。\n- 增量推送：只推送变动的配置 Key-Value，而非全量配置。\n\n扩展延伸：\n- 配置中心的安全设计：敏感配置（数据库密码、API Key）需加密存储 + 传输加密 + 访问审计。\n- Spring Cloud 生态中 Spring Cloud Config Server + Bus + RabbitMQ/Kafka 实现配置的自动刷新。\n- 一个反模式：把运行时数据（如动态开关的流量比例）存在配置中心——配置中心不是数据库，不适合频繁写。\n- 业界参考：Apollo 的 Namespace 设计非常优秀——private/public/关联 Namespace 实现了配置的继承与覆盖。",
+    "hints": [
+      "配置热更新的关键不是「推送」本身——而是「安全地刷新运行态」",
+      "本地缓存是配置中心在高可用中的最后一道防线——Server 挂了也不影响已有配置"
+    ],
+    "tags": [
+      "配置中心",
+      "热更新",
+      "微服务配置",
+      "Apollo",
+      "Nacos"
+    ]
+  },
+  {
+    "category": "system_design_micro",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务可观测性：Metrics/Tracing/Logging 的协同设计",
+    "content": "可观测性（Observability）三大支柱——Metrics、Tracing、Logging——各有侧重。请阐述三者的核心差异与互补关系，设计一个三者协同的观测体系，并说明：\n1. 如何通过 Correlation ID / Trace ID 将三类数据关联起来；\n2. 从「收到告警」到「定位根因」的完整排查流程中，三类数据各自扮演什么角色；\n3. 在存储成本和查询性能之间如何权衡（采样策略、聚合策略）。",
+    "answer": "答案：\n三大支柱在可观测性排查链路中各司其职：Metrics 告诉我「出问题了」，Tracing 告诉我「问题在哪里」，Logging 告诉我「为什么会这样」。\n\n解析：\n**三者的核心差异**：\n- **Metrics**：时间序列聚合数据（请求延迟、错误率、吞吐量），结构化、小存储、适合图表和告警。\n- **Tracing**：每个请求的完整调用链路（跨服务的 Span 树），带延迟明细。\n- **Logging**：非结构化的文本记录，信息最丰富但查询效率最低。\n\n**关联设计——统一 Correlation ID**：\n- 入口处生成全局唯一的 Trace ID，通过 HTTP Header / gRPC Metadata 透传到所有下游服务。\n- 日志框架绑定 Trace ID -> 所有日志行自动包含 Trace ID。\n- Metrics 标签中包含 Service 级别标识，从 Tracing 的异常 Span 可定位 Service -> 查看该 Service 的 Metrics。\n- 标准：基于 OpenTelemetry（OTel）统一 SDK，自动注入 Trace ID 到日志和 Metrics。\n\n**排查流程示例**：\n1. Alert（Metrics）：P99 延迟 > 500ms -> 告警触发。\n2. 看 Dashboard（Metrics）：定位到「下单接口延迟异常」-> 排除其他服务。\n3. 看 Tracing：找到延迟最高的 Span -> 定位到「库存服务」。\n4. 看 Logging：查询该 Trace ID 的日志 -> 发现 Redis 连接超时。\n5. 看 Redis Metrics：连接池耗尽 -> 根因定位。\n\n**存储与性能权衡**：\n- 采样策略：Tracing 100% 采样 -> 存储爆炸。高流量服务用「头采样 + 尾采样」（Head-based + Tail-based Sampling）。\n- 日志分级：DEBUG 日志不入中心存储，ERROR/WARN 日志全量保留。\n- Metrics 降采样：原始 1s 粒度的 Metrics 只保留 7 天；7 天->30 天降采样为 1m 聚合；30 天+ 保留 1h 聚合。\n- 成本优化：用「自适应采样」——只在错误/慢请求时全量采样。\n\n扩展延伸：\n- 「三大支柱」的说法正在被「三种信号」取代——OpenTelemetry 的愿景是通过 OTel Collector 统一采集、处理、导出。\n- 开源方案：Prometheus（Metrics）+ OpenTelemetry（Tracing）+ Loki / ELK（Logging）。\n- 商业方案：Datadog / Grafana Cloud / New Relic 能提供跨 Metrics-Tracing-Logging 的统一查询界面。\n- 一个常见盲区：Event（事件）作为第四个支柱——Kubernetes Events、业务变更事件等对排查同样重要。",
+    "hints": [
+      "三类数据的协同靠「统一 Correlation ID」——这是可观测性的「粘合剂」",
+      "Tracing 解决「分布」问题——单机场景下 Tracing 作用有限，Logging + Metrics 就够"
+    ],
+    "tags": [
+      "可观测性",
+      "Metrics",
+      "Tracing",
+      "Logging",
+      "OpenTelemetry"
+    ]
   }
 ]

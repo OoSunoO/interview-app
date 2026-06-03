@@ -1338,5 +1338,104 @@
       "集合",
       "不可变"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentLinkedQueue 与 LinkedBlockingQueue 的并发策略对比",
+    "content": "请从并发实现策略、适用场景和性能特征三个方面对比 ConcurrentLinkedQueue 和 LinkedBlockingQueue。",
+    "answer": "ConcurrentLinkedQueue 基于 Michael-Scott 非阻塞队列算法，使用 CAS（Compare-And-Swap）操作更新头尾指针，无锁但有自旋（活锁风险）。是无界队列，不支持阻塞操作。内存开销更低，在低竞争下吞吐量极高。LinkedBlockingQueue 基于 ReentrantLock + Condition 实现阻塞语义，使用双锁（takeLock 和 putLock）分离读写以减少锁竞争。支持有界队列（指定容量），put() 和 take() 支持阻塞等待。选择建议：高吞吐低延迟、不需要阻塞的生产-消费场景用 ConcurrentLinkedQueue；需要控制生产者速度（防止 OOM）、需要阻塞等待语义的场景用 LinkedBlockingQueue。在中等以上竞争下，LinkedBlockingQueue 的阻塞机制比 CAS 自旋更节省 CPU。",
+    "hints": [
+      "CAS 自旋在高竞争下导致 CPU 空转的问题",
+      "LinkedBlockingQueue 的双锁分离如何提升并发吞吐"
+    ],
+    "tags": [
+      "并发队列",
+      "ConcurrentLinkedQueue",
+      "LinkedBlockingQueue",
+      "CAS",
+      "锁"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "TreeMap 与 NavigableMap 的范围查询方法",
+    "content": "请说明 TreeMap 的红黑树实现如何支持 NavigableMap 提供的各种范围查询方法，以及这些方法的时间复杂度。",
+    "answer": "TreeMap 底层是红黑树，每个节点有左子、右子、父节点引用和颜色标记。NavigableMap 接口提供的范围查询方法利用红黑树的中序遍历有序性：lowerKey(K) 返回严格小于的最大键（向左查找最右子节点），floorKey(K) 返回小于等于的最大键，ceilingKey(K) 返回大于等于的最小键，higherKey(K) 返回严格大于的最小键——均为 O(log n)。descendingMap() 返回逆序视图，内部通过 descendingEntryIterator 实现，不复制数据。subMap(fromKey, toKey)、headMap(toKey)、tailMap(fromKey) 返回范围视图，延迟执行，插入/删除操作会映射回原始 TreeMap。范围视图支持非对称边界（inclusive/exclusive）。TreeMap 基于 Comparable 或 Comparator 排序，key 不可为 null。",
+    "hints": [
+      "红黑树的中序遍历如何保证键的有序性",
+      "subMap 等范围视图是动态视图还是创建时的快照"
+    ],
+    "tags": [
+      "TreeMap",
+      "NavigableMap",
+      "红黑树",
+      "范围查询",
+      "排序"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Arrays.parallelPrefix 并行前缀计算原理",
+    "content": "请解释 Arrays.parallelPrefix() 的工作原理、时间复杂度和典型使用场景。",
+    "answer": "Arrays.parallelPrefix() 对数组执行就地并行前缀扫描（prefix scan）。核心算法是并行归并扫描：将数组分为若干段，每段独立计算局部前缀，然后合并段间边界值。例如计算累积和：输入 `[a1, a2, a3, a4, a5, a6]`，先分段并行计算每段前缀，然后逐段传播边界值。时间复杂度从串行 O(n) 降为 O(n/p + log p)(p 为并行度)，但受 ForkJoinPool 线程数和数组大小影响。数据量小于阈值时退化为串行。BinaryOperator 必须是关联的（associative）才能保证正确并行化。典型场景：累积和/累积乘积、霍夫曼编码中的频率累积、排序中的 rank 计算、并行基数排序的桶偏移计算、图像处理的区域积分图（integral image）等。",
+    "hints": [
+      "并行前缀扫描的算法如何分治处理",
+      "BinaryOperator 的关联性对并行结果的正确性有何影响"
+    ],
+    "tags": [
+      "Arrays",
+      "parallelPrefix",
+      "并行",
+      "前缀扫描",
+      "ForkJoinPool"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Collections.checkedList 动态类型检查机制",
+    "content": "请解释 Collections.checkedList() 的作用原理和典型应用场景，以及它解决了泛型擦除带来的什么问题。",
+    "answer": "Collections.checkedList() 返回原始 List 的类型安全视图（checked view）。原理：在每个写入操作（add、addAll、set 等）之前调用 `typeCheck()` 方法，通过 `Class.cast()` 验证元素类型。如果类型不匹配抛出 ClassCastException。解决的是类型擦除问题——泛型仅在编译期生效，运行期不保留类型信息。如果通过原始类型（raw type）绕过编译检查，如 `((List)rawList).add(\"string\")` 可以在 `List<Integer>` 中插入字符串，程序在运行时可能在其他位置抛出 ClassCastException。checkedList 在插入点就捕获了类型错误，更容易定位问题来源。checkedSet()、checkedMap()、checkedQueue()、checkedSortedSet()、checkedNavigableMap() 等方法类似。性能影响极低（仅一次 cast 检查）。常用于集合作为公开 API 参数或反序列化数据时做防御性校验。",
+    "hints": [
+      "泛型擦除后运行期如何产生堆污染（heap pollution）",
+      "checkedList 是在集合的每个写入入口做类型验证"
+    ],
+    "tags": [
+      "checkedList",
+      "类型安全",
+      "泛型擦除",
+      "防御性编程"
+    ],
+    "options": []
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Spliterator 的特性标志与拆分策略",
+    "content": "请解释 Spliterator 的 characteristics（特性标志）对 Stream API 并行执行的影响，以及 Spliterator 的拆分策略差异。",
+    "answer": "Spliterator 特性标志以 int 位掩码表示：ORDERED（有序）、DISTINCT（无重复）、SORTED（已排序）、SIZED（大小精确已知）、NONNULL（无 null 元素）、IMMUTABLE（数据源不可变）、CONCURRENT（数据源可并发修改）、SUBSIZED（子 Spliterator 也大小精确）。特性影响 Stream 管线的优化：SIZED 支持精确拆分任务，ORDERED 保证相遇顺序但限制并行优化，DISTINCT 让 distinct 操作可跳过，SORTED 让 sorted 操作可跳过。拆分策略因数据源而异：ArrayList 按索引二分（随机访问高效拆分），LinkedList 遍历到中点拆分（O(n)），HashSet 无顺序随机拆分，TreeSet 按元素范围拆分。拆分目标是在 O(1) 或 O(log n) 内完成，尽可能使任务负载均衡。当数据量低于阈值（ForkJoinPool 的公共池门限）时 trySplit() 返回 null 停止拆分。",
+    "hints": [
+      "ORDERED 特性为什么可能限制并行性能",
+      "SUBSIZED 和 SIZED 的区别是什么"
+    ],
+    "tags": [
+      "Spliterator",
+      "Stream API",
+      "并行",
+      "拆分",
+      "特性标志"
+    ],
+    "options": []
   }
 ]

@@ -1278,5 +1278,95 @@
       "卡诺图",
       "布尔代数"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "一致性哈希与虚拟节点",
+    "content": "什么是一致性哈希（Consistent Hashing）？为什么要引入虚拟节点（Virtual Nodes）？请结合分布式缓存场景解释其工作原理和优势。",
+    "answer": "答案：一致性哈希是一种将数据均匀分布到多个节点的哈希算法，节点增减时只影响少量数据重新映射。虚拟节点是每个物理节点对应多个哈希环上的位置，用于解决数据倾斜问题。\n\n解析：一致性哈希将哈希值空间组织成一个环（0~2^32-1）。服务器节点和数据 Key 都哈希到环上，数据顺时针找到最近的节点存储。节点增减时，只需迁移该节点在环上负责区间的数据，而非全量重新哈希。没有虚拟节点时，节点少且哈希分布不均匀会导致某些节点负载过高。虚拟节点为每个物理节点分配多个环上位置（如 100~200 个），使各物理节点负载更均衡。\n\n扩展延伸：一致性哈希 vs 取模哈希——取模哈希（hash(key) % N）在节点增减时几乎所有 Key 都要重新映射，缓存服务会瞬间雪崩。一致性哈希是分布式缓存（Redis Cluster、Memcached）、负载均衡和分布式数据库分片的主流方案。典型实现：Ketama 算法。虚拟节点数量的选择——太少了负载不均，太多了路由表膨胀，实践中通常每个物理节点分配 100~200 个虚拟节点。",
+    "hints": [
+      "没有虚拟节点时，少量物理节点为什么会导致数据倾斜",
+      "一致性哈希相比取模哈希在扩缩容时的核心优势"
+    ],
+    "tags": [
+      "分布式",
+      "哈希",
+      "缓存",
+      "一致性哈希"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "布隆过滤器误判率计算",
+    "content": "布隆过滤器（Bloom Filter）的误判率（False Positive）是如何产生的？误判率与哪些参数相关？请给出计算公式并解释参数选择策略。",
+    "answer": "答案：布隆过滤器的误判率来自哈希碰撞——多个元素哈希后映射到的位可能重叠，导致不存在的元素被误判为存在。误判率 p 与位数组大小 m、哈希函数个数 k、已插入元素数 n 相关。\n\n解析：近似公式 p ≈ (1 - e^{-kn/m})^k。给定 n 和期望误判率 p 时，最优哈希函数个数 k ≈ (m/n) * ln2，所需位数组大小 m ≈ -n * ln(p) / (ln2)^2。k 太少则判断精度不足，k 太多则位数组迅速填满、碰撞概率反而升高。举例：n=1000 万、期望 p=1% 时，m ≈ 9580 万 bit ≈ 114 MB，k ≈ 7。\n\n扩展延伸：布隆过滤器不支持删除元素（元素映射的位可能被其他元素共享）。扩展方案——Counting Bloom Filter（用计数器数组替代位数组支持删除）、Cuckoo Filter（支持删除且误判率更低）、布谷鸟过滤器支持删除操作。布隆过滤器在缓存穿透防御、爬虫 URL 去重、比特币 SPV 节点轻量验证等场景广泛使用。",
+    "hints": [
+      "哈希函数个数太多或太少为什么都会增加误判率",
+      "布隆过滤器为什么不能删除元素"
+    ],
+    "tags": [
+      "数据结构",
+      "哈希",
+      "概率",
+      "布隆过滤器"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "默克尔树结构与验证",
+    "content": "什么是默克尔树（Merkle Tree）？它的结构有什么特点？请解释如何用默克尔树进行高效的数据完整性验证，并举一个实际应用场景。",
+    "answer": "答案：默克尔树是一种基于哈希的二叉树（或多叉树），叶子节点存储数据块的哈希，非叶子节点存储子节点哈希的拼接哈希。根哈希（Merkle Root）唯一标识整棵树的数据状态。\n\n解析：结构如下——底部是数据块（chunk）的哈希（叶子），向上逐层拼接两个子节点的哈希并再次哈希，最终得到 Merkle Root。验证某个数据块是否被篡改时，只需提供该数据块和从叶子到根路径上的兄弟节点哈希（Merkle Proof），根哈希不变则数据未被篡改。验证复杂度 O(log n)，无需传输全部数据。\n\n扩展延伸：Merkle Tree 的核心应用——1）Git：每次 commit 的 tree 对象本质是 Merkle Tree，快速校验文件变更。2）区块链/Bitcoin：区块头只存 Merkle Root，SPV 节点通过 Merkle Proof 验证交易是否存在。3）分布式数据库（Cassandra、DynamoDB）用 Merkle Tree 做数据一致性校验和反熵修复。4）证书透明度（Certificate Transparency）用 Merkle Tree 记录所有 TLS 证书。",
+    "hints": [
+      "Merkle Proof 需要提供哪些哈希才能验证一个叶子节点",
+      "Merkle Tree 在区块链中如何帮助 SPV 节点轻量验证交易"
+    ],
+    "tags": [
+      "数据结构",
+      "哈希",
+      "区块链",
+      "安全"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LSM-Tree 合并策略：Size-Tiered vs Leveled",
+    "content": "LSM-Tree（Log-Structured Merge-Tree）的两种主要 Compaction 策略——Size-Tiered Compaction 和 Leveled Compaction——分别如何工作？各有什么优缺点？分别适用于什么场景？",
+    "answer": "答案：Size-Tiered Compaction 将大小相近的 SSTable 合并为一个更大的 SSTable；Leveled Compaction 将数据分为多层（Level 0/L1/L2...），逐层向下合并，每层大小有上限。\n\n解析：Size-Tiered——多个 SSTable 达到相同大小级别时触发合并。优点是写入放大（Write Amplification）低，简单粗放；缺点是空间放大（Space Amplification）高，且读放大严重（可能需要查多个 SSTable）。Leveled——Level 0 是内存 flush 的结果，L1 及以上每层大小按倍数增长（如 10 倍），触发时从 Li 读入 Li+1 合并。优点是空间放大低、读性能好；缺点是写入放大较高。\n\n扩展延伸：Cassandra 默认用 Size-Tiered（STCS），适合写多读少场景；Leveled Compaction（LCS）适合读多写少场景。RocksDB 使用 Leveled（L0 内部用 Size-Tiered 合并到 L1 后再用 Leveled），提供了多种 Compaction 策略调优参数。写入放大 vs 空间放大本质上是个 trade-off——Leveled 用更多写入开销换取更紧凑的存储和更好的读性能。",
+    "hints": [
+      "写入放大（Write Amplification）和空间放大（Space Amplification）分别指什么",
+      "为什么 Leveled Compaction 的读性能优于 Size-Tiered"
+    ],
+    "tags": [
+      "存储",
+      "LSM-Tree",
+      "数据库",
+      "分布式"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RAFT 协议领导者选举机制",
+    "content": "请描述 RAFT 共识协议中领导者（Leader）选举的核心机制。Term（任期）和超时（Timeout）在选举中起什么作用？如何防止分裂投票（Split Vote）？",
+    "answer": "答案：RAFT 通过领导者选举机制在集群中选出一个 Leader 来处理所有日志复制请求。时间被划分为连续递增的 Term（任期），每个 Term 最多有一个 Leader。选举通过超时机制触发——Follower 在 Election Timeout 内未收到 Leader 心跳 → 转为 Candidate → 发起投票请求。\n\n解析：选举流程——1）Follower 超时未收到心跳，增加本地 Term、转为 Candidate。2）Candidate 先投自己一票并向其他节点发送 RequestVote RPC。3）每个节点在一个 Term 内只能投一票。4）获得多数派（N/2+1）选票的 Candidate 成为 Leader。5）Leader 立即发送心跳（AppendEntries RPC）通知其他节点。分裂投票的防御——Election Timeout 在每个节点是随机的（如 150~300ms），随机化使节点超时时间错开，大概率只有一个节点先发起选举，降低分裂概率。\n\n扩展延伸：RAFT 的安全保证——一个 Term 内最多只有一个 Leader（Election Safety），Leader 拥有所有已提交日志（Leader Completeness）。Raft 相比 Paxos 的核心设计哲学是「可理解性」——把共识问题拆解为 Leader 选举、日志复制、安全性三个子问题，并限制日志只从 Leader 单向复制到 Follower。",
+    "hints": [
+      "随机 Election Timeout 为什么能降低分裂投票概率",
+      "RAFT 如何保证一个 Term 内最多只有一个 Leader"
+    ],
+    "tags": [
+      "分布式",
+      "共识",
+      "RAFT",
+      "协议"
+    ]
   }
 ]

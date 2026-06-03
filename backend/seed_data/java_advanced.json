@@ -1285,5 +1285,100 @@
       "锁",
       "偏向锁"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "FFM API 中 Linker 与外部函数调用",
+    "content": "请介绍 Foreign Function & Memory API 中 Linker 接口的角色，以及如何通过 SymbolLookup 调用 C 标准库函数。",
+    "answer": "FFM API 中 Linker 接口用于将 Java 方法签名与外部函数（C 函数）链接。核心流程：1）通过 `Linker.nativeLinker()` 获取平台 Linker；2）通过 `SymbolLookup.libraryLooker()` 或 `SymbolLookup.loaderLookup()` 查找外部符号（函数指针）；3）通过 `Linker.downcallHandle()` 将符号绑定到 MethodHandle——需要描述函数的签名（FunctionDescriptor）和内存布局（MemoryLayout）；4）使用 Arena 管理参数和返回值的内存生命周期。例如调用 C 的 `strlen`：先查找符号，构建 FunctionDescriptor（参数为 AddressLayout，返回值为 ValueLayout.JAVA_LONG），获取 MethodHandle 后在 Arena 中分配 C 字符串（使用 MemorySegment）并调用。Linker 还支持 upcall——从 C 代码回调 Java 方法。",
+    "hints": [
+      "downcallHandle 和 upcallStub 分别用于什么场景",
+      "FunctionDescriptor 如何描述 C 函数的参数和返回值类型"
+    ],
+    "tags": [
+      "FFM API",
+      "Linker",
+      "Project Panama",
+      "外部函数",
+      "SymbolLookup"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Vector API 的 Species 选择与 FMA 运算",
+    "content": "请介绍 Vector API 中 Species（向量物种）的作用，以及熔乘加（FMA）运算在数值计算中的优势。",
+    "answer": "VectorSpecies 定义了向量运算的位宽和元素类型组合，如 `FloatVector.SPECIES_256` 表示 256 位宽、可容纳 8 个 float 元素。Species 的选择需要平衡 CPU 支持（不同架构支持的 SIMD 指令宽度不同）和数据量。最佳做法是使用 `FloatVector.SPECIES_PREFERRED` 让 JIT 自动选择当前 CPU 架构的最优宽度。Vector API 支持逐元素的加减乘除运算，以及熔乘加（FMA，`v.fma(a, b)` 等价于 `v * a + b`）——FMA 在硬件层面只需一条指令（如 AVX-512 的 VFMADD），比先乘后加更快且更精确（单次舍入而非两次舍入）。Vector API 还支持 lane 操作（如 `withLane`、`lane`）、重排操作（rearrange）、比较和选择（blend）等。适合矩阵乘法、卷积、FFT 等计算密集型场景。",
+    "hints": [
+      "SPECIES_PREFERRED 在 x86 和 ARM 架构下分别对应多少位",
+      "FMA 指令减少舍入误差的原因是什么"
+    ],
+    "tags": [
+      "Vector API",
+      "SIMD",
+      "FMA",
+      "Project Panama",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "结构化并发的错误传播与任务取消",
+    "content": "请解释结构化并发中 ShutdownOnFailure 和 ShutdownOnSuccess 策略如何传播错误和取消任务，以及 StructuredTaskScope 的生命周期保证。",
+    "answer": "StructuredTaskScope 封装了结构化并发的生命周期管理。通过 try-with-resources 创建 scope，在 scope 内调用 `fork()` 提交子任务（每个子任务通常由虚拟线程执行）。scope 关闭时（try 块结束）自动等待所有子任务完成。ShutdownOnFailure 策略：任何一个子任务抛出异常时立即关闭 scope（调用 shutdown()），取消所有尚未完成的子任务，主线程在 join() 时抛出异常。ShutdownOnSuccess 策略：第一个子任务成功返回结果时立即关闭 scope，取消其他未完成子任务，主线程通过 result() 获取结果。两种策略都确保了：1）无任务泄漏——scope 关闭时未完成的子任务被强制取消；2）错误传播——异常不会无声吞没；3）取消传播——一个任务的结果或异常影响其他任务。用户还可以自定义策略。",
+    "hints": [
+      "自定义 StructuredTaskScope 策略需要实现 handleComplete 方法",
+      "shutdown() 和 close() 在取消传播中的协同方式"
+    ],
+    "tags": [
+      "结构化并发",
+      "StructuredTaskScope",
+      "错误处理",
+      "Project Loom",
+      "Java 21"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ScopedValue 的绑定生命周期与传递规则",
+    "content": "请解释 ScopedValue 的绑定（binding）生命周期机制，以及它在虚拟线程间传递数据时相比 ThreadLocal 的优势。",
+    "answer": "ScopedValue 使用 `where(key, value)` 静态方法创建绑定，通过 `run()` 或 `call()` 方法限定作用域。绑定只在 lambda 执行期间有效，退出后自动解绑。特性：1）单次写入（single shot）——绑定后值不可变，读取调用 `get()` 返回当前绑定的值；2）作用域化——绑定生命周期由方法调用栈决定，不依赖线程生命周期；3）不可变性——避免了 ThreadLocal 常见的脏读和值意外修改问题。相比 ThreadLocal 的优势：1）虚拟线程友好——ScopedValue 利用栈帧结构存储绑定，虚拟线程 context switch 时无需像 ThreadLocal 那样维护哈希表；2）无内存泄漏风险——绑定自动随作用域结束释放；3）不可变性提供线程安全保证。ScopedValue 支持跨线程边界传递：在 `run()` 内创建的虚拟线程自动继承当前绑定的 ScopedValue。",
+    "hints": [
+      "ScopedValue 在虚拟线程的 context switch 时如何实现高效传递",
+      "ThreadLocal 在虚拟线程场景下的大量线程导致的内存开销问题"
+    ],
+    "tags": [
+      "ScopedValue",
+      "ThreadLocal",
+      "Project Loom",
+      "虚拟线程",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "有序集合 SequencedCollection 与 SequencedMap",
+    "content": "请介绍 Java 21 中 SequencedCollection、SequencedSet 和 SequencedMap 接口的设计目标和新增方法。",
+    "answer": "Sequenced Collections（JDK 21 正式）为有序集合定义了标准接口。SequencedCollection 接口新增方法：`addFirst(E)`、`addLast(E)`、`getFirst()`、`getLast()`、`removeFirst()`、`removeLast()`、`reversed()`（返回逆序视图）。实现类包括 ArrayList、LinkedList、ArrayDeque 等。SequencedSet 接口继承 SequencedCollection，增加 `reversed()` 返回 SequencedSet。实现类包括 LinkedHashSet、TreeSet 等。SequencedMap 接口新增方法：`putFirst(K, V)`、`putLast(K, V)`、`firstEntry()`、`lastEntry()`、`pollFirstEntry()`、`pollLastEntry()`、`reversed()`（返回 SequencedMap 逆序视图）。实现类包括 LinkedHashMap、TreeMap 等。设计目标是消除之前访问有序集合首尾元素时的 API 不一致问题（ArrayList 没有 addFirst/getFirst，TreeMap 没有一致的逆序视图方法）。",
+    "hints": [
+      "reversed() 返回的是新集合还是原始集合的视图",
+      "SequencedCollection 如何统一 LinkedList 和 ArrayList 的首尾操作"
+    ],
+    "tags": [
+      "SequencedCollection",
+      "SequencedMap",
+      "Java 21",
+      "集合框架",
+      "API 设计"
+    ]
   }
 ]

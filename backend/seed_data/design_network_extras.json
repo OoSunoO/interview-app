@@ -1265,5 +1265,98 @@
       "Nagle",
       "延迟确认"
     ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "HTTP/3 0-RTT 握手的安全风险与防护",
+    "content": "HTTP/3 基于 QUIC 协议引入了 0-RTT 握手特性，允许客户端在恢复会话时直接发送数据，显著缩短连接建立时间。请阐述 0-RTT 的工作原理，分析其面临的主要安全风险（尤其是重放攻击），并讨论业界的防护策略及其对性能的影响。",
+    "answer": "答案：\n0-RTT 通过缓存之前会话的 TLS 参数实现零往返连接恢复，但「零往返 = 零抗重放」是其根本安全矛盾。\n\n解析：\n**0-RTT 工作原理**：\n1. 首次连接完成 1-RTT 握手后，Server 发送 session_ticket，Client 缓存该 ticket 及相关密钥材料。\n2. 再次连接时，Client 直接发送 0-RTT 数据（含加密的 early data）+ 缓存的 session_ticket。\n3. Server 验证 ticket 有效 -> 直接用之前协商的密钥解密数据 -> 0-RTT 完成。\n\n**主要安全风险**：\n- **重放攻击（Replay Attack）**：攻击者截获 0-RTT 数据包 -> 重放到多个服务实例 / 同一实例多次 -> 幂等性不足的操作被执行多次（如扣款 2 次、下单 2 次）。\n- 根本原因：0-RTT 数据没有 forward secrecy（前向安全性）——密钥由之前的 session ticket 决定，攻击者无法解密但可以重放。\n- 其他风险：中间人篡改（0-RTT 数据无 anti-replay 保护）、时序攻击。\n\n**防护策略**：\n1. **应用层幂等性（最重要的是第一道防线）**：所有 0-RTT 请求必须幂等（Idempotent）——如 GET/PUT/DELETE，不用于 POST/支付类请求。\n2. **Server 端 Replay Detection**：\n   - 记录已处理的 0-RTT ticket 的唯一标识（ClientHello.random），在「重放窗口」（通常 10s）内去重。\n   - 多实例场景用分布式缓存（Redis）共享已处理的 ticket 列表。\n3. **限制 0-RTT 数据大小**：只允许 0-RTT 发送小数据（如 HTTP GET 请求头），大请求回退到 1-RTT。\n4. **禁用 0-RTT**：对于金融级场景，完全禁用 0-RTT early data。\n\n**性能影响**：\n- 开启重放防护（尤其是分布式去重）会增加 Server 端开销。\n- 权衡：0-RTT 节省的约 1 RTT（约 20-100ms）对于全球延迟用户意义重大，但对于低频请求收益有限。\n\n扩展延伸：\n- TLS 1.3 的 0-RTT 与 QUIC 的 0-RTT 本质相同——都是利用 previous session ticket 恢复。\n- HTTP/2 不支持 0-RTT => 这是 HTTP/3 相对于 HTTP/2 在弱网环境下的核心优势之一。\n- Cloudflare 的实践表明：0-RTT 在移动端效果显著（弱网场景 1-RTT 约 200-500ms，0-RTT 可节省数百毫秒）。\n- RFC 9001（QUIC over TLS 1.3）详细规定了 0-RTT 的安全要求和限制。",
+    "hints": [
+      "0-RTT 的安全短板不在于「加密不够强」——而在于「服务端无法区分重放和正常请求」",
+      "应用层幂等是 0-RTT 安全的第一道、也是最重要的防线"
+    ],
+    "tags": [
+      "HTTP/3",
+      "0-RTT",
+      "QUIC",
+      "网络安全",
+      "重放攻击"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TCP BBR 拥塞控制算法原理与调优",
+    "content": "TCP BBR（Bottleneck Bandwidth and Round-trip propagation time）是 Google 开发的基于带宽和延迟的拥塞控制算法，与传统基于丢包的算法（如 CUBIC）有本质区别。请阐述 BBR 的核心原理（包括 Pacing Gain、ProbeBW、ProbeRTT 状态机）、为何它能在高延迟/高丢包链路上优于传统算法，以及在实际部署中可能遇到的兼容性和公平性问题。",
+    "answer": "答案：\nBBR 不把「丢包」当作拥塞信号——它通过周期性探测最大带宽和最小 RTT 来建模网络管道。\n\n解析：\n**核心原理**：\n- BBR 的核心是对网络管道的建模：BtlBW（瓶颈带宽）和 RTprop（往返传播时延）。\n- 发送速率 = Pacing Gain x BtlBW。\n- **状态机**：\n  - Startup：指数级加速发送，直到发现带宽不再增长（排空网络缓冲区）。\n  - Drain：减速排空 Startup 阶段积累的队列。\n  - ProbeBW：常态阶段——周期性上调/下调 Pacing Gain（如 1.25x 一段时间再降到 0.75x），探测是否有更多可用带宽。\n  - ProbeRTT：如果超过 10s 未测量到 min RTT -> 降低发送速率（进入 4-RTT 的 ProbeRTT）重新测量。\n\n**为什么优于传统算法**：\n- 传统丢包算法（如 CUBIC / Reno）：在有足够的缓冲区时，直到缓冲区满才丢包 -> 产生大量 bufferbloat 延迟。\n- BBR 通过带宽/延迟建模找到 optimal operating point——刚好在缓冲区填充之前。\n- 在高速、高延迟（如卫星链路、跨国传输）和高丢包（如 WiFi）场景下，BBR 显著优于 CUBIC。\n\n**部署问题**：\n- 与 CUBIC 共存的公平性：BBR 在共享瓶颈链路上可能侵占 CUBIC 流的带宽——因为 CUBIC 丢包后大幅降速，BBR 不响应丢包。\n- 多流公平性：同一链路多个 BBR 流之间较为公平，但 BBR vs CUBIC 可能不公平。\n- 交换机缓冲区溢出：BBR Startup 阶段如果过激可能导致交换机 buffer 溢出（尤其是浅 buffer 交换机）。\n\n扩展延伸：\n- BBR 的演进：BBRv1（Google 2016）-> BBRv2（增加了对丢包的适度响应，提升公平性）。\n- BBRv1 不考虑丢包 -> 在某些路由器上导致 buffer overflow 丢包 -> 重传 -> 效率反而低于 CUBIC。\n- 实际部署建议：对于公网服务，建议在 CDN 回源链路上启用 BBR（回源链路常是跨国/高延迟）；内部 IDC 链路仍可用 CUBIC。\n- Linux 内核 4.9+ 已内置 BBR 模块：`sysctl net.ipv4.tcp_congestion_control=bbr`。",
+    "hints": [
+      "BBR 的哲学转变：不把「丢包」当拥塞信号——丢包可能是无线误码而非拥塞",
+      "BBR vs CUBIC 的公平性问题：BBR 不降速 -> CUBIC 丢包降速 -> BBR 抢占更多带宽"
+    ],
+    "tags": [
+      "TCP",
+      "BBR",
+      "拥塞控制",
+      "网络性能"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "DNS over HTTPS 与 DNS over TLS 的技术对比",
+    "content": "DNS over HTTPS（DoH）和 DNS over TLS（DoT）都是为了解决传统 DNS 明文中存在的隐私和劫持问题。请对比两者在协议栈、传输方式、端口使用、应用场景和部署难度等方面的差异。并讨论为什么 DoH 比 DoT 更容易突破企业防火墙的 DNS 管控——这既是优势也是安全挑战。",
+    "answer": "答案：\nDoH 将 DNS 查询封装在 HTTPS 中（443 端口），DoT 使用独立的 TLS 连接（853 端口）。两者目标一致但实现策略不同。\n\n解析：\n**协议对比**：\n| 维度 | DoT (RFC 7858) | DoH (RFC 8484) |\n|------|---------------|---------------|\n| 传输 | 独立 TLS 连接 | HTTPS POST/GET 请求 |\n| 端口 | 853（独立端口） | 443（与 HTTPS 共用） |\n| 封装 | TLS 记录层 | HTTP/2 或 HTTP/3 帧 |\n| 实现复杂度 | 简单 | 较复杂（需 HTTP 栈） |\n| 浏览器支持 | 较少（系统级支持） | Chrome/Firefox 原生支持 |\n\n**差异化分析**：\n- **隐蔽性**：DoT 使用 853 端口 -> 企业防火墙可以识别并阻断。DoH 混在 443 端口的 HTTPS 流量中 -> 难以区分是 DNS 查询还是普通网页请求。\n- **性能**：DoH 可以复用现有的 HTTP/2 连接（0-RTT），DoT 每次查询都需建立新的 TLS 连接。\n- **缓存**：DoH 可利用 HTTP 缓存（Cache-Control），DoT 需自行实现缓存。\n- **隐私分级**：DoT 只能隐藏 DNS 查询内容，但暴露「我在用 DNS」（853 端口）；DoH 隐藏了「我在进行 DNS 查询」这一事实本身。\n\n**为什么 DoH 能突破管控**：\n- 传统 DNS 管控基于 DNS 协议特征（UDP 53 + 明文 Payload）。\n- DoT 用了 853 端口 -> 防火墙只需一条规则「block 853」即可。\n- DoH 走 443 -> 防火墙要么「允许所有 HTTPS」（无法管控 DoH），要么「中间人解密 HTTPS」（成本高且违法）。\n- **安全挑战**：企业失去了对员工 DNS 查询的可见性和管控能力——恶意软件可用 DoH 绕过 DNS 安全策略。\n\n扩展延伸：\n- DoH/DoT 不能防止 DNS 查询的 metadata 泄露——时间、量级仍是可见的。\n- DNSSEC 解决「DNS 应答的完整性」，DoH/DoT 解决「传输的私密性」，两者互补而非替代。\n- 国内情况：公共 DoH 服务（如 Alibaba DNS、腾讯 DNSPod）已有部署，但受限于网络管制政策，可用性和白名单配置需注意。\n- 推荐应用策略：企业内部网络阻断 DoH 到外部解析器 + 自建 DoH 解析器做统一管控。",
+    "hints": [
+      "DoH 的核心策略是「隐身」——把 DNS 查询藏在加密的 HTTPS 流量中",
+      "端口差异导致了「可管控性」的根本不同——443 端口无法简单阻断"
+    ],
+    "tags": [
+      "DNS",
+      "DoH",
+      "DoT",
+      "加密DNS",
+      "网络安全"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "QUIC 连接迁移机制与 NAT 穿透",
+    "content": "QUIC 协议的一个关键特性是连接迁移（Connection Migration）——当客户端的 IP 或端口发生变化时，QUIC 连接无需重建。请阐述 QUIC 连接迁移的实现原理（Connection ID 的作用、路径验证机制），分析该特性在移动端 NAT 穿透场景中的优势，并讨论连接迁移可能引入的安全风险（如反射放大攻击）。",
+    "answer": "答案：\nQUIC 的连接迁移通过「不变的 Connection ID 绑定逻辑连接」实现，配合路径验证确保迁移的安全性。\n\n解析：\n**连接迁移实现原理**：\n1. **Connection ID（CID）**：每个 QUIC 连接有唯一的 Connection ID，不依赖于 IP:Port。即使 Client 的 IP 变化（如从 Wi-Fi 切换到 4G），Server 端通过 CID 识别是同一条连接。\n2. **Path Validation**：当检测到对端地址变化时——新的路径不能立即收发数据——先发送 PATH_CHALLENGE 帧 -> 收到 PATH_RESPONSE 帧后，确认新路径可达 -> 开始使用新路径。\n3. **迁移不中断**：在路径验证期间旧路径仍然可用，数据通过旧路径继续传输。\n\n**移动端优势**：\n- 传统 TCP 遇到 IP 变化（Wi-Fi -> 蜂窝）-> 连接断开 -> 应用层重建（耗时 1-3s）。\n- QUIC 迁移无缝——新路径验证完后自动切换 -> 延迟零或极低。\n- NAT 场景：移动端经过 NAT 后 Port 可能变化 -> QUIC 通过 CID 识别连接，不受 NAT 端口变更影响。\n- 结合 0-RTT，从「移动网络断连到恢复」可在 0-RTT 内完成 -> 用户体验大幅提升。\n\n**安全风险**：\n- **反射放大攻击**：攻击者伪造源地址发送 QUIC 请求 -> Server 发送 PATH_CHALLENGE/响应到伪造地址 -> 如果响应数据远大于请求 -> 放大倍率。\n  - 防护：QUIC 的 initial 数据包大小限制（1200 bytes），Server 的响应量有严格限制。\n- **地址欺骗**：攻击者冒充 Client 新地址迁移连接 -> 需要完成路径验证（收到 PATH_CHALLENGE 后的响应）-> 不比 TCP 的序列号预测更容易。\n- **Anti-amplification**：QUIC 协议要求 Server 发送的数据量不能超过 Client 发送的数据量的 3 倍（直到 Client 地址被验证）。\n\n扩展延伸：\n- 连接迁移的「服务端无状态迁移」是个高级话题——如果连接状态在 Server 端存在内存中 -> 迁移后仍可路由到原 Server 实例。需要负载均衡器支持 CID 路由（而非四元组路由）。\n- Google 的数据表明：QUIC 连接迁移在 YouTube 移动端减少了 30%+ 的重连次数。\n- 代理场景（如 CDN）：TLS 终止后 QUIC CID 仅在 Client <-> Edge 之间有效，Edge <-> Origin 仍使用 TCP。\n- RFC 9000 和 RFC 9001 详细定义了连接迁移的协议约束。",
+    "hints": [
+      "Connection ID 是 QUIC 连接迁移的「锚」——不绑定 IP:Port 是根本原因",
+      "路径验证机制防止了「被动迁移」——不能因为你发了个包我就把连接迁到你的地址"
+    ],
+    "tags": [
+      "QUIC",
+      "连接迁移",
+      "NAT穿透",
+      "传输协议"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Anycast 在 DNS 解析与 CDN 加速中的应用",
+    "content": "Anycast 是一种将同一 IP 地址从多个地理位置同时宣告的网络技术。请阐述 Anycast 的工作原理，分析其在 DNS 解析（如 Root DNS 服务器）和 CDN 内容加速中的具体应用，对比 Anycast 与 DNS-based GSLB（全局负载均衡）在可用性、性能和运维复杂度上的差异。同时讨论 Anycast 在 BGP 层面的常见问题（如路由抖动、TCP 连接漂移）。",
+    "answer": "答案：\nAnycast 利用 BGP 路由宣告使多台 Server 共享同一 IP，用户流量自动路由到「最近的」节点——本质是利用互联网路由表实现分布式入口。\n\n解析：\n**工作原理**：\n- 多个数据中心的 Server 通过 BGP 宣告同一 IP 前缀。\n- 路由器根据 AS PATH 长度等 BGP 度量选择「最近的」路径 -> 用户流量到达最近的 Anycast 节点。\n- 关键在于：不是物理距离，而是 BGP 路由度量决定的「网络距离」。\n\n**在 DNS 中的应用**：\n- Root DNS 服务器（如 F Root、K Root）使用 Anycast——全球分布数十个节点共享 13 个 Root IP 之一。\n- 公共 DNS（如 Google 8.8.8.8、Cloudflare 1.1.1.1）Anycast 部署 -> 用户就近接入。\n- 优势：天然 DDoS 防护（流量分布到所有节点）、高可用（单节点故障不影响全局 IP）。\n\n**在 CDN 中的应用**：\n- CDN 边缘节点 Anycast -> 用户请求自动路由到最近节点。\n- 与 HTTP DNS 搭配：CDN 提供商通过 Anycast 提供 DNS 解析服务，将用户导向最优边缘节点。\n\n**Anycast vs DNS GSLB**：\n| 维度 | Anycast | DNS GSLB |\n|------|---------|----------|\n| 切换速度 | BGP 收敛秒级 | DNS TTL 分钟级 |\n| 流量调度粒度 | IP 前缀级 | 域名级 / 地区级 |\n| 节点故障检测 | BGP Keepalive | 健康检查 -> DNS 记录更新 |\n| 运维复杂度 | 需要 ASN + BGP | 只需 DNS 配置 |\n| 适用场景 | 接入层（DNS/CDN 入口） | 应用层负载调度 |\n\n**典型问题**：\n- **路由抖动（Route Flap）**：BGP 路由频繁变化 -> 全球路由器不断重新计算 -> 可用性下降。\n- **TCP 连接漂移**：不同请求分流到不同 Anycast 节点 -> TCP 连接断开（QUIC 可缓解）。\n  - 缓解：同源 IP 的请求亲和性路由（ECMP 一致性哈希）。\n- **ECMP 不均匀**：路由器 ECMP 哈希导致流量在不同节点间不均衡（哈希冲突）。\n\n扩展延伸：\n- Anycast 的「最近」可能不是实际最优——BGP 路径最短不等于网络延迟最低。\n- 与 Unicast 结合使用：CDN 的架构常是 Anycast 做 DNS 入口 + Unicast 做内容分发。\n- Cloudflare 的 Anycast 网络是世界上最大的 Anycast 部署之一——他们的经验是坚持「所有节点对所有服务都可用」（Anycast 所有的东西），消除「这个节点有服务 A 但没服务 B」的复杂性。\n- Anycast 不适用于有状态的 TCP 长连接（如 WebSocket）——这些场景建议用 DNS GSLB + L4 负载均衡。",
+    "hints": [
+      "Anycast 的本质是「利用互联网路由表做分布式入口」——不是技术在选路，是路由器在选路",
+      "Anycast 主要适用于「无状态」的接入层——DNS 查询、CDN 缓存、DDoS 防护"
+    ],
+    "tags": [
+      "Anycast",
+      "DNS",
+      "CDN",
+      "网络架构",
+      "BGP"
+    ]
   }
 ]

@@ -1519,5 +1519,127 @@
       "栈",
       "ArrayDeque"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashMap 扩容阈值的动态计算",
+    "content": "关于 HashMap 扩容阈值（threshold）的计算过程，以下描述正确的是？",
+    "answer": "答案：D) 默认 threshold = capacity × loadFactor，但首次 put 时若指定初始容量，threshold 先设为大于容量的最小 2 的幂，再重算。解析：HashMap 默认 threshold = 16 × 0.75 = 12。但构造时若指定初始容量，tableSizeFor() 方法先将 threshold 设为大于等于指定容量的最小 2 的幂（如传入 19 → 32）。首次 put 时在 resize() 中重算 threshold = newCap × loadFactor。此后每次 resize 时 threshold 都等于新容量 × 负载因子。loadFactor 默认 0.75 是空间和时间成本的折中。threshold 是 int 类型，最大值为 Integer.MAX_VALUE。",
+    "options": [
+      "A) threshold 固定为容量的一半，不受负载因子影响",
+      "B) threshold 在初始化时设为容量 × 2，防止频繁扩容",
+      "C) threshold 每次扩容后都重设为 Java 允许的 int 最大值",
+      "D) 默认 threshold = capacity × loadFactor，但首次 put 时若指定初始容量，threshold 先设为大于容量的最小 2 的幂，再重算"
+    ],
+    "hints": [
+      "tableSizeFor() 方法将任意整数转为大于等于该数的最小 2 的幂",
+      "threshold 在构造时和首次 put 后的语义有细微差别"
+    ],
+    "tags": [
+      "HashMap",
+      "扩容",
+      "threshold",
+      "负载因子"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "IdentityHashMap 的引用比较与典型应用",
+    "content": "关于 IdentityHashMap 的键比较方式和典型应用场景，以下说法正确的是？",
+    "answer": "答案：C) IdentityHashMap 使用 == 和 System.identityHashCode() 比较键，用于追踪对象身份而非内容相等性。解析：IdentityHashMap 违反 Map 接口的一般约定（使用 equals() 比较键），改用引用相等性（==）和 System.identityHashCode()。典型用途：1）序列化/深拷贝框架追踪已处理的对象引用（防止循环引用）；2）调试工具维护对象身份到元数据的映射；3）分析工具做对象引用图遍历；4）代理或 instrumentation 框架记录原始对象。IdentityHashMap 底层使用线性探测哈希表（open addressing），而非 HashMap 的拉链法。它不是通用的 Map，不适合作为常规映射使用。允许 null 键（使用特殊的 null key 标记）。",
+    "options": [
+      "A) IdentityHashMap 与 HashMap 完全相同，只是增加了线程安全特性",
+      "B) IdentityHashMap 在比较键时优先使用 equals()，如果不重写则回退到 ==",
+      "C) IdentityHashMap 使用 == 和 System.identityHashCode() 比较键，用于追踪对象身份",
+      "D) IdentityHashMap 的底层数据结构和 HashMap 一样使用拉链法"
+    ],
+    "hints": [
+      "IdentityHashMap 不适合用 equals() 比较键的场景",
+      "序列化框架利用 IdentityHashMap 追踪已遍历的对象引用"
+    ],
+    "tags": [
+      "IdentityHashMap",
+      "引用比较",
+      "序列化",
+      "线性探测"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "PriorityQueue 入队出队的时间复杂度",
+    "content": "关于 PriorityQueue 核心操作的时间复杂度，以下选项完全正确的是？",
+    "answer": "答案：B) offer()：O(log n)，poll()：O(log n)，peek()：O(1)，remove(Object)：O(n)。解析：PriorityQueue 基于二叉最小堆实现。offer() 在数组末尾插入新元素并执行 siftUp（上浮）O(log n)。poll() 移除堆顶元素并将末尾元素移到堆顶执行 siftDown（下沉）O(log n)。peek() 直接返回数组下标 0 的元素 O(1)。remove(Object) 需要线性扫描数组定位元素 O(n)，然后移除并做 siftUp/siftDown O(log n)，总体 O(n)。批量建堆（使用 Collection 构造）通过 heapify 方法在 O(n) 时间内完成。注意 PriorityQueue 不是线程安全的，线程安全版本为 PriorityBlockingQueue。",
+    "options": [
+      "A) offer()：O(log n)，poll()：O(1)，peek()：O(1)，remove()：O(log n)",
+      "B) offer()：O(log n)，poll()：O(log n)，peek()：O(1)，remove(Object)：O(n)",
+      "C) offer()：O(1)，poll()：O(log n)，peek()：O(log n)，remove()：O(1)",
+      "D) 所有操作的时间复杂度均为 O(log n)"
+    ],
+    "hints": [
+      "siftUp（上浮）和 siftDown（下沉）分别在哪些操作中使用",
+      "为什么 remove(Object) 不能直接通过索引快速定位"
+    ],
+    "tags": [
+      "PriorityQueue",
+      "二叉堆",
+      "时间复杂度",
+      "siftUp",
+      "siftDown"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "WeakHashMap 引用队列的清理机制",
+    "content": "关于 WeakHashMap 的弱引用键和引用队列（ReferenceQueue）的配合机制，以下说法错误的是？",
+    "answer": "答案：D) WeakHashMap 的 value 也被弱引用引用，因此 key 被 GC 回收后 value 会自动释放。解析：WeakHashMap 的 Entry 继承自 WeakReference，key 被弱引用包装，但 value 是强引用。当 key 被 GC 回收（仅有弱引用可达）后，WeakReference 被加入 ReferenceQueue。WeakHashMap 在每次调用 put()、get()、size() 等操作时轮询 ReferenceQueue，获取已回收的 WeakReference，清理对应的 Entry 并解除 value 的强引用。如果 value 没有被正确清理，且 value 对象内部持有对自己或 key 的强引用，可能导致 value 泄漏。设计上 WeakHashMap 适合缓存 key→value 映射，其中 key 的生命周期由外部控制。注意 value 不能直接或间接引用 key，否则 key 永远不会被回收（因为 value 到 key 的强引用链阻止了 GC）。",
+    "options": [
+      "A) WeakHashMap 的 Entry 继承自 WeakReference，key 被弱引用包装",
+      "B) WeakHashMap 每次调用 put()、get()、size() 时检查 ReferenceQueue 清理过期 Entry",
+      "C) 如果 value 持有对 key 的强引用，会导致 key 无法被 GC 回收，造成内存泄漏",
+      "D) WeakHashMap 的 value 也被弱引用引用，因此 key 被 GC 回收后 value 会自动释放"
+    ],
+    "hints": [
+      "弱引用只作用于 key，value 仍然是强引用",
+      "value 不能直接或间接强引用 key，否则弱引用机制失效"
+    ],
+    "tags": [
+      "WeakHashMap",
+      "ReferenceQueue",
+      "弱引用",
+      "内存管理"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "CopyOnWriteArrayList 快照迭代器的弱一致性",
+    "content": "关于 CopyOnWriteArrayList 迭代器的快照语义和弱一致性，以下描述正确的是？",
+    "answer": "答案：C) 迭代器创建时保存底层数组的快照引用，后续对列表的修改不会影响已创建的迭代器，也不会抛出 ConcurrentModificationException。解析：CopyOnWriteArrayList 的迭代器持有创建时底层数组的快照引用。此后对列表的 add()、set()、remove() 操作都会创建新数组副本，迭代器遍历的仍然是旧数组，因此不会抛出 ConcurrentModificationException。这种设计保证了弱一致性（weakly consistent）——迭代器保证看到创建时刻的状态，但不保证看到后续修改。迭代器不支持 remove() 操作（抛出 UnsupportedOperationException）。CopyOnWriteArrayList 适合读多写少的场景（如事件监听器列表、缓存配置），写操作（数组复制）在元素多时开销很大。",
+    "options": [
+      "A) CopyOnWriteArrayList 的迭代器在列表修改时会抛出 ConcurrentModificationException",
+      "B) 迭代器创建后，后续对列表的修改会实时反映在迭代器中",
+      "C) 迭代器创建时保存底层数组的快照引用，后续对列表的修改不会影响已创建的迭代器",
+      "D) CopyOnWriteArrayList 的迭代器支持 remove() 操作删除当前遍历的元素"
+    ],
+    "hints": [
+      "写时复制（Copy-On-Write）策略决定了迭代器的快照语义",
+      "弱一致性（weakly consistent）和强一致性的区别"
+    ],
+    "tags": [
+      "CopyOnWriteArrayList",
+      "迭代器",
+      "快照",
+      "弱一致性",
+      "写时复制"
+    ]
   }
 ]

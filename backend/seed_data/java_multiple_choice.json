@@ -1605,5 +1605,138 @@
       "Lambda",
       "函数式"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Java 标记接口的判断标准",
+    "content": "以下哪些是 Java 中的标记接口（Marker Interface）？",
+    "answer": "ABD",
+    "options": [
+      "A) java.io.Serializable",
+      "B) java.lang.Cloneable",
+      "C) java.io.Closeable",
+      "D) java.util.RandomAccess",
+      "E) java.rmi.Remote",
+      "F) java.util.EventListener"
+    ],
+    "hints": [
+      "标记接口是没有定义任何方法和常量的接口",
+      "Closeable 定义了 close() 方法，不属于标记接口"
+    ],
+    "tags": [
+      "标记接口",
+      "Java 基础",
+      "Serializable",
+      "Cloneable"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "函数式接口的正确识别",
+    "content": "以下哪些接口在 Java 中是有效的函数式接口（Functional Interface，即只有一个抽象方法）？",
+    "answer": "ACE",
+    "options": [
+      "A) java.lang.Runnable",
+      "B) java.io.Serializable",
+      "C) java.util.Comparator",
+      "D) java.beans.PropertyChangeListener",
+      "E) java.util.concurrent.Callable",
+      "F) java.lang.Iterable"
+    ],
+    "hints": [
+      "函数式接口要求恰好有一个抽象方法，Object 类的方法不计入",
+      "Comparator 虽然有两个抽象方法但 equals() 来自 Object"
+    ],
+    "tags": [
+      "函数式接口",
+      "@FunctionalInterface",
+      "Lambda",
+      "Java 8"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "允许 null 键的集合类型",
+    "content": "以下哪些集合允许将 null 作为键（key）存入？",
+    "answer": "ABD",
+    "options": [
+      "A) HashMap",
+      "B) LinkedHashMap",
+      "C) TreeMap（默认自然顺序）",
+      "D) WeakHashMap",
+      "E) ConcurrentHashMap",
+      "F) Hashtable"
+    ],
+    "hints": [
+      "需要排序的集合通常不允许 null 键",
+      "ConcurrentHashMap 的作者出于语义清晰考虑禁止 null 键"
+    ],
+    "tags": [
+      "集合",
+      "null 键",
+      "HashMap",
+      "ConcurrentHashMap",
+      "TreeMap"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "线程安全集合包装方式的识别",
+    "content": "以下哪些方式可以将非线程安全集合转为线程安全的集合？",
+    "answer": "ABE",
+    "options": [
+      "A) Collections.synchronizedList(new ArrayList<>())",
+      "B) Collections.unmodifiableList(new ArrayList<>())",
+      "C) Collections.checkedList(new ArrayList<>(), String.class)",
+      "D) new ArrayList<>() 加上 synchronized 关键字声明",
+      "E) 使用 java.util.concurrent.CopyOnWriteArrayList",
+      "F) Collections.emptyList()"
+    ],
+    "hints": [
+      "synchronizedXXX 给每个方法加锁，unmodifiableXXX 通过不可变性保证安全",
+      "checkedList 只做类型检查不做同步，emptyList 不可修改"
+    ],
+    "tags": [
+      "线程安全",
+      "同步包装器",
+      "Collections",
+      "unmodifiable",
+      "CopyOnWriteArrayList"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Java 模块系统的核心优势",
+    "content": "以下哪些是 Java 9 模块系统（JPMS / Project Jigsaw）的核心优势？",
+    "answer": "ACE",
+    "options": [
+      "A) 强封装——模块可以精确控制哪些包对外暴露，不导出的包外部无法反射访问",
+      "B) 自动提升 Java 应用程序的运行期性能",
+      "C) 可靠配置——启动时校验模块依赖图的完整性，避免运行期 ClassNotFoundException",
+      "D) 允许模块在运行期动态替换实现版本",
+      "E) 支持 jlink 工具构建包含最少模块的定制 JRE 镜像",
+      "F) 自动将类路径上的所有 jar 转为模块"
+    ],
+    "hints": [
+      "强封装和可靠配置解决了类路径地狱（JAR Hell）问题",
+      "jlink 可以裁剪 JDK 生成小型运行时镜像"
+    ],
+    "tags": [
+      "模块系统",
+      "JPMS",
+      "Project Jigsaw",
+      "Java 9",
+      "jlink"
+    ]
   }
 ]

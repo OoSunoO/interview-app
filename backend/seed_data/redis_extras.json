@@ -1273,5 +1273,97 @@
       "新特性",
       "版本"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 7 RedisJSON 与 JSONPath 查询",
+    "content": "Redis 的 RedisJSON 模块支持 JSON 数据类型。在 Redis 7 中它有哪些核心功能？JSONPath 查询如何工作？RedisJSON 相比直接存 JSON 字符串的优势是什么？",
+    "answer": "答案：RedisJSON（redisjson 模块）为 Redis 提供原生的 JSON 数据类型支持，允许对 JSON 文档的部分字段做原子读写操作，无需读取整个文档。Redis 7 还增强了 JSONPath 查询语法支持（支持 $.store.book[0].title 等路径表达式）。优势：字段级操作、减少网络传输、内置 JSONPath 查询。\n\n解析：1）核心命令——JSON.SET key $ path value（设置 JSON 值）、JSON.GET key $ path（获取指定路径的值）、JSON.DEL key path（删除路径）、JSON.ARRAPPEND/ARRPOP/ARRTRIM（数组操作）、JSON.OBJKEYS/OBJLEN（对象操作）。2）JSONPath 语法——$ 表示根节点，. 表示子节点，[] 表示数组索引或过滤器，* 表示通配符。示例：JSON.GET user:123 $ .address.city（获取城市的地址）。JSON.GET orders $ .items[?(@.price > 100)]（查询价格大于 100 的商品）。\n\n扩展延伸：3）相比存 JSON 字符串的优势——String 存 JSON：要修改一个字段需要 GET 整个 JSON -> 反序列化 -> 修改 -> 序列化 -> SET（O(N) 网络传输 + 序列化开销）。RedisJSON：JSON.SET key $ .field new_value 只传输修改部分（O(1) 大小）。4）存储效率——RedisJSON 使用二进制 JSON 格式（JSONB），比纯字符串 JSON 更紧凑且支持部分读取。5）注意事项——RedisJSON 是模块，不是 Redis 内置数据类型（需通过 Redis Stack 或单独加载模块）。JSONPath 的 $ 前缀在 RedisJSON v2（Redis 7）中是标准前缀。使用 @ 前缀引用过滤器中的当前节点属性。",
+    "hints": [
+      "RedisJSON 的 JSON.SET 和普通 Redis SET 在处理 JSON 字段修改时的网络开销差异",
+      "JSONPath 查询中 $ 和 @ 的作用分别是什么"
+    ],
+    "tags": [
+      "Redis",
+      "RedisJSON",
+      "JSONPath",
+      "Redis 7"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis TimeSeries 时序数据结构",
+    "content": "Redis TimeSeries（时序数据模块）的数据结构是什么？它解决了什么问题？TimeSeries 的压缩机制和聚合查询如何工作？",
+    "answer": "答案：Redis TimeSeries 是 Redis 的时序数据类型（Module），专用于存储和查询时间序列数据（如监控指标、传感器数据）。支持以时间范围为条件的聚合查询、自动压缩（Compaction）、保留策略（Retention）。核心数据结构是每个 key 对应一个时序序列，内部使用分块存储（Chunk）来优化写入和查询。\n\n解析：1）核心命令——TS.CREATE key（创建时序序列，可配置 retention、labels、chunk size）。TS.ADD key timestamp value（添加数据点，可选 ON_DUPLICATE 策略）。TS.RANGE key fromTimestamp toTimestamp（范围查询，支持 AGGREGATION 参数做降采样）。TS.MRANGE（多 key 范围查询，按 labels 匹配）。2）压缩（Compaction）——通过 TS.CREATERULE 创建压缩规则（如原始序列每 10 秒一个点，压缩为每 5 分钟最大值）。压缩后的数据存储在不同的 key 中（规则自动触发）。\n\n扩展延伸：3）存储优化——每个 TimeSeries 内部将数据分块存储（默认每块包含 3600 个数据点）。写入时追加到当前块，查询时跳过不相关的块。内存效率高于使用 ZSet 或 List 存储时序数据。4）聚合查询——TS.RANGE ... AGGREGATION avg 5m 表示以 5 分钟为窗口计算平均值。支持 avg、sum、min、max、range、count、first、last、std.p（总体标准差）、std.s（样本标准差）、var.p、var.s。5）适用场景——监控指标采集（CPU、内存、网络）、IoT 传感器数据、应用性能指标（APM）、实时分析。优势：相比 ZSet 存时序数据，TimeSeries 提供原生的压缩、聚合、保留策略，无需应用层实现。",
+    "hints": [
+      "TimeSeries 的 Compaction（压缩规则）是如何自动触发写入的",
+      "TimeSeries 的 Chunk 分块存储为什么能同时优化写入和范围查询"
+    ],
+    "tags": [
+      "Redis",
+      "TimeSeries",
+      "时序数据",
+      "监控"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Cluster 重新分片与槽位迁移",
+    "content": "Redis Cluster 的重新分片（Resharding）和槽位迁移（Slot Migration）是如何工作的？迁移过程中对客户端访问有什么影响？MOVED 和 ASK 重定向的区别是什么？",
+    "answer": "答案：Redis Cluster 重新分片是将部分哈希槽及其数据从源节点迁移到目标节点的过程。通过 redis-cli --cluster reshard 触发，底层使用 CLUSTER SETSLOT 命令设置槽位状态（MIGRATING/IMPORTING），通过 MIGRATE 命令逐 key 迁移数据。迁移过程中客户端可能收到 MOVED（槽位已永久迁移）或 ASK（槽位正在迁移中）重定向。\n\n解析：1）迁移流程——确定要迁移的槽位和目标节点 -> 目标节点执行 CLUSTER SETSLOT slot IMPORTING -> 源节点执行 CLUSTER SETSLOT slot MIGRATING -> 源节点遍历槽位中的 key 逐个执行 MIGRATE（原子 DUMP + DEL + RESTORE）-> 所有 key 迁移完成后通知所有节点更新槽位分配（CLUSTER SETSLOT slot NODE target_id）。\n\n2）MOVED 重定向——槽位已经永久分配给目标节点。客户端收到 MOVED 后应更新本地槽位缓存，后续请求直接发往目标节点。这是永久性重定向。3）ASK 重定向——槽位正在迁移中。客户端请求的 key 可能在源节点也可能在目标节点。客户端先向目标节点发送 ASKING 命令（仅单次有效），再发送操作命令。ASK 不更新客户端路由缓存。\n\n扩展延伸：4）迁移对性能的影响——MIGRATE 命令对每个 key 执行 DUMP（序列化数据）-> 网络传输 -> RESTORE（反序列化存入目标节点）-> DEL（从源节点删除）。批量迁移大量 key 时产生较大的 CPU 和网络开销。5）在线迁移的注意事项——迁移期间建议低峰期执行，避免大量写操作。一次迁移的 key 数量可分批进行（--cluster-slots 控制每批迁移的槽位数）。6）Redis 7.0 的改进——支持更灵活的副本迁移（replicas migration 优化），减少节点故障时的数据恢复时间。",
+    "hints": [
+      "MOVED 和 ASK 重定向在客户端处理方式上的核心区别是什么",
+      "为什么 MIGRATE 命令是原子的（DUMP + DEL + RESTORE 组合）"
+    ],
+    "tags": [
+      "Redis Cluster",
+      "重新分片",
+      "槽位迁移",
+      "MOVED",
+      "ASK"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis Pipeline 与事务的对比分析",
+    "content": "Redis Pipeline 和事务（MULTI/EXEC）有什么区别？它们可以一起使用吗？在什么场景下应该选择 Pipeline 而非事务，反之亦然？",
+    "answer": "答案：Pipeline 是网络层面的批量传输优化——将多个命令一次发送减少 RTT，不保证原子性。事务（MULTI/EXEC）是服务端层面的原子执行保证——所有命令在 EXEC 时连续执行不被其他命令打断，但不保证回滚。两者可以结合使用（Pipeline 中包含 MULTI/EXEC 命令块）。\n\n解析：核心区别——1）网络优化 vs 原子性：Pipeline 将 N 次网络往返降为 1 次，但命令之间可能插入其他客户端的命令。事务通过 EXEC 确保命令序列不被中断（原子执行），但每个命令依然单独发送（除非配合 Pipeline）。2）错误处理：Pipeline 中某个命令失败不影响其他命令的执行。事务中如果命令入队时语法错误，整个事务被拒绝；如果运行时错误（如对 string 执行 LPUSH），前面的命令已生效且不会回滚。3）返回结果：Pipeline 返回所有命令的响应数组，事务同样返回 QUEUED + EXEC 后的结果数组。\n\n扩展延伸：4）组合使用——批量执行需要原子性保证的命令：在 Pipeline 中发送 MULTI -> 命令序列 -> EXEC。这样既有 Pipeline 的网络优化（批量发送），又有事务的原子性保证。5）选择建议——只需要批量发送不要求原子性 -> Pipeline。需要命令序列原子执行但不关心网络 RTT -> 事务。两者都需要 -> Pipeline + 事务。需要条件逻辑（if/else）-> Lua 脚本（比事务更灵活）。6）性能对比——Pipeline 批量发送 100 条命令，网络开销从 100 RTT 降为 1 RTT，性能提升显著。事务本身的性能开销很小（主要在命令入队队列的管理上）。",
+    "hints": [
+      "Pipeline 和事务组合使用时命令的发送与执行顺序是怎样的",
+      "在需要原子性保证的同时还想减少网络 RTT 应该怎么做"
+    ],
+    "tags": [
+      "Redis",
+      "Pipeline",
+      "事务",
+      "MULTI/EXEC",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 键空间通知（Keyspace Notification）的投递保证",
+    "content": "Redis 的键空间通知（Keyspace Notification）机制是什么？它如何工作？键空间通知的投递保证是怎样的？有哪些限制和注意事项？",
+    "answer": "答案：键空间通知（Keyspace Notification）是 Redis 在密钥发生特定事件（如过期、删除、修改）时通过 Pub/Sub 频道发送通知的机制。通过 notify-keyspace-events 配置启用。投递保证是「即发即弃」（Fire-and-Forget）——如果订阅者不在线，通知会丢失。\n\n解析：1）启用配置——在 redis.conf 中设置 notify-keyspace-events Ex（E 表示 key 事件，x 表示过期事件）。可选事件类型：K（keyspace 事件）、E（keyevent 事件）、g（通用命令）、$（字符串命令）、l（列表命令）、s（集合命令）、h（哈希命令）、z（有序集合命令）、x（过期事件）、e（驱逐事件）、A（所有事件的别名）。2）两种频道——__keyspace@0__:keyname（接收指定 key 的所有事件）和 __keyevent@0__:eventname（接收某种事件的所有 key）。例如 SUBSCRIBE __keyevent@0__:expired 订阅所有过期事件。\n\n扩展延伸：3）投递保证——键空间通知使用 Pub/Sub 实现，不持久化、不重试。如果客户端断开连接，断开期间的所有通知永久丢失。对于需要可靠通知的场景（如缓存过期后的数据同步），应使用 Redis Stream 或外部消息队列。4）性能影响——频繁的键变更（如 TTL 大量 key 同时过期）会产生大量通知消息，可能压垮订阅者或占用网络带宽。建议只订阅需要的事件类型。5）注意事项——Redis 6.0+ 的 ACL 用户可以限制通知权限。Cluster 模式下通知只在本节点发布，不会跨节点广播。7.0+ 增加了 __keyevent@* 通配符订阅支持。6）典型应用——缓存过期后的异步数据刷新、分布式锁过期告警、TTL 到期后的状态清理任务触发。",
+    "hints": [
+      "键空间通知为什么使用 Pub/Sub 而不是 Stream——历史原因和设计取舍",
+      "大量 key 同时过期时键空间通知会产生什么问题"
+    ],
+    "tags": [
+      "Redis",
+      "键空间通知",
+      "Pub/Sub",
+      "过期事件"
+    ]
   }
 ]

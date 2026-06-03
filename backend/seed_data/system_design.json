@@ -1232,5 +1232,98 @@
       "授权",
       "安全"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CRDT 与 OT 算法在协同编辑中的对比与选型",
+    "content": "实时协同编辑技术是协作工具（如 Google Docs、Notion）的核心。请对比两种主流算法——操作转换（Operational Transformation, OT）和无冲突可复现数据类型（Conflict-free Replicated Data Type, CRDT）——的核心原理、优缺点和适用场景。如果让你设计一个新协作编辑系统，你会如何选型？",
+    "answer": "答案：\nOT 通过操作变换保证并发操作的一致性，CRDT 通过数据结构设计使合并结果对操作顺序不敏感。两者目标相同但实现路径不同。\n\n解析：\n**OT 核心原理**：\n- 每个操作经过一个「转换函数」（Transform），根据并发操作调整参数（如「在第 5 位插入 'a'」遇到「在第 3 位删除 2 字符」-> 转换为「在第 3 位插入 'a'」）。\n- 需要中心化或顺序化的操作处理架构（通常使用 Client-Server + 操作序列号）。\n- 优点：成熟，Google Docs / Microsoft Office 等使用多年。\n- 缺点：实现复杂（OT 函数的组合爆炸问题）；需要中央 server 维护操作顺序；P2P 场景困难。\n\n**CRDT 核心原理**：\n- 数据结构本身保证「合并结果 = 所有操作的 LUB（最下上界）」，与操作到达顺序无关。\n- 常见实现：RGA（Replicated Growable Array）、LWW-Register。\n- 优点：天然支持 P2P 无中心架构；合并结果确定性强；适合离线优先场景。\n- 缺点：存储开销大（需要维护元数据如 tombstone）；实现正确性验证难。\n\n**选型建议**：\n- 中心化架构（如 Google Docs）：OT 成熟可靠。\n- P2P / 离线优先（如 Figma 后期、本地优先工具）：CRDT 更适合。\n- 初期选 OT 快速上线、后期迁移到 CRDT 也是可行路径（Notion 的做法）。\n- 新系统推荐 CRDT——社区生态逐渐成熟（Yjs, Automerge），且能应对更广泛的网络场景。\n\n扩展延伸：\n- 实际工业级系统往往使用「OT + CRDT 混合」——Google Docs 的 OT 已经引入了 CRDT 式的版本向量（Version Vector）来处理分支合并。\n- Yjs（CRDT）的性能在文本编辑场景已接近 OT 级别，且天然支持 Undo/Redo（CRDT 的逆操作比 OT 简单得多）。\n- 一个常见的误解：CRDT 一定比 OT 慢——实际上 CRDT 在 P2P 场景下因为无需 coordinator，延迟反而更低。\n- 推荐阅读：「OT vs CRDT」——Martin Kleppmann 的论文综述。",
+    "hints": [
+      "OT 的核心是「操作转换函数」——它改变了操作参数来适应并发操作",
+      "CRDT 的核心是「数据结构保证」——无论操作顺序如何，合并结果一样"
+    ],
+    "tags": [
+      "协同编辑",
+      "CRDT",
+      "OT",
+      "实时协作",
+      "分布式系统"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计全球新闻推荐 Feed 系统",
+    "content": "请设计一个全球新闻推荐 Feed 系统，服务于数亿日活用户，需要聚合全球数千家新闻源的实时内容，并为每个用户生成个性化 Feed。\n要求重点阐述：\n1. 内容采集与处理管道的架构；\n2. 个性化推荐策略的分层设计（召回 -> 排序 -> 重排）；\n3. Feed 生成的实时性与性能保证。",
+    "answer": "答案：\n全球新闻 Feed 系统分为内容管道、推荐引擎和交付层三层，核心挑战在于内容的实时性和个性化之间的平衡。\n\n解析：\n**1. 内容采集与处理管道**：\n- 爬虫层：分布式爬虫集群（按地区/语言切分），使用 Kafka 作为消息缓冲。\n- 解析层：HTML 净化 -> 正文提取（Readability算法） -> 去重（SimHash / MinHash）。\n- 理解层：NLP 管线——实体识别（NER）、分类（Topic Classification）、关键词提取、摘要生成。\n- 索引层：写入 Elasticsearch（全文搜索）+ 写入 Feature Store（推荐特征）。\n\n**2. 推荐引擎**：\n- 召回：多路召回——热门召回（Global Hot）、协同过滤（协同主题）、内容召回（用户兴趣标签）、社交召回（关注的作者/媒体）、LBS 召回（本地新闻）。\n- 排序：CTR 预估模型（DeepFM / DCN V2），特征包括用户画像、新闻新鲜度、阅读历史、设备上下文。\n- 重排：多样性保证（MMR 算法）、时间衰减、地域相关性、敏感内容过滤。\n\n**3. 实时性与性能**：\n- Feed 列表预生成：活跃用户每隔 5 分钟预计算一次 Feed。\n- 热点事件实时插入：Breaking News 通过旁路通道实时注入已有 Feed 列表（置顶/第二位）。\n- CDN 边缘缓存：Feed API 结果不同用户不同 -> 用 Personalization Cache（如 Redis Cluster）而非 CDN。\n- 降级方案：如果推荐引擎不可用 -> Fallback 到基于地理位置的 Trending 列表。\n\n扩展延伸：\n- 反过滤气泡：需要显式引入「探索式推荐」（Exploration），如 10% 的推荐来自用户兴趣之外的内容。\n- 时效性处理：News Freshness 不同于电商——一条 2 小时前的新闻可能已经过时，需要「Time-decay factor」。\n- 合规要求：GDPR 要求用户可关闭个性化推荐（「Non-personalized feed」模式）。\n- 业界参考：Google News 使用「Story Detection」技术将同一事件的多个来源聚合为一条「维基百科式」的故事卡片。",
+    "hints": [
+      "新闻推荐的特殊性在于时效性——一条新闻的「半衰期」可能只有几小时",
+      "多路召回是关键——单纯协同过滤无法处理新新闻的冷启动"
+    ],
+    "tags": [
+      "Feed流",
+      "推荐系统",
+      "系统设计",
+      "新闻",
+      "个性化"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计实时竞价广告系统",
+    "content": "实时竞价（Real-Time Bidding, RTB）是在线广告的核心技术。请设计一个 RTB 广告系统，支持百万级 QPS 的竞价请求，要求：\n1. 画出核心流程（从用户访问媒体到广告展示）；\n2. 阐述竞标引擎（Auction Engine）的关键设计；\n3. 说明反作弊和流量质量控制的策略。",
+    "answer": "答案：\nRTB 系统要求在 100ms 内完成一次从曝光请求到竞价决策的完整流程，涉及 DSP、SSP、Ad Exchange 多方协作。\n\n解析：\n**1. 核心流程**：\n用户打开媒体页面 -> SSP/Ad Server 发出曝光请求 -> Ad Exchange 发起竞价 -> DSP 接收请求并计算出价 -> Auction Engine 选择获胜者 -> 获胜广告返回媒体 -> 广告展示 -> 后续上报展示/点击事件。\n\n**2. 竞标引擎关键设计**：\n- 竞价模型：最常用的是第二价格拍卖（GFP/GSP）——出价最高的获胜但支付第二高价。\n- 实时性：竞价从发起到结果返回通常要求 < 100ms。\n  - 使用预加载的「出价模型」（离线训练 CTR/CVR 预估模型）。\n  - 频次控制用 Redis + Lua Script（原子化扣减）。\n  - 预算控制：Pacing 算法在时间维度均匀消耗预算（如 PID Controller 调控出价因子）。\n- 动态出价：DSP 根据用户画像、上下文、广告主预算约束实时计算最优出价。\n\n**3. 反作弊策略**：\n- 无效流量检测：IP/Device ID 去重、User-Agent 合法性校验、JS SDK 验证（非 Server 端伪造）。\n- 点击质量：过滤机器点击（行为模式分析 + 时间分布异常检测）、安装归因验证。\n- 广告可见性：使用 viewability SDK 确保广告真的在可视区域内。\n- 实时拦截层：在竞价入口处用 Bloom Filter 过滤已知恶意 Publisher/DSP。\n\n扩展延伸：\n- Head Bidding / PreBid 模式：在 Ad Exchange 发起正式竞价前，媒体先向多个 DSP 询价，打破 Google AdX 的垄断优势。\n- Privacy Sandbox（Google）：后 Cookie 时代的 RTB 替代方案——Topics API 替代用户画像精确匹配。\n- Federated Learning of Cohorts（FLoC -> Topics）：在不暴露个体信息的前提下实现兴趣定向。\n- 数据方向：RTB 日志量通常是 TB/天级，需要差异化的离线（模型训练）和实时（出价计算）管道。",
+    "hints": [
+      "RTB 的时延是生命线——100ms 内完成一切，因此出价决策无法在线用大模型推理",
+      "广告系统的收入最大化本质是受约束的优化问题：给定预算，最大化总转化价值"
+    ],
+    "tags": [
+      "实时竞价",
+      "广告系统",
+      "RTB",
+      "系统设计"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计分布式文件系统",
+    "content": "请设计一个分布式文件系统，类似 GFS（Google File System）或 HDFS，支持存储 PB 级数据。重点阐述：\n1. 系统架构与核心组件（NameNode/DataNode 的角色和选主机制）；\n2. 数据分片与副本策略；\n3. 读写流程及一致性模型；\n4. 故障恢复机制。",
+    "answer": "答案：\n分布式文件系统采用主从架构，通过数据分片、多副本和心跳检测实现高可靠性和高吞吐。\n\n解析：\n**1. 架构与组件**：\n- NameNode（Master）：管理文件系统元数据（命名空间、文件到 Block 的映射）。\n  - 高可用：Active-Standby 模式（如 ZK / Raft 选主），共享元数据存储（如 BookKeeper / JournalNode）。\n- DataNode（Worker）：实际存储数据块，定期向 NameNode 发送心跳+块报告。\n\n**2. 数据分片与副本**：\n- 文件被切分为固定大小的 Block（GFS 64MB，HDFS 128MB）。\n- 每个 Block 默认 3 副本，放置在至少 2 个不同机架（Rack Awareness）——保证机架级容错。\n- 块放置策略：一个副本在本机架，一个在另一个机架，第三个在同另一个机架的不同节点。\n\n**3. 读写流程**：\n- 读：Client 请求 NameNode -> 获取 Block -> DataNode 列表 -> 选择最近节点读取。\n- 写：Client 请求 NameNode 分配 Block -> 建立 Pipeline（Client -> DN1 -> DN2 -> DN3）-> 数据流式复制。\n- 一致性：追加写入（append）为主，不支持随机写入。同一时刻只有一个写入者时保证一致性。\n\n**4. 故障恢复**：\n- DataNode 故障：NameNode 从副本列表中移除故障节点 -> 低于目标副本数的 Block 进入「重新复制」队列。\n- NameNode 故障：Standby NameNode 接管，从 JournalNodes 回放 EditLog。\n- 数据完整性：每个 Block 附带 Checksum，读取时验证 -> 损坏时从其他副本恢复。\n\n扩展延伸：\n- 现代替代方案：Ceph（去中心化架构，无单点 NameNode）、MinIO（S3 兼容的轻量方案）。\n- GFS 的演进：GFS -> Colossus（解除了 1TB ~ 10K QPS 的制约）-> 不再有单 NameNode 瓶颈。\n- HDFS 的典型读/写性能：写入瓶颈在磁盘和网络带宽（而非 CPU 或内存）。\n- 小文件问题：大量小文件（< Block Size）会导致 NameNode 内存爆炸——解决方案是 SequenceFile / HAR / 合并写入。",
+    "hints": [
+      "核心设计哲学：大文件、批量读取、追加写为主——GFS 是为 Google 搜索索引批量生成设计的",
+      "NameNode 是系统的单点瓶颈——所有元数据存在内存中，文件数量受限于内存大小"
+    ],
+    "tags": [
+      "分布式文件系统",
+      "GFS",
+      "HDFS",
+      "系统设计"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计全球音视频通话系统",
+    "content": "请设计一个全球音视频实时通话系统，支持多人视频会议，类似 Zoom 或 Google Meet。重点阐述：\n1. 信令服务与媒体流分离的架构；\n2. 全球路由与网络质量优化（包括抗丢包、动态码率）；\n3. 多人通话的架构选型（SFU/MCU/P2P 的选择）；\n4. 大房间场景下的性能挑战及解决方案。",
+    "answer": "答案：\n全球音视频系统采用「信令-媒体分离」架构，通过 SFU 实现多人通话，并利用全球边缘网络优化传输质量。\n\n解析：\n**1. 信令与媒体分离**：\n- 信令服务（WebSocket/HTTP）：处理房间管理、用户入/离、媒体协商（SDP 交换）、踢人/静音等控制面。\n- 媒体服务（RTP/RTCP 流）：实际音视频数据不经过信令服务器，直接通过媒体节点转发。\n\n**2. 全球路由与网络优化**：\n- 边缘节点：全球部署媒体转发节点（Media Relay），用户接入最近的节点。\n- 抗丢包：FEC（前向纠错）+ NACK（重传请求）+ 带宽估计（GCC / WebRTC 算法）。\n- 动态码率：根据网络状况自动调整编码参数（Simulcast——同时发送多个分辨率流让接收方选择）。\n- ICE/STUN/TURN：NAT 穿透框架，TURN 作为最后备选（Relay 模式）。\n\n**3. 多人通话架构**：\n- **P2P（Mesh）**：每人与 n-1 人直连，上行带宽 O(n)。只适用于 2-4 人。\n- **MCU（Multipoint Control Unit）**：中心节点混流为一路 -> 发给所有人，下行恒定，服务器解码-混合-编码压力大。\n- **SFU（Selective Forwarding Unit）**：中心节点不混流，只选择性转发。接收方可选要谁的流（大窗显示当前说话人）。\n  - 首选方案：Zoom/Google Meet 都使用 SFU。\n\n**4. 大房间挑战（50+ 人）**：\n- 服务器带宽：每个发布者上行 1 路 -> SFU 下行为 O(n) 路。需要智能带宽分配。\n- 音视频布局：只显示当前活跃说话人（Active Speaker Detection）+ 缩略图轮播。\n- 屏幕共享：使用独立的 Simulcast 流，专用带宽分配。\n- 降级策略：CPU 过载时降低入流分辨率，网络拥塞时丢弃非活跃人的视频流。\n\n扩展延伸：\n- WebRTC 是行业标准，但大规模场景仍需专用 Media Server。\n- Zoom 的独特优势：自研编码器（低码率高质量）+ 分布式 SFU 架构 + 强 FEC 策略（在 30% 丢包率下仍可用）。\n- 在弱网环境下（如移动网络），音频质量优化比视频更紧迫——Opus 编码器 + RED（冗余）是标配。\n- 延迟预算：系统设计中通常按「唇音同步 < 200ms」，「可通话 < 500ms」，「超过 1s 不可接受」。",
+    "hints": [
+      "音视频系统的核心指标是「延迟 vs 质量」的权衡——没有无限带宽",
+      "多人通话的扩容瓶颈在 SFU 的出站带宽，而非入站带宽"
+    ],
+    "tags": [
+      "音视频通话",
+      "WebRTC",
+      "SFU",
+      "系统设计",
+      "实时通信"
+    ]
   }
 ]

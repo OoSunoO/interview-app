@@ -1267,5 +1267,95 @@
       "描述器",
       "面向对象"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python GIL 在 I/O 与 CPU 密集场景下的释放行为",
+    "content": "Python 的 GIL（全局解释器锁）在 I/O 密集型任务和 CPU 密集型任务中分别如何表现？什么时候 GIL 被释放，什么时候一直持有？请解释 GIL 的释放机制（check interval / eval breaker）。",
+    "answer": "答案：GIL 在 I/O 操作前会主动释放——因为 I/O 等待不涉及 Python 对象操作，释放 GIL 让其他线程运行。CPU 密集型任务（纯 Python 循环/计算）会持续持有 GIL，必须等待 sys.setswitchinterval 设置的检查点（每 5ms 或特定字节码指令数）才尝试切换线程。\n\n解析：释放机制——CPython 通过「eval breaker」机制处理 GIL 切换。每执行一定数量的字节码指令（早期是 100 条 tick，现在基于超时），主线程会检查是否有其他线程在等待 GIL，如果有则释放 GIL 并让出。但 CPU 密集线程在两次检查之间一直持有 GIL，所以多线程做计算无法并行——4 个线程算质数，用户态 CPU 总时间仍然是 1 核的（实际加上切换开销可能更慢）。I/O 密集则不同：执行 socket.recv()、文件读写、数据库查询等操作时，C 级别的 I/O 函数会调用 Py_BEGIN_ALLOW_THREADS 宏显式释放 GIL，操作完成后再通过 Py_END_ALLOW_THREADS 重新获取。\n\n扩展延伸：数线程用多线程做 HTTP 请求（I/O 密集型），阻塞时间远大于计算时间，GIL 释放后其他线程可继续发送/接收请求。C 扩展和 GIL——通过 CPython C API 手动释放 GIL 可实现真正的并行，Cython 中用 nogil 声明函数不持有 GIL。Python 3.13 实验性的自由线程模式（--disable-gil）去掉了 GIL，但每个对象的引用计数操作需要更细粒度的锁，单线程性能会下降 5~15%。",
+    "hints": [
+      "为什么 I/O 操作前 GIL 会被释放而纯 Python 计算不会",
+      "Python 3.13 的去 GIL 实验为什么会导致单线程性能下降"
+    ],
+    "tags": [
+      "Python",
+      "GIL",
+      "并发",
+      "CPython"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 元类实战与 __init_subclass__ 替代方案",
+    "content": "Python 元类（Metaclass）有哪些实际应用场景？__init_subclass__ 是什么、它与元类有什么关联？在什么情况下你应优先使用 __init_subclass__ 而不是自定义元类？",
+    "answer": "答案：元类的典型应用——ORM 模型定义（Django/SQLAlchemy 的 Model 基类通过元类自动注册表映射）、单例模式、类注册表、API 校验（自动为子类添加校验逻辑）。__init_subclass__ 是 Python 3.6 引入的 hook，在父类被继承时自动调用，是元类的轻量替代方案。\n\n解析：元类本质——元类是创建类的类。type('MyClass', (Base,), {'attr': value}) 等同于 class MyClass(Base): attr = value。自定义元类继承 type 并覆盖 __new__ 或 __init__。场景举例——Django Model 的元类在类创建时读取 fields 定义并自动生成数据库表映射、validators 等。__init_subclass__——在父类上定义了此类方法后，任何子类定义时都会自动调用它（子类作为参数传入）。比元类简单得多，只需覆盖一个方法而无需理解完整的元类机制。\n\n扩展延伸：何时用 __init_subclass__ vs 元类——1）只需在子类创建时做一些配置/注册 → __init_subclass__，如自动注册所有子类到工厂。2）需要修改子类的类体（如添加方法、修改属性）→ 元类（因为 __init_subclass__ 调用时类已经创建完成）。3）需要拦截属性访问等更底层操作 → 元类。缺陷——元类冲突问题：如果一个类继承了两个有不同元类的父类，会引发 TypeError（除非手动组合元类），__init_subclass__ 无此问题。",
+    "hints": [
+      "__init_subclass__ 和元类在调用时机上有什么区别",
+      "什么情况下 __init_subclass__ 无法替代元类"
+    ],
+    "tags": [
+      "Python",
+      "元类",
+      "Metaclass",
+      "OOP"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "asyncio 事件循环实现：SelectorEventLoop 与 ProactorEventLoop",
+    "content": "Python asyncio 在不同操作系统上使用的事件循环实现有什么不同？SelectorEventLoop 和 ProactorEventLoop 分别基于什么系统调用？为什么 Windows 上 ProactorEventLoop 是更好的选择？",
+    "answer": "答案：SelectorEventLoop 基于 selectors 模块（底层使用 epoll/Linux、kqueue/macOS、select/Windows），是「就绪通知」模型——内核通知应用可以读/写了，应用再去执行操作。ProactorEventLoop 基于 Windows I/O Completion Ports (IOCP)，是「完成通知」模型——内核完成读写操作后通知应用结果。\n\n解析：SelectorEventLoop（Unix 默认）——使用 select/poll/epoll/kqueue 等 I/O 多路复用机制。应用注册感兴趣的文件描述符和事件类型，事件循环调用 select() 等待事件就绪，就绪后回调执行实际读写。epoll（Linux）和 kqueue（macOS/BSD）性能好。但在 Windows 上 select 只能处理 socket，不支持普通文件/管道。ProactorEventLoop（Python 3.8 起 Windows 默认）——使用 Windows IOCP，subprocess 也通过 IOCP 支持。IOCP 是真正的异步 I/O：应用发起 ReadFile/WriteFile 后立即返回，I/O 操作由内核完成，完成后将结果放入完成端口，事件循环从完成端口取结果。不存在类似 epoll 「就绪后还要应用自己读」的问题。\n\n扩展延伸：Python 3.10+ 在 Unix 上也开始支持基于 IOCP 思想的实验性 Proactor 实现。asyncio 运行时会根据平台自动选择事件循环（通过 PlatformEventLoop）。在 Linux 上，asyncio 事件循环还支持 subprocess 的进程间通信管道监控。自定义事件循环——可以继承 BaseEventLoop 实现自己的调度器，但绝大多数情况不需要。uvloop 是第三方高性能事件循环实现（基于 libuv，Node.js 用的也是 libuv），在 Unix 上可替换 asyncio 默认循环，性能提升 2~4 倍。",
+    "hints": [
+      "「就绪通知」和「完成通知」两种模型在并发处理上的本质区别",
+      "uvloop 为什么比 Python 内置的事件循环更快"
+    ],
+    "tags": [
+      "Python",
+      "asyncio",
+      "事件循环",
+      "I/O"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 描述符协议：__get__ / __set__ / __delete__ 详解",
+    "content": "请解释 Python 描述符（Descriptor）协议中 __get__、__set__、__delete__ 三个方法的作用和调用时机。什么是数据描述符和非数据描述符？property、classmethod、staticmethod 是如何利用描述符实现的？",
+    "answer": "答案：描述符协议定义了一个对象如何管理另一个类的属性访问。__get__(self, instance, owner) 在访问属性时调用，__set__(self, instance, value) 在赋值时调用，__delete__(self, instance) 在 del 属性时调用。只定义了 __get__ 的是非数据描述符，同时定义了 __get__ 和 __set__（或 __delete__）的是数据描述符。数据描述符的优先级高于实例属性字典。\n\n解析：属性查找链优先级——数据描述符 > 实例属性（__dict__）> 非数据描述符。为什么要区分？因为非数据描述符优先级低于实例属性，所以才允许相同名称的实例属性覆盖方法——这正是方法的查找机制：函数对象是非数据描述符（实现了 __get__ 绑定实例），但实例变量名可以同名覆盖方法。property 实现——property 是一个数据描述符，__get__ 执行 getter 函数，__set__ 执行 setter 函数。classmethod——是一个非数据描述符，__get__ 返回绑定到类的 bound method（第一个参数是 cls 而非 self）。staticmethod——也是非数据描述符，__get__ 原样返回被包装的函数，不做绑定。\n\n扩展延伸：描述符是 Python 底层的核心机制——方法（function）自动绑定到实例就是通过描述符协议实现的。@property、@classmethod、@staticmethod 都是描述符的语法糖。Django ORM 的 Field 字段也是描述符——在 Model 实例上访问字段属性时自动执行数据库查询。描述符 vs __getattr__/__getattribute__——描述符管理的是「类属性」级别，定义在类上的描述符对象才能拦截属性访问；__getattribute__ 是实例级别的属性访问拦截器，优先级在所有常规查找之上。",
+    "hints": [
+      "函数（function）为什么在作为类属性时访问会返回 bound method",
+      "数据描述符为什么优先级高于实例属性字典"
+    ],
+    "tags": [
+      "Python",
+      "描述符",
+      "Descriptor",
+      "OOP"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 导入系统：sys.meta_path 与查找器/加载器",
+    "content": "请解释 Python 的导入系统是如何工作的。sys.meta_path 中的 Finder（查找器）和 Loader（加载器）分别起什么作用？如何实现一个自定义导入钩子（Import Hook）？",
+    "answer": "答案：Python 的 import 语句按以下流程工作——1）检查 sys.modules 缓存。2）遍历 sys.meta_path 中的 Finder 对象，调用 find_spec(fullname, path, target=None) 查找模块规格（ModuleSpec）。3）如果 Finder 返回了 ModuleSpec，调用其中的 Loader 执行模块加载（执行代码、创建模块对象）。4）将模块存入 sys.modules。5）返回模块。\n\n解析：sys.meta_path 默认包含三个 Finder：1）BuiltinImporter——导入内置模块（如 sys、math），直接加载 C 扩展。2）FrozenImporter——导入冻结模块。3）PathFinder——基于 sys.path 的文件系统查找器，负责在磁盘路径中定位 .py/.pyc/C 扩展模块。每个 Finder 返回 ModuleSpec 对象（包含 name、loader、origin、submodule_search_locations 等）。Loader 的 exec_module(module) 负责真正执行模块代码并填充 module.__dict__。\n\n扩展延伸：自定义导入钩子的实现——编写一个实现了 find_spec 的类，将其加入 sys.meta_path 开头（优先于默认查找器）。典型用途：1）从 ZIP/数据库/网络导入模块（如 zipimporter）。2）自动转换导入代码（如文件加载时自动用 Babel 转译）。3）虚拟模块——在运行时生成伪模块提供功能。需要注意的陷阱——sys.modules 的操作需要谨慎，导入失败时需 pop 移除避免半初始化模块继续存在。Python 3.10 起添加了 importlib.resources 替代 pkg_resources，用于访问包内资源文件而不依赖 __file__。",
+    "hints": [
+      "sys.meta_path 中的 PathFinder 是如何遍历 sys.path 的",
+      "自定义导入钩子为什么需要放在 sys.meta_path 开头"
+    ],
+    "tags": [
+      "Python",
+      "导入",
+      "Import",
+      "模块"
+    ]
   }
 ]

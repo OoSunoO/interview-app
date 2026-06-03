@@ -1244,5 +1244,99 @@
       "VFS",
       "文件系统"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux cgroups v2 统一层级结构详解",
+    "content": "Linux cgroups v2 相比 cgroups v1 有哪些核心改进？v2 的统一层级（Unified Hierarchy）是什么意思？资源控制器（Controllers）在 v2 中如何工作？cgroups v2 对 Kubernetes 等容器编排系统有什么影响？",
+    "answer": "答案：cgroups v2（Linux 4.5+，5.2+ 生产推荐）将 v1 中分散的多个层级（每类资源一个层级树）合并为单一的统一层级树（Unified Hierarchy）。同一个进程属于一个 cgroup，在该 cgroup 下控制所有资源（CPU/内存/IO/PID 等）。v2 引入了更严格的层级规则：一个控制器只能在子 cgroup 中启用，如果父 cgroup 启用了某个控制器但子 cgroup 不启用，则不能越过父级去操控孙级。\n\n解析：1）v1 的问题——每种资源控制器有自己的层级树（如 /sys/fs/cgroup/cpu/、/sys/fs/cgroup/memory/ 等独立目录）。一个进程可以在多个不同层级的 cgroup 中，导致资源控制混乱。例如：进程可以在 cpu 控制组 A 和 memory 控制组 B。v2 统一所有控制器到一个目录树（/sys/fs/cgroup/），进程属于唯一 cgroup。\n\n2）v2 的控制器管理——cgroup.controllers：显示该 cgroup 可用的控制器。cgroup.subtree_control：设置子 cgroup 启用的控制器。父子约束：父 cgroup 启用某控制器后子 cgroup 才能启用。非叶节点：非叶 cgroup 只能通过 subtree_control 控制子 cgroup 的资源分配，不能直接对其自身限制资源（只能设置资源分配权重）。\n\n扩展延伸：3）cgroups v2 的改进——IO 控制器（io.weight/io.max）支持更精细的 IO 限制（读写分别限制，支持 IOPS 和带宽）。内存控制器（memory.current/memory.min/memory.max）支持内存回收优先级（memory.low/memory.min）。PSI（Pressure Stall Information，/proc/pressure/）：提供 CPU/内存/IO 的压力指标，容器编排系统可根据压力值做调度决策。4）对 Kubernetes 的影响——Kubernetes 1.24+ 推荐使用 cgroups v2（containerd/runc 已适配）。v2 的 PSI 使得节点压力感知更精准，推动更好的调度和驱赶策略。\n\n5）查看 v2 状态——stat -c %T -f /sys/fs/cgroup/ 显示 cgroup2_fs 表示使用 v2。grep cgroup /proc/filesystems 查看支持情况。",
+    "hints": [
+      "cgroups v1 的多层级树设计和 v2 的统一层级树在管理上最本质的区别",
+      "PSI（Pressure Stall Information）对容器调度有什么实用价值"
+    ],
+    "tags": [
+      "Linux",
+      "cgroups",
+      "cgroups v2",
+      "容器",
+      "资源隔离"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux PID/Network/Mount 命名空间隔离原理",
+    "content": "Linux 的命名空间（Namespace）是实现容器隔离的基础。请分别解释 PID Namespace、Network Namespace、Mount Namespace 的隔离机制。容器启动时这些命名空间是如何创建的？",
+    "answer": "答案：PID Namespace 隔离进程 ID（容器内只能看到自己的进程），Network Namespace 隔离网络栈（容器有自己的网络接口和路由表），Mount Namespace 隔离挂载点（容器有自己的文件系统视图）。容器运行时（如 runc）通过 clone() 系统调用并传入 CLONE_NEWPID|CLONE_NEWNET|CLONE_NEWNS 等标志创建隔离环境。\n\n解析：1）PID Namespace——在 PID Namespace 内，进程的 PID 从 1 开始（init 进程）。子 Namespace 中的进程在父 Namespace 中有映射的 PID。init 进程（PID=1）负责回收僵尸进程。使用 unshare(CLONE_NEWPID) 创建新 PID 命名空间。特点：容器内看不到宿主机进程，宿主机可以看到容器内所有进程。\n\n2）Network Namespace——每个 Network Namespace 有独立的网络接口（lo/eth0）、IP 地址、路由表、iptables/ nftables 规则。容器网络通过 veth pair（虚拟网卡对）连接到宿主机网桥（docker0/cni0）。NR = CLONE_NEWNET。容器通信通过网桥转发或 Overlay 网络（VXLAN）。\n\n3）Mount Namespace——隔离文件系统的挂载点。容器启动时使用 rootfs（镜像层 + 可写层）作为根文件系统，通过 pivot_root 或 chroot 切换到新的根。/proc 和 /sys 等虚拟文件系统也会重新挂载。Mount Propagtion：shared/slave/private/unbindable 控制挂载事件是否传播到其他 Namespace。\n\n扩展延伸：4）各 Namespace 的创建方式——clone()：创建新进程并指定命名空间标志。unshare()：将当前进程移出到新命名空间。setns()：将进程加入已存在的命名空间。5）完整隔离的容器需要 6+2 个命名空间：PID/Network/Mount/UTS（主机名）/IPC（进程间通信）/User（用户 ID）+ cgroup v2 Namespace + Time Namespace。6）注意——User Namespace 的 ID 映射（uid_map/gid_map）允许容器内以 root（uid=0）运行但实际映射到宿主机非特权用户，增加安全性。",
+    "hints": [
+      "PID Namespace 中 PID=1 的进程在容器中的特殊角色是什么",
+      "veth pair 如何实现容器和宿主机之间的网络通信"
+    ],
+    "tags": [
+      "Linux",
+      "Namespace",
+      "容器",
+      "隔离",
+      "PID",
+      "Network"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "strace vs ltrace vs perf 追踪工具对比",
+    "content": "Linux 系统中有多种追踪/分析工具。请对比 strace、ltrace、perf trace 的底层实现原理和适用场景。什么场景下应该使用 strace，什么场景下应该使用 perf？它们的性能开销有什么差异？",
+    "answer": "答案：strace 基于 ptrace 系统调用拦截所有系统调用和信号，ltrace 拦截库函数调用（通过设置 PLT 断点），perf trace 基于 perf_event 子系统（Linux 内核的采样和追踪框架）。性能开销：strace 最大（一次 ptrace 上下文切换约 1-5 微秒），perf 最小（在内核中采样，几乎零开销）。\n\n解析：1）strace——原理：使用 ptrace(PTRACE_SYSCALL, ...) 在系统调用的进入和退出时暂停目标进程，读取寄存器状态获取系统调用号和参数。每次系统调用产生 2 次 ptrace 停靠（进入和退出）。开销：每次系统调用附加约 1-5 微秒开销，高系统调用频率的程序性能下降可达 10-100 倍。适用：排查系统调用错误（EACCESS/ENOENT）、定位文件读写问题、性能问题初步分析。\n\n2）ltrace——原理：在共享库（如 libc.so）的 PLT（Procedure Linkage Table）入口设置断点（通过 ptrace），监视库函数调用。不适合：静态链接程序、使用非标准库的程序。适用性较 strace 更局限（现代软件大多使用直接系统调用而非 libc 包装函数）。基本已被 strace 和 perf 替代。\n\n3）perf trace——原理：使用内核的 tracepoints（静态跟踪点）和 kprobes/uprobes（动态探针），通过 perf_event_open() 系统调用读取内核环形缓冲区中的追踪数据。开销极低（接近零，因为数据在内核中采样后通过 mmap 读取）。适用：性能分析（CPU 采样、上下文切换、Page Cache 命中率、系统调用频率统计），高频率系统调用的追踪。\n\n扩展延伸：4）选择建议——快速定位程序崩溃或系统调用错误 -> strace（最简单直接）。性能分析和热点追踪 -> perf（开销极小，数据丰富）。混合使用：先用 perf top/record 找出热点函数，再用 strace -p 跟踪具体系统调用。5）高级用法——strace -e trace=network（只追踪网络相关系统调用）、strace -c（统计系统调用次数和时间）、perf trace -e syscalls:sys_enter_openat（追踪特定的 tracepoint）。6）替代工具——bpftrace（基于 eBPF，开销更低，可编程性更强）、SystemTap（功能强大但部署复杂）。",
+    "hints": [
+      "为什么 strace 在高频系统调用程序中会导致性能急剧下降",
+      "perf trace 如何做到比 strace 开销低几个数量级"
+    ],
+    "tags": [
+      "Linux",
+      "strace",
+      "perf",
+      "调试",
+      "性能分析"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "systemd 单元依赖关系与启动顺序管理",
+    "content": "systemd 如何管理单元（Unit）之间的依赖关系和启动顺序？Unit 的 After/Before/Requires/Wants/PartOf 等指令的区别是什么？如何处理循环依赖？systemd 的并行启动是如何实现的？",
+    "answer": "答案：systemd 通过声明式依赖指令在 Unit 文件中定义启动顺序和执行条件。After/Before 控制启动顺序（时序依赖），Requires/Wants 控制依赖关系（功能性依赖），PartOf 控制集合关系。systemd 使用事务解决依赖关系，在激活一个 Unit 时自动激活其依赖项，遇到循环依赖时触发冲突检测并报错。并行启动通过解析依赖 DAG 图，无依赖关系的 Unit 并行启动（默认同时启动多个服务）。\n\n解析：1）时序依赖 vs 功能依赖——After=network.target：本服务在 network.target 之后启动（不要求 network.target 必须启动）。Requires=postgresql.service：本服务需要 postgresql.service 一起启动（如果 postgresql 启动失败，本服务也会失败）。Wants=redis.service：本服务希望 redis 一起启动但非必需（redis 启动失败本服务仍可启动）。\n\n2）常见指令——Before：在指定 Unit 之前启动（反向的 After）。Requires：强依赖——指定 Unit 必须随本 Unit 一起启动/停止。Wants：弱依赖——建议一起启动但不强制。BindsTo：更强版的 Requires——指定 Unit 停止时本 Unit 也必须停止。PartOf：本 Unit 是集合的一部分，集合停止时本 Unit 也停止。Conflicts：冲突关系——本 Unit 激活时会自动停止冲突的 Unit。\n\n3）并行启动实现——systemd 将所有 Unit 构建为 DAG（有向无环图），依赖边决定启动顺序。没有依赖关系或依赖关系中前置条件满足的 Unit 可以同时启动（利用 Linux 的 fork 并发能力）。systemd 默认根据 CPU 核数创建并行任务队列。\n\n扩展延伸：4）调试命令——systemd-analyze：查看启动时间和关键链。systemd-analyze blame：按启动耗时排序。systemd-analyze critical-chain：找出启动顺序中的关键链路。systemctl list-dependencies：查看 Unit 的依赖关系。5）循环依赖处理——systemd 会检测循环依赖，将循环链路中的某个依赖降级为 Wants（弱依赖）来打破循环。设计原则：尽量减少显式依赖，使用 target（network.target、multi-user.target）作为依赖点。6）Socket 激活——systemd 支持 Socket 激活（监听端口），服务进程还没启动时 socket 由 systemd 监听，请求到达时 systemd 启动服务并传递 socket 文件描述符（实现按需启动）。",
+    "hints": [
+      "After 和 Requires 在系统启动中的行为有什么不同——时序 vs 功能依赖",
+      "systemd-analyze critical-chain 如何帮助定位启动瓶颈"
+    ],
+    "tags": [
+      "Linux",
+      "systemd",
+      "启动管理",
+      "依赖关系"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Linux OOM Killer 评分机制与进程选择算法",
+    "content": "当 Linux 系统内存不足时，OOM Killer 如何选择要杀死的进程？oom_score 和 oom_score_adj 是如何计算的？如何保护关键进程不被 OOM Killer 误杀？swap 耗尽是否也会触发 OOM Killer？",
+    "answer": "答案：OOM Killer 在系统内存严重不足（包括物理内存 + swap 耗尽）且无法通过内存回收释放足够内存时触发。选择目标进程的依据是 oom_score（分数最高的进程被选中）。oom_score 综合考虑进程的 RSS（驻留内存）、swap 使用量、页表大小、进程运行时长、进程的 root 权限等因素。通过 oom_score_adj（范围 -1000 到 +1000）可以人为调整进程被选中的权重。\n\n解析：1）oom_score 的计算——内核的 badness() 函数计算：基础来自进程的 RSS + swap 使用 + 页表大小（以物理内存页为单位）。运行时间越长，分数越低（/18 衰减）。Root 进程分数略低（/4 衰减）。子进程多的进程分数更高（因为杀死一个进程会连带杀死所有子进程）。内核中 oom_badness() 函数的简化逻辑：points = (total_vm / 100) * oom_score_adj 调整 + rss + swap + pgtables。\n\n2）oom_score_adj——/proc/PID/oom_score_adj 文件控制。值范围 -1000 到 +1000。设置为 -1000 表示完全禁用 OOM Killer 对该进程的杀死（OOM_DISABLE）。设置 +1000 表示优先杀死该进程。常用：系统关键服务（sshd/docker/critical app）设置 -500 到 -1000。调试/测试进程可设置 +500。\n\n3）触发条件——内核在 __alloc_pages_nodemask() 中多次重试分配内存失败后调用 out_of_memory()。检查 /proc/<pid>/oom_score 查看当前得分。/var/log/messages 或 dmesg 中记录 OOM Killer 的日志（被杀死的进程名、分数、内存使用、CPU 等信息）。\n\n扩展延伸：4）保护策略——设置 oom_score_adj = -1000（完全保护）。设置 vm.swappiness=1（尽量少用 swap，减少 OOM 触发概率）。关闭 overcommit（vm.overcommit_memory=2），保证内存分配不会超过实际可用内存的某个比例（除非应用显式请求）。5）内核参数——panic_on_oom：触发 OOM 时直接 panic 重启系统（而不是杀死进程），用于关键系统。oom_kill_allocating_task：杀死触发 OOM 的当前进程而非全局评分最高者。6）OOM 的预防——设置 cgroup 的 memory.max 限制容器的内存使用上限。使用 Memory Limits 和 Reservations（K8s requests/limits）。监控内存使用趋势（Prometheus + 告警），在 OOM 发生前扩容或优化。",
+    "hints": [
+      "oom_score_adj = -1000 和不设置 oom_score_adj 在 OOM Killer 决策时的区别是什么",
+      "vm.swappiness 参数如何影响 OOM Killer 触发的频率"
+    ],
+    "tags": [
+      "Linux",
+      "OOM Killer",
+      "内存管理",
+      "进程保护"
+    ]
   }
 ]

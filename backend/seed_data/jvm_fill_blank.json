@@ -1173,5 +1173,94 @@
       "NIO",
       "内存"
     ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ZGC 指针染色管理引用",
+    "content": "ZGC 使用 ___ 指针染色来管理引用，在 64 位指针的高 ___ 位中编码对象状态（Finalizable、Remapped、Mark0、Mark1）。",
+    "answer": "{\"correct\": [[\"染色\", \"Colored\", \"彩色\"], [\"4\", \"四\", \"4位\"]], \"distractors\": [\"标记\", \"8\", \"2\", \"着色\", \"3\"]}",
+    "hints": [
+      "ZGC 不依赖对象头中的 GC 标记位，而是利用指针高位编码状态",
+      "染色指针使 ZGC 可以在不访问对象的前提下判断对象状态"
+    ],
+    "tags": [
+      "JVM",
+      "ZGC",
+      "染色指针"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Java 21 默认垃圾回收器",
+    "content": "Java 21+ 的默认垃圾回收器是 ___，但在低延迟场景下推荐使用 ___。在 JDK 21 中分代 ZGC（Generational ZGC）已成为 ___。",
+    "answer": "{\"correct\": [[\"G1\", \"G1 GC\", \"Garbage First\"], [\"ZGC\"], [\"默认模式\", \"默认\", \"默认选项\"]], \"distractors\": [\"Parallel GC\", \"CMS\", \"Shenandoah\", \"Serial GC\", \"Epsilon GC\"]}",
+    "hints": [
+      "JDK 9 起 G1 成为默认 GC，JDK 21 起分代 ZGC 成为默认 ZGC 模式",
+      "CMS 在 JDK 14 已被移除"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "G1",
+      "ZGC"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "压缩 OOP 开启参数",
+    "content": "压缩 OOP（Compressed Ordinary Object Pointer）通过 JVM 参数 ___ 开启（JDK 8+ 默认开启），class 指针压缩通过单独的参数 ___ 控制。堆大小超过 ___ 时压缩自动失效。",
+    "answer": "{\"correct\": [[\"-XX:+UseCompressedOops\", \"UseCompressedOops\"], [\"-XX:+UseCompressedClassPointers\", \"UseCompressedClassPointers\"], [\"32GB\", \"32G\"]], \"distractors\": [\"-XX:+UseTLAB\", \"-XX:+DoEscapeAnalysis\", \"-XX:+EliminateLocks\", \"64GB\", \"16GB\"]}",
+    "hints": [
+      "UseCompressedOops 同时控制引用压缩和 Class 指针压缩",
+      "堆超过 32GB 时指针压缩自动关闭，因为 32 位寻址无法覆盖更大的堆空间"
+    ],
+    "tags": [
+      "JVM",
+      "指针压缩",
+      "OOP",
+      "参数"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "运行时常量池存放区域",
+    "content": "运行时常量池（Runtime Constant Pool）存放在 ___ 区域中。JDK 8 之前它位于 ___ 中，JDK 8 之后随着 ___ 替代永久代，它分配在本地内存中。",
+    "answer": "{\"correct\": [[\"方法区\", \"Method Area\"], [\"永久代\", \"PermGen\"], [\"元空间\", \"Metaspace\"]], \"distractors\": [\"堆\", \"虚拟机栈\", \"Code Cache\", \"直接内存\", \"程序计数器\"]}",
+    "hints": [
+      "JDK 8 的方法区被元空间替代，使用本地内存而非 JVM 堆内存",
+      "运行时常量池是方法区的一部分，存放字面量和符号引用"
+    ],
+    "tags": [
+      "JVM",
+      "方法区",
+      "常量池",
+      "Metaspace"
+    ]
+  },
+  {
+    "category": "jvm_fill_blank",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "最大堆对齐因子",
+    "content": "最大堆对齐因子是 ___。HotSpot JVM 要求对象起始地址必须是 ___ 的整数倍，压缩指针通过左移 ___ 位将 32 位引用扩展为 64 位地址（2^32 x 8 = 32GB 寻址空间）。",
+    "answer": "{\"correct\": [[\"8\", \"8字节\", \"8Byte\"], [\"8\", \"8字节\"], [\"3\", \"3位\"]], \"distractors\": [\"4\", \"16\", \"32\", \"2\", \"6\"]}",
+    "hints": [
+      "8 字节对齐是 HotSpot 的默认对齐要求，通过 -XX:ObjectAlignmentInBytes 参数调整",
+      "对齐因子直接影响指针压缩的寻址范围"
+    ],
+    "tags": [
+      "JVM",
+      "对齐",
+      "对象布局",
+      "指针压缩"
+    ]
   }
 ]

@@ -1273,5 +1273,96 @@
       "灰度",
       "回滚"
     ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 评估: 自动化评估 Pipeline 设计",
+    "content": "请设计一个 Agent 系统的自动化评估 Pipeline，说明评估指标、数据集构造和评价方法。",
+    "answer": "答案：Agent 评估 Pipeline 需要覆盖三个层面：任务完成度（最终结果是否正确）、过程质量（推理路径是否合理、效率是否高）、安全合规（是否有违规行为）。核心方法包括专家评估、LLM-as-Judge 和自动化指标计算。\n\n解析：评估维度——1）任务成功率（Task Success Rate）：Agent 是否在指定步骤内完成目标。适合有明确答案的任务（如代码生成）。2）过程效率：工具调用次数、总 Token 消耗、延迟。反映 Agent 的规划和执行效率。3）安全合规：是否执行了越权操作、是否泄漏敏感信息。评估方法——1）LLM-as-Judge：用强模型（GPT-4、Claude）评估 Agent 的输出质量，按评分卡打分。可以 pairwise 比较（A vs B）或绝对评分（1-5 分）。2）单元测试式评估：对确定性任务编写断言测试（期望结果精确匹配或包含关键要素）。3）Golden Dataset：人工标注一组标准测试用例和期望行为，自动化回归测试每次系统变更。Pipeline 架构——1）测试用例数据库：存储任务描述、期望结果、评估标准。2）Agent 执行引擎：依次执行测试用例，记录完整轨迹。3）评估引擎：集成多种评估方法并行评分。4）报告生成：汇总指标、分析失败案例、趋势追踪。\n\n扩展延伸：实践要点——1）评估成本：LLM-as-Judge 调用 API 费用不低，需要合理采样。可用小型评分模型或规则引擎过滤明显正确的案例。2）评估偏差：LLM-as-Judge 可能偏好格式更漂亮、更长的回答。需要设计评分卡减少偏差，并对评估结果人工抽检。3）持续集成：每次 Agent 系统变更（提示词修改、工具更新、模型升级）自动跑回归套件。4）用户反馈闭环：在线数据标注大锤模板，周期性更新 Golden Dataset。需要构建反馈采集 → 标注 → 评估 → 改进的闭环。",
+    "hints": [
+      "LLM-as-Judge 的评估偏差主要有哪些——位置偏差、长度偏差、自我偏好偏差",
+      "Golden Dataset 需要多大才够——经验值 100-200 个用例可以覆盖大部分常见场景"
+    ],
+    "tags": [
+      "Agent",
+      "评估",
+      "Pipeline",
+      "LLM-as-Judge",
+      "自动化"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 成本: Token 消耗的优化策略",
+    "content": "请分析 LLM Agent 的 Token 消耗构成，并提出成本优化策略。",
+    "answer": "答案：Agent 的 Token 消耗包括系统提示词（System Prompt）、用户输入、Agent 推理（Thought/Action Chain）、工具调用结果（Observation）和最终输出。多次推理轮次和工具调用的大体积返回是成本的主要来源。\n\n解析：成本构成——1）System Prompt：每次请求都发送，占据基础量。长 prompt 可能包含角色定义、工具描述、少样本示例，可达数千 Token。2）推理链（Thought/Action）：每轮思考 + 行动 + 观察循环消耗大量 Token。3）工具返回值：搜索结果的全文、读取文件的全部内容可能远超预期。4）上下文窗口累积：多轮对话中历史消息不断累积，每次请求的 Token 数线性增长。优化策略——1）System Prompt 压缩：用简短的角色描述替代冗长指令，工具描述精简（名称 + 一句话功能）。2）历史摘要：将早期对话压缩为摘要替换原始对话。3）工具返回截断：限制工具返回的最大 Token 数（如搜索结果只返回标题和摘要前 200 字）。4）减少推理轮次：设计更直接的 prompt，引导 Agent 减少不必要的工具调用。5）模型选择：简单任务用小模型（Claude Haiku / GPT-4o-mini），复杂任务用强模型。6）缓存：对相同的 System Prompt 和工具返回利用 Prompt Caching（Anthropic、OpenAI 都支持）。\n\n扩展延伸：工程实践——1）Token 监控：每次请求记录 token 消耗，分析不同任务类型的成本分布。设置告警阈值。2）成本预算与限流：为每个用户或任务设置 Token 预算上限，超限时降级到简单模式。3）成本分层：高频低价值任务用低成本模型，低频高价值任务用强模型。4）未来的优化方向——Speculative Decoding（推测解码）减少推理步骤、并行工具调用降低轮次、精简中间推理（CoT 缩短版）。",
+    "hints": [
+      "多轮对话中 Token 累积为什么是最容易被忽视的成本增长点",
+      "Prompt Caching 为什么会省钱——相同前缀无需重复编码"
+    ],
+    "tags": [
+      "Agent",
+      "成本",
+      "Token",
+      "优化",
+      "Prompt Caching"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 可观测: 轨迹跟踪与调试方法",
+    "content": "请解释 Agent 系统的可观测性（Observability）设计，包括轨迹跟踪、调试和性能分析的方法。",
+    "answer": "答案：Agent 可观测性需要记录完整的执行轨迹（Trace）：每轮推理的输入输出、工具调用的请求与响应、中间推理过程、Token 消耗和延迟。通过轨迹回放、步骤检查和指标分析来定位问题和优化性能。\n\n解析：核心数据——每次 Agent 运行记录一条 Trace，包含：1）Session ID / Run ID 标识唯一执行。2）Step 列表：每个 Step 包含 Step Number、Agent Input（推理前状态）、Agent Output（Thought + Action）、Tool Call（函数名 + 参数）、Tool Result（返回值 + 状态码）、Token 数、耗时。3）最终结果：Final Answer 或 Error。调试方法——1）轨迹回放：按步骤回放 Agent 的决策过程，检查中间推理。2）对比分析：同样的输入在两次不同配置下的轨迹差异。3）分支探索：支持从某一步手动 Fork，修改后续决策观察不同结果。4）断点调试：在特定步骤暂停，手动修改 Agent 的思考或工具调用结果后继续。\n\n扩展延伸：工程实现——1）LangSmith / LangFuse：成熟的 Agent 可观测平台，提供自动追踪、评估和可视化。2）Trace 采样：高并发场景不需要记录所有 Trace，设置采样率（如 10%）降低成本。3）异常检测：从 Trace 中自动识别异常模式（无限循环、异常工具调用序列、过长推理链）。4）用户自定义事件：在关键业务节点插入自定义监控事件（如“用户确认收货”），关联到 Trace。5）分布式追踪：多 Agent 协作系统需要跨 Agent 的 Trace ID 传播，追踪完整的端到端处理过程。",
+    "hints": [
+      "轨迹回放和日志记录的本质区别是什么——轨迹保留了决策的因果关系而日志只是一维的时间线",
+      "Agent 的无限循环如何从 Trace 中自动检测——重复的相同工具调用序列"
+    ],
+    "tags": [
+      "Agent",
+      "可观测性",
+      "Trace",
+      "调试",
+      "LangSmith"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 护栏: 输出验证与内容过滤",
+    "content": "请设计 Agent 系统的输出验证和内容过滤机制（Guardrails），确保生成内容的安全性和合规性。",
+    "answer": "答案：Agent Guardrails 在生成内容输出前和执行工具调用前进行多层验证和过滤。核心包括：输入检查（防止提示注入）、工具调用验证（参数合法性）、输出检查（内容安全、格式合规）、以及速率限制和权限控制。\n\n解析：多层护栏架构——1）输入层（Input Guard）：检查用户输入是否包含恶意指令，拦截明显的注入攻击。2）工具调用层（Action Guard）：在执行前验证工具参数范围和类型。例如：文件读写只允许在指定目录、API 调用只允许白名单内的端点、删除操作需要二次确认。3）输出层（Output Guard）：检查模型输出是否包含敏感信息（PII、密钥）、是否违反内容政策、是否包含受版权保护的内容。4）速率限制（Rate Limiting）：防止单个用户/任务过度消耗资源。实现方式——1）基于规则：正则匹配黑名单、参数范围校验。2）基于模型：LLM 二次审核输出安全性（Guardian Model）。3）语义检测：向量相似度匹配已知的安全违规模式。4）结构化输出协议：要求 Agent 以 JSON Schema 格式输出，Schema 校验层验证后通过。\n\n扩展延伸：工程实践——1）NeMo Guardrails（NVIDIA）：开源的护栏框架，提供 Colang 语言定义对话流程和安全策略。2）Guardrails AI：python 库，通过定义输入/输出的验证器链实现过滤。3）护栏的响应模式：静默阻断（替换内容）、拒绝（返回错误信息）、审查标记（标记但放行）。4）护栏的准确率权衡：过于严格会拦截正常内容（假阳性），过于宽松则遗漏风险（假阴性）。建议对高风险操作使用硬拦截（拒绝执行），对低风险内容使用软拦截（标记提示人工审核）。5）多租户场景下，不同用户的护栏策略不同（如子用户只能读不能写）。",
+    "hints": [
+      "硬拦截和软拦截分别适用于什么场景——高风险操作拒绝、低风险内容标记",
+      "为什么结构化输出（JSON Schema）本身也是一种护栏——格式校验自动过滤不合法输出"
+    ],
+    "tags": [
+      "Agent",
+      "护栏",
+      "Guardrails",
+      "安全“, ”内容过滤"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 扩展: 插件系统架构设计",
+    "content": "请设计一个 Agent 的插件系统架构，包括插件注册、发现、生命周期管理和沙箱隔离。",
+    "answer": "答案：Agent 插件系统采用注册-发现-执行三层架构。核心组件：Plugin Registry（插件注册中心）、Plugin Manager（生命周期管理）、Sandbox Runtime（隔离执行环境）。插件通过标准化的 Interface（输入 Schema、输出 Schema、权限声明）与 Agent 交互。\n\n解析：架构设计——1）Plugin Manifest：每个插件声明 metadata（名称、版本、作者）、Interface（暴露的工具列表、每个工具的输入输出 Schema）、Permissions（需要的权限——网络访问、文件读取、API 调用）。2）Plugin Registry：存储所有已注册插件的信息。支持热加载——安装新插件无需重启 Agent。支持版本管理——多版本共存、灰度切换。3）Plugin Manager：负责插件的加载、初始化、运行和卸载。生命周期：注册（Register）→ 安装（Install）→ 初始化（Init）→ 启用（Enable）→ 调用（Invoke）→ 禁用（Disable）→ 卸载（Uninstall）。4）Sandbox Runtime：每个插件在隔离环境中运行（容器化或进程隔离），防止影响主 Agent 进程。限制资源（CPU、内存、网络、文件系统）。\n\n扩展延伸：设计要点——1）Plugin 与 Tool 的关系：Plugin 是一组 Tool 的集合。Agent 通过 Function Calling 调用插件暴露的 Tool。2）权限模型：用户安装插件时可以看到权限声明（类似手机 App 的权限弹窗）。高危权限（如文件删除、网络请求）需要用户显式授权。3）插件市场：中央仓库管理插件的发布和分发。包含自动安全扫描。4）Proto 框架：考虑到语言无关性，插件可通过 gRPC 或子进程通信（如 Anthropic Plugin Protocol），支持 Python、JS、Rust 等不同语言编写的插件。5）OpenAPI 适配器：将任意 OpenAPI/Swagger 接口自动转换为 Agent 插件，无需手动编写。",
+    "hints": [
+      "插件隔离为什么需要 Sandbox——恶意或 buggy 的插件不能影响主 Agent 运行",
+      "Plugin 和 Tool 在概念上有什么区别——Plugin 是 Tool 的打包单元，Tool 是具体功能点"
+    ],
+    "tags": [
+      "Agent",
+      "插件系统“, ”架构“, ”沙箱“, ”可扩展"
+    ]
   }
 ]

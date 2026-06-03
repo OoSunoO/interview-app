@@ -1279,5 +1279,99 @@
       "反射",
       "JVM"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "虚拟线程的挂载与卸载机制详解",
+    "content": "请详细解释 Java 21 虚拟线程的挂载（mount）和卸载（unmount）机制，以及载体线程（carrier thread）的调度方式。",
+    "answer": "虚拟线程由 JVM 在用户态调度，底层依赖于平台线程（载体线程）执行。当虚拟线程执行阻塞操作（如 socket I/O、锁等待、Thread.sleep()）时，JVM 会触发 unmount 操作，将虚拟线程的栈帧从载体线程的堆栈复制到堆上的栈块（stack chunk），载体线程转而执行其他虚拟线程。阻塞操作完成后，虚拟线程通过 mount 操作恢复，将栈块复制回某个可用载体线程的堆栈。载体线程由 ForkJoinPool 管理，默认线程数为 CPU 核心数。每执行一个虚拟线程的逻辑称为一次 continuation，continuation 的 yield 和 resume 由 JVM 的 Continuation 类实现，这避免了 OS 级线程上下文切换的开销。",
+    "hints": [
+      "栈块（stack chunk）在 mount/unmount 时如何与载体线程交互",
+      "Continuation.yield() 与虚拟线程调度的关系"
+    ],
+    "tags": [
+      "虚拟线程",
+      "Project Loom",
+      "Java 21",
+      "调度机制"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模式匹配中类型模式与守卫模式的组合",
+    "content": "请说明 Java 21 中模式匹配增强里类型模式和守卫模式的使用方式，以及穷尽性检查（exhaustiveness）如何生效。",
+    "answer": "类型模式允许在 instanceof 和 switch 中直接声明变量并做类型检查，如 `if (obj instanceof String s) { ... }`。守卫模式（guarded pattern）在类型模式后添加 when 子句做额外条件过滤，如 `case String s when s.length() > 5 -> ...`。穷尽性检查在 switch 中使用 sealed 类或枚举时生效——编译器在编译期检查所有可能的子类型已覆盖，如果没有 default 且未穷尽所有子类型则编译报错。当 sealed 类的 permits 子句列出所有子类型后，switch 不必须包含 default 分支。模式匹配支持嵌套（如 record 模式 + 类型模式组合），守卫模式可以嵌套记录解构：`case Point(var x, var y) when x > 0 && y > 0 -> ...`。",
+    "hints": [
+      "switch 穷尽性检查对 sealed class 和 enum 分别如何工作",
+      "守卫模式中的 when 子句与传统的 if 判断有何区别"
+    ],
+    "tags": [
+      "模式匹配",
+      "switch",
+      "类型模式",
+      "守卫模式",
+      "Java 21"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Record 模式的嵌套解构与 switch 结合",
+    "content": "请介绍 Java 21 中 Record 模式（Record Pattern）的语法规则，以及如何与 switch 表达式结合实现深层解构。",
+    "answer": "Record 模式允许在模式匹配中对 Record 实例做解构，语法为 `Point(int x, int y)`。支持嵌套解构：如 `if (obj instanceof Line(Point(int x1, int y1), Point(int x2, int y2))` 可一次解构多层 Record。与 switch 表达式结合时可以处理代数数据类型：`switch (shape) { case Circle(double r) -> ...; case Rectangle(double w, double h) -> ...; }`。Record 模式也可以结合 var 推断类型：`case Point(var x, var y) -> ...`。Record 模式的类型推断在嵌套场景下特别有用，可以混合显式类型和 var。泛型 Record 的模式匹配也支持类型参数推断。编译器保证 Record 模式在穷尽性检查下的安全性。",
+    "hints": [
+      "嵌套 Record 模式如何解构多层包装的数据结构",
+      "Record 模式中 var 和显式类型声明如何混合使用"
+    ],
+    "tags": [
+      "Record",
+      "模式匹配",
+      "解构",
+      "Java 21",
+      "switch"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "密封类的 permits 与子类传播规则",
+    "content": "请详细解释密封类（sealed class）中 permits 子句的限制，以及子类必须使用的 sealed、non-sealed、final 三种传播方式。",
+    "answer": "密封类通过 permits 子句明确列出允许继承的子类列表，如 `sealed class Shape permits Circle, Rectangle, Triangle`。子类必须使用以下三种修饰符之一：1）final——终结继承链，子类不能再被继承；2）sealed——延续密封，子类继续限制自己的子类型；3）non-sealed——开放继承，子类退化为普通可继承类。密封接口同样适用此规则。密封类不具备传递性——如果密封类的子类声明为 non-sealed，那么后续的继承不再受原始密封类的限制。密封类与 Record 结合时，Record 隐式 final，因此密封类的子类可以是 Record 类型。密封类在模块化系统中有特殊权限，同一模块内的子类可以省略 permits（编译器自动推断）。编译器利用密封信息做穷尽性检查。",
+    "hints": [
+      "non-sealed 子类之后的继承层次是否还受原始密封类的约束",
+      "密封类在模块内可以省略 permits 子句的规则是什么"
+    ],
+    "tags": [
+      "密封类",
+      "sealed",
+      "继承",
+      "Java 17",
+      "模式匹配"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "文本块与字符串模板详解",
+    "content": "请介绍 Java 15 正式引入的文本块（Text Blocks）和 Java 21 中预览的字符串模板（String Templates）的语法和核心特性。",
+    "answer": "文本块使用三个双引号 `\"\"\"` 包裹多行字符串，自动处理前导公共缩进（stripIndent()）并统一换行符。无需转义大多数双引号和换行。适合嵌入 HTML、JSON、SQL 等。字符串模板是 JDK 21 的预览特性（22 再次预览），通过 `STR.` 模板处理器实现字符串插值：`STR.\"Hello \\{name}\"`。大括号内可嵌入表达式，甚至方法调用和计算：`STR.\"Today is \\{LocalDate.now()}\"`。FMT. 模板处理器支持格式化说明符：`FMT.\"%04d\\{count}\"`。模板处理器的核心接口是 StringTemplate.Processor，可以自定义处理器（如 SQL 参数化查询处理器防止注入）。注意字符串模板尚未转正，仍在预览阶段。",
+    "hints": [
+      "文本块的 indent 和 stripIndent 方法如何影响缩进处理",
+      "自定义 StringTemplate.Processor 可以解决 SQL 注入等安全问题"
+    ],
+    "tags": [
+      "文本块",
+      "字符串模板",
+      "Java 15",
+      "Java 21",
+      "预览特性"
+    ]
   }
 ]

@@ -1260,5 +1260,94 @@
       "弹性伸缩",
       "部署"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "GPU 显存管理: vLLM PagedAttention 原理",
+    "content": "请解释 vLLM 中 PagedAttention 的 GPU 显存管理原理，及其如何提升 LLM 推理吞吐。",
+    "answer": "答案：PagedAttention 借鉴操作系统虚拟内存的分页机制，将 KV Cache 切分为固定大小的 Block（通常 16 token），通过 Block Table 实现逻辑页到物理页的映射，消除传统预分配方式导致的内部和外部碎片，显存利用率从 20-40% 提升至 95% 以上。\n\n解析：核心机制——1）分页管理：KV Cache 不再要求连续显存，以 Block 为单位动态分配和回收。每个 Block 存储固定数量 token（如 16 个）的 K 和 V 张量。2）Block Table：维护每个序列的逻辑 Block 到物理 Block 的映射表，类似 OS 的页表。推理时通过 Block Table 找到物理地址读取 KV。3）Copy-on-Write（写时复制）：多个序列共享相同前缀时（如 beam search、并行采样），逻辑 Block 指向同一物理 Block，仅在写入时才复制，大幅节省显存。4）按需分配：序列变长时实时分配新 Block，完成立即回收，无预分配的浪费。\n\n扩展延伸：PagedAttention 的优化方向——1）Prefix Caching：缓存公共前缀（如 System Prompt）的 Block，跨请求共享。2）Block 大小的权衡：Block 越小碎片越少但 Block Table 越大（元数据开销增加）。vLLM 默认 16 token/block。3）Kernel 融合：将 PagedAttention 的 gather/matmul 操作融合为单个 CUDA kernel 减少 Kernel Launch 开销。4）后续发展：SGLang 的 RadixAttention 用前缀树管理 KV Cache 共享，LightLLM 等框架也采用了类似的分页机制。",
+    "hints": [
+      "传统预分配方式为什么显存利用率只有 20-40%——内部碎片和外部碎片分别如何产生",
+      "Copy-on-Write 在 beam search 中如何节省显存——多个候选序列共享相同前缀"
+    ],
+    "tags": [
+      "vLLM",
+      "PagedAttention",
+      "KV Cache",
+      "推理优化“, ”显存管理"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式训练: FSDP 分片策略与通信开销",
+    "content": "请解释 FSDP（Fully Sharded Data Parallel）的分片策略，以及如何权衡通信开销和显存节省。",
+    "answer": "答案：FSDP 将模型的参数、梯度和优化器状态分片到多个 GPU 上，计算时按需从通信域 gather 参数，计算完可丢弃非本分片。相比 DDP（每个 GPU 存完整模型副本），FSDP 以通信换显存，能在更多 GPU 上训练更大模型。\n\n解析：分片策略——1）参数分片：每个 GPU 只存储 1/N 的参数，需要时通过 all-gather 收集完整参数向前计算，计算完丢弃非本分片。2）梯度分片：反向传播时再次 all-gather 参数计算梯度，每个 GPU 只归约其分片对应的梯度（reduce-scatter）。3）优化器状态分片：Adam 的动量和方差同样分片，每 GPU 只更新自己的分片参数。通信开销——1）Forward：每层一次 all-gather。2）Backward：每层一次 all-gather + reduce-scatter。3）对比 DDP（每步仅一次 all-reduce），FSDP 通信量约为 DDP 的 3 倍。策略选择——1）full_shard（层级分片）：每层前/后向分别 gather/discard，通信密集但显存最少。2）hybrid_shard：节点内分片 + 节点间数据并行，减少跨节点通信。3）hsdp（分片数据并行）：分片 + 数据并行混合，适用于超大规模训练。\n\n扩展延伸：FSDP 的工程优化——1）通信计算重叠：将 all-gather 与当前层的计算 overlap，隐藏通信延迟。2）参数预取（prefetch）：提前 gather 下一层的参数，降低通信等待。3）混合精度：BF16 计算 + FP32 主权重节省 2x 显存。4）CPU Offload：参数进一步卸载到 CPU，训练更大模型但大幅增加通信延迟。5）与 DeepSpeed ZeRO 的对应：FSDP full_shard ≈ ZeRO-3，shard_grad_op ≈ ZeRO-2，shard_optimizer_state ≈ ZeRO-1。",
+    "hints": [
+      "FSDP 的通信量大约是 DDP 的几倍——forward 和 backward 各需要什么通信原语",
+      "通信计算重叠如何减少实际延迟——gather 下一层参数的同时计算当前层"
+    ],
+    "tags": [
+      "FSDP",
+      "分布式训练“, ”模型并行",
+      "ZeRO",
+      "通信优化"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型量化: AWQ vs GPTQ 对比",
+    "content": "请对比 AWQ（Activation-aware Weight Quantization）和 GPTQ（GPT Post-Training Quantization）两种模型量化方法的异同。",
+    "answer": "答案：GPTQ 基于 Optimal Brain Quantization（OBQ），通过二阶信息（Hessian 矩阵）逐层逐列量化权重并补偿量化误差；AWQ 基于激活值分布感知，观察到少数“重要”权重通道（对应大激活值）对精度影响大，因此对这些通道不量化或高精度量化。两者目标都是将 LLM 量化到 INT4 且保持精度。\n\n解析：GPTQ——1）核心思想：量化某个权重后，调整该列中剩余的未量化权重来补偿精度损失（利用 Hessian 逆矩阵计算补偿量）。2）过程：逐层处理，每层内逐列量化，先用 Cholesky 分解预计算 Hessian 逆，量化补偿 O(col_dim²)。3）特点：一次校准数据集（128 sample）即可，支持 group-wise 量化。无需训练，量化速度快。AWQ——1）核心观察：激活值越大的通道对模型输出影响越大，这些通道仅占 1% 但 skip 量化可大幅恢复精度。2）方法：逐层统计激活值的 per-channel 分布，对重要通道进行 scaling（缩小权重幅度），使量化更友好，之后再 rescale 回原输出。3）特点：不需要 Hessian 矩阵计算，速度快且实现简单；对 4-bit 量化效果显著。\n\n扩展延伸：对比总结——1）精度：AWQ 在 INT4 下通常略优于 GPTQ（尤其是低比特和小模型场景）。2）速度：AWQ 不需要 Hessian 计算，量化过程更快。3）硬件适配：GPTQ 的 group-wise 量化对不同硬件兼容性更好。GPTQ 更成熟广泛使用。4）实际表现：在 LLaMA、Mistral 等模型上 INT4 量化都保持 1% 以内的精度损失。5）其他方法——GGML/GGUF 的 Q4_K 系列是改进版 GPTQ 风格量化；BitDistiller、QuIP# 等最新方法也在突破精度边界。",
+    "hints": [
+      "AWQ 为什么只关注激活值大的通道——这些通道的权重对输出误差影响最大",
+      "GPTQ 的 Hessian 信息起什么作用——如何用二阶信息补偿量化误差"
+    ],
+    "tags": [
+      "量化",
+      "AWQ",
+      "GPTQ",
+      "推理优化“, ”模型压缩"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "KV Cache 量化与共享优化",
+    "content": "请解释 KV Cache 的量化方法以及跨请求的共享优化策略。",
+    "answer": "答案：KV Cache 量化将存储在显存中的 Key 和 Value 张量从 FP16 降低精度（INT8/INT4/FP8）以减少显存占用。共享优化通过缓存和复用公共前缀（如 System Prompt、上下文文档）的 KV Cache 来避免重复计算。\n\n解析：KV Cache 量化方法——1）Per-token 量化：对每个 token 的 K/V 张量单独计算 scale 和 zero-point，精度损失小但元数据开销大。2）Per-channel 量化：对 K/V 的每个通道（head 维度）量化，元数据更少。3）KV 分离量化：K 对量化误差更敏感（影响 attention 分布），通常比 V 保留更高精度。4）FP8 量化：利用 H100/H200 的原生 FP8 支持，兼容性好，精度损失最小。共享优化——1）前缀缓存（Prefix Caching）：多个请求共享相同的 System Prompt 或上下文前缀（如多轮对话的历史），第一请求计算后缓存该前缀的 KV Cache，后续请求直接复用，节省 30-70% 的 Prefill 时间。2）RadixAttention（SGLang）：以前缀树（Radix Tree）组织 KV Cache，自动发现最长公共前缀并共享，支持缓存淘汰（LRU）。3）Automatic Prefix Caching（vLLM）：基于 hash 的请求前缀匹配，命中则直接加载缓存。\n\n扩展延伸：工程实现要点——1）精度与性能的权衡：INT4 量化节省 4x 显存但可能导致精度下降（尤其在长序列场景）。2）缓存策略：缓存空间有限时需要淘汰策略（LRU/LFU），如何平衡缓存命中率和显存开销。3）安全影响：跨用户的 KV Cache 共享可能造成信息泄露，多租户场景需要隔离缓存。4）KIVI（2024）：提出的 2-bit KV Cache 量化方案，利用 V 的通道间相似性实现极致压缩。",
+    "hints": [
+      "为什么 K 比 V 对量化误差更敏感——K 直接影响 attention 分数的计算",
+      "前缀缓存如何检测公共前缀——哈希匹配还是树结构检索更快"
+    ],
+    "tags": [
+      "KV Cache",
+      "量化“, ”推理优化“, ”前缀缓存“, ”显存"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "AI 推理芯片: GPU vs TPU vs NPU 架构差异",
+    "content": "请比较 GPU、TPU、NPU 三种 AI 推理芯片的架构设计差异和适用场景。",
+    "answer": "答案：GPU（NVIDIA）以 SM 和 Tensor Core 为核心，通用性强，支持 FP16/INT8/FP8，适合训练和推理；TPU（Google）以 MXU（Matrix Multiply Unit）为核心，专为大规模矩阵乘法设计的 systolic array，适合批量训练和高吞吐推理；NPU（如华为 Ascend、Apple Neural Engine）以 AI Core（Cube Unit + Vector Unit）为核心，注重能效比，适合端侧推理。\n\n解析：架构对比——1）GPU：大量 CUDA Core + Tensor Core，灵活支持各种精度和算子。H100 有 132 个 SM，每个 SM 含 4 个 Tensor Core。优势在于通用性和生态（CUDA、TensorRT）。劣势是功耗较高（700W TDP）。2）TPU：由 MXU（128×128 systolic array）组成的脉动阵列，大规模矩阵乘法效率极高。TPU v4 有 4096 个 chip，通过高速互联组成 pod。优势是大规模集群的 MFU（Model FLOPS Utilization）高。劣势是灵活性差，非矩阵运算效率低。3）NPU：异构计算架构，通常包含 Cube Unit（矩阵乘）、Vector Unit（向量运算）、Scalar Unit（标量控制）。华为 Ascend 910B 的 Cube 支持 INT8/FP16。优势是能效比高（同等性能下功耗为 GPU 的 1/3-1/2），劣势是软件生态和算子覆盖弱于 GPU。\n\n扩展延伸：选型建议——1）训练场景：GPU（CUDA 生态最完善），大规模训练也可用 TPU。2）云端推理：GPU 目前是主流（TensorRT-LLM、vLLM 等框架适配最好）。TPU 适合大模型批量推理。3）端侧推理：NPU 是首选（手机、IoT 设备），配合量化模型实现实时推理。4）趋势：chiplet 集成的异构封装越来越普遍，将不同计算单元组合在单芯片上。AMD MI300X 的 APU 设计（CPU+GPU 统一内存）代表了融合方向。",
+    "hints": [
+      "Systolic Array 和 Tensor Core 在矩阵计算上有什么本质区别",
+      "为什么 TPU 不适合稀疏计算场景"
+    ],
+    "tags": [
+      "AI芯片",
+      "GPU",
+      "TPU",
+      "NPU",
+      "推理“, ”架构"
+    ]
   }
 ]

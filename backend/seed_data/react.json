@@ -1245,5 +1245,95 @@
       "Portal",
       "事件"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "useEffect 清理时机与 Strict Mode 二次调用",
+    "content": "在 React 中 useEffect 的清理函数（cleanup）是在什么时候执行的？React Strict Mode 下为什么 useEffect 会被调用两次？这对 Effect 的设计有什么影响？",
+    "answer": "答案：清理函数在下一次 Effect 执行前或组件卸载时执行。严格来说流程是——组件挂载 → Effect 执行 → 依赖变化或卸载 → 上次的清理函数执行 → 新 Effect 执行（如果依赖变化）。在 Strict Mode 下，React 在开发环境会故意挂载→卸载→重新挂载组件，所以 Effect 执行 → 清理 → 再次执行。\n\n解析：**清理时机详解**——假设组件第一次渲染，useEffect 回调执行并返回 cleanup。当依赖变化触发重渲染时：先执行上一次的 cleanup（清理旧副作用）→ 执行新的 Effect 回调。组件卸载时：执行最后一次 cleanup。**Strict Mode 二次调用**——严格模式下 React 会在 mount 后立即 unmount 再 remount，以检测 Effect 是否未正确清理（如缺少 cleanup 导致内存泄漏）。这不是 Bug，而是开发环境的「压力测试」。如果 Effect 在二次挂载时出现不一致行为（如重复注册事件、重复请求），说明清理逻辑有遗漏。\n\n扩展延伸：Strict Mode 只影响开发环境，生产环境中 Effect 只执行一次。useEffect + cleanup 的经典模式——订阅外部事件（addEventListener → removeEventListener）、定时器（setInterval → clearInterval）、WebSocket 连接（connect → disconnect）。useEffect 的竞态问题——如果 Effect 发起异步请求，依赖变化后旧请求仍在进行中，需用 cleanup 标记过期（如设置 didCancel flag）避免 setState 在已卸载组件上执行。",
+    "hints": [
+      "Strict Mode 为什么要故意挂载两次来测试清理函数",
+      "如果 Effect 中有异步请求，如何防止竞态条件"
+    ],
+    "tags": [
+      "React",
+      "useEffect",
+      "Hooks",
+      "Strict Mode"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Server Components 序列化与客户端边界",
+    "content": "React Server Components (RSC) 中服务器组件是如何序列化并传输到客户端的？客户端边界（Client Boundary, 'use client'）是如何划分的？什么数据可以跨边界传递，什么不可以？",
+    "answer": "答案：RSC 使用一种名为 RSC Payload 的特殊格式（基于 JSON + React 元素树）序列化服务器组件渲染结果。'use client' 标记的文件定义了客户端边界——边界内的组件在客户端运行，边界外的组件只在服务端运行。跨边界只能传递序列化后的 props（必须可 JSON 序列化或支持特殊类型如 Date、Map、ReactNode），函数和类实例不能传递。\n\n解析：序列化机制——服务器组件执行后生成 React 元素树（不是 HTML），RSC 协议将其编码为流式 JSON 格式。每个元素包含类型、props 和客户端组件引用信息。客户端收到 RSC Payload 后重建 React 元素树，与已有的客户端组件树合并。客户端边界——当服务器组件树中遇到 'use client' 组件的引用时，RSC Payload 只包含该组件的「引用名」和其序列化后的 props，实际的组件代码已在客户端 bundle 中。边界的关键是引用不可传递——你不能把服务器端组件作为 prop 传给客户端组件。\n\n扩展延伸：RSC 的优势——直接在后端访问数据库/文件系统，不暴露敏感逻辑，自动代码分割（只有客户端组件被打包）。RSC 与 SSR 的区别和协同——SSR 将组件渲染为 HTML 字符串（用于首屏），RSC 返回的是组件树描述（用于交互）。RSC 可以与 SSR 并存：SSR 做首屏，RSC Payload 用于后续导航。RSC 的限制——不能使用 hooks、不能依赖浏览器 API、不能有事件处理。",
+    "hints": [
+      "RSC Payload 和 SSR 的 HTML 有什么本质区别",
+      "为什么函数不能作为 prop 传递给 'use client' 组件"
+    ],
+    "tags": [
+      "React",
+      "Server Components",
+      "RSC",
+      "架构"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "useTransition 与 useDeferredValue 并发差异",
+    "content": "React 18+ 的并发特性中 useTransition 和 useDeferredValue 都可以用于标记非紧急更新（Non-urgent Updates），它们的使用方式和底层机制有什么不同？分别适用于什么场景？",
+    "answer": "答案：useTransition 用于将一段状态更新标记为 Transition（低优先级），返回 [isPending, startTransition]。useDeferredValue 用于将一个值标记为延迟更新，返回该值的延迟版本。useTransition 包裹的是状态更新逻辑，useDeferredValue 包裹的是从状态派生的值。\n\n解析：使用方式差异——useTransition：const [isPending, startTransition] = useTransition(); startTransition(() => setQuery(newValue))。适合在事件处理中区分紧急/非紧急更新。useDeferredValue：const deferredQuery = useDeferredValue(query)。当 query 频繁变化时，组件先用 deferredQuery（旧值）渲染，React 在后台用新值重新渲染。底层机制——两者都利用了 React 的并发调度器（Scheduler）。useTransition 通过降低内部状态的优先级标记，触发紧急更新先渲染，Transition 更新可被中断。useDeferredValue 本质是「值降级」——如果新值已经准备好，React 在空闲时用新值渲染；渲染过程中被用户交互中断则保持旧值。\n\n扩展延伸：什么时候用哪个——1）如果控制权在你手里（你拥有 setState），用 useTransition。输入框 onChange → setInput 是紧急更新，基于 input 发起搜索是 Transition 更新。2）如果你不能控制生产者（如 prop 来自父组件或第三方库），用 useDeferredValue。3）useDeferredValue 在渲染期间自动工作，无需手动包裹 setState。结合 Suspense——useTransition 支持挂起（Suspense），在 Transition 内触发的 Suspense fallback 不会替换已显示的内容，而是保持当前 UI 直到新内容就绪。",
+    "hints": [
+      "输入框中的 onChange 更新——应该用 useTransition 还是 useDeferredValue",
+      "useDeferredValue 为什么不需要手动标记更新优先级"
+    ],
+    "tags": [
+      "React",
+      "并发",
+      "useTransition",
+      "useDeferredValue"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React.memo 引用相等性与 useCallback 联动",
+    "content": "React.memo 是如何判断是否需要跳过重渲染的？为什么 React.memo 通常需要和 useCallback/useMemo 配合使用？如果没有正确使用引用相等性，React.memo 可能失效的原因是什么？",
+    "answer": "答案：React.memo 通过浅比较（Shallow Compare）props 来决定是否跳过子组件重渲染。如果 props 的每个值引用都相同（===），则跳过渲染使用缓存结果。但内联创建的对象/函数每次渲染都是新引用，导致浅比较失败，memo 失效——因此需要 useCallback/useMemo 保持引用稳定。\n\n解析：React.memo(Component, areEqual?)——默认使用 Object.is 做浅比较，逐个比较 props 的 key：prevProps.key === nextProps.key。内联对象/数组/函数每次创建新的引用，所以浅比较永远返回 false，memo 退化为无优化。解决方案——回调函数用 useCallback 包裹（const handleClick = useCallback(() => {...}, [deps])）、派生对象用 useMemo 包裹（const config = useMemo(() => ({...}), [deps])）。\n\n扩展延伸：areEqual 自定义比较函数——传递第二个参数实现深度比较（如 React.memo(Comp, (prev, next) => _.isEqual(prev, next))），但不推荐因为每次都要深比较，反而可能拖慢性能。memo 的成本——memo 本身也有比较开销，如果子组件渲染很快（基本无运算），memo 的浅比较反而浪费。规则：只有当子组件渲染成本高（大数据列表、图表、复杂子组件树）时才用 memo。React Compiler（原 React Forget）将自动完成记忆化，手动 useMemo/useCallback/memo 将不再是必备优化手段。",
+    "hints": [
+      "为什么内联箭头函数会让 React.memo 失效",
+      "React Compiler 如何自动完成记忆化优化"
+    ],
+    "tags": [
+      "React",
+      "性能",
+      "Memo",
+      "useCallback"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Portal 事件冒泡穿越 Portal 边界的机制",
+    "content": "React Portal 可以将子节点渲染到 DOM 树中父组件之外的节点（如 document.body）。但 Portal 内触发的事件为什么能冒泡到 Portal 父组件的祖先节点？React 是如何实现这种「虚拟冒泡」的？",
+    "answer": "答案：React Portal 的「事件冒泡穿越 Portal 边界」是 React 合成事件系统实现的，不是 DOM 原生行为。Portal 内触发的事件在 React 的合成事件树中沿着 React 组件树（而非 DOM 树）向上冒泡，所以能触发 Portal 父组件上的事件处理。\n\n解析：实现机制——React 的事件委托机制将事件全部绑定到 root 容器（React 17 前是 document，React 17+ 是 React root DOM 节点）。事件触发时，React 不依赖 DOM 树的事件冒泡路径，而是根据 Fiber 树的父子关系构建事件传播路径。Portal 组件渲染到不同 DOM 位置，但在 Fiber 树中仍然是 Portal 父组件的子节点，所以 React 合成事件系统中的冒泡路径遵循 Fiber 树结构，而非 DOM 树。\n\n扩展延伸：一个 Portal 弹出层（Modal）放在 document.body 中，内部点击按钮触发 onClick。在 DOM 树上，body → button，冒泡目标是 body。但在 React 中，事件处理系统会从 button 对应的 Fiber 节点开始向上遍历 Fiber 树，经过 Portal 父组件、祖父组件等。这意味着——父组件可以通过事件冒泡捕获 Portal 内的点击，实现点击外部关闭弹窗（Outside Click）。需要注意的是——React 合成事件能穿透 Portal，但原生事件（addEventListener 绑定）不会，所以需要「点击外部关闭」时如果用原生事件监听 document.click，需要额外逻辑判断点击目标是否在 Portal 内容内。",
+    "hints": [
+      "Portal 内的点击事件为什么在 DOM 树和 React 组件树中有不同的冒泡路径",
+      "合成事件和原生事件在 Portal 场景下的事件处理有什么差异"
+    ],
+    "tags": [
+      "React",
+      "Portal",
+      "事件",
+      "合成事件"
+    ]
   }
 ]

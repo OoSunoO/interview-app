@@ -1518,5 +1518,129 @@
       "JIT",
       "OSR"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "虚拟线程的线程模型与调度方式",
+    "content": "关于 Java 虚拟线程的线程模型和调度方式，以下描述正确的是？",
+    "answer": "答案：C) 虚拟线程采用 M:N 调度模型，JVM 管理多个虚拟线程映射到少量平台线程，阻塞时自动卸载。解析：虚拟线程使用 M:N 调度（M 个虚拟线程映射到 N 个平台线程）。JVM 内置的 carrier thread scheduler（基于 ForkJoinPool）负责调度。当虚拟线程执行阻塞 I/O、锁等待或 Thread.sleep() 时，JVM 自动执行 unmount 操作释放载体线程。虚拟线程创建成本极低（微秒级），可创建百万级实例。注意虚拟线程不适用于 CPU 密集型任务——计算密集型操作不会触发 unmount，无法利用轻量级优势。",
+    "options": [
+      "A) 虚拟线程一对一映射到内核线程，由 OS 完全调度",
+      "B) 虚拟线程使用 1:1 调度模型，每个虚拟线程独占一个平台线程",
+      "C) 虚拟线程采用 M:N 调度模型，JVM 管理多个虚拟线程映射到少量平台线程，阻塞时自动卸载",
+      "D) 虚拟线程共享一个全局线程池，所有虚拟线程排队执行"
+    ],
+    "hints": [
+      "对比传统平台线程的 1:1 模型和虚拟线程的 M:N 模型",
+      "虚拟线程在什么情况下会 pin 住载体线程无法卸载"
+    ],
+    "tags": [
+      "虚拟线程",
+      "Project Loom",
+      "线程模型",
+      "调度",
+      "Java 21"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "StructuredTaskScope 的关闭策略",
+    "content": "关于 StructuredTaskScope 的 ShutdownOnFailure 和 ShutdownOnSuccess 两种内置策略，以下说法正确的是？",
+    "answer": "答案：A) ShutdownOnSuccess 在任意子任务成功时立即关闭 scope，其他未完成任务被取消。解析：ShutdownOnSuccess 在第一个子任务成功返回结果时立即调用 shutdown()，取消 scope 内所有尚未完成的子任务。主线程调用 result() 获取成功子任务的返回值。ShutdownOnFailure 则相反——任意子任务失败时关闭 scope，取消其他未完成任务，主线程抛出异常。两者都保证了不会出现任务泄漏。自定义策略可以实现 Spi 接口定义自己的关闭逻辑。注意结构化并发在 JDK 21 中为预览特性，JDK 23 为第三次预览。",
+    "options": [
+      "A) ShutdownOnSuccess 在任意子任务成功时立即关闭 scope，其他未完成任务被取消",
+      "B) ShutdownOnFailure 在所有子任务完成后才决定是否关闭 scope",
+      "C) 两种策略的 scope 在 try 块结束后仍可继续提交新任务",
+      "D) ShutdownOnSuccess 的结果必须在所有子任务完成后才能获取"
+    ],
+    "hints": [
+      "ShutdownOnSuccess 是取第一个成功结果，ShutdownOnFailure 是第一个失败就取消全部",
+      "StructuredTaskScope 实现了 AutoCloseable，必须使用 try-with-resources"
+    ],
+    "tags": [
+      "结构化并发",
+      "StructuredTaskScope",
+      "Project Loom",
+      "Java 21"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "FFM API Arena 的内存释放机制",
+    "content": "关于 FFM API 中 Arena 的内存释放时机，以下说法错误的是？",
+    "answer": "答案：B) Arena.ofConfined() 创建的 Arena 可以在多个线程之间共享访问。解析：Arena.ofConfined() 创建的 Arena 只能由创建它的线程访问和使用，其他线程尝试访问会抛异常。Arena 有三种类型：1）ofAuto()——内存由 GC 自动回收（当 Arena 不可达时）；2）ofConfined()——线程限制，仅创建线程可访问，close() 时显式释放；3）ofShared()——多线程共享，所有线程可访问，最后一个 close() 调用者负责释放。Arena 都实现了 AutoCloseable，推荐使用 try-with-resources 确保及时释放堆外内存。Arena 释放时，其分配的所有 MemorySegment 变为无效状态，再次访问抛出 IllegalStateException。",
+    "options": [
+      "A) Arena.ofAuto() 分配的内存在没有引用时由 GC 自动释放",
+      "B) Arena.ofConfined() 创建的 Arena 可以在多个线程之间共享访问",
+      "C) Arena.ofShared() 支持多个线程同时访问和释放内存",
+      "D) Arena 实现了 AutoCloseable，推荐用 try-with-resources 管理生命周期"
+    ],
+    "hints": [
+      "ofConfined 和 ofShared 的线程访问限制不同",
+      "ofShared 的释放由最后一个 close() 调用者负责"
+    ],
+    "tags": [
+      "FFM API",
+      "Arena",
+      "内存管理",
+      "Project Panama",
+      "Java 22"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Project Valhalla 值类型与对象标识",
+    "content": "关于 Project Valhalla 的值类型（Value Types）和内联类（Inline Classes），以下说法正确的是？",
+    "answer": "答案：C) 内联类没有对象标识（identity），因此不能用作锁对象，也不能用 == 做引用比较。解析：内联类（JDK 未来特性，@__inline）的核心特征是无标识（identity-less）。这意味着：1）实例没有对象头（mark word + klass pointer），内存占用更低；2）不能作为 synchronized 的锁对象（因为没有 monitor）；3）== 比较的是值而非引用地址；4）数组可扁平化存储，减少指针间接访问开销。值类型是不可变的，所有字段隐式为 final。内联类不能继承其他类，也不能被继承。因为缺少标识，null 引用语义也不同——内联类默认值为零值（zero-initialized），而非 null。",
+    "options": [
+      "A) 内联类与普通类的内存布局完全相同",
+      "B) 内联类可以作为 synchronized 同步语句的锁对象",
+      "C) 内联类没有对象标识，因此不能用作锁对象，也不能用 == 做引用比较",
+      "D) 内联类的 == 和 equals() 始终返回相同结果"
+    ],
+    "hints": [
+      "对象标识（identity）是每个 Java 对象独立性的基础，内联类去除了这个属性",
+      "零值（zero value）和 null 的区别是理解内联类的关键"
+    ],
+    "tags": [
+      "Project Valhalla",
+      "值类型",
+      "内联类",
+      "JVM",
+      "对象标识"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Stream Gatherers 自定义中间操作",
+    "content": "关于 JDK 22 预览的 Stream Gatherers 特性，以下说法正确的是？",
+    "answer": "答案：D) Gatherer 接口包含 initializer、integrator、combiner 和 finisher 四个组件，用于构建自定义中间操作。解析：Stream Gatherers（JDK 22 预览）通过 Gatherer 接口支持自定义中间操作。四个组件：1）initializer——提供可变状态容器；2）integrator——处理每个元素，可选地将元素 publish 到下游；3）combiner——并行时合并两个状态容器；4）finisher——在所有元素处理完后做最终转换。内置的 Gatherers 工具类提供 windowFixed（定长窗口）、fold（折叠）、scan（扫描，产生中间结果）、mapConcurrent（并发映射）等。windowFixed(3) 可将流 `[1,2,3,4,5,6]` 转换为 `[[1,2,3],[4,5,6]]`。",
+    "options": [
+      "A) Stream Gatherers 只能用作终结操作（terminal operation）",
+      "B) Gatherer 接口只需要实现 integrator 一个方法即可",
+      "C) Stream Gatherers 不支持并行流操作",
+      "D) Gatherer 接口包含 initializer、integrator、combiner 和 finisher 四个组件"
+    ],
+    "hints": [
+      "Gatherer 的 combiner 组件是支持并行化的关键",
+      "Gatherers.windowFixed 和 Gatherers.scan 是内置收集器的代表"
+    ],
+    "tags": [
+      "Stream API",
+      "Gatherers",
+      "Java 22",
+      "函数式编程",
+      "并行"
+    ]
   }
 ]

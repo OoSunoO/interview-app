@@ -1274,5 +1274,98 @@
       "事务",
       "一致性"
     ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 日志压实（Log Compaction）与墓碑消息",
+    "content": "Kafka 的日志压实（Log Compaction）机制是什么？它与普通的日志删除（Log Deletion）有什么区别？墓碑消息（Tombstone Record）的作用是什么？",
+    "answer": "答案：日志压实（Log Compaction）是 Kafka 的一种日志清理策略，确保同一 Key 的最新消息被保留，旧版本被丢弃。与日志删除（按时间或大小删除旧 Segment）不同，压实基于 Key 去重——保留每个 Key 的最新值。墓碑消息（值为 null 的 Key 消息）用于标记 Key 被删除，压实后该 Key 的旧消息和墓碑消息本身都会被清理。\n\n解析：1）日志压实的工作原理——Kafka 的 Log Cleaner 后台线程周期性扫描日志的 Segment，对于每个 Key 只保留最新的消息，删除该 Key 的旧版本。整个 Topic 的消息集仍然有序，但每个 Key 只有最新值。2）启用方式：在 Topic 级别设置 cleanup.policy=compact，或使用 compact+delete 策略（既按时间删除又做压实）。3）墓碑消息（Tombstone）——带有 Key 但 Value 为 null 的消息。压实过程中，如果某个 Key 的最新消息是墓碑消息并且该消息的保留时间超过 delete.retention.ms（默认 24 小时），则该 Key 的所有消息（包括墓碑消息本身）都会被删除。\n\n扩展延伸：4）适用场景——Kafka Connect 的配置 Topic（__consumer_offsets 使用压实保存每个 Consumer Group 的最新 Offset）、KV 变更日志（只关心最新状态，不关心完整历史）。5）压实 vs 删除：日志删除按照 Segment 文件的时间戳或总大小删除整个 Segment。日志压实按 Key 扫描并压缩（只保留最新值），不影响其他 Key。6）性能影响——压实是 CPU 和磁盘 IO 密集型操作（需要读取 + 重新写入数据）。compact 策略下要避免使用无 Key 消息（null Key 不会被压实处理，相当于保留全部版本）。7）注意事项：压实不保证原子性——Log Cleaner 崩溃后可能留下部分压缩的数据。删除.retention.ms 设置的墓碑保留时间决定了 Key 被物理删除的延迟。",
+    "hints": [
+      "Kafka 的 Log Compaction 和 Log Deletion 在清理粒度上的根本区别是什么",
+      "墓碑消息的 delete.retention.ms 参数在压实中起什么作用"
+    ],
+    "tags": [
+      "Kafka",
+      "日志压实",
+      "Log Compaction",
+      "墓碑消息"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RabbitMQ 惰性队列（Lazy Queues）与仲裁队列（Quorum Queues）",
+    "content": "RabbitMQ 的惰性队列（Lazy Queues）和仲裁队列（Quorum Queues）各解决了什么问题？它们的实现原理和适用场景有什么区别？",
+    "answer": "答案：惰性队列（Lazy Queue）将消息尽可能早地写入磁盘（以减少内存压力），适合消息积压场景。仲裁队列（Quorum Queue）基于 Raft 协议实现数据多副本复制，提供高可用和数据一致性，适合可靠性要求高的场景。两者分别从内存管理和高可用两个维度解决了 RabbitMQ 早期版本的问题。\n\n解析：1）惰性队列——功能：消息到达后直接写入磁盘，只在被消费时加载到内存（而非传统模式下先尽量驻留内存）。配置：通过 x-queue-mode=lazy 声明。优势：可以处理大量消息积压而不会耗尽内存，适合消费者处理速度跟不上生产者或需要长时间保留消息的场景。劣势：消息读取比默认队列慢（需要磁盘 I/O）。\n\n2）仲裁队列——功能：基于 Raft 共识算法，队列数据在多个集群节点间复制（leader/follower 模式）。配置：通过 x-queue-type=quorum 声明（RabbitMQ 3.8+）。优势：数据不丢失（多数节点写入确认），自动故障转移（leader 宕机时自动选举新 leader），镜像队列的替代方案。劣势：吞吐量低于普通队列，不支持临时队列（排他性/自动删除），不支持非幂等消费者。\n\n扩展延伸：3）选择建议——需要处理大量消息积压且不关心数据高可用 -> 惰性队列。需要数据不丢失和高可用 -> 仲裁队列（替代已弃用的镜像队列）。性能敏感且内存充足 -> 默认队列（吞吐最高）。4）注意事项——仲裁队列的 Raft 协议有一定延迟（需要多数节点确认），跨 AZ 部署时网络延迟影响明显。惰性队列的磁盘 IO 压力较大，需要足够的磁盘吞吐。5）RabbitMQ 3.12+ 的默认队列类型已改为 quorum（以前是 classic）。",
+    "hints": [
+      "惰性队列在消息写入路径上与默认队列的核心区别是什么",
+      "为什么仲裁队列不能支持排他性（Exclusive）队列"
+    ],
+    "tags": [
+      "RabbitMQ",
+      "惰性队列",
+      "仲裁队列",
+      "Raft",
+      "高可用"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 消费者组重平衡协议：Eager 与 Cooperative Sticky",
+    "content": "Kafka 消费者组重平衡（Rebalance）协议经历了从 Eager 到 Cooperative Sticky 的演进。这两种协议的工作方式有什么不同？Cooperative Sticky 如何减少重平衡对消费的影响？",
+    "answer": "答案：Eager Rebalance 是全停全启模式——所有消费者撤销（Revoke）所有已分配的分区，重新加入 Group 后由 Coordinator 重新分配。Cooperative Sticky Rebalance 是增量模式——每次只重新分配需要调整的分区（新增消费者或消费者离开），稳定分区的消费不中断。\n\n解析：1）Eager Rebalance——协议流程：消费者加入/离开时，Coordinator 通知所有消费者撤销全部分区 -> 所有消费者停止消费并加入新一轮 Rebalance -> Coordinator 使用分配策略（如 RangeAssignor/RoundRobinAssignor）重新分配分区。影响：全部消费者暂停，消费中断时间 = 撤销时间 + 重新分配时间 + 续租时间。在频繁 Rebalance 时（如大规模集群滚动重启），整个消费组可能会长时间无法消费。\n\n2）Cooperative Sticky Rebalance（Kafka 2.4+ 默认）——协议流程：Coordinator 计算新旧分区分配的差异 -> 只通知需要调整的消费者撤销特定分区 -> 消费者仅撤销指定分区（保持其他分区继续消费）-> 这些被撤销的分区分配给新消费者。优势：消费中断时间大幅缩短（只影响被移动的分区），分配更稳定（Sticky 保证尽量保持已有分配不变）。\n\n扩展延伸：3）配置——partition.assignment.strategy=org.apache.kafka.clients.consumer.CooperativeStickyAssignor。注意：同一个消费组内的所有消费者必须使用相同的分配策略。4）静态消费组（Static Group Membership，Kafka 2.3+）：消费者使用 group.instance.id 注册，重启时不触发 Rebalance（只要在 session.timeout.ms 内恢复）。结合 Cooperative Sticky 可以最大程度减少 Rebalance 影响。5）监控 Rebalance：通过 kafka-consumer-groups --describe --group my-group --members --verbose 查看消费者状态和分区分配。",
+    "hints": [
+      "Cooperative Sticky 协议中消费者撤销部分分区后如何处理被撤销的分区中的数据",
+      "静态消费组（Static Group Membership）和 Cooperative Sticky 协议如何配合使用"
+    ],
+    "tags": [
+      "Kafka",
+      "Rebalance",
+      "Cooperative Sticky",
+      "消费者组"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "跨分区消息有序性保证的挑战与方案",
+    "content": "在分布式消息系统中，跨分区（Partition）的消息顺序是无法保证的（因为分区是并行消费的）。如果需要全局有序或跨分区的局部有序，有哪些可行的方案？各自的优缺点是什么？",
+    "answer": "答案：消息队列的单分区内有序，跨分区无序（这是分布式系统的固有约束）。实现全局有序的唯一方案是使用单分区（吞吐受限）。跨分区局部有序（如按业务 ID 将关联消息路由到同一分区）是实际工程中最常用的方案。对于需要跨分区排序的场景，可以在消费端使用缓冲区排序或数据库兜底。\n\n解析：1）单分区全局有序——Topic 只设 1 个 Partition，所有消息写入同一分区，消费端单线程消费。优点：严格有序。缺点：吞吐量受限于单分区处理能力（Kafka 单 Partition 约数十 MB/s），扩展消费者数量无意义（一个分区只能被一个消费者消费）。适用：订单变更日志、金融交易流水等对全局顺序有强要求且数据量不大的场景。\n\n2）分区内有序（Key 路由）——通过 Key 哈希将同一业务 ID（订单号、用户 ID）的消息路由到同一分区。优点：业务级别有序，支持多分区并行。缺点：如果 Key 分布不均会导致数据倾斜（某分区消息特别多）。需要合理设计 Key（避免热 Key）。\n\n3）消费端排序——生产者将消息发送到任意分区（利用分区并行写入），每条消息带业务序号或时间戳。消费者读取后先放入内存或数据库缓冲区，按序号排序后再处理。优点：写入吞吐高，适用于最终一致性要求。缺点：消费端复杂度高，缓冲区可能很大，排序延迟不可控。\n\n扩展延伸：4）消息有序性的实践建议——先分析业务是否真的需要全局有序。大多数场景下「最终一致」加「业务幂等」即可满足需求。5）Kafka 的有序性保证：单分区内严格有序（Producer 端 max.in.flight.requests.per.connection=1 或 enable.idempotence=true）。RocketMQ 的顺序消息：MessageQueueSelector 保证同一队列内有序，且消费者使用 MessageListenerOrderly。6）Pulsar 的 Key_Shared 订阅：保证同一 Key 的消息被同一个 Consumer 按序处理，同时保留了非同一 Key 消息的并行性（兼顾有序和吞吐）。",
+    "hints": [
+      "为什么分布式消息系统不可能实现高性能的全局有序",
+      "Pulsar 的 Key_Shared 订阅相比 Kafka 的 Key 路由有什么优势"
+    ],
+    "tags": [
+      "有序性",
+      "跨分区",
+      "Kafka",
+      "RocketMQ",
+      "全局有序"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 消息幂等性生产者（Idempotent Producer）的工作原理",
+    "content": "Kafka 幂等生产者（Idempotent Producer）是如何保证消息不重复的？幂等生产者与事务性消息（Transactional API）的关系是什么？使用幂等生产者时有哪些配置要求和限制？",
+    "answer": "答案：幂等生产者通过 enable.idempotence=true 启用，Kafka 为每个 Producer 分配唯一的 Producer ID（PID），每条消息附带 Sequence Number（从 0 开始单调递增）。Broker 端按 PID + Partition 维度去重——如果收到 Sequence Number 小于或等于已写入的最大 Sequence，则视为重复消息直接丢弃。\n\n解析：1）工作流程——Producer 初始化时向 Broker 请求分配 PID -> 发送消息时每条消息携带 (PID, Sequence Number) -> Broker 为每个 PID+Partition 维护当前最大 Sequence Number -> 收到消息时判断 Sequence > 已写入最大 Sequence 则正常写入，否则丢弃（并返回成功避免 Producer 重试）。2）幂等性与 max.in.flight.requests——启用幂等后 max.in.flight.requests.per.connection 可以设为 5（默认从 5 改为与幂等兼容的缓冲机制），因为 Broker 端按 Sequence 排序保证了即使乱序到达也能正确去重。\n\n扩展延伸：3）PID 的生命周期——PID 在 Producer 初始化时分配，Producer 重启后分配新的 PID，之前记录在 Broker 端的去重状态失效（重启后可能重复发送）。幂等保证不跨 Producer Session。4）事务性消息——在幂等生产者基础上增加了事务 API（beginTransaction/commitTransaction/abortTransaction），通过 Transaction Coordinator 管理事务状态，实现跨分区原子写入。事务性消息不仅保证不重复，还保证跨多个分区的写入要么全部成功要么全部失败。5）性能影响——幂等生产者的额外开销微乎其微（多了一个 PID 和 Sequence Number 字段）。事务性消息有额外开销（事务 Coordinator 的 commit 消息需要写入）。6）生产建议——对于需要至少一次（At-Least-Once）且自动去重的场景，启用幂等生产者是最低成本的方案。事务性消息只在需要跨分区原子写入时才使用。",
+    "hints": [
+      "幂等生产者的 PID 重启后会发生变化——这会导致什么限制",
+      "幂等生产和事务性消息在去重机制上是包含关系还是平行关系"
+    ],
+    "tags": [
+      "Kafka",
+      "幂等",
+      "Producer",
+      "Exactly-Once",
+      "事务"
+    ]
   }
 ]
