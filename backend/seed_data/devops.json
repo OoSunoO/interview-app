@@ -513,5 +513,95 @@
       "韧性",
       "Chaos Monkey"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 资源请求与限制",
+    "content": "Kubernetes 中 Pod 的 requests 和 limits 有什么区别？QoS 类别（Guaranteed/Burstable/BestEffort）是如何划分的？资源超卖（Overcommit）如何处理？",
+    "answer": "答案：requests 是容器保证能获得的资源量（调度依据），limits 是容器最多能使用的资源上限（限制依据）。QoS 划分——Guaranteed（requests=limits）、Burstable（requests<limits 或只设了 requests）、BestEffort（未设置任何 requests/limits）。\n\n解析：QoS 类别——1）Guaranteed（高优先级）：所有容器 requests=limits（CPU 和内存都相同）。Pod 不会被 OOM Killer 轻易杀死。适用于关键业务应用。2）Burstable（中优先级）：至少有一个容器设置了 requests 但未全部等于 limits。没有 limits 时可以使用节点剩余资源（超卖场景）。适用于大部分应用。3）BestEffort（低优先级）：没有设置任何 requests/limits。当节点资源紧张时被 OOM Killer 最先杀死。适用于批处理/离线任务。\n\n扩展延伸：资源管理机制——1）CPU：requests 和 limits 单位是 CPU 核数（1=1 核，100m=0.1 核）。CPU 是可压缩资源——限制过度的 Pod 会被 throttle（节流）而非杀死。2）内存：requests 和 limits 单位是字节（1Gi）。内存是不可压缩资源——超过 limits 的 Pod 会被 OOM Killer 杀死。3）调度器根据节点剩余 capacity 和 Pod 的 requests 做调度决策（不参考 limits）。4）超卖（Overcommit）是常见实践：设置 CPU requests 较低但 limits 较高（允许 Pod 在空闲时使用更多 CPU，在争用时被限制）。内存不建议超卖——超出即 OOM。监控——kubectl top node/pod 查看实际资源使用。Vertical Pod Autoscaler（VPA）可根据历史使用自动调整 requests/limits。",
+    "hints": [
+      "requests 是调度依据（保证值），limits 是上限值。CPU 超限被 throttle，内存超限被 OOM",
+      "QoS 降级顺序：BestEffort 最先被杀 → Burstable → Guaranteed 最后被杀"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "QoS",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s Service 与网络流量路径",
+    "content": "Kubernetes Service 有哪几种类型？ClusterIP 到 Pod 的流量路径是怎样的？iptables 和 IPVS 模式的区别？kube-proxy 的作用？",
+    "answer": "答案：Service 类型：ClusterIP（集群内可访问的虚拟 IP）、NodePort（节点端口映射到 ClusterIP）、LoadBalancer（云厂商 LB + NodePort/ClusterIP）、ExternalName（DNS CNAME 映射）。kube-proxy 负责维护节点上的网络规则（iptables/IPVS），将 Service 的 ClusterIP 流量转发到对应的 Pod。\n\n解析：流量路径（以 ClusterIP 为例）——1）客户端访问 Service 的 ClusterIP:Port。2）kube-proxy 在节点上写入 iptables/IPVS 规则，匹配到 Service IP 后 DNAT（目标地址转换）为选中的 Pod IP。3）请求发送到 Pod。Pod 的回包经过反向 SNAT（将 Pod IP 转换回 Service IP）使客户端感知不到 Pod 的存在。\n\n扩展延伸：iptables vs IPVS——1）iptables 模式：kube-proxy 为每个 Service 创建 iptables 规则。匹配规则链式遍历（从第一条到最后一条匹配）。当 Service 数量大（>1000）时规则性能下降明显（规则更新 O(N)）。2）IPVS 模式（推荐）：基于 Linux 内核的 L4 负载均衡（hash 表查找，O(1) 复杂度）。支持更多负载均衡算法（rr/wlc/lc）。高性能、支持大规模 Service。kube-proxy 的模式选择——通过 kube-proxy 的 --proxy-mode 参数设置。Service 的 sessionAffinity（会话保持）通过设置 iptables/IPVS 的源 IP 哈希实现。ExternalTrafficPolicy=Local 可保留客户端源 IP（不经过 SNAT，直接将流量转发给本地 Pod，但可能负载不均）。",
+    "hints": [
+      "iptables 模式规则遍历 O(N)——Cluster 规模大（>1000 Service）时推荐 IPVS 模式",
+      "ExternalTrafficPolicy=Local 保留客户端源 IP 但可能导致负载不均——流量只转发给同一节点上的 Pod"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "Service",
+      "网络"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s HPA 与自动伸缩",
+    "content": "Kubernetes HPA（Horizontal Pod Autoscaler）的工作原理？基于 CPU/Memory 和自定义指标的伸缩策略？HPA 的扩容和缩容有什么策略和限制？Cluster Autoscaler 和 HPA 如何配合？",
+    "answer": "答案：HPA 根据 Pod 的 CPU/内存使用率或自定义指标自动调整 Pod 副本数。核心逻辑：desiredReplicas = ceil[currentReplicas * (currentMetricValue / desiredMetricValue)]。默认支持 CPU、内存利用率。通过 Custom Metrics API 和 External Metrics API 可接入 Prometheus 自定义指标。\n\n解析：配置和行为——1）CPU/Memory 指标：targetAverageUtilization（目标平均利用率，如 80%）。HPA 周期性地（默认 15s）获取 Pod 的当前利用率，计算目标副本数。2）自定义指标：需要部署 metrics adapter（如 Prometheus Adapter）。支持每秒请求数（QPS）、队列深度、连接数等业务指标。3）扩容策略：kube-controller-manager 的 --horizontal-pod-autoscaler-downscale-stabilization（默认 5min，缩容冷却）。--horizontal-pod-autoscaler-upscale-delay（默认 3min，扩容冷却）。\n\n扩展延伸：HPA + Cluster Autoscaler——1）HPA 增加 Pod 副本数 → Pod 因资源不足 Pending → Cluster Autoscaler 检查是否有 Pending Pod → 创建新的 Node → Pod 调度成功。2）HPA 缩容 Pod → 节点负载降低 → Cluster Autoscaler 检查节点利用率 → 如果低于阈值则缩容节点。3）行为约束（behavior）：HPA 可以配置扩容/缩容的速率限制（stabilizationWindowSeconds/policy/selectPolicy）。防止指标抖动导致的频繁扩缩容（thrashing）。注意——HPA 要求 Pod 设置了 requests（没有 requests 无法计算利用率）。HPA 对 StatefulSet 的支持有限——StatefulSet 的缩容是有序的（从最大序号开始），HPA 不改变此行为。",
+    "hints": [
+      "HPA 扩缩容公式——desiredReplicas = ceil(currentReplicas * currentValue / targetValue)",
+      "HPA + Cluster Autoscaler 联动——HPA 扩容导致 Pod Pending → Cluster Autoscaler 扩容节点"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "HPA",
+      "自动伸缩"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Docker 镜像构建优化",
+    "content": "如何优化 Docker 镜像的大小？多阶段构建（Multi-stage Build）的原理？有哪些减少镜像层的技巧？Docker 镜像安全扫描的最佳实践？",
+    "answer": "答案：多阶段构建是减少镜像大小的核心技术——第一个阶段编译和依赖安装（使用完整的基础镜像），第二个阶段只复制编译产物（使用精简基础镜像，如 alpine）。其他优化：选择合适的基础镜像（alpine/distroless）、合并 RUN 指令（减少镜像层）、清理缓存和临时文件。\n\n解析：多阶段构建——1）`FROM golang:1.20 AS builder`——编译阶段使用完整 Go 工具链。`RUN go build -o /app` 编译二进制。2）`FROM alpine:3.18`——运行阶段使用精简基础镜像。`COPY --from=builder /app /app`——只从 builder 阶段复制编译产物。3）最终镜像只包含运行需要的二进制和运行时依赖，不包含 Go 编译器、源码等构建工具。\n\n扩展延伸：镜像层与缓存——1）Dockerfile 的每条 RUN/COPY/ADD 指令创建一个新镜像层。合并指令可减少层数（`RUN apt-get update && apt-get install -y pkg1 pkg2 && apt-get clean` 连成一条 RUN）。2）层的缓存：Docker 构建时如果某层没有变化则使用缓存。不变的内容放前面（如 apt 安装放在 COPY 源码之前，只在依赖变化时才重装）。3）Dockerignore：`.dockerignore` 排除不需要的文件（node_modules、.git、.env），减少构建上下文大小。安全——1）镜像扫描：Trivy（Aqua）、Clair（CoreOS）、Docker Scan（Snyk）。2）减少攻击面：不用 root 用户运行；不用包含大量工具（bash、curl、wget）的镜像。3）Distroless 镜像（Google）：只有应用和运行时，没有 shell 和包管理器（攻击面最小化但调试困难）。",
+    "hints": [
+      "多阶段构建的精髓——编译阶段用完整工具链，运行阶段用最小依赖",
+      "Docker 镜像层缓存——不常变的内容放 Dockerfile 前面，经常变的源码放后面（最大化缓存利用）"
+    ],
+    "tags": [
+      "DevOps",
+      "Docker",
+      "镜像优化",
+      "构建"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Prometheus 监控体系",
+    "content": "Prometheus 的架构和数据模型？Pull 模型和 Push 模型各自的优缺点？PromQL 的四大核心数据类型（Counter/Gauge/Histogram/Summary）？Grafana 和 Prometheus 如何配合？",
+    "answer": "答案：Prometheus 采用 Pull 模型（主动从 Targets 抓取指标）。核心组件：Prometheus Server（抓取 + 存储 + 查询）、Exporters（暴露指标）、Alertmanager（告警管理）。数据模型基于带标签（Labels）的时间序列。\n\n解析：指标类型——1）Counter（计数器）：只增不减（如请求总数、错误总数）。适用于累加数据。rate() 和 irate() 函数计算增长率（QPS）。2）Gauge（仪表盘）：可增可减（如当前内存使用、在线人数、队列长度）。3）Histogram（直方图）：对观测值（如请求延迟）进行分桶统计。可计算 P50/P90/P99（`histogram_quantile()` 函数）。4）Summary（摘要）：类似于 Histogram，但在客户端计算分位数（Prometheus 服务端无需计算）。Histogram 可以在服务端聚合多个实例的分布，Summary 不行。\n\n扩展延伸：Pull vs Push——Pull 优势：更容易做健康检查（抓取失败即服务不可用）；中心化配置。Pull 劣势：Target 需要被 Prometheus 可访问（通过网络或 Service Discovery）。Push 场景（Pushgateway）：批处理任务（运行完就退出 → 无法 Pull）；网络隔离的 Target。Grafana——数据可视化（Dashboards）+ 告警（Unified Alerting）。Alertmanager——告警路由（分组/抑制/静默）。Thanos/Cortex——Prometheus 的长期存储和全局视图方案（解决 Prometheus 单实例的存储上限和 HA 问题）。",
+    "hints": [
+      "Counter 用 rate()/irate() 算 QPS，Gauge 直接看值，Histogram/Snapshot 用 histogram_quantile() 算 P99",
+      "Pull 模型让 Prometheus 控制抓取节奏——避免 Push 模式下 Target 过多导致 Server 过载"
+    ],
+    "tags": [
+      "DevOps",
+      "Prometheus",
+      "监控",
+      "Grafana"
+    ]
   }
 ]

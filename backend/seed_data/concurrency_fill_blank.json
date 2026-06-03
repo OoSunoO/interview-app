@@ -6,8 +6,14 @@
     "title": "线程的六种状态",
     "content": "Java 线程的生命周期包括六种状态：NEW、___、BLOCKED（等待锁释放）、___（等待通知）、TIMED_WAITING（带超时等待）和___。",
     "answer": "{\"correct\":[[\"RUNNABLE\",\"可运行\"],[\"WAITING\",\"等待\"],[\"TERMINATED\",\"终止\"]],\"distractors\":[\"READY\",\"SLEEPING\",\"RUNNING\",\"PAUSED\"]}",
-    "hints": ["操作系统层面的 READY 和 RUNNING 在 JVM 层面统一为一个状态", "线程在调用 Object.wait() 后会进入等待状态"],
-    "tags": ["并发", "线程"]
+    "hints": [
+      "操作系统层面的 READY 和 RUNNING 在 JVM 层面统一为一个状态",
+      "线程在调用 Object.wait() 后会进入等待状态"
+    ],
+    "tags": [
+      "并发",
+      "线程"
+    ]
   },
   {
     "category": "java_advanced",
@@ -16,8 +22,14 @@
     "title": "synchronized 的锁升级过程",
     "content": "JDK 6 为 synchronized 引入锁升级机制：___（JDK 15 默认关闭，JDK 18 废弃）→ ___（通过 CAS 自旋获取）→ ___（依赖操作系统的互斥锁，进入等待队列）。",
     "answer": "{\"correct\":[[\"偏向锁\",\"Biased Locking\"],[\"轻量级锁\",\"Lightweight Lock\"],[\"重量级锁\",\"Heavyweight Lock\"]],\"distractors\":[\"自旋锁\",\"共享锁\",\"公平锁\",\"可重入锁\"]}",
-    "hints": ["锁是单向升级的，不可降级", "重量级锁依赖操作系统底层的互斥量（Mutex）"],
-    "tags": ["并发", "锁"]
+    "hints": [
+      "锁是单向升级的，不可降级",
+      "重量级锁依赖操作系统底层的互斥量（Mutex）"
+    ],
+    "tags": [
+      "并发",
+      "锁"
+    ]
   },
   {
     "category": "java_advanced",
@@ -26,8 +38,14 @@
     "title": "volatile 的两个核心语义",
     "content": "volatile 关键字提供两个核心语义：一是保证___（每次使用都从主存获取，写操作立即刷新到主存），二是禁止___（通过插入内存屏障实现）。但 volatile 不保证___。",
     "answer": "{\"correct\":[[\"可见性\",\"内存可见性\"],[\"指令重排序\",\"指令重排\"],[\"原子性\"]],\"distractors\":[\"有序性\",\"一致性\",\"持久性\",\"隔离性\"]}",
-    "hints": ["inc++ 这类复合操作需要使用 synchronized 或 AtomicInteger 来保证原子性", "内存屏障有 StoreStore、StoreLoad、LoadLoad、LoadStore 四种"],
-    "tags": ["并发", "volatile"]
+    "hints": [
+      "inc++ 这类复合操作需要使用 synchronized 或 AtomicInteger 来保证原子性",
+      "内存屏障有 StoreStore、StoreLoad、LoadLoad、LoadStore 四种"
+    ],
+    "tags": [
+      "并发",
+      "volatile"
+    ]
   },
   {
     "category": "java_advanced",
@@ -36,8 +54,14 @@
     "title": "死锁的四个必要条件",
     "content": "死锁必须同时满足四个条件：___（资源只能被一个线程占用）、___（线程持有资源的同时请求新资源）、___（资源不能被强制剥夺）和___（多个线程形成闭合的依赖链）。",
     "answer": "{\"correct\":[[\"互斥\",\"互斥条件\"],[\"请求与保持\",\"占有并等待\"],[\"不剥夺\",\"非抢占\"],[\"循环等待\",\"循环等待条件\"]],\"distractors\":[\"非阻塞\",\"饥饿\",\"活锁\",\"死循环\"]}",
-    "hints": ["破坏任意一个条件即可预防死锁", "最常用的预防方法是资源顺序化——破坏循环等待条件"],
-    "tags": ["并发", "死锁"]
+    "hints": [
+      "破坏任意一个条件即可预防死锁",
+      "最常用的预防方法是资源顺序化——破坏循环等待条件"
+    ],
+    "tags": [
+      "并发",
+      "死锁"
+    ]
   },
   {
     "category": "java_advanced",
@@ -46,8 +70,14 @@
     "title": "线程池拒绝策略",
     "content": "ThreadPoolExecutor 提供四种内置拒绝策略：抛异常的___、调用者线程执行的___、直接丢弃的___和丢弃最早未处理任务的___。",
     "answer": "{\"correct\":[[\"AbortPolicy\"],[\"CallerRunsPolicy\"],[\"DiscardPolicy\"],[\"DiscardOldestPolicy\"]],\"distractors\":[\"RejectPolicy\",\"TimeoutPolicy\",\"QueuePolicy\",\"BlockPolicy\"]}",
-    "hints": ["默认策略是 AbortPolicy，会抛出 RejectedExecutionException", "CallerRunsPolicy 会在调用者线程中直接执行任务，可起到流量控制作用"],
-    "tags": ["并发", "线程池"]
+    "hints": [
+      "默认策略是 AbortPolicy，会抛出 RejectedExecutionException",
+      "CallerRunsPolicy 会在调用者线程中直接执行任务，可起到流量控制作用"
+    ],
+    "tags": [
+      "并发",
+      "线程池"
+    ]
   },
   {
     "category": "java_advanced",
@@ -56,8 +86,15 @@
     "title": "CAS 的三个操作数",
     "content": "CAS（Compare-And-Swap）操作需要三个操作数：内存位置 V、预期值___、新值___。当 V 的值等于___时，将 V 更新为新值，否则不操作。",
     "answer": "{\"correct\":[[\"A\",\"预期原值\"],[\"B\",\"新值\"],[\"A\",\"预期原值\"]],\"distractors\":[\"内存地址\",\"旧值\",\"比较结果\",\"偏移量\"]}",
-    "hints": ["CAS 是硬件层面支持的原子操作，java.util.concurrent.atomic 包基于此实现", "CAS 存在 ABA 问题，AtomicStampedReference 通过版本号解决"],
-    "tags": ["并发", "CAS", "原子操作"]
+    "hints": [
+      "CAS 是硬件层面支持的原子操作，java.util.concurrent.atomic 包基于此实现",
+      "CAS 存在 ABA 问题，AtomicStampedReference 通过版本号解决"
+    ],
+    "tags": [
+      "并发",
+      "CAS",
+      "原子操作"
+    ]
   },
   {
     "category": "java_advanced",
@@ -66,8 +103,15 @@
     "title": "AQS 的核心组件",
     "content": "AbstractQueuedSynchronizer（AQS）的核心组件包括：___（volatile 修饰的状态变量，表示资源的可用数量）、___（CLH 锁的变体，存放等待线程）、以及基于 LockSupport 的___/___机制。",
     "answer": "{\"correct\":[[\"state\"],[\"同步队列\",\"CLH 队列\",\"FIFO 队列\"],[\"park\",\"阻塞\"],[\"unpark\",\"唤醒\"]],\"distractors\":[\"阻塞队列\",\"条件队列\",\"信号量\",\"锁\"]}",
-    "hints": ["ReentrantLock、CountDownLatch、Semaphore 都是基于 AQS 实现的", "AQS 的核心是 state + CLH 变体队列"],
-    "tags": ["并发", "AQS", "锁"]
+    "hints": [
+      "ReentrantLock、CountDownLatch、Semaphore 都是基于 AQS 实现的",
+      "AQS 的核心是 state + CLH 变体队列"
+    ],
+    "tags": [
+      "并发",
+      "AQS",
+      "锁"
+    ]
   },
   {
     "category": "java_advanced",
@@ -76,8 +120,15 @@
     "title": "Thread.join() 的等待语义",
     "content": "调用 t.join() 时，当前线程会___直到线程 t 执行完毕。join() 的内部实现使用___方法，让当前线程在 t 线程的___对象上等待。t 执行结束后，JVM 会调用___方法唤醒所有等待线程。",
     "answer": "{\"correct\":[[\"阻塞\",\"等待\"],[\"wait\",\"Object.wait\"],[\"Thread\",\"线程\"],[\"notifyAll\"]],\"distractors\":[\"sleep\",\"yield\",\"interrupt\",\"notify\",\"LockSupport.park\"]}",
-    "hints": ["join(0) 表示无限等待直到目标线程结束", "join 的源码实际是 while (isAlive()) wait(0) 循环"],
-    "tags": ["并发", "线程", "join"]
+    "hints": [
+      "join(0) 表示无限等待直到目标线程结束",
+      "join 的源码实际是 while (isAlive()) wait(0) 循环"
+    ],
+    "tags": [
+      "并发",
+      "线程",
+      "join"
+    ]
   },
   {
     "category": "java_advanced",
@@ -86,8 +137,15 @@
     "title": "Happens-Before 规则",
     "content": "JMM（Java 内存模型）定义了八条 Happens-Before 规则，其中四条核心规则是：___（同一个线程中前面的操作 happen-before 后面的）、___（对 volatile 变量的写操作 happen-before 后续的读）、___（锁的释放 happen-before 同一锁的获取）、___（A happens-before B 且 B happens-before C → A happens-before C）。",
     "answer": "{\"correct\":[[\"程序次序\",\"程序顺序\"],[\"volatile 变量\",\"volatile\"],[\"锁\",\"释放锁\"],[\"传递性\"]],\"distractors\":[\"线程启动\",\"线程终止\",\"中断\",\"对象终结\"]}",
-    "hints": ["Happens-Before 不是时间上的先后，而是可见性的保证", "volatile 写-读规则保证了写入的值对后续读取可见"],
-    "tags": ["并发", "JMM", "Happens-Before"]
+    "hints": [
+      "Happens-Before 不是时间上的先后，而是可见性的保证",
+      "volatile 写-读规则保证了写入的值对后续读取可见"
+    ],
+    "tags": [
+      "并发",
+      "JMM",
+      "Happens-Before"
+    ]
   },
   {
     "category": "java_advanced",
@@ -96,8 +154,14 @@
     "title": "CountDownLatch / CyclicBarrier / Semaphore",
     "content": "___是一个线程等待其他 N 个线程完成后才继续执行的同步器（计数器不能复用）；___是 N 个线程相互等待到同步点后再一起执行的同步器（计数器可以复用）；___是控制同时访问资源的线程数的同步器（发放许可证）。",
     "answer": "{\"correct\":[[\"CountDownLatch\",\"倒计时门闩\"],[\"CyclicBarrier\",\"循环屏障\"],[\"Semaphore\",\"信号量\"]],\"distractors\":[\"Exchanger\",\"Phaser\",\"ReadWriteLock\",\"StampedLock\"]}",
-    "hints": ["CountDownLatch 的 countDown() 和 await() 配合使用", "CyclicBarrier 的 reset() 可以重置屏障"],
-    "tags": ["并发", "同步器"]
+    "hints": [
+      "CountDownLatch 的 countDown() 和 await() 配合使用",
+      "CyclicBarrier 的 reset() 可以重置屏障"
+    ],
+    "tags": [
+      "并发",
+      "同步器"
+    ]
   },
   {
     "category": "java_advanced",
@@ -106,8 +170,16 @@
     "title": "ReadWriteLock / StampedLock",
     "content": "ReadWriteLock 分离读锁和写锁，___（读读不互斥）、___（读写互斥）、___（写写互斥）。StampedLock 在 ReadWriteLock 的基础上增加了___模式，支持乐观读且无需获取锁。",
     "answer": "{\"correct\":[[\"读锁\",\"读\"],[\"写锁\",\"写\"],[\"写锁\",\"写\"],[\"乐观读\",\"乐观锁\"]],\"distractors\":[\"自旋锁\",\"公平锁\",\"悲观锁\",\"共享锁\"]}",
-    "hints": ["StampedLock 的乐观读不需要 CAS 操作，性能比 ReadWriteLock 更好", "StampedLock 不可重入，使用时需注意"],
-    "tags": ["并发", "锁", "ReadWriteLock", "StampedLock"]
+    "hints": [
+      "StampedLock 的乐观读不需要 CAS 操作，性能比 ReadWriteLock 更好",
+      "StampedLock 不可重入，使用时需注意"
+    ],
+    "tags": [
+      "并发",
+      "锁",
+      "ReadWriteLock",
+      "StampedLock"
+    ]
   },
   {
     "category": "java_advanced",
@@ -116,8 +188,15 @@
     "title": "LockSupport 与线程阻塞原语",
     "content": "LockSupport 的 park()/unpark() 基于___机制，与 Object.wait/notify 相比：不需要在___块中使用、unpark 可以___（可以先 unpark 再 park）、响应中断时通过___标志位返回而不是抛出异常。",
     "answer": "{\"correct\":[[\"许可证\",\"Permit\",\"许可\"],[\"synchronized\",\"同步\"],[\"提前调用\",\"先于 park 调用\"],[\"interrupted\",\"中断\"]],\"distractors\":[\"信号量\",\"锁\",\"wait\",\"notify\"]}",
-    "hints": ["unpark 相当于发放一个许可证，park 相当于等待一个许可证", "AQS 的底层线程阻塞就是基于 LockSupport.park() 实现的"],
-    "tags": ["并发", "LockSupport", "线程"]
+    "hints": [
+      "unpark 相当于发放一个许可证，park 相当于等待一个许可证",
+      "AQS 的底层线程阻塞就是基于 LockSupport.park() 实现的"
+    ],
+    "tags": [
+      "并发",
+      "LockSupport",
+      "线程"
+    ]
   },
   {
     "category": "java_advanced",
@@ -126,8 +205,15 @@
     "title": "ThreadLocal 内存泄漏",
     "content": "ThreadLocal 每个线程维护一个___（ThreadLocalMap），key 是 ThreadLocal 实例的___（弱引用），value 是线程局部变量。使用完后必须调用___清理，否则在线程池场景下线程复用会导致___。",
     "answer": "{\"correct\":[[\"ThreadLocalMap\",\"threadLocals\"],[\"弱引用\",\"WeakReference\"],[\"remove()\",\"remove\"],[\"内存泄漏\",\"OOM\",\"值残留\"]],\"distractors\":[\"强引用\",\"软引用\",\"clear()\",\"reset()\"]}",
-    "hints": ["ThreadLocalMap 中 key 是弱引用但 value 是强引用——key 被回收后 value 无法被访问也无法被回收", "Tomcat 等 Web 容器使用线程池，请求结束后不清理 ThreadLocal 会导致下次请求读到上次的用户数据"],
-    "tags": ["并发", "ThreadLocal", "内存"]
+    "hints": [
+      "ThreadLocalMap 中 key 是弱引用但 value 是强引用——key 被回收后 value 无法被访问也无法被回收",
+      "Tomcat 等 Web 容器使用线程池，请求结束后不清理 ThreadLocal 会导致下次请求读到上次的用户数据"
+    ],
+    "tags": [
+      "并发",
+      "ThreadLocal",
+      "内存"
+    ]
   },
   {
     "category": "java_advanced",
@@ -136,8 +222,15 @@
     "title": "ForkJoinPool 工作窃取",
     "content": "ForkJoinPool 基于___算法：空闲线程从___（其他线程的任务队列尾部）偷取任务执行。每个工作线程维护一个___（双端队列），自己从___取任务，窃取者从尾部取。",
     "answer": "{\"correct\":[[\"工作窃取\",\"Work-Stealing\",\"Work Stealing\"],[\"其他线程的任务队列\",\"work queue\"],[\"双端队列\",\"Deque\"],[\"头部\",\"队首\"]],\"distractors\":[\"公平调度\",\"优先级调度\",\"阻塞队列\",\"单端队列\"]}",
-    "hints": ["ForkJoinPool 的 parallelism 参数控制并行度", "工作窃取能充分利用多核 CPU，减少线程空闲时间"],
-    "tags": ["并发", "ForkJoinPool", "Work-Stealing"]
+    "hints": [
+      "ForkJoinPool 的 parallelism 参数控制并行度",
+      "工作窃取能充分利用多核 CPU，减少线程空闲时间"
+    ],
+    "tags": [
+      "并发",
+      "ForkJoinPool",
+      "Work-Stealing"
+    ]
   },
   {
     "category": "java_advanced",
@@ -146,8 +239,15 @@
     "title": "CompletableFuture 异步编排",
     "content": "CompletableFuture 通过___实现异步编排：thenApply（___）、thenAccept（消费结果）、thenCompose（异步组合 flatMap）、allOf（___）、anyOf（___）。",
     "answer": "{\"correct\":[[\"回调链\",\"回调\"],[\"同步转换\",\"转换\"],[\"所有完成\",\"全部完成\"],[\"任意完成\",\"任一完成\"]],\"distractors\":[\"轮询\",\"阻塞\",\"通知\",\"信号\"]}",
-    "hints": ["thenApply 和 thenCompose 的区别类似于 Optional 的 map 和 flatMap", "allOf 返回的 CompletableFuture 在全部任务完成时触发，但类型是 Void，需要用 get() 等待"],
-    "tags": ["并发", "CompletableFuture", "异步"]
+    "hints": [
+      "thenApply 和 thenCompose 的区别类似于 Optional 的 map 和 flatMap",
+      "allOf 返回的 CompletableFuture 在全部任务完成时触发，但类型是 Void，需要用 get() 等待"
+    ],
+    "tags": [
+      "并发",
+      "CompletableFuture",
+      "异步"
+    ]
   },
   {
     "category": "java_advanced",
@@ -156,8 +256,15 @@
     "title": "线程池核心参数",
     "content": "ThreadPoolExecutor 的核心参数包括：corePoolSize（___）、maximumPoolSize（___）、keepAliveTime（___）、workQueue（___）、以及 RejectedExecutionHandler（___）。线程池的工作原理：当任务数超过 corePoolSize 时，新任务会放入___；当队列满时，会创建新线程直到___；超过该阈值后执行___。",
     "answer": "{\"correct\":[[\"核心线程数\",\"常驻线程数\"],[\"最大线程数\"],[\"空闲线程存活时间\"],[\"任务队列\",\"阻塞队列\"],[\"拒绝策略\"],[\"阻塞队列\",\"任务队列\"],[\"maximumPoolSize\",\"最大线程数\"],[\"拒绝策略\",\"RejectedExecutionHandler\"]],\"distractors\":[\"临时线程\",\"缓冲队列\",\"线程工厂\",\"工作窃取\"]}",
-    "hints": ["workQueue 的三种常见类型：SynchronousQueue（直接提交）、LinkedBlockingQueue（无界队列）、ArrayBlockingQueue（有界队列）", "线程池的 corePoolSize 和 maximumPoolSize 设为相同值时不会创建临时线程"],
-    "tags": ["并发", "线程池", "ThreadPoolExecutor"]
+    "hints": [
+      "workQueue 的三种常见类型：SynchronousQueue（直接提交）、LinkedBlockingQueue（无界队列）、ArrayBlockingQueue（有界队列）",
+      "线程池的 corePoolSize 和 maximumPoolSize 设为相同值时不会创建临时线程"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "ThreadPoolExecutor"
+    ]
   },
   {
     "category": "java_advanced",
@@ -166,8 +273,16 @@
     "title": "synchronized 与 Lock 的对比",
     "content": "synchronized 是 JVM 层面的___锁（退出同步块时自动释放），Lock 是 JDK 层面的___锁（必须在 finally 中释放）。Lock 提供了 synchronized 不具备的功能：___（尝试获取锁失败不阻塞）、___（可中断等待锁）、___（公平性选择）。",
     "answer": "{\"correct\":[[\"隐式\"],[\"显式\"],[\"tryLock\",\"非阻塞获取\"],[\"lockInterruptibly\"],[\"公平锁\",\"公平性\"]],\"distractors\":[\"自旋\",\"重入\",\"共享\",\"互斥\"]}",
-    "hints": ["JDK 6 对 synchronized 做了大量优化（锁升级），性能已接近 Lock", "Lock 的 lockInterruptibly() 方法允许在等待锁时响应中断"],
-    "tags": ["并发", "锁", "synchronized", "Lock"]
+    "hints": [
+      "JDK 6 对 synchronized 做了大量优化（锁升级），性能已接近 Lock",
+      "Lock 的 lockInterruptibly() 方法允许在等待锁时响应中断"
+    ],
+    "tags": [
+      "并发",
+      "锁",
+      "synchronized",
+      "Lock"
+    ]
   },
   {
     "category": "java_advanced",
@@ -176,8 +291,16 @@
     "title": "伪共享（False Sharing）与缓存行填充",
     "content": "CPU 缓存以___为单位加载和同步数据（x86 默认 64 字节）。伪共享指多个线程修改同一缓存行中的___变量导致频繁的___，尽管它们操作的是___变量。Java 中通过___（JDK 8 注解）或手动填充___字节来避免伪共享。",
     "answer": "{\"correct\":[[\"缓存行\",\"Cache Line\"],[\"不同\",\"多个\"],[\"缓存同步\",\"缓存一致性\",\"缓存失效\",\"MESI 协议\"],[\"不同\",\"独立\"],[\"@Contended\",\"@jdk.internal.vm.annotation.Contended\"],[\"64\"]],\"distractors\":[\"页\",\"相同\",\"上下文切换\",\"无需填充\"]}",
-    "hints": ["伪共享是高并发程序性能损耗的隐蔽原因——通过 CPU 性能计数器（perf stat -e cache-misses）可以检测", "Disruptor 框架广泛使用缓存行填充来达到极致性能"],
-    "tags": ["并发", "缓存", "伪共享", "性能"]
+    "hints": [
+      "伪共享是高并发程序性能损耗的隐蔽原因——通过 CPU 性能计数器（perf stat -e cache-misses）可以检测",
+      "Disruptor 框架广泛使用缓存行填充来达到极致性能"
+    ],
+    "tags": [
+      "并发",
+      "缓存",
+      "伪共享",
+      "性能"
+    ]
   },
   {
     "category": "java_advanced",
@@ -186,8 +309,16 @@
     "title": "JMM 抽象与内存屏障",
     "content": "Java 内存模型（JMM）规定所有变量存储在主内存，每个线程拥有自己的___（存储变量的副本）。线程间变量值的传递通过主内存完成。JMM 通过___（4 种指令类型：LoadLoad、StoreStore、___、StoreLoad）限制了编译器和 CPU 的指令重排序。volatile 读会在其后插入___屏障，volatile 写会在其前后插入___屏障。",
     "answer": "{\"correct\":[[\"工作内存\",\"本地内存\",\"线程栈\"],[\"内存屏障\",\"Memory Barrier\"],[\"LoadStore\"],[\"LoadLoad\",\"LoadLoad+LoadStore\"],[\"StoreStore\",\"StoreStore+StoreLoad\"]],\"distractors\":[\"共享内存\",\"堆内存\",\"寄存器\",\"锁\"]}",
-    "hints": ["final 关键字也在 JMM 中有特殊的可见性保证——构造函数中对 final 字段的写入在构造完成前对其他线程可见", "StoreLoad 内存屏障是四种屏障中最重的，x86 架构上等同于 mfence 指令"],
-    "tags": ["并发", "JMM", "内存屏障", "重排序"]
+    "hints": [
+      "final 关键字也在 JMM 中有特殊的可见性保证——构造函数中对 final 字段的写入在构造完成前对其他线程可见",
+      "StoreLoad 内存屏障是四种屏障中最重的，x86 架构上等同于 mfence 指令"
+    ],
+    "tags": [
+      "并发",
+      "JMM",
+      "内存屏障",
+      "重排序"
+    ]
   },
   {
     "category": "java_advanced",
@@ -196,8 +327,16 @@
     "title": "ConcurrentHashMap 原理",
     "content": "JDK 7 的 ConcurrentHashMap 使用___（Segment 继承 ReentrantLock）实现分段锁，最多支持___个 Segment 并发写入。JDK 8 的 ConcurrentHashMap 改为使用___（CAS + synchronized）实现并发安全性。当 Node 数组中一个槽位有多个节点时（链表长度超过___），链表转换为___来提高查找性能。",
     "answer": "{\"correct\":[[\"Segment\",\"分段锁\"],[\"16\"],[\"CAS + synchronized\",\"CAS+synchronized\"],[\"8\",\"TREEIFY_THRESHOLD\"],[\"红黑树\",\"TreeBin\"]],\"distractors\":[\"读写锁\",\"自旋锁\",\"32\",\"数组\",\"二叉树\"]}",
-    "hints": ["ConcurrentHashMap 的 size() 方法在 JDK 8 中通过 CounterCell 数组和 baseCount 组合计算", "JDK 8 的 ConcurrentHashMap 在弱一致性（get 不加锁）和强一致性之间做了权衡"],
-    "tags": ["并发", "ConcurrentHashMap", "集合", "CAS"]
+    "hints": [
+      "ConcurrentHashMap 的 size() 方法在 JDK 8 中通过 CounterCell 数组和 baseCount 组合计算",
+      "JDK 8 的 ConcurrentHashMap 在弱一致性（get 不加锁）和强一致性之间做了权衡"
+    ],
+    "tags": [
+      "并发",
+      "ConcurrentHashMap",
+      "集合",
+      "CAS"
+    ]
   },
   {
     "category": "java_advanced",
@@ -206,8 +345,16 @@
     "title": "ThreadPoolExecutor 执行流程",
     "content": "ThreadPoolExecutor.execute() 的执行流程中：当线程数小于___时创建新线程执行任务；超过此值则尝试将任务放入___；如果队列已满则创建新线程直到达到___；超过此上限则执行___策略。",
     "answer": "{\"correct\":[[\"corePoolSize\",\"核心线程数\"],[\"BlockingQueue\",\"工作队列\",\"任务队列\",\"阻塞队列\"],[\"maximumPoolSize\",\"最大线程数\"],[\"RejectedExecutionHandler\",\"拒绝策略\",\"饱和策略\"]],\"distractors\":[\"最大线程数\",\"等待队列\",\"直接拒绝\",\"丢弃\"]}",
-    "hints": ["corePoolSize 和 maximumPoolSize 之间的缓冲由工作队列承担", "拒绝策略包括 AbortPolicy、CallerRunsPolicy、DiscardPolicy 等"],
-    "tags": ["并发", "线程池", "ThreadPoolExecutor", "执行流程"]
+    "hints": [
+      "corePoolSize 和 maximumPoolSize 之间的缓冲由工作队列承担",
+      "拒绝策略包括 AbortPolicy、CallerRunsPolicy、DiscardPolicy 等"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "ThreadPoolExecutor",
+      "执行流程"
+    ]
   },
   {
     "category": "java_advanced",
@@ -216,8 +363,16 @@
     "title": "ReentrantLock 公平锁与非公平锁",
     "content": "ReentrantLock 基于___框架实现。公平锁的 lock() 方法比非公平锁多调用___方法检查是否有等待更久的线程，而非公平锁直接___尝试获取锁（允许插队）。unlock() 每次将 state 减 1，当 state 为___时释放锁。",
     "answer": "{\"correct\":[[\"AQS\",\"AbstractQueuedSynchronizer\"],[\"hasQueuedPredecessors\"],[\"compareAndSetState\",\"CAS\"],[\"0\",\"零\"]],\"distractors\":[\"CLH队列\",\"ThreadPoolExecutor\",\"LockSupport\",\"1\",\"负数\"]}",
-    "hints": ["非公平锁的性能通常高于公平锁——因为唤醒等待队列的成本比一次 CAS 高", "公平锁的 hasQueuedPredecessors 检查的是同步队列中是否有前驱节点"],
-    "tags": ["并发", "ReentrantLock", "AQS", "公平锁"]
+    "hints": [
+      "非公平锁的性能通常高于公平锁——因为唤醒等待队列的成本比一次 CAS 高",
+      "公平锁的 hasQueuedPredecessors 检查的是同步队列中是否有前驱节点"
+    ],
+    "tags": [
+      "并发",
+      "ReentrantLock",
+      "AQS",
+      "公平锁"
+    ]
   },
   {
     "category": "java_advanced",
@@ -226,8 +381,16 @@
     "title": "SynchronousQueue 原理",
     "content": "SynchronousQueue 是一个容量为___的 BlockingQueue，每个插入必须等待一个对应的___操作。公平模式下内部使用___（FIFO），非公平模式下使用___（LIFO）。核心的 transfer 方法通过自旋 + ___避免不必要的上下文切换。",
     "answer": "{\"correct\":[[\"0\",\"零\"],[\"移除\",\"take\",\"poll\"],[\"TransferQueue\"],[\"TransferStack\"],[\"LockSupport.park\",\"park\",\"阻塞\"]],\"distractors\":[\"1\",\"无界\",\"put\",\"LinkedBlockingQueue\",\"SynchronousQueue\",\"yield\"]}",
-    "hints": ["SynchronousQueue 的 take() 和 put() 必须成对出现——没有缓冲", "TransferStack 使用 SCM（Singly-linked list + CAS）模式实现线程配对"],
-    "tags": ["并发", "SynchronousQueue", "BlockingQueue", "线程配对"]
+    "hints": [
+      "SynchronousQueue 的 take() 和 put() 必须成对出现——没有缓冲",
+      "TransferStack 使用 SCM（Singly-linked list + CAS）模式实现线程配对"
+    ],
+    "tags": [
+      "并发",
+      "SynchronousQueue",
+      "BlockingQueue",
+      "线程配对"
+    ]
   },
   {
     "category": "java_advanced",
@@ -236,8 +399,16 @@
     "title": "FutureTask 状态转换",
     "content": "FutureTask 的状态转换：NEW 能转换为___（正常完成前的中间态）再转换为___（正常完成）；或转换为___（异常完成）；也可从 NEW 直接转换为___（被取消）。get() 方法通过___使调用线程等待，任务完成后通过___唤醒。",
     "answer": "{\"correct\":[[\"COMPLETING\"],[\"NORMAL\"],[\"EXCEPTIONAL\"],[\"CANCELLED\"],[\"LockSupport.park\",\"park\"],[\"LockSupport.unpark\",\"unpark\",\"finishCompletion\"]],\"distractors\":[\"SUCCESS\",\"FAILED\",\"INTERRUPTED\",\"DONE\",\"wait\",\"notify\"]}",
-    "hints": ["FutureTask 的状态一旦从 NEW 离开就不会再回到 NEW——单向状态机", "FutureTask 内部使用 WaitNode 链表管理等待线程"],
-    "tags": ["并发", "FutureTask", "状态", "AQS"]
+    "hints": [
+      "FutureTask 的状态一旦从 NEW 离开就不会再回到 NEW——单向状态机",
+      "FutureTask 内部使用 WaitNode 链表管理等待线程"
+    ],
+    "tags": [
+      "并发",
+      "FutureTask",
+      "状态",
+      "AQS"
+    ]
   },
   {
     "category": "java_advanced",
@@ -246,8 +417,16 @@
     "title": "ThreadLocal 实现原理",
     "content": "ThreadLocal 的 set(T) 方法获取当前线程的___，如果存在则调用 set(this, value) 存入，否则创建。ThreadLocalMap 使用___（而非链地址法）解决哈希冲突。Entry 的 key 是___引用。内存泄漏风险在于 Entry 的 value 是___引用（不会被自动清理），因此使用后应调用___方法。",
     "answer": "{\"correct\":[[\"ThreadLocalMap\"],[\"开放寻址\",\"开放地址\",\"open addressing\"],[\"弱\",\"WeakReference\",\"Weak\"],[\"强\",\"Strong\",\"StrongReference\"],[\"remove\"]],\"distractors\":[\"ThreadLocal\",\"HashMap\",\"链地址\",\"软\",\"虚\",\"get\"]}",
-    "hints": ["ThreadLocalMap 使用线性探测法（开放寻址）解决冲突——因为 Entry 数量不会很大", "在线程池中使用 ThreadLocal 必须在使用后 remove——否则线程可复用导致内存泄漏"],
-    "tags": ["并发", "ThreadLocal", "ThreadLocalMap", "内存泄漏"]
+    "hints": [
+      "ThreadLocalMap 使用线性探测法（开放寻址）解决冲突——因为 Entry 数量不会很大",
+      "在线程池中使用 ThreadLocal 必须在使用后 remove——否则线程可复用导致内存泄漏"
+    ],
+    "tags": [
+      "并发",
+      "ThreadLocal",
+      "ThreadLocalMap",
+      "内存泄漏"
+    ]
   },
   {
     "category": "java_advanced",
@@ -256,8 +435,16 @@
     "title": "CountDownLatch 与 CyclicBarrier",
     "content": "CountDownLatch 的计数器是___（可/不可）重用的，而 CyclicBarrier 的计数器___（可以/不可以）重置。CountDownLatch 基于___实现，CyclicBarrier 基于___实现。当计数到达零后，CyclicBarrier 可以执行一个可选的___。",
     "answer": "{\"correct\":[[\"不可\",\"不能\"],[\"可以\"],[\"AQS\",\"AbstractQueuedSynchronizer\"],[\"ReentrantLock\",\"Lock\",\"Condition\"],[\"barrierAction\",\"屏障动作\",\"Runnable\"]],\"distractors\":[\"可以\",\"不能\",\"ReentrantLock\",\"synchronized\",\"Callable\"]}",
-    "hints": ["CountDownLatch 是一次性的（一次计数归零后就失效了）", "CyclicBarrier 可以重用——所有线程到达屏障后自动重置计数器"],
-    "tags": ["并发", "CountDownLatch", "CyclicBarrier", "AQS"]
+    "hints": [
+      "CountDownLatch 是一次性的（一次计数归零后就失效了）",
+      "CyclicBarrier 可以重用——所有线程到达屏障后自动重置计数器"
+    ],
+    "tags": [
+      "并发",
+      "CountDownLatch",
+      "CyclicBarrier",
+      "AQS"
+    ]
   },
   {
     "category": "java_advanced",
@@ -266,8 +453,16 @@
     "title": "读写锁 ReentrantReadWriteLock",
     "content": "ReentrantReadWriteLock 维护了两个锁：___和___。读锁是___锁（多线程可同时持有），写锁是___锁（独占）。当写锁持有时，___不能获取读锁；当读锁持有时，___不能获取写锁。锁降级指持有___锁后获取___锁再释放___锁。",
     "answer": "{\"correct\":[[\"读锁\",\"ReadLock\",\"共享锁\"],[\"写锁\",\"WriteLock\",\"排他锁\",\"独占锁\"],[\"共享\",\"Shared\"],[\"排他\",\"独占\",\"Exclusive\"],[\"其他线程\"],[\"其他线程\"],[\"写\",\"Write\"],[\"读\",\"Read\"],[\"写\",\"Write\"]],\"distractors\":[\"公平锁\",\"非公平锁\",\"互斥锁\",\"其他锁\",\"读\",\"写\",\"读\",\"写\"]}",
-    "hints": ["读锁是共享锁——多个读线程可以同时持有读锁", "锁降级指写线程获取读锁后再释放写锁——在读多写少场景中减少锁释放后的竞争"],
-    "tags": ["并发", "读写锁", "ReentrantReadWriteLock", "AQS"]
+    "hints": [
+      "读锁是共享锁——多个读线程可以同时持有读锁",
+      "锁降级指写线程获取读锁后再释放写锁——在读多写少场景中减少锁释放后的竞争"
+    ],
+    "tags": [
+      "并发",
+      "读写锁",
+      "ReentrantReadWriteLock",
+      "AQS"
+    ]
   },
   {
     "category": "java_advanced",
@@ -276,8 +471,16 @@
     "title": "CAS 底层实现",
     "content": "CAS（Compare-And-Swap）操作包含三个操作数：___、___和___。当内存值等于预期值时将内存值更新为新值。Java 中 CAS 通过___类的___方法实现。CAS 存在三个经典问题：___、___和___。",
     "answer": "{\"correct\":[[\"内存地址\",\"内存位置\",\"V\"],[\"预期值\",\"期望值\",\"E\",\"oldValue\"],[\"新值\",\"N\",\"newValue\"],[\"Unsafe\"],[\"compareAndSwapInt\",\"compareAndSwapObject\",\"compareAndSwap\",\"CAS\"],[\"ABA问题\",\"ABA\"],[\"自旋时间过长\",\"循环时间长开销大\"],[\"只能保证一个共享变量的原子操作\"]],\"distractors\":[\"AtomicInteger\",\"Lock\",\"值\",\"线程安全\",\"死锁\",\"活锁\",\"可见性\"]}",
-    "hints": ["ABA 问题通过 AtomicStampedReference 的版本号解决", "CAS 自旋在竞争激烈时会浪费大量 CPU 资源"],
-    "tags": ["并发", "CAS", "Unsafe", "无锁"]
+    "hints": [
+      "ABA 问题通过 AtomicStampedReference 的版本号解决",
+      "CAS 自旋在竞争激烈时会浪费大量 CPU 资源"
+    ],
+    "tags": [
+      "并发",
+      "CAS",
+      "Unsafe",
+      "无锁"
+    ]
   },
   {
     "category": "java_advanced",
@@ -286,8 +489,16 @@
     "title": "volatile 内存语义",
     "content": "volatile 保证___（可见性）和___（有序性），但不保证___。volatile 写操作会立即刷新到___，读操作会从___重新读取。volatile 通过___屏障禁止指令重排序。JVM 对 volatile 的读写会在前后插入___屏障。",
     "answer": "{\"correct\":[[\"可见性\",\"visibility\"],[\"有序性\",\"禁止指令重排\"],[\"原子性\",\"atomicity\"],[\"主存\",\"内存\",\"RAM\"],[\"主存\",\"内存\",\"RAM\"],[\"内存屏障\",\"Memory Barrier\",\"Memory Fence\"],[\"StoreLoad\",\"StoreLoad屏障\",\"读写\"]],\"distractors\":[\"一致性\",\"持久性\",\"缓存\",\"寄存器\",\"volatile\",\"synchronized\"]}",
-    "hints": ["volatile 写-读建立 happens-before 关系——写 volatile 的 happens-before 后续读同一 volatile", "volatile 适合一写多读的场景，不适合多线程同时写"],
-    "tags": ["并发", "volatile", "内存屏障", "JMM"]
+    "hints": [
+      "volatile 写-读建立 happens-before 关系——写 volatile 的 happens-before 后续读同一 volatile",
+      "volatile 适合一写多读的场景，不适合多线程同时写"
+    ],
+    "tags": [
+      "并发",
+      "volatile",
+      "内存屏障",
+      "JMM"
+    ]
   },
   {
     "category": "java_advanced",
@@ -296,7 +507,105 @@
     "title": "synchronized 锁升级过程",
     "content": "Java 6 优化后的 synchronized 锁有四种状态：___、___、___和___。锁升级是___（单向/双向）的。偏向锁在发生___时撤销升级为轻量级锁。轻量级锁使用___代替操作系统互斥量。重量级锁依赖___实现线程阻塞。",
     "answer": "{\"correct\":[[\"无锁\",\"无锁状态\"],[\"偏向锁\",\"Biased\"],[\"轻量级锁\",\"Lightweight\"],[\"重量级锁\",\"Heavyweight\"],[\"单向\"],[\"锁竞争\",\"其他线程访问\",\"争用\"],[\"自旋\",\"CAS\"],[\"操作系统互斥量\",\"mutex\",\"Monitor\"]],\"distractors\":[\"共享锁\",\"排他锁\",\"可重入锁\",\"公平锁\",\"双向\",\"可逆\",\"自适应\",\"条件变量\",\"信号量\"]}",
-    "hints": ["偏向锁在 JDK 15 中默认禁用——因为撤销偏向锁的开销可能超过其收益", "轻量级锁的本质是 CAS 自旋——不进内核态，避免线程切换开销"],
-    "tags": ["并发", "synchronized", "锁升级", "偏向锁"]
+    "hints": [
+      "偏向锁在 JDK 15 中默认禁用——因为撤销偏向锁的开销可能超过其收益",
+      "轻量级锁的本质是 CAS 自旋——不进内核态，避免线程切换开销"
+    ],
+    "tags": [
+      "并发",
+      "synchronized",
+      "锁升级",
+      "偏向锁"
+    ]
+  },
+  {
+    "category": "concurrency",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "线程的 daemon 属性",
+    "content": "在 Java 中，通过 setDaemon(true) 可以将线程设置为{{____}}线程。当 JVM 中只剩下{{____}}线程时，JVM 会自动退出。用户线程的默认 daemon 属性为{{____}}。守护线程创建的{{____}}线程也是守护线程。",
+    "answer": "{\"correct\":[[\"守护\"],[\"守护\"],[\"false\"],[\"子\"]],\"distractors\":[[\"用户\",\"后台\",\"精灵\"],[\"用户\",\"前台\",\"工作\"],[\"true\",\"null\",\"0\"],[\"父\",\"孙\",\"守护\"]]}",
+    "hints": [
+      "守护线程（Daemon Thread）是为用户线程提供服务的线程，JVM 不等待守护线程结束",
+      "典型的守护线程：GC 线程、Finalizer 线程"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "线程",
+      "Daemon"
+    ]
+  },
+  {
+    "category": "concurrency",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Exchanger 线程间数据交换",
+    "content": "java.util.concurrent.Exchanger 是一个用于线程间{{____}}的工具类。两个线程在某个同步点调用 exchange() 方法可以{{____}}各自的数据。如果只有一个线程到达同步点而另一个未到达，该线程会{{____}}。Exchanger 适用于{{____}}问题场景。",
+    "answer": "{\"correct\":[[\"数据交换\"],[\"交换\"],[\"阻塞等待\"],[\"生产者-消费者\"]],\"distractors\":[[\"通信\",\"同步\",\"协作\"],[\"复制\",\"同步\",\"合并\"],[\"超时返回\",\"抛出异常\",\"轮询等待\"],[\"读写锁\",\"死锁\",\"活锁\"]]}",
+    "hints": [
+      "Exchanger 的 exchange() 方法是阻塞的，直到配对线程也到达同步点",
+      "Exchanger 的典型应用：两个线程交换缓冲区（如一个线程填满缓冲区，另一个线程读取后交换）"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "Exchanger",
+      "线程间通信"
+    ]
+  },
+  {
+    "category": "concurrency",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "ThreadPoolExecutor 的线程工厂",
+    "content": "ThreadPoolExecutor 允许通过{{____}}接口自定义线程的创建方式。通过自定义线程工厂可以设置线程的{{____}}、{{____}}、{{____}}和异常处理器。默认的线程工厂由{{____}}类提供。",
+    "answer": "{\"correct\":[[\"ThreadFactory\"],[\"名称\"],[\"优先级\"],[\"daemon 状态\"],[\"Executors\"]],\"distractors\":[[\"Executor\",\"Runnable\",\"Callable\"],[\"大小\",\"数量\",\"数量限制\"],[\"超时时间\",\"生命周期\",\"缓存策略\"],[\"运行状态\",\"等待队列\",\"核心线程数\"],[\"Thread\",\"Executor\",\"ExecutorService\"]]}",
+    "hints": [
+      "自定义线程工厂常用于为线程设置有意义的名称（便于排查问题），如 db-pool-1、http-pool-3",
+      "Executors 默认的线程工厂创建的线程名称格式为 pool-N-thread-M"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "线程池",
+      "ThreadFactory"
+    ]
+  },
+  {
+    "category": "concurrency",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Phaser 阶段同步器",
+    "content": "Phaser 是 Java 7 引入的{{____}}同步器。它支持{{____}}阶段的同步，每个阶段可以有不同数量的{{____}}。Phaser 的{{____}}方法用于注册新的参与者，{{____}}方法用于等待当前阶段所有参与者完成。Phaser 的参与者可以{{____}}注册或撤销注册。",
+    "answer": "{\"correct\":[[\"可复用\"],[\"多\"],[\"参与者\"],[\"register()\"],[\"arriveAndAwaitAdvance()\"],[\"动态\"]],\"distractors\":[[\"一次性\",\"基本\",\"高级\"],[\"单\",\"固定\",\"可变\"],[\"线程\",\"操作\",\"任务\"],[\"await()\",\"sync()\",\"join()\"],[\"arrive()\",\"awaitAdvance()\",\"forceTermination()\"],[\"静态\",\"自动\",\"手动\"]]}",
+    "hints": [
+      "Phaser 比 CyclicBarrier 更灵活——参与者数量可以动态变化（register/bulkRegister）",
+      "Phaser 的 arrive() 和 arriveAndDeregister() 允许参与者通知到达后退出"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "Phaser",
+      "同步器"
+    ]
+  },
+  {
+    "category": "concurrency",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "LockSupport 的 park/unpark",
+    "content": "LockSupport 是 Java 并发包的基础{{____}}工具。{{____}}方法阻塞当前线程，{{____}}方法唤醒指定线程。与 Object.wait/notify 不同，LockSupport 的 park/unpark 是{{____}}的，且不需要在{{____}}块中使用。每个线程都有一个{{____}}许可（permit）。",
+    "answer": "{\"correct\":[[\"线程阻塞\"],[\"park()\"],[\"unpark(thread)\"],[\"面向线程\"],[\"同步\"],[\"许可证\"]],\"distractors\":[[\"锁\",\"通信\",\"监控\"],[\"wait()\",\"sleep()\",\"suspend()\"],[\"notify()\",\"wake()\",\"resume()\"],[\"面向对象\",\"基于信号\",\"基于事件\"],[\"try-catch\",\"锁\",\"方法\"],[\"信号量\",\"令牌\",\"计数器\"]]}",
+    "hints": [
+      "LockSupport 的信号量与 Semaphore 不同——permit 最多为 1（类似二元信号量）",
+      "LockSupport 是 AQS (AbstractQueuedSynchronizer) 实现线程阻塞/唤醒的基础"
+    ],
+    "tags": [
+      "Java",
+      "并发",
+      "LockSupport",
+      "AQS"
+    ]
   }
 ]

@@ -538,5 +538,95 @@
       "架构",
       "读写分离"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Zookeeper 的 Zab 协议",
+    "content": "Zab（Zookeeper Atomic Broadcast）协议的原理是什么？Zab 与 Raft 协议的区别？Leader 选举和原子广播的过程？Zab 如何保证消息的顺序性和一致性？",
+    "answer": "答案：Zab 是 Zookeeper 使用的崩溃恢复原子广播协议，保证在 Leader 崩溃后恢复时不会丢失已提交的提案。Zab 的特点是「主从 + 原子广播」，所有写请求必须通过 Leader 广播到多数 Follower 后才算提交。\n\n解析：Zab 的两个阶段——1）Leader 选举（崩溃恢复）：当 Leader 宕机或大多数 Follower 联系不上 Leader 时进入选举。使用 Fast Leader Election——每个节点投票给自己，收到更高 epoch/zxid 的节点时改投，多数节点达成一致时选出新 Leader。关键：zxid（Zookeeper Transaction ID）越大表示数据越新。新 Leader 必须是拥有最新数据的节点（zxid 最大）。2）原子广播（Atomic Broadcast）：Leader 将写请求转为 Proposal（提案）广播给所有 Follower。Follower 写本地日志后回复 ACK（确认）。Leader 收到多数 ACK 后提交（Commit），并通知 Follower 提交。\n\n扩展延伸：Zab vs Raft——1）选举条件：Zab 基于 zxid（事务 ID，越大越新），Raft 基于 term（任期）+ log index（日志索引）。2）日志方向：Zab 的日志方向是固定的（Leader→Follower），Raft 也是 Leader→Follower 但方向更灵活。3）成员变更：Raft 有明确的 Joint Consensus 成员变更协议，Zab 的处理不如 Raft 清晰。Raft 更易理解、更广泛用于新系统（etcd/Consul 等使用 Raft）。Zab 在 Zookeeper 中运行良好但不如 Raft 易移植。Zab 在 CAP 理论中属于 CP（一致性+分区容忍性）——Leader 宕机时集群不可用 30-120 秒（选举期间不可用），但保证选举后数据一致。",
+    "hints": [
+      "Zab 的 zxid（事务 ID）包含 epoch 和 counter——epoch 标记 Leader 任期，大的 zxid 表示更新的数据",
+      "Zab 在 Leader 选举期间不可用（CP 系统）——选举时间通常 30-120 秒，频繁选举会影响可用性"
+    ],
+    "tags": [
+      "分布式",
+      "Zookeeper",
+      "Zab",
+      "一致性"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Raft 协议与 Leader 选举",
+    "content": "Raft 协议中 Leader 选举的过程？Term（任期）和 Election Timeout（选举超时）的作用？Raft 如何保证最多只有一个 Leader 被选出？",
+    "answer": "答案：Raft 使用随机超时（随机 Election Timeout）来避免选举平局。每个节点有三种状态：Follower（跟随者，初始状态）、Candidate（候选者，发起选举）、Leader（领导者，处理客户端请求）。Term（任期）是一个递增的编号，每个 Term 最多有一个 Leader。\n\n解析：选举过程——1）Follower 如果在 Election Timeout（150-300ms 随机）内没有收到 Leader 的心跳（Heartbeat），就转为 Candidate。2）Candidate 增加自己的 Term，给自己投票，并向所有其他节点发送 RequestVote RPC。3）其他节点在同一 Term 内只能投一票（先到先得），如果 Candidate 的日志比自己的更新则投票。4）Candidate 收到多数节点的投票后成为 Leader，立即发送 Heartbeat 通知其他节点。5）如果同时多个 Candidate 都没有获得多数票（Split Vote），各自超时后再次发起选举。\n\n扩展延伸：安全性保证——1）Election Safety：每个 Term 最多只有一个 Leader（通过「同一 Term 一票」机制保证）。2）Leader Append-Only：Leader 不能覆盖或删除自己日志中的已有条目。3）Log Matching：如果两个日志在相同 index 和 term 的 entry 相同，那么之前的所有 entry 也相同。4）Leader Completeness：被提交的日志条目在后续选举中一定存在于新 Leader 中（Candidate 的日志必须比现有节点「至少一样新」才可能当选）。Raft 的应用——etcd（Kubernetes 使用 etcd 存储集群状态）、Consul（服务发现）、TiDB（分布式数据库）。",
+    "hints": [
+      "随机 Election Timeout（150-300ms）避免 Split Vote——多个 Candidate 同时参选的概率降低",
+      "同一 Term 一票机制保证选举安全——每个节点在每个 Term 只能投一票，不可能选出两个 Leader"
+    ],
+    "tags": [
+      "分布式",
+      "Raft",
+      "一致性",
+      "Leader选举"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式一致性哈希（Consistent Hashing）",
+    "content": "一致性哈希（Consistent Hashing）解决了什么问题？虚拟节点（Virtual Nodes）的作用？一致性哈希和普通哈希取模的区别？一致性哈希在分布式缓存（如 Redis Cluster）中的应用？",
+    "answer": "答案：一致性哈希解决了分布式系统中节点增减导致的大量数据重新映射问题。普通哈希取模（hash(key) % N）在节点数量 N 变化时几乎所有键都要重新映射（缓存雪崩风险）。一致性哈希在哈希环上做映射，节点的增减只影响环上相邻节点的数据。\n\n解析：工作原理——1）将哈希值空间组织成一个环（0 → 2^32-1）。2）节点（服务器的 hash）和键（key 的 hash）都映射到环上。3）每个键找到环上顺时针方向最近的节点，存储在该节点上。4）节点增减时，只影响该节点在环上顺时针方向的相邻节点（的数据需要迁移），其他节点不受影响。虚拟节点（Virtual Nodes）——每个物理节点在环上创建多个虚拟节点（复制品）。解决两个问题：节点在环上分布不均匀（导致数据倾斜）；某节点宕机时，其负载只能转移到相邻节点（可能压垮那个节点）。虚拟节点让负载更均匀地分布到所有物理节点。\n\n扩展延伸：应用场景——1）Redis Cluster 使用一致性哈希的变体（16384 个槽位机制——Hash Slot，而不是一致性哈希环）。每个节点负责一段槽位，节点增减时迁移槽位。2）Amazon DynamoDB/DynamoDB 使用一致性哈希（带虚拟节点）。3）Akamai CDN 使用一致性哈希将内容映射到缓存服务器。4）Cassandra 使用一致性哈希（Token Ring）。一致性哈希的问题——节点分布不均匀时数据倾斜（虚拟节点解决）。热点 key（某个 key 被频繁访问）——一致性哈希不解决热点问题，需要配合本地缓存或应用层负载均衡。一致性哈希保证的是映射稳定性而非负载均衡。",
+    "hints": [
+      "普通取模 N 变化时所有 key 重新映射（缓存雪崩风险），一致性哈希只有 1/N 的 key 需要迁移",
+      "虚拟节点解决数据倾斜——每个物理节点有多个虚拟节点分布在环上，负载更均匀"
+    ],
+    "tags": [
+      "分布式",
+      "一致性哈希",
+      "负载均衡",
+      "缓存"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式事务解决方案",
+    "content": "分布式事务有哪些主流方案？XA（两阶段提交）的优缺点？TCC（Try-Confirm-Cancel）模式？SAGA 模式？Seata 的实现原理？",
+    "answer": "答案：分布式事务四大方案——XA（两阶段提交，强一致）、TCC（Try-Confirm-Cancel，最终一致）、SAGA（长事务补偿）、本地消息表 + MQ（可靠消息最终一致）。Seata 是主流的分布式事务框架，支持 AT（Automatic Transaction，基于 XA 的改进）、TCC、SAGA、XA 四种模式。\n\n解析：各方案——1）XA 两阶段提交（强一致性）：Prepare 阶段（所有参与者准备就绪 + 写 Undo/Redo 日志）→ Commit 阶段（协调者通知所有参与者提交）。问题：同步阻塞（Prepare 后资源锁定直到 Commit/Abort）、协调者单点、脑裂风险。适用于对一致性要求极高的场景（跨库转账）。2）TCC（Try-Confirm-Cancel）：由业务代码实现三阶段。Try：检查和预留资源（如冻结资金）。Confirm：确认执行业务（扣款）。Cancel：取消释放资源（解冻资金）。优点：无需全局锁、性能好。缺点：侵入性强（业务代码需要实现三阶段接口）。3）SAGA：将长事务拆为多个本地事务 + 补偿事务。每个子事务执行成功→执行下一个；执行失败→反向执行补偿事务。\n\n扩展延伸：Seata 的 AT 模式——1）对 XA 的优化：XA 锁的是数据库资源，AT 通过拦截 SQL 自动生成逆向 SQL（UNDO_LOG），业务无需改造。2）一阶段：执行业务 SQL + 生成 before image 和 after image（记录在 UNDO_LOG 表）。3）二阶段：如果全部成功，异步清理 UNDO_LOG。如果有失败，根据 UNDO_LOG 中的 before image 自动补偿回滚。应用场景——强一致：XA/AT（转账/支付）。最终一致：TCC（订单/库存）、SAGA（长流程审批）。可靠消息：本地消息表（异步通知类场景）。没有万能的分布式事务方案，核心是业务可以接受多强的一致性。",
+    "hints": [
+      "XA 是「资源锁定」的强一致，TCC 是「业务预留」的最终一致——TCC 性能更好但侵入性更强",
+      "Seata AT 模式通过生成逆向 SQL 自动实现回滚——不需业务代码实现补偿逻辑"
+    ],
+    "tags": [
+      "分布式",
+      "事务",
+      "Seata",
+      "一致性"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "限流算法与实现",
+    "content": "常见的限流算法有哪些？计数器算法、滑动窗口、漏桶（Leaky Bucket）、令牌桶（Token Bucket）的区别？Sentinel 和 RateLimiter 分别是如何实现限流的？",
+    "answer": "答案：四大限流算法——计数器（固定窗口，简单但有临界问题）、滑动窗口（将窗口细分，更平滑）、漏桶（恒定速率处理，可以应对突发输入）、令牌桶（允许一定程度的突发请求，最常用）。\n\n解析：算法对比——1）计数器（固定窗口）：单位时间窗口内计数达到上限后拒绝。缺点：临界问题——在窗口边界处可能出现两倍峰值（假如窗口 1s 限制 100，在 0.9s 来了 100 个请求，1.0-1.1s 又来了 100 个，实际 0.2s 内处理了 200 个）。2）滑动窗口：将窗口细分更小的格子（如 1s 窗口分为 10 个 100ms 的格子），滑动统计最近一个窗口的请求数。格子越多越精确但占用内存越多。3）漏桶（Leaky Bucket）：请求进入桶，桶以恒定速率漏水（处理请求）。桶满时新请求被丢弃。不管请求多突发，流出速率恒定。适合保护下游系统不被突发流量冲击。4）令牌桶（Token Bucket）：以恒定速率向桶中添加令牌，请求需要拿到令牌才能处理。桶中有缓存令牌时允许突发请求。Guava RateLimiter 使用令牌桶（支持预消费——允许一定程度的突发）。\n\n扩展延伸：限流工具——1）Guava RateLimiter：单机限流，令牌桶算法，支持 warmup（平滑预热，避免冷启动时瞬间限流）。2）Sentinel（Alibaba）：分布式限流，支持滑动窗口、令牌桶、漏桶多种算法。支持限流降级（熔断降级、系统自适应保护）。与 Spring Cloud 集成。3）Nginx 限流：ngx_http_limit_req_module（漏桶算法），ngx_http_limit_conn_module（连接数限制）。4）Redis 分布式限流：基于 Redis + Lua 脚本实现滑动窗口（Lua 保证原子性）。限流 vs 熔断——限流控制「请求速率」，熔断控制「错误率/延迟」（当错误率达到阈值时熔断器打开，快速失败防止级联）。",
+    "hints": [
+      "固定窗口的临界问题——窗口边界处瞬时流量可达两倍上限，滑动窗口通过细分窗口解决",
+      "令牌桶 vs 漏桶——令牌桶允许突发（攒了 N 个令牌可一次性用完），漏桶处理速率恒定（不管多突发都平滑处理）"
+    ],
+    "tags": [
+      "分布式",
+      "限流",
+      "Sentinel",
+      "RateLimiter"
+    ]
   }
 ]

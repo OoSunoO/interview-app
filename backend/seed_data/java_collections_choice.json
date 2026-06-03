@@ -640,5 +640,125 @@
       "有序",
       "集合"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashMap 的扰动函数",
+    "content": "HashMap 中 hash 扰动函数（hash()）的作用是什么？JDK 8 的实现方式是什么？",
+    "options": [
+      "A) 直接返回 key 的 hashCode()，不经过任何处理",
+      "B) 将 hashCode 的高 16 位与低 16 位进行异或运算，混合高位和低位信息",
+      "C) 将 hashCode 乘以一个质数后取模，减少冲突",
+      "D) 将 hashCode 进行 MD5 哈希后取前 32 位"
+    ],
+    "answer": "答案：B) 将 hashCode 的高 16 位与低 16 位进行异或运算，混合高位和低位信息\n\n解析：JDK 8 的 hash 函数：`(key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16)`——将 hashCode 的高 16 位与低 16 位做异或。由于 HashMap 计算 bucket 索引时使用 (n - 1) & hash（n 是数组长度，通常是较小的数），高位信息被淹没。扰动函数将高位信息混合到低位中，减少哈希冲突。\n\n扩展延伸：为什么这样设计——1）大多数场景下 key 的 hashCode 分布并不理想（如连续整数的 hashCode 分布好，但自定义对象的 hashCode 不一定）。2）n-1 & hash 中如果 n 较小（如 16），只有低 4 位参与运算。高位信息完全无用。扰动函数将高 16 位与低 16 位异或，让高位也影响低位的分布。3）JDK 7 中的 hashCode 处理更复杂（多次右移和异或），JDK 8 简化为一次（效果足够好且效率更高）。性能方面——位运算（异或和右移）开销极低，几乎不影响 HashMap 的读写性能。",
+    "hints": [
+      "扰动函数的目的是让高位影响低位——因为 bucket 索引 (n-1) & hash 中 n 小，只有低位参与索引计算",
+      "JDK 8 简化了 JDK 7 的多次扰动（4 次位运算）为 1 次（h ^ (h >>> 16)）——性能更好效果相近"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "HashMap",
+      "哈希"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ConcurrentHashMap 红黑树转链表",
+    "content": "在 JDK 8 的 ConcurrentHashMap 中，关于红黑树退化为链表的条件，哪项描述正确？",
+    "options": [
+      "A) 当红黑树的节点数小于等于 6 时，在每次 put 操作后立即检查并退化",
+      "B) 当红黑树的节点数小于等于 8 时，在扩容时进行退化检查",
+      "C) 在扩容（transfer）过程中，如果红黑树节点数小于等于 UNTREEIFY_THRESHOLD（6），则退化为链表",
+      "D) 红黑树一旦形成后永远不会退化为链表"
+    ],
+    "answer": "答案：C) 在扩容（transfer）过程中，如果红黑树节点数小于等于 UNTREEIFY_THRESHOLD（6），则退化为链表\n\n解析：ConcurrentHashMap 的红黑树退化只发生在扩容（transfer）过程中。因为扩容时需要将红黑树中的节点分配到新的 bucket（低位/高位链表），此时如果树中节点数 <= 6（UNTREEIFY_THRESHOLD），则直接以链表形式存放在新的 bucket 中，不需要维护红黑树结构。\n\n扩展延伸：ConcurrentHashMap vs HashMap 的树化差异——1）ConcurrentHashMap 的树化条件与 HashMap 相同：链表长度 >= 8 且数组长度 >= 64。2）退化都是在 resize（扩容）时检查，不是在每次 put/remove 后。3）ConcurrentHashMap 的树节点（TreeNode）与 HashMap 不同——ConcurrentHashMap 的 TreeNode 继承了 ConcurrentHashMap.Node（保留了 next 字段用于链表遍历）。4）退化检查的位置——在 `ConcurrentHashMap.helpTransfer()` 和 `transfer()` 方法中。ConcurrentHashMap 的树化结构维护（TreeBin）包含读写锁（lockState）来同步树操作。",
+    "hints": [
+      "红黑树退化只在扩容时发生——put/remove 操作后不会立即退化",
+      "ConcurrentHashMap 的 TreeNode 保留了 next 字段——即使在树中也可以按链表方式遍历"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentHashMap",
+      "红黑树"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ArrayList 的 subList 陷阱",
+    "content": "关于 ArrayList 的 subList 方法，以下哪项描述是正确的？",
+    "options": [
+      "A) subList 返回一个新的独立 ArrayList，修改 subList 不影响原 List",
+      "B) subList 返回的是原 List 的一个视图（View），对 subList 的结构性修改会影响原 List",
+      "C) subList 返回的 List 支持添加（add）和删除（remove）操作且不影响原 List",
+      "D) subList 返回的 List 是只读的，不能通过 add 或 remove 修改"
+    ],
+    "answer": "答案：B) subList 返回的是原 List 的一个视图（View），对 subList 的结构性修改会影响原 List\n\n解析：ArrayList.subList() 返回的是原 ArrayList 的内部视图（SubList 类），与原 ArrayList 共享同一个数组。修改 subList 的内容（如 set）会影响原 ArrayList。对 subList 进行结构性修改（add/remove）也会影响原 ArrayList。如果在对 subList 操作期间修改了原 ArrayList（通过原 List 或另一个 subList），subList 会抛 ConcurrentModificationException。\n\n扩展延伸：详细行为——1）subList 的修改反映到原 List：`list.subList(0, 2).clear()` 等价于直接删除 [0, 2) 范围的元素。2）subList 的视图特性：subList 的 add/remove 操作会通过 SubList 内部的 add/remove 方法修改原 ArrayList 的 size 和 elementData。3）ConcurrentModificationException：如果通过原 ArrayList 修改（如 list.add('x')）后继续使用 subList，subList 检测到 modCount 不匹配而抛异常。4）使用场景：安全地通过 subList 进行范围操作（`list.subList(from, to).clear()` 删除范围元素）。5）内存泄漏风险：subList 持有原 ArrayList 的引用，如果长期持有大 List 的 subList，原 List 无法被 GC 回收。",
+    "hints": [
+      "subList 是视图（View）而非副本——修改 subList 直接影响原 ArrayList",
+      "使用 subList 期间通过原 List 修改会抛 ConcurrentModificationException——subList 的 modCount 与原 List 同步"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ArrayList",
+      "subList"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "TreeMap 与红黑树",
+    "content": "关于 TreeMap 的底层实现，以下哪项描述是正确的？",
+    "options": [
+      "A) TreeMap 的 key 必须实现 Comparable 接口或在构造时传入 Comparator",
+      "B) TreeMap 使用哈希表作为底层数据结构，查找时间复杂度为 O(1)",
+      "C) TreeMap 允许 null key（和 HashMap 一样）",
+      "D) TreeMap 的所有操作都是线程安全的"
+    ],
+    "answer": "答案：A) TreeMap 的 key 必须实现 Comparable 接口或在构造时传入 Comparator\n\n解析：TreeMap 基于红黑树（Red-Black Tree）实现——key 通过比较器（Comparator 或 Comparable）决定排序。如果 key 没有实现 Comparable 且构造时没有提供 Comparator，put 操作会抛出 ClassCastException。\n\n扩展延伸：TreeMap 特性——1）有序性：TreeMap 按 key 的自然顺序（Comparable）或 Comparator 顺序存储，遍历时输出有序序列。2）时间复杂度：增删查均为 O(log n)——基于红黑树。3）null key：TreeMap 不允许 null key（需要比较 null 时会抛 NullPointerException——除非自定义 Comparator 处理 null）。4）非线程安全：需要线程安全时使用 Collections.synchronizedSortedMap。5）常用方法：firstKey()/lastKey()、headMap()/tailMap()/subMap()、lowerKey()/higherKey()/floorKey()/ceilingKey()。场景——1）需要有序遍历的集合（如排行榜的分数排序）。2）需要按范围查找（查询某一区间的元素）。3）NavigableMap 接口提供导航方法（如查找最接近给定 key 的 entry）。与 HashMap 选择——需要排序功能时才用 TreeMap（O(log n) vs O(1)）。",
+    "hints": [
+      "TreeMap 基于红黑树（有序），HashMap 基于哈希表（无序）——选择依据是需要排序还是有 O(1) 的查找",
+      "TreeMap 不允许 null key（需要比较时无法处理 null），HashMap 允许一个 null key"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "TreeMap",
+      "红黑树"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "List 与 Set 的区别",
+    "content": "关于 List 和 Set 的区别，以下哪项描述是正确的？",
+    "options": [
+      "A) List 保证元素有序且允许重复，Set 不允许重复但不保证有序",
+      "B) Set 一定比 List 的查找速度快",
+      "C) List 只能存储相同类型的元素，Set 可以存储不同类型的元素",
+      "D) List 和 Set 的底层实现完全相同，只是接口不同"
+    ],
+    "answer": "答案：A) List 保证元素有序且允许重复，Set 不允许重复但不保证有序\n\n解析：List（如 ArrayList/LinkedList）维护元素的插入顺序（有序性），允许重复元素，可以通过索引访问。Set（如 HashSet/TreeSet/LinkedHashSet）不允许重复元素但有序性因实现而异——HashSet 无序、TreeSet 排序、LinkedHashSet 按插入顺序。\n\n扩展延伸：详细区别——1）List 特性：有序（按插入顺序或索引访问）。允许 null（取决于实现，ArrayList 允许多个 null）。可通过 get(index) 随机访问。2）Set 特性：元素唯一（equals/hashCode 决定）。TreeSet 不允许 null（需要比较）。HashSet 允许一个 null。EnumSet 不允许 null。3）选择依据：需要索引访问或需要保留插入顺序且允许重复 → List。需要元素唯一性 → Set。需要自动排序 → TreeSet 或 TreeMap。4）HashSet 的底层使用 HashMap（元素作为 key，常量作为 value），TreeSet 使用 TreeMap（元素作为 key，常量作为 value）。LinkedHashSet 使用 LinkedHashMap。",
+    "hints": [
+      "List — 有序、可重复、索引访问；Set — 元素唯一、有序性因实现而异",
+      "HashSet 底层是 HashMap（元素作为 key）——利用 HashMap 的 key 唯一性"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "List",
+      "Set"
+    ]
   }
 ]

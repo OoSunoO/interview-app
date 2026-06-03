@@ -539,5 +539,96 @@
       "Redlock",
       "并发"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 持久化策略选型",
+    "content": "Redis 的 RDB 和 AOF 持久化各自的特点和适用场景？混合持久化的原理？RDB 和 AOF 同时开启时优先使用哪个恢复？AOF rewrite 的触发条件和过程？",
+    "answer": "答案：RDB（快照持久化）——定时将全部数据写入二进制 RDB 文件。AOF（追加文件）——记录每个写命令（以 Redis 协议格式追加到 AOF 文件）。Redis 4.0+ 支持混合持久化——RDB 全量快照 + AOF 增量日志。RDB 恢复快（二进制加载），AOF 数据更安全（每秒/每次写入同步）。同时开启时优先用 AOF 恢复（数据更完整）。\n\n解析：RDB——1）触发：save（同步阻塞）、bgsave（fork 子进程写）、配置自动触发（save 900 1 等）。2）优势：文件紧凑适合备份和灾难恢复、恢复速度快（直接加载二进制数据）。3）劣势：丢数据风险大（两次 RDB 之间的数据全部丢失）。AOF——1）同步策略：appendfsync always（每次写同步，最安全但最慢，磁盘 IO 成为瓶颈）、everysec（每秒同步，折中方案，推荐）、no（由 OS 决定同步时机）。2）AOF 文件可能比 RDB 大得多（记录命令而非数据）。\n\n扩展延伸：AOF Rewrite——1）触发条件：AOF 文件超过上次 rewrite 后大小的 100%（auto-aof-rewrite-percentage 100）且最小 64MB（auto-aof-rewrite-min-size 64mb）。2）过程：fork 子进程，子进程将当前内存中的数据重写为最小命令集（如将多个 INCR 合并为 SET），写入临时 AOF 文件，写入期间主进程的增量变化记录在重写缓冲区中，最终将缓冲区追加到新 AOF 文件，替换旧 AOF 文件。3）混合持久化（aof-use-rdb-preamble yes）：RDB + AOF 结合——RDB 作为全量基础，AOF 记录增量。加载时先加载 RDB 再回放 AOF。兼顾 RDB 的快速恢复和 AOF 的数据完整性。在生产环境——建议同时开启 RDB（灾难恢复）+ AOF（尽量不丢数据）或混合持久化。",
+    "hints": [
+      "RDB 恢复快但丢数据多——AOF 数据更完整但恢复慢——混合持久化兼顾两者",
+      "AOF rewrite 由子进程执行——不会阻塞主进程处理请求"
+    ],
+    "tags": [
+      "数据库",
+      "Redis",
+      "持久化",
+      "RDB",
+      "AOF"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 过期键删除策略",
+    "content": "Redis 的过期键删除策略有哪些？定期删除（Active Expiry）和惰性删除（Lazy Expiry）如何配合？当大量 key 同时过期时的性能影响？内存淘汰策略和过期策略的关系？",
+    "answer": "答案：Redis 的过期键删除采用定期删除 + 惰性删除组合策略。惰性删除：当客户端访问 key 时检查是否过期（过期则删除）。定期删除：Redis 每 100ms 随机抽样一些设置了过期时间的 key 检查删除。\n\n解析：定期删除——1）每次运行：从设置了过期时间的 key 集合中随机取 20 个（ACTIVE_EXPIRE_CYCLE_LOOKUPS_PER_LOOP=20），删除其中过期的。如果过期比例超过 25% 则再取 20 个，重复直到过期比例低于 25% 或超时（耗时不超过 25ms）。2）频率：默认每秒 10 次（hz=10 参数控制）。3）目的：防止大量过期 key 长期占用内存（如果只靠惰性删除，不过期不访问的 key 永远不释放）。\n\n扩展延伸：大量 key 同时过期的性能问题——1）同一秒内大量 key 过期 → 定期删除在 25ms 限制内可能来不及全部删除。CPU 使用率会突增（检查+删除操作占用 CPU）。2）如果大量过期 key 没有被访问——惰性删除不会触发，定期删除受限于采样和 25ms 上限，导致部分过期 key 在内存中长期滞留。缓解策略——在设置过期时间时加上随机偏移（如 TTL = 3600 + random(0, 600)）避免大量 key 同时过期。内存淘汰 vs 过期——1）过期：基于 key 的 TTL（时间驱动）。2）淘汰：基于内存上限 maxmemory（内存驱动）。当内存超限时根据淘汰策略（allkeys-lru 等）淘汰 key。如果 key 已过期但未被删除——淘汰策略也可能选中它们。3）两者独立运作——过期 key 可能立即被删除（定期/惰性），也可能先被内存淘汰选中。",
+    "hints": [
+      "惰性删除（访问时检查）+ 定期删除（每 100ms 随机样本检查）= 双重确保过期 key 不被长期占用",
+      "大量 key 同时过期导致 CPU 突增——设置过期时间加随机偏移避免同时过期"
+    ],
+    "tags": [
+      "数据库",
+      "Redis",
+      "过期策略",
+      "内存淘汰"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 大 Key 治理",
+    "content": "什么是 Redis 的 Big Key（大 Key）？大 Key 有哪些危害？如何发现和治理大 Key？大 Key 的拆分策略？",
+    "answer": "答案：Big Key 通常指——单个 key 包含大量数据（String 类型值 > 10KB、List/Hash/Set/Zset 元素 > 几千个）。大 Key 的危害：阻塞 Redis 命令（如 key * 导致 O(N) 阻塞）、网络带宽占用大（大 Value 传输慢）、数据迁移慢（集群模式下大 Key 迁移卡住）、内存分布不均（集群中的数据倾斜）。\n\n解析：发现方法——1）redis-cli --bigkeys：扫描整个 Redis，按类型统计最大 key。2）DEBUG OBJECT key：查看 key 的编码和序列化长度。3）memory usage key：精确计算 key 的内存占用（4.0+ 提供）。4）monitor 命令：结合脚本分析使用模式（但生产环境慎用——阻塞式）。5）定期扫描脚本：扫描所有 key 并检查 size。\n\n扩展延伸：治理策略——1）拆分（Sharding）：大 Hash 拆分为多个小 Hash（根据 field 做 hash → field%N 分配到不同 key）。大 List 拆分为多个 List（按时间/ID 区间拆分）。2）压缩：对大 Value 做压缩（如 gzip/snappy）后存入 Redis，读取时解压。以 CPU 换内存和网络带宽。3）数据淘汰（Pruning）：大 Key 中的数据往往是积累了长时间未清理。建立 TTL 过期策略或定期清理过期子元素。4）数据结构变更：JSON 字符串 → Hash（利用 Hash 的字段级操作，只读写需要的字段）。5）本地缓存：大 Value 的频繁读取业务在应用层加本地缓存减少 Redis 压力。主动监控——设置大 Key 告警：memory usage 超过阈值时告警。大 Key 的删除需要谨慎——del 大 Key 会阻塞 Redis（单线程执行）。使用 UNLINK（4.0+）异步删除（后台线程逐步释放内存，不阻塞主线程）。",
+    "hints": [
+      "redis-cli --bigkeys 扫描大 Key——DEL 大 Key 会阻塞 Redis，用 UNLINK 异步删除",
+      "数据倾斜——大 Key 导致集群中单个节点内存使用远超其他节点（分布不均）"
+    ],
+    "tags": [
+      "数据库",
+      "Redis",
+      "大Key",
+      "优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Cluster 集群迁移与扩缩容",
+    "content": "Redis Cluster 如何做扩缩容？槽位迁移的过程？数据迁移时对客户端的影响？reshard 操作的时间复杂度？Redis Cluster 的局限性和替代方案？",
+    "answer": "答案：Redis Cluster 通过槽位（slot）迁移实现扩缩容。16384 个槽位在节点间重新分配，槽位中的数据从源节点迁移到目标节点。迁移过程对客户端是透明的（客户端在 MOVED/ASK 重定向时更新槽位缓存）。\n\n解析：迁移过程——1）准备：确定要迁移的槽位范围、目标节点。使用 `redis-cli --cluster reshard host:port` 交互式迁移。2）迁移数据：对每个 slot 中的每批 key——目标节点准备导入（CLUSTER SETSLOT slot IMPORTING）、源节点准备导出（CLUSTER SETSLOT slot MIGRATING）。对每个 key——源节点执行 MIGRATE 命令（原子操作：dump key + DEL key + RESTORE key 到目标）。3）完成后：通知所有节点槽位已分配给目标节点（CLUSTER SETSLOT slot NODE target_id）。\n\n扩展延伸：客户端影响——1）MOVED 重定向：迁移完成后，客户端请求的槽位在旧节点时收到 MOVED 错误（永久重定向——客户端更新槽位缓存后直接访问新节点）。2）ASK 重定向：迁移过程中，槽位正在迁移时，客户端请求旧节点时如果 key 已迁移走收到 ASK 错误（临时重定向——客户端先向新节点发送 ASKING 再请求）。局限与替代——1）跨 slot 多 key 操作受限（只能在同一 slot 的 key 间执行 mset/mget/事务）。用 hash tag 将相关 key 强制分配到同一 slot。2）Cluster 模式不支持多数据库（只有 db0）。3）数据迁移时性能下降（MIGRATE 命令的 dump/del/restore 有开销）。4）替代方案：Codis（代理模式，中间层做分片，客户端无需感知）、Redis Sharding（客户端分片库，如 Jedis/JedisCluster）、云服务（阿里云 Redis/Tencent CRS 等托管集群）。",
+    "hints": [
+      "MOVED（永久迁移完成）vs ASK（临时迁移中）——客户端处理两者的方式不同",
+      "Redis Cluster 的跨 slot 多 key 操作受限——用 hash tag { } 强制相关 key 到同一 slot"
+    ],
+    "tags": [
+      "数据库",
+      "Redis",
+      "Cluster",
+      "迁移"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 生产配置最佳实践",
+    "content": "Redis 生产环境有哪些关键的配置参数？内存配置、持久化配置、网络配置、安全配置分别需要注意什么？监控 Redis 的关键指标有哪些？",
+    "answer": "答案：生产配置三大要点——内存（maxmemory + 淘汰策略）、持久化（AOF + RDB 策略）、安全（密码 + 绑定 + ACL）。监控核心指标：内存使用率、连接数、OPS（每秒操作数）、缓存命中率、复制延迟。\n\n解析：关键配置——1）内存：maxmemory 设置为物理内存的 60-80%（留出系统内存和 Fork 内存）。maxmemory-policy allkeys-lru（缓存场景）或 volatile-lru（有过期时间的场景）。2）持久化：appendonly yes（开启 AOF）。appendfsync everysec（每秒刷盘，兼顾安全与性能）。aof-use-rdb-preamble yes（混合持久化）。save 900 1 / save 300 10（RDB 自动触发）。3）网络：bind 127.0.0.1（绑定内网 IP，不暴露到公网）。protected-mode yes。requirepass / ACL 配置密码认证。timeout 300（空闲连接超时）。4）连接：maxclients 10000（最大连接数，受限于系统 ulimit）。tcp-keepalive 300（检测死连接）。\n\n扩展延伸：监控指标——1）info memory：used_memory、used_memory_rss、mem_fragmentation_ratio（碎片率，>1.5 需处理）。2）info stats：total_commands_processed（OPS）、instantaneous_ops_per_sec（实时 QPS）。3）info replication：master_link_status、slave_lag（复制延迟）。4）info persistence：rdb_last_bgsave_status、aof_last_bgrewrite_status。5）info clients：connected_clients、blocked_clients。常见问题——1）fork 耗时：RDB/AOF rewrite 需要 fork 子进程，fork 耗时与内存大小正相关。大实例（> 10GB）fork 可能阻塞服务数十 ms 到数秒。2）碎片率 > 1.5：主动 defrag（activedefrag yes）或重启。3）慢查询：SLOWLOG GET 查看。",
+    "hints": [
+      "maxmemory 设置（物理内存的 60-80%）+ 合适的淘汰策略——防止 Redis OOM 被系统杀掉",
+      "fork 耗时随内存增长——大实例（> 10GB）的 fork 可能导致毫秒到秒级的服务暂停"
+    ],
+    "tags": [
+      "数据库",
+      "Redis",
+      "配置",
+      "运维"
+    ]
   }
 ]

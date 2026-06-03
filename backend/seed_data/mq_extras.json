@@ -532,5 +532,95 @@
       "监控",
       "消费"
     ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 日志存储与分段策略",
+    "content": "Kafka 的日志存储结构是怎样的？分段（Segment）和索引（Index）的设计？日志滚动策略（log.segment.bytes / log.roll.hours）？Kafka 为什么能高效读写？",
+    "answer": "答案：Kafka 的日志存储结构——每个 Partition 对应一个目录，目录内按 Segment 分段存储。Segment 由 .log（消息数据）、.index（偏移量索引）、.timeindex（时间戳索引）组成。Kafka 通过在内存中维护 Segment 的索引实现高效的消息查找。\n\n解析：Segment 管理——1）每个 Partition 目录下有多个 Segment 文件（如 00000000000000000000.log / 0000000000000010240.log 等，文件名是 Segment 起始偏移量）。2）活跃 Segment（Active Segment）正在写入，其余 Segment 只读。3）日志滚动：当 Segment 达到 log.segment.bytes（默认 1GB）或 log.roll.hours（默认 7 天）时关闭当前 Segment，创建新 Segment。\n\n扩展延伸：索引设计——1）.index（偏移量索引）：稀疏索引——每个条目记录 offset → position（文件中的物理位置），并非每条消息都有索引（默认每 4KB 写入一个索引条目）。稀疏索引减少了索引文件大小且可以常驻内存。2）.timeindex（时间戳索引）：timestamp → offset，按时间查找消息。3）查找流程：根据 offset 或 timestamp 定位 Segment → 加载 .index 或 .timeindex → 二分查找找到最近的 position → 在 .log 文件中顺序扫描。\n\n扩展延伸：高效读写的原因——1）顺序写：Kafka 消息追加到 Partition 文件末尾，是顺序磁盘写入（比随机写快数百倍）。2）零拷贝（sendfile）：Consumer 读取时直接从文件系统 PageCache 发送到 Socket（不需要经过 Kafka 进程的用户空间内存）。3）PageCache 利用：Kafka 大量使用 OS 的 PageCache 缓存日志数据，不自己做缓存管理（避免 JVM GC 开销）。4）批量读写：Producer 批量发送消息，Consumer 批量拉取消息，提高吞吐量。日志清理——Cleanup Policy：delete（保留 log.retention.hours/bytes 内的数据）、compact（保留每个 key 的最新值——适合变更日志场景）。",
+    "hints": [
+      "Kafka 的稀疏索引——每 4KB 写入一个索引条目，索引文件小可常驻内存，查找时二分+顺序扫描",
+      "Kafka 顺序写磁盘 + PageCache + 零拷贝（sendfile）——这是 Kafka 高性能的核心"
+    ],
+    "tags": [
+      "MQ",
+      "Kafka",
+      "日志存储",
+      "索引"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 消息可靠性保证",
+    "content": "Kafka 如何保证消息不丢失？消息可靠性的三个层面（Producer/Broker/Consumer）各有哪些配置？acks 参数（0/1/all）的区别？min.insync.replicas 的作用？",
+    "answer": "答案：Kafka 消息可靠性从三个层面保障——Producer 端（确认机制 + 重试）、Broker 端（副本机制 + ISR + ACK）、Consumer 端（手动提交 offset）。核心参数：acks=all（等待所有 ISR 副本确认）、min.insync.replicas（最小同步副本数，防止 ISR 只剩 Leader 时丢数据）。\n\n解析：配置详解——1）Producer acks：acks=0（不等待任何确认，最高吞吐量但有最高的丢数据风险）、acks=1（等待 Leader 写入成功即返回）、acks=all 或 -1（等待所有 ISR 副本写入成功后才返回）。2）Broker 端：min.insync.replicas=2（至少 2 个 ISR 副本才接受写入，配合 acks=all 使用）。unclean.leader.election.enable=false（不允许非 ISR 副本成为 Leader——宁可集群不可用也不丢失数据）。3）Consumer 端：enable.auto.commit=false（手动提交 offset）。处理完消息后才调用 commitSync() 或 commitAsync()。\n\n扩展延伸：配置组合——1）最高可靠性：Producer acks=all + retries=Integer.MAX_VALUE + min.insync.replicas=2 + replication.factor=3 + unclean.leader.election.enable=false + 手动提交 offset。2）最高吞吐量：acks=0 或 1 + 自动提交 offset。消息重复——at-least-once 语义（最多一次重复，不会丢）。去重需要幂等性 Producer（enable.idempotence=true）或下游做幂等消费。Exactly-Once——Kafka 的幂等 Producer（enable.idempotence=true）保证 Producer-Broker 之间的精确一次（通过 PID + Sequence Number 去重）+ 事务性消息。注意：acks=all 可能因 Leader 写入后 Follower 未同步时 Leader 宕机而重试（可能导致消息重复但不会丢失）。",
+    "hints": [
+      "acks=all + min.insync.replicas=2 + unclean.leader.election=false 是最高可靠性组合",
+      "acks=0 最高吞吐但可能丢数据——适合日志/监控等允许少量丢失的场景"
+    ],
+    "tags": [
+      "MQ",
+      "Kafka",
+      "可靠性",
+      "acks"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "RocketMQ 事务消息",
+    "content": "RocketMQ 事务消息的实现原理是什么？半消息（Half Message）和事务回查（Transaction Checkback）机制？RocketMQ 的事务消息和 Kafka 的事务有什么区别？",
+    "answer": "答案：RocketMQ 事务消息通过半消息 + 事务回查机制实现分布式事务的最终一致性。半消息（Half Message）先发送到 Broker（暂不可消费），本地事务执行后提交或回滚半消息。如果本地事务状态不确定，Broker 定期回查（Checkback）询问 Producer 决定。\n\n解析：流程——1）Producer 发送半消息到 Broker（消息的 topic/queue 已确定但消息标记为不可消费）。2）Broker 确认半消息持久化成功。3）Producer 执行本地事务（如数据库操作）。4）Producer 根据本地事务结果向 Broker 发送 Commit 或 Rollback 指令。Commit：消息变为可消费。Rollback：消息被删除。5）如果 Producer 在步骤 4 宕机或网络异常，Broker 在超时后发起事务回查（checkback）：调用 Producer 的 checkLocalTransaction() 方法查询本地事务状态。6）Producer 返回事务状态（COMMIT/ROLLBACK/UNKNOWN），Broker 据此处理半消息。\n\n扩展延伸：Kafka 事务 vs RocketMQ 事务消息——1）Kafka 事务：解决的是「跨分区跨 Topic」的原子写入（多个 Partition 的写入要么全成功要么全失败）。不具有「回查」机制——Kafka 事务不涉及外部系统的本地事务协调。2）RocketMQ 事务消息：解决的是「本地事务 + MQ 消息发送」的原子性（保证 MQ 消息和数据库事务的一致性）。回查是 RocketMQ 的独特设计——补偿了半消息提交时可能出现的网络或进程故障。使用限制——事务消息不支持批处理、定时消息、延时消息等。事务回查次数有限（默认 15 次，超过则消息进入死信队列）。",
+    "hints": [
+      "半消息暂不可消费——本地事务成功后才 Commit 使其可见（RocketMQ 事务消息的核心机制）",
+      "Kafka 事务是跨分区原子写入（无回查），RocketMQ 事务消息是本地事务 + MQ 的协调（有回查）"
+    ],
+    "tags": [
+      "MQ",
+      "RocketMQ",
+      "事务消息",
+      "分布式事务"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MQ 消息轨迹与全链路追踪",
+    "content": "消息队列的消息轨迹（Message Trace）是什么？如何追踪消息从生产到消费的完整路径？RocketMQ 和 Kafka 的消息轨迹实现方式？",
+    "answer": "答案：消息轨迹记录消息从 Producer 发送到 Broker 存储再到 Consumer 消费的完整生命周期。包括发送时间、发送结果、存储位置、消费时间、消费状态、重试次数等信息。消息轨迹帮助排查消息丢失、重复消费、延迟等问题。\n\n解析：实现方式——1）RocketMQ 消息轨迹：RocketMQ 内置轨迹支持——通过开启 traceTopicEnable=true，Producer 和 Consumer 在发送/消费消息时异步上报轨迹数据到 RMQ_SYS_TRACE_TOPIC 系统 Topic。在控制台（rocketmq-console）中查看消息轨迹。支持 OpenTelemetry 集成。2）Kafka 消息轨迹：Kafka 没有内置消息轨迹功能。通常通过自定义埋点（Interceptor）或 OTel SDK 实现。在 Producer 端添加 Interceptor（onSend/onAcknowledgement）记录发送轨迹，Consumer 端添加 Interceptor（onConsume）记录消费轨迹。\n\n扩展延伸：消息轨迹的关键数据——1）消息唯一 ID（MessageId / MsgId）。2）发送端：Producer IP、发送时间、发送耗时、发送结果（成功/失败）。3）存储端：Broker IP、存储时间、Queue ID、Offset。4）消费端：Consumer IP、消费时间、消费状态（成功/失败/重试）、消费耗时。OpenTelemetry 集成——通过 OTel SDK 在 MQ 的生产和消费操作中创建 Span。消息的 TraceId 从 Producer 传递到 Broker 再到 Consumer（通过消息属性传递）。全链路追踪需要将消息轨迹与业务 Trace 关联——消息属性中携带 TraceId，消费时通过日志框架或 OTel 自动关联。",
+    "hints": [
+      "RocketMQ 内置消息轨迹（异步上报到系统 Topic），Kafka 无内置轨迹需要自定义 Interceptor 或 OTel",
+      "消息轨迹的 TraceId 通过消息属性传递——实现 Producer → Broker → Consumer 的全链路追踪"
+    ],
+    "tags": [
+      "MQ",
+      "消息轨迹",
+      "追踪",
+      "RocketMQ"
+    ]
+  },
+  {
+    "category": "mq",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "MQ 流控与背压（Backpressure）",
+    "content": "消息队列中什么是背压（Backpressure）？消费速度跟不上生产速度时如何处理？RocketMQ 和 Kafka 的流量控制机制？",
+    "answer": "答案：背压（Backpressure）是当消费者处理速度慢于生产者投递速度时，下游的压力反向传递到上游的机制。MQ 作为缓冲层天然能处理部分背压——消息在队列中暂存。但如果消息持续积压，需要多种机制来防止系统崩溃。\n\n解析：消费速度跟不上时的应对——1）水平扩容：增加 Consumer 实例（Consumer Group 中的消费者数量）。Kafka 中分区数限制了最大并发消费数（一个分区同一时刻只能被一个消费者消费）。扩容 Consumer 的同时需要增加分区数。2）限流（Rate Limiter）：在 Consumer 端控制处理速率（如令牌桶限流）。RocketMQ 支持在 Broker 端对 Consumer 的拉取速度做限制。3）消息降级：当积压超过阈值时，对非关键消息做降级处理（直接丢弃或只记录不处理）。4）背压传播：限制 Producer 端的发送速率。当 MQ 积压达到阈值时，Producer 发送请求被拒绝或阻塞（RocketMQ 的 send 方法同步调用时会被阻塞）。\n\n扩展延伸：Kafka 流控——1）Consumer 的 max.poll.records 控制每次 poll 拉取的最大消息数。2）Kafka Broker 端的限流：通过 quotas 限制 Producer/Consumer 的带宽（clientQuotaCallback）。3）Consumer 的 fetch.max.bytes 限制每次 fetch 请求的最大数据量。RocketMQ 流控——1）Broker 端的 fastFailureEnabled：当 PageCache 忙或消息堆积超过阈值时快速失败（而非阻塞）。2）Broker 限制 Consumer 的拉取速度（当页面缓存压力大时降低拉取速率）。3）Producer 的 request.timeout 在 Broker 拒绝时抛出异常。背压的最佳实践——监控消息积压量（Lag）是最直接的健康指标。持续增长的 Lag 说明消费者处理能力不足，需要扩容或优化。Message Queue 的深度监控和告警是最基本的运维要求。",
+    "hints": [
+      "Kafka 中 Consumer 扩容受分区数限制——一个分区只能被一个消费者消费，超过分区数的 Consumer 闲置",
+      "监控消息积压（Lag）是 MQ 运维中最关键的指标——持续增长的 Lag 需要关注"
+    ],
+    "tags": [
+      "MQ",
+      "流控",
+      "背压",
+      "消费者"
+    ]
   }
 ]

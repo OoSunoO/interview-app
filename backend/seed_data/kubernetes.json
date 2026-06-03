@@ -516,5 +516,95 @@
       "服务网格",
       "Envoy"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s 准入控制器（Admission Controller）",
+    "content": "什么是 Kubernetes 的准入控制器（Admission Controller）？MutatingAdmissionWebhook 和 ValidatingAdmissionWebhook 的区别？常见的内置准入控制器有哪些？",
+    "answer": "答案：准入控制器在 API Server 处理请求的认证和授权之后、对象持久化到 etcd 之前拦截请求。分为 Mutating（可以修改请求对象）和 Validating（只能验证不能修改）两种。Webhook 准入控制器允许用户通过外部 Webhook 服务自定义准入逻辑。\n\n解析：工作流程——1）请求经过认证（Authentication）→ 授权（Authorization）→ 准入控制（Admission Control）→ 持久化到 etcd。2）MutatingAdmissionWebhook 在 ValidatingAdmissionWebhook 之前执行。Mutating 先修改对象（如注入 Sidecar），Validating 再验证修改后的对象（如检查镜像来源是否白名单）。3）Webhook 配置：MutatingWebhookConfiguration 和 ValidatingWebhookConfiguration 资源。配置 webhook 的 URL、触发规则（operations/apiGroups/resources）、超时时间、失败策略（Fail/Ignore）。\n\n扩展延伸：重要内置准入控制器——1）NamespaceLifecycle：拒绝在删除中的 Namespace 创建新资源。2）LimitRanger：检查 Pod 资源请求和限制是否符合 LimitRange。3）ResourceQuota：检查 Namespace 的资源配额是否超限。4）PodSecurity：替代 PodSecurityPolicy (PSP)，基于标签的 Pod 安全标准。5）NodeRestriction：限制 kubelet 只能修改本节点相关的资源。6）DefaultStorageClass：为 PVC 自动设置默认 StorageClass。Webhook 开发注意——1）必须处理 TLS（使用 CA 签发的证书）。2）超时时间 30s（设置更短的超时避免阻塞 API Server）。3）failurePolicy=Fail 时 webhook 不可用导致整个集群不可用——用 Ignore 做灰度。4）避免 webhook 之间的循环调用（webhook 修改的资源又触发了同样的 webhook）。",
+    "hints": [
+      "准入控制器拦截顺序——认证 → 授权 → MutatingWebhook → ValidatingWebhook → etcd",
+      "failurePolicy 的选择——Fail 保证安全但 webhook 故障会影响集群，Ignore 反之"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "准入控制",
+      "安全"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 节点资源管理",
+    "content": "Kubernetes 节点如何管理资源？Node Capacity、Allocatable、Requests/Limits 的关系？节点压力驱逐（Node Pressure Eviction）的触发条件？kubelet 如何保证节点不因过载而崩溃？",
+    "answer": "答案：节点资源层次——Node Capacity（节点的总资源，如 32C/128G）→ kube-reserved（kubelet/kube-proxy 等系统组件保留）→ system-reserved（OS/sshd 等系统进程保留）→ Eviction Threshold（驱逐阈值）→ Allocatable（可调度给 Pod 的资源总量）。公式：Allocatable = Capacity - kube-reserved - system-reserved - eviction-hard-threshold。\n\n解析：节点压力驱逐——1）kubelet 监控节点资源（memory/disk/pid/压力）。当资源使用超过软阈值（eviction-soft）时启动驱逐流程，超过硬阈值（eviction-hard）时立即驱逐 Pod。2）驱逐顺序：先 BestEffort（无 requests/limits）→ Burstable 中超限使用最多的 → Guaranteed（最晚被驱逐）。3）资源回收：kubelet 优先回收本地资源（如 GC 镜像/终止 Pod），如果不够再驱逐 Pod。\n\n扩展延伸：配置——1）--kube-reserved 和 --system-reserved 参数配置。2）--eviction-hard=memory.available<500Mi,nodefs.available<10% 等。3）--eviction-soft-grace-period（软阈值的等待时间，给 Pod 时间主动释放）。4）--eviction-minimum-reclaim（每次驱逐至少回收多少资源，防止频繁驱逐）。Pod 层面——设置 Pod 的 requests 和 limits（特别是 Guaranteed QoS 的 Pod 几乎不会被驱逐）。PriorityClass——高优先级的 Pod 在驱逐时排在最后，且可能抢占低优先级 Pod 的资源（Priority Preemption）。",
+    "hints": [
+      "Allocatable = Capacity - kube-reserved - system-reserved - eviction-threshold",
+      "驱逐顺序：BestEffort → 超限 Burstable → Guaranteed——设置 Guaranteed QoS 提高稳定性"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "节点管理",
+      "驱逐"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 存储卷与 PV/PVC 生命周期",
+    "content": "Kubernetes 存储卷有哪些类型？PersistentVolume（PV）和 PersistentVolumeClaim（PVC）的生命周期？StorageClass 和动态供给（Dynamic Provisioning）的原理？PV 的访问模式（Access Modes）？",
+    "answer": "答案：PV 是集群级别的存储资源（由管理员预先创建或通过 StorageClass 动态供给），PVC 是 Pod 对存储资源的请求。PVC 绑定到满足条件的 PV（容量/访问模式/StorageClass 匹配）。PVC 被 Pod 使用后，PVC 删除时 PV 根据回收策略（Retain/Delete/Recycle）处理。\n\n解析：生命周期——1）静态供给：管理员创建 PV（指定存储类型/容量/访问模式/回收策略）。用户创建 PVC（指定容量/访问模式/StorageClass）。K8s 将 PVC 绑定到匹配的 PV（一对一绑定）。2）动态供给：StorageClass 定义 provisioner（如 ebs.csi.aws.com/managed-nfs.storageclass）和参数。PVC 指定 StorageClass → 系统自动创建 PV 并绑定。3）回收策略：Retain（保留 PV 和数据，管理员手动清理）、Delete（自动删除 PV 和后端存储）、Recycle（已废弃，清空数据后重新可用）。\n\n扩展延伸：访问模式——1）ReadWriteOnce（RWO）：单节点读写（最常见的模式）。2）ReadOnlyMany（ROX）：多节点只读。3）ReadWriteMany（RWX）：多节点读写（需要 NFS/CephFS 等共享存储）。4）ReadWriteOncePod（RWOP，K8s 1.22+）：单 Pod 读写。CSI 存储接口——Container Storage Interface 是 K8s 与存储系统交互的标准接口。driver 实现 CSI 接口（CreateVolume/DeleteVolume/ControllerPublishVolume/NodePublishVolume）。常见的 CSI Driver：AWS EBS/EFS、GCE PD、Azure Disk/File、Ceph RBD/CephFS、NFS CSI。",
+    "hints": [
+      "PVC 绑定 PV 是一对一的——PVC 删除后 PV 根据回收策略（Retain/Delete）决定是否保留数据",
+      "RWX（多节点读写）需要共享存储（NFS/CephFS），RWO（单节点读写）是最常用的模式"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "存储",
+      "PV/PVC"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 资源配额与 LimitRange",
+    "content": "Kubernetes 的 ResourceQuota 和 LimitRange 的区别？如何为不同 Namespace 设置资源配额？ResourceQuota 可以限制哪些资源类型？",
+    "answer": "答案：ResourceQuota 是 Namespace 维度的资源总量限制（整个 Namespace 的 CPU/内存总和上限、PVC 数量上限等）。LimitRange 是 Pod/Container 维度的默认值和范围限制（最小请求/最大限制/默认值）。两者配合使用——ResourceQuota 防止 Namespace 超支，LimitRange 防止单个 Pod 占用过多。\n\n解析：ResourceQuota——1）计算资源：limits.cpu/limits.memory/requests.cpu/requests.memory。2）存储资源：requests.storage（PVC 总容量）、persistentvolumeclaims（PVC 数量上限）。3）对象数量：count/deployments、count/services、count/secrets、count/configmaps 等。4）配额作用范围：选择器作用（scopes）——Terminating（删除中的 Pod）、NotTerminating、BestEffort、NotBestEffort。\n\n扩展延伸：LimitRange——1）Pod 级别：max/min（Pod 中所有 Container 的最大/最小资源）、maxLimitRequestRatio（limits/requests 的最大比例）。2）Container 级别：default（默认 limits）、defaultRequest（默认 requests）、max/min。3）LimitRange 在 Namespace 级别生效——在该 Namespace 中创建 Pod 时如果没有设置 resources，LimitRange 的默认值会被应用。注意——ResourceQuota 没有设置 `limits` 时，Pod 必须有 limits（否则拒绝创建）。因此 ResourceQuota 和 LimitRange 通常一起使用——LimitRange 设置默认 limits，ResourceQuota 限制总量。",
+    "hints": [
+      "ResourceQuota 限制 Namespace 总量——LimitRange 设置 Pod/Container 的资源默认值和边界——两者互补",
+      "ResourceQuota 如果限制了 limits.cpu——Namespace 中所有 Pod 必须设置 CPU limits（否则拒绝创建）"
+    ],
+    "tags": [
+      "DevOps",
+      "K8s",
+      "ResourceQuota",
+      "LimitRange"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "etcd 原理与运维",
+    "content": "etcd 在 Kubernetes 中的角色？Raft 协议如何保证 etcd 一致性？etcd 的性能瓶颈和运维最佳实践？etcd 快照和恢复？",
+    "answer": "答案：etcd 是 K8s 的分布式键值存储——存储所有集群状态（Pod/Service/ConfigMap/Secret 等资源的数据）。etcd 使用 Raft 一致性协议保证数据的一致性和高可用。K8s API Server 是无状态的——所有状态通过 etcd 持久化。\n\n解析：Raft 在 etcd 中——1）Leader 选举：etcd 集群节点通过随机超时机制选举 Leader。Leader 处理所有写请求（Follower 将写请求转发给 Leader）。2）日志复制：Leader 将写操作作为日志条目复制到多数 Follower（quorum）。quorum = N/2 + 1（如 3 节点集群需要 2 个节点确认）。3）持久化：日志写入 WAL（Write-Ahead Log）后才能确认。快照（Snapshot）压缩旧的 WAL，减少启动恢复时间。\n\n扩展延伸：运维——1）集群规模：推荐 3 或 5 节点（奇数）。3 节点容忍 1 个节点故障，5 节点容忍 2 个。2）性能：etcd 对磁盘 IO 敏感——推荐 SSD（固态硬盘）和独立的 etcd 节点（不混部）。监控 fsync 耗时和 db size。3）磁盘：etcd 对磁盘延迟敏感——fsync 延迟应 < 10ms。慢磁盘是 etcd 不稳定的最常见原因。4）压缩：定期 defrag（碎片整理）和 compact（历史压缩）。默认自动每 5 分钟 compact。db size 通常应 < 2GB 且增长到 < 8GB。5）备份：定期快照备份——`ETCDCTL_API=3 etcdctl snapshot save`。恢复：`etcdctl snapshot restore`。灾难恢复——当 etcd 集群丢失 quorum 时，用最新快照恢复单个 etcd 节点。",
+    "hints": [
+      "etcd 对磁盘 IO 极度敏感——SSD 是必须的，fsync 延迟 < 10ms 是健康标准",
+      "etcd 集群推荐奇数节点（3 或 5）——3 节点容忍 1 个故障，5 节点容忍 2 个"
+    ],
+    "tags": [
+      "DevOps",
+      "etcd",
+      "K8s",
+      "一致性"
+    ]
   }
 ]

@@ -10,7 +10,11 @@
       "排序后如何用双指针将 O(n³) 降到 O(n²)",
       "如何处理重复元素避免结果重复"
     ],
-    "tags": ["数组", "双指针", "排序"],
+    "tags": [
+      "数组",
+      "双指针",
+      "排序"
+    ],
     "options": [],
     "company": "字节跳动,阿里巴巴,腾讯"
   },
@@ -25,7 +29,11 @@
       "如何从三数之和的思路扩展",
       "注意整数溢出问题"
     ],
-    "tags": ["数组", "双指针", "排序"],
+    "tags": [
+      "数组",
+      "双指针",
+      "排序"
+    ],
     "options": [],
     "company": "微软,字节跳动"
   },
@@ -40,7 +48,9 @@
       "先实现一个函数翻转链表的一段区间",
       "使用 dummy 节点简化头节点处理"
     ],
-    "tags": ["链表"],
+    "tags": [
+      "链表"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,微软"
   },
@@ -55,7 +65,10 @@
       "快慢指针相遇能证明有环吗",
       "如何找到环的入口节点"
     ],
-    "tags": ["链表", "双指针"],
+    "tags": [
+      "链表",
+      "双指针"
+    ],
     "options": [],
     "company": "Amazon,字节跳动"
   },
@@ -70,7 +83,10 @@
       "如何区分每一层的节点",
       "BFS 的队列大小控制"
     ],
-    "tags": ["树", "BFS"],
+    "tags": [
+      "树",
+      "BFS"
+    ],
     "options": [],
     "company": "字节跳动,Amazon"
   },
@@ -85,7 +101,10 @@
       "如果 p 和 q 分别在左右子树，当前节点是什么",
       "递归函数的语义是什么"
     ],
-    "tags": ["树", "递归"],
+    "tags": [
+      "树",
+      "递归"
+    ],
     "options": [],
     "company": "字节跳动,微软,Amazon"
   },
@@ -100,7 +119,11 @@
       "只检查当前节点和左右子节点够吗",
       "中序遍历的结果有什么性质"
     ],
-    "tags": ["树", "递归", "二叉搜索树"],
+    "tags": [
+      "树",
+      "递归",
+      "二叉搜索树"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,微软"
   },
@@ -115,7 +138,10 @@
       "回文串的中心可以是单字符或双字符",
       "中心扩展法和动态规划的区别"
     ],
-    "tags": ["字符串", "双指针"],
+    "tags": [
+      "字符串",
+      "双指针"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,Amazon"
   },
@@ -130,7 +156,11 @@
       "滑动窗口如何移动左边界",
       "HashMap 记录什么信息"
     ],
-    "tags": ["字符串", "滑动窗口", "哈希表"],
+    "tags": [
+      "字符串",
+      "滑动窗口",
+      "哈希表"
+    ],
     "options": [],
     "company": "字节跳动,Amazon,微软"
   },
@@ -145,7 +175,10 @@
       "回溯的三步曲是什么",
       "如何保证不重复选择同一个元素"
     ],
-    "tags": ["回溯", "递归"],
+    "tags": [
+      "回溯",
+      "递归"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,微软"
   },
@@ -160,7 +193,11 @@
       "每个元素选或不选，总共几种可能",
       "回溯中的 start 参数有什么作用"
     ],
-    "tags": ["回溯", "位运算", "数组"],
+    "tags": [
+      "回溯",
+      "位运算",
+      "数组"
+    ],
     "options": [],
     "company": "字节跳动,微软"
   },
@@ -175,7 +212,10 @@
       "可重复选和不可重复选在代码上的区别是什么",
       "如何通过排序进行剪枝优化"
     ],
-    "tags": ["回溯", "数组"],
+    "tags": [
+      "回溯",
+      "数组"
+    ],
     "options": [],
     "company": "字节跳动,腾讯"
   },
@@ -190,7 +230,10 @@
       "如果当前子数组和变成负数了怎么办",
       "分治法如何合并左右子问题的结果"
     ],
-    "tags": ["动态规划", "数组"],
+    "tags": [
+      "动态规划",
+      "数组"
+    ],
     "options": [],
     "company": "Amazon,字节跳动,微软"
   },
@@ -205,7 +248,11 @@
       "dp[i] 表示什么含义",
       "tails 数组的二分插入逻辑"
     ],
-    "tags": ["动态规划", "数组", "二分搜索"],
+    "tags": [
+      "动态规划",
+      "数组",
+      "二分搜索"
+    ],
     "options": [],
     "company": "字节跳动,微软,Google"
   },
@@ -220,7 +267,10 @@
       "dp[i] 和 dp[i-1]、dp[i-2] 之间有什么关系",
       "环形排列如何处理"
     ],
-    "tags": ["动态规划", "数组"],
+    "tags": [
+      "动态规划",
+      "数组"
+    ],
     "options": [],
     "company": "字节跳动,Amazon,微软"
   },
@@ -235,7 +285,10 @@
       "从最低位开始模拟竖式计算",
       "如何处理不同长度的字符串"
     ],
-    "tags": ["字符串", "数学"],
+    "tags": [
+      "字符串",
+      "数学"
+    ],
     "options": [],
     "company": "字节跳动,微软"
   },
@@ -250,7 +303,10 @@
       "为什么要用两个栈",
       "遇到 '[' 时保存当前上下文"
     ],
-    "tags": ["栈", "字符串"],
+    "tags": [
+      "栈",
+      "字符串"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,微软"
   },
@@ -265,7 +321,11 @@
       "排序后如何判断两个区间是否重叠",
       "合并后区间的 end 取哪个值"
     ],
-    "tags": ["数组", "排序", "贪心"],
+    "tags": [
+      "数组",
+      "排序",
+      "贪心"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,微软"
   },
@@ -280,7 +340,11 @@
       "DFS 如何标记已访问的陆地",
       "沉岛法有什么好处"
     ],
-    "tags": ["图", "DFS", "BFS"],
+    "tags": [
+      "图",
+      "DFS",
+      "BFS"
+    ],
     "options": [],
     "company": "字节跳动,Amazon,Google"
   },
@@ -295,7 +359,11 @@
       "Trie 节点需要存储什么信息",
       "search 和 startsWith 的区别在哪里"
     ],
-    "tags": ["设计", "字符串", "树"],
+    "tags": [
+      "设计",
+      "字符串",
+      "树"
+    ],
     "options": [],
     "company": "字节跳动,Amazon,微软"
   },
@@ -310,7 +378,12 @@
       "每个位置能接多少水取决于什么",
       "单调栈为什么是递减栈"
     ],
-    "tags": ["栈", "数组", "双指针", "单调栈"],
+    "tags": [
+      "栈",
+      "数组",
+      "双指针",
+      "单调栈"
+    ],
     "options": [],
     "company": "字节跳动,Google,Amazon"
   },
@@ -325,7 +398,10 @@
       "原地哈希的核心思想是什么",
       "为什么结果一定在 [1, n+1] 范围内"
     ],
-    "tags": ["数组", "原地哈希"],
+    "tags": [
+      "数组",
+      "原地哈希"
+    ],
     "options": [],
     "company": "腾讯,字节跳动,Amazon"
   },
@@ -340,7 +416,11 @@
       "判断重叠的条件是什么",
       "会议室 II 如何用扫描线解决"
     ],
-    "tags": ["贪心", "排序", "数组"],
+    "tags": [
+      "贪心",
+      "排序",
+      "数组"
+    ],
     "options": [],
     "company": "Amazon,微软,字节跳动"
   },
@@ -355,7 +435,11 @@
       "为什么 get 和 put 都需要将节点移动到头部",
       "双向链表和 HashMap 如何配合"
     ],
-    "tags": ["设计", "链表", "哈希表"],
+    "tags": [
+      "设计",
+      "链表",
+      "哈希表"
+    ],
     "options": [],
     "company": "字节跳动,Google,Amazon,微软"
   },
@@ -370,7 +454,11 @@
       "单调队列为什么能保证队首始终是最大值",
       "队列中存下标而不是元素值的好处是什么"
     ],
-    "tags": ["队列", "滑动窗口", "单调队列"],
+    "tags": [
+      "队列",
+      "滑动窗口",
+      "单调队列"
+    ],
     "options": [],
     "company": "字节跳动,Google,Amazon"
   },
@@ -385,7 +473,11 @@
       "中心扩散法如何同时处理奇数长度和偶数长度的回文",
       "Manacher 算法利用了什么对称性质"
     ],
-    "tags": ["字符串", "回文", "动态规划"],
+    "tags": [
+      "字符串",
+      "回文",
+      "动态规划"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,Amazon"
   },
@@ -400,7 +492,10 @@
       "为什么只需维护历史最低价就能找到最大利润",
       "含冷冻期的买卖股票问题如何定义状态机"
     ],
-    "tags": ["数组", "动态规划"],
+    "tags": [
+      "数组",
+      "动态规划"
+    ],
     "options": [],
     "company": "字节跳动,微软,Amazon"
   },
@@ -415,7 +510,10 @@
       "回溯算法的三要素：选择、约束、终止条件",
       "有重复数字的全排列剪枝条件为什么要 !used[i-1]"
     ],
-    "tags": ["回溯", "排列"],
+    "tags": [
+      "回溯",
+      "排列"
+    ],
     "options": [],
     "company": "字节跳动,微软,Google"
   },
@@ -430,7 +528,11 @@
       "层序遍历中如何区分每一层的边界",
       "ZigZag 层序遍历如何控制方向交替"
     ],
-    "tags": ["二叉树", "BFS", "层序遍历"],
+    "tags": [
+      "二叉树",
+      "BFS",
+      "层序遍历"
+    ],
     "options": [],
     "company": "字节跳动,腾讯,微软"
   },
@@ -445,8 +547,112 @@
       "优先队列法的时间复杂度为什么是 O(n log k)",
       "分治合并法和归并排序有什么联系"
     ],
-    "tags": ["链表", "分治", "优先队列"],
+    "tags": [
+      "链表",
+      "分治",
+      "优先队列"
+    ],
     "options": [],
     "company": "字节跳动,Google,Amazon,微软"
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "三数之和",
+    "content": "给定一个整数数组 nums，判断是否存在三元组 [nums[i], nums[j], nums[k]] 满足 i != j、i != k 且 j != k，并且 nums[i] + nums[j] + nums[k] == 0。找出所有不重复的三元组。",
+    "answer": "答案：排序 + 双指针。先对数组排序，然后固定第一个数（去重），用双指针找后两个数。\n\n解析：排序后每个外层循环固定一个数 nums[i]，用左右指针 j=i+1, k=n-1 寻找两个数和为 -nums[i]。和 > 0 则 k--，和 < 0 则 j++。注意跳过重复元素。\n\n扩展延伸：时间 O(N^2)，空间 O(log N)（排序）。变种：最接近的三数之和（LeetCode 16）、四数之和（LeetCode 18）。\n\n```java\nclass Solution {\n    public List<List<Integer>> threeSum(int[] nums) {\n        List<List<Integer>> res = new ArrayList<>();\n        Arrays.sort(nums);\n        for (int i = 0; i < nums.length - 2; i++) {\n            if (i > 0 && nums[i] == nums[i-1]) continue;\n            int target = -nums[i], j = i+1, k = nums.length-1;\n            while (j < k) {\n                int sum = nums[j] + nums[k];\n                if (sum == target) {\n                    res.add(Arrays.asList(nums[i], nums[j], nums[k]));\n                    while (j < k && nums[j] == nums[j+1]) j++;\n                    while (j < k && nums[k] == nums[k-1]) k--;\n                    j++; k--;\n                } else if (sum < target) j++;\n                else k--;\n            }\n        }\n        return res;\n    }\n}\n```",
+    "options": [],
+    "company": "Amazon, ByteDance",
+    "hints": [
+      "排序后固定第一个数，双指针寻找后两个数——去重是这道题的核心难点",
+      "为什么要先排序——排序让双指针找两个数之和成为可能"
+    ],
+    "tags": [
+      "算法",
+      "双指针",
+      "排序",
+      "数组"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "接雨水",
+    "content": "给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。",
+    "answer": "答案：双指针法。左右指针向中间移动，维护左右两侧的最大高度，计算当前位置能接的雨水量。\n\n解析：瓶颈效应——某位置能接的雨水取决于「左右两侧最高柱子中较矮的那根」。用 leftMax 和 rightMax 记录左右两侧的最高柱子。如果左指针处 leftMax < rightMax，则左指针位置能接 leftMax - height[left] 雨水，左指针右移；否则类似。\n\n扩展延伸：时间 O(N)，空间 O(1)。其他解法：单调栈（在调试 O(N) 维护递减栈，遇到比栈顶高的位置时计算雨水）。\n\n```java\nclass Solution {\n    public int trap(int[] height) {\n        int left = 0, right = height.length - 1;\n        int leftMax = 0, rightMax = 0, ans = 0;\n        while (left < right) {\n            leftMax = Math.max(leftMax, height[left]);\n            rightMax = Math.max(rightMax, height[right]);\n            if (leftMax < rightMax) {\n                ans += leftMax - height[left];\n                left++;\n            } else {\n                ans += rightMax - height[right];\n                right--;\n            }\n        }\n        return ans;\n    }\n}\n```",
+    "options": [],
+    "company": "Google, Amazon, Microsoft",
+    "hints": [
+      "瓶颈效应——每个位置能接的雨水由左右两侧最高柱子的较矮者决定",
+      "双指针法为什么不需要额外的数组——leftMax 和 rightMax 在遍历中动态更新"
+    ],
+    "tags": [
+      "算法",
+      "双指针",
+      "数组",
+      "单调栈"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "最小覆盖子串",
+    "content": "给你一个字符串 s 和一个字符串 t 。返回 s 中涵盖 t 所有字符的最小子串。如果 s 中不存在涵盖 t 所有字符的子串，则返回空字符串 。",
+    "answer": "答案：滑动窗口 + 计数数组。用两个指针维护窗口，右指针扩展窗口直到覆盖 t，然后左指针收缩窗口以找到最小长度。\n\n解析：1）用 need 数组记录 t 中每个字符需要的个数。2）right 指针右移扩展窗口，每加入一个在 t 中的字符则 count++。3）当 count == tlen 时（窗口覆盖了 t），尝试左指针右移收缩窗口，更新最小长度。4）left 右移时如果移出的字符是 t 中需要的，则 count--。循环此过程。\n\n扩展延伸：时间 O(N)（N 为 s 长度），空间 O(1)（计数数组固定 128/256）。\n\n```java\nclass Solution {\n    public String minWindow(String s, String t) {\n        int[] need = new int[128];\n        for (char c : t.toCharArray()) need[c]++;\n        int left = 0, right = 0, count = 0, minLen = Integer.MAX_VALUE, start = 0;\n        while (right < s.length()) {\n            char rc = s.charAt(right);\n            if (need[rc] > 0) count++;\n            need[rc]--;\n            while (count == t.length()) {\n                if (right - left + 1 < minLen) {\n                    minLen = right - left + 1;\n                    start = left;\n                }\n                char lc = s.charAt(left);\n                need[lc]++;\n                if (need[lc] > 0) count--;\n                left++;\n            }\n            right++;\n        }\n        return minLen == Integer.MAX_VALUE ? \"\" : s.substring(start, start + minLen);\n    }\n}\n```",
+    "options": [],
+    "company": "Facebook, Microsoft, Amazon",
+    "hints": [
+      "need 数组的增减——右指针减 need（增加需求），左指针加 need（释放需求）",
+      "count 变量如何维护——count 只统计当前仍然缺失的字符数"
+    ],
+    "tags": [
+      "算法",
+      "滑动窗口",
+      "字符串",
+      "哈希表"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "编辑距离（Levenshtein Distance）",
+    "content": "给你两个单词 word1 和 word2，请返回将 word1 转换成 word2 所使用的最少操作数。你可以对一个单词进行：插入一个字符、删除一个字符、替换一个字符。",
+    "answer": "答案：动态规划。dp[i][j] 表示 word1 的前 i 个字符转换成 word2 的前 j 个字符的最少操作次数。\n\n解析：转移方程——如果 word1[i-1] == word2[j-1]：dp[i][j] = dp[i-1][j-1]。否则：dp[i][j] = min(dp[i-1][j]（删除）, dp[i][j-1]（插入）, dp[i-1][j-1]（替换）) + 1。初始化：dp[0][j] = j（插入 j 次），dp[i][0] = i（删除 i 次）。\n\n扩展延伸：时间 O(MN)，空间 O(MN) 可优化为 O(N)（只保留两行）。编辑距离是 NLP 中拼写检查（Spell Check）的核心算法。\n\n```java\nclass Solution {\n    public int minDistance(String word1, String word2) {\n        int m = word1.length(), n = word2.length();\n        int[][] dp = new int[m+1][n+1];\n        for (int i = 0; i <= m; i++) dp[i][0] = i;\n        for (int j = 0; j <= n; j++) dp[0][j] = j;\n        for (int i = 1; i <= m; i++) {\n            for (int j = 1; j <= n; j++) {\n                if (word1.charAt(i-1) == word2.charAt(j-1)) {\n                    dp[i][j] = dp[i-1][j-1];\n                } else {\n                    dp[i][j] = Math.min(dp[i-1][j], Math.min(dp[i][j-1], dp[i-1][j-1])) + 1;\n                }\n            }\n        }\n        return dp[m][n];\n    }\n}\n```",
+    "options": [],
+    "company": "Google, Amazon",
+    "hints": [
+      "dp[i][j] 的三个来源——删除（去掉 word1 最后一个）、插入（word1 追回 word2 最后一个）、替换",
+      "初始化 dp[i][0] 和 dp[0][j] 为什么分别是 i 和 j——从一个空字符串变到另一个需要全部插入或删除"
+    ],
+    "tags": [
+      "算法",
+      "动态规划",
+      "字符串",
+      "编辑距离"
+    ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "课程表（拓扑排序）",
+    "content": "你这个学期必须选修 numCourses 门课程，记为 0 到 numCourses-1。在选修某些课程之前需要一些先修课程。先修课程按数组 prerequisites 给出，其中 prerequisites[i] = [ai, bi] 表示要学习课程 ai 则必须先学习课程 bi。判断是否可能完成所有课程的学习。",
+    "answer": "答案：拓扑排序（Kahn 算法）。构建图和入度数组，用 BFS 从入度为 0 的节点开始遍历，检测是否有环。\n\n解析：1）建立邻接表 graph[i] 存储课程 i 的后继课程。2）计算每门课程的入度 indegree[i]（先修课程数）。3）将入度为 0 的课程入队（可以直接修的课程）。4）每次出队一门课程，将其后继课程的入度减 1。入度变为 0 则入队。5）如果出队课程数 == numCourses，则可以完成所有课程。\n\n扩展延伸：时间 O(V+E)，空间 O(V+E)。如果要求输出课程顺序（LeetCode 210），将出队顺序保存为结果。\n\n```java\nclass Solution {\n    public boolean canFinish(int numCourses, int[][] prerequisites) {\n        List<Integer>[] graph = new ArrayList[numCourses];\n        int[] indegree = new int[numCourses];\n        for (int i = 0; i < numCourses; i++) graph[i] = new ArrayList<>();\n        for (int[] pre : prerequisites) {\n            graph[pre[1]].add(pre[0]);\n            indegree[pre[0]]++;\n        }\n        Queue<Integer> queue = new LinkedList<>();\n        for (int i = 0; i < numCourses; i++) {\n            if (indegree[i] == 0) queue.offer(i);\n        }\n        int count = 0;\n        while (!queue.isEmpty()) {\n            int cur = queue.poll();\n            count++;\n            for (int next : graph[cur]) {\n                indegree[next]--;\n                if (indegree[next] == 0) queue.offer(next);\n            }\n        }\n        return count == numCourses;\n    }\n}\n```",
+    "options": [],
+    "company": "Amazon, Microsoft, Google",
+    "hints": [
+      "Kahn 算法的核心——入度为 0 表示没有前置依赖，可以直接处理",
+      "计数 count 为什么能判断是否有环——有环时环上的节点入度不可能变为 0"
+    ],
+    "tags": [
+      "算法",
+      "拓扑排序",
+      "图",
+      "BFS"
+    ]
   }
 ]

@@ -504,5 +504,95 @@
       "Nx",
       "工程化"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端路由原理",
+    "content": "前端路由的实现方式有哪些？Hash 路由和 History 路由的区别？History 路由为什么需要服务器配置？如何实现路由懒加载？",
+    "answer": "答案：前端路由通过监听 URL 变化渲染不同的视图组件。两种模式——Hash 路由（URL 中 `#/path` 部分，hash 变化不触发页面刷新）和 History 路由（基于 HTML5 History API，URL 使用真实路径）。\n\n解析：Hash 路由——1）使用 window.location.hash 和 hashchange 事件。2）hash 变化不发送 HTTP 请求（纯前端控制）。3）兼容性好（IE8+ 支持）。4）URL 中有 # 符号（不够美观）。History 路由——1）使用 History API（pushState/replaceState + popstate 事件）。2）URL 美观（没有 #）。3）需要服务器配置——用户直接访问 `/path` 时，服务器必须返回 index.html（前端处理路由），否则会返回 404。4）兼容性：IE10+。\n\n扩展延伸：路由实现细节——1）React Router 的 BrowserRouter（History 模式）和 HashRouter。Vue Router 的 history/createWebHashHistory/createWebHistory。2）路由懒加载：结合动态 import（`import()` 语法），Webpack/Vite 自动代码分割。React 的 `React.lazy()` + `<Suspense>` 实现组件按需加载。Vue 中 `defineAsyncComponent`。3）路由守卫：路由跳转前的权限验证（React Router 的 loader/Vue Router 的 beforeEach）。4）History 模式的 Nginx 配置——`try_files $uri $uri/ /index.html`。Safari 的 popstate 行为有些 Bug（如 pushState 后 popstate 事件不触发）。SSR（Next.js/Nuxt.js）中通常使用 History 路由。",
+    "hints": [
+      "Hash 路由的 hash 变化不会触发页面刷新——不会向服务器发送请求",
+      "History 路由需要 Nginx 配置 try_files——否则直接访问 /path 会返回 404"
+    ],
+    "tags": [
+      "前端",
+      "路由",
+      "React Router",
+      "Vue Router"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "前端性能优化：Core Web Vitals",
+    "content": "Google 的 Core Web Vitals 指标有哪些？LCP（Largest Contentful Paint）、FID（First Input Delay）、CLS（Cumulative Layout Shift）分别衡量什么？如何优化这些指标？",
+    "answer": "答案：Core Web Vitals 是 Google 衡量用户体验的三个核心指标——LCP（加载性能：主要内容渲染时间）、FID（可交互性：首次交互响应延迟）、CLS（视觉稳定性：页面布局偏移量）。这些指标影响 SEO 排名。\n\n解析：各指标——1）LCP（Largest Contentful Paint）：测量最大可见内容元素（图片/视频/大文本块）的渲染时间。目标：<2.5s。优化：优化图片（压缩/WebP/懒加载消除）、预加载关键资源（<link rel=preload>）、减少服务器响应时间（TTFB）、使用 CDN。2）FID（First Input Delay）：测量用户首次与页面交互到浏览器能处理该交互的时间。2024 年起被 INP（Interaction to Next Paint）替代。INP 评估页面所有交互的响应延迟。优化：减少/拆分长任务（Long Task）、使用 Web Worker、优化 JS 执行。3）CLS（Cumulative Layout Shift）：衡量页面内容在加载过程中意外移动的程度。用 layout shift score 量化（移动元素面积 × 移动距离）。目标：<0.1。优化：明确设置图片/视频/广告的尺寸（width/height）、避免在内容上方插入新内容、使用 transform 做动画。\n\n扩展延伸：工具——Lighthouse（Chrome DevTools 内置审计工具）、PageSpeed Insights（在线工具）、Web Vitals 库（js 库收集真实用户数据上报到 Google Analytics）。优化优先级——LCP 和 CLS 对 SEO 影响最大。FID/INP 影响用户交互体验。Web Vitals 不是全部——还需关注 TTFB（首字节时间）、TBT（总阻塞时间）、SI（速度指数）等辅助指标。",
+    "hints": [
+      "CLS 的 layout shift score = 移动元素影响面积 × 距离分数——给图片设置尺寸是预防 CLS 的最简单方法",
+      "FID 已被 INP 取代（2024）——INP 评估页面所有交互的响应延迟而非仅首次交互"
+    ],
+    "tags": [
+      "前端",
+      "性能优化",
+      "Core Web Vitals",
+      "SEO"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端状态管理方案对比",
+    "content": "目前主流的前端状态管理方案有哪些？Context API、Redux/Zustand、Jotai/Recoil 的核心理念和适用场景？什么情况下不需要状态管理库？",
+    "answer": "答案：状态管理方案从复杂到简单——Redux/Zustand（集中式单一 Store）、Jotai/Recoil（原子化状态）、Context API（React 内置）。选择依据：应用规模和状态共享的复杂度。\n\n解析：方案对比——1）Redux：单一 Store + Action + Reducer + Dispatch。单向数据流，可预测性强。中间件（Redux Thunk/Saga）处理副作用。适合大型应用（复杂的状态交互和多层组件）。学习曲线较陡。Redux Toolkit 简化了模板代码。2）Zustand：极简 API，创建一个 store（create），直接读写。不需要 Provider 包裹、不需要 Action/Reducer 样板代码。适合中小型应用。性能优于 Redux（精细订阅更新）。3）Jotai/Recoil：原子化状态——每个状态是一个独立原子（Atom），组件按需订阅原子。原子可组合（从原子派生新原子）。适合状态分散、按需加载的场景。\n\n扩展延伸：何时不需要状态管理库——1）组件间状态提升即可——如果只是父子/兄弟组件共享状态，用 React 的 useState + 提升 state + props 传递就够。2）Context API 够用——主题/用户认证/语言偏好等全局且低频更新的状态。3）服务端状态和客户端状态分离——考虑用 React Query/TanStack Query 管理服务端状态（缓存/刷新/loading/error），本地状态用 useState 即可。状态管理的本质是在「组件树」中的传递效率，不是所有共享状态都需要全局 Store。Server State 和 Client State 分开管理越来越成为主流。",
+    "hints": [
+      "状态管理的选择树——少量状态→useState → 跨组件→Context API → 复杂交互→Zustand/Jotai → 大型复杂应用→Redux Toolkit",
+      "React Query 管理服务端状态 + useState 管理客户端状态——很多「Redux 场景」其实不需要 Redux"
+    ],
+    "tags": [
+      "前端",
+      "状态管理",
+      "Redux",
+      "Zustand"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web 安全：内容安全策略（CSP）",
+    "content": "什么是内容安全策略（Content Security Policy / CSP）？CSP 如何防范 XSS 攻击？如何配置 CSP Header？CSP 的 report-only 模式是什么？",
+    "answer": "答案：CSP 是一个 HTTP 响应头（Content-Security-Policy），告诉浏览器哪些来源的资源是可信的。浏览器会阻止未在白名单中的来源加载脚本/样式/图片等资源。CSP 是防御 XSS 攻击的强有力机制（即使攻击者注入了 <script> 标签，浏览器也不会执行）。\n\n解析：CSP 指令——1）`default-src`（默认资源来源，未被其他指令覆盖时生效）。2）`script-src`（放行脚本的来源，设置 `'unsafe-inline'` 放行内联脚本——但这也是 XSS 的入口）。3）`style-src`（样式来源）。4）`img-src`（图片来源）。5）`connect-src`（fetch/XMLHttpRequest 目标）。6）`frame-src`/`object-src`。示例 CSP 策略：`Content-Security-Policy: default-src 'self'; script-src 'self' trusted-cdn.com; img-src 'self' *.img.com`。\n\n扩展延伸：严格 CSP——为了避免 `'unsafe-inline'` 的风险，使用 nonce（一次性随机数）或 hash（脚本内容的哈希值）来放行特定的内联脚本。`script-src 'nonce-random123'`——只有 nonce 匹配的 <script> 标签才能执行。Report-Only 模式——`Content-Security-Policy-Report-Only`——不阻塞违规请求，只向指定 URL 发送违规报告。用于灰度测试（在生产环境先观察兼容性再全面启用）。配置 `report-uri` 或 `report-to` 接收报告。CSP 的局限——CSP 不能防范基于 DOM 的 XSS（如通过 innerHTML 注入的不安全 HTML 没有脚本执行）。不能防范服务端数据泄露（如 JSONP 接口被调用）。CSP 可能被 strict-dynamic 传播绕过（但攻击难度很高）。",
+    "hints": [
+      "CSP 在浏览器层面阻止 XSS——即使 script 标签被注入了，如果来源不在白名单就不执行",
+      "nonce 策略比 'unsafe-inline' 安全——每次响应生成不同的随机数，注入的脚本无法预知 nonce"
+    ],
+    "tags": [
+      "前端",
+      "安全",
+      "CSP",
+      "XSS"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "前端构建工具：Webpack 核心原理",
+    "content": "Webpack 的核心原理是什么？Loader 和 Plugin 的区别？Tree Shaking 的工作原理？Webpack 5 有哪些重要更新？Webpack 和 Vite 的核心差异？",
+    "answer": "答案：Webpack 是一个模块打包工具——从入口文件开始构建依赖图（Dependency Graph），将所有模块打包为 bundle（一个或多个 JS 文件）。Loader 用于转换文件（将非 JS 文件转为 Webpack 可处理的模块），Plugin 用于扩展 Webpack 功能（在构建生命周期中挂钩执行自定义逻辑）。\n\n解析：Loader vs Plugin——1）Loader：本质是一个转换函数（source → transformed）。module.rules 中配置 test（匹配文件）和 use（使用的 loader）。如 babel-loader（JS/TS 转译）、css-loader（解析 CSS import）、sass-loader（SASS→CSS）。Loader 在构建过程中按顺序链式执行。2）Plugin：监听 Webpack 的构建生命周期钩子（如 emit/done/compile），可访问 Webpack 的 compiler 和 compilation 对象。如 HtmlWebpackPlugin（生成 HTML）、MiniCssExtractPlugin（提取 CSS 文件）。Plugin 可以修改输出、优化打包、注入环境变量。\n\n扩展延伸：Tree Shaking——1）基于 ES Module 的静态分析（import/export 是静态的，可以在编译时确定哪些导出未被使用）。生产模式下自动启用（`mode: production`）。未被使用的导出在打包时被移除（dead code elimination）。2）CommonJS 不支持静态分析（require 可以在运行时动态条件加载），无法做 Tree Shaking。Webpack 5 重要更新——1）持久化缓存（Persistent Caching）：Webpack 5 将缓存持久化到磁盘，二次构建速度大幅提升。2）模块联邦（Module Federation）：多个独立构建的应用可以在运行时共享模块（微前端的一种实现方式）。3）内置静态资源模块（Asset Modules）：替代 file-loader/url-loader/raw-loader。Vite 的差异——Vite 开发时使用 ESM 原生（No Bundle），按需编译（速度极快）；生产构建用 Rollup（Webpack 是全程打包）。开发体验上 Vite 远快于 Webpack。",
+    "hints": [
+      "Loader 转换文件内容（在模块被添加到依赖图之前），Plugin 扩展 Webpack 生命周期功能",
+      "Tree Shaking 依赖 ES Module 的静态导入语法——CommonJS 的 require() 无法静态分析"
+    ],
+    "tags": [
+      "前端",
+      "Webpack",
+      "构建工具",
+      "Vite"
+    ]
   }
 ]

@@ -6,8 +6,16 @@
     "title": "LLM 推理中的 KV Cache",
     "content": "Transformer 自回归推理中 KV Cache 是什么？它是如何减少计算量的？存在哪些问题？",
     "answer": "答案：KV Cache 缓存 Transformer 每层 Self-Attention 中历史 token 的 Key 和 Value 矩阵，避免每步重新计算。\n\n解析：自回归推理每步生成一个 token，新 token 只需与历史 token 做 Attention。如果不缓存，每步都要重新计算所有历史 token 的 K 和 V，复杂度 O(n²)。缓存后每步只需计算新 token 的 K 和 V，复杂度降为 O(n)。以 LLaMA 7B（hidden_dim=4096，32 层，FP16）为例：每 token 每层 KV cache = 2 × 4096 × 2 = 16KB，32 层 → 512KB/token，2048 上下文 → 约 1GB/请求。\n\n扩展延伸：KV Cache 的优化方向：1）MQA（Multi-Query Attention）——所有查询头共享一组 K-V，出自《Fast Transformer Decoding》论文。2）GQA（Grouped Query Attention）——折中方案，LLaMA 2 70B 和 LLaMA 3 系列使用。3）PagedAttention——分块管理 KV Cache 减少碎片（vLLM）。4）KV Cache 量化——从 FP16 到 INT8/INT4 减少显存占用。",
-    "hints": ["MQA 和 GQA 如何减少 KV Cache 大小", "KV Cache 的显存占用如何估算"],
-    "tags": ["LLM", "推理优化", "KV Cache", "Transformer"]
+    "hints": [
+      "MQA 和 GQA 如何减少 KV Cache 大小",
+      "KV Cache 的显存占用如何估算"
+    ],
+    "tags": [
+      "LLM",
+      "推理优化",
+      "KV Cache",
+      "Transformer"
+    ]
   },
   {
     "category": "ai",
@@ -16,8 +24,16 @@
     "title": "Continuous Batching",
     "content": "什么是 Continuous Batching（连续批处理）？它与传统静态 Batching 相比有什么优势？",
     "answer": "答案：Continuous Batching 以 token 级别而非请求级别组织批次，调度器每步动态增删序列，消除静态批次的填充浪费。\n\n解析：传统静态 Batching：收集固定数量的请求后批量处理，短序列完成后必须等待最长的序列结束，GPU 利用率低。Continuous Batching（源于微软 Orca 论文，2022）：每步解码后，已完成序列立即移出批次，新序列加入。调度器在每次迭代时重新规划批次，保证 GPU 始终处理有效 token。\n\n扩展延伸：实现 Continuous Batching 的核心组件的关键考量：1）iteration-level scheduling——每步解码后重新调度。2）显存管理——动态分配和回收 KV Cache。3）vLLM 和 TensorRT-LLM 等主流框架均实现了不同版本的 Continuous Batching。TGI（Text Generation Inference）的简单批次拼接也属于类似的思路。",
-    "hints": ["静态批次中 padding token 浪费了多少算力", "vLLM 如何实现 Continuous Batching"],
-    "tags": ["LLM", "推理优化", "Continuous Batching", "vLLM"]
+    "hints": [
+      "静态批次中 padding token 浪费了多少算力",
+      "vLLM 如何实现 Continuous Batching"
+    ],
+    "tags": [
+      "LLM",
+      "推理优化",
+      "Continuous Batching",
+      "vLLM"
+    ]
   },
   {
     "category": "ai",
@@ -26,8 +42,16 @@
     "title": "PagedAttention 与 vLLM",
     "content": "PagedAttention 的核心思想是什么？vLLM 如何利用它提升 LLM 推理效率？",
     "answer": "答案：PagedAttention 将 KV Cache 分页管理（固定大小 block，如 16 token/block），像操作系统虚拟内存一样解决碎片问题。\n\n解析：传统实现为每个请求预分配连续显存存放 KV Cache，但实际序列长度不确定，导致大量内部碎片和外部碎片（利用率仅 20%-40%）。PagedAttention 将 KV Cache 切为固定大小的 block（通常 16 token），不要求物理连续，通过 block table 映射逻辑页到物理页。当序列变长时按需分配新 block。\n\n扩展延伸：PagedAttention 的其他优势：1）Copy-on-Write——多个序列共享相同前缀的 block（beam search、并行采样场景节省显存）。2）Block 级内存复用——序列完成后 block 即时回收。vLLM 论文发表于 SOSP 2023（Kwon et al.），在 A100 80GB 上达到 vLLM 比 HF Transformers 快 14-24 倍。后续发展：SGLang 的 RadixAttention、LightLLM 等借鉴了类似思路。",
-    "hints": ["KV Cache 预分配方式为什么导致大量碎片", "Copy-on-Write 在 beam search 中如何节省显存"],
-    "tags": ["LLM", "推理优化", "PagedAttention", "vLLM"]
+    "hints": [
+      "KV Cache 预分配方式为什么导致大量碎片",
+      "Copy-on-Write 在 beam search 中如何节省显存"
+    ],
+    "tags": [
+      "LLM",
+      "推理优化",
+      "PagedAttention",
+      "vLLM"
+    ]
   },
   {
     "category": "ai",
@@ -36,8 +60,16 @@
     "title": "HNSW 向量索引原理",
     "content": "HNSW（Hierarchical Navigable Small World）向量索引的工作原理是什么？为什么它搜索速度快？",
     "answer": "答案：HNSW 构建多层图结构——上层节点稀少（长跳转），下层节点密集（精细搜索），搜索从顶层贪婪遍历逐层下降。\n\n解析：HNSW 基于 NSW（Navigable Small World）改进，增加层级结构。构建时每个节点随机分配层级（指数衰减概率），插入时在每层找到近邻并连接。搜索时从顶层入口点开始，每层做贪婪搜索（贪心地走向最近的邻居），找到该层局部最近点后进入下一层继续，直到最底层做完整搜索。复杂度约为 O(log n)。\n\n扩展延伸：关键参数：M（每层最大连接数，默认 16）控制图密度；efConstruction（构建时搜索范围，默认 200）控制构建质量；efSearch（搜索时动态候选集大小）控制搜索质量。HNSW 出自论文《Efficient and robust approximate nearest neighbor search using Hierarchical Navigable Small World graphs》（Malkov & Yashunin，2018）。是目前最流行的 ANN 算法之一，Milvus、Qdrant 等向量数据库默认索引类型。",
-    "hints": ["HNSW 的参数 ef 和 M 分别控制什么", "NSW 和 HNSW 的区别是什么"],
-    "tags": ["向量数据库", "ANN", "HNSW", "索引"]
+    "hints": [
+      "HNSW 的参数 ef 和 M 分别控制什么",
+      "NSW 和 HNSW 的区别是什么"
+    ],
+    "tags": [
+      "向量数据库",
+      "ANN",
+      "HNSW",
+      "索引"
+    ]
   },
   {
     "category": "ai",
@@ -46,8 +78,16 @@
     "title": "IVF-PQ 向量索引",
     "content": "IVF-PQ（Inverted File with Product Quantization）索引如何实现高压缩比向量检索？适用什么场景？",
     "answer": "答案：IVF 做粗粒度聚类剪枝搜索范围，PQ 将向量分块量化压缩。IVF 决定搜哪片，PQ 决定存多省。\n\n解析：IVF（倒排文件）：k-means 聚类划分 Voronoi 单元，搜索时只查最近 nprobe 个单元，减少搜索量。PQ（乘积量化）：将 d 维向量分成 m 个子向量，每个子向量独立聚类量化（如 256 个中心点 = 8 bit），原来 d × 4 字节可压缩为 m × 1 字节。例如 128 维向量分 8 组 → 512 字节 → 8 字节，压缩比达 64 倍。\n\n扩展延伸：IVF-PQ 的核心权衡：nprobe（搜索的聚类数）越多越准但越慢；m（子向量数）越大压缩越低但越准。FAISS（Facebook AI）的 IndexIVFPQ 是经典实现。适用场景：内存受限的超大规模检索（十亿级），可接受一定精度损失（Recall 通常 90%-95%）。对比 HNSW：HNSW 更快更准但内存占用大，IVF-PQ 内存效率高但精度和速度略差。",
-    "hints": ["PQ 的压缩比如何计算", "nprobe 参数对搜索质量的影响"],
-    "tags": ["向量数据库", "ANN", "IVF-PQ", "FAISS"]
+    "hints": [
+      "PQ 的压缩比如何计算",
+      "nprobe 参数对搜索质量的影响"
+    ],
+    "tags": [
+      "向量数据库",
+      "ANN",
+      "IVF-PQ",
+      "FAISS"
+    ]
   },
   {
     "category": "ai",
@@ -56,8 +96,16 @@
     "title": "稠密检索与混合检索",
     "content": "稠密检索（Dense Retrieval）和稀疏检索（Sparse Retrieval）有什么区别？为什么生产级 RAG 系统常用混合检索？",
     "answer": "答案：稠密检索用 Embedding 向量做语义匹配，稀疏检索（BM25）基于关键词精确匹配。混合检索结合两者优势。\n\n解析：稀疏检索（BM25/TF-IDF）基于词频和逆文档频率打分，优点是精确匹配、可解释性强、无需训练，缺点是无法处理同义词和语义差异（搜索”汽车”匹配不到”轿车”）。稠密检索用预训练语言模型（BERT、E5、BGE）生成文本向量，通过向量距离度量语义相似度，可以匹配同义表达，但需要大量训练数据、对罕见词不敏感。\n\n扩展延伸：混合检索的融合策略：1）RRF（Reciprocal Rank Fusion）——对多个排名的倒数求和，简单有效。2）加权求和——bm25_score × w1 + dense_score × w2，权重需调参。3）Learning to Rank——用模型学习最佳排序。主流向量数据库（Milvus、Weaviate、Elasticsearch）都原生支持混合检索。稠密模型推荐：BGE（BAAI，中文强）、E5（微软，英文强）、Cohere Embed、OpenAI text-embedding-3。",
-    "hints": ["RRF 融合排名的原理和优势", "Embedding 模型的 MTEB 基准"],
-    "tags": ["RAG", "检索", "Embedding", "混合检索"]
+    "hints": [
+      "RRF 融合排名的原理和优势",
+      "Embedding 模型的 MTEB 基准"
+    ],
+    "tags": [
+      "RAG",
+      "检索",
+      "Embedding",
+      "混合检索"
+    ]
   },
   {
     "category": "ai",
@@ -66,8 +114,15 @@
     "title": "RAG Chunking 策略",
     "content": "RAG 系统中文档分块（Chunking）的策略有哪些？分块大小如何影响检索质量？",
     "answer": "答案：常见分块策略包括固定大小分块、语义分块、递归分块和文档结构感知分块，各有适用场景。\n\n解析：1）固定大小分块——按字符/token 数切分（如 512 token + 128 overlap），实现简单但可能切断语义完整的段落。2）语义分块——按句子边界、段落边界或语义完整度切分，如基于 Embedding 相似度检测主题转换点。3）递归分块（LangChain RecursiveCharacterTextSplitter）——按优先级逐级分隔符分割（\n\n → \n → 。 → .），尽量保持语义完整。4）文档结构感知分块——按 Markdown 标题、HTML 标签、代码函数边界切分。\n\n扩展延伸：分块大小的权衡：块太小（<100 token）→ 检索精确但缺乏上下文，LLM 看不清全貌；块太大（>1000 token）→ 包含噪音、超出 LLM 上下文窗口有效利用率、检索召回下降。实践中 256-512 token 结合 10%-20% overlap 是常见起点。高级策略：Small-to-Big——检索小片段但返回其所在的大段落（如 LlamaIndex 的 SentenceWindowNodeParser）。",
-    "hints": ["为什么需要 chunk overlap", "Small-to-Big 检索策略的工作原理"],
-    "tags": ["RAG", "Chunking", "文档处理"]
+    "hints": [
+      "为什么需要 chunk overlap",
+      "Small-to-Big 检索策略的工作原理"
+    ],
+    "tags": [
+      "RAG",
+      "Chunking",
+      "文档处理"
+    ]
   },
   {
     "category": "ai",
@@ -76,8 +131,15 @@
     "title": "RAG Re-ranking",
     "content": "RAG 系统中为什么需要 Re-ranking（重排序）阶段？Bi-encoder 和 Cross-encoder 在检索中的角色分别是什么？",
     "answer": "答案：Re-ranking 用更精确的模型对初检结果重排，弥补第一阶段检索的精度不足。Bi-encoder 负责高效初检，Cross-encoder 负责精确重排。\n\n解析：第一阶段（Retrieval）使用 Bi-encoder（如 BGE、E5）——查询和文档独立编码，向量可预计算和建索引，适合大规模快速检索（百毫秒级），但独立编码丢失了查询-文档间的交互信息。第二阶段（Re-ranking）使用 Cross-encoder（如 BGE-reranker、Cohere Rerank）——查询和文档拼接后一起编码，能捕捉细粒度匹配信号，精度更高但无法预计算，只能对小规模候选集（如 Top-100）重排。\n\n扩展延伸：两阶段设计是效率和精度的最优平衡——Bi-encoder 从百万级文档召回 Top-100，Cross-encoder 对 Top-100 精排取 Top-5/10 送入 LLM。实际部署注意事项：1）Re-ranker 通常选择轻量模型（如 6 层 Transformer）控制延迟。2）可以多路召回（BM25 + 稠密检索 + 其他策略）后统一重排。3）Cohere Rerank API 和 BGE-reranker 是常用选项。",
-    "hints": ["为什么不用 Cross-encoder 直接做全量检索", "多路召回后统一重排的架构"],
-    "tags": ["RAG", "Re-ranking", "检索"]
+    "hints": [
+      "为什么不用 Cross-encoder 直接做全量检索",
+      "多路召回后统一重排的架构"
+    ],
+    "tags": [
+      "RAG",
+      "Re-ranking",
+      "检索"
+    ]
   },
   {
     "category": "ai",
@@ -90,7 +152,11 @@
       "Rejection Sampling 如何保证输出分布不偏差",
       "推测解码的加速倍数受什么因素限制"
     ],
-    "tags": ["LLM", "推理优化", "推测解码"]
+    "tags": [
+      "LLM",
+      "推理优化",
+      "推测解码"
+    ]
   },
   {
     "category": "ai",
@@ -103,7 +169,13 @@
       "INT4 量化为什么比 INT8 更敏感",
       "Activation-Aware 和 Weight-Only 量化的区别"
     ],
-    "tags": ["LLM", "量化", "推理优化", "GPTQ", "AWQ"]
+    "tags": [
+      "LLM",
+      "量化",
+      "推理优化",
+      "GPTQ",
+      "AWQ"
+    ]
   },
   {
     "category": "ai",
@@ -116,7 +188,13 @@
       "TP 为什么需要 NVLink 等高带宽互联",
       "流水线气泡是什么？1F1B 如何减少气泡"
     ],
-    "tags": ["LLM", "分布式", "推理优化", "TP", "PP"]
+    "tags": [
+      "LLM",
+      "分布式",
+      "推理优化",
+      "TP",
+      "PP"
+    ]
   },
   {
     "category": "ai",
@@ -129,7 +207,13 @@
       "vLLM 的 PagedAttention 和 TGI 的 Continuous Batching 优化的是同一个问题的不同方面吗",
       "TensorRT-LLM 为什么在非 NVIDIA 硬件上无法使用"
     ],
-    "tags": ["LLM", "推理优化", "vLLM", "TGI", "TensorRT-LLM"]
+    "tags": [
+      "LLM",
+      "推理优化",
+      "vLLM",
+      "TGI",
+      "TensorRT-LLM"
+    ]
   },
   {
     "category": "ai",
@@ -142,7 +226,12 @@
       "LoRA 的秩 r 如何影响微调效果和参数量",
       "NF4 量化和普通 INT4 量化的区别"
     ],
-    "tags": ["LLM", "微调", "LoRA", "QLoRA"]
+    "tags": [
+      "LLM",
+      "微调",
+      "LoRA",
+      "QLoRA"
+    ]
   },
   {
     "category": "ai",
@@ -155,7 +244,12 @@
       "MoE 的「稀疏激活」为什么能降低推理成本",
       "Router 的负载均衡问题如何解决"
     ],
-    "tags": ["LLM", "MoE", "架构", "Mixtral"]
+    "tags": [
+      "LLM",
+      "MoE",
+      "架构",
+      "Mixtral"
+    ]
   },
   {
     "category": "ai",
@@ -168,7 +262,12 @@
       "Prefix Cache 为什么对 RAG 应用特别有效",
       "vLLM 的 APC 和 SGLang 的 RadixAttention 的区别"
     ],
-    "tags": ["LLM", "推理优化", "Prefix Cache", "RadixAttention"]
+    "tags": [
+      "LLM",
+      "推理优化",
+      "Prefix Cache",
+      "RadixAttention"
+    ]
   },
   {
     "category": "ai",
@@ -181,7 +280,12 @@
       "Flash Attention 如何绕过 Softmax 需要全局规约的限制",
       "HBM（高带宽内存）和 SRAM 在 GPU 中的层次关系"
     ],
-    "tags": ["LLM", "推理优化", "Flash Attention", "Transformer"]
+    "tags": [
+      "LLM",
+      "推理优化",
+      "Flash Attention",
+      "Transformer"
+    ]
   },
   {
     "category": "ai",
@@ -194,7 +298,12 @@
       "位置插值（PI）为什么会导致 token 区分度下降",
       "Ring Attention 如何实现序列并行"
     ],
-    "tags": ["LLM", "上下文窗口", "RoPE", "位置编码"]
+    "tags": [
+      "LLM",
+      "上下文窗口",
+      "RoPE",
+      "位置编码"
+    ]
   },
   {
     "category": "ai",
@@ -207,7 +316,12 @@
       "温度 T 如何影响蒸馏效果",
       "为什么黑盒蒸馏在大模型时代比白盒蒸馏更流行"
     ],
-    "tags": ["LLM", "蒸馏", "模型压缩", "训练"]
+    "tags": [
+      "LLM",
+      "蒸馏",
+      "模型压缩",
+      "训练"
+    ]
   },
   {
     "category": "ai",
@@ -220,7 +334,12 @@
       "为什么 LLaMA 等模型选择 SentencePiece 而不是 BPE",
       "词表大小对模型参数量和推理速度的影响"
     ],
-    "tags": ["LLM", "Tokenizer", "BPE", "SentencePiece"]
+    "tags": [
+      "LLM",
+      "Tokenizer",
+      "BPE",
+      "SentencePiece"
+    ]
   },
   {
     "category": "ai",
@@ -233,7 +352,12 @@
       "为什么 LLaVA 的两阶段训练策略有效——先对齐后微调",
       "Visual token 数量如何影响多模态模型的推理效率"
     ],
-    "tags": ["多模态", "LLaVA", "视觉", "架构"]
+    "tags": [
+      "多模态",
+      "LLaVA",
+      "视觉",
+      "架构"
+    ]
   },
   {
     "category": "ai",
@@ -332,8 +456,15 @@
     "title": "MLOps：机器学习运维与生命周期管理",
     "content": "请介绍 MLOps 的核心概念和最佳实践。MLOps 与 DevOps 有什么异同？如何构建一个端到端的 ML Pipeline？",
     "answer": "答案：MLOps 将 DevOps 理念应用于机器学习系统生命周期管理，涵盖数据管理、模型训练、部署、监控和持续迭代。与 DevOps 的关键区别在于 ML 系统涉及数据和模型的版本管理、实验追踪和模型评估。\n\n解析：1）MLOps vs DevOps——相同点：CI/CD、自动化、监控、基础设施即代码。不同点：MLOps 额外需要——数据版本控制（DVC、LakeFS）、实验跟踪（MLflow、Weights & Biases）、模型注册和版本管理、模型评估和验证（不仅测试代码还要测试模型质量）、数据和模型的概念漂移检测（Data/Model Drift）。2）ML Pipeline 的典型阶段：数据采集和验证 → 数据预处理和特征工程 → 模型训练和超参数调优 → 模型评估和验证 → 模型部署 → 在线监控和反馈循环。每个阶段都可能失败，因此需要质量门禁（Quality Gates）。3）基础设施——Feature Store（特征存储，如 Feast、Tecton）统一在线和离线特征，避免训练-推理偏差（Training-Serving Skew）。Model Registry（模型注册表）管理模型版本、元数据和部署状态。\n\n扩展延伸：MLOps 成熟度模型：Level 0（手工）——Jupyter Notebook 训练，手动部署，无监控。Level 1（基础自动化）——Pipeline 自动化训练和部署，有基础监控。Level 2（CI/CD）——完整的 CI/CD for ML，自动触发重新训练。Level 3（自动化运营）——自动检测 Data/Model Drift 并触发重训练，A/B 测试框架。常见陷阱：1）训练-推理偏差——训练时的数据分布和服务时的数据分布不一致。2）模型退化——模型上线后随时间推移性能下降（概念漂移）。3）复现性问题——依赖环境不一致导致模型无法复现。最佳实践：所有环境容器化（Docker 统一训练和推理环境），训练脚本参数化（每次训练记录超参、数据版本、代码提交 hash），监控预测分布的统计特征变化。",
-    "hints": ["为什么 ML 系统比传统软件系统需要额外的版本控制维度", "训练-推理偏差（Training-Serving Skew）如何检测和预防"],
-    "tags": ["MLOps", "Pipeline", "机器学习工程"]
+    "hints": [
+      "为什么 ML 系统比传统软件系统需要额外的版本控制维度",
+      "训练-推理偏差（Training-Serving Skew）如何检测和预防"
+    ],
+    "tags": [
+      "MLOps",
+      "Pipeline",
+      "机器学习工程"
+    ]
   },
   {
     "category": "ai_infra",
@@ -342,8 +473,16 @@
     "title": "数据标注、清洗与增强",
     "content": "高质量训练数据对模型性能至关重要。请介绍数据标注的策略、数据清洗的常见方法以及数据增强技术。",
     "answer": "答案：数据标注需要策略性设计（标注规范、质量控制、标注工具），数据清洗处理缺失值、异常值和噪声，数据增强通过变换扩增训练数据规模。三者共同决定了训练数据质量。\n\n解析：1）数据标注——标注策略分类：内部标注（质量最高但成本高）、众包标注（Amazon Mechanical Turk、Appen，量大但质量参差不齐）、半自动标注（模型预标注 + 人工修正，效率和质量的平衡）。标注质量控制：将黄金标准数据（Golden Set）混入标注任务中检查标注一致性（Inter-Annotator Agreement, IAA），计算 Cohen's Kappa 或 Fleiss' Kappa。标注迭代策略：先小批量标注（100-200 条）→ 检查质量 → 更新标注规范 → 全量标注。2）数据清洗——常见问题：缺失值（填充均值/中位数或删除）、重复数据（去重，对 LLM 训练尤为重要——数据去重比例可达 30%）、异常值检测（用 Z-score、IQR 或 Isolation Forest）、格式不一致（日期、编码、单位统一）。3）数据增强——图像：旋转、翻转、裁剪、色彩抖动、CutMix/MixUp（混合两张图）。文本：回译（翻译成另一语言再翻译回来）、同义词替换、Back Translation、EDA（Easy Data Augmentation）。\n\n扩展延伸：LLM 数据策略的特殊考量：1）数据质量 vs 数据规模——对于 LLM 预训练，数据规模是首要的（Scaling Law 需要 ≈ 10T tokens）。但高质量数据的比例直接影响模型上限——Phi-3 证明了 小模型 + 高质量数据「Textbooks Are All You Need」可以匹敌大模型。2）数据去重——对 LLM 训练数据去重十分重要：文档级别去重（MinHash LSH）、句子级别去重（Exact Match）、模糊去重（SimHash 或 Embedding 相似度）。3）数据配比——预训练数据中各种来源的配比（网页、书籍、论文、代码）需要精细调整。代码数据比例对推理能力有显著影响。4）安全过滤——去除 PII（个人身份信息）、有毒内容、版权材料。",
-    "hints": ["预训练数据的去重为什么比传统 ML 数据去重更关键", "LLM 的数据配比（Data Mixture）如何确定"],
-    "tags": ["数据标注", "数据清洗", "数据增强", "数据质量"]
+    "hints": [
+      "预训练数据的去重为什么比传统 ML 数据去重更关键",
+      "LLM 的数据配比（Data Mixture）如何确定"
+    ],
+    "tags": [
+      "数据标注",
+      "数据清洗",
+      "数据增强",
+      "数据质量"
+    ]
   },
   {
     "category": "ai_infra",
@@ -352,8 +491,17 @@
     "title": "模型服务部署与推理优化",
     "content": "如何将训练好的模型部署到生产环境？模型推理优化的技术有哪些（TensorRT、vLLM、TGI）？",
     "answer": "答案：模型部署需要将训练好的模型转换为推理格式、部署到推理服务器、配置监控和自动伸缩。推理优化技术包括模型编译（TensorRT）、PagedAttention（vLLM）、Continuous Batching（TGI）等。\n\n解析：1）部署流程——模型导出（PyTorch → ONNX 或 TorchScript）、模型优化（量化、算子融合）、部署到推理服务器、配置 API 端点（REST/gRPC）和自动伸缩。2）TensorRT（NVIDIA）——将模型编译为优化的推理引擎：算子融合（将多个小算子合并为一个大算子减少 Kernel Launch 开销）、量化（FP16/INT8/INT4）、动态形状优化、内存复用。效果：推理延迟降低 2-5 倍，但模型必须用 TensorRT 支持的操作实现。3）vLLM——使用 PagedAttention 管理 KV Cache。传统推理中 KV Cache 是连续显存分配，导致显存碎片严重（利用率仅 20-40%）。PagedAttention 将 KV Cache 分页管理（类似操作系统虚拟内存），按需分配页面，显存利用率提升至 95%+，从而显著提高吞吐量（2-4x）。4）TGI（Text Generation Inference, HuggingFace）——支持 Continuous Batching：推理服务器不等待一个 batch 的所有序列都生成完再接收新请求，而是动态将完成生成的序列移出 batch 并加入新序列。\n\n扩展延伸：部署架构：1）单模型单服务——简单但资源利用率低。2）模型路由——一个推理端点路由到多个模型（如 LLM 选择器），根据请求特性路由到不同模型（大小、领域）。3）模型复制和负载均衡——水平扩展推理副本，用 Load Balancer 分发请求，基于 GPU 利用率自动伸缩。监控关键指标：首 token 延迟（TTFT，Time to First Token）、每个输出 token 延迟（TPOT，Time Per Output Token）、吞吐量（Tokens/s）、显存使用。延迟和吞吐量的权衡：增大 batch size 提高吞吐但增加每请求延迟；减少 batch size 降低延迟但降低吞吐。",
-    "hints": ["PagedAttention 是如何解决 KV Cache 显存碎片问题的", "为什么 TTFT（首 token 延迟）和 TPOT（后续 token 延迟）是 LLM 推理的关键指标"],
-    "tags": ["模型部署", "推理优化", "TensorRT", "vLLM", "TGI"]
+    "hints": [
+      "PagedAttention 是如何解决 KV Cache 显存碎片问题的",
+      "为什么 TTFT（首 token 延迟）和 TPOT（后续 token 延迟）是 LLM 推理的关键指标"
+    ],
+    "tags": [
+      "模型部署",
+      "推理优化",
+      "TensorRT",
+      "vLLM",
+      "TGI"
+    ]
   },
   {
     "category": "ai_infra",
@@ -362,8 +510,16 @@
     "title": "超参数调优：网格搜索到贝叶斯优化",
     "content": "请介绍超参数调优的主要方法。网格搜索（Grid Search）、随机搜索（Random Search）、贝叶斯优化（Bayesian Optimization）各有什么优缺点？",
     "answer": "答案：网格搜索系统性地遍历所有参数组合但计算成本随参数维度指数增长；随机搜索在参数空间中随机采样，效率更高且通常不差于网格搜索；贝叶斯优化通过代理模型（Gaussian Process 或 TPE）指导搜索方向，在少次迭代中找到最优参数。\n\n解析：1）网格搜索（Grid Search）——对每个超参数指定候选值列表，穷举所有组合。优点：简单、可并行化、结果可复现。缺点：维度灾难（10 个参数每个取 10 个值 → 100 亿次实验），且无法跳过不重要参数——等间距的网格在参数空间中效率很低。2）随机搜索（Random Search, Bergstra & Bengio, 2012）——在参数空间中随机采样指定数量的点。优点：比网格搜索效率更高（同等实验次数下能找到更好的参数），因为不需要密集采样不重要维度上的所有点。缺点：没有利用之前的实验结果做定向搜索，属于「盲目」搜索。3）贝叶斯优化——维护一个代理模型（通常用 Gaussian Process 或 TPE），基于已有实验结果构建参数空间到目标性能的概率模型，通过采集函数（Acquisition Function，如 Expected Improvement、Upper Confidence Bound）选择下一个最有希望的点。\n\n扩展延伸：超参数调优的实践技巧：1）学习率是几乎最重要的超参——建议优先调优。2）训练成本高时从粗到细（Coarse-to-Fine）——先用少量 epoch 大范围搜索，确定大致范围后再精调。3）Population Based Training（PBT, DeepMind）——在训练过程中动态调整超参数，Network 群体中表现差的 Network 会继承表现好的的超参配置并加入随机扰动。4）早停（Early Stopping）用于加速搜索——验证集指标不再提升时提前终止该次训练，节省计算资源。5）自动调参工具——Optuna（TPE + 剪枝）、Ray Tune（多种搜索策略 + 并行化）。",
-    "hints": ["为什么随机搜索在高维超参空间中通常优于网格搜索", "贝叶斯优化的采集函数（Acquisition Function）如何平衡探索和利用"],
-    "tags": ["超参数调优", "贝叶斯优化", "网格搜索", "AutoML"]
+    "hints": [
+      "为什么随机搜索在高维超参空间中通常优于网格搜索",
+      "贝叶斯优化的采集函数（Acquisition Function）如何平衡探索和利用"
+    ],
+    "tags": [
+      "超参数调优",
+      "贝叶斯优化",
+      "网格搜索",
+      "AutoML"
+    ]
   },
   {
     "category": "ai_infra",
@@ -372,7 +528,106 @@
     "title": "模型可解释性与可解释 AI（XAI）",
     "content": "为什么深度学习模型需要可解释性？有哪些主流的可解释性方法（LIME、SHAP、Grad-CAM）？它们在什么场景下适用？",
     "answer": "答案：模型可解释性对构建信任、调试模型、符合法规要求至关重要。主要方法包括：LIME（局部线性近似）、SHAP（博弈论 shapley value）、Grad-CAM（梯度加权类激活映射）。各有适用场景——LIME 适合文本和表格数据，SHAP 理论完备但计算成本高，Grad-CAM 适合视觉模型。\n\n解析：1）为什么需要可解释性——信任建立（用户不相信黑箱）、模型调试（发现模型学到了虚假特征——如「哈士奇 vs 雪橇犬」分类器实际是看背景是否有雪）、法规合规（GDPR 的「解释权」right to explanation）、公平性审计（检查模型是否存在偏见）。2）LIME（Local Interpretable Model-agnostic Explanations, 2016）——在预测点附近用可解释模型（线性模型或决策树）近似黑箱模型。先对输入做扰动生成样本 → 查询黑箱模型获得预测 → 用可解释模型拟合局部行为 → 从可解释模型中提取特征重要性。优点：模型无关、任何分类器可用。缺点：局部近似不稳定（不同扰动生成不同的解释）。3）SHAP（SHapley Additive exPlanations, 2017）——基于合作博弈论中的 Shapley Value，计算每个特征对所有可能的特征组合的边际贡献的平均值。\n\n扩展延伸：不同的解释类型：1）全局解释——模型整体学到什么规则？（如决策树、特征重要性排序）。2）局部解释——为什么某个特定的预测是这个结果（LIME、SHAP）。3）反事实解释——如果改变某个特征，预测会如何变化（「如果这个人的收入提高 2 万，就会被批准贷款」）。4）概念解释——模型学到了什么高级概念（TCAV, Testing with Concept Activation Vectors）。可解释性 vs 性能的权衡：通常更复杂的模型（深度学习）比简单模型（线性回归）性能好但可解释性差。在风险敏感场景（医疗、金融、法律），需要在性能和可解释性之间取舍，或使用本身可解释的模型（如 EBM, Explainable Boosting Machine）。注意：特征重要性不等同于因果关系——高重要性的特征可能是相关但不是因果。",
-    "hints": ["为什么 LIME 的解释可能不稳定（同一输入多次询问给出不同解释）", "SHAP 的 Shapley Value 计算为什么计算成本高"],
-    "tags": ["可解释性", "XAI", "SHAP", "LIME", "Grad-CAM"]
+    "hints": [
+      "为什么 LIME 的解释可能不稳定（同一输入多次询问给出不同解释）",
+      "SHAP 的 Shapley Value 计算为什么计算成本高"
+    ],
+    "tags": [
+      "可解释性",
+      "XAI",
+      "SHAP",
+      "LIME",
+      "Grad-CAM"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "深度学习框架选型：PyTorch vs TensorFlow",
+    "content": "PyTorch 和 TensorFlow 在设计哲学上有何本质区别？为什么 PyTorch 在研究界更受欢迎？TensorFlow 在什么场景下仍有优势？",
+    "answer": "答案：PyTorch 采用「即时执行」（Eager Execution）模式，定义即运行，调试直观。TensorFlow 2.x 引入 Keras 和 Eager Execution 后与 PyTorch 趋同，但历史包袱较重。PyTorch 的研究社区生态更活跃，TensorFlow 在工业部署（TF Serving/TFLite）仍有优势。\n\n解析：PyTorch 的优势——1）Eager Execution：张量操作立即执行，结果立即可见。可以用 Python 原生调试器（pdb）调试，print 张量值。2）动态计算图：每轮前向传播动态构建计算图，支持 if/for 等控制流天然嵌入。适合处理变长输入（NLP/语音）。3）研究社区：学术界压倒性使用 PyTorch，新论文的官方实现几乎都是 PyTorch。Hugging Face Transformers 优先支持 PyTorch。4）Pythonic：API 设计更符合 Python 习惯，学习曲线平缓。\n\n扩展延伸：TensorFlow 的优势——1）生产部署成熟：TF Serving（高性能模型服务）、TFLite（移动端/边缘端）、TF.js（浏览器端）、TPU 支持（Google Cloud 的 TPU 只有 TF/JAX 原生支持）。2）TFX（TensorFlow Extended）：完整的 ML 流水线平台（数据验证、特征工程、模型评估、部署）。3）量化工具：TFLite 的量化工具成熟（INT8 量化精度损失小）。4）JAX（Google 的新方向）：函数式纯变换（grad/jit/vmap/pmap），在 Google 内部和部分研究领域（强化学习、物理模拟）快速增长。PyTorch 2.0+ 引入 torch.compile 通过 TorchDynamo 将计算图编译为 CUDA 代码，性能大幅提升（追赶 TF 的静态图优化）。",
+    "hints": [
+      "动态计算图（PyTorch）vs 静态计算图（TF1.x）的核心差异——动态图每轮重建，静态图一次建好多次执行",
+      "PyTorch 2.0 的 torch.compile 如何将即时执行的灵活性和静态图的性能结合起来"
+    ],
+    "tags": [
+      "AI",
+      "PyTorch",
+      "TensorFlow",
+      "深度学习框架"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式训练策略",
+    "content": "分布式深度学习训练有哪些并行策略？数据并行（Data Parallelism）和模型并行（Model Parallelism）的区别？ZeRO（Zero Redundancy Optimizer）如何优化显存？",
+    "answer": "答案：数据并行：每个 GPU 保存完整的模型副本，数据分片训练，梯度同步（AllReduce）。模型并行：模型切分到多个 GPU 上，每个 GPU 处理一部分层。流水线并行（Pipeline Parallelism）是模型并行的一种——不同层在不同 GPU 上，数据在 GPU 间以 micro-batch 形式流动。\n\n解析：数据并行——1）同步训练：各 GPU 计算梯度后 AllReduce 聚合梯度，再同步更新参数。PS 架构（Parameter Server）或 Ring AllReduce 实现。2）异步训练：各 GPU 独立更新参数（不用等待），但有 staleness 问题（梯度滞后）。ZeRO——Microsoft 提出的显存优化方案，消除数据并行中的冗余存储。Stage 1：优化器状态分片（通常占显存大头），每个 GPU 只存一部分优化器状态。Stage 2：+ 梯度分片。Stage 3：+ 参数分片（每个 GPU 只存一部分模型参数，需要时才从其他 GPU 获取）。\n\n扩展延伸：其他策略——1）张量并行（Tensor Parallelism）：在单个操作内切分矩阵乘法（如 Megatron-LM 的列/行并行切分 Attention 层）。2）序列并行（Sequence Parallelism）：沿序列维度切分，处理超长序列（Ring Attention）。3）混合并行：组合多种策略。GPT-3 使用了数据并行 + 张量并行 + 流水线并行。3D 并行 = 数据并行 + 张量并行 + 流水线并行。ZeRO++：结合 ZeRO 和量化通信，进一步减少通信量。DeepSpeed（Microsoft）和 Megatron-LM（NVIDIA）是大规模分布式训练的主流框架。",
+    "hints": [
+      "ZeRO Stage 3 的参数分片如何工作——需要参数时从其他 GPU 拉取（AllGather），用完丢弃",
+      "Pipeline Parallelism 的 Bubble 问题——流水线启动和排空阶段的 GPU 空闲（通过 micro-batch 减少 Bubble 比率）"
+    ],
+    "tags": [
+      "AI",
+      "分布式训练",
+      "ZeRO",
+      "并行策略"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "模型量化（Quantization）",
+    "content": "什么是模型量化？FP16/BF16/INT8/INT4 量化的原理和差异？量化感知训练（QAT）和训练后量化（PTQ）的区别是什么？",
+    "answer": "答案：模型量化是将模型权重和激活值从高精度浮点（FP32）转换为低精度格式（FP16/BF16/INT8/INT4），以减少模型大小和推理延迟。FP16（16 位浮点，半精度）和 BF16（16 位脑浮点）是训练和推理中常用的量化格式；INT8/INT4 是整数量化，压缩率更高但精度损失更大。\n\n解析：量化格式——1）FP16：5bit 指数 + 10bit 尾数，动态范围较小（容易溢出）。2）BF16（Google Brain Float）：8bit 指数 + 7bit 尾数，与 FP32 动态范围相同（训练中更稳定）。NVIDIA H100/AMD MI300 原生支持 BF16。3）INT8：8bit 整数，模型大小减 75%，推理速度提升 2-4 倍。需要校准数据集确定缩放因子。4）INT4：4bit 整数，模型大小减 87.5%。GPTQ/AWQ 是主流的 INT4 量化算法。\n\n扩展延伸：量化方法——1）PTQ（Post-Training Quantization，训练后量化）：训练完成后进行量化。需要少量校准数据确定量化参数（缩放因子、零点）。优点：无需重新训练。缺点：大模型精度损失可能不可接受。2）QAT（Quantization-Aware Training，量化感知训练）：在训练中模拟量化操作（Fake Quantization），让模型适应量化误差。优点：精度损失更小。缺点：需要重新训练。应用场景——1）GPU 推理：FP16/BF16 量化（Tensor Cores 原生加速）。2）CPU 推理：INT8 量化（VNNI 指令加速）。3）移动端/边缘端：INT4 量化（减少模型大小）。LLM 量化工具：GPTQ（基于 Hessian 矩阵的权重量化）、AWQ（激活感知的权重量化）、GGUF（CPU 友好的量化格式，用于 llama.cpp）。",
+    "hints": [
+      "BF16 和 FP16 的区别——BF16 动态范围更大大（训练稳定），但精度比 FP16 低",
+      "GPTQ 为什么需要 Hessian 矩阵——通过二阶信息找到对输出影响最小的量化方案"
+    ],
+    "tags": [
+      "AI",
+      "量化",
+      "模型优化",
+      "推理"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型蒸馏（Knowledge Distillation）",
+    "content": "知识蒸馏（Knowledge Distillation）的原理是什么？软标签（Soft Labels）和温度参数（Temperature）的作用？蒸馏在 LLM 中如何应用？",
+    "answer": "答案：知识蒸馏是将一个大模型（Teacher）的知识转移到一个小模型（Student）的过程。Student 不仅学习 Teacher 的硬输出（最终预测类别），还学习 Teacher 的软输出（各类别的概率分布）。软标签中包含了 Teacher 的泛化知识（如「猫」和「虎」的相似性）。\n\n解析：蒸馏过程——1）训练 Teacher（通常是大型高性能模型）。2）用 Teacher 在训练数据上生成软标签。使用温度参数 T 软化 Softmax 输出（T > 1 时分布更平滑）。`q_i = exp(z_i / T) / sum(exp(z_j / T))`。3）Student 的目标函数 = 蒸馏损失（软标签的 KL 散度）+ 监督损失（硬标签的交叉熵）。温度 T 在训练时用高值（T=4-8 蒸馏类别关系），推理时 T=1。\n\n扩展延伸：LLM 中的蒸馏——1）生成式蒸馏：Student 学习 Teacher 的输出 token 概率分布（黑盒蒸馏）。Student 通过 Teacher 生成的文本微调（只有 Teacher 的输出 token，没有概率分布）。2）特征层蒸馏：Student 学习 Teacher 的中间层表示（白盒蒸馏，需要访问 Teacher 内部结构）。3）蒸馏 + 量化：先蒸馏（缩小模型）再量化（压缩位宽）的组合效果最好。常见蒸馏方案——DistilBERT（BERT 蒸馏为 40% 大小，保留 97% 性能）、Alpaca（LLaMA 蒸馏 GPT 的行为）、Phi（Small Language Models 使用合成数据蒸馏训练）。注意：蒸馏的前提是 Teacher 的性能显著优于 Student，否则不如直接训练 Student。",
+    "hints": [
+      "温度参数 T 为什么能在蒸馏中传递更丰富的知识——高温度让概率分布更平滑，显式类别间相似关系",
+      "黑盒蒸馏和白盒蒸馏的区别——黑盒只使用 Teacher 的输出，白盒使用 Teacher 的内部表示"
+    ],
+    "tags": [
+      "AI",
+      "蒸馏",
+      "模型压缩",
+      "LLM"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "GPU 显存管理与优化",
+    "content": "深度学习训练中 GPU 显存主要被哪些部分占用？如何优化显存使用？梯度检查点（Gradient Checkpointing）、混合精度训练（Mixed Precision）、卸载（Offloading）分别解决了什么？",
+    "answer": "答案：显存占用主要来自：模型参数（权重）+ 优化器状态（Adam 的动量+方差）+ 激活值（每一层的中间输出）+ 梯度。其中激活值在训练大模型时占显存最大（与 batch size 和序列长度成正比）。优化策略：混合精度训练（FP16/BF16 减少参数显存）、梯度检查点（用计算换显存、减少激活存储）、ZeRO（分片优化器状态）。\n\n解析：各策略的显存节省——1）混合精度训练（AMP）：模型参数和激活值使用 FP16/BF16 存储，显存减半。维护 FP32 的权重副用于梯度更新。GPU 的 Tensor Cores 对 FP16/BF16 有 8-16x 加速。（需要 Volta+ 架构）。2）梯度检查点（Activation Checkpointing）：不保存所有层的激活值（通常占用显存最大），只保存关键检查点的激活值。反向传播时从最近的检查点重新计算缺失的激活值。时间换空间：约增加 20% 训练时间，减少 50-70% 激活显存。3）CPU Offloading（卸载）：将优化器状态和参数暂时移出 GPU 到 CPU 内存。需要时再加载回 GPU。\n\n扩展延伸：其他技巧——1）torch.compile：PyTorch 2.0 编译优化，通过算子融合减少显存分配和 GPU Kernel 启动开销。2）Flash Attention：IO 感知的注意力算法，减少 HBM（高带宽内存）访问量，提升训练速度并减少显存。3）Sequence Parallelism（序列并行）：超长序列切分到多个 GPU。4）Recomputation：在反向传播中重算部分操作（非检查点方式）。工具——nvidia-smi 查看显存使用。PyTorch 的 torch.cuda.memory_summary() 详细分析显存分配。",
+    "hints": [
+      "梯度检查点为什么能节省显存——不保存激活值，反向传播时重算（时间换空间）",
+      "Flash Attention 为什么能同时提升训练速度和减少显存——减少显存读写（IO 感知）而非 FLOPs"
+    ],
+    "tags": [
+      "AI",
+      "GPU",
+      "显存",
+      "训练优化"
+    ]
   }
 ]

@@ -172,7 +172,11 @@
       "为什么去噪扩散模型的目标函数可以简化为噪声预测",
       "Classifier-Free Guidance（CFG）如何控制生成质量"
     ],
-    "tags": ["深度学习", "生成模型", "扩散模型"]
+    "tags": [
+      "深度学习",
+      "生成模型",
+      "扩散模型"
+    ]
   },
   {
     "category": "ai",
@@ -185,7 +189,10 @@
       "Chunk 大小对检索质量有什么影响",
       "Hybrid Search（向量+关键词）为什么比纯向量搜索好"
     ],
-    "tags": ["LLM", "RAG"]
+    "tags": [
+      "LLM",
+      "RAG"
+    ]
   },
   {
     "category": "ai",
@@ -198,7 +205,10 @@
       "Zero-shot CoT 为什么有效（加一句 let's think step by step）",
       "Prompt 越长推理质量一定越高吗"
     ],
-    "tags": ["LLM", "Prompt"]
+    "tags": [
+      "LLM",
+      "Prompt"
+    ]
   },
   {
     "category": "ai",
@@ -211,7 +221,10 @@
       "CLIP 的训练损失是什么（对比学习损失）",
       "为什么视觉编码器和 LLM 之间需要 Projection Layer"
     ],
-    "tags": ["多模态", "LLM"]
+    "tags": [
+      "多模态",
+      "LLM"
+    ]
   },
   {
     "category": "ai",
@@ -224,7 +237,10 @@
       "Temperature 参数在蒸馏中起到什么作用",
       "为什么软标签比硬标签包含更多信息"
     ],
-    "tags": ["模型压缩", "蒸馏"]
+    "tags": [
+      "模型压缩",
+      "蒸馏"
+    ]
   },
   {
     "category": "ai",
@@ -233,8 +249,15 @@
     "title": "GAN 生成对抗网络",
     "content": "请解释 GAN（生成对抗网络）的核心原理和训练难点。",
     "answer": "GAN 由生成器（Generator）和判别器（Discriminator）两个网络组成，通过对抗训练的方式共同提升。生成器试图生成逼真样本欺骗判别器，判别器试图区分真实样本和生成样本。\n\n解析：核心公式是 min_G max_D V(D,G) = E_{x~p_data}[log D(x)] + E_{z~p_z}[log(1-D(G(z)))]。训练过程：1）固定生成器，训练判别器区分真假。2）固定判别器，训练生成器生成更逼真的样本。3）交替进行直到纳什均衡。\n\n扩展延伸：训练难点：1）模式坍塌（Mode Collapse）——生成器只学会生成少数几种样本，失去多样性。解决方案：Mini-batch Discrimination、Unrolled GAN。2）训练不稳定——D 收敛太快或 G 梯度消失。解决方案：WGAN（Wasserstein 距离替代 JS 散度，用梯度裁剪保证 Lipschitz 约束）、LSGAN（最小二乘损失）、SNGAN（谱归一化）。3）评估困难——没有明确的指标衡量生成质量。常用指标：IS（Inception Score，衡量多样性和清晰度）、FID（Fréchet Inception Distance，更可靠，衡量真实分布和生成分布的距离）。4）GAN vs Diffusion：Diffusion 生成更稳定、质量更高（SOTA），但推理速度慢；GAN 生成快但训练不稳定。",
-    "hints": ["JS 散度在 GAN 训练中有什么缺陷导致梯度消失", "WGAN 的 Wasserstein 距离为什么能缓解训练不稳定"],
-    "tags": ["深度学习", "生成模型", "GAN"]
+    "hints": [
+      "JS 散度在 GAN 训练中有什么缺陷导致梯度消失",
+      "WGAN 的 Wasserstein 距离为什么能缓解训练不稳定"
+    ],
+    "tags": [
+      "深度学习",
+      "生成模型",
+      "GAN"
+    ]
   },
   {
     "category": "ai",
@@ -243,8 +266,16 @@
     "title": "Batch Normalization vs Layer Normalization",
     "content": "请比较 Batch Normalization 和 Layer Normalization 的区别及各自适用场景。",
     "answer": "BN 在 Batch 维度做归一化，LN 在特征维度做归一化。BN 依赖 Batch Size 且对序列长度敏感，LN 与 Batch Size 无关且适用于变长序列。\n\n解析：BN 计算每个特征通道在 batch 中的均值和方差，对小 batch 效果差（batch size < 16 时不稳定）。BN 在训练时维护全局移动平均，推理时使用固定统计量。BN 适合 CNN 等固定输入维度的网络。\n\nLN 对每个样本的所有特征计算均值和方差，不依赖 batch 维度，所以在 RNN/Transformer 中表现更好（同一 batch 内序列长度不同时 LN 仍然有效）。Transformer 中使用 LN 而不是 BN 的核心原因：位置编码 + 自适应序列长度。\n\n扩展延伸：其他归一化方法：1）Instance Normalization——对每个样本的每个通道独立归一化，风格迁移常用。2）Group Normalization——将通道分组归一化，batch size 极小时（如视频/3D 模型），LN 和 GN 的效果优于 BN。3）RMS Norm——简化版 LN（只归一化均方根，不减去均值），LLaMA 等现代 LLM 使用，计算更快。归一化的本质作用：解决内部协变量偏移（Internal Covariate Shift），让每层输入分布稳定，允许更大的学习率。",
-    "hints": ["Transformer 中为什么用 LayerNorm 而不是 BatchNorm", "BN 在训练和推理阶段的行为有什么不同"],
-    "tags": ["深度学习", "归一化", "BN", "LN"]
+    "hints": [
+      "Transformer 中为什么用 LayerNorm 而不是 BatchNorm",
+      "BN 在训练和推理阶段的行为有什么不同"
+    ],
+    "tags": [
+      "深度学习",
+      "归一化",
+      "BN",
+      "LN"
+    ]
   },
   {
     "category": "ai",
@@ -253,8 +284,15 @@
     "title": "文本生成的解码策略",
     "content": "请比较 LLM 文本生成中 Greedy Search、Beam Search 和 Sampling 的区别。",
     "answer": "Greedy Search 每步选最高概率 token（最确定但缺乏多样性）；Beam Search 维护 K 条候选路径（适合翻译/摘要等确定性任务）；Sampling 从概率分布中随机采样（适合创意生成）。\n\n解析：1）Greedy Search——每步选择 argmax，简单高效但容易陷入重复；一旦某步选错无法纠正。2）Beam Search——维护 K（beam size）条最优路径，最终选概率积最大的路径。K 越大越可能找到全局最优但计算开销和重复率也增加。适合机器翻译、文本摘要等输出确定性较高的任务。3）Sampling——从概率分布随机采样，temperature 参数控制分布的平滑度：T → 0 趋近 Greedy，T → ∞ 趋近均匀分布，T = 1 保持原始分布。Top-K Sampling：只从概率最高的 K 个 token 中采样。Top-P（Nucleus）Sampling：累积概率达到 P 的最小集合中采样。\n\n扩展延伸：实际部署的组合策略：1）Chat 场景——Top-P = 0.9 + Temperature = 0.7 + 重复惩罚（repetition_penalty）。2）翻译/摘要——Beam Search + 长度惩罚（length_penalty），K=4 或 5。3）代码生成——Temperature = 0.2（较确定），或 Top-P = 0.95 保留一定多样性。4）创意写作——Temperature > 1.0 + Top-P 让输出更有创意但可能逻辑不佳。重复问题：通过 repetition_penalty（对已生成 token 的概率做衰减）或 frequency_penalty（对高频 token 降权）缓解。",
-    "hints": ["Beam Search 在对话生成中为什么不如在翻译中效果好", "Temperature 参数对概率分布的影响"],
-    "tags": ["LLM", "解码", "生成策略"]
+    "hints": [
+      "Beam Search 在对话生成中为什么不如在翻译中效果好",
+      "Temperature 参数对概率分布的影响"
+    ],
+    "tags": [
+      "LLM",
+      "解码",
+      "生成策略"
+    ]
   },
   {
     "category": "ai",
@@ -263,8 +301,16 @@
     "title": "GPU vs TPU 硬件加速",
     "content": "请比较 GPU 和 TPU 在深度学习训练和推理中的优劣势。",
     "answer": "GPU 通用性强（CUDA 生态成熟），适用于各种模型和框架。TPU 专为 Google TensorFlow 设计（矩阵乘法加速器），在大规模 TPU 集群训练中性价比更高，但灵活性受限。\n\n解析：GPU 优势：1）CUDA 生态——PyTorch/TensorFlow/JAX 都深度支持。2）通用性——CNN/RNN/Transformer/GNN/扩散模型均可训练和推理。3）浮点精度——FP64/FP32/FP16/TF32/BF16/FP8 多种精度支持。4）显存——单卡可达 80GB（A100/H100）。\n\nTPU 优势：1）MXU（矩阵乘法单元）——专为大规模矩阵乘法优化，TPU v4 的算力达 275 TFLOPS（BF16）。2）互联带宽——TPU Pod 内通过高速互联（ICI，类似 NVLink）组成 2D 环面拓扑，2048 个 TPU 的超级计算机。3）BF16 原生支持——不需要 FP32 做中间计算。4）性价比——大规模训练时单 TFLOPS 成本低于 GPU。\n\n扩展延伸：选型建议：1）中小规模（1-8 卡）→ GPU（A100/H100），生态成熟。2）大规模分布式训练（256+ 卡）→ TPU Pod 或 GPU 集群（取决于预算和框架偏好）。3）推理部署 → GPU（T4/L4/A10G）更通用，TPU 推理需要 TensorFlow 或 JAX 模型转换。趋势：NVIDIA H100/B200 的 FP8 Transformer Engine + NVLink Switch 让 GPU 在大规模训练中的劣势缩小。关于训练加速的启示：硬件决定算力天花板，但算法优化（Flash Attention、ZeRO、量化训练）同样重要。",
-    "hints": ["TPU 的 MXU 和 GPU 的 Tensor Core 在矩阵乘法实现上的区别", "为什么 TPU 不适合做通用的科学计算"],
-    "tags": ["硬件", "GPU", "TPU", "训练"]
+    "hints": [
+      "TPU 的 MXU 和 GPU 的 Tensor Core 在矩阵乘法实现上的区别",
+      "为什么 TPU 不适合做通用的科学计算"
+    ],
+    "tags": [
+      "硬件",
+      "GPU",
+      "TPU",
+      "训练"
+    ]
   },
   {
     "category": "ai",
@@ -273,8 +319,16 @@
     "title": "词嵌入（Word Embedding）方法",
     "content": "请比较 Word2Vec、GloVe 和 FastText 三种词嵌入方法的原理和区别。",
     "answer": "Word2Vec 基于上下文预测（局部窗口），GloVe 基于全局共现矩阵分解，FastText 引入子词信息解决 OOV 问题。\n\n解析：1）Word2Vec（Mikolov, 2013）——CBOW：根据上下文词预测目标词。Skip-gram：根据目标词预测上下文词。Skip-gram 对低频词效果更好但训练更慢。负采样（Negative Sampling）是加速训练的关键技巧——每次只更新少量负样本而非整个词表。2）GloVe（Pennington, 2014）——利用全局词共现矩阵，将词向量学习转化为矩阵分解（共现概率比的拟合，目标是让词向量的点积等于共现概率的对数）。优势：全局统计信息捕捉更好。3）FastText（Bojanowski, 2016）——将每个词表示为字符 n-gram 向量的和，未登录词（OOV）也能通过子词组合得到向量。对形态丰富的语言（如中文、德文）效果更好。\n\n扩展延伸：静态词嵌入 vs 上下文词嵌入：Word2Vec/GloVe/FastText 生成的是静态向量（同义词在不同上下文中不变），BERT/ELMo 等预训练语言模型生成的是上下文向量（根据上下文动态变化）。2018 年后 NLP 主流已转向预训练语言模型（BERT/GPT），但静态词嵌入在某些场景仍然有用——文本分类的特征提取、计算速度要求极高的场景、资源受限环境。",
-    "hints": ["Word2Vec 的负采样解决了什么问题", "静态词嵌入和上下文词嵌入的区别是什么"],
-    "tags": ["NLP", "词嵌入", "Word2Vec", "GloVe"]
+    "hints": [
+      "Word2Vec 的负采样解决了什么问题",
+      "静态词嵌入和上下文词嵌入的区别是什么"
+    ],
+    "tags": [
+      "NLP",
+      "词嵌入",
+      "Word2Vec",
+      "GloVe"
+    ]
   },
   {
     "category": "ai",
@@ -283,8 +337,16 @@
     "title": "状态空间模型与 Mamba",
     "content": "请解释状态空间模型（SSM）在深度学习中是什么？Mamba 模型相比 Transformer 有什么优势和局限？",
     "answer": "答案：状态空间模型（SSM）源自控制理论，将序列建模为隐藏状态随时间演化的过程。Mamba 是结构化状态空间序列模型（S6），通过选择性扫描机制实现线性时间复杂度的序列建模，是 Transformer 的一种高效替代方案。\n\n解析：1）SSM 基础——将输入 u(t) 映射到输出 y(t)，中间通过隐藏状态 h(t) 传递：h'(t) = Ah(t) + Bu(t), y(t) = Ch(t) + Du(t)。在深度学习中，A/B/C/D 是可学习的参数矩阵。2）S4（Structured State Space Sequence Model）——将 A 矩阵初始化为 HiPPO 矩阵（能捕捉长距离依赖），通过结构化分解实现高效计算。优势：长序列上 O(n) 的计算复杂度（Transformer 是 O(n²)），且能捕捉长达 16K+ 的依赖。3）Mamba（S6）——S4 的改进，核心创新是「选择性机制」：让 SSM 的参数（A/B/C 矩阵中的 delta）依赖输入（input-dependent），使模型能选择性地关注或遗忘信息。解决了 SSM 在内容感知（content-aware reasoning）上的弱点。实现上使用硬件感知的并行扫描算法。\n\n扩展延伸：Mamba vs Transformer：优势——1）长序列推理时显存线性增长（Transformer 平方增长）。2）推理时不需要 KV Cache（历史信息通过隐状态传递），首 token 生成延迟不随上下文增长。局限——1）预训练生态不如 Transformer 成熟（没有 TensorFlow/JAX 的主流支持）。2）在需要「内容定位」的任务（如 MMLU 中的特定知识检索）中不如 Transformer。3）尚不支持多模态的标准化方案。趋势：Transformer 仍然统治大模型，但 Mamba 在超长序列（基因组、音频、时间序列）和边缘端部署场景中展现潜力。2025 年的纯 Mamba 大模型尚未超越同参数量的 Transformer，但 Mamba-Transformer 混合架构（如 Jamba）已被验证是有效的折中方案。",
-    "hints": ["Mamba 的「选择性机制」解决了 S4 的什么问题", "为什么 Mamba 推理不需要 KV Cache"],
-    "tags": ["SSM", "Mamba", "深度学习", "架构"]
+    "hints": [
+      "Mamba 的「选择性机制」解决了 S4 的什么问题",
+      "为什么 Mamba 推理不需要 KV Cache"
+    ],
+    "tags": [
+      "SSM",
+      "Mamba",
+      "深度学习",
+      "架构"
+    ]
   },
   {
     "category": "ai",
@@ -293,8 +355,16 @@
     "title": "对比学习（Contrastive Learning）",
     "content": "请解释对比学习的核心思想和主要算法（SimCLR、MoCo、CLIP）。为什么对比学习在多模态领域特别成功？",
     "answer": "答案：对比学习通过拉近相似样本（正样本对）、推远不相似样本（负样本对）来学习有意义的表征。核心是构造正负样本对和设计对比损失（NT-Xent 或 InfoNCE Loss）。\n\n解析：对比学习的基本流程：1）数据增强——同一张图做两种不同的数据增强（裁剪、翻转、颜色抖动）得到正样本对（x_i, x_j）。2）编码器——将增强后的图像映射到特征空间（ResNet/ViT）。3）投影头（Projection Head）——将特征映射到对比空间（MLP，训练后丢弃）。4）对比损失——最大化正样本对的相似度，最小化负样本对的相似度。SimCLR（2020, Google）：端到端训练，大 batch size（4096+）需要大量负样本。MoCo（Momentum Contrast，何恺明）：用动量编码器维护负样本队列，解耦 batch size 和负样本数量，训练更稳定。CLIP（2021, OpenAI）：图文对比学习——4 亿图文对，用 InfoNCE Loss 拉近匹配的图文对、推开不匹配的。\n\n扩展延伸：对比学习成功的关键：1）数据增强的选择至关重要——SimCLR 实验发现随机裁剪和色彩失真对正样本对构建最有效。2）负样本的数量和质量——MoCo 的队列机制证明更多负样本提升表征质量。3）CLIP 的多模态成功——自然语言监督提供了比人工标注更丰富的学习信号（对比 ImageNet 1K 类的硬标签，CLIP 的文本描述提供了无限类别的软标签）。下游应用：零样本分类（CLIP）、视觉特征预训练（自监督）、多模态检索、图文生成的基础编码器。对比学习已成为多模态学习的核心范式。",
-    "hints": ["对比学习为什么需要大量负样本", "CLIP 的图文对比学习与 SimCLR 的自监督对比学习有什么本质区别"],
-    "tags": ["对比学习", "Self-Supervised", "CLIP", "SimCLR"]
+    "hints": [
+      "对比学习为什么需要大量负样本",
+      "CLIP 的图文对比学习与 SimCLR 的自监督对比学习有什么本质区别"
+    ],
+    "tags": [
+      "对比学习",
+      "Self-Supervised",
+      "CLIP",
+      "SimCLR"
+    ]
   },
   {
     "category": "ai",
@@ -303,8 +373,15 @@
     "title": "模型量化：INT8、GPTQ、AWQ",
     "content": "请解释大模型量化的原理。INT8 量化、GPTQ、AWQ 各有什么不同？量化对模型性能有什么影响？",
     "answer": "答案：模型量化通过降低权重和激活值的精度（如 FP16 → INT8/INT4）来减少模型大小和加速推理。量化方法分为训练后量化（PTQ）和量化感知训练（QAT）。\n\n解析：1）量化原理——将 FP16 的数值范围映射到更小的整数范围（如 INT8 的 -128~127）。映射公式：q = round(r / s) + z，其中 r 是原始浮点数，s 是缩放因子（scale），z 是零点偏移（zero-point）。s = (rmax - rmin) / (qmax - qmin)。量化误差来源于舍入误差和截断误差（超出映射范围的数值被截断）。\n\n2）INT8 量化——最常见的量化精度，模型大小减半（FP16 的 50%），推理速度提升 1.5-2x（取决于硬件支持）。Weight-only 量化（只量化权重，激活用 FP16）精度损失小，适合大多数场景。Weight + Activation 量化更难（激活值分布变化大）。\n\n3）GPTQ（2023, Frantar et al.）——基于 OBD（Optimal Brain Damage）的权重量化方法。原理：逐层量化，利用 Hessian 矩阵信息寻找最优量化方案——每次量化一个权重后，调整其他未量化权重补偿量化误差。支持 INT4 和 INT3，FP16→INT4 下 LLM 的困惑度损失很小。\n\n4）AWQ（2024, MIT）——激活感知的权重量化。核心发现：权重的不同通道对精度的影响不均等——约 1% 的「显著权重通道」在保持模型性能中起关键作用。AWQ 将显著通道的 scale 因子做小幅度保护缩放（不直接保留为 FP16，而是降低量化误差），其他通道正常量化。INT4 下精度优于 GPTQ。\n\n扩展延伸：量化选型建议：1）INT8 Weight-only——几乎无精度损失的首选。2）INT4（GPTQ/AWQ）——需要在质量-速度-显存之间权衡时。3）GGUF/GGML（llama.cpp 生态）——CPU 推理的主流格式。4）量化感知训练（QAT）——对精度要求极高时在训练中模拟量化效果，精度最好但需要额外训练成本。趋势：硬件支持的精度在扩展（H100 的 FP8、Blackwell 的 FP4），未来量化到 INT2 甚至比特级。量化 + 蒸馏 + 剪枝三者组合可达到 10x+ 的模型压缩比。",
-    "hints": ["为什么 Activation 量化比 Weight 量化难得多", "GPTQ 和 AWQ 的核心区别是什么"],
-    "tags": ["模型压缩", "量化", "推理优化"]
+    "hints": [
+      "为什么 Activation 量化比 Weight 量化难得多",
+      "GPTQ 和 AWQ 的核心区别是什么"
+    ],
+    "tags": [
+      "模型压缩",
+      "量化",
+      "推理优化"
+    ]
   },
   {
     "category": "ai",
@@ -313,8 +390,16 @@
     "title": "迁移学习与预训练-微调范式",
     "content": "请解释迁移学习的核心思想。预训练-微调范式为什么是深度学习的革命性突破？",
     "answer": "答案：迁移学习的核心是将在一个任务上学习到的知识迁移到另一个相关任务上。预训练-微调范式先在大规模通用数据上预训练模型，再在特定任务的小规模数据上微调，显著降低了对标注数据的依赖。\n\n解析：1）迁移学习的核心假设——不同任务之间存在共享的底层特征/知识。早期迁移学习以特征提取为主（用预训练模型的中间层特征训练小模型），现在以微调为主（用预训练模型权重做初始化，在所有层上继续训练）。2）预训练-微调范式的发展：CV 领域——ImageNet 预训练的 ResNet 在分类→检测→分割等下游任务上微调成为 CV 标配。NLP 领域——BERT 在大规模语料上预训练（Masked Language Model + Next Sentence Prediction），在下游任务上微调（分类、NER、QA），推动了 NLP 的 BERT 时代。LLM 时代——GPT-3 证明 In-context Learning（不用微调，给几个示例即可），Claude/GPT-4 进一步证明 Scaling Law 下涌现能力。但特定任务上监督微调（SFT）仍然有效。\n\n扩展延伸：微调策略的演进：1）全量微调——更新所有参数，效果好但训练成本高。2）Adapter 微调——在 Transformer 层间插入小 Adapter 模块，只训练 Adapter。3）Prompt Tuning——固定模型，只训练软 prompt（可学习的 embedding）。4）LoRA 系列（LoRA、QLoRA、DoRA）——低秩适配方法，已成为主流。迁移学习的核心贡献：大幅降低了数据门槛——ImageNet 预训练让下游任务只需要几百张标注图片；BERT/GPT 预训练让 NLP 任务只需要几千条标注数据。没有迁移学习，今天的深度学习应用规模会小得多。预训练阶段的「训练-数据-算力」投入巨大，但微调阶段的成本相对可控。",
-    "hints": ["为什么预训练-微调范式比从头训练更高效", "Scaling Law 下预训练模型的涌现能力对迁移学习有什么影响"],
-    "tags": ["迁移学习", "预训练", "微调", "深度学习"]
+    "hints": [
+      "为什么预训练-微调范式比从头训练更高效",
+      "Scaling Law 下预训练模型的涌现能力对迁移学习有什么影响"
+    ],
+    "tags": [
+      "迁移学习",
+      "预训练",
+      "微调",
+      "深度学习"
+    ]
   },
   {
     "category": "ai",
@@ -323,8 +408,16 @@
     "title": "MoE（混合专家模型）架构",
     "content": "请解释 MoE（Mixture of Experts）架构的原理。为什么 MoE 能训练更大的模型但推理更高效？Switch Transformer 和 DeepSeekMoE 有什么创新？",
     "answer": "答案：MoE 将模型分解为多个专家子网络（Experts），每个输入只激活部分专家（通过门控网络 Router 选择 Top-K 专家），在不增加推理计算量的情况下大幅增加模型参数量。\n\n解析：1）MoE 原理——每一层 MoE 包含 N 个 Expert（每个 Expert 是一个 FFN）和一个 Router（门控网络）。Router 对输入 x 计算所有 Expert 的得分，选择得分最高的 Top-K 专家（通常 K=1 或 2），将输入的加权和作为输出。未选中的 Expert 不参与计算。2）优势——总参数量大（如 Mixtral 8×7B ≈ 47B 总参数），但每次推理只激活约 2 个专家（≈ 13B 活跃参数），所以推理速度和计算成本只相当于 13B 模型。允许训练更大规模的模型，而推理成本却远低于同等效果的密集模型。3）挑战——负载均衡（Expert 崩溃问题——Router 可能总是选择少数几个 Expert，其他 Expert 得不到训练）。解决方式：负载均衡损失（auxiliary load balancing loss）约束 Router 分配均匀。通信瓶颈——MoE 需要 All-to-All 通信做 Expert 分发，跨机训练时通信瓶颈显著。\n\n扩展延伸：业界 MoE 实践：1）GShard（Google, 2020）——首个大规模 MoE，将 Transformer 的 FFN 层替换为 MoE，Top-2。条件计算支持跨 TPU 分片。2）Switch Transformer（Google, 2021）——Top-1（只选一个 Expert），简化计算和通信。提出 Expert 容量（Expert Capacity）防止 Expert 过载。3）Mixtral 8×7B（Mistral, 2023）——开源 MoE 里程碑，总参 47B 活跃 13B，性能超越 LLaMA 2 70B。4）DeepSeekMoE（2024）——细粒度 Expert 分割（Fine-Grained Segmentation）+ 共享 Expert（Shared Expert）。将传统 MoE 的一个 Expert 拆为多个更小的 Expert，部分 Expert 作为共享 Expert 不被 Router 选择（所有输入共享），提高参数效率。DeepSeek-V2 的 MoE 架构显著降低 KV Cache。趋势：MoE 正在成为大模型的主流架构（GPT-4 也被广泛认为使用了 MoE），密集模型在大规模场景下逐渐被 MoE 替代。",
-    "hints": ["MoE 的 Expert 负载均衡问题如何解决", "DeepSeekMoE 的细粒度 Expert 分割和共享 Expert 对参数效率有什么提升"],
-    "tags": ["MoE", "架构", "大规模模型", "效率"]
+    "hints": [
+      "MoE 的 Expert 负载均衡问题如何解决",
+      "DeepSeekMoE 的细粒度 Expert 分割和共享 Expert 对参数效率有什么提升"
+    ],
+    "tags": [
+      "MoE",
+      "架构",
+      "大规模模型",
+      "效率"
+    ]
   },
   {
     "category": "ai",
@@ -333,8 +426,16 @@
     "title": "RLHF：基于人类反馈的强化学习",
     "content": "请解释 RLHF（Reinforcement Learning from Human Feedback）的原理和训练流程。和直接监督微调（SFT）相比有什么优势？RLHF 有哪些局限？",
     "answer": "答案：RLHF 通过人类偏好数据训练奖励模型，再用强化学习（PPO 算法）微调语言模型，使模型输出更符合人类偏好。相比 SFT，RLHF 能更好地对齐人类价值观，减少有害输出。主要局限在于训练复杂、奖励模型可能被利用。\n\n解析：RLHF 的三阶段流程：1）SFT（Supervised Fine-Tuning）——在高质量人工标注数据上对预训练模型做监督微调，让模型学会期望的输出格式和风格。这是 RLHF 的基础，没有好的 SFT 模型，RLHF 效果有限。2）奖励模型（Reward Model, RM）训练——收集人类比较数据（对同一 prompt 的多个模型输出做偏好排序，如 Elo 评分或 Pairwise Comparison），训练一个奖励模型来预测人类偏好。奖励模型通常与策略模型同规模或小一级。3）PPO（Proximal Policy Optimization）微调——使用强化学习算法 PPO 优化策略模型，目标是最大化奖励模型的得分，同时加入 KL 散度惩罚项防止模型偏离 SFT 模型太远（避免奖励黑客行为）。PPO 优势：相比 Policy Gradient 更稳定（信任区域约束，clipping 机制防止更新步长过大）。\n\n扩展延伸：RLHF 的挑战和变体：1）奖励黑客（Reward Hacking）——模型学会「欺骗」奖励模型而不是真正改进输出。例如，用更长的回答、更讨好的语气来提高分数。缓解方式：KL 散度约束、奖励模型的 Ensemble。2）偏好数据偏差——标注者的偏好未必代表所有用户群体。不同文化、不同背景的人对「好回答」的定义不同。DPO（Direct Preference Optimization, 2023）——无需显式训练奖励模型，直接在偏好数据上优化策略，简化了 RLHF 流程。被 Claude、Gemini 等广泛采用。3）Constitutional AI（Claude 的方法）——用 AI 自生成批评和修订数据代替人类标注，减少对人工标注的依赖。4）KTO（Kahneman-Tversky Optimization）——只需要「好/坏」标签而不是成对比较，更贴近现实场景。",
-    "hints": ["为什么 RLHF 需要 KL 散度惩罚来防止奖励黑客", "DPO 相比 PPO 的 RLHF 简化在哪里"],
-    "tags": ["RLHF", "强化学习", "对齐", "PPO"]
+    "hints": [
+      "为什么 RLHF 需要 KL 散度惩罚来防止奖励黑客",
+      "DPO 相比 PPO 的 RLHF 简化在哪里"
+    ],
+    "tags": [
+      "RLHF",
+      "强化学习",
+      "对齐",
+      "PPO"
+    ]
   },
   {
     "category": "ai",
@@ -343,8 +444,16 @@
     "title": "多模态模型：架构与训练",
     "content": "请介绍多模态大模型的主流架构。CLIP、Florence、GPT-4V 等模型是如何处理图像和文本的？图像编码和文本编码如何对齐？",
     "answer": "答案：多模态模型将视觉和文本信息映射到统一表示空间。CLIP 使用双塔结构（独立图像编码器+文本编码器）做对比学习对齐；Florence 使用统一视觉语言模型；GPT-4V 等多模态 LLM 将图像特征通过 Projection Layer 注入 LLM 的输入序列。\n\n解析：1）双塔架构（Dual-Encoder）——CLIP（2021, OpenAI）是代表作。图像编码器（ResNet/ViT）和文本编码器（Transformer）各自输出 embedding，通过对比学习（InfoNCE Loss）拉近匹配图文对的距离，推远不匹配图文对。好处：图像和文本可独立编码和检索。零样本分类能力：对 ImageNet 的零样本分类达到 ResNet50 水平。2）融合架构（Fusion Encoder）——Florence（Microsoft）用一个统一的视觉编码器（Swin Transformer）处理图像，然后用一个联合编码器融合视觉和语言信息。优势：跨模态理解更深入（VQA、Captioning 等任务表现更好）。3）多模态 LLM（GPT-4V、LLaVA、Qwen-VL）——使用预训练的视觉编码器（如 CLIP ViT）提取图像特征，通过 Projection Layer（通常是 MLP 或 Q-Former）将视觉特征映射到 LLM 的 embedding 空间，作为 prefix 或 interleaved 输入到 LLM 中。LLaVA 的架构最简单：CLIP ViT + Linear Projection + Vicuna LLM。\n\n扩展延伸：多模态训练的挑战：1）数据对齐——如何获得高质量的图像-文本对。LAION-5B 是最大的公开数据集，但噪声大。人工标注的 COCO、CC12M 质量好但规模小。2）模态对齐难度——图片是否包含复杂关系（空间关系、计数、属性绑定）时对齐困难。图像中的物体之间的位置关系（「左边的猫右边的狗」）对多模态模型是长期挑战。3）Resolution——高分辨率图像细节丰富但计算量大。低分辨率图像会丢失细节（小字、小物体）。解决方案：动态分辨率（切 patch 处理）、双编码器（低分辨率全局视图 + 高分辨率局部视图）。",
-    "hints": ["CLIP 双塔架构和 GPT-4V 融合架构各自的优缺点", "Projection Layer（如 Q-Former）的作用是什么"],
-    "tags": ["多模态", "CLIP", "视觉语言模型", "LLaVA"]
+    "hints": [
+      "CLIP 双塔架构和 GPT-4V 融合架构各自的优缺点",
+      "Projection Layer（如 Q-Former）的作用是什么"
+    ],
+    "tags": [
+      "多模态",
+      "CLIP",
+      "视觉语言模型",
+      "LLaVA"
+    ]
   },
   {
     "category": "ai",
@@ -353,8 +462,16 @@
     "title": "扩散模型：原理与应用",
     "content": "请解释扩散模型（Diffusion Model）的核心原理。DDPM 和 DDIM 有什么区别？扩散模型在图像生成之外的领域有哪些应用？",
     "answer": "答案：扩散模型通过向数据逐步添加噪声（前向过程）再学习逆向去噪（反向过程）来生成数据。DDPM 是基本的马尔可夫链扩散过程，DDIM 通过非马尔可夫过程实现更快的采样。应用已扩展到视频生成、音频合成、3D 生成、分子设计等领域。\n\n解析：1）核心原理——前向过程（Forward/Diffusion Process）：对原始图像 x₀ 逐步添加高斯噪声，经过 T 步后变成纯噪声 x_T（近似标准正态分布）。这个过程中 q(x_t|x_{t-1}) 是已知的（给定上一步，加噪后分布是高斯分布）。反向过程（Reverse/Denoising Process）：模型学习从噪声中逐步去噪恢复原始数据。神经网络（通常用 UNet 或 Transformer）预测每一步的噪声 ε_θ(x_t, t)，然后用预测的噪声减去当前数据得到 x_{t-1}。训练目标：最小化预测噪声和实际添加噪声之间的 MSE。2）DDPM vs DDIM——DDPM（Denoising Diffusion Probabilistic Models）：标准扩散过程，生成时需完整 T 步（通常 1000 步），生成质量高但速度慢。DDIM（Denoising Diffusion Implicit Models）：通过非马尔可夫过程允许跳步采样（如从 1000 步减少到 50 步），生成速度提升 20 倍，质量轻微下降。DDIM 的采样过程是确定性的（给定初始噪声，生成结果固定）。3）条件生成——通过 Classifier Guidance（需要额外分类器引导）或 Classifier-Free Guidance（训练时随机丢弃条件，推理时用条件和非条件预测的差值引导），控制生成结果满足特定条件（如文本描述「一只蓝色的猫」）。\n\n扩展延伸：扩散模型的应用拓展：1）文本到图像（Text-to-Image）——Stable Diffusion 将扩散过程在 Latent Space 中进行（Latent Diffusion Model），大幅降低计算量，使消费级 GPU 也能运行。2）视频生成——Sora（OpenAI）将扩散模型应用于视频生成，在时空 patch 上进行扩散。3）音频——AudioLDM 将扩散模型应用于文本到音频/音乐生成。4）3D 生成——Point-E、DreamFusion 用扩散模型生成 3D 模型。5）分子设计——扩散模型生成满足特定化学性质的分子结构。趋势：流匹配（Flow Matching）和一致性模型（Consistency Models）正在挑战扩散模型的统治地位——流匹配训练更稳定，一致性模型实现一步生成。",
-    "hints": ["为什么 DDIM 能用更少的采样步骤达到近似 DDPM 的质量", "Stable Diffusion 的 Latent Diffusion 如何降低计算量"],
-    "tags": ["扩散模型", "DDPM", "DDIM", "生成模型"]
+    "hints": [
+      "为什么 DDIM 能用更少的采样步骤达到近似 DDPM 的质量",
+      "Stable Diffusion 的 Latent Diffusion 如何降低计算量"
+    ],
+    "tags": [
+      "扩散模型",
+      "DDPM",
+      "DDIM",
+      "生成模型"
+    ]
   },
   {
     "category": "ai",
@@ -363,8 +480,15 @@
     "title": "注意力机制：从 Soft Attention 到 Flash Attention",
     "content": "请介绍注意力机制（Attention Mechanism）的演进。从原始的 Soft Attention 到 Self-Attention、Multi-Head Attention，再到 Flash Attention，每一步解决了什么问题？",
     "answer": "答案：注意力机制让模型在处理序列数据时动态聚焦于重要部分。演进路线：Soft Attention（机器翻译对齐）→ Self-Attention（Transformer 核心）→ Multi-Head Attention（多视角表示）→ Flash Attention（IO 感知的高效实现）。\n\n解析：1）Soft Attention（Bahdanau Attention, 2014）——在 Encoder-Decoder 框架中，Decoder 每一步从 Encoder 的所有隐状态中计算加权和作为上下文向量。权重由对齐模型（alignment model）计算当前 Decoder 隐状态与每个 Encoder 隐状态的相似度后 softmax 得到。解决了原始 Seq2Seq 只能依赖固定长度上下文向量的瓶颈。复杂度 O(Td)（T=序列长度，d=维度）。2）Self-Attention（Vaswani et al., 2017, 「Attention Is All You Need」）——Query、Key、Value 都来自同一个序列。计算 QK^T 得到注意力分数矩阵，softmax 后与 V 加权求和。复杂度 O(T²d)。优势：每个位置都能直接关注到任意其他位置（解决了 RNN 的长距离依赖问题），可高度并行化。3）Multi-Head Attention——将 Q、K、V 投影到 h 个不同的子空间（h 个头），在每个头上独立做注意力计算，然后拼接结果再投影回原始维度。每个头可以关注不同类型的关系（语法关系、语义关系、位置关系）。4）Flash Attention（2022, Dao et al.）——核心洞察：注意力计算慢的原因是对 HBM 的频繁读写（O(T²) 的读写量）。Flash Attention 通过 tiling（分块计算）和 recomputation（重计算）技术，利用 SRAM 存储中间结果，将 HBM 读写量从 O(T²) 降低到 O(T²d⁻¹)（近似线性）。\n\n扩展延伸：注意力机制的进一步演进：1）Sparse Attention——降低 QK 计算范围（如局部窗口注意力、全局稀疏注意力）。代表：Longformer、BigBird。2）Linear Attention——用核方法（kernel trick）将 O(T²) 复杂度降低到 O(T)。代表：Performer（FAVOR+）、Linear Transformer。3）Sliding Window Attention——每个 token 只关注固定窗口内的邻居，Mistral 等模型使用。4）Grouped Query Attention（GQA）——在 Multi-Query Attention（MQA, 所有 Query 共用一个 Key/Value 头）和标准 MHA 之间折中，减少 KV Cache 大小，LLaMA 2/3 使用。5）Multi-head Latent Attention（MLA, DeepSeek-V2）——通过低秩压缩减少 KV Cache，DeepSeek-V2/V3 使用。",
-    "hints": ["Flash Attention 通过什么思路减少了 HBM 访问", "GQA 是如何平衡推理速度和质量的"],
-    "tags": ["注意力", "Transformer", "Flash Attention"]
+    "hints": [
+      "Flash Attention 通过什么思路减少了 HBM 访问",
+      "GQA 是如何平衡推理速度和质量的"
+    ],
+    "tags": [
+      "注意力",
+      "Transformer",
+      "Flash Attention"
+    ]
   },
   {
     "category": "ai",
@@ -373,7 +497,105 @@
     "title": "知识蒸馏：原理与方法",
     "content": "请解释知识蒸馏（Knowledge Distillation）的原理。什么是 Soft Label 蒸馏？什么是 Feature-based 蒸馏？蒸馏在大模型场景下有什么特殊挑战？",
     "answer": "答案：知识蒸馏用大模型（Teacher）的知识训练小模型（Student）。Soft Label 蒸馏让学生模仿 Teacher 的软概率输出，Feature-based 蒸馏让学生模仿 Teacher 的中间层特征。大模型蒸馏的挑战在于 Teacher-Student 能力差距过大和蒸馏数据的来源与质量。\n\n解析：1）知识蒸馏基本原理（Hinton, 2015）——Teacher 模型（通常是大模型）在训练数据上生成软标签（Soft Label，即各类别的概率分布，通过温度参数 T 软化：T 越高分布越平滑），Student 模型同时学习硬标签（ground truth）和软标签（Teacher 的知识）。蒸馏损失 = α * 交叉熵（Student 输出 vs 软标签）+ (1-α) * 交叉熵（Student 输出 vs 硬标签）。温度 T 和权重 α 是蒸馏的超参数。为什么软标签有效：软标签包含了类别间的相似性信息（例如一张猫的图片，Teacher 预测「猫」90%，「狗」7%，「老虎」3%——这告诉了 Student 猫和狗比猫和汽车更相似）。2）Feature-based 蒸馏——不仅模仿 Teacher 的输出，还让 Student 的中间层特征图匹配 Teacher 对应的中间层特征。常用于视觉模型（FitNet 方法）和检测模型。需要设计特征对齐的映射函数（因为 Teacher 和 Student 的维度可能不同）。3）Online Distillation——Teacher 和 Student 同时训练。适用于没有预训练好的 Teacher 的场景。\n\n扩展延伸：大模型时代的知识蒸馏：1）数据挑战——Teacher 需要高质量蒸馏数据，研究表明 Teacher 生成的合成数据比原始训练数据效果更好。数据质量和多样性直接影响 Student 的性能。2）能力差距——如果 Teacher 和 Student 的容量差距太大（如 70B → 1.5B），蒸馏效果有限。缓解方式：渐进式蒸馏（Intermediate-Task Distillation + 多阶段蒸馏）。3）流行方法：DistilBERT——预训练阶段蒸馏，保留 BERT 97% 性能但体积减半。TinyLLaMA——在 LLaMA 2 的基础上用 QLoRA 蒸馏。4）蒸馏 vs 量化 vs 剪枝——三种模型压缩技术的比较：蒸馏改变模型权重/结构（需要重新训练），量化降低权重精度（不需训练但可能损失精度），剪枝移除冗余参数。三者可以结合使用。",
-    "hints": ["为什么 Soft Label 比 Hard Label 包含更多信息", "大模型蒸馏中 Teacher 和 Student 能力差距太大会有什么问题"],
-    "tags": ["知识蒸馏", "模型压缩", "Soft Label", "Student-Teaacher"]
+    "hints": [
+      "为什么 Soft Label 比 Hard Label 包含更多信息",
+      "大模型蒸馏中 Teacher 和 Student 能力差距太大会有什么问题"
+    ],
+    "tags": [
+      "知识蒸馏",
+      "模型压缩",
+      "Soft Label",
+      "Student-Teaacher"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "对比学习（Contrastive Learning）",
+    "content": "对比学习的核心思想是什么？SimCLR、MoCo、CLIP 等经典对比学习方法的区别？对比学习中的正样本对和负样本对如何构建？",
+    "answer": "答案：对比学习的核心思想是「拉近相似样本（正对）的距离，推远不相似样本（负对）的距离」。通过对比损失（Contrastive Loss/InfoNCE Loss）学习到具有判别力的特征表示。在无监督/自监督学习中效果显著。\n\n解析：经典方法——1）SimCLR（Google）：同一图像做两次随机增强（裁剪/翻转/颜色变化等）构成正对，Batch 内其他图像为负对。使用 NT-Xent Loss（归一化温度标度交叉熵损失）。关键：需要大 Batch Size（4096+）提供足够多的负样本。2）MoCo（FAIR）：提出动量对比——维护一个动量编码器（Momentum Encoder）和动态队列（Queue）存储负样本。Queue 将负样本数量与 Batch Size 解耦，可以使用更大的负样本库。3）CLIP（OpenAI）：图文对比学习——图像和对应的文本描述作为正对，Batch 内其他图文对为负对。训练后 CLIP 可以实现 Zero-Shot 图像分类（用文本描述匹配图像）。\n\n扩展延伸：对比损失——InfoNCE Loss 公式：L = -log(exp(sim(q,k+)/tau) / sum(exp(sim(q,ki)/tau)))。物理含义：让正对相似度最大化的同时，让所有负对相似度最小化。温度参数 tau 控制对难负样本的关注程度。应用——1）Sentence-BERT：使用对比学习优化句子嵌入。2）DINO（自监督视觉 Transformer）：不需要负样本，通过自蒸馏+对比实现。3）推荐系统：用户行为序列作为正对构建用户表征。",
+    "hints": [
+      "SimCLR 需要大 Batch Size 的原因——Batch 内的负样本数量直接影响对比学习的效果",
+      "MoCo 的动态队列如何将负样本数量与 Batch Size 解耦——历史编码的样本也可作为负样本"
+    ],
+    "tags": [
+      "AI",
+      "对比学习",
+      "SimCLR",
+      "CLIP"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "生成对抗网络（GAN）",
+    "content": "GAN（Generative Adversarial Network）的原理是什么？生成器和判别器如何对抗训练？GAN 训练中的常见问题（模式崩塌/训练不稳定）如何解决？",
+    "answer": "答案：GAN 由生成器（Generator）和判别器（Discriminator）组成。生成器试图生成以假乱真的数据欺骗判别器，判别器试图区分真实数据和生成数据。两者交替训练，最终生成器学会生成逼真的数据。\n\n解析：训练过程——1）生成器 G：输入随机噪声 z → 输出假数据 G(z)。目标：最大化判别器误判概率（让 D(G(z)) → 1）。2）判别器 D：输入真实数据 x 和假数据 G(z) → 输出真/假概率。目标：正确区分真假。3）损失函数：min_G max_D V(D,G) = E[log D(x)] + E[log(1-D(G(z)))]。交替优化：先训练 D 区分真假，再训练 G 欺骗 D。\n\n扩展延伸：常见问题——1）模式崩塌（Mode Collapse）：生成器只学会了生成少数几种样本。原因：生成器找到了欺骗当前判别器的「捷径」。解决：Mini-batch Discrimination（判别器看整个 Batch 的多样性）、Unrolled GAN（展开 G 的更新步骤再更新 D）。2）训练不稳定：G 和 D 的平衡很难维持。解决：WGAN（Wasserstein GAN）用 Earth Mover 距离替代 JS 散度，训练更稳定。WGAN-GP（改进版加入梯度惩罚）。3）无法收敛：G 和 D 在互相追赶中永远达不到纳什均衡。改进版本——DCGAN（卷积 GAN）、StyleGAN（风格控制）、CycleGAN（图像翻译）、BigGAN（大规模 GAN）。",
+    "hints": [
+      "GAN 的模式崩塌为什么是生成器取巧的结果——生成器只学少数样本类型就能骗过判别器",
+      "WGAN 为什么比原始 GAN 训练更稳定——Wasserstein 距离在分布不重叠时仍能提供有意义的梯度"
+    ],
+    "tags": [
+      "AI",
+      "GAN",
+      "生成模型",
+      "对抗训练"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "自监督学习（Self-Supervised Learning）",
+    "content": "什么是自监督学习？自监督学习和监督学习/无监督学习的关系是什么？预文本任务（Pretext Task）和下游任务（Downstream Task）如何配合？",
+    "answer": "答案：自监督学习是一种不需要人工标注的表示学习方法——设计预文本任务（Pretext Task）从数据自身生成监督信号，学习到通用的特征表示后再迁移到下游任务。自监督学习介于监督学习（需要标注）和无监督学习（无标签）之间——它利用数据自身结构生成伪标签。\n\n解析：三大流派——1）生成式（Generative）：通过重建输入来学习表示。代表：MAE（Masked Autoencoder，遮盖图像块后重建）、BERT（遮盖词预测）、BEiT（图像块预测）。2）对比式（Contrastive）：通过拉近相似样本推远不相似样本来学习表示。代表：SimCLR、MoCo、DINO。3）联合嵌入（Joint Embedding）：两个视角的图像通过不同增强方式后映射到相近的嵌入空间。BYOL、SimSiam 不需要负样本。\n\n扩展延伸：预文本任务——1）图像领域：图像修复（Inpainting）、旋转预测（Rotation Prediction）、拼图拼回（Jigsaw Puzzle）、颜色化（Colorization）。2）NLP 领域：下一句预测（NSP）、词序恢复（Sentence Ordering）、替换词检测（RTD）。下游任务——预训练后在下游任务上微调（Fine-tuning）或线性探测（Linear Probing）。自监督预训练的目标是学到可迁移的特征，大幅减少下游任务所需的标注数据。CLIP 的对齐对比学习可以实现 Zero-Shot 迁移。",
+    "hints": [
+      "MAE 的遮盖重建为什么效果这么好——高遮盖率（75%）迫使模型学出全局语义而非局部修补",
+      "BYOL 没有负样本为什么不会崩溃——预测器（Predictor）阻止了表示坍塌"
+    ],
+    "tags": [
+      "AI",
+      "自监督学习",
+      "SSL",
+      "预训练"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "少样本学习（Few-Shot Learning）",
+    "content": "什么是少样本学习（Few-Shot Learning）？Zero-Shot、One-Shot、Few-Shot 的区别是什么？元学习（Meta-Learning）如何帮助少样本学习？",
+    "answer": "答案：少样本学习让模型在极少量标注样本上快速适应新任务。Zero-Shot（零样本，无标注样本，靠语义描述识别新类别）、One-Shot（每类 1 个样本）、Few-Shot（每类 2-5 个样本）。LLM 的 In-Context Learning 是少样本学习的典型体现——在 Prompt 中给少量示例即可完成任务。\n\n解析：方法分类——1）基于微调：在预训练模型的基础上，用小样本数据微调所有层或部分层。风险：样本太少容易过拟合。需要正则化和低学习率。2）基于度量学习（Metric Learning）：学习一个嵌入空间，新样本根据与支持集（Support Set）样本的相似度分类。代表：Siamese Network（孪生网络）、Prototypical Network（类原型网络——每个类别的原型是支持集样本嵌入的平均值）。3）基于元学习（Meta-Learning / Learning to Learn）：在大量相似的 few-shot 任务上训练模型，让模型学会「快速适应新任务」。\n\n扩展延伸：MAML（Model-Agnostic Meta-Learning）——1）核心思想：学习一个「好的初始化参数」，使得在新任务上只需少量梯度更新就能达到好效果。2）训练过程：外循环（跨任务训练）→ 内循环（每个任务的少量梯度更新）→ 评估内循环后的模型表现 → 反向传播到初始参数。3）MAML 不依赖特定模型结构（Model-Agnostic），可用于任何可微模型。应用——1）医疗图像：罕见病图像样本少，少样本学习可以帮助诊断。2）用户个性化：每个用户的数据少但需要快速适配（推荐/搜索）。3）新语言适应：低资源语言的 NLP 任务。",
+    "hints": [
+      "Prototypical Network 的类原型是如何计算的——支持集样本嵌入的均值",
+      "MAML 学习「好的初始化参数」和迁移学习预训练的区别——MAML 专门为快速适应优化"
+    ],
+    "tags": [
+      "AI",
+      "少样本学习",
+      "元学习",
+      "MAML"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "迁移学习（Transfer Learning）",
+    "content": "什么是迁移学习？预训练-微调（Pretrain-Finetune）范式的原理是什么？什么情况下迁移学习有效，什么情况下会出现负迁移（Negative Transfer）？",
+    "answer": "答案：迁移学习将一个任务上学到的知识应用到另一个相关任务上。预训练-微调是最常用的迁移学习范式：先在大型通用数据集上预训练（学习通用特征），再在目标任务的小数据集上微调（适配具体任务）。\n\n解析：迁移策略——1）特征提取器（Feature Extractor）：冻结预训练模型的参数（作为固定的特征提取器），只训练新加的分类层。适用：目标任务数据量极少（<100 张图）、与预训练数据分布接近。2）全模型微调（Fine-Tuning）：所有层都参与训练，使用较小的学习率。适用：目标任务有足够的标注数据（1000+）、需要适配特定的数据分布。3）逐层解冻（Progressive Unfreezing）：先解冻并训练最后几层，逐步向前解冻。适用：平衡过拟合风险和模型适配能力。\n\n扩展延伸：负迁移——当源任务和目标任务差异太大时，预训练的知识反而损害目标任务的表现。原因：1）源和目标的数据分布差异过大（如自然图像 → X 光片，底层特征差异大）。2）源任务中学到的特征与目标任务无关。3）微调方式不当（学习率太大破坏了预训练的特征）。缓解负迁移的方法：1）选择与目标任务更接近的预训练模型（ImageNet → 医学图像不如用医学图像预训练的模型）。2）Layer-wise 学习率衰减：底层（通用特征）用更小的学习率，高层（任务特定特征）用更大的学习率。3）领域自适应（Domain Adaptation）：减少源域和目标域分布差异的迁移方法。",
+    "hints": [
+      "为什么微调时学习率要比从头训练小很多——预训练模型已经有好的特征，太大的学习率会破坏它",
+      "逐层解冻为什么能降低过拟合风险——底层保留通用特征，高层适配特定任务"
+    ],
+    "tags": [
+      "AI",
+      "迁移学习",
+      "微调",
+      "预训练"
+    ]
   }
 ]

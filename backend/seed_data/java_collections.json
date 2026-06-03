@@ -575,5 +575,111 @@
       "ConcurrentHashMap",
       "并发"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HashMap 的遍历方式",
+    "content": "HashMap 有哪些遍历方式？效率从高到低如何排序？为什么推荐使用 entrySet 遍历？遍历时修改集合会有什么问题？",
+    "answer": "答案：四种遍历方式——1）entrySet 迭代器遍历（最高效，同时获取 key 和 value）。2）keySet + get（遍历 key 再 get value，效率低——需要额外 get 操作）。3）forEach (BiConsumer)（Java 8 Lambda，底层使用 entrySet 迭代器）。4）values() 遍历（只遍历 value）。效率排名：entrySet ≈ forEach > keySet > values。\n\n解析：entrySet 最推荐的原因——1）entrySet 的迭代器直接返回 Map.Entry 对象，同时包含 key 和 value，一次迭代即可获取两者。2）keySet 遍历每次需要额外调用 get(key)——get 操作有 O(1) 复杂度但遍历 n 个元素多出了 n 次 hash 计算和链表/红黑树查找。3）forEach（BiConsumer）在 Java 8 的 HashMap 中实现为 `forEach` 方法，内部封装了 entrySet 遍历，使用 Lambda 表达式更简洁。\n\n扩展延伸：遍历时的修改——1）使用迭代器遍历时，调用 HashMap.put/remove 会触发快速失败（ConcurrentModificationException）。必须使用 iterator.remove() 方法安全删除。2）使用 forEach (BiConsumer) 时同样不能修改集合（内部会检查 modCount）。3）Lambda 中使用 ConcurrentHashMap 的 forEach 可以安全修改（因为其迭代器是弱一致性的）。4）Stream API：`map.entrySet().stream()` 可以配合 filter/collect 使用。",
+    "hints": [
+      "entrySet 同时返回 key 和 value（一次迭代），keySet 需要额外 get（多出 n 次 hash 查找）",
+      "遍历时修改集合必须使用 iterator.remove()——直接调用 HashMap.put/remove 会抛 ConcurrentModificationException"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "HashMap",
+      "遍历"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ConcurrentHashMap 的 size() 方法",
+    "content": "ConcurrentHashMap 的 size() 方法在 JDK 7 和 JDK 8 中的实现有何不同？为什么 ConcurrentHashMap 不维护一个全局的 size 变量？JDK 8 中 size() 的计数机制？",
+    "answer": "答案：JDK 7：通过遍历 segments 累加每个 segment 的 count（两次对比无修改则返回，否则加锁后累加）。JDK 8：使用 baseCount + CounterCell 数组实现近似计数。size() 返回 `sumCount()`——baseCount 加上所有 CounterCell 的 value 之和。不维护全局 size 变量是为了避免每次写操作竞争同一个计数器。\n\n解析：JDK 8 计数原理——1）baseCount：没有竞争时的基础计数器。每次 put/remove 时通过 CAS 更新 baseCount。2）CounterCell：当 baseCount 的 CAS 竞争激烈时，创建 CounterCell 数组（每个线程映射到不同的 cell）。每个线程只 CAS 更新自己对应的 cell，减少竞争。3）sumCount()：返回 baseCount + sum(counterCells)。由于没有锁，sumCount 是「近似值」。\n\n扩展延伸：为什么是近似值——1）ConcurrentHashMap 的 size() 返回的是一个近似值（不是精确值）。高并发下正在进行的操作可能还未加到计数器中。2）JDK 7 中 size() 可能在两次遍历之间发生变化（无锁的两阶段遍历有可能获得不一致的 snapshot）。3）实际场景中 size() 的精确性不重要（大多数时候只需要判断 map 是否为空或大致大小）。4）mappingCount() 方法返回 long 类型（比 size() 的 int 更适用于大集合）。size() 用于 isEmpty() 判断和负载均衡场景（分片策略）。核心设计思想——高并发场景下「近似正确的计数」比「精确但阻塞的计数」更有价值。",
+    "hints": [
+      "JDK 8 的 size() 是近似值——没有全局锁，正在执行的操作可能尚未计入总数",
+      "CounterCell 减少竞争——多线程各写各的 cell，不比所有线程争同一个 baseCount"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "ConcurrentHashMap",
+      "并发"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "HashMap 键的 hashCode 和 equals",
+    "content": "如果将一个自定义对象作为 HashMap 的键，以下哪项描述是正确的？",
+    "options": [
+      "A) 只要重写 equals() 方法即可保证 HashMap 正确工作",
+      "B) HashMap 先通过 equals() 判断键是否相同，再通过 hashCode() 定位桶",
+      "C) hashCode() 相同时，HashMap 认为两个 key 一定相等",
+      "D) HashMap 先通过 hashCode() 定位 bucket，再通过 equals() 判断 key 是否相等"
+    ],
+    "answer": "答案：D) HashMap 先通过 hashCode() 定位 bucket，再通过 equals() 判断 key 是否相等\n\n解析：HashMap 的 put 和 get 流程——1）计算 key 的 hashCode()，通过扰动函数（高 16 位异或低 16 位）后计算 bucket 索引。2）如果该 bucket 为空，直接插入。3）如果 bucket 非空，遍历链表或红黑树，使用 equals() 判断每个节点的 key 是否与插入的 key 相等。如果找到相等的 key，替换 value。如果不相等，插入到链表尾部或红黑树。\n\n扩展延伸：正确实现——1）重写 equals() 时必须重写 hashCode()。保证：如果两个对象 equals() 为 true，则 hashCode() 必须相同。如果两个对象 hashCode() 相同，equals() 不一定为 true（哈希冲突）。2）HashMap 和 HashSet 依赖 hashCode() 和 equals() 的契约一致性。不一致时可能导致 key 无法被正确查找（put 到某个 bucket 后 hashCode 变化 → get 时定位到不同的 bucket → 找不到）。3）最佳实践：使用不可变对象作为 HashMap 的 key（如 String/Integer/Long）。如果使用可变对象作为 key 并修改了 hashCode() 相关的字段，会导致内存泄漏（无法通过 key 找到原始 entry）。",
+    "hints": [
+      "hashCode 定位 bucket（桶），equals 在 bucket 中查找具体 key——两个方法缺一不可",
+      "equals 为 true → hashCode 必须相同（契约）。hashCode 相同 → equals 不一定为 true（哈希冲突）"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "HashMap",
+      "hashCode"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "Collections.synchronizedList 原理",
+    "content": "关于 Collections.synchronizedList 方法，以下哪项描述是正确的？",
+    "options": [
+      "A) 它返回的 List 中的所有方法都是通过添加 synchronized 关键字实现的线程安全",
+      "B) 使用迭代器遍历该 List 时，需要外部同步（在 synchronized 块中遍历）",
+      "C) 它比 CopyOnWriteArrayList 的并发性能更好",
+      "D) 它使用 Lock 接口来实现线程安全"
+    ],
+    "answer": "答案：B) 使用迭代器遍历该 List 时，需要外部同步（在 synchronized 块中遍历）\n\n解析：Collections.synchronizedList 使用「包装器模式」——在每个方法上使用 synchronized 块（mutex 对象）实现同步。但迭代器遍历时没有同步包装——因为 iterator() 方法返回的是原始 List 的迭代器。因此遍历时必须手动加 synchronized(list) { list.iterator() }。\n\n扩展延伸：使用注意事项——1）synchronizedList 的线程安全是「方法级」的。复合操作（如 get + set、检查再修改）仍然是线程不安全的，需要外部同步。2）迭代器遍历时必须手动加锁：`synchronized(list) { for (Object o : list) { ... } }`。3）synchronizedList 的迭代器是 fail-fast 的（遍历时其他线程修改会抛 ConcurrentModificationException）。CopyOnWriteArrayList 的迭代器是快照（snapshot）模式——遍历时不会抛异常但也不反映遍历过程中的修改。优缺点——synchronizedList：读和写都加锁（低并发场景可用）。CopyOnWriteArrayList：读无锁（读多写少场景极优），但每次写操作复制整个数组（写代价高）。",
+    "hints": [
+      "synchronizedList 的迭代器遍历需要外部同步——iterator() 方法本身返回的是原始 List 的迭代器",
+      "复合操作（非原子操作）需要额外的同步——synchronizedList 只保证单个方法的原子性"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "线程安全",
+      "Collections"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "HashMap 红黑树退化条件",
+    "content": "HashMap 中当某个桶的链表长度达到 8 时，一定会将链表转换为红黑树。当链表长度退化到 6 时，红黑树会立即退化为链表。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：链转树的双重条件——1）某个桶的链表长度达到 TREEIFY_THRESHOLD=8。2）并且 HashMap 的容量（数组长度）达到 MIN_TREEIFY_CAPACITY=64。如果容量 < 64，即使链表长度 >= 8 也不会树化，而是先扩容数组（resize 将链表分散到新数组中）。树退化为链表的条件——红黑树不会在链表长度退化到 6 时立即退化。树退化发生在 resize（扩容）时，当红黑树的节点数 <= UNTREEIFY_THRESHOLD=6 时才退化为链表。\n\n扩展延伸：为什么是 8 和 6——1）8 作为树化阈值：基于泊松分布——在随机哈希码下，链表长度达到 8 的概率极低（约 0.00000006），达到 8 说明哈希函数有问题或恶意攻击（Hash 碰撞 DoS）。2）6 作为退化阈值：8 和 6 之间留了 2 的缓冲（7），避免链表和红黑树在临界值频繁切换（thrashing）。3）树化是为了在极端哈希冲突下保证 O(log n) 的性能（而非 O(n)）。正常情况下 HashMap 几乎不会触发树化。",
+    "hints": [
+      "链转树需要两个条件——链表长度 >= 8 且数组容量 >= 64（容量 < 64 时优先扩容而非树化）",
+      "8（树化）和 6（退化）之间的 2 差值——防止链表和红黑树频繁互转"
+    ],
+    "tags": [
+      "Java",
+      "集合",
+      "HashMap",
+      "红黑树"
+    ]
   }
 ]

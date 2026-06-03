@@ -478,5 +478,115 @@
       "正确",
       "错误"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "StringBuilder 与 StringBuffer",
+    "content": "StringBuilder 是线程安全的，StringBuffer 是线程不安全的。因此 StringBuilder 适合在多线程环境下使用，而 StringBuffer 只适合在单线程环境下使用。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：事实正好相反——StringBuffer 的方法是 synchronized 修饰的（线程安全），适合多线程场景但性能较低。StringBuilder 的方法没有同步（线程不安全），适合单线程场景但性能更高（无锁开销）。一般推荐在单线程环境优先使用 StringBuilder。\n\n扩展延伸：性能对比——StringBuilder 比 StringBuffer 快 10-20%（无 synchronized 开销）。字符串拼接的场景选择——1）单次简单拼接（用 + 操作符即可，编译器优化为 StringBuilder）。2）循环内大量拼接（显式使用 StringBuilder）。3）多线程下共享字符串拼接（使用 StringBuffer 或手动同步 StringBuilder）。String 的不可变性——String 是 immutable 的，每次修改都创建新对象（频繁拼接会产生大量垃圾对象）。",
+    "hints": [
+      "StringBuffer 才是线程安全的（方法用 synchronized），StringBuilder 不是",
+      "单线程下优先使用 StringBuilder——无锁开销，比 StringBuffer 快 10-20%"
+    ],
+    "tags": [
+      "Java",
+      "StringBuilder",
+      "StringBuffer",
+      "线程安全"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "try-with-resources 资源关闭",
+    "content": "try-with-resources 语句中声明的资源（实现了 AutoCloseable 接口的对象）会在 try 块正常执行完毕后自动关闭，但如果 try 块中抛出了异常，资源将不会被关闭。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：try-with-resources 保证资源在 try 块结束后一定会被关闭——无论正常结束还是异常结束。资源的 close() 方法是在 finally 机制中自动调用的（实际上，编译后 try-with-resources 会展开为 try-finally 结构）。如果 try 块和 close() 都抛出异常，try 块的异常会被抑制（suppressed），close() 的异常可以通过 getSuppressed() 获取。\n\n扩展延伸：try-with-resources 的增强——1）多个资源时声明顺序：`try (FileInputStream fis = new FileInputStream(\"a.txt\"); FileOutputStream fos = new FileOutputStream(\"b.txt\"))`。多个资源的 close 顺序与声明顺序相反（后声明先关闭）。2）Java 9 增强：可以在 try 外部声明资源引用，在 try 中直接引用（`Resource r = ...; try (r) { ... }`）。3）自动关闭的原理：反编译显示 try-with-resources 编译为 try-finally + catch 的嵌套结构。在 finally 中调用 close() 且使用 Throwable.addSuppressed 保存异常。注意——使用 try-with-resources 比手动在 finally 中关闭资源更安全（不会遗漏 close 调用，且正确处理异常抑制）。",
+    "hints": [
+      "try-with-resources 保证资源一定会关闭（无论正常执行还是异常退出）——编译为 try-finally 闭",
+      "try 块的异常可以抑制 close() 的异常（通过 getSuppressed() 获取被抑制的异常）"
+    ],
+    "tags": [
+      "Java",
+      "异常",
+      "try-with-resources",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Java 接口默认方法的冲突",
+    "content": "如果一个类同时实现两个接口，两个接口包含同名的 default 方法，该类的实例可以直接调用该 default 方法，编译不会报错。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：如果一个类实现的两个接口包含相同签名的 default 方法，编译时报错（必须在该类中重写该方法来明确调用哪个接口的 default 方法）。使用 `InterfaceName.super.methodName()` 语法明确选择。\n\n扩展延伸：冲突解决规则——1）类优先：如果父类和接口中有相同签名的方法，父类的方法优先于接口的 default 方法（不管接口是何时添加的）。2）接口间冲突：如果两个接口有相同签名的方法，且都提供了 default 实现，则实现类必须重写该方法。3）重写时通过 `super` 调用：`InterfaceA.super.method()` 调用接口 A 的 default 实现。设计注意事项——Default 方法的主要目的是接口进化（向已有接口添加新方法而不破坏现有实现）。但使用时需注意多接口冲突问题。Java 8 在 Collection 接口中添加了 forEach、stream 等 default 方法。",
+    "hints": [
+      "两个接口的同名 default 方法冲突时——实现类必须重写，用 Interface.super.method() 调用指定接口的默认实现",
+      "类优先原则——父类的具体方法优先于接口的 default 方法"
+    ],
+    "tags": [
+      "Java",
+      "接口",
+      "Default方法",
+      "冲突"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "Java 静态内部类",
+    "content": "静态内部类（static nested class）可以访问外部类的实例成员（包括私有实例成员）。非静态内部类（inner class）不能声明 static 成员。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：错误。\n\n解析：前半部分错误——静态内部类只能访问外部类的静态成员（包括私有静态成员），不能直接访问外部类的实例成员（因为没有外部类对象的引用）。后半部分正确——非静态内部类（内部类）不能声明 static 成员（包括 static 方法、static 字段、static 内部类）。因为非静态内部类的实例依赖于外部类实例，static 成员不依赖于实例。\n\n扩展延伸：内部类类型——1）静态内部类：不需要外部类实例的引用，只能访问外部类的静态成员。作为「与外部类相关但不需要外部实例」的封装。2）非静态内部类（成员内部类）：持有外部类实例的引用（`Outer.this`），可以访问外部类的所有成员。创建前需要先创建外部类实例：`new Outer().new Inner()`。3）局部内部类（方法内定义的类）：在方法中定义，访问方法内的局部变量需要是 effectively final。4）匿名内部类：无类名，通常用于事件监听器和回调。持有外部类实例的引用（可能导致内存泄漏）。内存泄漏风险——非静态内部类持有外部类实例的引用。如果内部类对象长期存活而外部类不再使用，外部类和所有引用的对象都不能被 GC 回收（常见于 Android 的 Activity 泄漏和 Swing 的事件监听器泄漏）。",
+    "hints": [
+      "静态内部类没有外部类实例引用——只能访问外部类的静态成员",
+      "非静态内部类持有外部类实例的强引用——可能导致外部类无法被 GC 回收（内存泄漏）"
+    ],
+    "tags": [
+      "Java",
+      "内部类",
+      "静态",
+      "内存"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Java 枚举的构造器",
+    "content": "Java 枚举（enum）类型的构造器默认是 private 的，如果显式声明为 public 或 protected 会导致编译错误。枚举常量在枚举类加载时创建，是线程安全的。",
+    "options": [
+      "正确",
+      "错误"
+    ],
+    "answer": "答案：正确。\n\n解析：枚举的构造器隐式为 private（即使不加 private 修饰，也默认为 private）。显式声明为 public 或 protected 会编译错误。枚举常量在类加载时由 JVM 保证线程安全地创建（利用 class loader 的同步特性）。这使得枚举是实现单例模式的最安全方式——反射无法创建枚举实例（Constructor.newInstance() 检查是否为枚举类型并拒绝）。\n\n扩展延伸：枚举特性——1）枚举实例的创建：每个枚举常量在 enum 类加载时由 JVM 静态初始化（确保线程安全）。2）枚举实现单例：Effective Java 推荐的单例实现方式——避免反射攻击（Constructor.newInstance() 对枚举类型抛异常）、避免序列化攻击（枚举的序列化由 JVM 特殊处理，不会创建新实例）。3）枚举与 switch：枚举与 switch 配合良好（编译时编译器检查 case 覆盖了所有枚举值，否则可能需要 default）。4）枚举的字段和方法：枚举可以有实例字段（在构造器中初始化）、实例方法、抽象方法（每个枚举常量分别实现）。5）EnumSet 和 EnumMap：针对枚举类型优化的高性能集合实现。EnumSet 使用位向量（bit vector）存储，极省内存且极快。",
+    "hints": [
+      "枚举构造器默认为 private——反射无法创建枚举实例，枚举是实现安全单例的最佳方式",
+      "枚举常量在类加载时由 JVM 保证线程安全——避免了 DCL 和序列化问题"
+    ],
+    "tags": [
+      "Java",
+      "枚举",
+      "单例",
+      "线程安全"
+    ]
   }
 ]

@@ -527,5 +527,95 @@
       "Eureka",
       "CAP"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计一个推荐系统",
+    "content": "如何设计一个推荐系统？协同过滤（Collaborative Filtering）和基于内容的推荐（Content-Based）的原理？Embedding 在推荐系统中的应用？推荐系统的实时和离线架构？",
+    "answer": "答案：推荐系统核心三阶段——召回（从海量物品中选出候选集）→ 排序（精确排序）→ 重排序（多样性/去重/业务规则）。离线计算（特征工程 + 模型训练）+ 近线计算（实时特征更新）+ 在线推理（实时预测）。\n\n解析：推荐算法——1）协同过滤（User-Based/Item-Based）：用户 A 喜欢物品 X，用户 B 也喜欢物品 X → 用户 A 可能喜欢用户 B 也喜欢的物品 Y。基于用户行为矩阵（用户-物品交互）计算相似度。问题：冷启动（新用户/新物品无行为数据）。2）基于内容推荐：分析物品的特征（标签/分类/文本），推荐与用户历史喜欢的物品特征相似的物品。能解决冷启动问题。3）矩阵分解（Matrix Factorization）：将用户-物品交互矩阵分解为用户 Embedding × 物品 Embedding。通过内积预测用户对物品的偏好。代表：SVD、ALS（交替最小二乘法）。\n\n扩展延伸：Embedding——1）将用户和物品映射到同一个向量空间（维度 64-256）。2）通过内积/余弦相似度计算用户-物品相似度，用于召回。3）训练方式：word2vec(GraphEmbedding)、Graph Neural Network（GNN）、双塔模型（Two-Tower Model）。4）实时 Embedding 更新：用户行为发生时更新用户 Embedding。召回策略——多路召回（协同过滤 + 基于内容 + 热点召回 + 语义召回 + 社交召回）。每路召回各选出几百个候选，合并去重后进入排序阶段。排序模型——LR（逻辑回归）/FM（因子分解机）/DeepFM（深度因子分解机）/DIN（深度兴趣网络）。重排序——MMR（最大边际相关性，平衡相关性和多样性）、打散（相同类型的物品不在相邻位置）。",
+    "hints": [
+      "推荐系统三个漏斗——召回（千万→千）→ 排序（千→百）→ 重排序（百→十）",
+      "多路召回（协同过滤 + 内容 + 热点 + 语义）→ 合并去重 → 排序模型精排"
+    ],
+    "tags": [
+      "系统设计",
+      "推荐系统",
+      "Embedding",
+      "架构"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计一个大数据处理平台",
+    "content": "如何设计一个大数据处理平台？Lambda 架构和 Kappa 架构的区别？批处理（Batch Processing）和流处理（Stream Processing）的适用场景？实时数仓的分层设计？",
+    "answer": "答案：大数据处理的两大架构——Lambda（批处理层 + 流处理层 + 服务层）和 Kappa（纯流处理，所有数据通过消息队列进入流处理引擎）。Lambda 可以同时处理历史和实时数据但维护两套代码。Kappa 架构更简单（一套流处理代码处理所有数据）但 replay 历史数据时需要足够吞吐。\n\n解析：Lambda 架构——1）Batch Layer：存储全量原始数据（HDFS/S3），离线计算完整视图（通过 MapReduce/Spark，T+1）。2）Speed Layer：流处理实时增量数据（Flink/Spark Streaming），提供实时视图。3）Serving Layer：合并 Batch 和 Speed 的结果对外提供服务（用 HBase/ClickHouse/Druid 存储）。Kappa 架构——所有数据（历史和实时）都通过消息队列（Kafka）进入流处理引擎（Flink/Spark Streaming）。需要 replay 历史时只需重置 Kafka 消费者的 offset 重新处理。\n\n扩展延伸：实时数仓分层——1）ODS（原始数据层）：数据从业务系统/日志直接接入（Kafka Topic）。2）DWD（明细数据层）：数据清洗、格式统一、维度退化（Flink ETL 写入 Kafka 或 HDFS）。3）DWS（汇总数据层）：按维度聚合（小时/天级别聚合指标，写入 ClickHouse/StarRocks）。4）ADS（应用数据层）：面向具体业务的数据（报表/大屏/推荐特征）。技术选型——批处理：Spark / Hive / MapReduce。流处理：Flink（首选）/ Spark Streaming。消息队列：Kafka。OLAP 查询：ClickHouse / StarRocks / Druid / Presto。数据湖（Data Lakehouse）——Iceberg / Hudi / Delta Lake，统一批流（将 Lambda 的批/流合并到同一存储层）。",
+    "hints": [
+      "Lambda（批+流两套代码）vs Kappa（纯流一套代码）——Kappa 更简单但要求流处理足够快",
+      "实时数仓分层：ODS（原始）→ DWD（清洗）→ DWS（聚合）→ ADS（应用）"
+    ],
+    "tags": [
+      "系统设计",
+      "大数据",
+      "Lambda",
+      "Kappa"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计一个配置中心系统",
+    "content": "如何设计一个分布式配置中心？配置的存储和推送机制？客户端的配置更新监听（长轮询/WebSocket）？配置变更的权限控制（环境隔离/灰度发布）？",
+    "answer": "答案：配置中心核心功能——配置存储（结构化存储 + 版本管理 + 环境隔离）+ 配置推送（实时推送配置变更到客户端）+ 权限控制（环境隔离/灰度/回滚）。实现方案：Nacos/Apollo/Spring Cloud Config + Spring Cloud Bus。\n\n解析：架构——1）存储层：MySQL 存储配置数据（配置项 key-value + 分组/命名空间/环境）。历史版本记录在配置变更时自动保存（支持回滚）。2）服务端：管理 API（CRUD 配置）+ 推送服务（长轮询/WebSocket 通知客户端配置变更）。3）客户端 SDK：监听配置变更（长轮询）+ 本地缓存配置（防止服务端不可用）+ 回调通知业务代码。\n\n扩展延伸：推送机制——1）长轮询（推荐）：客户端发起 HTTP 请求等待配置变更。服务端对比配置的 MD5，无变化时 hold 住请求（30s 超时）。配置变化时立即返回。超时后客户端立即发起下一次请求。2）WebSocket：建立全双工连接，服务端主动推送变更。但需要在网关层额外支持 WebSocket。3）配置变更事件流：配置变更 → 写入数据库 + 推送 MQ 消息 → 客户端 SDK 监听 MQ 或通过长轮询感知变化。环境隔离与灰度——Namespace/Group 隔离不同环境（开发/测试/生产）。灰度发布：先发布到灰度实例（如 1% 的机器），观察监控指标无问题后全量推送。配置回滚：查看配置变更历史 → 选择历史版本回滚 → 推送回滚到客户端。安全——配置加密存储（敏感配置如数据库密码用 AES/RSA 加密）。操作审计（谁在什么时间修改了什么配置）。",
+    "hints": [
+      "配置推送推荐长轮询——实现简单、兼容性好（HTTP），比 WebSocket 更易维护",
+      "配置灰度发布——先推送 1% 实例观察，无异常再全量推送（Apollo 原生支持此功能）"
+    ],
+    "tags": [
+      "系统设计",
+      "配置中心",
+      "Nacos",
+      "Apollo"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计一个分布式搜索系统",
+    "content": "如何设计一个分布式搜索引擎？倒排索引（Inverted Index）的原理？Elasticsearch 的分布式架构（Node/Shard/Replica）？搜索的相关性排序（BM25/TF-IDF）？",
+    "answer": "答案：搜索引擎核心——文档索引（建库）+ 检索（查询）。倒排索引是文档 → 词的映射（记录每个词出现在哪些文档中及其位置/频率）。Elasticsearch 的分布式架构基于 Lucene——Index 分为多个 Shard（分片），每个 Shard 是一个独立的 Lucene 索引。有主分片（Primary）和副本分片（Replica）。\n\n解析：Elasticsearch 架构——1）Node 角色：Master Node（管理集群状态）、Data Node（存储数据和执行查询）、Coordinating Node（接收请求转发到数据节点）、Ingest Node（数据预处理）。2）Shard：分片是 Elasticsearch 的最小工作单元。每个 Index 创建时指定主分片数（不可动态修改），副本分片数可动态调整。3）写入流程：协调节点 → 路由到主分片 → 写入 Lucene（内存 Buffer + Translog）→ 同步到副本分片。\n\n扩展延伸：相关性排序——1）TF-IDF（Term Frequency - Inverse Document Frequency）：词频 × 逆文档频率。TF = 词在文档中出现次数/文档总词数（词出现越多越相关）。IDF = log(总文档数/包含该词的文档数)（罕见词权重更高）。2）BM25（Okapi BM25，ES 5+ 默认）：TF-IDF 的改进——增加了词频饱和度（term frequency saturation）和字段长度归一化（field-length normalization）。BM25 对高频词的惩罚更平滑（避免一个词出现过多遍导致得分过高）。3）ES 查询 DSL：match（全文检索，分析器处理查询词）、term（精确匹配）、bool（must/should/filter 组合）。query（相关性评分阶段）和 filter（精确过滤阶段，不评分且可缓存）。高级——近实时搜索（NRT，Refresh Interval 控制文档从 Buffer 到 Segment 的可见时间）。段合并（Segment Merge，小段合并为大段，减少文件句柄和删除文档的物理清理）。",
+    "hints": [
+      "倒排索引（Term → Document List）是搜索引擎的基石——Elasticsearch 基于 Lucene 倒排索引",
+      "BM25 是 ES 5+ 的默认相关性算法——比 TF-IDF 更平滑（高频词饱和、长度归一化）"
+    ],
+    "tags": [
+      "系统设计",
+      "搜索",
+      "Elasticsearch",
+      "倒排索引"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计一个 API 网关",
+    "content": "如何设计一个 API 网关？网关的核心功能（路由/限流/认证/日志/协议转换）？网关的性能瓶颈如何解决？网关的高可用设计？",
+    "answer": "答案：API 网关是微服务架构的统一入口——处理所有外部请求并将请求路由到内部服务。核心功能：路由转发、认证鉴权、限流熔断、日志监控、协议转换（HTTP→gRPC）、请求/响应转换。网关是系统的前门——因此必须是高性能和高可用的。\n\n解析：网关架构——1）路由层：根据请求的 Host/Path/Header/Query 匹配路由规则，转发到对应的后端服务。支持权重路由（灰度发布）。2）过滤器链（Filter Chain）：Pre Filters（认证/限流/日志/修改请求）→ Route（转发）→ Post Filters（修改响应/缓存/日志）。3）限流：令牌桶（Guava RateLimiter）或滑动窗口（Redis + Lua）。支持按 API/用户/IP 维度限流。\n\n扩展延伸：性能优化——1）异步非阻塞：使用 Netty（Spring Cloud Gateway）/ NIO（Kong 基于 OpenResty）实现异步 IO。少量线程处理大量连接（对比 Zuul 1.x 的线程池模型——每个请求占一个线程，连接数受限）。2）缓存：路由规则缓存、DNS 缓存、认证 Token 缓存。3）连接池管理：后端连接池复用（避免每次请求都创建新连接）。4）超时控制：每个路由设置超时时间（connect timeout / read timeout）。高可用——1）网关集群部署（无状态，可水平扩展）。2）健康检查：定期检查后端服务健康状况，自动摘除不健康节点（熔断器 Circuit Breaker）。3）优雅降级：当后端服务不可用时，网关返回缓存响应或降级提示（「服务繁忙」）。4）限流自我保护：网关自身需要限流（防止恶意流量打垮网关本身）。选型——Spring Cloud Gateway（Spring 生态，功能丰富）、Kong/APISIX（高性能，插件生态）、Nginx + Lua（自建，最灵活）。",
+    "hints": [
+      "网关是流量的统一入口——高性能（异步非阻塞 IO）+ 高可用（集群部署 + 熔断降级）",
+      "网关的过滤器链——Pre（认证限流）→ Route（转发）→ Post（响应处理）——每个环节都可扩展"
+    ],
+    "tags": [
+      "系统设计",
+      "API网关",
+      "Spring Cloud Gateway",
+      "Kong"
+    ]
   }
 ]

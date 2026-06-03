@@ -538,5 +538,95 @@
       "协程",
       "异步"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python 协程与 asyncio 深入",
+    "content": "Python asyncio 的核心概念有哪些？事件循环（Event Loop）、协程（Coroutine）、任务（Task）和 Future 的关系？async/await 关键字的工作原理？asyncio 的并发模型和线程的区别？",
+    "answer": "答案：asyncio 是基于协程的并发框架——事件循环是核心调度器（管理所有待执行协程）。协程（async def 定义）是挂起/恢复的生成器函数。Task 是 Future 的子类（将协程包装为可调度的任务）。await 挂起当前协程让出控制权到事件循环。\n\n解析：原理——1）事件循环（Event Loop）：不断检查待执行队列（Task/回调/I/O 事件），有可执行任务就执行直到遇到 await（挂起点），然后切换到下一个任务。整个过程在单线程中完成。2）协程和生成器的关系：Python 的协程基于生成器的机制（PEP 342/380）。async/await 是语法糖（本质是基于 yield from 的生成器）。3）Task 与 Future：Task 是 Future 的子类——Future 表示一个「未来结果」的占位符，Task 包装协程并驱动其执行。\n\n扩展延伸：asyncio vs 线程——1）并发模型：asyncio 单线程 + 协作式多任务（显式挂起点 await）。线程：OS 调度 + 抢占式多任务（随时可能被切换）。2）上下文切换：asyncio 的 await 切换成本极低（函数调用级别），线程切换需要内核态切换（微秒级）。3）GIL：asyncio 不受 GIL 影响（单线程），但 CPU 密集型任务会阻塞事件循环。需要 CPU 密集任务时用 run_in_executor（丢到线程池）。4）常见模式：asyncio.run(main()) 启动事件循环。asyncio.create_task() 创建并发任务。asyncio.gather() 等待多个任务。asyncio.wait_for() 超时控制。asyncio 适合 IO 密集（网络请求/文件读写/数据库查询），CPU 密集还是需要多进程。",
+    "hints": [
+      "asyncio 单线程协作式并发——await 是挂起点，协程在此处让出控制权给事件循环",
+      "CPU 密集型任务不应直接在 async 函数中执行——用 run_in_executor 丢到线程池"
+    ],
+    "tags": [
+      "Python",
+      "asyncio",
+      "协程",
+      "并发"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Python GIL 原理与规避",
+    "content": "Python GIL（Global Interpreter Lock）的原理是什么？GIL 为什么存在？如何规避 GIL 的限制以实现真正的并行计算？",
+    "answer": "答案：GIL 是 CPython 解释器中的一把全局锁——同一时刻只能有一个线程执行 Python 字节码。GIL 的存在是为了保证 CPython 内存管理的线程安全（引用计数操作不需要额外的锁）。GIL 导致 CPU 密集型多线程程序无法利用多核。规避方式：多进程（multiprocessing）、C 扩展（不使用 GIL）、异步 IO（asyncio）、JIT 编译（PyPy 的 STM）。\n\n解析：GIL 原理——1）CPython 内存管理使用引用计数（Reference Counting），引用计数需要原子操作。不加 GIL 的话需要为每个对象加细粒度锁（开销巨大）。GIL 选择「单锁简化整个解释器」。2）GIL 的释放：IO 操作自动释放 GIL（IO 密集的线程可以并发）。CPU 密集操作每执行 100 个字节码指令（sys.getcheckinterval）或每 5 毫秒释放 GIL。3）由于 GIL 的存在，Python 多线程在 CPU 密集场景下甚至可能比单线程慢（锁竞争开销）。\n\n扩展延伸：规避方式——1）multiprocessing：多进程（每个进程有独立的 GIL），利用多核 CPU。缺点：进程间通信代价高（需要 pickle 序列化）。适用：CPU 密集型任务。2）C 扩展：C 扩展在调用时释放 GIL（Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS）。NumPy/Cython 等库在内部释放 GIL。3）asyncio：单线程并发，不受 GIL 影响。适合 IO 密集型。4）PyPy / Jython / IronPython：Jython（Java 实现）和 IronPython（.NET 实现）没有 GIL。PyPy 的 STM（Software Transactional Memory）试图移除 GIL。5）Python 3.12+ 的 nogil 编译选项（实验性），Python 3.13+ 作为可选编译模式。注意——大多数场景下不用过度关注 GIL。IO 密集型（Web 请求/数据库/文件读写）程序多线程效果很好。CPU 密集型才需要考虑多进程/C 扩展。",
+    "hints": [
+      "GIL 同一时刻只能执行一个线程的字节码——CPU 密集多线程不能利用多核，但 IO 密集可以（IO 操作释放 GIL）",
+      "规避 GIL 三板斧——多进程（CPU 密集）、asyncio（IO 密集）、C 扩展（numpy/cython 释放 GIL）"
+    ],
+    "tags": [
+      "Python",
+      "GIL",
+      "并发",
+      "CPython"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Python 的 import 机制",
+    "content": "Python 的 import 机制是如何工作的？sys.path 的搜索顺序？相对导入和绝对导入的区别？__init__.py 的作用？循环导入如何解决？",
+    "answer": "答案：Python import 的流程——1）在 sys.modules 中查找（已缓存的模块字典）。2）未找到则使用 finder（查找器）在 sys.path 的路径中查找模块。3）找到后使用 loader（加载器）加载模块并执行模块代码。4）将模块加入 sys.modules。\n\n解析：sys.path 搜索顺序——1）当前脚本所在目录（或 PYTHONPATH）。2）环境变量 PYTHONPATH。3）标准库路径。4）site-packages 中的第三方包。绝对导入（`import os.path`）使用 sys.path 搜索。相对导入（`from . import utils`）使用当前模块的 __package__ 属性定位，只能在包内使用。__init__.py——将目录标记为 Python 包。Python 3.3+ 支持隐式命名空间包（没有 __init__.py 也可以）。\n\n扩展延伸：循环导入——当模块 A import 模块 B，模块 B 又 import 模块 A 时发生。此时 A 尚未完全加载（在 sys.modules 中但部分属性未定义），B 尝试导入 A 时拿到的是不完整的 A。解决方式——1）延迟导入：在函数内（而非模块顶层）导入。2）重构：将共同依赖的部分提取到第三个模块。3）重新设计：循环导入通常说明模块职责划分有问题。import 缓存——`sys.modules` 缓存所有已导入模块。`importlib.reload(module)` 重新加载。注意：reload 不会更新已引用的对象（如 `from module import func` 后 reload 不会更新 func）。",
+    "hints": [
+      "sys.path 搜索顺序——当前目录 → PYTHONPATH → 标准库 → site-packages",
+      "循环导入在顶层 import 时触发——延迟到函数内导入可避开（但不治本）"
+    ],
+    "tags": [
+      "Python",
+      "import",
+      "模块",
+      "路径"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 性能优化策略",
+    "content": "Python 程序性能优化有哪些常用策略？从代码层面到架构层面如何逐步优化？常用的性能分析工具有哪些？什么时候应该考虑用 C 扩展或 JIT？",
+    "answer": "答案：Python 性能优化层次——1）算法和数据结构层面（最有效，如用 set 替代 list 做查找）。2）语言特性优化（列表推导式比 for 循环快、局部变量比全局变量快）。3）使用内置函数和标准库（map/filter/itertools 等 C 实现的函数）。4）用 C 扩展（Cython/PyPy/Numba）。5）架构层面（缓存/异步/多进程）。\n\n解析：具体优化——1）使用合适的数据结构：set 查找 O(1) vs list O(n)。dict 做计数器 vs 手写 if-else。collections.deque 做队列 vs list pop(0)。2）减少 Python 级别的循环：用 NumPy 向量化替代 Python for 循环。用 map/filter/reduce 替代显式循环。3）字符串拼接：用 ''.join(list) 而非 +=（前者 O(n)，后者可能 O(n^2)）。4）使用 __slots__：减少实例对象的内存占用和属性访问时间。5）局部变量优化：频繁访问的全局变量（如 len/max）赋值给局部变量。\n\n扩展延伸：性能分析工具——1）cProfile：内置的性能分析器（`python -m cProfile script.py`）。输出每个函数的调用次数和耗时。2）line_profiler：逐行分析（@profile 装饰器标记要分析的函数）。3）memory_profiler：逐行分析内存使用。4）py-spy：无需修改代码的采样分析器（适合生产环境）。5）timeit：测量小段代码的执行时间。JIT/C 扩展——PyPy（JIT 编译器，纯 Python 代码可能快 4-10 倍）。Cython（将 Python 编译为 C 扩展，适合重计算）。Numba（@jit 装饰器，将 Python 函数编译为机器码，适合 NumPy 操作）。优化第一原则——先测量再优化，不要过早优化。根据 Profile 结果找到真正的瓶颈（通常是 20% 的代码占 80% 的时间）。",
+    "hints": [
+      "Python 优化第一原则——先用 cProfile 找到瓶颈（80% 时间在 20% 代码中），不要盲目优化",
+      "列表推导式比 for 循环快、set 比 list 查找快、局部变量比全局变量快——基础优化技巧"
+    ],
+    "tags": [
+      "Python",
+      "性能优化",
+      "cProfile",
+      "JIT"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Python 的垃圾回收机制",
+    "content": "Python 的垃圾回收（GC）机制有哪些？引用计数（Reference Counting）和分代回收（Generational GC）的关系？循环引用如何被处理？gc 模块的用法？",
+    "answer": "答案：Python 使用引用计数为主、分代收集为辅的 GC 策略。引用计数：每个对象维护 ob_refcnt（引用计数），为 0 时立即回收。分代收集：处理循环引用（引用计数无法处理）。Python 将对象分为 3 代（0/1/2 代），新对象在第 0 代，每次 GC 存活的对象升代。\n\n解析：引用计数——1）引用增加：赋值给变量、加入容器、作为参数传递等。2）引用减少：变量离开作用域、从容器删除、del 显式删除等。3）优点：实时性好（引用计数为 0 时立即回收，不需要等待 GC 触发）。4）缺点：额外的计数维护开销、循环引用没法处理（需要分代收集辅助）。\n\n扩展延伸：分代收集（gc 模块）——1）阈值（gc.get_threshold()）：默认 (700, 10, 10)。第 0 代分配数量减去回收数量超过 700 时触发第 0 代 GC。第 0 代 GC 发生 10 次触发第 1 代 GC，第 1 代 GC 发生 10 次触发第 2 代 GC。2）循环引用判断：gc 模块从 GC Roots（栈/全局变量等）出发遍历所有可达对象，不可达的对象形成判定为循环引用的垃圾。3）手动控制：gc.collect() 强制触发 GC。gc.disable() 关闭分代收集（引用计数仍然工作）。gc.set_debug(gc.DEBUG_LEAK) 调试内存泄漏。注意——自定义类实现 __del__ 方法时循环引用会导致对象无法被 GC 回收（Python 3.4+ 的 PEP 442 解决了此问题）。对象被回收时 __del__ 的调用顺序不确定。",
+    "hints": [
+      "引用计数实时回收（为 0 立即回收，即时性好）但无法处理循环引用——分代收集辅助解决循环引用",
+      "gc 模块的阈值(700, 10, 10)——每分配 700 个对象减回收数触发第 0 代 GC"
+    ],
+    "tags": [
+      "Python",
+      "垃圾回收",
+      "GC",
+      "内存"
+    ]
   }
 ]

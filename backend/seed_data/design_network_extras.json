@@ -537,5 +537,95 @@
       "发布订阅",
       "事件驱动"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "适配器模式（Adapter）",
+    "content": "适配器模式的目的是什么？类适配器和对象适配器的区别？适配器模式和外观模式（Facade）的区别？适配器模式在实际开发中的应用？（如 Spring 中的适配器）",
+    "answer": "答案：适配器模式将一个类的接口转换成客户端期望的另一个接口，让原本不兼容的类可以一起工作。类适配器使用继承（适配器同时继承目标接口和适配者类），对象适配器使用组合（适配器持有适配者对象的引用）。对象适配器更灵活（适配者子类也可适配），类适配器需要多继承（Java 中不直接支持）。\n\n解析：结构——1）Target（目标接口）：客户端期望的接口。2）Adapter（适配器）：将 Adaptee 的接口转换为 Target 接口。3）Adaptee（适配者）：需要被适配的已有的类。4）Client 通过 Target 接口调用 Adapter，Adapter 内部调用 Adaptee。对象适配器示例：`class Adapter implements Target { private Adaptee adaptee; }`——Adapter 持有 Adaptee 对象并将 Target 方法的调用转发给 Adaptee。\n\n扩展延伸：实际应用——1）Spring MVC 中的 HandlerAdapter：将不同的 handler（Controller/HttpRequestHandler/SimpleControllerHandlerAdapter）适配到统一的 DispatcherServlet 调用。2）java.util.Arrays#asList()：将数组适配到 List 接口。3）java.io.InputStreamReader：将 InputStream 适配到 Reader。4）日志门面（SLF4J）：为不同的日志框架（Log4j/Logback/java.util.logging）提供统一的适配层。适配器 vs 外观（Facade）——1）适配器：解决「接口不兼容」的问题，改变接口以匹配客户端的期望。2）外观：为复杂子系统提供简化的统一接口，不改变原有接口的能力。适配器模式通常在系统设计之后（为了兼容遗留代码），而外观模式是设计时对复杂子系统的简化封装。",
+    "hints": [
+      "类适配器用继承（不可修改 Adaptee 的行为），对象适配器用组合（更灵活，推荐使用）",
+      "适配器 vs 外观——适配器「转换接口」，外观「简化接口」。适配器是事后兼容，外观是事前面向客户端简化"
+    ],
+    "tags": [
+      "设计模式",
+      "适配器模式",
+      "结构型",
+      "Spring"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "抽象工厂模式（Abstract Factory）",
+    "content": "抽象工厂模式和工厂方法模式的区别？什么场景适合用抽象工厂模式？抽象工厂模式的「产品族」概念是什么？",
+    "answer": "答案：工厂方法模式：一个工厂创建一个产品；抽象工厂模式：一个工厂创建一组相关的产品（产品族）。抽象工厂是工厂方法的扩展——当系统需要生产多个产品系列（不同品牌/不同操作系统）时使用。\n\n解析：结构——1）AbstractFactory：声明创建一组产品的方法（createProductA/createProductB）。2）ConcreteFactory：实现创建具体产品族的方法（如 WindowsFactory 创建 WindowsButton + WindowsTextBox；MacFactory 创建 MacButton + MacTextBox）。3）AbstractProduct：产品接口（Button/TextBox）。4）ConcreteProduct：具体产品（WindowsButton/MacButton）。5）客户端只使用 AbstractFactory 和 AbstractProduct 接口，不依赖具体工厂和产品。\n\n扩展延伸：场景——1）跨平台 UI 组件：Windows/Mac/Linux 各有一套按钮、文本框、菜单（产品族）。运行时根据操作系统选择对应的 Factory。2）数据库连接：不同数据库（MySQL/PostgreSQL/Oracle）各有 Connection/Statement/ResultSet（产品族）。JDBC 是抽象工厂的经典实现。3）主题切换：不同主题（暗色/亮色）的样式组件。优缺点——优点：确保同一工厂创建的产品之间兼容；客户端与具体产品解耦；更换产品族只需更换一个工厂对象。缺点：扩展产品族中的产品困难（需要修改 AbstractFactory 接口，所有 ConcreteFactory 都需要更新）。\"产品族\"——同一工厂生产的一组互相依赖/配套的产品。同一操作系统下的所有 UI 控件（Button + TextBox + Menu 互相配合使用）就是一个产品族。",
+    "hints": [
+      "产品族（Product Family）——同一工厂生产的一组配套产品，如 Windows 的 Button + TextBox + Menu",
+      "抽象工厂 vs 工厂方法——工厂方法「一个工厂一种产品」，抽象工厂「一个工厂一组相关产品」"
+    ],
+    "tags": [
+      "设计模式",
+      "抽象工厂",
+      "创建型",
+      "产品族"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "原型模式（Prototype）",
+    "content": "原型模式（Prototype Pattern）的原理？Java 中浅克隆（Shallow Copy）和深克隆（Deep Copy）的区别？原型模式相比 new 创建对象的优势？",
+    "answer": "答案：原型模式通过复制已有对象来创建新对象（克隆），而不是通过 new 创建。在 Java 中实现 Cloneable 接口并重写 clone()。当对象创建成本较高（数据库查询/复杂初始化）且需要大量相似对象时，克隆比 new 更高效。\n\n解析：浅克隆 vs 深克隆——1）浅克隆（Shallow Copy）：复制对象本身，但对象内部的引用类型字段指向同一个对象（两个对象共享引用）。Java 的 Object.clone() 默认实现是浅克隆。2）深克隆（Deep Copy）：不仅复制对象本身，还递归复制所有引用类型的字段，使得原始对象和克隆对象完全独立。实现方式：重写 clone() 在内部递归 clone 引用字段；序列化（Serializable + ObjectOutputStream）；手动 new 并逐个赋值。3）Cloneable 接口是一个标记接口（不包含方法），clone() 方法来自 Object。如果对象没有实现 Cloneable 却调用了 clone()，会抛出 CloneNotSupportedException。\n\n扩展延伸：原型模式的应用——1）Spring 框架中的原型作用域（prototype scope）：每次获取 Bean 时返回一个新的实例（原型模式的应用）。2）Java 的 ArrayList、HashMap 等都提供了 clone() 方法（返回浅克隆）。3）游戏开发中大量对象的创建（子弹/敌人生成）——避免频繁 new 的开销。4）配置对象的复制——从默认配置克隆出定制配置。原型 vs new——克隆不调用构造函数，因此不会执行构造方法中的逻辑。这意味着如果构造器中有关键初始化操作，克隆会直接绕过（既是优点也是缺点）。序列化实现深克隆注意事项：所有被克隆的类都需要实现 Serializable。JSON 序列化（Jackson/Gson）可以实现深克隆但不要求 Serializable。",
+    "hints": [
+      "Java 的 clone() 是浅克隆——引用类型字段指向同一个对象，修改一个会影响另一个",
+      "原型模式不调用构造函数——直接内存复制创建对象，绕过构造器中的初始化逻辑"
+    ],
+    "tags": [
+      "设计模式",
+      "原型模式",
+      "创建型",
+      "克隆"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "中介者模式（Mediator）",
+    "content": "中介者模式（Mediator Pattern）的目的是什么？它如何解决对象之间多对多交互的复杂度问题？中介者模式和观察者模式的区别？实际应用（如 MVC 中的 Controller）？",
+    "answer": "答案：中介者模式通过引入一个中介对象来封装一组对象之间的交互，将多对多的交互简化为一对多的交互（对象→中介者）。各个对象不需要显式引用彼此，减少了耦合度。中介者控制交互逻辑，使得交互规则的变化集中在中介者中。\n\n解析：结构——1）Mediator（中介者接口）：定义通信方法（notify/send）。2）ConcreteMediator：维护各个 Colleague 的引用，协调交互逻辑。3）Colleague（同事）：每个同事对象持有中介者的引用，通过中介者与其他同事通信。不直接调用其他同事的方法。同事之间只通过中介者通信——例如聊天室中的用户不直接发消息给彼此，而是发给聊天室（中介者），由聊天室广播给其他人。\n\n扩展延伸：实际应用——1）MVC 架构：Controller 是 Model 和 View 的中介者——View 的事件发给 Controller，Controller 更新 Model，Model 变化通过 Controller 通知 View。2）聊天室（Chat Room）：用户通过聊天室发消息，聊天室协调消息的转发。3）Air Traffic Control（塔台）：飞机不直接通信，通过塔台协调航线。4）java.util.Timer：schedule 方法中 Timer 协调任务的执行。中介者 vs 观察者——1）观察者模式：一对多关系（一个 Subject 通知多个 Observer），Observer 之间无直接交互。2）中介者模式：多对多关系，Colleague 之间可能互相影响，交互逻辑集中在中介者。3）两者可以组合使用：中介者内部使用观察者模式实现消息通知。",
+    "hints": [
+      "中介者将多对多关系简化为一对多——Colleague 只与 Mediator 通信，不直接引用其他 Colleague",
+      "MVC 中的 Controller 是中介者模式——View 的事件传 Controller，Controller 更新 Model，Model 变化传回 View"
+    ],
+    "tags": [
+      "设计模式",
+      "中介者模式",
+      "行为型",
+      "MVC"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "备忘录模式（Memento）",
+    "content": "备忘录模式（Memento Pattern）用于解决什么问题？备忘录模式的三个角色分别是什么？备忘录模式在实现撤销（Undo）功能时如何使用？",
+    "answer": "答案：备忘录模式在不破坏封装的前提下捕获一个对象的内部状态，并在该对象之外保存这个状态，以便之后将对象恢复到原先保存的状态。核心思想：状态保存和恢复由原发器（Originator）自己负责，备忘录（Memento）是一个不可变的状态快照，管理者（Caretaker）保存和提供备忘录但不查看其内容。\n\n解析：三个角色——1）Originator（原发器）：需要保存和恢复状态的对象。提供 createMemento()（创建快照）和 restore(memento)（从快照恢复）方法。2）Memento（备忘录）：存储 Originator 的内部状态（不可变对象）。对外提供有限接口（getState 可能只暴露部分信息或不暴露内部状态）。3）Caretaker（管理者）：负责保存 Memento（如存储在 List\\ 中）。不对 Memento 的内容做任何操作（不读取也不修改）。\n\n扩展延伸：应用——1）文本编辑器的 Undo/Redo：每次修改文本创建一个 Memento（文本内容的快照），Undo 时恢复到上一个 Memento。2）游戏存档：玩家进度存档机制——游戏状态保存为 Memento，读档时通过 Memento 恢复。3）事务回滚：操作前保存状态快照，操作失败时恢复。4）关于封装性：备忘录模式的关键保护在于 Memento 只暴露给 Originator 必要的信息，对 Caretaker 隐藏内部细节。如果 Memento 对外可见其内部状态，就破坏了 Originator 的封装性。Java 实现技巧：使用内部类（Memento 作为 Originator 的内部类，对外部类私有字段可见，对其他类隐藏）。",
+    "hints": [
+      "备忘录模式的关键是封装性的保护——Memento 对 Originator 开放内部状态，对 Caretaker 隐藏",
+      "Caretaker 只负责保存和提供 Memento，不能查看或修改 Memento 的内容"
+    ],
+    "tags": [
+      "设计模式",
+      "备忘录模式",
+      "行为型",
+      "撤销"
+    ]
   }
 ]

@@ -639,5 +639,125 @@
       "锁",
       "JUC"
     ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java 反射与注解",
+    "content": "关于 Java 反射（Reflection）API，以下哪项描述是正确的？",
+    "options": [
+      "A) 反射通过 Class.forName() 获取的 Class 对象是每次调用时重新创建的",
+      "B) 反射调用私有方法时，必须调用 setAccessible(true) 来抑制 Java 语言访问检查",
+      "C) 反射在编译时即可完成类型安全检查",
+      "D) @Inherited 注解标注的元注解会使其修饰的子注解自动被所有子类继承"
+    ],
+    "answer": "答案：B) 反射调用私有方法时，必须调用 setAccessible(true) 来抑制 Java 语言访问检查\n\n解析：Class 对象由 JVM 类加载器创建并缓存，同一个类加载器加载的同一个类只有一份 Class 对象（不是每次创建）。反射是在运行时检查类信息（编译时无法做类型安全验证）。@Inherited 只能让「类」上的注解被子类继承——对接口/方法/字段上的注解无效，且不能使子注解自动继承。\n\n扩展延伸：反射性能——反射调用比普通方法调用慢（需要动态解析方法句柄、做访问检查）。优化：setAccessible(true) 关闭访问检查提升性能；MethodHandles.lookup() 比 Class.getMethod() 更高效。Java 9+ 的模块系统限制了反射访问（对未开放模块的私有成员反射会报错 --add-opens）。反射的典型应用——Spring 的 IoC（依赖注入/Bean 实例化）、MyBatis 的映射绑定、JUnit 的测试方法发现。",
+    "hints": [
+      "Class 对象在同一个类加载器中是缓存复用的（单例）——不是每次 Class.forName() 都新建",
+      "@Inherited 只对类上的注解有效，对方法/字段/接口上的注解无效"
+    ],
+    "tags": [
+      "Java",
+      "反射",
+      "注解",
+      "JVM"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Java 泛型类型擦除",
+    "content": "关于 Java 泛型的类型擦除（Type Erasure），以下哪项描述是正确的？",
+    "options": [
+      "A) List<String> 和 List<Integer> 在运行时是同一个 Class 对象",
+      "B) 可以在运行时通过 getClass() 获取泛型参数类型",
+      "C) new T() 在泛型方法中是合法操作",
+      "D) 泛型方法在编译后不会进行类型擦除"
+    ],
+    "answer": "答案：A) List<String> 和 List<Integer> 在运行时是同一个 Class 对象\n\n解析：Java 泛型通过类型擦除实现——编译时检查类型安全，运行时移除类型参数信息。List<String> 和 List<Integer> 在运行时都是 List（原始类型）。B 错：类型擦除后运行时无法获取泛型参数（除非通过特定手段如 ParameterizedType 取父类的泛型参数）。C 错：T 被擦除后变为 Object，new T() 没有任何语义。D 错：泛型方法同样进行类型擦除。\n\n扩展延伸：类型擦除的影响——1）不能使用 instanceof T（运行时不知道 T 是什么）。2）不能创建泛型数组（new T[] 非法）。3）重载冲突——`void foo(List<String>)` 和 `void foo(List<Integer>)` 擦除后都是 `void foo(List)`，不能作为重载方法。保留泛型信息的方法——1）通过 TypeReference 匿名类的 getGenericSuperclass() 获取父类的泛型参数（Spring 和 Jackson 使用此技巧）。2）通过方法参数保留泛型信息（Java reflection 的 Method.getGenericParameterTypes()）。C# 的泛型是 reified（运行时保留类型信息），Java 的设计选择是为了保持向后兼容（Java 5 之前的代码无需修改即可运行在泛型版本中）。",
+    "hints": [
+      "Java 泛型是编译期行为——编译后类型参数被擦除为上限类型（通常是 Object）",
+      "通过 TypeReference/ParameterizedType 技巧可以在运行时获取泛型参数——利用匿名子类保留超类的泛型信息"
+    ],
+    "tags": [
+      "Java",
+      "泛型",
+      "类型擦除",
+      "JVM"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Java 内存模型与可见性",
+    "content": "在 Java 内存模型（JMM）中，以下关于可见性的描述哪一项是正确的？",
+    "options": [
+      "A) 一个线程修改了 volatile 变量，其他线程立即可见（保证可见性）",
+      "B) synchronized 块内对一个普通变量的修改，在该线程退出 synchronized 块后其他线程立即可见",
+      "C) final 字段在构造器中初始化完成后，其他线程一定能在对象引用发布后看到正确的 final 值",
+      "D) 以上全部正确"
+    ],
+    "answer": "答案：D) 以上全部正确\n\n解析：JMM 的可见性保证——volatile 变量的写操作立即刷新到主内存，读操作从主内存读取（不会读到缓存值），保证可见性。synchronized 的可见性由管程（Monitor）的进入和退出保证——退出 synchronized 块时线程的本地内存刷新到主内存。final 字段的特殊语义——构造器正确初始化 final 字段后，其他线程看到该对象引用时一定看到正确的 final 值（但不能保证看到构造器中非 final 字段的正确值——因为可能发生重排序）。\n\n扩展延伸：Happens-Before 规则——1）程序顺序规则：同一个线程中的每个操作 happens-before 其后的任意操作。2）monitor 锁规则：一个锁的解锁 happens-before 后续对这个锁的加锁。3）volatile 规则：对 volatile 变量的写 happens-before 后续对该 volatile 变量的读。4）传递性：A happens-before B, B happens-before C → A happens-before C。5）start 规则：线程的 start() happens-before 该线程中的任何操作。6）join 规则：线程中的所有操作 happens-before 其他线程对该线程的 join() 返回。双重检查锁定（DCL）加 volatile——单例模式中 instance 需要声明为 volatile（防止 new 操作的重排序导致另一个线程看到未完全初始化的对象）。",
+    "hints": [
+      "Happens-Before 是 JMM 的核心——定义了多线程共享变量的可见性规则",
+      "final 字段在构造器正确初始化后被其他线程安全可见——但 this 逸出（构造器中传递 this 引用）会破坏此保证"
+    ],
+    "tags": [
+      "Java",
+      "JMM",
+      "可见性",
+      "并发"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "Java 异常体系",
+    "content": "关于 Java 的异常体系，下列哪项描述是正确的？",
+    "options": [
+      "A) Error 类异常需要开发者在代码中捕获处理，否则无法编译",
+      "B) RuntimeException 及其子类属于受检异常（Checked Exception）",
+      "C) 如果父类方法没有声明 throws 异常，子类重写方法也不能声明抛出受检异常",
+      "D) finally 块中的 return 语句会在 try 块 return 之前执行，因此 finally 的 return 会覆盖 try 的 return"
+    ],
+    "answer": "答案：C) 如果父类方法没有声明 throws 异常，子类重写方法也不能声明抛出受检异常\n\n解析：子类重写方法抛出的受检异常范围不能大于父类方法声明的异常范围（Liskov 替换原则）。Error 及其子类属于非受检异常（Unchecked Exception），不需要也不应该捕获。RuntimeException 及其子类属于非受检异常（Unchecked Exception）。D：finally 块在 try 的 return 之前执行，但 finally 中的 return 会覆盖 try 的返回值——这是 Java 的陷阱（try 中计算返回值存入栈，finally 修改返回值变量不影响已存入的返回值，除非 finally 也有 return）。\n\n扩展延伸：异常设计——1）受检异常（Checked Exception）：必须处理的异常（IOException、SQLException）。方法签名中 throws 声明→调用者必须 try-catch 或继续 throws。2）非受检异常（Unchecked Exception）：包括 RuntimeException（NullPointerException、IllegalArgumentException、IndexOutOfBoundsException）和 Error（OutOfMemoryError、StackOverflowError）。3）异常开销：创建异常需要填充栈轨迹（fillInStackTrace），这是主要开销。自定义异常时可以用 `protected` 构造器禁用栈轨迹填充来优化（`super(message, cause, enableSuppression, writableStackTrace)`）。最佳实践——不要用异常控制正常流程（异常应留给真正的异常情况）。不要 catch Exception 或 Throwable（范围太大）。finally 中不要有 return。尽量用更具体的异常类。",
+    "hints": [
+      "子类重写方法不能抛出比父类更宽泛的受检异常——这是 Liskov 替换原则（LSP）的要求",
+      "finally 中的 return 会覆盖 try 中的 return——这是 Java 的陷阱，可能隐藏异常"
+    ],
+    "tags": [
+      "Java",
+      "异常",
+      "Exception",
+      "编程规范"
+    ]
+  },
+  {
+    "category": "java",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Java NIO 与零拷贝",
+    "content": "关于 Java NIO 的零拷贝（Zero-Copy）技术，下列哪项描述是正确的？",
+    "options": [
+      "A) FileChannel.transferTo() 实现了零拷贝，数据在内核空间直接从一个文件描述符传输到另一个，不需要经过用户空间",
+      "B) 零拷贝是指数据在传输过程中不需要任何 Copy 操作",
+      "C) MappedByteBuffer 使用堆外内存（Direct Memory）映射文件，其内存分配和回收不受 JVM GC 管理",
+      "D) DirectByteBuffer 分配的内存不受 -Xmx 参数限制"
+    ],
+    "answer": "答案：A) FileChannel.transferTo() 实现了零拷贝，数据在内核空间直接从一个文件描述符传输到另一个，不需要经过用户空间\n\n解析：FileChannel.transferTo() 在底层调用操作系统的 sendfile（Linux）系统调用，数据从磁盘→内核缓冲区→Socket 缓冲区（两次 DMA 拷贝），不需要经过 JVM 堆内存（用户空间→内核空间的切换）。零拷贝是指「不需要 CPU 参与数据拷贝（DMA 代替 CPU 拷贝）」+「不需要经过用户空间」。B 错：零拷贝并非没有拷贝——DMA 拷贝仍然存在，是减少 CPU 拷贝和上下文切换。\n\n扩展延伸：NIO 核心组件——1）Channel（通道）：与 Buffer 配合，双向数据传输（FileChannel、SocketChannel、ServerSocketChannel）。2）Buffer（缓冲区）：ByteBuffer（HeapByteBuffer/DirectByteBuffer）、CharBuffer、IntBuffer 等。position/limit/capacity 三个指针。3）Selector（选择器）：一个线程管理多个 Channel 的 IO 事件（多路复用）。DirectByteBuffer vs HeapByteBuffer——DirectByteBuffer 在堆外分配内存（Native Memory），读写时减少用户空间→内核空间的拷贝。创建和回收成本高（不适合小缓冲区）。不受 -Xmx 限制（受 -XX:MaxDirectMemorySize 限制）。MappedByteBuffer 基于 mmap（内存映射文件）——将文件映射到虚拟内存，通过读写内存操作文件（性能接近零拷贝但不完全是 sendfile）。MappedByteBuffer 的回收依赖于 GC（可能导致文件句柄泄漏）。",
+    "hints": [
+      "零拷贝（Zero-Copy）不是零次拷贝——而是减少 CPU 拷贝和内核态/用户态切换（用 DMA 替代 CPU 拷贝）",
+      "DirectByteBuffer（堆外内存）不受 -Xmx 控制——受 -XX:MaxDirectMemorySize（默认等于 -Xmx）控制"
+    ],
+    "tags": [
+      "Java",
+      "NIO",
+      "零拷贝",
+      "IO"
+    ]
   }
 ]
