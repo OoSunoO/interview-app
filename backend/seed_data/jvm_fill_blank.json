@@ -148,5 +148,55 @@
     "answer": "{\"correct\":[[\"逃逸对象\",\"逃逸\"],[\"栈\",\"栈上\",\"虚拟机栈\"],[\"TLAB\"],[\"无锁分配\",\"快速分配\"]],\"distractors\":[\"堆上分配\",\"标量替换\",\"锁消除\",\"同步分配\"]}",
     "hints": ["逃逸分析在 JDK 6u23+ 默认开启（-XX:+DoEscapeAnalysis）", "TLAB 默认开启（-XX:+UseTLAB），可通过 -XX:TLABSize 调整大小"],
     "tags": ["JVM", "逃逸分析", "TLAB", "优化"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "三色标记法与并发标记",
+    "content": "三色标记法将对象分为三种颜色：___（未被 GC 访问过）、___（自身已扫描但引用的对象尚未全部扫描）和___（自身和引用的对象都已扫描完成，安全可回收）。CMS/G1 在并发标记阶段遇到的问题：___（标记过程中黑色对象引用了白色对象且该白色对象被灰色对象移除了引用）需要用到___（增量更新/CMS 或 SATB/G1）来解决。",
+    "answer": "{\"correct\":[[\"白色\",\"White\"],[\"灰色\",\"Gray\"],[\"黑色\",\"Black\"],[\"对象消失问题\",\"漏标问题\"],[\"写屏障\",\"Write Barrier\"]],\"distractors\":[\"红色\",\"蓝色\",\"标记清除\",\"计数器\",\"读屏障\"]}",
+    "hints": ["三色标记中如果黑色对象引用了新的白色对象且灰色到该白色对象的引用已经消失，会导致白色对象被错误回收", "CMS 使用增量更新（Incremental Update）解决对象消失问题，G1 使用 SATB（Snapshot At The Beginning）"],
+    "tags": ["JVM", "GC", "三色标记", "并发"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "安全点（SafePoint）与安全区域",
+    "content": "安全点（SafePoint）是线程执行到某处时___信息是完整可描述的状态——JVM 在该位置执行 GC 等全局操作。线程在安全点通过___（轮询标志位）机制响应 GC 请求。安全区域（SafeRegion）是线程不执行 Java 代码时（如___或___状态）的区域，线程在这个区域时不需要响应 GC 请求但需要记录自己已经进入安全区域。",
+    "answer": "{\"correct\":[[\"堆栈\",\"栈\",\"线程\"],[\"轮询\"],[\"Blocked\",\"阻塞\"],[\"Sleep\",\"休眠\"]],\"distractors\":[\"缓存\",\"内存\",\"中断\",\"运行\",\"等待\"]}",
+    "hints": ["安全点通常设置在循环末尾、方法返回前、可能抛异常的位置等「长时间运行」的指令之后", "JIT 编译的代码中，安全点轮询通常通过一个简单的内存加载指令实现——读一个特定内存页"],
+    "tags": ["JVM", "安全点", "GC", "SafePoint"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "双亲委派模型",
+    "content": "JVM 类加载器按双亲委派模型工作：当一个类加载器收到类加载请求时，先将请求___给父类加载器（依次向上委派，直到 Bootstrap ClassLoader），只有当___（父类加载器找不到该类）时，才由当前类加载器尝试___。三个核心类加载器：___（加载 rt.jar）、___（加载 JRE/lib/ext）、Application ClassLoader（加载 CLASSPATH）。",
+    "answer": "{\"correct\":[[\"委派\",\"委托\"],[\"父类加载器加载失败\"],[\"自行加载\"],[\"Bootstrap ClassLoader\",\"启动类加载器\"],[\"Extension ClassLoader\",\"扩展类加载器\"]],\"distractors\":[\"执行\",\"缓存\",\"Platform ClassLoader\",\"System ClassLoader\",\"URL ClassLoader\"]}",
+    "hints": ["双亲委派模型保证了 Java 核心类库的安全性——核心类由 Bootstrap ClassLoader 加载，不会被自定义类替换", "破坏双亲委派模型的典型例子是 Tomcat——每个 Web App 独立加载类实现应用隔离"],
+    "tags": ["JVM", "类加载", "双亲委派", "类加载器"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "堆外内存与 DirectByteBuffer",
+    "content": "DirectByteBuffer 通过___方法分配堆外内存（Direct Memory），不受 JVM 堆大小限制（由___参数或操作系统控制上限）。堆外内存相对于堆内内存的优势：___（减少一次从堆到堆外的拷贝）、减少 GC 压力（不占用 GC Roots 扫描和对象移动的开销）。缺点：需要手动管理内存（通过___实现自动回收），内存释放不及时可能导致___。",
+    "answer": "{\"correct\":[[\"ByteBuffer.allocateDirect()\",\"allocateDirect\"],[\"-XX:MaxDirectMemorySize\"],[\"零拷贝\",\"减少拷贝\"],[\"Cleaner\",\"虚引用\",\"PhantomReference\"],[\"堆外内存泄漏\",\"Direct Memory OOM\"]],\"distractors\":[\"malloc\",\"-Xmx\",\"堆内\",\"手动释放\",\"栈溢出\"]}",
+    "hints": ["堆外内存的释放依赖于 GC 触发 Cleaner 的 run() 方法，如果堆内存充足不触发 GC，堆外内存可能一直不会释放", "Netty 使用 PooledByteBufAllocator 池化堆外内存，避免频繁分配和回收"],
+    "tags": ["JVM", "堆外内存", "DirectByteBuffer", "NIO"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Java 对象创建过程",
+    "content": "JVM 创建一个 Java 对象（如 new Object()）的完整过程：1）___检查（能否在常量池中找到类的符号引用并验证类是否已加载）；2）如果类未加载则执行___（加载→验证→准备→解析→初始化）；3）___（在堆上分配对象内存，TLAB 优先）；4）___（将对象头外的内存区域初始化为零值）；5）设置___（Mark Word + Klass Pointer）；6）执行___（按照 父类变量初始化→父类构造代码块→父类构造函数→子类变量初始化→子类构造代码块→子类构造函数 的顺序）。",
+    "answer": "{\"correct\":[[\"类加载\"],[\"类加载\",\"类加载过程\"],[\"分配内存\"],[\"零值初始化\"],[\"对象头\",\"对象头信息\"],[\"<init>\",\"实例构造器\",\"初始化方法\"]],\"distractors\":[\"权限检查\",\"常量检查\",\"设置引用\",\"分配栈空间\",\"<clinit>\",\"静态初始化\"]}",
+    "hints": ["对象创建过程中，零值初始化（Step 4）保证了 Java 对象的成员变量在不赋值时也有默认值", "<init> 和 <clinit> 的区别：前者是实例初始化方法（每次 new 都执行），后者是类初始化方法（类加载时执行一次）"],
+    "tags": ["JVM", "对象创建", "初始化", "new"]
   }
 ]

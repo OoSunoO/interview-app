@@ -148,5 +148,55 @@
     "answer": "{\"correct\":[[\"回调链\",\"回调\"],[\"同步转换\",\"转换\"],[\"所有完成\",\"全部完成\"],[\"任意完成\",\"任一完成\"]],\"distractors\":[\"轮询\",\"阻塞\",\"通知\",\"信号\"]}",
     "hints": ["thenApply 和 thenCompose 的区别类似于 Optional 的 map 和 flatMap", "allOf 返回的 CompletableFuture 在全部任务完成时触发，但类型是 Void，需要用 get() 等待"],
     "tags": ["并发", "CompletableFuture", "异步"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "线程池核心参数",
+    "content": "ThreadPoolExecutor 的核心参数包括：corePoolSize（___）、maximumPoolSize（___）、keepAliveTime（___）、workQueue（___）、以及 RejectedExecutionHandler（___）。线程池的工作原理：当任务数超过 corePoolSize 时，新任务会放入___；当队列满时，会创建新线程直到___；超过该阈值后执行___。",
+    "answer": "{\"correct\":[[\"核心线程数\",\"常驻线程数\"],[\"最大线程数\"],[\"空闲线程存活时间\"],[\"任务队列\",\"阻塞队列\"],[\"拒绝策略\"],[\"阻塞队列\",\"任务队列\"],[\"maximumPoolSize\",\"最大线程数\"],[\"拒绝策略\",\"RejectedExecutionHandler\"]],\"distractors\":[\"临时线程\",\"缓冲队列\",\"线程工厂\",\"工作窃取\"]}",
+    "hints": ["workQueue 的三种常见类型：SynchronousQueue（直接提交）、LinkedBlockingQueue（无界队列）、ArrayBlockingQueue（有界队列）", "线程池的 corePoolSize 和 maximumPoolSize 设为相同值时不会创建临时线程"],
+    "tags": ["并发", "线程池", "ThreadPoolExecutor"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "synchronized 与 Lock 的对比",
+    "content": "synchronized 是 JVM 层面的___锁（退出同步块时自动释放），Lock 是 JDK 层面的___锁（必须在 finally 中释放）。Lock 提供了 synchronized 不具备的功能：___（尝试获取锁失败不阻塞）、___（可中断等待锁）、___（公平性选择）。",
+    "answer": "{\"correct\":[[\"隐式\"],[\"显式\"],[\"tryLock\",\"非阻塞获取\"],[\"lockInterruptibly\"],[\"公平锁\",\"公平性\"]],\"distractors\":[\"自旋\",\"重入\",\"共享\",\"互斥\"]}",
+    "hints": ["JDK 6 对 synchronized 做了大量优化（锁升级），性能已接近 Lock", "Lock 的 lockInterruptibly() 方法允许在等待锁时响应中断"],
+    "tags": ["并发", "锁", "synchronized", "Lock"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "伪共享（False Sharing）与缓存行填充",
+    "content": "CPU 缓存以___为单位加载和同步数据（x86 默认 64 字节）。伪共享指多个线程修改同一缓存行中的___变量导致频繁的___，尽管它们操作的是___变量。Java 中通过___（JDK 8 注解）或手动填充___字节来避免伪共享。",
+    "answer": "{\"correct\":[[\"缓存行\",\"Cache Line\"],[\"不同\",\"多个\"],[\"缓存同步\",\"缓存一致性\",\"缓存失效\",\"MESI 协议\"],[\"不同\",\"独立\"],[\"@Contended\",\"@jdk.internal.vm.annotation.Contended\"],[\"64\"]],\"distractors\":[\"页\",\"相同\",\"上下文切换\",\"无需填充\"]}",
+    "hints": ["伪共享是高并发程序性能损耗的隐蔽原因——通过 CPU 性能计数器（perf stat -e cache-misses）可以检测", "Disruptor 框架广泛使用缓存行填充来达到极致性能"],
+    "tags": ["并发", "缓存", "伪共享", "性能"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JMM 抽象与内存屏障",
+    "content": "Java 内存模型（JMM）规定所有变量存储在主内存，每个线程拥有自己的___（存储变量的副本）。线程间变量值的传递通过主内存完成。JMM 通过___（4 种指令类型：LoadLoad、StoreStore、___、StoreLoad）限制了编译器和 CPU 的指令重排序。volatile 读会在其后插入___屏障，volatile 写会在其前后插入___屏障。",
+    "answer": "{\"correct\":[[\"工作内存\",\"本地内存\",\"线程栈\"],[\"内存屏障\",\"Memory Barrier\"],[\"LoadStore\"],[\"LoadLoad\",\"LoadLoad+LoadStore\"],[\"StoreStore\",\"StoreStore+StoreLoad\"]],\"distractors\":[\"共享内存\",\"堆内存\",\"寄存器\",\"锁\"]}",
+    "hints": ["final 关键字也在 JMM 中有特殊的可见性保证——构造函数中对 final 字段的写入在构造完成前对其他线程可见", "StoreLoad 内存屏障是四种屏障中最重的，x86 架构上等同于 mfence 指令"],
+    "tags": ["并发", "JMM", "内存屏障", "重排序"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ConcurrentHashMap 原理",
+    "content": "JDK 7 的 ConcurrentHashMap 使用___（Segment 继承 ReentrantLock）实现分段锁，最多支持___个 Segment 并发写入。JDK 8 的 ConcurrentHashMap 改为使用___（CAS + synchronized）实现并发安全性。当 Node 数组中一个槽位有多个节点时（链表长度超过___），链表转换为___来提高查找性能。",
+    "answer": "{\"correct\":[[\"Segment\",\"分段锁\"],[\"16\"],[\"CAS + synchronized\",\"CAS+synchronized\"],[\"8\",\"TREEIFY_THRESHOLD\"],[\"红黑树\",\"TreeBin\"]],\"distractors\":[\"读写锁\",\"自旋锁\",\"32\",\"数组\",\"二叉树\"]}",
+    "hints": ["ConcurrentHashMap 的 size() 方法在 JDK 8 中通过 CounterCell 数组和 baseCount 组合计算", "JDK 8 的 ConcurrentHashMap 在弱一致性（get 不加锁）和强一致性之间做了权衡"],
+    "tags": ["并发", "ConcurrentHashMap", "集合", "CAS"]
   }
 ]

@@ -267,5 +267,90 @@
       "重试",
       "死信队列"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MQ 消息回溯与重置消费位点",
+    "content": "什么是消息回溯？Kafka 和 RocketMQ 分别如何支持重置消费位点（Offset）？",
+    "answer": "答案：消息回溯指的是重新消费已经消费过的历史消息。Kafka 通过重置消费组 Offset 实现消息回溯，RocketMQ 通过重置消费位点（按时间或按 Offset）实现。两者都支持按时间回溯或按指定位置回溯。\n\n解析：消息回溯的使用场景：1）消费逻辑 Bug——修复后重新消费最近一段时间的数据。2）数据清洗——重新处理历史数据进行修正。3）业务回滚——业务变更需要回退到某个时间点的状态。\n\n扩展延伸：Kafka 消息回溯——通过 kafka-consumer-groups.sh 工具重置 Offset：--to-earliest（回溯到最早）、--to-latest（跳到最新）、--to-datetime（按时间回溯）、--to-offset（按指定 Offset）。RocketMQ 可通过控制台或 API 重置消费位点：按时间重置（精确到毫秒）或按 Offset 重置。RocketMQ 的消费位点管理更灵活——Broker 端持久化消费进度。Kafka 的 Offset 提交到 __consumer_offsets Topic，默认保留 7 天。注意：消息回溯可能导致重复消费，消费端必须做好幂等。",
+    "hints": [
+      "Kafka 默认保留 7 天的消息数据，超过即无法回溯",
+      "RocketMQ 回溯可精确到毫秒级别"
+    ],
+    "tags": [
+      "消息队列",
+      "消息回溯",
+      "Offset"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kafka 消费者再均衡",
+    "content": "什么是 Kafka 消费者再均衡（Rebalance）？再均衡期间消费行为有何影响？如何优化？",
+    "answer": "答案：消费者再均衡是指消费组内分区所有权重新分配的过程。当消费者加入/退出/崩溃或分区数变化时触发。再均衡期间整个消费组停止消费（Stop The World），直到分配完成。\n\n解析：再均衡的发生条件：1）新消费者加入组。2）消费者超时离开组（session.timeout.ms 未发送心跳）。3）Topic 分区数变化。4）订阅的 Topic 列表变化。再均衡的影响：所有消费者暂停消费（Stop The World 状态），分区重新分配。注意：再均衡可能导致重复消费——新消费者接管分区后从上次提交的 Offset 开始消费，如果 Offset 未及时提交则重复消费。\n\n扩展延伸：Kafka 再均衡协议演变：1）Eager Rebalance（早期）——所有消费者撤销全部分区，再重新分配，影响最大。2）Cooperative Sticky（0.11+）——增量再均衡，逐步转移分区，减少全停顿。静态消费组（Static Group Membership）：Kafka 2.4+ 引入 group.instance.id，消费者重启时不触发再均衡（Session Timeout 内恢复即可）。优化策略：合理设置 session.timeout.ms（默认 45s）和 heartbeat.interval.ms（默认 3s），使用 Cooperative Rebalance 协议，使用静态消费组。",
+    "hints": [
+      "再均衡期间所有消费者暂停消费，对实时性要求高的业务有影响",
+      "静态消费组成员在重启期间不会触发再均衡"
+    ],
+    "tags": [
+      "消息队列",
+      "Kafka",
+      "消费者再均衡"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MQ 集群高可用与故障转移",
+    "content": "消息队列集群如何实现高可用？Kafka 和 RocketMQ 的故障转移机制分别是什么？",
+    "answer": "答案：MQ 集群高可用的核心是数据冗余（多副本）+ 自动故障转移。Kafka 基于 ISR 机制 + Controller 选举，RocketMQ 基于 DLedger（Raft）自动切换或手动 Master-Slave 切换。\n\n解析：Kafka 高可用架构：1）分区多副本（Replication Factor ≥ 2），Leader/Follower 分布在不同的 Broker 上。2）ISR（In-Sync Replicas）机制——只有 ISR 中的副本才有资格成为 Leader。3）当 Leader 宕机时，Controller 从 ISR 中选出一个新 Leader。4）min.insync.replicas 控制最小同步副本数，配合 acks=all 保证不丢数据。\n\n扩展延伸：RocketMQ 高可用：1）传统模式——Master-Slave 架构，Master 挂了需要手动切换到 Slave。2）DLedger（Raft）模式——RocketMQ 4.5+，基于 Raft 协议自动 Leader 选举，多副本自动切换。3）DLedger CommitLog 取代原生 CommitLog，三节点部署。Kafka vs RocketMQ 高可用对比：Kafka 天生分布式（所有节点对等），Controller 负责元数据管理。RocketMQ 的 NameServer 集群无状态（不对等通信），Broker 通过心跳注册自己。",
+    "hints": [
+      "Kafka 的 Controller 和 RocketMQ 的 NameServer 职责本质不同",
+      "min.insync.replicas=2 + acks=all 确保即使一个副本宕机也不丢数据"
+    ],
+    "tags": [
+      "消息队列",
+      "高可用",
+      "故障转移"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RocketMQ NameServer 架构",
+    "content": "RocketMQ 的 NameServer 的作用是什么？为什么 NameServer 之间不互相通信？",
+    "answer": "答案：NameServer 是 RocketMQ 的注册中心和路由信息中心。核心功能：Broker 注册与发现、Topic 路由信息管理。NameServer 之间不互相通信——每个 NameServer 独立维护全量路由信息，通过 Broker 的心跳保证最终一致性。\n\n解析：NameServer 的核心职责：1）Broker 管理——接收 Broker 注册（含 BrokerName、地址、Cluster 信息），通过心跳检测（每 30s 一次）维护 Broker 存活列表。2）路由管理——每个 NameServer 存储全量 Topic → Broker Queue 的路由信息。Producer 和 Consumer 从 NameServer 获取 Topic 路由信息。3）不互相通信的设计哲学——降低复杂度，NameServer 设计为无状态（路由信息只在内存中，不持久化），Broker 向所有 NameServer 注册保证最终一致性。\n\n扩展延伸：NameServer 与 Zookeeper/ETCD 对比：1）NameServer 无选举/一致性协议，每个节点独立，设计更简单但功能局限。2）Zookeeper 有 ZAB 协议保证强一致性，用于 Kafka 早期版本（Kafka 2.8+ 已移除 ZK 依赖，基于 KRaft）。3）ETCD 有 Raft 协议。NameServer 的部署建议：至少 2 台（避免单点），通常 3 台。Producer 会在本地缓存路由信息（每 30s 刷新一次），即使 NameServer 全部宕机，Producer 仍能根据缓存继续发消息到已连接的 Broker。",
+    "hints": [
+      "NameServer 设计成无状态——每个 NameServer 独立维护全量路由",
+      "NameServer 全部宕机不会立即影响正在运行的生产消费"
+    ],
+    "tags": [
+      "消息队列",
+      "RocketMQ",
+      "NameServer"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MQ 流量控制与背压",
+    "content": "消息队列如何实现流量控制和背压（Backpressure）？生产者和消费者端各有什么限流策略？",
+    "answer": "答案：MQ 的流量控制涵盖 Producer 端限流、Broker 端限流（流控 + 背压检测）、Consumer 端消费速率控制。核心目标是防止生产速度超过消费速度导致系统崩溃。\n\n解析：Producer 端限流方法：1）消息发送速率限制——客户端使用 RateLimiter（令牌桶/漏桶）限制发送 QPS。2）同步发送的阻塞反馈——同步发送时 Broker 拒绝会直接抛异常。3）异步发送的回调——异步发送时通过回调感知 Broker 的压力。\n\n扩展延伸：Broker 端限流机制：1）RocketMQ Broker 流控——当消息堆积超过内存阈值（brokerOomProtect），Broker 主动拒绝 Producer 请求。2）Kafka 的 Quota 控制——producer_byte_rate 和 consumer_byte_rate 限制网络带宽使用。3）背压（Backpressure）——Kafka 的客户端使用 max.in.flight.requests.per.connection（默认 5）限制未确认请求数，当 Broker 处理不过来时自动降速。消费端限流策略：1）拉取频率控制——Kafka 的 fetch.max.bytes 和 max.poll.records 控制每次拉取量。2）RocketMQ 的 consumeThreadMin/Max 控制消费并发度，pullBatchSize 控制批量拉取量。3）下游保护——消费端根据下游处理能力动态调整拉取速率（使用令牌桶或动态探测）。消息堆积告警——当消费堆积超过阈值（消息数/延迟时间）触发报警，自动扩容消费者或降级非核心业务。",
+    "hints": [
+      "RocketMQ 的 brokerOomProtect 机制——当内存使用率超过阈值直接拒绝请求",
+      "Kafka 的 max.in.flight.requests 是一种天然的背压机制"
+    ],
+    "tags": [
+      "消息队列",
+      "流量控制",
+      "背压"
+    ]
   }
 ]

@@ -194,5 +194,90 @@
       "消息队列",
       "Kafka"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计即时通讯系统（IM）",
+    "content": "如何设计一个支持亿级用户的即时通讯系统？需要重点考虑哪些架构问题？",
+    "answer": "答案：IM 系统核心架构分层：接入层（长连接管理）、逻辑层（消息路由/状态管理）、存储层（消息持久化/离线消息）。核心挑战：高并发长连接、消息有序与可靠投递、多端同步。\n\n解析：1）接入层——使用 Netty 维护海量 WebSocket/TCP 长连接，连接状态存 Redis（轻量，不占 DB）。长连接心跳保活（每 30s 一次），超时断开。2）消息路由——每个用户分配一个 ConnectionID 绑定到具体 Gateway 节点。消息先发到 MQ 做异步削峰，Logic 层消费后推送到接收方所在的 Gateway。3）消息有序——同一会话的消息按 SeqID 排序，使用时间戳 + 自增序列号。\n\n扩展延伸：业界主流架构对比：1）微信——自研 MMTP 协议，做大规模连接收敛和分布式一致性。2）Telegram——MTProto，端到端加密，分布式数据中心同步。3）开源方案——OpenFire（XMPP 协议）、TeamTalk（蘑菇街开源）。推拉结合：在线用户 Push（实时推送），离线用户下次登录时 Pull（拉取离线消息）。离线消息存在 DB，拉取后标记已读。多端同步方案：每个设备独立 Offset，服务端按设备纬度记录已读位置。",
+    "hints": [
+      "长连接的扩容比 HTTP 连接复杂——需要考虑连接迁移",
+      "IM 系统的消息可靠性要求比普通消息推送高一个数量级"
+    ],
+    "tags": [
+      "系统设计",
+      "IM",
+      "即时通讯"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计 Feed 流系统",
+    "content": "如何设计一个类似微博/朋友圈的 Feed 流系统？推模式和拉模式各有什么优劣？",
+    "answer": "答案：Feed 流架构的核心问题是「推 vs 拉」：推模式（Fan-out on Write）——发布时写入所有粉丝的收件箱；拉模式（Fan-out on Read）——读取时聚合关注者内容。业界普遍使用推拉结合。\n\n解析：推模式的流程：用户发帖 → 查询粉丝列表 → 将帖子 ID 写入每个粉丝的收件箱（Redis List）。优点：读取延迟低（O(1)），适合大 V 之外的普通用户。缺点：大 V 粉丝太多时写放大严重。拉模式的流程：用户刷 Feed → 查询关注者列表 → 聚合每个关注者的最新帖子 → 按时间排序返回。优点：写操作轻量，适合大 V。缺点：读取时延迟高，需要实时聚合。\n\n扩展延伸：推拉结合方案（混合架构）：1）普通用户（粉丝数 < N，如 10 万）→ 推模式，主动写入粉丝收件箱。2）大 V（粉丝数 > N）→ 拉模式，粉丝读取时拉取大 V 的帖子再合并。冷热数据分离：热数据在 Redis（最近 7 天），冷数据在 MySQL/对象存储。Feed 分页使用 Cursor 分页（基于时间戳 + ID），不适用传统 Offset 分页——新内容插入会导致分页偏移。",
+    "hints": [
+      "推模式写放大和拉模式读放大是 Feed 系统的核心矛盾",
+      "大 V 的粉丝列表缓存需要分层——不能一个 Key 存所有粉丝 ID"
+    ],
+    "tags": [
+      "系统设计",
+      "Feed 流",
+      "推拉模式"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计权限系统（RBAC）",
+    "content": "如何设计一个通用的权限管理系统？RBAC 模型的核心要素是什么？",
+    "answer": "答案：RBAC（Role-Based Access Control）的核心要素：用户（User）、角色（Role）、权限（Permission）。用户归属于角色，角色拥有权限集合。核心原则：用户不直接关联权限，通过角色间接绑定。\n\n解析：RBAC 三层模型：1）User → Role（多对多）——一个用户可以有多个角色，一个角色包含多个用户。2）Role → Permission（多对多）——角色是权限的集合，权限粒度可以是页面/按钮/API 级别。3）Permission 由 Resource + Operation 组成（如「订单模块-删除操作」）。核心接口：CreateUser、AssignRole、CreateRole、AddPermissionToRole、CheckPermission(user, resource, operation) → bool。\n\n扩展延伸：RBAC 的变体：1）RBAC1——角色继承（Role Hierarchy），上级角色自动拥有下级角色的权限。2）RBAC2——约束（静态职责分离 SSD：用户不能同时拥有互斥角色；动态职责分离 DSD：同一会话中不能同时激活互斥角色）。3）ABAC（Attribute-Based Access Control）——基于属性的动态权限（如「部门经理只能查看本部门的订单」），比 RBAC 更灵活但实现复杂。缓存策略：权限缓存到 Redis（用户 → 权限集合），变更时删除缓存。权限验证流程：用户请求 → 拦截器获取用户 ID → 查 Redis/DB 获取权限集 → 鉴权 → 通过/拒绝。",
+    "hints": [
+      "RBAC 的核心优势是解耦——用户和权限通过角色间接关联，便于管理",
+      "权限的变更需要实时生效还是可以容忍缓存延迟"
+    ],
+    "tags": [
+      "系统设计",
+      "权限系统",
+      "RBAC"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计对象存储系统",
+    "content": "如何设计一个类似 S3 的对象存储系统？核心架构和数据分布策略是什么？",
+    "answer": "答案：对象存储的核心架构包括：接入层（Gateway/Proxy）、元数据层（Metadata Service）、数据层（Storage Node）。核心设计要点：扁平命名空间（Bucket + Object Key）、数据分布（一致性哈希/分片）、冗余策略（多副本/EC）、强一致性。\n\n解析：1）扁平命名空间——所有对象存放在 Bucket 中，通过 Object Key 全局唯一寻址，无目录层级（但 Key 可含 / 模拟目录）。2）数据分布——一致性哈希环（Virtual Node 解决分布不均），将 Object Key Hash 映射到存储节点。3）冗余——多副本（3 副本，跨机架/可用区）或纠删码 EC（12+4 方案，存储效率更高但恢复开销大）。4）元数据——存储 Bucket 列表、Object 元信息（大小/ETag/创建时间/位置），使用分布式 KV 存储（ETCD/Cassandra/TiKV）。\n\n扩展延伸：S3 的核心特性难点：1）强一致性（S3 在 2020 年后提供写后读一致性）——写入后立即读取必须返回最新值，通过 Quorum 机制 + 版本向量实现。2）大文件分片上传（Multipart Upload）——将大文件分成 5MB~5GB 的 Part，支持并发上传和断点续传。3）生命周期管理——自动将冷数据沉降到低频/归档存储，过期自动删除。EC vs 多副本：3 副本的存储开销 300%，EC（12+4）的存储开销约 133%，但 EC 的恢复需要读取 12 个分片——计算负载高。",
+    "hints": [
+      "对象存储不适用于随机读写场景——对象一旦写入不可修改，只能覆盖删除",
+      "小文件存储（< 1MB）需要特殊优化——合并存储减少元数据压力"
+    ],
+    "tags": [
+      "系统设计",
+      "对象存储",
+      "S3"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计搜索引擎",
+    "content": "如何设计一个搜索引擎？倒排索引的核心原理是什么？搜索的召回和排序分别如何实现？",
+    "answer": "答案：搜索引擎核心流程：爬虫抓取（Crawler）→ 文档预处理（分词/去停用词）→ 建立倒排索引 → 查询解析 → 召回（Recall）→ 排序（Ranking）。倒排索引是搜索引擎的核心数据结构——以词（Term）为 Key，文档 ID 列表为 Value。\n\n解析：倒排索引的构建：1）文档分词（中文用 jieba/IK，英文用空格分词）→ 去停用词 → 术语归一化（大小写/词干提取）。2）构建 Term → DocID 列表映射，可附加位置信息（支持短语搜索）和 Term 频率（TF，用于排序）。3）索引写入磁盘时分层（Segment/LSM Tree 思想），定期合并减少层级。\n\n扩展延伸：召回阶段（Recall）：1）布尔模型——AND/OR/NOT 组合查询，返回匹配文档集合。2）向量空间模型（VSM）——将查询和文档表示为 TF-IDF 向量，计算余弦相似度。3）语义检索（BERT/Dense Embedding）——将 query 和 doc 编码为向量，ANN 近邻搜索（HNSW 算法）召回。排序阶段（Ranking）：1）BM25——现代搜索引擎最广泛使用的排序算法，考虑 TF/IDF/文档长度归一化。2）Learning to Rank（LTR）——GBDT/RankNet/LambdaRank 等机器学习排序。3）业务排序——在上一步基础上叠加业务策略（时效性/个性化/广告竞价）。搜索引擎中的 Cache 策略：热门 Query 结果缓存到 Redis（短时间 TTL 如 1min），冷 Query 走完整链路。",
+    "hints": [
+      "倒排索引本质是空间换时间——预计算 Term→Doc 映射来加速查询",
+      "搜索引擎的排序权重设计是核心竞争力——BM25 是公认的基准排序算法"
+    ],
+    "tags": [
+      "系统设计",
+      "搜索引擎",
+      "倒排索引"
+    ]
   }
 ]
