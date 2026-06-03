@@ -98,5 +98,55 @@
     "answer": "{\"correct\":[[\"CountDownLatch\",\"倒计时门闩\"],[\"CyclicBarrier\",\"循环屏障\"],[\"Semaphore\",\"信号量\"]],\"distractors\":[\"Exchanger\",\"Phaser\",\"ReadWriteLock\",\"StampedLock\"]}",
     "hints": ["CountDownLatch 的 countDown() 和 await() 配合使用", "CyclicBarrier 的 reset() 可以重置屏障"],
     "tags": ["并发", "同步器"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ReadWriteLock / StampedLock",
+    "content": "ReadWriteLock 分离读锁和写锁，___（读读不互斥）、___（读写互斥）、___（写写互斥）。StampedLock 在 ReadWriteLock 的基础上增加了___模式，支持乐观读且无需获取锁。",
+    "answer": "{\"correct\":[[\"读锁\",\"读\"],[\"写锁\",\"写\"],[\"写锁\",\"写\"],[\"乐观读\",\"乐观锁\"]],\"distractors\":[\"自旋锁\",\"公平锁\",\"悲观锁\",\"共享锁\"]}",
+    "hints": ["StampedLock 的乐观读不需要 CAS 操作，性能比 ReadWriteLock 更好", "StampedLock 不可重入，使用时需注意"],
+    "tags": ["并发", "锁", "ReadWriteLock", "StampedLock"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "LockSupport 与线程阻塞原语",
+    "content": "LockSupport 的 park()/unpark() 基于___机制，与 Object.wait/notify 相比：不需要在___块中使用、unpark 可以___（可以先 unpark 再 park）、响应中断时通过___标志位返回而不是抛出异常。",
+    "answer": "{\"correct\":[[\"许可证\",\"Permit\",\"许可\"],[\"synchronized\",\"同步\"],[\"提前调用\",\"先于 park 调用\"],[\"interrupted\",\"中断\"]],\"distractors\":[\"信号量\",\"锁\",\"wait\",\"notify\"]}",
+    "hints": ["unpark 相当于发放一个许可证，park 相当于等待一个许可证", "AQS 的底层线程阻塞就是基于 LockSupport.park() 实现的"],
+    "tags": ["并发", "LockSupport", "线程"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "ThreadLocal 内存泄漏",
+    "content": "ThreadLocal 每个线程维护一个___（ThreadLocalMap），key 是 ThreadLocal 实例的___（弱引用），value 是线程局部变量。使用完后必须调用___清理，否则在线程池场景下线程复用会导致___。",
+    "answer": "{\"correct\":[[\"ThreadLocalMap\",\"threadLocals\"],[\"弱引用\",\"WeakReference\"],[\"remove()\",\"remove\"],[\"内存泄漏\",\"OOM\",\"值残留\"]],\"distractors\":[\"强引用\",\"软引用\",\"clear()\",\"reset()\"]}",
+    "hints": ["ThreadLocalMap 中 key 是弱引用但 value 是强引用——key 被回收后 value 无法被访问也无法被回收", "Tomcat 等 Web 容器使用线程池，请求结束后不清理 ThreadLocal 会导致下次请求读到上次的用户数据"],
+    "tags": ["并发", "ThreadLocal", "内存"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "ForkJoinPool 工作窃取",
+    "content": "ForkJoinPool 基于___算法：空闲线程从___（其他线程的任务队列尾部）偷取任务执行。每个工作线程维护一个___（双端队列），自己从___取任务，窃取者从尾部取。",
+    "answer": "{\"correct\":[[\"工作窃取\",\"Work-Stealing\",\"Work Stealing\"],[\"其他线程的任务队列\",\"work queue\"],[\"双端队列\",\"Deque\"],[\"头部\",\"队首\"]],\"distractors\":[\"公平调度\",\"优先级调度\",\"阻塞队列\",\"单端队列\"]}",
+    "hints": ["ForkJoinPool 的 parallelism 参数控制并行度", "工作窃取能充分利用多核 CPU，减少线程空闲时间"],
+    "tags": ["并发", "ForkJoinPool", "Work-Stealing"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "CompletableFuture 异步编排",
+    "content": "CompletableFuture 通过___实现异步编排：thenApply（___）、thenAccept（消费结果）、thenCompose（异步组合 flatMap）、allOf（___）、anyOf（___）。",
+    "answer": "{\"correct\":[[\"回调链\",\"回调\"],[\"同步转换\",\"转换\"],[\"所有完成\",\"全部完成\"],[\"任意完成\",\"任一完成\"]],\"distractors\":[\"轮询\",\"阻塞\",\"通知\",\"信号\"]}",
+    "hints": ["thenApply 和 thenCompose 的区别类似于 Optional 的 map 和 flatMap", "allOf 返回的 CompletableFuture 在全部任务完成时触发，但类型是 Void，需要用 get() 等待"],
+    "tags": ["并发", "CompletableFuture", "异步"]
   }
 ]

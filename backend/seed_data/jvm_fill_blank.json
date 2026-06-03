@@ -98,5 +98,55 @@
     "answer": "{\"correct\":[[\"强引用\",\"Strong Reference\"],[\"软引用\",\"Soft Reference\"],[\"弱引用\",\"Weak Reference\"],[\"虚引用\",\"Phantom Reference\"]],\"distractors\":[\"影子引用\",\"空引用\",\"幽灵引用\",\"弹性引用\"]}",
     "hints": ["WeakHashMap 是弱引用的典型应用——当 key 不再被外部引用时自动被 GC 回收", "软引用适合实现缓存（如 Guava Cache 的 softValues）"],
     "tags": ["JVM", "引用", "GC"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "类与实例的初始化顺序",
+    "content": "类初始化时先执行___的 <clinit>（类构造器），再执行当前类的 <clinit>。创建对象时先执行___的 <init>（实例变量初始化 + 构造代码块 + 构造函数），再执行子类的。静态变量赋值和静态代码块按___顺序执行。",
+    "answer": "{\"correct\":[[\"父类\",\"超类\"],[\"父类\",\"超类\"],[\"书写\",\"定义\",\"代码\"]],\"distractors\":[\"接口\",\"子类\",\"顺序无关\",\"任意\"]}",
+    "hints": ["<clinit> 由 JVM 保证线程安全，多个线程同时初始化一个类时只有一个线程执行 <clinit>", "构造代码块（{}）在每次创建对象时执行，且在构造函数之前"],
+    "tags": ["JVM", "类加载", "初始化"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "String Pool 与 intern()",
+    "content": "JDK 7+ 中 String Pool 位于___。String s = new String(\"a\") + new String(\"b\") 执行后 s 指向堆中的___。调用 s.intern() 时，如果池中已有则___；如果池中没有则___（JDK 7+ 的实现策略）。",
+    "answer": "{\"correct\":[[\"堆内存\",\"堆\"],[\"ab\",\"字符串ab\"],[\"返回池中引用\",\"返回已有引用\"],[\"将堆中引用存入常量池\",\"记录首次出现实例的引用\"]],\"distractors\":[\"方法区\",\"元空间\",\"永久代\",\"复制字符串到池中\"]}",
+    "hints": ["JDK 6 中 String Pool 在永久代，intern() 会复制字符串到永久代（可能 OOM）", "JDK 7+ 将 String Pool 移到了堆，intern() 只在常量池中记录堆中 String 对象的引用"],
+    "tags": ["JVM", "String", "常量池"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "DCL 单例与 volatile",
+    "content": "双重检查锁定（DCL）单例中 instance 必须用___修饰。new 操作分为三步：分配内存、___、___，JIT 可能重排序后两步。不加关键字时另一个线程可能在第一步判断 instance 不为 null 后读取到___。",
+    "answer": "{\"correct\":[[\"volatile\"],[\"调用构造函数\",\"初始化\"],[\"赋值引用\",\"设置引用\"],[\"未初始化的对象\",\"半初始化对象\"]],\"distractors\":[\"synchronized\",\"final\",\"static\",\"transient\"]}",
+    "hints": ["volatile 在 JDK 5+ 才提供完善的 happens-before 语义（JSR-133 修复）", "静态内部类单例模式（Initialization-on-demand holder）可以避免 DCL 的复杂性"],
+    "tags": ["JVM", "单例", "volatile", "指令重排序"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "JIT 编译器与分层编译",
+    "content": "HotSpot JVM 包含两种 JIT 编译器：___（C1，启动快、优化轻）和___（C2，启动慢、优化重）。方法被调用超过阈值（默认___次）后从解释执行进入 C1 编译。JDK 6 引入的___策略先用 C1 编译，热点继续上升后用 C2 重新编译。",
+    "answer": "{\"correct\":[[\"Client Compiler\",\"-client\"],[\"Server Compiler\",\"-server\",\"C2\"],[\"1500\",\"10000\"],[\"分层编译\",\"Tiered Compilation\"]],\"distractors\":[\"AOT Compiler\",\"Graal Compiler\",\"LLVM\",\"-Xcomp\"]}",
+    "hints": ["C2 编译器优化程度高但编译本身也消耗 CPU，分层编译在启动速度和峰值性能间取得平衡", "JDK 8 默认开启分层编译（-XX:+TieredCompilation）"],
+    "tags": ["JVM", "JIT", "编译优化"]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "栈上分配与 TLAB",
+    "content": "未被逃逸分析识别为___的对象可以在___（线程栈）上分配，方法结束时随栈帧自动销毁。___（Thread Local Allocation Buffer）是每个线程在 Eden 区预分配的内存区域，用于___避免线程竞争 CAS 操作。",
+    "answer": "{\"correct\":[[\"逃逸对象\",\"逃逸\"],[\"栈\",\"栈上\",\"虚拟机栈\"],[\"TLAB\"],[\"无锁分配\",\"快速分配\"]],\"distractors\":[\"堆上分配\",\"标量替换\",\"锁消除\",\"同步分配\"]}",
+    "hints": ["逃逸分析在 JDK 6u23+ 默认开启（-XX:+DoEscapeAnalysis）", "TLAB 默认开启（-XX:+UseTLAB），可通过 -XX:TLABSize 调整大小"],
+    "tags": ["JVM", "逃逸分析", "TLAB", "优化"]
   }
 ]
