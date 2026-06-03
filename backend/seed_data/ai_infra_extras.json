@@ -169,5 +169,70 @@
       "vLLM 的 APC 和 SGLang 的 RadixAttention 的区别"
     ],
     "tags": ["LLM", "推理优化", "Prefix Cache", "RadixAttention"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Flash Attention 原理",
+    "content": "Flash Attention 的核心优化思想是什么？它是如何加速 Transformer 训练和推理的？",
+    "answer": "答案：Flash Attention 通过分块计算（Tiling）和重新排序 Attention 计算流程，避免将完整的 N×N Attention 矩阵写入 HBM（高带宽内存），减少显存读写量，加速 Attention 计算并降低显存占用。\n\n解析：标准 Attention 计算：Q×K^T → S（写入 HBM）→ Softmax（读 S，写 P）→ P×V（写入 HBM）。需要频繁读写 HBM，N×N 矩阵的读写是瓶颈。Flash Attention（Tri Dao et al., 2022）的思路：将 Q、K、V 分块后加载到 SRAM（片上高速缓存），在 SRAM 中完成整个 Attention 计算，只在最终结果写回 HBM。核心挑战是 Softmax 需要全局规约（所有行的最大值和和），Flash Attention 通过 online softmax（分块逐步计算统计量）克服。\n\n扩展延伸：Flash Attention 2（2023）的改进：减少非矩阵运算（重新安排循环顺序，外层循环 Q，内层循环 K/V），更好地利用 GPU 的 Tensor Cores。性能提升约 2 倍。Flash Attention 3（2024）：利用 Hopper 架构的 WGMMA（Tensor Memory Accelerator）指令进一步优化。实际影响：Flash Attention 使长上下文训练变得可行（如 GPT-4 的 128K 上下文），是几乎所有现代 LLM 训练框架的标配（PyTorch SDPA、vLLM、TGI 等）。",
+    "hints": [
+      "Flash Attention 如何绕过 Softmax 需要全局规约的限制",
+      "HBM（高带宽内存）和 SRAM 在 GPU 中的层次关系"
+    ],
+    "tags": ["LLM", "推理优化", "Flash Attention", "Transformer"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "LLM 上下文窗口扩展方法",
+    "content": "如何将 LLM 的上下文窗口从 2K/4K 扩展到 128K 甚至更长？RoPE 位置编码的扩展方法有哪些？",
+    "answer": "答案：扩展上下文窗口的核心方法包括位置编码改造（RoPE 的 PI/YaRN/NTK-aware）、ALiBi 的外推能力、以及长上下文训练方案（分段训练、渐进扩展）。\n\n解析：1）RoPE（Rotary Position Embedding）的扩展——直接外推（位置插值 PI：将位置索引 m 缩小 λ 倍适应训练时的频段范围），NTK-aware 插值（按神经网络频率调整比例——高频不压缩、低频压缩），YaRN（Yet another RoPE extensioN method——结合 PI 和 NTK，调整注意力温度）。2）ALiBi（Attention with Linear Biases）——偏置加法而非位置编码，天生具有外推能力（训练 1K 可外推到 2K+）。3）LongRoPE——通过搜索 RoPE 各维度的最佳缩放比例。\n\n扩展延伸：长上下文的工程挑战：1）显存——Attention 计算复杂度 O(n²)，4K→128K 显存增长约 1024 倍。HW 对策：Flash Attention + Ring Attention（分布式序列并行）。2）训练策略——渐进扩展（先 4K 预训练 → 32K 继续训练 → 128K 微调）、分段训练（将长序列切段）。3）评估——LongBench、L-Eval、RULER 等长上下文基准。注意：长上下文不等于长上下文利用能力——许多模型在 128K 上下文下中间信息的召回准确率仍不足 60%（Lost in the Middle 问题）。",
+    "hints": [
+      "位置插值（PI）为什么会导致 token 区分度下降",
+      "Ring Attention 如何实现序列并行"
+    ],
+    "tags": ["LLM", "上下文窗口", "RoPE", "位置编码"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "知识蒸馏（Knowledge Distillation）",
+    "content": "什么是知识蒸馏？在大模型时代，蒸馏与量化、剪枝相比有什么不同？",
+    "answer": "答案：知识蒸馏让一个小模型（Student）学习大模型（Teacher）的行为，目标不是硬标签而是 Teacher 输出的软概率分布（logits），即「暗知识」——Teacher 对相似类别的区分度信息。\n\n解析：经典蒸馏（Hinton et al., 2015）：Student 的训练目标 = 交叉熵(Student_logits, hard_label) + α × KL_div(Student_logits/T, Teacher_logits/T)。温度 T（Temperature）控制软标签的平滑度——T 越高，概率分布越平滑（类别间的细微关系越明显）。\n\n扩展延伸：大模型时代的蒸馏新范式：1）白盒蒸馏（训练时对齐）——MiniLLM、Knowledge Distillation with Aligned Logits：让 Student 学习 Teacher 的生成概率分布，适用于同架构模型。2）黑盒蒸馏（API 输出对齐）——用 Teacher（如 GPT-4）生成大量 QA 数据训练 Student（如 LLaMA），核心是数据质量而非 logits 对齐。3）训练策略蒸馏——Vicuna、Alpaca 等通过 API 收集高质量指令数据微调开源模型。4）蒸馏 vs 量化——蒸馏改变模型参数，量化压缩已有参数；两者可叠加（量化后再蒸馏恢复精度）。蒸馏 vs 剪枝——蒸馏减少模型规模（层数/宽度），剪枝去除冗余参数。三者在实践中常组合使用。",
+    "hints": [
+      "温度 T 如何影响蒸馏效果",
+      "为什么黑盒蒸馏在大模型时代比白盒蒸馏更流行"
+    ],
+    "tags": ["LLM", "蒸馏", "模型压缩", "训练"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Tokenizer 与词嵌入",
+    "content": "LLM 中的 Tokenizer 有哪些类型？BPE、WordPiece、SentencePiece 有什么区别？",
+    "answer": "答案：三种主流 Tokenizer：BPE（Byte-Pair Encoding，GPT 系列使用）、WordPiece（BERT 使用）、SentencePiece（Unigram LM，LLaMA/T5 使用）。核心区别在于分词粒度和是否内置预分词器。\n\n解析：1）BPE——从字符集开始，逐步合并最频繁出现的字符对（Pair）。训练过程：统计相邻 token 对的频率，合并最高频的 pair，重复直到达到目标词表大小。GPT-2/GPT-4 使用。2）WordPiece——类似 BPE 但合并标准不是频率而是似然增益（合并后降低语料 perplexity 最高的 pair）。BERT 使用。3）SentencePiece——不依赖语言的预分词（不以空格分词为前置条件），将原始文本视为 Unicode 字符序列。底层使用 Unigram LM 或 BPE。LLaMA、T5 使用。支持字节回退（BBPE——遇到未登录字时按字节切分）。\n\n扩展延伸：Tokenizer 对模型性能的关键影响：1）词表大小——太小编码效率低（同一文本 token 数多），太大会极大增加 Embedding 层的参数量。LLaMA 词表 32K，GPT-4 约 100K。2）多语言支持——BPE 以空格分词，对 CJK（中日韩）不友好（一个汉字一个 token）。SentencePiece 无此问题。3）特殊 token——<s>、</s>、<pad>、<unk> 以及指令格式 token（<|im_start|> 等）。注意：Tokenizer 的正确性不可忽视——训练和推理使用不同 tokenizer 会导致灾难性结果（乱码/语义偏移）。SpaCy 和 HuggingFace tokenizers 库是常用实现。",
+    "hints": [
+      "为什么 LLaMA 等模型选择 SentencePiece 而不是 BPE",
+      "词表大小对模型参数量和推理速度的影响"
+    ],
+    "tags": ["LLM", "Tokenizer", "BPE", "SentencePiece"]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多模态大模型架构",
+    "content": "多模态大模型（如 LLaVA、GPT-4V）的核心架构是什么？视觉特征如何与 LLM 对齐？",
+    "answer": "答案：主流多模态架构为「视觉编码器 → 连接器（Projector）→ LLM」三层。视觉编码器（如 CLIP-ViT）提取图像特征，连接器（Projector，如线性层/Q-Former）将视觉特征映射到 LLM 的 Embedding 空间，LLM 理解视觉信息后生成回复。\n\n解析：LLaVA（Large Language and Vision Assistant，2023）是代表性开源方案：1）Vision Encoder——CLIP ViT-L/14（336px），将图像编码为 576 个 visual tokens（patch 数）。2）Projector——简单的两层 MLP（线性映射 + GELU + 线性），将 visual token 映射到 LLM 的 Embedding 空间。3）LLM——Vicuna/LLaMA 作为语言骨干，visual token 作为 prefix 拼接到文本 token 序列前。训练两阶段：Stage 1——冻结 Vision Encoder 和 LLM，只训练 Projector（对齐视觉和语言表示）；Stage 2——端到端微调 LLM + Projector（指令微调）。\n\n扩展延伸：其他多模态架构对比：1）Flamingo（DeepMind）——Perceiver Resampler 将可变数量的 visual token 压缩为固定数量，LLM 权重冻结，插 Cross-Attention 层。2）Qwen-VL——类似 LLaVA 但 Vision Encoder 更大（ViT-bigG），支持多图输入。3）CogVLM——引入 Visual Expert 模块（Deep Fusion 架构），视觉特征和文本特征深度融合。4）GPT-4V（闭源，据推测）——多 Encoder + 大 LLM + RLHF。关键设计考量：Visual token 数量（576 vs 256 vs 64）决定计算成本；Projector 复杂度（单层 MLP vs Q-Former vs Cross-Attention）影响对齐质量。",
+    "hints": [
+      "为什么 LLaVA 的两阶段训练策略有效——先对齐后微调",
+      "Visual token 数量如何影响多模态模型的推理效率"
+    ],
+    "tags": ["多模态", "LLaVA", "视觉", "架构"]
   }
 ]

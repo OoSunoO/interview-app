@@ -248,5 +248,113 @@
       "引用类型",
       "ReferenceQueue"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 核心参数详解与调优",
+    "content": "JVM 参数分为哪几类？日常调优中最重要的参数是哪些？",
+    "answer": "答案：JVM 参数分为三类：标准参数（-开头，所有 JVM 实现都支持）、非标准参数（-X 开头，HotSpot 特有）、高级参数（-XX 开头，开发者选项，可能在不同版本间变化）。核心调优参数围绕堆大小、GC 选择、内存管理和日志诊断。\n\n解析：1）标准参数：-server（启用 Server Compiler C2，64 位 JVM 默认）、-version、-classpath。2）非标准参数（-X）：-Xms（初始堆大小）和 -Xmx（最大堆大小）必须设置，建议相同值避免运行时扩容开销。-Xss（线程栈大小，默认 1MB，减小可增加可创建线程数，但可能引起 StackOverflow）。3）高级参数（-XX）：-XX:+PrintFlagsFinal 打印所有 JVM 参数当前值（常用排查工具）。\n\n扩展延伸：生产环境常用参数模板（JDK 17+, G1）：-Xms4g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/dump -Xlog:gc*:file=gc.log:time,uptime:filecount=10,filesize=10M。调优原则：优先保证堆大小足够（避免频繁 GC），再调 GC 参数。99% 的应用默认 GC 参数已够好，调优前先用 jstat/jcmd 诊断。",
+    "hints": [
+      "为什么建议 Xms 和 Xmx 设置相同值",
+      "如何找到当前 JVM 所有参数的实际值"
+    ],
+    "tags": [
+      "JVM",
+      "调优",
+      "参数",
+      "性能"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "StackOverflowError 与线程栈",
+    "content": "什么情况下会触发 StackOverflowError？如何估算 Java 线程栈能支持的最大递归深度？",
+    "answer": "答案：StackOverflowError 在线程栈内存耗尽时触发，最常见原因是无限递归或深度递归。最大递归深度 = Xss 栈大小 / 平均每栈帧大小。每栈帧大小取决于方法的局部变量表、操作数栈、动态链接和返回地址。\n\n解析：Java 虚拟机栈（JVM Stack）是线程私有的，存储栈帧。每个方法调用创建一个栈帧，方法返回时销毁。栈帧中包含：局部变量表（this + 参数 + 局部变量，每个 slot 32 位）、操作数栈（字节码指令的工作区）、动态链接（指向运行时常量池的引用）、返回地址。Xss 默认值：JDK 17+ 默认 1MB（Linux x64），可通过 -Xss256k 减少。\n\n扩展延伸：计算递归深度：写一个简单递归方法（int depth=0; f(){depth++; f();}），在 catch(StackOverflowError) 中打印 depth。32 位 JDK 约 10K-20K 深度（Xss=256k），64 位约 20K-40K。如果递归深度可控（如树遍历），可增大 Xss。如果深度不可控（如错误的递归算法），应修复代码而不是调参数。栈溢出排查：jstack 打印的线程栈显示最深位置——这就是递归/调用链的末端。生产建议：限制递归深度（设置阈值）或用循环替代递归。",
+    "hints": [
+      "为什么栈帧大小影响可创建的线程总数",
+      "如何通过 jstack 定位 StackOverflow 的根因"
+    ],
+    "tags": [
+      "JVM",
+      "栈",
+      "StackOverflow",
+      "异常"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Java 异常表与异常处理机制",
+    "content": "JVM 是如何实现 try-catch-finally 的？异常表（Exception Table）的结构是什么？",
+    "answer": "答案：JVM 通过异常表（Exception Table）实现异常处理，不是通过 if-else 控制流。每个方法编译后生成一个异常表，记录 try 块的起始/结束字节码偏移、catch 类型的常量池索引、handler 的起始偏移。Finally 块通过代码复制实现。\n\n解析：try-catch 的编译结果：代码中的 try 块边界被标记为异常表中的 from/to 行，catch 类型和目标 handler 地址存入表项。当异常发生时，JVM 遍历异常表：如果异常发生的位置在 from-to 范围内且抛出的异常是 catch 类型的子类，JVM 跳转到 handler 地址执行。如果遍历完异常表没有匹配项，异常沿方法调用栈向上传播。finally 的实现（JDK 7+）：编译器将 finally 块的代码复制到三个位置——try 块正常出口、catch 块出口、catch 块未捕获异常时重新抛出前。\n\n扩展延伸：异常表的性能影响：try-catch 在无异常抛出时零开销（异常表只做数据存储，不在控制流上增加检查）。抛出异常时有开销（需要遍历异常表 + 构建异常栈帧 + 获取栈回溯）。所以 try-catch 不用来替代正常的控制流。JDK 7 的改进：Suppressed Exception（try-with-resources 中多个异常可叠加，通过 addSuppressed 方法）。try-with-resources：编译后每个资源调用 close() 在 finally 中执行，close 抛异常时通过异常抑制机制附加到主异常。",
+    "hints": [
+      "try 块没有抛出异常时是否有性能开销",
+      "try-with-resources 如何确保多个资源的 close 都被调用"
+    ],
+    "tags": [
+      "JVM",
+      "异常",
+      "字节码",
+      "编译"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "字符串常量池与 String.intern",
+    "content": "Java 字符串常量池（String Pool）是如何工作的？String.intern() 方法在 JDK 6 和 JDK 7+ 中有什么区别？",
+    "answer": "答案：字符串常量池是 JVM 为 String 对象维护的一个特殊缓存池，用于减少字符串对象的重复创建。直接双引号声明的字符串字面量自动入池，String.intern() 可以手动将字符串对象加入池中。JDK 7+ 将字符串常量池从堆外（PermGen）移入 Java 堆。\n\n解析：字符串常量池的本质是一个 HashMap<String, String>（StringTable）。当用双引号声明 String s = \"hello\" 时，JVM 先查池中是否已有相同内容的字符串，有则返回引用，无则创建并放入池中。new String(\"hello\")：显式创建新对象（不保证入池），可以用 intern() 手动入池。JDK 6 中字符串常量池在永久代（PermGen，固定大小，有上限），intern() 过多触发 PermGen OOM。JDK 7 中将字符串常量池移入 Java 堆（受 -Xmx 限制），且 intern() 的实现变为：如果池中已有相同内容的 String，返回池中引用；否则将堆中 String 对象的引用放入池中（而非复制到 PermGen）。\n\n扩展延伸：String.intern 的滥用：在循环中大量调用 intern() 会导致 StringTable 膨胀（链表查询变慢），即使字符串内容不同但 intern 竞争激烈（ConcurrentHashMap 式的桶锁）。优化方案：使用 Guava 的 Interners.newWeakInterner()（弱引用 + 自动 GC）或自定义缓存。StringTable 大小可通过 -XX:StringTableSize=N 调整（JDK 8 默认 60013，JDK 17+ 默认 65536）。大 StringTable（如 1000003）可减少哈希冲突，但增加内存开销。注意：G1 GC 会在 Full GC 时清理 StringTable 中的死字符串（JDK 8u20+ 默认开启 -XX:+UseStringDeduplication 去重相同 char[]）。",
+    "hints": [
+      "JDK 7 将 String Pool 移到堆后 intern 行为有哪些具体变化",
+      "为什么大量调用 intern() 可能导致性能下降"
+    ],
+    "tags": [
+      "JVM",
+      "String",
+      "常量池",
+      "内存"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "堆外内存管理",
+    "content": "Java 堆外内存（Off-Heap Memory）有哪些使用场景和实现方式？DirectByteBuffer 是如何分配和回收堆外内存的？",
+    "answer": "答案：堆外内存指 JVM 堆之外的内存区域，通过 DirectByteBuffer（NIO）或 Unsafe.allocateMemory 分配。主要使用场景：高性能 IO（Netty）、缓存（MapDB）、减少 GC 压力。DirectByteBuffer 通过虚引用（Cleaner）机制自动回收堆外内存。\n\n解析：DirectByteBuffer 的分配：调用 ByteBuffer.allocateDirect(capacity) → DirectByteBuffer 构造器内部调用 Bits.reserveMemory() 检查堆外内存配额（-XX:MaxDirectMemorySize，默认等于 Xmx）→ Unsafe.allocateMemory() 在堆外分配内存 → 记录分配地址和大小到 DirectByteBuffer 实例。回收机制：DirectByteBuffer 实例在构造时关联一个 Cleaner（PhantomReference），当 DirectByteBuffer 对象被 GC 回收时，Cleaner 的 clean() 方法被 Reference Handler 线程调用 → 调用 Unsafe.freeMemory() 释放堆外内存。\n\n扩展延伸：堆外内存管理的关键问题：1）堆外内存不归 GC 管——GC 只管 DirectByteBuffer 这个小对象（几十字节），不管其引用的堆外大内存（GB 级）。因此堆外内存不足时不会触发 GC，只能靠 MaxDirectMemorySize 限制。2）堆外内存泄漏的排查——NMT（Native Memory Tracking，-XX:NativeMemoryTracking=summary）→ jcmd PID VM.native_memory summary 查看各类内存使用；pmap -x PID 观察 RSS 异常增长。3）Netty 的优化——Netty 使用 PooledByteBufAllocator 对 DirectByteBuffer 做池化管理（类似堆内对象池），减少分配和回收的开销。建议：使用 -XX:MaxDirectMemorySize 限制堆外内存上限，Netty 应用中开启 PooledByteBufAllocator。",
+    "hints": [
+      "为什么 DirectByteBuffer 对象很小（几十字节）但可能导致 OOM",
+      "Netty 为什么默认使用 PooledByteBufAllocator 而非 Unpooled"
+    ],
+    "tags": [
+      "JVM",
+      "堆外内存",
+      "DirectByteBuffer",
+      "NIO"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "finalize 与 Cleaner 机制",
+    "content": "Java 的 finalize() 方法为什么被弃用？Cleaner 机制如何替代 finalize 实现资源回收？",
+    "answer": "答案：finalize() 被弃用（JDK 9 @Deprecated）的原因：执行时机不可预测、影响 GC 性能（需要两次 GC 周期）、线程安全问题。Cleaner（JDK 9+）替代 finalize，通过 PhantomReference + ReferenceQueue 在对象被回收后安全释放资源。\n\n解析：finalize 的问题：1）对象实现 finalize 后，GC 发现对象不可达时不直接回收，而是将对象放入 Finalization Queue，由 Finalizer 线程（低优先级）逐一执行 finalize()。执行后对象可能被重新引用（逃脱 GC），需要下次 GC 才能回收——至少两个 GC 周期。2）Finalizer 线程优先级低，如果 finalize() 执行慢，对象堆积，可能 OOM。3）finalize() 中抛出异常会被忽略（不中断 finalization 线程），异常信息丢失。4）存在竞态条件——对象在 finalize() 中被方法调用（this 引用逃逸）。\n\n扩展延伸：Cleaner 机制（JDK 9+，sun.misc.Cleaner → java.lang.ref.Cleaner）：1）构造时关联一个 PhantomReference + Runnable。2）对象被回收后，PhantomReference 入 ReferenceQueue。3）Cleaner 线程从队列取出引用，执行关联的 Runnable。4）相比 finalize：Cleaner 的线程是 daemon 线程（不会阻止 JVM 退出）、Runnable 中不会意外复活对象、释放时机更可预测。典型应用：DirectByteBuffer 使用 Cleaner 释放堆外内存（即使应用程序没有显式调用 clean()）。注意：Cleaner 仍不能完全保证及时执行——如果 Reference Handler 线程来不及处理，操作系统资源（文件描述符/堆外内存）可能耗尽。应优先使用 try-with-resources（AutoCloseable）显式释放资源，将 Cleaner 作为最后的兜底防线。",
+    "hints": [
+      "finalize 为什么至少需要两次 GC 才能回收对象",
+      "Cleaner 相比 finalize 解决了哪些具体问题"
+    ],
+    "tags": [
+      "JVM",
+      "finalize",
+      "Cleaner",
+      "GC"
+    ]
   }
 ]
