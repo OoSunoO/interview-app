@@ -484,5 +484,59 @@
       "架构",
       "微服务"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务网格与 Sidecar 模式",
+    "content": "服务网格中的 Sidecar 模式解决了什么问题？Sidecar 和 Ambassador 边车模式有什么区别？Sidecar 的优缺点有哪些？",
+    "answer": "答案：Sidecar 模式是将辅助功能（服务发现、负载均衡、监控、日志、认证、加密等）从应用容器中剥离，放在同一 Pod 的独立容器中。服务网格（Istio/Linkerd）用 Sidecar Proxy 统一处理服务间通信，应用无需感知。\n\n解析：Sidecar vs Ambassador——两种边车模式的定位不同：Sidecar 与主容器并行运行（「在我身边」），处理流量和横切关注点。Ambassador 是代理模式（「在我前面」），作为应用的入口代理转发请求到应用（更适合传统应用代理改造）。Sidecar 通常对所有流量透明拦截（iptables 透明代理），Ambassador 需要应用显式连接代理。\n\n扩展延伸：优缺点——优点：1）横切关注点（监控、日志、限流、认证）与业务逻辑解耦。2）多语言友好：不同语言的服务通过 Sidecar 获得一致的可观测性。3）热升级：Sidecar 独立重启不影响主进程。4）一致性：整个集群的网络行为一致。缺点：1）资源开销：每个 Pod 多一个 Sidecar 容器（内存 50-200MB）。2）延迟增加：多一跳网络（增加约 2ms P99）。3）调试复杂度：流量路径更长（应用 → Sidecar → Sidecar → 应用）。",
+    "hints": [
+      "Sidecar 和服务治理的关系——把 SDK 从应用代码中移到独立的进程里",
+      "Sidecar 的 iptables 透明流量拦截如何做到应用零感知"
+    ],
+    "tags": [
+      "设计模式",
+      "Sidecar",
+      "服务网格",
+      "架构"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "仓库模式（Repository）",
+    "content": "仓库模式（Repository Pattern）在架构中的作用是什么？它和数据访问对象（DAO）模式有什么区别与联系？",
+    "answer": "答案：Repository 模式在领域层和数据映射层之间提供集合式的接口，使领域对象不需要知道底层数据存储的细节。Repository 返回的是领域对象（Domain Object），DAO 返回的是数据对象（Data Object/POJO）。\n\n解析：Repository vs DAO——1）DAO（JPA 的 @Repository、MyBatis 的 Mapper）直接映射数据库表，CRUD 操作围绕数据表，返回 Entity。2）Repository 聚合一个或多个 DAO 的查询，返回业务语义的集合（如查询活跃用户、获取热门产品），返回已经组装好的 Domain Model。3）在整洁架构中，Repository 是领域层的接口定义，DAO/ORM 是数据层的实现。Domain 层定义 Repository 接口，Data 层实现它。\n\n扩展延伸：应用场景——在 Spring 应用中：JpaRepository（CrudRepository）既是 DAO 也是 Repository——属于简化方法。如果业务简单，直接用 JpaRepository。如果业务复杂，在 JpaRepository 之上再加一层 Repository 接口。示例场景：UserRepository 有查询付费会员的方法——内部可能调用多个 DAO 来组装完整的 PremiumCustomer 视图。注意：不要过度抽象 Repository——简单的 CRUD 不需要额外封装，直接使用 Spring Data JPA / MyBatis 的 Mapper 即可。",
+    "hints": [
+      "Repository 返回领域对象（Domain Object），DAO 返回数据对象（Data Object）——区别是语义层级",
+      "Spring Data JPA 的 JpaRepository 既是 DAO 也是 Repository——做了简化合并"
+    ],
+    "tags": [
+      "设计模式",
+      "Repository",
+      "DAO",
+      "架构"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CQRS 命令查询职责分离",
+    "content": "CQRS（Command Query Responsibility Segregation）模式将命令（写）和查询（读）分离为不同的模型。CQRS 解决了什么问题？在什么场景下适用？",
+    "answer": "答案：CQRS 将系统的读写操作分离为不同的模型（Command Model 和 Query Model），各自独立演进和优化。CQRS 的核心思想是「读和写有不同的关注点——写关注数据完整性和一致性，读关注查询效率和灵活性」。\n\n解析：分离的原因——传统 CRUD 中，读写使用相同的实体模型。当读写需求差异变大时矛盾显现：1）写模型需要事务一致性和业务校验，读模型需要灵活的查询和多表 JOIN。2）写请求少（订单创建），读请求多（订单列表查询），独立优化更合理。3）写的 Schema 对性能不敏感，读的 Schema 需要针对查询做反范式优化。\n\n扩展延伸：实现方式——1）简单 CQRS：同一个数据源（数据库），不同的实体类（Command entity vs Query DTO/Projection）。使用不同的 Repository 或 DAO。2）事件溯源 CQRS：写端存储事件（Event Store），读端从事件重建 Projection 视图。读写使用不同的数据库（写用 Event Store，读用 MySQL/Elasticsearch）。优点：读写完全解耦（读端可以随意重建），完整的审计历史。代价：最终一致性（写和读之间存在延迟），事件版本管理复杂。适用场景——1）适合：读写负载差异大（99% 读 1% 写）、需要多种查询视图、需要审计历史。2）不适合：简单 CRUD 应用（增加复杂度但收益不大）、读写模型差异小的应用。",
+    "hints": [
+      "简单 CQRS 和事件溯源 CQRS 的核心区别——数据源分离和 Event Store",
+      "CQRS 的最终一致性——写后立刻读可能读不到最新数据，前端需要处理此问题"
+    ],
+    "tags": [
+      "设计模式",
+      "CQRS",
+      "架构",
+      "读写分离"
+    ]
   }
 ]

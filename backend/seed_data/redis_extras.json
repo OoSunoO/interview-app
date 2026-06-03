@@ -276,8 +276,16 @@
     "title": "Redis 6/7 多线程 I/O 模型",
     "content": "Redis 6/7 引入了多线程 I/O，它优化了什么？Redis 的主线程和 I/O 线程各司什么职责？为什么 Redis 没有完全变成多线程？",
     "answer": "答案：Redis 6 引入多线程处理网络 I/O（读写请求/响应数据），但命令执行仍然是单线程。多线程 I/O 解决了网络吞吐瓶颈——大量并发连接时单线程读取/写入 socket 的 CPU 开销过大。Redis 7 进一步优化了子线程效率和延迟稳定性。核心设计仍然是「多线程 I/O + 单线程命令执行」。\n\n解析：Redis 6 多线程 I/O 的工作方式：1）主线程负责 accept 新连接、分发读任务到 I/O 线程池。2）I/O 线程从 socket 中读取请求数据并解析。3）主线程等待所有 I/O 线程完成读后，单线程串行执行命令。4）执行完成后，主线程将响应数据分发给 I/O 线程写入 socket。I/O 线程数默认 3（读+写各 3），通过 io-threads 和 io-threads-do-reads 配置控制。\n\n扩展延伸：为什么 Redis 不改成全多线程？1）单线程模型是 Redis 高性能的核心基石——避免锁竞争、上下文切换和复杂的并发控制（Lua 脚本、事务、WATCH 的原子性都依赖单线程）。2）Redis 的瓶颈很少在 CPU——绝大多数场景下都是网络 I/O 和内存带宽受限。3）引入多线程执行命令会破坏现有数据结构的线程安全性，需要大量重构且收益不确定。Redis 6 的多线程 I/O 优化了「受限于网络带宽」而非「受限于 CPU」的场景——1Gbps+ 网络下，单线程处理网络 I/O 会成为瓶颈，多线程 I/O 显著提升吞吐。",
-    "hints": ["Redis 6 的多线程 I/O 为什么不解锁命令执行也变多线程", "io-threads-do-reads 配置对性能有什么影响"],
-    "tags": ["Redis", "多线程", "I/O", "性能"]
+    "hints": [
+      "Redis 6 的多线程 I/O 为什么不解锁命令执行也变多线程",
+      "io-threads-do-reads 配置对性能有什么影响"
+    ],
+    "tags": [
+      "Redis",
+      "多线程",
+      "I/O",
+      "性能"
+    ]
   },
   {
     "category": "database",
@@ -286,8 +294,16 @@
     "title": "RESP 协议",
     "content": "Redis 序列化协议（RESP）是什么？RESP3（Redis 6+）相比 RESP2 有哪些改进？RESP 协议对 Redis 性能有什么影响？",
     "answer": "答案：RESP（Redis Serialization Protocol）是 Redis 服务端和客户端之间通信的文本协议，将命令参数和结果编码为特定前缀的字符串。Redis 6 引入 RESP3 协议，新增了丰富的返回类型。\n\n解析：RESP 数据类型都用前缀标识：+ 简单字符串、- 错误、: 整数、$ 批量字符串（$5\\r\\nhello\\r\\n）、* 数组（*3\\r\\n...）。RESP 的设计原则是简单性和解析速度——前缀标识了类型和长度，解析器可以快速跳过不需要的数据。\n\nRESP2 vs RESP3：RESP2 只有 5 种类型（简单字符串、错误、整数、批量字符串、数组）。RESP3 新增加了 Map（有序映射）、Set（集合）、Bool（布尔值）、Double（浮点数）、Big Number（大数）、Null（空值）、Streamed types（流式类型）等 8 种新的数据类型。RESP3 的核心优势：客户端不再需要猜测服务端返回的数据是什么类型——Map 类型直接表示哈希结构，不需要解析为扁平数组。这大大简化和改进了客户端库的实现。\n\n扩展延伸：RESP 协议的性能考量：1）文本协议 vs 二进制协议——RESP 是文本协议，但效率并不低（没有 XML/JSON 的冗余）。大部分数据包很小（短 key 和整数），文本开销可忽略。2）Pipelining——RESP 天然支持管道传输（客户端不等待响应直接发送多个命令）。3）RESP3 支持服务器端推送（Push 类型），使客户端可以接收 Pub/Sub 消息、客户端断连通知等异步消息，无需轮询。4）RESP3 的流式类型支持从服务器获取大量数据（如一个大集合）时以流式传输，减少客户端内存压力。",
-    "hints": ["RESP 协议为什么选择文本形式而不是二进制", "RESP3 的 Push 类型对客户端实现有什么影响"],
-    "tags": ["Redis", "RESP", "协议", "RESP3"]
+    "hints": [
+      "RESP 协议为什么选择文本形式而不是二进制",
+      "RESP3 的 Push 类型对客户端实现有什么影响"
+    ],
+    "tags": [
+      "Redis",
+      "RESP",
+      "协议",
+      "RESP3"
+    ]
   },
   {
     "category": "database",
@@ -296,8 +312,16 @@
     "title": "Redis 慢查询日志",
     "content": "Redis 的慢查询日志（SLOWLOG）是如何工作的？如何通过慢查询日志定位性能问题？配置参数有哪些？",
     "answer": "答案：Redis 的 SLOWLOG 记录执行时间超过指定阈值（slowlog-log-slower-than，单位微秒）的命令。日志保存在内存中，通过 SLOWLOG GET 查看。\n\n解析：配置参数：1）slowlog-log-slower-than——命令执行时间阈值，单位微秒（默认 10000，即 10ms）。设置为负值关闭慢查询日志，0 记录所有命令。2）slowlog-max-len——内存中保留的慢查询最大条数（默认 128）。超出时最早的记录被丢弃。与 MySQL 不同，Redis 的慢查询日志保存在内存（固定大小的队列），不会写文件，对性能影响极小。查看命令：SLOWLOG GET [count]——查看最近 N 条慢查询记录，每条包含：唯一 ID、时间戳、执行耗时（微秒）、命令及参数、客户端地址/端口。SLOWLOG LEN——查看当前慢查询数量。SLOWLOG RESET——清空慢查询日志。\n\n扩展延伸：通过慢查询定位问题的方法：1）慢查询日志显示执行时间长——首先检查命令的时间复杂度（O(N) 的 KEYS、SMEMBERS、HGETALL、LRANGE 可能在大集合上出问题）。2）排查 big key——慢查询中大量出现对大 key 的操作（DEL 大 key 也会阻塞）。3）排查慢查询对应的客户端——慢查询会记录客户端信息。4）注意 Redis 是单线程——一个慢查询会阻塞后续所有命令。如果观察到 QPS 下降，通常是有慢查询导致。优化建议：将 SLOWLOG 阈值设置为 1000-2000 微秒（1-2ms），这样可以看到对正常业务有实际影响的慢命令。避免使用 O(N) 命令，使用 SCAN 替代 KEYS、SSCAN 替代 SMEMBERS、HSCAN 替代 HGETALL。",
-    "hints": ["Redis 的慢查询日志为什么不写磁盘而是存在内存", "慢查询日志发现的大 key 怎么处理"],
-    "tags": ["Redis", "慢查询", "SLOWLOG", "性能"]
+    "hints": [
+      "Redis 的慢查询日志为什么不写磁盘而是存在内存",
+      "慢查询日志发现的大 key 怎么处理"
+    ],
+    "tags": [
+      "Redis",
+      "慢查询",
+      "SLOWLOG",
+      "性能"
+    ]
   },
   {
     "category": "database",
@@ -306,8 +330,16 @@
     "title": "Redis 备份恢复策略",
     "content": "Redis 的备份和恢复策略有哪些？RDB 和 AOF 的备份恢复场景各有什么不同？如何做异地容灾备份？",
     "answer": "答案：Redis 的备份分为 RDB 备份（定时快照）和 AOF 备份（追加日志）。恢复时优先使用 AOF（数据更完整）。异地容灾通过主从复制、RDB 远程传输或云厂商跨地域复制实现。\n\n解析：RDB 备份——定期执行 BGSAVE 生成 .rdb 文件，Redis 4.0+ 可配置周期性自动触发（save 900 1 等）。备份方式：将 .rdb 文件 rsync/scp 到远程存储或云存储（S3/OSS）。RDB 适合全量备份和快速恢复，但可能丢失最后一次快照后的数据。AOF 备份——AOF 文件记录所有写操作，通过 rewrite（BGREWRITEAOF）控制文件大小。备份方式：定期复制 AOF 文件到远程存储。AOF 备份更安全（可设置 appendfsync everysec，最多丢 1 秒数据）。\n\n扩展延伸：恢复流程：1）将 RDB/AOF 文件放到 Redis 工作目录（dir 配置）。2）重启 Redis，自动加载 AOF 或 RDB（优先加载 AOF，如果没有 AOF 则加载 RDB）。3）验证数据完整性——用 redis-check-rdb 和 redis-check-aof 工具检查文件。异地容灾方案：1）主从复制跨机房——主节点在一个数据中心，从节点在其他数据中心。注意跨机房延迟。2）RDB 远程备份脚本——crontab 定期执行 BGSAVE，然后将 .rdb 用 rsync 同步到异地机器。3）云原生方案——AWS ElastiCache 跨区域复制（Global Datastore）、阿里云 Redis 跨地域复制。4）Sentinel/Cluster 的跨 AZ 部署——异常时切换到其他可用区。注意：AOF 也依赖 appendfsync 策略（always/everysec/no）。always 最安全但写入性能大幅下降（每次写入都 fsync）。生产建议：RDB + AOF 混合持久化 + AOF everysec + 定时异地 RDB 备份。",
-    "hints": ["恢复时 Redis 为什么优先加载 AOF 而不是 RDB", "Redis 异地容灾跨机房同步延迟问题如何解决"],
-    "tags": ["Redis", "备份", "恢复", "容灾"]
+    "hints": [
+      "恢复时 Redis 为什么优先加载 AOF 而不是 RDB",
+      "Redis 异地容灾跨机房同步延迟问题如何解决"
+    ],
+    "tags": [
+      "Redis",
+      "备份",
+      "恢复",
+      "容灾"
+    ]
   },
   {
     "category": "database",
@@ -316,8 +348,16 @@
     "title": "redis-benchmark 性能压测",
     "content": "redis-benchmark 是做什么的？如何使用它测试 Redis 性能？测试结果中的关键指标怎么解读？",
     "answer": "答案：redis-benchmark 是 Redis 自带的性能基准测试工具，模拟指定数量的并发客户端发送命令，统计每秒完成的请求数（TPS/QPS）和响应延迟。\n\n解析：基本用法：redis-benchmark -h 127.0.0.1 -p 6379 -c 50 -n 10000。参数说明：-c 并发客户端数（默认 50）、-n 总请求数（默认 100000）、-d 数据大小（字节，默认 3）、-t 指定测试的命令（如 -t set,get,lpush）、-P 启用 Pipeline（管道批处理数量）。默认测试：依次测试 PING、SET、GET、INCR、LPUSH、RPUSH、LPOP、RPOP、SADD、SPOP、LPUSH（列表）、MSET（批量）等命令。\n\n扩展延伸：解读结果：每条命令输出类似 SET: 93545.23 requests per second——表示 1 秒内完成了约 9.3 万次 SET 操作。影响测试结果的因素：1）网络延迟——localhost 测试排除网络因素。2）CPU 频率和内存带宽——Redis 是 CPU 和内存敏感型。3）数据大小（-d 参数）——数据越大带宽消耗越大。4）Pipeline 批处理——Pipelining 可以大幅提升 TPS（减少 RTT）。高级测试技巧：1）redis-benchmark -c 20 -n 100000 -P 10——测试 Pipeline 10 批量时的性能。2）redis-benchmark -t set,get -q——仅输出简洁结果（requests per second）。3）对比不同参数：分别测试 -c 10/50/200/1000 观察并发与吞吐的变化曲线。4）注意——redis-benchmark 不模拟真实业务场景（真实场景各命令比例不同，数据大小分布不同）。真实压测建议用自己编写的压测脚本（如 wrk + Lua 脚本、go 压测工具）。",
-    "hints": ["redis-benchmark 和真实流量压测的区别是什么", "Pipeline 测试中 -P 参数对 TPS 的典型影响"],
-    "tags": ["Redis", "性能", "压测", "benchmark"]
+    "hints": [
+      "redis-benchmark 和真实流量压测的区别是什么",
+      "Pipeline 测试中 -P 参数对 TPS 的典型影响"
+    ],
+    "tags": [
+      "Redis",
+      "性能",
+      "压测",
+      "benchmark"
+    ]
   },
   {
     "category": "database",
@@ -330,7 +370,13 @@
       "RDB fork 时写时复制（COW）具体如何工作的",
       "为什么 AOF 的 everysec 模式推荐用于生产"
     ],
-    "tags": ["Redis", "持久化", "RDB", "AOF", "fork"]
+    "tags": [
+      "Redis",
+      "持久化",
+      "RDB",
+      "AOF",
+      "fork"
+    ]
   },
   {
     "category": "database",
@@ -343,7 +389,12 @@
       "ACL 的 +@read -DEL 这样的规则是如何组合生效的",
       "ACL LOG 如何帮助排查权限问题"
     ],
-    "tags": ["Redis", "ACL", "安全", "权限"]
+    "tags": [
+      "Redis",
+      "ACL",
+      "安全",
+      "权限"
+    ]
   },
   {
     "category": "database",
@@ -356,7 +407,12 @@
       "惰性删除和定期删除哪个对内存释放更重要",
       "大量 key 同一时间过期为什么会造成延迟抖动"
     ],
-    "tags": ["Redis", "过期", "删除", "内存"]
+    "tags": [
+      "Redis",
+      "过期",
+      "删除",
+      "内存"
+    ]
   },
   {
     "category": "database",
@@ -369,7 +425,12 @@
       "AOF 重写为什么需要 rewrite buffer 这个额外缓冲区",
       "为什么 AOF 自动重写同时检查百分比和最小大小两个条件"
     ],
-    "tags": ["Redis", "AOF", "重写", "持久化"]
+    "tags": [
+      "Redis",
+      "AOF",
+      "重写",
+      "持久化"
+    ]
   },
   {
     "category": "database",
@@ -382,6 +443,101 @@
       "哨兵模式下读 QPS 如何扩展、写 QPS 遇到瓶颈怎么办",
       "什么情况下需要从哨兵升级到 Cluster"
     ],
-    "tags": ["Redis", "部署", "架构", "选型"]
+    "tags": [
+      "Redis",
+      "部署",
+      "架构",
+      "选型"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 持久化：RDB vs AOF",
+    "content": "Redis 的 RDB 和 AOF 两种持久化方式的原理、优劣和选型建议？RDB 的 fork 写时复制（COW）机制如何工作？AOF 重写（Rewrite）的目的是什么？",
+    "answer": "答案：RDB 是时间点快照（fork 子进程将全量数据写入磁盘），AOF 是追加写操作日志（每个写命令追加到文件）。RDB 文件小、恢复快但可能丢数据；AOF 数据更完整但文件大、恢复慢。两者可同时开启。\n\n解析：RDB——1）通过 fork() 创建子进程，子进程将数据写入临时 RDB 文件，完成后替换旧文件。2）写时复制（COW）：fork 后父子进程共享内存页，子进程写 RDB 时如果父进程修改了某页内存，内核复制该页给子进程（子进程看到的是 fork 时刻的数据快照）。3）配置：save 900 1（900 秒内至少 1 个 key 变化触发）。AOF——1）追加写命令到文件末尾（aof_buf → fsync 到磁盘）。2）fsync 策略：appendfsync always（每次写都 fsync，最安全但最慢）、everysec（每秒 fsync，推荐）、no（交给 OS，最快但不安全）。3）AOF 重写：子进程读取当前内存中的数据生成最小的写命令集合来重建数据集——解决 AOF 文件无限增长问题。4）混合持久化（Redis 4.0+）：RDB 快照 + AOF 增量日志。AOF 重写时先生成当前数据的 RDB，再追加增量写命令。加载时先加载 RDB 再回放 AOF 增量。\n\n扩展延伸：选型建议——1）允许丢少量数据 + 追求恢复速度 → RDB。2）不能丢数据 + 可以接受慢恢复 → AOF（everysec）。3）最佳实践：RDB + AOF 同时开启（混合持久化）。监控 AOF 文件大小和重写耗时。注意：RDB fork 的 COW 机制——如果 fork 后父进程大量写入（修改内存页），子进程需要复制更多内存页，内存使用翻倍（物理内存不足时使用 Swap 导致性能骤降）。需要预留一半内存给 COW。",
+    "hints": [
+      "RDB 的 fork COW 注意——写入量大的时候子进程复制页多，内存可能翻倍",
+      "AOF everysec 是最推荐的 fsync 策略的原因——最多丢 1 秒数据，性能影响小"
+    ],
+    "tags": [
+      "Redis",
+      "持久化",
+      "RDB",
+      "AOF"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 过期策略与内存淘汰",
+    "content": "Redis 的 key 过期删除策略有哪些？惰性删除和定期删除如何配合工作？内存淘汰（Eviction）策略有哪些？如何选择淘汰策略？",
+    "answer": "答案：过期删除策略——1）惰性删除：访问 key 时检查是否过期，过期则删除。优点：CPU 友好（只处理被访问的 key）。缺点：过期但不再访问的 key 永远不删除（内存泄漏）。2）定期删除：每 100ms 扫描一部分设置了过期时间的 key（随机抽样 + 过期则删除）。两者配合：定期删除兜底，惰性删除精准。\n\n解析：定期删除的细节——1）server.hz 控制扫描频率，默认 10（也就是每秒执行 10 次）。2）每次扫描 Redis 从设置了过期时间的 key 中随机取 20 个，删除其中过期的。如果超过 25% 过期则再随机取 20 个（循环上限 16ms）。3）续命机制：如果大量 key 同时过期，扫描会持续直到过期比例 < 25% 或耗时 > 16ms。\n\n扩展延伸：内存淘汰策略（maxmemory 配置）——1）noeviction（默认）：不淘汰，写入时报错（OOM 拒绝）。2）allkeys-lru：从所有 key 中选最近最少使用的淘汰。最常用。3）volatile-lru：从设置了过期时间的 key 中选 LRU 淘汰。4）allkeys-lfu：从所有 key 中选最不经常使用的淘汰（Redis 4.0+）。5）volatile-random/volatile-ttl：随机淘汰或按 ttl 淘汰。选型：缓存场景 → allkeys-lru（最均衡）。有 Session 场景 → volatile-lru（只淘汰可过期的，永不过期的 key 安全）。淘汰不是精确 LRU——Redis 的近似 LRU 通过随机采样 + 维护一个 LRU 时间戳实现（节省内存）。",
+    "hints": [
+      "为什么定期删除的随机抽样 + 过期比例检查比扫描所有 key 更高效——避免 O(N) 扫描",
+      "近似 LRU 和精确 LRU 的差异——Redis 用 3-5 个 key 的采样代替全局排序"
+    ],
+    "tags": [
+      "Redis",
+      "过期",
+      "淘汰",
+      "内存"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Redis 事务与 Lua 脚本",
+    "content": "Redis 事务（MULTI/EXEC）和 Lua 脚本（EVAL）的关系和区别是什么？Lua 脚本为什么能保证原子性？在 Redis 中使用 Lua 的最佳实践是什么？",
+    "answer": "答案：Redis 事务通过 MULTI（开启事务）→ 命令入队 → EXEC（批量执行）实现。事务中的命令在 EXEC 时按顺序执行，但不回滚（语法错误取消事务，运行时错误不回滚）。Lua 脚本通过 EVAL 在服务端执行一段 Lua 代码，整个脚本在 Redis 中原子执行。\n\n解析：Redis 事务——1）MULTI 后命令不立即执行（入队），EXEC 时依次执行。2）WATCH 提供乐观锁：WATCH 监视 key 后，如果其他客户端修改了这些 key，当前事务 EXEC 失败。3）事务不保证回滚：如果某个命令运行时失败（如对一个 string 类型执行 LPUSH），后续命令继续执行（不是整体回滚）。\n\n扩展延伸：Lua 脚本的优势——1）真正的原子性：脚本执行期间其他客户端命令不会插入。ECMAScript 承诺？不——是在 Redis 中单线程执行的。2）减少网络开销：将多个命令打包到一个 EVAL 请求中（一次网络往返）。3）Lua 脚本的最佳实践：脚本尽量短（长脚本阻塞 Redis 单线程，其他操作排队）。用 redis.call()（报错抛异常）和 redis.pcall()（捕获异常返回）处理错误。使用 SCRIPT LOAD + EVALSHA 减少带宽（缓存编译后的脚本）。KEYS[1] 和 ARGV[1] 传参。注意：生产环境不要用随机 key 名（影响复制）。场景：分布式锁的 Redlock Lua 脚本、限流的令牌桶脚本。",
+    "hints": [
+      "Redis 事务不回滚的原因——Redis 设计哲学：错误是编程问题而非运行时问题，不应该在服务端处理",
+      "Lua 脚本为什么在分布式锁场景中是核心——一条 EVAL 原子性地完成「检查-设置」操作"
+    ],
+    "tags": [
+      "Redis",
+      "事务",
+      "Lua",
+      "原子性"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Redis Pipeline 管道",
+    "content": "Redis Pipeline（管道）是什么？它如何提升批量操作的性能？Pipeline 和事务（MULTI/EXEC）有什么区别？使用 Pipeline 时应该注意什么？",
+    "answer": "答案：Pipeline 将多个命令一次性发送到 Redis 服务器，减少网络往返（RTT）。不使用 Pipeline 时 N 个命令需要 N 次网络往返，Pipeline 只需 1 次往返。性能提升在网络延迟高时尤为显著。\n\n解析：Pipeline 和事务的对比——1）Pipeline 不保证原子性：管道中的命令在服务端可以穿插执行其他客户端的命令。2）事务保证隔离性：EXEC 时所有命令连续执行不被其他命令打断。3）Pipeline 没有回滚机制。4）Pipeline 可以提升批量读取和写入的性能，但不要求命令之间有关联。5）两者可以组合使用：Pipeline + MULTI/EXEC 既减少网络开销又保证原子性。\n\n扩展延伸：性能提升的原理——1）微秒级命令执行时间 vs 毫秒级网络 RTT。100 个命令：无 Pipeline = 100 * RTT + 100 * 执行时间，Pipeline = 1 * RTT + 100 * 执行时间。2）如果 RTT = 1ms，命令执行 = 0.1ms：无 Pipeline = 110ms，Pipeline = 1.1ms（快 100 倍）。注意事项——1）Pipeline 命令数量不要太大（建议 < 5000），避免 Socket Buffer 溢出。2）不对 Pipeline 中的命令的响应做实时处理（所有响应在 Pipeline 关闭后一起读取）。3）Pipeline 导致客户端缓冲区占用增加（命令累积到缓冲区再发送）。4）客户端需要处理 Pipeline 部分失败的场景（网络断开时已发送的命令状态不确定）。",
+    "hints": [
+      "Pipeline 为什么在网络延迟高的场景下提升最大——100 个命令在 50ms RTT 的跨机房场景下节省 5s 网络时间",
+      "Pipeline 的命令数量为什么不是越大越好——Socket Buffer 溢出和客户端 OOM 风险"
+    ],
+    "tags": [
+      "Redis",
+      "Pipeline",
+      "性能优化",
+      "网络"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 分布式锁深入",
+    "content": "基于 Redis 的分布式锁如何实现？Redlock 算法的原理是什么？使用 Redis 实现分布式锁的常见问题（锁超时、GC 停顿、时钟漂移）有哪些？",
+    "answer": "答案：最基础的分布式锁：SET key uuid NX PX 30000（原子性地设置 key，value 为唯一标识，过期时间 30s）。释放时用 Lua 脚本检查 value 匹配再删除（防止误删其他客户端的锁）。Redlock 在 Redis 集群中的多数节点上获取锁来保证一致性。\n\n解析：基础锁的实现——1）加锁：`SET lock_key unique_id NX PX 10000`。NX = 不存在才设置（互斥），PX = 过期时间（避免死锁），unique_id（如 UUID + 线程 ID）保证只有持有者能释放锁。2）释放：Lua 脚本 `if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end`。\n\n扩展延伸：常见问题——1）锁超时：业务执行时间超过了锁过期时间，锁自动释放后其他客户端获取锁。解决：看门狗机制（Redisson 的 Watch Dog，锁剩余 1/3 时间时自动续期）。2）GC 停顿：GC Stop-The-World 导致线程暂停，锁超时后其他线程获取锁，原线程 GC 完成后以为自己仍持有锁（认为业务没执行完）。3）时钟漂移：Redis 节点时钟不同步导致过期时间不一致。Redlock 算法（Redis 之父 Antirez 提出）——1）在 N/2+1 个 Redis 节点上获取锁（通常 5 个奇数节点）。2）获取锁的总耗时必须小于锁的有效时间。3）如果超过半数节点获取成功且耗时小于有效时间，则认为锁获取成功。4）争议：分布式系统专家认为 Redlock 在 GC 停顿下仍有安全性问题（「红锁的争议」是经典话题）。实践建议：大多数场景用基础 SET NX PX + Redisson Watch Dog 就够了。需要严格一致性时考虑 ZooKeeper 或 etcd 的锁。",
+    "hints": [
+      "释放锁的 Lua 脚本为什么要先 GET 比较 value 再 DEL——防止误释放其他客户端持有的锁",
+      "Redlock 的 GC 停顿问题为什么没有被完全解决——GC 暂停期间锁已过期但线程不知情"
+    ],
+    "tags": [
+      "Redis",
+      "分布式锁",
+      "Redlock",
+      "并发"
+    ]
   }
 ]

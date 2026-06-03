@@ -525,5 +525,120 @@
       "集合",
       "数组"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "HashMap 树化条件",
+    "content": "关于 HashMap 的树化（Treeify）条件，以下说法正确的是？",
+    "answer": "答案：C) 当链表长度 >= 8 且数组长度 >= 64 时，链表转为红黑树；链表长度 < 6 时红黑树退化为链表。解析：树化有两个条件：链表长度达到阈值 TREEIFY_THRESHOLD=8，且数组长度 >= MIN_TREEIFY_CAPACITY=64。数组长度不足 64 时，即使链表很长也不树化，而是通过 resize 扩容（扩容后元素分散到新位置，链表自然缩短）。退化阈值 UNTREEIFY_THRESHOLD=6，留 2 的缓冲避免频繁转换。",
+    "options": [
+      "A) 只要链表长度 >= 8 就立即树化",
+      "B) 只要数组长度 >= 64 就全部树化",
+      "C) 当链表长度 >= 8 且数组长度 >= 64 时，链表转为红黑树；链表长度 < 6 时红黑树退化为链表",
+      "D) 树化后不会退化为链表"
+    ],
+    "hints": [
+      "为什么树化需要同时满足链表长度 >= 8 和数组长度 >= 64——避免 resize 前的不必要树化"
+    ],
+    "tags": [
+      "HashMap",
+      "红黑树",
+      "树化",
+      "集合"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ConcurrentHashMap 的 size() 方法",
+    "content": "关于 ConcurrentHashMap 的 size() 方法，JDK 8 的实现与 JDK 7 相比有什么重要变化？",
+    "answer": "答案：B) JDK 7 先无锁尝试再加锁，JDK 8 使用 CounterCell 数组 + baseCount 维护计数，size() 直接累加，性能更好。解析：JDK 7 的 ConcurrentHashMap 的 size() 先尝试无锁统计 Segment 的 count，如果前后两次结果不一致则加锁重试。JDK 8 改用 CounterCell 数组进行分段计数，put/remove 时通过 CAS 更新 CounterCell，size() 直接累加 CounterCell 的值和 baseCount。JDK 8 的 size() 是 O(N)（N 为 CounterCell 数量，通常很小），不需要锁。注意：JDK 8 的 mappingCount() 返回 long 类型（比 size() 的 int 更准确）。",
+    "options": [
+      "A) JDK 7 和 JDK 8 的 size() 实现没有区别",
+      "B) JDK 7 先无锁尝试再加锁，JDK 8 使用 CounterCell 数组 + baseCount 维护计数，size() 直接累加，性能更好",
+      "C) JDK 8 的 size() 是 O(1) 的，直接返回一个变量",
+      "D) JDK 7 的 size() 不需要加锁，JDK 8 的 size() 需要加锁"
+    ],
+    "hints": [
+      "JDK 8 的 CounterCell 分段计数如何避免多线程竞争下的计数瓶颈"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "并发",
+      "计数",
+      "集合"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ArrayList subList 陷阱",
+    "content": "关于 ArrayList 的 subList() 方法，以下说法正确的是？",
+    "answer": "答案：D) subList 返回的是原列表的视图（View），对 subList 的修改（如 clear()）会直接反映到原列表，对原列表的结构性修改会导致 subList 抛出 ConcurrentModificationException。解析：subList() 返回内部类 SubList，持有原 List 的引用，没有创建新数组。修改 subList（如 subList.clear() 清空指定范围）直接操作原列表的 elementData。但对原列表做结构性修改（如 add/remove 改变大小）会使 SubList 的 modCount 和原 List 不一致，再次操作 subList 时抛出 ConcurrentModificationException。正确做法：需要独立列表时用 new ArrayList<>(list.subList(from, to))。",
+    "options": [
+      "A) subList 返回的是全新独立的 ArrayList，修改它不影响原列表",
+      "B) subList 返回的是不可修改的只读视图",
+      "C) subList 只支持 get 操作，不支持 add/remove/set",
+      "D) subList 返回的是原列表的视图（View），对 subList 的修改会直接反映到原列表，对原列表的结构性修改会导致 subList 抛出 ConcurrentModificationException"
+    ],
+    "hints": [
+      "subList 的视图特性——clear() 子列表为什么是清空原列表指定范围的「正确打开方式」"
+    ],
+    "tags": [
+      "ArrayList",
+      "subList",
+      "视图",
+      "集合"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "Collections.synchronizedList 原理",
+    "content": "关于 Collections.synchronizedList() 包装的线程安全列表，以下说法正确的是？",
+    "answer": "答案：B) 所有方法都使用 synchronized 代码块加锁（mutex），但遍历时需要外部同步。解析：synchronizedList 通过在 List 的每个方法外套上 synchronized(mutex) 实现线程安全。但是，迭代器（iterator()/listIterator()）不支持加锁——遍历时必须外部同步：synchronized(list) { for (T item : list) { ... } }。这是因为迭代器在遍历过程中会多次调用 next()，单次调用是原子的，但整体遍历过程不是。复合操作（如判断再添加：if (!list.contains(x)) list.add(x)）也需要外部同步。",
+    "options": [
+      "A) synchronizedList 包装后，迭代器也是线程安全的，无需额外同步",
+      "B) 所有方法都使用 synchronized 代码块加锁（mutex），但遍历时需要外部同步",
+      "C) synchronizedList 使用 ReentrantLock 实现并发控制",
+      "D) synchronizedList 包装后的列表，复合操作（如 put-if-absent）也是原子的"
+    ],
+    "hints": [
+      "同步包装器的迭代器为什么不安全——迭代是多个方法调用的复合操作"
+    ],
+    "tags": [
+      "Collections",
+      "同步",
+      "线程安全",
+      "集合"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "NavigableMap 与 TreeMap",
+    "content": "关于 NavigableMap 和 TreeMap 的特性，以下说法错误的是？",
+    "answer": "答案：D) TreeMap 的 key 不需要实现 Comparable 接口，也不需要提供 Comparator。解析：TreeMap 基于红黑树，key 必须可比较——要么实现 Comparable 接口，要么在构造 TreeMap 时传入 Comparator。两者都不提供时抛出 ClassCastException。NavigableMap 是 SortedMap 的子接口，额外提供了导航方法（ceilingEntry/floorEntry/lowerEntry/higherEntry、descendingMap、subMap/headMap/tailMap 等）。TreeMap 实现了 NavigableMap。ceilingKey(key) 返回 >= key 的最小 key，floorKey(key) 返回 <= key 的最大 key。",
+    "options": [
+      "A) NavigableMap 提供了 ceilingKey/floorKey/lowerKey/higherKey 等导航方法",
+      "B) TreeMap 实现了 NavigableMap，基于红黑树，支持有序遍历",
+      "C) NavigableMap 的 descendingMap() 返回逆序视图",
+      "D) TreeMap 的 key 不需要实现 Comparable 接口，也不需要提供 Comparator"
+    ],
+    "hints": [
+      "TreeMap 的有序性依赖 key 的比较能力——要么 Comparable 要么 Comparator"
+    ],
+    "tags": [
+      "TreeMap",
+      "NavigableMap",
+      "有序",
+      "集合"
+    ]
   }
 ]

@@ -6,8 +6,14 @@
     "title": "JVM 运行时数据区域",
     "content": "JVM 运行时数据区包括：程序计数器、___、本地方法栈、___、方法区（JDK 8 后改为___）。",
     "answer": "{\"correct\":[[\"虚拟机栈\",\"Java虚拟机栈\"],[\"堆\",\"Java堆\",\"堆内存\"],[\"元空间\",\"Metaspace\"]],\"distractors\":[\"永久代\",\"直接内存\",\"运行时常量池\",\"栈内存\"]}",
-    "hints": ["除了程序计数器外，其他区域都可能发生 OOM", "方法区在 JDK 8 中被彻底移除，替代品使用本地内存"],
-    "tags": ["JVM", "内存管理"]
+    "hints": [
+      "除了程序计数器外，其他区域都可能发生 OOM",
+      "方法区在 JDK 8 中被彻底移除，替代品使用本地内存"
+    ],
+    "tags": [
+      "JVM",
+      "内存管理"
+    ]
   },
   {
     "category": "java_advanced",
@@ -16,8 +22,14 @@
     "title": "Java 堆内存分区",
     "content": "Java 堆被分为三个区域：___（新生代和老年代）、___（可选，JDK 7 后移除）。新生代又分为：___、Survivor 0 和 Survivor 1。",
     "answer": "{\"correct\":[[\"年轻代\",\"新生代\"],[\"永久代\",\"PermGen\"],[\"Eden\",\"Eden区\"]],\"distractors\":[\"老年代\",\"元空间\",\"代码缓存\",\"直接内存\"]}",
-    "hints": ["默认 Eden:Survivor 比例为 8:1:1", "大多数对象都在 Eden 区分配"],
-    "tags": ["JVM", "堆内存"]
+    "hints": [
+      "默认 Eden:Survivor 比例为 8:1:1",
+      "大多数对象都在 Eden 区分配"
+    ],
+    "tags": [
+      "JVM",
+      "堆内存"
+    ]
   },
   {
     "category": "java_advanced",
@@ -26,8 +38,14 @@
     "title": "GC Roots 包括哪些",
     "content": "可作为 GC Roots 的对象包括：虚拟机栈中___的对象、方法区中___引用的对象、方法区中___引用的对象、JNI（即一般说的 Native 方法）中引用的对象。",
     "answer": "{\"correct\":[[\"引用\",\"引用的\"],[\"静态属性\",\"静态变量\"],[\"常量\",\"常量池\"]],\"distractors\":[\"局部变量\",\"实例方法\",\"成员变量\",\"临时变量\"]}",
-    "hints": ["GC Roots 是进行可达性分析的起始点", "局部变量表中的引用是 GC Roots 的一部分"],
-    "tags": ["JVM", "GC"]
+    "hints": [
+      "GC Roots 是进行可达性分析的起始点",
+      "局部变量表中的引用是 GC Roots 的一部分"
+    ],
+    "tags": [
+      "JVM",
+      "GC"
+    ]
   },
   {
     "category": "java_advanced",
@@ -36,8 +54,14 @@
     "title": "类加载过程的步骤",
     "content": "JVM 类加载过程包括以下七个阶段：加载、___、准备、___、初始化、使用和___。",
     "answer": "{\"correct\":[[\"验证\",\"校验\"],[\"解析\"],[\"卸载\"]],\"distractors\":[\"编译\",\"执行\",\"链接\",\"优化\",\"运行\"]}",
-    "hints": ["前五个阶段（加载到初始化）是类加载的核心流程", "解析阶段不一定在初始化之前，JVM 规范允许在初始化之后开始解析"],
-    "tags": ["JVM", "类加载"]
+    "hints": [
+      "前五个阶段（加载到初始化）是类加载的核心流程",
+      "解析阶段不一定在初始化之前，JVM 规范允许在初始化之后开始解析"
+    ],
+    "tags": [
+      "JVM",
+      "类加载"
+    ]
   },
   {
     "category": "java_advanced",
@@ -46,8 +70,14 @@
     "title": "对象存活判断算法",
     "content": "JVM 判断对象是否存活有两种算法：___法（无法解决循环引用问题，不为主流）和___分析法（从 GC Roots 开始搜索，不可达的对象即为可回收对象）。",
     "answer": "{\"correct\":[[\"引用计数\",\"引用计数法\"],[\"可达性\",\"可达性分析\"]],\"distractors\":[\"标记清除\",\"标记整理\",\"分代收集\",\"复制算法\"]}",
-    "hints": ["主流的 JVM 都采用第二种算法来判断对象是否存活", "循环引用是第一种算法的致命缺陷"],
-    "tags": ["JVM", "GC"]
+    "hints": [
+      "主流的 JVM 都采用第二种算法来判断对象是否存活",
+      "循环引用是第一种算法的致命缺陷"
+    ],
+    "tags": [
+      "JVM",
+      "GC"
+    ]
   },
   {
     "category": "java_advanced",
@@ -56,8 +86,16 @@
     "title": "主流 GC 收集器",
     "content": "JDK 11+ 默认的 GC 收集器是___，它通过将堆划分为多个固定大小的 Region 来实现可预测的停顿。JDK 21+ 引入的___（JDK 15 Preview、JDK 21 GA）使用染色指针和读屏障，将停顿时间控制在___以下。",
     "answer": "{\"correct\":[[\"G1\",\"G1 GC\",\"Garbage First\"],[\"ZGC\"],[\"1ms\",\"10ms\",\"毫秒级\"]],\"distractors\":[\"CMS\",\"Parallel\",\"Serial\",\"Shenandoah\"]}",
-    "hints": ["G1 GC 的目标是最大停顿时间可由 -XX:MaxGCPauseMillis 参数指定", "ZGC 的核心创新是染色指针（Colored Pointers）和读屏障（Load Barrier）"],
-    "tags": ["JVM", "GC", "G1", "ZGC"]
+    "hints": [
+      "G1 GC 的目标是最大停顿时间可由 -XX:MaxGCPauseMillis 参数指定",
+      "ZGC 的核心创新是染色指针（Colored Pointers）和读屏障（Load Barrier）"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "G1",
+      "ZGC"
+    ]
   },
   {
     "category": "java_advanced",
@@ -66,8 +104,15 @@
     "title": "JVM 堆内存大小参数",
     "content": "设置 JVM 初始堆大小的参数是___，设置最大堆大小的参数是___，设置新生代大小的参数是___，设置元空间大小上限的参数是___。",
     "answer": "{\"correct\":[[\"-Xms\"],[\"-Xmx\"],[\"-Xmn\"],[\"-XX:MaxMetaspaceSize\"]],\"distractors\":[\"-Xss\",\"-XX:PermSize\",\"-XX:NewRatio\",\"-XX:SurvivorRatio\"]}",
-    "hints": ["Xmx 和 Xms 设置为相同值可以避免运行时动态调整堆大小带来的性能损耗", "JDK 8 使用 MaxMetaspaceSize 取代了 MaxPermSize"],
-    "tags": ["JVM", "参数", "堆内存"]
+    "hints": [
+      "Xmx 和 Xms 设置为相同值可以避免运行时动态调整堆大小带来的性能损耗",
+      "JDK 8 使用 MaxMetaspaceSize 取代了 MaxPermSize"
+    ],
+    "tags": [
+      "JVM",
+      "参数",
+      "堆内存"
+    ]
   },
   {
     "category": "java_advanced",
@@ -76,8 +121,15 @@
     "title": "Java 对象头结构",
     "content": "在 64 位 JVM（未开启指针压缩）中，一个普通 Java 对象的对象头包含两个部分：___（存储哈希码、GC 分代年龄、锁状态标志、偏向线程 ID 等）和___（指向该对象所属类元数据的指针）。开启指针压缩后，第二部分在 64 位系统中从 8 字节压缩到___字节。",
     "answer": "{\"correct\":[[\"Mark Word\",\"标记字\"],[\"Klass Pointer\",\"类指针\",\"类型指针\"],[\"4\",\"4 字节\"]],\"distractors\":[\"实例数据\",\"对齐填充\",\"对象体\",\"元数据\"]}",
-    "hints": ["Mark Word 在 32 位系统上占 4 字节，64 位系统上占 8 字节", "对象头是锁升级的关键——Mark Word 中存储了锁状态标志位"],
-    "tags": ["JVM", "对象头", "内存布局"]
+    "hints": [
+      "Mark Word 在 32 位系统上占 4 字节，64 位系统上占 8 字节",
+      "对象头是锁升级的关键——Mark Word 中存储了锁状态标志位"
+    ],
+    "tags": [
+      "JVM",
+      "对象头",
+      "内存布局"
+    ]
   },
   {
     "category": "java_advanced",
@@ -86,8 +138,15 @@
     "title": "Minor GC / Major GC / Full GC",
     "content": "发生在新生代的 GC 称为___（触发频率高，速度较快）；发生在老年代的 GC 称为___；对整个堆（包括新生代、老年代、元空间）进行垃圾回收称为___，通常伴随停顿时间较长。",
     "answer": "{\"correct\":[[\"Minor GC\",\"Young GC\"],[\"Major GC\",\"Old GC\"],[\"Full GC\"]],\"distractors\":[\"部分 GC\",\"全局 GC\",\"并发 GC\",\"停止 GC\"]}",
-    "hints": ["Full GC 通常伴随着至少一次 Minor GC", "频繁 Full GC 是 JVM 性能问题的常见信号，通常需要排查内存泄漏"],
-    "tags": ["JVM", "GC", "分代"]
+    "hints": [
+      "Full GC 通常伴随着至少一次 Minor GC",
+      "频繁 Full GC 是 JVM 性能问题的常见信号，通常需要排查内存泄漏"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "分代"
+    ]
   },
   {
     "category": "java_advanced",
@@ -96,8 +155,15 @@
     "title": "Java 引用类型强度",
     "content": "Java 提供了四种引用类型，强度从高到低依次为：___（new 出来的普通对象，GC 永不回收）、___（内存不足时才回收，常用于缓存）、___（下一次 GC 时一定回收，常用于补充原生 API 的 dispose 方法）、___（随时可被回收，无法通过 get 获得强引用，用于关联 GC 通知）。",
     "answer": "{\"correct\":[[\"强引用\",\"Strong Reference\"],[\"软引用\",\"Soft Reference\"],[\"弱引用\",\"Weak Reference\"],[\"虚引用\",\"Phantom Reference\"]],\"distractors\":[\"影子引用\",\"空引用\",\"幽灵引用\",\"弹性引用\"]}",
-    "hints": ["WeakHashMap 是弱引用的典型应用——当 key 不再被外部引用时自动被 GC 回收", "软引用适合实现缓存（如 Guava Cache 的 softValues）"],
-    "tags": ["JVM", "引用", "GC"]
+    "hints": [
+      "WeakHashMap 是弱引用的典型应用——当 key 不再被外部引用时自动被 GC 回收",
+      "软引用适合实现缓存（如 Guava Cache 的 softValues）"
+    ],
+    "tags": [
+      "JVM",
+      "引用",
+      "GC"
+    ]
   },
   {
     "category": "java_advanced",
@@ -106,8 +172,15 @@
     "title": "类与实例的初始化顺序",
     "content": "类初始化时先执行___的 <clinit>（类构造器），再执行当前类的 <clinit>。创建对象时先执行___的 <init>（实例变量初始化 + 构造代码块 + 构造函数），再执行子类的。静态变量赋值和静态代码块按___顺序执行。",
     "answer": "{\"correct\":[[\"父类\",\"超类\"],[\"父类\",\"超类\"],[\"书写\",\"定义\",\"代码\"]],\"distractors\":[\"接口\",\"子类\",\"顺序无关\",\"任意\"]}",
-    "hints": ["<clinit> 由 JVM 保证线程安全，多个线程同时初始化一个类时只有一个线程执行 <clinit>", "构造代码块（{}）在每次创建对象时执行，且在构造函数之前"],
-    "tags": ["JVM", "类加载", "初始化"]
+    "hints": [
+      "<clinit> 由 JVM 保证线程安全，多个线程同时初始化一个类时只有一个线程执行 <clinit>",
+      "构造代码块（{}）在每次创建对象时执行，且在构造函数之前"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "初始化"
+    ]
   },
   {
     "category": "java_advanced",
@@ -116,8 +189,15 @@
     "title": "String Pool 与 intern()",
     "content": "JDK 7+ 中 String Pool 位于___。String s = new String(\"a\") + new String(\"b\") 执行后 s 指向堆中的___。调用 s.intern() 时，如果池中已有则___；如果池中没有则___（JDK 7+ 的实现策略）。",
     "answer": "{\"correct\":[[\"堆内存\",\"堆\"],[\"ab\",\"字符串ab\"],[\"返回池中引用\",\"返回已有引用\"],[\"将堆中引用存入常量池\",\"记录首次出现实例的引用\"]],\"distractors\":[\"方法区\",\"元空间\",\"永久代\",\"复制字符串到池中\"]}",
-    "hints": ["JDK 6 中 String Pool 在永久代，intern() 会复制字符串到永久代（可能 OOM）", "JDK 7+ 将 String Pool 移到了堆，intern() 只在常量池中记录堆中 String 对象的引用"],
-    "tags": ["JVM", "String", "常量池"]
+    "hints": [
+      "JDK 6 中 String Pool 在永久代，intern() 会复制字符串到永久代（可能 OOM）",
+      "JDK 7+ 将 String Pool 移到了堆，intern() 只在常量池中记录堆中 String 对象的引用"
+    ],
+    "tags": [
+      "JVM",
+      "String",
+      "常量池"
+    ]
   },
   {
     "category": "java_advanced",
@@ -126,8 +206,16 @@
     "title": "DCL 单例与 volatile",
     "content": "双重检查锁定（DCL）单例中 instance 必须用___修饰。new 操作分为三步：分配内存、___、___，JIT 可能重排序后两步。不加关键字时另一个线程可能在第一步判断 instance 不为 null 后读取到___。",
     "answer": "{\"correct\":[[\"volatile\"],[\"调用构造函数\",\"初始化\"],[\"赋值引用\",\"设置引用\"],[\"未初始化的对象\",\"半初始化对象\"]],\"distractors\":[\"synchronized\",\"final\",\"static\",\"transient\"]}",
-    "hints": ["volatile 在 JDK 5+ 才提供完善的 happens-before 语义（JSR-133 修复）", "静态内部类单例模式（Initialization-on-demand holder）可以避免 DCL 的复杂性"],
-    "tags": ["JVM", "单例", "volatile", "指令重排序"]
+    "hints": [
+      "volatile 在 JDK 5+ 才提供完善的 happens-before 语义（JSR-133 修复）",
+      "静态内部类单例模式（Initialization-on-demand holder）可以避免 DCL 的复杂性"
+    ],
+    "tags": [
+      "JVM",
+      "单例",
+      "volatile",
+      "指令重排序"
+    ]
   },
   {
     "category": "java_advanced",
@@ -136,8 +224,15 @@
     "title": "JIT 编译器与分层编译",
     "content": "HotSpot JVM 包含两种 JIT 编译器：___（C1，启动快、优化轻）和___（C2，启动慢、优化重）。方法被调用超过阈值（默认___次）后从解释执行进入 C1 编译。JDK 6 引入的___策略先用 C1 编译，热点继续上升后用 C2 重新编译。",
     "answer": "{\"correct\":[[\"Client Compiler\",\"-client\"],[\"Server Compiler\",\"-server\",\"C2\"],[\"1500\",\"10000\"],[\"分层编译\",\"Tiered Compilation\"]],\"distractors\":[\"AOT Compiler\",\"Graal Compiler\",\"LLVM\",\"-Xcomp\"]}",
-    "hints": ["C2 编译器优化程度高但编译本身也消耗 CPU，分层编译在启动速度和峰值性能间取得平衡", "JDK 8 默认开启分层编译（-XX:+TieredCompilation）"],
-    "tags": ["JVM", "JIT", "编译优化"]
+    "hints": [
+      "C2 编译器优化程度高但编译本身也消耗 CPU，分层编译在启动速度和峰值性能间取得平衡",
+      "JDK 8 默认开启分层编译（-XX:+TieredCompilation）"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "编译优化"
+    ]
   },
   {
     "category": "java_advanced",
@@ -146,8 +241,16 @@
     "title": "栈上分配与 TLAB",
     "content": "未被逃逸分析识别为___的对象可以在___（线程栈）上分配，方法结束时随栈帧自动销毁。___（Thread Local Allocation Buffer）是每个线程在 Eden 区预分配的内存区域，用于___避免线程竞争 CAS 操作。",
     "answer": "{\"correct\":[[\"逃逸对象\",\"逃逸\"],[\"栈\",\"栈上\",\"虚拟机栈\"],[\"TLAB\"],[\"无锁分配\",\"快速分配\"]],\"distractors\":[\"堆上分配\",\"标量替换\",\"锁消除\",\"同步分配\"]}",
-    "hints": ["逃逸分析在 JDK 6u23+ 默认开启（-XX:+DoEscapeAnalysis）", "TLAB 默认开启（-XX:+UseTLAB），可通过 -XX:TLABSize 调整大小"],
-    "tags": ["JVM", "逃逸分析", "TLAB", "优化"]
+    "hints": [
+      "逃逸分析在 JDK 6u23+ 默认开启（-XX:+DoEscapeAnalysis）",
+      "TLAB 默认开启（-XX:+UseTLAB），可通过 -XX:TLABSize 调整大小"
+    ],
+    "tags": [
+      "JVM",
+      "逃逸分析",
+      "TLAB",
+      "优化"
+    ]
   },
   {
     "category": "java_advanced",
@@ -156,8 +259,16 @@
     "title": "三色标记法与并发标记",
     "content": "三色标记法将对象分为三种颜色：___（未被 GC 访问过）、___（自身已扫描但引用的对象尚未全部扫描）和___（自身和引用的对象都已扫描完成，安全可回收）。CMS/G1 在并发标记阶段遇到的问题：___（标记过程中黑色对象引用了白色对象且该白色对象被灰色对象移除了引用）需要用到___（增量更新/CMS 或 SATB/G1）来解决。",
     "answer": "{\"correct\":[[\"白色\",\"White\"],[\"灰色\",\"Gray\"],[\"黑色\",\"Black\"],[\"对象消失问题\",\"漏标问题\"],[\"写屏障\",\"Write Barrier\"]],\"distractors\":[\"红色\",\"蓝色\",\"标记清除\",\"计数器\",\"读屏障\"]}",
-    "hints": ["三色标记中如果黑色对象引用了新的白色对象且灰色到该白色对象的引用已经消失，会导致白色对象被错误回收", "CMS 使用增量更新（Incremental Update）解决对象消失问题，G1 使用 SATB（Snapshot At The Beginning）"],
-    "tags": ["JVM", "GC", "三色标记", "并发"]
+    "hints": [
+      "三色标记中如果黑色对象引用了新的白色对象且灰色到该白色对象的引用已经消失，会导致白色对象被错误回收",
+      "CMS 使用增量更新（Incremental Update）解决对象消失问题，G1 使用 SATB（Snapshot At The Beginning）"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "三色标记",
+      "并发"
+    ]
   },
   {
     "category": "java_advanced",
@@ -166,8 +277,16 @@
     "title": "安全点（SafePoint）与安全区域",
     "content": "安全点（SafePoint）是线程执行到某处时___信息是完整可描述的状态——JVM 在该位置执行 GC 等全局操作。线程在安全点通过___（轮询标志位）机制响应 GC 请求。安全区域（SafeRegion）是线程不执行 Java 代码时（如___或___状态）的区域，线程在这个区域时不需要响应 GC 请求但需要记录自己已经进入安全区域。",
     "answer": "{\"correct\":[[\"堆栈\",\"栈\",\"线程\"],[\"轮询\"],[\"Blocked\",\"阻塞\"],[\"Sleep\",\"休眠\"]],\"distractors\":[\"缓存\",\"内存\",\"中断\",\"运行\",\"等待\"]}",
-    "hints": ["安全点通常设置在循环末尾、方法返回前、可能抛异常的位置等「长时间运行」的指令之后", "JIT 编译的代码中，安全点轮询通常通过一个简单的内存加载指令实现——读一个特定内存页"],
-    "tags": ["JVM", "安全点", "GC", "SafePoint"]
+    "hints": [
+      "安全点通常设置在循环末尾、方法返回前、可能抛异常的位置等「长时间运行」的指令之后",
+      "JIT 编译的代码中，安全点轮询通常通过一个简单的内存加载指令实现——读一个特定内存页"
+    ],
+    "tags": [
+      "JVM",
+      "安全点",
+      "GC",
+      "SafePoint"
+    ]
   },
   {
     "category": "java_advanced",
@@ -176,8 +295,16 @@
     "title": "双亲委派模型",
     "content": "JVM 类加载器按双亲委派模型工作：当一个类加载器收到类加载请求时，先将请求___给父类加载器（依次向上委派，直到 Bootstrap ClassLoader），只有当___（父类加载器找不到该类）时，才由当前类加载器尝试___。三个核心类加载器：___（加载 rt.jar）、___（加载 JRE/lib/ext）、Application ClassLoader（加载 CLASSPATH）。",
     "answer": "{\"correct\":[[\"委派\",\"委托\"],[\"父类加载器加载失败\"],[\"自行加载\"],[\"Bootstrap ClassLoader\",\"启动类加载器\"],[\"Extension ClassLoader\",\"扩展类加载器\"]],\"distractors\":[\"执行\",\"缓存\",\"Platform ClassLoader\",\"System ClassLoader\",\"URL ClassLoader\"]}",
-    "hints": ["双亲委派模型保证了 Java 核心类库的安全性——核心类由 Bootstrap ClassLoader 加载，不会被自定义类替换", "破坏双亲委派模型的典型例子是 Tomcat——每个 Web App 独立加载类实现应用隔离"],
-    "tags": ["JVM", "类加载", "双亲委派", "类加载器"]
+    "hints": [
+      "双亲委派模型保证了 Java 核心类库的安全性——核心类由 Bootstrap ClassLoader 加载，不会被自定义类替换",
+      "破坏双亲委派模型的典型例子是 Tomcat——每个 Web App 独立加载类实现应用隔离"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "双亲委派",
+      "类加载器"
+    ]
   },
   {
     "category": "java_advanced",
@@ -186,8 +313,16 @@
     "title": "堆外内存与 DirectByteBuffer",
     "content": "DirectByteBuffer 通过___方法分配堆外内存（Direct Memory），不受 JVM 堆大小限制（由___参数或操作系统控制上限）。堆外内存相对于堆内内存的优势：___（减少一次从堆到堆外的拷贝）、减少 GC 压力（不占用 GC Roots 扫描和对象移动的开销）。缺点：需要手动管理内存（通过___实现自动回收），内存释放不及时可能导致___。",
     "answer": "{\"correct\":[[\"ByteBuffer.allocateDirect()\",\"allocateDirect\"],[\"-XX:MaxDirectMemorySize\"],[\"零拷贝\",\"减少拷贝\"],[\"Cleaner\",\"虚引用\",\"PhantomReference\"],[\"堆外内存泄漏\",\"Direct Memory OOM\"]],\"distractors\":[\"malloc\",\"-Xmx\",\"堆内\",\"手动释放\",\"栈溢出\"]}",
-    "hints": ["堆外内存的释放依赖于 GC 触发 Cleaner 的 run() 方法，如果堆内存充足不触发 GC，堆外内存可能一直不会释放", "Netty 使用 PooledByteBufAllocator 池化堆外内存，避免频繁分配和回收"],
-    "tags": ["JVM", "堆外内存", "DirectByteBuffer", "NIO"]
+    "hints": [
+      "堆外内存的释放依赖于 GC 触发 Cleaner 的 run() 方法，如果堆内存充足不触发 GC，堆外内存可能一直不会释放",
+      "Netty 使用 PooledByteBufAllocator 池化堆外内存，避免频繁分配和回收"
+    ],
+    "tags": [
+      "JVM",
+      "堆外内存",
+      "DirectByteBuffer",
+      "NIO"
+    ]
   },
   {
     "category": "java_advanced",
@@ -196,8 +331,16 @@
     "title": "Java 对象创建过程",
     "content": "JVM 创建一个 Java 对象（如 new Object()）的完整过程：1）___检查（能否在常量池中找到类的符号引用并验证类是否已加载）；2）如果类未加载则执行___（加载→验证→准备→解析→初始化）；3）___（在堆上分配对象内存，TLAB 优先）；4）___（将对象头外的内存区域初始化为零值）；5）设置___（Mark Word + Klass Pointer）；6）执行___（按照 父类变量初始化→父类构造代码块→父类构造函数→子类变量初始化→子类构造代码块→子类构造函数 的顺序）。",
     "answer": "{\"correct\":[[\"类加载\"],[\"类加载\",\"类加载过程\"],[\"分配内存\"],[\"零值初始化\"],[\"对象头\",\"对象头信息\"],[\"<init>\",\"实例构造器\",\"初始化方法\"]],\"distractors\":[\"权限检查\",\"常量检查\",\"设置引用\",\"分配栈空间\",\"<clinit>\",\"静态初始化\"]}",
-    "hints": ["对象创建过程中，零值初始化（Step 4）保证了 Java 对象的成员变量在不赋值时也有默认值", "<init> 和 <clinit> 的区别：前者是实例初始化方法（每次 new 都执行），后者是类初始化方法（类加载时执行一次）"],
-    "tags": ["JVM", "对象创建", "初始化", "new"]
+    "hints": [
+      "对象创建过程中，零值初始化（Step 4）保证了 Java 对象的成员变量在不赋值时也有默认值",
+      "<init> 和 <clinit> 的区别：前者是实例初始化方法（每次 new 都执行），后者是类初始化方法（类加载时执行一次）"
+    ],
+    "tags": [
+      "JVM",
+      "对象创建",
+      "初始化",
+      "new"
+    ]
   },
   {
     "category": "java_advanced",
@@ -206,8 +349,16 @@
     "title": "GC 调优核心参数",
     "content": "GC 调优核心参数：-Xms 设置初始堆大小，___设置最大堆大小（建议两者相等避免运行时扩容）。___设置新生代和老年代的比例。G1 GC 通过___设置期望的最大 GC 暂停时间，___设置并行 GC 线程数。打印 GC 日志使用___（JDK 9+ 统一日志格式）。",
     "answer": "{\"correct\":[[\"-Xmx\",\"最大堆大小\"],[\"-XX:NewRatio\"],[\"-XX:MaxGCPauseMillis\"],[\"-XX:ParallelGCThreads\"],[\"-Xlog:gc*\"]],\"distractors\":[\"-Xmn\",\"-Xss\",\"-XX:SurvivorRatio\",\"-XX:G1HeapRegionSize\",\"-verbose:gc\"]}",
-    "hints": ["Xms 和 Xmx 设为相同值可以避免运行时堆扩容和缩容的性能开销", "G1 的 MaxGCPauseMillis 默认 200ms，降低此值会增加 GC 频率"],
-    "tags": ["JVM", "GC", "调优", "参数"]
+    "hints": [
+      "Xms 和 Xmx 设为相同值可以避免运行时堆扩容和缩容的性能开销",
+      "G1 的 MaxGCPauseMillis 默认 200ms，降低此值会增加 GC 频率"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "调优",
+      "参数"
+    ]
   },
   {
     "category": "java_advanced",
@@ -216,8 +367,16 @@
     "title": "类加载器层次结构",
     "content": "JDK 8 的类加载器层次（从父到子）：___→ 扩展类加载器（ExtClassLoader）→ ___。___加载 JDK 核心类库（rt.jar）。双亲委派的破坏——___让父类加载器请求子类加载器加载（如 JDBC 驱动通过 SPI 机制）。JDK 9 将扩展类加载器改为___。",
     "answer": "{\"correct\":[[\"Bootstrap ClassLoader\",\"启动类加载器\"],[\"Application ClassLoader\",\"App ClassLoader\",\"系统类加载器\"],[\"Bootstrap ClassLoader\",\"启动类加载器\"],[\"线程上下文类加载器\",\"Thread Context ClassLoader\",\"TCCL\"],[\"Platform ClassLoader\",\"平台类加载器\"]],\"distractors\":[\"自定义类加载器\",\"Extension\",\"URLClassLoader\",\"Launcher\",\"ClassLoader\"]}",
-    "hints": ["双亲委派模型的工作流程——先委托父加载器加载，父加载器找不到才自己加载", "JDBC 驱动通过 ServiceLoader SPI + 线程上下文类加载器破坏双亲委派"],
-    "tags": ["JVM", "类加载", "双亲委派", "类加载器"]
+    "hints": [
+      "双亲委派模型的工作流程——先委托父加载器加载，父加载器找不到才自己加载",
+      "JDBC 驱动通过 ServiceLoader SPI + 线程上下文类加载器破坏双亲委派"
+    ],
+    "tags": [
+      "JVM",
+      "类加载",
+      "双亲委派",
+      "类加载器"
+    ]
   },
   {
     "category": "java_advanced",
@@ -226,8 +385,16 @@
     "title": "Java 四种引用类型",
     "content": "Java 的四种引用类型从强到弱：___、___（内存不足时回收）、___（GC 时立即回收）、___（get() 始终返回 null）。___引用类型通常配合 ReferenceQueue 使用，用于跟踪对象被回收后的通知。",
     "answer": "{\"correct\":[[\"强引用\",\"StrongReference\",\"Strong Reference\"],[\"软引用\",\"SoftReference\",\"Soft Reference\"],[\"弱引用\",\"WeakReference\",\"Weak Reference\"],[\"虚引用\",\"PhantomReference\",\"Phantom Reference\"],[\"虚\",\"PhantomReference\",\"Phantom\"]],\"distractors\":[\"硬引用\",\"软引用\",\"弱引用\",\"虚引用\"]}",
-    "hints": ["软引用适合做缓存——内存不足时自动回收", "虚引用的 get() 永远返回 null——它的唯一作用是跟踪对象被回收的时机"],
-    "tags": ["JVM", "引用类型", "WeakReference", "PhantomReference"]
+    "hints": [
+      "软引用适合做缓存——内存不足时自动回收",
+      "虚引用的 get() 永远返回 null——它的唯一作用是跟踪对象被回收的时机"
+    ],
+    "tags": [
+      "JVM",
+      "引用类型",
+      "WeakReference",
+      "PhantomReference"
+    ]
   },
   {
     "category": "java_advanced",
@@ -236,8 +403,16 @@
     "title": "元空间（Metaspace）",
     "content": "JDK 8 使用___替代永久代（PermGen）存储类的元数据。元空间使用___（而不是 JVM 堆）存储元数据，默认无上限（受操作系统物理内存限制）。通过___设置元空间的最大大小，___设置触发 Full GC 的阈值。字符串常量池和静态变量在 JDK 7 中被移到了___。",
     "answer": "{\"correct\":[[\"元空间\",\"Metaspace\"],[\"本地内存\",\"堆外内存\",\"Native Memory\"],[\"-XX:MaxMetaspaceSize\"],[\"-XX:MetaspaceSize\"],[\"Java堆\",\"堆\",\"heap\"]],\"distractors\":[\"永久代\",\"堆\",\"-XX:PermSize\",\"-XX:MaxPermSize\",\"直接内存\"]}",
-    "hints": ["元空间默认无上限——如果类加载过多可能导致物理内存耗尽", "MetaspaceSize 是触发 Full GC 的初始阈值，不是最大限制"],
-    "tags": ["JVM", "元空间", "Metaspace", "永久代"]
+    "hints": [
+      "元空间默认无上限——如果类加载过多可能导致物理内存耗尽",
+      "MetaspaceSize 是触发 Full GC 的初始阈值，不是最大限制"
+    ],
+    "tags": [
+      "JVM",
+      "元空间",
+      "Metaspace",
+      "永久代"
+    ]
   },
   {
     "category": "java_advanced",
@@ -246,7 +421,106 @@
     "title": "JIT 编译触发条件",
     "content": "HotSpot VM 中方法被调用超过___次时触发 JIT 编译（服务端模式默认 10000）。___（C1 编译器）进行少量优化、编译速度快；___（C2 编译器）进行大量优化、编译慢但代码质量高。JDK 7u4+ 默认使用___（在解释、C1、C2 之间动态切换）。OSR 用于___被 JIT 编译后，正在解释执行的代码立即切换到编译后的版本。",
     "answer": "{\"correct\":[[\"-XX:CompileThreshold\",\"CompileThreshold\"],[\"Client Compiler\",\"C1\"],[\"Server Compiler\",\"C2\"],[\"分层编译\",\"TieredCompilation\"],[\"热点循环\",\"长时间运行的方法体\"]],\"distractors\":[\"-XX:InlineThreshold\",\"JIT\",\"AOT\",\"混合模式\",\"OSR\"]}",
-    "hints": ["OSR（On-Stack Replacement）让正在栈上运行的解释帧切换到编译后的执行入口", "分层编译的 0-4 层——从解释执行到 C2 顶级编译"],
-    "tags": ["JVM", "JIT", "编译", "C1", "C2"]
+    "hints": [
+      "OSR（On-Stack Replacement）让正在栈上运行的解释帧切换到编译后的执行入口",
+      "分层编译的 0-4 层——从解释执行到 C2 顶级编译"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "编译",
+      "C1",
+      "C2"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "CMS GC 阶段与停顿",
+    "content": "CMS（Concurrent Mark Sweep）GC 的四个主要阶段为：1）___（STW，找到 GC Root 直接引用的对象）；2）___（并发，从已标记的对象遍历对象图）；3）___（STW，重新标记因并发阶段引用变化而遗漏的对象）；4）___（并发，回收死亡对象。CMS 的缺点是可能产生大量___，且无法解决内存碎片问题。",
+    "answer": "{\"correct\":[[\"初始标记\",\"Initial Mark\"],[\"并发标记\",\"Concurrent Mark\"],[\"重新标记\",\"Remark\"],[\"并发清除\",\"Concurrent Sweep\"],[\"浮动垃圾\",\"Floating Garbage\"]],\"distractors\":[\"Final Mark\",\"Parallel Sweep\",\"Minor GC\",\"碎片整理\",\"晋升失败\"]}",
+    "hints": [
+      "CMS 的「初始标记」和「重新标记」虽然都是 STW，但哪个阶段耗时更长？为什么？",
+      "浮动垃圾（Floating Garbage）的产生原因——并发标记阶段新产生的垃圾"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "CMS",
+      "垃圾回收"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "GC Root 对象类型",
+    "content": "在 JVM 中，可作为 GC Root 的对象类型包括：___中的对象（当前栈帧引用的对象）、___（类静态属性引用的对象）、___（字符串常量池中的引用）、JNI ___（JNI 全局引用）、以及所有活跃线程的___。",
+    "answer": "{\"correct\":[[\"虚拟机栈\",\"局部变量表\"],[\"方法区静态属性\",\"静态变量\"],[\"常量池\"],[\"全局引用\",\"Global Reference\"],[\"Thread对象\",\"线程\"]],\"distractors\":[\"堆\",\"JIT 编译的代码\",\"新生代\",\"老年代\",\"直接内存\"]}",
+    "hints": [
+      "方法区中的静态引用在 Java 8 中存在于 Metaspace 中，但 GC Root 的扫描方式没有变化",
+      "局部变量表中的引用为什么是最常见的 GC Root——每个方法调用都在创建新的栈帧"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "GC Root",
+      "可达性分析"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "G1 GC 的 Region 与停顿预测",
+    "content": "G1（Garbage First）GC 将堆划分为多个固定大小的___（默认 2048 个，大小 1MB-32MB）。每个 Region 可以是___（E）、___（S）或___（O）三种角色。G1 通过___（记录 Region 中存活对象最少、垃圾最多的区域优先回收）实现停顿时间可控。G1 的___（Remember Set）记录了 Region 之间的跨区域引用。",
+    "answer": "{\"correct\":[[\"Region\"],[\"Eden\"],[\"Survivor\"],[\"Old\"],[\"垃圾最多的Region优先回收\",\"Garbage First\"]],\"distractors\":[\"Card Table\",\"PLAB\",\"TLAB\",\"Mark Word\",\"空闲列表\"]}",
+    "hints": [
+      "G1 的 RSet 和 Card Table 的区别——RSet 属于 Region，Card Table 属于整个堆",
+      "G1 的停顿预测模型如何实现——基于历史每个 Region 的回收耗时统计"
+    ],
+    "tags": [
+      "JVM",
+      "G1",
+      "GC",
+      "Region"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "JVM 内存区域划分",
+    "content": "JVM 运行时数据区包括：___（存储局部变量、操作数栈、方法出口）、___（所有线程共享，存储类和接口的元数据）、___（所有线程共享，存储对象实例）、___（线程私有，存储本地方法调用栈帧）。其中___区域是 GC 的主要管理区域。",
+    "answer": "{\"correct\":[[\"虚拟机栈\",\"Java 栈\"],[\"方法区\",\"元空间\"],[\"堆\"],[\"本地方法栈\"],[\"堆\"]],\"distractors\":[\"程序计数器\",\"运行时常量池\",\"直接内存\",\"Code Cache\",\"字符串常量池\"]}",
+    "hints": [
+      "程序计数器为什么没有被归为「内存区域」——因为它只存储指令地址，不涉及 GC 和 OOM",
+      "Java 8 中方法区被 Metaspace（元空间）替代——从堆内移到本地内存"
+    ],
+    "tags": [
+      "JVM",
+      "运行时数据区",
+      "内存",
+      "基础"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "对象分配与指针压缩",
+    "content": "64 位 JVM 中，对象引用占___字节（开启压缩后占 4 字节）。对象在堆中的分配优先在___线程本地缓冲区（TLAB）中分配。如果 TLAB 空间不足，对象会直接进入___（Eden）。-XX：___控制是否启用指针压缩（默认开启）。指针压缩在堆大小不超过___时生效。",
+    "answer": "{\"correct\":[[\"8\"],[\"TLAB\"],[\"Eden\"],[\"UseCompressedOops\"],[\"32GB\"]],\"distractors\":[\"4\",\"PLAB\",\"Survivor\",\"UseCompressedClassPointers\",\"64GB\"]}",
+    "hints": [
+      "为什么指针压缩在堆超过 32GB 时失效——因为对象指针需要寻址 2^32 个 8 字节对齐的位置，覆盖 32GB 地址空间",
+      "TLAB 为什么能减少同步开销——每个线程有自己的分配区域，无需锁竞争"
+    ],
+    "tags": [
+      "JVM",
+      "对象分配",
+      "指针压缩",
+      "TLAB"
+    ]
   }
 ]

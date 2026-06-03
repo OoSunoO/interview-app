@@ -10,7 +10,10 @@
       "CrashLoopBackOff 是 Pod 状态吗？是一个状态条件",
       "Init 容器的执行顺序和业务容器不同"
     ],
-    "tags": ["Kubernetes", "Pod"]
+    "tags": [
+      "Kubernetes",
+      "Pod"
+    ]
   },
   {
     "category": "kubernetes",
@@ -23,7 +26,10 @@
       "RollingUpdate 的回滚和暂停操作",
       "maxSurge 和 maxUnavailable 的合理取值"
     ],
-    "tags": ["Kubernetes", "Deployment"]
+    "tags": [
+      "Kubernetes",
+      "Deployment"
+    ]
   },
   {
     "category": "kubernetes",
@@ -36,7 +42,11 @@
       "ClusterIP 只能在集群内部访问",
       "NodePort 的端口范围是 30000-32767"
     ],
-    "tags": ["Kubernetes", "Service", "网络"]
+    "tags": [
+      "Kubernetes",
+      "Service",
+      "网络"
+    ]
   },
   {
     "category": "kubernetes",
@@ -49,7 +59,10 @@
       "ConfigMap 和 Secret 作为 Volume 挂载时更新后 Pod 会同步更新吗",
       "Secret 的 etcd 加密需要额外配置"
     ],
-    "tags": ["Kubernetes", "配置"]
+    "tags": [
+      "Kubernetes",
+      "配置"
+    ]
   },
   {
     "category": "kubernetes",
@@ -62,7 +75,11 @@
       "Ingress 和 Service 的职责划分",
       "Ingress 的 Annotation 是扩展功能的主要方式"
     ],
-    "tags": ["Kubernetes", "Ingress", "网络"]
+    "tags": [
+      "Kubernetes",
+      "Ingress",
+      "网络"
+    ]
   },
   {
     "category": "kubernetes",
@@ -75,7 +92,12 @@
       "PV 的回收策略：Retain、Delete、Recycle（已废弃）",
       "PVC 绑定 PV 的匹配逻辑"
     ],
-    "tags": ["Kubernetes", "存储", "PV", "PVC"]
+    "tags": [
+      "Kubernetes",
+      "存储",
+      "PV",
+      "PVC"
+    ]
   },
   {
     "category": "kubernetes",
@@ -88,7 +110,11 @@
       "ResourceQuota 限制的是总量，LimitRange 限制的是单 Pod",
       "默认创建的四个 Namespace：default、kube-system、kube-public、kube-node-lease"
     ],
-    "tags": ["Kubernetes", "Namespace", "多租户"]
+    "tags": [
+      "Kubernetes",
+      "Namespace",
+      "多租户"
+    ]
   },
   {
     "category": "kubernetes",
@@ -101,7 +127,11 @@
       "Metrics Server 和 Prometheus Adapter 的区别",
       "HPA 的冷却周期（cooldown delay）可以防止频繁伸缩"
     ],
-    "tags": ["Kubernetes", "HPA", "自动伸缩"]
+    "tags": [
+      "Kubernetes",
+      "HPA",
+      "自动伸缩"
+    ]
   },
   {
     "category": "kubernetes",
@@ -114,7 +144,11 @@
       "Liveness 和 Readiness 的失败后果不同",
       "Startup Probe 是 K8s 1.18+ 引入的"
     ],
-    "tags": ["Kubernetes", "探针", "健康检查"]
+    "tags": [
+      "Kubernetes",
+      "探针",
+      "健康检查"
+    ]
   },
   {
     "category": "kubernetes",
@@ -127,7 +161,11 @@
       "Role 和 ClusterRole 的区别是作用域不同",
       "ServiceAccount 是 Pod 的身份，不是用户的身份"
     ],
-    "tags": ["Kubernetes", "RBAC", "安全"]
+    "tags": [
+      "Kubernetes",
+      "RBAC",
+      "安全"
+    ]
   },
   {
     "category": "kubernetes",
@@ -140,7 +178,10 @@
       "StatefulSet 的 Pod 名称为什么是有序的",
       "DaemonSet 在节点故障时 Pod 会怎样"
     ],
-    "tags": ["Kubernetes", "Workload"]
+    "tags": [
+      "Kubernetes",
+      "Workload"
+    ]
   },
   {
     "category": "kubernetes",
@@ -153,7 +194,11 @@
       "没有 CNI 插件支持时 NetworkPolicy 会生效吗",
       "Cilium 基于 eBPF 实现的 NetworkPolicy 有什么优势"
     ],
-    "tags": ["Kubernetes", "网络", "安全"]
+    "tags": [
+      "Kubernetes",
+      "网络",
+      "安全"
+    ]
   },
   {
     "category": "kubernetes",
@@ -166,7 +211,11 @@
       "master 节点默认有 Taint 防止用户 Pod 调度到上面",
       "NoExecute 效果会影响已运行的 Pod"
     ],
-    "tags": ["Kubernetes", "调度", "Taint"]
+    "tags": [
+      "Kubernetes",
+      "调度",
+      "Taint"
+    ]
   },
   {
     "category": "kubernetes",
@@ -179,7 +228,11 @@
       "Helm 2 和 Helm 3 的主要区别",
       "helm template 命令可以在不实际部署的情况下渲染 YAML"
     ],
-    "tags": ["Kubernetes", "Helm", "包管理"]
+    "tags": [
+      "Kubernetes",
+      "Helm",
+      "包管理"
+    ]
   },
   {
     "category": "kubernetes",
@@ -192,7 +245,11 @@
       "CRD 定义的资源能否和原生资源一样用 kubectl",
       "Operator 与 Helm 的本质区别：Helm 部署时自动化 vs Operator 运行时持续自动化"
     ],
-    "tags": ["Kubernetes", "CRD", "Operator"]
+    "tags": [
+      "Kubernetes",
+      "CRD",
+      "Operator"
+    ]
   },
   {
     "category": "kubernetes",
@@ -201,8 +258,15 @@
     "title": "K8s 调度器与调度策略",
     "content": "请介绍 Kubernetes 调度器的调度流程和常用调度策略。",
     "answer": "K8s 调度器通过 Filtering（过滤）→ Scoring（打分）两阶段为未调度的 Pod 选择最合适的 Node。\n\n解析：1）Filtering（Predicates）——过滤不满足条件的节点：Pod 资源请求超过节点剩余资源（Node Resources Fit）、节点满足 NodeSelector/NodeAffinity、端口冲突检查（Pod Fits Host Ports）、Taint 容忍检查。2）Scoring（Priorities）——对满足条件的节点打分：资源分配最均衡（LeastRequestedPriority 或 BalancedResourceAllocation）、Pod 亲和性/反亲和性分数、节点拓扑分布偏好。3）用户自定义调度策略——NodeAffinity（硬约束 required + 软约束 preferred）、PodAffinity/PodAntiAffinity（将同一应用的 Pod 分布到不同节点提高可用性）、TopologySpreadConstraints（跨拓扑域均匀分布 Pod）。\n\n扩展延伸：高级调度特性：1）优先级和抢占（Priority + Preemption）——高优先级 Pod 无法调度时驱逐低优先级 Pod。2）Descheduler——重新平衡已调度 Pod 的分布。3）自定义调度器——通过 Scheduler Framework 的扩展点（Score/Filter/PreBind 插件）实现自定义调度逻辑（如 GPU 拓扑感知调度）。4）节点资源碎片——Pod 资源请求多样化导致节点上留下大量无法被使用的碎片资源，Bin Packing 算法（集中调度到少量节点）或 Spread 策略（分散调度）取决于场景。5）Volcano——面向 AI/大数据工作负载的批量调度器。",
-    "hints": ["NodeAffinity 的 requiredDuringScheduling 和 preferredDuringScheduling 的区别", "优先级抢占（Preemption）和优雅驱逐的区别是什么"],
-    "tags": ["Kubernetes", "调度", "Scheduler"]
+    "hints": [
+      "NodeAffinity 的 requiredDuringScheduling 和 preferredDuringScheduling 的区别",
+      "优先级抢占（Preemption）和优雅驱逐的区别是什么"
+    ],
+    "tags": [
+      "Kubernetes",
+      "调度",
+      "Scheduler"
+    ]
   },
   {
     "category": "kubernetes",
@@ -211,8 +275,15 @@
     "title": "Pod 安全上下文与安全策略",
     "content": "请介绍 Kubernetes Pod 安全上下文（SecurityContext）和 Pod Security Standards。",
     "answer": "SecurityContext 在 Pod/容器级别定义权限和安全设置（运行用户、Capabilities、只读根文件系统）。Pod Security Standards（PSS）是内置的准入控制器，替代了废弃的 PodSecurityPolicy。\n\n解析：1）SecurityContext 常用配置——runAsUser（指定运行用户 ID）、runAsNonRoot（禁止以 root 运行，安全基准要求）、capabilities（如 drop: [\"ALL\"] 去掉所有内核能力，再添加特定 add: [\"NET_BIND_SERVICE\"]）、readOnlyRootFilesystem（只读根文件系统，防止恶意写入）。2）Pod Security Standards（K8s 1.23+）——三个级别：Privileged（不受限制，系统组件使用）、Baseline（最小限制，阻止已知的特权升级）、Restricted（最严格，遵循 Pod 加固最佳实践）。通过 Namespace 标签强制：`pod-security.kubernetes.io/enforce=restricted`。\n\n扩展延伸：安全加固对比：1）PSP 被废弃的原因：难以正确配置、更新策略时不自动扫描现有 Pod、与 RBAC 的交互过于复杂。2）seccomp（Secure Computing Mode）——限制容器可以使用的系统调用。默认 seccomp 配置在 K8s 1.19+ GA，RuntimeDefault 级别阻止了大部分危险系统调用（如 unshare、mount）。3）AppArmor/SELinux——通过 K8s 注解（v1.30+ 升级为 SecurityContext 字段）限制程序行为。4）SecurityContext 的最小权限原则：只给 Pod 完成任务所需的最小权限——不要以 root 运行、去掉所有 cap、文件系统只读。",
-    "hints": ["PodSecurityPolicy 为什么被废弃", "seccomp 的 RuntimeDefault 和 Localhost 模式的区别"],
-    "tags": ["Kubernetes", "安全", "PodSecurity"]
+    "hints": [
+      "PodSecurityPolicy 为什么被废弃",
+      "seccomp 的 RuntimeDefault 和 Localhost 模式的区别"
+    ],
+    "tags": [
+      "Kubernetes",
+      "安全",
+      "PodSecurity"
+    ]
   },
   {
     "category": "kubernetes",
@@ -221,8 +292,15 @@
     "title": "K8s 日志采集架构",
     "content": "请介绍 Kubernetes 集群中日志采集的几种模式及其优劣。",
     "answer": "K8s 日志采集有三种主流模式：Node 级 DaemonSet、Sidecar 容器和应用内直出。\n\n解析：1）Node 级 DaemonSet 模式——每个节点运行一个日志采集 DaemonSet（如 Filebeat/Fluentd/Fluent Bit），读取节点上所有容器的日志文件（/var/log/containers/*.log）。优点：资源占用少（每节点一个）、对应用无侵入。缺点：结构化日志解析需要统一格式（JSON 行日志）。推荐度：生产首选。2）Sidecar 模式——每个 Pod 内运行一个日志采集容器（如 fluentd-sidecar），从共享 Volume 读取业务容器日志后转发。优点：日志转发配置与应用解耦、支持非标准输出日志。缺点：额外资源消耗（每 Pod 多一个容器）。适合：需要日志预处理/过滤/路由的复杂场景。3）应用内直出——应用代码直接调用日志采集 SDK（如直接写入 Elasticsearch）。优点：最灵活。缺点：侵入性强、增加应用复杂度、配置变更需重新部署。\n\n扩展延伸：日志架构选型：1）轻量级方案——Fluent Bit（用 C 写，资源消耗极低）→ Elasticsearch → Kibana（EFK 栈）。2）云原生方案——Loki（Grafana）替代 Elasticsearch，成本更低（不索引日志内容，只索引标签），适合调用链追踪和排查问题。3）结构化日志要求——生产环境建议所有日志输出为 JSON 格式：`{\"timestamp\": ..., \"level\": \"ERROR\", \"logger\": ..., \"message\": ..., \"trace_id\": ...}`。4）日志采集度——K8s 默认用文件重定向记录容器日志（kubectl logs 读取），滚动策略由 Docker/containerd 管理——不要通过 kubectl logs 采集日志到监控系统（断电丢失），始终通过 DaemonSet 采集到中心存储。",
-    "hints": ["Fluent Bit 和 Fluentd 有什么区别", "Loki 和 Elasticsearch 在日志存储上的架构差异"],
-    "tags": ["Kubernetes", "日志", "可观测性"]
+    "hints": [
+      "Fluent Bit 和 Fluentd 有什么区别",
+      "Loki 和 Elasticsearch 在日志存储上的架构差异"
+    ],
+    "tags": [
+      "Kubernetes",
+      "日志",
+      "可观测性"
+    ]
   },
   {
     "category": "kubernetes",
@@ -231,8 +309,16 @@
     "title": "Prometheus + Grafana 监控栈",
     "content": "请介绍 Kubernetes 中 Prometheus 和 Grafana 的监控架构。",
     "answer": "Prometheus 通过 Pull 模式从目标（Target）拉取指标（Metrics），Grafana 从 Prometheus 读取数据并可视化。在 K8s 中结合 Prometheus Operator 实现声明式监控管理。\n\n解析：核心组件：1）Prometheus Server——时间序列数据库，定期拉取指标并按标签存储。拉取方式：ServiceMonitor（CRD 定义要拉取指标的服务，搭配 Prometheus Operator 自动发现）。2）Metrics 来源——kube-state-metrics（从 K8s API 获取集群状态指标，如 Pod 数量/Deployment 副本数）、cAdvisor（内置在 kubelet 中，暴露容器资源指标如 CPU/内存/网络）、node_exporter（节点级指标，如磁盘/网络/负载）、应用自定义指标（如 /metrics 端点暴露 QPS/延迟）。3）Alertmanager——处理 Prometheus 产生的告警：分组（Grouping，相似告警合并）、抑制（Inhibition，高等级告警抑制低等级）、静默（Silence，定时/定条件静音）。\n\n扩展延伸：监控分层设计：1）黄金信号（USE/RED 方法）——利用率（Utilization）、饱和度（Saturation）、错误（Errors）、延迟（Latency），每个服务至少监控这四个维度。2）完整监控栈——Prometheus（采集）+ Grafana（看板）+ Alertmanager（告警）+ Loki（日志聚合，与 Prometheus 共享标签模型，实现 metrics + logs 联动）。3）Thanos/Cortex——Prometheus 的高可用和长期存储方案（对象存储 + 全局查询）。4）Pod 水平预测——通过 KRR（Kubernetes Resource Recommender）或 VPA 的历史数据分析，推荐 Pod 资源 requests/limits 的合理值。",
-    "hints": ["Prometheus 的 Pull 模式和 Push 模式（Pushgateway）各自适用什么场景", "Golden Signals 中的 USE 和 RED 方法论有什么区别"],
-    "tags": ["Kubernetes", "监控", "Prometheus", "Grafana"]
+    "hints": [
+      "Prometheus 的 Pull 模式和 Push 模式（Pushgateway）各自适用什么场景",
+      "Golden Signals 中的 USE 和 RED 方法论有什么区别"
+    ],
+    "tags": [
+      "Kubernetes",
+      "监控",
+      "Prometheus",
+      "Grafana"
+    ]
   },
   {
     "category": "kubernetes",
@@ -241,8 +327,15 @@
     "title": "K8s 故障排查实战",
     "content": "Kubernetes 中 Pod 一直处于 Pending/CrashLoopBackOff/ImagePullBackOff 状态，分别如何排查？",
     "answer": "不同状态的排查重点不同：Pending 查资源/调度，CrashLoopBackOff 查应用日志/配置，ImagePullBackOff 查镜像/认证。\n\n解析：1）Pending——Pod 无法调度到节点。排查命令：`kubectl describe pod <pod>` 看 Events 的最后几条。常见原因：资源不足（节点 CPU/内存不够）、PVC 未绑定（StorageClass 不存在或 PV 供应不上）、NodeSelector/NodeAffinity 没有匹配节点、Taints 无对应 Toleration。2）CrashLoopBackOff——容器启动后反复崩溃。排查：`kubectl logs <pod>` 查看容器日志、`kubectl logs --previous <pod>` 查看上次崩溃日志（当前已重启日志被覆盖）。常见原因：应用配置错误（数据库连接串写错）、启动命令参数错误、健康检查（Liveness Probe）配置不合理导致容器被误杀。3）ImagePullBackOff——镜像拉取失败。排查：`kubectl describe pod <pod>` 查看 Events。常见原因：镜像名/标签写错（如 nginix 拼写错误）、私有镜像仓库认证缺失（需要 ImagePullSecret）、镜像拉取策略（ImagePullPolicy: Always 可能导致私有仓库限流）。\n\n扩展延伸：高阶排错工具：1）`kubectl debug`（K8s 1.20+）——启动临时调试容器或拷贝一个副本修改配置后测试。2）`kubectl exec -it <pod> -- sh` 进入容器检查进程/网络/文件系统。3）Ephemeral Container（临时容器）——用于无法 exec（容器已崩溃）时排查，可在正在运行的 Pod 中注入工具容器。4）查看集群级问题：`kubectl get nodes` 确认节点状态、`kubectl describe node <node>`查看节点资源分配。5）事件监控：`kubectl get events --sort-by='.lastTimestamp' -A` 查看集群全局事件。",
-    "hints": ["kubectl logs --previous 和普通 kubectl logs 的区别", "Ephemeral Container 和普通 Sidecar 容器的使用场景有什么不同"],
-    "tags": ["Kubernetes", "故障排查", "Pod"]
+    "hints": [
+      "kubectl logs --previous 和普通 kubectl logs 的区别",
+      "Ephemeral Container 和普通 Sidecar 容器的使用场景有什么不同"
+    ],
+    "tags": [
+      "Kubernetes",
+      "故障排查",
+      "Pod"
+    ]
   },
   {
     "category": "kubernetes",
@@ -255,7 +348,12 @@
       "为什么所有组件都只与 kube-apiserver 通信而不互相连接",
       "kube-scheduler 的主备选举（leader election）是如何工作的"
     ],
-    "tags": ["Kubernetes", "架构", "组件", "etcd"]
+    "tags": [
+      "Kubernetes",
+      "架构",
+      "组件",
+      "etcd"
+    ]
   },
   {
     "category": "kubernetes",
@@ -268,7 +366,12 @@
       "Headless Service 为什么适合 StatefulSet 的有状态应用",
       "NodeLocal DNSCache 在高并发场景下为什么能显著降低 DNS 延迟"
     ],
-    "tags": ["Kubernetes", "DNS", "CoreDNS", "服务发现"]
+    "tags": [
+      "Kubernetes",
+      "DNS",
+      "CoreDNS",
+      "服务发现"
+    ]
   },
   {
     "category": "kubernetes",
@@ -281,7 +384,12 @@
       "Cluster API 和云厂商托管的集群（EKS/AKS/GKE）之间是什么关系",
       "什么时候应该使用多集群而不是扩大单集群"
     ],
-    "tags": ["Kubernetes", "多集群", "Federation", "Cluster API"]
+    "tags": [
+      "Kubernetes",
+      "多集群",
+      "Federation",
+      "Cluster API"
+    ]
   },
   {
     "category": "kubernetes",
@@ -294,7 +402,12 @@
       "etcd 为什么对磁盘 IO 延迟如此敏感",
       "为什么 etcd 官方建议存储配额为 2GB"
     ],
-    "tags": ["etcd", "Raft", "存储", "Kubernetes"]
+    "tags": [
+      "etcd",
+      "Raft",
+      "存储",
+      "Kubernetes"
+    ]
   },
   {
     "category": "kubernetes",
@@ -307,6 +420,101 @@
       "CSI 的 Controller 和 Node 组件为什么必须分开部署",
       "为什么 K8s 花大力气将 In-Tree 存储插件迁移到 CSI"
     ],
-    "tags": ["Kubernetes", "存储", "CSI", "扩展"]
+    "tags": [
+      "Kubernetes",
+      "存储",
+      "CSI",
+      "扩展"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HPA 与 VPA 自动伸缩",
+    "content": "Horizontal Pod Autoscaler（HPA）和 Vertical Pod Autoscaler（VPA）的区别是什么？HPA 基于哪些指标进行自动伸缩？HPA 的工作流程是怎样的？",
+    "answer": "答案：HPA 通过增减 Pod 副本数来调整容量（水平伸缩），VPA 通过调整 Pod 的 CPU/内存 Request 和 Limit 来调整单个 Pod 的资源（垂直伸缩）。HPA 最常用的指标是 CPU 和内存利用率，也支持自定义指标（QPS、队列深度等）。\n\n解析：HPA 工作流程——1）HPA Controller 定期（默认 15s，--horizontal-pod-autoscaler-sync-period）查询 Metrics Server 或自定义指标 API。2）计算期望副本数：期望副本数 = ceil(当前副本数 * (当前指标值 / 目标指标值))。3）如果期望副本数与当前副本数差异超过容忍阈值（默认 0.1），则执行扩缩容。4）扩容无延迟限制（立即执行），缩容有冷却时间（默认 5 分钟，--horizontal-pod-autoscaler-downscale-stabilization）。\n\n扩展延伸：VPA——1）VPA 推荐 Pod 的资源请求（Recommendation：min/max/target）。2）更新模式：Auto（自动更新并重启 Pod）、Initial（只在创建时设置）、Off（仅推荐）。3）限制：不能与 HPA 基于 CPU/内存同时使用（会冲突）。VPA 对 StatefulSet 友好（扩容不需要修改代码）。Prometheus Adapter——HPA 可以基于 Prometheus 中的自定义指标：QPS（rate(http_requests_total[1m])）、队列深度（kafka_consumer_lag）、gRPC 错误率。Cluster Autoscaler 是第三层伸缩——HPA/VPA 调整 Pod 数量或资源，Cluster Autoscaler 调整节点数量。",
+    "hints": [
+      "HPA 的扩容无延迟但缩容有冷却——为什么缩容需要冷却时间（避免来回振荡）",
+      "HPA 和 VPA 为什么不能基于 CPU/内存同时使用——两者会相互抵消效果"
+    ],
+    "tags": [
+      "Kubernetes",
+      "HPA",
+      "VPA",
+      "自动伸缩"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Pod 安全性标准（PSA）",
+    "content": "什么是 Pod Security Standards（PSS）和 Pod Security Admission（PSA）？Privileged/Baseline/Restricted 三个安全级别的区别是什么？如何迁移 PodSecurityPolicy（PSP）到 PSA？",
+    "answer": "答案：PSS 定义了 Pod 安全配置的三个级别，PSA 是 K8s 1.23+ 内置的准入控制器，根据 Namespace 标签强制 Pod 满足对应安全级别。PSP（PodSecurityPolicy）在 K8s 1.21 弃用、1.25 移除，由 PSA 替代。\n\n解析：三个安全级别——1）Privileged（不受限制）——不施加任何安全约束。适用：系统级 Pod（kube-system 中的组件、日志/监控 Agent 需要主机权限）。策略示例：允许 hostNetwork、hostPID、privileged 容器、hostPath 卷。2）Baseline（基本约束）——防止已知的权限提升。适用：大多数普通应用。限制：禁止 privileged 容器、禁止 hostNetwork/hostPID/hostIPC、禁止 hostPath 卷、禁止 CAP_SYS_ADMIN 等危险 capability。3）Restricted（严格限制）——遵循 Pod 安全最佳实践。适用：安全敏感应用。额外限制：以非 root 用户运行（runAsNonRoot: true）、Seccomp 配置文件必须设置、禁止 allowPrivilegeEscalation=true、限制 Linux Capabilities 到最小集。\n\n扩展延伸：PSA 的工作方式——1）通过 Namespace 标签设置安全级别：pod-security.kubernetes.io/<level>: privileged/baseline/restricted。2）三种模式：enforce（拒绝不满足的 Pod）、audit（记录审计日志不拒绝）、warn（返回警告不拒绝）。迁移 PSP 到 PSA 的步骤：1）审计现有 Pod 的安全配置。2）用 PSA warn/audit 模式收集违规信息。3）按 Namespace 逐个设置 Baseline 或 Restricted 级别。4）设置 enforce 模式。5）移除 PSP 资源。注意：PSA 的控制是 Namespace 粒度的，无法像 PSP 那样定义细粒度的例外规则——需要 Admission Controller（如 Kyverno）做更精细的控制。",
+    "hints": [
+      "PSP 为什么被弃用——配置复杂且难以审计，PSA 的「按 Namespace 分级」更易管理",
+      "Seccomp 为什么在 Restricted 级别中是必选的——限制系统调用是降低攻击面的关键手段"
+    ],
+    "tags": [
+      "Kubernetes",
+      "安全",
+      "PSA",
+      "PSP"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 网络策略 NetworkPolicy",
+    "content": "Kubernetes NetworkPolicy 如何实现 Pod 级别的网络访问控制？默认拒绝所有入站/出站流量的策略怎么写？NetworkPolicy 的实现依赖什么 CNI 插件？",
+    "answer": "答案：NetworkPolicy 是 K8s 的网络安全资源，通过标签选择器（Pod Selector）定义哪些 Pod 可以和目标 Pod 通信。策略规则包括：podSelector（选择目标 Pod）、policyTypes（Ingress/Egress）、ingress（入站规则，允许来源）、egress（出站规则，允许目标）。\n\n解析：默认拒绝策略——1）拒绝所有入站流量：定义 NetworkPolicy 选择所有 Pod，不定义任何 ingress 规则。`spec: { podSelector: {}, policyTypes: [\"Ingress\"] }`。2）拒绝所有出站流量：类似，policyTypes: [\"Egress\"]。3）允许所有入站：空的 ingress 规则匹配所有来源（`ingress: [{}]`）。NetworkPolicy 规则——1）from 匹配来源：ipBlock（CIDR 范围）、namespaceSelector（命名空间标签选择）、podSelector（Pod 标签选择）。2）可以组合：`from: [namespaceSelector: {matchLabels: {team: ops}}, podSelector: {matchLabels: {app: monitoring}}]`。3）ports 指定目标端口。\n\n扩展延伸：实现前提——NetworkPolicy 需要 CNI 插件支持：Calico（有成熟的 NetworkPolicy 引擎）、Cilium（基于 eBPF 实现，性能好且支持 DNS-based 策略）。Flannel 不支持 NetworkPolicy。Weave Net 和 Antrea 也支持。限制——NetworkPolicy 只能控制 L3/L4（IP+端口），不能控制 L7（HTTP 方法、路径等）。L7 策略需要 Service Mesh（Istio AuthorizationPolicy）或 Cilium 的 L7 策略。调试工具：`kubectl describe networkpolicy`、`calicoctl get networkpolicy`。",
+    "hints": [
+      "为什么 Flannel 不支持 NetworkPolicy——Flannel 只负责 Overlay 网络，没有实现策略引擎",
+      "NetworkPolicy 默认允许全通（无策略时）vs 默认拒绝（加策略后）的行为差异"
+    ],
+    "tags": [
+      "Kubernetes",
+      "网络",
+      "NetworkPolicy",
+      "安全"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "自定义控制器与 Operator",
+    "content": "什么是 Kubernetes Operator？Operator 模式与 Helm Chart 的本质区别是什么？如何用 Kubebuilder 构建一个 Operator？",
+    "answer": "答案：Operator 是将人工运维知识编码为软件的 Kubernetes 扩展——通过自定义资源（CRD）和自定义控制器，实现应用的自动化管理（部署、扩缩、备份、恢复、升级）。Helm Chart 是静态模板（「安装时」替换参数），Operator 是动态控制器（「运行时」持续调谐）。\n\n解析：Operator 核心机制——1）CRD（Custom Resource Definition）——定义新的 K8s 资源类型（如 EtcdCluster、RedisFailover）。用户创建 CR 实例声明期望状态。2）Controller（控制器）——监听 CR 和关联资源的变化，通过 Reconcile 循环将实际状态调整到期望状态。3）调谐循环（Reconcile Loop）：Watch → 收到变更事件 → Requeue → Reconcile（查询当前状态 → 对比期望状态 → 执行调整）。\n\n扩展延伸：Kubebuilder 构建 Operator——1）初始化项目：kubebuilder init --domain example.com。2）创建 API：kubebuilder create api --group cache --version v1 --kind Memcached。3）定义 CRD 的 Spec 和 Status。4）实现 Reconcile 函数。5）使用 controller-runtime 库。常见的 Operator 例子：Prometheus Operator（管理 Prometheus 实例和告警规则）、Cert-Manager（自动签发和管理 TLS 证书）、Elasticsearch Operator（管理 ES 集群生命周期）。注意：Operator 的目的是处理有状态应用的复杂运维逻辑，不是无状态应用——无状态应用用 Deployment + Helm 就够了。",
+    "hints": [
+      "Operator 的 Reconcile 循环为什么用「调谐」而非「事件驱动」——Reconcile 基于实际状态而非只响应事件，更健壮",
+      "什么时候该写 Operator 而不是 Helm——当应用的运维逻辑需要「持续管理」而非「一次安装」时"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Operator",
+      "CRD",
+      "Kubebuilder"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Istio 服务网格核心概念",
+    "content": "Istio 服务网格的核心组件有哪些？Sidecar 注入原理是什么？Istio 如何实现流量拦截和路由？",
+    "answer": "答案：Istio 架构分控制面和数据面。控制面：Istiod（整合 Pilot/Mixer/Citadel），负责配置分发、证书管理。数据面：Envoy Proxy（Sidecar），拦截所有进出 Pod 的流量，执行路由和策略。\n\n解析：Sidecar 注入——1）自动注入：通过 Mutating Admission Webhook 在 Pod 创建时注入 Envoy 容器。2）手动注入：istioctl kube-inject 在 YAML 中添加 Sidecar 容器。注入的内容：istio-proxy（Envoy 容器）+ istio-init（初始化容器，设置 iptables 规则）+ 共享 Volume（挂载 Envoy 配置和证书）。流量拦截——istio-init 容器的 iptables 规则将 Pod 的入站流量转发到 Envoy 的 15006 端口、出站流量转发到 15001 端口。这叫「透明代理」——应用代码无感知。\n\n扩展延伸：核心功能——1）流量管理：VirtualService（定义路由规则）+ DestinationRule（定义负载均衡和连接池策略）。支持灰度发布、金丝雀部署、故障注入。2）安全：mTLS（自动双向 TLS 加密）、AuthorizationPolicy（细粒度 L7 访问控制）、PeerAuthentication（服务间认证策略）。3）可观测性：指标（Prometheus + Grafana）、链路追踪（Jaeger/Zipkin）、访问日志。性能开销——Sidecar 会增加额外延迟（约 1-5ms P99），增加资源消耗（每个 Sidecar 约 50-100MB 内存 + 0.5vCPU 核）。eBPF 方案（如 Cilium Service Mesh）可以在无 Sidecar 的情况下提供类似能力。",
+    "hints": [
+      "Istio 的 iptables 透明流量拦截为什么不需要修改应用代码——所有流量在 Pod 网络命名空间层面被重定向",
+      "Sidecar 模式的资源开销 vs 无 Sidecar（Cilium/Ambient Mesh）模式的取舍"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Istio",
+      "服务网格",
+      "Envoy"
+    ]
   }
 ]

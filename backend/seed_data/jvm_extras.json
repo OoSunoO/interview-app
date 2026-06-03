@@ -446,5 +446,95 @@
       "JIT",
       "字节码"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "堆外内存 DirectBuffer",
+    "content": "什么是堆外内存（Direct Memory/Off-Heap Memory）？DirectByteBuffer 如何分配和回收堆外内存？堆外内存相比堆内存有哪些优势和风险？",
+    "answer": "答案：堆外内存是 JVM 堆之外分配的本地内存（由 OS 管理，不在 GC 管辖范围）。DirectByteBuffer 通过 Unsafe.allocateMemory() 分配堆外内存，回收依赖 Cleaner 机制（虚引用 + ReferenceQueue 触发 Deallocator 线程释放）。\n\n解析：堆外内存的使用——1）NIO 的 ByteBuffer.allocateDirect(capacity) 创建的 DirectByteBuffer 背后是 OS 分配的本地内存。2）Network IO 和 File IO 中，堆外内存可以减少一次内存拷贝（堆内 → 堆外的 Copy），提升 IO 性能。3）Netty 使用 DirectBuffer 池化以减少堆外内存的分配和释放开销。\n\n扩展延伸：回收机制——1）DirectByteBuffer 对象本身在堆中（很小），其引用的堆外内存块不在堆中。2）当 DirectByteBuffer 对象被 GC 回收时，其关联的 Cleaner（虚引用）被加入 ReferenceQueue，由 Reference Handler 线程调用 Deallocator 释放堆外内存。3）风险：如果 DirectByteBuffer 对象的 GC 速度跟不上堆外内存分配速度，会抛 OutOfMemoryError: Direct buffer memory。4）-XX:MaxDirectMemorySize 控制堆外内存上限。监控：JMX 的 BufferPoolMXBean 可以监控 DirectBuffer 的使用情况。Netty 的优势之一是池化和主动追踪 DirectBuffer 的释放。",
+    "hints": [
+      "DirectByteBuffer 的堆外内存为什么能减少一次拷贝——内核空间和用户空间之间的切换代价",
+      "堆外内存泄漏的典型场景——DirectByteBuffer 对象在 GC 前堆外内存已耗尽"
+    ],
+    "tags": [
+      "JVM",
+      "堆外内存",
+      "NIO",
+      "DirectByteBuffer"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM SafePoint 与 SafeRegion",
+    "content": "JVM 的 SafePoint（安全点）是什么？哪些操作只能在 SafePoint 执行？SafeRegion 和 SafePoint 有什么区别？",
+    "answer": "答案：SafePoint 是 JVM 中所有线程都暂停到某一确定执行点的状态（「Stop-The-World」），用于执行需要全局停顿的操作。SafeRegion 是线程知道自己在很长一段时间内不会修改堆内存的代码区域，无需到达 SafePoint 也能暂停。\n\n解析：SafePoint 的触发时机——1）GC 发生时所有线程必须到达 SafePoint。2）偏向锁撤销需要在 SafePoint 检查线程状态。3）代码反优化（Deoptimization）——JIT 编译的代码发现假设不成立时退回解释执行。4）Java 线程在 SafePoint 可以安全地修改线程的 Java 状态（如 Thread.currentThread()）。\n\n扩展延伸：线程进入 SafePoint 的方式——1）主动轮询（Polling）：JIT 编译的代码在方法返回处、循环回边处插入 SafePoint 轮询指令。2）被动等待：解释执行的线程通过解释器中的 SafePoint 检查点。SafeRegion——典型场景：JNI 调用期间（Java 线程执行 native 代码，不访问 Java 堆）。线程在执行 SafeRegion 中的代码时，JVM 认为该线程已处于安全状态。线程在退出 SafeRegion 时必须检查是否正在 GC（如果正在 GC 则等待 GC 完成）。-XX:+PrintGCApplicationStoppedTime 可以打印 STW 暂停时间。",
+    "hints": [
+      "SafePoint 轮询是如何实现的——JIT 在方法返回和循环回边插入的内存屏障指令",
+      "JNI 调用期间线程为什么不需要到达 SafePoint——因为 SafeRegion 机制避免了不必要的暂停"
+    ],
+    "tags": [
+      "JVM",
+      "SafePoint",
+      "GC",
+      "STW"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "JVM 对象头 Mark Word",
+    "content": "JVM 对象头中的 Mark Word 存储了哪些信息？在不同锁状态下 Mark Word 的布局有什么变化？64 位 JVM 中 Mark Word 的大小是多少？",
+    "answer": "答案：Mark Word 是 JVM 对象头的第一部分（64 位 JVM 中 8 字节），存储对象的运行时数据：哈希码、GC 分代年龄、锁状态标志（偏向锁/轻量锁/重量锁/无锁）。不同锁状态下 Mark Word 的位布局不同。\n\n解析：Mark Word 的 64 位布局（64 位 JVM）——1）无锁（Normal）：前 25bits 未使用 + 31bits 哈希码（identity_hashcode）+ 1bit cms_free + 4bits 分代年龄 + 1bit biased_lock + 2bits lock=01。注意：哈希码是惰性计算的，在首次调用 identityHashCode() 时填充到 Mark Word。如果对象已处于偏向锁状态，调用 hashCode() 会导致偏向锁撤销。2）偏向锁（Biased）：54bits 持有线程 ID + 2bits epoch + 4bits 分代年龄 + 1bit biased_lock=1 + 2bits lock=01。3）轻量锁：62bits 指向 Lock Record 的指针 + 2bits lock=00。4）重量锁：62bits 指向 Monitor（ObjectMonitor）的指针 + 2bits lock=10。5）GC 标记：62bits 未使用（或 forwarding 指针）+ 2bits lock=11。\n\n扩展延伸：为什么 hashCode() 会导致偏向锁撤销——偏向锁的 Mark Word 中没有空间存储 hashCode。调用 identityHashCode() 后必须撤销偏向锁，变为无锁状态（填充 hash 值）或重量锁（hash 存储到 ObjectMonitor 中）。分代年龄 4bits 最大值 15（-XX:MaxTenuringThreshold）。对象头整体大小：64 位 JVM 默认开启指针压缩时，对象头 = Mark Word(8B) + Klass Pointer(4B，压缩后) = 12B。未开启指针压缩时 Klass Pointer 8B，对象头 16B。",
+    "hints": [
+      "偏向锁的 Mark Word 中没有存储 hashCode 的位置——理解为什么 hashcode() 会导致锁膨胀",
+      "Mark Word 的分代年龄为什么最大值是 15——4bits 空间的限制"
+    ],
+    "tags": [
+      "JVM",
+      "对象头",
+      "Mark Word",
+      "锁"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "类加载器命名空间与可见性",
+    "content": "Java 类加载器的命名空间（Namespace）是什么？不同类加载器加载的相同全限定名的类为什么被认为是不同的类？如何实现类加载器隔离？",
+    "answer": "答案：类的唯一标识 = 全限定类名 + 定义类加载器。同一个 Class 文件被两个不同的类加载器加载会产生两个不同的 Class 对象（instanceof 检查为 false）。类加载器的命名空间由其已加载的类组成，子加载器可见父加载器的类，反之不可见。\n\n解析：类加载器命名空间规则——1）可见性：子加载器可见父加载器加载的类。父加载器不可见子加载器加载的类。2）同一个 JVM 中，两个类加载器可以各自加载相同全限定名的类，它们是不同的类型。3）两个类互相访问时，如果由不同类加载器加载，会报 ClassCastException。\n\n扩展延伸：应用场景——1）Tomcat 的类加载器隔离：每个 WebApp 有自己的 WebAppClassLoader，加载 WEB-INF/lib 和 WEB-INF/classes。不同 WebApp 的同名类互不干扰。WebApp 优先加载自己的类（破坏双亲委派），但基础类（java.*）仍由 Bootstrap 加载。2）OSGi 的模块化：每个 Bundle 有自己的类加载器，通过 Import-Package/Export-Package 控制类可见性（细粒度的类加载器间的可见性控制）。3）Java 模块系统（JPMS，JDK 9+）的模块化隔离。类加载器泄漏——如果某个类加载器加载的类的对象被更高层级的类加载器中的对象引用，该类加载器无法被 GC。这是 Java 常见的类加载器内存泄漏场景。",
+    "hints": [
+      "Tomcat 的 WebAppClassLoader 为什么要破坏双亲委派——Web 应用需要优先加载自己的类",
+      "类加载器内存泄漏的场景——对象跨类加载器引用导致整批类无法卸载"
+    ],
+    "tags": [
+      "JVM",
+      "类加载器",
+      "命名空间",
+      "隔离"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 内存泄漏排查与工具",
+    "content": "如何排查 JVM 内存泄漏？常用的内存分析工具有哪些？从堆转储（Heap Dump）中分析泄漏的一般步骤是什么？",
+    "answer": "答案：内存泄漏排查流程：监控发现（GC 后堆不下降或持续增长）→ 触发 Heap Dump → 分析 Dominator Tree（支配树）找到 GC Root 路径 → 定位泄漏对象 → 修复代码。\n\n解析：排查步骤——1）发现阶段：JVM 指标监控（GC 次数和耗时、堆使用率趋势）。特征：Full GC 后老年代使用率不降或持续增长。用 jstat -gcutil <pid> 观察。2）获取堆转储：jmap -dump:live,format=b,file=dump.hprof <pid>（生产环境谨慎，会触发 Full GC 并暂停应用）。更安全的是自动转储：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=。Arthas 的 heapdump 命令也可以获取。3）分析工具：MAT（Memory Analyzer，Eclipse 基金会）是功能最强大的分析工具。Eclipse Memory Analyzer 的 Leak Suspects Report 自动分析泄漏嫌疑。JProfiler（商业）、VisualVM（轻量）、YourKit（商业）。\n\n扩展延伸：MAT 分析要点——1）Dominator Tree：按保留堆（Retained Heap）排序——保留堆最大的对象最可能是泄漏源头。2）GC Root 路径：从泄漏对象到 GC Root 的引用链——找到为什么 GC 无法回收它。Thread → ThreadLocalMap → Entry → Value 是最常见的。3）常见的泄漏模式——集合中累积未清理的对象（HashMap 只增不减）、ThreadLocal 未 remove、ClassLoader 泄漏、回调未解注册、静态集合持有大对象。4）In-Use / Uncollected 的分析：JProfiler 的 Heap Walker 可以标记哪些对象是「应该被回收的未回收对象」。",
+    "hints": [
+      "MAT 的 Dominator Tree 为什么比「大对象」列表更能找到泄漏源头——Retained Heap 反映的是「如果这个对象被回收能释放多少内存」",
+      "ThreadLocal 内存泄漏为什么在 Tomcat 等 Web 容器中最常见——Worker 线程长期存活"
+    ],
+    "tags": [
+      "JVM",
+      "内存泄漏",
+      "MAT",
+      "排查"
+    ]
   }
 ]

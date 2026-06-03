@@ -6,8 +6,15 @@
     "title": "useState 闭包陷阱（Stale Closure）",
     "content": "以下代码点击三次后输出什么？为什么？\n```jsx\nfunction Counter() {\n  const [count, setCount] = useState(0);\n  useEffect(() => {\n    const timer = setInterval(() => {\n      setCount(count + 1);\n    }, 1000);\n    return () => clearInterval(timer);\n  }, []);\n  return <p>{count}</p>;\n}\n```",
     "answer": "答案：每次只增加到 1，永远不增长\n\n解析：useEffect 回调在 mount 时执行一次，闭包捕获了当时 count = 0。setInterval 中每次执行 setCount(count + 1) 等同于 setCount(0 + 1) = setCount(1)，所以 count 永远是 1。这是 React Hooks 中最常见的闭包陷阱。\n\n扩展延伸：三种解决方案 1）在依赖数组中加 count（但会使定时器重设）2）使用函数式更新 setCount(c => c + 1)（推荐，永远从最新状态计算）3）使用 useRef 保存最新值。函数式更新是最简洁的方案。",
-    "hints": ["闭包在渲染时捕获了什么", "函数式更新 setCount(c => c + 1) 为什么能避免这个问题"],
-    "tags": ["React", "Hooks", "陷阱"]
+    "hints": [
+      "闭包在渲染时捕获了什么",
+      "函数式更新 setCount(c => c + 1) 为什么能避免这个问题"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -16,8 +23,15 @@
     "title": "useEffect 依赖项遗漏的问题",
     "content": "useEffect 缺少依赖项时可能引发什么问题？为什么 React 的 eslint-plugin-react-hooks 要求 exhaustive-deps？",
     "answer": "答案：可能读到陈旧的 props/state，产生难以排查的 bug\n\n解析：useEffect 回调形成一个闭包，捕获了创建时的 props 和 state。缺少依赖项意味着即使依赖值变化，effect 也不会重新执行，回调中始终使用旧值。这可能导致数据不同步、无限循环（缺少依赖 + 在 effect 中 setState）或遗漏清理逻辑。\n\n扩展延伸：严格模式下如何思考依赖 1）组件中所有被 effect 引用的 props/state 都应加入依赖 2）如果想故意只在 mount 时执行，需明确说明意图（如 eslint-disable 注释 + 代码注释）3）useEffect 的参数是心智模型的核心——它等价于响应式系统的依赖追踪。",
-    "hints": ["react-hooks/exhaustive-deps 规则是什么", "哪些场景下需要故意跳过依赖"],
-    "tags": ["React", "Hooks", "陷阱"]
+    "hints": [
+      "react-hooks/exhaustive-deps 规则是什么",
+      "哪些场景下需要故意跳过依赖"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -26,8 +40,15 @@
     "title": "React key 属性的作用",
     "content": "列表渲染时 key 属性有什么作用？使用数组索引作为 key 有什么风险？",
     "answer": "答案：key 帮助 React 识别哪些元素被修改、添加或删除\n\n解析：React 通过 key 来判断是复用已有 DOM 节点还是创建新节点。使用索引做 key 的问题：在列表插入/删除/排序时，元素下标变化导致 key 改变，React 会错误地复用节点，引发状态错乱（如 input 输入框内容残留）。\n\n扩展延伸：key 的最佳实践 1）优先用数据的唯一 ID（如 id、UUID）2）仅在列表静态不变时用索引 3）key 应在兄弟节点间唯一 4）不推荐用 Math.random() 作为 key（每次渲染都新建 DOM，性能极差）。",
-    "hints": ["key 变化时 React 做什么", "插入新元素时用索引 key 会有什么表现"],
-    "tags": ["React", "列表", "陷阱"]
+    "hints": [
+      "key 变化时 React 做什么",
+      "插入新元素时用索引 key 会有什么表现"
+    ],
+    "tags": [
+      "React",
+      "列表",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -36,8 +57,14 @@
     "title": "受控组件与非受控组件",
     "content": "请解释 React 中受控组件和非受控组件的区别，各自的适用场景。",
     "answer": "答案：受控组件由 React state 控制表单值，非受控组件由 DOM 自身的 ref 管理状态\n\n解析：受控组件每个输入都对应 state，onChange 更新 state → 组件重渲染 → 显示新值，数据流单向清晰。非受控组件用 ref 从 DOM 获取值，类似传统 HTML 表单，性能更好但难以实时校验。\n\n扩展延伸：如何选择 1）表单校验/联动/条件渲染 → 受控 2）简单的文件上传 → 非受控 3）混合使用（defaultValue + ref）在某些场景下也可行。React 推荐多数场景用受控组件。",
-    "hints": ["非受控组件如何获取当前值", "表单提交时两种方式的处理区别"],
-    "tags": ["React", "表单"]
+    "hints": [
+      "非受控组件如何获取当前值",
+      "表单提交时两种方式的处理区别"
+    ],
+    "tags": [
+      "React",
+      "表单"
+    ]
   },
   {
     "category": "react",
@@ -46,8 +73,15 @@
     "title": "useCallback/useMemo 的滥用问题",
     "content": "是否所有函数都应该用 useCallback 包裹？什么情况下 useCallback/useMemo 反而会降低性能？",
     "answer": "答案：不是。滥用 useCallback 反而可能降低性能\n\n解析：useCallback/useMemo 本身也有开销——依赖数组的比较 + 闭包维护。如果父组件每次渲染开销本身不大，传一个新函数给子组件也不浪费性能，那么加上 useCallback 增加的代码复杂度和内存开销可能超过减少重渲染带来的收益。\n\n扩展延伸：何时应该使用 1）传给 React.memo 包裹的子组件作为 props 2）作为 useEffect 的依赖项 3）自定义 Hook 返回值中。不使用的场景：原生 DOM 元素、非 memo 的组件、成本极轻的 computed 值。推荐在真正遇到性能问题时再优化，而非提前优化。",
-    "hints": ["React.memo 和 useCallback 的关系", "如何度量子组件重渲染的成本"],
-    "tags": ["React", "性能", "陷阱"]
+    "hints": [
+      "React.memo 和 useCallback 的关系",
+      "如何度量子组件重渲染的成本"
+    ],
+    "tags": [
+      "React",
+      "性能",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -56,8 +90,15 @@
     "title": "React.memo 的浅比较陷阱",
     "content": "以下代码中 Child 组件被 React.memo 包裹，但父组件每次渲染 Child 仍然重渲染，为什么？\n```jsx\nfunction Parent() {\n  return <Child data={{ name: 'test' }} />;\n}\nconst Child = React.memo(({ data }) => <p>{data.name}</p>);\n```",
     "answer": "答案：对象字面量每次渲染都是新引用，浅比较总是不相等\n\n解析：React.memo 默认使用浅比较（Object.is 比较 props）。{{ name: 'test' }} 每次在父组件 render 时都会创建新对象，引用不同导致浅比较结果为 false，所以 Child 永远重渲染。\n\n扩展延伸：解决方案 1）将对象提升到组件外（const DATA = { name: 'test' }）2）使用 useState/useRef 保持引用稳定 3）使用 useMemo 记忆化对象。React.memo 的心智模型：Props 引用不变才跳过渲染，所以传入内联对象/箭头函数会让 memo 完全失效。",
-    "hints": ["React.memo 默认比较策略是什么", "如何保持 props 引用稳定"],
-    "tags": ["React", "性能", "陷阱"]
+    "hints": [
+      "React.memo 默认比较策略是什么",
+      "如何保持 props 引用稳定"
+    ],
+    "tags": [
+      "React",
+      "性能",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -66,8 +107,15 @@
     "title": "组件卸载后 setState 的警告",
     "content": "为什么 React 会在组件卸载后的 setState 时抛出警告？如何处理异步操作中的这个问题？",
     "answer": "答案：卸载后 setState 表示内存泄漏——更新已不存在的组件状态\n\n解析：组件卸载后调用 setState，React 会在开发模式下输出警告（Can't perform a React state update on an unmounted component）。这通常是异步回调、定时器或订阅在组件卸载后仍在执行的结果。\n\n扩展延伸：修复方案 1）使用 AbortController 取消 fetch 请求 2）清理定时器/订阅（useEffect 的 cleanup）3）使用 useRef 标记组件是否挂载（如 const mounted = useRef(true) + mounted.current = false 在 cleanup 中，但不推荐作为默认方案）。React 18 的 StrictMode 会在开发环境双重触发 effect 以帮助发现此问题。",
-    "hints": ["useEffect 的清理函数何时执行", "AbortController 如何取消请求"],
-    "tags": ["React", "Hooks", "陷阱"]
+    "hints": [
+      "useEffect 的清理函数何时执行",
+      "AbortController 如何取消请求"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -76,8 +124,15 @@
     "title": "连续 setState 的批量更新问题",
     "content": "以下代码执行后 count 是多少？\n```jsx\nconst [count, setCount] = useState(0);\nconst handleClick = () => {\n  setCount(count + 1);\n  setCount(count + 1);\n  setCount(count + 1);\n};\n```",
     "answer": "答案：1，不是 3\n\n解析：React 18 中事件处理函数内的 setState 会批量执行（batch update）。三个 setCount(count + 1) 在渲染时 count 都是 0，所以 0 + 1 = 1，最终结果只有 1。这是 React 状态更新机制的核心——state 在单次渲染中保持快照。\n\n扩展延伸：如需基于最新状态多次更新，应使用函数式更新 setCount(c => c + 1) 重复三次，结果才是 3。React 18 之前的版本仅在事件处理函数中批量执行，setTimeout 和 Promise 回调中不会批量。React 18 实现了自动批量更新，所有场景均批量处理。",
-    "hints": ["函数式更新 setCount(c => c + 1) 和普通更新的区别", "React 18 的自动批量更新是什么"],
-    "tags": ["React", "Hooks", "陷阱"]
+    "hints": [
+      "函数式更新 setCount(c => c + 1) 和普通更新的区别",
+      "React 18 的自动批量更新是什么"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -86,8 +141,15 @@
     "title": "React 合成事件与原生事件混用",
     "content": "在 React 组件中混用 React 合成事件和原生 DOM 事件，可能遇到什么问题？",
     "answer": "答案：执行顺序不可控、事件冒泡/捕获行为异常、内存泄漏\n\n解析：React 合成事件在根节点（React 17 之前为 document，React 17+ 为 root 节点）统一委托处理。原生事件在真实 DOM 上绑定，两者执行时机不同。混用时可能出现：原生事件阻止冒泡后 React 事件无法触发、卸载时未清理原生事件导致内存泄漏、e.stopPropagation() 对原生事件无效。\n\n扩展延伸：最佳实践 1）尽量只用 React 事件系统 2）必须用原生事件时，在 useEffect 的 cleanup 中 removeEventListener 3）useRef 绑定原生事件是合法场景（如 Canvas、第三方库集成）。React 18 改为在 root 节点委托合成事件，使事件行为更贴近原生 DOM。",
-    "hints": ["React 合成事件在哪里绑定", "e.stopPropagation() 在合成事件和原生事件中的区别"],
-    "tags": ["React", "事件", "陷阱"]
+    "hints": [
+      "React 合成事件在哪里绑定",
+      "e.stopPropagation() 在合成事件和原生事件中的区别"
+    ],
+    "tags": [
+      "React",
+      "事件",
+      "陷阱"
+    ]
   },
   {
     "category": "react",
@@ -96,8 +158,15 @@
     "title": "自定义 Hook 的命名约定与设计",
     "content": "自定义 Hook 为什么必须以 use 开头？不遵守会有什么后果？设计自定义 Hook 的最佳实践有哪些？",
     "answer": "答案：use 前缀是 React 约定的命名规则，ESLint 插件依赖此规则检查 Hook 规则\n\n解析：eslint-plugin-react-hooks 通过函数名是否以 use 开头来判断其是否为 Hook，从而检查 Hooks 的调用规则（不在条件/循环中调用）。不遵守命名约定会失去规则检查，无法发现条件调用 Hook 等错误。\n\n扩展延伸：设计原则 1）单一职责——每个 Hook 管理一个关注点 2）返回值尽量是数组或具名对象 3）依赖参数化——接受外部依赖作为参数 4）组合优于继承——用多个简单 Hook 组合出复杂逻辑 5）避免过度抽象——3 次以上复用才值得抽取。",
-    "hints": ["ESLint 如何判断一个函数是自定义 Hook", "自定义 Hook 的参数和返回值应该如何设计"],
-    "tags": ["React", "Hooks", "规范"]
+    "hints": [
+      "ESLint 如何判断一个函数是自定义 Hook",
+      "自定义 Hook 的参数和返回值应该如何设计"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "规范"
+    ]
   },
   {
     "category": "react",
@@ -110,7 +179,10 @@
       "Error Boundary 为什么不能捕获异步错误",
       "事件处理中的错误应该如何处理"
     ],
-    "tags": ["React", "错误处理"]
+    "tags": [
+      "React",
+      "错误处理"
+    ]
   },
   {
     "category": "react",
@@ -123,7 +195,11 @@
       "useTransition 和 setTimeout 的区别",
       "并发模式下 Suspense 的工作原理和传统 try-catch loading 有什么不同"
     ],
-    "tags": ["React", "并发", "React 18"]
+    "tags": [
+      "React",
+      "并发",
+      "React 18"
+    ]
   },
   {
     "category": "react",
@@ -136,7 +212,11 @@
       "useRef 和 useState 有什么区别",
       "为什么函数组件默认不支持 ref 属性"
     ],
-    "tags": ["React", "Refs", "DOM"]
+    "tags": [
+      "React",
+      "Refs",
+      "DOM"
+    ]
   },
   {
     "category": "react",
@@ -149,7 +229,11 @@
       "拆分 Context 能解决什么性能问题",
       "Zustand 为什么比 Context 性能更好"
     ],
-    "tags": ["React", "Context", "性能"]
+    "tags": [
+      "React",
+      "Context",
+      "性能"
+    ]
   },
   {
     "category": "react",
@@ -162,7 +246,11 @@
       "Server Component 和 SSR 有什么本质区别",
       "'use client' 声明对 bundle 体积有什么影响"
     ],
-    "tags": ["React", "Server Components", "架构"]
+    "tags": [
+      "React",
+      "Server Components",
+      "架构"
+    ]
   },
   {
     "category": "react",
@@ -171,8 +259,14 @@
     "title": "React Portals",
     "content": "请解释 React Portal 的作用和使用场景。Portal 中的事件冒泡行为是什么样的？",
     "answer": "答案：Portal 将子节点渲染到父组件 DOM 树之外的 DOM 节点中，但保持 React 组件树上下文不变。\n\n解析：`ReactDOM.createPortal(children, domNode)` 将 children 渲染到 domNode 元素下（通常在 `document.body` 或独立容器中），而非父组件的 DOM 层级下。典型场景：模态框、工具提示、弹出菜单、通知 toast。\n\n扩展延伸：Portal 的事件冒泡行为——尽管 DOM 位置在父组件之外，但事件冒泡仍然遵循 React 组件树（而非真实 DOM 树）。这意味着父组件能捕获 Portal 内冒泡出来的事件。这一设计让 Portal 的上下文行为保持一致。React 17+ 将 Portal 的合成事件附加到 Portal 容器而非 document，使事件行为更接近直觉。注意：Portal 的样式继承（CSS 继承属性如 font-family）仍然基于真实 DOM 位置，而非组件树——所以可能需要额外重置样式。",
-    "hints": ["Portal 中事件冒泡遵循 React 组件树还是真实 DOM 树", "Portal 在什么场景下比绝对定位更合适"],
-    "tags": ["React", "Portal"]
+    "hints": [
+      "Portal 中事件冒泡遵循 React 组件树还是真实 DOM 树",
+      "Portal 在什么场景下比绝对定位更合适"
+    ],
+    "tags": [
+      "React",
+      "Portal"
+    ]
   },
   {
     "category": "react",
@@ -181,8 +275,15 @@
     "title": "useReducer vs useState",
     "content": "什么情况下应该使用 useReducer 而不是 useState？两者如何选择？",
     "answer": "答案：useReducer 适合复杂 state 逻辑、state 依赖另一个 state、深层更新场景。useState 适合简单独立的状态值。\n\n解析：useReducer 的优势：1）复杂 state 结构——state 是对象有多个字段（如表单状态含 name/email/errors/isSubmitting）。2）更新逻辑依赖当前 state——Reducer 接收 prevState，没有闭包陷阱。3）更新逻辑可复用——Reducer 是纯函数，可单独测试，可在多个组件间共享。4）性能优化——dispatch 引用稳定，传给子组件不会引起不必要重渲染（与 useCallback 配合更佳）。\n\n扩展延伸：对比清单：用 useState 的场景——简单的 toggle、单个数字/字符串、更新逻辑简单。用 useReducer 的场景——多字段表单、购物车操作（增删改查）、undo/redo 历史记录。自定义 Hook 封装 + useState 可以达到类似 useReducer 的效果。Immer 配合 useReducer（useImmerReducer）可以让复杂 state 更新更简洁。",
-    "hints": ["useReducer 的 dispatch 为什么不需要加 useCallback", "useReducer 和 useState 在性能优化上的区别"],
-    "tags": ["React", "Hooks", "状态管理"]
+    "hints": [
+      "useReducer 的 dispatch 为什么不需要加 useCallback",
+      "useReducer 和 useState 在性能优化上的区别"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "状态管理"
+    ]
   },
   {
     "category": "react",
@@ -191,8 +292,15 @@
     "title": "高阶组件（HOC）模式",
     "content": "请解释高阶组件（Higher-Order Component）的概念、用途和局限性。",
     "answer": "答案：高阶组件是接收一个组件并返回一个新组件的函数。它是一种复用组件逻辑的模式，在 React Hooks 流行之前广泛使用。\n\n解析：本质：`const EnhancedComponent = higherOrderComponent(WrappedComponent)`。典型用途：1）权限控制——检查用户权限后决定是否渲染子组件。2）数据获取——在 HOC 中获取数据，将数据通过 props 注入子组件。3）日志/埋点——自动在组件挂载时发送日志。4）Redux 的 connect——`connect(mapStateToProps, mapDispatchToProps)(Component)` 是最经典的 HOC 例子。\n\n扩展延伸：HOC 的局限性：1）Props 命名冲突——HOC 注入的 props 可能与子组件已有的 props 重名。2）静态方法丢失——HOC 不自动传递子组件的静态方法，需手动 hoist-non-react-statics。3）ref 不穿透——ref 默认指向 HOC 外层容器而非子组件，需 React.forwardRef 解决。4）多层嵌套地狱——多个 HOC 叠加使调试困难（wrapper hell）。HOC vs Hooks：Hooks 解决了 HOC 的大部分痛点（无命名冲突、无静态方法丢失、无嵌套），是 HOC 的主流替代方案。选择原则：新代码优先用 Hooks，遗留代码维护时理解 HOC 模式即可。",
-    "hints": ["HOC 和 Render Props 模式有什么区别", "为什么 Hooks 能替代 HOC"],
-    "tags": ["React", "HOC", "模式"]
+    "hints": [
+      "HOC 和 Render Props 模式有什么区别",
+      "为什么 Hooks 能替代 HOC"
+    ],
+    "tags": [
+      "React",
+      "HOC",
+      "模式"
+    ]
   },
   {
     "category": "react",
@@ -201,8 +309,14 @@
     "title": "React Testing Library 测试策略",
     "content": "如何使用 React Testing Library 测试组件？测试组件的最佳实践是什么？",
     "answer": "答案：React Testing Library 以用户视角测试组件——关注渲染输出和交互行为，不测试实现细节。\n\n解析：核心原则：测试用户能看到什么、能操作什么，而非组件内部 state、生命周期方法或 Hook 调用。常用 API：`render(<Component />)`（渲染组件）、`screen.getByText/ByRole/ByTestId`（查询元素，优先 ByRole 语义化查询）、`fireEvent.click()` 或 `userEvent.click()`（模拟用户交互，userEvent 更接近真实行为）。\n\n```jsx\nimport { render, screen } from '@testing-library/react';\nimport userEvent from '@testing-library/user-event';\n\ntest('shows greeting after name input', async () => {\n  render(<Greeting />);\n  await userEvent.type(screen.getByLabelText('Name'), 'Alice');\n  expect(screen.getByText('Hello, Alice!')).toBeInTheDocument();\n});\n```\n\n扩展延伸：最佳实践：1）查询优先级：getByRole > getByLabelText > getByPlaceholderText > getByText > getByTestId（`data-testid` 是最后的手段）。2）测试行为而非实现——不要测 state 值，测页面渲染了正确的内容。3）用 `waitFor` 和 `findBy` 处理异步渲染。4）用 MSW（Mock Service Worker）模拟 API 调用，不 mock fetch/axios。5）覆盖有价值的场景——Happy path（正常流程）、Error state（错误处理）、Edge case（空数据、边界值）。6）避免测试过于碎片化——测试组件在用户视角下的行为，而非逐个方法测试。",
-    "hints": ["Testing Library 查询元素的优先级顺序", "React Testing Library 和 Enzyme 的核心差异是什么"],
-    "tags": ["React", "测试"]
+    "hints": [
+      "Testing Library 查询元素的优先级顺序",
+      "React Testing Library 和 Enzyme 的核心差异是什么"
+    ],
+    "tags": [
+      "React",
+      "测试"
+    ]
   },
   {
     "category": "react",
@@ -211,8 +325,16 @@
     "title": "React Suspense 与数据获取模式",
     "content": "请介绍 React Suspense 在数据获取场景下的使用方式和最佳实践。",
     "answer": "答案：Suspense 是一种声明式的加载状态处理机制，组件可以「等待」异步操作，同时显示 fallback 内容。\n\n解析：传统模式：组件内用 useEffect 获取数据，手动管理 loading/error/success 三种状态。Suspense 模式：异步操作在组件外或渲染过程中触发，Suspense 边界自动捕获未完成的异步依赖并显示 fallback。\n\n```jsx\n<Suspense fallback={<Loading />}>\n  <UserProfile userId={id} />\n</Suspense>\n```\n\n用户 profile 数据未加载完时显示 Loading，加载完成后显示 UserProfile。错误边界通过 Error Boundary 统一处理——`<ErrorBoundary fallback={<ErrorPage />}><Suspense><UserProfile /></Suspense></ErrorBoundary>`。\n\n扩展延伸：React 19 的 `use()` Hook 是 Suspense 数据获取的重要简化：`const data = use(fetchDataPromise)`，可在组件渲染过程中直接读取 Promise，Suspense 会自动处理挂起状态。流式 SSR（Streaming SSR）结合 Suspense 实现 HTML 流式输出——每个 Suspense 边界独立流式传输，用户无需等待整个页面加载完成即可看到已渲染部分。最佳实践：1）合理划分 Suspense 边界——太粗导致大块区域 loading，太细导致布局反复跳变。2）配合 useDeferredValue 让旧数据保持可见直到新数据就绪。3）并发模式下 Suspense 的嵌套 loading 会以「揭示」模式（reveal sequence）自动处理——嵌套的 Suspense 边界同时显示。",
-    "hints": ["use() Hook 和传统 useEffect + useState 的数据获取有什么区别", "流式 SSR 如何改善用户体验"],
-    "tags": ["React", "Suspense", "数据获取", "React 19"]
+    "hints": [
+      "use() Hook 和传统 useEffect + useState 的数据获取有什么区别",
+      "流式 SSR 如何改善用户体验"
+    ],
+    "tags": [
+      "React",
+      "Suspense",
+      "数据获取",
+      "React 19"
+    ]
   },
   {
     "category": "react",
@@ -221,8 +343,16 @@
     "title": "React Fiber 架构与协调原理",
     "content": "请解释 React Fiber 架构的核心设计。Fiber 节点如何实现可中断的渲染？workInProgress 树和 Effect List 的作用是什么？",
     "answer": "答案：React Fiber 是 React 16 引入的新协调（Reconciliation）引擎，将渲染拆分为可中断的单元（Fiber 节点），实现了优先级调度和并发能力。\n\n解析：Fiber 架构的核心设计：1）Fiber 节点——每个 React 元素对应一个 Fiber 节点，包含 type（组件类型）、key、stateNode（DOM 节点/组件实例）、child/sibling/return（构成 Fiber 树的三级指针：子节点→兄弟节点→父节点）。Fiber 树本质上是一个链表结构（不是递归树），这使得遍历可以随时暂停和恢复。2）双缓冲——current 树（当前屏幕上显示的 UI）和 workInProgress 树（正在构建的下一版本）。每次状态更新时，React 在 workInProgress 树上执行协调，完成后将 workInProgress 切为 current（root.current = workInProgress）。3）Effect List——遍历 workInProgress 树时，将有副作用的 Fiber 节点串成链表（effect list），提交阶段一次性处理。副作用包括 DOM 插入/更新/删除、useEffect 回调等。4）时间切片（Time Slicing）——React 利用 requestIdleCallback（或 polyfill）将 workInProgress 树的构建拆分为多个小任务单元（yield 回主线程处理高优先级输入如用户点击）。\n\n扩展延伸：Fiber 的协调流程分为两个阶段：1）Render Phase（可中断）——构建 workInProgress 树，执行 diff 算法（beginWork → completeWork），标记需要更新的节点（effectTag），此阶段可被高优先级任务打断。2）Commit Phase（不可中断，同步执行）——将 Effect List 提交到 DOM（before mutation → mutation → layout），执行生命周期方法和 effect 回调。因为此阶段操作 DOM，中断会导致 UI 不一致，所以必须同步完成。Fiber 解决了 React 15（Stack Reconciler）的问题：递归遍历虚拟 DOM 树不可中断，导致复杂组件渲染时阻塞主线程造成卡顿。",
-    "hints": ["Fiber 树的链表结构为什么比递归遍历更适合并发渲染", "Render Phase 和 Commit Phase 为什么一个可中断一个不可中断"],
-    "tags": ["React", "Fiber", "架构", "协调"]
+    "hints": [
+      "Fiber 树的链表结构为什么比递归遍历更适合并发渲染",
+      "Render Phase 和 Commit Phase 为什么一个可中断一个不可中断"
+    ],
+    "tags": [
+      "React",
+      "Fiber",
+      "架构",
+      "协调"
+    ]
   },
   {
     "category": "react",
@@ -231,8 +361,15 @@
     "title": "React 19 新特性概览",
     "content": "请介绍 React 19 的主要新特性，尤其是 Actions、use() Hook、Server Components 稳定化方面的变化。",
     "answer": "答案：React 19（2024 年底发布）带来了多个重要新特性：Actions（基于 Server Actions 的表单处理）、use()（在渲染中直接读取 Promise/Context）、Server Components 正式稳定化。\n\n解析：1）Actions——`<form action={actionFunction}>` 直接在表单上使用异步函数处理提交。`useActionState`（原 `useFormState`）获取表单状态和提交状态。`useFormStatus` 在子组件中读取父表单的提交状态。Actions 与 Server Actions（'use server'）结合可直接在后端处理表单，无需手动写 API 路由。\n\n2）`use()`——React 19 的新 Hook，可在渲染期间直接读取 Promise 或 Context。示例：`const data = use(fetchDataPromise)`。与 Suspense 无缝集成——promise 未 resolved 时自动挂起组件，Suspense 边界显示 fallback。不同于 useEffect + useState（需要手动管理 loading 状态），`use()` 简化了异步数据获取。注意：`use()` 可根据条件调用（不同于其他 Hooks 不可在条件中调用）。\n\n3）Server Components——正式稳定，Next.js App Router 已使用。服务端组件默认不包含在客户端 JS bundle 中，可直接读取数据库/文件系统，减少客户端 JS 体积。'use client' 声明客户端边界。\n\n扩展延伸：React 19 的其他改进：ref 作为 prop 不再需要 forwardRef（ref 直接被识别为 prop），useMemo/useCallback 返回值更智能的优化（React 可能忽略不必要的记忆化），自定义元素（Custom Elements）的原生支持，资源预加载（preload/preinit）的声明式 API。升级建议：项目升级 React 19 时需更新 React Router（v7+）、Ant Design（v5.22+）等依赖库的兼容版本。",
-    "hints": ["use() 和传统 useEffect + useState 数据获取在代码量上的对比", "React 19 移除 forwardRef 对迁移的影响"],
-    "tags": ["React", "React 19", "新特性"]
+    "hints": [
+      "use() 和传统 useEffect + useState 数据获取在代码量上的对比",
+      "React 19 移除 forwardRef 对迁移的影响"
+    ],
+    "tags": [
+      "React",
+      "React 19",
+      "新特性"
+    ]
   },
   {
     "category": "react",
@@ -241,8 +378,16 @@
     "title": "CSS-in-JS 方案对比与选择",
     "content": "请对比 React 中主流的 CSS 方案：styled-components、CSS Modules、Tailwind CSS、Vanilla Extract。各自的优劣和适用场景是什么？",
     "answer": "答案：四种方案代表了不同的 CSS 组织哲学：styled-components（运行时 CSS-in-JS）、CSS Modules（编译时模块化）、Tailwind CSS（原子化 CSS）、Vanilla Extract（零运行时 CSS-in-JS）。\n\n解析：1）styled-components——在 JS 中写 CSS，通过 tagged template literals 定义组件样式。优点：组件内聚、动态样式（props 驱动）、无 class 命名冲突。缺点：运行时开销（解析模板 → 注入 style 标签）、bundle 体积大（含 css-to-js 解析器）。适用场景：中小型项目、动态样式多。\n\n2）CSS Modules——`import styles from './Component.module.css'`，编译时 class 名加 hash 避免冲突。优点：零运行时开销、原生 CSS 语法、Webpack/Vite 内置支持。缺点：动态样式需要内联 style 或 CSS 变量、全局样式需要 `:global`。适用场景：对性能敏感的项目。\n\n3）Tailwind CSS——预定义的原子化 class（`flex`, `text-center`, `p-4`）。优点：设计一致（设计系统约束）、构建产物极小（purgeCSS 只保留用到的类）、无需命名 class、响应式便捷（`md:flex`）。缺点：模板中 class 冗长、学习曲线（需记 class 名）、提取组件时需要封装抽象。适用场景：UI 一致性要求高的中大型项目、快速原型。\n\n4）Vanilla Extract——编译时 CSS-in-JS（TypeScript 中定义样式，编译为纯 CSS 文件）。优点：零运行时、完整 TypeScript 类型安全（自动补全、编译时验证）、主题系统完善。缺点：学习成本、生态不如其他方案成熟。适用场景：TypeScript 重度用户、对类型安全有高要求。\n\n扩展延伸：选择建议：1）新项目优先 Tailwind CSS（生态好、社区活跃、开发效率高）。2）传统服务端渲染项目用 CSS Modules（零成本、SSR 友好）。3）需要复杂动态样式时用 Vanilla Extract 或 Linaria（零运行时 CSS-in-JS 方向）。4）React Native 项目用 StyleSheet API 或 NativeWind（Tailwind for RN）。趋势：运行时 CSS-in-JS（styled-components）在 React 19 中面临服务器组件兼容性问题，社区正转向零运行时方案。",
-    "hints": ["Tailwind CSS 的 purgeCSS 如何做到极小生产包体积", "运行时 CSS-in-JS 在 React Server Components 中有什么兼容问题"],
-    "tags": ["React", "CSS", "样式", "选型"]
+    "hints": [
+      "Tailwind CSS 的 purgeCSS 如何做到极小生产包体积",
+      "运行时 CSS-in-JS 在 React Server Components 中有什么兼容问题"
+    ],
+    "tags": [
+      "React",
+      "CSS",
+      "样式",
+      "选型"
+    ]
   },
   {
     "category": "react",
@@ -251,8 +396,15 @@
     "title": "React 与 TypeScript 类型最佳实践",
     "content": "在 React + TypeScript 项目中，如何定义组件的 Props 类型？有哪些常见的类型模式和技巧？",
     "answer": "答案：React + TypeScript 的类型定义核心是 Props 类型化、事件处理类型化、泛型组件。\n\n解析：1）Props 类型定义——接口（interface，优先用 interface，可合并声明）或类型别名（type，需要联合/交叉类型时用）。\n\n```tsx\ninterface ButtonProps {\n  variant: 'primary' | 'secondary';\n  size?: 'sm' | 'md' | 'lg';\n  children: React.ReactNode;\n  onClick?: React.MouseEventHandler<HTMLButtonElement>;\n}\n```\n\n2）常用的 React 类型：`React.FC<Props>`（默认有 children —— React 18 移除了隐式 children，显式声明更好）、`React.ReactNode`（任意可渲染内容）、`React.CSSProperties`（style prop）、`React.ComponentProps<'button'>`（获取原生 button 的 props 类型，方便包装组件）。\n\n3）泛型组件——组件 Props 中包含泛型参数：\n\n```tsx\ninterface ListProps<T> {\n  items: T[];\n  renderItem: (item: T) => React.ReactNode;\n}\nfunction List<T>({ items, renderItem }: ListProps<T>) {\n  return <>{items.map(renderItem)}</>;\n}\n// 使用：<List items={[{ id: 1, name: 'a' }]} renderItem={(item) => <p>{item.name}</p>} />\n// item 类型自动推断为 { id: number; name: string }\n```\n\n4）事件处理——`onChange: (e: React.ChangeEvent<HTMLInputElement>) => void`、`onSubmit: (e: React.FormEvent<HTMLFormElement>) => void`。\n\n扩展延伸：进阶技巧：1）Props 提取——`type ComposedProps = React.ComponentProps<typeof Composed>` 获取已有组件的 Props 类型。2）Omit 联合类型扩展——`interface MyButtonProps extends Omit<React.ComponentProps<'button'>, 'type'> { type: 'submit' | 'reset' }`（覆盖原生 type 属性）。3）as 多态组件（Polymorphic Component）——`ComponentPropsWithRef<'as'>` 泛型参数。4）条件类型映射——`type EventHandler<T> = T extends 'click' ? React.MouseEvent : T extends 'change' ? React.ChangeEvent : never`。生产建议：不要过度追求类型体操，类型安全的目标是在「不给开发者增加认知负担」的前提下「让非法状态不可表示」。",
-    "hints": ["React.FC<Props> 在 React 18 中 children 不再隐式包含的原因", "泛型组件中类型参数自动推断的原理"],
-    "tags": ["React", "TypeScript", "类型"]
+    "hints": [
+      "React.FC<Props> 在 React 18 中 children 不再隐式包含的原因",
+      "泛型组件中类型参数自动推断的原理"
+    ],
+    "tags": [
+      "React",
+      "TypeScript",
+      "类型"
+    ]
   },
   {
     "category": "react",
@@ -261,7 +413,106 @@
     "title": "React 状态管理库选型：Redux vs Zustand vs Jotai",
     "content": "请对比 Redux Toolkit、Zustand、Jotai 三种状态管理方案的设计哲学和适用场景。",
     "answer": "答案：Redux Toolkit 是集中式 Flux 架构，Zustand 是简约的集中式 Store，Jotai 是基于原子（Atom）的分散式状态管理。三者代表了不同的状态管理哲学。\n\n解析：1）Redux Toolkit（RTK）——集中式单一 Store，通过 Slice 切分状态和 reducer。使用 Immer 简化不可变更新（`state.counter.value += 1`）。RTK Query 处理 API 缓存/数据获取。适合中大型项目（多人协作、严格规范），但模板代码仍较多，学习曲线中等。\n\n2）Zustand——极简集中式 Store。`const useStore = create((set) => ({ count: 0, inc: () => set((s) => ({ count: s.count + 1 })) }))`。无需 Provider 包裹、选择器自动优化（只有选择的状态变化才触发重渲染）、中间件（persist/immer/devtools）可选。适合中小型项目，心智负担最低。\n\n3）Jotai——原子化状态管理（灵感来自 Recoil）。每个状态是一个原子：`const countAtom = atom(0)`，组件使用 `const [count, setCount] = useAtom(countAtom)`。派生原子自动追踪依赖：`const doubleAtom = atom((get) => get(countAtom) * 2)`。优势：按需订阅（只使用该原子的组件重渲染）、无需 Provider、天然支持代码分割。适合状态结构复杂、有大量派生状态的场景。\n\n扩展延伸：选型建议：1）团队大、需要严格规范 → Redux Toolkit（Redux 的约束在多人项目中是优势）。2）小团队、快速迭代 → Zustand（简单到可以 5 分钟上手）。3）复杂派生状态（如 Excel 式的公式/依赖图）→ Jotai（原子自动追踪依赖）。4）与 React Server Components 兼容性——Zustand 和 Jotai 比 Redux 更容易适配服务端渲染。5）三种库都可通过中间件或插件扩展（如 Zustand 的 persist 中间件保持状态到 localStorage）。不要为了用一个状态管理库而用它——80% 的场景 React 内置的 Context + useReducer 已经够用。",
-    "hints": ["Zustand 的选择器如何做到只重渲染关联组件而非整个 Store 的消费者", "Jotai 的派生原子自动依赖追踪与 useMemo 相比有何优势"],
-    "tags": ["React", "状态管理", "Redux", "Zustand", "Jotai"]
+    "hints": [
+      "Zustand 的选择器如何做到只重渲染关联组件而非整个 Store 的消费者",
+      "Jotai 的派生原子自动依赖追踪与 useMemo 相比有何优势"
+    ],
+    "tags": [
+      "React",
+      "状态管理",
+      "Redux",
+      "Zustand",
+      "Jotai"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 19 新特性",
+    "content": "React 19 引入了哪些重要的新特性？Actions、use() Hook、Server Components、新 Hooks（useOptimistic/useFormStatus）分别解决了什么问题？",
+    "answer": "答案：React 19 围绕「简化数据获取和表单处理」和「更好的服务端渲染」两个方向。核心新特性：Actions（异步表单处理自动管理 pending/error/optimistic 状态）、use() Hook（在 render 中读取 Promise 和 Context）、React Server Components（RSC，服务端渲染组件）、useOptimistic/useFormStatus 等新 Hooks。\n\n解析：Actions——1）在 `<form>` 的 action 属性中使用异步函数。React 自动管理 Pending 状态（useFormStatus 获取）、错误处理、表单重置。2）示例：`<form action={async (formData) => { await submit(formData) }}>`。3）配合 useActionState：获取最新的 action 返回值和 pending 状态。use() Hook——1）在 render 中直接 use(promise) 读取异步数据。与 Suspense 配合使用（Promise 未完成时显示 fallback）。2）在 render 中 use(Context) 替代 useContext(Context)。优势：可以在条件语句和循环中使用。\n\n扩展延伸：Server Components（RSC）——1）在服务端运行，直接访问数据库和文件系统，零 JS 体积发送到客户端。2）Server Actions：在 Server Component 中定义异步函数，客户端可以调用（类似 RPC）。3）RSC 不是 SSR 的替代：SSR 将组件渲染为 HTML（首屏），RSC 是服务端组件的序列化表示（用于减少客户端 JS 体积）。Next.js App Router 已在生产使用 RSC。useOptimistic——乐观更新：用户提交操作后立即显示预期结果，后台请求完成后根据结果确认或回滚。useFormStatus——读取父级 `<form>` 的 pending 状态（在表单子组件中使用）。",
+    "hints": [
+      "use() Hook 比 useEffect 获取数据的优势——原生支持 Suspense、可在条件语句中使用",
+      "Server Components 的零 JS 体积意味着什么——组件逻辑和依赖只在服务端执行，不发送到浏览器"
+    ],
+    "tags": [
+      "React",
+      "React 19",
+      "Actions",
+      "Server Components"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "自定义 Hooks 设计模式",
+    "content": "如何设计高质量的自定义 Hooks？常见的自定义 Hooks 设计模式有哪些？什么时候应该抽离自定义 Hook？",
+    "answer": "答案：自定义 Hook 是将有状态逻辑从组件中提取为可复用的函数。命名规范：useXxx（以 use 开头），内部可以使用其他 Hooks。抽离的时机：当发现多个组件共享相似的状态逻辑时，或一个组件的逻辑变得复杂需要拆分时。\n\n解析：常见模式——1）状态管理 Hook：封装状态 + 更新方法。`function useCounter(initial = 0) { const [count, setCount] = useState(initial); return { count, increment: () => setCount(c => c+1), decrement: ... } }`。2）副作用 Hook：封装生命周期和副作用。`useDocumentTitle(title) { useEffect(() => { document.title = title }, [title]) }`。3）数据获取 Hook：封装 API 调用 + loading/error/success 状态管理。`function useFetch(url) { const [data, setData] = useState(); const [loading, setLoading] = useState(true); useEffect(() => { ... }, [url]); return { data, loading } }`。4）事件监听 Hook：`useWindowSize()`、`useKeyPress(key, callback)`。5）上下文 Hook：`useAuth()`、`useTheme()` 封装 useContext。\n\n扩展延伸：设计原则——1）单一职责：一个 Hook 只做一件事。如果 Hook 太长，拆分为更小的 Hook。2）组合：将多个基础 Hook 组合为高级 Hook。3）参数和返回值：输入参数应该简洁，返回值通常用对象（方便调用方解构且扩展时无需改调用方）。4）TypeScript：为参数和返回值提供完整类型。5）测试：Hook 用 renderHook（@testing-library/react-hooks）测试。不要抽离过早——如果一个逻辑只在单个组件中出现一次，不需要提取为 Hook。等它被第二次需要时再提取。",
+    "hints": [
+      "自定义 Hook 的参数设计——用对象参数（options）比多参数更易扩展",
+      "renderHook 测试自定义 Hook 的思路——不需要渲染组件，直接测试 Hook 的返回值变化"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "自定义Hooks",
+      "模式"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Server Components 深入",
+    "content": "React Server Components（RSC）和传统的 SSR 有什么本质区别？RSC 的渲染模型是怎样的？'use client' 和 'use server' 指令的作用是什么？",
+    "answer": "答案：RSC 在服务端渲染组件且渲染结果（一种序列化的数据结构）发送到客户端，组件代码不会打包到客户端 JS bundle 中。传统的 SSR 在服务端生成 HTML 发送给浏览器——但所有组件 JS 仍然需要在客户端加载和 Hydrate。RSC 的组件在服务端运行一次，客户端不需要加载它的代码。\n\n解析：核心区别——1）SSR：服务端生成 HTML → 客户端加载 JS → Hydrate（激活交互）。即使静态内容也需要在客户端加载 JS。2）RSC：服务端组件运行 → 输出描述 UI 的序列化数据（不是 HTML）→ 客户端用它渲染。服务端组件的 JS 不会发送给客户端。RSC 可以和 SSR 一起用：RSC 先产出组件树，SSR 再将其渲染为 HTML。\n\n扩展延伸：'use client'——标记边界：该文件中的组件是客户端组件。客户端组件可以访问浏览器 API、使用状态和副作用。'use server'——定义 Server Action：在服务端执行的异步函数，客户端可以通过 RPC 调用。数据流向——1）Server Component 可以直接访问数据库（无需 API 层）。2）通过 Props 将数据传给 Client Component。3）Server Action 处理表单提交和变更（不需要写 API 路由）。优点——减少客户端 JS 体积（只发送交互所需的组件）、直接访问后端资源（无需构建 API 层）、自动代码分割。注意：RSC 还不支持事件处理（onClick 等）和 Hooks——这些只能在客户端组件中使用。",
+    "hints": [
+      "Server Component 零 JS 体积的关键——组件逻辑只在服务端执行，浏览器只拿到渲染结果",
+      "'use client' 是一个边界——在边界以下的所有组件都是客户端组件"
+    ],
+    "tags": [
+      "React",
+      "RSC",
+      "Server Components",
+      "SSR"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 错误边界与 Suspense",
+    "content": "React 的 Error Boundary 和 Suspense 分别处理什么场景？Error Boundary 为什么不能捕获事件处理函数中的错误？Suspense 的 fallback 机制如何工作？",
+    "answer": "答案：Error Boundary 捕获子组件树中的渲染错误、生命周期方法错误和构造函数错误，展示降级 UI。Suspense 处理组件「等待某些条件就绪」的场景（数据加载、代码分割），在等待期间显示 fallback 内容。\n\n解析：Error Boundary——1）基于 class 组件实现的特殊组件，实现 static getDerivedStateFromError() 和 componentDidCatch() 生命周期方法。2）错误边界不能捕获：事件处理函数中的错误（需要 try/catch）、异步代码（setTimeout/requestAnimationFrame）、服务端渲染错误、错误边界自身抛出的错误。3）React 19 中可以用 `useErrorBoundary()` Hook 简化错误边界的使用。\n\n扩展延伸：Suspense——1）配合 React.lazy() 做代码分割：`const LazyComponent = React.lazy(() => import('./HeavyComponent'))`。Suspense 包裹：`<Suspense fallback={<Loading />}><LazyComponent /></Suspense>`。2）配合数据获取：React 19 中 Suspense + use() 可以实现「组件请求数据并在加载完成前显示 fallback」。3）Suspense 的嵌套：多个 Suspense 可以嵌套，每层有自己的 fallback。4）SuspenseList（实验性）控制多个 Suspense 的显示顺序（together/collapse/sequential）。组合使用——可以用 Error Boundary 包裹 Suspense，优雅处理加载失败：网络错误时显示「加载失败，请重试」而不是白屏。",
+    "hints": [
+      "事件处理函数中的错误为什么不能被 Error Boundary 捕获——Error Boundary 捕获的是 React 渲染管线的错误",
+      "Suspense 配合 React.lazy 的代码分割效果——页面初始化时只加载关键 JS，其他按需加载"
+    ],
+    "tags": [
+      "React",
+      "Error Boundary",
+      "Suspense",
+      "错误处理"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 性能优化策略",
+    "content": "React 性能优化的主要手段有哪些？React.memo、useMemo、useCallback 分别在什么场景下使用？React 19 的 useMemoHook 有什么变化？",
+    "answer": "答案：React 性能优化分三层面：减少不必要的渲染（React.memo/useMemo/useCallback）、优化渲染过程（key/虚拟列表/代码分割）、减少渲染内容（条件渲染/Portal）。React.memo 用于组件（类比 PureComponent），useMemo 缓存计算结果，useCallback 缓存函数引用。\n\n解析：选择策略——1）React.memo(Component)：浅比较 props 是否变化，如果未变则跳过渲染。适用：父组件频繁重新渲染但子组件的 props 很少变化。注意：memo 也不是免费的（需要比较 props）。2）useMemo：缓存计算代价大的表达式。`const sortedList = useMemo(() => items.sort(...), [items])`。适用：数组排序/过滤、复杂数据转换。3）useCallback：当需要将函数作为 props 传给 memo 子组件时。父组件重新渲染会创建新函数引用，导致 memo 组件失效。\n\n扩展延伸：React 19 的变化——1）React 编译器（React Forget/React Compiler）自动记忆化：编译器自动在需要的地方插入 memo/useMemo/useCallback。开发者不再需要手动优化。2）性能分析工具：React DevTools Profiler、Chrome Performance Tab。3）虚拟列表（Windowing）：react-window/react-virtuoso 只渲染可见区域，长列表从万级降到十级 DOM 节点。4）代码分割：React.lazy + Suspense 按需加载模块。5）优化建议（按优先级）：减少渲染次数 > 减少渲染节点 > 减少渲染内容。不要过早优化——React 本身已经做了高效的 Diff 和 Reconciliation。在遇到性能问题时用 Profiler 定位瓶颈再优化。",
+    "hints": [
+      "React.memo 的浅比较也不是免费的——对简单组件的 memo 可能得不偿失",
+      "React 编译器（React Compiler）自动记忆化的目标——让开发者不再需要手动 useMemo/useCallback"
+    ],
+    "tags": [
+      "React",
+      "性能优化",
+      "memo",
+      "useCallback"
+    ]
   }
 ]

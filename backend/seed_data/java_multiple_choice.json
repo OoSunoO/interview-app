@@ -337,7 +337,11 @@
       "Object 类的 equals() 默认就是 ==",
       "hashCode 契约——相等的对象哈希值必须相同"
     ],
-    "tags": ["基础", "equals", "=="]
+    "tags": [
+      "基础",
+      "equals",
+      "=="
+    ]
   },
   {
     "category": "java_basic",
@@ -356,7 +360,11 @@
       "finally 块永远会执行",
       "finally 中的 return 覆盖 try 中的 return"
     ],
-    "tags": ["基础", "异常", "陷阱"]
+    "tags": [
+      "基础",
+      "异常",
+      "陷阱"
+    ]
   },
   {
     "category": "java_collections",
@@ -375,7 +383,10 @@
       "Map 和 Collection 是同一层次的两个不同接口体系",
       "TreeSet 判断重复依赖 Comparable/Comparator"
     ],
-    "tags": ["集合", "基础"]
+    "tags": [
+      "集合",
+      "基础"
+    ]
   },
   {
     "category": "java_advanced",
@@ -394,7 +405,10 @@
       "Callable 和 Runnable 的主要区别",
       "start() 和 run() 的区别是什么"
     ],
-    "tags": ["并发", "线程"]
+    "tags": [
+      "并发",
+      "线程"
+    ]
   },
   {
     "category": "java_advanced",
@@ -413,7 +427,10 @@
       "Optional 的设计初衷是返回值，不是字段类型",
       "orElse 和 orElseGet 有什么区别"
     ],
-    "tags": ["Java 8", "Optional"]
+    "tags": [
+      "Java 8",
+      "Optional"
+    ]
   },
   {
     "category": "java_basic",
@@ -432,7 +449,11 @@
       "自动装箱调用的是 Integer.valueOf()",
       "-XX:AutoBoxCacheMax 可以调整缓存上限"
     ],
-    "tags": ["基础", "装箱", "缓存"]
+    "tags": [
+      "基础",
+      "装箱",
+      "缓存"
+    ]
   },
   {
     "category": "java_basic",
@@ -451,7 +472,11 @@
       "编译看左边（声明类型），运行看右边（实际类型）",
       "成员变量（字段）没有多态性"
     ],
-    "tags": ["面向对象", "多态", "继承"]
+    "tags": [
+      "面向对象",
+      "多态",
+      "继承"
+    ]
   },
   {
     "category": "java_advanced",
@@ -470,7 +495,10 @@
       "分段锁的设计演进",
       "ConcurrentHashMap 和 HashTable 的性能差异来源"
     ],
-    "tags": ["并发", "ConcurrentHashMap"]
+    "tags": [
+      "并发",
+      "ConcurrentHashMap"
+    ]
   },
   {
     "category": "java_advanced",
@@ -489,7 +517,11 @@
       "弱引用会在 GC 时被回收",
       "线程池中线程复用导致 ThreadLocal 值无法被自动回收"
     ],
-    "tags": ["并发", "ThreadLocal", "内存泄漏"]
+    "tags": [
+      "并发",
+      "ThreadLocal",
+      "内存泄漏"
+    ]
   },
   {
     "category": "java_advanced",
@@ -508,6 +540,128 @@
       "JIT 只编译热点代码，不是所有代码",
       "逃逸分析 -XX:+DoEscapeAnalysis 默认开启"
     ],
-    "tags": ["JVM", "JIT", "性能优化"]
+    "tags": [
+      "JVM",
+      "JIT",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "String 不可变性",
+    "content": "以下关于 Java String 不可变性的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、C)。解析：A) String 被 final 修饰，不可被继承。B) String 内部使用 private final char[] value（JDK 8）或 private final byte[] value（JDK 9+）存储，value 引用不可变。C) substring() 在 JDK 7u6+ 中通过 new String() 创建新对象（JDK 7u6 之前共享 char[] 但已修复）。D 错误：String 不是通过「写时复制」实现的——写时复制是 CopyOnWriteArrayList 的实现策略。字符串常量池（String Pool）在堆中（JDK 7+），通过 intern() 方法放入。",
+    "options": [
+      "A) String 类被 final 修饰，不能被继承",
+      "B) String 内部使用 final 字符数组存储，创建后内容不可变",
+      "C) substring() 方法在 JDK 7u6 以后创建新的字符数组，不再共享原数组",
+      "D) String 的不可变性通过写时复制（Copy-on-Write）机制实现"
+    ],
+    "hints": [
+      "String 的 final char[] 保证引用不变但内容不变吗——真正的不变性靠的是不提供修改数组内容的方法",
+      "JDK 7u6 之前 substring() 的内存泄漏问题——共享 char[] 导致大字符串无法被 GC"
+    ],
+    "tags": [
+      "String",
+      "不可变性",
+      "Java 基础"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "类加载双亲委派模型",
+    "content": "以下关于 Java 类加载双亲委派模型的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：A) 双亲委派的核心——先让父加载器尝试加载，父加载器无法加载时才自己加载。B) 三层的默认加载器：启动类加载器 Bootstrap（C++ 实现，加载 rt.jar）、扩展类加载器 Extension（JDK 8 加载 jre/lib/ext，JDK 9 改为平台类加载器 Platform ClassLoader）、应用类加载器 Application（加载 classpath）。C 错误：双亲委派是先委托父加载器，不是先自己尝试。D) 破坏双亲委派的场景：JDBC（通过 SPI，线程上下文类加载器加载 Driver 实现）、Tomcat（每个 WebApp 有自己的类加载器优先加载 Web 应用的类）。",
+    "options": [
+      "A) 双亲委派模型的工作流程是：先委托父类加载器加载，父加载器无法加载时才由子加载器自己加载",
+      "B) Java 默认有三层类加载器：Bootstrap ClassLoader -> Extension ClassLoader -> Application ClassLoader",
+      "C) 双亲委派模型中，类加载器会先尝试自己加载类，加载失败才委托给父加载器",
+      "D) 破坏双亲委派的常见场景包括 JDBC 的 SPI 机制和 Web 容器（如 Tomcat）"
+    ],
+    "hints": [
+      "双亲委派的「先父后子」和「先自己再父」是相反的——理解这个顺序对排查 ClassNotFoundException 有帮助",
+      "JDBC 为什么需要线程上下文类加载器——Bootstrap 不知道 MySQL Driver 的存在"
+    ],
+    "tags": [
+      "类加载",
+      "双亲委派",
+      "JVM",
+      "SPI"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "multiple_choice",
+    "title": "Java 异常处理",
+    "content": "以下关于 Java 异常处理的描述，哪些是正确的？",
+    "answer": "答案：A)、C)、D)。解析：A) Error 是 JVM 内部错误（OutOfMemoryError、StackOverflowError），程序不应捕获。B 错误：受检异常（Checked Exception）必须 catch 或 throws，非受检异常（RuntimeException）不需要。C) try-with-resources（JDK 7+）中 AutoCloseable 的资源会自动关闭。D) finally 唯一不执行的情况是 System.exit() 或 JVM 崩溃。注意：如果 finally 中有 return 语句，会覆盖 try 中的 return（这是一种不好的实践，阿里规约也禁止在 finally 中使用 return）。",
+    "options": [
+      "A) Error 类及其子类表示程序无法处理的严重错误，不应捕获",
+      "B) 所有异常都是受检异常（Checked Exception），必须显式捕获或声明抛出",
+      "C) try-with-resources 语句可以自动关闭实现了 AutoCloseable 接口的资源",
+      "D) finally 块在 try 块执行 return 后仍然会执行，除非 JVM 退出"
+    ],
+    "hints": [
+      "受检异常和非受检异常的设计哲学——什么时候用哪一种",
+      "finally 中的 return 为什么被称为「坏味道」——它会吞掉 try 中的异常"
+    ],
+    "tags": [
+      "异常",
+      "基础",
+      "语言特性"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "泛型擦除与桥接方法",
+    "content": "以下关于 Java 泛型擦除（Type Erasure）的描述，哪些是正确的？",
+    "answer": "答案：A)、B)、D)。解析：A) 泛型信息在编译后从字节码中移除，运行时 List<Integer> 和 List<String> 是同一个 Class 对象。B) 编译器在必要时生成桥接方法（Bridge Method）保持多态——当子类继承泛型父类并指定具体类型时，编译器生成参数类型为 Object 的桥接方法内部调用具体类型的方法。C 错误：Java 不支持 List<int>，泛型类型不能是基本类型。D) 通过反射可以在运行时获取部分泛型信息（如父类的泛型参数 TypeReference 模式）。getClass() 获取字节码，getGenericSuperclass() 获取包含泛型参数的父类类型。",
+    "options": [
+      "A) Java 的泛型在编译后进行类型擦除，运行时不存在泛型类型信息",
+      "B) 编译器在必要时会生成桥接方法（Bridge Method）来保持多态性",
+      "C) Java 泛型支持基本类型，如 List<int> 是合法的",
+      "D) 泛型擦除后仍可通过反射获取某些泛型信息（如父类的泛型参数）"
+    ],
+    "hints": [
+      "桥接方法为什么在泛型擦除后是必要的——ArrayList 继承 List<String> 时 add(Object) 和 add(String) 的关系",
+      "TypeReference/TypeToken 模式如何绕过类型擦除——在父类中保留泛型参数信息"
+    ],
+    "tags": [
+      "泛型",
+      "类型擦除",
+      "桥接方法",
+      "反射"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "multiple_choice",
+    "title": "自动装箱与缓存池",
+    "content": "以下关于 Java 自动装箱（Autoboxing）的描述，哪些是正确的？",
+    "answer": "答案：B)、C)、D)。解析：A 错误：Integer i = 100 不是创建新对象，而是调用 Integer.valueOf(100)，使用缓存池中的对象。B) IntegerCache 默认缓存 -128 到 127，所以 Integer x = 127; Integer y = 127; x == y 为 true；Integer x = 128; Integer y = 128; x == y 为 false（两个不同的对象）。C) 自动装箱是语法糖：Integer i = 100 编译为 Integer.valueOf(100)，拆箱 i.intValue()。D) 缓存上限可通过 -XX:AutoBoxCacheMax= 调整（仅对 Integer 有效，其他类型缓存范围固定）。Byte/Short/Integer/Long 缓存 [-128, 127]，Character 缓存 [0, 127]，Boolean 缓存 true/false。Float/Double 没有缓存。",
+    "options": [
+      "A) Integer i = 100 等价于 new Integer(100)，每次都会创建新对象",
+      "B) Integer 缓存池默认范围是 -128 到 127，超出此范围会创建新对象",
+      "C) 自动装箱和拆箱是编译期的语法糖，通过 valueOf() 和 xxxValue() 实现",
+      "D) 可以通过 JVM 参数调整 Integer 缓存池的上限"
+    ],
+    "hints": [
+      "Integer x = 128; Integer y = 128; x == y 为什么是 false——缓存池边界",
+      "为什么阿里巴巴 Java 规约建议用 equals() 而非 == 比较 Integer"
+    ],
+    "tags": [
+      "自动装箱",
+      "缓存",
+      "语法糖",
+      "基础"
+    ]
   }
 ]

@@ -10,7 +10,12 @@
       "工具链式调用和 Agent 自主规划的区别是什么",
       "链式调用的中间结果缓存如何设计"
     ],
-    "tags": ["Agent", "Tool Chaining", "工具链", "编排"]
+    "tags": [
+      "Agent",
+      "Tool Chaining",
+      "工具链",
+      "编排"
+    ]
   },
   {
     "category": "agent",
@@ -23,7 +28,12 @@
       "并行工具调用和函数式编程中的 Promise.all 有什么相似之处",
       "什么情况下不应该使用并行工具调用"
     ],
-    "tags": ["Agent", "并行调用", "工具", "性能"]
+    "tags": [
+      "Agent",
+      "并行调用",
+      "工具",
+      "性能"
+    ]
   },
   {
     "category": "agent",
@@ -36,7 +46,12 @@
       "递归工具调用和链式调用的本质区别是什么",
       "如何检测 Agent 陷入了工具调用的死循环"
     ],
-    "tags": ["Agent", "递归", "工具", "迭代"]
+    "tags": [
+      "Agent",
+      "递归",
+      "工具",
+      "迭代"
+    ]
   },
   {
     "category": "agent",
@@ -49,7 +64,12 @@
       "MCP 协议中的 tools/list 和 tools/call 分别做什么",
       "动态工具发现的权限控制如何设计"
     ],
-    "tags": ["Agent", "工具发现", "MCP", "注册"]
+    "tags": [
+      "Agent",
+      "工具发现",
+      "MCP",
+      "注册"
+    ]
   },
   {
     "category": "agent",
@@ -62,7 +82,12 @@
       "为什么工具描述中的否定表述（「不要用于...」）可能适得其反",
       "如何自动化测试工具 Schema 的质量"
     ],
-    "tags": ["Agent", "工具", "Schema", "Function Calling"]
+    "tags": [
+      "Agent",
+      "工具",
+      "Schema",
+      "Function Calling"
+    ]
   },
   {
     "category": "agent",
@@ -75,7 +100,12 @@
       "ToT 和 COT 的推理开销差异有多大",
       "为什么 ToT 适合需要探索和回溯的复杂推理任务"
     ],
-    "tags": ["Agent", "推理", "ToT", "思维树"]
+    "tags": [
+      "Agent",
+      "推理",
+      "ToT",
+      "思维树"
+    ]
   },
   {
     "category": "agent",
@@ -88,7 +118,12 @@
       "Reflexion 中的记忆和普通 Agent 记忆有什么区别",
       "如何防止 Agent 陷入过度反思导致的无限循环"
     ],
-    "tags": ["Agent", "反思", "Self-Reflection", "Reflexion"]
+    "tags": [
+      "Agent",
+      "反思",
+      "Self-Reflection",
+      "Reflexion"
+    ]
   },
   {
     "category": "agent",
@@ -101,7 +136,12 @@
       "重新规划（Replanning）和局部修正（Local Repair）分别适用于什么场景",
       "渐进式规划为什么适合不确定性高的任务"
     ],
-    "tags": ["Agent", "规划", "验证", "自适应"]
+    "tags": [
+      "Agent",
+      "规划",
+      "验证",
+      "自适应"
+    ]
   },
   {
     "category": "agent",
@@ -114,7 +154,12 @@
       "为什么校准良好的 Agent 比总是低置信度的 Agent 更可靠",
       "如何利用 LLM 的 logprobs 信息估算答案置信度"
     ],
-    "tags": ["Agent", "置信度", "不确定性", "可靠性"]
+    "tags": [
+      "Agent",
+      "置信度",
+      "不确定性",
+      "可靠性"
+    ]
   },
   {
     "category": "agent",
@@ -127,7 +172,12 @@
       "为什么验证点（Checkpoint）比最终一次性检查更有效",
       "Self-Consistency 方法如何提升多步推理的准确率"
     ],
-    "tags": ["Agent", "推理", "准确性", "验证"]
+    "tags": [
+      "Agent",
+      "推理",
+      "准确性",
+      "验证"
+    ]
   },
   {
     "category": "agent",
@@ -140,7 +190,12 @@
       "代码沙箱的隔离级别（容器 vs VM vs WebAssembly）对性能和安全的影响",
       "seccomp 在容器安全中的作用是什么"
     ],
-    "tags": ["Agent", "沙箱", "代码执行", "安全"]
+    "tags": [
+      "Agent",
+      "沙箱",
+      "代码执行",
+      "安全"
+    ]
   },
   {
     "category": "agent",
@@ -153,7 +208,12 @@
       "SSE 为什么比 WebSocket 更简单——单向 vs 双向的取舍",
       "流式输出中如何处理工具调用事件的实时展示"
     ],
-    "tags": ["Agent", "流式", "Streaming", "SSE"]
+    "tags": [
+      "Agent",
+      "流式",
+      "Streaming",
+      "SSE"
+    ]
   },
   {
     "category": "agent",
@@ -166,7 +226,12 @@
       "语义缓存的 Embedding 维度选择和相似度阈值如何确定",
       "Agent 的语义缓存和传统 Redis 缓存如何配合使用"
     ],
-    "tags": ["Agent", "缓存", "语义", "Embedding"]
+    "tags": [
+      "Agent",
+      "缓存",
+      "语义",
+      "Embedding"
+    ]
   },
   {
     "category": "agent",
@@ -179,7 +244,12 @@
       "Agent 的可观测性和传统 Web 服务的可观测性有什么本质区别",
       "为什么 Agent 的 Span 设计比传统微服务更复杂"
     ],
-    "tags": ["Agent", "可观测性", "OpenTelemetry", "监控"]
+    "tags": [
+      "Agent",
+      "可观测性",
+      "OpenTelemetry",
+      "监控"
+    ]
   },
   {
     "category": "agent",
@@ -192,7 +262,12 @@
       "主动压缩（摘要）和被动压缩（检索式）各自的优缺点",
       "记忆压缩中最重要的信息和次要信息的区分策略"
     ],
-    "tags": ["Agent", "记忆", "压缩", "摘要"]
+    "tags": [
+      "Agent",
+      "记忆",
+      "压缩",
+      "摘要"
+    ]
   },
   {
     "category": "agent",
@@ -205,7 +280,12 @@
       "为什么多模态输入的 Token 消耗比纯文本高出很多",
       "视频处理中关键帧提取策略对分析和成本的影响"
     ],
-    "tags": ["Agent", "多模态", "视觉", "处理"]
+    "tags": [
+      "Agent",
+      "多模态",
+      "视觉",
+      "处理"
+    ]
   },
   {
     "category": "agent",
@@ -218,7 +298,12 @@
       "滑动窗口和分层检索在长上下文管理中的优缺点",
       "为什么需要 Token 预算分配——上下文中不同内容的优先级管理"
     ],
-    "tags": ["Agent", "上下文", "窗口管理", "Token"]
+    "tags": [
+      "Agent",
+      "上下文",
+      "窗口管理",
+      "Token"
+    ]
   },
   {
     "category": "agent",
@@ -231,7 +316,12 @@
       "主从协调和对等协作在 Agent 群组中各自的适用场景",
       "共享上下文在 Agent 协作中最难解决的问题是什么"
     ],
-    "tags": ["Agent", "通信", "协议", "协作"]
+    "tags": [
+      "Agent",
+      "通信",
+      "协议",
+      "协作"
+    ]
   },
   {
     "category": "agent",
@@ -244,7 +334,12 @@
       "LangGraph 的 StateGraph 和传统的工作流引擎有什么本质不同",
       "DAG 工作流中如何处理循环依赖——Agent 任务是否允许循环"
     ],
-    "tags": ["Agent", "DAG", "工作流", "编排"]
+    "tags": [
+      "Agent",
+      "DAG",
+      "工作流",
+      "编排"
+    ]
   },
   {
     "category": "agent",
@@ -257,7 +352,12 @@
       "MCP Server 的 Transport 选择（stdio vs SSE vs WebSocket）对部署方式的影响",
       "MCP 工具的 stateless 设计和 Agent 的 stateful 需求之间如何平衡"
     ],
-    "tags": ["Agent", "MCP", "Server", "开发"]
+    "tags": [
+      "Agent",
+      "MCP",
+      "Server",
+      "开发"
+    ]
   },
   {
     "category": "agent",
@@ -270,7 +370,12 @@
       "为什么 Agent 服务的自动扩缩容更适合用队列深度而非 CPU 使用率来触发",
       "会话亲和性（Sticky Session）在多实例部署中的优缺点"
     ],
-    "tags": ["Agent", "高可用", "负载均衡", "部署"]
+    "tags": [
+      "Agent",
+      "高可用",
+      "负载均衡",
+      "部署"
+    ]
   },
   {
     "category": "agent",
@@ -283,7 +388,12 @@
       "Agent 的 A/B 测试为什么比传统 Web 的 A/B 测试更难——答案的非确定性是核心挑战",
       "为什么 Agent 实验需要同时做在线评估和离线评估"
     ],
-    "tags": ["Agent", "A/B测试", "实验", "评估"]
+    "tags": [
+      "Agent",
+      "A/B测试",
+      "实验",
+      "评估"
+    ]
   },
   {
     "category": "agent",
@@ -296,7 +406,12 @@
       "Agent 的数据飞轮和传统推荐系统的数据飞轮有什么异同",
       "用户反馈稀疏性问题如何解决——大多数用户不会主动给反馈"
     ],
-    "tags": ["Agent", "数据飞轮", "改进", "反馈"]
+    "tags": [
+      "Agent",
+      "数据飞轮",
+      "改进",
+      "反馈"
+    ]
   },
   {
     "category": "agent",
@@ -309,7 +424,12 @@
       "Guardrails 的输入过滤和输出验证为什么需要不同策略",
       "Guardrails 的误报和漏报如何影响用户体验和安全"
     ],
-    "tags": ["Agent", "安全", "Guardrails", "合规"]
+    "tags": [
+      "Agent",
+      "安全",
+      "Guardrails",
+      "合规"
+    ]
   },
   {
     "category": "agent",
@@ -322,6 +442,101 @@
       "影子测试（Shadow Testing）为什么是 Agent 灰度发布中最安全的评估方式",
       "Agent 的会话一致性在灰度发布中为什么比传统应用更复杂"
     ],
-    "tags": ["Agent", "灰度发布", "回滚", "运维"]
+    "tags": [
+      "Agent",
+      "灰度发布",
+      "回滚",
+      "运维"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 工具调用与 Function Calling",
+    "content": "Agent 的工具调用（Tool Calling / Function Calling）机制是如何工作的？如何处理工具返回的错误和异常？",
+    "answer": "答案：工具调用让 LLM 能够调用外部 API 和函数。流程：系统 Prompt 中描述可用工具（名称、参数 Schema）→ LLM 根据用户请求决定调用哪个工具并生成结构化参数 → 程序执行工具调用并返回结果 → LLM 处理结果并回复。\n\n解析：Function Calling 的核心流程——1）工具注册：将工具的 JSON Schema 描述（name、description、parameters）放入 LLM 的 API 调用中（OpenAI 的 tools 参数、Claude 的 tool_use）。2）意图识别：LLM 分析用户输入，如果匹配某个工具则输出 tool_call 请求（包含工具名称和参数）。3）实际执行：宿主程序执行工具调用（API 请求、数据库查询、代码执行），这一步是 LLM 不参与的。4）结果反馈：将执行结果传回 LLM，LLM 生成最终回复。\n\n扩展延伸：错误处理——1）工具执行可能失败（网络超时、API 返回错误、参数无效）。策略：在 tool result 中附加错误信息，LLM 可以决定重试、换参数、或告诉用户错误。2）超时控制——工具执行有超时时间（建议 10-30s），超时后返回「工具超时」让 LLM 决定下一步。3）重试机制——幂等的工具可以自动重试（最多 3 次），非幂等的工具报错后返回给 LLM 处理。多工具协作——Agent 通常在单轮中多次调用工具（链式调用或并行调用）来完成任务。",
+    "hints": [
+      "LLM 执行工具调用时，实际执行是由宿主程序完成的，LLM 只负责「决定调哪个和传什么参数」",
+      "工具执行的错误如何通过 tool result 反馈给 LLM 做下一步决策"
+    ],
+    "tags": [
+      "Agent",
+      "Tool Calling",
+      "Function Calling",
+      "工具"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 记忆管理",
+    "content": "Agent 如何在多轮对话中管理记忆？短期记忆和长期记忆分别如何实现？记忆压缩和摘要的策略有哪些？",
+    "answer": "答案：Agent 记忆分三层：短期记忆（当前对话窗口）→ 工作记忆（近期上下文，从数据库检索）→ 长期记忆（持久化存储，通过 RAG 检索）。核心挑战：上下文窗口限制 vs 保持对话连续性。\n\n解析：短期记忆——直接使用 LLM 的上下文窗口（如 Claude 的 200K tokens）。超出窗口时进行压缩。常见管理策略：1）滑动窗口——保留最近 N 轮对话。最简单且常用。2）摘要压缩——每当对话达到一定长度，用 LLM 对早期对话进行摘要：「用户提到了项目 A 的需求，对方案 B 表示认可，提出了 C 方面的顾虑」。然后将摘要放回系统 Prompt 中。3）关键信息提取——从对话中提取核心实体和关系（SQL 数据库或向量数据库存储）。4）分层记忆——最近 N 轮完整保留 + 之前部分的摘要 + 关键事实的持久化存储。\n\n扩展延伸：长期记忆的 RAG 实现——1）对话 Embedding + 向量数据库（Pinecone/Weaviate/Chroma）。2）每次用户请求时检索相关历史片段。3）检索策略：按时间衰减权重 + 语义相似度混合。记忆安全——1）记忆的 CRUD 权限：用户应该能查看和删除 Agent 记住的信息（GDPR 合规要求）。2）敏感信息脱敏：记住的是「用户购买了产品 X」而非「用户 138****5678 购买了 ￥299 的产品 X」。",
+    "hints": [
+      "滑动窗口和摘要压缩各自的优劣——压缩会丢失细节但节省上下文",
+      "长期记忆的 RAG 检索为什么不只靠语义相似度，还需要时间衰减"
+    ],
+    "tags": [
+      "Agent",
+      "记忆",
+      "RAG",
+      "上下文管理"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 的规划与任务分解",
+    "content": "Agent 如何进行任务规划与分解？ReAct、Plan-and-Execute、Tree-of-Thought 等规划模式各自的特点和适用场景是什么？",
+    "answer": "答案：Agent 的规划机制决定如何将复杂任务拆解为可执行的子步骤。ReAct（Reasoning + Acting）交替推理和行动，Plan-and-Execute 先制定完整计划再逐步执行，ToT（Tree-of-Thought）同时探索多条推理路径。\n\n解析：1）ReAct（最常用）——在每步中输出推理（Thought）→ 行动（Action/工具调用）→ 观察（Observation/工具结果）。优势：灵活、能根据中间结果调整计划。局限：没有整体视图，可能在复杂任务中陷入局部最优。适用：大多数通用任务，特别是需要动态调整的。\n\n2）Plan-and-Execute——先让 LLM 生成完整计划（「第一步查文档，第二步写代码，第三步测试，第四步部署」），然后按步骤执行。每一步执行后可以更新计划。优势：有全局视图，适合有明确步骤结构的复杂任务。局限：计划可能不准确，执行中需要重新规划。适用：软件开发、多步骤工作流。\n\n3）Tree-of-Thought（ToT）——同时探索多条推理路径，在每一步评估各路径的可行性，保留最有希望的 N 条（束搜索）。优势：对需要探索多种可能性且有明确评估标准的任务效果好（如数学题、谜题）。局限：Token 消耗大、延迟高。\n\n扩展延伸：规划工具选型：简单任务（单步工具调用）不需要复杂规划——Function Calling 就够了。中等复杂度（3-5 步，需要动态调整）→ ReAct。复杂结构任务（需要全局视图）→ Plan-and-Execute。需要发散探索的任务 → ToT。自我反思（Self-Reflection）——在规划执行后让 LLM 评估执行结果并改进。",
+    "hints": [
+      "ReAct 的「Thought-Action-Observation」循环如何让 Agent 在复杂任务中保持灵活性",
+      "什么时候需要从 ReAct 升级到 Plan-and-Execute——全局视图 vs 灵活性"
+    ],
+    "tags": [
+      "Agent",
+      "规划",
+      "ReAct",
+      "Task Decomposition"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent Prompt 工程与优化",
+    "content": "Agent 的 System Prompt 应该如何设计？如何通过 Prompt 优化提升 Agent 的工具调用准确率？有哪些常见的 Prompt 反模式？",
+    "answer": "答案：Agent 的 System Prompt 需要精确定义：角色定位、可用工具及使用规则、输出格式、边界条件（什么不做）、安全约束。优化方向：明确指令、Few-shot 示例、格式约束、行为边界。\n\n解析：Agent Prompt 的核心组件——1）角色定义：你是谁、能做什么、不能做什么。示例：「你是一个编程助手，可以使用工具执行 Python 代码和搜索文件」。关键：不要过度约束（限制了 Agent 的灵活性），也不要太松散（导致幻觉和错误）。2）工具描述：每个工具的 name、description（什么时候用）、parameters（每个参数的说明）。Description 质量直接影响 LLM 在什么场景下选择该工具。3）行为规范：输出格式、沟通风格、安全边界。\n\n扩展延伸：优化技巧——1）Few-shot 示例：提供 2-3 个工具调用的输入输出示例（特别是复杂参数的构建方式）。2）格式约束：用 JSON Schema 格式定义工具参数（LLM 理解 Schema 比描述更好）。3）分离 Prompt：核心 System Prompt（不变）+ 动态上下文（变动的记忆/工具列表/用户信息）。4）A/B 测试：对 Prompt 做版本管理和对比测试（Prompt 的每次修改都可能影响行为）。反模式——1）Over-prompting：塞入过多无关规则（稀释了关键指令的注意力）。2）自我矛盾：Prompt 中既说「尽量简短」又说「完整描述所有细节」。3）假设约束不足：没有定义 Agent 在工具调用失败时的兜底行为。",
+    "hints": [
+      "工具描述（description）的措辞如何影响 LLM 在什么场景下选择该工具",
+      "为什么 Few-shot 示例比更长的 prompt 规则更有效"
+    ],
+    "tags": [
+      "Agent",
+      "Prompt",
+      "工程化",
+      "优化"
+    ]
+  },
+  {
+    "category": "agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多 Agent 协作模式",
+    "content": "多 Agent 协作的常见模式有哪些？中央协调（Orchestrator）vs 去中心化（Debate/投票）各有什么优劣？如何解决 Agent 间的上下文共享问题？",
+    "answer": "答案：多 Agent 协作有三类模式：Orchestrator-Worker（中央调度）、Debate（辩论模式）、Swarm（去中心化协作）。核心挑战：Agent 间的通信协议、上下文一致性、冲突解决。\n\n解析：1）Orchestrator-Worker（AutoGen、CrewAI）——一个 Orchestrator Agent 负责任务分解和分配，Worker Agent 各司其职。优势：结构清晰、容易跟踪进度。劣势：单点瓶颈（Orchestrator 慢了整体慢）。适用：任务结构明确、子任务不交叉的场景。\n\n2）Debate（多 Agent 辩论）——多个 Agent 各自独立思考同一问题，然后讨论/辩论达成共识。优势：减少单个 Agent 的偏见和错误，通过「互相审查」提高结果质量。劣势：时间和 Token 消耗大。适用：需要高准确率的决策场景（代码审查、事实核查）。\n\n3）Swarm——去中心化，Agent 自主发现其他 Agent 并协作（类似聊天室）。优势：高度灵活、无单点故障。劣势：调试困难、可能出现 Agent 间的死循环。适用：复杂的开放性探索场景。\n\n扩展延伸：上下文共享——Agent 间通过共享的 Memory/Knowledge Base 传递信息（而非在对话中传递完整上下文）。每个 Agent 只读自己需要的部分。共享内存以 Message Queue 或 Shared DB 实现。冲突解决——当 Agent 给出矛盾结论时：投票机制（多数胜出）、仲裁 Agent（由一个高级 Agent 做最终裁决）、置信度比较（取置信度最高的）。",
+    "hints": [
+      "Orchestrator 模式下 Orchestrator Agent 的单点瓶颈如何缓解",
+      "在多 Agent 系统中为什么通过共享存储而非对话传递上下文"
+    ],
+    "tags": [
+      "Agent",
+      "多Agent",
+      "协作",
+      "Orchestrator"
+    ]
   }
 ]

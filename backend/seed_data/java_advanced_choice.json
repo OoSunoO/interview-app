@@ -524,5 +524,120 @@
       "并发",
       "CompletableFuture"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "锁优化：偏向锁撤销",
+    "content": "关于 HotSpot VM 中偏向锁的撤销过程，以下说法正确的是？",
+    "answer": "答案：C) 偏向锁撤销需要在全局安全点（SafePoint）暂停所有线程，检查持有锁的线程状态后决定是否撤销。解析：偏向锁撤销不是由持有偏向锁的线程自己完成的，而是由竞争线程触发，在全局安全点（所有线程暂停）执行。GC 发生时也会批量撤销偏向锁。JDK 15+ 默认禁用了偏向锁（-XX: -UseBiasedLocking），因为锁撤销的 SafePoint 开销在某些场景下影响了性能。",
+    "options": [
+      "A) 偏向锁撤销由持有偏向锁的线程在偏向另一个对象时自动完成，无需暂停",
+      "B) 偏向锁撤销只需要 CAS 替换 Mark Word，是轻量级操作",
+      "C) 偏向锁撤销需要在全局安全点（SafePoint）暂停所有线程，检查持有锁的线程状态后决定是否撤销",
+      "D) 偏向锁一旦获取就永远不会撤销"
+    ],
+    "hints": [
+      "偏向锁撤销为什么需要在 SafePoint 暂停——因为需要检查持有锁的线程状态"
+    ],
+    "tags": [
+      "JVM",
+      "锁优化",
+      "偏向锁",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "ThreadLocal 内存泄漏",
+    "content": "关于 ThreadLocal 的内存泄漏问题，以下说法正确的是？",
+    "answer": "答案：B) ThreadLocalMap 的 Entry 继承 WeakReference，Key 为弱引用，Value 为强引用，因此 Key 被 GC 回收后 Value 仍存在导致内存泄漏。解析：ThreadLocalMap 中 Entry 的 Key（ThreadLocal 实例）是弱引用（WeakReference），当 ThreadLocal 对象的外部强引用被置为 null 后，GC 会回收 Key。但 Entry 的 Value 是强引用，只要 Thread 仍然存活（在线程池中线程不会销毁），Value 就永远不会被回收。解决：每次使用完 ThreadLocal 后调用 remove() 清空 Entry。阿里 Java 规约也明确要求了这一点。",
+    "options": [
+      "A) ThreadLocal 不会有内存泄漏问题，因为 Java 的 GC 会自动回收所有不再使用的对象",
+      "B) ThreadLocalMap 的 Entry 继承 WeakReference，Key 为弱引用，Value 为强引用，因此 Key 被 GC 回收后 Value 仍存在导致内存泄漏",
+      "C) ThreadLocal 内存泄漏的根源是 ThreadLocalMap 的 Key 是强引用导致的",
+      "D) 使用 ThreadLocal 后不需要手动 remove，GC 会自动清理"
+    ],
+    "hints": [
+      "弱引用 Key + 强引用 Value 的组合为什么会在线程池场景下产生内存泄漏"
+    ],
+    "tags": [
+      "JVM",
+      "ThreadLocal",
+      "内存泄漏",
+      "并发"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "AQS 共享模式与独占模式",
+    "content": "关于 AQS（AbstractQueuedSynchronizer）的共享模式和独占模式，以下说法错误的是？",
+    "answer": "答案：C) 共享模式获取同步状态失败时，线程进入 CLH 队列并阻塞，而独占模式会让线程自旋等待。解析：共享模式和独占模式在获取失败时都进入 CLH 队列并阻塞，区别在于同步状态释放时的传播行为：独占模式释放时只唤醒后继节点（head.next），共享模式释放时会唤醒后继节点并继续向后传播（因为可能有多个线程同时获得同步状态）。CountDownLatch 和 Semaphore 使用共享模式。ReentrantLock 使用独占模式。",
+    "options": [
+      "A) 共享模式释放同步状态时会唤醒后继节点并继续向后传播，独占模式只唤醒后继节点",
+      "B) ReentrantLock 使用独占模式，CountDownLatch 使用共享模式",
+      "C) 共享模式获取同步状态失败时，线程进入 CLH 队列并阻塞，而独占模式会让线程自旋等待",
+      "D) 共享模式和独占模式获取同步状态失败时都进入 CLH 队列等待"
+    ],
+    "hints": [
+      "共享模式释放时「传播唤醒」的特性为什么适合信号量和闭锁"
+    ],
+    "tags": [
+      "AQS",
+      "并发",
+      "JUC",
+      "锁"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "CAS ABA 问题",
+    "content": "关于 CAS（Compare-And-Swap）操作的 ABA 问题，以下说法正确的是？",
+    "answer": "答案：A) ABA 问题指变量从 A 变为 B 又变回 A，CAS 误认为没有变化。AtomicStampedReference 通过版本号解决。解析：ABA 场景：线程 1 读到值是 A，准备 CAS 更新。期间线程 2 将 A 改为 B 又改回 A。线程 1 的 CAS 比较发现还是 A 就认为没有变化，但实际上中间状态已经被改变了。AtomicStampedReference 内部维护 [reference, stamp] 配对，每次修改 stamp +1，CAS 同时比较 reference 和 stamp。AtomicMarkableReference 使用 boolean mark 表示是否被修改过。",
+    "options": [
+      "A) ABA 问题指变量从 A 变为 B 又变回 A，CAS 误认为没有变化。AtomicStampedReference 通过版本号解决",
+      "B) ABA 问题导致 CAS 一定会失败，需要使用 AtomicMarkableReference 修复",
+      "C) ABA 问题只发生在多核 CPU 上，单核 CPU 不会出现",
+      "D) ABA 问题无法解决，只能通过锁替代 CAS"
+    ],
+    "hints": [
+      "ABA 问题的本质是 CAS 只检查值相等但不知道值是否被修改过——版本号提供了修改历史"
+    ],
+    "tags": [
+      "CAS",
+      "并发",
+      "ABA",
+      "原子操作"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "StampedLock 特性",
+    "content": "关于 StampedLock 的特性，以下说法错误的是？",
+    "answer": "答案：D) StampedLock 支持重入（Reentrant），同一个线程可以多次获取同一把 StampedLock 锁。解析：StampedLock 不可重入！这是它与 ReentrantReadWriteLock 的关键区别之一。StampedLock 提供了三种模式：写锁（排他）、读锁（悲观，类似 ReadWriteLock 的读锁）、乐观读（不需要获取锁，直接读取，通过 stamp 校验有效性）。乐观读在读多写少的场景下性能最优——读取数据后检查 stamp 是否有效，如果期间没有写操作就避免了获取锁的开销。StampedLock 的锁获取方法返回一个 long stamp，解锁时传入 stamp。",
+    "options": [
+      "A) StampedLock 的乐观读模式在读多写少场景下性能优于 ReentrantReadWriteLock",
+      "B) StampedLock 获取锁时返回 stamp，解锁时需要用 stamp 验证",
+      "C) StampedLock 支持写锁、悲观读锁、乐观读三种模式",
+      "D) StampedLock 支持重入，同一个线程可以多次获取同一把 StampedLock 锁"
+    ],
+    "hints": [
+      "StampedLock 的乐观读 + stamp 校验机制为什么在并发读取场景下比 ReadWriteLock 更快"
+    ],
+    "tags": [
+      "并发",
+      "StampedLock",
+      "锁",
+      "JUC"
+    ]
   }
 ]

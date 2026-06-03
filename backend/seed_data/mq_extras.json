@@ -442,5 +442,95 @@
       "Controller",
       "Leader选举"
     ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RocketMQ 架构原理",
+    "content": "RocketMQ 的核心架构组件有哪些？它如何保证消息的顺序性和可靠性？与 Kafka 相比有什么区别？",
+    "answer": "答案：RocketMQ 核心组件：NameServer（注册中心）、Broker（消息存储和转发）、Producer（生产者）、Consumer（消费者）。消息顺序通过 Message Queue 内有序保证，可靠性通过同步刷盘 + 主从复制 + 重试机制保证。\n\n解析：RocketMQ vs Kafka——1）模型差异：RocketMQ 的消费队列（Consumer Queue）是逻辑队列，Kafka 的 Partition 是物理分片。RocketMQ 支持「广播模式」和「集群模式」两种消费语义。2）顺序消息：RocketMQ 将同一业务的消息发送到同一个 Queue（生产者指定 MessageQueueSelector 按业务 ID 哈希）。同一个 Queue 内消息严格有序（单线程消费）。Kafka 的 Partition 内有序。3）可靠性：RocketMQ 支持同步/异步刷盘。同步刷盘（FlushDiskType=SYNC_FLUSH）性能损失大但数据不丢。同步主从复制（BrokerRole=SYNC_MASTER）——消息写入 Master 并同步到 Slave 后才返回成功。\n\n扩展延伸：RocketMQ 的事务消息——1）半消息（Half Message）：Producer 发送半消息到 Broker（Consumer 不可见）。2）执行本地事务（如 insert DB）。3）Commit/Rollback：本地事务成功则 Commit 半消息（Consumer 可见），失败则 Rollback。4）回查（Check Back）：如果 Broker 长时间未收到 Commit/Rollback，主动回查 Producer 的事务状态。事务消息解决了分布式事务中的「消息发送和本地事务的一致性」问题。适用场景：需要严格顺序、事务消息、延迟消息的场景。Kafka 更适用于高吞吐量日志/事件流。",
+    "hints": [
+      "RocketMQ 的事务消息半消息机制如何保证本地事务和消息发送的原子性",
+      "同步刷盘 vs 异步刷盘的性能和数据可靠性权衡"
+    ],
+    "tags": [
+      "消息队列",
+      "RocketMQ",
+      "事务消息",
+      "顺序消息"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Apache Pulsar 架构",
+    "content": "Apache Pulsar 的「存储计算分离」架构是怎样的？BookKeeper 和 Broker 分别承担什么职责？Pulsar 的 Segment 存储模型有什么优势？",
+    "answer": "答案：Pulsar 采用计算层（Broker）和存储层（BookKeeper）分离的架构。Broker 负责消息路由、消费协调、无状态可水平扩展；BookKeeper 负责消息持久化存储，每个 Segment 分散存储到多个 Bookie 节点。\n\n解析：存储计算分离的优势——1）独立的弹性伸缩：Broker 无状态（处理能力不足时加 Broker），BookKeeper 有状态的通过增加 Bookie 扩展存储容量和 IO 吞吐。2）Write-Ahead Log 和 Segment：消息首先写入 Broker 的 Managed Ledger（WAL），Segment 是存储的最小单元。Segment 写入多个 Bookie 节点（Ensemble 大小，默认 3），保证数据不丢。3）Segment 的优势：BookKeeper 内部 Segment 写入多个节点（quorum），读取时只要任意一个成功返回。故障时 Bookie 自动将 Segment 副本复制到其他 Bookie（无需全量重平衡）。支持无限存储（Segment 可自动滚动，旧 Segment 可分层到 S3 等冷存储）。\n\n扩展延伸：Pulsar vs Kafka——1）分区架构：Kafka 的 Partition 绑定到 Broker（Broker 故障需要重新选举 Leader）。Pulsar 的 Partition 是逻辑概念，可随时迁移到其他 Broker。2）消费模型：Pulsar 支持「独占」「灾备」「共享」「Key_Shared」四种订阅类型。共享模式可以让多个 Consumer 并行消费同一 Partition 的消息（Kafka 不允许）。3）IO 隔离：Pulsar 的读写分离——写入走 BookKeeper，缓存命中读取走 Broker 内存缓存。Pulsar 更适合需要低延迟、无限存储、订阅灵活的流场景。\n\n扩展延伸：",
+    "hints": [
+      "Pulsar 的存储计算分离为什么能让 Broker 无状态——Broker 不存储数据，故障时随时替换",
+      "Pulsar 的 Key_Shared 订阅如何保证同一 key 的消息被同一 Consumer 处理"
+    ],
+    "tags": [
+      "消息队列",
+      "Pulsar",
+      "BookKeeper",
+      "存储计算分离"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "消息幂等与去重",
+    "content": "消息队列中的「幂等消费」怎么实现？为什么消息可能会被重复投递？去重需要考虑哪些因素？",
+    "answer": "答案：幂等消费指消费者多次处理同一条消息产生的结果与处理一次相同。消息被重复投递的原因：生产者重试（Producer 发送后未收到 ACK 时重发，Broker 可能已收到）、Broker 故障恢复（未同步的消息在其他 Broker 重新投递）、消费者超时（已处理但 ACK 超时 Broker 认为未处理）。\n\n解析：幂等实现方案——1）业务去重表（最可靠）：消费者在处理前先查数据库的「消息去重表」（唯一键为消息 ID 或业务 ID）。如果已存在相同 ID 的记录，说明已处理过，直接返回成功。示例：`INSERT INTO msg_dedup(msg_id, status) VALUES('xxx', 'DONE') ON DUPLICATE KEY UPDATE ...`。2）Redis 去重：SETNX 消息 ID（设置过期时间 24h）。3）状态机幂等：订单状态「已支付」不能被「支付中」覆盖。业务逻辑中判断当前状态是否可以转移。\n\n扩展延伸：消息 ID 的生成——1）全局唯一消息 ID：Producer 端生成 UUID 或雪花 ID。2）业务去重键（业务 ID）：如订单号 + 事件类型（比消息 ID 更利于业务幂等）。需要确认的重点——1）去重的范围（全局去重 vs 每个 topic 独立去重）。2）去重记录保留时间（通常 24-72 小时，超过时间窗口的消息再出现时认为是合法的提交）。3）去重不是万能的——需要结合业务逻辑做最终一致性保障。RocketMQ 和 Kafka 都需要自己在消费端实现幂等。Pulsar 支持 Producer 端的消息去重（基于生产者名称 + 序列号）。",
+    "hints": [
+      "为什么只靠消息 ID 去重不够——业务层面的幂等还需要考虑状态机转换的合法性",
+      "去重记录的保留时间如何确定——取决于消费者处理消息的最大延迟时间"
+    ],
+    "tags": [
+      "消息队列",
+      "幂等",
+      "去重",
+      "可靠性"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "消息队列消息顺序保证",
+    "content": "消息队列如何保证消息的有序性？全局有序和分区有序分别怎么实现？Kafka 中保证消息顺序的注意事项有哪些？",
+    "answer": "答案：全局有序（一个 Topic 只有一个 Partition，性能极差）和分区有序（将消息按照业务 key 路由到固定的 Partition/Queue，在分区内保持有序）。实际生产中几乎只用分区有序——将同一业务 ID（如订单号、用户 ID）的消息发送到同一分区。\n\n解析：Kafka 中保证顺序——1）生产者端：配置 max.in.flight.requests.per.connection = 1（保证发送失败重试时不会乱序）或 enable.idempotence=true（幂等生产者内部自动处理重试顺序）。2）分区选择：使用相同的 key（如 order_id）路由到同一 Partition。3）消费者端：单线程消费同一 Partition 的消息。如果需要提高并行度，需要按业务拆分到更多分区（通过不同 key 粒度）。\n\n扩展延伸：顺序消费的挑战——1）消费端扩容：增加消费者时触发 Rebalance，分区重新分配可能导致短暂的乱序（旧消费者停止处理、新消费者从最新 offset 开始）。2）消息失败处理：如果某条消息处理失败，需要阻塞后续消息还是跳过？通常的选择：将失败消息发到死信队列（DLQ），继续处理后续消息——但这意味着消息丢失了顺序。如果一定要保顺序，可能需要暂停整个 Partition 的消费。3）多 Topic 间的顺序：无法保证（跨 Topic 的全局有序几乎不可能）。需要全局有序时考虑单 Partition（但吞吐量受限）。",
+    "hints": [
+      "max.in.flight.requests.per.connection=1 为什么能防止重试导致乱序——重试的消息不会插队到新消息前面",
+      "分区内为什么用了 key 还会乱序——消费者多线程处理和 Rebalance 可能导致乱序"
+    ],
+    "tags": [
+      "消息队列",
+      "顺序消费",
+      "Kafka",
+      "分区"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息积压处理方案",
+    "content": "消息队列出现消息积压（Backlog）时，常见的排查和处理方案有哪些？如何避免和预防消息积压？",
+    "answer": "答案：消息积压的常规处理流程：确认积压规模（积压消息数、时间差）→ 排查消费者能力瓶颈 → 临时扩容消费者 → 紧急加速消费 → 持久化排查积压原因。\n\n解析：原因排查——1）消费者瓶颈：慢 SQL、外部调用超时、死循环、GC 问题。查看消费者日志的耗时分布。2）分区不均：某些 Partition 积压量大，其他 Partition 正常（消息 key 倾斜导致）。3）消费速率下降：下游服务限流/熔断导致消费变慢。4）生产者激增：突发流量导致瞬时积压。\n\n扩展延伸：处理方案——1）临时扩容：增加消费者实例（需要分区数 >= 消费者数，Kafka 同组消费者不能超过分区数）。如果分区数不够，可以新建 Topic（更多分区）临时将积压消息转发过去。2）加速消费：跳过非关键消息（标记处理失败发送到死信队列），只处理高优消息。3）消息回溯：如果问题出在消费者代码（处理逻辑 bug），需要修复后重置 Offset 重新消费。4）预防措施：设置积压告警（Consumer Lag 监控，超过阈值告警）。Kafka 用 Burrow/Kafka Lag Exporter，RocketMQ 用自带的监控平台。合理的告警阈值：积压量超过正常速率 * 5min 时触发告警。长期方案：优化消费者吞吐（批量处理、异步化）、增加分区数。",
+    "hints": [
+      "Kafka 中分区数和消费者数的关系为什么限制积压扩容——分区数固定，消费者数不能超过分区数",
+      "消息积压告警阈值如何设置——以正常消费速率的时间窗口为基准"
+    ],
+    "tags": [
+      "消息队列",
+      "积压",
+      "监控",
+      "消费"
+    ]
   }
 ]

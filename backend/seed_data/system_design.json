@@ -6,8 +6,14 @@
     "title": "CAP 定理",
     "content": "请解释 CAP 定理及其在分布式系统中的权衡。",
     "answer": "CAP：一致性（Consistency）、可用性（Availability）、分区容错性（Partition Tolerance）三者最多同时满足两个。分布式系统必须保证 P，实际是 CP 或 AP 的选择。CP 优先（如 ZK）保证一致但可能不可用，AP 优先（如 Eureka）保证可用但可能不一致。",
-    "hints": ["BASE 理论和 CAP 的关系", "为什么 P 是必须的"],
-    "tags": ["分布式", "CAP"]
+    "hints": [
+      "BASE 理论和 CAP 的关系",
+      "为什么 P 是必须的"
+    ],
+    "tags": [
+      "分布式",
+      "CAP"
+    ]
   },
   {
     "category": "system_design",
@@ -16,8 +22,14 @@
     "title": "一致性哈希",
     "content": "请解释一致性哈希算法的原理和优势。",
     "answer": "一致性哈希将节点和数据映射到哈希环上，数据顺时针找到最近的节点。优势：节点增减仅影响相邻节点，大幅减少数据迁移量。引入虚拟节点解决负载不均问题。",
-    "hints": ["什么场景需要一致性哈希", "普通哈希取模有什么问题"],
-    "tags": ["分布式", "哈希"]
+    "hints": [
+      "什么场景需要一致性哈希",
+      "普通哈希取模有什么问题"
+    ],
+    "tags": [
+      "分布式",
+      "哈希"
+    ]
   },
   {
     "category": "system_design",
@@ -26,8 +38,13 @@
     "title": "缓存策略",
     "content": "请介绍常见的缓存策略及其适用场景。",
     "answer": "Cache Aside（旁路缓存：读时回填，更新时先写 DB 再删缓存）、Read/Write Through（缓存代理读写）、Write Behind（异步批量写回 DB）。常见问题：缓存雪崩（大范围过期）、缓存穿透（查询不存在的数据）、缓存击穿（热点 key 过期）。",
-    "hints": ["更新缓存时为什么是删缓存而不是更新缓存", "如何解决缓存穿透"],
-    "tags": ["缓存"]
+    "hints": [
+      "更新缓存时为什么是删缓存而不是更新缓存",
+      "如何解决缓存穿透"
+    ],
+    "tags": [
+      "缓存"
+    ]
   },
   {
     "category": "system_design",
@@ -36,8 +53,13 @@
     "title": "消息队列的作用",
     "content": "请说明消息队列在分布式系统中的作用。",
     "answer": "解耦（生产者和消费者独立演进）、削峰填谷（缓冲突发流量）、异步处理（提升响应速度）、可靠投递（消息持久化保证不丢失）。常见选型：Kafka（高吞吐，日志类）、RabbitMQ（低延迟，可靠路由）、RocketMQ（事务消息）。",
-    "hints": ["如何保证消息不重复消费", "消息顺序性如何保证"],
-    "tags": ["消息队列"]
+    "hints": [
+      "如何保证消息不重复消费",
+      "消息顺序性如何保证"
+    ],
+    "tags": [
+      "消息队列"
+    ]
   },
   {
     "category": "system_design",
@@ -46,8 +68,14 @@
     "title": "数据库分片策略",
     "content": "请介绍数据库分片（Sharding）的常见策略和挑战。",
     "answer": "分片策略：范围分片（按 ID 范围，简单但可能热点）、哈希分片（按 hash mod N，数据均匀但扩缩容难）、一致性哈希（迁移量少）、按业务属性分片（如按用户 ID）。挑战：跨分片查询、分布式事务、数据均衡、动态扩容。",
-    "hints": ["分片后如何做 JOIN 查询", "如何平滑扩容"],
-    "tags": ["数据库", "扩展"]
+    "hints": [
+      "分片后如何做 JOIN 查询",
+      "如何平滑扩容"
+    ],
+    "tags": [
+      "数据库",
+      "扩展"
+    ]
   },
   {
     "category": "system_design",
@@ -56,8 +84,14 @@
     "title": "微服务架构的优缺点",
     "content": "请分析微服务架构的优缺点。",
     "answer": "优点：独立部署（每个服务独立 CI/CD）、技术异构、故障隔离、团队自治。缺点：分布式复杂性（网络延迟、服务发现、配置管理、监控链路）、数据一致性（分布式事务）、调试困难、运维成本高。不适合简单应用。",
-    "hints": ["微服务和 SOA 的区别", "什么时候不应该用微服务"],
-    "tags": ["微服务", "架构"]
+    "hints": [
+      "微服务和 SOA 的区别",
+      "什么时候不应该用微服务"
+    ],
+    "tags": [
+      "微服务",
+      "架构"
+    ]
   },
   {
     "category": "system_design",
@@ -66,8 +100,14 @@
     "title": "负载均衡算法",
     "content": "请介绍常见的负载均衡算法。",
     "answer": "轮询（Round Robin）、加权轮询、最少连接（Least Connections）、源地址哈希（IP Hash，保证会话一致性）、一致性哈希（缓存场景）。L4 负载均衡（传输层，性能高）和 L7 负载均衡（应用层，可路由 HTTP 路径）。",
-    "hints": ["Session 粘滞问题如何解决", "健康检查的几种方式"],
-    "tags": ["网络", "负载均衡"]
+    "hints": [
+      "Session 粘滞问题如何解决",
+      "健康检查的几种方式"
+    ],
+    "tags": [
+      "网络",
+      "负载均衡"
+    ]
   },
   {
     "category": "system_design",
@@ -76,8 +116,14 @@
     "title": "幂等性设计",
     "content": "请解释接口幂等性及其实现方式。",
     "answer": "幂等：同一操作多次执行结果相同。实现方式：1）唯一索引（防重复插入）。2）Token 机制（先获取 token，处理时携带）。3）乐观锁（版本号 CAS）。4）去重表（利用 DB 唯一键）。5）状态机（只有特定状态转换才执行）。",
-    "hints": ["天然幂等的操作有哪些", "MQ 消费者如何保证幂等"],
-    "tags": ["设计", "分布式"]
+    "hints": [
+      "天然幂等的操作有哪些",
+      "MQ 消费者如何保证幂等"
+    ],
+    "tags": [
+      "设计",
+      "分布式"
+    ]
   },
   {
     "category": "system_design",
@@ -86,8 +132,14 @@
     "title": "设计高并发短链接系统",
     "content": "请设计一个支持高并发的短链接生成系统，包括存储方案和重定向流程。",
     "answer": "存储：发号器（Snowflake/Redis incr）+ 缓存（Redis 热点）+ DB 持久化。流程：生成短码（Base62 编码自增 ID）→ 写入 DB+Cache。访问时先查 Cache，miss 查 DB 后回填 Cache。优化：布隆过滤器拦截无效短码，CDN 加速，预生成短码池。",
-    "hints": ["短码如何生成才能保证唯一且短", "如何防止恶意遍历短链接"],
-    "tags": ["设计", "高并发"]
+    "hints": [
+      "短码如何生成才能保证唯一且短",
+      "如何防止恶意遍历短链接"
+    ],
+    "tags": [
+      "设计",
+      "高并发"
+    ]
   },
   {
     "category": "system_design",
@@ -96,8 +148,14 @@
     "title": "限流策略",
     "content": "请介绍常见的限流算法及其适用场景。",
     "answer": "固定窗口（简单但有突刺问题）、滑动窗口（更平滑）、漏桶算法（恒定速率，适合平滑突发流量）、令牌桶（允许突发，适合大部分场景）。实现方式：Guava RateLimiter、Redis+Lua、Sentinel。限流维度：QPS、并发数、CPU 负载。",
-    "hints": ["限流和熔断的区别", "分布式限流如何实现"],
-    "tags": ["高并发", "限流"]
+    "hints": [
+      "限流和熔断的区别",
+      "分布式限流如何实现"
+    ],
+    "tags": [
+      "高并发",
+      "限流"
+    ]
   },
   {
     "category": "system_design",
@@ -110,7 +168,10 @@
       "Snowflake 时钟回拨问题如何解决",
       "美团 Leaf 和滴滴 TinyID 对 Snowflake 做了什么改进"
     ],
-    "tags": ["分布式", "ID生成"]
+    "tags": [
+      "分布式",
+      "ID生成"
+    ]
   },
   {
     "category": "system_design",
@@ -123,7 +184,10 @@
       "固定超时和自适应超时的优缺点",
       "Phi-Accrual 为什么比固定超时更可靠"
     ],
-    "tags": ["分布式", "高可用"]
+    "tags": [
+      "分布式",
+      "高可用"
+    ]
   },
   {
     "category": "system_design",
@@ -136,7 +200,11 @@
       "CQRS 和 Event Sourcing 一定要一起用吗",
       "事件溯源的快照机制解决了什么问题"
     ],
-    "tags": ["架构", "CQRS", "事件驱动"]
+    "tags": [
+      "架构",
+      "CQRS",
+      "事件驱动"
+    ]
   },
   {
     "category": "system_design",
@@ -149,7 +217,10 @@
       "Sidecar 模式为什么适合 Service Mesh",
       "Istio 和 Linkerd 的设计理念有什么不同"
     ],
-    "tags": ["微服务", "Service Mesh"]
+    "tags": [
+      "微服务",
+      "Service Mesh"
+    ]
   },
   {
     "category": "system_design",
@@ -162,7 +233,10 @@
       "蓝绿部署数据库兼容性问题如何解决",
       "金丝雀发布如何决定放量比例"
     ],
-    "tags": ["部署", "高可用"]
+    "tags": [
+      "部署",
+      "高可用"
+    ]
   },
   {
     "category": "system_design",
@@ -171,8 +245,16 @@
     "title": "Paxos 与 Raft 共识算法",
     "content": "请解释 Raft 共识算法的工作原理，相比 Paxos 有什么优势？",
     "answer": "Raft 通过 Leader 选举、日志复制和安全机制实现分布式共识。相比 Paxos，Raft 更易理解，因为将问题分解为相对独立的子问题。\n\n解析：Raft 的核心机制：1）Leader 选举——节点有三种角色：Leader（处理所有客户端请求）、Follower（被动复制）、Candidate（竞选 Leader）。Leader 定期发送心跳（AppendEntries RPC），Follower 超时未收到心跳则发起选举。2）日志复制——Leader 将客户端请求封装为日志条目，广播给所有 Follower，多数确认后提交（committed），然后应用到状态机。3）安全性——Leader 拥有所有已提交日志；Candidate 竞选时限制只有日志最新的节点才能胜出。\n\n扩展延伸：Paxos vs Raft 的差异：1）Paxos 有 Basic Paxos、Multi-Paxos 等多个变体，Raft 单一标准规范。2）Raft 的日志连续性强，日志复制和 Leader 选举紧密耦合。3）Paxos 理论上更通用，但 Raft 在实际工程中更流行（etcd、Consul、TiKV 都使用 Raft）。共识算法的核心价值：在不可靠的分布式环境中，让多个节点对某个值达成一致。",
-    "hints": ["Raft 中如何保证新选举的 Leader 拥有所有已提交日志", "Paxos 和 Raft 对网络分区（split-brain）的处理方式有何不同"],
-    "tags": ["分布式", "共识", "Raft", "Paxos"]
+    "hints": [
+      "Raft 中如何保证新选举的 Leader 拥有所有已提交日志",
+      "Paxos 和 Raft 对网络分区（split-brain）的处理方式有何不同"
+    ],
+    "tags": [
+      "分布式",
+      "共识",
+      "Raft",
+      "Paxos"
+    ]
   },
   {
     "category": "system_design",
@@ -181,8 +263,16 @@
     "title": "分布式事务：2PC 与 Saga",
     "content": "请比较两阶段提交（2PC）和 Saga 模式在分布式事务中的优劣和适用场景。",
     "answer": "2PC 通过协调者和参与者两阶段提交实现强一致性（ACID）。Saga 将长事务拆分为多个本地事务 + 补偿事务，实现最终一致性。\n\n解析：2PC 流程：阶段一（Prepare）——协调者问每个参与者「能提交吗？」，参与者写 Undo/Redo 日志后回复 Yes/No。阶段二（Commit/Abort）——全部回复 Yes 则广播 Commit，任一 No 则广播 Abort。缺点：同步阻塞（参与者 Prepare 后锁资源直到收到 Commit/Abort）、协调者单点故障、脑裂风险（部分参与者 Commit 部分 Abort）。\n\nSaga 流程：每个本地事务执行完后发布事件，触发下一个本地事务。如果某个步骤失败，执行之前各步骤的补偿事务（逆向操作）。编排方式：1）Choreography（编排，事件驱动，无中心）。2）Orchestration（协调器，中心化控制）。\n\n扩展延伸：适用场景选型：需要强一致性（金融转账）→ 2PC 或 Percolator（Google Spanner 的优化版 2PC，TiDB 使用）。可以接受最终一致性（订单创建 → 支付 → 库存扣减）→ Saga（Seata AT/TCC 模式）。2PC 的锁持有时间长，高并发下吞吐量低。Saga 的挑战在于补偿事务的正确性——补偿逻辑必须幂等且能处理部分成功。",
-    "hints": ["2PC 的 Prepare 阶段为什么要写 Undo/Redo 日志", "Saga 的补偿事务和回滚（Rollback）有什么本质区别"],
-    "tags": ["分布式", "事务", "2PC", "Saga"]
+    "hints": [
+      "2PC 的 Prepare 阶段为什么要写 Undo/Redo 日志",
+      "Saga 的补偿事务和回滚（Rollback）有什么本质区别"
+    ],
+    "tags": [
+      "分布式",
+      "事务",
+      "2PC",
+      "Saga"
+    ]
   },
   {
     "category": "system_design",
@@ -191,8 +281,15 @@
     "title": "CDN 架构原理",
     "content": "请解释 CDN 的工作原理及其在系统架构中的作用。",
     "answer": "CDN（内容分发网络）将源站内容缓存到全球分布的边缘节点，用户就近获取内容。核心价值：降低延迟、减轻源站压力、抗 DDoS 攻击。\n\n解析：CDN 工作流程：用户请求 → DNS 解析 CNAME 到 CDN 调度系统 → 调度系统根据用户 IP 返回最近的边缘节点 IP → 用户请求边缘节点。边缘节点有缓存则直接返回（Cache Hit），没有则回源请求（从源站拉取后缓存到本地并返回）。\n\n核心组件：1）DNS 调度——按地理位置的 GSLB（全局负载均衡）。2）边缘缓存节点——存静态资源（图片/CSS/JS/视频），通过 LRU 淘汰策略管理。3）回源策略——缓存未命中时如何回源、回源超时/降级处理。4）预热/Push——大促前主动预热热点资源到边缘节点。\n\n扩展延伸：CDN 架构中的关键问题：1）缓存一致性——源站更新资源后如何通知 CDN 失效缓存（PURGE 请求或 Cache-Control: max-age=0 + 版本号）。2）HTTPS——边缘节点 TLS 证书管理、SNI 路由。3）DDoS 防护——CDN 天然防御（将所有流量分散到边缘节点，只有干净流量到达源站）。4）动态加速（DCDN）——针对动态 API 请求的加速，通过优化路由（TCP 优化、私有协议）而非缓存实现。",
-    "hints": ["CDN 回源时如果源站压力过大怎么办", "动态请求（API）能否用 CDN 加速"],
-    "tags": ["CDN", "网络", "性能"]
+    "hints": [
+      "CDN 回源时如果源站压力过大怎么办",
+      "动态请求（API）能否用 CDN 加速"
+    ],
+    "tags": [
+      "CDN",
+      "网络",
+      "性能"
+    ]
   },
   {
     "category": "system_design",
@@ -201,8 +298,16 @@
     "title": "WebSocket vs SSE vs 轮询",
     "content": "请比较 WebSocket、SSE（Server-Sent Events）和轮询三种实时通信方案的优劣。",
     "answer": "轮询最简单但浪费资源；WebSocket 功能最全但复杂度高；SSE 是服务端→客户端的单向实时通道，实现简单。\n\n解析：1）轮询——客户端定时发 HTTP 请求查询是否有新数据。实现最简单，兼容性最好。缺点：大量请求浪费带宽（大多数请求没有新数据），实时性取决于轮询间隔。长轮询（Long Polling）改进：请求保持打开直到有数据或超时，减少空请求。2）WebSocket——全双工通信，一次握手建立长连接。适合双向高频通信（聊天、协同编辑、游戏）。支持 binary 帧，协议开销小。缺点：需要 WebSocket Server（不能直接用 CDN），连接管理复杂。3）SSE——基于 HTTP 的单向流（服务端推送）。浏览器通过 EventSource API 接收。自动重连，比 WebSocket 实现简单得多。适合单向数据流（推送通知、股票价格、日志流）。\n\n扩展延伸：选型建议：1）需要双向通信（用户发送 + 服务端推送）→ WebSocket。2）只需服务端推送消息→ SSE（简单场景首选）。3）没有长连接基础设施，实时性要求不高 → 轮询/长轮询。4）WebSocket 生产方案——Socket.IO（降级+房间广播自动处理）、Pusher/Ably（托管 WebSocket 服务）。5）SSE + HTTP/2——HTTP/2 的多路复用支持 SSE 更高效。6）WebTransport（HTTP/3 的替代方案，还在早期）。",
-    "hints": ["WebSocket 应用层的心跳机制如何设计", "SSE 相比 WebSocket 的局限性是什么"],
-    "tags": ["网络", "实时通信", "WebSocket", "SSE"]
+    "hints": [
+      "WebSocket 应用层的心跳机制如何设计",
+      "SSE 相比 WebSocket 的局限性是什么"
+    ],
+    "tags": [
+      "网络",
+      "实时通信",
+      "WebSocket",
+      "SSE"
+    ]
   },
   {
     "category": "system_design",
@@ -211,8 +316,15 @@
     "title": "系统设计估算方法",
     "content": "系统设计面试中如何进行容量估算？请举例说明常用的估算方法。",
     "answer": "系统设计估算的核心是「合理的近似」，不需要精确数字。通过已知参照物 + 快速计算得出合理范围。\n\n解析：常用估算方法：1）QPS 估算——DAU × 每天用户操作次数 / 86400（秒数）= 平均 QPS，峰值 QPS = 平均 QPS × 3-10 倍（取决于业务类型）。示例：Twitter 类应用 3 亿 DAU，每人每天发 5 条推文 → 每天 15 亿条 → 平均 QPS = 15亿/86400 ≈ 17K，峰值 ≈ 50K-170K。2）存储估算——每条数据大小 × 数量 × 副本数 × 冗余系数（1.2-1.5）。示例：推文 140 字符 + 元数据 ≈ 500 字节，15 亿条/天 → 每天 750GB，一年约 270TB（不考虑图片/视频）。3）带宽估算——QPS × 响应体大小。示例：每推文约 500 字节，峰值写入 QPS 50K → 写入带宽 ≈ 25MB/s ≈ 200Mbps。\n\n扩展延伸：需要记住的参照数据：1）MySQL 单机 QPS ≈ 1K（写入）/ 5K（读取）。2）Redis 单机 QPS ≈ 10 万。3）单机网络带宽 ≈ 1-10Gbps。4）磁盘顺序写 ≈ 200MB/s，随机 IOPS ≈ 100-10K（取决于 SSD/HDD）。5）内存访问 ≈ 100ns，SSD ≈ 0.1ms，HDD ≈ 10ms（数量级的差异）。非功能性需求的基准数据也很重要：BASE 64 编码和 Base62 编码的区别（6 字符 Base62 ≈ 56 亿种组合）。估算的目标不是精确到个位数，而是在 2-3 倍误差范围内（面试中展示拆解问题的思路比答案本身重要）。",
-    "hints": ["如何快速计算 64 位 vs 128 位的存储差异", "估算中 86400 这个常数在日常估算中的角色是什么"],
-    "tags": ["估算", "容量规划", "面试"]
+    "hints": [
+      "如何快速计算 64 位 vs 128 位的存储差异",
+      "估算中 86400 这个常数在日常估算中的角色是什么"
+    ],
+    "tags": [
+      "估算",
+      "容量规划",
+      "面试"
+    ]
   },
   {
     "category": "system_design",
@@ -221,8 +333,16 @@
     "title": "设计实时排行榜系统",
     "content": "请设计一个支持亿级用户、秒级更新的实时排行榜系统。需要考虑数据一致性、分片和容错。",
     "answer": "答案：核心用 Redis Sorted Set 实现实时排名，分片+合并处理海量数据，定时持久化到 MySQL 做历史归档。\n\n解析：实时排行榜的核心数据结构是 Redis ZSet（有序集合），成员（member）为用户 ID，分数（score）为排名指标值。ZSet 通过 skiplist 实现 O(log n) 的插入/更新和 O(log n) 的范围查询。\n\n1）单 ZSet 方案——适合千万级以内。ZADD 更新分数，ZREVRANGE 0 99 获取 Top 100。优点：实现简单、毫秒级响应。缺点：单 ZSet 在亿级数据下内存占用大（约 40 字节/成员）。\n\n2）分片 ZSet 方案——按用户 ID 哈希分片到 N 个 Redis 实例（如 user_id % 10）。更新时写对应分片。查询全局 Top N：从每个分片取 Top N，归并排序后返回。优点：水平扩展、内存分散。缺点：归并开销随分片数增长（但 N 通常不大，如 10-20 片，归并成本可接受）。\n\n3）降级策略——读多写少：ZSet 全量在 Redis，缓存热门区间（Top 1000）减少查询压力。写多：批量更新（合并用户在短时间内的多次分数变更，减少 ZADD 调用）。\n\n扩展延伸：进阶优化：1）同分处理——score 相同按时间优先。方案：score = 整数值 + (MAX_TIMESTAMP - 当前时间戳) 的小数部分。2）归档策略——每日/每周结束时将 Top N 快照持久化到 MySQL，删除过期 ZSet。3）近似排行榜——允许误差时可用 Count-Min Sketch 近似计数 + 分段排序，大幅降低内存。4）实时变化推送——结合 Redis Pub/Sub 或 WebSocket 向用户推送排名变化（仅在用户排名变化超过阈值时推送，避免风暴）。",
-    "hints": ["ZSet 为什么适合做排行榜底层数据结构", "分片 ZSet 在归并时如何保证全局排名准确性"],
-    "tags": ["设计", "排行榜", "Redis", "高并发"]
+    "hints": [
+      "ZSet 为什么适合做排行榜底层数据结构",
+      "分片 ZSet 在归并时如何保证全局排名准确性"
+    ],
+    "tags": [
+      "设计",
+      "排行榜",
+      "Redis",
+      "高并发"
+    ]
   },
   {
     "category": "system_design",
@@ -231,8 +351,15 @@
     "title": "设计分布式配置中心",
     "content": "请设计一个分布式配置中心，支持配置的实时推送、版本管理和灰度发布。参考 Apollo/Nacos 架构。",
     "answer": "答案：分布式配置中心的核心架构：Config 存储层（DB）+ 管理 Portal + Config Service（长轮询推送）+ Client SDK（本地缓存+监听回调）。配置变更流程：Portal 写入 DB → Config Service 通知客户端 → Client 拉取新配置。\n\n解析：1）配置存储——MySQL 存储配置项（key-value，按 Namespace/Group/DataId 组织）。每个配置有版本号（version），更新时版本递增。2）配置推送——客户端通过 Http 长轮询（Long Polling）向 Config Service 请求变更。服务端有变更立即返回，无变更保持连接等待（默认 30-60 秒超时后重新建立）。相比 WebSocket，长轮询实现简单、兼容性好。3）客户端设计——在本地缓存配置（文件 + 内存），启动时先读本地缓存（快），再异步拉取最新配置对比版本号。当服务端配置变更时，通过长轮询收到通知，拉取新配置并触发回调（监听器模式，支持热更新）。4）灰度发布——按 IP/标签/实例 ID 匹配灰度规则，只对特定客户端推送新配置，验证无误后全量发布。\n\n扩展延伸：进阶功能：1）配置回滚——每个配置保存历史版本，支持一键回滚到任意版本。2）配置监听——客户端注册监听器，配置变更时动态更新（如日志级别、降级开关）。注意：数据库连接等需要重建连接的配置变更，热更新有风险，建议配合应用重启。3）安全审计——配置变更记录操作人、时间、变更前后值。4）配置加密——敏感配置（密码、密钥）在 DB 中加密存储，客户端端到端解密。5）对比 Apollo（携程）vs Nacos（阿里）：Apollo 功能最全（多环境多集群、权限管理、灰度），Nacos 轻量兼具服务发现和配置管理能力。选择建议：纯配置中心用 Apollo，已有 Nacos 服务发现时用 Nacos 配置。",
-    "hints": ["长轮询（Long Polling）相比 WebSocket 在配置推送场景中的优势", "配置热更新在哪些场景下是安全的、哪些场景有风险"],
-    "tags": ["设计", "配置中心", "分布式"]
+    "hints": [
+      "长轮询（Long Polling）相比 WebSocket 在配置推送场景中的优势",
+      "配置热更新在哪些场景下是安全的、哪些场景有风险"
+    ],
+    "tags": [
+      "设计",
+      "配置中心",
+      "分布式"
+    ]
   },
   {
     "category": "system_design",
@@ -241,8 +368,16 @@
     "title": "设计日志收集系统（ELK/EFK）",
     "content": "请设计一个海量日志收集和分析系统。如何保证日志的可靠收集和高效检索？",
     "answer": "答案：ELK（Elasticsearch + Logstash + Kibana）或 EFK（Elasticsearch + Filebeat/Fluentd + Kibana）是业界标准方案。日志从产生到可搜索的流程：应用日志 → Log Shippers（Filebeat）→ 消息队列（Kafka/Redis）→ Log Processor（Logstash/Fluentd）→ Elasticsearch → Kibana 展示。\n\n解析：1）日志采集层——Filebeat（轻量 agent，每个节点部署一个，读取日志文件）→ Kafka（削峰，解耦采集和消费）。Filebeat 特征：读取文件时维护偏移量，进程重启后从断点续传；背压感知——当输出（Kafka）压力大时放慢读取速度。\n\n2）日志传输层——Kafka 作为缓冲。优势：高吞吐、持久化、支持多消费组（实时流处理和批量归档并行）。Kafka 主题按应用/环境分区（如 topic = app_log_production）。\n\n3）日志处理层——Logstash/Fluentd 从 Kafka 消费日志，解析/结构化（Grok 正则解析日志格式 → JSON）、字段提取（IP、请求路径、响应码、耗时）。Logstash 功能强大但 Java 资源消耗大；Fluentd 用 Ruby/C 更轻量。\n\n4）存储和检索层——Elasticsearch 做倒排索引。常用优化：按时间分索引（如 app-logs-2024-06-01）、冷热分离（近期热数据 SSD 高副本、历史冷数据 HDD 低副本）、索引生命周期管理（ILM，自动从热→温→冷→删除）。\n\n扩展延伸：进阶话题：1）日志采样——全量日志开销大，对 DEBUG/INFO 级别按 1% 采样，ERROR/WARN 全量。2）结构化日志——应用侧打印 JSON 格式日志而不是文本日志（避免正则解析性能开销）。3）链路追踪关联——日志中注入 Trace ID（从分布式追踪系统 SkyWalking/Zipkin 获取），在 Kibana 中按 Trace ID 查询完整调用链。4）成本控制——日志保留策略：热数据 3 天 SSD、温数据 15 天 HDD、冷数据 30 天对象存储/COS。每天日志量 > 1TB 时考虑使用 ClickHouse 替代 Elasticsearch（压缩比高、查询速度快但搜索引擎能力弱）。",
-    "hints": ["为什么日志采集用 Filebeat 而非直接写 Kafka", "Elasticsearch 按时间分索引和 ILM 索引生命周期管理的关系"],
-    "tags": ["日志", "ELK", "EFK", "Elasticsearch"]
+    "hints": [
+      "为什么日志采集用 Filebeat 而非直接写 Kafka",
+      "Elasticsearch 按时间分索引和 ILM 索引生命周期管理的关系"
+    ],
+    "tags": [
+      "日志",
+      "ELK",
+      "EFK",
+      "Elasticsearch"
+    ]
   },
   {
     "category": "system_design",
@@ -251,8 +386,16 @@
     "title": "设计秒杀系统",
     "content": "请设计一个高并发秒杀系统，要应对瞬时流量洪峰（万人抢几百件商品）。如何保证不超卖、不雪崩？",
     "answer": "答案：秒杀系统的核心策略是「层层过滤、流量削峰」——在前端和中台尽可能拦截无效流量，后端确保数据一致性。关键步骤：前端限流 → CDN 静态化 → MQ 削峰 → Redis 原子扣减 → DB 最终一致性。\n\n解析：分层架构：1）前端层——按钮置灰（防重复点击）、动态 URL（隐藏接口地址，防提前抢）、验证码/滑块（拦住机器请求）。CDN 承载商品详情页，秒杀接口不走 CDN。\n\n2）网关层——同一用户限流（IP + 用户 ID 限流，如 5次/秒）、全局令牌桶（按商品数量比例限流，秒杀开始提前预热令牌）、恶意请求拦截（同一 IP 高频访问、异常 User-Agent）。\n\n3）服务层——Redis 原子扣减库存：`DECR stock_key`，返回值 < 0 说明已售罄（回滚）。余量写入 Lua 脚本确保原子性。扣减成功后将用户 ID 写入 Redis 有序集合（已抢到名单）。Redis 单机 10 万 QPS，扛住峰值流量绰绰有余。\n\n4）异步下单——扣减成功后发 MQ 消息（用户 ID + 商品 ID），后端 Worker 异步处理（订单生成、DB 库存扣减、支付）。MQ 削峰：流量均匀消费，避免瞬时 DB 压力。\n\n5）DB 层——乐观锁更新库存：`UPDATE stock SET count = count - 1 WHERE id = ? AND count > 0`（SQL 级别的原子性防止超卖）。唯一订单号约束防止重复下单。\n\n扩展延伸：超卖防线：1）第一道：Redis DECR（虽然超卖一丢丢但速度快）→ 2）第二道：MQ 消费者中的 DB 乐观锁 SQL（最终防线，精确到个位）。数据一致性：Redis 和 DB 之间的库存差异通过定时对账任务校正（每 5 分钟 Redis 库存同步到 DB）。限流触发后的降级：排队页（显示「前方排队 X 人」）、漏桶算法平滑请求输出。秒杀结束后：未抢到的用户推送安慰消息，附带下次预告或优惠券作为补偿。",
-    "hints": ["Redis DECR 为什么不能单独作为不超卖的保证", "秒杀系统中为什么要用 MQ 做异步下单而不是同步写 DB"],
-    "tags": ["设计", "秒杀", "高并发", "Redis"]
+    "hints": [
+      "Redis DECR 为什么不能单独作为不超卖的保证",
+      "秒杀系统中为什么要用 MQ 做异步下单而不是同步写 DB"
+    ],
+    "tags": [
+      "设计",
+      "秒杀",
+      "高并发",
+      "Redis"
+    ]
   },
   {
     "category": "system_design",
@@ -261,7 +404,105 @@
     "title": "设计 API 网关",
     "content": "请设计一个 API 网关，支持路由转发、身份认证、限流、请求日志和协议转换。参考 Kong / APISIX / Spring Cloud Gateway 的架构。",
     "answer": "答案：API 网关是系统对外的统一入口，负责横切关注点（认证、限流、日志、监控）和请求路由。核心架构：路由表 + Filter 链（前置/后置过滤器）+ 上游服务。\n\n解析：核心组件：1）路由表——配置 URL pattern → 目标服务映射。支持精确路径、前缀匹配、正则匹配。路由存储：etcd（Kong）/ DB（APISIX）/ 配置文件（Spring Cloud Gateway）。\n\n2）过滤器链——请求在匹配路由后经过一系列过滤器。前置过滤器：身份认证（JWT/OAuth2 Token 校验）、限流（令牌桶/漏桶/Redis 计数器）、请求头转换（添加/删除 Header）、请求体校验。后置过滤器：响应头注入（CORS）、响应体转换（字段映射/过滤）、请求日志（记录请求路径、耗时、状态码）。\n\n3）负载均衡——支持轮询/加权/最少连接/一致性哈希，健康检查（主动心跳 + 被动熔断）。\n\n4）协议转换——HTTP → gRPC（网关将 RESTful 请求转为 Protobuf 调用）、HTTP → Dubbo（泛化调用）、WebSocket 代理。\n\n扩展延伸：进阶功能：1）灰度发布——按照 Header/Cookie/IP 权重将部分流量转发到新版本服务。2）限流维度——接口级、用户级、应用级（API Key）。分布式限流用 Redis + Lua 脚本实现。3）熔断降级——下游服务超时/错误率达到阈值时快速失败（返回降级响应），避免级联雪崩（Hystrix/Resilience4j/Sentinel）。4）网关选型对比：Kong（Nginx + Lua，高性能，插件生态丰富）、APISIX（Apache 孵化，动态路由，性能强）、Spring Cloud Gateway（Spring 生态，基于 WebFlux，Java 团队首选）、Envoy Proxy（C++ 高性能，Service Mesh 数据平面）。注意：网关不应包含业务逻辑，这只是横切关注点的汇聚层。业务逻辑应留在后端服务中。",
-    "hints": ["API 网关的过滤器链如何实现前置和后置处理", "Kong 和 APISIX 都基于 Nginx，为什么能实现动态路由而不需要 reload"],
-    "tags": ["网关", "API", "路由", "限流"]
+    "hints": [
+      "API 网关的过滤器链如何实现前置和后置处理",
+      "Kong 和 APISIX 都基于 Nginx，为什么能实现动态路由而不需要 reload"
+    ],
+    "tags": [
+      "网关",
+      "API",
+      "路由",
+      "限流"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计短 URL 系统",
+    "content": "如何设计一个短 URL 生成系统（类似 TinyURL/bitly）？如何生成唯一且短的 URL 编码？短 URL 的重定向如何实现高并发？",
+    "answer": "答案：短 URL 核心功能：长 URL → 短码（6-8 位字符串）→ 访问短 URL 时 302 重定向到长 URL。核心挑战：全局唯一短码生成 + 高并发重定向 + 短码的防碰撞。\n\n解析：短码生成方案——1）Hash + 去重：MD5(长 URL + 盐值) → Base62 编码 → 取前 6-8 位 → 检查冲突（重复则加盐重试）。2）发号器（Snowflake/DB 自增）：用全局 ID 发号器生成唯一 ID，Base62 编码（62^7 ≈ 3.5 万亿个组合）。不需要处理冲突。3）预生成：提前生成一批短码放在缓存中，使用时直接取（性能最好）。\n\n扩展延伸：架构设计——1）写请求（生成短 URL）：负载较低，直接写 DB + Cache。2）读请求（短码重定向）：高并发（读多写少），Cache 为王。缓存策略：短码 → 长 URL 的映射放入 Redis（过期时间 24h+）。所有请求先查缓存，缓存 miss 查 DB 并回填。3）302 vs 301 重定向：301（永久重定向）会被浏览器缓存，后续请求不经过短 URL 服务（无法计数），302（临时重定向）每次经过服务（可以计数和分析）。业务场景：分析追踪用 302，不关心统计用 301。扩展功能：自定义短码、过期时间、访问统计（PV/UV/来源/设备）、二维码生成。",
+    "hints": [
+      "发号器方案和 Hash 方案的核心区别——发号器无冲突但依赖中心发号器，Hash 可能冲突但去中心化",
+      "301 和 302 在短 URL 中怎么选——需要点击统计用 302，不需要用 301"
+    ],
+    "tags": [
+      "系统设计",
+      "短URL",
+      "高并发",
+      "重定向"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计实时聊天系统",
+    "content": "如何设计一个百万同时在线的实时聊天系统（类似微信/WhatsApp）？WebSocket 长连接如何管理？消息的可靠投递和离线消息如何处理？",
+    "answer": "答案：实时聊天系统核心分层：客户端 → 接入层（WebSocket 网关/Chat Server）→ 业务逻辑层（消息/关系链/群组）→ 存储层（消息存储/用户状态）。接入层维护 WebSocket 长连接，消息按 Conversation ID 路由。\n\n解析：WebSocket 连接管理——1）Connection Pool（连接池）：每个 Chat Server 维护当前连接的 Map<userId, WebSocket>。2）网关路由：客户端连接时通过一致性哈希或随机分配到一台 Chat Server。3）心跳检测：每 30s 发 Ping，如果 120s 无 Pong 则断开连接并更新用户状态为离线。消息投递流程——1）发送方：客户端 A → Chat Server1 → 消息队列（Kafka/RocketMQ）。2）接收方：消息队列 Consumer → Chat Server2（B 所在服务器）→ WebSocket → 客户端 B。3）如果 B 不在线，消息存入离线消息存储（MySQL/LevelDB）。\n\n扩展延伸：可靠性保证——1）消息 ID：客户端生成 + 服务端确认去重（幂等）。2）ACK 机制：客户端收到消息后返回 ACK，服务端未收到 ACK 则重试（最多 3 次）。3）消息同步：多设备登录时，收到消息后同步到所有在线设备。群聊优化——1）写扩散（Fan-out）：小群（<1000）→ 为每个群成员写一份消息。2）读扩散：大群（>1000）→ 消息只存一份，成员拉取时计算自己的 Timeline。好友上线通知：用户上线后通知所有在线好友（通过 Presence Service——Redis Pub/Sub 或基于 ZooKeeper 的 Watch 机制）。",
+    "hints": [
+      "写扩散和读扩散的选择——写扩散适合小群（写入量大但读取快），读扩散适合大群（写入少但读取慢）",
+      "Presence（在线状态）为什么用 Redis Pub/Sub 而不是 WebSocket 直连——减少 Chat Server 之间的耦合"
+    ],
+    "tags": [
+      "系统设计",
+      "聊天",
+      "WebSocket",
+      "高并发"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计分布式限流系统",
+    "content": "如何设计一个分布式的 API 限流系统？令牌桶和漏桶算法有什么区别？分布式限流如何保证计数器的准确性？",
+    "answer": "答案：分布式限流系统的核心：集中化的计数器 + 快速判断算法。常用算法：令牌桶（允许突发流量）、漏桶（强制平滑流量）、滑动窗口（精确控制时间窗口内请求数）。分布式场景下用 Redis + Lua 脚本实现原子计数。\n\n解析：令牌桶 vs 漏桶——1）令牌桶（Token Bucket）：以固定速率向桶中添加令牌，请求到达时取令牌，有令牌则放行，无令牌则拒绝。优点：允许一定的突发流量（桶中有令牌时可以快速消费）。适用：大多数 API 限流。2）漏桶（Leaky Bucket）：请求以任意速率进入桶中，以固定速率漏出（处理），桶满则溢出（拒绝）。优点：无论请求多么突发，流出速率恒定。适用：保护下游系统（即使上游突发也不能压垮下游）。\n\n扩展延伸：分布式实现——1）Redis + Lua：将限流逻辑写在 Lua 脚本中（原子执行）。用 Redis 的 Sorted Set（滑动窗口）或计数（计数器/令牌桶）。2）Sentinel（阿里开源）：通用的限流熔断库，支持多种限流规则和来源。3）性能考虑：每次请求都需要 Redis 调用（增加 1-2ms 延迟），对极高 QPS 可以用本地限流 + 定期同步。4）本地限流（Guava RateLimiter）：单机版令牌桶，不依赖 Redis，适合「允许少量误差」的场景。限流维度——接口级（/api/order）、用户级（user_id）、IP 级、应用级（API Key）。配合降级：限流后的返回策略——排队等待、快速失败（返回 429 Too Many Requests）、降级返回缓存数据。",
+    "hints": [
+      "Redis + Lua 做分布式限流的核心优势——Lua 脚本在 Redis 中原子执行，避免并发写的竞态",
+      "本地限流（Guava RateLimiter）vs 分布式限流（Redis）——允许误差 vs 精确控制"
+    ],
+    "tags": [
+      "系统设计",
+      "限流",
+      "令牌桶",
+      "高并发"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "设计分布式 ID 生成系统",
+    "content": "如何设计一个全局唯一的分布式 ID 生成器？Snowflake（雪花算法）的原理是什么？时钟回拨问题怎么解决？",
+    "answer": "答案：分布式 ID 需要满足：全局唯一、趋势递增（B+Tree 索引友好）、高可用低延迟。Snowflake 是最经典的方案：64 位 long 型 ID = 1bit 符号位 + 41bit 毫秒时间戳 + 10bit 机器 ID + 12bit 序列号（同一毫秒内计数）。单机每秒可生成约 409 万个 ID（2^12 * 1000）。\n\n解析：Snowflake 的位段——1）符号位（1bit）：0。2）时间戳（41bit）：当前时间戳 - 自定义起始时间戳（epoch），可用 69 年。3）机器 ID（10bit）：5bit datacenter + 5bit worker，支持 32 个机房 * 32 台机器（共 1024 个节点）。4）序列号（12bit）：同一毫秒内的递增序号（0-4095），溢出则等待下一毫秒。\n\n扩展延伸：时钟回拨问题——1）原因：NTP 时间同步导致系统时钟回拨（向前调整时间）。2）影响：如果 ID 生成器的时钟回拨，可能生成重复 ID 或者时间戳错乱。3）方案：短时间回拨（< 几秒）→ 等待时钟追上（Spin/Busy Wait，最简单但阻塞）。提前记录上次生成的时间戳，如果发现当前时间 < 上次时间（回拨了），等待回拨的那段时间再继续。长时间回拨 → 报警并拒绝服务（需要手动介入修复时钟）。改进方案——1）使用 Redis 发号器（INCR）替代 Snowflake（不依赖本地时钟，但依赖 Redis）。2）百度 UidGenerator——使用数据库自增 ID + RingBuffer 预缓存。3）美团 Leaf——Snowflake 改进版，用 ZooKeeper 管理 WorkerID 自动注册，解决时钟回拨通过标记「回拨期间 ID 不可用」+ ZK 持久化保存上次时间戳。4）分段发号（Segment）：预先分配一段 ID 范围，用完后取下一段。经典 DB 方案：`REPLACE INTO id_generator(stub) VALUES('a')` → `SELECT LAST_INSERT_ID()`。",
+    "hints": [
+      "Snowflake 的时间戳 + 序列号为什么能保证趋势递增——同一毫秒内序列号递增，跨毫秒时间戳递增",
+      "短时间时钟回拨的 Spin Wait 为什么可行——NTP 回拨通常在几毫秒到几百毫秒"
+    ],
+    "tags": [
+      "系统设计",
+      "分布式ID",
+      "Snowflake",
+      "发号器"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "设计搜索引擎",
+    "content": "如何从零设计一个搜索引擎（类似 Google/Bing 的简化版）？倒排索引（Inverted Index）的原理是什么？搜索结果如何排序（Ranking）？",
+    "answer": "答案：搜索引擎核心流程：爬虫（Crawler）抓取网页 → 索引器（Indexer）建立倒排索引 → 检索器（Searcher）处理查询 → 排序器（Ranker）按相关性排序结果。倒排索引是「词 → 文档列表」的映射，使全文搜索可以从 O(N) 降到 O(1)。\n\n解析：倒排索引——1）正向索引：文档 → 词。2）倒排索引：词 → [文档 ID 列表 + 词频(TF) + 位置(Position)]。建立过程：分词（Tokenizer）→ 去除停用词 → 词干提取（Stemming）→ 建索引写入磁盘。3）压缩：文档 ID 用差值编码（Delta Encoding）+ Varint 压缩存储。查询处理——1）布尔查询：AND（取文档列表交集）、OR（并集）、NOT（差集）。2）短语查询：在位置信息中匹配相邻词。3）容错查询：编辑距离（Edit Distance）或 N-gram 索引处理拼写错误。\n\n扩展延伸：排序算法——1）TF-IDF：词频越高、文档频率越低（词越稀有）→ 权重越高。2）BM25（现代搜索引擎核心算法）：TF-IDF 的改进版，加入文档长度归一化和词频饱和函数。3）PageRank（链接分析）：被越多高质量页面链接 → 页面越重要。4）实际搜索引擎的 Rank 融合几百个特征（用户位置、设备类型、历史点击率等），用 ML 模型（LambdaMART）计算最终得分。搜索引擎架构——索引分片（Sharding）按文档 ID 范围或词哈希分片。热词缓存（常用查询结果直接返回）。Elasticsearch 是 Lucene 封装——倒排索引 + 分布式 + 近乎实时搜索。",
+    "hints": [
+      "倒排索引的「词 → 文档列表」为什么比关系型数据库的 LIKE 查询快几个数量级——从全表扫描到词哈希直接定位",
+      "BM25 为什么比 TF-IDF 更好——文档长度归一化避免了长文档天然高分的问题"
+    ],
+    "tags": [
+      "系统设计",
+      "搜索引擎",
+      "倒排索引",
+      "Elasticsearch"
+    ]
   }
 ]
