@@ -1363,5 +1363,94 @@
       "SSI",
       "PostgreSQL"
     ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "PostgreSQL 并行查询",
+    "content": "解释 PostgreSQL 并行查询的执行模型。什么是并行顺序扫描、并行哈希连接、并行聚合？哪些 GUC 参数控制并行行为？哪些查询类型不支持并行？",
+    "answer": "PostgreSQL 采用 Leader-Worker 模型实现并行查询。\\n\\n并行操作类型：\\n1. 并行顺序扫描（Parallel Seq Scan）：将表的数据块分配给多个 Worker 并行读取，Leader 负责汇总结果。\\n2. 并行哈希连接（Parallel Hash Join）：多个 Worker 协作构建哈希表，然后并行探测。\\n3. 并行聚合（Partial Aggregate）：每个 Worker 做部分聚合，Leader 做最终聚合。\\n\\n关键 GUC 参数：\\n- max_parallel_workers：整个系统的最大并行 Worker 数。\\n- max_parallel_workers_per_gather：单个 Gather 节点能启动的最大 Worker 数。\\n- parallel_tuple_cost / parallel_setup_cost：优化器评估并行执行成本的系数。\\n- min_parallel_table_scan_size：触发并行扫描的最小表大小。\\n\\n不支持并行的场景：\\n- 使用游标（CURSOR）的查询。\\n- 带 PARALLEL UNSAFE 标记的函数。\\n- 某些窗口函数。\\n- 修改数据的 DML（默认限制，PG 11 之后支持部分并行）。\\n- 加锁操作（SELECT FOR UPDATE / FOR SHARE）。\\n\\n并行安全性分为三个级别：PARALLEL SAFE（可以并行）、PARALLEL RESTRICTED（只能在 Leader 上并行）、PARALLEL UNSAFE（不能并行）。",
+    "hints": [
+      "控制并行度的三个主要 GUC 参数是什么",
+      "为什么某些窗口函数和游标查询不支持并行"
+    ],
+    "tags": [
+      "PostgreSQL",
+      "并行查询",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "冷热数据分离",
+    "content": "描述数据库中冷热数据分离的几种常见实现策略。每种策略的优缺点是什么？如何设计分区键和迁移策略？",
+    "answer": "冷热数据分离是将频繁访问的「热数据」和不常访问的「冷数据」分开存储，以降低成本并提高性能。\\n\\n常见策略：\\n1. 时间分区法：按时间范围分区（如按月分区），热分区放在快速存储（NVMe SSD），冷分区可移到廉价存储甚至归档。优点是实现简单、查询分区裁剪方便；缺点是热数据也可能包含大量不活跃数据。\\n2. 显式标记法：表中增加 `is_hot` 或 `status` 字段，通过定期 Job 将冷数据迁移到归档表或归档库（如 MySQL 到 ClickHouse）。优点是灵活控制；缺点是需要应用层感知多表路由。\\n3. 存储分层法：利用存储引擎的分层能力（如 LSMTree 的 Tiered Compaction、MySQL 的分区表放在不同磁盘路径）。优势是对应用透明。\\n4. 缓存加速法：热数据在 Redis/Memcached 中缓存，数据库作为完整数据的持久层。简单有效，但需要处理缓存一致性问题。\\n\\n迁移策略考虑：\\n- 迁移窗口：冷数据迁移通常在业务低峰期执行。\\n- 数据一致性：迁移过程中需保证未迁移数据的一致性，可通过双写或校验机制。\\n- 降级策略：如果迁移失败，应有回滚机制。",
+    "hints": [
+      "最简单也最常见的分离标准是什么？它有什么局限性",
+      "存储分层法对应用透明意味着什么"
+    ],
+    "tags": [
+      "数据库设计",
+      "冷热分离",
+      "性能优化",
+      "架构"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库连接池 HikariCP 优化",
+    "content": "解释 HikariCP 连接池的关键配置参数及其优化策略。如何确定合适的连接池大小？HikariCP 相比其他连接池（如 DBCP、C3P0）做了哪些性能优化？",
+    "answer": "HikariCP 是 Spring Boot 默认的数据库连接池，以高性能著称。\\n\\n关键参数：\\n- maximumPoolSize：最大连接数。经验公式为 T = (core_count * 2) + effective_spindle_count，通常建议保持在 10-20 左右，过大会导致数据库端连接竞争加剧。\\n- minimumIdle：最小空闲连接数（建议等于 maximumPoolSize 或接近以消除创建延迟）。\\n- connectionTimeout：获取连接的超时时间（默认 30000ms）。\\n- idleTimeout：连接最大空闲时间（仅当 pool 超过 minimumIdle 时生效）。\\n- maxLifetime：连接最大寿命（应小于数据库的 wait_timeout）。\\n- poolName：便于监控。\\n\\n性能优化原理：\\n1. ConcurrentBag：无锁设计，比有锁队列性能高几个数量级。\\n2. 减少上下文切换：单一内部队列 + 极小程度竞争。\\n3. 字节码优化：使用 Javassist 替代 CGLIB 生成动态代理（减少方法调用开销）。\\n4. 直接初始化：编译器优化级别更高。\\n\\n优化建议：\\n- 监控实际连接利用率而非猜测池大小。\\n- 池大小并非越大越好——数据库连接是重量级资源，过多连接导致上下文切换和锁竞争。\\n- maxLifetime 建议设为略小于数据库的 wait_timeout。\\n- prepareStatementCache 按需开启，合理设置 cache size。",
+    "hints": [
+      "为什么数据库连接池不是越大越好",
+      "HikariCP 用哪种无锁数据结构替代了有锁队列"
+    ],
+    "tags": [
+      "HikariCP",
+      "连接池",
+      "Java",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分区裁剪",
+    "content": "解释数据库分区裁剪（Partition Pruning）的原理。MySQL 和 PostgreSQL 分别如何实现分区裁剪？什么情况下分区裁剪会失效？如何设计分区键以最大化裁剪效果？",
+    "answer": "分区裁剪是数据库查询优化器通过分析 WHERE 条件中的分区键，跳过无关分区的技术。\\n\\nMySQL 实现方式：\\n- 静态裁剪：在查询规划阶段，根据 WHERE 条件中的分区键范围直接确定需访问的分区。\\n- 动态裁剪：在执行阶段，对子查询等运行时才能确定值的条件进行裁剪（需版本支持）。\\n- 支持 RANGE、LIST、HASH、KEY、COLUMNS 等分区类型。\\n- EXPLAIN PARTITIONS 可查看查询命中的分区。\\n\\nPostgreSQL 实现方式：\\n- 基于约束排除（Constraint Exclusion），在 PG 10+ 通过声明式分区（Declarative Partitioning）原生支持。\\n- 利用 CHECK 约束逐分区排除。\\n- 分区键必须出现在 WHERE 条件中才能触发裁剪。\\n\\n裁剪失效场景：\\n1. 在 WHERE 中对分区键使用函数：WHERE YEAR(create_time) = 2024（应改为 create_time BETWEEN 「2024-01-01」 AND 「2024-12-31」）。\\n2. 隐式类型转换导致索引/分区键无法匹配。\\n3. 多表 JOIN 条件不包含分区键。\\n4. 分区表达式复杂导致优化器无法推测。\\n\\n设计建议：\\n- 分区键应选择查询中最常用的过滤列。\\n- 范围分区的时间粒度应与查询模式匹配。\\n- 避免在 WHERE 中对分区键做函数包裹或运算。",
+    "hints": [
+      "WHERE YEAR(partition_col) = 2024 能触发分区裁剪吗",
+      "MySQL 和 PG 分区裁剪的实现方式有何不同"
+    ],
+    "tags": [
+      "分区表",
+      "MySQL",
+      "PostgreSQL",
+      "查询优化"
+    ]
+  },
+  {
+    "category": "database_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "content": "MySQL 8.0 窗口函数的执行模型是什么？优化器如何选择执行策略？如何设计索引和查询以优化窗口函数性能？ROWS、RANGE、GROUPS 三种帧模式有什么区别？",
+    "title": "MySQL 8.0 窗口函数优化",
+    "answer": "MySQL 8.0 窗口函数执行分为三个步骤：\\n1. Partition：按 PARTITION BY 分组。\\n2. Order：在每个分组内按 ORDER BY 排序。\\n3. Frame：在定义好的窗口帧上计算函数值。\\n\\n执行策略：\\n- 默认策略：使用临时表 + filesort（如果排序量超过 sort_buffer_size）。\\n- 优化器可在某些场景选择 BNL（Batched Key Access）策略。\\n\\n三种帧模式：\\n- ROWS：物理行偏移（如 ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING）。最精确、最高效。\\n- RANGE：逻辑值范围（同一 ORDER BY 值视为一组）。性能较 ROWS 差。\\n- GROUPS：分组范围（ORDER BY 值相同的行视为一组）。MySQL 8.0.14 引入。\\n\\n优化建议：\\n1. 创建匹配 PARTITION BY + ORDER BY 的联合索引——大幅减少排序开销。\\n2. 优先使用 ROWS 而非 RANGE/GROUPS。\\n3. 避免对大结果集无 PARTITION BY 的窗口函数（全局排序单线程）。\\n4. 用 ROW_NUMBER() 替代 GROUP BY + 子查询实现分组 Top-N（性能更好）。\\n5. 善用窗口函数替代自连接，减少 IO。\\n6. 控制 `windowing_use_high_precision` 参数（高精度模式有额外开销）。\\n7. 子查询中使用窗口函数时，外层要加适当过滤以减少内层处理行数。",
+    "hints": [
+      "什么索引设计能同时加速 PARTITION BY 和 ORDER BY 两个步骤",
+      "ROWS 和 RANGE 帧模式在性能上的关键差异是什么"
+    ],
+    "tags": [
+      "MySQL",
+      "窗口函数",
+      "查询优化",
+      "性能"
+    ]
   }
 ]

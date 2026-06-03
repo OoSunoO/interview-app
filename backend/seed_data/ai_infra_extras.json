@@ -1349,5 +1349,99 @@
       "NPU",
       "推理“, ”架构"
     ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "Tensor Parallelism vs Pipeline Parallelism",
+    "content": "请详细比较 Tensor Parallelism（TP）和 Pipeline Parallelism（PP）在分布式训练中的核心差异。包括它们的拆分方式、通信开销、负载均衡特性、以及在 LLM 训练中的典型应用配置。",
+    "answer": "Tensor Parallelism（TP）：在单层内部进行拆分。以 Transformer 为例，将 attention 头的计算分布到不同设备上（如每个设备负责 H/G 个注意力头），或将 FFN 的中间维度按列切开。通信发生在每一层内部（forward 和 backward 各有一次 all-reduce），属于高频高带宽通信。典型采用 NVLink（节点内）或高速互联。TP 对通信带宽要求极高（每层需传输整个 hidden states）。Pipeline Parallelism（PP）：按层维度拆分，将不同层分配到不同设备（如设备 0 负责 1-8 层，设备 1 负责 9-16 层）。前向计算在设备间顺序传递。通信只发生在相邻 stage 边界（传递 activation 和 gradient），属于低频通信。但 PP 存在 bubble 问题（由于 pipeline 启动/排空阶段的空闲等待）。Gpipe 的同步 pipeline bubble 随 stage 数增加而增大（约 (K-1)/(M+K-1) 的 bubble ratio），1F1B 策略通过交错调度改善。典型配置：在节点内使用 TP（因为 NVLink 高带宽），在节点间使用 PP 或数据并行（因为跨节点带宽有限）。Megatron-LM 的组合并行策略通常先做 TP（同一节点），再做 PP，最后做数据并行（3D Parallelism）。",
+    "hints": [
+      "TP 通信发生在模型层的什么位置，属于什么类型的通信？",
+      "PP 的经典问题 bubble 是如何产生的，1F1B 如何改善？"
+    ],
+    "tags": [
+      "tensor parallelism",
+      "pipeline parallelism",
+      "分布式训练",
+      "3D parallelism",
+      "模型并行"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "GPU 显存池化技术",
+    "content": "请解释 GPU 显存池化（Memory Pooling）的核心概念和主流实现方案。对比显存池化与显存交换（swap）的区别，说明显存池化在 LLM 推理和训练场景中的优势和挑战。",
+    "answer": "GPU 显存池化是将显存资源从物理 GPU 卡抽象为统一资源池，允许多个模型或多副本共享、动态分配显存的技术。核心思想是将显存作为可弹性分配的资源，而非静态分配给单个进程。主要实现方案：1) CUDA Unified Memory / UVM：操作系统级别的页迁移，GPU 访问缺页时自动从 CPU 内存迁移。简单但性能开销大，不适合高性能计算。2) NCCL-backed 显存池（如 vLLM 的 PagedAttention 的显存管理）：将显存划分为固定大小的 block，像虚拟内存一样管理，按需分配，减少碎片。3) GPU Memory Pooling Framework（如 GPUDirect RDMA + 分布式显存池）：跨节点统一显存池，通过 RDMA 直接访问远端显存，如阿里云 cGPU 和腾讯 TACO。4) 显存池化 vs 显存交换：交换（Swap）是将暂时不用的显存数据迁移到 CPU 内存（如 DeepSpeed ZeRO-Offload），当需要时再换回。池化更强调资源的共享和隔离，交换是单机层面的空间换时间。显存池化在 LLM 推理中的优势：通过共享 KV Cache 池在请求间复用显存，大幅提高吞吐（vLLM 的 PagedAttention 号称 2-4x 提升）。挑战在于：显存池化需要精确的 memory management 避免碎片，跨设备访问带来额外延迟，以及资源隔离和安全问题（多租户场景）。",
+    "hints": [
+      "vLLM 的 PagedAttention 如何类比操作系统的虚拟内存管理？",
+      "显存池化和显存交换在资源管理方式上的核心区别是什么？"
+    ],
+    "tags": [
+      "GPU显存",
+      "显存池化",
+      "vLLM",
+      "PagedAttention",
+      "资源管理"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "模型分片与动态加载",
+    "content": "请解释大模型推理场景中模型分片（Model Sharding）和动态加载（Dynamic Loading）的原理和实现策略。对比模型分片和模型并行的区别，说明在资源受限设备上部署大模型的关键技术。",
+    "answer": "模型分片（Model Sharding）是将大模型按某种维度切分为多个片段，分布加载到有限的存储/内存设备上。与模型并行的核心区别：模型并行侧重训练/推理时多设备协同计算，各设备同时持有部分参数并参与前向计算；模型分片侧重存储管理，各分片可以按需加载到计算设备，不要求所有分片同时驻留显存。主要实现策略：1) 层级分片（Layer-level Sharding）：按层切分，推理前向时按顺序逐层加载到显存，计算完成即卸载。适用于顺序计算（Transformer），延迟随层数线性增加。2) 张量分片（Tensor-level Sharding）：将单层的权重矩阵划分为子矩阵，但需要全设备参与计算时再组合。与 TP 类似但强调动态加载而非常驻。3) 量化分片（Quantized Sharding）：将部分层量化到更低精度（如 4bit 或 2bit），大幅减小分片大小。4) 动态加载技术：a) Offload + Prefetch：根据计算图预取即将用到的分片（如 Accelerate 库的 cpu_offload with hook）。b) Streaming Execution：边加载边执行，流水线化加载和执行过程掩盖 I/O 延迟。c) Lazy Loading：用到哪个分片才加载（如 llama.cpp 的 mmap 按需加载）。关键技术：在资源受限设备（如单卡消费级 GPU 或边缘设备）上部署大模型，结合分片、量化、offloading 技术，使数十亿参数模型可在数 GB 显存上运行。代表实现：llama.cpp（基于 mmap 的按需加载 + 量化层分片）、Hugging Face Accelerate（device_map=「auto」自动分片）、Alibaba PAI-EAS（弹性分片推理）。",
+    "hints": [
+      "模型分片和模型并行在目标上有什么本质区别？",
+      "llama.cpp 使用什么技术实现模型分片的动态加载？"
+    ],
+    "tags": [
+      "模型分片",
+      "动态加载",
+      "大模型推理",
+      "offloading",
+      "llama.cpp"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "expert",
+    "type": "short_answer",
+    "title": "异构计算资源调度",
+    "content": "请说明在多 GPU 集群中进行异构计算资源调度的核心挑战和主要算法。对比不同调度策略（如 Gandiva、Tiresias、HiveMind）的设计思路，以及在训练和推理场景中的调度差异。",
+    "answer": "异构计算资源调度是指在包含不同 GPU 型号、不同互联拓扑、不同带宽的多设备集群上，为任务高效分配计算资源。核心挑战：1) 异构性：不同 GPU 算力、显存、带宽差异大，任务对资源的需求各异。2) 干扰：多任务共享 GPU/网络时可能产生性能干扰（如 PCIe 带宽争抢）。3) 碎片化：资源碎片导致利用率下降。4) 弹性：任务可伸缩性不同，调度策略需考虑加速比和效率。主要调度策略：1) Gandiva（Microsoft，2018）：基于 Gang Scheduling，采用 introspective 预测任务在不同 GPU 组合上的性能，使用 Best-Fit 策略。引入 pack-aware 选择器避免碎片，支持任务迁移。2) Tiresias（Microsoft，2019）：针对 DL 训练的两阶段调度器，区分延迟敏感型（如在线实验）和吞吐优先型（如常规训练）。采用 Gittins Index 算法，根据任务资源需求和历史执行时间，优先调度短任务来提高集群 SM（Service Level Objective）达标率。3) HiveMind（2020）：针对 GPU 共享和混部场景，同时支持训练和推理任务。引入 GPU 换入换出（preemption with GPU state swapping），将推理延迟敏感的 Kubernetes Pod 绑定到 GPU，训练任务利用剩余资源。4) 训练与推理调度差异：训练任务：持久（小时到天），强调高带宽通信（NVLink/NCCL），倾向于同构节点避免掉队者，调度关注：Gang Scheduling（多卡并行任务同时启动）、弹性扩缩（如 TorchElastic）。推理任务：短暂（毫秒到秒），强调低延迟（单卡推理居多），调度关注：资源隔离（避免干扰）、请求级别调度（如 Triton 的 Dynamic Batching 和排队）。5) 现代趋势：Kubernetes + Volcano 或 Yunikorn 作为资源管理层，支持 GPU 资源的 bin-packing 和 spread 策略结合，以及基于 Prometheus 指标的动态调度。",
+    "hints": [
+      "Gang Scheduling 在分布式训练中解决什么问题？",
+      "训练和推理任务在调度关注点上有哪些根本差异？"
+    ],
+    "tags": [
+      "资源调度",
+      "异构计算",
+      "GPU集群",
+      "Gandiva",
+      "Tiresias"
+    ]
+  },
+  {
+    "category": "ai_infra_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "推理加速：Flash Attention 原理",
+    "content": "请解释 Flash Attention 的核心原理及其如何加速 Transformer 推理和训练",
+    "answer": "答案：Flash Attention 通过分块计算和重计算减少 HBM 访问，将注意力计算时间降低 2-4 倍。\\n\\n解析：标准注意力计算需要将 S 和 P 矩阵写入 HBM 再读取，导致大量显存带宽消耗。Flash Attention 的核心优化：1）分块计算（Tiling）：将 Q、K、V 切分成小块在 SRAM 中计算，避免大矩阵的 HBM 读写；2）重计算（Recomputation）：反向传播时不保存注意力矩阵，而是从 SRAM 中重新计算；3）IO 复杂度从 O(N^2) 降低到 O(N^2 / M)。Flash Attention 2 进一步优化了线程束调度和并行性，Flash Attention 3 支持 FP8 和 Hopper GPU。",
+    "hints": [
+      "Flash Attention 的 IO 复杂度是如何计算的——相比标准注意力的优势在哪里",
+      "Flash Attention 在推理场景相比训练场景的加速效果有什么不同"
+    ],
+    "tags": [
+      "Flash Attention",
+      "推理加速",
+      "Transformer",
+      "GPU"
+    ]
   }
 ]

@@ -1338,5 +1338,97 @@
       "内存管理",
       "进程保护"
     ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Linux 文件描述符限制",
+    "content": "解释 Linux 文件描述符（File Descriptor）的限制机制。系统级（fs.file-max）和进程级（ulimit -n）的 soft/hard 限制分别是什么？如何诊断 FD 耗尽问题？如何正确修改限制？",
+    "answer": "Linux 文件描述符限制有三层：\\n\\n1. 系统级限制：\\n- 内核参数 fs.file-max：整个系统能打开的 FD 总数。\\n- 查看：`sysctl fs.file-max` 或 `cat /proc/sys/fs/file-nr`（第一列是已分配数，第三列是上限）。\\n- 修改：`sysctl -w fs.file-max=1000000` 或写入 `/etc/sysctl.conf`。\\n\\n2. 进程级限制（ulimit -n）：\\n- Soft Limit（当前限制）：`ulimit -Sn`，进程当前可用的最大 FD 数。可以调高到 Hard Limit。\\n- Hard Limit（最大限制）：`ulimit -Hn`，进程可设置的上限。\\n- 查看进程限制：`cat /proc/<PID>/limits`。\\n\\n3. 配置方法：\\n- 用户级别：`/etc/security/limits.conf`（如 `* soft nofile 65536`）。\\n- systemd 服务：Unit 文件中 `LimitNOFILE=65536`。\\n- 容器级别：`--ulimit nofile=65536:65536`（Docker）。\\n\\nFD 耗尽症状：\\n- 应用日志：「Too many open files」。\\n- 新的网络连接失败，文件打不开。\\n- `lsof -p <PID> | wc -l` 查看进程 FD 数。\\n\\n常见原因：\\n- 高并发连接（网络服务器）。\\n- 连接泄漏（未正确 close）。\\n- 大量日志文件句柄未释放。\\n- 线程池实现的连接管理不当。\\n\\n诊断工具：\\n- `lsof -p <PID>`：列出所有打开的文件。\\n- `fuser`：查看文件被哪些进程使用。\\n- `/proc/sys/fs/file-nr`：系统 FD 使用统计。\\n- `strace -e trace=open,openat,close -p <PID>`：追踪 FD 操作。",
+    "hints": [
+      "soft limit 和 hard limit 的区别是什么",
+      "检查系统当前已分配的 FD 总数使用什么命令"
+    ],
+    "tags": [
+      "Linux",
+      "文件描述符",
+      "系统调优",
+      "ulimit"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "iptables 规则链",
+    "content": "解释 iptables 中 packet 在 filter 和 nat 表的规则链中的完整遍历路径。Pre-routing、Input、Forward、Output、Post-routing 五条链分别处理什么时机？规则的匹配顺序是什么？",
+    "answer": "iptables 数据包遍历路径：\\n\\n入站包（发往本机）：\\nPREROUTING (raw/mangle/nat) → INPUT (mangle/filter) → 本地进程\\n\\n转发包（路由器模式）：\\nPREROUTING (raw/mangle/nat) → FORWARD (mangle/filter) → POSTROUTING (mangle/nat)\\n\\n出站包（本机发出）：\\nOUTPUT (raw/mangle/nat/filter) → POSTROUTING (mangle/nat)\\n\\n各链功能：\\n1. PREROUTING：包到达网络接口后最先经过，用于 DNAT（端口转发、负载均衡）、报文修改。\\n2. INPUT：发往本机的包经过，用于本地服务的安全控制。\\n3. FORWARD：经本机转发的包经过，用于路由/NAT 场景的安全控制。\\n4. OUTPUT：本机发出的包经过，用于出站控制。\\n5. POSTROUTING：路由决策后，包离开前，用于 SNAT/MASQUERADE。\\n\\n规则匹配顺序：\\n- 同一链内规则按顺序匹配，匹配即执行（ACCEPT/DROP/REJECT 等），后续规则不再处理。\\n- 默认策略（Default Policy）：如果所有规则都不匹配，使用链默认策略（ACCEPT 或 DROP）。\\n- 对于同一个表，同一链内的规则有序；对于不同表，按 table priority 顺序（raw > mangle > nat > filter）。\\n\\n连接跟踪（conntrack）：\\n- `-m state --state ESTABLISHED,RELATED`：允许已建立连接和关联连接的返回包。\\n- 典型规则：`iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT`。\\n- 使防火墙对出站连接的返回包自动放行，无需手动编写对应规则。\\n\\n最佳实践：\\n- filter INPUT 默认 DROP，显式允许必要端口。\\n- 利用 `-m conntrack` 做状态防火墙。\\n- 定期保存 `iptables-save > /etc/iptables/rules.v4`。",
+    "hints": [
+      "一个从外部访问本机 80 端口的 TCP 包依次经过哪些链",
+      "-m state --state ESTABLISHED,RELATED 解决了什么问题"
+    ],
+    "tags": [
+      "Linux",
+      "iptables",
+      "网络安全",
+      "网络"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "系统调用上下文切换开销",
+    "content": "解释 Linux 系统调用（System Call）的上下文切换开销。从用户态切换到内核态涉及哪些成本？包括寄存器保存/恢复、TLB 刷新、缓存污染、Spectre/Meltdown 缓解措施的影响。如何通过 io_uring 缓解系统调用开销？",
+    "answer": "系统调用上下文切换开销：\\n\\n1. 模式切换成本：\\n- CPU 从 Ring 3（用户态）切换到 Ring 0（内核态），权限级别变化。\\n- 切换堆栈（从用户栈切换到内核栈）。\\n- 保存和恢复通用寄存器。\\n\\n2. TLB 刷新：\\n- 传统上，切换到内核态需要刷新 TLB（用户地址空间 → 内核地址空间）。\\n- PCID（Process Context IDentifiers）：允许用户和内核地址的 TLB entry 共存，减少刷新量。\\n- KPTI（Kernel Page Table Isolation）：Meltdown 缓解措施，但仍增加了 TLB 开销。\\n\\n3. 缓存污染：\\n- 内核代码/数据会驱逐用户空间的 L1/L2 缓存行。\\n- 返回用户态后，用户程序需要重新加载热数据，造成缓存未命中。\\n\\n4. Spectre/Meltdown 缓解：\\n- KPTI：用户态 → 内核态切换时刷新 TLB，增加 ~30-50% 系统调用开销。\\n- Retpoline：间接分支预测的安全替代方案，会增加分支预测开销。\\n\\n开销测量：\\n- 一次简单的 gettimeofday() 系统调用约 50-200ns（现代硬件）。\\n- 更复杂的系统调用（如 read/write）在 200-1000ns 范围。\\n\\nio_uring 缓解方案：\\n- 原理：通过内核和用户共享的环形缓冲区（Submission Queue + Completion Queue）提交 IO 请求和获取结果。\\n- 大多数 IO 操作无需 enter 系统调用（仅在需要内核介入时使用）。\\n- 批量提交：一次系统调用可提交多个 IO 请求。\\n- 零拷贝：共享缓冲区避免数据拷贝。\\n- 适合：高 IOPS 场景（数据库、文件服务器、消息队列）。\\n\\n其他缓解措施：\\n- 批处理系统调用（readv/writev 合并多个 IO）。\\n- 使用 eBPF 将部分逻辑下放到内核执行。\\n- 使用 VDSO（Virtual Dynamic Shared Object）减少常见系统调用（如 gettimeofday、clock_gettime）的上下文切换。",
+    "hints": [
+      "KPTI 为什么增加了系统调用的开销",
+      "io_uring 如何实现在大多数 IO 操作中避免系统调用"
+    ],
+    "tags": [
+      "Linux",
+      "系统调用",
+      "性能",
+      "内核"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "mmap 与 brk 堆分配",
+    "content": "解释 Linux 进程内存分配中 mmap 和 brk/sbrk 的区别。glibc 的 malloc 如何在这两种分配方式之间选择？什么是 MMAP_THRESHOLD？线程本地 Arena 如何减少锁竞争？",
+    "answer": "Linux 堆内存分配机制：\\n\\nbrk/sbrk：\\n- 通过移动 Program Break（程序断点）改变数据段大小。\\n- 分配连续地址空间的堆内存。\\n- 适合小内存分配——开销低、地址连续、局部性好。\\n\\nmmap：\\n- 通过映射匿名页面分配独立内存区域。\\n- 内存不连续，不受堆扩展限制。\\n- 释放时立即归还给系统（munmap）。\\n- 适合大内存分配。\\n\\nglibc malloc 分配策略（ptmalloc）：\\n1. Fastbin：极小分配（<= global_max_fast，默认 ~64B），LIFO 策略，不合并。\\n2. Small/Large Bins：从主 Arena 或 Thread-Local Arena 分配的 bin 中查找。\\n3. Top Chunk（主堆顶）：大块分配从堆顶切分。\\n4. mmap（MMAP_THRESHOLD，默认 128KB 以上）：超过阈值的分配直接用 mmap。\\n\\nMMAP_THRESHOLD：\\n- 默认 128KB。\\n- 可动态调整（根据 mmap 和 brk 的使用模式自适应）。\\n- 调低阈值：减少堆碎片但增加系统调用频率。\\n- 调高阈值：减少 mmap 数量和系统调用次数但可能增加堆碎片。\\n\\n线程本地 Arena：\\n- 多线程场景下，多个线程同时 malloc 会造成主 Arena 的锁竞争。\\n- ptmalloc 为每个线程创建独立的 Arena（最多 2 * CPU核数 + 1 个，64 位系统默认为 64）。\\n- 每个线程优先从自己的 Arena 分配内存，减少锁冲突。\\n- Arena 之间不能直接共享已分配内存，但 free 时可以释放到任意 Arena。\\n- 每个 Arena 使用 mmap 分配子堆（Subheap，默认 64MB 区域）。\\n\\n注意：Arena 数量上限（per-thread arenas）有限，超出后线程会共享 Arena。",
+    "hints": [
+      "mmap 分配的阈值默认是多少？释放后有何行为差异",
+      "多线程 malloc 为什么会使用 Thread-Local Arena"
+    ],
+    "tags": [
+      "Linux",
+      "内存分配",
+      "mmap",
+      "brk",
+      "glibc",
+      "ptmalloc"
+    ]
+  },
+  {
+    "category": "linux",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "epoll 边缘触发 vs 水平触发",
+    "content": "解释 epoll 的两种触发模式：边缘触发（Edge-Triggered, ET）和水平触发（Level-Triggered, LT）的区别。为什么 ET 模式必须使用非阻塞 IO？使用 ET 模式有哪些常见陷阱？什么场景应该选择 ET 而非 LT？",
+    "answer": "epoll ET vs LT：\\n\\n水平触发（LT，默认模式）：\\n- 只要文件描述符处于就绪状态（有数据可读/可写），epoll_wait 就返回。\\n- 如果没有消费完所有数据，下次 epoll_wait 仍然会通知。\\n- 与 select/poll 语义相似，编码简单。\\n- 可以使用阻塞 IO。\\n\\n边缘触发（ET）：\\n- 仅在状态变化时通知一次（如：buffer 从不可读变为可读时）。\\n- 如果一次没有读完所有数据，不会再次通知——必须一次性读完到 EAGAIN。\\n- 必须使用非阻塞 FD（否则在最后一次读取时将阻塞在 EAGAIN 上）。\\n\\n为什么 ET 必须使用非阻塞 IO：\\n- ET 模式下，必须循环读取直到 EAGAIN 才知道「数据已读完」。\\n- 如果使用阻塞 IO，最后一次读取会因为无数据而阻塞（线程卡死）。\\n- 非阻塞 IO 的 EAGAIN 是「数据已读取完毕」的信号。\\n\\nET 常见陷阱：\\n1. 部分读取导致饥饿：如果读取循环逻辑不当，可能永远读不完。\\n2. 写入 ET 同样需要循环 write 到 EAGAIN。\\n3. 新连接的初始事件处理：刚 Accept 的 Socket 需要先设置状态，防止漏掉初始事件。\\n4. 需要额外记录每个 fd 的状态（是否已经读取到哪个位置）。\\n\\nET 的优势：\\n- epoll_wait 调用次数少（仅在状态变更时返回）。\\n- 减少系统调用和数据拷贝。\\n- 适合高并发、大量连接的高性能服务器。\\n\\n选择建议：\\n- 大多数应用选择 LT（简单、可靠）。\\n- 高吞吐量服务器（如 Nginx、HAProxy）使用 ET 以获得极致性能。\\n- Redis 使用自己简化的类似 ET 的事件模型。\\n\\n示例：\\n- ET 读循环：`while ((n = read(fd, buf, sizeof(buf))) > 0) { process(buf); } if (n == -1 && errno != EAGAIN) { error; }`",
+    "hints": [
+      "ET 模式下一次没读完数据会怎样",
+      "为什么 EAGAIN 是 ET 模式正常读取完毕的标志"
+    ],
+    "tags": [
+      "Linux",
+      "epoll",
+      "IO多路复用",
+      "网络编程"
+    ]
   }
 ]

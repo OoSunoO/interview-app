@@ -1359,5 +1359,100 @@
       "Graham scan",
       "Andrew算法“, ”叉积"
     ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "expert",
+    "type": "short_answer",
+    "title": "吉司机线段树",
+    "content": "请说明吉司机线段树（Segment Tree Beats）的核心概念和设计动机。它解决了哪些传统线段树无法高效处理的问题？以「区间取 min」操作为例，说明如何维护区间最大值和次大值来实现均摊 O(n log n) 的复杂度。重点解释势能分析如何保证复杂度上界。",
+    "answer": "吉司机线段树（Segment Tree Beats，由吉如一提出）是一种扩展线段树，用于高效处理区间取最值（区间 chmin/chmax）操作，同时支持区间求和。传统线段树无法高效处理区间取 min 是因为无法快速更新区间内所有大于 x 的值。核心思路：对每个节点维护区间最大值 mx、次大值 smx、最大值出现次数 cnt。区间取 min 操作（将区间内所有 > x 的值设为 x）：1) 若当前区间最大值 mx <= x：无需操作。2) 若 smx < x < mx：更新 mx = x，并根据 cnt 更新区间和（sum -= cnt * (old_mx - x)），打 lazy tag。3) 若 x <= smx：递归向下处理子树。势能分析：每个节点被递归到「第三层」时，其最大值会被减小到次大值以下，即该区间的「不同值的数量」严格减少。整个线段树的不同值总数是 O(n log n) 的势能上界，每次操作消耗势能，总复杂度 O((n + q) log n)。但要注意当同时需要区间加操作时，势能分析不再适用，复杂度退化为 O(q log^2 n)。类似地，区间 chmax（取最大）、区间加、区间求和的组合操作也可以在 STB 框架下实现，但实现复杂度显著增加。",
+    "hints": [
+      "为什么 mx、smx、cnt 三个信息足以判断是否需要递归？",
+      "势能分析中「不同值的数量」为什么是 O(n log n)？"
+    ],
+    "tags": [
+      "线段树",
+      "Segment Tree Beats",
+      "势能分析",
+      "区间操作",
+      "吉司机"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "expert",
+    "type": "short_answer",
+    "title": "回文自动机",
+    "content": "请说明回文自动机（Palindrome Automaton / Palindromic Tree / Eertree）的数据结构原理和构建过程。包括：如何定义回文自动机的状态和转移？如何在线性时间内构建？它支持哪些高效的回文相关查询？",
+    "answer": "回文自动机（又叫 Palindromic Tree / Eertree，由 Mikhail Rubinchik 和 Arseny M. Shur 提出）是一种处理回文串问题的自动机结构。其原理是用两个根节点（偶根 -1 和奇根 0）代表所有回文串，每个状态代表一个不同的回文子串（本质不同的回文子串）。核心定义：1) 每个节点（状态）代表一个回文子串：存储长度 len、后缀链接 fail（指向最长的不同回文后缀）、转移边 next（按字符转移）。2) 两个根节点：偶根 len=0（空串），奇根 len=-1。奇根的 fail 指向偶根，偶根的 fail 指向奇根。3) fail 链接：从一个回文串的末尾添加字符后得到的新回文串的最长回文后缀。构建过程（在线，O(n)）：逐字符插入。设当前字符 s[i]，维护上一次插入后最长回文后缀的节点 last。1) 从 last 开始沿 fail 链找到第一个回文串其前一个字符等于 s[i]：while s[i-len[cur]-1] != s[i]: cur = fail[cur]。2) 如果当前节点 cur 没有转移边 s[i]，创建新节点：next[cur][s[i]] = new_node，len[new] = len[cur] + 2。3) 设置新节点的 fail：如果 len[new] == 1，fail[new] = 偶根（0）。否则沿 cur 的 fail 链找第一个满足条件的节点。4) last = next[cur][s[i]]。高效查询：1) 每个回文子串出现次数（沿 fail 链拓扑 DP）。2) 以 i 结尾的回文子串数量（通过 last 节点 len 信息可递推）。3) 最小回文划分（通过 fail 链的等差数列优化）。4) 双端添加字符。时间复杂度 O(n)，空间 O(n * |alphabet|) 或 O(n)。",
+    "hints": [
+      "回文自动机的两个根节点分别代表什么，为什么需要两个？",
+      "fail 链在构建过程中起到什么作用？"
+    ],
+    "tags": [
+      "回文自动机",
+      "Palindromic Tree",
+      "字符串",
+      "Eertree",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "最小割 Stoer-Wagner 算法",
+    "content": "请说明 Stoer-Wagner 算法求无向图全局最小割（Global Minimum Cut）的核心思想和算法步骤。它与基于最大流的最小割算法（如求 s-t 最小割）相比有什么优势？算法的时间复杂度和正确性直观理解是什么？",
+    "answer": "Stoer-Wagner 算法是一种用于求无向带权图全局最小割的算法，不需要指定源点和汇点。其核心思想是迭代执行「最大相邻序列」（Maximum Adjacency Ordering / MA 序）的切分过程。算法步骤：1) 初始图 G，累积权重数组 w[v]（初始 0），合并后的顶点集。2) 重复以下步骤直到图中只剩一个顶点：a) 从任意顶点开始，每次选择与当前已选集合外部连接权重最大的顶点加入集合，并用 w[v] 记录。此过程称为 MA 序。b) 设 MA 序最后两个加入的顶点为 s 和 t，则 w[t] 就是「s-t 相切的最小割容量」，记录此割容量。c) 合并 s 和 t（将 t 合并到 s），更新所有与 t 相连的边的权重到 s。3) 所有记录的割容量中的最小值即为全局最小割。正确性直观理解：按照 MA 序构造过程中，最后加入的顶点 t 与之前集合的割是某个 s-t 割的容量，且该割是当前图的最小 s-t 割。合并后不影响全局最小割的容量（因为全局最小割或者在此轮被切掉，或者完全包含在合并后的结果中）。优势：1) 不需要指定源汇点。2) 不需要运行多次最大流（全局最小割需要 O(n) 次最大流或 Gomory-Hu 树），实现更简洁。3) 对于稠密图，Stoer-Wagner 的 O(nm + n^2 log n)（使用优先队列）比 Dinic 求 n 次最大流的 O(n^2 * m) 更快。4) 但 Stoer-Wagner 只能用于无向图。简单实现使用邻接矩阵 O(n^3)，用二叉堆 O(nm log n)，用 Fibonacci 堆 O(nm + n^2 log n)。",
+    "hints": [
+      "MA 序的选取规则是什么，s 和 t 是怎么确定的？",
+      "为什么合并 s-t 后不会丢失全局最小割？"
+    ],
+    "tags": [
+      "最小割",
+      "Stoer-Wagner",
+      "图论",
+      "全局最小割",
+      "无向图"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "树链剖分",
+    "content": "请说明树链剖分（Heavy-Light Decomposition, HLD）的核心原理和典型应用场景。包括重儿子/轻儿子的定义、剖分过程、如何将树上路径查询转化为 O(log^2 n) 的区间查询。以「树上路径求和」和「LCA 查询」为例说明实现细节。",
+    "answer": "树链剖分将树剖分为若干条链（重链），使得任意节点到根的路径上经过 O(log n) 条链，从而将树上路径操作转化为多段线段树区间操作。核心定义：1) 重儿子：子树大小最大的子节点。2) 轻儿子：其他子节点。3) 重边：父节点与重儿子的边。4) 重链：由重边连接而成的链（从某个节点开始不断走重儿子直到叶子）。5) 链头（top）：重链中最浅的节点。剖分过程（两遍 DFS）：DFS1：计算每个节点的子树大小 size、父节点 parent、深度 dep、重儿子 heavy_child。DFS2：按重儿子优先顺序分配 dfs 序（dfn），使每条重链上的节点在 dfn 数组中连续。维护链头 top：从根开始，沿重边走时共享链头，转到轻边时自身为新链头。应用一：树上路径求和（u 到 v）。while top[u] != top[v]：if dep[top[u]] < dep[top[v]]: swap(u, v)。在 dfn[top[u]] 到 dfn[u] 区间上查询线段树区间和。u = parent[top[u]]。最后 u 和 v 在同一条链上，查询 dfn[u] 到 dfn[v]（假设 dep[u] < dep[v]）。应用二：LCA 查询。while top[u] != top[v]：if dep[top[u]] > dep[top[v]]: u = parent[top[u]] else: v = parent[top[v]]。返回 dep[u] < dep[v] ? u : v。复杂度：单条路径操作 O(log^2 n)（O(log n) 条链 * O(log n) 线段树查询）。子树操作更简单（dfn[u] 到 dfn[u] + size[u] - 1 的连续区间）。HLD 不仅支持求和，还可支持 max/min、赋值、区间加等线段树操作。常见题型：路径权值更新/查询、子树更新/查询、结合树上差分处理路径覆盖问题。",
+    "hints": [
+      "为什么 dfn 序中每条重链上的节点是连续的？",
+      "路径向上跳转时，每次跳到链头的父节点起到什么作用？"
+    ],
+    "tags": [
+      "树链剖分",
+      "HLD",
+      "LCA",
+      "线段树",
+      "树"
+    ]
+  },
+  {
+    "category": "algorithm_extras",
+    "difficulty": "expert",
+    "type": "short_answer",
+    "title": "动态图连通性",
+    "content": "请说明动态图连通性（Dynamic Connectivity）问题的定义和主要算法。针对完全动态（边插入和删除）场景，解释 Holm-de Lichtenberg-Thorup（HDLT）算法的核心思想和复杂度。对于仅删除（decremental）或仅插入（incremental）这两个特例，分别用什么更简单的数据结构？",
+    "answer": "动态图连通性指在支持边插入和删除的动态图中，实时回答两个顶点是否连通的问题。主要难度在于删除操作可能破坏连通性。完全动态（边增删皆可）：Holm-de Lichtenberg-Thorup（HDLT）算法是第一个达到近最优 O(log^2 n) 均摊时间/操作的确定性算法。核心思想：维护多级生成森林（Euler Tour Tree 管理各级森林），利用边的「层次」概念。1) 每条边赋予一个层次 level（0 到 L = log n），新插入边在 level 0。2) 维护 L+1 层生成森林 F_0 ... F_L，每个 F_l 是 level >= l 的边构成的生成森林。F_0 包含所有边，F_L 是空集。3) 删除边 (u,v) 时：找到该边所在最高层级 l。将该边从 F_l 及以下所有层中移除。如果 F_l 中 u-v 被断开，则需要在 level l 找一条替代边（在 F_{l-1} 中找与 u 连通且通过 level >= l 的边连接到 v 的边）。4) 用 Euler Tour Tree（ETT）维护各层生成森林，支持在 O(log n) 内检查连通性和替换边。5) 每条边最多被 promotion 到更高层一次（层数上限 log n），每次 promotion 涉及图中 O(log n) 次操作，均摊 O(log^2 n)。对于特例：1) 仅插入（Incremental）：用并查集（Union-Find）即可，每次插入用 union 操作合并边，查询 O(alpha(n))。2) 仅删除（Decremental）：更复杂但仍有高效方法。a) 对于连通性仅删除（如删边数上限 K）：可用 DFS 树 + 并查集，或使用 Holm 等提出的随机数据结构。b) 一般 decremental：可用 HD 算法（Holm 和 de Lichtenberg 的早期工作），O(m log n) 总时间。c) 确定性算法：可用「连通性认证子」（connectivity certificate）技术构造稀疏化子图降低复杂度。",
+    "hints": [
+      "HDLT 算法的「层级提升」机制如何保证均摊复杂度？",
+      "为什么并查集不能处理边删除操作？"
+    ],
+    "tags": [
+      "动态图",
+      "连通性",
+      "HDLT",
+      "Euler Tour Tree",
+      "并查集"
+    ]
   }
 ]

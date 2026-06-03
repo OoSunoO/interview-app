@@ -1380,5 +1380,100 @@
       "集合框架",
       "API 设计"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "FFM API SegmentAllocator 使用",
+    "content": "请说明 Foreign Function & Memory API（JDK 22 正式）中 MemorySegment 和 SegmentAllocator 的关系，以及 SegmentAllocator 在不同 Arena 作用域下的使用方式。",
+    "answer": "SegmentAllocator 是分配 MemorySegment 的策略接口。MemorySegment 是内存段的抽象表示，而 SegmentAllocator 负责如何分配这些段。\\n关系：\\n1. Arena 实现了 SegmentAllocator 接口，因此 Arena 本身可作为分配器使用。\\n2. 通过 Arena.allocate() 分配的内存段生命周期由 Arena 管理，arena 关闭时所有段失效。\\n3. SegmentAllocator 也提供 `slicingAllocator(SegmentAllocator, long)` 从现有 Arena 分配器中切分出一个子分配器。\\n不同 Arena 类型下的使用：\\n- Arena.ofAuto()：内存由 GC 自动回收，适合生命周期不明确的场景。\\n- Arena.ofConfined()：线程限制，仅创建线程可分配和访问，性能最高。\\n- Arena.ofShared()：多线程共享，通过同步机制保证安全，性能低于 confined。\\n分配方法包括 allocate(ValueLayout)、allocateArray(ValueLayout, long)、allocate(MemoryLayout)、allocateFrom(ValueLayout, 值) 等。\\nSegmentAllocator 还支持追加分配策略（如 NativeSegmentList 在 GraalVM 中），减少单次分配的开销。",
+    "hints": [
+      "Arena 实现了 SegmentAllocator 接口，可以直接调用 allocate 方法",
+      "SegmentAllocator.allocateFrom 可以直接从 Java 字符串或 int 数组创建 MemorySegment"
+    ],
+    "tags": [
+      "FFM API",
+      "SegmentAllocator",
+      "MemorySegment",
+      "Arena",
+      "panama"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Vector API SIMD 向量化性能建模",
+    "content": "请介绍 Vector API 中 VectorSpecies 的作用和选择策略，以及熔乘加（FMA）运算在数值计算中的性能优势。",
+    "answer": "VectorSpecies 定义了向量运算的位宽和元素类型组合，如 `FloatVector.SPECIES_256` 表示 256 位宽可容纳 8 个 float。\\n选择策略：\\n1. 使用 `FloatVector.SPECIES_PREFERRED` 让 JVM 自动选择当前 CPU 架构最优宽度（x86 上为 256 或 512 位，ARM 上为 128 位）。\\n2. 数据量较小时选择 smaller species 避免尾部循环处理过多。\\n3. 需要根据数据集大小做 Loop Unrolling，每轮处理多个 species 单元。\\nFMA 运算优势：\\n1. `v.fma(a, b)` 等价于 `v * a + b`，但在硬件层面只需一条指令（如 AVX-512 的 VFMADD、ARM NEON 的 FMLA）。\\n2. 精度优势：FMA 只做一次舍入，而先乘后加做两次舍入，FMA 结果更精确。\\n3. 性能优势：一条指令替代两条，降低指令发射压力和延迟。\\nVector API 还支持 lane 操作（withLane/lane）、重排（rearrange）、比较选择（blend/compare）、类型转换（convertShape）等，适合矩阵乘法、卷积、FFT 等计算密集型场景。",
+    "hints": [
+      "SPECIES_PREFERRED 在 x86 和 ARM 架构下可能返回不同位宽",
+      "FMA 减少一次舍入既提高精度也提升性能"
+    ],
+    "tags": [
+      "Vector API",
+      "SIMD",
+      "FMA",
+      "VectorSpecies",
+      "panama"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Structured Concurrency ShutdownOnFailure vs ShutdownOnSuccess",
+    "content": "请对比说明结构化并发中 ShutdownOnFailure 和 ShutdownOnSuccess 两种内置策略的错误传播和任务取消行为，以及如何自定义关闭策略。",
+    "answer": "ShutdownOnFailure：任一子任务失败时立即关闭 scope，取消所有尚未完成的子任务。主线程在 join() 完成后调用 `throwIfFailed()` 重新抛出第一个异常。适用于「全有或全无」场景——所有子任务都需成功。\\nShutdownOnSuccess：第一个子任务成功返回结果时立即关闭 scope，取消其他未完成子任务。主线程通过 `result()` 获取第一个成功结果。适用于「谁先完成用谁」场景——如多数据源查询取最快响应。\\n共同保证：\\n1. 无任务泄漏——scope 关闭时未完成的子任务被强制取消。\\n2. try-with-resources 确保 scope 正确关闭。\\n3. scope.close() 等待所有已 fork 的子任务完成（非取消方式完成）。\\n自定义策略：继承 StructuredTaskScope 并覆写 `handleComplete()` 方法。在 handleComplete 中接收已完成子任务的 Future，根据自定义条件决定是否调用 shutdown()。例如实现「半数通过」策略——当超过半数的子任务成功时才停止。",
+    "hints": [
+      "ShutdownOnFailure 用 throwIfFailed 获取异常，ShutdownOnSuccess 用 result() 获取成功值",
+      "自定义策略需要重写 handleComplete 方法并调用 shutdown() 控制关闭时机"
+    ],
+    "tags": [
+      "structured-concurrency",
+      "StructuredTaskScope",
+      "shutdown",
+      "lomb",
+      "java21"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "ScopedValue 与 ThreadLocal 性能对比",
+    "content": "请解释 ScopedValue（JDK 21 预览转正）的绑定生命周期和不可变性机制，以及相比 ThreadLocal 在虚拟线程场景下的性能优势。",
+    "answer": "ScopedValue 使用 `ScopedValue.where(key, value).run(() -> { ... })` 创建临时绑定。绑定只在 lambda 执行期间有效，退出后自动解绑。\\n核心特性：\\n1. 单次写入（single shot）——绑定值在作用域内不可变，避免并发修改。\\n2. 作用域化——绑定由方法调用栈作用域决定而非线程生命周期。\\n3. 可继承——在 run() 内创建的虚拟线程自动继承当前绑定的 ScopedValue（无需声明 InheritableThreadLocal）。\\n相比 ThreadLocal 的优势：\\n1. 不可变性——ThreadLocal 可变导致脏读问题，ScopedValue 不可变保证安全性。\\n2. 虚拟线程友好——虚拟线程数量可达百万级，ThreadLocal 的哈希表查找在线程数极大时性能退化严重。ScopedValue 利用栈帧结构存储，在虚拟线程 context switch 时高效传递。\\n3. 无内存泄漏——ThreadLocal 若未 remove() 会导致内存泄漏（线程池场景），ScopedValue 自动随作用域结束释放。\\n4. 性能——ScopedValue 的 get() 操作复杂度为 O(1) 且无哈希计算开销。",
+    "hints": [
+      "ScopedValue 的不可变性消除了 ThreadLocal 的脏读和值意外修改问题",
+      "虚拟线程百万级别时 ThreadLocal 的内存开销和查找性能都显著恶化"
+    ],
+    "tags": [
+      "ScopedValue",
+      "ThreadLocal",
+      "virtual-thread",
+      "lomb",
+      "concurrency"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "SequencedCollection reversed 视图与接口设计",
+    "content": "请介绍 Java 21 中 SequencedCollection、SequencedSet 和 SequencedMap 接口的设计目标和新增方法，尤其是 reversed() 方法的视图语义。",
+    "answer": "Sequenced Collections（JDK 21 正式）解决了有序集合 API 长期不一致的问题，为标准有序集合定义了统一接口。\\nSequencedCollection 新增方法：addFirst(E)、addLast(E)、getFirst()、getLast()、removeFirst()、removeLast()、reversed()。reversed() 返回逆序视图（不是新集合），修改逆序视图会反映到原始集合。实现类：ArrayList、LinkedList、ArrayDeque 等。\\nSequencedSet 继承 SequencedCollection，保证 reversed() 返回 SequencedSet。实现类：LinkedHashSet、TreeSet 等。\\nSequencedMap 新增：putFirst(K,V)、putLast(K,V)、firstEntry()、lastEntry()、pollFirstEntry()、pollLastEntry()、reversed()（返回 SequencedMap 逆序视图）。实现类：LinkedHashMap、TreeMap 等。\\n设计意义：\\n1. 统一了首尾操作 API——之前 addFirst 只在 LinkedList 和 ArrayDeque 里有，ArrayList 没有。\\n2. reversed() 视图消除了 TreeMap 的 DescendingMap 和 NavigableMap 的 descendingMap() 之间的不一致。\\n3. 视图而非副本的设计保证了内存效率——O(1) 空间开销。",
+    "hints": [
+      "reversed() 返回的是原始集合的逆序视图，不是数据副本",
+      "SequencedCollection 统一了 ArrayList 和 LinkedList 的首尾操作方法"
+    ],
+    "tags": [
+      "SequencedCollection",
+      "SequencedMap",
+      "reversed",
+      "java21",
+      "collection-framework"
+    ]
   }
 ]

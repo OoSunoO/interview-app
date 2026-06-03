@@ -1365,5 +1365,96 @@
       "Pub/Sub",
       "过期事件"
     ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 主从复制缓冲区",
+    "content": "解释 Redis 主从复制中的缓冲区机制，包括客户端输出缓冲区（Client Output Buffer）和复制积压缓冲区（Replication Backlog）。PSYNC 和全量同步的切换条件是什么？缓冲区溢出如何处理？",
+    "answer": "Redis 主从复制涉及两类缓冲区：\\n\\n1. 复制积压缓冲区（Replication Backlog）：\\n- 由参数 repl-backlog-size 控制（默认 1MB）。\\n- 主库在内存中维护一个环形缓冲区，记录最近执行的写命令。\\n- 从库断线重连时，如果偏移量仍在 backlog 范围内，执行 PSYNC（部分重同步），只发送断连期间缺失的命令。\\n- 如果从库的偏移量已被 backlog 覆盖（断连太久），则触发全量重同步。\\n- repl-backlog-ttl 控制没有从库时 backlog 的保留时间。\\n\\n2. 客户端输出缓冲区（Client Output Buffer）：\\n- 由 client-output-buffer-limit replica 参数控制（hard limit / soft limit）。\\n- 当从库消费速度跟不上主库的写入速度时，缓冲区会增大。\\n- 如果超过 hard limit 或持续超过 soft limit，主库会断开该从库连接。\\n- 对于慢从库或网络延迟高的场景，需要适当增大缓冲区限制。\\n\\n同步切换：\\n- PSYNC（部分同步）：repl_backlog 中还有从库丢失的命令。\\n- 全量同步：从库首次连接、repl_backlog 溢出、或从库落后太多。\\n- 全量同步成本高：主库需 Fork 子进程生成 RDB 快照，传输给从库。",
+    "hints": [
+      "repl-backlog-size 设置太小会有什么后果",
+      "从库网络延迟高时，client-output-buffer-limit 应该如何调整"
+    ],
+    "tags": [
+      "Redis",
+      "主从复制",
+      "复制缓冲区",
+      "PSYNC"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 哨兵选主",
+    "content": "描述 Redis Sentinel 故障转移中的领导者选举过程。主观下线（SDOWN）和客观下线（ODOWN）如何判定？Sentinel 之间如何通过类 Raft 共识选举 Leader？如何选择新主库？",
+    "answer": "Redis Sentinel 的故障转移流程：\\n\\n1. 主观下线（SDOWN）：\\n- 单个 Sentinel 检测到 master 在 down-after-milliseconds 时间内没有响应 PING。\\n- 标记为 sdown 并通知其他 Sentinel。\\n\\n2. 客观下线（ODOWN）：\\n- 当 Sentinel 收到足够多（>= quorum）的 Sentinel 报告 master 不可达。\\n- 标记为 odown，触发 Leader 选举。\\n\\n3. Leader 选举（Raft 类共识）：\\n- 每个检测到 ODOWN 的 Sentinel 为自己投票（类似 Raft 的 Candidate）。\\n- 需获得超过一半 Sentinel 节点数（majority，非 quorum）的选票。\\n- 如果一轮未能选出（平票或不足 majority），随机退避后重试。\\n\\n4. 新主库选择（由选出的 Leader 执行）：\\n- 过滤：排除已下线和不在线的从库，排除最近断连过的从库。\\n- 优先级：按 replica-priority（越小越优先）。\\n- 复制进度：选择与主库复制偏移量最大的从库。\\n- 运行 ID：如果优先级和偏移量相同，选择 run ID 最小的。\\n\\n5. 故障转移执行：\\n- 选中的从库执行 SLAVEOF NO ONE 升级为主库。\\n- 其他从库重新配置为跟随新主库。\\n- 原主库恢复后降级为从库。",
+    "hints": [
+      "SDOWN 和 ODOWN 的关键区别是什么",
+      "选举 Leader 需要 majority 还是 quorum？两者有什么不同"
+    ],
+    "tags": [
+      "Redis",
+      "哨兵",
+      "选主",
+      "高可用",
+      "Raft"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 6 多线程 IO",
+    "content": "解释 Redis 6 引入的多线程 IO 模型。哪些操作是线程化的？哪些操作仍然是单线程的？什么场景下多线程 IO 有显著收益？配置参数有哪些？",
+    "answer": "Redis 6 多线程 IO 模型：\\n\\n设计原则：\\n- 命令执行（核心数据处理）仍然是单线程的——保证原子性和数据一致性。\\n- 多线程仅用于网络 IO 的读写操作。\\n\\n线程化的部分：\\n1. 从客户端 Socket 读取数据——多线程并行读取。\\n2. 将命令执行结果写回客户端 Socket——多线程并行写入。\\n\\n仍为单线程的部分：\\n- 命令解析和执行。\\n- 数据结构的修改和查询。\\n- RDB/AOF 持久化操作（有独立的子进程/子线程）。\\n\\n配置参数：\\n- io-threads：IO 线程数（默认 4），通常设置为 CPU 核数。\\n- io-threads-do-reads：是否启用多线程读（默认 no，即默认只多线程写）。\\n\\n性能收益：\\n- 大批量数据（如 MGET、大量 pipelined 操作）场景收益显著。\\n- 大量并发连接的场景受益于网络 IO 并行化。\\n- 小命令、低并发场景收益有限。\\n\\n注意事项：\\n- io-threads 不宜超过 CPU 核数，否则上下文切换会抵消收益。\\n- 命令执行仍是单线程瓶颈，对 CPU 密集型命令（如 KEYS、SORT）无帮助。\\n- 启用在有大量并发连接和大数据传输的场景最有效。",
+    "hints": [
+      "多线程 IO 不改动哪一部分处理流程",
+      "什么业务场景下开启多线程 IO 收益最大"
+    ],
+    "tags": [
+      "Redis",
+      "多线程",
+      "IO",
+      "性能"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis Stream 消费者组",
+    "content": "解释 Redis Stream 消费者组（Consumer Group）的工作机制。消息如何在不同消费者之间分配？PEL（Pending Entries List）的作用是什么？如何处理消费者故障和消息重新分配？",
+    "answer": "Redis Stream 消费者组机制：\\n\\n核心概念：\\n- 消费者组 = 一组消费者协同消费同一个 Stream。\\n- 每条消息在组内只分发给一个消费者（不同于 Pub/Sub）。\\n- 每个组独立维护消费状态。\\n\\n消息分配：\\n- XREADGROUP GROUP group consumer 从 Stream 读取消息。\\n- 默认采用轮询（Round-Robin）方式在组内消费者间分配消息。\\n- 消费者需通过 XACK 确认消息已处理完成。\\n\\nPEL（Pending Entries List）：\\n- 每个消费者维护一个 PEL，记录已投递但未 ACK 的消息。\\n- 保证至少一次（At-Least-Once）语义——消费者崩溃后消息不会被丢弃。\\n- XPENDING 可查看 PEL 状态（消息 ID、所属消费者、空闲时间、投递次数）。\\n\\n故障处理：\\n1. XCLAIM：将指定消息的所有权从一个消费者转移给另一个消费者。\\n   - 需指定 MIN-IDLE-TIME（这条消息未 ACK 的空闲最小时间）。\\n2. XAUTOCLAIM（Redis 7.0+）：自动扫描 PEL 并回收超时未 ACK 的消息。\\n3. 被回收的消息投递计数（delivery count）会递增。\\n\\n与 Kafka 的区别：\\n- Redis Stream 不会自动 rebalance——新消费者加入后仍需手动分配。\\n- 没有 Kafka 的 Consumer Group Coordinator 角色。\\n\\n使用建议：\\n- XGROUP CREATE 创建组时指定 $（只消费之后的）或 0（从头消费）。\\n- 设置合理的 NACK（未确认）监控和告警。",
+    "hints": [
+      "Redis Stream 的 PEL 如何实现至少一次投递",
+      "如果一个消费者崩溃了，其中的 PEL 消息怎么处理"
+    ],
+    "tags": [
+      "Redis",
+      "Stream",
+      "消费者组",
+      "PEL"
+    ]
+  },
+  {
+    "category": "redis_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Lua 脚本原子性",
+    "content": "解释 Redis Lua 脚本的原子性保证。EVAL 和 EVALSHA 的执行语义是什么？脚本执行期间其他命令能否执行？如果脚本执行出错，已执行的命令会回滚吗？脚本如何复制到从库？",
+    "answer": "Redis Lua 脚本的原子性与复制机制：\\n\\n原子性语义：\\n- 脚本执行期间，Redis 会阻塞所有其他客户端命令。\\n- 脚本是一个整体原子操作——不会被其他命令中断。\\n- 但脚本失败不会回滚（Rollback）已执行的操作——Redis 没有回滚机制。\\n- 脚本中已执行的写命令即使后面出错，也会保持已写入状态。\\n\\nEVAL 与 EVALSHA：\\n- EVAL：直接发送脚本内容执行。\\n- EVALSHA：通过脚本的 SHA1 校验和执行（需先用 SCRIPT LOAD 缓存）。\\n- EVALSHA 在网络传输上更高效（短字符串代替长脚本）。\\n\\n脚本沙箱：\\n- 只提供有限的库函数（不提供文件 IO、网络 IO 等）。\\n- 通过 KEYS[i] 和 ARGV[i] 参数数组传递键名和参数（便于分析依赖）。\\n\\n复制机制：\\n- 默认模式（Redis 3.2+）：脚本作为整体复制到从库和 AOF。\\n- 如果脚本使用了「脚本效果复制」（script effects replication），且不含随机命令（TIME、SRANDMEMBER、SPOP 等），可作为单个写命令复制。\\n- 脚本必须具有确定性（Deterministic）——相同输入产生相同输出，否则主从数据不一致。\\n\\n使用建议：\\n- 脚本中所有键应通过 KEYS 数组传递以支持集群模式。\\n- 避免长时间运行的脚本（redis.conf 的 lua-time-limit 默认 5000ms）。\\n- 超时只会中断脚本，但不会自动终止——需要 SCRIPT KILL（如果未执行写操作）或 SHUTDOWN。",
+    "hints": [
+      "脚本执行一半出错后，前面的写操作会怎样",
+      "Redis 如何确保 Lua 脚本在从库上执行结果一致"
+    ],
+    "tags": [
+      "Redis",
+      "Lua",
+      "原子性",
+      "复制"
+    ]
   }
 ]

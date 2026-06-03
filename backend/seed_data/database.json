@@ -1381,5 +1381,97 @@
       "RANGE",
       "GROUPS"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MySQL 间隙锁加锁规则",
+    "content": "详细解释 MySQL InnoDB 在 REPEATABLE READ 隔离级别下，间隙锁（Gap Lock）的加锁规则。什么情况下加间隙锁？什么情况下只加记录锁？唯一索引、非唯一索引、无索引三种场景的加锁范围分别是什么？",
+    "answer": "间隙锁锁定索引记录之间的间隙（Gap），目的是防止幻读（Phantom Read）。在 REPEATABLE READ 级别下，间隙锁默认生效。\\n加锁规则如下：\\n1. 唯一索引等值查询：如果命中唯一记录，只加记录锁（Record Lock），不加间隙锁。因为唯一索引能精确锁定行，无需间隙锁防止幻读。\\n2. 唯一索引等值查询未命中：对查询范围内但不存在的记录间隙加间隙锁（Gap Lock）。\\n3. 非唯一索引等值查询：对命中的索引记录加记录锁，同时对前后的间隙加间隙锁（Next-Key Lock = Record Lock + Gap Lock）。\\n4. 无索引或全表扫描：对所有记录和所有间隙加锁，相当于锁住整张表。\\n5. 范围查询：对范围内的所有记录加记录锁，对边界前后的间隙加锁。\\n间隙锁与插入意向锁不互斥——间隙锁只阻止其他事务插入到该间隙，不阻止空隙被锁。间隙锁在 READ COMMITTED 级别下自动禁用。",
+    "hints": [
+      "思考唯一索引与非唯一索引在 RR 级别下的加锁差异",
+      "范围查询与等值查询的加锁范围有何不同"
+    ],
+    "tags": [
+      "MySQL",
+      "间隙锁",
+      "InnoDB",
+      "隔离级别",
+      "幻读"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "索引下推 ICP",
+    "content": "什么是 MySQL 的索引下推（Index Condition Pushdown, ICP）？它是如何优化查询执行的？在哪些条件下生效？有哪些限制？",
+    "answer": "ICP 是 MySQL 5.6 引入的查询优化技术，将索引过滤条件下推到存储引擎层执行。\\n工作原理：\\n- 不使用 ICP：存储引擎通过索引定位到记录后，将完整行记录返回给 Server 层，Server 层再应用 WHERE 条件过滤。\\n- 使用 ICP：存储引擎在读取索引记录时，直接使用索引包含的列进行条件过滤，只将满足条件的记录返回给 Server 层。\\n\\n生效条件：\\n1. 只能用于 InnoDB 和 MyISAM 表。\\n2. 作用于二级索引（非聚簇索引），不能用于聚簇索引（因为聚簇索引本身就包含完整行）。\\n3. WHERE 条件中部分列必须是索引的组成部分（覆盖索引的部分列）。\\n4. 不支持子查询和存储过程。\\n\\n收益：减少存储引擎到 Server 层的行数据传输量，减少回表次数，显著提升查询性能。\\n可通过 EXPLAIN 的 Extra 列看到「Using index condition」表示 ICP 生效。",
+    "hints": [
+      "ICP 把过滤逻辑从哪一层下移到了哪一层？",
+      "ICP 对二级索引和聚簇索引的效果有何不同"
+    ],
+    "tags": [
+      "MySQL",
+      "ICP",
+      "索引优化",
+      "查询优化"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "B+树页分裂合并",
+    "content": "解释 InnoDB B+树索引的页分裂（Page Split）和页合并（Page Merge）机制。什么情况下触发分裂？分裂策略是什么？对索引性能有什么影响？",
+    "answer": "页分裂：\\n1. 触发条件：B+树页面已满（默认 16KB），需要插入新记录时发生。\\n2. 分裂策略：InnoDB 采用平衡分裂（Balanced Split），将页面中大约一半的记录移到新页。在 B-Tree 索引的右侧插入时（自增主键），InnoDB 还会尝试简单的乐观分裂仅分配新页。\\n3. 影响：写放大（一次分裂涉及原页、新页和父页的修改），产生索引碎片，降低页面填充率。\\n\\n页合并：\\n1. 触发条件：页面删除操作后，相邻页面填充率较低（通常合并后可放入同一页时），由 Purge 操作在适当时机触发。\\n2. 合并过程：将两个相邻页的数据合并到一页，释放另一页。\\n3. 影响：减少空间浪费，改善缓存效率。\\n\\n优化建议：\\n- 自增主键可减少随机插入导致的频繁页分裂（右分裂只需新分配页）。\\n- 避免频繁的随机插入操作（如 UUID 作为主键会导致大量随机分裂）。\\n- 监控 innodb_buffer_pool_stats 和索引统计信息评估碎片程度。",
+    "hints": [
+      "自增主键和 UUID 主键在页分裂方面有何不同表现",
+      "InnoDB 默认页大小是多少？页分裂后填充率大约是多少"
+    ],
+    "tags": [
+      "MySQL",
+      "B+树",
+      "InnoDB",
+      "页分裂",
+      "页合并"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "主从复制半同步",
+    "content": "解释 MySQL 半同步复制（Semi-Synchronous Replication）的工作原理。它与异步复制和全同步复制有何区别？超时机制如何处理？是否保证数据不丢失？",
+    "answer": "半同步复制机制：\\n1. 主库提交事务时，等待至少一个从库确认已收到 Binlog 事件后，才向客户端返回提交成功。\\n2. 从库写入 Relay Log 后返回 ACK，不要求已经应用（Apply）。\\n3. 通过插件实现（semisync_master.so / semisync_slave.so）。\\n\\n与异步复制对比：\\n- 异步复制：主库不等待从库确认，性能最高但有数据丢失风险。\\n- 半同步复制：主库等待至少一个从库回复 ACK，兼顾性能和数据安全。\\n- 全同步复制：主库等待所有从库确认，数据最安全但延迟最高。\\n\\n超时降级机制：\\n参数 rpl_semi_sync_master_timeout（默认 10 秒）控制等待超时。超时后自动降级为异步复制。当从库恢复并追上进度时，自动恢复半同步模式。\\n\\n数据安全性：\\n半同步不保证数据不丢失——它只保证从库已收到 Binlog，但不保证已应用。如果从库在收到 Binlog 但未应用时宕机，切换后可能丢失数据。还可设置 rpl_semi_sync_master_wait_point=AFTER_SYNC（在 Binlog 落盘后等待 ACK，客户端看到提交前已同步）或 AFTER_COMMIT（默认，提交后等待 ACK，性能稍好但窗口更大）。",
+    "hints": [
+      "半同步等待的是从库的什么操作完成——收到还是应用？",
+      "超时后主库会怎么做？从库恢复后又如何"
+    ],
+    "tags": [
+      "MySQL",
+      "主从复制",
+      "半同步",
+      "高可用"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "InnoDB 自适应哈希",
+    "content": "解释 InnoDB 自适应哈希索引（Adaptive Hash Index, AHI）的工作原理。它如何加速查询？什么情况下反而会降低性能？如何监控和调优？",
+    "answer": "AHI 是 InnoDB 在内置 B+树索引之上自动构建的哈希索引结构，无需手动创建。\\n\\n工作原理：\\n1. InnoDB 监控对 B+树索引页的访问模式（持续观察索引搜索的匹配前缀）。\\n2. 当发现某个页面被反复以相同前缀模式访问时，自动为该页面构建哈希索引。\\n3. 哈希索引以 B+树页为哈希表的值，以索引前缀为键。\\n4. 将 B+树的 O(log n) 查找降为 O(1) 哈希查找。\\n\\n收益场景：\\n- 大量等值查询（如主键或唯一索引的点查）。\\n- 工作集（Working Set）能够放入 Buffer Pool 的场景。\\n\\n负面影响：\\n- 写操作需要维护哈希表，增加开销。\\n- 占用额外内存（由 innodb_adaptive_hash_index_parts 控制分区数，默认 8）。\\n- 对于写密集型负载或全表扫描场景，AHI 维护开销可能超过收益。\\n\\n监控与调优：\\n- SHOW ENGINE INNODB STATUS 的 SEMAPHORES 部分显示 AHI 相关等待。\\n- 通过 innodb_adaptive_hash_index=OFF 可完全禁用。\\n- 在读写比例 1:1 以下的场景通常建议禁用。\\n- 分区数（innodb_adaptive_hash_index_parts）可减少 AHI 的锁竞争。",
+    "hints": [
+      "AHI 是建立在什么之上的？它替换了什么查找路径",
+      "什么类型的负载下 AHI 反而会变成负担"
+    ],
+    "tags": [
+      "MySQL",
+      "InnoDB",
+      "自适应哈希",
+      "索引"
+    ]
   }
 ]

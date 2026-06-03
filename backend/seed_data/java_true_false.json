@@ -1366,5 +1366,113 @@
       "类优先",
       "Java 8"
     ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "StringBuffer 线程安全",
+    "content": "StringBuffer 是线程安全的类，可以在多线程环境下安全使用。",
+    "answer": "A",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "hints": [
+      "StringBuffer 和 StringBuilder 的核心区别在于线程安全",
+      "StringBuffer 的所有公共方法都用 synchronized 修饰"
+    ],
+    "tags": [
+      "StringBuffer",
+      "StringBuilder",
+      "thread-safety",
+      "synchronized"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "抽象类可以没有抽象方法",
+    "content": "在 Java 中，抽象类（abstract class）可以没有任何抽象方法。",
+    "answer": "A",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "hints": [
+      "抽象类的定义是使用 abstract 修饰的类，不一定要包含抽象方法",
+      "即使没有抽象方法，用 abstract 修饰的类也不能被直接实例化"
+    ],
+    "tags": [
+      "abstract-class",
+      "abstract-method",
+      "instantiation"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "final 类可以被继承",
+    "content": "在 Java 中，使用 final 关键字修饰的类可以被其他类继承。",
+    "answer": "B",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "hints": [
+      "final 关键字在类上的含义是禁止继承",
+      "String 和 Integer 等核心类都是 final 的，思考它们是否能被继承"
+    ],
+    "tags": [
+      "final",
+      "inheritance",
+      "class"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "静态内部类访问外部类实例变量",
+    "content": "在 Java 中，静态内部类（static nested class）可以直接访问外部类的实例变量（非静态字段）。",
+    "answer": "B",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "hints": [
+      "静态内部类不持有外部类实例的隐式引用",
+      "非静态内部类（inner class）才持有对外部类实例的引用"
+    ],
+    "tags": [
+      "static-nested-class",
+      "inner-class",
+      "instance-variable",
+      "access"
+    ]
+  },
+  {
+    "category": "java_true_false",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Integer 缓存范围可配置性",
+    "content": "Integer 的 -128 到 127 缓存范围不可配置，是 JVM 固定的。",
+    "answer": "B",
+    "options": [
+      "A) 正确",
+      "B) 错误"
+    ],
+    "hints": [
+      "Integer 缓存范围有对应的 JVM 参数可调整",
+      "思考 -XX:AutoBoxCacheMax 参数的作用"
+    ],
+    "tags": [
+      "Integer",
+      "cache",
+      "AutoBoxCacheMax",
+      "JVM-parameter"
+    ]
   }
 ]

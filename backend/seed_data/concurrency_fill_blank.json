@@ -1255,5 +1255,94 @@
       "屏障",
       "同步器"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "synchronized 的 JVM 实现",
+    "content": "synchronized 关键字在 JVM 中通过___实现。每个 Java 对象关联一个___，对象头中的 Mark Word 存储锁信息。JDK 6 之后 JVM 引入了___机制优化 synchronized，路径为：偏向锁 → 轻量级锁 → ___。",
+    "answer": "{\"correct\":[[\"Monitor\",\"ObjectMonitor\"],[\"Monitor\",\"监视器\"],[\"锁升级\",\"锁膨胀\"],[\"重量级锁\"]],\"distractors\":[\"互斥锁\",\"信号量\",\"读写锁\",\"自旋锁\",\"公平锁\"]}",
+    "hints": [
+      "每个对象的对象头 Mark Word 中存储锁状态标志位",
+      "偏向锁在 JDK 15 后默认关闭，JDK 21 中被移除"
+    ],
+    "tags": [
+      "并发",
+      "synchronized",
+      "Monitor",
+      "锁升级"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "线程池核心线程数设置",
+    "content": "线程池核心线程数设置取决于任务类型。CPU 密集型任务核心线程数建议设为___。IO 密集型任务核心线程数建议设为___（其中 W 为 IO 等待时间，C 为 CPU 计算时间）。",
+    "answer": "{\"correct\":[[\"CPU核心数+1\",\"CPU核数+1\",\"N+1\",\"CPU核心数\",\"N\"],[\"CPU核心数*（1+W/C）\",\"2*CPU核心数\",\"N*（1+W/C）\"]],\"distractors\":[\"1\",\"固定值\",\"任务数\",\"内存大小\",\"磁盘数\"]}",
+    "hints": [
+      "CPU 密集型任务过多的线程会导致上下文切换开销大于计算收益",
+      "IO 密集型任务在等待 IO 时可以让出 CPU 给其他线程，因此可设置更多线程"
+    ],
+    "tags": [
+      "并发",
+      "线程池",
+      "性能",
+      "任务类型"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "LongAdder 的原理",
+    "content": "LongAdder 是 JDK 8 引入的高性能累加器，通过___（___）机制将单一 CAS 竞争分散到多个 Cell 上，大幅减少高并发下的___失败。最终调用 sum() 时汇总所有 Cell 内值和___。",
+    "answer": "{\"correct\":[[\"分段\",\"Striped\",\"Cell分组\"],[\"Striped\",\"分段\",\"Cell数组\"],[\"CAS\",\"自旋\"],[\"base值\",\"base\",\"基础值\"]],\"distractors\":[\"分区\",\"分表\",\"锁定\",\"volatile\",\"阻塞\",\"AtomicLong\"]}",
+    "hints": [
+      "LongAdder 的设计思路类似 ConcurrentHashMap 的分段锁",
+      "低并发时 LongAdder 退化为直接 CAS 更新 base 值，避免额外开销"
+    ],
+    "tags": [
+      "并发",
+      "LongAdder",
+      "CAS",
+      "分段"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "CompletableFuture 任务组合",
+    "content": "CompletableFuture 中合并两个独立异步任务结果的方法是___。当第二个任务依赖第一个任务的结果时（异步编排），应使用___方法。多个任务中任意一个完成即可继续的场景应使用___方法。",
+    "answer": "{\"correct\":[[\"thenCombine\",\"thenCombineAsync\"],[\"thenCompose\",\"thenComposeAsync\"],[\"applyToEither\",\"acceptEither\",\"runAfterEither\"]],\"distractors\":[\"thenApply\",\"thenAccept\",\"thenRun\",\"allOf\",\"anyOf\"]}",
+    "hints": [
+      "thenCombine 和 thenCompose 的区别：前者合并独立任务，后者编排依赖任务",
+      "applyToEither 用于竞速场景——多个任务中谁先完成就用谁的结果"
+    ],
+    "tags": [
+      "并发",
+      "CompletableFuture",
+      "异步",
+      "任务组合"
+    ]
+  },
+  {
+    "category": "concurrency_fill_blank",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "锁升级：偏向锁到轻量级锁再到重量级锁",
+    "content": "Java synchronized 在 JVM 中的锁升级过程为：无锁 → ___ → 轻量级锁 → 重量级锁",
+    "answer": "{\"correct\":[[\"偏向锁\"]], \"distractors\":[\"读写锁\",\"自旋锁\",\"悲观锁\",\"公平锁\"]}",
+    "hints": [
+      "JDK 15 之后偏向锁被默认禁用，为什么",
+      "锁升级的阈值由哪些 JVM 参数控制"
+    ],
+    "tags": [
+      "synchronized",
+      "锁升级",
+      "JVM"
+    ]
   }
 ]

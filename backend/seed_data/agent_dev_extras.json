@@ -1364,5 +1364,100 @@
       "Agent",
       "插件系统“, ”架构“, ”沙箱“, ”可扩展"
     ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "intermediate",
+    "type": "short_answer",
+    "title": "Agent 日志结构化",
+    "content": "请说明 Agent 系统中结构化日志的设计原则和实现方案。包括日志的分层结构（运行日志 vs 轨迹日志 vs 指标日志）、每个层次的字段定义、日志序列化格式选择（JSON/结构化文本），以及如何通过日志进行 Agent 行为调试和性能分析。",
+    "answer": "Agent 系统的结构化日志需要支持调试、监控和事后分析，核心是分层设计：1) 运行日志（Runtime Logs）：记录系统级事件，格式标准化的 JSON 每行一条（如 JSON Lines / .jsonl）。字段：timestamp、level、module、agent_id、session_id、message、correlation_id。示例：{\"ts\": \"2026-06-04T10:00:00Z\", \"level\": \"INFO\", \"module\": \"tool_executor\", \"agent_id\": \"agent-001\", \"session_id\": \"session-xyz\", \"message\": \"Executing tool 'calculator'\", \"correlation_id\": \"trace-abc123\"}。2) 轨迹日志（Trace Logs）：记录 Agent 的思维过程和决策轨迹，用于调试推理和复现行为。字段：step_number、input（用户消息/系统 prompt 摘要）、thought（LLM 生成的推理步骤）、tool_calls（调用的工具名/参数/结果/耗时）、output（最终输出）、token_usage。3) 指标日志（Metrics Logs）：聚合型指标用于性能监测。字段：metric_name（如 tool_call_latency_ms、token_count_per_step、tool_success_rate）、value、tags（如 tool_name、model_name）。建议用 Prometheus 格式或定期写入时序数据库。4) 序列化选择：推荐 JSON Lines（.jsonl）作为主要日志格式，每行一个完整的 JSON 对象，兼容日志收集系统（如 Logstash、Fluentd）。对大规模场景，可用 Protobuf 序列化压缩传输。5) 调试和性能分析：a) Session Replay——通过 session_id 聚合所有日志，完整复现一次 Agent 会话。b) Trace View——可视化工具（如 LangSmith、Arize）展示每个步骤的输入输出耗时，定位瓶颈。c) 失败模式挖掘——聚合错误日志按工具名/步骤数/模型版本聚类，发现系统性问题。d) Token 消耗分析——监控每个步骤的 token 使用量，优化 prompt 长度。6) 安全考虑：日志中不能记录 API Key、用户密码等敏感信息，需实现自动脱敏（PII masking）。",
+    "hints": [
+      "轨迹日志和运行日志在用途上有什么核心区别？",
+      "如何通过结构化日志实现 Agent 行为的 Session Replay？"
+    ],
+    "tags": [
+      "Agent",
+      "日志",
+      "结构化",
+      "调试",
+      "监控"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "工具调用延迟优化",
+    "content": "请说明 Agent 系统中工具调用延迟的优化策略。包括：工具预加载与预热、结果缓存策略（语义缓存 vs 精确缓存）、并行工具调用（并行度控制）、以及异步工具执行和流式返回的设计模式。给出具体的延迟优化指标评估方法。",
+    "answer": "Agent 工具调用延迟直接影响用户体验，优化需从多个层面入手：1) 预加载与预热（Preloading & Warm-up）：a) 工具池（Tool Pool）：对无状态工具维护常驻连接池（如数据库连接池、HTTP 连接池），避免每次调用重新创建连接。b) 模型预热：对使用 ML 模型的工具（如 embedding、分类器），在 Agent 启动时预热以减少首次调用冷启动延迟。c) 依赖预加载：对需要加载大量依赖的工具（如 Python 解释器），提前加载到内存。2) 结果缓存（Caching）：a) 精确缓存：对确定性的、参数相同的工具调用缓存结果。如 calculator(「2+2」) 永远返回 4。用 hash(工具名 + 参数) 作为 cache key。b) 语义缓存：对非确定性但语义上相似的查询，使用 embedding + 相似度搜索缓存相似结果。适用于搜索类工具。例如「北京的天气」和「Beijing weather」是语义缓存匹配。c) 缓存失效策略：基于 TTL、事件驱动（如数据更新时清除相关缓存）或版本号。3) 并行工具调用（Parallel Tool Calls）：a) 识别可并行化工具：分析工具依赖图，不相互依赖的工具并行执行。b) 控制并行度：通过 semaphore 限制最大并发数，避免资源耗尽（如 API 限流）。c) 合并同类调用：对同一 API 的不同参数合并批量请求（batch API）。4) 异步执行与流式返回：a) 异步非阻塞调用：使用 Async/Await（Python 的 asyncio / Node.js 的 async）避免工具调用阻塞推理流程。b) 流式返回（Streaming）：对耗时工具（如大模型推理、数据处理），以流式返回中间结果，让 Agent 在收到全部结果前开始处理部分结果。c) 乐观执行（Speculative Execution）：在 LLM 生成工具调用时，对参数中最确定的部分提前执行。5) 延迟评估指标：a) P50/P95/P99 延迟——工具调用的中位数和尾部延迟。b) 端到端延迟——从用户发出请求到收到完整回复的总时间。c) 工具延迟占比——工具调用延迟在总延迟中的比例（识别优化重点）。d) 缓存命中率——精确缓存和语义缓存的命中率。e) 并行效率——实际并行加速比与理想加速比的对比。",
+    "hints": [
+      "语义缓存和精确缓存各自适合什么类型的工具？",
+      "并行工具调用时如何避免超出 API 限流配额？"
+    ],
+    "tags": [
+      "Agent",
+      "工具调用",
+      "延迟优化",
+      "缓存",
+      "并行执行"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "Agent 测试用例生成",
+    "content": "请说明 Agent 系统中测试用例的生成策略和测试框架设计。包括：单元测试（单个工具）、集成测试（多工具协作）、端到端测试（完整 Agent 行为）和对抗测试（边界和异常场景）。着重说明如何自动生成测试用例以及测试覆盖率评估方法。",
+    "answer": "Agent 测试需要覆盖工具、推理、调度和异常处理等多个层面：1) 测试层次：a) 单元测试——对单个工具的功能性测试。mock LLM 的输出，验证工具是否能正确处理各种输入和错误返回。占测试用例的 60-70%。b) 集成测试——测试多个工具协作流程。mock LLM 输出指定工具调用序列，验证工具链是否正确传递数据和状态。c) 端到端测试——从用户输入到 Agent 输出的完整流程。使用真实 LLM（或录制的 LLM 响应 replay）验证最终输出质量。d) 对抗测试（Adversarial Testing）——边界条件（空输入、超大输入）、异常输入（SQL 注入尝试、格式错误）、不完整信息（缺少必要参数）。2) 自动测试用例生成：a) 基于规范（Spec-based）：从工具 schema 定义自动生成（如 API 参数的 required/optional 类型组合）。b) 基于录制回放（Recorder-based）：在实际运行中录制用户输入和 Agent 行为，脱敏后作为回归测试用例。c) 基于 LLM 生成：让 LLM 基于工具描述和 Agent prompt 生成有代表性的场景。d) 基于模糊测试（Fuzz Testing）：对输入参数进行随机变异，测试 Agent 对异常输入的容错能力。3) 测试框架设计：a) Test Harness：模拟 LLM 输出（Mock LLM），模拟工具执行环境（Mock Server），使测试可重复、不依赖外部服务。b) Scenario DSL：用 YAML 定义测试场景，包括用户输入、预期工具调用序列、mock 响应、预期输出。c) 断言机制：除了值断言，还需要语义断言（如「回答中包含具体数字」）、流程断言（「调用了正确的工具顺序」）。4) 覆盖率评估：a) 工具覆盖率——所有工具是否都被测试覆盖。b) 参数覆盖率——每个工具的参数组合覆盖情况。c) 场景覆盖率——业务场景的覆盖矩阵。d) 错误路径覆盖率——各种错误类型（超时、错误格式、认证失败、资源不存在）是否都有测试。e) 对抗覆盖率——边界值和异常输入覆盖。",
+    "hints": [
+      "Mock LLM 和 Mock Server 在测试中的作用是什么？",
+      "端到端测试中如何自动化判断 Agent 的输出是否正确？"
+    ],
+    "tags": [
+      "Agent",
+      "测试",
+      "测试用例生成",
+      "覆盖率",
+      "对抗测试"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "intermediate",
+    "type": "short_answer",
+    "title": "Agent 版本管理与回滚",
+    "content": "请说明 Agent 系统的版本管理和回滚策略。包括：Agent 配置版本化（prompt、工具列表、模型参数）、Agent 行为 A/B 测试框架、灰度发布策略、以及出现问题时如何快速回滚。对比传统软件版本管理和 Agent 版本管理的核心差异。",
+    "answer": "Agent 版本管理因 LLM 的非确定性行为而比传统软件更复杂。核心原则是将 Agent 的「行为」作为版本管理对象而非仅代码版本。1) 版本化范围：a) Agent 配置——system prompt 内容、工具定义列表（tool schema）、LLM 参数（temperature、top_p、max_tokens）、记忆系统配置（摘要策略、窗口大小）。b) Agent 代码——推理循环、工具执行器、调度逻辑。c) 外部依赖——LLM 模型版本（gpt-4-0613 vs gpt-4-0125）、Embedding 模型版本、知识库版本。2) 版本化策略：a) 配置即代码（Configuration as Code）：所有 Agent 配置存储为 YAML/JSON 文件，纳入 git 管理如 agent_config_v1.yaml。b) 版本捆绑（Version Bundle）：将配置 + 代码 + 依赖模型版本的组合定义为一个 Agent 版本，可在部署时切换。c) 迁移脚本：prompt 更新可能影响 Agent 行为，需提供迁移脚本将旧 session 适配到新版本。3) A/B 测试框架：a) 按 session_id 或用户 ID 路由到不同版本（如 10% 用户使用新版 prompt）。b) 核心指标：任务成功率、用户满意度（如 thumbs up/down）、延迟、token 消耗、人工干预率。c) 运行时长：至少收集 24 小时数据或满一定统计显著性样本量后做决策。4) 灰度发布（Canary Release）：a) 第一阶段：内部测试（开发环境验证）。b) 第二阶段：1% 流量（监控错误率和异常行为）。c) 第三阶段：逐步提升到 5% → 20% → 50% → 100%。d) 每个阶段预设停留时间和晋级条件（如 P50 延迟不增加、错误率不高于基线）。5) 快速回滚：a) 保持最近 N 个版本的完整部署包（包括模型输出缓存预热）。b) 回滚触发器：P95 延迟飙升 > 50%、错误率 > 1%、用户负面反馈率 > 5%、关键任务成功率下降 > 10%。c) 自动回滚策略：灰度阶段的自动回滚（回滚到上一个稳定版本），全量阶段的手动确认回滚。d) 回滚后处理：记录回滚原因（存入 postmortem），修复后重新进入灰度流程。6) 与传统软件版本管理差异：a) Agent 行为受 LLM 非确定性影响，同一配置在不同模型版本上表现可能完全不同。b) 测试更难——无法简单通过单元测试验证 prompt 变更影响。c) 回滚可能改变中间状态——已开始的任务切换版本可能导致行为不一致。",
+    "hints": [
+      "Agent 的「版本」包括哪些非代码组件？",
+      "为什么 Agent 的自动回滚比传统软件更谨慎？"
+    ],
+    "tags": [
+      "Agent",
+      "版本管理",
+      "A/B测试",
+      "灰度发布",
+      "回滚"
+    ]
+  },
+  {
+    "category": "agent_dev_extras",
+    "difficulty": "advanced",
+    "type": "short_answer",
+    "title": "Agent 跨语言工具调用",
+    "content": "请说明 Agent 系统中跨语言工具调用的架构设计和实现方案。包括：进程间通信机制选择（gRPC vs HTTP vs 消息队列）、数据序列化格式（JSON / Protobuf）、异常传播和错误处理、多语言工具注册和发现机制。以及不同语言工具之间的类型转换和兼容性处理。",
+    "answer": "跨语言工具调用是 Agent 生态系统中不同语言实现的工具相互调用的关键能力。1) 通信机制选择：a) gRPC：适用于高性能、低延迟的内部工具调用。使用 Protocol Buffers 定义接口，强类型，支持双向流。b) HTTP/REST：简单通用，适合轻量级工具调用。使用 JSON 序列化，调试方便。延迟比 gRPC 略高。c) 消息队列（RabbitMQ / Kafka）：适用于异步和事件驱动的工具调用，支持背压。d) IPC（Unix Domain Socket / Named Pipe）：适用于同一节点上的进程间高吞吐通信。2) 数据序列化：a) JSON：最通用，几乎所有语言都原生支持。缺点是无类型约束、解析开销大。b) Protocol Buffers：强类型、schema 驱动、序列化体积小（比 JSON 小 3-10 倍）、解析快。需维护 .proto 文件。c) Apache Arrow：适用于数据密集型工具调用（如数据分析和 ML），零拷贝反序列化。3) 异常传播：a) 将语言特定的错误类型映射为统一的跨语言错误码（如 gRPC status codes）。b) 错误信息结构：{code: int, message: string, details: string, source_language: string, stack_trace_serialized: string}。c) 超时和重试策略统一管理。4) 工具注册与发现：a) 中心式注册中心：工具启动时向注册中心注册（如 etcd / ZooKeeper / Consul），上报工具名、接口描述、健康状态。b) 声明式配置：在 Agent 配置的 tools.yaml 中声明各个工具的 endpoint、语言、认证方式。c) 健康检查：定期 ping 检查工具是否存活，将挂掉的工具动态移除。5) 类型转换与兼容性：a) 跨语言类型映射表（JSON Schema 作为中间表示）：string -> Python str / TypeScript string / Rust String / Go string / Java String；integer -> Python int / TypeScript number / Rust i64 / Go int64 / Java long；number -> Python float / TypeScript number / Rust f64 / Go float64 / Java double；boolean -> Python bool / TypeScript boolean / Rust bool / Go bool / Java boolean；array -> Python list / TypeScript Array[] / Rust Vec<T> / Go []T / Java List<T>；object -> Python dict / TypeScript Record / Rust HashMap / Go map[K]V / Java Map<K,V>。b) 日期时间统一使用 ISO 8601 字符串传递（避免不同语言的 Date 对象差异）。c) 大整数使用字符串传递（避免 JavaScript/JSON 的 2^53 精度限制）。d) 二进制数据用 Base64 编码传递或通过共享文件系统/对象存储的文件引用。6) 安全考虑：a) 跨语言调用需认证（mTLS / Token），避免未授权工具调用。b) 输入验证需在工具侧实现（不能依赖调用侧验证，因为另一语言可能有不同安全策略）。",
+    "hints": [
+      "为什么大整数在跨语言 JSON 传递中需要特殊处理？",
+      "gRPC 相比 HTTP/REST 在跨语言工具调用中的主要优势是什么？"
+    ],
+    "tags": [
+      "Agent",
+      "跨语言",
+      "工具调用",
+      "gRPC",
+      "序列化"
+    ]
   }
 ]

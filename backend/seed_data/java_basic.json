@@ -1373,5 +1373,100 @@
       "Java 21",
       "预览特性"
     ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Java 21 虚拟线程挂载与卸载原理",
+    "content": "请详细说明 Java 21 虚拟线程与平台线程的核心区别，重点解释虚拟线程的挂载（Mount）与卸载（Unmount）机制，以及在什么场景下虚拟线程会从 carrier 线程上卸载。",
+    "answer": "虚拟线程（Virtual Thread）是 JDK 21 正式发布的轻量级线程，由 JVM 管理而非操作系统。与平台线程的核心区别：\\n1. 调度方式：平台线程由 OS 调度，虚拟线程由 JVM 调度，虚拟线程是平台线程的包装，运行在 carrier 线程上。\\n2. 挂载与卸载：虚拟线程执行时被挂载（Mount）到 carrier 线程。遇到阻塞操作（如 I/O、锁等待、Thread.sleep）时，JVM 将其卸载（Unmount），保存栈帧到堆上的栈块（stack chunk），carrier 线程可执行其他虚拟线程。\\n3. 卸载条件：阻塞 I/O（socket.read、InputStream.read）、Future.get()、ReentrantLock.lock() 等都触发卸载。synchronized 块和 native 方法不会触发卸载，会导致 carrier 线程被 Pin 住。\\n4. 使用场景：适合大量并发 I/O 密集型任务，不适合 CPU 密集型计算——计算密集型操作不会触发 unmount，无法利用轻量级优势。",
+    "hints": [
+      "阻塞操作是触发虚拟线程卸载的关键条件，synchronized 块不会触发卸载",
+      "虚拟线程的栈帧在卸载时被复制到堆上，避免 OS 级上下文切换"
+    ],
+    "tags": [
+      "virtual-thread",
+      "platform-thread",
+      "mount",
+      "unmount",
+      "java21"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Pattern Matching for switch 守卫模式与 null 处理",
+    "content": "请说明 Java 21 中 Pattern Matching for switch 的守卫模式（Guarded Pattern）的语法和使用方式，以及 switch 对 null 值的处理策略。",
+    "answer": "守卫模式使用 when 关键字在 case 标签后添加额外条件判断。语法为：`case Type var when condition -> 表达式`。当类型匹配但守卫条件不满足时，继续向下匹配下一个 case，而非落入当前 case。\\n示例：`switch (obj) { case String s when s.length() > 5 -> 「长字符串」; case String s -> 「短字符串」; default -> 「其他」; }`\\nnull 处理策略：传统 switch 传入 null 会抛 NullPointerException。Pattern Matching switch 允许通过 `case null ->` 显式处理 null 值。如果所有 case 都不匹配且没有 default 分支，则抛出 MatchException（而非 NPE）。如果有 case null 处理，不会抛 NPE。\\n编译器对 sealed 类型做穷尽性检查——如果所有 sealed 子类型都已覆盖且不包含 default，编译通过；否则需要 default 分支。守卫模式在穷尽性检查时被视为已覆盖对应类型，但如果守卫条件永远不满足，运行期仍可能抛出 MatchException。",
+    "hints": [
+      "守卫模式使用 when 关键字，注意不是 if 也不是 &&",
+      "case null 必须显式写出才能处理 null，否则抛 MatchException"
+    ],
+    "tags": [
+      "pattern-matching",
+      "switch",
+      "guarded-pattern",
+      "null-safety",
+      "java21"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Record 紧凑构造器与验证逻辑",
+    "content": "请解释 Java 16 正式发布的 Record 类型的紧凑构造器（Compact Constructor）语法，以及在构造器中进行参数验证和归一化（Normalization）的规则。",
+    "answer": "紧凑构造器是 Record 的特殊构造器形式，省略了参数列表和显式的 this.field = field 赋值。\\n语法：`public Point { if (x < 0) throw new IllegalArgumentException(); }`\\n关键规则：\\n1. 所有 canonical 构造器的参数在紧凑构造器作用域内直接可用。\\n2. 在紧凑构造器中可以进行参数验证（范围检查、null 检查等）、归一化（null 转默认值、值裁剪等）和防御性拷贝（如数组/集合的拷贝）。\\n3. 紧凑构造器结束后，编译器自动生成 this.x = x; this.y = y; 赋值。\\n4. 如果在紧凑构造器中修改参数值（如 `if (age < 0) age = 0;`），修改后的值被自动赋值到对应组件。\\n5. 验证失败应抛出 IllegalArgumentException 或 NullPointerException 等运行时异常。\\n注意：紧凑构造器适用于简单的验证和归一化，复杂逻辑应在工厂方法或 Builder 中处理。",
+    "hints": [
+      "紧凑构造器不需要显式写 this.field = field 赋值，编译器自动生成",
+      "紧凑构造器中修改参数值会被自动映射到对应 Record 组件"
+    ],
+    "tags": [
+      "record",
+      "compact-constructor",
+      "validation",
+      "normalization",
+      "java16"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Sealed Class permits 约束与模式匹配完整性",
+    "content": "请说明 Java 17 中密封类（Sealed Class）的 permits 子句约束规则，以及如何利用密封类实现模式匹配的编译期完整性检查。",
+    "answer": "密封类使用 sealed 关键字声明，permits 列出所有允许的直接子类。\\n核心规则：\\n1. 声明：`sealed class Shape permits Circle, Rectangle, Triangle { }`，permits 子类必须在同一模块或同一包内。\\n2. 每个 permits 子类必须是 final、sealed 或 non-sealed 之一——final 终结继承链，sealed 延续密封约束，non-sealed 开放继承。\\n3. 密封类不具备传递性——若子类声明为 non-sealed，后续继承不再受原始密封类约束。\\n4. 密封接口同样适用，子接口也必须是 sealed、non-sealed 或 final。\\n模式匹配完整性：\\n- 在 switch 表达式或语句中使用密封类时，编译器检查是否覆盖了所有 permits 子类型。\\n- 若所有子类型都已覆盖，可省略 default 分支，编译器不会报错。\\n- 若某个子类型未被覆盖且没有 default，编译错误。\\n- 守卫模式被视为对对应类型的覆盖，但运行时可能因守卫条件都不满足而抛 MatchException。",
+    "hints": [
+      "non-sealed 关键字的含义是开放继承，后续子类不再受原始密封限制",
+      "密封类与 switch 模式匹配结合可实现编译期穷举检查"
+    ],
+    "tags": [
+      "sealed-class",
+      "permits",
+      "exhaustiveness",
+      "pattern-matching",
+      "java17"
+    ]
+  },
+  {
+    "category": "java_basic",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "Text Block 缩进处理与 stripIndent",
+    "content": "请说明 Java 15 正式引入的 Text Block 语法，以及 indent() 和 stripIndent() 方法对多行字符串缩进的处理规则。",
+    "answer": "Text Block 使用三个连续双引号包裹多行字符串。编译器自动执行 stripIndent() 去除公共前导空白。\\n缩进规则：\\n1. stripIndent()：计算所有内容行（不包括第一行和只含空白的最后行）中最少的前导空白数，然后从每行移除该数量的空白。\\n2. indent(n)：对每行增加 n 个空格缩进。n 为负数时减少缩进但不会少于 0。\\n3. 三引号闭合位置影响缩进——闭合三引号的位置决定了编译器计算公共缩进的基准。\\n示例：三引号包裹的字符串中缩进由内容行和闭合位置共同决定。stripIndent 后 `「Hello\\nWorld」` 的公共前导空格被移除。\\n4. translateEscapes() 方法可将字符串中的转义序列（如 `\\n`）真正转换为对应的控制字符。\\n5. 文本块自动统一换行符为 `\\n`。",
+    "hints": [
+      "stripIndent 是编译器自动调用的，开发者一般不需要手动调用",
+      "三引号闭合的位置影响公共缩进的计算基准"
+    ],
+    "tags": [
+      "text-block",
+      "indent",
+      "strip-indent",
+      "java15",
+      "string"
+    ]
   }
 ]

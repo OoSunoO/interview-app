@@ -1641,5 +1641,131 @@
       "弱一致性",
       "写时复制"
     ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "ConcurrentHashMap CAS 操作机制",
+    "content": "关于 Java 8+ ConcurrentHashMap 的并发控制机制，以下描述正确的是？",
+    "answer": "答案：B) ConcurrentHashMap 使用 CAS + synchronized 对特定桶位进行细粒度并发控制。解析：Java 8 重构了 ConcurrentHashMap，放弃分段锁（Segment）设计。新实现使用 CAS（Compare-And-Swap）处理大部分操作：table 初始化用 CAS 避免锁争用，桶位首节点用 CAS 插入。当发生哈希冲突（链表或红黑树操作）时使用 synchronized 锁住桶位首节点。这种设计只在发生冲突时才加锁，无冲突时完全无锁，显著提升了并发吞吐量。size() 方法通过 CounterCell 数组累加计数，无需全表扫描。迭代器是弱一致性的——不抛 ConcurrentModificationException，但不保证实时反映最新修改。",
+    "options": [
+      "A) ConcurrentHashMap 在所有写操作中使用全局 ReentrantLock 保证线程安全",
+      "B) ConcurrentHashMap 使用 CAS + synchronized 对特定桶位进行细粒度并发控制",
+      "C) ConcurrentHashMap 完全基于分段锁（Segment）实现，与 Java 7 相同",
+      "D) ConcurrentHashMap 的 size() 方法每次调用都需要全表扫描加锁计算"
+    ],
+    "hints": [
+      "Java 8 对 ConcurrentHashMap 做了重大重构，放弃了分段锁",
+      "CAS 用于无竞争场景，synchronized 用于哈希冲突时的桶位锁定"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "CAS",
+      "synchronized",
+      "concurrency",
+      "java8"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "CopyOnWriteArrayList 底层数组快照",
+    "content": "关于 CopyOnWriteArrayList 的底层数组快照机制和迭代器行为，以下说法正确的是？",
+    "answer": "答案：A) CopyOnWriteArrayList 的所有修改操作（add、set、remove）都会创建底层数组的新副本。解析：CopyOnWriteArrayList 的写时复制策略——每次修改操作（add、set、remove）都创建当前数组的完整副本，在副本上修改，然后用副本替换原数组。这个操作使用 ReentrantLock 加锁保证并发安全。读操作（get、迭代）无需加锁，直接访问当前 volatile 数组引用。迭代器创建时持有当时数组的快照引用，对该迭代器的遍历只能看到创建时刻的状态。后续的 add/remove 不会影响已创建的迭代器，也不会抛 ConcurrentModificationException（快照迭代器本质是弱一致性）。迭代器不支持 remove() 操作（抛 UnsupportedOperationException）。适用场景：读远多于写的场景（如事件监听器列表、配置信息缓存）。元素数量大时写成本很高（完整数组复制）。",
+    "options": [
+      "A) CopyOnWriteArrayList 的所有修改操作（add、set、remove）都会创建底层数组的新副本",
+      "B) CopyOnWriteArrayList 的迭代器在列表被修改时会抛出 ConcurrentModificationException",
+      "C) CopyOnWriteArrayList 的读操作需要获取 ReentrantLock 以保证可见性",
+      "D) CopyOnWriteArrayList 适用于写多读少的并发场景"
+    ],
+    "hints": [
+      "写时复制的本质是牺牲写性能换取读性能",
+      "迭代器持有的是创建时刻的数组快照，之后的修改不影响已有迭代器"
+    ],
+    "tags": [
+      "CopyOnWriteArrayList",
+      "snapshot",
+      "fail-safe",
+      "weakly-consistent",
+      "copy-on-write"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "easy",
+    "type": "choice",
+    "title": "BlockingQueue put/take 阻塞机制",
+    "content": "关于 BlockingQueue 的 put() 和 take() 方法的阻塞语义，以下说法正确的是？",
+    "answer": "答案：B) put() 在队列满时无限期阻塞等待直到有空闲位置，take() 在队列空时无限期阻塞等待直到有新元素。解析：BlockingQueue 的 put(E) 方法在队列满时阻塞等待，直到其他线程调用 take() 移除元素腾出空间。take() 方法在队列空时阻塞等待，直到其他线程调用 put() 添加元素。两者都是可中断的阻塞——线程在等待期间可响应中断。非阻塞变体：offer(E) 返回 boolean 表示是否成功入队（不阻塞），offer(E, long, TimeUnit) 限时等待；poll(long, TimeUnit) 限时等待出队，peek() 返回队首但不移除。注意不同 BlockingQueue 实现的行为差异：ArrayBlockingQueue 是有界阻塞队列，必须指定容量；LinkedBlockingQueue 可指定容量也可无边；SynchronousQueue 不存储元素，每个 put 必须等待一个 take。所有 BlockingQueue 实现都是线程安全的。",
+    "options": [
+      "A) put() 在队列满时抛出 IllegalStateException，take() 在队列空时返回 null",
+      "B) put() 在队列满时无限期阻塞等待直到有空闲位置，take() 在队列空时无限期阻塞等待直到有新元素",
+      "C) put() 和 take() 只等待 1 秒，超时后分别返回 false 和 null",
+      "D) put() 和 offer() 行为完全一致，都返回 boolean 表示是否成功"
+    ],
+    "hints": [
+      "put() 和 take() 是阻塞方法，offer() 和 poll() 是非阻塞或限时的",
+      "BlockingQueue 的设计目的是解决生产者-消费者模型中的线程协调问题"
+    ],
+    "tags": [
+      "BlockingQueue",
+      "put",
+      "take",
+      "blocking",
+      "producer-consumer"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "HashMap 树化触发的双重条件检测",
+    "content": "关于 HashMap 在 Java 8+ 中链表转红黑树的树化条件和退化为链表的条件，以下说法正确的是？",
+    "answer": "答案：B) 当链表长度超过 8 且数组长度大于等于 64 时才会树化，否则优先触发扩容。解析：HashMap 树化的两个条件必须同时满足：1）链表长度超过 TREEIFY_THRESHOLD（8），2）数组长度大于等于 MIN_TREEIFY_CAPACITY（64）。如果链表长度超过 8 但数组长度小于 64，HashMap 会优先触发 resize() 扩容，将链表分散到新数组中，避免树化。扩容后链表长度通常会降低（重新哈希后元素分布更散）。退化条件：当红黑树中的节点数降低到 UNTREEIFY_THRESHOLD（6）以下时，在 resize() 过程中将红黑树退化为链表。注意退化只在 resize 时发生，不会在 remove 时立即触发（remove 时不做退化为链表的检查）。TREEIFY_THRESHOLD=8 的选择基于泊松分布的概率统计——链表长度达到 8 的概率极低（约 0.00000006），树化是一种防攻击机制而不是常规优化。",
+    "options": [
+      "A) 当链表长度超过 8 时立即可将链表树化为红黑树，无需其他条件",
+      "B) 当链表长度超过 8 且数组长度大于等于 64 时才会树化，否则优先触发扩容",
+      "C) 树化后当链表长度降低到 6 以下时立即退化为链表，无需 resize",
+      "D) 树化阈值为 16，退化阈值为 12，树化和退化都在 put 操作中实时检查"
+    ],
+    "hints": [
+      "树化是防哈希碰撞攻击的保护机制，不是常态优化",
+      "链表长度超 8 但数组小时优先扩容而非树化"
+    ],
+    "tags": [
+      "HashMap",
+      "treeify",
+      "untreeify",
+      "threshold",
+      "resize"
+    ]
+  },
+  {
+    "category": "java_collections",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "NavigableSet ceiling floor 方法",
+    "content": "关于 NavigableSet（如 TreeSet）的 ceiling() 和 floor() 方法的行为，以下说法正确的是？",
+    "answer": "答案：A) ceiling(e) 返回大于等于 e 的最小元素，如果不存在这样的元素则返回 null。解析：NavigableSet 提供了 4 个范围查找方法：1）ceiling(e)：返回 ≥ e 的最小元素，不存在返回 null。2）floor(e)：返回 ≤ e 的最大元素，不存在返回 null。3）higher(e)：返回 > e 的最小元素，严格大于，不存在返回 null。4）lower(e)：返回 < e 的最大元素，严格小于，不存在返回 null。这些方法的时间复杂度均为 O(log n)（基于 TreeSet 的 TreeMap 实现）。四种方法都不会抛出 NoSuchElementException——找不到时返回 null 而非异常。注意区分 ceiling 与 higher、floor 与 lower 的区别在于是否包含等于（inclusive vs exclusive）。这些方法对实现范围查询、分页查询、最近邻查找等场景非常有用。",
+    "options": [
+      "A) ceiling(e) 返回大于等于 e 的最小元素，如果不存在这样的元素则返回 null",
+      "B) floor(e) 返回小于等于 e 的最大元素，如果不存在则抛出 NoSuchElementException",
+      "C) higher(e) 返回大于等于 e 的最小元素，与 ceiling(e) 行为完全一致",
+      "D) lower(e) 返回小于等于 e 的最大元素，与 floor(e) 行为完全一致"
+    ],
+    "hints": [
+      "ceiling 包含等于（≥）而 higher 不包含等于（>）",
+      "floor 包含等于（≤）而 lower 不包含等于（<）"
+    ],
+    "tags": [
+      "NavigableSet",
+      "TreeSet",
+      "ceiling",
+      "floor",
+      "higher",
+      "lower"
+    ]
   }
 ]

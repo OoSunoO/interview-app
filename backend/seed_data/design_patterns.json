@@ -1370,5 +1370,91 @@
       "Mediator",
       "行为型"
     ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "命令模式实现撤销重做",
+    "content": "如何用命令模式（Command Pattern）实现一个支持撤销（Undo）和重做（Redo）的操作系统？请说明核心组件和工作流程。",
+    "answer": "命令模式的核心思想是将一个请求封装为一个对象，从而使你可以用不同的请求对客户端进行参数化。\\n组件：\\n1. Command 接口：定义 `execute()` 和 `undo()` 方法。\\n2. ConcreteCommand：实现具体的操作逻辑和对应的撤销逻辑。\\n3. Invoker：维护一个命令历史栈 `undoStack` 和一个重做栈 `redoStack`。\\n4. Receiver：实际执行操作的对象（如文本编辑器中的 Document）。\\n工作流程：\\n- 每次执行一个命令时，调用 `command.execute()`，然后将该命令压入 `undoStack`，同时清空 `redoStack`（因为新操作后重做历史无效）。\\n- 撤销时，从 `undoStack` 弹出顶部命令，调用 `command.undo()`，然后将该命令压入 `redoStack`。\\n- 重做时，从 `redoStack` 弹出顶部命令，调用 `command.execute()`，再压回 `undoStack`。\\n- 约束：`undoStack` 需要设置最大深度（如 100 步），防止内存溢出。\\n示例（伪代码）：\\n```\\nclass TextEditorCommand implements Command {\\n    execute() { insertText(text); }\\n    undo() { deleteText(length); }\\n}\\nInvoker {\\n    Stack undoStack, redoStack;\\n    void executeCommand(cmd) {\\n        cmd.execute();\\n        undoStack.push(cmd);\\n        redoStack.clear();\\n    }\\n    void undo() {\\n        cmd = undoStack.pop(); cmd.undo(); redoStack.push(cmd);\\n    }\\n    void redo() {\\n        cmd = redoStack.pop(); cmd.execute(); undoStack.push(cmd);\\n    }\\n}\\n```",
+    "hints": [
+      "关键在于每个命令同时封装了「执行」和「撤销」两个操作",
+      "redo 栈在每次新操作时被清空——这是常见的设计决策"
+    ],
+    "tags": [
+      "命令模式",
+      "撤销重做",
+      "行为型模式"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "原型模式与深浅拷贝",
+    "content": "原型模式（Prototype Pattern）中，浅拷贝（Shallow Copy）和深拷贝（Deep Copy）的区别是什么？分别适用什么场景？Java 中如何实现？",
+    "answer": "原型模式通过复制一个已有对象来创建新对象，而非通过 new 调用构造器。核心是 Java 中的 `Cloneable` 接口和 `clone()` 方法。\\n浅拷贝：\\n- 复制基本类型字段的值和引用类型字段的引用地址。\\n- 复制后的对象和原对象共享引用类型字段指向的同一个实例。\\n- Java 默认的 `super.clone()` 就是浅拷贝。\\n- 适用于：对象只包含基本类型和不可变对象（如 String、Integer），或者你明确希望共享内部状态。\\n深拷贝：\\n- 递归复制所有引用类型字段指向的对象，创建完全独立的副本。\\n- 修改副本的内部状态不会影响原对象。\\n- 实现方式：a) 重写 `clone()` 方法，手动 clone 所有可变引用字段；b) 序列化 + 反序列化；c) 手动构造器（copy constructor）。\\n- 适用于：对象包含可变引用类型，且需要完全隔离的副本。\\n- 问题：深拷贝在对象图复杂时可能引发循环引用问题（A 引用 B，B 引用 A），此时需要手动处理。\\n注意：数组的 `clone()` 是浅拷贝——数组元素如果是引用类型，复制的是引用而非对象本身。\\n最佳实践：实现了 `Cloneable` 却不重写 `clone()` 为 public 是常见的错误。更推荐使用 copy constructor 或 factory method 替代 `Cloneable`。",
+    "hints": [
+      "Java 的 Cloneable 是一个标记接口（marker interface），不重写 clone() 会抛 CloneNotSupportedException",
+      "深拷贝在性能敏感场景中可能成为瓶颈——考虑是否需要完全隔离"
+    ],
+    "tags": [
+      "原型模式",
+      "深浅拷贝",
+      "创建型模式"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "享元模式与字符串常量池",
+    "content": "享元模式（Flyweight Pattern）是什么？请以 Java 字符串常量池（String Pool）为例说明其应用和设计要点。",
+    "answer": "享元模式的核心思想是共享大量细粒度对象以减少内存占用。当系统中存在大量相似对象时，将对象中「不变的部分（内在状态）」提取出来共享，「变化的部分（外在状态）」由客户端维护。\\nJava String Pool 是典型的享元模式应用：\\n- 内在状态（共享）：字符串的字符数组内容。\\n- 外在状态（不共享）：无（字符串本身是不可变的，所以全部状态都内在化）。\\n- 当通过字面量创建字符串时（如 `String s = 「hello」`），JVM 会先在常量池中查找，如果已存在则返回引用，否则创建新对象放入池中。\\n- 通过 `new String(「hello」)` 创建的字符串不进入常量池（除非调用 `intern()`），这是为了避免所有字符串都被强制共享。\\n设计要点：\\n1. 区分内在状态（Intrinsic State，可共享）和外在状态（Extrinsic State，不可共享）。\\n2. 享元对象应该是不可变的（immutable）——如果共享对象允许修改，会导致并发问题。\\n3. 需要有一个享元工厂（Flyweight Factory）来管理池中的对象，实现对象的复用和创建。\\n4. 适用场景：对象数量巨大、对象状态可被外部化、对象大部分状态可共享。典型的真实应用包括线程池、连接池、缓存系统。\\n在 Java 中，除了 String Pool，Integer 的 `valueOf()` 也使用了享元模式（缓存 -128 到 127 的 Integer 对象）。",
+    "hints": [
+      "享元模式的关键问题是「哪些状态可以共享」——这是设计难点",
+      "享元对象必须是不可变的，否则共享带来的并发问题会抵消内存收益"
+    ],
+    "tags": [
+      "享元模式",
+      "字符串常量池",
+      "结构型模式"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "责任链模式与 Web 中间件",
+    "content": "责任链模式（Chain of Responsibility Pattern）在 Web 框架的中间件（Middleware）中如何实现？请以 Express.js 或 Django 中间件为例说明。",
+    "answer": "责任链模式将多个处理对象连成一条链，请求沿着链传递直到某个处理器处理它。Web 中间件的本质就是责任链模式。\\nExpress.js 实现：\\n```\\napp.use((req, res, next) => {\\n    console.log('Request:', req.url);\\n    next();  // 传递给下一个中间件\\n});\\napp.use('/api', authMiddleware);\\napp.use('/api', errorHandler);\\n```\\n每个中间件要么调用 `next()` 将控制权传递给链中的下一个中间件，要么直接发送响应终止链。\\nDjango 实现：\\nDjango 的中间件是洋葱模型（Onion Model）。请求从外到内穿过所有中间件，响应从内到外反向穿过。\\n```\\nclass MyMiddleware:\\n    def __init__(self, get_response):\\n        self.get_response = get_response\\n\\n    def __call__(self, request):\\n        # 请求阶段（进入洋葱）\\n        response = self.get_response(request)  # 调用下一个中间件\\n        # 响应阶段（退出洋葱）\\n        return response\\n```\\n设计要点：\\n1. 每个处理器知道下一个处理器是谁（通过 `next` 指针或列表索引）。\\n2. 处理器可以决定是否继续传递（调用 `next()`）或终止链（直接返回响应）。\\n3. 链的顺序很重要——中间件的注册顺序决定了处理顺序。\\n4. 适用场景：有多个处理器按顺序处理同一个请求，且处理器之间的顺序是动态可变的。典型的真实应用还有 Java Servlet Filter、ASP.NET Core Middleware、Logging 框架的日志级别过滤。\\n优点：解耦了请求发送者和接收者，新增处理器不需要修改现有代码。\\n缺点：调试困难——请求在链中传递的路径可能不直观。",
+    "hints": [
+      "Express.js 是线性链（单向传递），Django 是洋葱模型（双向传递）——理解了区别才算真正懂了",
+      "中间件顺序决定行为——认证中间件应该在业务中间件之前"
+    ],
+    "tags": [
+      "责任链模式",
+      "Web 中间件",
+      "行为型模式"
+    ]
+  },
+  {
+    "category": "design_patterns",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "MVC vs MVVM vs MVP",
+    "content": "MVC、MVVM、MVP 三种架构模式的核心区别是什么？各自的优缺点和适用场景是什么？",
+    "answer": "三种模式都是关注点分离（Separation of Concerns）的实现，核心区别在于 View 和 Model 之间的通信方式以及 Controller/Presenter/ViewModel 的角色。\\nMVC（Model-View-Controller）：\\n- 流程：View → Controller → Model → View。Controller 接收用户输入，更新 Model，Model 通知 View 更新。\\n- 优点：最经典，概念简单，适合传统 Web 应用（如 Rails、Django）。\\n- 缺点：Controller 容易变得臃肿（Fat Controller），View 和 Model 之间仍有直接依赖。\\n- 适用：服务端渲染的 Web 应用，iOS 开发（Apple 官方推荐）。\\nMVVM（Model-View-ViewModel）：\\n- 流程：View ↔ ViewModel ↔ Model。ViewModel 通过数据绑定（Data Binding）自动同步 View 状态，无需手动操作 DOM。\\n- 优点：View 和 Model 完全解耦，ViewModel 可独立测试，数据绑定减少了大量样板代码。\\n- 缺点：数据绑定调试困难，复杂场景下性能开销大。\\n- 适用：前端框架（Vue、React with hooks、Angular），WPF、SwiftUI。\\nMVP（Model-View-Presenter）：\\n- 流程：View ↔ Presenter ↔ Model。Presenter 是中间人，View 将所有用户事件委托给 Presenter。\\n- 优点：View 和 Model 完全分离（比 MVC 更彻底），Presenter 易于单元测试（因为 View 被抽象为接口）。\\n- 缺点：需要为每个 View 定义接口，导致文件数量多；Presenter 层会变得非常厚重。\\n- 适用：Android 原生开发（早期推荐），复杂 UI 的桌面应用。\\n简单对比：MVC 的 Controller 对 View 了解较少；MVP 的 Presenter 知道 View 的接口；MVVM 的 ViewModel 完全不知道 View 的存在（通过数据绑定间接通信）。",
+    "hints": [
+      "三者的核心区别是「View 是否知道 Model」——MVC 知道，MVP/MVVM 不知道",
+      "MVVM 依赖数据绑定框架（如 Vue/React），没有框架支持很难纯手工实现"
+    ],
+    "tags": [
+      "架构模式",
+      "MVC",
+      "MVVM",
+      "MVP"
+    ]
   }
 ]

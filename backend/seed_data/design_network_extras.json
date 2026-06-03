@@ -1358,5 +1358,90 @@
       "网络架构",
       "BGP"
     ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "TCP 快速打开 TFO",
+    "content": "请解释 TCP 快速打开（TCP Fast Open, TFO）的原理和优势。它如何减少 TCP 连接的延迟？TFO 的安全考虑和实际部署中的注意事项是什么？",
+    "answer": "TCP 快速打开（TFO）核心原理：\\n- 标准 TCP 需要三次握手才能开始发送数据（1 RTT 的延迟）\\n- TFO 允许客户端在 SYN 包中携带应用数据（如 HTTP 请求）\\n- 服务器在收到 SYN + 数据后，可以直接处理并将响应和数据一起在 SYN-ACK 中返回\\n- 效果：将新建连接的 1-RTT 开销降至 0-RTT（如果是重复连接）\\n\\nTFO 工作流程：\\n1. 首次连接：客户端 SYN + TFO 选项（请求 Cookie）\\n2. 服务器生成 TFO Cookie（基于客户端 IP 加密）→ 通过 SYN-ACK 返回\\n3. 后续连接：客户端 SYN + Cookie + 应用数据一起发送\\n4. 服务器验证 Cookie 有效 → 直接处理数据，通过 SYN-ACK 返回首批响应\\n\\n安全考虑：\\n- TFO Cookie 必须防伪造（服务器用密钥加密客户端 IP + 时间戳）\\n- Cookie 有有效期（通常 24 小时），过期后退化为标准握手\\n- TFO 不提供应用层安全（仍需 TLS 加密数据）\\n- 重放攻击风险：攻击者截获 TFO 数据包可重复发送→服务端需在应用层做幂等性设计\\n\\n实际部署注意事项：\\n- 需要客户端和服务器都支持（Linux 内核 ≥ 3.7）\\n- 支持 TCP 快速打开（tcp_fastopen 内核参数配置：1=客户端, 2=服务端, 3=双向）\\n- TFO 在移动端效果最明显（频繁断开重连的场景）\\n- 负载均衡器需透传 TFO Cookie（某些 LB 会拦截 SYN 包导致 TFO 失效）\\n- Kubernetes / Docker 环境需确认容器网络栈支持 TFO（需宿主机内核支持 + 容器 sysctl 配置）\\n- 性能收益：HTTP 请求 + TLS 握手场景平均节省 1 RTT（约 30-200ms 视距离而定）",
+    "hints": [
+      "TFO 如何避免安全攻击（如 SYN Flood 利用 TFO 放大攻击）？",
+      "为什么移动端应用从 TFO 获益最大？"
+    ],
+    "tags": [
+      "TCP",
+      "TFO",
+      "网络优化"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "负载均衡算法对比",
+    "content": "请对比常见的负载均衡算法：轮询、加权轮询、最少连接、IP Hash、一致性哈希。说明各自的适用场景和局限。",
+    "answer": "常见负载均衡算法对比：\\n\\n1. 轮询（Round Robin）：\\n   - 请求按顺序依次分配给后端服务器\\n   - 优点：实现简单、无状态、公平分配\\n   - 缺点：不考虑服务器负载差异、不考虑请求处理时间差异\\n   - 适用：后端负载分布均匀的简单场景\\n\\n2. 加权轮询（Weighted Round Robin）：\\n   - 给高性能服务器分配更大权重（如 4 核权重 4, 2 核权重 2）\\n   - 优点：考虑了服务器能力差异\\n   - 缺点：权重需要静态配置，无法实时调整\\n   - 适用：异构服务器集群\\n\\n3. 最少连接（Least Connections）：\\n   - 将请求分配给当前活跃连接数最少的服务器\\n   - 优点：动态反映实时负载（连接数 = 负载的近似值）\\n   - 缺点：连接数不能完全代表 CPU/IO 负载（一个长连接可能无负载，一个短连接可能高 CPU）\\n   - 适用：请求处理时间差异大的场景（长连接和短连接混合）\\n\\n4. IP Hash：\\n   - 对客户端 IP 做 Hash，同一 IP 始终路由到同一台服务器\\n   - 优点：天然支持 Session 亲和性（Sticky Session）\\n   - 缺点：服务器增减时 Hash 结果变化 → 大量 Session 失效（除非加一致性哈希）\\n   - 适用：需要保持 Session 的有状态服务场景\\n\\n5. 一致性哈希（Consistent Hash）：\\n   - 在 Hash 环上分布虚拟节点，服务器增减影响最小\\n   - 优点：扩缩容时只影响少数映射关系，最小化重新分配\\n   - 缺点：实现复杂、需要管理虚拟节点分布\\n   - 适用：分布式缓存（Redis Cluster / Memcached）、有状态服务的分片路由\\n\\n高级策略：\\n- 自适应负载均衡（Adaptive）：实时采集后端 CPU/延迟/错误率，动态调整调度权重\\n  - 实现：P2C（Pick of 2 Choices）— 随机选 2 台，挑负载轻的那台\\n  - 代表：Envoy 的 Maglev 算法、gRPC 的 Weighted Round Robin with latency tracking\\n\\n实际部署中通常组合使用：\\n- 第一层：DNS 轮询（全局流量调度）\\n- 第二层：IP Hash 或最少连接（单机房的流量分发）\\n- 第三层：一致性哈希（数据/缓存分片）",
+    "hints": [
+      "最少连接算法在什么情况下会失效？连接数多一定代表负载高吗？",
+      "一致性哈希如何解决扩缩容时的「雪崩」问题？"
+    ],
+    "tags": [
+      "负载均衡",
+      "算法",
+      "网络"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "HTTP/2 服务端推送",
+    "content": "请解释 HTTP/2 服务端推送（Server Push）的原理和正确使用方式。它与 WebSocket 的区别是什么？为什么实际落地中很多站点选择关闭 Server Push？",
+    "answer": "HTTP/2 Server Push 原理：\\n- 服务端在客户端请求 HTML 时，预测客户端后续会请求的资源（CSS、JS、图片），主动推送给客户端\\n- 客户端收到推送的资源后缓存起来，当浏览器解析到需要该资源时直接命中缓存\\n- 推送通过 PUSH_PROMISE 帧实现——服务端先发一个 PUSH_PROMISE 告诉客户端「我等一下要推 X」，客户端可拒绝\\n\\n与 WebSocket 的区别：\\n| 维度 | Server Push | WebSocket |\\n| 方向 | 仅服务端→客户端（响应式推送） | 全双工（双向实时通信）|\\n| 触发 | 基于客户端请求的预测 | 客户端/服务端都可主动发起 |\\n| 协议 | HTTP/2 帧之上（仍算 HTTP） | 独立协议（ws:// wss://）|\\n| 适用场景 | 加速页面首次加载 | 实时通信、消息推送、协作编辑 |\\n| 浏览器兼容 | 所有 HTTP/2 支持的浏览器 | 所有主流浏览器 |\\n\\n为什么很多站点关闭 Server Push：\\n\\na) 命中率低：服务端猜用户会请求哪些资源，但实际不一定（用户交互不同、缓存状态不同）。推送了用户已有的资源反而浪费带宽。\\n\\nb) 带宽浪费：移动端用户可能不需要大尺寸图片/CDN 已缓存的资源也被推送。\\n\\nc) 已被 Preload Link Header 取代：\\n   - Link: </style.css>; rel=preload; as=style\\n   - Preload 浏览器原生支持，更轻量，服务端不需要维护推送逻辑\\n   - Preload 只在需要时下载，而 Push 会强推占用带宽\\n\\nd) HTTP/3 (QUIC) 不支持 Server Push：IETF 在 HTTP/3 标准中移除了 Server Push，因为实践中证明弊大于利。\\n\\ne) CDN / 代理层支持有限：很多 CDN 节点不支持或不完全支持 HTTP/2 Push。\\n\\n建议：\\n- 新项目不要依赖 Server Push\\n- 用 Preload / Preconnect / Prefetch 提前加载关键资源\\n- 对已知高价值场景（PWA 离线包预加载）可考虑 Push，但要配合缓存状态检测",
+    "hints": [
+      "为什么 HTTP/3 (QUIC) 移除了 Server Push？这说明了什么？",
+      "Preload Link Header 和 Server Push 的核心区别是什么？"
+    ],
+    "tags": [
+      "HTTP/2",
+      "Server Push",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "VPN 原理与隧道协议",
+    "content": "请解释 VPN 的核心原理和常见的隧道协议（IPSec、OpenVPN、WireGuard）的区别。对比各协议的安全性和性能特征。",
+    "answer": "VPN 核心原理：\\n- 在公共网络（互联网）上建立加密隧道，使远程客户端/站点像在私有网络中一样通信\\n- 核心组件：\\n  - 隧道协议：封装数据包（原始 IP 包 → 隧道协议包 → 外层 IP 包）\\n  - 加密机制：确保数据机密性、完整性和身份验证\\n  - 认证机制：验证通信双方身份（证书、密钥、用户名密码）\\n\\n三种常见隧道协议对比：\\n\\n1. IPSec（Internet Protocol Security）:\\n   - 工作在 IP 层（OSI Layer 3），分为传输模式（加密 Payload）和隧道模式（加密整个包）\\n   - 核心协议：IKE（密钥交换，基于 UDP 500）+ AH（认证头，不推荐）/ ESP（封装安全载荷）\\n   - 优点：标准化程度高、硬件加速支持好（路由器/防火墙内置 IPSec 模块）\\n   - 缺点：配置复杂、NAT 穿透差（需要 NAT-T 扩展）、IKE 协商握手多（慢）\\n   - 性能：中等（内核级处理，但 IKE 握手开销大）\\n\\n2. OpenVPN:\\n   - 工作在应用层（基于 TLS，通常 UDP 1194 端口）\\n   - 使用 OpenSSL 库做加密，支持自定义端口（容易伪装流量）\\n   - 优点：高度可定制、NAT/防火墙友好（UDP 单端口）、客户端/服务端证书双向认证\\n   - 缺点：用户态实现（非内核级）→ 性能上限低于 WireGuard\\n   - 性能：中等（单核通常 200-500 Mbps，受 CPU 限制）\\n\\n3. WireGuard:\\n   - 较新的 VPN 协议（Linux 内核内置，L3 层）\\n   - 设计原则：极简（~4000 行代码 vs OpenVPN ~100,000+ 行）、快速、安全现代\\n   - 加密：ChaCha20 + Poly1305（现代 AEAD 加密）\\n   - 优点：配置简单（双方交换公钥即可）、连接速度快（Noise 协议一次握手）、内核级性能\\n   - 缺点：不支持动态 IP（需要配置端点的公钥 + 端点 IP）、灵活性低于 OpenVPN\\n   - 性能：高（单核通常 1-2 Gbps，多核可线性扩展）\\n\\n性能对比（大致范围）：\\n| 协议 | 延迟 | 吞吐量（单核）| 配置复杂度 | 安全性评级 |\\n| IPSec | 中等 | 500-800 Mbps | 高 | 高 |\\n| OpenVPN | 中等 | 200-500 Mbps | 中 | 中-高 |\\n| WireGuard | 低 | 1-2 Gbps | 低 | 高 |\\n\\n安全性考虑：\\n- IPSec 配置复杂度高意味着容易配置错误（如 IKE 参数不匹配→自动降级到弱加密）\\n- WireGuard 被 Linus Torvalds 称赞并合入 Linux 内核 5.6\\n- OpenVPN 的 TLS 实现受 OpenSSL 库版本影响（Heartbleed 等历史漏洞）",
+    "hints": [
+      "WireGuard 为什么比 OpenVPN 性能高这么多？架构设计上有哪些关键差异？",
+      "IPSec 的 IKE 协商为什么会导致 NAT 穿透问题？"
+    ],
+    "tags": [
+      "VPN",
+      "网络安全",
+      "隧道协议"
+    ]
+  },
+  {
+    "category": "design_network_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "内容分发网络回源策略",
+    "content": "请解释 CDN 的回源策略。包括回源触发条件、回源方式（DNS 回源 vs 协议回源）、回源优化手段（Preheat、Range Request、分片回源）以及回源熔断机制。",
+    "answer": "CDN 回源（Origin Pull）核心概念：当 CDN 节点没有缓存资源或缓存过期时，向源站请求最新数据的动作。\\n\\n回源触发条件：\\n- 缓存未命中：资源首次被请求 / 资源被逐出 / 资源过期（TTL 到）\\n- 强制回源：客户端请求头带 Cache-Control: no-cache / Pragma: no-cache\\n- 预热不充分：虽然做了预热，但边缘节点未覆盖所有地区\\n- 状态码处理：源站返回 301/302 时 CDN 可跟随跳转继续回源\\n\\n回源方式：\\n1. DNS 回源（最常见）：CDN 节点将域名 CNAME 到源站域名，由 DNS 解析得到源站 IP\\n   - 优点：配置简单，支持多源站（DNS 轮询）\\n   - 缺点：DNS 解析延迟、DNS TTL 期间无法快速切换故障源站\\n2. 协议回源：CDN 节点直接配置源站 IP/端口列表\\n   - 优点：无需 DNS 解析，回源延迟更低\\n   - 缺点：源站 IP 变更需要手动更新 CDN 配置\\n3. 内网回源：CDN 节点与源站同机房/同云服务商（内网 IP 回源）\\n   - 优点：低延迟、高带宽、稳定\\n   - 缺点：绑定云厂商\\n\\n回源优化手段：\\n\\na) 预热（Preheat / Cache Warmer）：大促/新版本上线前主动将热门资源推送到所有 CDN 节点\\n   - 适合：静态资源（JS/CSS/图片）、配置文件、大促页面\\n\\nb) Range Request 回源（分片回源）：\\n   - CDN 节点只请求资源的一部分（如 0-1MB 的第一个分片），减少首字节时间\\n   - 适合：大文件（视频、安装包）\\n   - CDN 节点向后端发送 Range 请求，后端需支持 HTTP Range 头\\n\\nc) 合并回源（Coalescing）：同一节点对同一资源的多个请求合并为一次回源\\n   - 减少源站压力（源站只需响应一次）\\n\\n回源熔断机制：\\n- 当源站负载过高或不可用时，CDN 应该静默返回缓存中的过期资源（Stale Content），而不是传递 502 给用户\\n- 熔断条件：连续回源错误数 > 阈值（如 10 次/分钟）\\n- 熔断后行为：返回旧缓存 + response header 标记 Cache: stale\\n- 恢复：定期检查（Probe），源站恢复后再正常回源\\n- 保护源站：回源限流控制（每节点每秒回源请求数上限），防止 CDN 节点把源站打垮",
+    "hints": [
+      "回源熔断是什么——源站挂了 CDN 应该返回什么？",
+      "预热（Preheat）和回源（Pull）的区别是什么？什么场景必须预热？"
+    ],
+    "tags": [
+      "CDN",
+      "回源",
+      "性能优化"
+    ]
   }
 ]

@@ -1262,5 +1262,94 @@
       "对象布局",
       "指针压缩"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "JVM 默认最大堆内存",
+    "content": "在不设置 -Xmx 参数的情况下，JVM 默认最大堆内存为物理内存的___。当物理内存大于 192MB 时，服务器模式下默认初始堆内存为物理内存的___。",
+    "answer": "{\"correct\":[[\"1/4\",\"四分之一\",\"25%\"]],\"distractors\":[\"1/2\",\"1/8\",\"1/16\",\"1/64\",\"64%\"]}",
+    "hints": [
+      "初始堆（-Xms）的默认值与最大堆（-Xmx）不同",
+      "客户端模式（-client）和服务端模式（-server）的默认值不同"
+    ],
+    "tags": [
+      "JVM",
+      "堆内存",
+      "-Xmx"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "CMS GC 的生命周期",
+    "content": "CMS（Concurrent Mark Sweep）垃圾回收器在 JDK 9 中被标注为___，在 JDK 14 中被正式___。它的主要替代方案是___垃圾回收器。",
+    "answer": "{\"correct\":[[\"Deprecated\",\"废弃\",\"已废弃\"],[\"移除\",\"删除\",\"去掉\"],[\"G1\",\"G1 GC\",\"Garbage First\"]],\"distractors\":[\"过时\",\"淘汰\",\"Parallel\",\"ZGC\",\"Shenandoah\"]}",
+    "hints": [
+      "CMS 的缺陷包括内存碎片和 CPU 敏感——JDK 9 默认 GC 已切换",
+      "Deprecated 意味着 JDK 后续版本中可能被移除"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "CMS",
+      "Deprecated"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "JVM GC 日志参数",
+    "content": "JDK 9+ 中启用 GC 统一日志的 JVM 参数是___。JDK 8 中启用 GC 详细日志使用___参数，JDK 8 中在 GC 日志中添加时间戳用___参数。",
+    "answer": "{\"correct\":[[\"-Xlog:gc*\",\"-Xlog:gc\"],[\"-XX:+PrintGCDetails\"],[\"-XX:+PrintGCDateStamps\",\"-XX:+PrintGCTimeStamps\"]],\"distractors\":[\"-verbose:gc\",\"-Xloggc:gc.log\",\"-XX:+UseGCLogFileRotation\",\"-XX:+HeapDumpOnOutOfMemoryError\"]}",
+    "hints": [
+      "JDK 9+ 统一日志系统使用 -Xlog 前缀，旧的 PrintGCDetails 已废弃",
+      "-Xlog:gc* 中的星号表示包含所有 GC 子模块的日志"
+    ],
+    "tags": [
+      "JVM",
+      "GC日志",
+      "-Xlog",
+      "PrintGCDetails"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "字符串常量池的位置",
+    "content": "JDK 7 之前，字符串常量池位于___中。JDK 7 之后字符串常量池被移入___中。JDK 8 移除永久代后，字符串常量池仍然位于___中。",
+    "answer": "{\"correct\":[[\"永久代\",\"PermGen\"],[\"堆\",\"Java堆\",\"堆内存\"],[\"堆\",\"Java堆\",\"堆内存\"]],\"distractors\":[\"元空间\",\"Metaspace\",\"直接内存\",\"栈\",\"代码缓存\"]}",
+    "hints": [
+      "JDK 7 将字符串常量池移入堆是为了缓解永久代 OOM",
+      "JDK 8 中静态变量也移到了堆中，而非元空间"
+    ],
+    "tags": [
+      "JVM",
+      "字符串常量池",
+      "永久代",
+      "堆"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Epsilon GC 的特性",
+    "content": "Epsilon GC 是 JDK 11 引入的一种___（无操作）垃圾回收器。它不执行任何实际的___回收。当堆内存耗尽时 Epsilon GC 直接___，适用于___或性能测试。",
+    "answer": "{\"correct\":[[\"No-Op\",\"无操作\",\"NoOp\"],[\"内存\",\"垃圾\"],[\"抛出 OutOfMemoryError\",\"OOM\"],[\"短生命周期应用\",\"一次性任务\",\"短暂任务\"]],\"distractors\":[\"并行\",\"并发\",\"CMS\",\"G1\",\"暂停\",\"降级\",\"触发 Full GC\",\"长周期应用\"]}",
+    "hints": [
+      "Epsilon 的字面意思是「ε」（极小量）——暗示它的 GC 工作量几乎为零",
+      "Epsilon 适合知道不会产生垃圾或对延迟极端敏感的实验性场景"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "Epsilon",
+      "无操作"
+    ]
   }
 ]

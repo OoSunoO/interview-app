@@ -1335,5 +1335,100 @@
       "事件",
       "合成事件"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 18 useSyncExternalStore",
+    "content": "请解释React 18中useSyncExternalStore Hook的设计目的、核心用法及其解决了什么问题。",
+    "answer": "1. 设计目的：useSyncExternalStore是React 18为外部状态存储（如Redux、Zustand、Immer、第三方全局状态、浏览器APIs等）设计的官方Hook，用于安全地订阅外部状态源并保证并发模式下的正确性。它解决了外部存储与React并发渲染（Concurrent Rendering）之间的撕裂（Tearing）问题。\\n2. 核心原因——Tearing问题：\\n   - 在React 18的并发模式下，组件渲染可以被中断和重启（time slicing）；\\n   - 如果外部存储的值在渲染过程中发生了变化，同一个组件的不同渲染「帧」可能看到不同的值，导致UI不一致（tearing）；\\n   - 传统的useSubscription或手动在useEffect中订阅无法保证并发模式下的正确性；\\n   - useSyncExternalStore强制外部状态在React的渲染时间片中保持同步（synchronous external snapshot），确保同一渲染周期内所有组件看到的值一致。\\n3. API签名与用法：\\n   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot?)；\\n   - subscribe: (onStoreChange: () => void) => () => void——订阅函数，接收一个回调，当外部状态变化时调用该回调触发React重新渲染。返回清除订阅的函数；\\n   - getSnapshot: () => T——返回当前状态的快照。必须是一个纯函数，同一状态必须返回同一引用（===）。React用它获取当前状态值，并在re-render时比较前后快照；\\n   - getServerSnapshot（可选）——服务端渲染时使用的快照值；\\n   - 返回值T——当前快照值，是并发安全的。\\n4. 示例——订阅浏览器在线状态：\\n   function useOnlineStatus() {\\n     return useSyncExternalStore(\\n       callback => { window.addEventListener(「online」, callback); window.addEventListener(「offline」, callback); return () => { window.removeEventListener(「online」, callback); window.removeEventListener(「offline」, callback); }; },\\n       () => navigator.onLine,\\n       () => true // 服务器端默认认为在线\\n     );\\n   }\\n5. React内部实现机制：\\n   - React在渲染期间调用getSnapshot获取当前值；\\n   - 如果后续渲染中getSnapshot返回的值与之前不同（通过Object.is比较），React会在store上标记为「有未处理的更新」；\\n   - React在commit阶段之前强制重新渲染组件以确保UI一致性；\\n   - 在并发渲染中如果检测到外部状态变化，React会废弃当前渲染并重新开始。\\n6. 与class组件的componentDidMount/componentWillUnmount订阅模式的区别：\\n   - 旧模式：手动订阅、手动setState触发更新、手动比较快照、清理时需要取消订阅；\\n   - 新模式：统一接口、自动触发re-render、自动处理并发安全、自动清理。\\n7. 适配外部store的最佳实践：\\n   - Redux已内部集成useSyncExternalStore（通过React-Redux v8）；\\n   - Zustand v4+已使用useSyncExternalStore；\\n   - 任何自定义store，如果想兼容React 18并发模式，都应该使用useSyncExternalStore。\\n8. 性能优化策略：\\n   - 使用shallow comparison（浅比较）在subscribe中防止不必要的re-render；\\n   - 在getSnapshot中返回memoized/invariant的引用，避免返回新对象导致无限循环。",
+    "hints": [
+      "记住useSyncExternalStore的核心价值：在并发模式下保证「所有组件在同一个渲染周期内看到的外部状态是一致的」——这就是同步（sync）的含义",
+      "subscribe负责告诉React「什么时候需要重新检查快照」，getSnapshot负责「返回当前值并让React检查是否变化」——两个函数各司其职"
+    ],
+    "tags": [
+      "React",
+      "useSyncExternalStore",
+      "并发模式",
+      "外部状态",
+      "Tearing"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React Server Components 流式渲染",
+    "content": "请解释React Server Components（RSC）的流式渲染（Streaming）原理及其相比传统SSR的优势。",
+    "answer": "1. RSC架构概述：React Server Components是一种由React 18+支持的组件架构模式，允许组件在服务器端渲染，其返回的是一种称为RSC Payload的特殊数据格式（一种序列化的React元素树，包含虚拟DOM描述和指令），而非传统的HTML字符串。\\n2. 流式渲染（Streaming Rendering）原理：\\n   - 服务器不再等待所有数据准备完毕再一次性返回整个HTML，而是将渲染结果分块（chunks）通过HTTP/1.1的分块传输编码（Chunked Transfer Encoding）或HTTP/2的流式响应发送给客户端；\\n   - 每个chunk包含一个React元素子树的信息（包括Suspense边界的状态、fallback内容的转变点等）；\\n   - 客户端逐步接收chunk并逐步渲染UI，不需要等待整个页面完成；\\n   - 使用< Suspense >划分流式边界——服务器可以快速发送Suspense包裹的fallback内容（如骨架屏），当对应数据到达后再发送真正的组件内容替换fallback。\\n3. RSC Payload格式（非HTML）：\\n   - RSC不直接返回HTML字符串，而是返回一个序列化的虚拟DOM树（React Element Tree），包括元素类型、props、children、以及M:N的客户端组件引用；\\n   - 该Payload可以直接被React Reconciler消费，客户端不需要解析HTML；\\n   - 格式示例：每行是一个JSON-like的指令元组（如I: id表示import指令，J: [type,props]表示React元素节点，S: fallback表示Suspense边界标记）。\\n4. 流式渲染的过程（以Next.js App Router为例）：\\n   - 请求到达后，服务器立即读取布局（Layout）的RSC Payload并开始流式发送（包括Shell部分）；\\n   - 当Suspense内的Server Components开始数据获取时，先发送其fallback的RSC Payload；\\n   - 数据获取完成后，服务器渲染对应的Server Components并发送替换fallback的payload流（streaming content replacement）；\\n   - 客户端React Reconciler接收每个chunk并逐步更新DOM——fallback被替换为实际内容，不需要重新渲染整个页面。\\n5. 与传统SSR的对比优势：\\n   - TTFB（首字节时间）更低：传统SSR需要等待所有数据获取完毕才开始发送HTML，RSC可以在数据准备好前就开始发送布局shell；\\n   - First Paint更快：浏览器逐步接收HTML并渲染，用户不必面对白屏；\\n   - 选择性注水（Selective Hydration）：RSC允许客户端逐步注水——不同的Suspense边界可以独立注水，不需要等待所有JS加载完成；\\n   - 带宽节省：RSC Payload比传统HTML+JS Bundle更轻量，因为Server Components的代码不会发送到客户端；\\n   - 零客户端JS：Server Components的代码完全不包含在客户端Bundle中（但Client Components仍会打包到客户端）。\\n6. 关键技术细节：\\n   - Next.js通过Web Streams API（ReadableStream）实现流式传输；\\n   - 客户端使用renderToPipeableStream（Node.js）或renderToReadableStream（Edge Runtime）消费RSC流；\\n   - 流式渲染期间，错误边界（Error Boundary）可以在流级别捕获并发送错误替换chunk。\\n7. 限制与注意事项：\\n   - RSC不能使用客户端Hooks（useState、useEffect等），不能使用浏览器API；\\n   - RSC的Props必须是可序列化的（不能传函数、回调）；\\n   - 流式渲染需要运行环境支持流式传输（某些CDN/代理可能不支持或缓冲整个响应）。",
+    "hints": [
+      "把流式渲染想象成「边做菜边上菜」——以前的SSR是「所有菜做好了一起上桌」，RSC是说「先上凉菜让客人吃着，热菜慢慢上」",
+      "RSC Payload不是HTML而是React元素的序列化格式——这意味着客户端接收数据后直接进入React Reconciler处理，没有HTML解析→DOM构建的过程"
+    ],
+    "tags": [
+      "RSC",
+      "流式渲染",
+      "React Server Components",
+      "SSR",
+      "Next.js"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 错误边界 componentDidCatch",
+    "content": "请解释React错误边界（Error Boundary）的实现机制，以及componentDidCatch和getDerivedStateFromError两个生命周期方法的区别。",
+    "answer": "1. 错误边界的作用：React错误边界是一种React组件，用于捕获其子组件树中抛出的JavaScript错误（主要指渲染期间的生命周期方法、构造函数、事件处理中的错误），记录错误日志并显示fallback UI，防止整个应用崩溃白屏。\\n2. 实现方式（class组件特有）：\\n   - 错误边界目前只能通过class组件实现（React Hooks中没有直接等价的功能）；\\n   - 需要在class组件中定义componentDidCatch(error, info)和/或getDerivedStateFromError(error)生命周期方法；\\n   - 只有定义了这些方法的class组件才成为错误边界。\\n3. componentDidCatch(error, info)：\\n   - 在commit阶段触发（已提交到DOM后），因此可以在回调中执行副作用（如发送错误报告到监控服务）；\\n   - 参数：error（抛出的错误对象），info.componentStack（包含组件栈追踪信息，显示哪个组件抛出了错误）；\\n   - 用于日志记录和错误报告，不应该在这里修改state（如果需要显示fallback UI，应该使用getDerivedStateFromError）；\\n   - 因为在commit阶段执行，理论上可以进行setState（React允许但在同一commit中不会立即生效，会触发下一次渲染）。\\n4. getDerivedStateFromError(error)：\\n   - 在render阶段触发（在错误发生时立即调用），是一个静态方法（static）；\\n   - 参数：error（抛出的错误对象）；\\n   - 返回值：应返回一个state更新对象（如{ hasError: true }），用于更新错误边界组件的内部状态以显示fallback UI；\\n   - 因为是静态方法，没有this访问，不能执行副作用（如日志记录）；\\n   - 因为是在render阶段触发，不影响commit性能。\\n5. 生命周期执行顺序：\\n   - 子组件树中抛出错误时，React捕获错误；\\n   - 首先调用getDerivedStateFromError(error)返回新的state对象；\\n   - 然后触发错误边界组件的重新渲染（使用更新后的state）；\\n   - 渲染完成后，在commit阶段调用componentDidCatch(error, info)用于日志记录。\\n6. 错误边界捕获错误的范围：\\n   - 能捕获：render生命周期中的错误、componentDidMount/componentDidUpdate/componentWillUnmount中的错误、构造函数中的错误；\\n   - 不能捕获：事件处理中的错误（需要自己用try/catch）、异步代码中的错误（setTimeout/Promise的catch/resolve中）、服务端渲染中抛出的错误、错误边界自身的错误（需要在上层嵌套另一个错误边界）。\\n7. 最佳实践：\\n   - 在应用的根级别放置一个全局错误边界（通用fallback UI + 错误上报）；\\n   - 在独立的功能模块（如侧边栏、主内容区、弹窗）各自放置错误边界，一个模块崩溃不影响其他模块；\\n   - 结合Suspense使用——Suspense处理加载状态，Error Boundary处理错误状态；\\n   - 使用react-error-boundary库（社区封装，通过useErrorBoundary Hook提供声明式API）。\\n8. Hook方式的替代方案：\\n   - React官方暂无Hooks版本的内置错误边界；\\n   - 社区方案：react-error-boundary提供了<ErrorBoundary FallbackComponent={...}>和useErrorBoundary Hook的封装；\\n   - 也可使用class组件包裹Hooks组件，class组件负责错误捕获，内部使用Hooks组件。",
+    "hints": [
+      "记住这两个方法的职责分离：getDerivedStateFromError管「展示什么」（更新state显示fallback UI），componentDidCatch管「记录什么」（发送错误日志）",
+      "错误边界只能捕获生命周期中的错误。事件处理中的错误需要自己用try/catch处理"
+    ],
+    "tags": [
+      "React",
+      "错误边界",
+      "componentDidCatch",
+      "异常处理",
+      "生命周期"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React forwardRef 与 useImperativeHandle",
+    "content": "请解释React中forwardRef和useImperativeHandle的作用、使用方式以及它们的配合关系。",
+    "answer": "1. forwardRef的作用：forwardRef是React提供的一个高阶组件（HOC），用于将ref从父组件传递（转发）给子组件中的某个具体DOM元素或组件实例。React的函数组件默认不接受ref属性（因为函数组件没有实例），forwardRef允许函数组件接收第二个参数ref，使其能够「接住」父组件传递的ref。\\n2. forwardRef的使用方式：\\n   const MyInput = forwardRef((props, ref) => {\\n     return <input ref={ref} {...props} />;\\n   });\\n   // 父组件使用\\n   const ref = useRef(null);\\n   <MyInput ref={ref} />;\\n   ref.current.focus(); // 直接操作子组件内的input元素\\n3. forwardRef的常见场景：\\n   - 聚焦控制：父组件需要控制子组件内某个输入框的聚焦（如表单验证后聚焦到错误字段）；\\n   - 动画/过渡库：父组件需要访问子组件的DOM元素执行动画（如framer-motion）；\\n   - 第三方库集成：需要将DOM引用传递给第三方库（如D3图表挂载点）；\\n   - 测量尺寸和位置：父组件需要测量子组件内特定元素的尺寸。\\n4. useImperativeHandle的作用：\\n   - 配合forwardRef使用，在子组件中自定义暴露给父组件ref的实例值（ref.current）的内容；\\n   - 通常是为了限制父组件对子组件内部DOM的直接访问权限，只暴露「需要暴露」的方法和属性；\\n   - 是封装内部实现细节的关键手段。\\n5. useImperativeHandle的使用方式：\\n   const MyInput = forwardRef((props, ref) => {\\n     const inputRef = useRef(null);\\n     useImperativeHandle(ref, () => ({\\n       focus: () => inputRef.current.focus(),\\n       scrollToTop: () => inputRef.current.scrollIntoView({ behavior: 'smooth' }),\\n       validate: () => inputRef.current.checkValidity(),\\n       value: props.value, // 也可以暴露属性\\n     }), [props.value]); // 依赖数组，类似useEffect\\n     return <input ref={inputRef} {...props} />;\\n   });\\n   // 父组件只能使用ref.current.focus()、ref.current.scrollToTop()，而不能直接操作input元素本身\\n6. useImperativeHandle的依赖管理：\\n   - 第三个参数是依赖数组（deps），类似useEffect的依赖管理；\\n   - 当依赖变化时，回调函数会重新执行，更新暴露的实例值；\\n   - 如果不提供依赖数组，回调会在每次渲染时执行（可能造成不必要的对象重建）；\\n   - 如果依赖数组为空（[]），暴露的实例值在整个生命周期内不会更新。\\n7. 配合关系与最佳实践：\\n   - forwardRef是基础设施（提供ref转发的通道），useImperativeHandle是安全阀门（控制ref的内容）；\\n   - 优先使用声明式props而非命令式ref：能用state/props控制的行为尽量不用ref暴露方法；\\n   - ref是一种「逃生舱口」（Escape Hatch），不要过度使用；\\n   - 在UI库/组件库中（如Ant Design、Radix UI），多数受控组件会结合forwardRef和useImperativeHandle暴露验证、聚焦等命令式方法。\\n8. TypeScript中的类型定义：\\n   - forwardRef配合泛型：MyInput = forwardRef<MyHandle, MyProps>((props, ref) => ...)\\n   - MyHandle定义useImperativeHandle暴露的实例类型（{ focus(): void; validate(): boolean }等）；\\n   - 父组件useRef<MyHandle>(null)获得正确的类型推断。",
+    "hints": [
+      "forwardRef是「把ref递到子组件内部」的通道，useImperativeHandle是「控制ref递进去后暴露什么出来」的守门员——两个一起用才完整",
+      "能不用ref就不用ref——ref是对React声明式编程范式的「逃逸」，只应该在焦点管理、尺寸测量、动画集成等命令式场景使用"
+    ],
+    "tags": [
+      "React",
+      "forwardRef",
+      "useImperativeHandle",
+      "ref",
+      "组件封装"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 并发模式下的 Suspense",
+    "content": "请解释React 18并发模式（Concurrent Mode/Concurrent Features）下Suspense的工作机制及其与非并发模式下Suspense的区别。",
+    "answer": "1. React 18之前的Suspense：\\n   - 仅支持React.lazy()的动态加载场景（code splitting）；\\n   - 当组件还未加载完成时显示fallback内容；\\n   - 不支持数据获取——社区方案（如Relay、SWR、React Query的Suspense模式）是框架自身模拟的，React核心并未原生支持数据获取的Suspense；\\n   - Suspense一旦触发fallback，子树全部消失并重新从头渲染（会导致已挂载的子组件卸载后重新挂载）。\\n2. React 18并发模式下Suspense的新能力：\\n   - 数据获取Suspense：配合Suspense-enabled的数据框架（如Relay、SWR、React Query v5+、Next.js App Router的Server Components），Suspense可以在数据获取期间显示fallback；\\n   - 流式Suspense：在服务器端流式渲染中，Suspense边界可以逐块发送——每个Suspense边界的fallback和实际内容可以独立流式传输（Next.js App Router的核心机制）；\\n   - 选择性注水（Selective Hydration）：客户端可以按Suspense边界逐个注水，注水顺序由用户交互决定（点击了哪个交互区域，那个区域的Suspense优先注水）。\\n3. 并发模式的核心机制——可中断渲染：\\n   - React 18在并发模式下启动渲染时，不会一次性完成整个渲染工作，而是将渲染工作拆分为可中断的单位（work units）；\\n   - 当Suspense包裹的组件挂起（throw a Promise），React不会丢弃已经渲染的树，而是「记住」当前的渲染进度，挂起该部分，显示fallback；\\n   - 当数据或代码就绪后，React恢复被挂起的渲染，从之前中断的地方继续，不会从头渲染；\\n   - 这个过程被称为Transition-based Suspense。\\n4. Suspense的行为机制（旧的和新的）：\\n   - 当子组件抛出（throw）一个Promise时，React从最近的Suspense边界上寻找fallback；\\n   - 在React 18 Legacy模式（非并发）中，首次渲染遇到Suspense时，会立刻丢弃子组件树渲染，直接用fallback替换——这意味着组件内部的useEffect等副作用已经被触发；\\n   - 在React 18并发模式中，如果Suspense触发了，React会保留之前已经渲染的Sibling组件，只显示Suspense内的fallback，隐藏子组件树。已渲染的子树保持在内存中（但不显示），不会卸载。当Promise resolve后，恢复渲染并通过DOM diff最小化更新。\\n5. React 18中的useTransition与Suspense配合：\\n   - startTransition()将状态更新标记为低优先级过渡（Transition）；\\n   - 当Transition更新导致一个Suspense边界被触发时，React不丢弃旧的屏幕（旧屏幕是之前渲染好的），而是保持旧屏幕可见，直到新内容就绪后再切换到新内容（不会出现闪烁fallback == 旧屏幕闪现fallback → 新内容）；\\n   - 这个机制称为「挂起旧内容避免回退到fallback」——这是并发模式下Suspense的行为改进。\\n6. Suspense边界嵌套与优先级：\\n   - Suspense边界可以嵌套，外层Suspense的fallback在内部Suspense全部就绪之前显示；\\n   - 不同Suspense边界可以具有不同的优先级，高优先级的Suspense可以「跳过」等待低优先级的Suspense；\\n   - 在Next.js中，Suspense边界相当于流式传输中的「分块边界」——每个边界的内容可以独立流式到达客户端。\\n7. 注意事项与陷阱：\\n   - Suspense目前不能配合事件处理使用（事件处理中的setState不会由Suspense接管）；\\n   - 过多的Suspense边界会导致过度拆分和性能问题；\\n   - 没有Suspense包裹的区域如果抛出错误，错误会冒泡到应用顶层（建议配合Error Boundary使用）。",
+    "hints": [
+      "并发模式下Suspense的核心改进是「可恢复」——旧Suspense触发后会卸载子树重新挂载，新Suspense在数据就绪后从挂起点恢复渲染，不会丢失内部状态",
+      "Legacy Suspense = 「要么显示内容要么显示fallback，来回切换」；Concurrent Suspense = 「保持当前内容直到新内容就绪，平滑过渡」"
+    ],
+    "tags": [
+      "React",
+      "Suspense",
+      "并发模式",
+      "流式渲染",
+      "Transition"
+    ]
   }
 ]

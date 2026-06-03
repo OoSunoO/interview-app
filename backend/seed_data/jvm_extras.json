@@ -1363,5 +1363,101 @@
       "指针压缩",
       "内存布局"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "G1 GC 的年轻代与老年代回收流程",
+    "content": "请详细描述 G1 GC 的年轻代回收（Young GC）和混合回收（Mixed GC）的完整流程。Region、RSet、SATB 分别在其中起什么作用？",
+    "answer": "答案：G1 GC 的回收分为 Young GC 和 Mixed GC 两大类。Young GC 在 Eden Region 用满时触发，Mixed GC 在并发标记完成后对年轻代和高价值老年代 Region 一起回收。\n\n解析：1）Region——G1 将堆划分为约 2048 个大小相等的 Region（1-32MB），每个 Region 可以是 Eden、Survivor、Old 或 Humongous（大对象 Region）。G1 不要求物理连续，逻辑上分代。2）Young GC——当所有 Eden Region 用满时触发。将所有 Eden Region 中的存活对象复制到 Survivor Region，同时部分 Survivor 对象晋升到 Old Region。这个过程是 STW（Stop-The-World）的，但通过 RSet 只扫描与年轻代有关联的 Old Region 引用，避免全堆扫描。3）RSet（Remembered Set）——每个 Region 维护一个 RSet，记录其他 Region 对当前 Region 的引用。Young GC 时，只需扫描 GC Roots + RSet，就可以确定哪些 Old Region 中的对象引用了 Eden 中的对象。RSet 使用写屏障（Write Barrier）维护引用变更，用卡表（Card Table）精细化管理引用粒度。4）SATB（Snapshot At The Beginning）——G1 的并发标记算法。并发标记开始时记录对象图快照（逻辑快照），并发期间新分配的对象标记为黑色（存活）。通过写屏障记录被覆盖引用的旧对象，在 Remark 阶段重新处理。5）Mixed GC——并发标记完成后，G1 计算每个 Old Region 的垃圾回收价值（存活率低的 Region 收益大），选择一批高收益 Old Region + 全部 Eden Region 一起回收。Mixed GC 也是 STW 的，会分多次进行（默认最多 8 次，-XX:G1MixedGCCountTarget），以避免单次停顿过长。\n\n扩展延伸：G1 的 Full GC——当 Mixed GC 回收速度跟不上对象分配速度时（Humongous 分配失败或老年代满），G1 退化为 Serial Old 做单线程 Full GC（极长 STW）。G1 适合大堆（4GB+）和可预期停顿（200ms 左右）的场景。小堆（<4GB）使用 Parallel GC 吞吐量更高。G1 的 RSet 也带来额外内存开销（约堆大小的 5-20%）。",
+    "hints": [
+      "G1 的 Young GC 是在所有 Eden Region 用满时触发，不是定时触发",
+      "Mixed GC 选择 Old Region 的标准是垃圾价值——存活率越低越优先回收"
+    ],
+    "tags": [
+      "JVM",
+      "GC",
+      "G1",
+      "Region",
+      "RSet"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JVM 堆外内存管理（DirectBuffer 与 Cleaner）",
+    "content": "请解释 Java 堆外内存的分配和回收机制。DirectByteBuffer 如何分配堆外内存？Cleaner 机制是如何工作的？堆外内存为什么可能导致 OOM？",
+    "answer": "答案：堆外内存（Off-Heap Memory）是 JVM 堆之外由操作系统直接分配的内存。DirectByteBuffer 通过 Unsafe.allocateMemory() 分配堆外内存，通过 Cleaner 机制（基于 PhantomReference）在 DirectByteBuffer 对象被 GC 回收后自动释放。堆外内存不受 JVM 堆大小（-Xmx）控制，由 -XX:MaxDirectMemorySize 限制（默认等于 Xmx）。\n\n解析：1）分配过程——ByteBuffer.allocateDirect(capacity) 创建 DirectByteBuffer，构造器内部调用 Bits.reserveMemory() 检查 MaxDirectMemorySize 配额，然后通过 Unsafe.allocateMemory() 在堆外分配内存，记录分配地址和大小到 DirectByteBuffer 实例（堆上的一个小对象）。2）回收机制——DirectByteBuffer 构造时关联一个 Cleaner 对象（Cleaner 继承 PhantomReference）。当 DirectByteBuffer 对象不可达时，GC 将其关联的 Cleaner 加入 ReferenceQueue。Reference Handler 线程（高优先级 daemon 线程）处理 ReferenceQueue，调用 Cleaner.clean() → 最终调用 Unsafe.freeMemory(address) 释放堆外内存。3）堆外内存 OOM——DirectByteBuffer 对象本身很小（几十字节），但引用的堆外内存可能很大。GC 只看到堆上的小对象，如果 DirectByteBuffer 对象 GC 不及时（堆内存充足不触发 GC），堆外内存可能持续分配直到超过 MaxDirectMemorySize，抛出 OutOfMemoryError: Direct buffer memory。\n\n扩展延伸：堆外内存的优势——1）减少 GC 压力：生命周期长的数据放堆外，不被 GC 扫描。2）减少内存拷贝：NIO 直接读写堆外内存，避免堆内→堆外的中间拷贝。3）突破堆大小限制：堆外内存使用系统内存，不受 -Xmx 限制。Netty 的优化——Netty 使用 PooledByteBufAllocator 对 DirectByteBuffer 池化管理（分配/释放复用），显著减少堆外内存分配开销。排查工具：NMT（Native Memory Tracking，-XX:NativeMemoryTracking=summary）可查看堆外内存使用；jcmd PID VM.native_memory summary；pmap -x PID 查看进程内存映射。",
+    "hints": [
+      "DirectByteBuffer 对象很小，但其引用的堆外内存可能很大——这是堆外内存 OOM 的根本原因",
+      "Netty 使用 PooledByteBufAllocator 池化 DirectBuffer 以减少分配和释放开销"
+    ],
+    "tags": [
+      "JVM",
+      "堆外内存",
+      "DirectByteBuffer",
+      "Cleaner",
+      "NIO"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "JIT 编译层次：C1 vs C2 vs Graal JIT",
+    "content": "请详细解释 JVM 的 JIT 编译层次。C1（Client Compiler）和 C2（Server Compiler）有什么区别？Graal JIT Compiler 与 C1/C2 有什么不同？分层编译是如何工作的？",
+    "answer": "答案：C1（Client Compiler）编译速度快但优化程度低，适合对启动速度敏感的客户端应用。C2（Server Compiler）编译速度慢但优化深度大，适合追求峰值性能的服务端应用。Graal JIT 是用 Java 编写的 JIT 编译器，支持与 C2 同等甚至更强的优化，并且可扩展性更好。分层编译（Tiered Compilation，JDK 7u4+ 默认）结合三者优势：解释执行 → C1（轻量编译 + profiling）→ C2（深度优化）。\n\n解析：1）C1（Client Compiler）——基于 HIR（High-Level Intermediate Representation）做简单优化：方法内联（不超过 35 字节）、常量折叠、去虚拟化等。编译速度快（毫秒级），但生成的代码质量一般。适合桌面应用或短生命周期应用。2）C2（Server Compiler）——基于理想图（Ideal Graph，Sea-of-Nodes IR）做激进优化：完整逃逸分析、标量替换、锁消除、循环优化（展开/向量化）、递归优化等。编译速度慢（可能秒级甚至更久），但代码质量极高。C2 会收集完整的 profiling 数据指导优化决策。C2 的代码复杂度极高，被社区称为「The Great Oracle Monster」。3）Graal JIT——用 Java 自举实现的 JIT 编译器（JVMCI，JVM Compiler Interface，JDK 9+）。与 C2 同等级优化能力，但架构更清晰、更可维护。优势：可内联跨语言调用（Truffle 框架）、更激进的 partial escape analysis、更早的编译调度策略。在 JDK 16+ 可通过 -XX:+UseGraalJIT 启用（实验性）。4）分层编译（Tiered Compilation）共 5 层——第 0 层：解释执行（不编译）；第 1 层：简单 C1（基础优化，不 profiling）；第 2 层：受限 C1（部分 profiling）；第 3 层：完整 C1（全部 profiling）；第 4 层：C2（基于 profiling 数据做激进优化）。方法调用次数达到阈值后逐层升级。\n\n扩展延伸：编译阈值的动态调整——-XX:TierXCompileThreshold 控制各层的编译触发阈值。JIT 的激进优化可能因假设不成立而需要去优化（Deoptimization，退回解释执行再重新编译）。GraalVM 将 Graal JIT 用于 Native Image 的 AOT 编译，运行时不需要 JIT 编译器。Graal JIT 相比 C2 的主要优势是新优化技术的迭代速度（C2 的代码极其复杂，修改风险大）。",
+    "hints": [
+      "C1 编译快但代码质量低，C2 编译慢但代码质量极高",
+      "Graal JIT 用 Java 自实现，可扩展性优于 C2，但当前默认仍使用 C2"
+    ],
+    "tags": [
+      "JVM",
+      "JIT",
+      "C1",
+      "C2",
+      "Graal",
+      "分层编译"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Class 文件的常量池结构",
+    "content": "请解释 Java Class 文件中常量池（Constant Pool）的组成结构。常量池中主要包含哪些类型的常量？常量池在类加载过程中如何被解析为直接引用？",
+    "answer": "答案：常量池（Constant Pool）是 Class 文件中最重要的资源仓库，存放字面量（Literal）和符号引用（Symbolic Reference）。结构上位于 Class 文件的魔数（Magic Number）和版本号之后，由常量池计数器和常量池表组成。常量池索引从 1 开始（0 保留表示「不引用任何常量」）。\n\n解析：1）常量池表——每个条目有一个 tag 标志类型（1 字节），后跟具体数据。主要类型：CONSTANT_Utf8（tag=1，字符串常量，使用改进的 UTF-8 编码，这是最基础的常量类型）、CONSTANT_Integer（tag=3，int 常量）、CONSTANT_Float（tag=4）、CONSTANT_Long（tag=5，占两个槽位）、CONSTANT_Double（tag=6，占两个槽位）、CONSTANT_Class（tag=7，类或接口的符号引用，指向 CONSTANT_Utf8）、CONSTANT_String（tag=8，字符串对象引用，指向 CONSTANT_Utf8）、CONSTANT_Fieldref（tag=9）、CONSTANT_Methodref（tag=10）、CONSTANT_InterfaceMethodref（tag=11）、CONSTANT_NameAndType（tag=12，字段或方法名+描述符）、CONSTANT_MethodHandle（tag=15，JDK 7+）、CONSTANT_MethodType（tag=16）、CONSTANT_InvokeDynamic（tag=18）。2）符号引用——当代码引用一个类、字段或方法时，编译后的字节码指令（如 ldc、invokevirtual）中存储的是常量池索引（符号引用），而非直接内存地址。符号引用包括：类的全限定名、字段名和描述符、方法名和描述符。3）解析过程——类加载的「解析」阶段（可能在初始化之前或之后），JVM 将常量池中的符号引用替换为直接引用（内存地址或偏移量）。例如 CONSTANT_Class 解析为类的方法区内存地址，CONSTANT_Methodref 解析为方法表的偏移量。\n\n扩展延伸：常量池与运行时常量池——Class 文件中的常量池是静态数据，加载到方法区后成为运行时常量池（Runtime Constant Pool），此时可动态添加新常量（如 String.intern() 添加的字符串）。常量池的内存开销——大型 Class 文件（如包含大量字符串的代码）的常量池可能很大。JDK 7+ 将运行时常量池从永久代移到堆中。查看工具：javap -verbose ClassName 可查看 Class 文件的常量池内容。",
+    "hints": [
+      "常量池索引从 1 开始，0 保留表示不引用任何常量",
+      "CONSTANT_Utf8 存储字符串内容，CONSTANT_String 引用 CONSTANT_Utf8（两者分离）"
+    ],
+    "tags": [
+      "JVM",
+      "Class文件",
+      "常量池",
+      "字节码",
+      "符号引用"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "-XX:MaxMetaspaceSize 与元空间回收",
+    "content": "请解释 JVM 元空间（Metaspace）的回收机制。-XX:MaxMetaspaceSize 参数的作用是什么？元空间不足时 JVM 会怎么处理？什么情况下会发生元空间泄漏？",
+    "answer": "答案：元空间（Metaspace）是 JDK 8 替代永久代（PermGen）的类元数据存储区域，使用本地内存（Native Memory）而非 JVM 堆内存。-XX:MaxMetaspaceSize 限制元空间最大使用量（默认无上限）。元空间回收的触发条件是类加载器变为不可达——当 ClassLoader 可被 GC 时，其加载的所有类的元数据才可被回收。\n\n解析：1）内存模型——元空间使用本地内存，默认无上限（只受系统物理内存限制）。元空间内部使用 Chunk 分配器：从系统内存分配大的 Chunk（多个连续的 64KB 块），内部切割为 Block 分配给各个类加载器。类加载器卸载时，整个 Chunk 被回收（无需遍历单个类的元数据）。2）回收条件——元空间回收本质是类卸载（Class Unloading）。类卸载的条件苛刻：该类所有实例已被回收、加载该类的 ClassLoader 已被回收、该类对应的 java.lang.Class 对象没有在任何地方被引用。这三个条件全部满足时，类的元数据才能被回收。3）MaxMetaspaceSize 的作用——设置元空间上限。如果在使用过程中达到上限，JVM 会触发 Full GC 尝试回收类元数据。如果 Full GC 后元空间使用率仍未下降（类的元数据无法被回收），JVM 抛出 OutOfMemoryError: Metaspace。即使 MaxMetaspaceSize 未设置，JVM 也有内部阈值（-XX:MetaspaceSize，默认约 20MB），首次触发元空间 GC。之后根据空闲比例动态调整阈值。\n\n扩展延伸：元空间泄漏的典型场景——1）热部署/动态类生成：如 Spring Boot DevTools 频繁重启、CGLib 动态代理大量生成类、Groovy 等动态语言在运行时动态加载类。每次部署/调用产生新的 ClassLoader，不断累积的类元数据撑满元空间。2）排查方法：-XX:+TraceClassLoading 和 -XX:+TraceClassUnloading 查看类加载/卸载情况。如果类加载数量不断增长而卸载数为 0，说明存在泄漏。jstat -gc PID 的 MU 列显示元空间使用量，列 MC 显示元空间容量。3）调优建议：MaxMetaspaceSize 建议设置上限（避免无限膨胀导致操作系统 OOM Killer），但不宜过小（否则频繁触发 Full GC）。线上建议 256MB-512MB 作为起点。通过 jstat 观察元空间使用率后调整。",
+    "hints": [
+      "元空间回收必须满足类加载器可被 GC——三个条件缺一不可",
+      "MaxMetaspaceSize 不设置时默认无上限，但不代表不会触发 GC"
+    ],
+    "tags": [
+      "JVM",
+      "元空间",
+      "MaxMetaspaceSize",
+      "类卸载",
+      "内存管理"
+    ]
   }
 ]

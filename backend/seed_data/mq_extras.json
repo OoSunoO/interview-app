@@ -1367,5 +1367,96 @@
       "Exactly-Once",
       "事务"
     ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Kafka 幂等性 producer 状态机",
+    "content": "解释 Kafka 幂等性 Producer 的状态机和序列号（Sequence Number）机制。Producer ID（PID）和序列号如何生成的？Broker 如何检测和去重？OutOfOrderSequenceException 什么情况下触发？",
+    "answer": "Kafka 幂等性 Producer（enable.idempotence=true）通过 PID + 序列号机制实现精确一次投递。\\n\\n核心组件：\\n- PID（Producer ID）：每个 Producer 实例分配一个唯一 ID（从 Transaction Coordinator 获取）。\\n- Sequence Number：每个 Producer 维护每个分区单调递增的序列号（从 0 开始）。\\n\\nBroker 端去重逻辑：\\n每个 Broker 维护每个 PID + Partition 的 Producer 状态（Producer State），包括：\\n- 当前预期序列号（expectedSeq = 已确认的最大序列号 + 1）。\\n- 最后 5 个（由 max.in.flight.requests.per.connection 决定）已确认的序列号缓存。\\n\\n状态机决策：\\n1. seq == expectedSeq → 正常接受，写入日志。\\n2. expectedSeq - 5 <= seq < expectedSeq → 重试的重复请求，返回已成功的响应（幂等去重）。\\n3. seq > expectedSeq + 1 → 序列号跳跃，拒绝并抛出 OutOfOrderSequenceException（数据丢失风险）。\\n4. seq < expectedSeq - 5 → 旧的重复请求超出缓存范围，返回致命错误（需重置 Producer）。\\n\\n注意事项：\\n- 幂等性只能保证单分区内的精确一次投递。\\n- 跨分区事务需要配合 Kafka Transactions 使用。\\n- max.in.flight.requests.per.connection 在幂等模式下最多为 5（保证顺序）。\\n- Producer 重启后 PID 会变化（除非手动配置 transactional.id），之前状态的去重可能失效。",
+    "hints": [
+      "Broker 如何区分「新消息」和「重试的重复消息」",
+      "幂等性 Producer 重启后还能去重吗"
+    ],
+    "tags": [
+      "Kafka",
+      "幂等性",
+      "Producer",
+      "状态机"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "RabbitMQ 死信队列",
+    "content": "解释 RabbitMQ 的死信队列（Dead Letter Queue / Dead Letter Exchange）机制。什么情况下消息会成为死信？如何配置 DLX 和 DLK？如何处理死信无限循环的问题？",
+    "answer": "RabbitMQ 死信队列机制：\\n\\n死信产生三种条件：\\n1. TTL 过期：消息设置了 TTL（per-message TTL 或 per-queue TTL），超时后未被消费。\\n2. 队列长度超限：队列达到 x-max-length 或 x-max-length-bytes，最早的消息被死信处理。\\n3. 消费者拒绝：消费者 basic.nack 或 basic.reject 且 requeue=false。\\n\\n配置方式：\\n- 声明队列时设置 x-dead-letter-exchange 参数指定死信交换机。\\n- 可选 x-dead-letter-routing-key 参数指定死信路由键（默认使用原 routing key）。\\n- 例如：Map args = new HashMap(); args.put(「x-dead-letter-exchange」, 「dlx.exchange」);\\n\\n死信消息属性：\\n- 保留原始消息体和 headers。\\n- 系统添加 x-death 数组：包含被死信的原因、时间、次数等元数据。\\n- 可通过 x-death 信息追踪消息的死信链路。\\n\\n无限循环问题：\\n- 如果死信交换机的路由规则将消息重新路由回原队列，会形成死循环。\\n- 解决方案：\\n  1. 确保 DLX 绑定的队列与原始队列不同。\\n  2. 在死信队列消费者中实现重试次数限制（基于 x-death 计数）。\\n  3. 达到最大次数后，转发到「最终死信队列」（parking lot queue）。",
+    "hints": [
+      "死信消息的 x-death header 记录了什么信息",
+      "如何防止死信消息在队列间无限循环"
+    ],
+    "tags": [
+      "RabbitMQ",
+      "死信队列",
+      "DLX",
+      "消息"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Pulsar 分层存储",
+    "content": "解释 Apache Pulsar 的分层存储（Tiered Storage）架构。数据如何从 BookKeeper 卸载（Offload）到对象存储（S3/GCS）？消费者如何透明地从不同层级读取数据？配置参数有哪些？",
+    "answer": "Pulsar 分层存储架构：\\n\\n设计原理：\\nPulsar 将计算（Broker）和存储（BookKeeper）分离，再将冷数据从 BookKeeper 卸载到廉价对象存储。\\n\\n卸载流程：\\n1. Broker 识别已完全 Ack 且超过配置阈值时间的 Ledger（BookKeeper 存储段）。\\n2. Offloader Driver（可插拔实现，支持 S3、GCS、阿里云 OSS 等）将 Ledger 数据以 Pulsar 内部格式写入对象存储。\\n3. 卸载完成后，BookKeeper 中的原 Ledger 可被删除。\\n4. 卸载元数据（哪些 Ledger 已卸载到哪个对象存储路径）保存在 BookKeeper 或 ZooKeeper 中。\\n\\n消费者透明读取：\\n1. 消费者请求数据时，Broker 检查数据所在位置。\\n2. 近期数据直接从 BookKeeper 读取。\\n3. 已卸载数据通过 Offloader 从对象存储读取。\\n4. 对消费者完全透明——无需修改客户端代码。\\n\\n关键参数：\\n- managedLedgerOffloadThresholdInSeconds：数据保留在 BookKeeper 中的时间阈值，超过后触发卸载（默认 0 = 从不卸载）。\\n- managedLedgerOffloadedReadPriority：读取优先级——BOOKKEEPER_FIRST（先检查 BookKeeper，再到对象存储）或 TIERED_STORAGE_FIRST。\\n\\n优势：\\n- 无限消息保留能力（保留时长不受 BookKeeper 存储限制）。\\n- 降低存储成本（对象存储通常比 BookKeeper 廉价数倍）。\\n- 热数据在 BookKeeper 上保持低延迟访问。",
+    "hints": [
+      "什么触发条件导致数据从 BookKeeper 卸载到对象存储",
+      "消费者读取数据时如何知道数据在哪一层"
+    ],
+    "tags": [
+      "Pulsar",
+      "分层存储",
+      "消息队列",
+      "架构"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Kafka 分区分配策略",
+    "content": "比较 Kafka 的四种分区分配策略：RangeAssignor、RoundRobinAssignor、StickyAssignor、CooperativeStickyAssignor。各自的优缺点是什么？消费者组 Rebalance 过程中如何选择分配策略？",
+    "answer": "Kafka 消费者分区分配策略：\\n\\n1. RangeAssignor（2.4 前默认）：\\n- 按 Topic 依次分配，每个 Topic 的连续分区分配给连续消费者。\\n- 问题：当消费者数不能整除分区数时，前面消费者多分到分区，造成不均匀。\\n- Rebalance 会触发大量分区移动（Stop-the-World）。\\n\\n2. RoundRobinAssignor：\\n- 所有 Topic 分区合并后做轮询分配。\\n- 分配更均匀，但 Rebalance 时仍会移动大量分区。\\n\\n3. StickyAssignor（2.4+ 默认）：\\n- 目标：在尽量平衡的前提下，最小化 Rebalance 时的分区移动。\\n- 会保留尽可能多的现有分配关系。\\n- 新消费者加入或离开时，移动的分区数远少于 Range/RoundRobin。\\n\\n4. CooperativeStickyAssignor：\\n- 在 StickyAssignor 基础上支持协作式 Rebalance（Cooperative Rebalancing）。\\n- 增量式 Rebalance：多轮小范围调整代替一次 Stop-the-World。\\n- 第一轮：消费者汇报当前分配，Leader 计算新分配，只回收必须移动的分区。\\n- 后续轮次：逐步完成分配调整。\\n- 优势：减少 Rebalance 期间的消费暂停时间。\\n\\nRebalance 协议：\\n- FindCoordinator → JoinGroup（Leader 选主） → SyncGroup（Leader 分配并广播） → Heartbeat。\\n- 传统 Eager Rebalance：先 revoke 所有分区，再重新分配。\\n- Cooperative Rebalance：只 revoke 需要移动的分区。\\n\\n配置方式：partition.assignment.strategy 参数指定。",
+    "hints": [
+      "StickyAssignor 相比 RangeAssignor 解决了什么问题",
+      "CooperativeStickyAssignor 的增量式 Rebalance 是如何减少停顿的"
+    ],
+    "tags": [
+      "Kafka",
+      "分区分配",
+      "消费者",
+      "Rebalance"
+    ]
+  },
+  {
+    "category": "mq_extras",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "消息轨迹追踪",
+    "content": "解释分布式消息轨迹追踪（Message Trace Tracking）的实现原理。如何追踪一条消息从生产到消费的完整生命周期？OpenTracing/OpenTelemetry 在消息追踪中如何传播上下文（Span Context）？",
+    "answer": "消息轨迹追踪记录消息从生产到消费的完整生命周期。\\n\\n追踪阶段：\\n1. 生产阶段：Producer 发送、Broker 写入、Topic 确定。\\n2. Broker 阶段：队列分配、持久化、索引写入。\\n3. 消费阶段：Consumer 拉取、分发、业务处理、ACK 确认。\\n\\n实现方式：\\n\\n方案一：内置轨迹 Topic（如 RocketMQ）：\\n- 生产者/消费者在关键节点将轨迹数据异步发送到专用轨迹 Topic（RMQ_SYS_TRACE_TOPIC）。\\n- 记录消息 ID、Topic、Tags、Keys、Broker 地址、Consumer Group、时间戳等。\\n- 通过轨迹查询控制台查看完整链路。\\n\\n方案二：OpenTracing/OpenTelemetry（如 Pulsar）：\\n- 消息头中注入 Span Context（traceId, spanId, baggage）。\\n- Producer 发送时创建 Producer Span。\\n- Broker 分发时创建 Queue/Send Span 或直接传递。\\n- Consumer 处理时创建 Consumer Span。\\n- Span 包含：操作名称、服务名、耗时、状态等。\\n\\n追踪关键指标：\\n- 生产耗时（sendDuration）：Producer 发送到 Broker 确认。\\n- 队列耗时（queueDuration）：消息到达 Broker 到被消费者拉取。\\n- 消费耗时（consumeDuration）：消费者开始处理到 ACK。\\n\\n业务价值：\\n- 运维方面：排查消息丢失、重复消费、延迟过高的问题。\\n- 性能分析：定位集群瓶颈点和慢消费者。\\n- 链路追踪：跨消息系统的全链路可视化（结合 APM 系统）。",
+    "hints": [
+      "消息轨迹如何在不影响业务性能的情况下收集数据",
+      "跨服务传递 Span Context 需要消息系统提供什么支持"
+    ],
+    "tags": [
+      "消息轨迹",
+      "OpenTracing",
+      "RocketMQ",
+      "Pulsar",
+      "可观测性"
+    ]
   }
 ]

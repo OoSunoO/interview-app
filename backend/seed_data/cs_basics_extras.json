@@ -1351,5 +1351,100 @@
       "Paxos",
       "Raft"
     ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "向量时钟与分布式因果一致性",
+    "content": "请解释向量时钟（Vector Clock）的核心原理、数据结构以及它在分布式系统中如何解决因果一致性（Causal Consistency）问题。",
+    "answer": "1. 核心原理：向量时钟是在Lamport逻辑时钟基础上为解决因果依赖追踪而设计的。每个节点维护一个向量[V1, V2, ..., Vn]，Vi表示该节点已知的节点i的逻辑时钟值。当节点i发生事件时，Vi自增；向其他节点发送消息时，附带当前向量时钟；接收消息时，合并接收到的向量时钟（取每个分量的max）。\\n2. 数据结构：向量时钟是一个n维向量，n为分布式系统中的节点数量；或者优化为动态向量时钟（仅记录有交互的节点），减少存储开销。如需支持动态节点加入/离开，可使用版本向量（Version Vector）或带点版本向量（Dotted Version Vector）。\\n3. 因果关系的判定：给定两个事件A和B的向量时钟VA和VB：\\n   - 如果VA所有分量 ≤ VB对应分量，则A在B之前（happens-before），即A→B；\\n   - 如果VA部分分量 > VB且部分分量 < VB，则A和B并发（concurrent），即存在因果冲突。\\n4. 解决因果一致性问题：\\n   - 在分布式KV存储（如Amazon Dynamo、Riak）中，向量时钟用于检测并发写入的因果依赖关系；\\n   - 当读取时返回所有版本及其向量时钟，客户端在写入时附带读取到的时钟，服务端据此判断是否覆盖或产生冲突版本（sibling）；\\n   - 冲突的版本由客户端或应用程序的冲突解决策略（CRDT、Last-Write-Win等）来合并。\\n5. 局限：\\n   - 向量长度随节点数线性增长，大规模集群中存储和传输开销大；\\n   - 节点新增/删除时需要重新分配向量维度；\\n   - 不能保证强一致性，仅保证因果一致性。\\n6. 优化方案：\\n   - Dynamo-style trim：定期裁剪过旧的时钟条目；\\n   - 使用64位哈希标识节点替代索引位置；\\n   - 使用版本向量（Version Vector）替代向量时钟，仅跟踪当前节点已知的最大版本。",
+    "hints": [
+      "向量时钟的核心思想是用一个向量来记录每个节点的「已知事件进度」，通过比较向量各分量的大小判断因果关系",
+      "如果一个事件的时钟和另一个事件的时钟不能完全比较（即存在分量一个大于一个小于），说明它们是并发的"
+    ],
+    "tags": [
+      "向量时钟",
+      "分布式系统",
+      "因果一致性",
+      "冲突检测",
+      "Dynamo"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "拜占庭容错算法原理",
+    "content": "请解释拜占庭容错（Byzantine Fault Tolerance, BFT）的基本问题描述、核心解决思路，以及与传统故障容错（CFT/Crash Fault Tolerance）的本质区别。",
+    "answer": "1. 问题描述：拜占庭将军问题描述了分布式系统中存在任意恶意行为的节点（发送任意消息、说谎、合谋等）时，诚实节点如何达成共识。\\n2. 核心条件：n个节点中最多有f个拜占庭故障节点，n ≥ 3f + 1是BFT算法能达成共识的必要条件（同步网络中可以n ≥ 3f + 1，异步网络中需更多约束）。消息传递需要经过数字签名以确保消息的不可否认性和完整性。\\n3. PBFT（Practical Byzantine Fault Tolerance）：\\n   - 三阶段协议：Pre-Prepare → Prepare → Commit；\\n   - 主节点（Primary）负责提议，所有节点通过两轮投票确保至少有f+1个正确节点对消息顺序达成一致；\\n   - 视图切换（View Change）：主节点故障时切换到下一个视图；\\n   - 复杂度O(n²)，适用于小规模联盟链场景（通常< 100节点）。\\n4. 与CFT（Crash Fault Tolerance）的本质区别：\\n   - 故障模型不同：CFT假设节点最多是崩溃/宕机（不会发送恶意消息），典型算法如Raft、Paxos、Zab；BFT假设节点可以任意行为（包括恶意攻击）；\\n   - 节点数量要求：CFT只需n ≥ 2f + 1（如Raft用多数派），BFT需要n ≥ 3f + 1；\\n   - 签名开销：CFT可以用消息认证码（MAC），BFT必须用数字签名（非对称加密）；\\n   - 算法复杂度：Raft的leader选举复杂度O(n)，PBFT的视图切换复杂度O(n³)；\\n   - 性能：BFT算法通常比CFT慢1~2个数量级，因为需要更多通信轮次。\\n5. 现代BFT优化：\\n   - HotStuff（Libra/Diem使用）：将PBFT的三阶段改为流水线式，复杂度降为O(n)，基于阈值签名实现线性视图切换；\\n   - Tendermint（Cosmos使用）：结合BFT与POS，通过锁定策略（lock/unlock）防止分叉；\\n   - 拜占庭容错广播：可靠广播（Reliable Broadcast）保证所有正确节点收到的消息相同；\\n   - HoneyBadgerBFT：首个实用的异步BFT协议，不需要任何时序假设。\\n6. 应用场景：区块链共识（Hyperledger Fabric使用PBFT变体、Cosmos使用Tendermint）、联盟链/BFT状态机复制、航天系统容错设计。",
+    "hints": [
+      "记住关键数字3f+1——在存在f个恶意节点时，需要至少3f+1个节点才能保证一致性，因为诚实节点需要形成压倒性多数",
+      "BFT与CFT的根本区别不在于「允许多少节点故障」，而在于「故障节点可以做什么」——BFT假设节点可以作恶，CFT假设节点只是停止工作"
+    ],
+    "tags": [
+      "拜占庭容错",
+      "分布式共识",
+      "BFT",
+      "PBFT",
+      "区块链"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "CRDT数据类型与无冲突合并",
+    "content": "请解释CRDT（Conflict-free Replicated Data Type，无冲突可复制数据类型）的核心原理，列举主要的CRDT数据类型及其合并规则。",
+    "answer": "1. 核心原理：CRDT是一种在多个副本间自动合并且保证最终一致性的数据结构，不需要中央协调器也不需解决冲突。其数学基础是单调半格（Monotonic Semilattice）——状态只能前向合并（monotonic），且合并操作符合交换律（commutative）、结合律（associative）、幂等律（idempotent）。\\n2. 两种设计路线：\\n   - CvRDT（Convergent Replicated Data Type，基于状态）：副本直接交换完整状态，合并函数merge(state1, state2)返回包含两个状态所有操作的最小上界（LUB）。\\n   - CmRDT（Commutative Replicated Data Type，基于操作）：副本间广播操作（op），接收方应用操作，前提是操作本身满足交换律。需要可靠因果广播（Reliable Causal Broadcast）来保证消息顺序。\\n3. 常见CRDT数据类型：\\n   - G-Counter（Grow-Only Counter）：每个副本维护独立的计数器位，合并时取各位置的最大值。只能增加不能减少。\\n   - PN-Counter（Positive-Negative Counter）：由两个G-Counter组成（G增+G减），合并时分别取max。支持增减操作。\\n   - G-Set（Grow-Only Set）：支持添加，合并取并集。\\n   - 2P-Set（Two-Phase Set）：由G-Set（添加集）+ G-Set（移除集）。元素在添加集中且不在移除集中时存在。移除后不能再次添加。\\n   - LWW-Register（Last-Writer-Wins Register）：每个写操作附带时间戳（或vector clock），合并时取时间戳最大的值。\\n   - MV-Register（Multi-Value Register）：保留所有并发写入的值作为冲突版本，合并时全部保留（类似Dynamo的sibling）。\\n   - OR-Set（Observed-Remove Set）：在添加时生成唯一tag，删除时指定tag。合并时保留未被标记删除的元素。支持添加后又删除再添加的场景。\\n   - RGA（Replicated Growable Array，序列CRDT）：用于协同编辑的文本序列，每个字符关联唯一ID和删除标记，插入操作指定在某个已有字符之后/之前。\\n4. 应用场景：\\n   - 协同编辑（Google Docs、Automerge、Yjs使用RGA/TreeDoc等序列CRDT，实现无冲突的多人实时编辑）；\\n   - 分布式数据库（Riak使用CRDT实现无冲突复制）；\\n   - 离线优先应用（Local-First软件如Obsidian的同步功能、Notion多地离线编辑）；\\n   - Redis Cluster中CRDT变体实现最终一致性同步。",
+    "hints": [
+      "CRDT的数学基础是半格（Semilattice）——合并操作必须是交换、结合、幂等的，这样才能保证无论以什么顺序合并最终结果一致",
+      "区分CvRDT和CmRDT：CvRDT交换状态（状态合并），CmRDT交换操作（操作合并），前者更鲁棒但带宽高，后者效率高但需要可靠广播"
+    ],
+    "tags": [
+      "CRDT",
+      "最终一致性",
+      "协同编辑",
+      "无冲突复制",
+      "分布式系统"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "写倾斜（Write Skew）与检测方法",
+    "content": "请解释数据库和分布式系统中的写倾斜（Write Skew）问题，说明其产生原因、典型场景以及可用的检测和预防方法。",
+    "answer": "1. 问题定义：Write Skew是快照隔离（Snapshot Isolation）级别下的一种异常现象——两个并发事务分别读取一组重叠的数据，然后基于读取到的旧值做出决策并写入不同的数据项，各自在自身视角中看起来是正确的，但合并后破坏了数据库的完整性约束。\\n2. 与丢失更新（Lost Update）的区别：丢失更新是「两个事务写同一行，后者覆盖前者」；写倾斜是「两个事务分别写不同的行，但每个事务的写入依赖于另一事务读取的旧值」，因此丢失更新通常被数据库自动检测（如MVCC的first-updater-wins），写倾斜不会被标准MVCC检测到。\\n3. 经典举例——医生值班问题：\\n   - 约束：至少有一名医生值班；\\n   - 事务A：读取值班表发现只有张三在值班，查询自己是否可以取消值班，看到李四也在值班（实际李四也在取消中），于是取消张三的值班；\\n   - 事务B：读取值班表发现只有李四在值班（张三已取消），看到张三也在值班（实际张三也在取消中），于是取消李四的值班；\\n   - 结果：两个事务都提交，最终无人值班，违反约束。\\n4. 其他典型场景：\\n   - 多用户预订系统（如会议室/航班座位，检查可用性后分别订不同的座位）；\\n   - 账户余额分配（检查总余额后分配到不同子账户）；\\n   - 库存管理中不同SKU共享总量配额。\\n5. 检测方法：\\n   - 谓词锁（Predicate Lock）/间隙锁（Gap Lock）：锁定查询的条件范围而不是具体的行，阻止后续事务在范围内插入/修改数据，但谓词锁实现复杂且性能开销大；\\n   - 序列化快照隔离（SSI, Serializable Snapshot Isolation）：PostgreSQL在9.1+中实现的可串行化隔离级别底层机制。SSI检测事务间的读写冲突（rw-conflict）并构建冲突图，若图中存在环则终止可能导致write skew的事务。SSI的核心是跟踪每个事务的读依赖集和写依赖集，当发现两个事务的读写依赖形成循环时，终止其中一个；\\n   - 物化冲突（Materializing Conflicts）：引入一个额外的锁行或锁表，让并发事务必须竞争同一资源（本质上是将逻辑冲突转化为物理锁冲突），虽然有效但侵入性强。\\n6. 预防措施：\\n   - 使用可序列化隔离级别（SERIALIZABLE）替代READ COMMITTED或REPEATABLE READ；\\n   - 应用层加锁（如SELECT ... FOR UPDATE显式锁定相关行）；\\n   - 执行约束检查的原子化（检查+写入放在同一事务的最后一步，但只能降低概率不能完全避免）；\\n   - 业务层面重新设计数据模型，使约束条件的检查可以集中在单行或少量行上。",
+    "hints": [
+      "Write Skew的核心特征是「两个事务写不同的行，但各自写入决策依赖于对方的读取」——这种依赖关系在MVCC的普通快照隔离中不会被阻断",
+      "SSI通过构建事务的读写依赖图并检测环来解决Write Skew——PostgreSQL的可串行化隔离级别就是基于此原理"
+    ],
+    "tags": [
+      "写倾斜",
+      "快照隔离",
+      "SSI",
+      "事务隔离",
+      "并发控制"
+    ]
+  },
+  {
+    "category": "cs_basics_extras",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "死锁检测算法与等待图",
+    "content": "请解释数据库和操作系统中死锁检测（Deadlock Detection）算法的核心原理，特别是基于等待图（Wait-For Graph, WFG）的检测方法。",
+    "answer": "1. 死锁检测概述：与死锁预防和死锁避免不同，死锁检测允许系统进入死锁状态，然后通过周期性的检测发现并解除死锁。这适用于死锁发生率低、但恢复成本可以接受的场景。\\n2. 等待图WFG：\\n   - 每次一个事务/进程请求锁时，若能授予则直接授予并更新锁表；若不能授予则记录等待关系；\\n   - 检测周期到来时，系统扫描所有等待关系构建有向图：节点=事务/进程，边Ti→Tj表示Ti等待Tj持有的资源；\\n   - 使用DFS（深度优先搜索）或BFS检测图中是否存在环；\\n   - 若存在环，则判定为死锁。\\n3. WFG构建方式：\\n   - 全局集中式：单一检测节点维护全局WFG（适用于单机多线程或主从数据库架构）；\\n   - 分布式WFG：每个节点维护本地WFG，通过传播算法（如Chandy-Misra-Haas算法）检测跨节点死锁；\\n   - Chandy-Misra-Haas算法：每个进程向其等待队列中的进程发送探测消息(Probe)，消息携带(i, j, k)三元组表示「发起者i怀疑因等待j而被阻塞，正在调查k」。若探测回到发起者则检测到死锁。\\n4. 检测频率与性能权衡：\\n   - 频繁检测（每个锁请求后检测）：消耗大量CPU，影响正常事务吞吐；\\n   - 固定间隔检测（如每1秒检测一次）：简单但响应时间不可控；\\n   - 自适应检测：系统空闲或锁等待队列长度超过阈值时触发检测。\\n5. 死锁解除（Recovery）：\\n   - 选择牺牲品（Victim Selection）：通常选择占用资源最少、已执行时间最短或回滚代价最小的事务；\\n   - 回滚方式：完全回滚（abort所有操作）或部分回滚（rollback到保存点savepoint，只释放必要锁）；\\n   - 饥饿预防：记录被选中为牺牲品的次数，次数越多优先级越低被再次选中的概率。\\n6. 各系统的实现：\\n   - MySQL InnoDB：自动检测死锁（通过锁等待图），选中修改行数最少或回滚代价最小的事务作为牺牲品，回滚整事务并返回死锁错误（ER_LOCK_DEADLOCK）；\\n   - PostgreSQL：不主动检测死锁，通过deadlock_timeout（默认1秒）等待锁超时后触发检测，检测到后终止一个参与死锁的事务；\\n   - SQL Server：使用锁监视器线程每隔一定间隔（如5秒）扫描锁管理器中的等待图检测环；\\n   - 分布式数据库（TiDB、CockroachDB）：检测全局死锁使用分布式WFG或通过资源排名（Resource Ranking）避免循环等待。",
+    "hints": [
+      "死锁检测的核心就是「找环」——任何死锁本质上都是资源等待关系图中的一个有向环",
+      "分布式死锁检测的难点在于没有全局视图，Chandy-Misra-Haas通过探测消息在节点间传递来解决，消息回到发起者即证明有环"
+    ],
+    "tags": [
+      "死锁检测",
+      "等待图",
+      "并发控制",
+      "事务",
+      "分布式系统"
+    ]
   }
 ]

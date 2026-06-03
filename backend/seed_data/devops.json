@@ -1339,5 +1339,94 @@
       "告警规则",
       "PromQL"
     ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s ResourceQuota vs LimitRange",
+    "content": "解释 Kubernetes ResourceQuota 和 LimitRange 的区别。它们各自管控什么维度？配合使用时如何工作？Namespace 下设置了 ResourceQuota 后 Pod 会有什么约束？",
+    "answer": "ResourceQuota 和 LimitRange 的对比：\\n\\nResourceQuota（资源配额）：\\n- 作用域：Namespace 级别。\\n- 功能：限制整个 Namespace 内所有 Pod/Container 的资源总和上限。\\n- 可限制：CPU、内存总和，PVC 数量，Service/Pod/Secret 等对象计数。\\n- 副作用：一旦 Namespace 设置了 ResourceQuota，该 Namespace 下的 Pod 必须显式声明资源 requests 和 limits。\\n- 示例：`kubectl create quota my-quota --hard=cpu=4,memory=8Gi,pods=10`。\\n\\nLimitRange（限制范围）：\\n- 作用域：Namespace 级别，作用于单个 Container/Pod。\\n- 功能：\\n  1. 默认值：为未设置 requests/limits 的 Container 设置默认值。\\n  2. 约束：限制单个 Container 的资源最小/最大值。\\n  3. 比例约束：限制 requests 与 limits 的最大比例。\\n- 示例：`kubectl create limitrange my-limits --max=cpu=2,memory=1Gi --default=cpu=500m,memory=256Mi`。\\n\\n配合工作方式：\\n- ResourceQuota 设置 Namespace 资源预算上限。\\n- LimitRange 确保单个 Pod 不超限同时也有默认值。\\n- 没有 LimitRange 时，一个 Pod 可能占用整个 Quota。\\n- 没有 ResourceQuota 时，LimitRange 只能约束单个容器但不能阻止总量失控。\\n\\n超限行为：\\n- 创建 Pod 时如果超过 ResourceQuota 剩余额度，请求被拒绝（HTTP 403 Forbidden）。\\n- 更新时不检查（K8s 的设计决定）。",
+    "hints": [
+      "设置了 ResourceQuota 后，不指定 resource requests 的 Pod 能创建吗",
+      "LimitRange 的 default 字段在什么情况下会被使用"
+    ],
+    "tags": [
+      "Kubernetes",
+      "ResourceQuota",
+      "LimitRange"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Docker 镜像层缓存",
+    "content": "解释 Docker 镜像的分层缓存机制。Dockerfile 中指令顺序如何影响缓存命中率？什么会导致缓存失效？如何使用 BuildKit 和多阶段构建优化缓存？",
+    "answer": "Docker 镜像分层缓存：\\n\\n分层机制：\\n- 每个 RUN、COPY、ADD 指令产生一个新层。\\n- 构建时，Docker 对每一层计算校验和，如果层的内容未变则复用缓存。\\n- 一旦某一层的缓存失效（内容变化），该层及其后所有层必须重新构建。\\n\\n缓存失效条件：\\n- RUN：命令字符串变化或相关文件变化（取决于上下文）。\\n- COPY/ADD：源文件内容变化（基于文件校验和）。\\n- 其他指令：指令参数变化。\\n\\n最佳实践（指令顺序从最稳定到最易变）：\\n1. 系统依赖：`RUN apt-get update && apt-get install -y …`\\n2. 语言运行时：`RUN curl -sL https:// …`\\n3. 依赖声明文件：`COPY package.json package-lock.json ./` → `RUN npm install`\\n4. 应用代码：`COPY . .`（变化最频繁，放在最后）\\n\\n多阶段构建：\\n- 第一阶段（Builder）：安装编译工具，编译代码。\\n- 第二阶段（Runtime）：只复制编译产物到精简基础镜像。\\n- 减少了最终镜像大小和安全面。\\n\\nBuildKit（DOCKER_BUILDKIT=1）：\\n- 并行构建独立的构建阶段。\\n- 跳过未使用的阶段。\\n- 更好的缓存失效追踪（基于内容寻址而非指令级比较）。\\n- `--cache-from` 支持远程缓存（CI/CD 中特别有用）。\\n- 支持保密构建（Secret mount，不保留在镜像中）。\\n\\n其他优化：\\n- 合理使用 .dockerignore 避免不必要的上下文。\\n- COPY --from=… 仅复制需要的文件到最终镜像。",
+    "hints": [
+      "Dockerfile 中哪些指令应该放在最前面以减少缓存失效",
+      "BuildKit 的 --cache-from 在 CI/CD 中解决什么问题"
+    ],
+    "tags": [
+      "Docker",
+      "镜像缓存",
+      "Dockerfile",
+      "CI/CD"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Argo Rollouts 渐进式交付",
+    "content": "解释 Argo Rollouts 的渐进式交付策略。Blue-Green 和 Canary 两种部署模式的工作原理是什么？如何通过指标分析（Analysis）自动决定 Promote 还是 Rollback？",
+    "answer": "Argo Rollouts 是 Kubernetes 的渐进式交付控制器：\\n\\nBlue-Green 部署：\\n1. 新版本创建 Green 副本集（ReplicaSet）与现有 Blue 共存。\\n2. 通过 Service 切换流量（Preview Service 可先测试 Green）。\\n3. 确认后更新主 Service 指向 Green。\\n4. 可配置自动 Promotio n/Rollback。\\n\\nCanary 部署：\\n1. 按步进策略逐步切换流量（如 10% → 25% → 50% → 100%）。\\n2. 每一步可设置暂停（Pause）等待自动分析或人工审批。\\n3. 在每一步执行 metric 分析。\\n\\n指标分析（Analysis）：\\n- AnalysisTemplate：定义分析规则（PromQL、Datadog 查询、Web 请求等）。\\n- AnalysisRun：模板的实例化执行。\\n- 分析结果：Success（继续灰度）、Failure（回滚）、Inconclusive（暂停等待人工）。\\n- 可设置失败阈值和取样周期。\\n\\n服务网格集成：\\n- Istio VirtualService + DestinationRule：基于权重路由。\\n- SMI（Service Mesh Interface）：标准化的流量拆分 API。\\n- NGINX Ingress：通过 annotation/配置权重。\\n\\n优势：\\n- 自动回滚防止有问题的版本影响所有用户。\\n- 平滑的流量切换速度控制。\\n- 丰富的指标集成（Prometheus、Datadog、New Relic、Web）。\\n- 可视化的 Dashboard 实时展示部署进度。\\n\\n与 K8s Deployment 的区别：\\n- K8s Deployment 只支持滚动更新（Rolling Update）。\\n- Argo Rollouts 提供 Blue-Green 和 Canary 两种高级策略。\\n- Argo Rollouts 不替换 Deployment——Rollout 是一个独立的 CRD 资源。",
+    "hints": [
+      "Argo Rollouts 如何判断是继续放量还是回滚",
+      "Canary 部署中 step weight 和分析流程如何配合"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Argo Rollouts",
+      "渐进式交付",
+      "CI/CD"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Terraform 模块化",
+    "content": "解释 Terraform 模块化设计的最佳实践。如何设计模块结构（输入变量、输出值、本地变量）？如何实现模块版本控制和远程状态共享？如何组合模块构建基础设施？",
+    "answer": "Terraform 模块化实践：\\n\\n模块结构：\\n```\\nmodules/\\n  vpc/\\n    main.tf         # 核心资源定义\\n    variables.tf     # 输入变量（类型、描述、校验、敏感标记）\\n    outputs.tf       # 输出值（资源 ID、ARN、DNS 等）\\n    versions.tf      # Terraform 和 Provider 版本约束\\n    README.md        # 模块文档\\n```\\n\\n输入变量最佳实践：\\n- 定义 type、description、nullable、sensitive。\\n- validation block 做输入校验。\\n- 使用 optional() 定义可选字段。\\n\\n输出值：\\n- 暴露必要的下游依赖信息（vpc_id、subnet_ids、security_group_id 等）。\\n- 使用 description 说明输出值的含义。\\n\\n模块组合（Composition）：\\n- 根模块（Root Module）调用多个子模块。\\n- 数据传递：子模块的输出作为另一个子模块的输入。\\n- for_each/count 实现多实例。\\n- 隐式依赖优于 explicit depends_on。\\n\\n版本管理：\\n- Git Tag 版本号：source = 「git::ssh://git@github.com/org/terraform-module-vpc.git?ref=v1.2.0」\\n- Terraform Registry 私有模块。\\n- 遵循 SemVer 语义化版本。\\n\\n远程状态：\\n- 后端：S3 + DynamoDB（状态锁定）/ GCS + Bigtable / Azure Storage。\\n- Workspace 分离环境（dev/staging/prod）。\\n- 状态文件通过 backend 配置统一管理。\\n\\n最佳实践清单：\\n- 单一职责（一个模块只做一件事）。\\n- 避免硬编码——全部通过变量传入。\\n- 使用 locals 块推导重复的值。\\n- 使用 terratest 或 tfsec 做测试和安全扫描。",
+    "hints": [
+      "模块间如何传递依赖关系",
+      "如何对不同的环境（dev/staging/prod）使用同一套模块"
+    ],
+    "tags": [
+      "Terraform",
+      "IaC",
+      "模块化",
+      "基础设施"
+    ]
+  },
+  {
+    "category": "devops",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "日志收集 Loki",
+    "content": "解释 Grafana Loki 的日志聚合架构。Loki 的日志索引策略与 ELK（Elasticsearch）有何本质区别？主要组件（Distributor、Ingester、Querier、Query Frontend）的职责是什么？LogQL 的定位是什么？",
+    "answer": "Grafana Loki 架构：\\n\\n设计哲学：\\n- 受 Prometheus 启发，只索引日志元数据（Labels），不索引日志内容。\\n- 日志内容压缩后存储在对象存储中（S3/GCS/MinIO）。\\n- 这是一种「便宜但足够好」的日志方案，区别于 ES 的全文索引。\\n\\n核心组件：\\n1. Distributor：接收日志流 → 校验 → 按一致性哈希分发到 Ingester。\\n2. Ingester：将日志在内存中批量压缩 → 定期 Flush 到对象存储。\\n   - 近期日志在内存中可直接查询，历史日志从对象存储读取。\\n3. Querier：接收查询 → 根据标签 + 时间范围从 Ingester 和对象存储中获取日志。\\n4. Query Frontend（可选）：查询拆分、缓存、并行执行。\\n\\n与 ELK 对比：\\n| 维度 | Loki | Elasticsearch |\\n|------|------|---------------|\\n| 索引对象 | 标签（Labels） | 日志全文 |\\n| 存储 | 对象存储（廉价） | 本地磁盘 + 副本 |\\n| 写入性能 | 高（无索引构建开销） | 低（全文索引成本） |\\n| 全文搜索 | 慢（扫描） | 快（倒排索引） |\\n| 运维成本 | 低 | 高 |\\n| K8s 集成 | 原生 | 需额外配置 |\\n\\nLogQL：\\n- 类似 PromQL 的日志查询语言。\\n- 基本：`{app=「nginx」} |= 「error」`。\\n- 聚合：`rate({app=「nginx」}[5m])`。\\n- 管道：`| json` 或 `| logfmt` 解析结构化日志。\\n\\n最佳实践：\\n- 选择合适的标签基数（太高导致索引膨胀，太低导致查询效率低）。\\n- 常用标签：namespace、pod、container、app。\\n- 使用 Promtail 或 Alloy 作为日志采集 Agent。",
+    "hints": [
+      "Loki 和 Elasticsearch 在索引策略上的根本区别是什么",
+      "Loki 为什么比 ELK 运维成本低——存储层面如何体现"
+    ],
+    "tags": [
+      "Loki",
+      "日志收集",
+      "Grafana",
+      "可观测性"
+    ]
   }
 ]

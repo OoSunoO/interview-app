@@ -1335,5 +1335,95 @@
       "Ephemeral Containers",
       "调试"
     ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s PriorityClass 与抢占",
+    "content": "解释 Kubernetes PriorityClass 和抢占（Preemption）机制。PriorityClass 如何定义？调度器如何进行抢占决策？PodDisruptionBudget（PDB）如何影响抢占行为？什么情况下抢占可能导致集群不稳定？",
+    "answer": "PriorityClass 和抢占机制：\\n\\nPriorityClass：\\n- 非命名空间资源（Cluster-Scoped），定义整数值代表优先级（越高越优先）。\\n- 系统内置：system-cluster-critical、system-node-critical。\\n- 字段：value、globalDefault（未指定 PriorityClass 的 Pod 默认使用）、description。\\n\\n抢占流程：\\n1. 调度器将高优先级 Pod 放入调度队列（按优先级排序）。\\n2. 如果 Pending 且无法调度（资源不足）：\\n   a. 找出可放置高优先级 Pod 的节点。\\n   b. 在该节点上选择需要被驱逐的低优先级 Pod（Victim）。\\n   c. 优先尝试驱逐优先级最低的 Pod。\\n   d. 如果驱逐足够低优先级的 Pod 后能放下，执行驱逐。\\n3. 被驱逐的 Pod 根据其 PriorityClass 恢复 Pending 状态并重新排队。\\n\\nPDB 与抢占的交互：\\n- 调度器驱逐 Victim Pod 时，会尊重 PDB——不会违反 PDB 规则（如「最少可用 2 个副本」）。\\n- 如果驱逐满足 PDB 约束，则执行驱逐。\\n- 如果满足 PDB 约束无法获得足够资源，则抢占失败，高优先级 Pod 仍保持 Pending。\\n\\nPreemptionPolicy：\\n- PreemptLowerPriority（默认）：触发抢占。\\n- Never：不触发抢占，即使处于 Pending 状态。\\n\\n集群稳定风险：\\n- PriorityClass 值设计不合理 → 高优先级 Pod 持续抢占关键组件。\\n- 大量高优先级的 bursts → 频繁抢占导致 Pod 稳定性下降。\\n- 最佳实践：仅为关键系统组件设置最高优先级，避免应用级别滥用。\\n\\n注意事项：\\n- 被抢占的 Pod 优雅退出时间受 terminationGracePeriodSeconds 控制。\\n- 抢占日志：kube-scheduler 日志中有 Preemption 相关记录。",
+    "hints": [
+      "当 PDB 与被抢占 Pod 冲突时，调度器如何处理",
+      "PreemptionPolicy=Never 的 Pod 在高优先级 Pod 无法调度时会怎样"
+    ],
+    "tags": [
+      "Kubernetes",
+      "PriorityClass",
+      "抢占",
+      "调度"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s EndpointSlice",
+    "content": "解释 Kubernetes EndpointSlice 资源。它与传统的 Endpoints 资源有何区别？EndpointSlice 如何提高服务发现在大规模集群中的可扩展性？topology-aware 路由是如何实现的？",
+    "answer": "EndpointSlice：\\n\\n背景：\\n传统 Endpoints 资源用一个对象存储一个 Service 的所有后端 Pod IP，当 Pod 数量大时：\\n- 单个 Endpoints 对象非常大（频繁更新时压力大）。\\n- 任何 Pod 变化都会重新生成完整对象。\\n- Watcher（kube-proxy）每次变更都需重新处理全部数据。\\n\\nEndpointSlice 的改进：\\n1. 分区（Sharding）：将 Endpoints 切片为多个 EndpointSlice，每个默认最多 100 个端点。\\n2. 局部更新：一个 Pod 变更只需更新包含该 Pod 的那个切片。\\n3. 标签关联：通过 `kubernetes.io/service-name` 标签关联到 Service。\\n4. 自动管理：EndpointSlice Controller 自动创建/更新/删除。\\n\\n拓扑感知路由（Topology-aware Routing）：\\n- EndpointSlice 每个端点包含拓扑信息（zone、region、node 等）。\\n- Service 设置 `topologyKeys` 后，kube-proxy 优先选择同节点、同可用区的端点。\\n- 减少跨 AZ 的网络延迟和跨 AZ 数据传输费用。\\n- 前提：节点需要配置 topology.kubernetes.io/zone 标签。\\n\\n多地址类型支持：\\n- 同一个 EndpointSlice 可同时包含 IPv4、IPv6 和 FQDN 端点。\\n- 不再需要为不同地址族维护独立的端点集。\\n\\n迁移状态：\\n- K8s 1.21+ 默认启用 EndpointSlice。\\n- kube-proxy 默认使用 EndpointSlice（通过 --feature-gates 控制）。\\n- Endpoints 仍保持向后兼容。",
+    "hints": [
+      "EndpointSlice 的分区策略如何减少大规模集群中的更新开销",
+      "拓扑感知路由如何减少跨可用区的网络流量"
+    ],
+    "tags": [
+      "Kubernetes",
+      "EndpointSlice",
+      "服务发现",
+      "网络"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s Ingress 与 Gateway API",
+    "content": "对比 Kubernetes Ingress 和 Gateway API。Ingress 有哪些局限性？Gateway API 通过哪种角色导向的资源模型（GatewayClass / Gateway / Route）解决了这些问题？Gateway API 当前成熟度如何？",
+    "answer": "Ingress 与 Gateway API 对比：\\n\\nIngress 的局限性：\\n1. 配置碎片化：不同 Ingress Controller（NGINX / Traefik / ALB）使用不同的 Annotation，不可移植。\\n2. 权限粒度过粗：应用开发者和基础设施运维共享同一 Ingress 资源权限。\\n3. 协议支持有限：只支持 HTTP/HTTPS，不支持 TCP/UDP/gRPC。\\n4. 功能限制：不支持流量拆分、请求镜像、高级 Header 操作。\\n5. 缺乏多租户隔离能力。\\n\\nGateway API 的角色模型：\\n1. GatewayClass（基础设施提供者）：\\n   - 定义网关类型（如 `istio.io/gateway-controller`、`nginx-gateway`）。\\n   - 集群管理员定义，应用开发者不可见。\\n2. Gateway（集群运维者）：\\n   - 实例化 GatewayClass，指定监听地址和端口。\\n   - 定义证书、TLS 策略等。\\n3. HTTPRoute / TCPRoute / TLSRoute（应用开发者）：\\n   - 定义路由规则（匹配条件、后端服务、权重等）。\\n   - 通过 `parentRefs` 关联到 Gateway。\\n\\n关键改进：\\n- 角色分离：基础设施、运维、应用各自管理自己的资源。\\n- 协议扩展：HTTPRoute、TCPRoute、UDPRoute、TLSRoute、GRPCRoute。\\n- 流量管理：权重拆分（Canary）、请求镜像、Header 修改。\\n- 跨 Namespace 引用：Route 可引用其他 Namespace 的 Service。\\n- 实现可移植性：相同 Route 定义可在不同实现上运行。\\n\\n成熟度：\\n- Gateway API v1.0（GA）：核心 API（GatewayClass、Gateway、HTTPRoute）。\\n- v1.1+：GRPCRoute、BackendTLSPolicy 等扩展。\\n- 主流实现：Istio、NGINX、Traefik、Contour、HAProxy、Kong 等。\\n- 向后兼容：大多数实现同时支持 Ingress 和 Gateway API。",
+    "hints": [
+      "Gateway API 的三个资源类型分别对应哪三个角色的管理范围",
+      "为什么说 Gateway API 比 Ingress 更适合多租户场景"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Ingress",
+      "Gateway API",
+      "网络"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "K8s CRD 与 Operator 模式",
+    "content": "解释 Kubernetes CRD（Custom Resource Definition）和 Operator 模式。CRD 如何扩展 K8s API？Operator 的调和循环（Reconciliation Loop）如何工作？常用的 Operator 框架有哪些？",
+    "answer": "CRD 和 Operator 模式：\\n\\nCRD（Custom Resource Definition）：\\n- 扩展 Kubernetes API，定义新的资源类型。\\n- Spec（期望状态）：用户描述的 Desired State。\\n- Status（实际状态）：Controller 报告的实际状态。\\n- CRD 本身只是数据定义——实际逻辑由 Controller 实现。\\n\\nOperator = CRD + Controller：\\n- Controller 通过监控 CRD 实例的变化，执行业务逻辑使集群状态趋近 Spec 定义。\\n\\n调和循环（Reconciliation Loop）：\\n1. Informer 监听 API Server 的 CRD 变更事件。\\n2. 事件进入 Work Queue（去重、限速）。\\n3. Worker 从 Queue 取出事件，执行 Reconcile。\\n4. Reconcile 函数读取当前状态 vs 期望状态，执行操作使其一致。\\n5. 更新 Status 反映当前状态。\\n6. 失败时使用指数退避（Exponential Backoff）重新入队。\\n\\n典型 Operator 功能：\\n- 应用部署、升级、回滚。\\n- 备份和恢复。\\n- 自动扩缩容。\\n- 配置变更管理。\\n- 健康检查和自愈。\\n\\n常用 Operator 框架：\\n1. kubebuilder（Go）：最常用，基于 controller-runtime。\\n2. Operator SDK（Go/Ansible/Helm）：扩展 kubebuilder，支持多语言。\\n3. Kopf（Python）：Python 编写的轻量框架。\\n4. Java Operator SDK：Java 生态选择。\\n5. Charmed Operator Framework：Canonical 的 Python 框架。\\n\\n最佳实践：\\n- 使用 Finalizer 处理资源删除（清理外部资源）。\\n- 使用 OwnerReferences 支持级联删除。\\n- Status Conditions 记录资源状态。\\n- 版本管理——CRD 支持多个版本间的 Conversion。",
+    "hints": [
+      "Reconcile 函数如何处理失败——会重试吗",
+      "Finalizer 在 Operator 中起到什么作用"
+    ],
+    "tags": [
+      "Kubernetes",
+      "CRD",
+      "Operator",
+      "控制器"
+    ]
+  },
+  {
+    "category": "kubernetes",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "K8s 节点自动扩缩容 Cluster Autoscaler",
+    "content": "解释 Kubernetes Cluster Autoscaler 的工作原理。什么条件触发节点扩容？什么条件触发缩容？Cluster Autoscaler 与 HPA（Horizontal Pod Autoscaler）如何配合？有哪些限制和最佳实践？",
+    "answer": "Cluster Autoscaler（CA）工作原理：\\n\\n扩容（Scale Up）：\\n1. 触发条件：Pod 进入 Pending 状态，原因是资源不足（CPU/Memory/GPU 等）。\\n2. CA 检查 Pending Pod，判断加入新节点后是否可以调度。\\n3. 通过云提供商 API（AWS ASG、GCP MIG、Azure VMSS）扩容节点组。\\n4. 新节点加入集群后，调度器将 Pending Pod 调度上去。\\n5. 扩容延迟主要由云提供商创建 VM 和节点初始化时间决定。\\n\\n缩容（Scale Down）：\\n1. 评估周期：默认每 10 秒检查一次。\\n2. 缩容条件：\\n   - 节点利用率低于 50%（CPU + 内存）且持续超过 10 分钟。\\n   - 该节点上的所有 Pod 可以被调度到其他节点。\\n3. 排除条件：\\n   - 节点运行着 PDB（PodDisruptionBudget）约束的 Pod。\\n   - 节点有 local storage（emptyDir）。\\n   - Pod 有注解 `cluster-autoscaler.kubernetes.io/safe-to-evict=false`。\\n4. 被选中的节点被 Drain（排空）后 Terminate。\\n\\n与 HPA 配合：\\n- HPA：根据 CPU/自定义指标增减 Pod 副本数。\\n- CA 和 HPA 独立工作，但宏观上配合：\\n  1. 流量增加 → HPA 扩容 Pod 数。\\n  2. 新 Pod 因资源不足 Pending → CA 扩容节点。\\n  3. 流量下降 → HPA 缩容 Pod。\\n  4. 节点利用率降低 → CA 缩容节点。\\n- 最佳实践：先配置 HPA 保证弹性伸缩，再配置 CA 作为基础设施层的自动扩缩。\\n\\n关键参数：\\n- --max-nodes-total / --cores-total：防止无限扩容。\\n- --scale-down-delay-after-add：扩容后等待再缩容（默认 10 分钟）。\\n- --scale-down-unneeded-time：节点不必要后的等待时间（默认 10 分钟）。\\n- --skip-nodes-with-system-pods：是否跳过有系统 Pod 的节点。\\n\\n最佳实践：\\n- 多节点组：混合 Spot（成本优先）和 On-Demand（稳定性优先）。\\n- 利用 nodeselector、taints/tolerations 控制 Pod 到节点组的调度。\\n- 避免 Cluster Autoscaler 和 VPA（Vertical Pod Autoscaler）同时干扰。",
+    "hints": [
+      "Pod 达到什么状态时会触发 CA 扩容",
+      "缩容时 CA 如何决定哪个节点可以被安全移除"
+    ],
+    "tags": [
+      "Kubernetes",
+      "Cluster Autoscaler",
+      "自动扩缩容",
+      "HPA"
+    ]
   }
 ]

@@ -1317,5 +1317,100 @@
       "Performance API",
       "监控"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "浏览器渲染流水线：Layout、Paint与Composite",
+    "content": "请说明浏览器渲染流水线（Rendering Pipeline）中Layout（回流）、Paint（绘制）和Composite（合成）三个阶段各自的工作内容和触发条件，以及各阶段对页面性能的影响。",
+    "answer": "1. 完整渲染流水线：DOM树 → Style（样式计算）→ Layout（布局/回流）→ Layer Tree（层树）→ Paint（绘制）→ Composite（合成）→ 显示。\\n2. Layout（回流/Reflow）：计算每个可见元素的几何信息（位置和尺寸）。输入是DOM树+计算后的样式，输出是Layout Tree（包含x、y、width、height等盒模型信息）。触发条件：任何影响元素几何属性的变化，包括窗口resize、DOM增删、元素尺寸/位置/display等样式变化。Layout是完整流水线中最消耗性能的阶段之一，因为几何变化可能影响几乎所有后代元素的布局且需重新计算。\\n3. Paint（绘制）：将Layout Tree中的元素绘制为独立的绘制指令序列（paint records），包括文本、颜色、图片、边框、阴影等视觉属性。输入是Layout Tree + 各元素的绘制顺序（绘制层级由z-index和层叠上下文决定），输出是paint records。触发条件：元素视觉属性（颜色、背景、阴影、可见性等）变化。Paint阶段本身不直接输出像素，而是生成绘制指令列表。\\n4. Composite（合成）：将多个绘制层（Paint Layers）按照正确的顺序合成为最终的屏幕像素。输入是各渲染层的paint records，输出是最终的位图。GPU加速：合成层（Compositing Layer）在GPU上有独立的纹理，浏览器通过GPU将各层合成，不需要重新绘制。触发条件：影响层叠的样式变化（transform、opacity、will-change等）。\\n5. 性能影响与优化策略：\\n   - 触发Layout+ Paint+ Composite的变更（如修改width/height/top/left/display等一切几何和视觉属性）开销最大；\\n   - 跳过Layout仅触发Paint+ Composite的变更（如修改color/background-color/visibility/outline-color等不影响几何的视觉属性）开销中等；\\n   - 仅触发Composite的变更（如使用transform和opacity动画）开销最小，属性变更在合成线程处理，不经过主线程的Layout和Paint阶段；\\n   - 使用will-change或transform: translateZ(0)将元素提升为独立合成层，使后续的transform动画仅在合成线程处理，避免主线程阻塞；\\n   - 注意不要创建过多合成层（层爆炸），GPU内存有限且过多的纹理上传和合成计算也会导致性能问题。\\n6. 各浏览器的差异：Chrome和Edge基于Blink引擎，与上面描述一致；Safari基于WebKit，Firefox基于Gecko，虽实现细节不同但Layout/Paint/Composite三大阶段的概念类似。",
+    "hints": [
+      "记住性能开销的排序：触发Layout > 跳过Layout仅Paint > 仅Composite。CSS属性需要看其对应的渲染阶段来决定优化策略",
+      "将动画属性限制在transform和opacity上，是保证60fps的最有效方式——因为它们可以在合成线程独立执行"
+    ],
+    "tags": [
+      "浏览器渲染",
+      "Layout",
+      "Paint",
+      "Composite",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "IntersectionObserver实现懒加载",
+    "content": "请描述IntersectionObserver API的核心原理和使用方式，以及如何用它实现图片/组件的懒加载。",
+    "answer": "1. 核心原理：IntersectionObserver提供了一种异步观察目标元素与祖先元素（或document视口）交叉状态的方法。它注册一个回调函数，当目标元素与根元素的交叉比例（intersection ratio）超过阈值时触发。回调运行在主线程之外（浏览器合成线程），不会阻塞主线程的JavaScript执行。\\n2. 构造函数：new IntersectionObserver(callback, options)\\n   - callback接收entries数组（每个entry包含intersectionRatio、isIntersecting、boundingClientRect、intersectionRect等属性）；\\n   - options.root（观察的根元素，默认document视口）、rootMargin（类似于CSS margin，用于提前/延迟触发）、threshold（阈值，可以是单一数字或数组，如[0, 0.25, 0.5, 1]）。\\n3. 图片懒加载实现步骤：\\n   - 在HTML中将img的src占位（或使用data-src存放真实URL），添加类名如lazy-image；\\n   - 创建IntersectionObserver实例，设置rootMargin: 100px（进入视口前100px提前加载）；\\n   - 观测所有.lazy-image元素；\\n   - 在回调中检查entry.isIntersecting（或entry.intersectionRatio > 0），当元素进入视口时，将真实URL从data-src赋值给src触发加载，加载完成后调用observer.unobserve(entry.target)停止观测；\\n   - 可选：使用requestAnimationFrame来优雅处理多个元素同时进入视口的情况。\\n4. 组件懒加载：\\n   - 对iframe、视频、组件占位容器使用相同思路，在进入视口时动态渲染组件（如React中的React.lazy + Suspense）；\\n   - 无限滚动列表：IntersectionObserver观测列表末尾的哨兵元素，进入视口时加载更多数据。\\n5. 与scroll事件监听方案的对比：\\n   - scroll事件在每一次滚动中高频触发（60fps），主线程持续计算getBoundingClientRect导致频繁Layout（强迫同步布局/Forced Synchronous Layout）；\\n   - IntersectionObserver在合成线程处理，回调异步触发，不会造成强迫同步布局；\\n   - IntersectionObserver更节能（移动端电池友好）；\\n   - IntersectionObserver支持rootMargin轻易实现预加载，scroll方案需要手动计算偏差。\\n6. 注意事项：\\n   - 兼容性（主流现代浏览器支持，但旧版Safari/KaiOS不支持）；\\n   - 回调不会每个帧都触发，不适合需要精确位置同步的动画场景；\\n   - 观测大量元素时检查entries.length并合理批量处理。",
+    "hints": [
+      "IntersectionObserver的关键优势是回调运行在浏览器合成线程而非主线程，因此不会引起强迫同步布局（Forced Synchronous Layout）",
+      "设置rootMargin: 100px可以在用户滚动到元素之前100px就触发加载，实现了「预懒加载」的效果，提升用户体验"
+    ],
+    "tags": [
+      "IntersectionObserver",
+      "懒加载",
+      "性能优化",
+      "浏览器API",
+      "图片优化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ResizeObserver与元素尺寸变化",
+    "content": "请说明ResizeObserver API的核心原理和主要使用场景，以及它解决了Window resize事件无法处理的问题。",
+    "answer": "1. 核心原理：ResizeObserver是一个监听元素尺寸变化的浏览器API。当被观察元素的content rectangle（内容区域）尺寸发生变化时触发回调。回调包含一个entries数组，每个entry包含contentRect（元素的content box尺寸和位置）、target（目标元素）以及borderBoxSize/devicePixelContentBoxSize等更精确的尺寸信息。\\n2. 解决的问题：\\n   - window.resize事件只能监听窗口尺寸变化，无法感知单个元素的尺寸变化；\\n   - 当元素的尺寸因CSS变化、子DOM增删、父容器布局变化等间接原因改变时，window.resize无法捕捉；\\n   - 传统方案（定时轮询getBoundingClientRect或MutationObserver监听容器样式）性能差且不可靠；\\n   - ResizeObserver直接观测目标元素的尺寸变化，无论变化由什么引起，都能精确回调。\\n3. 主要应用场景：\\n   - 自适应容器组件（Container Queries的前身或补充）：根据容器宽度调整内部布局和字体大小；\\n   - 可拖拽/可调整大小的面板（resizable split panes）：当用户拖拽边界时实时响应；\\n   - 图表/Canvas自适应：当容器尺寸变化时重新渲染ECharts/Highcharts等可视化组件；\\n   - 虚拟滚动列表：当容器尺寸变化时重新计算可见区域和缓冲区大小；\\n   - 文本截断检测（检测元素是否溢出，若溢出则添加省略号或tooltip）；\\n   - iframe与嵌入内容的自适应尺寸通信。\\n4. 性能特点：\\n   - 回调在每次布局（Layout）完成后执行，不会遗漏中间状态变化；\\n   - 单帧内多个尺寸变化会合并为一个回调，避免多次处理；\\n   - 回调中修改目标元素的尺寸会导致递归循环——规范要求在Recursive Observer Callback中跳过深度超过1层的递归变化；\\n   - 相比之下，手动轮询方案在resize频繁时容易造成性能浪费。\\n5. 使用方法：\\n   const observer = new ResizeObserver(entries => { entries.forEach(entry => { /* 处理变化 */ }); });\\n   observer.observe(targetElement, { box: 'border-box' }); // 可观察content-box/border-box/device-pixel-content-box\\n   使用完毕后调用observer.disconnect()或observer.unobserve(element)释放资源。\\n6. 与MutationObserver的区别：MutationObserver监听DOM树的变化（子节点增删、属性变更），但不监听元素尺寸变化；ResizeObserver专门监听尺寸变化，不关心DOM结构变化。两者是互补关系。",
+    "hints": [
+      "ResizeObserver的关键特点是能感知「任意原因」导致的元素尺寸变化——无论是因为窗口resize、CSS变化、子元素增减还是字体加载",
+      "与MutationObserver不同，ResizeObserver的回调在Layout阶段之后触发，这意味着读取元素的尺寸时已经是最新的值"
+    ],
+    "tags": [
+      "ResizeObserver",
+      "浏览器API",
+      "响应式设计",
+      "性能优化",
+      "容器查询"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "CSS contain属性与渲染优化",
+    "content": "请解释CSS contain属性的作用原理、可选值（layout、paint、size、style、strict、content）以及它们如何帮助浏览器优化页面渲染性能。",
+    "answer": "1. 核心原理：CSS contain属性告诉浏览器，某个元素及其子元素在布局、绘制、尺寸等方面是独立的——浏览器可以将该元素视为一个独立的「子树」，其内部变化不会影响外部元素，从而在发生变化时避免全树重排/重绘。\\n2. 可选值详解：\\n   - contain: layout：声明元素的布局独立，内部布局变化不会影响外部元素。浏览器在重新布局时只需考虑该元素内部，外部元素的布局不用重新计算。浏览器还会为该元素建立独立的格式化上下文（Independent Formatting Context）。\\n   - contain: paint：声明元素的绘制区域被限制在自身的border box内，任何超出部分被裁剪。元素内任何变化仅在该元素的层内重绘，不会影响兄弟或祖先元素的绘制区域。浏览器会为该元素创建新的渲染层（在Chrome中对应新的PaintLayer）。\\n   - contain: size：声明元素的尺寸仅取决于其自身CSS设置（width/height等），不依赖于子元素的内容大小。这允许浏览器在子元素发生变化时推断该元素的尺寸不变，跳过该元素及子元素的布局计算。但使用此值时必须明确给元素设置尺寸，否则子元素可能溢出或显示异常。\\n   - contain: style：声明元素内部不影响外部样式作用域，反之亦然。目前仅保证counter（计数器）和quote（引用）作用域的隔离。实际上没有浏览器需要此值来优化，它更多属于未来扩展的预留。\\n   - contain: strict：等同于contain: layout paint size（全包含），是独立盒子的最强保证。\\n   - contain: content：等同于contain: layout paint（不含size）。与strict的区别在于size包含要求开发者在包含块上显式设置尺寸，如果忘记设置可能导致布局塌陷，因此content是更安全的默认选择。\\n3. 性能优化效果：\\n   - 无contain时的变更：修改一个列表项的高度可能导致整个文档重新布局（Recalculate Style + Layout → Paint → Composite）；\\n   - 有contain: strict或contain: content时：浏览器将该元素的变化影响限制在元素内部，布局和绘制不需要传播到外部，显著降低渲染成本；\\n   - 在虚拟滚动、大型列表、复杂Widget组件中使用contain可以获得明显的滚动性能提升。\\n4. 浏览器层面发生了什么：\\n   - 设置contain: layout的元素会被标记为「Layout Boundary」，Layout操作被限定在该边界内；\\n   - 设置contain: paint的元素会被提升为合成层候选（但不能保证一定提升为合成层，浏览器根据实际需要决定）；\\n   - 浏览器的Layout算法会检测这些边界标记，跳过不需要重新计算的子树。\\n5. 使用建议：\\n   - 对每个独立的UI组件或Widget应用contain: content（如果不需要显式限制尺寸）或contain: strict（如果设置了容器尺寸）；\\n   - 在大型列表的每个列表项上使用contain: layout paint，减少滚动时的渲染开销；\\n   - 注意过度使用contain: layout可能会导致浏览器创建过多独立的Layout Context，增加内存开销。",
+    "hints": [
+      "把contain看作给浏览器的「承诺」——告诉浏览器这个子树是自包含的，内部变化不会影响外部，让浏览器大胆地跳过不必要的工作",
+      "contain: content（layout + paint）是安全的最优实践，contain: strict则额外承诺了固定尺寸——忘记设宽高会出布局问题"
+    ],
+    "tags": [
+      "CSS contain",
+      "渲染优化",
+      "浏览器引擎",
+      "性能",
+      "布局边界"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "前端资源预加载：prefetch、preload与preconnect",
+    "content": "请分别解释rel=prefetch、rel=preload和rel=preconnect在资源加载时机、优先级、使用场景上的区别。",
+    "answer": "1. rel=preload：告诉浏览器「当前页面马上就要用到这个资源，请立即开始下载」。\\n   - 使用方式：<link rel=「preload」 href=「style.css」 as=「style」>（as属性必须指定资源类型，如style/script/font/image/fetch/document/worker等）；\\n   - 加载时机：在浏览器的主渲染线程启动之前就开始加载，是「页面生命周期中最早开始加载资源的方式」；\\n   - 资源优先级：浏览器会根据as类型分配适当的优先级（如CSS为Highest、字体/script为High、图片为Low）。preload的资源优先级比其他方式的同类型资源高；\\n   - 使用场景：提前加载关键CSS/JS文件、@font-face引用的字体文件（防止FOIT/FOUT——字体加载导致的不可见文本闪烁）、在HTML head中提前加载首屏图片、动态导入的模块等；\\n   - 注意事项：所有preload的资源浏览器都会下载（无法取消），即使页面没有用到也会浪费带宽。因此只用于「确定会用」的关键资源。\\n2. rel=prefetch：告诉浏览器「将来可能用到这个资源，请在空闲时提前下载」。\\n   - 使用方式：<link rel=「prefetch」 href=「next-page.js」 as=「script」>；\\n   - 加载时机：在浏览器空闲时（idle time，利用requestIdleCallback机制）以最低优先级下载；\\n   - 资源优先级：最低（Lowest），几乎不会与首屏关键资源的下载竞争带宽；\\n   - 使用场景：预加载下一页可能用到的资源（SPA应用中下一个路由的chunk）、用户悬停在链接上时预取目标页面、搜索结果中的候选页面资源等；\\n   - 缓存位置：prefetch的资源存储在HTTP缓存中，而不是预加载缓存（preload cache）。这意味着跨页面跳转后prefetch的资源仍然可用；\\n   - 注意事项：prefetch是「空闲时才下载」，不一定每次都下载完成。不能用于关键资源，因为空闲时机的不可控性。\\n3. rel=preconnect：告诉浏览器「请尽快建立到目标服务器的连接（DNS查询+TLS握手+TCP连接）」。\\n   - 使用方式：<link rel=「preconnect」 href=「https://api.example.com」>；\\n   - 涉及步骤：DNS解析（Domain Name Resolution）→ TCP握手（TCP Handshake）→ TLS协商（TLS Negotiation，仅HTTPS）→ 连接已就绪；\\n   - 时间节省：通常可节省100~500ms的连接建立时间（取决于DNS/TLS的复杂度）；\\n   - 使用场景：连接到第三方CDN、Google Fonts、API服务器、静态资源服务器等已知将要请求的外部域名；\\n   - 注意事项：即使只建立连接而没有后续请求，连接资源也会被浪费（占用socket池）。每个preconnect会占用一个socket直到超时。不建议对超过4~6个域名使用preconnect。DNS-prefetch是preconnect的轻量替代，仅做DNS解析（<link rel=「dns-prefetch」 href=「...」>）。\\n4. 优先级总结和举例：\\n   - preload > 默认加载 > preconnect（仅连接）> prefetch；\\n   - 同一页面内先preload字体和关键CSS，再prefetch下一页资源；\\n   - 对第三方API域名用preconnect提前建立连接；\\n   - 组合使用：preconnect + preload对跨域字体（如Google Fonts）的组合是最佳实践——先preconnect到字体域名，再preload字体文件。\\n5. 其他相关属性：\\n   - rel=prerender：比prefetch更进一步，不仅下载资源还会在后台完全渲染整个页面（包含JS执行），代价极高，已逐渐被废弃；\\n   - rel=modulepreload：类似preload但专门用于ES Module（JavaScript模块），会同时下载模块及其依赖树。",
+    "hints": [
+      "可以这样记忆优先级：preload（确定要用的，现在就要）> preconnect（现在连上，稍后可能用）> prefetch（以后可能会用，不着急）",
+      "preload和prefetch的关键区别在于「谁控制优先级」——preload由开发者显式声明优先级，prefetch由浏览器空闲时自动以最低优先级执行"
+    ],
+    "tags": [
+      "preload",
+      "prefetch",
+      "preconnect",
+      "资源加载",
+      "性能优化"
+    ]
   }
 ]

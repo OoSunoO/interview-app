@@ -1359,5 +1359,100 @@
       "遗留系统",
       "微服务迁移"
     ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "服务注册 ZK vs Nacos vs Eureka",
+    "content": "比较 ZooKeeper、Nacos 和 Eureka 三种服务注册中心在 CAP 理论中的定位。它们的健康检查机制、一致性模型、集群同步方式和典型应用场景有何不同？",
+    "answer": "三种注册中心的对比：\\n\\n1. ZooKeeper：\\n- CAP：CP 系统（强一致性 + 分区容忍性）。\\n- 一致性：ZAB 共识协议，Leader 写入后同步到 Follower。\\n- 数据模型：树形 ZNode 结构，服务注册用临时节点（Ephemeral ZNode）。\\n- 健康检查：客户端与服务端维持 Session（心跳），Session 超时自动删除临时节点。\\n- 问题：写吞吐量有限（单 Leader），羊群效应（Herd Effect）在大规模服务变更时明显。\\n- 适合：配置中心、分布式协调，小规模服务注册。\\n\\n2. Eureka：\\n- CAP：AP 系统（可用性 + 分区容忍性）。\\n- 一致性：最终一致性，每个节点都存储全量数据并互相复制。\\n- 健康检查：客户端定时发送心跳，可配置健康检查 URL。\\n- 自我保护模式：网络分区时 Eureka 不会删除实例数据，保证可用性。\\n- 适合：服务注册纯 AP 场景，Netflix 生态。正在被 Spring Cloud 社区逐步淘汰。\\n\\n3. Nacos：\\n- CAP：支持 CP（Raft）和 AP（Distro 协议）两种模式，按服务粒度切换。\\n- 健康检查：HTTP/TCP/MySQL 多种方式，支持主动探测和被动心跳。\\n- 额外功能：配置管理（配置中心 + 注册中心一体化），权重路由。\\n- 适合：微服务注册 + 配置管理一体化，适合大规模集群。\\n\\n业界趋势：Nacos AP 模式是 Spring Cloud 场景的主流选择；ZK 更多用于分布式协调和配置；Eureka 已逐渐淡出。",
+    "hints": [
+      "ZK 的临时节点如何对应到服务注册的摘除机制",
+      "Eureka 的自我保护模式在网络分区时如何影响服务发现"
+    ],
+    "tags": [
+      "微服务",
+      "服务注册",
+      "ZooKeeper",
+      "Nacos",
+      "Eureka",
+      "CAP"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "配置染色与全链路灰度",
+    "content": "解释微服务架构中基于配置染色（Configuration Dyeing）实现全链路灰度发布的技术方案。灰度标签如何产生、传递和生效？如何保证灰度链路的数据库和缓存隔离？",
+    "answer": "全链路灰度发布方案：\\n\\n1. 灰度标签产生（染色）：\\n- 入口网关（Spring Cloud Gateway / APISIX / Envoy）根据染色规则（用户 ID、设备类型、地域、百分比、Header 等）为请求打上灰度标签。\\n- 染色规则可存储在配置中心（Nacos / Apollo）动态下发。\\n\\n2. 灰度标签传递（传播）：\\n- HTTP 请求：通过自定义 Header（如 x-gray-tag=gray-001）传递。\\n- RPC 调用（Dubbo / Feign）：通过 RPC 隐式参数传递。\\n- 消息队列：消息体或 Headers 中携带灰度标签。\\n- OpenTelemetry Baggage：通过分布式追踪上下文自动传播。\\n- 实现方案：Feign 拦截器 / Dubbo Filter / MQ 消息拦截器自动注入标签。\\n\\n3. 灰度路由（生效）：\\n- Service Mesh（Istio）：通过 DestinationRule 的 subset 根据 header 路由到灰度版本。\\n- Nacos 元数据 + Spring Cloud LoadBalancer：灰度服务实例标记 metadata，自定义负载均衡规则按标签路由。\\n- K8s：通过服务标签选择器和 Ingress 注解实现。\\n\\n4. 基础设施隔离：\\n- 数据库：灰度服务连接灰度数据库实例，或通过 SQL 注解（如 SELECT … FOR gray_user）在表级别隔离。\\n- 缓存：灰度服务使用独立的 Redis 实例或 Key 前缀隔离。\\n- 消息队列：灰度消息投递到灰度消费组或灰度 Topic。\\n\\n挑战：\\n- 异步消息的灰度传播：Producer 写入灰度标记，Consumer 按标记路由。\\n- 灰度数据写库后，回流到稳定版时可能出现脏数据。",
+    "hints": [
+      "灰度标签如何通过 RPC 调用自动传播到下游服务",
+      "灰度请求访问了稳定版的数据库会造成什么问题"
+    ],
+    "tags": [
+      "微服务",
+      "灰度发布",
+      "配置染色",
+      "全链路",
+      "Istio"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "限流熔断隔离降级四板斧",
+    "content": "解释微服务稳定性的四个核心模式：限流（Rate Limiting）、熔断（Circuit Breaking）、隔离（Bulkhead Isolation）、降级（Degradation）。Sentinel 和 Hystrix 分别如何实现这些模式？",
+    "answer": "微服务稳定性四板斧：\\n\\n1. 限流（Rate Limiting）：控制请求速率，保护系统不被突发流量冲垮。\\n- 算法：令牌桶（可应对突发）、漏桶（平滑处理）、滑动窗口（精确时间窗口）。\\n- Sentinel 支持：QPS 限流、并发线程数限流、热点参数限流、匀速排队。\\n- Hystrix 支持：不内置限流，需配合其他组件。\\n\\n2. 熔断（Circuit Breaking）：当下游故障率超阈值时，快速失败防止级联故障。\\n- 状态机：CLOSED（正常） → OPEN（熔断，快速失败） → HALF_OPEN（半开，放行探测请求以检测恢复）。\\n- Sentinel 实现：基于响应时间/异常比例/异常数的熔断策略，更细粒度。\\n- Hystrix 实现：基于滑动窗口的异常比例，线程池/信号量耗尽触发。\\n\\n3. 隔离（Bulkhead Isolation）：资源隔离防止单个依赖故障波及全局。\\n- 线程池隔离（Hystrix）：每个依赖分配独立线程池，一个依赖的线程耗尽不影响其他。\\n- 信号量隔离（Sentinel）：轻量级的并发限制，无线程上下文切换。\\n- 信号量隔离性能更好但无法支持超时。\\n\\n4. 降级（Service Degradation）：压力下主动关闭非核心功能。\\n- 被动降级：熔断后触发 Fallback（缓存数据、默认值、错误页面）。\\n- 主动降级：配置中心动态关闭某些功能（如双十一关掉「猜你喜欢」）。\\n- 降级策略：返回空数据、返回本地缓存、直接报错由前端兜底。\\n\\n行业实践：\\n- Spring Cloud Alibaba 生态中 Sentinel 已基本替代 Hystrix（功能更丰富、性能更好）。\\n- 四板斧组合使用才能构建健壮的微服务体系。",
+    "hints": [
+      "熔断器的三个状态之间如何转换",
+      "线程池隔离和信号量隔离的优缺点分别是什么"
+    ],
+    "tags": [
+      "微服务",
+      "限流",
+      "熔断",
+      "隔离",
+      "降级",
+      "Sentinel"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "事件溯源与 CQRS",
+    "content": "解释事件溯源（Event Sourcing）和 CQRS（Command Query Responsibility Segregation）模式。它们解决了什么问题？如何协同工作？有什么挑战和解决方案？",
+    "answer": "事件溯源 + CQRS 架构模式：\\n\\n事件溯源：\\n- 不是保存当前状态，而是以追加（Append-Only）方式存储所有状态变更事件。\\n- 当前状态由「事件回放」（Event Replay）计算得出。\\n- 事件是事实（Facts），不会修改或删除（除非显式的补偿事件）。\\n\\nCQRS：\\n- 命令（Command）：写操作，更新数据（触发事件）。\\n- 查询（Query）：读操作，查询数据。\\n- 读写模型分离：写模型使用事件存储，读模型使用优化后的投影（Projection）数据库。\\n\\n协同工作：\\n1. 命令端（Command Side）：接收命令 → 验证业务规则 → 生成事件 → 追加到事件存储。\\n2. 事件总线（Event Bus）：发布事件到订阅者。\\n3. 投影（Projection）/ 读模型：订阅事件 → 更新读数据库（可以是任何适合查询的形式，如 MySQL、Elasticsearch）。\\n\\n优点：\\n- 完整审计日志：可追溯每个状态的变更历史。\\n- 时间旅行：可回到任意历史时间点。\\n- 事件驱动：天然适合微服务间异步协作。\\n- 读写优化：写 O(1) Append，读使用专用优化模型。\\n\\n挑战与解决方案：\\n- 事件模式演进：使用 Upcasting（事件版本升级器）或新事件类型。\\n- 运行状态重建慢：使用快照（Snapshot）——定期保存一份聚合状态快照。\\n- 最终一致性：投影延迟造成读模型落后于写模型——可通过事件通知客户端等待投影同步。\\n- 分布式事务：使用 Saga 模式——一系列补偿事件。\\n\\n常用框架：Axon Framework（Java）、EventStoreDB、Kafka + KSQL。",
+    "hints": [
+      "事件溯源中如何得到当前状态",
+      "CQRS 的读模型如何与事件存储保持同步"
+    ],
+    "tags": [
+      "微服务",
+      "事件溯源",
+      "CQRS",
+      "架构模式"
+    ]
+  },
+  {
+    "category": "microservices",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微服务链路追踪与 Span 关联",
+    "content": "请解释微服务链路追踪中 Span 的关联关系、传播机制以及采样策略的设计",
+    "answer": "答案：Span 是链路追踪的基本单元，通过 Trace ID 关联同一次请求的所有 Span，Parent Span ID 标识父子关系。\\n\\n解析：Span 结构包括 Trace ID、Span ID、Parent Span ID、开始/结束时间、服务名、标签和日志。传播机制通过上下文注入实现：客户端在出站请求中注入 Trace 上下文，服务端从入站请求中提取上下文。采样策略：头部采样（Head-based，在请求入口决定是否采样）和尾部采样（Tail-based，根据请求结果决定）。头部采样适合性能场景，尾部采样适合错误分析。传播协议：W3C Trace Context（traceparent 头）是标准推荐。",
+    "hints": [
+      "头部采样和尾部采样各自的优缺点是什么",
+      "多语言环境下 Trace Context 的传播兼容性如何保证"
+    ],
+    "tags": [
+      "链路追踪",
+      "Span",
+      "采样",
+      "OpenTelemetry"
+    ]
   }
 ]

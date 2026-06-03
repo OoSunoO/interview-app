@@ -1738,5 +1738,130 @@
       "Java 9",
       "jlink"
     ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "允许 null 键的 Map 实现",
+    "content": "以下哪些 Map 实现允许将 null 作为键（key）存入？",
+    "answer": "AB",
+    "options": [
+      "A) HashMap",
+      "B) LinkedHashMap",
+      "C) TreeMap（默认自然顺序，未指定 Comparator）",
+      "D) ConcurrentHashMap"
+    ],
+    "hints": [
+      "需要排序的 Map 通常不允许 null 键",
+      "ConcurrentHashMap 的作者 Doug Lea 出于语义清晰考虑明确禁止 null 键与值"
+    ],
+    "tags": [
+      "HashMap",
+      "LinkedHashMap",
+      "null-key",
+      "TreeMap",
+      "ConcurrentHashMap"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "函数式接口的识别",
+    "content": "以下哪些接口在 Java 中是有效的函数式接口（Functional Interface，即只包含一个抽象方法）？",
+    "answer": "ABC",
+    "options": [
+      "A) java.lang.Runnable",
+      "B) java.util.concurrent.Callable",
+      "C) java.lang.Comparable",
+      "D) java.io.Serializable"
+    ],
+    "hints": [
+      "函数式接口要求恰好有一个抽象方法，Object 类的 public 方法不计入抽象方法",
+      "Serializable 是标记接口（Marker Interface），没有抽象方法"
+    ],
+    "tags": [
+      "functional-interface",
+      "Runnable",
+      "Callable",
+      "Comparable",
+      "Serializable"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "HashMap resize 触发条件",
+    "content": "以下哪些情况下 HashMap 会触发 resize（扩容）？",
+    "answer": "AB",
+    "options": [
+      "A) 元素数量超过容量与负载因子的乘积（size > threshold）",
+      "B) 链表长度超过 8 但数组长度小于 64（此时优先扩容而非树化）",
+      "C) 每次调用 put() 方法都会触发 resize",
+      "D) 调用 clear() 方法清空所有元素后触发 resize"
+    ],
+    "hints": [
+      "threshold = capacity × loadFactor，超过这个阈值才扩容",
+      "链表超过 8 但数组还没到 64 时 HashMap 选择扩容来分散元素"
+    ],
+    "tags": [
+      "HashMap",
+      "resize",
+      "threshold",
+      "treeify",
+      "load-factor"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "实现 RandomAccess 的集合类",
+    "content": "以下哪些集合类实现了 RandomAccess 标记接口（即支持高效随机访问）？",
+    "answer": "ACD",
+    "options": [
+      "A) ArrayList",
+      "B) LinkedList",
+      "C) Vector",
+      "D) CopyOnWriteArrayList"
+    ],
+    "hints": [
+      "RandomAccess 是标记接口，告诉算法该类支持 O(1) 随机访问",
+      "LinkedList 的随机访问是 O(n)，因此没有实现 RandomAccess"
+    ],
+    "tags": [
+      "RandomAccess",
+      "ArrayList",
+      "Vector",
+      "CopyOnWriteArrayList",
+      "LinkedList"
+    ]
+  },
+  {
+    "category": "java_multiple_choice",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "ConcurrentHashMap Java 8+ 并发控制机制",
+    "content": "以下哪些是 Java 8+ ConcurrentHashMap 使用的并发控制机制？",
+    "answer": "AB",
+    "options": [
+      "A) CAS（Compare-And-Swap）操作",
+      "B) synchronized 块",
+      "C) ReentrantReadWriteLock",
+      "D) 分段锁（Segment）"
+    ],
+    "hints": [
+      "Java 8 重构了 ConcurrentHashMap，放弃了 Java 7 的分段锁设计",
+      "CAS 用于无竞争场景（如插入新桶），synchronized 用于竞争场景（如树化节点操作）"
+    ],
+    "tags": [
+      "ConcurrentHashMap",
+      "CAS",
+      "synchronized",
+      "segment-lock",
+      "java8"
+    ]
   }
 ]

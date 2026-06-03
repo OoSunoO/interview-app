@@ -1642,5 +1642,130 @@
       "函数式编程",
       "并行"
     ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "虚拟线程 carrier 线程复用机制",
+    "content": "关于虚拟线程的 carrier 线程（载体线程）复用机制，以下描述正确的是？",
+    "answer": "答案：B) 虚拟线程在阻塞 I/O 时从 carrier 卸载，carrier 被归还给 ForkJoinPool 供其他虚拟线程复用。解析：虚拟线程的 carrier 线程是 ForkJoinPool 中的平台线程，默认数量等于 CPU 核心数。当虚拟线程遇到阻塞 I/O（如 socket.read、锁等待）时，JVM 自动执行 unmount 操作，将虚拟线程的栈帧内容保存到堆上，carrier 线程被释放回 ForkJoinPool 供其他虚拟线程调度。阻塞操作完成后，虚拟线程被重新 mount 到某个可用的 carrier 线程继续执行。注意 synchronized 块和 native 方法不会触发卸载，会导致 carrier 被 Pin 住无法复用。",
+    "options": [
+      "A) 每个虚拟线程创建时分配一个固定的 carrier 线程，虚拟线程生命周期内 carrier 不变",
+      "B) 虚拟线程在阻塞 I/O 时从 carrier 卸载，carrier 被归还给 ForkJoinPool 供其他虚拟线程复用",
+      "C) 虚拟线程的 carrier 线程数量等于 CPU 核心数乘以 2，且运行时不可调整",
+      "D) 虚拟线程结束后其 carrier 线程也被销毁并归还给 OS"
+    ],
+    "hints": [
+      "carrier 线程由 ForkJoinPool 管理，思考虚拟线程阻塞时 carrier 的去向",
+      "思考哪些操作会导致 carrier 被 Pin 住无法卸载"
+    ],
+    "tags": [
+      "virtual-thread",
+      "carrier-thread",
+      "ForkJoinPool",
+      "mount-unmount",
+      "java21"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "StructuredTaskScope 异常传播策略",
+    "content": "关于 StructuredTaskScope 的 ShutdownOnFailure 和 ShutdownOnSuccess 两种内置策略，以下说法正确的是？",
+    "answer": "答案：A) ShutdownOnFailure 在任意子任务失败时立即关闭 scope 并取消其余子任务；ShutdownOnSuccess 在任意子任务成功时立即关闭 scope 并取消其余子任务。解析：ShutdownOnFailure 策略在任意子任务抛出异常时立即调用 shutdown()，取消所有尚未完成的子任务。主线程在 join() 后调用 throwIfFailed() 重新抛出第一个异常。适用于必须在所有子任务都成功才能继续的场景。ShutdownOnSuccess 策略则在第一个子任务成功返回时立即关闭 scope，主线程通过 result() 获取第一个成功结果。适用于多数据源并行查询取最快结果的场景。两种策略都使用 try-with-resources 确保 scope 正确关闭，不会遗留未完成的任务。",
+    "options": [
+      "A) ShutdownOnFailure 在任意子任务失败时立即关闭 scope 并取消其余子任务；ShutdownOnSuccess 在任意子任务成功时立即关闭 scope 并取消其余子任务",
+      "B) ShutdownOnFailure 和 ShutdownOnSuccess 都等待所有子任务完成后统一处理结果",
+      "C) ShutdownOnFailure 只捕获第一个子任务的异常并忽略后续子任务的异常",
+      "D) ShutdownOnSuccess 需要等待所有子任务完成才能通过 result() 获取结果"
+    ],
+    "hints": [
+      "两种策略名字已经暗示了触发关闭的条件——Failure 或 Success",
+      "思考「全有或全无」和「谁先完成用谁」分别对应哪种策略"
+    ],
+    "tags": [
+      "structured-concurrency",
+      "StructuredTaskScope",
+      "ShutdownOnFailure",
+      "ShutdownOnSuccess",
+      "java21"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "FFM API Arena 作用域管理",
+    "content": "关于 FFM API 中 Arena 的作用域管理和内存释放机制，以下说法正确的是？",
+    "answer": "答案：B) Arena 使用 try-with-resources 自动释放所有分配的内存段，无需手动释放每个 MemorySegment。解析：Arena 实现了 AutoCloseable 和 SegmentAllocator 接口。使用 try-with-resources 包围时，try 块结束时自动调用 arena.close()，所有由此 Arena 分配的 MemorySegment 都被释放（变为无效状态）。JVM 有三种 Arena：Arena.ofAuto()（GC 自动回收）、Arena.ofConfined()（线程限制，显式关闭）、Arena.ofShared()（多线程共享，显式关闭）。ofConfined 只能由创建线程访问，性能最高。ofShared 多线程可同时访问，但关闭时由最后一个 close() 调用者负责。注意：释放后继续访问对应 MemorySegment 会抛出 IllegalStateException。",
+    "options": [
+      "A) Arena 使用引用计数管理内存，引用归零时由 GC 自动释放",
+      "B) Arena 使用 try-with-resources 自动释放所有分配的内存段，无需手动释放每个 MemorySegment",
+      "C) Arena 分为 confined 和 shared 两种，其中 shared arena 的访问性能比 confined 更高",
+      "D) Arena 分配的内存必须为每个 MemorySegment 单独调用 close() 释放"
+    ],
+    "hints": [
+      "Arena 实现了 AutoCloseable，思考 try-with-resources 如何工作",
+      "ofConfined 和 ofShared 在线程访问限制上的差异"
+    ],
+    "tags": [
+      "FFM API",
+      "Arena",
+      "MemorySegment",
+      "memory-management",
+      "panama"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "hard",
+    "type": "choice",
+    "title": "Valhalla 值类型 JIT 优化原理",
+    "content": "关于 Project Valhalla 的值类型（Value Types）和内联类（Inline Classes）在 JIT 编译中的优化，以下说法正确的是？",
+    "answer": "答案：A) 值类型可以将对象内联展开到栈帧或父对象中，消除堆分配和指针间接访问。解析：值类型（内联类，@__inline）的核心特征是无对象标识（identity-less）。JIT 编译器因此可以将值类型的实例内联展开（scalar replacement / flattening），直接存储在栈帧的局部变量槽中或嵌入到父对象的字段中，无需堆分配和通过指针访问。这意味着：1）内存局部性更好，减少缓存未命中；2）减少 GC 压力（堆上对象更少）；3）数组可扁平化存储（连续排列值而非引用数组）。但值类型不可变，所有字段隐式 final，不能继承或被继承。没有 null 引用语义——默认值为零值。注意 synchronized 不适用于值类型。",
+    "options": [
+      "A) 值类型可以将对象内联展开到栈帧或父对象中，消除堆分配和指针间接访问",
+      "B) 值类型在 JIT 编译后与普通引用类型的性能完全一致，无额外优化",
+      "C) JIT 对值类型的优化仅限于字符串常量池内联，不涉及标量替换",
+      "D) 值类型必须通过引用访问，无法实现标量化替换（scalar replacement）"
+    ],
+    "hints": [
+      "值类型没有对象标识，这是 JIT 做内联展开的前提条件",
+      "标量替换（Scalar Replacement）是 JIT 将对象拆解为字段的关键技术"
+    ],
+    "tags": [
+      "Valhalla",
+      "value-types",
+      "inline-class",
+      "JIT",
+      "scalar-replacement"
+    ]
+  },
+  {
+    "category": "java_advanced",
+    "difficulty": "medium",
+    "type": "choice",
+    "title": "Stream Gatherers 自定义实现",
+    "content": "关于 JDK 22 预览的 Stream Gatherers 特性，以下说法正确的是？",
+    "answer": "答案：C) Gatherer 接口的 integrator() 是核心方法，处理每个元素并通过 Downstream.push() 决定是否向下游发射。解析：Stream Gatherers 通过 Gatherer 接口支持自定义中间操作。Gatherer 包含四个组件：initializer（初始化可变状态）、integrator（处理每个元素，调用 downstream.push() 发射结果）、combiner（并行时合并状态）、finisher（处理完成后做最终转换）。其中 integrator 是唯一必须实现的方法，其余有默认实现。integrator 返回 boolean 值——返回 false 表示不再接受更多元素（提前终止）。内置 Gatherers 工具类提供 windowFixed（定长窗口）、fold（折叠）、scan（扫描产生中间结果）、mapConcurrent（并发映射）等。注意 Gatherer 支持并行流——通过 combiner 实现任务拆分和结果合并。",
+    "options": [
+      "A) Gatherer 接口必须实现 initializer、integrator、combiner 和 finisher 全部四个方法",
+      "B) Stream Gatherers 只能处理有限流，对无限流直接抛出异常",
+      "C) Gatherer 接口的 integrator() 是核心方法，处理每个元素并通过 Downstream.push() 决定是否向下游发射",
+      "D) Gatherer 的 finisher 只能做清理操作，无法向下游发射最终元素"
+    ],
+    "hints": [
+      "integrator 是唯一必须实现的方法，其他组件有默认实现",
+      "Downstream.push() 的调用时机决定了下游能否收到该元素"
+    ],
+    "tags": [
+      "Stream API",
+      "Gatherers",
+      "gatherer",
+      "java22",
+      "integrator"
+    ]
   }
 ]
