@@ -74,9 +74,20 @@
   let notesSaved = $state(false);
   let notesSaving = $state(false);
 
+  let questionHistory = $state([]);
+
   $effect(() => {
-    if (q) notesText = q.notes || "";
+    if (q) {
+      notesText = q.notes || "";
+      loadQuestionHistory();
+    }
   });
+
+  function loadQuestionHistory() {
+    if (!q) return;
+    const all = api.progress.reviewHistory(200);
+    questionHistory = all.filter((s) => s.question_id === q.id).slice(0, 10);
+  }
 
   async function saveNotes() {
     notesSaving = true;
@@ -784,6 +795,25 @@
         <button class="notes-save-btn" onclick={saveNotes} disabled={notesSaving}>
           {notesSaving ? "保存中…" : "保存笔记"}
         </button>
+      </div>
+    {/if}
+
+    {#if questionHistory.length > 0}
+      <div class="q-history">
+        <div class="qh-header">
+          <span class="qh-label">答题历史</span>
+          <span class="qh-count">最近 {questionHistory.length} 次</span>
+        </div>
+        <div class="qh-list">
+          {#each questionHistory as h}
+            <div class="qh-item" class:qh-correct={h.result === "correct"} class:qh-wrong={h.result === "wrong" || h.result === "forgot"}>
+              <span class="qh-dot"></span>
+              <span class="qh-result">{h.result === "correct" ? "正确" : h.result === "wrong" ? "错误" : h.result}</span>
+              <span class="qh-time">{new Date(h.reviewed_at).toLocaleString("zh-CN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+              <span class="qh-dur">{h.duration_seconds ? `${h.duration_seconds}秒` : ""}</span>
+            </div>
+          {/each}
+        </div>
       </div>
     {/if}
 
@@ -1691,6 +1721,77 @@
   }
   .notes-save-btn:disabled {
     opacity: 0.5;
+  }
+
+  /* ── Question History ── */
+  .q-history {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+  }
+  .qh-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .qh-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .qh-count {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .qh-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .qh-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 4px 6px;
+    border-radius: 4px;
+  }
+  .qh-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    flex-shrink: 0;
+  }
+  .qh-correct .qh-dot {
+    background: var(--success);
+  }
+  .qh-wrong .qh-dot {
+    background: var(--danger);
+  }
+  .qh-result {
+    font-weight: 600;
+    min-width: 32px;
+  }
+  .qh-correct .qh-result {
+    color: var(--success);
+  }
+  .qh-wrong .qh-result {
+    color: var(--danger);
+  }
+  .qh-time {
+    color: var(--text-dim);
+    font-size: 11px;
+    margin-left: auto;
+  }
+  .qh-dur {
+    color: var(--text-dim);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
   }
 
   /* ── Session Summary ── */
