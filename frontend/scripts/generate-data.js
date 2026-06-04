@@ -34,6 +34,10 @@ const sortedCats = Object.keys(byCategory).sort();
 
 // ── Write per-category files (full data, lazy chunks) ─────────
 fs.mkdirSync(catsDir, { recursive: true });
+// Clean stale files from previous runs
+for (const f of fs.readdirSync(catsDir)) {
+  fs.rmSync(path.join(catsDir, f), { force: true });
+}
 
 for (const cat of sortedCats) {
   const questions = byCategory[cat];
