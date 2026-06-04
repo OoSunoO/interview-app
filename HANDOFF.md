@@ -1,8 +1,8 @@
 # Handoff — 面试刷题 App
 
 **日期：** 2026-06-04
-**版本：** v1.4.0
-**当前状态：** 5176 题，51 分类全部 100+，202 测试全绿，构建 860ms
+**版本：** v1.4.1
+**当前状态：** 5176 题，51 分类全部 100+，202 单元测试全绿，28 E2E 全绿，构建 830ms
 
 ---
 
@@ -48,6 +48,13 @@
 - 趋势图 + 周柱状图
 - 复习历史
 
+### UI Polish (v1.4.1)
+- 全 CSS 变量化：code block 背景、标签颜色、badge 颜色均使用 theme-aware 变量
+- 全局 `.overlay` class 统一 5 个组件的弹窗遮罩层（-89 行 CSS 重复）
+- CodeBlock 组件浅色模式修复（复制按钮背景/颜色适配主题）
+- Playwright E2E storageState 预置用户名（跳过 GistSetup 首屏引导）
+- question type 标签（choice/multiple_choice/fill_in_blank）使用语义 CSS 变量
+
 ### UI/UX
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
@@ -58,9 +65,9 @@
 
 ### 测试
 - 202 单元测试（Vitest）
-- 28 E2E 测试（Playwright，含移动端视图 + 主题切换）
+- 28 E2E 测试（Playwright，含移动端视图 + 主题切换 + GistSetup bypass）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
-- 覆盖率：83.39% statements, 87.28% lines（JS 模块）
+- 覆盖率：83.42% statements, 87.23% lines（JS 模块）
 
 ### 后端补齐
 - 书签：POST toggle + GET list（`/api/progress/{id}/bookmark`, `/api/progress/bookmarks`）
@@ -73,7 +80,7 @@
 
 ## 当前未提交的工作
 
-无。v1.3.0 已提交并推送。
+无。v1.4.1 已提交并推送。
 
 ## 架构要点
 
