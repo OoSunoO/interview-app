@@ -111,6 +111,10 @@
 - 修复 `goRandom()` 未检查 tag 筛选条件的 bug
 - 新增 1 个 tagsWithCount 单元测试
 
+### Feature (v1.4.14)
+- Mock Interview 设置新增题型和知识点筛选，与 QuickReview 筛选能力对齐
+- 新增 miType/miTag 状态持久化到 localStorage，筛选条件跨会话保留
+
 ### Feature (v1.4.13)
 - Browse 题目详情弹窗新增笔记编辑功能：展开式文本区，输入即自动保存
 - 笔记有内容时在折叠标题旁显示指示点

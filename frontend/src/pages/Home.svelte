@@ -29,8 +29,11 @@
   let goalInput = $state(0);
   let miCategory = $state(localStorage.getItem("mi_category") || "");
   let miDifficulty = $state(localStorage.getItem("mi_difficulty") || "");
+  let miType = $state(localStorage.getItem("mi_type") || "");
+  let miTag = $state(localStorage.getItem("mi_tag") || "");
   let miCount = $state(Number(localStorage.getItem("mi_count")) || 10);
   let miTimeLimit = $state(Number(localStorage.getItem("mi_time_limit")) || 120);
+  let allTags = $state([]);
 
   const categories = FILTER_CATEGORIES;
 
@@ -82,6 +85,7 @@
         days.push({ label: dayLabel, count });
       }
       weeklyData = days;
+      allTags = api.questions.tags();
     } catch (e) {
       error = e.message ?? "加载数据失败";
     } finally {
@@ -145,11 +149,15 @@
     showMIDialog = false;
     localStorage.setItem("mi_category", miCategory);
     localStorage.setItem("mi_difficulty", miDifficulty);
+    localStorage.setItem("mi_type", miType);
+    localStorage.setItem("mi_tag", miTag);
     localStorage.setItem("mi_count", String(miCount));
     localStorage.setItem("mi_time_limit", String(miTimeLimit));
     const list = api.questions.list({
       category: miCategory,
       difficulty: miDifficulty,
+      type: miType || undefined,
+      tag: miTag || undefined,
       page_size: 500,
     });
     const shuffled = [...list].sort(() => Math.random() - 0.5);
@@ -586,6 +594,25 @@
         <option value="easy">简单</option>
         <option value="medium">中等</option>
         <option value="hard">困难</option>
+      </select>
+
+      <label for="mi-type">题型</label>
+      <select id="mi-type" bind:value={miType}>
+        <option value="">全部</option>
+        <option value="short_answer">问答题</option>
+        <option value="choice">选择题</option>
+        <option value="multiple_choice">多选题</option>
+        <option value="true_false">判断题</option>
+        <option value="coding">编程题</option>
+        <option value="fill_in_blank">填空题</option>
+      </select>
+
+      <label for="mi-tag">知识点</label>
+      <select id="mi-tag" bind:value={miTag}>
+        <option value="">全部</option>
+        {#each allTags as tag}
+          <option value={tag}>{tag}</option>
+        {/each}
       </select>
 
       <span class="dialog-label">题量</span>
