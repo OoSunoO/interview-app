@@ -54,6 +54,12 @@ export const CATEGORY_LABELS = {
   system_design_extras: "系统设计",
   system_design_micro: "系统设计",
 
+  // Distributed systems
+  distributed_systems: "分布式系统",
+
+  // Security
+  security: "安全",
+
   // Middleware & infra
   redis: "Redis",
   redis_extras: "Redis",
@@ -106,6 +112,9 @@ export const MAIN_CATEGORY = {
   concurrency_fill_blank: "concurrency",
   design_patterns: "design_patterns",
   microservices: "microservices",
+  distributed_systems: "distributed_systems",
+
+  security: "security",
 
   frontend: "frontend",
   react: "react",
@@ -160,6 +169,9 @@ export const FILTER_CATEGORIES = [
   { value: "concurrency", label: "并发编程" },
   { value: "design_patterns", label: "设计模式" },
   { value: "microservices", label: "微服务" },
+  { value: "distributed_systems", label: "分布式系统" },
+
+  { value: "security", label: "安全" },
 
   { value: "react", label: "React" },
   { value: "frontend", label: "前端" },

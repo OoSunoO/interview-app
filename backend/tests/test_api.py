@@ -494,3 +494,130 @@ class TestSM2Progression:
         client.post("/api/progress/1", json={"status": "correct"})
         data = client.get("/api/questions/1").json()
         assert data["status"] == "reviewing"
+
+
+# ── POST /api/progress/{id}/bookmark & GET /api/progress/bookmarks ──
+
+
+class TestBookmarks:
+    def test_toggle_bookmark_on(self, client):
+        resp = client.post("/api/progress/1/bookmark", json={"bookmarked": True})
+        assert resp.status_code == 200
+        assert resp.json()["bookmarked"] is True
+
+    def test_toggle_bookmark_off(self, client):
+        client.post("/api/progress/1/bookmark", json={"bookmarked": True})
+        resp = client.post("/api/progress/1/bookmark", json={"bookmarked": False})
+        assert resp.json()["bookmarked"] is False
+
+    def test_bookmark_nonexistent_question(self, client):
+        resp = client.post("/api/progress/9999/bookmark", json={"bookmarked": True})
+        assert resp.status_code == 404
+
+    def test_list_bookmarks_empty(self, client):
+        resp = client.get("/api/progress/bookmarks")
+        assert resp.json() == []
+
+    def test_list_bookmarks(self, client):
+        client.post("/api/progress/1/bookmark", json={"bookmarked": True})
+        client.post("/api/progress/2/bookmark", json={"bookmarked": True})
+
+        data = client.get("/api/progress/bookmarks").json()
+        assert len(data) == 2
+        ids = [d["id"] for d in data]
+        assert 1 in ids and 2 in ids
+
+    def test_list_bookmarks_excludes_unbookmarked(self, client):
+        client.post("/api/progress/1/bookmark", json={"bookmarked": True})
+        client.post("/api/progress/2/bookmark", json={"bookmarked": False})
+
+        data = client.get("/api/progress/bookmarks").json()
+        assert len(data) == 1
+        assert data[0]["id"] == 1
+
+
+# ── POST /api/quick-review/start ──
+
+
+class TestQuickReviewStart:
+    def test_start_returns_random_questions(self, client):
+        resp = client.post("/api/quick-review/start", json={"count": 2})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) == 2
+        assert "id" in data[0] and "title" in data[0] and "category" in data[0]
+
+    def test_start_filter_by_category(self, client):
+        resp = client.post("/api/quick-review/start", json={"count": 10, "category": "java"})
+        data = resp.json()
+        assert all(q["category"] == "java" for q in data)
+
+    def test_start_respects_count(self, client):
+        resp = client.post("/api/quick-review/start", json={"count": 1})
+        assert len(resp.json()) == 1
+
+    def test_start_empty_category(self, client):
+        resp = client.post("/api/quick-review/start", json={"count": 10, "category": "nonexistent"})
+        assert resp.json() == []
+
+
+# ── POST /api/quick-review/rate ──
+
+
+class TestQuickReviewRate:
+    def test_rate_forgot(self, client):
+        resp = client.post("/api/quick-review/rate",
+                           json={"question_id": 1, "rating": 0, "duration_seconds": 10})
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+    def test_rate_unsure(self, client):
+        resp = client.post("/api/quick-review/rate",
+                           json={"question_id": 2, "rating": 1})
+        assert resp.status_code == 200
+
+    def test_rate_remembered(self, client):
+        resp = client.post("/api/quick-review/rate",
+                           json={"question_id": 3, "rating": 2})
+        assert resp.status_code == 200
+
+    def test_rate_creates_progress(self, client):
+        client.post("/api/quick-review/rate",
+                    json={"question_id": 3, "rating": 2})
+
+        data = client.get("/api/questions/3").json()
+        assert data["status"] == "correct"
+        assert data["review_count"] == 1
+
+
+# ── GET /api/quick-review/history ──
+
+
+class TestQuickReviewHistory:
+    def test_history_empty(self, client):
+        resp = client.get("/api/quick-review/history")
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_history_shows_reviews(self, client):
+        client.post("/api/quick-review/rate",
+                    json={"question_id": 1, "rating": 0})
+        client.post("/api/quick-review/rate",
+                    json={"question_id": 2, "rating": 2})
+
+        data = client.get("/api/quick-review/history").json()
+        assert len(data) == 2
+
+    def test_history_shows_result_text(self, client):
+        client.post("/api/quick-review/rate",
+                    json={"question_id": 1, "rating": 0})  # forgot
+        client.post("/api/quick-review/rate",
+                    json={"question_id": 2, "rating": 1})  # unsure
+        client.post("/api/quick-review/rate",
+                    json={"question_id": 3, "rating": 2})  # remembered
+
+        data = client.get("/api/quick-review/history").json()
+        results = {r["question_id"]: r["result"] for r in data}
+        assert results[1] == "forgot"
+        assert results[2] == "unsure"
+        assert results[3] == "remembered"

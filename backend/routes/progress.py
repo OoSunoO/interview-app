@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from collections import defaultdict
 from database import get_db
-from models import ProgressUpdate, StatsOverview
+from models import ProgressUpdate, StatsOverview, BookmarkToggle
 from datetime import datetime, timedelta, timezone
 import json
 import math
@@ -239,6 +239,56 @@ async def get_knowledge():
         })
 
     return result
+
+
+@router.post("/{question_id}/bookmark")
+async def toggle_bookmark(question_id: int, body: BookmarkToggle):
+    db = await get_db()
+    cursor = await db.execute("SELECT id FROM questions WHERE id = ?", (question_id,))
+    if not await cursor.fetchone():
+        await db.close()
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    cursor = await db.execute(
+        "SELECT id FROM user_progress WHERE question_id = ?", (question_id,)
+    )
+    if await cursor.fetchone():
+        await db.execute(
+            "UPDATE user_progress SET bookmarked = ? WHERE question_id = ?",
+            (1 if body.bookmarked else 0, question_id),
+        )
+    else:
+        await db.execute(
+            "INSERT INTO user_progress (question_id, status, bookmarked) VALUES (?, 'new', ?)",
+            (question_id, 1 if body.bookmarked else 0),
+        )
+    await db.commit()
+    await db.close()
+    return {"ok": True, "bookmarked": body.bookmarked}
+
+
+@router.get("/bookmarks")
+async def list_bookmarks():
+    db = await get_db()
+    cursor = await db.execute("""
+        SELECT q.id, q.title, q.category, q.difficulty, q.type, q.tags, q.company,
+               COALESCE(p.status, 'new') as status,
+               COALESCE(p.wrong_count, 0) as wrong_count
+        FROM questions q
+        JOIN user_progress p ON q.id = p.question_id
+        WHERE p.bookmarked = 1
+        ORDER BY q.id
+    """)
+    rows = await cursor.fetchall()
+    await db.close()
+    return [
+        dict(
+            id=r["id"], category=r["category"], difficulty=r["difficulty"],
+            type=r["type"], title=r["title"], tags=json.loads(r["tags"]) if isinstance(r["tags"], str) else [],
+            company=r["company"] or "", status=r["status"], wrong_count=r["wrong_count"],
+        )
+        for r in rows
+    ]
 
 
 @router.get("/review/due")

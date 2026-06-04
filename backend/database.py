@@ -66,5 +66,11 @@ async def init_db():
     except Exception:
         pass  # Column already exists
 
+    # Migrate existing databases: add bookmarked column if missing
+    try:
+        await db.execute("ALTER TABLE user_progress ADD COLUMN bookmarked INTEGER NOT NULL DEFAULT 0")
+    except Exception:
+        pass  # Column already exists
+
     await db.commit()
     await db.close()

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from database import init_db
-from routes import questions, progress
+from routes import questions, progress, quick_review
 from pathlib import Path
 
 
@@ -32,6 +32,7 @@ app.add_middleware(
 
 app.include_router(questions.router, prefix="/api/questions", tags=["questions"])
 app.include_router(progress.router, prefix="/api/progress", tags=["progress"])
+app.include_router(quick_review.router, prefix="/api/quick-review", tags=["quick-review"])
 
 
 @app.get("/api/health")

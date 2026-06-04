@@ -16,12 +16,18 @@
   import CommandPalette from "./components/CommandPalette.svelte";
   import Toast from "./components/Toast.svelte";
   import KeyboardHelp from "./components/KeyboardHelp.svelte";
+  import GistSetup from "./components/GistSetup.svelte";
+  import SyncStatus from "./components/SyncStatus.svelte";
+  import { gistSync } from "./lib/gist-sync.js";
 
   let page = $state("home");
   let selectedQuestionId = $state(null);
   let selectedTag = $state(null);
   let reviewConfig = $state(null);
   let mockInterviewConfig = $state(null);
+  let showGistSetup = $state(false);
+  let showGistBtn = $state(false);
+  let appReady = $state(false);
 
   function navigate(to, params = {}) {
     selectedQuestionId = params.questionId ?? null;
@@ -31,9 +37,42 @@
     page = to;
   }
 
+  function handleGistComplete(result) {
+    showGistSetup = false;
+    showGistBtn = true;
+    // If restored from Gist, refresh all views
+    if (result?.restored) {
+      store.refreshStats();
+      store.refreshDue();
+      store.refreshWrong();
+      store.refreshDailyStats();
+    }
+  }
+
+  function openGistSetup() {
+    showGistSetup = true;
+  }
+
   onMount(() => {
     api.migrateProgress();
     store.refreshDue();
+
+    // Install beforeunload hook for last-chance sync
+    gistSync.installBeforeUnloadHook();
+    gistSync.migrateToSlotKeys();
+
+    // Show GistSetup if first time (no username)
+    if (!gistSync.hasUsername()) {
+      showGistSetup = true;
+    } else {
+      showGistBtn = true;
+      // If token is set, queue an initial sync
+      if (gistSync.hasToken()) {
+        gistSync.queueSync();
+      }
+    }
+
+    appReady = true;
   });
 </script>
 
@@ -67,6 +106,16 @@
   <CommandPalette onNavigate={navigate} />
   <KeyboardHelp />
   <Toast />
+
+  {#if showGistSetup && appReady}
+    <GistSetup onComplete={handleGistComplete} />
+  {/if}
+
+  {#if showGistBtn}
+    <button class="app-sync-btn" onclick={openGistSetup} data-testid="open-gist-settings" title="同步设置">
+      <SyncStatus />
+    </button>
+  {/if}
 </div>
 
 <style>
@@ -79,5 +128,20 @@
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+  .app-sync-btn {
+    position: fixed;
+    top: 12px;
+    right: max(12px, var(--safe-right));
+    z-index: var(--z-sticky);
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: inherit;
+    font-family: inherit;
+  }
+  .app-sync-btn:active {
+    transform: none;
   }
 </style>

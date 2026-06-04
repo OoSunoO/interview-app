@@ -21,6 +21,13 @@ loadAll();
 import { rateCard, getDefaultProgress, QUICK_REVIEW_MAP, RATINGS } from "./sm2.js";
 import { CATEGORY_LABELS, MAIN_CATEGORY } from "./categories.js";
 import { version as buildVersion } from "../../package.json";
+import { gistSync } from "./gist-sync.js";
+
+function usernameSuffix(key) {
+  const u = gistSync.getUsername();
+  if (!u) return key;
+  return `${key}_${u}`;
+}
 
 const PROGRESS_KEY = "quiz_progress";
 const SESSION_KEY = "quiz_review_sessions";
@@ -29,7 +36,7 @@ const GOAL_KEY = "quiz_daily_goal";
 
 function getProgress() {
   try {
-    return JSON.parse(localStorage.getItem(PROGRESS_KEY) || "{}");
+    return JSON.parse(localStorage.getItem(usernameSuffix(PROGRESS_KEY)) || "{}");
   } catch {
     return {};
   }
@@ -37,7 +44,8 @@ function getProgress() {
 
 function saveProgress(p) {
   try {
-    localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+    localStorage.setItem(usernameSuffix(PROGRESS_KEY), JSON.stringify(p));
+    gistSync.queueSync();
   } catch (e) {
     console.warn("localStorage write failed:", e);
   }
@@ -45,7 +53,7 @@ function saveProgress(p) {
 
 function getSessions() {
   try {
-    return JSON.parse(localStorage.getItem(SESSION_KEY) || "[]");
+    return JSON.parse(localStorage.getItem(usernameSuffix(SESSION_KEY)) || "[]");
   } catch {
     return [];
   }
@@ -53,7 +61,8 @@ function getSessions() {
 
 function saveSessions(s) {
   try {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(s.slice(-500))); // keep last 500
+    localStorage.setItem(usernameSuffix(SESSION_KEY), JSON.stringify(s.slice(-500))); // keep last 500
+    gistSync.queueSync();
   } catch {
     /* ignore */
   }
@@ -61,13 +70,14 @@ function saveSessions(s) {
 
 function getDailyStats() {
   try {
-    return JSON.parse(localStorage.getItem(DAILY_STATS_KEY) || "{}");
+    return JSON.parse(localStorage.getItem(usernameSuffix(DAILY_STATS_KEY)) || "{}");
   } catch { return {}; }
 }
 
 function saveDailyStats(stats) {
   try {
-    localStorage.setItem(DAILY_STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(usernameSuffix(DAILY_STATS_KEY), JSON.stringify(stats));
+    gistSync.queueSync();
   } catch { /* ignore */ }
 }
 

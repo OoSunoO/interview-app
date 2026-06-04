@@ -60,6 +60,21 @@ class ReviewSession(BaseModel):
     duration_seconds: int
 
 
+class BookmarkToggle(BaseModel):
+    bookmarked: bool
+
+
+class QuickReviewStart(BaseModel):
+    count: int = 20
+    category: Optional[str] = None
+
+
+class QuickReviewRate(BaseModel):
+    question_id: int
+    rating: int  # 0=不会, 1=大概会, 2=已掌握
+    duration_seconds: int = 0
+
+
 class StatsOverview(BaseModel):
     total: int
     done: int
