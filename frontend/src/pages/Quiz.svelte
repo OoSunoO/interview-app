@@ -108,6 +108,18 @@
     loadError = null;
     q = null;
     scoreHistory = getScoreHistory();
+
+    // Try to restore session from backup on page refresh
+    if (!questionId && store.quizSessionLength === 0) {
+      const restored = await store.restoreFromBackup();
+      if (restored && store.quizSessionLength > 0) {
+        const firstId = store.quizSession[store.quizIndex]?.id;
+        if (firstId) {
+          return loadQuestionById(firstId);
+        }
+      }
+    }
+
     try {
       const result = await store.loadQuestionDetail(questionId);
       if (result) {
@@ -367,11 +379,13 @@
   }
 
   function finishSession() {
+    store._clearSessionBackup();
     showSessionSummary = true;
   }
 
   function exit() {
     store.startQuiz([]);
+    store._clearSessionBackup();
     sessionResults = [];
     showSessionSummary = false;
     onNavigate("browse");

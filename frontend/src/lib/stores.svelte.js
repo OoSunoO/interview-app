@@ -136,14 +136,66 @@ export const store = {
     return _quizIndex < _quizSession.length - 1;
   },
 
+  // ── Quiz session persistence ──
+  SESSION_BACKUP_KEY: "quiz_session_backup",
+
+  _saveSessionBackup() {
+    try {
+      const backup = {
+        questionIds: _quizSession.map((q) => q.id),
+        index: _quizIndex,
+        savedAt: Date.now(),
+      };
+      localStorage.setItem("quiz_session_backup", JSON.stringify(backup));
+    } catch {
+      /* ignore */
+    }
+  },
+
+  _clearSessionBackup() {
+    try {
+      localStorage.removeItem("quiz_session_backup");
+    } catch {
+      /* ignore */
+    }
+  },
+
+  getSessionBackup() {
+    try {
+      const raw = localStorage.getItem("quiz_session_backup");
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  },
+
+  async restoreFromBackup() {
+    const backup = this.getSessionBackup();
+    if (!backup || !backup.questionIds || backup.questionIds.length === 0) return false;
+    const questions = [];
+    for (const id of backup.questionIds) {
+      const q = await api.questions.get(id);
+      if (q) questions.push(q);
+    }
+    if (questions.length === 0) {
+      this._clearSessionBackup();
+      return false;
+    }
+    _quizSession = questions;
+    _quizIndex = Math.min(backup.index, questions.length - 1);
+    return true;
+  },
+
   startQuiz(list, shuffle = false) {
     _quizSession = shuffle ? shuffled(list) : list;
     _quizIndex = 0;
+    this._saveSessionBackup();
   },
 
   advanceQuiz() {
     if (_quizIndex < _quizSession.length - 1) {
       _quizIndex++;
+      this._saveSessionBackup();
       return true;
     }
     return false;
@@ -152,6 +204,7 @@ export const store = {
   retreatQuiz() {
     if (_quizIndex > 0) {
       _quizIndex--;
+      this._saveSessionBackup();
       return true;
     }
     return false;
@@ -160,6 +213,7 @@ export const store = {
   shuffleSession() {
     _quizSession = shuffled(_quizSession);
     _quizIndex = 0;
+    this._saveSessionBackup();
   },
 
   async loadQuestions(params = {}) {
