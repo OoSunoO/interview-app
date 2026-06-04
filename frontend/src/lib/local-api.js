@@ -393,6 +393,28 @@ export const api = {
       return getDailyStats();
     },
 
+    /** Return recent review history, enriched with question data */
+    reviewHistory(limit = 50) {
+      const sessions = getSessions();
+      return sessions
+        .slice(-limit)
+        .reverse()
+        .map((s) => {
+          const q = questions.find((x) => x.id === s.question_id);
+          return {
+            id: s.id,
+            question_id: s.question_id,
+            reviewed_at: s.reviewed_at,
+            result: s.result,
+            duration_seconds: s.duration_seconds,
+            source: s.source,
+            title: q?.title || `题目 #${s.question_id}`,
+            category: q?.category || "",
+            difficulty: q?.difficulty || "",
+          };
+        });
+    },
+
     wrong() {
       const progress = getProgress();
       const wrongIds = Object.entries(progress)

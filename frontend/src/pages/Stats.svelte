@@ -14,6 +14,7 @@
       weeklyData = await api.progress.weeklyActivity();
       wrongList = await api.progress.wrong();
       allDaily = await api.progress.allDailyStats();
+      history = await api.progress.reviewHistory(30);
     } catch (e) {
       // wrongList stays empty on error — weak sections gracefully show nothing
     }
@@ -23,6 +24,7 @@
   let dailyStats = $state(null);
   let weeklyData = $state([]);
   let allDaily = $state(null);
+  let history = $state([]);
 
   let stats = $derived(store.stats);
 
@@ -219,6 +221,38 @@
             {tag}
             <span class="tag-count">{count}</span>
           </span>
+        {/each}
+      </div>
+    {/if}
+
+    {#if history.length > 0}
+      <h2 class="section-title">最近浏览记录</h2>
+      <div class="history-list">
+        {#each history as s, i}
+          {#if i === 0 || history[i - 1].reviewed_at.slice(0, 10) !== s.reviewed_at.slice(0, 10)}
+            <div class="history-date">
+              {new Date(s.reviewed_at).toLocaleDateString("zh-CN", { month: "short", day: "numeric", weekday: "short" })}
+            </div>
+          {/if}
+          <div class="history-item result-{s.result || 'unknown'}">
+            <span class="history-result">
+              {#if s.result === "correct"}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              {:else if s.result === "reviewing"}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+              {:else}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              {/if}
+            </span>
+            <span class="history-title">{s.title}</span>
+            <span class="history-meta">
+              {#if s.category}{categoryLabel(s.category)}{/if}
+              {#if s.difficulty}<span class="tag diff {s.difficulty}" style="margin-left:4px">{s.difficulty}</span>{/if}
+            </span>
+            <span class="history-time">
+              {new Date(s.reviewed_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          </div>
         {/each}
       </div>
     {/if}
@@ -511,6 +545,67 @@
     color: var(--text-muted);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Review History ── */
+  .history-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .history-date {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    padding: 10px 4px 4px;
+    margin-top: 4px;
+    border-top: 1px solid var(--border);
+  }
+  .history-date:first-child {
+    border-top: none;
+    margin-top: 0;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .history-item:hover {
+    background: var(--bg-surface);
+  }
+  .history-result {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .history-item.result-correct .history-result { color: var(--success); }
+  .history-item.result-reviewing .history-result { color: var(--warning); }
+  .history-item.result-wrong .history-result { color: var(--danger); }
+  .history-item.result-unknown .history-result { color: var(--text-dim); }
+  .history-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--text);
+  }
+  .history-meta {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .history-time {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    min-width: 36px;
+    text-align: right;
   }
 
   /* ── Mobile ── */
