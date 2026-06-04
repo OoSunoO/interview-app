@@ -472,9 +472,9 @@
 
     {#if showHistory}
       <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-      <div class="overlay" onclick={() => (showHistory = false)}>
+      <div class="overlay" onclick={() => (showHistory = false)} onkeydown={(e) => { if (e.key === "Escape") showHistory = false; }}>
         <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-        <div class="history-dialog" role="dialog" aria-modal="true" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showHistory = false; }}>
+        <div class="history-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showHistory = false; }}>
           <div class="history-header">
             <span class="history-title">速记历史</span>
             <button class="history-close" onclick={() => (showHistory = false)} aria-label="关闭">
