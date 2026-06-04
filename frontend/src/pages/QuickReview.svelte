@@ -164,18 +164,27 @@
   }
 
   function handleKeydown(e) {
-    if (phase !== "active") return;
     if (showSessionMap) return;
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-    if (!showAnswer && (e.key === " " || e.key === "Enter")) {
-      e.preventDefault();
-      revealAnswer();
+    if (phase === "active") {
+      if (!showAnswer && (e.key === " " || e.key === "Enter")) {
+        e.preventDefault();
+        revealAnswer();
+        return;
+      }
+      if (showAnswer) {
+        if (e.key === "1") { selfRate("forgot"); return; }
+        if (e.key === "2") { selfRate("unsure"); return; }
+        if (e.key === "3") { selfRate("remembered"); return; }
+      }
+    }
+    if (e.key === "Escape") {
+      if (phase === "active") handleExit();
+      else if (phase === "completed") handleDone();
       return;
     }
-    if (showAnswer) {
-      if (e.key === "1") { selfRate("forgot"); return; }
-      if (e.key === "2") { selfRate("unsure"); return; }
-      if (e.key === "3") { selfRate("remembered"); return; }
+    if (e.key === "r" && phase === "completed" && total > 0) {
+      restartSession();
     }
   }
 

@@ -421,6 +421,53 @@ describe("QuickReview", () => {
         expect(screen.getByText("SQL优化")).toBeInTheDocument();
       });
     });
+
+    it("exits active phase with Escape key", async () => {
+      mockList.mockReturnValue([LIGHT_Q1]);
+      mockGet.mockResolvedValueOnce(FULL_Q1);
+
+      render(QuickReview, { props: { config: {}, onNavigate } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+
+      fireEvent.keyDown(window, { key: "Escape" });
+
+      expect(onNavigate).toHaveBeenCalledWith("home");
+    });
+
+    it("restarts from summary with R key", async () => {
+      mockList.mockReturnValue([LIGHT_Q1]);
+      mockGet.mockResolvedValueOnce(FULL_Q1);
+
+      render(QuickReview, { props: { config: { count: 10 }, onNavigate } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-reveal-btn"));
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-rate-remembered")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-rate-remembered"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-summary")).toBeInTheDocument();
+      });
+
+      mockClearSession.mockClear();
+      mockList.mockReturnValue([LIGHT_Q1, LIGHT_Q2]);
+      mockGet.mockResolvedValueOnce(FULL_Q1).mockResolvedValueOnce(FULL_Q2);
+
+      fireEvent.keyDown(window, { key: "r" });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      expect(mockClearSession).toHaveBeenCalled();
+      expect(screen.getByTestId("qr-counter")).toHaveTextContent("0/2");
+    });
   });
 
   describe("session map", () => {
