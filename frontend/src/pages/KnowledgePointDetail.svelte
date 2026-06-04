@@ -44,6 +44,16 @@
   function goQuestion(q) {
     onNavigate("quiz", { questionId: q.id });
   }
+
+  async function toggleBookmark(e, q) {
+    e.stopPropagation();
+    q.bookmarked = !q.bookmarked;
+    try {
+      await api.progress.toggleBookmark(q.id);
+    } catch {
+      q.bookmarked = !q.bookmarked;
+    }
+  }
 </script>
 
 <div class="page kp-detail-page">
@@ -173,6 +183,26 @@
               <span class="tag">{categoryLabel(q.category)}</span>
               <span class="tag diff {q.difficulty}">{q.difficulty}</span>
               <span class="tag type">{q.type}</span>
+              <span
+                class="kp-bm-toggle {q.bookmarked ? 'active' : ''}"
+                role="button"
+                tabindex="0"
+                onclick={(e) => toggleBookmark(e, q)}
+                onkeydown={(e) => e.key === 'Enter' && toggleBookmark(e, q)}
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill={q.bookmarked ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                </svg>
+              </span>
             </div>
             <p class="q-title">{q.title}</p>
             <p class="q-content-preview">{q.content.slice(0, 60)}...</p>
@@ -394,6 +424,21 @@
   }
   .status-icon.new {
     color: var(--text-dim);
+  }
+  .kp-bm-toggle {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+    color: var(--text-dim);
+    margin-left: auto;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+  .kp-bm-toggle:hover {
+    color: var(--warning);
+  }
+  .kp-bm-toggle.active {
+    color: var(--warning);
   }
   .q-title {
     font-size: 14px;

@@ -160,6 +160,16 @@
     }
   }
 
+  async function toggleBookmark(q) {
+    if (!q) return;
+    q.bookmarked = !q.bookmarked;
+    try {
+      await api.progress.toggleBookmark(q.id);
+    } catch {
+      q.bookmarked = !q.bookmarked;
+    }
+  }
+
   function handleExit() {
     if (phase === "active" && doneCount > 0) saveSession();
     onNavigate("home");
@@ -196,6 +206,24 @@
           <span class="tag">{currentQuestion?.category ? categoryLabel(currentQuestion.category) : ""}</span>
           <span class="tag diff {currentQuestion?.difficulty}">{currentQuestion?.difficulty}</span>
           <span class="tag type">{currentQuestion?.type}</span>
+          <button
+            class="qr-bm-btn {currentQuestion?.bookmarked ? 'active' : ''}"
+            onclick={() => toggleBookmark(currentQuestion)}
+            aria-label={currentQuestion?.bookmarked ? '取消收藏' : '收藏'}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill={currentQuestion?.bookmarked ? 'currentColor' : 'none'}
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+          </button>
         </div>
 
         <h2 class="qr-question-title">{currentQuestion?.title}</h2>
@@ -412,6 +440,21 @@
   .tag.type {
     background: var(--bg-surface);
     color: var(--text-dim);
+  }
+  .qr-bm-btn {
+    margin-left: auto;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+  }
+  .qr-bm-btn:hover,
+  .qr-bm-btn.active {
+    color: var(--warning);
   }
 
   .qr-question-title {

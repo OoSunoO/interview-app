@@ -667,6 +667,7 @@ export const api = {
             status: p.status || "new",
             wrong_count: p.wrong_count || 0,
             review_count: p.review_count || 0,
+            bookmarked: p.bookmarked || false,
           };
         }),
       };
