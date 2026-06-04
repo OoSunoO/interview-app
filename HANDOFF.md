@@ -1,8 +1,8 @@
 # Handoff — 面试刷题 App
 
-**日期：** 2026-06-04
-**版本：** v1.4.3
-**当前状态：** 5196 题，51 分类全部 100+，225 单元测试全绿，28 E2E 全绿，构建 891ms
+**日期：** 2026-06-05
+**版本：** v1.4.4
+**当前状态：** 5196 题，51 分类全部 100+，232 单元测试全绿，29 E2E 全绿，构建 896ms
 
 ---
 
@@ -68,6 +68,11 @@
 - 移除 Browse.svelte 和 WrongBook.svelte 中的硬编码 `search-hl` 颜色
 - 至此所有 Svelte 组件内无残留硬编码颜色值
 
+### Feature (v1.4.4)
+- QuickReview 速记模式新增历史记录：完成时自动保存结果（时间、题数、掌握率），可在汇总页面查看最近 50 次记录
+- 历史记录弹窗：展示日期、掌握/待巩固/待复习计数、掌握率百分比，支持清除
+- 新增 Quiz self-evaluation E2E 测试，使用 Browse→Quiz 导航路径提升稳定性
+
 ### UI/UX
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
@@ -77,8 +82,8 @@
 - PWA：可安装，Service Worker 自动更新
 
 ### 测试
-- 225 单元测试（Vitest）
-- 28 E2E 测试（Playwright，含移动端视图 + 主题切换 + GistSetup bypass）
+- 232 单元测试（Vitest，+7 QuickReview history）
+- 29 E2E 测试（Playwright，+1 quiz self-evaluation）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.59% statements, 97.23% lines（JS 模块）
 - `local-api.js`：94.74% statements, 96.55% lines（核心业务逻辑）
