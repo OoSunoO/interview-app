@@ -107,25 +107,6 @@ function matchesSearch(q, search) {
 
 const CATEGORY_NAMES = CATEGORY_LABELS;
 
-/** Build a readable summary for a knowledge point from its questions */
-function generateSummary(tag, tagQuestions) {
-  // Collect unique key phrases from question titles and content
-  const concepts = new Set();
-  for (const q of tagQuestions) {
-    // Extract key concepts from content
-    const content = q.content || "";
-    const title = q.title || "";
-    // Add title
-    concepts.add(title.replace(/^请(解释|介绍|描述)?/, "").trim());
-    // Extract short meaningful phrases from content
-    const snippets = content.split(/[。，；]/).filter((s) => s.length > 5 && s.length < 40);
-    for (const s of snippets.slice(0, 2)) {
-      concepts.add(s.trim() + "。");
-    }
-  }
-  return Array.from(concepts).slice(0, 5).join("");
-}
-
 /** Compute mastery for a tag across all questions, using progress data */
 function computeMastery(tag, progress) {
   const tagQuestions = questions.filter((q) => q.tags.includes(tag));
@@ -695,8 +676,6 @@ export const api = {
         content: stored?.content || "",
         source: stored?.source || null,
         has_content: !!stored?.content,
-        // AI-generated summary falls back to heuristic
-        summary: generateSummary(tag, tagQuestions),
         questions: tagQuestions.map((q) => {
           const p = progress[q.id] || {};
           return {
