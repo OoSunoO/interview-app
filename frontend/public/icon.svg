@@ -1,14 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#6c8cff"/>
-      <stop offset="100%" stop-color="#4f6fdb"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="96" fill="url(#g)"/>
-  <g transform="translate(256,230)" fill="none" stroke="#fff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M-10-120 Q-90-120-90-40 Q-90 20-40 40 L-40 80 L0 50 Q60 40 60-20 Q60-120-10-120Z"/>
-    <circle cx="-40" cy="-60" r="8" fill="#fff" stroke="none"/>
-    <circle cx="0" cy="-60" r="8" fill="#fff" stroke="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#1e293b"/>
+  <g stroke="#6c8cff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M160 160h192a32 32 0 0 1 32 32v160a32 32 0 0 1-32 32H160a32 32 0 0 1-32-32V192a32 32 0 0 1 32-32z"/>
+    <path d="M160 352L224 288 272 336 352 256"/>
+    <circle cx="192" cy="224" r="16" fill="#6c8cff" stroke="none"/>
+    <circle cx="256" cy="224" r="16" fill="#6c8cff" stroke="none"/>
+    <circle cx="320" cy="224" r="16" fill="#6c8cff" stroke="none"/>
   </g>
 </svg>
