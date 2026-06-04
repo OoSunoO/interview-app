@@ -9,6 +9,8 @@
   let { onNavigate } = $props();
 
   let showRandomHint = $state(false);
+  let selectedIds = $state(new Set());
+  let selectionMode = $state(false);
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -84,6 +86,27 @@
     const s = store.filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`(${s})`, 'gi');
     return text.replace(re, '<mark class="search-hl">$1</mark>');
+  }
+
+  function toggleSelection(id) {
+    const next = new Set(selectedIds);
+    if (next.has(id)) { next.delete(id); } else { next.add(id); }
+    selectedIds = next;
+    if (next.size > 0) selectionMode = true;
+    else selectionMode = false;
+  }
+
+  function clearSelection() {
+    selectedIds = new Set();
+    selectionMode = false;
+  }
+
+  function startSelected() {
+    const selected = store.questions.filter((q) => selectedIds.has(q.id));
+    if (selected.length === 0) return;
+    store.startQuiz(selected);
+    clearSelection();
+    onNavigate("quiz", { questionId: selected[0].id });
   }
 </script>
 
@@ -303,6 +326,16 @@
     {/if}
   </div>
 
+  {#if selectedIds.size > 0}
+    <div class="sel-bar">
+      <span class="sel-count">已选 {selectedIds.size} 题</span>
+      <div class="sel-actions">
+        <button class="sel-cancel" onclick={clearSelection}>取消</button>
+        <button class="sel-start" onclick={startSelected}>开始答题</button>
+      </div>
+    </div>
+  {/if}
+
   {#if store.error}
     <ErrorAlert message={store.error} onRetry={applyFilter} />
   {:else if store.loading}
@@ -315,9 +348,35 @@
       {#each pagedQuestions as q}
         <button
           class="card q-item status-{q.status}"
+          class:selected={selectedIds.has(q.id)}
           data-testid="question-item"
           onclick={() => goQuestion(q)}
         >
+          <span
+            class="sel-check"
+            role="checkbox"
+            aria-checked={selectedIds.has(q.id)}
+            tabindex="0"
+            onclick={(e) => e.stopPropagation()}
+            onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); toggleSelection(q.id); } }}
+            onmousedown={(e) => e.stopPropagation()}
+            onpointerdown={(e) => e.stopPropagation()}
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill={selectedIds.has(q.id) ? "currentColor" : "none"}
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ><rect x="3" y="3" width="18" height="18" rx="3" />
+              {#if selectedIds.has(q.id)}
+                <polyline points="9 12 11 14 15 10" />
+              {/if}
+            </svg>
+          </span>
           <div class="q-header">
             <span class="status-icon {q.status}">
               {#if q.status === "correct"}
@@ -758,6 +817,77 @@
   .tag.type.multiple_choice {
     background: rgba(108, 140, 255, 0.1);
     color: #6c8cff;
+  }
+
+  /* ── Selection Mode ── */
+  .q-item.selected {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .sel-check {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: color 0.2s;
+    z-index: 1;
+    position: relative;
+  }
+  .q-item:hover .sel-check,
+  .q-item.selected .sel-check {
+    color: var(--accent);
+  }
+
+  .sel-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius-sm);
+    animation: scale-in 0.25s var(--spring) both;
+  }
+  .sel-count {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  .sel-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .sel-cancel {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .sel-cancel:active {
+    transform: scale(0.96);
+  }
+  .sel-start {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .sel-start:active {
+    transform: scale(0.96);
   }
 
   /* ── Mobile ── */
