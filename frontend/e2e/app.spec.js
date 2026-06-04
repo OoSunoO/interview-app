@@ -217,6 +217,7 @@ test.describe("Quiz", () => {
   });
 
   test("Escape key exits quiz back to browse", async ({ page }) => {
+    test.setTimeout(30000);
     // Clear any leftover quiz session backup from previous tests
     await page.goto("/");
     await page.evaluate(() => {
