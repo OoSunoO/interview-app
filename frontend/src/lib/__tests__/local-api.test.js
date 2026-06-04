@@ -192,9 +192,9 @@ describe("questions.list", () => {
     expect(tags).toContain("Java基础");
     expect(tags).toContain("SQL");
     expect(tags).toContain("数组");
-    // Ensure sorted
+    // Ensure sorted (matching default Array.sort() UTF-16 code unit order)
     for (let i = 1; i < tags.length; i++) {
-      expect(tags[i - 1].localeCompare(tags[i])).toBeLessThanOrEqual(0);
+      expect(tags[i - 1] <= tags[i]).toBe(true);
     }
   });
 
