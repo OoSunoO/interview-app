@@ -236,6 +236,22 @@ export const api = {
         .map(([name]) => name);
     },
 
+    /** Pick a random question, with optional category/difficulty/status filter */
+    random(filter = {}) {
+      let pool = questions;
+      if (filter.category) {
+        pool = pool.filter((q) => (MAIN_CATEGORY[q.category] || q.category) === filter.category);
+      }
+      if (filter.difficulty) {
+        pool = pool.filter((q) => q.difficulty === filter.difficulty);
+      }
+      if (filter.status) {
+        const progress = getProgress();
+        pool = pool.filter((q) => (progress[q.id]?.status || "new") === filter.status);
+      }
+      return pool[Math.floor(Math.random() * pool.length)] || null;
+    },
+
     get(id) {
       const q = questions.find((x) => x.id === id);
       if (!q) throw new Error(`Question ${id} not found`);

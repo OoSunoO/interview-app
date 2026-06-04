@@ -66,6 +66,14 @@ describe("getAIConfig", () => {
     const cfg = getAIConfig();
     expect(cfg.key).toBe("sk-abc");
   });
+  it("handles corrupted config gracefully", async () => {
+    localStorage.setItem("interview_ai_config", "{corrupt-json");
+    vi.resetModules();
+    const { getAIConfig } = await import("../ai.js");
+    const cfg = getAIConfig();
+    expect(cfg.key).toBe("");
+    expect(cfg.provider).toBe(0);
+  });
 });
 
 describe("setProvider", () => {

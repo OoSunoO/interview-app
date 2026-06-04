@@ -348,6 +348,20 @@
         </span>
       </button>
 
+      <button class="random-btn" onclick={() => {
+        const q = api.questions.random();
+        if (q) onNavigate("quiz", { questionId: q.id });
+      }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><polyline points="16 3 21 3 21 8" />
+          <line x1="4" y1="20" x2="21" y2="3" />
+          <polyline points="21 16 21 21 16 21" />
+          <line x1="15" y1="15" x2="21" y2="21" />
+          <line x1="4" y1="4" x2="9" y2="9" /></svg>
+        随机一题
+      </button>
+
       <button class="qr-entry-btn" onclick={openQuickReview}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -778,6 +792,29 @@
       font-size: 14px;
     }
   }
+
+/* ── Random Button ── */
+.random-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s var(--spring);
+}
+.random-btn:active {
+  transform: scale(0.97);
+  background: var(--accent-bg);
+}
 
 /* ── Quick Review Entry Button ── */
 .qr-entry-btn {

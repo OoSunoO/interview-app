@@ -213,6 +213,43 @@ describe("questions.get", () => {
   });
 });
 
+describe("questions.random", () => {
+  it("returns a question from the fixture", async () => {
+    const api = await getApi();
+    const q = api.questions.random();
+    expect(q).not.toBeNull();
+    expect(q).toHaveProperty("id");
+    expect(q).toHaveProperty("title");
+  });
+
+  it("returns null or a valid question with category filter", async () => {
+    const api = await getApi();
+    const q = api.questions.random({ category: "database" });
+    if (q) {
+      expect(["database", "database_extra"]).toContain(q.category);
+    }
+  });
+
+  it("returns null or a valid question with difficulty filter", async () => {
+    const api = await getApi();
+    const q = api.questions.random({ difficulty: "hard" });
+    if (q) {
+      expect(q.difficulty).toBe("hard");
+    }
+  });
+
+  it("filters by status using progress data", async () => {
+    const api = await getApi();
+    localStorage.setItem("quiz_progress", JSON.stringify({ 1: { status: "correct" } }));
+    vi.resetModules();
+    const api2 = await getApi();
+    const q = api2.questions.random({ status: "correct" });
+    if (q) {
+      expect(q.id).toBe(1);
+    }
+  });
+});
+
 describe("progress.update", () => {
   it("marks correct on new question", async () => {
     const api = await getApi();
