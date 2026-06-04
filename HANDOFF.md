@@ -1,8 +1,8 @@
 # Handoff — 面试刷题 App
 
 **日期：** 2026-06-05
-**版本：** v1.4.4
-**当前状态：** 5196 题，51 分类全部 100+，232 单元测试全绿，29 E2E 全绿，构建 896ms
+**版本：** v1.4.5
+**当前状态：** 5196 题，51 分类全部 100+，241 单元测试全绿，29 E2E 全绿，构建 855ms
 
 ---
 
@@ -73,6 +73,12 @@
 - 历史记录弹窗：展示日期、掌握/待巩固/待复习计数、掌握率百分比，支持清除
 - 新增 Quiz self-evaluation E2E 测试，使用 Browse→Quiz 导航路径提升稳定性
 
+### Feature (v1.4.5)
+- QuickReview 汇总页新增"再来一轮"按钮，使用相同筛选条件重启新会话
+- QuickReview 筛选设置持久化（分类/难度/题型/题量跨会话保留）
+- QuickReview 新增题型筛选（问答题/选择题/多选题/判断题/编程题/填空题）
+- 新增 setProvider 无效索引边界测试，分支覆盖率 85.74% → 85.96%
+
 ### UI/UX
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
@@ -82,11 +88,11 @@
 - PWA：可安装，Service Worker 自动更新
 
 ### 测试
-- 232 单元测试（Vitest，+7 QuickReview history）
+- 241 单元测试（Vitest，+2 QuickReview restart + ai edge case）
 - 29 E2E 测试（Playwright，+1 quiz self-evaluation）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
-- 覆盖率：95.59% statements, 97.23% lines（JS 模块）
-- `local-api.js`：94.74% statements, 96.55% lines（核心业务逻辑）
+- 覆盖率：95.35% statements, 85.96% branches（JS 模块）
+- `local-api.js`：94.47% statements, 84.78% branches（核心业务逻辑）
 
 ### 后端补齐
 - 书签：POST toggle + GET list（`/api/progress/{id}/bookmark`, `/api/progress/bookmarks`）
