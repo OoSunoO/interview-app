@@ -94,7 +94,7 @@ export const MAIN_CATEGORY = {
   linux: "linux",
   devops: "devops",
 
-  java: "java",
+  java: "java_basic",
   java_basic: "java_basic",
   java_advanced: "java_advanced",
   java_advanced_choice: "java_advanced",

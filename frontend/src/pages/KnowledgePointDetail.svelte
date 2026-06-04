@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { marked } from "marked";
   import { api } from "../lib/local-api.js";
+  import { categoryLabel } from "../lib/categories.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { tag, onNavigate } = $props();
@@ -169,7 +170,7 @@
                   >
                 {/if}
               </span>
-              <span class="tag">{q.category}</span>
+              <span class="tag">{categoryLabel(q.category)}</span>
               <span class="tag diff {q.difficulty}">{q.difficulty}</span>
               <span class="tag type">{q.type}</span>
             </div>
