@@ -26,6 +26,7 @@
 
   function applyFilter() {
     currentPage = 1;
+    clearSelection();
     store.loadQuestions({ page: 1 });
   }
 
