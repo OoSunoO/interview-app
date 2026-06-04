@@ -1062,8 +1062,8 @@
     color: var(--accent);
   }
   .tag.type.true_false {
-    background: rgba(167, 139, 250, 0.1);
-    color: #a78bfa;
+    background: var(--ans-extension-bg);
+    color: var(--ans-extension-text);
   }
   .tag.type.coding {
     background: var(--danger-bg);

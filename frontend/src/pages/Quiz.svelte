@@ -1482,12 +1482,12 @@
     color: var(--text-muted);
   }
   .type-pill.choice {
-    background: rgba(108, 140, 255, 0.1);
-    color: #6c8cff;
+    background: var(--accent-bg);
+    color: var(--accent);
   }
   .type-pill.true_false {
-    background: rgba(167, 139, 250, 0.1);
-    color: #a78bfa;
+    background: var(--ans-extension-bg);
+    color: var(--ans-extension-text);
   }
   .type-pill.short_answer {
     background: var(--success-bg);
@@ -1498,8 +1498,8 @@
     color: var(--danger);
   }
   .type-pill.fill_in_blank {
-    background: rgba(251, 191, 36, 0.12);
-    color: #fbbf24;
+    background: var(--warning-bg);
+    color: var(--warning);
   }
 
   .q-title {
