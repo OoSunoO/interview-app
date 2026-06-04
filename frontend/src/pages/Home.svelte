@@ -169,7 +169,13 @@
     await store.startQuiz(selected);
     onNavigate("quiz", {
       questionId: selected[0].id,
-      mockInterview: { timeLimit: miTimeLimit },
+      mockInterview: {
+        timeLimit: miTimeLimit,
+        category: miCategory,
+        difficulty: miDifficulty,
+        type: miType,
+        tag: miTag,
+      },
     });
   }
 

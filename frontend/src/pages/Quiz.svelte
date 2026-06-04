@@ -485,6 +485,10 @@
           pct: s.pct,
           totalTime: s.totalTime,
           timeLimit,
+          category: mockInterview.category || undefined,
+          difficulty: mockInterview.difficulty || undefined,
+          type: mockInterview.type || undefined,
+          tag: mockInterview.tag || undefined,
         });
       }
     } catch (_) { /* ignore quota errors */ }

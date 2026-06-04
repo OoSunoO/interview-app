@@ -170,6 +170,14 @@
     return s > 0 ? `${m} 分 ${s} 秒` : `${m} 分钟`;
   }
 
+  function difficultyLabel(d) {
+    return { easy: "简单", medium: "中等", hard: "困难" }[d] || d;
+  }
+
+  function typeLabel(t) {
+    return { short_answer: "问答题", coding: "编程题", choice: "选择题", multiple_choice: "多选题", true_false: "判断题", fill_in_blank: "填空题" }[t] || t;
+  }
+
   let weakTags = $derived.by(() => {
     const count = {};
     for (const q of wrongList) {
@@ -550,6 +558,13 @@
               <span class="mi-badge mi-fail" title="错误">{session.wrong}</span>
               <span class="mi-history-total">共 {session.total} 题</span>
             </span>
+            {#if session.category || session.difficulty || session.type}
+              <span class="mi-history-filters">
+                {session.category ? categoryLabel(session.category) : ""}
+                {session.difficulty ? difficultyLabel(session.difficulty) : ""}
+                {session.type ? typeLabel(session.type) : ""}{session.tag ? ` · ${session.tag}` : ""}
+              </span>
+            {/if}
             <span class="mi-history-dur">{formatDuration(session.totalTime)}</span>
             <span class="mi-history-rate" class:mi-pass-rate={session.pct >= 70} class:mi-fail-rate={session.pct < 70}>
               {session.pct}%
@@ -1471,6 +1486,15 @@
     font-size: 11px;
     color: var(--text-dim);
     margin-left: 4px;
+  }
+  .mi-history-filters {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+    flex-shrink: 0;
   }
   .mi-history-dur {
     color: var(--text-dim);

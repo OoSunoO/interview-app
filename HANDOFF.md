@@ -114,6 +114,8 @@
 ### Feature (v1.4.14)
 - Mock Interview 设置新增题型和知识点筛选，与 QuickReview 筛选能力对齐
 - 新增 miType/miTag 状态持久化到 localStorage，筛选条件跨会话保留
+- Mock Interview 历史记录显示筛选上下文（分类/难度/题型/知识点）
+- Stats 页面 Mock Interview 历史项新增筛选标签展示
 
 ### Feature (v1.4.13)
 - Browse 题目详情弹窗新增笔记编辑功能：展开式文本区，输入即自动保存
