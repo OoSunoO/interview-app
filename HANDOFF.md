@@ -91,6 +91,9 @@
 - Stats 页面浏览历史项显示来源标签（"速记" vs 常规练习）
 - QuickReview 保存会话用时到历史记录，Stats 页面每条记录显示用时
 - Quiz 普通模式计时器新增超时提醒：>2 分钟橙色警告，>5 分钟红色脉冲
+- Quiz 会话总结页新增"速记错题"按钮，快速跳转 QuickReview 复习错题
+- QuickReview 支持 questionIds 参数，可接收任意题目集合
+- Browse 详情面板显示答题进度（已答次数/错误次数/掌握状态）
 - E2E 测试：Stats 页面 QuickReview 历史展示 + Escape 键退出速记
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
