@@ -1,0 +1,824 @@
+# -*- coding: utf-8 -*-
+"""分布式系统面试题生成器"""
+import json
+
+questions = []
+
+def q(diff, typ, title, content, answer, hints, tags, options=None):
+    q = {
+        "category": "distributed_systems",
+        "difficulty": diff,
+        "type": typ,
+        "title": title,
+        "content": content,
+        "answer": answer,
+        "hints": hints,
+        "tags": tags,
+    }
+    if options:
+        q["options"] = options
+    questions.append(q)
+
+# ==================== CAP / PACELC ====================
+
+q("hard", "short_answer",
+  "CAP 定理与取舍",
+  "解释 CAP 定理中的 Consistency、Availability、Partition Tolerance。实际分布式系统中为什么只能在 CP 和 AP 之间选择？举例说明。",
+  """CAP 定理：分布式系统最多同时满足三项中的两项。C=一致性（所有节点同一时刻看到相同数据）、A=可用性（每个请求都能获得非错误的响应）、P=分区容错性（节点间通信中断时系统仍能正常运行）。由于分布式网络不可靠，分区必然发生（P 必须选择），因此实际只有 CP 或 AP。CP 示例：ZooKeeper 在 leader 故障时不可用（牺牲 A）。AP 示例：Cassandra 在分区时读取可能过时数据（牺牲 C）。注意 CAP 的一致性是一致性模型中的线性一致性（强一致性），而不是最终一致性。""",
+  ["为什么 P 是必选项？如果系统不在分布式环境中运行呢？", "Etsy 的 Cassandra 部署选择了 AP，这会带来什么实际影响？"],
+  ["分布式系统", "CAP", "一致性", "可用性", "分区容错"])
+
+q("hard", "choice",
+  "PACELC 扩展模型",
+  "PACELC 在 CAP 基础上增加了什么维度？它对系统设计有何指导意义？",
+  "PACELC 扩展：分区时（P）在 A 和 C 之间选择；正常（E=Else）时在 L（延迟）和 C（一致性）之间选择。这意味着即使没有网络分区，系统也需在一致性和延迟间做取舍——强一致性通常带来更高延迟。DynamoDB 和 Cassandra 在正常时选择低延迟（最终一致性），而传统关系数据库选择强一致性。",
+  ["CAP 只有分区时的取舍，PACELC 增加了正常情况下的取舍"],
+  ["分布式系统", "PACELC", "CAP", "延迟", "一致性"],
+  options=["A) 增加了安全性维度", "B) 分区时选 A/C；正常时选 延迟/一致性", "C) 增加了可用性维度", "D) 分区时选 C/A；正常时选 延迟/一致性"])
+
+# ==================== 一致性模型 ====================
+
+q("medium", "choice",
+  "一致性模型层级",
+  "以下哪个一致性模型最弱（提供最少保证）？Linearizability、Sequential Consistency、Causal Consistency、Eventual Consistency 的区别是什么？",
+  "从强到弱：Linearizability（线性一致性，所有操作实时排序）→ Sequential Consistency（顺序一致性，各节点操作顺序一致但无实时保证）→ Causal Consistency（因果一致性，有因果关系的操作顺序一致）→ Eventual Consistency（最终一致性，停止写入后最终收敛）。最终一致性最弱。",
+  ["哪两种一致性模型在 DynamoDB 中可配置？", "关系型数据库默认提供什么级别的一致性？"],
+  ["分布式系统", "一致性", "线性一致性", "最终一致性"],
+  options=["A) Linearizability", "B) Sequential Consistency", "C) Causal Consistency", "D) Eventual Consistency"])
+
+q("hard", "short_answer",
+  "Quorum 读写一致性",
+  "解释 Quorum（法定人数）机制：N 个副本，W 个写确认，R 个读确认。为什么 W + R > N 能保证强一致性？W + R <= N 会怎样？",
+  """Quorum 机制：N=副本总数，W=每次写入至少确认节点数，R=每次读取至少查询节点数。W + R > N 时，读集合与写集合必有重叠（鸽巢原理），因此读操作至少读到一份最新写入。W + R <= N 时，读操作可能完全避开最新写入的节点，返回旧数据（弱一致性）。强一致性典型配置：W=N/2+1, R=N/2+1（如 N=3, W=2, R=2）。Dynamo 风格的系统可用 W=1, R=N 优化读性能或 W=N, R=1 优化写性能。
+
+Hinted handoff、读修复和反熵协议能帮助最终一致性系统更快收敛。""",
+  ["鸽巢原理为什么能保证重叠？", "Riak 的默认 N=3, W=2, R=2 是哪种一致性？"],
+  ["分布式系统", "Quorum", "一致性", "鸽巢原理", "读写"])
+
+# ==================== 共识算法 ====================
+
+q("hard", "short_answer",
+  "Paxos 核心流程",
+  "简述 Paxos 协议的基本角色和两阶段流程。为什么需要两阶段？Prepare 阶段的作用是什么？",
+  """Paxos 角色：Proposer（提案者）、Acceptor（批准者）、Learner（学习者）。第一阶段 Prepare：Proposer 生成提案编号 n，向 Acceptors 发送 Prepare(n)。Acceptor 承诺不再接受编号小于 n 的提案，若已接受过提案则返回已接受的最大编号提案。第二阶段 Accept：Proposer 收到多数派响应后，选择其中编号最大的已接受值（若无则用自己的值），发送 Accept(n, value) 给 Acceptors。Acceptor 在该编号不低于已承诺编号时接受该值。需要两阶段是因为分布式环境中没有全局时钟，必须通过 Prepare 阶段发现是否已有已通过的提案值，避免覆盖已达成共识的决议。Paxos 的难点在于理解和正确实现——因此出现了更易理解的 Raft。Multi-Paxos 通过选主优化，省掉了 Prepare 阶段。""",
+  ["Prepare 阶段发现已有值的场景是怎样的？", "为什么 Paxos 难以正确实现？"],
+  ["分布式系统", "Paxos", "共识", "两阶段", "Multi-Paxos"])
+
+q("hard", "choice",
+  "Raft 角色与任期",
+  "Raft 算法中有哪三种角色？Term（任期）的作用是什么？Leader 选举流程是怎样的？",
+  "Raft 三种角色：Leader（领导者）、Follower（跟随者）、Candidate（候选者）。Term 是一个递增的整数逻辑时钟，每个 Term 最多有一个 Leader，Candidate 在竞选时递增 Term。选举流程：Follower 超时未收到 Leader 心跳 → 转为 Candidate → 递增 Term → 投票给自己 → 请求其他节点投票 → 获得多数票 → 成为 Leader。Leader 定期发送心跳（AppendEntries RPC）维持权威。",
+  ["如果选举导致 split vote（平票）会怎样？", "Raft 如何处理 Leader 宕机后的日志不一致？"],
+  ["分布式系统", "Raft", "共识", "Leader选举", "Term"],
+  options=["A) Leader/Follower/Candidate; Term 是逻辑时钟", "B) Master/Slave/Proxy; Term 是超时时间", "C) Leader/Worker/Observer; Term 是系统时间", "D) Proposer/Acceptor/Learner; Term 是轮次"])
+
+q("hard", "short_answer",
+  "Raft 日志复制与安全性",
+  "Raft 如何保证日志复制的一致性和安全性？什么是 Leader 完整性（Leader Completeness）属性？",
+  """Raft 日志复制流程：Leader 收到客户端请求 → 将日志条目追加到本地日志 → 并行发送 AppendEntries RPC → 收到多数确认后提交 → 应用到状态机 → 响应客户端。日志匹配特性：如果两个日志条目有相同的 (Term, Index)，它们的内容相同，且之前所有条目也相同。Leader 完整性：一旦日志条目在某个 Term 提交，它一定会出现在未来所有 Term 的 Leader 日志中。这由选举限制保证——Candidate 必须包含已提交的日志才能当选。具体地，RequestVote RPC 包含 Candidate 的最新 (Term, Index)，接收者投票给日志更新的候选者（Term 更大或 Term 相同但 Index 更大）。""",
+  ["Leader 完整性如何防止已提交的日志被覆盖？", "Raft 如何处理 Follower 日志与 Leader 不一致的情况？"],
+  ["分布式系统", "Raft", "日志复制", "安全性", "Leader完整性"])
+
+q("hard", "short_answer",
+  "ZooKeeper ZAB 协议",
+  "ZooKeeper 的 ZAB（ZooKeeper Atomic Broadcast）协议的核心流程是什么？与 Raft 有什么关键区别？",
+  """ZAB 协议：崩溃恢复模式（选主 + 数据同步）→ 广播模式（正常服务）。选主使用 Fast Leader Election——每个节点投票给自己，通过比较 (zxid, server_id) 选出数据最新的节点成为 Leader。数据同步：Leader 确保所有 Follower 日志与其一致后才对外服务。关键区别：(1) ZAB 保证消息的全局有序和因果关系（FIFO + 因果），Raft 保证线性一致性。(2) ZAB 的消息广播是二阶段（Leader → Follower + 半数确认），Raft 也是多数确认但通过连续的 AppendEntries。(3) ZAB 的 zxid（ZooKeeper Transaction ID）是高 32 位 epoch + 低 32 位计数器，相当于 Raft 的 (Term, Index)。""",
+  ["zxid 的结构和 Raft 的 (Term, Index) 有何异同？", "ZAB 的崩溃恢复和 Raft 的 Leader 选举 + 日志修复有何异同？"],
+  ["分布式系统", "ZAB", "ZooKeeper", "原子广播", "一致性"])
+
+# ==================== 分布式事务 ====================
+
+q("hard", "short_answer",
+  "2PC 两阶段提交",
+  "解释两阶段提交（2PC）的流程和局限性。什么是阻塞问题（Blocking Problem）？协调者宕机时会发生什么？",
+  """2PC 流程：第一阶段（投票）：协调者发送 prepare 请求，参与者执行事务但暂不提交，回复 yes/no。第二阶段（提交/中止）：若所有参与者回复 yes，协调者发送 commit；否则发送 abort。局限性：(1) 同步阻塞——参与者 prepare 后等待协调者决策，期间锁定资源。(2) 单点故障——协调者宕机后参与者无法决策（阻塞），即使恢复也需要查询事务日志。(3) 脑裂风险——网络分区时，部分参与者收到 commit 但部分没有，可能导致数据不一致。3PC（三阶段提交）通过引入 pre-commit 阶段减少阻塞窗口，但无法完全解决。实践中更倾向使用 SAGA 或 TCC（Try-Confirm/Cancel）。""",
+  ["2PC 在微服务架构中适用吗？为什么不推荐？", "XA 事务和 2PC 是什么关系？"],
+  ["分布式系统", "2PC", "分布式事务", "阻塞", "XA"])
+
+q("hard", "choice",
+  "SAGA 事务模式",
+  "SAGA 事务模式的核心思想是什么？什么是补偿（Compensation）？SAGA 有哪两种协调方式？",
+  "SAGA 将长事务拆分为多个本地事务，每个步骤有对应的补偿操作（回滚时执行）。协调方式：(1) 编排（Choreography）——各服务通过事件驱动互相调用，适合步骤少、逻辑简单的场景。(2) 协调器（Orchestration）——中央协调器负责调用各步骤和补偿，适合复杂流程。SAGA 不提供隔离性（A 事务可能看到 B 事务未提交的中间状态），需要通过语义锁或幂等设计来应对。",
+  ["SAGA 的补偿操作和 2PC 的回滚有什么本质区别？", "怎么处理 SAGA 中的悬挂事务（孤儿事务）？"],
+  ["分布式系统", "SAGA", "分布式事务", "补偿", "编排"],
+  options=["A) 通过锁实现隔离；Choreography/Orchestration", "B) 拆为子事务+补偿；Choreography/Orchestration", "C) 使用强一致性；同步/异步", "D) 通过消息队列解耦；推/拉模式"])
+
+q("hard", "short_answer",
+  "TCC 模式详解",
+  "解释 TCC（Try-Confirm/Cancel）模式的三个阶段。与 2PC 的本质区别是什么？什么场景适合使用 TCC？",
+  """TCC 三阶段：Try——预留资源（如冻结库存、锁定账户金额），Confirm——确认执行（实际扣减），Cancel——释放预留资源。与 2PC 的本质区别：TCC 是业务层面的分布式事务（应用代码控制），2PC 是资源层面（数据库/XA）。TCC 需要业务方实现 Try/Confirm/Cancel 接口，对业务入侵较大。适用场景：跨多个服务的写操作（如订单+支付+库存），对一致性要求高的场景。TCC 的空回滚和防悬挂是要重点处理的问题——Cancel 可能先于 Try 到达（网络重排），需要事务表记录状态。""",
+  ["TCC 的空回滚问题是什么？怎么处理？", "TCC 和 SAGA 在隔离性方面有什么区别？"],
+  ["分布式系统", "TCC", "分布式事务", "Try-Confirm-Cancel", "资源预留"])
+
+# ==================== 复制 ====================
+
+q("medium", "short_answer",
+  "主从复制模式",
+  "比较同步复制（Synchronous Replication）和异步复制（Asynchronous Replication）的优缺点。什么是半同步复制（Semi-Synchronous Replication）？",
+  """同步复制：主节点等待所有（或多个）从节点确认写入后才响应客户端。优点：强一致性，从节点与主节点数据完全一致。缺点：写入延迟高（最慢的从节点决定速度），可用性降低（从节点宕机阻塞写入）。异步复制：主节点写入后立即响应，从节点异步拉取更新。优点：写入延迟低，主节点不受从节点影响。缺点：主节点宕机时丢失未同步数据（RPO>0），从节点读可能读到旧数据。半同步复制（如 MySQL 半同步）：主节点至少等待一个从节点确认后才响应，结合了同步的可靠性和异步的性能。MySQL Group Replication 使用 Paxos 风格的组通信实现强一致性。""",
+  ["MySQL 默认复制模式是异步的还是半同步的？", "Kafka 的 ISR（In-Sync Replica）属于哪种复制？"],
+  ["分布式系统", "复制", "同步", "异步", "半同步"])
+
+q("medium", "short_answer",
+  "Multi-Leader 与无主复制",
+  "多主复制（Multi-Leader）和无主复制（Leaderless）分别解决了什么问题？各自的挑战是什么？",
+  """多主复制（多主写入）：多个节点（数据中心）都可接受写入，互相同步变更。解决跨数据中心延迟问题（每个数据中心本地写入），以及离线设备的本地写入。挑战：写入冲突（CRDT 或 LWW 解决），环形复制可能造成数据不一致。无主复制（Leaderless，Dynamo 风格）：客户端向多个副本并行写入，读取时从多副本读取并比对版本。解决了单点故障问题。典型代表：Cassandra（所有节点同角色）、Riak。挑战：读修复（Read Repair）和 Hinted Handoff 的复杂度，墓碑（Tombstone）机制。""",
+  ["DynamoDB 的复制模型是无主复制还是多主？", "Cassandra 的 Hinted Handoff 机制解决什么问题？"],
+  ["分布式系统", "多主复制", "无主复制", "Dynamo", "冲突"])
+
+# ==================== 分片 ====================
+
+q("medium", "short_answer",
+  "数据分片策略",
+  "比较水平分片（Horizontal Sharding）的几种 key 分发策略：范围分片、哈希分片、一致性哈希。各自的优缺点是什么？",
+  """范围分片（Range Sharding）：按 key 范围分区（如 user_id 1-10000 在 shard 1）。优点：支持范围查询，批量扫描效率高。缺点：数据分布可能不均匀（热点问题）。哈希分片（Hash Sharding）：对 key 哈希后取模分配到各分片。优点：数据均匀分布。缺点：不支持范围查询，扩缩容需要重新哈希。一致性哈希（Consistent Hashing）：将哈希值映射到环上，每个节点负责一段范围。优点：扩缩容只影响相邻节点（最小数据迁移）。缺点：可能存在负载不均（通过虚拟节点解决）。DynamoDB 使用一致性哈希 + 虚拟节点，Redis Cluster 使用哈希槽（CRC16 % 16384）。""",
+  ["一致性哈希为什么能减少扩缩容的数据迁移量？", "Redis Cluster 的 16384 个哈希槽和一致性哈希有什么不同？"],
+  ["分布式系统", "分片", "一致性哈希", "哈希", "范围分片"])
+
+q("hard", "short_answer",
+  "分片集群扩缩容挑战",
+  "分布式数据库扩缩容时面临哪些挑战？怎样做到平滑扩容？",
+  """核心挑战：(1) 数据迁移——大量数据需要重新分布，迁移过程影响性能。(2) 路由更新——客户端或中间件需更新分片映射关系。(3) 一致性问题——迁移过程中数据不断写入，需保证一致性。平滑扩容方案：(1) 虚拟槽（Slot）映射——将数据映射到固定数量的槽，槽到物理节点的映射可动态调整。Redis Cluster 的 16384 个槽、ElasticSearch 的分片 rebalance 都是这个思路。(2) 两阶段迁移——先同步数据，再切换路由（类似 DNS 切换的 TTL 控制）。(3) 有限状态迁移——每批迁移固定量的数据（如 Vitess 的 Tablet 迁移）。Vitess 使用 Ranged Sharding + VSchema，扩缩容时通过 Split Clone 逐步迁移。""",
+  ["ElasticSearch 的分片 rebalance 机制是怎样的？", "Vitess 的 Resharding 流程是如何保证在线服务的？"],
+  ["分布式系统", "扩缩容", "数据迁移", "虚拟槽", "平滑扩容"])
+
+# ==================== 分布式 ID ====================
+
+q("medium", "choice",
+  "分布式 ID 生成方案",
+  "分布式系统中生成全局唯一 ID 有哪些方案？它们的优缺点和适用场景是什么？",
+  "常见方案：(1) UUID——128 位，无序，索引性能差，不适合作为数据库主键。(2) Snowflake 算法——64 位（1 位符号 + 41 位毫秒时间戳 + 10 位机器 ID + 12 位序列号），单机每秒可生成约 409.6 万个 ID，趋势递增。(3) 数据库自增 ID——使用独立的 ID 生成服务（如 Ticket Server），简单但存在单点瓶颈。(4) Redis INCR——利用原子递增，性能高但依赖 Redis。Snowflake 最常用（如美团 Leaf、百度 UidGenerator），注意时钟回拨问题。",
+  ["Snowflake 的时钟回拨问题怎么解决？", "UUIDv7 和 UUIDv4 有什么区别？"],
+  ["分布式系统", "ID", "Snowflake", "UUID", "全局唯一"],
+  options=["A) UUID > Snowflake > DB 自增 > Redis INCR", "B) Snowflake > UUID > Redis INCR > DB 自增", "C) 以上方案各有适用场景", "D) 只有 Snowflake 是可行的方案"])
+
+# ==================== Leader 选举 ====================
+
+q("medium", "short_answer",
+  "分布式选主算法",
+  "分布式系统中 Leader 选举的常见方法有哪些？Bully 算法和新节点加入时如何保证不会出现多个 Leader？",
+  """常见选主方法：(1) ZooKeeper 临时顺序节点——多个节点创建临时顺序节点，序号最小的成为 Leader（Follower 监视前一个节点的删除事件）。(2) Bully 算法——节点向 ID 比自己大的所有节点发送选举消息，若无人响应则自己成为 Leader（假设节点 ID 可比较）。(3) Raft 的随机超时选举——节点在 [150ms, 300ms] 随机超时后发起选举，Term 递增防止分区选举出新 Leader。保证单 Leader 的关键：任一时刻最多只有一个 Leader 能获得多数派支持（法定人数投票保证互斥）。心跳机制检测 Leader 存活，故障时触发重新选举。""",
+  ["ZooKeeper 的临时顺序节点如何保证选举的唯一性？", "Raft 的随机超时时间为什么是 [150ms, 300ms]？"],
+  ["分布式系统", "Leader选举", "Bully", "ZooKeeper", "心跳"])
+
+# ==================== 分布式锁 ====================
+
+q("hard", "short_answer",
+  "Redis 分布式锁与 Redlock",
+  "Redis SET NX 实现分布式锁有哪些坑？Redlock 算法解决了什么问题？它真的安全吗？",
+  """Redis 分布式锁（SET key value NX EX 30）：(1) 死锁风险——获取锁后客户端崩溃，锁永远不会释放（EX 超时可解决）。(2) 锁超时——A 在超时前未完成任务，锁释放，B 获取锁，A 完成时释放锁（实际上释放了 B 的锁）。(3) 网络延迟/GC——线程暂停超过超时时间（GC pause），锁已释放，另一个线程获取锁导致并发写入。Redlock 算法：向多数（5 个实例中至少 3 个）Redis 独立实例申请锁，获取多数即成功。但 Redlock 在时钟跳跃（NTP 时间调整）或 GC pause 时仍可能出现问题。Martin Kleppmann 指出 Redlock 不提供线性一致性——它对系统模型的假设（同步网络模型假设）不切实际。更安全的做法：使用 ZooKeeper 的临时顺序节点（通过 ZooKeeper 的线性一致性保证）或 etcd 的 concurrency 包。""",
+  ["为什么 GC 暂停会影响 Redlock 的安全性？", "ZooKeeper 锁为什么比 Redis 锁更安全？"],
+  ["分布式系统", "分布式锁", "Redlock", "Redis", "ZooKeeper"])
+
+q("hard", "choice",
+  "Fencing Token 机制",
+  "什么是 Fencing Token？它如何解决分布式锁的遗留问题？为什么仅靠锁本身不能保证安全性？",
+  "Fencing Token 是一种单调递增的令牌机制。当客户端获取锁时，锁服务返回一个单调递增的 token（如全局递增 ID）。客户端在写入操作时携带该 token，资源端拒绝处理 token 小于当前最大值的操作。仅靠锁不足以保证安全的根本原因：获取锁的客户端可能由于 GC pause、网络延迟等原因在锁过期后仍在执行操作。Fencing Token 确保即使客户端持有过期的锁，其操作也会被资源端拒绝。ZooKeeper 通过递增的 zxid 天然支持，而 Redlock 由于没有单调递增的令牌生成能力，无法提供 fencing 保证。",
+  ["Fencing Token 在 etcd 的 concurrency 包中如何实现？", "Hazelcast 和 ZooKeeper 分别怎么处理这个问题？"],
+  ["分布式系统", "Fencing Token", "分布式锁", "安全性", "单调递增"],
+  options=["A) 一种加密令牌", "B) 单调递增令牌，资源端拒绝过期令牌的操作", "C) 一种 TTL 机制", "D) 一种密码学签名"])
+
+# ==================== 熔断与限流 ====================
+
+q("medium", "short_answer",
+  "熔断器（Circuit Breaker）模式",
+  "解释熔断器模式的三个状态及其转换条件。熔断器与重试模式为什么不能混用？半开状态（Half-Open）的作用是什么？",
+  """熔断器三状态：Closed（正常）→ Open（熔断）→ Half-Open（半开）→ Closed。Closed：请求正常通过，失败累积达到阈值时进入 Open。Open：请求快速失败（不调用下游），经过超时时间进入 Half-Open。Half-Open：放行有限数量的请求探活，成功率达标则回到 Closed，否则回到 Open。熔断器不能和简单重试混用：Open 状态下的重试会穿透熔断器造成额外的负载。正确做法：熔断器和退避重试配合（Exponential Backoff + 熔断后进入 Half-Open）。Hystrix 和 Resilience4j 是 Java 生态最流行的实现。""",
+  ["熔断器如何与重试配合使用？", "Hystrix 的信号量隔离和线程池隔离有什么区别？"],
+  ["分布式系统", "熔断器", "Circuit Breaker", "重试", "Half-Open"])
+
+q("medium", "short_answer",
+  "限流算法对比",
+  "比较计数器算法、令牌桶（Token Bucket）、漏桶（Leaky Bucket）三种限流算法的原理和适用场景。",
+  """计数器算法（固定窗口）：单位时间内计数达到阈值则限流。问题：窗口切换时可能出现两倍流量尖峰（如在 00:59:59 和 01:00:00 各来 100 个请求，系统可能承受 200 请求/秒的突发）。令牌桶：匀速生产令牌存入桶中，请求消耗令牌。允许突发流量（桶内可积累令牌）。适用：允许短时突发的场景（如 Web API 限流）。漏桶（Leaky Bucket）：请求以固定速率流出，超出容量的请求被丢弃。平滑流量但无法应对突发。适用：保护数据库连接池等需要严格平滑的场景。滑动窗口比计数器更精确。分布式限流常用 Redis + Lua 脚本实现原子计数。""",
+  ["计数器算法在 1s 窗口边界的问题怎么解决？", "Sentinel 和 Guava RateLimiter 分别使用什么算法？"],
+  ["分布式系统", "限流", "令牌桶", "漏桶", "计数器"])
+
+# ==================== CQRS / Event Sourcing ====================
+
+q("hard", "short_answer",
+  "CQRS 命令查询职责分离",
+  "解释 CQRS（Command Query Responsibility Segregation）的核心思想。什么时候应该使用 CQRS？它带来了哪些复杂度？",
+  """CQRS 核心：将写操作（Command）和读操作（Query）分离到不同的模型中，甚至不同的数据库。Command 使用面向业务的写模型（通常是规范化），Query 使用面向展示的读模型（通常是反规范化）。适用场景：(1) 读写负载严重不对称（如写少读多的报表系统）。(2) 业务逻辑复杂，读模型需要多种聚合视图。(3) 不同维度的查询性能要求不同。复杂度：(1) 数据同步——写模型变更需传播到读模型（最终一致性），存在读取滞后。(2) 架构复杂度提升——至少两套数据模型+同步机制。(3) 开发运维成本。CQRS 常与 Event Sourcing 配合使用——Command 产生事件，Query 消费事件构建读模型。""",
+  ["CQRS 中读模型和写模型的数据不一致如何处理？", "CQRS 和 Event Sourcing 为什么经常一起使用？"],
+  ["分布式系统", "CQRS", "读写分离", "命令查询", "Event Sourcing"])
+
+q("hard", "short_answer",
+  "Event Sourcing 事件溯源",
+  "Event Sourcing 的基本原理是什么？它和传统 CRUD 相比有哪些优势和劣势？什么是事件存储（Event Store）？",
+  """Event Sourcing 核心：不保存系统当前状态，而是存储所有状态变更事件。当前状态由事件的回放（Replay）计算得出。Event Store 是只追加（Append-Only）的事件存储，通常是专门的数据库（如 EventStoreDB）或传统数据库中的 events 表。优势：(1) 完整的审计日志——知道每个状态的变化原因和时间。(2) 时间旅行——可回溯到任意历史状态。(3) 天然支持 CQRS——事件可被不同订阅者消费构建不同的读模型。(4) 原生处理并发冲突——事件是唯一的事实来源。劣势：(1) 事件模式演进困难——新代码需兼容旧事件（上转型）。处理方式：Versioned Events 或 Upcasting。(2) 查询复杂度高——按状态查询需要回放事件（快照机制缓解）。(3) 事件量无限增长——需要快照（Snapshot）+ 归档策略。""",
+  ["Event Sourcing 的事件模式演化怎么管理？", "快照（Snapshot）在 Event Sourcing 中的角色是什么？"],
+  ["分布式系统", "Event Sourcing", "事件溯源", "事件存储", "CRDT"])
+
+# ==================== Gossip / 最终一致性 ====================
+
+q("hard", "short_answer",
+  "Gossip 协议",
+  "解释 Gossip 协议（流行病协议）的工作原理。为什么 Cassandra 和 Dynamo 使用它？Gossip 有哪些变种？",
+  """Gossip 协议：节点定期随机选择其他节点交换信息，类似流行病传播。信息传播复杂度为 O(log N)（经对数轮次后几乎每个节点都收到信息）。三种传播模式：(1) Anti-Entropy（反熵）——节点间全量比较数据差异（推/拉/推拉模式）。(2) Rumour Mongering（谣言传播）——节点只传播新变更，收到节点变成"知情者"。(3) Phi Accrual Failure Detection——基于心跳到达时间分布的概率故障检测。Cassandra 使用基于 Phi 的 Gossip 做集群成员管理，Riak 使用 Gossip 做元数据同步。优势：去中心化、容错性好、O(log N) 收敛。劣势：带宽消耗（全量比较），最终一致性保证较弱。""",
+  ["为什么 Cassandra 使用 Gossip 而不是中心化的成员管理？", "Gossip 的传播延迟大约是多少轮才能覆盖全集群？"],
+  ["分布式系统", "Gossip", "流行病协议", "反熵", "故障检测"])
+
+# ==================== 时钟 ====================
+
+q("hard", "short_answer",
+  "向量时钟与冲突检测",
+  "解释 Vector Clock（向量时钟）的原理。它如何检测分布式系统中的更新冲突？Dynamo 如何使用它？",
+  """Vector Clock：每个节点维护一个 (node_id, counter) 列表，每次事件发生递增本节点计数器值。时钟 A 和 B 的比较：A 的所有分量都 ≤ B → A 是 B 的因果历史；无法比较（各分量有大小交错）→ 冲突。Dynamo 使用 Vector Clock 检测读写冲突——DynamoDB 的每个数据项附带 Vector Clock，读操作返回所有不可比较的版本，由客户端（或应用）合并解决冲突（CRDT 可自动合并）。Vector Clock 的问题是它随节点数线性增长（可能有大量版本分支），Dynamo 通过截断（Truncation）控制大小——当时钟超过阈值时丢弃旧版本。""",
+  ["向量时钟和 Lamport 时钟的核心区别是什么？", "CRDT 和 Vector Clock 在冲突解决上有什么不同的思路？"],
+  ["分布式系统", "Vector Clock", "向量时钟", "冲突检测", "Dynamo"])
+
+# ==================== 分布式缓存 ====================
+
+q("medium", "short_answer",
+  "缓存一致性问题",
+  "分布式缓存与数据库的一致性面临哪些经典问题？旁路缓存（Cache-Aside）模式如何工作？什么是缓存穿透、缓存击穿、缓存雪崩？",
+  """Cache-Aside：读时先查缓存（miss 则查 DB 并回填缓存），写时更新 DB 并删除缓存（延迟删除）。问题：(1) 缓存穿透——查不存在的数据（缓存和 DB 都 miss），大量请求穿过缓存直达 DB。解决：布隆过滤器过滤不存在 key，或缓存空值。(2) 缓存击穿——热点 key 过期时大量并发请求同时落 DB。解决：互斥锁（只让一个线程查 DB），或主动刷新热点 key。(3) 缓存雪崩——大量 key 同时过期，或 Redis 宕机。解决：过期时间加随机偏移、集群部署、本地缓存兜底。旁路缓存更新顺序的经典陷阱：先更新 DB 再删除缓存 vs 先删除缓存再更新 DB？推荐：先更新 DB 再删除缓存（延迟双删是补偿手段）。""",
+  ["为什么先删缓存再更新 DB 可能出问题？", "延迟双删补偿机制是怎样的？"],
+  ["分布式系统", "缓存", "穿透", "击穿", "雪崩"])
+
+# ==================== 幂等与 Exactly-Once ====================
+
+q("medium", "choice",
+  "幂等性设计",
+  "在分布式系统中实现 Exactly-Once 语义的核心挑战是什么？常用的幂等性策略有哪些？",
+  "Exactly-Once 的核心挑战：在网络不可靠、消息可能重复送达的分布式环境中，保证每条消息或操作恰好执行一次。幂等策略：(1) 去重表（唯一约束）——使用唯一索引的业务 ID 防重复（先查后插无法原子化，需使用 INSERT IGNORE 或条件更新）。(2) 令牌机制（Token/Idempotency Key）——客户端生成唯一令牌，服务端记录已处理的令牌。(3) 乐观锁 ——通过版本号/条件更新（UPDATE ... WHERE version = N）。(4) 状态机——利用状态流转的确定性做幂等（已支付状态不可再次支付）。消息队列的 Exactly-Once 一般指 At-Least-Once + 消费者幂等。Kafka 在 0.11+ 通过幂等 Producer（transactional.id + epoch）+ 事务（read-process-write cycle）实现端到端 Exactly-Once。",
+  ["Kafka 的幂等 Producer 是如何实现的？", "HTTP 的 PUT 和 DELETE 为什么天然是幂等的？POST 为什么不是？"],
+  ["分布式系统", "幂等", "Exactly-Once", "去重", "幂等键"],
+  options=["A) 网络重试；去重表/令牌/乐观锁", "B) 事务隔离；加锁/排队/串行化", "C) 数据一致性；备份/容灾/恢复", "D) 消息可靠；确认/重试/超时"])
+
+# ==================== 分布式监控与追踪 ====================
+
+q("medium", "short_answer",
+  "分布式追踪（Distributed Tracing）",
+  "分布式追踪的核心概念是什么？Trace、Span、SpanContext 分别代表什么？为什么分布式追踪在微服务架构中很重要？",
+  """Trace（追踪）：一次完整请求在多个服务间的调用链路。Span（跨度）：链路中的单个操作单元（如一次 RPC 调用、一次数据库查询）。SpanContext：包含 Trace ID、Span ID 和 Baggage Items 的上下文信息，在跨进程传递时通过传输层协议（如 HTTP Header 的 traceparent）传播。Trace 由一组有父子关系的 Span 组成的有向无环图。采样策略非常重要——100% 采样对高吞吐系统不可行，常用 Head-Based（头部采样，决定整个 Trace 是否采样）和 Tail-Based（尾部采样，只采样感兴趣的 Span）。OpenTelemetry 是 CNCF 的标准化可观测性框架，统一了 OpenTracing 和 OpenCensus。""",
+  ["W3C traceparent 头的格式是怎样的？", "为什么 Head-Based 采样在低流量服务中可能不够用？"],
+  ["分布式系统", "分布式追踪", "Trace", "Span", "OpenTelemetry"])
+
+# ==================== 一致性哈希 ====================
+
+q("medium", "short_answer",
+  "一致性哈希与虚拟节点",
+  "一致性哈希如何解决分布式缓存扩缩容的数据迁移问题？虚拟节点（Virtual Node）解决了什么实际问题？",
+  """一致性哈希将哈希值映射到一个首尾相接的环上（0 ~ 2³²-1），缓存节点在环上占据位置。数据 key 哈希后沿环顺时针找到第一个节点（负责该数据的节点）。加节点：只影响新节点顺时针到下一个节点之间的数据。减节点：只影响该节点到下一个节点之间的数据。对比取模哈希（增减节点导致大量数据迁移），一致性哈希大幅减少迁移量。虚拟节点：每个物理节点在环上占据多个虚拟位置（通常 100-200 个）。解决的问题：(1) 负载不均——节点物理性能不同时，通过虚拟节点数量调整负载权重。(2) 热点问题——少量虚拟节点位置使数据分布更均匀（减少哈希偏斜）。Cassandra 和 DynamoDB 都使用一致性哈希 + 虚拟节点。""",
+  ["Memcached 的一致性哈希实现和 Redis Cluster 的哈希槽有什么不同？", "虚拟节点数设置多少合适？"],
+  ["分布式系统", "一致性哈希", "虚拟节点", "数据迁移", "Dynamo"])
+
+# ==================== 分布式配置中心 ====================
+
+q("medium", "short_answer",
+  "etcd 与 ZooKeeper 对比",
+  "对比 etcd 和 ZooKeeper 在分布式协调中的角色、协议、数据模型和适用场景。",
+  """ZooKeeper（Java，ZAB 协议）：树形数据模型（znode），支持临时节点和 Watcher 机制（事件通知）。适用：Leader 选举、分布式锁、服务注册与发现（历史上是 Hadoop 生态标配）。etcd（Go，Raft 协议）：key-value 存储（bbolt 引擎），支持 Watch 和 Lease 机制（租约）。适用：Kubernetes 的核心存储（保存集群状态和配置）、服务发现、配置管理。对比：(1) etcd 更简单（key-value vs 树形）、原生支持 gRPC。(2) ZooKeeper 的 znode 有更丰富的语义（顺序节点、ACL 控制的细粒度）。(3) 性能：etcd 3.x 单实例写入 ~10k ops/s，ZooKeeper ~50k ops/s（纯读）。
+趋势：Kubernetes 生态选择了 etcd，云原生应用中 etcd 更受欢迎。""",
+  ["为什么不推荐在生产环境用 ZooKeeper 做消息队列？", "etcd 的 Compact 机制为什么很重要？"],
+  ["分布式系统", "etcd", "ZooKeeper", "配置中心", "服务发现"])
+
+# ==================== 分布式文件系统 ====================
+
+q("medium", "short_answer",
+  "对象存储架构",
+  "对象存储（如 AWS S3、MinIO）的核心架构原理是什么？和传统文件系统（POSIX）的区别在哪里？",
+  """对象存储架构：(1) 扁平化命名空间——Bucket → Object（key-value 结构），没有目录层级（/ 只是 key 中的分隔符，实际上不创建目录）。(2) 不可变性——对象通常不可修改（覆盖写是删除旧对象+创建新对象）。(3) 数据保护——ECC 纠删码（Erasure Coding）比多副本更节省空间（如 12+4 配置，14 块盘能容忍 4 块故障）。(4) 元数据服务器追踪对象到存储节点的映射。与传统文件系统的区别：POSIX 文件系统支持 inode 变更（rwx 权限、硬链接、rename 原子性），对象存储不支持。了解 AWS S3 的数据一致性模型即可投入生产使用。S3 在对象覆盖写后提供最终一致性。""",
+  ["S3 的 LIST 操作为什么是前缀排序的？", "MinIO 的 Erasure Coding 和 RAID 有什么不同？"],
+  ["分布式系统", "对象存储", "S3", "MinIO", "Erasure Coding"])
+
+# ==================== 消息传递 ====================
+
+q("hard", "short_answer",
+  "消息传递语义",
+  "分布式消息队列中的三种传递语义：At-Most-Once、At-Least-Once、Exactly-Once。为什么 Exactly-Once 在分布式环境中如此困难？Kafka 如何实现端到端 Exactly-Once？",
+  """At-Most-Once：消息最多传递一次（可能丢失）。代价最小，适合日志采集等允许丢失的场景。At-Least-Once：消息至少传递一次（可能重复）。大多数消息队列的默认语义。Exactly-Once：消息恰好传递一次（不丢不重）。困难的原因：(1) 发送端——网络超时无法区分是消息没到还是确认丢失（幂等解决）。(2) 消费端——处理完成在提交偏移之前的 crash 会导致重复消费（幂等消费解决）。(3) 端到端——需要在 Producer、Broker、Consumer 三层都保证。Kafka 的端到端 Exactly-Once：幂等 Producer（Producer ID + 序列号保证同一 Producer 不重复）+ 原子性的 read-process-write cycle（事务保证消费和结果写入要么同时成功要么同时失败）+ transactional.id 跨 session 的幂等恢复。""",
+  ["Kafka 幂等 Producer 和事务 Producer 有什么区别？", "Pulsar 的 Exactly-Once 实现和 Kafka 有什么不同？"],
+  ["分布式系统", "消息传递", "Exactly-Once", "Kafka", "幂等"])
+
+# ==================== 拜占庭容错 ====================
+
+q("hard", "choice",
+  "拜占庭容错（BFT）",
+  "拜占庭将军问题描述了什么样的场景？PBFT（Practical Byzantine Fault Tolerance）的核心思路是什么？为什么区块链中 BFT 仍然重要？",
+  "拜占庭将军问题：将军们必须就攻击时间达成一致（共识），但某些将军可能是叛徒（恶意节点）。在 n 个节点中容忍 f 个恶意节点需要至少 n >= 3f+1。PBFT 核心：三阶段协议（Pre-Prepare → Prepare → Commit），通过数字签名防止节点欺骗。每个阶段需收集至少 2f+1 个节点的一致回复。与 Crash Fault Tolerance 的关键区别：BFT 还需要验证消息的真实性（恶意节点可能发送错误消息），而 CFT（如 Raft/Paxos）只假设节点宕机（fail-stop），不处理恶意行为。区块链仍然需要 BFT：公链环境节点不可信（PoW/Nakamoto Consensus 是另一种 BFT）。联盟链（Hyperledger Fabric）使用 PBFT 的变种。Tendermint（Cosmos）将 BFT 与 PoS 结合。Libra（Diem）的 HotStuff 是链式 BFT 的新范式。",
+  ["CFT（Raft）和 BFT（PBFT）在节点数上的要求有何不同？", "HotStuff 和 PBFT 的核心区别是什么？"],
+  ["分布式系统", "拜占庭容错", "PBFT", "共识", "区块链"],
+  options=["A) 恶意节点传播错误消息；三阶段协议+数字签名", "B) 网络延迟导致的不一致；超时重试机制", "C) 存储数据不一致；校验和验证", "D) 计算结果不一致；多数投票机制"])
+
+# ==================== 事务消息 ====================
+
+q("hard", "short_answer",
+  "事务消息与本地消息表",
+  "分布式系统中如何保证消息发送和本地事务的一致性？解释事务消息和本地消息表两种方案。",
+  """方案一：事务消息（RocketMQ）。RocketMQ 半消息（Half Message）机制：Producer 发送半消息（Broker 标记为暂不可投递）→ 执行本地事务 → 根据结果 commit/rollback 半消息。Broker 未收到二次确认时会回查 Producer。方案二：本地消息表。在本地数据库中创建消息表，业务操作和消息插入在同一个本地事务中 → 独立的消息发送服务轮询未发送的消息进行投递 → 投递成功更新消息状态。对比：事务消息对代码入侵较小（回查机制由 MQ 自动触发），本地消息表方案更通用（不依赖 MQ 特性）。RocketMQ 的事务消息在金融场景广泛使用。处理事务消息的悬挂和回查超时需要幂等设计。""",
+  ["事务消息的半消息状态对消费者是不可见的，那什么时候变成可见？", "本地消息表方案的消息重复问题怎么处理？"],
+  ["分布式系统", "事务消息", "本地消息表", "RocketMQ", "分布式事务"])
+
+
+# ==================== 拓扑与通信 ====================
+
+q("medium", "short_answer",
+  "Gossip 传播效率与去中心化",
+  "Gossip 协议的传播延迟与集群规模之间的关系是怎样的？SWIM 协议如何改进了经典 Gossip？",
+  """经典 Gossip：每轮每个节点随机选择 b 个节点传播信息，O(log N) 轮后信息到达所有节点（以高概率）。假设 b=1（每轮选一个），信息传播类似 SI 流行病模型，感染率取决于节点度和随机选择。SWIM 协议（Scalable Weakly-consistent Infection-style Process Group Membership Protocol）的改进：(1) 成员信息采用 Gossip 传播但加上 Ping-ACK 机制做故障检测；(2) Ping 目标随机选择 + 间接 Ping（通过第三方节点）提高可用性；(3) Suspicion 机制（怀疑阶段）避免误判。SWIM 是 Consul 的成员管理基础。实际部署中 Gossip 的传播延迟受网络拓扑、带宽和消息大小影响。""",
+  ["Gossip 的 b（fanout）参数如何影响收敛速度？", "Consul 的 SWIM 实现和 Cassandra 的 Gossip 有什么不同？"],
+  ["分布式系统", "Gossip", "SWIM", "成员管理", "故障检测"])
+
+q("hard", "short_answer",
+  "Phi Accrual 故障检测",
+  "解释 Phi Accrual Failure Detector 的工作原理。为什么它比简单的超时（Timeout）检测更适应分布式环境？",
+  """Phi Accrual 基于心跳到达时间的统计分布做出故障判断，输出一个连续值 φ（怀疑度），而不是简单的"存活/死亡"二元判断。工作原理：(1) 维护最近心跳到达间隔的滑动窗口（通常取 1000 个样本）；(2) 假设心跳间隔服从正态分布（或 Weibull 分布更准确），计算当前心跳间隔的概率；(3) φ = -log₂(1 - CDF)，其中 CDF 是当前时间距上次心跳的累积分布函数值。当 φ 超过阈值（通常 φ=8 对应约 0.4% 误判率）时标记为故障。优势：(1) 自适应——网络抖动时 φ 不会因单次超时就报警；(2) 可调——不同节点可设置不同敏感度；(3) 连续值——应用层可根据 φ 值做不同响应。Cassandra 和 Akka 都使用 Phi Accrual 检测。""",
+  ["φ=1 和 φ=8 分别代表什么误判概率？", "为什么 Weibull 分布比正态分布拟合心跳间隔更准确？"],
+  ["分布式系统", "故障检测", "Phi Accrual", "心跳", "Cassandra"])
+
+# ==================== 复制与同步 ====================
+
+q("hard", "short_answer",
+  "Chain Replication",
+  "解释 Chain Replication 的工作原理。它与 Raft 在一致性模型和性能特性上有什么不同？",
+  """Chain Replication：将副本组织成链，写请求先发给 Head 节点，Head 沿链依次转发到尾 Tail，Tail 才是确认写入完成。读请求直接由 Tail 响应，保证线性一致性（所有读发生在所有之前的写之后）。优势：(1) 读吞吐高——Tail 单点响应，无读仲裁开销；(2) 强一致性透明——链式传递天然保证顺序；(3) 故障处理简单——Head 或中间节点故障只需链中移除，Tail 故障时前一个接替。与 Raft 对比：Raft 读写都走 Leader（读有性能瓶颈），写需要多数派确认（延迟受最慢节点影响）。Chain Replication 写延迟也是链长相关的（串行传递），但读吞吐更好。实际系统中 CRAQ（Chain Replication with Apportioned Queries）允许所有副本响应读请求（牺牲一点一致性保证换取更高读性能）。""",
+  ["Chain Replication 在 Tail 故障时如何保证不丢数据？", "CRAQ 允许中间节点读会引入什么问题？"],
+  ["分布式系统", "Chain Replication", "复制", "一致性", "CRAQ"])
+
+q("hard", "short_answer",
+  "CRDT（无冲突可复制数据类型）",
+  "解释 CRDT 的工作原理。State-based CRDT 和 Operation-based CRDT 有什么区别？最终一致性系统为什么需要 CRDT？",
+  """CRDT（Conflict-free Replicated Data Types）是一种无需协调即可并发写入且最终一定能合并为一致结果的数据结构。两种类型：(1) State-based CRDT（CvRDT）——节点将完整状态同步给其他节点，合并函数必须满足交换律、结合律、幂等律（如 GCounter 用 Max 合并，GSet 用 Union 合并）。(2) Operation-based CRDT（CmRDT）——节点只广播操作（如 add/remove），操作在远端重放。需要可靠的消息传递顺序（或因果序）。对比：State-based 带宽大（传递全量）但通信要求低；Operation-based 带宽小但要求可靠有序。使用场景：Riak 的 CRDT（计数器、集合、地图）、Redis 的 CRDT 同步（Redis Enterprise）、Figma 的协同编辑。最终一致性系统的痛点——常规操作（如并发 add/remove）会产生冲突，CRDT 从数学上保证无冲突合并。""",
+  ["为什么 GCounter 只增不减？怎么实现支持减的 PN Counter？", "CRDT 和 Operational Transformation（OT）在协同编辑场景的对比？"],
+  ["分布式系统", "CRDT", "无冲突", "复制", "最终一致性"])
+
+q("medium", "short_answer",
+  "Hinted Handoff 与读修复",
+  "解释 Dynamo 风格的 Hinted Handoff（提示移交）和 Read Repair（读修复）机制。它们如何帮助最终一致性系统自愈？",
+  """Hinted Handoff：当数据写入时目标节点不可用，协调节点在本地暂时保存数据（带提示信息"本属于节点 X"），等节点 X 恢复后转发给它。如果 Hint 过期（默认超时）或协调节点自己宕机，数据可能丢失。Read Repair：读请求检测到副本间数据不一致时（通过比对版本向量），由协调节点用最新版本修复落后副本。Cassandra 的 read repair 有概率触发（read_repair_chance），稠密集群中通过持续读操作最终修复所有副本。Anti-Entropy（反熵）：Merkle Tree 比较不同副本的数据差异，定期全量同步。三种机制分层：Hinted Handoff 处理瞬时故障（秒级），Read Repair 处理持续修复（毫秒级检测），Anti-Entropy 兜底（小时级，修复 Hinted Handoff 和 Read Repair 遗漏的差异）。""",
+  ["Hinted Handoff 的 Hint 信息具体存储在哪里？", "Read Repair 在高写入负载下能否跟上不一致的累积速度？"],
+  ["分布式系统", "Hinted Handoff", "读修复", "反熵", "Dynamo"])
+
+# ==================== 协调与时钟 ====================
+
+q("hard", "short_answer",
+  "Leader Lease 领导权租约",
+  "什么是 Leader Lease（领导权租约）？为什么它比单纯的任期（term）机制更能防止脑裂？",
+  """Leader Lease：Leader 持有带时间窗口的领导权授权，约定在租约有效期内 Leader 拥有唯一决策权。租约到期后没有续约则自动放弃领导权。与任期（term）机制的区别：Raft 的 term 是逻辑上的连续递增编号，没有时间绑定。如果 Leader 发生网络分区但进程未停止，另一分区的节点可能选举出新 Leader，原 Leader 仍在旧 term 发号施令——这就是脑裂的根源。Leader Lease 通过"过期时间"提供了物理墙：Leader 必须在租约内收到续约确认（如通过 etcd 的 refresh API），否则自动降级。(1) 时钟同步假设——Lease 依赖时钟漂移有界（通常 NTP 同步误差 < 100ms），选 Lease 时长要考虑最大时钟误差。(2) 租约时长权衡——太短增加续约开销，太长增加脑裂窗口。Google Chubby 的租约默认 10 秒，Leader 在 5 秒内续约。K8s 的 leader election 使用 Lease 对象（默认 15 秒租约，10 秒续约间隔）。""",
+  ["时钟漂移超过租约边界会怎样？", "Lease 和 TTL 机制本质上有什么区别？"],
+  ["分布式系统", "Leader Lease", "租约", "脑裂", "时钟同步"])
+
+q("hard", "short_answer",
+  "混合逻辑时钟（HLC）",
+  "混合逻辑时钟（Hybrid Logical Clock）解决了什么问题？为什么在分布式数据库中 HLC 比物理时钟或 Lamport 时钟更实用？",
+  """混合逻辑时钟（HLC）：结合物理时钟（NTP）和逻辑时钟（Lamport/Vector）的优点，既接近物理时间（人类可读），又能保证因果序。HLC 属性：(1) l 时刻接近物理时钟 pt（|l - pt| 受限于 NTP 最大误差），事件发生时取 l = max(pt, l_local, l_received + 1)。(2) 如果两个事件没有通信关系，HLC 不会强加虚假的因果序（不像 Lamport 时钟）。CockroachDB 和 YugabyteDB 使用 HLC 实现快照隔离和事务排序。为什么需要 HLC：TrueTime（Spanner）需要专用硬件（GPS +原子钟），Go-ogle 级别的基础设施。HLC 软件实现，误差可控。MariaDB/MySQL Galera 也使用类似 HLC 的概念做事务排序。HLC 的限制：不能替代 TrueTime——TrueTime 提供的是"时间区间保证"（NTP 误差有界区间），HLC 只能提供"最佳近似"。""",
+  ["HLC 中 l = max(pt, l_local, l_received + 1) 为什么能保证因果序？", "CockroachDB 如何保证 HLC 在节点间同步不偏差？"],
+  ["分布式系统", "HLC", "混合逻辑时钟", "因果序", "CockroachDB"])
+
+q("medium", "short_answer",
+  "Chandy-Lamport 全局快照",
+  "Chandy-Lamport 快照算法如何在不停止分布式系统的情况下捕获全局状态？它依赖哪些假设？",
+  """Chandy-Lamport 算法通过 Marker 消息捕获分布式系统的全局一致性快照。核心思路：(1) 任一节点可以发起快照，记录本地状态并向所有出边发送 Marker。(2) 节点首次收到 Marker 时：记录本地状态，标记此入边通道为空，向所有出边转发 Marker。(3) 已经快照过的节点再收到 Marker：记录此入边通道上从上次快照之后收到的消息序列（in-transit messages）。(4) 所有节点和通道都记录完成后得到全局一致的快照。关键性质：(1) 不停止系统——无全局暂停；(2) 不要求时钟同步；(3) 快照的一致性——记录的全局状态对应某个可能的系统执行序列。假设：通道 FIFO，网络可靠（不丢包），节点不崩溃（崩溃恢复后需重新快照）。应用场景：Apache Flink 的检查点基于 Chandy-Lamport 的变体。Spark Structured Streaming 也使用类似机制做容错快照。""",
+  ["Chandy-Lamport 快照的 in-transit 消息如何处理？", "Flink 的异步快照（Async Checkpoint）相比原始 Chandy-Lamport 优化了什么？"],
+  ["分布式系统", "Chandy-Lamport", "快照", "检查点", "Flink"])
+
+# ==================== 数据一致性与冲突处理 ====================
+
+q("medium", "short_answer",
+  "Merkle Tree 反熵",
+  "Dynamo 和 Cassandra 使用 Merkle Tree 做反熵同步。Merkle Tree 如何高效地找出两个副本的数据差异？",
+  """Merkle Tree（哈希树）：每个叶节点是数据块的哈希，非叶节点是其子节点哈希的哈希。两副本比较差异时：(1) 从根哈希开始比较；(2) 根哈希相同则完全一致（O(1)）；(3) 根不同则递归比较子节点；(4) 找到哈希不同的叶节点即为差异数据块。效率：N 个数据块、d 个差异块时，只需要比较 O(d * log N) 个哈希值（而非 O(N) 个数据比较）。Cassandra 的 Merkle Tree 实现：每个 Table 按 Token Range 构建 Merkle Tree，对等节点定期比较。Tree 的深度可配置（默认 15，即可区分最多 32768 个分区）。Merkle Tree 局限：构建需要扫描全量数据（CPU/IO 密集），只用于低频率的反熵修复。增量 Merkle Tree（只算变化的部分）是更高效的变体。""",
+  ["Merkle Tree 的深度如何影响比较效率？", "Cassandra 为什么选择定期反熵而不是持续同步？"],
+  ["分布式系统", "Merkle Tree", "反熵", "Cassandra", "Dynamo"])
+
+q("hard", "short_answer",
+  "分布式系统中写后读一致性",
+  "最终一致性系统中，用户写入后立即读取自己的写入可能读到旧数据。有哪些保证'读自己写'（Read-your-writes）一致性的方案？",
+  """保证 Read-your-writes 的常见方案：(1) Quorum 强一致读——写入 W + 读取 R 满足 W + R > N（如 W=2, R=2, N=3），但性能开销大。(2) 粘性连接（Session Guarantees）——用户从同一节点读写（如 Cassandra 的 whitelist 一致性），但在节点故障时不可用。(3) 版本向量追踪——客户端维护自己写入的版本信息，读时检查版本是否足够新（Cassandra 的 PAXOS 轻量级事务）。(4) 读修复加速——写入后在超时内要求读操作自动做读修复。(5) RYW Cache——在写入时缓存时间戳，读请求如果命中缓存时间戳小于数据版本则直接路由到最新节点。DynamoDB 的 Consistent Read：在强一致性读取时直接路由到 Leader 分区（代价是延迟和可用性降低）。Cassandra 的 SERIAL/LOCAL_SERIAL 一致性级别配合 lightweight transaction。成本权衡：每个方案都涉及一致性可用性延迟的三角取舍。""",
+  ["Cassandra 的 LOCAL_QUORUM 读和一致性级别为 ONE 的读有何不同？", "粘性连接方案下如果节点故障，用户会读到旧数据吗？"],
+  ["分布式系统", "Read-your-writes", "一致性", "Cassandra", "Session Guarantee"])
+
+# ==================== 架构与模式 ====================
+
+q("medium", "short_answer",
+  "Sidecar 模式与服务网格",
+  "解释分布式系统中的 Sidecar 部署模式。它和服务网格（Service Mesh）是什么关系？Sidecar 的资源开销如何控制？",
+  """Sidecar：在同一个 Pod/主机上与主服务进程同侧的辅助容器，负责网络代理、日志采集、监控上报、服务发现等功能。核心思路——将基础设施关注点从业务代码中剥离（分离运维关注点）。服务网格 = Sidecar 的规模化抽象：控制面（Control Plane）下发策略，数据面（Data Plane）由所有 Sidecar Proxy 组成。Istio 使用 Envoy 做 Sidecar，Linkerd 使用 Rust 实现的轻量级 Sidecar（linkerd-proxy）。Sidecar 资源开销：CPU（请求加解密和协议转换）、内存（连接表 + 路由规则缓存）、延迟（每次请求多一跳）。优化策略：(1) Proxy 资源预留（CPU 设置 100-500m，内存 128-512MB）；(2) 连接池调优减少转发延迟；(3) 使用 eBPF 技术（Cilium）替代 Sidecar 做到无代理网格。""",
+  ["Envoy Sidecar 和 eBPF 无代理网格的优缺点对比？", "Sidecar 模式下的链路追踪传递如何保证正确？"],
+  ["分布式系统", "Sidecar", "服务网格", "Istio", "Envoy"])
+
+q("medium", "short_answer",
+  "分布式系统中的背压（Backpressure）机制",
+  "什么是背压？它在分布式系统中如何传递？有哪些实现策略？",
+  """背压：当下游处理速度跟不上上游发送速度时，下游向上游反馈减速信号，防止系统过载崩溃。三种实现策略：(1) 基于信用（Credit-based）——下游给上游发放信用额度（如 RxJava 的 backpressure），上游按额度发送。适合流式处理（Akka Streams、Reactive Streams）。(2) 基于速率（Rate-based）——监控下游处理速率，动态调整上游发送速率（如 Apache Kafka 的消费者 fetch.max.bytes + max.poll.records）。(3) 基于显式信号（Explicit signal）——下游通过 HTTP 503 / TCP 窗口关闭 等信号通知上游减速。Kafka 中背压的实现：消费者拉取模型天然支持（poll 控制速率）；Kafka Streams 的 task queue 和 buffer 限制。分布式系统中的⻛险：背压传递链条中的死锁（下游等待上游、上游等待下游释放信用）。Akka Streams 使用有界缓冲 + 信用度来防止。""",
+  ["Reactive Streams 的背压规范和 HTTP/2 的流控制有什么区别？", "Kafka 消费者拉取模型中怎么设置参数来避免 OOM？"],
+  ["分布式系统", "背压", "Backpressure", "流控", "Reactive"])
+
+q("hard", "short_answer",
+  "分布式系统中的脑裂问题与 Fencing 机制",
+  "解释分布式系统中的脑裂（Split-Brain）场景。有哪些 fencing 机制可以防止脑裂带来的数据损坏？",
+  """脑裂：网络分区导致集群分裂成多个互不相通的小组，每个组都可能选出自认为的 Leader，各自写入数据导致全局不一致。Fencing 机制：(1) Epoch/Generation 编号——每个 Leader 任期分配单调递增编号。旧 Leader 的写入请求带过期编号被资源层拒绝（ZooKeeper 的 zxid、Raft 的 term）。(2) Lease 租约——Leader 只能在自己的租约有效期内操作，租约到期自动降级。(3) 共享存储 fence——通过分布式锁 + 存储层版本号检查（如 etcd 的 revision 机制）。(4) I/O Fencing——对共享存储设备执行 SCSI persistent reserve 命令（物理层面的写入权限剥夺）。(5) 磁盘 Fencing——在 STONITH（Shoot The Other Node In The Head）方案中，将故障节点的磁盘强制下线（SAN 级别 fencing）。HDFS NameNode 脑裂防护：QJM（Quorum Journal Manager）保证仅有一个 NameNode 能写入 EditLog。K8s 中 kube-controller-manager 的 leader election 使用 Lease 机制防止脑裂。""",
+  ["SCSI persistent reserve 和 Lease 在 fencing 级别上有什么本质区别？", "为什么 Raft 的 term 机制不能完全阻止脑裂期的写入？"],
+  ["分布式系统", "脑裂", "Fencing", "Split-Brain", "租约"])
+
+# ==================== 分布式存储与计算 ====================
+
+q("medium", "short_answer",
+  "Write-Ahead Log（WAL）",
+  "解释 Write-Ahead Log（预写日志）在分布式系统中的核心作用。WAL 如何保证系统在崩溃后恢复？请举例说明。",
+  """WAL：在修改数据之前先将变更写入持久化日志，日志确认写入后再应用变更到内存/数据文件。核心原则——日志先落盘，数据后更新。崩溃恢复流程：重启时回放 WAL 重建内存状态（Raft 里叫 replay），把所有已提交但未应用到状态机的操作重新执行。典型实现：(1) PostgreSQL 的 WAL（XLOG）——用于崩溃恢复 + 流复制；(2) Raft 的 Log——所有状态机命令先写入持久化日志；(3) RocksDB 的 WAL——LSM-Tree 的 memtable flush 前保证 WAL 落盘；(4) Kafka 的 Log——所有消息写入 partition 的 log segment（即 WAL），消费者读取的是已持久化的日志。WAL 的优化：组提交（Group Commit）——将多个写操作合并为一次 fsync，提升吞吐。WAL 的代价：额外一次 IO 写入顺序日志（顺序 IO 很快在 SSD 上大部分场景可接受）。WAL vs Binlog：MySQL 的 WAL（InnoDB redo log）用于崩溃恢复，binlog 用于复制和时间点恢复。""",
+  ["Raft 的 committed 和 applied 之间为什么会有 gap？崩溃恢复时如何处理这个 gap？", "WAL 的组提交到底会不会改变事务的可见性顺序？"],
+  ["分布式系统", "WAL", "预写日志", "崩溃恢复", "Raft"])
+
+q("hard", "short_answer",
+  "分布式系统中的同城双活与多 Region 部署",
+  "设计跨 AZ（可用区）或跨 Region 的分布式系统时面临哪些挑战？Global Database（如 Spanner、Cosmos DB）如何解决跨区域一致性问题？",
+  """跨 Region 挑战：(1) 延迟——跨区域 RTT 通常 50-200ms（同区域 < 2ms）；(2) 带宽成本——跨区域数据传输有显著成本；(3) 分区概率——长链路网络分区概率远高于同 DC；(4) 法规——GDPR 等数据主权要求数据留在特定区域。Spanner 的解决方案：(1) TrueTime——GPS + 原子钟保证全局时间有界误差（~7ms），实现外部一致性（线性一致性 + 快照隔离）；(2) 拆分数据按 Region 分布（interleave table + 父表位置配置）；(3) 读写分离——读从本地 replica 走（TrueTime 保证读到最新版本），写需经过 Paxos group 的多数派。Cosmos DB 的方案：(1) 多 Master 写入（multi-homing）——每个 Region 都可写；(2) 冲突解决策略——Last Writer Wins (LWW) 或自定义；(3) 一致性级别可配置（Strong/Bounded Staleness/Session/Consistent Prefix/Eventual）。较经济的方案：CockroachDB——HLC + Range Lease + 多区域配置（survival goals 可以是 zone 级或 region 级丢一节点能存活）。""",
+  ["Spanner 的 TrueTime API 在 commit 等待时的 SAFE 时间怎么算？", "Cosmos DB 的 Bounded Staleness 最多允许多少延迟？"],
+  ["分布式系统", "跨区域", "Spanner", "TrueTime", "CockroachDB"])
+
+# ==================== 实际场景 ====================
+
+q("medium", "short_answer",
+  "分布式系统中的缓存一致性问题",
+  "在分布式缓存（如 Redis Cluster）中，缓存和数据库之间如何保持一致性？常见的缓存一致性策略有哪些，各自的取舍？",
+  """缓存一致性本质：数据库写入后，缓存中的数据如何更新以确保后续读不返回旧数据。常见策略：(1) Cache-Aside（旁路缓存）——读时先查缓存，miss 则查库再回填；写时先更新数据库再删除缓存（删除而非更新缓存的理由：更新有并发写竞争问题，缓存计算可能复杂）。(2) Read-Through/Write-Through——缓存层代理读写，缓存先把数据写入数据库再更新自己（一致性由缓存层保证，如 Hazelcast IMDG）。(3) Write-Behind（异步写）——先更新缓存，异步批量写数据库（提高写吞吐，但异步写失败会丢数据）。(4) 订阅 Binlog 同步——用 Canal/Debezium 订阅 MySQL binlog，变更后推送给 Redis 更新（不侵入业务代码，但增加 CDC 组件复杂度）。经典陷阱：(1) 更新缓存而非删除——并发写导致写覆盖和读写竞争；(2) 先删缓存再更新数据库——读写并发时读到的空缓存回填旧数据（延时双删模式缓解）；(3) 最终一致性不可接受场景需要使用读写锁（如库存扣减）。""",
+  ["延迟双删模式为什么不能完全解决一致性问题？", "为什么很多团队最终选择了先更新数据库再删缓存的策略？"],
+  ["分布式系统", "缓存一致性", "Redis", "Cache-Aside", "Binlog"])
+
+q("medium", "short_answer",
+  "分布式系统的优雅关闭与灰度发布",
+  "在一个分布式系统中如何实现优雅关闭（Graceful Shutdown）？灰度发布（Canary Release）和金丝雀部署的关键设计要素是什么？",
+  """优雅关闭：进程收到 SIGTERM 后执行：注销服务注册 → 停止接受新请求 → 等待正在处理请求完成（drain，通常设超时 30s）→ 关闭连接池 → 刷新缓冲区 → 关闭数据库连接。关键点：(1) K8s preStop hook 和 terminationGracePeriodSeconds 配置；(2) 负载均衡器健康检查延迟配置（不让 LB 在实例停止期间继续路由流量）；(3) 消息消费者先停止拉取再处理剩余消息。灰度发布/金丝雀：(1) 路由控制——用 Istio VirtualService/DestinationRule 设置权重路由（5% → 20% → 50% → 100%）；(2) 监控告警——灰度期间对比新旧版本的错误率、P99 延迟、CPU/内存；(3) 自动回滚——错误率超过阈值自动将流量切回旧版本；(4) 版本兼容——灰度期间新旧两版同时在线，API/数据格式须向后兼容。K8s Deployment 的 maxSurge=25% maxUnavailable=25% 策略 + Argo Rollout 的 blue-green/canary 策略实现生产级发布。""",
+  ["terminationGracePeriodSeconds 设太短会怎样？太长呢？", "Istio 灰度发布中如何确保流量无损？"],
+  ["分布式系统", "优雅关闭", "灰度发布", "金丝雀", "K8s"])
+
+q("medium", "short_answer",
+  "分布式系统的容量规划与热点处理",
+  "分布式系统中如何处理热点（Hotspot）问题？容量规划时单 Partition 的吞吐上限如何估算？",
+  """热点类型：(1) 数据热点——某分区数据访问远超平均值（如高流量用户、热门商品）。(2) 计算热点——某计算节点被频繁调度（如 GroupBy 的 Key 倾斜）。解决方案：(1) 热分区拆分——对哈希分片追加随机后缀（同内容写多个分区），但需要在查询时聚合（写扩散）。(2) 本地缓存——热点数据在应用层本地缓存（如 Redis Cluster 场景下的 local cache + 失效广播）。(3) 读写分离——热点用 read replicas 分摊读请求。(4) 动态分区——Bigtable 的 tablet split、Kafka 的 partition 手动拆分。容量规划核心公式：单 Partition 写吞吐上限 = 单节点 IOPS / 副本数 * 写入放大系数（WAF）。Kafka 单 Partition 写上限 ≈ 15-50 MB/s（取决于磁盘和复制数）。每 Partition 也有连接数和内存开销（Kafka 每个 Partition 一个文件句柄）。推荐单节点 Partition 数不超过 2000。Cassandra 推荐单节点数据量不超过 2-4TB。""",
+  ["Kafka 的热分区怎么处理？除了增加 partition 还有什么方法？", "Cassandra 的热 Partition 在 Compaction 时有什么影响？"],
+  ["分布式系统", "热点", "容量规划", "分区", "Kafka"])
+
+# ==================== 服务发现与协调 ====================
+
+q("medium", "short_answer",
+  "服务发现机制",
+  "分布式系统中的服务发现有几种模式？客户端发现和服务器端发现各有什么优劣？Consul 和 Eureka 的实现差异是什么？",
+  """三种模式：(1) DNS 发现——通过 DNS A 记录 / SRV 记录解析服务地址，配合 DNS TTL 缓存。简单但不及时（DNS 缓存导致更新延迟）。(2) 客户端发现——客户端直接查询注册中心（ZooKeeper/Consul/Eureka）获取可用服务实例列表，自行选择负载均衡策略。优势是去中心化、低延迟（少一跳）；劣势是每个语言/框架需集成注册中心客户端。(3) 服务器端发现——通过负载均衡器（K8s Service / AWS ALB / Envoy）代理请求，客户端只需访问固定 VIP/DNS。优势是客户端无需感知后端变化；劣势是增加一跳延迟和运维复杂度。Consul vs Eureka：Consul 使用 Raft 一致性 + 健康检查（Agent 级），支持多数据中心和 KV Store。Eureka 采用 AP（最终一致性），强调可用性和去中心化（每个节点平等，所有信息最终一致），更适合微服务注册的心跳场景。K8s 的 Service 本质是服务器端发现——kube-proxy/iptables/IPVS 将 Service IP 路由到后端 Pod。""",
+  ["为什么 Eureka 选择 AP 而不是 CP？", "Consul 的健康检查是什么样的架构（Agent vs Server）？"],
+  ["分布式系统", "服务发现", "Consul", "Eureka", "K8s"])
+
+q("medium", "short_answer",
+  "分布式协调服务 ZooKeeper",
+  "ZooKeeper 的 ZNode 模型和 Watcher 机制如何实现分布式协调？ZooKeeper 适合和不适合做什么？",
+  """ZNode 模型：树形结构，两种类型——Persistent（持久节点，显式删除才消失）和 Ephemeral（临时节点，会话结束自动删除）。Sequential 后缀自动生成单调递增序号。典型使用场景：(1) 选主——多个客户端竞争创建同一个 Ephemeral 节点，成功的为 Leader（如 Kafka Controller 选举）。(2) 配置管理——配置存在 Persistent ZNode，客户端设 Watcher 监听变更。(3) 分布式锁——创建 Ephemeral Sequential 节点 + 监听前一个节点实现公平锁。(4) 服务注册——每个服务实例创建 Ephemeral 节点，崩溃时自动清理。Watcher 机制：客户端可以在 ZNode 上设置一次性 Watch，节点变更时收到通知。Watcher 是一次性的（触发后需重新注册），保证顺序（在同个 session 内 Watcher 事件按序触发）。ZK 的局限：(1) 不适合海量数据（所有数据在内存中，ZNode 总量建议 < 1M）；(2) 写吞吐瓶颈（Leader 单点写，ZAB 协议）；(3) Watcher 机制无法保证实时性（通知可能有延迟）。K8s 使用 etcd 而非 ZK——etcd 的 watch 更高效（支持长连接持续推送），API 更友好（gRPC + JSON），数据可持久化到磁盘。""",
+  ["为什么 ZK 不适合做通用存储？", "etcd 的 watch 和 ZK 的 watcher 有什么区别？"],
+  ["分布式系统", "ZooKeeper", "协调服务", "选主", "配置管理"])
+
+q("hard", "short_answer",
+  "etcd Raft 实现与最佳实践",
+  "etcd 的 Raft 实现在生产部署中需要注意什么？Learner 节点的作用是什么？如何处理 etcd 集群的成员变更？",
+  """生产注意事项：(1) etcd 对磁盘延迟敏感——Raft 日志写入需要 fsync（默认每 100ms 批量提交一次）。推荐 SSD 或 NVMe，磁盘延迟 > 10ms 会导致频繁的 Leader 选举（心跳超时默认 50ms）。(2) 奇数节点（3/5/7）避免脑裂。（3）网络隔离——etcd 对网络抖动容忍度较低，建议同 DC 部署。Learner 节点（etcd v3.4+）：不参与投票的 Raft 节点，只从 Leader 同步日志。设计目的——新节点加入时先作为 Learner 追赶上 Leader 的日志进度（避免新节点因日志落后影响集群可用性），追上后晋升为 Voting 成员。成员变更：etcd 使用 Raft 的 joint consensus 实现一次添加/移除多个成员的安全变更。注意事项——不建议同时变更多个成员（一次一个最安全）。quorum 容错能力：3 节点容忍 1 故障，5 节点容忍 2 故障。K8s control plane 的 etcd 通常跨 3 个 AZ 部署。""",
+  ["为什么 etcd 强烈建议将数据盘和 WAL 盘分开？", "etcd 集群从 3 节点扩容到 5 节点如何保证安全？"],
+  ["分布式系统", "etcd", "Raft", "Learner", "K8s"])
+
+# ==================== 消息与流处理 ====================
+
+q("hard", "short_answer",
+  "Kafka 分区重平衡",
+  "Kafka Consumer Group 的 Rebalance 触发条件是什么？Cooperative Rebalancing 相比 Eager Rebalancing 改进了什么？静态分组（Static Group Membership）怎么避免重平衡？",
+  """触发条件：(1) 新 consumer 加入或现有 consumer 离开；(2) topic 分区数变化；(3) 订阅的 topic 正则匹配到新 topic。Eager Rebalancing（旧）：Stop-the-world——所有 consumer 撤销分区分配，全部重新加入组并等待新分配。期间无消费（全组暂停），大规模集群可能造成数秒到数十秒的消费空洞。Cooperative Rebalancing（Kafka 2.4+，基于 KIP-429）：Incremental——每次只重新分配部分分区（逐步收敛至均衡状态），不停止的 consumer 继续消费。原理：Consumer Leader 在多次 rebalance 轮次中逐步调整分配（由 CooperativeStickyAssignor 实现），每次只移动必要的最小分区集。Static Group Membership（KIP-345）：consumer 配置 group.instance.id，固定身份的 consumer 在重启或短暂故障时不触发 rebalance（会话超时内直接重新加入拿到原分区）。对长时间 GC 或滚动重启的场景非常有用。建议配置 session.timeout.ms=45s 配合 heartbeat.interval.ms=15s 减少不必要的 rebalance。""",
+  ["Cooperative Rebalance 和 Eager Rebalance 在分区分配算法上的区别？", "为什么 Static Group Membership 能跳过 rebalance？"],
+  ["分布式系统", "Kafka", "Rebalance", "Consumer", "流处理"])
+
+q("hard", "short_answer",
+  "Kafka 的 ISR 机制与副本管理",
+  "解释 Kafka 的 ISR（In-Sync Replica）机制。min.insync.replicas 和 acks=all 有什么关联？Leader 如何知道 follower 是否同步？",
+  """ISR：Leader 维护的一组与 Leader 保持同步的副本集合。follower 定期从 Leader fetch 数据，如果 follower 在 replica.lag.time.max.ms（默认 30s）内没有 fetch 请求或落后超过此阈值，Leader 将其移出 ISR。被移出的 follower 不再被视为"同步"，不在 ISR 中的 follower 不参与 Leader 选举（避免选出一个数据严重落后的节点做 Leader）。acks=all + min.insync.replicas：Producer 设置 acks=all 要求消息写入所有 ISR 副本后才确认。min.insync.replicas 定义 ISR 的最小数量——如果 ISR 收缩到低于这个值（如只有 Leader 在 ISR 中），Leader 拒绝写入（返回 NotEnoughReplicasException）。这个组合保证写入的数据至少有 N 个副本确认。Unclean Leader Election：允许不在 ISR 中的 follower 成为 Leader（可能丢数据）。默认关闭（unclean.leader.election.enable=false）。开启场景：极端情况（ISR 只剩 Leader 且 Leader 挂了，待恢复服务优先于数据完整性）。Kafka 的持久性保证永远不弱于传统消息队列（acks=all + min.insync.replicas=2 等价于同步复制模式）。""",
+  ["replica.lag.time.max.ms 设太小会有什么问题？", "acks=all 情况下全部 ISR 都挂了的处理策略是什么？"],
+  ["分布式系统", "Kafka", "ISR", "副本", "acks"])
+
+q("hard", "short_answer",
+  "流处理中的 Exactly-Once 语义",
+  "在流处理引擎（如 Flink、Kafka Streams）中实现端到端 Exactly-Once 的关键技术是什么？分布式快照（Checkpoint）如何保证一致性？",
+  """端到端 Exactly-Once 三层保证：(1) Source——Kafka Source 使用 Kafka 事务 API 或基于 offset 的 checkpoint（flink 的 Kafka consumer 周期性保存 offset 到 state backend）。(2) 处理——Flink 使用 Chandy-Lamport 变体的分布式快照（Async Barrier Snapshot）。Barrier（对齐机制）：Source 注入 Barrier（当前 Checkpoint ID 的标记），Barrier 在算子间传递（One-input 算子收到 Barrier 时做 snapshot；Two-input 算子需要等所有输入的 Barrier 都到达后再 snapshot——即 Barrier Alignment）。对齐时暂缓快流、等慢流，防止先快照的处理结果包含未快照的输入数据。(3) Sink——两阶段提交（TwoPhaseCommitSinkFunction）：预提交（pre-commit）→等待所有 subtask 预提交成功 →发起全局 commit。失败时所有 subtask 统一回滚到上一个 checkpoint。Kafka Streams 的 Exactly-Once：使用 Kafka 事务 API + Consumer 的 transactional.id 实现 read-process-write 原子性。流处理 Exactly-Once 的代价：Barrier Alignment 增加延迟（等待慢流），事务提交增加吞吐开销。Flink 的 unaligned checkpoint（FLIP-76）在反压下牺牲对齐的强一致性换取更快恢复。""",
+  ["Flink 的 unaligned checkpoint 相比 aligned 的优缺点？", "Kafka Streams 的 exactly-once 和 Flink 的 exactly-once 本质上有什么不同？"],
+  ["分布式系统", "Exactly-Once", "流处理", "Flink", "Checkpoint"])
+
+q("medium", "short_answer",
+  "Apache Kafka 的消息存储机制",
+  "Kafka 的消息是如何存储的？Segment、Index、TimeIndex 文件的作用是什么？为什么 Kafka 的存储设计使其能支撑百万级 TPS？",
+  """Kafka 存储核心：每个 Partition 是一个有序的消息日志——日志文件按 Segment 切分（默认 1GB 或 7 天滚动）。分段存储的优势：(1) 日志清理（compaction/deletion）以 Segment 为单位；(2) 顺序读写（新 Segment 追加写，不随机写）。每个活跃 Segment 有三个文件：(1) .log——消息数据，每条消息含 offset、timestamp、key、value、headers；(2) .index——偏移索引（稀疏存储，每 4KB 数据建一条索引），用于 offset → 文件位置查找；(3) .timeindex——时间戳索引（同样稀疏），用于按时间戳查找 offset。查找流程：根据 target offset → 二分查找 .index 文件得到近似位置 → 从 .log 文件扫描精确消息。高吞吐原因：(1) 顺序 IO（Page Cache 命中率高）；(2) 零拷贝（sendfile 系统调用将数据从 Page Cache 直接发送到网卡）；(3) 批量压缩（Producer 端批量压缩 broker 不解压直接落盘 consumer 拉取时直接读取压缩块）；(4) O(1) 读写——写入追加、读取通过 offset 定位 Segment。""",
+  ["为什么 Kafka 的 .index 文件是稀疏索引而非全量索引？", "sendfile 零拷贝相比 read/write 减少了多少次上下文切换？"],
+  ["分布式系统", "Kafka", "存储", "Segment", "零拷贝"])
+
+# ==================== 分布式测试与可靠性 ====================
+
+q("hard", "short_answer",
+  "Jepsen 测试与确定性仿真",
+  "分布式系统测试为什么如此困难？Jepsen 测试框架的工作原理是什么？什么是确定性仿真（Deterministic Simulation）？",
+  """分布式系统测试困难的根源：(1) 非确定性——网络延迟、调度顺序、故障时间都是非确定的；(2) 状态空间爆炸——节点数和消息数增长时可能状态数指数级增长；(3) 边界条件——脑裂、时钟漂移、慢节点等错误场景在测试环境中难以复现。Jepsen：Kyle Kingsbury 开发的分布式系统正确性验证框架。工作原理：(1) 生成混合操作负载（读/写/网络分区/节点故障）；(2) 可控注入故障（使用 iptables/TC 做网络分区，pkill/freeze 做节点故障）；(3) 记录所有操作和系统返回；(4) 事后使用 Knossos 或 Elle 检查是否满足一致性模型（如线性一致性检测）。Jepsen 发现的著名问题：etcd v3.1 前的线性一致性违反、MongoDB 的脏读、Redis 的丢失写入。确定性仿真（FoundationDB 最先大规模应用）——将随机种子控制所有非确定性操作（时钟、网络、调度），在单进程中模拟上千节点的分布式系统，用同一个随机种子可精确重放相同执行序列。FoundationDB 的仿真每天运行数亿次测试，覆盖单节点故障到全网分区。LDB（TigerBeetle）和 Maelstrom 也使用类似的确定性仿真。""",
+  ["Jepsen 的 Knossos 线性一致性检查器的工作原理？", "确定性仿真和 Jepsen 测试分别在什么阶段使用？"],
+  ["分布式系统", "Jepsen", "测试", "确定性仿真", "FoundationDB"])
+
+q("medium", "short_answer",
+  "混沌工程（Chaos Engineering）",
+  "混沌工程的核心原则是什么？在分布式系统中如何设计混沌实验？Chaos Mesh 和 Litmus 的架构差异？",
+  """混沌工程四大原则（来自 Principles of Chaos）：(1) 建立稳定状态的基线——定义系统的正常行为指标（P99 延迟 < 200ms，错误率 < 0.1%）；(2) 假设稳定状态——实验期间持续监控基线指标；(3) 引入真实世界的故障——网络延迟、Pod 崩溃、磁盘 IO 节流、时钟倾斜等；(4) 反证假设——如果基线指标不变，说明系统有韧性；如果恶化，说明有弱点。实验设计流程：选定假设（"双副本部署下重启一个 Pod 不影响可用性"）→ 定义实验范围 → 设定爆炸半径（生产环境限 5% 流量）→ 执行实验 → 自动回滚 → 复盘改进。Chaos Mesh（CNCF 项目，K8s 原生）：Operator 模式——通过 CRD 定义 Chaos 实验，Chaos Mesh Controller 管理实验生命周期。支持的网络故障类型：延迟、丢包、分区、带宽限制。Litmus（CNCF 项目）：Hub 模式——实验模板（Chaos Experiments）通过 Litmus Hub 分发，Litmus Operator 执行实验。相比 Chaos Mesh，Litmus 更强调实验市场（ChaosHub）和 CI 集成（GitOps 触发实验）。""",
+  ["生产环境做混沌实验的爆炸半径如何控制？", "Chaos Mesh 和 Litmus 在实验编排上的核心差异？"],
+  ["分布式系统", "混沌工程", "Chaos Mesh", "Litmus", "韧性测试"])
+
+q("medium", "short_answer",
+  "分布式系统中的重试策略",
+  "如何设计安全的分布式重试策略？指数退避（Exponential Backoff）和抖动（Jitter）的原理是什么？重试风暴如何防止？",
+  """重试策略层级：(1) 应用层重试——业务代码捕获异常后重试，适合临时性故障（网络超时、服务限流 503）。(2) 框架层重试——gRPC 内置重试（retryPolicy）、Spring Retry、Resilience4j Retry。指数退避 + 抖动（AWS 推荐的策略）：基础退避——第一次失败等 100ms，第二次 200ms，第三次 400ms...（每次 * 2，上限可配置）。全抖动（Full Jitter）——在 [0, 基础退避值] 间随机，避免所有客户端同时重试。Equal Jitter——退避值 / 2 ± 随机偏移。重试风暴的防范：(1) 限制最大重试次数（通常 3-5 次）；(2) 使用断路器（Circuit Breaker）在失败率达到阈值时快速失败；(3) 客户端限流（如自适应限流）；(4) 重试预算——所有客户端共享重试额度（Google 的 gRPC Retry Budget）。幂等是重试的前提——重试必须是安全的（同个请求重试多次和一次效果相同）。K8s controller 的重试：controller-runtime 使用队列的指数退避（baseDelay=5ms，maxDelay=1000s，maxRetries=5）。""",
+  ["幂等和重试的关系是什么？不幂等的操作如何安全重试？", "gRPC 的重试策略配置的最佳实践？"],
+  ["分布式系统", "重试", "指数退避", "抖动", "幂等"])
+
+# ==================== 高级主题 ====================
+
+q("hard", "short_answer",
+  "分布式系统中的数据编码与 Schema 演化",
+  "分布式系统中为什么需要 Schema 演化？Avro、Protobuf、Thrift 在 Schema 演化上的差异是什么？",
+  "Schema 演化是分布式系统通信的基础——微服务独立部署，A 服务的新版本可能先于 B 服务上线，双方的数据格式需要在不同版本间兼容。Avro：Schema 随数据存储（文件头/Confluent Schema Registry），读时 Schema 和写时 Schema 对比解析。优势是支持默认值和无损演化（添加字段设默认值兼容旧数据），劣势是解析性能略慢。Protobuf：Field numbers 做唯一标识（字段名可改），required/optional 控制兼容性。添加字段必须是 optional，删除字段用 reserved 保留 field number（防止未来误用同一编号）。Thrift：Struct 类似 Protobuf 使用 field id，Union 类型做 oneof。性能上 Protobuf ≈ Thrift > Avro（编码更紧凑）。Schema Registry 的作用：存储和校验 Schema 版本，保证 Producer 和 Consumer 的 Schema 兼容性。兼容性类型有 BACKWARD（新 Schema 可读旧数据）、FORWARD（旧 Schema 可读新数据）、FULL（双向兼容）、NONE。Kafka + Avro + Schema Registry 是流式数据治理的标准组合。",
+  ["为什么 Protobuf 删除字段要用 reserved 而不是直接删除？", "Avro 的 BACKWARD 兼容和 FORWARD 兼容分别在什么场景使用？"],
+  ["分布式系统", "Schema 演化", "Avro", "Protobuf", "兼容性"])
+
+q("medium", "short_answer",
+  "分布式调度系统架构",
+  "分布式任务调度系统的核心架构要素有哪些？单体调度（Monolithic Scheduler）和两级调度（Two-Level Scheduler）的区别？",
+  "任务调度三要素：(1) 资源管理——维护集群资源视图（每个节点的 CPU/内存/GPU 可用量）；(2) 任务调度——将任务分配到最优节点，满足资源约束、亲和性（数据局部性）、反亲和性（容错）等策略；(3) 任务执行——监控任务生命周期，失败重试、超时处理。单体调度（Kubernetes Scheduler）：一个调度器管理所有 Pod 的调度。优势是全局最优（考虑整体资源利用率），劣势是吞吐瓶颈（大规模集群 > 5000 节点时调度延迟增加）。K8s Scheduler 使用 Scheduling Framework（PreFilter/Filter/PostFilter/PreScore/Score/NormalizeScore/Reserve/Permit/PreBind/Bind/PostBind 扩展点）。两级调度（Hadoop YARN / Apache Mesos）：Resource Manager 将资源 Offer 给多个 Application Master，各 AM 自己决定如何使用。优势是可扩展性强（不同框架共享集群），劣势是无法全局优化（每个 AM 只能看到 Offer 的资源，无法全局规划）。Apache Spark 使用 FIFO/Fair/FAIR 调度器，Presto/Trino 使用内存感知调度（查询的并发执行受节点可用内存限制）。",
+  ["K8s Scheduler 的 scoring 阶段有哪些内置评分插件？", "YARN 的 Capacity Scheduler 和 Fair Scheduler 有什么不同？"],
+  ["分布式系统", "调度", "K8s", "YARN", "Mesos"])
+
+q("hard", "short_answer",
+  "分布式一致性读的挑战——读己之写与单调读",
+  "解释分布式数据库中的 Session Consistency（会话一致性）的两种保证：Read-Your-Writes 和 Monotonic Reads。为什么它们对用户体验至关重要？",
+  "Read-Your-Writes（RYW）：用户写入后立即读，保证看到自己的写入。实现方式：(1) 时间戳追踪——客户端维护最大写入时间戳，读请求携带此时间戳，服务端只返回 >= 该时间戳的数据。(2) Cookie 路由——写入时将 Last-Updated-At 记入 Cookie，读请求携带此 Cookie 确保路由到足够新的副本。CockroachDB 的 follower reads + follower_read_timestamp() 保证读到最新数据不落后太多。Monotonic Reads（单调读）：用户多次读取同一数据，保证不会读到越来越旧的值（即不出现时间回退）。违反场景：在分布式数据库中，两次读请求可能被负载均衡到不同副本。第一次读到最新数据（副本 A 已同步），第二次读请求路由到滞后副本 B（还没收到最新写入），返回旧数据——用户感觉数据回退了。实现方式：(1) Session 绑定到固定节点（粘性连接）；(2) 使用因果一致性（HLC + 版本向量追踪）。Cassandra 的 CONSISTENCY 级别中 LOCAL_QUORUM 读 + whitelist 的一致性可保证单调读。DynamoDB 的 Consistent Read 将请求路由到 Leader 分区。",
+  ["Cassandra 中写 ALL 读 ONE 会违背单调读吗？为什么？", "CockroachDB 的 follower reads 如何保证不违反单调读？"],
+  ["分布式系统", "会话一致性", "Read-Your-Writes", "单调读", "Cassandra"])
+
+q("medium", "short_answer",
+  "分布式系统的 API 版本管理",
+  "微服务 API 的版本管理有哪些策略？URI 版本 vs Accept Header 版本 vs gRPC 版本的优缺点？",
+  "四种主流策略：(1) URI 版本——`/v1/users`、`/v2/users`。优点是最直观（客户端明确知道版本），缺点是 URI 混乱（多个版本共存），RESTful 语义较弱（资源 URI 包含版本信息）。(2) Accept Header 版本——`Accept: application/vnd.api+json;version=1`。优点是符合 REST 规范（资源 URI 不变），缺点是客户端调试困难（需要设 Header），CDN 缓存效率低。(3) Query Parameter 版本——`/users?version=1`。优点是简单，缺点是容易被遗忘，且 URL 语义不清晰。(4) gRPC 版本——通过 Protobuf 的 package 管理（`package users.v1`、`package users.v2`）。优点是编译时强类型检查 + Schema 演化，缺点是服务端需同时维护多个服务实现。gRPC 版本的优雅做法：向后兼容——只新增字段不删除，使用 `deprecated` 选项标记过时 API。实际建议：对外 API 使用 URI 版本（明确、可缓存），对内微服务通信使用 gRPC 版本演化（Schema Registry 校验兼容性）。K8s API 使用 URI 版本 + 每个版本有独立的 API Group。",
+  ["为什么 gRPC 版本变化时建议新老版本长期共存？", "API Gateway 如何帮助多版本共存？"],
+  ["分布式系统", "API 版本", "gRPC", "REST", "兼容性"])
+
+q("medium", "short_answer",
+  "分布式系统中的死锁检测",
+  "分布式死锁和单机死锁有什么不同？分布式死锁检测算法（集中式、边缘追逐、等待图）各自如何工作？",
+  "单机死锁四条件（互斥、持有等待、非剥夺、循环等待），依赖操作系统或语言运行时检测（如 MySQL InnoDB 的 waits-for graph 检测）。分布式死锁：不同节点上的事务互相等待对方释放锁，每个节点只看到自己的锁信息，无法发现跨节点的循环等待。集中式检测：选举一个协调者，所有事务上报锁等待关系，协调者构建全局等待图并检测环。优点是实现简单，缺点是单点瓶颈 + 协调者故障影响全局。边缘追逐算法（Chandy-Misra-Haas 算法）：节点向持有锁的节点发送探测消息（Probe），消息通过 (发起者, 等待者, 持有者) 三元组唯一标识。如果发起者收到自己发出的探测消息，说明检测到死锁。无需协调者，完全去中心化。消息复杂度 O(E)（E 为等待边数）。等待图法：分布式收集每个节点的事务等待子图，合并构建全局等待图做环检测。每轮检测有延迟（检测周期和消息传递时间），死锁可能持续一段时间。实际系统选择：Percolator（Google）和 TiDB 使用单节点事务管理器 + 启发式超时回滚来避免分布式死锁检测的复杂性——认为分布式死锁很少见且短暂，超时回滚成本低于检测成本。",
+  ["TiDB 为什么选择超时回滚而不是分布式死锁检测？", "Chandy-Misra-Haas 算法中探测消息怎么唯一标识一个探针？"],
+  ["分布式系统", "死锁", "Chandy-Misra-Haas", "分布式事务", "等待图"])
+
+q("hard", "short_answer",
+  "多主复制（Multi-Leader）的写入冲突与解决方案",
+  "多主复制（Multi-Leader Replication）中写入冲突如何发生？冲突检测和冲突解决有哪些策略？",
+  "多主复制出现在：多数据中心（各 DC 一个主节点写入）、离线客户端（移动设备本地写入后同步）、协同编辑（各用户本地修改后合并）。冲突发生的条件：两个 Leader 同时修改同一数据，同步到对方时发现冲突。冲突检测策略：(1) 同步检测——写入时立即向其他 Leader 发送 pre-check，确认无冲突后再提交。代价是增加写入延迟（跨 DC RTT）。(2) 异步检测——写入先本地成功，后台异步同步时检测冲突。写入快但冲突可能已不可回溯。冲突解决策略：(1) Last Writer Wins (LWW)——用时间戳选最新的写入。简单但有损（丢失数据）。Cassandra 的默认策略。(2) CRDT——数据结构层面的自动合并（计数器合并用 Max，集合合并用 Union）。Riak 使用 CRDT。(3) 自定义合并逻辑——应用层编写合并函数，看到冲突的版本后决定如何合并。CouchDB 暴露冲突版本给客户端处理。(4) 版本向量 + 分支——Dynamo 风格保留所有冲突版本（Vector Clock + sibling），读取时返回所有版本让客户端解决。DynamoDB 的多 Leader 模式下，多个写入者同时更新同一 item 出现冲突版本。MySQL Group Replication：使用认证阶段检测冲突（基于 write set 的并发检测）。",
+  ["为什么 LWW 在高并发下可能丢失写入？NTP 时钟偏移怎么影响 LWW？", "CRDT 的 GCounter 只增不减如何解决业务场景需要减量的问题？"],
+  ["分布式系统", "多主复制", "冲突解决", "LWW", "CRDT"])
+
+q("hard", "short_answer",
+  "分布式系统中的优雅降级与过载保护",
+  "什么是优雅降级（Graceful Degradation）？在分布式系统中有哪些过载保护的常见模式？",
+  "优雅降级：在资源不足或部分组件故障时，系统主动牺牲非核心功能以保证核心功能的可用性。Netflix 的 Chaos Engineering 理念——系统要设计为组件故障是常态。过载保护模式：(1) 请求分级（Priority Queueing）——高优先级请求（如支付）走独立资源池，低优先级（如日志/异步统计）限流或丢弃。K8s QoS 类（Guaranteed/Burstable/BestEffort）控制内存不足时的 Pod 驱逐顺序。(2) 服务降级——非核心链路关闭：推荐服务降级为默认推荐、搜索降级为缓存热数据、图片服务降级为缩略图（不再加载原图）。(3) 体验降级——读从库（允许少量不一致）、写限流（用户看到「稍后再试」而非 500 错误）、功能降级（关闭评论区、下线搜索功能）。(4) 自动扩缩容——HPA（Horizontal Pod Autoscaler）基于 CPU/内存/custom metrics 自动扩缩，但扩容有延迟（容器启动 30-60s），需要前置 buffer。(5) 容量规划 + 缓存预加载——提前部署 20-30% 余量，热点活动前预热缓存。(6) 负载卸载（Load Shedding）——随机丢弃一定比例的请求（Shed load ahead of latency collapse）。Google 的 SRE 书中提到：在请求量超过处理能力的 2x 时，系统性能会急剧下降（Latency 随负载超线性增长）。正确做法是当 P99 延迟超过阈值时，主动返回 503 快速失败而非让请求排队（队列越长响应越慢→上游超时重试→雪崩）。",
+  ["过载时返回 503 和让请求排队哪个更好？为什么？", "什么是 Tail-at-Scale（大规模系统中的尾部延迟放大效应）？"],
+  ["分布式系统", "优雅降级", "过载保护", "Load Shedding", "SRE"])
+
+q("hard", "short_answer",
+  "Leaderless Replication（Dynamo 架构）",
+  "Dynamo 风格的无主复制（Leaderless Replication）如何处理读写的协调？sloppy quorum 是什么？和 hint handoff 的配合？",
+  "Dynamo 架构（Amazon DynamoDB 的前身/理论模型）：没有 Leader，任何节点都可接受读写。写请求发送到所有 N 个副本节点，等待 W 个确认；读等待 R 个确认。每个节点对等（对称架构），客户端（或协调者）负责一致性仲裁。Sloppy Quorum：当网络分区导致无法获得 N 个节点响应时，协调者接受不在原始 N 节点集合内的其他节点写入（即放宽了『必须写入指定 N 节点』的约束），保证写入可用。之后通过 Hinted Handoff 将数据转交到原始负责节点。Hinted Handoff：数据暂时写入第三方节点（带 hint 指向原始目标节点），节点恢复后转发给它。优势：写可用性不因『必须写入某 N 个节点』而受损，即使部分节点故障也能写入。代价：数据一致性可能受损（sloppy quorum 成功但数据可能还没传输到原始节点）。Cassandra 可配置每个写入的一致性级别（ONE/QUORUM/ALL/EACH_QUORUM）和复制因子，以灵活选择可用性和一致性的权衡。默认为 N=3, W=2, R=2。",
+  ["sloppy quorum 和 strict quorum 的区别是什么？", "Cassandra 中 LOCAL_QUORUM 和 QUORUM 的区别？"],
+  ["分布式系统", "Dynamo", "无主复制", "Sloppy Quorum", "Hinted Handoff"])
+
+q("medium", "short_answer",
+  "分布式系统中的幂等性设计",
+  "幂等性（Idempotency）在分布式系统中为什么如此重要？幂等键（Idempotency Key）的典型实现是什么？",
+  "分布式系统中，网络超时无法区分『消息已处理』和『消息未处理』——重试必然发生，没有幂等性就不敢重试。幂等保证：无论请求执行多少次，结果与执行一次相同。幂等键（Idempotency Key）实现：客户端为每个请求生成唯一键（通常是 UUID），服务端在第一次处理请求时将请求结果缓存（带过期时间 TTL，通常 24h），后续相同键的请求直接返回缓存结果。幂等键的存储：Redis（TTL 自动过期 + 原子操作 SETNX）或数据库（唯一索引）。关键设计点：幂等键的过期时间必须在『重试窗口最大值』以内——如果重试发生在幂等键过期之后，就可能产生重复。Stripe 的幂等键设计方法论：客户端在 POST 请求头中带 Idempotency-Key: UUID，服务端原子检查 key 是否已存在，不存在则处理并存储结果。Kafka 幂等 Producer：ProducerID + 序列号（单调递增），Broker 按序列号去重。消息队列场景：消费者需要记录已处理的 message ID（如写入 offset 表），重启时可恢复消费状态。",
+  ["Stripe 幂等键 24h 过期时间怎么选？太短或太长的后果？", "Kafka 幂等 Producer 在分区切换（Leader 变更）时如何保持？"],
+  ["分布式系统", "幂等", "幂等键", "Idempotency Key", "重试"])
+
+q("hard", "short_answer",
+  "分布式系统的一致性级别与延迟权衡",
+  "分布式数据库中可调一致性级别（Tunable Consistency）有哪些？每种级别的延迟特征和应用场景是什么？",
+  "一致性级别从强到弱：(1) 强一致性/线性一致性——读取保证返回最新写入的结果。需要所有副本确认（写延迟最高）或 Quorum 同步读。Spanner 的 TrueTime + Paxos 提供外部一致性。应用场景：金融交易、库存扣减、选举。(2) 因果一致性——如果有因果关系的操作（A→B），所有观察者看到 A 在 B 之前发生。无因果关系的操作可并发。实现代价低于强一致性。应用场景：评论系统（回复必然在帖子之后）、社交关系链。(3) 会话一致性——同一会话中保证 Read-Your-Writes 和 Monotonic Reads。跨会话无保证。最实用的默认级别。应用场景：Web 应用的后端会话。(4) 单调读——数据不『回退』，用户不会看到更旧的数据。(5) 最终一致性——停止写入后最终收敛。无任何实时保证。DynamoDB 的默认级别。Cassandra 的 ONE 级别。应用场景：文章计数、用户头像、搜索引擎索引。延迟特征：强一致性——写入延迟 = max(所有副本确认时间)，与 P99 网络延迟相关。最终一致性——写入延迟 = 单节点写入时间（~1ms）。Cassandra 中 CL.ONE 和 CL.ALL 的写入延迟比约为 1:3（3 副本场景）。PACELC 框架：Even without Partition, one chooses between Latency and Consistency. 没有分区也要做取舍。",
+  ["因果一致性的 Vector Clock 实现复杂度如何？", "为什么大多数 NoSQL 选择了最终一致性 + 可选强一致读？"],
+  ["分布式系统", "一致性级别", "延迟", "PACELC", "Cassandra"])
+
+q("medium", "short_answer",
+  "分布式系统中的配置管理",
+  "分布式系统的配置管理面临哪些挑战？配置中心（配置中心）的核心架构模式是什么？推送 vs 拉取的取舍？",
+  "挑战：(1) 配置项数量爆炸——微服务场景下成百上千个服务，每个服务有开发/测试/生产等多套配置。(2) 配置变更的原子性——多服务同时读到新旧配置可能导致不一致。(3) 安全敏感——数据库密码、API Key 等敏感配置需加密存储和传输。(4) 版本管理和回滚——错误配置可能导致大规模故障，需快速回滚。配置中心架构：存储层（etcd/数据库）→ 配置服务（管理 API）→ Agent/SDK（配置获取与监听）→ 业务应用。推送 vs 拉取：拉取（Pull）——应用定期轮询配置中心获取最新配置。简单可靠，但更新延迟（取决于轮询间隔）。推送（Push）——配置变更时配置中心主动通知所有应用（通过长连接/Watch 机制）。实时性好，但增加了复杂度（需要维持连接、处理重连）。实际系统通常结合两者：配置中心使用 Watch 推送变更通知，应用收到通知后拉取全量配置（如 Apollo 配置中心的『推拉结合』模式）。K8s ConfigMap + Spring Cloud Config + Apollo + Nacos 是主流方案。Apollo 的特色：多环境管理、灰度发布、配置变更审计。Nacos 的特色：配置中心 + 服务发现一体化。",
+  ["Apollo 的『推拉结合』具体怎么工作的？", "配置加密（jasypt/KMS）在配置中心的实现方式？"],
+  ["分布式系统", "配置管理", "配置中心", "Apollo", "Nacos"])
+
+q("hard", "short_answer",
+  "分布式系统中的时钟同步问题",
+  "分布式系统的时钟不同步会导致哪些问题？NTP 同步的精度和局限性是什么？Spanner 的 TrueTime 如何解决时钟问题？",
+  "不同步时钟引发的问题：(1) 时间戳排序错误——事件 A 在节点 1 发生于 10:00:01，事件 B 在节点 2 发生于 10:00:00（时钟慢），导致因果颠倒。(2) Last Writer Wins (LWW) 数据丢失——两个节点同时写入同一数据，NTP 时钟误差大时，时钟偏慢的节点写入被错误丢弃。(3) 租约续约错误——Leader 租约在 A 节点 10:00:00 到期，B 节点时钟比 A 快 100ms，B 认为 A 的租约还有效但 A 自己已降级。NTP 精度：同数据中心 NTP 误差通常 1-10ms，跨数据中心 10-100ms，受网络延迟抖动影响（误差有随机性）。Google 的 TrueTime（Spanner）：使用 GPS 时钟 + 原子钟，每个节点提供时间区间 [earliest, latest]（保证真实时间在此区间内）。误差 ±1-7ms（典型 4ms）。Spanner commit 等待：写操作需等待到 latest - earliest 以确保外部一致性——如果 TT.now() = [10:00:00.000, 10:00:00.007]，则等待 7ms 确保未来所有读操作看到该写入。代价是写入延迟增加 7ms + 网络 RTT。替代方案：CockroachDB 的 HLC（混合逻辑时钟）无需特殊硬件，提供近似 TrueTime 的保证但无硬边界。Amazon Time Sync Service：通过 NTP 的改进变体，误差 < 1ms（同 Region）。",
+  ["TrueTime 的 commit wait 是怎么计算的？", "HLC 和 TrueTime 在保证外部一致性上有本质区别吗？"],
+  ["分布式系统", "时钟同步", "TrueTime", "NTP", "HLC"])
+
+q("medium", "short_answer",
+  "分布式系统中的日志聚合与可观测性",
+  "分布式系统的日志聚合架构是怎样的？结构化日志和追踪 ID（Trace ID）如何帮助排障？ELK/Splunk 等系统的核心组件？",
+  "日志聚合架构：应用日志 → 日志采集（Filebeat/Fluentd）→ 消息队列（Kafka）→ 日志处理（Logstash/Fluent 过滤解析）→ 存储（Elasticsearch）→ 可视化和搜索（Kibana/Grafana）。核心设计要点：(1) 结构化日志——JSON 格式而非自由文本，包含 timestamp、level、service、trace_id、user_id、duration_ms 等维度。结构化后才可做自动化分析和告警。(2) 追踪 ID——入口请求生成全局唯一 Trace ID（通常 UUIDv4），跨服务 RPC 调用时在 Header 中透传。日志中带上 Trace ID 后可将一次请求的跨服务调用串联。（3）日志采样——高流量系统全量日志不可行，常见策略：ERROR 全量采集 + INFO 按 1% 采样 + DEBUG 按需开启。(4) 日志分级和降级——每个服务可独立调整日志级别（通过配置中心推送）。故障排查流程：Grafana 发现延迟异常 → 查看对应 Trace ID 的 span 找到瓶颈 → 查看对应服务的 ERROR 日志 → 定位根因。ELK 核心组件：Elasticsearch（存储和搜索）、Logstash（采集和转换）、Kibana（可视化）。现代替代：Loki（Grafana 的日志系统，更轻量，与 Prometheus 集成）替代 Elasticsearch。OpenTelemetry 统一了 Metrics/Logging/Tracing 的数据格式，是当前可观测性的标准。",
+  ["为什么 Elk 场景下建议在日志采集阶段做结构化而非在 Logstash 中转换？", "OpenTelemetry 的 Trace 上下文传播机制（W3C TraceContext）？"],
+  ["分布式系统", "日志聚合", "可观测性", "Trace ID", "ELK"])
+
+q("hard", "short_answer",
+  "分布式序列号生成器——Snowflake 与变体",
+  "Snowflake ID 的结构如何保证全局唯一和趋势递增？雪花算法的时钟回拨问题和解决方案？",
+  "Snowflake（Twitter）：64 位 long，分段为 1-bit unused（符号位）+ 41-bit 时间戳（毫秒，自定义 epoch 起，够用 69 年）+ 10-bit 机器 ID（5-bit datacenter + 5-bit worker，最多 1024 节点）+ 12-bit 序列号（每毫秒最多 4096 个 ID = 409.6 万/秒/节点）。(1) 全局唯一：机器 ID 唯一 + 时间戳 + 序列号组合 (2) 趋势递增：时间戳在高位，按时间排序。(3) 高性能：全内存计算，无网络调用。时钟回拨问题：服务器 NTP 同步时可能出现时钟向后跳。如果回拨超过序列号能补偿的范围，可能产生重复 ID。解决方案：(1) 等待——如果回拨时间短（< 几秒），自旋等待时钟追上之前的使用记录。(2) 备用序列——时间回拨时使用『回拨序列号空间』（如序列号用高位标记是正常还是回拨状态）。(3) 废弃走快的时钟——如果回拨超过阈值（如 10 秒），记录日志并告警，等待人工介入（或 ZooKeeper/etcd 选举新的 worker ID）。(4) 百度 UidGenerator——使用数据库中的 Work ID 分配 + 环形缓冲区预生成 ID 规避时钟回拨。美团 Leaf——使用号段模式（segment）预取 ID，不依赖时钟。Sony 的 Snowflake 变体（Flicky）：去掉了序列号用更细粒度的时间戳（10ms 窗）。",
+  ["Snowflake 41-bit 时间戳为什么够用 69 年？69 年后怎么办？", "百度 UidGenerator 的环形缓冲区（RingBuffer）怎么工作的？"],
+  ["分布式系统", "Snowflake", "分布式 ID", "时钟回拨", "序列号"])
+
+q("medium", "short_answer",
+  "分布式系统中的 gRPC 通信模式",
+  "gRPC 在分布式系统中的四种通信模式是什么？Streaming 模式相比 Unary 有什么优势？为什么微服务间通信推荐 gRPC 而非 REST？",
+  "四种通信模式：(1) Unary RPC——客户端发送一个请求，服务端返回一个响应。和传统 REST 类似，适合请求-响应场景。(2) Server Streaming RPC——客户端发送一个请求，服务端返回流式数据（如订阅推送、批量数据导出）。(3) Client Streaming RPC——客户端发送流式数据，服务端汇总后返回一个响应（如文件上传、批量日志上报）。(4) Bidirectional Streaming RPC——双方独立收发流数据，全双工通信（如实时聊天、分布式协调）。Streaming 相比 Unary 的优势：(1) 延迟更低——建立一次连接持续复用，减少握手开销。(2) 背压（Backpressure）——HTTP/2 流控制，慢消费者不会压垮生产者。(3) 推送能力——服务端可主动推送，无需客户端轮询。gRPC vs REST 选型：对内部微服务通信，gRPC 优势大（Protobuf 序列化更小更快 + 强类型接口定义 + streaming 支持）。对外 API，REST 更通用（HTTP 语义 + 广泛工具支持 + 浏览器兼容）。gRPC-Web 允许浏览器中使用 gRPC（需 Envoy/gRPC-Web 代理转换）。Protobuf 的向后兼容性（字段编号 + optional 控制）使 gRPC 比 REST API 更容易做版本演化。性能对比：Protobuf 序列化比 JSON 快 3-10 倍，消息体小 30-70%。K8s 内部大量使用 gRPC（etcd、kubelet 等都支持 gRPC 接口）。",
+  ["gRPC Bidirectional Streaming 和 WebSocket 的区别？", "gRPC 连接复用（HTTP/2 multiplexing）对长连接池管理的影响？"],
+  ["分布式系统", "gRPC", "Streaming", "Protobuf", "微服务通信"])
+
+
+q("medium", "short_answer",
+  "Kafka 分区分配策略与消费者再均衡",
+  "Kafka 消费者再均衡（Rebalance）的过程是怎样的？分区分配策略有哪些？如何减少再均衡对消费延迟的影响？",
+  "再均衡触发条件：消费者加入/离开组、分区数变更、订阅 topic 变更。过程（基于 Kafka 3.x 的 Cooperative Rebalance）：(1) FindCoordinator → 消费者找到 GroupCoordinator；(2) JoinGroup——消费者发送 JoinGroupRequest，Coordinator 选出一个 Consumer Leader（第一个发送的）；(3) SyncGroup——Leader 制定分区分配方案（使用分配策略），广播给所有消费者；(4) 各消费者分配到的分区开始消费。Cooperative Rebalancing（Kafka 2.4+）：增量再均衡——每次只移动少量分区，而非 Stop-the-World 全停再均衡。默认策略：RangeAssignor（按 topic 分区范围均分）、RoundRobinAssignor（按订阅 topic 轮询）、StickyAssignor（保持已有分配不变的前提下尽量均匀）。影响消费延迟的关键因素：session.timeout.ms（心跳超时，默认 45s）和 max.poll.interval.ms（拉取间隔，默认 5min）。短超时加速检测但增加误 rebalance风险。静态会员（Static Group Membership）：消费者用 group.instance.id 唯一标识，重启后不触发 rebalance（避免了最耗时的 JoinGroup 步骤）。",
+  ["Kafka 的 Cooperative Rebalance 相比 Eager Rebalance 好在哪里？", "静态会员如何避免 rebalance？group.instance.id 的副作用？"],
+  ["分布式系统", "Kafka", "Rebalance", "分区分配", "消费者"])
+
+q("medium", "short_answer",
+  "LSM-Tree 与分布式数据库的 Compaction 策略",
+  "LSM-Tree 为什么适合分布式数据库？Size-Tiered Compaction 和 Leveled Compaction 的区别是什么？",
+  "LSM-Tree（Log-Structured Merge-Tree）的优势：(1) 顺序写——所有写入追加到 MemTable 和 WAL，避免随机写，写入吞吐可达 100MB/s+。(2) 压缩比高——SSTable 不可变，可做全量压缩。(3) 天然的分布式友好——SSTable 是不可变的文件，易于分区、复制和快速恢复。Cassandra 和 RocksDB 均使用 LSM-Tree。Size-Tiered Compaction Strategy（STCS，Cassandra 默认策略）：当同一 Level 的 SSTable 数量达到阈值（默认 4），合并成更大的 SSTable。优势是实现简单、不影响写入。劣势是空间放大率高（同一数据存于多个 SSTable），且读放大高（可能需要查多个 SSTable）。Leveled Compaction Strategy（LCS，类似 LevelDB/RocksDB）：将 SSTable 组织为多个 Level（L0 → L1 → L2 → ...），各 Level 大小指数增长。后台线程从 Ln 合并到 Ln+1，保证每个 Level 内 Key 无重叠。优势是空间放大率低（约 1.1x），读性能好。劣势是写入 IO 消耗大（每次写入都可能触发 compaction）。Cassandra 的 TWCS（TimeWindow Compaction Strategy）：按时间窗口划分 SSTable，适合时间序列数据——窗口关闭后整个 SSTable 可被删除或只读合并。读放大量化：STCS 读可能需要查 20+ 个 SSTable，LCS 通常只需要查 1-2 个 SSTable。",
+  ["读放大和写放大在 LSM-Tree 中如何取舍？", "RocksDB 的 Compaction 优先级（Priority）如何配置？"],
+  ["分布式系统", "LSM-Tree", "Compaction", "Cassandra", "RocksDB"])
+
+q("hard", "short_answer",
+  "MVCC 在分布式数据库中的实现",
+  "分布式数据库中 MVCC（多版本并发控制）的实现和单机数据库有什么不同？分布式 MVCC 如何保证全局一致性视图？",
+  "MVCC 核心机制：每条记录维护多个版本，每个版本有可见性范围（事务范围）。读操作不阻塞写，写操作不阻塞读。分布式 MVCC 的额外挑战：(1) 全局事务 ID——需要全局严格递增的事务 ID（TID）来确定版本可见性。单机用自增序列即可，分布式需要 Google TrueTime（Spanner）、HLC（CockroachDB）或全局 TID 分配器（TiDB PD 分配的 tsO 时间戳）。(2) 分布式提交时间——分布式事务中不同分区的写提交时间可能不同，需要协调者确定全局提交时间戳。Spanner 用 TrueTime 确保 commit timestamp 严格递增（commit wait）。CockroachDB 用 HLC 实现并行提交（Parallel Committer）：事务状态记录为 STAGING，所有参与节点确认后转为 COMMITTED。(3) 垃圾回收——过期的 MVCC 版本需要清除。分布式 GC 需要确保不再有任何查询需要旧版本。TiDB 的 GC 使用 safe point（当前正在执行的最早事务的 start_ts 之前的时间戳），Spanner 用时间窗（保留最近 N 小时内的版本）。(4) 全局读锁——分布式 Snapshot Isolation 需要在跨多分区的读请求中保证看到一致的快照。TiDB 使用 PD（Placement Driver）分配的 tso 作为快照时间戳，所有读操作使用这个时间戳从各分区读取一致版本的数据。CockroachDB 的 Snapshot Reads 利用 HLC + follower reads 实现跨区域一致性读。",
+  ["TiDB 的 tso 分配是单点瓶颈吗？如何优化？", "CockroachDB 的 Parallel Committer 和 Percolator 的两阶段提交有什么不同？"],
+  ["分布式系统", "MVCC", "分布式事务", "Spanner", "CockroachDB"])
+
+q("medium", "short_answer",
+  "分布式文件系统 HDFS 与 Ceph 架构对比",
+  "HDFS 和 Ceph 在架构设计上的核心差异是什么？各自适用的场景？",
+  "HDFS（Hadoop Distributed File System）：Master-Worker 架构，NameNode（元数据管理）+ DataNode（数据存储）。文件被切分为 Block（默认 128MB），每个 Block 三副本。NameNode 维护文件系统树和 Block→DataNode 映射（全内存）。核心设计：写一次读多次（WORM），追加写入不支持随机修改。读性能高（数据局部性 + 机架感知调度）。Ceph：去中心化架构，采用 CRUSH（Controlled Replication Under Scalable Hashing）算法计算数据位置而非查找元数据。核心组件：MON（Monitor，集群状态）、OSD（Object Storage Daemon，数据存储）、MDS（Metadata Server，文件系统元数据）。CRUSH 算法：输入 (文件对象 ID, 集群拓扑树, 策略) → 输出 (OSD 列表)。无需中心化元数据查询，扩展性极好。架构差异对比表：(1) 元数据——HDFS 用 NameNode（单点瓶颈），Ceph 用 CRUSH 分布式计算；(2) 一致性——HDFS 强一致性（NameNode 控制），Ceph 强一致性（RADOS 层 Paxos）；(3) 写入语义——HDFS 追加写入，Ceph 支持随机读写（类似对象存储）；(4) 扩展性——HDFS 瓶颈在 NameNode 内存（一般 < 10 亿文件），Ceph 可扩至 EB 级（无元数据瓶颈）；(5) 适用场景——HDFS 适合大数据批处理（MapReduce/Spark），Ceph 适合统一存储（块/文件/对象，支持 OpenStack/S3 协议）。Ceph RBD（块设备）为分布式数据库提供存储后端。",
+  ["HDFS NameNode 高可用（HA）是如何实现的？为什么 QJM 比 NFS 更好？", "Ceph CRUSH 的 Weight 和 Reweight 如何影响数据分布？"],
+  ["分布式系统", "HDFS", "Ceph", "分布式文件系统", "CRUSH"])
+
+q("hard", "short_answer",
+  "服务网格（Service Mesh）与 mTLS 通信",
+  "服务网格（Service Mesh）解决了分布式系统的哪些问题？Istio 中 mTLS 如何工作？Sidecar 模式的性能开销？",
+  "Service Mesh 解决的问题：服务间通信的『基础设施层』从业务代码中剥离。包括(1) 流量管理——灰度发布、蓝绿部署、限流熔断的配置化（无需改代码）；(2) 安全通信——mTLS、RBAC 策略的下发和验证；(3) 可观测性——Metrics/Tracing/Logging 自动注入；(4) 故障注入——Chaos Engineering 演练。Istio 架构：控制平面（istiod：Pilot + Citadel + Galley）+ 数据平面（Envoy Sidecar）。每个 Pod 旁挂一个 Envoy 代理，所有进出流量均经过代理。mTLS 工作流：(1) Citadel 签发 SPIFFE 证书（X.509）给每个工作负载，证书包含 Service Identity（spiffe://cluster.local/ns/default/sa/myservice）；(2) 两个 Pod 通信时 Envoy 互验证书，验证 SAN（Subject Alternative Name）是否匹配目标 Service Account；(3) 建立双向 TLS 通道后，数据在传输中加密。优点：零代码改动的服务间加密通信。配置策略丰富——PERMISSIVE 模式（同时接受 mTLS 和明文，便于迁移）、STRICT 模式（仅接受 mTLS）。Sidecar 性能开销：Envoy 代理每个请求增加约 2-5ms 延迟（P99，取决于证书验证和 Header 处理）。资源消耗约每个代理 20-50MB 内存 + 0.1-0.5 vCPU 核心。大规模集群（> 5000 服务）控制平面成为瓶颈：证书轮转频率和 xDS 推送的并发量增加。eBPF 替代方案（Cilium Service Mesh）移除 Sidecar，将网络策略注入内核，降低延迟约 30-50%。",
+  ["STRICT mTLS 模式下证书过期对服务可用性的影响？", "eBPF Service Mesh 相比 Sidecar 模式在故障隔离能力上有什么不足？"],
+  ["分布式系统", "服务网格", "Istio", "mTLS", "Sidecar"])
+
+q("medium", "short_answer",
+  "分布式追踪系统 Jaeger 与采样策略",
+  "分布式追踪系统（Distributed Tracing）的核心数据模型是什么？常见的采样策略有哪些？如何在不影响性能的前提下做追踪？",
+  "核心数据模型——Span 和 Trace：一个 Span 表示一个操作单元（如一次数据库查询、一次 RPC），包含 operation_name、start_time、duration、tags（key/value）、status。多个 Span 通过 parent-child 关系或 follows-from 关系组成 Trace。SpanContext 在进程间传递 Trace ID + Span ID + Baggage。实现标准：OpenTelemetry（当前标准，整合了 OpenTracing 和 OpenCensus）。无采样时高 QPS 系统（如 10000 req/s）每秒产生数十万 Span，全量采集不可行。采样策略：(1) 头部一致采样（Head-Based Consistent Sampling）——请求入口处决定是否采样，同一 Trace 的所有 Span 采样或不采样。通过 Trace ID 哈希（如 Trace ID（十进制）% 100 < 采样率百分比）。Jaeger 默认策略。优点是实现简单、一致性保证好。缺点是低延迟请求和高延迟请求被同等对待（可能错过高延迟 outlier）。(2) 尾部采样（Tail-Based Sampling）——先暂存所有 Span，服务端根据某些策略（P99 延迟、错误率）决定哪些 Trace 保留。优点是针对性更强——可以看到高延迟和错误 Trace。缺点是需要缓冲区存储 Span，资源消耗大。OpenTelemetry Collector 的 tail_sampling 处理器实现。用于 SRE 调查生产问题的场景。(3) 概率采样——固定比例的请求被采样（如 1%）。最简单且开销可控，但低频事件可能被遗漏。推荐策略：生产环境全量采集 ERROR Span + 1% 概率采样成功请求 + 10% 采样高延迟请求。Jaeger 的无存储采样：要采集的 Trace 信息以日志形式写到本地，问题排查时才捞取。",
+  ["为什么头部一致采样要求 Trace ID 的采样决策在入口统一？不同服务各自采样会出什么问题？", "OpenTelemetry Collector 的 tail_sampling 处理器在内存不足时怎么降级？"],
+  ["分布式系统", "分布式追踪", "Jaeger", "采样", "OpenTelemetry"])
+
+q("hard", "short_answer",
+  "API Gateway 模式与 BFF 架构",
+  "API Gateway 在微服务架构中的核心职责是什么？BFF（Backend For Frontend）模式解决了什么问题？",
+  "API Gateway 的核心职责：(1) 路由和聚合——将外部请求路由到内部微服务，将多个后端接口聚合成一个响应（减少客户端请求次数）。Netflix Zuul、Kong、Spring Cloud Gateway。(2) 横切关注点——认证（JWT 校验）、限流（令牌桶/滑动窗口）、日志审计、请求/响应转换。(3) 协议转换——外部 HTTP/JSON → 内部 gRPC/Protobuf。(4) 熔断和重试——下游服务故障时快速失败，避免雪崩。(5) 负载均衡——按权重/一致性哈希分发请求。BFF 模式：为每种客户端（移动端、Web 端、第三方 API）构建独立的 Gateway。解决的问题：(1) 不同客户端的差异化需求——移动端需要小流量接口（只返回必要字段），Web 端需要大数据量渲染内容。(2) 客户端差异——移动端网络不稳定需要重试+缓存策略，Web 端需要 Server-Sent Events 推送。(3) 团队自治——每个前端团队（移动端/Web/第三方）拥有自己的 BFF，独立迭代互不影响。Gateway 分层进化：单一 Gateway → BFF（按端拆分）→ GraphQL BFF（允许客户端自主声明数据需求）。Netflix 的 Gateway 架构：Zuul → Ribbon（客户端负载均衡）→ Eureka（服务发现）→ Hystrix（熔断器）。客户端请求路径：Edge Service（API Gateway）→ Mid-tier Service（编排/聚合层）→ Core Service（领域服务）。Gateway 的性能瓶颈：请求进出都经过 Gateway，单节点 QPS 取决于 CPU 核数（Zuul 2 的 Netty 异步模型，单核约 3000 req/s）。Kong（基于 OpenResty/Lua）单节点约 10000 req/s。",
+  ["为什么 GraphQL BFF 比 REST BFF 更适合移动端场景？", "API Gateway 和 Service Mesh 在处理『东西向流量』和『南北向流量』的分工是什么？"],
+  ["分布式系统", "API Gateway", "BFF", "微服务", "路由"])
+
+q("medium", "short_answer",
+  "Blue-Green 部署与灰度发布（Canary Release）",
+  "蓝绿部署（Blue-Green Deployment）和金丝雀发布（Canary Release）的区别是什么？分布式系统中灰度发布的流量路由策略有哪些？",
+  "蓝绿部署：两套完全相同的环境（Blue = 当前生产，Green = 新版本），LB 切换流量从 Blue 到 Green。优点：瞬间切换/回滚。缺点：成本翻倍（两倍资源），切换前 Green 环境没有真实流量验证。适用：全量上线、资源充足、低风险变更。金丝雀发布：新版本先上线一小部分实例（如 1% 流量），验证无问题后逐步增加比例（5% → 20% → 50% → 100%）。优点：真实流量验证、问题影响面小。缺点：发布周期长、多版本共存增加运维复杂度。流量路由策略：(1) 权重路由（基于负载均衡权重）——最简单，Nginx/Envoy 的 weighted round-robin。缺点是无会话保持（同一用户的请求可能落在不同版本）。(2) Header/Cookie 路由——按条件（Header 值、Cookie 内容）决定走新版还是旧版。适合内测——设置 x-canary: true Header 指定部分用户用新版。可精确控制『哪些用户走新版本』。(3) 地域/用户属性路由——灰度某个地域的用户（如先上线北京机房）、灰度某个用户群（如 VIP 用户新功能优先体验）。K8s 中的实现：Service Mesh（Istio VirtualService + DestinationRule）：按权重分流到不同版本的 Subset。Flagger（自动化 Canary Operator）：根据 Prometheus 指标（P99 延迟、错误率、成功率）自动调整灰度比例或回滚。灰度发布的关键指标：Pod 启动成功（Readiness 通过）、P99 延迟不恶化、HTTP 500 率不升高（超过阈值自动回滚）。",
+  ["蓝绿部署中数据库 Schema 变更（如新增 NOT NULL 字段）怎么处理？", "Flagger 的 canary 分析和 manual gating 怎么配合？"],
+  ["分布式系统", "部署", "灰度发布", "Canary", "K8s"])
+
+q("hard", "short_answer",
+  "Bloom Filter 在分布式系统中的应用",
+  "Bloom Filter 的数据结构和工作原理是什么？在分布式系统中有哪些典型应用场景？",
+  "Bloom Filter：一个位数组 + k 个独立的哈希函数。插入时对元素做 k 次哈希，将对应位设为 1。查询时同样做 k 次哈希，如果所有位都是 1 则『可能存在』（有误判），如果任何一位是 0 则『绝对不存在』。误判率公式：p = (1 - e^(-kn/m))^k，m = 位数组大小（bits），k = 哈希函数数，n = 元素数。典型误判率 1%（位数组容量约 10 bits 每元素）。分布式系统应用场景：(1) 缓存穿透保护——将『缓存中已有的 Key 集合』维护在 Bloom Filter 中，查询缓存前先检查 Bloom Filter。如果 Bloom Filter 说『不存在』直接返回空（拦截穿透请求）。误判的『不存在』为正确——误判的『存在』只会多一次缓存查询，不影响正确性。可减少 99%+ 的缓存穿透查询。Redis 的 BF 模块（RedisBloom）内置支持。(2) 内容去重——分布式爬虫用 Bloom Filter 记录已抓取的 URL（千亿级 URL 去重，只用几 GB 内存）。(3) 社交 Feed 去重——百万级用户的时间线合并时，Bloom Filter 过滤已读的文章（成本降低 90%）。(4) Cassandra 的 Bloom Filter——所有 SSTable 的文件级过滤器，快速判断 Key 是否在某 SSTable 中（Cassandra 每次读取必须检查所有 SSTable）。Cassandra 中的误判率默认 1%（可配置），通过 sstablemetadata 命令查看每个 SSTable 的 Bloom Filter 大小。Counting Bloom Filter：支持删除操作（每个位改为计数器），代价是存储空间扩大数倍。Cuckoo Filter：比 Bloom Filter 支持删除、更高的空间利用率和更好的查询性能（但实现更复杂）。",
+  ["为什么 Bloom Filter 不能保证『一定存在』？误判率怎么影响分布式系统的正确性？", "Counting Bloom Filter 的计数器溢出怎么处理？"],
+  ["分布式系统", "Bloom Filter", "缓存", "去重", "Cassandra"])
+
+q("hard", "short_answer",
+  "全局分布式限流策略",
+  "分布式系统中如何实现全局限流（Global Rate Limiting）？令牌桶 vs 滑动窗口 vs 漏桶的区别？Redis 实现全局限流的挑战？",
+  "单机限流 vs 全局限流：单机限流每台机器独立计数，N 台机器后端的背压能力就是单机限流的 N 倍——负载均衡不均匀（某台机器流量多 30%）时可能局部过载。全局限流保证整个集群的流量不超过总容量。常见算法：(1) 令牌桶——固定速率产生令牌放入桶中（桶容量 = 最大突发），每个请求消耗一个令牌。优点是允许突发流量。Go 的 x/time/rate 实现。参数：rate（令牌生成速率）、burst（桶容量）。(2) 滑动窗口——将时间切为小窗口（如 1s），统计当前窗口及其之后若干窗口的总请求数。优点：避免窗口切换时的流量尖峰。Sentinel（阿里）的滑动窗口实现使用环形数组（10 个格子，每格 1s）而非全量存储，内存开销可控。(3) 漏桶——请求以恒定速率流出（处理），超出的请求排队或丢弃。优点：输出流量完全平滑。NGINX 的 limit_req 使用漏桶。Redis 实现全局限流：INCR + EXPIRE（窗口计数器），或更精确的 Sorted Set（ZADD + ZCOUNT + EXPIRE）。Redis 全局限流的挑战：(1) Redis 单机瓶颈——所有 QPS 的请求都要查询 Redis（高 QPS 场景下 Redis 成为瓶颈）。解决方案：本地令牌桶 + Redis 周期性同步（Token Bucket with Central Sync）。(2) Redis 故障——Redis 挂了导致限流失效（允许所有流量）。解决方案：限流器 Client 本地缓存最近一次配额估计 + 降级为本地限流。(3) 时钟偏差——不同机器的本地时间偏差导致窗口计数不一致。高性能生产方案：Redis Cluster（分片）+ Lua 脚本保证原子性。Google 的 Global Rate Limiter（基于论文《The Google Global Rate Limiter》）：使用『配额桶』的概念，在多个分布式节点间协调，每个请求计算『公平共享』并判断是否超出。",
+  ["Sentinel 的滑动窗口为什么用环形数组而非全量 Sorted Set？", "本地令牌桶 + Redis 同步方案中同步周期太短或太长的代价？"],
+  ["分布式系统", "限流", "令牌桶", "滑动窗口", "Redis"])
+
+q("medium", "short_answer",
+  "重试机制中的退避（Backoff）与抖动（Jitter）",
+  "为什么分布式系统中的重试需要指数退避（Exponential Backoff）和抖动（Jitter）？没有抖动会导致什么问题？",
+  "指数退避：第 n 次重试的等待时间 = base * multiplier^n（如 base=1s, multiplier=2，则重试间隔 1s→2s→4s→8s→16s）。目的：给下游服务恢复时间，避免『重试风暴』进一步拖垮系统。没有抖动的后果：『惊群效应（Thundering Herd）』——多个客户端同时收到失败响应，按相同退避算法在完全相同的时间点同时重试，导致下游在同一个瞬间收到远超承受能力的流量。抖动方案：(1) Full Jitter——sleep = random(0, min(cap, base * 2^attempt))。AWS 推荐。Google gRPC 重试的默认策略。(2) Equal Jitter——sleep = cap/2 + random(0, cap/2)。分解为固定部分+随机部分，避免退避时间过短。(3) Decorrelated Jitter——sleep = min(cap, random(base, prevSleep * 3))。AWS 的『Decorrelated Jitter』算法，平均延迟介于 Full 和 Equal 之间。实际工程建议：(1) 最大重试间隔上限（cap）——Base 1s，cap 最多 30-60s。不设上限的话指数增长很快到分钟级。(2) 重试次数限制——通常最多 3-5 次（超过表明下游故障不是瞬时问题）。(3) 重试预算（Retry Budget）——系统级别的重试总次数控制（如每秒最多 100 次重试），避免重试风暴放大流量。Google gRPC 的 retry-budget 默认：每 10s 最多重试 1000 次。Stripe 的 retry 策略：第一次重试 1s，第二次 5s，第三次 30s，第四次 2min，第五次 10min。超过五次不再重试（dead letter queue）。幂等 + 重试退避是分布式可靠性的基础组合。",
+  ["重试次数设 3 次和 5 次有什么不同？为什么不是 10 次？", "『重试预算』如何防止重试风暴？具体怎么计算？"],
+  ["分布式系统", "重试", "退避", "Jitter", "可靠性"])
+
+q("medium", "short_answer",
+  "分布式协调服务 ZooKeeper vs etcd",
+  "ZooKeeper 和 etcd 在架构设计和应用场景上的关键区别是什么？如何选型？",
+  "ZooKeeper：Java 实现，基于 ZAB（ZooKeeper Atomic Broadcast）协议。使用 Tree Namespace（ZNode Tree），支持临时和持久节点。提供 Watcher 机制（一次性触发）。读性能是写性能的 10x+（写需要共识，读任一台机器即可——但可能读到 stale 数据）。应用场景：Hadoop/HBase/Kafka 的协调服务。etcd：Go 实现，基于 Raft 共识（强一致性读写）。使用 Flat KV + 版本号（Revision），支持 Watch（持续推送）和 Lease（租约）。gRPC 接口，支持事务（比较-交换，即 If-Then-Else Tx）。性能：写 ~10,000 QPS（3 节点集群），读 ~40,000 QPS。Kubernetes 的核心数据存储。关键对比：(1) 一致性模型——ZooKeeper 的 Sync 操作强制线性一致性（默认读可能读 stale），etcd 读写都通过 Raft 保证线性一致性。(2) API 风格——ZooKeeper 的类比文件系统（create/delete/getData/setData），etcd 的 KV + gRPC 更接近现代分布式系统。(3) Watch——ZooKeeper 的 Watcher 是一次性的，必须在每次触发后重新注册。etcd 的 Watch 持续推送（使用 HTTP/2 长连接），更易用。(4) 运维——etcd 比 ZooKeeper 运维简单：无 Java 依赖、内置 metrics（Prometheus）、支持自动压缩和快照。(5) 容量——ZooKeeper 不建议存储超过几 MB 的数据（不适用于大量配置存储），etcd 可以存到数 GB（有压缩机制，但建议不超过 10GB）。工程建议：Kubernetes 为主的栈选 etcd。大数据/Hadoop 生态选 ZooKeeper。新系统建议 etcd（更简单的运维 + 强一致性保证 + 更好的 Watch 接口）。一致性要求不高的协调场景（如配置分发、服务发现）可以考虑 etcd 的 Serializable 读来降低 Leader 压力。",
+  ["etcd 的 Revision 机制如何实现 MVCC？", "ZooKeeper 的 Leader 选举中 Observer 和 Follower 的区别？"],
+  ["分布式系统", "ZooKeeper", "etcd", "Raft", "ZAB"])
+
+q("hard", "short_answer",
+  "MapReduce 计算模型与现代分布式计算",
+  "MapReduce 的核心思想是什么？它在现代分布式计算中的局限性和演进方向？",
+  "MapReduce 的核心思想：『移动计算而非移动数据』——将计算逻辑发送到数据所在节点。数据→Map→Shuffle→Reduce。Map 阶段：输入数据分割（Split）→ 每条记录映射为 (key, value) 对。Shuffle 阶段（自动完成）：按 key 对 Map 输出分区、排序、合并，将相同 key 的数据路由到同一 Reduce 节点。Reduce 阶段：对每个 key 的 value 列表做聚合计算。Google MapReduce 论文影响的整个大数据生态：Hadoop（开源实现）、Hive（SQL on MR）、Spark（DAG 引擎替代 MR 但保留相同思想）。MapReduce 的局限性：(1) 中间结果写磁盘——Map 输出写入本地磁盘，Reduce 拉取后再次处理。多次 shuffle 在迭代计算（如 PageRank、K-Means）中导致大量 IO。(2) 编程模型抽象低——每个 MR 作业需要写 Map 和 Reduce 函数，复杂逻辑需要链式 MR 作业。(3) 批处理延迟——作业调度和 Shuffle 耗时巨大（即使小数据也要几十秒）。Spark 的改进：利用 RDD（弹性分布式数据集）在内存中保留中间结果（内存不够才写磁盘），迭代计算提速 10-100x。DAG 执行引擎：一次构建执行计划，避免多次 MR 的多次 shuffle。Spark Structured Streaming：统一批流 API，微批次处理（Micro-Batch）提供秒级延迟。Flink/Beam：真正的流式处理——数据一到就处理（record-at-a-time 或 mini-batch），延迟毫秒级。SQL-on-Hadoop 的演进：Hive（MapReduce 调度）→ Impala/Presto/Trino（MPP 架构，完全抛弃 MapReduce，直接协调节点并行执行 SQL 算子），查询延迟从小时级降至秒级。",
+  ["为什么 Spark 的 Shuffle 比原始的 MapReduce 快？", "Presto/Trino 的 MPP 引擎如何处理 Shuffle 阶段的 Join？"],
+  ["分布式系统", "MapReduce", "Spark", "大数据的演进", "分布式计算"])
+
+q("medium", "short_answer",
+  "多区域部署（Geo-Distribution）与数据本地化",
+  "多区域部署（Multi-Region）面临的核心挑战是什么？如何优化跨区域读写的延迟？",
+  "核心挑战：光速物理极限（跨洋 ~100ms RTT）+ 数据一致性 + 合规要求（数据主权，如 GDPR 要求数据留在欧盟内）。多区域写冲突：两个 Region 同时写同一数据，要么接受最终一致性（允许冲突），要么牺牲写入延迟做同步写。多区域部署策略：(1) Single-Master + Read Replicas——一个主 Region 处理写，其他 Region 只读（异步复制到只读副本）。优点是写简单（无冲突），读延迟低。缺点是跨区域写延迟高 + 主 Region 故障时读副本可能读到旧数据。AWS Aurora Global Database、Azure SQL Database Geo-Replication。(2) Multi-Master（多主）——每个 Region 可写，异步互相同步。写入延迟低（本地写），但需要处理写冲突。Google Spanner（TrueTime 同步 + 强一致）、DynamoDB Global Tables（最终一致但有冲突解决）。(3) 两区域双写——两个 Region 都写本地数据库，通过消息队列异步同步。复杂但灵活性高，适合自定义冲突解决。读取优化：(1) 地域路由——DNS 解析根据客户端 IP 返回最近的 Region。AWS Route53 的 Latency-Based Routing、GeoDNS。CDN 的处理方式：静态资源（图片/JS/CSS）走 CDN，动态请求根据用户地理位置路由。(2) 读数据本地化——用户数据按 Region 分库（用户注册地决定主 Region），跨 Region 读取走 Follower Read（CockroachDB 的 Global Tables 提供全局读）。(3) 全球分布式缓存——每个 Region 部署本地缓存，跨 Region 缓存失效使用 Pub/Sub 广播。多区域下的 CAP 取舍：跨区域场景中网络分区是常态（跨洋网络不可靠）。多数系统选择 CP（如 Spanner 跨区域同步 Paxos，写入延迟 200-500ms）或 AP（如 DynamoDB Global Tables，写入延迟 < 50ms，但跨区域最终一致）。Google Spanner 的跨区域拓扑：每个 Paxos Group 的副本分布在 3-5 个 Region，Leader 在同一 Region 写入，Follower 在其他 Region 负责读。",
+  ["多区域部署中主 Region 故障如何切换写流量到其他 Region？", "Cassandra 的 NetworkTopologyStrategy 在多数据中心部署中如何配置复制因子？"],
+  ["分布式系统", "多区域", "Geo-Distribution", "延迟优化", "Spanner"])
+
+q("hard", "short_answer",
+  "分布式安全——SPIFFE 与工作负载身份",
+  "分布式系统中服务间认证的挑战是什么？SPIFFE（Secure Production Identity Framework for Everyone）如何解决服务身份问题？",
+  "挑战：(1) 动态环境——K8s 中 Pod 频繁创建和销毁，IP 不可信赖（Pod 重建后 IP 变更），不能基于 IP 做认证。(2) 凭证管理——几百个微服务的 TLS 证书需要自动签发、轮换、吊销，手动管理不可行。(3) 东西向流量加密——微服务间通信需要加密，但 mTLS 的证书认证体系需要自动化的身份框架。SPIFFE 标准：定义工作负载身份的标准格式——spiffe://trust-domain/path（如 spiffe://prod.example.com/ns/payment/sa/auth-service）。SPIFFE Workload API：工作负载（进程）通过 Unix Socket 请求自己的身份（X.509 SVID，即 SPIFFE Verifiable Identity Document）。身份签发由 SPIRE Server 完成：SPIRE Agent 运行在每个节点上，从 SPIRE Server 获取身份，并通过 Workload API 分发给工作负载。SPIRE Server 使用 Registration API 注册节点和工作负载的 attested 方法（K8s 中通过 Service Account Token）。mTLS 自动化的好处：(1) 零配置——新服务部署后自动获取证书（无需手动申请和分发）。(2) 自动轮转——证书即将过期时自动更新（SPIRE 默认每 6h 轮转一次）。(3) 吊销——工作负载下线后证书自动过期。Istio + SPIRE 集成：Istio 1.6+ 支持 SPIRE 作为证书签发后端。每个 Envoy 代理通过 SPIRE Agent 获取 SVID，在 mTLS 握手时验证对方身份。K8s Node 的不信任假设：SPIRE 在 K8s 环境中使用 Downward API（Pod 标签和 Service Account）做身份验证——即使节点被攻破，也无法伪造其他 Pod 的身份。推广生态：Envoy、gRPC、Istio 等原生支持 SPIFFE。SPIFFE Federation：不同 trust domain 之间可以建立信任关系（如 prod 和 staging 两个集群，prod 的 auth-service 是否可信任 staging 的 api-gateway）。",
+  ["SPIFFE 和传统 CA 签发的 TLS 证书有什么不同？", "SPIRE 的 Registration Entry 中 Selector 怎么写才能精确匹配 Pod？"],
+  ["分布式系统", "SPIFFE", "安全", "mTLS", "SPIRE"])
+
+q("medium", "short_answer",
+  "TCC 分布式事务模式",
+  "TCC（Try-Confirm/Cancel）分布式事务模式的原理是什么？和 2PC/3PC 有什么不同？TCC 的设计要点和陷阱？",
+  "TCC（Try-Confirm-Cancel）：业务层面的分布式事务解决方案，将每个服务的事务操作拆分为三个阶段：(1) Try——预留资源（锁定库存、冻结金额），不做真正的提交；(2) Confirm——如果所有参与者 Try 成功，协调者调用确认接口完成真正提交；(3) Cancel——如果任一参与者 Try 失败，协调者调用取消接口释放预留资源。TCC vs 2PC：(1) 2PC 是数据库层的协议（XA Resource Manager），TCC 是业务层的协议。(2) 2PC 的资源锁定是悲观锁（持有数据库锁直到准备完成），TCC 的 Try 阶段的锁是业务层面的『预占』（如预占库存、启用线程池）。3) 2PC 在 Coordinator 故障时有『中断后的不确定状态』（参与者锁定资源无法释放），TCC 的 Cancel 是幂等业务操作（可重复执行，不会死锁）。TCC 的设计要点：(1) 幂等性——Confirm 和 Cancel 必须幂等（备调多次执行与一次结果相同）。使用事务表的去重机制（业务主键唯一索引）。(2) 空回滚——如果 Try 还没执行就收到 Cancel（网络超时后协调者认为超时），Cancel 需要正确处理『没有预留』的情况。(3) 防悬挂——Cancel 先于 Try 到达（异步消息乱序），使用状态机确保顺序执行（Cancel 收到时如果 Try 状态未确认，拒绝处理或延迟处理）。(4) Try 中的资源预留要有『确认』或『超时自动释放』——防止预留后既不 Confirm 也不 Cancel（协调者故障导致悬空事务）。业界实现：Alibaba Seata（AT 模式自动生成反向 SQL，不需要写 TCC 接口，适合简单的 Update/Insert 场景；TCC 模式适合更复杂的业务场景）、Hmily（金融级 TCC 实现，支持 Dubbo/Spring Cloud）。Seata 的去中心化协调：使用 GlobalTransaction 代理，协调者与管理端分离，避免 2PC 的协调者单点瓶颈。TCC 适合资金场景（支付/退款/积分兑换等需要『预留→确认』语义的业务）。不适用场景：大事务（TCC 三个阶段至少需 2RTT，跨服务延迟累加）。",
+  ["Seata 的 AT 模式（自动生成反向 SQL）和 TCC 模式有什么区别？各自适合什么场景？", "TCC 中‘Try 资源预留’应该预留到什么粒度（如订单预留整份库存还是预留特定数量的库存）？"],
+  ["分布式系统", "TCC", "分布式事务", "Seata", "2PC"])
+
+q("medium", "short_answer",
+  "边缘计算架构与设计模式",
+  "边缘计算（Edge Computing）解决了云计算的哪些不足？边缘节点与中心云的典型协作模式是什么？",
+  "边缘计算解决的问题：(1) 延迟敏感——自动驾驶需要在 5ms 内做出障碍物判断，云计算的 ~50ms RTT 不可接受。工业控制系统需要 1-10ms 级响应。(2) 带宽成本——大量终端设备（IoT）上传原始数据到云中心成本高（带宽/存储/计算），边缘预处理后可减少 90%+ 数据传输量。(3) 离线可用——边缘节点在断网下需要能独立运行（本地推理、规则引擎），恢复网络后与云同步。(4) 数据主权——个人数据在本地处理完才上传（如欧盟 GDPR 合规要求）。典型协作模式（边缘-云协同）：边缘节点负责实时处理、数据过滤和本地决断，云端负责模型训练、全局调度和历史数据存储。具体分工：(1) 训练-推理分离——模型在云端训练（GPU 集群），部署到边缘端（ARM/TensorRT/ONNX Runtime 推理）。(2) 数据路径分层——敏感/实时数据经边缘处理→可选上云、非敏感/批量数据异步上传到云做聚合分析。(3) 边缘节点自治——节点保存本地规则集，云端连接断开后独立运行（本地规则引擎 + 本地数据库），云联网后冲突合并。边缘计算的架构模式：(1) CDN 的边缘——静态内容就近缓存（CDN 是最早的边缘计算形式）。CloudFront/CloudFlare 的 Edge Functions（Worker）支持在边缘节点执行轻量逻辑。(2) 物联网边缘——KubeEdge（K8s 扩展到边缘）、EdgeX Foundry。设备→边缘网关→云，网关负责协议转换（MQTT/CoAP/HTTP）和数据聚合。(3) MEC（Multi-Access Edge Computing，5G 边缘）——在 5G 基站附近部署 MEC 服务器，UPF（用户面功能）直接路由流量到 MEC 而不是核心网。延迟降至 1-5ms。Akamai Edge Platform + 5G NR。边缘数据同步策略：边缘本地 SQLite/LMDB → 定期同步到云端。使用 CRDT / OT（Operational Transformation）合并冲突（例如 Figma 的协同编辑依赖 OT 算法）。",
+  ["边缘节点断网后重新连接时，数据冲突怎么处理？", "KubeEdge 中的 CloudCore 和 EdgeCore 各自负责什么？"],
+  ["分布式系统", "边缘计算", "KubeEdge", "MEC", "IoT"])
+
+q("hard", "short_answer",
+  "Serverless 架构与 FaaS 在分布式系统中的角色",
+  "Serverless（FaaS）架构的本质是什么？它在分布式系统中的优势和限制？Saga 执行的分布式事务与 Function 编排的关系？",
+  "Serverless 的本质：将『服务器管理』从开发者视角中彻底移除——函数级别的弹性伸缩：自动从 0→1000→0，只按调用次数和持续时间计费。FaaS 模型：Function as a Service——事件驱动（HTTP Request、消息队列、定时器触发），无状态（冷启动时实例消失），细粒度资源计量（128MB-3GB）。优势：(1) 极致弹性——每个请求独立调度，无预热问题。AWS Lambda 的单 Region 并发限制默认 1000，可申请提高。(2) 零空闲费用——不调用不收钱。适合低频、波动大的场景（Webhook、离线数据处理、短期批处理）。(3) 运维简化——无需关心 OS/运行时/JVM 参数。限制：(1) 冷启动延迟——AWS Lambda 冷启动 200ms-1s（Java/C#/Go 更重，Python/Node 轻），V8 isolates（CloudFlare Workers）和 Firecracker microVM（Lambda SnapStart 预初始化）减轻但不是消除。(2) 有状态困难——每次调用可能跑在不同实例上（内存不共享），状态需要外部存储（ElastiCache/DynamoDB）。粘性 Session 是反模式的。(3) 运行时长限制——AWS Lambda 最长 15 分钟，不适合长时间的流处理。(4) 分布式调试复杂——函数分散不可调试，每个函数独立的日志和指标。在分布式系统中的角色：(1) 事件消费者和处理器——Kafka/SQS 消息处理（每条消息触发一次 Lambda 调用）。(2) API 胶水——AWS API Gateway + Lambda 构建 REST API（BFF 层的轻量替代）。(3) 分布式事务的 Saga 编排器——每个 Saga 步骤用 Lambda 实现，编排器（Step Functions/Express Workflows）协调 Try/Compensate 的执行。Step Functions 提供『编排』能力：并行任务、条件分支、重试和回滚。Saga 搭配 Serverless 的优势——每一步的函数天然隔离，失败时 Step Functions 自动回滚补偿。Step Functions 最多执行 1 年。费用是 Lambda + State Transition 计数。",
+  ["Lambda 冷启动为什么 Java 比 Python 更严重？GraalVM Native Image 如何改善？", "Step Functions 中的 Saga 模式的补偿事务（compensate）的执行顺序和业务 rollback 的差异？"],
+  ["分布式系统", "Serverless", "FaaS", "Lambda", "Saga"])
+
+q("medium", "short_answer",
+  "分布式系统中的背压（Backpressure）机制",
+  "分布式系统中背压（Backpressure）的概念是什么？如何从上游到下游传播和响应背压？",
+  "背压概念：当消费者处理速度 < 生产者发送速度时，消费者反馈信号给生产者（『慢点，我处理不过来了』），生产者据此调整发送速率。没有背压的后果：内存溢出（消息堆积在消费者缓冲区）→ GC 频繁→ CPU 升高→ 请求响应变慢→ 上游超时重试→ 雪崩。实现背压的层次：(1) 网络层——HTTP/2 的多路复用和流控机制（WINDOW_UPDATE Frame）：接收方通告自己能接收的字节窗口，发送方不超过该窗口。gRPC 基于 HTTP/2，天然支持背压——Bidirectional Streaming 中调用者根据流控窗口调整发送速率。(2) 传输层——Kafka 消费者：如果消费者处理太慢，kafka 通过 max.poll.interval.ms 和 fetch.max.bytes 控制拉取速率。Reactive Streams（Java）：Publisher → Subscriber 通过 Subscription.request(n) 信号（n 表示本次处理多少个元素）逐级传递背压。Akka Streams 和 Project Reactor 的实现。(3) 应用层——线程池拒绝策略：AbortPolicy（抛异常）、CallerRunsPolicy（生产者自己处理，实质控制生产者速度——『背压到上游』）。有界队列：通过队列满溢出（BlockingQueue 的 offer timeout）产生背压信号。分布式背压的场景：(1) Kafka 消费者滞后——Kafka 消费者 lag 检查 > 阈值时触发暂停消费，批量处理完再继续拉取。Kafka 的 rebalance + 慢消费者可能导致 Partition 被重分配给其他消费者。(2) Envoy 的限流——Envoy 的 Circuit Breaker（最大连接数/最大 pending 请求数/最大重试次数）触发时断开连接（主动背压）。Envoy 在检测到 upstream 高延迟 / 多错误时通过『延迟注入』（通过 HTTP 503）反馈给客户端。实践中建议：每个服务都设置线程池和队列的容量上限（有界资源），到达上限时拒绝（快速失败）而非无限排队。快速失败 + 重试退避 = 系统的天然背压机制。",
+  ["HTTP/2 的 WINDOW_UPDATE 流控和 TCP 的滑动窗口有什么区别？", "Reactive Streams 的 request(n) 中的 n 设太大或太小有什么影响？"],
+  ["分布式系统", "背压", "Backpressure", "Reactive Streams", "Kafka"])
+
+q("medium", "short_answer",
+  "Kubernetes 控制器模式与 Operator",
+  "Kubernetes 控制器模式（Controller Pattern）的核心思想是什么？Operator 模式和控制器模式的关系？",
+  "Kubernetes 控制器模式：基于『声明式 API』和『控制循环（Reconciliation Loop）』——用户用 YAML 声明期望状态（Desired State），控制器不断观察当前状态（Current State），通过一系列操作使当前状态趋近期望状态。核心组件：Informer（Watch API 监听资源变化 → 存入 DeltaFIFO）→ Indexer（本地缓存，避免频繁 API Server 查询）→ WorkQueue（限速队列，失败重试）→ Reconciler（实际调谐逻辑：创建 Pod、Service 等）。控制循环伪代码：for { actual := getCurrentState(); desired := getDesiredState(); if actual != desired { reconcile(actual, desired) } }。Operator 模式 = 控制器模式 + 领域知识——将运维人员的领域知识编码为一个控制器（Operator），自动化管理复杂的分布式应用。Kubernetes 自身的控制器管理内置资源（Deployment、StatefulSet、DaemonSet）。Operator 管理自定义资源（CRD，Custom Resource Definition）。典型 Operator：(1) etcd Operator——自动备份、故障恢复、扩缩容。(2) Prometheus Operator——自动管理 Prometheus 实例、ServiceMonitor 配置。(3) Kafka Operator（Strimzi）——自动部署 Kafka 集群、Topic 管理、Rebalance。(4) TiDB Operator——自动部署 TiDB 集群、备份恢复、弹性伸缩。Operator 的分代演进：Gen 1（Helm chart + 脚本）→ Gen 2（基本的控制器 + CRD）→ Gen 3（更成熟的框架如 Operator SDK / Kubebuilder）。Operator 框架：Kubebuilder（标杆，使用 controller-runtime）、Operator SDK（红帽，底层也是 Kubebuilder）、 Kopf（Python 实现的 Operator 框架）。Operator 的实现约束：(1) Reconciler 必须是幂等的——多次调和与一次调和结果相同。如果 Pod 已存在则跳过创建。(2) 失败重试——WorkQueue 内置指数退避重试，默认 5ms base → 16min max。(3) Leader 选举——Operator 自身通常多副本部署，通过 etcd 的 Lease 实现 Leader 选举（保证同时只有一个副本执行调谐）。",
+  ["Operator 的 Watch 粒度为什么是 Cluster 级别 vs Namespace 级别？", "控制器中 Informer 的 List+Watch 为什么比定时轮询（Polling）好？"],
+  ["分布式系统", "Kubernetes", "Controller", "Operator", "CRD"])
+
+q("medium", "short_answer",
+  "分布式健康检查与优雅关闭",
+  "分布式系统中健康检查和优雅关闭（Graceful Shutdown）如何配合？K8s 的 Readiness Probe 和 Liveness Probe 的区别？",
+  "健康检查：通知负载均衡器和调度系统当前节点是否能接受请求。K8s 有三种 Probe：(1) Readiness Probe——Pod 是否准备好接收流量。如果 Readiness 失败，Service Endpoint Controller 从 Endpoint 列表中移除该 Pod（不再分发新请求）。用于检查：应用初始化完成、缓存预热完、RPC 连接池就绪。如果应用启动时需要 30s 加载模型，Readiness 失败 30s，Service 不会把流量打到还没准备好的 Pod。(2) Liveness Probe——Pod 是否存活。如果 Liveness 失败，kubelet 重启容器（根据 restartPolicy）。用于检测死锁、goroutine 泄漏、无限循环。(3) Startup Probe——K8s 1.18+，用于慢启动的容器。在 Startup Probe 成功前，Liveness 和 Readiness 被禁用。用于 Java 应用启动慢（如 Spring Boot 需要 60s 初始化）。Probe 的注意点：Liveness 不应依赖外部依赖（如数据库），否则外部故障会导致 Pod 反复重启——Liveness 只检查自己是否卡死。Readiness 可依赖外部依赖（检查自己能否处理请求）。优雅关闭（Graceful Shutdown）：Pod 收到 SIGTERM（终止信号）时：(1) Pod 状态变为 Terminating，从 Service Endpoint 移除（不再接收新请求）。(2) preStop Hook 执行（如果有）。(3) SIGTERM 发给主进程（PID 1）。(4) 进程开始优雅关闭：停止接受新请求 → 完成正在处理的请求 → 关闭 DB 连接池 / 消息队列连接 / 其他资源。(5) 如果在 terminationGracePeriodSeconds（默认 30s）内进程没有退出，发送 SIGKILL 强制杀死。常见的问题：(1) 关闭顺序——Pod 内的多个容器（如 istio-proxy Sidecar + app 容器）关闭顺序不可控。Istio 1.7+ 的 EXIT_ON_ZERO_ACTIVE_CONNECTIONS + 修改 iptables 规则保证 app 先停。(2) LB 传播延迟——Pod 停止后 Load Balancer 可能还有几秒的陈旧连接。解决方案：preStop Hook 中 sleep(5-10s) 等待 LB 传播完毕。K8s 1.25+ 使用 EndpointSlice 加速传播。(3) 活跃请求处理——收到 SIGTERM 后拒绝新请求但等待正在处理的请求完成（通常设 10s 最长时间）。",
+  ["K8s 中 preStop Hook 的 sleep 和 terminationGracePeriodSeconds 怎么配合？", "Envoy 的 ​​Drain Manager 和 Pod 的优雅关闭如何协调？"],
+  ["分布式系统", "K8s", "Health Check", "Graceful Shutdown", "SRE"])
+
+q("hard", "short_answer",
+  "分布式特征标记（Feature Flag）系统",
+  "特征标记（Feature Flag/Toggle）系统在分布式架构中如何设计？如何保证标记变更的实时和一致？",
+  "Feature Flag 解决的问题：将『功能发布』和『代码部署』解耦——代码合并到主分支但不一定对用户可见。分布式场景的挑战：标记变更后如何快速传播到所有服务实例 + 不同服务需要读到一致的标记值。Feature Flag 架构：管理面板（配置 CRUD）→ 标记存储（数据库/Redis/etcd）→ 分发通道 → 客户端 SDK/Agent（缓存 + 实时监听）。核心组件：(1) 存储层——标记定义和规则存储。使用 MySQL/PostgreSQL 持久化，Redis 缓存加速。(2) 分发通道——推送（WebSocket/long-polling/SSE）或拉取（固定间隔轮询）。LaunchDarkly（商业 Feature Flag 平台）使用 Streaming 推送（SSE，Server-Sent Events），变更到所有客户端约 200ms。(3) 客户端 SDK——本地缓存标记规则，SSE 连接断开时使用缓存规则维持决策。标记值的布尔型 vs 多变量型（A/B 测试用）：布尔型 on/off，多变量型可指定一组值（如 button_color: [red, blue, green]）。Flag 规则可以基于用户属性（地域、用户 ID、用户分组）、随机百分比（灰度）、时间窗口。分布式一致性考虑：(1) 最终一致性——大多数 Feature Flag 系统可以接受最终一致性（某个用户几秒内看到不同行为不是大问题）。不需要强一致性的事务支持（etcd 的线性一致性对 Feature Flag 来说太重了）。(2) 缓存击穿——Flag 中心挂了时 SDK 继续使用本地缓存规则，不影响业务决策。SDK 中的『fallback』逻辑：如果无法连接 Flag 中心并且本地缓存过期，返回默认值（通常是 false/关闭状态）。(3) 抖动的避免——不要把 Flag 检查放在热点路径（如 for 循环每轮都查 Flag）。应该查一次后缓存结果。Kill Switch 模式：Feature Flag 用作紧急降级开关（如『关闭推荐服务』Flag），需要实时生效——不能在本地缓存超过 1-2s。SSE 推送通道 + 应用层定时轮询（双重保险：SSE 断线后 5s 自动切换轮询）。",
+  ["Feature Flag SDK 中的『缓存规则』在 SSE 断开后应该用多久？", "Feature Flag 在单元测试和集成测试中的 Mock 策略？"],
+  ["分布式系统", "Feature Flag", "灰度发布", "LaunchDarkly", "配置管理"])
+
+q("hard", "short_answer",
+  "分布式系统 Jepsen 测试与线性一致性验证",
+  "Jepsen 是什么？它是如何验证分布式系统的线性一致性的？常见的分布式系统一致性 bug 类型？",
+  "Jepsen（Kyle Kingsbury 开发）：一个分布式系统正确性验证框架——向系统施加并发读写操作，同时注入故障（网络分区、节点宕机、时钟跳跃），然后检查系统的行为是否符合线性一致性（Linearizability）。方法论：(1) 生成历史——每个客户端生成一系列操作（读取/写入），记录调用时间（invoke）和完成时间（complete）。(2) 注入故障——Partition（iptables 切断网络）、Kill（SIGKILL 进程）、时钟偏差（chrony/NTP 扰动）、CPU 压力（stress-ng）。(3) 检查线性一致性——使用 Knossos（Elle 的前身）或 Elle 检查器验证每个操作的历史是否是线性一致的。Knossos 使用『线性一致性定义』进行状态空间的搜索（NP-complete 问题，运行时间随操作数指数增长，通常 < 10,000 操作 30min 内可验证）。Elle 支持更丰富的类型（List、Set、Map 的并发操作检查）。知名发现：(1) MongoDB 2.x 在 write concern = majority 时仍然可能丢数据（网络分区时 secondary 错误地被 promote）。(2) Redis Cluster 在脑裂（Split Brain）时返回过时的数据（哨兵的异步复制导致写丢失）。(3) etcd 3.4 之前线性一致读需要设置 --experimental-serializable-read-only=false（否则 read 可能返回旧数据，不是真正线性一致）。(4) RethinkDB 在并发读写下发现多例『Read 返回不存在的值』问题。常见的一致性 bug 类型：(1) Lost Update——两个并发写操作，一个写被覆盖（LWW 的常见问题）。(2) Dirty Read——读到未提交的数据（事务隔离级别不足）。(3) Non-repeatable Read——同一个事务中的两次读返回不同结果。(4) Read Skew——事务 T1 读到 T2 在 T1 提交过程中写的一部分但没写到全部（事务隔离的异常）。工具链：Jepsen（Clojure 框架）+ Knossos（线性一致性检查器）+ Elle（更高级的并发操作检查器）+ Maelstrom（教学版 Jepsen，用于分布式系统的『玩具』测试）。",
+  ["Jepsen 的 Knossos 为什么不能验证超大量操作？NP-complete 的限制？", "如果系统宣称『最终一致性』，Jepsen 的检查器还能验证什么？"],
+  ["分布式系统", "Jepsen", "线性一致性", "测试", "正确性"])
+
+q("medium", "short_answer",
+  "分布式系统中的容量规划与弹性伸缩",
+  "分布式系统的容量规划（Capacity Planning）怎么做？水平扩缩（Horizontal Scaling）的挑战是什么？K8s HPA 和 KEDA 的区别？",
+  "容量规划步骤：(1) 流量预测——基于历史数据预测未来 N 个月的峰值 QPS，加上弹性 buffer（通常 30-50% 冗余）。考虑季节性——双十一、黑五的流量可能是平时的 10-50x。(2) 单机基准测试——单台机器在典型请求下的 QPS/延迟/资源消耗（CPU/内存/IO）。做压测得到单机最大 QPS（在 P99 延迟不超 SLO 的前提下）。(3) 总容量 = 单机 QPS × 节点数 / 1.7（考虑集群不均匀，留 30% buffer）。扩缩容策略：(1) 反应式扩容——指标触发（CPU > 70% 时扩容），响应延迟 30s-5min（取决于指标采集间隔和容器启动时间）。HPA 的默认延迟：指标每 15s 采集一次，扩容决策需要 3 个采集周期（45s）+ Pod readiness 时间。(2) 预测式扩容——使用时间序列预测（Prophet/ARIMA 模型），在流量高峰前 5-10min 提前扩容。AWS 的 Predictive Scaling、Spotify 的预测扩容。(3) 定期扩缩——业务有规律的高峰（如每天早 10 点、晚 8 点），定时策略扩容/缩容。K8s HPA（Horizontal Pod Autoscaler）：内置 Pod 副本数自动调整。基于 CPU/内存/Custom Metrics（Prometheus adapter）的『当前值 / 目标值』比例计算副本数。目标指标推荐：并发请求数而非 CPU（CPU 利用率受 GC、启动等临时因素影响大）。KEDA（Kubernetes Event-Driven Autoscaling）：比 HPA 更丰富的触发器——Kafka 消费滞后（lag）、RabbitMQ 队列深度、Prometheus 指标、AWS SQS 队列大小。KEDA 的 ScaledObject 架构：Scaler（外部指标采集）→ KEDA Operator（计算目标副本数）→ HPA（实际执行扩缩）。KEDA 在 Kafka 消费场景的典型配置：lagThreshold（滞后阈值，如 lag > 10 条则实例 +1）、pollingInterval（轮询间隔，默认 30s）、cooldownPeriod（缩容冷静期，默认 5min，防止频繁缩扩）。扩缩容的『伸缩滞后』问题：扩容容易（创建副本约 30-60s），缩容难（cool-down period 是为了避免刚缩容又来流量高峰）。(1) 扩容快但不可控——新 Pod 从 Pending→Running→Readiness 需要 30-90s，热点活动前提前扩容更靠谱。(2) 缩容太慢浪费资源——Cluster Autoscaler 缩容节点需要 10-15min（确保不会立即需要）。",
+  ["KEDA 的 cooldownPeriod 设太短会导致什么？", "Cluster Autoscaler 和 HPA 如何配合？抢先扩容 vs 延迟缩容的策略？"],
+  ["分布式系统", "容量规划", "弹性伸缩", "KEDA", "HPA"])
+
+
+# Write (with safety guard)
+outpath = '/Users/petersun/DEV/labs/interview-app/backend/seed_data/gen_distributed.json'
+try:
+    with open(outpath, 'r') as f:
+        existing = json.load(f)
+    print(f'⚠️  目标文件已有 {len(existing)} 题，本次将写入 {len(questions)} 题（覆盖）')
+    confirm = input('确认覆盖？(y/N): ')
+    if confirm.lower() != 'y':
+        print('已取消')
+        exit()
+except FileNotFoundError:
+    pass
+
+with open(outpath, 'w', encoding='utf-8') as f:
+    json.dump(questions, f, ensure_ascii=False, indent=2)
+print(f'Written: {len(questions)} questions to {outpath}')

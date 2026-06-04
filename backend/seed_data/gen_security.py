@@ -1,0 +1,636 @@
+# -*- coding: utf-8 -*-
+"""安全面试题生成器"""
+import json
+
+questions = []
+
+def q(diff, typ, title, content, answer, hints, tags, options=None):
+    questions.append({
+        "category": "security", "difficulty": diff, "type": typ,
+        "title": title, "content": content, "answer": answer,
+        "hints": hints, "tags": tags,
+        **({"options": options} if options else {})
+    })
+
+
+q('medium','short_answer','OWASP Top 10',
+  'OWASP Top 10 中最常见的安全风险有哪些？列举最重要的 5 项。',
+  'OWASP Top 10 最有代表性的五项：(1) 访问控制失效——IDOR、目录遍历、垂直越权。(2) 加密机制失效——敏感数据未加密、弱算法。(3) 注入——SQL/NoSQL/OS Command 注入。(4) 不安全设计——架构层面缺乏安全控制。(5) 安全配置错误——默认密码、Debug 模式。',
+  ['为什么 SQL Injection 排名下降而 Broken Access Control 排第一？','IDOR 和缺少权限检查的区别？'],
+  ['安全','OWASP','Web安全','注入','访问控制'])
+
+q('hard','short_answer','SQL 注入',
+  'SQL 注入的攻击原理？预编译语句为什么能防御？盲注的变种？',
+  '攻击原理：用户输入拼接进 SQL 语句，输入中的 SQL 特殊字符改变了原始语义。预编译防御：SQL 模板和参数分别发送，参数作为纯数据绑定不参与编译。盲注变种：(1) 基于布尔——通过 true/false 页面差异推断。(2) 基于时间——通过响应延迟推断。防御层次：参数化查询 > 存储过程 > 最小权限 + WAF。',
+  ['为什么 ORM 也可能出现 SQL 注入？','基于时间的盲注为什么比基于布尔的慢？'],
+  ['安全','SQL注入','Web安全','预编译','OWASP'])
+
+q('medium','short_answer','XSS 跨站脚本攻击',
+  'XSS 的三种类型（反射型、存储型、DOM 型）的区别？CSP 如何防御 XSS？',
+  '三种 XSS：(1) 反射型——恶意脚本在 URL 参数中，需诱导用户点击。(2) 存储型——脚本存在服务端，访问即触发，危害最大。(3) DOM 型——纯客户端，通过 JS 动态修改 DOM 触发。CSP 通过 Content-Security-Policy 头声明允许的资源来源：script-src nonce-xxxxx 限制内联脚本执行（nonce 随机生成不可猜测）。其他防御：输出编码（React/Vue 默认做 HTML Entity 转义）、HttpOnly Cookie。',
+  ['React 的 dangerouslySetInnerHTML 使用时要配合什么？','CSP strict-dynamic 指令的工作原理？'],
+  ['安全','XSS','CSP','Web安全','跨站脚本'])
+
+q('hard','short_answer','CSRF 跨站请求伪造',
+  'CSRF 攻击的原理？SameSite Cookie 如何防御？CSRF Token 是什么？',
+  'CSRF 原理：用户已登录 A，攻击者诱导用户访问 B，B 自动发起跨站请求到 A，浏览器自动携带 A 的 Cookie。SameSite 防御：(1) Strict——完全禁止跨站携带 Cookie。(2) Lax——GET 导航携带，POST 不携带，Chrome 默认。(3) None——需 Secure 标志。CSRF Token：服务端在页面中嵌入随机 Token，修改操作要求携带此 Token 验证。Double Submit Cookie：无状态方案，Token 同时写入 Cookie 和请求头，服务器验证两者匹配。推荐 SameSite + CSRF Token 深度防御。',
+  ['CSRF Token 放请求头比请求体更安全？','JSONP 接口为什么易受 CSRF 攻击？'],
+  ['安全','CSRF','SameSite','CSRF Token','Web安全'])
+
+q('medium','short_answer','SSRF 服务端请求伪造',
+  'SSRF 攻击的原理？常见防御手段？',
+  'SSRF：攻击者控制服务端发起请求的 URL（文件预览、Webhook 等），服务端因此访问内部资源（内网数据库、云元数据 169.254.169.254 泄露凭证）。防御：(1) URL 白名单。(2) 内网 IP 黑名单。(3) 禁用 file://、dict:// 等协议。(4) 出口防火墙限制出站流量。(5) 防止 DNS 重绑定攻击（连接建立前再次验证 IP）。',
+  ['AWS 元数据服务 IMDSv2 比 IMDSv1 更安全的原因？','URL 重定向场景如何防止 SSRF 绕过？'],
+  ['安全','SSRF','服务端请求伪造','内网安全','云安全'])
+
+q('medium','short_answer','不安全反序列化',
+  '不安全反序列化漏洞的原理？Java 反序列化为什么问题突出？',
+  '原理：反序列化过程中自动执行对象的特殊方法（readObject、__wakeup），攻击者可构造恶意输入触发任意代码执行。Java 反序列化突出的原因：(1) 原生序列化机制强大——readObject() 可创建任意对象。(2) Gadget Chain——利用链组合多个库的类实现任意代码执行（如 CC 链、Fastjson 链）。防御：(1) 使用 JSON/Protobuf 等简单格式。(2) ObjectInputFilter 白名单（Java 9+）。(3) Fastjson safemode=true。(4) 数据完整性校验。',
+  ['为什么 RMI 天然易受反序列化攻击？','Fastjson 和 Jackson 的反序列化漏洞原理区别？'],
+  ['安全','反序列化','Java','Gadget链','RCE'])
+
+# ==================== 认证与授权 ====================
+q('medium','short_answer','JWT 安全',
+  'JWT 结构？常见攻击面和防御措施？',
+  'JWT 结构：Header.Payload.Signature（Base64URL 编码，点分隔）。常见攻击：(1) alg=none——防御：拒绝此算法。(2) 弱密钥 HS256——防御：用 RS256 非对称签名。(3) 密钥混淆——RS256 改 HS256 用公钥签名→防御：固定算法。(4) JWT 泄露——防御：短过期（15min）+ Refresh Token 轮换。(5) Payload 可解码——不存敏感信息。生产：RS256 + JWKS + 15min 过期 + Refresh Token + jti 黑名单。',
+  ['JWT 和 Session Token 在分布式系统的鉴权优缺点？','JWT 黑名单实现登出的设计？'],
+  ['安全','JWT','认证','令牌','OAuth'])
+
+q('hard','short_answer','OAuth 2.0 与 OIDC',
+  'OAuth 2.0 四种授权模式？OIDC 增加了什么？PKCE 是什么？',
+  '四种模式：(1) 授权码模式——最安全，返回 code 需 client_secret 换 Token。(2) 隐式模式——OAuth 2.1 废弃。(3) 密码模式——OAuth 2.1 废弃。(4) 客户端模式——机器对机器。OIDC 增加认证层——ID Token（JWT 格式）+ UserInfo + Discovery 端点。PKCE：Client 生成 code_verifier 和 code_challenge=SHA256(verifier)，换 Token 时验证 verifier。防止授权码拦截攻击，OAuth 2.1 要求所有授权码流程使用 PKCE。',
+  ['Refresh Token Rotation 策略？','OAuth scope 如何做到最小权限？'],
+  ['安全','OAuth','OIDC','PKCE','认证'])
+
+q('medium','short_answer','密码存储安全',
+  '密码如何安全存储？bcrypt/argon2/scrypt 区别？',
+  '绝不存明文或用 MD5/SHA-256 一次哈希。正确方法：加盐（Salt）+ 慢哈希。盐：每个用户随机 salt 16+ 字节，防彩虹表。慢哈希：bcrypt（基于 Blowfish，cost=10 约 50-100ms）、scrypt（内存消耗参数 N/r/p）、argon2（2015 冠军，OWASP 推荐 argon2id）。生产建议：argon2id（memory=64MB, time=3）或 bcrypt（cost=12）。',
+  ['bcrypt cost 太高会影响什么？','如何防御密码验证的 DoS 攻击？'],
+  ['安全','密码','加密','bcrypt','argon2'])
+
+q('hard','short_answer','MFA 多因素认证',
+  'TOTP 的工作原理？WebAuthn 和 TOTP 安全性对比？',
+  'TOTP：共享密钥 + 时间窗口（30s），HMAC-SHA1 截取 6 位。风险：钓鱼（中间人实时转发）、SIM 劫持（短信 2FA）。WebAuthn（FIDO2）：公钥密码学，私钥存设备 TPM/YubiKey。抗钓鱼（签名含 origin）、私钥不离开设备、无共享密钥。代价：需硬件支持、跨设备需云同步。Passkey（Apple/Google/MS）基于 WebAuthn，实现无密码登录。推荐：重要系统用 WebAuthn，一般系统用 TOTP。',
+  ['WebAuthn attestation 和 assertion 的区别？','Passkey 和无密码登录的关系？'],
+  ['安全','MFA','TOTP','WebAuthn','认证'])
+
+q('medium','short_answer','RBAC 与 ABAC',
+  'RBAC 和 ABAC 的区别？各自适用场景？',
+  'RBAC：用户→角色→权限。优点简单，缺点角色爆炸、粒度不够。适用：管理后台、企业内部系统。ABAC：基于属性（用户/资源/环境）的表达式策略。优点灵活，缺点复杂难审计。AWS IAM 是 ABAC 实践。Google Zanzibar 使用 ReBAC（基于关系的授权），是分布式授权系统标杆。中间方案：RBAC + 属性约束。',
+  ['Zanzibar 如何在分布式系统中保持一致性？','K8s Role 和 ClusterRole 的区别？'],
+  ['安全','RBAC','ABAC','访问控制','权限'])
+
+# ==================== 密码学 ====================
+q('hard','short_answer','对称加密与非对称加密',
+  'AES 和 RSA 在工程中的配合方式？为什么即使 RSA 慢仍然必要？',
+  '混合加密：非对称加密传递对称密钥，对称加密加密实际数据。RSA 慢且有限制（2048-bit 最多加密 245 字节），AES 有硬件加速（AES-NI）。TLS 握手流程：(1) 客户端生成随机 Premaster Secret。(2) 用服务器 RSA 公钥加密发送。(3) 服务器用私钥解密。(4) 双方派生 AES 会话密钥。AES 模式：ECB（不安全）→ CBC（需 IV）→ GCM（AEAD，推荐，同时提供机密性和完整性）。TLS 1.3 移除 RSA 密钥交换改 ECDHE——前向安全（私钥泄露不影响历史会话）。',
+  ['TLS 1.3 为什么移除 RSA 密钥交换？','AES-GCM 的 nonce 重复使用有什么后果？'],
+  ['安全','AES','RSA','TLS','加密'])
+
+q('medium','short_answer','哈希函数安全',
+  '密码学哈希函数特性？MD5/SHA-1/SHA-2/SHA-3 安全性对比？',
+  '密码学哈希特性：抗原像性、抗第二原像性、抗碰撞性、雪崩效应。安全性对比：(1) MD5（128-bit）——1996 发现碰撞，2004 王小云教授快速碰撞方法。丢弃。(2) SHA-1（160-bit）——2017 SHAttered 攻击。不再使用。(3) SHA-2（256/384/512）——当前安全，推荐。(4) SHA-3（Keccak）——备选方案，海绵结构。安全应用：数据完整性验证、HMAC、数字签名中的哈希、证书指纹。注意：密码存储不能只用 SHA-256，需加盐 + 慢哈希（bcrypt/argon2）。',
+  ['为什么密码存储不能只用 SHA-256 多次迭代？和 bcrypt 本质区别？','SHAttered 攻击对 Git 的影响？'],
+  ['安全','哈希','SHA','MD5','密码学'])
+
+q('hard','short_answer','PKI 与数字证书',
+  'X.509 数字证书结构？CA 证书链验证流程？',
+  'X.509 核心字段：Version、Serial Number、Signature Algorithm、Issuer、Validity、Subject、Public Key Info、Extensions（SAN、Key Usage）。CA 链验证：实体证书由 Intermediate CA 签发→ Intermediate 由 Root CA 签发→ Root CA 自签名（浏览器内置信任）。每级验证：(1) 签名验证（用父证书公钥）。(2) 有效期。(3) 吊销检查（CRL/OCSP）。OCSP Stapling：服务器定期获取 OCSP 响应，TLS 握手时附带，避免客户端访问 OCSP 泄露隐私。Let Encrypt 免费 DV 证书，ACME 协议自动签发续期（90 天）。',
+  ['HTTPS 证书过期后用户访问会发生什么？','Certificate Transparency 如何防止 CA 签发伪造证书？'],
+  ['安全','PKI','X.509','CA','TLS'])
+
+q('medium','short_answer','TLS 握手过程',
+  'TLS 1.3 握手与 TLS 1.2 有什么不同？为什么 TLS 1.3 更快？',
+  'TLS 1.2（2-RTT）：ClientHello→ServerHello+证书→ClientKeyExchange→Finished。TLS 1.3（1-RTT）：ClientHello（含密钥参数）→ServerHello+证书+Finished（立即发应用数据）。0-RTT：之前访问过的客户端可直接发加密数据（有重放风险，不能用于非幂等操作）。TLS 1.3 移除：RSA 密钥交换、RC4、CBC 模式、3DES、EXPORT 加密。只支持 5 个密码套件（AEAD：AES-GCM、CHACHA20-POLY1305）。',
+  ['TLS 1.3 0-RTT 重放攻击怎么防御？','ALPN 在 TLS 握手中的作用？'],
+  ['安全','TLS','HTTPS','握手','加密'])
+
+# ==================== 应用安全 ====================
+q('medium','short_answer','输入验证',
+  '为什么输入验证是安全的第一道防线？白名单和黑名单的区别？',
+  '80%+ 漏洞源于未处理的用户输入。白名单（Allowlist）：只允许预设模式（^[a-zA-Z0-9_]+$），安全性确定但可能过于严格。黑名单（Blocklist）：阻止已知恶意输入（过滤 script、UNION），用户体验好但总有绕过方法（大小写、编码、双编码）。安全原则：白名单 > 黑名单。纵深防御：输入验证→输出编码→参数化查询→安全序列化。',
+  ['手机号/邮箱验证用白名单还是黑名单？','文件上传验证为什么不仅检查 Content-Type 还要检查文件头？'],
+  ['安全','输入验证','白名单','黑名单','安全编码'])
+
+q('medium','short_answer','文件上传安全',
+  '文件上传有哪些安全风险？如何构建安全的文件上传？',
+  '风险：(1) 任意文件上传（webshell）。(2) 覆盖敏感文件。(3) XSS（SVG 含恶意脚本）。(4) 存储耗尽（DoS）。(5) 恶意解析（.htaccess）。安全策略：(1) 扩展名白名单 + Magic Number 校验。(2) 文件名消毒，用 UUID 重命名。(3) 存放目录无执行权限，存对象存储（S3/MinIO）更佳。(4) 限制文件大小。(5) 病毒扫描（ClamAV）。(6) 图片重新编码清除 EXIF GPS 信息。(7) CDN 设置正确 Content-Type。',
+  ['SVG 文件为何是 XSS 的常见载体？','S3 Presigned URL 在文件上传安全中的角色？'],
+  ['安全','文件上传','Web安全','RCE','XSS'])
+
+q('medium','short_answer','日志安全',
+  '分布式系统中安全日志的最佳实践？常见信息泄露风险？',
+  '信息泄露风险：(1) 日志打印密码/Token/PII。(2) 错误页面显示堆栈信息。(3) 响应头暴露版本。(4) 路径信息泄露。(5) DEBUG 日志忘记关闭。最佳实践：(1) 日志掩码（密码/Token 替换为 ***）。(2) 结构化 JSON 日志 + 日志级别。(3) 统一错误响应（不返堆栈）。(4) 敏感信息放环境变量/K8s Secret，不硬编码。(5) 审计日志（记录谁做了什么，append-only 存储）。(6) 日志保留策略（30-90天）。(7) 防止日志注入（攻击者输入含换行符伪造日志）。',
+  ['什么是日志伪造（Log Forging）？','PII 脱敏在个人信息保护法下的要求？'],
+  ['安全','日志','信息泄露','PII','审计'])
+
+# ==================== 云安全 ====================
+q('hard','short_answer','IAM 最小权限',
+  'IAM 最小权限原则在工程中如何落地？权限蔓延怎么治理？',
+  '落地方法：(1) 初始只给最小权限，默认拒绝。(2) 基于角色的访问（Role），策略与用户解耦。(3) 权限边界（Permissions Boundary）——限制最大授权范围。(4) 临时凭证（AWS STS，15min-12h）替代长期 Access Key。(5) 服务间用 Service Account 认证，自动轮转。权限蔓延治理：(1) 定期审计未使用的权限（AWS Access Advisor）。(2) 自动化扫描禁止通配符 * 策略（Parliament/Checkov）。(3) CI 门禁——PR 含 Action:* 自动驳回。(4) 90 天未使用的权限建议删除。AWS IAM 的 PassRole 是高危权限，需严格限制。',
+  ['AWS PassRole 为什么是高危权限？','GitHub Actions OIDC 和长期 Access Key 安全性对比？'],
+  ['安全','IAM','云安全','最小权限','AWS'])
+
+q('medium','short_answer','容器安全',
+  '容器安全的关键实践有哪些？镜像安全和运行时安全？',
+  '镜像安全：(1) 使用精简基础镜像（alpine/distroless），攻击面小。(2) 镜像扫描 CVE（Trivy/Grype），CI 中阻断 CRITICAL 漏洞。(3) 多阶段构建——最终镜像只含运行时。运行时安全：(1) 非 root 运行（USER 1000）。(2) 只读文件系统 + emptyDir 写入。(3) 禁止特权模式，Capabilities 白名单。(4) seccomp/AppArmor 限制系统调用。K8s Pod Security Standards（PSA）：Privileged（宽松）→ Baseline（禁止特权容器）→ Restricted（非 root + 只读 FS）。',
+  ['distroless 为什么比 alpine 安全但调试困难？','K8s allowPrivilegeEscalation:false 防止什么？'],
+  ['安全','容器安全','Docker','K8s','镜像'])
+
+q('hard','short_answer','KMS 密钥管理',
+  'KMS 如何工作？密钥轮换和信封加密？',
+  'KMS 核心：HSM 保护密钥，解密在 HSM 内部执行，明文密钥不离开 HSM。信封加密（Envelope Encryption）：KMS Master Key 加密 Data Key，Data Key 加密实际数据。只有加密的 Data Key 存在磁盘上，明文用完即弃。AWS KMS 自动轮换 CMK（每年一次），保留旧版本解密旧数据。密钥分层：Region CMK → Service Key → Data Key。KMS Key Policy：Key Admin（管理）和 Key User（使用）权限分离。',
+  ['AWS KMS 自动轮换为什么每年一次？','HSM 和软件密钥存储的安全性差距？'],
+  ['安全','KMS','密钥管理','加密','云安全'])
+
+q('medium','short_answer','API 安全',
+  '为第三方提供的 API 需要哪些安全防护？请求签名如何实现？',
+  'API 安全层次：(1) 强制 HTTPS + HSTS。(2) 认证——API Key + Secret 签名（AWS SigV4）或 OAuth 2.0。(3) 请求签名——CanonicalRequest + StringToSign + HMAC 签名，包含时间戳和 Nonce 防重放。(4) 防重放——Nonce 存 Redis（TTL 5min）去重。(5) 限流——按 API Key 分级（匿名 10r/min，付费 1000r/min），返回 429 + Retry-After。(6) CORS 白名单、精确 Origin 验证。',
+  ['AWS SigV4 为什么包含 Payload Hash？','API 灰度迁移中签名算法升级怎么兼容？'],
+  ['安全','API安全','签名','防重放','限流'])
+
+# ==================== 网络安全 ====================
+q('medium','short_answer','CORS 安全配置',
+  'CORS 的工作原理？常见配置安全错误？',
+  'CORS 是浏览器安全机制——同源策略阻止跨域读取响应。预检请求（OPTIONS）确认服务端允许后浏览器才发实际请求。常见错误：(1) Access-Control-Allow-Origin:*——允许任何网站读取敏感数据。(2) 动态 Origin 回映不验证——攻击者可构造恶意 Origin 头绕过。(3) 宽泛的方法/头——暴露不必要接口能力。安全配置：白名单 Origin 列表 + 精确匹配。注意：CORS 是浏览器端机制，不能替代服务端认证。',
+  ['CORS 为什么不能替代 CSRF Token？','Access-Control-Max-Age 设太大或太小的影响？'],
+  ['安全','CORS','跨域','浏览器安全','Web安全'])
+
+q('hard','short_answer','DDoS 防御',
+  'DDoS 攻击的分类？从网络层到应用层的防御策略？',
+  '三层分类：(1) 网络层 L3/L4——SYN Flood、UDP 放大（DNS/NTP 放大 50-500x）、ICMP Flood。(2) 协议层——HTTP Flood、Slowloris。(3) 应用层——API 滥用、资源密集型操作。网络层防御：(1) 云清洗（AWS Shield/CloudFlare）。(2) SYN Cookie。(3) BGP FlowSpec + IP 黑名单。应用层防御：(1) WAF + 速率限制。(2) CDN 缓存 90%+ 流量。(3) CAPTCHA。(4) 服务降级 + Cache 热数据。(5) Auto Scaling 吸收突发。',
+  ['SYN Cookie 原理——为什么不消耗连接表？','HTTP/2 多路复用对 DDoS 防御的新挑战？'],
+  ['安全','DDoS','WAF','CloudFlare','防御'])
+
+q('medium','short_answer','K8s NetworkPolicy',
+  'Kubernetes NetworkPolicy 如何实现网络安全隔离？默认拒绝模式？',
+  'NetworkPolicy：Pod 级别防火墙，通过标签选择器定义访问规则。K8s 默认所有 Pod 互通。安全实践：先创建默认拒绝策略再放开。默认拒绝入站：podSelector:{} + policyTypes:["Ingress"]（无规则→拒绝所有）。精细控制：只允许 frontend 访问 backend 8080 端口。注意事项：一旦有 NetworkPolicy 选中 Pod，未显式允许的流量被拒绝。Cilium 扩展 NetworkPolicy 支持 L7（HTTP 方法过滤）、DNS 过滤。',
+  ['只配置 ingress 不配 egress 会怎样？','Istio AuthorizationPolicy 和 NetworkPolicy 的区别？'],
+  ['安全','K8s','NetworkPolicy','网络安全','零信任'])
+
+# ==================== 安全开发流程 ====================
+q('hard','short_answer','SDL 安全开发生命周期',
+  '微软 SDL 的七个阶段？敏捷开发中如何落地安全活动？',
+  'SDL 七阶段：培训→需求→设计→实现→验证→发布→响应。敏捷落地：(1) Sprint Planning——轻量威胁建模（STRIDE）。(2) Sprint 执行——SAST 作为 CI 门禁（SonarQube/CodeQL）。(3) Sprint Review——安全回顾。(4) 每个 Release——DAST 扫描 + 依赖审计。(5) Security Champion 每个团队一人。STRIDE：Spoofing（认证）、Tampering（完整性）、Repudiation（审计）、Info Disclosure（加密）、DoS（限流）、Elevation（权限分离）。',
+  ['威胁建模中 DFD 怎么帮助发现安全风险？','SAST 和 DAST 的差异？为什么两者都需要？'],
+  ['安全','SDL','安全开发','威胁建模','STRIDE'])
+
+q('medium','short_answer','供应链安全',
+  '软件供应链安全威胁？SLSA 框架的等级？',
+  '威胁：(1) 依赖投毒（event-stream 事件）。(2) 构建环境篡改。(3) 维护者账号被攻破。(4) 依赖混淆（私有包名在公共仓库注册同名包）。(5) Typosquatting。SLSA（L1-L4）：L1 有文档→L2 认证构建服务+源完整性→L3 防篡改来源证明+隔离构建→L4 双人审查+可重现构建。工程实践：SBOM 清单 + 锁定依赖版本 + cosign 镜像签名 + Sigstore 验证 + 最小依赖原则。',
+  ['package-lock.json 对供应链安全为什么重要？','npm 依赖混淆攻击的具体场景？'],
+  ['安全','供应链安全','SLSA','SBOM','开源安全'])
+
+q('hard','short_answer','漏洞披露流程',
+  '协调披露（CVD）的标准流程？CVE 和 CVSS 的作用？',
+  '协调披露流程：(1) 发现→通过安全渠道报告（security@、HackerOne）。(2) 确认与 CVSS 定级（0-10：攻击向量/复杂度/权限/影响）。(3) 厂商开发补丁（通常 30-90 天）。(4) 协调发布补丁 + 公开详情。CVE 编号由 CNA 分配。CVSS 评分标准：AV:N/AC:L/PR:N/UI:R 等向量。Bug Bounty：严重漏洞可到数十万美元。零日漏洞：补丁发布前已被公开或利用。GDPR 要求 72 小时报告数据泄露。',
+  ['CVSS 3.1 的 Scope 指标——Changed 和 Unchanged 区别？','为什么有些组织选 90 天修复窗口期？'],
+  ['安全','CVE','CVSS','漏洞披露','Bug Bounty'])
+
+# ==================== 安全架构 ====================
+q('medium','short_answer','零信任架构',
+  '零信任（Zero Trust）的核心原则？BeyondCorp 和传统 VPN 的区别？',
+  '零信任四原则：(1) 显式验证——每次访问都需认证。(2) 最小权限。(3) 假设被攻破——内网已存在威胁。(4) 微分段——东西向流量也要控制。BeyondCorp vs VPN：VPN 拨入后可访问大部分内网，横向移动无限制。BeyondCorp：不区分内外网，基于设备健康度+用户身份做访问控制，所有请求经 Access Proxy 验证。实施步骤：识别保护面→映射交易流→构建微边界→持续监控。',
+  ['OPA 在零信任架构中担任什么角色？','NIST SP 800-207 定义的 Policy Engine 职责？'],
+  ['安全','零信任','BeyondCorp','VPN','网络分段'])
+
+q('medium','short_answer','事件响应',
+  '安全事件响应六阶段（NIST SP 800-61）？数据泄露后的止血步骤？',
+  '六阶段：(1) 准备——IR 团队、工具（EDR/SIEM）、演练。(2) 检测与分析——确认事件真实性。(3) 遏制/擦除/恢复——止血、清除后门、恢复系统。(4) 事后分析——RCA、Lessons Learned。(5) 报告——相关方沟通。(6) 改进——更新检测规则。数据泄露止血：(1) 隔离受感染系统（拔网线、保留内存快照）。(2) 轮换所有泄露凭证。(3) 收集证据（内存/磁盘/日志）。(4) 保留证据链。(5) 通知相关方（GDPR 72h 通知）。(6) 根因分析。',
+  ['内存取证中 Volatility 能提取什么？','GDPR 什么情况下需通知监管机构和用户？'],
+  ['安全','事件响应','取证','NIST','数据泄露'])
+
+q('hard','short_answer','HTTP 安全头',
+  '哪些 HTTP 安全头是生产环境必须配置的？各自防御什么攻击？',
+  '必须配置：(1) HSTS——强制 HTTPS，防御 SSL Strip。max-age=31536000; includeSubDomains。(2) X-Content-Type-Options: nosniff——禁止 MIME 嗅探。(3) X-Frame-Options: DENY/SAMEORIGIN——防御 Clickjacking。(4) CSP——限制资源来源，防御 XSS。(5) Referrer-Policy: strict-origin-when-cross-origin——限制 Referer 泄露。(6) Permissions-Policy——控制浏览器 API 权限。OWASP 推荐最低安全头：HSTS + CSP + X-Frame-Options + X-Content-Type-Options + Referrer-Policy。',
+  ['CSP 的 report-uri 和 report-to 区别？','Preload HSTS 提交到浏览器预加载列表的后果？'],
+  ['安全','HTTP头','HSTS','CSP','Web安全'])
+
+q('medium','short_answer','Clickjacking 防御',
+  'Clickjacking（点击劫持）的原理？X-Frame-Options 和 CSP frame-ancestors 区别？',
+  'Clickjacking：攻击者用透明 iframe 覆盖合法页面，诱导用户点击透明层上的按钮。防御：(1) X-Frame-Options: DENY（禁止嵌入）/ SAMEORIGIN（允许同源嵌入）。(2) CSP frame-ancestors: none（禁止）/ self（同源）/ 域名（白名单）。优先使用 CSP frame-ancestors（更灵活，支持多域名）。注意：同时存在时以更严格的为准。',
+  ['为什么 frame-ancestors 比 X-Frame-Options 更推荐？','JavaScript Frame Busting 的局限？'],
+  ['安全','Clickjacking','X-Frame-Options','CSP','Web安全'])
+
+# ==================== 进阶安全 ====================
+q('hard','short_answer','侧信道攻击',
+  '侧信道攻击（Side-Channel Attack）的原理？Meltdown 和 Spectre 是什么？常量时间比较？',
+  '侧信道攻击原理：攻击者利用系统的物理实现泄露的信息（时间、功耗、缓存状态）而非算法本身的弱点。Meltdown（熔断）：利用乱序执行——CPU 在权限检查前执行非法内存访问，虽然指令被回滚但数据留在缓存中，通过 Flush+Reload 读出。影响 Intel（1995-2018）。Spectre（幽灵）：利用分支预测——训练 CPU 分支预测器使其误预测。影响几乎所有现代 CPU。常量时间比较：比较密码/签名时使用固定时间的函数（hmac.compare_digest），防止攻击者通过比较时间推断正确值。',
+  ['为什么 memcmp 不适合密码比较？','Meltdown 和 Spectre 为什么难以完全修复？'],
+  ['安全','侧信道','Meltdown','Spectre','常量时间'])
+
+q('hard','short_answer','后量子密码学',
+  '量子计算机对现有密码学的威胁？NIST 后量子密码标准化进展？',
+  '量子威胁：Shor 算法可分解大整数和计算离散对数，攻破 RSA/ECC/DSA。Grover 算法对对称加密有平方根加速。受影响最大：RSA、ECC、DH——公钥密码学基本被 Shor 攻破。不受影响：AES-256、SHA-256/512。NIST 后量子标准化：(1) CRYSTALS-Kyber——基于格的密钥封装，替代 RSA/ECDH。(2) CRYSTALS-Dilithium——基于格的数字签名。(3) FALCON——紧凑签名。(4) SPHINCS+——基于哈希的无状态签名。工程影响：混合模式（ECDHE + Kyber）、密钥更大、PKI 迁移。Google Chrome 已测试 X25519Kyber768。',
+  ['Store Now Decrypt Later 威胁为什么是紧迫问题？','RSA 和 ECC 谁迁移工作量更大？'],
+  ['安全','后量子','Kyber','格密码','NIST'])
+
+q('hard','short_answer','同态加密与安全多方计算',
+  '同态加密（HE）和 MPC 的核心思想？工程挑战？',
+  '同态加密：在密文上直接计算，结果解密后与对明文计算一致。PHE（部分）支持加法或乘法（Paillier/RSA）。FHE（全）支持任意计算，比明文慢 10^5-10^9 倍。MPC（安全多方计算）：多个参与方在不泄露各自输入的前提下共同计算。两种方法：(1) Garbled Circuit（姚氏混淆电路）。(2) Secret Sharing（秘密分享）。挑战：通信开销大、不适合大数据量。应用：隐私保护机器学习、密钥管理。',
+  ['为什么 HE 还不能用于通用生产数据库加密？','MPC 在区块链中的应用？'],
+  ['安全','同态加密','MPC','隐私计算','密码学'])
+
+q('medium','short_answer','WebSocket 安全',
+  'WebSocket 的安全考量和 wss:// 的作用？和 HTTP 的安全差异？',
+  'WebSocket 不受同源策略限制——浏览器允许任意 WebSocket 连接（不检查 Origin），但服务端必须验证 Origin 头。wss://（WebSocket Secure）使用 TLS 加密，防止中间人攻击和内容窃听。HTTP 到 WebSocket 的升级请求（Upgrade: websocket）可能被劫持——攻击者在 HTTP 响应中注入 Upgrade 头建立恶意 WebSocket。安全实践：(1) 服务端验证 Origin 头（白名单）。(2) 使用 wss:// 而非 ws://。(3) Token 在连接建立时验证（查询参数或 Header），不要在 URL 路径中暴露。(4) 消息级别的认证（每个消息校验 Token 是否仍然有效）。(5) 速率限制——WebSocket 长连接可能被滥用于 DDoS。CSRF over WebSocket：攻击网站可建立 WebSocket 连接到目标服务器（浏览器不阻止），服务端需额外验证来源。',
+  ['WebSocket 为什么不受浏览器同源策略限制？历史原因？','Socket.IO 的安全配置和原生 WebSocket 有什么不同？'],
+  ['安全','WebSocket','wss','实时通信','网络安全'])
+
+q('medium','short_answer','GraphQL 安全',
+  'GraphQL API 的安全风险有哪些？如何防止 GraphQL 查询滥用？',
+  'GraphQL 特有风险：(1) 深层嵌套查询——攻击者构造深度嵌套的查询（user→friends→posts→comments→user...），导致服务端资源耗尽（DoS）。防御：设置最大查询深度（max_depth=10）。(2) 批量请求（Batching Attack）——在单个请求中查询大量数据。如一次性查询所有用户的手机号。防御：限制每次查询的根字段数量（max_limit）、实现成本分析（query complexity analysis）。(3) 自省（Introspection）泄露——攻击者通过 __schema 查询获取全部 API 类型和字段定义。防御：生产环境禁用 introspection。(4) 认证和授权必须在 resolver 层实现——GraphQL 的单一端点意味着所有数据经过同一入口，授权逻辑不能只在路由层。工具：GraphQL Armor（安全中间件）、GraphQL 查询深度分析 + 成本限制（graphql-query-complexity）、Persisted Queries 预批准查询白名单。',
+  ['为什么 GraphQL 的单一端点比 REST 多端点在安全上更难防护？','Persisted Queries 如何防止恶意查询？'],
+  ['安全','GraphQL','API安全','Web安全','查询滥用'])
+
+# ==================== 安全技术专题 ====================
+q('hard','short_answer','浏览器安全机制',
+  '浏览器的同源策略（Same-Origin Policy）是什么？SOP 和 CORS 的关系？浏览器沙箱（Sandbox）的作用？',
+  '同源策略（SOP）：限制不同源（协议+域名+端口）的文档或脚本之间的交互。允许跨域写（链接/重定向/表单提交）和跨域资源嵌入（script/img/iframe），但禁止跨域读（AJAX 请求响应的读取）。SOP 是浏览器安全的基石。SOP vs CORS：SOP 默认拒绝跨域读，CORS 是 SOP 的受控放松。服务器通过 CORS 头声明允许哪些源读取响应。浏览器沙箱：每个 Tab/iframe 运行在独立进程中（Chrome 的多进程架构），沙箱限制渲染进程访问操作系统资源（文件/网络/进程），即使渲染进程被攻破，攻击者也不能直接访问系统资源。Chrome 的 Site Isolation——不同站点的页面分配到不同进程，防御 Spectre 类型的侧信道攻击跨进程读取内存。Sandbox iframe 属性：allow-scripts（允许脚本）、allow-same-origin（允许访问父页面 DOM）、allow-forms（允许表单提交）等，组合使用创建安全的内容隔离环境。Chromium 的沙箱在 Linux 上用 seccomp-bpf + namespace 实现，在 Windows 上用 AppContainer 实现。',
+  ['为什么 CSP 的 script-src unsafe-inline 会降低浏览器安全？','Chrome Site Isolation 如何防御 Spectre？'],
+  ['安全','浏览器安全','SOP','沙箱','Site Isolation'])
+
+q('hard','short_answer','Race Condition 安全漏洞',
+  '安全领域中的 Race Condition（TOCTOU）漏洞是什么？分布式系统中的竞态条件攻击？',
+  'TOCTOU（Time-of-Check Time-of-Use）：在检查权限和使用资源之间的时间窗口内，条件发生变化，导致安全检查失效。经典场景：(1) 文件系统 TOCTOU——检查文件是否可访问（access()），然后打开文件（open()）。在检查和打开之间攻击者替换了文件（符号链接攻击）。(2) 票务系统——检查余额 → 创建订单 → 扣款。在检查和扣款之间攻击者快速多次提交，导致同一个余额被多次使用。分布式系统竞态条件：(1) 非原子的检查-更新——IF not exists(lock) THEN acquire(lock) 在分布式锁中不是原子的，需要 SETNX / Compare-And-Swap 原子操作。(2) 并发请求去重——检查是否处理过 → 处理请求。两个请求同时到达，都检查为未处理。解决：唯一约束 + 幂等键 + 数据库行锁。(3) 库存超卖——多个节点同时扣减库存，在检查库存 > 0 和 decrement 之间其他节点同时扣减。解决：乐观锁（版本号或 CAS）、Redis 原子 DECR、数据库行锁。防御方法：(1) 原子操作——使用数据库事务、Redis Lua 脚本、CAS 指令。(2) 乐观锁——版本号字段，更新时 WHERE version = old_version。(3) 悲观锁——SELECT FOR UPDATE 行锁。(4) 分布式锁——Redlock / etcd 事务锁。',
+  ['为什么非原子检查-更新在分布式系统中尤其危险？','乐观锁和悲观锁在秒杀场景中的性能和安全权衡？'],
+  ['安全','竞态条件','TOCTOU','分布式锁','原子操作'])
+
+q('hard','short_answer','OAuth 安全攻击——OAuth 劫持与 CSRF',
+  'OAuth 2.0 流程中的安全攻击方式？state 参数如何防御 CSRF？',
+  'OAuth 2.0 常见攻击：(1) 授权码拦截——攻击者截获 authorization code（通过 Referer 头、浏览器历史、网络嗅探）。防御：PKCE + 短 code 有效期（通常 1-5min）。(2) CSRF 攻击——攻击者伪造授权请求，使用自己的 code 绑定受害者账号。防御：state 参数——Client 生成随机 state 值存在会话中，授权请求携带 state，回调时验证 state 匹配。state = 授权流程的 CSRF Token。(3) 重定向 URI 篡改——攻击者修改 redirect_uri 指向攻击者控制的服务器，截获 code。防御：服务端注册精确的 redirect_uri（不允许通配符）。OAuth 安全最佳实践：(1) 必须使用 PKCE（OAuth 2.1 强制）。(2) state 参数必须使用（防止 CSRF）。(3) redirect_uri 必须精确注册和匹配（白名单）。(4) 授权码必须是一次性的一次性（使用后立即过期）。(5) OP（OpenID Provider）的 Token 端点必须有 CSRF 和暴力破解防御。(6) 客户端认证 —— 有 client_secret 的后端使用 Basic Auth 或 POST body 认证，SPA 使用 PKCE + DPoP（Demonstration of Proof-of-Possession）。JWT 作为 access token 时的信息安全：jti 防重放、aud 防跨站使用。',
+  ['state 参数和 CSRF Token 在 OAuth 流程中的角色异同？','DPoP（OAuth 2.0 Demonstration of Proof-of-Possession）如何防止 Token 被盗用？'],
+  ['安全','OAuth','CSRF','State','PKCE'])
+
+
+# ==================== Web 安全专题 ====================
+q('medium','short_answer','XXE（XML External Entity）',
+  'XXE 攻击的原理？如何防御？',
+  'XXE 原理：XML 解析器在处理外部实体引用时加载攻击者指定的外部资源。攻击向量：(1) 读取本地文件——<!ENTITY xxe SYSTEM file:///etc/passwd>。(2) SSRF——<!ENTITY xxe SYSTEM http://内网-ip/>。(3) DoS——Billion Laughs 攻击（递归实体扩展）。防御：(1) 禁用 XML 外部实体解析——Java DocumentBuilderFactory.setFeature(XMLConstants.FEATURE_DISALLOW_DOCTYPE_DECL, true)。(2) 使用 JSON 替代 XML（减少攻击面）。(3) 如果必须解析 XML，使用安全的解析器配置（禁用 DOCTYPE 声明、禁用外部实体）。(4) 升级 XML 库版本（旧版 libxml2、Xerces 默认解析外部实体）。Java 的 SAXParser、DocumentBuilderFactory 默认配置需要显式 disable。Python 的 defusedxml 库替代标准 xml 库。',
+  ['Billion Laughs 攻击的具体原理？','为什么 JSON 解析器没有 XXE 问题？'],
+  ['安全','XXE','XML','注入','Web安全'])
+
+q('medium','short_answer','Open Redirect 开放重定向',
+  '开放重定向（Open Redirect）漏洞的原理和利用方式？',
+  'Open Redirect：服务端将 URL 参数中的地址作为重定向目标返回（302 Location: url），未验证目标域名是否合法。利用方式：(1) 钓鱼——攻击者构造 https://trusted.com/redirect?url=https://evil.com，用户看到可信域名后点击，实际被重定向到钓鱼网站。(2) OAuth Token 劫持——OAuth 回调 URL 重定向可被利用窃取 code。(3) 绕过 URL 白名单——信任了 trusted.com 的链接安全检查。防御：(1) 重定向目标白名单——只允许重定向到预设的域名列表。(2) 使用数字签名——对合法 URL 签名，验证签名后执行重定向。(3) 不使用 URL 参数做跳转——用 ID 映射固定 URL。(4) 如果必须参数化：验证重定向目标不以 // 开头（避免 protocol-relative URL）、不包含 @ 符号（URL 凭证格式绕过）、解析并验证 host 是否在白名单中。',
+  ['URL 中 @ 符号（https://real.com@evil.com）如何绕过重定向验证？','为什么 protocol-relative URL (//evil.com) 可绕过某些重定向校验？'],
+  ['安全','Open Redirect','重定向','钓鱼','Web安全'])
+
+q('medium','short_answer','CRLF 注入',
+  'CRLF 注入（HTTP 响应拆分）的原理？如何防御？',
+  'CRLF 注入：攻击者在用户输入中注入回车换行符（%0d%0a 或 \r\n），如果输入被写入 HTTP 响应头，攻击者可以提前结束响应头并写入新的响应体，实现 HTTP 响应拆分（Response Splitting）。攻击效果：(1) 写入恶意 Cookie——set-cookie 注入恶意会话。(2) 跨站脚本——拆分的响应体中包含恶意 HTML。(3) 缓存投毒——将恶意页面写入缓存，后续用户访问缓存时获得恶意内容。防御：(1) 对所有用户输入做 CR/LF 过滤——删除 \r(0x0D) 和 \n(0x0A) 字符。(2) 使用安全的 API 设置响应头——不直接拼接字符串到响应头。(3) 现代 Web 框架（Spring Security、Express Helmet）默认阻止 CRLF 注入。Node.js 的 http 模块在响应头值中发现 CR/LF 时抛异常（v10+）。Apache Tomcat 的 Response 接口对 Header 值做 encode。Nginx 的 proxy_pass 配置中 $uri 可能携带 CRLF → 使用 $request_uri 替代。',
+  ['HTTP 响应拆分如何实现缓存投毒？','为什么 Nginx 的 $uri 变量可能引入 CRLF 注入？'],
+  ['安全','CRLF注入','响应拆分','Web安全','缓存投毒'])
+
+q('hard','short_answer','SSTI（服务端模板注入）',
+  'SSTI（Server-Side Template Injection）的原理？哪些模板引擎容易受影响？',
+  "SSTI：攻击者在模板中注入恶意模板表达式，服务端渲染时执行了注入的代码。常见于允许用户自定义模板内容的场景（邮件模板、报表模板、CMS 页面）。模板引擎安全性分类：(1) 不安全——Java（Velocity、FreeMarker）、Python（Jinja2、Mako）、Ruby（ERB）、JavaScript（Pug/EJS、Nunjucks）。这些模板引擎在模板中可以直接调用任意对象方法。(2) 安全——有沙箱机制的模板（Liquid、Handlebars（无预编译）、Mustache）。但沙箱可能被绕过。检测：${7*7} 在 Velocity 中输出 49，{{7*7}} 在 Jinja2 中输出 49。Jinja2 SSTI 利用链：''.__class__.__mro__[1].__subclasses__() 找到可执行命令的类（如 subprocess.Popen）。FreeMarker SSTI：<#assign ex='freemarker.template.utility.Execute'?new()>${ex('id')}。防御：(1) 如果不需要用户自定义模板——不把用户输入作为模板内容。(2) 如果需要——使用语义明确的模板语言（如 Liquid 或 Handlebars 沙箱）。(3) 禁用危险的内置函数——Jinja2 配置 undefined=StrictUndefined + 自定义 sandbox。(4) 输入验证——限制模板表达式语法。(5) 最小权限——沙箱进程不以 root 运行。",
+  ['为什么 Freemarker/Thymeleaf 的 SSTI 利用链不同？','Jinja2 的 SandboxedEnvironment 能完全防御 SSTI 吗？'],
+  ['安全','SSTI','模板注入','Jinja2','FreeMarker'])
+
+q('medium','short_answer','IDOR（不安全的直接对象引用）',
+  'IDOR（Insecure Direct Object Reference）的原理？如何防御？',
+  'IDOR：应用程序使用用户提供的直接引用（ID、编号、文件名）访问对象，未验证用户是否有权限访问该对象。经典场景：GET /api/order/12345——用户 A 可以访问订单 12345，但将 ID 改为 12346 后同样能访问（即使订单不属于用户 A）。常见位置：API 路径参数、查询参数、POST body 中的 ID、文件名的数字 ID。IDOR 是访问控制失效（Broken Access Control）中最常见的形式——OWASP Top 10 #1。防御：(1) 每次访问都执行权限检查——不做假设（如「用户从列表中点进来的就不用检查」是不安全的假设）。(2) 使用 UUID 替代自增 ID（使 IDOR 更难枚举，但不替代权限检查）。(3) 使用间接引用——用户令牌与服务端 ID 的映射，用户永远看不到真实 ID。(4) 自动授权测试——使用 ZAP/Burp 的 Auto-Detect IDOR 扫描工具。(5) 权限检查的最佳实践：AOP（面向切面编程）在 API 层统一检查（Spring Security 的 @PreAuthorize、Django 的 PermissionRequiredMixin）。',
+  ['为什么 UUID 替代自增 ID 不能完全防御 IDOR？','Base64 编码的 ID（如 dXNlcjoxMjM=）为什么不是安全的授权机制？'],
+  ['安全','IDOR','访问控制','OWASP','授权'])
+
+# ==================== 认证与会话管理 ====================
+q('hard','short_answer','Session 管理与安全',
+  '安全的 Session 管理最佳实践？如何防御 Session Fixation 攻击？',
+  'Session 管理最佳实践：(1) Session ID 必须由安全随机数生成——Java 的 SecureRandom、Node 的 crypto.randomBytes()。不使用可预测的算法（如 Math.random() 拼接 IP+时间戳）。(2) Session 过期——登录后生成新 Session（登录前和登录后的 Session 分离）。空闲超时（15-30min 无操作过期）。绝对超时（4-8h 后强制重新登录）。(3) Session 存储——生产环境不存文件（多节点不一致），使用 Redis/数据库共享 Session。Redis Session 需设置 TTL。(4) Cookie 安全——HttpOnly（防 XSS 读取）、Secure（仅 HTTPS）、SameSite（防 CSRF）、Path 限制。Session Fixation（会话固定）：攻击者给用户一个已知的 Session ID，用户登录后服务端未创建新 Session，攻击者仍可使用同一 Session ID 访问。防御：(1) 登录成功后总是生成新 Session（session_regenerate_id() / HttpSession.invalidate() + request.getSession(true)）。(2) 不接受 URL 参数传递的 Session ID（只接受 Cookie）。(3) Session ID 在认证后、权限变化后重新生成。Session 并发控制：限制同一用户同时登录的 Session 数（记录用户 Session ID 列表，超出限制时踢除最先登录的）。',
+  ['为什么登录后必须重新生成 Session ID？','Redis Session 存储中 TTL 延长策略（滑动过期 vs 固定过期）？'],
+  ['安全','Session','认证','Session Fixation','Cookie'])
+
+q('medium','short_answer','Broken Authentication',
+  '常见的认证机制漏洞有哪些？枚举攻击如何防御？',
+  '常见认证漏洞：(1) 弱密码策略——允许短密码、常见密码（123456、password）。防御：密码复杂度要求（大写+小写+数字+符号，8+ 字符）、密码黑名单（禁用 Top 10000 常见密码）。(2) 凭证枚举——登录失败时返回「用户名不存在」vs 「密码错误」，攻击者可枚举有效用户名。防御：统一返回「用户名或密码错误」。注册时「邮箱已注册」不禁用——攻击者可通过注册接口枚举有效邮箱。(3) 暴力破解缺乏限流——防御：登录限流（5 次失败后锁定 15min）+ CAPTCHA + 渐增延迟。(4) 忘记密码功能——密码重置链接有效期太短/太长、Token 可预测（base64(timestamp) 而非安全随机数）、重置 Token 不失效（新旧 Token 同时可用）。防御：重置 Token 用 SecureRandom 生成，有效期 15-30min，使用后立即失效。(5) 凭证填充（Credential Stuffing）——攻击者使用其他网站泄露的用户名密码批量登录。防御：账号异常检测（同一 IP 大量失败登录）、设备指纹、地理异常检测。(6) 多因素认证未启用——防御：重要系统强制 MFA。Apple/Google/Microsoft 都在强制推行 MFA。',
+  ['为什么「用户名不存在」vs「密码错误」的区分是安全风险？','Credential Stuffing 和暴力破解的防御策略差异？'],
+  ['安全','认证','暴力破解','枚举','MFA'])
+
+# ==================== 数据安全 ====================
+q('hard','short_answer','数据分类与数据保护',
+  '数据分类分级的原则？不同级别数据应如何保护？',
+  '数据分类三要素：机密性、完整性、可用性（CIA）。级别划分（以金融行业为例）：(1) 公开数据——影响极小。不用特殊保护（如产品公告）。(2) 内部数据——泄露有轻微影响（内部文档、组织架构）。保护：基本访问控制。(3) 敏感数据——泄露有重大影响（用户 PII、交易记录、业务数据）。保护：加密存储（AES-256）+ 传输加密（TLS）+ 访问审计。(4) 机密数据——泄露有灾难性影响（密钥、支付凭证、源代码签名密钥）。保护：加密+HSM+严格控制+定期轮换+多因素审批。数据安全治理框架：(1) 发现——识别和分类所有存储的数据（Data Discovery 工具，如 Amazon Macie、Microsoft Purview）。(2) 保护——加密（静态/传输/处理中）+ 令牌化（Tokenization）替代敏感字段。(3) 监控——数据访问审计（DLP 系统，Data Loss Prevention）。异常访问告警。GDPR 对个人数据的定义：可直接或间接识别自然人的信息（姓名、身份证号、位置数据、IP 地址、Cookie ID、遗传数据、生物特征数据）。加密 vs 令牌化：加密可逆（有密钥可还原），令牌化不可逆（Token 无数学映射，通过安全 Token 库映射原始值）。',
+  ['为什么令牌化（Tokenization）在某些场景比加密更适合合规？','数据保留策略（多久删除历史数据）和法律法规的冲突？'],
+  ['安全','数据分类','PII','GDPR','数据保护'])
+
+q('medium','short_answer','Secrets Management',
+  '分布式系统中的机密管理（密码、API Key、证书）的最佳实践？HashiCorp Vault 的架构？',
+  '机密管理的错误实践（常见）：硬编码在代码里、写配置文件提交到 Git、环境变量明文存储、K8s ConfigMap（Base64 编码不是加密）。最佳实践：(1) 专门的机密管理服务——HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、GCP Secret Manager。(2) 机密动态生成——数据库密码不是静态的，Vault 可以为每个应用生成动态临时密码（TTL 到期自动失效）。(3) 机密轮换——定期自动轮换。Secrets Manager 支持自动轮换（每 30 天）。Vault 支持动态机密（每次获取不同密码）。(4) 审计——谁在什么时候访问了什么机密。Vault 的审计日志记录每个 API 调用。Vault 核心架构：存储后端（Raft/Consul）→ 密封层（Seal，自动解封需 Shamir 密钥）→ Secret Engine（KV/数据库/AWS/Transit）→ Auth Method（Token/K8s/LDAP/OIDC）→ 审计设备。应用集成：Vault Agent 自动认证→ 获取动态数据库密码 → 注入到应用的环境变量或文件。K8s 集成：Vault Agent Sidecar 注入 + CSI Secret Store Driver 将机密挂载为 Volume。零信任机密管理原则：应用不信任环境变量（可能被其他进程读取），机密通过 Sidecar/Unix Socket 直接注入到应用内存。',
+  ['为什么动态数据库密码比静态密码更安全？','K8s External Secrets Operator 和 Vault Agent Sidecar 的架构区别？'],
+  ['安全','Secrets','Vault','机密管理','K8s'])
+
+# ==================== 安全运营 ====================
+q('medium','short_answer','安全测试类型（SAST/DAST/IAST/RASP）',
+  'SAST、DAST、IAST、RASP 的区别？各自在 SDLC 的什么阶段使用？',
+  '四种安全测试技术的对比：(1) SAST（静态应用安全测试）——白盒测试，分析源代码发现漏洞（不运行程序）。工具：SonarQube、CodeQL、Checkmarx、Semgrep。在开发阶段（IDE/Commit）使用。优点：早期发现、精确到代码行。缺点：误报率高、无法检测运行时漏洞。(2) DAST（动态应用安全测试）——黑盒测试，对运行中的应用进行扫描。工具：OWASP ZAP、Burp Suite、Acunetix。在测试/预发布阶段使用。优点：发现运行时漏洞（配置错误、认证问题）、误报率低。缺点：需要运行环境、测试覆盖取决于爬虫能力。(3) IAST（交互式应用安全测试）——代理/插桩在运行的应用中，结合 SAST 和 DAST。工具：Contrast Assess、HCL AppScan。在测试阶段使用。优点：低误报（有代码上下文）、覆盖率高（跟踪执行路径）。需要代码插桩。(4) RASP（运行时应用自我保护）——运行时嵌入应用的安全保护层，实时检测和阻断攻击。工具：Contrast Protect、Signal Sciences、Imperva RASP。在生产阶段使用。优点：实时防御（不依赖签名）、上下文感知（理解应用逻辑）。缺点：性能开销（每请求检查）、需要持续维护规则。DevSecOps 集成建议：CI 中 SAST 门禁（阻断 CRITICAL）+ 定期 DAST 扫描（每周）+ 生产环境 RASP（核心应用）。',
+  ['为什么 SAST 的误报率通常高于 DAST？','RASP 和 WAF 的区别——为什么 RASP 能检测到 WAF 漏过的攻击？'],
+  ['安全','SAST','DAST','IAST','RASP'])
+
+q('hard','short_answer','安全自动化与 DevSecOps',
+  'DevSecOps 实践中如何将安全嵌入 CI/CD 流水线？Pipeline 的各个阶段的安全门禁？',
+  'DevSecOps 核心理念：安全是每个人的责任，安全控制左移到开发早期。CI/CD 各阶段安全门禁：(1) 代码提交（Pre-Commit）——pre-commit hook 检查硬编码密钥（truffleHog/gitleaks）、机密扫描（禁止提交 .env/凭证文件）。Terraform 的 tfsec/checkov 扫描 IaC 安全配置。(2) 构建阶段（CI）——SAST 扫描（SonarQube/CodeQL），阻断 CRITICAL/HIGH 漏洞。依赖扫描（Dependabot/Snyk/Trivy），阻断已知 CVE 的依赖。容器镜像扫描（Trivy/Grype），阻断基础镜像中的 CRITICAL 漏洞。软件物料清单（SBOM）生成（CycloneDX）。(3) 测试阶段——DAST 扫描（OWASP ZAP 作为集成测试的一部分）。API 安全测试（针对 API 端点的认证/授权测试）。模糊测试（如 Jazzer for Java）。(4) 预发布——Infrastructure as Code 合规扫描（Terraform 的 sentinel policy / cdk-nag）。K8s 资源安全配置检查（kube-bench / kube-hunter / Popeye）。(5) 部署——镜像签名验证（cosign）——只部署已签名的受信镜像。金丝雀发布（Flagger 自动根据错误率/延迟决定是否回滚）。(6) 运行时——RASP 或 WAF 保护。K8s 运行时安全（Falco 检测异常系统调用）。持续扫描（Trivy 定期扫描运行中的容器）。工具链集成：统一 Dashboard（DefectDojo / Argo Security）聚合所有工具的发现结果，减少平台切换。安全 Champions：每个开发团队中至少一人负责推动安全实践，成为 Security Team 和 Dev Team 的桥梁。',
+  ['Pipeline 中 SAST 阻断 CRITICAL 漏洞导致发布延迟，怎么平衡？','Falco 检测容器逃逸的规则示例？'],
+  ['安全','DevSecOps','CI/CD','SAST','Pipeline'])
+
+q('medium','short_answer','K8s Pod Security Standards（PSS）',
+  'K8s Pod Security Standards（PSS）的三个级别？Pod Security Admission（PSA）如何实施？',
+  'Pod Security Standards（PSS）定义三个策略级别：(1) Privileged——无限制（权限最宽松），适用于系统级组件（监控、网络插件）。(2) Baseline——最低限制的 Pod 安全要求，禁止已知特权升级。禁止：privileged 容器、hostPID/IPC/Network、hostPort（除 1024 以下）、allowPrivilegeEscalation、seccomp 未配置。(3) Restricted——最严格的 Pod 安全要求。附加限制：以非 root 用户运行（MustRunAsNonRoot=true）、只读根文件系统（readOnlyRootFilesystem=true）、seccomp 配置为 RuntimeDefault、删除所有非必需 Capability。Pod Security Admission（PSA，K8s v1.23+ beta，v1.25+ stable）：以 Admission Controller 方式实施 PSS。三种模式：enforce（阻止违反策略的 Pod）、audit（记录审计日志，不阻止）、warn（返回警告，不阻止）。按命名空间级别（标签）配置：pod-security.kubernetes.io/<MODE>: <LEVEL>（如 pod-security.kubernetes.io/enforce: restricted）。也支持版本控制：pod-security.kubernetes.io/enforce-version: v1.25。迁移建议：先 warn → 修复违规 → enforce。第三方替代：K8s 1.23 前使用 PodSecurityPolicy（PSP，v1.25 移除）。OPA/Gatekeeper 或 Kyverno 可实现更细粒度的控制（补充 PSS 之外的自定义策略）。',
+  ['为什么 PSP 被废弃而 PSA 成为替代？','Kyverno 的 generate 规则如何自动为命名空间添加 PSA 标签？'],
+  ['安全','K8s','PSS','PSA','Pod安全'])
+
+q('hard','short_answer','数据库安全',
+  '数据库安全的纵深防御策略？静态加密（TDE）和列级加密的区别？',
+  '数据库安全层次：(1) 网络层——数据库不暴露公网，只允许应用服务器 IP（安全组白名单）。使用 Private Link / VPC Endpoint。TLS 传输加密（强制 sslmode=require）。(2) 认证——强密码策略 + 应用使用独立数据库用户（不共享 root/管理员账号）。短期凭证（Vault 动态数据库密码 / AWS IAM 数据库认证）。(3) 权限——最小数据库权限：应用只用 SELECT/INSERT/UPDATE/DELETE，不用 DROP/ALTER/CREATE。按表粒度授权（应用 A 只访问 order 表，不访问 user_pii 表）。(4) 加密——静态加密和列级加密。静态加密（TDE，Transparent Data Encryption）：数据库级别自动加密所有写入磁盘的数据。对应用透明（无需代码修改）。加密在存储层（page 级别），解密在数据库引擎层。云数据库（AWS RDS、Azure SQL、GCP Cloud SQL）默认启用。保护物理介质丢失的安全。列级加密：应用层有选择地加密特定列（如身份证号、信用卡号）。应用读取时需解密。支持搜索吗？不支持（大多数情况），需要可搜索加密或特殊处理。AES-256 加密。保护数据库管理员越权查看。(5) 审计——数据库审计日志（AWS RDS 审计插件 / PostgreSQL audit extension）。记录谁在什么时间执行了什么 SQL。SQL 注入的检测和告警。(6) 备份安全——备份加密（S3 SSE-KMS / GPG 加密备份文件）。备份访问控制。备份恢复演练。',
+  ['列级加密下如何对加密列做模糊搜索？','AWS RDS 加密和 Aurora 加密有什么区别？'],
+  ['安全','数据库安全','TDE','加密','审计'])
+
+# ==================== 扩展安全专题 ====================
+q('medium','short_answer','移动应用安全',
+  'OWASP Mobile Top 10 的主要风险？移动应用特有的安全威胁？',
+  'OWASP Mobile Top 10 2024：(1) M1——凭证和认证不足（不当的凭据管理、生物认证绕过）。(2) M2——不安全的数据存储（本地 SQLite 未加密、SharedPreferences 明文、日志泄露敏感数据）。(3) M3——不安全的通信（未使用 TLS、证书验证绕过）。(4) M4——不安全的认证（本地认证可绕过、Session Token 泄露）。(5) M5——授权不足（越权访问其他用户数据）。(6) M6——客户端代码质量（缓冲区溢出、字符串格式化）。(7) M7——代码篡改（应用重打包、运行时 hook）。(8) M8——逆向工程（代码混淆不足、DEX 保护不足）。(9) M9——功能滥用（URL Scheme 劫持、剪贴板泄露）。(10) M10——生态系统风险（第三方 SDK 权限过大、应用市场恶意应用）。移动特有威胁：侧载攻击、设备 Root/Jailbreak 检测、屏幕截图防护（FLAG_SECURE）、应用完整性校验（代码签名）。防御：(1) 敏感数据存 Keychain/Keystore 而非本地文件。(2) 证书固定（Certificate Pinning）。(3) 反调试检测 + 代码混淆（ProGuard/R8/DexGuard）。(4) SSL Pinning + 证书透明度。',
+  ['iOS Keychain 和 Android Keystore 的安全差异？','为什么 SSL Pinning 在移动端比 Web 端更重要？'],
+  ['安全','移动安全','OWASP','移动应用','逆向工程'])
+
+q('medium','short_answer','云安全工具（CSPM/CWPP）',
+  'CSPM、CWPP、CNAPP 分别解决什么问题？云安全的关键控制措施？',
+  '云安全工具分类：(1) CSPM（Cloud Security Posture Management）——云安全态势管理。自动检测云配置风险（S3 公开读写、安全组过于宽松、IAM 权限过大）。持续合规检查（CIS Benchmarks、SOC2、PCI DSS）。代表：Wiz、Prisma Cloud、AWS Security Hub。(2) CWPP（Cloud Workload Protection Platform）——云工作负载保护。保护虚拟机、容器、Serverless 工作负载。包括防病毒、IDS/IPS、文件完整性监控（FIM）。代表：CrowdStrike、Trend Micro。(3) CNAPP（Cloud Native Application Protection Platform）——统一 CSPM + CWPP + CIEM + API 安全。覆盖从代码到运行时的全链路保护。代表：Wiz、Prisma Cloud、Aqua Security。关键控制措施：(1) IAM——最小权限 + 权限边界（Permissions Boundary）+ Service Control Policy（SCP）。(2) 网络安全——VPC 隔离 + 安全组白名单 + 网络 ACL。(3) 数据保护——S3 禁止公开访问（Block Public Access）+ SSE-KMS 加密。(4) 日志审计——CloudTrail / 操作审计启用 + 日志不可变存储。(5) 基础设施即代码（IaC）扫描——Terraform 配置扫描（tfsec / Checkov）。',
+  ['CIS Benchmarks 和 PCI DSS 在云安全中的重叠点？','AWS SCP 和 IAM Policy 的区别？'],
+  ['安全','云安全','CSPM','CWPP','CNAPP'])
+
+q('medium','short_answer','威胁情报金字塔',
+  '威胁情报的四个层次（金字塔模型）？威胁情报在 SOC 中的应用？',
+  '威胁情报金字塔（Pyramid of Pain，David Bianco 提出，自底向上越来越痛苦）：(1) Hash Values——文件 Hash（MD5/SHA1），攻击者容易更改（重新编译即可）。(2) IP Addresses——攻击者 C2 地址，容易更换（CDN / DGA / 代理）。(3) Domain Names——域名（DGA 域名、punycode），可通过域名前置（Domain Fronting）绕过。(4) Network/Host Artifacts——网络/主机特征（特定的 URI 路径、TLS JA3 指纹、User-Agent），攻击者修改成本较高。(5) Tools——攻击工具（Metasploit、Mimikatz、Cobalt Strike），工具签名检测难度增加。(6) TTPs（Tactics, Techniques, Procedures）——攻击者的行为模式（MITRE ATT&CK 框架中的技术），攻击者改变行为模式的成本最高。威胁情报在 SOC 中的应用：(1) 事件优先级排序——关联 IoC（Indicator of Compromise）和内部日志减少误报。(2) 主动检测——基于 TTP 的行为检测（Sigma 规则）。(3) 威胁狩猎——基于最新威胁情报主动搜索内部系统。(4) SOAR ——自动响应已知的威胁 IoC（自动封禁 IP、隔离主机）。STIX/TAXII 标准：STIX（Structured Threat Information Expression）是威胁情报的标准化格式，TAXII（Trusted Automated Exchange of Indicator Information）是传输协议。',
+  ['为什么 TTP 比 Hash 和 IP 在威胁情报金字塔中更痛苦？','STIX 2.1 和 STIX 1.x 的主要区别？'],
+  ['安全','威胁情报','SOC','STIX','TAXII'])
+
+q('medium','short_answer','勒索软件防御',
+  '勒索软件的攻击链？企业如何构建反勒索能力？',
+  '勒索软件攻击链：(1) 初始访问——钓鱼邮件（含恶意附件/链接）、RDP 暴力破解、漏洞利用（ProxyShell/Log4j）、被盗凭证登录 VPN。(2) 持久化——创建计划任务、注册表 Run 键、创建本地管理员账号。(3) 横向移动——PsExec、SMB 共享、RDP、WMIC（加密网络共享文件可最大化影响）。(4) 数据窃取——在加密前窃取敏感数据（双重勒索：不交赎金就公开数据）。(5) 部署勒索软件——禁用备份服务（vssadmin delete shadows / bcdedit /boot {default} /set {default} recoveryenabled No）。加密文件（AES + RSA），留下赎金说明。反勒索能力框架（NIST IR + CISA 指南）：(1) 预防——邮件安全（DMARC/DKIM/SPF + 附件沙箱分析）。EDR 覆盖所有端点（行为检测而非签名检测）。凭证安全（杜绝弱密码 + MFA 全覆盖）。网络分段（限制横向移动）。(2) 检测——异常文件加密行为检测（大量文件访问 + 写操作）。大量 SMB 连接检测。安全事件关联。(3) 响应——隔离感染主机（手动/自动）。保留赎金说明（证据）。(4) 恢复——不可变备份（WORM 存储 / S3 Object Lock / 离线磁带）。(5) 备份复原演练——定期演练确保备份可用。3-2-1 备份原则：3 份副本，2 种介质，1 份异地。',
+  ['为什么不可变备份对勒索软件防御至关重要？','双重勒索攻击的完整应对流程？'],
+  ['安全','勒索软件','备份','事件响应','CISA'])
+
+q('hard','short_answer','红蓝对抗',
+  '红队（Red Team）、蓝队（Blue Team）、紫队（Purple Team）的职责区别？',
+  '红队（进攻方）：模拟真实攻击者的 TTP，测试组织的检测和响应能力。不限于漏洞扫描——使用高级攻击技术（社会工程、0day、物理入侵）。通常有明确目标（获取某个系统的数据、到达某个网络区域）。不通知蓝队（防止偏见），评估真实检测能力。输出：攻击路径报告 + 改进建议。蓝队（防守方）：日常安全运营（SOC）。事件监控、检测、分析、响应。威胁狩猎（在线索不明显时主动寻找入侵痕迹）。安全架构加固。红队的核心客户——蓝队从红队攻击中学习改进检测能力。紫队：红蓝协作机制。不是独立的团队，而是红蓝之间持续沟通的反馈循环。红队分享 TTP、蓝队实时调整检测规则。流程：红队执行攻击 → 蓝队是否检测到？→ 如果没检测到，为什么？→ 完善检测规则 → 红队再次执行确认修复。CPTED（Crime Prevention Through Environmental Design）：设计环境使得攻击难以实施和隐藏。ATT&CK 映射：红队用 ATT&CK 规划攻击路径，蓝队用 ATT&CK 映射检测覆盖盲区。',
+  ['如何衡量红队攻击的 ROI？','为什么静态检测规则（Signature）不足以应对 APT 攻击？'],
+  ['安全','红蓝对抗','紫队','SOC','检测'])
+
+q('medium','short_answer','SOC 三线模型',
+  'SOC 的三线模型？SIEM 和 SOAR 的区别？',
+  'SOC（Security Operations Center）三线模型：(1) L1（Tier 1，一线分析师）——监控 SIEM 告警，初步分类和优先级排序（Triage）。确认告警是否为真阳（True Positive）。升级到 L2 如果无法处理。典型工具：SIEM 控制台。(2) L2（Tier 2，二线分析师）——深入调查确认的告警。事件响应（隔离主机、封禁 IP、收集取证数据）。使用 EDR 平台（CrowdStrike、SentinelOne）进行深入调查。(3) L3（Tier 3，高级分析师/工程师）——威胁狩猎、逆向工程、恶意软件分析。安全架构改进。规则优化（编写新的 Sigma 规则 / YARA 规则）。SIEM（Security Information & Event Management）：集中收集日志（Syslog、Windows Event Log、CloudTrail、Flow Logs）。关联分析（规则引擎 / UEBA）。告警生成。代表：Splunk、ELK Stack、Azure Sentinel、Sumo Logic。SOAR（Security Orchestration Automation & Response）：工作流自动化（Runbook 实现自动化响应）。案例管理（Ticket、证据关联）。编排（调用防火墙/EDR/邮件 API 自动执行操作）。代表：Splunk SOAR（Phantom）、Palo Alto XSOAR、Shuffle SOAR（开源）。SIEM → SOAR：SIEM 检测异常 → SOAR 触发自动化响应。UEBA（User & Entity Behavior Analytics）：用 ML 检测异常用户行为（内部威胁）。',
+  ['MSSP（托管安全服务提供商）如何解决多租户 SIEM 的数据隔离？','Splunk ES 和 Microsoft Sentinel 的定价模式区别？'],
+  ['安全','SOC','SIEM','SOAR','事件响应'])
+
+q('medium','short_answer','EDR/XDR 端点安全',
+  'EDR 和 XDR 的区别？现代端点安全的核心能力？',
+  'EDR（Endpoint Detection & Response）：以端点（终端）为中心。实时监控端点行为（进程创建、网络连接、文件系统变更、注册表变更、内存访问）。行为分析代替签名检测（检测无文件恶意软件、LOLBins）。提供远程隔离和取证能力。代表：CrowdStrike Falcon、SentinelOne Singularity、Microsoft Defender for Endpoint、Elastic EDR（开源）。XDR（eXtended Detection & Response）：跨多个安全层的数据关联——端点（EDR）、网络（NDR）、邮件、云工作负载、身份（IAM）。单一平台统一告警，减少告警疲劳。目的：解决 EDR 只能看到端点、网络流量看不到端点、邮件攻击看不到执行链的问题。自动关联：邮件钓鱼 → 用户点击 → 进程执行 → C2 连接 → 数据窃取（一条时间线而非多个独立告警）。核心端点安全能力：(1) 下一代反病毒（NGAV）——ML 驱动的恶意软件检测，不依赖签名。(2) EDR——行为监控 + 回滚功能（SentinelOne 可以 rollback 勒索软件加密的文件）。(3) 攻击面减少（ASR）——禁用宏、阻止 LOLBins、控制 USB 设备。(4) 设备控制——USB 白名单 / BitLocker 加密策略。(5) 托管检测与响应（MDR）——7x24 外包 SOC 服务。',
+  ['为什么传统 AV 签名检测在 APT 攻击中基本无效？','Elastic EDR 和 CrowdStrike Falcon 的架构差异（开源 vs SaaS）？'],
+  ['安全','EDR','XDR','端点安全','NGAV'])
+
+q('hard','short_answer','硬件安全模块',
+  'HSM 和 TPM 的区别？密钥管理的最佳实践？',
+  'HSM（Hardware Security Module）：专用硬件设备，用于生成、存储和管理加密密钥。防篡改（物理安全措施——树莓派内的 HSM 会检测到机箱打开并擦除密钥）。FIPS 140-2/140-3 Level 3 或 Level 4 认证。常见用途：CA 根私钥存储、数据库 TDE 主密钥、代码签名、支付 HSM（PCI HSM）。云 HSM：AWS CloudHSM、Azure Dedicated HSM、GCP Cloud HSM（通过 Luna/Thales HSM 提供）。性能：HSM 加速 RSA/ECC 签名操作（数万次/秒）。TPM（Trusted Platform Module）：主板上的安全芯片（TPM 2.0 标准）。功能：(1) 安全存储——平台完整性度量（PCR 寄存器存储启动链 Hash）。(2) 远程证明——证明平台处于可信状态（TPM Quote + AIK 签名）。(3) 密封存储——仅在特定平台状态下解密的密钥（BitLocker 使用 TPM 保护全盘加密密钥）。HSM vs TPM：HSM 管理大量密钥（企业级安全策略），TPM 保护一台设备（个人设备级）。HSM 可以高速签名（API 调用），TPM 通过操作系统驱动访问（慢得多）。密钥管理最佳实践：(1) 密钥分层——根密钥在 HSM/TPM 中、加密密钥在内存中、会话密钥临时使用。(2) 密钥轮换——定期更换加密密钥（AWS KMS 自动每年轮换 CMK）。(3) 密钥备份——密钥备份到另一个 HSM（HSM 集群）。永远不以明文形式存在。(4) 访问控制——HSM 使用 M of N 控制（如 3/5 管理员分持智能卡，需要至少 3 人才能启用 HSM）。',
+  ['为什么 M of N（多方控制）是 HSM 管理的核心安全策略？','TPM 远程证明（Remote Attestation）如何确保平台未被篡改？'],
+  ['安全','HSM','TPM','密钥管理','加密'])
+
+q('hard','short_answer','机密计算',
+  '机密计算（Confidential Computing）的原理？TEE 如何保护使用中的数据？',
+  '机密计算目标：保护使用中的数据（Data-in-Use）。传统加密只保护传输中（TLS）和静态（磁盘加密），数据在内存中是明文的。机密计算通过在硬件级隔离的计算环境中处理数据，即使 OS/Hypervisor/云平台被攻破，攻击者也无法看到内存中的数据。TEE（Trusted Execution Environment）：CPU 提供的安全飞地（Enclave），内存加密 + CPU 封装。主流实现：(1) Intel SGX（Software Guard Extensions）——应用级飞地。应用程序划分为飞地（enclave）和不可信部分。飞地内代码和数据对 OS/其他进程不可见。EPC（Enclave Page Cache）内存加密。仅飞地代码可以直接访问飞地内存。局限：EPC 大小有限（128MB，SGX2 扩展后更多）。远程证明（Remote Attestation）：通过 Intel Attestation Service (IAS/DCAP) 证明飞地运行的是未被篡改的代码。(2) Intel TDX（Trusted Domain Extensions）——虚拟机级飞地（整台 VM 加密）。不需要修改应用程序（通过 KVM 转换）。(3) AMD SEV-SNP（Secure Encrypted Virtualization-Secure Nested Paging）——虚拟机级加密（AWS 使用的技术）。每个 VM 有独立的内存加密密钥。(4) ARM TrustZone——移动设备 TEE（分为 Normal World 和 Secure World）。应用场景：多方数据联合计算（金融风控共享、医疗数据研究）、区块链（私有交易）、AI 模型保护（模型在 TEE 内推理，云服务商无法查看）。',
+  ['Intel SGX 远程证明的信任链（EPID vs DCAP）？','为什么 Confidential Computing 被认为是加密的最后一块拼图？'],
+  ['安全','机密计算','TEE','SGX','隐私计算'])
+
+q('hard','short_answer','模糊测试',
+  '模糊测试（Fuzzing）的原理？覆盖率引导的模糊测试如何工作？',
+  '模糊测试（Fuzzing）原理：自动生成大量输入，向目标程序提供无效/异常/随机输入，观察程序是否崩溃或行为异常。用于发现缓冲区溢出、整数溢出、格式化字符串、use-after-free 等内存安全漏洞。模糊测试分类：(1) 黑盒 Fuzzing——完全不了解程序内部结构，随机变异输入。简单但效率低（大量无效输入浪费计算）。(2) 白盒 Fuzzing——基于符号执行（Symbolic Execution）生成可以覆盖新路径的输入。精确但开销巨大（约束求解是 NP 问题）。(3) 灰盒 Fuzzing——结合二者，最实用。覆盖率引导的模糊测试（Coverage-guided Fuzzing，代表：American Fuzzy Lop / AFL、libFuzzer、Honggfuzz）：将覆盖率反馈作为优化信号。工作流程：(1) 初始种子 → 输入种子集合（有效的文件/协议样例）。(2) 变异 → 随机位翻转、算术运算（+/−）、拼接、字典替换。(3) 执行 → 在插桩的目标程序上运行变异后的输入。(4) 覆盖率反馈 → 如果变异后的输入覆盖了新的代码路径（基本块），保留该输入作为优质种子。(5) 种子池进化 → 优质种子被添加到种子池，继续变异和进化。(6) Sanitizer 配合——AddressSanitizer（内存错误）、UndefinedBehaviorSanitizer（未定义行为）。',
+  ['为什么覆盖率引导的 Fuzzing 比随机 Fuzzing 更有效？','AFL 如何通过边覆盖（Edge Coverage）找到零日漏洞？'],
+  ['安全','Fuzzing','漏洞挖掘','AFL','覆盖率引导'])
+
+q('hard','short_answer','侧信道攻击防御',
+  '侧信道攻击（Side-Channel Attack）的原理？常见的侧信道类型和防御方法？',
+  '侧信道攻击原理：不直接攻击加密算法的数学基础，而是利用系统在执行加密操作时泄露的物理信息（时间、功耗、电磁、声音、缓存行为）来推断密钥。常见侧信道类型：(1) 计时攻击（Timing Attack）——攻击者测量加密操作的时间差异推断密钥。防御：常量时间比较（constant-time comparison）。(2) 缓存侧信道攻击（Cache Side-Channel）——攻击者通过测量缓存访问时间推断被攻击进程访问的内存地址。Spectre（CVE-2017-5753, CVE-2017-5715）：利用分支预测 + 缓存侧信道读取越界内存。Meltdown（CVE-2017-5754）：利用乱序执行读取内核内存。防御：KPTI、lfence/speculation barriers、Retpoline。(3) 功耗分析（Power Analysis）——SPA 直接观察功耗轨迹，DPA 通过统计分析恢复密钥。防御：功耗平衡（加噪声、随机化操作顺序）。(4) 电磁（EM）攻击——通过分析电磁辐射恢复密钥。防御：电磁屏蔽。(5) 声学侧信道——通过分析 CPU/风扇/键盘声音推断信息。防御：噪声屏蔽。常量时间编程原则：(1) 不在条件分支中使用秘密数据。(2) 不使用秘密数据作为数组索引。(3) 使用安全的 libsodium / BearSSL 等常量时间实现库。',
+  ['为什么 Spectre 和 Meltdown 本质上是侧信道攻击？','为什么常量时间编程比简单加随机延迟更有效防御计时攻击？'],
+  ['安全','侧信道','Spectre','Meltdown','常量时间'])
+
+q('hard','short_answer','后量子密码标准化',
+  '为什么量子计算对现有密码学的威胁？NIST 后量子密码标准化进展？',
+  '量子威胁：Shor 算法可以在多项式时间内分解大整数和计算离散对数——破解 RSA（2048 位）、ECDSA、ECDH。Grover 算法可以将对称加密的暴力破解复杂度减半（AES-256 只需要 128 位的量子安全强度）。时间线：密码相关量子计算机（CRQC）预估 10-20 年（2040 年前后），但现在是迁移前的准备期（Harvest Now, Decrypt Later——攻击者先收集加密数据，等量子计算机可用时解密）。NIST 后量子密码标准化（PQC Standardization）：2016 年启动征集，2024 年正式标准发布。(1) CRYSTALS-Kyber（已标准化为 FIPS 203）——基于格的密钥封装机制（KEM，用于密钥交换）。安全基：Module-LWE 问题（格上的 Learning With Errors）。(2) CRYSTALS-Dilithium（已标准化为 FIPS 204）——基于格的数字签名。(3) SPHINCS+（已标准化为 FIPS 205）——基于无状态哈希的数字签名。签名大（~17KB - 50KB），但安全性基于哈希函数的抗碰撞性（最保守的安全假设）。(4) FALCON——基于格的紧凑签名（签名小，适合证书链）。需要浮点运算。迁移挑战：(1) 混合模式——在过渡期同时使用经典 + 量子安全算法（如 X25519Kyber768 组合）。(2) 大小增加——PQC 公钥/签名比 RSA/ECDSA 大 10-100x，影响 TLS 握手、DNS（DNSSEC）、代码签名等协议。(3) 协议升级——TLS 1.3 已支持混合 KEM（RFC 8446 扩展）。',
+  ['为什么 Harvest Now, Decrypt Later 是企业现在就需要关注 PQC 的原因？','混合模式（Hybrid Mode）如何实现经典到 PQC 的平稳过渡？'],
+  ['安全','后量子密码','PQC','Kyber','Dilithium'])
+
+q('medium','short_answer','安全意识培训',
+  '有效的安全培训计划应该覆盖哪些内容？如何衡量培训效果？',
+  '安全培训分层：第一层——全员安全意识（所有员工必须参加，每年至少一次）。重点内容：钓鱼邮件识别（检查发件人地址、可疑链接悬停检查、紧急请求验证）、密码安全（密码管理器使用、不重复使用密码）、敏感数据处理（不通过即时通讯发送密码/个人信息）、物理安全（尾随进入、清理桌面 Clean Desk）、报告流程（发现可疑活动的报告渠道）。第二层——开发人员安全培训（SDLC 安全集成）。安全编码规范（OWASP ASVS / SEI CERT Coding Standards）。常见漏洞的识别和修复（SQL 注入、XSS、CSRF、IDOR）。第三方依赖管理（SBOM、漏洞扫描、License 合规）。安全工具使用（SAST/DAST 扫描结果修正、Snyk/Dependabot 告警处理）。第三层——IT/运维人员。安全基线和加固标准（CIS Benchmarks）。事件响应流程和 Runbook。云安全配置（身份和访问管理、网络安全）。第四层——高管安全培训。业务风险视角的安全（Ransomware 的财务影响、合规风险、供应链风险）。培训效果衡量：(1) 钓鱼模拟成功率（一季度一次，目标 <5% 点击率，逐年下降）。(2) 安全告警员工上报率和平均响应时间。(3) 安全考试通过率。(4) 开发人员安全漏洞返工率。',
+  ['为什么钓鱼模拟训练应该奖励报告者而非惩罚点击者？','安全培训覆盖率和培训效果哪个更重要？如何平衡？'],
+  ['安全','安全意识','培训','钓鱼','合规'])
+
+q('medium','short_answer','隐私保护与数据合规',
+  'GDPR 的核心原则？个人信息保护法对企业数据处理的要求？',
+  'GDPR（General Data Protection Regulation，2018）核心原则：(1) 合法、公正、透明原则——处理个人数据需要合法的法律依据（同意、合同履行、法定义务、公共利益、合法利益）。(2) 目的限制——数据只能为特定、明确、合法的目的收集。(3) 数据最小化——只收集处理目的所需的必要数据。(4) 准确性——数据必须准确，过期数据应及时更新或删除。(5) 存储限制——数据保存时间不应超过处理目的所需的时间。(6) 完整性和保密性——适当的技术和组织安全措施。数据主体权利（GDPR）：知情权、访问权、更正权、删除权（被遗忘权）、限制处理权、数据可携权、反对权。数据泄露通知：72 小时内通知监管机构。个人信息保护法（中国，2021）核心要求：(1) 告知同意——处理个人信息前取得明确同意（单独同意用于敏感个人信息）。(2) 自动化决策——算法推荐需提供不基于个人特征的选择方案。(3) 跨境传输——通过安全评估或认证后，个人数据方可出境（数据本地化要求）。(4) 重要互联网平台——需设立独立的外部监督机构。PII（Personally Identifiable Information）的分类管理：直接标识符（姓名、手机号、身份证号）vs 间接标识符（IP 地址、设备指纹、行为轨迹）。敏感 PII（健康状况、生物识别、金融信息）需要更高级的保护（加密 + 访问控制 + 审计）。',
+  ['GDPR 的被遗忘权和区块链的不可篡改性如何调和？','数据可携权（Data Portability）对 SaaS 平台的影响？'],
+  ['安全','隐私','GDPR','个人信息保护','合规'])
+
+q('medium','short_answer','API 网关安全',
+  'API 网关的安全功能？速率限制（Rate Limiting）的实现策略？',
+  'API 网关安全功能：(1) 认证和授权——JWT 验证（签名校验 + 过期检查）、OAuth2/OIDC 集成、API Key 管理。(2) 速率限制（Rate Limiting）——防止滥用和暴力破解。(3) 请求验证——Schema 验证（JSON Schema / Protobuf）、大小限制、SQL 注入/XSS 过滤。(4) 日志和监控——请求日志（谁、什么、何时）、异常检测。(5) IP 白名单/黑名单——地理限制。(6) Web 应用防火墙（WAF）——OWASP CRS（Core Rule Set）。速率限制策略：(1) 用户级别限制——每个用户/API Key 的请求限额（如 100 req/min）。(2) IP 级别限制——基于 IP 地址的限制（如 1000 req/min per IP）。(3) 端点级别限制——不同端点不同限制。敏感端点（/login）比只读端点（/list）更严格。(4) 全局限制——所有请求的总上限。实现算法：Token Bucket（允许突发流量）、Leaky Bucket（平滑流量）、Fixed Window（简单但有边界问题）、Sliding Window（更平滑，Redis sorted set + ZREMRANGEBYSCORE）。响应策略：429 Too Many Requests + Retry-After 头部 + rate-limiting 头部（X-RateLimit-Limit、X-RateLimit-Remaining、X-RateLimit-Reset）。',
+  ['为什么 Token Bucket 比 Fixed Window 更适合做 API Rate Limiting？','多节点分布式 Rate Limiting 的 Redis 实现和一致性问题？'],
+  ['安全','API安全','速率限制','网关','WAF'])
+
+q('hard','short_answer','WebAuthn 无密码认证',
+  'WebAuthn/Passkeys 的原理？为什么被认为是密码认证的取代方案？',
+  'WebAuthn（Web Authentication，W3C 标准 2019）和 CTAP（Client to Authenticator Protocol，FIDO2 协议）共同构成 FIDO2 标准。核心概念：(1) 无密码认证——用户使用生物识别（指纹/人脸）、PIN 或安全密钥代替密码。不使用共享密钥——私钥永远不离开用户设备（平台认证器/跨平台认证器）。(2) 防钓鱼——WebAuthn 的认证绑定到 Origin（域名），凭据对每个域名唯一。即使攻击者制作了完全相同的登录页面，用户设备不会响应 phishing 域名。(3) 公私钥对——注册时在用户设备生成公私钥对。私钥存储在设备安全区域（Secure Enclave / TPM / Android TEE）。公钥发送给服务端。登录时服务端发送挑战（challenge），用户设备用私钥签名，服务端用公钥验证。Passkeys（平台凭据）：iCloud Keychain / Google Password Manager / Microsoft Authenticator 中存储的 FIDO2 凭据。跨设备通过端到端加密同步。与传统 MFA 对比：密码（你已知）+ TOTP（你拥有）——TOTP 可以钓鱼（中间人攻击）。WebAuthn（你拥有 + 你是）= 强抗钓鱼。Passkeys = WebAuthn + 跨设备同步 + 用户体验改进。',
+  ['为什么 WebAuthn 被认为可以抵抗钓鱼攻击（而 TOTP 不能）？','Passkeys 跨设备同步（iCloud Keychain）对安全模型的影响？'],
+  ['安全','WebAuthn','FIDO2','无密码','认证'])
+
+q('hard','short_answer','安全架构评审',
+  '威胁建模（Threat Modeling）的常用方法？STRIDE 和 DREAD 模型？',
+  '威胁建模：在设计阶段系统性地识别安全威胁，在编码前解决问题（比修复生产环境的漏洞成本低 100x）。常用方法：(1) STRIDE（Microsoft 提出的威胁分类法，每个威胁是一种安全属性的破坏）——Spoofing（冒充，破坏身份认证）、Tampering（篡改，破坏完整性）、Repudiation（抵赖，破坏不可否认性）、Information Disclosure（信息泄露，破坏机密性）、Denial of Service（拒绝服务，破坏可用性）、Elevation of Privilege（权限提升，破坏授权）。(2) DREAD（风险评分模型，每个威胁用以下维度打分 1-10）：Damage Potential、Reproducibility、Exploitability、Affected Users、Discoverability。总评分 / 5 → 高/中/低风险。DREAD 的缺陷：评分高度主观。现在更多使用 CVSS 评分。威胁建模流程（四个问题模型）：(1) 我们在构建什么？（数据流图 DFD，识别信任边界）。(2) 可能出什么问题？（STRIDE 枚举、攻击树）。(3) 怎么做才能防止问题？（安全控制措施）。(4) 我们做得怎么样？（验证、测试、威胁建模更新）。工具：Microsoft Threat Modeling Tool、OWASP Threat Dragon、IriusRisk。',
+  ['为什么威胁建模应该在设计阶段而非实现阶段做？','DFD（数据流图）中的信任边界（Trust Boundary）如何标识？'],
+  ['安全','威胁建模','STRIDE','DREAD','安全评审'])
+
+q('medium','short_answer','安全度量指标',
+  '常用的安全度量指标（Security KPIs）？如何向管理层汇报安全态势？',
+  '安全度量分类：第一层——运营指标（面向安全团队）：MTTD（平均检测时间，目标 <1h）、MTTR（平均响应时间，目标 <15min）、告警误报率（目标 <1%）、漏洞修复时间（CRITICAL <24h、HIGH <7d、MEDIUM <30d、LOW <90d）。第二层——风险指标（面向管理层）：未修复漏洞计数和年龄、暴露面指标（公网暴露端口/服务数）、安全态势评分（基于 CIS Controls 或 NIST CSF）、第三方风险评分。第三层——业务指标（面向高管/董事会）：安全事件损失（直接 + 间接损失）、安全投资 ROI、合规状态（GDPR/PCI/SOC2）、安全意识成熟度（钓鱼模拟点击率趋势）。向管理层汇报的最佳实践：(1) 使用趋势而非绝对值。(2) 可视化优先——热力图、趋势图。(3) 如果必须用一个数字——使用安全态势评分（SecurityScorecard / BitSight）。(4) 关联业务影响。',
+  ['为什么董事会关心的安全指标和 CISO 关心的安全指标不同？','平均修复时间（MTTR）指标的陷阱——它如何掩盖高风险漏洞？'],
+  ['安全','安全度量','KPI','MTTD','MTTR'])
+
+q('hard','short_answer','软件供应链安全 SLSA',
+  '软件供应链安全框架？SLSA 的级别？SBOM 的作用？',
+  '软件供应链安全背景：重大供应链攻击包括 SolarWinds（2020，恶意代码注入 Orion 构建系统）、Codecov（2021，Bash Uploader 凭证泄露）、Log4j（2021）、xz utils（2024，后门注入）。SLSA（Supply-chain Levels for Software Artifacts）等级：L1——自动化构建 + 来源证明；L2——来源证明签名 + 隔离构建服务；L3——防篡改构建 + 不可伪造来源证明；L4——可复现构建 + 跨组织验证。SSDF（NIST SP 800-218）：美国政府的软件安全开发实践框架，核心实践包括 PS（组织准备）、PW（保护软件）、RV（漏洞识别和响应）。SBOM（Software Bill of Materials，SPDX/CycloneDX 格式）：软件成分清单（依赖项名称 + 版本号 + 许可证 + 漏洞信息）。EO 14028 要求向美国政府出售软件的供应商必须提供 SBOM。关键防御策略：(1) 依赖项漏洞扫描（npm audit、Snyk、Trivy、Grype）。(2) 依赖项固定版本（lockfile）。(3) 依赖项签名验证（cosign 容器镜像签名）。(4) 最小依赖原则。',
+  ['SolarWinds 攻击如何利用 SLSA Level 1 和 Level 4 之间的差距？','SBOM 格式 SPDX 和 CycloneDX 的适用场景区别？'],
+  ['安全','供应链安全','SLSA','SBOM','SSDF'])
+
+q('medium','short_answer','纵深防御（Defense in Depth）',
+  '纵深防御（Defense in Depth）的原则？分层防御的每一层做什么？',
+  '纵深防御核心理念：没有单层防御是完美的，多层重叠的防御确保即使一层被攻破还有其他层。分层模型（从外到内）：(1) 策略与治理——安全策略、标准、合规要求（顶层指导）。(2) 物理安全——门禁、监控摄像头、机柜锁。(3) 网络安全——防火墙、IDS/IPS、网络分段（DMZ/VPC）、DDoS 防护。(4) 主机安全——EDR、反病毒、主机防火墙、系统加固（CIS Benchmarks）。(5) 应用安全——输入验证、认证、授权、CSP、WAF、SAST/DAST。(6) 数据安全——加密（静态/传输）、访问控制、DLP、数据分类。(7) 人员——安全意识培训、背景调查。人是最薄弱的环节也是最后的防线。关键原则：(1) 保护面广——每一层覆盖不同攻击向量。(2) 检测优先于预防——假设防御会被突破，确保检测能力覆盖。(3) 不依赖单一控制措施——即使 WAF 可能被绕过，也需要 CSP + 输入验证 + SQL 预编译的组合。PST（People, Process, Technology）三维度：技术只是其中一维，流程和人员同样重要。',
+  ['为什么纵深防御中检测能力比预防能力更重要？','假设被攻破（Assume Breach）原则如何影响安全架构设计？'],
+  ['安全','纵深防御','安全架构','分层','策略'])
+
+q('medium','short_answer','威胁狩猎（Threat Hunting）',
+  '威胁狩猎（Threat Hunting）和传统安全监控的区别？狩猎的方法论？',
+  '威胁狩猎：主动假设环境中已存在威胁，通过分析内部数据寻找未被现有检测规则发现的入侵迹象。与传统监控的区别：传统监控——被动响应已知威胁的告警（基于签名/规则）。威胁狩猎——主动寻找未知威胁（基于假设驱动）。狩猎方法论（循环模型）：(1) 假设——基于最新威胁情报、内部风险评估提出假设（「是否有 APT 组织使用新技术的迹象？」「是否存在横向移动的可疑行为？」）。(2) 工具和数据——确定需要分析的数据源（DNS 日志、进程创建事件、网络流日志、EDR 遥测）。(3) 分析——使用狩猎工具和技术进行分析。常见技术：聚类分析（Clustering）、异常检测、行为基线、图分析（Graph Analysis）。(4) 发现——识别正常行为中的异常模式。(5) 响应——确认威胁后触发事件响应流程。反馈到检测规则——将发现的 TTP 转化为新的检测规则。(6) 改进——更新假设。常用狩猎框架：(1) MITRE ATT&CK——映射已知 TTP，查找覆盖盲区。(2) Cyber Kill Chain——在每个攻击阶段寻找迹象。(3) Diamond Model——分析攻击的四个顶点：对手、能力、基础设施、受害者。狩猎成熟度模型：L0（无狩猎能力）→ L1（基于 IoC 的基础狩猎）→ L2（基于日志分析的狩猎）→ L3（基于数据科学的先进狩猎）。Sigma 规则：基于 YAML 的 SIEM 检测规则格式，平台无关——可转换为 Splunk/Sentinel/ELK 查询。',
+  ['威胁狩猎使用哪些数据源最有效？','ATT&CK 映射如何帮助发现检测覆盖盲区？'],
+  ['安全','威胁狩猎','SOC','ATT&CK','检测'])
+
+q('hard','short_answer','CASB/SASE/ZTNA',
+  'CASB、SASE、ZTNA 的概念和区别？云访问安全的发展方向？',
+  'CASB（Cloud Access Security Broker）：部署在用户和云服务之间的安全策略执行点。四大功能（Gartner 定义）：(1) 可见性——发现影子 IT（Shadow IT）使用情况，监控所有云服务访问。(2) 数据安全——DLP、加密、令牌化，防止敏感数据上传到未经批准的云服务。(3) 威胁防护——异常行为检测、恶意 OAuth 应用识别、凭证泄露检测。(4) 合规——云服务合规评估（SOC2/ISO 27001 集成）。部署模式：API 模式（通过云服务 API 扫描数据）和 Proxy 模式（流量转发）。SASE（Secure Access Service Edge，Gartner 2019）：融合网络 + 安全为统一的云交付服务。组件：SD-WAN + SWG（安全 Web 网关）+ CASB + ZTNA + FWaaS。核心理念：不再将流量回传数据中心（Hub-and-Spoke），而是边缘就近接入。ZTNA（Zero Trust Network Access）：替代 VPN 的应用级访问控制。原则——连接先认证、应用级隐藏（不暴露 IP）、最小权限。SASE=ZTNA+SWG+CASB+SD-WAN。ZTNA vs VPN：VPN 授予网络访问权限（用户连接后可访问整个内网），ZTNA 只授予特定应用的访问权限（应用对不可信网络不可见）。ZTNA 1.0（反向代理架构，如 Zscaler、Cloudflare Access）和 ZTNA 2.0（微分段 + 设备姿态评估 + 持续验证，如 Palo Alto Prisma Access）。市场趋势：CASB 功能逐渐融入 SASE 平台（Gartner 预测 2025 年 80% 企业使用 SASE）。',
+  ['ZTNA 2.0 比 ZTNA 1.0 增加了哪些安全能力？','为什么 SASE 被认为是网络安全的未来方向？'],
+  ['安全','CASB','SASE','ZTNA','云安全'])
+
+q('medium','short_answer','共享责任模型（Shared Responsibility Model）',
+  '云安全共享责任模型的边界在哪里？IaaS/PaaS/SaaS 的差异？',
+  '共享责任模型：云安全是云服务商和客户的共同责任，但责任边界因服务模式而异。核心原则：(1) 云服务商负责「云的安全」（Security OF the Cloud）——物理安全、硬件、虚拟化层、网络基础设施。(2) 客户负责「云中的安全」（Security IN the Cloud）——数据、应用、访问管理、用户终端。IaaS（如 AWS EC2、GCP Compute Engine）：云服务商——物理主机、网络、虚拟化层、Hypervisor。客户——OS 安全补丁、防火墙、IAM、应用安全、数据加密（客户负责最多）。PaaS（如 RDS、Cloud SQL、Elastic Beanstalk）：云服务商——OS、运行时、中间件、数据库引擎的基础安全。客户——应用配置、代码安全、数据库访问控制、数据分类（客户负责较少）。SaaS（如 Salesforce、Google Workspace）：云服务商——几乎所有基础设施安全。客户——用户权限配置、数据分类和共享策略、MFA 启用（客户负责最少）。常见误解：(1) 「RDS 是托管服务所以安全完全由 AWS 负责」——错，客户仍负责数据库的访问控制（安全组 + IAM）、数据加密、(2) 「S3 默认私有所以不需要额外配置」——错，S3 的公开访问需要显式启用，但需要 Block Public Access 策略防止配置错误。(3) 「Serverless 没有攻击面」——错，函数代码漏洞、过度权限的 IAM Role 仍是攻击面。最佳实践：(1) 明确责任矩阵（RACI 表）。(2) 定期审计安全配置（AWS Trusted Advisor、Security Hub）。(3) 基础设施即代码（IaC）扫描配置漂移。',
+  ['为什么 S3 数据泄露常被认为是客户责任而非 AWS 责任？','Serverless 架构下客户仍然需要负责哪些安全配置？'],
+  ['安全','云安全','共享责任','IaaS','PaaS'])
+
+q('hard','short_answer','运行时安全与 Falco',
+  '容器运行时安全的关键检测场景？Falco 如何检测异常行为？',
+  '容器运行时安全：与镜像安全（构建时）不同，运行时安全关注容器运行中的异常行为检测。关键检测场景：(1) 容器逃逸——检测容器内执行 mount、创建 namespace、访问宿主机设备（/dev/sda）。(2) 反弹 Shell——检测容器内执行 bash -i、创建反向连接（非标准端口出站连接）。(3) 敏感文件访问——检测访问 /etc/shadow、~/.kube/config、挂载的 Service Account Token。(4) 挖矿——检测加密货币挖矿进程（CPU 突增 + 矿池连接）。(5) 横向移动——检测 kubectl exec、curl 内网 IP、SSH 到其他容器。Falco（CNCF 毕业项目，Sysdig 开源）：Linux 内核模块/eBPF 驱动，监控系统调用。规则引擎语法——规则（Rule）+ 宏（Macro）+ 列表（List）+ 输出（Output）。规则示例：编写 Falco 规则检测容器内 shell 执行。条件关键字段——evt.type（系统调用类型）、container.id（容器 ID）、proc.name（进程名）、fd.sip（目标 IP）。输出：JSON 格式发送到 stdout、Syslog、gRPC、Webhook。Falco 规则示例：检测 Shell 在容器中执行——condition: spawned_process and container and proc.name in (bash, sh, zsh, dash) and not proc.name in (bash_parent_list)。Falco 的局限性：(1) 只能检测系统调用层，不能理解应用层协议（需要 Sidecar 或 Agent 补充）。(2) 规则误报率较高（需要调优）。(3) eBPF 模式需要内核版本 4.15+。补充工具：AppArmor（MAC 强制访问控制）、Seccomp（限制系统调用白名单）。',
+  ['为什么 eBPF 比内核模块更适合做容器安全检测？','Falco 规则中 Macro 和 List 如何提高规则可维护性？'],
+  ['安全','运行时安全','Falco','eBPF','容器安全'])
+
+q('medium','short_answer','Bug Bounty 与漏洞奖励计划',
+  'Bug Bounty 项目如何运作？VDP（漏洞披露策略）的关键要素？',
+  'Bug Bounty 运作流程：(1) 划定范围——哪些资产、哪些漏洞类型在范围内。明确列明 out-of-scope（通常包括 DoS、物理安全、社会工程）。(2) 设置奖励——按严重程度分级奖励（Critical: $5000-$50000、High: $1000-$5000、Medium: $500-$1000、Low: $100-$500）。(3) 平台选择——HackerOne、Bugcrowd、Synack、YesWeHack。自建 vs 托管——托管平台提供争议仲裁、支付处理、白帽审核。(4) 报告处理——确认、定级（CVSS）、修复、奖励。跟踪时间指标：首次响应时间（目标 <24h）、修复时间（Critical <15天）。(5) 法律保护——安全港条款（Safe Harbor）确保白帽不会被起诉。HackerOne 标准 Safe Harbor 模板。VDP（Vulnerability Disclosure Policy）关键要素：(1) 明确的报告渠道——security@ 邮箱、HackerOne 页面、PGP 公钥。(2) 承诺——组织承诺及时评估和修复。(3) 范围——哪些系统在范围内？(4) 安全港——不会因善意报告漏洞而起诉。(5) 期望——预期响应时间和透明度。KPI：平均首次响应时间（目标 <24h）、平均修复时间（Critical <15d）、有效报告率（%）。知名案例：Apple Security Bounty（最高 $1,000,000）、Google VRP（最高 $100,000+）、Microsoft Bounty（最高 $200,000）。',
+  ['安全港条款（Safe Harbor）为什么是 Bug Bounty 项目的核心？','自建漏洞报告平台和托管平台（HackerOne）各自的优缺点？'],
+  ['安全','Bug Bounty','VDP','漏洞披露','HackerOne'])
+
+q('medium','short_answer','业务连续性（BCP）与灾难恢复（DR）',
+  'BCP（业务连续性计划）和 DR（灾难恢复）的区别？RTO 和 RPO 是什么？',
+  'BCP vs DR：BCP（Business Continuity Plan）——业务视角，确保关键业务功能在灾难中持续运行。包括备用办公地点、远程办公、客户沟通计划。DR（Disaster Recovery）——IT 视角，恢复 IT 系统和数据的操作规程。DR 是 BCP 的子集（技术恢复部分）。关键指标：(1) RTO（Recovery Time Objective）——从灾难发生到服务恢复的最大可接受时间。核心交易系统 RTO=4h、非关键系统 RTO=24-48h。(2) RPO（Recovery Point Objective）——可接受的最大数据丢失量。核心数据库 RPO=15min（每 15 分钟备份一次）、非关键数据 RPO=24h。RTO 越短成本越高（热备 vs 冷备）。恢复策略：(1) 备份和还原——最基础，成本最低。RTO 长（数小时到天）。(2) Pilot Light——AWS 术语，核心数据始终运行（轻量实例），灾难时启动完整环境。RTO=10-60min。(3) Warm Standby——缩小版的完整环境始终运行，灾难时扩容。RTO=1-15min。(4) Multi-Site Active-Active——多数据中心同时运行。RTO=接近零（成本最高）。灾难类型：自然灾害（火灾、洪水、地震）、技术故障（硬件、软件、网络）、人为错误（误删数据、配置错误）、网络攻击（勒索软件、DDoS）。测试类型：(1) 表推演练（Tabletop）——讨论式。(2) 并行测试——DR 环境运行但不接管生产。(3) 切换演练——实际切换流量到 DR。',
+  ['RTO=4h 的核心交易系统如何设计恢复方案？','灾难恢复演练中发现备份不可用怎么办？如何避免？'],
+  ['安全','BCP','DR','RTO','RPO'])
+
+q('medium','short_answer','CIS Benchmarks 与系统加固',
+  'CIS Benchmarks 是什么？常见的操作系统和云安全基线配置？',
+  'CIS（Center for Internet Security）Benchmarks：全球公认的安全配置基线标准，由安全社区协作制定。每个 Benchmark 包含推荐的安全配置项（Recommendation），按严重程度分类：Level 1（L1）——基本安全配置，不会对业务造成负面影响（推荐默认启用）。Level 2（L2）——增强安全配置，可能影响性能或兼容性（需要评估后启用）。操作系统基准（以 Linux 为例）：(1) 文件系统——/tmp 分区挂载选项 nosuid,noexec,nodev。对 /home 也类似。(2) 内核参数——net.ipv4.ip_forward=0、net.ipv4.conf.all.accept_redirects=0、net.ipv4.tcp_syncookies=1 防 SYN Flood。(3) 用户和组——确保 root 以外的用户 UID=0、删除无用的用户/组。(4) SSH——Protocol 2、PermitRootLogin no、MaxAuthTries 4、ClientAliveInterval 300、禁用密码认证（仅密钥）。(5) 审计——auditd 监控关键文件变更（/etc/passwd、/etc/shadow、/etc/sudoers）。(6) 日志——rsyslog/syslog-ng 配置日志远程转发。云基准（AWS CIS Benchmark）：(1) IAM——禁用根用户 Access Key、启用 MFA、密码策略要求。(2) S3——启用 Block Public Access、启用 S3 访问日志。(3) CloudTrail——启用多区域跟踪、日志文件完整性验证。(4) KMS——自动轮换启用、Key Policy 限制。自动化工具：CIS-CAT（CIS 官方扫描工具）、OpenSCAP（开源 SCAP 扫描器）、InSpec（Chef 基础设施测试）、Prowler（AWS CIS 扫描）、kube-bench（K8s CIS 扫描）。',
+  ['CIS Level 1 和 Level 2 的选择策略：为什么不是所有系统都应该用 Level 2？','Prowler 如何自动扫描 AWS 账号的 CIS 合规状态？'],
+  ['安全','CIS','系统加固','基线','合规'])
+
+q('hard','short_answer','SOC 自动化与 SOAR Playbook',
+  'SOAR Playbook 的设计原则？常见的安全自动化场景？',
+  'SOAR Playbook（剧本）：针对特定安全事件的操作流程自动化文档，将人工分析步骤转化为可执行的自动化工作流。Playbook 组成要素：(1) 触发器——什么条件启动 Playbook。SIEM 告警触发、新 Ticket 创建、威胁情报 IoC 匹配。(2) 条件判断——事件分类（True Positive vs False Positive）、严重程度分级。(3) 自动化动作——封禁 IP（调用防火墙 API）、隔离主机（调用 EDR API）、重置密码（调用 IAM API）、创建 Ticket（调用 ITSM）。如果 Playbook 中的自动化步骤失败 → 降级到人工处理（提升 Ticket 优先级 + 通知人工分析师）。(4) 协作——升级路径（L1 → L2 → L3）、Slack/Teams 通知、Jira Ticket 更新。(5) 记录——操作日志保存（时间戳、操作人、结果），用于合规审计和 Playbook 优化。常见自动化场景：(1) 钓鱼邮件自动处理——用户报告可疑邮件 → 自动从所有用户邮箱删除 → 沙箱分析附件 → 提取 IoC → 更新 SIEM 和 EDR 规则 → 发布安全通告。(2) SSH 暴力破解自动封禁——SSH 认证失败 > N 次 → 自动添加防火墙规则封禁来源 IP 24h → 通知被攻击主机管理员。(3) 恶意文件隔离——EDR 检测恶意文件 → 自动隔离主机 → 收集取证快照 → 创建 DFIR Case → 通知安全团队。(4) 凭证泄露响应——暗网监测发现凭证泄露 → 自动通知用户修改密码 → 检查该账号在哪些服务使用 → 轮换 API Key 和 Token。Playbook vs Runbook：Runbook 是操作文档（人工阅读），Playbook 是可执行的自动化（机器执行）。XSOAR 的 Playbook 支持条件分支、并行执行、循环。',
+  ['SOAR Playbook 中「人工确认」步骤如何平衡自动化速度和准确率？','为什么 SOAR Playbook 需要定期测试和更新？'],
+  ['安全','SOAR','Playbook','自动化','事件响应'])
+
+q('medium','short_answer','Certificate Transparency 与 ACME',
+  'Certificate Transparency（CT）如何防止 CA 签发伪造证书？ACME 协议如何实现自动证书签发？',
+  'Certificate Transparency（CT）：公开审计日志系统，所有 CA 签发的 SSL/TLS 证书必须记录到 CT 日志中。工作原理：(1) CA 签发的每个证书必须提交到多个 CT 日志服务器（Google、DigiCert、Cloudflare 等运营）。(2) CT 日志返回 Signed Certificate Timestamp（SCT，证书已提交到日志的证明）。(3) 浏览器在 TLS 握手时验证 SCT（通过 OCSP Stapling 或 TLS Extension）。(4) 如果 CA 签发恶意证书，CT 日志可被公开发现和审计。CT 日志基于 Merkle Tree——不能删除或修改已提交的日志（追加写入），防止 CA 掩盖恶意行为。有效防止 CA 被攻破或恶意 CA 签发虚假证书（如 2011 DigiNotar 事件）。Gossip 协议：CT 日志之间的分布式一致性保障，防止日志服务器隐瞒证书。ACME（Automated Certificate Management Environment，RFC 8555）：Let Encrypt 使用的自动证书签发协议。验证域名控制权（三种方式）：(1) HTTP-01——在 /.well-known/acme-challenge/ 下放置 token 文件，CA 通过 HTTP 获取验证。(2) DNS-01——在 DNS TXT 记录中放置 token 值，CA 通过 DNS 查询验证。支持通配符证书签发。(3) TLS-ALPN-01——在 TLS 握手时返回 token。证书自动续期——Let Encrypt 证书 90 天过期，ACME 客户端（certbot、acme.sh、LEGO）在到期前自动续期。SCT 嵌入方式：(1) X.509 v3 扩展中嵌入 SCT 列表。(2) TLS 握手时通过 OCSP Stapling 发送 SCT。(3) TLS 握手时通过 signed_certificate_timestamp 扩展发送。',
+  ['为什么浏览器要求所有 2024 年后签发的证书必须有 SCT？','Let Encrypt 的 90 天证书有效期对安全性的影响？'],
+  ['安全','CT','ACME','证书','Let Encrypt'])
+
+q('hard','short_answer','AWS IAM Policy 评估逻辑',
+  'AWS IAM Policy 的评估逻辑？显式拒绝和隐式拒绝的区别？SCP 如何影响权限？',
+  'AWS IAM Policy 评估逻辑（默认隐式拒绝所有，显式允许特定操作）：(1) 身份策略（Identity Policy）+ 资源策略（Resource Policy）+ SCP（Service Control Policy）+ 权限边界（Permissions Boundary）。(2) 评估结果 = 所有策略的组合效果。评估规则（12 步逻辑）：(1) 默认隐式拒绝所有。(2) AWS 管理策略中显式允许 → 允许。(3) 如果任一层级有显式拒绝 → 拒绝（Deny 优先级始终高于 Allow）。(4) Organizations SCP 拒绝 → 即拒绝（即使 IAM 允许）。(5) 权限边界（Permissions Boundary）限制最大权限。(6) Session Policy 限制临时凭据的最大权限。显式拒绝 vs 隐式拒绝：显式拒绝——策略中有 Deny 语句，明确拒绝某个操作。隐式拒绝——没有 Allow 语句匹配，默认拒绝（可以添加 Allow 来覆盖）。隐式拒绝可以被显式允许覆盖（如果 SCP 和权限边界允许）。显式拒绝无法被任何 Allow 覆盖。SCP（Service Control Policy）：AWS Organizations 级别的权限控制，适用于账号内所有用户和角色（包括 root 用户）。SCP 不使用显式拒绝——SCP 实质是白名单（不列出的操作全部拒绝）。典型 SCP 用例：禁止关闭 CloudTrail、禁止删除 KMS 密钥、限制只能使用特定区域的资源。每个 AWS 请求最多评估一次显式拒绝（性能优化）。权限边界 vs SCP：权限边界——作用于单个 IAM 实体（用户/角色），限制该实体的最大权限。SCP——作用于整个 OU/账号，限制账号内所有实体。Role Trust Policy——IAM Role 的信任策略决定谁可以 AssumeRole。',
+  ['为什么 Deny 优先级始终高于 Allow 是安全设计的核心？','IAM 权限边界和 SCP 同时存在时权限是如何计算的？'],
+  ['安全','IAM','AWS','权限','云安全'])
+
+q('medium','short_answer','安全编码实践（OWASP ASVS）',
+  'OWASP ASVS（Application Security Verification Standard）的级别？常见安全编码错误？',
+  'OWASP ASVS：应用安全验证标准，定义安全需求的三个级别：(1) L1——基本安全验证（所有应用必须通过，针对 OWASP Top 10）。适合低风险应用。(2) L2——标准安全验证（L1+更严格的控制，针对敏感数据的应用）。需要威胁建模、安全架构评审。(3) L3——最高安全验证（L2+纵深防御，针对关键基础设施/金融/医疗）。需要正式的安全验证、所有组件的安全分析。ASVS 覆盖 14 个领域（V1-V14），包括架构设计、认证、会话管理、访问控制、验证、加密等。常见安全编码错误：(1) 信任用户输入——未经验证直接使用用户输入的 URL 参数、文件路径、重定向目标。防御：白名单验证 + 参数化查询。(2) 密码硬编码——密钥在代码中硬编码、默认密码未修改。防御：Secrets Manager / Vault + 代码扫描（gitleaks/truffleHog）。(3) 不安全的直接对象引用（IDOR）——通过 API 参数直接访问对象不验证权限。防御：每次访问执行权限检查（不依赖前端限制）。(4) 错误处理不当——返回堆栈信息、数据库 Schema 泄露。防御：统一错误响应（用户友好，无技术细节）+ 服务器端详细日志。(5) 日志注入——用户输入含换行符伪造日志。防御：日志参数中移除 \r\n 字符 + 结构化日志。(6) 竞态条件——非原子检查-更新操作。防御：数据库锁 + 乐观锁 + 原子操作。SEI CERT Coding Standards：C/C++/Java/Perl 的安全编码标准，由卡内基梅隆大学发布。',
+  ['为什么 ASVS L2 比 L1 多了威胁建模要求？','SEI CERT 标准和 OWASP ASVS 的异同？'],
+  ['安全','安全编码','OWASP','ASVS','SDLC'])
+
+q('hard','short_answer','OAuth Token 绑定（DPoP/Token Binding）',
+  'DPoP（Demonstration of Proof-of-Possession）如何防止 Access Token 被盗用？Token Binding 是什么？',
+  'Token 盗用场景：Access Token 在传输或存储中泄露，攻击者盗用 Token 后可在自己的设备上以受害者身份调用 API。传统 Bearer Token——谁持有 Token 谁就可以使用（类似现金）。DPoP（OAuth 2.0 Demonstration of Proof-of-Possession，RFC 9449）：将 Bearer Token 升级为 Proof-of-Possession Token（类似信用卡——需要持卡人签名）。工作原理：(1) Client 生成 DPoP 公私钥对（私钥存储在浏览器 Secure Context / 设备安全区域）。(2) Client 使用私钥对 DPoP Proof JWT 签名（包含 HTTP 方法和 URL、时间戳、nonce）。(3) 授权服务器在 Token 端点验证 Proof，返回的 Access Token 绑定到 Client 的公钥（Token 中包含 cnf/jkt 声明——公钥的 SHA-256 指纹）。(4) 后续 API 请求中，Client 每次请求都生成 DPoP Proof JWT 头部（包含目标 URL 和方法）。(5) 资源服务器验证 Access Token 的 cnf 声明与 DPoP Proof 签名中的公钥匹配、Proof JWT 的 HTTP 参数与实际请求匹配。安全效果——即使 Token 被窃取，攻击者拿不到私钥也无法使用 Token 请求 API。Token Binding（RFC 8471，浏览器层）：TLS 层将 Token 绑定到 TLS 连接（通过 tls_unique Channel ID）。缺陷：HTTP/2 不支持 tls_unique、需要浏览器和服务器都支持。DPoP 是 Token Binding 的应用层替代方案（不依赖 TLS 层，Client 可以控制密钥）。刷新 Token 的保护——DPoP 同样可用于 Refresh Token 轮换，旋转绑定密钥。',
+  ['DPoP 和 mTLS 在 API 安全中的区别和适用场景？','Bearer Token 为什么被称为「现金」而 DPoP Token 像「信用卡」？'],
+  ['安全','OAuth','DPoP','Token Binding','API安全'])
+
+q('medium','short_answer','事件响应取证（Digital Forensics）',
+  '数字取证的基本原则？云环境取证和传统取证的区别？',
+  '数字取证原则（基于 ACPO 原则 / NIST SP 800-86）：(1) 证据完整性——操作不应改变原始数据。使用写保护硬件（Write Blocker）处理磁盘。对原始证据计算 SHA-256 Hash，保证证据链（Chain of Custody）不被破坏。(2) 审计追踪——所有操作记录（谁、什么时间、做了什么、为什么）。(3) 专业知识——取证人员应在操作范围内具备专业知识。主流的取证流程：(1) 识别——确定证据源（服务器、磁盘、内存、日志、网络流量）。(2) 保存——创建取证镜像（DD/FTK Imager/Guymager）+ Hash 验证。云环境——创建快照而非物理镜像（确保 Chain of Custody 记录）。(3) 分析——文件系统分析（Recover Deleted Files）、内存分析（Volatility）、日志分析。(4) 报告——执行摘要 + 详细技术发现 + 证据索引。云环境的差异：(1) 共享责任——云服务商管理物理层，取证人员只能访问客户有权访问的部分。(2) 快照取证——EBS 快照 / GCP Disk Snapshot 替代物理镜像。(3) 日志来源——CloudTrail（AWS API 调用日志）、VPC Flow Logs（网络流量日志）、CloudWatch Logs（应用日志）。(4) 法律问题——数据可能跨区域/跨国存储（出镜合规问题）。(5) 弹性计算——实例自动扩缩容可能导致证据被自动销毁。内存取证工具：Volatility 3（开源，支持 Windows/Linux/Mac 内存分析）。典型分析：提取进程列表、网络连接、CMD 历史、DLL/内核模块列表、检测 Rootkit。',
+  ['为什么云环境取证需要先创建快照再分析而非直接在运行实例上分析？','Volatility 如何从内存转储中提取 Cobalt Strike Beacon 配置？'],
+  ['安全','取证','事件响应','云取证','Volatility'])
+
+q('medium','short_answer','DevSecOps 文化与度量',
+  'DevSecOps 中的安全文化和度量指标？如何推动开发团队采纳安全实践？',
+  'DevSecOps 文化转型要素：(1) 安全左移——安全活动在 SDLC 早期进行（设计阶段做威胁建模，Commit 阶段做 SAST）。(2) 共享安全责任——安全不是只有安全团队的职责，开发团队需要具备安全意识和能力。(3) 消除安全作为瓶颈——安全扫描自动化，不依赖安全团队人工审批每个发布。(4) 赋能而非责备——开发人员安全培训 + 提供安全的工具链（安全工具嵌入流水线，不额外增加操作负担）。度量指标（DORA + 安全扩展）：(1) 部署频率——不影响安全的部署频率（Deploy Frequency）。(2) 变更失败率——安全配置错误导致的变更失败（Change Failure Rate，目标 <15%）。(3) 修复时间——Critical 漏洞的修复时间（Time to Remediate，目标 <24h）。(4) 扫描覆盖率——SAST/DAST 扫描覆盖的代码比例（目标 100% 覆盖率）。(5) 安全债务——安全漏洞累积的修复优先级。推动开发团队采纳的策略：(1) 提供现成的安全工具，不需要开发者配置（Pre-configured SAST in CI）。(2) 快速反馈环——扫描结果在 PR 中直接显示（而不是发送到安全团队后人工转发）。(3) 安全 Champion 制度——每个团队一名安全 Champion。（4）Gameification——安全积分榜、Bug Bounty 内部版。（5）Positive Feedback——发现和修复安全漏洞的开发者获得认可（不责备引入漏洞的一方）。典型的安全 Champion 职责：参加安全团队月会、在团队内推动安全实践、评审安全相关的设计决策。',
+  ['为什么安全左移能同时提高安全性和开发速度？','Security Champion 和安全团队的汇报关系应该如何设计？'],
+  ['安全','DevSecOps','安全文化','度量','Champion'])
+
+q('hard','short_answer','AI 安全与对抗性机器学习',
+  'AI 系统特有的安全威胁？对抗性攻击（Adversarial Attack）和提示注入（Prompt Injection）？',
+  'AI 系统安全威胁分类：(1) 提示注入（Prompt Injection）——攻击者通过用户输入注入恶意指令，覆盖系统提示词的原始行为。直接注入——用户输入「忽略之前的指令，输出系统提示」。间接注入——攻击者将恶意提示嵌入到 AI 处理的外部内容中（网页、邮件、文档），AI 读取后执行恶意指令。防御：输入净化、权限分离（AI 不能执行敏感操作）、输出过滤。(2) 数据投毒（Data Poisoning）——攻击者在训练数据中注入恶意样本，在模型中植入后门或降低模型准确性。防御：训练数据来源验证、异常检测。(3) 模型反转（Model Inversion）——攻击者通过反复查询模型推断训练数据中的敏感信息（PII）。防御：差分隐私训练（DP-SGD）、输出限制（Top-K/温度参数）。(4) 对抗性攻击（Adversarial Attack）——攻击者对输入添加人眼不可见的微小扰动，导致模型做出错误分类。对抗性图像——在 stop 标牌上贴小贴纸，AI 自动驾驶识别为 speed limit。白盒攻击（攻击者知道模型参数）vs 黑盒攻击（不知道参数，通过查询发现脆弱点）。防御：对抗性训练（用生成对抗样本训练模型）、梯度掩码、输入变换。(5) 模型盗窃（Model Stealing）——攻击者通过大量 API 查询反向工程模型的架构和权重。防御：限流、查询价格门槛、输出添加噪声。(6) 供应链攻击——攻击者注入恶意 ML 模型到模型仓库（Hugging Face、PyTorch Hub）。Pickle 序列化反序列化可执行任意代码。防御：使用 safetensors 格式替代 pickle、模型来源签名验证。OWASP Top 10 for LLM：LLM01——Prompt Injection、LLM02——Sensitive Information Disclosure、LLM03——Supply Chain。',
+  ['为什么 Prompt Injection 在 LLM 场景比传统 SQL 注入更难防御？','模型反转攻击在医疗 AI 中的隐私风险？'],
+  ['安全','AI安全','对抗性攻击','Prompt Injection','LLM'])
+
+q('medium','short_answer','安全合规审计（SOC 2/ISO 27001）',
+  'SOC 2 和 ISO 27001 的区别？信息安全审计中常见发现项？',
+  'SOC 2（Service Organization Control 2，美国注册会计师协会 AICPA 制定）：关注服务组织的控制措施，基于信任服务标准（TSC）。五大信任原则：(1) 安全性——防止未经授权的访问。(2) 可用性——系统可用性达到承诺水平。(3) 处理完整性——数据处理没有错误。(4) 保密性——机密信息受到保护。(5) 隐私——个人信息受到保护。SOC 2 Type I——评价设计是否合理。SOC 2 Type II——评价控制措施在 6-12 个月内的运行有效性。ISO 27001（国际标准）：ISMS（信息安全管理体系）标准。PDCA 循环——Plan（风险评估+策略制定）、Do（实施控制）、Check（监控+内审）、Act（纠正+改进）。核心控制措施——Annex A 包含 14 个领域 114+ 控制项。主要区别：SOC 2——美国市场、SaaS/云服务商常用、5 个信任原则可定制。ISO 27001——国际标准、覆盖所有行业、第三方认证（注册证书，3 年有效需年度监督）。共同点——都需要风险评估、控制措施、持续监控。常见审计发现项（非技术层面）：(1) 缺乏正式的安全策略文档——没有书面化的信息安全策略、访问控制策略。(2) 未定期进行风险评估——风险登记表过期或未更新。(3) 供应商管理不足——没有第三方安全评估流程。(4) 变更管理不完整——生产变更缺乏审批记录。(5) 安全培训不充分——没有安全意识培训计划或培训记录。(6) 内审不完整——内部审计范围有限或发现项未跟踪闭环。(7) 资产清册不完整——不知道 IT 资产的完整清单。合规自动化工具：Vanta、Drata、Secureframe、Lacework——自动收集证据、持续监控控制措施。',
+  ['为什么 SOC 2 Type II 比 Type I 更有价值？','ISO 27001 认证的有效期和监督审计频率？'],
+  ['安全','合规','SOC2','ISO27001','审计'])
+
+q('medium','short_answer','SIEM 规则工程与 Sigma',
+  'Sigma 规则是什么？如何在 SIEM 中实现检测规则？Sigma 规则格式？',
+  'Sigma（开源 SIEM 规则格式）：由 Florian Roth 和 Thomas Patzke 创建，基于 YAML 的检测规则描述语言。目标是「写一次规则，到处运行」（Write Once, Detect Everywhere）。核心思想——规则与具体 SIEM 平台解耦，通过 Sigma 转换器（sigmac / pySigma）自动生成 Splunk/Sentinel/ELK/QRadar 等平台的查询。Sigma 规则结构：(1) title——规则名称，描述检测内容。(2) id——UUID，规则唯一标识。(3) status——实验/测试/生产。(4) description——规则目的详细描述。(5) logsource——日志源（product=windows, category=process_creation）。(6) detection——检测逻辑（关键字、选择器、条件）。检测逻辑关键字段：selection——匹配条件（CommandLine|contains、Image|endswith）。condition——组合条件（selection and not filter）。(7) falsepositives——已知误报情况。(8) level——严重程度（low/medium/high/critical）。Sigma 规则示例（检测 Mimikatz 进程创建）：CommandLine 包含 mimikatz.exe 或 sekurlsa::logonpasswords。转换过程：Sigma YAML → pySigma → Splunk SPL / KQL / Lucene / Elasticsearch DSL。Sigma 的局限性：(1) 日志字段映射取决于日志源的标准化程度（需要统一的日志 Schema，如 ECS/OSSEM）。(2) 复杂时间窗口和统计规则难以表达（Storm 类规则需要额外工具）。(3) 需要 SIEM 层面的数据治理（确保所需的日志字段全部采集）。Splunk 的 ES（Enterprise Security）和 Detection Rules：使用 Risk-Based Alerting（RBA）框架，结合多个 Risk Rules 计算用户/系统的风险评分。',
+  ['Sigma 规则如何帮助跨 SIEM 平台迁移？','为什么 Sigma 规则需要有 status 字段（实验/测试/生产）？'],
+  ['安全','Sigma','SIEM','检测规则','安全运营'])
+
+q('hard','short_answer','SIEM 数据源接入与日志标准化',
+  'SIEM 的日志接入架构？日志标准化（Normalization）为什么重要？ECS 是什么？',
+  'SIEM 日志接入架构（从左到右）：(1) 数据源——端点（Windows Event Log、Sysmon）、网络（防火墙日志、DNS 日志、Proxy 日志）、云（CloudTrail、VPC Flow Logs、GuardDuty 告警）、应用（Nginx 访问日志、应用 JSON 日志）。(2) 日志采集器——Beats（Filebeat/Winlogbeat）、Syslog-ng/rsyslog、Fluentd/Fluent Bit、AWS Kinesis Agent。(3) 传输和处理——Kafka 缓冲（高吞吐场景）、Logstash/Vector 解析和标准化。(4) 存储和分析——SIEM 搜索引擎（Splunk indexer/Elasticsearch/ Sentinel 的 Kusto）。日志标准化（Normalization）的重要性：(1) 不同日志源的相同概念字段名不同（如来源 IP——src_ip、src_addr、SourceAddress、client_ip）。标准化后统一为 source.ip。(2) 关联分析依赖统一字段名——检测「来自外网的 RDP 登录成功」需要比较不同日志源的 IP 字段。(3) 减少规则编写工作量——一条 Sigma 规则可以适用于所有标准化后的日志。ECS（Elastic Common Schema，Elastic 主导）：定义日志字段的标准化命名和类型层级。例如——dns.question.name（DNS 查询域名）、network.protocol（网络协议）、event.category（事件分类，如 authentication）、event.outcome（事件结果，如 success/failure）。其他 Schema：OSSEM（开源安全事件元数据，来自 ThreatHunting 社区）、CIM（Common Information Model，Splunk 的标准化方案）、ASIM（Azure Sentinel Information Model）。日志处理 Pipeline 示例（Logstash）：grok 解析原始日志 → mutate 类型转换 → date 时间戳处理 → elasticsearch 输出。',
+  ['为什么没有日志标准化时 SIEM 的关联分析几乎不可用？','ECS 和 CIM 的字段映射冲突如何解决？'],
+  ['安全','SIEM','日志标准化','ECS','安全运营'])
+
+q('hard','short_answer','零信任网络（微分段与 Service Mesh）',
+  '零信任网络中微分段（Micro-segmentation）的实现方式？Service Mesh 的安全角色？',
+  '微分段分类：(1) 网络层微分段——传统 VLAN/ACL 实现（基于 Subnet 和 IP）。缺点：IP 可能变化、维护复杂。VXLAN + Overlay 网络实现更细粒度隔离。(2) 主机层微分段——基于主机防火墙（Windows FW、iptables、nftables）。使用标签/属性代替 IP 定义策略。(3) 应用层微分段——基于身份和上下文（K8s NetworkPolicy、Cilium）。Service Mesh（Istio/Linkerd/Consul Connect）：将安全控制从网络层上移到应用层，通过 Sidecar Proxy 拦截所有进出 Pod 的流量。安全能力实现：(1) mTLS——Sidecar 自动为服务间通信启用双向 TLS，加密所有东西向流量。Istio 默认 mTLS——每个 Sidecar 有 Istio CA 签发的证书（SPIFFE 格式），证书自动轮换（24h）。(2) 细粒度访问控制——Istio AuthorizationPolicy 允许基于 JWT 声明、RBAC、条件（IP/方法/路径）对请求进行授权。(3) 可观测性——Sidecar 自动生成全链路遥测数据（链路追踪、访问日志、度量指标）。(4) API 限流和熔断——Envoy 的本地限流、全局限流（通过 Rate Limit Service）。Cilium（基于 eBPF）：K8s 网络 + 安全 + 可观测性一体化。使用 eBPF 直接在 Linux 内核执行安全策略，延迟低于 Sidecar（无额外网络跳数）。支持 L3/L4 和 L7（HTTP/gRPC/Kafka）策略。Hubble——Cilium 的可观测性层，提供流量关系图和策略审计。零信任实际案例：Google BeyondProd（服务网格 + 工作负载身份 + 自动证书轮换）。',
+  ['Sidecar（Istio）和 eBPF（Cilium）实现服务间安全的性能差异？','SPIFFE 标准如何实现跨服务网格的工作负载身份？'],
+  ['安全','零信任','微分段','Service Mesh','Cilium'])
+
+q('medium','short_answer','IoT/OT 安全',
+  'IoT/OT 安全与传统 IT 安全的区别？工业控制系统（ICS）的安全挑战？',
+  'IoT/OT 安全的核心差异：(1) 可用性 > 机密性——IT 安全侧重于机密性（数据加密），OT 安全侧重于可用性（生产线不能停）。(2) 补丁周期——IT 系统可每月打补丁，OT 系统（PLC、RTU、SCADA）可能数年不更新（需要停机维护）。(3) 设备资源限制——IoT 传感器通常只有几百 KB 内存，无法运行 EDR 或复杂加密。(4) 专有协议——Modbus、PROFINET、DNP3 等工业协议缺乏内置安全机制（无认证、无加密）。(5) 网络拓扑——扁平网络（IT 已普及网络分段，但 OT 网络常因设备兼容性需求使用扁平架构）。(6) 物理安全——IoT 设备常在物理不安全的环境中（户外传感器、工厂车间）。(7) 设备生命周期长——工业设备的预期寿命 10-20 年，远长于 IT 设备。ICS 安全架构：Purdue 模型（IEC 62443）——层次化 ICS 网络架构。Level 0——物理过程（传感器、执行器）。Level 1——控制设备（PLC、RTU）。Level 2——监控（SCADA、HMI）。Level 3——生产管理（MES、历史数据库）。Level 4——企业 IT（ERP、企业网络）。Level 5——互联网。Purdue 模型安全原则：每个 Level 之间有防火墙和安全网关、Level 3-4 之间的 DMZ 保护、禁止 Level 0-3 直接访问互联网。IEC 62443 标准：ICS 安全国际标准，覆盖（1）风险评估和方法论、（2）系统安全等级（SL 1-4）、（3）组件要求。常见攻击场景：2015 乌克兰电网攻击（BlackEnergy 恶意软件导致 23 万用户停电）、2017 Trisis/Hatman（攻击 Triconex 安全仪表系统，可导致物理破坏）、Stuxnet（2010，破坏伊朗核离心机）。防御策略：网络微分段（Purdue 模型 + 单向网关（Data Diode））、补丁管理窗口规划、远程访问的跳板机（Jump Box）+ 多因素认证。',
+  ['为什么 OT 系统打补丁比 IT 系统困难得多？','Purdue 模型中 Level 3-4 之间的 DMZ 需要哪些安全控制？'],
+  ['安全','IoT','OT','ICS','SCADA'])
+
+q('medium','short_answer','数据防泄露（DLP）',
+  'DLP（Data Loss Prevention）的工作原理？网络 DLP 和端点 DLP 的区别？',
+  'DLP 目标：防止敏感数据被有意或无意泄露到组织外部。DLP 三大类别：(1) 网络 DLP（Network DLP）——监控出口流量，检测通过 HTTP/HTTPS/Email/FTP 传输的敏感数据。部署方式——网络探针/代理或云 API 分析。检测能力——内容分析（信用卡号正则、身份证号正则、文档指纹）、文件类型检测、关键字匹配。阻断方式——阻断邮件发送、阻断上传、告警后人工确认。(2) 端点 DLP（Endpoint DLP）——监控终端操作，阻止敏感数据通过 USB、打印、截屏、即时通讯泄露。部署方式——端点 Agent（如 Microsoft Purview、Symantec DLP）。检测能力——文件操作监控（复制/修改/删除）、USB 设备控制、应用程序控制。阻断方式——阻止 USB 写入、阻止打印、阻止文件复制到非授权应用。(3) 云 DLP（Cloud DLP）——对 SaaS 应用中的数据做 DLP。CASB 集成 + 云原生 DLP（如 Google DLP API、AWS Macie）。检测能力——自动发现 S3 桶中的 PII（Macie）、Google Drive/SharePoint 中的敏感文件扫描。内容检测技术：(1) 正则表达式匹配——信用卡号、SSN、电话号码。(2) Exact Data Matching（EDM）——与已知敏感数据（数据库导出）精确匹配。(3) Document Fingerprinting——对敏感文档计算哈希或内容特征。(4) Statistical/ML 分类——基于上下文的分类（如「包含护照号且包含发件/收件人的邮件」）。DLP 实施的挑战：(1) 准确率——误报过多导致安全团队疲劳，漏报导致数据泄露。(2) 加密流量——TLS 流量中的 DLP 检测需要 TLS 解密（MITM 代理），引入隐私和性能问题。(3) 用户隐私——DLP 监控与员工隐私的平衡，需要明确的 DLP 政策和员工同意。',
+  ['为什么 DLP 对加密流量的检测需要 TLS 解密（SSL Inspection）？','内容感知 DLP 和关键字 DLP 的误报率差异？'],
+  ['安全','DLP','数据防泄露','数据安全','合规'])
+
+q('medium','short_answer','安全开发工具（SAST/DAST/SCA）',
+  'SAST、SCA、DAST 在 CI Pipeline 中的集成顺序和门禁策略？误报处理流程？',
+  'CI Pipeline 安全工具集成顺序（早发现早修复，成本依次递增）：(1) Pre-Commit（开发者本地）——IDE 插件（SonarLint、Semgrep Lint）实时提示。pre-commit hook 扫描硬编码密钥（gitleaks/truffleHog）。(2) Commit/Build（CI 早期）——SAST 扫描（SonarQube/CodeQL）。规则目标：发现注入、XSS、硬编码密码、不安全反序列化。门禁策略：新引入的 CRITICAL 漏洞阻断构建（Bug Fix 例外）。SCA 依赖扫描（Dependabot/Snyk/Trivy）。门禁策略：阻断包含 CRITICAL CVE 的依赖（有已知利用链的 CVE 优先阻断）。(3) Test/Staging（CI 后期）——DAST 扫描（OWASP ZAP）。扫描运行中的应用，适合发现运行时配置错误和认证问题。门禁策略：报告中标记高风险项供人工审核（不自动阻断，DAST 误报较高）。Secret Scanning——扫描 Git 历史中的凭证泄露（GitHub Secret Scanning / GitLab Secret Detection）。误报处理流程：(1) 自动去重——相同文件相同行号只有首次记录。(2) 规则调优——将误报模式添加到排除清单（如测试文件的路径模式）。(3) 优先级排序——SAST 的误报率通常高于 DAST。SAST CRITICAL 的误报率 ~30%（需要人工审核），DAST 的误报率 ~10-15%。(4) 回放机制——允许开发者对特定漏洞标记「误报」并添加说明。门禁的权衡（安全 vs 速度）：CRITICAL 漏洞自动阻断 → 发出即时告警 → 如果确认误报可在 1h 内通过白名单恢复。红色门禁：阻断构建。黄色门禁：告警但允许合并，要求在 Sprint 内修复。绿色门禁：仅报告，不要求修复。工具标准化 vs 碎片化：团队统一使用同一套安全工具（统一 Dashboard 集中管理），避免每个团队各用不同的扫描工具导致漏洞管理混乱。',
+  ['为什么 CI Pipeline 中 SAST 门禁应该阻止新漏洞但不要求修复所有存量漏洞？','DAST 扫描在 CI 中应该以什么频率运行？'],
+  ['安全','SAST','DAST','SCA','CI/CD'])
+
+q('hard','short_answer','Kerberos 认证与攻击',
+  'Kerberos 认证协议的流程？针对 Kerberos 的常见攻击（Golden Ticket/Silver Ticket）？',
+  'Kerberos 核心角色：(1) KDC（Key Distribution Center）——包含 AS（Authentication Service）和 TGS（Ticket Granting Service）。(2) Client——请求服务的用户或机器。(3) Server——提供服务的资源。认证流程（简化的四步）：(1) AS-REQ → AS-REP——客户端向 AS 发送请求（含用户 ID 和时间戳）。AS 返回 TGT（Ticket Granting Ticket）——用 KDC 密钥（krbtgt Hash）加密，客户端无法解密。(2) TGS-REQ → TGS-REP——客户端向 TGS 发送 TGT + 服务请求（Service Principal Name）。TGS 返回 Service Ticket——用服务账号密钥加密。(3) AP-REQ → AP-REP——客户端向目标服务发送 Service Ticket + Authenticator。服务验证 Ticket 后用 Authenticator 确认客户端身份。Kerberos 配置核心文件：Active Directory 的域控制器上的 krbtgt 账户是 KDC 的秘密。Golden Ticket 攻击：攻击者获取了域控权限后，导出 krbtgt 账户的 NTLM Hash（通过 Mimikatz lsadump::dcsync /user:krbtgt）。然后使用 krbtgt Hash 伪造任意用户的 TGT——不受密码变更影响（krbtgt 密码很少轮换）。防御：(1) 定期轮换 krbtgt 密码（每 12 个月两次）。(2) 监控事件 ID 4768（TGT 请求）的异常模式（Kerberos 事件日志）。(3) 限制域管理员权限。Silver Ticket 攻击：攻击者获取了服务账号（MSSQL、IIS）的 NTLM Hash，伪造该服务的 Service Ticket。Silver Ticket 比 Golden Ticket 更难检测——只伪造特定服务的访问令牌，不接触 KDC。防御：监控服务票据异常使用（事件 ID 4769）、使用受保护的属性（PAC 签名验证）。AS-REP Roasting：用户未启用 Kerberos 预认证（Pre-Authentication），攻击者可以通过 AS-REP 响应的加密数据暴力破解密码。防御：对所有用户启用 Kerberos 预认证。Kerberoasting：攻击者通过 TGS-REP 获取加密的服务账号 Hash，离线破解服务账号密码。防御：服务账号使用强密码 + 200+ 字符；使用 Group Managed Service Accounts（gMSA）自动管理密码。',
+  ['为什么 Golden Ticket 攻击即使修改密码也无法防御？','Kerberoasting 和 AS-REP Roasting 的区别？'],
+  ['安全','Kerberos','域安全','Golden Ticket','Active Directory'])
+
+q('medium','short_answer','OSINT 与外部攻击面管理',
+  'OSINT（开源情报）获取的信息类型？外部攻击面管理（EASM）如何发现影子资产？',
+  'OSINT 类别与工具：(1) DNS 情报——通过 Passive DNS（VirusTotal、SecurityTrails）获取域名的历史解析记录，发现隐藏的子域名。工具：Amass、Subfinder、dnsx。(2) 证书透明度——通过 crt.sh / CertSpotter 枚举域名 SSL 证书的所有 Subject Alternative Name（SAN），发现未备案的资产。(3) 搜索引擎——Google Dorking（site:domain.com intitle:login）暴露未受保护的页面。Shodan——搜索公网开放的服务（数据库、摄像头、ICS 设备）。(4) 代码仓库——GitHub 搜索（组织名+凭证、配置文件、内部代码泄露）。工具：GitDorker、truffleHog。(5) 暗网情报——监测暗网论坛中的凭证泄露和内部文档曝光。外部攻击面管理（EASM，Gartner 2020 定义）：持续发现和监控面向公网的资产。EASM vs 传统漏洞扫描——传统扫描只覆盖已知资产，EASM 先发现未知资产再评估。识别影子 IT（Shadow IT）——未被 IT/Security 团队备案的资产（开发环境、测试实例、旧系统、被遗忘的 S3 存储桶）。ATASM 生命周期：发现（Discover）→分类（Classify）→评估（Assess）→监控（Monitor）。攻击者视角：「你管理的资产 = 你的已知资产，你未知但公网暴露的资产 = 攻击者的突破口」。EASM 工具：Censys、Cymru、Randori（IBM）、AssetNote（社区版）。防御策略：(1) 定期外部资产发现扫描（至少每月一次）。(2) 统一资产清单管理（CMDB + CSPM 集成）。(3) 域名和 IP 备案流程自动化（防止失管资产）。(4) 攻击面缩减（ASR）——关闭不必要的外网服务、移除过期 DNS 记录。',
+  ['为什么 shodan.io 能扫描到公司不知道的暴露资产？','Google Dorking 如何发现开发环境中泄露的凭证？'],
+  ['安全','OSINT','攻击面','EASM','Shodan'])
+
+q('hard','short_answer','红队 C2 基础设施',
+  '红队 C2（Command & Control）通信架构？如何避免被蓝队检测？',
+  'C2 架构类型：(1) 直连——Beacon 直连 C2 服务器。最简单但最容易被检测（静态 IP/域名被 IoC 标记）。(2) 重定向器——Beacon → Redirector（Nginx/Apache 反向代理）→ C2 服务器。Redirector 接收所有流量，转发到隐藏的 C2 服务器。优势：C2 服务器 IP 不暴露，Redirector 被封后快速更换。(3) 域名前置（Domain Fronting）——Beacon → CDN（CloudFront/CloudFlare）→ C2 服务器。HTTPS 的 SNI 和 HTTP Host 头不一致——SNI 指向 CDN（合法域名），Host 指向 C2 服务器。已基本被 CDN 厂商封禁。(4) 社会化媒体 C2（Dead Drop Resolver）——Beacon 从 Twitter/GitHub/Steam 的合法内容（图片、Profile 描述）中提取 C2 地址。流量看起来是正常的社交媒体访问。(5) 多级 C2——Beacon → Staging Server → Team Server → Operator。Malleable C2 Profile（Cobalt Strike）：自定义网络流量特征（HTTP Header、URI、JA3/S 指纹、Jitter）。避免被蓝队通过流量指纹（如特定的 HTTP User-Agent、URI 模式）检测。例如——修改默认的 Cookie、改变 HTTP 响应的大小和内容。C2 通信模式：(1) 轮询——固定间隔的 HTTP/HTTPS 请求。Jitter（抖动）——请求间隔随机变化（如 60s ± 30%）。(2) 异步——SMB 命名管道（内网横向移动时用，不需出网）、DNS TXT 查询（请求/响应编码在 DNS TXT 记录中）。(3) WebSocket——持续连接，实时双向通信。社交媒体 C2（如 Slack API、Telegram Bot API）——流量看起来是正常的企业应用流量。检测规避技术：睡眠混淆（Sleep Mask，加密内存中的 Beacon）、清理 Event Log（wevtutil cl）、禁用 AMSI（通过内存补丁）、绕过 Windows Defender（通过加载无签名驱动）。防御建议：监控 JA3 指纹变化、分析 DNS 查询模式的异常（高频特定域名的 TXT 查询）、EDR 检测内存操作。',
+  ['为什么域名前置（Domain Fronting）在大多数 CDN 上已不可用？','Malleable C2 Profile 如何规避基于流量分析的检测？'],
+  ['安全','红队','C2','Cobalt Strike','渗透测试'])
+
+q('medium','short_answer','密码管理器与企业凭证安全',
+  '企业密码管理器（1Password/LastPass/Bitwarden）的安全架构？主密码泄露后怎么办？',
+  '企业密码管理器核心安全模型——零知识架构（Zero-Knowledge / Zero-Trust Proof）。服务端无法知道用户存储的密码内容。架构原理：(1) 主密码（Master Password）——用户的唯一记忆，用于加密/解密密码库（Vault）。使用 PBKDF2/scrypt/argon2 从主密码派生加密密钥。主密码永远不发送到服务器。(2) 加密——Vault 数据在客户端使用 AES-256-GCM 加密后上传。服务端只存储密文。加密密钥不对服务器可见。(3) 同步——密文通过服务器同步到其他设备，其他设备用主密码解密（或通过共享密钥）。双因子安全——主密码（知悉）+ 2FA（拥有），2FA 包括 TOTP/U2F WebAuthn。安全的密码共享——共享密码时使用共享密钥（对称加密），共享双方使用各自私钥解密共享密钥。不安全的密码共享方式：导出 CSV 通过邮件发送。企业功能：(1) 单点登录（SSO）集成——SAML/OIDC 认证后自动解锁密码库。(2) 策略控制——强制使用强密码、禁用密码导出、限制密码共享范围。(3) 紧急访问——指定紧急联系人，在用户失联时可申请访问密码库（Grace Period 机制）。主密码泄露后的应对：(1) 立即更改主密码——更改后重新加密所有密码库数据（生成新的加密密钥重新加密）。(2) 轮换所有存储的密码——密码管理器可以帮助批量检测哪些密码受影响。逐个轮换重要账户密码。(3) 撤销所有会话——强制所有设备登出（要求重新用新主密码登录）。(4) 检查访问日志——查看是否有未授权的设备访问历史。安全事件（LastPass 2022 泄露）：攻击者通过攻破开发人员的家用电脑获取 Vault 访问凭证。LastPass 的零知识架构保护了用户的主密码和 Vault 密钥，但用户的元数据（URL、用户名）也部分泄露。',
+  ['为什么零知识架构下密码管理器服务端被攻破，用户的密码仍然安全？','Bitwarden 的自托管方案（Self-hosted）比云方案安全吗？'],
+  ['安全','密码管理器','零知识','Bitwarden','LastPass'])
+
+q('medium','short_answer','安全成熟度模型（CMMC/NIST CSF）',
+  'NIST Cybersecurity Framework（CSF）的框架结构？CMMC 和等级？',
+  'NIST CSF（美国国家标准与技术研究院网络安全框架，2014 发布，2024 年 2.0 版最新）：(1) 框架核心——六个函数（Function）：Govern（治理，2.0 新增）、Identify（识别）、Protect（保护）、Detect（检测）、Respond（响应）、Recover（恢复）。包含 106 个控制措施子项（Categories/Subcategories）。(2) 框架实施层（Tiers）——Tier 1（部分）：临时、非正式的风险管理。Tier 2（风险告知）：组织意识到风险但缺乏组织级策略。Tier 3（可重复）：组织级风险策略，流程制度完善且可重复。Tier 4（自适应）：持续改进、实时自适应安全。CSF 2.0 新增 Govern 函数——强调网络安全是组织治理的一部分，需要董事会级别的参与和决策。NIST CSF 不是认证标准——是自评估框架，企业用它来评估和改善安全态势。CMMC（Cybersecurity Maturity Model Certification，美国国防部 2020）：面向国防承包商（DFARS 合规）的强制认证。五个级别：(1) L1（基础）——保护联邦合同信息（FCI）。17 个基本控制措施。自评估。(2) L2（中级）——保护受控非密信息（CUI）。110 个控制措施（与 NIST SP 800-171 一致）。第三方评估（每 3 年）。(3) L3（良好）——减少 APT 风险。新增 20+ 控制措施。政府评估。(4) L4（高）——针对 APT 的先进防御。政府评估。(5) L5（最高）——针对 APT 的高级保护。政府评估。CMMC 2.0（2021 简化版）：将原 5 级精简为 3 级（L1/L2/L3，L2 合并原 L2+L3，L3 合并原 L4+L5）。ISO 27001、NIST CSF、CMMC 之间的关系：ISO 27001——管理体系建设（ISMS）。NIST CSF——安全能力评估（自评框架）。CMMC——国防供应链强制合规（认证）。',
+  ['为什么 NIST CSF 2.0 新增 Govern 函数？','CMMC 认证对向美国国防部供应软件的企业的商业影响？'],
+  ['安全','NIST','CSF','CMMC','成熟度'])
+
+
+# Write
+outpath = '/Users/petersun/DEV/labs/interview-app/backend/seed_data/gen_security.json'
+with open(outpath, 'w', encoding='utf-8') as f:
+    json.dump(questions, f, ensure_ascii=False, indent=2)
+print(f'Written: {len(questions)} questions to {outpath}')
