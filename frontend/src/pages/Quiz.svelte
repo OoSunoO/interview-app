@@ -2625,7 +2625,7 @@
       width: 100%;
     }
     .page {
-      padding: 18px 14px;
+      padding: 18px 14px calc(var(--nav-height) + 18px + var(--safe-bottom));
     }
   }
 </style>

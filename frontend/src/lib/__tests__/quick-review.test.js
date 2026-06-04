@@ -238,6 +238,94 @@ describe("QuickReview", () => {
     });
   });
 
+  describe("review forgotten", () => {
+    it("shows review button on summary when some questions were forgotten", async () => {
+      mockList.mockReturnValue([LIGHT_Q1]);
+      mockGet.mockResolvedValueOnce(FULL_Q1);
+
+      render(QuickReview, { props: { config: {}, onNavigate } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-reveal-btn"));
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-rate-forgot")).toBeInTheDocument();
+      });
+      // Rate as forgot
+      fireEvent.click(screen.getByTestId("qr-rate-forgot"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-summary")).toBeInTheDocument();
+      });
+      expect(screen.getByText(/复习.*遗忘/)).toBeInTheDocument();
+    });
+
+    it("does not show review button when all questions were remembered", async () => {
+      mockList.mockReturnValue([LIGHT_Q1]);
+      mockGet.mockResolvedValueOnce(FULL_Q1);
+
+      render(QuickReview, { props: { config: {}, onNavigate } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-reveal-btn"));
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-rate-remembered")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-rate-remembered"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-summary")).toBeInTheDocument();
+      });
+      expect(screen.queryByText(/复习.*遗忘/)).not.toBeInTheDocument();
+    });
+
+    it("clicking review button re-enters active mode with forgotten questions only", async () => {
+      mockList.mockReturnValue([LIGHT_Q1, LIGHT_Q2]);
+      mockGet.mockResolvedValueOnce(FULL_Q1).mockResolvedValueOnce(FULL_Q2);
+
+      render(QuickReview, { props: { config: {}, onNavigate } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      // Rate Q1 as forgot
+      fireEvent.click(screen.getByTestId("qr-reveal-btn"));
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-rate-forgot")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-rate-forgot"));
+
+      // Rate Q2 as remembered
+      await waitFor(() => {
+        expect(screen.getByText("SQL优化")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-reveal-btn"));
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-rate-remembered")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-rate-remembered"));
+
+      // Summary should show review button
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-summary")).toBeInTheDocument();
+      });
+      const reviewBtn = screen.getByText(/复习.*遗忘/);
+      expect(reviewBtn).toBeInTheDocument();
+
+      // Click review button
+      fireEvent.click(reviewBtn);
+
+      // Should re-enter active mode with only the forgotten question (Q1)
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("qr-question-title")).toHaveTextContent("Java是什么");
+    });
+  });
+
   describe("bookmark", () => {
     it("toggles bookmark and shows success toast", async () => {
       mockList.mockReturnValue([LIGHT_Q1]);

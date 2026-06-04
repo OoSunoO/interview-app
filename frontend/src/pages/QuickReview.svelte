@@ -36,6 +36,9 @@
     Object.values(results).filter((r) => r === "unsure").length,
   );
   let doneCount = $derived(Object.keys(results).length);
+  let forgottenCount = $derived(
+    Object.values(results).filter((r) => r === "forgot").length,
+  );
   let showSessionMap = $state(false);
   let mapDialog = $state(null);
   let showHistory = $state(false);
@@ -217,6 +220,18 @@
   function handleDone() {
     api.quickReview.clearSession();
     onNavigate("home");
+  }
+
+  function reviewForgotten() {
+    const fq = questions.filter((q) => results[q.id] === "forgot");
+    if (fq.length === 0) return;
+    questions = fq;
+    currentIndex = 0;
+    showAnswer = false;
+    results = {};
+    phase = "active";
+    saveSession();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
 </script>
@@ -445,6 +460,11 @@
 
       <div class="summary-actions">
         <button class="summary-btn primary" onclick={handleDone}>完成</button>
+        {#if forgottenCount > 0}
+          <button class="summary-btn danger" onclick={reviewForgotten}>
+            复习 {forgottenCount} 道遗忘题
+          </button>
+        {/if}
         <button class="summary-btn secondary" onclick={() => onNavigate("wrong")}>查看错题</button>
         <button class="summary-btn ghost" onclick={() => (showHistory = true)}>历史记录</button>
       </div>
@@ -1048,6 +1068,11 @@
     border: none;
     font-size: 13px;
     padding: 8px;
+  }
+  .summary-btn.danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger);
   }
 
   /* ── History Dialog ── */

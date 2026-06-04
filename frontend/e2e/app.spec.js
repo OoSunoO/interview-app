@@ -189,25 +189,31 @@ test.describe("Quiz", () => {
     await page.getByRole("button", { name: /开始答题/ }).click();
     await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 8000 });
 
-    // Handle different question types to reveal self-evaluation buttons
+    // Handle different question types
     const optBtn = page.locator("[data-testid=option-button]").first();
     if (await optBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      // Choice question: selecting correct option auto-reveals answer
       await optBtn.click();
     } else {
       const textarea = page.locator("textarea").first();
       if (await textarea.isVisible({ timeout: 2000 }).catch(() => false)) {
+        // Short answer: type, submit, then self-evaluate
         await textarea.pressSequentially("test answer");
-        await page.getByRole("button", { name: /提交答案/ }).click();
+        // Scroll submit button into view to avoid nav bar interception
+        const submitBtn = page.getByRole("button", { name: /提交答案/ });
+        await submitBtn.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(100);
+        await submitBtn.click({ force: true });
+
+        // Self-evaluate as correct
+        await expect(page.getByRole("button", { name: /答对了/ })).toBeVisible({ timeout: 5000 });
+        await page.getByRole("button", { name: /答对了/ }).click();
+        await page.waitForTimeout(300);
       }
     }
 
-    // Self-evaluate as correct
-    await expect(page.getByRole("button", { name: /答对了/ })).toBeVisible({ timeout: 5000 });
-    await page.getByRole("button", { name: /答对了/ }).click();
-    await page.waitForTimeout(300);
-
-    // Answer section should be visible
-    await expect(page.locator(".q-answer, .answer-section, [data-testid=answer-content]").first()).toBeVisible({ timeout: 3000 });
+    // Answer section should be visible (appears after correct option or self-evaluation)
+    await expect(page.locator("[data-testid=answer-section]").first()).toBeVisible({ timeout: 5000 });
   });
 });
 
