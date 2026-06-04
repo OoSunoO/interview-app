@@ -85,6 +85,7 @@
     { keys: "Enter", desc: "提交答案 / 提交多选" },
     { keys: "R", desc: "答错后重试" },
     { keys: "G", desc: "答错后看答案" },
+    { keys: "1 2", desc: "自评答错 / 答对" },
     { keys: "B", desc: "收藏 / 取消收藏" },
     { keys: "?", desc: "显示此帮助" },
   ];
@@ -439,6 +440,10 @@
     if (browseMode || showAnswer || showSubmitResult) {
       if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); return; }
       if (e.key === "ArrowRight") { e.preventDefault(); goNext(); return; }
+      if (showSubmitResult && !showAnswer && e.target.tagName !== "TEXTAREA") {
+        if (e.key === "1") { selfEvaluate(false); return; }
+        if (e.key === "2") { selfEvaluate(true); return; }
+      }
     }
 
     // Answering interactions (blocked when answer is revealed)
