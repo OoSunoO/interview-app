@@ -215,6 +215,16 @@ test.describe("Quiz", () => {
     // Answer section should be visible (appears after correct option or self-evaluation)
     await expect(page.locator("[data-testid=answer-section]").first()).toBeVisible({ timeout: 5000 });
   });
+
+  test("Escape key exits quiz back to browse", async ({ page }) => {
+    await goToQuiz(page);
+    await expect(page.locator("[data-testid=question-title]")).toBeVisible();
+    // Press Escape to exit
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    // Should be back on Browse page
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+  });
 });
 
 test.describe("Wrong Book", () => {

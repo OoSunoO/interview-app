@@ -2,7 +2,7 @@
 
 **日期：** 2026-06-05
 **版本：** v1.4.7
-**当前状态：** 5196 题，51 分类全部 100+，243 单元测试全绿，32 E2E 全绿，构建 846ms
+**当前状态：** 5196 题，51 分类全部 100+，243 单元测试全绿，33 E2E 全绿，构建 846ms
 
 ---
 
@@ -98,6 +98,7 @@
 - ReviewSession 新增快捷键：Escape 退出活动会话，R 键从完成页重新开始
 - WrongBook 新增"速记错题"按钮，将错题列表一键送入 QuickReview 速记模式
 - Quiz 新增 Escape 键退出当前会话（所有阶段），与 QuickReview/ReviewSession 保持一致
+- E2E：Quiz Escape 键退出测试 + ReviewSession Escape 键退出测试
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
 - 每日目标 + 复习提醒
@@ -107,7 +108,7 @@
 
 ### 测试
 - 243 单元测试（Vitest，+2 QuickReview keyboard shortcuts）
-- 32 E2E 测试（Playwright，+1 quiz self-evaluation，+1 QR stats history，+1 QR Escape，+1 RS Escape）
+- 33 E2E 测试（Playwright，+1 quiz self-evaluation，+1 QR stats history，+1 QR Escape，+1 RS Escape）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
 - `local-api.js`：94.47% statements, 84.78% branches（核心业务逻辑）
