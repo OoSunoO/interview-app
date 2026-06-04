@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { store } from "../lib/stores.svelte.js";
   import { api } from "../lib/local-api.js";
   import { toast } from "../lib/toast.js";
@@ -13,6 +13,7 @@
   let selectedIds = $state(new Set());
   let selectionMode = $state(false);
   let companies = $state([]);
+  let searchInput = $state(null);
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -22,9 +23,21 @@
 
   const categories = FILTER_CATEGORIES;
 
+  function handleKeydown(e) {
+    if (e.key === "/" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+      e.preventDefault();
+      searchInput?.focus();
+    }
+  }
+
   onMount(() => {
     companies = api.questions.companies();
     store.loadQuestions();
+    document.addEventListener("keydown", handleKeydown);
+  });
+
+  onDestroy(() => {
+    document.removeEventListener("keydown", handleKeydown);
   });
 
   function applyFilter() {
@@ -345,6 +358,7 @@
       placeholder="搜索题目、答案、标签..."
       bind:value={store.filters.search}
       oninput={() => applyFilter()}
+			  bind:this={searchInput}
     />
     {#if store.filters.search}
       <button
