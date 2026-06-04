@@ -8,7 +8,26 @@
   let open = $state(false);
   let query = $state("");
   let inputEl = $state(null);
+  let dialogEl = $state(null);
   let selectedIndex = $state(0);
+
+  function trapFocus(e, container) {
+    if (e.key !== "Tab" || !container) return;
+    const focusable = container.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
   let allQuestions = $state([]);
 
   // ── Command sources ──
@@ -135,7 +154,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="cp-overlay" onclick={handleOverlayClick} onkeydown={(e) => { if (e.key === "Escape") open = false; }}>
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="cp-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") open = false; }}>
+    <div class="cp-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { trapFocus(e, dialogEl); if (e.key === "Escape") open = false; }} bind:this={dialogEl}>
       <div class="cp-input-wrap">
         <svg class="cp-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
