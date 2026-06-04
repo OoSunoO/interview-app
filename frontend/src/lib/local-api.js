@@ -8,6 +8,7 @@ const [{ questions }, { buildKnowledgeMap, getKnowledgeForTag }] = await Promise
 ]);
 
 import { rateCard, getDefaultProgress, QUICK_REVIEW_MAP, RATINGS } from "./sm2.js";
+import { CATEGORY_LABELS, MAIN_CATEGORY } from "./categories.js";
 
 // Build knowledge map once (question data is static)
 const knowledgeMap = buildKnowledgeMap(questions);
@@ -103,23 +104,7 @@ function matchesSearch(q, search) {
 
 // ── Knowledge Points helpers ──────────────────────────────────────
 
-const CATEGORY_NAMES = {
-  java_basic: "Java 基础",
-  java_advanced: "Java 进阶",
-  ai: "AI 基础",
-  agent: "AI Agent",
-  algorithm: "算法",
-  system_design: "系统设计",
-  frontend: "前端",
-  cs_basics: "计算机基础",
-  database: "数据库",
-  linux: "Linux",
-  devops: "DevOps",
-  react: "React",
-  project_mgmt: "项目管理",
-  product: "产品思维",
-  java_collections: "Java 集合",
-};
+const CATEGORY_NAMES = CATEGORY_LABELS;
 
 /** Build a readable summary for a knowledge point from its questions */
 function generateSummary(tag, tagQuestions) {
@@ -183,7 +168,10 @@ export const api = {
   questions: {
     list(params = {}) {
       let result = questions;
-      if (params.category) result = result.filter((q) => q.category === params.category);
+      // Filter by main category — sub-categories (e.g. jvm_extras) match their parent (jvm)
+      if (params.category) {
+        result = result.filter((q) => (MAIN_CATEGORY[q.category] || q.category) === params.category);
+      }
       if (params.difficulty) result = result.filter((q) => q.difficulty === params.difficulty);
       if (params.type) result = result.filter((q) => q.type === params.type);
       if (params.search) result = result.filter((q) => matchesSearch(q, params.search));
@@ -321,18 +309,19 @@ export const api = {
       const byCategory = {};
 
       for (const q of questions) {
-        if (!byCategory[q.category]) {
-          byCategory[q.category] = { total: 0, done: 0 };
+        const mainCat = MAIN_CATEGORY[q.category] || q.category;
+        if (!byCategory[mainCat]) {
+          byCategory[mainCat] = { total: 0, done: 0 };
         }
-        byCategory[q.category].total++;
+        byCategory[mainCat].total++;
 
         const p = progress[q.id];
         if (p?.status === "correct") {
           correct++;
-          byCategory[q.category].done++;
+          byCategory[mainCat].done++;
         } else if (p?.status === "reviewing") {
           reviewing++;
-          byCategory[q.category].done++;
+          byCategory[mainCat].done++;
         } else if (p?.status === "wrong") {
           wrong++;
         }
