@@ -708,6 +708,23 @@
       {/key}
     {/if}
 
+    <!-- Your Answer (show for typed answers when answer is revealed) -->
+    {#if userAnswer && showAnswer && !browseMode}
+      <div class="user-answer-section">
+        <div class="ua-header">
+          <span class="ua-label">你的回答</span>
+        </div>
+        <div class="ua-body">{userAnswer}</div>
+        <div class="ua-status">
+          {#if feedbackResult === "correct"}
+            <span class="ua-correct">✓ 自评正确</span>
+          {:else if feedbackResult === "wrong"}
+            <span class="ua-wrong">✗ 自评错误</span>
+          {/if}
+        </div>
+      </div>
+    {/if}
+
     <!-- Notes -->
     {#if q && (browseMode || showAnswer)}
       <div class="notes-section">
@@ -1420,6 +1437,45 @@
   .kt-btn:active {
     transform: scale(0.95);
   }
+
+  /* ── User Answer ── */
+  .user-answer-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ua-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ua-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .ua-body {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text);
+    white-space: pre-wrap;
+    background: var(--bg-surface);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .ua-status {
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .ua-correct { color: var(--success); }
+  .ua-wrong { color: var(--danger); }
 
   /* ── Navigation ── */
   .nav-actions {
