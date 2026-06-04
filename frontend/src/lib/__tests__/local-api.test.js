@@ -198,6 +198,19 @@ describe("questions.list", () => {
     }
   });
 
+  it("tagsWithCount() returns tag-count pairs sorted by count desc", async () => {
+    const api = await getApi();
+    const tcs = api.questions.tagsWithCount();
+    expect(tcs.length).toBeGreaterThan(0);
+    // highest count first
+    for (let i = 1; i < tcs.length; i++) {
+      expect(tcs[i - 1].count >= tcs[i].count).toBe(true);
+    }
+    const jb = tcs.find((t) => t.name === "Java基础");
+    expect(jb).toBeDefined();
+    expect(jb.count).toBe(3);
+  });
+
   it("filters by tag", async () => {
     const api = await getApi();
     expect(api.questions.list({ tag: "Java基础" })).toHaveLength(3);

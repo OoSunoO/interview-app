@@ -264,6 +264,19 @@ export const api = {
       return [...set].sort();
     },
 
+    /** Get tags with question counts, sorted by count descending */
+    tagsWithCount() {
+      const freq = Object.create(null);
+      for (const q of questionIndex) {
+        for (const t of q.tags) {
+          freq[t] = (freq[t] || 0) + 1;
+        }
+      }
+      return Object.entries(freq)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, count]) => ({ name, count }));
+    },
+
     /** Pick a random question, with optional category/difficulty/status filter */
     random(filter = {}) {
       let pool = questionIndex;

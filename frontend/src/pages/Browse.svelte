@@ -15,6 +15,7 @@
   let selectionMode = $state(false);
   let companies = $state([]);
   let allTags = $state([]);
+  let allTagsWithCount = $state([]);
   let searchInput = $state(null);
   let detailQuestion = $state(null);
   let showDetailAnswer = $state(false);
@@ -73,6 +74,7 @@
   onMount(() => {
     companies = api.questions.companies();
     allTags = api.questions.tags();
+    allTagsWithCount = api.questions.tagsWithCount();
     store.loadQuestions();
     document.addEventListener("keydown", handleKeydown);
   });
@@ -308,8 +310,8 @@
           class:filter-active={store.filters.tag}
         >
           <option value="">全部知识点</option>
-          {#each allTags as t}
-            <option value={t}>{t}</option>
+          {#each allTagsWithCount as tc}
+            <option value={tc.name}>{tc.name} ({tc.count})</option>
           {/each}
         </select>
       </div>
