@@ -204,6 +204,12 @@
     URL.revokeObjectURL(url);
   }
 
+  function toggleBookmark(e, q) {
+    e.stopPropagation();
+    const newVal = api.progress.toggleBookmark(q.id);
+    q.bookmarked = newVal;
+  }
+
   function saveAIKey() {
     setProvider(apiProvider);
     saveAIConfig({ key: apiKeyInput });
@@ -502,6 +508,26 @@
                   <div class="q-header">
                     <span class="tag">{categoryLabel(q.category)}</span>
                     <span class="tag diff {q.difficulty}">{q.difficulty}</span>
+                    <span
+                      class="wb-bm-toggle"
+                      class:active={q.bookmarked}
+                      role="button"
+                      tabindex="0"
+                      onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }}
+                      onclick={(e) => toggleBookmark(e, q)}
+                      title={q.bookmarked ? "取消收藏" : "收藏"}
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill={q.bookmarked ? "currentColor" : "none"}
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+                    </span>
                     <span class="wrong-count">答错 {q.wrong_count} 次</span>
                   </div>
                   <p class="q-title-text">{q.title}</p>
@@ -604,6 +630,23 @@
     margin-left: auto;
     color: var(--danger);
     font-size: 12px;
+  }
+  .wb-bm-toggle {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    border-radius: 3px;
+    transition: all 0.2s var(--spring);
+  }
+  .wb-bm-toggle.active {
+    color: var(--warning);
+  }
+  .wb-bm-toggle:active {
+    transform: scale(0.85);
   }
   .q-title-text {
     font-size: 14px;

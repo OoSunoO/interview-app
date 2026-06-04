@@ -184,6 +184,9 @@ export const api = {
       if (params.status) {
         result = result.filter((q) => (progress[q.id]?.status || "new") === params.status);
       }
+      if (params.bookmarked) {
+        result = result.filter((q) => progress[q.id]?.bookmarked === true);
+      }
 
       // sort
       const diffRank = { easy: 0, medium: 1, hard: 2 };
@@ -214,6 +217,7 @@ export const api = {
           company: q.company || "",
           status: p.status || "new",
           wrong_count: p.wrong_count || 0,
+          bookmarked: p.bookmarked || false,
         };
       });
     },
@@ -233,6 +237,7 @@ export const api = {
         repetitions: p.repetitions ?? 0,
         next_review_at: p.next_review_at || null,
         notes: p.notes || "",
+        bookmarked: p.bookmarked || false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -276,6 +281,7 @@ export const api = {
         interval: sm2.interval ?? existing.interval ?? 0,
         repetitions: sm2.repetitions ?? existing.repetitions ?? 0,
         notes: body.notes || existing.notes || "",
+        bookmarked: body.bookmarked !== undefined ? body.bookmarked : (existing.bookmarked || false),
         source: body.source || "quiz",
       };
       progress[questionId] = entry;
@@ -305,7 +311,8 @@ export const api = {
       const total = questions.length;
       let correct = 0,
         wrong = 0,
-        reviewing = 0;
+        reviewing = 0,
+        bookmarked = 0;
       const byCategory = {};
 
       for (const q of questions) {
@@ -316,6 +323,7 @@ export const api = {
         byCategory[mainCat].total++;
 
         const p = progress[q.id];
+        if (p?.bookmarked) bookmarked++;
         if (p?.status === "correct") {
           correct++;
           byCategory[mainCat].done++;
@@ -333,6 +341,7 @@ export const api = {
         done,
         correct,
         wrong,
+        bookmarked,
         by_category: byCategory,
       };
     },
@@ -371,6 +380,11 @@ export const api = {
       return { today: todayStats, streak, retention };
     },
 
+    /** Return the raw daily stats record (all dates) for heatmap / export. */
+    allDailyStats() {
+      return getDailyStats();
+    },
+
     wrong() {
       const progress = getProgress();
       const wrongIds = Object.entries(progress)
@@ -391,8 +405,19 @@ export const api = {
             wrong_count: p.wrong_count || 0,
             last_reviewed_at: p.last_reviewed_at || null,
             next_review_at: p.next_review_at || null,
+            bookmarked: p.bookmarked || false,
           };
         });
+    },
+
+    /** Toggle bookmark for a question. Returns new state. */
+    toggleBookmark(questionId) {
+      const progress = getProgress();
+      const entry = progress[questionId] || {};
+      const newVal = !(entry.bookmarked || false);
+      progress[questionId] = { ...entry, bookmarked: newVal };
+      saveProgress(progress);
+      return newVal;
     },
 
     dueReviews() {
@@ -488,6 +513,7 @@ export const api = {
           tags: q.tags,
           status: p.status || "new",
           wrong_count: p.wrong_count || 0,
+          bookmarked: p.bookmarked || false,
           ef: p.ef,
           interval: p.interval,
         };

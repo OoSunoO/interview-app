@@ -26,15 +26,37 @@
     loading = true;
     error = null;
     try {
-      const [questions, due, stats] = await Promise.all([
-        api.questions.list({ page_size: 3 }),
+      const [due, stats, wrong] = await Promise.all([
         api.progress.dueReviews(),
         api.progress.stats(),
+        api.progress.wrong(),
       ]);
-      recommend = questions.slice(0, 3);
       dueCount = due.length;
       store.stats = stats;
       store.refreshDailyStats();
+
+      // Build smart recommendations:
+      // 1. Prioritize due/pending SM-2 reviews
+      // 2. Then wrong-answer questions
+      // 3. Fall back to random unseen questions
+      let recs = [];
+      const seen = new Set();
+
+      function pushRec(q) {
+        if (recs.length >= 3 || seen.has(q.id)) return;
+        seen.add(q.id);
+        recs.push(q);
+      }
+
+      for (const q of due) pushRec(q);
+      for (const q of wrong) pushRec(q);
+
+      if (recs.length < 3) {
+        const extras = await api.questions.list({ page_size: 10 });
+        for (const q of extras) pushRec(q);
+      }
+
+      recommend = recs;
     } catch (e) {
       error = e.message ?? "加载数据失败";
     } finally {

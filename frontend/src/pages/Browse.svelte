@@ -44,7 +44,8 @@
       store.filters.status ||
       store.filters.company ||
       store.filters.search ||
-      store.filters.sort_by;
+      store.filters.sort_by ||
+      store.filters.bookmarked;
     if (hasFilters) {
       showRandomHint = true;
       setTimeout(() => {
@@ -70,6 +71,12 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  function toggleBookmark(e, q) {
+    e.stopPropagation();
+    api.progress.toggleBookmark(q.id);
+    q.bookmarked = !q.bookmarked;
   }
 </script>
 
@@ -170,6 +177,23 @@
       {#if showRandomHint}
         <span class="random-hint">已从当前筛选结果中随机抽取</span>
       {/if}
+      <button
+        class="bm-filter-btn"
+        class:active={store.filters.bookmarked}
+        onclick={() => { store.filters.bookmarked = !store.filters.bookmarked; applyFilter(); }}
+      >
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill={store.filters.bookmarked ? "currentColor" : "none"}
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+        收藏
+      </button>
       <button
         class="random-btn"
         onclick={goRandom}
@@ -349,6 +373,26 @@
             {#if q.company}
               <span class="tag company">{q.company}</span>
             {/if}
+            <span
+              class="bm-toggle"
+              class:active={q.bookmarked}
+              role="button"
+              tabindex="0"
+              onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }}
+              onclick={(e) => toggleBookmark(e, q)}
+              title={q.bookmarked ? "取消收藏" : "收藏"}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill={q.bookmarked ? "currentColor" : "none"}
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+            </span>
           </div>
           <p class="q-title">{q.title}</p>
           {#if q.tags.length > 0}
@@ -442,6 +486,30 @@
     white-space: nowrap;
     animation: fade-in 0.25s var(--spring);
     pointer-events: none;
+  }
+
+  .bm-filter-btn {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 12px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s var(--spring);
+  }
+  .bm-filter-btn.active {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border-color: var(--warning);
+  }
+  .bm-filter-btn:active {
+    transform: scale(0.96);
   }
 
   .random-btn {
@@ -553,6 +621,24 @@
   }
   .status-icon.new {
     color: var(--text-dim);
+  }
+  .bm-toggle {
+    margin-left: auto;
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    border-radius: 3px;
+    transition: all 0.2s var(--spring);
+  }
+  .bm-toggle.active {
+    color: var(--warning);
+  }
+  .bm-toggle:active {
+    transform: scale(0.85);
   }
   .q-header {
     display: flex;

@@ -174,6 +174,12 @@
     onNavigate("home");
   }
 
+  function toggleBookmark(e, card) {
+    e.stopPropagation();
+    if (!card) return;
+    card.bookmarked = api.progress.toggleBookmark(card.id);
+  }
+
   const categories = FILTER_CATEGORIES;
 </script>
 
@@ -233,6 +239,26 @@
           <span class="tag">{currentCard?.category ? categoryLabel(currentCard.category) : ""}</span>
           <span class="tag diff {currentCard?.difficulty}">{currentCard?.difficulty}</span>
           <span class="tag type">{currentCard?.type}</span>
+          <span
+            class="rs-bm-toggle"
+            class:active={currentCard?.bookmarked}
+            role="button"
+            tabindex="0"
+            onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, currentCard); }}
+            onclick={(e) => toggleBookmark(e, currentCard)}
+            title={currentCard?.bookmarked ? "取消收藏" : "收藏"}
+          >
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill={currentCard?.bookmarked ? "currentColor" : "none"}
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+          </span>
         </div>
 
         <h2 class="rs-question-title">{currentCard?.title}</h2>
@@ -489,6 +515,25 @@
     gap: 6px;
     flex-wrap: wrap;
     margin-bottom: 12px;
+    align-items: center;
+  }
+  .rs-bm-toggle {
+    margin-left: auto;
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    border-radius: 3px;
+    transition: all 0.2s var(--spring);
+  }
+  .rs-bm-toggle.active {
+    color: var(--warning);
+  }
+  .rs-bm-toggle:active {
+    transform: scale(0.85);
   }
   .tag.type {
     background: var(--bg-surface);

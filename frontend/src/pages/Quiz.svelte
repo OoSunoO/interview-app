@@ -58,6 +58,27 @@
   let scoreHistory = $state([]);
   let knowledgeTags = $state([]);
 
+  let notesText = $state("");
+  let notesSaved = $state(false);
+  let notesSaving = $state(false);
+
+  $effect(() => {
+    if (q) notesText = q.notes || "";
+  });
+
+  async function saveNotes() {
+    notesSaving = true;
+    try {
+      await api.progress.update(q.id, { notes: notesText });
+      notesSaved = true;
+      setTimeout(() => (notesSaved = false), 2000);
+    } catch {
+      /* ignore */
+    } finally {
+      notesSaving = false;
+    }
+  }
+
   // Load knowledge tags for the current question
   function loadKnowledgeTags() {
     if (q) {
@@ -356,6 +377,12 @@
       if (e.key === "Enter" && userAnswer.trim()) submitAnswer();
     }
   }
+
+  function handleToggleBookmark() {
+    if (!q) return;
+    const newVal = api.progress.toggleBookmark(q.id);
+    q.bookmarked = newVal;
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -394,6 +421,23 @@
         </button>
       {/if}
       <span class="q-timer">{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
+      <button
+        class="quiz-bm-btn"
+        class:active={q.bookmarked}
+        onclick={handleToggleBookmark}
+        title={q.bookmarked ? "取消收藏" : "收藏此题"}
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill={q.bookmarked ? "currentColor" : "none"}
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+      </button>
     </div>
 
     {#if sessionProgress}
@@ -664,6 +708,27 @@
       {/key}
     {/if}
 
+    <!-- Notes -->
+    {#if q && (browseMode || showAnswer)}
+      <div class="notes-section">
+        <div class="notes-header">
+          <span class="notes-label">学习笔记</span>
+          {#if notesSaved}
+            <span class="notes-saved-msg">已保存</span>
+          {/if}
+        </div>
+        <textarea
+          class="notes-input"
+          bind:value={notesText}
+          placeholder="记录你的思考、心得或记忆技巧…"
+          rows="3"
+        ></textarea>
+        <button class="notes-save-btn" onclick={saveNotes} disabled={notesSaving}>
+          {notesSaving ? "保存中…" : "保存笔记"}
+        </button>
+      </div>
+    {/if}
+
     {#if browseMode || showAnswer}
       {#if sessionProgress}
         <div class="nav-actions">
@@ -745,6 +810,23 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--text-muted);
+  }
+  .quiz-bm-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: all 0.2s var(--spring);
+  }
+  .quiz-bm-btn.active {
+    color: var(--warning);
+  }
+  .quiz-bm-btn:active {
+    transform: scale(0.85);
   }
   .q-number-badge {
     display: inline-flex;
@@ -1370,6 +1452,56 @@
     background: var(--accent);
     color: #fff;
     border: none;
+  }
+
+  /* ── Notes ── */
+  .notes-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .notes-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .notes-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+  .notes-saved-msg {
+    font-size: 11px;
+    color: var(--success);
+    font-weight: 600;
+    animation: fade-up 0.2s var(--spring);
+  }
+  .notes-input {
+    resize: vertical;
+    min-height: 60px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .notes-save-btn {
+    align-self: flex-end;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    transition: all 0.2s var(--spring);
+  }
+  .notes-save-btn:active {
+    transform: scale(0.96);
+  }
+  .notes-save-btn:disabled {
+    opacity: 0.5;
   }
 
   @media (max-width: 480px) {

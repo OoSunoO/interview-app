@@ -4,6 +4,7 @@
   import { store } from "../lib/stores.svelte.js";
   import { categoryLabel } from "../lib/categories.js";
   import ProgressRing from "../components/ProgressRing.svelte";
+  import CalendarHeatmap from "../components/CalendarHeatmap.svelte";
 
   onMount(async () => {
     // refreshStats must resolve before rendering overview content
@@ -12,6 +13,7 @@
       dailyStats = await api.progress.dailyStats();
       weeklyData = await api.progress.weeklyActivity();
       wrongList = await api.progress.wrong();
+      allDaily = await api.progress.allDailyStats();
     } catch (e) {
       // wrongList stays empty on error — weak sections gracefully show nothing
     }
@@ -20,6 +22,7 @@
   let wrongList = $state([]);
   let dailyStats = $state(null);
   let weeklyData = $state([]);
+  let allDaily = $state(null);
 
   let stats = $derived(store.stats);
 
@@ -74,6 +77,12 @@
         <span class="num danger">{stats.wrong}</span>
         <span class="label">待复习</span>
       </div>
+      {#if stats.bookmarked > 0}
+        <div class="overview-item">
+          <span class="num" style="color:var(--warning)">{stats.bookmarked}</span>
+          <span class="label">已收藏</span>
+        </div>
+      {/if}
     </div>
 
     <div class="overall-progress">
@@ -98,6 +107,11 @@
           <span class="daily-lbl">连续天数</span>
         </div>
       </div>
+
+      {#if allDaily}
+        <h2 class="section-title">年度活动</h2>
+        <CalendarHeatmap data={allDaily} />
+      {/if}
 
       {#if weeklyData.length > 0}
         <h2 class="section-title">近 7 天活动</h2>

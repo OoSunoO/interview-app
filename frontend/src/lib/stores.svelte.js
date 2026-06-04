@@ -16,6 +16,7 @@ let _filters = $state({
   search: "",
   sort_by: "",
   company: "",
+  bookmarked: false,
 });
 let _quizSession = $state([]);
 let _quizIndex = $state(0);
