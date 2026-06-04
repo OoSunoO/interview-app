@@ -24,6 +24,17 @@ test.describe("Home", () => {
     await expect(page.getByRole("button", { name: /速记模式/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /模拟面试/ })).toBeVisible();
   });
+
+  test("theme toggle switches between dark and light", async ({ page }) => {
+    await page.goto("/");
+    const themeBtn = page.getByRole("button", { name: "切换主题" });
+    await expect(themeBtn).toBeVisible();
+    const initial = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+    await themeBtn.click();
+    await page.waitForTimeout(200);
+    const after = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
+    expect(after).not.toBe(initial);
+  });
 });
 
 test.describe("Browse", () => {
