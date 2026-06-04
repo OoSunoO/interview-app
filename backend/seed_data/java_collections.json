@@ -1666,7 +1666,7 @@
   {
     "category": "java_collections",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "HashMap 扩容时元素的位移规律",
     "content": "关于 HashMap 的扩容机制，以下哪项描述是正确的？\nA) HashMap 扩容时将所有元素重新计算 hash 并插入新数组，时间复杂度 O(n)\nB) HashMap 扩容时容量翻倍，旧元素在新数组中的索引要么不变，要么为原索引 + 原数组长度，利用数组长度为 2 的幂次方特性优化\nC) 负载因子默认为 0.75，即元素数量达到数组长度的 75% 时立即触发扩容\nD) 扩容时所有链表会立即转换为红黑树以提高迁移效率",
     "answer": "B",
@@ -1758,7 +1758,7 @@
   {
     "category": "java_collections",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "ConcurrentHashMap mappingCount 与 size 的设计意图",
     "content": "ConcurrentHashMap 同时提供了 `size()`（返回 int）和 `mappingCount()`（返回 long）两个方法。以下关于二者区别的描述，哪项是正确的？\nA) size() 和 mappingCount() 功能完全相同，都是返回映射数量；mappingCount() 只是为兼容 Map 接口而保留的命名别名\nB) size() 返回的是桶数组的容量（capacity），不是映射数量；mappingCount() 才是真正的映射计数\nC) size() 存在因 int 溢出而丢失精度的问题（当映射数超过 Integer.MAX_VALUE 时），mappingCount() 用 long 返回避免此问题——这是二者同时存在的根本原因；在 JDK 8+ 实现中，size() 内部直接调用 mappingCount() 并截断为 int\nD) size() 是弱一致性视图（可能不反映最新状态），mappingCount() 是强一致性的精确计数",
     "answer": "C) ConcurrentHashMap 在 JDK 8+ 的实现中，size() 方法是 `return (int) mappingCount()` 的简单包装。二者都返回映射条目数，都基于内部的 `sumCount()` 方法计算（弱一致性视图，不是实时精确值，但在并发场景下足够精确）。存在两个方法的原因是历史兼容——Map 接口定义 size() 返回 int，但 JDK 设计者意识到大内存场景下 ConcurrentHashMap 可能包含超过 Integer.MAX_VALUE 个映射，因此添加了返回 long 的 mappingCount()。",
@@ -1859,7 +1859,7 @@
   {
     "category": "java_collections",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "TreeMap.descendingMap 逆序视图的 subMap 范围反转规则",
     "content": "关于 TreeMap.descendingMap() 返回的逆序视图（descending map）及其 subMap 方法的行为，以下哪项描述是正确的？\nA) descendingMap 返回的 subMap 参数顺序不变：subMap(fromKey, toKey) 中的 fromKey 仍然小于 toKey\nB) descendingMap 返回的 subMap 参数自动反转：subMap(fromKey, toKey) 实际表示从 toKey 到 fromKey 的范围\nC) descendingMap 不支持 subMap 操作，调用会抛出 UnsupportedOperationException\nD) descendingMap 的 subMap 行为与正向视图完全一致，不存在差异",
     "answer": "B) TreeMap.descendingMap() 返回一个 NavigableMap，其 subMap 方法的参数语义自动反转。在 descendingMap 上调用 subMap(fromKey, toKey) 时，fromKey 应大于 toKey（因为视图是逆序的），操作结果表示逆序映射中从原本的 toKey 到 fromKey 的范围（在正向视图中是从 fromKey 到 toKey 的子范围）。具体而言：descendingMap().subMap(highKey, lowKey) 相当于正向视图的 subMap(lowKey, highKey)。NavigableMap 的 descendingMap 文档明确说明「如果指定了参数，则 less 和 greater 的含义在交换后的映射中会被反转」。这一设计使得逆序视图的 subMap 参数签名保持一致——fromKey 仍然表示子范围的「下界」，但这个下界在逆序中对应的是更大的 key。",
@@ -1925,7 +1925,7 @@
   {
     "category": "java_collections",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "List.of 与 Collections.unmodifiableList 序列化实现差异",
     "content": "关于 List.of（JDK 9+）返回的不可变列表与 Collections.unmodifiableList 在序列化方面的差异，以下哪项描述是正确的？\nA) List.of 和 Collections.unmodifiableList 的序列化形式完全相同\nB) List.of 返回的列表通过自定义 writeReplace 方法将序列化委托为数组或普通列表，而 unmodifiableList 序列化的是其内部的包装结构\nC) List.of 返回的列表不支持序列化，会抛出 NotSerializableException\nD) Collections.unmodifiableList 的序列化形式直接输出其包装的源列表",
     "answer": "B) List.of（以及 Set.of、Map.of）返回的不可变集合是 JDK 内部实现类，它们通过 writeReplace() 方法将序列化代理替换为普通数组或标准集合表示——例如 List.of 返回的 ImmutableCollections.List12 在序列化时使用 SerializedList 作为代理，反序列化时重新构造为 List.of 的不可变实例。Collections.unmodifiableList 则序列化其内部的包装结构——它输出 UnmodifiableCollection 序列化代理，反序列化时重新包装。核心区别：List.of 的序列化不保留包装链，直接序列化底层数据元素；而 unmodifiableList 的序列化保留了包装语义，反序列化后仍然是 unmodifiable 的包装视图。这一差异在涉及远程调用和缓存对象序列化的场景中很重要。",

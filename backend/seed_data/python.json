@@ -1172,7 +1172,7 @@
     "type": "choice",
     "title": "Python 列表推导式的执行顺序",
     "content": "以下 Python 列表推导式的执行顺序是什么？\n```python\n[(x, y) for x in range(3) for y in range(2)]\n```",
-    "answer": "A) 先执行外层 for 再执行内层 for（等价于嵌套 for 循环）\nB) 先执行内层 for 再执行外层 for\nC) 并行执行两个 for\nD) 随机顺序执行",
+    "answer": "A) 先执行外层 for 再执行内层 for（等价于嵌套 for 循环）",
     "correct": "A",
     "hints": [
       "列表推导式中的多个 for 子句按从左到右的顺序嵌套，等价于普通的嵌套 for 循环"
@@ -1180,6 +1180,12 @@
     "tags": [
       "Python",
       "基础"
+    ],
+    "options": [
+      "A) 先执行外层 for 再执行内层 for（等价于嵌套 for 循环）",
+      "B) 先执行内层 for 再执行外层 for",
+      "C) 并行执行两个 for",
+      "D) 随机顺序执行"
     ]
   },
   {
@@ -1794,7 +1800,7 @@
   {
     "category": "python",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Python __new__ 与 __init__ 的对象创建控制",
     "content": "关于 Python 中 __new__ 与 __init__ 的关系，以下哪一项是正确的？\n\nA) __init__ 是真正的构造函数，负责分配内存和初始化对象；__new__ 仅在 __init__ 之前被调用，负责返回初始化的实例\nB) 在元类中重写 __new__ 可以控制类的创建行为（如注册所有子类），而 __init__ 永远不能返回除 None 以外的值\nC) 如果 __new__ 返回了该类的一个实例（即 isinstance(result, cls) 为真），__init__ 将不会被自动调用\nD) __new__ 是类的静态方法（但不需要 @staticmethod），第一个参数是 cls；__init__ 是实例方法，第一个参数是 self，两者都不能继承",
     "answer": "B) 在元类中重写 __new__ 可以控制类的创建行为（如注册所有子类），而 __init__ 永远不能返回除 None 以外的值。\n\n解析：\nA 错误：__new__ 才是真正的分配内存的「构造函数」，它负责创建并返回新实例；__init__ 是「初始化器」，在 __new__ 返回实例后被调用。\nB 正确：元类的 __new__ 可在创建类对象时拦截（如自动收集子类），__init__ 若返回非 None 值会引发 TypeError。\nC 错误：如果 __new__ 返回的对象是 cls 类型的实例，__init__ 会被自动调用（传入相同的参数）。仅当 __new__ 返回非 cls 类型的对象时，__init__ 才不被调用。\nD 错误：__new__ 确实无需 @staticmethod（隐式静态方法），且两者的继承行为不同——__new__ 可被子类覆盖，__init__ 也遵循 MRO 规则正常继承。\n\n实际应用示例：\n- 单例模式：__new__ 返回已缓存的实例。\n- 不可变类型（如 tuple、str）：只能在 __new__ 中初始化（__init__ 在不可变对象创建后无法修改属性）。\n- 元类的 __new__：用于 ORM 框架的 Model 基类注册（如 Django ORM）。",
@@ -1850,7 +1856,7 @@
   {
     "category": "python",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Python sys.settrace 与调试器/覆盖率工具实现钩子",
     "content": "关于 Python sys.settrace 与 sys.setprofile 的以下叙述，哪一项是正确的？\n\nA) sys.settrace 设置的追踪函数在每个字节码指令执行后都会被调用，因此对性能影响极大，不适合生产环境使用\nB) sys.settrace 设置的 trace 函数接收三个参数（frame, event, arg），事件类型包括 'call'、'line'、'return'、'exception'、'opcode' 以及 C 函数的 'c_call'、'c_return'、'c_exception'\nC) coverage.py 使用 sys.setprofile（而非 sys.settrace）收集行覆盖率，因为 profile 函数性能开销更低\nD) sys.settrace 设置的追踪函数是全局的——一个进程中只能设置一个 trace 函数，后设置的会覆盖之前的",
     "answer": "B) sys.settrace 设置的 trace 函数接收三个参数（frame, event, arg），事件类型包括 'call'、'line'、'return'、'exception'、'opcode' 以及 C 函数的 'c_call'、'c_return'、'c_exception'。\n\n解析：\nA 错误：trace 函数不是按字节码粒度——默认配置下它仅在事件触发（call、line、return、exception）时被调用，而非每个字节码。但这确实影响性能（CPython 需额外检查 Python 层面），非调试时不应开启。\nB 正确：这是 CPython 3.12+ 中 sys.settrace 事件的准确描述。注意 'opcode' 是 3.12 新增（PEP 669），允许在任意字节码前触发。\nC 错误：coverage.py 使用 sys.settrace（或 3.12 后使用 sys.monitoring，PEP 669），而非 sys.setprofile。sys.setprofile 的 profile 函数仅接收 call/return 事件，不支持 line 事件，因此无法用于行覆盖率。\nD 错误：sys.settrace 是「线程本地」设置——每个线程可以独立设置自己的 trace 函数。当前线程的设置不影响其他线程。\n\n补充（PEP 669 低开销监控，Python 3.12+）：\nsys.monitoring 使用零成本的工具检测（不需要 Python 层面的事件循环），性能开销远低于 sys.settrace（微秒级 vs 百微秒级），适合生产环境的性能分析和覆盖率收集。",

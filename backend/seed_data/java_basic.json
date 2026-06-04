@@ -1578,7 +1578,7 @@
   {
     "category": "java_basic",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Java String 不可变性的实现保障",
     "content": "以下关于 Java String 不可变性的说法，哪一项是正确的？\nA) String 被声明为 final 类的唯一原因是禁止继承\nB) String 内部的 char[] 被声明为 final 意味着数组内容不可修改\nC) String 的不可变性由 final class、private final char[] 字段以及不暴露修改方法三者共同保障\nD) String 的不可变性仅由 JVM 运行时负责，与编译器无关",
     "answer": "C",
@@ -1665,7 +1665,7 @@
   {
     "category": "java_basic",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Pattern Matching for instanceof 流分析作用域",
     "content": "在 JDK 17+（JEP 394）中，Pattern Matching for instanceof 引入了基于流分析（Flow Analysis）的变量作用域规则。以下哪项描述是正确的？\nA) 模式匹配变量的作用域严格限定在匹配成功的代码块内（if 的 true 分支），从不扩展到 else 分支或 if 语句之后\nB) 当 if 条件为 `!(obj instanceof X x)` 且 true 分支必然抛出异常或返回时，模式变量 x 在 if 语句之后可见\nC) 模式匹配变量只能在 if 语句中使用，不能在 switch 规则或 while 循环条件中使用\nD) 模式匹配变量在 switch 箭頭規則（->）右侧表达式中不可直接引用，必须放在大括号代码块中",
     "answer": "B) 当 if 条件为 `!(obj instanceof X x)` 且 true 分支必然抛出异常或返回时，模式变量 x 在 if 语句之后可见。JDK 17+ 的流分析能够判断：如果匹配条件为 false 的分支必然异常终止，则模式变量在后续代码中「确定已赋值」(definitely assigned)。这一机制也适用于 switch 规则、循环条件等场景。",
@@ -1684,7 +1684,7 @@
   {
     "category": "java_basic",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Switch 表达式穷举性与 null 处理",
     "content": "关于 JDK 17+ 中 Switch 表达式（含 Pattern Matching for switch）的穷举性（Exhaustiveness）和 null 处理，以下哪项是正确的？\nA) Switch 表达式要求穷举所有可能值，编译器自动为 switch 表达式插入 null 检查，如果输入为 null 则默认进入 default 分支\nB) 传统 colon 語法的 switch 也要求穷举性检查，与箭頭語法规则相同\nC) 使用 sealed class 作为 switch 目标时，编译器会检查所有 permitted 子类是否都已覆盖，如果已穷举则无需 default 分支；但 null 值在没有 default 时会抛出 NullPointerException\nD) 箭頭語法 switch 不需要穷举，只需包含 default 分支即可编译",
     "answer": "C) 使用 sealed class 作为 switch 目标时，编译器会逐个检查所有 permitted 子类是否都已覆盖；如果穷举了所有子类则不需要 default 分支。但是当输入为 null 时，若 switch 没有 default 分支（尽管已穷举），会抛出 NullPointerException。这是穷举性规则的常见陷阱。",
@@ -1784,7 +1784,7 @@
   {
     "category": "java_basic",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "编译时常量表达式跨编译单元内联对二进制兼容性的影响",
     "content": "以下关于 Java 编译时常量表达式跨编译单元内联行为的描述，哪项是正确的？\nA) 编译时常量（static final 基本类型或 String）在编译期会被直接内联到使用处的字节码中，因此修改常量定义类的值后只需重新编译定义类，无需重新编译引用类\nB) 编译时常量在编译期内联后，修改常量定义类的值时必须重新编译所有引用该常量的类，否则引用类使用的仍然是旧值\nC) 编译时常量表达式仅对同一编译单元（同一源文件）内的引用进行内联，跨类的常量引用不会内联\nD) Java 编译器不会对编译时常量进行跨类内联，常量引用在运行期通过动态链接解析",
     "answer": "B) 编译时常量（static final 基本类型和 String 常量，当初始化表达式是 JLS 15.29 定义的「常量表达式」时）会在编译期被内联到所有引用该常量的类的字节码中。这意味着修改定义类中的常量值后，已编译的引用类仍然使用旧值，直到所有引用类被重新编译。这是 Java 二进制兼容性的常见陷阱之一——开发者修改了常量值但只重新编译了定义类，导致不同类使用不同版本的常量值。注意：static final 字段不一定是编译时常量——例如 static final int x = someMethod() 不是编译时常量表达式，不会触发内联。",

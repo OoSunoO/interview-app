@@ -1765,7 +1765,7 @@
   {
     "category": "ai",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Consistency Models（一致性模型）",
     "content": "关于生成式 AI 中的 Consistency Models（一致性模型），以下哪个描述是正确的？\nA) 它们是一类使用一致性损失的扩散模型，确保模型输出对输入的小扰动保持不变。\nB) 它们通过学习一个一致性函数，将扩散轨迹上的任意噪声点直接映射回原始数据分布，从而单步生成。\nC) 它是一种集成技术，多个模型对最终输出投票，确保不同随机种子下的预测一致性。\nD) 它们通过在时间维度上施加帧级一致性损失来保证视频生成的时间一致性。",
     "answer": "B",
@@ -1785,7 +1785,7 @@
   {
     "category": "ai",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Diffusion Forcing（扩散强迫）",
     "content": "Diffusion Forcing 是一种结合扩散模型与序列建模的新架构。以下哪个选项正确描述了其核心创新？\nA) 它用扩散来增强训练数据，通过一致性过滤器强制合成样本通过检测。\nB) 它对序列中的每个 Token 应用独立的扩散过程，并在去噪后的潜在表示上计算下一个 Token 预测损失，从而在单一框架中统一生成与序列建模。\nC) 它通过在去噪输出上添加对抗判别器损失，强制扩散模型生成精确重建。\nD) 它用基于扩散的 Token 混合层取代了 Transformer 中的标准自注意力。",
     "answer": "B",

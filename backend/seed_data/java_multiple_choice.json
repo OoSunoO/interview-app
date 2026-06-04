@@ -1405,7 +1405,7 @@
     "type": "multiple_choice",
     "title": "Java 中创建对象的合法方式",
     "content": "以下哪些方式可以在 Java 中合法地创建对象（新实例）？",
-    "answer": "A) 使用 new 关键字\nB) 调用 Class.newInstance()\nC) 调用 Constructor.newInstance()\nD) 调用 Object.clone()\nE) 使用 Unsafe.allocateInstance()",
+    "answer": "A) 使用 new 关键字",
     "correct": [
       "A",
       "B",
@@ -1419,6 +1419,13 @@
     ],
     "tags": [
       "java_multiple"
+    ],
+    "options": [
+      "A) 使用 new 关键字",
+      "B) 调用 Class.newInstance()",
+      "C) 调用 Constructor.newInstance()",
+      "D) 调用 Object.clone()",
+      "E) 使用 Unsafe.allocateInstance()"
     ]
   },
   {
@@ -1427,7 +1434,7 @@
     "type": "multiple_choice",
     "title": "Lambda 表达式的限制",
     "content": "以下哪些是 Java Lambda 表达式的限制？",
-    "answer": "A) Lambda 表达式不能有命名的局部变量（必须有名称）\nB) Lambda 表达式引入的局部变量必须是 effectively final\nC) Lambda 表达式不能定义默认方法\nD) Lambda 表达式不能捕获 this 引用\nE) Lambda 表达式不能使用 return 语句",
+    "answer": "A) Lambda 表达式不能有命名的局部变量（必须有名称）",
     "correct": [
       "B",
       "C"
@@ -1438,6 +1445,13 @@
     ],
     "tags": [
       "java_multiple"
+    ],
+    "options": [
+      "A) Lambda 表达式不能有命名的局部变量（必须有名称）",
+      "B) Lambda 表达式引入的局部变量必须是 effectively final",
+      "C) Lambda 表达式不能定义默认方法",
+      "D) Lambda 表达式不能捕获 this 引用",
+      "E) Lambda 表达式不能使用 return 语句"
     ]
   },
   {
@@ -1446,7 +1460,7 @@
     "type": "multiple_choice",
     "title": "不可变类的设计要求",
     "content": "设计一个不可变类（Immutable Class）需要满足哪些条件？",
-    "answer": "A) 类声明为 final（防止子类修改）\nB) 所有字段声明为 final\nC) 不提供修改字段值的方法（setter）\nD) 在 getter 中返回字段的防御性拷贝\nE) 类必须实现 Serializable",
+    "answer": "A) 类声明为 final（防止子类修改）",
     "correct": [
       "A",
       "B",
@@ -1459,6 +1473,13 @@
     ],
     "tags": [
       "java_multiple"
+    ],
+    "options": [
+      "A) 类声明为 final（防止子类修改）",
+      "B) 所有字段声明为 final",
+      "C) 不提供修改字段值的方法（setter）",
+      "D) 在 getter 中返回字段的防御性拷贝",
+      "E) 类必须实现 Serializable"
     ]
   },
   {
@@ -1467,7 +1488,7 @@
     "type": "multiple_choice",
     "title": "Stream API 的中间操作",
     "content": "以下哪些是 Java Stream API 的中间操作（Intermediate Operation）？",
-    "answer": "A) filter()\nB) map()\nC) collect()\nD) sorted()\nE) forEach()",
+    "answer": "A) filter()",
     "correct": [
       "A",
       "B",
@@ -1479,6 +1500,13 @@
     ],
     "tags": [
       "java_multiple"
+    ],
+    "options": [
+      "A) filter()",
+      "B) map()",
+      "C) collect()",
+      "D) sorted()",
+      "E) forEach()"
     ]
   },
   {
@@ -1487,7 +1515,7 @@
     "type": "multiple_choice",
     "title": "ServiceLoader 的特点",
     "content": "关于 Java 的 ServiceLoader（SPI 机制），以下哪些描述是正确的？",
-    "answer": "A) ServiceLoader 通过 META-INF/services/ 目录下的配置文件加载服务实现\nB) ServiceLoader 是延迟加载的（lazy loading），遍历时才实例化\nC) ServiceLoader 加载的服务实现必须是 public 且有无参构造器\nD) ServiceLoader 是线程安全的\nE) ServiceLoader 支持服务的卸载和重新加载",
+    "answer": "A) ServiceLoader 通过 META-INF/services/ 目录下的配置文件加载服务实现",
     "correct": [
       "A",
       "B",
@@ -1499,6 +1527,13 @@
     ],
     "tags": [
       "java_multiple"
+    ],
+    "options": [
+      "A) ServiceLoader 通过 META-INF/services/ 目录下的配置文件加载服务实现",
+      "B) ServiceLoader 是延迟加载的（lazy loading），遍历时才实例化",
+      "C) ServiceLoader 加载的服务实现必须是 public 且有无参构造器",
+      "D) ServiceLoader 是线程安全的",
+      "E) ServiceLoader 支持服务的卸载和重新加载"
     ]
   },
   {
@@ -2010,7 +2045,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "medium",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "线程安全的集合类识别",
     "content": "以下哪些集合是线程安全的，可以直接在多线程环境中使用而不需要额外同步？（多选）\nA) ConcurrentHashMap\nB) CopyOnWriteArrayList\nC) HashMap\nD) Collections.synchronizedMap(new HashMap<>())",
     "answer": "A, B, D",
@@ -2027,7 +2062,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "medium",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "保证迭代顺序的 Map 实现",
     "content": "以下哪些 Map 实现能够保证遍历时键值对的顺序是确定的？（多选）\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",
     "answer": "B, C",
@@ -2045,7 +2080,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "ConcurrentModificationException 的触发路径",
     "content": "以下哪些场景会抛出 ConcurrentModificationException？（多选）\nA) 线程 A 使用 Iterator 遍历 ArrayList 的同时，线程 B 调用 list.add() 添加元素\nB) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 list.remove(index)\nC) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 iterator.remove()\nD) 一个线程遍历 CopyOnWriteArrayList 的同时另一个线程向其中添加元素",
     "answer": "A, B",
@@ -2062,7 +2097,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "Collections 包装方法的语义陷阱",
     "content": "关于 Collections 工具类的包装方法，以下哪些描述是正确的？（多选）\nA) Collections.unmodifiableList() 返回的视图拦截所有修改操作，调用 add/remove/set 时抛出 UnsupportedOperationException\nB) Collections.synchronizedList() 返回的同步列表在迭代时仍需外部手动加锁\nC) Collections.checkedList() 在运行时对所有插入元素执行类型检查\nD) Collections.emptyList() 返回的空列表可以正常调用 add() 来扩展元素",
     "answer": "A, B, C",
@@ -2080,7 +2115,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "Queue 与 Deque 实现的核心特性",
     "content": "以下关于 Java 队列实现的描述，哪些是正确的？（多选）\nA) ArrayDeque 的初始容量为 16，且容量始终保持为 2 的幂次方\nB) LinkedList 同时实现了 List 和 Deque 接口，可作为双端队列使用\nC) PriorityBlockingQueue 是有界阻塞队列，插入操作在队列满时阻塞\nD) DelayQueue 要求元素实现 Delayed 接口，take() 方法在有元素到期前阻塞",
     "answer": "A, B, D",
@@ -2099,7 +2134,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "线程上下文类加载器与 SPI 的违背",
     "content": "关于 Java 的线程上下文类加载器（Thread Context ClassLoader, TCCL）在 SPI 机制中的作用，以下哪些描述是正确的？（多选）\nA) SPI 机制的典型实现（如 JDBC DriverManager）使用 TCCL 加载第三方实现类，因为启动类加载器无法访问应用 classpath 中的类\nB) TCCL 的使用是对「双亲委派模型」的一种破坏，因为加载方向变成了从子加载器向父加载器请求\nC) TCCL 默认值就是启动类加载器（Bootstrap ClassLoader），因此 SPI 总是能加载到所有类\nD) TCCL 在 Java 9+ 模块化系统中已完全废弃，被 ModuleLayer 的 findLoader 机制取代",
     "answer": "A)、B)",
@@ -2118,7 +2153,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "medium",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "PhantomReference 与 ReferenceQueue 的交互时机",
     "content": "关于 PhantomReference（虚引用）和 ReferenceQueue 的交互，以下哪些描述是正确的？（多选）\nA) PhantomReference.get() 始终返回 null，无论被引用对象是否可达\nB) PhantomReference 在 GC 确定对象为虚可达后，会清除引用并将 PhantomReference 对象入队到 ReferenceQueue\nC) PhantomReference 所指对象只有在 PhantomReference 本身被清除（clear）或不再可访问时，其内存才会被真正回收\nD) PhantomReference 必须与 ReferenceQueue 配合使用，无参构造方法不存在",
     "answer": "A)、C)、D)",
@@ -2137,7 +2172,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "ConcurrentHashMap compute vs merge 原子性差异",
     "content": "ConcurrentHashMap 提供了 compute()、computeIfAbsent()、merge() 等方法。以下关于这些方法原子性保证和行为差异的描述，哪些是正确的？（多选）\nA) compute() 和 merge() 都保证整个函数在 ConcurrentHashMap 的分段锁内原子执行\nB) merge(key, value, remappingFunction) 的 remappingFunction 仅在 key 已存在时才会被调用，如果 key 不存在则直接放入 value（类似 put 但返回已存在的值或新值）\nC) compute() 函数的 remappingFunction 如果返回 null，则删除该 key（如果存在）\nD) computeIfAbsent() 的 mappingFunction 如果返回 null，则 key 不会被插入，且方法返回 null",
     "answer": "A)、B)、C)、D)",
@@ -2156,7 +2191,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "medium",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "Stream collect 与 reduce 的选择原则",
     "content": "Java Stream API 提供了 `collect(Collector)` 和 `reduce(T, BinaryOperator)` 两种归约操作。以下关于二者选择原则的描述，哪些是正确的？（多选）\nA) reduce() 适用于不可变的归约操作（如求和、最大值），其累加器是纯函数，不会修改已有状态\nB) collect() 适用于可变的归约操作（如追加到集合、拼接字符串），其累加器可以修改可变容器\nC) 在并行流中，reduce() 的 combiner 只有在结果类型与输入类型不一致时才被调用\nD) collect() 的 combiner（在 Collector 中定义）必须能处理任意两个部分结果容器的合并，且合并后结果与顺序执行等价",
     "answer": "A)、B)、D)",
@@ -2175,7 +2210,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "JMM final 字段在构造过程中的保证",
     "content": "JSR 133（Java Memory Model）为 final 字段提供了特殊的初始化安全保证。以下关于 final 字段的 JMM 语义描述，哪些是正确的？（多选）\nA) 一个对象的 final 字段在构造函数完成后、对象引用被发布到其他线程时，其他线程保证看到 final 字段的正确初始化值，即使该对象引用存在 data race\nB) final 字段的保证不适用于通过反射（Field.set()）修改后的值——修改后的值没有跨线程可见性保证\nC) final 字段的保证要求构造函数中没有将 this 引用泄漏（如将 this 传给其他线程注册）——如果发生逃逸，则保证失效\nD) final 字段的初始化安全保证仅适用于 primitive 类型的 final 字段，不适用于引用类型的 final 字段指向的对象内部状态",
     "answer": "A)、B)、C)",
@@ -2194,7 +2229,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "ConcurrentHashMap.search 系列方法的短路终止语义",
     "content": "ConcurrentHashMap 的 search 系列方法（search / searchKeys / searchValues / searchEntries）提供了在映射上应用搜索的并行操作。以下关于这些方法的正确描述是哪些？（多选）\nA) search 方法接受一个函数，应用到映射的每个元素上，返回第一个非 null 的函数结果\nB) 当任一分区找到非 null 结果后，其他正在执行的分区任务会被取消或忽略其返回结果\nC) search 方法会捕获函数中抛出的异常，继续在其他元素上执行搜索\nD) 搜索函数返回的非 null 结果被严格保证是「映射中第一个」满足条件的元素（按迭代顺序）\nE) searchEntries 的搜索函数接收 Map.Entry 作为参数，而 search 接收键值对",
     "answer": "A)、B)",
@@ -2215,7 +2250,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "medium",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "Collectors.teeing 多路聚合的特性",
     "content": "Collectors.teeing(Collector, Collector, BiFunction) 是 JDK 12 引入的 Collector。以下关于 teeing 的正确描述是哪些？（多选）\nA) 可以将同一个流中的元素同时发送到两个不同的 Collector 中进行聚合\nB) 两个下游 Collector 共享同一个中间结果容器\nC) 最终通过一个 BiFunction 将两个下游 Collector 的结果合并为一个结果\nD) teeing 要求两个下游 Collector 的类型和中间结果类型完全相同\nE) 在并行流中，teeing 要求两个 Collector 都是 CONCURRENT 且 UNORDERED",
     "answer": "A)、C)",
@@ -2236,7 +2271,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "Spliterator 特性标志对 Stream 并行拆分策略的影响",
     "content": "Spliterator 的特性标志（characteristics）通过 trySplit() 方法控制 Stream 的并行拆分行为。以下关于特性标志影响的正确描述是哪些？（多选）\nA) SIZED + SUBSIZED 保证通过 trySplit() 拆分得到的两个子 Spliterator 的大小精确可知\nB) CONCURRENT 特征表示元素源可以被其他线程并发修改，因此在拆分时不能依赖 trySplit 的稳定性\nC) IMMUTABLE 特征保证元素源在 Spliterator 的遍历期间不会发生结构变更\nD) ORDERED 特征要求 Spliterator 拆分时必须保持遇到顺序（encounter order）\nE) NONNULL 特征表示 Spliterator 会在遍历时自动跳过 null 元素",
     "answer": "A)、B)、C)",
@@ -2257,7 +2292,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "medium",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "BlockingQueue.drainTo 方法的并发语义保证",
     "content": "BlockingQueue.drainTo(Collection<? super E> c) 和 drainTo(Collection<? super E> c, int maxElements) 用于将队列中的元素批量转移到目标集合。以下关于 drainTo 并发语义的正确描述是哪些？（多选）\nA) drainTo 将队列中「当前可用」的元素一次性转移到目标集合\nB) drainTo(Collection, int maxElements) 最多转移 maxElements 个元素\nC) 相比循环调用 poll，drainTo 可以减少锁获取次数，提高批量元素获取效率\nD) drainTo 执行期间其他线程添加的元素一定会被包含在本次转移中\nE) drainTo 会在没有可用元素时阻塞等待新元素到达",
     "answer": "A)、B)、C)",
@@ -2278,7 +2313,7 @@
   {
     "category": "java_multiple_choice",
     "difficulty": "hard",
-    "type": "multiple_choice",
+    "type": "short_answer",
     "title": "Map.Entry 实现类与 Map.entry 工厂方法的行为对比",
     "content": "关于 AbstractMap.SimpleEntry、AbstractMap.SimpleImmutableEntry 和 Map.entry(K, V) 工厂方法（JDK 9+），以下哪些描述是正确的？（多选）\nA) SimpleEntry 是可变的——setValue(V value) 修改 Entry 内部的值并返回旧值\nB) SimpleImmutableEntry 的 setValue 方法抛出 UnsupportedOperationException\nC) Map.entry(K, V) 返回的 Entry 支持 setValue 方法修改值\nD) SimpleEntry 和 SimpleImmutableEntry 都重写了 equals 和 hashCode 方法，基于键值对进行比较\nE) SimpleImmutableEntry 的 key 和 value 使用 final 修饰",
     "answer": "A)、B)、D)、E)",

@@ -1804,7 +1804,7 @@
   {
     "category": "design_network_extras",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "微服务架构中的服务发现机制对比",
     "content": "以下关于微服务架构中服务发现（Service Discovery）的说法，哪一项是正确的？\n\nA) 客户端发现模式中，客户端直接从注册中心获取服务实例列表并自行负载均衡，如 Netflix Eureka + Ribbon\nB) 服务端发现模式通过负载均衡器（如 AWS NLB）隐藏注册中心细节，客户端只需知道负载均衡器地址即可\nC) Zookeeper 基于 ZAB 协议保证强一致性，适合作为注册中心，在服务大规模上下线时性能不会出现瓶颈\nD) Kubernetes Service 本质上是服务端发现模式，kube-proxy 通过 iptables/IPVS 将请求负载均衡到后端 Pod",
     "answer": "答案：正确的是 A、B、D。\n\n解析：A 正确——客户端发现模式中，服务实例启动时向注册中心注册，客户端从注册中心获取可用实例列表，客户端自身实现负载均衡（如 Ribbon、Spring Cloud LoadBalancer）。优势：减少了网络跳数，部署拓扑简单。缺点：客户端需要集成发现逻辑，不同语言需要不同的实现。\n\nB 正确——服务端发现模式中，客户端不直接感知注册中心，而是通过负载均衡器（AWS ALB/NLB、Kubernetes Service）发起请求。负载均衡器将请求转发到健康的服务实例。优势：客户端逻辑简单（只需知道负载均衡器地址），语言无关。缺点：多了一次网络跳转，负载均衡器可能成为瓶颈。\n\nC 错误——Zookeeper 基于 ZAB 协议保证强一致性（CP 系统），但在服务大规模上下线时，注册信息的变更导致 ZK 集群频繁进行 Leader 选举和状态同步，可能产生脑裂和性能瓶颈。这也是为什么 Netflix 从 ZooKeeper 迁移到 Eureka（AP 系统）的原因。\n\nD 正确——Kubernetes Service 是典型服务端发现模式。Service 有 Cluster IP，kube-proxy 通过 iptables/IPVS 规则将发往 Cluster IP 的请求负载均衡到后端 Pod 实例。客户端不需要关注后端实例的变化，所有发现逻辑由 Kubernetes 基础设施完成。\n\n扩展延伸：当今服务发现的主要选择包括：Kubernetes 自带 DNS + Service（云原生首选）、Consul（支持多数据中心和健康检查）、Eureka（Spring Cloud 传统方案，AP 优先）。选型建议：如果已经在用 Kubernetes，优先使用 Kubernetes Service（天然的服务发现）；如果是在非 K8s 环境（如传统 IDC），可以考虑 Consul 或 Eureka。注意区分注册中心和健康检查的职责——注册中心负责存储可用实例，健康检查负责判断实例是否存活。",
@@ -1822,7 +1822,7 @@
   {
     "category": "design_network_extras",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "容器网络（CNI）原理对比",
     "content": "关于容器网络接口（CNI）和 Kubernetes 网络模型的描述，以下哪一项是不正确的？\n\nA) Calico 基于 BGP 协议实现容器间三层路由，不依赖 Overlay 隧道，性能损耗较低\nB) Flannel 的 VXLAN 模式工作在二层，在每个 Node 之间建立 VXLAN 隧道封装容器流量\nC) Cilium 基于 eBPF 实现网络策略和可观测性，性能优于 iptables 模式，但不支持 L7 网络策略\nD) Kubernetes 网络模型要求所有 Pod 可以直接通信（无需 NAT），无论是否在同一个 Node 上",
     "answer": "答案：C 不正确。\n\n解析：A 正确——Calico 使用 BGP 协议在 Node 之间交换容器路由信息，不需要 Overlay 封装，数据包的源/目的 IP 就是容器 IP，性能损耗小。适合对网络性能要求高的场景。也存在 IPIP 隧道的跨子网模式。\n\nB 正确——Flannel 的 VXLAN 模式将二层帧封装到 UDP 包（VXLAN）中，在 Node 之间通过 VXLAN 隧道传输。优点是跨子网通信不需要三层路由，缺点是 VXLAN 封装（额外 50 字节头部）带来一定的性能损耗。\n\nC 错误——Cilium 不仅支持 L3/L4 网络策略，还支持 L7 网络策略（HTTP/gRPC/Kafka 等协议的请求级控制）。Cilium 基于 eBPF 实现了比 iptables 模式更高性能的数据平面，并且提供了 API 级别的可观测性（Hubble）。Cilium 是目前 CNCF 生态中最活跃的 CNI 插件之一，被认为是 iptables 模式的下一代替代。\n\nD 正确——Kubernetes 网络模型的三个基本要求：1）所有 Pod 可以不经过 NAT 与所有其他 Pod 通信。2）所有 Node 可以不经过 NAT 与所有 Pod 通信。3）Pod 看到的自己的 IP 与别人看到的其 IP 相同。这个模型简化了应用迁移（从 VM 到容器）和微服务架构中服务间通信。\n\n扩展延伸：CNI 选型建议：1）如果对性能要求极高且团队有网络背景 → Calico（BGP 模式）。2）大部分通用场景 → Flannel（VXLAN 模式）或 Calico（IPIP 模式），简单可靠。3）如果需要高级网络策略（L7 策略、API 级可观测性、加密）→ Cilium（基于 eBPF，代表了 K8s 网络的未来方向）。4）AWS 环境 → AWS VPC CNI（每个 Pod 分配 VPC 真实 IP，性能最好）。注意：CNI 选型与 Kubernetes 版本、云平台和团队运维能力密切相关，没有绝对的最优选择。从 iptables 到 eBPF 的迁移是 Kubernetes 网络发展的主要趋势——Cilium 的使用率在持续快速上升。",

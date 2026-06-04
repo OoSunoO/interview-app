@@ -1795,7 +1795,7 @@
   {
     "category": "agent_dev_extras",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Multi-Model Agent 架构: 规划器与执行器分离",
     "content": "在规划器-执行器分离的 Multi-Model Agent 架构中，以下哪个选项最准确地描述了其设计原理和实现方式？\nA) 单一大型模型同时处理规划和执行，但执行在独立线程中并行运行。\nB) 强大的（通常更大的）LLM 作为规划器，将任务分解为子任务并决定工具编排；小而快的 LLM 作为执行器完成每个子任务——规划器低频调用，执行器高频运行以降低延迟和成本。\nC) 规划器是专门微调的模型用于任务分解，执行器是从历史执行数据库中搜索最佳动作的检索模型。\nD) 规划器和执行器是同一个模型，但使用不同的系统提示——规划器用「plan」提示，执行器用「act」提示。",
     "answer": "B",
@@ -1855,7 +1855,7 @@
   {
     "category": "agent_dev_extras",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "自进化 Agent 提示词优化",
     "content": "自进化 Agent 提示词（self-evolving prompts，也称 prompt self-optimization 或 meta-prompting）使 Agent 能够自动改进自身提示词。以下哪个选项最准确地描述了这种方法的实际工作方式？\nA) Agent 使用另一个 LLM（「提示词工程师」模型）每 N 个请求后根据这些请求的聚合反馈重写其系统提示词。\nB) Agent 维护一个候选提示词池，用变异算子对提示词进行变异，在预留的任务集上评估每个候选，然后迭代选择最优的——这是将神经进化（neuro-evolution）应用于提示词文本。\nC) Agent 将每次遇到的错误追加到系统提示词中作为「教训」，使提示词无限增长。\nD) Agent 将提示词翻译为向量嵌入，在嵌入空间中执行梯度下降以找到最优提示向量。",
     "answer": "B",

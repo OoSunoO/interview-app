@@ -1793,7 +1793,7 @@
   {
     "category": "cs_basics",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Linux seccomp 安全机制与系统调用过滤",
     "content": "关于 Linux seccomp（Secure Computing Mode）的叙述，以下哪一项是正确的？\n\nA) seccomp 通过限制文件系统访问路径来实现安全隔离，与 chroot 原理相同\nB) seccomp-bpf 允许用户通过 BPF（Berkeley Packet Filter）规则动态限制进程可调用的系统调用\nC) seccomp 只能工作在 strict 模式下，白名单仅允许 read、write、exit 和 rt_sigreturn 四个系统调用\nD) seccomp 与 namespace 完全等价，两者选其一即可实现容器安全",
     "answer": "B) seccomp-bpf 允许用户通过 BPF 规则动态限制进程可调用的系统调用。\n\n解析：\nA 错误：seccomp 限制的是系统调用层面而非文件系统路径；chroot 限制的是文件系统根路径，两者原理完全不同。\nB 正确：seccomp-bpf 模式使用 BPF 规则过滤系统调用，支持黑名单/白名单策略，Docker 和 Chrome 均使用此技术。\nC 错误：seccomp 有两种模式——STRICT（仅允许 4 个系统调用）和 FILTER（即 seccomp-bpf，支持自定义 BPF 规则）。\nD 错误：namespace 和 seccomp 是互补而非等价关系，容器安全需要两者结合（namespace 隔离资源视图，seccomp 限制系统调用面）。",

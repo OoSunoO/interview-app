@@ -1602,7 +1602,7 @@
   {
     "category": "java_advanced",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "ClassLoader 双亲委派模型的核心机制",
     "content": "关于 ClassLoader 双亲委派模型的描述，哪一项是正确的？\nA) 类加载时首先由子 ClassLoader 尝试加载，加载失败后才交给父 ClassLoader\nB) 自定义 ClassLoader 必须重写 loadClass 方法才能遵循双亲委派模型\nC) loadClass 方法的核心逻辑是先委派父 ClassLoader 加载，父加载失败后才由自己尝试加载\nD) Thread.currentThread().getContextClassLoader() 返回当前类所属的 ClassLoader",
     "answer": "C",
@@ -1692,7 +1692,7 @@
   {
     "category": "java_advanced",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "JDK 9+ String 拼接 invokeDynamic 优化",
     "content": "在 JDK 9+ 中，Java 编译器将 String 的 + 拼接操作符编译为 invokedynamic 调用，而非传统的 StringBuilder。以下关于这种优化的描述，哪项是正确的？\nA) invokedynamic 方式在每次运行时都通过反射构造 StringBuilder，因此比 JDK 8 的显式 StringBuilder 更慢\nB) invokedynamic 方式使用 StringConcatFactory 作为 bootstrap method，在首次调用时生成最优的拼接实现策略，后续调用直接使用生成的 MethodHandle，JIT 可进一步内联优化\nC) invokedynamic 方式仅适用于 String 字面量的拼接，变量拼接仍然使用 StringBuilder\nD) 拼接结果仍然通过 StringBuilder.toString() 返回，只是创建 StringBuilder 的方式改用了 invokedynamic",
     "answer": "B) invokedynamic 方式使用 StringConcatFactory 作为 bootstrap method，在首次调用时根据参数数量和类型选择最优策略（如直接构造字符数组、StringBuilder 或 StringBuffer），生成并缓存 MethodHandle。JIT 可以进一步将生成的拼接代码内联到调用点，消除方法分派开销。这种方式比 JDK 8 固定使用 StringBuilder 更灵活且性能更优。",
@@ -1711,7 +1711,7 @@
   {
     "category": "java_advanced",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "JIT 分层编译中 C1 和 C2 的协作机制",
     "content": "HotSpot VM 的分层编译（Tiered Compilation）将编译分为 5 个级别（0-4）。以下关于各编译级别之间协作机制的描述，哪项是正确的？\nA) 代码从 level 0（解释器）直接升级到 level 4（C2），中间不经过带 profiling 的编译级别\nB) level 2（C1 不带 profiling）和 level 3（C1 带 profiling）是可选的中间状态；C2 编译基于 level 3 收集的类型 profiling 信息做出更激进的优化决策，如虚方法内联和分支预测\nC) C1 编译的所有级别（1-3）都不记录运行时类型信息，这些信息仅在解释器中收集\nD) level 3 带 profiling 的 C1 代码与 level 4 C2 代码可以共存，但 JVM 不会自动从 level 4 回退到较低级别",
     "answer": "B) level 2（C1 不带 profiling）和 level 3（C1 带 profiling）是可选中间状态。典型的升级路径是：0（解释器）-> 3（C1 带 profiling）-> 4（C2）。C1 的 level 3 收集方法调用频次、分支走向 profile、类型接收者分布等关键数据；C2 利用这些 profile 信息进行激进的优化，包括内联、锁消除、标量替换、循环展开等。所以 B 正确。A 错误——分层编译从 level 0 逐步升级。C 错误——C1 在 level 3 会收集 profiling。D 前半句正确，但 JVM 确实不会从 4 回退到更低级别（deoptimization 会回到解释器，不是回到 C1）。",
@@ -1793,7 +1793,7 @@
   {
     "category": "java_advanced",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "ConstantDynamic (Condy) 引导方法解析机制",
     "content": "ConstantDynamic（Condy，JDK 11+ JEP 309）允许在 class 文件的常量池中定义用户自定义常量。以下关于 Condy 引导方法解析机制的描述，哪项是正确的？\nA) 引导方法在类加载阶段对所有 Condy 常量池条目进行批量调用，并将结果缓存到运行时常量池\nB) 引导方法在 JIT 编译阶段被调用，编译结果直接嵌入机器码，不经过运行时常量池\nC) 引导方法在 CONSTANT_Dynamic 常量池条目首次被解析时调用，结果由 JVM 缓存供后续访问复用\nD) 引导方法每次访问 Condy 常量时都被重新调用，以确保返回值的「新鲜度」",
     "answer": "C) Condy 的引导方法（bootstrap method）在 class 文件的 BootstrapMethods 属性中定义。当运行时常量池中的 CONSTANT_Dynamic 条目首次被某条字节码指令实际访问时，JVM 调用对应的引导方法并将结果缓存。此后对同一常量池条目的访问直接返回缓存值，不再重复调用引导方法。引导方法的固定签名为 (MethodHandles.Lookup, String, Class<?>)，后续参数由 BootstrapMethods 属性中的参数指定。这意味 Condy 具有懒加载语义——从未被实际使用的 Condy 条目永远不会触发引导方法调用。实际应用包括：延迟初始化编译时常量、实现语言级元编程、提供更灵活的常量定义方式。",

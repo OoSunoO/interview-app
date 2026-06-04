@@ -1768,7 +1768,7 @@
   {
     "category": "react",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "React createPortal 的 Context 继承机制",
     "content": "关于 React createPortal 的以下叙述，哪个是正确的？\n\nA) Portal 渲染的内容在 DOM 结构上位于父组件之外，因此无法访问父组件的 Context 值\nB) Portal 的内容在 React 虚拟 DOM 树中仍然遵从父组件的 Context 链（即 Provider 的值对 Portal 子节点可见），但由于实际 DOM 位置在外，事件冒泡不遵循 React 树而是遵循 DOM 树\nC) createPortal 会将 Portal 内容附加到 document.body 节点，不允许自定义 container 参数\nD) Portal 中的事件会沿着 DOM 树冒泡到实际父节点，因此如果 Portal 在 document.body 下挂载，事件不会到达 React 父组件",
     "answer": "B) Portal 的内容在 React 虚拟 DOM 树中仍然遵从父组件的 Context 链（即 Provider 的值对 Portal 子节点可见），但由于实际 DOM 位置在外，事件冒泡不遵循 React 树而是遵循 DOM 树。\n\n解析：\nA 错误：Portal 的 React 树位置（即 createPortal 被调用的位置）决定了 Context 可见性——它仍能从祖先 Provider 获得值。这是 Portal 的核心设计：React 树（逻辑位置）与 DOM 树（渲染位置）解耦。\nB 正确：React 的 context 链基于 Fiber 树，与 DOM 位置无关；Portal 渲染在子 fiber 节点下，所以 context 传递正常。但事件冒泡遵循 DOM 树结构，因此无法从 Portal DOM 位置的祖先捕获事件（除非通过 Portal 自己的根节点）。\nC 错误：createPortal 的第二个参数是 container 节点，可以传入任意 DOM 元素，不限于 document.body。第三个参数是 key（可选）。\nD 错误：事件冒泡沿 DOM 树向上，不会「到达 React 父组件」（因为 React 父组件在 DOM 树的不同分支），但会到达 container 的 DOM 祖先。React 的合成事件系统在 Portal 容器节点的 DOM 树层捕获事件，而非 React 树层。\n\n应用场景：modal、tooltip、dropdown 等通常使用 Portal 避免 z-index/overflow 问题，且需要 context 保持可见。",
@@ -1804,7 +1804,7 @@
   {
     "category": "react",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "React 严格模式 (StrictMode) 双重调用策略与副作用检测",
     "content": "关于 React StrictMode 在开发模式下的双重调用（Double Invocation）行为，以下哪一项是错的？\n\nA) StrictMode 会故意双重调用 reducer（useReducer 的 reducer 函数），以帮助开发者发现 reducer 中的不纯操作\nB) StrictMode 双重调用会执行 useEffect 的 cleanup 函数后重新运行该 useEffect，以验证 effect cleanup 是否正确\nC) StrictMode 的双重调用仅在开发模式下生效，生产构建不会影响实际执行逻辑\nD) StrictMode 会对 useState 的初始值函数（initializer function）进行双重调用来检查初始化逻辑的纯度",
     "answer": "A) 这是错误的。\n\n解析：\nA 错误：StrictMode 不会双重调用 useReducer 的 reducer 函数。StrictMode 会双重调用的是组件函数体本身（即 render 函数）、useState 的 initializer 函数、useMemo/useCallback 的回调。reducer 在双重渲染过程中也会被执行两次，但这只是双重渲染的自然结果，而非 StrictMode 的显式检查目标。\nB 正确：每个 useEffect 在 StrictMode 中执行「挂载 → 卸载 → 挂载」流程：运行 effect → cleanup → 再次运行 effect。这是为了确保 cleanup 被正确实现。\nC 正确：StrictMode 的双重调用仅发生在 development 构建（process.env.NODE_ENV === 'development'）。production 构建中 StrictMode 不做双重调用。\nD 正确：useState 的 initializer 函数（如 useState(() => computeExpensive())）在 StrictMode 下会被调用两次，虽然是惰性初始化但 StrictMode 依然会调用两次以检查纯度。\n\n补充：React 19 中 StrictMode 的行为更加细致——双重调用会记录并比较两次渲染的结果树来检测不纯度。遇到双重渲染导致的弹窗/通知重复问题，说明副作用未放在 useEffect 中。",

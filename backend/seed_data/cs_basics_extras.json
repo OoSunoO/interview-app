@@ -1778,7 +1778,7 @@
   {
     "category": "cs_basics_extras",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "STUN/TURN/ICE 与 NAT 穿透协议",
     "content": "关于 WebRTC 中 NAT 穿透技术的描述，以下哪一项是正确的？\n\nA) STUN 协议通过服务器中继所有媒体流量，因此延迟较高但穿透成功率最高\nB) TURN 协议仅在端到端直连 P2P 失败时作为 relay 兜底方案，其工作原理与 STUN 完全一样\nC) ICE 是一个框架协议，通过收集 Candidate（Host/Server Reflexive/Relay）并按优先级排序尝试连接，底层可同时使用 STUN 和 TURN\nD) STUN 可以穿透所有类型的 NAT（包括对称 NAT），因为它利用 UDP 打洞技术",
     "answer": "C) ICE 是一个框架协议，通过收集 Candidate（Host/Server Reflexive/Relay）并按优先级排序尝试连接，底层可同时使用 STUN 和 TURN。\n\n解析：\nA 错误：STUN 不自中继流量，它仅帮助端发现其对端公网地址和端口（反射地址）。中继流量的 TURN 才有延迟问题。\nB 错误：TURN 的工作原理与 STUN 不同——TURN 在服务器端分配一个 relay 地址，所有数据经服务器转发。STUN 帮助建立直连（P2P）。\nC 正确：ICE 先收集 Host（本机）、Server Reflexive（STUN 反射）和 Relay（TURN）三类 Candidate，按优先级排序后通过连通性检查（STUN binding request/response）逐对测试，选择最佳路径。\nD 错误：STUN 对大部分 NAT 类型有效，但对对称 NAT（Symmetric NAT）无效——对称 NAT 会基于目的 IP:端口分配不同的映射端口，STUN 无法预测。TURN 是对称 NAT 下唯一保证可用的方案。",
@@ -1796,7 +1796,7 @@
   {
     "category": "cs_basics_extras",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "IP 分片与路径 MTU 发现 (PMTUD)",
     "content": "关于 IPv4 分片与路径 MTU 发现（PMTUD，Path MTU Discovery）的叙述，以下哪一项是错的？\n\nA) IPv4 路由器在需要分片且 DF（Don't Fragment）标志位未设置时，将数据报分片后转发，分片重组由目的主机完成\nB) IPv6 中间路由器不再执行分片操作，IPv6 仅在源主机通过分段扩展头（Fragment Extension Header）进行分片\nC) PMTUD 利用 ICMPv6「Packet Too Big」（Type 2）消息进行，发送方收到后逐步降低猜测的 MTU，直到数据包不再被 ICMP 拒绝\nD) 中间路由器在 IPv4 中设置 DF 标志的数据报超过出站接口 MTU 时，按 MTU 分片并设置 MF（More Fragments）标志后继续转发",
     "answer": "D) 这是错误的叙述。\n\n解析：\nA 正确：IPv4 中路由器可在 DF=0 时分片，分片重组由目的主机 IP 层完成。\nB 正确：IPv6 取消了中间路由器分片能力，源主机必须通过 PMTUD 或使用最小 MTU（1280 字节）发送，使用分段扩展头发送超出 MTU 的数据。\nC 正确：IPv6 的 PMTUD 通过 ICMPv6 Type 2（Packet Too Big）消息通知源主机，源主机调整发送大小。\nD 错误：DF=1 的数据报超过 MTU 时，IPv4 路由器不执行分片，而是丢弃数据包并发送 ICMPv3 Type 3 Code 4（Destination Unreachable - Fragmentation Needed and DF set）消息给源主机。源主机据此减小发送数据包大小。\n\n补充：PMTUD 在实际网络中常因 ICMP 被防火墙过滤而失效，导致 TCP 连接无响应（black hole PMTUD），这是现代 TCP 协议栈实现 PLPMTUD (Packetization Layer Path MTU Discovery) 的原因。",

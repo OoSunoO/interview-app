@@ -1689,7 +1689,7 @@
   {
     "category": "design_patterns",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "观察者模式的现代替代方案",
     "content": "你的系统需要在用户下单后执行一系列动作（发送邮件、更新库存、通知物流、记录日志）。传统方案是用观察者模式（Observer Pattern）实现事件通知。在现代 Java/Spring 架构中，以下哪种方案更推荐？\n\nA) 继续使用观察者模式——定义一个 Subject 接口，所有观察者注册到 Subject 上\nB) 使用 Spring 的 ApplicationEvent / EventListener 机制实现观察者\nC) 使用消息队列（RabbitMQ/Kafka）解耦所有后置动作\nD) 在一个事务中同步调用所有后置服务",
     "answer": "正确答案：B\n\n解析：Spring 的 ApplicationEvent / @EventListener 本质上就是观察者模式的标准实现，但比手写观察者更好——它利用 IoC 容器自动管理观察者注册，支持异步执行（@Async），且与事务同步（TransactionEventListener）。\n\nA 选项的问题：手写观察者模式在 Spring 生态中属于重复造轮子。Spring 已经提供了完整的实现，包括同步/异步、事务绑定、异常处理。\n\nC 选项的问题：引入消息队列的复杂度远高于当前需求——需要部署和维护消息中间件、处理消息幂等性和顺序问题。消息队列适合跨服务、跨进程的事件驱动架构，不适合单体应用内的服务间通信。\n\nD 选项的问题：在同一个事务中同步调用所有后置服务会导致：1）主流程被后置动作阻塞（用户要等到邮件发送完毕才能看到下单成功）；2）任何一个后置服务失败都会导致主事务回滚（邮件发送失败导致订单取消）。\n\n扩展延伸：实际项目的推荐分层：1）同进程内的后置动作（日志记录、缓存更新）→ 用 Spring Event（同步或异步）；2）同服务但跨聚合的事件（订单完成→通知库存预留）→ 用 Spring Event + @Async 或 @TransactionalEventListener；3）跨服务的事件（订单完成→物流系统发货）→ 用消息队列 + 事件总线。观察者模式的现代演变是从「类级别的硬编码通知」到「框架级别的声明式事件驱动」。勿过度设计——在单一应用内引入消息队列来解决「下单后发邮件」的问题是大炮打蚊子。",
@@ -1726,7 +1726,7 @@
   {
     "category": "design_patterns",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Bridge 模式 vs Adapter 模式区分",
     "content": "你需要为一个消息推送系统做设计。系统需要支持多种消息类型（文本/图片/富媒体）和多种推送渠道（短信/邮件/App Push）。你希望新增消息类型或推送渠道时不影响已有的代码。以下哪个模式组合最适合这个需求？\n\nA) Adapter 模式——为每个渠道写一个适配器\nB) Bridge 模式——将消息抽象和推送实现分离为两个独立的维度\nC) Factory 模式——根据参数创建不同的推送对象\nD) Facade 模式——为推送系统提供一个统一的简化接口",
     "answer": "正确答案：B\n\n解析：这个需求有两个独立变化的维度——消息类型和推送渠道。Bridge 模式专门解决多维度的组合问题：将抽象部分（消息类型）与实现部分（推送渠道）分离，各自可以独立变化和扩展。\n\nA 选项的问题：Adapter 模式是让不兼容的接口能够一起工作（如封装第三方 SDK 的差异接口），它不解决多维组合问题。\n\nC 选项的问题：Factory 模式解决的是对象创建的问题，虽然可以和 Bridge 组合使用（工厂创建具体的 Message + Sender 组合），但不解决维度扩展。\n\nD 选项的问题：Facade 模式是提供简化接口，隐藏子系统复杂性，不解决可变维度的扩展。\n\n扩展延伸：Bridge 模式的典型实现：\n\n```java\n// 实现维度：推送渠道\ninterface MessageSender { void send(String content); }\nclass EmailSender implements MessageSender { ... }\nclass SmsSender implements MessageSender { ... }\n\n// 抽象维度：消息类型\nabstract class Message {\n    protected MessageSender sender;\n    abstract void send();\n}\nclass TextMessage extends Message { ... }\nclass RichMediaMessage extends Message { ... }\n```\n\n新增消息类型 → 新增 Message 子类；新增推送渠道 → 新增 MessageSender 实现类。两者互不干扰。Bridge 模式在跨平台 GUI 框架（不同操作系统 × 不同 UI 组件）和 JDBC 驱动（不同数据库 × 不同 SQL 操作）中都有广泛应用。",

@@ -1744,7 +1744,7 @@
   {
     "category": "agent",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Mixture-of-Agents (MoA) 参考架构",
     "content": "Mixture-of-Agents (MoA) 是一种多 Agent 架构。以下哪个选项正确描述了其核心设计思路，以及它与标准多 Agent 编排的区别？\nA) MoA 将 LLM 骨干替换为路由器，将每个任务分配给专门的微调 Agent 模型。\nB) MoA 将多个 LLM 分层级联——每个层的 Agent 基于上一层的输出生成内容，聚合模型合成最终回复。\nC) MoA 在任务负载超过预设阈值时动态生成新的 Agent 实例。\nD) MoA 在 Agent 的 LLM 骨干内部使用混合专家架构来选择不同的推理策略。",
     "answer": "B",
@@ -1784,7 +1784,7 @@
   {
     "category": "agent",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Agent 路由与模型选择器架构",
     "content": "Agent Router（Agent 网关/路由器）是大规模 Agent 部署中的重要设计模式。以下哪个选项最准确地描述了它的核心功能和设计目的？\nA) Agent Router 是一个负载均衡器，将 Agent 请求分发到多个 GPU 实例以实现水平扩展。\nB) Agent Router 是一个智能调度器，解析传入任务并根据任务复杂度、成本预算和延迟要求，将其路由到最合适的 Agent 专长、模型层级或执行策略。\nC) Agent Router 是一个网络代理，转换不同的 Agent 通信协议（MCP、A2A、OpenAI function calling）。\nD) Agent Router 是一个缓存层，存储之前的 Agent 回复，将重复查询直接路由到缓存结果而不调用 Agent。",
     "answer": "B",

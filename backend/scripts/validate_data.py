@@ -109,7 +109,7 @@ def check_fill_in_blank_answer(data: list) -> tuple[bool, str]:
 
 
 def check_options_prefix(data: list) -> tuple[bool, str]:
-    """检查 choice/multiple_choice 的 options 是否有 A)/B)/C)/D) 前缀。"""
+    """检查 choice/multiple_choice 的 options 是否有 A)/B)/C)/D) 前缀且非空。"""
     issues = []
     for i, item in enumerate(data):
         t = item.get("type", "")
@@ -117,6 +117,8 @@ def check_options_prefix(data: list) -> tuple[bool, str]:
             continue
         opts = item.get("options", [])
         if not opts:
+            title = item.get("title", f"第{i}条")
+            issues.append(f"'{title}' {t} 类型缺少 options")
             continue
         # true_false 类不需要 A)/B) 前缀
         if t == "true_false":

@@ -1818,7 +1818,7 @@
   {
     "category": "ai_infra_extras",
     "difficulty": "medium",
-    "type": "choice",
+    "type": "short_answer",
     "title": "LayerSkip: 层跳跃推理加速",
     "content": "LayerSkip 是大模型推理加速的一种技术。以下哪个最佳描述了其核心思路？\nA) 根据输入难度动态跳过 Transformer 层——简单输入跳过多层，困难输入使用所有层。\nB) 在每层 Transformer 上附加早期退出分类器，当输出置信度足够高时可提前停止计算。\nC) 推理时完全丢弃注意力层，替换为学习到的线性投影，减少每个 Token 的计算量。\nD) 推理时随机丢弃跨层 KV Cache 条目，减少显存带宽消费而不显著影响精度。",
     "answer": "B",
@@ -1838,7 +1838,7 @@
   {
     "category": "ai_infra_extras",
     "difficulty": "hard",
-    "type": "choice",
+    "type": "short_answer",
     "title": "Skeleton-of-Thought（SoT: 思维骨架并行解码）",
     "content": "Skeleton-of-Thought (SoT) 是一种大模型并行解码方法。其核心思想是什么？它是如何实现生成加速的？\nA) 将 Transformer 骨干替换为由残差连接构成的「骨架」，减少每层计算量。\nB) 先让 LLM 生成一个由关键点组成的骨架大纲，然后通过批量解码并行填充每个要点，从而显著降低文本生成的端到端延迟。\nC) 将模型参数剪枝为骨架（最小可行模型），保留原始模型大部分生成质量。\nD) 在骨架阶段仅处理 Transformer 的第一层和最后一层，然后插值中间层表示。",
     "answer": "B",
