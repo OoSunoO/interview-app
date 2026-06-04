@@ -54,7 +54,11 @@
     const correct = sessionResults.filter(r => r.status === "correct").length;
     const wrong = sessionResults.filter(r => r.status === "wrong").length;
     const total = sessionResults.length;
-    return { correct, wrong, total, pct: total > 0 ? Math.round(correct / total * 100) : 0 };
+    const totalTime = sessionResults.reduce((sum, r) => sum + (r.duration || 0), 0);
+    return {
+      correct, wrong, total, pct: total > 0 ? Math.round(correct / total * 100) : 0,
+      totalTime, avgTime: total > 0 ? Math.round(totalTime / total) : 0,
+    };
   });
   let aiGrade = $state(null);
   let aiLoading = $state(false);
@@ -331,7 +335,7 @@
 
   function recordSessionResult(status) {
     if (!sessionProgress || !q) return;
-    sessionResults = [...sessionResults, { id: q.id, title: q.title, status, category: q.category, difficulty: q.difficulty }];
+    sessionResults = [...sessionResults, { id: q.id, title: q.title, status, category: q.category, difficulty: q.difficulty, duration: timer }];
   }
 
   async function goNext() {
@@ -820,6 +824,16 @@
             ></div>
           </div>
           <span class="ss-bar-label">{s.pct}%</span>
+        </div>
+        <div class="ss-time-row">
+          <span class="ss-time-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            总耗时 {Math.floor(s.totalTime / 60)}分{s.totalTime % 60}秒
+          </span>
+          <span class="ss-time-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><polyline points="12 6 12 12 16 14" /></svg>
+            平均 {s.avgTime > 60 ? `${Math.floor(s.avgTime / 60)}分${s.avgTime % 60}秒` : `${s.avgTime}秒`}/题
+          </span>
         </div>
         {#if s.wrong > 0}
           <div class="ss-wrong-list">
@@ -1729,6 +1743,21 @@
     font-variant-numeric: tabular-nums;
     min-width: 40px;
     text-align: right;
+  }
+  .ss-time-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .ss-time-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .ss-time-item svg {
+    opacity: 0.6;
   }
   .ss-subtitle {
     font-size: 14px;
