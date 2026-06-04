@@ -48,6 +48,14 @@
   let showSubmitResult = $state(false);
   let multiSubmitted = $state(false);
   let feedbackResult = $state(null);
+  let sessionResults = $state([]);
+  let showSessionSummary = $state(false);
+  let sessionSummary = $derived.by(() => {
+    const correct = sessionResults.filter(r => r.status === "correct").length;
+    const wrong = sessionResults.filter(r => r.status === "wrong").length;
+    const total = sessionResults.length;
+    return { correct, wrong, total, pct: total > 0 ? Math.round(correct / total * 100) : 0 };
+  });
   let aiGrade = $state(null);
   let aiLoading = $state(false);
   let showAIConfig = $state(false);
@@ -129,6 +137,7 @@
     const status = correct ? "correct" : "wrong";
     const rating = correct ? "good" : "forgot";
     await store.markProgress(q.id, status, timer, rating);
+    recordSessionResult(status);
     q.status = status;
     feedbackResult = status;
     showAnswer = true;
@@ -213,6 +222,7 @@
     const status = allCorrect ? "correct" : "wrong";
     saving = true;
     await store.markProgress(q.id, status, timer);
+    recordSessionResult(status);
     q.status = status;
     feedbackResult = status;
     showAnswer = true;
@@ -254,6 +264,7 @@
       stopTimer();
       saving = true;
       await store.markProgress(q.id, "correct", timer);
+      recordSessionResult("correct");
       showAnswer = true;
       saving = false;
     } else {
@@ -271,6 +282,7 @@
     stopTimer();
     saving = true;
     await store.markProgress(q.id, "wrong", timer);
+    recordSessionResult("wrong");
     q.status = "wrong";
     showAnswer = true;
     saving = false;
@@ -317,6 +329,11 @@
     }
   }
 
+  function recordSessionResult(status) {
+    if (!sessionProgress || !q) return;
+    sessionResults = [...sessionResults, { id: q.id, title: q.title, status, category: q.category, difficulty: q.difficulty }];
+  }
+
   async function goNext() {
     if (!store.hasNext) return;
     store.advanceQuiz();
@@ -345,8 +362,14 @@
     store.startQuiz([...done, ...rest]);
   }
 
+  function finishSession() {
+    showSessionSummary = true;
+  }
+
   function exit() {
     store.startQuiz([]);
+    sessionResults = [];
+    showSessionSummary = false;
     onNavigate("browse");
   }
 
@@ -760,7 +783,7 @@
           {#if store.hasNext}
             <button class="nav-btn next" onclick={goNext}>下一题 →</button>
           {:else}
-            <button class="nav-btn next" onclick={exit}>完成</button>
+            <button class="nav-btn next" onclick={finishSession}>完成</button>
           {/if}
         </div>
       {:else}
@@ -769,6 +792,72 @@
           <button class="nav-btn next" onclick={() => onNavigate("wrong")}>错题本</button>
         </div>
       {/if}
+    {/if}
+
+    {#if showSessionSummary}
+      {@const s = sessionSummary}
+      <div class="session-summary">
+        <h2 class="ss-title">本次练习完成</h2>
+        <div class="ss-stats">
+          <div class="ss-stat ss-correct">
+            <span class="ss-num">{s.correct}</span>
+            <span class="ss-label">正确</span>
+          </div>
+          <div class="ss-stat ss-wrong-stat">
+            <span class="ss-num">{s.wrong}</span>
+            <span class="ss-label">错误</span>
+          </div>
+          <div class="ss-stat ss-total">
+            <span class="ss-num">{s.total}</span>
+            <span class="ss-label">总计</span>
+          </div>
+        </div>
+        <div class="ss-bar-wrap">
+          <div class="ss-bar">
+            <div
+              class="ss-bar-fill ss-bar-correct"
+              style="width: {s.pct}%"
+            ></div>
+          </div>
+          <span class="ss-bar-label">{s.pct}%</span>
+        </div>
+        {#if s.wrong > 0}
+          <div class="ss-wrong-list">
+            <h3 class="ss-subtitle">需要复习的题目</h3>
+            {#each sessionResults.filter(r => r.status === "wrong") as wr}
+              <button
+                class="ss-wrong-item"
+                onclick={() => {
+                  const wrongIds = new Set(sessionResults.filter(r => r.status === "wrong").map(r => r.id));
+                  const wrongQs = store.quizSession.filter(qq => wrongIds.has(qq.id));
+                  store.startQuiz(wrongQs);
+                  showSessionSummary = false;
+                  resetState();
+                  loadQuestionById(wr.id);
+                }}
+              >
+                <span class="ss-wrong-cat">{wr.category}</span>
+                <span class="ss-wrong-title">{wr.title}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+        <div class="ss-actions">
+          {#if s.wrong > 0}
+            <button class="ss-btn ss-btn-primary" onclick={() => {
+              const wrongIds = new Set(sessionResults.filter(r => r.status === "wrong").map(r => r.id));
+              const wrongQs = store.quizSession.filter(qq => wrongIds.has(qq.id));
+              if (wrongQs.length > 0) {
+                store.startQuiz(wrongQs);
+                showSessionSummary = false;
+                resetState();
+                loadQuestionById(wrongQs[0].id);
+              }
+            }}>重做错题</button>
+          {/if}
+          <button class="ss-btn" onclick={exit}>返回题库</button>
+        </div>
+      </div>
     {/if}
   {/if}
 </div>
@@ -1574,6 +1663,150 @@
   }
   .notes-save-btn:disabled {
     opacity: 0.5;
+  }
+
+  /* ── Session Summary ── */
+  .session-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px 0;
+    animation: fadeIn 0.3s ease;
+  }
+  .ss-title {
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text);
+  }
+  .ss-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+  }
+  .ss-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .ss-num {
+    font-size: 32px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .ss-correct .ss-num { color: var(--success); }
+  .ss-wrong-stat .ss-num { color: var(--danger); }
+  .ss-total .ss-num { color: var(--text-muted); }
+  .ss-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .ss-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .ss-bar {
+    flex: 1;
+    height: 10px;
+    background: var(--danger-bg);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .ss-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    background: var(--success);
+    transition: width 0.6s var(--spring);
+  }
+  .ss-bar-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    min-width: 40px;
+    text-align: right;
+  }
+  .ss-subtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .ss-wrong-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ss-wrong-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    text-align: left;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .ss-wrong-item:active {
+    transform: scale(0.98);
+    border-color: var(--danger);
+  }
+  .ss-wrong-cat {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-radius: 3px;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+  .ss-wrong-title {
+    font-size: 13px;
+    line-height: 1.4;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+  }
+  .ss-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .ss-btn {
+    flex: 1;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--radius);
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .ss-btn:active {
+    transform: scale(0.97);
+  }
+  .ss-btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .ss-btn-primary:active {
+    opacity: 0.85;
   }
 
   @media (max-width: 480px) {
