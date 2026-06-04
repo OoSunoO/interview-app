@@ -98,19 +98,21 @@
 
   async function startSession(filter) {
     try {
-      const list = api.questions.list({
-        category: filter.category || undefined,
-        difficulty: filter.difficulty || undefined,
-        type: filter.type || undefined,
-        page_size: filter.count || 20,
-      });
-
-      if (list.length === 0) {
-        phase = "completed";
-        return;
+      if (filter.questionIds) {
+        questions = await Promise.all(filter.questionIds.map((id) => api.questions.get(id)));
+      } else {
+        const list = api.questions.list({
+          category: filter.category || undefined,
+          difficulty: filter.difficulty || undefined,
+          type: filter.type || undefined,
+          page_size: filter.count || 20,
+        });
+        if (list.length === 0) {
+          phase = "completed";
+          return;
+        }
+        questions = await Promise.all(list.map((item) => api.questions.get(item.id)));
       }
-
-      questions = await Promise.all(list.map((item) => api.questions.get(item.id)));
       currentIndex = 0;
       showAnswer = false;
       results = {};

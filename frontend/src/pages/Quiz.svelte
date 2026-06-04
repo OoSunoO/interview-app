@@ -1144,6 +1144,16 @@
                 loadQuestionById(wrongQs[0].id);
               }
             }}>重做错题</button>
+            <button class="ss-btn ss-btn-secondary" onclick={async () => {
+              const wrongIds = [...new Set(sessionResults.filter(r => r.status === "wrong").map(r => r.id))];
+              showSessionSummary = false;
+              store._clearSessionBackup();
+              sessionResults = [];
+              onNavigate("quick-review", { reviewConfig: { questionIds: wrongIds } });
+            }}>
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+              速记错题
+            </button>
           {/if}
           <button class="ss-btn" onclick={exit}>返回题库</button>
         </div>
@@ -2396,6 +2406,18 @@
   }
   .ss-btn-primary:active {
     opacity: 0.85;
+  }
+  .ss-btn-secondary {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .ss-btn-secondary:active {
+    opacity: 0.75;
   }
 
   /* ── Shortcuts Help ── */
