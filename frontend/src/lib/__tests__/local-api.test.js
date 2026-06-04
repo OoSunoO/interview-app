@@ -186,6 +186,25 @@ describe("questions.list", () => {
     expect(api.questions.list({ company: "Google" })).toHaveLength(1);
   });
 
+  it("tags() returns all unique tags sorted", async () => {
+    const api = await getApi();
+    const tags = api.questions.tags();
+    expect(tags).toContain("Java基础");
+    expect(tags).toContain("SQL");
+    expect(tags).toContain("数组");
+    // Ensure sorted
+    for (let i = 1; i < tags.length; i++) {
+      expect(tags[i - 1].localeCompare(tags[i])).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it("filters by tag", async () => {
+    const api = await getApi();
+    expect(api.questions.list({ tag: "Java基础" })).toHaveLength(3);
+    expect(api.questions.list({ tag: "SQL" })).toHaveLength(1);
+    expect(api.questions.list({ tag: "不存在" })).toHaveLength(0);
+  });
+
   it("filters by status using progress data", async () => {
     const api = await getApi();
     localStorage.setItem(

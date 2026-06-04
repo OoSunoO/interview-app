@@ -255,6 +255,15 @@ export const api = {
         .map(([name]) => name);
     },
 
+    /** Get all unique tags from the question index */
+    tags() {
+      const set = new Set();
+      for (const q of questionIndex) {
+        for (const t of q.tags) set.add(t);
+      }
+      return [...set].sort();
+    },
+
     /** Pick a random question, with optional category/difficulty/status filter */
     random(filter = {}) {
       let pool = questionIndex;

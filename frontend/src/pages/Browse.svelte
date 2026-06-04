@@ -14,6 +14,7 @@
   let selectedIds = $state(new Set());
   let selectionMode = $state(false);
   let companies = $state([]);
+  let allTags = $state([]);
   let searchInput = $state(null);
   let detailQuestion = $state(null);
   let showDetailAnswer = $state(false);
@@ -67,6 +68,7 @@
 
   onMount(() => {
     companies = api.questions.companies();
+    allTags = api.questions.tags();
     store.loadQuestions();
     document.addEventListener("keydown", handleKeydown);
   });
@@ -194,6 +196,7 @@
     !!store.filters.type ||
     !!store.filters.status ||
     !!store.filters.company ||
+    !!store.filters.tag ||
     !!store.filters.search ||
     !!store.filters.sort_by ||
     store.filters.bookmarked
@@ -205,6 +208,7 @@
     store.filters.type = "";
     store.filters.status = "";
     store.filters.company = "";
+    store.filters.tag = "";
     store.filters.search = "";
     store.filters.sort_by = "";
     store.filters.bookmarked = false;
@@ -282,6 +286,19 @@
           <option value="">全部来源</option>
           {#each companies as c}
             <option value={c}>{c}</option>
+          {/each}
+        </select>
+      </div>
+      <div class="filter-item">
+        <span class="filter-label">知识点</span>
+        <select
+          bind:value={store.filters.tag}
+          onchange={applyFilter}
+          class:filter-active={store.filters.tag}
+        >
+          <option value="">全部知识点</option>
+          {#each allTags as t}
+            <option value={t}>{t}</option>
           {/each}
         </select>
       </div>
