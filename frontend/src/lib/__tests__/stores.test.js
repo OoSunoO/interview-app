@@ -27,7 +27,7 @@ const FIXTURE = [
   },
 ];
 
-vi.mock("../question-data.js", () => ({ questions: FIXTURE }));
+vi.mock("../question-data/index.js", () => ({ questions: FIXTURE }));
 vi.mock("../knowledge-data.js", () => ({
   buildKnowledgeMap: () => ({}),
   getKnowledgeForTag: () => null,

@@ -3915,6 +3915,715 @@ Scrum 是最流行的敏捷框架，核心角色和事件：
 `,
     source: "JavaGuide",
   },
+
+  // ── Network ─────────────────────────────────────────
+  TCP_IP: {
+    category: "network",
+    content: `## TCP/IP 协议栈
+
+### 四层模型
+- **应用层**：HTTP、FTP、SMTP、DNS — 为用户提供网络应用服务。
+- **传输层**：TCP、UDP — 端到端通信，提供可靠或不可靠传输。
+- **网络层**：IP、ICMP — 路由寻址、分组转发。
+- **链路层**：以太网、Wi-Fi — 相邻节点间的帧传输。
+
+### TCP 核心特性
+| 特性 | 说明 |
+|------|------|
+| 面向连接 | 三次握手建立连接，四次挥手释放连接 |
+| 可靠传输 | 确认重传（ARQ）、序列号、校验和 |
+| 流量控制 | 滑动窗口机制，防止发送方过快 |
+| 拥塞控制 | 慢开始、拥塞避免、快重传、快恢复 |
+
+### 三次握手
+1. **SYN**：客户端发送 SYN=1, seq=x → 服务端
+2. **SYN+ACK**：服务端回复 SYN=1, ACK=1, seq=y, ack=x+1 → 客户端
+3. **ACK**：客户端发送 ACK=1, seq=x+1, ack=y+1 → 服务端
+
+**为什么是三次？** 防止已失效的连接请求到达服务端，避免资源浪费。
+
+### 四次挥手
+1. **FIN**：客户端发送 FIN=1 → 服务端（不再发送数据）
+2. **ACK**：服务端回复 ACK（半关闭状态，客户端→服务端通道关闭）
+3. **FIN**：服务端数据发送完毕，发送 FIN=1 → 客户端
+4. **ACK**：客户端回复 ACK，等待 2MSL 后关闭
+
+**为什么 TIME_WAIT 需要 2MSL？** 确保最后一个 ACK 被收到，以及让过期的报文段在网络中消失。
+
+### UDP 特点
+- 无连接，不可靠
+- 头部仅 8 字节（TCP 20-60 字节）
+- 支持广播和多播
+- 适用于 DNS、视频通话、直播等实时场景
+`,
+    source: null,
+  },
+  HTTP: {
+    category: "network",
+    content: `## HTTP 协议
+
+### HTTP 版本演进
+| 版本 | 特点 |
+|------|------|
+| HTTP/1.0 | 短连接，每次请求新建 TCP 连接 |
+| HTTP/1.1 | 持久连接（Keep-Alive）、管道化、Host 头 |
+| HTTP/2 | 多路复用、二进制分帧、头部压缩（HPACK）、服务端推送 |
+| HTTP/3 | 基于 QUIC（UDP）、0-RTT 握手、无队头阻塞 |
+
+### HTTP 方法
+- **GET**：幂等，安全（只读），可缓存
+- **POST**：非幂等，不安全，通常不可缓存
+- **PUT**：幂等，更新资源
+- **DELETE**：幂等，删除资源
+- **PATCH**：部分更新
+- **HEAD**：类似 GET 但只返回响应头
+
+### 状态码
+- 1xx：信息性 — 100 Continue
+- 2xx：成功 — 200 OK, 201 Created, 204 No Content
+- 3xx：重定向 — 301 Moved Permanently, 302 Found, 304 Not Modified
+- 4xx：客户端错误 — 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found
+- 5xx：服务端错误 — 500 Internal Server Error, 502 Bad Gateway, 503 Service Unavailable
+
+### HTTPS = HTTP + TLS
+- **非对称加密**：客户端用服务端公钥加密对称密钥，服务端用私钥解密
+- **数字证书**：CA 签发，验证服务端身份
+- **TLS 握手**：ClientHello → ServerHello + 证书 + 密钥交换 → 完成
+`,
+    source: null,
+  },
+
+  // ── JVM ────────────────────────────────────────────
+  JVM_内存模型: {
+    category: "jvm",
+    content: `## JVM 内存模型
+
+### 运行时数据区
+| 区域 | 线程共享 | 作用 |
+|------|----------|------|
+| 堆（Heap） | 是 | 存放对象实例，GC 主要区域 |
+| 方法区（Method Area） | 是 | 类信息、常量、静态变量 |
+| 虚拟机栈（VM Stack） | 否 | 局部变量表、操作数栈、方法出口 |
+| 本地方法栈（Native Stack） | 否 | 本地方法调用 |
+| 程序计数器（PC） | 否 | 当前线程执行的字节码行号 |
+
+### 堆内存划分
+- **新生代（Young）**：Eden + Survivor0 + Survivor1（默认 8:1:1）
+  - 对象优先分配在 Eden
+  - Minor GC 后存活对象移入 Survivor
+  - 经过多次 GC 仍存活 → 移入老年代
+- **老年代（Old）**：存放长期存活的对象（Major GC / Full GC）
+- **元空间（Metaspace）**：JDK 8+ 替代永久代，使用本地内存
+
+### GC 算法
+| 算法 | 原理 | 适用 |
+|------|------|------|
+| 标记-清除 | 标记存活对象 → 回收未标记对象 | 老年代（有碎片） |
+| 标记-复制 | 将存活对象复制到另一块空间 | 新生代（效率高） |
+| 标记-整理 | 标记存活 → 向一端移动 → 清理边界外 | 老年代（无碎片） |
+
+### 常用 GC 收集器
+- **Serial**：单线程，Stop-The-World，客户端模式
+- **Parallel**：多线程，关注吞吐量，JDK 8 默认
+- **CMS**：并发标记清除，低延迟，有碎片问题
+- **G1**：分区式，可预测停顿时间，JDK 9+ 默认
+- **ZGC**：JDK 15+，极低延迟（<10ms），超大堆
+`,
+    source: null,
+  },
+  类加载机制: {
+    category: "jvm",
+    content: `## 类加载机制
+
+### 类加载过程
+1. **加载（Loading）**：通过全类名获取二进制字节流，在堆中生成 Class 对象
+2. **验证（Verification）**：文件格式、元数据、字节码、符号引用验证
+3. **准备（Preparation）**：为静态变量分配内存并设零值
+4. **解析（Resolution）**：将符号引用替换为直接引用
+5. **初始化（Initialization）**：执行类构造器 <clinit>() 方法
+
+### 双亲委派模型
+- Bootstrap ClassLoader → Extension ClassLoader → Application ClassLoader → 自定义
+- **工作流程**：加载类时先委派给父加载器，父加载器无法加载才自己尝试
+- **优点**：避免核心类被篡改（如 java.lang.String 始终由 Bootstrap 加载）
+- **打破双亲委派**：自定义 ClassLoader 重写 loadClass()，或使用线程上下文类加载器（如 JDBC SPI）
+`,
+    source: null,
+  },
+
+  // ── Concurrency ────────────────────────────────────
+  并发基础: {
+    category: "concurrency",
+    content: `## 并发编程基础
+
+### 线程 vs 进程
+| | 进程 | 线程 |
+|--|------|------|
+| 资源 | 独立内存空间 | 共享进程内存 |
+| 切换开销 | 大（切换地址空间） | 小 |
+| 通信 | IPC（管道、Socket等） | 共享变量 |
+
+### Java 线程创建方式
+1. 继承 Thread 类
+2. 实现 Runnable 接口（无返回值）
+3. 实现 Callable 接口（有返回值，配合 FutureTask）
+4. 线程池（ExecutorService）
+
+### 线程状态（6种）
+NEW → RUNNABLE → BLOCKED / WAITING / TIMED_WAITING → TERMINATED
+
+### synchronized 原理
+- 基于监视器（Monitor），每个对象关联一个 Monitor
+- 同步代码块使用 monitorenter/monitorexit 指令
+- JDK 6 优化：偏向锁 → 轻量级锁 → 重量级锁（锁升级）
+
+### volatile 关键字
+- **可见性**：写操作立即刷新到主存，读操作从主存读取
+- **禁止指令重排序**：内存屏障（Memory Barrier）
+- **不保证原子性**：i++ 操作需要加锁
+
+### CAS（Compare-And-Swap）
+- 乐观锁机制：比较当前值 → 相等则更新
+- ABA 问题：加版本号（AtomicStampedReference）
+- 底层：Unsafe 类的 compareAndSwap 方法（CPU 原子指令）
+`,
+    source: null,
+  },
+  JUC_工具: {
+    category: "concurrency",
+    content: `## JUC（java.util.concurrent）
+
+### 锁机制
+| 工具 | 特性 |
+|------|------|
+| ReentrantLock | 可重入、公平/非公平、可中断、超时 |
+| ReentrantReadWriteLock | 读读不互斥、读写互斥、写写互斥 |
+| StampedLock | JDK 8，乐观读，比读写锁更高效 |
+
+### 线程池（ThreadPoolExecutor）
+- **核心参数**：corePoolSize, maxPoolSize, keepAliveTime, workQueue, handler
+- **工作流程**：核心线程 → 工作队列 → 最大线程 → 拒绝策略
+- **拒绝策略**：Abort（抛异常）、Discard（丢弃）、DiscardOldest（丢弃最旧）、CallerRuns（调用者执行）
+- **Executors 工厂方法**：newFixedThreadPool, newCachedThreadPool, newSingleThreadExecutor, newScheduledThreadPool
+
+### 并发容器
+- **ConcurrentHashMap**：分段锁 / CAS + synchronized（JDK 8）
+- **CopyOnWriteArrayList**：写时复制，读无锁，适合读多写少
+- **BlockingQueue**：ArrayBlockingQueue, LinkedBlockingQueue, DelayQueue, SynchronousQueue
+- **ConcurrentLinkedQueue**：无锁队列（CAS）
+`,
+    source: null,
+  },
+
+  // ── Redis ──────────────────────────────────────────
+  Redis_基础: {
+    category: "redis",
+    content: `## Redis 核心要点
+
+### 数据结构
+| 类型 | 底层实现 | 用途 |
+|------|----------|------|
+| String | SDS（动态字符串） | 缓存、计数器、分布式锁 |
+| Hash | dict（哈希表）+ ziplist | 对象存储 |
+| List | quicklist | 消息队列、最新列表 |
+| Set | intset + hashtable | 标签、去重 |
+| Sorted Set | skiplist + dict | 排行榜、延时队列 |
+| Bitmap | 位数组 | 签到统计 |
+| HyperLogLog | 概率数据结构 | UV 统计 |
+| GEO | geohash + zset | 地理位置 |
+
+### 持久化
+| | RDB | AOF |
+|--|-----|-----|
+| 方式 | 快照（全量） | 追加写命令 |
+| 性能 | 高（子进程写） | 较低（实时写） |
+| 数据安全 | 可能丢最近一次快照后的数据 | 可配 always/everysec/no |
+| 恢复速度 | 快 | 慢 |
+| 推荐 | 结合使用：RDB 做快照 + AOF 做增量 |
+
+### 高可用
+- **主从复制**：全量同步（RDB）+ 增量同步（命令传播）
+- **哨兵（Sentinel）**：监控、选主、通知
+- **集群（Cluster）**：16384 个槽位，分片存储，无中心化
+
+### 缓存策略
+- **过期策略**：定期删除 + 惰性删除
+- **淘汰策略**：volatile-lru, allkeys-lru, volatile-ttl, volatile-random, allkeys-random, noeviction
+- **缓存穿透**：查不存在的数据绕过缓存 → 布隆过滤器
+- **缓存击穿**：热点 key 过期 → 互斥锁 / 逻辑过期
+- **缓存雪崩**：大量 key 同时过期 → 过期时间加随机值 / 降级限流
+`,
+    source: null,
+  },
+  微服务架构: {
+    category: "microservices",
+    content: `## 微服务架构核心概念
+
+### 什么是微服务？
+将单体应用拆分为多个独立部署的小服务，每个服务围绕特定业务能力构建，拥有独立的数据库、部署流水线和运维边界。
+
+### 微服务 vs 单体
+
+| 维度 | 单体架构 | 微服务架构 |
+|------|---------|-----------|
+| 部署 | 单一部署单元 | 独立部署，服务间通过 API 通信 |
+| 扩展 | 整体水平扩展 | 按需扩展单个服务 |
+| 开发 | 统一技术栈 | 服务可选用不同技术栈 |
+| 团队 | 按功能分层协作 | 按业务领域组织（康威定律） |
+| 测试 | 端到端测试较简单 | 需契约测试、服务桩 |
+| 运维 | 单一监控和日志 | 分布式追踪、集中式日志 |
+
+### 服务拆分原则
+- **领域驱动设计（DDD）**：按限界上下文（Bounded Context）拆分
+- **单一职责**：每个服务只负责一个业务能力
+- **无共享**：数据库不共享，通过 API 交换数据
+- **自治性**：服务可独立开发、测试、部署、扩展
+
+### 服务通信
+- **同步**：REST / gRPC。简单直接，但会产生调用链依赖和级联故障
+- **异步**：消息队列（Kafka / RabbitMQ）。解耦削峰，但增加最终一致性复杂度
+- **gRPC**：基于 HTTP/2 + Protocol Buffers，高效双向流，适合内部服务间通信
+
+### 微服务痛点
+
+| 问题 | 解决方案 |
+|------|---------|
+| 配置管理 | 配置中心（Nacos / Apollo / Consul） |
+| 服务发现 | Eureka / Nacos / Consul / Kubernetes Service |
+| 负载均衡 | Ribbon / Spring Cloud LoadBalancer / K8s Service |
+| 熔断降级 | Hystrix / Sentinel / Resilience4j |
+| 分布式事务 | Seata（AT / TCC / Saga） |
+| 分布式追踪 | Jaeger / Zipkin / Skywalking |
+| 日志聚合 | ELK / Loki + Grafana |
+| 监控告警 | Prometheus + Grafana |
+
+### 微服务设计模式
+- **服务注册与发现**：新服务启动时注册，客户端从注册中心获取地址
+- **API 网关**：统一入口，负责路由、认证、限流、协议转换
+- **熔断器（Circuit Breaker）**：快速失败防止级联雪崩
+- **舱壁隔离（Bulkhead）**：将资源池隔离，防止一个服务耗尽所有线程
+- **重试与超时**：设置合理的重试策略和超时时间
+- **Sidecar**：将服务治理能力剥离到独立进程（Istio / Linkerd）
+- **Saga**：长事务拆分为本地事务 + 补偿操作
+
+### 容器化与编排
+- **Docker**：将服务和依赖打包为容器镜像
+- **Kubernetes**：容器编排平台，提供自动部署、伸缩、服务管理
+- **Service Mesh**：将通信逻辑从业务代码中剥离到 Sidecar 代理（Istio 数据面为 Envoy）
+`,
+    source: "综合整理",
+  },
+
+  系统设计: {
+    category: "system_design",
+    content: `## 系统设计核心要点
+
+### 设计流程
+1. **需求澄清**：功能需求 + 非功能需求（QPS、延迟、可用性、一致性要求）
+2. **估算**：QPS、存储量、带宽。例如日活 1 亿，每个用户每天 10 条消息 → QPS ≈ 10^8*10/86400 ≈ 11500
+3. **数据模型设计**：ER 图，选择存储系统（关系型 / NoSQL / 缓存 / 对象存储）
+4. **高层设计**：系统架构图，核心模块划分
+5. **详细设计**：深入关键组件，权衡取舍
+
+### 关键指标
+
+| 指标 | 说明 | 目标参考 |
+|------|------|---------|
+| QPS | 每秒查询数 | 单机 ~1k-2k（MySQL），~5-10k（Redis） |
+| 延迟 | 请求响应时间 | <100ms 优秀，<500ms 可接受 |
+| P99 延迟 | 99% 请求的延迟上界 | <200ms 优秀 |
+| 可用性 | 系统正常运行时间比 | 99.9%（3 个 9）≈ 8.7h/年 故障 |
+| SLA | 服务等级协议 | 99.99%（4 个 9）≈ 52min/年 故障 |
+
+### 常见系统设计题
+
+#### 短链服务（TinyURL）
+- 核心操作：create(长链) → 短链；访问短链 → 302 重定向
+- 发号器：自增 ID（雪花算法 / Redis incr）→ Base62 编码（6-7 位）
+- 读写比 ≈ 1:10000，缓存热点短链
+- 预估：每日 1 亿新短链，QPS 约 1150（写） + 1150w（读）
+
+#### 分布式 KV 存储
+- 一致性哈希解决数据分片和扩缩容
+- 虚拟节点减少数据倾斜
+- Gossip 协议维护集群成员
+- Vector Clock / CRDT 处理冲突
+- Hinted Handoff + Read Repair 保证最终一致性
+
+#### 实时消息系统
+- WebSocket 长连接保持实时推送
+- 消息可靠性：至少一次 / 最多一次 / 恰好一次
+- 消息有序性：单分区/单线程保证顺序
+- 离线消息：消息持久化 + 拉取模式
+- 大规模连接管理：连接池 + 心跳检测
+
+#### 限流设计
+- 令牌桶：固定速率放入令牌，突发时消耗累积令牌
+- 漏桶：固定速率流出，超出的请求排队或丢弃
+- 滑动窗口：在时间窗口内计数，更平滑的限流
+- 分布式限流：Redis + Lua 脚本实现原子计数
+
+### 数据库扩展策略
+- **读写分离**：主库写，从库读（只对读多写少场景有效）
+- **分库分表**：按业务分库（垂直），按 ID 范围/哈希分表（水平）
+- **CQRS**：命令和查询分离，写模型和读模型使用不同数据结构
+
+### 缓存策略
+- **旁路缓存（Cache-Aside）**：读时先查缓存，miss 则查 DB 并回填
+- **穿透缓存（Read-Through）**：缓存层代为查询 DB
+- **写回缓存（Write-Back）**：先写缓存，异步写 DB
+- **缓存更新**：先写 DB 再删缓存（Cache Aside Pattern）
+
+### 一致性方案
+- **强一致性**：分布式事务（2PC / 3PC），性能低
+- **最终一致性**：消息队列 + 重试 + 对账
+- **补偿事务**：Saga（Choreography / Orchestration）
+- **共识算法**：Paxos / Raft，用于配置同步和选主
+`,
+    source: "综合整理",
+  },
+
+  消息队列: {
+    category: "mq",
+    content: `## 消息队列核心概念
+
+### 什么是消息队列
+消息队列（Message Queue）是分布式系统中的异步通信中间件，生产者发送消息到队列，消费者从队列拉取或接收推送。解耦生产者和消费者，实现削峰填谷、异步处理。
+
+### 主流消息队列对比
+
+| 特性 | Kafka | RabbitMQ | RocketMQ | Pulsar |
+|------|-------|---------|---------|--------|
+| 性能 | 最高（百万级/秒） | 中等（万级/秒） | 高（十万级/秒） | 高（十万级/秒） |
+| 吞吐 | 日志、流处理场景 | 低延迟业务场景 | 金融级事务场景 | 云原生、多租户 |
+| 消息模型 | 分区日志（Pub/Sub） | 队列 + Exchange | Topic + Queue | Topic + 分层存储 |
+| 顺序消息 | 分区内有序 | 单队列有序 | 分区有序 | 分区有序 |
+| 消息可靠性 | ACK + ISR 副本 | 持久化 + 确认 | 同步刷盘 + 同步复制 | BookKeeper 持久化 |
+| 延迟消息 | 不支持原生 | 支持（插件） | 支持（内置） | 支持 |
+| 死信队列 | 支持 | 支持 | 支持 | 支持 |
+| 事务消息 | 支持（2PC） | 不支持 | 支持 | 支持 |
+
+### Kafka 核心概念
+- **Topic**：消息的逻辑分类
+- **Partition**：Topic 的分片，每个 Partition 是有序的日志文件
+- **Producer**：消息生产者，可指定 partition key
+- **Consumer Group**：消费者组，组内消费者分摊分区消费
+- **Broker**：Kafka 服务器节点，每个节点管理多个 Partition
+- **Offset**：消息在 Partition 内的偏移量，消费者通过 offset 追踪消费位置
+- **ISR（In-Sync Replica）**：与 Leader 保持同步的副本集合
+
+#### Kafka 关键特性
+- **顺序写磁盘**：利用磁盘顺序 I/O（≈600MB/s），远快于随机 I/O
+- **零拷贝**：利用 sendfile() 系统调用，数据直接从 PageCache → 网卡，绕过应用程序内存
+- **批量压缩**：批量发送消息，支持 gzip / snappy / lz4 / zstd 压缩
+- **分区自平衡**：新增或下线 Broker 时自动触发 Rebalance
+
+#### Kafka 消息可靠性
+- **acks=0**：不等待确认，可能丢消息（最快）
+- **acks=1**：Leader 写入即确认（默认）
+- **acks=-1(all)**：所有 ISR 写入后确认（最可靠）
+- **min.insync.replicas**：设定最小同步副本数，配合 acks=all 保证不丢
+
+### RabbitMQ 核心概念
+- **Exchange**：交换机，决定消息路由到哪些队列
+  - Direct：精确匹配 routing key
+  - Topic：通配符匹配 routing key（\* 匹配一个词，# 匹配零或多个词）
+  - Fanout：广播到所有绑定队列
+  - Headers：根据消息头属性匹配
+- **Binding**：Exchange 和 Queue 之间的绑定规则
+- **Virtual Host**：逻辑隔离，多租户支持
+
+### RocketMQ 核心概念
+- **NameServer**：注册中心，维护 Topic 路由信息
+- **Producer Group**：生产者分组，事务消息回查
+- **Consumer Group**：消费者分组，消费进度管理
+- **消息类型**：普通消息、顺序消息、事务消息、延时消息
+
+### 消息可靠性保证
+- **生产端**：发送确认 + 重试机制
+- **服务端**：持久化存储 + 多副本同步
+- **消费端**：手动 ACK + 幂等消费
+- **最终一致性**：事务消息 + 本地事务表
+
+### 使用场景
+- **异步处理**：用户注册后异步发送邮件和短信
+- **流量削峰**：秒杀请求先入队列，后端按能力消费
+- **日志收集**：各服务日志 → Kafka → 实时计算 + 归档
+- **事件驱动**：订单状态变更 → 发送事件 → 下游服务响应
+- **系统解耦**：上下游服务通过 MQ 通信，变更不影响对方
+`,
+    source: "综合整理",
+  },
+
+  行为面试: {
+    category: "behavioral",
+    content: `## 行为面试核心方法论
+
+### STAR 法则
+行为面试的黄金框架，几乎所有问题都可以用 STAR 组织回答：
+
+| 要素 | 说明 | 回答要点 |
+|------|------|---------|
+| **S**ituation | 当时面临什么背景 | 简要描述项目/团队/时间背景，1-2 句话 |
+| **T**ask | 你需要完成什么任务 | 你的职责和目标是什么，你负责的部分 |
+| **A**ction | 你具体做了什么 | **核心部分**：你的思考、决策、行动、技术方案 |
+| **R**esult | 最终结果如何 | 量化结果（性能提升 X%、节省 Y 人天、营收增长 Z） |
+
+### 常见问题分类
+
+#### 项目经验类
+- "介绍一个你最有成就感的项目"
+- "你遇到的最难的技术挑战是什么"
+- "你在项目中扮演什么角色"
+
+回答策略：选择有技术深度的项目，重点放在你的**技术判断**和**关键决策**上。
+
+#### 冲突协作类
+- "和同事/产品经理意见不合怎么办"
+- "如何推动跨部门合作"
+- "带过新人吗？怎么带的"
+
+回答策略：展示**同理心** + **理据** + **共赢思维**，不要说"我坚持己见"或"我让步了"。
+
+#### 失败与成长类
+- "介绍一次线上事故"
+- "你犯过最大的错误是什么"
+- "如果重来一次你会怎么做"
+
+回答策略：选择**不太严重但学到了重要教训**的案例，重点在于反思和改进措施。
+
+#### 目标规划类
+- "你未来 3-5 年的职业规划"
+- "为什么想加入我们公司"
+- "你为什么离开上一家公司"
+
+回答策略：目标要具体可行（如"在 XXX 方向达到资深水平"），与公司发展契合。
+
+### 软技能准备
+
+| 能力 | 面试官想看到 | 反面例子 |
+|------|------------|---------|
+| **技术判断力** | 对技术选型有明确理由，权衡过取舍 | "大家都用 Spring 所以我们也用" |
+| **沟通能力** | 能把复杂问题讲清楚，有结构地表达 | 回答跳跃、细节过多、抓不住重点 |
+| **主动性** | 主动发现问题并推动解决 | "等产品给需求" |
+| **学习能力** | 从实践中总结方法论 | 同样的错误反复犯 |
+| **领导力** | 技术影响力，能带动团队变好 | 只顾自己写代码不关心团队 |
+
+### 回答注意事项
+- **避免背台词**：面试官能感觉出来，准备要点但现场组织语言
+- **避免过度谦虚**：不说"我运气好"，而是"我判断 XXX 方向更可行"
+- **避免负面评价**：不说前公司的坏话，说"技术栈方向不匹配"
+- **量化结果**：用数据说话比泛泛而谈有力 10 倍
+- **准备反问**：面试结尾的反问展示了你的思考层次
+`,
+    source: "综合整理",
+  },
+
+  职业发展: {
+    category: "career",
+    content: `## 职业发展核心要点
+
+### 求职准备流程
+1. **简历优化**：STAR 原则写项目经历，量化成果（提升 X%，减少 Y%），关键词匹配目标岗位 JD
+2. **刷题策略**：按频率排序 Top 100 热题 + 你目标公司的高频题，不要盲目刷 500+
+3. **系统设计准备**：准备 5-6 道经典设计题（短链、秒杀、新闻流、聊天系统、打车系统）
+4. **行为面试准备**：准备 6-8 个 STAR 案例覆盖项目、冲突、失败、领导力
+5. **目标公司调研**：技术栈、业务模式、面试风格、团队方向
+
+### 技术面试流程
+
+| 阶段 | 考察重点 | 准备方法 |
+|------|---------|---------|
+| 简历筛选 | 匹配度、关键词、项目影响力 | 定制简历，突出硬技能和量化成果 |
+| 技术一面 | 算法 + 数据结构 | LeetCode 热题 100 + 周赛 |
+| 技术二面 | 系统设计 / 架构 | 经典设计题 + 白板练习 |
+| 技术三面 | 项目深度 + 技术判断 | 深挖简历项目，准备技术选型理由 |
+| HR 面 | 软技能、薪资期望、文化匹配 | 准备行为面试案例 + 市场行情 |
+| 交叉面 | 综合能力 | 不同视角考察技术视野和沟通能力 |
+
+### 技术成长阶段
+
+| 年限 | 典型职级 | 核心能力 |
+|------|---------|---------|
+| 0-2 年 | 初级工程师 | 能独立完成任务，写好代码，掌握常用框架 |
+| 2-5 年 | 中级工程师 | 能独立负责模块设计，理解技术原理，Code Review 他人 |
+| 5-8 年 | 高级/资深 | 跨系统架构设计，技术选型决策，指导团队技术方向 |
+| 8+ 年 | 专家/架构师 | 跨团队影响，战略级技术决策，行业影响力 |
+
+### 薪资谈判
+- **不先出价**：让面试官先提范围，或在最后一轮才谈薪资
+- **了解行情**：脉脉/OfferShow/一亩三分地了解目标公司薪资结构
+- **package 视角**：关注总包（base + 奖金 + 股票/期权），不只是月薪
+- **跳槽涨幅**：通常 15-30%，能力强或抢手时可到 50%+（含股票）
+- **谈判筹码**：已有 Offer 是最强的谈判杠杆
+
+### 持续学习路径
+- **技术广度**：关注业界趋势（云原生、AI Infra、大数据）、读技术博客
+- **技术深度**：源码阅读（Spring / Redis / Kafka）、做开源贡献
+- **软技能**：写作（技术博客）、演讲（内部分享）、英语（面试 + 文档）
+- **社区参与**：参加技术大会、混技术社区、建立人脉网络
+
+### 大厂面试要点
+- **字节**：重视算法（白板 coding），项目经验问得深，文化面看"字节范"
+- **阿里**：重视技术深度和项目影响力，常问源码和原理
+- **腾讯**：产品思维 + 技术深度并重，面试轮次多
+- **美团**：业务理解 + 技术实现，问落地细节
+- **外企**：重视系统设计（白板）+ 英语沟通，流程长但体验好
+`,
+    source: "综合整理",
+  },
+
+  AI_基础设施: {
+    category: "ai_infra",
+    content: `## AI 基础设施核心概念
+
+### AI 技术栈分层
+
+| 层级 | 技术组件 | 说明 |
+|------|---------|------|
+| 硬件层 | GPU（NVIDIA A100/H100/B200）、TPU、网络（InfiniBand/RoCE）、存储（NVMe/NFS） | 算力底座 |
+| 集群层 | Slurm / Kubernetes + Volcano / Ray | 任务调度、资源管理 |
+| 训练层 | PyTorch / JAX / TensorFlow + DeepSpeed / Megatron / FSDP | 分布式训练框架 |
+| 推理层 | vLLM / TensorRT-LLM / Triton Inference Server / TGI | 模型推理优化 |
+| 模型层 | GPT / LLaMA / Claude / Qwen 等基础模型 + LoRA 微调 | 模型本身 |
+| 应用层 | LangChain / LlamaIndex / RAG 框架 + Agent 框架 | 上层应用 |
+
+### GPU 选型对比
+
+| GPU | FP8 TFLOPS | HBM | 互联 | 典型用途 |
+|-----|-----------|-----|------|---------|
+| A100 (80G) | 624 | 80GB HBM2e | NVLink 600GB/s | 训练 + 推理（上一代主力） |
+| H100 (80G) | 1979 | 80GB HBM3 | NVLink 900GB/s | 训练 + 推理（当前主力） |
+| H200 (141G) | 1979 | 141GB HBM3e | NVLink 900GB/s | 大模型推理（显存优先） |
+| B200 | 4500 | 192GB HBM3e | NVLink 1800GB/s | 旗舰训练 + 推理 |
+
+### 分布式训练策略
+
+- **数据并行（DP/DDP）**：每个 GPU 一份完整模型，分 batch 训练，梯度同步
+- **模型并行（MP）**：将模型分层切分到不同 GPU，按序执行
+- **张量并行（TP）**：将单个 Transformer block 内矩阵拆到多个 GPU 计算
+- **流水线并行（PP）**：不同 GPU 处理不同 micro-batch，交错执行减少 bubble
+- **FSDP（Fully Sharded Data Parallel）**：参数、梯度、优化器状态分片到各 GPU，通信计算重叠
+
+#### ZeRO 优化三阶段
+- **ZeRO-1**：优化器状态分片
+- **ZeRO-2**：优化器状态 + 梯度分片
+- **ZeRO-3**：优化器状态 + 梯度 + 模型参数分片（最省显存，通信量最大）
+
+### 推理优化技术
+
+| 技术 | 原理 | 效果 |
+|------|------|------|
+| **量化** | FP16 → INT8/INT4，减少显存占用和计算量 | 显存减半，速度 2-4x |
+| **KV Cache** | 缓存 attention 的 K/V 矩阵，避免重复计算 | 自回归生成加速 10x+ |
+| **Flash Attention** | 分块计算 + 重计算，减少 HBM 读写 | 训练加速 2-4x，显存 O(N) → O(√N) |
+| **Speculative Decoding** | 小模型生成草稿 → 大模型验证 | 推理加速 2-3x |
+| **Continuous Batching** | 推理引擎动态合并请求为 batch | 吞吐提升 5-20x |
+| **PagedAttention** | 类似虚拟内存管理 KV Cache，消除碎片 | 显存利用率提升 4x（vLLM 核心） |
+
+### RAG 技术栈
+
+| 组件 | 技术选型 | 说明 |
+|------|---------|------|
+| Embedding | text-embedding-3-small / BGE / E5 | 将文本转为向量 |
+| 向量数据库 | Milvus / Pinecone / Qdrant / Weaviate / Chroma | 存储和检索向量 |
+| 分块策略 | RecursiveCharacterTextSplitter / Semantic Chunking | 文档分块策略 |
+| 检索增强 | Hybrid Search（向量 + BM25） + Rerank | 提升检索质量 |
+| Prompt 优化 | Context 压缩 + 动态 Few-shot | 减少 Token 消耗 |
+
+### MLOps 工具链
+- **实验追踪**：MLflow / Weights & Biases / Neptune / Aim
+- **模型注册**：MLflow Model Registry / Hugging Face Hub
+- **特征存储**：Feast / Tecton
+- **数据标注**：Label Studio / Scale AI
+- **模型监控**：WhyLabs / Arize / Evidently
+- **A/B 测试**：自建实验平台 / LaunchDarkly
+`,
+    source: "综合整理",
+  },
+
+  Linux: {
+    category: "linux",
+    content: `## Linux 核心要点
+
+### 常用命令分类
+
+#### 文件操作
+- \`ls -la\`：列出文件详情（-a 包含隐藏文件，-l 长格式）
+- \`find . -name "*.log" -mtime +7\`：查找 7 天前的 .log 文件
+- \`grep -r "error" --include="*.java"\`：递归搜索 Java 文件中的 error
+- \`awk '{print \$1, \$NF}'\`：打印每行第一列和最后一列
+- \`sed -i 's/old/new/g' file\`：原地替换文本
+- \`tar -czf archive.tar.gz dir/\`：压缩目录
+
+#### 进程管理
+- \`ps aux --sort=-%mem\`：按内存降序查看所有进程
+- \`top -o %CPU\`：实时查看 CPU 占用最高的进程
+- \`htop\`：增强版 top（需安装）
+- \`kill -15 PID\`：优雅终止进程（SIGTERM）
+- \`kill -9 PID\`：强制终止（SIGKILL，谨慎使用）
+- \`nohup command &\`：后台运行，退出终端不终止
+- \`systemctl start/stop/status/restart\`：systemd 服务管理
+
+#### 网络
+- \`netstat -tlnp\` / \`ss -tlnp\`：查看监听端口
+- \`curl -v http://example.com\`：调试 HTTP 请求详情
+- \`ping -c 5 host\`：网络连通性测试
+- \`traceroute host\` / \`mtr host\`：路由跟踪
+- \`tcpdump -i eth0 port 80\`：抓包分析
+- \`lsof -i :8080\`：查看端口被哪个进程占用
+
+#### 磁盘与内存
+- \`df -h\`：磁盘分区使用情况
+- \`du -sh *\`：当前目录各项目大小
+- \`iostat -x 1\`：磁盘 I/O 性能监控（每秒刷新）
+- \`free -h\`：内存使用情况
+- \`vmstat 1\`：虚拟内存、CPU、I/O 综合统计
+
+### Linux 内核关键概念
+
+#### 进程与线程
+- Linux 不区分进程和线程——都使用 \`task_struct\` 表示
+- 线程是共享地址空间的进程（通过 clone 系统调用创建）
+- 调度器基于 CFS（Completely Fair Scheduler），时间复杂度 O(log n)
+
+#### 文件系统
+- 一切皆文件：普通文件、目录、设备、socket、pipe 都是 fd
+- inode 存储元数据（权限、大小、时间戳），不存储文件名
+- 硬链接共享同一个 inode（\`ln source target\`）
+- 符号链接是独立的 inode 指向目标路径（\`ln -s source target\`）
+
+#### I/O 模型
+
+| 模型 | 特点 | 系统调用 |
+|------|------|---------|
+| 阻塞 I/O | 进程休眠等待 | read / write |
+| 非阻塞 I/O | 立即返回，轮询检查 | O_NONBLOCK |
+| I/O 多路复用 | 单线程监控多个 fd | select / poll / epoll |
+| 信号驱动 I/O | fd 就绪时发信号通知 | SIGIO |
+| 异步 I/O | 内核完成 I/O 后通知 | io_uring |
+
+#### epoll 进阶
+- \`epoll_create\`：创建 epoll 实例
+- \`epoll_ctl\`：注册/修改/删除关心的 fd
+- \`epoll_wait\`：等待事件就绪
+- **水平触发（LT）**：fd 还有数据未读就会继续通知（默认）
+- **边缘触发（ET）**：fd 状态变化时才通知一次，需配合非阻塞 I/O 循环读取
+- epoll 相比 select/poll 的优势：O(1) 复杂度，无 1024 fd 上限，无需拷贝 fd 集合
+
+### 性能排查常用命令
+
+| 场景 | 命令 | 关注点 |
+|------|------|--------|
+| CPU 高 | \`top\` / \`perf top\` | 哪个进程/函数占 CPU |
+| 内存高 | \`free -h\` / \`ps aux --sort=-%mem\` | 内存泄漏嫌疑进程 |
+| IO 高 | \`iostat -x 1\` / \`iotop\` | await, %util |
+| 网络慢 | \`ss -ti\` / \`ping\` / \`mtr\` | 延迟、丢包率 |
+| 文件句柄泄漏 | \`lsof -p PID | wc -l\` | fd 数量是否持续增长 |
+| 上下文切换高 | \`vmstat 1\` / \`pidstat -w\` | cs（context switch）列 |
+`,
+    source: "综合整理",
+  },
 };
 
 /**

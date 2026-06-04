@@ -18,7 +18,7 @@
 <nav class="nav-island">
   <div class="nav-inner">
     {#each tabs as tab}
-      <button class="nav-item" class:active={current === tab.id} onclick={() => onNavigate(tab.id)}>
+      <button class="nav-item" class:active={current === tab.id} onclick={() => onNavigate(tab.id)} aria-current={current === tab.id ? "page" : undefined}>
         <span class="icon-wrap">
           {#if tab.icon === "home"}
             <svg

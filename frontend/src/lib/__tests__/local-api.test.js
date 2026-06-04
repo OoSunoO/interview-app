@@ -82,7 +82,7 @@ const FIXTURE = [
   },
 ];
 
-vi.mock("../question-data.js", () => ({ questions: FIXTURE }));
+vi.mock("../question-data/index.js", () => ({ questions: FIXTURE }));
 
 vi.mock("../knowledge-data.js", () => ({
   buildKnowledgeMap: (questions) => {
@@ -371,6 +371,13 @@ describe("knowledge API", () => {
     expect(jb.question_count).toBe(3);
     expect(jb).toHaveProperty("mastery");
     expect(jb).toHaveProperty("has_content", false);
+  });
+
+  it("searches knowledge points by name", async () => {
+    const api = await getApi();
+    const result = api.knowledge.list("Java");
+    expect(result.length).toBeGreaterThanOrEqual(1);
+    expect(result.some((k) => k.name === "Java基础")).toBe(true);
   });
 
   it("gets knowledge point tags for a question", async () => {

@@ -22,6 +22,14 @@
   let qrCategory = $state("");
   let qrDifficulty = $state("");
   let qrCount = $state(20);
+  let lastSession = $state(null);
+  let showMIDialog = $state(false);
+  let showGoalDialog = $state(false);
+  let goalInput = $state(0);
+  let miCategory = $state("");
+  let miDifficulty = $state("");
+  let miCount = $state(10);
+  let miTimeLimit = $state(120);
 
   const categories = FILTER_CATEGORIES;
 
@@ -82,6 +90,10 @@
 
   onMount(async () => {
     await loadData();
+    try {
+      const saved = sessionStorage.getItem("last_quiz_session");
+      if (saved) lastSession = JSON.parse(saved);
+    } catch (_) { /* ignore */ }
     if (reminderEnabled && dueCount > 0 && "Notification" in window && Notification.permission === "granted") {
       new Notification("📚 复习提醒", {
         body: `你有 ${dueCount} 道题待复习，点击开始巩固吧！`,
@@ -124,8 +136,38 @@
     });
   }
 
+  async function startMockInterview() {
+    showMIDialog = false;
+    const list = api.questions.list({
+      category: miCategory,
+      difficulty: miDifficulty,
+      page_size: 500,
+    });
+    const shuffled = [...list].sort(() => Math.random() - 0.5);
+    const selected = shuffled.slice(0, miCount);
+    if (selected.length === 0) {
+      toast.error("没有符合条件的题目");
+      return;
+    }
+    store.startQuiz(selected);
+    onNavigate("quiz", {
+      questionId: selected[0].id,
+      mockInterview: { timeLimit: miTimeLimit },
+    });
+  }
+
   function handleOverlayKeydown(e, close) {
     if (e.key === "Escape") close();
+  }
+
+  function timeAgo(iso) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return "刚刚";
+    if (m < 60) return `${m}分钟前`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}小时前`;
+    return `${Math.floor(h / 24)}天前`;
   }
 
   async function startDueReview() {
@@ -134,6 +176,20 @@
       store.startQuiz(due);
       onNavigate("quiz", { questionId: due[0].id });
     }
+  }
+
+  function openGoalDialog() {
+    goalInput = dailyGoal;
+    showGoalDialog = true;
+  }
+
+  function saveGoal() {
+    const val = Math.max(0, Math.min(200, Math.round(goalInput) || 0));
+    api.progress.setGoal(val);
+    dailyGoal = val;
+    showGoalDialog = false;
+    if (val > 0) toast.success(`每日目标已设为 ${val} 题`);
+    else toast.success("每日目标已关闭");
   }
 </script>
 
@@ -174,7 +230,7 @@
       </div>
     {/if}
     {#if dailyGoal > 0}
-      <div class="goal-card">
+      <button class="goal-card" onclick={openGoalDialog}>
         <div class="goal-row">
           <span class="goal-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
@@ -187,7 +243,17 @@
         <div class="goal-bar-track">
           <div class="goal-bar-fill" style="transform: scaleX({Math.min(1, store.dailyStats.today.reviewed / dailyGoal)})"></div>
         </div>
-      </div>
+      </button>
+    {:else}
+      <button class="goal-card goal-card-empty" onclick={openGoalDialog}>
+        <div class="goal-row">
+          <span class="goal-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+          </span>
+          <span class="goal-text">设置每日目标</span>
+          <span class="goal-hint">+</span>
+        </div>
+      </button>
     {/if}
   </div>
 
@@ -255,6 +321,45 @@
         </div>
       {/if}
 
+      {#if lastSession}
+        <button class="last-session-card" onclick={() => {
+          const wrongIds = lastSession.results.filter(r => r.status === "wrong" || r.status === "timeout").map(r => r.id);
+          if (wrongIds.length > 0) {
+            store.startQuiz(store.questions.filter(q => wrongIds.includes(q.id)));
+            onNavigate("quiz", { questionId: wrongIds[0] });
+          }
+        }}>
+          <div class="ls-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" /></svg>
+            <span class="ls-label">上次练习</span>
+            <span class="ls-time">{timeAgo(lastSession.completedAt)}</span>
+          </div>
+          <div class="ls-stats">
+            <span class="ls-stat">
+              <span class="ls-stat-num correct">{lastSession.correct}</span>
+              <span class="ls-stat-lbl">正确</span>
+            </span>
+            <span class="ls-stat">
+              <span class="ls-stat-num wrong">{lastSession.wrong}</span>
+              <span class="ls-stat-lbl">错误</span>
+            </span>
+            <span class="ls-stat">
+              <span class="ls-stat-num">{lastSession.total}</span>
+              <span class="ls-stat-lbl">总计</span>
+            </span>
+            <span class="ls-stat">
+              <span class="ls-stat-num pct" class:pass={lastSession.pct >= 70}>{lastSession.pct}%</span>
+              <span class="ls-stat-lbl">正确率</span>
+            </span>
+          </div>
+          {#if lastSession.wrong > 0}
+            <div class="ls-wrong-hint">点击复习 {lastSession.wrong} 道错题 →</div>
+          {/if}
+        </button>
+      {/if}
       <button class="review-entry-btn" onclick={() => onNavigate("review-session")}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -369,6 +474,14 @@
           <path d="M12 6v6l4 2" /></svg>
         速记模式
       </button>
+
+      <button class="mi-entry-btn" onclick={() => (showMIDialog = true)}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" />
+          <path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+        模拟面试
+      </button>
     {/if}
   </div>
 </div>
@@ -426,6 +539,54 @@
       <div class="dialog-actions">
         <button class="dialog-btn cancel" onclick={() => (showQRDialog = false)}>取消</button>
         <button class="dialog-btn primary" onclick={startQuickReview}>开始</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- ── Mock Interview Dialog ── -->
+{#if showMIDialog}
+  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+  <div class="dialog-overlay" onclick={() => (showMIDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showMIDialog = false)}>
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showMIDialog = false)}>
+      <div class="dialog-title">模拟面试</div>
+      <div class="dialog-desc">在限定时间内完成题目，考验真实面试水平</div>
+
+      <label for="mi-cat">分类</label>
+      <select id="mi-cat" bind:value={miCategory}>
+        {#each categories as cat}
+          <option value={cat.value}>{cat.label}</option>
+        {/each}
+      </select>
+
+      <label for="mi-diff">难度</label>
+      <select id="mi-diff" bind:value={miDifficulty}>
+        <option value="">全部</option>
+        <option value="easy">简单</option>
+        <option value="medium">中等</option>
+        <option value="hard">困难</option>
+      </select>
+
+      <span class="dialog-label">题量</span>
+      <div class="count-options">
+        <button class="count-btn" class:active={miCount === 5} onclick={() => (miCount = 5)}>5</button>
+        <button class="count-btn" class:active={miCount === 10} onclick={() => (miCount = 10)}>10</button>
+        <button class="count-btn" class:active={miCount === 20} onclick={() => (miCount = 20)}>20</button>
+        <button class="count-btn" class:active={miCount === 30} onclick={() => (miCount = 30)}>30</button>
+      </div>
+
+      <span class="dialog-label">每题限时</span>
+      <div class="time-options">
+        <button class="time-btn" class:active={miTimeLimit === 60} onclick={() => (miTimeLimit = 60)}>1分</button>
+        <button class="time-btn" class:active={miTimeLimit === 120} onclick={() => (miTimeLimit = 120)}>2分</button>
+        <button class="time-btn" class:active={miTimeLimit === 180} onclick={() => (miTimeLimit = 180)}>3分</button>
+        <button class="time-btn" class:active={miTimeLimit === 300} onclick={() => (miTimeLimit = 300)}>5分</button>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="dialog-btn cancel" onclick={() => (showMIDialog = false)}>取消</button>
+        <button class="dialog-btn primary" onclick={startMockInterview}>开始模拟</button>
       </div>
     </div>
   </div>
@@ -546,6 +707,24 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+    text-align: left;
+    font-family: inherit;
+    width: 100%;
+  }
+  .goal-card:active {
+    transform: scale(0.98);
+  }
+  .goal-card-empty .goal-hint {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--accent);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .goal-row {
     display: flex;
@@ -839,6 +1018,29 @@
   background: var(--accent-bg);
 }
 
+.mi-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--danger, #e74c3c);
+  border: 1px solid var(--danger, #e74c3c);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s var(--spring);
+  margin-top: 8px;
+}
+.mi-entry-btn:active {
+  transform: scale(0.97);
+  background: rgba(231, 76, 60, 0.08);
+}
+
 /* ── Reminder Toggle ── */
 .reminder-toggle {
   display: flex;
@@ -876,6 +1078,79 @@
 }
 .toggle-dot.off {
   background: var(--text-dim);
+}
+
+/* ── Last Session Card ── */
+.last-session-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  text-align: left;
+  width: 100%;
+  color: var(--text);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.3s var(--spring);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+.last-session-card:active {
+  background: var(--bg-card-hover);
+  border-color: rgba(108, 140, 255, 0.2);
+  transform: scale(0.99);
+}
+.ls-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+}
+.ls-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+.ls-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.ls-stats {
+  display: flex;
+  gap: 12px;
+}
+.ls-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ls-stat-num {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.ls-stat-num.correct { color: var(--success); }
+.ls-stat-num.wrong { color: var(--danger); }
+.ls-stat-num.pct { color: var(--text); }
+.ls-stat-num.pct.pass { color: var(--success); }
+.ls-stat-lbl {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.ls-wrong-hint {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
 }
 
 /* ── SM-2 Review Entry Button ── */
@@ -959,7 +1234,8 @@
   color: var(--text-muted);
   line-height: 1.5;
 }
-.dialog label {
+.dialog label,
+.dialog-label {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-muted);
@@ -1005,6 +1281,32 @@
   background: var(--accent-bg);
   color: var(--accent);
   border-color: var(--accent);
+}
+.time-options {
+  display: flex;
+  gap: 8px;
+}
+.time-btn {
+  flex: 1;
+  padding: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s var(--spring);
+  text-align: center;
+}
+.time-btn:active {
+  transform: scale(0.96);
+}
+.time-btn.active {
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--danger, #e74c3c);
+  border-color: var(--danger, #e74c3c);
 }
 .dialog-actions {
   display: flex;

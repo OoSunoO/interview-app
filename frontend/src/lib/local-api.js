@@ -3,7 +3,7 @@
 // Dynamic imports for code-splitting: Vite creates separate chunks
 // so the main bundle stays lean.
 const [{ questions }, { buildKnowledgeMap, getKnowledgeForTag }] = await Promise.all([
-  import("./question-data.js"),
+  import("./question-data/index.js"),
   import("./knowledge-data.js"),
 ]);
 
@@ -109,7 +109,7 @@ const CATEGORY_NAMES = CATEGORY_LABELS;
 
 /** Compute mastery for a tag across all questions, using progress data */
 function computeMastery(tag, progress) {
-  const tagQuestions = questions.filter((q) => q.tags.includes(tag));
+  const tagQuestions = questions.filter((q) => (q.tags || []).includes(tag));
   if (tagQuestions.length === 0) return 0;
   let totalScore = 0;
   for (const q of tagQuestions) {
@@ -131,7 +131,7 @@ function computeMastery(tag, progress) {
 function getTagCategoryMap() {
   const map = Object.create(null);
   for (const q of questions) {
-    for (const t of q.tags) {
+    for (const t of q.tags || []) {
       if (!map[t]) map[t] = new Set();
       map[t].add(q.category);
     }
@@ -157,7 +157,7 @@ export const api = {
       if (params.difficulty) result = result.filter((q) => q.difficulty === params.difficulty);
       if (params.type) result = result.filter((q) => q.type === params.type);
       if (params.search) result = result.filter((q) => matchesSearch(q, params.search));
-      if (params.tag) result = result.filter((q) => q.tags.includes(params.tag));
+      if (params.tag) result = result.filter((q) => (q.tags || []).includes(params.tag));
 
       const progress = getProgress();
       if (params.company) {
@@ -626,13 +626,13 @@ export const api = {
   // ── Knowledge Points API ─────────────────────────────────────
   knowledge: {
     /** List all knowledge points (from tags), with counts, mastery, and hasContent flag */
-    list() {
+    list(search) {
       const progress = getProgress();
       const tagMap = Object.create(null);
       const tagCategories = getTagCategoryMap();
 
       for (const q of questions) {
-        for (const t of q.tags) {
+        for (const t of q.tags || []) {
           if (!tagMap[t]) tagMap[t] = [];
           tagMap[t].push(q.id);
         }
@@ -645,7 +645,7 @@ export const api = {
         }
       }
 
-      return Object.entries(tagMap)
+      let entries = Object.entries(tagMap)
         .map(([tag, ids]) => ({
           name: tag,
           question_count: ids.length,
@@ -654,12 +654,32 @@ export const api = {
           has_content: !!getKnowledgeForTag(tag),
         }))
         .sort((a, b) => b.question_count - a.question_count);
+
+      // Search within name, categories, AND content text
+      if (search) {
+        const q = search.toLowerCase().trim();
+        const contentCache = Object.create(null);
+        entries = entries.filter((e) => {
+          if (e.name.toLowerCase().includes(q)) return true;
+          if (e.categories.some((c) => c.toLowerCase().includes(q))) return true;
+          const stored = getKnowledgeForTag(e.name);
+          if (stored?.content) {
+            if (contentCache[e.name] === undefined) {
+              contentCache[e.name] = stored.content.toLowerCase();
+            }
+            return contentCache[e.name].includes(q);
+          }
+          return false;
+        });
+      }
+
+      return entries;
     },
 
     /** Get detail for a specific knowledge point, with pre-stored content */
     get(tag) {
       const progress = getProgress();
-      const tagQuestions = questions.filter((q) => q.tags.includes(tag));
+      const tagQuestions = questions.filter((q) => (q.tags || []).includes(tag));
 
       const ids = tagQuestions.map((q) => q.id);
       const tagCategories = getTagCategoryMap();

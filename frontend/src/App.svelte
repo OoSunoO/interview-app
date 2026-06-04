@@ -20,11 +20,14 @@
   let selectedQuestionId = $state(null);
   let selectedTag = $state(null);
   let reviewConfig = $state(null);
+  let mockInterviewConfig = $state(null);
 
   function navigate(to, params = {}) {
     if (params.questionId) selectedQuestionId = params.questionId;
     if (params.tag) selectedTag = params.tag;
     if (params.reviewConfig) reviewConfig = params.reviewConfig;
+    if (params.mockInterview) mockInterviewConfig = params.mockInterview;
+    else mockInterviewConfig = null;
     page = to;
   }
 
@@ -43,7 +46,7 @@
         {:else if page === "browse"}
           <Browse onNavigate={navigate} />
         {:else if page === "quiz"}
-          <Quiz questionId={selectedQuestionId} onNavigate={navigate} />
+          <Quiz questionId={selectedQuestionId} onNavigate={navigate} mockInterview={mockInterviewConfig} />
         {:else if page === "wrong"}
           <WrongBook onNavigate={navigate} />
         {:else if page === "knowledge"}

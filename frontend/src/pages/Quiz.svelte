@@ -19,13 +19,19 @@
     getScoreHistory,
   } from "../lib/ai.js";
 
-  let { questionId, onNavigate } = $props();
+  let { questionId, onNavigate, mockInterview = null } = $props();
   let q = $state(null);
   let loadError = $state(null);
   let showAnswer = $state(false);
   let showHints = $state(false);
   let browseMode = $state(false);
   let expandedSections = $state({ answer: true, explanation: false, extension: false });
+
+  // Mock interview mode
+  let interviewed = $derived(!!mockInterview);
+  let timeLimit = $derived(mockInterview?.timeLimit ?? 0);
+  let countdown = $state(0);
+  let autoAdvancing = $state(false);
 
   function toggleBrowseMode() {
     browseMode = !browseMode;
@@ -54,7 +60,7 @@
   let showSessionSummary = $state(false);
   let sessionSummary = $derived.by(() => {
     const correct = sessionResults.filter(r => r.status === "correct").length;
-    const wrong = sessionResults.filter(r => r.status === "wrong").length;
+    const wrong = sessionResults.filter(r => r.status === "wrong" || r.status === "timeout").length;
     const total = sessionResults.length;
     const totalTime = sessionResults.reduce((sum, r) => sum + (r.duration || 0), 0);
     return {
@@ -191,7 +197,11 @@
       if (result) {
         q = result;
         loadKnowledgeTags();
-        timerInterval = setInterval(() => timer++, 1000);
+        countdown = interviewed ? timeLimit : 0;
+        timerInterval = setInterval(() => {
+          timer++;
+          if (interviewed) { countdown--; if (countdown <= 0) { stopTimer(); handleTimeout(); } }
+        }, 1000);
       } else {
         loadError = store.error ?? "加载题目失败";
       }
@@ -207,6 +217,19 @@
       clearInterval(timerInterval);
       timerInterval = null;
     }
+  }
+
+  function handleTimeout() {
+    if (autoAdvancing) return;
+    autoAdvancing = true;
+    recordSessionResult("timeout");
+    feedbackResult = "wrong";
+    showAnswer = true;
+    setTimeout(() => {
+      autoAdvancing = false;
+      if (store.hasNext) goNext();
+      else finishSession();
+    }, 2000);
   }
 
   function submitAnswer() {
@@ -351,6 +374,7 @@
     feedbackResult = null;
     aiGrade = null;
     timer = 0;
+    countdown = interviewed ? timeLimit : 0;
     if (timerInterval) {
       clearInterval(timerInterval);
       timerInterval = null;
@@ -364,7 +388,14 @@
       if (result) {
         q = result;
         loadKnowledgeTags();
-        timerInterval = setInterval(() => timer++, 1000);
+        countdown = interviewed ? timeLimit : 0;
+        timerInterval = setInterval(() => {
+          timer++;
+          if (interviewed) {
+            countdown--;
+            if (countdown <= 0) { stopTimer(); handleTimeout(); }
+          }
+        }, 1000);
         return true;
       }
       loadError = store.error ?? "加载题目失败";
@@ -377,7 +408,12 @@
 
   function recordSessionResult(status) {
     if (!sessionProgress || !q) return;
-    sessionResults = [...sessionResults, { id: q.id, title: q.title, status, category: q.category, difficulty: q.difficulty, duration: timer }];
+    const ans = q.type === "choice" || q.type === "true_false"
+      ? (selectedOption || "")
+      : q.type === "multiple_choice"
+        ? (selectedOptions.length > 0 ? selectedOptions.join("; ") : "")
+        : userAnswer || "";
+    sessionResults = [...sessionResults, { id: q.id, title: q.title, status, category: q.category, difficulty: q.difficulty, duration: timer, userAnswer: ans, correctAnswer: answerBody() }];
   }
 
   async function goNext() {
@@ -390,7 +426,7 @@
   }
 
   async function goPrev() {
-    if (!store.hasPrev) return;
+    if (!store.hasPrev || interviewed) return;
     store.retreatQuiz();
     const prevId = store.quizSession[store.quizIndex].id;
     resetState();
@@ -421,6 +457,25 @@
   function finishSession() {
     store._clearSessionBackup();
     showSessionSummary = true;
+    // Persist last session to sessionStorage for Home page
+    try {
+      const s = sessionSummary;
+      sessionStorage.setItem("last_quiz_session", JSON.stringify({
+        correct: s.correct,
+        wrong: s.wrong,
+        total: s.total,
+        pct: s.pct,
+        totalTime: s.totalTime,
+        avgTime: s.avgTime,
+        interviewed: sessionResults.length > 0 && sessionResults[0].duration !== undefined,
+        completedAt: new Date().toISOString(),
+        results: sessionResults.map(r => ({
+          id: r.id, title: r.title, status: r.status,
+          category: r.category, userAnswer: r.userAnswer,
+          correctAnswer: r.correctAnswer
+        }))
+      }));
+    } catch (_) { /* ignore quota errors */ }
   }
 
   function exit() {
@@ -439,7 +494,7 @@
 
     // Left/Right navigation — answer-shown and browse modes
     if (browseMode || showAnswer || showSubmitResult) {
-      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); return; }
+      if (e.key === "ArrowLeft" && !interviewed) { e.preventDefault(); goPrev(); return; }
       if (e.key === "ArrowRight") { e.preventDefault(); goNext(); return; }
       if (e.key === "Enter" && (browseMode || showAnswer)) { e.preventDefault(); goNext(); return; }
       if (e.key === "r" || e.key === "R") {
@@ -525,7 +580,7 @@
     const dx = e.changedTouches[0].clientX - touchStartX;
     const dy = e.changedTouches[0].clientY - touchStartY;
     if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.5) return;
-    if (dx > 0) { store.hasPrev && goPrev(); } else { store.hasNext && goNext(); }
+    if (dx > 0) { !interviewed && store.hasPrev && goPrev(); } else { store.hasNext && goNext(); }
   }
 </script>
 
@@ -539,6 +594,9 @@
     <div class="skeleton" style="height:240px"></div>
   {:else}
     <div class="q-meta">
+      {#if interviewed}
+        <span class="mi-badge">模拟面试</span>
+      {/if}
       {#if sessionProgress}
         <span class="q-number-badge">{sessionProgress.index}/{sessionProgress.total}</span>
         <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
@@ -555,10 +613,12 @@
             <rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>
         </button>
       {/if}
-      <button class="browse-toggle" class:active={browseMode} onclick={toggleBrowseMode}>
-        {browseMode ? "浏览" : "答题"}
-      </button>
-      {#if sessionProgress && !showAnswer}
+      {#if !interviewed}
+        <button class="browse-toggle" class:active={browseMode} onclick={toggleBrowseMode}>
+          {browseMode ? "浏览" : "答题"}
+        </button>
+      {/if}
+      {#if sessionProgress && !showAnswer && !interviewed}
         <button class="shuffle-btn" onclick={shuffleRemaining} title="随机后续题目">
           <svg
             width="13"
@@ -578,7 +638,13 @@
           </svg>
         </button>
       {/if}
-      <span class="q-timer">{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
+      {#if interviewed}
+        <span class="q-timer" class:critical={countdown <= 10} class:warn={countdown <= 30 && countdown > 10}>
+          {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}
+        </span>
+      {:else}
+        <span class="q-timer">{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
+      {/if}
       <button
         class="quiz-bm-btn"
         class:active={q.bookmarked}
@@ -961,7 +1027,7 @@
       {#if sessionProgress}
         <div class="nav-actions">
           <button class="nav-btn exit" onclick={exit}>返回题库</button>
-          {#if store.hasPrev}
+          {#if store.hasPrev && !interviewed}
             <button class="nav-btn prev" onclick={goPrev}>← 上一题</button>
           {/if}
           <button class="nav-btn retry" onclick={() => { const id = q.id; resetState(); loadQuestionById(id); }}>
@@ -984,17 +1050,25 @@
 
     {#if showSessionSummary}
       {@const s = sessionSummary}
-      <div class="session-summary">
-        <h2 class="ss-title">本次练习完成</h2>
+      {@const pass = s.pct >= 70}
+      <div class="session-summary" class:mock-summary={interviewed}>
+        <h2 class="ss-title">{interviewed ? "模拟面试完成" : "本次练习完成"}</h2>
+        {#if interviewed}
+          <div class="mi-verdict" class:pass={pass} class:fail={!pass}>
+            {pass ? "🎉 通过" : "💪 继续努力"}
+          </div>
+        {/if}
         <div class="ss-stats">
           <div class="ss-stat ss-correct">
             <span class="ss-num">{s.correct}</span>
             <span class="ss-label">正确</span>
           </div>
-          <div class="ss-stat ss-wrong-stat">
+          {#if s.wrong > 0}
+          <div class="ss-stat ss-wrong">
             <span class="ss-num">{s.wrong}</span>
             <span class="ss-label">错误</span>
           </div>
+          {/if}
           <div class="ss-stat ss-total">
             <span class="ss-num">{s.total}</span>
             <span class="ss-label">总计</span>
@@ -1036,6 +1110,18 @@
               >
                 <span class="ss-wrong-cat">{wr.category}</span>
                 <span class="ss-wrong-title">{wr.title}</span>
+                {#if wr.userAnswer !== undefined}
+                  <div class="ss-wrong-compare">
+                    <div class="ss-compare-row ss-compare-user">
+                      <span class="ss-compare-label">你答：</span>
+                      <span class="ss-compare-text">{wr.userAnswer || "(空)"}</span>
+                    </div>
+                    <div class="ss-compare-row ss-compare-correct">
+                      <span class="ss-compare-label">答案：</span>
+                      <span class="ss-compare-text">{wr.correctAnswer}</span>
+                    </div>
+                  </div>
+                {/if}
               </button>
             {/each}
           </div>
@@ -1188,6 +1274,18 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--text-muted);
+    transition: color 0.3s ease;
+  }
+  .q-timer.warn {
+    color: var(--warning, #e6a23c);
+  }
+  .q-timer.critical {
+    color: var(--danger, #e74c3c);
+    animation: pulse-timer 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes pulse-timer {
+    from { opacity: 1; }
+    to { opacity: 0.4; }
   }
   .help-btn,
   .copy-btn {
@@ -1222,6 +1320,19 @@
   }
   .quiz-bm-btn:active {
     transform: scale(0.85);
+  }
+  .mi-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 10px;
+    border-radius: var(--radius-pill);
+    background: var(--danger, #e74c3c);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
   }
   .q-number-badge {
     display: inline-flex;
@@ -2081,6 +2192,16 @@
     padding: 24px 0;
     animation: fadeIn 0.3s ease;
   }
+  .mock-summary .ss-title {
+    color: var(--accent);
+  }
+  .mi-verdict {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 0;
+  }
+  .mi-verdict.pass { color: var(--success, #52c41a); }
+  .mi-verdict.fail { color: var(--danger, #e74c3c); }
   .ss-title {
     font-size: 20px;
     font-weight: 700;
@@ -2105,7 +2226,7 @@
     line-height: 1;
   }
   .ss-correct .ss-num { color: var(--success); }
-  .ss-wrong-stat .ss-num { color: var(--danger); }
+  .ss-wrong .ss-num { color: var(--danger); }
   .ss-total .ss-num { color: var(--text-muted); }
   .ss-label {
     font-size: 12px;
@@ -2202,6 +2323,39 @@
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     line-clamp: 2;
+  }
+  .ss-wrong-compare {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    line-height: 1.6;
+    text-align: left;
+    width: 100%;
+  }
+  .ss-compare-row {
+    display: flex;
+    gap: 6px;
+  }
+  .ss-compare-row + .ss-compare-row {
+    margin-top: 4px;
+  }
+  .ss-compare-label {
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+  .ss-compare-user .ss-compare-label {
+    color: var(--danger);
+  }
+  .ss-compare-correct .ss-compare-label {
+    color: var(--success);
+  }
+  .ss-compare-text {
+    color: var(--text);
+    word-break: break-word;
+    min-width: 0;
   }
   .ss-actions {
     display: flex;

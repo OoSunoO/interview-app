@@ -17,20 +17,10 @@
   const PAGE_SIZE = 6;
   let currentPage = $state(1);
 
-  // Filter flat list by search
-  let filtered = $derived(
-    points.filter(
-      (p) =>
-        !searchQuery ||
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.categories.some((c) => c.toLowerCase().includes(searchQuery.toLowerCase())),
-    ),
-  );
-
-  // Group filtered points by first category into hierarchical structure
+  // Group points by first category into hierarchical structure
   let grouped = $derived.by(() => {
     const map = {};
-    for (const p of filtered) {
+    for (const p of points) {
       const cat = p.categories[0] || "其他";
       if (!map[cat]) {
         map[cat] = { id: cat, label: categoryLabel(cat), totalQuestions: 0, totalMastery: 0, count: 0, children: [] };
@@ -55,15 +45,26 @@
   // Cache for knowledge detail content
   let detailCache = $state({});
 
+  let searchTimeout;
+
+  $effect(() => {
+    // Debounced re-fetch when search changes
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      loadPoints(searchQuery);
+      currentPage = 1;
+    }, 200);
+  });
+
   onMount(async () => {
     await loadPoints();
   });
 
-  async function loadPoints() {
+  async function loadPoints(search) {
     loading = true;
     error = null;
     try {
-      points = await api.knowledge.list();
+      points = await api.knowledge.list(search || undefined);
     } catch (e) {
       error = e.message ?? "加载知识点失败";
     } finally {

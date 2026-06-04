@@ -3,7 +3,7 @@
 </script>
 
 <div class="error-shell">
-  <div class="error-inner">
+  <div class="error-inner" role="alert">
     <svg
       width="18"
       height="18"

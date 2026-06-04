@@ -4,6 +4,7 @@
   import { api } from "../lib/local-api.js";
   import { toast } from "../lib/toast.js";
   import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
+  import { renderContent, renderAnswer } from "../lib/render-utils.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import Pagination from "../components/Pagination.svelte";
 
@@ -14,6 +15,11 @@
   let selectionMode = $state(false);
   let companies = $state([]);
   let searchInput = $state(null);
+  let detailQuestion = $state(null);
+  let showDetailAnswer = $state(false);
+  let detailDialog = $state(null);
+  let detailNotes = $state("");
+  let noteSaving = $state(false);
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -23,7 +29,36 @@
 
   const categories = FILTER_CATEGORIES;
 
+  function openDetail(q) {
+    detailQuestion = q;
+    showDetailAnswer = false;
+    try {
+      const full = api.questions.get(q.id);
+      detailNotes = full.notes || "";
+    } catch {
+      detailNotes = "";
+    }
+  }
+  function closeDetail() {
+    detailQuestion = null;
+    showDetailAnswer = false;
+    detailNotes = "";
+  }
+
+  async function saveNotes() {
+    if (!detailQuestion) return;
+    noteSaving = true;
+    try {
+      await api.progress.update(detailQuestion.id, { notes: detailNotes });
+    } catch {
+      // silent
+    } finally {
+      noteSaving = false;
+    }
+  }
+
   function handleKeydown(e) {
+    if (e.key === "Escape") { closeDetail(); return; }
     if (e.key === "/" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
       e.preventDefault();
       searchInput?.focus();
@@ -104,6 +139,21 @@
     const s = store.filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const re = new RegExp(`(${s})`, 'gi');
     return text.replace(re, '<mark class="search-hl">$1</mark>');
+  }
+  function contentSnippet(text) {
+    if (!text) return "";
+    const plain = text.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+    const s = store.filters.search?.toLowerCase() || "";
+    const idx = plain.toLowerCase().indexOf(s);
+    let snippet;
+    if (idx >= 0) {
+      const start = Math.max(0, idx - 30);
+      const end = Math.min(plain.length, idx + s.length + 60);
+      snippet = (start > 0 ? "…" : "") + plain.slice(start, end) + (end < plain.length ? "…" : "");
+    } else {
+      snippet = plain.slice(0, 100) + (plain.length > 100 ? "…" : "");
+    }
+    return highlight(snippet);
   }
 
   function toggleSelection(id) {
@@ -423,7 +473,7 @@
           class="card q-item status-{q.status}"
           class:selected={selectedIds.has(q.id)}
           data-testid="question-item"
-          onclick={() => goQuestion(q)}
+          onclick={() => openDetail(q)}
         >
           <span
             class="sel-check"
@@ -534,6 +584,9 @@
             </span>
           </div>
           <p class="q-title">{@html highlight(q.title)}</p>
+          {#if store.filters.search}
+            <p class="q-snippet">{@html contentSnippet(q.content)}</p>
+          {/if}
           {#if q.tags.length > 0}
             <div class="q-tags">
               {#each q.tags.slice(0, 3) as t}
@@ -564,6 +617,107 @@
     <Pagination page={currentPage} {totalPages} onPageChange={(n) => { currentPage = n; }} />
   {/if}
 </div>
+
+{#if detailQuestion}
+  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+  <div class="detail-overlay" onclick={closeDetail} onkeydown={(e) => { if (e.key === "Escape") closeDetail(); }}>
+    <div class="detail-panel" role="dialog" aria-modal="true" tabindex="-1" bind:this={detailDialog} onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") closeDetail(); }}>
+      <div class="dp-header">
+        <div class="dp-badges">
+          <span class="tag">{categoryLabel(detailQuestion.category)}</span>
+          <span class="tag diff {detailQuestion.difficulty}">{detailQuestion.difficulty}</span>
+          <span class="tag type">{detailQuestion.type}</span>
+          {#if detailQuestion.company}
+            <span class="tag company">{detailQuestion.company}</span>
+          {/if}
+        </div>
+        <button class="dp-close" onclick={closeDetail} aria-label="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <h2 class="dp-title">{detailQuestion.title}</h2>
+
+      <div class="dp-content">
+        {#each renderContent(detailQuestion.content) as section}
+          {#if section.type === "code"}
+            <pre class="dp-code"><code>{section.text}</code></pre>
+          {:else}
+            <p class="dp-text">{section.text}</p>
+          {/if}
+        {/each}
+      </div>
+
+      {#if detailQuestion.hints?.length > 0}
+        <details class="dp-hints">
+          <summary class="dp-hints-summary">提示 ({detailQuestion.hints.length})</summary>
+          <ul class="dp-hints-list">
+            {#each detailQuestion.hints as hint}
+              <li>{hint}</li>
+            {/each}
+          </ul>
+        </details>
+      {/if}
+
+      {#if detailQuestion.tags?.length > 0}
+        <div class="dp-tags">
+          {#each detailQuestion.tags as t}
+            <span class="mini-tag kp-link" role="button" tabindex="0"
+              onkeydown={(e) => { if (e.key === "Enter") { closeDetail(); onNavigate("knowledge-detail", { tag: t }); } }}
+              onclick={() => { closeDetail(); onNavigate("knowledge-detail", { tag: t }); }}
+            >{t}</span>
+          {/each}
+        </div>
+      {/if}
+
+      <div class="dp-answer-section">
+        <button class="dp-answer-toggle" onclick={() => (showDetailAnswer = !showDetailAnswer)}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            {#if showDetailAnswer}
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            {:else}
+              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            {/if}
+          </svg>
+          {showDetailAnswer ? "隐藏答案" : "查看答案"}
+        </button>
+        {#if showDetailAnswer}
+          <div class="dp-answer">
+            {#each renderAnswer(detailQuestion.answer) as section}
+              {#if section.type === "code"}
+                <pre class="dp-code"><code>{section.text}</code></pre>
+              {:else}
+                <p class="dp-text">{section.text}</p>
+              {/if}
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+      <div class="dp-actions">
+        <button class="dp-action-btn dp-action-btn-primary" onclick={() => { const q = detailQuestion; closeDetail(); goQuestion(q); }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+          开始答题
+        </button>
+        <button class="dp-action-btn" onclick={(e) => { toggleBookmark(e, detailQuestion); }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={detailQuestion.bookmarked ? "currentColor" : "none"}
+            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round"><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+          {detailQuestion.bookmarked ? "已收藏" : "收藏"}
+        </button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 <style>
   .browse {
@@ -852,6 +1006,18 @@
     line-height: 1.4;
     color: var(--text);
   }
+  .q-snippet {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin-top: 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+  }
   .q-tags {
     display: flex;
     gap: 4px;
@@ -1020,5 +1186,232 @@
       flex: 1;
       justify-content: center;
     }
+  }
+
+  /* ── Question Detail Panel ── */
+  .detail-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-overlay);
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+    animation: fade-in 0.2s both;
+  }
+  .detail-panel {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 20px 20px 24px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: slide-up 0.3s var(--spring) both;
+  }
+  .dp-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .dp-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    flex: 1;
+  }
+  .dp-close {
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.2s var(--spring);
+  }
+  .dp-close:active {
+    transform: scale(0.9);
+    background: var(--bg-card-hover);
+  }
+  .dp-title {
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: -0.2px;
+    color: var(--text);
+    margin: 0;
+  }
+  .dp-content {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .dp-text {
+    margin: 0 0 8px;
+  }
+  .dp-code {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+    margin: 8px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .dp-hints {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .dp-hints-summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--warning);
+    padding: 4px 0;
+  }
+  .dp-hints-list {
+    margin: 8px 0 4px 20px;
+    line-height: 1.6;
+  }
+  .dp-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  /* ── Notes ── */
+  .dp-notes {
+    margin: 4px 0;
+  }
+  .dp-notes-details {
+    font-size: 13px;
+  }
+  .dp-notes-summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 0;
+    user-select: none;
+  }
+  .dp-notes-summary:active {
+    opacity: 0.7;
+  }
+  .dp-notes-badge {
+    color: var(--accent);
+    font-size: 8px;
+  }
+  .dp-notes-input {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 10px;
+    font-size: 13px;
+    line-height: 1.5;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-family: inherit;
+    resize: vertical;
+    min-height: 56px;
+    box-sizing: border-box;
+  }
+  .dp-notes-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-dim);
+  }
+  .dp-notes-status {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    display: block;
+  }
+
+  .dp-answer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .dp-answer-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+    width: fit-content;
+  }
+  .dp-answer-toggle:active {
+    transform: scale(0.97);
+  }
+  .dp-answer {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+    padding: 12px 14px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .dp-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .dp-action-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .dp-action-btn:active {
+    transform: scale(0.97);
+  }
+  .dp-action-btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+  }
+  .dp-action-btn-primary:active {
+    opacity: 0.9;
+  }
+
+  @keyframes slide-up {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 </style>

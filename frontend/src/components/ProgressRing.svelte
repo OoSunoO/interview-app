@@ -5,7 +5,7 @@
   const offset = $derived(circumference - (percentage / 100) * circumference);
 </script>
 
-<svg width={size} height={size} viewBox="0 0 {size} {size}">
+<svg width={size} height={size} viewBox="0 0 {size} {size}" role="progressbar" aria-valuenow={percentage} aria-valuemin="0" aria-valuemax="100">
   <circle
     cx={size / 2}
     cy={size / 2}
