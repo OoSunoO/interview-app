@@ -31,6 +31,7 @@
     if (config?.category) parts.push(categoryLabel(config.category));
     if (config?.difficulty) parts.push({ easy: "简单", medium: "中等", hard: "困难" }[config.difficulty] || config.difficulty);
     if (config?.type) parts.push(TYPE_LABELS[config.type] || config.type);
+    if (config?.tag) parts.push(config.tag);
     return parts.length > 0 ? parts.join(" · ") : null;
   });
 
@@ -105,6 +106,7 @@
           category: filter.category || undefined,
           difficulty: filter.difficulty || undefined,
           type: filter.type || undefined,
+          tag: filter.tag || undefined,
           page_size: filter.count || 20,
         });
         if (list.length === 0) {
