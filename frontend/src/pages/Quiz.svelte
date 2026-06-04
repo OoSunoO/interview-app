@@ -736,6 +736,10 @@
           {#if store.hasPrev}
             <button class="nav-btn prev" onclick={goPrev}>← 上一题</button>
           {/if}
+          <button class="nav-btn retry" onclick={() => { resetState(); timerInterval = setInterval(() => timer++, 1000); }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+            重做
+          </button>
           {#if store.hasNext}
             <button class="nav-btn next" onclick={goNext}>下一题 →</button>
           {:else}
@@ -1452,6 +1456,18 @@
     background: var(--accent);
     color: #fff;
     border: none;
+  }
+  .nav-btn.retry {
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .nav-btn.retry:hover {
+    border-color: var(--accent-dim);
+    color: var(--accent);
   }
 
   /* ── Notes ── */
