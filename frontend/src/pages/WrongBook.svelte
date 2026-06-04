@@ -160,8 +160,11 @@
       if (wrongFilterDiff && q.difficulty !== wrongFilterDiff) return false;
       if (wrongSearch) {
         const s = wrongSearch.toLowerCase();
-        const title = (q.title || "").toLowerCase();
-        if (!title.includes(s)) return false;
+        const matches = (q.title || "").toLowerCase().includes(s) ||
+          (q.content || "").toLowerCase().includes(s) ||
+          (q.answer || "").toLowerCase().includes(s) ||
+          (q.tags || []).some((t) => t.toLowerCase().includes(s));
+        if (!matches) return false;
       }
       return true;
     }),
