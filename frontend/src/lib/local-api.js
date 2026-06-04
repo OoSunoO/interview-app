@@ -223,6 +223,21 @@ export const api = {
       });
     },
 
+    /** Return unique company names across all questions, sorted by frequency */
+    companies() {
+      const freq = Object.create(null);
+      for (const q of questions) {
+        if (!q.company) continue;
+        for (const c of q.company.split(",")) {
+          const name = c.trim();
+          if (name) freq[name] = (freq[name] || 0) + 1;
+        }
+      }
+      return Object.entries(freq)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name]) => name);
+    },
+
     get(id) {
       const q = questions.find((x) => x.id === id);
       if (!q) throw new Error(`Question ${id} not found`);

@@ -11,6 +11,7 @@
   let showRandomHint = $state(false);
   let selectedIds = $state(new Set());
   let selectionMode = $state(false);
+  let companies = $state([]);
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -21,6 +22,7 @@
   const categories = FILTER_CATEGORIES;
 
   onMount(() => {
+    companies = api.questions.companies();
     store.loadQuestions();
   });
 
@@ -179,13 +181,9 @@
           class:filter-active={store.filters.company}
         >
           <option value="">全部来源</option>
-          <option value="字节跳动">字节跳动</option>
-          <option value="腾讯">腾讯</option>
-          <option value="阿里巴巴">阿里巴巴</option>
-          <option value="美团">美团</option>
-          <option value="华为">华为</option>
-          <option value="Google">Google</option>
-          <option value="Microsoft">Microsoft</option>
+          {#each companies as c}
+            <option value={c}>{c}</option>
+          {/each}
         </select>
       </div>
       <div class="filter-item">
