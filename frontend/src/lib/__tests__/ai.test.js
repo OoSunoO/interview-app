@@ -85,6 +85,16 @@ describe("setProvider", () => {
     expect(cfg.endpoint).toBe(PROVIDERS[2].endpoint);
     expect(cfg.model).toBe(PROVIDERS[2].model);
   });
+
+  it("does nothing when index is out of bounds", async () => {
+    const { getAIConfig, setProvider, saveAIConfig } = await import("../ai.js");
+    saveAIConfig({ key: "sk-test", provider: 1 });
+    setProvider(99);
+    const cfg = getAIConfig();
+    // Config should be unchanged (provider stays at 1)
+    expect(cfg.provider).toBe(1);
+    expect(cfg.key).toBe("sk-test");
+  });
 });
 
 // ── Score history (localStorage-based) ──
