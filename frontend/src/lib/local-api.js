@@ -674,8 +674,6 @@ export const api = {
         mastery: tagQuestions.length > 0 ? computeMastery(tag, progress) : 0,
         categories: tagCategories[tag] || (stored ? [stored.category || ""] : []),
         content: stored?.content || "",
-        source: stored?.source || null,
-        has_content: !!stored?.content,
         questions: tagQuestions.map((q) => {
           const p = progress[q.id] || {};
           return {
