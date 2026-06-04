@@ -83,6 +83,9 @@ export const store = {
   set dueReviews(v) {
     _dueReviews = v;
   },
+  get dueCount() {
+    return _dueReviews.length;
+  },
 
   get dailyStats() {
     return _dailyStats;

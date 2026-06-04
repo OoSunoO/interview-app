@@ -11,6 +11,7 @@
   import QuickReview from "./pages/QuickReview.svelte";
   import ReviewSession from "./pages/ReviewSession.svelte";
   import { api } from "./lib/local-api.js";
+import { store } from "./lib/stores.svelte.js";
 
   let page = $state("home");
   let selectedQuestionId = $state(null);
@@ -26,6 +27,7 @@
 
   onMount(() => {
     api.migrateProgress();
+    store.refreshDue();
   });
 </script>
 

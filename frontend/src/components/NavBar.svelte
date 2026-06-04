@@ -2,6 +2,8 @@
   import { store } from "../lib/stores.svelte.js";
   let { current = "home", onNavigate } = $props();
 
+  let dueCount = $derived(store.dueCount);
+
   const tabs = [
     { id: "home", label: "首页", icon: "home" },
     { id: "knowledge", label: "知识点", icon: "knowledge" },
@@ -76,6 +78,9 @@
             >
               <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" />
             </svg>
+            {#if dueCount > 0}
+              <span class="badge">{dueCount > 99 ? "99+" : dueCount}</span>
+            {/if}
           {:else if tab.icon === "stats"}
             <svg
               width="20"
@@ -195,6 +200,22 @@
   }
   .nav-item:active .icon-wrap {
     transform: scale(0.85);
+  }
+  .badge {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 24px);
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 16px;
+    text-align: center;
+    border-radius: 8px;
+    pointer-events: none;
   }
   .label {
     font-size: 9px;
