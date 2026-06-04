@@ -672,6 +672,28 @@
         </div>
       {/if}
 
+      {#if detailQuestion.review_count > 0}
+        <div class="dp-progress">
+          <span class="dp-progress-label">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+            已答 {detailQuestion.review_count} 次
+          </span>
+          {#if detailQuestion.wrong_count > 0}
+            <span class="dp-progress-label dp-progress-wrong">错误 {detailQuestion.wrong_count} 次</span>
+          {/if}
+          <span class="dp-progress-status" class:dp-status-correct={detailQuestion.status === "correct"} class:dp-status-wrong={detailQuestion.status === "wrong"} class:dp-status-reviewing={detailQuestion.status === "reviewing"}>
+            {detailQuestion.status === "correct" ? "已掌握" : detailQuestion.status === "wrong" ? "待复习" : detailQuestion.status === "reviewing" ? "巩固中" : ""}
+          </span>
+        </div>
+      {:else}
+        <div class="dp-progress">
+          <span class="dp-progress-label dp-progress-new">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+            尚未练习
+          </span>
+        </div>
+      {/if}
+
       <div class="dp-answer-section">
         <button class="dp-answer-toggle" onclick={() => (showDetailAnswer = !showDetailAnswer)}>
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -1408,6 +1430,52 @@
   }
   .dp-action-btn-primary:active {
     opacity: 0.9;
+  }
+
+  /* ── Detail Progress ── */
+  .dp-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+  }
+  .dp-progress-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .dp-progress-label svg {
+    opacity: 0.6;
+  }
+  .dp-progress-wrong {
+    color: var(--danger);
+  }
+  .dp-progress-new {
+    color: var(--text-dim);
+  }
+  .dp-progress-status {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+  .dp-status-correct {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .dp-status-wrong {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  .dp-status-reviewing {
+    background: var(--warning-bg);
+    color: var(--warning);
   }
 
   @keyframes slide-up {
