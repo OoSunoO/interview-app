@@ -353,6 +353,51 @@ test.describe("QuickReview", () => {
     // Counter should advance
     await expect(page.locator("[data-testid=qr-counter]")).toHaveText(/1\//);
   });
+
+  test("Escape key exits active session back to home", async ({ page }) => {
+    await startQR(page);
+    await expect(page.locator("[data-testid=qr-page]")).toBeVisible({ timeout: 5000 });
+    // Press Escape to exit
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(300);
+    // Should be back on home page
+    await expect(page.getByRole("button", { name: /速记模式/ })).toBeVisible({ timeout: 3000 });
+  });
+});
+
+test.describe("QuickReview History on Stats", () => {
+  test("shows QuickReview session data on stats page after injection", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+
+    // Inject QR history into localStorage (the key uses username suffix from storageState)
+    await page.evaluate(() => {
+      const history = [{
+        total: 8, remembered: 5, forgot: 2, unsure: 1,
+        category: "database", difficulty: "medium",
+        date: new Date().toISOString(),
+      }, {
+        total: 6, remembered: 4, forgot: 1, unsure: 1,
+        category: "algorithm", difficulty: "easy",
+        date: new Date(Date.now() - 86400000).toISOString(),
+      }];
+      // Username from storageState is "e2e-test"
+      localStorage.setItem("quick_review_history_e2e-test", JSON.stringify(history));
+    });
+
+    // Navigate to Stats
+    await page.getByRole("button", { name: "进度" }).click();
+    await page.waitForTimeout(300);
+
+    // Should see the QR history section with summary
+    await expect(page.locator(".qr-summary")).toBeVisible({ timeout: 5000 });
+    // Summary should show 2 sessions
+    await expect(page.locator(".qr-summary-item").first()).toContainText("2");
+    // Should see "去速记" button
+    await expect(page.getByRole("button", { name: /去速记/ })).toBeVisible();
+    // QR history items should be rendered
+    await expect(page.locator(".qr-history-item").first()).toBeVisible();
+  });
 });
 
 test.describe("Mobile", () => {
