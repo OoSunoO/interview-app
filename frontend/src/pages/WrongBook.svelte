@@ -704,8 +704,8 @@
     background: var(--bg-card);
   }
   :global(.search-hl) {
-    background: #fef08a;
-    color: #1a1a2e;
+    background: var(--search-hl-bg);
+    color: var(--search-hl-color);
     padding: 0 2px;
     border-radius: 2px;
   }

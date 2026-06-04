@@ -996,8 +996,8 @@
     color: var(--text-muted);
   }
   :global(.search-hl) {
-    background: var(--warning);
-    color: #000;
+    background: var(--search-hl-bg);
+    color: var(--search-hl-color);
     border-radius: 2px;
     padding: 0 2px;
   }

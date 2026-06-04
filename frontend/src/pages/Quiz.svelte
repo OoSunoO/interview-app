@@ -1418,52 +1418,52 @@
     letter-spacing: 0.3px;
   }
   .cat-pill.cs_basics {
-    background: rgba(108, 140, 255, 0.1);
-    color: #6c8cff;
+    background: var(--accent-bg);
+    color: var(--accent);
   }
   .cat-pill.algorithm {
-    background: rgba(74, 222, 128, 0.1);
-    color: #4ade80;
+    background: var(--success-bg);
+    color: var(--success);
   }
   .cat-pill.database {
-    background: rgba(251, 191, 36, 0.1);
-    color: #fbbf24;
+    background: var(--warning-bg);
+    color: var(--warning);
   }
   .cat-pill.linux {
-    background: rgba(248, 113, 113, 0.1);
-    color: #f87171;
+    background: var(--danger-bg);
+    color: var(--danger);
   }
   .cat-pill.devops {
-    background: rgba(167, 139, 250, 0.1);
-    color: #a78bfa;
+    background: var(--ans-extension-bg);
+    color: var(--ans-extension-text);
   }
   .cat-pill.java_basic,
   .cat-pill.java_advanced,
   .cat-pill.java_collections {
-    background: rgba(244, 114, 182, 0.1);
-    color: #f472b6;
+    background: var(--cat-java-bg);
+    color: var(--cat-java);
   }
   .cat-pill.react,
   .cat-pill.frontend {
-    background: rgba(56, 189, 248, 0.1);
-    color: #38bdf8;
+    background: var(--cat-frontend-bg);
+    color: var(--cat-frontend);
   }
   .cat-pill.ai,
   .cat-pill.agent {
-    background: rgba(232, 121, 249, 0.1);
-    color: #e879f9;
+    background: var(--cat-ai-bg);
+    color: var(--cat-ai);
   }
   .cat-pill.system_design {
-    background: rgba(251, 146, 60, 0.1);
-    color: #fb923c;
+    background: var(--cat-system-design-bg);
+    color: var(--cat-system-design);
   }
   .cat-pill.project_mgmt {
-    background: rgba(148, 163, 184, 0.1);
-    color: #94a3b8;
+    background: var(--cat-project-mgmt-bg);
+    color: var(--cat-project-mgmt);
   }
   .cat-pill.product {
-    background: rgba(74, 222, 128, 0.1);
-    color: #4ade80;
+    background: var(--success-bg);
+    color: var(--success);
   }
   .diff-pill.easy {
     background: var(--success-bg);
