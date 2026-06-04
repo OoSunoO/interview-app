@@ -137,6 +137,21 @@
     showAnswer = true;
   }
 
+  function handleKeydown(e) {
+    if (phase !== "active") return;
+    if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+    if (!showAnswer && (e.key === " " || e.key === "Enter")) {
+      e.preventDefault();
+      revealAnswer();
+      return;
+    }
+    if (showAnswer) {
+      if (e.key === "1") { selfRate("forgot"); return; }
+      if (e.key === "2") { selfRate("unsure"); return; }
+      if (e.key === "3") { selfRate("remembered"); return; }
+    }
+  }
+
   function selfRate(rating) {
     results = { ...results, [currentQuestion.id]: rating };
 
@@ -181,6 +196,8 @@
   }
 
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <div class="page qr-page">
   <!-- ── Active ── -->
