@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import { categoryLabel } from "../lib/categories.js";
@@ -100,6 +100,36 @@
   }
 
   onMount(loadWrong);
+
+  function revealAnswer() {
+    showAnswer = true;
+  }
+
+  function handleReviewKeydown(e) {
+    if (!reviewMode) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      reviewMode = false;
+      showAnswer = false;
+      currentDetail = null;
+      return;
+    }
+    if (e.key === " " || e.key === "Spacebar") {
+      if (!showAnswer) { e.preventDefault(); revealAnswer(); return; }
+    }
+    if (showAnswer) {
+      if (e.key === "1") { e.preventDefault(); markWrongAgain(); return; }
+      if (e.key === "2") { e.preventDefault(); markCorrect(); return; }
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener("keydown", handleReviewKeydown);
+  });
+
+  onDestroy(() => {
+    window.removeEventListener("keydown", handleReviewKeydown);
+  });
 
   async function markCorrect() {
     const q = wrongQuestions[currentIndex];
@@ -289,13 +319,14 @@
         class:revealed={showAnswer}
         onclick={() => (showAnswer = !showAnswer)}
       >
-        {showAnswer ? "隐藏答案" : "查看答案"}
+        <span>{showAnswer ? "隐藏答案" : "查看答案"}</span>
+        {#if !showAnswer}<span class="kbd-hint">Space</span>{/if}
       </button>
 
       {#if showAnswer}
         <div class="review-actions">
-          <button class="wrong-btn" onclick={markWrongAgain}>还是不会</button>
-          <button class="correct-btn" onclick={markCorrect}>掌握了</button>
+          <button class="wrong-btn" onclick={markWrongAgain}><span class="kbd-hint">1</span> 还是不会</button>
+          <button class="correct-btn" onclick={markCorrect}><span class="kbd-hint">2</span> 掌握了</button>
         </div>
         <button class="socratic-btn" onclick={startSocratic} disabled={socraticLoading}>
           {#if socraticLoading}
@@ -1056,6 +1087,10 @@
   .reveal-btn {
     width: 100%;
     padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
     background: var(--bg-surface);
     color: var(--text);
     border: 1px dashed var(--border);
@@ -1063,6 +1098,7 @@
     font-size: 15px;
     cursor: pointer;
     transition: all 0.2s;
+    font-family: inherit;
   }
   .reveal-btn:active {
     background: var(--bg-card-hover);
@@ -1073,6 +1109,20 @@
     border-style: solid;
     border-color: var(--accent-dim);
     background: var(--accent-bg);
+  }
+  .kbd-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 4px;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
   }
   .review-actions {
     display: flex;

@@ -97,6 +97,7 @@
 - E2E 测试：Stats 页面 QuickReview 历史展示 + Escape 键退出速记
 - ReviewSession 新增快捷键：Escape 退出活动会话，R 键从完成页重新开始
 - WrongBook 新增"速记错题"按钮，将错题列表一键送入 QuickReview 速记模式
+- WrongBook 新增复习模式键盘快捷键：Space 查看答案，1/2 评级，Escape 退出
 - Quiz 新增 Escape 键退出当前会话（所有阶段），与 QuickReview/ReviewSession 保持一致
 - E2E：Quiz Escape 键退出测试 + ReviewSession Escape 键退出测试
 - 深色/浅色主题（respects prefers-reduced-motion）
