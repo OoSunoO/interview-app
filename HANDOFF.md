@@ -61,6 +61,13 @@
 - 新增覆盖：related()、companies()、weeklyActivity()、allDailyStats()、sort_by 全部分支、bookmarked 筛选、tag 搜索、记录复习活动（hard 评分 + 数据裁剪）、usernameSuffix、knowledge.list 内容搜索、knowledge-only 标签、migrateProgress 无操作路径
 - 修复 E2E `.dialog-overlay` 陈旧选择器（v1.4.1 overlay 重构后漏改）
 
+### UI Polish (v1.4.3)
+- 新增 5 组分类颜色 CSS 变量（java、frontend、ai、system-design、project-mgmt）及深色/浅色模式适配
+- 新增搜索高亮 CSS 变量 `--search-hl-bg` / `--search-hl-color`，统一 Browse.svelte 和 WrongBook.svelte 的 `search-hl` 样式
+- 移除 Quiz.svelte 中 12 处 `.cat-pill.*` 硬编码颜色，全部映射为 CSS 变量
+- 移除 Browse.svelte 和 WrongBook.svelte 中的硬编码 `search-hl` 颜色
+- 至此所有 Svelte 组件内无残留硬编码颜色值
+
 ### UI/UX
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
