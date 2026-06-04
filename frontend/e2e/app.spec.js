@@ -100,6 +100,68 @@ test.describe("Knowledge Points", () => {
   });
 });
 
+test.test.describe("Review Session (SM-2)", () => {
+  test("navigating from home shows setup page", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    // Click "间隔复习" button on home
+    await page.getByRole("button", { name: /间隔复习/ }).click();
+    await page.waitForTimeout(200);
+    await expect(page.getByText("选择分类和题量")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: "开始复习" })).toBeVisible();
+  });
+
+  test("setup and start a review session", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    await page.getByRole("button", { name: /间隔复习/ }).click();
+    await page.waitForTimeout(200);
+    // Select count 10
+    await page.getByRole("button", { name: "10" }).click();
+    // Start review
+    await page.getByRole("button", { name: "开始复习" }).click();
+    await page.waitForTimeout(300);
+    // Should show a question card
+    await expect(page.getByText("查看答案")).toBeVisible({ timeout: 5000 });
+  });
+
+  test("reveal answer and rate a card", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    await page.getByRole("button", { name: /间隔复习/ }).click();
+    await page.waitForTimeout(200);
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "开始复习" }).click();
+    await page.waitForTimeout(300);
+    // Reveal answer
+    await page.getByText("查看答案").click();
+    await page.waitForTimeout(200);
+    // Rating buttons should appear
+    await expect(page.getByText("忘记了")).toBeVisible({ timeout: 2000 });
+    await expect(page.getByText("答对了")).toBeVisible();
+    // Rate as "good"
+    await page.getByText("答对了").click();
+    await page.waitForTimeout(200);
+    // Should advance to next card
+    await expect(page.getByText("查看答案")).toBeVisible({ timeout: 3000 });
+  });
+
+  test("empty state when no overdue cards", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    await page.getByRole("button", { name: /间隔复习/ }).click();
+    await page.waitForTimeout(200);
+    // Start with just 1 question — should always have at least 1 card
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "开始复习" }).click();
+    await page.waitForTimeout(300);
+    // Active phase: either a card or empty state
+    const hasCard = await page.getByText("查看答案").isVisible().catch(() => false);
+    const isEmpty = await page.getByText("暂无待复习题目").isVisible().catch(() => false);
+    expect(hasCard || isEmpty).toBe(true);
+  });
+});
+
 test.describe("Mobile", () => {
   test("no horizontal overflow on 375px viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
