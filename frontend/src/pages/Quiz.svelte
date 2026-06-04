@@ -126,6 +126,7 @@
     { keys: "G", desc: "答错后看答案" },
     { keys: "1 2", desc: "自评答错 / 答对" },
     { keys: "B", desc: "收藏 / 取消收藏" },
+    { keys: "Esc", desc: "退出当前会话" },
     { keys: "?", desc: "显示此帮助" },
   ];
 
