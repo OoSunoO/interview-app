@@ -1,7 +1,7 @@
 # Handoff — 面试刷题 App
 
 **日期：** 2026-06-05
-**版本：** v1.4.6
+**版本：** v1.4.7
 **当前状态：** 5196 题，51 分类全部 100+，243 单元测试全绿，29 E2E 全绿，构建 846ms
 
 ---
@@ -86,7 +86,10 @@
 - Mock Interview 设置持久化（分类/难度/题量/限时跨会话保留）
 - QuickReview 新增快捷键：Escape 退出（活动态/汇总态），R 键一键重启
 
-### UI/UX
+### Feature (v1.4.7)
+- Stats 页面新增"速记记录"版块：显示 QuickReview 总次数/复习题数/平均掌握率，最近 20 次速记会话列表（已掌握/待巩固/需复习），含"去速记"导航按钮
+- Stats 页面浏览历史项显示来源标签（"速记" vs 常规练习）
+- E2E 测试：Stats 页面 QuickReview 历史展示 + Escape 键退出速记
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
 - 每日目标 + 复习提醒
@@ -96,7 +99,7 @@
 
 ### 测试
 - 243 单元测试（Vitest，+2 QuickReview keyboard shortcuts）
-- 29 E2E 测试（Playwright，+1 quiz self-evaluation）
+- 31 E2E 测试（Playwright，+1 quiz self-evaluation，+1 QR stats history，+1 QR Escape）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
 - `local-api.js`：94.47% statements, 84.78% branches（核心业务逻辑）
