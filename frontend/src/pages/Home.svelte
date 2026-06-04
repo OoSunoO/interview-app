@@ -27,10 +27,10 @@
   let showMIDialog = $state(false);
   let showGoalDialog = $state(false);
   let goalInput = $state(0);
-  let miCategory = $state("");
-  let miDifficulty = $state("");
-  let miCount = $state(10);
-  let miTimeLimit = $state(120);
+  let miCategory = $state(localStorage.getItem("mi_category") || "");
+  let miDifficulty = $state(localStorage.getItem("mi_difficulty") || "");
+  let miCount = $state(Number(localStorage.getItem("mi_count")) || 10);
+  let miTimeLimit = $state(Number(localStorage.getItem("mi_time_limit")) || 120);
 
   const categories = FILTER_CATEGORIES;
 
@@ -143,6 +143,10 @@
 
   async function startMockInterview() {
     showMIDialog = false;
+    localStorage.setItem("mi_category", miCategory);
+    localStorage.setItem("mi_difficulty", miDifficulty);
+    localStorage.setItem("mi_count", String(miCount));
+    localStorage.setItem("mi_time_limit", String(miTimeLimit));
     const list = api.questions.list({
       category: miCategory,
       difficulty: miDifficulty,
