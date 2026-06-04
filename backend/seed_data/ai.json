@@ -1821,5 +1821,100 @@
       "ai_alignment",
       "training_free"
     ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "扩散模型（Diffusion Models）原理",
+    "content": "请详细解释扩散模型（Diffusion Models）的核心原理。包括前向扩散过程（Forward Diffusion）、反向去噪过程（Reverse Denoising）、以及训练目标（噪声预测）。对比 DDPM 和 DDIM 的采样效率差异。扩散模型与 GAN / VAE 在生成质量、训练稳定性、采样速度方面各有什么优劣势？",
+    "answer": "答案：\n扩散模型通过逐步加噪（前向）和逐步去噪（反向）两个过程学习数据分布。核心思想是将复杂的分布建模分解为多个简单的高斯去噪步骤。\n\n解析：\n前向扩散过程：从原始数据 x0 开始，每步加少量高斯噪声，经过 T 步后 xT 近似纯噪声。这是固定过程（无需学习）。重参数化后可直接从 x0 计算任意 xt：xt = sqrt(ᾱt) * x0 + sqrt(1-ᾱt) * ε。\n\n反向去噪过程（核心）：学习一个神经网络 εθ(xt, t) 预测当前步添加的噪声 ε。训练目标是最小化预测噪声和真实噪声的 MSE。采样时从纯噪声 xT 开始，逐步预测噪声并去除，恢复出 x0。\n\nDDPM vs DDIM：DDPM 需要完整的 T 步（通常 1000 步）逐级去噪，采样慢。DDIM 可以跳跃采样（如 50 步即可），速度提升 10-20 倍，还可以做 latent 空间插值。\n\n对比 GAN / VAE：扩散模型生成质量最优（FID 最低），训练稳定，但采样速度慢。GAN 生成质量高但训练不稳定（对抗训练），有模式坍塌风险。VAE 训练稳定但生成偏模糊。\n\n扩展延伸：Latent Diffusion Models（Stable Diffusion）在 latent 空间做扩散，大幅降低计算量。流匹配（Flow Matching）和 Consistency Models 是最新的演进方向。",
+    "hints": [
+      "扩散模型的前向过程是固定的（无需学习），只有反向过程需要训练——这是与 VAE 的关键区别",
+      "DDIM 能跳跃采样的原因是去除了 Markov 链约束——相邻时间步不再是必要条件"
+    ],
+    "tags": [
+      "扩散模型",
+      "DDPM",
+      "DDIM",
+      "生成模型",
+      "Stable Diffusion"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "对比学习（Contrastive Learning）",
+    "content": "请解释对比学习（Contrastive Learning）的核心思想和代表性方法 SimCLR。对比学习如何在没有标签的情况下学到有用的特征表示？InfoNCE 损失函数的原理是什么？SimCLR 中为什么需要大 batch size 和 strong augmentation？对比学习与自回归（Autoregressive）预训练的本质区别是什么？",
+    "answer": "答案：\n对比学习的核心思想是「拉近相似样本，推远不相似样本」——不需要标签，仅通过数据增强构造正负样本对来学习语义表示。\n\n解析：\n核心原理：对同一张图做两次不同的数据增强（裁剪、旋转、色彩抖动），得到两个视图（正样本对）。同一 batch 中其他样本的增强视图都是负样本。学习目标：让正样本对的表示相似，负样本对的表示不同。\n\nInfoNCE 损失函数：L = -log[ exp(sim(zi, zj)/τ) / Σ(exp(sim(zi, zk)/τ)) ]。分子是正样本对的 cosine similarity，分母是正样本对 + 所有负样本对的 similarity。温度系数 τ 控制分布的集中程度——τ 越小，模型越关注难负样本。本质是一个 (N-1)-way 的 softmax 分类器。\n\n大 batch size 的原因：负样本的数量直接决定对比学习的质量。小 batch 负样本少，任务简单，学到的是粗粒度的区分能力。SimCLR 用 4096 的 batch size 来提供足够丰富的负样本。\n\nStrong augmentation 的重要性：正样本对的 augmentation 变化越大，模型学到的表示越「不变性」。\n\n与自回归预训练：自回归（GPT）预测序列中下一个 token（生成式），学习条件分布。对比学习在表示空间中拉近正样本、推远负样本（判别式），学习语义等价性。",
+    "hints": [
+      "InfoNCE 的本质是一个 (N-1)-way softmax 分类——从 N-1 个负样本中找出那个正样本",
+      "为什么 SimCLR 需要 strong augmentation——增强力度越大，模型需要学到的语义不变性越强"
+    ],
+    "tags": [
+      "对比学习",
+      "SimCLR",
+      "自监督学习",
+      "InfoNCE",
+      "表征学习"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "多模态大模型架构设计",
+    "content": "请设计一个多模态大模型（如 GPT-4V / Gemini / LLaVA）的架构方案。重点讨论：1. 视觉编码器的选择和图像分辨率处理策略；2. 视觉-语言连接方式（Q-Former / MLP Projector / Cross-Attention）的设计考量；3. 多模态训练流程；4. 高效训练的关键技术（动态分辨率、token 压缩）。",
+    "answer": "答案：\n多模态大模型面临的核心挑战是将视觉信息有效融入语言模型的语义空间，同时控制计算成本。\n\n解析：\n1. 视觉编码器与分辨率处理：主流选择 SigLIP、InternViT。高分辨率策略包括动态分辨率（保持原始宽高比，将图像划分为多个 tile 编码）和 AnyRes（LLaVA-NeXT）。\n\n2. 视觉-语言连接方式：MLP Projector（LLaVA 系列）简单高效但对齐能力有限。Q-Former（BLIP-2）用可学习 query token 从视觉特征中提取信息，减少视觉 token 数量（32 或 64 个）。Cross-Attention（Flamingo）将视觉信息直接融入深度语义，但推理慢且需要修改 LLM 架构。\n\n3. 训练流程：阶段一预训练对齐（冻结 LLM + 训练视觉编码器和连接器），阶段二指令微调（解冻 LLM 全参数微调），阶段三多模态 RLHF/DPO。\n\n4. 高效训练技术：Token 压缩（Token Merging / Top-K 选择），交错注意力（跨帧共享 KV 缓存），动态分辨率 + 高效 2D RoPE。",
+    "hints": [
+      "视觉-语言连接器的设计决定了多少视觉信息无损地传递给 LLM——投影 + 压缩 + 位置编码是关键",
+      "多模态模型的分辨率瓶颈不在于编码器，而在于 LLM 能处理的 token 数量"
+    ],
+    "tags": [
+      "多模态",
+      "大模型",
+      "视觉-语言",
+      "LLaVA",
+      "架构设计"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "MoE（混合专家模型）技术详解",
+    "content": "请解释混合专家模型（Mixture of Experts, MoE）的核心原理和工程实现。MoE 如何在不显著增加计算量的情况下扩大模型参数量？Router 网络的设计方式和负载均衡问题如何解决？对比 Dense 模型和 MoE 模型在训练、推理和显存占用方面的差异。",
+    "answer": "答案：\nMoE 的核心思想是「条件计算」——每个 token 只激活一部分专家（通常 top-2），从而在相同 FLOPs 下获得更大的模型容量。\n\n解析：\n核心原理：传统 Dense 模型所有参数对所有输入都被激活。MoE 模型有一组专家 FFN 层（如 8 或 16 个），Router 为每个 token 选择 top-2 专家处理。共享计算：Attention 层仍然是 Dense 的，只有 FFN 被替换为 MoE。\n\nRouter 设计：Router 是一个线性层 + Softmax，将 token hidden state 映射到 expert 数量维度的概率分布，取 top-2 加权求和。\n\n负载均衡：Router 倾向于将 token 路由到少数强专家。解决方法包括 Load Balancing Loss（辅助损失鼓励均匀分布）、Capacity Factor（每个专家设置最大 token 容量）、Z-loss（DeepSeek-MoE 的稳定性约束）。\n\n与 Dense 对比：MoE 总参数量是 Dense 的 N 倍，但每次激活仅约 1/4~1/8 参数。训练 FLOPs 相近。推理时所有 expert 参数需加载到 GPU——显存需求高。MoE 训练速度快（更多参数但更少激活）。",
+    "hints": [
+      "MoE 的核心优势不是在相同参数下更快，而是在相同计算量下有更多参数——模型容量更大",
+      "MoE 推理需要把全部 expert 参数放到显存——所以显存需求是 Dense 的 N 倍，但 FLOPs 基本不变"
+    ],
+    "tags": [
+      "MoE",
+      "混合专家模型",
+      "条件计算",
+      "大模型",
+      "分布式训练"
+    ]
+  },
+  {
+    "category": "ai",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "大模型推理优化技术全景",
+    "content": "请系统性地介绍大语言模型推理优化的关键技术。包括：1. KV Cache 的原理与优化（PagedAttention / vLLM、Prefix Caching）；2. 量化技术（FP16 / INT8 / INT4 / FP8）的原理和精度影响；3. 投机解码（Speculative Decoding）和 Medusa / Eagle 等技术加速推理的原理；4. 高效 Serving 框架（vLLM / TensorRT-LLM / SGLang）的核心架构差异。",
+    "answer": "答案：\n大模型推理优化的核心是「在保证生成质量的前提下，最小化每 token 的延迟和显存占用」。\n\n解析：\n1. KV Cache 与显存优化：KV Cache 缓存前序 token 的 K、V 向量避免重复计算。PagedAttention（vLLM）将 KV Cache 分页管理，实现近 100% 显存利用率。Prefix Caching 跨请求共享公共 prompt 的 KV Cache。\n\n2. 量化技术：INT8（W8A8）用 SmoothQuant 处理激活异常值。INT4（W4A16）仅权重量化到 4bit（GPTQ / AWQ）。FP8（H100 原生支持）无需 calibration 数据集。KV Cache 量化将每 token 的 KV 从 4 bytes 降至 2 bytes。\n\n3. 投机解码：用小模型先推测 K 个 token，大模型并行验证。Medusa 加多个猜测头直接预测后续位置。Eagle 用 LLM 的 hidden state 作为 draft model 的输入。理想加速比 2-3x。\n\n4. Serving 框架：vLLM（PagedAttention + 连续批处理，在线推理最佳），TensorRT-LLM（NV 官方，极致算子融合），SGLang（RadixAttention，结构化输出场景最佳）。",
+    "hints": [
+      "LLM 推理的瓶颈不是计算而是访存——模型利用 token 并行验证的方式绕过访存瓶颈",
+      "量化不是越低位越好——INT4 显存省 4x 但精度损失不可忽视"
+    ],
+    "tags": [
+      "推理优化",
+      "KV Cache",
+      "量化",
+      "投机解码",
+      "vLLM"
+    ]
   }
 ]

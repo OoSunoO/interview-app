@@ -1784,5 +1784,99 @@
       "前端性能",
       "网络传输"
     ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "浏览器渲染流程与性能优化",
+    "content": "请详细描述浏览器从输入 URL 到页面渲染完成的完整流程。重点解释关键渲染路径（Critical Rendering Path）的各个阶段：DOM 树构建、CSSOM 构建、渲染树（Render Tree）、布局（Layout）、绘制（Paint）、合成（Composite）。如何通过优化 CRP 来提升页面加载性能？",
+    "answer": "答案：\n从 URL 到页面渲染的完整流程：域名解析 -> TCP 连接 -> TLS 握手 -> HTTP 请求 -> 服务端响应 -> HTML 解析 -> 渲染。\n\n解析：\n关键渲染路径（CRP）的六个阶段：\n1. DOM 树构建：HTML 解析器逐字节解析 HTML -> 分词 -> Token -> 构建 DOM 树。遇到外部资源（CSS/JS）时：CSS 是阻塞渲染的资源，JS 是阻塞解析的资源（除非加 async/defer）。\n\n2. CSSOM 构建：CSS 解析器解析 CSS -> 构建 CSSOM 树（层叠规则已经计算好）。CSSOM 构建完成之前渲染树不会构建。\n\n3. 渲染树（Render Tree）：DOM + CSSOM 合并生成 Render Tree。只包含可见元素（display:none 不包含，visibility:hidden 包含但不可见）。\n\n4. 布局（Layout / Reflow）：计算每个可见元素的几何位置（大小、位置、层叠顺序）。首次执行时叫布局，后续因样式或内容变化重新计算时叫重排（Reflow）。\n\n5. 绘制（Paint）：将布局阶段计算的盒子转换为屏幕上的实际像素——绘制背景、边框、文字、阴影等。\n\n6. 合成（Composite）：将不同层（Layer）在合成线程中组合成最终画面。合成是 GPU 加速的关键——transform 和 opacity 的动画在合成线程执行，不触发 Layout 和 Paint。\n\nCRP 优化策略：\n- 内联关键 CSS（Critical CSS）：首屏必需的 CSS 内联在 HTML head 中，非关键 CSS 异步加载。\n- JS 异步加载：用 async/defer 避免 JS 阻塞 HTML 解析。\n- 减少 Reflow 和 Repaint：批量 DOM 操作、用 transform 替代 top/left 做动画、脱离文档流（absolute/fixed）。\n- 启用 GPU 合成：will-change: transform 提示浏览器创建独立图层。",
+    "hints": [
+      "CSS 阻塞渲染但不阻塞 DOM 解析，JS 阻塞 HTML 解析",
+      "Reflow 的代价远大于 Repaint——因为 Reflow 涉及几何计算，影响布局树"
+    ],
+    "tags": [
+      "浏览器",
+      "渲染",
+      "CRP",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "前端工程化与模块化演进",
+    "content": "请系统性地介绍前端模块化方案和工程化工具的演进历程和设计思路。从早期的 IIFE / CommonJS / AMD，到 ES Module，再到现代的 Bundless（Vite / Turbopack）方案。为什么 Vite 选择基于原生 ES Module 的 Dev Server + Rollup 的生产构建？对比 Webpack 和 Vite 的 HMR（热更新）机制差异。",
+    "answer": "答案：\n前端模块化的演进本质是「在浏览器环境中实现高效的模块隔离和加载」。\n\n解析：\n1. 模块化方案演进：\n- IIFE（Immediately Invoked Function Expression）：利用函数作用域隔离变量，但没有依赖管理。\n- CommonJS（Node.js）：require + exports，同步加载，不适合浏览器（需要打包工具转译）。\n- AMD（RequireJS）：define + require，异步加载，适合浏览器但语法冗余。\n- ES Module（ES2015）：import + export，静态分析（Tree Shaking 的基础），浏览器原生支持。\n\n2. 工程化工具演进：\n- Webpack：打包一切资源（JS/CSS/图片）。核心是 bundle——将所有模块打包成少数 bundle 文件。关键概念：Loader（转换资源）、Plugin（注入构建逻辑）、Code Splitting（代码分割）。\n- 问题：大型项目 Dev Server 启动慢（需要全量打包），HMR 更新慢（需要重新打包变更模块及依赖）。\n- Vite：开发时基于原生 ES Module——浏览器直接加载模块，无需打包。服务器按需编译（只编译当前请求的文件），冷启动秒级。生产用 Rollup 打包（Tree Shaking 更彻底）。\n- Turbopack（Rust 实现）：Vercel 出品，增量计算架构，旨在比 Vite 更快。\n\n3. Webpack vs Vite HMR 差异：\n- Webpack：修改一个模块 -> 重新打包该模块及其所有依赖模块的产物 -> 发送到浏览器。\n- Vite：修改一个模块 -> 利用 ES Module 的精准失效机制 -> 只向浏览器发送该模块的变更文件（及其 HMR boundary 内的依赖）。\n- Vite 的 HMR 复杂度从 O(N) 降到了 O(1)——无论项目大小，HMR 都只需更新修改的文件本身。",
+    "hints": [
+      "Vite 快的本质是在 Dev 时避开了打包这个步骤——浏览器直接加载 ES Module，服务器只做按需编译",
+      "Webpack 的 HMR 慢是因为即使只改一行代码，也需要重新打包该模块在 chunk 中的所有代码"
+    ],
+    "tags": [
+      "前端工程化",
+      "Vite",
+      "Webpack",
+      "ES Module",
+      "HMR"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "微前端架构设计",
+    "content": "请设计一个微前端架构方案。覆盖：1. 主应用与子应用的通信机制（事件总线 vs 路由参数 vs 共享状态）；2. 隔离方案（CSS 隔离 + JS 沙箱——Shadow DOM / iframe / 自建 Proxy 沙箱的对比）；3. 应用加载与生命周期管理（注册表、按需加载、预加载策略）；4. 流行的微前端框架对比（single-spa / qiankun / Module Federation / 无界）。",
+    "answer": "答案：\n微前端的核心问题是「多个独立开发、独立部署的前端应用如何集成到同一个页面中」。\n\n解析：\n1. 通信机制：事件总线（发布订阅模式，最简单但需约定事件名），路由参数（通过 URL query/hash 传递，适合少量数据），共享状态（Globally shared store，如 Redux store 提升为共享实例）。\n\n2. 隔离方案：\n- iframe：最强的隔离（完全独立的 JS 上下文和 CSS 作用域），但通信复杂（postMessage）、URL 同步困难、性能开销大、弹窗无法覆盖到 iframe 外。\n- Shadow DOM：CSS 样式完全隔离，DOM 隔离。问题：主流 UI 库（Antd/ElementUI）的弹窗挂载到 document.body 会逃逸 Shadow DOM。\n- JS 沙箱（qiankun 方案）：用 Proxy 拦截 window 访问——子应用激活时将全局变量复制到沙箱中，卸载时还原。开销小但无法完全隔离（如 prototype 污染）。\n- 推荐混合方案：JS 沙箱（qiankun 风格）+ CSS 隔离（CSS Scope + CSS Variables + BEM 命名）。\n\n3. 应用加载与生命周期：注册表维护子应用信息（name、entry URL、activeRule）。按需加载（根据路由匹配激活），预加载（浏览器空闲时加载异步 chunk）。生命周期：bootstrap -> mount -> unmount -> update。\n\n4. 框架对比：\n- single-spa：最基础的微前端框架，只提供应用注册和生命周期管理。需要自行处理隔离和通信。\n- qiankun：基于 single-spa + Proxy 沙箱 + CSS scope。生态最成熟，但侵入性较强（要求子应用改写 bootstrap/mount/unmount）。\n- Module Federation（Webpack 5）：运行时加载远程模块，去中心化架构。每个应用都可以作为 Host 和 Remote。技术栈锁定 Webpack。\n- 无界：JS 沙箱基于 iframe（天然隔离），UI 渲染通过 WebComponent 在 iframe 外渲染——解决了 iframe 弹窗和通信问题。",
+    "hints": [
+      "微前端的隔离不存在完美方案——iframe 隔离最强但体验差，Proxy 沙箱体验好但隔离不彻底",
+      "Module Federation 的核心创新是运行时模块加载——它让独立的构建产物之间可以互相引用模块"
+    ],
+    "tags": [
+      "微前端",
+      "qiankun",
+      "Module Federation",
+      "架构",
+      "前端"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 与 Vue 的响应式原理对比",
+    "content": "请深入对比 React 和 Vue 在响应式（Reactivity）设计上的核心差异。React 的 useState / useReducer 是如何工作的？Vue 3 的 Proxy 响应式又是如何实现的？为什么 React 需要「手动声明依赖」（useEffect deps）而 Vue 不需要？这些设计差异对两者在性能、开发体验、调试难度上有哪些影响？",
+    "answer": "答案：\nReact 和 Vue 的响应式差异本质上是「拉取（Pull）」和「推送（Push）」两种机制的差异。\n\n解析：\n1. React（Pull 模式）：状态变化时 -> 组件重新执行渲染函数 -> React 通过 Virtual DOM Diff 找出需要更新的真实 DOM。这是一种「拉取」——变化后从头编译，比较前后差异。\n\nuseState 返回 [state, setState]。setState -> 调度更新 -> 标记组件为 dirty -> 下次 render 执行 -> 新的 state 值被使用。每次 render 在闭包中捕获当前的 state 值。\n\n2. Vue 3（Push 模式）：用 Proxy 对数据进行深度劫持——访问属性时依赖收集（track），修改属性时触发更新（trigger）。这是一种「推送」——精准知道哪些数据变了，只更新依赖这些数据的组件。\n\nProxy 的 getter 做 track（收集当前正在执行的 effect 作为依赖），setter 做 trigger（通知所有依赖这个属性的 effect 重新执行）。\n\n3. 为什么 Vue 不需要 useEffect deps：因为 Vue 在编译时就知道模板用了哪些数据——运行时的 Proxy 在访问时自动收集依赖。React 不知道你的函数组件里用了哪些 state——因为 JSX 最终编译成 React.createElement 调用，无法静态分析数据依赖。所以需要开发者手动声明依赖。\n\n4. 影响：\n- 开发体验：Vue 的自动追踪更方便（写代码少），React 的显式依赖更可预测（bug 更容易定位）。\n- 性能：Vue 精确追踪依赖，默认不需要额外优化。React 只要父组件更新子组件默认也重新渲染——需要用 React.memo / useMemo / useCallback 手动优化。\n- 调试：React 的显式依赖让 useEffect 的问题更容易调试。Vue 的自动依赖追踪可能导致隐性 bug（如深层嵌套对象的变更追踪）。\n\n扩展延伸：Svelte 5 的 runes 信号机制用类似 Vue 的 push 模式，但通过编译器分析而非运行时 Proxy。Svelte 的编译时响应式是第三种范式——push 模式但无运行时开销。",
+    "hints": [
+      "React 的响应式是「Pull」——重新执行全部函数组件然后 diff，Vue 是「Push」——精准知道什么变了就更新什么",
+      "React 的 deps 手动声明不是设计缺陷——和「函数组件 + 闭包」的架构哲学是一致的"
+    ],
+    "tags": [
+      "React",
+      "Vue",
+      "响应式",
+      "状态管理",
+      "前端"
+    ]
+  },
+  {
+    "category": "frontend",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Web 安全：XSS 与 CSRF",
+    "content": "请详细解释前端开发中最常见的两种安全攻击——XSS（跨站脚本攻击）和 CSRF（跨站请求伪造）。它们的攻击原理是什么？有哪些分类（反射型 XSS / 存储型 XSS / DOM-based XSS）？有哪些防御措施？HTTP Only / CSP / SameSite Cookie 各自解决什么问题？",
+    "answer": "答案：\nXSS 攻击信任用户输入，CSRF 攻击信任浏览器 Cookie——理解这个本质区别有助于针对性地防御。\n\n解析：\n1. XSS（跨站脚本攻击）：\n- 原理：攻击者向页面注入恶意脚本，在受害者浏览器中执行。\n- 反射型 XSS：恶意脚本在 URL 参数中，服务器未经转义直接返回页面中（如搜索关键词）。需要诱骗用户点击恶意链接。\n- 存储型 XSS：恶意脚本存储在服务器数据库（如评论区、用户资料）。每次访问页面都执行——危害最大。\n- DOM-based XSS：客户端 JS 动态修改页面时，将用户输入直接插入到 HTML 中（如 innerHTML = userInput）。\n- 防御：\n  - 输入编码（HTML Entity 转义：< -> &lt;，> -> &gt;）。\n  - Content Security Policy（CSP）：HTTP 头限制脚本来源（script-src 'self' 只允许同域脚本执行）。\n  - HttpOnly Cookie：标记 Cookie 不能通过 document.cookie 访问——即使有 XSS 也无法窃取 Cookie。\n  - 避免危险 API：不使用 innerHTML、document.write，用 textContent / innerText 替代。\n\n2. CSRF（跨站请求伪造）：\n- 原理：用户在已登录网站 A 后，访问恶意网站 B。B 自动发送跨站请求到 A（带上了 A 的 Cookie），A 以为是用户自主操作。关键：Cookie 自动附加。\n- 防御：\n  - SameSite Cookie（Chrome 默认 Lax）：Strict（完全禁止跨站附带 Cookie）、Lax（GET 链接方式允许，POST 不允许）、None（关闭限制）。\n  - CSRF Token：服务端在页面中嵌入 token，每个请求必须带 token 验证。\n  - Referer/Origin 检查：验证请求来源是否合法。\n  - 关键操作二次确认（输入密码 / 验证码）。\n\n3. XSS vs CSRF 关系：XSS 能绕过几乎所有 CSRF 防御——如果攻击者能执行脚本，可以直接读取 CSRF Token 或 Cookie。",
+    "hints": [
+      "XSS 信任用户输入却未做转义——防御核心是「输出编码」和「不信任任何输入」",
+      "CSRF 信任 Cookie 自动附带——防御核心是「不让跨站请求携带认证信息」或「验证来源」"
+    ],
+    "tags": [
+      "XSS",
+      "CSRF",
+      "Web安全",
+      "CSP",
+      "SameSite"
+    ]
   }
 ]

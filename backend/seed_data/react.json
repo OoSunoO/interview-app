@@ -1838,5 +1838,100 @@
       "自定义渲染器",
       "中间件"
     ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Hooks 设计与闭包陷阱",
+    "content": "请深入分析 React Hooks 的设计原理和常见陷阱。解释：1. useState / useEffect / useRef / useCallback / useMemo 的实现机制；2. 为什么 Hooks 不能放在条件语句或循环中——「Hooks 的调用顺序必须不变」的底层原因（链表结构）；3. 闭包陷阱（Stale Closure）的产生原因——为什么 useEffect 和 useCallback 中拿到的 state 可能是旧的？如何解决？4. React 18 的 useEvent / useInsertionEffect 解决了什么具体问题？",
+    "answer": "答案：\nHooks 的核心设计思想是「将状态逻辑从类组件中剥离，以函数的形式复用」。Hooks 的规则（不放在条件/循环中）是由其底层数据结构决定的。\n\n解析：\n1. 各 Hooks 的机制：\n- useState：返回 [状态, setter]。setter 触发组件重新渲染。每个组件实例维护一个「hooks 链表」——每个 hook 在链表中有一个对应的节点。\n- useEffect：接收回调 + 依赖数组。渲染完成后执行回调——不影响浏览器绘制。依赖数组变化时重新执行。返回的清除函数在下一次 effect 运行前执行。\n- useRef：返回一个可变的 { current } 对象。改变 ref 不触发重新渲染。\n- useCallback：缓存函数引用——只有依赖变化时才创建新函数。等价于 useMemo(() => fn, deps)。\n- useMemo：缓存计算结果——只有依赖变化时才重新计算。\n\n2. Hooks 调用顺序不变的底层原因：\nReact 在组件中用 单向链表 存储 hooks 的状态。每个 hook 在链表中的 位置（索引） 是在 第一次渲染 时确定的。后续渲染时，React 按 位置 从链表中取出对应的 hook 状态。\n- 如果调用顺序改变（如放在条件中），React 无法正确匹配位置——它取出的可能就是错误的 hook 状态。\n- 示例：第一次渲染 f1() f2() f3()，条件分支导致第二次渲染 f1() f3()——React 错误地将 f2 的 state 给了 f3。\n- Vue 3 的 Composition API 也用类似的机制（setup 函数内的 ref/computed 调用顺序）。这是基于「执行顺序」的响应式系统的固有约束。\n\n3. 闭包陷阱（Stale Closure）：\n每次渲染都会创建一个独立的作用域（closure）。useEffect / useCallback 内部引用 state 时，引用的是该次渲染时的值——不是最新的。\n- 示例：useEffect(() => { setTimeout(() => setCount(count + 1), 1000) }, []) —— count 永远卡在初始值。\n- 解决方案：\n  a. 添加正确的依赖：useEffect(() => { ... }, [count])。\n  b. 函数式更新：setCount(prev => prev + 1) —— 不需要依赖。\n  c. useRef 保存最新值：ref.current = count（ref 不创建闭包）。\n  d. React 18 的 useEvent（草案中，尚未正式发布）——稳定引用最新 props/state 但不触发重新创建。\n\n4. React 18 的新 Hooks：\n- useInsertionEffect：在 DOM 变更后、Layout Effect 执行前同步运行。专门给 CSS-in-JS 库使用（注入样式规则）。\n- useEvent（草案/实验性）：创建一个始终引用最新 props/state 的稳定回调函数。解决了「传递一个不会变化的回调但又不想加依赖」的问题。",
+    "hints": [
+      "Hooks 不能放在条件中的根本原因是链表的索引匹配——和「优雅」或「规范」无关，是纯技术约束",
+      "闭包陷阱的本质是每次渲染独立作用域——useCallback / useEffect 捕获的是创建时的值"
+    ],
+    "tags": [
+      "React",
+      "Hooks",
+      "闭包陷阱",
+      "useEffect",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React Fiber 架构与并发模式",
+    "content": "请详细解释 React Fiber 架构的核心理念。覆盖：1. React 16 Fiber 架构为什么是对 Stack Reconciler 的全面重写——Fiber 节点结构的设计目的；2. 可中断渲染（Time Slicing）的实现原理——工作循环（Work Loop）和优先级调度；3. React 18 的并发特性——useTransition / useDeferredValue 的作用和工作机制；4. Suspense 与流式 SSR——React 18 的 Streaming SSR 架构如何实现首个字节（HTML）的增量发送。",
+    "answer": "答案：\nFiber 架构的核心理念是将「渲染」从不可中断的同步递归，变为可中断的异步链表遍历。\n\n解析：\n1. Fiber vs Stack Reconciler：\n- Stack Reconciler（React 15）：递归遍历 Virtual DOM 树——开始后不可中断。一次性完成整棵树的 diff 和提交。如果树很大（几百个组件），主线程会被阻塞几百毫秒——导致掉帧。\n- Fiber（React 16）：用 Fiber 节点（链表结构）替代 Stack。Fiber 节点是一个 JS 对象，包含：type（组件类型）、key、stateNode（真实 DOM 或组件实例）、child / sibling / return（指向子/兄弟/父 Fiber 的指针）。\n- 链表结构的优势：可以「断点续传」——通过 child / sibling / return 指针可以在遍历中间暂停和恢复。不像递归栈——暂停后就丢失了上下文。\n\n2. 可中断渲染：\n- 工作循环（Work Loop）：requestAnimationFrame 或 MessageChannel（小任务）调度 ——> performUnitOfWork（处理一个 Fiber 节点）——> 检查是否超时 ——> 让出主线程。\n- 每个 Fiber 节点的处理过程中，React 定期检查是否有更高优先级的工作（如用户点击事件）。\n- 双缓冲（Double Buffering）：current fiber tree（当前已渲染的树） + workInProgress fiber tree（正在构建的新树）。构建完成 -> 切换 root 指针（commit 阶段）。\n- commit 阶段是同步的（不可中断）——DOM 操作必须一次性完成。\n\n3. React 18 的并发特性：\n- useTransition：将状态更新标记为「低优先级」——让用户输入等高优先级更新先执行。\n  - 示例：搜索框输入时，输入响应优先，搜索结果渲染可以延迟。const [isPending, startTransition] = useTransition(); startTransition(() => setSearchQuery(e.target.value))\n- useDeferredValue：延迟更新 UI 中的非紧急部分。\n  - 示例：让列表渲染延迟不超过 timeout 时间，让输入框保持流畅。\n- 两者的本质：标记「哪些更新是可以打断的、让位给用户交互的」。\n\n4. Suspense + 流式 SSR：\n- 传统 SSR：服务器必须等待所有组件的数据准备好 -> 生成完整 HTML -> 一次性发送。瀑布流问题——一个慢的数据源阻塞整个页面。\n- 流式 SSR（React 18）：使用 pipeToNodeWritable（Node.js）或类似的流式 API。\n  - 发送流程：尽快发送 Suspense 边界外的 HTML（首屏框架）-> 数据准备好后，发送对应 Suspense 边界的 HTML（注入到 stream 中的占位符位置）。\n  - 先发送静态部分（Header、导航栏等），动态部分（数据来自 API）准备好后再流式注入。\n  - 结合 useSuspense：数据加载时显示 fallback（loading spinner），加载完成后替换为真实内容。",
+    "hints": [
+      "Fiber 的革命性不是新增了功能——而是将渲染从「不可中断的递归」变成了「可中断的遍历」",
+      "useTransition 和 useDeferredValue 的区别：useTransition 包装 setState，useDeferredValue 包装值——但底层机制相同"
+    ],
+    "tags": [
+      "React",
+      "Fiber",
+      "并发渲染",
+      "Suspense",
+      "SSR"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 状态管理与组件架构模式",
+    "content": "请系统性地分析 React 应用中的状态管理方案选型。覆盖：1. 状态分类（UI State / Server State / URL State / Form State）及各分类的最佳实践；2. Context API 的局限性——为什么 Context 不适合高频更新的全局状态？Provider 重新渲染时的性能问题如何排查和解决？3. 第三方状态管理库对比——Zustand / Jotai / Redux Toolkit / TanStack Query 的设计哲学差异；4. 组件架构模式——容器-展示模式（Container/Presentational）、高阶组件（HOC）、Render Props、自定义 Hooks 的演进逻辑。",
+    "answer": "答案：\nReact 状态管理的核心原则是「状态尽量靠近它所属的组件」——将状态提升到「恰好够用」的层级。\n\n解析：\n1. 状态分类：\n- UI State（组件内部状态，局部）：useState、useReducer。状态只在一个组件或少数子组件中使用。最佳实践：保持局部，不必全局化。\n- Server State（服务端状态）：TanStack Query / SWR / RTK Query。缓存 + 后台更新 + 乐观更新。不需要放入 Redux。\n- URL State（路由参数）：React Router / Next.js Router。页面级别状态——搜索词、页码、筛选条件。放入 URL 支持分享和前进/后退。\n- Form State（表单状态）：React Hook Form / Formik。受控组件的值管理 + 验证 + 提交。专用库可以避免不必要的重新渲染。\n\n2. Context 的局限性：\n- Provider 更新时，所有消费该 Context 的组件都会重新渲染——即使它们只关心 Context 的一部分。\n- 解决方案：\n  a. 拆分 Context（如 UserContext、ThemeContext 分开，避免一改全改）。\n  b. context 值拆分 + React.memo + useMemo。\n  c. 对高频更新的状态（如鼠标位置、动画帧）——不要用 Context。用 zustand 的状态订阅机制（selector 精确订阅）。\n- 不是所有全局状态都要用 Context：如果只是「父子组件传参」，用 props 就够。\n\n3. 状态管理库对比：\n- Redux Toolkit（RTK，成熟方案）：Immer 的不可变更新、RTK Query 数据获取。适合大型应用、团队协作（严格的结构约束）。反对者认为模板代码较多。\n- Zustand（简洁方案）：基于 Flux 理念但极简（无 action creator / reducer）。通过 selector 精确控制渲染——只订阅组件关心的字段。最适合中小型应用。\n- Jotai / Recoil（原子状态）：类似「原子 + 派生」模型。每个 atom 独立订阅——粒度比 selector 更细。适合复杂的派生数据和依赖图。\n- TanStack Query / SWR（服务端状态）：不是通用的状态管理——专注服务端数据的缓存、失效、后台更新。最佳组合：Zustand（UI 状态）+ TanStack Query（服务端数据）。\n\n4. 组件架构模式演进：\n- Mixin（React.createClass 时代）-> HOC（高阶组件，注入 props）-> Render Props（函数 prop 提供渲染能力）。\n- 三种模式都存在的问题：Wrapper Hell（多层嵌套）、不直观的数据流。\n- Custom Hooks（React 16.8+）——将逻辑提取到函数中，组件直接调用 hook。相较于 HOC / Render Props 更简洁，类型推导更好。没有嵌套。",
+    "hints": [
+      "将服务端数据放入 Redux 是最常见的错误——数据刷新/缓存/失效逻辑用 TanStack Query 比自己管理好得多",
+      "Context 不是状态管理工具——它是依赖注入工具。高频更新用 zustand 或本地 state"
+    ],
+    "tags": [
+      "React",
+      "状态管理",
+      "Zustand",
+      "Redux",
+      "Context"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "React 渲染优化与性能调优",
+    "content": "请全面分析 React 应用的性能优化策略。覆盖：1. React 的渲染流程（Render 阶段 -> Commit 阶段），为什么组件的 render 函数被执行了但页面没有变化？2. React.memo 和 React.PureComponent 的浅比较原理——什么时候 memo 无效（props 中的对象 / 函数 / children 每次都新建）；3. 列表优化——虚拟滚动（react-window / react-virtuoso）的原理和使用场景；4. React DevTools Profiler 的使用——如何定位不必要的重新渲染？火焰图中的「为什么这个组件重新渲染了？」问题的排查思路。",
+    "answer": "答案：\nReact 性能优化的核心是「减少不必要的重新渲染」和「减少渲染过程的计算量」——这两者的手段和排查方式不同。\n\n解析：\n1. React 渲染流程（渲染 -> 提交）：\n- Render 阶段：调用组件函数（函数组件）或 render 方法（类组件）-> 生成 React Element -> 与上次的 Fiber 树进行 Diff。\n- Commit 阶段：将 Diff 结果应用到真实 DOM。\n- Render 执行了但页面没变：这是 React 的预期行为——React 在 Render 阶段计算虚拟 DOM 差异，发现没有变化时跳过 DOM 更新。这不叫「性能问题」——但如果 render 的计算量很大（复杂组件树），空跑 render 也是浪费。\n\n2. React.memo 的原理和陷阱：\n- React.memo（函数组件的优化方案）对 props 做浅比较（=== 或 Object.is）。如果 props 的引用没有变化，跳过该组件的重新渲染。\n- memo 失效的常见原因：\n  a. 内联对象/数组：<Child config={{ key: value }} />——每次渲染父组件都创建新对象，浅比较永远不等。\n  b. 内联函数：<Child onClick={() => handleClick(id)} />——同理。\n  c. children 是 JSX：<Child><span>...</span></Child>——JSX 每次创建新的 React 元素。\n  d. 解决方案：useMemo（对象/数组）、useCallback（函数）、提取子组件为独立组件。\n- 不是所有组件都需要 memo——只有渲染开销大的组件（复杂子树）才有用。随意添加 memo 反而增加浅比较的开销。\n\n3. 虚拟滚动（Virtual Scrolling）：\n- 长列表 (1000+ 项) 时，渲染所有 DOM 节点会导致页面卡顿。\n- 原理：只渲染视窗内和缓冲区内的元素（如滚动容器高度的 2-3 倍）。滚动时替换可见元素的内容。\n- react-window：固定高度列表（FixedSizeList）和动态高度列表（VariableSizeList）。\n- react-virtuoso：自动测量高度、支持网格和分组、TypeScript 支持更好。\n- 适用场景：不限数量的列表、表格、聊天记录、大文件树。\n\n4. 使用 React DevTools Profiler 排查：\n- 点击「Record」开始记录 -> 执行操作 -> 停止记录 -> 查看火焰图。\n- Flamegraph 中的每个色块 = 一个组件的渲染。颜色深浅 = 渲染耗时。\n- 「Why did this render?」：点击某个组件查看：\n  a. Props changed：检查哪些 props 的引用变化了（devtools 会高亮改变的 props）。\n  b. Hook changed：检查 hooks 依赖是否变化。\n  c. Parent rendered：父组件重新渲染导致该组件也重新渲染——考虑用 memo 隔离。\n- 常见工具：Why Did You Render（WDYR）钩子库——在开发环境的 console 中打印不必要的重新渲染和原因。",
+    "hints": [
+      "Render 函数执行了但页面没变不是 bug——这是 React 的正常工作方式，但可以通过 memo 避免计算开销",
+      "memo 失效的根源是「引用不等」——内联对象/函数/JSX 每次都新建引用"
+    ],
+    "tags": [
+      "React",
+      "性能优化",
+      "memo",
+      "虚拟滚动",
+      "Profiler"
+    ]
+  },
+  {
+    "category": "react",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "React 服务端渲染与 Next.js",
+    "content": "请详细分析 React 服务端渲染（SSR）的演进和 Next.js 的架构设计。覆盖：1. CSR vs SSR vs SSG vs ISR 的适用场景和数据新鲜度差异；2. Next.js 的架构：Pages Router vs App Router（RSC 架构）的核心差异——为什么 App Router 是基元（Server Component + Client Component）体系？3. RSC（React Server Components）的流式序列化协议——Server Component 如何在不发送 JS bundle 给客户端的情况下传输渲染结果；4. Next.js 的数据获取模式——在 RSC 架构中，我们在哪里获取数据更合理？",
+    "answer": "答案：\nNext.js 的 App Router 是一次架构革命——它彻底改变了 React 应用的数据获取和渲染的模型，从「所有组件在客户端渲染」转变为「组件默认在服务器渲染，客户端只负责交互部分」。\n\n解析：\n1. 渲染模式对比：\n- CSR（Client-Side Rendering）：所有渲染在客户端完成。优点：部署简单、交互丰富。缺点：白屏时间、SEO 差。\n- SSR（Server-Side Rendering, getServerProps）：请求时在服务器渲染 HTML。优点：完整的 HTML 首屏、SEO 好。缺点：服务器压力大、TTFB 慢。\n- SSG（Static Site Generation）：构建时生成静态 HTML。优点：CDN 缓存最快。缺点：包含动态内容的页面不合适。\n- ISR（Incremental Static Regeneration）：SSG + 增量重新生成——页面在部署后还可以更新。按需重建（on-demand revalidation, Next.js 12.1+）。兼顾静态的速度和动态的实时性。\n\n2. Pages Router vs App Router：\n- Pages Router（Next.js 12 之前）：所有组件默认都是客户端组件（CSR/SSR）。数据获取在 getServerSideProps / getStaticProps 中——和组件文件分离。\n- App Router（Next.js 13+，基于 React 18 的 RSC 架构）：\n  - Server Component（默认）：在服务器执行——直接访问数据库、文件系统、后端 API。不产生 JS bundle 开销。不能使用 Hooks。\n  - Client Component（标记 'use client'）：在浏览器执行——可以交互、用 Hooks、处理状态。\n  - 决定性的差异：以前 SSR 是「服务器渲染 -> 发送 HTML + JS bundle -> 客户端 hydrate（水合）」。现在 RSC 是「服务器渲染 Server Components + 发送序列化结果 -> 客户端保留该结果不 hydrate」。\n  - 性能收益：不需要 hydrate 就不需要发送 Server Component 的 JS bundle——大幅减少 JS 体积。\n\n3. RSC 流式序列化协议：\n- RSC 不是 HTML——而是一种序列化格式（wire format，类似 JSON + React Element 的混合），称为 RSC Payload。\n- 格式包含：类型标记（Element 类型）、props（深度有限：只能序列化 JSON 兼容的类型、Date、Map、Set、React Element）、children（嵌套的 Server Component 或 Client Component 占位符）。\n- 流式传输：使用 ReadableStream（Web Streams API）——服务器一边渲染一边发送，客户端一边接收一边渲染（渐进式展示）。\n- Client Component 的部分：在 RSC Payload 中用一个「占位符」（特殊的 reference ID）标记——客户端收到后由 Client Component 渲染。\n\n4. App Router 的数据获取最佳实践：\n- Server Component 中直接获取（推荐）：async function Page() { const data = await db.query(...); return <div>{data}</div> }——不需要 API 路由，省去网络跳转。\n- 共享数据层：在 Server Component 中获取数据 -> 通过 props 传给 Client Component。避免在 Client Component 中再做一次 fetch。\n- 缓存策略：fetch(url, { cache: 'force-cache' | 'no-store', next: { revalidate: 60 } })。\n- 适合 API 路由的场景：需要调用外部 HTTP API、需要认证鉴权、需要 CORS 控制。",
+    "hints": [
+      "RSC 的核心优势不是「服务器渲染更快」而是「Server Component 不需要 JS bundle——大幅减少客户端需要加载的 JS 量」",
+      "App Router 的核心规则是：默认 Server Component（不产生 JS，不能交互），需要交互的地方用 'use client' 包裹"
+    ],
+    "tags": [
+      "React",
+      "Next.js",
+      "SSR",
+      "RSC",
+      "服务器组件"
+    ]
   }
 ]

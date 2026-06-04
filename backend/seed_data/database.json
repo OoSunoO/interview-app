@@ -1883,5 +1883,100 @@
       "查询优化",
       "性能诊断"
     ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "InnoDB 的 MVCC 与锁机制深度解析",
+    "content": "请深入分析 MySQL InnoDB 的 MVCC 和锁机制。包括 Undo Log 版本链与 Read View 的工作原理，当前读与快照读的区别，行锁/间隙锁/临键锁的加锁范围，INSERT 的隐式锁与锁升级机制。",
+    "answer": "答案：\nInnoDB 的 MVCC + 锁机制是事务隔离性的基石，理解它们需要区分「读」的两种模式。\n\n解析：\n1. Undo Log 版本链：每行记录有多个版本通过 DB_ROLL_PTR 指针链接。Read View 由 m_ids、min_trx_id、max_trx_id、creator_trx_id 组成。RC 级别每条语句前生成 Read View，RR 级别整个事务复用同一个 Read View。\n\n2. 当前读 vs 快照读：快照读（普通 SELECT）从 Read View 读取，不阻塞。当前读（SELECT FOR UPDATE / UPDATE / DELETE / INSERT）读取最新版本并加锁。\n\n3. Next-Key Lock = Record Lock + Gap Lock。RR 级别下 InnoDB 的默认锁是 Next-Key Lock，通过 Gap Lock 阻止新记录插入查询范围，部分解决幻读。RC 级别禁用 Gap Lock。\n\n4. INSERT 隐式锁：InnoDB 在聚簇索引中记录 trx_id，其他事务通过检查 trx_id 是否活跃来判断隐式锁。InnoDB 没有行锁升级到表锁的机制。",
+    "hints": [
+      "MVCC 的核心不是「保存多个副本」，而是「只保存增量差异（Undo Log）」，构建历史版本的成本很低",
+      "RC 下不可重复读的本质是每条语句新生成的 Read View 包含了新提交的事务"
+    ],
+    "tags": [
+      "MySQL",
+      "InnoDB",
+      "MVCC",
+      "锁",
+      "事务"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库索引设计策略",
+    "content": "请系统性地介绍关系数据库的索引设计策略。覆盖 B+ Tree 索引结构特点、联合索引的最左前缀原则、索引下推和覆盖索引的优化原理、索引选择性的概念。",
+    "answer": "答案：\n索引是数据库查询性能的核心——设计好的索引可以将查询从全表扫描降到索引查找。\n\n解析：\n1. B+ Tree：非叶子节点只存 key 和 pointer，每个节点可以存更多 key——树高度更矮（通常 3-4 层）。叶子节点形成有序双向链表支持范围查询。InnoDB 聚簇索引叶子节点直接存行数据，二级索引叶子节点存主键值（需回表）。\n\n2. 最左前缀原则：联合索引 (a, b, c) 等效于 (a)、(a, b)、(a, b, c)。查询必须包含最左列。B+ Tree 按联合索引的列顺序依次排序，跳过前导列 = 排序顺序不匹配。\n\n3. 索引下推（ICP, MySQL 5.6+）：在索引层级应用 WHERE 条件中索引列能判断的条件，减少回表次数。覆盖索引：查询的所有列都在二级索引中时不需要回表。\n\n4. 索引选择性 = Cardinality / 总行数。选择性越高，索引越有效。性别列 Cardinality = 2，选择性极低，不适合建索引。",
+    "hints": [
+      "最左前缀原则的本质是 B+ Tree 的排序方式决定的——它按联合索引的列顺序依次排序",
+      "覆盖索引是查询优化性价比最高的手段——不需要回表意味着减少一次或多次磁盘 I/O"
+    ],
+    "tags": [
+      "MySQL",
+      "索引",
+      "B+ Tree",
+      "查询优化",
+      "数据库"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式事务与一致性协议",
+    "content": "请系统性地介绍分布式事务的实现方案和一致性协议。包括 XA 两阶段提交的问题、TCC 模式的适用场景、Saga 模式的编排方式、最终一致性方案（本地消息表、事务消息）。",
+    "answer": "答案：\n分布式事务的核心矛盾是「一致性」和「可用性」的 trade-off——没有万能的方案。\n\n解析：\n1. XA 2PC：阶段 1 Prepare（参与者执行但不提交），阶段 2 Commit/Rollback。问题：同步阻塞（Prepare 后锁资源等待协调器），协调器单点，脑裂。\n\n2. TCC：Try（预留资源）、Confirm（真正执行）、Cancel（回滚）。Confirm 和 Cancel 必须幂等。业务侵入性强，但不持有数据库锁，并发性能比 2PC 好。\n\n3. Saga：长事务拆分为多个本地事务，每个有补偿操作。Choreography（事件驱动，去中心化）vs Orchestration（中心化协调，流程可视化）。适用长周期业务（如旅游预订）。\n\n4. 最终一致性方案：本地消息表（业务操作 + 消息同 DB 事务写入，后台轮询发送）。RocketMQ 事务消息（Producer 发 Half 消息 -> 执行本地事务 -> Commit/Rollback + 宕机回查）。",
+    "hints": [
+      "XA 2PC 存在的问题不是「慢」而是「不可靠」——协调器宕机导致所有参与者被阻塞",
+      "事务消息相对本地消息表的优势：不需要业务方维护表结构和轮询任务"
+    ],
+    "tags": [
+      "分布式事务",
+      "2PC",
+      "TCC",
+      "Saga",
+      "事务消息"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据库高可用架构设计",
+    "content": "请设计一个关系数据库的高可用架构方案。覆盖主从复制原理、自动故障转移机制、读写分离的挑战、备份与恢复策略。",
+    "answer": "答案：\n数据库高可用不是「挂了有人接」就够了——需要保证 RPO 和 RTO 在业务能接受的范围内。\n\n解析：\n1. 复制方案：异步复制（性能好，RPO > 0），半同步复制（等待至少一个从库确认，RPO = 0），组复制 MGR（Paxos 共识，强一致性但要求所有表有主键）。\n\n2. 故障转移：MHA（传统，RTO 10-30s），Orchestrator（基于 Raft，拓扑可视化），MySQL InnoDB Cluster（MGR + MySQL Router，官方方案，RTO < 5s）。\n\n3. 读写分离挑战：主从延迟（从库 apply 慢、大事务）。应对策略——强制读主（实时性要求高）、延迟感知路由（Proxy 监控延迟）、缓存补偿。\n\n4. 备份：逻辑备份（mysqldump，可读可选择性恢复，适合小库）。物理备份（XtraBackup，直接拷贝数据文件，备份恢复快，适合大库）。全量 + binlog 实时 + 定期恢复验证。",
+    "hints": [
+      "半同步复制的「不丢数据」是有条件的——主库和从库同时宕机且从库的 relay log 也丢失时仍会丢数据",
+      "物理备份（XtraBackup）的备份速度远快于逻辑备份（mysqldump）"
+    ],
+    "tags": [
+      "MySQL",
+      "高可用",
+      "主从复制",
+      "备份恢复",
+      "故障转移"
+    ]
+  },
+  {
+    "category": "database",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "SQL 查询优化实战",
+    "content": "请分析大规模数据下的 SQL 查询优化策略。分析时间范围查询的性能问题、分页深度问题、JOIN 查询优化、OR 条件的索引使用问题。",
+    "answer": "答案：\n大规模数据下的 SQL 优化核心是「减少数据扫描量」。\n\n解析：\n1. 时间范围查询：WHERE created_at > '2026-01-01' ORDER BY created_at LIMIT 100 会扫描大量匹配记录。优化：用 (created_at, id) 联合索引，或游标分页（Keyset Pagination）。\n\n2. 分页深度：LIMIT 100000, 100 等价于读取 100100 行后丢弃前 100000 行。优化：游标分页（WHERE id > :last_id LIMIT 100），或延迟关联（先查覆盖索引的主键再 JOIN 回原表）。\n\n3. JOIN 查询：先 JOIN 再 GROUP BY 会产生极大中间结果。优化：先聚合再 JOIN，子查询先过滤和聚合，减少 Join 的数据量。\n\n4. OR 条件：WHERE status = 'PAID' OR status = 'REFUND' 可能不走索引。改写为 IN 或 UNION ALL。",
+    "hints": [
+      "LIMIT + OFFSET 的深度分页问题是 MySQL 读取了 N 行后丢弃前 N-M 行——不是从第 N 行开始读",
+      "OR 改 IN 不是 SQL 语法糖——两种写法在优化器中的执行路径可能完全不同"
+    ],
+    "tags": [
+      "MySQL",
+      "SQL优化",
+      "索引",
+      "慢查询",
+      "性能调优"
+    ]
   }
 ]

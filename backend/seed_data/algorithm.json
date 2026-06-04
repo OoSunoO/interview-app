@@ -1775,5 +1775,95 @@
       "TimSort",
       "归并排序"
     ]
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "接雨水（Trapping Rain Water）",
+    "content": "给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。",
+    "answer": "```java\npublic int trap(int[] height) {\n    int left = 0, right = height.length - 1;\n    int leftMax = 0, rightMax = 0, water = 0;\n    while (left < right) {\n        if (height[left] < height[right]) {\n            if (height[left] >= leftMax) {\n                leftMax = height[left];\n            } else {\n                water += leftMax - height[left];\n            }\n            left++;\n        } else {\n            if (height[right] >= rightMax) {\n                rightMax = height[right];\n            } else {\n                water += rightMax - height[right];\n            }\n            right--;\n        }\n    }\n    return water;\n}\n```\n时间复杂度 O(n)，空间复杂度 O(1)。双指针法：每次移动较矮的一侧，因为较矮一侧的接水量由该侧的最大高度决定。每个柱子能接的水 = min(leftMax, rightMax) - height[i]。",
+    "hints": [
+      "双指针的核心思路是每次移动较矮的一侧——接水量由较矮侧的最大值决定",
+      "每个位置能接的水量只取决于左右两侧最大值的较小者"
+    ],
+    "tags": [
+      "双指针",
+      "数组",
+      "单调栈"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "每日温度（Daily Temperatures）",
+    "content": "给定一个整数数组 temperatures，表示每天的温度，返回一个数组 answer，其中 answer[i] 是指对于第 i 天，下一个更高温度出现在几天后。如果气温在这之后都不会升高，请在该位置用 0 来代替。",
+    "answer": "```java\npublic int[] dailyTemperatures(int[] temperatures) {\n    int n = temperatures.length;\n    int[] answer = new int[n];\n    Deque<Integer> stack = new ArrayDeque<>();\n    for (int i = 0; i < n; i++) {\n        while (!stack.isEmpty() && temperatures[i] > temperatures[stack.peek()]) {\n            int prev = stack.pop();\n            answer[prev] = i - prev;\n        }\n        stack.push(i);\n    }\n    return answer;\n}\n```\n时间复杂度 O(n)，空间复杂度 O(n)。单调递减栈：栈中保存温度递减的日期索引。遇到更高温度时弹出并计算天数差。栈中元素在遍历完仍存在的，说明后面没有更高温度，默认 0。",
+    "hints": [
+      "单调栈适合解决「下一个更大/更小元素」类问题",
+      "栈中保存的是索引而非温度值——因为需要计算天数差"
+    ],
+    "tags": [
+      "单调栈",
+      "数组",
+      "栈"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "合并 K 个升序链表",
+    "content": "给你一个链表数组，每个链表都已经按升序排列。请你将所有链表合并到一个升序链表中，返回合并后的链表。",
+    "answer": "```java\npublic ListNode mergeKLists(ListNode[] lists) {\n    if (lists == null || lists.length == 0) return null;\n    PriorityQueue<ListNode> pq = new PriorityQueue<>((a, b) -> a.val - b.val);\n    for (ListNode node : lists) {\n        if (node != null) pq.offer(node);\n    }\n    ListNode dummy = new ListNode(0);\n    ListNode curr = dummy;\n    while (!pq.isEmpty()) {\n        ListNode node = pq.poll();\n        curr.next = node;\n        curr = curr.next;\n        if (node.next != null) pq.offer(node.next);\n    }\n    return dummy.next;\n}\n```\n时间复杂度 O(N log K)（N 是总节点数，K 是链表数），空间复杂度 O(K)。用最小堆每次取 K 个链表头的最小值。也可以用分治合并（两两合并），复杂度相同。",
+    "hints": [
+      "优先队列（最小堆）每次从 K 个头节点中取最小的",
+      "分治合并（两两递归合并）的空间复杂度更低（O(1) 堆空间）"
+    ],
+    "tags": [
+      "链表",
+      "堆",
+      "分治"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "无重复字符的最长子串",
+    "content": "给定一个字符串 s，请你找出其中不含有重复字符的最长子串的长度。",
+    "answer": "```java\npublic int lengthOfLongestSubstring(String s) {\n    Map<Character, Integer> map = new HashMap<>();\n    int maxLen = 0, left = 0;\n    for (int right = 0; right < s.length(); right++) {\n        char c = s.charAt(right);\n        if (map.containsKey(c)) {\n            left = Math.max(left, map.get(c) + 1);\n        }\n        map.put(c, right);\n        maxLen = Math.max(maxLen, right - left + 1);\n    }\n    return maxLen;\n}\n```\n时间复杂度 O(n)，空间复杂度 O(min(m, n))（m 是字符集大小）。滑动窗口 + HashMap：right 指针扩展窗口，遇到重复时 left 跳到重复字符的下一个位置。HashMap 记录每个字符最近出现的位置。",
+    "hints": [
+      "滑动窗口的核心是 left 指针不需要逐步移动——可以直接跳到重复字符的下一个位置",
+      "窗口内无重复字符时，窗口长度 = right - left + 1"
+    ],
+    "tags": [
+      "滑动窗口",
+      "哈希表",
+      "字符串"
+    ],
+    "options": []
+  },
+  {
+    "category": "algorithm",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "正则表达式匹配",
+    "content": "给你一个字符串 s 和一个字符规律 p，请你来实现一个支持 '.' 和 '*' 的正则表达式匹配。'.' 匹配任意单个字符，'*' 匹配零个或多个前面的那一个元素。",
+    "answer": "```java\npublic boolean isMatch(String s, String p) {\n    int m = s.length(), n = p.length();\n    boolean[][] dp = new boolean[m + 1][n + 1];\n    dp[0][0] = true;\n    for (int j = 2; j <= n; j++) {\n        if (p.charAt(j - 1) == '*') dp[0][j] = dp[0][j - 2];\n    }\n    for (int i = 1; i <= m; i++) {\n        for (int j = 1; j <= n; j++) {\n            char sc = s.charAt(i - 1), pc = p.charAt(j - 1);\n            if (pc == '*') {\n                char prev = p.charAt(j - 2);\n                dp[i][j] = dp[i][j - 2]; // 匹配 0 次\n                if (prev == '.' || prev == sc) {\n                    dp[i][j] = dp[i][j] || dp[i - 1][j]; // 匹配 1 次或多次\n                }\n            } else if (pc == '.' || pc == sc) {\n                dp[i][j] = dp[i - 1][j - 1];\n            }\n        }\n    }\n    return dp[m][n];\n}\n```\n时间复杂度 O(mn)，空间复杂度 O(mn)。核心状态转移：遇到 * 时两种选择——匹配 0 次（跳过模式串两个字符）或匹配 1 次以上（消耗一个主串字符，模式串不前进）。",
+    "hints": [
+      "* 匹配的核心是两种选择——匹配 0 次（跳过 p 的 x*）或匹配 1 次以上（s 前进，p 不动）",
+      "dp[i][j] 表示 s 的前 i 个字符和 p 的前 j 个字符是否匹配"
+    ],
+    "tags": [
+      "动态规划",
+      "字符串",
+      "正则"
+    ],
+    "options": []
   }
 ]

@@ -1862,5 +1862,100 @@
       "可信执行环境",
       "加密"
     ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "进程、线程与协程：并发模型深度对比",
+    "content": "请深入对比进程（Process）、线程（Thread）、协程（Coroutine / Fiber）三种并发原语。它们在资源开销、切换成本、通信方式、适用场景上的核心差异是什么？解释用户态线程（协程）相对于内核态线程的优势。为什么 Go 的 Goroutine 能支持百万级并发而传统线程不行？",
+    "answer": "答案：\n三种并发原语的本质区别在于「由谁管理上下文切换」——内核（进程/线程）还是用户态程序（协程）。\n\n解析：\n1. 进程：\n- 最小的资源分配单位。每个进程有独立的地址空间、文件描述符表、信号处理。\n- 上下文切换成本最高：需要切换页表（TLB flush）、刷新 CPU 缓存、切换内核栈。\n- 通信：IPC（管道、消息队列、共享内存、Socket）。\n- 创建开销大（fork 系统调用 + 拷贝页表）。\n\n2. 线程（内核级线程，如 POSIX Threads）：\n- 最小的调度单位（内核视角）。同一进程的线程共享地址空间和文件描述符。\n- 上下文切换成本中等：需要内核介入（陷入内核态），但不需要切换页表。\n- 通信：共享内存（需要同步原语——互斥锁、条件变量、读写锁）。\n- 创建开销中等（pthread_create 系统调用）。栈空间通常 1-8MB，限制了最大线程数（~1 万 / 4GB RAM）。\n\n3. 协程（用户态线程）：\n- 最小的执行流单位，完全在用户态管理。每个协程有自己的栈和寄存器上下文。\n- 上下文切换成本极低：只需保存/恢复几个寄存器（CPU 寄存器 + 栈指针），不需要陷入内核。\n- 通信：通道（Channel，Go 的 CSP 模型）。Go goroutine 通过 channel 传递消息而非共享内存。\n- 创建开销极低：Goroutine 初始栈仅 2KB，动态增长。在 4GB RAM 下可以创建数百万个。\n\n4. Goroutine 能百万级的原因：\n- 栈小且动态增长（2KB -> 1GB，按需增长）。\n- M:N 调度：M 个内核线程调度 N 个 Goroutine。Go 运行时维护 G（Goroutine）、M（Machine，内核线程）、P（Processor，调度器上下文）。当 G 阻塞（系统调用/I/O）时，P 自动将 M 让给其他 G 执行。\n- 协程切换在用户态完成（约 10ns），无需系统调用。\n\n5. 选型建议：\n- 进程：隔离性要求高（如 Chrome 的多进程架构）、需要不同权限级别。\n- 线程：CPU 密集型任务、需要内核调度（如多线程并行计算）。\n- 协程：I/O 密集型高并发（Web 服务、中间件、代理服务器）。",
+    "hints": [
+      "进程切换需要 TLB flush——这是进程切换比线程切换慢得多的核心原因",
+      "Goroutine 的 M:N 调度模型让「一个线程阻塞了，其他 Goroutine 还能在别的线程上跑」"
+    ],
+    "tags": [
+      "进程",
+      "线程",
+      "协程",
+      "Goroutine",
+      "并发"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "操作系统内存管理：分段、分页与虚拟内存",
+    "content": "请详细解释操作系统的内存管理体系。覆盖：1. 分段（Segmentation）和分页（Paging）的核心思想及对比；2. 虚拟内存地址翻译过程——MMU 如何将虚拟地址转换为物理地址；3. 多级页表的目的——为什么不用单级页表？4. TLB（Translation Lookaside Buffer）的工作原理和缓存一致性。",
+    "answer": "答案：\n内存管理的核心是「让多个进程安全高效地共享物理内存」，同时给每个进程「我有整个内存」的错觉。\n\n解析：\n1. 分段 vs 分页：\n- 分段：将内存按逻辑单位分割（代码段、数据段、堆、栈），每段有独立的基址和限长。段对程序员可见。问题：产生外部碎片、段长度不统一导致管理复杂。\n- 分页：将物理内存划分为固定大小（通常 4KB）的帧（Frame），进程的虚拟内存划分为同样大小的页（Page）。页对程序员透明。优势：无外部碎片、swap 方便。\n- 现代操作系统：分页为主 + 分段辅助（如 x86-64 的分段主要用于权限级别切换）。\n\n2. 虚拟地址翻译：虚拟地址 -> 页号（VPN）+ 页内偏移（Offset）。MMU 查页表（Page Table）找到 VPN 对应的物理帧号（PFN）-> PFN + Offset = 物理地址。页表项（PTE）包含：PFN、有效位、读写权限位、用户/内核位、脏位、访问位。\n\n3. 多级页表：如果虚拟地址空间是 48 位，页大小 4KB，单级页表需要 2^48 / 2^12 = 2^36 个 PTE = ~512GB 的页表空间（每个 PTE 8 字节）。完全不可接受。多级页表（x86-64 用 4 级页表）：减少页表占用的内存——大多数虚拟地址空间是稀疏的，不使用的地址范围不需要分配页表层级。四级页表翻译：CR3（顶级页表基址）-> PML4 -> PDPT -> PD -> PT -> 物理页。\n\n4. TLB：页表在内存中——每次内存访问都需要 1 次（TLB 命中）或 4 次（4 级页表 = 4 次内存访问 + 1 次数据访问）。TLB 是 MMU 中的高速缓存，缓存最近使用的 VPN->PFN 映射。TLB 缺失处理：硬件层面（x86）自动遍历页表填充 TLB，软件层面（RISC）触发 TLB Miss 异常由 OS 处理。\n\nTLB 一致性：进程切换时 TLB 中的映射不再有效——需要 TLB flush（清空 TLB）。解决方案：增加 ASID（Address Space ID）——TLB 项标记所属进程，切换进程时不清空 TLB，靠 ASID 区分。",
+    "hints": [
+      "多级页表不是为了加速地址翻译——恰恰相反，它增加了翻译次数（多了几步内存访问），但节省了页表占用的内存",
+      "TLB flush 是进程切换的主要开销——ASID 的引入正是为了减少不必要的 TLB flush"
+    ],
+    "tags": [
+      "操作系统",
+      "内存管理",
+      "虚拟内存",
+      "MMU",
+      "TLB"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "计算机网络：TCP 与 QUIC 传输协议对比",
+    "content": "请从传输层协议设计的角度深入对比 TCP 和 QUIC。覆盖：1. TCP 的可靠传输机制（序列号 + 确认号 + 超时重传 + 快速重传）；2. TCP 的拥塞控制算法演进（Reno / Cubic / BBR）的核心思路；3. TCP 的队头阻塞（HOL Blocking）问题的本质；4. QUIC 如何在传输层解决 TCP 的各种固有问题。",
+    "answer": "答案：\nTCP 是过去 40 年互联网的基石，QUIC 是它的正式继承者——不是简单的「替代」，而是「将传输层语义重新实现在 UDP 之上」。\n\n解析：\n1. TCP 可靠传输：\n- 序列号（Sequence Number）：每个字节有唯一的序列号，接收方按序重组。确认号（ACK）：收到数据后回复下一个期望的序列号。\n- 超时重传（RTO）：发送数据后启动定时器 -> 超时未收到 ACK 则重传。超时时间动态计算（SRTT + 4*RTTVAR）。\n- 快速重传（Fast Retransmit）：收到 3 个相同 ACK（Duplicate ACK）时立即重传——不用等超时。配合快速恢复（Fast Recovery）。\n- 选择确认（SACK）：选择性确认已收到的乱序数据块——避免不必要的重传。\n\n2. 拥塞控制演进：\n- Reno：慢启动 + 拥塞避免 + 快速恢复。以丢包作为拥塞信号（AIMD 原则）。\n- Cubic：在 Reno 基础上改进，拥塞窗口增长函数是三次函数——在高带宽网络下更快恢复。\n- BBR（Bottleneck Bandwidth and RTT）：不以丢包作为拥塞信号的革命性方案。基于带宽和 RTT 建模——精确测量瓶颈带宽和最小 RTT，使发送速率刚好等于瓶颈带宽。BBR 在高速移动网络（丢包率高但带宽大）场景下完胜 Cubic。\n\n3. TCP 队头阻塞：TCP 是字节流协议——一个 TCP 包丢失后，后续所有到达的包（即使属于不同 HTTP 请求）都要等重传完成后才能被应用层读取。HTTP/2 多路复用在一个 TCP 连接上加剧了这个问题——单个丢失阻塞所有流。\n\n4. QUIC 的解决方案：\n- 多 Stream 独立传输：一个 Stream 丢包只影响该 Stream，不影响同一连接中的其他 Stream。每个 Stream 有独立的序列号空间。\n- 0-RTT 连接建立：首次 1 RTT，重连 0 RTT（发送第一个数据包时携带加密数据）。\n- 连接迁移（Connection Migration）：用 Connection ID 而非四元组标识连接——WiFi 切 4G 连接不断。\n- 更精确的 RTT 估计（无 TCP 的序列号模糊问题）+ FEC 前向纠错。",
+    "hints": [
+      "TCP 的 HOL 问题不在 TCP 层本身——在 HTTP/2 的多路复用场景下才体现出来",
+      "BBR 的核心创新是不用丢包作为拥塞信号——基于带宽和 RTT 建模，更适合高丢包率的无线网络"
+    ],
+    "tags": [
+      "TCP",
+      "QUIC",
+      "拥塞控制",
+      "BBR",
+      "传输协议"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据结构：B-Tree 与 LSM-Tree",
+    "content": "请对比 B-Tree 和 LSM-Tree（Log-Structured Merge-Tree）两种核心的数据存储结构。它们的读写性能差异的根本原因是什么？为什么传统关系数据库（MySQL InnoDB）用 B+ Tree 而现代 NoSQL 数据库（LevelDB / RocksDB / Cassandra）用 LSM-Tree？两种结构的写放大（Write Amplification）和读放大（Read Amplification）各有什么特点？",
+    "answer": "答案：\nB-Tree 是「读优化」的结构——读快写慢。LSM-Tree 是「写优化」的结构——写快读慢。这是两者最本质的区别。\n\n解析：\n1. B+ Tree（InnoDB 使用的变体）：\n- 结构：有序的平衡多路搜索树。所有数据在叶子节点，叶子节点形成双向链表。\n- 读取：从根到叶子路径上做二分查找。单点查询 O(log N)，范围查询 O(log N + K)。\n- 写入（INSERT / UPDATE）：先查找插入位置 O(log N) -> 叶子节点写入 -> 如果叶子节点满了则分裂。随机写入时可能触发多次节点分裂和平衡。写入是原地更新（In-Place Update）。\n- 写放大：每次写入需要写数据页 + 写 Redo Log + 可能写 Undo Log + 二级索引。一次 UPDATE 可能触发 4-10 倍的写放大。\n- 适合：读多写少的场景（传统 OLTP）。\n\n2. LSM-Tree（RocksDB / Cassandra）：\n- 结构：多层有序的 SST（Sorted String Table）。写入先到内存中的 MemTable（有序结构如 SkipList）-> MemTable 满了后 flush 到 L0 层 SST -> 后台合并（Compaction）下沉到 L1、L2...\n- 读取：先查 MemTable（最新数据）-> 再逐层查 SST（按层从新到旧）。\n- 写入：写入直接追加到 MemTable（顺序写，很快）-> 后台异步 flush + compaction。随机写入转换为顺序写——这是 LSM-Tree 写快的关键。\n- 读放大（Read Amplification）：读需要检查多层——L0 可能有重叠的多个 SST（需要全查），L1+ 通过 Bloom Filter 过滤。Range 查询需要合并多个 SST。\n- 写放大（Write Amplification）：LSM-Tree 的 Compaction 是将多个 SST 合并成一个——数据在生命周期内被多次重写。Leveled Compaction 写放大通常 10-30x，Size-Tiered Compaction 写放大较低但空间放大高。\n- 适合：写多读少或写读均衡的场景（时序数据、日志、KV 缓存）。\n\n3. 选择指南：\n- MySQL InnoDB（B+ Tree）：需要事务（ACID）、外键、复杂查询（JOIN / GROUP BY）。数据量适中（TB 级以下）。\n- RocksDB / Cassandra（LSM-Tree）：高写入吞吐、KV 场景、时序数据。数据量大（PB 级）。可以接受 NoSQL 的功能约束。",
+    "hints": [
+      "LSM-Tree 写快的根本原因是将随机写转换为顺序写——磁盘顺序写比随机写快 100x 以上",
+      "LSM-Tree 的 Compaction 是核心机制也是主要成本——它决定了写放大、读放大、空间放大的三角 trade-off"
+    ],
+    "tags": [
+      "B-Tree",
+      "LSM-Tree",
+      "存储引擎",
+      "RocksDB",
+      "数据库"
+    ]
+  },
+  {
+    "category": "cs_basics",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式系统：CAP 理论与一致性模型",
+    "content": "请深入解释分布式系统的 CAP 定理及其在实际系统中的体现。包括：1. CAP 三大属性（Consistency / Availability / Partition Tolerance）的精确定义；2. 为什么 CAP 说三者不能同时满足——2-of-3 的数学推理；3. 一致性模型的谱系：强一致性（Linearizability / Sequential Consistency）到最终一致性（Eventual Consistency）及其中间模型（Causal Consistency / Read-Your-Writes）；4. PACELC 扩展——在网络正常时的一致性和延迟的权衡。",
+    "answer": "答案：\nCAP 定理的核心洞察是：当网络分区发生时，你必须在「一致」和「可用」之间做选择。\n\n解析：\n1. CAP 精确定义：\n- Consistency（一致性 / Linearizability）：所有节点在同一时间看到相同的数据。等同于存在一个全局的总序，所有操作都在这个总序中原子执行。\n- Availability（可用性）：每个请求都能收到一个（非错误）响应——但不保证响应中的是最新数据。\n- Partition Tolerance（分区容忍性）：系统在网络分区（节点间消息丢失或延迟）下仍能正常工作。P 不是选择项——分布式系统必然会发生网络分区，所以 P 是必须接受的。\n\n2. 为什么三者不能同时满足：\n网络分区发生时，消息在分区两侧之间无法传递。这时有两种选择：\n- CP（放弃可用性）：等待分区恢复，保证两侧数据一致后才继续服务。GFS、HBase、ZooKeeper 在分区时牺牲可用性。\n- AP（放弃一致性）：两侧各自继续服务，分区恢复后再合并数据。DNS、Cassandra（默认）、DynamoDB。\n\n不存在 CA（放弃分区容忍性）的分布式系统——因为网络分区一定会发生，放弃 P 意味着分区发生时系统直接不可用（相当于单机系统）。\n\n3. 一致性模型谱系（从强到弱）：\n- Linearizability（线性一致性/强一致性）：每个操作在某个时间点原子生效，所有后续操作都看到这个值。最直观但实现成本最高。\n- Sequential Consistency：所有进程的操作各自按程序顺序执行，全局存在一个总序，但不同进程的交叉顺序可以任意。\n- Causal Consistency：有因果关系（happens-before）的操作必须按因果顺序被看到。无因果关系的操作可以任意排序。\n- Read-Your-Writes 一致性：写后读自己写的——保证自己能读到自己的写入。\n- Eventual Consistency（最终一致性）：如果没有新写入，系统最终会收敛到一致状态。\n\n4. PACELC 扩展：\nPACELC 弥补了 CAP 只讨论「分区时」的不足：如果网络正常（Else），系统的设计是在一致性（Consistency）和延迟（Latency）之间做权衡。\n- 典型 PA/EL（Cassandra）：分区时选择 AP（可用），正常时选择低延迟（弱一致性）。\n- 典型 PC/EC（HBase / Spanner）：分区时选择 CP（一致），正常时也选一致性（牺牲延迟）。\n\n扩展延伸：Spanner 的 TrueTime + Paxos 实现了「外部一致性」（External Consistency）——在不牺牲可用性的情况下保证强一致性。这推翻了「强一致性和高可用不可兼得」的传统认知，依赖精确的时钟同步。",
+    "hints": [
+      "CAP 定理不是「三者选二」——P 不是可选项，分布式系统必须容忍网络分区，所以实际是在 CP 和 AP 之间选择",
+      "PACELC 比 CAP 更实用——网络大部分时间是正常的，正常时的一致性-延迟权衡对系统性能影响更大"
+    ],
+    "tags": [
+      "CAP",
+      "分布式系统",
+      "一致性模型",
+      "PACELC",
+      "Linearizability"
+    ]
   }
 ]
