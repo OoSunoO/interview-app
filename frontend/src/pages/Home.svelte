@@ -12,6 +12,7 @@
   let error = $state(null);
   let reminderEnabled = $state(localStorage.getItem("review_reminder") !== "off");
   let dailyGoal = $state(api.progress.getGoal());
+  let weeklyData = $state([]);
 
   // ── Quick Review ──
   let showQRDialog = $state(false);
@@ -58,6 +59,19 @@
       }
 
       recommend = recs;
+
+      // Build weekly chart
+      const allDaily = api.progress.allDailyStats();
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const dayLabel = i === 0 ? "今天" : i === 1 ? "昨天" : ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
+        const count = allDaily[key]?.reviewed || 0;
+        days.push({ label: dayLabel, count });
+      }
+      weeklyData = days;
     } catch (e) {
       error = e.message ?? "加载数据失败";
     } finally {
@@ -248,6 +262,22 @@
           <span>掌握率 <strong>{store.dailyStats.retention}%</strong></span>
         </div>
       {/if}
+
+      <div class="weekly-chart">
+        <div class="wc-bars">
+          {#each weeklyData as day}
+            <div class="wc-col" title="{day.count} 题">
+              <div
+                class="wc-bar"
+                style="height: {Math.max(3, Math.min(100, day.count * 6))}px"
+                class:wc-hit={dailyGoal > 0 && day.count >= dailyGoal}
+                class:wc-today={day.label === "今天" && day.count > 0}
+              ></div>
+              <span class="wc-label">{day.label}</span>
+            </div>
+          {/each}
+        </div>
+      </div>
 
       <button class="reminder-toggle" onclick={toggleReminder}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -963,5 +993,47 @@
     padding: 20px;
     max-width: 300px;
   }
+}
+
+/* ── Weekly Chart ── */
+.weekly-chart {
+  padding: 10px 0 4px;
+}
+.wc-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+}
+.wc-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.wc-bar {
+  width: 100%;
+  max-width: 32px;
+  border-radius: 4px 4px 0 0;
+  background: var(--border);
+  transition: height 0.5s var(--spring), background 0.3s;
+  min-height: 3px;
+}
+.wc-bar.wc-hit {
+  background: var(--success);
+}
+.wc-bar.wc-today {
+  background: var(--accent);
+}
+.wc-bar.wc-hit.wc-today {
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+.wc-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  font-weight: 500;
 }
 </style>
