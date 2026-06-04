@@ -191,6 +191,18 @@
     }
   }
 
+  function exportWrongAsMarkdown() {
+    const ids = wrongQuestions.map((q) => q.id);
+    const md = api.exportMarkdown(ids);
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `错题导出-${new Date().toISOString().slice(0, 10)}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   function saveAIKey() {
     setProvider(apiProvider);
     saveAIConfig({ key: apiKeyInput });
@@ -318,6 +330,15 @@
         loadReviewDetail(0);
       }}>
         开始复习 ({wrongQuestions.length})
+      </button>
+
+      <button class="export-btn" onclick={exportWrongAsMarkdown}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        导出为 Markdown
       </button>
 
       {#if hasSchedule}
@@ -534,6 +555,28 @@
     font-size: 16px;
     font-weight: 600;
     border-radius: var(--radius);
+  }
+  .export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .export-btn:active {
+    background: var(--bg-surface);
+    color: var(--text);
+    transform: scale(0.97);
   }
   .list {
     display: flex;
