@@ -162,7 +162,7 @@ function computeMastery(tag, progress) {
 
 /** Get category group mapping for each tag */
 function getTagCategoryMap() {
-  const map = {};
+  const map = Object.create(null);
   for (const q of questions) {
     for (const t of q.tags) {
       if (!map[t]) map[t] = new Set();
@@ -592,7 +592,7 @@ export const api = {
     /** List all knowledge points (from tags), with counts, mastery, and hasContent flag */
     list() {
       const progress = getProgress();
-      const tagMap = {};
+      const tagMap = Object.create(null);
       const tagCategories = getTagCategoryMap();
 
       for (const q of questions) {

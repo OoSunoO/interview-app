@@ -3930,7 +3930,7 @@ export function getKnowledgeForTag(tag) {
  * relatedQuestionIds filled from the actual question data (imported lazily).
  */
 export function buildKnowledgeMap(questions) {
-  const map = {};
+  const map = Object.create(null);
 
   // First pass: accumulate question IDs per tag
   for (const q of questions) {
