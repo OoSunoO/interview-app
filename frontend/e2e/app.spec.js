@@ -313,6 +313,22 @@ test.describe("Review Session (SM-2)", () => {
     const isEmpty = await page.getByText("暂无待复习题目").isVisible().catch(() => false);
     expect(hasCard || isEmpty).toBe(true);
   });
+
+  test("Escape key exits active session back to home", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    await page.getByRole("button", { name: /间隔复习/ }).click();
+    await page.waitForTimeout(200);
+    await page.getByRole("button", { name: "10" }).click();
+    await page.getByRole("button", { name: "开始复习" }).click();
+    await page.waitForTimeout(300);
+    const hasCard = await page.getByText("查看答案").isVisible().catch(() => false);
+    const isEmpty = await page.getByText("暂无待复习题目").isVisible().catch(() => false);
+    if (!hasCard && isEmpty) return;
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+    await expect(page.getByRole("button", { name: /间隔复习/ })).toBeVisible({ timeout: 3000 });
+  });
 });
 
 test.describe("QuickReview", () => {
