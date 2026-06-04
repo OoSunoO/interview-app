@@ -4,7 +4,7 @@
    * Card-based review with 4-level self-rating and SM-2 scheduling.
    * Session save/resume via localStorage.
    */
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import { RATINGS } from "../lib/sm2.js";
@@ -117,7 +117,15 @@
     try { localStorage.removeItem(SAVE_KEY); } catch { /* ignore */ }
   }
 
+  function handleKeydown(e) {
+    if (phase !== "active" || !showAnswer) return;
+    const map = { "1": "forgot", "2": "hard", "3": "good", "4": "easy" };
+    const rating = map[e.key];
+    if (rating) { e.preventDefault(); rate(rating); }
+  }
+
   onMount(async () => {
+    window.addEventListener("keydown", handleKeydown);
     const saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
       try {
@@ -129,6 +137,10 @@
       } catch { /* ignore */ }
     }
     phase = "setup";
+  });
+
+  onDestroy(() => {
+    window.removeEventListener("keydown", handleKeydown);
   });
 
   function revealAnswer() {
@@ -318,6 +330,7 @@
         <div class="rs-rate-area">
           <div class="rs-rate-btns">
             <button class="rs-rate-btn forgot" onclick={() => rate("forgot")}>
+              <span class="rs-rate-kbd">1</span>
               <span class="rs-rate-icon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -328,6 +341,7 @@
               <span class="rs-rate-sub">1 天后复习</span>
             </button>
             <button class="rs-rate-btn hard" onclick={() => rate("hard")}>
+              <span class="rs-rate-kbd">2</span>
               <span class="rs-rate-icon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -338,6 +352,7 @@
               <span class="rs-rate-sub">1 天后复习</span>
             </button>
             <button class="rs-rate-btn good" onclick={() => rate("good")}>
+              <span class="rs-rate-kbd">3</span>
               <span class="rs-rate-icon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -347,6 +362,7 @@
               <span class="rs-rate-sub">逐步延长</span>
             </button>
             <button class="rs-rate-btn easy" onclick={() => rate("easy")}>
+              <span class="rs-rate-kbd">4</span>
               <span class="rs-rate-icon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -647,6 +663,7 @@
     gap: 8px;
   }
   .rs-rate-btn {
+    position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -678,6 +695,23 @@
   .rs-rate-lbl {
     font-size: 13px;
     font-weight: 700;
+  }
+  .rs-rate-kbd {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    opacity: 0.6;
   }
   .rs-rate-sub {
     font-size: 10px;
