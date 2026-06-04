@@ -46,7 +46,7 @@ import { store } from "./lib/stores.svelte.js";
     {:else if page === "knowledge-detail"}
       <KnowledgePointDetail tag={selectedTag} onNavigate={navigate} />
     {:else if page === "stats"}
-      <Stats />
+      <Stats onNavigate={navigate} />
     {:else if page === "quick-review"}
       <QuickReview config={reviewConfig} onNavigate={navigate} />
     {:else if page === "review-session"}

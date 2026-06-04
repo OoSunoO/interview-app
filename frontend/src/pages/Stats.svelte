@@ -6,6 +6,8 @@
   import ProgressRing from "../components/ProgressRing.svelte";
   import CalendarHeatmap from "../components/CalendarHeatmap.svelte";
 
+  let { onNavigate } = $props();
+
   onMount(async () => {
     // refreshStats must resolve before rendering overview content
     await store.refreshStats();
@@ -27,6 +29,16 @@
   let history = $state([]);
 
   let stats = $derived(store.stats);
+
+  function goCategory(cat) {
+    store.filters.category = cat;
+    store.loadQuestions({ page: 1 });
+    onNavigate("browse");
+  }
+
+  function goTag(tag) {
+    onNavigate("knowledge-detail", { tag });
+  }
 
   let weakTags = $derived.by(() => {
     const count = {};
@@ -181,7 +193,7 @@
     <h2 class="section-title">各领域进度</h2>
     <div class="category-list">
       {#each Object.entries(stats.by_category) as [cat, data]}
-        <div class="category-item">
+        <div class="category-item clickable" role="button" tabindex="0" onclick={() => goCategory(cat)} onkeydown={(e) => e.key === 'Enter' && goCategory(cat)}>
           <div class="cat-header">
             <span class="cat-name">{categoryLabel(cat)}</span>
             <span class="cat-stat">{data.done}/{data.total}</span>
@@ -200,7 +212,7 @@
       <h2 class="section-title">薄弱领域</h2>
       <div class="weak-list">
         {#each weakCategories as c}
-          <div class="weak-item">
+          <div class="weak-item clickable" role="button" tabindex="0" onclick={() => goCategory(c.cat)} onkeydown={(e) => e.key === 'Enter' && goCategory(c.cat)}>
             <div class="weak-header">
               <span class="cat-name">{c.name}</span>
               <span class="weak-stat">{c.wrong} 道答错 / {c.total} 道</span>
@@ -217,7 +229,7 @@
       <h2 class="section-title">薄弱知识点</h2>
       <div class="tag-cloud">
         {#each weakTags as [tag, count]}
-          <span class="weak-tag" style="font-size: {Math.min(16, 12 + count * 2)}px">
+          <span class="weak-tag" style="font-size: {Math.min(16, 12 + count * 2)}px" role="button" tabindex="0" onclick={() => goTag(tag)} onkeydown={(e) => e.key === 'Enter' && goTag(tag)}>
             {tag}
             <span class="tag-count">{count}</span>
           </span>
@@ -485,6 +497,29 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
+  }
+  .weak-tag[role="button"] {
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .weak-tag[role="button"]:hover {
+    box-shadow: 0 0 8px rgba(252, 165, 165, 0.2);
+  }
+  .weak-tag[role="button"]:active {
+    transform: scale(0.92);
+  }
+  .category-item.clickable,
+  .weak-item.clickable {
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .category-item.clickable:hover,
+  .weak-item.clickable:hover {
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  }
+  .category-item.clickable:active,
+  .weak-item.clickable:active {
+    transform: scale(0.99);
   }
   .tag-count {
     background: #7f1d1d;
