@@ -395,4 +395,56 @@ describe("QuickReview", () => {
       expect(mockList).toHaveBeenCalled();
     });
   });
+
+  describe("history dialog", () => {
+    async function completeSession(page) {
+      mockList.mockReturnValue([LIGHT_Q1]);
+      mockGet.mockResolvedValueOnce(FULL_Q1);
+      render(QuickReview, { props: { config: {}, onNavigate } });
+      await waitFor(() => expect(screen.getByTestId("qr-card")).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId("qr-reveal-btn"));
+      await waitFor(() => expect(screen.getByTestId("qr-rate-remembered")).toBeInTheDocument());
+      fireEvent.click(screen.getByTestId("qr-rate-remembered"));
+      await waitFor(() => expect(screen.getByTestId("qr-summary")).toBeInTheDocument());
+    }
+
+    it("shows history button on summary page", async () => {
+      await completeSession();
+      expect(screen.getByText("历史记录")).toBeInTheDocument();
+    });
+
+    it("shows empty state when no history exists", async () => {
+      mockGetHistory.mockReturnValue([]);
+      await completeSession();
+      fireEvent.click(screen.getByText("历史记录"));
+      await waitFor(() => {
+        expect(screen.getByText("暂无记录")).toBeInTheDocument();
+      });
+    });
+
+    it("displays past session entries in the dialog", async () => {
+      mockGetHistory.mockReturnValue([
+        { date: new Date().toISOString(), total: 5, remembered: 3, forgot: 1, unsure: 1 },
+      ]);
+      await completeSession();
+      fireEvent.click(screen.getByText("历史记录"));
+      await waitFor(() => {
+        expect(screen.getByText("5 题")).toBeInTheDocument();
+      });
+      expect(screen.getByText("60%")).toBeInTheDocument();
+    });
+
+    it("clear button removes all history", async () => {
+      mockGetHistory.mockReturnValue([
+        { date: new Date().toISOString(), total: 3, remembered: 2, forgot: 1, unsure: 0 },
+      ]);
+      await completeSession();
+      fireEvent.click(screen.getByText("历史记录"));
+      await waitFor(() => {
+        expect(screen.getByText("3 题")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByText("清除历史"));
+      expect(mockClearHistory).toHaveBeenCalled();
+    });
+  });
 });
