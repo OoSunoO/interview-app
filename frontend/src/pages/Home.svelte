@@ -9,6 +9,7 @@
   let dueCount = $state(0);
   let loading = $state(true);
   let error = $state(null);
+  let reminderEnabled = $state(localStorage.getItem("review_reminder") !== "off");
 
   // ── Quick Review ──
   let showQRDialog = $state(false);
@@ -57,7 +58,24 @@
     }
   }
 
-  onMount(loadData);
+  onMount(async () => {
+    await loadData();
+    if (reminderEnabled && dueCount > 0 && "Notification" in window && Notification.permission === "granted") {
+      new Notification("📚 复习提醒", {
+        body: `你有 ${dueCount} 道题待复习，点击开始巩固吧！`,
+        icon: "/favicon.ico",
+        tag: "review-reminder",
+      });
+    }
+  });
+
+  function toggleReminder() {
+    reminderEnabled = !reminderEnabled;
+    localStorage.setItem("review_reminder", reminderEnabled ? "on" : "off");
+    if (reminderEnabled && "Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }
 
   // ── Quick Review ──
   function openQuickReview() {
@@ -207,6 +225,17 @@
           <span>掌握率 <strong>{store.dailyStats.retention}%</strong></span>
         </div>
       {/if}
+
+      <button class="reminder-toggle" onclick={toggleReminder}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class:off={!reminderEnabled}>
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+        复习提醒
+        <span class="toggle-dot" class:on={reminderEnabled} class:off={!reminderEnabled}></span>
+      </button>
 
       <div class="section-divider">
         <span class="section-dot"></span>
@@ -641,6 +670,45 @@
 .qr-entry-btn:active {
   transform: scale(0.97);
   background: var(--accent-bg);
+}
+
+/* ── Reminder Toggle ── */
+.reminder-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s var(--spring);
+}
+.reminder-toggle:active {
+  transform: scale(0.97);
+}
+.reminder-toggle svg.off {
+  opacity: 0.4;
+}
+.toggle-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: all 0.3s var(--spring);
+}
+.toggle-dot.on {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+}
+.toggle-dot.off {
+  background: var(--text-dim);
 }
 
 /* ── SM-2 Review Entry Button ── */
