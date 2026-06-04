@@ -105,17 +105,7 @@
     if (list.length === 0) return;
 
     // Show brief toast if filters are active
-    const hasFilters =
-      store.filters.category ||
-      store.filters.difficulty ||
-      store.filters.type ||
-      store.filters.status ||
-      store.filters.company ||
-      store.filters.tag ||
-      store.filters.search ||
-      store.filters.sort_by ||
-      store.filters.bookmarked;
-    if (hasFilters) {
+    if (hasActiveFilters) {
       showRandomHint = true;
       setTimeout(() => {
         showRandomHint = false;
