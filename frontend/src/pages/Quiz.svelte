@@ -643,7 +643,7 @@
           {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")}
         </span>
       {:else}
-        <span class="q-timer">{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
+        <span class="q-timer" class:warn={timer > 120} class:critical={timer > 300}>{Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}</span>
       {/if}
       <button
         class="quiz-bm-btn"
