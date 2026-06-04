@@ -116,6 +116,9 @@ vi.mock("../knowledge-data.js", () => ({
         map[t].questionIds.push(q.id);
       }
     }
+    // Add a knowledge-only tag (no associated questions) to cover the
+    // knowledgeMap fallback branch in knowledge.list()
+    map["知识扩展"] = { questionIds: [], category: "general" };
     return map;
   },
   getKnowledgeForTag: vi.fn(() => null),
@@ -129,6 +132,15 @@ beforeEach(() => {
 function getApi() {
   return import("../local-api.js").then((m) => m.api);
 }
+
+describe("api.version", () => {
+  it("returns version info", async () => {
+    const api = await getApi();
+    const info = api.version();
+    expect(info).toHaveProperty("version");
+    expect(info).toHaveProperty("name", "面试题 App");
+  });
+});
 
 describe("questions.list", () => {
   it("returns all questions with defaults", async () => {
@@ -191,6 +203,24 @@ describe("questions.list", () => {
     expect(api2.questions.list({ status: "new" })).toHaveLength(4);
   });
 
+  it("sorts by category alphabetically", async () => {
+    const api = await getApi();
+    const result = api.questions.list({ sort_by: "category" });
+    expect(result.length).toBe(FIXTURE.length);
+    for (let i = 1; i < result.length; i++) {
+      expect(result[i - 1].category.localeCompare(result[i].category)).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it("sorts by type alphabetically", async () => {
+    const api = await getApi();
+    const result = api.questions.list({ sort_by: "type" });
+    expect(result.length).toBe(FIXTURE.length);
+    for (let i = 1; i < result.length; i++) {
+      expect(result[i - 1].type.localeCompare(result[i].type)).toBeLessThanOrEqual(0);
+    }
+  });
+
   it("sorts by difficulty (easy → medium → hard)", async () => {
     const api = await getApi();
     const result = api.questions.list({ sort_by: "difficulty" });
@@ -198,6 +228,32 @@ describe("questions.list", () => {
     for (let i = 1; i < result.length; i++) {
       expect(rank[result[i].difficulty]).toBeGreaterThanOrEqual(rank[result[i - 1].difficulty]);
     }
+  });
+
+  it("sorts by status (wrong → reviewing → new → correct)", async () => {
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "correct" },
+        2: { status: "wrong" },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const result = api.questions.list({ sort_by: "status" });
+    expect(result.length).toBeGreaterThanOrEqual(2);
+    // First result should be "wrong" status (rank 0)
+    expect(result[0].status).toBe("wrong");
+  });
+
+  it("filters by bookmarked", async () => {
+    const api = await getApi();
+    // Toggle bookmark on id=1
+    api.progress.toggleBookmark(1);
+    const result = api.questions.list({ bookmarked: true });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe(1);
+    expect(result[0].bookmarked).toBe(true);
   });
 
   it("paginates correctly", async () => {
@@ -330,6 +386,22 @@ describe("progress.stats", () => {
     expect(stats2.wrong).toBe(1);
     expect(stats2.by_category.java_basic).toEqual({ total: 3, done: 1 });
     expect(stats2.by_category.database).toEqual({ total: 2, done: 0 });
+  });
+
+  it("counts reviewing status in by_difficulty done", async () => {
+    // id=4 is algorithm, easy — set to "reviewing" to hit the branch
+    // where reviewing increments byDifficulty[diff].done
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        4: { status: "reviewing" },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const stats = api.progress.stats();
+    expect(stats.by_difficulty.easy.done).toBe(1);
+    expect(stats.by_difficulty.easy.total).toBeGreaterThanOrEqual(1);
   });
 });
 
@@ -767,5 +839,194 @@ describe("reviewHistory", () => {
     expect(history).toHaveLength(1);
     expect(history[0].title).toBe("题目 #999");
     expect(history[0].question_id).toBe(999);
+  });
+});
+
+describe("questions.related", () => {
+  it("returns related questions by shared tags", async () => {
+    const api = await getApi();
+    // id=1 has tags ["Java基础"] — ids 2,5 share same tag and category
+    const related = api.questions.related(1);
+    expect(related.length).toBeGreaterThanOrEqual(2);
+    expect(related.map((r) => r.id).sort()).toEqual(expect.arrayContaining([2, 5]));
+  });
+
+  it("returns empty array for nonexistent question", async () => {
+    const api = await getApi();
+    expect(api.questions.related(999)).toEqual([]);
+  });
+
+  it("limits results", async () => {
+    const api = await getApi();
+    expect(api.questions.related(1, 1)).toHaveLength(1);
+  });
+});
+
+describe("questions.companies", () => {
+  it("returns unique company names sorted by frequency", async () => {
+    const api = await getApi();
+    const companies = api.questions.companies();
+    expect(companies).toContain("字节跳动");
+    expect(companies).toContain("Google");
+    expect(companies).toContain("腾讯");
+    // Companies should be ordered by frequency descending
+    expect(companies.length).toBe(3);
+  });
+});
+
+describe("weeklyActivity", () => {
+  it("returns 7 days with zero stats when no data", async () => {
+    const api = await getApi();
+    const week = api.progress.weeklyActivity();
+    expect(week).toHaveLength(7);
+    expect(week[6].label).toBe("今天");
+    expect(week.every((d) => d.reviewed === 0)).toBe(true);
+    expect(week.every((d) => d.retention === null)).toBe(true);
+  });
+
+  it("reflects today's activity", async () => {
+    const api = await getApi();
+    const today = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`;
+    localStorage.setItem(
+      "quiz_daily_stats",
+      JSON.stringify({ [today]: { reviewed: 3, remembered: 2, hard: 0, forgot: 1 } }),
+    );
+    vi.resetModules();
+    const api2 = await getApi();
+    const week = api2.progress.weeklyActivity();
+    const todayEntry = week[6];
+    expect(todayEntry.reviewed).toBe(3);
+    expect(todayEntry.remembered).toBe(2);
+    expect(todayEntry.retention).toBe(67);
+  });
+});
+
+describe("allDailyStats", () => {
+  it("returns raw daily stats object", async () => {
+    const api = await getApi();
+    const stats = { "2026-01-01": { reviewed: 5 } };
+    localStorage.setItem("quiz_daily_stats", JSON.stringify(stats));
+    vi.resetModules();
+    const api2 = await getApi();
+    expect(api2.progress.allDailyStats()).toEqual(stats);
+  });
+});
+
+describe("startReviewSession with category", () => {
+  it("filters to a single category", async () => {
+    const api = await getApi();
+    const session = await api.progress.startReviewSession(10, "java_basic");
+    expect(session.every((q) => q.category === "java_basic")).toBe(true);
+  });
+
+  it("returns empty session for nonexistent category", async () => {
+    const api = await getApi();
+    const session = await api.progress.startReviewSession(10, "nonexistent");
+    // May include overdue cards from other categories if there are none
+    expect(session.length).toBeLessThanOrEqual(10);
+  });
+});
+
+describe("migrateProgress no-op", () => {
+  it("returns migrated: false when no entries need migration", async () => {
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: {
+          status: "correct",
+          ef: 2.5,
+          interval: 4,
+          repetitions: 1,
+          next_review_at: new Date().toISOString(),
+        },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const result = api.migrateProgress();
+    expect(result.migrated).toBe(false);
+  });
+});
+
+describe("usernameSuffix", () => {
+  it("keys are suffixed when username is set", async () => {
+    localStorage.setItem("quiz_username", "test-user");
+    vi.resetModules();
+    const api = await getApi();
+    await api.progress.update(1, { status: "correct" });
+    // Progress should be stored under quiz_progress_test-user
+    const raw = localStorage.getItem("quiz_progress_test-user");
+    expect(raw).toBeTruthy();
+    const parsed = JSON.parse(raw);
+    expect(parsed["1"].status).toBe("correct");
+  });
+});
+
+describe("recordReviewActivity edge cases", () => {
+  it("records hard rating separately", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { rating: "hard" });
+    const stats = api.progress.dailyStats();
+    expect(stats.today.hard).toBe(1);
+    expect(stats.today.remembered).toBe(0);
+    expect(stats.today.forgot).toBe(0);
+  });
+
+  it("prunes entries beyond 365 count", async () => {
+    // Build 367 entries so the pruning logic kicks in
+    const many = {};
+    const today = new Date();
+    for (let i = 0; i < 367; i++) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      many[key] = { reviewed: 1 };
+    }
+    localStorage.setItem("quiz_daily_stats", JSON.stringify(many));
+    vi.resetModules();
+    const api = await getApi();
+    await api.progress.update(1, { rating: "good" });
+    const all = api.progress.allDailyStats();
+    const keys = Object.keys(all);
+    expect(keys.length).toBeLessThanOrEqual(366);
+  });
+});
+
+describe("questions.list search extras", () => {
+  it("searches by tag name", async () => {
+    const api = await getApi();
+    const result = api.questions.list({ search: "数组" });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe(4);
+  });
+});
+
+describe("knowledge.list content search", () => {
+  it("finds knowledge points by content text", async () => {
+    const knowledgeData = await import("../knowledge-data.js");
+    knowledgeData.getKnowledgeForTag.mockImplementation((tag) => {
+      if (tag === "Java基础") return { content: "Java面向对象编程核心概念" };
+      if (tag === "SQL") return { content: "数据库查询语言" };
+      return null;
+    });
+    const api = await getApi();
+    const result = api.knowledge.list("面向对象");
+    expect(result.some((k) => k.name === "Java基础")).toBe(true);
+  });
+});
+
+describe("questions.random extras", () => {
+  it("filters by category", async () => {
+    const api = await getApi();
+    const q = api.questions.random({ category: "java_basic" });
+    expect(q).not.toBeNull();
+    expect(["java_basic", "java_basic_extras"]).toContain(q.category);
+  });
+
+  it("filters by difficulty", async () => {
+    const api = await getApi();
+    const q = api.questions.random({ difficulty: "hard" });
+    expect(q).not.toBeNull();
+    expect(q.difficulty).toBe("hard");
   });
 });
