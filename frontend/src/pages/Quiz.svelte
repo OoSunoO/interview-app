@@ -366,6 +366,7 @@
     store.advanceQuiz();
     const nextId = store.quizSession[store.quizIndex].id;
     resetState();
+    window.scrollTo({ top: 0, behavior: "smooth" });
     await loadQuestionById(nextId);
   }
 
@@ -374,6 +375,7 @@
     store.retreatQuiz();
     const prevId = store.quizSession[store.quizIndex].id;
     resetState();
+    window.scrollTo({ top: 0, behavior: "smooth" });
     await loadQuestionById(prevId);
   }
 
