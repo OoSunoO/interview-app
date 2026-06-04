@@ -28,6 +28,35 @@
   let allDaily = $state(null);
   let history = $state([]);
 
+  let trendLayout = $derived.by(() => {
+    if (!trendData || trendData.length < 2) return null;
+    const w = 340, h = 120, padL = 30, padR = 8, padT = 8, padB = 20;
+    const chartW = w - padL - padR, chartH = h - padT - padB;
+    const step = chartW / Math.max(trendData.length - 1, 1);
+    const points = trendData.map((d, i) => `${padL + i * step},${padT + chartH - (d.retention / 100) * chartH}`).join(' ');
+    return { w, h, padL, padR, padT, padB, chartW, chartH, step, points, gridY: [0, 25, 50, 75, 100] };
+  });
+
+  let trendData = $derived.by(() => {
+    if (!allDaily) return [];
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      const day = allDaily[key];
+      if (day && day.reviewed > 0) {
+        days.push({
+          date: key,
+          label: `${d.getMonth() + 1}/${d.getDate()}`,
+          retention: Math.round((day.remembered / day.reviewed) * 100),
+          reviewed: day.reviewed,
+        });
+      }
+    }
+    return days;
+  });
+
   let stats = $derived(store.stats);
 
   function goCategory(cat) {
@@ -156,6 +185,38 @@
           <span class="daily-lbl">连续天数</span>
         </div>
       </div>
+
+      {#if trendData.length > 0}
+        <h2 class="section-title">近 30 天掌握率趋势</h2>
+        <div class="trend-chart-wrap">
+          {#if trendLayout}
+            {@const { w, h, padL, padR, padT, padB, chartW, chartH, step, points, gridY } = trendLayout}
+            <svg viewBox="0 0 {w} {h}" class="trend-chart">
+              <!-- Grid lines -->
+              {#each gridY as pct}
+                <line x1={padL} y1={padT + chartH - (pct / 100) * chartH} x2={w - padR} y2={padT + chartH - (pct / 100) * chartH} stroke="currentColor" stroke-opacity="0.08" stroke-width="1" />
+                <text x={padL - 4} y={padT + chartH - (pct / 100) * chartH + 3} text-anchor="end" fill="currentColor" fill-opacity="0.4" font-size="8">{pct}%</text>
+              {/each}
+              <!-- Area fill -->
+              <path d="M{points} L{padL + (trendData.length - 1) * step},{padT + chartH} L{padL},{padT + chartH}Z" fill="var(--accent)" fill-opacity="0.1" />
+              <!-- Line -->
+              <polyline points={points} fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <!-- Dots -->
+              {#each trendData as d, i}
+                <circle cx={padL + i * step} cy={padT + chartH - (d.retention / 100) * chartH} r="2.5" fill="var(--accent)" />
+              {/each}
+              <!-- X labels (first, last, and one mid) -->
+              <text x={padL} y={h - 2} text-anchor="start" fill="currentColor" fill-opacity="0.4" font-size="8">{trendData[0].label}</text>
+              {#if trendData.length > 2}
+                <text x={padL + chartW / 2} y={h - 2} text-anchor="middle" fill="currentColor" fill-opacity="0.4" font-size="8">{trendData[Math.floor(trendData.length / 2)].label}</text>
+              {/if}
+              <text x={padL + (trendData.length - 1) * step} y={h - 2} text-anchor="end" fill="currentColor" fill-opacity="0.4" font-size="8">{trendData[trendData.length - 1].label}</text>
+            </svg>
+          {:else if trendData.length === 1}
+            <div class="trend-single">今日掌握率：{trendData[0].retention}%（{trendData[0].reviewed} 题）</div>
+          {/if}
+        </div>
+      {/if}
 
       {#if allDaily}
         <h2 class="section-title">年度活动</h2>
@@ -580,6 +641,26 @@
     color: var(--text-muted);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Retention Trend ── */
+  .trend-chart-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px;
+    overflow: hidden;
+  }
+  .trend-chart {
+    width: 100%;
+    height: 120px;
+    display: block;
+  }
+  .trend-single {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 12px;
   }
 
   /* ── Review History ── */
