@@ -1356,6 +1356,9 @@
     "hints": [
       "WeakHashMap 的 Key 使用 WeakReference 包装",
       "当 Key 只有 WeakReference 指向时，下次 GC 就会回收 Entry"
+    ],
+    "tags": [
+      "java_collections"
     ]
   },
   {
@@ -1369,6 +1372,9 @@
     "hints": [
       "跳表是一种多层链表结构，支持 O(log n) 的查找、插入和删除",
       "ConcurrentSkipListMap 是有序的并发 Map（不需要锁的树结构）"
+    ],
+    "tags": [
+      "java_collections"
     ]
   },
   {
@@ -1382,6 +1388,9 @@
     "hints": [
       "unmodifiableMap 返回的是原 Map 的视图包装器，底层仍然是原 Map",
       "对视图调用修改方法会抛 UnsupportedOperationException（不是被忽略）"
+    ],
+    "tags": [
+      "java_collections"
     ]
   },
   {
@@ -1395,6 +1404,9 @@
     "hints": [
       "EnumMap 内部使用两个长度等于 enum 常量个数的数组（keys[] 和 values[]）",
       "因为 enum 的 ordinal 是连续的整数，可以直接作为数组下标访问"
+    ],
+    "tags": [
+      "java_collections"
     ]
   },
   {
@@ -1408,6 +1420,9 @@
     "hints": [
       "TreeSet 内部使用 TreeMap 作为底层存储（TreeSet 是 TreeMap 的包装）",
       "TreeMap 使用红黑树实现，所以 TreeSet 也是红黑树"
+    ],
+    "tags": [
+      "java_collections"
     ]
   },
   {

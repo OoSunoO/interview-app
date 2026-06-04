@@ -1353,6 +1353,9 @@
     "hints": [
       "volatile 写 = 释放语义（Release），volatile 读 = 获取语义（Acquire）",
       "volatile 禁止指令重排序（LoadLoad/StoreStore/LoadStore/StoreLoad 屏障）"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1366,6 +1369,9 @@
     "hints": [
       "DelayQueue 内部使用小顶堆（PriorityQueue）实现，堆顶是最早到期的任务",
       "每次从队列中取任务时检查堆顶任务的延迟时间是否已到"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1379,6 +1385,9 @@
     "hints": [
       "工作线程用自己的 LIFO 栈（尾部），窃取时从对方队列的头部（FIFO）",
       "这种设计减少窃取时的竞争（窃取者和所有者操作队列的不同端）"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1392,6 +1401,9 @@
     "hints": [
       "Entry 继承 WeakReference<ThreadLocal>，Key 是弱引用可被 GC 回收",
       "但 Value 是强引用且 Entry 在线程池的线程中长期存活 → Value 泄漏"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1405,6 +1417,9 @@
     "hints": [
       "AQS 先尝试 CAS 获取锁（快速路径），失败后才进入等待队列",
       "这种设计减少了锁竞争不激烈时的入队开销"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {

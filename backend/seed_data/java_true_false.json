@@ -1106,6 +1106,9 @@
     "hints": [
       "Java 要求类必须显式重写冲突的默认方法来解决二义性",
       "通过 接口名.super.方法名() 语法指定调用的具体实现"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1118,6 +1121,9 @@
     "hints": [
       "Integer.valueOf() 使用缓存池（可配置 -XX:AutoBoxCacheMax 调整上限）",
       "自动装箱使用 valueOf()，所以 -128~127 的 Integer 使用 == 比较相等"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1130,6 +1136,9 @@
     "hints": [
       "try-with-resources 的 close() 异常被压制（添加为 try 块异常的 suppressed 异常）",
       "可以通过 Throwable.getSuppressed() 获取所有被压制的异常"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1142,6 +1151,9 @@
     "hints": [
       "Math.round() 对正数：加 0.5 后向下取整；对负数：加 0.5 后向下取整",
       "-11.5 + 0.5 = -11.0，向下取整为 -11"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {
@@ -1154,6 +1166,9 @@
     "hints": [
       "subList() 返回的是原 List 的 SubList 视图（内部视图类），不是独立副本",
       "对 SubList 的修改会反映到原 List 上"
+    ],
+    "tags": [
+      "java"
     ]
   },
   {

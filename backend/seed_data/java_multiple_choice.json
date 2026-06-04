@@ -1416,6 +1416,9 @@
     "hints": [
       "所有选项都是 Java 中创建对象的合法方式",
       "new 和反射（newInstance）会调用构造器，clone 和 Unsafe 不调用构造器"
+    ],
+    "tags": [
+      "java_multiple"
     ]
   },
   {
@@ -1432,6 +1435,9 @@
     "hints": [
       "Lambda 捕获的局部变量必须是 effectively final（或事实上的 final）",
       "Lambda 本质是函数式接口的匿名实现，不能有默认方法"
+    ],
+    "tags": [
+      "java_multiple"
     ]
   },
   {
@@ -1450,6 +1456,9 @@
     "hints": [
       "A-D 都是不可变类的必要条件（保护性拷贝返回引用类型字段）",
       "Serializable 不是不可变类的必要条件"
+    ],
+    "tags": [
+      "java_multiple"
     ]
   },
   {
@@ -1467,6 +1476,9 @@
     "hints": [
       "中间操作返回新的 Stream，延迟执行（惰性求值），直到遇到终止操作才执行",
       "collect() 和 forEach() 是终止操作（Terminal Operation），触发 Stream 执行"
+    ],
+    "tags": [
+      "java_multiple"
     ]
   },
   {
@@ -1484,6 +1496,9 @@
     "hints": [
       "ServiceLoader 基于约定：META-INF/services/接口全限定名 文件列出实现类",
       "ServiceLoader 不是线程安全的，且不支持卸载已加载的服务"
+    ],
+    "tags": [
+      "java_multiple"
     ]
   },
   {
