@@ -97,6 +97,7 @@
       wrongList = await api.progress.wrong();
       allDaily = await api.progress.allDailyStats();
       history = await api.progress.reviewHistory(30);
+      qrHistory = api.quickReview.getHistory();
     } catch (e) {
       // wrongList stays empty on error — weak sections gracefully show nothing
     }
@@ -107,6 +108,7 @@
   let weeklyData = $state([]);
   let allDaily = $state(null);
   let history = $state([]);
+  let qrHistory = $state([]);
 
   let trendLayout = $derived.by(() => {
     if (!trendData || trendData.length < 2) return null;
@@ -147,6 +149,16 @@
 
   function goTag(tag) {
     onNavigate("knowledge-detail", { tag });
+  }
+
+  function formatQRDate(iso) {
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return "刚刚";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+    return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
   }
 
   let weakTags = $derived.by(() => {
@@ -422,12 +434,64 @@
             <span class="history-meta">
               {#if s.category}{categoryLabel(s.category)}{/if}
               {#if s.difficulty}<span class="tag diff {s.difficulty}" style="margin-left:4px">{s.difficulty}</span>{/if}
+              {#if s.source === "quick_review"}
+                <span class="qr-badge">速记</span>
+              {/if}
             </span>
             <span class="history-time">
               {new Date(s.reviewed_at).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}
             </span>
           </div>
         {/each}
+      </div>
+    {/if}
+
+    {#if qrHistory.length > 0}
+      {@const qrTotal = qrHistory.length}
+      {@const qrReviewed = qrHistory.reduce((sum, s) => sum + s.total, 0)}
+      {@const qrRemembered = qrHistory.reduce((sum, s) => sum + (s.remembered || 0), 0)}
+      {@const qrRate = qrReviewed > 0 ? Math.round((qrRemembered / qrReviewed) * 100) : 0}
+      <h2 class="section-title">速记记录</h2>
+      <div class="qr-summary">
+        <div class="qr-summary-item">
+          <span class="qr-summary-num">{qrTotal}</span>
+          <span class="qr-summary-label">总次数</span>
+        </div>
+        <div class="qr-summary-item">
+          <span class="qr-summary-num">{qrReviewed}</span>
+          <span class="qr-summary-label">复习题数</span>
+        </div>
+        <div class="qr-summary-item">
+          <span class="qr-summary-num" class:qr-rate-good={qrRate >= 70} class:qr-rate-ok={qrRate >= 40 && qrRate < 70}>{qrRate}%</span>
+          <span class="qr-summary-label">平均掌握率</span>
+        </div>
+      </div>
+      <div class="qr-history-list">
+        {#each qrHistory.slice(0, 20) as session}
+          {@const mastered = session.remembered || 0}
+          {@const consolidate = session.unsure || 0}
+          {@const review = session.forgot || 0}
+          <div class="qr-history-item">
+            <span class="qr-history-date">{formatQRDate(session.date)}</span>
+            <span class="qr-history-counts">
+              <span class="qr-badge qr-mastered" title="已掌握">{mastered}</span>
+              <span class="qr-count-sep">/</span>
+              <span class="qr-badge qr-consolidate" title="待巩固">{consolidate}</span>
+              <span class="qr-count-sep">/</span>
+              <span class="qr-badge qr-review" title="需复习">{review}</span>
+              <span class="qr-history-total">共 {session.total} 题</span>
+            </span>
+            <span class="qr-history-rate" class:qr-rate-good={(mastered / session.total) * 100 >= 70}>
+              {Math.round((mastered / session.total) * 100)}%
+            </span>
+          </div>
+        {/each}
+      </div>
+      <div class="qr-nav">
+        <button class="qr-nav-btn" onclick={() => onNavigate("quick-review")}>
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+          去速记
+        </button>
       </div>
     {/if}
 
@@ -1101,6 +1165,119 @@
   }
 
   /* ── Mobile ── */
+  /* ── QuickReview History ── */
+  .qr-summary {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .qr-summary-item {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+  }
+  .qr-summary-num {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .qr-summary-num.qr-rate-good {
+    color: var(--success);
+  }
+  .qr-summary-num.qr-rate-ok {
+    color: var(--warning);
+  }
+  .qr-summary-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .qr-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+  .qr-history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+  }
+  .qr-history-date {
+    color: var(--text-muted);
+    font-size: 12px;
+    min-width: 60px;
+  }
+  .qr-history-counts {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex: 1;
+  }
+  .qr-count-sep {
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+  .qr-history-total {
+    color: var(--text-dim);
+    font-size: 11px;
+    margin-left: 6px;
+  }
+  .qr-history-rate {
+    font-weight: 700;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+  }
+  .qr-history-rate.qr-rate-good {
+    color: var(--success);
+  }
+  .qr-nav {
+    display: flex;
+    margin-bottom: 4px;
+  }
+  .qr-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .qr-nav-btn:active {
+    transform: scale(0.96);
+  }
+  .qr-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .history-meta .qr-badge {
+    margin-left: 4px;
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
   @media (max-width: 480px) {
     .overview {
       gap: 8px;
