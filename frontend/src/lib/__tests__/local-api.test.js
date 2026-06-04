@@ -82,7 +82,29 @@ const FIXTURE = [
   },
 ];
 
-vi.mock("../question-data/index.js", () => ({ questions: FIXTURE }));
+const FIXTURE_INDEX = FIXTURE.map((q) => ({
+  id: q.id,
+  category: q.category,
+  difficulty: q.difficulty,
+  type: q.type,
+  title: q.title,
+  tags: q.tags || [],
+  company: q.company || "",
+}));
+
+vi.mock("../question-data/index.js", () => ({
+  questionIndex: FIXTURE_INDEX,
+  // Pre-populated full data for methods that need it (get, startReviewSession, etc.)
+  questions: FIXTURE,
+  categoryIndex: Object.fromEntries(
+    [...new Set(FIXTURE.map((q) => q.category))].map((cat) => [
+      cat,
+      FIXTURE.filter((q) => q.category === cat),
+    ]),
+  ),
+  loadCategory: vi.fn(async () => {}),
+  loadAll: vi.fn(async () => {}),
+}));
 
 vi.mock("../knowledge-data.js", () => ({
   buildKnowledgeMap: (questions) => {
@@ -138,12 +160,12 @@ describe("questions.list", () => {
     expect(api.questions.list({ type: "choice" })).toHaveLength(1);
   });
 
-  it("filters by search matching title, content, tags, or answer", async () => {
+  it("filters by search matching title, tags, or answer", async () => {
     const api = await getApi();
     expect(api.questions.list({ search: "Java" })).toHaveLength(3);
     expect(api.questions.list({ search: "SQL" })).toHaveLength(1);
     expect(api.questions.list({ search: "数组" })).toHaveLength(1); // matches tags
-    expect(api.questions.list({ search: "求和" })).toHaveLength(1); // matches content
+    expect(api.questions.list({ search: "两数" })).toHaveLength(1); // matches title
   });
 
   it("filters by company", async () => {
@@ -197,7 +219,7 @@ describe("questions.list", () => {
 describe("questions.get", () => {
   it("returns full question detail", async () => {
     const api = await getApi();
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.title).toBe("Java是什么");
     expect(q.content).toBe("问Java核心");
     expect(q).toHaveProperty("status", "new");
@@ -209,7 +231,7 @@ describe("questions.get", () => {
 
   it("throws for missing question", async () => {
     const api = await getApi();
-    expect(() => api.questions.get(999)).toThrow("Question 999 not found");
+    await expect(api.questions.get(999)).rejects.toThrow("Question 999 not found");
   });
 });
 
@@ -254,7 +276,7 @@ describe("progress.update", () => {
   it("marks correct on new question", async () => {
     const api = await getApi();
     await api.progress.update(1, { status: "correct", duration_seconds: 10 });
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.status).toBe("correct");
     expect(q.wrong_count).toBe(0);
   });
@@ -262,7 +284,7 @@ describe("progress.update", () => {
   it("marks wrong on new question", async () => {
     const api = await getApi();
     await api.progress.update(1, { status: "wrong", duration_seconds: 5 });
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.status).toBe("wrong");
     expect(q.wrong_count).toBe(1);
   });
@@ -271,7 +293,7 @@ describe("progress.update", () => {
     const api = await getApi();
     await api.progress.update(1, { status: "wrong" });
     await api.progress.update(1, { status: "correct" });
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.status).toBe("reviewing");
     expect(q.wrong_count).toBe(1); // same wrong count
   });
@@ -280,7 +302,7 @@ describe("progress.update", () => {
     const api = await getApi();
     await api.progress.update(1, { status: "wrong" });
     await api.progress.update(1, { status: "wrong" });
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.wrong_count).toBe(2);
   });
 });
@@ -397,7 +419,7 @@ describe("SM-2 progress.update with rating", () => {
   it("stores SM-2 fields after good rating", async () => {
     const api = await getApi();
     await api.progress.update(1, { rating: "good" });
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.ef).toBeGreaterThanOrEqual(1.3);
     expect(q.interval).toBe(1);
     expect(q.repetitions).toBe(1);
@@ -408,7 +430,7 @@ describe("SM-2 progress.update with rating", () => {
     const api = await getApi();
     await api.progress.update(1, { rating: "good" }); // reps: 1
     await api.progress.update(1, { rating: "forgot" }); // should reset
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.repetitions).toBe(0);
     expect(q.interval).toBe(1);
   });
@@ -417,7 +439,7 @@ describe("SM-2 progress.update with rating", () => {
     const api = await getApi();
     await api.progress.update(1, { rating: "good" }); // interval: 1
     await api.progress.update(1, { rating: "good" }); // interval: 6
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.interval).toBe(6);
     expect(q.repetitions).toBe(2);
   });
@@ -425,14 +447,14 @@ describe("SM-2 progress.update with rating", () => {
   it("writes ef from sm2 calculation (good=quality 4, ef stays 2.5)", async () => {
     const api = await getApi();
     await api.progress.update(1, { rating: "good" });
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.ef).toBe(2.5);
   });
 
   it("accepts rating from status fallback", async () => {
     const api = await getApi();
     await api.progress.update(1, { status: "correct" });
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.ef).toBeDefined();
     expect(q.interval).toBe(1);
   });
@@ -478,7 +500,7 @@ describe("dailyStats", () => {
 describe("startReviewSession", () => {
   it("returns new cards when no progress exists", async () => {
     const api = await getApi();
-    const session = api.progress.startReviewSession(3);
+    const session = await api.progress.startReviewSession(3);
     expect(session.length).toBe(3);
     expect(session.every((q) => q.id)).toBe(true);
   });
@@ -500,7 +522,7 @@ describe("startReviewSession", () => {
     );
     vi.resetModules();
     const api = await getApi();
-    const session = api.progress.startReviewSession(3);
+    const session = await api.progress.startReviewSession(3);
     // Session includes the overdue card plus new cards
     expect(session.length).toBe(3);
     expect(session.find((q) => q.id === 1)).toBeDefined();
@@ -550,7 +572,7 @@ describe("dueReviews with SM-2", () => {
 describe("exportMarkdown", () => {
   it("generates markdown for given question ids", async () => {
     const api = await getApi();
-    const md = api.exportMarkdown([1, 4]);
+    const md = await api.exportMarkdown([1, 4]);
     expect(md).toContain("Java是什么");
     expect(md).toContain("两数之和");
     expect(md).not.toContain("SQL优化");
@@ -558,7 +580,7 @@ describe("exportMarkdown", () => {
 
   it("includes options for choice questions", async () => {
     const api = await getApi();
-    const md = api.exportMarkdown([2]);
+    const md = await api.exportMarkdown([2]);
     expect(md).toContain("Java选择");
     expect(md).toContain("选项");
     expect(md).toContain("A) a");
@@ -569,7 +591,7 @@ describe("exportMarkdown", () => {
 describe("knowledge.get", () => {
   it("returns detail for a specific tag", async () => {
     const api = await getApi();
-    const detail = api.knowledge.get("Java基础");
+    const detail = await api.knowledge.get("Java基础");
     expect(detail.name).toBe("Java基础");
     expect(detail.question_count).toBeGreaterThan(0);
     expect(detail).toHaveProperty("mastery");
@@ -582,7 +604,7 @@ describe("knowledge.get", () => {
 
   it("returns empty questions for unknown tag", async () => {
     const api = await getApi();
-    const detail = api.knowledge.get("nonexistent-tag");
+    const detail = await api.knowledge.get("nonexistent-tag");
     expect(detail.name).toBe("nonexistent-tag");
     expect(detail.question_count).toBe(0);
     expect(detail.questions).toEqual([]);
@@ -613,7 +635,7 @@ describe("toggleBookmark", () => {
     const api = await getApi();
     const result = api.progress.toggleBookmark(1);
     expect(result).toBe(true);
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.bookmarked).toBe(true);
   });
 
@@ -622,7 +644,7 @@ describe("toggleBookmark", () => {
     api.progress.toggleBookmark(1); // bookmark
     const result = api.progress.toggleBookmark(1); // unbookmark
     expect(result).toBe(false);
-    const q = api.questions.get(1);
+    const q = await api.questions.get(1);
     expect(q.bookmarked).toBe(false);
   });
 
@@ -630,9 +652,9 @@ describe("toggleBookmark", () => {
     const api = await getApi();
     api.progress.toggleBookmark(1);
     api.progress.toggleBookmark(3);
-    expect(api.questions.get(1).bookmarked).toBe(true);
-    expect(api.questions.get(3).bookmarked).toBe(true);
-    expect(api.questions.get(2).bookmarked).toBeFalsy();
+    expect((await api.questions.get(1)).bookmarked).toBe(true);
+    expect((await api.questions.get(3)).bookmarked).toBe(true);
+    expect((await api.questions.get(2)).bookmarked).toBeFalsy();
   });
 });
 

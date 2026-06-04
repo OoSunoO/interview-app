@@ -27,7 +27,28 @@ const FIXTURE = [
   },
 ];
 
-vi.mock("../question-data/index.js", () => ({ questions: FIXTURE }));
+const FIXTURE_INDEX = FIXTURE.map((q) => ({
+  id: q.id,
+  category: q.category,
+  difficulty: q.difficulty,
+  type: q.type,
+  title: q.title,
+  tags: q.tags || [],
+  company: q.company || "",
+}));
+
+vi.mock("../question-data/index.js", () => ({
+  questionIndex: FIXTURE_INDEX,
+  questions: FIXTURE,
+  categoryIndex: Object.fromEntries(
+    [...new Set(FIXTURE.map((q) => q.category))].map((cat) => [
+      cat,
+      FIXTURE.filter((q) => q.category === cat),
+    ]),
+  ),
+  loadCategory: vi.fn(async () => {}),
+  loadAll: vi.fn(async () => {}),
+}));
 vi.mock("../knowledge-data.js", () => ({
   buildKnowledgeMap: () => ({}),
   getKnowledgeForTag: () => null,

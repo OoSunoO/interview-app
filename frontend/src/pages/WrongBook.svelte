@@ -219,9 +219,9 @@
     }
   }
 
-  function exportWrongAsMarkdown() {
+  async function exportWrongAsMarkdown() {
     const ids = wrongQuestions.map((q) => q.id);
-    const md = api.exportMarkdown(ids);
+    const md = await api.exportMarkdown(ids);
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

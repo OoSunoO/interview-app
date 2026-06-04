@@ -29,13 +29,13 @@
 
   const categories = FILTER_CATEGORIES;
 
-  function openDetail(q) {
-    detailQuestion = q;
+  async function openDetail(q) {
     showDetailAnswer = false;
     try {
-      const full = api.questions.get(q.id);
-      detailNotes = full.notes || "";
+      detailQuestion = await api.questions.get(q.id);
+      detailNotes = detailQuestion.notes || "";
     } catch {
+      detailQuestion = q;
       detailNotes = "";
     }
   }
@@ -112,10 +112,10 @@
     onNavigate("quiz", { questionId: q.id });
   }
 
-  function exportMarkdown() {
+  async function exportMarkdown() {
     const ids = store.questions.map((q) => q.id);
     if (ids.length === 0) return;
-    const md = api.exportMarkdown(ids);
+    const md = await api.exportMarkdown(ids);
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

@@ -74,9 +74,9 @@
 
   const SAVE_KEY = "review_session";
 
-  function startSession(count, category) {
+  async function startSession(count, category) {
     try {
-      const session = api.progress.startReviewSession(count || 20, category || "");
+      const session = await api.progress.startReviewSession(count || 20, category || "");
       if (session.length === 0) {
         phase = "empty";
         return;
@@ -92,9 +92,9 @@
     }
   }
 
-  function restoreSession(saved) {
+  async function restoreSession(saved) {
     try {
-      cards = saved.cardIds.map((id) => api.questions.get(id));
+      cards = await Promise.all(saved.cardIds.map((id) => api.questions.get(id)));
       currentIndex = saved.currentIndex;
       results = saved.results || {};
       phase = "active";

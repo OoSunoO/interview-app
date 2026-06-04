@@ -74,7 +74,7 @@
     return map;
   });
 
-  function startSession(filter) {
+  async function startSession(filter) {
     try {
       const list = api.questions.list({
         category: filter.category || undefined,
@@ -87,7 +87,7 @@
         return;
       }
 
-      questions = list.map((item) => api.questions.get(item.id));
+      questions = await Promise.all(list.map((item) => api.questions.get(item.id)));
       currentIndex = 0;
       showAnswer = false;
       results = {};
@@ -99,9 +99,9 @@
     }
   }
 
-  function restoreSession(saved) {
+  async function restoreSession(saved) {
     try {
-      questions = saved.questionIds.map((id) => api.questions.get(id));
+      questions = await Promise.all(saved.questionIds.map((id) => api.questions.get(id)));
       currentIndex = saved.currentIndex;
       results = saved.results || {};
       phase = "active";

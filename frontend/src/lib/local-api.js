@@ -2,16 +2,24 @@
 
 // Dynamic imports for code-splitting: Vite creates separate chunks
 // so the main bundle stays lean.
-const [{ questions }, { buildKnowledgeMap, getKnowledgeForTag }] = await Promise.all([
+//
+// questionIndex: lightweight metadata for all 4191 questions (loaded eagerly)
+// loadAll:      starts background load of full question data (content, answers)
+const [{ questionIndex, loadCategory, loadAll, questions, categoryIndex },
+       { buildKnowledgeMap, getKnowledgeForTag }] = await Promise.all([
   import("./question-data/index.js"),
   import("./knowledge-data.js"),
 ]);
 
+// Build knowledge map once (from lightweight index — only needs id+tags)
+const knowledgeMap = buildKnowledgeMap(questionIndex);
+
+// Start loading full question data in background (don't block rendering).
+// By the time users navigate to Quiz/Review pages, all data is available.
+loadAll();
+
 import { rateCard, getDefaultProgress, QUICK_REVIEW_MAP, RATINGS } from "./sm2.js";
 import { CATEGORY_LABELS, MAIN_CATEGORY } from "./categories.js";
-
-// Build knowledge map once (question data is static)
-const knowledgeMap = buildKnowledgeMap(questions);
 
 const PROGRESS_KEY = "quiz_progress";
 const SESSION_KEY = "quiz_review_sessions";
@@ -98,7 +106,7 @@ function matchesSearch(q, search) {
   if (!search) return true;
   const s = search.toLowerCase();
   return q.title.toLowerCase().includes(s) ||
-    q.content.toLowerCase().includes(s) ||
+    (q.content || "").toLowerCase().includes(s) ||
     (q.answer || "").toLowerCase().includes(s) ||
     (q.tags || []).some((t) => t.toLowerCase().includes(s));
 }
@@ -109,7 +117,7 @@ const CATEGORY_NAMES = CATEGORY_LABELS;
 
 /** Compute mastery for a tag across all questions, using progress data */
 function computeMastery(tag, progress) {
-  const tagQuestions = questions.filter((q) => (q.tags || []).includes(tag));
+  const tagQuestions = questionIndex.filter((q) => q.tags.includes(tag));
   if (tagQuestions.length === 0) return 0;
   let totalScore = 0;
   for (const q of tagQuestions) {
@@ -130,8 +138,8 @@ function computeMastery(tag, progress) {
 /** Get category group mapping for each tag */
 function getTagCategoryMap() {
   const map = Object.create(null);
-  for (const q of questions) {
-    for (const t of q.tags || []) {
+  for (const q of questionIndex) {
+    for (const t of q.tags) {
       if (!map[t]) map[t] = new Set();
       map[t].add(q.category);
     }
@@ -149,7 +157,7 @@ export const api = {
   version: () => ({ version: BUILD_VERSION, name: "面试题 App" }),
   questions: {
     list(params = {}) {
-      let result = questions;
+      let result = questionIndex;
       // Filter by main category — sub-categories (e.g. jvm_extras) match their parent (jvm)
       if (params.category) {
         result = result.filter((q) => (MAIN_CATEGORY[q.category] || q.category) === params.category);
@@ -157,7 +165,7 @@ export const api = {
       if (params.difficulty) result = result.filter((q) => q.difficulty === params.difficulty);
       if (params.type) result = result.filter((q) => q.type === params.type);
       if (params.search) result = result.filter((q) => matchesSearch(q, params.search));
-      if (params.tag) result = result.filter((q) => (q.tags || []).includes(params.tag));
+      if (params.tag) result = result.filter((q) => q.tags.includes(params.tag));
 
       const progress = getProgress();
       if (params.company) {
@@ -206,14 +214,14 @@ export const api = {
 
     /** Find related questions by shared tags and same category */
     related(questionId, limit = 5) {
-      const src = questions.find((q) => q.id === questionId);
+      const src = questionIndex.find((q) => q.id === questionId);
       if (!src) return [];
       const scores = [];
-      for (const q of questions) {
+      for (const q of questionIndex) {
         if (q.id === questionId) continue;
         let score = 0;
-        for (const t of src.tags || []) {
-          if ((q.tags || []).includes(t)) score += 2;
+        for (const t of src.tags) {
+          if (q.tags.includes(t)) score += 2;
         }
         if (q.category === src.category) score += 1;
         if (score > 0) scores.push({ id: q.id, title: q.title, score, difficulty: q.difficulty, category: q.category, type: q.type });
@@ -224,7 +232,7 @@ export const api = {
     /** Return unique company names across all questions, sorted by frequency */
     companies() {
       const freq = Object.create(null);
-      for (const q of questions) {
+      for (const q of questionIndex) {
         if (!q.company) continue;
         for (const c of q.company.split(",")) {
           const name = c.trim();
@@ -238,7 +246,7 @@ export const api = {
 
     /** Pick a random question, with optional category/difficulty/status filter */
     random(filter = {}) {
-      let pool = questions;
+      let pool = questionIndex;
       if (filter.category) {
         pool = pool.filter((q) => (MAIN_CATEGORY[q.category] || q.category) === filter.category);
       }
@@ -252,9 +260,13 @@ export const api = {
       return pool[Math.floor(Math.random() * pool.length)] || null;
     },
 
-    get(id) {
+    async get(id) {
+      const meta = questionIndex.find((x) => x.id === id);
+      if (!meta) throw new Error(`Question ${id} not found`);
+      // Ensure full data for this category is loaded
+      await loadCategory(meta.category);
       const q = questions.find((x) => x.id === id);
-      if (!q) throw new Error(`Question ${id} not found`);
+      if (!q) throw new Error(`Question ${id} not found in loaded data`);
       const p = getProgress()[id] || {};
       return {
         ...q,
@@ -338,7 +350,7 @@ export const api = {
 
     stats() {
       const progress = getProgress();
-      const total = questions.length;
+      const total = questionIndex.length;
       let correct = 0,
         wrong = 0,
         reviewing = 0,
@@ -346,7 +358,7 @@ export const api = {
       const byCategory = {};
       const byDifficulty = { easy: { total: 0, done: 0, wrong: 0 }, medium: { total: 0, done: 0, wrong: 0 }, hard: { total: 0, done: 0, wrong: 0 } };
 
-      for (const q of questions) {
+      for (const q of questionIndex) {
         const mainCat = MAIN_CATEGORY[q.category] || q.category;
         if (!byCategory[mainCat]) {
           byCategory[mainCat] = { total: 0, done: 0 };
@@ -430,7 +442,7 @@ export const api = {
         .slice(-limit)
         .reverse()
         .map((s) => {
-          const q = questions.find((x) => x.id === s.question_id);
+          const q = questionIndex.find((x) => x.id === s.question_id);
           return {
             id: s.id,
             question_id: s.question_id,
@@ -451,7 +463,7 @@ export const api = {
         .filter(([, p]) => p.status === "wrong" || p.status === "reviewing")
         .map(([id]) => Number(id));
 
-      return questions
+      return questionIndex
         .filter((q) => wrongIds.includes(q.id))
         .map((q) => {
           const p = progress[q.id];
@@ -487,7 +499,7 @@ export const api = {
         .filter(([, p]) => p.next_review_at && p.next_review_at <= now)
         .map(([id]) => Number(id));
 
-      return questions
+      return questionIndex
         .filter((q) => dueIds.includes(q.id))
         .map((q) => {
           const p = progress[q.id];
@@ -505,7 +517,8 @@ export const api = {
         });
     },
 
-    startReviewSession(count = 20, category) {
+    async startReviewSession(count = 20, category) {
+      await loadAll();
       const progress = getProgress();
       const now = new Date();
       const overdue = [];
@@ -552,7 +565,7 @@ export const api = {
       const progress = getProgress();
       const catData = {};
 
-      for (const q of questions) {
+      for (const q of questionIndex) {
         const cat = q.category;
         if (!catData[cat]) {
           catData[cat] = { total: 0, done: 0, tags: {} };
@@ -563,7 +576,7 @@ export const api = {
         const done = p?.status === "correct" || p?.status === "reviewing";
         if (done) catData[cat].done++;
 
-        for (const tag of q.tags || []) {
+        for (const tag of q.tags) {
           if (!catData[cat].tags[tag]) {
             catData[cat].tags[tag] = { total: 0, done: 0 };
           }
@@ -631,8 +644,8 @@ export const api = {
       const tagMap = Object.create(null);
       const tagCategories = getTagCategoryMap();
 
-      for (const q of questions) {
-        for (const t of q.tags || []) {
+      for (const q of questionIndex) {
+        for (const t of q.tags) {
           if (!tagMap[t]) tagMap[t] = [];
           tagMap[t].push(q.id);
         }
@@ -677,7 +690,8 @@ export const api = {
     },
 
     /** Get detail for a specific knowledge point, with pre-stored content */
-    get(tag) {
+    async get(tag) {
+      await loadAll();
       const progress = getProgress();
       const tagQuestions = questions.filter((q) => (q.tags || []).includes(tag));
 
@@ -715,7 +729,7 @@ export const api = {
      * Returns array of { name, has_content } for each tag on this question.
      */
     getTagsForQuestion(questionId) {
-      const q = questions.find((x) => x.id === questionId);
+      const q = questionIndex.find((x) => x.id === questionId);
       if (!q) return [];
       return (q.tags || []).map((t) => ({
         name: t,
@@ -725,13 +739,14 @@ export const api = {
   },
 
   /** Export filtered questions as Markdown */
-  exportMarkdown(ids) {
+  async exportMarkdown(ids) {
+    await loadAll();
     const now = new Date();
     const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const items = questions.filter((q) => ids.includes(q.id));
     const lines = [`# 面试题库导出 (${dateStr})`, `共 ${items.length} 题\n`, ...Array(items.length).fill("---")];
 
-    
+
 
     let md = `# 面试题库导出 (${dateStr})\n\n共 ${items.length} 题\n\n`;
     for (const q of items) {
