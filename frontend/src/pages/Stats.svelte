@@ -451,7 +451,7 @@
 
   {#if showImportDialog}
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-    <div class="import-overlay" onclick={() => { showImportDialog = false; importRaw = null; }} onkeydown={(e) => { if (e.key === "Escape") { showImportDialog = false; importRaw = null; } }}>
+    <div class="overlay" onclick={() => { showImportDialog = false; importRaw = null; }} onkeydown={(e) => { if (e.key === "Escape") { showImportDialog = false; importRaw = null; } }}>
       <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
       <div class="import-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") { showImportDialog = false; importRaw = null; } }}>
         {#if importError}
@@ -776,11 +776,11 @@
     gap: 8px;
   }
   .weak-tag {
-    background: #2d0a0a;
-    color: #fca5a5;
+    background: var(--danger-bg);
+    color: var(--danger);
     padding: 4px 10px;
     border-radius: 12px;
-    border: 1px solid #7f1d1d;
+    border: 1px solid var(--danger-glow);
     display: inline-flex;
     align-items: center;
     gap: 4px;
@@ -790,7 +790,7 @@
     transition: transform 0.15s, box-shadow 0.15s;
   }
   .weak-tag[role="button"]:hover {
-    box-shadow: 0 0 8px rgba(252, 165, 165, 0.2);
+    box-shadow: 0 0 8px var(--danger-glow);
   }
   .weak-tag[role="button"]:active {
     transform: scale(0.92);
@@ -809,8 +809,8 @@
     transform: scale(0.99);
   }
   .tag-count {
-    background: #7f1d1d;
-    color: #fca5a5;
+    background: var(--danger-bg);
+    color: var(--danger);
     border-radius: 8px;
     padding: 0 5px;
     font-size: 11px;
@@ -936,17 +936,6 @@
   }
 
   /* ── Import Dialog ── */
-  .import-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-modal-overlay);
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    animation: fade-in 0.2s both;
-  }
   .import-dialog {
     background: var(--bg-elevated);
     border: 1px solid var(--border);

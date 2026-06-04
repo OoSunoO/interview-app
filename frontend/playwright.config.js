@@ -7,6 +7,7 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:5173",
     viewport: { width: 390, height: 844 }, // iPhone 14 size
+    storageState: "./e2e/storageState.json",
   },
   webServer: {
     command: "npm run dev",

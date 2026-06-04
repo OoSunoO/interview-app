@@ -489,7 +489,7 @@
 <!-- ── Resume Dialog ── -->
 {#if showResumeDialog}
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-  <div class="dialog-overlay" onclick={() => (showResumeDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showResumeDialog = false)}>
+  <div class="overlay" onclick={() => (showResumeDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showResumeDialog = false)}>
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
     <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showResumeDialog = false)}>
       <div class="dialog-title">继续速记？</div>
@@ -508,7 +508,7 @@
 <!-- ── Filter Dialog ── -->
 {#if showQRDialog}
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-  <div class="dialog-overlay" onclick={() => (showQRDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showQRDialog = false)}>
+  <div class="overlay" onclick={() => (showQRDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showQRDialog = false)}>
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
     <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showQRDialog = false)}>
       <div class="dialog-title">速记模式</div>
@@ -547,7 +547,7 @@
 <!-- ── Mock Interview Dialog ── -->
 {#if showMIDialog}
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-  <div class="dialog-overlay" onclick={() => (showMIDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showMIDialog = false)}>
+  <div class="overlay" onclick={() => (showMIDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showMIDialog = false)}>
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
     <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showMIDialog = false)}>
       <div class="dialog-title">模拟面试</div>
@@ -595,7 +595,7 @@
 <!-- ── Goal Dialog ── -->
 {#if showGoalDialog}
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-  <div class="dialog-overlay" onclick={() => (showGoalDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showGoalDialog = false)}>
+  <div class="overlay" onclick={() => (showGoalDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showGoalDialog = false)}>
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
     <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showGoalDialog = false)}>
       <div class="dialog-title">每日目标</div>
@@ -1046,8 +1046,8 @@
   font-weight: 600;
   border-radius: var(--radius-sm);
   background: none;
-  color: var(--danger, #e74c3c);
-  border: 1px solid var(--danger, #e74c3c);
+  color: var(--danger);
+  border: 1px solid var(--danger);
   cursor: pointer;
   font-family: inherit;
   transition: all 0.3s var(--spring);
@@ -1055,7 +1055,7 @@
 }
 .mi-entry-btn:active {
   transform: scale(0.97);
-  background: rgba(231, 76, 60, 0.08);
+  background: var(--danger-bg);
 }
 
 /* ── Reminder Toggle ── */
@@ -1221,17 +1221,6 @@
 }
 
 /* ── Dialogs (Overlay) ── */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal-overlay);
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: fade-in 0.2s both;
-}
 .dialog {
   background: var(--bg-elevated);
   border: 1px solid var(--border);

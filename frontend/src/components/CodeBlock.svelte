@@ -53,7 +53,7 @@
 <style>
   .code-block {
     position: relative;
-    background: #0d1117;
+    background: var(--code-bg);
     border-radius: 8px;
     padding: 14px;
     overflow-x: auto;
@@ -74,10 +74,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
     border-radius: 6px;
-    color: rgba(255, 255, 255, 0.35);
+    color: var(--text-muted);
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.2s, background 0.2s, color 0.2s;
@@ -86,7 +86,7 @@
     opacity: 1;
   }
   .copy-btn:active {
-    background: rgba(255, 255, 255, 0.12);
-    color: rgba(255, 255, 255, 0.7);
+    background: var(--bg-card-hover);
+    color: var(--text);
   }
 </style>

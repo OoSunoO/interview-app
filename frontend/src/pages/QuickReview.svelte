@@ -349,7 +349,7 @@
 
   {#if showSessionMap}
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-    <div class="map-overlay" onclick={() => (showSessionMap = false)} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
+    <div class="overlay" onclick={() => (showSessionMap = false)} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
       <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
       <div class="map-dialog" role="dialog" aria-modal="true" tabindex="-1" data-testid="qr-map-dialog" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { trapFocus(e, mapDialog); if (e.key === "Escape") showSessionMap = false; }} bind:this={mapDialog}>
         <div class="map-title">题目列表</div>
@@ -503,17 +503,6 @@
   }
 
   /* ── Session Map Overlay ── */
-  .map-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-modal-overlay);
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    animation: fade-in 0.2s both;
-  }
   .map-dialog {
     background: var(--bg-elevated);
     border: 1px solid var(--border);

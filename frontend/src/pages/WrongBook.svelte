@@ -1283,8 +1283,8 @@
     color: var(--danger);
   }
   .badge.sev-medium, .badge.pri-medium {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--warning-bg);
+    color: var(--warning);
   }
   .badge.sev-low, .badge.pri-low {
     background: var(--bg-surface);

@@ -37,7 +37,7 @@
   --nav-bg: rgba(5, 5, 5, 0.85);
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
   --spring-smooth: cubic-bezier(0.22, 0.61, 0.2, 1);
-  --code-bg: rgba(0, 0, 0, 0.3);
+  --code-bg: #0d1117;
   --ans-answer-bg: rgba(74, 222, 128, 0.06);
   --ans-answer-border: rgba(74, 222, 128, 0.12);
   --ans-answer-text: #4ade80;
@@ -116,7 +116,7 @@
   --glass-border: rgba(255, 255, 255, 0.5);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
   --nav-bg: rgba(242, 243, 247, 0.85);
-  --code-bg: rgba(0, 0, 0, 0.03);
+  --code-bg: #eef0f4;
   --ans-answer-bg: rgba(34, 166, 94, 0.04);
   --ans-answer-border: rgba(34, 166, 94, 0.15);
   --ans-answer-text: #22a65e;
@@ -453,6 +453,19 @@ textarea:focus {
   50% {
     opacity: 0.15;
   }
+}
+
+/* ── Overlay (shared by all dialogs) ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-overlay);
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fade-in 0.2s both;
 }
 
 /* ── Skeleton ── */
