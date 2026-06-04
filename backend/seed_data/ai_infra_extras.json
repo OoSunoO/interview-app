@@ -1352,7 +1352,7 @@
   },
   {
     "category": "ai_infra_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Tensor Parallelism vs Pipeline Parallelism",
     "content": "请详细比较 Tensor Parallelism（TP）和 Pipeline Parallelism（PP）在分布式训练中的核心差异。包括它们的拆分方式、通信开销、负载均衡特性、以及在 LLM 训练中的典型应用配置。",
@@ -1371,7 +1371,7 @@
   },
   {
     "category": "ai_infra_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "GPU 显存池化技术",
     "content": "请解释 GPU 显存池化（Memory Pooling）的核心概念和主流实现方案。对比显存池化与显存交换（swap）的区别，说明显存池化在 LLM 推理和训练场景中的优势和挑战。",
@@ -1390,7 +1390,7 @@
   },
   {
     "category": "ai_infra_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "模型分片与动态加载",
     "content": "请解释大模型推理场景中模型分片（Model Sharding）和动态加载（Dynamic Loading）的原理和实现策略。对比模型分片和模型并行的区别，说明在资源受限设备上部署大模型的关键技术。",
@@ -1409,7 +1409,7 @@
   },
   {
     "category": "ai_infra_extras",
-    "difficulty": "expert",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "异构计算资源调度",
     "content": "请说明在多 GPU 集群中进行异构计算资源调度的核心挑战和主要算法。对比不同调度策略（如 Gandiva、Tiresias、HiveMind）的设计思路，以及在训练和推理场景中的调度差异。",
@@ -1853,6 +1853,96 @@
       "inference_acceleration",
       "speculative_decoding",
       "text_generation"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "特征存储（Feature Store）设计与实践",
+    "content": "特征存储（Feature Store）在 ML 基础设施中承担什么角色？请说明 Feature Store 的核心功能、在线特征与离线特征的一致性保证、以及 Feast 和 Tecton 两种方案的设计差异。",
+    "answer": "答案：Feature Store 是集中管理 ML 特征的平台，解决特征重复开发、训练/推理特征不一致和特征时效性问题。核心功能包括特征注册、特征计算、在线/离线 serving、特征血缘追踪和时间点正确性（Point-in-Time Correctness）。\n\n解析：1）Feature Store 解决的问题——模型训练需要历史特征（从离线数仓），模型推理需要最新特征（从在线存储），两者往往使用不同管道，容易产生训练/推理偏差（Training-Serving Skew）。Feature Store 统一管理特征的离线批处理和在线实时计算逻辑，确保训练和推理使用相同的特征定义。\n\n2）核心功能——特征注册：定义特征名称、类型、来源 SQL/Transform。离线 Serving：从数据仓库批量导出特征到训练数据集。在线 Serving：低延迟（<10ms）提供实时特征。特征血缘：追踪每个特征来自哪个数据源、经过什么变换、被哪些模型使用。Point-in-Time 正确性：训练时使用「当时间点之前已知」的特征值，避免数据泄露（Feature Store 自动做时间戳 Join）。\n\n3）Feast vs Tecton——Feast（开源）：基于 Redis/Google Datastore 做在线存储，用 Spark SQL 做离线特征工程。架构简单，社区活跃。适合团队有一定基础设施能力、需要灵活定制的场景。Tecton（商业）：提供全托管 Feature Platform，自动处理实时特征计算和 Point-in-Time Join。内置监控（特征新鲜度、延迟、异常检测）。自动特征工程（Auto Transformations）。适合企业级 ML 平台。\n\n扩展延伸：特征存储的最佳实践：1）离线特征用 Parquet 格式存储在数据湖（S3/GCS），在线特征用 KV 存储（Redis/DynamoDB）低延迟读取。2）特征新鲜度要求决定计算频率——实时特征用 Kafka Streams/Flink，准实时用 Spark Streaming，离线用每天批处理。3）Feature Store 的引入时机：团队有 3+ 个模型共享特征时值得引入。Feature Store 和 Data Mesh 的关系：特征可以被视为 Data Mesh 中的「数据产品」——特征团队负责生产和治理，模型团队消费。",
+    "hints": [
+      "Point-in-Time 正确性为什么重要——不使用的后果是什么",
+      "Feature Store 如何解决训练/推理特征不一致问题"
+    ],
+    "tags": [
+      "Feature Store",
+      "ML 基础设施",
+      "特征工程",
+      "Feast"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "模型监控与数据漂移检测",
+    "content": "生产环境中 ML 模型为什么需要持续监控？请说明数据漂移（Data Drift）、概念漂移（Concept Drift）和模型退化（Model Degradation）的区别、检测方法、以及触发 retraining 的策略。",
+    "answer": "答案：模型在生产中的表现会随时间下降，原因是输入数据分布变化（数据漂移）或目标变量与特征关系变化（概念漂移）。监控系统需要持续跟踪模型性能指标、特征分布和预测分布，在检测到漂移时触发模型重训练或回退。\n\n解析：1）三种漂移的区别——数据漂移（Data Drift / Covariate Shift）：输入特征 X 的分布变化（P(X) 变化但 P(Y|X) 不变）。例如用户画像特征分布因产品改版发生偏移。检测方法：PSI（Population Stability Index）、KL 散度、KS 检验、特征分位数比较。概念漂移（Concept Drift）：P(Y|X) 变化（特征和标签的关系变化）。例如疫情期间信用评分模型失效（历史还款行为不再能预测违约）。检测方法：监控模型准确率/误差率随时间变化、DDM（Drift Detection Method）、ADWIN（Adaptive Windowing）。模型退化：模型因外部因素（竞争对手策略改变、供应链变动）整体表现下降，往往不是单一特征或概念漂移。\n\n2）监控指标——业务指标：准确率、AUC、MAE、转化率等（有延迟，需要标签到达才能计算）。输入指标：特征缺失率、特征范围、特征分布统计量。输出指标：预测均值、预测分布（预测分布突变往往是漂移信号）、模型置信度。数据质量：延迟、新鲜度、完整性。\n\n3）Retraining 策略——定期重训：固定时间窗口（如每周/每月）重新训练，简单但不及时。触发式重训：检测到漂移超过阈值（如 PSI > 0.2）时触发重训，响应快但需要可靠监控。渐进式重训：Online Learning 方式持续更新模型参数，适合概念漂移频繁的场景（如推荐系统）。Window-based：滑动窗口只使用最近 N 天数据训练。\n\n扩展延伸：ML 监控技术栈：1）数据漂移检测：Great Expectations（数据质量）+ WhyLabs/Evidently AI（漂移监控）。2）模型性能监控：MLflow Model Monitoring、SageMaker Model Monitor、Arize AI。3）特征平台集成：Feature Store 天然的监控通路（记录每个特征的时间戳和统计）。Retraining 的代价：每次重训需要数据准备 + 训练资源 + 离线评估 + 在线 A/B 验证，频繁重训的 ROI 需要评估。工程建议：漂移监控阈值不要设置过紧（正常业务波动也会触发，导致「狼来了」效应），建议用「3σ 原则」或「中位数 + 四分位距」设定异常告警线。",
+    "hints": [
+      "数据漂移和概念漂移检测方法的核心区别",
+      "为什么定期重训不够——触发式重训的优缺点"
+    ],
+    "tags": [
+      "ML 监控",
+      "数据漂移",
+      "概念漂移",
+      "Model Monitoring"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ML 实验管理与模型注册",
+    "content": "ML 实验管理（Experiment Tracking）和模型注册（Model Registry）解决什么问题？请说明 MLflow 的核心组件架构、实验追踪的关键元数据、以及模型版本管理和部署策略（Staging → Production 晋升流程）。",
+    "answer": "答案：实验管理系统追踪每一次训练的配置、指标和产物，解决「哪个参数跑出了最佳结果」的可复现问题。模型注册中心管理模型版本、元数据和生命周期状态（Staging/Production/Archived），支持模型审批晋升流程和部署追溯。\n\n解析：1）实验管理核心记录——超参数：learning rate、batch size、优化器配置等。指标：训练/验证 loss、accuracy、AUC 等（可包含多步指标曲线）。产物：模型权重文件（checkpoint）、tokenizer、预处理 pipeline、onnx 导出文件。源代码版本：git commit hash。数据集版本。环境信息：Python 版本、依赖包版本（conda/env.yaml）。\n\n2）MLflow 架构——MLflow Tracking：REST API + UI，记录 experiments/runs/params/metrics/artifacts。MLflow Models：标准模型打包格式（MLmodel 文件），支持多种 flavor（Python Function、PyTorch、sklearn、ONNX）。MLflow Registry：集中管理模型版本，支持 stage 注解（None/Staging/Production/Archived）和 webhook 通知。MLflow Projects：可复现的运行打包规范（conda.yaml + entry point）。\n\n3）模型版本晋升流程——开发阶段：experiment run → 注册候选模型（None stage）。测试验证：模型部署到 Staging（shadow 流量或 A/B 测试）→ 自动评估 → 通过验证晋升到 Production。生产阶段：Production 模型 serving 在线流量 → 性能监控 → 发现退化 → 回退到上一版本。归档：旧版本自动移入 Archived。每次晋升需要审批记录（谁、什么时候、为什么、评估结果），满足模型治理合规要求。\n\n扩展延伸：企业级 ML 平台（如 Uber 的 Michelangelo、Google 的 Vertex AI）在此基础增加了自动特征流水线、模型可解释性报告、公平性检测和自动 retraining Pipeline。MLflow 适用于中小团队快速搭建实验管理，缺乏企业级权限管理和审批流——可用 MLflow + 自定义 webhook + CI/CD Pipeline（如 Jenkins/Argo Workflows）弥补。模型注册与 CI/CD 集成：模型晋升到 Staging 触发自动化评测（在 shadow 环境中跑 benchmark），通过后自动部署到生产。",
+    "hints": [
+      "MLflow Models 的 flavor 机制如何支持多框架模型统一管理",
+      "模型晋升流程中 Staging 到 Production 的验证标准是什么"
+    ],
+    "tags": [
+      "MLflow",
+      "实验管理",
+      "模型注册",
+      "MLOps"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "分布式训练策略：DP/DDP/FSDP/DeepSpeed",
+    "content": "大模型分布式训练中，数据并行（Data Parallelism）、模型并行（Model Parallelism）、流水线并行（Pipeline Parallelism）和张量并行（Tensor Parallelism）各自的原理是什么？DeepSpeed ZeRO 和 FSDP 如何优化显存使用？",
+    "answer": "答案：数据并行将数据分片到多个 GPU，每卡有完整模型副本。模型并行将模型层拆分到不同 GPU。流水线并行是模型并行的一种——不同 GPU 处理不同层，数据以 micro-batch 流水线形式流过。张量并行将单层内的矩阵运算拆分到多卡（如 Megatron-LM 的列切割/行切割）。ZeRO（Zero Redundancy Optimizer）和 FSDP 通过在数据并行基础上分片 optimizer state/gradient/parameter 来大幅减少每卡显存占用。\n\n解析：1）数据并行（DP/DDP）——每个 GPU 持有完整模型副本，前向/反向独立计算。DDP（Distributed DataParallel，PyTorch）在反向传播时用 all-reduce 同步梯度。优点：实现简单，适合中小模型。缺点：每卡需要完整模型显存，大模型无法单卡容纳。\n\n2）模型并行（Model Parallelism）——Pipeline Parallelism（GPIPE/1F1B）：模型不同层放在不同 GPU，数据以 micro-batch 流水线执行。问题：空泡（bubble）效率损失（GPIPE 约 50%，1F1B 调度减少到约 10-15%）。Tensor Parallelism（Megatron-LM）：将注意力层的 QKV 投影按列切分、FFN 按行切分，适合单机多卡（NVLINK 高带宽）。序列并行（Sequence Parallelism）：将 sequence 维度切分，结合 TP 进一步减少激活显存。\n\n3）ZeRO（DeepSpeed）和 FSDP——ZeRO Stage 1：分片 Optimizer States（显存减少 4 倍）。Stage 2：分片 Optimizer + Gradients（减少 8 倍）。Stage 3：分片 Optimizer + Gradients + Parameters（减少 64+ 倍，每卡只存自己负责的参数分片）。ZeRO-Offload：将 optimizer state 卸载到 CPU 内存。ZeRO-Infinity：扩展到 NVMe SSD。FSDP（Fully Sharded Data Parallel，PyTorch 原生）：类似 ZeRO Stage 3，但更深度集成 PyTorch 的 autograd。FSDP 在 forward 时 all-gather 参数、backward 时 all-gather 参数（重计算 / activation checkpointing）、然后 reduce-scatter 梯度。\n\n扩展延伸：混合并行（3D Parallelism）——ZeRO + Tensor Parallelism + Pipeline Parallelism 组合，是训练 100B+ 大模型的标配方案（如 Meta 的 OPT-175B、LLaMA 系列）。例如：节点内用 TP（NVLINK 高带宽），节点间用 ZeRO Stage 2 数据并行 + Pipeline 并行。通信开销：TP > PP > DP（ZeRO），大模型训练需要 InfiniBand 互连。Current best practice：70B 以下用 ZeRO Stage 3 + activation checkpointing 即可；70B-175B 需要 ZeRO + TP 组合；175B+ 需要 3D Parallelism。",
+    "hints": [
+      "ZeRO Stage 1/2/3 各自分片了什么——显存节省量",
+      "FSDP 和 ZeRO Stage 3 的核心区别是什么"
+    ],
+    "tags": [
+      "分布式训练",
+      "FSDP",
+      "DeepSpeed",
+      "ZeRO"
+    ]
+  },
+  {
+    "category": "ai_infra",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "ML Pipeline 编排与工作流管理",
+    "content": "ML Pipeline 与传统的 ETL Pipeline 有什么不同？请说明 Pipeline 编排工具（Airflow / Kubeflow / Argo Workflows）在 ML 场景下的适用性对比、以及 Pipeline 中关键节点（数据验证→特征工程→训练→评估→部署）的最佳实践。",
+    "answer": "答案：ML Pipeline 比 ETL Pipeline 多模型训练、评估、注册和部署阶段，且需要处理实验性（参数可调、运行结果不确定）。Airflow 通用性强但 ML 感知弱，Kubeflow 为 ML 原生设计但复杂度高，Argo Workflows 适合 K8s 原生场景。关键节点应包含数据质量门禁、特征验证、模型评估门禁和自动部署决策。\n\n解析：1）ML Pipeline vs ETL Pipeline——ETL 通常是确定性的（同输入同输出），ML Pipeline 包含训练实验（参数搜索、随机种子导致结果波动）。ML Pipeline 需要 artifact tracking（模型权重、指标、可视化），ETL 只需数据 lineage。ML Pipeline 需要模型评估门禁（准确率 > 阈值才部署），ETL 没有。ML Pipeline 往往需要 GPU 资源调度。\n\n2）编排工具对比——Airflow：通用工作流编排，有向无环图（DAG）。优势：生态丰富、社区大、Python 原生。劣势：对 ML 场景支持需要扩展——没有内置实验追踪、KubernetesPodOperator 需要手动配置 GPU。适合：已有 Airflow 基础设施的团队，ML 工作流占比不高的场景。Kubeflow：K8s 原生 ML 平台，包含 Notebook/Pipeline/Katib（超参搜索）/KFServing。优势：ML 全生命周期覆盖，Pipeline 可视化、artifact 管理、实验追踪一体。劣势：部署运维复杂，学习曲线陡峭。适合：K8s + ML 深度整合的大团队。Argo Workflows：K8s 原生工作流引擎（也是 Kubeflow 的底层编排组件）。优势：轻量灵活，YAML 定义 DAG，每个 step 是独立容器。劣势：ML 特性少（需要自己集成 MLflow 等）。\n\n3）Pipeline 最佳实践——数据验证节点：Great Expectations 检查数据质量（缺失率、分布范围、schema 合规），不通过则告警暂停 Pipeline。特征工程节点：缓存已计算的特征（Feature Store），避免重复计算。训练节点：自动超参搜索（Optuna/Katib）+ 实验追踪（MLflow）。评估节点：对比 candidate 模型与当前 production 模型的指标（不仅看平均指标，还要看分群指标/公平性指标）。模型门禁：candidate 模型的 AUC/准确率须在 production 模型的一定范围内（过高可能过拟合，过低则退化）。部署节点：根据评估结果自动决定 promote 到 staging/production 或 reject。\n\n扩展延伸：Pipeline 可复现性：每次运行记录数据版本（DVC/Great Expectations run ID）+ 代码版本（git commit）+ 环境版本（Docker image digest）+ 参数版本。需要能够回滚到任意历史运行（包括数据回滚）。建议使用 Manifest 文件记录每次 Pipeline run 的完整上下文。生产 ML Pipeline 常见的失败模式：上游数据延迟导致下游训练失败、GPU 资源不足任务排队过长、模型评估门禁过于宽松导致退化模型上线。",
+    "hints": [
+      "ML Pipeline 的数据验证门禁（Data Validation Gate）应该检查哪些内容",
+      "为什么 ML Pipeline 需要 artifact tracking 而 ETL Pipeline 不需要"
+    ],
+    "tags": [
+      "ML Pipeline",
+      "Airflow",
+      "Kubeflow",
+      "MLOps"
     ]
   }
 ]

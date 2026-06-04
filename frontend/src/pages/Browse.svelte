@@ -310,7 +310,7 @@
         class:active={store.filters.bookmarked}
         onclick={() => { store.filters.bookmarked = !store.filters.bookmarked; applyFilter(); }}
       >
-        <svg
+        <svg aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"
@@ -327,7 +327,7 @@
         onclick={goRandom}
         disabled={store.questions.length === 0}
       >
-        <svg
+        <svg aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"
@@ -350,7 +350,7 @@
         onclick={exportMarkdown}
         disabled={store.questions.length === 0}
       >
-        <svg
+        <svg aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"
@@ -368,7 +368,7 @@
       </button>
             {#if hasActiveFilters}
         <button class="reset-filter-btn" onclick={resetFilters}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
             stroke-linejoin="round"><polyline points="23 4 23 10 17 10" />
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
@@ -380,7 +380,7 @@
         onclick={() => onNavigate("quick-review", { reviewConfig: { category: store.filters.category, difficulty: store.filters.difficulty, count: 20 } })}
         disabled={store.questions.length === 0}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
           <path d="M12 6v6l4 2" /></svg>
@@ -390,7 +390,7 @@
   </div>
 
   <div class="search-wrap">
-    <svg
+    <svg aria-hidden="true"
       class="search-icon"
       width="16"
       height="16"
@@ -419,7 +419,7 @@
           applyFilter();
         }}
       >
-        <svg
+        <svg aria-hidden="true"
           width="14"
           height="14"
           viewBox="0 0 24 24"
@@ -440,7 +440,7 @@
       <div class="sel-actions">
         <button class="sel-cancel" onclick={clearSelection}>取消</button>
         <button class="sel-bm" onclick={batchBookmark} title="收藏选中题目">
-          <svg
+          <svg aria-hidden="true"
             width="13"
             height="13"
             viewBox="0 0 24 24"
@@ -485,7 +485,7 @@
             onmousedown={(e) => e.stopPropagation()}
             onpointerdown={(e) => e.stopPropagation()}
           >
-            <svg
+            <svg aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -503,7 +503,7 @@
           <div class="q-header">
             <span class="status-icon {q.status}">
               {#if q.status === "correct"}
-                <svg
+                <svg aria-hidden="true"
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
@@ -517,7 +517,7 @@
                   /></svg
                 >
               {:else if q.status === "wrong"}
-                <svg
+                <svg aria-hidden="true"
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
@@ -529,7 +529,7 @@
                   ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
                 >
               {:else if q.status === "reviewing"}
-                <svg
+                <svg aria-hidden="true"
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
@@ -543,7 +543,7 @@
                   /></svg
                 >
               {:else}
-                <svg
+                <svg aria-hidden="true"
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
@@ -571,7 +571,7 @@
               onclick={(e) => toggleBookmark(e, q)}
               title={q.bookmarked ? "取消收藏" : "收藏"}
             >
-              <svg
+              <svg aria-hidden="true"
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
@@ -632,7 +632,7 @@
           {/if}
         </div>
         <button class="dp-close" onclick={closeDetail} aria-label="关闭">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
             stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
@@ -674,7 +674,7 @@
 
       <div class="dp-answer-section">
         <button class="dp-answer-toggle" onclick={() => (showDetailAnswer = !showDetailAnswer)}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
             stroke-linejoin="round">
             {#if showDetailAnswer}
@@ -703,13 +703,13 @@
 
       <div class="dp-actions">
         <button class="dp-action-btn dp-action-btn-primary" onclick={() => { const q = detailQuestion; closeDetail(); goQuestion(q); }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
             stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
           开始答题
         </button>
         <button class="dp-action-btn" onclick={(e) => { toggleBookmark(e, detailQuestion); }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={detailQuestion.bookmarked ? "currentColor" : "none"}
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill={detailQuestion.bookmarked ? "currentColor" : "none"}
             stroke="currentColor" stroke-width="2" stroke-linecap="round"
             stroke-linejoin="round"><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
           {detailQuestion.bookmarked ? "已收藏" : "收藏"}

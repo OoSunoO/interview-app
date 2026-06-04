@@ -61,7 +61,7 @@
 
 <div class="page kp-detail-page">
   <button class="back-btn" onclick={() => onNavigate("knowledge")}>
-    <svg
+    <svg aria-hidden="true"
       width="16"
       height="16"
       viewBox="0 0 24 24"
@@ -133,7 +133,7 @@
             <div class="q-header">
               <span class="status-icon {q.status}">
                 {#if q.status === "correct"}
-                  <svg
+                  <svg aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -147,7 +147,7 @@
                     /></svg
                   >
                 {:else if q.status === "wrong"}
-                  <svg
+                  <svg aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -159,7 +159,7 @@
                     ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
                   >
                 {:else if q.status === "reviewing"}
-                  <svg
+                  <svg aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -171,7 +171,7 @@
                     ><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg
                   >
                 {:else}
-                  <svg
+                  <svg aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -193,7 +193,7 @@
                 onclick={(e) => toggleBookmark(e, q)}
                 onkeydown={(e) => e.key === 'Enter' && toggleBookmark(e, q)}
               >
-                <svg
+                <svg aria-hidden="true"
                   width="14"
                   height="14"
                   viewBox="0 0 24 24"

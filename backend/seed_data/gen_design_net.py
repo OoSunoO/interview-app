@@ -209,9 +209,20 @@ q("cs_basics", "medium", "short_answer",
   ["DNS 解析流程中浏览器和操作系统的缓存分别在什么阶段", "浏览器关键渲染路径（Critical Rendering Path）包含哪些步骤"],
   ["网络", "HTTP", "DNS", "渲染"])
 
-# Write properly
+# Write properly (with safety guard)
 result = json.dumps(questions, ensure_ascii=False, indent=2)
 outpath = '/Users/petersun/DEV/labs/interview-app/backend/seed_data/design_network_extras.json'
+try:
+    with open(outpath, 'r') as f:
+        existing = json.load(f)
+    print(f'⚠️  目标文件已有 {len(existing)} 题，本次将写入 {len(questions)} 题（覆盖）')
+    confirm = input('确认覆盖？(y/N): ')
+    if confirm.lower() != 'y':
+        print('已取消')
+        exit()
+except FileNotFoundError:
+    pass
+
 with open(outpath, 'w') as f:
     f.write(result)
 print(f'Written: {len(questions)} questions to {outpath}')

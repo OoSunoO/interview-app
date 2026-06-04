@@ -1,17 +1,10 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { VitePWA } from "vite-plugin-pwa";
-import { readFileSync } from "fs";
-import { resolve } from "path";
-
-const version = readFileSync(resolve(__dirname, "../VERSION"), "utf-8").trim();
 
 export default defineConfig({
   base: "./",
   build: { target: "es2022", chunkSizeWarningLimit: 8000 },
-  define: {
-    __APP_VERSION__: JSON.stringify(version),
-  },
   plugins: [
     svelte(),
     VitePWA({

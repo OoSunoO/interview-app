@@ -29,11 +29,13 @@ def check_json_parseable(path: Path) -> tuple[bool, str]:
 
 
 VALID_TYPES = {"choice", "coding", "fill_in_blank", "multiple_choice", "short_answer", "true_false"}
+VALID_DIFFICULTIES = {"easy", "medium", "hard"}
 
 
 def check_required_fields(data: list, fields: list[str]) -> tuple[bool, str]:
     missing = []
     type_issues = []
+    diff_issues = []
     for i, item in enumerate(data):
         for f in fields:
             if f not in item:
@@ -42,10 +44,16 @@ def check_required_fields(data: list, fields: list[str]) -> tuple[bool, str]:
         if t and t not in VALID_TYPES:
             title = item.get("title", f"第{i}条")
             type_issues.append(f"'{title}' 未知题型 '{t}'，应为 {sorted(VALID_TYPES)}")
+        d = item.get("difficulty", "")
+        if d and d not in VALID_DIFFICULTIES:
+            title = item.get("title", f"第{i}条")
+            diff_issues.append(f"'{title}' 未知难度 '{d}'，应为 {sorted(VALID_DIFFICULTIES)}")
     if missing:
         return False, "; ".join(missing[:5])
     if type_issues:
         return False, "; ".join(type_issues[:5])
+    if diff_issues:
+        return False, "; ".join(diff_issues[:5])
     return True, ""
 
 
@@ -145,7 +153,7 @@ def main():
         file_ok = True
 
         if isinstance(data, list):
-            ok, err = check_required_fields(data, ["title", "type", "answer"])
+            ok, err = check_required_fields(data, ["title", "type", "answer", "category", "difficulty"])
             if not ok:
                 print(f"  ❌ {rel}: {err}")
                 total_errors += 1

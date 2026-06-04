@@ -3,7 +3,7 @@
 // Dynamic imports for code-splitting: Vite creates separate chunks
 // so the main bundle stays lean.
 //
-// questionIndex: lightweight metadata for all 4191 questions (loaded eagerly)
+// questionIndex: lightweight metadata for all questions (loaded eagerly)
 // loadAll:      starts background load of full question data (content, answers)
 const [{ questionIndex, loadCategory, loadAll, questions, categoryIndex },
        { buildKnowledgeMap, getKnowledgeForTag }] = await Promise.all([
@@ -20,6 +20,7 @@ loadAll();
 
 import { rateCard, getDefaultProgress, QUICK_REVIEW_MAP, RATINGS } from "./sm2.js";
 import { CATEGORY_LABELS, MAIN_CATEGORY } from "./categories.js";
+import { version as buildVersion } from "../../package.json";
 
 const PROGRESS_KEY = "quiz_progress";
 const SESSION_KEY = "quiz_review_sessions";
@@ -151,7 +152,7 @@ function getTagCategoryMap() {
   return result;
 }
 
-const BUILD_VERSION = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0";
+const BUILD_VERSION = buildVersion;
 
 export const api = {
   version: () => ({ version: BUILD_VERSION, name: "面试题 App" }),

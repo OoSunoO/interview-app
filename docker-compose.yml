@@ -4,18 +4,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
-      - interview_data:/app
+      - interview_data:/app/data
 
   frontend:
     build: ./frontend
     ports:
-      - "5173:5173"
-    environment:
-      - API_PROXY=http://backend:8000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+      - "80:80"
     depends_on:
       - backend
 

@@ -1367,7 +1367,7 @@
   },
   {
     "category": "agent_dev_extras",
-    "difficulty": "intermediate",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 日志结构化",
     "content": "请说明 Agent 系统中结构化日志的设计原则和实现方案。包括日志的分层结构（运行日志 vs 轨迹日志 vs 指标日志）、每个层次的字段定义、日志序列化格式选择（JSON/结构化文本），以及如何通过日志进行 Agent 行为调试和性能分析。",
@@ -1386,7 +1386,7 @@
   },
   {
     "category": "agent_dev_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "工具调用延迟优化",
     "content": "请说明 Agent 系统中工具调用延迟的优化策略。包括：工具预加载与预热、结果缓存策略（语义缓存 vs 精确缓存）、并行工具调用（并行度控制）、以及异步工具执行和流式返回的设计模式。给出具体的延迟优化指标评估方法。",
@@ -1405,7 +1405,7 @@
   },
   {
     "category": "agent_dev_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Agent 测试用例生成",
     "content": "请说明 Agent 系统中测试用例的生成策略和测试框架设计。包括：单元测试（单个工具）、集成测试（多工具协作）、端到端测试（完整 Agent 行为）和对抗测试（边界和异常场景）。着重说明如何自动生成测试用例以及测试覆盖率评估方法。",
@@ -1424,7 +1424,7 @@
   },
   {
     "category": "agent_dev_extras",
-    "difficulty": "intermediate",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 版本管理与回滚",
     "content": "请说明 Agent 系统的版本管理和回滚策略。包括：Agent 配置版本化（prompt、工具列表、模型参数）、Agent 行为 A/B 测试框架、灰度发布策略、以及出现问题时如何快速回滚。对比传统软件版本管理和 Agent 版本管理的核心差异。",
@@ -1443,7 +1443,7 @@
   },
   {
     "category": "agent_dev_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Agent 跨语言工具调用",
     "content": "请说明 Agent 系统中跨语言工具调用的架构设计和实现方案。包括：进程间通信机制选择（gRPC vs HTTP vs 消息队列）、数据序列化格式（JSON / Protobuf）、异常传播和错误处理、多语言工具注册和发现机制。以及不同语言工具之间的类型转换和兼容性处理。",
@@ -1870,6 +1870,96 @@
       "meta_prompting",
       "evolutionary_algorithm",
       "dspy"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "easy",
+    "type": "short_answer",
+    "title": "MCP（Model Context Protocol）",
+    "content": "什么是 MCP（Model Context Protocol）？它解决了 AI Agent 开发中的什么问题？与 Function Calling 有何区别？",
+    "answer": "答案：MCP（Model Context Protocol）是 Anthropic 于 2024 年底提出的开放协议，标准化了 AI 模型与外部工具/数据源的交互方式。它定义了「Host（宿主，如 Claude Desktop）—Client（客户端）—Server（工具提供方）」的三层架构，让模型通过统一协议发现和调用工具。\n\n解析：MCP 要解决的核心痛点是工具集成的碎片化。在 MCP 之前，每个 Agent 框架（LangChain、AutoGPT、Semantic Kernel）都有自己的工具定义和调用方式，工具开发者需要为每个框架写适配器。MCP 统一了工具发现（ListTools）、工具调用（CallTool）、资源访问（ReadResource）的接口协议，就像 USB-C 统一了设备连接标准一样。\n\n扩展延伸：MCP 与 Function Calling 的关系——1）Function Calling 是模型能力（模型输出结构化的函数调用参数），MCP 是协议层（管理工具的发现、认证、调用生命周期）。2）两者互补：MCP 的 Client 端最终调用模型的 Function Calling 能力来触发工具。3）MCP 的价值在于标准化工具生态——任何人只要实现一个 MCP Server，就能被所有支持 MCP 的 Agent 使用。",
+    "hints": [
+      "从协议分层角度思考 MCP 的价值",
+      "MCP vs Function Calling 是不同层次的抽象"
+    ],
+    "tags": [
+      "MCP",
+      "协议",
+      "工具集成",
+      "标准化"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Multi-Agent 编排模式",
+    "content": "Multi-Agent 系统中有哪些常见的编排模式？各模式的适用场景和优缺点是什么？",
+    "answer": "答案：常见的 Multi-Agent 编排模式有五种：1）Supervisor 模式——一个主管 Agent 负责任务分配和结果汇总，Worker Agent 执行子任务。适用于任务可清晰拆分的场景（如代码审查：一个主管分配代码给多个 Reviewer）。2）Orchestrator 模式——一个中央调度器定义执行计划，子 Agent 按 DAG 顺序执行。适用于流程固定的场景（如 DevOps 流水线）。3）Swarm 模式——无中心节点，Agent 间直接通信和协商任务分工。适用于动态协作场景（如多个 Research Agent 共同调研一个课题）。4）Debate 模式——多个 Agent 就同一问题独立推理后辩论，最终达成共识。适用于需要多角度分析的场景（如代码审核、决策评估）。5）Pipeline 模式——Agent 按固定顺序串联，上一个的输出是下一个的输入。适用于流程链固定的场景（如数据处理流水线）。\n\n扩展延伸：实际生产系统通常采用混合模式——主流程用 Orchestrator，局部用 Supervisor 动态调配。关键设计考虑——1）通信开销：Agent 间消息传递的延迟和成本（每次通信都是一次 LLM 调用）。2）状态一致性：多个 Agent 如何共享和同步上下文。3）故障隔离：一个 Agent 失败不应拖垮整个系统。",
+    "hints": [
+      "中心化 vs 去中心化是编排模式的核心维度",
+      "生产系统通常混合使用多种模式"
+    ],
+    "tags": [
+      "Multi-Agent",
+      "编排",
+      "系统设计",
+      "架构模式"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Agent 的上下文窗口管理",
+    "content": "长时间运行的 Agent 会面临上下文窗口超限的问题。请介绍常见的上下文管理策略及其优缺点。",
+    "answer": "答案：常见的上下文管理策略有五种：1）滑动窗口——只保留最近 N 轮对话历史，丢弃最旧的内容。实现简单，但会丢失长期信息。适用于对话场景。2）摘要压缩——定期将历史对话摘要为简短总结，替换原始内容。能保留核心信息，但有信息损失，且摘要本身消耗 Token。适用于需要长期记忆但不要求精确回忆的场景。3）检索增强——将历史内容分块存入向量数据库，每次查询时检索最相关的历史片段加入上下文。精确保留信息，但增加了延迟和系统复杂度。适用于需要精确回忆特定细节的场景。4）结构化截断——保留 System Prompt 和关键状态，逐步丢弃不重要的中间步骤。需要明确的优先级标记。适用于有固定工作流的场景。5）分层记忆——参考人类记忆的三层模型：工作记忆（完整上下文，当前会话）、短期记忆（摘要，跨会话）、长期记忆（向量化检索）。适用于需要持久化上下文的复杂 Agent。\n\n扩展延伸：实际策略选择取决于 Agent 的任务类型——简单对话用滑动窗口就够了，复杂研究型 Agent 需要用分层记忆。还有一个关键点是 Token 预算的主动监控：在接近上下文窗口限制前就触发压缩或检索策略，而不是等到超限后才处理。这称为「主动上下文管理」。",
+    "hints": [
+      "Token 预算是 Agent 上下文管理的核心约束",
+      "主动管理比被动截断更可靠"
+    ],
+    "tags": [
+      "上下文管理",
+      "Token 优化",
+      "记忆系统",
+      "性能优化"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 评估体系",
+    "content": "如何全面评估一个 Agent 系统的性能？现有的 Agent 基准测试有哪些？评估时需要注意什么？",
+    "answer": "答案：Agent 评估分三个维度：1）任务完成度——能否正确完成用户目标（Accuracy、Success Rate、Task Completion Rate）。2）效率——完成任务的成本（Token 消耗、API 调用次数、延迟）。3）稳健性——对异常输入的容忍度（错误恢复率、幻觉率、安全违规次数）。\n\n解析：主流 Agent 基准测试——1）SWE-bench：评估 Agent 解决 GitHub Issue 的能力，包含 2294 个真实 Python 项目 Issue。是软件工程 Agent 的事实标准。2）GAIA：评估通用 AI 助手的多步推理和工具使用能力，包含 466 个需要多步推理的真实世界问题。3）ToolBench：评估工具学习和泛化能力，包含超过 16000 个 API。4）WebArena / VisualWebArena：评估 Agent 在浏览器环境中的网页导航和操作能力。5）AgentBench：多维度评估基准，涵盖操作系统、Web 浏览、购物、数据库等 8 个场景。6）TauBench：评估 Agent 的长期规划和记忆能力，包含需要数千步交互的复杂任务。\n\n扩展延伸：Agent 评估的一个核心挑战是可复现性——LLM 的非确定性输出导致同一任务在不同运行中的结果可能不同。建议——1）每个任务至少运行 3-5 次取统计结果。2）使用 Pass@K 指标（K 次尝试中至少成功一次的比例）。3）区分「确定性失败」和「随机性失败」。4）建立持续评估流水线，每次 Agent 升级后重新跑基准。",
+    "hints": [
+      "评估需要区分能力维度和效率维度",
+      "可复现性是 Agent 评估的核心挑战"
+    ],
+    "tags": [
+      "评估",
+      "基准测试",
+      "质量保障",
+      "稳健性"
+    ]
+  },
+  {
+    "category": "ai_agent",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Agent 工具调用的安全防护",
+    "content": "Agent 在自主调用工具时面临哪些安全风险？如何设计安全的工具调用防护体系？",
+    "answer": "答案：Agent 工具调用的安全风险分多层：1）Prompt Injection——用户输入中嵌入恶意指令操纵 Agent 调用危险工具。2）权限滥用——Agent 在合法上下文中过度使用工具（如读取所有文件而非指定文件）。3）工具滥用——同一工具被高频调用导致资源耗尽（经济风险和 DoS）。4）数据泄露——Agent 将敏感数据通过工具传递给外部服务。5）供应链攻击——恶意 MCP 或工具库窃取数据。\n\n解析：安全防护体系从外到内包含五层：1）输入净化层——在用户输入进入 Agent 前检测和过滤 Prompt Injection 尝试（使用独立的 Guard 模型或模式匹配）。2）权限控制层——每个工具有最小权限原则：定义工具能访问的路径范围、数据范围、调用频率上限。参考 Unix 文件权限模型。3）审批流层——高风险操作（写文件、执行命令、发送网络请求）需要用户显式确认。低风险操作（读取文件、搜索）允许自动执行。4）审计日志层——记录所有工具调用的完整上下文（输入、输出、时间戳、触发链）。用于事后追溯和异常检测。5）沙箱执行层——所有工具调用在隔离环境中执行（容器化或 Serverless 沙箱），限制网络访问和系统调用。\n\n扩展延伸：实际生产中的安全策略——1）分级授权：读操作自动放行，写操作需要确认，高危操作需要二次验证或 MFA。2）速率限制：按用户/按工具设置调用频率上限，防止滥用。3）内容检测：Agent 写出的内容在执行前经过敏感信息检测。4）红队测试：定期模拟攻击测试 Agent 的安全性。",
+    "hints": [
+      "Prompt Injection 是 Agent 安全最大的挑战",
+      "安全是分层设计，没有单点解决方案"
+    ],
+    "tags": [
+      "安全",
+      "工具调用",
+      "防护体系",
+      "Prompt Injection"
     ]
   }
 ]

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from collections import defaultdict
 from database import get_db
 from models import ProgressUpdate, StatsOverview
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 import math
 
@@ -46,7 +46,7 @@ async def update_progress(question_id: int, body: ProgressUpdate):
     )
     existing = await cursor.fetchone()
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Map app status to SM-2 quality
     quality = 4 if body.status == "correct" else 1
@@ -62,7 +62,7 @@ async def update_progress(question_id: int, body: ProgressUpdate):
                 last_review = existing["next_review_at"]
                 if isinstance(last_review, str):
                     last_review = datetime.fromisoformat(last_review.replace("Z", ""))
-                last_interval = max(1, (datetime.utcnow() - last_review).days)
+                last_interval = max(1, (datetime.now(timezone.utc) - last_review).days)
             except (ValueError, TypeError):
                 last_interval = 1
 
@@ -244,7 +244,7 @@ async def get_knowledge():
 @router.get("/review/due")
 async def get_due_reviews():
     db = await get_db()
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     cursor = await db.execute("""
         SELECT q.id, q.title, q.category, q.difficulty, q.type,
                p.wrong_count, p.next_review_at,

@@ -171,7 +171,7 @@
   <!-- Hints -->
   {#if question.hints?.length > 0 && !submitted}
     <button class="hint-trigger" onclick={() => (showHints = !showHints)}>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="10" />
         <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />

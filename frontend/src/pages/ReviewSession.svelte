@@ -199,7 +199,7 @@
   {#if phase === "setup"}
     <div class="rs-setup">
       <div class="rs-setup-icon">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
           stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
@@ -233,14 +233,14 @@
       <span class="rs-title">间隔复习</span>
       <span class="rs-counter">{doneCount}/{total}</span>
       <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" />
           <rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
           <rect x="14" y="14" width="7" height="7" /></svg>
       </button>
       <button class="rs-close" onclick={handleExit} aria-label="退出">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" /></svg>
@@ -266,7 +266,7 @@
             onclick={(e) => toggleBookmark(e, currentCard)}
             title={currentCard?.bookmarked ? "取消收藏" : "收藏"}
           >
-            <svg
+            <svg aria-hidden="true"
               width="13"
               height="13"
               viewBox="0 0 24 24"
@@ -293,7 +293,10 @@
 
         {#if currentCard?.hints?.length > 0 && !showAnswer}
           <div class="rs-hints">
-            <span class="rs-hint-label">💡 提示</span>
+            <span class="rs-hint-label">
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+              提示
+            </span>
             {#each currentCard.hints.slice(0, 1) as hint}
               <p class="rs-hint-text">{hint}</p>
             {/each}
@@ -312,7 +315,7 @@
       {#if !showAnswer}
         <div class="rs-reveal-area">
           <button class="rs-reveal-btn" onclick={revealAnswer}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
               stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" /></svg>
@@ -347,7 +350,7 @@
             <button class="rs-rate-btn forgot" onclick={() => rate("forgot")}>
               <span class="rs-rate-kbd">1</span>
               <span class="rs-rate-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                   stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
                   <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
@@ -358,7 +361,7 @@
             <button class="rs-rate-btn hard" onclick={() => rate("hard")}>
               <span class="rs-rate-kbd">2</span>
               <span class="rs-rate-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                   stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
                   <path d="M12 8v4M12 16h.01" /></svg>
@@ -369,7 +372,7 @@
             <button class="rs-rate-btn good" onclick={() => rate("good")}>
               <span class="rs-rate-kbd">3</span>
               <span class="rs-rate-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                   stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               </span>
@@ -379,7 +382,7 @@
             <button class="rs-rate-btn easy" onclick={() => rate("easy")}>
               <span class="rs-rate-kbd">4</span>
               <span class="rs-rate-icon">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
                   stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
               </span>
@@ -429,12 +432,12 @@
     <div class="rs-summary">
       <div class="summary-icon {retention >= 70 ? 'good' : retention >= 40 ? 'ok' : 'bad'}">
         {#if retention >= 70}
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
             stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" /></svg>
         {:else}
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
             stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
             <path d="M12 8v4M12 16h.01" /></svg>
@@ -444,7 +447,10 @@
       <h2 class="summary-title">复习完成！</h2>
 
       {#if store.dailyStats?.streak > 0}
-        <div class="summary-streak">🔥 连续 {store.dailyStats.streak} 天</div>
+        <div class="summary-streak">
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+          连续 {store.dailyStats.streak} 天
+        </div>
       {/if}
 
       <div class="summary-stats">
@@ -473,7 +479,7 @@
   {:else if phase === "empty"}
     <div class="rs-summary">
       <div class="summary-icon good">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
           stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" /></svg>
@@ -855,6 +861,9 @@
     font-size: 14px;
     color: var(--warning);
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
   .summary-stats {
     display: flex;

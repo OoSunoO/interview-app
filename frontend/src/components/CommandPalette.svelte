@@ -156,7 +156,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="cp-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { trapFocus(e, dialogEl); if (e.key === "Escape") open = false; }} bind:this={dialogEl}>
       <div class="cp-input-wrap">
-        <svg class="cp-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" class="cp-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
         </svg>
@@ -184,7 +184,7 @@
             >
               {#if item.type === "page"}
                 <span class="cp-item-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" />
@@ -195,7 +195,7 @@
                 <span class="cp-item-hint">页面</span>
               {:else}
                 <span class="cp-item-icon cp-question-icon">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />

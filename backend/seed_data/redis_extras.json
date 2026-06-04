@@ -1867,5 +1867,70 @@
       "安全审计",
       "访问控制"
     ]
+  },
+  {
+    "category": "redis",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis Streams 消息队列深度解析",
+    "content": "Redis Streams 是 Redis 5.0 引入的消息队列数据结构。请说明 Streams 的核心概念（消息、消费者组、消费者、待确认列表、全球唯一 ID）、消费确认机制、以及 Streams 与 Kafka 的分区模型对比。",
+    "answer": "答案：Redis Streams 是追加式日志数据结构，每条消息有全球唯一自动生成的毫秒级时间戳 ID（<time>-<seq>），支持消费者组将消息分发给不同消费者并确认处理完成。\n\n解析：1）核心概念——Stream 本身是消息链表，每个 entry 有唯一 ID 和 key-value 对。消费者组（Consumer Group）是逻辑订阅者，每个组有游标（last_delivered_id）追踪进度。组内消费者（Consumer）从 Stream 中读取消息，各消费者收到的消息互斥。待确认列表（PEL, Pending Entries List）记录已发送但未确认的消息。2）消费流程：XREADGROUP GROUP group consumer COUNT 10 STREAMS mystream >——读取未消费消息。处理完成后 XACK group consumer stream id 确认。超时未确认的消息会被重新分发给其他消费者。3）与 Kafka 对比：相同点——都是追加日志 + 消费者组 + 偏移量管理。关键差异——Kafka 按分区有序，在分区内严格顺序；Redis Streams 可在多消费者间实现 at-least-once 但不保证全局顺序。Kafka 持久化到磁盘、可回溯任意历史；Redis Streams 受内存限制（数据可配置上限，如 XTRIM MAXLEN ~10000）。Kafka 的分区数固定；Redis Streams 的消费者组数量灵活。\n\n扩展延伸：Streams 生产建议：使用 ~（波浪线）做近似裁剪，性能远高于精确裁剪。消息积压时注意内存监控。消费者故障恢复依赖 PEL 的超时重分配（XPENDING + XCLAIM），需根据业务合理设置 idle 超时时间。Streams 适合队列长度可控、延迟敏感的消息场景，不适合海量历史数据回溯。",
+    "hints": [
+      "XREADGROUP 中 > 符号的特殊含义",
+      "PEL（Pending Entries List）在消费者故障时的作用"
+    ],
+    "tags": ["Redis", "Streams", "消息队列", "Kafka"]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 缓存穿透/击穿/雪崩及解决方案",
+    "content": "在 Redis 缓存实践中，缓存穿透、缓存击穿、缓存雪崩是三种典型的故障场景。请分别说明三者的定义、产生原因和对应的解决方案。",
+    "answer": "答案：缓存穿透指查询不存在的数据，缓存和数据库都查不到，请求直接打到数据库。缓存击穿指热点 key 在缓存过期瞬间，大量并发请求直接打到数据库。缓存雪崩指大量 key 同时过期或 Redis 宕机，导致数据库被海量请求压垮。\n\n解析：1）缓存穿透——产生原因：恶意攻击或查询不存在 ID。解决方案：布隆过滤器（Bloom Filter）拦截非法 key。另一种是缓存空值（null），设置短 TTL（如 60s），防止恶意请求穿透到 DB。2）缓存击穿——产生原因：某个热点 key 在某一时刻过期，并发请求瞬间涌入。解决方案：互斥锁（Mutex Key）——第一个请求获取锁去重建缓存，其他请求等待后直接读缓存。或者使用「逻辑过期」策略——缓存不设过期时间，后台异步刷新。3）缓存雪崩——产生原因：大量 key 同时过期或 Redis 实例宕机。解决方案：过期时间加随机值（如基础 TTL + 随机 1-5min）避免同时过期。Redis 高可用部署（主从 + Sentinel/Cluster）。本地缓存（如 Caffeine）作为多级降级。限流和熔断保护 DB。\n\n扩展延伸：实际生产通常是组合方案：布隆过滤器 + 本地缓存 + Redis Cluster + 过期时间加随机值。缓存击穿和雪崩的区分：击穿是单 key 问题，雪崩是多 key 或全 Redis 故障。缓存空值策略要注意防止内存泄漏（大量空 key 占用内存），建议对空值做「系统性」TTL 短且 key 前缀可追溯。",
+    "hints": [
+      "布隆过滤器解决缓存穿透的原理是什么",
+      "缓存击穿和缓存雪崩在故障范围上的区别"
+    ],
+    "tags": ["Redis", "缓存穿透", "缓存击穿", "缓存雪崩"]
+  },
+  {
+    "category": "redis",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Redis 限流算法实战",
+    "content": "如何用 Redis 实现接口限流？请说明固定窗口、滑动窗口、令牌桶和漏桶四种限流算法的 Redis 实现方式、优缺点和适用场景。",
+    "answer": "答案：固定窗口按时间段计数，用 INCR + EXPIRE 实现，简单但存在临界突发问题。滑动窗口用有序集合（ZSET）记录时间戳，ZREMRANGEBYSCORE + ZCARD 计数，精度高但内存开销大。令牌桶用 Lua 脚本模拟令牌生成和消耗，支持突发流量。漏桶用 LIST + FIFO 消费，强制平滑请求。\n\n解析：1）固定窗口——Redis key 过期策略天然适合：INCR key，EXPIRE key 60。问题：窗口切换瞬间可能双倍流量（00:59 来 100 请求，01:00 又来 100，1 秒内 200 请求）。2）滑动窗口——每个请求的时间戳作为 score 加入 ZSET，ZREMRANGEBYSCORE 移除窗口外记录，ZCARD 统计。精度高但每个请求需要 O(log N) 且内存随请求量增长。优化：可以按秒粗化粒度减少存储。3）令牌桶——Lua 脚本实现：每次请求计算上次请求后生成的令牌数（(now - lastTime) * rate），更新令牌数。允许一定程度的突发（桶容量内）。实现复杂但流量整形效果最好。4）漏桶——用 LPUSH 入队，定时任务 RPOP 消费。处理速度恒定，强制平滑，适合保护下游系统，但不允许突发。\n\n扩展延伸：生产环境建议：1）简单场景（单机限流）用固定窗口 + 随机过期偏移。2）精确限流（API 级别）用滑动窗口 + ZSET 定期清理。3）突发保护（秒杀）用令牌桶。4）平滑处理（消息推送）用漏桶。Redis 限流的性能瓶颈在网络 IO，可用 local Redis + Pipeline 或 Lua 脚本减少往返。高级方案：Redis 模块方式（RedisCell——滑动窗口限流模块，支持突发和降级）。",
+    "hints": [
+      "固定窗口算法在窗口切换时刻的临界问题",
+      "令牌桶算法为什么适合秒杀类场景"
+    ],
+    "tags": ["Redis", "限流", "令牌桶", "滑动窗口"]
+  },
+  {
+    "category": "redis",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 内存优化与存储编码",
+    "content": "Redis 为了节省内存，对不同的数据结构采用了多种内部编码方式。请说明 Redis 的 ziplist、quicklist、skiplist、intset 和 hashtable 五种编码的适用条件和转换机制，以及如何分析和调优 Redis 实例的内存。",
+    "answer": "答案：Redis 为每种数据类型提供了多种内部编码，在内存占用和性能之间做权衡。ziplist（紧凑列表）用于小规模 list/hash/zset，quicklist 是 ziplist 的链表（Redis 3.2+ 替代 linkedlist），skiplist 用于大规模 zset，intset 用于小规模整数集合，hashtable 是字典基础编码。\n\n解析：1）ziplist——连续内存块，每个 entry 有 prevlen（前一个 entry 长度）、encoding、data。适合元素少且值小的场景。list 用 ziplist：list-max-ziplist-size 控制（默认 -2 即 8KB）。hash 用 ziplist：hash-max-ziplist-entries 512 + hash-max-ziplist-value 64。zset 用 ziplist：zset-max-ziplist-entries 128 + zset-max-ziplist-value 64。超过阈值转换为 hashtable/skiplist。2）quicklist——双向链表节点，每个节点是一个 ziplist。解决了 linkedlist 节点指针过多（每个 entry 一个 Node）和 ziplist 更新连锁反应的问题。list-max-ziplist-size -2 表示每个 ziplist 上限 8KB。list-compress-depth 0 表示不压缩（可设 1 表示首尾不压缩中间压缩）。3）skiplist——zset 在规模超过 ziplist 阈值时使用 skiplist + hashtable 双重结构（skiplist 有序 + hashtable O(1) 查分）。4）intset——当 set 的元素全是整数且数量不超过 set-max-intset-entries（默认 512）时使用。按 16/32/64 位自动升级编码以节省空间。5）hashtable——渐进式 rehash 的 dict 结构，当 set 超出 intset 阈值或 hash 超出 ziplist 阈值时使用。\n\n扩展延伸：内存分析：MEMORY USAGE key 查看 key 的内存（近似）；MEMORY STATS 查看实例内存分配；MEMORY DOCTOR 给出优化建议。INFO memory 关注 used_memory_rss（RSS 内存）和 used_memory（逻辑内存），差值大说明碎片率高。常用优化：合理设置 maxmemory + 淘汰策略；hash 代替 string 批量存储（对象用 hash field 比多个 string key 省内存近 90%）；大 key 拆分（单 key 超过 10MB 需要考虑拆分，影响主从同步和迁移）。",
+    "hints": [
+      "ziplist 的连锁更新（Cascade Update）问题",
+      "quicklist 如何解决 ziplist 的连锁更新和 linkedlist 的高指针开销"
+    ],
+    "tags": ["Redis", "内存优化", "内部编码", "性能调优"]
+  },
+  {
+    "category": "redis",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "Redis 集群扩缩容与数据分片",
+    "content": "Redis Cluster 如何实现在线扩缩容？请说明槽迁移的过程、resharding 对客户端的影响、slot 与 key 的映射机制、以及扩缩容期间需要注意的关键问题。",
+    "answer": "答案：Redis Cluster 将 key 空间分为 16384 个 hash slot，每个节点负责一部分槽。扩缩容时通过槽迁移（slot migration）将槽从一个节点迁移到另一个节点，整个过程在线进行，无需停机。\n\n解析：1）Slot 映射——key 通过 CRC16(key) % 16384 计算所属槽。支持 hash tags（key 中包含 {} 可强制将不同 key 映射到同一槽，支持 multi-key 操作）。2）扩容流程——新节点 CLUSTER MEET 加入集群 → CLUSTER SETSLOT slot MIGRATING src-node（源节点标记槽为迁出）→ CLUSTER SETSLOT slot IMPORTING dst-node（目标节点标记槽为迁入）→ 对槽内每个 key 执行 MIGRATE 迁移 → CLUSTER SETSLOT slot NODE dst-node 广播槽归属变更。3）缩容流程——先将被移除节点的槽迁移到其他节点 → CLUSTER FORGET 通知所有节点移除目标节点。4）在线迁移的影响——客户端在迁移期间可能遇到 MOVED 重定向（槽完全归属新节点）或 ASK 重定向（槽正在迁移中，需要先 ASKING 再操作）。Redis 客户端（如 JedisCluster/lettuce）自动处理重定向，但 ASK 重定向会增加一次额外 RTT。\n\n扩展延伸：批量迁移用 redis-cli --cluster reshard 自动完成。reshard 期间注意：1）网络带宽——传输大 key 影响延迟（MIGRATE 是阻塞命令）。2）内存变化——迁移过程中源节点和目标节点都有该槽数据（double memory 阶段）。3）数据一致性——迁移过程非事务性，客户端可能读到不一致状态。4）性能建议——低峰期做 reshard，单次迁移 key 数量控制（CLUSTER SETSLOT 频繁广播会影响集群 gossip 效率）。5）每个节点建议管理的 slot 数不要过度碎片化，保持每个节点连续的大段 slot（减少客户端 routing table 长度）。",
+    "hints": [
+      "MOVED 和 ASK 重定向的区别",
+      "hash tags 的使用场景和限制"
+    ],
+    "tags": ["Redis", "Cluster", "扩缩容", "分片"]
   }
 ]

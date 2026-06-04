@@ -1362,7 +1362,7 @@
   },
   {
     "category": "algorithm_extras",
-    "difficulty": "expert",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "吉司机线段树",
     "content": "请说明吉司机线段树（Segment Tree Beats）的核心概念和设计动机。它解决了哪些传统线段树无法高效处理的问题？以「区间取 min」操作为例，说明如何维护区间最大值和次大值来实现均摊 O(n log n) 的复杂度。重点解释势能分析如何保证复杂度上界。",
@@ -1381,7 +1381,7 @@
   },
   {
     "category": "algorithm_extras",
-    "difficulty": "expert",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "回文自动机",
     "content": "请说明回文自动机（Palindrome Automaton / Palindromic Tree / Eertree）的数据结构原理和构建过程。包括：如何定义回文自动机的状态和转移？如何在线性时间内构建？它支持哪些高效的回文相关查询？",
@@ -1400,7 +1400,7 @@
   },
   {
     "category": "algorithm_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "最小割 Stoer-Wagner 算法",
     "content": "请说明 Stoer-Wagner 算法求无向图全局最小割（Global Minimum Cut）的核心思想和算法步骤。它与基于最大流的最小割算法（如求 s-t 最小割）相比有什么优势？算法的时间复杂度和正确性直观理解是什么？",
@@ -1419,7 +1419,7 @@
   },
   {
     "category": "algorithm_extras",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "树链剖分",
     "content": "请说明树链剖分（Heavy-Light Decomposition, HLD）的核心原理和典型应用场景。包括重儿子/轻儿子的定义、剖分过程、如何将树上路径查询转化为 O(log^2 n) 的区间查询。以「树上路径求和」和「LCA 查询」为例说明实现细节。",
@@ -1438,7 +1438,7 @@
   },
   {
     "category": "algorithm_extras",
-    "difficulty": "expert",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "动态图连通性",
     "content": "请说明动态图连通性（Dynamic Connectivity）问题的定义和主要算法。针对完全动态（边插入和删除）场景，解释 Holm-de Lichtenberg-Thorup（HDLT）算法的核心思想和复杂度。对于仅删除（decremental）或仅插入（incremental）这两个特例，分别用什么更简单的数据结构？",

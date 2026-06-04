@@ -96,6 +96,24 @@ class TestCheckRequiredFields:
             ok, err = check_required_fields(data, ["title", "type", "answer"])
             assert ok, f"type '{t}' should be valid: {err}"
 
+    def test_invalid_difficulty(self):
+        data = [{"title": "Q", "type": "short_answer", "answer": "A", "difficulty": "expert"}]
+        ok, err = check_required_fields(data, ["title", "type", "answer", "difficulty"])
+        assert not ok
+        assert "未知难度" in err
+
+    def test_valid_difficulty(self):
+        for d in ("easy", "medium", "hard"):
+            data = [{"title": "Q", "type": "short_answer", "answer": "A", "difficulty": d}]
+            ok, err = check_required_fields(data, ["title", "type", "answer", "difficulty"])
+            assert ok, f"difficulty '{d}' should be valid: {err}"
+
+    def test_missing_category(self):
+        data = [{"title": "Q", "type": "short_answer", "answer": "A", "difficulty": "easy"}]
+        ok, err = check_required_fields(data, ["title", "type", "answer", "category", "difficulty"])
+        assert not ok
+        assert "category" in err
+
 
 # ── check_options_prefix ──
 

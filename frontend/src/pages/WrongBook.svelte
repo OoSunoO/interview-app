@@ -298,7 +298,12 @@
           <button class="correct-btn" onclick={markCorrect}>掌握了</button>
         </div>
         <button class="socratic-btn" onclick={startSocratic} disabled={socraticLoading}>
-          {socraticLoading ? "思考中..." : "🤖 AI 苏格拉底式探讨"}
+          {#if socraticLoading}
+            思考中...
+          {:else}
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="2" y="10" width="20" height="12" rx="2"/><path d="M6 14v.01M10 14v.01M14 14v.01M18 14v.01"/></svg>
+            AI 苏格拉底式探讨
+          {/if}
         </button>
       {/if}
 
@@ -341,7 +346,10 @@
         </div>
       {/if}
     {:else}
-      <p class="empty">全部掌握！🎉</p>
+      <p class="empty">
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        全部掌握！
+      </p>
     {/if}
   {:else}
     <div class="wrong-header">
@@ -370,7 +378,7 @@
       </button>
 
       <button class="export-btn" onclick={exportWrongAsMarkdown}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
@@ -381,7 +389,7 @@
       {#if hasSchedule}
         <div class="schedule-section">
           <button class="schedule-header" onclick={() => (showSchedule = !showSchedule)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
@@ -389,7 +397,7 @@
             </svg>
             复习日程
             <span class="chevron" class:open={showSchedule}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                 stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
@@ -433,7 +441,7 @@
           {#if analysisLoading}
             分析中...
           {:else}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 2a10 10 0 0 1 10 10c0 2.5-1 5-2.7 6.7L12 12V2z" />
               <path d="M12 12 7 17.3" />
@@ -506,7 +514,7 @@
 
       {#if wrongQuestions.length > 2}
         <div class="wb-search-wrap">
-          <svg class="wb-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+          <svg aria-hidden="true" class="wb-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
           <input
             class="wb-search"
             placeholder="搜索错题标题..."
@@ -514,7 +522,7 @@
           />
           {#if wrongSearch}
             <button class="wb-search-clear" onclick={() => (wrongSearch = "")} aria-label="清除搜索">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
             </button>
           {/if}
         </div>
@@ -559,7 +567,8 @@
                 onclick={() => onNavigate("knowledge-detail", { tag: group.tag })}
                 title="查看知识点"
               >
-                📖 知识点
+                <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                知识点
               </button>
               <span class="group-wrong">错 {group.totalWrong} 次</span>
             </div>
@@ -592,7 +601,7 @@
                       onclick={(e) => toggleBookmark(e, q)}
                       title={q.bookmarked ? "取消收藏" : "收藏"}
                     >
-                      <svg
+                      <svg aria-hidden="true"
                         width="13"
                         height="13"
                         viewBox="0 0 24 24"
@@ -623,7 +632,10 @@
     gap: 14px;
   }
   .empty {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     color: var(--text-muted);
     padding: 40px 0;
     font-size: 18px;
@@ -918,6 +930,9 @@
     font-weight: 600;
   }
   .kp-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
     font-size: 11px;
     padding: 2px 8px;
     border-radius: 4px;
@@ -1083,6 +1098,10 @@
     width: 100%;
     padding: 12px;
     font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     background: none;
     border: 1px solid var(--border);
     color: var(--text-muted);

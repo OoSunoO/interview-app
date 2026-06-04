@@ -147,8 +147,19 @@ q("behavioral", "medium", "short_answer",
   ["和固执的技术同事合作有什么技巧", "同事频繁甩锅怎么自保"],
   ["难相处", "合作", "冲突", "EQ"])
 
-# Write
+# Write (with safety guard)
 outpath = '/Users/petersun/DEV/labs/interview-app/backend/seed_data/behavioral_extras.json'
+try:
+    with open(outpath, 'r') as f:
+        existing = json.load(f)
+    print(f'⚠️  目标文件已有 {len(existing)} 题，本次将写入 {len(questions)} 题（覆盖）')
+    confirm = input('确认覆盖？(y/N): ')
+    if confirm.lower() != 'y':
+        print('已取消')
+        exit()
+except FileNotFoundError:
+    pass
+
 with open(outpath, 'w') as f:
     json.dump(questions, f, ensure_ascii=False, indent=2)
 print(f'Written: {len(questions)} questions to {outpath}')

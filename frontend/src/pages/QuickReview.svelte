@@ -211,14 +211,14 @@
       <span class="qr-title">速记模式</span>
       <span class="qr-counter" data-testid="qr-counter">{doneCount}/{total}</span>
       <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" />
           <rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
           <rect x="14" y="14" width="7" height="7" /></svg>
       </button>
       <button class="qr-close" onclick={handleExit} aria-label="退出">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" />
           <line x1="6" y1="6" x2="18" y2="18" /></svg>
@@ -240,7 +240,7 @@
             onclick={() => toggleBookmark(currentQuestion)}
             aria-label={currentQuestion?.bookmarked ? '取消收藏' : '收藏'}
           >
-            <svg
+            <svg aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -269,7 +269,10 @@
 
         {#if currentQuestion?.hints?.length > 0 && !showAnswer}
           <div class="qr-hints">
-            <span class="qr-hint-label">💡 提示</span>
+            <span class="qr-hint-label">
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>
+              提示
+            </span>
             {#each currentQuestion.hints.slice(0, 1) as hint}
               <p class="qr-hint-text">{hint}</p>
             {/each}
@@ -288,7 +291,7 @@
       {#if !showAnswer}
         <div class="qr-reveal-area">
           <button class="qr-reveal-btn" onclick={revealAnswer} data-testid="qr-reveal-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+            <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
               stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" /></svg>
@@ -322,13 +325,22 @@
           <p class="qr-rate-hint">这道题你掌握了吗？</p>
           <div class="qr-rate-btns">
             <button class="qr-rate-btn forgot" onclick={() => selfRate("forgot")} data-testid="qr-rate-forgot">
-              ❌ 不会
+              <span class="qr-rate-icon">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+              </span>
+              <span class="qr-rate-lbl">不会</span>
             </button>
             <button class="qr-rate-btn unsure" onclick={() => selfRate("unsure")} data-testid="qr-rate-unsure">
-              🤔 大概会
+              <span class="qr-rate-icon">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+              </span>
+              <span class="qr-rate-lbl">大概会</span>
             </button>
             <button class="qr-rate-btn remembered" onclick={() => selfRate("remembered")} data-testid="qr-rate-remembered">
-              ✅ 已掌握
+              <span class="qr-rate-icon">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+              </span>
+              <span class="qr-rate-lbl">已掌握</span>
             </button>
           </div>
         </div>
@@ -373,17 +385,17 @@
     <div class="qr-summary" data-testid="qr-summary">
       <div class="summary-icon">
         {#if total === 0}
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
             stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
             <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
         {:else if rememberedCount >= forgotCount}
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
             stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" /></svg>
         {:else}
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+          <svg aria-hidden="true" width="48" height="48" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
             stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
             <path d="M12 8v4M12 16h.01" /></svg>
@@ -805,6 +817,10 @@
   }
   .qr-rate-btn {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
     padding: 14px 8px;
     font-size: 13px;
     font-weight: 600;
@@ -820,20 +836,32 @@
   .qr-rate-btn:active {
     transform: scale(0.96);
   }
-  .qr-rate-btn.forgot:active {
+  .qr-rate-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+  .qr-rate-btn.forgot:active,
+  .qr-rate-btn.forgot .qr-rate-icon {
     background: var(--danger-bg);
-    border-color: var(--danger);
     color: var(--danger);
   }
-  .qr-rate-btn.unsure:active {
+  .qr-rate-btn.unsure:active,
+  .qr-rate-btn.unsure .qr-rate-icon {
     background: var(--warning-bg);
-    border-color: var(--warning);
     color: var(--warning);
   }
-  .qr-rate-btn.remembered:active {
+  .qr-rate-btn.remembered:active,
+  .qr-rate-btn.remembered .qr-rate-icon {
     background: var(--success-bg);
-    border-color: var(--success);
     color: var(--success);
+  }
+  .qr-rate-lbl {
+    font-size: 13px;
+    font-weight: 700;
   }
 
   /* ── Summary ── */

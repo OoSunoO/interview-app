@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 
 /** Small fixture covering all filter/sort/pagination scenarios */
 const FIXTURE = [
@@ -118,7 +118,7 @@ vi.mock("../knowledge-data.js", () => ({
     }
     return map;
   },
-  getKnowledgeForTag: () => null,
+  getKnowledgeForTag: vi.fn(() => null),
 }));
 
 beforeEach(() => {
@@ -400,6 +400,17 @@ describe("knowledge API", () => {
     const result = api.knowledge.list("Java");
     expect(result.length).toBeGreaterThanOrEqual(1);
     expect(result.some((k) => k.name === "Java基础")).toBe(true);
+  });
+
+  it("searches knowledge points by content", async () => {
+    const knowledgeData = await import("../knowledge-data.js");
+    knowledgeData.getKnowledgeForTag.mockImplementation((tag) => {
+      if (tag === "SQL") return { content: "SQL查询优化技巧和索引原理" };
+      return null;
+    });
+    const api = await getApi();
+    const result = api.knowledge.list("查询优化");
+    expect(result.some((k) => k.name === "SQL")).toBe(true);
   });
 
   it("gets knowledge point tags for a question", async () => {

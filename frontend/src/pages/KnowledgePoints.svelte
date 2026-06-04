@@ -126,7 +126,7 @@
   </div>
 
   <div class="search-wrap">
-    <svg
+    <svg aria-hidden="true"
       class="search-icon"
       width="16"
       height="16"
@@ -173,7 +173,7 @@
               >
                 掌握 {Math.round(cat.totalMastery / Math.max(cat.children.length, 1))}%
               </span>
-              <svg
+              <svg aria-hidden="true"
                 class="cat-arrow"
                 class:rotated={expandedCategory === cat.id}
                 width="16"
@@ -198,7 +198,7 @@
                       <span class="child-name">{kp.name}</span>
                       <span class="child-count">{kp.question_count} 题</span>
                       {#if kp.has_content}
-                        <span class="content-badge">📖 有讲解</span>
+                        <span class="content-badge"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> 有讲解</span>
                       {/if}
                     </div>
                     <div class="child-mastery">
@@ -215,7 +215,7 @@
                         {kp.mastery}%
                       </span>
                     </div>
-                    <svg
+                    <svg aria-hidden="true"
                       class="child-arrow"
                       class:rotated={expandedKp === kp.name}
                       width="14"
@@ -413,6 +413,9 @@
     flex-shrink: 0;
   }
   .content-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
     font-size: 10px;
     color: var(--accent);
     background: var(--accent-bg);

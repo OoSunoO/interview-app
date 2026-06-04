@@ -233,7 +233,7 @@
       <button class="goal-card" onclick={openGoalDialog}>
         <div class="goal-row">
           <span class="goal-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
           </span>
           <span class="goal-text">每日目标</span>
           <span class="goal-count" class:goal-done={store.dailyStats.today.reviewed >= dailyGoal}>
@@ -248,7 +248,7 @@
       <button class="goal-card goal-card-empty" onclick={openGoalDialog}>
         <div class="goal-row">
           <span class="goal-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
           </span>
           <span class="goal-text">设置每日目标</span>
           <span class="goal-hint">+</span>
@@ -268,7 +268,7 @@
       {#if dueCount > 0}
         <button class="due-card" onclick={startDueReview}>
           <div class="due-icon">
-            <svg
+            <svg aria-hidden="true"
               width="16"
               height="16"
               viewBox="0 0 24 24"
@@ -286,7 +286,7 @@
             <span class="due-cnt">{dueCount} 道题待巩固</span>
           </div>
           <div class="due-arrow-icon">
-            <svg
+            <svg aria-hidden="true"
               width="14"
               height="14"
               viewBox="0 0 24 24"
@@ -303,7 +303,7 @@
         <button class="due-alt-link" onclick={() => onNavigate("wrong")}>在错题本中查看</button>
       {:else}
         <div class="all-clear">
-          <svg
+          <svg aria-hidden="true"
             width="16"
             height="16"
             viewBox="0 0 24 24"
@@ -330,7 +330,7 @@
           }
         }}>
           <div class="ls-header">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
               stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" /></svg>
@@ -361,13 +361,13 @@
         </button>
       {/if}
       <button class="review-entry-btn" onclick={() => onNavigate("review-session")}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
           <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
         间隔复习
         {#if store.dailyStats?.streak > 0}
-          <span class="review-streak-badge">🔥 {store.dailyStats.streak} 天</span>
+          <span class="review-streak-badge"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg> {store.dailyStats.streak} 天</span>
         {/if}
       </button>
 
@@ -396,7 +396,7 @@
       </div>
 
       <button class="reminder-toggle" onclick={toggleReminder}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
           class:off={!reminderEnabled}>
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -438,7 +438,7 @@
       <button class="btn-wrap start-cta" onclick={() => onNavigate("browse")}>
         开始刷题
         <span class="btn-icon">
-          <svg
+          <svg aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -457,7 +457,7 @@
         const q = api.questions.random();
         if (q) onNavigate("quiz", { questionId: q.id });
       }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><polyline points="16 3 21 3 21 8" />
           <line x1="4" y1="20" x2="21" y2="3" />
@@ -468,7 +468,7 @@
       </button>
 
       <button class="qr-entry-btn" onclick={openQuickReview}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
           <path d="M12 6v6l4 2" /></svg>
@@ -476,7 +476,7 @@
       </button>
 
       <button class="mi-entry-btn" onclick={() => (showMIDialog = true)}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" />
           <path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
@@ -587,6 +587,23 @@
       <div class="dialog-actions">
         <button class="dialog-btn cancel" onclick={() => (showMIDialog = false)}>取消</button>
         <button class="dialog-btn primary" onclick={startMockInterview}>开始模拟</button>
+      </div>
+    </div>
+  </div>
+{/if}
+
+<!-- ── Goal Dialog ── -->
+{#if showGoalDialog}
+  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+  <div class="dialog-overlay" onclick={() => (showGoalDialog = false)} onkeydown={(e) => handleOverlayKeydown(e, () => showGoalDialog = false)}>
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => handleOverlayKeydown(e, () => showGoalDialog = false)}>
+      <div class="dialog-title">每日目标</div>
+      <div class="dialog-desc">设置每天计划复习的题数（0 关闭目标）</div>
+      <input class="goal-input" type="number" min="0" max="200" bind:value={goalInput} onkeydown={(e) => { if (e.key === "Enter") saveGoal(); }}>
+      <div class="dialog-actions">
+        <button class="dialog-btn cancel" onclick={() => (showGoalDialog = false)}>取消</button>
+        <button class="dialog-btn primary" onclick={saveGoal}>保存</button>
       </div>
     </div>
   </div>
@@ -1176,6 +1193,9 @@
   opacity: 0.9;
 }
 .review-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-size: 11px;
   font-weight: 600;
   padding: 2px 8px;

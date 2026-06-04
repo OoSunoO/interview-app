@@ -77,6 +77,19 @@ describe("renderAnswer", () => {
     expect(renderAnswer(undefined)).toEqual([]);
   });
 
+  it("returns empty array for whitespace-only input", () => {
+    expect(renderAnswer("   ")).toEqual([]);
+  });
+
+  it("handles text ending with a header and no trailing content", () => {
+    const text = "答案：content\n解析：";
+    const result = renderAnswer(text);
+    expect(result).toHaveLength(2);
+    expect(result[0].type).toBe("answer");
+    expect(result[0].parts[0].content).toBe("content");
+    expect(result[1].type).toBe("explanation");
+  });
+
   it("handles text with code blocks inside sections", () => {
     const text = "答案：Here's code\n```py\nprint(1)\n```\n解析：It prints 1";
     const result = renderAnswer(text);

@@ -1325,7 +1325,7 @@
   },
   {
     "category": "agent",
-    "difficulty": "intermediate",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 工具调用失败重试策略",
     "content": "请详细说明 Agent 在工具调用失败时的重试策略设计。包括指数退避（Exponential Backoff）的实现、重试类型区分（可恢复 vs 不可恢复错误）、最大重试次数和超时控制，以及如何结合 LLM 的自省能力确定下一步动作。给出一个可靠的重试策略流程。",
@@ -1344,7 +1344,7 @@
   },
   {
     "category": "agent",
-    "difficulty": "intermediate",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 记忆压缩与摘要",
     "content": "请说明 Agent 系统中记忆压缩和摘要的实现策略。包括：何时触发记忆压缩、摘要生成的方法（提取式 vs 生成式摘要）、层次化记忆管理（如 Rolling Window + Summary），以及如何在压缩过程中保留关键事实不丢失。对比不同压缩策略的权衡。",
@@ -1363,7 +1363,7 @@
   },
   {
     "category": "agent",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "多步推理中幻觉检测",
     "content": "请说明 Agent 在多步推理过程中如何检测和缓解 LLM 幻觉。包括：基于一致性检查的方法、基于外部知识验证的方法、自我反思（Self-Reflection）和 SelfCheckGPT 等技术的原理和适用场景。",
@@ -1382,7 +1382,7 @@
   },
   {
     "category": "agent",
-    "difficulty": "intermediate",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 使用外部计算工具",
     "content": "请说明 Agent 如何使用外部计算工具（如计算器、代码解释器、数据库查询引擎）来增强推理能力。重点讨论：Agent 如何决定何时需要外部计算、如何将自然语言问题转化为工具调用、以及如何整合计算结果回推理链。给出一个包含数学推理的完整流程示例。",
@@ -1401,7 +1401,7 @@
   },
   {
     "category": "agent",
-    "difficulty": "advanced",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Agent 任务分解的动态规划",
     "content": "请说明 Agent 如何将动态规划（DP）思想应用于任务分解中。包括：如何定义任务的状态和子问题对应关系、如何利用 DP 的最优子结构性质优化子任务的执行顺序、以及在不确定环境下如何处理状态转移的不可预测性。对比贪心分解和 DP 分解的优劣。",

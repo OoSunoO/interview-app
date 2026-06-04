@@ -546,8 +546,19 @@ q("behavioral", "hard", "short_answer",
   ["情景题", "失败", "复盘", "成长"])
 
 
-# Write
+# Write (with safety guard)
 outpath = '/Users/petersun/DEV/labs/interview-app/backend/seed_data/career_extras.json'
+try:
+    with open(outpath, 'r') as f:
+        existing = json.load(f)
+    print(f'⚠️  目标文件已有 {len(existing)} 题，本次将写入 {len(questions)} 题（覆盖）')
+    confirm = input('确认覆盖？(y/N): ')
+    if confirm.lower() != 'y':
+        print('已取消')
+        exit()
+except FileNotFoundError:
+    pass
+
 with open(outpath, 'w') as f:
     json.dump(questions, f, ensure_ascii=False, indent=2)
 print(f'Written: {len(questions)} questions to {outpath}')

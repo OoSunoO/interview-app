@@ -4,6 +4,7 @@
   import { store } from "../lib/stores.svelte.js";
   import { categoryLabel } from "../lib/categories.js";
   import { toast } from "../lib/toast.js";
+  import { version as appVersion } from "../../package.json";
   import ProgressRing from "../components/ProgressRing.svelte";
   import CalendarHeatmap from "../components/CalendarHeatmap.svelte";
 
@@ -23,7 +24,7 @@
       dailyStats: JSON.parse(localStorage.getItem("quiz_daily_stats") || "{}"),
       goal: localStorage.getItem("quiz_daily_goal") || "0",
       exportedAt: new Date().toISOString(),
-      appVersion: typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0",
+      appVersion,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -275,7 +276,7 @@
           <div class="goal-lbl-row">
             <span class="daily-lbl">每日目标</span>
             <button class="goal-edit-btn" onclick={() => { const n = prompt('设置每日复习目标（题数）:', goalInput || ''); if (n !== null) { goalInput = Math.max(0, Math.min(200, parseInt(n) || 0)); saveGoal(); } }} aria-label="设置目标">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+              <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
             </button>
           </div>
           {#if goalInput > 0}
@@ -291,7 +292,7 @@
         <div class="trend-chart-wrap">
           {#if trendLayout}
             {@const { w, h, padL, padR, padT, padB, chartW, chartH, step, points, gridY } = trendLayout}
-            <svg viewBox="0 0 {w} {h}" class="trend-chart">
+            <svg aria-hidden="true" viewBox="0 0 {w} {h}" class="trend-chart">
               <!-- Grid lines -->
               {#each gridY as pct}
                 <line x1={padL} y1={padT + chartH - (pct / 100) * chartH} x2={w - padR} y2={padT + chartH - (pct / 100) * chartH} stroke="currentColor" stroke-opacity="0.08" stroke-width="1" />
@@ -410,11 +411,11 @@
           <div class="history-item result-{s.result || 'unknown'}">
             <span class="history-result">
               {#if s.result === "correct"}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
               {:else if s.result === "reviewing"}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
               {:else}
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
               {/if}
             </span>
             <span class="history-title">{s.title}</span>
@@ -432,14 +433,14 @@
 
     <div class="export-section">
       <button class="export-progress-btn" onclick={exportProgress}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
         导出进度备份
       </button>
       <button class="import-progress-btn" onclick={triggerImport}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
           stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
@@ -455,7 +456,7 @@
       <div class="import-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") { showImportDialog = false; importRaw = null; } }}>
         {#if importError}
           <div class="import-error-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+            <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none"
               stroke="var(--danger)" stroke-width="1.5" stroke-linecap="round"
               stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
               <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
@@ -464,7 +465,7 @@
           <button class="import-btn-primary" onclick={() => { showImportDialog = false; importRaw = null; }}>知道了</button>
         {:else if importPreview}
           <div class="import-success-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+            <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none"
               stroke="var(--success)" stroke-width="1.5" stroke-linecap="round"
               stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" /></svg>

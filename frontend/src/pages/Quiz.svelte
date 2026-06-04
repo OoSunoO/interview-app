@@ -600,7 +600,7 @@
       {#if sessionProgress}
         <span class="q-number-badge">{sessionProgress.index}/{sessionProgress.total}</span>
         <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
-          <svg
+          <svg aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -620,7 +620,7 @@
       {/if}
       {#if sessionProgress && !showAnswer && !interviewed}
         <button class="shuffle-btn" onclick={shuffleRemaining} title="随机后续题目">
-          <svg
+          <svg aria-hidden="true"
             width="13"
             height="13"
             viewBox="0 0 24 24"
@@ -651,7 +651,7 @@
         onclick={handleToggleBookmark}
         title={q.bookmarked ? "取消收藏" : "收藏此题"}
       >
-        <svg
+        <svg aria-hidden="true"
           width="15"
           height="15"
           viewBox="0 0 24 24"
@@ -663,12 +663,12 @@
         ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
       </button>
       <button class="help-btn" onclick={() => (showShortcuts = !showShortcuts)} title="快捷键">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round"
           stroke-linejoin="round"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" /></svg>
       </button>
       <button class="copy-btn" onclick={copyQuestion} title="复制题目">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+        <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round"
           stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
@@ -711,7 +711,7 @@
 
       {#if q.hints.length > 0 && !showAnswer && !browseMode}
         <button class="hint-trigger" onclick={() => (showHints = !showHints)}>
-          <svg
+          <svg aria-hidden="true"
             width="14"
             height="14"
             viewBox="0 0 24 24"
@@ -738,7 +738,7 @@
 
       {#if knowledgeTags.length > 0}
         <div class="knowledge-tags">
-          <span class="kt-label">📖 相关知识：</span>
+          <span class="kt-label"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> 相关知识：</span>
           {#each knowledgeTags as kt}
             <button
               class="kt-btn"
@@ -912,7 +912,7 @@
                 {:else}扩展延伸
                 {/if}
               </span>
-              <svg
+              <svg aria-hidden="true"
                 class="chevron"
                 class:open={expandedSections[section.type]}
                 width="14"
@@ -1031,7 +1031,7 @@
             <button class="nav-btn prev" onclick={goPrev}>← 上一题</button>
           {/if}
           <button class="nav-btn retry" onclick={() => { const id = q.id; resetState(); loadQuestionById(id); }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+            <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
             重做
           </button>
           {#if store.hasNext}
@@ -1055,7 +1055,13 @@
         <h2 class="ss-title">{interviewed ? "模拟面试完成" : "本次练习完成"}</h2>
         {#if interviewed}
           <div class="mi-verdict" class:pass={pass} class:fail={!pass}>
-            {pass ? "🎉 通过" : "💪 继续努力"}
+            {#if pass}
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              通过
+            {:else}
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              继续努力
+            {/if}
           </div>
         {/if}
         <div class="ss-stats">
@@ -1085,11 +1091,11 @@
         </div>
         <div class="ss-time-row">
           <span class="ss-time-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             总耗时 {Math.floor(s.totalTime / 60)}分{s.totalTime % 60}秒
           </span>
           <span class="ss-time-item">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><polyline points="12 6 12 12 16 14" /></svg>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10" /><polyline points="12 6 12 12 16 14" /></svg>
             平均 {s.avgTime > 60 ? `${Math.floor(s.avgTime / 60)}分${s.avgTime % 60}秒` : `${s.avgTime}秒`}/题
           </span>
         </div>
@@ -1904,6 +1910,9 @@
     margin-top: 4px;
   }
   .kt-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     font-size: 12px;
     color: var(--text-muted);
     white-space: nowrap;
@@ -2196,6 +2205,9 @@
     color: var(--accent);
   }
   .mi-verdict {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     font-size: 20px;
     font-weight: 800;
     letter-spacing: 0;

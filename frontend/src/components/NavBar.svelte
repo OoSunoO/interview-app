@@ -1,5 +1,6 @@
 <script>
   import { store } from "../lib/stores.svelte.js";
+  import { version as appVersion } from "../../package.json";
   let { current = "home", onNavigate } = $props();
 
   let dueCount = $derived(store.dueCount);
@@ -12,7 +13,7 @@
     { id: "stats", label: "进度", icon: "stats" },
   ];
 
-  const version = typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "";
+  const version = appVersion;
 </script>
 
 <nav class="nav-island">
@@ -21,7 +22,7 @@
       <button class="nav-item" class:active={current === tab.id} onclick={() => onNavigate(tab.id)} aria-current={current === tab.id ? "page" : undefined}>
         <span class="icon-wrap">
           {#if tab.icon === "home"}
-            <svg
+            <svg aria-hidden="true"
               width="20"
               height="20"
               viewBox="0 0 24 24"
@@ -36,7 +37,7 @@
               />
             </svg>
           {:else if tab.icon === "knowledge"}
-            <svg
+            <svg aria-hidden="true"
               width="20"
               height="20"
               viewBox="0 0 24 24"
@@ -51,7 +52,7 @@
               />
             </svg>
           {:else if tab.icon === "browse"}
-            <svg
+            <svg aria-hidden="true"
               width="20"
               height="20"
               viewBox="0 0 24 24"
@@ -66,7 +67,7 @@
               />
             </svg>
           {:else if tab.icon === "wrong"}
-            <svg
+            <svg aria-hidden="true"
               width="20"
               height="20"
               viewBox="0 0 24 24"
@@ -82,7 +83,7 @@
               <span class="badge">{dueCount > 99 ? "99+" : dueCount}</span>
             {/if}
           {:else if tab.icon === "stats"}
-            <svg
+            <svg aria-hidden="true"
               width="20"
               height="20"
               viewBox="0 0 24 24"
@@ -102,7 +103,7 @@
   </div>
   <button class="theme-toggle" onclick={() => store.toggleTheme()} aria-label="切换主题">
     {#if store.theme === "dark"}
-      <svg
+      <svg aria-hidden="true"
         width="16"
         height="16"
         viewBox="0 0 24 24"
@@ -123,7 +124,7 @@
         <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
       </svg>
     {:else}
-      <svg
+      <svg aria-hidden="true"
         width="16"
         height="16"
         viewBox="0 0 24 24"

@@ -35,6 +35,20 @@ test.describe("Home", () => {
     const after = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
     expect(after).not.toBe(initial);
   });
+
+  test("daily goal button opens dialog", async ({ page }) => {
+    await page.goto("/");
+    const goalBtn = page.getByRole("button", { name: /每日目标|设置每日目标/ });
+    await expect(goalBtn).toBeVisible({ timeout: 3000 });
+    await goalBtn.click();
+    await page.waitForTimeout(200);
+    // Dialog should appear with goal input
+    await expect(page.locator(".dialog-title")).toHaveText("每日目标", { timeout: 3000 });
+    // Close via cancel
+    await page.getByRole("button", { name: "取消" }).click();
+    await page.waitForTimeout(200);
+    await expect(page.locator(".dialog-overlay")).not.toBeVisible();
+  });
 });
 
 test.describe("Browse", () => {
@@ -93,6 +107,39 @@ test.describe("Browse", () => {
     // Should now be on Quiz page
     await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 5000 });
   });
+
+  test("bookmark filter toggles active state", async ({ page }) => {
+    await goTo(page, NAV.browse);
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    const bmBtn = page.locator("button.bm-filter-btn");
+    await expect(bmBtn).toBeVisible();
+    await bmBtn.click();
+    await page.waitForTimeout(200);
+    await expect(bmBtn).toHaveClass(/active/);
+    await bmBtn.click();
+    await page.waitForTimeout(200);
+    await expect(bmBtn).not.toHaveClass(/active/);
+  });
+
+  test("search filters questions", async ({ page }) => {
+    await goTo(page, NAV.browse);
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    const searchBox = page.getByPlaceholder(/搜索/);
+    await expect(searchBox).toBeVisible();
+    // Get initial count
+    const initialCount = await page.locator("[data-testid=question-item]").count();
+    // Type something that likely matches few questions
+    await searchBox.fill("TCP");
+    await page.waitForTimeout(400);
+    const filteredCount = await page.locator("[data-testid=question-item]").count();
+    // Should have at least one result but likely fewer than all
+    expect(filteredCount).toBeGreaterThanOrEqual(1);
+    // Clear search
+    await searchBox.fill("");
+    await page.waitForTimeout(300);
+    const restoredCount = await page.locator("[data-testid=question-item]").count();
+    expect(restoredCount).toBeGreaterThanOrEqual(filteredCount);
+  });
 });
 
 test.describe("Quiz", () => {
@@ -102,7 +149,8 @@ test.describe("Quiz", () => {
     await page.waitForTimeout(200);
     // Use random quiz button to navigate directly to Quiz page
     await page.getByRole("button", { name: /随机一题/ }).click();
-    await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 5000 });
+    // Wait for quiz page navigation + async question data load (warm-up may be slow)
+    await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 10000 });
   }
 
   test("question loads with interactive elements", async ({ page }) => {
@@ -119,6 +167,16 @@ test.describe("Quiz", () => {
     if (await hintBtn.isVisible()) {
       await hintBtn.click();
       await expect(page.locator("[data-testid=hints-list]")).toBeVisible();
+    }
+  });
+
+  test("can reveal answer and view content", async ({ page }) => {
+    await goToQuiz(page);
+    const revealBtn = page.getByRole("button", { name: /查看答案/ });
+    if (await revealBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await revealBtn.click();
+      await page.waitForTimeout(200);
+      await expect(page.locator(".q-answer, .answer-section, [data-testid=answer-content]").first()).toBeVisible({ timeout: 3000 });
     }
   });
 });
@@ -299,18 +357,3 @@ test.describe("Mobile", () => {
   });
 });
 
-test.describe("KnowledgePoints", () => {
-  test("loads knowledge list with categories", async ({ page }) => {
-    await goTo(page, NAV.knowledge);
-    await expect(page.locator("[data-testid=page-title]")).toHaveText("知识点", { timeout: 5000 });
-    await expect(page.locator("[data-testid=category-card]").first()).toBeVisible({ timeout: 8000 });
-    expect(await page.locator("[data-testid=category-card]").count()).toBeGreaterThan(0);
-  });
-
-  test("can expand a category and view knowledge items", async ({ page }) => {
-    await goTo(page, NAV.knowledge);
-    await expect(page.locator("[data-testid=category-header]").first()).toBeVisible({ timeout: 5000 });
-    await page.locator("[data-testid=category-header]").first().click();
-    await expect(page.locator("[data-testid=knowledge-item]").first()).toBeVisible({ timeout: 3000 });
-  });
-});

@@ -71,9 +71,6 @@ export const CATEGORY_LABELS = {
   behavioral_extras: "行为面试",
   career: "求职与职业发展",
   career_extras: "求职与职业发展",
-
-  // Mixed
-  系统设计: "系统设计",
 };
 
 /**
@@ -138,7 +135,6 @@ export const MAIN_CATEGORY = {
   behavioral_extras: "behavioral",
   career: "career",
   career_extras: "career",
-  系统设计: "system_design",
 };
 
 /**
