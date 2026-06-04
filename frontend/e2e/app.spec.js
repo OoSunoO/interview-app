@@ -232,6 +232,35 @@ test.describe("Wrong Book", () => {
     await goTo(page, NAV.wrong);
     await expect(page.locator("[data-testid=page-title]")).toHaveText("错题本", { timeout: 3000 });
   });
+
+  test("keyboard shortcuts in review mode: Space reveal, Escape exit", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    // Inject progress with 2 wrong questions (IDs 1 and 2 exist in the index)
+    await page.evaluate(() => {
+      localStorage.setItem("quiz_progress_e2e-test", JSON.stringify({
+        "1": { status: "wrong", wrong_count: 2 },
+        "2": { status: "wrong", wrong_count: 1 },
+      }));
+    });
+    await page.getByRole("button", { name: NAV.wrong }).click();
+    await page.waitForTimeout(300);
+    // Click button that starts review
+    const reviewBtn = page.getByRole("button", { name: /开始复习/ });
+    await expect(reviewBtn).toBeVisible({ timeout: 3000 });
+    await reviewBtn.click();
+    await page.waitForTimeout(300);
+    // Review card should appear
+    await expect(page.locator(".review-card")).toBeVisible({ timeout: 5000 });
+    // Press Space to reveal answer
+    await page.keyboard.press("Space");
+    await page.waitForTimeout(200);
+    await expect(page.locator(".review-answer")).toBeVisible({ timeout: 2000 });
+    // Press Escape to exit review mode
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(200);
+    await expect(page.locator("[data-testid=page-title]")).toHaveText("错题本", { timeout: 3000 });
+  });
 });
 
 test.describe("Stats", () => {
