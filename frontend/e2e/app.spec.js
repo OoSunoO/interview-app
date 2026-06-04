@@ -52,6 +52,28 @@ test.describe("Home", () => {
     // Dialog should be closed — check dialog content is gone
     await expect(page.locator(".dialog-title")).not.toBeVisible();
   });
+
+  test("mock interview dialog has type and tag filters", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: /模拟面试/ }).click();
+    await page.waitForTimeout(200);
+    await expect(page.locator(".dialog-title")).toHaveText("模拟面试", { timeout: 3000 });
+    // Category and difficulty selects exist
+    await expect(page.locator("#mi-cat")).toBeVisible();
+    await expect(page.locator("#mi-diff")).toBeVisible();
+    // New filters
+    await expect(page.locator("#mi-type")).toBeVisible();
+    await expect(page.locator("#mi-tag")).toBeVisible();
+    // Type options
+    const typeOpts = await page.locator("#mi-type option").all();
+    const typeValues = await Promise.all(typeOpts.map((o) => o.getAttribute("value")));
+    expect(typeValues).toContain("coding");
+    expect(typeValues).toContain("choice");
+    // Close
+    await page.getByRole("button", { name: "取消" }).click();
+    await page.waitForTimeout(200);
+    await expect(page.locator(".dialog-title")).not.toBeVisible();
+  });
 });
 
 test.describe("Browse", () => {
