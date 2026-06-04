@@ -15,6 +15,7 @@
   import { store } from "./lib/stores.svelte.js";
   import CommandPalette from "./components/CommandPalette.svelte";
   import Toast from "./components/Toast.svelte";
+  import KeyboardHelp from "./components/KeyboardHelp.svelte";
 
   let page = $state("home");
   let selectedQuestionId = $state(null);
@@ -64,6 +65,7 @@
   </main>
   <NavBar current={page} onNavigate={(p) => navigate(p)} />
   <CommandPalette onNavigate={navigate} />
+  <KeyboardHelp />
   <Toast />
 </div>
 
