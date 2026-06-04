@@ -16,6 +16,12 @@ export const PROVIDERS = [
     endpoint: "https://api.deepseek.com/v1/chat/completions",
     model: "deepseek-chat",
   },
+  {
+    label: "Google (Gemini)",
+    endpoint:
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+    model: "gemini-2.5-flash",
+  },
 ];
 
 let _config = null;
@@ -54,30 +60,41 @@ export async function aiChat(systemPrompt, messages) {
   if (!cfg.key) throw new Error("请先配置 API Key");
 
   const isAnthropic = cfg.endpoint.includes("anthropic.com");
-  const body = isAnthropic
-    ? { model: cfg.model, max_tokens: 1024, system: systemPrompt, messages }
-    : {
-        model: cfg.model,
-        max_tokens: 1024,
-        messages: [{ role: "system", content: systemPrompt }, ...messages],
-      };
-
+  const isGemini = cfg.endpoint.includes("googleapis.com");
   const headers = { "Content-Type": "application/json" };
+  let url = cfg.endpoint;
+  let body;
+
   if (isAnthropic) {
     headers["x-api-key"] = cfg.key;
     headers["anthropic-version"] = "2023-06-01";
+    body = { model: cfg.model, max_tokens: 1024, system: systemPrompt, messages };
+  } else if (isGemini) {
+    url += `?key=${cfg.key}`;
+    body = {
+      contents: messages,
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      generationConfig: { maxOutputTokens: 1024 },
+    };
   } else {
     headers["Authorization"] = `Bearer ${cfg.key}`;
+    body = {
+      model: cfg.model,
+      max_tokens: 1024,
+      messages: [{ role: "system", content: systemPrompt }, ...messages],
+    };
   }
 
-  const res = await fetch(cfg.endpoint, { method: "POST", headers, body: JSON.stringify(body) });
+  const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`API 错误 (${res.status}): ${text.slice(0, 200)}`);
   }
 
   const data = await res.json();
-  return isAnthropic ? data.content[0].text : data.choices[0].message.content;
+  if (isAnthropic) return data.content[0].text;
+  if (isGemini) return data.candidates[0].content.parts[0].text;
+  return data.choices[0].message.content;
 }
 
 export async function gradeAnswer(question, userAnswer, referenceAnswer) {

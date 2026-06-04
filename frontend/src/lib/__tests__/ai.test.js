@@ -21,12 +21,13 @@ afterEach(() => {
 });
 
 describe("PROVIDERS", () => {
-  it("has Anthropic, OpenAI, and DeepSeek", async () => {
+  it("has Anthropic, OpenAI, DeepSeek, and Gemini", async () => {
     const { PROVIDERS } = await import("../ai.js");
     const labels = PROVIDERS.map((p) => p.label);
     expect(labels).toContain("Anthropic (Claude)");
     expect(labels).toContain("OpenAI (GPT)");
     expect(labels).toContain("DeepSeek");
+    expect(labels).toContain("Google (Gemini)");
   });
 
   it("each provider has endpoint and model", async () => {
@@ -193,6 +194,28 @@ describe("aiChat", () => {
     expect(body.messages[0].content).toBe("You're helpful");
     expect(opts.headers["Authorization"]).toBe("Bearer sk-openai");
     expect(opts.headers["x-api-key"]).toBeUndefined();
+  });
+
+  it("sends Gemini format and extracts candidate content", async () => {
+    globalThis.fetch.mockResolvedValue({
+      ok: true,
+      json: () =>
+        Promise.resolve({ candidates: [{ content: { parts: [{ text: "Gemini response" }] } }] }),
+      text: () => Promise.resolve(""),
+    });
+    const { aiChat, saveAIConfig, setProvider } = await import("../ai.js");
+    setProvider(3); // Gemini
+    saveAIConfig({ key: "gemini-key" });
+    const result = await aiChat("You're helpful", [{ role: "user", parts: [{ text: "Hi" }] }]);
+    expect(result).toBe("Gemini response");
+
+    const [url, opts] = globalThis.fetch.mock.calls[0];
+    expect(url).toContain("key=gemini-key");
+    const body = JSON.parse(opts.body);
+    expect(body.contents).toBeDefined();
+    expect(body.systemInstruction.parts[0].text).toBe("You're helpful");
+    expect(body.generationConfig.maxOutputTokens).toBe(1024);
+    expect(opts.headers["Authorization"]).toBeUndefined();
   });
 
   it("throws on non-ok response with status text", async () => {
