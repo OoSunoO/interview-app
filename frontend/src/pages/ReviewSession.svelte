@@ -18,8 +18,9 @@
   let currentIndex = $state(0);
   let showAnswer = $state(false);
   let results = $state({});
-  let configCategory = $state(config?.category || "");
-  let configCount = $state(config?.count || 20);
+  function _initVal(key, fallback) { return config?.[key] ?? fallback; }
+  let configCategory = $state(_initVal("category", ""));
+  let configCount = $state(_initVal("count", 20));
 
   let currentCard = $derived(cards[currentIndex]);
   let total = $derived(cards.length);

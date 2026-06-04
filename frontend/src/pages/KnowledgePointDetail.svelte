@@ -267,57 +267,57 @@
     color: var(--text);
     overflow-x: auto;
   }
-  .content-body h2 {
+  :global(.content-body h2) {
     font-size: 16px;
     font-weight: 700;
     margin: 16px 0 8px 0;
     color: var(--accent);
   }
-  .content-body h2:first-child {
+  :global(.content-body h2:first-child) {
     margin-top: 0;
   }
-  .content-body h3 {
+  :global(.content-body h3) {
     font-size: 14px;
     font-weight: 700;
     margin: 12px 0 6px 0;
   }
-  .content-body p {
+  :global(.content-body p) {
     margin: 6px 0;
   }
-  .content-body ul, .content-body ol {
+  :global(.content-body ul), :global(.content-body ol) {
     margin: 6px 0;
     padding-left: 20px;
   }
-  .content-body li {
+  :global(.content-body li) {
     margin: 3px 0;
   }
-  .content-body table {
+  :global(.content-body table) {
     width: 100%;
     border-collapse: collapse;
     margin: 8px 0;
     font-size: 13px;
   }
-  .content-body th, .content-body td {
+  :global(.content-body th), :global(.content-body td) {
     border: 1px solid var(--border);
     padding: 6px 10px;
     text-align: left;
   }
-  .content-body th {
+  :global(.content-body th) {
     background: var(--bg-surface);
     font-weight: 600;
   }
-  .content-body code {
+  :global(.content-body code) {
     font-size: 13px;
     background: var(--bg-surface);
     padding: 1px 5px;
     border-radius: 3px;
     border: 1px solid var(--border);
   }
-  .content-body a {
+  :global(.content-body a) {
     color: var(--accent);
     text-decoration: none;
   }
-  .content-body hr {
+  :global(.content-body hr) {
     border: none;
     border-top: 1px solid var(--border);
     margin: 12px 0;
