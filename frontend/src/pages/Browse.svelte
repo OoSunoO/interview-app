@@ -111,6 +111,16 @@
     clearSelection();
     onNavigate("quiz", { questionId: selected[0].id });
   }
+
+  function batchBookmark() {
+    const selected = store.questions.filter((q) => selectedIds.has(q.id));
+    if (selected.length === 0) return;
+    for (const q of selected) {
+      const newVal = api.progress.toggleBookmark(q.id);
+      q.bookmarked = newVal;
+    }
+    clearSelection();
+  }
 </script>
 
 <div class="page browse">
@@ -330,6 +340,19 @@
       <span class="sel-count">已选 {selectedIds.size} 题</span>
       <div class="sel-actions">
         <button class="sel-cancel" onclick={clearSelection}>取消</button>
+        <button class="sel-bm" onclick={batchBookmark} title="收藏选中题目">
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+          收藏
+        </button>
         <button class="sel-start" onclick={startSelected}>开始答题</button>
       </div>
     </div>
