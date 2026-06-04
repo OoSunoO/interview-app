@@ -121,17 +121,28 @@
   }
 
   function handleKeydown(e) {
-    if (phase !== "active") return;
     if (showSessionMap) return;
-    // Space to reveal answer
-    if (e.key === " " || e.key === "Spacebar") {
-      if (!showAnswer) { e.preventDefault(); revealAnswer(); return; }
+    if (phase === "active") {
+      // Space to reveal answer
+      if (e.key === " " || e.key === "Spacebar") {
+        if (!showAnswer) { e.preventDefault(); revealAnswer(); return; }
+      }
+      // 1-4 to rate
+      if (showAnswer) {
+        const map = { "1": "forgot", "2": "hard", "3": "good", "4": "easy" };
+        const rating = map[e.key];
+        if (rating) { e.preventDefault(); rate(rating); return; }
+      }
+      // Escape to exit
+      if (e.key === "Escape") { e.preventDefault(); handleExit(); return; }
     }
-    // 1-4 to rate
-    if (showAnswer) {
-      const map = { "1": "forgot", "2": "hard", "3": "good", "4": "easy" };
-      const rating = map[e.key];
-      if (rating) { e.preventDefault(); rate(rating); return; }
+    // R to restart from completed
+    if (e.key === "r" || e.key === "R") {
+      if (phase === "completed" && cards.length > 0) {
+        e.preventDefault();
+        startSession(configCount, configCategory);
+        return;
+      }
     }
   }
 
