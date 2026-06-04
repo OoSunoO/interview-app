@@ -87,8 +87,10 @@
 - QuickReview 新增快捷键：Escape 退出（活动态/汇总态），R 键一键重启
 
 ### Feature (v1.4.7)
-- Stats 页面新增"速记记录"版块：显示 QuickReview 总次数/复习题数/平均掌握率，最近 20 次速记会话列表（已掌握/待巩固/需复习），含"去速记"导航按钮
+- Stats 页面新增"速记记录"版块：显示 QuickReview 总次数/复习题数/平均掌握率，最近 20 次速记会话列表（已掌握/待巩固/需复习/用时），含"去速记"导航按钮
 - Stats 页面浏览历史项显示来源标签（"速记" vs 常规练习）
+- QuickReview 保存会话用时到历史记录，Stats 页面每条记录显示用时
+- Quiz 普通模式计时器新增超时提醒：>2 分钟橙色警告，>5 分钟红色脉冲
 - E2E 测试：Stats 页面 QuickReview 历史展示 + Escape 键退出速记
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
