@@ -2,7 +2,7 @@
 
 **日期：** 2026-06-05
 **版本：** v1.4.6
-**当前状态：** 5196 题，51 分类全部 100+，241 单元测试全绿，29 E2E 全绿，构建 846ms
+**当前状态：** 5196 题，51 分类全部 100+，243 单元测试全绿，29 E2E 全绿，构建 846ms
 
 ---
 
@@ -84,6 +84,7 @@
 - Browse 页面"速记"按钮新增题型筛选传递，与 QuickReview 筛选联动
 - QuickReview 汇总页显示本次速记用时（如"用时 3 分 25 秒"）
 - Mock Interview 设置持久化（分类/难度/题量/限时跨会话保留）
+- QuickReview 新增快捷键：Escape 退出（活动态/汇总态），R 键一键重启
 
 ### UI/UX
 - 深色/浅色主题（respects prefers-reduced-motion）
@@ -94,7 +95,7 @@
 - PWA：可安装，Service Worker 自动更新
 
 ### 测试
-- 241 单元测试（Vitest，+2 QuickReview restart + ai edge case）
+- 243 单元测试（Vitest，+2 QuickReview keyboard shortcuts）
 - 29 E2E 测试（Playwright，+1 quiz self-evaluation）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
