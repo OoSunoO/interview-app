@@ -92,6 +92,7 @@
 - 所有复习模式一致性：Space 查看答案，数字键评级，R 重新开始，Escape 退出
 - E2E 测试：WrongBook 复习模式键盘快捷键（Space 显示答案 + Escape 退出）
 - Quiz inline SHORTCUTS 弹窗补全 Escape 条目
+- 修复 Quiz E2E 测试偶发超时（清除上一测试遗留 session backup）
 
 ### Feature (v1.4.7)
 - Stats 页面新增"速记记录"版块：显示 QuickReview 总次数/复习题数/平均掌握率，最近 20 次速记会话列表（已掌握/待巩固/需复习/用时），含"去速记"导航按钮
@@ -116,7 +117,7 @@
 
 ### 测试
 - 243 单元测试（Vitest，+2 QuickReview keyboard shortcuts）
-- 33 E2E 测试（Playwright，+1 quiz self-evaluation，+1 QR stats history，+1 QR Escape，+1 RS Escape）
+- 34 E2E 测试（Playwright，+1 WrongBook keyboard shortcuts）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
 - `local-api.js`：94.47% statements, 84.78% branches（核心业务逻辑）
