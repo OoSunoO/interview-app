@@ -53,6 +53,9 @@ const mockToggleBM = vi.fn();
 const mockSaveSession = vi.fn();
 const mockGetSession = vi.fn(() => null);
 const mockClearSession = vi.fn();
+const mockSaveHistory = vi.fn();
+const mockGetHistory = vi.fn(() => []);
+const mockClearHistory = vi.fn();
 const mockCategoryLabel = vi.fn((slug) => slug);
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
@@ -71,6 +74,9 @@ vi.mock("../local-api.js", () => ({
       saveSession: (...a) => mockSaveSession(...a),
       getSession: (...a) => mockGetSession(...a),
       clearSession: (...a) => mockClearSession(...a),
+      saveHistory: (...a) => mockSaveHistory(...a),
+      getHistory: (...a) => mockGetHistory(...a),
+      clearHistory: (...a) => mockClearHistory(...a),
     },
   },
 }));
@@ -226,6 +232,9 @@ describe("QuickReview", () => {
       });
       expect(screen.getByText("速记完成！")).toBeInTheDocument();
       expect(mockClearSession).toHaveBeenCalled();
+      expect(mockSaveHistory).toHaveBeenCalledWith(
+        expect.objectContaining({ total: 1, remembered: 1 }),
+      );
     });
   });
 

@@ -804,6 +804,71 @@ describe("quickReview", () => {
     expect(() => api.quickReview.clearSession()).not.toThrow();
     spy.mockRestore();
   });
+
+  it("saveHistory stores session result with date", async () => {
+    const api = await getApi();
+    api.quickReview.saveHistory({
+      total: 10,
+      remembered: 7,
+      forgot: 2,
+      unsure: 1,
+      category: "java",
+      difficulty: "easy",
+    });
+    const history = api.quickReview.getHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0].total).toBe(10);
+    expect(history[0].remembered).toBe(7);
+    expect(history[0].forgot).toBe(2);
+    expect(history[0].date).toBeDefined();
+  });
+
+  it("getHistory returns empty array when no history exists", async () => {
+    const api = await getApi();
+    expect(api.quickReview.getHistory()).toEqual([]);
+  });
+
+  it("saveHistory prepends entries (most recent first)", async () => {
+    const api = await getApi();
+    api.quickReview.saveHistory({ total: 5, remembered: 3, forgot: 1, unsure: 1 });
+    api.quickReview.saveHistory({ total: 8, remembered: 7, forgot: 0, unsure: 1 });
+    const history = api.quickReview.getHistory();
+    expect(history).toHaveLength(2);
+    expect(history[0].total).toBe(8);
+    expect(history[1].total).toBe(5);
+  });
+
+  it("saveHistory caps at 50 entries", async () => {
+    const api = await getApi();
+    for (let i = 0; i < 55; i++) {
+      api.quickReview.saveHistory({ total: 1, remembered: 1, forgot: 0, unsure: 0 });
+    }
+    expect(api.quickReview.getHistory()).toHaveLength(50);
+  });
+
+  it("clearHistory removes all history", async () => {
+    const api = await getApi();
+    api.quickReview.saveHistory({ total: 5, remembered: 3, forgot: 1, unsure: 1 });
+    api.quickReview.clearHistory();
+    expect(api.quickReview.getHistory()).toEqual([]);
+  });
+
+  it("saveHistory handles localStorage failure gracefully", async () => {
+    const spy = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new Error("quota exceeded");
+    });
+    const api = await getApi();
+    expect(() =>
+      api.quickReview.saveHistory({ total: 1, remembered: 1, forgot: 0, unsure: 0 }),
+    ).not.toThrow();
+    spy.mockRestore();
+  });
+
+  it("getHistory returns empty array on corrupt JSON", async () => {
+    vi.spyOn(localStorage, "getItem").mockReturnValue("{corrupt");
+    const api = await getApi();
+    expect(api.quickReview.getHistory()).toEqual([]);
+  });
 });
 
 describe("getGoal error handling", () => {

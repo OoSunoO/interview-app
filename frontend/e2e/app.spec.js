@@ -180,6 +180,35 @@ test.describe("Quiz", () => {
       await expect(page.locator(".q-answer, .answer-section, [data-testid=answer-content]").first()).toBeVisible({ timeout: 3000 });
     }
   });
+
+  test("self-evaluation: submit answer and rate", async ({ page }) => {
+    await goTo(page, NAV.browse);
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await page.locator("[data-testid=question-item]").first().click();
+    await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
+    await page.getByRole("button", { name: /开始答题/ }).click();
+    await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 8000 });
+
+    // Handle different question types to reveal self-evaluation buttons
+    const optBtn = page.locator("[data-testid=option-button]").first();
+    if (await optBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await optBtn.click();
+    } else {
+      const textarea = page.locator("textarea").first();
+      if (await textarea.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await textarea.pressSequentially("test answer");
+        await page.getByRole("button", { name: /提交答案/ }).click();
+      }
+    }
+
+    // Self-evaluate as correct
+    await expect(page.getByRole("button", { name: /答对了/ })).toBeVisible({ timeout: 5000 });
+    await page.getByRole("button", { name: /答对了/ }).click();
+    await page.waitForTimeout(300);
+
+    // Answer section should be visible
+    await expect(page.locator(".q-answer, .answer-section, [data-testid=answer-content]").first()).toBeVisible({ timeout: 3000 });
+  });
 });
 
 test.describe("Wrong Book", () => {

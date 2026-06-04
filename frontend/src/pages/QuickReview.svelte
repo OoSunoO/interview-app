@@ -38,6 +38,7 @@
   let doneCount = $derived(Object.keys(results).length);
   let showSessionMap = $state(false);
   let mapDialog = $state(null);
+  let showHistory = $state(false);
 
   function trapFocus(e, container) {
     if (e.key !== "Tab" || !container) return;
@@ -173,6 +174,14 @@
       saveSession();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
+      api.quickReview.saveHistory({
+        total,
+        remembered: rememberedCount,
+        forgot: forgotCount,
+        unsure: unsureCount,
+        category: config?.category || "",
+        difficulty: config?.difficulty || "",
+      });
       api.quickReview.clearSession();
       phase = "completed";
     }
@@ -188,6 +197,16 @@
       q.bookmarked = !q.bookmarked;
       toast.error("操作失败");
     }
+  }
+
+  function formatDate(iso) {
+    const d = new Date(iso);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 60000) return "刚刚";
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   }
 
   function handleExit() {
@@ -427,8 +446,45 @@
       <div class="summary-actions">
         <button class="summary-btn primary" onclick={handleDone}>完成</button>
         <button class="summary-btn secondary" onclick={() => onNavigate("wrong")}>查看错题</button>
+        <button class="summary-btn ghost" onclick={() => (showHistory = true)}>历史记录</button>
       </div>
     </div>
+
+    {#if showHistory}
+      <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+      <div class="overlay" onclick={() => (showHistory = false)}>
+        <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+        <div class="history-dialog" role="dialog" aria-modal="true" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showHistory = false; }}>
+          <div class="history-header">
+            <span class="history-title">速记历史</span>
+            <button class="history-close" onclick={() => (showHistory = false)} aria-label="关闭">
+              <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </button>
+          </div>
+          {#if api.quickReview.getHistory().length === 0}
+            <p class="history-empty">暂无记录</p>
+          {:else}
+            <div class="history-list">
+              {#each api.quickReview.getHistory() as session}
+                <div class="history-item">
+                  <div class="history-item-date">{formatDate(session.date)}</div>
+                  <div class="history-item-stats">
+                    <span class="history-stat remembered">{session.remembered}</span>
+                    <span class="history-stat unsure">{session.unsure}</span>
+                    <span class="history-stat forgot">{session.forgot}</span>
+                  </div>
+                  <div class="history-item-info">
+                    <span>{session.total} 题</span>
+                    <span class="history-pct">{Math.round((session.remembered / session.total) * 100)}%</span>
+                  </div>
+                </div>
+              {/each}
+            </div>
+            <button class="history-clear" onclick={() => { api.quickReview.clearHistory(); showHistory = false; }}>清除历史</button>
+          {/if}
+        </div>
+      </div>
+    {/if}
 
   <!-- ── Loading ── -->
   {:else}
@@ -983,5 +1039,133 @@
     .summary-stat-num {
       font-size: 18px;
     }
+  }
+
+  /* ── Summary Ghost Button ── */
+  .summary-btn.ghost {
+    background: none;
+    color: var(--text-dim);
+    border: none;
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  /* ── History Dialog ── */
+  .history-dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0;
+    width: 100%;
+    max-width: 360px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    animation: scale-in 0.3s var(--spring) both;
+    overflow: hidden;
+  }
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 0;
+  }
+  .history-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .history-close {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-dim);
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+  }
+  .history-close:active {
+    transform: scale(0.88);
+  }
+  .history-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+  .history-list {
+    padding: 12px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .history-item-date {
+    font-size: 12px;
+    color: var(--text-dim);
+    min-width: 56px;
+  }
+  .history-item-stats {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .history-stat {
+    width: 24px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 4px;
+  }
+  .history-stat.remembered {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .history-stat.unsure {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  .history-stat.forgot {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  .history-item-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .history-pct {
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .history-clear {
+    margin: 0 16px 16px;
+    padding: 8px;
+    font-size: 12px;
+    color: var(--danger);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .history-clear:active {
+    opacity: 0.7;
   }
 </style>
