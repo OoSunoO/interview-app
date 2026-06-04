@@ -1,8 +1,8 @@
 # Handoff — 面试刷题 App
 
 **日期：** 2026-06-04
-**版本：** v1.4.1
-**当前状态：** 5176 题，51 分类全部 100+，202 单元测试全绿，28 E2E 全绿，构建 830ms
+**版本：** v1.4.2
+**当前状态：** 5176 题，51 分类全部 100+，225 单元测试全绿，28 E2E 全绿，构建 891ms
 
 ---
 
@@ -55,6 +55,12 @@
 - Playwright E2E storageState 预置用户名（跳过 GistSetup 首屏引导）
 - question type 标签（choice/multiple_choice/fill_in_blank）使用语义 CSS 变量
 
+### 测试提升 (v1.4.2)
+- 新增 50+ 单元测试覆盖 12 个先前未测试的函数/分支
+- `local-api.js` 覆盖率达 94.74% statements / 96.55% lines
+- 新增覆盖：related()、companies()、weeklyActivity()、allDailyStats()、sort_by 全部分支、bookmarked 筛选、tag 搜索、记录复习活动（hard 评分 + 数据裁剪）、usernameSuffix、knowledge.list 内容搜索、knowledge-only 标签、migrateProgress 无操作路径
+- 修复 E2E `.dialog-overlay` 陈旧选择器（v1.4.1 overlay 重构后漏改）
+
 ### UI/UX
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
@@ -64,10 +70,11 @@
 - PWA：可安装，Service Worker 自动更新
 
 ### 测试
-- 202 单元测试（Vitest）
+- 225 单元测试（Vitest）
 - 28 E2E 测试（Playwright，含移动端视图 + 主题切换 + GistSetup bypass）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
-- 覆盖率：83.42% statements, 87.23% lines（JS 模块）
+- 覆盖率：95.59% statements, 97.23% lines（JS 模块）
+- `local-api.js`：94.74% statements, 96.55% lines（核心业务逻辑）
 
 ### 后端补齐
 - 书签：POST toggle + GET list（`/api/progress/{id}/bookmark`, `/api/progress/bookmarks`）
@@ -80,7 +87,7 @@
 
 ## 当前未提交的工作
 
-无。v1.4.1 已提交并推送。
+HANDOFF.md 更新中。v1.4.2 已提交并推送（2 commits：测试覆盖提升 + E2E 选择器修复）。
 
 ## 架构要点
 
