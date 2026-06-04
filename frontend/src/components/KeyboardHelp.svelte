@@ -9,10 +9,12 @@
   ];
 
   const quizShortcuts = [
-    { keys: ["Space", "Enter"], desc: "查看答案" },
-    { keys: ["1"], desc: "评价：不会" },
-    { keys: ["2"], desc: "评价：大概会" },
-    { keys: ["3"], desc: "评价：已掌握" },
+    { keys: ["Space"], desc: "查看答案" },
+    { keys: ["1"], desc: "速记：不会" },
+    { keys: ["2"], desc: "速记：大概会" },
+    { keys: ["3"], desc: "速记：已掌握" },
+    { keys: ["R"], desc: "速记 / 复习：重新开始" },
+    { keys: ["Esc"], desc: "速记 / 复习：退出" },
   ];
 
   function handleKeydown(e) {
@@ -68,7 +70,7 @@
       </div>
 
       <div class="kh-section">
-        <div class="kh-section-title">答题页面</div>
+        <div class="kh-section-title">速记 / 复习</div>
         {#each quizShortcuts as s}
           <div class="kh-row">
             <div class="kh-keys">
