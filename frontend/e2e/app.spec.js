@@ -47,7 +47,8 @@ test.describe("Home", () => {
     // Close via cancel
     await page.getByRole("button", { name: "取消" }).click();
     await page.waitForTimeout(200);
-    await expect(page.locator(".dialog-overlay")).not.toBeVisible();
+    // Dialog should be closed — check dialog content is gone
+    await expect(page.locator(".dialog-title")).not.toBeVisible();
   });
 });
 
