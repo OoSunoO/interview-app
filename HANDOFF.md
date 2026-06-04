@@ -2,7 +2,7 @@
 
 **日期：** 2026-06-05
 **版本：** v1.4.13
-**当前状态：** 5196 题，51 分类全部 100+，252 单元测试全绿，39 E2E 全绿，构建 846ms
+**当前状态：** 5196 题，51 分类全部 100+，253 单元测试全绿，39 E2E 全绿，构建 846ms
 
 ---
 
@@ -33,7 +33,7 @@
 
 ### 刷题
 - 7 种题型支持
-- AI 评分 + 苏格拉底式引导（Claude / GPT / DeepSeek）
+- AI 评分 + 苏格拉底式引导（Claude / GPT / DeepSeek / Gemini）
 - 知识点双向关联（题目→知识点跳转，知识点→相关题目）
 
 ### 复习系统
@@ -149,8 +149,13 @@
 - 键盘快捷键帮助弹窗
 - PWA：可安装，Service Worker 自动更新
 
+### Feature (v1.4.15)
+- E2E 测试：Mock Interview 历史记录筛选上下文显示（Stats 页面 mi-history-filters 验证）
+- AI 评分新增 Google Gemini（gemini-2.5-flash）提供商支持
+- aiChat 函数重构：支持 Anthropic / OpenAI / Gemini 三种 API 格式
+
 ### 测试
-- 252 单元测试（Vitest）
+- 253 单元测试（Vitest，+1 Gemini API format test）
 - 39 E2E 测试（Playwright，+1 Mock Interview history filter context）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
