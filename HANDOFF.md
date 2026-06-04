@@ -90,6 +90,7 @@
 - KeyboardHelp 全局快捷键弹窗更新：反映当前所有快捷方式（速记/复习统一分类，添加 R/Esc）
 - 快捷键全覆盖：Quiz/QuickReview/ReviewSession/WrongBook 四个模式均支持 Escape 退出
 - 所有复习模式一致性：Space 查看答案，数字键评级，R 重新开始，Escape 退出
+- E2E 测试：WrongBook 复习模式键盘快捷键（Space 显示答案 + Escape 退出）
 
 ### Feature (v1.4.7)
 - Stats 页面新增"速记记录"版块：显示 QuickReview 总次数/复习题数/平均掌握率，最近 20 次速记会话列表（已掌握/待巩固/需复习/用时），含"去速记"导航按钮
