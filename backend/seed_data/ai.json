@@ -1845,7 +1845,7 @@
     "category": "ai",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "对比学习（Contrastive Learning）",
+    "title": "对比学习（Contrastive Learning）进阶详解",
     "content": "请解释对比学习（Contrastive Learning）的核心思想和代表性方法 SimCLR。对比学习如何在没有标签的情况下学到有用的特征表示？InfoNCE 损失函数的原理是什么？SimCLR 中为什么需要大 batch size 和 strong augmentation？对比学习与自回归（Autoregressive）预训练的本质区别是什么？",
     "answer": "答案：\n对比学习的核心思想是「拉近相似样本，推远不相似样本」——不需要标签，仅通过数据增强构造正负样本对来学习语义表示。\n\n解析：\n核心原理：对同一张图做两次不同的数据增强（裁剪、旋转、色彩抖动），得到两个视图（正样本对）。同一 batch 中其他样本的增强视图都是负样本。学习目标：让正样本对的表示相似，负样本对的表示不同。\n\nInfoNCE 损失函数：L = -log[ exp(sim(zi, zj)/τ) / Σ(exp(sim(zi, zk)/τ)) ]。分子是正样本对的 cosine similarity，分母是正样本对 + 所有负样本对的 similarity。温度系数 τ 控制分布的集中程度——τ 越小，模型越关注难负样本。本质是一个 (N-1)-way 的 softmax 分类器。\n\n大 batch size 的原因：负样本的数量直接决定对比学习的质量。小 batch 负样本少，任务简单，学到的是粗粒度的区分能力。SimCLR 用 4096 的 batch size 来提供足够丰富的负样本。\n\nStrong augmentation 的重要性：正样本对的 augmentation 变化越大，模型学到的表示越「不变性」。\n\n与自回归预训练：自回归（GPT）预测序列中下一个 token（生成式），学习条件分布。对比学习在表示空间中拉近正样本、推远负样本（判别式），学习语义等价性。",
     "hints": [

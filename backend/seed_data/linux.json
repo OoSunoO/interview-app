@@ -1902,7 +1902,7 @@
     "category": "linux",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "cgroup 与容器资源隔离",
+    "title": "cgroup 与容器资源隔离（进阶）",
     "content": "Linux cgroup（Control Group）是容器技术的核心基石之一。请详细解释：1. cgroup v1 和 v2 的核心差异——为什么 cgroup v2 是统一层次结构？2. cgroup 的子系统（subsystems）——cpu / memory / cpuset / blkio / pids 各控制什么？3. cgroup 如何与 namespace 配合实现完整的容器隔离？4. 从内核角度看，Docker/Podman 创建容器时的关键系统调用序列。",
     "answer": "答案：\ncgroup 的核心功能是「资源限制和统计」，namespace 提供「隔离视图」——两者互补构成容器技术的基石。\n\n解析：\n1. cgroup v1 vs v2：\n- cgroup v1（2008）：每个子系统有自己的树形结构。问题：一个进程可以在不同子系统中加入不同的 cgroup——管理复杂、线程粒度不一致。\n- cgroup v2（Linux 4.5+）：统一的层次结构（Unified Hierarchy）。所有子系统挂载在同一棵树上。一个进程只能在一个 cgroup 中——强制了资源控制的一致性。接口简化（统一的 cgroup.controllers 和 cgroup.subtree_control 文件）。\n\n2. 核心子系统：\n- cpu：控制 CPU 时间分配。cpu.weight（权重分配）、cpu.max（CFS 配额，如 50000/100000 = 50% CPU）。\n- memory：限制内存 + swap 使用，提供内存压力通知（memory.pressure，PSI 指标）。\n- cpuset：绑定到指定 CPU core 和内存节点——适合 NUMA 场景。\n- blkio（v2 中合并到 io）：限制块设备的 I/O 读写速率（IOPS / BPS）。\n- pids：限制 cgroup 中可创建的进程/线程总数（防止 fork bomb）。\n- hugetlb：限制大页内存使用。\n\n3. cgroup + namespace 的容器隔离：\n- PID namespace：容器内只能看到自己的进程（PID 1 = init 进程）。\n- Mount namespace：每个容器有独立的挂载点视图。\n- Network namespace：每个容器有独立的网络栈（网卡、路由表、iptables）。\n- UTS namespace：容器有自己的 hostname。\n- IPC namespace：容器间信号量和共享内存隔离。\n- User namespace：容器内 root 映射到容器外的非特权用户（安全关键）。\n- cgroup 层面：限制容器可以使用的资源上限。\n\n4. Docker 容器的关键系统调用序列：\nclone(CLONE_NEWNS | CLONE_NEWPID | CLONE_NEWNET | CLONE_NEWUTS | CLONE_NEWIPC | CLONE_NEWUSER, ...) // 在新的 namespace 中创建子进程\n-> 子进程中 mount(\"/proc\")、设置 hostname\n-> 父进程执行 cgroup 操作（通过 /sys/fs/cgroup/<name>/ 下的接口文件写入限制）\n-> pivot_root（切换根文件系统到容器镜像）\n-> execve 执行容器入口程序\n\n- 安全相关：user namespace 允许容器内 root 在容器外是普通用户——降低提权风险。seccomp（通过 seccomp() 系统调用）限制容器可用的系统调用列表。",
     "hints": [

@@ -1829,7 +1829,7 @@
     "category": "system_design",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "设计一个短链接系统",
+    "title": "设计短链接系统（高并发设计）",
     "content": "请设计一个短链接生成系统（类似 TinyURL），支持每天新增 1 亿个短链接，总短链接数 100 亿+。覆盖全局唯一 ID 生成、编码方式、读写分层架构、过期策略。",
     "answer": "答案：\n短链接系统的核心需求：高并发写入、高并发读取、极低延迟。\n\n解析：\n1. 全局唯一 ID 生成：Snowflake（64 位 = 时间戳 + 工作节点 + 序列号，去中心化但依赖时钟）或 Redis incr 预分配区间。推荐 Snowflake + 时钟回拨保护。\n\n2. 编码方式：Base62（a-zA-Z0-9）对 ID 编码。62^7 ≈ 3.5 万亿，7 位足够。去掉混淆字符（0O、1lI）得到 Base58。固定长度推荐 7 位。\n\n3. 读请求分层架构：L1 本地 LRU Cache（最热 100 万条）-> L2 Redis Cluster（全量映射）-> L3 持久化 DB（分库分表）。Cache-Aside + 写入时主动填充。\n\n4. 过期与冷热分离：热数据（7 天内被访问）全量在 Redis+ 本地缓存，温数据（30 天内）仅在 Redis，冷数据（30 天以上）只存在 DB。访问冷链接时查 DB 回填缓存。",
     "hints": [
