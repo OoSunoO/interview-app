@@ -511,4 +511,184 @@ describe("exportMarkdown", () => {
     expect(md).toContain("两数之和");
     expect(md).not.toContain("SQL优化");
   });
+
+  it("includes options for choice questions", async () => {
+    const api = await getApi();
+    const md = api.exportMarkdown([2]);
+    expect(md).toContain("Java选择");
+    expect(md).toContain("选项");
+    expect(md).toContain("A) a");
+    expect(md).toContain("B) b");
+  });
+});
+
+describe("knowledge.get", () => {
+  it("returns detail for a specific tag", async () => {
+    const api = await getApi();
+    const detail = api.knowledge.get("Java基础");
+    expect(detail.name).toBe("Java基础");
+    expect(detail.question_count).toBeGreaterThan(0);
+    expect(detail).toHaveProperty("mastery");
+    expect(detail).toHaveProperty("content");
+    expect(detail.questions.length).toBe(detail.question_count);
+    expect(detail.questions[0]).toHaveProperty("id");
+    expect(detail.questions[0]).toHaveProperty("title");
+    expect(detail.questions[0]).toHaveProperty("difficulty");
+  });
+
+  it("returns empty questions for unknown tag", async () => {
+    const api = await getApi();
+    const detail = api.knowledge.get("nonexistent-tag");
+    expect(detail.name).toBe("nonexistent-tag");
+    expect(detail.question_count).toBe(0);
+    expect(detail.questions).toEqual([]);
+  });
+});
+
+describe("migrateProgress with correct status", () => {
+  it("sets SM-2 fields for correct entries without next_review_at", async () => {
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "correct", wrong_count: 0, review_count: 1 },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    api.migrateProgress();
+    const progress = JSON.parse(localStorage.getItem("quiz_progress"));
+    expect(progress["1"].ef).toBe(2.5);
+    expect(progress["1"].interval).toBe(4);
+    expect(progress["1"].repetitions).toBe(1);
+    expect(progress["1"].next_review_at).toBeTruthy();
+  });
+});
+
+describe("toggleBookmark", () => {
+  it("bookmarks a question and returns true", async () => {
+    const api = await getApi();
+    const result = api.progress.toggleBookmark(1);
+    expect(result).toBe(true);
+    const q = api.questions.get(1);
+    expect(q.bookmarked).toBe(true);
+  });
+
+  it("unbookmarks a previously bookmarked question", async () => {
+    const api = await getApi();
+    api.progress.toggleBookmark(1); // bookmark
+    const result = api.progress.toggleBookmark(1); // unbookmark
+    expect(result).toBe(false);
+    const q = api.questions.get(1);
+    expect(q.bookmarked).toBe(false);
+  });
+
+  it("toggles bookmark for multiple questions independently", async () => {
+    const api = await getApi();
+    api.progress.toggleBookmark(1);
+    api.progress.toggleBookmark(3);
+    expect(api.questions.get(1).bookmarked).toBe(true);
+    expect(api.questions.get(3).bookmarked).toBe(true);
+    expect(api.questions.get(2).bookmarked).toBeFalsy();
+  });
+});
+
+describe("daily goal", () => {
+  it("getGoal returns 0 by default", async () => {
+    const api = await getApi();
+    expect(api.progress.getGoal()).toBe(0);
+  });
+
+  it("setGoal stores and returns the clamped value", async () => {
+    const api = await getApi();
+    expect(api.progress.setGoal(10)).toBe(10);
+    expect(api.progress.getGoal()).toBe(10);
+  });
+
+  it("clamps goal to 0–200", async () => {
+    const api = await getApi();
+    expect(api.progress.setGoal(-5)).toBe(0);
+    expect(api.progress.setGoal(250)).toBe(200);
+  });
+});
+
+describe("quickReview", () => {
+  it("saves and retrieves a session", async () => {
+    const api = await getApi();
+    const session = { questionIds: [1, 2, 3], count: 3 };
+    api.quickReview.saveSession(session);
+    const retrieved = api.quickReview.getSession();
+    expect(retrieved).toEqual(session);
+  });
+
+  it("clears session", async () => {
+    const api = await getApi();
+    api.quickReview.saveSession({ questionIds: [1] });
+    api.quickReview.clearSession();
+    expect(api.quickReview.getSession()).toBeNull();
+  });
+
+  it("getSession returns null when no session saved", async () => {
+    const api = await getApi();
+    expect(api.quickReview.getSession()).toBeNull();
+  });
+
+  it("saveSession handles localStorage failure gracefully", async () => {
+    const spy = vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new Error("quota exceeded");
+    });
+    const api = await getApi();
+    expect(() => api.quickReview.saveSession({ questionIds: [1] })).not.toThrow();
+    spy.mockRestore();
+  });
+
+  it("getSession returns null on corrupt JSON", async () => {
+    vi.spyOn(localStorage, "getItem").mockReturnValue("{corrupt");
+    const api = await getApi();
+    expect(api.quickReview.getSession()).toBeNull();
+  });
+
+  it("clearSession handles localStorage failure gracefully", async () => {
+    const spy = vi.spyOn(localStorage, "removeItem").mockImplementation(() => {
+      throw new Error("storage error");
+    });
+    const api = await getApi();
+    expect(() => api.quickReview.clearSession()).not.toThrow();
+    spy.mockRestore();
+  });
+});
+
+describe("getGoal error handling", () => {
+  it("returns 0 when localStorage throws", async () => {
+    vi.spyOn(localStorage, "getItem").mockImplementation(() => {
+      throw new Error("storage error");
+    });
+    const api = await getApi();
+    expect(api.progress.getGoal()).toBe(0);
+  });
+});
+
+describe("reviewHistory", () => {
+  it("handles missing question gracefully", async () => {
+    const api = await getApi();
+    // Set up a session with a non-existent question_id
+    localStorage.setItem(
+      "quiz_review_sessions",
+      JSON.stringify([
+        {
+          id: 1,
+          question_id: 999,
+          result: "correct",
+          reviewed_at: new Date().toISOString(),
+          duration_seconds: 10,
+          source: "quiz",
+        },
+      ]),
+    );
+    vi.resetModules();
+    const api2 = await getApi();
+    const history = api2.progress.reviewHistory(50);
+    expect(history).toHaveLength(1);
+    expect(history[0].title).toBe("题目 #999");
+    expect(history[0].question_id).toBe(999);
+  });
 });

@@ -10,6 +10,7 @@
   import { RATINGS } from "../lib/sm2.js";
   import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
   import { toast } from "../lib/toast.js";
+  import { renderContent, renderAnswer } from "../lib/render-utils.js";
   import CodeBlock from "../components/CodeBlock.svelte";
 
   let { config, onNavigate } = $props();
@@ -73,44 +74,6 @@
 
   const SAVE_KEY = "review_session";
 
-  function renderContent(text) {
-    if (!text) return [{ type: "text", content: "" }];
-    const parts = text.split(/(```\w*\n[\s\S]*?```)/g);
-    return parts.map((p) => {
-      const match = p.match(/```(\w*)\n([\s\S]*?)```/);
-      if (match) return { type: "code", lang: match[1], code: match[2].trimEnd() };
-      return { type: "text", content: p };
-    });
-  }
-
-  function renderAnswer(text) {
-    if (!text) return [];
-    const lines = text.split("\n");
-    const sections = [];
-    let curType = "answer";
-    let curLines = [];
-    const headerRe = /^(答案|解析|扩展延伸|推荐阅读)[：:]\s*/;
-
-    for (const line of lines) {
-      const h = line.match(headerRe);
-      if (h) {
-        if (curLines.length) sections.push({ type: curType, text: curLines.join("\n").trim() });
-        curType = { 答案: "answer", 解析: "explanation" }[h[1]] ?? "extension";
-        curLines = [line.slice(h[0].length)];
-      } else {
-        curLines.push(line);
-      }
-    }
-    if (curLines.length) sections.push({ type: curType, text: curLines.join("\n").trim() });
-
-    const hasMarkers = lines.some((l) => headerRe.test(l));
-    if (!hasMarkers) {
-      const t = text.trim();
-      return t ? [{ type: "answer", parts: renderContent(t) }] : [];
-    }
-    return sections.map((s) => ({ type: s.type, parts: renderContent(s.text) }));
-  }
-
   function startSession(count, category) {
     try {
       const session = api.progress.startReviewSession(count || 20, category || "");
@@ -159,6 +122,7 @@
 
   function handleKeydown(e) {
     if (phase !== "active") return;
+    if (showSessionMap) return;
     // Space to reveal answer
     if (e.key === " " || e.key === "Spacebar") {
       if (!showAnswer) { e.preventDefault(); revealAnswer(); return; }
@@ -168,12 +132,6 @@
       const map = { "1": "forgot", "2": "hard", "3": "good", "4": "easy" };
       const rating = map[e.key];
       if (rating) { e.preventDefault(); rate(rating); return; }
-    }
-    // Escape to close map
-    if (e.key === "Escape" && showSessionMap) {
-      e.preventDefault();
-      showSessionMap = false;
-      return;
     }
   }
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-validate-data.py — Interview App 种子数据校验
+validate_data.py — Interview App 种子数据校验
 
 校验 backend/seed_data/ 下所有 JSON 文件：
   1. JSON 可解析
@@ -28,14 +28,24 @@ def check_json_parseable(path: Path) -> tuple[bool, str]:
         return False, f"读取错误: {e}"
 
 
+VALID_TYPES = {"choice", "coding", "fill_in_blank", "multiple_choice", "short_answer", "true_false"}
+
+
 def check_required_fields(data: list, fields: list[str]) -> tuple[bool, str]:
     missing = []
+    type_issues = []
     for i, item in enumerate(data):
         for f in fields:
             if f not in item:
                 missing.append(f"第 {i} 条缺少字段 '{f}'")
+        t = item.get("type", "")
+        if t and t not in VALID_TYPES:
+            title = item.get("title", f"第{i}条")
+            type_issues.append(f"'{title}' 未知题型 '{t}'，应为 {sorted(VALID_TYPES)}")
     if missing:
         return False, "; ".join(missing[:5])
+    if type_issues:
+        return False, "; ".join(type_issues[:5])
     return True, ""
 
 
@@ -100,8 +110,8 @@ def check_options_prefix(data: list) -> tuple[bool, str]:
         opts = item.get("options", [])
         if not opts:
             continue
-        # true_false 类（2选项）不需要前缀
-        if t == "choice" and len(opts) == 2:
+        # true_false 类不需要 A)/B) 前缀
+        if t == "true_false":
             continue
         # 跳过已含前缀的
         for opt in opts:

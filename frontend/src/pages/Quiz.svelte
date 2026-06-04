@@ -5,6 +5,7 @@
   import CodeBlock from "../components/CodeBlock.svelte";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import FillInBlank from "../components/FillInBlank.svelte";
+  import { renderContent, renderAnswer } from "../lib/render-utils.js";
   import { api } from "../lib/local-api.js";
   import { toast } from "../lib/toast.js";
   import {
@@ -254,16 +255,6 @@
     if (apiKeyInput) gradeWithAI();
   }
 
-  function renderContent(text) {
-    if (!text) return [{ type: "text", content: "" }];
-    const parts = text.split(/(```\w*\n[\s\S]*?```)/g);
-    return parts.map((p) => {
-      const match = p.match(/```(\w*)\n([\s\S]*?)```/);
-      if (match) return { type: "code", lang: match[1], code: match[2].trimEnd() };
-      return { type: "text", content: p };
-    });
-  }
-
   function answerBody() {
     return q.answer.replace(/^答案[：:]\s*/, "");
   }
@@ -308,34 +299,6 @@
     feedbackResult = status;
     showAnswer = true;
     saving = false;
-  }
-
-  function renderAnswer(text) {
-    if (!text) return [];
-    const lines = text.split("\n");
-    const sections = [];
-    let curType = "answer";
-    let curLines = [];
-    const headerRe = /^(答案|解析|扩展延伸|推荐阅读)[：:]\s*/;
-
-    for (const line of lines) {
-      const h = line.match(headerRe);
-      if (h) {
-        if (curLines.length) sections.push({ type: curType, text: curLines.join("\n").trim() });
-        curType = { 答案: "answer", 解析: "explanation" }[h[1]] ?? "extension";
-        curLines = [line.slice(h[0].length)];
-      } else {
-        curLines.push(line);
-      }
-    }
-    if (curLines.length) sections.push({ type: curType, text: curLines.join("\n").trim() });
-
-    const hasMarkers = lines.some((l) => headerRe.test(l));
-    if (!hasMarkers) {
-      const t = text.trim();
-      return t ? [{ type: "answer", parts: renderContent(t) }] : [];
-    }
-    return sections.map((s) => ({ type: s.type, parts: renderContent(s.text) }));
   }
 
   async function selectOption(opt) {
@@ -470,6 +433,9 @@
 
   function handleKeydown(e) {
     if (!q) return;
+
+    // Block keyboard input when overlays are open (map, shortcuts)
+    if (showSessionMap || showShortcuts) return;
 
     // Left/Right navigation — answer-shown and browse modes
     if (browseMode || showAnswer || showSubmitResult) {

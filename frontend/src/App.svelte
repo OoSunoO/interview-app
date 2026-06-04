@@ -61,7 +61,7 @@
     {/key}
   </main>
   <NavBar current={page} onNavigate={(p) => navigate(p)} />
-  <CommandPalette {onNavigate} />
+  <CommandPalette onNavigate={navigate} />
   <Toast />
 </div>
 
