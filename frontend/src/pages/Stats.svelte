@@ -8,6 +8,15 @@
 
   let { onNavigate } = $props();
 
+  let goalInput = $state(api.progress.getGoal());
+  let goalSaved = $state(false);
+
+  function saveGoal() {
+    api.progress.setGoal(goalInput);
+    goalSaved = true;
+    setTimeout(() => goalSaved = false, 2000);
+  }
+
   onMount(async () => {
     // refreshStats must resolve before rendering overview content
     await store.refreshStats();
@@ -183,6 +192,25 @@
         <div class="daily-item">
           <span class="daily-num fire">{dailyStats.streak}</span>
           <span class="daily-lbl">连续天数</span>
+        </div>
+        <div class="daily-item goal-item">
+          <div class="goal-top">
+            <span class="daily-num" class:goal-met={dailyStats.today.reviewed >= goalInput}>{dailyStats.today.reviewed}</span>
+            {#if goalInput > 0}
+              <span class="goal-target">/ {goalInput}</span>
+            {/if}
+          </div>
+          <div class="goal-lbl-row">
+            <span class="daily-lbl">每日目标</span>
+            <button class="goal-edit-btn" onclick={() => { const n = prompt('设置每日复习目标（题数）:', goalInput || ''); if (n !== null) { goalInput = Math.max(0, Math.min(200, parseInt(n) || 0)); saveGoal(); } }} aria-label="设置目标">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>
+            </button>
+          </div>
+          {#if goalInput > 0}
+            <div class="goal-progress-track">
+              <div class="goal-progress-fill" style="transform: scaleX({Math.min(1, dailyStats.today.reviewed / goalInput)})"></div>
+            </div>
+          {/if}
         </div>
       </div>
 
@@ -398,6 +426,60 @@
   }
   .daily-num.fire {
     color: var(--warning);
+  }
+  .daily-num.goal-met {
+    color: var(--success);
+  }
+  .goal-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .goal-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 2px;
+  }
+  .goal-target {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .goal-lbl-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .goal-edit-btn {
+    background: none;
+    border: none;
+    padding: 2px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+  .goal-edit-btn:hover {
+    color: var(--accent);
+    background: var(--bg-surface);
+  }
+  .goal-progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .goal-progress-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 2px;
+    transform-origin: left;
+    transition: transform 0.5s;
   }
   .daily-lbl {
     display: block;

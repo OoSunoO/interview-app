@@ -16,6 +16,7 @@ const knowledgeMap = buildKnowledgeMap(questions);
 const PROGRESS_KEY = "quiz_progress";
 const SESSION_KEY = "quiz_review_sessions";
 const DAILY_STATS_KEY = "quiz_daily_stats";
+const GOAL_KEY = "quiz_daily_goal";
 
 function getProgress() {
   try {
@@ -606,6 +607,18 @@ export const api = {
             .sort(([, a], [, b]) => b.total - a.total)
             .map(([tname, td]) => ({ name: tname, total: td.total, done: td.done })),
         }));
+    },
+
+    /** Get/set daily review goal */
+    getGoal() {
+      try {
+        return parseInt(localStorage.getItem(GOAL_KEY), 10) || 0;
+      } catch { return 0; }
+    },
+    setGoal(n) {
+      const val = Math.max(0, Math.min(200, Math.round(n)));
+      try { localStorage.setItem(GOAL_KEY, String(val)); } catch { /* ignore */ }
+      return val;
     },
   },
 

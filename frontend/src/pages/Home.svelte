@@ -11,6 +11,7 @@
   let loading = $state(true);
   let error = $state(null);
   let reminderEnabled = $state(localStorage.getItem("review_reminder") !== "off");
+  let dailyGoal = $state(api.progress.getGoal());
 
   // ── Quick Review ──
   let showQRDialog = $state(false);
@@ -145,6 +146,22 @@
             <span class="stat-num">{dueCount}</span>
             <span class="stat-lbl">待复习</span>
           </div>
+        </div>
+      </div>
+    {/if}
+    {#if dailyGoal > 0}
+      <div class="goal-card">
+        <div class="goal-row">
+          <span class="goal-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+          </span>
+          <span class="goal-text">每日目标</span>
+          <span class="goal-count" class:goal-done={store.dailyStats.today.reviewed >= dailyGoal}>
+            {Math.min(store.dailyStats.today.reviewed, dailyGoal)}/{dailyGoal}
+          </span>
+        </div>
+        <div class="goal-bar-track">
+          <div class="goal-bar-fill" style="transform: scaleX({Math.min(1, store.dailyStats.today.reviewed / dailyGoal)})"></div>
         </div>
       </div>
     {/if}
@@ -463,6 +480,54 @@
   .hero-stats-skeleton .skeleton-box {
     width: 98px;
     height: 88px;
+  }
+
+  /* ── Daily Goal ── */
+  .goal-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .goal-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .goal-icon {
+    display: inline-flex;
+    color: var(--accent);
+  }
+  .goal-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .goal-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .goal-count.goal-done {
+    color: var(--success);
+  }
+  .goal-bar-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .goal-bar-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 2px;
+    transform-origin: left;
+    transition: transform 0.5s;
   }
 
   /* ── Body Section ── */
