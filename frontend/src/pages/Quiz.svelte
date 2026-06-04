@@ -1188,6 +1188,12 @@
               速记错题
             </button>
           {/if}
+          {#if interviewed}
+            <button class="ss-btn ss-btn-secondary" onclick={() => onNavigate("home")}>
+              <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+              再来一轮
+            </button>
+          {/if}
           <button class="ss-btn" onclick={exit}>返回题库</button>
         </div>
       </div>

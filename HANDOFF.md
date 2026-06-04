@@ -118,6 +118,7 @@
 - Stats 页面 Mock Interview 历史项新增筛选标签展示
 - Quiz 页面 Mock Interview 模式头部显示当前筛选范围（如 "Java · 中等 · JVM"）
 - 后端 QuickReview API 新增 difficulty/type/tag 筛选支持，含 4 个新测试
+- Mock Interview 完成页新增"再来一轮"按钮，快速回到首页重开
 
 ### Feature (v1.4.13)
 - Browse 题目详情弹窗新增笔记编辑功能：展开式文本区，输入即自动保存
