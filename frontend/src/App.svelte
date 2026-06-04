@@ -12,7 +12,8 @@
   import ReviewSession from "./pages/ReviewSession.svelte";
   import { fade } from "svelte/transition";
   import { api } from "./lib/local-api.js";
-import { store } from "./lib/stores.svelte.js";
+  import { store } from "./lib/stores.svelte.js";
+  import CommandPalette from "./components/CommandPalette.svelte";
 
   let page = $state("home");
   let selectedQuestionId = $state(null);
@@ -59,6 +60,7 @@ import { store } from "./lib/stores.svelte.js";
     {/key}
   </main>
   <NavBar current={page} onNavigate={(p) => navigate(p)} />
+  <CommandPalette {onNavigate} />
 </div>
 
 <style>
