@@ -1,8 +1,8 @@
 # Handoff — 面试刷题 App
 
 **日期：** 2026-06-05
-**版本：** v1.4.11
-**当前状态：** 5196 题，51 分类全部 100+，251 单元测试全绿，34 E2E 全绿，构建 846ms
+**版本：** v1.4.12
+**当前状态：** 5196 题，51 分类全部 100+，252 单元测试全绿，34 E2E 全绿，构建 846ms
 
 ---
 
@@ -104,6 +104,13 @@
 - 新增 `api.questions.tags()` 方法返回所有标签（去重+排序）
 - 新增 2 个 tag 筛选单元测试（tags 去重排序 + tag 筛选过滤）
 
+### Feature (v1.4.12)
+- Browse 题目详情弹窗新增"相关题目"推荐：基于共享标签和同分类自动推荐 5 道相关题，点击直接跳转答题
+- Browse 知识点筛选项新增题目计数，如"Java基础 (3)"，帮助评估筛选结果
+- 新增 `api.questions.tagsWithCount()` 方法返回带计数的标签列表（按数量降序）
+- 修复 `goRandom()` 未检查 tag 筛选条件的 bug
+- 新增 1 个 tagsWithCount 单元测试
+
 ### Feature (v1.4.9)
 - Stats 页面新增"题型分布"版块：按题型统计 total/done/wrong 及进度条
 - 单元测试增加 by_type 数据断言
@@ -130,7 +137,7 @@
 - PWA：可安装，Service Worker 自动更新
 
 ### 测试
-- 251 单元测试（Vitest，+2 tag filter）
+- 252 单元测试（Vitest，+1 tagsWithCount）
 - 34 E2E 测试（Playwright，+1 WrongBook keyboard shortcuts）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
