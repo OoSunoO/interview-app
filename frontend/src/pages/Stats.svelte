@@ -98,6 +98,7 @@
       allDaily = await api.progress.allDailyStats();
       history = await api.progress.reviewHistory(30);
       qrHistory = api.quickReview.getHistory();
+      miHistory = api.mockInterview.getHistory();
     } catch (e) {
       // wrongList stays empty on error — weak sections gracefully show nothing
     }
@@ -109,6 +110,7 @@
   let allDaily = $state(null);
   let history = $state([]);
   let qrHistory = $state([]);
+  let miHistory = $state([]);
 
   let trendLayout = $derived.by(() => {
     if (!trendData || trendData.length < 2) return null;
@@ -514,6 +516,51 @@
         <button class="qr-nav-btn" onclick={() => onNavigate("quick-review")}>
           <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
           去速记
+        </button>
+      </div>
+    {/if}
+
+    {#if miHistory.length > 0}
+      {@const miTotal = miHistory.length}
+      {@const miQuestions = miHistory.reduce((sum, s) => sum + s.total, 0)}
+      {@const miPassed = miHistory.filter(s => s.pct >= 70).length}
+      {@const miRate = miTotal > 0 ? Math.round((miPassed / miTotal) * 100) : 0}
+      <h2 class="section-title">模拟面试记录</h2>
+      <div class="mi-summary">
+        <div class="mi-summary-item">
+          <span class="mi-summary-num">{miTotal}</span>
+          <span class="mi-summary-label">总次数</span>
+        </div>
+        <div class="mi-summary-item">
+          <span class="mi-summary-num">{miQuestions}</span>
+          <span class="mi-summary-label">总题数</span>
+        </div>
+        <div class="mi-summary-item">
+          <span class="mi-summary-num" class:mi-rate-good={miRate >= 70}>{miRate}%</span>
+          <span class="mi-summary-label">通过率</span>
+        </div>
+      </div>
+      <div class="mi-history-list">
+        {#each miHistory.slice(0, 20) as session}
+          <div class="mi-history-item">
+            <span class="mi-history-date">{formatQRDate(session.date)}</span>
+            <span class="mi-history-counts">
+              <span class="mi-badge mi-pass" title="正确">{session.correct}</span>
+              <span class="mi-count-sep">/</span>
+              <span class="mi-badge mi-fail" title="错误">{session.wrong}</span>
+              <span class="mi-history-total">共 {session.total} 题</span>
+            </span>
+            <span class="mi-history-dur">{formatDuration(session.totalTime)}</span>
+            <span class="mi-history-rate" class:mi-pass-rate={session.pct >= 70} class:mi-fail-rate={session.pct < 70}>
+              {session.pct}%
+            </span>
+          </div>
+        {/each}
+      </div>
+      <div class="mi-nav">
+        <button class="mi-nav-btn" onclick={() => onNavigate("home")}>
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+          模拟面试
         </button>
       </div>
     {/if}
@@ -1339,6 +1386,129 @@
   .qr-nav-btn:active {
     transform: scale(0.96);
   }
+
+  .mi-summary {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .mi-summary-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .mi-summary-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .mi-summary-num.mi-rate-good {
+    color: var(--success);
+  }
+  .mi-summary-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .mi-history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .mi-history-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .mi-history-date {
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    min-width: 80px;
+  }
+  .mi-history-counts {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+  .mi-count-sep {
+    color: var(--text-dim);
+    font-size: 11px;
+  }
+  .mi-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  .mi-badge.mi-pass {
+    color: var(--success);
+    background: var(--success-bg);
+  }
+  .mi-badge.mi-fail {
+    color: var(--danger);
+    background: var(--danger-bg);
+  }
+  .mi-history-total {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-left: 4px;
+  }
+  .mi-history-dur {
+    color: var(--text-dim);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .mi-history-rate {
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 36px;
+    text-align: right;
+  }
+  .mi-pass-rate { color: var(--success); }
+  .mi-fail-rate { color: var(--danger); }
+  .mi-nav {
+    display: flex;
+    margin-bottom: 24px;
+  }
+  .mi-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .mi-nav-btn:active {
+    transform: scale(0.96);
+  }
+
   .qr-badge {
     display: inline-flex;
     align-items: center;

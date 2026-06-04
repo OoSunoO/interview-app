@@ -476,6 +476,17 @@
           correctAnswer: r.correctAnswer
         }))
       }));
+      // Persist mock interview session to long-term history
+      if (interviewed) {
+        api.mockInterview.saveHistory({
+          correct: s.correct,
+          wrong: s.wrong,
+          total: s.total,
+          pct: s.pct,
+          totalTime: s.totalTime,
+          timeLimit,
+        });
+      }
     } catch (_) { /* ignore quota errors */ }
   }
 

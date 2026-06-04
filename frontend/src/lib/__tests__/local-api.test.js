@@ -874,6 +874,91 @@ describe("quickReview", () => {
   });
 });
 
+describe("mockInterview", () => {
+  it("saveHistory and getHistory round-trip", async () => {
+    const api = await getApi();
+    api.mockInterview.saveHistory({
+      correct: 7,
+      wrong: 3,
+      total: 10,
+      pct: 70,
+      totalTime: 600,
+      timeLimit: 120,
+    });
+    api.mockInterview.saveHistory({
+      correct: 5,
+      wrong: 5,
+      total: 10,
+      pct: 50,
+      totalTime: 480,
+      timeLimit: 60,
+    });
+    const history = api.mockInterview.getHistory();
+    expect(history).toHaveLength(2);
+    expect(history[0].total).toBe(10);
+    expect(history[0].pct).toBe(50);
+    expect(history[1].total).toBe(10);
+    expect(history[1].pct).toBe(70);
+  });
+
+  it("getHistory returns empty array when no history saved", async () => {
+    const api = await getApi();
+    expect(api.mockInterview.getHistory()).toEqual([]);
+  });
+
+  it("clearHistory removes all history", async () => {
+    const api = await getApi();
+    api.mockInterview.saveHistory({
+      correct: 3,
+      wrong: 1,
+      total: 4,
+      pct: 75,
+      totalTime: 300,
+      timeLimit: 120,
+    });
+    api.mockInterview.clearHistory();
+    expect(api.mockInterview.getHistory()).toEqual([]);
+  });
+
+  it("saveHistory caps at 50 entries", async () => {
+    const api = await getApi();
+    for (let i = 0; i < 55; i++) {
+      api.mockInterview.saveHistory({
+        correct: 1,
+        wrong: 0,
+        total: 1,
+        pct: 100,
+        totalTime: 60,
+        timeLimit: 120,
+      });
+    }
+    expect(api.mockInterview.getHistory()).toHaveLength(50);
+  });
+
+  it("saveHistory handles localStorage failure gracefully", async () => {
+    vi.spyOn(localStorage, "setItem").mockImplementation(() => {
+      throw new Error("quota exceeded");
+    });
+    const api = await getApi();
+    expect(() =>
+      api.mockInterview.saveHistory({
+        correct: 1,
+        wrong: 0,
+        total: 1,
+        pct: 100,
+        totalTime: 60,
+        timeLimit: 120,
+      }),
+    ).not.toThrow();
+  });
+
+  it("getHistory returns empty array on corrupt JSON", async () => {
+    vi.spyOn(localStorage, "getItem").mockReturnValue("{corrupt");
+    const api = await getApi();
+    expect(api.mockInterview.getHistory()).toEqual([]);
+  });
+});
+
 describe("getGoal error handling", () => {
   it("returns 0 when localStorage throws", async () => {
     vi.spyOn(localStorage, "getItem").mockImplementation(() => {

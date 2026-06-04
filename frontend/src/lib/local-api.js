@@ -690,6 +690,42 @@ export const api = {
     },
   },
 
+  // ── Mock Interview History ───────────────────────────────────
+  mockInterview: {
+    /** Save a completed session to history */
+    saveHistory(result) {
+      try {
+        const key = usernameSuffix("mock_interview_history");
+        const history = JSON.parse(localStorage.getItem(key) || "[]");
+        history.unshift({
+          ...result,
+          date: new Date().toISOString(),
+        });
+        if (history.length > 50) history.length = 50;
+        localStorage.setItem(key, JSON.stringify(history));
+      } catch (e) {
+        console.warn("mockInterview saveHistory failed:", e);
+      }
+    },
+
+    /** Get past session history (most recent first) */
+    getHistory() {
+      try {
+        const key = usernameSuffix("mock_interview_history");
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      } catch {
+        return [];
+      }
+    },
+
+    /** Clear all session history */
+    clearHistory() {
+      try {
+        localStorage.removeItem(usernameSuffix("mock_interview_history"));
+      } catch { /* ignore */ }
+    },
+  },
+
   // ── Knowledge Points API ─────────────────────────────────────
   knowledge: {
     /** List all knowledge points (from tags), with counts, mastery, and hasContent flag */
