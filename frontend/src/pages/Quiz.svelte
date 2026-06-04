@@ -83,7 +83,7 @@
     { keys: "← →", desc: "上一题 / 下一题" },
     { keys: "1-9", desc: "选择选项" },
     { keys: "Enter", desc: "提交答案 / 提交多选" },
-    { keys: "R", desc: "答错后重试" },
+    { keys: "R", desc: "重做当前题" },
     { keys: "G", desc: "答错后看答案" },
     { keys: "1 2", desc: "自评答错 / 答对" },
     { keys: "B", desc: "收藏 / 取消收藏" },
@@ -440,6 +440,11 @@
     if (browseMode || showAnswer || showSubmitResult) {
       if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); return; }
       if (e.key === "ArrowRight") { e.preventDefault(); goNext(); return; }
+      if (e.key === "r" || e.key === "R") {
+        if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+          e.preventDefault(); const id = q.id; resetState(); loadQuestionById(id); return;
+        }
+      }
       if (showSubmitResult && !showAnswer && e.target.tagName !== "TEXTAREA") {
         if (e.key === "1") { selfEvaluate(false); return; }
         if (e.key === "2") { selfEvaluate(true); return; }
