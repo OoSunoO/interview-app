@@ -21,6 +21,7 @@
   let detailDialog = $state(null);
   let detailNotes = $state("");
   let noteSaving = $state(false);
+  let relatedQuestions = $state([]);
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -32,9 +33,11 @@
 
   async function openDetail(q) {
     showDetailAnswer = false;
+    relatedQuestions = [];
     try {
       detailQuestion = await api.questions.get(q.id);
       detailNotes = detailQuestion.notes || "";
+      relatedQuestions = api.questions.related(q.id, 5);
     } catch {
       detailQuestion = q;
       detailNotes = "";
@@ -44,6 +47,7 @@
     detailQuestion = null;
     showDetailAnswer = false;
     detailNotes = "";
+    relatedQuestions = [];
   }
 
   async function saveNotes() {
@@ -88,6 +92,12 @@
     onNavigate("quiz", { questionId: q.id });
   }
 
+  async function goToRelated(q) {
+    closeDetail();
+    await store.startQuiz([q]);
+    onNavigate("quiz", { questionId: q.id });
+  }
+
   async function goRandom() {
     const list = store.questions;
     if (list.length === 0) return;
@@ -99,6 +109,7 @@
       store.filters.type ||
       store.filters.status ||
       store.filters.company ||
+      store.filters.tag ||
       store.filters.search ||
       store.filters.sort_by ||
       store.filters.bookmarked;
@@ -754,6 +765,27 @@
           {detailQuestion.bookmarked ? "已收藏" : "收藏"}
         </button>
       </div>
+
+      {#if relatedQuestions.length > 0}
+        <div class="dp-related">
+          <span class="dp-related-label">相关题目</span>
+          <div class="dp-related-list">
+            {#each relatedQuestions as rq}
+              <button
+                class="dp-related-item"
+                onclick={() => goToRelated(rq)}
+                onkeydown={(e) => { if (e.key === "Enter") goToRelated(rq); }}
+              >
+                <span class="dp-related-title">{rq.title}</span>
+                <div class="dp-related-meta">
+                  <span class="tag diff {rq.difficulty}">{rq.difficulty}</span>
+                  <span class="tag type">{rq.type}</span>
+                </div>
+              </button>
+            {/each}
+          </div>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}
@@ -1493,6 +1525,63 @@
   .dp-status-reviewing {
     background: var(--warning-bg);
     color: var(--warning);
+  }
+
+  /* ── Related Questions ── */
+  .dp-related {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+  }
+  .dp-related-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 8px;
+  }
+  .dp-related-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dp-related-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-align: left;
+    color: var(--text);
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .dp-related-item:hover {
+    background: var(--bg-surface);
+    border-color: var(--border);
+  }
+  .dp-related-item:active {
+    transform: scale(0.99);
+  }
+  .dp-related-title {
+    font-size: 13px;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dp-related-meta {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
   }
 
   @keyframes slide-up {
