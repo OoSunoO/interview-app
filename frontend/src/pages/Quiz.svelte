@@ -428,6 +428,9 @@
     if (!showAnswer && !showSubmitResult && e.target.tagName !== "TEXTAREA" && q.type !== "choice" && q.type !== "true_false" && q.type !== "multiple_choice") {
       if (e.key === "Enter" && userAnswer.trim()) submitAnswer();
     }
+    if (e.key === "b" || e.key === "B") {
+      if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") handleToggleBookmark();
+    }
   }
 
   function handleToggleBookmark() {
