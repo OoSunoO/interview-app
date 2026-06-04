@@ -97,7 +97,7 @@ describe("store", () => {
 
   it("manages quiz session", async () => {
     const { store } = await import("../stores.svelte.js");
-    store.startQuiz(FIXTURE);
+    await store.startQuiz(FIXTURE);
     expect(store.quizSessionLength).toBe(2);
     expect(store.quizIndex).toBe(0);
     expect(store.hasPrev).toBe(false);
@@ -106,7 +106,7 @@ describe("store", () => {
 
   it("advanceQuiz moves forward", async () => {
     const { store } = await import("../stores.svelte.js");
-    store.startQuiz(FIXTURE);
+    await store.startQuiz(FIXTURE);
     const result = store.advanceQuiz();
     expect(result).toBe(true);
     expect(store.quizIndex).toBe(1);
@@ -116,7 +116,7 @@ describe("store", () => {
 
   it("advanceQuiz returns false at end", async () => {
     const { store } = await import("../stores.svelte.js");
-    store.startQuiz(FIXTURE);
+    await store.startQuiz(FIXTURE);
     store.advanceQuiz();
     const result = store.advanceQuiz();
     expect(result).toBe(false);
@@ -125,7 +125,7 @@ describe("store", () => {
 
   it("retreatQuiz moves backward", async () => {
     const { store } = await import("../stores.svelte.js");
-    store.startQuiz(FIXTURE);
+    await store.startQuiz(FIXTURE);
     store.advanceQuiz();
     const result = store.retreatQuiz();
     expect(result).toBe(true);
@@ -134,7 +134,7 @@ describe("store", () => {
 
   it("retreatQuiz returns false at start", async () => {
     const { store } = await import("../stores.svelte.js");
-    store.startQuiz(FIXTURE);
+    await store.startQuiz(FIXTURE);
     const result = store.retreatQuiz();
     expect(result).toBe(false);
     expect(store.quizIndex).toBe(0);
@@ -142,7 +142,7 @@ describe("store", () => {
 
   it("goToQuestion navigates to index", async () => {
     const { store } = await import("../stores.svelte.js");
-    store.startQuiz(FIXTURE);
+    await store.startQuiz(FIXTURE);
     expect(store.goToQuestion(1)).toBe(true);
     expect(store.quizIndex).toBe(1);
     expect(store.goToQuestion(5)).toBe(false);
@@ -151,7 +151,7 @@ describe("store", () => {
 
   it("shuffleSession randomizes order", async () => {
     const { store } = await import("../stores.svelte.js");
-    store.startQuiz(FIXTURE);
+    await store.startQuiz(FIXTURE);
     const original = [...store.quizSession];
     store.shuffleSession();
     // Should still have all questions

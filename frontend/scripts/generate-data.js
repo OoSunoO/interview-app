@@ -91,6 +91,9 @@ export async function loadCategory(name) {
   _loadingCategories[name] = loader().then(mod => {
     categoryIndex[name] = mod.questions;
     questions.push(...mod.questions);
+  }).catch(err => {
+    delete _loadingCategories[name];
+    throw err;
   });
   return _loadingCategories[name];
 }

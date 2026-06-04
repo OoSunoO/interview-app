@@ -411,8 +411,8 @@
                     <span class="schedule-count">{items.length} 题</span>
                     <div class="schedule-questions">
                       {#each items.slice(0, 3) as item}
-                        <button class="schedule-q" onclick={() => {
-                          store.startQuiz(wrongQuestions);
+                        <button class="schedule-q" onclick={async () => {
+                          await store.startQuiz(wrongQuestions);
                           onNavigate("quiz", { questionId: item.id });
                         }}>{item.title}</button>
                       {/each}
@@ -575,8 +575,8 @@
               {#each group.questions as q}
                 <button
                   class="card"
-                  onclick={() => {
-                    store.startQuiz(filteredQuestions);
+                  onclick={async () => {
+                    await store.startQuiz(filteredQuestions);
                     onNavigate("quiz", { questionId: q.id });
                   }}
                 >

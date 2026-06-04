@@ -186,8 +186,10 @@ export const store = {
     return true;
   },
 
-  startQuiz(list, shuffle = false) {
-    _quizSession = shuffle ? shuffled(list) : list;
+  async startQuiz(list, shuffle = false) {
+    // Load full question data (content, answer, options) for quiz rendering
+    const full = await Promise.all(list.map((q) => api.questions.get(q.id)));
+    _quizSession = shuffle ? shuffled(full) : full;
     _quizIndex = 0;
     this._saveSessionBackup();
   },

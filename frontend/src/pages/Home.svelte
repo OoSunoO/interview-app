@@ -149,7 +149,7 @@
       toast.error("没有符合条件的题目");
       return;
     }
-    store.startQuiz(selected);
+    await store.startQuiz(selected);
     onNavigate("quiz", {
       questionId: selected[0].id,
       mockInterview: { timeLimit: miTimeLimit },
@@ -173,7 +173,7 @@
   async function startDueReview() {
     const due = await api.progress.dueReviews();
     if (due.length > 0) {
-      store.startQuiz(due);
+      await store.startQuiz(due);
       onNavigate("quiz", { questionId: due[0].id });
     }
   }
@@ -322,10 +322,10 @@
       {/if}
 
       {#if lastSession}
-        <button class="last-session-card" onclick={() => {
+        <button class="last-session-card" onclick={async () => {
           const wrongIds = lastSession.results.filter(r => r.status === "wrong" || r.status === "timeout").map(r => r.id);
           if (wrongIds.length > 0) {
-            store.startQuiz(store.questions.filter(q => wrongIds.includes(q.id)));
+            await store.startQuiz(store.questions.filter(q => wrongIds.includes(q.id)));
             onNavigate("quiz", { questionId: wrongIds[0] });
           }
         }}>

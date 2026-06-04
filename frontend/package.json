@@ -17,7 +17,7 @@
     "test:cov": "vitest run --coverage",
     "test:e2e": "playwright test",
     "audit": "npm audit --audit-level=high",
-    "verify": "npm run format:check && npm run check && npm test"
+    "verify": "npm run data && npm run format:check && npm run check && npm test"
   },
   "dependencies": {
     "highlight.js": "^11.11.0",

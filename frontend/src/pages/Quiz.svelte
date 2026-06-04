@@ -434,7 +434,7 @@
     await loadQuestionById(prevId);
   }
 
-  function shuffleRemaining() {
+  async function shuffleRemaining() {
     const session = store.quizSession;
     const idx = store.quizIndex;
     const done = session.slice(0, idx + 1);
@@ -443,7 +443,7 @@
       const j = Math.floor(Math.random() * (i + 1));
       [rest[i], rest[j]] = [rest[j], rest[i]];
     }
-    store.startQuiz([...done, ...rest]);
+    await store.startQuiz([...done, ...rest]);
   }
 
   function jumpToQuestion(index) {
@@ -478,8 +478,8 @@
     } catch (_) { /* ignore quota errors */ }
   }
 
-  function exit() {
-    store.startQuiz([]);
+  async function exit() {
+    await store.startQuiz([]);
     store._clearSessionBackup();
     sessionResults = [];
     showSessionSummary = false;
@@ -1099,10 +1099,10 @@
             {#each sessionResults.filter(r => r.status === "wrong") as wr}
               <button
                 class="ss-wrong-item"
-                onclick={() => {
+                onclick={async () => {
                   const wrongIds = new Set(sessionResults.filter(r => r.status === "wrong").map(r => r.id));
                   const wrongQs = store.quizSession.filter(qq => wrongIds.has(qq.id));
-                  store.startQuiz(wrongQs);
+                  await store.startQuiz(wrongQs);
                   showSessionSummary = false;
                   resetState();
                   loadQuestionById(wr.id);
@@ -1128,11 +1128,11 @@
         {/if}
         <div class="ss-actions">
           {#if s.wrong > 0}
-            <button class="ss-btn ss-btn-primary" onclick={() => {
+            <button class="ss-btn ss-btn-primary" onclick={async () => {
               const wrongIds = new Set(sessionResults.filter(r => r.status === "wrong").map(r => r.id));
               const wrongQs = store.quizSession.filter(qq => wrongIds.has(qq.id));
               if (wrongQs.length > 0) {
-                store.startQuiz(wrongQs);
+                await store.startQuiz(wrongQs);
                 showSessionSummary = false;
                 resetState();
                 loadQuestionById(wrongQs[0].id);

@@ -81,12 +81,12 @@
     store.loadQuestions({ page: 1 });
   }
 
-  function goQuestion(q) {
-    store.startQuiz(store.questions);
+  async function goQuestion(q) {
+    await store.startQuiz(store.questions);
     onNavigate("quiz", { questionId: q.id });
   }
 
-  function goRandom() {
+  async function goRandom() {
     const list = store.questions;
     if (list.length === 0) return;
 
@@ -108,7 +108,7 @@
     }
 
     const q = list[Math.floor(Math.random() * list.length)];
-    store.startQuiz(list);
+    await store.startQuiz(list);
     onNavigate("quiz", { questionId: q.id });
   }
 
@@ -169,10 +169,10 @@
     selectionMode = false;
   }
 
-  function startSelected() {
+  async function startSelected() {
     const selected = store.questions.filter((q) => selectedIds.has(q.id));
     if (selected.length === 0) return;
-    store.startQuiz(selected);
+    await store.startQuiz(selected);
     clearSelection();
     onNavigate("quiz", { questionId: selected[0].id });
   }
