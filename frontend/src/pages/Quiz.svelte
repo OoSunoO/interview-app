@@ -75,6 +75,16 @@
   let notesSaving = $state(false);
 
   let questionHistory = $state([]);
+  let showShortcuts = $state(false);
+
+  const SHORTCUTS = [
+    { keys: "1-9", desc: "选择选项" },
+    { keys: "Enter", desc: "提交答案 / 提交多选" },
+    { keys: "R", desc: "答错后重试" },
+    { keys: "G", desc: "答错后看答案" },
+    { keys: "B", desc: "收藏 / 取消收藏" },
+    { keys: "?", desc: "显示此帮助" },
+  ];
 
   $effect(() => {
     if (q) {
@@ -433,6 +443,10 @@
     if (e.key === "b" || e.key === "B") {
       if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") handleToggleBookmark();
     }
+    if (e.key === "?") {
+      e.preventDefault();
+      showShortcuts = !showShortcuts;
+    }
   }
 
   function handleToggleBookmark() {
@@ -494,6 +508,11 @@
           stroke-linecap="round"
           stroke-linejoin="round"
         ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+      </button>
+      <button class="help-btn" onclick={() => (showShortcuts = !showShortcuts)} title="快捷键">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" /></svg>
       </button>
     </div>
 
@@ -924,6 +943,25 @@
     {/if}
   {/if}
 </div>
+
+{#if showShortcuts}
+  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+  <div class="shortcuts-overlay" onclick={() => (showShortcuts = false)} onkeydown={(e) => { if (e.key === "Escape") showShortcuts = false; }}>
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="shortcuts-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showShortcuts = false; }}>
+      <div class="shortcuts-title">键盘快捷键</div>
+      <div class="shortcuts-list">
+        {#each SHORTCUTS as sc}
+          <div class="shortcut-row">
+            <kbd class="shortcut-key">{sc.keys}</kbd>
+            <span class="shortcut-desc">{sc.desc}</span>
+          </div>
+        {/each}
+      </div>
+      <button class="shortcuts-close" onclick={() => (showShortcuts = false)}>关闭</button>
+    </div>
+  </div>
+{/if}
 
 <style>
   .quiz {
@@ -1956,6 +1994,84 @@
   }
   .ss-btn-primary:active {
     opacity: 0.85;
+  }
+
+  /* ── Shortcuts Help ── */
+  .shortcuts-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-overlay);
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fade-in 0.2s both;
+  }
+  .shortcuts-dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: scale-in 0.3s var(--spring) both;
+  }
+  .shortcuts-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .shortcuts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .shortcut-key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 28px;
+    padding: 0 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    text-align: center;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  }
+  .shortcut-desc {
+    font-size: 14px;
+    color: var(--text);
+  }
+  .shortcuts-close {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .shortcuts-close:active {
+    transform: scale(0.97);
   }
 
   @media (max-width: 480px) {
