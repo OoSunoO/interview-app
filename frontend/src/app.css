@@ -467,3 +467,14 @@ textarea:focus {
   border-radius: var(--radius-sm);
   animation: pulse 1.8s var(--spring-smooth) infinite;
 }
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
