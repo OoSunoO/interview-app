@@ -17,6 +17,26 @@
     setTimeout(() => goalSaved = false, 2000);
   }
 
+  function exportProgress() {
+    const data = {
+      progress: JSON.parse(localStorage.getItem("quiz_progress") || "{}"),
+      sessions: JSON.parse(localStorage.getItem("quiz_review_sessions") || "[]"),
+      dailyStats: JSON.parse(localStorage.getItem("quiz_daily_stats") || "{}"),
+      goal: localStorage.getItem("quiz_daily_goal") || "0",
+      exportedAt: new Date().toISOString(),
+      appVersion: typeof __APP_VERSION__ !== "undefined" ? __APP_VERSION__ : "0.0.0",
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `面试题-进度备份-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   onMount(async () => {
     // refreshStats must resolve before rendering overview content
     await store.refreshStats();
@@ -357,6 +377,16 @@
         {/each}
       </div>
     {/if}
+
+    <div class="export-section">
+      <button class="export-progress-btn" onclick={exportProgress}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+        导出进度备份
+      </button>
+    </div>
   {/if}
 </div>
 
@@ -743,6 +773,32 @@
     font-size: 13px;
     color: var(--text-muted);
     padding: 12px;
+  }
+
+  /* ── Export Progress ── */
+  .export-section {
+    display: flex;
+    justify-content: center;
+  }
+  .export-progress-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .export-progress-btn:active {
+    transform: scale(0.96);
+    color: var(--accent);
+    border-color: var(--accent-dim);
   }
 
   /* ── Review History ── */
