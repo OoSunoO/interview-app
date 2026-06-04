@@ -92,6 +92,41 @@
       />
     </div>
 
+    {#if stats.by_difficulty}
+      <h2 class="section-title">难度分布</h2>
+      <div class="diff-dist">
+        {#each Object.entries(stats.by_difficulty) as [diff, d]}
+          <div class="diff-item">
+            <div class="diff-header">
+              <span class="diff-name">
+                <span class="diff-dot {diff}"></span>
+                { { easy: "简单", medium: "中等", hard: "困难" }[diff] || diff }
+              </span>
+              <span class="diff-stat">{d.done}/{d.total}</span>
+            </div>
+            <div class="diff-bar-track">
+              <div
+                class="diff-bar done"
+                style="transform: scaleX({d.total > 0 ? d.done / d.total : 0})"
+              ></div>
+              {#if d.wrong > 0}
+                <div
+                  class="diff-bar wrong"
+                  style="transform: scaleX({d.wrong / d.total}); transform-origin: left;"
+                ></div>
+              {/if}
+            </div>
+            <div class="diff-sub">
+              <span class="diff-pct">{Math.round((d.done / d.total) * 100) || 0}% 掌握</span>
+              {#if d.wrong > 0}
+                <span class="diff-wrong">{d.wrong} 道答错</span>
+              {/if}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
     {#if dailyStats}
       <div class="daily-section">
         <div class="daily-item">
@@ -295,6 +330,79 @@
     border-radius: 3px;
     transform-origin: left;
     transition: transform 0.5s;
+  }
+
+  /* ── Difficulty Distribution ── */
+  .diff-dist {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .diff-item {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 14px;
+  }
+  .diff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  .diff-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+  }
+  .diff-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .diff-dot.easy { background: var(--success); }
+  .diff-dot.medium { background: var(--warning); }
+  .diff-dot.hard { background: var(--danger); }
+  .diff-stat {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .diff-bar-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+  .diff-bar {
+    height: 100%;
+    border-radius: 4px;
+    transform-origin: left;
+    transition: transform 0.5s;
+  }
+  .diff-bar.done {
+    background: var(--accent);
+    flex: 1;
+  }
+  .diff-bar.wrong {
+    background: var(--danger);
+    min-width: 2px;
+  }
+  .diff-sub {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+  }
+  .diff-pct {
+    color: var(--text-muted);
+  }
+  .diff-wrong {
+    color: var(--danger);
   }
   .weak-list {
     display: flex;

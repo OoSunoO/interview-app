@@ -314,6 +314,7 @@ export const api = {
         reviewing = 0,
         bookmarked = 0;
       const byCategory = {};
+      const byDifficulty = { easy: { total: 0, done: 0, wrong: 0 }, medium: { total: 0, done: 0, wrong: 0 }, hard: { total: 0, done: 0, wrong: 0 } };
 
       for (const q of questions) {
         const mainCat = MAIN_CATEGORY[q.category] || q.category;
@@ -322,16 +323,22 @@ export const api = {
         }
         byCategory[mainCat].total++;
 
+        const diff = q.difficulty || "medium";
+        if (byDifficulty[diff]) byDifficulty[diff].total++;
+
         const p = progress[q.id];
         if (p?.bookmarked) bookmarked++;
         if (p?.status === "correct") {
           correct++;
           byCategory[mainCat].done++;
+          if (byDifficulty[diff]) byDifficulty[diff].done++;
         } else if (p?.status === "reviewing") {
           reviewing++;
           byCategory[mainCat].done++;
+          if (byDifficulty[diff]) byDifficulty[diff].done++;
         } else if (p?.status === "wrong") {
           wrong++;
+          if (byDifficulty[diff]) byDifficulty[diff].wrong++;
         }
       }
 
@@ -343,6 +350,7 @@ export const api = {
         wrong,
         bookmarked,
         by_category: byCategory,
+        by_difficulty: byDifficulty,
       };
     },
 
