@@ -31,6 +31,7 @@
   let error = $state(null);
   let wrongFilterCat = $state("");
   let wrongFilterDiff = $state("");
+  let wrongSearch = $state("");
   let currentDetail = $state(null);
   let detailLoading = $state(false);
   let detailVersion = $state(0);
@@ -157,9 +158,21 @@
     wrongQuestions.filter((q) => {
       if (wrongFilterCat && q.category !== wrongFilterCat) return false;
       if (wrongFilterDiff && q.difficulty !== wrongFilterDiff) return false;
+      if (wrongSearch) {
+        const s = wrongSearch.toLowerCase();
+        const title = (q.title || "").toLowerCase();
+        if (!title.includes(s)) return false;
+      }
       return true;
     }),
   );
+
+  function highlightText(text) {
+    if (!wrongSearch || !text) return text;
+    const s = wrongSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`(${s})`, 'gi');
+    return text.replace(re, '<mark class="search-hl">$1</mark>');
+  }
 
   let grouped = $derived.by(() => {
     const kpMap = {};
@@ -485,6 +498,19 @@
       </div>
 
       {#if wrongQuestions.length > 2}
+        <div class="wb-search-wrap">
+          <svg class="wb-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+          <input
+            class="wb-search"
+            placeholder="搜索错题标题..."
+            bind:value={wrongSearch}
+          />
+          {#if wrongSearch}
+            <button class="wb-search-clear" onclick={() => (wrongSearch = "")} aria-label="清除搜索">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+          {/if}
+        </div>
         <div class="wb-filters">
           <select bind:value={wrongFilterCat} class="wb-filter">
             <option value="">全部分类</option>
@@ -572,7 +598,7 @@
                     </span>
                     <span class="wrong-count">答错 {q.wrong_count} 次</span>
                   </div>
-                  <p class="q-title-text">{q.title}</p>
+                  <p class="q-title-text">{@html highlightText(q.title)}</p>
                 </button>
               {/each}
             </div>
@@ -613,6 +639,56 @@
     padding: 2px 10px;
     border-radius: 12px;
     font-variant-numeric: tabular-nums;
+  }
+  .wb-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0 10px;
+    transition: border-color 0.2s;
+  }
+  .wb-search-wrap:focus-within {
+    border-color: var(--accent-dim);
+  }
+  .wb-search-icon {
+    flex-shrink: 0;
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+  .wb-search {
+    flex: 1;
+    padding: 10px 0;
+    font-size: 14px;
+    background: none;
+    border: none;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+  .wb-search::placeholder {
+    color: var(--text-dim);
+  }
+  .wb-search-clear {
+    display: flex;
+    padding: 4px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 3px;
+  }
+  .wb-search-clear:active {
+    color: var(--text);
+    background: var(--bg-card);
+  }
+  :global(.search-hl) {
+    background: #fef08a;
+    color: #1a1a2e;
+    padding: 0 2px;
+    border-radius: 2px;
   }
   .summary {
     color: var(--text-muted);
