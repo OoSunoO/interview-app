@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
+  import { categoryLabel } from "../lib/categories.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import Pagination from "../components/Pagination.svelte";
 
@@ -32,7 +33,7 @@
     for (const p of filtered) {
       const cat = p.categories[0] || "其他";
       if (!map[cat]) {
-        map[cat] = { id: cat, label: cat, totalQuestions: 0, totalMastery: 0, count: 0, children: [] };
+        map[cat] = { id: cat, label: categoryLabel(cat), totalQuestions: 0, totalMastery: 0, count: 0, children: [] };
       }
       map[cat].children.push({
         name: p.name,

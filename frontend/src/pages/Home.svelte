@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
+  import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { onNavigate } = $props();
@@ -19,24 +20,7 @@
   let qrDifficulty = $state("");
   let qrCount = $state(20);
 
-  const categories = [
-    { value: "", label: "全部" },
-    { value: "cs_basics", label: "计算机基础" },
-    { value: "algorithm", label: "算法" },
-    { value: "database", label: "数据库" },
-    { value: "linux", label: "Linux" },
-    { value: "devops", label: "DevOps" },
-    { value: "java_basic", label: "Java" },
-    { value: "java_advanced", label: "Java 进阶" },
-    { value: "java_collections", label: "Java 集合" },
-    { value: "react", label: "React" },
-    { value: "frontend", label: "前端" },
-    { value: "ai", label: "AI 基础" },
-    { value: "agent", label: "AI Agent" },
-    { value: "system_design", label: "系统设计" },
-    { value: "project_mgmt", label: "项目管理" },
-    { value: "product", label: "产品思维" },
-  ];
+  const categories = FILTER_CATEGORIES;
 
   async function loadData() {
     loading = true;
@@ -256,7 +240,7 @@
               onclick={() => onNavigate("quiz", { questionId: q.id })}
             >
               <div class="rec-badges">
-                <span class="tag">{q.category}</span>
+                <span class="tag">{categoryLabel(q.category)}</span>
                 <span class="tag diff {q.difficulty}">{q.difficulty}</span>
               </div>
               <p class="rec-title">{q.title}</p>

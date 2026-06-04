@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
+  import { categoryLabel } from "../lib/categories.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import {
     hasAI,
@@ -228,7 +229,7 @@
     {#if wrongQuestions.length > 0}
       <div class="review-card">
         <div class="q-info">
-          <span class="tag">{wrongQuestions[currentIndex].category}</span>
+          <span class="tag">{categoryLabel(wrongQuestions[currentIndex].category)}</span>
           <span class="tag diff {wrongQuestions[currentIndex].difficulty}"
             >{wrongQuestions[currentIndex].difficulty}</span
           >
@@ -499,7 +500,7 @@
                   }}
                 >
                   <div class="q-header">
-                    <span class="tag">{q.category}</span>
+                    <span class="tag">{categoryLabel(q.category)}</span>
                     <span class="tag diff {q.difficulty}">{q.difficulty}</span>
                     <span class="wrong-count">答错 {q.wrong_count} 次</span>
                   </div>

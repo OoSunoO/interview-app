@@ -8,6 +8,7 @@
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import { RATINGS } from "../lib/sm2.js";
+  import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
   import CodeBlock from "../components/CodeBlock.svelte";
 
   let { config, onNavigate } = $props();
@@ -173,38 +174,7 @@
     onNavigate("home");
   }
 
-  const categories = [
-    { value: "", label: "全部分类" },
-    { value: "cs_basics", label: "计算机基础" },
-    { value: "algorithm", label: "算法" },
-    { value: "database", label: "数据库" },
-    { value: "linux", label: "Linux" },
-    { value: "devops", label: "DevOps" },
-    { value: "java_basic", label: "Java 基础" },
-    { value: "java_advanced", label: "Java 进阶" },
-    { value: "java_collections", label: "Java 集合" },
-    { value: "react", label: "React" },
-    { value: "frontend", label: "前端" },
-    { value: "ai", label: "AI 基础" },
-    { value: "agent", label: "AI Agent" },
-    { value: "system_design", label: "系统设计" },
-    { value: "project_mgmt", label: "项目管理" },
-    { value: "product", label: "产品思维" },
-    { value: "kubernetes", label: "Kubernetes" },
-    { value: "career", label: "求职与职业发展" },
-    { value: "behavioral", label: "行为面试" },
-  ];
-
-  const categoryLabel = {
-    cs_basics: "计算机基础", algorithm: "算法", database: "数据库",
-    linux: "Linux", devops: "DevOps", java_basic: "Java",
-    java_advanced: "Java 进阶", java_collections: "Java 集合",
-    react: "React", frontend: "前端", ai: "AI",
-    agent: "Agent", system_design: "系统设计",
-    project_mgmt: "项目管理", product: "产品思维",
-    kubernetes: "Kubernetes", career: "求职与职业发展",
-    behavioral: "行为面试",
-  };
+  const categories = FILTER_CATEGORIES;
 </script>
 
 <div class="page rs-page">
@@ -260,7 +230,7 @@
     {#key currentCard?.id}
       <div class="rs-card">
         <div class="rs-card-badges">
-          <span class="tag">{currentCard?.category ? (categoryLabel[currentCard.category] || currentCard.category) : ""}</span>
+          <span class="tag">{currentCard?.category ? categoryLabel(currentCard.category) : ""}</span>
           <span class="tag diff {currentCard?.difficulty}">{currentCard?.difficulty}</span>
           <span class="tag type">{currentCard?.type}</span>
         </div>

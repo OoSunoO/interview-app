@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
+  import { categoryLabel } from "../lib/categories.js";
   import ProgressRing from "../components/ProgressRing.svelte";
 
   onMount(async () => {
@@ -15,23 +16,6 @@
       // wrongList stays empty on error — weak sections gracefully show nothing
     }
   });
-
-  const categoryNames = {
-    java_basic: "Java 基础",
-    java_advanced: "Java 进阶",
-    ai: "AI",
-    agent: "Agent",
-    algorithm: "算法",
-    system_design: "系统设计",
-    frontend: "前端",
-    cs_basics: "计算机基础",
-    database: "数据库",
-    linux: "Linux",
-    devops: "DevOps",
-    react: "React",
-    project_mgmt: "项目管理",
-    product: "产品思维",
-  };
 
   let wrongList = $state([]);
   let dailyStats = $state(null);
@@ -60,7 +44,7 @@
     return Object.entries(stats.by_category)
       .map(([cat, data]) => ({
         cat,
-        name: categoryNames[cat] || cat,
+        name: categoryLabel(cat),
         total: data.total,
         done: data.done,
         wrong: wrongByCat[cat] || 0,
@@ -148,7 +132,7 @@
       {#each Object.entries(stats.by_category) as [cat, data]}
         <div class="category-item">
           <div class="cat-header">
-            <span class="cat-name">{categoryNames[cat] || cat}</span>
+            <span class="cat-name">{categoryLabel(cat)}</span>
             <span class="cat-stat">{data.done}/{data.total}</span>
           </div>
           <div class="progress-bar">

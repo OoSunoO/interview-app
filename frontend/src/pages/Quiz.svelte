@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { store } from "../lib/stores.svelte.js";
+  import { categoryLabel } from "../lib/categories.js";
   import CodeBlock from "../components/CodeBlock.svelte";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import FillInBlank from "../components/FillInBlank.svelte";
@@ -410,7 +411,7 @@
       class:feedback-wrong={feedbackResult === "wrong"}
     >
       <div class="q-card-header">
-        <span class="cat-pill {q.category}">{q.category}</span>
+        <span class="cat-pill {q.category}">{categoryLabel(q.category)}</span>
         <span class="diff-pill {q.difficulty}">{q.difficulty}</span>
         <span class="type-pill {q.type}">{q.type}</span>
       </div>

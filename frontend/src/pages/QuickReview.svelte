@@ -6,6 +6,7 @@
    */
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
+  import { categoryLabel } from "../lib/categories.js";
   import CodeBlock from "../components/CodeBlock.svelte";
 
   let { config, onNavigate } = $props();
@@ -169,14 +170,6 @@
     onNavigate("home");
   }
 
-  const categoryLabel = {
-    cs_basics: "计算机基础", algorithm: "算法", database: "数据库",
-    linux: "Linux", devops: "DevOps", java_basic: "Java",
-    java_advanced: "Java 进阶", java_collections: "Java 集合",
-    react: "React", frontend: "前端", ai: "AI",
-    agent: "Agent", system_design: "系统设计",
-    project_mgmt: "项目管理", product: "产品思维",
-  };
 </script>
 
 <div class="page qr-page">
@@ -200,7 +193,7 @@
     {#key currentQuestion?.id}
       <div class="qr-card">
         <div class="qr-card-badges">
-          <span class="tag">{currentQuestion?.category ? (categoryLabel[currentQuestion.category] || currentQuestion.category) : ""}</span>
+          <span class="tag">{currentQuestion?.category ? categoryLabel(currentQuestion.category) : ""}</span>
           <span class="tag diff {currentQuestion?.difficulty}">{currentQuestion?.difficulty}</span>
           <span class="tag type">{currentQuestion?.type}</span>
         </div>
