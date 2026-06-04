@@ -204,12 +204,12 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="page qr-page">
+<div class="page qr-page" data-testid="qr-page">
   <!-- ── Active ── -->
   {#if phase === "active"}
     <div class="qr-header">
       <span class="qr-title">速记模式</span>
-      <span class="qr-counter">{doneCount}/{total}</span>
+      <span class="qr-counter" data-testid="qr-counter">{doneCount}/{total}</span>
       <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -230,7 +230,7 @@
     </div>
 
     {#key currentQuestion?.id}
-      <div class="qr-card">
+      <div class="qr-card" data-testid="qr-card">
         <div class="qr-card-badges">
           <span class="tag">{currentQuestion?.category ? categoryLabel(currentQuestion.category) : ""}</span>
           <span class="tag diff {currentQuestion?.difficulty}">{currentQuestion?.difficulty}</span>
@@ -255,7 +255,7 @@
           </button>
         </div>
 
-        <h2 class="qr-question-title">{currentQuestion?.title}</h2>
+        <h2 class="qr-question-title" data-testid="qr-question-title">{currentQuestion?.title}</h2>
 
         <div class="qr-content">
           {#each renderContent(currentQuestion?.content || "") as part}
@@ -287,7 +287,7 @@
 
       {#if !showAnswer}
         <div class="qr-reveal-area">
-          <button class="qr-reveal-btn" onclick={revealAnswer}>
+          <button class="qr-reveal-btn" onclick={revealAnswer} data-testid="qr-reveal-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
               stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -321,13 +321,13 @@
         <div class="qr-rate-area">
           <p class="qr-rate-hint">这道题你掌握了吗？</p>
           <div class="qr-rate-btns">
-            <button class="qr-rate-btn forgot" onclick={() => selfRate("forgot")}>
+            <button class="qr-rate-btn forgot" onclick={() => selfRate("forgot")} data-testid="qr-rate-forgot">
               ❌ 不会
             </button>
-            <button class="qr-rate-btn unsure" onclick={() => selfRate("unsure")}>
+            <button class="qr-rate-btn unsure" onclick={() => selfRate("unsure")} data-testid="qr-rate-unsure">
               🤔 大概会
             </button>
-            <button class="qr-rate-btn remembered" onclick={() => selfRate("remembered")}>
+            <button class="qr-rate-btn remembered" onclick={() => selfRate("remembered")} data-testid="qr-rate-remembered">
               ✅ 已掌握
             </button>
           </div>
@@ -339,7 +339,7 @@
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
     <div class="map-overlay" onclick={() => (showSessionMap = false)} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
       <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-      <div class="map-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { trapFocus(e, mapDialog); if (e.key === "Escape") showSessionMap = false; }} bind:this={mapDialog}>
+      <div class="map-dialog" role="dialog" aria-modal="true" tabindex="-1" data-testid="qr-map-dialog" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { trapFocus(e, mapDialog); if (e.key === "Escape") showSessionMap = false; }} bind:this={mapDialog}>
         <div class="map-title">题目列表</div>
         <div class="map-legend">
           <span class="map-legend-item"><span class="map-dot correct"></span>已掌握</span>
@@ -370,7 +370,7 @@
 
   <!-- ── Completed / Empty ── -->
   {:else if phase === "completed"}
-    <div class="qr-summary">
+    <div class="qr-summary" data-testid="qr-summary">
       <div class="summary-icon">
         {#if total === 0}
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
