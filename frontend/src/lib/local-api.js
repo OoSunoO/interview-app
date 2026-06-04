@@ -572,26 +572,7 @@ export const api = {
         }
       }
 
-      const categoryNames = {
-        ai: "AI",
-        agent: "AI Agent",
-        algorithm: "算法",
-        cs_basics: "计算机基础",
-        database: "数据库",
-        devops: "DevOps",
-        frontend: "前端",
-        java_basic: "Java 基础",
-        java_advanced: "Java 进阶",
-        java_collections: "Java 集合",
-        linux: "Linux",
-        react: "React",
-        system_design: "系统设计",
-        product: "产品思维",
-        project_mgmt: "项目管理",
-        career: "求职与职业发展",
-        behavioral: "行为面试",
-        kubernetes: "Kubernetes",
-      };
+      const categoryNames = CATEGORY_NAMES;
 
       return Object.entries(catData)
         .sort(([a], [b]) => a.localeCompare(b))
@@ -730,11 +711,11 @@ export const api = {
     const items = questions.filter((q) => ids.includes(q.id));
     const lines = [`# 面试题库导出 (${dateStr})`, `共 ${items.length} 题\n`, ...Array(items.length).fill("---")];
 
-    const cats = { cs_basics: "计算机基础", algorithm: "算法", database: "数据库", linux: "Linux", devops: "DevOps", java_basic: "Java", java_advanced: "Java 进阶", java_collections: "Java 集合", react: "React", frontend: "前端", ai: "AI 基础", agent: "AI Agent", system_design: "系统设计", project_mgmt: "项目管理", product: "产品思维", kubernetes: "Kubernetes" };
+    
 
     let md = `# 面试题库导出 (${dateStr})\n\n共 ${items.length} 题\n\n`;
     for (const q of items) {
-      const catLabel = cats[q.category] || q.category;
+      const catLabel = CATEGORY_NAMES[q.category] || q.category;
       const diffLabel = { easy: "简单", medium: "中等", hard: "困难" }[q.difficulty] || q.difficulty;
       const typeLabel = { short_answer: "简答", coding: "编程", choice: "选择", true_false: "判断", multiple_choice: "多选", fill_in_blank: "填空" }[q.type] || q.type;
       const tags = (q.tags || []).map((t) => `\`${t}\``).join(" ");
