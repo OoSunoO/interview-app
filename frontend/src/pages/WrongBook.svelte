@@ -351,7 +351,8 @@
     {#if error}
       <ErrorAlert message={error} onRetry={loadWrong} />
     {:else if loading}
-      <p class="loading">加载中...</p>
+      <div class="skeleton" style="height:60px"></div>
+      <div class="skeleton" style="height:80px;margin-top:10px"></div>
     {:else if wrongQuestions.length === 0}
       <p class="empty">暂无错题 — 继续保持！可以去题库刷更多题</p>
     {:else}

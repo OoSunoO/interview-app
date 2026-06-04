@@ -500,7 +500,7 @@
   {#if loadError}
     <ErrorAlert message={loadError} onRetry={loadQuestion} />
   {:else if !q}
-    <p class="loading">加载中...</p>
+    <div class="skeleton" style="height:240px"></div>
   {:else}
     <div class="q-meta">
       {#if sessionProgress}

@@ -393,7 +393,9 @@
   {#if store.error}
     <ErrorAlert message={store.error} onRetry={applyFilter} />
   {:else if store.loading}
-    <p class="loading">加载中...</p>
+    <div class="skeleton" style="height:80px"></div>
+    <div class="skeleton" style="height:80px;margin-top:8px"></div>
+    <div class="skeleton" style="height:80px;margin-top:8px"></div>
   {:else if store.questions.length === 0}
     <p class="empty">暂无题目 — 试试调整筛选条件或换个分类</p>
   {:else}

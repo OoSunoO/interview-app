@@ -183,7 +183,9 @@
   <h1 class="page-title" data-testid="page-title">学习进度</h1>
 
   {#if !stats}
-    <p class="loading">加载中...</p>
+    <div class="skeleton" style="height:80px"></div>
+    <div class="skeleton" style="height:120px;margin-top:14px"></div>
+    <div class="skeleton" style="height:200px;margin-top:14px"></div>
   {:else}
     <div class="overview" data-testid="stats-overview">
       <div class="overview-item">
