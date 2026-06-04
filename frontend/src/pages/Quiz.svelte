@@ -80,6 +80,7 @@
   let relatedQuestions = $state([]);
 
   const SHORTCUTS = [
+    { keys: "← →", desc: "上一题 / 下一题" },
     { keys: "1-9", desc: "选择选项" },
     { keys: "Enter", desc: "提交答案 / 提交多选" },
     { keys: "R", desc: "答错后重试" },
@@ -432,7 +433,17 @@
   }
 
   function handleKeydown(e) {
-    if (!q || showAnswer) return;
+    if (!q) return;
+
+    // Left/Right navigation — answer-shown and browse modes
+    if (browseMode || showAnswer || showSubmitResult) {
+      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); return; }
+      if (e.key === "ArrowRight") { e.preventDefault(); goNext(); return; }
+    }
+
+    // Answering interactions (blocked when answer is revealed)
+    if (showAnswer || showSubmitResult) return;
+
     if (q.type === "choice" && selectedOption === null) {
       const idx = parseInt(e.key) - 1;
       if (idx >= 0 && idx < q.options.length) {
@@ -450,11 +461,11 @@
       if (e.key === "1" && selectedOption === null) selectOption(q.options[0]);
       if (e.key === "2" && selectedOption === null) selectOption(q.options[1]);
     }
-    if (selectedOption !== null && !isOptionCorrect(selectedOption) && !showAnswer) {
+    if (selectedOption !== null && !isOptionCorrect(selectedOption)) {
       if (e.key === "r" || e.key === "R") retry();
       if (e.key === "g" || e.key === "G") giveUp();
     }
-    if (!showAnswer && !showSubmitResult && e.target.tagName !== "TEXTAREA" && q.type !== "choice" && q.type !== "true_false" && q.type !== "multiple_choice") {
+    if (!showSubmitResult && e.target.tagName !== "TEXTAREA" && q.type !== "choice" && q.type !== "true_false" && q.type !== "multiple_choice") {
       if (e.key === "Enter" && userAnswer.trim()) submitAnswer();
     }
     if (e.key === "b" || e.key === "B") {
