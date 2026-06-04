@@ -492,11 +492,28 @@
     const newVal = api.progress.toggleBookmark(q.id);
     q.bookmarked = newVal;
   }
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  function handleTouchStart(e) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }
+
+  function handleTouchEnd(e) {
+    if (!(browseMode || showAnswer)) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx) * 0.5) return;
+    if (dx > 0) { store.hasPrev && goPrev(); } else { store.hasNext && goNext(); }
+  }
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="page quiz">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="page quiz" ontouchstart={handleTouchStart} ontouchend={handleTouchEnd}>
   {#if loadError}
     <ErrorAlert message={loadError} onRetry={loadQuestion} />
   {:else if !q}
