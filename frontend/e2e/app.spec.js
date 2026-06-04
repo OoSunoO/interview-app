@@ -611,6 +611,69 @@ test.describe("QuickReview History on Stats", () => {
   });
 });
 
+test.describe("Mock Interview History on Stats", () => {
+  test("shows Mock Interview history with filter context on stats page", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+
+    // Inject MI history into localStorage
+    await page.evaluate(() => {
+      const history = [
+        {
+          correct: 5,
+          wrong: 2,
+          total: 7,
+          pct: 71,
+          totalTime: 420,
+          timeLimit: 600,
+          category: "database",
+          difficulty: "medium",
+          type: "short_answer",
+          tag: "SQL",
+          date: new Date().toISOString(),
+        },
+        {
+          correct: 3,
+          wrong: 3,
+          total: 6,
+          pct: 50,
+          totalTime: 300,
+          timeLimit: 600,
+          category: "algorithm",
+          difficulty: "hard",
+          date: new Date(Date.now() - 86400000).toISOString(),
+        },
+      ];
+      localStorage.setItem("mock_interview_history_e2e-test", JSON.stringify(history));
+    });
+
+    // Navigate to Stats
+    await page.getByRole("button", { name: "进度" }).click();
+    await page.waitForTimeout(300);
+
+    // Should see the MI history section with summary
+    await expect(page.locator(".mi-summary")).toBeVisible({ timeout: 5000 });
+    // Summary should show 2 sessions
+    await expect(page.locator(".mi-summary-item").first()).toContainText("2");
+    // Should see "模拟面试" nav button
+    await expect(page.getByRole("button", { name: /模拟面试/ })).toBeVisible();
+    // MI history items should be rendered
+    await expect(page.locator(".mi-history-item").first()).toBeVisible();
+
+    // First item should show filter context: 数据库 中等 问答题 · SQL
+    const firstFilters = page.locator(".mi-history-filters").first();
+    await expect(firstFilters).toContainText("数据库");
+    await expect(firstFilters).toContainText("中等");
+    await expect(firstFilters).toContainText("问答题");
+    await expect(firstFilters).toContainText("SQL");
+
+    // Second item shows category and difficulty: 算法 困难
+    const lastFilters = page.locator(".mi-history-filters").last();
+    await expect(lastFilters).toContainText("算法");
+    await expect(lastFilters).toContainText("困难");
+  });
+});
+
 test.describe("Mobile", () => {
   test("no horizontal overflow on 375px viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
