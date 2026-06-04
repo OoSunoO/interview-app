@@ -355,7 +355,7 @@
     </svg>
     <input
       class="search"
-      placeholder="搜索题目、答案、标签..."
+      placeholder="搜索题目、答案、标签... (按 / 快速定位)"
       bind:value={store.filters.search}
       oninput={() => applyFilter()}
 			  bind:this={searchInput}
