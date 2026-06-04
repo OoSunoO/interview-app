@@ -573,7 +573,7 @@
                 <button
                   class="card"
                   onclick={() => {
-                    store.startQuiz(wrongQuestions);
+                    store.startQuiz(filteredQuestions);
                     onNavigate("quiz", { questionId: q.id });
                   }}
                 >
