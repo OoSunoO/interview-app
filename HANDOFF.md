@@ -2,7 +2,7 @@
 
 **日期：** 2026-06-05
 **版本：** v1.4.13
-**当前状态：** 5196 题，51 分类全部 100+，252 单元测试全绿，34 E2E 全绿，构建 846ms
+**当前状态：** 5196 题，51 分类全部 100+，252 单元测试全绿，37 E2E 全绿，构建 846ms
 
 ---
 
@@ -142,7 +142,7 @@
 
 ### 测试
 - 252 单元测试（Vitest，+1 tagsWithCount）
-- 34 E2E 测试（Playwright，+1 WrongBook keyboard shortcuts）
+- 37 E2E 测试（Playwright，+3 Browse: tag filter / related questions / notes）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
 - `local-api.js`：94.47% statements, 84.78% branches（核心业务逻辑）
