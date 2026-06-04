@@ -146,12 +146,12 @@ test.describe("Browse", () => {
 test.describe("Quiz", () => {
   async function goToQuiz(page) {
     await page.goto("/");
-    await expect(page.getByRole("button", { name: /随机一题/ })).toBeVisible({ timeout: 8000 });
     await page.waitForTimeout(200);
-    // Use random quiz button to navigate directly to Quiz page
-    await page.getByRole("button", { name: /随机一题/ }).click();
+    // Wait for the random-quiz button before clicking (allows warm-up data load)
+    await expect(page.getByRole("button", { name: /随机一题/ })).toBeVisible({ timeout: 10000 });
+    await page.getByRole("button", { name: /随机一题/ }).click({ timeout: 5000 });
     // Wait for quiz page navigation + async question data load (warm-up may be slow)
-    await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 15000 });
   }
 
   test("question loads with interactive elements", async ({ page }) => {
@@ -217,6 +217,12 @@ test.describe("Quiz", () => {
   });
 
   test("Escape key exits quiz back to browse", async ({ page }) => {
+    // Clear any leftover quiz session backup from previous tests
+    await page.goto("/");
+    await page.evaluate(() => {
+      localStorage.removeItem("quiz_session_backup");
+      localStorage.removeItem("quiz_review_sessions_e2e-test");
+    });
     await goToQuiz(page);
     await expect(page.locator("[data-testid=question-title]")).toBeVisible();
     // Press Escape to exit
