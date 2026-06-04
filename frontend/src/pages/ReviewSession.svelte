@@ -24,6 +24,7 @@
   let configCategory = $state(_initVal("category", ""));
   let configCount = $state(_initVal("count", 20));
 
+  let showSessionMap = $state(false);
   let currentCard = $derived(cards[currentIndex]);
   let total = $derived(cards.length);
   let doneCount = $derived(Object.keys(results).length);
@@ -33,6 +34,18 @@
     return c;
   });
   let retention = $derived(doneCount > 0 ? Math.round(((counts.good + counts.easy) / doneCount) * 100) : 0);
+  let sessionStatusMap = $derived.by(() => {
+    const map = Object.create(null);
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
+      const rating = results[card.id];
+      if (rating === "good" || rating === "easy") map[card.id] = "correct";
+      else if (rating === "forgot" || rating === "hard") map[card.id] = "wrong";
+      else if (i === currentIndex) map[card.id] = "current";
+      else map[card.id] = "pending";
+    }
+    return map;
+  });
 
   const SAVE_KEY = "review_session";
 
@@ -121,10 +134,23 @@
   }
 
   function handleKeydown(e) {
-    if (phase !== "active" || !showAnswer) return;
-    const map = { "1": "forgot", "2": "hard", "3": "good", "4": "easy" };
-    const rating = map[e.key];
-    if (rating) { e.preventDefault(); rate(rating); }
+    if (phase !== "active") return;
+    // Space to reveal answer
+    if (e.key === " " || e.key === "Spacebar") {
+      if (!showAnswer) { e.preventDefault(); revealAnswer(); return; }
+    }
+    // 1-4 to rate
+    if (showAnswer) {
+      const map = { "1": "forgot", "2": "hard", "3": "good", "4": "easy" };
+      const rating = map[e.key];
+      if (rating) { e.preventDefault(); rate(rating); return; }
+    }
+    // Escape to close map
+    if (e.key === "Escape" && showSessionMap) {
+      e.preventDefault();
+      showSessionMap = false;
+      return;
+    }
   }
 
   onMount(async () => {
@@ -158,6 +184,7 @@
       currentIndex++;
       showAnswer = false;
       saveSession();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       clearSession();
       phase = "completed";
@@ -223,6 +250,13 @@
     <div class="rs-header">
       <span class="rs-title">间隔复习</span>
       <span class="rs-counter">{doneCount}/{total}</span>
+      <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" /></svg>
+      </button>
       <button class="rs-close" onclick={handleExit} aria-label="退出">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -374,6 +408,39 @@
         </div>
       {/if}
     {/key}
+
+  {#if showSessionMap}
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="map-overlay" onclick={() => (showSessionMap = false)} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
+      <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+      <div class="map-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
+        <div class="map-title">复习列表</div>
+        <div class="map-legend">
+          <span class="map-legend-item"><span class="map-dot correct"></span>已掌握</span>
+          <span class="map-legend-item"><span class="map-dot wrong"></span>待巩固</span>
+          <span class="map-legend-item"><span class="map-dot current"></span>当前</span>
+          <span class="map-legend-item"><span class="map-dot pending"></span>待复习</span>
+        </div>
+        <div class="map-grid">
+          {#each cards as card, i}
+            {@const status = sessionStatusMap[card.id] || "pending"}
+            <button
+              class="map-item"
+              class:map-correct={status === "correct"}
+              class:map-wrong={status === "wrong"}
+              class:map-current={status === "current"}
+              onclick={() => { if (status !== "correct" && status !== "wrong") { currentIndex = i; showAnswer = false; saveSession(); showSessionMap = false; } }}
+              title={card.title}
+              disabled={status === "correct" || status === "wrong"}
+            >
+              {i + 1}
+            </button>
+          {/each}
+        </div>
+        <button class="map-close" onclick={() => (showSessionMap = false)}>关闭</button>
+      </div>
+    </div>
+  {/if}
 
   <!-- ── Completed ── -->
   {:else if phase === "completed"}
@@ -972,6 +1039,141 @@
   .rs-setup-start:active {
     transform: scale(0.97);
     opacity: 0.9;
+  }
+
+  /* ── Map Button ── */
+  .map-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.3s var(--spring);
+  }
+  .map-btn:active {
+    transform: scale(0.88);
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+
+  /* ── Session Map Overlay ── */
+  .map-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-overlay);
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fade-in 0.2s both;
+  }
+  .map-dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 340px;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: scale-in 0.3s var(--spring) both;
+  }
+  .map-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .map-legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .map-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .map-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .map-dot.correct { background: var(--success); }
+  .map-dot.wrong { background: var(--danger); }
+  .map-dot.current { background: var(--accent); }
+  .map-dot.pending { background: var(--text-dim); }
+  .map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    gap: 6px;
+  }
+  .map-item {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .map-item:active {
+    transform: scale(0.9);
+  }
+  .map-item:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+  .map-item.map-correct {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .map-item.map-wrong {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  .map-item.map-current {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(108, 140, 255, 0.4);
+  }
+  .map-close {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .map-close:active {
+    transform: scale(0.97);
   }
 
   /* ── Mobile ── */

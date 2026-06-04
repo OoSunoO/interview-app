@@ -315,6 +315,7 @@
       saving = true;
       await store.markProgress(q.id, "correct", timer);
       recordSessionResult("correct");
+      feedbackResult = "correct";
       showAnswer = true;
       saving = false;
     } else {
@@ -334,6 +335,7 @@
     await store.markProgress(q.id, "wrong", timer);
     recordSessionResult("wrong");
     q.status = "wrong";
+    feedbackResult = "wrong";
     showAnswer = true;
     saving = false;
   }
@@ -442,6 +444,7 @@
     if (browseMode || showAnswer || showSubmitResult) {
       if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); return; }
       if (e.key === "ArrowRight") { e.preventDefault(); goNext(); return; }
+      if (e.key === "Enter" && (browseMode || showAnswer)) { e.preventDefault(); goNext(); return; }
       if (e.key === "r" || e.key === "R") {
         if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
           e.preventDefault(); const id = q.id; resetState(); loadQuestionById(id); return;

@@ -35,6 +35,19 @@
     Object.values(results).filter((r) => r === "unsure").length,
   );
   let doneCount = $derived(Object.keys(results).length);
+  let showSessionMap = $state(false);
+  let sessionStatusMap = $derived.by(() => {
+    const map = Object.create(null);
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      const rating = results[q.id];
+      if (rating === "remembered") map[q.id] = "correct";
+      else if (rating === "forgot") map[q.id] = "wrong";
+      else if (i === currentIndex) map[q.id] = "current";
+      else map[q.id] = "pending";
+    }
+    return map;
+  });
 
   function renderContent(text) {
     if (!text) return [{ type: "text", content: "" }];
@@ -170,6 +183,7 @@
       currentIndex++;
       showAnswer = false;
       saveSession();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       api.quickReview.clearSession();
       phase = "completed";
@@ -208,6 +222,13 @@
     <div class="qr-header">
       <span class="qr-title">速记模式</span>
       <span class="qr-counter">{doneCount}/{total}</span>
+      <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" /></svg>
+      </button>
       <button class="qr-close" onclick={handleExit} aria-label="退出">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -326,6 +347,39 @@
       {/if}
     {/key}
 
+  {#if showSessionMap}
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="map-overlay" onclick={() => (showSessionMap = false)} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
+      <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+      <div class="map-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
+        <div class="map-title">题目列表</div>
+        <div class="map-legend">
+          <span class="map-legend-item"><span class="map-dot correct"></span>已掌握</span>
+          <span class="map-legend-item"><span class="map-dot wrong"></span>答错</span>
+          <span class="map-legend-item"><span class="map-dot current"></span>当前</span>
+          <span class="map-legend-item"><span class="map-dot pending"></span>未答</span>
+        </div>
+        <div class="map-grid">
+          {#each questions as q, i}
+            {@const status = sessionStatusMap[q.id] || "pending"}
+            <button
+              class="map-item"
+              class:map-correct={status === "correct"}
+              class:map-wrong={status === "wrong"}
+              class:map-current={status === "current"}
+              onclick={() => { if (status !== "correct" && status !== "wrong") { currentIndex = i; showAnswer = false; saveSession(); showSessionMap = false; } }}
+              title={q.title}
+              disabled={status === "correct" || status === "wrong"}
+            >
+              {i + 1}
+            </button>
+          {/each}
+        </div>
+        <button class="map-close" onclick={() => (showSessionMap = false)}>关闭</button>
+      </div>
+    </div>
+  {/if}
+
   <!-- ── Completed / Empty ── -->
   {:else if phase === "completed"}
     <div class="qr-summary">
@@ -425,6 +479,141 @@
   }
   .qr-close:active {
     transform: scale(0.88);
+  }
+
+  /* ── Map Button ── */
+  .map-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all 0.3s var(--spring);
+  }
+  .map-btn:active {
+    transform: scale(0.88);
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+
+  /* ── Session Map Overlay ── */
+  .map-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-overlay);
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fade-in 0.2s both;
+  }
+  .map-dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 340px;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: scale-in 0.3s var(--spring) both;
+  }
+  .map-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .map-legend {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .map-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .map-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .map-dot.correct { background: var(--success); }
+  .map-dot.wrong { background: var(--danger); }
+  .map-dot.current { background: var(--accent); }
+  .map-dot.pending { background: var(--text-dim); }
+  .map-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    gap: 6px;
+  }
+  .map-item {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    padding: 0;
+  }
+  .map-item:active {
+    transform: scale(0.9);
+  }
+  .map-item:disabled {
+    cursor: default;
+    opacity: 0.7;
+  }
+  .map-item.map-correct {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .map-item.map-wrong {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  .map-item.map-current {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(108, 140, 255, 0.4);
+  }
+  .map-close {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .map-close:active {
+    transform: scale(0.97);
   }
 
   /* ── Progress ── */

@@ -3,6 +3,7 @@
   import { marked } from "marked";
   import { api } from "../lib/local-api.js";
   import { categoryLabel } from "../lib/categories.js";
+  import { toast } from "../lib/toast.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { tag, onNavigate } = $props();
@@ -50,8 +51,10 @@
     q.bookmarked = !q.bookmarked;
     try {
       await api.progress.toggleBookmark(q.id);
+      toast.success(q.bookmarked ? "已收藏" : "已取消收藏");
     } catch {
       q.bookmarked = !q.bookmarked;
+      toast.error("操作失败");
     }
   }
 </script>

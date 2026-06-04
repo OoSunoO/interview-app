@@ -3,6 +3,7 @@
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
+  import { toast } from "../lib/toast.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { onNavigate } = $props();
@@ -93,6 +94,7 @@
   function toggleReminder() {
     reminderEnabled = !reminderEnabled;
     localStorage.setItem("review_reminder", reminderEnabled ? "on" : "off");
+    toast.success(reminderEnabled ? "复习提醒已开启" : "复习提醒已关闭");
     if (reminderEnabled && "Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
