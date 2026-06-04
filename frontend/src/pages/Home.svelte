@@ -19,9 +19,9 @@
   let showQRDialog = $state(false);
   let showResumeDialog = $state(false);
   let savedQRSession = $state(null);
-  let qrCategory = $state("");
-  let qrDifficulty = $state("");
-  let qrCount = $state(20);
+  let qrCategory = $state(localStorage.getItem("qr_category") || "");
+  let qrDifficulty = $state(localStorage.getItem("qr_difficulty") || "");
+  let qrCount = $state(Number(localStorage.getItem("qr_count")) || 20);
   let lastSession = $state(null);
   let showMIDialog = $state(false);
   let showGoalDialog = $state(false);
@@ -131,6 +131,9 @@
   function startQuickReview() {
     showQRDialog = false;
     showResumeDialog = false;
+    localStorage.setItem("qr_category", qrCategory);
+    localStorage.setItem("qr_difficulty", qrDifficulty);
+    localStorage.setItem("qr_count", String(qrCount));
     onNavigate("quick-review", {
       reviewConfig: { category: qrCategory, difficulty: qrDifficulty, count: qrCount },
     });
