@@ -223,6 +223,23 @@ export const api = {
       });
     },
 
+    /** Find related questions by shared tags and same category */
+    related(questionId, limit = 5) {
+      const src = questions.find((q) => q.id === questionId);
+      if (!src) return [];
+      const scores = [];
+      for (const q of questions) {
+        if (q.id === questionId) continue;
+        let score = 0;
+        for (const t of src.tags || []) {
+          if ((q.tags || []).includes(t)) score += 2;
+        }
+        if (q.category === src.category) score += 1;
+        if (score > 0) scores.push({ id: q.id, title: q.title, score, difficulty: q.difficulty, category: q.category, type: q.type });
+      }
+      return scores.sort((a, b) => b.score - a.score).slice(0, limit);
+    },
+
     /** Return unique company names across all questions, sorted by frequency */
     companies() {
       const freq = Object.create(null);

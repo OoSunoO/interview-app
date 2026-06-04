@@ -210,6 +210,13 @@ export const store = {
     return false;
   },
 
+  goToQuestion(index) {
+    if (index < 0 || index >= _quizSession.length) return false;
+    _quizIndex = index;
+    this._saveSessionBackup();
+    return true;
+  },
+
   shuffleSession() {
     _quizSession = shuffled(_quizSession);
     _quizIndex = 0;
