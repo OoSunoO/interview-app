@@ -67,6 +67,9 @@ class BookmarkToggle(BaseModel):
 class QuickReviewStart(BaseModel):
     count: int = 20
     category: Optional[str] = None
+    difficulty: Optional[str] = None
+    type: Optional[str] = None
+    tag: Optional[str] = None
 
 
 class QuickReviewRate(BaseModel):

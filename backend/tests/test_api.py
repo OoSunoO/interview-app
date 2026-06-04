@@ -560,6 +560,34 @@ class TestQuickReviewStart:
         resp = client.post("/api/quick-review/start", json={"count": 10, "category": "nonexistent"})
         assert resp.json() == []
 
+    def test_start_filter_by_difficulty(self, client):
+        resp = client.post("/api/quick-review/start", json={"count": 10, "difficulty": "easy"})
+        data = resp.json()
+        assert len(data) > 0
+        assert all(q["difficulty"] == "easy" for q in data)
+
+    def test_start_filter_by_type(self, client):
+        resp = client.post("/api/quick-review/start", json={"count": 10, "type": "choice"})
+        data = resp.json()
+        assert len(data) > 0
+        assert all(q["type"] == "choice" for q in data)
+
+    def test_start_filter_by_tag(self, client):
+        resp = client.post("/api/quick-review/start", json={"count": 10, "tag": "Java基础"})
+        data = resp.json()
+        assert len(data) > 0
+        assert all("Java基础" in q["tags"] for q in data)
+
+    def test_start_combined_filters(self, client):
+        resp = client.post("/api/quick-review/start", json={
+            "count": 5, "category": "java", "difficulty": "medium", "type": "short_answer"
+        })
+        data = resp.json()
+        for q in data:
+            assert q["category"] == "java"
+            assert q["difficulty"] == "medium"
+            assert q["type"] == "short_answer"
+
 
 # ── POST /api/quick-review/rate ──
 

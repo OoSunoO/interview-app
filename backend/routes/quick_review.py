@@ -18,6 +18,15 @@ async def start_quick_review(body: QuickReviewStart):
     if body.category:
         conditions.append("category = ?")
         params.append(body.category)
+    if body.difficulty:
+        conditions.append("difficulty = ?")
+        params.append(body.difficulty)
+    if body.type:
+        conditions.append("type = ?")
+        params.append(body.type)
+    if body.tag:
+        conditions.append("INSTR(tags, ?) > 0")
+        params.append(json.dumps(body.tag)[1:-1])  # match tag inside JSON array
 
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
