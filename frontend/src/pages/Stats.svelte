@@ -9,6 +9,7 @@
     await store.refreshStats();
     try {
       dailyStats = await api.progress.dailyStats();
+      weeklyData = await api.progress.weeklyActivity();
       wrongList = await api.progress.wrong();
     } catch (e) {
       // wrongList stays empty on error — weak sections gracefully show nothing
@@ -34,6 +35,7 @@
 
   let wrongList = $state([]);
   let dailyStats = $state(null);
+  let weeklyData = $state([]);
 
   let stats = $derived(store.stats);
 
@@ -112,6 +114,33 @@
           <span class="daily-lbl">连续天数</span>
         </div>
       </div>
+
+      {#if weeklyData.length > 0}
+        <h2 class="section-title">近 7 天活动</h2>
+        <div class="weekly-chart">
+          {#each weeklyData as day}
+            <div class="wc-col">
+              <div class="wc-bars">
+                {#if day.reviewed > 0}
+                  <div class="wc-bar remembered" style="height: {(day.remembered / day.max) * 100}%"></div>
+                  {#if day.hard > 0}
+                    <div class="wc-bar hard" style="height: {(day.hard / day.max) * 100}%"></div>
+                  {/if}
+                  {#if day.forgot > 0}
+                    <div class="wc-bar forgot" style="height: {(day.forgot / day.max) * 100}%"></div>
+                  {/if}
+                {:else}
+                  <div class="wc-bar empty"></div>
+                {/if}
+              </div>
+              <div class="wc-label">{day.label}</div>
+              {#if day.reviewed > 0}
+                <div class="wc-count">{day.reviewed}</div>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
     {/if}
 
     <h2 class="section-title">各领域进度</h2>
@@ -324,6 +353,58 @@
     padding: 0 5px;
     font-size: 11px;
     font-weight: 600;
+  }
+
+  /* ── Weekly Chart ── */
+  .weekly-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    padding: 20px 0 4px;
+    height: 120px;
+  }
+  .wc-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .wc-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    flex: 1;
+    width: 100%;
+    justify-content: center;
+  }
+  .wc-bar {
+    width: 100%;
+    max-width: 20px;
+    border-radius: 3px 3px 0 0;
+    min-height: 4px;
+    transition: height 0.5s var(--spring);
+  }
+  .wc-bar.remembered { background: var(--success); }
+  .wc-bar.hard { background: var(--warning); }
+  .wc-bar.forgot { background: var(--danger); }
+  .wc-bar.empty {
+    background: var(--border);
+    height: 4px !important;
+    max-width: 12px;
+  }
+  .wc-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+  }
+  .wc-count {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
   }
 
   /* ── Mobile ── */

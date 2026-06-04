@@ -348,6 +348,29 @@ export const api = {
       };
     },
 
+    weeklyActivity() {
+      const daily = getDailyStats();
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const key = dateKey(d);
+        const day = daily[key] || { reviewed: 0, remembered: 0, hard: 0, forgot: 0 };
+        const weekday = ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
+        const label = i === 6 ? weekday : i === 0 ? "今天" : weekday;
+        days.push({
+          label,
+          full: `${d.getMonth() + 1}/${d.getDate()}`,
+          ...day,
+          retention: day.reviewed > 0 ? Math.round((day.remembered / day.reviewed) * 100) : null,
+          max: 0,
+        });
+      }
+      const maxReviewed = Math.max(1, ...days.map((d) => d.reviewed));
+      for (const d of days) d.max = maxReviewed;
+      return days;
+    },
+
     dailyStats() {
       const daily = getDailyStats();
       const today = dateKey(new Date());
