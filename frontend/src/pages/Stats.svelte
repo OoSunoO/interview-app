@@ -3,18 +3,17 @@
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import { categoryLabel } from "../lib/categories.js";
+  import { toast } from "../lib/toast.js";
   import ProgressRing from "../components/ProgressRing.svelte";
   import CalendarHeatmap from "../components/CalendarHeatmap.svelte";
 
   let { onNavigate } = $props();
 
   let goalInput = $state(api.progress.getGoal());
-  let goalSaved = $state(false);
 
   function saveGoal() {
     api.progress.setGoal(goalInput);
-    goalSaved = true;
-    setTimeout(() => goalSaved = false, 2000);
+    toast.success(`每日目标已设为 ${goalInput} 题`);
   }
 
   function exportProgress() {
@@ -35,6 +34,7 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    toast.success("进度已导出");
   }
 
   let importPreview = $state(null);
@@ -83,7 +83,8 @@
     if (importRaw.goal) localStorage.setItem("quiz_daily_goal", String(importRaw.goal));
     showImportDialog = false;
     importRaw = null;
-    window.location.reload();
+    toast.success("进度已导入，页面即将刷新");
+    setTimeout(() => window.location.reload(), 800);
   }
 
   onMount(async () => {

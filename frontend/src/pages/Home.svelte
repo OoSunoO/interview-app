@@ -125,6 +125,14 @@
   function handleOverlayKeydown(e, close) {
     if (e.key === "Escape") close();
   }
+
+  async function startDueReview() {
+    const due = await api.progress.dueReviews();
+    if (due.length > 0) {
+      store.startQuiz(due);
+      onNavigate("quiz", { questionId: due[0].id });
+    }
+  }
 </script>
 
 <div class="page home">
@@ -190,7 +198,7 @@
       <div class="skeleton" style="height:96px;margin-top:8px"></div>
     {:else}
       {#if dueCount > 0}
-        <button class="due-card" onclick={() => onNavigate("wrong")}>
+        <button class="due-card" onclick={startDueReview}>
           <div class="due-icon">
             <svg
               width="16"
@@ -224,6 +232,7 @@
             </svg>
           </div>
         </button>
+        <button class="due-alt-link" onclick={() => onNavigate("wrong")}>在错题本中查看</button>
       {:else}
         <div class="all-clear">
           <svg
@@ -622,6 +631,24 @@
     justify-content: center;
     flex-shrink: 0;
     color: var(--text-dim);
+  }
+
+  .due-alt-link {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0 0;
+    font-family: inherit;
+    transition: color 0.2s;
+  }
+  .due-alt-link:active {
+    color: var(--accent);
   }
 
   .all-clear {

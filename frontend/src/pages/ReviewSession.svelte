@@ -9,6 +9,7 @@
   import { store } from "../lib/stores.svelte.js";
   import { RATINGS } from "../lib/sm2.js";
   import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
+  import { toast } from "../lib/toast.js";
   import CodeBlock from "../components/CodeBlock.svelte";
 
   let { config, onNavigate } = $props();
@@ -178,6 +179,7 @@
     e.stopPropagation();
     if (!card) return;
     card.bookmarked = api.progress.toggleBookmark(card.id);
+    toast.success(card.bookmarked ? "已收藏" : "已取消收藏");
   }
 
   const categories = FILTER_CATEGORIES;

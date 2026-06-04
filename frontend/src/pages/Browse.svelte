@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { store } from "../lib/stores.svelte.js";
   import { api } from "../lib/local-api.js";
+  import { toast } from "../lib/toast.js";
   import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import Pagination from "../components/Pagination.svelte";
@@ -80,8 +81,9 @@
 
   function toggleBookmark(e, q) {
     e.stopPropagation();
-    api.progress.toggleBookmark(q.id);
-    q.bookmarked = !q.bookmarked;
+    const newVal = api.progress.toggleBookmark(q.id);
+    q.bookmarked = newVal;
+    toast.success(newVal ? "已收藏" : "已取消收藏");
   }
 
   function highlight(text) {
@@ -120,6 +122,7 @@
       q.bookmarked = newVal;
     }
     clearSelection();
+    toast.success(`已批量收藏 ${selected.length} 题`);
   }
 
   let hasActiveFilters = $derived(

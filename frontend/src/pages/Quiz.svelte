@@ -6,6 +6,7 @@
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import FillInBlank from "../components/FillInBlank.svelte";
   import { api } from "../lib/local-api.js";
+  import { toast } from "../lib/toast.js";
   import {
     hasAI,
     getAIConfig,
@@ -109,6 +110,7 @@
     try {
       await api.progress.update(q.id, { notes: notesText });
       notesSaved = true;
+      toast.success("笔记已保存");
       setTimeout(() => (notesSaved = false), 2000);
     } catch {
       /* ignore */
@@ -491,6 +493,23 @@
     if (!q) return;
     const newVal = api.progress.toggleBookmark(q.id);
     q.bookmarked = newVal;
+    toast.success(newVal ? "已收藏" : "已取消收藏");
+  }
+
+  function copyQuestion() {
+    if (!q) return;
+    const parts = [`# ${q.title}`, q.content || ""];
+    if (showAnswer || browseMode) {
+      const ans = q.answer ? q.answer.replace(/^答案[：:]\s*/m, "").trim() : "";
+      if (ans) parts.push("", "---", ans);
+    }
+    if (q.options?.length > 0) {
+      parts.push("", q.options.map((o, i) => `${i + 1}. ${o}`).join("\n"));
+    }
+    navigator.clipboard.writeText(parts.join("\n\n")).then(
+      () => toast.success("已复制"),
+      () => toast.error("复制失败"),
+    );
   }
 
   let touchStartX = 0;
@@ -581,6 +600,12 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round"
           stroke-linejoin="round"><path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" /></svg>
+      </button>
+      <button class="copy-btn" onclick={copyQuestion} title="复制题目">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
       </button>
     </div>
 
@@ -1163,6 +1188,23 @@
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: var(--text-muted);
+  }
+  .help-btn,
+  .copy-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: all 0.2s var(--spring);
+  }
+  .help-btn:active,
+  .copy-btn:active {
+    transform: scale(0.85);
+    color: var(--accent);
   }
   .quiz-bm-btn {
     background: none;

@@ -7,6 +7,7 @@
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
   import { categoryLabel } from "../lib/categories.js";
+  import { toast } from "../lib/toast.js";
   import CodeBlock from "../components/CodeBlock.svelte";
 
   let { config, onNavigate } = $props();
@@ -180,8 +181,10 @@
     q.bookmarked = !q.bookmarked;
     try {
       await api.progress.toggleBookmark(q.id);
+      toast.success(q.bookmarked ? "已收藏" : "已取消收藏");
     } catch {
       q.bookmarked = !q.bookmarked;
+      toast.error("操作失败");
     }
   }
 

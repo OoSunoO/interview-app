@@ -3,6 +3,7 @@
   import { api } from "../lib/local-api.js";
   import { store } from "../lib/stores.svelte.js";
   import { categoryLabel } from "../lib/categories.js";
+  import { toast } from "../lib/toast.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import {
     hasAI,
@@ -228,12 +229,14 @@
     a.download = `错题导出-${new Date().toISOString().slice(0, 10)}.md`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success(`已导出 ${ids.length} 题`);
   }
 
   function toggleBookmark(e, q) {
     e.stopPropagation();
     const newVal = api.progress.toggleBookmark(q.id);
     q.bookmarked = newVal;
+    toast.success(newVal ? "已收藏" : "已取消收藏");
   }
 
   function saveAIKey() {

@@ -1,7 +1,7 @@
 <script>
   import { onMount, onDestroy } from "svelte";
   import { api } from "../lib/local-api.js";
-  import { categoryLabel } from "../lib/categories.js";
+  import { store } from "../lib/stores.svelte.js";
 
   let { onNavigate } = $props();
 
@@ -22,6 +22,7 @@
     { id: "nav-quick-review", label: "速记模式", page: "quick-review", keywords: "quick 速记" },
     { id: "nav-stats", label: "学习进度", page: "stats", keywords: "stats 统计 进度" },
     { id: "nav-knowledge", label: "知识点", page: "knowledge", keywords: "knowledge 知识点" },
+    { id: "theme-toggle", label: "切换主题", page: "__theme__", keywords: "theme 主题 深色 浅色 dark light" },
   ];
 
   let results = $derived.by(() => {
@@ -102,6 +103,8 @@
     if (item.type === "page") {
       if (item.id === "nav-quiz") {
         onNavigate("quiz");
+      } else if (item.id === "theme-toggle") {
+        store.toggleTheme();
       } else {
         onNavigate(item.page);
       }
