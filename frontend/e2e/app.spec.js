@@ -674,6 +674,123 @@ test.describe("Mock Interview History on Stats", () => {
   });
 });
 
+test.describe("Mock Interview Flow", () => {
+  test("starts a session, answers a question, and completes", async ({ page }) => {
+    const errors = [];
+    page.on("pageerror", (err) => {
+      errors.push(err.message);
+      console.error("[PAGE ERROR]", err.message);
+    });
+
+    await page.goto("/");
+    await page.waitForTimeout(300);
+
+    // Wait for data to load
+    await expect(page.getByRole("button", { name: /模拟面试/ })).toBeVisible({ timeout: 10000 });
+
+    // Open MI dialog
+    await page.getByRole("button", { name: /模拟面试/ }).click();
+    await page.waitForTimeout(200);
+    await expect(page.locator(".dialog-title")).toHaveText("模拟面试", { timeout: 3000 });
+
+    // Set category to one with questions
+    await page.locator("#mi-cat").selectOption("java_basic");
+    // Set count to 5
+    await page.locator("button.count-btn").filter({ hasText: "5" }).click();
+    // Set time limit to 5min to avoid auto-advance interference
+    await page.locator("button.time-btn").filter({ hasText: "5分" }).click();
+
+    // Start session
+    await page.getByRole("button", { name: /开始模拟/ }).click();
+
+    // Verify Quiz loaded with MI-specific UI
+    await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 10000 });
+    await expect(page.locator(".mi-badge")).toHaveText("模拟面试");
+    await expect(page.locator(".mi-filter-label")).toBeVisible();
+    await expect(page.locator(".q-timer")).toBeVisible();
+    await expect(page.locator("button.browse-toggle")).not.toBeVisible();
+
+    // Answer the first question and navigate through all 5
+    for (let i = 0; i < 5; i++) {
+      // Wait for question to load
+      await expect(page.locator("[data-testid=question-title]")).toBeVisible({ timeout: 10000 });
+      await page.waitForTimeout(200);
+
+      // Check question type and answer accordingly
+      const optBtn = page.locator("[data-testid=option-button]").first();
+      if (await optBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
+        await optBtn.click();
+        // For multiple_choice: submit after selecting
+        const submitMulti = page.getByRole("button", { name: /确认提交/ });
+        if (await submitMulti.isVisible({ timeout: 500 }).catch(() => false)) {
+          await submitMulti.click();
+        }
+        // If wrong answer, attempt retry first, then give up
+        const retryBtn = page.getByRole("button", { name: /再试一次/ });
+        if (await retryBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+          await retryBtn.click();
+          // After retry, try another option or give up
+          const opt2 = page.locator("[data-testid=option-button]:not(.selected)").first();
+          if (await opt2.isVisible({ timeout: 500 }).catch(() => false)) {
+            await opt2.click();
+          }
+        }
+        // Give up to reveal answer
+        const giveUp = page.getByRole("button", { name: /看答案/ });
+        if (await giveUp.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await giveUp.click();
+        }
+      } else {
+        const textarea = page.locator("textarea").first();
+        if (await textarea.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await textarea.pressSequentially("test answer " + i);
+          await page.waitForTimeout(100);
+          const submitBtn = page.getByRole("button", { name: /提交答案/ });
+          await expect(submitBtn).toBeEnabled({ timeout: 3000 });
+          await submitBtn.click();
+          // Click either "答对了" or "答错了"
+          const correctBtn = page.getByRole("button", { name: /答对了/ });
+          const wrongBtn = page.getByRole("button", { name: /答错了/ });
+          await Promise.race([
+            expect(correctBtn).toBeVisible({ timeout: 5000 }),
+            expect(wrongBtn).toBeVisible({ timeout: 5000 }),
+          ]);
+          if (await correctBtn.isVisible().catch(() => false)) {
+            await correctBtn.click();
+          } else {
+            await wrongBtn.click();
+          }
+          await page.waitForTimeout(200);
+        }
+      }
+
+      // Verify answer is visible
+      await expect(page.locator("[data-testid=answer-section]").first()).toBeVisible({
+        timeout: 5000,
+      });
+
+      // Navigate to next question or finish on the last
+      if (i < 4) {
+        await page.keyboard.press("ArrowRight");
+        await page.waitForTimeout(500);
+      } else {
+        // On the last question, click "完成" to finish
+        await page.getByRole("button", { name: /完成/ }).click();
+        await page.waitForTimeout(300);
+      }
+    }
+    expect(errors, `Page errors: ${errors.join(" | ")}`).toHaveLength(0);
+
+    // Verify summary screen
+    await expect(page.locator(".session-summary")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".session-summary.mock-summary")).toBeVisible();
+    await expect(page.locator(".mi-summary-filters")).toBeVisible();
+    await expect(page.locator(".ss-title")).toHaveText("模拟面试完成");
+    // "再来一轮" button navigates to Home
+    await expect(page.getByRole("button", { name: /再来一轮/ })).toBeVisible();
+  });
+});
+
 test.describe("Mobile", () => {
   test("no horizontal overflow on 375px viewport", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });

@@ -2,7 +2,7 @@
 
 **日期：** 2026-06-05
 **版本：** v1.4.13
-**当前状态：** 5196 题，51 分类全部 100+，253 单元测试全绿，39 E2E 全绿，构建 846ms
+**当前状态：** 5196 题，51 分类全部 100+，253 单元测试全绿，40 E2E 全绿，构建 846ms
 
 ---
 
@@ -156,7 +156,7 @@
 
 ### 测试
 - 253 单元测试（Vitest，+1 Gemini API format test）
-- 39 E2E 测试（Playwright，+1 Mock Interview history filter context）
+- 40 E2E 测试（Playwright，+1 Mock Interview Flow start-answer-complete）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
 - `local-api.js`：94.47% statements, 84.78% branches（核心业务逻辑）
