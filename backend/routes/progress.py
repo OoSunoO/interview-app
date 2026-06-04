@@ -182,14 +182,28 @@ async def get_knowledge():
     rows = await cursor.fetchall()
     await db.close()
 
-    # Category display names
+    # Category display names (synced with frontend CATEGORY_LABELS)
     category_names = {
-        "ai": "AI", "agent": "AI Agent", "algorithm": "算法",
-        "cs_basics": "计算机基础", "database": "数据库", "devops": "DevOps",
-        "frontend": "前端", "java_basic": "Java 基础", "java_advanced": "Java 进阶",
-        "java_collections": "Java 集合", "linux": "Linux",
-        "react": "React", "system_design": "系统设计",
+        # Core CS
+        "cs_basics": "计算机基础", "algorithm": "算法",
+        "database": "数据库", "network": "网络",
+        "design_network": "网络设计", "linux": "Linux", "devops": "DevOps",
+        # Java ecosystem
+        "java": "Java", "java_basic": "Java 基础",
+        "java_advanced": "Java 进阶", "java_collections": "Java 集合",
+        "jvm": "JVM", "concurrency": "并发编程",
+        "design_patterns": "设计模式", "microservices": "微服务",
+        # Frontend
+        "frontend": "前端", "react": "React",
+        # AI / Agent
+        "ai": "AI 基础", "ai_infra": "AI 基础设施",
+        "agent": "AI Agent", "system_design": "系统设计",
+        # Middleware & infra
+        "redis": "Redis", "mq": "消息队列",
+        "kubernetes": "Kubernetes", "python": "Python",
+        # Soft skills
         "product": "产品思维", "project_mgmt": "项目管理",
+        "behavioral": "行为面试", "career": "求职与职业发展",
     }
 
     # Build: category -> { total, done, tags: { tag_name: {total, done} } }

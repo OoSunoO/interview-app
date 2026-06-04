@@ -408,9 +408,8 @@ class TestKnowledge:
 
     def test_knowledge_labels(self, client):
         data = {c["name"]: c for c in client.get("/api/progress/knowledge").json()}
-        # "database" has a label mapping, "java" does not — falls back to the key
         assert data["database"]["label"] == "数据库"
-        assert data["java"]["label"] == "java"
+        assert data["java"]["label"] == "Java"
 
 
 # ── GET /api/progress/review/due ──

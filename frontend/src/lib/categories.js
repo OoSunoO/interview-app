@@ -153,6 +153,7 @@ export const FILTER_CATEGORIES = [
   { value: "algorithm", label: "算法" },
   { value: "database", label: "数据库" },
   { value: "network", label: "网络" },
+  { value: "design_network", label: "网络设计" },
   { value: "linux", label: "Linux" },
   { value: "devops", label: "DevOps" },
 
