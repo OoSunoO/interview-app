@@ -23,11 +23,10 @@
   let mockInterviewConfig = $state(null);
 
   function navigate(to, params = {}) {
-    if (params.questionId) selectedQuestionId = params.questionId;
-    if (params.tag) selectedTag = params.tag;
-    if (params.reviewConfig) reviewConfig = params.reviewConfig;
-    if (params.mockInterview) mockInterviewConfig = params.mockInterview;
-    else mockInterviewConfig = null;
+    selectedQuestionId = params.questionId ?? null;
+    selectedTag = params.tag ?? null;
+    reviewConfig = params.reviewConfig ?? null;
+    mockInterviewConfig = params.mockInterview ?? null;
     page = to;
   }
 
