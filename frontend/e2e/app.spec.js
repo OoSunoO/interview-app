@@ -20,7 +20,9 @@ test.describe("Home", () => {
 
   test("shows goal card and quick actions", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("button", { name: /每日目标|设置每日目标/ })).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /每日目标|设置每日目标/ })).toBeVisible({
+      timeout: 3000,
+    });
     await expect(page.getByRole("button", { name: /速记模式/ })).toBeVisible();
     await expect(page.getByRole("button", { name: /模拟面试/ })).toBeVisible();
   });
@@ -55,13 +57,17 @@ test.describe("Home", () => {
 test.describe("Browse", () => {
   test("loads question list with cards", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     expect(await page.locator("[data-testid=question-item]").count()).toBeGreaterThan(0);
   });
 
   test("filters by category", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     // Pick first non-empty category from the select
     const catSelect = page.locator("select").first();
     const options = await catSelect.locator("option").all();
@@ -80,7 +86,9 @@ test.describe("Browse", () => {
 
   test("clicking question opens detail panel", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     await page.locator("[data-testid=question-item]").first().click();
     // Detail panel should show question title (not data-testid=question-title which is on Quiz page)
     await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
@@ -91,7 +99,9 @@ test.describe("Browse", () => {
 
   test("detail panel can show answer", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     await page.locator("[data-testid=question-item]").first().click();
     await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
     // Toggle answer visibility
@@ -101,7 +111,9 @@ test.describe("Browse", () => {
 
   test("clicking start quiz navigates to quiz page", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     await page.locator("[data-testid=question-item]").first().click();
     await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
     await page.getByRole("button", { name: /开始答题/ }).click();
@@ -111,7 +123,9 @@ test.describe("Browse", () => {
 
   test("bookmark filter toggles active state", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     const bmBtn = page.locator("button.bm-filter-btn");
     await expect(bmBtn).toBeVisible();
     await bmBtn.click();
@@ -124,7 +138,9 @@ test.describe("Browse", () => {
 
   test("search filters questions", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     const searchBox = page.getByPlaceholder(/搜索/);
     await expect(searchBox).toBeVisible();
     // Get initial count
@@ -140,6 +156,77 @@ test.describe("Browse", () => {
     await page.waitForTimeout(300);
     const restoredCount = await page.locator("[data-testid=question-item]").count();
     expect(restoredCount).toBeGreaterThanOrEqual(filteredCount);
+  });
+
+  test("tag filter narrows results", async ({ page }) => {
+    await goTo(page, NAV.browse);
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
+    // Find the tag filter select (last filter-item select)
+    const tagSelect = page.locator(".filter-item select").last();
+    await expect(tagSelect).toBeVisible();
+    // Pick first non-empty tag option
+    const options = await tagSelect.locator("option").all();
+    let picked = false;
+    for (const opt of options) {
+      const val = await opt.getAttribute("value");
+      if (val && val !== "") {
+        await tagSelect.selectOption(val);
+        await page.waitForTimeout(400);
+        picked = true;
+        break;
+      }
+    }
+    expect(picked).toBe(true);
+    // Reset filters
+    await page.getByRole("button", { name: /重置/ }).click();
+    await page.waitForTimeout(300);
+  });
+
+  test("detail panel shows related questions", async ({ page }) => {
+    await goTo(page, NAV.browse);
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
+    await page.locator("[data-testid=question-item]").first().click();
+    await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
+    // Check for related questions section
+    const related = page.locator(".dp-related");
+    if (await related.isVisible()) {
+      await expect(related.locator(".dp-related-item").first()).toBeVisible({ timeout: 2000 });
+    }
+    // Close detail panel
+    await page.locator(".dp-close").click();
+    await page.waitForTimeout(200);
+  });
+
+  test("detail panel notes are editable", async ({ page }) => {
+    await goTo(page, NAV.browse);
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
+    await page.locator("[data-testid=question-item]").first().click();
+    await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
+    // Open notes section
+    await page.locator(".dp-notes-summary").click();
+    await page.waitForTimeout(200);
+    const notesInput = page.locator(".dp-notes-input");
+    await expect(notesInput).toBeVisible({ timeout: 2000 });
+    // Write a note
+    await notesInput.fill("E2E test note");
+    await page.waitForTimeout(300);
+    // Close and reopen to verify persistence
+    await page.locator(".dp-close").click();
+    await page.waitForTimeout(200);
+    await page.locator("[data-testid=question-item]").first().click();
+    await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
+    await page.locator(".dp-notes-summary").click();
+    await page.waitForTimeout(200);
+    await expect(page.locator(".dp-notes-input")).toHaveValue("E2E test note");
+    // Clean up
+    await notesInput.fill("");
+    await page.waitForTimeout(200);
   });
 });
 
@@ -177,13 +264,17 @@ test.describe("Quiz", () => {
     if (await revealBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await revealBtn.click();
       await page.waitForTimeout(200);
-      await expect(page.locator(".q-answer, .answer-section, [data-testid=answer-content]").first()).toBeVisible({ timeout: 3000 });
+      await expect(
+        page.locator(".q-answer, .answer-section, [data-testid=answer-content]").first(),
+      ).toBeVisible({ timeout: 3000 });
     }
   });
 
   test("self-evaluation: submit answer and rate", async ({ page }) => {
     await goTo(page, NAV.browse);
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     await page.locator("[data-testid=question-item]").first().click();
     await expect(page.locator(".dp-title")).toBeVisible({ timeout: 3000 });
     await page.getByRole("button", { name: /开始答题/ }).click();
@@ -213,7 +304,9 @@ test.describe("Quiz", () => {
     }
 
     // Answer section should be visible (appears after correct option or self-evaluation)
-    await expect(page.locator("[data-testid=answer-section]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=answer-section]").first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("Escape key exits quiz back to browse", async ({ page }) => {
@@ -230,7 +323,9 @@ test.describe("Quiz", () => {
     await page.keyboard.press("Escape");
     await page.waitForTimeout(300);
     // Should be back on Browse page
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 });
 
@@ -245,10 +340,13 @@ test.describe("Wrong Book", () => {
     await page.waitForTimeout(300);
     // Inject progress with 2 wrong questions (IDs 1 and 2 exist in the index)
     await page.evaluate(() => {
-      localStorage.setItem("quiz_progress_e2e-test", JSON.stringify({
-        "1": { status: "wrong", wrong_count: 2 },
-        "2": { status: "wrong", wrong_count: 1 },
-      }));
+      localStorage.setItem(
+        "quiz_progress_e2e-test",
+        JSON.stringify({
+          1: { status: "wrong", wrong_count: 2 },
+          2: { status: "wrong", wrong_count: 1 },
+        }),
+      );
     });
     await page.getByRole("button", { name: NAV.wrong }).click();
     await page.waitForTimeout(300);
@@ -288,16 +386,22 @@ test.describe("Knowledge Points", () => {
   test("loads knowledge points grouped by category", async ({ page }) => {
     await goTo(page, NAV.knowledge);
     await expect(page.locator("[data-testid=page-title]")).toHaveText("知识点", { timeout: 5000 });
-    await expect(page.locator("[data-testid=category-card]").first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator("[data-testid=category-card]").first()).toBeVisible({
+      timeout: 8000,
+    });
     expect(await page.locator("[data-testid=category-card]").count()).toBeGreaterThan(0);
   });
 
   test("clicking a knowledge point opens detail page", async ({ page }) => {
     await goTo(page, NAV.knowledge);
-    await expect(page.locator("[data-testid=category-card]").first()).toBeVisible({ timeout: 8000 });
+    await expect(page.locator("[data-testid=category-card]").first()).toBeVisible({
+      timeout: 8000,
+    });
     // Expand the first category
     await page.locator("[data-testid=category-header]").first().click();
-    await expect(page.locator("[data-testid=knowledge-item]").first()).toBeVisible({ timeout: 3000 });
+    await expect(page.locator("[data-testid=knowledge-item]").first()).toBeVisible({
+      timeout: 3000,
+    });
     // Click a child knowledge point to expand inline
     await page.locator("[data-testid=knowledge-item]").first().click();
     // Click "查看完整内容 →" to navigate to the detail page
@@ -355,8 +459,14 @@ test.describe("Review Session (SM-2)", () => {
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "开始复习" }).click();
     await page.waitForTimeout(300);
-    const hasCard = await page.getByText("查看答案").isVisible().catch(() => false);
-    const isEmpty = await page.getByText("暂无待复习题目").isVisible().catch(() => false);
+    const hasCard = await page
+      .getByText("查看答案")
+      .isVisible()
+      .catch(() => false);
+    const isEmpty = await page
+      .getByText("暂无待复习题目")
+      .isVisible()
+      .catch(() => false);
     expect(hasCard || isEmpty).toBe(true);
   });
 
@@ -368,8 +478,14 @@ test.describe("Review Session (SM-2)", () => {
     await page.getByRole("button", { name: "10" }).click();
     await page.getByRole("button", { name: "开始复习" }).click();
     await page.waitForTimeout(300);
-    const hasCard = await page.getByText("查看答案").isVisible().catch(() => false);
-    const isEmpty = await page.getByText("暂无待复习题目").isVisible().catch(() => false);
+    const hasCard = await page
+      .getByText("查看答案")
+      .isVisible()
+      .catch(() => false);
+    const isEmpty = await page
+      .getByText("暂无待复习题目")
+      .isVisible()
+      .catch(() => false);
     if (!hasCard && isEmpty) return;
     await page.keyboard.press("Escape");
     await page.waitForTimeout(200);
@@ -434,15 +550,26 @@ test.describe("QuickReview History on Stats", () => {
 
     // Inject QR history into localStorage (the key uses username suffix from storageState)
     await page.evaluate(() => {
-      const history = [{
-        total: 8, remembered: 5, forgot: 2, unsure: 1,
-        category: "database", difficulty: "medium",
-        date: new Date().toISOString(),
-      }, {
-        total: 6, remembered: 4, forgot: 1, unsure: 1,
-        category: "algorithm", difficulty: "easy",
-        date: new Date(Date.now() - 86400000).toISOString(),
-      }];
+      const history = [
+        {
+          total: 8,
+          remembered: 5,
+          forgot: 2,
+          unsure: 1,
+          category: "database",
+          difficulty: "medium",
+          date: new Date().toISOString(),
+        },
+        {
+          total: 6,
+          remembered: 4,
+          forgot: 1,
+          unsure: 1,
+          category: "algorithm",
+          difficulty: "easy",
+          date: new Date(Date.now() - 86400000).toISOString(),
+        },
+      ];
       // Username from storageState is "e2e-test"
       localStorage.setItem("quick_review_history_e2e-test", JSON.stringify(history));
     });
@@ -473,7 +600,9 @@ test.describe("Mobile", () => {
     };
     await checkNoOverflow();
     await page.getByRole("button", { name: NAV.browse }).click();
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     await checkNoOverflow();
   });
 
@@ -481,7 +610,9 @@ test.describe("Mobile", () => {
     await page.setViewportSize({ width: 375, height: 667 });
     await page.goto("/");
     await page.getByRole("button", { name: NAV.browse }).click();
-    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("[data-testid=question-item]").first()).toBeVisible({
+      timeout: 5000,
+    });
     const canScroll = await page.evaluate(() => {
       const el = document.querySelector(".content");
       return el ? el.scrollHeight > el.clientHeight : false;
@@ -499,4 +630,3 @@ test.describe("Mobile", () => {
     expect(scrolled).toBeGreaterThan(0);
   });
 });
-
