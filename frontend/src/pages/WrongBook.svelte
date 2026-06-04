@@ -377,6 +377,18 @@
         开始复习 ({filteredQuestions.length})
       </button>
 
+      <button class="qr-nav-btn" onclick={() => {
+        const ids = filteredQuestions.map(q => q.id);
+        onNavigate("quick-review", { reviewConfig: { questionIds: ids } });
+      }}>
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 4 23 10 17 10" />
+          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+        </svg>
+        速记错题
+      </button>
+
       <button class="export-btn" onclick={exportWrongAsMarkdown}>
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -765,6 +777,27 @@
     background: var(--bg-surface);
     color: var(--text);
     transform: scale(0.97);
+  }
+  .qr-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .qr-nav-btn:active {
+    transform: scale(0.97);
+    opacity: 0.85;
   }
   .list {
     display: flex;

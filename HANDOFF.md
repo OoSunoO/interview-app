@@ -96,6 +96,7 @@
 - Browse 详情面板显示答题进度（已答次数/错误次数/掌握状态）
 - E2E 测试：Stats 页面 QuickReview 历史展示 + Escape 键退出速记
 - ReviewSession 新增快捷键：Escape 退出活动会话，R 键从完成页重新开始
+- WrongBook 新增"速记错题"按钮，将错题列表一键送入 QuickReview 速记模式
 - 深色/浅色主题（respects prefers-reduced-motion）
 - Cmd+K 命令面板，/ 聚焦搜索，? 快捷键帮助
 - 每日目标 + 复习提醒
