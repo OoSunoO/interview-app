@@ -39,6 +39,7 @@
   let currentIndex = $state(0);
   let showAnswer = $state(false);
   let results = $state({});
+  let sessionStart = $state(null);
 
   // ── Derived ──
   let currentQuestion = $derived(questions[currentIndex]);
@@ -113,6 +114,7 @@
       currentIndex = 0;
       showAnswer = false;
       results = {};
+      sessionStart = Date.now();
       phase = "active";
       saveSession();
     } catch (e) {
@@ -126,6 +128,7 @@
       questions = await Promise.all(saved.questionIds.map((id) => api.questions.get(id)));
       currentIndex = saved.currentIndex;
       results = saved.results || {};
+      sessionStart = Date.now();
       phase = "active";
       showAnswer = false;
     } catch {
@@ -228,6 +231,15 @@
     if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
     return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  }
+
+  function formatDuration() {
+    if (!sessionStart) return "";
+    const seconds = Math.floor((Date.now() - sessionStart) / 1000);
+    if (seconds < 60) return "不到 1 分钟";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return s > 0 ? `${m} 分 ${s} 秒` : `${m} 分钟`;
   }
 
   function handleExit() {
@@ -482,6 +494,7 @@
           </div>
         </div>
         <p class="summary-pct">{Math.round((rememberedCount / total) * 100)}% 掌握率</p>
+        <p class="summary-duration">{formatDuration()}</p>
       {/if}
 
       <div class="summary-actions">
@@ -1038,6 +1051,11 @@
   .summary-pct {
     font-size: 13px;
     color: var(--text-muted);
+  }
+  .summary-duration {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
   }
   .summary-actions {
     display: flex;
