@@ -21,6 +21,7 @@
   let savedQRSession = $state(null);
   let qrCategory = $state(localStorage.getItem("qr_category") || "");
   let qrDifficulty = $state(localStorage.getItem("qr_difficulty") || "");
+  let qrType = $state(localStorage.getItem("qr_type") || "");
   let qrCount = $state(Number(localStorage.getItem("qr_count")) || 20);
   let lastSession = $state(null);
   let showMIDialog = $state(false);
@@ -133,9 +134,10 @@
     showResumeDialog = false;
     localStorage.setItem("qr_category", qrCategory);
     localStorage.setItem("qr_difficulty", qrDifficulty);
+    localStorage.setItem("qr_type", qrType);
     localStorage.setItem("qr_count", String(qrCount));
     onNavigate("quick-review", {
-      reviewConfig: { category: qrCategory, difficulty: qrDifficulty, count: qrCount },
+      reviewConfig: { category: qrCategory, difficulty: qrDifficulty, type: qrType, count: qrCount },
     });
   }
 
@@ -530,6 +532,17 @@
         <option value="easy">简单</option>
         <option value="medium">中等</option>
         <option value="hard">困难</option>
+      </select>
+
+      <label for="qr-type">题型</label>
+      <select id="qr-type" bind:value={qrType}>
+        <option value="">全部</option>
+        <option value="short_answer">问答题</option>
+        <option value="choice">选择题</option>
+        <option value="multiple_choice">多选题</option>
+        <option value="true_false">判断题</option>
+        <option value="coding">编程题</option>
+        <option value="fill_in_blank">填空题</option>
       </select>
 
       <span class="dialog-label">题量</span>

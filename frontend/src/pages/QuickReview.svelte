@@ -83,6 +83,7 @@
       const list = api.questions.list({
         category: filter.category || undefined,
         difficulty: filter.difficulty || undefined,
+        type: filter.type || undefined,
         page_size: filter.count || 20,
       });
 
