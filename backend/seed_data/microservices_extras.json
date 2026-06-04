@@ -597,7 +597,8 @@
       "服务网格",
       "xDS",
       "Sidecar"
-    ]
+    ],
+    "answer": "Envoy 是 Istio 默认的数据面代理，以 Sidecar 方式部署在每个 Pod 中。\n\n线程模型：Envoy 基于事件驱动的多线程架构。主线程负责配置管理（xDS 处理）、证书轮换、统计刷新；Worker 线程（默认 = CPU 核数）处理网络 I/O，每个连接绑定到一个 Worker 线程（无锁设计）。\n\n核心组件：\n- Listener（监听器）：监听入站和出站流量。支持虚拟监听器（端口转发）、TLS 终止、Proxy Protocol。\n- Cluster（集群）：定义上游服务的端点集合，支持多种负载均衡策略（加权轮询、最少请求、Ring Hash、Maglev）。\n- Filter（过滤器链）：Envoy 通过 L4/L7 Filter 实现协议处理。HTTP 连接管理器（HCM）是最核心的 L7 Filter，负责路由、限流、重试、头操作、Tracing。\n\n数据面/控制面通信：\nEnvoy 通过 xDS 协议（gRPC 流式推送）从控制面获取动态配置：\n- LDS：监听器配置——哪些端口需要代理。\n- RDS：路由规则——根据 Host/Path 路由到不同集群。\n- CDS：集群定义——上游服务的端点集合。\n- EDS：服务端点列表——每个 Pod 的 IP:Port，支持动态增删。\n\n关键能力：\n- 协议支持：HTTP/1.1、HTTP/2、gRPC、TCP、WebSocket、MongoDB、Redis。\n- 流量管理：重试（带预算）、超时、熔断、限流、流量镜像、故障注入。\n- 可观测性：自动生成 Metrics（4 个黄金信号）、分布式 Tracing（OpenTelemetry）、Access Log。\n- 安全：mTLS 自动证书轮换、RBAC、外部授权（ExtAuthz）。\n\nEnvoy 与 Nginx 的区别：Envoy 是更纯粹的代理（无 Web 服务器功能），但配置管理更灵活（动态 xDS），协议支持更丰富，是云原生 Service Mesh 的事实标准数据平面。"
   },
   {
     "category": "microservices",
