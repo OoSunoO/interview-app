@@ -508,38 +508,6 @@ export const api = {
         });
     },
 
-    /**
-     * Return up to `count` unreviewed questions for a review session.
-     * Does NOT fall back to mastered questions when unreviewed count is insufficient.
-     */
-    review(count = 10) {
-      const progress = getProgress();
-      const unreviewed = [];
-
-      for (const q of questions) {
-        const p = progress[q.id];
-        if (!p || p.status === "new") {
-          unreviewed.push(q);
-          if (unreviewed.length >= count) break;
-        }
-      }
-
-      return unreviewed.slice(0, count).map((q) => {
-        const p = progress[q.id] || {};
-        return {
-          id: q.id,
-          title: q.title,
-          category: q.category,
-          difficulty: q.difficulty,
-          type: q.type,
-          content: q.content,
-          tags: q.tags,
-          status: p.status || "new",
-          wrong_count: p.wrong_count || 0,
-        };
-      });
-    },
-
     startReviewSession(count = 20, category) {
       const progress = getProgress();
       const now = new Date();
