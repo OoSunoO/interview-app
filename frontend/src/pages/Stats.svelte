@@ -37,6 +37,55 @@
     URL.revokeObjectURL(url);
   }
 
+  let importPreview = $state(null);
+  let importRaw = $state(null);
+  let showImportDialog = $state(false);
+  let importError = $state("");
+
+  function triggerImport() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!data.progress && !data.sessions && !data.dailyStats) {
+            importError = "无效的备份文件：缺少进度数据";
+            showImportDialog = true;
+            return;
+          }
+          const pCount = Object.keys(data.progress || {}).length;
+          const sCount = (data.sessions || []).length;
+          const dCount = Object.keys(data.dailyStats || {}).length;
+          importRaw = data;
+          importPreview = { pCount, sCount, dCount, goal: data.goal || "0", date: data.exportedAt || "未知" };
+          importError = "";
+          showImportDialog = true;
+        } catch {
+          importError = "无法解析文件，请确认选择了正确的备份文件";
+          showImportDialog = true;
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
+
+  function confirmImport() {
+    if (!importRaw) return;
+    if (importRaw.progress) localStorage.setItem("quiz_progress", JSON.stringify(importRaw.progress));
+    if (importRaw.sessions) localStorage.setItem("quiz_review_sessions", JSON.stringify(importRaw.sessions));
+    if (importRaw.dailyStats) localStorage.setItem("quiz_daily_stats", JSON.stringify(importRaw.dailyStats));
+    if (importRaw.goal) localStorage.setItem("quiz_daily_goal", String(importRaw.goal));
+    showImportDialog = false;
+    importRaw = null;
+    window.location.reload();
+  }
+
   onMount(async () => {
     // refreshStats must resolve before rendering overview content
     await store.refreshStats();
@@ -386,6 +435,67 @@
           <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
         导出进度备份
       </button>
+      <button class="import-progress-btn" onclick={triggerImport}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+        导入进度备份
+      </button>
+    </div>
+  {/if}
+
+  {#if showImportDialog}
+    <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+    <div class="import-overlay" onclick={() => { showImportDialog = false; importRaw = null; }} onkeydown={(e) => { if (e.key === "Escape") { showImportDialog = false; importRaw = null; } }}>
+      <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+      <div class="import-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") { showImportDialog = false; importRaw = null; } }}>
+        {#if importError}
+          <div class="import-error-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+              stroke="var(--danger)" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+          </div>
+          <p class="import-error-text">{importError}</p>
+          <button class="import-btn-primary" onclick={() => { showImportDialog = false; importRaw = null; }}>知道了</button>
+        {:else if importPreview}
+          <div class="import-success-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+              stroke="var(--success)" stroke-width="1.5" stroke-linecap="round"
+              stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" /></svg>
+          </div>
+          <div class="import-dialog-title">导入进度备份</div>
+          <div class="import-summary">
+            <div class="import-summary-row">
+              <span class="import-summary-lbl">备份时间</span>
+              <span class="import-summary-val">{importPreview.date}</span>
+            </div>
+            <div class="import-summary-row">
+              <span class="import-summary-lbl">题目进度</span>
+              <span class="import-summary-val">{importPreview.pCount} 条</span>
+            </div>
+            <div class="import-summary-row">
+              <span class="import-summary-lbl">练习记录</span>
+              <span class="import-summary-val">{importPreview.sCount} 条</span>
+            </div>
+            <div class="import-summary-row">
+              <span class="import-summary-lbl">每日统计</span>
+              <span class="import-summary-val">{importPreview.dCount} 天</span>
+            </div>
+            <div class="import-summary-row">
+              <span class="import-summary-lbl">每日目标</span>
+              <span class="import-summary-val">{importPreview.goal} 题</span>
+            </div>
+          </div>
+          <p class="import-warning">导入将覆盖全部本地进度数据，此操作不可撤销。</p>
+          <div class="import-dialog-actions">
+            <button class="import-btn-cancel" onclick={() => { showImportDialog = false; importRaw = null; }}>取消</button>
+            <button class="import-btn-primary danger" onclick={confirmImport}>确认导入</button>
+          </div>
+        {/if}
+      </div>
     </div>
   {/if}
 </div>
@@ -799,6 +909,141 @@
     transform: scale(0.96);
     color: var(--accent);
     border-color: var(--accent-dim);
+  }
+  .import-progress-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .import-progress-btn:active {
+    transform: scale(0.96);
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+
+  /* ── Import Dialog ── */
+  .import-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-overlay);
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fade-in 0.2s both;
+  }
+  .import-dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    animation: scale-in 0.3s var(--spring) both;
+  }
+  .import-error-icon,
+  .import-success-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface);
+  }
+  .import-error-text {
+    font-size: 14px;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .import-dialog-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .import-summary {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .import-summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .import-summary-lbl {
+    color: var(--text-muted);
+  }
+  .import-summary-val {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .import-warning {
+    font-size: 12px;
+    color: var(--danger);
+    text-align: center;
+    line-height: 1.5;
+  }
+  .import-dialog-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .import-btn-cancel {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .import-btn-cancel:active {
+    transform: scale(0.97);
+  }
+  .import-btn-primary {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .import-btn-primary:active {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+  .import-btn-primary.danger {
+    background: var(--danger);
   }
 
   /* ── Review History ── */
