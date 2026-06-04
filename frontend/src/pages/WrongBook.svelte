@@ -29,6 +29,8 @@
   let showSchedule = $state(true);
   let loading = $state(true);
   let error = $state(null);
+  let wrongFilterCat = $state("");
+  let wrongFilterDiff = $state("");
   let currentDetail = $state(null);
   let detailLoading = $state(false);
   let detailVersion = $state(0);
@@ -151,12 +153,20 @@
     socraticLoading = false;
   }
 
+  let filteredQuestions = $derived(
+    wrongQuestions.filter((q) => {
+      if (wrongFilterCat && q.category !== wrongFilterCat) return false;
+      if (wrongFilterDiff && q.difficulty !== wrongFilterDiff) return false;
+      return true;
+    }),
+  );
+
   let grouped = $derived.by(() => {
     const kpMap = {};
     for (const k of knowledgeTags) kpMap[k.name] = k;
 
     const groups = {};
-    for (const q of wrongQuestions) {
+    for (const q of filteredQuestions) {
       const tags = (q.tags && q.tags.length > 0) ? q.tags : ["未分类"];
       for (const t of tags) {
         if (!groups[t]) {
@@ -336,7 +346,7 @@
         showAnswer = false;
         loadReviewDetail(0);
       }}>
-        开始复习 ({wrongQuestions.length})
+        开始复习 ({filteredQuestions.length})
       </button>
 
       <button class="export-btn" onclick={exportWrongAsMarkdown}>
@@ -474,6 +484,38 @@
         {/if}
       </div>
 
+      {#if wrongQuestions.length > 2}
+        <div class="wb-filters">
+          <select bind:value={wrongFilterCat} class="wb-filter">
+            <option value="">全部分类</option>
+            <option value="algorithm">算法</option>
+            <option value="database">数据库</option>
+            <option value="cs_basics">计算机基础</option>
+            <option value="system_design">系统设计</option>
+            <option value="java_basic">Java 基础</option>
+            <option value="java_advanced">Java 进阶</option>
+            <option value="java_collections">Java 集合</option>
+            <option value="frontend">前端</option>
+            <option value="react">React</option>
+            <option value="devops">DevOps</option>
+            <option value="linux">Linux</option>
+            <option value="ai">AI</option>
+            <option value="agent">AI Agent</option>
+            <option value="kubernetes">Kubernetes</option>
+            <option value="product">产品思维</option>
+            <option value="project_mgmt">项目管理</option>
+            <option value="career">求职与职业发展</option>
+            <option value="behavioral">行为面试</option>
+          </select>
+          <select bind:value={wrongFilterDiff} class="wb-filter">
+            <option value="">全部难度</option>
+            <option value="easy">简单</option>
+            <option value="medium">中等</option>
+            <option value="hard">困难</option>
+          </select>
+          <span class="wb-filter-count">{filteredQuestions.length} 题</span>
+        </div>
+      {/if}
       <div class="group-list">
         {#each grouped as group}
           <div class="group">
@@ -582,6 +624,30 @@
     font-size: 16px;
     font-weight: 600;
     border-radius: var(--radius);
+  }
+  .wb-filters {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .wb-filter {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .wb-filter-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
   .export-btn {
     display: flex;
