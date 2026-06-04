@@ -121,6 +121,29 @@
     }
     clearSelection();
   }
+
+  let hasActiveFilters = $derived(
+    !!store.filters.category ||
+    !!store.filters.difficulty ||
+    !!store.filters.type ||
+    !!store.filters.status ||
+    !!store.filters.company ||
+    !!store.filters.search ||
+    !!store.filters.sort_by ||
+    store.filters.bookmarked
+  );
+
+  function resetFilters() {
+    store.filters.category = "";
+    store.filters.difficulty = "";
+    store.filters.type = "";
+    store.filters.status = "";
+    store.filters.company = "";
+    store.filters.search = "";
+    store.filters.sort_by = "";
+    store.filters.bookmarked = false;
+    applyFilter();
+  }
 </script>
 
 <div class="page browse">
@@ -277,6 +300,15 @@
         </svg>
         导出
       </button>
+            {#if hasActiveFilters}
+        <button class="reset-filter-btn" onclick={resetFilters}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round"><polyline points="23 4 23 10 17 10" />
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+          重置
+        </button>
+      {/if}
       <button
         class="qr-browse-btn"
         onclick={() => onNavigate("quick-review", { reviewConfig: { category: store.filters.category, difficulty: store.filters.difficulty, count: 20 } })}
@@ -665,6 +697,26 @@
     transform: scale(0.96);
     background: var(--accent-bg);
   }
+  .reset-filter-btn {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 12px;
+    background: none;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s var(--spring);
+  }
+  .reset-filter-btn:active {
+    transform: scale(0.96);
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
 
   .loading,
   .empty {
@@ -944,7 +996,8 @@
     }
     .random-btn,
     .export-btn,
-    .qr-browse-btn {
+    .qr-browse-btn,
+    .reset-filter-btn {
       flex: 1;
       justify-content: center;
     }
