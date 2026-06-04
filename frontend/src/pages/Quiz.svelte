@@ -79,6 +79,37 @@
   let showShortcuts = $state(false);
   let showSessionMap = $state(false);
   let relatedQuestions = $state([]);
+  let mapDialog = $state(null);
+  let shortcutsDialog = $state(null);
+
+  function trapFocus(e, container) {
+    if (e.key !== "Tab" || !container) return;
+    const focusable = container.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  }
+
+  $effect(() => {
+    if (showSessionMap && mapDialog) {
+      mapDialog.focus();
+    }
+  });
+
+  $effect(() => {
+    if (showShortcuts && shortcutsDialog) {
+      shortcutsDialog.focus();
+    }
+  });
 
   const SHORTCUTS = [
     { keys: "← →", desc: "上一题 / 下一题" },
@@ -1067,7 +1098,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
   <div class="shortcuts-overlay" onclick={() => (showShortcuts = false)} onkeydown={(e) => { if (e.key === "Escape") showShortcuts = false; }}>
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-    <div class="shortcuts-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showShortcuts = false; }}>
+    <div class="shortcuts-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { trapFocus(e, shortcutsDialog); if (e.key === "Escape") showShortcuts = false; }} bind:this={shortcutsDialog}>
       <div class="shortcuts-title">键盘快捷键</div>
       <div class="shortcuts-list">
         {#each SHORTCUTS as sc}
@@ -1086,7 +1117,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
   <div class="map-overlay" onclick={() => (showSessionMap = false)} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
     <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-    <div class="map-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { if (e.key === "Escape") showSessionMap = false; }}>
+    <div class="map-dialog" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => { trapFocus(e, mapDialog); if (e.key === "Escape") showSessionMap = false; }} bind:this={mapDialog}>
       <div class="map-title">题目列表</div>
       <div class="map-legend">
         <span class="map-legend-item"><span class="map-dot correct"></span>已掌握</span>
