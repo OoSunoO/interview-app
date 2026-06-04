@@ -377,7 +377,7 @@
       {/if}
       <button
         class="qr-browse-btn"
-        onclick={() => onNavigate("quick-review", { reviewConfig: { category: store.filters.category, difficulty: store.filters.difficulty, count: 20 } })}
+        onclick={() => onNavigate("quick-review", { reviewConfig: { category: store.filters.category, difficulty: store.filters.difficulty, type: store.filters.type, count: 20 } })}
         disabled={store.questions.length === 0}
       >
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"

@@ -17,6 +17,23 @@
   // loading | active | completed
   let phase = $state("loading");
 
+  // ── Filter indicator ──
+  const TYPE_LABELS = {
+    short_answer: "问答题",
+    choice: "选择题",
+    multiple_choice: "多选题",
+    true_false: "判断题",
+    coding: "编程题",
+    fill_in_blank: "填空题",
+  };
+  let filterLabel = $derived.by(() => {
+    const parts = [];
+    if (config?.category) parts.push(categoryLabel(config.category));
+    if (config?.difficulty) parts.push({ easy: "简单", medium: "中等", hard: "困难" }[config.difficulty] || config.difficulty);
+    if (config?.type) parts.push(TYPE_LABELS[config.type] || config.type);
+    return parts.length > 0 ? parts.join(" · ") : null;
+  });
+
   // ── Session data ──
   let questions = $state([]);
   let currentIndex = $state(0);
@@ -249,6 +266,9 @@
   {#if phase === "active"}
     <div class="qr-header">
       <span class="qr-title">速记模式</span>
+      {#if filterLabel}
+        <span class="qr-filter-label">{filterLabel}</span>
+      {/if}
       <span class="qr-counter" data-testid="qr-counter">{doneCount}/{total}</span>
       <button class="map-btn" onclick={() => (showSessionMap = !showSessionMap)} title="题目列表">
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -541,6 +561,18 @@
     font-size: 15px;
     font-weight: 700;
     color: var(--accent);
+  }
+  .qr-filter-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    font-weight: 500;
+    padding: 2px 8px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
   }
   .qr-counter {
     font-size: 13px;
