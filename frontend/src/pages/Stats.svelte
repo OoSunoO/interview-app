@@ -371,6 +371,21 @@
       {/if}
     {/if}
 
+    {#if stats.by_type}
+      <h2 class="section-title">题型分布</h2>
+      <div class="type-dist">
+        {#each Object.entries(stats.by_type) as [type, data]}
+          {@const pct = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0}
+          <div class="type-item">
+            <span class="type-tag {type}">{type}</span>
+            <span class="type-count">{data.done}/{data.total}</span>
+            <div class="type-bar-bg"><div class="type-bar-fill" style="width:{pct}%"></div></div>
+            <span class="type-pct">{pct}%</span>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
     <h2 class="section-title">各领域进度</h2>
     <div class="category-list">
       {#each Object.entries(stats.by_category) as [cat, data]}
@@ -702,6 +717,53 @@
     font-size: 11px;
     color: var(--text-dim);
     margin-top: 2px;
+  }
+  .type-dist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+  .type-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .type-tag {
+    font-weight: 600;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+  }
+  .type-count {
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+  .type-bar-bg {
+    width: 40px;
+    height: 4px;
+    background: var(--bg-surface);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .type-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s var(--spring);
+  }
+  .type-pct {
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 28px;
+    text-align: right;
   }
   .category-list {
     display: flex;

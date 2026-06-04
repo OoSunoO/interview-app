@@ -386,6 +386,9 @@ describe("progress.stats", () => {
     expect(stats2.wrong).toBe(1);
     expect(stats2.by_category.java_basic).toEqual({ total: 3, done: 1 });
     expect(stats2.by_category.database).toEqual({ total: 2, done: 0 });
+    expect(stats2.by_type.short_answer).toEqual({ total: 2, done: 1, wrong: 1 });
+    expect(stats2.by_type.choice).toEqual({ total: 1, done: 0, wrong: 0 });
+    expect(stats2.by_type.true_false).toEqual({ total: 1, done: 0, wrong: 0 });
   });
 
   it("counts reviewing status in by_difficulty done", async () => {

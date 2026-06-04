@@ -368,6 +368,7 @@ export const api = {
         bookmarked = 0;
       const byCategory = {};
       const byDifficulty = { easy: { total: 0, done: 0, wrong: 0 }, medium: { total: 0, done: 0, wrong: 0 }, hard: { total: 0, done: 0, wrong: 0 } };
+      const byType = {};
 
       for (const q of questionIndex) {
         const mainCat = MAIN_CATEGORY[q.category] || q.category;
@@ -379,19 +380,26 @@ export const api = {
         const diff = q.difficulty || "medium";
         if (byDifficulty[diff]) byDifficulty[diff].total++;
 
+        const type = q.type || "short_answer";
+        if (!byType[type]) byType[type] = { total: 0, done: 0, wrong: 0 };
+        byType[type].total++;
+
         const p = progress[q.id];
         if (p?.bookmarked) bookmarked++;
         if (p?.status === "correct") {
           correct++;
           byCategory[mainCat].done++;
           if (byDifficulty[diff]) byDifficulty[diff].done++;
+          byType[type].done++;
         } else if (p?.status === "reviewing") {
           reviewing++;
           byCategory[mainCat].done++;
           if (byDifficulty[diff]) byDifficulty[diff].done++;
+          byType[type].done++;
         } else if (p?.status === "wrong") {
           wrong++;
           if (byDifficulty[diff]) byDifficulty[diff].wrong++;
+          byType[type].wrong++;
         }
       }
 
@@ -404,6 +412,7 @@ export const api = {
         bookmarked,
         by_category: byCategory,
         by_difficulty: byDifficulty,
+        by_type: byType,
       };
     },
 
