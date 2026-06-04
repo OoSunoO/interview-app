@@ -440,13 +440,14 @@ export const api = {
       });
     },
 
-    startReviewSession(count = 20) {
+    startReviewSession(count = 20, category) {
       const progress = getProgress();
       const now = new Date();
       const overdue = [];
       const newCards = [];
 
       for (const q of questions) {
+        if (category && q.category !== category) continue;
         const p = progress[q.id];
         if (!p || p.status === "new") {
           if (newCards.length < count) newCards.push(q);

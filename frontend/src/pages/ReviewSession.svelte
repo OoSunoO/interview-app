@@ -12,12 +12,14 @@
 
   let { config, onNavigate } = $props();
 
-  // loading | active | completed | empty
+  // setup | loading | active | completed | empty
   let phase = $state("loading");
   let cards = $state([]);
   let currentIndex = $state(0);
   let showAnswer = $state(false);
   let results = $state({});
+  let configCategory = $state(config?.category || "");
+  let configCount = $state(config?.count || 20);
 
   let currentCard = $derived(cards[currentIndex]);
   let total = $derived(cards.length);
@@ -69,9 +71,9 @@
     return sections.map((s) => ({ type: s.type, parts: renderContent(s.text) }));
   }
 
-  function startSession() {
+  function startSession(count, category) {
     try {
-      const session = api.progress.startReviewSession(20);
+      const session = api.progress.startReviewSession(count || 20, category || "");
       if (session.length === 0) {
         phase = "empty";
         return;
@@ -126,7 +128,7 @@
         }
       } catch { /* ignore */ }
     }
-    startSession();
+    phase = "setup";
   });
 
   function revealAnswer() {
@@ -158,6 +160,28 @@
     onNavigate("home");
   }
 
+  const categories = [
+    { value: "", label: "全部分类" },
+    { value: "cs_basics", label: "计算机基础" },
+    { value: "algorithm", label: "算法" },
+    { value: "database", label: "数据库" },
+    { value: "linux", label: "Linux" },
+    { value: "devops", label: "DevOps" },
+    { value: "java_basic", label: "Java 基础" },
+    { value: "java_advanced", label: "Java 进阶" },
+    { value: "java_collections", label: "Java 集合" },
+    { value: "react", label: "React" },
+    { value: "frontend", label: "前端" },
+    { value: "ai", label: "AI 基础" },
+    { value: "agent", label: "AI Agent" },
+    { value: "system_design", label: "系统设计" },
+    { value: "project_mgmt", label: "项目管理" },
+    { value: "product", label: "产品思维" },
+    { value: "kubernetes", label: "Kubernetes" },
+    { value: "career", label: "求职与职业发展" },
+    { value: "behavioral", label: "行为面试" },
+  ];
+
   const categoryLabel = {
     cs_basics: "计算机基础", algorithm: "算法", database: "数据库",
     linux: "Linux", devops: "DevOps", java_basic: "Java",
@@ -165,12 +189,46 @@
     react: "React", frontend: "前端", ai: "AI",
     agent: "Agent", system_design: "系统设计",
     project_mgmt: "项目管理", product: "产品思维",
+    kubernetes: "Kubernetes", career: "求职与职业发展",
+    behavioral: "行为面试",
   };
 </script>
 
 <div class="page rs-page">
+  <!-- ── Setup ── -->
+  {#if phase === "setup"}
+    <div class="rs-setup">
+      <div class="rs-setup-icon">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+      </div>
+      <h2 class="rs-setup-title">间隔复习</h2>
+      <p class="rs-setup-desc">选择分类和题量，开始 SM-2 间隔复习。</p>
+
+      <label for="rs-cat">分类</label>
+      <select id="rs-cat" bind:value={configCategory}>
+        {#each categories as cat}
+          <option value={cat.value}>{cat.label}</option>
+        {/each}
+      </select>
+
+      <span class="rs-setup-lbl">题量</span>
+      <div class="rs-count-options">
+        <button class="rs-count-btn" class:active={configCount === 10} onclick={() => (configCount = 10)}>10</button>
+        <button class="rs-count-btn" class:active={configCount === 20} onclick={() => (configCount = 20)}>20</button>
+        <button class="rs-count-btn" class:active={configCount === 30} onclick={() => (configCount = 30)}>30</button>
+        <button class="rs-count-btn" class:active={configCount === 50} onclick={() => (configCount = 50)}>50</button>
+      </div>
+
+      <button class="rs-setup-start" onclick={() => startSession(configCount, configCategory)}>
+        开始复习
+      </button>
+    </div>
+
   <!-- ── Active ── -->
-  {#if phase === "active"}
+  {:else if phase === "active"}
     <div class="rs-header">
       <span class="rs-title">间隔复习</span>
       <span class="rs-counter">{doneCount}/{total}</span>
@@ -762,6 +820,106 @@
   /* ── Loading ── */
   .rs-loading {
     padding: 40px 0;
+  }
+
+  /* ── Setup ── */
+  .rs-setup {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .rs-setup-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .rs-setup-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .rs-setup-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 4px;
+  }
+  .rs-setup label,
+  .rs-setup-lbl {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    align-self: stretch;
+    text-align: left;
+  }
+  .rs-setup select {
+    width: 100%;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 14px;
+    background: var(--bg-card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    outline: none;
+  }
+  .rs-setup select:focus {
+    border-color: var(--accent);
+  }
+  .rs-count-options {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .rs-count-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+    text-align: center;
+  }
+  .rs-count-btn:active {
+    transform: scale(0.96);
+  }
+  .rs-count-btn.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .rs-setup-start {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: var(--radius-sm);
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s var(--spring);
+    margin-top: 8px;
+  }
+  .rs-setup-start:active {
+    transform: scale(0.97);
+    opacity: 0.9;
   }
 
   /* ── Mobile ── */
