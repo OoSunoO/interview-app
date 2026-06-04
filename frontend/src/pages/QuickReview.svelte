@@ -207,11 +207,13 @@
       saveSession();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
+      const elapsed = sessionStart ? Math.floor((Date.now() - sessionStart) / 1000) : 0;
       api.quickReview.saveHistory({
         total,
         remembered: rememberedCount,
         forgot: forgotCount,
         unsure: unsureCount,
+        duration_seconds: elapsed,
         category: config?.category || "",
         difficulty: config?.difficulty || "",
       });

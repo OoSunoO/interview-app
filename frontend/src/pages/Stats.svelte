@@ -161,6 +161,13 @@
     return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
   }
 
+  function formatDuration(seconds) {
+    if (!seconds || seconds < 60) return "不到 1 分钟";
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return s > 0 ? `${m} 分 ${s} 秒` : `${m} 分钟`;
+  }
+
   let weakTags = $derived.by(() => {
     const count = {};
     for (const q of wrongList) {
@@ -481,6 +488,7 @@
               <span class="qr-badge qr-review" title="需复习">{review}</span>
               <span class="qr-history-total">共 {session.total} 题</span>
             </span>
+            <span class="qr-history-dur">{formatDuration(session.duration_seconds)}</span>
             <span class="qr-history-rate" class:qr-rate-good={(mastered / session.total) * 100 >= 70}>
               {Math.round((mastered / session.total) * 100)}%
             </span>
@@ -1241,6 +1249,11 @@
   }
   .qr-history-rate.qr-rate-good {
     color: var(--success);
+  }
+  .qr-history-dur {
+    color: var(--text-dim);
+    font-size: 11px;
+    white-space: nowrap;
   }
   .qr-nav {
     display: flex;
