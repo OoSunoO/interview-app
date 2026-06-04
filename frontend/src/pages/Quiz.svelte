@@ -33,6 +33,14 @@
   let countdown = $state(0);
   let autoAdvancing = $state(false);
 
+  function miFilterLabel(config) {
+    const parts = [];
+    if (config?.category) parts.push(config.category);
+    if (config?.difficulty) parts.push({ easy: "简单", medium: "中等", hard: "困难" }[config.difficulty] || config.difficulty);
+    if (config?.tag) parts.push(config.tag);
+    return parts.length ? parts.join(" · ") : null;
+  }
+
   function toggleBrowseMode() {
     browseMode = !browseMode;
     if (browseMode) {
@@ -615,6 +623,9 @@
     <div class="q-meta">
       {#if interviewed}
         <span class="mi-badge">模拟面试</span>
+        {#if miFilterLabel(mockInterview)}
+          <span class="mi-filter-label">{miFilterLabel(mockInterview)}</span>
+        {/if}
       {/if}
       {#if sessionProgress}
         <span class="q-number-badge">{sessionProgress.index}/{sessionProgress.total}</span>
@@ -1073,6 +1084,9 @@
       <div class="session-summary" class:mock-summary={interviewed}>
         <h2 class="ss-title">{interviewed ? "模拟面试完成" : "本次练习完成"}</h2>
         {#if interviewed}
+          {#if miFilterLabel(mockInterview)}
+            <div class="mi-summary-filters">{miFilterLabel(mockInterview)}</div>
+          {/if}
           <div class="mi-verdict" class:pass={pass} class:fail={!pass}>
             {#if pass}
               <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1368,6 +1382,13 @@
     font-weight: 700;
     letter-spacing: 0.5px;
     white-space: nowrap;
+  }
+  .mi-filter-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .q-number-badge {
     display: inline-flex;
@@ -2232,6 +2253,12 @@
   }
   .mock-summary .ss-title {
     color: var(--accent);
+  }
+  .mi-summary-filters {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-align: center;
   }
   .mi-verdict {
     display: inline-flex;
