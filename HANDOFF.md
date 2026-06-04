@@ -83,6 +83,7 @@
 - QuickReview 活动状态头部显示筛选项（如"数据库 · 中等"），提示当前复习范围
 - Browse 页面"速记"按钮新增题型筛选传递，与 QuickReview 筛选联动
 - QuickReview 汇总页显示本次速记用时（如"用时 3 分 25 秒"）
+- Mock Interview 设置持久化（分类/难度/题量/限时跨会话保留）
 
 ### UI/UX
 - 深色/浅色主题（respects prefers-reduced-motion）
