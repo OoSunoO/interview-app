@@ -492,6 +492,9 @@
     // Block keyboard input when overlays are open (map, shortcuts)
     if (showSessionMap || showShortcuts) return;
 
+    // Escape to exit (all phases)
+    if (e.key === "Escape" && !showSessionSummary) { e.preventDefault(); exit(); return; }
+
     // Left/Right navigation — answer-shown and browse modes
     if (browseMode || showAnswer || showSubmitResult) {
       if (e.key === "ArrowLeft" && !interviewed) { e.preventDefault(); goPrev(); return; }
