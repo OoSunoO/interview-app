@@ -883,9 +883,10 @@
           bind:value={notesText}
           placeholder="记录你的思考、心得或记忆技巧…"
           rows="3"
+          onblur={saveNotes}
         ></textarea>
         <button class="notes-save-btn" onclick={saveNotes} disabled={notesSaving}>
-          {notesSaving ? "保存中…" : "保存笔记"}
+          {notesSaving ? "保存中…" : notesSaved ? "已保存" : "保存笔记"}
         </button>
       </div>
     {/if}
