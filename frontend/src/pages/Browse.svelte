@@ -78,6 +78,13 @@
     api.progress.toggleBookmark(q.id);
     q.bookmarked = !q.bookmarked;
   }
+
+  function highlight(text) {
+    if (!store.filters.search || !text) return text;
+    const s = store.filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re = new RegExp(`(${s})`, 'gi');
+    return text.replace(re, '<mark class="search-hl">$1</mark>');
+  }
 </script>
 
 <div class="page browse">
@@ -394,7 +401,7 @@
               ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
             </span>
           </div>
-          <p class="q-title">{q.title}</p>
+          <p class="q-title">{@html highlight(q.title)}</p>
           {#if q.tags.length > 0}
             <div class="q-tags">
               {#each q.tags.slice(0, 3) as t}
@@ -681,6 +688,12 @@
   .result-count {
     font-size: 12px;
     color: var(--text-muted);
+  }
+  :global(.search-hl) {
+    background: var(--warning);
+    color: #000;
+    border-radius: 2px;
+    padding: 0 2px;
   }
   .q-title {
     font-size: 14px;
