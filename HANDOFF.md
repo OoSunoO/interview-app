@@ -1,8 +1,8 @@
 # Handoff — 面试刷题 App
 
 **日期：** 2026-06-05
-**版本：** v1.4.9
-**当前状态：** 5196 题，51 分类全部 100+，243 单元测试全绿，34 E2E 全绿，构建 846ms
+**版本：** v1.4.10
+**当前状态：** 5196 题，51 分类全部 100+，249 单元测试全绿，34 E2E 全绿，构建 846ms
 
 ---
 
@@ -94,6 +94,11 @@
 - Quiz inline SHORTCUTS 弹窗补全 Escape 条目
 - 修复 Quiz E2E 测试偶发超时（清除上一测试遗留 session backup）
 
+### Feature (v1.4.10)
+- Mock Interview 会话历史持久化：完成时自动保存结果，Stats 页面新增"模拟面试记录"版块
+- Stats 页面展示总次数/总题数/通过率，最近 20 次会话列表（正确/错误数、用时、得分）
+- 新增 6 个 mock interview history 单元测试
+
 ### Feature (v1.4.9)
 - Stats 页面新增"题型分布"版块：按题型统计 total/done/wrong 及进度条
 - 单元测试增加 by_type 数据断言
@@ -120,7 +125,7 @@
 - PWA：可安装，Service Worker 自动更新
 
 ### 测试
-- 243 单元测试（Vitest，+2 QuickReview keyboard shortcuts）
+- 249 单元测试（Vitest，+6 mock interview history）
 - 34 E2E 测试（Playwright，+1 WrongBook keyboard shortcuts）
 - 106 后端测试（pytest，含书签和 QuickReview 端点）
 - 覆盖率：95.35% statements, 85.96% branches（JS 模块）
