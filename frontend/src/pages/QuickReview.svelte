@@ -234,6 +234,11 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function restartSession() {
+    api.quickReview.clearSession();
+    startSession(config || { count: 20 });
+  }
+
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -460,12 +465,15 @@
 
       <div class="summary-actions">
         <button class="summary-btn primary" onclick={handleDone}>完成</button>
+        {#if total > 0}
+          <button class="summary-btn secondary" onclick={restartSession}>再来一轮</button>
+        {/if}
         {#if forgottenCount > 0}
           <button class="summary-btn danger" onclick={reviewForgotten}>
             复习 {forgottenCount} 道遗忘题
           </button>
         {/if}
-        <button class="summary-btn secondary" onclick={() => onNavigate("wrong")}>查看错题</button>
+        <button class="summary-btn ghost" onclick={() => onNavigate("wrong")}>查看错题</button>
         <button class="summary-btn ghost" onclick={() => (showHistory = true)}>历史记录</button>
       </div>
     </div>

@@ -535,4 +535,42 @@ describe("QuickReview", () => {
       expect(mockClearHistory).toHaveBeenCalled();
     });
   });
+
+  describe("restart", () => {
+    it('shows "再来一轮" button on summary and re-enters active mode', async () => {
+      mockList.mockReturnValue([LIGHT_Q1]);
+      mockGet.mockResolvedValueOnce(FULL_Q1);
+
+      render(QuickReview, { props: { config: { count: 10 }, onNavigate } });
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-reveal-btn"));
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-rate-remembered")).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId("qr-rate-remembered"));
+
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-summary")).toBeInTheDocument();
+      });
+      expect(screen.getByText("再来一轮")).toBeInTheDocument();
+
+      // Re-configure mock for the restart call
+      mockList.mockReturnValue([LIGHT_Q1, LIGHT_Q2]);
+      mockGet.mockResolvedValueOnce(FULL_Q1).mockResolvedValueOnce(FULL_Q2);
+
+      fireEvent.click(screen.getByText("再来一轮"));
+
+      // Should re-enter active mode with fresh state
+      await waitFor(() => {
+        expect(screen.getByTestId("qr-card")).toBeInTheDocument();
+      });
+      expect(screen.getByTestId("qr-question-title")).toHaveTextContent("Java是什么");
+      expect(screen.getByTestId("qr-counter")).toHaveTextContent("0/2");
+      expect(mockClearSession).toHaveBeenCalled();
+      expect(mockList).toHaveBeenLastCalledWith(expect.objectContaining({ page_size: 10 }));
+    });
+  });
 });
