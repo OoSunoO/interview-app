@@ -5,11 +5,26 @@
 //
 // questionIndex: lightweight metadata for all questions (loaded eagerly)
 // loadAll:      starts background load of full question data (content, answers)
+let _imports;
+try {
+  _imports = await Promise.all([
+    import("./question-data/index.js"),
+    import("./knowledge-data.js"),
+  ]);
+} catch (e) {
+  console.error("Failed to load question/knowledge data:", e);
+  // Show error in the loading spinner so user isn't stuck on blank screen
+  const el = document.getElementById("app-loading");
+  if (el) {
+    const textEl = el.querySelector(".app-loading-text");
+    if (textEl) textEl.textContent = "加载失败，请刷新页面";
+    el.querySelector(".app-loading-spinner")?.remove();
+  }
+  throw e; // re-throw so Svelte mount still fails gracefully
+}
+
 const [{ questionIndex, loadCategory, loadAll, questions, categoryIndex },
-       { buildKnowledgeMap, getKnowledgeForTag }] = await Promise.all([
-  import("./question-data/index.js"),
-  import("./knowledge-data.js"),
-]);
+       { buildKnowledgeMap, getKnowledgeForTag }] = _imports;
 
 // Build knowledge map once (from lightweight index — only needs id+tags)
 const knowledgeMap = buildKnowledgeMap(questionIndex);

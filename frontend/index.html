@@ -59,18 +59,43 @@
   </div>
   <script type="module" src="/src/main.js"></script>
   <script>
+    // Show error in loading spinner
+    function showLoadError(msg) {
+      var el = document.getElementById("app-loading");
+      if (!el) return;
+      var text = el.querySelector(".app-loading-text");
+      if (text) text.textContent = msg;
+      var spinner = el.querySelector(".app-loading-spinner");
+      if (spinner) spinner.style.animationPlayState = "paused";
+    }
+
     // Hide loading indicator once Svelte mounts (app replaces #app content)
-    // If loading fails or is slow, the indicator stays visible
-    const observer = new MutationObserver(() => {
-      const el = document.getElementById("app-loading");
+    var observer = new MutationObserver(function() {
+      var el = document.getElementById("app-loading");
       if (el && !document.getElementById("app")?.contains(el)) {
         el.classList.add("hidden");
         observer.disconnect();
       }
     });
     observer.observe(document.getElementById("app"), { childList: true, subtree: true });
-    // Fallback: hide after 10s regardless
-    setTimeout(() => { observer.disconnect(); }, 10000);
+
+    // Safety net: if app fails to mount within 15s, show error
+    setTimeout(function() {
+      var el = document.getElementById("app-loading");
+      if (el && !el.classList.contains("hidden")) {
+        showLoadError("加载超时，请刷新页面");
+      }
+    }, 15000);
+
+    // Catch JS module loading failures (404 on stale chunks, network errors)
+    window.addEventListener("error", function(e) {
+      if (e.message && e.message.indexOf("Failed to fetch") > -1) {
+        showLoadError("资源加载失败，请刷新页面重试");
+      }
+    });
+    window.addEventListener("unhandledrejection", function(e) {
+      showLoadError("加载失败，请刷新页面");
+    });
   </script>
 </body>
 </html>
