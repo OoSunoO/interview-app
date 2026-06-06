@@ -4,9 +4,8 @@ const NAV = { home: "首页", browse: "题库", knowledge: "知识点", wrong: "
 
 async function goTo(page, tab) {
   await page.goto("/");
-  await page.waitForTimeout(300);
+  await expect(page.getByRole("button", { name: tab })).toBeVisible({ timeout: 10000 });
   await page.getByRole("button", { name: tab }).click();
-  await page.waitForTimeout(200);
 }
 
 test.describe("Home", () => {
@@ -255,7 +254,7 @@ test.describe("Browse", () => {
 test.describe("Quiz", () => {
   async function goToQuiz(page) {
     await page.goto("/");
-    await page.waitForTimeout(200);
+    await page.waitForLoadState("load");
     // Wait for the random-quiz button before clicking (allows warm-up data load)
     await expect(page.getByRole("button", { name: /随机一题/ })).toBeVisible({ timeout: 10000 });
     await page.getByRole("button", { name: /随机一题/ }).click({ timeout: 5000 });
@@ -719,7 +718,8 @@ test.describe("Mock Interview Flow", () => {
       // Check question type and answer accordingly
       const optBtn = page.locator("[data-testid=option-button]").first();
       if (await optBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await optBtn.click();
+        await optBtn.click({ force: true });
+        await page.waitForTimeout(150);  // Wait for Svelte reactivity (showAnswer / retry buttons)
         // For multiple_choice: submit after selecting
         const submitMulti = page.getByRole("button", { name: /确认提交/ });
         if (await submitMulti.isVisible({ timeout: 500 }).catch(() => false)) {
@@ -729,16 +729,19 @@ test.describe("Mock Interview Flow", () => {
         const retryBtn = page.getByRole("button", { name: /再试一次/ });
         if (await retryBtn.isVisible({ timeout: 500 }).catch(() => false)) {
           await retryBtn.click();
+          await page.waitForTimeout(100);
           // After retry, try another option or give up
           const opt2 = page.locator("[data-testid=option-button]:not(.selected)").first();
           if (await opt2.isVisible({ timeout: 500 }).catch(() => false)) {
-            await opt2.click();
+            await opt2.click({ force: true });
+            await page.waitForTimeout(150);
           }
         }
         // Give up to reveal answer
         const giveUp = page.getByRole("button", { name: /看答案/ });
         if (await giveUp.isVisible({ timeout: 1000 }).catch(() => false)) {
           await giveUp.click();
+          await page.waitForTimeout(150);
         }
       } else {
         const textarea = page.locator("textarea").first();

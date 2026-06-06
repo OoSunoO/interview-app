@@ -5,18 +5,18 @@
  * Each file contains knowledge points for a specific topic area.
  */
 
-import { knowledge as javaBasics } from "./knowledge-data/java-basics.js";
-import { knowledge as javaCollections } from "./knowledge-data/java-collections.js";
-import { knowledge as javaAdvanced } from "./knowledge-data/java-advanced.js";
-import { knowledge as jvmConcurrency } from "./knowledge-data/jvm-concurrency.js";
-import { knowledge as spring } from "./knowledge-data/spring.js";
-import { knowledge as database } from "./knowledge-data/database.js";
-import { knowledge as network } from "./knowledge-data/network.js";
-import { knowledge as frontend } from "./knowledge-data/frontend.js";
-import { knowledge as aiAgent } from "./knowledge-data/ai-agent.js";
-import { knowledge as systemDesign } from "./knowledge-data/system-design.js";
-import { knowledge as algorithms } from "./knowledge-data/algorithms.js";
-import { knowledge as softSkills } from "./knowledge-data/soft-skills.js";
+import { knowledge as javaBasics } from "./java-basics.js";
+import { knowledge as javaCollections } from "./java-collections.js";
+import { knowledge as javaAdvanced } from "./java-advanced.js";
+import { knowledge as jvmConcurrency } from "./jvm-concurrency.js";
+import { knowledge as spring } from "./spring.js";
+import { knowledge as database } from "./database.js";
+import { knowledge as network } from "./network.js";
+import { knowledge as frontend } from "./frontend.js";
+import { knowledge as aiAgent } from "./ai-agent.js";
+import { knowledge as systemDesign } from "./system-design.js";
+import { knowledge as algorithms } from "./algorithms.js";
+import { knowledge as softSkills } from "./soft-skills.js";
 
 // Merge all knowledge data
 export const knowledgeContent = {

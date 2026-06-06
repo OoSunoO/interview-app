@@ -567,16 +567,16 @@ class TestQuickReviewStart:
         assert all(q["difficulty"] == "easy" for q in data)
 
     def test_start_filter_by_type(self, client):
-        resp = client.post("/api/quick-review/start", json={"count": 10, "type": "choice"})
+        resp = client.post("/api/quick-review/start", json={"count": 10, "type": "short_answer"})
         data = resp.json()
         assert len(data) > 0
-        assert all(q["type"] == "choice" for q in data)
+        assert all(q["type"] == "short_answer" for q in data)
 
     def test_start_filter_by_tag(self, client):
-        resp = client.post("/api/quick-review/start", json={"count": 10, "tag": "Java基础"})
+        resp = client.post("/api/quick-review/start", json={"count": 10, "tag": "java"})
         data = resp.json()
         assert len(data) > 0
-        assert all("Java基础" in q["tags"] for q in data)
+        assert all("java" in q["tags"] for q in data)
 
     def test_start_combined_filters(self, client):
         resp = client.post("/api/quick-review/start", json={
