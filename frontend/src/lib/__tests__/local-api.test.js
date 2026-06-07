@@ -130,7 +130,10 @@ beforeEach(() => {
 });
 
 function getApi() {
-  return import("../local-api.js").then((m) => m.api);
+  return import("../local-api.js").then(async (m) => {
+    await m.ready;
+    return m.api;
+  });
 }
 
 describe("api.version", () => {

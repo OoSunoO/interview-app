@@ -11,7 +11,7 @@
   import QuickReview from "./pages/QuickReview.svelte";
   import ReviewSession from "./pages/ReviewSession.svelte";
   import { fade } from "svelte/transition";
-  import { api } from "./lib/local-api.js";
+  import { api, ready } from "./lib/local-api.js";
   import { store } from "./lib/stores.svelte.js";
   import CommandPalette from "./components/CommandPalette.svelte";
   import Toast from "./components/Toast.svelte";
@@ -53,7 +53,15 @@
     showGistSetup = true;
   }
 
-  onMount(() => {
+  let loadError = $state(null);
+
+  onMount(async () => {
+    try {
+      await ready;
+    } catch (e) {
+      loadError = e?.message || "加载题库数据失败";
+      return;
+    }
     api.migrateProgress();
     store.refreshDue();
 
@@ -77,6 +85,12 @@
 </script>
 
 <div class="app-shell">
+  {#if loadError}
+    <div class="app-load-error">
+      <p>加载失败: {loadError}</p>
+      <button onclick={() => location.reload()}>刷新页面</button>
+    </div>
+  {:else}
   <main class="content">
     {#key page}
       <div transition:fade={{ duration: 150 }}>
@@ -116,6 +130,7 @@
       <SyncStatus />
     </button>
   {/if}
+  {/if}
 </div>
 
 <style>
@@ -143,5 +158,23 @@
   }
   .app-sync-btn:active {
     transform: none;
+  }
+  .app-load-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 16px;
+    color: var(--text-secondary, #8a8a9a);
+  }
+  .app-load-error button {
+    padding: 8px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border, #333);
+    background: var(--bg-card, #1a1a2e);
+    color: var(--text-primary, #e0e0e0);
+    cursor: pointer;
+    font-size: 14px;
   }
 </style>

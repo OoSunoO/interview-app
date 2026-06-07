@@ -5,33 +5,25 @@
 //
 // questionIndex: lightweight metadata for all questions (loaded eagerly)
 // loadAll:      starts background load of full question data (content, answers)
-let _imports;
-try {
-  _imports = await Promise.all([
-    import("./question-data/index.js"),
-    import("./knowledge-data.js"),
-  ]);
-} catch (e) {
-  console.error("Failed to load question/knowledge data:", e);
-  // Show error in the loading spinner so user isn't stuck on blank screen
-  const el = document.getElementById("app-loading");
-  if (el) {
-    const textEl = el.querySelector(".app-loading-text");
-    if (textEl) textEl.textContent = "加载失败，请刷新页面";
-    el.querySelector(".app-loading-spinner")?.remove();
+
+let questionIndex, knowledgeMap, loadCategory, loadAll, questions, categoryIndex,
+    buildKnowledgeMap, getKnowledgeForTag;
+
+export const ready = (async () => {
+  try {
+    const [qMod, kMod] = await Promise.all([
+      import("./question-data/index.js"),
+      import("./knowledge-data.js"),
+    ]);
+    ({ questionIndex, loadCategory, loadAll, questions, categoryIndex } = qMod);
+    ({ buildKnowledgeMap, getKnowledgeForTag } = kMod);
+    knowledgeMap = buildKnowledgeMap(questionIndex);
+    loadAll();
+  } catch (e) {
+    console.error("Failed to load question/knowledge data:", e);
+    throw e;
   }
-  throw e; // re-throw so Svelte mount still fails gracefully
-}
-
-const [{ questionIndex, loadCategory, loadAll, questions, categoryIndex },
-       { buildKnowledgeMap, getKnowledgeForTag }] = _imports;
-
-// Build knowledge map once (from lightweight index — only needs id+tags)
-const knowledgeMap = buildKnowledgeMap(questionIndex);
-
-// Start loading full question data in background (don't block rendering).
-// By the time users navigate to Quiz/Review pages, all data is available.
-loadAll();
+})();
 
 import { rateCard, getDefaultProgress, QUICK_REVIEW_MAP, RATINGS } from "./sm2.js";
 import { CATEGORY_LABELS, MAIN_CATEGORY } from "./categories.js";

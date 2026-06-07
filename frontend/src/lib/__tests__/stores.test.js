@@ -59,9 +59,16 @@ beforeEach(() => {
   vi.resetModules();
 });
 
+async function getStore() {
+  const { ready } = await import("../local-api.js");
+  await ready;
+  const { store } = await import("../stores.svelte.js");
+  return store;
+}
+
 describe("store", () => {
   it("has default state values", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     expect(store.questions).toEqual([]);
     expect(store.stats).toBeNull();
     expect(store.wrongQuestions).toEqual([]);
@@ -77,26 +84,26 @@ describe("store", () => {
   });
 
   it("manages currentQuestion", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     store.currentQuestion = { id: 1, title: "test" };
     expect(store.currentQuestion).toEqual({ id: 1, title: "test" });
   });
 
   it("manages questions array", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     store.questions = FIXTURE;
     expect(store.questions).toHaveLength(2);
   });
 
   it("manages loading state", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     expect(store.loading).toBe(false);
     store.loading = true;
     expect(store.loading).toBe(true);
   });
 
   it("manages quiz session", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     await store.startQuiz(FIXTURE);
     expect(store.quizSessionLength).toBe(2);
     expect(store.quizIndex).toBe(0);
@@ -105,7 +112,7 @@ describe("store", () => {
   });
 
   it("advanceQuiz moves forward", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     await store.startQuiz(FIXTURE);
     const result = store.advanceQuiz();
     expect(result).toBe(true);
@@ -115,7 +122,7 @@ describe("store", () => {
   });
 
   it("advanceQuiz returns false at end", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     await store.startQuiz(FIXTURE);
     store.advanceQuiz();
     const result = store.advanceQuiz();
@@ -124,7 +131,7 @@ describe("store", () => {
   });
 
   it("retreatQuiz moves backward", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     await store.startQuiz(FIXTURE);
     store.advanceQuiz();
     const result = store.retreatQuiz();
@@ -133,7 +140,7 @@ describe("store", () => {
   });
 
   it("retreatQuiz returns false at start", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     await store.startQuiz(FIXTURE);
     const result = store.retreatQuiz();
     expect(result).toBe(false);
@@ -141,7 +148,7 @@ describe("store", () => {
   });
 
   it("goToQuestion navigates to index", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     await store.startQuiz(FIXTURE);
     expect(store.goToQuestion(1)).toBe(true);
     expect(store.quizIndex).toBe(1);
@@ -150,7 +157,7 @@ describe("store", () => {
   });
 
   it("shuffleSession randomizes order", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     await store.startQuiz(FIXTURE);
     const original = [...store.quizSession];
     store.shuffleSession();
@@ -160,18 +167,18 @@ describe("store", () => {
   });
 
   it("error starts null and clearError is callable", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     expect(store.error).toBeNull();
     expect(() => store.clearError()).not.toThrow();
   });
 
   it("has theme getter", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     expect(["light", "dark"]).toContain(store.theme);
   });
 
   it("toggleTheme switches theme", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     const original = store.theme;
     store.toggleTheme();
     expect(store.theme).not.toBe(original);
@@ -180,7 +187,7 @@ describe("store", () => {
   });
 
   it("filters can be set and read", async () => {
-    const { store } = await import("../stores.svelte.js");
+    const store = await getStore();
     store.filters = {
       category: "algo",
       difficulty: "hard",
