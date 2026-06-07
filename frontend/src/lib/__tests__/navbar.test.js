@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/svelte";
+
+vi.mock("../local-api.js", () => ({
+  api: {
+    version: () => ({ version: "0.0.0-test", name: "面试题 App" }),
+    progress: { dueReviews: () => [], stats: () => ({}) },
+  },
+  ready: Promise.resolve(),
+}));
+
 import NavBar from "../../components/NavBar.svelte";
 
 describe("NavBar", () => {
