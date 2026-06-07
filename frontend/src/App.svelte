@@ -91,10 +91,7 @@
       <button onclick={() => location.reload()}>刷新页面</button>
     </div>
   {:else if !appReady}
-    <div class="app-loading-inner">
-      <div class="spinner"></div>
-      <p>加载题库…</p>
-    </div>
+    <div class="app-loading-inner"></div>
   {:else}
   <main class="content">
     {#key page}
@@ -181,25 +178,5 @@
     color: var(--text-primary, #e0e0e0);
     cursor: pointer;
     font-size: 14px;
-  }
-  .app-loading-inner {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    color: var(--text-secondary, #8a8a9a);
-  }
-  .app-loading-inner .spinner {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    border: 2px solid var(--border, rgba(255,255,255,0.06));
-    border-top-color: var(--accent, #6c8cff);
-    animation: app-spin 0.8s linear infinite;
-  }
-  @keyframes app-spin {
-    to { transform: rotate(360deg); }
   }
 </style>

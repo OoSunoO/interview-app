@@ -520,6 +520,7 @@
               {/if}
             </svg>
           </span>
+          <div class="q-body">
           <div class="q-header">
             <span class="status-icon {q.status}">
               {#if q.status === "correct"}
@@ -582,26 +583,6 @@
             {#if q.company}
               <span class="tag company">{q.company}</span>
             {/if}
-            <span
-              class="bm-toggle"
-              class:active={q.bookmarked}
-              role="button"
-              tabindex="0"
-              onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }}
-              onclick={(e) => toggleBookmark(e, q)}
-              title={q.bookmarked ? "取消收藏" : "收藏"}
-            >
-              <svg aria-hidden="true"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill={q.bookmarked ? "currentColor" : "none"}
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
-            </span>
           </div>
           <p class="q-title">{@html highlight(q.title)}</p>
           {#if store.filters.search}
@@ -631,6 +612,27 @@
               {/each}
             </div>
           {/if}
+          </div>
+          <span
+            class="bm-toggle"
+            class:active={q.bookmarked}
+            role="button"
+            tabindex="0"
+            onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }}
+            onclick={(e) => toggleBookmark(e, q)}
+            title={q.bookmarked ? "取消收藏" : "收藏"}
+          >
+            <svg aria-hidden="true"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill={q.bookmarked ? "currentColor" : "none"}
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+          </span>
         </button>
       {/each}
     </div>
@@ -988,11 +990,6 @@
     flex-direction: column;
     gap: 10px;
   }
-  .q-item {
-    text-align: left;
-    width: 100%;
-    border-left: 3px solid transparent;
-  }
   .q-item.status-correct {
     border-left-color: var(--success);
   }
@@ -1022,16 +1019,20 @@
     color: var(--text-dim);
   }
   .bm-toggle {
-    margin-left: auto;
     background: none;
     border: none;
-    padding: 2px;
+    padding: 4px;
     cursor: pointer;
     color: var(--text-dim);
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     border-radius: 3px;
     transition: all 0.2s var(--spring);
+    align-self: center;
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
   }
   .bm-toggle.active {
     color: var(--warning);
@@ -1042,9 +1043,14 @@
   .q-header {
     display: flex;
     gap: 6px;
-    margin-bottom: 8px;
     flex-wrap: wrap;
     align-items: center;
+  }
+  .q-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
   .search-wrap {
     position: relative;
@@ -1091,6 +1097,12 @@
     font-size: 14px;
     line-height: 1.4;
     color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
   }
   .q-snippet {
     font-size: 12px;
@@ -1108,6 +1120,8 @@
     display: flex;
     gap: 4px;
     margin-top: 6px;
+    flex-wrap: wrap;
+    overflow: hidden;
   }
   .mini-tag {
     font-size: 10px;
@@ -1164,7 +1178,18 @@
     color: var(--accent);
   }
 
-  /* ── Selection Mode ── */
+  .q-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0 8px;
+    align-items: start;
+    align-content: start;
+    padding: 12px 14px;
+    text-align: left;
+    width: 100%;
+    border-left: 3px solid transparent;
+    position: relative;
+  }
   .q-item.selected {
     border-color: var(--accent);
     background: var(--accent-bg);
@@ -1175,6 +1200,7 @@
     flex-shrink: 0;
     padding: 2px;
     cursor: pointer;
+    align-self: center;
     color: var(--text-dim);
     transition: color 0.2s;
     z-index: 1;
