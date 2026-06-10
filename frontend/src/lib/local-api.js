@@ -566,7 +566,7 @@ export const api = {
         });
     },
 
-    async startReviewSession(count = 20, category) {
+    async startReviewSession(count = 20, category, difficulty) {
       await loadAll();
       const progress = getProgress();
       const now = new Date();
@@ -575,6 +575,7 @@ export const api = {
 
       for (const q of questions) {
         if (category && q.category !== category) continue;
+        if (difficulty && q.difficulty !== difficulty) continue;
         const p = progress[q.id];
         if (!p || p.status === "new") {
           if (newCards.length < count) newCards.push(q);

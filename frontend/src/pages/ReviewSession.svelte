@@ -23,6 +23,7 @@
   let results = $state({});
   function _initVal(key, fallback) { return config?.[key] ?? fallback; }
   let configCategory = $state(_initVal("category", ""));
+  let configDifficulty = $state(_initVal("difficulty", ""));
   let configCount = $state(_initVal("count", 20));
 
   let showSessionMap = $state(false);
@@ -74,9 +75,9 @@
 
   const SAVE_KEY = "review_session";
 
-  async function startSession(count, category) {
+  async function startSession(count, category, difficulty) {
     try {
-      const session = await api.progress.startReviewSession(count || 20, category || "");
+      const session = await api.progress.startReviewSession(count || 20, category || "", difficulty || "");
       if (session.length === 0) {
         phase = "empty";
         return;
@@ -140,7 +141,7 @@
     if (e.key === "r" || e.key === "R") {
       if (phase === "completed" && cards.length > 0) {
         e.preventDefault();
-        startSession(configCount, configCategory);
+        startSession(configCount, configCategory, configDifficulty);
         return;
       }
     }
@@ -225,6 +226,14 @@
         {/each}
       </select>
 
+      <label for="rs-diff">难度</label>
+      <select id="rs-diff" bind:value={configDifficulty}>
+        <option value="">全部难度</option>
+        <option value="easy">简单</option>
+        <option value="medium">中等</option>
+        <option value="hard">困难</option>
+      </select>
+
       <span class="rs-setup-lbl">题量</span>
       <div class="rs-count-options">
         <button class="rs-count-btn" class:active={configCount === 10} onclick={() => (configCount = 10)}>10</button>
@@ -233,7 +242,7 @@
         <button class="rs-count-btn" class:active={configCount === 50} onclick={() => (configCount = 50)}>50</button>
       </div>
 
-      <button class="rs-setup-start" onclick={() => startSession(configCount, configCategory)}>
+      <button class="rs-setup-start" onclick={() => startSession(configCount, configCategory, configDifficulty)}>
         开始复习
       </button>
     </div>
