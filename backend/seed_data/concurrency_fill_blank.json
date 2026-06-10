@@ -1,6 +1,6 @@
 [
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "线程的六种状态",
@@ -16,8 +16,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "synchronized 的锁升级过程",
     "content": "JDK 6 为 synchronized 引入锁升级机制：___（JDK 15 默认关闭，JDK 18 废弃）→ ___（通过 CAS 自旋获取）→ ___（依赖操作系统的互斥锁，进入等待队列）。",
@@ -32,8 +32,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "volatile 的两个核心语义",
     "content": "volatile 关键字提供两个核心语义：一是保证___（每次使用都从主存获取，写操作立即刷新到主存），二是禁止___（通过插入内存屏障实现）。但 volatile 不保证___。",
@@ -48,8 +48,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "死锁的四个必要条件",
     "content": "死锁必须同时满足四个条件：___（资源只能被一个线程占用）、___（线程持有资源的同时请求新资源）、___（资源不能被强制剥夺）和___（多个线程形成闭合的依赖链）。",
@@ -64,8 +64,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "线程池拒绝策略",
     "content": "ThreadPoolExecutor 提供四种内置拒绝策略：抛异常的___、调用者线程执行的___、直接丢弃的___和丢弃最早未处理任务的___。",
@@ -80,8 +80,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CAS 的三个操作数",
     "content": "CAS（Compare-And-Swap）操作需要三个操作数：内存位置 V、预期值___、新值___。当 V 的值等于___时，将 V 更新为新值，否则不操作。",
@@ -97,8 +97,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "AQS 的核心组件",
     "content": "AbstractQueuedSynchronizer（AQS）的核心组件包括：___（volatile 修饰的状态变量，表示资源的可用数量）、___（CLH 锁的变体，存放等待线程）、以及基于 LockSupport 的___/___机制。",
@@ -114,8 +114,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Thread.join() 的等待语义",
     "content": "调用 t.join() 时，当前线程会___直到线程 t 执行完毕。join() 的内部实现使用___方法，让当前线程在 t 线程的___对象上等待。t 执行结束后，JVM 会调用___方法唤醒所有等待线程。",
@@ -131,8 +131,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Happens-Before 规则",
     "content": "JMM（Java 内存模型）定义了八条 Happens-Before 规则，其中四条核心规则是：___（同一个线程中前面的操作 happen-before 后面的）、___（对 volatile 变量的写操作 happen-before 后续的读）、___（锁的释放 happen-before 同一锁的获取）、___（A happens-before B 且 B happens-before C → A happens-before C）。",
@@ -144,11 +144,11 @@
     "tags": [
       "并发",
       "JMM",
-      "Happens-Before"
+      "happens-before"
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CountDownLatch / CyclicBarrier / Semaphore",
@@ -164,8 +164,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ReadWriteLock / StampedLock",
     "content": "ReadWriteLock 分离读锁和写锁，___（读读不互斥）、___（读写互斥）、___（写写互斥）。StampedLock 在 ReadWriteLock 的基础上增加了___模式，支持乐观读且无需获取锁。",
@@ -182,8 +182,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "LockSupport 与线程阻塞原语",
     "content": "LockSupport 的 park()/unpark() 基于___机制，与 Object.wait/notify 相比：不需要在___块中使用、unpark 可以___（可以先 unpark 再 park）、响应中断时通过___标志位返回而不是抛出异常。",
@@ -199,8 +199,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ThreadLocal 内存泄漏",
     "content": "ThreadLocal 每个线程维护一个___（ThreadLocalMap），key 是 ThreadLocal 实例的___（弱引用），value 是线程局部变量。使用完后必须调用___清理，否则在线程池场景下线程复用会导致___。",
@@ -216,8 +216,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ForkJoinPool 工作窃取",
     "content": "ForkJoinPool 基于___算法：空闲线程从___（其他线程的任务队列尾部）偷取任务执行。每个工作线程维护一个___（双端队列），自己从___取任务，窃取者从尾部取。",
@@ -233,8 +233,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CompletableFuture 异步编排",
     "content": "CompletableFuture 通过___实现异步编排：thenApply（___）、thenAccept（消费结果）、thenCompose（异步组合 flatMap）、allOf（___）、anyOf（___）。",
@@ -250,7 +250,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "线程池核心参数",
@@ -267,8 +267,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "synchronized 与 Lock 的对比",
     "content": "synchronized 是 JVM 层面的___锁（退出同步块时自动释放），Lock 是 JDK 层面的___锁（必须在 finally 中释放）。Lock 提供了 synchronized 不具备的功能：___（尝试获取锁失败不阻塞）、___（可中断等待锁）、___（公平性选择）。",
@@ -285,7 +285,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "伪共享（False Sharing）与缓存行填充",
@@ -303,7 +303,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JMM 抽象与内存屏障",
@@ -321,7 +321,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ConcurrentHashMap 原理",
@@ -339,7 +339,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ThreadPoolExecutor 执行流程",
@@ -357,7 +357,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ReentrantLock 公平锁与非公平锁",
@@ -375,7 +375,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "SynchronousQueue 原理",
@@ -393,7 +393,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "FutureTask 状态转换",
@@ -411,7 +411,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ThreadLocal 实现原理",
@@ -429,8 +429,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CountDownLatch 与 CyclicBarrier",
     "content": "CountDownLatch 的计数器是___（可/不可）重用的，而 CyclicBarrier 的计数器___（可以/不可以）重置。CountDownLatch 基于___实现，CyclicBarrier 基于___实现。当计数到达零后，CyclicBarrier 可以执行一个可选的___。",
@@ -447,7 +447,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "读写锁 ReentrantReadWriteLock",
@@ -465,7 +465,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CAS 底层实现",
@@ -483,7 +483,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "volatile 内存语义",
@@ -501,7 +501,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "synchronized 锁升级过程",
@@ -538,7 +538,7 @@
   },
   {
     "category": "concurrency",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Exchanger 线程间数据交换",
     "content": "java.util.concurrent.Exchanger 是一个用于线程间{{____}}的工具类。两个线程在某个同步点调用 exchange() 方法可以{{____}}各自的数据。如果只有一个线程到达同步点而另一个未到达，该线程会{{____}}。Exchanger 适用于{{____}}问题场景。",
@@ -556,7 +556,7 @@
   },
   {
     "category": "concurrency",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ThreadPoolExecutor 的线程工厂",
     "content": "ThreadPoolExecutor 允许通过{{____}}接口自定义线程的创建方式。通过自定义线程工厂可以设置线程的{{____}}、{{____}}、{{____}}和异常处理器。默认的线程工厂由{{____}}类提供。",
@@ -592,7 +592,7 @@
   },
   {
     "category": "concurrency",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "LockSupport 的 park/unpark",
     "content": "LockSupport 是 Java 并发包的基础{{____}}工具。{{____}}方法阻塞当前线程，{{____}}方法唤醒指定线程。与 Object.wait/notify 不同，LockSupport 的 park/unpark 是{{____}}的，且不需要在{{____}}块中使用。每个线程都有一个{{____}}许可（permit）。",
@@ -609,7 +609,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "并发编程三大特性",
@@ -627,8 +627,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "可重入锁与不可重入锁",
     "content": "___（如 ReentrantLock）允许同一个线程多次获取同一把锁而不会死锁，获取几次就需要释放几次。___（如不可重入的自旋锁）不允许同一个线程重复获取同一把锁，否则会导致___。Java 的 synchronized 关键字是一个典型的___锁。",
@@ -645,8 +645,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "BlockingQueue 常用实现",
     "content": "___（基于链表的阻塞队列，默认无界）适合任务数不确定的场景；___（基于数组的有界阻塞队列）适合控制资源消耗的场景；___（不存储元素，容量为 0）适合任务直接交付工作线程的场景；___（支持延迟获取元素）适合延迟执行或定时任务的场景。",
@@ -663,8 +663,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "MESI 缓存一致性协议",
     "content": "MESI 协议定义了四种缓存行状态：___（缓存行内容与主存一致，且仅存于当前 CPU 缓存中）、___（缓存行内容与主存一致，但可能存在于多个 CPU 缓存中）、___（缓存行已被修改，与主存不一致，其他 CPU 必须从本缓存读取）、___（缓存行无效，需要从主存或其他 CPU 缓存读取最新数据）。",
@@ -681,8 +681,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Semaphore 信号量原理",
     "content": "Semaphore 基于___的共享模式实现同步控制，通过___方法获取一个许可证（可用许可减 1，许可不足时阻塞），通过___方法释放一个许可证（可用许可加 1，唤醒等待线程）。公平模式下会检查___队列中是否有等待更久的线程，非公平模式则直接尝试___更新 state。",
@@ -699,8 +699,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "volatile 的语义",
     "content": "volatile关键字保证多线程间的____（每次读取都从主存获取，写操作立即刷新到主存），禁止____（通过插入内存屏障实现），但____原子性（如count++操作仍需加锁）。",
@@ -715,7 +715,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CAS 的三元组",
@@ -731,8 +731,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "AQS 核心设计",
     "content": "AQS（AbstractQueuedSynchronizer）的核心是一个____队列（用于管理等待获取锁的线程）和一个____状态位（表示同步资源的占用情况）。",
@@ -747,8 +747,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Java 内存屏障类型",
     "content": "内存屏障（Memory Barrier）有四种类型：___屏障（保证读操作不重排序）、StoreStore 屏障、___屏障（保证写操作不重排序）、以及___屏障（保证所有之前的内存访问在之后的访问之前完成，最严格）。",
@@ -764,8 +764,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "happens-before 规则列举",
     "content": "JMM 的 happens-before 规则包括：程序次序规则（同一线程前一个操作 hb 后一个操作）、___规则（对 volatile 变量的写 hb 后续对该变量的读）、锁规则（解锁 hb 后续对该锁的加锁）、___规则（Thread.start() hb 该线程的任何动作）、___规则（线程的所有操作 hb 其他线程 join() 返回）、传递性规则（A hb B, B hb C ⇒ A hb C）。",
@@ -781,7 +781,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ReentrantLock 与 Condition",
@@ -799,8 +799,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Executor 框架核心接口",
     "content": "Java Executor 框架的核心接口包括：___（最顶层接口，execute 方法提交 Runnable 任务）、___（扩展了 Executor，提供 submit/invokeAll/invokeAny 方法）、以及___（可以调度任务在给定延迟后运行或周期性执行）。",
@@ -816,8 +816,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CAS 操作的 Atomic 包装类",
     "content": "Java 中常见的 CAS 原子类包括：___（int 值的原子更新）、AtomicLong、___（引用类型的原子更新）、___（带版本号的原子引用，解决 ABA 问题）。底层依赖 sun.misc.Unsafe 的 compareAndSwap 方法。",
@@ -834,8 +834,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Stream 并行流的工作原理",
     "content": "Java 8 Stream 的并行流（Parallel Stream）通过___方法开启，底层使用___（默认线程池）来并行处理元素。并行流的正确使用需要满足两个核心条件：数据源的___性（如数组、ArrayList）、以及操作的无状态性和关联性。并行流不适合有阻塞操作或大量___操作的场景。",
@@ -852,61 +852,7 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "Lambda 表达式的变量捕获",
-    "content": "Lambda 表达式可以捕获外围作用域的变量，但要求被捕获的变量必须是___（effectively final）——即在初始化后不再被修改。Lambda 表达式内部对类字段和静态变量没有这个限制，因为类字段和静态变量存储在___中，而局部变量存储在___上。JDK 8 之前，匿名内部类访问外部变量需要显式声明为___。",
-    "answer": "{\"correct\":[[\"事实不可变\",\"effectively final\",\"有效 final\"],[\"堆\",\"堆内存\"],[\"栈\",\"栈内存\",\"虚拟机栈\"],[\"final\",\"final 变量\"]],\"distractors\":[[\"final\",\"不可变\",\"不可修改\"],[\"栈\",\"方法区\",\"局部变量表\"],[\"堆\",\"方法区\",\"寄存器\"],[\"static\",\"volatile\",\"不可变\"]]}",
-    "hints": [
-      "effectively final 是 JDK 8 引入的概念——变量虽然没有 final 修饰符，但未被重新赋值",
-      "局部变量存在栈上，Lambda 捕获时拷贝了变量的值（不是引用）"
-    ],
-    "tags": [
-      "Java 8",
-      "Lambda",
-      "变量捕获",
-      "effectively final"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "方法引用的四种类型",
-    "content": "Java 8 方法引用（Method Reference）有四种形式：1）___——引用类的静态方法，如 Integer::parseInt；2）___——引用特定对象的实例方法，如 str::length；3）___——引用特定类型的任意对象的实例方法，如 String::length；4）___——引用构造方法，如 ArrayList::new。",
-    "answer": "{\"correct\":[[\"静态方法引用\",\"Class::staticMethod\",\"引用静态方法\"],[\"实例方法引用（特定对象）\",\"object::instanceMethod\",\"特定对象的方法引用\"],[\"实例方法引用（任意对象）\",\"Class::instanceMethod\",\"特定类型的实例方法\"],[\"构造方法引用\",\"Class::new\",\"构造器引用\",\"引用构造方法\"]],\"distractors\":[[\"类方法引用\",\"静态引用\",\"静态方法\"],[\"对象方法引用\",\"实例引用\",\"方法引用\"],[\"类型方法引用\",\"类实例方法\",\"ClassMethod::method\"],[\"new 引用\",\"构造函数引用\",\"构造器\"]]}",
-    "hints": [
-      "方法引用是 Lambda 表达式的更简洁写法，编译后生成同样的字节码",
-      "四种类型对应：类静态方法、特定对象方法、任意对象方法、构造器"
-    ],
-    "tags": [
-      "Java 8",
-      "方法引用",
-      "Lambda",
-      "语法糖"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "Optional 的链式操作",
-    "content": "Java 8 Optional 提供链式操作避免 null 检查。常用方法包括：ofNullable() 创建可以包含 null 的 Optional；map() 对值进行转换（返回 Optional）；flatMap() 避免嵌套 Optional，要求转换函数返回___；orElse() 和___提供默认值；filter() 按条件过滤；ifPresent() 在值存在时执行 Consumer；___在值不存在时执行 Runnable。",
-    "answer": "{\"correct\":[[\"Optional\",\"Optional 对象\"],[\"orElseGet()\",\"orElseGet\"],[\"ifPresentOrElse()\",\"or\",\"orElseThrow()\"]],\"distractors\":[[\"值\",\"对象\",\"非 Optional\"],[\"orElseThrow()\",\"orElseThrow\",\"get()\"],[\"ifPresent()\",\"isPresent()\",\"get()\"]]}",
-    "hints": [
-      "flatMap 用于避免 Optional<Optional<T>> 的嵌套结构",
-      "orElse 不论值是否存在都会执行（即使值不为 null），orElseGet 是惰性求值"
-    ],
-    "tags": [
-      "Java 8",
-      "Optional",
-      "函数式",
-      "空安全"
-    ]
-  },
-  {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CompletableFuture 的异步回调组合",
@@ -924,8 +870,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ThreadPoolExecutor prestart 方法",
     "content": "prestartCoreThread() 方法___（会/不会）预先启动一个核心线程使其等待任务。prestartAllCoreThreads() 启动___。allowCoreThreadTimeOut() 设置为 true 后核心线程也会在空闲超过___后被回收。",
@@ -941,8 +887,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "异步编程 CompletableFuture 异常处理",
     "content": "CompletableFuture 的异常处理方法：exceptionally() 在异常时提供___值；handle() 无论正常或异常都执行，可以处理结果或异常；whenComplete() 在完成时执行，不能___结果。所有异常传播到 get() 时包装为___Exception。",
@@ -958,8 +904,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "AQS 状态队列",
     "content": "AbstractQueuedSynchronizer（AQS）内部维护一个 _____ 状态变量（state）和一个 _____ 双向链表（CLH 队列的变体）。当线程获取锁失败时，会被封装为 Node 节点加入 _____ 队列。Node 的前驱节点为 _____ 时，当前节点才有资格尝试获取锁。",
@@ -972,8 +918,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "StampedLock 模式",
     "content": "StampedLock 支持三种锁模式：_____、乐观读和悲观读。乐观读不需要获取锁，通过_____机制验证数据是否被修改。与 ReentrantReadWriteLock 不同，StampedLock 的锁是_____（可重入/不可重入的）。如果乐观读验证失败，会升级为_____锁。",
@@ -986,8 +932,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "内存屏障分类",
     "content": "在 JMM（Java 内存模型）中，内存屏障（Memory Barrier）分为四种类型：LoadLoad、StoreStore、_____ 和 _____。volatile 写操作插入 _____ 屏障禁止写操作重排序。volatile 读操作插入 _____ 屏障禁止读操作重排序。",
@@ -1000,8 +946,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Semaphore 公平性",
     "content": "Semaphore 的构造参数中可以设置_____策略。公平模式下，调用 acquire() 的线程按照 FIFO 顺序获取许可，而非公平模式下允许线程_____。Semaphore 适用于_____控制场景。计数信号量允许同时最多 _____ 个线程访问临界区。",
@@ -1014,8 +960,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "线程状态转换",
     "content": "Java 线程从新建（NEW）状态调用 start() 后进入 _____ 状态。拥有锁的线程调用 wait() 会释放锁并进入 _____ 状态。线程进入同步代码块时未获得锁则进入 _____ 状态。线程调用 park() 后进入 _____ 状态。",
@@ -1028,8 +974,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "同步队列 SynchronousQueue",
     "content": "SynchronousQueue 是一个特殊的 BlockingQueue，其容量为 ____。",
@@ -1043,8 +989,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "锁消除优化",
     "content": "JIT 编译器的锁消除（Lock Elision）优化基于 ____ 分析技术来检测锁对象是否为线程局部。",
@@ -1058,8 +1004,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "锁粗化优化",
     "content": "当 JIT 检测到同一个锁被一个线程连续加锁解锁多次，会将锁的范围扩大到整个操作序列，这种优化称为____。",
@@ -1073,8 +1019,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "偏向锁的撤销",
     "content": "当多个线程竞争偏向锁时，偏向锁会升级为轻量级锁。偏向锁的撤销需要在____点执行。",
@@ -1088,8 +1034,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "读写锁的锁降级",
     "content": "在 ReentrantReadWriteLock 中，从写锁降级为读锁的过程称为____。写锁持有者可以获取读锁（降级），但读锁持有者____获取写锁（升级）。",
@@ -1103,8 +1049,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CAS 的 ABA 问题",
     "content": "CAS 操作的 ABA 问题是指值从 A 变为 B 又变回 A，可通过添加 ___(1)___ 或 ___(2)___ 来解决。",
@@ -1119,8 +1065,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "volatile 与重排序",
     "content": "volatile 关键字防止的重排序类型是 ___(1)___（编译时重排序）和 ___(2)___（运行时重排序）。volatile 写-读通过插入内存屏障禁止重排序。",
@@ -1135,8 +1081,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "锁分段技术",
     "content": "锁分段技术将锁的粒度减小以提高并发性能，典型实现是 ConcurrentHashMap 的 ___(1)___（JDK 7）和 ___(2)___（JDK 8）。",
@@ -1151,8 +1097,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CompletableFuture 方法",
     "content": "CompletableFuture 中，___(1)___ 用于异步不返回结果的任务，___(2)___ 将两个 CompletableFuture 的结果合并。",
@@ -1167,8 +1113,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ReadWriteLock 与读写锁",
     "content": "读写锁 ReadWriteLock 允许多个 ___(1)___ 线程同时访问，但 ___(2)___ 线程独占。",
@@ -1183,8 +1129,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Java 21 虚拟线程机制",
     "content": "Java 21 正式引入的轻量级并发机制是 ___（Virtual Threads），这是一种由 JVM 管理的 ___ 态线程。虚拟线程通过 ___（mount/unmount）机制在平台线程（Carrier Thread）上调度执行。",
@@ -1200,7 +1146,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ConcurrentHashMap 同步机制",
@@ -1218,7 +1164,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Happens-Before 跨线程保障",
@@ -1231,16 +1177,16 @@
     "tags": [
       "并发",
       "JMM",
-      "Happens-Before",
+      "happens-before",
       "volatile"
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ForkJoinPool 窃取机制",
-    "content": "ForkJoinPool 使用 ___ 窃取算法，由并发大师 ___ 引入到 Java 并发库中。每个工作线程维护一个 ___（双端队列），自己从头部获取任务，空闲时从 ___ 线程的队列尾部窃取任务。parallelism 参数默认等于 ___。",
+    "content": "ForkJoinPool 使用 ___ 窃取算法，由并发大师 ___ 引入到 Java 并发库中。每个工作线程维护一个 ___（双端队列），自己从尾部获取任务，空闲时从 ___ 线程的队列头部窃取任务。parallelism 参数默认等于 ___。",
     "answer": "{\"correct\": [[\"工作窃取\", \"Work-Stealing\", \"work stealing\"], [\"Doug Lea\"], [\"Deque\", \"双端队列\", \"work queue\"], [\"其他\", \"空闲\", \"相邻\"], [\"CPU核数\", \"可用处理器数\", \"Runtime.getRuntime().availableProcessors()\"]], \"distractors\": [\"任务抢占\", \"轮询调度\", \"Brian Goetz\", \"Joshua Bloch\", \"所有\", \"头部\", \"栈\", \"2\", \"4\"]}",
     "hints": [
       "ForkJoinPool 的 parallelism 控制工作线程数，默认等于 CPU 核数",
@@ -1254,7 +1200,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CyclicBarrier 屏障机制",
@@ -1272,8 +1218,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "synchronized 的 JVM 实现",
     "content": "synchronized 关键字在 JVM 中通过___实现。每个 Java 对象关联一个___，对象头中的 Mark Word 存储锁信息。JDK 6 之后 JVM 引入了___机制优化 synchronized，路径为：偏向锁 → 轻量级锁 → ___。",
@@ -1290,8 +1236,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "线程池核心线程数设置",
     "content": "线程池核心线程数设置取决于任务类型。CPU 密集型任务核心线程数建议设为___。IO 密集型任务核心线程数建议设为___（其中 W 为 IO 等待时间，C 为 CPU 计算时间）。",
@@ -1308,7 +1254,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "LongAdder 的原理",
@@ -1326,8 +1272,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CompletableFuture 任务组合",
     "content": "CompletableFuture 中合并两个独立异步任务结果的方法是___。当第二个任务依赖第一个任务的结果时（异步编排），应使用___方法。多个任务中任意一个完成即可继续的场景应使用___方法。",
@@ -1344,8 +1290,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "锁升级：偏向锁到轻量级锁再到重量级锁",
     "content": "Java synchronized 在 JVM 中的锁升级过程为：无锁 → ___ → 轻量级锁 → 重量级锁",
@@ -1361,8 +1307,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "线程池健康监控指标",
     "content": "监控 ThreadPoolExecutor 运行状态的关键方法包括：___（返回当前池中线程数）、___（返回正在执行任务的线程数）、___（返回任务队列中积压的任务数）、___（返回已累计完成的任务数）。根据这些指标判断线程池是否健康——如果___持续接近 maximumPoolSize 且队列持续增长，说明任务提交速度超过处理能力，需要评估是否要拒绝任务或扩容。",
@@ -1379,7 +1325,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Happens-Before 规则应用示例",
@@ -1392,13 +1338,13 @@
     "tags": [
       "并发",
       "JMM",
-      "Happens-Before",
+      "happens-before",
       "volatile",
       "锁"
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CopyOnWriteArrayList 读写分离原理",
@@ -1416,8 +1362,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ThreadPoolExecutor 的钩子方法",
     "content": "ThreadPoolExecutor 提供了三个可重写的保护性钩子方法：___（任务执行前调用，常用于记录开始时间或初始化 ThreadLocal）、___（任务执行后调用，无论正常完成还是异常退出都会执行，常用于记录耗时）、以及___（任务被拒绝时调用，比 RejectedExecutionHandler 更灵活，支持将任务重新入队）。线程池终止时回调的方法是___。",
@@ -1434,7 +1380,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "LockSupport 与 Object.wait/notify 对比",
@@ -1453,8 +1399,8 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "线程中断协作机制",
     "content": "Java 线程中断是协作机制而非强制终止。调用 thread.interrupt() 将线程的中断标志位设为___。线程通过___检测中断（返回 true 并___标志位），通过___仅检查不清除标志位。对于阻塞在 wait()/sleep()/join() 中的线程，interrupt() 会抛出___。已经终止的线程调用 interrupt()___（有/无）效果。",
@@ -1471,7 +1417,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "medium",
     "type": "fill_in_blank",
     "title": "ConcurrentHashMap 1.8 实现",
@@ -1490,7 +1436,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "LongAdder 分段计数原理",
@@ -1509,7 +1455,7 @@
     ]
   },
   {
-    "category": "concurrency_fill_blank",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "内存屏障的四种类型与 X86 实现",
@@ -1529,8 +1475,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Exchanger 数据交换",
     "content": "Exchanger 是 JUC 包中的同步器，支持两个线程在___（同步点）交换数据。内部使用___（CAS 自旋机制）和___（自旋失败后线程阻塞）两种等待策略。",
@@ -1546,7 +1492,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "medium",
     "type": "fill_in_blank",
     "title": "ExecutorCompletionService 完成服务",
@@ -1564,8 +1510,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ThreadPoolExecutor 生命周期管理",
     "content": "ThreadPoolExecutor 的生命周期状态（基于 AtomicInteger 的高 3 位存储）：___（CTL 值 < 0，接收新任务并处理队列任务）、___（不再接收新任务但继续处理队列中已有任务）、___（不再接收新任务且不处理队列任务，尝试中断执行中的线程）、___（所有任务终止、工作线程数为 0，terminated() 尚未执行）和 TERMINATED。shutdown() 将状态切换到___。shutdownNow() 将状态切换到___并返回___（队列中未执行的任务列表）。awaitTermination() 在超时时间内___等待线程池终止。",
@@ -1582,7 +1528,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "VarHandle 变量句柄与安全 CAS",
@@ -1601,7 +1547,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "DelayQueue 延迟队列原理",
@@ -1619,7 +1565,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "LinkedTransferQueue 传输队列",
@@ -1638,7 +1584,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CopyOnWriteArrayList 的适用场景与原理",
@@ -1656,7 +1602,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "LongAdder 与 Striped64 高性能计数器",
@@ -1674,7 +1620,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CompletionService 异步任务完成排序",
@@ -1692,8 +1638,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "线程中断机制与中断响应",
     "content": "线程中断是一种___机制（线程间协作，不是强制终止）。通过调用线程对象的___方法设置中断标志位。线程可以通过___方法检查中断状态（并清除标志位），或通过___方法仅检查不清除。如果线程处于___（sleep/wait/join）状态时被中断，会抛出___并清除中断标志位。LockSupport.park() 遇到中断会直接返回（不抛异常），但中断标志位___。处理中断的两种正确策略：传递中断（___）或恢复中断（___）。",
@@ -1710,8 +1656,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "concurrency",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Executors 工厂方法的常见陷阱",
     "content": "Executors 工厂方法创建的线程池存在多个陷阱：___返回无界线程池（核心=0，最大=MAX_VALUE，SynchronousQueue），任务堆积太多会创建过多线程导致___。___返回无界队列线程池（核心=最大=nThreads，LinkedBlockingQueue），任务堆积可能导致___。___返回单线程池，发生异常后线程会___（但 Executors 会创建新线程替代）。建议直接使用___构造器显式指定所有参数，避免默认参数带来的隐患。",

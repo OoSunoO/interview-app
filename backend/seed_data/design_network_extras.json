@@ -1,155 +1,11 @@
 [
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "单例模式实现方式对比",
-    "content": "单例模式有哪几种实现方式？各自优缺点是什么？为什么双重检查锁定需要 volatile？",
-    "answer": "答案：五种主流实现：饿汉、懒汉（synchronized）、双重检查锁（DCL）、静态内部类、枚举。DCL 需要 volatile 禁止指令重排序（防止拿到未初始化的半成品对象）。\n\n解析：1）饿汉式——类加载时初始化实例，JVM 保证线程安全。缺点：类加载即创建，即使不需要也占用资源（提前初始化）。2）懒汉式（synchronized）——获取实例时同步方法，线程安全但性能差（每次获取都加锁）。3）双重检查锁（DCL）——先检查实例是否已创建（不加锁），再加锁创建。instance 必须用 volatile 修饰（JDK 5+），原因：instance = new Singleton() 不是原子操作——分配内存 → 初始化对象 → 引用赋值。JIT 可能重排序为 1→3→2，线程 B 在赋值后、初始化前读到的是「半初始化」对象。volatile 禁止该重排序。4）静态内部类——静态内部类 SingletonHolder 在调用 getInstance() 时才加载（JLS 保证类加载线程安全）。最推荐的懒加载方式。5）枚举（Enum）——最简洁，JVM 保证单例、线程安全，天然防反射和反序列化破坏。\n\n扩展延伸：反射破坏单例：通过 Constructor.setAccessible(true) 可以反射创建新实例。防御方式：构造方法中检查实例是否已存在，抛出异常。序列化破坏：readObject() 会创建新对象。防御方式：实现 readResolve() 方法返回单例实例。枚举天然免疫这两种攻击。Spring Bean 默认也是单例（singleton scope）——Spring 容器使用 ConcurrentHashMap 缓存 Bean 实例，非 GOF 单例模式但效果相同。",
-    "hints": [
-      "volatile 在 DCL 中起什么作用",
-      "为什么枚举天然防止反射和反序列化攻击"
-    ],
-    "tags": [
-      "设计模式",
-      "单例",
-      "DCL",
-      "volatile"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "工厂模式体系",
-    "content": "简单工厂、工厂方法、抽象工厂三种工厂模式的区别是什么？各自适用什么场景？",
-    "answer": "答案：简单工厂一个类创建所有产品（违反开闭原则）；工厂方法每个产品对应一个工厂（符合开闭，但类多）；抽象工厂创建产品族（解决多产品的兼容性约束）。\n\n解析：1）简单工厂（Simple Factory）——一个工厂类根据参数返回不同的产品子类。缺点：每增加一个产品需要修改工厂类（开闭原则）。2）工厂方法（Factory Method）——定义创建对象的接口，让子类决定实例化哪个类。每个产品对应一个具体工厂。优点：符合开闭原则（新增产品只需新增工厂类）。缺点：产品种类多时工厂类数量膨胀。3）抽象工厂（Abstract Factory）——提供一个创建一系列相关或相互依赖对象的接口，无需指定具体类。解决产品族（同一品牌的产品集合）的兼容性约束。\n\n扩展延伸：工厂模式在 Spring 中的应用：1）Spring IoC 容器本质上是工厂模式（BeanFactory 工厂接口，ApplicationContext 是其子接口）。2）getBean(name) 根据名称/类型创建并返回 Bean。3）FactoryBean 接口——工厂 Bean，实现类可自定义 Bean 的创建逻辑（如 MyBatis 的 SqlSessionFactoryBean、Spring 的 ProxyFactoryBean）。\n\n在 MyBatis 中的应用：SqlSessionFactory（核心工厂）通过 SqlSessionFactoryBuilder 创建、openSession() 打开 Session。",
-    "hints": [
-      "Spring BeanFactory 和 FactoryBean 的区别",
-      "抽象工厂中如何保证产品族的兼容性"
-    ],
-    "tags": [
-      "设计模式",
-      "工厂",
-      "简单工厂",
-      "抽象工厂"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "策略模式与 if-else 重构",
-    "content": "策略模式的核心思想是什么？如何用策略模式重构大段的 if-else/switch 代码？",
-    "answer": "答案：策略模式将算法封装为独立的策略类，运行时动态切换。核心是定义策略接口（Strategy）→ 具体策略实现（ConcreteStrategy）→ 上下文（Context）持有策略引用。\n\n解析：重构 if-else 的步骤：1）提取变化的算法为一个接口（如 CalculateStrategy）。2）每个分支创建一个策略实现类（如 NormalStrategy、VipStrategy、PromotionStrategy）。3）上下文持有策略引用，setStrategy() 或构造注入。4）调用端不再用 if-else 判断，直接 context.execute()。\n\n扩展延伸：策略模式的应用场景：1）支付渠道路由——根据用户选择的支付方式（微信/支付宝/银联）切换不同的支付处理。2）促销活动——满减/折扣/返现不同的优惠计算。3）审批流程——不同金额级别走不同审批策略。Spring 中的策略模式：ResourceLoader 根据路径前缀（classpath:/file:/http://）调用不同的 Resource 实现类。Spring Security 的 AuthenticationProvider 根据不同认证方式（表单/JWT/OAuth）切换验证逻辑。注意：策略模式没有消除 if-else，而是将 if-else 从调用代码转移到了策略注册/工厂中。可配合 Spring 的依赖注入（@Autowired Map<String, Strategy>）自动收集所有策略，彻底消除条件分支。",
-    "hints": [
-      "@Autowired Map<String, Strategy> 如何自动注入所有策略实现",
-      "策略模式和状态模式的区别"
-    ],
-    "tags": [
-      "设计模式",
-      "策略",
-      "重构",
-      "if-else"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "代理模式与 Spring AOP",
-    "content": "JDK 动态代理和 CGLIB 代理的核心区别是什么？Spring AOP 如何选择使用哪种代理？",
-    "answer": "答案：JDK 动态代理通过 InvocationHandler 基于接口生成代理类；CGLIB 通过继承（ASM 字节码增强）生成子类代理。Spring AOP 优先用 JDK 动态代理（Bean 实现接口时），否则用 CGLIB。Spring Boot 2.0 起默认用 CGLIB。\n\n解析：1）JDK 动态代理——要求目标类实现接口。运行时创建实现目标接口的代理类（$Proxy0 等），方法调用转发到 InvocationHandler.invoke()。生成的代理类字节码小。2）CGLIB（Code Generation Library）——不要求接口。通过 ASM 字节码框架生成目标类的子类作为代理，覆盖父类方法，在方法调用前后织入增强逻辑。注意：CGLIB 不能代理 final 方法和 final 类（子类无法重写）。\n\n扩展延伸：AOP 两种代理的底层机制：JDK 动态代理底层调用链：\nproxy.method() → InvocationHandler.invoke() → MethodInterceptor.invoke() → joinPoint.proceed() → target.method()。CGLIB 底层是生成 Enhancer 子类，在子类方法中调用 MethodInterceptor。\n\n性能说明：JDK 8+ 的 JDK 动态代理性能已接近甚至超过 CGLIB（JDK 持续优化代理生成速度和调用性能）。Spring Boot 2.0+ 默认 spring.aop.proxy-target-class=true。AOP 的使用限制：自调用（内部方法调用 this.method()）不会走代理（因为 this 是原始对象不是代理对象），需要注入自身（@Autowired self）或在同一个类内部用 AopContext.currentProxy()。",
-    "hints": [
-      "为什么 Spring Boot 2.0+ 默认用 CGLIB 替代 JDK 动态代理",
-      "AOP 自调用问题如何解决"
-    ],
-    "tags": [
-      "设计模式",
-      "代理",
-      "AOP",
-      "CGLIB"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "观察者模式与事件驱动",
-    "content": "观察者模式的核心概念是什么？Spring 框架中基于事件驱动（Event/Listener）的观察者模式是如何工作的？",
-    "answer": "答案：观察者模式定义一对多依赖关系，当一个对象（Subject）状态变化时自动通知所有依赖它的观察者（Observer）。Spring 通过 ApplicationEventPublisher + @EventListener 实现事件驱动架构。\n\n解析：经典结构：Subject（主题）维护 Observer 列表，提供了 attach/notify 等方法。Observer（观察者）定义 update() 接口。\n\nSpring 事件机制：1）发布事件——ApplicationEventPublisher.publishEvent()，可发布任意 Object（Spring 4.2+）。2）监听事件——@EventListener 注解标记监听器方法。3）异步监听——配合 @Async 异步执行（默认是同步——发布者阻塞等待所有监听器处理完成再继续）。4）事件继承——监听父事件也会收到子事件。5）@TransactionalEventListener——监听器在事务提交后执行（AFTER_COMMIT/AFTER_ROLLBACK 等阶段）。\n\n扩展延伸：观察者模式的 Java 原生实现：java.util.Observable（已弃用，JDK 9+ 标记废弃）和 java.util.Observer。推荐使用 Guava 的 EventBus（@Subscribe 注解）或 Spring 事件。消息队列 vs 事件驱动：Spring Event 是 JVM 进程内的同步/异步（@Async + 线程池）通知机制；消息队列（Kafka/RocketMQ）是跨进程、跨服务的消息传递，支持持久化、重试和广播。选型：单体应用内解耦用 Spring Event；微服务间解耦用 MQ。",
-    "hints": [
-      "Spring Event 同步和异步两种模式的选择依据",
-      "@TransactionalEventListener 的 AFTER_COMMIT 事务阶段有什么用"
-    ],
-    "tags": [
-      "设计模式",
-      "观察者",
-      "事件驱动",
-      "Spring Event"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "模板方法模式与 Spring 模板",
-    "content": "模板方法模式的核心思想是什么？Spring 中的 JdbcTemplate、RestTemplate 是如何应用模板方法模式的？",
-    "answer": "答案：模板方法模式在父类定义算法的骨架（流程步骤），将可变部分延迟到子类或回调中实现。Spring 的 XXTemplate 类封装了资源管理的固定部分（创建/释放/异常处理），将业务逻辑通过回调（Callback）交给调用方。\n\n解析：模板方法的结构：AbstractClass（定义 templateMethod 流程骨架，包含 primitiveOperation1() + primitiveOperation2() 等抽象方法由子类实现。\n\nSpring 中的模板方法变体（Callback + Template）：JdbcTemplate.execute() 的流程：1）获取 Connection（从 DataSource 获取）。2）创建 Statement/PreparedStatement。3）执行 SQL，如果传入 PreparedStatementCallback 将 Statement 交给回调处理。4）处理 ResultSet（RowMapper 回调将每行映射为对象）。5）清理资源（关闭 Connection/Statement/ResultSet，异常时回滚事务）。调用方只需要实现回调接口（如 RowMapper<T>），不需要关心 Connection 获取和释放。\n\n扩展延伸：RestTemplate 的工作方式：创建 HttpRequest → 处理请求头/体 → 执行 HTTP 请求（ClientHttpRequestFactory）→ 处理响应（ResponseExtractor）。Spring 5 开始 RestTemplate 标记为维护模式（维护模式：不添加新功能但继续修 bug），推荐使用 WebClient（Reactive 非阻塞）。其他模板类：RedisTemplate（操作 Redis）、MongoTemplate（操作 MongoDB）、RabbitTemplate（操作 RabbitMQ）。注意：模板方法模式在 Spring 中的实现更接近 Strategy（回调函数注入）而不是经典模板方法（子类继承），但思想一致——固定流程 + 可变回调。",
-    "hints": [
-      "JdbcTemplate 为什么不需要手动释放连接",
-      "模板方法模式中继承和回调（Callback）两种方式各有什么优劣"
-    ],
-    "tags": [
-      "设计模式",
-      "模板方法",
-      "JdbcTemplate",
-      "Spring"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "责任链模式",
-    "content": "责任链模式的工作原理是什么？Java Web 中的 Filter、Spring Interceptor、Netty Pipeline 有哪些异同点？",
-    "answer": "答案：责任链模式将多个处理对象连成链，请求依次经过链上的每个处理器，直到某个处理器终止传递或链结束。核心是每个处理器决定是否处理请求并传递给下一个。\n\n解析：1）Servlet Filter（javax.servlet.Filter）——基于 javax.servlet.FilterChain，doFilter() 方法调用 chain.doFilter() 传递请求。过滤器的执行顺序由 web.xml 或 @WebFilter 的 filterName 排序决定（按字母序）。Filter 作用于所有 Servlet，是粗粒度的（基于 HttpServletRequest/Response）。2）Spring Interceptor（HandlerInterceptor）——在 Spring MVC 的 Handler 执行前后插入处理（preHandle/postHandle/afterCompletion），粒度更细（可以针对特定 URL 模式），可以访问 Spring 容器中的 Bean。3）Netty Pipeline（ChannelPipeline）——责任链的纯正实现：每个 ChannelHandler 处理入站/出站事件，调用 ctx.fireChannelRead() 传播到下一个处理器。支持异步处理和动态增删处理器。\n\n扩展延伸：责任链模式的实现要点：1）链中每个节点决定是否传下去（FilterViolationException 可中断链）。2）Filter 和 Interceptor 的顺序问题：先部署的 Filter 在外层（先执行 doFilter 前/后执行 doFilter 后），Interceptor 按配置顺序执行 preHandler、逆序执行 postHandler。3）Spring Cloud Gateway 的过滤器链基于责任链模式（pre-filter + post-filter 双向处理）。\n\n设计原则：责任链降低了发送者和接收者的耦合度，新增处理器只需新加一个节点。缺点：调试困难（请求穿过多个处理器，链条长时性能下降）。",
-    "hints": [
-      "Filter 和 Interceptor 在 Spring MVC 中的执行顺序",
-      "Netty Pipeline 双向传播（入站/出站）是怎么实现的"
-    ],
-    "tags": [
-      "设计模式",
-      "责任链",
-      "Filter",
-      "Interceptor"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Spring 中的经典设计模式汇总",
-    "content": "Spring 框架中用到了哪些经典设计模式？请列举核心用例。",
-    "answer": "答案：Spring 是设计模式的集大成者，核心用到的模式包括：工厂（控制反转 IoC）、单例（Bean 默认作用域）、代理（AOP）、模板（JdbcTemplate）、观察者（事件机制）、适配器（MVC HandlerAdapter）、策略（ResourceLoader 路由）、装饰器（BeanWrapper/DataSource 装饰）。\n\n解析：1）工厂模式——BeanFactory/IoC 容器是工厂模式的最佳实践。getBean() 根据配置或注解创建并组装对象。对比 GOF 工厂模式：Spring IoC 不只是工厂——还管理生命周期、作用域、依赖注入。2）单例模式——Spring Bean 默认 scope=singleton，更准确说是一个 Bean 名称/对象对在容器中是唯一的。与 GOF 单例区别：Spring 控制单例的范围在容器层面，不是 ClassLoader 级别。3）代理模式——AOP 实现原理。@Transactional 声明式事务管理就是 AOP 代理的典型应用——在方法前后自动开启/提交/回滚事务。4）模板方法——JdbcTemplate 封装了 JDBC 固定流程（获取连接→执行 SQL→处理结果→清理资源）。5）观察者——ApplicationEvent + ApplicationListener / @EventListener。6）适配器——Spring MVC 的 HandlerAdapter 将各种 Handler（@Controller/HttpRequestHandler/SimpleControllerHandlerAdapter）统一适配为 ModelAndView。7）策略——ResourceLoader 根据路径前缀（classpath:/file:/http://）选择不同实现。8）装饰器——BeanWrapper 为 Bean 的属性设置提供额外行为。\n\n扩展延伸：掌握这些设计模式对理解 Spring 源码的帮助：读源码时不要逐行读，先识别当前用到的模式，从宏观把握设计意图。Spring 源码本身就是设计模式教学的活教材。",
-    "hints": [
-      "Spring IoC 和 GOF 工厂模式的根本区别在哪",
-      "Spring 的 AOP 代理在什么场景下使用 JDK 动态代理 vs CGLIB"
-    ],
-    "tags": [
-      "Spring",
-      "设计模式",
-      "IoC",
-      "AOP"
-    ]
-  },
-  {
     "category": "cs_basics",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "HTTP/1.1 vs HTTP/2 vs HTTP/3",
     "content": "HTTP 各版本（1.1/2/3）的核心区别是什么？HTTP/2 解决了什么问题，又带来了什么新问题？",
-    "answer": "答案：HTTP/1.1 文本协议支持持久连接和管线化；HTTP/2 二进制分帧实现多路复用解决队头阻塞；HTTP/3 基于 QUIC（UDP）彻底解决传输层队头阻塞。\n\n解析：HTTP/1.1 的问题：1）队头阻塞（HOL Blocking）——同一连接上的多个请求按序处理，前一个请求阻塞则后续请求等待。2）头部冗余——每次请求携带大量重复的 HTTP 头部（Cookie/User-Agent 等）。3）只能客户端主动发起请求（无服务端推送）。\n\nHTTP/2（基于 SPDY）的改进：1）二进制分帧（Binary Framing）——将 HTTP 消息拆为帧（Headers/Data 等），同一连接上的多个帧交错发送，消除队头阻塞。2）多路复用（Multiplexing）——一个 TCP 连接可同时传输多个 Stream（请求-响应流）。3）服务端推送（Server Push）——服务端可以主动推送资源（如 HTML 中的 CSS/JS）。4）头部压缩（HPACK）——用 Huffman 编码 + 动态/静态索引表减少头部冗余。\n\n扩展延伸：HTTP/2 的问题：TCP 层的队头阻塞仍然存在。TCP 按序传输，底层 TCP 丢包时即使后续数据帧到达也会被缓冲（等待重传），阻塞所有 Stream。HTTP/3 基于 QUIC（Quick UDP Internet Connections）：QUIC 在 UDP 之上实现可靠传输、TLS 1.3 加密和零 RTT 连接。多路复用在 QUIC 级别独立（一条流的丢包不影响其他流）。\n\n注意：HTTP/3 部署需要服务端和客户端都支持，CDN 厂商（Cloudflare/Google/Fastly）已广泛支持，但企业内部系统升级较慢。生产建议：优先升级到 HTTP/2（绝大多数现代浏览器和服务端支持），HTTP/3 作为可选增强。",
+    "answer": "HTTP/1.1 文本协议支持持久连接和管线化；HTTP/2 二进制分帧实现多路复用解决队头阻塞；HTTP/3 基于 QUIC（UDP）彻底解决传输层队头阻塞。\n\n解析：HTTP/1.1 的问题：1）队头阻塞（HOL Blocking）——同一连接上的多个请求按序处理，前一个请求阻塞则后续请求等待。2）头部冗余——每次请求携带大量重复的 HTTP 头部（Cookie/User-Agent 等）。3）只能客户端主动发起请求（无服务端推送）。\n\nHTTP/2（基于 SPDY）的改进：1）二进制分帧（Binary Framing）——将 HTTP 消息拆为帧（Headers/Data 等），同一连接上的多个帧交错发送，消除队头阻塞。2）多路复用（Multiplexing）——一个 TCP 连接可同时传输多个 Stream（请求-响应流）。3）服务端推送（Server Push）——服务端可以主动推送资源（如 HTML 中的 CSS/JS）。4）头部压缩（HPACK）——用 Huffman 编码 + 动态/静态索引表减少头部冗余。\n\n扩展延伸：HTTP/2 的问题：TCP 层的队头阻塞仍然存在。TCP 按序传输，底层 TCP 丢包时即使后续数据帧到达也会被缓冲（等待重传），阻塞所有 Stream。HTTP/3 基于 QUIC（Quick UDP Internet Connections）：QUIC 在 UDP 之上实现可靠传输、TLS 1.3 加密和零 RTT 连接。多路复用在 QUIC 级别独立（一条流的丢包不影响其他流）。\n\n注意：HTTP/3 部署需要服务端和客户端都支持，CDN 厂商（Cloudflare/Google/Fastly）已广泛支持，但企业内部系统升级较慢。生产建议：优先升级到 HTTP/2（绝大多数现代浏览器和服务端支持），HTTP/3 作为可选增强。",
     "hints": [
       "HTTP/2 的二进制分帧如何解决队头阻塞",
       "HTTP/2 的 TCP 队头阻塞和 HTTP/3 QUIC 如何解决"
@@ -167,7 +23,7 @@
     "type": "short_answer",
     "title": "gRPC 与 Protocol Buffers",
     "content": "gRPC 的核心原理是什么？Protocol Buffers 和 HTTP/2 在 gRPC 中分别扮演什么角色？与 REST 相比有什么优势和限制？",
-    "answer": "答案：gRPC 基于 HTTP/2 做传输层，Protocol Buffers 做序列化/接口定义语言（IDL）。支持四种通信模式：一元（Unary）、服务端流、客户端流、双向流。适合微服务内部通信。\n\n解析：1）Protocol Buffers——.proto 文件定义服务接口和消息结构，编译为各语言的代码。编码后的二进制消息比 JSON 小 3-10 倍（varint 编码 + 字段序号唯一标识）。序列化/反序列化速度比 JSON 快一个数量级（二进制解析 vs 文本解析）。2）HTTP/2——gRPC 利用 HTTP/2 的 Stream 实现多个请求复用和双向流。每个 gRPC 调用在一个 HTTP/2 Stream 中完成。3）四种通信模式：Unary（客户端发送一个请求，服务端返回一个响应）、Server-side streaming（服务端持续推送数据流）、Client-side streaming（客户端持续上传数据流）、Bidirectional streaming（双方同时发送接收数据流）。\n\n扩展延伸：gRPC vs REST：gRPC 适合高性能微服务间调用（低延迟、高吞吐），但浏览器不支持原生 gRPC（需要 gRPC-Web + Envoy 代理）。REST 以资源为中心，可读性强，适合对外开放的 API（浏览器可以直接调用）。gRPC 的限制：1）服务端负载均衡需要 L7（gRPC 基于 HTTP/2 长连接，L4 轮询失衡），通常需要 Kubernetes + Headless Service + 客户端侧负载均衡或 Envoy Sidecar。2）版本管理——.proto 文件变更要兼容。\n\n注意：gRPC 在 IoT 和移动端也有应用（grpc-java 和 grpc-swift），但 Web 端使用仍需 gRPC-Web 代理转换。",
+    "answer": "gRPC 基于 HTTP/2 做传输层，Protocol Buffers 做序列化/接口定义语言（IDL）。支持四种通信模式：一元（Unary）、服务端流、客户端流、双向流。适合微服务内部通信。\n\n解析：1）Protocol Buffers——.proto 文件定义服务接口和消息结构，编译为各语言的代码。编码后的二进制消息比 JSON 小 3-10 倍（varint 编码 + 字段序号唯一标识）。序列化/反序列化速度比 JSON 快一个数量级（二进制解析 vs 文本解析）。2）HTTP/2——gRPC 利用 HTTP/2 的 Stream 实现多个请求复用和双向流。每个 gRPC 调用在一个 HTTP/2 Stream 中完成。3）四种通信模式：Unary（客户端发送一个请求，服务端返回一个响应）、Server-side streaming（服务端持续推送数据流）、Client-side streaming（客户端持续上传数据流）、Bidirectional streaming（双方同时发送接收数据流）。\n\n扩展延伸：gRPC vs REST：gRPC 适合高性能微服务间调用（低延迟、高吞吐），但浏览器不支持原生 gRPC（需要 gRPC-Web + Envoy 代理）。REST 以资源为中心，可读性强，适合对外开放的 API（浏览器可以直接调用）。gRPC 的限制：1）服务端负载均衡需要 L7（gRPC 基于 HTTP/2 长连接，L4 轮询失衡），通常需要 Kubernetes + Headless Service + 客户端侧负载均衡或 Envoy Sidecar。2）版本管理——.proto 文件变更要兼容。\n\n注意：gRPC 在 IoT 和移动端也有应用（grpc-java 和 grpc-swift），但 Web 端使用仍需 gRPC-Web 代理转换。",
     "hints": [
       "gRPC 为什么比 REST 性能高",
       "gRPC-Web 为什么需要代理层"
@@ -185,7 +41,7 @@
     "type": "short_answer",
     "title": "TCP TIME_WAIT 与 CLOSE_WAIT",
     "content": "TCP 连接关闭中的 TIME_WAIT 和 CLOSE_WAIT 状态分别在什么情况下产生？大量 TIME_WAIT 如何优化？",
-    "answer": "答案：TIME_WAIT 出现在主动关闭连接的一方（发送 FIN 并收到对端的 FIN ACK 后），持续 2MSL（默认 60s 在 Linux），确保旧连接的数据包不会干扰新连接。CLOSE_WAIT 是被动关闭方收到 FIN 后未调用 close() 导致。\n\n解析：1）TIME_WAIT 产生——当主动关闭方发送最后的 ACK 确认后进入 TIME_WAIT。两个作用：一是确保最后的 ACK 到达对端（如果 ACK 丢失，对端重传 FIN，主动关闭方会重发 ACK）；二是让本连接的所有延迟数据包在网络中自然消失（MSL = Maximum Segment Lifetime，Linux 默认 30s，2MSL = 60s）。2）CLOSE_WAIT——对端关闭连接（发送 FIN），本端回复 ACK 后进入 CLOSE_WAIT。此时本端应用程序尚未关闭 Socket（未调用 close()），CLOSE_WAIT 不会自动消失。大量 CLOSE_WAIT 通常是代码 bug——未在 finally 或 try-with-resources 中关闭连接。\n\n扩展延伸：大量 TIME_WAIT 优化：1）开启 net.ipv4.tcp_tw_reuse=1（Linux 3.6+，只对客户端发起连接有用——作为客户端主动发起新连接时可以重用 TIME_WAIT 状态的 socket，但前提是时间戳递增）。2）注意：Linux 4.12 移除了 tcp_tw_recycle 参数（因 NAT 环境下时间戳冲突产生问题）。3）减少 TIME_WAIT 的正确方式：如果是客户端（短连接调用方），使用连接池复用连接（如 HTTP 连接池、JDBC 连接池）减少主动关闭次数。4）调整 MSL：tcp_fin_timeout 参数调节 TIME_WAIT 时长（默认 60s，不是直接减 MSL）。5）服务端视角：让客户端主动关闭（Client 发 FIN），服务端做被动关闭方避免 TIME_WAIT（服务端发完数据后调用 shutdownOutput 而不是 close）。\n\n排查命令：netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}' 统计各状态数量。",
+    "answer": "TIME_WAIT 出现在主动关闭连接的一方（发送 FIN 并收到对端的 FIN ACK 后），持续 2MSL（默认 60s 在 Linux），确保旧连接的数据包不会干扰新连接。CLOSE_WAIT 是被动关闭方收到 FIN 后未调用 close() 导致。\n\n解析：1）TIME_WAIT 产生——当主动关闭方发送最后的 ACK 确认后进入 TIME_WAIT。两个作用：一是确保最后的 ACK 到达对端（如果 ACK 丢失，对端重传 FIN，主动关闭方会重发 ACK）；二是让本连接的所有延迟数据包在网络中自然消失（MSL = Maximum Segment Lifetime，Linux 默认 30s，2MSL = 60s）。2）CLOSE_WAIT——对端关闭连接（发送 FIN），本端回复 ACK 后进入 CLOSE_WAIT。此时本端应用程序尚未关闭 Socket（未调用 close()），CLOSE_WAIT 不会自动消失。大量 CLOSE_WAIT 通常是代码 bug——未在 finally 或 try-with-resources 中关闭连接。\n\n扩展延伸：大量 TIME_WAIT 优化：1）开启 net.ipv4.tcp_tw_reuse=1（Linux 3.6+，只对客户端发起连接有用——作为客户端主动发起新连接时可以重用 TIME_WAIT 状态的 socket，但前提是时间戳递增）。2）注意：Linux 4.12 移除了 tcp_tw_recycle 参数（因 NAT 环境下时间戳冲突产生问题）。3）减少 TIME_WAIT 的正确方式：如果是客户端（短连接调用方），使用连接池复用连接（如 HTTP 连接池、JDBC 连接池）减少主动关闭次数。4）调整 MSL：tcp_fin_timeout 参数调节 TIME_WAIT 时长（默认 60s，不是直接减 MSL）。5）服务端视角：让客户端主动关闭（Client 发 FIN），服务端做被动关闭方避免 TIME_WAIT（服务端发完数据后调用 shutdownOutput 而不是 close）。\n\n排查命令：netstat -n | awk '/^tcp/ {++S[$NF]} END {for(a in S) print a, S[a]}' 统计各状态数量。",
     "hints": [
       "TIME_WAIT 为什么是 2MSL 而不是别的值",
       "CLOSE_WAIT 大量堆积通常说明什么问题"
@@ -203,7 +59,7 @@
     "type": "short_answer",
     "title": "HTTPS 与 TLS 1.2 vs 1.3",
     "content": "TLS 1.2 和 1.3 的握手过程有什么区别？TLS 1.3 在性能和安全上有哪些改进？",
-    "answer": "答案：TLS 1.2 完整握手需要 2-RTT（4 次消息），TLS 1.3 只 1-RTT（2 次消息），并提供 0-RTT 会话恢复。TLS 1.3 删除了不安全算法（RSA 密钥交换、CBC 模式等），只支持 PFS（完美前向安全）。\n\n解析：TLS 1.2 完整握手：ClientHello → ServerHello + Certificate + ServerKeyExchange + ServerHelloDone → ClientKeyExchange + ChangeCipherSpec + Finished → ChangeCipherSpec + Finished（2 RTT）。TLS 1.3 完整握手：ClientHello（携带支持的密码套件和 Key Share 猜测）→ ServerHello + Certificate + Finished → Client Finished（1 RTT，客户端在第一个消息中就发送了密钥共享猜测）。\n\n扩展延伸：TLS 1.3 的安全性改进：1）移除 RSA 密钥交换——RSA 不能提供 PFS（私钥泄露后可解密所有历史流量），TLS 1.3 只支持 ECDHE（临时椭圆曲线 Diffie-Hellman）和 DHE。2）移除 CBC 模式加密——此前有 Padding Oracle 攻击（POODLE/Lucky 13）。3）移除 RC4——弱流密码（偏差攻击）。4）减少密码套件数量——从 37 个降为 5 个。\n\n0-RTT（TLS 1.3 会话恢复）：客户端之前在本地缓存了 PSK（Pre-Shared Key），再次连接时可以直接在 ClientHello 中携带加密数据，实现零往返延迟。风险：0-RTT 有重放攻击风险（需要服务端做幂等检查）。HTTPS 性能的优化工具：OCSP Stapling（服务端缓存证书撤销状态，减少客户端额外请求）、False Start（允许客户端在握手未完全完成时提前发送应用数据）。",
+    "answer": "TLS 1.2 完整握手需要 2-RTT（4 次消息），TLS 1.3 只 1-RTT（2 次消息），并提供 0-RTT 会话恢复。TLS 1.3 删除了不安全算法（RSA 密钥交换、CBC 模式等），只支持 PFS（完美前向安全）。\n\n解析：TLS 1.2 完整握手：ClientHello → ServerHello + Certificate + ServerKeyExchange + ServerHelloDone → ClientKeyExchange + ChangeCipherSpec + Finished → ChangeCipherSpec + Finished（2 RTT）。TLS 1.3 完整握手：ClientHello（携带支持的密码套件和 Key Share 猜测）→ ServerHello + Certificate + Finished → Client Finished（1 RTT，客户端在第一个消息中就发送了密钥共享猜测）。\n\n扩展延伸：TLS 1.3 的安全性改进：1）移除 RSA 密钥交换——RSA 不能提供 PFS（私钥泄露后可解密所有历史流量），TLS 1.3 只支持 ECDHE（临时椭圆曲线 Diffie-Hellman）和 DHE。2）移除 CBC 模式加密——此前有 Padding Oracle 攻击（POODLE/Lucky 13）。3）移除 RC4——弱流密码（偏差攻击）。4）减少密码套件数量——从 37 个降为 5 个。\n\n0-RTT（TLS 1.3 会话恢复）：客户端之前在本地缓存了 PSK（Pre-Shared Key），再次连接时可以直接在 ClientHello 中携带加密数据，实现零往返延迟。风险：0-RTT 有重放攻击风险（需要服务端做幂等检查）。HTTPS 性能的优化工具：OCSP Stapling（服务端缓存证书撤销状态，减少客户端额外请求）、False Start（允许客户端在握手未完全完成时提前发送应用数据）。",
     "hints": [
       "TLS 1.3 为什么能比 1.2 少一个 RTT",
       "TLS 1.3 的 0-RTT 会话恢复存在什么安全风险"
@@ -221,7 +77,7 @@
     "type": "short_answer",
     "title": "HTTP 缓存机制",
     "content": "HTTP 的强缓存和协商缓存的区别是什么？Cache-Control 和 ETag 如何配合实现高效缓存？",
-    "answer": "答案：强缓存直接使用本地缓存（不请求服务器），通过 Expires/Cache-Control: max-age 控制。协商缓存向服务器验证缓存是否过期（返回 304 则用本地缓存），通过 Last-Modified/If-Modified-Since 和 ETag/If-None-Match 实现。\n\n解析：1）强缓存——浏览器检查 Cache-Control: max-age=31536000（优先级高于 Expires），如果未过期直接从本地磁盘/内存缓存读取，不发送 HTTP 请求。优先级：Cache-Control > Expires。Expires 是 HTTP/1.0 的过期时间（绝对时间，依赖客户端时钟），Cache-Control 是 HTTP/1.1 的相对时间（max-age 秒数）。2）协商缓存——强缓存过期后，浏览器向服务器发送验证请求。请求头 If-Modified-Since = 上次响应头的 Last-Modified（最近修改时间），服务器比对时间决定返回 304（文件未修改）或 200 + 新文件。请求头 If-None-Match = 上次响应头的 ETag（文件指纹，如 hash/版本号），服务器比对指纹决定。优先级：ETag > Last-Modified（ETag 更精确——能检测到秒级内的修改、inode 变化等 Last-Modified 无法感知的变化）。\n\n扩展延伸：Cache-Control 的其他指令：no-cache（不使用强缓存，但仍可使用协商缓存）、no-store（完全不缓存）、public（任何缓存都可缓存，包括 CDN）、private（仅浏览器可缓存，CDN 不可缓存）、must-revalidate（过期后必须向源服务器验证）。\n\n应用场景：静态资源（CSS/JS/图片）→ 强缓存 + 文件名 hash（webpack 的 contenthash）。HTML → no-cache 确保每次协商验证。API 响应 → 根据业务设置适当的 max-age 或 private/no-store。CDN 配合：静态资源上 CDN，Cache-Control 设置 public + 长 max-age + 文件名 hash + 版本路径。",
+    "answer": "强缓存直接使用本地缓存（不请求服务器），通过 Expires/Cache-Control: max-age 控制。协商缓存向服务器验证缓存是否过期（返回 304 则用本地缓存），通过 Last-Modified/If-Modified-Since 和 ETag/If-None-Match 实现。\n\n解析：1）强缓存——浏览器检查 Cache-Control: max-age=31536000（优先级高于 Expires），如果未过期直接从本地磁盘/内存缓存读取，不发送 HTTP 请求。优先级：Cache-Control > Expires。Expires 是 HTTP/1.0 的过期时间（绝对时间，依赖客户端时钟），Cache-Control 是 HTTP/1.1 的相对时间（max-age 秒数）。2）协商缓存——强缓存过期后，浏览器向服务器发送验证请求。请求头 If-Modified-Since = 上次响应头的 Last-Modified（最近修改时间），服务器比对时间决定返回 304（文件未修改）或 200 + 新文件。请求头 If-None-Match = 上次响应头的 ETag（文件指纹，如 hash/版本号），服务器比对指纹决定。优先级：ETag > Last-Modified（ETag 更精确——能检测到秒级内的修改、inode 变化等 Last-Modified 无法感知的变化）。\n\n扩展延伸：Cache-Control 的其他指令：no-cache（不使用强缓存，但仍可使用协商缓存）、no-store（完全不缓存）、public（任何缓存都可缓存，包括 CDN）、private（仅浏览器可缓存，CDN 不可缓存）、must-revalidate（过期后必须向源服务器验证）。\n\n应用场景：静态资源（CSS/JS/图片）→ 强缓存 + 文件名 hash（webpack 的 contenthash）。HTML → no-cache 确保每次协商验证。API 响应 → 根据业务设置适当的 max-age 或 private/no-store。CDN 配合：静态资源上 CDN，Cache-Control 设置 public + 长 max-age + 文件名 hash + 版本路径。",
     "hints": [
       "为什么 ETag 比 Last-Modified 更精确",
       "Cache-Control: no-cache 和 no-store 的区别是什么"
@@ -239,14 +95,14 @@
     "type": "short_answer",
     "title": "TCP Keepalive 与应用层心跳",
     "content": "TCP Keepalive 和应用层心跳检测机制有什么区别？各自的使用场景是什么？",
-    "answer": "答案：TCP Keepalive 是 TCP 协议内置的保活探测（内核实现），默认 2 小时探测一次，适合清理死连接。应用层心跳是应用代码中主动发送的 ping/pong 消息（自定义协议），频率灵活、可携带数据，适合实时检测对端存活状态。\n\n解析：TCP Keepalive（操作系统内核实现）：1）如果连接长时间空闲（默认 tcp_keepalive_time=7200s，即 2 小时），发送一个空的 ACK 探测包。2）连续探测 tcp_keepalive_probes=9 次（每次间隔 tcp_keepalive_intvl=75s）后仍未收到响应，则关闭连接。3）应用层感知到 read() 返回 -1 或 EPIPE 错误。4）缺点：默认周期太长（2 小时），不适合实时检测；仅检测 TCP 连接是否通（不能验证应用层是否正常）；无法携带数据。\n\n扩展延伸：应用层心跳（常见于 WebSocket/IM/微服务场景）：1）WebSocket 的 Ping/Pong 帧（控制帧，不带应用数据）。2）微服务间的健康检查——Spring Boot Actuator 的 /actuator/health 端点（HTTP 请求）。3）自定义心跳——发送轻量 ping 请求，对端回复 pong（可携带时间戳用于计算 RTT 延迟）。4）Nginx 健康检查——每 N 秒发送请求到后端，返回 200 则标记为健康，否则摘除。\n\n选型建议：长连接场景下的实时故障检测→ 必须使用应用层心跳（设置合适的超时，如 10-30s）+ 重试机制。仅为了及时清理系统中已死的 TCP 连接 → 开启 TCP Keepalive（调整内核参数缩短周期，如 tcp_keepalive_time=300s）。实际生产中一般两层都开：TCP Keepalive + 应用心跳，相互补充。注意：微信/QQ 等 IM 的心跳不仅有保活功能，还用于保持 NAT 映射不超时（NAT 映射通常 30-60s 失效）。",
+    "answer": "TCP Keepalive 是 TCP 协议内置的保活探测（内核实现），默认 2 小时探测一次，适合清理死连接。应用层心跳是应用代码中主动发送的 ping/pong 消息（自定义协议），频率灵活、可携带数据，适合实时检测对端存活状态。\n\n解析：TCP Keepalive（操作系统内核实现）：1）如果连接长时间空闲（默认 tcp_keepalive_time=7200s，即 2 小时），发送一个空的 ACK 探测包。2）连续探测 tcp_keepalive_probes=9 次（每次间隔 tcp_keepalive_intvl=75s）后仍未收到响应，则关闭连接。3）应用层感知到 read() 返回 -1 或 EPIPE 错误。4）缺点：默认周期太长（2 小时），不适合实时检测；仅检测 TCP 连接是否通（不能验证应用层是否正常）；无法携带数据。\n\n扩展延伸：应用层心跳（常见于 WebSocket/IM/微服务场景）：1）WebSocket 的 Ping/Pong 帧（控制帧，不带应用数据）。2）微服务间的健康检查——Spring Boot Actuator 的 /actuator/health 端点（HTTP 请求）。3）自定义心跳——发送轻量 ping 请求，对端回复 pong（可携带时间戳用于计算 RTT 延迟）。4）Nginx 健康检查——每 N 秒发送请求到后端，返回 200 则标记为健康，否则摘除。\n\n选型建议：长连接场景下的实时故障检测→ 必须使用应用层心跳（设置合适的超时，如 10-30s）+ 重试机制。仅为了及时清理系统中已死的 TCP 连接 → 开启 TCP Keepalive（调整内核参数缩短周期，如 tcp_keepalive_time=300s）。实际生产中一般两层都开：TCP Keepalive + 应用心跳，相互补充。注意：微信/QQ 等 IM 的心跳不仅有保活功能，还用于保持 NAT 映射不超时（NAT 映射通常 30-60s 失效）。",
     "hints": [
       "TCP Keepalive 为什么默认间隔 2 小时",
       "WebSocket 的 Ping/Pong 帧和 HTTP 健康检查有什么区别"
     ],
     "tags": [
       "TCP",
-      "Keepalive",
+      "Keep-Alive",
       "心跳",
       "健康检查"
     ]
@@ -257,7 +113,7 @@
     "type": "short_answer",
     "title": "从 URL 输入到页面展示的完整过程",
     "content": "在浏览器中输入 URL 到页面展示的完整过程是怎样的？（经典面试题）",
-    "answer": "答案：DNS 解析 → TCP 三次握手 → TLS 握手（HTTPS）→ 发送 HTTP 请求 → 反向代理/负载均衡 → 应用处理 → 响应返回 → 浏览器解析渲染。\n\n解析：1）DNS 解析——浏览器缓存 → 操作系统缓存（hosts 文件）→ 本地 DNS 服务器（递归查询）→ 根 DNS → TLD DNS → 权威 DNS。2）TCP 连接——浏览器找到目标 IP 后，经过三次握手建立 TCP 连接（SYN → SYN+ACK → ACK）。3）TLS 握手（如果是 HTTPS）——通过加密握手协商对称密钥，TLS 1.3 仅需 1 RTT。4）发送 HTTP 请求——构建请求行/请求头/请求体，如果是 HTTP/2 则分帧在 Stream 中传输。5）负载均衡——Nginx/LVS 根据策略分发请求到后端应用服务器。6）应用处理——Spring Boot 等后端处理请求（拦截器→Controller→Service→DAO→数据库），返回响应。7）响应返回——服务端返回 HTML/JSON，通过反向代理回传给浏览器。8）浏览器渲染——解析 HTML 构建 DOM 树 → 解析 CSS 构建 CSSOM → 合并为 Render Tree → 布局（Layout/Reflow）→ 绘制（Paint）→ 合成（Composite）。9）后续资源加载——解析 HTML 时发现外部资源（CSS/JS/图片），发起新的 HTTP 请求并行下载。\n\n扩展延伸：优化点：1）DNS 缓存（浏览器/系统/CDN 预热）减少解析时间。2）CDN 加速静态资源，缩短网络路径。3）HTTP/2 多路复用减少连接开销。4）浏览器关键渲染路径优化：减少回流（Reflow）和重绘（Repaint）、CSS 放 head、JS 放 body 末尾或 async/defer 加载。5）Server-Side Rendering（SSR）加速首屏渲染。6）缓存策略：Service Worker 实现离线缓存和 PWA。注意：这是一个「一根筋」的综合性面试题，面试官想考察的是面试者的广度（网络 + 前端 + 后端 + 浏览器原理）以及是否能讲清楚链路中的关键阻塞点。",
+    "answer": "DNS 解析 → TCP 三次握手 → TLS 握手（HTTPS）→ 发送 HTTP 请求 → 反向代理/负载均衡 → 应用处理 → 响应返回 → 浏览器解析渲染。\n\n解析：1）DNS 解析——浏览器缓存 → 操作系统缓存（hosts 文件）→ 本地 DNS 服务器（递归查询）→ 根 DNS → TLD DNS → 权威 DNS。2）TCP 连接——浏览器找到目标 IP 后，经过三次握手建立 TCP 连接（SYN → SYN+ACK → ACK）。3）TLS 握手（如果是 HTTPS）——通过加密握手协商对称密钥，TLS 1.3 仅需 1 RTT。4）发送 HTTP 请求——构建请求行/请求头/请求体，如果是 HTTP/2 则分帧在 Stream 中传输。5）负载均衡——Nginx/LVS 根据策略分发请求到后端应用服务器。6）应用处理——Spring Boot 等后端处理请求（拦截器→Controller→Service→DAO→数据库），返回响应。7）响应返回——服务端返回 HTML/JSON，通过反向代理回传给浏览器。8）浏览器渲染——解析 HTML 构建 DOM 树 → 解析 CSS 构建 CSSOM → 合并为 Render Tree → 布局（Layout/Reflow）→ 绘制（Paint）→ 合成（Composite）。9）后续资源加载——解析 HTML 时发现外部资源（CSS/JS/图片），发起新的 HTTP 请求并行下载。\n\n扩展延伸：优化点：1）DNS 缓存（浏览器/系统/CDN 预热）减少解析时间。2）CDN 加速静态资源，缩短网络路径。3）HTTP/2 多路复用减少连接开销。4）浏览器关键渲染路径优化：减少回流（Reflow）和重绘（Repaint）、CSS 放 head、JS 放 body 末尾或 async/defer 加载。5）Server-Side Rendering（SSR）加速首屏渲染。6）缓存策略：Service Worker 实现离线缓存和 PWA。注意：这是一个「一根筋」的综合性面试题，面试官想考察的是面试者的广度（网络 + 前端 + 后端 + 浏览器原理）以及是否能讲清楚链路中的关键阻塞点。",
     "hints": [
       "DNS 解析流程中浏览器和操作系统的缓存分别在什么阶段",
       "浏览器关键渲染路径（Critical Rendering Path）包含哪些步骤"
@@ -270,210 +126,12 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "建造者模式（Builder）",
-    "content": "建造者模式（Builder Pattern）的核心思想是什么？它和工厂模式有什么区别？在什么场景下使用 Builder 模式？",
-    "answer": "答案：建造者模式将一个复杂对象的构建与表示分离，允许通过相同的构建过程创建不同的表示。它分步构建对象，适合参数多、有必填和可选参数、参数之间有依赖关系的对象创建。\n\n解析：经典 Builder 结构：1）Product（产品）——要构建的复杂对象。2）Builder（抽象建造者）——定义构建各部分的接口（stepA()、stepB()、build()）。3）ConcreteBuilder（具体建造者）——实现 Builder 接口，维护产品实例。4）Director（指挥者）——定义构建的顺序（construct() 方法按顺序调用 Builder 的方法）。实际开发中常简化 Director 角色（直接在客户端代码中链式调用）。与工厂模式的区别：工厂模式一把梭创建整个对象（适合不太复杂的对象），Builder 分步构建（适合复杂的、需要定制部分组件的对象）。\n\n扩展延伸：Builder 的经典应用：1）Java 中的 StringBuilder/StringBuffer——将字符串的构建过程抽象为 append() 链式调用。2）Lombok @Builder 注解——基于注解处理器自动生成 Builder 代码。3）OkHttp 的 Request.Builder——通过 chain 设置 URL、Header、Method 等。4）Spring 的 UriComponentsBuilder。5）Feign 的 RequestTemplate。注意：Builder 模式的问题——需要额外编写 Builder 类，增加代码量。Lombok 缓解了这个问题。简单对象（如 2-3 个参数）直接用构造器或静态工厂方法就足够了。",
-    "hints": [
-      "建造者模式和工厂模式的根本区别在于构建过程的复杂度",
-      "Lombok @Builder 通过注解处理器自动生成了什么"
-    ],
-    "tags": [
-      "设计模式",
-      "Builder",
-      "建造者",
-      "Lombok"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "装饰器模式与代理模式的区别",
-    "content": "装饰器模式（Decorator）和代理模式（Proxy）在结构上很相似，它们的本质区别是什么？各自在什么场景下使用？",
-    "answer": "答案：结构上两者都持有被包装对象的引用并转发调用。本质区别在于意图：装饰器模式动态添加新功能（增强原有行为），代理模式控制对被代理对象的访问（拦截、延迟、权限控制）。\n\n解析：装饰器模式——强调「叠加功能」。核心是让装饰器实现与被装饰对象相同的接口，在调用目标方法前后添加新行为。可以多层嵌套装饰（核心功能 + 加密 + 压缩 + 缓存）。适用：给 InputStream 加 BufferedInputStream、加 GzipInputStream。代理模式——强调「控制访问」。代理类可以控制是否调用目标方法（权限检查）、何时调用（延迟加载）、调用的次数（缓存）。适用：远程代理（RPC 的 Stub）、虚拟代理（图片懒加载）、保护代理（权限控制）、AOP 的切面代理。\n\n扩展延伸：Java 标准库中的区分——java.io 包全是装饰器（同接口的嵌套增强）。Spring AOP 是代理模式（控制对目标 Bean 的访问，织入横切逻辑）。装饰器对被装饰对象无感知（只知道自己被增强），代理对代理对象可能完全不知情（远程代理让对方感觉不到远程的存在）。另一个关键区别：装饰器模式中客户端可以自己嵌套组合；代理模式中客户端通常不需要自己创建代理。一句话总结：装饰器说「我让你更强」，代理说「我代你做事」。",
-    "hints": [
-      "Java IO 中 InputStream 的嵌套装饰是如何实现的",
-      "Spring AOP 为什么归类为代理模式而不是装饰器"
-    ],
-    "tags": [
-      "设计模式",
-      "装饰器",
-      "代理",
-      "区别"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "桥接模式（Bridge）",
-    "content": "桥接模式（Bridge Pattern）的核心思想是什么？它如何解决多维度的继承爆炸问题？与适配器模式有什么不同？",
-    "answer": "答案：桥接模式将抽象部分（Abstraction）与实现部分（Implementor）分离，使两者可以独立变化。核心是「用组合替代继承」，解决多维度的类爆炸问题。\n\n解析：经典场景：消息发送器——发送方式（邮件/短信/钉钉）和消息类型（普通/加急/机密）。用继承实现需要 3 × 3 = 9 个类。用桥接模式：消息类型为 Abstraction（持有 MessageSender 接口引用），发送方式为 Implementor（邮件/短信/钉钉实现 MessageSender 接口），只需 3 + 3 + 1 = 7 个类，且扩展任意维度都不影响另一方。适配器 vs 桥接——适配器模式（Adapter）解决接口不兼容的问题（让原本不匹配的接口协同工作）。桥接模式解决的是抽象和实现的关系（提前设计好的解耦）。适配器是事后补救，桥接是事前设计。\n\n扩展延伸：桥接模式在框架中的应用：1）JDBC 驱动——DriverManager（抽象）和各个数据库驱动（实现），两者独立变化。2）SLF4J——日志门面（抽象）和各种日志框架实现（Logback/Log4j/Log4j2）。3）Java AWT——Component（抽象）和 Peer（实现），不同平台的窗口系统实现不同。4）Spring 的 ResourceLoader——resource（抽象）区分 classpath/file/url，底层实现可独立扩展。注意：桥接模式适合抽象和实现都有多个维度变化的场景。如果只有一个维度变化，只需要策略模式就够了。",
-    "hints": [
-      "桥接模式如何让抽象和实现双方独立扩展",
-      "JDBC 驱动为什么是桥接模式的经典案例"
-    ],
-    "tags": [
-      "设计模式",
-      "桥接",
-      "Bridge",
-      "JDBC"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "享元模式（Flyweight）",
-    "content": "享元模式（Flyweight Pattern）的核心思想是什么？它在 Java 和框架中的经典应用有哪些？享元和单例模式有什么区别？",
-    "answer": "答案：享元模式通过共享细粒度对象减少内存使用，将对象状态分为内部状态（可共享，不变）和外部状态（不可共享，变化）。适合大量相似对象的场景。\n\n解析：享元模式的核心是对象复用而非创建新对象。结构：1）Flyweight（享元接口）——定义接受外部状态的接口（operation(externalState)）。2）ConcreteFlyweight（具体享元）——存储内部状态，可共享。3）FlyweightFactory（享元工厂）——维护享元池（通常用 Map），如果请求的对象已存在则直接返回。外部状态由调用方传入，不在享元内部存储。\n\n扩展延伸：Java 和框架中的享元模式：1）String 常量池——JVM 自动维护 String 字面量的享元池（intern() 方法）。2）Integer 缓存——Integer.valueOf() 默认缓存 -128 到 127 的 Integer 对象（享元池）。3）Java 线程池——ThreadPoolExecutor 复用线程（共享的工作线程），任务为外部状态。4）数据库连接池——复用连接对象，连接创建/销毁开销大。5）Netty 的 ByteBuf 池化（PooledByteBufAllocator）。6）游戏开发中的子弹/粒子效果——大量相似对象通过参数变化实现差异化。与单例模式的区别：单例一个类只有一个实例；享元一个类可以创建有限个实例（通过享元池）。单例没有外部状态的概念，享元强调内部/外部状态的分离。池化技术（Pool）和享元的本质区别：池化是为了复用避免重复创建的开销；享元除了复用还强调状态分离。",
-    "hints": [
-      "String 常量池、Integer 缓存属于享元模式的哪种应用",
-      "享元模式和池化技术（Pool）的根本区别是什么"
-    ],
-    "tags": [
-      "设计模式",
-      "享元",
-      "Flyweight",
-      "池化"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "外观模式（Facade）",
-    "content": "外观模式（Facade Pattern）解决什么问题？它的核心好处是什么？与适配器模式有什么区别？外观模式在代码重构中怎么用？",
-    "answer": "答案：外观模式为子系统中的一组接口提供一个统一的高层接口，让子系统更容易使用。核心是封装复杂性、降低耦合、简化客户端调用。\n\n解析：结构——Facade 类持有子系统中各个组件的引用，提供一个简化的方法供客户端调用，内部协调各个子组件完成功能。关键在于 Facade 并不知道客户端的存在，客户端也不知道子系统内部组件的存在（双向解耦）。经典类比：酒店前台（Facade）——客人不需要知道大堂经理、清洁工、维修工是谁，只需要告诉前台需要什么服务。\n\n扩展延伸：1）Spring 的 JDBC 封装——JdbcTemplate 是 JDBC 子系统的 Facade，客户端只需要调用 query/update，无需关心 Connection/Statement/ResultSet 的创建和释放。2）SLF4J——为多个日志框架（Logback/Log4j/Log4j2/JUL）提供统一门面。3）Spring MVC 的 DispatcherServlet——是整个 MVC 框架的 Facade。外观模式 vs 适配器模式：适配器是接口转换（让原本不兼容的接口能工作）；外观是接口简化（提供更简单的接口）。适配器为了兼容，外观为了易用。外观模式在重构中的应用：当旧系统的客户端代码散落着对多个底层 API 的直接调用时，可以引入 Facade 层封装这些调用，逐步将客户端迁移到新接口上（这是 Strangler Fig 模式的基础）。",
-    "hints": [
-      "JdbcTemplate 是外观模式、模板方法模式还是两者都有",
-      "Facade 在微服务重构中是如何做服务封装的"
-    ],
-    "tags": [
-      "设计模式",
-      "外观",
-      "Facade",
-      "重构"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "迭代器模式（Iterator）",
-    "content": "迭代器模式（Iterator Pattern）解决了什么问题？它在 Java 集合框架中是如何实现的？为什么 Java 的 for-each 循环能遍历所有集合？",
-    "answer": "答案：迭代器模式在不暴露集合内部表示的前提下，提供顺序访问集合元素的方法。Java 集合框架中每个集合类都实现了 Iterator 接口（hasNext()/next()/remove()），for-each 循环在编译时被翻译成 Iterator 调用。\n\n解析：迭代器模式将遍历逻辑从集合实现中分离，客户端只需依赖 Iterator 接口而非具体集合类型。核心接口：1）Iterator——定义 hasNext()、next()、remove()。2）Iterable——返回 Iterator 对象。ArrayList 的 Iterator 维护 cursor 游标，支持 fail-fast 机制（modCount 检测并发修改）。LinkedList 的 Iterator 维护 next 节点引用。for-each 本质——任何实现了 Iterable 接口的类都可以用在 for-each 循环中，编译器将其转换为 Iterator 调用。\n\n扩展延伸：快速失败（fail-fast）与安全失败（fail-safe）——ArrayList 等集合的 Iterator 是 fail-fast 的（遍历过程中检测到结构修改立即抛 ConcurrentModificationException）。ConcurrentHashMap 的 Iterator 是 fail-safe 的（在副本上遍历，不抛异常但不保证看到最新数据）。外部迭代 vs 内部迭代——Iterator 是外部迭代（客户端驱动），Stream API 是内部迭代（集合内部驱动），内部迭代可以利用并行流自动多线程。",
-    "hints": [
-      "为什么 for-each 循环中不能直接调用 list.remove()",
-      "Iterable 和 Iterator 的区别是什么"
-    ],
-    "tags": [
-      "设计模式",
-      "迭代器",
-      "Iterator",
-      "Java"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "状态模式（State）",
-    "content": "状态模式（State Pattern）的核心思想是什么？它与策略模式（Strategy）有什么区别？",
-    "answer": "答案：状态模式将对象在不同状态下的行为封装到独立的状态类中，将条件分支转化为状态对象间的委托调用。状态模式与策略模式结构相同（组合+多态），但意图不同：状态模式是状态的自动流转（状态对象决定下一个状态），策略模式是算法的自由替换（客户端选择策略）。\n\n解析：State 模式的结构——1）Context（上下文）——持有当前状态对象的引用。2）State（抽象状态接口）——定义该状态下允许的行为。3）ConcreteState（具体状态类）——实现该状态下的行为，通常包含状态转换逻辑。与策略模式的关键区别——状态模式的状态对象可以互相转换（状态自动演进）；策略模式由客户端替换策略（外部触发）。状态模式体现的是「对象在不同状态下对同一请求的不同响应」。\n\n扩展延伸：经典例——TCP 连接的状态：CLOSED → LISTEN → SYN_SENT → SYN_RCVD → ESTABLISHED。实际应用：1）订单流程——待支付/已支付/已发货/已取消状态下操作的合法性。2）工作流引擎——审批流程。3）游戏角色——不同状态下对不同输入的响应。状态机和状态模式的关系——状态模式是状态机的 OOP 实现方式之一。另一种常见实现是查表法（状态转换表），适合状态多但逻辑简单的场景。状态模式适合状态转换逻辑复杂、每个状态行为差异大的场景。",
-    "hints": [
-      "状态模式和策略模式在结构上相同，意图上完全不同的含义是什么",
-      "状态模式的状态对象之间为什么会相互引用"
-    ],
-    "tags": [
-      "设计模式",
-      "状态",
-      "State",
-      "状态机"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "命令模式（Command）",
-    "content": "命令模式（Command Pattern）的核心思想是什么？它如何实现「请求发送者和接收者解耦」？在现实系统中有哪些经典应用？",
-    "answer": "答案：命令模式将请求封装为对象，使请求发送者（Invoker）和请求接收者（Receiver）完全解耦。命令对象存储了执行操作所需的所有信息，支持参数化、队列化、日志化、可撤销（Undo）操作。\n\n解析：核心角色——1）Command（抽象命令）——定义 execute() 和 undo()。2）ConcreteCommand（具体命令）——持有 Receiver 引用，在 execute() 中调用 Receiver 的方法。3）Invoker（调用者）——持有 Command 对象，调用 command.execute()，不关心具体谁执行。4）Receiver（接收者）——真正执行业务逻辑。命令模式的威力——发送者和接收者零耦合：Invoker 不知道 Command 背后是哪个 Receiver、方法名是什么。\n\n扩展延伸：经典应用——1）Runnable/Callable——Thread 接受 Runnable（命令对象）。2）GUI 按钮事件——JButton 的 ActionListener。3）事务回滚——每个操作封装为 Command，execute() 执行，unexecute() 回滚。4）任务队列/线程池——命令对象放入队列，工作线程取出执行。5）文本编辑器的 Undo/Redo——操作栈存储命令，undo() 出栈回退。命令模式的代价——每个操作都需要一个类，但通过函数式接口（Java 8 的 Supplier/Consumer/Runnable）或 lambda 可以部分缓解。",
-    "hints": [
-      "为什么命令模式天然支持 Undo/Redo 操作",
-      "Java 中的 Runnable 为什么可以被看作命令模式的体现"
-    ],
-    "tags": [
-      "设计模式",
-      "命令",
-      "Command",
-      "Undo"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "访问者模式（Visitor）",
-    "content": "访问者模式（Visitor Pattern）解决什么问题？为什么它是实现「双重分派（Double Dispatch）」的经典方式？访问者模式的适用场景和限制是什么？",
-    "answer": "答案：访问者模式将数据结构上的操作与数据结构本身分离，允许在不修改现有类的前提下添加新操作（满足开闭原则）。其核心是通过「访问者接口 + accept 方法」实现双重分派——运行时同时根据元素类型和访问者类型决定调用哪个方法。\n\n解析：为什么需要访问者模式——当对象结构稳定（如 AST 节点类型固定：NumberExpr、BinaryOp、VariableRef）但操作频繁变化（代码格式化、类型检查、代码生成），每次新增操作都需要修改所有节点类。访问者模式将操作封装到 Visitor 接口：每个 Visitor 有 visitNumberExpr()、visitBinaryOp() 等方法。每个节点类实现 accept(Visitor v) { v.visitXxx(this); }。新增操作只需新增 Visitor 实现类。双重分派——普通 OOP 只有单分派（根据接收者的运行时类型）。访问者模式通过两次分派实现：第一次——element.accept(visitor)（根据 element 的运行时类型）。第二次——visitor.visitXxx(element)（根据 visitor 的运行时类型 + element 的编译时类型在重载中确定）。\n\n扩展延伸：适用场景——1）编译器/解释器的 AST 遍历（代码生成、语义分析、格式化、优化）。2）文件处理——对不同类型文件执行不同操作。3）报表引擎——对不同类型数据节点计算不同指标。限制——元素类型难以扩展：新增一种元素类型需要修改所有 Visitor 接口。所以访问者模式适用于「元素类型固定、操作频繁变化」的场景。实际应用：ASM 字节码库使用访问者模式遍历 Class 文件；Spring 的 BeanDefinitionVisitor。Java 17+ 的密封类（sealed class）+ switch 模式匹配可以替代访问者模式的部分场景。",
-    "hints": [
-      "双重分派（Double Dispatch）的实现原理是什么",
-      "Java 17+ 的密封类和模式匹配如何替代访问者模式"
-    ],
-    "tags": [
-      "设计模式",
-      "访问者",
-      "Visitor",
-      "双重分派"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "组合模式（Composite）",
-    "content": "组合模式（Composite Pattern）解决什么问题？它如何使客户端统一处理单个对象和组合对象？在什么场景下它是天然的选择？",
-    "answer": "答案：组合模式将对象组织成树形结构以表示「部分-整体」的层次结构，让客户端统一处理叶子节点和容器节点。客户端调用叶子和调用组合对象使用同样的方法——组合对象内部递归调用子组件的同名方法。\n\n解析：核心角色——1）Component（抽象组件）——定义叶子和容器的公共接口。2）Leaf（叶子）——实现 operation()，叶子端操作。3）Composite（容器）——持有子 Component 列表，operation() 遍历所有子节点递归调用。透明性 vs 安全性——透明性：在 Component 中声明所有方法（包括 add/remove）。优点：客户端无差异调用。缺点：叶子节点有无意义的方法。安全性：add/remove 只在 Composite 中定义。优点：类型安全。缺点：客户端需要 instanceof 判断。Java AWT/Swing 中的 Component/Container 是经典应用。\n\n扩展延伸：实际应用——1）文件系统：文件和目录的统一接口（getSize() 递归计算）。2）GUI 组件树：JPanel 包含 JButton、JTextField 等。3）HTML DOM 树：Element 和 TextNode 统一实现 Node 接口。4）XML/JSON 配置：配置项（叶子）和配置组（容器）统一访问。5）公司组织架构：员工（叶子）和部门（容器）统一管理。组合模式的优点——新增组件类型方便（实现 Component 接口即可），天然支持递归结构。缺点——限制了组件类型的差异化，在接口过大时违反接口隔离原则。",
-    "hints": [
-      "组合模式中透明性（Transparency）和安全性的权衡",
-      "文件系统中文件和目录如何用组合模式统一处理"
-    ],
-    "tags": [
-      "设计模式",
-      "组合",
-      "Composite",
-      "树形结构"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "HTTP/3 与 QUIC 协议",
-    "content": "HTTP/3 和 QUIC 协议解决了哪些 HTTP/2 的痛点？QUIC 如何实现 0-RTT 和连接迁移？",
-    "answer": "答案：HTTP/3 基于 QUIC 协议（传输层，替代 TCP+TLS），解决了 HTTP/2 的队头阻塞（HOL Blocking）、连接建立延迟高、移动网络切换断开等问题。QUIC 使用 UDP + 自定义可靠传输 + 内置 TLS 1.3。\n\n解析：HTTP/2 的痛点：1）TCP 层队头阻塞——HTTP/2 多路复用时，如果某个 TCP 包丢失，后续所有流（Streams）都得等待重传（即使其他流的数据包已到达）。HTTP/3 在 QUIC 层实现多路复用，一个流的丢包不影响其他流。2）连接建立延迟——TCP 握手的 1 RTT + TLS 1.3 握手的 1 RTT = 2 RTT。QUIC 的 0-RTT（首次连接 1 RTT，后续连接可以 0 RTT 发送数据）。3）连接迁移——TCP 用四元组标识连接（源 IP:Port → 目标 IP:Port），网络切换（WiFi → 移动网络）时连接断开。QUIC 用 Connection ID 标识连接，网络变化不影响上层连接。\n\n扩展延伸：QUIC 内在机制——1）Packet Number 严格递增（不重传复用，增加空格出更多序列空间），解决 TCP 的重传歧义（Retransmission Ambiguity）。2）Stream 层独立流量控制（非 TCP 的全局流控），避免一个慢流拖慢所有流。3）前向冗余 FEC 可选（减少丢包重传的等待）。部署现状：Google 服务已全部使用 QUIC（YouTube、Search、Gmail），Cloudflare 支持 QUIC/HTTP3，国内 CDN（阿里/腾讯/网宿）已支持 QUIC。Nginx 1.25+ 支持 HTTP/3。注意：企业防火墙通常放行 UDP 443 但可能限速，需评估。",
-    "hints": [
-      "HTTP/2 的 TCP 队头阻塞为什么比 HTTP/1.1 的队头阻塞更隐蔽",
-      "QUIC 的 Connection ID 为什么能让连接迁移成为 UDP 的天然优势"
-    ],
-    "tags": [
-      "HTTP/3",
-      "QUIC",
-      "网络协议",
-      "性能优化"
-    ]
-  },
-  {
     "category": "cs_basics",
     "difficulty": "easy",
     "type": "short_answer",
     "title": "WebSocket 协议",
     "content": "WebSocket 协议是如何实现全双工通信的？它和 HTTP 长轮询有什么本质区别？WebSocket 的握手过程是怎样的？",
-    "answer": "答案：WebSocket 在 HTTP 握手后升级到 ws:// 协议，建立持久化 TCP 连接，实现双向实时通信。与 HTTP 长轮询的本质区别：WebSocket 是真正的 Server Push（服务端可以随时发送消息），长轮询是「伪推送」（客户端不断请求模拟）。\n\n解析：握手过程——1）客户端发送 HTTP Upgrade 请求：包含 Upgrade: websocket、Connection: Upgrade、Sec-WebSocket-Key（随机 Base64 编码）。2）服务端计算 Sec-WebSocket-Accept（SHA-1(Sec-WebSocket-Key + 固定 GUID) 再 Base64），返回 101 Switching Protocols。3）握手完成后，协议切换到 ws://，在 TCP 连接上进行帧通信。帧结构——Opcode（text=1/binary=2/close=8/ping=9/pong=10）、Payload Length、Masking Key（客户端→服务端必须加掩码）。\n\n扩展延伸：WebSocket 与 HTTP 长轮询对比——长轮询：客户端发起请求 → 服务端 hold 住直到有新数据 → 返回数据 → 客户端立即发起下一次请求。缺点：每次请求都有 HTTP 头部开销，仍然有延迟。WebSocket：一次握手后，头部仅 2-10 字节。服务端可以随时推送消息（事件驱动）。适用场景：实时聊天、协同编辑、游戏、金融行情。WebSocket 的挑战——1）连接管理（大量并发连接的内存开销）。2）负载均衡（长连接不能通过普通 HTTP 负载均衡简单分发，需要使用 sticky session 或 broker 模式）。3）重连机制：网络中断后客户端需要自动重连。生产环境通常用 Socket.IO/SignalR 等库做自动降级和重连。",
+    "answer": "WebSocket 在 HTTP 握手后升级到 ws:// 协议，建立持久化 TCP 连接，实现双向实时通信。与 HTTP 长轮询的本质区别：WebSocket 是真正的 Server Push（服务端可以随时发送消息），长轮询是「伪推送」（客户端不断请求模拟）。\n\n解析：握手过程——1）客户端发送 HTTP Upgrade 请求：包含 Upgrade: websocket、Connection: Upgrade、Sec-WebSocket-Key（随机 Base64 编码）。2）服务端计算 Sec-WebSocket-Accept（SHA-1(Sec-WebSocket-Key + 固定 GUID) 再 Base64），返回 101 Switching Protocols。3）握手完成后，协议切换到 ws://，在 TCP 连接上进行帧通信。帧结构——Opcode（text=1/binary=2/close=8/ping=9/pong=10）、Payload Length、Masking Key（客户端→服务端必须加掩码）。\n\n扩展延伸：WebSocket 与 HTTP 长轮询对比——长轮询：客户端发起请求 → 服务端 hold 住直到有新数据 → 返回数据 → 客户端立即发起下一次请求。缺点：每次请求都有 HTTP 头部开销，仍然有延迟。WebSocket：一次握手后，头部仅 2-10 字节。服务端可以随时推送消息（事件驱动）。适用场景：实时聊天、协同编辑、游戏、金融行情。WebSocket 的挑战——1）连接管理（大量并发连接的内存开销）。2）负载均衡（长连接不能通过普通 HTTP 负载均衡简单分发，需要使用 sticky session 或 broker 模式）。3）重连机制：网络中断后客户端需要自动重连。生产环境通常用 Socket.IO/SignalR 等库做自动降级和重连。",
     "hints": [
       "WebSocket 握手完成后 UDP 还是 TCP——理解协议升级过程对性能分析有帮助",
       "长轮询（Long Polling）在哪些场景下仍然比 WebSocket 更合适"
@@ -485,268 +143,12 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "观察者模式（Observer）与发布订阅模式",
-    "content": "观察者模式（Observer Pattern）和发布订阅模式（Pub-Sub）有什么区别？Java 中的 Observable/Observer 为什么被标记为 Deprecated？",
-    "answer": "答案：观察者模式是 Subject 直接持有 Observer 列表并通知，发布订阅模式通过 Broker/Event Channel 解耦发布者和订阅者。两者的本质区别：观察者模式是「直接通信」（观察者知道 Subject），发布订阅是「间接通信」（双方不知道对方）。\n\n解析：观察者模式——Subject 维护 Observer 列表，状态变化时调用所有 Observer 的 update() 方法。同步、直接。缺点：Subject 和 Observer 紧耦合（Subject 需要知道 Observer 的存在和接口）。发布订阅模式——Publisher → Event Channel/Broker → Subscriber。发布者将消息发到 Channel，订阅者从 Channel 接收。两者完全解耦（通过中间层。Publisher 不关心谁在订阅，Subscriber 不关心谁在发布）。\n\n扩展延伸：Java 的 Observable/Observer 为什么被标记为 deprecated（Java 9+）？1）Observable 是类而非接口，限制了子类的灵活性（Java 单继承限制）。2）事件通知顺序未定义，不支持多线程安全。3）没有提供更细粒度的事件过滤。4）替代方案：PropertyChangeListener（Java Beans）、RxJava/Reactive Streams（响应式流）。实际应用中的替代——现在几乎没有人在 Java 中用 Observable/Observer。Spring 的 ApplicationEvent/ApplicationListener 是发布订阅模式，Guava 的 EventBus 也是发布订阅。消息队列（Kafka/RabbitMQ）是分布式发布订阅的典型实现。",
-    "hints": [
-      "观察者是直接调用 update() 同步通知，发布订阅通过 Broker 异步解耦——两者本质是耦合度的差异",
-      "Java Observable 被标记 Deprecated 的根本原因不是功能问题而是设计问题（类 vs 接口）"
-    ],
-    "tags": [
-      "设计模式",
-      "观察者",
-      "发布订阅",
-      "事件驱动"
-    ]
-  },
-  {
-    "category": "design_patterns",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "适配器模式（Adapter）",
-    "content": "适配器模式的目的是什么？类适配器和对象适配器的区别？适配器模式和外观模式（Facade）的区别？适配器模式在实际开发中的应用？（如 Spring 中的适配器）",
-    "answer": "答案：适配器模式将一个类的接口转换成客户端期望的另一个接口，让原本不兼容的类可以一起工作。类适配器使用继承（适配器同时继承目标接口和适配者类），对象适配器使用组合（适配器持有适配者对象的引用）。对象适配器更灵活（适配者子类也可适配），类适配器需要多继承（Java 中不直接支持）。\n\n解析：结构——1）Target（目标接口）：客户端期望的接口。2）Adapter（适配器）：将 Adaptee 的接口转换为 Target 接口。3）Adaptee（适配者）：需要被适配的已有的类。4）Client 通过 Target 接口调用 Adapter，Adapter 内部调用 Adaptee。对象适配器示例：`class Adapter implements Target { private Adaptee adaptee; }`——Adapter 持有 Adaptee 对象并将 Target 方法的调用转发给 Adaptee。\n\n扩展延伸：实际应用——1）Spring MVC 中的 HandlerAdapter：将不同的 handler（Controller/HttpRequestHandler/SimpleControllerHandlerAdapter）适配到统一的 DispatcherServlet 调用。2）java.util.Arrays#asList()：将数组适配到 List 接口。3）java.io.InputStreamReader：将 InputStream 适配到 Reader。4）日志门面（SLF4J）：为不同的日志框架（Log4j/Logback/java.util.logging）提供统一的适配层。适配器 vs 外观（Facade）——1）适配器：解决「接口不兼容」的问题，改变接口以匹配客户端的期望。2）外观：为复杂子系统提供简化的统一接口，不改变原有接口的能力。适配器模式通常在系统设计之后（为了兼容遗留代码），而外观模式是设计时对复杂子系统的简化封装。",
-    "hints": [
-      "类适配器用继承（不可修改 Adaptee 的行为），对象适配器用组合（更灵活，推荐使用）",
-      "适配器 vs 外观——适配器「转换接口」，外观「简化接口」。适配器是事后兼容，外观是事前面向客户端简化"
-    ],
-    "tags": [
-      "设计模式",
-      "适配器模式",
-      "结构型",
-      "Spring"
-    ]
-  },
-  {
-    "category": "design_patterns",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "抽象工厂模式（Abstract Factory）",
-    "content": "抽象工厂模式和工厂方法模式的区别？什么场景适合用抽象工厂模式？抽象工厂模式的「产品族」概念是什么？",
-    "answer": "答案：工厂方法模式：一个工厂创建一个产品；抽象工厂模式：一个工厂创建一组相关的产品（产品族）。抽象工厂是工厂方法的扩展——当系统需要生产多个产品系列（不同品牌/不同操作系统）时使用。\n\n解析：结构——1）AbstractFactory：声明创建一组产品的方法（createProductA/createProductB）。2）ConcreteFactory：实现创建具体产品族的方法（如 WindowsFactory 创建 WindowsButton + WindowsTextBox；MacFactory 创建 MacButton + MacTextBox）。3）AbstractProduct：产品接口（Button/TextBox）。4）ConcreteProduct：具体产品（WindowsButton/MacButton）。5）客户端只使用 AbstractFactory 和 AbstractProduct 接口，不依赖具体工厂和产品。\n\n扩展延伸：场景——1）跨平台 UI 组件：Windows/Mac/Linux 各有一套按钮、文本框、菜单（产品族）。运行时根据操作系统选择对应的 Factory。2）数据库连接：不同数据库（MySQL/PostgreSQL/Oracle）各有 Connection/Statement/ResultSet（产品族）。JDBC 是抽象工厂的经典实现。3）主题切换：不同主题（暗色/亮色）的样式组件。优缺点——优点：确保同一工厂创建的产品之间兼容；客户端与具体产品解耦；更换产品族只需更换一个工厂对象。缺点：扩展产品族中的产品困难（需要修改 AbstractFactory 接口，所有 ConcreteFactory 都需要更新）。\"产品族\"——同一工厂生产的一组互相依赖/配套的产品。同一操作系统下的所有 UI 控件（Button + TextBox + Menu 互相配合使用）就是一个产品族。",
-    "hints": [
-      "产品族（Product Family）——同一工厂生产的一组配套产品，如 Windows 的 Button + TextBox + Menu",
-      "抽象工厂 vs 工厂方法——工厂方法「一个工厂一种产品」，抽象工厂「一个工厂一组相关产品」"
-    ],
-    "tags": [
-      "设计模式",
-      "抽象工厂",
-      "创建型",
-      "产品族"
-    ]
-  },
-  {
-    "category": "design_patterns",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "原型模式（Prototype）",
-    "content": "原型模式（Prototype Pattern）的原理？Java 中浅克隆（Shallow Copy）和深克隆（Deep Copy）的区别？原型模式相比 new 创建对象的优势？",
-    "answer": "答案：原型模式通过复制已有对象来创建新对象（克隆），而不是通过 new 创建。在 Java 中实现 Cloneable 接口并重写 clone()。当对象创建成本较高（数据库查询/复杂初始化）且需要大量相似对象时，克隆比 new 更高效。\n\n解析：浅克隆 vs 深克隆——1）浅克隆（Shallow Copy）：复制对象本身，但对象内部的引用类型字段指向同一个对象（两个对象共享引用）。Java 的 Object.clone() 默认实现是浅克隆。2）深克隆（Deep Copy）：不仅复制对象本身，还递归复制所有引用类型的字段，使得原始对象和克隆对象完全独立。实现方式：重写 clone() 在内部递归 clone 引用字段；序列化（Serializable + ObjectOutputStream）；手动 new 并逐个赋值。3）Cloneable 接口是一个标记接口（不包含方法），clone() 方法来自 Object。如果对象没有实现 Cloneable 却调用了 clone()，会抛出 CloneNotSupportedException。\n\n扩展延伸：原型模式的应用——1）Spring 框架中的原型作用域（prototype scope）：每次获取 Bean 时返回一个新的实例（原型模式的应用）。2）Java 的 ArrayList、HashMap 等都提供了 clone() 方法（返回浅克隆）。3）游戏开发中大量对象的创建（子弹/敌人生成）——避免频繁 new 的开销。4）配置对象的复制——从默认配置克隆出定制配置。原型 vs new——克隆不调用构造函数，因此不会执行构造方法中的逻辑。这意味着如果构造器中有关键初始化操作，克隆会直接绕过（既是优点也是缺点）。序列化实现深克隆注意事项：所有被克隆的类都需要实现 Serializable。JSON 序列化（Jackson/Gson）可以实现深克隆但不要求 Serializable。",
-    "hints": [
-      "Java 的 clone() 是浅克隆——引用类型字段指向同一个对象，修改一个会影响另一个",
-      "原型模式不调用构造函数——直接内存复制创建对象，绕过构造器中的初始化逻辑"
-    ],
-    "tags": [
-      "设计模式",
-      "原型模式",
-      "创建型",
-      "克隆"
-    ]
-  },
-  {
-    "category": "design_patterns",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "中介者模式（Mediator）",
-    "content": "中介者模式（Mediator Pattern）的目的是什么？它如何解决对象之间多对多交互的复杂度问题？中介者模式和观察者模式的区别？实际应用（如 MVC 中的 Controller）？",
-    "answer": "答案：中介者模式通过引入一个中介对象来封装一组对象之间的交互，将多对多的交互简化为一对多的交互（对象→中介者）。各个对象不需要显式引用彼此，减少了耦合度。中介者控制交互逻辑，使得交互规则的变化集中在中介者中。\n\n解析：结构——1）Mediator（中介者接口）：定义通信方法（notify/send）。2）ConcreteMediator：维护各个 Colleague 的引用，协调交互逻辑。3）Colleague（同事）：每个同事对象持有中介者的引用，通过中介者与其他同事通信。不直接调用其他同事的方法。同事之间只通过中介者通信——例如聊天室中的用户不直接发消息给彼此，而是发给聊天室（中介者），由聊天室广播给其他人。\n\n扩展延伸：实际应用——1）MVC 架构：Controller 是 Model 和 View 的中介者——View 的事件发给 Controller，Controller 更新 Model，Model 变化通过 Controller 通知 View。2）聊天室（Chat Room）：用户通过聊天室发消息，聊天室协调消息的转发。3）Air Traffic Control（塔台）：飞机不直接通信，通过塔台协调航线。4）java.util.Timer：schedule 方法中 Timer 协调任务的执行。中介者 vs 观察者——1）观察者模式：一对多关系（一个 Subject 通知多个 Observer），Observer 之间无直接交互。2）中介者模式：多对多关系，Colleague 之间可能互相影响，交互逻辑集中在中介者。3）两者可以组合使用：中介者内部使用观察者模式实现消息通知。",
-    "hints": [
-      "中介者将多对多关系简化为一对多——Colleague 只与 Mediator 通信，不直接引用其他 Colleague",
-      "MVC 中的 Controller 是中介者模式——View 的事件传 Controller，Controller 更新 Model，Model 变化传回 View"
-    ],
-    "tags": [
-      "设计模式",
-      "中介者模式",
-      "行为型",
-      "MVC"
-    ]
-  },
-  {
-    "category": "design_patterns",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "备忘录模式（Memento）",
-    "content": "备忘录模式（Memento Pattern）用于解决什么问题？备忘录模式的三个角色分别是什么？备忘录模式在实现撤销（Undo）功能时如何使用？",
-    "answer": "答案：备忘录模式在不破坏封装的前提下捕获一个对象的内部状态，并在该对象之外保存这个状态，以便之后将对象恢复到原先保存的状态。核心思想：状态保存和恢复由原发器（Originator）自己负责，备忘录（Memento）是一个不可变的状态快照，管理者（Caretaker）保存和提供备忘录但不查看其内容。\n\n解析：三个角色——1）Originator（原发器）：需要保存和恢复状态的对象。提供 createMemento()（创建快照）和 restore(memento)（从快照恢复）方法。2）Memento（备忘录）：存储 Originator 的内部状态（不可变对象）。对外提供有限接口（getState 可能只暴露部分信息或不暴露内部状态）。3）Caretaker（管理者）：负责保存 Memento（如存储在 List\\ 中）。不对 Memento 的内容做任何操作（不读取也不修改）。\n\n扩展延伸：应用——1）文本编辑器的 Undo/Redo：每次修改文本创建一个 Memento（文本内容的快照），Undo 时恢复到上一个 Memento。2）游戏存档：玩家进度存档机制——游戏状态保存为 Memento，读档时通过 Memento 恢复。3）事务回滚：操作前保存状态快照，操作失败时恢复。4）关于封装性：备忘录模式的关键保护在于 Memento 只暴露给 Originator 必要的信息，对 Caretaker 隐藏内部细节。如果 Memento 对外可见其内部状态，就破坏了 Originator 的封装性。Java 实现技巧：使用内部类（Memento 作为 Originator 的内部类，对外部类私有字段可见，对其他类隐藏）。",
-    "hints": [
-      "备忘录模式的关键是封装性的保护——Memento 对 Originator 开放内部状态，对 Caretaker 隐藏",
-      "Caretaker 只负责保存和提供 Memento，不能查看或修改 Memento 的内容"
-    ],
-    "tags": [
-      "设计模式",
-      "备忘录模式",
-      "行为型",
-      "撤销"
-    ]
-  },
-  {
     "category": "cs_basics",
     "difficulty": "medium",
-    "type": "short_answer",
-    "title": "TCP 拥塞控制算法演进",
-    "content": "TCP 拥塞控制经历了哪些主要算法阶段？BBR 相比传统基于丢包的拥塞控制有哪些本质区别？",
-    "answer": "答案：TCP 拥塞控制主要阶段——Tahoe（慢启动 + 拥塞避免 + 快速重传）→ Reno（增加快速恢复，每 RTT 增加 1 MSS）→ Cubic（三次函数窗口增长，高带宽高延迟友好）→ BBR（基于带宽和 RTT 建模，不依赖丢包信号）。BBR 本质区别：从「基于丢包的被动控制」变为「基于模型的主动控制」。\n\n解析：传统拥塞控制（Reno/Cubic）的局限——1）将丢包作为拥塞信号：现代网络中丢包不一定意味着拥塞（无线网络丢包、缓冲区过大导致 Bufferbloat）。2）需要先填满缓冲区才能检测到拥塞，人为增大了 RTT。3）高带宽高延迟（长肥网络）下恢复速度慢。BBR 核心创新——1）交替探测最大带宽（BW，通过增加发送速率直到队列堆积）和最小时延（RTprop，通过排空队列）。2）通过 Pacing 发送速率匹配带宽，避免缓冲区排队。3）不填满缓冲区，保持低延迟。BBR 状态机：Startup（指数增速探测带宽上限）→ Drain（排空积压数据）→ ProbeBW（稳态，周期性微调速率）→ ProbeRTT（进入小窗口探测最小时延，应对路径变化）。\n\n扩展延伸：Linux 内核默认拥塞控制——大多发行版用 Cubic（适合长肥网络）。Google 在 YouTube 和 Cloud 内部广泛使用 BBR。实测 BBR 在跨国传输中吞吐量提升 2-10 倍、RTT 降低 40-80%。BBR v2 改进：对非拥塞丢包容忍更好，与 Cubic 竞争更公平。QUIC/HTTP/3 也使用类似 BBR 的拥塞控制算法。",
-    "hints": [
-      "BBR 为什么不把丢包当作拥塞信号",
-      "Bufferbloat 现象是怎么产生的"
-    ],
-    "tags": [
-      "TCP",
-      "拥塞控制",
-      "BBR",
-      "Cubic",
-      "网络协议"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "DNS 解析流程与优化技术",
-    "content": "从浏览器输入域名到获得 IP 地址，DNS 解析经历了哪些步骤？有哪些常见的 DNS 优化技术？",
-    "answer": "答案：DNS 解析流程——浏览器缓存 → 操作系统缓存 → hosts 文件 → 本地 DNS 服务器（递归查询）→ 根 DNS → 顶级域 DNS → 权威 DNS → 返回 IP。优化技术包括 DNS 预解析（dns-prefetch）、HTTPDNS、DNS 负载均衡（CDN GSLB）、Anycast、DNS-over-HTTPS/TLS。\n\n解析：完整解析步骤——1）浏览器检查自身 DNS 缓存（Chrome 约 60 秒缓存）。2）操作系统检查 DNS 缓存和 hosts 文件。3）向本地 DNS 服务器（ISP 或配置的 114.114.114.114/8.8.8.8）发起递归查询。4）本地 DNS 向根 DNS（全球 13 组根服务器集群）查询，返回顶级域（如 .com）的 NS 记录。5）本地 DNS 向顶级域 DNS 查询，返回权威 DNS 地址。6）本地 DNS 向权威 DNS 查询，返回 A/AAAA 记录。7）本地 DNS 缓存结果并返回客户端。优化技术——1）dns-prefetch：HTML 中 <link rel=\"dns-prefetch\" href=\"//example.com\"> 提前解析域名。2）HTTPDNS：用 HTTP API 绕过 LocalDNS 劫持和域名污染，实现精准调度（阿里云 HTTPDNS）。3）CDN GSLB：权威 DNS 根据客户端源 IP 返回最近边缘节点 IP。4）Anycast：多节点共享同 IP，路由协议自动选最近节点。5）DoH/DoT：加密 DNS 查询防止中间人篡改。\n\n扩展延伸：DNS 记录类型——A（IPv4）、AAAA（IPv6）、CNAME（别名，泛解析不建议根域名）、MX（邮件）、TXT（SPF/DKIM/DMARC）、NS（权威服务器）、SOA（区域起始授权）。TTL 策略——CDN 域名短 TTL（30-300 秒）方便调度切流；稳定域名长 TTL（86400 秒）减少查询量。安全威胁：DNS 劫持、DNS 隧道（数据外泄）、DNS 放大攻击（DDoS）、DNSSEC（缓存中毒防御）。",
-    "hints": [
-      "CNAME 记录和 A 记录在 CDN 调度中分别起什么作用",
-      "HTTPDNS 如何解决 LocalDNS 劫持问题"
-    ],
-    "tags": [
-      "DNS",
-      "HTTPDNS",
-      "CDN",
-      "DoH",
-      "网络优化"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "CDN 缓存策略与边缘计算",
-    "content": "CDN 如何加速静态和动态内容传输？CDN 的缓存策略有哪些？边缘计算如何改变 CDN 架构？",
-    "answer": "答案：CDN 通过在全球部署边缘节点将内容缓存到离用户最近的位置，减少传输延迟和回源压力。缓存策略包括强制缓存（Cache-Control max-age）、协商缓存（ETag/Last-Modified）、预热和刷新。边缘计算将计算能力下沉到 CDN 节点，使动态内容可在边缘生成而无需回源。\n\n解析：CDN 核心机制——1）静态内容加速（图片/JS/CSS/视频）：内容缓存到边缘节点，GSLB 将用户请求调度到最近节点。2）动态内容加速（API/个性化页面）：通过动态加速（DCDN）优化回源路径——智能路由选路、TCP 优化、协议优化。缓存控制分层——浏览器缓存 → CDN 缓存 → 源站缓存。CDN 缓存控制手段：1）强制缓存：Cache-Control max-age（浏览器）/ s-maxage（CDN 专用）。2）协商缓存：CDN 回源时携带 If-None-Match（ETag）/ If-Modified-Since，源返回 304 则复用缓存。3）预热：主动通知 CDN 预拉取热点内容。4）刷新：清除指定 URL 缓存（全网刷新需时间，支持批量提交）。边缘计算演进——第一代：纯缓存（Varnish/Nginx）。第二代：边缘规则 + Serverless（CloudFlare Workers）。第三代：边缘容器（AWS Lambda@Edge）。边缘可运行 A/B 测试、URL 重写、实时图片处理、请求聚合。\n\n扩展延伸：主流 CDN 对比——CloudFlare（全球最大，免费额度够用，安全能力强）、Akamai（老牌企业级，亚太覆盖好）、阿里云 CDN（国内节点多，配合 WAF）、腾讯 CDN（游戏/直播优势）。CDN 安全——DDoS 防护（边缘清洗，CloudFlare 可防御 Tbps 级攻击）、WAF、CC 攻击防护。关键指标：缓存命中率建议 85% 以上、回源率、首字节时间（TTFB）。",
-    "hints": [
-      "s-maxage 和 max-age 在 CDN 场景下的区别",
-      "动态加速 DCDN 和静态加速的路径优化有何不同"
-    ],
-    "tags": [
-      "CDN",
-      "缓存策略",
-      "边缘计算",
-      "DCDN",
-      "GSLB"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "HTTPS 证书信任链与 TLS 握手优化",
-    "content": "HTTPS 的证书信任链如何构建？TLS 1.3 相比 1.2 在握手性能上做了哪些优化？会话复用如何减少延迟？",
-    "answer": "答案：证书信任链采用层级 CA 体系——根 CA 签发中间 CA，中间 CA 签发服务器证书。浏览器预置约 150 个根证书，验证时递归检查至受信任的根。TLS 1.3 将握手从 2-RTT 减为 1-RTT（首次）/ 0-RTT（复用），简化密码套件（去除不安全算法），强制前向安全。\n\n解析：证书验证流程——1）服务器发送证书链（服务器证书 + 中间 CA 证书，不含根证书）。2）浏览器用根证书公钥验证中间 CA 证书签名，再用中间 CA 公钥验证服务器证书签名。3）验证内容：签名有效性、证书有效期、域名匹配（Subject Alternative Name）、吊销状态（CRL/OCSP）。TLS 1.2 握手（2-RTT）：ClientHello → ServerHello + Certificate + ServerHelloDone → ClientKeyExchange + ChangeCipherSpec + Finished → ChangeCipherSpec + Finished。TLS 1.3 握手（1-RTT）：ClientHello（携带 KeyShare）→ ServerHello + Certificate + Finished → ClientFinished。TLS 1.3 的 0-RTT：客户端用之前会话的 PSK 在第一个包就发送加密数据，适用于幂等请求（注意重放攻击风险）。会话复用方式——Session ID（服务端存上下文，扩展性差）→ Session Ticket（客户端存加密 ticket，推荐）→ PSK（TLS 1.3 原生）。\n\n扩展延伸：HTTPS 性能优化——1）OCSP Stapling：服务器代替客户端查询证书状态，消除客户端去 CA 验证的延迟。2）False Start：TLS 1.2 中允许 ChangeCipherSpec 后立即发数据（减少 1-RTT）。3）HSTS 强制 HTTPS 访问，消除 302 重定向。4）证书压缩减少传输量。证书类型——DV（域名验证，最基础）、OV（组织验证）、EV（扩展验证，地址栏显示公司名）。Let's Encrypt 提供免费 DV 证书并支持 ACME 协议自动续期。",
-    "hints": [
-      "OCSP Stapling 如何解决证书吊销检查的性能问题",
-      "TLS 1.3 的 0-RTT 存在哪些安全风险"
-    ],
-    "tags": [
-      "HTTPS",
-      "TLS",
-      "证书链",
-      "OCSP",
-      "网络安全"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "HTTP 协议演进与性能优化全景",
-    "content": "HTTP/1.1、HTTP/2、HTTP/3 分别在哪些方面优化了传输性能？实际项目中应如何选择？",
-    "answer": "答案：HTTP/1.1 的问题——队头阻塞（一个请求阻塞后续所有请求）、同域名 6 连接限制、头部冗余（每次请求携带完整 headers）。HTTP/2 通过多路复用（同连接多个 Stream 并发）、头部压缩（HPACK）、服务器推送解决。HTTP/3 将传输层从 TCP 改为 QUIC（基于 UDP），解决 TCP 级的队头阻塞。建议：新项目优先支持 HTTP/2，移动端或弱网场景优先 HTTP/3。\n\n解析：HTTP/1.1 的优化手段——域名分片（Domain Sharding：资源分散到多个子域名突破 6 连接限制）、雪碧图（CSS Sprites 合并图片）、资源内联（Data URI 小图片嵌入 CSS）。这些是应用层 hack，HTTP/2 从协议层解决。HTTP/2 多路复用：在同一 TCP 连接上建立多个 Stream（ID 标识），每个 Stream 发送多个 Frame（DATA/HEADERS），实现真正的并行请求。但 TCP 级的 HoL——TCP 保证所有 Frame 有序，丢失一个 Segment 会导致后续所有 Stream 被阻塞（等待重传）。HTTP/3/QUIC——独立 UDP 传输层，每个 Stream 独立传输互不影响，丢包只影响该 Stream。加上 0-RTT 握手、连接迁移（IP 变化不重连）、内置 TLS 1.3。实际对比：HTTP/2 在丢包率 > 2% 时性能严重下降，HTTP/3 在弱网下显著优于 HTTP/2。QUIC 的连接迁移特性使切换 WiFi/蜂窝网络时不中断连接。\n\n扩展延伸：各版本采用率——HTTP/2 约 50% 网站支持，HTTP/3 约 25%。迁移建议：有 TLS 就用 HTTP/2（Nginx 简单配置即可）。移动端/物联网考虑 HTTP/3（连接迁移和 0-RTT 优势显著）。CDN 商——CloudFlare、Akamai、Fastly 均已支持 HTTP/3（Alt-Svc 头协商）。QUIC 协议已标准化为 RFC 9000。",
-    "hints": [
-      "HTTP/2 的 TCP 队头阻塞与 HTTP/1.1 的队头阻塞有何不同",
-      "QUIC 的连接迁移如何做到切换网络不中断"
-    ],
-    "tags": [
-      "HTTP",
-      "HTTP/2",
-      "HTTP/3",
-      "QUIC",
-      "网络优化"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "QUIC 协议与 HTTP/3 的底层原理",
-    "content": "QUIC 协议解决了 TCP 的哪些痛点？HTTP/3 基于 QUIC 做了哪些优化？QUIC 相比 TCP+TLS 的核心优势是什么？",
-    "answer": "答案：QUIC 基于 UDP 实现可靠传输，解决 TCP 的队头阻塞、连接建立延迟、连接迁移等问题。HTTP/3 将 HTTP 语义映射到 QUIC 上，显著降低页面加载延迟。\n\n解析：QUIC 的核心优势：1）0-RTT 建连——首次连接 1-RTT（TCP + TLS 1.3 需要 2-RTT），后续连接可做到 0-RTT（复用前次会话的凭据），直接发送数据。2）无队头阻塞（HOL Blocking）——TCP 的队头阻塞来自字节流的有序到达：丢失一个包，后续所有已到达的包都不能交付给应用层。QUIC 在一条连接内支持多个独立的 Stream，一个 Stream 丢包不影响其他 Stream 的数据交付。3）连接迁移——TCP 连接用（源 IP, 源端口, 目标 IP, 目标端口）四元组标识，IP 变化（如从 WiFi 切到 4G）必须重建连接。QUIC 使用 64 位 Connection ID 标识连接，网络切换后连接不断开。4）内置 TLS 1.3——QUIC 将 TLS 握手内化到传输层，避免了 TCP + TLS 分层握手的额外延迟，且所有数据包默认加密。\n\n扩展延伸：HTTP/3 的帧结构——在 QUIC Stream 基础上定义了 HTTP 帧（HEADERS、DATA、SETTINGS 等），与 HTTP/2 帧结构类似但去除了 HTTP/2 的 TCP 层队头阻塞问题。部署现状：Google 服务（YouTube、Gmail）已全面使用 QUIC，国内主流 CDN（阿里云、腾讯云）已支持 HTTP/3。QUIC 的挑战：UDP 在部分中间设备上被限速或拦截，服务器端和客户端库生态仍在完善中。",
-    "hints": [
-      "TCP 的队头阻塞和 QUIC 的独立 Stream 有什么关系",
-      "QUIC 如何实现连接迁移"
-    ],
-    "tags": [
-      "QUIC",
-      "HTTP/3",
-      "UDP",
-      "传输层"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "gRPC 的核心原理",
-    "content": "gRPC 是什么？它基于哪些核心技术（HTTP/2、Protocol Buffers、流式通信）？相比 RESTful API 有什么优势和劣势？",
-    "answer": "答案：gRPC 是 Google 开源的高性能 RPC 框架，基于 HTTP/2 + Protocol Buffers，支持四种通信模式（一元、服务端流、客户端流、双向流），相比 RESTful API 性能更高、类型更安全，但调试不如 REST 直观。\n\n解析：gRPC 的核心技术栈：1）Protocol Buffers——IDL（接口定义语言）和服务契约定义，生成客户端/服务端存根（Stub）。二进制序列化格式，比 JSON 小 3-5 倍，序列化/反序列化快 10-20 倍。字段编号（Field Number）替代字段名，向后兼容性通过字段编号的预留和扩展实现。2）HTTP/2——多路复用（一个 TCP 连接处理多个流）、头部压缩（HPACK）、服务端推送（Server Push）、二进制帧格式。gRPC 利用 HTTP/2 的流（Stream）实现双向流式通信。3）四种通信模式——Unary RPC（普通请求-响应）、Server Streaming RPC（客户端发一次请求，服务端持续返回流）、Client Streaming RPC（客户端持续发送流，服务端返回一次响应）、Bidirectional Streaming RPC（双方独立发送和接收流）。\n\n扩展延伸：gRPC 的使用场景——1）微服务间通信（高性能、强类型、多语言支持）。2）移动端到服务端（Protobuf 体积小，省流量）。3）流式处理（实时推送、大文件传输）。gRPC 的劣势：1）浏览器支持需要 gRPC-Web（有功能限制）。2）二进制协议不易调试（需 grpcurl、gRPC UI 工具）。3）负载均衡方案复杂（基于 HTTP/2 长连接，连接级别的 LB 不够，需要客户端感知服务端负载）。对比 REST：REST 适合外部 API（开放、易理解、语言无关），gRPC 适合内部服务通信（高性能、强契约）。",
-    "hints": [
-      "Protobuf 相比 JSON 为什么更快更小",
-      "gRPC 为什么不适合直接给浏览器用"
-    ],
-    "tags": [
-      "gRPC",
-      "Protobuf",
-      "HTTP/2",
-      "RPC"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "WebSocket 协议详解",
-    "content": "WebSocket 协议解决了什么问题？它与 HTTP 的关系是什么？WebSocket 的握手过程和帧格式是怎样的？",
-    "answer": "答案：WebSocket 提供全双工通信（服务器可主动推送数据），解决 HTTP 轮询的低效问题。通过 HTTP 升级握手建立连接后，从 HTTP 协议切换到 WebSocket 自定义帧协议，在单个 TCP 连接上实现双向实时通信。\n\n解析：WebSocket 握手过程：1）客户端发送 HTTP Upgrade 请求——GET /chat HTTP/1.1，Connection: Upgrade，Upgrade: websocket，Sec-WebSocket-Key: base64 随机值（16 字节）。2）服务端计算 Sec-WebSocket-Accept——将 key 加上固定 GUID（258EAFA5-E914-47DA-95CA-C5AB0DC85B11）做 SHA1 摘要再 Base64 编码。3）服务端返回 101 Switching Protocols——握手完成，协议从 HTTP 切换到 WebSocket。帧格式——FIN（1 位）：是否最后一帧。Opcode（4 位）：1=文本帧、2=二进制帧、8=关闭、9=Ping、A=Pong。Mask（1 位）：客户端发服务端的数据必须掩码（防缓存投毒攻击）。Payload length：7/7+16/7+64 位表示。Masking Key（4 字节，客户端发送时）。\n\n扩展延伸：WebSocket 的应用场景——1）实时协作（在线文档、协同编辑）。2）即时通讯（聊天、消息推送）。3）实时数据推送（行情、体育比分、游戏状态同步）。4）Web 终端（SSH 到浏览器的端口转发）。注意事项：1）WebSocket 连接不自动重连（需应用层心跳和重连机制）。2）HTTP/2 的 Server Push 不能替代 WebSocket（Push 只能关联请求，不能实现任意时刻的双向推送）。3）大规模连接下，服务端需要支持连接数扩展（多进程/多线程 + 事件驱动，如 Node.js、Netty）。",
-    "hints": [
-      "WebSocket 握手时的 Sec-WebSocket-Key 和 Sec-WebSocket-Accept 是什么作用",
-      "为什么客户端发服务端的帧必须掩码"
-    ],
-    "tags": [
-      "WebSocket",
-      "实时通信",
-      "HTTP Upgrade"
-    ]
-  },
-  {
-    "category": "cs_basics",
-    "difficulty": "hard",
     "type": "short_answer",
     "title": "BGP 协议与互联网路由",
     "content": "BGP（边界网关协议）是什么？它在互联网中起什么作用？BGP 的核心概念（AS、CIDR、路由属性、IBGP/EBGP）是什么？",
-    "answer": "答案：BGP 是互联网的核心路由协议，负责在不同自治系统（AS）之间交换路由可达信息。它基于路径矢量算法，通过丰富的路由属性（AS Path、Local Preference、MED 等）实现灵活的选路策略。\n\n解析：BGP 的核心概念：1）AS（自治系统）——拥有独立路由策略的网络集合，每个 AS 有唯一 16 位或 32 位编号。互联网由约 10 万个 AS 组成。2）EBGP 与 IBGP——EBGP 在不同 AS 之间交换路由（直连邻居），IBGP 在 AS 内部传递路由（逻辑全连接或通过路由反射器/联盟）。IBGP 要求 AS 内所有 BGP 路由器之间全互连，但通过路由反射器（Route Reflector）可以打破全连接约束。3）路径属性——AS_PATH 记录经过的 AS 列表（防环），AS 序列长度影响选路（短路径优先）。NEXT_HOP 指向下一跳 IP。LOCAL_PREF（本地优先级，AS 内传播，值高优先）。MED（多出口区分，值低优先）。4）CIDR——无类别域间路由，BGP 路由聚合减少路由表条目。\n\n扩展延伸：BGP 的工程实践——1）选路策略：通过调整 LOCAL_PREF、AS_PATH prepend、MED 等属性控制流量路径。2）BGP 的收敛速度——BGP 路由收敛比 IGP（OSPF/ISIS）慢，通常数十秒到分钟级。原因：BGP 采用增量更新，路由变更需要逐跳传播，且每个 AS 需要对路由进行策略验证和选路计算。3）BGP 安全——BGP 劫持（如 2008 年巴基斯坦封禁 YouTube 事件误将全球 YouTube 路由到巴基斯坦），RPKI（前缀验证框架）和 BGPsec 是当前的安全增强方案。",
+    "answer": "BGP 是互联网的核心路由协议，负责在不同自治系统（AS）之间交换路由可达信息。它基于路径矢量算法，通过丰富的路由属性（AS Path、Local Preference、MED 等）实现灵活的选路策略。\n\n解析：BGP 的核心概念：1）AS（自治系统）——拥有独立路由策略的网络集合，每个 AS 有唯一 16 位或 32 位编号。互联网由约 10 万个 AS 组成。2）EBGP 与 IBGP——EBGP 在不同 AS 之间交换路由（直连邻居），IBGP 在 AS 内部传递路由（逻辑全连接或通过路由反射器/联盟）。IBGP 要求 AS 内所有 BGP 路由器之间全互连，但通过路由反射器（Route Reflector）可以打破全连接约束。3）路径属性——AS_PATH 记录经过的 AS 列表（防环），AS 序列长度影响选路（短路径优先）。NEXT_HOP 指向下一跳 IP。LOCAL_PREF（本地优先级，AS 内传播，值高优先）。MED（多出口区分，值低优先）。4）CIDR——无类别域间路由，BGP 路由聚合减少路由表条目。\n\n扩展延伸：BGP 的工程实践——1）选路策略：通过调整 LOCAL_PREF、AS_PATH prepend、MED 等属性控制流量路径。2）BGP 的收敛速度——BGP 路由收敛比 IGP（OSPF/ISIS）慢，通常数十秒到分钟级。原因：BGP 采用增量更新，路由变更需要逐跳传播，且每个 AS 需要对路由进行策略验证和选路计算。3）BGP 安全——BGP 劫持（如 2008 年巴基斯坦封禁 YouTube 事件误将全球 YouTube 路由到巴基斯坦），RPKI（前缀验证框架）和 BGPsec 是当前的安全增强方案。",
     "hints": [
       "BGP 如何防止路由环路",
       "BGP 路由收敛为什么比 OSPF 慢"
@@ -764,7 +166,7 @@
     "type": "short_answer",
     "title": "DDoS 攻击原理与防护策略",
     "content": "DDoS（分布式拒绝服务）攻击的原理是什么？常见的攻击类型有哪些？从网络层到应用层如何分层防御？",
-    "answer": "答案：DDoS 攻击通过大量被控设备（僵尸网络）向目标系统发送海量请求，耗尽网络带宽、系统连接数或应用资源，导致正常用户无法访问。防御策略分层为近源清洗、网络层防护、应用层限流。\n\n解析：DDoS 攻击分类和防御——1）网络层（L3/L4）攻击——SYN Flood（伪造 IP 发送大量 SYN 包，耗尽连接表）。UDP Flood（大量 UDP 包打满带宽）。放大攻击（利用 NTP/DNS/memcached 等协议的反射放大效应，如 NTP monlist 放大 556 倍）。防御：运营商级清洗中心（如 Cloudflare、阿里云高防），基于 BGP FlowSpec 或黑洞路由牵引流量到清洗设备，SYN Cookie 和连接跟踪。2）应用层（L7）攻击——HTTP Flood（大量看似正常的 HTTP GET/POST 请求）。Slowloris（慢速发送 HTTP 请求，耗尽服务端连接池）。API 滥用（针对特定接口的密集调用）。防御：WAF（Web 应用防火墙）规则匹配，IP 限速和黑名单，验证码/CAPTCHA，API 认证和频率限制。3）CC 攻击（Challenge Collapsar）——针对特定页面或接口的密集请求。防御：速率限制（Rate Limiting，令牌桶/漏桶算法）、限流熔断（Sentinel/Hystrix）降级。\n\n扩展延伸：DDoS 防护架构——1）本地防护流量超过带宽上限需上云清洗（On-premise 设备处理峰值有限）。2）CDN 层防护（Cloudflare、Akamai 等 CDN 天然分布，吸收攻击流量）。3）Anycast 网络（多数据中心共享同一 IP，攻击流量分散到最近节点）。4）TCP 代理验证（先完成 TCP 三次握手再转发业务服务器，过滤掉 IP 欺骗攻击）。近年趋势：HTTPS DDoS 攻击（TLS 握手计算密集，CPU 消耗更大）、IoT 僵尸网络（Mirai 变种，数百万摄像头/路由器设备）。企业防护步骤：评估风险 -> 选择高防服务 -> 配置清洗阈值 -> 制定应急预案（自动触发清洗/黑洞）。",
+    "answer": "DDoS 攻击通过大量被控设备（僵尸网络）向目标系统发送海量请求，耗尽网络带宽、系统连接数或应用资源，导致正常用户无法访问。防御策略分层为近源清洗、网络层防护、应用层限流。\n\n解析：DDoS 攻击分类和防御——1）网络层（L3/L4）攻击——SYN Flood（伪造 IP 发送大量 SYN 包，耗尽连接表）。UDP Flood（大量 UDP 包打满带宽）。放大攻击（利用 NTP/DNS/memcached 等协议的反射放大效应，如 NTP monlist 放大 556 倍）。防御：运营商级清洗中心（如 Cloudflare、阿里云高防），基于 BGP FlowSpec 或黑洞路由牵引流量到清洗设备，SYN Cookie 和连接跟踪。2）应用层（L7）攻击——HTTP Flood（大量看似正常的 HTTP GET/POST 请求）。Slowloris（慢速发送 HTTP 请求，耗尽服务端连接池）。API 滥用（针对特定接口的密集调用）。防御：WAF（Web 应用防火墙）规则匹配，IP 限速和黑名单，验证码/CAPTCHA，API 认证和频率限制。3）CC 攻击（Challenge Collapsar）——针对特定页面或接口的密集请求。防御：速率限制（Rate Limiting，令牌桶/漏桶算法）、限流熔断（Sentinel/Hystrix）降级。\n\n扩展延伸：DDoS 防护架构——1）本地防护流量超过带宽上限需上云清洗（On-premise 设备处理峰值有限）。2）CDN 层防护（Cloudflare、Akamai 等 CDN 天然分布，吸收攻击流量）。3）Anycast 网络（多数据中心共享同一 IP，攻击流量分散到最近节点）。4）TCP 代理验证（先完成 TCP 三次握手再转发业务服务器，过滤掉 IP 欺骗攻击）。近年趋势：HTTPS DDoS 攻击（TLS 握手计算密集，CPU 消耗更大）、IoT 僵尸网络（Mirai 变种，数百万摄像头/路由器设备）。企业防护步骤：评估风险 -> 选择高防服务 -> 配置清洗阈值 -> 制定应急预案（自动触发清洗/黑洞）。",
     "hints": [
       "SYN Flood 为什么能耗尽服务器连接资源",
       "CDN 和 Anycast 在网络层如何缓解 DDoS"
@@ -777,106 +179,12 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "软件定义网络（SDN）原理",
-    "content": "请解释软件定义网络（SDN）的核心原理。SDN 将控制面（Control Plane）和数据面（Data Plane）分离是什么意思？OpenFlow 和 SDN 的关系是什么？SDN 在数据中心网络中解决了什么问题？",
-    "answer": "答案：SDN（Software-Defined Networking）的核心是将网络设备的控制面（决策如何转发）和数据面（实际转发数据包）分离。控制面集中在 SDN Controller 上运行，数据面保留在交换机/路由器中执行 Controller 下发的转发规则。这种分离使网络管理更加灵活，可以实现编程化、自动化的网络配置。\n\n解析：控制面与数据面分离——1）传统网络：每台交换机独立运行路由协议（OSPF/BGP），自己控制转发决策。控制面和数据面在同一个设备上，配置变更需要逐个设备手动操作。2）SDN：Controller（如 ONOS、OpenDaylight）掌握全网拓扑，计算转发路径，通过南向接口（如 OpenFlow）向交换机下发流表（Flow Table）。交换机只查表转发，不再运行路由协议。SDN 架构分层——1）基础设施层（Infrastructure Layer）：物理/虚拟交换机（如 Open vSwitch），负责数据包转发。2）控制层（Control Layer）：SDN Controller，管理网络状态和拓扑，下发转发规则。3）应用层（Application Layer）：网络应用和服务（如负载均衡、防火墙、流量工程）。4）南向接口（Southbound API）：Controller 和交换机之间的通信协议（OpenFlow、NETCONF）。5）北向接口（Northbound API）：应用层调用控制层功能的 API（RESTful、gRPC）。\n\n扩展延伸：OpenFlow——1）第一个标准化的 SDN 南向协议（最初由 Stanford 提出）。2）定义交换机上的 Flow Table（匹配规则 + 动作）。3）每个 Flow Entry 包含：匹配字段（MAC/IP/端口）、计数器、动作（转发/丢弃/修改头部）。4）OpenFlow 1.3+ 支持多级流表、Group Table 和 Meter Table。SDN 的实际价值——1）数据中心资源池化：网络配置跟随 VM/Container 迁移自动化。2）流量工程：动态调整路径避免拥塞（如 Google B4 使用 SDN 将广域网链路利用率从 30% 提升到接近 100%）。3）网络切片：在同一个物理网络上划分多个逻辑上隔离的虚拟网络。SDN 的局限性——1）Controller 单点瓶颈（有主备方案但复杂度高）。2）南向接口性能瓶颈（OpenFlow 流表下发有延迟，不适合微秒级切换）。3）实际部署中 SDN 更多作为叠加网络（Overlay）的管理面，并非替代所有传统网络协议。",
-    "hints": [
-      "SDN 将控制面和数据面分离的实际好处是什么",
-      "OpenFlow 流表匹配和传统路由表查找有什么区别"
-    ],
-    "tags": [
-      "网络",
-      "SDN",
-      "OpenFlow",
-      "数据中心"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "网络虚拟化：VXLAN 与 Geneve",
-    "content": "请解释 VXLAN 和 Geneve 等 Overlay 网络隧道的原理。它们如何解决传统 VLAN 在大规模云网络中的不足？Overlay 网络和 Underlay 网络的关系是什么？",
-    "answer": "答案：VXLAN（Virtual Extensible LAN）是一种 Overlay 网络技术，将二层以太网帧封装在 UDP 包中传输。它使用 24-bit VNI（VXLAN Network Identifier，支持 1600 万个隔离网络）替代传统 VLAN 的 12-bit VID（仅 4096 个）。Geneve（Generic Network Virtualization Encapsulation）是 VXLAN 的改进版，支持更灵活的 TLV（Type-Length-Value）选项封装。\n\n解析：VXLAN——1）封装格式：原始以太网帧 → VXLAN Header（8 字节，含 24-bit VNI）→ UDP Header（目的端口 4789）→ Outer IP Header → Outer MAC Header。2）VTEP（VXLAN Tunnel Endpoint）：封装/解封装的边界设备，可以是物理交换机、软件交换机（OVS）或 Hypervisor（宿主机内核）。3）通信过程：源宿主的 VTEP 将 VM 发出的原始包封装为 VXLAN UDP 包，通过 Underlay IP 网络传输到目标宿主的 VTEP，解封装后交给目标 VM。4）MAC 学习：VTEP 维护 MAC→VTEP IP 的映射表（可以通过多播或分布式控制平面学习）。Geneve——1）类似 VXLAN 但更灵活：VNI 扩展为 24-bit + 可变长的 TLV 选项。2）选项可携带元数据：如安全上下文（Virtual Domain）、流标识、时间戳。3）UDP 端口 6081。4）主要用于数据中心的可编程 Overlay 场景。\n\n扩展延伸：Overlay 和 Underlay——1）Underlay：物理网络（IP 路由），只负责在 VTEP 之间传输封装后的 UDP 包，不需要知道 VM 的 MAC/IP。2）Overlay：逻辑二层网络（虚拟交换机维持的虚拟网络），VM 看到的是 Overlay 网络拓扑。3）Overlay 解耦了虚拟网络和物理网络——物理网络升级改造不影响虚拟网络拓扑，反之亦然。云网络中的应用——1）OpenStack Neutron：默认使用 VXLAN/Geneve 做网络多租户隔离。2）Kubernetes：部分 CNI 插件（如 Flannel VXLAN 模式、Calico VXLAN 模式）使用 VXLAN 跨节点通信。3）VMware NSX：使用 Geneve 封装（称为 GENEVE/GEN）。VXLAN 的不足之处——1）多播依赖：早期 VXLAN 依赖 IP 多播进行 MAC 学习，很多数据中心不支持多播。解决方案：使用 EVPN（MP-BGP）作为控制面替代多播学习。2）UDP 封装增加了约 50 字节的包头开销，在 MTU 1500 的网络中需要调整 MSS/MRU。",
-    "hints": [
-      "VXLAN 如何突破 VLAN 4096 个隔离网络的限制",
-      "Overlay 网络解耦了虚拟网络和物理网络的什么"
-    ],
-    "tags": [
-      "网络",
-      "VXLAN",
-      "Geneve",
-      "Overlay",
-      "虚拟化"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "L4 与 L7 负载均衡器架构对比",
-    "content": "请对比 L4（传输层）和 L7（应用层）负载均衡器的架构和工作原理。各自适用于什么场景？现代负载均衡器（如 Envoy、Nginx）如何同时支持 L4 和 L7？",
-    "answer": "答案：L4 负载均衡工作在传输层（TCP/UDP），根据 IP 地址和端口做流量分发，不解析应用层协议内容。L7 负载均衡工作在应用层（HTTP/gRPC/WebSocket），可以解析协议内容并根据 URL、Header、Cookie 等做精细路由。L4 性能更高（纯转发），L7 功能更丰富（智能路由、限流、认证、改写）。\n\n解析：L4 负载均衡——1）工作方式：接收客户端 TCP 连接，基于哈希/轮询/最少连接选择一个后端服务器，通过 NAT（DNAT）或 DSR（Direct Server Return）转发流量。2）常用算法：源 IP 哈希（会话保持）、轮询（RR）、最少连接、一致性哈希。3）代表产品：LVS（Linux Virtual Server）、HAProxy 的 TCP 模式、AWS NLB（Network Load Balancer）。4）优势：高吞吐（纯内核态转发，如 DPDK 加速可达百万 PPS），解析简单（不拆包到应用层）。L7 负载均衡——1）工作方式：终止客户端连接（Proxy 模式），解析 HTTP 请求头/体，根据 Host/Path/Cookie 决定路由目标。2）额外功能：TLS 终止、认证（OAuth/JWT 验证）、限流（令牌桶）、重试、熔断、请求/响应改写。3）代表产品：Nginx、HAProxy 的 HTTP 模式、AWS ALB（Application Load Balancer）、Envoy。\n\n扩展延伸：现代负载均衡器（Envoy、Nginx）同时支持 L4 和 L7——1）Envoy 的 Listener 可以配置为 TCP Listener（L4）或 HTTP Connection Manager（L7 Filter）。同一个 Envoy 实例可以同时监听多个端口，分别工作在不同层级。2）Nginx 的 stream 模块做 L4（TCP/UDP 代理），http 模块做 L7。性能对比——L4 典型延迟：微秒级（DPDK 纳秒级）。L7 典型延迟：毫秒级（需要拆包和分析 HTTP 头部）。负载均衡架构模式——1）L4 在前 + L7 在后（分层负载均衡）：L4（如 LVS）做入口流量分发到多个 Nginx/Envoy。2）直连 L7：客户端直接连接 L7 负载均衡器（中小规模场景）。应用场景选择——纯 TCP/UDP 协议转发、高吞吐要求 → L4。HTTP/gRPC 应用、需要智能路由和功能丰富 → L7。",
-    "hints": [
-      "L4 负载均衡的 DSR（Direct Server Return）模式有什么优势",
-      "Envoy 如何同时支持 L4 和 L7 流量处理"
-    ],
-    "tags": [
-      "网络",
-      "负载均衡",
-      "L4",
-      "L7",
-      "Envoy"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "API Gateway 与 Service Mesh 对比",
-    "content": "请对比 API Gateway（网关）和 Service Mesh（服务网格）在微服务架构中的角色。它们各自的职责范围是什么？是否会被替代还是互补共存？",
-    "answer": "答案：API Gateway 是南北向流量（客户端→服务）的入口代理，负责认证、限流、路由、协议转换、聚合等边缘功能。Service Mesh 是东西向流量（服务→服务）的基础设施层，通过 Sidecar Proxy（通常为 Envoy）拦截服务间通信，管理流量控制、服务发现、可观测性和安全。两者解决不同问题，互补共存。\n\n解析：API Gateway 的职责——1）统一入口：所有外部请求经过网关进入内部系统。2）认证授权：验证 JWT/OAuth Token，在网关层统一拦截未认证请求。3）限流/防爬：基于 IP/API Key/用户维度的速率限制。4）协议转换：将外部 HTTP/REST 转为内部 gRPC，或将多种客户端协议统一为内部协议。5）请求聚合：一次外部请求需要调用多个内部服务时，网关做聚合合并减少客户端调用次数。6）典型产品：Kong、Kong API Gateway、AWS API Gateway、Zuul（Netflix）、Spring Cloud Gateway。Service Mesh 的职责——1）流量控制：超时、重试、熔断、流量分割（金丝雀发布）。2）服务发现：自动发现后端服务实例。3）可观测性：调用链（Distributed Tracing）、指标（RED 指标：Rate/Error/Duration）。4）安全：mTLS 自动加密服务间通信、细粒度访问控制（RBAC）。5）典型产品：Istio（Envoy Sidecar）、Linkerd、Consul Connect。\n\n扩展延伸：互补关系——API Gateway 处理「外部进入内部」的公共边界面问题。Service Mesh 处理「内部服务之间」的通信基础设施问题。典型架构——外部请求 → Load Balancer（L4）→ API Gateway（L7 认证/路由）→ Service Mesh Sidecar（东西向流量控制）。API Gateway 的发展——已有集成 Service Mesh 能力的趋势（如 Kong Mesh 整合 Service Mesh 功能）。Service Mesh 不适合所有场景——1）增加了延迟（每次服务调用都多一跳 Sidecar）。2）运维复杂度高（需要管理 Control Plane 和 Sidecar 注入）。3）简单微服务（10 个以下服务）通常不需要 Service Mesh。选择指导——有外部客户端、需要认证/API 管理 → 需要 API Gateway。服务间通信复杂、需要精细化流量控制和可观测性 → 引入 Service Mesh。中小规模系统用 API Gateway 就够了。",
-    "hints": [
-      "南北向流量和东西向流量分别对应什么通信场景",
-      "API Gateway 和 Service Mesh 在哪些场景下有功能重叠"
-    ],
-    "tags": [
-      "网络",
-      "API Gateway",
-      "Service Mesh",
-      "微服务",
-      "Envoy"
-    ]
-  },
-  {
-    "category": "java_advanced",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "mTLS 双向 TLS 深度解析",
-    "content": "请解释 mTLS（双向 TLS）的原理和实现方式。mTLS 和单向 TLS 的区别是什么？在微服务通信中，mTLS 如何保障服务间的身份认证和通信加密？",
-    "answer": "答案：mTLS（Mutual TLS）是 TLS 的双向认证版本。单向 TLS 只有客户端验证服务器证书（保证服务器身份可信），mTLS 要求客户端也出示证书让服务器验证（保证客户端身份也可信）。在微服务通信中，mTLS 确保只有持有合法证书的服务才能互相通信，同时通信内容通过 TLS 加密。\n\n解析：单向 TLS vs mTLS——1）单向 TLS（标准的 HTTPS）：TLS 握手时服务器发送证书（Certificate），客户端验证服务器身份后协商会话密钥。客户端不需要证书。2）mTLS：服务器发送证书给客户端验证，同时要求客户端发送证书（CertificateRequest）。客户端发送自己的证书给服务器验证（Certificate + CertificateVerify）。双方证书都验证通过后，建立加密连接。mTLS 握手流程——1）ClientHello → ServerHello + Certificate + CertificateRequest。2）客户端验证服务器证书。3）客户端发送 Certificate（自己的证书）+ ClientKeyExchange + CertificateVerify。4）服务器验证客户端证书。5）协商会话密钥 → 建立加密通道。\n\n扩展延伸：mTLS 在微服务中的应用——1）Istio 自动 mTLS：在每个 Sidecar（Envoy）之间建立 mTLS 连接，应用容器完全无感。Istio 的 Citadel 组件负责颁发和管理证书（基于 SPIFFE 标准）。2）证书轮换：短期证书（如 Istio 默认 24 小时过期）降低证书泄漏风险，自动轮换。3）身份标识：证书中的 SAN（Subject Alternative Name）包含服务标识，如 spiffe://cluster.local/ns/default/sa/my-service。mTLS 的挑战——1）证书管理：每个服务都需要证书，大规模部署需要 PKI（公钥基础设施）和自动签发/轮换机制（SPIRE、cert-manager）。2）性能开销：TLS 握手在每次新连接时产生，mTLS 比单向 TLS 多一次证书验证。3）调试困难：证书错误比连接拒绝更难排查。是否需要 mTLS——1）外部 API：不要用 mTLS（管理外部客户证书不现实），使用 JWT/OAuth2 认证。2）内部服务间通信：推荐 mTLS，特别是通过不信任的网络（跨 AZ、跨机房）。3）Kubernetes 集群内：如果网络安全策略（NetworkPolicy）已严格控制，Service Mesh 的 mTLS 是纵深防御。",
-    "hints": [
-      "mTLS 比单向 TLS 多出哪一步握手环节",
-      "Istio 如何自动管理服务间的 mTLS 证书"
-    ],
-    "tags": [
-      "网络",
-      "mTLS",
-      "TLS",
-      "安全",
-      "Service Mesh"
-    ]
-  },
-  {
     "category": "design_network_extras",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "QUIC 与 HTTP/3 协议",
     "content": "请解释 QUIC 协议的核心特性和 HTTP/3 相比 HTTP/2 的优势。",
-    "answer": "答案：QUIC 基于 UDP 实现了类似 TCP 的可靠传输 + TLS 1.3 加密 + 多路复用\n\n解析：QUIC 核心设计：1）基于 UDP — 避免 TCP 在操作系统内核实现的升级困难，可在用户态快速迭代 2）内置 TLS 1.3 — 加密默认且不可协商，握手比 TCP+TLS 少 1 个 RTT（0-RTT 可复用）3）连接迁移 — 用 Connection ID 而非 IP:Port 标识连接，切换网络（WiFi 切 4G）不断连 4）多路复用无队头阻塞 — 单个流丢包不影响其他流。HTTP/3 将 HTTP/2 的 HPACK 头部压缩改为 QPACK（适应乱序到达），帧和流模型基本继承 HTTP/2。\n\n扩展延伸：0-RTT：已连接过的客户端可携带加密数据和 HTTP 请求同时发出，服务端可直接回复，但存在重放攻击风险（幂等性检查）。多级流优先级：HTTP/3 引入了比 HTTP/2 更细粒度的 Extensible Priorities（Urgency + Incremental 标记）。QUIC 丢包检测：使用更精确的 RTT 计算和更快的丢包重传（基于包序号单调递增而非 TCP 的序列号+ACK 歧义）。QUIC 应用的现状：Google 内部（YouTube/Chrome）已广泛使用，CDN 覆盖逐步扩大但仍有中间设备（防火墙/负载均衡器）阻止 UDP 流量的问题。",
+    "answer": "QUIC 基于 UDP 实现了类似 TCP 的可靠传输 + TLS 1.3 加密 + 多路复用\n\n解析：QUIC 核心设计：1）基于 UDP — 避免 TCP 在操作系统内核实现的升级困难，可在用户态快速迭代 2）内置 TLS 1.3 — 加密默认且不可协商，握手比 TCP+TLS 少 1 个 RTT（0-RTT 可复用）3）连接迁移 — 用 Connection ID 而非 IP:Port 标识连接，切换网络（WiFi 切 4G）不断连 4）多路复用无队头阻塞 — 单个流丢包不影响其他流。HTTP/3 将 HTTP/2 的 HPACK 头部压缩改为 QPACK（适应乱序到达），帧和流模型基本继承 HTTP/2。\n\n扩展延伸：0-RTT：已连接过的客户端可携带加密数据和 HTTP 请求同时发出，服务端可直接回复，但存在重放攻击风险（幂等性检查）。多级流优先级：HTTP/3 引入了比 HTTP/2 更细粒度的 Extensible Priorities（Urgency + Incremental 标记）。QUIC 丢包检测：使用更精确的 RTT 计算和更快的丢包重传（基于包序号单调递增而非 TCP 的序列号+ACK 歧义）。QUIC 应用的现状：Google 内部（YouTube/Chrome）已广泛使用，CDN 覆盖逐步扩大但仍有中间设备（防火墙/负载均衡器）阻止 UDP 流量的问题。",
     "hints": [
       "QUIC 如何解决 TCP 队头阻塞问题",
       "0-RTT 的重放攻击风险怎么缓解"
@@ -889,45 +197,11 @@
   },
   {
     "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "BGP 协议基础",
-    "content": "请解释 BGP（边界网关协议）的基本原理和路由决策过程。",
-    "answer": "答案：BGP 是互联网核心路由协议，在不同自治系统（AS）之间交换可达性信息\n\n解析：BGP 是路径向量协议，不同于 OSPF/IS-IS 等内部网关协议（IGP）。每个 BGP 路由更新包含目标网络前缀 + AS_PATH（经过的 AS 序列）+ 其他路径属性。路径选择依据多条属性决策过程（BGP Best Path Selection）：1）最高 Weight（本地 Cisco 特有）2）最高 Local_Preference（AS 内策略）3）本地起源（network/aggregate）优于重分布 4）最短 AS_PATH 5）最低 Origin Type（IGP < EGP < Incomplete）6）最低 MED（跨 AS 度量）7）eBGP 优于 iBGP 8）最近的 IGP 下一跳等等共 13 步。\n\n扩展延伸：iBGP vs eBGP：eBGP 在 AS 间交换路由，默认 TTL=1；iBGP 在 AS 内部保证一致路由视图。iBGP 要求全连接（full mesh），通过 Route Reflector 或 Confederation 解决扩展性问题。路由策略和流量工程：通过 Local_Preference 控制出站流量，通过 MED/AS_PATH Prepending 控制入站流量。BGP 安全问题：路由劫持（前缀劫持）通过 RPKI（Resource Public Key Infrastructure，资源公钥基础设施）验证路由源 AS 合法性缓解。BGP convergence 在大规模拓扑中较慢，需要各种优化技术（BGP PIC、前缀独立收敛）。",
-    "hints": [
-      "Local_Preference 和 MED 分别控制什么方向的流量",
-      "BGP Route Reflector 解决什么问题"
-    ],
-    "tags": [
-      "BGP",
-      "路由",
-      "网络"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Anycast 原理与应用",
-    "content": "请解释 Anycast 路由原理及其在 CDN/DNS 中的应用。",
-    "answer": "答案：Anycast 将同一 IP 地址从多个地点同时宣告，路由器自动将用户导向最近的节点\n\n解析：原理：多个节点（不同地理位置）通过 BGP 宣告同一 IP 前缀段，互联网路由器根据 BGP 选路规则自动选择“最近”的节点（通常是最短 AS_PATH）。用户无需感知，访问同一 IP 就被分流到最近的服务节点。核心优势：1）自动故障切换 — 某个节点宕机后 BGP 撤销路由，流量自动切换 2）负载分散 — 用户请求分散到不同节点 3）低延迟 — 流量自然路由到最近节点。典型应用：DNS Root Server（13 个根服务器地址实际有 1000+ 个 Anycast 节点），CDN 加速（用户访问 CDN 的边缘节点），DDoS 防护（Cloudflare/AWS Shield 将攻击流量分散到全球节点消化）。\n\n扩展延伸：Anycast 的问题：1）路由不稳定 — BGP 路由抖动会导致长连接中断（TCP 连接因路由变化断开），对实时应用不友好 2）TCP 连接状态不共享 — 后续请求可能到达不同节点，需设计无状态服务或共享 session 3）路由不对称 — 请求和响应可能走不同路径，需要应用层容错。L4 负载均衡中的 Anycast 实践：Facebook 的 L4LB 利用 Anycast 将流量分配到多个 Linux 负载均衡器（均接受同一 VIP）。Unicast vs Multicast vs Broadcast vs Anycast：Unicast 一对一，Multicast 一对多组，Broadcast 一对全部，Anycast 一对最近。",
-    "hints": [
-      "Anycast 中 TCP 长连接遇到路由改变会怎样",
-      "DDoS 防护用 Anycast 的原理是什么"
-    ],
-    "tags": [
-      "Anycast",
-      "路由",
-      "CDN"
-    ]
-  },
-  {
-    "category": "design_network_extras",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "DNS 解析深入",
     "content": "请详细解析 DNS 递归解析和迭代解析的过程及优化方法。",
-    "answer": "答案：DNS 解析将域名转换为 IP 地址，依缓存层级逐级查询\n\n解析：递归解析（通常客户端到本地 DNS 递归器）：客户端问本地 DNS 解析器，解析器负责完成全部分析返回结果。迭代解析（递归器向权威服务器查询的典型模式）：根域名服务器 -> TLD 顶级域服务器（.com/.cn）-> 权威域名服务器（example.com），每一步返回下一步要查询的服务器的地址。解析器的多级缓存：浏览器缓存 -> 操作系统缓存（hosts 文件）-> 本地 DNS 解析器缓存（运营商/公共 DNS 如 8.8.8.8）-> 权威服务器。缓存失效：每个 DNS 记录有 TTL（通常在 60-86400 秒），在 TTL 内缓存结果，过期则重新查询。\n\n扩展延伸：DNS 优化：1）预解析（<link rel=\"dns-prefetch\">）提前解析域名 2）抢占解析（Chrome 的 Predictor，在用户悬停链接时解析）3）HTTP/2 Server Push 可能包含域名解析信息 4）CDN 通过 CNAME 将域名指向 CDN 的 GSLB（全局负载均衡器），自动选择最优 CDN 节点。DNS 扩展机制（EDNS）：支持 DNSSEC（防止缓存投毒）、ECS（EDNS Client Subnet，让 CDN 根据客户端实际 IP 而非解析器位置响应）。解析器类型：运营商 DNS（延迟低但可能缓存污染）、公共 DNS（8.8.8.8/1.1.1.1 可靠但延迟略高）、DoH/DoT（加密 DNS 解析防止窥探/篡改）。",
+    "answer": "DNS 解析将域名转换为 IP 地址，依缓存层级逐级查询\n\n解析：递归解析（通常客户端到本地 DNS 递归器）：客户端问本地 DNS 解析器，解析器负责完成全部分析返回结果。迭代解析（递归器向权威服务器查询的典型模式）：根域名服务器 -> TLD 顶级域服务器（.com/.cn）-> 权威域名服务器（example.com），每一步返回下一步要查询的服务器的地址。解析器的多级缓存：浏览器缓存 -> 操作系统缓存（hosts 文件）-> 本地 DNS 解析器缓存（运营商/公共 DNS 如 8.8.8.8）-> 权威服务器。缓存失效：每个 DNS 记录有 TTL（通常在 60-86400 秒），在 TTL 内缓存结果，过期则重新查询。\n\n扩展延伸：DNS 优化：1）预解析（<link rel=\"dns-prefetch\">）提前解析域名 2）抢占解析（Chrome 的 Predictor，在用户悬停链接时解析）3）HTTP/2 Server Push 可能包含域名解析信息 4）CDN 通过 CNAME 将域名指向 CDN 的 GSLB（全局负载均衡器），自动选择最优 CDN 节点。DNS 扩展机制（EDNS）：支持 DNSSEC（防止缓存投毒）、ECS（EDNS Client Subnet，让 CDN 根据客户端实际 IP 而非解析器位置响应）。解析器类型：运营商 DNS（延迟低但可能缓存污染）、公共 DNS（8.8.8.8/1.1.1.1 可靠但延迟略高）、DoH/DoT（加密 DNS 解析防止窥探/篡改）。",
     "hints": [
       "递归解析和迭代解析的区别在哪里",
       "ECS（EDNS Client Subnet）解决什么问题"
@@ -942,152 +216,9 @@
     "category": "design_network_extras",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "CDN 边缘计算",
-    "content": "请解释 CDN 的工作原理以及边缘计算在 CDN 中的演进。",
-    "answer": "答案：CDN 通过在全球部署边缘节点缓存静态内容，使用户就近获取数据\n\n解析：CDN 核心架构：1）边缘节点（Edge/Edge POP）— 部署在全球各地，存储热点缓存，响应终端用户请求 2）中间层（Mid-tier）— 边缘未命中时回源到中间层，多层缓存减轻源站压力 3）源站（Origin）— 存储原始内容。流量调度通过 GSLB 分配最近的 CDN 节点（基于 DNS 或 Anycast）。缓存策略：CDN 规则控制(TTL + 缓存控制头)、预热(预拉取)、分层回源。从纯粹的内容缓存演进到边缘计算：边缘节点上运行代码(Cloudflare Workers/AWS Lambda@Edge/阿里云 EdgeScript)处理请求，可直接在边缘执行 JS/Python/WebAssembly 函数而不必回源站。\n\n扩展延伸：边缘计算的核心价值：1）减少延迟 — 在离用户最近的节点处理计算逻辑，跳过回源的长距离网络 2）降低源站成本 — 源站只需提供数据和核心逻辑 3）弹性 — 利用 CDN 的全球资源实现按需扩缩。使用场景：JWT 验证/请求转发、图像优化（WebP 转换/缩放）、A/B 测试路由、API 聚合与响应组装、内容个性化。限制：运行环境受限（CPU/内存/存储有限）、无状态（持久化需回源）、不支持某些系统调用（文件系统/线程）。新兴趋势：Wasm（WebAssembly 沙箱）在边缘的部署，比 JavaScript 隔离更安全、启动更快。",
-    "hints": [
-      "CDN 多层缓存怎么避免缓存风暴",
-      "边缘计算为什么适合做请求聚合和协议转换"
-    ],
-    "tags": [
-      "CDN",
-      "边缘计算",
-      "缓存"
-    ]
-  },
-  {
-    "category": "network",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "TCP BBR 拥塞控制",
-    "content": "请解释 TCP BBR（Bottleneck Bandwidth and Round-trip propagation time）拥塞控制算法的原理。BBR 与传统的基于丢包的拥塞控制（如 CUBIC）有什么本质区别？",
-    "answer": "答案：BBR 是 Google 提出的基于模型（Model-based）的拥塞控制算法。\n\n原理：BBR 周期性测量两个关键参数：\n1. 带宽（Bottleneck Bandwidth, BtlBw）：链路的最大传输速率\n2. 往返时间（Round-trip Propagation Time, RTprop）：链路的最小 RTT\n\n通过这两个参数计算最佳工作点：带宽 × 延迟 = 管道容量（BDP）\nBBR 的目标是让发送速率维持在 BDP 附近，既不造成排队也不浪费带宽。\n\nBBR 与传统算法（CUBIC/Reno）的本质区别：\n- 传统算法：基于丢包检测——填满缓冲区直到发生丢包才降低速率\n- 问题：引入大量延迟（Bufferbloat），带宽利用率在丢包率高时骤降\n- BBR：基于带宽和延迟建模——主动控制发送速率以避免排队\n- 优势：延迟更低（减少 50-90%），吞吐量更稳定（尤其在高丢包率链路）\n\n工作阶段：\n1. Startup：指数增长探测带宽上限\n2. Drain：降低速率排空 Startup 积累的队列\n3. ProbeBW：稳定状态下周期性探测带宽变化\n4. ProbeRTT：进入小窗口探测最小 RTT\n\n扩展延伸：BBR 在 YouTube 和 Google Cloud 中广泛使用。BBRv3 进一步改进了与 CUBIC 的公平性。BBR 不适合延迟敏感场景（如实时音视频）。考虑使用 WebRTC 的 GCC（Google Congestion Control）。",
-    "hints": [
-      "BBR 基于带宽×延迟模型，而非丢包检测",
-      "BBR 主动避免排队→延迟更低，吞吐更稳定"
-    ],
-    "tags": [
-      "网络",
-      "TCP",
-      "BBR",
-      "拥塞控制"
-    ]
-  },
-  {
-    "category": "network",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "eBPF 网络观测",
-    "content": "请介绍 eBPF（extended Berkeley Packet Filter）在网络安全和观测中的应用。eBPF 如何实现无侵入的应用监控？XDP 和 TC 钩子的区别是什么？",
-    "answer": "答案：eBPF 是 Linux 内核的沙箱虚拟机技术，允许在不修改内核源码或加载内核模块的情况下安全地执行用户自定义代码。\n\n无侵入应用监控：\n1. 内核探针（kprobe/tracepoint）：监控系统调用、网络事件、文件系统操作\n2. 用户态探针（uprobe）：在用户态函数的入口/出口插入探针\n3. eBPF 程序在内核中执行，收集数据后通过 map 或 perf_event 传递到用户态\n4. 不需要修改应用代码、重启进程或加载内核模块\n\nXDP（eXpress Data Path）：\n- 在网络驱动层（NIC 驱动收到数据包后最早的时刻）执行\n- 在协议栈处理之前，性能最高\n- 应用：DDoS 防护（最快丢弃包）、负载均衡（Cilium）、包过滤\n\nTC（Traffic Control）钩子：\n- 在内核协议栈处理过程中执行（ingress/egress）\n- 可以访问已解析的协议头、进行修改和重定向\n- 应用：容器网络策略（Cilium NetworkPolicy）、流量加密、协议转换\n\nXDP vs TC：XDP 更早期（驱动层），提供纳秒级处理；TC 更后期（协议栈内），可以修改包内容。\n\n扩展延伸：Cilium 基于 eBPF 实现的 Kubernetes CNI 插件——替代 kube-proxy、实现 NetworkPolicy、提供可观测性。Falco 使用 eBPF 实现容器运行时安全。Pixie 使用 eBPF 实现 Kubernetes 应用的可观测性。eBPF 是云原生网络和安全的核心技术。",
-    "hints": [
-      "eBPF 通过内核探针实现无侵入监控",
-      "XDP（驱动层）比 TC（协议栈层）更早期性能更高"
-    ],
-    "tags": [
-      "网络",
-      "eBPF",
-      "XDP",
-      "Cilium"
-    ]
-  },
-  {
-    "category": "design_network",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "TCP 拥塞控制",
-    "content": "请介绍 TCP 拥塞控制算法。CUBIC 和 BBR 各有什么特点？CUBIC 适合什么场景？BBR 如何绕过丢包判断的局限？",
-    "answer": "答案：TCP 拥塞控制决定数据发送速率，避免网络过载。\n\nTCP 拥塞控制的基本算法：\n1. 慢启动（Slow Start）：初始发送 1 个 MSS，每次 ACK 翻倍（指数增长），直到 ssthresh\n2. 拥塞避免（Congestion Avoidance）：超过 ssthresh 后线性增长（每个 RTT 增加 1 个 MSS）\n3. 快速恢复（Fast Recovery）：收到 3 个重复 ACK 时，将 ssthresh 减半\n\nCUBIC（Linux 默认）：\n- 基于丢包反馈的算法——以丢包作为拥塞信号\n- 拥塞窗口增长呈三次函数（立方）形状：W = C(t-K)³ + Wmax\n  - Wmax = 丢包时的窗口大小\n  - t = 距离上次丢包的时间\n  - 特点：距离上次丢包越近增长越慢（谨慎），距离越远增长越快（探测）\n- 优势：在高带宽链路中快速恢复（对 RTT 不公平性问题有改进）\n- 问题：在浅缓冲区中，丢包可能不是拥塞信号（导致吞吐量不必要下降）\n\nBBR（Google，2016）：\n- 基于带宽和延迟的模型——不把丢包当作拥塞信号\n- BBR 周期性地探测：\n  1. 最大带宽（BW）——发送更多数据直到出现延迟或丢包\n  2. 最小 RTT（RTprop）——排空队列后的传输延迟\n- 发送速率 = min(带宽估计 × 系数, 窗口限制)\n- 优点：不依赖丢包，在高延迟/高带宽链路中表现更好\n- 缺点：与 CUBIC 流共存时可能不公平（抢占 CUBIC 的带宽）\n\n扩展延伸：TCP 拥塞控制的两个流派——丢包反馈（CUBIC/NewReno）和模型反馈（BBR/Vegas）。现代 CUBIC + BBR 部署情况：CUBIC 是 Linux 内核默认，BBR 在 Google 内部和 YouTube/CDN 广泛部署。QUIC 的拥塞控制——QUIC 在应用层实现拥塞控制（不是在内核），可以更灵活地更新算法（不更新内核）。",
-    "hints": [
-      "CUBIC = 基于丢包反馈 + 三次函数增长窗口（高带宽友好）",
-      "BBR = 基于带宽和延迟模型（不信任丢包），周期探测 BW 和 minRTT"
-    ],
-    "tags": [
-      "网络",
-      "TCP",
-      "拥塞控制",
-      "BBR"
-    ]
-  },
-  {
-    "category": "design_network",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "QUIC 协议",
-    "content": "请介绍 QUIC 协议的工作原理。QUIC 如何解决 TCP 的队头阻塞问题？0-RTT 连接建立是如何实现的？",
-    "answer": "答案：QUIC（Quick UDP Internet Connections）是基于 UDP 的传输协议，HTTP/3 的底层协议。\n\nQUIC 解决的主要问题：\n1. TCP 的队头阻塞（HOL Blocking）：TCP 按序交付，丢包后所有后续流都等待重传\n2. 连接建立延迟：TCP + TLS 需要 2-3 个 RTT\n3. 连接迁移困难：IP 地址变化（如切换 Wi-Fi → 移动网络）需要重新建立连接\n\nQUIC 的核心特性：\n- 基于 UDP：避免修改操作系统内核（QUIC 在用户空间实现）\n- 多路复用无 HOL：一个连接内有多个 Stream，一个 Stream 的丢包不影响其他 Stream\n- 0-RTT/1-RTT 连接：首次连接 1-RTT（类似 TCP + TLS 1.3），重连 0-RTT\n- 连接迁移：连接 ID 唯一标识连接（不是 IP:Port 四元组），网络切换不中断\n\n0-RTT 实现：\n1. 首次连接：Client Hello → Server 返回证书和配置 → 1-RTT 后建立连接\n2. 后续连接：客户端缓存 Server 的配置（Cached Config），直接发送加密请求（0-RTT）\n3. 风险：重放攻击（攻击者可以通过重放 0-RTT 数据执行重复操作）\n4. 解决方案：服务端限制 0-RTT 数据（只允许幂等请求）\n\nQUIC vs HTTP/2：\n- HTTP/2 的多路复用（一个 TCP 连接多个 Stream）存在 HOL 问题\n- TCP 丢包阻塞所有 Stream，因为 TCP 必须按序交付\n- QUIC 将多路复用移到底层（Stream 在 QUIC 层独立），丢包只影响对应 Stream\n\n扩展延伸：QUIC 的拥塞控制——在应用层实现（可以随时升级算法）。QUIC 的加密——内置 TLS 1.3（无明文模式）。QUIC 的部署——Google 内部已使用多年（YouTube 40%+ 流量），现在标准化为 RFC 9000。运营商对 UDP 的限制——部分网络会限速或封锁 UDP。",
-    "hints": [
-      "QUIC = UDP + TLS 1.3 + 多 Stream 无 HOL + 连接迁移 + 0-RTT",
-      "TCP 丢包阻塞所有 Stream（HOL），QUIC Stream 独立，丢包互不影响"
-    ],
-    "tags": [
-      "网络",
-      "QUIC",
-      "HTTP/3",
-      "传输协议"
-    ]
-  },
-  {
-    "category": "design_network",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "HTTP/2 多路复用",
-    "content": "请介绍 HTTP/2 的核心改进——多路复用（Multiplexing）。HTTP/2 如何通过帧（Frame）和流（Stream）实现多路复用？HTTP/2 的队头阻塞（HOL）为什么仍然存在？",
-    "answer": "答案：HTTP/2 在单个 TCP 连接上实现多路复用（多个请求/响应并行传输）。\n\nHTTP/2 的核心概念：\n- 流（Stream）：连接内的双向字节流，每个请求/响应是一个 Stream\n- 帧（Frame）：HTTP/2 的最小传输单位（HEADERS 帧传输头部，DATA 帧传输正文）\n- 一个连接内可以存在多个 Stream（多路复用）\n- Stream 之间独立传输，不需要按序等待\n\nHTTP/1.1 的问题：\n- 队头阻塞（HOL）：一个请求的响应不完毕，后续请求不能发送\n- 解决方式：建立多个连接（通常 6 个），连接多浪费资源\n- 管道化（Pipelining）：理论上可行但实际未推广（中间件/代理不支持）\n\nHTTP/2 的帧结构：\n- 固定头部（9 字节）：Length(24) + Type(8) + Flags(8) + Stream ID(31) + Reserved(1)\n- 帧类型：HEADERS、DATA、SETTINGS、PRIORITY、RST_STREAM、GOAWAY 等\n- 每个帧携带 Stream ID，接收方根据 Stream ID 组装完整消息\n\nHTTP/2 仍然存在的 HOL 问题：\n- TCP 层面仍然有 HOL——TCP 必须按序交付\n- 如果 TCP 数据段丢失：后续所有 Stream（即使属于不同的请求）都必须等待重传\n- QUIC 解决了这个问题（在 QUIC 层处理多路复用，独立 Stream）\n\n扩展延伸：HTTP/2 的服务器推送（Server Push）——服务器可以主动推送客户端需要的资源（如 HTML 中引用的 CSS），不需要客户端请求。HTTP/2 的头压缩（HPACK）——使用静态表和动态表压缩 Header，减少重复传输。HTTP/2 的流量控制——每个 Stream 级别的流量控制（WINDOW_UPDATE 帧）。",
-    "hints": [
-      "HTTP/2 多路复用 = 单 TCP 连接内的多个 Stream（帧通过 Stream ID 区分）",
-      "TCP 层面的 HOL 仍然存在：一个丢包阻塞所有 Stream"
-    ],
-    "tags": [
-      "网络",
-      "HTTP/2",
-      "多路复用",
-      "HOL"
-    ]
-  },
-  {
-    "category": "design_network",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "DNS 解析与 CDN 调度",
-    "content": "请介绍 DNS 解析过程和 CDN 的智能 DNS 调度。DNS 递归查询和迭代查询的区别是什么？CDN 如何根据用户地理位置选择最近的节点？",
-    "answer": "答案：DNS 将域名解析为 IP 地址，CDN 利用 DNS 调度用户到最近节点。\n\nDNS 解析过程：\n1. 浏览器查询本地 DNS 缓存\n2. 未命中 → 查询系统 Hosts 文件\n3. 未命中 → 查询本地 DNS 服务器（LDNS，通常由 ISP 提供）\n4. LDNS 先查根 DNS 服务器 → 返回顶级域（.com）服务器的地址\n5. LDNS 查顶级域服务器 → 返回权威 DNS 服务器的地址\n6. LDNS 查权威 DNS 服务器 → 返回最终的 IP 地址\n7. LDNS 缓存结果并返回给客户端\n\n递归查询 vs 迭代查询：\n- 递归查询：DNS 服务器替客户端完成完整解析（客户端只需等待结果）\n- 迭代查询：DNS 服务器返回下一级 DNS 服务器地址（客户端自己逐级查询）\n- 通常：客户端 → LDNS 是递归，LDNS → 根/顶级/权威是迭代（取决于实现）\n\nCDN 的智能 DNS 调度：\n- CDN 的权威 DNS 服务器配置为智能 DNS（如阿里云 DNS/Cloudflare DNS）\n- 智能 DNS 根据客户端 IP 判断地理位置和网络运营商\n- 返回距离最近/负载最低的 CDN 边缘节点的 IP 地址\n- 调度策略：\n  1. 地理位置调度：选择距离用户最近的节点\n  2. 运营商调度：选择同运营商节点（避免跨运营商延迟）\n  3. 负载调度：选择负载最低的节点\n  4. 可用性调度：自动剔除故障节点\n\nDNS 优化：\n- DNS 预解析（<link rel=\"dns-prefetch\">）\n- DNS 缓存 TTL 设置（短 TTL → 调度灵活但压力大，长 TTL → 调度不灵活但缓存命中率高）\n- HTTPDNS：使用 HTTP 协议代替 UDP DNS，避免 DNS 劫持/污染\n\n扩展延伸：Anycast——CDN 的另一种调度方式（多个节点共享同一 IP，BGP 路由自动调度到最近节点）。DNS 污染/劫持——部分 ISP 篡改 DNS 响应，HTTPDNS 是对抗手段。CDN 的缓存命中率——热门资源 > 90%，冷门资源 < 30%。",
-    "hints": [
-      "DNS 解析：浏览器缓存 → Hosts → LDNS → 根/顶级/权威 DNS 服务器",
-      "CDN 智能 DNS = 根据用户 IP 判断地理位置和运营商，返回最近节点 IP"
-    ],
-    "tags": [
-      "网络",
-      "DNS",
-      "CDN",
-      "调度"
-    ]
-  },
-  {
-    "category": "design_network",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "gRPC 负载均衡",
-    "content": "请介绍 gRPC 的负载均衡策略。gRPC 为什么需要客户端负载均衡？Lookaside 负载均衡和 Proxy 负载均衡有什么区别？",
-    "answer": "答案：gRPC 使用基于 HTTP/2 的长连接，传统代理层负载均衡在高并发场景下效果不佳。\n\ngRPC 负载均衡的挑战：\n- HTTP/2 长连接：建立连接后长期复用，7 层代理无法按请求粒度分发（连接绑定）\n- 传统 Nginx 7 层负载均衡：在 HTTP/2 下只能按连接分发（不是按请求）\n- 长连接数远小于请求数 → 连接级负载均衡导致请求分布不均匀\n\n客户端负载均衡（Lookaside）：\n1. 客户端内置负载均衡逻辑（或者通过客户端库）\n2. 客户端从服务发现组件获取可用后端列表（如 Consul/Eureka/K8s DNS）\n3. 客户端自行选择后端发起 gRPC 调用\n4. 后端不可用时客户端感知并切换到其他节点\n5. 策略：轮询（Round Robin）、加权轮询、最少请求数（Least Request）\n6. 优点：按请求粒度分发（均衡性最好），无代理瓶颈\n7. 缺点：每个客户端都要实现负载均衡逻辑（通常通过 gRPC 插件/拦截器）\n\nProxy 负载均衡：\n1. 引入独立的负载均衡代理（如 Envoy / Linkerd Proxy / Nginx）\n2. 客户端→Proxy→后端，Proxy 负责将请求分发到后端\n3. 第 7 层协议感知代理（Envoy）能理解 HTTP/2，并按请求分发\n4. 优点：客户端简单（只需要连到 Proxy），对客户端语言无关\n5. 缺点：额外一跳（增加延迟），Proxy 可能成为瓶颈\n\ngRPC 原生负载均衡方案：\n- gRPC 内置了 Lookaside 负载均衡支持（通过 gRPC LB API）\n- 使用服务配置（Service Config）配置负载均衡策略\n- gRPC 支持 Subchannel（子通道）管理——维护到每个后端的连接池\n\n扩展延伸：gRPC-Web 的负载均衡——浏览器中的 gRPC 不支持 HTTP/2 多路复用，需要使用 Envoy 等 7 层代理做协议转换。Kubernetes 中的 gRPC 负载均衡——headless service + gRPC DNS 轮询，或使用 Envoy/Ambassador。gRPC 的健康检查——gRPC 内置健康检查协议，客户端可以自动排除不健康节点。",
-    "hints": [
-      "gRPC 客户端负载均衡（Lookaside）= 客户端从注册中心获取后端列表后自行选择",
-      "Proxy 负载均衡（Envoy）= 中间代理层按请求分发到后端（加一跳延迟）"
-    ],
-    "tags": [
-      "网络",
-      "gRPC",
-      "负载均衡",
-      "HTTP/2"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
     "title": "HTTP/2 多路复用原理",
     "content": "请介绍 HTTP/2 的多路复用（Multiplexing）原理及其与 HTTP/1.1 的对比。",
-    "answer": "答案：HTTP/2 的多路复用允许在单个 TCP 连接上同时传输多个请求和响应。\n\n核心原理：\n\n1. 流（Stream）：\n   - HTTP/2 将通信抽象为多个并行的流\n   - 每个流有一个唯一的流 ID\n   - 请求和响应在同一个流上传输\n\n2. 帧（Frame）：\n   - HTTP/2 的最小通信单位\n   - HEADERS 帧：传输 HTTP 头部\n   - DATA 帧：传输请求/响应体\n   - SETTINGS 帧：协商连接参数\n   - RST_STREAM 帧：终止某个流\n\n3. 二进制分帧层：\n   - 所有帧以二进制格式编码\n   - 帧通过流 ID 关联到对应的流\n   - 接收方按流 ID 重新组装\n\n与 HTTP/1.1 对比：\n| 特性 | HTTP/1.1 | HTTP/2 |\n|------|----------|--------|\n| 连接复用 | 无（需多个连接或 pipelining） | 单连接多路复用 |\n| 队头阻塞 | 有（请求串行） | 无（流级别） |\n| 数据格式 | 文本 | 二进制 |\n| 优先级 | 无 | 流优先级 |\n| 头部压缩 | 无 | HPACK |\n\n关键优势：\n- 减少连接数：一个域名一个连接\n- 消除队头阻塞：多个请求互不等待\n- 更高效的网络利用：减少 TCP 慢启动次数\n\n注意：HTTP/2 在传输层（TCP）仍有队头阻塞——一个 TCP 丢包会影响所有流。这个问题的解决方案是 HTTP/3（基于 QUIC）。",
+    "answer": "HTTP/2 的多路复用允许在单个 TCP 连接上同时传输多个请求和响应。\n\n核心原理：\n\n1. 流（Stream）：\n   - HTTP/2 将通信抽象为多个并行的流\n   - 每个流有一个唯一的流 ID\n   - 请求和响应在同一个流上传输\n\n2. 帧（Frame）：\n   - HTTP/2 的最小通信单位\n   - HEADERS 帧：传输 HTTP 头部\n   - DATA 帧：传输请求/响应体\n   - SETTINGS 帧：协商连接参数\n   - RST_STREAM 帧：终止某个流\n\n3. 二进制分帧层：\n   - 所有帧以二进制格式编码\n   - 帧通过流 ID 关联到对应的流\n   - 接收方按流 ID 重新组装\n\n与 HTTP/1.1 对比：\n| 特性 | HTTP/1.1 | HTTP/2 |\n|------|----------|--------|\n| 连接复用 | 无（需多个连接或 pipelining） | 单连接多路复用 |\n| 队头阻塞 | 有（请求串行） | 无（流级别） |\n| 数据格式 | 文本 | 二进制 |\n| 优先级 | 无 | 流优先级 |\n| 头部压缩 | 无 | HPACK |\n\n关键优势：\n- 减少连接数：一个域名一个连接\n- 消除队头阻塞：多个请求互不等待\n- 更高效的网络利用：减少 TCP 慢启动次数\n\n注意：HTTP/2 在传输层（TCP）仍有队头阻塞——一个 TCP 丢包会影响所有流。这个问题的解决方案是 HTTP/3（基于 QUIC）。",
     "hints": [
       "HTTP/2 将通信抽象为流+帧，一个 TCP 连接承载多个并行流",
       "二进制分帧层通过流 ID 关联帧，解决 HTTP/1.1 的队头阻塞",
@@ -1106,7 +237,7 @@
     "type": "short_answer",
     "title": "CDN 的工作原理与路由策略",
     "content": "请介绍 CDN 的工作原理以及常见的全局负载均衡路由策略。",
-    "answer": "答案：CDN（Content Delivery Network）通过在全球部署边缘节点，将内容缓存到离用户最近的位置。\n\nCDN 的核心组件：\n1. 边缘节点（Edge Node）：存储缓存内容，直接响应用户请求\n2. 源站（Origin）：内容的原始服务器\n3. 全局负载均衡器（GSLB）：DNS 级别的流量调度\n4. 缓存管理系统：内容预热、刷新、淘汰\n\n用户请求流程：\n1. 用户请求某个资源\n2. DNS 解析到 CDN 的 GSLB\n3. GSLB 根据策略选择一个最优的边缘节点 IP\n4. 用户直接请求该边缘节点\n5. 如果边缘节点有缓存 → 直接返回\n6. 如果没有缓存 → 回源（回源到上级节点或源站）→ 缓存 → 返回\n\n常见的 GSLB 路由策略：\n1. 地理位置路由：根据用户 IP 所属的地理位置返回最近的节点\n   - 优点：简单、稳定\n   - 缺点：地理近不一定网络快\n\n2. 实时延迟探测：对各节点进行实时网络探测，返回延迟最低的\n   - 优点：适应性好\n   - 缺点：计算开销大\n\n3. 带宽成本优化：根据各节点的带宽成本和负载情况分配\n   - 适用：大流量场景\n\n4. 一致性哈希：同一用户的请求始终路由到同一节点\n   - 适用：对缓存命中率敏感的动态内容\n\n5. 基于权重的轮询：根据节点容量分配权重\n\n扩展延伸：现代 CDN 还有 DDoS 防护（在边缘层清洗流量）、边缘计算（在 CDN 节点运行自定义代码，如 Cloudflare Workers）、动态加速（优化动态内容的回源链路）等能力。",
+    "answer": "CDN（Content Delivery Network）通过在全球部署边缘节点，将内容缓存到离用户最近的位置。\n\nCDN 的核心组件：\n1. 边缘节点（Edge Node）：存储缓存内容，直接响应用户请求\n2. 源站（Origin）：内容的原始服务器\n3. 全局负载均衡器（GSLB）：DNS 级别的流量调度\n4. 缓存管理系统：内容预热、刷新、淘汰\n\n用户请求流程：\n1. 用户请求某个资源\n2. DNS 解析到 CDN 的 GSLB\n3. GSLB 根据策略选择一个最优的边缘节点 IP\n4. 用户直接请求该边缘节点\n5. 如果边缘节点有缓存 → 直接返回\n6. 如果没有缓存 → 回源（回源到上级节点或源站）→ 缓存 → 返回\n\n常见的 GSLB 路由策略：\n1. 地理位置路由：根据用户 IP 所属的地理位置返回最近的节点\n   - 优点：简单、稳定\n   - 缺点：地理近不一定网络快\n\n2. 实时延迟探测：对各节点进行实时网络探测，返回延迟最低的\n   - 优点：适应性好\n   - 缺点：计算开销大\n\n3. 带宽成本优化：根据各节点的带宽成本和负载情况分配\n   - 适用：大流量场景\n\n4. 一致性哈希：同一用户的请求始终路由到同一节点\n   - 适用：对缓存命中率敏感的动态内容\n\n5. 基于权重的轮询：根据节点容量分配权重\n\n扩展延伸：现代 CDN 还有 DDoS 防护（在边缘层清洗流量）、边缘计算（在 CDN 节点运行自定义代码，如 Cloudflare Workers）、动态加速（优化动态内容的回源链路）等能力。",
     "hints": [
       "CDN 核心流程：DNS → GSLB 选择最优节点 → 边缘节点响应（缓存命中则直接返回）",
       "GSLB 策略：地理位置、实时延迟、带宽成本、一致性哈希",
@@ -1121,30 +252,11 @@
   },
   {
     "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "QUIC 协议的核心特性",
-    "content": "请介绍 QUIC 协议的核心特性以及它如何解决 TCP 的固有缺陷。",
-    "answer": "答案：QUIC（Quick UDP Internet Connections）是 Google 设计和标准化的传输层协议，基于 UDP。\n\n核心特性：\n\n1. 零 RTT 连接建立：\n   - 首次连接：1-RTT（交换配置和证书）\n   - 再次连接：0-RTT（使用缓存的配置直接发送数据）\n   - TCP+TLS 1.3 至少需要 1-2 RTT\n\n2. 无队头阻塞：\n   - TCP 的队头阻塞：一个 TCP 段丢失，后续所有段都要等待重传\n   - QUIC 的解决：多条独立的流共用同一个 QUIC 连接\n   - 一条流的丢包不影响其他流的数据交付\n\n3. 连接迁移：\n   - TCP 连接由（IP, Port）四元组标识，网络切换（如 Wi-Fi 切蜂窝）中断连接\n   - QUIC 使用 Connection ID 标识连接，网络变化不影响上层连接\n   - 对移动端体验提升巨大\n\n4. 内置加密：\n   - QUIC 默认强制加密（TLS 1.3 集成），没有明文模式\n   - 加密传输层头部（如 ACK、流 ID），防止中间人分析\n\n5. 用户空间实现：\n   - TCP 在内核空间实现（升级需要更新内核）\n   - QUIC 在用户空间实现（应用可以快速迭代拥塞控制算法）\n\n6. 可插拔的拥塞控制：\n   - 应用可以自定义拥塞控制算法（如 NewReno、CUBIC、BBR）\n   - TCP 的拥塞控制受限于内核\n\n与 TCP 对比：\n| 特性 | TCP | QUIC |\n|------|-----|------|\n| 传输层 | TCP | UDP |\n| 连接建立 | 3-Way Handshake | 0/1-RTT |\n| 队头阻塞 | 有 | 无 |\n| 连接迁移 | 不支持 | 支持 |\n| 加密 | 可选（TLS） | 强制 |\n| 实现位置 | 内核 | 用户空间 |\n\n扩展延伸：HTTP/3 就是基于 QUIC 的 HTTP 协议。QUIC 的广泛应用受限于中间设备（防火墙/NAT）对 UDP 的限制。但主要互联网公司（Google、Meta、Cloudflare）已经大规模部署 QUIC。",
-    "hints": [
-      "0-RTT 连接、无队头阻塞、连接迁移（Connection ID）、强制加密",
-      "基于 UDP，在用户空间实现——内核无需升级即可迭代拥塞控制算法",
-      "HTTP/3 基于 QUIC，解决了 TCP 层面的队头阻塞"
-    ],
-    "tags": [
-      "网络",
-      "QUIC",
-      "HTTP/3",
-      "传输层"
-    ]
-  },
-  {
-    "category": "design_network_extras",
     "difficulty": "easy",
     "type": "short_answer",
     "title": "正向代理与反向代理",
     "content": "请介绍正向代理（Forward Proxy）和反向代理（Reverse Proxy）的区别和应用场景。",
-    "answer": "答案：正向代理和反向代理的核心区别在于代理的服务对象不同。\n\n正向代理（Forward Proxy）：\n\n定义：\n- 代表客户端向服务器发起请求\n- 客户端明确知道代理的存在\n- 服务器不知道真正的客户端是谁\n\n应用场景：\n1. 突破访问限制（如翻墙访问国外网站）\n2. 访问控制（公司网络限制员工访问某些网站）\n3. 匿名访问（隐藏客户端真实 IP）\n4. 缓存加速（缓存频繁访问的外部资源）\n5. 审计和日志（记录员工的网络访问行为）\n\n反向代理（Reverse Proxy）：\n\n定义：\n- 代表服务器接收客户端的请求\n- 客户端不知道真正的后端服务器是谁\n- 客户端可能不知道代理的存在（透明）\n\n应用场景：\n1. 负载均衡（分发请求到多个后端服务器）\n2. 安全防护（隐藏后端服务器真实 IP，阻挡恶意请求）\n3. SSL 终结（统一处理 HTTPS 证书，后端用 HTTP）\n4. 缓存加速（缓存静态内容减轻后端压力）\n5. 灰度发布（按比例将流量路由到不同版本）\n\n核心对比：\n| 维度 | 正向代理 | 反向代理 |\n|------|----------|----------|\n| 代表方 | 客户端 | 服务器 |\n| 客户端感知 | 知道 | 可能不知道 |\n| 服务端感知 | 不知道客户端 | 不知道代理存在 |\n| 典型实现 | Squid、Shadowsocks | Nginx、HAProxy |\n| 配置位置 | 客户端（浏览器/应用） | 服务端（网络层） |\n\n一个例子：\n- 正向代理：你通过公司代理访问 Google——Google 不知道是你，只知道是公司代理\n- 反向代理：你访问 baidu.com——你不知道背后有无数服务器，只知道百度首页",
+    "answer": "正向代理和反向代理的核心区别在于代理的服务对象不同。\n\n正向代理（Forward Proxy）：\n\n定义：\n- 代表客户端向服务器发起请求\n- 客户端明确知道代理的存在\n- 服务器不知道真正的客户端是谁\n\n应用场景：\n1. 突破访问限制（如翻墙访问国外网站）\n2. 访问控制（公司网络限制员工访问某些网站）\n3. 匿名访问（隐藏客户端真实 IP）\n4. 缓存加速（缓存频繁访问的外部资源）\n5. 审计和日志（记录员工的网络访问行为）\n\n反向代理（Reverse Proxy）：\n\n定义：\n- 代表服务器接收客户端的请求\n- 客户端不知道真正的后端服务器是谁\n- 客户端可能不知道代理的存在（透明）\n\n应用场景：\n1. 负载均衡（分发请求到多个后端服务器）\n2. 安全防护（隐藏后端服务器真实 IP，阻挡恶意请求）\n3. SSL 终结（统一处理 HTTPS 证书，后端用 HTTP）\n4. 缓存加速（缓存静态内容减轻后端压力）\n5. 灰度发布（按比例将流量路由到不同版本）\n\n核心对比：\n| 维度 | 正向代理 | 反向代理 |\n|------|----------|----------|\n| 代表方 | 客户端 | 服务器 |\n| 客户端感知 | 知道 | 可能不知道 |\n| 服务端感知 | 不知道客户端 | 不知道代理存在 |\n| 典型实现 | Squid、Shadowsocks | Nginx、HAProxy |\n| 配置位置 | 客户端（浏览器/应用） | 服务端（网络层） |\n\n一个例子：\n- 正向代理：你通过公司代理访问 Google——Google 不知道是你，只知道是公司代理\n- 反向代理：你访问 baidu.com——你不知道背后有无数服务器，只知道百度首页",
     "hints": [
       "正向代理：代表客户端（客户端配置，服务器不知道真实客户端）",
       "反向代理：代表服务器（服务器配置，客户端不知道真实服务器）",
@@ -1159,43 +271,7 @@
   },
   {
     "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "WebSocket 与 SSE 对比",
-    "content": "请对比 WebSocket 和 SSE（Server-Sent Events）的差异、优劣势及适用场景。",
-    "answer": "答案：WebSocket 和 SSE 都是浏览器与服务端建立持久连接的技术，但设计理念不同。\n\nWebSocket：\n\n协议特性：\n- 全双工通信：客户端和服务端都可以随时发送消息\n- 独立协议：ws:// 和 wss:// 协议（非 HTTP）\n- 二进制 + 文本：支持发送二进制帧和文本帧\n- 连接头：Upgrade: websocket 头部升级连接\n\n优势：\n- 双向通信（服务端也可以主动推数据给客户端）\n- 支持二进制数据\n- 低延迟（建立连接后没有 HTTP 开销）\n\n劣势：\n- 实现复杂（需要处理心跳、重连、协议解析）\n- 协议层面没有自动重连\n- 防火墙可能拦截 ws:// 连接\n\n适用场景：\n- 实时聊天/消息\n- 在线游戏\n- 实时协作编辑\n- 股票行情推送\n\nSSE（Server-Sent Events）：\n\n协议特性：\n- 服务端单向推送（客户端只能收，不能发）\n- 基于 HTTP 协议（不需要协议升级）\n- 纯文本（EventStream 格式）\n- 内置事件类型（event:）和 ID（id:）字段\n\n优势：\n- 实现简单（标准 EventSource API）\n- 自动重连（浏览器内置重连机制）\n- 基于 HTTP 协议，不会被防火墙拦截\n- 消息有 ID，支持断点续传\n\n劣势：\n- 单向通信（客户端发消息需要用额外的 HTTP 请求）\n- 不支持二进制数据\n- 连接数限制（浏览器对同一域名的 SSE 连接数有限制）\n\n适用场景：\n- 实时通知/提醒\n- 数据流式更新（如 LLM 输出流）\n- 日志推送\n- 社交媒体 Feed 更新\n\n选择建议：\n需要双向通信或二进制 → WebSocket\n只需要服务端推送、要求简单可靠 → SSE\nLLM 流式输出 → SSE（默认标准方案）",
-    "hints": [
-      "WebSocket：全双工、二进制+文本、独立协议，适合实时双向通信",
-      "SSE：服务端单向推送、基于 HTTP、自动重连，适合通知/流式输出",
-      "LLM 流式输出通常用 SSE（标准 EventStream），实现简单且浏览器原生支持"
-    ],
-    "tags": [
-      "网络",
-      "WebSocket",
-      "SSE",
-      "实时通信"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "TCP BBR 拥塞控制算法",
-    "content": "请解释 TCP BBR（Bottleneck Bandwidth and Round-trip propagation time）拥塞控制算法的原理及其与传统算法（CUBIC）的差异。",
-    "answer": "答案：BBR 基于带宽和 RTT 的测量建模网络路径，不依赖丢包作为拥塞信号，避免了缓冲区膨胀\n\n解析：传统拥塞控制算法（CUBIC、Reno）基于丢包判断拥塞——检测到丢包就认为是队列已满，降低发送速率。但现代网络中存在大量缓冲区（Bufferbloat），丢包发生在缓冲区已满时，此时「丢包即拥塞」模型导致大量数据在缓冲区排队，增加延迟。BBR（由 Google 2016 年提出）通过周期性测量两个关键参数来建模网络路径：1）BtlBw（瓶颈带宽，Bottleneck Bandwidth）——链路的最大传输速率 2）RTprop（最小 RTT，Round-Trip Propagation Time）——无排队时的物理延迟。BBR 的四个阶段：Startup（探测最大带宽）、Drain（排空缓冲区）、ProbeBW（稳定探测带宽）、ProbeRTT（探测最小 RTT）。BBR 通过维持发送速率 ≈ BtlBw 来防止数据在缓冲区排队，使延迟保持在 RTprop 水平。\n\n扩展延伸：BBR 相比 CUBIC 的优势：1）延迟大幅降低（去除了 Bufferbloat）2）WiFi 和移动网络（随机丢包）下吞吐远高于 CUBIC（CUBIC 把非拥塞丢包当成拥塞信号降速）3）对短流友好（网页浏览体验更好）。BBR v3（2024 年发布）增加了对偶尔丢包的响应公平性。BBR 的局限性：1）对 CUBIC 流的不公平性——BBR 会抢占 CUBIC 流的带宽 2）公平性假设（RTT 小的流获得更多带宽）仍然存在。配置建议：Linux kernel 4.9+ 支持 BBR：sysctl net.ipv4.tcp_congestion_control=bbr。CDN 和流媒体服务器（YouTube）普遍使用 BBR 提高视频传输 QoE。BBR 的 Startup 阶段 4 倍增速（每 RTT 翻倍发送速率），在大带宽链路上可能速度快导致短暂抖动。实际部署中 BBR + fq（Fair Queuing qdisc）是最佳组合。",
-    "hints": [
-      "BBR 相比基于丢包的拥塞控制算法最主要改进是什么",
-      "Bufferbloat 对用户体验的实际影响是什么"
-    ],
-    "tags": [
-      "TCP",
-      "拥塞控制",
-      "BBR"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "抽象工厂 vs 工厂方法",
     "content": "以下关于抽象工厂模式（Abstract Factory）和工厂方法模式（Factory Method）的对比，正确的是？",
@@ -1219,97 +295,9 @@
     "category": "design_network_extras",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "CDN 动态加速原理",
-    "content": "请解释 CDN 动态加速（DCDN / Dynamic Acceleration）的原理及其与静态加速的区别。",
-    "answer": "答案：CDN 动态加速通过优化网络传输路径加速不可缓存的动态内容，核心是智能路由和协议优化\n\n解析：静态 CDN 缓存静态文件（图片、CSS、JS）到边缘节点，用户的请求在边缘节点直接返回（不需要回源），加速效果显而易见。但动态内容（API 响应、个性化页面、用户状态）不可缓存，每次都需要回源服务器。动态加速的核心技术：1）智能路由（Smart Route）——CDN 边缘节点到源站之间寻找最优路径（避开 BGP 路由的次优路径、避开拥堵节点）。通过全网探测节点间的延迟和丢包率，实时计算最优转发路径（类似 F5 的全局流量管理）。2）TCP 优化——CDN 边缘节点与用户侧优化 TCP 连接，边缘节点与源站之间使用优化过的长连接（连接复用 + TCP 参数调优）。3）协议优化——将 HTTP/1.1 的短连接转为 HTTP/2 多路复用长连接，减少握手次数。在边缘节点做 TLS 卸载（SSL Termination）而不是一路代理到源站。4）路由回源——用户 -> CDN 边缘（最近的节点）-> 智能路由 -> CDN 中间层 -> 源站。\n\n扩展延伸：全站加速（DCDN）的适用场景：1）动态 API 响应（电商的购物车、搜索、个性化推荐）2）全球部署的 SaaS 应用（跨国回源延迟大，智能路由节省 30-60% 延迟）3）动态页面的首次渲染（首屏加载时间优化）。云厂商产品：AWS CloudFront + Global Accelerator（TCP/UDP 流量优化），阿里云全站加速（DCDN），Cloudflare Argo Smart Routing。动态加速的效果：跨国场景下平均延迟降低 30-50%。配合边缘计算（Edge Functions/Cloudflare Workers）可以在边缘节点做更多逻辑（聚合多个 API、A/B 测试、请求改写）进一步减少回源。动态加速的局限性：1）对实时性要求极高（如实时游戏同步、WebSocket）不太适用 2）受跨国网络质量影响大（海底光缆故障时所有路由都绕不开）3）动态加速比静态加速收费高很多（因为每次请求都消耗回源带宽和路径计算）。",
-    "hints": [
-      "CDN 静态加速和动态加速的核心区别是什么",
-      "智能路由是怎么找到从边缘到源站的更快路径的"
-    ],
-    "tags": [
-      "CDN",
-      "动态加速",
-      "网络"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "服务网格 vs 传统微服务治理",
-    "content": "请对比服务网格（Service Mesh，如 Istio/Linkerd）与传统微服务治理框架（如 Spring Cloud）的架构差异和优缺点。",
-    "answer": "答案：服务网格将服务治理能力从应用层下沉到基础设施层（Sidecar Proxy），实现了治理逻辑与业务代码的完全解耦\n\n解析：传统微服务治理（Spring Cloud）在应用层实现：服务注册与发现用 Eureka/Nacos，负载均衡用 Ribbon，熔断用 Hystrix/Sentinel，配置管理用 Spring Cloud Config，API 网关用 Zuul/Gateway。每个微服务 SDK 引入了大量依赖和配置，治理逻辑与业务代码耦合在同一个进程内。升级治理版本（如从 Hystrix 迁移到 Sentinel）需要修改所有微服务的代码并重新部署。服务网格（Istio）将治理能力解耦到 Sidecar Proxy（Envoy）：1）数据平面（Data Plane）——每个 Pod 带一个 Envoy Sidecar 代理所有的进出流量，代理处理注册发现、负载均衡、熔断、重试、TLS、监控等 2）控制平面（Control Plane）——Istiod 集中管理 Pilot（服务发现和流量规则）、Citadel（证书管理）、Galley（配置验证）。开发者只需要关注业务逻辑，不需要引入任何框架依赖。\n\n扩展延伸：服务网格的优势：1）语言无关——任何语言（Go/Python/Node.js/Rust）都可以用上服务治理能力 2）升级成本极低——升级 Sidecar Proxy 版本不需要改业务代码 3）可观测性——自动获取 mTLS、分布式追踪（OpenTelemetry 集成）、HTTP/gRPC 指标 4）安全性——自动 mTLS 加密，细粒度 RBAC。服务网格的代价：1）延迟增加——每次请求多一跳代理（Sidecar，通常 1-3ms 额外延迟）2）资源消耗——每个 Pod 额外占约 50-200MB Memory + 0.5-1 vCPU 3）运维复杂度——Istio 的调试比 Spring Cloud 复杂（需要理解 Envoy 的配置和流量规则）4）新概念学习成本——VirtualService、DestinationRule、ServiceEntry 等 CRD 的学习曲线。选型建议：1）小团队/简单微服务（<10 个服务）——Spring Cloud 更简单 2）多语言/大规模（>50 个服务）——Service Mesh 收益更大 3）新项目——直接上 Istio + Kubernetes（不需要先有 Spring Cloud 再迁移）。eBPF 技术的进展（Cilium）可能导致未来的服务网格更轻量（不需要 Sidecar，直接在内核层处理）。",
-    "hints": [
-      "Service Mesh 相比传统微服务治理框架最核心的优势是什么",
-      "Sidecar 代理请求是怎么增加额外延迟的"
-    ],
-    "tags": [
-      "Service Mesh",
-      "Istio",
-      "微服务"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "TCP Nagle 算法与延迟确认",
-    "content": "请解释 TCP Nagle 算法和延迟确认（Delayed ACK）的原理及其交互影响。",
-    "answer": "答案：Nagle 算法合并小数据包减少网络拥塞，延迟确认推迟 ACK 减少确认包数量，两者交互可能导致延迟增加\n\n解析：Nagle 算法（RFC 896）：如果 TCP 连接上有未确认的数据，新发送的小于 MSS 的数据会被延迟发送，直到已发送数据被确认或数据累积到 MSS。目的是减少发送大量小包（如 Telnet 每次发送一个字节）导致的网络拥塞。延迟确认（Delayed ACK）：接收方收到数据包后不立即发送 ACK，而是等待最多 500ms，如果在这期间有数据要发送则捎带确认（Piggyback ACK），或超时后发送独立 ACK。Nagle + Delayed ACK 的交互问题：发送方在等待 ACK（因为 Nagle 算法阻止新数据发送），接收方在等待数据（因为延迟确认等待捎带），两者互相等待导致延迟增加（经典的 Silly Window Syndrome + Nagle + Delayed ACK 交互问题）。\n\n扩展延伸：解决 Nagle + Delayed ACK 交互问题的方法：1）在交互式应用（如 SSH、实时游戏）中禁用 Nagle 算法——设置 TCP_NODELAY socket 选项 2）使用 TCP_QUICKACK（Linux 特定）禁用延迟确认。Nagle 适用的场景：批量数据传输（文件上传下载、大响应体），Nagle 减少小包数量效率高。不适用场景：实时交互（低延迟优先）、流媒体。TCP Cork（TCP_CORK）与 Nagle 类似但更激进——完全禁止发送小包，直到缓冲区达到 MSS 或显式解除 Cork。TSO（TCP Segmentation Offload）和 GSO（Generic Segmentation Offload）在网卡层面将大块数据分割为 TCP 段，对 Nagle 的影响：如果应用发送大数据块，TSO 确保分段发生在网卡，Nagle 对大数据块基本不影响。代理服务器（Nginx）的 sendfile 和 TCP_NOPUSH 配合优化小文件传输。",
-    "hints": [
-      "Nagle 算法和延迟确认为什么在一起时会导致延迟问题",
-      "开启 TCP_NODELAY 会在什么场景下带来负面影响"
-    ],
-    "tags": [
-      "TCP",
-      "Nagle",
-      "延迟确认"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "HTTP/3 0-RTT 握手的安全风险与防护",
-    "content": "HTTP/3 基于 QUIC 协议引入了 0-RTT 握手特性，允许客户端在恢复会话时直接发送数据，显著缩短连接建立时间。请阐述 0-RTT 的工作原理，分析其面临的主要安全风险（尤其是重放攻击），并讨论业界的防护策略及其对性能的影响。",
-    "answer": "答案：\n0-RTT 通过缓存之前会话的 TLS 参数实现零往返连接恢复，但「零往返 = 零抗重放」是其根本安全矛盾。\n\n解析：\n**0-RTT 工作原理**：\n1. 首次连接完成 1-RTT 握手后，Server 发送 session_ticket，Client 缓存该 ticket 及相关密钥材料。\n2. 再次连接时，Client 直接发送 0-RTT 数据（含加密的 early data）+ 缓存的 session_ticket。\n3. Server 验证 ticket 有效 -> 直接用之前协商的密钥解密数据 -> 0-RTT 完成。\n\n**主要安全风险**：\n- **重放攻击（Replay Attack）**：攻击者截获 0-RTT 数据包 -> 重放到多个服务实例 / 同一实例多次 -> 幂等性不足的操作被执行多次（如扣款 2 次、下单 2 次）。\n- 根本原因：0-RTT 数据没有 forward secrecy（前向安全性）——密钥由之前的 session ticket 决定，攻击者无法解密但可以重放。\n- 其他风险：中间人篡改（0-RTT 数据无 anti-replay 保护）、时序攻击。\n\n**防护策略**：\n1. **应用层幂等性（最重要的是第一道防线）**：所有 0-RTT 请求必须幂等（Idempotent）——如 GET/PUT/DELETE，不用于 POST/支付类请求。\n2. **Server 端 Replay Detection**：\n   - 记录已处理的 0-RTT ticket 的唯一标识（ClientHello.random），在「重放窗口」（通常 10s）内去重。\n   - 多实例场景用分布式缓存（Redis）共享已处理的 ticket 列表。\n3. **限制 0-RTT 数据大小**：只允许 0-RTT 发送小数据（如 HTTP GET 请求头），大请求回退到 1-RTT。\n4. **禁用 0-RTT**：对于金融级场景，完全禁用 0-RTT early data。\n\n**性能影响**：\n- 开启重放防护（尤其是分布式去重）会增加 Server 端开销。\n- 权衡：0-RTT 节省的约 1 RTT（约 20-100ms）对于全球延迟用户意义重大，但对于低频请求收益有限。\n\n扩展延伸：\n- TLS 1.3 的 0-RTT 与 QUIC 的 0-RTT 本质相同——都是利用 previous session ticket 恢复。\n- HTTP/2 不支持 0-RTT => 这是 HTTP/3 相对于 HTTP/2 在弱网环境下的核心优势之一。\n- Cloudflare 的实践表明：0-RTT 在移动端效果显著（弱网场景 1-RTT 约 200-500ms，0-RTT 可节省数百毫秒）。\n- RFC 9001（QUIC over TLS 1.3）详细规定了 0-RTT 的安全要求和限制。",
-    "hints": [
-      "0-RTT 的安全短板不在于「加密不够强」——而在于「服务端无法区分重放和正常请求」",
-      "应用层幂等是 0-RTT 安全的第一道、也是最重要的防线"
-    ],
-    "tags": [
-      "HTTP/3",
-      "0-RTT",
-      "QUIC",
-      "网络安全",
-      "重放攻击"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "TCP BBR 拥塞控制算法原理与调优",
-    "content": "TCP BBR（Bottleneck Bandwidth and Round-trip propagation time）是 Google 开发的基于带宽和延迟的拥塞控制算法，与传统基于丢包的算法（如 CUBIC）有本质区别。请阐述 BBR 的核心原理（包括 Pacing Gain、ProbeBW、ProbeRTT 状态机）、为何它能在高延迟/高丢包链路上优于传统算法，以及在实际部署中可能遇到的兼容性和公平性问题。",
-    "answer": "答案：\nBBR 不把「丢包」当作拥塞信号——它通过周期性探测最大带宽和最小 RTT 来建模网络管道。\n\n解析：\n**核心原理**：\n- BBR 的核心是对网络管道的建模：BtlBW（瓶颈带宽）和 RTprop（往返传播时延）。\n- 发送速率 = Pacing Gain x BtlBW。\n- **状态机**：\n  - Startup：指数级加速发送，直到发现带宽不再增长（排空网络缓冲区）。\n  - Drain：减速排空 Startup 阶段积累的队列。\n  - ProbeBW：常态阶段——周期性上调/下调 Pacing Gain（如 1.25x 一段时间再降到 0.75x），探测是否有更多可用带宽。\n  - ProbeRTT：如果超过 10s 未测量到 min RTT -> 降低发送速率（进入 4-RTT 的 ProbeRTT）重新测量。\n\n**为什么优于传统算法**：\n- 传统丢包算法（如 CUBIC / Reno）：在有足够的缓冲区时，直到缓冲区满才丢包 -> 产生大量 bufferbloat 延迟。\n- BBR 通过带宽/延迟建模找到 optimal operating point——刚好在缓冲区填充之前。\n- 在高速、高延迟（如卫星链路、跨国传输）和高丢包（如 WiFi）场景下，BBR 显著优于 CUBIC。\n\n**部署问题**：\n- 与 CUBIC 共存的公平性：BBR 在共享瓶颈链路上可能侵占 CUBIC 流的带宽——因为 CUBIC 丢包后大幅降速，BBR 不响应丢包。\n- 多流公平性：同一链路多个 BBR 流之间较为公平，但 BBR vs CUBIC 可能不公平。\n- 交换机缓冲区溢出：BBR Startup 阶段如果过激可能导致交换机 buffer 溢出（尤其是浅 buffer 交换机）。\n\n扩展延伸：\n- BBR 的演进：BBRv1（Google 2016）-> BBRv2（增加了对丢包的适度响应，提升公平性）。\n- BBRv1 不考虑丢包 -> 在某些路由器上导致 buffer overflow 丢包 -> 重传 -> 效率反而低于 CUBIC。\n- 实际部署建议：对于公网服务，建议在 CDN 回源链路上启用 BBR（回源链路常是跨国/高延迟）；内部 IDC 链路仍可用 CUBIC。\n- Linux 内核 4.9+ 已内置 BBR 模块：`sysctl net.ipv4.tcp_congestion_control=bbr`。",
-    "hints": [
-      "BBR 的哲学转变：不把「丢包」当拥塞信号——丢包可能是无线误码而非拥塞",
-      "BBR vs CUBIC 的公平性问题：BBR 不降速 -> CUBIC 丢包降速 -> BBR 抢占更多带宽"
-    ],
-    "tags": [
-      "TCP",
-      "BBR",
-      "拥塞控制",
-      "网络性能"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
     "title": "DNS over HTTPS 与 DNS over TLS 的技术对比",
     "content": "DNS over HTTPS（DoH）和 DNS over TLS（DoT）都是为了解决传统 DNS 明文中存在的隐私和劫持问题。请对比两者在协议栈、传输方式、端口使用、应用场景和部署难度等方面的差异。并讨论为什么 DoH 比 DoT 更容易突破企业防火墙的 DNS 管控——这既是优势也是安全挑战。",
-    "answer": "答案：\nDoH 将 DNS 查询封装在 HTTPS 中（443 端口），DoT 使用独立的 TLS 连接（853 端口）。两者目标一致但实现策略不同。\n\n解析：\n**协议对比**：\n| 维度 | DoT (RFC 7858) | DoH (RFC 8484) |\n|------|---------------|---------------|\n| 传输 | 独立 TLS 连接 | HTTPS POST/GET 请求 |\n| 端口 | 853（独立端口） | 443（与 HTTPS 共用） |\n| 封装 | TLS 记录层 | HTTP/2 或 HTTP/3 帧 |\n| 实现复杂度 | 简单 | 较复杂（需 HTTP 栈） |\n| 浏览器支持 | 较少（系统级支持） | Chrome/Firefox 原生支持 |\n\n**差异化分析**：\n- **隐蔽性**：DoT 使用 853 端口 -> 企业防火墙可以识别并阻断。DoH 混在 443 端口的 HTTPS 流量中 -> 难以区分是 DNS 查询还是普通网页请求。\n- **性能**：DoH 可以复用现有的 HTTP/2 连接（0-RTT），DoT 每次查询都需建立新的 TLS 连接。\n- **缓存**：DoH 可利用 HTTP 缓存（Cache-Control），DoT 需自行实现缓存。\n- **隐私分级**：DoT 只能隐藏 DNS 查询内容，但暴露「我在用 DNS」（853 端口）；DoH 隐藏了「我在进行 DNS 查询」这一事实本身。\n\n**为什么 DoH 能突破管控**：\n- 传统 DNS 管控基于 DNS 协议特征（UDP 53 + 明文 Payload）。\n- DoT 用了 853 端口 -> 防火墙只需一条规则「block 853」即可。\n- DoH 走 443 -> 防火墙要么「允许所有 HTTPS」（无法管控 DoH），要么「中间人解密 HTTPS」（成本高且违法）。\n- **安全挑战**：企业失去了对员工 DNS 查询的可见性和管控能力——恶意软件可用 DoH 绕过 DNS 安全策略。\n\n扩展延伸：\n- DoH/DoT 不能防止 DNS 查询的 metadata 泄露——时间、量级仍是可见的。\n- DNSSEC 解决「DNS 应答的完整性」，DoH/DoT 解决「传输的私密性」，两者互补而非替代。\n- 国内情况：公共 DoH 服务（如 Alibaba DNS、腾讯 DNSPod）已有部署，但受限于网络管制政策，可用性和白名单配置需注意。\n- 推荐应用策略：企业内部网络阻断 DoH 到外部解析器 + 自建 DoH 解析器做统一管控。",
+    "answer": "DoH 将 DNS 查询封装在 HTTPS 中（443 端口），DoT 使用独立的 TLS 连接（853 端口）。两者目标一致但实现策略不同。\n\n解析：\n**协议对比**：\n| 维度 | DoT (RFC 7858) | DoH (RFC 8484) |\n|------|---------------|---------------|\n| 传输 | 独立 TLS 连接 | HTTPS POST/GET 请求 |\n| 端口 | 853（独立端口） | 443（与 HTTPS 共用） |\n| 封装 | TLS 记录层 | HTTP/2 或 HTTP/3 帧 |\n| 实现复杂度 | 简单 | 较复杂（需 HTTP 栈） |\n| 浏览器支持 | 较少（系统级支持） | Chrome/Firefox 原生支持 |\n\n**差异化分析**：\n- **隐蔽性**：DoT 使用 853 端口 -> 企业防火墙可以识别并阻断。DoH 混在 443 端口的 HTTPS 流量中 -> 难以区分是 DNS 查询还是普通网页请求。\n- **性能**：DoH 可以复用现有的 HTTP/2 连接（0-RTT），DoT 每次查询都需建立新的 TLS 连接。\n- **缓存**：DoH 可利用 HTTP 缓存（Cache-Control），DoT 需自行实现缓存。\n- **隐私分级**：DoT 只能隐藏 DNS 查询内容，但暴露「我在用 DNS」（853 端口）；DoH 隐藏了「我在进行 DNS 查询」这一事实本身。\n\n**为什么 DoH 能突破管控**：\n- 传统 DNS 管控基于 DNS 协议特征（UDP 53 + 明文 Payload）。\n- DoT 用了 853 端口 -> 防火墙只需一条规则「block 853」即可。\n- DoH 走 443 -> 防火墙要么「允许所有 HTTPS」（无法管控 DoH），要么「中间人解密 HTTPS」（成本高且违法）。\n- **安全挑战**：企业失去了对员工 DNS 查询的可见性和管控能力——恶意软件可用 DoH 绕过 DNS 安全策略。\n\n扩展延伸：\n- DoH/DoT 不能防止 DNS 查询的 metadata 泄露——时间、量级仍是可见的。\n- DNSSEC 解决「DNS 应答的完整性」，DoH/DoT 解决「传输的私密性」，两者互补而非替代。\n- 国内情况：公共 DoH 服务（如 Alibaba DNS、腾讯 DNSPod）已有部署，但受限于网络管制政策，可用性和白名单配置需注意。\n- 推荐应用策略：企业内部网络阻断 DoH 到外部解析器 + 自建 DoH 解析器做统一管控。",
     "hints": [
       "DoH 的核心策略是「隐身」——把 DNS 查询藏在加密的 HTTPS 流量中",
       "端口差异导致了「可管控性」的根本不同——443 端口无法简单阻断"
@@ -1320,43 +308,6 @@
       "DoT",
       "加密DNS",
       "网络安全"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "QUIC 连接迁移机制与 NAT 穿透",
-    "content": "QUIC 协议的一个关键特性是连接迁移（Connection Migration）——当客户端的 IP 或端口发生变化时，QUIC 连接无需重建。请阐述 QUIC 连接迁移的实现原理（Connection ID 的作用、路径验证机制），分析该特性在移动端 NAT 穿透场景中的优势，并讨论连接迁移可能引入的安全风险（如反射放大攻击）。",
-    "answer": "答案：\nQUIC 的连接迁移通过「不变的 Connection ID 绑定逻辑连接」实现，配合路径验证确保迁移的安全性。\n\n解析：\n**连接迁移实现原理**：\n1. **Connection ID（CID）**：每个 QUIC 连接有唯一的 Connection ID，不依赖于 IP:Port。即使 Client 的 IP 变化（如从 Wi-Fi 切换到 4G），Server 端通过 CID 识别是同一条连接。\n2. **Path Validation**：当检测到对端地址变化时——新的路径不能立即收发数据——先发送 PATH_CHALLENGE 帧 -> 收到 PATH_RESPONSE 帧后，确认新路径可达 -> 开始使用新路径。\n3. **迁移不中断**：在路径验证期间旧路径仍然可用，数据通过旧路径继续传输。\n\n**移动端优势**：\n- 传统 TCP 遇到 IP 变化（Wi-Fi -> 蜂窝）-> 连接断开 -> 应用层重建（耗时 1-3s）。\n- QUIC 迁移无缝——新路径验证完后自动切换 -> 延迟零或极低。\n- NAT 场景：移动端经过 NAT 后 Port 可能变化 -> QUIC 通过 CID 识别连接，不受 NAT 端口变更影响。\n- 结合 0-RTT，从「移动网络断连到恢复」可在 0-RTT 内完成 -> 用户体验大幅提升。\n\n**安全风险**：\n- **反射放大攻击**：攻击者伪造源地址发送 QUIC 请求 -> Server 发送 PATH_CHALLENGE/响应到伪造地址 -> 如果响应数据远大于请求 -> 放大倍率。\n  - 防护：QUIC 的 initial 数据包大小限制（1200 bytes），Server 的响应量有严格限制。\n- **地址欺骗**：攻击者冒充 Client 新地址迁移连接 -> 需要完成路径验证（收到 PATH_CHALLENGE 后的响应）-> 不比 TCP 的序列号预测更容易。\n- **Anti-amplification**：QUIC 协议要求 Server 发送的数据量不能超过 Client 发送的数据量的 3 倍（直到 Client 地址被验证）。\n\n扩展延伸：\n- 连接迁移的「服务端无状态迁移」是个高级话题——如果连接状态在 Server 端存在内存中 -> 迁移后仍可路由到原 Server 实例。需要负载均衡器支持 CID 路由（而非四元组路由）。\n- Google 的数据表明：QUIC 连接迁移在 YouTube 移动端减少了 30%+ 的重连次数。\n- 代理场景（如 CDN）：TLS 终止后 QUIC CID 仅在 Client <-> Edge 之间有效，Edge <-> Origin 仍使用 TCP。\n- RFC 9000 和 RFC 9001 详细定义了连接迁移的协议约束。",
-    "hints": [
-      "Connection ID 是 QUIC 连接迁移的「锚」——不绑定 IP:Port 是根本原因",
-      "路径验证机制防止了「被动迁移」——不能因为你发了个包我就把连接迁到你的地址"
-    ],
-    "tags": [
-      "QUIC",
-      "连接迁移",
-      "NAT穿透",
-      "传输协议"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Anycast 在 DNS 解析与 CDN 加速中的应用",
-    "content": "Anycast 是一种将同一 IP 地址从多个地理位置同时宣告的网络技术。请阐述 Anycast 的工作原理，分析其在 DNS 解析（如 Root DNS 服务器）和 CDN 内容加速中的具体应用，对比 Anycast 与 DNS-based GSLB（全局负载均衡）在可用性、性能和运维复杂度上的差异。同时讨论 Anycast 在 BGP 层面的常见问题（如路由抖动、TCP 连接漂移）。",
-    "answer": "答案：\nAnycast 利用 BGP 路由宣告使多台 Server 共享同一 IP，用户流量自动路由到「最近的」节点——本质是利用互联网路由表实现分布式入口。\n\n解析：\n**工作原理**：\n- 多个数据中心的 Server 通过 BGP 宣告同一 IP 前缀。\n- 路由器根据 AS PATH 长度等 BGP 度量选择「最近的」路径 -> 用户流量到达最近的 Anycast 节点。\n- 关键在于：不是物理距离，而是 BGP 路由度量决定的「网络距离」。\n\n**在 DNS 中的应用**：\n- Root DNS 服务器（如 F Root、K Root）使用 Anycast——全球分布数十个节点共享 13 个 Root IP 之一。\n- 公共 DNS（如 Google 8.8.8.8、Cloudflare 1.1.1.1）Anycast 部署 -> 用户就近接入。\n- 优势：天然 DDoS 防护（流量分布到所有节点）、高可用（单节点故障不影响全局 IP）。\n\n**在 CDN 中的应用**：\n- CDN 边缘节点 Anycast -> 用户请求自动路由到最近节点。\n- 与 HTTP DNS 搭配：CDN 提供商通过 Anycast 提供 DNS 解析服务，将用户导向最优边缘节点。\n\n**Anycast vs DNS GSLB**：\n| 维度 | Anycast | DNS GSLB |\n|------|---------|----------|\n| 切换速度 | BGP 收敛秒级 | DNS TTL 分钟级 |\n| 流量调度粒度 | IP 前缀级 | 域名级 / 地区级 |\n| 节点故障检测 | BGP Keepalive | 健康检查 -> DNS 记录更新 |\n| 运维复杂度 | 需要 ASN + BGP | 只需 DNS 配置 |\n| 适用场景 | 接入层（DNS/CDN 入口） | 应用层负载调度 |\n\n**典型问题**：\n- **路由抖动（Route Flap）**：BGP 路由频繁变化 -> 全球路由器不断重新计算 -> 可用性下降。\n- **TCP 连接漂移**：不同请求分流到不同 Anycast 节点 -> TCP 连接断开（QUIC 可缓解）。\n  - 缓解：同源 IP 的请求亲和性路由（ECMP 一致性哈希）。\n- **ECMP 不均匀**：路由器 ECMP 哈希导致流量在不同节点间不均衡（哈希冲突）。\n\n扩展延伸：\n- Anycast 的「最近」可能不是实际最优——BGP 路径最短不等于网络延迟最低。\n- 与 Unicast 结合使用：CDN 的架构常是 Anycast 做 DNS 入口 + Unicast 做内容分发。\n- Cloudflare 的 Anycast 网络是世界上最大的 Anycast 部署之一——他们的经验是坚持「所有节点对所有服务都可用」（Anycast 所有的东西），消除「这个节点有服务 A 但没服务 B」的复杂性。\n- Anycast 不适用于有状态的 TCP 长连接（如 WebSocket）——这些场景建议用 DNS GSLB + L4 负载均衡。",
-    "hints": [
-      "Anycast 的本质是「利用互联网路由表做分布式入口」——不是技术在选路，是路由器在选路",
-      "Anycast 主要适用于「无状态」的接入层——DNS 查询、CDN 缓存、DDoS 防护"
-    ],
-    "tags": [
-      "Anycast",
-      "DNS",
-      "CDN",
-      "网络架构",
-      "BGP"
     ]
   },
   {
@@ -1378,98 +329,11 @@
   },
   {
     "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "负载均衡算法对比",
-    "content": "请对比常见的负载均衡算法：轮询、加权轮询、最少连接、IP Hash、一致性哈希。说明各自的适用场景和局限。",
-    "answer": "常见负载均衡算法对比：\\n\\n1. 轮询（Round Robin）：\\n   - 请求按顺序依次分配给后端服务器\\n   - 优点：实现简单、无状态、公平分配\\n   - 缺点：不考虑服务器负载差异、不考虑请求处理时间差异\\n   - 适用：后端负载分布均匀的简单场景\\n\\n2. 加权轮询（Weighted Round Robin）：\\n   - 给高性能服务器分配更大权重（如 4 核权重 4, 2 核权重 2）\\n   - 优点：考虑了服务器能力差异\\n   - 缺点：权重需要静态配置，无法实时调整\\n   - 适用：异构服务器集群\\n\\n3. 最少连接（Least Connections）：\\n   - 将请求分配给当前活跃连接数最少的服务器\\n   - 优点：动态反映实时负载（连接数 = 负载的近似值）\\n   - 缺点：连接数不能完全代表 CPU/IO 负载（一个长连接可能无负载，一个短连接可能高 CPU）\\n   - 适用：请求处理时间差异大的场景（长连接和短连接混合）\\n\\n4. IP Hash：\\n   - 对客户端 IP 做 Hash，同一 IP 始终路由到同一台服务器\\n   - 优点：天然支持 Session 亲和性（Sticky Session）\\n   - 缺点：服务器增减时 Hash 结果变化 → 大量 Session 失效（除非加一致性哈希）\\n   - 适用：需要保持 Session 的有状态服务场景\\n\\n5. 一致性哈希（Consistent Hash）：\\n   - 在 Hash 环上分布虚拟节点，服务器增减影响最小\\n   - 优点：扩缩容时只影响少数映射关系，最小化重新分配\\n   - 缺点：实现复杂、需要管理虚拟节点分布\\n   - 适用：分布式缓存（Redis Cluster / Memcached）、有状态服务的分片路由\\n\\n高级策略：\\n- 自适应负载均衡（Adaptive）：实时采集后端 CPU/延迟/错误率，动态调整调度权重\\n  - 实现：P2C（Pick of 2 Choices）— 随机选 2 台，挑负载轻的那台\\n  - 代表：Envoy 的 Maglev 算法、gRPC 的 Weighted Round Robin with latency tracking\\n\\n实际部署中通常组合使用：\\n- 第一层：DNS 轮询（全局流量调度）\\n- 第二层：IP Hash 或最少连接（单机房的流量分发）\\n- 第三层：一致性哈希（数据/缓存分片）",
-    "hints": [
-      "最少连接算法在什么情况下会失效？连接数多一定代表负载高吗？",
-      "一致性哈希如何解决扩缩容时的「雪崩」问题？"
-    ],
-    "tags": [
-      "负载均衡",
-      "算法",
-      "网络"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "HTTP/2 服务端推送",
-    "content": "请解释 HTTP/2 服务端推送（Server Push）的原理和正确使用方式。它与 WebSocket 的区别是什么？为什么实际落地中很多站点选择关闭 Server Push？",
-    "answer": "HTTP/2 Server Push 原理：\\n- 服务端在客户端请求 HTML 时，预测客户端后续会请求的资源（CSS、JS、图片），主动推送给客户端\\n- 客户端收到推送的资源后缓存起来，当浏览器解析到需要该资源时直接命中缓存\\n- 推送通过 PUSH_PROMISE 帧实现——服务端先发一个 PUSH_PROMISE 告诉客户端「我等一下要推 X」，客户端可拒绝\\n\\n与 WebSocket 的区别：\\n| 维度 | Server Push | WebSocket |\\n| 方向 | 仅服务端→客户端（响应式推送） | 全双工（双向实时通信）|\\n| 触发 | 基于客户端请求的预测 | 客户端/服务端都可主动发起 |\\n| 协议 | HTTP/2 帧之上（仍算 HTTP） | 独立协议（ws:// wss://）|\\n| 适用场景 | 加速页面首次加载 | 实时通信、消息推送、协作编辑 |\\n| 浏览器兼容 | 所有 HTTP/2 支持的浏览器 | 所有主流浏览器 |\\n\\n为什么很多站点关闭 Server Push：\\n\\na) 命中率低：服务端猜用户会请求哪些资源，但实际不一定（用户交互不同、缓存状态不同）。推送了用户已有的资源反而浪费带宽。\\n\\nb) 带宽浪费：移动端用户可能不需要大尺寸图片/CDN 已缓存的资源也被推送。\\n\\nc) 已被 Preload Link Header 取代：\\n   - Link: </style.css>; rel=preload; as=style\\n   - Preload 浏览器原生支持，更轻量，服务端不需要维护推送逻辑\\n   - Preload 只在需要时下载，而 Push 会强推占用带宽\\n\\nd) HTTP/3 (QUIC) 不支持 Server Push：IETF 在 HTTP/3 标准中移除了 Server Push，因为实践中证明弊大于利。\\n\\ne) CDN / 代理层支持有限：很多 CDN 节点不支持或不完全支持 HTTP/2 Push。\\n\\n建议：\\n- 新项目不要依赖 Server Push\\n- 用 Preload / Preconnect / Prefetch 提前加载关键资源\\n- 对已知高价值场景（PWA 离线包预加载）可考虑 Push，但要配合缓存状态检测",
-    "hints": [
-      "为什么 HTTP/3 (QUIC) 移除了 Server Push？这说明了什么？",
-      "Preload Link Header 和 Server Push 的核心区别是什么？"
-    ],
-    "tags": [
-      "HTTP/2",
-      "Server Push",
-      "性能优化"
-    ]
-  },
-  {
-    "category": "design_network_extras",
     "difficulty": "hard",
-    "type": "short_answer",
-    "title": "VPN 原理与隧道协议",
-    "content": "请解释 VPN 的核心原理和常见的隧道协议（IPSec、OpenVPN、WireGuard）的区别。对比各协议的安全性和性能特征。",
-    "answer": "VPN 核心原理：\\n- 在公共网络（互联网）上建立加密隧道，使远程客户端/站点像在私有网络中一样通信\\n- 核心组件：\\n  - 隧道协议：封装数据包（原始 IP 包 → 隧道协议包 → 外层 IP 包）\\n  - 加密机制：确保数据机密性、完整性和身份验证\\n  - 认证机制：验证通信双方身份（证书、密钥、用户名密码）\\n\\n三种常见隧道协议对比：\\n\\n1. IPSec（Internet Protocol Security）:\\n   - 工作在 IP 层（OSI Layer 3），分为传输模式（加密 Payload）和隧道模式（加密整个包）\\n   - 核心协议：IKE（密钥交换，基于 UDP 500）+ AH（认证头，不推荐）/ ESP（封装安全载荷）\\n   - 优点：标准化程度高、硬件加速支持好（路由器/防火墙内置 IPSec 模块）\\n   - 缺点：配置复杂、NAT 穿透差（需要 NAT-T 扩展）、IKE 协商握手多（慢）\\n   - 性能：中等（内核级处理，但 IKE 握手开销大）\\n\\n2. OpenVPN:\\n   - 工作在应用层（基于 TLS，通常 UDP 1194 端口）\\n   - 使用 OpenSSL 库做加密，支持自定义端口（容易伪装流量）\\n   - 优点：高度可定制、NAT/防火墙友好（UDP 单端口）、客户端/服务端证书双向认证\\n   - 缺点：用户态实现（非内核级）→ 性能上限低于 WireGuard\\n   - 性能：中等（单核通常 200-500 Mbps，受 CPU 限制）\\n\\n3. WireGuard:\\n   - 较新的 VPN 协议（Linux 内核内置，L3 层）\\n   - 设计原则：极简（~4000 行代码 vs OpenVPN ~100,000+ 行）、快速、安全现代\\n   - 加密：ChaCha20 + Poly1305（现代 AEAD 加密）\\n   - 优点：配置简单（双方交换公钥即可）、连接速度快（Noise 协议一次握手）、内核级性能\\n   - 缺点：不支持动态 IP（需要配置端点的公钥 + 端点 IP）、灵活性低于 OpenVPN\\n   - 性能：高（单核通常 1-2 Gbps，多核可线性扩展）\\n\\n性能对比（大致范围）：\\n| 协议 | 延迟 | 吞吐量（单核）| 配置复杂度 | 安全性评级 |\\n| IPSec | 中等 | 500-800 Mbps | 高 | 高 |\\n| OpenVPN | 中等 | 200-500 Mbps | 中 | 中-高 |\\n| WireGuard | 低 | 1-2 Gbps | 低 | 高 |\\n\\n安全性考虑：\\n- IPSec 配置复杂度高意味着容易配置错误（如 IKE 参数不匹配→自动降级到弱加密）\\n- WireGuard 被 Linus Torvalds 称赞并合入 Linux 内核 5.6\\n- OpenVPN 的 TLS 实现受 OpenSSL 库版本影响（Heartbleed 等历史漏洞）",
-    "hints": [
-      "WireGuard 为什么比 OpenVPN 性能高这么多？架构设计上有哪些关键差异？",
-      "IPSec 的 IKE 协商为什么会导致 NAT 穿透问题？"
-    ],
-    "tags": [
-      "VPN",
-      "网络安全",
-      "隧道协议"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "内容分发网络回源策略",
-    "content": "请解释 CDN 的回源策略。包括回源触发条件、回源方式（DNS 回源 vs 协议回源）、回源优化手段（Preheat、Range Request、分片回源）以及回源熔断机制。",
-    "answer": "CDN 回源（Origin Pull）核心概念：当 CDN 节点没有缓存资源或缓存过期时，向源站请求最新数据的动作。\\n\\n回源触发条件：\\n- 缓存未命中：资源首次被请求 / 资源被逐出 / 资源过期（TTL 到）\\n- 强制回源：客户端请求头带 Cache-Control: no-cache / Pragma: no-cache\\n- 预热不充分：虽然做了预热，但边缘节点未覆盖所有地区\\n- 状态码处理：源站返回 301/302 时 CDN 可跟随跳转继续回源\\n\\n回源方式：\\n1. DNS 回源（最常见）：CDN 节点将域名 CNAME 到源站域名，由 DNS 解析得到源站 IP\\n   - 优点：配置简单，支持多源站（DNS 轮询）\\n   - 缺点：DNS 解析延迟、DNS TTL 期间无法快速切换故障源站\\n2. 协议回源：CDN 节点直接配置源站 IP/端口列表\\n   - 优点：无需 DNS 解析，回源延迟更低\\n   - 缺点：源站 IP 变更需要手动更新 CDN 配置\\n3. 内网回源：CDN 节点与源站同机房/同云服务商（内网 IP 回源）\\n   - 优点：低延迟、高带宽、稳定\\n   - 缺点：绑定云厂商\\n\\n回源优化手段：\\n\\na) 预热（Preheat / Cache Warmer）：大促/新版本上线前主动将热门资源推送到所有 CDN 节点\\n   - 适合：静态资源（JS/CSS/图片）、配置文件、大促页面\\n\\nb) Range Request 回源（分片回源）：\\n   - CDN 节点只请求资源的一部分（如 0-1MB 的第一个分片），减少首字节时间\\n   - 适合：大文件（视频、安装包）\\n   - CDN 节点向后端发送 Range 请求，后端需支持 HTTP Range 头\\n\\nc) 合并回源（Coalescing）：同一节点对同一资源的多个请求合并为一次回源\\n   - 减少源站压力（源站只需响应一次）\\n\\n回源熔断机制：\\n- 当源站负载过高或不可用时，CDN 应该静默返回缓存中的过期资源（Stale Content），而不是传递 502 给用户\\n- 熔断条件：连续回源错误数 > 阈值（如 10 次/分钟）\\n- 熔断后行为：返回旧缓存 + response header 标记 Cache: stale\\n- 恢复：定期检查（Probe），源站恢复后再正常回源\\n- 保护源站：回源限流控制（每节点每秒回源请求数上限），防止 CDN 节点把源站打垮",
-    "hints": [
-      "回源熔断是什么——源站挂了 CDN 应该返回什么？",
-      "预热（Preheat）和回源（Pull）的区别是什么？什么场景必须预热？"
-    ],
-    "tags": [
-      "CDN",
-      "回源",
-      "性能优化"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "QUIC 与 HTTP/3 协议深析",
-    "content": "请从协议设计角度深入分析 QUIC 和 HTTP/3。包括：\n1. QUIC 如何在传输层解决 TCP 的队头阻塞（HOL Blocking）问题；\n2. QUIC 的 0-RTT 连接建立原理及重放攻击风险；\n3. QUIC 的连接迁移（Connection Migration）如何应对网络切换（WiFi 切 4G）；\n4. HTTP/3 相比 HTTP/2 在性能上的本质提升。",
-    "answer": "答案：\nQUIC（Quick UDP Internet Connections）本质上是「将 TCP + TLS + HTTP/2 的传输语义重新实现在 UDP 之上」，解决了 TCP 协议栈中累积几十年的设计问题。\n\n解析：\n**1. 队头阻塞（HOL Blocking）的根治**：\n- HTTP/2 的 HOL 问题：HTTP/2 多路复用在一个 TCP 连接上。TCP 是字节流协议——一个 TCP 包丢失后，后续所有到达的包（即使属于其他流）都要等重传完成后才能被应用层读取。\n- QUIC 的解决方案：QUIC 在单连接内支持多个独立的 Stream，每个 Stream 的内部数据独立传输和重传。\n  - 一个 Stream 丢包只影响该 Stream，不影响同一连接中的其他 Stream。\n  - 实现：每个 Stream 有独立的 Sequence Number Space，而不是共享 TCP 的 Byte Sequence。\n\n**2. 0-RTT 连接建立**：\n- 1-RTT 初次连接：客户端发送 CHLO（Client Hello）-> 服务器回复 SHLO + 证书 + 配置 -> 握手完成（1 RTT）。\n- 0-RTT 重连：客户端缓存服务器的配置（Connection ID + 密钥），下次直接发送加密数据 + CHLO。\n  - 效果：在第一个数据包中就携带应用数据，省掉握手延迟。\n- 重放攻击风险：0-RTT 数据包被截获后可以重复发送给服务器。\n  - 防护：0-RTT 数据只允许幂等操作（GET 请求、非破坏性操作）；服务器主动检测重放（Replay Detection）。\n  - 类似 TLS 1.3 的 0-RTT 也有同样风险，QUIC 在协议层做了更强的防重放约束。\n\n**3. 连接迁移（Connection Migration）**：\n- 传统 TCP 连接由（源 IP、源端口、目的 IP、目的端口）四元组标识——切换网络时 IP 变化 -> 连接中断。\n- QUIC 的连接标识：Connection ID（CUID）——独立于 IP 和端口。\n  - 切换网络后：客户端用新的 IP 发送包，但 CUID 不变 -> 服务器识别出是同一个连接。\n  - 效果：WiFi 切 4G 时视频通话不中断、TCP 连接不需要重建。\n- 路径验证（Path Validation）：切换后服务器对新路径做验证（发送 PATH_CHALLENGE）确保新路径可用后再切换数据流量。\n\n**4. HTTP/3 相对 HTTP/2 的本质提升**：\n- 零 HOL（Zero HOL Blocking）——这是最本质的提升。\n- 更快的连接建立：HTTP/2 依赖 TCP + TLS（2-3 RTT），HTTP/3 通过 QUIC 通常 1 RTT（重连 0 RTT）。\n- 更好的弱网表现：QUIC 的 FEC（前向纠错）/ 更精确的 RTT 估计 / 无序列号模糊（TCP 的序列号回绕问题）。\n- 头部压缩升级：HTTP/3 使用 QPACK（参考 HPACK，但适配 QUIC 的乱序交付特性——HTTP/2 的 HPACK 依赖顺序交付）。\n\n扩展延伸：\n截至 2026 年，HTTP/3 的互联网流量已占 Web 总量的 40%+（Google/YouTube/Meta 等已全量部署）。QUIC 的缺点是 CPU 开销较高（UDP 加密 + 用户态协议栈），但通过内核旁路（XDP/DPDK）和硬件卸载逐步缓解。",
-    "hints": [
-      "HTTP/2 的 HOL 问题不在 HTTP 层而在 TCP 层——多路复用 + 单一字节流导致丢包阻塞所有流",
-      "QUIC 的 Connection Migration 解决了移动端最头疼的问题——网络切换不被中断"
-    ],
-    "tags": [
-      "QUIC",
-      "HTTP/3",
-      "传输协议",
-      "性能优化",
-      "UDP"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
     "type": "short_answer",
     "title": "W3C Trace Context 协议",
     "content": "在分布式追踪系统中，Trace Context 的传播是保证跨服务调用链完整性的基础。请解释 W3C Trace Context 标准（Trace Context Level 1）的核心设计，包括 traceparent 和 tracestate 头部的格式和作用。为什么需要 W3C 标准化而不是各厂商自定协议？它如何解决不同追踪系统（如 Jaeger、Zipkin、SkyWalking）之间的互操作问题？",
-    "answer": "答案：\nW3C Trace Context（推荐标准 2021）定义了分布式追踪中追踪上下文的传播格式，使不同追踪系统之间能够互相识别和传递追踪信息。\n\n解析：\n**标准化的必要性**：\n在没有 W3C Trace Context 之前，每个追踪系统定义自己的传播格式：\n- Jaeger：`uber-trace-id` Header。\n- Zipkin：`x-b3-traceid` + `x-b3-spanid` + `x-b3-sampled` 等多个 Header。\n- SkyWalking：`sw8` Header（自定义 Base64 编码）。\n\n问题：微服务中使用不同追踪 SDK 时，调用链在跨系统边界处断裂（A 服务用 Jaeger、B 服务用 Zipkin -> B 不知道 A 的 trace id 放在哪里）。\n\n**W3C Trace Context 标准（Level 1）**：\n**1. traceparent Header**：\n格式：`traceparent: 00-<trace-id>-<parent-id>-<trace-flags>`\n- 00：版本号（2 字节 hex）。\n- trace-id：全局唯一追踪 ID（32 字节 hex = 16 字节，所有服务共享）。\n- parent-id（span-id）：当前调用的 Span ID（16 字节 hex = 8 字节，每次 RPC 重新生成）。\n- trace-flags：追踪标志（2 字节 hex），最低位 = 是否采样（01 采样，00 不采样）。\n- 例：`traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01`\n\n**2. tracestate Header**：\n- 用途：携带供应商特定的追踪元数据（如采样率、优先级、租户信息）。\n- 格式：`tracestate: vendor1=value1,vendor2=value2`。\n- 例：`tracestate: congo=t61rcWkgMzE,rojo=00f067aa0ba902b7`\n- 设计要点：\n  - 保留最新 N 个供应商条目。\n  - 每个供应商只读写自己的 key-value，不修改其他供应商的条目。\n  - 当 tracestate 超过长度限制时，从最老的条目开始截断。\n\n**互操作机制**：\n- 所有 W3C 兼容的追踪 SDK 都会读取和解析 traceparent，无论下游服务使用什么追踪系统。\n- traceparent 是跨系统传递的唯一必需字段。\n- tracestate 用于传递供应商内部的附加信息，不能用于替代 traceparent。\n- 当服务收到 traceparent 时，必须使用该 trace ID，生成新的 span ID 并更新 parent ID。\n\n扩展延伸：\nOpenTelemetry 已原生支持 W3C Trace Context，推荐所有新项目使用 OTel SDK。标准化的收益不仅在于跨系统追踪，还在于：日志框架可以统一提取 trace ID（自动注入所有日志行）、基础设施（网关/LB/Service Mesh）可以统一透传。",
+    "answer": "W3C Trace Context（推荐标准 2021）定义了分布式追踪中追踪上下文的传播格式，使不同追踪系统之间能够互相识别和传递追踪信息。\n\n解析：\n**标准化的必要性**：\n在没有 W3C Trace Context 之前，每个追踪系统定义自己的传播格式：\n- Jaeger：`uber-trace-id` Header。\n- Zipkin：`x-b3-traceid` + `x-b3-spanid` + `x-b3-sampled` 等多个 Header。\n- SkyWalking：`sw8` Header（自定义 Base64 编码）。\n\n问题：微服务中使用不同追踪 SDK 时，调用链在跨系统边界处断裂（A 服务用 Jaeger、B 服务用 Zipkin -> B 不知道 A 的 trace id 放在哪里）。\n\n**W3C Trace Context 标准（Level 1）**：\n**1. traceparent Header**：\n格式：`traceparent: 00-<trace-id>-<parent-id>-<trace-flags>`\n- 00：版本号（2 字节 hex）。\n- trace-id：全局唯一追踪 ID（32 字节 hex = 16 字节，所有服务共享）。\n- parent-id（span-id）：当前调用的 Span ID（16 字节 hex = 8 字节，每次 RPC 重新生成）。\n- trace-flags：追踪标志（2 字节 hex），最低位 = 是否采样（01 采样，00 不采样）。\n- 例：`traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01`\n\n**2. tracestate Header**：\n- 用途：携带供应商特定的追踪元数据（如采样率、优先级、租户信息）。\n- 格式：`tracestate: vendor1=value1,vendor2=value2`。\n- 例：`tracestate: congo=t61rcWkgMzE,rojo=00f067aa0ba902b7`\n- 设计要点：\n  - 保留最新 N 个供应商条目。\n  - 每个供应商只读写自己的 key-value，不修改其他供应商的条目。\n  - 当 tracestate 超过长度限制时，从最老的条目开始截断。\n\n**互操作机制**：\n- 所有 W3C 兼容的追踪 SDK 都会读取和解析 traceparent，无论下游服务使用什么追踪系统。\n- traceparent 是跨系统传递的唯一必需字段。\n- tracestate 用于传递供应商内部的附加信息，不能用于替代 traceparent。\n- 当服务收到 traceparent 时，必须使用该 trace ID，生成新的 span ID 并更新 parent ID。\n\n扩展延伸：\nOpenTelemetry 已原生支持 W3C Trace Context，推荐所有新项目使用 OTel SDK。标准化的收益不仅在于跨系统追踪，还在于：日志框架可以统一提取 trace ID（自动注入所有日志行）、基础设施（网关/LB/Service Mesh）可以统一透传。",
     "hints": [
       "W3C Trace Context 解决的核心问题是 trace 上下文在不同追踪系统间的交换——没有标准时各厂商各传各的",
       "traceparent 必须按规范透传——网关、MQ、Service Mesh 都不能丢失它"
@@ -1485,72 +349,9 @@
     "category": "design_network_extras",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "零信任网络架构（ZTNA）",
-    "content": "请解释零信任网络架构（Zero Trust Network Architecture / ZTNA）的核心原则。它与传统的边界安全模型（Castle-and-Moat）有什么根本区别？ZTNA 的三大关键技术组件是什么（身份驱动策略、微分段、实时验证）？在微服务和云原生环境中实施 ZTNA 的主要挑战是什么？",
-    "answer": "答案：\n零信任（Zero Trust）的核心原则是「永不信任，始终验证」——不信任网络内部的任何流量，每次访问请求都必须经过身份验证和授权检查。\n\n解析：\n**与传统边界模型的根本区别**：\n| 维度 | 边界安全（Castle-and-Moat） | 零信任（ZTNA） |\n| 信任假设 | 内网 = 安全，外网 = 不安全 | 没有隐式信任，每次请求都要验证 |\n| 访问控制 | 基于 IP 和网络位置 | 基于身份（User/Device/Workload）| \n| 网络架构 | 防火墙隔离内外网 | 微分段 + 应用层隧道 |\n| 横向移动防御 | 差（进入内网后畅通无阻） | 好（每步都要验证）| \n| VPN 依赖 | 强依赖（远程接入必须 VPN） | 无需传统 VPN（应用级隧道）| \n\n**三大关键技术组件**：\n\n1. **身份驱动策略（Identity-Aware Policy）**：\n   - 策略基于「谁（用户身份）+ 什么（设备/Workload）+ 哪里（位置/网络）+ 什么应用」而非网络五元组。\n   - 策略引擎（PEP / Policy Engine）：如 Google BeyondCorp 的 Policy Engine -> 每次访问请求前做实时评估。\n\n2. **微分段（Micro-Segmentation）**：\n   - 将网络划分为细粒度的安全段（甚至细到每个 Pod 或每个 Workload）。\n   - 实现方式：Service Mesh（Sidecar 代理做 mTLS + 应用层策略）+ Kubernetes NetworkPolicy。\n   - 效果：攻破一个 Pod 后无法横向移动——因为其他 Pod 的策略拒绝未经身份验证的流量。\n\n3. **实时验证（Continuous Verification）**：\n   - 不是「登录后一直信任」而是持续验证——每次请求都检查凭证有效性、设备健康度、行为异常。\n   - 证书短有效期（如 Istio 的证书每 24 小时轮换）+ 请求级别的 Token（JWT）。\n   - 设备合规检查：设备是否打了最新补丁、是否越狱、是否有恶意软件。\n\n**云原生环境的主要挑战**：\n- 服务间通信量巨大：全量 mTLS 加密导致 CPU 开销（可通过 Sidecar 硬件加速 / eBPF 优化）。\n- 策略管理复杂度：K8s 集群中数千个 Service -> 策略数量指数级增长——需要策略即代码（Policy as Code）和自动生成。\n- 性能开销：每请求的认证开销（JWT 验证 + mTLS 握手）在高吞吐下不可忽视（优化：连接复用 + 会话 Ticket）。\n- 遗留系统适配：不支持 mTLS 的旧应用需通过 Gateway 代理。\n\n扩展延伸：\nGoogle BeyondCorp 是 ZTNA 的鼻祖——全员远程办公 + 无 VPN。主流方案：Cloudflare Access / Zscaler / Illumio / Istio + OPA。ZTNA 不是买一个产品就能解决的问题，而是安全架构的全面转型。",
-    "hints": [
-      "零信任不是「不信任任何人」而是「每次请求都验证」——信任是短暂的、范围受限的",
-      "在云原生中实现零信任的关键技术是 Service Mesh——它天然提供了身份、加密和策略执行点"
-    ],
-    "tags": [
-      "零信任",
-      "ZTNA",
-      "网络安全",
-      "微分段",
-      "BeyondCorp"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "BGP 在数据中心网络中的应用",
-    "content": "请解释 BGP（边界网关协议）在数据中心网络中的角色和配置方式。BGP 原本是用于互联网 AS 之间的路由协议，为什么现代数据中心网络（特别是在 Clos / Spine-Leaf 架构中）选择使用 BGP 作为 Underlay 路由协议？对比 BGP 和 OSPF/IS-IS 在数据中心场景下的优劣。另外解释 EVPN + VXLAN 如何与 BGP 配合实现网络虚拟化。",
-    "answer": "答案：\nBGP 在数据中心网络中的使用（RFC 7938）已经成为大规模数据中心的事实标准。使用 BGP 而非 OSPF 的主要原因在于「可扩展性」和「策略控制能力」。\n\n解析：\n**为什么数据中心用 BGP**：\n\n传统观点认为 BGP 收敛慢（相比 OSPF），但在现代 Clos 架构中这一缺点不再显著——Clos 拓扑是规则的全连接二分图，链路故障不需要路由重计算（ECMP 自动去除故障链路）。\n\nBGP 的优势：\n1. 策略控制（Policy Control）：BGP 的 MED、Local Preference、AS Path 等属性提供了丰富的流量工程能力。\n2. 可扩展性：BGP 支持大量路由（数十万条），在大型数据中心（数百台交换机）中表现稳定。\n3. 标准统一：BGP 是互联网标准，各厂商实现最一致、互操作性最好。\n4. 简化运维：数据中心 + 互联网出口都用 BGP -> 运维人员只需要精通一种 IGP。\n\n**BGP vs OSPF/IS-IS 对比**：\n| 维度 | BGP | OSPF/IS-IS |\n| 设计目标 | 跨 AS 的路由策略 | 单域内快速收敛 |\n| 收敛速度 | 慢（但 Clos 消除此问题） | 快（秒级） |\n| 路由数量 | 支持百万级 | 有限（几千条后性能下降） |\n| 策略 | 丰富（AS Path、Community 等） | 有限 |\n| 配置复杂度 | 简单（仅 Peer + 通告网络） | 比较器要设计 Area |\n| ECMP | 需要支持 BGP Multipath | 原生支持 |\n| 典型场景 | 大型 DC、Leaf-Spine | 小型 DC、企业网 |\n\n**BGP + EVPN + VXLAN 的网络虚拟化**：\n- VXLAN：Overlay 隧道协议，将 L2 帧封装在 UDP 中跨越 L3 网络（24-bit VNI = 1600 万个虚拟网络）。\n- EVPN（Ethernet VPN）：在 BGP 中扩展了新的 Address Family（L2VPN/EVPN），用于在 Spine-Leaf 网络中分发 MAC/VTEP 信息。\n- 工作流程：\n  1. Leaf 交换机从服务器学到 MAC 地址。\n  2. Leaf 通过 BGP EVPN 将 [MAC, VNI, VTEP IP] 通告给其他 Leaf。\n  3. 其他 Leaf 学到该 MAC 在后端 VTEP 上。\n  4. 跨 Leaf 的流量通过 VXLAN 隧道封装转发。\n- 优势：控制平面（BGP）和数据平面（VXLAN）分离，BGP EVPN 提供自动化的 MAC 学习（替代传统 Flood-and-Learn）。\n\n扩展延伸：\n大型云厂商（Google、AWS、阿里云）的数据中心内部全部使用 BGP（eBGP 或 iBGP + BGP Multipath）。Google 的 Jupiter 网络运行 eBGP 在数百万个端点之间做路由。",
-    "hints": [
-      "BGP 原本是为「自治系统间路由」设计的——它在数据中心中成功的原因是有策略控制能力强和扩展性好的优点",
-      "EVPN 本质上是用 BGP 作为控制平面来分发 MAC/VTEP 信息——替代了传统 VXLAN 的数据平面泛洪学习"
-    ],
-    "tags": [
-      "BGP",
-      "数据中心",
-      "EVPN",
-      "VXLAN",
-      "Spine-Leaf"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "eBPF 网络性能优化场景",
-    "content": "在 Kubernetes 环境中，网络性能是容器化应用的关键瓶颈之一。以下哪个场景中 eBPF 技术带来的网络性能提升最显著？",
-    "answer": "答案：C) 使用 eBPF 实现 Service Mesh 的数据平面（如 Cilium / Istio Ambient Mesh），绕过 Sidecar 代理的 iptables 重定向开销\n\n解析：eBPF 可以将包处理逻辑从用户态回归内核，直接在 XDP 或 TC hook 点执行——避免了包从网卡 -> 内核 -> iptables -> 用户态代理 -> 内核 -> 目标容器的多次上下文切换和数据拷贝。\n\nA 场景中，IPv4 vs IPv6 的路由查找效率差距与 eBPF 关系不大。B 场景中，网络带宽受限通常是物理链路瓶颈（购买带宽不足），eBPF 无法增加带宽。D 场景中，多个 CNI 插件的管理复杂度差异更多体现在运维流程上，eBPF 虽能通过统一策略框架（CiliumNetworkPolicy）简化，但这不是最显著的性能提升场景。\n\nCilium 在 K8s 中替换 kube-proxy（用 eBPF 做 Service 负载均衡）也能获得显著性能提升——直接跳过 iptables（O(n) 规则匹配）改为 eBPF 的哈希表查找（O(1)）。但目前最 impactful 的是服务网格场景。",
-    "hints": [
-      "eBPF 最大的性能优势在于将包处理从用户态回归内核空间——减少上下文切换和数据拷贝",
-      "Service Mesh 中 Sidecar 代理的 iptables 重定向是主要的性能损耗点——每个包需要多次进出内核态"
-    ],
-    "tags": [
-      "eBPF",
-      "Kubernetes",
-      "网络性能",
-      "Cilium",
-      "Service Mesh"
-    ],
-    "options": [
-      "A) 使用 eBPF 的 XDP 加速 IPv4 路由转发，替代传统内核协议栈的 IPv4 路由查找",
-      "B) 使用 eBPF 的带宽管理（Bandwidth Manager）增加节点的网络带宽上限",
-      "C) 使用 eBPF 实现 Service Mesh 的数据平面（如 Cilium / Istio Ambient Mesh），绕过 Sidecar 代理的 iptables 重定向开销",
-      "D) 使用 eBPF 统一管理多个 CNI 插件（如 Calico + Flannel 共存），降低多 CNI 的网络策略复杂度"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "TCP 拥塞控制算法演进：从 Reno 到 BBR",
     "content": "TCP 拥塞控制算法从传统的基于丢包检测（Loss-based，如 Reno、CUBIC）发展到基于带宽和延迟的模型（Model-based，如 BBR），核心思路的变化是什么？BBR 为什么在高延迟/高带宽的长肥网络（Long Fat Network）上比 CUBIC 表现更好？BBR 的 ProbeBW 和 ProbeRTT 阶段在做什么？",
-    "answer": "答案：核心变化是从「被动响应丢包」到「主动探测带宽瓶颈」。传统的 Reno/CUBIC 通过 AIMD（加法增乘法减）调整拥塞窗口，丢包视为拥塞信号。BBR（Bottleneck Bandwidth and Round-trip propagation time）直接探测链路瓶颈带宽和最小 RTT，用模型计算发送速率。\n\n解析：1）传统算法（Reno / CUBIC）的问题——以丢包为拥塞信号在深缓冲区网络中失效：路由器缓冲区很大时，丢包前延迟已经很高（Bufferbloat 问题）。在高速网络（> 10Gbps）上，填满缓冲区需要很长时间，CUBIC 的窗口增长到链路带宽很慢。而且还存在不公平竞争问题（RTT 小的连接更容易抢占带宽）。2）BBR 的核心模型——BBR 在任意时刻维护两个估算值：BtlBw（瓶颈带宽，通过测量发送速率和接收 ACK 速率得到）和 RTprop（最小 RTT，反映传播延迟）。发送速率 = min(BtlBw × 增益系数, cwnd / SRTT)。3）BBR 的运行状态机——Startup（启动阶段，以 2/ln2 ≈ 2.89 倍速指数增长探测瓶颈带宽）、Drain（排空阶段，降低发送速率为 2/3 BtlBw 排空 Startup 阶段建立的队列）、ProbeBW（稳定带宽探测，以 1.25/0.75 倍速周期性上下波动探测是否有更大带宽可用，占大多数时间）、ProbeRTT（RTT 探测，当 RTprop 超过 10s 未更新时进入，大幅降低发送速率以获取新的最小 RTT）。\n\n扩展延伸：4）BBR 的问题：与 Reno/CUBIC 共存不公平（BBR 会抢占传统算法的带宽）。BBR 在有少量随机丢包时性能比 CUBIC 差（BBR 对丢包不敏感所以不会降低速率，但丢包导致的实际吞吐下降 BBR 也不会补偿）。BBRv2 正在尝试解决这些问题（增加对丢包的响应）。5）BBR 适用场景：跨地域数据中心传输（高延迟、高带宽）、CDN 边缘回源、视频上传/直播推流。不适用的场景：Web 短连接（BBR 的 Startup 阶段还没完成连接就结束了，不如 CUBIC）。",
+    "answer": "核心变化是从「被动响应丢包」到「主动探测带宽瓶颈」。传统的 Reno/CUBIC 通过 AIMD（加法增乘法减）调整拥塞窗口，丢包视为拥塞信号。BBR（Bottleneck Bandwidth and Round-trip propagation time）直接探测链路瓶颈带宽和最小 RTT，用模型计算发送速率。\n\n解析：1）传统算法（Reno / CUBIC）的问题——以丢包为拥塞信号在深缓冲区网络中失效：路由器缓冲区很大时，丢包前延迟已经很高（Bufferbloat 问题）。在高速网络（> 10Gbps）上，填满缓冲区需要很长时间，CUBIC 的窗口增长到链路带宽很慢。而且还存在不公平竞争问题（RTT 小的连接更容易抢占带宽）。2）BBR 的核心模型——BBR 在任意时刻维护两个估算值：BtlBw（瓶颈带宽，通过测量发送速率和接收 ACK 速率得到）和 RTprop（最小 RTT，反映传播延迟）。发送速率 = min(BtlBw × 增益系数, cwnd / SRTT)。3）BBR 的运行状态机——Startup（启动阶段，以 2/ln2 ≈ 2.89 倍速指数增长探测瓶颈带宽）、Drain（排空阶段，降低发送速率为 2/3 BtlBw 排空 Startup 阶段建立的队列）、ProbeBW（稳定带宽探测，以 1.25/0.75 倍速周期性上下波动探测是否有更大带宽可用，占大多数时间）、ProbeRTT（RTT 探测，当 RTprop 超过 10s 未更新时进入，大幅降低发送速率以获取新的最小 RTT）。\n\n扩展延伸：4）BBR 的问题：与 Reno/CUBIC 共存不公平（BBR 会抢占传统算法的带宽）。BBR 在有少量随机丢包时性能比 CUBIC 差（BBR 对丢包不敏感所以不会降低速率，但丢包导致的实际吞吐下降 BBR 也不会补偿）。BBRv2 正在尝试解决这些问题（增加对丢包的响应）。5）BBR 适用场景：跨地域数据中心传输（高延迟、高带宽）、CDN 边缘回源、视频上传/直播推流。不适用的场景：Web 短连接（BBR 的 Startup 阶段还没完成连接就结束了，不如 CUBIC）。",
     "hints": [
       "BBR 为什么不依赖丢包作为拥塞信号——Bufferbloat 问题导致丢包前延迟已经很高",
       "BBR 的 ProbeBW 为什么要周期性上下抖动探测——因为瓶颈带宽可能随时间变化（其他流加入/离开）"
@@ -1569,7 +370,7 @@
     "type": "short_answer",
     "title": "HTTP/3 (QUIC) 协议的核心优势与实现原理",
     "content": "HTTP/3 基于 QUIC 协议，相比 HTTP/2 解决了哪些核心问题？QUIC 建立在 UDP 之上而非 TCP，具体带来了什么好处？0-RTT 连接建立是如何实现的？",
-    "answer": "答案：HTTP/3 (QUIC) 相比 HTTP/2 的核心优势是彻底解决了 TCP 协议层的队头阻塞（Head-of-Line Blocking）问题，并且大幅降低了连接建立的延迟（0-RTT 握手）。\n\n解析：1）队头阻塞——HTTP/2 在单个 TCP 连接上多路复用多个流，但 TCP 是字节流协议，一个 TCP 包丢失会导致后续所有 HTTP 流（即使不相关）都被阻塞等待重传（因为在 TCP 层面数据是按序交付的）。QUIC 在 UDP 之上实现了独立的流（Stream），每个流独立丢包重传，一个流的丢包不影响其他流。2）0-RTT 连接建立——TCP + TLS 1.3 需要 1-RTT（如果之前连接过，TLS 1.3 的 0-RTT 模式下可以直接发数据，但 TCP 本身还是需要一次握手）。QUIC 第一次连接需要 1-RTT 交换传输参数 + TLS 1.3 握手，第二次及之后的连接，客户端可以直接发送加密数据（0-RTT），因为 QUIC 在之前连接中缓存了传输参数和会话密钥（Connection ID 机制保障）。3）其他 QUIC 优势——连接迁移（Connection Migration）：TCP 连接由四元组（src_ip:port, dst_ip:port）标识，网络切换（如 Wi-Fi 切 4G）会断开。QUIC 用 Connection ID 标识连接，IP 变化时连接不中断。内建加密（QUIC 强制 TLS 1.3 加密，不像 TCP 可能明文传输）、改进的流量控制和拥塞控制（QUIC 可以在应用层实现自定义拥塞控制算法，无需修改操作系统内核）。\n\n扩展延伸：部署现状和挑战：1）CDN 支持——Cloudflare、Google、Akamai 已大规模部署 QUIC 和 HTTP/3，约 30%+ 的 Web 流量已经走 QUIC。2）UDP 被运营商限速——某些企业网络/运营商限制 UDP 流量（出于安全考虑），QUIC 在这些网络下 fallback 到 TCP。3）服务器端支持——Nginx 1.25+ 支持 QUIC/HTTP/3，需要 OpenSSL 3.2+ 或 BoringSSL。4）HTTP/3 适合的场景：弱网环境（移动端网络切换频繁）、高延迟场景（0-RTT 优势明显）、页面资源多（多路复用免队头阻塞）。短文件下载/即时通讯类场景收益最大。",
+    "answer": "HTTP/3 (QUIC) 相比 HTTP/2 的核心优势是彻底解决了 TCP 协议层的队头阻塞（Head-of-Line Blocking）问题，并且大幅降低了连接建立的延迟（0-RTT 握手）。\n\n解析：1）队头阻塞——HTTP/2 在单个 TCP 连接上多路复用多个流，但 TCP 是字节流协议，一个 TCP 包丢失会导致后续所有 HTTP 流（即使不相关）都被阻塞等待重传（因为在 TCP 层面数据是按序交付的）。QUIC 在 UDP 之上实现了独立的流（Stream），每个流独立丢包重传，一个流的丢包不影响其他流。2）0-RTT 连接建立——TCP + TLS 1.3 需要 1-RTT（如果之前连接过，TLS 1.3 的 0-RTT 模式下可以直接发数据，但 TCP 本身还是需要一次握手）。QUIC 第一次连接需要 1-RTT 交换传输参数 + TLS 1.3 握手，第二次及之后的连接，客户端可以直接发送加密数据（0-RTT），因为 QUIC 在之前连接中缓存了传输参数和会话密钥（Connection ID 机制保障）。3）其他 QUIC 优势——连接迁移（Connection Migration）：TCP 连接由四元组（src_ip:port, dst_ip:port）标识，网络切换（如 Wi-Fi 切 4G）会断开。QUIC 用 Connection ID 标识连接，IP 变化时连接不中断。内建加密（QUIC 强制 TLS 1.3 加密，不像 TCP 可能明文传输）、改进的流量控制和拥塞控制（QUIC 可以在应用层实现自定义拥塞控制算法，无需修改操作系统内核）。\n\n扩展延伸：部署现状和挑战：1）CDN 支持——Cloudflare、Google、Akamai 已大规模部署 QUIC 和 HTTP/3，约 30%+ 的 Web 流量已经走 QUIC。2）UDP 被运营商限速——某些企业网络/运营商限制 UDP 流量（出于安全考虑），QUIC 在这些网络下 fallback 到 TCP。3）服务器端支持——Nginx 1.25+ 支持 QUIC/HTTP/3，需要 OpenSSL 3.2+ 或 BoringSSL。4）HTTP/3 适合的场景：弱网环境（移动端网络切换频繁）、高延迟场景（0-RTT 优势明显）、页面资源多（多路复用免队头阻塞）。短文件下载/即时通讯类场景收益最大。",
     "hints": [
       "QUIC 怎么解决队头阻塞——UDP + 独立流 + 每个流独立丢包重传",
       "0-RTT 的安全性缺陷——可能有重放攻击风险（服务器需要防护）"
@@ -1583,81 +384,12 @@
     ]
   },
   {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "DNS 解析与 CDN 全局负载均衡",
-    "content": "用户在浏览器中输入一个 URL 到最终从 CDN 节点获取资源，以下关于 DNS 解析和 CDN 调度的描述中正确的是？",
-    "options": [
-      "A) CDN 通过修改权威 DNS 的 NS 记录将域名解析指向 CDN 的智能 DNS 服务器，再根据用户 IP 返回最近的边缘节点 IP",
-      "B) DNS 解析只做域名到 IP 的映射，不参与 CDN 的负载均衡决策",
-      "C) 浏览器收到 CDN 节点的 IP 后会建立 TCP 连接，该连接在整个页面生命周期内不会切换节点",
-      "D) Anycast 路由中，用户的 DNS 查询和 HTTP 请求经过同一个边缘节点，保证状态一致性"
-    ],
-    "answer": "答案：A) CDN 通过修改权威 DNS 的 NS 记录将域名解析指向 CDN 的智能 DNS 服务器，再根据用户 IP 返回最近的边缘节点 IP\n\n解析：CDN 的智能 DNS 调度流程：1）网站所有者将域名的 NS 记录指向 CDN 提供的 DNS 服务器（CNAME 方式指向 CDN 域名）。2）用户请求时，Local DNS 递归查询到 CDN 的智能 DNS 服务器。3）CDN 智能 DNS 根据用户 Local DNS 的 IP 地址（代表用户地理位置），以及各边缘节点的负载和健康状况，返回最优边缘节点的 VIP。4）用户连接该 VIP 获取内容。B 错误——CDN 的核心调度机制就是通过 DNS 解析实现的（DNS 级别的 GSLB）。还有 HTTP 重定向和 Anycast 路由也是 CDN 调度手段。C 错误——CDN 的边缘节点切换可能发生在：某个节点挂了、负载不均衡需要重定向、动态内容需要回源。一些 CDN 使用 HTTP 重定向在应用层切换节点。D 错误——Anycast 路由中，DNS 查询和 HTTP 请求可能路由到不同的 Anycast 节点（路由表动态变化），但 CDN 在应用层确保请求的一致性和最终处理。\n\n扩展延伸：CDN 调度的三种方式：1）DNS 调度（最常用）——基于 Local DNS 地理位置返回最近节点。精度到城市级，粒度较粗，缓存 TTL 导致切换不灵敏。2）HTTP 重定向调度——302 响应重定向到更优的节点 URL。粒度细（每次请求可精确调度），但增加一次 HTTP 重定向延迟。3）Anycast 路由调度——多个边缘节点共享同一个 IP，通过 BGP 路由将用户路由到最近的节点。粒度最粗（BGP 路由粒度），但切换快（路由收敛），抗 DDoS 能力强。\n\nCDN 调度的挑战：移动端连 Wi-Fi 和 4G 时 Local DNS 不同，同一个域名可能解析到不同节点。多个运营商（电信/联通/移动）之间的互联带宽有限，跨运营商访问 CDN 节点可能有额外的延迟。",
-    "hints": [
-      "DNS 调度的问题是缓存导致切换不灵敏——CDN 如何解决某个边缘节点挂了但 DNS 缓存还没过期的问题",
-      "Anycast 路由为什么比 DNS 调度切换更快——BGP 路由收敛 vs DNS TTL"
-    ],
-    "tags": [
-      "网络",
-      "DNS",
-      "CDN",
-      "负载均衡",
-      "GSLB"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "零信任网络架构（ZTNA）的核心原则与实现",
-    "content": "零信任安全模型的核心思想是「永不信任，始终验证」（Never Trust, Always Verify）。它与传统的边界安全模型（防火墙 + VPN）的根本区别是什么？在企业微服务架构中如何实现零信任？mTLS、SPIFFE、服务身份认证的具体做法？",
-    "answer": "答案：零信任（Zero Trust）假设网络始终处于危险状态——内部网络不默认可信，每个请求都需要认证和授权。传统边界安全模型假设内部网络是安全的，攻击者一旦进入内网就可以横向移动（Lateral Movement）。零信任的三大支柱：显式验证、最小权限、假设受损。\n\n解析：1）传统边界的缺陷——VPN 一旦连入，用户获得内网 IP，可以访问几乎所有内部服务。攻击者通过钓鱼拿到 VPN 凭证后可以在内网自由横向移动。防火墙只做 IP/端口级别的过滤，不能识别应用层身份。2）零信任的三大原则——永不信任始终验证：每个请求都需要认证（不仅是 login 时）。最小权限：每个服务/用户只拥有完成工作所需的最小权限（Just-in-Time 临时授权）。假设受损：假设攻击者已经在内网，做防御纵深和持续监控。3）微服务中的实施——mTLS（双向 TLS）：不仅是 HTTPS 的单向认证，服务端和客户端互相验证证书。每对服务之间的通信都经过 mTLS 加密和身份验证。SPIFFE（Secure Production Identity Framework for Everyone）：为每个工作负载（Pod/容器）分配 SPIFFE ID（格式 spiffe://trust-domain/workload/name），通过 X.509 SVID（SPIFFE Verifiable Identity Document）标识身份。Istio 的 Citadel 组件自动为每个 Pod 签发证书和轮换。\n\n扩展延伸：企业实施路径：1）阶段一（基础）——统一身份认证（SSO + MFA），移除默认信任的 VPN 访问。2）阶段二（精细化访问）——实施微隔离（Micro-Segmentation），网络策略基于服务身份而非 IP。K8s NetworkPolicy + Istio AuthorizationPolicy 实现。3）阶段三（持续验证）——引入行为分析：异常流量检测（用户突然从异地 IP 访问、服务之间出现非正常调用）、持续风险评估（根据设备状态/行为风险动态调整访问权限）。\n\nZTNA 的两种架构：1）客户端发起（Client-Initiated）——用户设备上安装 ZTNA Agent，Agent 连接到 ZTNA 网关，网关代理访问内部应用。用户不直接接触内部 IP。2）服务发起（Service-Initiated）——适用于服务间通信，服务通过 Sidecar 代理互相认证和加密（服务网格的 mTLS 能力）。\n\n与 VPN 的对比：VPN 给「网络级」的隐式信任；ZTNA 给「应用级」的显式信任——用户能访问哪些应用、在什么条件下可以访问，都是明确限制的。",
-    "hints": [
-      "零信任的两个关键区别：永不信任（打破「内网安全假设」）和最小权限（每个访问都需要明确授权）",
-      "SPIFFE ID 为什么比 IP + 端口更适合做服务身份——IP 会变，SPIFFE ID 是稳定的工作负载标识"
-    ],
-    "tags": [
-      "网络",
-      "安全",
-      "零信任",
-      "mTLS",
-      "SPIFFE"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "API 网关 vs 负载均衡器 vs 反向代理",
-    "content": "以下关于 API 网关、负载均衡器和反向代理的描述，哪一项是错误的？",
-    "options": [
-      "A) 负载均衡器（如 Nginx / HAProxy）工作在 L4 或 L7，核心功能是将流量分发到多个后端服务器",
-      "B) 反向代理（如 Nginx / Apache）可以隐藏后端服务器 IP，提供缓存、SSL 终止、静态文件服务等功能",
-      "C) API 网关（如 Kong / APISIX / Spring Cloud Gateway）在反向代理基础上增加认证鉴权、限流熔断、协议转换、API 编排等能力",
-      "D) 一个架构中同时部署了 API 网关和负载均衡器属于职责重复，应该合并为一个组件"
-    ],
-    "answer": "答案：D) 一个架构中同时部署了 API 网关和负载均衡器属于职责重复，应该合并为一个组件\n\n解析：API 网关和负载均衡器在架构中通常同时存在且职责不同。典型的部署拓扑：外层负载均衡器（如云厂商的 SLB / Nginx）做 L4 流量分发和 DDoS 防护 → 内层 API 网关做 L7 的路由、认证、限流等业务功能。负载均衡器负责「把流量分发到网关集群」，API 网关负责「把请求路由到具体微服务」。两者不重复，是分层协作关系。A、B、C 的描述都是正确的——三层有功能重叠（都能做路由），但侧重点不同：负载均衡侧重高可用和吞吐量（性能优先），反向代理侧重缓存和安全，API 网关侧重业务治理（如认证、限流、灰度）。\n\n扩展延伸：四层（L4）vs 七层（L7）负载均衡器的区别：L4 工作于传输层（TCP/UDP），只做 IP + 端口转发，性能高（内核态转发）；L7 工作于应用层（HTTP/gRPC），可以基于 URL、Header、Cookie 做路由和修改请求/响应内容。\n\n常见部署拓扑：1）小型架构（单体应用）→ 一个 Nginx 就够了（同时做反向代理 + 负载均衡 + 简单的缓存）。2）中型架构（微服务 < 50 个）→ 外层 SLB（云厂商 L4）→ 内层 API 网关（Kong / APISIX）。3）大型架构（微服务 100+ 个）→ DDoS 清洗 → L4 负载均衡器（如 F5 / HAProxy）→ 分布式网关集群 → 内部可能出现二三级网关（BFF / 业务网关）。\n\n知识点：网关的流量经过路径不应该太长——通常 2-3 跳（Client → SLB → Gateway → Service），过多的中间层增加延迟和故障点。",
-    "hints": [
-      "L4 负载均衡只看 IP 端口转发，L7 可以看 URL/Header 内容做路由",
-      "大数据量的下载/上传等场景中中间层越少越好——避免代理层成为带宽瓶颈"
-    ],
-    "tags": [
-      "网络",
-      "API网关",
-      "负载均衡",
-      "反向代理",
-      "架构"
-    ]
-  },
-  {
     "category": "design_network",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "gRPC 拦截器与横切关注点",
     "content": "gRPC 拦截器（Interceptor）的工作原理是什么？客户端拦截器和服务端拦截器各有什么用途？如何用拦截器实现统一的日志记录、认证鉴权、请求超时和链路追踪注入？",
-    "answer": "答案：gRPC 拦截器类似 HTTP 中间件，在 RPC 调用链中插入横切逻辑。客户端拦截器在请求发送前和服务端响应后执行，适合重试、熔断、超时控制、日志。服务端拦截器在请求到达处理函数前和执行后执行，适合认证鉴权、限流、请求日志、Panic 恢复。一元拦截器拦截普通 RPC，流式拦截器拦截流式 RPC。\n\n解析：1）客户端拦截器——接口：`UnaryClientInterceptor(ctx, method, req, reply, cc, invoker, opts)`。在 invoker(ctx, req, opts) 前后插入逻辑。典型用途：注入 TraceID（将 ctx 中的 SpanContext 写入 gRPC metadata）、请求日志（记录 method、延迟、状态码）、重试/超时（当调用失败时根据状态码决定是否重试）、熔断（检查服务端是否已熔断，熔断中的请求直接返回错误）。\n\n2）服务端拦截器——接口：`UnaryServerInterceptor(ctx, req, info, handler)`。在 handler(ctx, req) 前后插入逻辑。典型用途：认证鉴权（从 metadata 中提取 JWT Token，验证有效性后将用户信息注入 ctx）、限流（基于令牌桶或滑动窗口，超过阈值直接返回 ResourceExhausted 错误）、请求日志、Panic 恢复（handler 执行时 panic 时拦截并转为 Internal 错误返回，避免服务崩溃）、指标采集（记录请求计数和延迟分布）。\n\n扩展延伸：3）拦截器链——多个拦截器通过链式调用组合（类似 HTTP 中间件）。每个拦截器可以选择提前终止链（返回错误）或传递给下一个。4）流式拦截器——`StreamServerInterceptor(srv, ss, info, handler)`：srv 是服务实例，ss 是 ServerStream（含 Context），handler 是流处理器。适合对流的发送/接收消息进行监控或转换（如消息大小校验、加密/解密）。5）性能影响——拦截器的性能开销在于每次 RPC 调用都会执行，所以拦截器应轻量（不阻塞、不做重计算）。用拦截器做认证：JWT 验证用缓存（预先缓存公钥/Secret），不要在每次请求中重复解析密钥。",
+    "answer": "gRPC 拦截器类似 HTTP 中间件，在 RPC 调用链中插入横切逻辑。客户端拦截器在请求发送前和服务端响应后执行，适合重试、熔断、超时控制、日志。服务端拦截器在请求到达处理函数前和执行后执行，适合认证鉴权、限流、请求日志、Panic 恢复。一元拦截器拦截普通 RPC，流式拦截器拦截流式 RPC。\n\n解析：1）客户端拦截器——接口：`UnaryClientInterceptor(ctx, method, req, reply, cc, invoker, opts)`。在 invoker(ctx, req, opts) 前后插入逻辑。典型用途：注入 TraceID（将 ctx 中的 SpanContext 写入 gRPC metadata）、请求日志（记录 method、延迟、状态码）、重试/超时（当调用失败时根据状态码决定是否重试）、熔断（检查服务端是否已熔断，熔断中的请求直接返回错误）。\n\n2）服务端拦截器——接口：`UnaryServerInterceptor(ctx, req, info, handler)`。在 handler(ctx, req) 前后插入逻辑。典型用途：认证鉴权（从 metadata 中提取 JWT Token，验证有效性后将用户信息注入 ctx）、限流（基于令牌桶或滑动窗口，超过阈值直接返回 ResourceExhausted 错误）、请求日志、Panic 恢复（handler 执行时 panic 时拦截并转为 Internal 错误返回，避免服务崩溃）、指标采集（记录请求计数和延迟分布）。\n\n扩展延伸：3）拦截器链——多个拦截器通过链式调用组合（类似 HTTP 中间件）。每个拦截器可以选择提前终止链（返回错误）或传递给下一个。4）流式拦截器——`StreamServerInterceptor(srv, ss, info, handler)`：srv 是服务实例，ss 是 ServerStream（含 Context），handler 是流处理器。适合对流的发送/接收消息进行监控或转换（如消息大小校验、加密/解密）。5）性能影响——拦截器的性能开销在于每次 RPC 调用都会执行，所以拦截器应轻量（不阻塞、不做重计算）。用拦截器做认证：JWT 验证用缓存（预先缓存公钥/Secret），不要在每次请求中重复解析密钥。",
     "hints": [
       "一元拦截器和流式拦截器的使用场景分别是什么",
       "多个拦截器的执行顺序如何保证——拦截器链的实现模式"
@@ -1681,10 +413,10 @@
       "C) 全部使用 gRPC，通过 gRPC-Web 支持浏览器，移动端也使用 gRPC",
       "D) 外部 API 用 REST（简单成熟），内部服务用 MQ 异步通信（解耦），实时推送用 SSE"
     ],
-    "answer": "答案：B) 外部 API 用 GraphQL（前端灵活组合数据），内部服务用 gRPC（高性能），实时通信用 WebSocket\n\n解析：不同场景对协议的需求不同，一个协议不可能在所有场景都最优。\n\n选择理由：1）GraphQL 对外——前端和第三方可以按需声明字段，避免 REST 的 over-fetching（一次返回过多字段）和 under-fetching（需要多次请求拼接数据）。API 版本管理也比 REST 简单（字段废弃和新增不影响旧客户端）。2）gRPC 内部——基于 HTTP/2 多路复用和 Protobuf 二进制编码，延迟和吞吐都优于 JSON REST。IDL（.proto 文件）是天然的服务契约，便于多语言代码生成。3）WebSocket 实时通信——双向推送，浏览器原生支持（SSE 只支持服务端→客户端单向推送，不适合需要客户端实时发送数据的场景）。\n\nA 的问题：REST 不适合实时推送（需要轮询或长轮询，效率低），内部服务 JSON 序列化比 Protobuf 慢 3-10 倍。C 的问题：gRPC-Web 需要 Envoy/Proxy 层转换，浏览器兼容性不如 REST/GraphQL，移动端 gRPC 在弱网环境下不如 REST 灵活（重试机制不如 HTTP 库成熟）。D 的问题：MQ 不适合做请求-响应模式的内部调用（需要额外实现 request-reply 模式），SSE 不支持客户端→服务器的双向通信。",
+    "answer": "B) 外部 API 用 GraphQL（前端灵活组合数据），内部服务用 gRPC（高性能），实时通信用 WebSocket\n\n解析：不同场景对协议的需求不同，一个协议不可能在所有场景都最优。\n\n选择理由：1）GraphQL 对外——前端和第三方可以按需声明字段，避免 REST 的 over-fetching（一次返回过多字段）和 under-fetching（需要多次请求拼接数据）。API 版本管理也比 REST 简单（字段废弃和新增不影响旧客户端）。2）gRPC 内部——基于 HTTP/2 多路复用和 Protobuf 二进制编码，延迟和吞吐都优于 JSON REST。IDL（.proto 文件）是天然的服务契约，便于多语言代码生成。3）WebSocket 实时通信——双向推送，浏览器原生支持（SSE 只支持服务端→客户端单向推送，不适合需要客户端实时发送数据的场景）。\n\nA 的问题：REST 不适合实时推送（需要轮询或长轮询，效率低），内部服务 JSON 序列化比 Protobuf 慢 3-10 倍。C 的问题：gRPC-Web 需要 Envoy/Proxy 层转换，浏览器兼容性不如 REST/GraphQL，移动端 gRPC 在弱网环境下不如 REST 灵活（重试机制不如 HTTP 库成熟）。D 的问题：MQ 不适合做请求-响应模式的内部调用（需要额外实现 request-reply 模式），SSE 不支持客户端→服务器的双向通信。",
     "hints": [],
     "tags": [
-      "API 设计",
+      "API设计",
       "gRPC",
       "GraphQL",
       "WebSocket",
@@ -1697,7 +429,7 @@
     "type": "short_answer",
     "title": "Reactor 模式与 C10M 网络架构",
     "content": "什么是 C10M 问题？Reactor 网络模型如何解决 C10K 问题并向 C10M 演进？Netty 的线程模型（Boss Group vs Worker Group）是如何设计的？Epoll 的边缘触发（ET）和水平触发（LT）在 Reactor 实现中有什么区别？",
-    "answer": "答案：C10M 指单机处理千万级并发连接的问题。C10K（万级）到 C10M（千万级）的演进核心是 IO 模型从「阻塞 IO + 多线程/多进程」到「异步非阻塞 IO + 事件驱动」的转变。Reactor 模式通过事件分发（Demultiplexing）和回调处理（Event Handler）实现少量线程处理海量连接。\n\n解析：1）传统方案（C10K 之前）——一个请求一个线程（或进程）。当并发连接数达到数万时，线程上下文切换和内存开销（每个线程默认栈 1MB）导致系统不可用。2）Reactor 模式——单线程 Reactor：一个线程同时在 epoll_wait 上等待多个 fd 的事件就绪，就绪后依次调用对应的 Handler。适用于 CPU 密集型场景而非 IO 密集型。多线程 Reactor（主从 Reactor，Netty 采用）：Main Reactor（Boss Group）负责 accept 新连接，将连接注册到 Sub Reactor（Worker Group）上，Sub Reactor 负责该连接后续的读写事件。\n\n3）Netty 线程模型——Boss EventLoopGroup：通常 1 个线程，负责处理 OP_ACCEPT 事件，将新连接注册到 Worker 的 EventLoop 上。Worker EventLoopGroup：通常 N 个线程（默认 CPU 核数 * 2），每个 EventLoop 负责一组 Channel 的 OP_READ/OP_WRITE 事件。一个 Channel 的生命周期绑定到一个 EventLoop 上（保证线程安全，避免锁竞争）。\n\n扩展延伸：4）ET vs LT——水平触发（Level-Triggered, LT）：只要 fd 上有未读数据，epoll_wait 每次都会返回该 fd。编程简单，但可能重复唤醒。边缘触发（Edge-Triggered, ET）：仅当 fd 状态变化时通知一次，应用层必须一次性读完所有数据（循环 read 直到 EAGAIN）。ET 效率更高（减少 epoll 调用次数），但编程复杂度高（需要处理部分读取的情况）。5）C10M 的进一步优化——内核绕过（Kernel Bypass）：使用 DPDK（Intel）或 XDP 直接在用户态处理网络包，跳过内核协议栈。CPU 亲和性绑定：每个网络处理线程绑定到独立 CPU 核，减少缓存失效。共享内存通信：进程间通过共享内存而非 Socket 通信（避免上下文切换）。典型代表：Netflix 的 Vector Packet Processing（VPP）、Cloudflare 的 DPDK 应用。",
+    "answer": "C10M 指单机处理千万级并发连接的问题。C10K（万级）到 C10M（千万级）的演进核心是 IO 模型从「阻塞 IO + 多线程/多进程」到「异步非阻塞 IO + 事件驱动」的转变。Reactor 模式通过事件分发（Demultiplexing）和回调处理（Event Handler）实现少量线程处理海量连接。\n\n解析：1）传统方案（C10K 之前）——一个请求一个线程（或进程）。当并发连接数达到数万时，线程上下文切换和内存开销（每个线程默认栈 1MB）导致系统不可用。2）Reactor 模式——单线程 Reactor：一个线程同时在 epoll_wait 上等待多个 fd 的事件就绪，就绪后依次调用对应的 Handler。适用于 CPU 密集型场景而非 IO 密集型。多线程 Reactor（主从 Reactor，Netty 采用）：Main Reactor（Boss Group）负责 accept 新连接，将连接注册到 Sub Reactor（Worker Group）上，Sub Reactor 负责该连接后续的读写事件。\n\n3）Netty 线程模型——Boss EventLoopGroup：通常 1 个线程，负责处理 OP_ACCEPT 事件，将新连接注册到 Worker 的 EventLoop 上。Worker EventLoopGroup：通常 N 个线程（默认 CPU 核数 * 2），每个 EventLoop 负责一组 Channel 的 OP_READ/OP_WRITE 事件。一个 Channel 的生命周期绑定到一个 EventLoop 上（保证线程安全，避免锁竞争）。\n\n扩展延伸：4）ET vs LT——水平触发（Level-Triggered, LT）：只要 fd 上有未读数据，epoll_wait 每次都会返回该 fd。编程简单，但可能重复唤醒。边缘触发（Edge-Triggered, ET）：仅当 fd 状态变化时通知一次，应用层必须一次性读完所有数据（循环 read 直到 EAGAIN）。ET 效率更高（减少 epoll 调用次数），但编程复杂度高（需要处理部分读取的情况）。5）C10M 的进一步优化——内核绕过（Kernel Bypass）：使用 DPDK（Intel）或 XDP 直接在用户态处理网络包，跳过内核协议栈。CPU 亲和性绑定：每个网络处理线程绑定到独立 CPU 核，减少缓存失效。共享内存通信：进程间通过共享内存而非 Socket 通信（避免上下文切换）。典型代表：Netflix 的 Vector Packet Processing（VPP）、Cloudflare 的 DPDK 应用。",
     "hints": [
       "主从 Reactor 中 Boss Group 和 Worker Group 的职责划分是如何保障高性能的",
       "边缘触发（ET）为什么比水平触发（LT）效率高——编程复杂度也更高"
@@ -1707,7 +439,7 @@
       "Reactor",
       "Netty",
       "C10M",
-      "Epoll"
+      "epoll"
     ]
   },
   {
@@ -1716,7 +448,7 @@
     "type": "short_answer",
     "title": "HTTP/2 Stream 优先级与流量控制",
     "content": "HTTP/2 的多路复用解决了 HTTP/1.1 的队头阻塞，但引入了 Stream 间的资源竞争问题。HTTP/2 的 Stream 优先级如何设计？流量控制机制（Flow Control）是什么级别的？优先级树（Priority Tree）和依赖关系如何影响资源分配？",
-    "answer": "答案：HTTP/2 的 Stream 优先级通过「依赖关系 + 权重」来管理。每个 Stream 可以依赖另一个 Stream（形成优先级树），同一层级的 Stream 按权重比例分配带宽。流量控制是 Stream 级别的（不是 Connection 级别的），基于 WINDOW_UPDATE 帧实现滑动窗口。\n\n解析：1）Stream 优先级——使用 PRIORITY 帧声明依赖关系：Stream A 依赖 Stream B（B 完成后 A 才能分配资源）。同层级的多个 Stream 设置权重（weight 1-256，默认 16），按权重比例分配带宽。示例：Stream A（weight 12）和 Stream B（weight 4）共享带宽 → A 获得 75%，B 获得 25%。默认优先级树：所有 Stream 隐式依赖根节点，权重均等。\n\n2）依赖去重——如果 Stream A 依赖 Stream B 同时 Stream B 又依赖 Stream A（循环依赖），优先级树退化为默认值。浏览器利用优先级优化页面加载：HTML 资源最高优先级、CSS（影响渲染）高优先级、JS medium 优先级、图片低优先级。\n\n3）流量控制——HTTP/2 在 Stream 和 Connection 两层都实现了基于窗口的流量控制（类似 TCP 但更上层）。初始窗口大小 65535 字节（可通过 SETTINGS 帧调整到更大值，推荐 16MB）。接收方通过 WINDOW_UPDATE 帧通知发送方窗口增加量。目的：防止接收方被发过来的大量数据压垮（尤其是慢速客户端的缓冲区被填满）。\n\n扩展延伸：4）BDP 与窗口设置——带宽延迟积 = 带宽 × RTT。对于高带宽长距离网络，默认 64KB 窗口太小（极大的限制了吞吐量）。推荐将 HTTP/2 初始窗口设为 BDP 大小或更大（如 16MB），避免窗口成为瓶颈。5）Stream 优先级在实践中未广泛采用——原因是浏览器和服务端的优先级实现不一致，且优先级可能被恶意利用（低优先级 Stream 挂在高优先级 Stream 下抢带宽）。Chrome 和 Firefox 已经调整了 HTTP/2 优先级策略，部分场景甚至退化为公平调度。6）HTTP/3 的改进——HTTP/3（基于 QUIC）在 Stream 调度上使用了更灵活的方案（如 Cubic/BBR 流控 + 独立 Stream 重启，不像 HTTP/2 那样强依赖优先级树）。",
+    "answer": "HTTP/2 的 Stream 优先级通过「依赖关系 + 权重」来管理。每个 Stream 可以依赖另一个 Stream（形成优先级树），同一层级的 Stream 按权重比例分配带宽。流量控制是 Stream 级别的（不是 Connection 级别的），基于 WINDOW_UPDATE 帧实现滑动窗口。\n\n解析：1）Stream 优先级——使用 PRIORITY 帧声明依赖关系：Stream A 依赖 Stream B（B 完成后 A 才能分配资源）。同层级的多个 Stream 设置权重（weight 1-256，默认 16），按权重比例分配带宽。示例：Stream A（weight 12）和 Stream B（weight 4）共享带宽 → A 获得 75%，B 获得 25%。默认优先级树：所有 Stream 隐式依赖根节点，权重均等。\n\n2）依赖去重——如果 Stream A 依赖 Stream B 同时 Stream B 又依赖 Stream A（循环依赖），优先级树退化为默认值。浏览器利用优先级优化页面加载：HTML 资源最高优先级、CSS（影响渲染）高优先级、JS medium 优先级、图片低优先级。\n\n3）流量控制——HTTP/2 在 Stream 和 Connection 两层都实现了基于窗口的流量控制（类似 TCP 但更上层）。初始窗口大小 65535 字节（可通过 SETTINGS 帧调整到更大值，推荐 16MB）。接收方通过 WINDOW_UPDATE 帧通知发送方窗口增加量。目的：防止接收方被发过来的大量数据压垮（尤其是慢速客户端的缓冲区被填满）。\n\n扩展延伸：4）BDP 与窗口设置——带宽延迟积 = 带宽 × RTT。对于高带宽长距离网络，默认 64KB 窗口太小（极大的限制了吞吐量）。推荐将 HTTP/2 初始窗口设为 BDP 大小或更大（如 16MB），避免窗口成为瓶颈。5）Stream 优先级在实践中未广泛采用——原因是浏览器和服务端的优先级实现不一致，且优先级可能被恶意利用（低优先级 Stream 挂在高优先级 Stream 下抢带宽）。Chrome 和 Firefox 已经调整了 HTTP/2 优先级策略，部分场景甚至退化为公平调度。6）HTTP/3 的改进——HTTP/3（基于 QUIC）在 Stream 调度上使用了更灵活的方案（如 Cubic/BBR 流控 + 独立 Stream 重启，不像 HTTP/2 那样强依赖优先级树）。",
     "hints": [
       "HTTP/2 的流量控制为什么在 Stream 层做——TCP 层已经有了流量控制，为什么还需要 HTTP/2 层再做一次",
       "优先级树在实践中为什么没有达到预期的效果——浏览器和服务端实现不一致"
@@ -1734,7 +466,7 @@
     "type": "short_answer",
     "title": "数据中心网络：Clos/Fat-Tree 拓扑",
     "content": "现代数据中心网络（DCN）为什么采用 Clos（叶脊/Spine-Leaf）拓扑而不是传统的三层树形结构？Clos 拓扑如何实现高带宽、低延迟和可扩展性？ECMP（等价多路径）和 SDN 在其中的作用是什么？",
-    "answer": "答案：Clos（Spine-Leaf）拓扑解决了传统三层树形（Core-Aggregation-Access）的带宽瓶颈和扩展性问题。Spine-Leaf 中每个 Leaf（叶子交换机，连接服务器）连接到所有 Spine（脊交换机，纯转发层），形成一个 Full-Mesh。任何两台服务器之间的路径最多经过 2 跳（Leaf → Spine → Leaf）。\n\n解析：1）传统三层树形的问题——接入层 → 汇聚层 → 核心层。上行链路带宽远小于下行（收敛比过高，over-subscription ratio 可达 20:1 甚至更高）。汇聚层瓶颈：东西流量（服务器间通信）需要经过汇聚层，容易饱和。扩展困难：新增一个机架需要调整上层链路。\n\n2）Spine-Leaf 设计——每个 Leaf 交换机通过多条上行链路连接到所有 Spine 交换机。收敛比可控（可通过增加 Spine 交换机数量降低收敛比，甚至做到 1:1）。东西流量：服务器 A（Leaf1）→ Leaf1 → Spine → Leaf2 → 服务器 B，每条路径只有 2 跳。扩展性：增加容量只需添加 Spine 交换机（水平扩展），Leaf 上行链路线速扩展到新 Spine。\n\n3）ECMP（等价多路径）——Spine-Leaf 中 Leaf 到 Spine 有多条等价路径。ECMP 基于哈希（源 IP、目的 IP、端口等）将流量分担到不同 Spine。解决哈希冲突：使用多级哈希（Tuple Hash）+ 一致性哈希。不对称问题：ECMP 哈希可能导致某个 Spine 负载过高（大象流碰撞），可以用 Flowlet Switching（切分大象流到不同路径）缓解。\n\n扩展延伸：4）SDN 在 DCN 中的应用——集中控制器（如 Google 的 B4 / Andromeda）掌握全网拓扑和链路利用率，可以动态调整路由和负载均衡。相比 ECMP 的局部决策，SDN 全局调度更优。5）VXLAN Overlay——Spine-Leaf 网络通常承载 VXLAN Overlay，Leaf 充当 VTEP（VXLAN Tunnel Endpoint）。服务器通过 VXLAN 实现跨 Leaf 的二层互通（VM 迁移场景）。6）Intent-based 自动化——Cisco ACI / VMware NSX 将网络策略定义与底层拓扑解耦，网络管理员声明什么流量需要互通（Intents），由 SDN 控制器自动下发到 Leaf/Spine 的 ACL 和路由表。",
+    "answer": "Clos（Spine-Leaf）拓扑解决了传统三层树形（Core-Aggregation-Access）的带宽瓶颈和扩展性问题。Spine-Leaf 中每个 Leaf（叶子交换机，连接服务器）连接到所有 Spine（脊交换机，纯转发层），形成一个 Full-Mesh。任何两台服务器之间的路径最多经过 2 跳（Leaf → Spine → Leaf）。\n\n解析：1）传统三层树形的问题——接入层 → 汇聚层 → 核心层。上行链路带宽远小于下行（收敛比过高，over-subscription ratio 可达 20:1 甚至更高）。汇聚层瓶颈：东西流量（服务器间通信）需要经过汇聚层，容易饱和。扩展困难：新增一个机架需要调整上层链路。\n\n2）Spine-Leaf 设计——每个 Leaf 交换机通过多条上行链路连接到所有 Spine 交换机。收敛比可控（可通过增加 Spine 交换机数量降低收敛比，甚至做到 1:1）。东西流量：服务器 A（Leaf1）→ Leaf1 → Spine → Leaf2 → 服务器 B，每条路径只有 2 跳。扩展性：增加容量只需添加 Spine 交换机（水平扩展），Leaf 上行链路线速扩展到新 Spine。\n\n3）ECMP（等价多路径）——Spine-Leaf 中 Leaf 到 Spine 有多条等价路径。ECMP 基于哈希（源 IP、目的 IP、端口等）将流量分担到不同 Spine。解决哈希冲突：使用多级哈希（Tuple Hash）+ 一致性哈希。不对称问题：ECMP 哈希可能导致某个 Spine 负载过高（大象流碰撞），可以用 Flowlet Switching（切分大象流到不同路径）缓解。\n\n扩展延伸：4）SDN 在 DCN 中的应用——集中控制器（如 Google 的 B4 / Andromeda）掌握全网拓扑和链路利用率，可以动态调整路由和负载均衡。相比 ECMP 的局部决策，SDN 全局调度更优。5）VXLAN Overlay——Spine-Leaf 网络通常承载 VXLAN Overlay，Leaf 充当 VTEP（VXLAN Tunnel Endpoint）。服务器通过 VXLAN 实现跨 Leaf 的二层互通（VM 迁移场景）。6）Intent-based 自动化——Cisco ACI / VMware NSX 将网络策略定义与底层拓扑解耦，网络管理员声明什么流量需要互通（Intents），由 SDN 控制器自动下发到 Leaf/Spine 的 ACL 和路由表。",
     "hints": [
       "Spine-Leaf 网络中东西流量为什么只需要 2 跳——和传统三层树形的路径对比",
       "ECMP 的哈希冲突导致的大象流（Elephant Flow）问题如何解决"
@@ -1745,96 +477,6 @@
       "Clos",
       "Spine-Leaf",
       "ECMP"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "分布式事务的 CAP 理论与最终一致性方案",
-    "content": "CAP 理论的本质是什么？为什么说「CA」在分布式系统中不可能？在微服务架构中，有哪些实现最终一致性的实践方案？",
-    "answer": "答案：CAP 理论指出分布式系统在 Consistency（强一致性）、Availability（可用性）、Partition Tolerance（分区容忍性）三者中最多同时满足两个。网络分区（P）在分布式系统中是必然发生的，所以实际上是在 CP 和 AP 之间做选择。「CA」只在不允许网络分区的单机系统中存在，但分布式系统必须容忍网络分区，所以 CA 在分布式系统中不可能。\n\n解析：CAP 的深入理解：1）C（Consistency）——所有节点在同一时刻看到相同的数据。严格来说等同于线性一致性（Linearizability）。2）A（Availability）——每个请求都能在有限时间内获得非错误的响应（但不保证是最新数据）。3）P（Partition Tolerance）——系统中任意节点间的网络通信中断时，系统仍能继续运行。网络分区是事实，所以 P 必须选，因此实质是 CP vs AP 的选择。\n\n最终一致性的实现方案：1）TCC（Try-Confirm/Cancel）——业务层面的两阶段提交。Try 阶段预留资源，Confirm 阶段确认执行，Cancel 阶段回滚。适用于短事务、高一致性场景。2） Saga 模式——将一个长事务拆分为多个本地事务，每个事务有对应的补偿操作。Saga 又分两种编排方式：Choreography（事件驱动，每个服务监听事件并触发下一步）和 Orchestration（一个协调者集中管理）。3）事件驱动 + 本地消息表——利用消息队列实现异步解耦。本地事务和消息发送在同一个事务中完成（或使用 Transactional Outbox 模式），消费者端保证幂等消费。4）最大努力通知——不断重试直到成功，适合对一致性要求不高但需要最终送达的场景（如发送通知）。\n\n扩展延伸：面试中常见追问：「互联网金融场景怎么选？」——核心交易用 TCC 或 Saga 保证强一致性，非核心环节（积分、通知）用异步消息。注意：不要教条地认为 AP 一定优于 CP（ZooKeeper 就是 CP 系统，选择了强一致性牺牲了部分可用性），选择取决于业务场景——如果 100 元的转账不能出现两边都扣钱（需要强一致），如果新闻推荐暂时不一致影响不大（适合 AP）。",
-    "hints": [
-      "CAP 中 P（分区容忍性）是必须选的——分布式系统不可能避免网络分区，所以实质是 CP vs AP",
-      "ACID 的 C（一致性约束）和 CAP 的 C（线性一致性）不是同一个概念——ACID 关注数据库约束，CAP 关注多节点数据一致性"
-    ],
-    "tags": [
-      "分布式",
-      "CAP",
-      "最终一致性",
-      "Saga"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "分布式追踪系统（Distributed Tracing）的原理与选型",
-    "content": "在微服务架构中，一个请求会经过多个服务。分布式追踪系统是如何实现跨服务请求追踪的？OpenTelemetry、Jaeger、Zipkin 之间是什么关系？",
-    "answer": "答案：分布式追踪的核心思想是为每个请求生成一个全局唯一的 Trace ID，在请求经过每个服务时创建 Span（追踪单元），通过 Trace ID 将所有 Span 串联起来，还原请求在微服务之间的完整调用链路。OpenTelemetry 是数据采集标准，Jaeger 和 Zipkin 是后端存储和可视化平台。\n\n解析：核心数据结构——1）Trace：代表一个完整的请求链路。2）Span：链路中的一个工作单元（如一次 RPC 调用、一次数据库查询）。每个 Span 记录操作名称、开始时间、结束时间、状态。3）Span Context：跨进程传递的追踪上下文，包含 Trace ID、Span ID、Baggage（用户自定义 KV）。\n\n跨服务传递：当一个服务调用另一个服务时，Span Context 通过 HTTP Header（如 W3C Trace Context 标准的 traceparent 头）或 RPC 元数据传递。接收方从请求中提取 Trace ID，创建新的 Span 并关联到父 Span。\n\nOpenTelemetry vs Jaeger vs Zipkin：1）OpenTelemetry（OTel）——CNCF 孵化项目，统一了 OpenTracing 和 OpenCensus，提供 SDK、API 和 Collector，负责数据采集和导出。它不负责存储和可视化。2）Jaeger——Uber 开源的分布式追踪系统，CNCF 毕业项目，提供存储（Elasticsearch/Cassandra/Badger）和 UI。可以接收 OTel 格式的数据。3）Zipkin——Twitter 开源的分布式追踪系统，功能类似 Jaeger，更轻量。\n\n扩展延伸：选型建议——新项目优先选 OpenTelemetry（业界标准） + Jaeger（成熟度高）。如果已经在用 Prometheus + Grafana，Jaeger 可以很好地集成到 Grafana 的 observability 体系中。带宽和采样率是全量采集还是采样采集？高流量系统通常使用头采样（Head Sampling，在请求入口决定采不采样）或自适应采样（根据流量动态调整采样率）。数据量预估：一个高频请求（如 10000 QPS）全量采集可能需要 TB 级的存储，所以 1-10% 的采样率是常见的折中。",
-    "hints": [
-      "Trace ID 在服务间通过 HTTP Header / RPC 元数据传递——接收方从请求中提取并创建关联 Span",
-      "OpenTelemetry 是标准（负责数据采集），Jaeger/Zipkin 是后端（负责存储和展示）——两者是上下游关系"
-    ],
-    "tags": [
-      "分布式追踪",
-      "OpenTelemetry",
-      "Jaeger",
-      "微服务"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "API 网关在微服务架构中的核心职责",
-    "content": "API 网关在微服务架构中承担哪些核心职责？比较传统的单体网关（如 Kong）和云原生网关（如 Envoy、Spring Cloud Gateway）的异同。",
-    "answer": "答案：API 网关是微服务架构的入口层，负责请求路由、认证鉴权、限流熔断、协议转换和可观测性等横切关注点。它将对多个微服务的调用统一暴露为对客户端的单一入口，简化客户端调用逻辑。\n\n解析：API 网关核心功能：1）请求路由——根据请求路径、Header、域名等将请求转发到对应的后端服务。支持动态路由更新而无需重启网关。2）认证鉴权——统一的身份认证（OAuth2/JWT 验证）和权限校验，避免每个服务重复实现。3）限流熔断——对超出阈值的请求进行限流，对下游故障的服务进行熔断（Circuit Breaker），保护后端服务不被流量冲垮。4）协议转换——将外部协议（HTTP/HTTPS/WebSocket）转换为内部协议（gRPC/Thrift），或反向代理。5）可观测性——统一收集请求的指标（延迟、错误率、QPS）和日志，输出到监控系统。\n\n传统网关 vs 云原生网关：1）传统网关（Kong/Nginx + Lua）——基于 Nginx + 插件机制，成熟稳定，性能优异。通过 Lua 脚本或插件扩展功能。优点：生态成熟、文档丰富、性能好。缺点：配置热更新需要 reload（Kong 通过 DB 解决了部分问题）、扩展性受限于 Lua 生态。2）云原生网关（Envoy/Spring Cloud Gateway）——Envoy 是用 C++ 写的 L7 代理和服务网格的数据面，动态配置（xDS API），适用于 Kubernetes 和 Service Mesh 环境。Spring Cloud Gateway 基于 Spring WebFlux（Reactive），适合 Java 技术栈团队。优点：动态配置、与 Kubernetes 深度集成、丰富的可观测性。缺点：运维复杂度较高。\n\n扩展延伸：API 网关的演进趋势——从单一网关走向服务网格（Service Mesh）。服务网格将网关的流量治理能力下沉到 Sidecar Proxy（Envoy/Istio），应用代码不再需要感知网关逻辑。Gateway API（Kubernetes 的新一代 Ingress API）提供了更标准化的网关配置方式。注意：不要滥用 API 网关——不要将业务逻辑塞入网关层。网关负责基础设施级的横切关注点，业务逻辑（如消息格式转换、业务规则校验）应该放在后端服务中而不是网关中。",
-    "hints": [
-      "API 网关负责「横切关注点」（认证/限流/路由/监控）——不要把业务逻辑塞进网关层",
-      "从传统网关到 Service Mesh 的演进趋势是将流量治理能力从中心化网关下沉到 Sidecar Proxy"
-    ],
-    "tags": [
-      "微服务",
-      "API网关",
-      "Envoy",
-      "Service Mesh"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "微服务架构中的服务发现机制对比",
-    "content": "以下关于微服务架构中服务发现（Service Discovery）的说法，哪一项是正确的？\n\nA) 客户端发现模式中，客户端直接从注册中心获取服务实例列表并自行负载均衡，如 Netflix Eureka + Ribbon\nB) 服务端发现模式通过负载均衡器（如 AWS NLB）隐藏注册中心细节，客户端只需知道负载均衡器地址即可\nC) Zookeeper 基于 ZAB 协议保证强一致性，适合作为注册中心，在服务大规模上下线时性能不会出现瓶颈\nD) Kubernetes Service 本质上是服务端发现模式，kube-proxy 通过 iptables/IPVS 将请求负载均衡到后端 Pod",
-    "answer": "答案：正确的是 A、B、D。\n\n解析：A 正确——客户端发现模式中，服务实例启动时向注册中心注册，客户端从注册中心获取可用实例列表，客户端自身实现负载均衡（如 Ribbon、Spring Cloud LoadBalancer）。优势：减少了网络跳数，部署拓扑简单。缺点：客户端需要集成发现逻辑，不同语言需要不同的实现。\n\nB 正确——服务端发现模式中，客户端不直接感知注册中心，而是通过负载均衡器（AWS ALB/NLB、Kubernetes Service）发起请求。负载均衡器将请求转发到健康的服务实例。优势：客户端逻辑简单（只需知道负载均衡器地址），语言无关。缺点：多了一次网络跳转，负载均衡器可能成为瓶颈。\n\nC 错误——Zookeeper 基于 ZAB 协议保证强一致性（CP 系统），但在服务大规模上下线时，注册信息的变更导致 ZK 集群频繁进行 Leader 选举和状态同步，可能产生脑裂和性能瓶颈。这也是为什么 Netflix 从 ZooKeeper 迁移到 Eureka（AP 系统）的原因。\n\nD 正确——Kubernetes Service 是典型服务端发现模式。Service 有 Cluster IP，kube-proxy 通过 iptables/IPVS 规则将发往 Cluster IP 的请求负载均衡到后端 Pod 实例。客户端不需要关注后端实例的变化，所有发现逻辑由 Kubernetes 基础设施完成。\n\n扩展延伸：当今服务发现的主要选择包括：Kubernetes 自带 DNS + Service（云原生首选）、Consul（支持多数据中心和健康检查）、Eureka（Spring Cloud 传统方案，AP 优先）。选型建议：如果已经在用 Kubernetes，优先使用 Kubernetes Service（天然的服务发现）；如果是在非 K8s 环境（如传统 IDC），可以考虑 Consul 或 Eureka。注意区分注册中心和健康检查的职责——注册中心负责存储可用实例，健康检查负责判断实例是否存活。",
-    "hints": [
-      "客户端发现需要客户端集成负载均衡逻辑，服务端发现多一次网络跳转但客户端更简单",
-      "ZooKeeper 做注册中心的性能瓶颈在于大规模变更时的 Leader 选举和同步"
-    ],
-    "tags": [
-      "微服务",
-      "服务发现",
-      "Eureka",
-      "Kubernetes"
-    ]
-  },
-  {
-    "category": "design_network_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "容器网络（CNI）原理对比",
-    "content": "关于容器网络接口（CNI）和 Kubernetes 网络模型的描述，以下哪一项是不正确的？\n\nA) Calico 基于 BGP 协议实现容器间三层路由，不依赖 Overlay 隧道，性能损耗较低\nB) Flannel 的 VXLAN 模式工作在二层，在每个 Node 之间建立 VXLAN 隧道封装容器流量\nC) Cilium 基于 eBPF 实现网络策略和可观测性，性能优于 iptables 模式，但不支持 L7 网络策略\nD) Kubernetes 网络模型要求所有 Pod 可以直接通信（无需 NAT），无论是否在同一个 Node 上",
-    "answer": "答案：C 不正确。\n\n解析：A 正确——Calico 使用 BGP 协议在 Node 之间交换容器路由信息，不需要 Overlay 封装，数据包的源/目的 IP 就是容器 IP，性能损耗小。适合对网络性能要求高的场景。也存在 IPIP 隧道的跨子网模式。\n\nB 正确——Flannel 的 VXLAN 模式将二层帧封装到 UDP 包（VXLAN）中，在 Node 之间通过 VXLAN 隧道传输。优点是跨子网通信不需要三层路由，缺点是 VXLAN 封装（额外 50 字节头部）带来一定的性能损耗。\n\nC 错误——Cilium 不仅支持 L3/L4 网络策略，还支持 L7 网络策略（HTTP/gRPC/Kafka 等协议的请求级控制）。Cilium 基于 eBPF 实现了比 iptables 模式更高性能的数据平面，并且提供了 API 级别的可观测性（Hubble）。Cilium 是目前 CNCF 生态中最活跃的 CNI 插件之一，被认为是 iptables 模式的下一代替代。\n\nD 正确——Kubernetes 网络模型的三个基本要求：1）所有 Pod 可以不经过 NAT 与所有其他 Pod 通信。2）所有 Node 可以不经过 NAT 与所有 Pod 通信。3）Pod 看到的自己的 IP 与别人看到的其 IP 相同。这个模型简化了应用迁移（从 VM 到容器）和微服务架构中服务间通信。\n\n扩展延伸：CNI 选型建议：1）如果对性能要求极高且团队有网络背景 → Calico（BGP 模式）。2）大部分通用场景 → Flannel（VXLAN 模式）或 Calico（IPIP 模式），简单可靠。3）如果需要高级网络策略（L7 策略、API 级可观测性、加密）→ Cilium（基于 eBPF，代表了 K8s 网络的未来方向）。4）AWS 环境 → AWS VPC CNI（每个 Pod 分配 VPC 真实 IP，性能最好）。注意：CNI 选型与 Kubernetes 版本、云平台和团队运维能力密切相关，没有绝对的最优选择。从 iptables 到 eBPF 的迁移是 Kubernetes 网络发展的主要趋势——Cilium 的使用率在持续快速上升。",
-    "hints": [
-      "Calico 用 BGP 直接路由（不封装），Flannel VXLAN 用隧道封装——两者各有适用场景",
-      "Cilium 的 eBPF 模式不仅支持 L7 策略而且性能优于 iptables——是 K8s 网络的未来方向"
-    ],
-    "tags": [
-      "容器网络",
-      "CNI",
-      "Calico",
-      "Cilium"
     ]
   }
 ]

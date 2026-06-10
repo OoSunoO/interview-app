@@ -1,11 +1,11 @@
 [
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Java 基本数据类型",
     "content": "以下哪些是 Java 的基本数据类型（Primitive Type）？",
-    "answer": "答案：A)、C)。解析：Java 有 8 种基本数据类型：byte、short、int、long、float、double、boolean、char。String 是引用类型，BigDecimal 是 java.math 包中的类，属于引用类型。基本类型存储在栈上，引用类型存储在堆上。",
+    "answer": "A)、C)。解析：Java 有 8 种基本数据类型：byte、short、int、long、float、double、boolean、char。String 是引用类型，BigDecimal 是 java.math 包中的类，属于引用类型。基本类型存储在栈上，引用类型存储在堆上。",
     "options": [
       "A) int",
       "B) String",
@@ -23,11 +23,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "面向对象三大特性",
     "content": "以下哪些是 Java 面向对象的特性？",
-    "answer": "答案：A)、B)、C)。解析：面向对象的三大特性是封装（Encapsulation）、继承（Inheritance）和多态（Polymorphism）。封装通过 private 关键字隐藏实现细节；继承通过 extends 实现代码复用；多态通过方法重写实现同一接口的不同表现。重载（Overload）是编译期多态的体现，但通常不被列为三大特性之一，而是多态的一种实现手段。",
+    "answer": "A)、B)、C)。解析：面向对象的三大特性是封装（Encapsulation）、继承（Inheritance）和多态（Polymorphism）。封装通过 private 关键字隐藏实现细节；继承通过 extends 实现代码复用；多态通过方法重写实现同一接口的不同表现。重载（Overload）是编译期多态的体现，但通常不被列为三大特性之一，而是多态的一种实现手段。",
     "options": [
       "A) 封装",
       "B) 继承",
@@ -44,11 +44,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "String 类的特性",
     "content": "关于 Java 中 String 类的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：String 被 final 修饰，不可被继承；String 底层在 JDK 8 及之前是 char[]，JDK 9+ 优化为 byte[]（加上 coder 标志位区分 Latin1 和 UTF16）；字符串常量池存储字符串字面量，通过 intern() 方法可以手动将字符串加入常量池。String 类重写了 equals() 方法，比较的是内容而非引用。",
+    "answer": "A)、B)、D)。解析：String 被 final 修饰，不可被继承；String 底层在 JDK 8 及之前是 char[]，JDK 9+ 优化为 byte[]（加上 coder 标志位区分 Latin1 和 UTF16）；字符串常量池存储字符串字面量，通过 intern() 方法可以手动将字符串加入常量池。String 类重写了 equals() 方法，比较的是内容而非引用。",
     "options": [
       "A) String 类被 final 修饰，不能被继承",
       "B) 底层使用 char[] 或 byte[] 存储",
@@ -69,7 +69,7 @@
     "type": "multiple_choice",
     "title": "异常体系结构",
     "content": "以下关于 Java 异常体系的描述，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：Throwable 是顶层父类，分为 Error（不可恢复，如 OutOfMemoryError）和 Exception（可处理）。RuntimeException 及其子类属于非检查异常（Unchecked Exception），不需要显式捕获或声明抛出。受检异常（Checked Exception，如 IOException）必须在方法签名中 throws 声明或 try-catch 处理。Throwable 不是异常，它是 Error 和 Exception 的共同父类。",
+    "answer": "A)、C)、D)。解析：Throwable 是顶层父类，分为 Error（不可恢复，如 OutOfMemoryError）和 Exception（可处理）。RuntimeException 及其子类属于非检查异常（Unchecked Exception），不需要显式捕获或声明抛出。受检异常（Checked Exception，如 IOException）必须在方法签名中 throws 声明或 try-catch 处理。Throwable 不是异常，它是 Error 和 Exception 的共同父类。",
     "options": [
       "A) RuntimeException 属于非检查异常",
       "B) Throwable 是检查异常的一种",
@@ -87,11 +87,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "final 关键字的用法",
     "content": "以下关于 Java final 关键字的说法，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：final 修饰类表示该类不能被继承；修饰方法表示该方法不能被子类重写（但可以重载）；修饰变量表示该变量只能被赋值一次（常量）。final 修饰的引用类型变量，引用地址不可变，但对象内部的状态可以改变。final 方法可以被继承，只是不能重写。",
+    "answer": "A)、C)、D)。解析：final 修饰类表示该类不能被继承；修饰方法表示该方法不能被子类重写（但可以重载）；修饰变量表示该变量只能被赋值一次（常量）。final 修饰的引用类型变量，引用地址不可变，但对象内部的状态可以改变。final 方法可以被继承，只是不能重写。",
     "options": [
       "A) final 修饰的类不能被继承",
       "B) final 修饰的方法不能被继承",
@@ -112,7 +112,7 @@
     "type": "multiple_choice",
     "title": "访问修饰符的可见范围",
     "content": "以下关于 Java 访问修饰符的描述，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：Java 有四种访问级别：public（所有类可见）、protected（同包 + 子类可见）、默认/package-private（同包可见）、private（同类可见）。protected 修饰的成员在不同包的子类中可以通过继承关系访问，但不能通过父类引用访问其他实例的 protected 成员。默认访问权限仅限同包访问。",
+    "answer": "A)、C)、D)。解析：Java 有四种访问级别：public（所有类可见）、protected（同包 + 子类可见）、默认/package-private（同包可见）、private（同类可见）。protected 修饰的成员在不同包的子类中可以通过继承关系访问，但不能通过父类引用访问其他实例的 protected 成员。默认访问权限仅限同包访问。",
     "options": [
       "A) public 对所有类可见",
       "B) protected 仅对同包类可见",
@@ -129,11 +129,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "ArrayList 的特性",
     "content": "以下关于 ArrayList 的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：ArrayList 基于动态数组实现，初始容量为 10（懒加载，第一次 add 时初始化），扩容时按 1.5 倍增长（oldCapacity + oldCapacity >> 1）。ArrayList 允许 null 元素，并且通过 ensureCapacity() 可以手动增加容量以减少扩容次数。ArrayList 不是线程安全的，多线程环境下应使用 CopyOnWriteArrayList 或 Collections.synchronizedList()。",
+    "answer": "A)、B)、D)。解析：ArrayList 基于动态数组实现，初始容量为 10（懒加载，第一次 add 时初始化），扩容时按 1.5 倍增长（oldCapacity + oldCapacity >> 1）。ArrayList 允许 null 元素，并且通过 ensureCapacity() 可以手动增加容量以减少扩容次数。ArrayList 不是线程安全的，多线程环境下应使用 CopyOnWriteArrayList 或 Collections.synchronizedList()。",
     "options": [
       "A) 底层基于动态数组实现",
       "B) 扩容时按原容量的 1.5 倍增长",
@@ -151,11 +151,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "HashMap 的特性",
     "content": "以下关于 Java HashMap 的描述，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：HashMap 允许一个 null 键和多个 null 值，null 键的哈希值固定为 0（存储在数组索引 0 的位置）。JDK 8 引入了红黑树优化：当链表长度 ≥ 8 且数组长度 ≥ 64 时链表转为红黑树，将查询复杂度从 O(n) 降为 O(log n)。HashMap 默认负载因子 0.75 是时间和空间的折中。默认初始容量 16 必须是 2 的幂。",
+    "answer": "A)、C)、D)。解析：HashMap 允许一个 null 键和多个 null 值，null 键的哈希值固定为 0（存储在数组索引 0 的位置）。JDK 8 引入了红黑树优化：当链表长度 ≥ 8 且数组长度 ≥ 64 时链表转为红黑树，将查询复杂度从 O(n) 降为 O(log n)。HashMap 默认负载因子 0.75 是时间和空间的折中。默认初始容量 16 必须是 2 的幂。",
     "options": [
       "A) 允许一个 null 键",
       "B) HashMap 在 JDK 8 中是线程安全的",
@@ -177,7 +177,7 @@
     "type": "multiple_choice",
     "title": "HashMap 与 Hashtable 的区别",
     "content": "以下关于 HashMap 和 Hashtable 区别的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、C)。解析：HashMap 和 Hashtable 的主要区别：1）线程安全：Hashtable 使用 synchronized 保证线程安全，HashMap 非线程安全；2）null 值：HashMap 允许 null key 和 null value，Hashtable 不允许；3）初始容量和扩容：HashMap 初始 16 扩容 2 倍，Hashtable 初始 11 扩容 2 倍 + 1；4）继承关系：Hashtable 继承 Dictionary，HashMap 继承 AbstractMap。Hashtable 是遗留类，推荐使用 ConcurrentHashMap 替代。",
+    "answer": "A)、B)、C)。解析：HashMap 和 Hashtable 的主要区别：1）线程安全：Hashtable 使用 synchronized 保证线程安全，HashMap 非线程安全；2）null 值：HashMap 允许 null key 和 null value，Hashtable 不允许；3）初始容量和扩容：HashMap 初始 16 扩容 2 倍，Hashtable 初始 11 扩容 2 倍 + 1；4）继承关系：Hashtable 继承 Dictionary，HashMap 继承 AbstractMap。Hashtable 是遗留类，推荐使用 ConcurrentHashMap 替代。",
     "options": [
       "A) Hashtable 是线程安全的，HashMap 不是",
       "B) HashMap 允许 null 键和 null 值",
@@ -194,11 +194,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Collections 工具类常用方法",
     "content": "以下哪些是 java.util.Collections 工具类提供的功能？",
-    "answer": "答案：A)、B)、C)。解析：Collections 提供了丰富的集合操作工具：sort() 对 List 排序（要求元素实现 Comparable 或传入 Comparator）；unmodifiableList/Set/Map 返回不可修改的视图（修改会抛 UnsupportedOperationException）；synchronizedList/Set/Map 返回线程安全的包装视图；binarySearch() 二分查找；reverse() 反转；shuffle() 洗牌等。copyOnWrite 不属于 Collections 工具类，是 JUC 包中 CopyOnWriteArrayList 提供的机制。",
+    "answer": "A)、B)、C)。解析：Collections 提供了丰富的集合操作工具：sort() 对 List 排序（要求元素实现 Comparable 或传入 Comparator）；unmodifiableList/Set/Map 返回不可修改的视图（修改会抛 UnsupportedOperationException）；synchronizedList/Set/Map 返回线程安全的包装视图；binarySearch() 二分查找；reverse() 反转；shuffle() 洗牌等。copyOnWrite 不属于 Collections 工具类，是 JUC 包中 CopyOnWriteArrayList 提供的机制。",
     "options": [
       "A) sort() 对 List 进行排序",
       "B) unmodifiableList() 返回不可修改的集合视图",
@@ -215,11 +215,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "线程池的拒绝策略",
     "content": "ThreadPoolExecutor 内置了哪些拒绝策略？",
-    "answer": "答案：A)、B)、C)、D)。解析：ThreadPoolExecutor 内置了 4 种拒绝策略：AbortPolicy（默认，抛 RejectedExecutionException）、CallerRunsPolicy（调用者线程直接执行任务，降低提交速度）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃队列中最老的任务后重试提交）。实际开发中还可以自定义 RejectedExecutionHandler 实现更复杂的降级策略，如写入 MQ 或数据库。",
+    "answer": "A)、B)、C)、D)。解析：ThreadPoolExecutor 内置了 4 种拒绝策略：AbortPolicy（默认，抛 RejectedExecutionException）、CallerRunsPolicy（调用者线程直接执行任务，降低提交速度）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃队列中最老的任务后重试提交）。实际开发中还可以自定义 RejectedExecutionHandler 实现更复杂的降级策略，如写入 MQ 或数据库。",
     "options": [
       "A) AbortPolicy",
       "B) CallerRunsPolicy",
@@ -240,7 +240,7 @@
     "type": "multiple_choice",
     "title": "synchronized 锁升级过程",
     "content": "关于 JDK 6 引入的 synchronized 锁升级机制，以下说法哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：JDK 6 优化了 synchronized 的锁机制，引入锁升级（膨胀）过程：无锁 → 偏向锁（只有一个线程访问）→ 轻量级锁（少量竞争，CAS 自旋）→ 重量级锁（大量竞争，阻塞）。偏向锁在 JDK 15 中默认关闭，JDK 21 中被移除。轻量级锁通过 CAS 自旋尝试获取锁，避免线程阻塞带来的上下文切换开销。重量级锁依赖操作系统互斥量实现，线程阻塞和唤醒开销最大。",
+    "answer": "A)、C)、D)。解析：JDK 6 优化了 synchronized 的锁机制，引入锁升级（膨胀）过程：无锁 → 偏向锁（只有一个线程访问）→ 轻量级锁（少量竞争，CAS 自旋）→ 重量级锁（大量竞争，阻塞）。偏向锁在 JDK 15 中默认关闭，JDK 21 中被移除。轻量级锁通过 CAS 自旋尝试获取锁，避免线程阻塞带来的上下文切换开销。重量级锁依赖操作系统互斥量实现，线程阻塞和唤醒开销最大。",
     "options": [
       "A) 锁升级的顺序是：偏向锁 → 轻量级锁 → 重量级锁",
       "B) 偏向锁永久有效，不会撤销",
@@ -258,11 +258,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "JVM 运行时数据区域",
     "content": "以下哪些属于 JVM 运行时数据区（Runtime Data Areas）？",
-    "answer": "答案：A)、B)、D)。解析：JVM 运行时数据区包括：程序计数器（PC Register，线程私有，记录当前线程执行的字节码地址）、虚拟机栈（Java Stack，线程私有，存储栈帧）、本地方法栈（Native Method Stack，线程私有，支持 native 方法）、堆（Heap，所有线程共享，存储对象实例）、方法区（Method Area，JDK 8 后由 Metaspace 实现）。直接内存（Direct Memory）是 NIO 在堆外分配的内存，不属于 JVM 规范定义的运行时数据区。",
+    "answer": "A)、B)、D)。解析：JVM 运行时数据区包括：程序计数器（PC Register，线程私有，记录当前线程执行的字节码地址）、虚拟机栈（Java Stack，线程私有，存储栈帧）、本地方法栈（Native Method Stack，线程私有，支持 native 方法）、堆（Heap，所有线程共享，存储对象实例）、方法区（Method Area，JDK 8 后由 Metaspace 实现）。直接内存（Direct Memory）是 NIO 在堆外分配的内存，不属于 JVM 规范定义的运行时数据区。",
     "options": [
       "A) 程序计数器",
       "B) Java 虚拟机栈",
@@ -279,11 +279,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "可作为 GC Roots 的对象",
     "content": "以下哪些对象可以作为 GC Roots？",
-    "answer": "答案：A)、B)、C)。解析：可作为 GC Roots 的对象包括：虚拟机栈中引用的对象（本地变量表中的引用）、方法区中静态属性引用的对象、方法区中常量池引用的对象、本地方法栈中 JNI 引用的对象（全局 JNI 引用）、活跃线程（Thread 对象）。通过 GC Roots 可达性分析，从这些根对象出发，无法到达的对象即为可回收对象。未被引用的字符串常量可能已被判定为无用常量，不能作为 GC Root。",
+    "answer": "A)、B)、C)。解析：可作为 GC Roots 的对象包括：虚拟机栈中引用的对象（本地变量表中的引用）、方法区中静态属性引用的对象、方法区中常量池引用的对象、本地方法栈中 JNI 引用的对象（全局 JNI 引用）、活跃线程（Thread 对象）。通过 GC Roots 可达性分析，从这些根对象出发，无法到达的对象即为可回收对象。未被引用的字符串常量可能已被判定为无用常量，不能作为 GC Root。",
     "options": [
       "A) 虚拟机栈中引用的对象",
       "B) 方法区中静态属性引用的对象",
@@ -304,7 +304,7 @@
     "type": "multiple_choice",
     "title": "Java 8 Stream 的特性",
     "content": "以下关于 Java 8 Stream 的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：Stream 本身不存储数据，而是对数据源（集合、数组等）的视图描述；Stream 操作是惰性求值的，中间操作（如 filter、map）不会立即执行，遇到终止操作（如 collect、forEach）才触发实际计算；Stream 的一次性体现在一旦执行了终止操作，该 Stream 就被消费了，不能再次使用。Stream 不改变数据源，操作结果通常是新的 Stream 或值。",
+    "answer": "A)、B)、D)。解析：Stream 本身不存储数据，而是对数据源（集合、数组等）的视图描述；Stream 操作是惰性求值的，中间操作（如 filter、map）不会立即执行，遇到终止操作（如 collect、forEach）才触发实际计算；Stream 的一次性体现在一旦执行了终止操作，该 Stream 就被消费了，不能再次使用。Stream 不改变数据源，操作结果通常是新的 Stream 或值。",
     "options": [
       "A) Stream 不存储数据，是对数据源的一个视图",
       "B) 中间操作是惰性的，遇到终止操作才执行",
@@ -326,7 +326,7 @@
     "type": "multiple_choice",
     "title": "equals() 与 ==",
     "content": "以下关于 equals() 和 == 的描述，哪些是正确的？",
-    "answer": "答案：B)、C)、D)。解析：== 比较基本类型时比较值，比较引用类型时比较的是内存地址（引用是否指向同一对象）。equals() 默认行为同 ==（Object 的实现），但很多类重写了它：String.equals() 比较内容、Integer.equals() 比较值、List.equals() 比较元素和顺序。重写 equals() 必须同时重写 hashCode()——保证相等的对象哈希值相同（否则 HashMap 等集合可能出错）。",
+    "answer": "B)、C)、D)。解析：== 比较基本类型时比较值，比较引用类型时比较的是内存地址（引用是否指向同一对象）。equals() 默认行为同 ==（Object 的实现），但很多类重写了它：String.equals() 比较内容、Integer.equals() 比较值、List.equals() 比较元素和顺序。重写 equals() 必须同时重写 hashCode()——保证相等的对象哈希值相同（否则 HashMap 等集合可能出错）。",
     "options": [
       "A) == 和 equals() 完全相同，只是语法不同",
       "B) == 比较引用类型时比较的是内存地址",
@@ -345,11 +345,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "try-catch-finally 执行顺序",
     "content": "执行以下代码会输出什么？\n```java\ntry {\n  return 1;\n} catch (Exception e) {\n  return 2;\n} finally {\n  return 3;\n}\n```",
-    "answer": "答案：A)。解析：finally 块中的 return 会覆盖 try 块中的 return，最终返回 3。即使 try 块中执行了 return，finally 块也会在执行 return 之前执行。如果 finally 也包含 return，则 finally 的返回值会替代 try 块的返回值。这是一个经典陷阱——finally 中的 return 会导致异常丢失（try 中的异常被 finally 的 return 吞掉）。",
+    "answer": "A)。解析：finally 块中的 return 会覆盖 try 块中的 return，最终返回 3。即使 try 块中执行了 return，finally 块也会在执行 return 之前执行。如果 finally 也包含 return，则 finally 的返回值会替代 try 块的返回值。这是一个经典陷阱——finally 中的 return 会导致异常丢失（try 中的异常被 finally 的 return 吞掉）。",
     "options": [
       "A) 3",
       "B) 1",
@@ -372,7 +372,7 @@
     "type": "multiple_choice",
     "title": "List / Set / Map 的区别",
     "content": "以下关于 Java 集合框架中 List、Set、Map 的描述，哪些是正确的？",
-    "answer": "答案：B)、C)、D)。解析：List 是有序可重复的集合（ArrayList、LinkedList、Vector）；Set 是无序不可重复的集合（HashSet、TreeSet、LinkedHashSet），判断重复依赖 equals() 和 hashCode()；Map 是键值对集合，键不可重复。Set 不继承 Collection 是错的——Set 继承 Collection，Map 不继承 Collection。List 和 Set 继承 Collection 接口，Map 是独立的接口体系。",
+    "answer": "B)、C)、D)。解析：List 是有序可重复的集合（ArrayList、LinkedList、Vector）；Set 是无序不可重复的集合（HashSet、TreeSet、LinkedHashSet），判断重复依赖 equals() 和 hashCode()；Map 是键值对集合，键不可重复。Set 不继承 Collection 是错的——Set 继承 Collection，Map 不继承 Collection。List 和 Set 继承 Collection 接口，Map 是独立的接口体系。",
     "options": [
       "A) Set 不继承 Collection 接口",
       "B) List 是有序且允许重复的集合",
@@ -390,11 +390,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "创建线程的方式",
     "content": "以下哪些是 Java 中创建线程或提交异步任务的方式？",
-    "answer": "答案：A)、B)、D)。解析：创建线程有三种方式：继承 Thread 重写 run()、实现 Runnable 接口传给 Thread、实现 Callable 接口（有返回值、可抛异常）配合 FutureTask 或线程池。ThreadPoolExecutor.submit(Callable) 使用 Callable 接口。Thread.start() 是启动线程的正确方式，直接调用 run() 只是在当前线程执行普通方法，不会创建新线程。",
+    "answer": "A)、B)、D)。解析：创建线程有三种方式：继承 Thread 重写 run()、实现 Runnable 接口传给 Thread、实现 Callable 接口（有返回值、可抛异常）配合 FutureTask 或线程池。ThreadPoolExecutor.submit(Callable) 使用 Callable 接口。Thread.start() 是启动线程的正确方式，直接调用 run() 只是在当前线程执行普通方法，不会创建新线程。",
     "options": [
       "A) 继承 Thread 类重写 run() 方法",
       "B) 实现 Runnable 接口传入 Thread",
@@ -412,11 +412,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Optional 的正确使用",
     "content": "以下关于 Java Optional 的使用建议，哪些是正确的？",
-    "answer": "答案：A)、B)、C)。解析：Optional 是用来表示值可能为空的容器，核心是提供函数式处理空值的方式，避免 NPE。推荐用法：orElse() 提供默认值、orElseGet() 延迟求值（Supplier）、ifPresent() 判空后处理、orElseThrow() 明确抛出异常。不推荐用法：get() 前用 isPresent() 检查（等于换了个方式写 if null）、将 Optional 作为方法参数（增加调用方的负担只能传 null 或 Optional.of）、将 Optional 用于序列化/持久化字段。",
+    "answer": "A)、B)、C)。解析：Optional 是用来表示值可能为空的容器，核心是提供函数式处理空值的方式，避免 NPE。推荐用法：orElse() 提供默认值、orElseGet() 延迟求值（Supplier）、ifPresent() 判空后处理、orElseThrow() 明确抛出异常。不推荐用法：get() 前用 isPresent() 检查（等于换了个方式写 if null）、将 Optional 作为方法参数（增加调用方的负担只能传 null 或 Optional.of）、将 Optional 用于序列化/持久化字段。",
     "options": [
       "A) 使用 orElse() 提供默认值",
       "B) 使用 orElseThrow() 明确抛出异常",
@@ -434,11 +434,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "自动装箱与缓存池",
     "content": "以下代码输出什么？\n```java\nInteger a = 127;\nInteger b = 127;\nInteger c = 128;\nInteger d = 128;\nSystem.out.println(a == b);\nSystem.out.println(c == d);\n```",
-    "answer": "答案：A)。解析：Integer 缓存池（享元模式）默认缓存 [-128, 127] 区间的 Integer 对象。a 和 b 的值在缓存范围内，指向同一个对象，所以 a == b 为 true。c 和 d 的值 128 超出缓存范围，每次自动装箱创建新对象，所以 c == d 为 false。Integer 缓存上限可以通过 -XX:AutoBoxCacheMax 调整。Long 也有同样的缓存范围 [-128, 127]，但 Double 和 Float 没有缓存。",
+    "answer": "A)。解析：Integer 缓存池（享元模式）默认缓存 [-128, 127] 区间的 Integer 对象。a 和 b 的值在缓存范围内，指向同一个对象，所以 a == b 为 true。c 和 d 的值 128 超出缓存范围，每次自动装箱创建新对象，所以 c == d 为 false。Integer 缓存上限可以通过 -XX:AutoBoxCacheMax 调整。Long 也有同样的缓存范围 [-128, 127]，但 Double 和 Float 没有缓存。",
     "options": [
       "A) true false",
       "B) true true",
@@ -461,7 +461,7 @@
     "type": "multiple_choice",
     "title": "静态方法与动态分派",
     "content": "以下代码输出什么？\n```java\nclass A { String f() { return \"A\"; } }\nclass B extends A { String f() { return \"B\"; } }\npublic class Main {\n  public static void main(String[] args) {\n    A obj = new B();\n    System.out.println(obj.f());\n  }\n}\n```",
-    "answer": "答案：B)。解析：输出 \"B\"。这是 Java 的动态单分派（Dynamic Dispatch）——编译时变量类型是 A（静态类型），但运行时实际对象类型是 B（实际类型）。方法调用根据实际类型决定调用哪个版本的方法。Java 的方法重写（Override）基于运行时类型进行动态分派；方法重载（Overload）基于编译时静态类型进行静态分派。多态的运行时表现。",
+    "answer": "B)。解析：输出 \"B\"。这是 Java 的动态单分派（Dynamic Dispatch）——编译时变量类型是 A（静态类型），但运行时实际对象类型是 B（实际类型）。方法调用根据实际类型决定调用哪个版本的方法。Java 的方法重写（Override）基于运行时类型进行动态分派；方法重载（Overload）基于编译时静态类型进行静态分派。多态的运行时表现。",
     "options": [
       "A) A",
       "B) B",
@@ -480,11 +480,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "ConcurrentHashMap 的分段锁",
     "content": "关于 ConcurrentHashMap 的线程安全机制，以下哪些描述是正确的？",
-    "answer": "答案：A)、B)、C)。解析：JDK 7 ConcurrentHashMap 使用 Segment（分段锁）继承 ReentrantLock，将数据分为 16 段，每段独立加锁，理论上支持 16 个线程并发写。JDK 8 分段锁已被取代：直接使用 Node 数组 + CAS + synchronized（只锁链表/红黑树头节点），并发粒度更细、内存占用更少。JDK 8 还在链表转红黑树时使用 TreeBin 的读写锁优化并发。ConcurrentHashMap 的迭代器是弱一致性（Weakly Consistent）的——迭代期间允许修改，不抛 ConcurrentModificationException。",
+    "answer": "A)、B)、C)。解析：JDK 7 ConcurrentHashMap 使用 Segment（分段锁）继承 ReentrantLock，将数据分为 16 段，每段独立加锁，理论上支持 16 个线程并发写。JDK 8 分段锁已被取代：直接使用 Node 数组 + CAS + synchronized（只锁链表/红黑树头节点），并发粒度更细、内存占用更少。JDK 8 还在链表转红黑树时使用 TreeBin 的读写锁优化并发。ConcurrentHashMap 的迭代器是弱一致性（Weakly Consistent）的——迭代期间允许修改，不抛 ConcurrentModificationException。",
     "options": [
       "A) JDK 7 中使用 Segment 分段锁实现线程安全",
       "B) JDK 8 中使用 CAS + synchronized 实现线程安全",
@@ -506,7 +506,7 @@
     "type": "multiple_choice",
     "title": "ThreadLocal 内存泄漏",
     "content": "以下关于 ThreadLocal 可能导致内存泄漏的描述，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：ThreadLocalMap 的 Entry 继承 WeakReference，key（ThreadLocal 实例）是弱引用，value 是强引用。当 ThreadLocal 对象没有外部强引用时，GC 会回收 key，但 value 仍然存在。此时 Entry 的 key 为 null，value 无法被访问（thread 存活期间不会被回收），造成内存泄漏。最佳实践：每次使用后调用 remove() 清理。Tomcat 等 Web 服务器使用线程池，线程复用会加剧泄漏风险——一个请求的 ThreadLocal 数据可能被下一个请求读到。",
+    "answer": "A)、C)、D)。解析：ThreadLocalMap 的 Entry 继承 WeakReference，key（ThreadLocal 实例）是弱引用，value 是强引用。当 ThreadLocal 对象没有外部强引用时，GC 会回收 key，但 value 仍然存在。此时 Entry 的 key 为 null，value 无法被访问（thread 存活期间不会被回收），造成内存泄漏。最佳实践：每次使用后调用 remove() 清理。Tomcat 等 Web 服务器使用线程池，线程复用会加剧泄漏风险——一个请求的 ThreadLocal 数据可能被下一个请求读到。",
     "options": [
       "A) ThreadLocalMap 的 Entry key 是弱引用",
       "B) ThreadLocal 默认会在线程结束时自动清理所有数据",
@@ -529,7 +529,7 @@
     "type": "multiple_choice",
     "title": "JIT 编译优化",
     "content": "以下关于 JIT（Just-In-Time）编译的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：JIT 将热点代码（HotSpot，执行次数达阈值后）编译为本地机器码，大幅提升执行效率。阈值由 -XX:CompileThreshold 控制（Client 模式 1500，Server 模式 10000）。逃逸分析（Escape Analysis）是 JIT 的关键优化：如果对象不逃逸方法或线程，可做栈上分配（消除堆分配）和同步消除（去掉不必要的锁）。方法内联（Inlining）将小方法体直接嵌入调用处，减少方法调用开销——这是 JIT 最重要的优化之一。JDK 8u40+ 支持分层编译（Tiered Compilation），结合 C1（轻量快速）和 C2（深度优化）的优势。",
+    "answer": "A)、B)、D)。解析：JIT 将热点代码（HotSpot，执行次数达阈值后）编译为本地机器码，大幅提升执行效率。阈值由 -XX:CompileThreshold 控制（Client 模式 1500，Server 模式 10000）。逃逸分析（Escape Analysis）是 JIT 的关键优化：如果对象不逃逸方法或线程，可做栈上分配（消除堆分配）和同步消除（去掉不必要的锁）。方法内联（Inlining）将小方法体直接嵌入调用处，减少方法调用开销——这是 JIT 最重要的优化之一。JDK 8u40+ 支持分层编译（Tiered Compilation），结合 C1（轻量快速）和 C2（深度优化）的优势。",
     "options": [
       "A) JIT 将热点代码编译为本地机器码",
       "B) 逃逸分析可实现栈上分配和同步消除",
@@ -548,11 +548,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "String 不可变性",
     "content": "以下关于 Java String 不可变性的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、C)。解析：A) String 被 final 修饰，不可被继承。B) String 内部使用 private final char[] value（JDK 8）或 private final byte[] value（JDK 9+）存储，value 引用不可变。C) substring() 在 JDK 7u6+ 中通过 new String() 创建新对象（JDK 7u6 之前共享 char[] 但已修复）。D 错误：String 不是通过「写时复制」实现的——写时复制是 CopyOnWriteArrayList 的实现策略。字符串常量池（String Pool）在堆中（JDK 7+），通过 intern() 方法放入。",
+    "answer": "A)、B)、C)。解析：A) String 被 final 修饰，不可被继承。B) String 内部使用 private final char[] value（JDK 8）或 private final byte[] value（JDK 9+）存储，value 引用不可变。C) substring() 在 JDK 7u6+ 中通过 new String() 创建新对象（JDK 7u6 之前共享 char[] 但已修复）。D 错误：String 不是通过「写时复制」实现的——写时复制是 CopyOnWriteArrayList 的实现策略。字符串常量池（String Pool）在堆中（JDK 7+），通过 intern() 方法放入。",
     "options": [
       "A) String 类被 final 修饰，不能被继承",
       "B) String 内部使用 final 字符数组存储，创建后内容不可变",
@@ -571,11 +571,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "类加载双亲委派模型",
     "content": "以下关于 Java 类加载双亲委派模型的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：A) 双亲委派的核心——先让父加载器尝试加载，父加载器无法加载时才自己加载。B) 三层的默认加载器：启动类加载器 Bootstrap（C++ 实现，加载 rt.jar）、扩展类加载器 Extension（JDK 8 加载 jre/lib/ext，JDK 9 改为平台类加载器 Platform ClassLoader）、应用类加载器 Application（加载 classpath）。C 错误：双亲委派是先委托父加载器，不是先自己尝试。D) 破坏双亲委派的场景：JDBC（通过 SPI，线程上下文类加载器加载 Driver 实现）、Tomcat（每个 WebApp 有自己的类加载器优先加载 Web 应用的类）。",
+    "answer": "A)、B)、D)。解析：A) 双亲委派的核心——先让父加载器尝试加载，父加载器无法加载时才自己加载。B) 三层的默认加载器：启动类加载器 Bootstrap（C++ 实现，加载 rt.jar）、扩展类加载器 Extension（JDK 8 加载 jre/lib/ext，JDK 9 改为平台类加载器 Platform ClassLoader）、应用类加载器 Application（加载 classpath）。C 错误：双亲委派是先委托父加载器，不是先自己尝试。D) 破坏双亲委派的场景：JDBC（通过 SPI，线程上下文类加载器加载 Driver 实现）、Tomcat（每个 WebApp 有自己的类加载器优先加载 Web 应用的类）。",
     "options": [
       "A) 双亲委派模型的工作流程是：先委托父类加载器加载，父加载器无法加载时才由子加载器自己加载",
       "B) Java 默认有三层类加载器：Bootstrap ClassLoader -> Extension ClassLoader -> Application ClassLoader",
@@ -599,7 +599,7 @@
     "type": "multiple_choice",
     "title": "Java 异常处理",
     "content": "以下关于 Java 异常处理的描述，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：A) Error 是 JVM 内部错误（OutOfMemoryError、StackOverflowError），程序不应捕获。B 错误：受检异常（Checked Exception）必须 catch 或 throws，非受检异常（RuntimeException）不需要。C) try-with-resources（JDK 7+）中 AutoCloseable 的资源会自动关闭。D) finally 唯一不执行的情况是 System.exit() 或 JVM 崩溃。注意：如果 finally 中有 return 语句，会覆盖 try 中的 return（这是一种不好的实践，阿里规约也禁止在 finally 中使用 return）。",
+    "answer": "A)、C)、D)。解析：A) Error 是 JVM 内部错误（OutOfMemoryError、StackOverflowError），程序不应捕获。B 错误：受检异常（Checked Exception）必须 catch 或 throws，非受检异常（RuntimeException）不需要。C) try-with-resources（JDK 7+）中 AutoCloseable 的资源会自动关闭。D) finally 唯一不执行的情况是 System.exit() 或 JVM 崩溃。注意：如果 finally 中有 return 语句，会覆盖 try 中的 return（这是一种不好的实践，阿里规约也禁止在 finally 中使用 return）。",
     "options": [
       "A) Error 类及其子类表示程序无法处理的严重错误，不应捕获",
       "B) 所有异常都是受检异常（Checked Exception），必须显式捕获或声明抛出",
@@ -618,11 +618,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "泛型擦除与桥接方法",
     "content": "以下关于 Java 泛型擦除（Type Erasure）的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：A) 泛型信息在编译后从字节码中移除，运行时 List<Integer> 和 List<String> 是同一个 Class 对象。B) 编译器在必要时生成桥接方法（Bridge Method）保持多态——当子类继承泛型父类并指定具体类型时，编译器生成参数类型为 Object 的桥接方法内部调用具体类型的方法。C 错误：Java 不支持 List<int>，泛型类型不能是基本类型。D) 通过反射可以在运行时获取部分泛型信息（如父类的泛型参数 TypeReference 模式）。getClass() 获取字节码，getGenericSuperclass() 获取包含泛型参数的父类类型。",
+    "answer": "A)、B)、D)。解析：A) 泛型信息在编译后从字节码中移除，运行时 List<Integer> 和 List<String> 是同一个 Class 对象。B) 编译器在必要时生成桥接方法（Bridge Method）保持多态——当子类继承泛型父类并指定具体类型时，编译器生成参数类型为 Object 的桥接方法内部调用具体类型的方法。C 错误：Java 不支持 List<int>，泛型类型不能是基本类型。D) 通过反射可以在运行时获取部分泛型信息（如父类的泛型参数 TypeReference 模式）。getClass() 获取字节码，getGenericSuperclass() 获取包含泛型参数的父类类型。",
     "options": [
       "A) Java 的泛型在编译后进行类型擦除，运行时不存在泛型类型信息",
       "B) 编译器在必要时会生成桥接方法（Bridge Method）来保持多态性",
@@ -652,7 +652,7 @@
       "C) DiscardPolicy：丢弃当前任务，不抛异常",
       "D) DiscardOldestPolicy：丢弃队列中最旧的任务，然后重试提交"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：四种内置拒绝策略——1）AbortPolicy（默认）：直接抛 RejectedExecutionException——调用者必须处理异常。2）CallerRunsPolicy：不进入线程池，由提交任务的线程自己执行任务（降低任务提交速率，天然背压机制）。3）DiscardPolicy：丢弃任务，不抛异常（可能丢失重要任务——需谨慎使用）。4）DiscardOldestPolicy：丢弃队列头部（等待最久）的任务，然后重新提交当前任务（重试）。\n\n扩展延伸：拒绝策略触发时机——当线程池核心线程已满、等待队列已满、最大线程已满且新任务提交时。选择策略——1）默认 AbortPolicy：适合调用者能够处理异常的场景。2）CallerRunsPolicy：最推荐——将任务推回调用者（如 Web 服务器中，请求线程自己处理 → 客户端感受到延迟 → 自动降低请求速率）。天然背压。3）DiscardPolicy：适合非关键任务（如日志记录——丢失几条日志影响不大）。4）DiscardOldestPolicy：优先级任务系统——丢弃最早的未处理任务，优先处理新任务。自定义策略——实现 RejectedExecutionHandler 接口的 rejectedExecution(Runnable r, ThreadPoolExecutor executor) 方法（如写入消息队列或数据库，留给后续处理）。",
+    "answer": "A)、B)、C)、D)。\n\n解析：四种内置拒绝策略——1）AbortPolicy（默认）：直接抛 RejectedExecutionException——调用者必须处理异常。2）CallerRunsPolicy：不进入线程池，由提交任务的线程自己执行任务（降低任务提交速率，天然背压机制）。3）DiscardPolicy：丢弃任务，不抛异常（可能丢失重要任务——需谨慎使用）。4）DiscardOldestPolicy：丢弃队列头部（等待最久）的任务，然后重新提交当前任务（重试）。\n\n扩展延伸：拒绝策略触发时机——当线程池核心线程已满、等待队列已满、最大线程已满且新任务提交时。选择策略——1）默认 AbortPolicy：适合调用者能够处理异常的场景。2）CallerRunsPolicy：最推荐——将任务推回调用者（如 Web 服务器中，请求线程自己处理 → 客户端感受到延迟 → 自动降低请求速率）。天然背压。3）DiscardPolicy：适合非关键任务（如日志记录——丢失几条日志影响不大）。4）DiscardOldestPolicy：优先级任务系统——丢弃最早的未处理任务，优先处理新任务。自定义策略——实现 RejectedExecutionHandler 接口的 rejectedExecution(Runnable r, ThreadPoolExecutor executor) 方法（如写入消息队列或数据库，留给后续处理）。",
     "hints": [
       "CallerRunsPolicy 是天然的背压机制——提交任务的线程自己执行，自动降低提交速率",
       "DiscardOldestPolicy 丢弃等待最久的任务——适合优先级高的新任务替代旧任务的场景"
@@ -676,7 +676,7 @@
       "C) 构造函数中的赋值操作一定在对象引用发布之前执行——不存在任何重排序",
       "D) 内存屏障（Memory Barrier）可以阻止屏障前后的特定类型指令重排序"
     ],
-    "answer": "答案：A)、B)、D)。\n\n解析：A 正确：as-if-serial 语义——单线程中不管怎么重排序，执行结果不能改变。B 正确：volatile 的 happens-before 规则——对 volatile 变量的写操作之前的操作不会被重排序到写之后，读操作之后的操作不会被重排序到读之前。D 正确：内存屏障是 CPU 级别的指令，JVM 在适当位置插入屏障来禁止特定类型的重排序。C 错误——构造函数的指令可能被重排序（如 new T() 的分配内存 → 设置引用 → 初始化中可能被重排序为 分配内存 → 设置引用 → 初始化）。这是双重检查锁定（DCL）需要 volatile 的原因。\n\n扩展延伸：重排序类型——1）编译器重排序（Compiler Reorder）：编译器在不改变语义的前提下调整指令顺序。2）处理器重排序（Processor Reorder）：CPU 乱序执行（Out-of-Order Execution）或内存系统重排序。3）JMM 的 happens-before 规则约束了允许的重排序。内存屏障类型——LoadLoad（读屏障）、StoreStore（写屏障）、LoadStore、StoreLoad。volatile 的写操作前插入 StoreStore，写操作后插入 StoreLoad。volatile 的读操作后插入 LoadLoad + LoadStore。final 的特殊语义——JMM 保证在构造器中正确初始化 final 字段后，其他线程看到对象引用时一定看到正确的 final 值（不需要同步）。",
+    "answer": "A)、B)、D)。\n\n解析：A 正确：as-if-serial 语义——单线程中不管怎么重排序，执行结果不能改变。B 正确：volatile 的 happens-before 规则——对 volatile 变量的写操作之前的操作不会被重排序到写之后，读操作之后的操作不会被重排序到读之前。D 正确：内存屏障是 CPU 级别的指令，JVM 在适当位置插入屏障来禁止特定类型的重排序。C 错误——构造函数的指令可能被重排序（如 new T() 的分配内存 → 设置引用 → 初始化中可能被重排序为 分配内存 → 设置引用 → 初始化）。这是双重检查锁定（DCL）需要 volatile 的原因。\n\n扩展延伸：重排序类型——1）编译器重排序（Compiler Reorder）：编译器在不改变语义的前提下调整指令顺序。2）处理器重排序（Processor Reorder）：CPU 乱序执行（Out-of-Order Execution）或内存系统重排序。3）JMM 的 happens-before 规则约束了允许的重排序。内存屏障类型——LoadLoad（读屏障）、StoreStore（写屏障）、LoadStore、StoreLoad。volatile 的写操作前插入 StoreStore，写操作后插入 StoreLoad。volatile 的读操作后插入 LoadLoad + LoadStore。final 的特殊语义——JMM 保证在构造器中正确初始化 final 字段后，其他线程看到对象引用时一定看到正确的 final 值（不需要同步）。",
     "hints": [
       "构造函数中对象引用赋值可能在初始化之前发生——这是 DCL 单例需要 volatile 的原因",
       "volatile 禁止特定重排序——写前插入 StoreStore + 写后插入 StoreLoad，读后插入 LoadLoad + LoadStore"
@@ -700,7 +700,7 @@
       "C) protected 成员可以在不同包的子类中访问",
       "D) public 成员在所有类中都可以访问"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：Java 访问修饰符的访问范围从严格到宽松——private（当前类）< default / package-private（同一包）< protected（同一包 + 不同包子类）< public（所有类）。四个选项全部正确。\n\n扩展延伸：访问控制细节——1）private：只在同一类中可见。常用于封装内部实现细节。2）default（无修饰符，也称 package-private）：同一包中的所有类可见。是 Java 的默认访问级别。3）protected：同一包可见 + 不同包的子类可见。注意：在不同包的子类中，protected 成员只能通过继承关系访问（不能通过父类引用访问）。4）public：所有类可见。构成类的公开 API。设计原则——最小化访问权限（信息隐藏原则）。能 private 就不要 default，能 default 就不要 protected，能 protected 就不要 public。对测试类——通常使用同包的方式进行测试（测试类和被测试类同包，使用 default 访问级别）。模块系统（Java 9+）的额外控制——模块可以导出特定包给特定模块（exports package to module）。",
+    "answer": "A)、B)、C)、D)。\n\n解析：Java 访问修饰符的访问范围从严格到宽松——private（当前类）< default / package-private（同一包）< protected（同一包 + 不同包子类）< public（所有类）。四个选项全部正确。\n\n扩展延伸：访问控制细节——1）private：只在同一类中可见。常用于封装内部实现细节。2）default（无修饰符，也称 package-private）：同一包中的所有类可见。是 Java 的默认访问级别。3）protected：同一包可见 + 不同包的子类可见。注意：在不同包的子类中，protected 成员只能通过继承关系访问（不能通过父类引用访问）。4）public：所有类可见。构成类的公开 API。设计原则——最小化访问权限（信息隐藏原则）。能 private 就不要 default，能 default 就不要 protected，能 protected 就不要 public。对测试类——通常使用同包的方式进行测试（测试类和被测试类同包，使用 default 访问级别）。模块系统（Java 9+）的额外控制——模块可以导出特定包给特定模块（exports package to module）。",
     "hints": [
       "访问修饰符范围：private < default < protected < public——最小化访问权限原则",
       "protected 在不同包子类中的访问需要通过继承关系（不能通过父类引用访问 protected 成员）"
@@ -724,7 +724,7 @@
       "C) Lambda 表达式编译后生成匿名内部类（字节码层面）",
       "D) Lambda 表达式可以引用外部变量，这些变量必须是 final 或 effectively final"
     ],
-    "answer": "答案：A)、B)、D)。\n\n解析：A 正确：函数式接口必须「有且仅有一个」抽象方法（可以有 default 方法和 static 方法，也可以有 Object 类的 public 抽象方法如 toString/equals/hashCode）。B 正确：@FunctionalInterface 是可选标记——编译器检查是否符合函数式接口定义。C 错误：Lambda 在编译后通过 invokedynamic（方法句柄）实现（而非匿名内部类）。JDK 8+ 生成的 Lambda 使用 bootstrap 方法和 LambdaMetafactory 动态创建函数接口的实例，而不是在编译时生成匿名内部类字节码。D 正确：Lambda 捕获的局部变量必须是 final 或 effectively final（值在初始化后未变化）。\n\n扩展延伸：Lambda 实现原理——1）invokedynamic（JDK 7 引入）：Lambda 表达式编译为 invokedynamic 指令，在运行时通过 LambdaMetafactory 生成函数接口的实现。2）vs 匿名内部类：匿名内部类编译生成独立的 .class 文件（会增加类加载开销和 PermGen/Metaspace 占用）。Lambda 没有额外的 .class 文件。3）变量捕获：Lambda 捕获的局部变量被复制到 Lambda 中（因此要求 effectively final——即使变化了 Lambda 中的副本也不会同步）。实例变量（this.field）可以被修改（因为 this 的引用被传递而非变量本身）。4）性能：Lambda 比匿名内部类性能更好（invokedynamic 避免了额外的类加载和方法分派开销）。串行 Stream 的 Lambda 经过 JIT 内联优化后与手写 for 循环性能相近。",
+    "answer": "A)、B)、D)。\n\n解析：A 正确：函数式接口必须「有且仅有一个」抽象方法（可以有 default 方法和 static 方法，也可以有 Object 类的 public 抽象方法如 toString/equals/hashCode）。B 正确：@FunctionalInterface 是可选标记——编译器检查是否符合函数式接口定义。C 错误：Lambda 在编译后通过 invokedynamic（方法句柄）实现（而非匿名内部类）。JDK 8+ 生成的 Lambda 使用 bootstrap 方法和 LambdaMetafactory 动态创建函数接口的实例，而不是在编译时生成匿名内部类字节码。D 正确：Lambda 捕获的局部变量必须是 final 或 effectively final（值在初始化后未变化）。\n\n扩展延伸：Lambda 实现原理——1）invokedynamic（JDK 7 引入）：Lambda 表达式编译为 invokedynamic 指令，在运行时通过 LambdaMetafactory 生成函数接口的实现。2）vs 匿名内部类：匿名内部类编译生成独立的 .class 文件（会增加类加载开销和 PermGen/Metaspace 占用）。Lambda 没有额外的 .class 文件。3）变量捕获：Lambda 捕获的局部变量被复制到 Lambda 中（因此要求 effectively final——即使变化了 Lambda 中的副本也不会同步）。实例变量（this.field）可以被修改（因为 this 的引用被传递而非变量本身）。4）性能：Lambda 比匿名内部类性能更好（invokedynamic 避免了额外的类加载和方法分派开销）。串行 Stream 的 Lambda 经过 JIT 内联优化后与手写 for 循环性能相近。",
     "hints": [
       "Lambda 使用 invokedynamic（方法句柄）而非匿名内部类——没有额外 .class 文件，性能更好",
       "Lambda 捕获的局部变量必须是 effectively final——否则编译错误"
@@ -742,7 +742,7 @@
     "type": "multiple_choice",
     "title": "ConcurrentHashMap 特性",
     "content": "以下关于 ConcurrentHashMap JDK 8 实现的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：JDK 8 的 ConcurrentHashMap 底层采用 Node 数组 + 链表/红黑树实现，摒弃了 JDK 7 的 Segment 分段锁。写操作使用 synchronized 锁住数组桶的首节点，配合 CAS 实现原子操作。ConcurrentHashMap 不允许 null key 和 null value（与 Hashtable 一致）。扩容时多线程协同（transfer 方法支持多线程并行迁移），提高了扩容效率。\n\n扩展延伸：size() 通过 baseCount + CounterCell 统计，是弱一致性的。迭代器也是弱一致性的，不会抛出 ConcurrentModificationException。",
+    "answer": "A)、B)、D)。解析：JDK 8 的 ConcurrentHashMap 底层采用 Node 数组 + 链表/红黑树实现，摒弃了 JDK 7 的 Segment 分段锁。写操作使用 synchronized 锁住数组桶的首节点，配合 CAS 实现原子操作。ConcurrentHashMap 不允许 null key 和 null value（与 Hashtable 一致）。扩容时多线程协同（transfer 方法支持多线程并行迁移），提高了扩容效率。\n\n扩展延伸：size() 通过 baseCount + CounterCell 统计，是弱一致性的。迭代器也是弱一致性的，不会抛出 ConcurrentModificationException。",
     "options": [
       "A) 底层采用 Node 数组 + 链表/红黑树",
       "B) 写操作使用 synchronized 锁住数组桶的首节点",
@@ -761,11 +761,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "CopyOnWriteArrayList 的特性",
     "content": "以下关于 CopyOnWriteArrayList 的描述，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。解析：CopyOnWriteArrayList 的所有写操作（add/set/remove 等）都通过 ReentrantLock 加锁，复制新数组进行操作后替换引用。读操作不加锁，直接访问 volatile 数组引用。迭代器遍历的是创建时刻的快照，不支持 add/remove 操作（会抛出 UnsupportedOperationException），但遍历过程中不会受并发修改影响。由于读写分离的设计，CopyOnWriteArrayList 适合读多写少的场景。\n\n扩展延伸：CopyOnWriteArrayList 的内存占用较高（写时有两份数组），且数据是最终一致的（读操作可能读不到最新的写入，但能保证最终读到）。",
+    "answer": "A)、C)、D)。解析：CopyOnWriteArrayList 的所有写操作（add/set/remove 等）都通过 ReentrantLock 加锁，复制新数组进行操作后替换引用。读操作不加锁，直接访问 volatile 数组引用。迭代器遍历的是创建时刻的快照，不支持 add/remove 操作（会抛出 UnsupportedOperationException），但遍历过程中不会受并发修改影响。由于读写分离的设计，CopyOnWriteArrayList 适合读多写少的场景。\n\n扩展延伸：CopyOnWriteArrayList 的内存占用较高（写时有两份数组），且数据是最终一致的（读操作可能读不到最新的写入，但能保证最终读到）。",
     "options": [
       "A) 写操作通过 ReentrantLock 加锁，复制新数组后替换引用",
       "B) 读操作需要加锁以保证数据一致性",
@@ -785,11 +785,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "TreeMap 与 LinkedHashMap",
     "content": "以下关于 TreeMap 和 LinkedHashMap 的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、C)。解析：TreeMap 基于红黑树实现，元素按键的自然顺序或 Comparator 排序。LinkedHashMap 继承自 HashMap，通过双向链表维护插入顺序或访问顺序。两者都非线程安全。TreeMap 提供了丰富的导航方法（lowerKey、higherKey、ceilingKey、floorKey、subMap 等）。LinkedHashMap 可设置 accessOrder=true 实现 LRU 缓存（removeEldestEntry 方法）。\n\n扩展延伸：TreeMap 的 put/get/remove 时间复杂度为 O(log n)。LinkedHashMap 的 put/get 时间复杂度为 O(1)。LinkedHashMap 的迭代顺序默认与插入顺序一致，而 TreeMap 始终按键排序。",
+    "answer": "A)、B)、C)。解析：TreeMap 基于红黑树实现，元素按键的自然顺序或 Comparator 排序。LinkedHashMap 继承自 HashMap，通过双向链表维护插入顺序或访问顺序。两者都非线程安全。TreeMap 提供了丰富的导航方法（lowerKey、higherKey、ceilingKey、floorKey、subMap 等）。LinkedHashMap 可设置 accessOrder=true 实现 LRU 缓存（removeEldestEntry 方法）。\n\n扩展延伸：TreeMap 的 put/get/remove 时间复杂度为 O(log n)。LinkedHashMap 的 put/get 时间复杂度为 O(1)。LinkedHashMap 的迭代顺序默认与插入顺序一致，而 TreeMap 始终按键排序。",
     "options": [
       "A) TreeMap 基于红黑树实现，元素按键排序",
       "B) LinkedHashMap 通过双向链表维护迭代顺序",
@@ -813,7 +813,7 @@
     "type": "multiple_choice",
     "title": "Collections 同步包装方法",
     "content": "以下关于 Collections.synchronizedList 的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：Collections.synchronizedList 返回的 List 在 add/remove/get 等每个方法上都加了 synchronized 块（mutex 对象锁），因此单个方法是线程安全的。但复合操作（如迭代遍历、判断空后添加）仍需要在外部加 synchronized 块并传入 mutex 对象。返回的 List 的迭代器是 fail-fast 的，在迭代时其他线程修改集合会抛出 ConcurrentModificationException，因此迭代时需要在 synchronized 块中手动同步。synchronizedList 的序列化时会强制要求多线程使用同一个 mutex，因此返回了支持序列化的 Sync 内部类。\n\n扩展延伸：与 CopyOnWriteArrayList 相比，synchronizedList 的读操作也需要加锁，并发读性能较差。但 synchronizedList 的写操作不需要复制数组，写性能更好。",
+    "answer": "A)、B)、D)。解析：Collections.synchronizedList 返回的 List 在 add/remove/get 等每个方法上都加了 synchronized 块（mutex 对象锁），因此单个方法是线程安全的。但复合操作（如迭代遍历、判断空后添加）仍需要在外部加 synchronized 块并传入 mutex 对象。返回的 List 的迭代器是 fail-fast 的，在迭代时其他线程修改集合会抛出 ConcurrentModificationException，因此迭代时需要在 synchronized 块中手动同步。synchronizedList 的序列化时会强制要求多线程使用同一个 mutex，因此返回了支持序列化的 Sync 内部类。\n\n扩展延伸：与 CopyOnWriteArrayList 相比，synchronizedList 的读操作也需要加锁，并发读性能较差。但 synchronizedList 的写操作不需要复制数组，写性能更好。",
     "options": [
       "A) 每个方法都加了 synchronized 保证单个方法的线程安全",
       "B) 复合操作仍需外部同步",
@@ -837,7 +837,7 @@
     "type": "multiple_choice",
     "title": "BlockingQueue 实现类比较",
     "content": "以下关于 BlockingQueue 实现类的描述，哪些是正确的？",
-    "answer": "答案：A)、B)、D)。解析：ArrayBlockingQueue 有界、基于数组、FIFO，创建时需指定容量，内部使用同一把 ReentrantLock 控制 put 和 take（读写竞争同一把锁）。LinkedBlockingQueue 可选有界（默认 Integer.MAX_VALUE）、基于链表、FIFO，内部使用两把锁——takeLock 和 putLock，生产者和消费者可以并发操作，吞吐量通常高于 ArrayBlockingQueue。SynchronousQueue 不存储元素，每个 put 必须等待一个 take，每个 take 必须等待一个 put，容量为 0。PriorityBlockingQueue 是无界优先队列，按优先级排序而非 FIFO。\n\n扩展延伸：LinkedBlockingQueue 默认容量为 Integer.MAX_VALUE 可能导致内存溢出。ArrayBlockingQueue 支持公平/非公平访问模式。SynchronousQueue 常用于直接传递场景（如 Executors.newCachedThreadPool）。",
+    "answer": "A)、B)、D)。解析：ArrayBlockingQueue 有界、基于数组、FIFO，创建时需指定容量，内部使用同一把 ReentrantLock 控制 put 和 take（读写竞争同一把锁）。LinkedBlockingQueue 可选有界（默认 Integer.MAX_VALUE）、基于链表、FIFO，内部使用两把锁——takeLock 和 putLock，生产者和消费者可以并发操作，吞吐量通常高于 ArrayBlockingQueue。SynchronousQueue 不存储元素，每个 put 必须等待一个 take，每个 take 必须等待一个 put，容量为 0。PriorityBlockingQueue 是无界优先队列，按优先级排序而非 FIFO。\n\n扩展延伸：LinkedBlockingQueue 默认容量为 Integer.MAX_VALUE 可能导致内存溢出。ArrayBlockingQueue 支持公平/非公平访问模式。SynchronousQueue 常用于直接传递场景（如 Executors.newCachedThreadPool）。",
     "options": [
       "A) ArrayBlockingQueue 是有界的，使用一把锁控制入队和出队",
       "B) LinkedBlockingQueue 默认无界，使用 takeLock 和 putLock 两把锁",
@@ -857,11 +857,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "JVM 判定对象可回收的方法",
     "content": "JVM 判定一个对象是否可回收使用哪些方法？",
-    "answer": "答案：A)、B)。\n\n解析：JVM 判定对象是否可回收主要使用可达性分析（Reachability Analysis）——从 GC Roots 出发，不可达的对象被判定为可回收。引用计数法（Reference Counting）不是 JVM 使用的方法（无法解决循环引用问题）。对象在 finalize() 方法中可能自救（重新被引用），但 finalize() 只执行一次。A 正确——可达性分析是主要方法。B 也正确——对于 G1 和 ZGC 等区域性 GC，还会使用 Remembered Set / Card Table 来跟踪跨代/跨区域引用。C 错误——引用计数法是 Python/Objective-C 使用的方式，JVM 不使用。D 错误——并发标记完成后还有最终标记/重新标记阶段处理并发期间的引用变化。",
+    "answer": "A)、B)。\n\n解析：JVM 判定对象是否可回收主要使用可达性分析（Reachability Analysis）——从 GC Roots 出发，不可达的对象被判定为可回收。引用计数法（Reference Counting）不是 JVM 使用的方法（无法解决循环引用问题）。对象在 finalize() 方法中可能自救（重新被引用），但 finalize() 只执行一次。A 正确——可达性分析是主要方法。B 也正确——对于 G1 和 ZGC 等区域性 GC，还会使用 Remembered Set / Card Table 来跟踪跨代/跨区域引用。C 错误——引用计数法是 Python/Objective-C 使用的方式，JVM 不使用。D 错误——并发标记完成后还有最终标记/重新标记阶段处理并发期间的引用变化。",
     "options": [
       "A) 可达性分析（Reachability Analysis）",
       "B) Remembered Set + 卡表（Card Table）",
@@ -884,7 +884,7 @@
     "type": "multiple_choice",
     "title": "JVM 参数分类与内存设置",
     "content": "以下哪些 JVM 参数用于设置堆内存大小？",
-    "answer": "答案：A)、B)、C)。\n\n解析：A)-Xms 设置初始堆大小，B)-Xmx 设置最大堆大小，C)-Xmn 设置新生代大小（不推荐 JDK 9+，优先用 -XX:NewSize/-XX:MaxNewSize），D)-Xss 设置线程栈大小（不是堆内存）。实际调优中通常将 -Xms 和 -Xmx 设为相同值，避免运行时动态调整堆大小导致性能抖动。E 错误——-XX:PermSize 设置永久代初始大小（JDK 8 之前），JDK 8+ 已不存在。\n\n扩展延伸：其他关键参数——-XX:NewRatio 设置老年代/新生代比例（默认 2，新生代为堆的 1/3）。-XX:SurvivorRatio 设置 Eden 与单个 Survivor 的比例（默认 8）。-XX:MaxMetaspaceSize 和 -XX:MetaspaceSize 控制元空间。容器化环境需注意 UseContainerSupport（JDK 8u191+ 默认开启）使 JVM 感知容器内存限制。",
+    "answer": "A)、B)、C)。\n\n解析：A)-Xms 设置初始堆大小，B)-Xmx 设置最大堆大小，C)-Xmn 设置新生代大小（不推荐 JDK 9+，优先用 -XX:NewSize/-XX:MaxNewSize），D)-Xss 设置线程栈大小（不是堆内存）。实际调优中通常将 -Xms 和 -Xmx 设为相同值，避免运行时动态调整堆大小导致性能抖动。E 错误——-XX:PermSize 设置永久代初始大小（JDK 8 之前），JDK 8+ 已不存在。\n\n扩展延伸：其他关键参数——-XX:NewRatio 设置老年代/新生代比例（默认 2，新生代为堆的 1/3）。-XX:SurvivorRatio 设置 Eden 与单个 Survivor 的比例（默认 8）。-XX:MaxMetaspaceSize 和 -XX:MetaspaceSize 控制元空间。容器化环境需注意 UseContainerSupport（JDK 8u191+ 默认开启）使 JVM 感知容器内存限制。",
     "options": [
       "A) -Xms",
       "B) -Xmx",
@@ -908,7 +908,7 @@
     "type": "multiple_choice",
     "title": "Java 线程安全实现的层次",
     "content": "以下哪些是 Java 中实现线程安全的方式？",
-    "answer": "答案：A)、B)、D)。\n\n解析：线程安全实现层次 1）不可变——final + 不可变对象（如 String），天然线程安全。2）互斥同步——synchronized、ReentrantLock、ReadWriteLock（悲观锁）。3）非阻塞同步——CAS + volatile（乐观锁），AtomicInteger 等原子类。4）无同步方案——ThreadLocal（线程本地存储不共享）、可重入代码（不依赖堆上的共享数据）。C 错误——volatile 不保证原子性，不能解决所有线程安全问题（如 i++ 需要原子类或锁）。\n\n扩展延伸：线程安全等级（Brian Goetz 分类）——1）不可变（Immutable）——永远安全。2）绝对线程安全——不管运行时环境如何都不需要额外同步（Java 中几乎没有完全做到，如 Vector 的复合操作仍需外部同步）。3）相对线程安全——单独操作安全（synchronized 修饰方法），但复合操作需要额外同步。4）线程兼容——非线程安全，需要调用方自行同步（ArrayList、HashMap）。5）线程对立——即使调用方同步也无法安全使用（如 Thread.suspend()，已废弃）。",
+    "answer": "A)、B)、D)。\n\n解析：线程安全实现层次 1）不可变——final + 不可变对象（如 String），天然线程安全。2）互斥同步——synchronized、ReentrantLock、ReadWriteLock（悲观锁）。3）非阻塞同步——CAS + volatile（乐观锁），AtomicInteger 等原子类。4）无同步方案——ThreadLocal（线程本地存储不共享）、可重入代码（不依赖堆上的共享数据）。C 错误——volatile 不保证原子性，不能解决所有线程安全问题（如 i++ 需要原子类或锁）。\n\n扩展延伸：线程安全等级（Brian Goetz 分类）——1）不可变（Immutable）——永远安全。2）绝对线程安全——不管运行时环境如何都不需要额外同步（Java 中几乎没有完全做到，如 Vector 的复合操作仍需外部同步）。3）相对线程安全——单独操作安全（synchronized 修饰方法），但复合操作需要额外同步。4）线程兼容——非线程安全，需要调用方自行同步（ArrayList、HashMap）。5）线程对立——即使调用方同步也无法安全使用（如 Thread.suspend()，已废弃）。",
     "options": [
       "A) 使用 synchronized 关键字",
       "B) 使用 ReentrantLock",
@@ -931,7 +931,7 @@
     "type": "multiple_choice",
     "title": "G1 GC 的 Mixed GC 过程",
     "content": "关于 G1 垃圾回收器的 Mixed GC（混合回收）阶段，以下哪些描述是正确的？",
-    "answer": "答案：A)、C)、D)。\n\n解析：G1 的 Mixed GC 在并发标记完成后触发，不仅回收年轻代，还回收标记为垃圾最多的老年代 Region（根据 -XX:G1MixedGCLiveThresholdPercent 判断存活对象比例）。B 错误——Mixed GC 必须依赖并发标记周期（CMS）的结果来确定哪些老年代 Region 值得回收。G1 的工作分为三种类型：Young GC（仅年轻代，Eden 满时触发）、并发标记周期（Concurrent Marking Cycle，CMS，当堆使用率达 -XX:InitiatingHeapOccupancyPercent=45% 时触发）、Mixed GC（回收年轻代 + 部分老年代，在 CMS 后触发）。D 正确——-XX:G1HeapWastePercent（默认 5%）控制并发标记后触发 Mixed GC 的条件——只有当可回收的垃圾比例超过该值时才触发。\n\n扩展延伸：G1 的停顿预测模型基于历史平均停顿时间，通过 -XX:MaxGCPauseMillis（默认 200ms）控制目标。G1 选择回收 Region 时优先选择回收收益大的（垃圾最多的 Region）。如果时间预算允许，继续选择更多 Region 直到时间用完或所有标记的老年代 Region 都回收了。",
+    "answer": "A)、C)、D)。\n\n解析：G1 的 Mixed GC 在并发标记完成后触发，不仅回收年轻代，还回收标记为垃圾最多的老年代 Region（根据 -XX:G1MixedGCLiveThresholdPercent 判断存活对象比例）。B 错误——Mixed GC 必须依赖并发标记周期（CMS）的结果来确定哪些老年代 Region 值得回收。G1 的工作分为三种类型：Young GC（仅年轻代，Eden 满时触发）、并发标记周期（Concurrent Marking Cycle，CMS，当堆使用率达 -XX:InitiatingHeapOccupancyPercent=45% 时触发）、Mixed GC（回收年轻代 + 部分老年代，在 CMS 后触发）。D 正确——-XX:G1HeapWastePercent（默认 5%）控制并发标记后触发 Mixed GC 的条件——只有当可回收的垃圾比例超过该值时才触发。\n\n扩展延伸：G1 的停顿预测模型基于历史平均停顿时间，通过 -XX:MaxGCPauseMillis（默认 200ms）控制目标。G1 选择回收 Region 时优先选择回收收益大的（垃圾最多的 Region）。如果时间预算允许，继续选择更多 Region 直到时间用完或所有标记的老年代 Region 都回收了。",
     "options": [
       "A) Mixed GC 不仅回收年轻代，还回收部分老年代 Region",
       "B) Mixed GC 不需要并发标记阶段，可以独立触发",
@@ -954,7 +954,7 @@
     "type": "multiple_choice",
     "title": "Java 线程的优先级",
     "content": "以下关于 Java 线程优先级的描述，哪些是正确的？",
-    "answer": "答案：A)、C)、D)。\n\n解析：A 正确——Java 中线程优先级范围是 1（MIN_PRIORITY）到 10（MAX_PRIORITY），默认 5（NORM_PRIORITY）。B 错误——线程优先级不能保证执行顺序！优先级只是给操作系统调度器的建议，实际操作系统（尤其是 Linux）可能忽略 Java 的优先级映射。Windows 有 7 个优先级级别，Linux 默认不将 Java 的优先级映射到原生线程优先级（需要使用实时调度策略或调整 nice 值）。C 正确——优先级高的线程获得更多 CPU 时间片（但不保证）。D 正确——线程优先级依赖具体操作系统和 JVM 实现。\n\n扩展延伸：代码中应避免依赖线程优先级来控制执行顺序——这可能导致跨平台行为不一致。更好的方式是使用显式的同步工具（CountDownLatch、Semaphore 等）控制执行流程。线程优先级在实时系统（Real-Time Java）中有实际意义，但在通用 Linux 服务器上效果有限。",
+    "answer": "A)、C)、D)。\n\n解析：A 正确——Java 中线程优先级范围是 1（MIN_PRIORITY）到 10（MAX_PRIORITY），默认 5（NORM_PRIORITY）。B 错误——线程优先级不能保证执行顺序！优先级只是给操作系统调度器的建议，实际操作系统（尤其是 Linux）可能忽略 Java 的优先级映射。Windows 有 7 个优先级级别，Linux 默认不将 Java 的优先级映射到原生线程优先级（需要使用实时调度策略或调整 nice 值）。C 正确——优先级高的线程获得更多 CPU 时间片（但不保证）。D 正确——线程优先级依赖具体操作系统和 JVM 实现。\n\n扩展延伸：代码中应避免依赖线程优先级来控制执行顺序——这可能导致跨平台行为不一致。更好的方式是使用显式的同步工具（CountDownLatch、Semaphore 等）控制执行流程。线程优先级在实时系统（Real-Time Java）中有实际意义，但在通用 Linux 服务器上效果有限。",
     "options": [
       "A) Java 线程优先级范围是 1~10，默认 5",
       "B) 设置优先级可以保证高优先级线程先执行",
@@ -983,7 +983,7 @@
       "C) 引入了分段锁机制提高并发性能",
       "D) 引入了 countCell 计数机制减少竞争"
     ],
-    "answer": "答案：A)、B)、D)。\n\n解析：JDK 8 对 ConcurrentHashMap 进行了大幅重写——A 正确：JDK 7 使用 Segment（继承 ReentrantLock）分段锁，默认 16 个 Segment。JDK 8 废弃了 Segment 结构，改为 Node 数组 + 链表/红黑树，锁粒度从 Segment 级别降低到 Bucket 级别（每个桶独立加锁）。B 正确：JDK 8 中，空桶用 CAS 插入第一个节点，碰撞时用 synchronized 锁住桶的头节点进行插入和扩容。C 错误：分段锁是 JDK 7 的做法（默认 16 个 Segment，并发度 16），JDK 8 已经用更细粒度的桶锁替代了分段锁。D 正确：JDK 8 引入了 CounterCell 数组（类似 LongAdder 的分段计数方式）来维护 size 计数，减少了多线程 put 时的计数竞争。\n\n扩展延伸：JDK 8 的 ConcurrentHashMap 在链表长度 > 8 且数组长度 ≥ 64 时转为红黑树，优化了哈希冲突严重时的查找性能。此外，JDK 8 的 CHM 还优化了扩容——支持多线程并发协助扩容（通过 ForwardingNode 数组标识已迁移的桶）。JDK 8 的 size() 方法使用 sumCount() 累加 CounterCell 数组和 baseCount，不再需要加锁。",
+    "answer": "A)、B)、D)。\n\n解析：JDK 8 对 ConcurrentHashMap 进行了大幅重写——A 正确：JDK 7 使用 Segment（继承 ReentrantLock）分段锁，默认 16 个 Segment。JDK 8 废弃了 Segment 结构，改为 Node 数组 + 链表/红黑树，锁粒度从 Segment 级别降低到 Bucket 级别（每个桶独立加锁）。B 正确：JDK 8 中，空桶用 CAS 插入第一个节点，碰撞时用 synchronized 锁住桶的头节点进行插入和扩容。C 错误：分段锁是 JDK 7 的做法（默认 16 个 Segment，并发度 16），JDK 8 已经用更细粒度的桶锁替代了分段锁。D 正确：JDK 8 引入了 CounterCell 数组（类似 LongAdder 的分段计数方式）来维护 size 计数，减少了多线程 put 时的计数竞争。\n\n扩展延伸：JDK 8 的 ConcurrentHashMap 在链表长度 > 8 且数组长度 ≥ 64 时转为红黑树，优化了哈希冲突严重时的查找性能。此外，JDK 8 的 CHM 还优化了扩容——支持多线程并发协助扩容（通过 ForwardingNode 数组标识已迁移的桶）。JDK 8 的 size() 方法使用 sumCount() 累加 CounterCell 数组和 baseCount，不再需要加锁。",
     "hints": [
       "JDK 7 的 Segment 锁粒度是 16 个分区",
       "JDK 8 的锁粒度是每个桶（Bucket），而且用 synchronized 替代 ReentrantLock"
@@ -1007,7 +1007,7 @@
       "C) DiscardOldestPolicy——丢弃队列中最旧的任务，然后重新提交",
       "D) CallerRunsPolicy——由提交任务的线程直接运行该任务"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：JDK 提供了四种内置拒绝策略（全部正确）：A——AbortPolicy（默认策略）：线程池无法接收新任务时抛出 RejectedExecutionException。调用方捕获异常处理。B——DiscardPolicy：直接丢弃新提交的任务，不抛出任何异常。适用于不重要、可丢弃的任务（如日志记录）。C——DiscardOldestPolicy：丢弃工作队列中最旧的（head of queue）未处理任务，然后重新提交当前任务。适用于任务的新鲜度比完成度更重要的场景。D——CallerRunsPolicy：由提交任务的线程（调用 execute/submit 的线程）直接运行该任务。这提供了一种简单的节流机制——主线程运行任务时无法提交更多任务，从而降低任务提交速率。\n\n扩展延伸：除了四种内置策略，还可以自定义 RejectedExecutionHandler 实现特殊逻辑（如将任务写入消息队列以便后续重试、阻塞提交线程直到队列有空位等）。注意 CallerRunsPolicy 的风险——如果主线程也执行任务，它可能会被长时间阻塞，导致应用程序的响应性下降。同时，由于提交任务的线程执行了任务，它不再是\"提交者\"，提交速率自然下降，形成反馈节流。DiscardOldestPolicy 需要与有界队列配合使用（如 ArrayBlockingQueue），在无界队列上它永远不会触发（因为队列永远不会满）。",
+    "answer": "A)、B)、C)、D)。\n\n解析：JDK 提供了四种内置拒绝策略（全部正确）：A——AbortPolicy（默认策略）：线程池无法接收新任务时抛出 RejectedExecutionException。调用方捕获异常处理。B——DiscardPolicy：直接丢弃新提交的任务，不抛出任何异常。适用于不重要、可丢弃的任务（如日志记录）。C——DiscardOldestPolicy：丢弃工作队列中最旧的（head of queue）未处理任务，然后重新提交当前任务。适用于任务的新鲜度比完成度更重要的场景。D——CallerRunsPolicy：由提交任务的线程（调用 execute/submit 的线程）直接运行该任务。这提供了一种简单的节流机制——主线程运行任务时无法提交更多任务，从而降低任务提交速率。\n\n扩展延伸：除了四种内置策略，还可以自定义 RejectedExecutionHandler 实现特殊逻辑（如将任务写入消息队列以便后续重试、阻塞提交线程直到队列有空位等）。注意 CallerRunsPolicy 的风险——如果主线程也执行任务，它可能会被长时间阻塞，导致应用程序的响应性下降。同时，由于提交任务的线程执行了任务，它不再是\"提交者\"，提交速率自然下降，形成反馈节流。DiscardOldestPolicy 需要与有界队列配合使用（如 ArrayBlockingQueue），在无界队列上它永远不会触发（因为队列永远不会满）。",
     "hints": [
       "AbortPolicy 是默认策略（抛出异常）",
       "CallerRunsPolicy 通过让提交线程执行任务来实现节流"
@@ -1031,7 +1031,7 @@
       "C) ReentrantLock 可以创建多个 Condition 实现精细化的等待/通知",
       "D) synchronized 是 JVM 层面的锁，ReentrantLock 是 API 层面的锁"
     ],
-    "answer": "答案：A)、C)、D)。\n\n解析：A 正确——ReentrantLock 提供了 tryLock()（尝试获取锁，立即返回 boolean）、tryLock(timeout, unit)（限时尝试）、lockInterruptibly()（可中断获取）等灵活方法，synchronized 不支持这些操作。B 错误——JDK 6 对 synchronized 进行了大量优化（偏向锁、轻量级锁、锁粗化、锁消除），使 synchronized 在大多数场景下与 ReentrantLock 性能相当甚至更优。但性能对比不是简单说 synchronized 优于 ReentrantLock，而是两者在不同场景下各有所长。不过 JDK 8 后，官方更推荐在不需要高级功能时优先使用 synchronized。C 正确——ReentrantLock 通过 newCondition() 可以创建多个 Condition 对象（如生产者-消费者模式中的 notFull 和 notEmpty 两个条件），而 synchronized 的 wait/notify 只有一个隐式条件。D 正确——synchronized 是 Java 语言关键字，由 JVM 通过 monitor 指令（monitorenter/monitorexit）实现。ReentrantLock 是 java.util.concurrent.locks 包中的类，基于 AQS（AbstractQueuedSynchronizer）实现，完全是 Java API 级别。\n\n扩展延伸：JDK 6+ 中，synchronized 的性能经过大规模优化后，在竞争不激烈时优于 ReentrantLock（偏向锁 + 轻量级锁优化）。在激烈竞争下两者接近。选择建议：如果不需要 tryLock、可中断、多 Condition、公平锁等高级功能，优先使用 synchronized 以减少代码复杂度和出错可能性。虚拟线程场景下，synchronized 会导致 pinned 问题，此时推荐使用 ReentrantLock。",
+    "answer": "A)、C)、D)。\n\n解析：A 正确——ReentrantLock 提供了 tryLock()（尝试获取锁，立即返回 boolean）、tryLock(timeout, unit)（限时尝试）、lockInterruptibly()（可中断获取）等灵活方法，synchronized 不支持这些操作。B 错误——JDK 6 对 synchronized 进行了大量优化（偏向锁、轻量级锁、锁粗化、锁消除），使 synchronized 在大多数场景下与 ReentrantLock 性能相当甚至更优。但性能对比不是简单说 synchronized 优于 ReentrantLock，而是两者在不同场景下各有所长。不过 JDK 8 后，官方更推荐在不需要高级功能时优先使用 synchronized。C 正确——ReentrantLock 通过 newCondition() 可以创建多个 Condition 对象（如生产者-消费者模式中的 notFull 和 notEmpty 两个条件），而 synchronized 的 wait/notify 只有一个隐式条件。D 正确——synchronized 是 Java 语言关键字，由 JVM 通过 monitor 指令（monitorenter/monitorexit）实现。ReentrantLock 是 java.util.concurrent.locks 包中的类，基于 AQS（AbstractQueuedSynchronizer）实现，完全是 Java API 级别。\n\n扩展延伸：JDK 6+ 中，synchronized 的性能经过大规模优化后，在竞争不激烈时优于 ReentrantLock（偏向锁 + 轻量级锁优化）。在激烈竞争下两者接近。选择建议：如果不需要 tryLock、可中断、多 Condition、公平锁等高级功能，优先使用 synchronized 以减少代码复杂度和出错可能性。虚拟线程场景下，synchronized 会导致 pinned 问题，此时推荐使用 ReentrantLock。",
     "hints": [
       "ReentrantLock 提供 tryLock、可中断、多 Condition 等高级功能",
       "JDK 6+ 对 synchronized 做了大量优化，性能与 ReentrantLock 相当"
@@ -1056,7 +1056,7 @@
       "C) 传递性——如果 A happens-before B, B happens-before C，则 A happens-before C",
       "D) 线程启动规则——Thread.start() happens-before 该线程中的任何操作"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：JMM 的 happens-before 规则是判断数据竞争（Data Race）和定义内存可见性的依据。全选正确：A——程序次序规则（Program Order Rule）：单线程内，按代码顺序，前面的操作 happens-before 后面的操作（不考虑重排序的等效性）。B——volatile 变量规则（Volatile Variable Rule）：对 volatile 的写操作 happens-before 对同一 volatile 的读操作（保证可见性）。C——传递性（Transitivity）：happens-before 关系具有传递性，这是推导其他规则的基础。D——线程启动规则（Thread Start Rule）：主线程调用 t.start() happens-before 线程 t 的任何操作。\n\n扩展延伸：完整的 happens-before 规则还包括：监视器锁规则（Monitor Lock Rule——对锁的 unlock happens-before 后续对该锁的 lock）、线程终止规则（Thread Termination Rule——线程中所有操作 happens-before 其他线程检测到该线程已终止，通过 t.join() 或 t.isAlive()）、线程中断规则（Thread Interruption Rule——调用 interrupt() happens-before 被中断线程检测到中断）、对象终结规则（Finalizer Rule——对象构造完成 happens-before finalize() 的执行）。这些规则共同定义了 JMM 的内存可见性保证。",
+    "answer": "A)、B)、C)、D)。\n\n解析：JMM 的 happens-before 规则是判断数据竞争（Data Race）和定义内存可见性的依据。全选正确：A——程序次序规则（Program Order Rule）：单线程内，按代码顺序，前面的操作 happens-before 后面的操作（不考虑重排序的等效性）。B——volatile 变量规则（Volatile Variable Rule）：对 volatile 的写操作 happens-before 对同一 volatile 的读操作（保证可见性）。C——传递性（Transitivity）：happens-before 关系具有传递性，这是推导其他规则的基础。D——线程启动规则（Thread Start Rule）：主线程调用 t.start() happens-before 线程 t 的任何操作。\n\n扩展延伸：完整的 happens-before 规则还包括：监视器锁规则（Monitor Lock Rule——对锁的 unlock happens-before 后续对该锁的 lock）、线程终止规则（Thread Termination Rule——线程中所有操作 happens-before 其他线程检测到该线程已终止，通过 t.join() 或 t.isAlive()）、线程中断规则（Thread Interruption Rule——调用 interrupt() happens-before 被中断线程检测到中断）、对象终结规则（Finalizer Rule——对象构造完成 happens-before finalize() 的执行）。这些规则共同定义了 JMM 的内存可见性保证。",
     "hints": [
       "happens-before 是 JMM 中判断两个操作是否有序的规则",
       "传递性规则使得我们可以推导出跨多个规则的 happens-before 关系"
@@ -1080,7 +1080,7 @@
       "C) thenRun 在上一个阶段完成后执行一个 Runnable，不依赖前阶段的结果",
       "D) exceptionally 处理前阶段的异常并提供替代结果"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：全选正确。A——thenApply(Function<T,R>) 将前阶段的结果通过 Function 转换为新值，返回 CompletableFuture<R>（类似 Stream.map）。B——thenAccept(Consumer) 消费前阶段的结果，返回 CompletableFuture<Void>，不产生新值（类似 Stream.forEach）。C——thenRun(Runnable) 在前阶段完成后执行一个动作，不关心前阶段的结果，返回 CompletableFuture<Void>。D——exceptionally(Function<Throwable,T>) 在前阶段异常完成时处理异常（类似 catch），返回替代结果。\n\n扩展延伸：CompletableFuture 的回调方法分三类——1）非异步版本（thenApply/thenAccept/thenRun）：在触发该回调的线程中执行（可能是前阶段线程或调用 complete 的线程）。2）异步版本（thenApplyAsync/thenAcceptAsync/thenRunAsync）：在 ForkJoinPool.commonPool() 或指定 Executor 中执行。3）组合方法：thenCompose（flatMap 风格，用于链式组合依赖的 Future）、thenCombine（合并两个独立的 Future 结果）、allOf（等待所有完成）、anyOf（任意一个完成）。异常处理链：exceptionally → handle（无论正常/异常都处理）→ whenComplete（类似 finally，不改变结果）。建议在异步回调中始终指定自定义 Executor（避免使用共享的 commonPool 导致任务饥饿）。",
+    "answer": "A)、B)、C)、D)。\n\n解析：全选正确。A——thenApply(Function<T,R>) 将前阶段的结果通过 Function 转换为新值，返回 CompletableFuture<R>（类似 Stream.map）。B——thenAccept(Consumer) 消费前阶段的结果，返回 CompletableFuture<Void>，不产生新值（类似 Stream.forEach）。C——thenRun(Runnable) 在前阶段完成后执行一个动作，不关心前阶段的结果，返回 CompletableFuture<Void>。D——exceptionally(Function<Throwable,T>) 在前阶段异常完成时处理异常（类似 catch），返回替代结果。\n\n扩展延伸：CompletableFuture 的回调方法分三类——1）非异步版本（thenApply/thenAccept/thenRun）：在触发该回调的线程中执行（可能是前阶段线程或调用 complete 的线程）。2）异步版本（thenApplyAsync/thenAcceptAsync/thenRunAsync）：在 ForkJoinPool.commonPool() 或指定 Executor 中执行。3）组合方法：thenCompose（flatMap 风格，用于链式组合依赖的 Future）、thenCombine（合并两个独立的 Future 结果）、allOf（等待所有完成）、anyOf（任意一个完成）。异常处理链：exceptionally → handle（无论正常/异常都处理）→ whenComplete（类似 finally，不改变结果）。建议在异步回调中始终指定自定义 Executor（避免使用共享的 commonPool 导致任务饥饿）。",
     "hints": [
       "thenApply 做转换，thenAccept 做消费，thenRun 做后续动作",
       "exceptionally 类似于 catch，handle 类似于 try-catch-finally"
@@ -1104,7 +1104,7 @@
       "C) parallelStream() 默认使用 ForkJoinPool.commonPool()",
       "D) Stream 可以复用——同一个 Stream 可以多次执行终端操作"
     ],
-    "answer": "答案：A)、B)、C)。\n\n解析：\nA 正确：Stream 是 once-only 的，终端操作执行后 Stream 就被消费了。再次调用终端操作会抛出 IllegalStateException。\nB 正确：中间操作（filter、map、distinct 等）在终端操作调用前不会执行。这种惰性求值避免了中间结果的生成，也允许短路操作（limit、findFirst）提前终止。\nC 正确：parallelStream() 默认使用全局的 ForkJoinPool.commonPool()（线程数 = CPU 核心数 - 1）。可以通过传递自定义 ForkJoinPool 改变。\nD 错误：Stream 不能被复用。\n\n扩展延伸：Stream 操作的短路特性（short-circuiting）：limit、findFirst、findAny、anyMatch、allMatch、noneMatch。顺序流和并行流的转换：sequential()/parallel()。流操作不能修改数据源（非干扰 non-interference）。",
+    "answer": "A)、B)、C)。\n\n解析：\nA 正确：Stream 是 once-only 的，终端操作执行后 Stream 就被消费了。再次调用终端操作会抛出 IllegalStateException。\nB 正确：中间操作（filter、map、distinct 等）在终端操作调用前不会执行。这种惰性求值避免了中间结果的生成，也允许短路操作（limit、findFirst）提前终止。\nC 正确：parallelStream() 默认使用全局的 ForkJoinPool.commonPool()（线程数 = CPU 核心数 - 1）。可以通过传递自定义 ForkJoinPool 改变。\nD 错误：Stream 不能被复用。\n\n扩展延伸：Stream 操作的短路特性（short-circuiting）：limit、findFirst、findAny、anyMatch、allMatch、noneMatch。顺序流和并行流的转换：sequential()/parallel()。流操作不能修改数据源（非干扰 non-interference）。",
     "hints": [
       "Stream 是惰性求值的——终端操作触发执行",
       "Stream 只能被消费一次"
@@ -1128,7 +1128,7 @@
       "C) 注解处理器（APT）编译期生成代码",
       "D) 动态字节码增强（ASM、CGLIB、ByteBuddy）"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：\nA 正确：MethodHandles 是 Java 7 引入的轻量级反射替代。它比传统反射更轻量（不需要安全检查、不需要包装 Object[]），JIT 可以内联 MethodHandle 调用。\nB 正确：LambdaMetafactory 可以将方法转换为函数式接口的实例。调用性能接近直接调用（比反射快 10 倍以上）。适合需要频繁回调的场景。\nC 正确：注解处理器（Annotation Processing Tool）在编译期生成代码（如 MapStruct、Lombok），零运行期反射开销。\nD 正确：ASM/CGLIB/ByteBuddy 在运行时直接操作字节码，性能优于反射。Spring AOP、Hibernate、MyBatis 都使用这种技术。\n\n扩展延伸：MethodHandles 在 Spring 5 中被广泛使用。LambdaMetafactory 可以将任意方法转换为函数式接口——例如 Client.getAddress() 转换为 Function<Client, Address>。这些技术的共同趋势是\"运行时反射→编译期代码生成\"。",
+    "answer": "A)、B)、C)、D)。\n\n解析：\nA 正确：MethodHandles 是 Java 7 引入的轻量级反射替代。它比传统反射更轻量（不需要安全检查、不需要包装 Object[]），JIT 可以内联 MethodHandle 调用。\nB 正确：LambdaMetafactory 可以将方法转换为函数式接口的实例。调用性能接近直接调用（比反射快 10 倍以上）。适合需要频繁回调的场景。\nC 正确：注解处理器（Annotation Processing Tool）在编译期生成代码（如 MapStruct、Lombok），零运行期反射开销。\nD 正确：ASM/CGLIB/ByteBuddy 在运行时直接操作字节码，性能优于反射。Spring AOP、Hibernate、MyBatis 都使用这种技术。\n\n扩展延伸：MethodHandles 在 Spring 5 中被广泛使用。LambdaMetafactory 可以将任意方法转换为函数式接口——例如 Client.getAddress() 转换为 Function<Client, Address>。这些技术的共同趋势是\"运行时反射→编译期代码生成\"。",
     "hints": [
       "MethodHandles 和 LambdaMetafactory 是 JDK 自带的反射替代",
       "APT 在编译期生成代码，零运行期开销"
@@ -1152,7 +1152,7 @@
       "C) Optional 可以作为类的字段类型",
       "D) Optional 应该避免在序列化类中使用"
     ],
-    "answer": "答案：A)、D)。\n\n解析：\nA 正确：Optional 设计的核心用途是方法返回值——告诉调用者结果可能为空，强制调用方处理。\nB 错误：Effective Java 和 Optional 的设计者都不推荐将 Optional 作为方法参数。重载方法或方法重命名更清晰。\nC 错误：Optional 没有实现 Serializable，不能作为类的字段。使用普通类型 + null 检查替代。\nD 正确：Optional 没有实现 Serializable。如果类需要序列化（如 JPA 实体、DTO），不应该使用 Optional 字段。\n\n扩展延伸：Optional 的正确用法：flatMap 链式操作、orElse/orElseGet 提供默认值、orElseThrow 异常处理。Optional 的常见误用：get() 之前不检查 isPresent()、用 Optional 包装集合/数组。IntStream 的 findFirst() 返回 OptionalInt——专门为基本类型设计的 Optional。",
+    "answer": "A)、D)。\n\n解析：\nA 正确：Optional 设计的核心用途是方法返回值——告诉调用者结果可能为空，强制调用方处理。\nB 错误：Effective Java 和 Optional 的设计者都不推荐将 Optional 作为方法参数。重载方法或方法重命名更清晰。\nC 错误：Optional 没有实现 Serializable，不能作为类的字段。使用普通类型 + null 检查替代。\nD 正确：Optional 没有实现 Serializable。如果类需要序列化（如 JPA 实体、DTO），不应该使用 Optional 字段。\n\n扩展延伸：Optional 的正确用法：flatMap 链式操作、orElse/orElseGet 提供默认值、orElseThrow 异常处理。Optional 的常见误用：get() 之前不检查 isPresent()、用 Optional 包装集合/数组。IntStream 的 findFirst() 返回 OptionalInt——专门为基本类型设计的 Optional。",
     "hints": [
       "Optional 适合做返回值，不适合做字段和参数",
       "Optional 没有实现 Serializable"
@@ -1175,7 +1175,7 @@
       "C) 特定类型的任意对象方法引用：ClassName::instanceMethod",
       "D) 构造方法引用：ClassName::new"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：四种方法引用都是合法的：\n\nA 正确：静态方法引用——Math::max 等价于 (a, b) -> Math.max(a, b)\nB 正确：实例方法引用——System.out::println 等价于 x -> System.out.println(x)\nC 正确：特定类型的任意对象方法引用——String::length 等价于 s -> s.length()。第一个参数作为调用者。\nD 正确：构造方法引用——ArrayList::new 等价于 () -> new ArrayList()\n\n方法引用是 Lambda 的简化语法。编译器通过函数式接口的上下文推断方法引用是否符合目标类型。\n\n扩展延伸：数组构造方法引用 int[]::new 等价于 length -> new int[length]。方法引用还可以与 super 关键字一起使用（super::toString）。方法引用的编译产物与 Lambda 相同（invokedynamic 指令）。",
+    "answer": "A)、B)、C)、D)。\n\n解析：四种方法引用都是合法的：\n\nA 正确：静态方法引用——Math::max 等价于 (a, b) -> Math.max(a, b)\nB 正确：实例方法引用——System.out::println 等价于 x -> System.out.println(x)\nC 正确：特定类型的任意对象方法引用——String::length 等价于 s -> s.length()。第一个参数作为调用者。\nD 正确：构造方法引用——ArrayList::new 等价于 () -> new ArrayList()\n\n方法引用是 Lambda 的简化语法。编译器通过函数式接口的上下文推断方法引用是否符合目标类型。\n\n扩展延伸：数组构造方法引用 int[]::new 等价于 length -> new int[length]。方法引用还可以与 super 关键字一起使用（super::toString）。方法引用的编译产物与 Lambda 相同（invokedynamic 指令）。",
     "hints": [
       "方法引用有 4 种形式：静态、实例、类型方法、构造",
       "方法引用是 Lambda 的语法糖"
@@ -1199,7 +1199,7 @@
       "C) Double 和 Float 有精度问题，不应该用于货币计算",
       "D) AtomicInteger 继承自 Number"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：\nA 正确：Integer、Long、Short、Byte 的 valueOf() 方法都缓存了 -128 到 127 的范围。Character 缓存 0-127。\nB 正确：BigDecimal 将数字表示为 BigInteger unscaledValue × 10^(-int scale)。例如 3.14 = 314 × 10^(-2)。\nC 正确：浮点数（float/double）基于二进制科学计数法，无法精确表示 0.1 等十进制小数。货币计算应使用 BigDecimal。\nD 正确：AtomicInteger、AtomicLong、AtomicBoolean 等原子类都继承自 Number。\n\n扩展延伸：BigDecimal 构造应该使用 BigDecimal(String) 而不是 BigDecimal(double)——new BigDecimal(0.1) 不等于 0.1。Integer 缓存范围可以通过 -XX:AutoBoxCacheMax 调整。浮点数比较应该使用误差范围比较（Math.abs(a - b) < 1e-6）而非 ==。",
+    "answer": "A)、B)、C)、D)。\n\n解析：\nA 正确：Integer、Long、Short、Byte 的 valueOf() 方法都缓存了 -128 到 127 的范围。Character 缓存 0-127。\nB 正确：BigDecimal 将数字表示为 BigInteger unscaledValue × 10^(-int scale)。例如 3.14 = 314 × 10^(-2)。\nC 正确：浮点数（float/double）基于二进制科学计数法，无法精确表示 0.1 等十进制小数。货币计算应使用 BigDecimal。\nD 正确：AtomicInteger、AtomicLong、AtomicBoolean 等原子类都继承自 Number。\n\n扩展延伸：BigDecimal 构造应该使用 BigDecimal(String) 而不是 BigDecimal(double)——new BigDecimal(0.1) 不等于 0.1。Integer 缓存范围可以通过 -XX:AutoBoxCacheMax 调整。浮点数比较应该使用误差范围比较（Math.abs(a - b) < 1e-6）而非 ==。",
     "hints": [
       "Integer 缓存 -128 到 127，BigDecimal 适用于货币",
       "浮点数不精确，BigDecimal 用 unscaled × 10^(-scale)"
@@ -1223,7 +1223,7 @@
       "C) exports 关键字控制哪些包对哪些模块可见",
       "D) opens 关键字允许反射访问私有成员"
     ],
-    "answer": "答案：A)、B)、C)、D)。\n\n解析：\nA 正确：module-info.java 是模块描述文件，位于源码根目录，声明模块的依赖、导出、开放、提供服务等。\nB 正确：requires 声明模块依赖。requires transitive 表示传递性依赖。requires static 表示编译期必需但运行期可选。\nC 正确：exports 控制哪些包对外可见。exports com.example.api to com.example.client 限定只对特定模块可见。\nD 正确：opens 允许反射访问（setAccessible）。opens com.example.core to com.example.test 允许测试框架通过反射访问内部类。不 open 的模块在 JDK 17+ 的强封装模式下无法被反射访问。\n\n扩展延伸：provides/uses 实现服务加载（ServiceLoader 的模块化版本）。JDK 9+ 的核心 Java 库被模块化（java.base、java.sql 等）。JDK 17 强封装模式使 --add-opens 成为框架适配期参数。模块化带来的优势：强封装、可靠的配置、可伸缩性。",
+    "answer": "A)、B)、C)、D)。\n\n解析：\nA 正确：module-info.java 是模块描述文件，位于源码根目录，声明模块的依赖、导出、开放、提供服务等。\nB 正确：requires 声明模块依赖。requires transitive 表示传递性依赖。requires static 表示编译期必需但运行期可选。\nC 正确：exports 控制哪些包对外可见。exports com.example.api to com.example.client 限定只对特定模块可见。\nD 正确：opens 允许反射访问（setAccessible）。opens com.example.core to com.example.test 允许测试框架通过反射访问内部类。不 open 的模块在 JDK 17+ 的强封装模式下无法被反射访问。\n\n扩展延伸：provides/uses 实现服务加载（ServiceLoader 的模块化版本）。JDK 9+ 的核心 Java 库被模块化（java.base、java.sql 等）。JDK 17 强封装模式使 --add-opens 成为框架适配期参数。模块化带来的优势：强封装、可靠的配置、可伸缩性。",
     "hints": [
       "module-info.java 声明模块的依赖和导出",
       "opens 允许反射访问，exports 控制编译期可见性"
@@ -1247,7 +1247,7 @@
       "C) 使用 SecurityManager 沙箱限制不可信代码的权限",
       "D) 避免在日志中记录敏感信息"
     ],
-    "answer": "答案：A)、B)、D)。\n\n解析：\nA 正确：PreparedStatement 使用参数化查询，将 SQL 语句和数据分离，防止 SQL 注入。Statement 的字符串拼接方式容易被注入攻击。\nB 正确：String 是不可变的，在 GC 前一直存在于内存中。char[] 可以在使用后手动填充为 0 清除。敏感信息（密码、密钥）应使用 char[]。\nC 错误：SecurityManager 在 JDK 17 中标记为废弃（deprecated-for-removal），JDK 22 中已移除。模块化系统（JPMS）和操作系统级安全机制替代了 SecurityManager。\nD 正确：日志中不应包含密码、信用卡号、个人身份信息（PII）等敏感数据。使用日志脱敏工具或日志过滤器清洗敏感信息。\n\n扩展延伸：OWASP Top 10 是 Web 安全的重要参考。DO_NOT_LEAK_SENSITIVE_DATA 是代码审查的重点检查项。输入验证（Validation）和输出编码（Encoding）是防御 XSS 的关键。使用参数化查询是防御 SQL 注入的最佳实践。",
+    "answer": "A)、B)、D)。\n\n解析：\nA 正确：PreparedStatement 使用参数化查询，将 SQL 语句和数据分离，防止 SQL 注入。Statement 的字符串拼接方式容易被注入攻击。\nB 正确：String 是不可变的，在 GC 前一直存在于内存中。char[] 可以在使用后手动填充为 0 清除。敏感信息（密码、密钥）应使用 char[]。\nC 错误：SecurityManager 在 JDK 17 中标记为废弃（deprecated-for-removal），JDK 22 中已移除。模块化系统（JPMS）和操作系统级安全机制替代了 SecurityManager。\nD 正确：日志中不应包含密码、信用卡号、个人身份信息（PII）等敏感数据。使用日志脱敏工具或日志过滤器清洗敏感信息。\n\n扩展延伸：OWASP Top 10 是 Web 安全的重要参考。DO_NOT_LEAK_SENSITIVE_DATA 是代码审查的重点检查项。输入验证（Validation）和输出编码（Encoding）是防御 XSS 的关键。使用参数化查询是防御 SQL 注入的最佳实践。",
     "hints": [
       "PreparedStatement 防 SQL 注入，char[] 替代 String 存敏感信息",
       "SecurityManager 已被废弃，模块系统替代"
@@ -1261,7 +1261,7 @@
   },
   {
     "category": "java",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Record 的限制",
     "content": "关于 Java Record 的限制，以下哪些是正确的？（多选）",
@@ -1284,12 +1284,12 @@
       "Java",
       "Record",
       "不可变",
-      "JDK16"
+      "JDK 16"
     ]
   },
   {
     "category": "java",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Stream 终止操作",
     "content": "以下哪些是 Stream 的终止操作（Terminal Operation）？（多选）",
@@ -1343,7 +1343,7 @@
   },
   {
     "category": "java",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "垃圾回收器适用场景",
     "content": "以下关于 GC 的叙述哪些是正确的？（多选）",
@@ -1401,7 +1401,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Java 中创建对象的合法方式",
     "content": "以下哪些方式可以在 Java 中合法地创建对象（新实例）？",
@@ -1418,7 +1418,7 @@
       "new 和反射（newInstance）会调用构造器，clone 和 Unsafe 不调用构造器"
     ],
     "tags": [
-      "java_multiple"
+      "Java Multiple Choice"
     ],
     "options": [
       "A) 使用 new 关键字",
@@ -1430,7 +1430,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Lambda 表达式的限制",
     "content": "以下哪些是 Java Lambda 表达式的限制？",
@@ -1444,7 +1444,7 @@
       "Lambda 本质是函数式接口的匿名实现，不能有默认方法"
     ],
     "tags": [
-      "java_multiple"
+      "Java Multiple Choice"
     ],
     "options": [
       "A) Lambda 表达式不能有命名的局部变量（必须有名称）",
@@ -1456,7 +1456,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "不可变类的设计要求",
     "content": "设计一个不可变类（Immutable Class）需要满足哪些条件？",
@@ -1472,7 +1472,7 @@
       "Serializable 不是不可变类的必要条件"
     ],
     "tags": [
-      "java_multiple"
+      "Java Multiple Choice"
     ],
     "options": [
       "A) 类声明为 final（防止子类修改）",
@@ -1484,7 +1484,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Stream API 的中间操作",
     "content": "以下哪些是 Java Stream API 的中间操作（Intermediate Operation）？",
@@ -1499,7 +1499,7 @@
       "collect() 和 forEach() 是终止操作（Terminal Operation），触发 Stream 执行"
     ],
     "tags": [
-      "java_multiple"
+      "Java Multiple Choice"
     ],
     "options": [
       "A) filter()",
@@ -1511,7 +1511,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "ServiceLoader 的特点",
     "content": "关于 Java 的 ServiceLoader（SPI 机制），以下哪些描述是正确的？",
@@ -1526,7 +1526,7 @@
       "ServiceLoader 不是线程安全的，且不支持卸载已加载的服务"
     ],
     "tags": [
-      "java_multiple"
+      "Java Multiple Choice"
     ],
     "options": [
       "A) ServiceLoader 通过 META-INF/services/ 目录下的配置文件加载服务实现",
@@ -1538,7 +1538,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Java 并发工具类",
     "content": "以下哪些类属于 JUC（java.util.concurrent）包中的并发工具？（多选）",
@@ -1574,7 +1574,7 @@
       "E) optional.orElse(null) 在值为空时返回 null",
       "F) optional.map(x -> x.toString()) 支持链式调用"
     ],
-    "answer": "D",
+    "answer": "D. Optional 应用于当返回值可能为 null 时，替代 null 返回，通过 orElse()/orElseGet()/ifPresent() 等函数式方法处理空值情况",
     "hints": [
       "optional.get() 在值为空时抛出 NoSuchElementException；其他选项都是正确的。答案是 D"
     ],
@@ -1586,7 +1586,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Java 函数式接口",
     "content": "以下哪些是 java.util.function 包中定义的标准函数式接口？（多选）",
@@ -1610,7 +1610,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Java IO 流分类",
     "content": "以下哪些属于字节流（Byte Stream）？（多选）",
@@ -1646,7 +1646,7 @@
       "E) Lambda 表达式目标类型必须是函数式接口",
       "F) Lambda 表达式必须至少有一个参数"
     ],
-    "answer": "ACE",
+    "answer": "ACE. Lambda 表达式的限制包括：捕获的局部变量必须是 final 或 effectively final（A）、Lambda 体内不能有抽象方法（C）需改接口为函数式接口、Lambda 不能有 this 引用（E）——实际上 Lambda 的 this 指向外部类而非 Lambda 本身",
     "hints": [
       "Lambda 的 this 指向外部类而非 Lambda 自身；无需参数 () -> expr 是合法 Lambda。答案是 ACE"
     ],
@@ -1658,11 +1658,11 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Java 标记接口的判断标准",
     "content": "以下哪些是 Java 中的标记接口（Marker Interface）？",
-    "answer": "ABD",
+    "answer": "ABD. 接口中没有任何方法声明（A）、接口的实现类通过 instanceof 判断（B）、符合常规接口的完全多态使用（D）",
     "options": [
       "A) java.io.Serializable",
       "B) java.lang.Cloneable",
@@ -1684,7 +1684,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "函数式接口的正确识别",
     "content": "以下哪些接口在 Java 中是有效的函数式接口（Functional Interface，即只有一个抽象方法）？",
@@ -1710,7 +1710,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "允许 null 键的集合类型",
     "content": "以下哪些集合允许将 null 作为键（key）存入？",
@@ -1737,7 +1737,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "线程安全集合包装方式的识别",
     "content": "以下哪些方式可以将非线程安全集合转为线程安全的集合？",
@@ -1764,7 +1764,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Java 模块系统的核心优势",
     "content": "以下哪些是 Java 9 模块系统（JPMS / Project Jigsaw）的核心优势？",
@@ -1785,13 +1785,13 @@
       "模块系统",
       "JPMS",
       "Project Jigsaw",
-      "Java 9",
-      "jlink"
+      "java-9",
+      "JLink"
     ]
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "允许 null 键的 Map 实现",
     "content": "以下哪些 Map 实现允许将 null 作为键（key）存入？",
@@ -1816,7 +1816,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "函数式接口的识别",
     "content": "以下哪些接口在 Java 中是有效的函数式接口（Functional Interface，即只包含一个抽象方法）？",
@@ -1833,7 +1833,7 @@
     ],
     "tags": [
       "functional-interface",
-      "Runnable",
+      "RUNNABLE",
       "Callable",
       "Comparable",
       "Serializable"
@@ -1841,7 +1841,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "HashMap resize 触发条件",
     "content": "以下哪些情况下 HashMap 会触发 resize（扩容）？",
@@ -1866,7 +1866,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "实现 RandomAccess 的集合类",
     "content": "以下哪些集合类实现了 RandomAccess 标记接口（即支持高效随机访问）？",
@@ -1891,7 +1891,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "ConcurrentHashMap Java 8+ 并发控制机制",
     "content": "以下哪些是 Java 8+ ConcurrentHashMap 使用的并发控制机制？",
@@ -1911,12 +1911,12 @@
       "CAS",
       "synchronized",
       "segment-lock",
-      "java8"
+      "Java 8"
     ]
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "线程安全集合的识别",
     "content": "以下哪些类或方法是线程安全的？（请选出所有正确选项）",
@@ -1942,7 +1942,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Map实现的关键特性对比",
     "content": "以下关于Java Map实现类的描述，哪些是正确的？（请选出所有正确选项）",
@@ -1992,7 +1992,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "Stream终端操作的识别",
     "content": "以下哪些Stream操作属于终端操作（terminal operation），调用后Stream被消费无法再次使用？（请选出所有正确选项）",
@@ -2018,7 +2018,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "multiple_choice",
     "title": "CompletableFuture异步编排方法",
     "content": "以下哪些关于CompletableFuture的描述是正确的？（请选出所有正确选项）",
@@ -2044,7 +2044,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "线程安全的集合类识别",
     "content": "以下哪些集合是线程安全的，可以直接在多线程环境中使用而不需要额外同步？（多选）\nA) ConcurrentHashMap\nB) CopyOnWriteArrayList\nC) HashMap\nD) Collections.synchronizedMap(new HashMap<>())",
@@ -2061,7 +2061,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "保证迭代顺序的 Map 实现",
     "content": "以下哪些 Map 实现能够保证遍历时键值对的顺序是确定的？（多选）\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",
@@ -2079,7 +2079,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ConcurrentModificationException 的触发路径",
     "content": "以下哪些场景会抛出 ConcurrentModificationException？（多选）\nA) 线程 A 使用 Iterator 遍历 ArrayList 的同时，线程 B 调用 list.add() 添加元素\nB) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 list.remove(index)\nC) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 iterator.remove()\nD) 一个线程遍历 CopyOnWriteArrayList 的同时另一个线程向其中添加元素",
@@ -2133,7 +2133,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "线程上下文类加载器与 SPI 的违背",
     "content": "关于 Java 的线程上下文类加载器（Thread Context ClassLoader, TCCL）在 SPI 机制中的作用，以下哪些描述是正确的？（多选）\nA) SPI 机制的典型实现（如 JDBC DriverManager）使用 TCCL 加载第三方实现类，因为启动类加载器无法访问应用 classpath 中的类\nB) TCCL 的使用是对「双亲委派模型」的一种破坏，因为加载方向变成了从子加载器向父加载器请求\nC) TCCL 默认值就是启动类加载器（Bootstrap ClassLoader），因此 SPI 总是能加载到所有类\nD) TCCL 在 Java 9+ 模块化系统中已完全废弃，被 ModuleLayer 的 findLoader 机制取代",
@@ -2143,16 +2143,16 @@
       "JDBC 4.0 的 DriverManager 初始化时使用 TCCL 扫描所有实现了 java.sql.Driver 的类"
     ],
     "tags": [
-      "classloader",
-      "spi",
-      "tccl",
+      "ClassLoader",
+      "SPI",
+      "TCCL",
       "parent-delegation",
       "module-system"
     ]
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "PhantomReference 与 ReferenceQueue 的交互时机",
     "content": "关于 PhantomReference（虚引用）和 ReferenceQueue 的交互，以下哪些描述是正确的？（多选）\nA) PhantomReference.get() 始终返回 null，无论被引用对象是否可达\nB) PhantomReference 在 GC 确定对象为虚可达后，会清除引用并将 PhantomReference 对象入队到 ReferenceQueue\nC) PhantomReference 所指对象只有在 PhantomReference 本身被清除（clear）或不再可访问时，其内存才会被真正回收\nD) PhantomReference 必须与 ReferenceQueue 配合使用，无参构造方法不存在",
@@ -2162,9 +2162,9 @@
       "PhantomReference 的入队和清理时机决定了它不像 SoftReference/WeakReference 那样能被自动清除"
     ],
     "tags": [
-      "phantomreference",
-      "referencequeue",
-      "gc",
+      "PhantomReference",
+      "ReferenceQueue",
+      "GC",
       "reachability",
       "memory-management"
     ]
@@ -2181,7 +2181,7 @@
       "compute 系列方法与 Map 接口的其他默认方法（如 replaceAll）的区别在于原子性保证"
     ],
     "tags": [
-      "concurrenthashmap",
+      "ConcurrentHashMap",
       "compute",
       "merge",
       "atomicity",
@@ -2190,7 +2190,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Stream collect 与 reduce 的选择原则",
     "content": "Java Stream API 提供了 `collect(Collector)` 和 `reduce(T, BinaryOperator)` 两种归约操作。以下关于二者选择原则的描述，哪些是正确的？（多选）\nA) reduce() 适用于不可变的归约操作（如求和、最大值），其累加器是纯函数，不会修改已有状态\nB) collect() 适用于可变的归约操作（如追加到集合、拼接字符串），其累加器可以修改可变容器\nC) 在并行流中，reduce() 的 combiner 只有在结果类型与输入类型不一致时才被调用\nD) collect() 的 combiner（在 Collector 中定义）必须能处理任意两个部分结果容器的合并，且合并后结果与顺序执行等价",
@@ -2200,7 +2200,7 @@
       "可变的累加容器用 collect（StringBuilder、ArrayList），不可变的标量累加用 reduce"
     ],
     "tags": [
-      "stream-api",
+      "Stream API",
       "collect",
       "reduce",
       "parallel-stream",
@@ -2219,16 +2219,16 @@
       "this 引用在构造函数中逃逸会导致「未冻结」的 final 字段被其他线程观察到默认值 0/null"
     ],
     "tags": [
-      "jmm",
+      "JMM",
       "final",
-      "jsr-133",
+      "JSR-133",
       "initialization-safety",
       "concurrency"
     ]
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ConcurrentHashMap.search 系列方法的短路终止语义",
     "content": "ConcurrentHashMap 的 search 系列方法（search / searchKeys / searchValues / searchEntries）提供了在映射上应用搜索的并行操作。以下关于这些方法的正确描述是哪些？（多选）\nA) search 方法接受一个函数，应用到映射的每个元素上，返回第一个非 null 的函数结果\nB) 当任一分区找到非 null 结果后，其他正在执行的分区任务会被取消或忽略其返回结果\nC) search 方法会捕获函数中抛出的异常，继续在其他元素上执行搜索\nD) 搜索函数返回的非 null 结果被严格保证是「映射中第一个」满足条件的元素（按迭代顺序）\nE) searchEntries 的搜索函数接收 Map.Entry 作为参数，而 search 接收键值对",
@@ -2249,7 +2249,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Collectors.teeing 多路聚合的特性",
     "content": "Collectors.teeing(Collector, Collector, BiFunction) 是 JDK 12 引入的 Collector。以下关于 teeing 的正确描述是哪些？（多选）\nA) 可以将同一个流中的元素同时发送到两个不同的 Collector 中进行聚合\nB) 两个下游 Collector 共享同一个中间结果容器\nC) 最终通过一个 BiFunction 将两个下游 Collector 的结果合并为一个结果\nD) teeing 要求两个下游 Collector 的类型和中间结果类型完全相同\nE) 在并行流中，teeing 要求两个 Collector 都是 CONCURRENT 且 UNORDERED",
@@ -2291,7 +2291,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "BlockingQueue.drainTo 方法的并发语义保证",
     "content": "BlockingQueue.drainTo(Collection<? super E> c) 和 drainTo(Collection<? super E> c, int maxElements) 用于将队列中的元素批量转移到目标集合。以下关于 drainTo 并发语义的正确描述是哪些？（多选）\nA) drainTo 将队列中「当前可用」的元素一次性转移到目标集合\nB) drainTo(Collection, int maxElements) 最多转移 maxElements 个元素\nC) 相比循环调用 poll，drainTo 可以减少锁获取次数，提高批量元素获取效率\nD) drainTo 执行期间其他线程添加的元素一定会被包含在本次转移中\nE) drainTo 会在没有可用元素时阻塞等待新元素到达",
@@ -2325,7 +2325,7 @@
       "Map.Entry",
       "SimpleEntry",
       "SimpleImmutableEntry",
-      "Map.entry",
+      "Map.Entry",
       "不可变Entry"
     ],
     "options": [],

@@ -5,7 +5,7 @@
     "type": "true_false",
     "title": "Java 中 String 是不可变的",
     "content": "在 Java 中，String 类的对象一旦创建就不可修改。",
-    "answer": "答案：正确。解析：String 被 final 修饰，其底层 char[]（JDK 8）或 byte[]（JDK 9+）也被 final 修饰，且不提供修改内部数组的方法。任何看似修改 String 的操作（如 concat、replace）都会返回新的 String 对象。",
+    "answer": "正确。解析：String 被 final 修饰，其底层 char[]（JDK 8）或 byte[]（JDK 9+）也被 final 修饰，且不提供修改内部数组的方法。任何看似修改 String 的操作（如 concat、replace）都会返回新的 String 对象。",
     "options": [
       "正确",
       "错误"
@@ -209,7 +209,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "HashMap 默认负载因子是 0.75",
     "content": "HashMap 的默认负载因子（load factor）是 0.75，这是时间与空间的折中值。",
@@ -225,7 +225,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "ConcurrentHashMap key 可以为 null",
     "content": "ConcurrentHashMap 允许 null 作为键。",
@@ -241,7 +241,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "PriorityQueue 保证元素按 FIFO 顺序",
     "content": "PriorityQueue 按照先进先出（FIFO）的顺序处理元素。",
@@ -289,7 +289,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "volatile 保证原子性",
     "content": "volatile 关键字可以保证对变量的操作是原子性的。",
@@ -305,7 +305,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "synchronized 是悲观锁",
     "content": "Java 中的 synchronized 属于悲观锁。",
@@ -337,7 +337,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "方法区在 JDK 8 中被移除",
     "content": "JDK 8 中移除了方法区（Method Area），使用元空间（Metaspace）替代。",
@@ -353,7 +353,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "线程池核心线程会被回收",
     "content": "ThreadPoolExecutor 中，如果 allowCoreThreadTimeOut 设置为 true，核心线程也会因空闲超时被回收。",
@@ -369,7 +369,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Stream 可以重复使用",
     "content": "Java 8 的 Stream 执行完终止操作后可以再次遍历。",
@@ -385,7 +385,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Lambda 表达式会生成匿名内部类",
     "content": "Lambda 表达式在编译时会生成匿名内部类。",
@@ -465,7 +465,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "LinkedList 实现了 Deque 接口",
     "content": "LinkedList 不仅实现了 List 接口，还实现了 Deque 接口。",
@@ -489,7 +489,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：事实正好相反——StringBuffer 的方法是 synchronized 修饰的（线程安全），适合多线程场景但性能较低。StringBuilder 的方法没有同步（线程不安全），适合单线程场景但性能更高（无锁开销）。一般推荐在单线程环境优先使用 StringBuilder。\n\n扩展延伸：性能对比——StringBuilder 比 StringBuffer 快 10-20%（无 synchronized 开销）。字符串拼接的场景选择——1）单次简单拼接（用 + 操作符即可，编译器优化为 StringBuilder）。2）循环内大量拼接（显式使用 StringBuilder）。3）多线程下共享字符串拼接（使用 StringBuffer 或手动同步 StringBuilder）。String 的不可变性——String 是 immutable 的，每次修改都创建新对象（频繁拼接会产生大量垃圾对象）。",
+    "answer": "错误。\n\n解析：事实正好相反——StringBuffer 的方法是 synchronized 修饰的（线程安全），适合多线程场景但性能较低。StringBuilder 的方法没有同步（线程不安全），适合单线程场景但性能更高（无锁开销）。一般推荐在单线程环境优先使用 StringBuilder。\n\n扩展延伸：性能对比——StringBuilder 比 StringBuffer 快 10-20%（无 synchronized 开销）。字符串拼接的场景选择——1）单次简单拼接（用 + 操作符即可，编译器优化为 StringBuilder）。2）循环内大量拼接（显式使用 StringBuilder）。3）多线程下共享字符串拼接（使用 StringBuffer 或手动同步 StringBuilder）。String 的不可变性——String 是 immutable 的，每次修改都创建新对象（频繁拼接会产生大量垃圾对象）。",
     "hints": [
       "StringBuffer 才是线程安全的（方法用 synchronized），StringBuilder 不是",
       "单线程下优先使用 StringBuilder——无锁开销，比 StringBuffer 快 10-20%"
@@ -511,7 +511,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：try-with-resources 保证资源在 try 块结束后一定会被关闭——无论正常结束还是异常结束。资源的 close() 方法是在 finally 机制中自动调用的（实际上，编译后 try-with-resources 会展开为 try-finally 结构）。如果 try 块和 close() 都抛出异常，try 块的异常会被抑制（suppressed），close() 的异常可以通过 getSuppressed() 获取。\n\n扩展延伸：try-with-resources 的增强——1）多个资源时声明顺序：`try (FileInputStream fis = new FileInputStream(\"a.txt\"); FileOutputStream fos = new FileOutputStream(\"b.txt\"))`。多个资源的 close 顺序与声明顺序相反（后声明先关闭）。2）Java 9 增强：可以在 try 外部声明资源引用，在 try 中直接引用（`Resource r = ...; try (r) { ... }`）。3）自动关闭的原理：反编译显示 try-with-resources 编译为 try-finally + catch 的嵌套结构。在 finally 中调用 close() 且使用 Throwable.addSuppressed 保存异常。注意——使用 try-with-resources 比手动在 finally 中关闭资源更安全（不会遗漏 close 调用，且正确处理异常抑制）。",
+    "answer": "错误。\n\n解析：try-with-resources 保证资源在 try 块结束后一定会被关闭——无论正常结束还是异常结束。资源的 close() 方法是在 finally 机制中自动调用的（实际上，编译后 try-with-resources 会展开为 try-finally 结构）。如果 try 块和 close() 都抛出异常，try 块的异常会被抑制（suppressed），close() 的异常可以通过 getSuppressed() 获取。\n\n扩展延伸：try-with-resources 的增强——1）多个资源时声明顺序：`try (FileInputStream fis = new FileInputStream(\"a.txt\"); FileOutputStream fos = new FileOutputStream(\"b.txt\"))`。多个资源的 close 顺序与声明顺序相反（后声明先关闭）。2）Java 9 增强：可以在 try 外部声明资源引用，在 try 中直接引用（`Resource r = ...; try (r) { ... }`）。3）自动关闭的原理：反编译显示 try-with-resources 编译为 try-finally + catch 的嵌套结构。在 finally 中调用 close() 且使用 Throwable.addSuppressed 保存异常。注意——使用 try-with-resources 比手动在 finally 中关闭资源更安全（不会遗漏 close 调用，且正确处理异常抑制）。",
     "hints": [
       "try-with-resources 保证资源一定会关闭（无论正常执行还是异常退出）——编译为 try-finally 闭",
       "try 块的异常可以抑制 close() 的异常（通过 getSuppressed() 获取被抑制的异常）"
@@ -525,7 +525,7 @@
   },
   {
     "category": "java",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Java 接口默认方法的冲突",
     "content": "如果一个类同时实现两个接口，两个接口包含同名的 default 方法，该类的实例可以直接调用该 default 方法，编译不会报错。",
@@ -533,7 +533,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：如果一个类实现的两个接口包含相同签名的 default 方法，编译时报错（必须在该类中重写该方法来明确调用哪个接口的 default 方法）。使用 `InterfaceName.super.methodName()` 语法明确选择。\n\n扩展延伸：冲突解决规则——1）类优先：如果父类和接口中有相同签名的方法，父类的方法优先于接口的 default 方法（不管接口是何时添加的）。2）接口间冲突：如果两个接口有相同签名的方法，且都提供了 default 实现，则实现类必须重写该方法。3）重写时通过 `super` 调用：`InterfaceA.super.method()` 调用接口 A 的 default 实现。设计注意事项——Default 方法的主要目的是接口进化（向已有接口添加新方法而不破坏现有实现）。但使用时需注意多接口冲突问题。Java 8 在 Collection 接口中添加了 forEach、stream 等 default 方法。",
+    "answer": "错误。\n\n解析：如果一个类实现的两个接口包含相同签名的 default 方法，编译时报错（必须在该类中重写该方法来明确调用哪个接口的 default 方法）。使用 `InterfaceName.super.methodName()` 语法明确选择。\n\n扩展延伸：冲突解决规则——1）类优先：如果父类和接口中有相同签名的方法，父类的方法优先于接口的 default 方法（不管接口是何时添加的）。2）接口间冲突：如果两个接口有相同签名的方法，且都提供了 default 实现，则实现类必须重写该方法。3）重写时通过 `super` 调用：`InterfaceA.super.method()` 调用接口 A 的 default 实现。设计注意事项——Default 方法的主要目的是接口进化（向已有接口添加新方法而不破坏现有实现）。但使用时需注意多接口冲突问题。Java 8 在 Collection 接口中添加了 forEach、stream 等 default 方法。",
     "hints": [
       "两个接口的同名 default 方法冲突时——实现类必须重写，用 Interface.super.method() 调用指定接口的默认实现",
       "类优先原则——父类的具体方法优先于接口的 default 方法"
@@ -555,7 +555,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：前半部分错误——静态内部类只能访问外部类的静态成员（包括私有静态成员），不能直接访问外部类的实例成员（因为没有外部类对象的引用）。后半部分正确——非静态内部类（内部类）不能声明 static 成员（包括 static 方法、static 字段、static 内部类）。因为非静态内部类的实例依赖于外部类实例，static 成员不依赖于实例。\n\n扩展延伸：内部类类型——1）静态内部类：不需要外部类实例的引用，只能访问外部类的静态成员。作为「与外部类相关但不需要外部实例」的封装。2）非静态内部类（成员内部类）：持有外部类实例的引用（`Outer.this`），可以访问外部类的所有成员。创建前需要先创建外部类实例：`new Outer().new Inner()`。3）局部内部类（方法内定义的类）：在方法中定义，访问方法内的局部变量需要是 effectively final。4）匿名内部类：无类名，通常用于事件监听器和回调。持有外部类实例的引用（可能导致内存泄漏）。内存泄漏风险——非静态内部类持有外部类实例的引用。如果内部类对象长期存活而外部类不再使用，外部类和所有引用的对象都不能被 GC 回收（常见于 Android 的 Activity 泄漏和 Swing 的事件监听器泄漏）。",
+    "answer": "错误。\n\n解析：前半部分错误——静态内部类只能访问外部类的静态成员（包括私有静态成员），不能直接访问外部类的实例成员（因为没有外部类对象的引用）。后半部分正确——非静态内部类（内部类）不能声明 static 成员（包括 static 方法、static 字段、static 内部类）。因为非静态内部类的实例依赖于外部类实例，static 成员不依赖于实例。\n\n扩展延伸：内部类类型——1）静态内部类：不需要外部类实例的引用，只能访问外部类的静态成员。作为「与外部类相关但不需要外部实例」的封装。2）非静态内部类（成员内部类）：持有外部类实例的引用（`Outer.this`），可以访问外部类的所有成员。创建前需要先创建外部类实例：`new Outer().new Inner()`。3）局部内部类（方法内定义的类）：在方法中定义，访问方法内的局部变量需要是 effectively final。4）匿名内部类：无类名，通常用于事件监听器和回调。持有外部类实例的引用（可能导致内存泄漏）。内存泄漏风险——非静态内部类持有外部类实例的引用。如果内部类对象长期存活而外部类不再使用，外部类和所有引用的对象都不能被 GC 回收（常见于 Android 的 Activity 泄漏和 Swing 的事件监听器泄漏）。",
     "hints": [
       "静态内部类没有外部类实例引用——只能访问外部类的静态成员",
       "非静态内部类持有外部类实例的强引用——可能导致外部类无法被 GC 回收（内存泄漏）"
@@ -577,7 +577,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：枚举的构造器隐式为 private（即使不加 private 修饰，也默认为 private）。显式声明为 public 或 protected 会编译错误。枚举常量在类加载时由 JVM 保证线程安全地创建（利用 class loader 的同步特性）。这使得枚举是实现单例模式的最安全方式——反射无法创建枚举实例（Constructor.newInstance() 检查是否为枚举类型并拒绝）。\n\n扩展延伸：枚举特性——1）枚举实例的创建：每个枚举常量在 enum 类加载时由 JVM 静态初始化（确保线程安全）。2）枚举实现单例：Effective Java 推荐的单例实现方式——避免反射攻击（Constructor.newInstance() 对枚举类型抛异常）、避免序列化攻击（枚举的序列化由 JVM 特殊处理，不会创建新实例）。3）枚举与 switch：枚举与 switch 配合良好（编译时编译器检查 case 覆盖了所有枚举值，否则可能需要 default）。4）枚举的字段和方法：枚举可以有实例字段（在构造器中初始化）、实例方法、抽象方法（每个枚举常量分别实现）。5）EnumSet 和 EnumMap：针对枚举类型优化的高性能集合实现。EnumSet 使用位向量（bit vector）存储，极省内存且极快。",
+    "answer": "正确。\n\n解析：枚举的构造器隐式为 private（即使不加 private 修饰，也默认为 private）。显式声明为 public 或 protected 会编译错误。枚举常量在类加载时由 JVM 保证线程安全地创建（利用 class loader 的同步特性）。这使得枚举是实现单例模式的最安全方式——反射无法创建枚举实例（Constructor.newInstance() 检查是否为枚举类型并拒绝）。\n\n扩展延伸：枚举特性——1）枚举实例的创建：每个枚举常量在 enum 类加载时由 JVM 静态初始化（确保线程安全）。2）枚举实现单例：Effective Java 推荐的单例实现方式——避免反射攻击（Constructor.newInstance() 对枚举类型抛异常）、避免序列化攻击（枚举的序列化由 JVM 特殊处理，不会创建新实例）。3）枚举与 switch：枚举与 switch 配合良好（编译时编译器检查 case 覆盖了所有枚举值，否则可能需要 default）。4）枚举的字段和方法：枚举可以有实例字段（在构造器中初始化）、实例方法、抽象方法（每个枚举常量分别实现）。5）EnumSet 和 EnumMap：针对枚举类型优化的高性能集合实现。EnumSet 使用位向量（bit vector）存储，极省内存且极快。",
     "hints": [
       "枚举构造器默认为 private——反射无法创建枚举实例，枚举是实现安全单例的最佳方式",
       "枚举常量在类加载时由 JVM 保证线程安全——避免了 DCL 和序列化问题"
@@ -591,11 +591,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "ConcurrentHashMap 读操作需要加锁",
     "content": "JDK 8 的 ConcurrentHashMap 在读操作（get）时也需要加锁以保证线程安全。",
-    "answer": "答案：错误。\n\n解析：JDK 8 的 ConcurrentHashMap 的 get 操作不需要加锁。它通过 volatile 关键字保证数组引用和 Node 的 val/next 属性的可见性，从而在不加锁的情况下安全读取。get 方法会先定位桶，如果桶的首节点是目标 key 则直接返回；如果是红黑树节点则通过 TreeBin 查找；否则遍历链表查找。整个过程不需要加锁。\n\n扩展延伸：虽然 get 操作是 lock-free 的，但在扩容迁移过程中访问到的节点如果处于 forwarding 状态，get 会调用 find 方法到新数组中继续查找。",
+    "answer": "错误。\n\n解析：JDK 8 的 ConcurrentHashMap 的 get 操作不需要加锁。它通过 volatile 关键字保证数组引用和 Node 的 val/next 属性的可见性，从而在不加锁的情况下安全读取。get 方法会先定位桶，如果桶的首节点是目标 key 则直接返回；如果是红黑树节点则通过 TreeBin 查找；否则遍历链表查找。整个过程不需要加锁。\n\n扩展延伸：虽然 get 操作是 lock-free 的，但在扩容迁移过程中访问到的节点如果处于 forwarding 状态，get 会调用 find 方法到新数组中继续查找。",
     "options": [
       "正确",
       "错误"
@@ -616,7 +616,7 @@
     "type": "true_false",
     "title": "CopyOnWriteArrayList 写操作复制数组",
     "content": "CopyOnWriteArrayList 在执行 add 操作时，会复制一份全新的底层数组，在副本上添加元素后替换原数组引用。",
-    "answer": "答案：正确。\n\n解析：CopyOnWriteArrayList 的 add 方法先获取 ReentrantLock 锁，然后复制当前数组（长度 +1），在新数组的末尾写入新元素，最后将新数组赋值给 volatile 的 array 引用。这种写时复制策略保证了读操作可以完全无锁进行，但写操作在数组较大时开销较高。\n\n扩展延伸：复制数组使用 Arrays.copyOf 方法。每次 add 都涉及数组复制和 GC 开销，因此不适合写频繁的场景。迭代器创建后基于当时的数组快照，修改原 list 不会影响已创建的迭代器。",
+    "answer": "正确。\n\n解析：CopyOnWriteArrayList 的 add 方法先获取 ReentrantLock 锁，然后复制当前数组（长度 +1），在新数组的末尾写入新元素，最后将新数组赋值给 volatile 的 array 引用。这种写时复制策略保证了读操作可以完全无锁进行，但写操作在数组较大时开销较高。\n\n扩展延伸：复制数组使用 Arrays.copyOf 方法。每次 add 都涉及数组复制和 GC 开销，因此不适合写频繁的场景。迭代器创建后基于当时的数组快照，修改原 list 不会影响已创建的迭代器。",
     "options": [
       "正确",
       "错误"
@@ -637,7 +637,7 @@
     "type": "true_false",
     "title": "TreeMap 基于哈希表",
     "content": "TreeMap 的底层是基于哈希表实现的。",
-    "answer": "答案：错误。\n\n解析：TreeMap 的底层是基于红黑树（Red-Black Tree）实现的，而非哈希表。红黑树是一种自平衡的二叉查找树，保证了插入、删除、查找操作的时间复杂度为 O(log n)。TreeMap 的元素按键的自然顺序或传入的 Comparator 排序。与基于哈希表实现的 HashMap 不同，TreeMap 提供了有序的键值对存储，以及 lowerKey、ceilingKey、headMap/tailMap/subMap 等导航方法。\n\n扩展延伸：HashMap 基于哈希表，时间复杂度为 O(1)，但元素无序。两个 Map 各有优劣，选择时需根据是否需要有序遍历来决定。LinkedHashMap 则是两者的结合——哈希表 + 双向链表。",
+    "answer": "错误。\n\n解析：TreeMap 的底层是基于红黑树（Red-Black Tree）实现的，而非哈希表。红黑树是一种自平衡的二叉查找树，保证了插入、删除、查找操作的时间复杂度为 O(log n)。TreeMap 的元素按键的自然顺序或传入的 Comparator 排序。与基于哈希表实现的 HashMap 不同，TreeMap 提供了有序的键值对存储，以及 lowerKey、ceilingKey、headMap/tailMap/subMap 等导航方法。\n\n扩展延伸：HashMap 基于哈希表，时间复杂度为 O(1)，但元素无序。两个 Map 各有优劣，选择时需根据是否需要有序遍历来决定。LinkedHashMap 则是两者的结合——哈希表 + 双向链表。",
     "options": [
       "正确",
       "错误"
@@ -654,11 +654,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "BlockingQueue drainTo 方法",
     "content": "BlockingQueue 的 drainTo(Collection) 方法是一次性将队列中所有可用元素转移到指定集合，是线程安全的。",
-    "answer": "答案：正确。\n\n解析：drainTo 方法是 BlockingQueue 提供的一个原子批量移除操作，它会一次性将队列中当前所有可用元素转移到传入的 Collection 中，并在操作期间持有内部锁，确保线程安全。使用 drainTo 可以避免逐个 poll 的元素多次获取锁带来的性能开销，是批量消费队列元素的高效方式。\n\n扩展延伸：drainTo 还有带数量限制的重载版本 drainTo(Collection, int)。注意 drainTo 的目标 Collection 不能是队列本身，否则可能产生不可预知的行为。drainTo 在批处理场景下非常有用，如从消息队列中批量取出消息进行处理。",
+    "answer": "正确。\n\n解析：drainTo 方法是 BlockingQueue 提供的一个原子批量移除操作，它会一次性将队列中当前所有可用元素转移到传入的 Collection 中，并在操作期间持有内部锁，确保线程安全。使用 drainTo 可以避免逐个 poll 的元素多次获取锁带来的性能开销，是批量消费队列元素的高效方式。\n\n扩展延伸：drainTo 还有带数量限制的重载版本 drainTo(Collection, int)。注意 drainTo 的目标 Collection 不能是队列本身，否则可能产生不可预知的行为。drainTo 在批处理场景下非常有用，如从消息队列中批量取出消息进行处理。",
     "options": [
       "正确",
       "错误"
@@ -675,11 +675,11 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Collections.unmodifiableList 完全不可修改",
     "content": "Collections.unmodifiableList 返回的集合是绝对不可修改的，任何尝试修改的操作都会抛出 UnsupportedOperationException。",
-    "answer": "答案：错误。\n\n解析：Collections.unmodifiableList 返回的是原 List 的不可修改视图（unmodifiable view），直接调用 add/remove/set 等方法时会抛出 UnsupportedOperationException。但是，如果原始 List 本身是可修改的，那么对原始 List 的修改会影响这个不可修改视图。换句话说，unmodifiableList 并不保证原始 List 不被修改，它只是阻止了通过该视图的修改操作。要保证真正的不可变，需要确保原始 List 也不被修改，或使用 Java 9+ 的 List.of() 创建真正的不可变集合。\n\n扩展延伸：类似的还有 unmodifiableMap/unmodifiableSet/unmodifiableCollection。这些方法返回的视图在序列化时也会保持不可修改的特性。",
+    "answer": "错误。\n\n解析：Collections.unmodifiableList 返回的是原 List 的不可修改视图（unmodifiable view），直接调用 add/remove/set 等方法时会抛出 UnsupportedOperationException。但是，如果原始 List 本身是可修改的，那么对原始 List 的修改会影响这个不可修改视图。换句话说，unmodifiableList 并不保证原始 List 不被修改，它只是阻止了通过该视图的修改操作。要保证真正的不可变，需要确保原始 List 也不被修改，或使用 Java 9+ 的 List.of() 创建真正的不可变集合。\n\n扩展延伸：类似的还有 unmodifiableMap/unmodifiableSet/unmodifiableCollection。这些方法返回的视图在序列化时也会保持不可修改的特性。",
     "options": [
       "正确",
       "错误"
@@ -696,7 +696,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Arrays.asList 返回的 List 可修改",
     "content": "Arrays.asList() 返回的 List 支持 add() 和 remove() 操作，可以动态增删元素。",
@@ -704,7 +704,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：Arrays.asList() 返回的是基于原数组的固定长度视图（java.util.Arrays.ArrayList 内部类），不支持 add/remove 操作（会抛出 UnsupportedOperationException）。但 set() 方法可以修改元素，且修改会同步反映到原数组。需要可变 List 应使用 new ArrayList<>(Arrays.asList(array))。\n\n扩展延伸：类似的陷阱——List.of()（JDK 9+）返回的也是不可变 List，不支持任何修改操作（包括 set）。subList 返回的视图支持结构修改但受限于原 List。",
+    "answer": "错误。\n\n解析：Arrays.asList() 返回的是基于原数组的固定长度视图（java.util.Arrays.ArrayList 内部类），不支持 add/remove 操作（会抛出 UnsupportedOperationException）。但 set() 方法可以修改元素，且修改会同步反映到原数组。需要可变 List 应使用 new ArrayList<>(Arrays.asList(array))。\n\n扩展延伸：类似的陷阱——List.of()（JDK 9+）返回的也是不可变 List，不支持任何修改操作（包括 set）。subList 返回的视图支持结构修改但受限于原 List。",
     "hints": [
       "Arrays.asList 返回的是固定长度视图，不是 ArrayList",
       "Java 9 的 List.of() 也是不可变的"
@@ -718,7 +718,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Java 8 的 Optional 可以为 null",
     "content": "Optional.ofNullable() 允许传入 null 值，如果原始值为 null 返回 Optional.empty()。",
@@ -726,7 +726,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：Optional.ofNullable(value) 在 value 为 null 时返回 Optional.empty()，不会抛 NPE。而 Optional.of(value) 如果传入 null 会立即抛出 NullPointerException。Optional.ofNullable 是安全创建 Optional 的方式。再次强调——Optional 主要用于返回值类型，不应作为字段、方法参数或集合元素使用。\n\n扩展延伸：Optional 的常见用法——optional.orElse(defaultValue)、optional.orElseGet(() -> expensiveComputation())、optional.orElseThrow(() -> new CustomException())、optional.map(...).filter(...).ifPresent(...)。orElse 和 orElseGet 的区别——orElse 的参数即使值存在也会求值，orElseGet 只在值不存在时执行 Supplier。",
+    "answer": "正确。\n\n解析：Optional.ofNullable(value) 在 value 为 null 时返回 Optional.empty()，不会抛 NPE。而 Optional.of(value) 如果传入 null 会立即抛出 NullPointerException。Optional.ofNullable 是安全创建 Optional 的方式。再次强调——Optional 主要用于返回值类型，不应作为字段、方法参数或集合元素使用。\n\n扩展延伸：Optional 的常见用法——optional.orElse(defaultValue)、optional.orElseGet(() -> expensiveComputation())、optional.orElseThrow(() -> new CustomException())、optional.map(...).filter(...).ifPresent(...)。orElse 和 orElseGet 的区别——orElse 的参数即使值存在也会求值，orElseGet 只在值不存在时执行 Supplier。",
     "hints": [
       "ofNullable 与 of 的区别在于是否允许 null",
       "orElse 和 orElseGet 的求值时机不同"
@@ -738,7 +738,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "finally 块中 return 的不良实践",
     "content": "finally 块中不应该包含 return 语句，因为 finally 的 return 会覆盖 try/catch 中的 return 或异常。",
@@ -746,7 +746,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：finally 块中的 return 语句是 Java 中广为人知的不良实践（阿里巴巴 Java 规范也明确禁止）。原因 1）finally 中的 return 会覆盖 try 块中的 return 值。2）如果 try 块抛出了异常，finally 中的 return 会吞掉该异常（异常不会传播出去）。finally 块的正确用法是仅用于释放资源（关闭文件、释放锁等），不放置业务逻辑。\n\n扩展延伸：finally 中的 return 覆盖规则——try 中 return 1 首先被求值（1 被保存到栈中），然后 finally 执行并 return 3，此时 try 中保存的返回值 1 被丢弃，最终返回 3。异常吞没——try 块异常已经记录但 finally 的 return 直接返回导致异常无法传播到调用方。",
+    "answer": "正确。\n\n解析：finally 块中的 return 语句是 Java 中广为人知的不良实践（阿里巴巴 Java 规范也明确禁止）。原因 1）finally 中的 return 会覆盖 try 块中的 return 值。2）如果 try 块抛出了异常，finally 中的 return 会吞掉该异常（异常不会传播出去）。finally 块的正确用法是仅用于释放资源（关闭文件、释放锁等），不放置业务逻辑。\n\n扩展延伸：finally 中的 return 覆盖规则——try 中 return 1 首先被求值（1 被保存到栈中），然后 finally 执行并 return 3，此时 try 中保存的返回值 1 被丢弃，最终返回 3。异常吞没——try 块异常已经记录但 finally 的 return 直接返回导致异常无法传播到调用方。",
     "hints": [
       "finally 中的 return 会覆盖 try 中的 return 和异常",
       "阿里巴巴 Java 规约禁止在 finally 中使用 return"
@@ -768,7 +768,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：栈上分配（Stack Allocation）是逃逸分析的优化结果之一，但不是所有不逃逸的对象都会被栈上分配。JVM 的 C2 编译器通过逃逸分析判断对象不逃逸后，实际执行的是标量替换（Scalar Replacement）——将对象分解为多个独立标量（原始类型字段），在栈上分配这些标量，而不是在栈上分配对象本身。标量替换后栈中只有零散的基本类型字段，没有对象实体。\n\n扩展延伸：逃逸分析的三种优化——1）栈上分配（通过标量替换实现）。2）同步消除（Lock Elimination）——去掉不会逃逸到其他线程的锁。3）标量替换本身。并非所有不逃逸对象都会被优化——对象字段过多或太大时，JIT 可能放弃标量替换。逃逸分析是 C2 编译器的优化，C1 仅做有限支持。",
+    "answer": "错误。\n\n解析：栈上分配（Stack Allocation）是逃逸分析的优化结果之一，但不是所有不逃逸的对象都会被栈上分配。JVM 的 C2 编译器通过逃逸分析判断对象不逃逸后，实际执行的是标量替换（Scalar Replacement）——将对象分解为多个独立标量（原始类型字段），在栈上分配这些标量，而不是在栈上分配对象本身。标量替换后栈中只有零散的基本类型字段，没有对象实体。\n\n扩展延伸：逃逸分析的三种优化——1）栈上分配（通过标量替换实现）。2）同步消除（Lock Elimination）——去掉不会逃逸到其他线程的锁。3）标量替换本身。并非所有不逃逸对象都会被优化——对象字段过多或太大时，JIT 可能放弃标量替换。逃逸分析是 C2 编译器的优化，C1 仅做有限支持。",
     "hints": [
       "栈上分配实际是通过标量替换实现的",
       "不是所有不逃逸的对象都会被优化"
@@ -781,7 +781,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Java 泛型数组创建的限制",
     "content": "Java 不允许创建泛型数组，如 new List<String>[10] 会导致编译错误。",
@@ -789,7 +789,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：Java 禁止创建泛型数组（new List<String>[10] 编译错误）。原因是泛型通过类型擦除实现——运行时数组元素类型信息不可恢复。如果允许创建泛型数组，可能破坏数组的类型安全。例如：List<String>[] arr = new List<String>[1]; Object[] objArr = arr; objArr[0] = new ArrayList<Integer>(); // 数组协变导致类型安全问题。不过可以创建未泛型的 List[] 或使用通配符 List<?>[]。\n\n扩展延伸：替代方案——1）使用 ArrayList<List<String>> 代替数组。2）使用 Array.newInstance() 反射创建。3）使用 @SuppressWarnings(\"unchecked\") 绕过（内部使用但暴露给外部的 API 应保证类型安全）。PECS 原则（Producer Extends, Consumer Super）与数组无关，但与泛型通配符密切相关。",
+    "answer": "正确。\n\n解析：Java 禁止创建泛型数组（new List<String>[10] 编译错误）。原因是泛型通过类型擦除实现——运行时数组元素类型信息不可恢复。如果允许创建泛型数组，可能破坏数组的类型安全。例如：List<String>[] arr = new List<String>[1]; Object[] objArr = arr; objArr[0] = new ArrayList<Integer>(); // 数组协变导致类型安全问题。不过可以创建未泛型的 List[] 或使用通配符 List<?>[]。\n\n扩展延伸：替代方案——1）使用 ArrayList<List<String>> 代替数组。2）使用 Array.newInstance() 反射创建。3）使用 @SuppressWarnings(\"unchecked\") 绕过（内部使用但暴露给外部的 API 应保证类型安全）。PECS 原则（Producer Extends, Consumer Super）与数组无关，但与泛型通配符密切相关。",
     "hints": [
       "泛型数组被禁止的原因是类型擦除 + 数组协变不兼容",
       "ArrayList<List<String>> 是替代方案"
@@ -802,7 +802,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "G1 GC 是分代垃圾回收器",
     "content": "G1（Garbage First）垃圾回收器也是一种分代（Generational）垃圾回收器，拥有年轻代和老年代的概念。",
@@ -810,7 +810,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：G1 虽是分区（Region）设计，但仍然保留分代概念。G1 中的 Region 分为 Eden Region、Survivor Region、Old Region 和 Humongous Region。Eden 和 Survivor 构成年轻代，Old 构成老年代。G1 的 Young GC 回收 Eden + Survivor，Mixed GC 回收年轻代 + 部分老年代 Region。注意 G1 与传统的分代 GC（如 Parallel、CMS）的区别——传统分代 GC 中年轻代和老年代是连续的内存块，G1 的 Region 可以动态改变角色（Eden 用完可以变成 Old）。\n\n扩展延伸：ZGC 和 Shenandoah（某些配置下）是不分代的（Non-generational），即没有年轻代和老年代的概念，所有对象在同一个堆中处理。不过 ZGC 的 JEP 439（Generational ZGC，JDK 21 引入）又重新引入了分代概念，以提升性能（减少了 Full GC 频率，降低了 CPU 开销）。这也说明了分代假设（大多数对象朝生夕死）对于 GC 性能的重要性。",
+    "answer": "正确。\n\n解析：G1 虽是分区（Region）设计，但仍然保留分代概念。G1 中的 Region 分为 Eden Region、Survivor Region、Old Region 和 Humongous Region。Eden 和 Survivor 构成年轻代，Old 构成老年代。G1 的 Young GC 回收 Eden + Survivor，Mixed GC 回收年轻代 + 部分老年代 Region。注意 G1 与传统的分代 GC（如 Parallel、CMS）的区别——传统分代 GC 中年轻代和老年代是连续的内存块，G1 的 Region 可以动态改变角色（Eden 用完可以变成 Old）。\n\n扩展延伸：ZGC 和 Shenandoah（某些配置下）是不分代的（Non-generational），即没有年轻代和老年代的概念，所有对象在同一个堆中处理。不过 ZGC 的 JEP 439（Generational ZGC，JDK 21 引入）又重新引入了分代概念，以提升性能（减少了 Full GC 频率，降低了 CPU 开销）。这也说明了分代假设（大多数对象朝生夕死）对于 GC 性能的重要性。",
     "hints": [
       "G1 的 Region 角色可以是 Eden、Survivor、Old、Humongous",
       "G1 有 Young GC 和 Mixed GC（回收年轻代 + 部分老年代）"
@@ -832,7 +832,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：TreeSet 不使用 equals() 判断元素相等，而是使用 Comparator（如果构造时提供了）或元素的 Comparable.compareTo() 方法。当 compareTo()（或 compare()）返回 0 时，TreeSet 认为两个元素相等（即使 equals() 返回 false）。这是有序集合（SortedSet）与普通 Set 的重要区别。根据 Java 规范，推荐情况是 compareTo 返回 0 时 equals 也返回 true（即自然排序与 equals 一致），否则 TreeSet 会违反 Set 接口的通用约定（不允许重复元素）。\n\n扩展延伸：HashSet 使用 hashCode() + equals() 判断相等。LinkedHashSet（继承 HashSet）相同。TreeSet 使用 Comparator/Comparable。这是为什么如果自定义类同时用于 TreeSet 和 HashSet 时，需要确保 compareTo 和 equals 一致。例如 BigDecimal 的 compareTo(\"1.0\").equals(\"1.0\") 是 false（因为 scale 不同），所以 TreeSet<BigDecimal> 中 1.0 和 1.00 只能共存一个，但 HashSet<BigDecimal> 可以同时存这两个。",
+    "answer": "错误。\n\n解析：TreeSet 不使用 equals() 判断元素相等，而是使用 Comparator（如果构造时提供了）或元素的 Comparable.compareTo() 方法。当 compareTo()（或 compare()）返回 0 时，TreeSet 认为两个元素相等（即使 equals() 返回 false）。这是有序集合（SortedSet）与普通 Set 的重要区别。根据 Java 规范，推荐情况是 compareTo 返回 0 时 equals 也返回 true（即自然排序与 equals 一致），否则 TreeSet 会违反 Set 接口的通用约定（不允许重复元素）。\n\n扩展延伸：HashSet 使用 hashCode() + equals() 判断相等。LinkedHashSet（继承 HashSet）相同。TreeSet 使用 Comparator/Comparable。这是为什么如果自定义类同时用于 TreeSet 和 HashSet 时，需要确保 compareTo 和 equals 一致。例如 BigDecimal 的 compareTo(\"1.0\").equals(\"1.0\") 是 false（因为 scale 不同），所以 TreeSet<BigDecimal> 中 1.0 和 1.00 只能共存一个，但 HashSet<BigDecimal> 可以同时存这两个。",
     "hints": [
       "TreeSet 根据 compareTo/compare 的返回值判断是否相等（0 表示相等）",
       "HashSet 使用 equals() + hashCode() 判断相等"
@@ -855,7 +855,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：ConcurrentHashMap 不允许 null key 和 null value，这是它和 HashMap 的重要区别（HashMap 允许一个 null key 和多个 null value）。原因是 ConcurrentHashMap 的作者 Doug Lea 认为：在多线程环境下，可以通过 get(key) 返回 null 来推断两种情况——1）该 key 不存在；2）该 key 对应的 value 就是 null。这两种情况的含义完全不同，但在并发环境下无法简单区分（因为可能其他线程正在修改）。HashMap 的 containsKey() 方法可以区分，但 CHM 在多线程中不能可靠使用 containsKey 来判断。所以 CHM 直接禁止 null value，避免歧义。\n\n扩展延伸：Hashtable 也不允许 null key/value（作为线程安全的遗留类，JDK 1.0 就如此设计）。HashMap 允许 null：null key 的 hashCode 为 0，存储在 index 0 的桶中。ConcurrentSkipListMap 允许 null key 吗？不允许（NavigableMap 的实现通常不允许 null key，因为比较器在排序时无法处理 null）。",
+    "answer": "错误。\n\n解析：ConcurrentHashMap 不允许 null key 和 null value，这是它和 HashMap 的重要区别（HashMap 允许一个 null key 和多个 null value）。原因是 ConcurrentHashMap 的作者 Doug Lea 认为：在多线程环境下，可以通过 get(key) 返回 null 来推断两种情况——1）该 key 不存在；2）该 key 对应的 value 就是 null。这两种情况的含义完全不同，但在并发环境下无法简单区分（因为可能其他线程正在修改）。HashMap 的 containsKey() 方法可以区分，但 CHM 在多线程中不能可靠使用 containsKey 来判断。所以 CHM 直接禁止 null value，避免歧义。\n\n扩展延伸：Hashtable 也不允许 null key/value（作为线程安全的遗留类，JDK 1.0 就如此设计）。HashMap 允许 null：null key 的 hashCode 为 0，存储在 index 0 的桶中。ConcurrentSkipListMap 允许 null key 吗？不允许（NavigableMap 的实现通常不允许 null key，因为比较器在排序时无法处理 null）。",
     "hints": [
       "Doug Lea 认为 null value 在并发 Map 中会导致二义性问题",
       "HashMap 允许 null key/value，但 ConcurrentHashMap 和 Hashtable 都不允许"
@@ -877,7 +877,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：unmodifiableList() 返回原列表的只读视图（Unmodifiable List），所有修改操作（add、set、remove、clear 等）都抛出 UnsupportedOperationException。但注意：如果原列表在外部被修改，unmodifiable 视图的内容也会变化（因为是视图模式）。真正的\"不可变\"需要同时确保原列表不再被修改——要么丢弃原引用，要么在包装前复制一份：Collections.unmodifiableList(new ArrayList<>(original))。\n\n扩展延伸：JDK 9 引入了 List.of() 工厂方法创建真正的不可变列表（Immutable List）。与 unmodifiableList 的区别——1）List.of() 返回的列表本身就是不可变的，没有原列表引用（真正不可变）。2）unmodifiableList 只是视图，如果原列表改变，视图跟着变。3）List.of() 不支持 null 元素，unmodifiableList 可以（前提是原列表允许）。相似的包装方法：unmodifiableSet、unmodifiableMap、unmodifiableCollection、unmodifiableSortedSet 等。Guava 的 ImmutableList 也是真正的不可变列表（有独立的拷贝）。",
+    "answer": "正确。\n\n解析：unmodifiableList() 返回原列表的只读视图（Unmodifiable List），所有修改操作（add、set、remove、clear 等）都抛出 UnsupportedOperationException。但注意：如果原列表在外部被修改，unmodifiable 视图的内容也会变化（因为是视图模式）。真正的\"不可变\"需要同时确保原列表不再被修改——要么丢弃原引用，要么在包装前复制一份：Collections.unmodifiableList(new ArrayList<>(original))。\n\n扩展延伸：JDK 9 引入了 List.of() 工厂方法创建真正的不可变列表（Immutable List）。与 unmodifiableList 的区别——1）List.of() 返回的列表本身就是不可变的，没有原列表引用（真正不可变）。2）unmodifiableList 只是视图，如果原列表改变，视图跟着变。3）List.of() 不支持 null 元素，unmodifiableList 可以（前提是原列表允许）。相似的包装方法：unmodifiableSet、unmodifiableMap、unmodifiableCollection、unmodifiableSortedSet 等。Guava 的 ImmutableList 也是真正的不可变列表（有独立的拷贝）。",
     "hints": [
       "unmodifiableList 是视图模式的只读包装，原列表改变会反映到视图",
       "真正的不可变列表应该用 List.of() 或 unmodifiableList(new ArrayList<>(original))"
@@ -899,7 +899,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：ArrayDeque 不是线程安全的。它是单线程环境下的高性能双端队列实现，没有内部同步机制。多线程并发访问时，如果没有外部同步，会导致数据损坏（元素丢失、内部数据结构损坏等）。如果需要线程安全的 Deque，可以使用：1）Deque<String> safe = new LinkedBlockingDeque<>()（阻塞双端队列，线程安全）。2）Deque<String> safe = Collections.synchronizedDeque(new ArrayDeque<>())（同步包装视图）。3）ConcurrentLinkedDeque（非阻塞并发双端队列，基于 CAS 操作，无锁实现）。\n\n扩展延伸：java.util 包中的非线程安全集合包括：ArrayList、LinkedList、HashSet、TreeSet、HashMap、TreeMap、ArrayDeque 等。线程安全集合包括：Vector、Hashtable、ConcurrentHashMap、CopyOnWriteArrayList、CopyOnWriteArraySet、LinkedBlockingDeque、ConcurrentLinkedDeque、ConcurrentSkipListMap 等。设计原则：默认集合类是非线程安全的（避免不必要的同步开销），需要时才使用并发集合类或同步包装。",
+    "answer": "错误。\n\n解析：ArrayDeque 不是线程安全的。它是单线程环境下的高性能双端队列实现，没有内部同步机制。多线程并发访问时，如果没有外部同步，会导致数据损坏（元素丢失、内部数据结构损坏等）。如果需要线程安全的 Deque，可以使用：1）Deque<String> safe = new LinkedBlockingDeque<>()（阻塞双端队列，线程安全）。2）Deque<String> safe = Collections.synchronizedDeque(new ArrayDeque<>())（同步包装视图）。3）ConcurrentLinkedDeque（非阻塞并发双端队列，基于 CAS 操作，无锁实现）。\n\n扩展延伸：java.util 包中的非线程安全集合包括：ArrayList、LinkedList、HashSet、TreeSet、HashMap、TreeMap、ArrayDeque 等。线程安全集合包括：Vector、Hashtable、ConcurrentHashMap、CopyOnWriteArrayList、CopyOnWriteArraySet、LinkedBlockingDeque、ConcurrentLinkedDeque、ConcurrentSkipListMap 等。设计原则：默认集合类是非线程安全的（避免不必要的同步开销），需要时才使用并发集合类或同步包装。",
     "hints": [
       "ArrayDeque 没有内部同步，不是线程安全的",
       "需要线程安全的 Deque 可以使用 LinkedBlockingDeque 或 ConcurrentLinkedDeque"
@@ -921,7 +921,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误。\n\n解析：OOM 可以在多个区域发生：堆（Java heap space）、元空间（Metaspace）、直接内存（Direct buffer memory）、栈（unable to create new native thread）、GC 开销超限（GC overhead limit exceeded）、请求的数组大小超过限制（Requested array size exceeds VM limit）。\n\n不同 OOM 的排查方向不同：堆 OOM 看堆 Dump（排查内存泄漏），元空间 OOM 看类加载数（排查类加载泄漏），直接内存 OOM 查看 DirectByteBuffer 的分配，无法创建线程 OOM 看操作系统线程限制。\n\n扩展延伸：-XX:+HeapDumpOnOutOfMemoryError 在 OOM 时生成堆 Dump。资源泄漏（未关闭的 InputStream、Connection）也会导致 OOM。线程 OOM 不一定是代码问题——可能是操作系统 ulimit 限制。",
+    "answer": "错误。\n\n解析：OOM 可以在多个区域发生：堆（Java heap space）、元空间（Metaspace）、直接内存（Direct buffer memory）、栈（unable to create new native thread）、GC 开销超限（GC overhead limit exceeded）、请求的数组大小超过限制（Requested array size exceeds VM limit）。\n\n不同 OOM 的排查方向不同：堆 OOM 看堆 Dump（排查内存泄漏），元空间 OOM 看类加载数（排查类加载泄漏），直接内存 OOM 查看 DirectByteBuffer 的分配，无法创建线程 OOM 看操作系统线程限制。\n\n扩展延伸：-XX:+HeapDumpOnOutOfMemoryError 在 OOM 时生成堆 Dump。资源泄漏（未关闭的 InputStream、Connection）也会导致 OOM。线程 OOM 不一定是代码问题——可能是操作系统 ulimit 限制。",
     "hints": [
       "OOM 可以发生在堆、元空间、直接内存、栈等多个区域",
       "不同的 OOM 有不同的排查方法"
@@ -943,7 +943,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：标记接口是不包含任何方法声明的接口，用于在运行期通过 instanceof 检查类是否具有某种能力。\n\nCloneable：指示 Object.clone() 可以合法地对该类进行逐字段复制。如果没有实现 Cloneable 而调用 clone()，会抛出 CloneNotSupportedException。\n\nSerializable：指示该类可以被 ObjectOutputStream 序列化。如果试图序列化一个未实现 Serializable 的对象，会抛出 NotSerializableException。\n\n扩展延伸：标记接口的替代方案：注解（@Override、@Deprecated）。Effective Java 建议优先使用注解标记而非标记接口——但 Cloneable 和 Serializable 是 Java 早期设计，使用标记接口。现代 Java 中，Serializable 的实现者需要声明 serialVersionUID。",
+    "answer": "正确。\n\n解析：标记接口是不包含任何方法声明的接口，用于在运行期通过 instanceof 检查类是否具有某种能力。\n\nCloneable：指示 Object.clone() 可以合法地对该类进行逐字段复制。如果没有实现 Cloneable 而调用 clone()，会抛出 CloneNotSupportedException。\n\nSerializable：指示该类可以被 ObjectOutputStream 序列化。如果试图序列化一个未实现 Serializable 的对象，会抛出 NotSerializableException。\n\n扩展延伸：标记接口的替代方案：注解（@Override、@Deprecated）。Effective Java 建议优先使用注解标记而非标记接口——但 Cloneable 和 Serializable 是 Java 早期设计，使用标记接口。现代 Java 中，Serializable 的实现者需要声明 serialVersionUID。",
     "hints": [
       "标记接口用 instanceof 检查能力",
       "Cloneable 和 Serializable 是最常见的标记接口"
@@ -965,7 +965,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：String 是不可变类——创建后内容和长度都不能修改（底层 char[]/byte[] 数组用 final 修饰且不暴露）。String 的 replace()、substring() 等\"修改\"方法都返回新 String 对象。\n\nStringBuffer（线程安全）和 StringBuilder（非线程安全）是可变的——append()、insert()、delete() 等操作修改对象自身内容。\n\n为什么 String 设计为不可变：1）字符串常量池（String Pool）可在多个引用间共享；2）安全性——String 被广泛用作参数（类加载、网络连接、数据库 URL）；3）不可变对象天然线程安全；4）不可变 String 的 hashCode 可以缓存（懒计算后缓存）。\n\n扩展延伸：StringBuilder 在单线程下性能优于 StringBuffer（不需要 synchronized）。JDK 9 将 String 底层从 char[] 改为 byte[] + coder（Latin-1 vs UTF-16 编码标记），节省内存。编译器对字符串拼接（+）自动优化为 StringBuilder。",
+    "answer": "正确。\n\n解析：String 是不可变类——创建后内容和长度都不能修改（底层 char[]/byte[] 数组用 final 修饰且不暴露）。String 的 replace()、substring() 等\"修改\"方法都返回新 String 对象。\n\nStringBuffer（线程安全）和 StringBuilder（非线程安全）是可变的——append()、insert()、delete() 等操作修改对象自身内容。\n\n为什么 String 设计为不可变：1）字符串常量池（String Pool）可在多个引用间共享；2）安全性——String 被广泛用作参数（类加载、网络连接、数据库 URL）；3）不可变对象天然线程安全；4）不可变 String 的 hashCode 可以缓存（懒计算后缓存）。\n\n扩展延伸：StringBuilder 在单线程下性能优于 StringBuffer（不需要 synchronized）。JDK 9 将 String 底层从 char[] 改为 byte[] + coder（Latin-1 vs UTF-16 编码标记），节省内存。编译器对字符串拼接（+）自动优化为 StringBuilder。",
     "hints": [
       "String 不可变，StringBuffer/StringBuilder 可变",
       "String 不可变性使常量池共享成为可能"
@@ -979,7 +979,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "静态内部类",
     "content": "静态内部类（static nested class）的实例可以独立于外部类实例存在。",
@@ -987,7 +987,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：静态内部类（static nested class）与外部类的实例无关——创建静态内部类的实例不需要外部类实例。这与普通内部类（inner class）不同——普通内部类隐式持有外部类实例的引用，创建时需要外部类实例。\n\n静态内部类的特性：\n- 可以有自己的静态成员（静态字段、静态方法）\n- 只能访问外部类的静态成员（包括 private static）\n- 不持有外部类实例的引用（不会导致内存泄漏）\n\n普通内部类的特性：\n- 不能有静态成员\n- 可以访问外部类的实例成员和静态成员\n- 持有外部类实例的引用（外部类被回收前内部类不会回收）\n\n扩展延伸：匿名内部类中使用的局部变量必须是 final/effectively final。Lambda 表达式的 this 指向外部类实例（与匿名类不同）。静态内部类的经典应用：Builder 模式（如 StringBuilder、构建器）、Map.Entry（独立于 HashMap）、ArrayList 的 Itr 子类。",
+    "answer": "正确。\n\n解析：静态内部类（static nested class）与外部类的实例无关——创建静态内部类的实例不需要外部类实例。这与普通内部类（inner class）不同——普通内部类隐式持有外部类实例的引用，创建时需要外部类实例。\n\n静态内部类的特性：\n- 可以有自己的静态成员（静态字段、静态方法）\n- 只能访问外部类的静态成员（包括 private static）\n- 不持有外部类实例的引用（不会导致内存泄漏）\n\n普通内部类的特性：\n- 不能有静态成员\n- 可以访问外部类的实例成员和静态成员\n- 持有外部类实例的引用（外部类被回收前内部类不会回收）\n\n扩展延伸：匿名内部类中使用的局部变量必须是 final/effectively final。Lambda 表达式的 this 指向外部类实例（与匿名类不同）。静态内部类的经典应用：Builder 模式（如 StringBuilder、构建器）、Map.Entry（独立于 HashMap）、ArrayList 的 Itr 子类。",
     "hints": [
       "静态内部类不依赖外部类实例",
       "普通内部类持有外部类引用"
@@ -1009,7 +1009,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确。\n\n解析：Java 泛型通过类型擦除实现——编译期进行类型检查，生成字节码时擦除类型参数（替换为 Object 或边界类型），并插入必要的强制类型转换。\n\n因此 ArrayList<String>.class 和 ArrayList<Integer>.class 都是 ArrayList.class。\n\n类型擦除带来的限制：\n1. 不能使用 instanceof 检查泛型类型（如 list instanceof ArrayList<String> 编译错误）\n2. 不能创建泛型数组（new T[] 编译错误）\n3. 静态字段和方法中不能使用类的类型参数\n4. 不能实例化泛型类型（new T() 编译错误）\n\n扩展延伸：擦除后的桥接方法（bridge method）由编译器自动生成以维持多态。Reifiable 类型（如 List<?>、原始类型）的类型信息在运行期完全保留。为避免类型擦除问题，可以使用 TypeToken（Gson/Jackson 中的类型信息捕获技术）。",
+    "answer": "正确。\n\n解析：Java 泛型通过类型擦除实现——编译期进行类型检查，生成字节码时擦除类型参数（替换为 Object 或边界类型），并插入必要的强制类型转换。\n\n因此 ArrayList<String>.class 和 ArrayList<Integer>.class 都是 ArrayList.class。\n\n类型擦除带来的限制：\n1. 不能使用 instanceof 检查泛型类型（如 list instanceof ArrayList<String> 编译错误）\n2. 不能创建泛型数组（new T[] 编译错误）\n3. 静态字段和方法中不能使用类的类型参数\n4. 不能实例化泛型类型（new T() 编译错误）\n\n扩展延伸：擦除后的桥接方法（bridge method）由编译器自动生成以维持多态。Reifiable 类型（如 List<?>、原始类型）的类型信息在运行期完全保留。为避免类型擦除问题，可以使用 TypeToken（Gson/Jackson 中的类型信息捕获技术）。",
     "hints": [
       "Java 泛型在运行期擦除类型参数",
       "类型擦除带来 instanceof、new T[] 等限制"
@@ -1038,7 +1038,7 @@
   },
   {
     "category": "java",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "switch 表达式有返回值",
     "content": "Java 14+ 的 switch 表达式（Switch Expression）可以有返回值。",
@@ -1048,12 +1048,12 @@
       "Java",
       "switch",
       "表达式",
-      "JDK14"
+      "JDK 14"
     ]
   },
   {
     "category": "java",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Optional 可以序列化",
     "content": "java.util.Optional 实现了 Serializable 接口。",
@@ -1108,7 +1108,7 @@
       "通过 接口名.super.方法名() 语法指定调用的具体实现"
     ],
     "tags": [
-      "java"
+      "Java"
     ]
   },
   {
@@ -1123,7 +1123,7 @@
       "自动装箱使用 valueOf()，所以 -128~127 的 Integer 使用 == 比较相等"
     ],
     "tags": [
-      "java"
+      "Java"
     ]
   },
   {
@@ -1138,7 +1138,7 @@
       "可以通过 Throwable.getSuppressed() 获取所有被压制的异常"
     ],
     "tags": [
-      "java"
+      "Java"
     ]
   },
   {
@@ -1153,7 +1153,7 @@
       "-11.5 + 0.5 = -11.0，向下取整为 -11"
     ],
     "tags": [
-      "java"
+      "Java"
     ]
   },
   {
@@ -1168,12 +1168,12 @@
       "对 SubList 的修改会反映到原 List 上"
     ],
     "tags": [
-      "java"
+      "Java"
     ]
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "JVM 栈上分配",
     "content": "Java 虚拟机通过逃逸分析可能将对象分配在栈上而非堆上。",
@@ -1193,7 +1193,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Java 枚举线程安全",
     "content": "Java 枚举在序列化时，JVM 保证每个枚举常量只有单一实例。",
@@ -1233,7 +1233,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Java 受检异常",
     "content": "RuntimeException 及其子类是受检异常（Checked Exception），必须显式捕获或声明抛出。",
@@ -1253,7 +1253,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Java String 不变性",
     "content": "String 被声明为 final 的主要目的之一是防止被继承后破坏不可变性。",
@@ -1273,7 +1273,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Lambda 表达式对 effectively final 变量的访问",
     "content": "在 Java 中，Lambda 表达式可以访问被 effectively final（有效只读）的局部变量。",
@@ -1339,7 +1339,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "InheritableThreadLocal vs ThreadLocal 值传递",
     "content": "在 Java 中，默认情况下子线程可以自动继承父线程的 ThreadLocal 值。",
@@ -1375,7 +1375,7 @@
       "接口可以声明抽象方法要求实现类重写 Object 方法（如 Comparator.equals()）"
     ],
     "tags": [
-      "default 方法",
+      "Default方法",
       "Object",
       "接口",
       "类优先",
@@ -1448,7 +1448,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "静态内部类访问外部类实例变量",
     "content": "在 Java 中，静态内部类（static nested class）可以直接访问外部类的实例变量（非静态字段）。",
@@ -1470,7 +1470,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Integer 缓存范围可配置性",
     "content": "Integer 的 -128 到 127 缓存范围不可配置，是 JVM 固定的。",
@@ -1485,14 +1485,14 @@
     ],
     "tags": [
       "Integer",
-      "cache",
+      "Cache",
       "AutoBoxCacheMax",
       "JVM-parameter"
     ]
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "String常量池与new String()引用比较",
     "content": "String s1 = 「Hello」; String s2 = new String(「Hello」); 执行后，s1 == s2 返回true，因为字符串常量池会复用字面量。",
@@ -1538,7 +1538,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "try-with-resources的资源关闭顺序",
     "content": "在try-with-resources语句中，多个资源按声明顺序依次关闭。",
@@ -1606,7 +1606,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Arrays.sort 的算法选择策略",
     "content": "Java 中 Arrays.sort() 对基本类型数组使用双轴快速排序（Dual-Pivot Quicksort），对对象数组使用 TimSort。\nA) 正确\nB) 错误",
@@ -1623,7 +1623,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "HashMap 的 null 键存储位置",
     "content": "HashMap 允许存储至多一个 null 键，该 null 键始终被存储在数组索引 0 所对应的桶中。\nA) 正确\nB) 错误",
@@ -1635,7 +1635,7 @@
     "tags": [
       "Java",
       "HashMap",
-      "null键"
+      "null 键"
     ]
   },
   {
@@ -1714,7 +1714,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "CompletableFuture.obtrudeValue 修改已完成状态",
     "content": "CompletableFuture 提供了 obtrudeValue(T value) 和 obtrudeException(Throwable ex) 方法，即使 CompletableFuture 已经处于完成状态，obtrudeValue 也可以强制修改其结果值。",
@@ -1728,11 +1728,11 @@
       "这个方法名称中的 obtrude（强行闯入）准确地表达了其语义——与 complete() 不同，complete() 只在未完成时生效"
     ],
     "tags": [
-      "completablefuture",
+      "CompletableFuture",
       "obtrudevalue",
       "completion",
       "concurrency",
-      "api"
+      "API"
     ]
   },
   {
@@ -1751,16 +1751,16 @@
       "JVM 启动参数 -Djava.util.concurrent.ForkJoinPool.common.parallelism=N 需要在 commonPool 被首次使用前设置才有效"
     ],
     "tags": [
-      "forkjoinpool",
-      "commonpool",
-      "lazy-initialization",
+      "ForkJoinPool",
+      "commonPool",
+      "Lazy Initialization",
       "parallel-stream",
       "concurrency"
     ]
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Collectors.toUnmodifiableList 返回真正不可变列表",
     "content": "JDK 10+ 中 Collectors.toUnmodifiableList() 返回的 Collector 所生成的 List 完全不可修改——调用其 add()、set()、remove() 等方法会抛出 UnsupportedOperationException。",
@@ -1774,11 +1774,11 @@
       "这与 Stream.toList()（JDK 16+）相似但实现不同——Stream.toList() 返回的是 Arrays.asList() 变体。二者都是不可修改的"
     ],
     "tags": [
-      "collectors",
+      "Collectors",
       "tounmodifiablelist",
-      "immutable",
-      "java-10",
-      "stream-api"
+      "Immutable",
+      "Java 10",
+      "Stream API"
     ]
   },
   {
@@ -1799,7 +1799,7 @@
     "tags": [
       "threadgroup",
       "thread-safety",
-      "deprecated",
+      "Deprecated",
       "concurrency",
       "api-design"
     ]
@@ -1818,7 +1818,7 @@
     "tags": [
       "匿名类",
       "变量捕获",
-      "effectively-final",
+      "effectively final",
       "编译器",
       "内部类"
     ],
@@ -1830,7 +1830,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "子类中定义与父类 final 方法同名方法的合法性",
     "content": "父类的 final 实例方法不能被覆盖（override），但子类中可以定义与父类 final 方法同名的方法——这会导致父类方法在子类中被隐藏（hiding），子类实例调用时执行的是子类定义的方法。",
@@ -1878,7 +1878,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "字符串 switch 语句的 hashCode 冲突两阶段保护",
     "content": "Java 中 switch 语句的字符串实现在字节码层面采用 hashCode 散列定位加 equals 二次验证的两阶段匹配策略，因此即使不同的 case 标签字符串产生相同的 hashCode，也能在运行时通过 equals 验证跳转到正确的分支。",

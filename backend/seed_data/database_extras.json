@@ -1,222 +1,11 @@
 [
   {
     "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL MVCC 实现原理",
-    "content": "MySQL InnoDB 如何通过 MVCC 实现可重复读隔离级别？MVCC 依赖哪些核心数据结构？",
-    "answer": "答案：MVCC（多版本并发控制）通过每行记录维护多个版本实现读不阻塞写、写不阻塞读。\n\n解析：InnoDB 在每行记录后隐藏两个字段：DB_TRX_ID（最近修改的事务 ID）和 DB_ROLL_PTR（回滚指针，指向 undo log 中上一个版本）。事务启动时生成 ReadView（活跃事务 ID 列表），通过比较事务 ID 与 ReadView 判断哪个版本可见。可重复读级别下，ReadView 在事务第一次读时创建并复用，保证同事务多次读结果一致。\n\n扩展延伸：READ COMMITTED 与 REPEATABLE READ 的区别在于 ReadView 的创建时机——RC 每次读都重新生成，RR 只在第一次读时生成。MVCC 只在 READ COMMITTED 和 REPEATABLE READ 级别生效，READ UNCOMMITTED 总是读最新版本，SERIALIZABLE 全部加锁。",
-    "hints": [
-      "每行记录的隐藏字段是什么",
-      "ReadView 在 RC 和 RR 下的区别"
-    ],
-    "tags": [
-      "MySQL",
-      "MVCC",
-      "事务",
-      "InnoDB"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL B+ Tree 索引结构详解",
-    "content": "为什么 MySQL InnoDB 选择 B+ Tree 而不是 B Tree 或红黑树作为索引结构？B+ Tree 相比 B Tree 有哪些优势？",
-    "answer": "答案：B+ Tree 比 B Tree 更适合磁盘 I/O 场景，因为非叶子节点不存数据，单节点能存更多索引键。\n\n解析：B+ Tree 核心优势：1）非叶子节点只存索引键（不存数据），扇出高，树矮（3-4 层即可存千万级数据），减少磁盘 I/O 次数。2）叶子节点通过双向链表连接，支持范围查询（B Tree 需要中序遍历，B+ Tree 直接遍历叶子链表）。3）所有数据都在叶子节点，查询复杂度稳定。对比红黑树：红黑树高度 O(log n) 约为 20+ 层，磁盘 I/O 次数多 5-10 倍。\n\n扩展延伸：InnoDB 的页大小默认 16KB。假设主键为 BIGINT（8 字节）+ 指针（6 字节），每页可存约 1170 个索引键。三层 B+ Tree 可存 1170 × 1170 × 16 ≈ 2190 万条记录。",
-    "hints": [
-      "B+ Tree 非叶子节点和叶子节点各存什么",
-      "为什么范围查询 B+ Tree 比 B Tree 快"
-    ],
-    "tags": [
-      "MySQL",
-      "索引",
-      "B+ Tree",
-      "InnoDB"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据库索引失效的场景",
-    "content": "哪些情况下 MySQL 索引会失效？请列举至少 5 种常见场景并解释原因。",
-    "answer": "答案：常见索引失效场景包括：\n\n1）最左前缀原则不满足——联合索引 (a, b, c) 中跳过了第一列直接查 b。\n2）对索引列使用函数——WHERE LENGTH(name) = 5，索引列参与运算。\n3）隐式类型转换——列是 VARCHAR，条件给整数，MySQL 会加隐式 CAST 函数。\n4）LIKE 以 % 开头——WHERE name LIKE '%关键词'，无法利用索引。\n5）OR 条件中存在非索引列——WHERE id = 1 OR status = 'active'，status 无索引。\n6）索引列参与计算——WHERE age + 1 = 20。\n\n解析：索引本质是排序后的数据结构。对索引列做函数/运算后，排序结构被破坏，数据库只能全表扫描。最左前缀反映了联合索引按顺序构建的层级结构。\n\n扩展延伸：检查索引是否使用使用 EXPLAIN 查看 type 和 key 字段。Extra 中的 Using index 表示索引覆盖（无需回表），Using filesort 需要优化排序。",
-    "hints": [
-      "EXPLAIN 中 type 字段的常见值含义",
-      "索引覆盖（Covering Index）和回表的区别"
-    ],
-    "tags": [
-      "MySQL",
-      "索引",
-      "SQL优化"
-    ]
-  },
-  {
-    "category": "database",
     "difficulty": "easy",
-    "type": "short_answer",
-    "title": "SQL 数据库三大范式",
-    "content": "数据库设计中的三大范式是什么？为什么有时会违反范式（反范式化）？",
-    "answer": "答案：第一范式（1NF）：列不可再分（原子性）。第二范式（2NF）：在 1NF 基础上，非主键列完全依赖于主键（消除部分依赖）。第三范式（3NF）：在 2NF 基础上，非主键列不传递依赖于主键（消除传递依赖）。\n\n解析：范式化减少数据冗余、避免更新异常。但实际应用中常做反范式化——在表中冗余存储某些字段以减少 JOIN 查询。例如订单表直接存用户名而不是用户 ID，省去每次查询 JOIN 用户表。\n\n扩展延伸：工程中通常设计到 3NF，然后在性能瓶颈处用反范式化优化。过度范式化导致几十个表的复杂 JOIN，过度反范式化导致数据不一致风险。需要权衡。",
-    "hints": [
-      "部分依赖和传递依赖的区别",
-      "反范式化在什么场景下收益最大"
-    ],
-    "tags": [
-      "数据库",
-      "范式",
-      "设计"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL 主从复制原理",
-    "content": "MySQL 主从复制是如何工作的？有哪几种复制模式？",
-    "answer": "答案：主从复制基于 binlog（二进制日志），分为三个步骤：\n1）主库将数据变更写入 binlog。\n2）从库的 I/O 线程读取主库 binlog 并写入 relay log（中继日志）。\n3）从库的 SQL 线程重放 relay log 中的数据变更。\n\n解析：复制模式有三种：1）异步复制（默认）——主库不等待从库确认，性能最好但可能丢数据。2）半同步复制——主库等待至少一个从库写入 relay log 后才返回，兼顾性能和数据安全。3）全同步复制——所有从库都写入后才返回，数据最安全但最慢。\n\n扩展延伸：主从延迟是常见问题——从库查询读到旧数据。解决方案：1）强制主库读（读写分离中间件）。2）缓存预热。3）并行复制（MySQL 5.7+ 支持多线程复制）。",
-    "hints": [
-      "半同步复制和异步复制的区别",
-      "主从延迟通常由哪些原因造成"
-    ],
-    "tags": [
-      "MySQL",
-      "主从复制",
-      "架构"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "SQL vs NoSQL 的区别与选择",
-    "content": "关系型数据库（SQL）和非关系型数据库（NoSQL）有什么区别？各自适用什么场景？",
-    "answer": "答案：SQL 数据库使用结构化表模式和数据关系，支持 ACID 事务；NoSQL 数据库更灵活，支持多种数据模型（文档、键值、列族、图），通常牺牲强一致性换取性能和扩展性。\n\n解析：SQL 数据库强项是复杂的关联查询和事务完整性，适合金融、ERP 等系统。NoSQL 各类别适用场景不同：文档型（MongoDB）适合灵活 Schema、快速迭代；键值型（Redis）适合缓存、会话管理；列族型（HBase、Cassandra）适合宽表、时序数据；图数据库（Neo4j）适合社交关系、推荐系统。\n\n扩展延伸：现代架构普遍使用混合持久化（Polyglot Persistence）——MySQL 做核心事务 + Redis 做缓存 + Elasticsearch 做搜索，各取所长。",
-    "hints": [
-      "CAP 定理在 SQL 和 NoSQL 选择中的作用",
-      "BASE 理论和 ACID 的区别"
-    ],
-    "tags": [
-      "数据库",
-      "NoSQL",
-      "架构"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "InnoDB 页分裂与页合并",
-    "content": "关于 InnoDB B+ Tree 的页分裂和页合并，以下说法正确的是？",
-    "answer": "答案：C) 页分裂发生在插入时，页合并发生在删除后利用率低于阈值时\n\n解析：页分裂：当插入的数据导致叶子页满时，InnoDB 会分配新页并将原页一半记录移到新页。页合并：删除数据后页利用率低于 MERGE_THRESHOLD（默认 50%）时，尝试与相邻页合并。两者的根本原因都是 B+ Tree 的有序性要求。",
-    "hints": [],
-    "tags": [
-      "MySQL",
-      "InnoDB",
-      "索引"
-    ],
-    "options": [
-      "A) 页分裂和页合并都只在插入时发生",
-      "B) 页分裂是删除数据时触发的，页合并在插入时触发",
-      "C) 页分裂发生在插入时，页合并发生在删除后利用率低于阈值时",
-      "D) 页分裂和页合并都是主动触发，与数据操作无关"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "数据库隔离级别解决的问题",
-    "content": "以下哪种隔离级别可以解决幻读（Phantom Read）问题？",
-    "answer": "答案：B) Serializable 和 InnoDB 的 RR 级别（通过间隙锁）。\n\n解析：幻读指同一个事务内两次查询结果集的行数不同（新插入的行）。InnoDB 的 REPEATABLE READ 级别通过间隙锁（Gap Lock）和临键锁（Next-Key Lock）在 MVCC 基础上解决了幻读问题。SQL 标准定义的 RR 不解决幻读，但 InnoDB 实现了比标准更强的 RR。",
-    "hints": [],
-    "tags": [
-      "MySQL",
-      "事务",
-      "隔离级别"
-    ],
-    "options": [
-      "A) Read Committed 和 Repeatable Read",
-      "B) Serializable 和 InnoDB 的 RR 级别（通过间隙锁）",
-      "C) 只有 Serializable",
-      "D) Read Uncommitted 和 Read Committed"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "Redis 底层数据结构",
-    "content": "Redis 中哪些数据类型底层使用跳跃表（skiplist）实现？",
-    "answer": "答案：C) Zset（有序集合）\n\n解析：Redis 的 Zset 在元素较多或字符串较长时使用字典 + 跳跃表的组合实现。跳跃表支持 O(log n) 的插入、删除和范围查询。List 使用压缩列表或 quicklist，Hash 使用压缩列表或字典，Set 使用整数集合或字典。",
-    "hints": [],
-    "tags": [
-      "Redis",
-      "数据结构"
-    ],
-    "options": [
-      "A) List 和 Set",
-      "B) Hash 和 List",
-      "C) Zset（有序集合）",
-      "D) 所有 Redis 数据类型都使用跳跃表"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "MySQL 中 COUNT(*) 与 COUNT(1) 的区别",
-    "content": "MySQL 中 COUNT(*) 比 COUNT(1) 慢，因为 COUNT(*) 需要读取所有列。",
-    "answer": "错误。解析：MySQL 中 COUNT(*) 和 COUNT(1) 没有性能差异。COUNT(*) 不会展开所有列，而是选择最小的二级索引或聚簇索引进行计数（如果有二级索引优先用二级索引，因为大小更小）。性能差异的关键在于是否走了索引，而不是括号内的内容。特殊地，COUNT(列名) 会排除该列为 NULL 的行，所以语义不同。",
-    "tags": [
-      "MySQL",
-      "SQL优化"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "true_false",
-    "title": "Redis 的 SETNX 作为分布式锁",
-    "content": "只用 Redis 的 SETNX 命令实现分布式锁是足够安全的。",
-    "answer": "错误。解析：只用 SETNX 存在问题：1）没有设置过期时间时，获得锁的进程崩溃会导致死锁。2）即使 SETNX + EXPIRE 分开设置也不是原子的，EXPIRE 可能执行失败。3）锁可能被其他进程误释放（没有唯一标识）。4）无法处理时钟漂移。正确实现方案：使用 Redis Redlock 算法或 SET key value NX EX seconds 单原子命令 + 随机 value 做锁校验 + Lua 脚本保证释放的原子性。",
-    "tags": [
-      "Redis",
-      "分布式锁"
-    ],
-    "options": [
-      "正确",
-      "错误"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "Redis 持久化方式",
-    "content": "Redis 提供两种持久化方式：___（定时将内存快照写入磁盘）和 ___（记录每次写操作的日志）。前者适合___场景，后者数据安全性更高但___更大。",
-    "answer": "{\"correct\":[[\"RDB\",\"RDB 快照\"],[\"AOF\"],[\"备份\",\"全量恢复\"],[\"文件体积\",\"AOF 文件\"]],\"distractors\":[\"LDB\",\"日志\",\"主从\",\"内存占用\"]}",
-    "hints": [
-      "RDB 触发时机：save 命令、bgsave 命令、配置策略",
-      "AOF 的重写机制是什么"
-    ],
-    "tags": [
-      "Redis",
-      "持久化"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
     "type": "choice",
     "title": "MySQL 中 VARCHAR 和 CHAR 的区别",
     "content": "关于 MySQL 中 VARCHAR 和 CHAR 类型，以下说法正确的是？",
-    "answer": "答案：B) VARCHAR 是变长字符串，CHAR 是定长字符串\n\n解析：VARCHAR 存储变长字符串，额外用 1-2 字节记录长度，适合长度差异大的列。CHAR 固定分配指定长度，适合长度固定的列（如手机号、身份证号）。VARCHAR(255) 和 VARCHAR(256) 的区别在于 255 以内只需 1 字节记录长度，256 以上需要 2 字节。此外，CHAR 在检索时会去掉末尾空格，VARCHAR 保留。",
+    "answer": "B) VARCHAR 是变长字符串，CHAR 是定长字符串\n\n解析：VARCHAR 存储变长字符串，额外用 1-2 字节记录长度，适合长度差异大的列。CHAR 固定分配指定长度，适合长度固定的列（如手机号、身份证号）。VARCHAR(255) 和 VARCHAR(256) 的区别在于 255 以内只需 1 字节记录长度，256 以上需要 2 字节。此外，CHAR 在检索时会去掉末尾空格，VARCHAR 保留。",
     "hints": [],
     "tags": [
       "MySQL",
@@ -231,11 +20,11 @@
   },
   {
     "category": "database",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Elasticsearch 倒排索引原理",
     "content": "Elasticsearch 的倒排索引是什么？全文搜索为什么比 LIKE 快那么多？",
-    "answer": "答案：倒排索引是词（Term）到文档（Document）的映射表，记录每个词出现在哪些文档中、什么位置。\n\n解析：MySQL LIKE '%关键词%' 走全表扫描，逐行匹配字符串。ES 在写入时预先分词、构建倒排索引，查询时直接通过词找到对应文档。以搜索”数据库优化”为例，ES 分词为”数据库”和”优化”，在倒排表中是两次 O(1) 查找，复杂度与文档总数无关，只与词频有关。\n\n扩展延伸：ES 的索引流程：文本 → 字符过滤 → 分词器（Tokenizer）→ 词项过滤（小写化、停用词、同义词）→ 写入倒排表。查询时默认使用 BM25 算法（Okapi BM25，基于 TF-IDF 改进）计算相关性评分。",
+    "answer": "倒排索引是词（Term）到文档（Document）的映射表，记录每个词出现在哪些文档中、什么位置。\n\n解析：MySQL LIKE '%关键词%' 走全表扫描，逐行匹配字符串。ES 在写入时预先分词、构建倒排索引，查询时直接通过词找到对应文档。以搜索”数据库优化”为例，ES 分词为”数据库”和”优化”，在倒排表中是两次 O(1) 查找，复杂度与文档总数无关，只与词频有关。\n\n扩展延伸：ES 的索引流程：文本 → 字符过滤 → 分词器（Tokenizer）→ 词项过滤（小写化、停用词、同义词）→ 写入倒排表。查询时默认使用 BM25 算法（Okapi BM25，基于 TF-IDF 改进）计算相关性评分。",
     "hints": [
       "正排索引和倒排索引的区别",
       "ES 中的分片（Shard）和副本（Replica）是什么"
@@ -248,119 +37,11 @@
   },
   {
     "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据库连接池的作用与配置",
-    "content": "数据库连接池有什么作用？连接池的常见参数（如最小连接数、最大连接数、连接超时）如何配置？",
-    "answer": "答案：数据库连接池复用 TCP 连接，避免每次数据库操作都经历 TCP 建连、MySQL 认证、TCP 断连的开销。\n\n解析：建连数据库通常需要 1-3ms（局域网）+ MySQL 认证，高频场景下不可忽略。连接池的关键参数：最小空闲连接数（保活，应对突发流量）、最大连接数（防止耗尽数据库资源）、连接超时（等待连接的最大时间）、空闲回收时间（超过此时间的空闲连接被关闭）。\n\n扩展延伸：HikariCP（Spring Boot 默认）推荐配置：maximumPoolSize = (core_count * 2) + effective_spindle_count。连接池不是越大越好——数据库侧每个连接消耗线程和内存（PostgreSQL 约 5MB/连接），过大的连接池反而导致上下文切换加剧。",
-    "hints": [
-      "连接池大小为什么不是越大越好",
-      "如何监控连接池的健康状态"
-    ],
-    "tags": [
-      "数据库",
-      "连接池",
-      "性能"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 死锁分析与排查",
-    "content": "MySQL InnoDB 中死锁（Deadlock）是如何产生的？如何查看和分析死锁？有哪些预防措施？",
-    "answer": "答案：死锁是两个或多个事务相互等待对方释放锁导致的循环等待。InnoDB 通过死锁检测（wait-for graph）自动发现并回滚代价较小的事务（持有锁较少或回滚代价低的事务）。\n\n解析：死锁产生条件（与操作系统死锁条件一致）：互斥、持有并等待、不可剥夺、循环等待。MySQL 中典型的死锁场景：事务 A 锁了行 1 想锁行 2，事务 B 锁了行 2 想锁行 1。或者间隙锁导致的死锁——两个事务的 INSERT 操作在相邻间隙上相互阻塞。查看最近死锁：SHOW ENGINE INNODB STATUS；查看输出的 LATEST DETECTED DEADLOCK 部分，包含涉及的事务和 SQL、持有的锁、等待的锁。MySQL 5.6+ 启用 innodb_print_all_deadlocks 可将所有死锁记录到错误日志。\n\n扩展延伸：频繁死锁时应该分析的几个方向：1）SQL 执行顺序——确保多个事务访问多个表的顺序一致（如都按 A→B 的顺序加锁）。2）索引——检查 SQL 是否使用了正确的索引（全表扫描会锁大量行，增加死锁概率）。3）降低隔离级别——从 RR 降到 RC（减少间隙锁）。4）缩短事务——事务保持时间越短，死锁概率越低。5）重试机制——在应用层捕获死锁异常（MySQL 错误码 1213）并重试。注意：死锁不是 bug——它是事务并发下的正常现象。合理的策略是检测 + 重试，而非消除所有死锁可能。",
-    "hints": [
-      "SHOW ENGINE INNODB STATUS 中哪个部分显示死锁信息",
-      "为什么降低隔离级别可以减少死锁"
-    ],
-    "tags": [
-      "MySQL",
-      "死锁",
-      "事务",
-      "InnoDB"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "乐观锁与悲观锁",
-    "content": "乐观锁和悲观锁在数据库中的应用场景是什么？各自如何实现？什么场景下选择哪一种？",
-    "answer": "答案：悲观锁假设并发冲突很频繁，每次操作数据前都加锁（SELECT … FOR UPDATE）。乐观锁假设冲突很少发生，只在提交时检查数据是否被修改过（通过版本号或时间戳）。\n\n解析：悲观锁——通过数据库的锁机制（行锁、表锁）保证并发安全。适用场景：写冲突频繁、数据一致性要求极高的场景（如库存扣减、金融转账）。缺点：锁等待降低并发度，可能死锁。乐观锁——不锁数据库，通过应用层控制。常见实现方式：1）版本号（version）——读取时获取 version，更新时 SET version = version + 1 WHERE version = old_version。如果 affected_rows = 0 说明其他人已经修改过，重试。2）CAS（Check-And-Set）——WHERE status = old_status 或者 WHERE stock >= required 等条件判断。适用场景：读多写少、并发冲突概率低的场景（如文章更新、用户资料修改）。缺点：冲突频繁时重试开销大。\n\n扩展延伸：悲观锁的 select … for update 注意事项：1）必须在事务中执行。2）只在 InnoDB 的行锁级别生效（无索引会升级为表锁）。3）需要配合索引使用。乐观锁在分布式系统中的变体：1）Redis 的 WATCH 命令（乐观锁 CAS）。2）ETCD 的 Revision 机制。3）ZooKeeper 的版本号。选型总结：高并发写入、冲突频繁 → 悲观锁（或分布式锁）；低冲突概率、读多写少 → 乐观锁；一致性 > 性能 → 悲观锁；性能 > 强一致 → 乐观锁。",
-    "hints": [
-      "SELECT … FOR UPDATE 在索引失效时可能变成表锁",
-      "乐观锁 version 和 CAS 两种实现方式哪个更好"
-    ],
-    "tags": [
-      "数据库",
-      "乐观锁",
-      "悲观锁",
-      "并发"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "InnoDB 行格式（Row Format）",
-    "content": "MySQL InnoDB 支持哪几种行格式？COMPACT、DYNAMIC、COMPRESSED 之间有什么区别？溢出页（Overflow Page）是如何工作的？",
-    "answer": "答案：InnoDB 行格式有四种：REDUNDANT（旧格式，基本淘汰）、COMPACT（MySQL 5.0 引入）、DYNAMIC（MySQL 5.7 默认）、COMPRESSED（在 DYNAMIC 基础上支持页压缩）。DYNAMIC 和 COMPRESSED 会将长字段（TEXT/BLOB）存储在溢出页，行内只保留 20 字节指针。\n\n解析：COMPACT 格式——行数据包含变长字段长度列表、NULL 标志位、记录头信息、RowID（无主键时）、事务 ID、回滚指针、各列数据。当一行数据超过一个页（16KB）时，部分数据存储到溢出页（off-page storage），行内用 768 字节前缀 + 20 字节指针。缺点：大字段的 768 字节前缀占用了行内空间，可能导致行总长度过大。DYNAMIC 格式（MySQL 5.7 默认）——优化了大字段的存储：不再存储 768 字节前缀，行内只保留 20 字节溢出页指针。完全的行外存储减少了行大小，提高 B+ Tree 的扇出（一页能存更多行），改善范围扫描性能。\n\n扩展延伸：COMPRESSED 格式——同 DYNAMIC 的溢出机制，但页级别使用 zlib 压缩。优点：减少磁盘 I/O 和内存占用（压缩页在 buffer pool 中以压缩形式存在）。缺点：压缩/解压消耗 CPU。适用场景：存储日志、文本等可压缩比高的数据。注意：COMPRESSED 格式的性能取决于 CPU 和 I/O 的平衡——IO 密集且数据压缩比高时收益大；CPU 密集时可能得不偿失。查看行格式：SHOW TABLE STATUS LIKE 'table_name'; 或 INFORMATION_SCHEMA.TABLES。",
-    "hints": [
-      "为什么 DYNAMIC 格式比 COMPACT 更适合大字段表",
-      "COMPRESSED 行格式在什么场景下收益最大"
-    ],
-    "tags": [
-      "MySQL",
-      "InnoDB",
-      "行格式",
-      "存储"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "InnoDB 自适应哈希索引（AHI）",
-    "content": "什么是 InnoDB 的自适应哈希索引（Adaptive Hash Index）？它是如何工作的？什么情况下 AHI 可能成为瓶颈？",
-    "answer": "答案：自适应哈希索引（AHI）是 InnoDB 在内存中自动构建的哈希索引，加速 buffer pool 中频繁访问的索引页的等值查询（如 WHERE id = ?）。\n\n解析：AHI 的构建条件——InnoDB 监控对 B+ Tree 索引页的访问模式，如果某个索引页频繁通过等值条件访问（而不是范围扫描），且满足一定的访问频率阈值，InnoDB 会为该页构建 AHI 哈希索引。AHI 的数据结构是一个散列表，key 为（space_id + page_no），value 为哈希值。查询时先根据 space_id + page_no 查 AHI 找到页在 buffer pool 的位置，直接定位而无需遍历 B+ Tree 的多个层级。特点是完全自动、无需人工配置、内存分配来源于 buffer pool（通过 innodb_adaptive_hash_index_parts 控制分区数）。\n\n扩展延伸：AHI 可能成为瓶颈的场景：1）高并发写入时——AHI 需要维护自身的哈希表（split/merge），加锁操作（btr_search_latch）成为全局竞争热点（SX-latch contention）。2）MySQL 5.7 及之前版本中 AHI 使用单一的全局锁（search_latch），高并发 INSERT 场景下出现明显的等待（btr_search_latch 竞争）。3）MySQL 8.0 通过将 AHI 分区（innodb_adaptive_hash_index_parts，默认 8 分区）缓解了这个问题。AHI 支持开关控制：innodb_adaptive_hash_index=ON/OFF。关闭建议：如果 SHOW ENGINE INNODB STATUS 中 SEMAPHORES 部分显示大量 btr_search_latch 等待。AHI 只在等值查询上有效，对范围查询（>、<、BETWEEN）无帮助（B+ Tree 的叶子链表更优）。",
-    "hints": [
-      "btr_search_latch 竞争在什么场景下会出现",
-      "AHI 为什么对范围查询没有加速效果"
-    ],
-    "tags": [
-      "MySQL",
-      "InnoDB",
-      "自适应哈希索引",
-      "性能"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "索引覆盖（Covering Index）与回表",
-    "content": "什么是索引覆盖（Covering Index）？什么是回表查询（Bookmark Lookup）？为什么要尽量使用索引覆盖？如何通过 EXPLAIN 判断？",
-    "answer": "答案：索引覆盖指查询所需的所有列都在索引树中（无需回表访问主键数据页）。回表指通过二级索引找到主键值后，再到聚簇索引中读取完整行数据。覆盖索引避免回表，减少磁盘 I/O。\n\n解析：InnoDB 的聚簇索引（Clustered Index）——表数据按主键顺序存储在 B+ Tree 的叶子节点（主键=数据行）。二级索引（Secondary Index）——叶子节点存储索引列的值 + 主键值（不是数据行本身）。所以二级索引找到记录后还需通过主键回表（一次额外 B+ Tree 搜索）读取完整数据。覆盖索引：如果 SELECT 的列都在二级索引中（如 SELECT id, name FROM user WHERE name = '...'，而 (name, id) 是联合索引），则二级索引的叶子节点已包含所有需要的数据，无需回表。\n\n扩展延伸：EXPLAIN 中 Extra 字段出现 Using index 表示使用了覆盖索引（无需回表）。出现 Using index condition 表示索引下推（虽然用了索引但需要回表）。没有 Using index 说明走了二级索引 + 回表。覆盖索引的设计策略：将高频查询的字段加入到已有索引的最右端（不影响最左前缀匹配），或者为高频查询专门设计索引。如：某个查询频繁根据 status 查 id 和 create_time，可以建索引 (status, create_time, id) 实现覆盖。注意：不要过度设计覆盖索引——索引也是有维护成本的（插入/更新需更新所有索引）。覆盖索引的主要收益在于减少磁盘 I/O 和减少对聚簇索引的访问压力。",
-    "hints": [
-      "EXPLAIN 中 Extra 字段的 Using index 和 Using index condition 的区别",
-      "覆盖索引和联合索引的关系是什么"
-    ],
-    "tags": [
-      "MySQL",
-      "索引",
-      "覆盖索引",
-      "回表",
-      "SQL优化"
-    ]
-  },
-  {
-    "category": "database",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "InnoDB Change Buffer",
     "content": "InnoDB 的 Change Buffer（变更缓冲区，旧称 Insert Buffer）的作用是什么？它如何提升性能？Change Buffer 在 MySQL 8.0 之后有什么变化？",
-    "answer": "答案：Change Buffer 用于缓存对二级索引页的变更操作（INSERT/UPDATE/DELETE），当目标索引页不在 buffer pool 中时，先将变更记录到 Change Buffer，等该页被读入 buffer pool 时再合并（Merge），减少磁盘随机 I/O。\n\n解析：二级索引的写入问题——InnoDB 的二级索引通常不是顺序的（相对于聚簇索引）。当 INSERT 一行数据时：聚簇索引写入（主键顺序，基本顺序写），但所有二级索引的更新需要随机 I/O。如果不做 Change Buffer，每次二级索引插入都需要磁盘随机读将目标页加载到 buffer pool。Change Buffer 的优化：1）变更操作写入 Change Buffer（内存 + 磁盘持久化）。2）当目标页被其他操作读入 buffer pool 时，触发 Change Buffer 的合并。3）Merge 批量化地应用变更到目标页。\n\n扩展延伸：Change Buffer 的配置——innodb_change_buffering 参数可设：none、inserts（只缓存 INSERT）、deletes、changes（inserts + deletes）、purges、all（默认值）。innodb_change_buffer_max_size（默认 25）——Change Buffer 最多占用 buffer pool 的 25%。MySQL 8.0 的改进：Change Buffer 从单一的 Insert Buffer 扩展到支持 INSERT/UPDATE/DELETE 三类变更。Change Buffer 的局限性——只对非唯一的二级索引有效（唯一索引需要立即检查唯一性约束，不能延迟合并）。对写密集场景也有副作用：如果二级索引页很少被读取，Change Buffer 会无限增长。",
+    "answer": "Change Buffer 用于缓存对二级索引页的变更操作（INSERT/UPDATE/DELETE），当目标索引页不在 buffer pool 中时，先将变更记录到 Change Buffer，等该页被读入 buffer pool 时再合并（Merge），减少磁盘随机 I/O。\n\n解析：二级索引的写入问题——InnoDB 的二级索引通常不是顺序的（相对于聚簇索引）。当 INSERT 一行数据时：聚簇索引写入（主键顺序，基本顺序写），但所有二级索引的更新需要随机 I/O。如果不做 Change Buffer，每次二级索引插入都需要磁盘随机读将目标页加载到 buffer pool。Change Buffer 的优化：1）变更操作写入 Change Buffer（内存 + 磁盘持久化）。2）当目标页被其他操作读入 buffer pool 时，触发 Change Buffer 的合并。3）Merge 批量化地应用变更到目标页。\n\n扩展延伸：Change Buffer 的配置——innodb_change_buffering 参数可设：none、inserts（只缓存 INSERT）、deletes、changes（inserts + deletes）、purges、all（默认值）。innodb_change_buffer_max_size（默认 25）——Change Buffer 最多占用 buffer pool 的 25%。MySQL 8.0 的改进：Change Buffer 从单一的 Insert Buffer 扩展到支持 INSERT/UPDATE/DELETE 三类变更。Change Buffer 的局限性——只对非唯一的二级索引有效（唯一索引需要立即检查唯一性约束，不能延迟合并）。对写密集场景也有副作用：如果二级索引页很少被读取，Change Buffer 会无限增长。",
     "hints": [
       "为什么 Change Buffer 对唯一索引无效",
       "Change Buffer 在什么场景下反而可能成为性能瓶颈"
@@ -376,64 +57,9 @@
     "category": "database",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "InnoDB Doublewrite Buffer",
-    "content": "什么是 InnoDB 的 Doublewrite Buffer（双写缓冲区）？它解决什么问题？为什么需要它而不仅仅依赖 Redo Log？",
-    "answer": "答案：Doublewrite Buffer 是 InnoDB 在写入数据页前的双重写入机制——先将页的副本写入 Doublewrite Buffer（顺序写），再写入实际数据文件（随机写）。解决部分写失效（Partial Page Write）问题——当数据库在写入 16KB 页的过程中崩溃，可能导致只有部分页写入磁盘（例如只写了 4KB），页数据损坏且 Redo Log 无法恢复。\n\n解析：部分写问题——InnoDB 数据页默认 16KB，而 OS 的磁盘写入单位通常为 512 字节（扇区）或 4KB。如果数据库在写 16KB 数据页到磁盘的过程中崩溃（如断电），可能只写入了部分内容，造成页损坏。此时该页的 LSN 无法正常识别，Redo Log 无法安全地应用到该页上。Doublewrite Buffer 的机制——1）写数据页到 Doublewrite Buffer（2MB 连续空间，顺序写）。2）将整个 Doublewrite Buffer 刷到磁盘（一次 fsync）。3）再从 Doublewrite Buffer 将数据页复制到各自的最终位置（随机写）。崩溃恢复时——如果在第一步或第二步崩溃，磁盘上的原始页是好的，Redo Log 可以正常恢复。如果在第三步崩溃，InnoDB 可以从 Doublewrite Buffer 找到页的完好副本恢复。\n\n扩展延伸：Doublewrite Buffer 的性能影响——写量翻倍，但实际影响不大：因为 Doublewrite Buffer 写入是顺序的，真正的数据写入才是随机 I/O。Doublewrite Buffer 默认开启（innodb_doublewrite=ON），建议一直保持开启。特殊场景——某些文件系统（如 ZFS）和存储系统（支持原子写 16KB 的硬件）本身已经解决部分写问题，可以关闭。MySQL 8.0.20+ 将 Doublewrite Buffer 从 system tablespace 迁移到独立文件，支持并发写入。",
-    "hints": [
-      "为什么部分写失效后 Redo Log 无法恢复",
-      "Doublewrite Buffer 在 SSD 上是否仍然必要"
-    ],
-    "tags": [
-      "MySQL",
-      "InnoDB",
-      "Doublewrite",
-      "数据完整性"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "InnoDB Redo Log 与 Undo Log",
-    "content": "InnoDB 的 Redo Log 和 Undo Log 分别是什么？它们如何配合实现事务的 ACID 特性？",
-    "answer": "答案：Redo Log 记录事务对数据页的物理修改，用于保证事务的持久性（Durability，D）。Undo Log 记录事务修改前的数据状态，用于支持事务回滚（Atomicity，A）和 MVCC（一致性读，I）。两者配合实现 Crash Recovery 和 ACID。\n\n解析：Redo Log——记录页级别的物理修改，如「将 page 5 的 offset 100 处的值改为 200」。顺序写入（环形写入，循环覆盖旧的 log 文件），写入速度快。WAL（Write Ahead Logging）——事务提交时必须先将 Redo Log 刷盘（fsync 保证落盘），然后才将数据页写入磁盘。这就是 Redo Log 能保证持久性的原因：即使数据页还没写盘就崩溃，恢复时通过 Redo Log 重放所有已提交事务的修改。Undo Log——记录逻辑层面的反向操作，存储在 rollback segment 中（system tablespace 或 undo tablespace）。回滚时顺序读取 Undo Log 逐条执行反向操作。MVCC——Undo Log 还用于构建一致性读，通过 Undo Log 链表可以读到事务开始前的旧版本数据。\n\n扩展延伸：Crash Recovery 三阶段：1）Redo Phase（前滚）——从 checkpoint 位置开始扫描 Redo Log，重放所有未刷盘的修改（不管事务是否提交）。2）Undo Phase（回滚）——对 Redo Phase 后仍未提交的事务回滚其修改。3）Cleanup——清理未完成的事务和锁。参数优化：innodb_log_file_size——控制 Redo Log 总大小（MySQL 8.0+ 推荐 2-4GB，原默认 48MB 对写密集场景过小）。如果 Redo Log 太小，频繁的 checkpoint 导致性能抖动。MySQL 8.0 引入了 Redo Log 的自动调优。",
-    "hints": [
-      "WAL（Write Ahead Logging）保证持久性的原理是什么",
-      "为什么 Redo Log 是物理日志而 Undo Log 是逻辑日志"
-    ],
-    "tags": [
-      "MySQL",
-      "InnoDB",
-      "Redo Log",
-      "Undo Log",
-      "事务"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL 索引下推（ICP）",
-    "content": "什么是 MySQL 的索引下推（Index Condition Pushdown，ICP）？它如何减少回表次数？什么时候 ICP 不能生效？",
-    "answer": "答案：索引下推是 MySQL 5.6 引入的优化，将 WHERE 条件中可以用索引筛选的部分「下推」到存储引擎层，在索引遍历过程中提前过滤不满足条件的记录，减少回表次数和 Server 层的数据处理量。\n\n解析：没有 ICP 时——存储引擎通过索引找到满足最左前缀条件的行（主键值），回表读取完整行数据，返回给 Server 层过滤。所有索引命中的行都要回表，即使它们最终被 WHERE 条件过滤掉了。有了 ICP 后——如果 WHERE 中的列虽然不在索引的最左前缀中，但属于索引的一部分（覆盖索引的中间或末尾列），存储引擎可以在索引遍历时直接判断该条件，不满足则直接跳过，不回表。示例：索引 (city, age)，查询 WHERE city='Beijing' AND age > 25。没有 ICP：通过 city='Beijing' 找到所有行，回表过滤 age > 25。有 ICP：在索引遍历时直接判断 age > 25，不满足跳过。\n\n扩展延伸：ICP 的使用条件——1）只适用于二级索引（不适用于聚簇索引）。2）只适用于 Range、Ref、Eq_Ref、Ref_Or_Null 访问方法。3）不支持子查询条件。4）不支持存储函数或触发器。查看 ICP 是否生效——EXPLAIN 输出中 Extra 列显示 Using index condition。ICP 默认开启（optimizer_switch 中的 index_condition_pushdown=on）。主要收益在于减少回表的 I/O 次数。",
-    "hints": [
-      "EXPLAIN 中 Extra 列的 Using index condition 表示 ICP 生效",
-      "ICP 为什么只对二级索引有效"
-    ],
-    "tags": [
-      "MySQL",
-      "索引下推",
-      "ICP",
-      "SQL优化"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "MySQL Group Commit（组提交）",
     "content": "什么是 MySQL 的 Group Commit（组提交）？它解决了什么问题？在 MySQL 8.0 中是如何实现的？",
-    "answer": "答案：Group Commit 将多个事务的 Redo Log 刷盘操作合并成一次 fsync 调用，减少磁盘 I/O 次数，显著提高高并发场景下的事务处理吞吐量。\n\n解析：问题背景——事务提交时 Redo Log 需要 fsync 刷盘。fsync 是昂贵的磁盘 I/O 操作（SSD 上约 10-100 微秒，HDD 上 5-10 毫秒）。如果每个事务提交都做一次 fsync，TPS 上限受限于 fsync 的延迟。Group Commit 的原理——多个事务同时提交时，它们进入队列。队列中第一个事务（Leader）负责为整个组执行 Redo Log 刷盘操作。其他事务（Follower）在 Leader 完成刷盘后直接从提交队列返回。一次 fsync 服务多个事务，大幅提升吞吐量。\n\n扩展延伸：MySQL 8.0 的 Group Commit 三个阶段（由 binlog_group_commit_sync_delay 和 binlog_group_commit_sync_no_delay_count 控制）：1）FLUSH 阶段——将每个事务的 binlog 写入内存缓冲区，Leader 等待达到 count 或 delay 阈值。2）SYNC 阶段——Leader 调用 fsync 将 binlog 刷盘。3）COMMIT 阶段——在存储引擎层提交事务。优化参数：binlog_group_commit_sync_delay（微秒）——Leader 等待更多事务加入组的时间（建议 500-1000μs）。binlog_group_commit_sync_no_delay_count——组内事务数达到此值立即提交。注意：如果关闭了 binlog，Group Commit 在 InnoDB 层通过 log_flusher 线程实现。",
+    "answer": "Group Commit 将多个事务的 Redo Log 刷盘操作合并成一次 fsync 调用，减少磁盘 I/O 次数，显著提高高并发场景下的事务处理吞吐量。\n\n解析：问题背景——事务提交时 Redo Log 需要 fsync 刷盘。fsync 是昂贵的磁盘 I/O 操作（SSD 上约 10-100 微秒，HDD 上 5-10 毫秒）。如果每个事务提交都做一次 fsync，TPS 上限受限于 fsync 的延迟。Group Commit 的原理——多个事务同时提交时，它们进入队列。队列中第一个事务（Leader）负责为整个组执行 Redo Log 刷盘操作。其他事务（Follower）在 Leader 完成刷盘后直接从提交队列返回。一次 fsync 服务多个事务，大幅提升吞吐量。\n\n扩展延伸：MySQL 8.0 的 Group Commit 三个阶段（由 binlog_group_commit_sync_delay 和 binlog_group_commit_sync_no_delay_count 控制）：1）FLUSH 阶段——将每个事务的 binlog 写入内存缓冲区，Leader 等待达到 count 或 delay 阈值。2）SYNC 阶段——Leader 调用 fsync 将 binlog 刷盘。3）COMMIT 阶段——在存储引擎层提交事务。优化参数：binlog_group_commit_sync_delay（微秒）——Leader 等待更多事务加入组的时间（建议 500-1000μs）。binlog_group_commit_sync_no_delay_count——组内事务数达到此值立即提交。注意：如果关闭了 binlog，Group Commit 在 InnoDB 层通过 log_flusher 线程实现。",
     "hints": [
       "为什么 Group Commit 能显著提升高并发下的 TPS",
       "binlog_group_commit_sync_delay 和 sync_no_delay_count 如何配合使用"
@@ -447,312 +73,11 @@
   },
   {
     "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 执行计划分析：filesort 与临时表优化",
-    "content": "EXPLAIN 输出中 Extra 字段出现 Using filesort 或 Using temporary 表示什么？如何通过索引优化避免这两种情况？",
-    "answer": "答案：Using filesort 表示 MySQL 需要额外的排序操作（使用文件排序或在内存中排序），Using temporary 表示 MySQL 需要使用临时表来处理查询。两者都表示查询性能可能存在问题，通常可以通过创建合适的复合索引来避免。\n\n解析：Using filesort——当 ORDER BY 的列与 WHERE 条件使用的索引不一致时，MySQL 无法利用索引有序性获得排序结果，需要自己排序。排序方式：内存排序（sort_buffer_size 足够时）或文件排序（数据量大时使用磁盘临时文件）。优化：创建包含 WHERE 条件和 ORDER BY 列的复合索引（利用索引本身就是有序的）。如 SELECT * FROM t WHERE a=1 ORDER BY b，可以创建索引 (a,b)，这样数据按 a 过滤后自然按 b 有序，不需要额外排序。Using temporary——当查询需要去重（DISTINCT）、分组（GROUP BY）或需要子查询结果时，MySQL 需要创建临时表。优化：同样通过合适的索引减少临时表的需求。GROUP BY 走索引可以减少临时表。\n\n扩展延伸：避免 filesort 和 temporary 的最佳实践：1）最左前缀原则：组合索引的顺序需要匹配 WHERE + ORDER BY 的列顺序。2）ORDER BY 列需要和 WHERE 条件中的索引列形成最左前缀（如索引 (a,b,c)，WHERE a=1 ORDER BY b → 利用索引；WHERE a=1 ORDER BY c → 无法利用索引的 b → 需要 filesort）。3）GROUP BY 优化：GROUP BY 的列如果是索引的一部分并且满足最左前缀，可以避免临时表。4）尽量减少 ORDER BY 和 GROUP BY 的列宽。5）适当增大 sort_buffer_size 避免磁盘排序。注意：不要指望完全消除 filesort——当查询结果集很大或排序需求复杂时，filesort 是必要的。关键是从全表扫描 + 磁盘排序优化为索引扫描 + 内存排序或免排序。",
-    "hints": [
-      "Using filesort 为什么通常意味着需要优化",
-      "复合索引的列顺序如何影响 ORDER BY 的优化"
-    ],
-    "tags": [
-      "MySQL",
-      "SQL优化",
-      "filesort",
-      "执行计划"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "NoSQL 数据库选型：Redis、MongoDB、HBase、Cassandra",
-    "content": "请比较 Redis、MongoDB、HBase、Cassandra 这四种 NoSQL 数据库的核心特性和适用场景。什么场景下应该使用 NoSQL 而不是关系型数据库？",
-    "answer": "答案：Redis——内存键值数据库，支持丰富的数据结构，适合缓存和实时数据。MongoDB——文档数据库，灵活的 Schema，适合快速原型和内容管理。HBase——列族数据库，基于 HDFS，适合海量数据实时读写。Cassandra——宽列存储，去中心化架构，适合全球多活部署。\n\n解析：1）Redis——全内存 + 可持久化，单线程处理命令（原子性），支持 String/Hash/List/Set/Sorted Set/Bitmap/HyperLogLog，支持事务和 Lua 脚本，发布订阅，主从+哨兵+集群。延迟通常在微秒级。适合：缓存、Session 存储、实时排行榜、分布式锁、消息队列。不适合：数据量超过内存的场景、需要复杂查询（多条件过滤）的场景。2）MongoDB——BSON 文档存储，支持二级索引和聚合管道，分片（水平扩展），无 Schema 约束（集合中的文档结构可以不统一）。适合：内容管理（CMS）、实时分析、IoT 数据采集、快速原型开发。不适合：强事务（ACID）要求、多表 JOIN 频繁、大量数据更新操作。\n\n扩展延伸：3）HBase——列族（Column Family）存储，按 Row Key 排序。Region Server 自动分片，强一致性（CP，基于 ZK）。适合：海量数据的实时随机读写（每秒百万级请求）、时序数据（监控指标）、大表（数十亿行×数百万列）。不适合：关系型查询模式、数据量小（HDFS 最小块 128MB，小数据量场景浪费空间）。4）Cassandra——分区键 + 聚类列，无主节点（所有节点平等），最终一致性（AP，可调一致性级别），Gossip 协议 + 去中心化。Write 性能极高（追加写入 CommitLog + MemTable）。适合：物联网设备数据、时序数据、全球多活（Multi-DC 同步）、写多读少的场景。不适合：强事务和复杂查询、数据一致性要求高于可用性。NoSQL 不是银弹——大多数业务场景的最佳选择是 MySQL（关系型）为主 + Redis（缓存）为辅。只在特定场景（海量数据、灵活 Schema、极高并发）才考虑 MongoDB/HBase/Cassandra。",
-    "hints": [
-      "什么场景应该用 Redis、MongoDB、HBase 或 Cassandra",
-      "CAP 定理如何指导 NoSQL 数据库选型"
-    ],
-    "tags": [
-      "NoSQL",
-      "Redis",
-      "MongoDB",
-      "HBase",
-      "Cassandra"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据库事务隔离级别与实现",
-    "content": "请详细解释 SQL 标准定义的四种事务隔离级别：读未提交（RU）、读已提交（RC）、可重复读（RR）、串行化（Serializable）。MySQL InnoDB 如何实现这些隔离级别？Oracle 和 PostgreSQL 的默认隔离级别是什么？",
-    "answer": "答案：四种隔离级别分别解决不同的并发问题：RU（脏读）、RC（不可重复读）、RR（可重复读）、Serializable（幻读）。InnoDB 默认 RR 级别，通过 MVCC + Next-Key Lock 实现。Oracle 默认 RC，PostgreSQL 默认 RC。\n\n解析：1）脏读——事务 A 读取了事务 B 未提交的数据，事务 B 回滚后导致 A 读到了脏数据。RU 级别可以发生脏读，RC 及以上级别通过读取已经提交的快照避免脏读。2）不可重复读——事务 A 内两次读取同一行数据，在两次读取之间事务 B 修改并提交了该行，导致 A 两次读取结果不同。RC 级别不可重复读，RR 级别通过在事务开始创建一致性快照（MVCC，多个版本并发控制）实现可重复读。3）幻读——事务 A 内两次范围查询，事务 B 在 A 两次查询期间插入了新行，导致 A 第二次多出了一行。RR 级别在 InnoDB 中通过间隙锁（Gap Lock）和 Next-Key Lock 防止幻读（但仅对当前读有效，快照读不受幻读影响）。Serializable 级别通过对所有读加锁强制串行。\n\n扩展延伸：实现机制——1）MVCC（多版本并发控制）：每行数据有多个版本（通过 Undo Log 维护），每行记录创建的事务 ID 和删除的事务 ID。事务开始时获取一个 Read View（活跃事务列表），通过可见性规则判断应该读哪个版本。快照读（普通的 SELECT）不加锁，通过 MVCC 获得一致快照。当前读（SELECT ... FOR UPDATE / UPDATE / DELETE）需要加锁。2）Next-Key Lock = 行锁 + 间隙锁，是 InnoDB RR 级别防止幻读的关键——锁住行以及行之间的间隙，阻止其他事务在间隙中插入新行。3）不同 DB 的默认隔离级别：MySQL InnoDB 默认 RR（可重复读），Oracle 默认 RC（读已提交），PostgreSQL 默认 RC（读已提交），SQL Server 默认 RC（读已提交）。MySQL 选择 RR 作为默认是为了兼容 binlog 基于 statement 格式时的复制安全——但现在推荐使用 ROW 格式+RC 级别。",
-    "hints": [
-      "MVCC 如何实现读不阻塞写、写不阻塞读",
-      "为什么 MySQL InnoDB 使用 RR 作为默认隔离级别而 Oracle 却用 RC"
-    ],
-    "tags": [
-      "数据库",
-      "事务",
-      "隔离级别",
-      "MVCC"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "数据库连接池连接数优化",
-    "content": "数据库连接池的最大连接数设置为多少合适？为什么不是越多越好？如何根据应用类型（OLTP vs OLAP）调整连接池参数？",
-    "answer": "答案：连接池的最大连接数不是越多越好——过大的连接数会导致数据库端上下文切换增加、资源竞争加剧，反而降低吞吐量。OLTP（在线事务处理）适合小连接数，OLAP（在线分析处理）可能需要大连接数但场景相对孤立。建议最大连接数 = CPU 核心数 × 2 + 磁盘数量的小公式作为起点。\n\n解析：1）连接不是越多越好——每个数据库连接都消耗资源（MySQL 每个连接一个线程，占用内存和 CPU 上下文切换）。当活跃连接数超过 CPU 核心数时，线程切换成本急剧增加。大量连接竞争 InnoDB 的行锁会导致锁等待加剧。2）HikariCP（Spring Boot 默认）的推荐公式：maximumPoolSize = ((core_count × 2) + effective_spindle_count)。其中 effective_spindle_count 是磁盘数量（SSD 视为 1，HDD 可设更高）。这个公式的前提是数据库和应用在同一台机器或同机房低延迟网络。对于 OLTP 应用（简短快速的事务），5-10 个连接通常足够。超过这个数字后，数据库更多是在处理锁竞争和线程切换而不是实际工作。\n\n扩展延伸：3）连接池参数调整——不同负载类型：OLTP（高并发、短查询、低延迟要求）：小连接池（10-20）、短超时（3-5 秒）、最小空闲连接保持 5-10。OLAP（复杂查询、数据量大、单个查询时间长）：可能需要更大的连接池或单独配置连接到分析库。混用场景（OLTP + 少量 OLAP）：分别配置两个数据源（一个给 OLTP 用小连接池，一个给 OLAP 用大连接池）。4）监控连接池：活跃连接数（active）、空闲连接数（idle）、等待获取连接的线程数（pending）。如果 pending > 0 持续上升，说明连接池过小；如果 active 一直远小于 maximum，说明连接池过大。5）数据库端上限：MySQL 的 max_connections（默认 151）需要大于所有应用实例连接池大小的总和。",
-    "hints": [
-      "为什么 CPU 核心数 × 2 + 磁盘数 是一个连接池大小参考公式",
-      "OLTP 应用连接池为什么不宜超过 CPU 核心数的 2-3 倍"
-    ],
-    "tags": [
-      "MySQL",
-      "连接池",
-      "性能",
-      "OLTP"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ShardingSphere 与数据库分片中间件",
-    "content": "请介绍数据库分片（Sharding）的几种策略。ShardingSphere、MyCAT 等分片中间件的工作原理是什么？分片后有哪些常见问题和挑战？",
-    "answer": "答案：数据库分片将数据水平拆分到多个数据库实例上，以突破单机存储和性能上限。分片策略包括：哈希分片（取模/一致性哈希）、范围分片（按 ID 或时间范围）、映射表（维护分片路由关系）。ShardingSphere 作为分片中间件，基于数据库协议层做 SQL 解析→路由→改写→执行→结果归并。\n\n解析：1）分片策略——哈希分片：对分片键取模（如 user_id % 16）→ 映射到 16 个库。数据分布均匀，但扩缩容需要重新分布数据（一致性哈希可减少迁移量）。范围分片：按分片键的范围映射到不同库（如 user_id 1-1000 万在库1，1000万-2000万在库2）。扩缩容容易（加新范围即可），但可能出现数据倾斜（活跃用户集中在某一范围）。映射表：维护分片键到数据库的映射关系。路由最灵活但需要查表（额外性能开销）。2）分片中间件——客户端模式（ShardingSphere-JDBC）：在 JDBC 层嵌入，应用直连数据库，无网络代理。优点：部署简单、性能高。缺点：每个应用都需要集成。代理模式（ShardingSphere-Proxy / MyCAT / DBLE）：独立的代理服务器，应用连接代理像连接数据库一样。\n\n扩展延伸：分片后的挑战和解决方案——1）跨分片查询：跨多个数据库的 JOIN 和排序效率低。解决：尽量按分片键查询（避免跨分片）；用 ES 做宽表冗余；应用层聚合。2）分布式事务：跨分片的事务需要分布式事务支持（Seata、XA、TCC）。尽量避免跨分片事务，或者通过最终一致性+补偿机制处理。3）全局主键：自增 ID 在分片下不适用。解决：雪花算法（Snowflake ID）、UUID、号段模式（Leaf/美团分布式ID）。4）分片键选择：必须根据查询模式选择分片键。如果分片键选错了，很多查询需要广播到所有分片。5）数据迁移：分片扩容（从 8 分片扩到 16）需要重新分布数据——停机迁移或双写迁移。一致性哈希可以最小化迁移量。分片是最后的优化手段——在分片前先尝试读写分离、缓存、分区表等更简单的方案。",
-    "hints": [
-      "分片后跨分片查询和分布式事务是最难解决的问题",
-      "为什么一致性哈希在分片扩容时比简单取模更好"
-    ],
-    "tags": [
-      "数据库",
-      "分片",
-      "ShardingSphere",
-      "分布式"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 主键选择与自增 ID 优化",
-    "content": "为什么 InnoDB 建议使用自增 ID 作为主键？UUID 作为主键有什么问题？雪花算法（Snowflake）ID 生成器的原理？主键选择对 B+ Tree 性能的影响？",
-    "answer": "答案：自增 ID 作为主键是最优选择——新记录插入时只在 B+ Tree 的末尾追加（页分裂最少）。UUID 作为主键会随机插入（大量页分裂和碎片化），且主键更长导致二级索引更大。雪花算法生成全局唯一分布式 ID（时间戳 + 机器 ID + 序列号）。\n\n解析：自增 ID 的优势——1）B+ Tree 的聚簇索引按主键顺序存储，自增 ID 新记录总是在最后插入，Page 利用率最高。2）UUID 作为主键时新记录的插入位置随机，导致大量页分裂（Page Split）、B+ Tree 频繁调整。3）自增 ID（4-8 bytes）比 UUID（16 bytes 或 36 bytes 字符串）小，主键越小二级索引越小（所有二级索引都包含主键）。\n\n扩展延伸：自增 ID 的局限——1）分库分表场景：不同库的自增 ID 会重复，需要全局唯一 ID。2）数据迁移时 ID 可能冲突。3）批量插入时自增锁（AUTO-INC Lock）可能成为瓶颈（InnoDB 可用轻量级 mutex 优化）。雪花算法——1）结构：1bit 符号位（固定 0）+ 41bit 时间戳（ms 级精度，可用 69 年）+ 10bit 机器 ID（最多 1024 台）+ 12bit 序列号（每 ms 最多 4096 个 ID）。2）时钟回拨问题：如果机器时间回拨，可能产生重复 ID。解决方案：记录上次生成时间戳，回拨时等待或使用备用序列号段。替代方案——分布式 ID——UUID（不推荐做 DB 主键）、Snowflake（最常用）、Leaf（美团）、Tinyid（滴滴）、Redis INCR + 号段模式。",
-    "hints": [
-      "UUID 做主键的三大问题——随机插入导致页分裂、16byte 比 4byte 大得多、二级索引膨胀",
-      "雪花算法的时钟回拨问题——时间回拨毫秒内可能生成重复 ID，需要容错机制"
-    ],
-    "tags": [
-      "数据库",
-      "MySQL",
-      "主键",
-      "分布式ID"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 备份恢复策略",
-    "content": "MySQL 有哪些备份方式？逻辑备份（mysqldump）和物理备份（XtraBackup）的区别？全量备份+增量备份+binlog 的恢复策略如何设计？",
-    "answer": "答案：MySQL 备份分为逻辑备份（mysqldump/mydumper 导出 SQL）和物理备份（直接拷贝数据文件，XtraBackup）。逻辑备份灵活但速度慢，物理备份速度快但跨版本兼容性差。最佳实践：全量备份（每周）+ 增量备份（每天）+ binlog 实时归档（点到点恢复）。\n\n解析：备份方式对比——1）mysqldump：导出 SQL 语句恢复数据库。优点：可跨版本、可选择单表、结果可读。缺点：速度慢（逐行导出）、导入慢（逐条执行 SQL）、锁表（--single-transaction 可避免 InnoDB 锁表）。大数据库（100GB+）不适用。2）XtraBackup（Percona）：物理备份，直接拷贝 InnoDB 数据文件。优点：速度快、不影响线上读写、支持增量备份。缺点：备份文件只能恢复同版本 MySQL。3）mydumper/myloader：多线程逻辑备份，比 mysqldump 快 3-5 倍。\n\n扩展延伸：恢复策略——1）RPO（Recovery Point Objective，最多丢失多少数据）和 RTO（Recovery Time Objective，恢复目标时间）决定备份策略。RPO=1 小时 → 每 1 小时 binlog 备份一次。RTO=4 小时 → 选择恢复速度快的物理备份方式。2）恢复步骤：恢复最近的全量备份 → 叠加增量备份 → 应用 binlog 到崩溃前的时间点（point-in-time recovery）。3）定期演练：备份不做恢复验证等于没有备份。每月至少一次恢复演练。延迟复制的用途——在误操作时从延迟复制（delayed replica）恢复数据。",
-    "hints": [
-      "mysqldump 适合小库（<50GB），XtraBackup 适合大库——物理备份速度远快于逻辑备份",
-      "备份恢复演练比备份本身更重要——没有验证过的备份可能在真正需要时不可用"
-    ],
-    "tags": [
-      "数据库",
-      "MySQL",
-      "备份",
-      "恢复"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "MySQL 覆盖索引",
-    "content": "以下关于 MySQL 覆盖索引（Covering Index）的描述中，哪一个是正确的？",
-    "options": [
-      "A) 覆盖索引是指索引包含所有列，不需要回表查询",
-      "B) 覆盖索引一定会比非覆盖索引快",
-      "C) 覆盖索引只能用于主键查询",
-      "D) 覆盖索引在 EXPLAIN 中显示为 Using where"
-    ],
-    "answer": "答案：A) 覆盖索引是指索引包含所有列，不需要回表查询\n\n解析：覆盖索引指查询所需的所有列都包含在索引中，不需要通过主键回表查询聚簇索引中的完整行。EXPLAIN 中的 Extra 显示为 Using index（区别于 Using where）。覆盖索引减少磁盘 I/O（只访问索引 B+ Tree 即可返回查询结果，无需回表），在高频查询中效果显著。\n\n扩展延伸：覆盖索引设计——1）SELECT 子句中的列和 WHERE 条件列都应包含在索引中。但如果索引列太多（覆盖全部列）反而不如回表（索引变大 → B+ Tree 变高 → 查询变慢）。2）不要为了覆盖索引添加过多列——只在高频查询上使用覆盖索引优化。3）回表（Secondary Index Lookup）：二级索引查到主键后，再通过主键到聚簇索引中查找完整行记录。覆盖索引避免了这一过程。4）Extra 的 Using index vs Using where：Using index 表示使用了覆盖索引（不需要回表）；Using where 表示 Server 层在存储引擎返回记录后进行了过滤。两者可以同时出现。",
-    "hints": [
-      "覆盖索引的 EXPLAIN 标志——Extra 显示 Using index 表示不需要回表",
-      "覆盖索引不是列越多越好——索引列越多 B+ Tree 越大，需要权衡"
-    ],
-    "tags": [
-      "数据库",
-      "MySQL",
-      "覆盖索引",
-      "优化"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "easy",
-    "type": "true_false",
-    "title": "MySQL 数据库连接池",
-    "content": "数据库连接池中的连接数量越多越好。如果系统需要处理 1000 个并发请求，应该配置 1000 个数据库连接来确保每个请求都有独立的数据库连接可用。",
-    "options": [
-      "正确",
-      "错误"
-    ],
-    "answer": "答案：错误。\n\n解析：数据库连接数并非越多越好。过多的连接会导致数据库服务器切换上下文频繁，反而降低吞吐量。PostgreSQL 和 MySQL 官方建议的活跃连接数 = 2 * CPU 核数 + 有效磁盘数（通常几十到几百就足够）。HikariCP（Spring Boot 默认连接池）作者指出：连接数过多时数据库的瓶颈从 CPU 变为上下文切换和锁竞争。\n\n扩展延伸：连接池配置原则——1）连接池大小不是并发请求数，而是「数据库能同时高效处理的活跃连接数」。CPU 密集型查询：core_count * 2 + 1。IO 密集型查询：可适当增加但也不宜过大。2）等待队列：请求从连接池获取连接时如果连接用尽，应该排队等待（而非立即创建新连接）。HikariCP 的 maximumPoolSize 和 minimumIdle 配置。3）连接池监控：活跃连接数、等待超时次数、连接创建/销毁频率。如果连接池设置过大（如 200+），在数据库端观察 Threads_running 指标会很高，CPU 的 context switch 大幅增加，吞吐量反而下降。4）经验值：4 核数据库 → 活跃连接 10-20。16 核 → 50-100。应用层连接池通常 10-50 就足够。",
-    "hints": [
-      "连接数过多导致数据库上下文切换频繁——HikariCP 推荐的活跃连接数 = 2 * CPU 核数 + 有效磁盘数",
-      "1000 个连接 ≠ 1000 个并行查询——数据库的并行度受 CPU 核数限制"
-    ],
-    "tags": [
-      "数据库",
-      "连接池",
-      "MySQL",
-      "性能"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "MySQL Redo Log 写入流程",
-    "content": "InnoDB 的 Redo Log 采用{{____}}写入方式，数据先写入{{____}}（内存缓冲区），由{{____}}线程定期刷盘。写入时遵循{{____}}原则（日志先行），确保事务的{{____}}性。Redo Log 是{{____}}日志，记录的是{{____}}的物理修改。",
-    "answer": "{\"correct\":[[\"循环\"],[\"redo log buffer\"],[\"log writer\"],[\"WAL（Write-Ahead Logging）\"],[\"持久\"],[\"物理\"],[\"数据页\"]],\"distractors\":[[\"顺序\",\"随机\",\"追加\"],[\"buffer pool\",\"log cache\",\"数据缓冲区\"],[\"page cleaner\",\"checkpoint\",\"master\"],[\"ACID\",\"MVCC\",\"两阶段提交\"],[\"一致\",\"隔离\",\"原子\"],[\"逻辑\",\"混合\",\"事务\"],[\"行记录\",\"表结构\",\"索引\"]]}",
-    "hints": [
-      "WAL（Write-Ahead Logging）——在修改数据页之前先把 Redo Log 写入磁盘，保证 Crash Recovery",
-      "Redo Log 是物理日志（记录对数据页的修改），Undo Log 是逻辑日志（记录数据修改前的状态）"
-    ],
-    "tags": [
-      "数据库",
-      "MySQL",
-      "Redo Log",
-      "InnoDB"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据库分片策略与分布式主键",
-    "content": "常见的数据库分片策略有哪些？如何选择分片键？分布式场景下全局唯一主键如何生成？",
-    "answer": "答案：常见分片策略包括范围分片、哈希分片、一致性哈希分片。分片键选择需保证数据均匀分布，常用用户ID、订单ID等高频查询字段。分布式主键方案包括UUID、雪花算法（Snowflake）、数据库分段（segment）、Redis incr。\n\n解析：1）范围分片（Range Sharding）——按连续范围划分数据，如按时间或ID范围。优点：范围查询友好，扩展时只需新增分片。缺点：热点问题——最新数据集中在最后一个分片。2）哈希分片（Hash Sharding）——对分片键取模或一致性哈希。优点：数据分布均匀，写压力分散。缺点：扩缩容需要数据迁移（一致性哈希可缓解范围变化），跨分片范围查询性能差。3）键值映射分片——维护分片键到分片的映射表。优点：灵活调整。缺点：映射表成为瓶颈和单点风险。分布式主键方案：UUID简单但128位过长且无序（影响B+树写入性能）。雪花算法（Snowflake）64位长整型——1bit符号+41bit毫秒时间戳+10bit机器ID+12bit序列号，有序递增、高性能、无中心化依赖。\n\n扩展延伸：分片后的实践挑战——跨分片事务需要分布式事务方案（XA、TCC、Saga）。跨分片查询的聚合问题——全局排序需归并排序、分页需各分片取回再合并、多维度查询需辅助索引（ES）。ShardingSphere 的 Hint 分片支持强制路由到指定分片。生产建议：分片键选择高频等值查询字段，避免使用 JOIN 跨分片，单表数据量超过 2000 万行再考虑分片。",
-    "hints": [
-      "一致性哈希如何减少扩缩容时的数据迁移量",
-      "雪花算法在时钟回拨场景下怎么处理"
-    ],
-    "tags": [
-      "数据库分片",
-      "分片策略",
-      "分布式主键",
-      "雪花算法"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL 组复制（MGR）原理",
-    "content": "MySQL Group Replication（MGR）如何实现高可用？与异步复制和半同步复制的核心区别是什么？",
-    "answer": "答案：MGR 基于 Paxos 协议的组通信系统实现多节点强一致性复制。所有节点组成复制组，事务需经组内多数节点同意才能提交。与异步复制（主无条件提交，不等待从库确认）和半同步复制（至少一个从库确认）不同，MGR 要求多数节点确认提交，提供更强的一致性保证。\n\n解析：MGR 采用全连接网状拓扑，节点之间通过 Group Communication System（基于 Paxos）通信。事务提交流程：1）事务在本地执行。2）提交时广播到组内所有节点。3）多数节点 certify 通过后本地提交。4）其余节点异步回放。冲突检测——MGR 对行级并行执行，使用维向量（version vector）检测写冲突。两种模式：单主模式（single-primary）——只有主节点可写，其余为只读节点，简化冲突处理。多主模式（multi-primary）——所有节点可写，但需要应用层处理写冲突。与异步复制区别：异步复制中主机宕机可能丢数据。半同步复制至少保证一个从机确认，但一致性仍弱于 MGR。MGR 保证多数节点有数据，自动故障切换。\n\n扩展延伸：MGR 的限制——写性能受组内最慢节点影响，组内节点数建议 3-5 个（奇数避免平局），不支持级联复制。MGR vs InnoDB Cluster——MGR 是核心组件，InnoDB Cluster 是 MGR + MySQL Router + MySQL Shell 的完整高可用方案。生产建议：使用单主模式 + 3 节点 + MySQL Router 自动读写分离。",
-    "hints": [
-      "单主模式和多主模式下写冲突处理的差异",
-      "为什么 MGR 建议用奇数个节点"
-    ],
-    "tags": [
-      "MySQL",
-      "MGR",
-      "组复制",
-      "高可用"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "NoSQL 数据建模核心原则",
-    "content": "NoSQL 数据建模与关系型数据库有哪些根本区别？如何根据不同 NoSQL 类型（键值、文档、列族、图）设计数据模型？",
-    "answer": "答案：NoSQL 数据建模的核心原则是「查询驱动设计」（Query-Driven Design）——先确定查询模式再设计数据模型（RDBMS 反之：先设计数据模型再写查询）。遵循反范式化、聚合导向、避免 JOIN 三大原则。\n\n解析：四种 NoSQL 类型的数据建模特点：1）键值存储（Redis/Memcached）——建模为 Key→Value 映射，无模式约束。Key 命名规范用冒号分隔（user:123:profile），Value 结构根据访问模式选择（JSON 字符串、Hash、Set）。适用：缓存、Session、计数器。2）文档数据库（MongoDB）——建模为 Collection → Document → Field。反范式化嵌入关联数据（Embedding）减少查询次数。设计关键：Embedding vs Referencing——嵌入性能好但有 16MB 文档上限，引用减少冗余但需应用层聚合。3）列族数据库（HBase/Cassandra）——RowKey 设计最重要（影响数据分布和访问效率）。Cassandra 要求先定义查询模式再建表（CQL 表设计以查询为中心）。4）图数据库（Neo4j）——建模为 Node → Relationship → Property。适合社交关系、推荐、知识图谱的深度遍历查询。\n\n扩展延伸：NoSQL 建模的反模式——在文档数据库中做应用层 JOIN（N+1 查询问题）、在 Cassandra 中建过多二级索引（每表不超过 2 个）、在 Redis 中存大 Key（影响集群重新分片和内存管理）。选型建议：支付宝用 OceanBase（NewSQL），微博用 Redis + MySQL，Facebook 用 Cassandra，Google 用 Spanner/Bigtable。",
-    "hints": [
-      "文档数据库中的 Embedding 和 Referencing 如何取舍",
-      "Cassandra 的数据模型设计为什么从查询开始"
-    ],
-    "tags": [
-      "NoSQL",
-      "数据建模",
-      "MongoDB",
-      "Cassandra",
-      "Redis"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "NewSQL 数据库架构与 TiDB 实践",
-    "content": "NewSQL 数据库（如 TiDB、CockroachDB、OceanBase）如何同时保证 ACID 事务和水平扩展？与传统分库分表方案相比有哪些核心优势？",
-    "answer": "答案：NewSQL 采用分布式 SQL 引擎 + 自动分片 + 共识协议（Raft/Paxos）的架构，在保持 SQL 和 ACID 事务的同时实现水平扩展。相比传统分库分表：业务无侵入（无需配置分片键）、跨分片查询透明、数据自动 rebalance、强一致性内置。\n\n解析：以 TiDB 为例——1）TiDB Server：无状态 SQL 层，解析 SQL、生成执行计划、下推算子到存储节点。兼容 MySQL 协议，可直接用 MySQL 客户端连接。2）TiKV Server：分布式 KV 存储引擎，数据按 Range 自动分片为 Region（默认 96MB）。每个 Region 通过 Raft 协议复制到 3 个节点，保证强一致性。Region 自动分裂和合并。3）PD（Placement Driver）：管理 Region 元数据，调度 Region 在节点间均衡分布，监控集群状态。传统分库分表痛点：分片键变更困难、跨分片查询/排序/分页复杂、分布式事务依赖 XA 性能差、扩缩容需迁移数据并配合业务停机。NewSQL 在 SQL 层自动完成分区路由和下推聚合，对应用完全透明。\n\n扩展延伸：主流 NewSQL 产品对比——TiDB（开源，MySQL 兼容，HTAP）、CockroachDB（开源，PostgreSQL 兼容，全球部署能力）、OceanBase（闭源，Oracle 兼容，蚂蚁集团核心系统）、Google Spanner（TrueTime API + 全球强一致）。HTAP（Hybrid Transactional/Analytical Processing）是 NewSQL 发展方向——同一系统同时支持 OLTP 和 OLAP，通过行列混合存储实现（TiDB 的 TiFlash 列存引擎）。",
-    "hints": [
-      "TiDB 中 SQL 层如何将查询下推到存储层",
-      "Raft 协议在 TiKV 中如何保证 Region 内数据一致性"
-    ],
-    "tags": [
-      "NewSQL",
-      "TiDB",
-      "分布式数据库",
-      "Raft",
-      "HTAP"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "读写分离架构与主从延迟处理",
-    "content": "MySQL 读写分离架构如何实现？主从同步延迟会导致哪些问题？有哪些应对策略？",
-    "answer": "答案：读写分离通过将写操作路由到主库、读操作路由到从库实现。核心组件包括中间代理层（Proxy/MaxScale/ProxySQL）或客户端路由（ShardingSphere/Spring @Transactional(readOnly=true)）。主从延迟导致「读到脏数据」——写入后立即读取到的是旧数据。应对策略包括强制读主、延迟容忍、缓存辅助、并行复制。\n\n解析：两种实现模式——1）中间代理层：应用程序连接代理，代理自动路由读写（如 MySQL Router、MaxScale、ProxySQL）。优点：对应用透明。缺点：增加网络一跳，代理成为性能瓶颈和高可用关注点。2）客户端路由：通过数据源框架实现（如 ShardingSphere 读写分离功能、Spring @Transactional(readOnly=true)）。优点：无需额外组件。缺点：每个应用都要配置。主从延迟根因：主库 binlog → 网络传输 → 从库 relay log → SQL 线程回放。延迟触发：从库硬件弱于主库、从库同时服务读请求、大事务（大量 binlog）、DDL 操作。\n\n扩展延伸：应对方案详解——1）强制读主：一致性敏感的请求（支付结果、刚创建的记录）强制路由到主库。2）延迟标记：监控从库延迟（Seconds_Behind_Master），超过阈值自动摘除该从库的读流量。3）缓存辅助：写入后同步更新 Redis 缓存，优先读缓存。4）数据库层面优化：半同步复制（等待至少一个从库确认）、启用并行复制（MySQL 5.7+ 多线程回放，slave_parallel_workers）。5）业务妥协：客户端写入后延迟 100ms 再读。监控：SHOW SLAVE STATUS 的 Seconds_Behind_Master，Percona Monitoring Plugins。建议：一主三从常见配置，从库数建议不超过 5 个。",
-    "hints": [
-      "半同步复制如何平衡一致性和性能",
-      "为什么从库数量不建议超过 5 个"
-    ],
-    "tags": [
-      "读写分离",
-      "主从延迟",
-      "MySQL",
-      "高可用"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "时序数据库与关系数据库的区别",
-    "content": "时序数据库（如 InfluxDB、Prometheus、TimescaleDB）与关系数据库在数据模型、存储结构、查询方式上有什么核心区别？时序数据库适合什么场景？",
-    "answer": "答案：时序数据库专为时间序列数据优化，以时间戳+标签+值的数据模型存储，写入吞吐高、压缩比大，适合监控、IoT、金融行情等场景。\n\n解析：时序数据库的核心特性：1）数据模型——每条数据由时间戳（Timestamp）、标签（Tag，如 host=server1, region=cn-beijing）和字段值（Field）组成。Tag 用于过滤和分组，Field 用于聚合计算。2）写入优化——时序数据写入频繁但很少修改，时序数据库针对 append-only 写入模式优化，写入吞吐可达百万点/秒。3）存储优化——使用列式压缩（差值编码、游程编码、浮点数 XOR 压缩），压缩比可达 10:1 到 50:1。4）查询模式——按时间范围聚合（降采样）、按标签过滤，支持连续查询（Continuous Query）自动聚合。\n\n扩展延伸：关系数据库（如 PostgreSQL + TimescaleDB 插件）也可以存储时序数据，但写入吞吐和压缩比不如专用时序数据库。时序数据库的局限性：不适合复杂 JOIN、事务型场景。选型建议：监控指标用 Prometheus，IoT 设备用 InfluxDB，需要 SQL 兼容用 TimescaleDB。",
-    "hints": [
-      "时序数据的写入模式有什么特点",
-      "时序数据库为什么压缩比高"
-    ],
-    "tags": [
-      "时序数据库",
-      "InfluxDB",
-      "Prometheus",
-      "监控"
-    ]
-  },
-  {
-    "category": "database",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "图数据库的核心概念与应用场景",
     "content": "什么是图数据库？Neo4j 等图数据库的核心概念（节点、关系、属性、遍历）是什么？图数据库适合解决什么问题？",
-    "answer": "答案：图数据库以图结构（节点+边+属性）存储数据，核心概念包括节点（实体）、关系（边）、属性（KV 对）、标签和遍历。擅长处理复杂关联关系和深层次路径查询。\n\n解析：图数据库的核心特性：1）数据模型——节点（Node）代表实体（如人、公司），关系（Relationship）代表实体间的连接（如「任职」「投资」），属性和标签附加在节点和关系上。2）查询语言——Cypher（Neo4j）或 Gremlin，用模式匹配表达图遍历，如 MATCH (a:Person)-[:WORKS_FOR]->(b:Company) WHERE a.name = '张三' RETURN b。关系数据库需要多层 JOIN 才能表达的查询，图数据库一行 Cypher 即可。3）性能优势——关联查询的复杂度与遍历深度相关，与数据总量无关。关系数据库 JOIN 多张千万级表时性能急剧下降，图数据库在深度关联场景快几个数量级。4）存储结构——使用邻接表或邻接矩阵的变体，节点和关系物理上指向相邻节点，无需索引即可快速遍历。\n\n扩展延伸：图数据库的典型场景——社交网络（好友推荐、影响力分析）、反欺诈（异常交易链路检测）、知识图谱（实体关系推理）、推荐系统（协同过滤的图路径计算）。不适用场景：大量聚合统计（如 SUM/COUNT）、全文搜索、OLTP 事务场景。",
+    "answer": "图数据库以图结构（节点+边+属性）存储数据，核心概念包括节点（实体）、关系（边）、属性（KV 对）、标签和遍历。擅长处理复杂关联关系和深层次路径查询。\n\n解析：图数据库的核心特性：1）数据模型——节点（Node）代表实体（如人、公司），关系（Relationship）代表实体间的连接（如「任职」「投资」），属性和标签附加在节点和关系上。2）查询语言——Cypher（Neo4j）或 Gremlin，用模式匹配表达图遍历，如 MATCH (a:Person)-[:WORKS_FOR]->(b:Company) WHERE a.name = '张三' RETURN b。关系数据库需要多层 JOIN 才能表达的查询，图数据库一行 Cypher 即可。3）性能优势——关联查询的复杂度与遍历深度相关，与数据总量无关。关系数据库 JOIN 多张千万级表时性能急剧下降，图数据库在深度关联场景快几个数量级。4）存储结构——使用邻接表或邻接矩阵的变体，节点和关系物理上指向相邻节点，无需索引即可快速遍历。\n\n扩展延伸：图数据库的典型场景——社交网络（好友推荐、影响力分析）、反欺诈（异常交易链路检测）、知识图谱（实体关系推理）、推荐系统（协同过滤的图路径计算）。不适用场景：大量聚合统计（如 SUM/COUNT）、全文搜索、OLTP 事务场景。",
     "hints": [
       "图数据库为什么在深度关联查询中比关系数据库快",
       "Cypher 查询语言和 SQL 有什么本质区别"
@@ -767,244 +92,9 @@
     "category": "database",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "列式存储与行式存储的区别",
-    "content": "列式存储（如 ClickHouse、Parquet、ORC）和行式存储（如 MySQL InnoDB）的存储结构和查询性能有什么核心区别？列存为什么在 OLAP 场景中表现更好？",
-    "answer": "答案：行式存储按行组织数据（一行连续存储），适合 OLTP 的点查和更新。列式存储按列组织数据（一列连续存储），适合 OLAP 的大规模聚合和扫描查询。\n\n解析：列式存储的核心优势：1）按需读取——查询只需要少数列时，列存只读取相关列的数据，减少 I/O。行存即使只查一列也要读整行数据。2）压缩率高——同一列的数据类型相同、值分布有规律（如日期列、枚举列），可以使用差值编码、游程编码、字典编码等高效压缩算法。列存压缩比通常为 5:1 到 20:1。3）向量化执行——列存天然适合 SIMD 向量化处理，单条指令可处理多列值。4）编码优化——数据排序后存储可以进一步压缩，如稀疏列可转为位图（Bitmap）存储。\n\n扩展延伸：行式存储 vs 列式存储的工程实践：1）数据更新——列存修改单行开销大（涉及多列文件改写），行存更新高效。2）OLTP（如订单系统）用行存，OLAP（如报表分析）用列存。3）HTAP 数据库（如 TiDB、StarRocks）同时支持行存和列存两种引擎。4）列存的代价：查询少量行时延迟高（需要扫描大量数据才能找到目标行），不适合点查场景。",
-    "hints": [
-      "为什么同一列的数据更容易压缩",
-      "列存为什么不适合频繁更新的场景"
-    ],
-    "tags": [
-      "列式存储",
-      "ClickHouse",
-      "Parquet",
-      "OLAP"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "HTAP 数据库的原理与挑战",
-    "content": "什么是 HTAP（Hybrid Transactional/Analytical Processing）？它解决了什么问题？HTAP 数据库在一份数据上同时支持 TP 和 AP 的核心技术挑战是什么？",
-    "answer": "答案：HTAP 指在同一数据库引擎中同时支持 OLTP 事务处理和 OLAP 分析查询，避免传统架构中 TP 库和 AP 库之间的数据搬运（ETL）。核心挑战在于如何在一份数据上同时满足 TP 的低延迟更新和 AP 的高吞吐扫描。\n\n解析：HTAP 的核心技术架构：1）行列混合存储——同时维护行存（高效点查和更新）和列存（高效聚合分析），通过分布式一致性协议（如 Raft）同步数据。写入走行存，分析查询走列存，两套引擎共享同一份最新数据（TiDB 的 TiFlash、MySQL HeatWave）。2）计算存储分离——计算节点无状态可弹性伸缩，存储节点按数据分片存储。TP 查询走计算节点的行存引擎，AP 查询走列存引擎（通过列存副本）。3）实时一致性——列存引擎通过 Raft Learner 或异步复制实时同步行存的数据变更，保证 AP 查询读取的是近实时数据（秒级延迟）。\n\n扩展延伸：主流 HTAP 方案对比——TiDB：行存（TiKV）+ 列存（TiFlash），Raft 同步。StarRocks：三种表模型（明细/聚合/更新），列式存储引擎同时支持 TP 和 AP。Snowflake：计算和存储分离，自动聚类和物化视图优化 AP 性能。ClickHouse：纯列存，通过 CollapsingMergeTree/ReplacingMergeTree 支持轻量级更新。HTAP 的局限：同一份数据难以同时在 TP 延迟和 AP 吞吐上都达到极致，通常是一种折中方案。",
-    "hints": [
-      "HTAP 如何解决 TP 和 AP 之间的数据同步延迟问题",
-      "行列混合存储中的列存副本是怎样实时同步的"
-    ],
-    "tags": [
-      "HTAP",
-      "TiDB",
-      "StarRocks",
-      "行列混合"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据库中间件的核心作用",
-    "content": "数据库中间件（如 ShardingSphere、MyCAT、Vitess）在分布式数据库架构中起什么作用？它们解决了哪些问题？有哪些常见的功能分层？",
-    "answer": "答案：数据库中间件位于应用和数据库之间，提供分库分表、读写分离、分布式事务、数据迁移等能力，让业务像访问单库一样访问分布式数据库集群。\n\n解析：数据库中间件的核心功能：1）分库分表（Sharding）——按分片键（Sharding Key）将数据路由到不同的数据库实例或表。策略包括：取模分片、范围分片、一致性哈希分片。对应用透明，SQL 层自动改写和路由。2）读写分离——将 SELECT 请求路由到只读从库，INSERT/UPDATE/DELETE 路由到主库。解决读写分离场景下从库的负载均衡和延迟感知问题。3）分布式事务——支持 XA 事务（两阶段提交）、SEATA（AT/TCC/Saga）等分布式事务方案，保证跨库事务的一致性。4）数据迁移和治理——在线数据迁移、分片策略动态调整、影子库压测、SQL 审计和限流。\n\n扩展延伸：数据库中间件的演进方向——从 Proxy 模式（如 MyCAT、Vitess，独立部署代理层）到 SDK 模式（如 ShardingSphere-JDBC，嵌入应用进程），再到云原生 DBaaS（直接提供分布式数据库实例）。Proxy 模式优势是跨语言兼容，劣势是多一层网络跳转。SDK 模式优势是低延迟（无中间层），劣势是仅 Java 生态。选型建议：小团队用 ShardingSphere-JDBC，大团队/多语言用 ShardingSphere-Proxy 或 Vitess。",
-    "hints": [
-      "Proxy 模式和 SDK 模式各有什么优缺点",
-      "分片键选择不当会导致什么问题"
-    ],
-    "tags": [
-      "数据库中间件",
-      "ShardingSphere",
-      "分库分表",
-      "Vitess"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "TiDB TiKV/TiFlash 存储引擎架构深度剖析",
-    "content": "请深入分析 TiDB 的存储引擎层 TiKV 和 TiFlash 的架构设计，包括 TiKV 的 Raft 复制、Region 调度、MVCC 实现，以及 TiFlash 的列式存储和 Raft Learner 角色。",
-    "answer": "答案：TiDB 是 NewSQL 数据库，采用计算与存储分离的架构。TiKV 是其行式存储引擎，基于 RocksDB（LSM-Tree）本地存储，通过 Raft 共识协议实现多副本强一致性。TiFlash 是 TiKV 的列式存储扩展（Raft Learner），异步复制数据后以列式格式存储，专为 OLAP 查询优化。两者在同一个集群中共存，实现 HTAP 能力。\n\n解析：TiKV 的核心设计：1) 数据以 Region 为单位管理（默认 96MB），每个 Region 有多个副本（通常是 3 副本），副本之间通过 Raft 协议同步写入。Region 是数据调度和负载均衡的基本单元。2) PD（Placement Driver）负责全局元数据管理和 Region 调度 —— 自动拆分/合并 Region、在节点间移动 Region 均衡负载、管理 Raft group 的 Leader 分布。3) MVCC 通过 Key 追加时间戳实现（_key_version），读请求使用 snapshot read 在特定时间戳上执行。TiFlash 的处理：作为 Raft Learner 从 TiKV Raft Group 异步复制数据，不参与 Raft 投票，因此不会影响 TiKV 的写入性能。数据以列式格式存储（Delta Tree 引擎），支持向量化计算。\n\n扩展延伸：TiDB 的适用场景：1) 需要 MySQL 兼容性但数据量超出单机（>1TB）的场景 —— 可直接替代 MySQL，分库分表方案不再必要；2) HTAP 场景 —— 一份数据同时支持 OLTP 和 OLAP，TiFlash 处理分析型查询不影响 TiKV 的 TP 负载；3) 弹性扩展 —— 在线扩容/缩容，Region 自动迁移。限制与注意事项：1) 事务冲突严重的场景性能不佳（乐观事务模型有 conflict 回滚开销）；2) 小表（< 1TB）场景下 TiDB 的分布式开销 > MySQL 单机；3) TiFlash 数据同步有秒级延迟，不适合对实时性要求极高的分析场景。",
-    "hints": [
-      "Region 是 TiKV 数据管理的最小单元，通过 Raft 在多个 TiKV 节点间复制",
-      "PD 负责全局调度，决定 Region 分布在哪些节点上",
-      "TiFlash 是 Raft Learner，不参与写入投票，异步接收数据"
-    ],
-    "tags": [
-      "TiDB",
-      "TiKV",
-      "TiFlash",
-      "NewSQL",
-      "HTAP"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "CockroachDB 架构与分布式事务",
-    "content": "请介绍 CockroachDB 的架构设计，包括其 Range 分片机制、Raft 复制、以及基于混合逻辑时钟（HLC）和 Serializable Snapshot Isolation（SSI）的分布式事务实现。",
-    "answer": "答案：CockroachDB 是 Google Spanner 思想的开源实现（但不等同），使用 Range（默认 64MB）自动分片数据。每个 Range 有 3 副本（默认），副本间通过 Raft 共识协议保持一致性。Gossip 协议用于节点发现和元数据分布，无需外部协调服务（对比 TiDB 依赖 PD）。分布式事务基于混合逻辑时钟（Hybrid Logical Clock，HLC）实现 Serializable Snapshot Isolation（SSI）。\n\n解析：CockroachDB 的核心机制：1) Range 分裂与合并 —— 当 Range 超过目标大小时自动分裂成两个 Range；当数据被删除导致 Range 过小时自动合并。分裂/合并不影响集群可用性。2) 事务机制 —— 通过 TCO（Transaction Coordinator Orchestrator）协调分布式事务，使用写入意向（Write Intent，类似锁）标记未提交数据。SSI 通过冲突检测和串行化保证 Serializable 隔离级别。写写冲突通过 Read-Committed 重试机制处理（自动回滚和重试）。3) 时钟 —— HLC 结合物理时钟和逻辑计数器，提供全局序而不依赖物理时钟同步精度（相比 Spanner 的 TrueTime 需要原子钟/GPS）。CockroachDB 默认最大时钟偏移为 500ms，通过 Clock Synchronization 检测防止偏离过大。\n\n扩展延伸：CockroachDB vs TiDB：1) 元数据管理 —— CockroachDB 使用 Gossip 协议，TiDB 使用 PD（中心化），两者各有优劣，Gossip 避免了单点但元数据变更收敛慢；2) 事务隔离 —— CockroachDB 默认 Serializable，TiDB 默认 Snapshot Isolation（SI），SI 在并发写入冲突下有 Write Skew 问题；3) 部署复杂度 —— CockroachDB 单二进制部署更简单，TiDB 需要 TiDB Server、PD、TiKV、TiFlash 四个组件；4) 监控成熟度 —— TiDB 的 Dashboard 和 Grafana 开箱即用更丰富；5) 生态兼容 —— TiDB 兼容 MySQL 协议，CockroachDB 兼容 PostgreSQL 协议。",
-    "hints": [
-      "CockroachDB 使用 Gossip 协议而非中心化元数据服务",
-      "HLC 提供线性一致性而不依赖高精度时钟同步",
-      "Write Intent 是 CockroachDB 的锁机制且支持死锁检测"
-    ],
-    "tags": [
-      "CockroachDB",
-      "分布式数据库",
-      "Raft",
-      "NewSQL"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MongoDB 聚合管道（Aggregation Pipeline）详解",
-    "content": "请详细说明 MongoDB 聚合管道的设计原理、常用阶段操作符（$match、$group、$project、$lookup、$unwind 等）以及性能优化策略。",
-    "answer": "答案：MongoDB 聚合管道（Aggregation Pipeline）是一个数据处理框架，文档依次经过多个阶段（Stage）处理，每个阶段对输入文档执行变换（过滤、分组、投影、关联等），输出结果传递给下一阶段。它基于流式处理模型 —— 阶段之间通过内存或临时文件传递数据，支持大规模文档的批量处理，比 MapReduce 更高效。\n\n解析：常用阶段操作符及作用：1) $match —— 过滤文档，应尽量放在管道前端以减少后续阶段处理量；2) $project —— 投影（保留/排除/重命名字段、添加计算字段）；3) $group —— 按指定键分组聚合（支持 SUM、AVG、MAX、MIN、$push 等累加器）；4) $sort —— 排序，如果在大数据量上排序建议在分组之后做；5) $lookup —— 左外连接（类似 SQL LEFT JOIN），从另一集合关联文档；6) $unwind —— 将数组字段展开为多条文档；7) $bucket —— 分桶聚合（如按年龄分段统计）；8) $facet —— 多维度统计，一次管道输出多个聚合结果；9) $addFields —— 添加计算字段不改变其他字段。\n\n扩展延伸：性能优化：1) 索引利用 —— $match 和 $sort 如果在管道最前面且字段有索引，可以利用索引加速。$lookup 关联的字段（foreignField）应有索引。2) 内存限制 —— 每个阶段默认使用 100MB 内存，超出写入临时文件（allowDiskUse: true 开启允许磁盘）。$group、$bucket、$sort 等有状态阶段消耗内存最多。3) 管道顺序优化 —— 将 $match 和 $limit 尽量前移，尽早减少数据量；4) 避免过大的 $unwind —— 展开大数组会放大数据量数倍，可考虑将 $unwind 后的 $match 合并到前面的阶段；5) 使用 cursor 返回聚合结果而非单个文档（allowDiskUse + batchSize 优化大结果集输出）。",
-    "hints": [
-      "$match 放在管道最前面能利用索引并尽早减少数据量",
-      "$lookup 在 MongoDB 5.1+ 支持关联条件索引自动选择",
-      "面向磁盘的聚合使用 allowDiskUse: true 可突破 100MB 内存限制"
-    ],
-    "tags": [
-      "MongoDB",
-      "聚合管道",
-      "Aggregation",
-      "NoSQL"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "HBase Region 分裂与合并机制详解",
-    "content": "请详细说明 HBase 的 Region 分裂（Split）和合并（Merge）机制，包括 Split 策略（ConstantSizeRegionSplitPolicy、IncreasingToUpperBoundRegionSplitPolicy、SteppingSplitPolicy）、分裂步骤，以及合并的触发条件和影响。",
-    "answer": "答案：HBase 的 Region 是表水平分片的基本单元。当 Region 大小超过阈值时触发 Split（自动分裂为两个子 Region），保证数据分布均匀和查询性能。HBase 提供了多种 Split 策略：1) ConstantSizeRegionSplitPolicy —— Region 大小超过 hbase.hregion.max.filesize（默认 10GB）时分裂；2) IncreasingToUpperBoundRegionSplitPolicy（0.94+ 默认）—— 初始阈值随表 Region 数量增加而提高（min(10GB, 2*R^3 * hbase.hregion.memstore.flush.size)）)；3) SteppingSplitPolicy（2.0+ 默认）—— 改进版，初始分裂阈值较小（256MB * 2），随分裂次数递增到 max.filesize，适合初始数据量小的表。\n\n解析：Region 分裂分为三个步骤：1) 在 Zookeeper 中创建分裂 znode 标记 Region 为分裂中（SPLITTING）；2) 父 Region 停止服务，将 Store 中的数据划分为两个子 Region（通过 split key 确定分界点）。HFile 引用机制 —— 子 Region 通过引用文件指向父 Region 的数据文件，直到 Compaction 时再读取实际数据；3) 将子 Region 上线到 RegionServer，更新 META 表记录。合并（Region Merge）是分裂的逆操作，将相邻的两个 Region 合并成一个，通常在大量数据删除后 Region 过小时触发 —— 可手动触发（merge_region CLI）或通过 RegionMerger 自动执行（hbase.region.merging.enabled 启用）。\n\n扩展延伸：生产实践建议：1) Region 数量管理 —— 单 RegionServer 建议 100-200 个 Region，避免过多 Region 导致 RegionServer 元数据膨胀和内存压力；2) 预分裂（Pre-splitting）—— 创建表时根据 rowkey 分布预分 Region，避免刚创建时所有写入集中在单个 Region 上；3) Split 后的 Compaction 风暴 —— 大量 Region 同时分裂后，子 Region 的引用文件触发多次合并，可能产生写放大，建议错峰建表或调整 split 策略；4) Region Hotspot（热点）—— 单调递增 rowkey 导致所有写入集中在最后一个 Region，可通过反转 rowkey 或加盐（salting）解决。",
-    "hints": [
-      "HFile 引用机制使 Split 不涉及实际数据移动，速度快",
-      "预分裂可以避免初始阶段写入集中在单 Region",
-      "单调递增 rowkey 是 Region 热点的最常见原因"
-    ],
-    "tags": [
-      "HBase",
-      "Region",
-      "Split",
-      "Merge"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Cassandra 分区键与数据分布策略",
-    "content": "请介绍 Apache Cassandra 的数据分布机制，包括分区键（Partition Key）和集群键（Clustering Key）的设计原则、分片与复制策略（Partitioners、Replication Strategy）、以及查询优化（二级索引、物化视图、SASI 索引）的最佳实践。",
-    "answer": "答案：Cassandra 是分布式 NoSQL 数据库，使用一致性哈希环进行数据分布。每个表必须有主键，主键的第一部分（Partition Key）决定数据存储在哪个节点（通过哈希计算 token），后续列是 Clustering Key 决定同一分区内的排序顺序。查询时必须包含 Partition Key（WHERE 子句中 = 或 IN），否则需要全集群扫描。\n\n解析：数据分布的核心组件：1) Partitioner —— 计算 Partition Key 的哈希值（Murmur3Partitioner，默认）决定数据在环上的位置。Token 范围环上的每个节点负责一段连续的 token 范围。2) Replication Strategy —— SimpleStrategy（单数据中心，测试用）和 NetworkTopologyStrategy（生产用，可指定每个机架的副本数，机架感知）。3) Snitch —— 感知网络拓扑（机架和数据中心），决定副本放置位置（如 Ec2Snitch、GossipingPropertyFileSnitch）。查询优化策略：二级索引适用于低基数（区分度高的列）且返回结果少（< 100 条）的查询；物化视图（Materialized View）自动维护基于不同列排序的视图；SASI 索引（SSTable Attached Secondary Index）支持全文搜索和范围查询。\n\n扩展延伸：Cassandra 数据建模原则：1) 按查询建表 —— 先分析查询模式再设计表结构，不要试图用 JOIN 或子查询（不支持）；2) 避免大分区 —— 单个分区的数据不宜超过 100MB（否则查询和写入性能都会下降）。分区键应选取区分度高的列，避免\"热点分区\"；3) 删除操作 —— Cassandra 的删除是 tombstone 标记（标记删除），Compaction 时真正清理。大量删除导致 tombstone 过多会降低查询性能；4) 内存和磁盘 —— Cassandra 依赖 OS Page Cache，建议 SSD + 大内存配置，调优 heap 大小和 GC 参数。注意 cqlsh 的 tracing 功能可分析查询性能瓶颈。",
-    "hints": [
-      "Partition Key 的基数（Cardinality）直接决定了数据分布是否均匀",
-      "Cassandra 按查询建表，非按关系建模",
-      "Tombstone 过多（大量删除）是查询性能下降的常见原因"
-    ],
-    "tags": [
-      "Cassandra",
-      "NoSQL",
-      "分区键",
-      "一致性哈希"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "时序数据库设计",
-    "content": "请解释时序数据库（Time-Series Database）的设计特点和存储优化策略。",
-    "answer": "答案：时序数据库针对时间戳数据的写入和查询做了专门优化\n\n解析：时序数据特征：持续写入、按时间排序、很少更新、数据按时间范围查询和分析。存储优化：1）列式存储 — 按列而非行存储，同一列的数据类型相同可高效压缩（差值编码/游程编码/Snappy）。2）LSM-Tree 写入优化 — 利用顺序写高吞吐，支持海量并发写入。3）时间分区 — 按时间范围分区表，过期数据直接删除分区文件（无需 DELETE + VACUUM）。4）降采样（Downsampling）— 自动将原始数据聚合为较粗粒度的统计值（Rollups），如原始 1 秒精度数据保留 7 天，7 天后聚合成 1 分钟精度保留 30 天。5）数据压缩 — InfluxDB 使用整数的 Simple8b 和浮点数的 XOR 压缩（基于 Facebook Gorilla 论文），压缩比可达 10:1-30:1。\n\n扩展延伸：时序数据库对比：InfluxDB（专用 TSDB，强大查询语言 Flux，但开源版集群功能有限）、TimescaleDB（基于 PostgreSQL 扩展的时序数据库，可利用 PG 生态，自动分区和压缩）、Prometheus（Pull 模型采集 + 内置 Alertmanager，适合监控场景，但有单点限制）。时序数据库建模：Metric（指标名） + Tags（维度标签，可索引） + Timestamp + Value。宽表 vs 窄表：时序数据通常用宽表（每行一个时间点 + 所有字段），但标签应建模为 metric 维度而非列。查询优化：预聚合（Continuous Aggregate 定时计算常用查询的聚合结果）、倒排索引（按标签快速过滤时间序列）。",
-    "hints": [
-      "时序数据库的列式压缩为什么比行式压缩更高效",
-      "Prometheus 的 Pull 模型和 Push 模型适用场景对比"
-    ],
-    "tags": [
-      "时序数据库",
-      "TSDB",
-      "存储"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "向量数据库索引",
-    "content": "请介绍向量数据库的索引结构以及近似最近邻搜索（ANN）的算法。",
-    "answer": "答案：向量数据库通过专门索引结构实现高维向量的近似最近邻搜索\n\n解析：ANN 主要算法：1）IVF（倒排文件）— 先对向量集做 K-means 聚类，查询时只搜索最近几个聚类中心的向量，用 PQ（乘积量化）压缩向量减少内存。IVF-PQ 是经典组合，速度快但召回率有损。2）HNSW（分层可导航小世界图）— 构建多层的近邻图，上层抽象跳跃到更远距离，底层精确查找。搜索从上到下逐步精确。HNSW 召回率高、搜索速度快，但索引构建慢、内存占用高。3）DiskANN — 基于 Vamana 图，使用 SSD 存储索引，平衡内存和磁盘。4）LSH（位置敏感哈希）— 将相近的向量以高概率映射到同一个桶中，小众但理论保证好。\n\n扩展延伸：量化方法：PQ（Product Quantization，乘积量化）将向量空间分解为多个子空间分别量化，用码本中的 ID 近似表示子向量，极大压缩（如 128 维向量可用 8-bit*8=64 bits 表示）。元数据过滤：搜索时先或后按用户标签过滤候选集，常见后过滤（先 ANN 搜索再按元数据过滤）可能导致 100 召回但空结果，前过滤（在搜索时就加上约束）更好但可能降低搜索效率。向量数据库对比：Milvus（支持 GPU 加速，云原生）、Pinecone（全托管 SaaS）、Weaviate（内置对象存储和 GraphQL）、Qdrant（Rust 实现，高并发）。Scann（Google）：使用空间感知的分层量化，在中等召回率区域比 HNSW 更快。混合搜索：BM25 文本检索 + 向量语义检索的融合（RRF 加权融合），这是 RAG 系统的核心实践。",
-    "hints": [
-      "HNSW 的层级图为什么能加速搜索",
-      "后过滤元数据会导致什么问题"
-    ],
-    "tags": [
-      "向量数据库",
-      "ANN",
-      "索引"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "列式存储与行式存储",
-    "content": "请对比列式存储和行式存储的存储格式、压缩机制和适用场景。",
-    "answer": "答案：列式存储按列组织数据，行式存储按行组织数据，各自适配不同的工作负载\n\n解析：行式存储（MySQL InnoDB 页面）：同一行的所有列连续存储，适合 OLTP（点查询、频繁增删改、事务）。列式存储（Parquet/ORC）：同一列的所有值连续存储，适合 OLAP（聚合查询、批量扫描）。列存优势：1）查询只需读取涉及列 2）同一列数据类型一致，高压缩比（Run-Length Encoding、差值编码、字典编码）3）向量化执行（SIMD 加速列处理）。行存优势：1）单行所有字段一次 I/O 即可获取 2）插入/更新整行效率高 3）事务处理天然友好。列存劣势：重建完整行需多列数据合并。行存劣势：读取大量行的少数列时浪费 I/O 和缓存。\n\n扩展延伸：Parquet 列式格式：数据以 Row Group 组织，每个 Column Chunk 内按 Page 分页（Data Page、Dictionary Page）。Parquet 支持复杂的嵌套数据类型（JSON、Struct、List）。ORC（Hive 优化的列存格式）比 Parquet 有更好的索引（Bloom Filter、Min/Max 统计索引）和更高压缩比（按 stripe 组织数据，stripe 内有 index data 区）。列式数据库：ClickHouse（列存 + 向量化执行，单表聚合极快）、Snowflake（混合列存 + 微分区）、DuckDB（嵌入式 OLAP，列存引擎）。HTAP（混合事务/分析处理）：TiDB（行存 TiKV + 列存 TiFlash，数据自动同步）、MySQL HeatWave、SingleStore 通过双格式存储同时支持 OLTP 和 OLAP。",
-    "hints": [
-      "列式存储的压缩为什么比行式存储好",
-      "ClickHouse 的快是依赖列式存储还是向量化执行"
-    ],
-    "tags": [
-      "列式存储",
-      "OLAP",
-      "存储格式"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "NewSQL 数据库架构",
-    "content": "请解释 NewSQL 数据库的架构设计及其与传统数据库和 NoSQL 的对比。",
-    "answer": "答案：NewSQL 融合 NoSQL 的扩展性和 SQL 的 ACID 事务能力，典型代表是 TiDB、CockroachDB\n\n解析：NewSQL 诞生背景：传统单体数据库（MySQL/Oracle）扩展能力有限，NoSQL（MongoDB/HBase）牺牲了 SQL 能力和强一致性。NewSQL 致力于在分布式架构上实现完整的 SQL 支持和 ACID 事务。架构设计：1）计算与存储分离 — SQL 计算节点无状态、可水平扩展，存储节点自动分片（Region/Range）2）自动分片（Auto-Sharding）— 数据按 Key Range 自动分片，跨节点重新均衡 3）分布式事务 — 基于 Percolator（TiDB）或 Calvin 的分布式事务协议提供 ACID 保证 4）MVCC 实现快照隔离（SI）或可序列化隔离。\n\n扩展延伸：TiDB 架构：TiDB（SQL 层，兼容 MySQL 协议）负责 SQL 解析和分布式执行计划，PD（Placement Driver）负责元数据管理和调度，TiKV（存储层，基于 RocksDB 的 LSM-Tree）存储实际数据。TiFlash 是 TiKV 的列存副本，支持 HTAP。CockroachDB 使用 Range 分片（类似 Spanner），通过 Raft 共识算法跨 3 个及以上副本复制，自动故障切换。NewSQL vs 分库分表中间件（如 ShardingSphere）：分库分表方案应用层做路由，分布式事务能力有限；NewSQL 原生分布式架构，应用无需感知分片存在。NewSQL 的挑战：1）分布式事务的延迟高于单体事务 2）跨节点 JOIN 的性能开销 3）节点数量增大后网络通信成本。",
-    "hints": [
-      "NewSQL 的自动分片和手动分库分表的核心区别",
-      "TiDB 的 TiFlash 列存如何实现 HTAP"
-    ],
-    "tags": [
-      "NewSQL",
-      "TiDB",
-      "分布式数据库"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "变更数据捕获（CDC）",
-    "content": "请解释 CDC（Change Data Capture）的原理、实现方案和典型应用场景。",
-    "answer": "答案：CDC 实时捕获数据库的数据变更并同步到其他系统\n\n解析：CDC 实现方式：1）基于日志解析 — 解析数据库的事务日志（MySQL Binlog / PostgreSQL WAL / MongoDB Oplog），提取 INSERT/UPDATE/DELETE 操作。主流方案。优点：对业务无侵入、捕获完整、延迟低。缺点：需要运维 Binlog 解析组件。代表工具：Debezium（Kafka Connect Connector，支持 MySQL/PostgreSQL/MongoDB 等）。2）基于触发器 — 在源表创建触发器记录变更到 changelog 表。优点：实现简单、可定制。缺点：侵入性高、性能开销大。3）基于时间戳查询（增量查询）— 按时间戳字段轮询查询变更数据。优点：最简单。缺点：无法捕获 DELETE、对业务表有侵入、实时性差。\n\n扩展延伸：CDC 典型应用场景：1）数据同步 — 从 OLTP 数据库实时同步到 OLAP 数仓（ClickHouse/Doris），通过 Kafka 或 Pulsar 流处理实现近实时分析 2）缓存失效/更新 — 数据库数据变化后通过 CDC 通知缓存系统更新/删除缓存 3）微服务事件驱动 — 将数据库变更发布为领域事件，其他服务订阅响应（Transaction Outbox 模式的替代方案）4）搜索索引同步 — DB 数据变化后实时更新 Elasticsearch 索引。Debezium 工作机制：连接 MySQL 读取 Binlog（Row 格式），以 Schema Registry 管理数据类型，将每个行变更发布为 Kafka 消息（消息包含 before 和 after 字段）。一致性保证：CDC 通常提供 at-least-once 语义，需要消费者侧做好幂等处理。Binlog 格式对比：STATEMENT（记录 SQL）、ROW（记录行变更详情，CDC 必需）、MIXED（混合模式）。",
-    "hints": [
-      "Debezium 读取 Binlog 时的初始快照如何保证一致性",
-      "CDC 消费者侧如何处理重复消息"
-    ],
-    "tags": [
-      "CDC",
-      "数据同步",
-      "Binlog"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
     "title": "TiDB 架构",
     "content": "请介绍 TiDB 的 NewSQL 架构。TiDB 如何通过计算存储分离实现水平扩展？TiKV 的 Raft 分区和 Percolator 事务模型如何工作？",
-    "answer": "答案：TiDB 是分布式 NewSQL 数据库，兼容 MySQL 协议，支持在线水平扩展和强一致性。\n\nTiDB 三层架构：\n1. TiDB Server（计算层）：\n   - 无状态 SQL 引擎（解析 SQL、生成执行计划、下推计算到 TiKV）\n   - 兼容 MySQL 协议（客户端可像连接 MySQL 一样连接 TiDB）\n   - 水平扩展：增加 TiDB Server 节点提升并发处理能力\n2. TiKV Server（存储层）：\n   - 分布式 KV 存储引擎（基于 RocksDB，LSM-Tree）\n   - 数据按 Range 分为 Region（默认 96MB），每个 Region 有 Leader 和 Follower\n   - Region 通过 Raft 协议复制（强一致性）\n   - 水平扩展：增加 TiKV 节点，Region 自动迁移到新节点\n3. PD Server（调度层）：\n   - 基于 etcd（Raft 一致性），管理 Region 元数据和调度\n   - 调度决策：Leader 均衡、Region 分裂/合并、故障转移\n\nTiKV 的 Raft 分区：\n- 数据分为多个 Region（每个 Region 一个 Raft Group）\n- 每个 Region 有 Leader（读写）+ 多个 Follower（只读+复制）\n- 读走 Leader（强一致），也支持 Follower Read（弱一致）\n- Region 分裂：超过 96MB 时自动分裂为两个 Region\n\nPercolator 事务模型：\n- TiDB 使用 Google Percolator 的分布式事务模型\n- 基于 Primary Key + 时间戳（TSO）的乐观事务\n- 事务流程：\n  1. Prewrite：写入所有 key 的锁和数据（携带时间戳）\n  2. Commit：提交 Primary Key（成功后事务即提交）\n  3. 异步提交（Async Commit / 1PC）优化——减少两阶段提交的开销\n\n扩展延伸：TiDB vs CockroachDB——类似架构但事务模型不同（CRDB 使用混合逻辑时钟 HLC，不依赖 TSO 全局时钟）。TiDB 适合 OLTP + 轻量 OLAP 场景（HTAP）。TiFlash——列存引擎（Raft Learner），用于分析型查询。",
+    "answer": "TiDB 是分布式 NewSQL 数据库，兼容 MySQL 协议，支持在线水平扩展和强一致性。\n\nTiDB 三层架构：\n1. TiDB Server（计算层）：\n   - 无状态 SQL 引擎（解析 SQL、生成执行计划、下推计算到 TiKV）\n   - 兼容 MySQL 协议（客户端可像连接 MySQL 一样连接 TiDB）\n   - 水平扩展：增加 TiDB Server 节点提升并发处理能力\n2. TiKV Server（存储层）：\n   - 分布式 KV 存储引擎（基于 RocksDB，LSM-Tree）\n   - 数据按 Range 分为 Region（默认 96MB），每个 Region 有 Leader 和 Follower\n   - Region 通过 Raft 协议复制（强一致性）\n   - 水平扩展：增加 TiKV 节点，Region 自动迁移到新节点\n3. PD Server（调度层）：\n   - 基于 etcd（Raft 一致性），管理 Region 元数据和调度\n   - 调度决策：Leader 均衡、Region 分裂/合并、故障转移\n\nTiKV 的 Raft 分区：\n- 数据分为多个 Region（每个 Region 一个 Raft Group）\n- 每个 Region 有 Leader（读写）+ 多个 Follower（只读+复制）\n- 读走 Leader（强一致），也支持 Follower Read（弱一致）\n- Region 分裂：超过 96MB 时自动分裂为两个 Region\n\nPercolator 事务模型：\n- TiDB 使用 Google Percolator 的分布式事务模型\n- 基于 Primary Key + 时间戳（TSO）的乐观事务\n- 事务流程：\n  1. Prewrite：写入所有 key 的锁和数据（携带时间戳）\n  2. Commit：提交 Primary Key（成功后事务即提交）\n  3. 异步提交（Async Commit / 1PC）优化——减少两阶段提交的开销\n\n扩展延伸：TiDB vs CockroachDB——类似架构但事务模型不同（CRDB 使用混合逻辑时钟 HLC，不依赖 TSO 全局时钟）。TiDB 适合 OLTP + 轻量 OLAP 场景（HTAP）。TiFlash——列存引擎（Raft Learner），用于分析型查询。",
     "hints": [
       "TiDB = TiDB（无状态 SQL 引擎）+ TiKV（Raft + Region 分片）+ PD（元数据调度）",
       "Percolator 事务 = 乐观两阶段提交（Prewrite + Commit），基于 TSO 全局时间戳"
@@ -1017,122 +107,12 @@
     ]
   },
   {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据分片策略",
-    "content": "请介绍数据库数据分片（Sharding）的策略和挑战。范围分片和哈希分片各有什么优缺点？分片后的跨节点查询和分布式事务如何处理？",
-    "answer": "答案：数据分片将大表水平切分到多个数据库节点（Shard），解决单机存储和性能瓶颈。\n\n分片策略：\n1. 范围分片（Range Sharding）：\n   - 按分片键的范围分配：Shard 1（id 1-1000000）、Shard 2（id 1000001-2000000）\n   - 优点：范围查询友好（连续范围通常在同一节点），支持分片键的范围扫描\n   - 缺点：数据倾斜（热点——最新数据集中在尾部分片），重新分片时需要移动大量数据\n2. 哈希分片（Hash Sharding）：\n   - 对分片键哈希取模：shard_id = hash(shard_key) % N\n   - 优点：数据分布均匀（无热点），写入负载均衡\n   - 缺点：范围查询需要广播到所有分片，增加分片需要迁移数据（一致性哈希可缓解）\n3. 一致性哈希（Consistent Hashing）：\n   - 哈希环 + 虚拟节点——增加/减少节点时只影响相邻节点\n   - 需要迁移的数据量约为 1/N（N = 节点数）\n   - 适合分片数频繁变化的场景\n\n分片键选择：\n- 选择访问频率最高、分布最均匀的字段（如 user_id、order_id）\n- 避免单调递增的字段（范围分片时产生热点）\n- 考虑业务查询模式——尽量让同一业务的数据在同一分片\n\n分片后的挑战：\n1. 跨节点查询：跨分片的查询需要广播到所有分片 → 聚合结果\n2. 分布式事务：分片后跨越多个节点的事务（2PC/SAGA/TCC）\n3. 全局主键：分片后不能使用数据库自增，需要分布式 ID（Snowflake）\n4. 分片键变更：极难在线变更（需要重新分布数据）\n\n扩展延伸：分片中间件——ShardingSphere（JDBC + Proxy 两种模式，功能丰富）、Vitess（YouTube 开源的 K8s 原生分片方案，支撑 CloudSQL）、MyCat（基于 Proxy 的 MySQL 分片代理）。分片 vs NoSQL——MongoDB 原生分片、Cassandra 的 Partition 设计。",
-    "hints": [
-      "范围分片（连续/范围查询友好/热点问题）vs 哈希分片（均匀分布/范围查询需广播）",
-      "分片挑战：跨节点查询 + 分布式事务 + 全局主键 + 分片键难变更"
-    ],
-    "tags": [
-      "数据库",
-      "分片",
-      "Sharding",
-      "水平扩展"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "SQL 慢查询优化方法论",
-    "content": "请介绍 SQL 慢查询的优化方法论。如何通过 EXPLAIN 分析查询性能？常见的慢查询原因和对应的优化手段有哪些？",
-    "answer": "答案：SQL 慢查询优化遵循\"先定位、再分析、后优化\"的流程。\n\n定位慢查询：\n- 慢查询日志（slow_query_log）：记录执行时间超过 long_query_time 的 SQL\n- performance_schema：更详细的信息（锁等待、IO、事务等）\n- 实时监控：信息_schema.PROCESSLIST 查看当前正在执行的查询\n\nEXPLAIN 分析（重要字段）：\n- type（访问类型）：system > const > eq_ref > ref > range > index > ALL（全表扫描）\n  - 目标：至少达到 range（范围扫描），最好 ref（等值引用）或 const（主键查询）\n- possible_keys / key：可能使用的索引 / 实际使用的索引\n- rows：预估扫描的行数（越小越好）\n- Extra：Using index（覆盖索引）、Using index condition（索引下推）、Using filesort（文件排序，要优化）、Using temporary（临时表，要优化）\n- key_len：使用的索引长度（越长说明索引覆盖的列越多）\n\n常见原因与优化：\n1. 全表扫描（ALL）：确认查询条件是否有索引，添加合适的索引\n2. 索引失效：\n   - 对索引列使用函数：WHERE UPPER(name) = 'ABC' → 改为 name = 'abc'\n   - 隐式类型转换：WHERE phone = 123（phone 是 varchar）→ 改为 '123'\n   - 最左前缀不满足：索引 (a,b,c) 但查询没有 a\n   - LIKE '%xxx'：以通配符开头会导致索引失效\n3. 排序和分组慢（Using filesort/Using temporary）：\n   - 确保排序列有索引（覆盖索引的列顺序匹配排序顺序）\n   - 分组字段建立索引可以减少临时表\n4. JOIN 慢：确保 JOIN 字段在驱动表和被驱动表上都有索引\n5. 分页慢（深分页 LIMIT 100000, 10）：\n   - 使用游标分页（WHERE id > last_id LIMIT 10）\n   - 或子查询延迟关联（先查出主键再关联原表）\n\n扩展延伸：覆盖索引优化——SELECT 只查索引包含的字段（不回表）。索引选择性（Cardinality）——区分度越高的列越适合建索引。不要对性别/状态这类低区分度列建单列索引（但可以加入联合索引）。MySQL 优化器的选择——即使有索引也可能选择全表扫描（估算扫描行数过大时）。",
-    "hints": [
-      "EXPLAIN 关键字段：type（const>ref>range>index>ALL）+ Extra（Using filesort/temporary=要优化）",
-      "索引失效：函数/隐式转换/最左前缀不满足/LIKE 前置通配符"
-    ],
-    "tags": [
-      "数据库",
-      "慢查询",
-      "EXPLAIN",
-      "索引优化"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "数据库连接池",
-    "content": "请介绍数据库连接池（Connection Pool）的原理和配置策略。为什么要使用连接池而不是每次创建新连接？连接池的常用参数（最小连接数/最大连接数/超时时间）如何配置？",
-    "answer": "答案：连接池维护一组数据库连接，应用程序重复使用它们，避免频繁创建和销毁连接的开销。\n\n为什么用连接池：\n- 创建连接的开销大：TCP 三次握手 + 数据库认证（几十到几百毫秒）\n- 数据库对连接数有限制（MySQL 默认 max_connections = 151）\n- 连接池复用连接——连接建立一次，后续请求复用已建立的连接\n- 连接池还提供连接管理（超时断开、健康检查、自动恢复）\n\n关键参数配置：\n1. 最小连接数（minimumIdle / minPoolSize）：\n   - 连接池保持的最小空闲连接数\n   - 推荐：根据业务低谷的 QPS 估算，保留少量空闲连接\n   - 太小 = 流量突发时创建连接的延迟\n2. 最大连接数（maximumPoolSize）：\n   - 连接池允许的最大活跃连接数\n   - 不是越大越好！数据库的 CPU/IO 限制了并行度\n   - 经验公式：CPU 核数 × 2 + 有效磁盘数（HDD 1-2，SSD 2-4）\n   - 常见配置：20-50（中等服务器），100-200（高性能服务器）\n   - HikariCP 作者建议：单节点 10-15 个连接已足够高吞吐\n3. 连接超时（connectionTimeout）：\n   - 等待连接的最大时间。超过则抛出异常\n   - 推荐：1000-5000ms（太长导致请求堆积，太短容易误判流量毛刺）\n4. 空闲超时（idleTimeout）：空闲连接的最大存活时间\n5. 最大生命周期（maxLifetime）：连接存活时间上限（建议小于数据库的 wait_timeout）\n\n连接池产品：\n- HikariCP（Java，最推荐）：性能极高，字节码优化，生产验证\n- Druid（Java，阿里）：功能最丰富（监控/SQL 审计/防 SQL 注入/慢查询日志）\n- DBCP/C3P0（Java，旧）：不再推荐（性能差，有坑）\n- SQLAlchemy（Python）：ORM 自带的连接池\n\n扩展延伸：连接泄露——应用中未关闭连接导致连接池耗尽。预防：try-with-resources（Java）/ with 语句（Python）。数据库侧的连接管理——wait_timeout（MySQL 默认 8 小时）。连接池大小与 PSCache（Prepared Statement Cache）的关系——缓存预编译的 SQL 计划，减少 SQL 解析开销，但占用连接池内存。",
-    "hints": [
-      "连接池复用连接（避免 TCP 握手 + 认证开销），最大连接数不是越大越好",
-      "经验：最大连接数 = CPU核数 × 2（SSD），HikariCP 推荐单节点 10-15 连接"
-    ],
-    "tags": [
-      "数据库",
-      "连接池",
-      "HikariCP",
-      "优化"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "查询计划与优化器",
-    "content": "请介绍数据库查询优化器（Query Optimizer）的工作原理。优化器如何选择索引？基于成本的优化（CBO）和基于规则的优化（RBO）的区别是什么？",
-    "answer": "答案：查询优化器将 SQL 语句转换为最高效的执行计划。\n\n优化器的工作流程：\n1. 解析器：SQL → 抽象语法树（AST）\n2. 预处理器：语义检查（表/列是否存在）、视图展开\n3. 优化器：生成多个执行计划（Join 顺序、索引选择、访问方式），选择成本最低的\n4. 执行器：按照执行计划执行\n\nRBO（基于规则的优化）：\n- 使用固定的规则进行优化（如\"WHERE 条件优先执行\"、\"子查询展开\"）\n- 规则是硬编码的经验法则\n- 优点：实现简单，执行计划可控\n- 缺点：不根据实际数据量调整，选择的计划不一定最优\n- 早期数据库（如 Oracle RBO）使用\n\nCBO（基于成本的优化）：\n- 根据统计信息估算每种执行计划的成本（IO + CPU + 网络）\n- 统计信息：表的行数、列的基数（Cardinality）、数据分布直方图\n- 优化器计算每种计划的成本，选择成本最低的\n- 缺点：统计信息过时时，优化器可能选择次优计划\n\nMySQL 的优化器：\n- 默认使用 CBO（MySQL 5.6+）\n- 通过 ANALYZE TABLE 更新统计信息\n- 使用 FORCE INDEX / USE INDEX / IGNORE INDEX 提示影响优化器选择\n- 优化器会考虑：全表扫描（ALL）、索引扫描（index/range/ref）、索引合并（Index Merge）、MRR（Multi-Range Read）\n\n扩展延伸：执行计划的查看——EXPLAIN（计划）+ EXPLAIN ANALYZE（MySQL 8.0，执行并输出实际耗时和行数）。优化器的局限——复杂的 JOIN 查询中，JOIN 顺序的选择是指数级的（N!），优化器通常使用启发式算法（贪心/动态规划）剪枝。统计信息的维护——自动更新 vs 手动更新，采样率设置。",
-    "hints": [
-      "RBO = 规则硬编码（实现简单，不根据数据量调整）→ CBO = 基于统计信息估算成本（IO+CPU+网络）",
-      "MySQL 使用 CBO，统计信息过时会导致优化器选错索引"
-    ],
-    "tags": [
-      "数据库",
-      "优化器",
-      "CBO",
-      "执行计划"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "LSM-Tree 的合并策略",
-    "content": "请介绍 LSM-Tree（Log-Structured Merge-Tree）的几种合并（Compaction）策略及 trade-off。",
-    "answer": "答案：LSM-Tree 通过延迟写入和后台合并来优化写性能。合并策略直接影响读写性能平衡。\n\nLSM-Tree 的基本结构：\n- MemTable：内存中的写缓冲（有序结构，如红黑树或跳表）\n- Immutable MemTable：只读的 MemTable（等待刷盘）\n- SSTable：磁盘上的有序键值对文件\n- Compaction：后台合并 SSTable 的过程\n\n合并策略：\n\n1. Size-Tiered Compaction（大小分层合并）：\n   - 原理：每层有多个 SSTable，当某一层的 SSTable 数量达到阈值时触发合并\n   - 合并：将同一层的小文件合并为更大的文件，提升到下一层\n   - 代表：Cassandra、HBase（早期）\n   - 优点：写放大小（写入时只需追加）\n   - 缺点：读放大、空间放大（同一 key 可能在多层都有数据）\n\n2. Leveled Compaction（分层合并）：\n   - 原理：每层只有一个 SSTable，key 范围不重叠\n   - Level 0：刚刷盘的 SSTable（范围可重叠）\n   - Level 1+：每层有序无重叠，层大小指数递增（如 10 倍）\n   - 合并：Level 0 满后合并到 Level 1，Level 1 满后合并到 Level 2...\n   - 代表：LevelDB、RocksDB\n   - 优点：读放大、空间放大都较小（每层 key 不重叠）\n   - 缺点：写放大较大（每次合并涉及上层文件的重写）\n\n3. Tiered + Leveled 混合：\n   - 原理：低层用 Size-Tiered（减少写放大），高层用 Leveled（减少读放大）\n   - 代表：RocksDB 的 Universal Compaction、Cassandra 新版\n   - 优点：在前两者间取得平衡\n\n关键指标：\n| 策略 | 写放大 | 读放大 | 空间放大 |\n|------|--------|--------|----------|\n| Size-Tiered | 小 | 大 | 大 |\n| Leveled | 大 | 小 | 小 |\n| 混合 | 中 | 中 | 中 |\n\n扩展延伸：RocksDB 提供了丰富的合并策略配置。实际调优中还需要考虑 Bloom Filter（减少读放大）、Block Cache（缓存热点数据）等配套优化。",
-    "hints": [
-      "LSM-Tree 结构：MemTable → Immutable MemTable → SSTable，后台 Compaction 合并",
-      "Size-Tiered：小写放大但读/空间放大；Leveled：小读/空间放大但写放大；混合取中间",
-      "RocksDB 支持多种合并策略配置，还需配合 Bloom Filter 和 Block Cache"
-    ],
-    "tags": [
-      "数据库",
-      "LSM-Tree",
-      "Compaction",
-      "RocksDB"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MongoDB 与关系型数据库的差异",
-    "content": "请介绍 MongoDB 与关系型数据库（MySQL/PostgreSQL）在数据模型、查询方式和一致性方面的核心差异。",
-    "answer": "答案：MongoDB 是一种文档型 NoSQL 数据库，与关系型数据库有本质差异。\n\n1. 数据模型差异：\n\n关系型：\n- 行（Row）和列（Column）\n- 需要预先定义 Schema（表结构）\n- 范式化设计，通过外键关联\n\nMongoDB：\n- 文档（Document，BSON 格式）\n- 无 Schema（Schemaless），同一集合的文档可以有不同的字段\n- 嵌入式文档和数组（JSON 风格嵌套）\n- 推荐去范式化（Denzionalization），通过嵌入减少 JOIN 操作\n\n2. 查询方式：\n\n关系型：\n- SQL 声明式查询（SELECT ... JOIN ... WHERE ... GROUP BY）\n- 支持复杂 JOIN、子查询\n\nMongoDB：\n- 链式方法构造查询（find().sort().limit()）\n- 使用聚合管道（Aggregation Pipeline）实现复杂查询\n- 不支持 JOIN（通过 $lookup 实现左外连接，但效率低）\n- 支持 2D 地理空间查询（GeoJSON）\n\n3. 一致性：\n\n关系型：\n- 默认强一致（ACID 事务）\n- MySQL InnoDB 支持行级锁\n\nMongoDB：\n- 默认最终一致（Replica Set 读从库时）\n- 支持可调一致性（Write Concern, Read Concern）\n- 支持多文档事务（4.0+），但性能不如关系型\n\n4. 扩展性：\n\n关系型：\n- 垂直扩展为主，水平扩展分库分表复杂\n- 读写分离\n\nMongoDB：\n- 原生分片（Sharding）\n- 自动数据再均衡\n- 更适合水平扩展\n\n选择建议：\n- 数据结构灵活、原型快速迭代 → MongoDB\n- 强一致性要求、复杂关联查询 → 关系型\n- 大量嵌套数据、JSON 为主 → MongoDB\n- 需要 ACID 事务 → 关系型\n- 大规模水平扩展 → MongoDB\n\n扩展延伸：实际系统中常见混合使用——核心事务数据（订单、支付）用 MySQL，非结构化数据（日志、配置、用户画像）用 MongoDB。",
-    "hints": [
-      "数据模型：MongoDB 文档（BSON、无 Schema、支持嵌套）vs 关系型 行+列、预定义 Schema",
-      "查询：MongoDB 链式 API + 聚合管道 vs 关系型 SQL + JOIN",
-      "一致性：MongoDB 最终一致 + 可调一致性 vs 关系型 ACID 强一致"
-    ],
-    "tags": [
-      "数据库",
-      "MongoDB",
-      "NoSQL",
-      "文档数据库"
-    ]
-  },
-  {
     "category": "database_extras",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "Redis vs Memcached 对比",
     "content": "请对比 Redis 和 Memcached 的核心差异和适用场景。",
-    "answer": "答案：Redis 和 Memcached 都是内存缓存系统，但设计目标和能力差异很大。\n\n核心差异：\n\n| 维度 | Redis | Memcached |\n|------|-------|-----------|\n| 数据结构 | 丰富（String, Hash, List, Set, Sorted Set, HyperLogLog, GEO, Stream） | 仅 Key-Value（值只能是字符串） |\n| 持久化 | RDB（快照）, AOF（日志） | 不支持 |\n| 主从复制 | 支持 | 不支持 |\n| 集群 | Redis Cluster（去中心化哈希槽） | 客户端分片（一致性哈希） |\n| 内存淘汰 | 8 种策略（LRU, LFU, TTL, Random 等） | LRU 为主 |\n| 线程模型 | 6.x 前单线程，6.x 后多线程 I/O | 多线程（多线程处理 I/O + 多线程处理命令） |\n| 事务 | 支持（MULTI/EXEC，WATCH 乐观锁） | 不支持 |\n| Lua 脚本 | 支持 | 不支持 |\n| 发布订阅 | 支持 | 不支持 |\n| 内存效率 | 较高（数据结构有额外开销） | 高（纯 KV，开销最小） |\n\nRedis 优势：\n- 丰富的数据结构支持复杂业务逻辑\n- 持久化保证数据不丢失\n- 主从复制和集群实现高可用\n- 适合从简单缓存到复杂业务场景\n\nMemcached 优势：\n- 多线程处理，在多核机器上 CPU 利用更充分\n- 纯 KV 设计，内存效率最高\n- 实现极简单，定位非常纯粹\n- 在大值缓存场景下性能更好\n\n选择建议：\n- 需要缓存以外的能力（数据结构、持久化、Pub/Sub）→ Redis\n- 超大并发、超大缓存（纯 KV 场景）→ Memcached\n- 默认选择 → Redis（生态更丰富、社区更活跃）\n\n扩展延伸：Redis 的定位已经从缓存进化为实时数据平台（Real-Time Data Platform）。Redis Stack（RedisJSON, RedisSearch, RedisTimeSeries, RedisGraph）进一步扩展了能力边界。",
+    "answer": "Redis 和 Memcached 都是内存缓存系统，但设计目标和能力差异很大。\n\n核心差异：\n\n| 维度 | Redis | Memcached |\n|------|-------|-----------|\n| 数据结构 | 丰富（String, Hash, List, Set, Sorted Set, HyperLogLog, GEO, Stream） | 仅 Key-Value（值只能是字符串） |\n| 持久化 | RDB（快照）, AOF（日志） | 不支持 |\n| 主从复制 | 支持 | 不支持 |\n| 集群 | Redis Cluster（去中心化哈希槽） | 客户端分片（一致性哈希） |\n| 内存淘汰 | 8 种策略（LRU, LFU, TTL, Random 等） | LRU 为主 |\n| 线程模型 | 6.x 前单线程，6.x 后多线程 I/O | 多线程（多线程处理 I/O + 多线程处理命令） |\n| 事务 | 支持（MULTI/EXEC，WATCH 乐观锁） | 不支持 |\n| Lua 脚本 | 支持 | 不支持 |\n| 发布订阅 | 支持 | 不支持 |\n| 内存效率 | 较高（数据结构有额外开销） | 高（纯 KV，开销最小） |\n\nRedis 优势：\n- 丰富的数据结构支持复杂业务逻辑\n- 持久化保证数据不丢失\n- 主从复制和集群实现高可用\n- 适合从简单缓存到复杂业务场景\n\nMemcached 优势：\n- 多线程处理，在多核机器上 CPU 利用更充分\n- 纯 KV 设计，内存效率最高\n- 实现极简单，定位非常纯粹\n- 在大值缓存场景下性能更好\n\n选择建议：\n- 需要缓存以外的能力（数据结构、持久化、Pub/Sub）→ Redis\n- 超大并发、超大缓存（纯 KV 场景）→ Memcached\n- 默认选择 → Redis（生态更丰富、社区更活跃）\n\n扩展延伸：Redis 的定位已经从缓存进化为实时数据平台（Real-Time Data Platform）。Redis Stack（RedisJSON, RedisSearch, RedisTimeSeries, RedisGraph）进一步扩展了能力边界。",
     "hints": [
       "Redis：丰富数据结构、持久化、主从复制、集群、Lua 脚本（通用缓存+数据平台）",
       "Memcached：纯 KV、多线程、高内存效率（简单纯粹的大缓存）",
@@ -1151,7 +131,7 @@
     "type": "short_answer",
     "title": "TiDB 架构与 HTAP",
     "content": "请介绍 TiDB 的架构设计及其如何实现 HTAP（混合事务/分析处理）。",
-    "answer": "答案：TiDB 是一款分布式 NewSQL 数据库，同时支持 OLTP 和 OLAP。\n\n核心架构：\n\n1. TiDB Server（计算层）：\n   - SQL 解析和优化（MySQL 协议兼容）\n   - 分布式执行计划生成\n   - 无状态，可水平扩展\n   - 通过 PD 获取元数据\n\n2. PD Server（调度层）：\n   - 基于 Raft 的元数据管理\n   - 全局时间戳分配（TSO）\n   - 数据调度和负载均衡\n   - Region 分裂和合并管理\n\n3. TiKV（行存引擎）：\n   - 键值对存储（基于 RocksDB）\n   - Raft 一致性复制（三副本）\n   - Region 自动分裂和调度\n   - 面向 OLTP 的行存\n\n4. TiFlash（列存引擎）：\n   - 列式存储（面向 OLAP）\n   - Raft Learner（异步复制 TiKV 数据）\n   - 支持向量化计算\n   - 对 TiDB 透明（自动选择行存/列存）\n\nHTAP 实现原理：\n\n1. 行列混合存储：\n   - 同一份数据同时以行存（TiKV）和列存（TiFlash）存储\n   - TiFlash 作为 Raft Learner 从 TiKV 实时同步数据\n   - 写入 TiKV 通过 Raft 复制到 TiFlash，秒级延迟\n\n2. 智能查询路由：\n   - TiDB 优化器根据查询类型自动选择引擎\n   - 点查和小范围查询 → TiKV（行存，低延迟）\n   - 分析型大查询 → TiFlash（列存，向量化）\n   - 同一 SQL 可以同时访问两个引擎\n\n3. 全局一致性快照：\n   - PD 提供全局 TSO\n   - TiFlash 通过 Raft 保证数据一致性\n   - 读请求获得一致性快照\n\n扩展延伸：TiDB 的 HTAP 能力使企业可以将 TP 和 AP 统一在一个数据库上，减少数据搬运（不需要 ETL 到数仓）。但在极端场景下，专用 OLAP（ClickHouse）和专用 OLTP（MySQL）的组合仍有性能优势。",
+    "answer": "TiDB 是一款分布式 NewSQL 数据库，同时支持 OLTP 和 OLAP。\n\n核心架构：\n\n1. TiDB Server（计算层）：\n   - SQL 解析和优化（MySQL 协议兼容）\n   - 分布式执行计划生成\n   - 无状态，可水平扩展\n   - 通过 PD 获取元数据\n\n2. PD Server（调度层）：\n   - 基于 Raft 的元数据管理\n   - 全局时间戳分配（TSO）\n   - 数据调度和负载均衡\n   - Region 分裂和合并管理\n\n3. TiKV（行存引擎）：\n   - 键值对存储（基于 RocksDB）\n   - Raft 一致性复制（三副本）\n   - Region 自动分裂和调度\n   - 面向 OLTP 的行存\n\n4. TiFlash（列存引擎）：\n   - 列式存储（面向 OLAP）\n   - Raft Learner（异步复制 TiKV 数据）\n   - 支持向量化计算\n   - 对 TiDB 透明（自动选择行存/列存）\n\nHTAP 实现原理：\n\n1. 行列混合存储：\n   - 同一份数据同时以行存（TiKV）和列存（TiFlash）存储\n   - TiFlash 作为 Raft Learner 从 TiKV 实时同步数据\n   - 写入 TiKV 通过 Raft 复制到 TiFlash，秒级延迟\n\n2. 智能查询路由：\n   - TiDB 优化器根据查询类型自动选择引擎\n   - 点查和小范围查询 → TiKV（行存，低延迟）\n   - 分析型大查询 → TiFlash（列存，向量化）\n   - 同一 SQL 可以同时访问两个引擎\n\n3. 全局一致性快照：\n   - PD 提供全局 TSO\n   - TiFlash 通过 Raft 保证数据一致性\n   - 读请求获得一致性快照\n\n扩展延伸：TiDB 的 HTAP 能力使企业可以将 TP 和 AP 统一在一个数据库上，减少数据搬运（不需要 ETL 到数仓）。但在极端场景下，专用 OLAP（ClickHouse）和专用 OLTP（MySQL）的组合仍有性能优势。",
     "hints": [
       "四层架构：TiDB（SQL 计算）+ PD（调度/元数据）+ TiKV（行存/OLTP）+ TiFlash（列存/OLAP）",
       "HTAP：Raft Learner 异步复制行存→列存，优化器自动选择行存/列存引擎",
@@ -1166,103 +146,11 @@
   },
   {
     "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "分库分表中间件对比",
-    "content": "请对比 ShardingSphere、MyCAT 和 Vitess 三种分库分表方案的核心差异。",
-    "answer": "答案：三种方案分别代表了不同的实现路径——JDBC 层、Proxy 层和云原生。\n\nShardingSphere：\n\n架构：\n- JDBC 层（ShardingSphere-JDBC）：增强 JDBC 驱动，应用直连数据库\n- Proxy 层（ShardingSphere-Proxy）：独立代理服务，MySQL 协议兼容\n- 混合部署（Hybrid）：两者可同时使用\n\n特点：\n- JDBC 模式性能最高（无网络跳转）\n- 支持丰富分片策略（Hash、Range、Time、自定义）\n- 支持分布式事务（Local XA、Seata AT）\n- 支持读写分离、数据加密、SQL 审计\n- 不兼容所有 SQL（部分复杂 JOIN 和子查询不支持）\n\nMyCAT：\n\n架构：\n- Proxy 层实现（类似 MySQL Router）\n- 客户端连接 MyCAT 就像连接 MySQL\n\n特点：\n- 对应用透明（应用不需要修改任何代码）\n- 基于 Cobar（阿里开源）演进\n- 配置通过 XML 管理\n- 分片策略较简单\n- 社区活跃度下降\n\nVitess：\n\n架构：\n- 云原生方案（CNCF 毕业项目）\n- Topology（元数据管理）→ VTGate（SQL 路由）→ VTTablet（数据节点）\n- 基于 Kubernetes 部署\n\n特点：\n- 为超大规模设计（YouTube 生产验证）\n- 自动分片管理（Resharding 自动化）\n- 深度 K8s 集成\n- 连接池管理强大（VTTablet 管理 MySQL 连接）\n- 学习成本高、部署复杂\n\n对比：\n| 维度 | ShardingSphere | MyCAT | Vitess |\n|------|---------------|-------|--------|\n| 架构 | JDBC + Proxy | Proxy | Proxy（K8s 原生） |\n| SQL 兼容 | 好 | 中 | 好 |\n| 性能 | 高（JDBC） | 中（Proxy） | 中（Proxy） |\n| 部署复杂度 | 低 | 低 | 高（K8s） |\n| 分片自动管理 | 手动 | 手动 | 自动 |\n| 生态 | Apache 活跃 | 一般 | CNCF 活跃 |\n| 学习成本 | 中 | 低 | 高 |\n\n选择建议：\n- 小团队、简单分片 → ShardingSphere-JDBC\n- 需要零改造 → ShardingSphere-Proxy 或 MyCAT\n- 超大规模云原生 → Vitess",
-    "hints": [
-      "ShardingSphere：JDBC+Proxy 双架构，SQL 兼容好，性能高，社区活跃",
-      "MyCAT：纯 Proxy，零改造配置简单，但社区活跃度下降",
-      "Vitess：CNCF 云原生，K8s 深度集成，自动分片管理，适合超大规模"
-    ],
-    "tags": [
-      "数据库",
-      "分库分表",
-      "ShardingSphere",
-      "Vitess"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Otter 与 Canal 数据同步方案",
-    "content": "请解释阿里巴巴 Canal 和 Otter 在数据同步中的作用和工作原理。",
-    "answer": "答案：Canal 解析 MySQL binlog 获取增量变更，Otter 基于 Canal 实现多机房数据同步\n\n解析：Canal 伪装成 MySQL 从库向主库请求 binlog，解析 binlog 的 ROW 格式事件，将数据库变更（INSERT/UPDATE/DELETE）转换为结构化消息输出到 MQ（Kafka/RocketMQ）或其他下游。Canal 支持过滤库/表、字段掩码、自定义 deserializer 等。核心能力：1）binlog 位置持久化（ZooKeeper/Memory），断点续传 2）高可用（多 Instance 竞争消费）3）支持多种输出格式（protobuf/JSON）。Otter 是分布式数据同步平台，基于 Canal 获取变更后通过 Pipeline 将数据同步到目标数据库（支持单向/双向同步），解决数据冲突用基于负载优先或时间戳的策略。\n\n扩展延伸：Canal 的典型应用场景：1）缓存与数据库一致性（变更后更新 Redis）2）异构数据同步（MySQL -> ES/HBase）3）实时数据仓库（CDC 入湖）4）数据库审计（记录所有变更）5）CQRS 事件源。Otter 在阿里巴巴内部用于异地多活数据同步：多个机房部署，通过 Otter 保证跨机房的数据最终一致性，支持数据对比和修复工具。CDC（Change Data Capture）方案对比：Canal（MySQL binlog）、Debezium（基于 Kafka Connect 支持多种数据库）、Maxwell（轻量级 MySQL binlog 同步到 Kafka），选择取决于集群规模和生态集成需求。",
-    "hints": [
-      "Canal 伪装成 MySQL 从库的原理是什么",
-      "Otter 怎么处理双向同步的数据冲突"
-    ],
-    "tags": [
-      "数据同步",
-      "Canal",
-      "CDC"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "NewSQL 与云原生数据库",
-    "content": "请介绍 NewSQL 和云原生数据库的代表产品及其技术特点。",
-    "answer": "答案：NewSQL 试图融合 NoSQL 的分布式弹性和传统 RDBMS 的 SQL/ACID 特性\n\n解析：代表性 NewSQL 产品：1）Google Spanner — TrueTime API + 2PC + Paxos，全球级强一致性分布式数据库，核心创新是用 GPS + 原子钟实现的 TrueTime 时钟解决了分布式一致性问题 2）TiDB — 基于 Raft 协议，PD 管理元数据和调度，TiKV（KV 存储）+ TiDB（SQL 层）分离架构，兼容 MySQL 协议，支持在线扩缩容 3）CockroachDB — 类似 Spanner 但用混合逻辑时钟（HLC）替代 TrueTime，支持跨地域多活。云原生数据库代表：Amazon Aurora（计算存储分离，存储层自愈 6 副本）、Snowflake（SaaS 数仓，存算分离极致弹性）、Serverless DB（按需付费 Auto-scaling）。\n\n扩展延伸：存储计算分离架构：计算节点无状态，可秒级弹性扩缩；存储层分布式共享（S3/EBS），数据持久化不依赖计算节点。TiDB 架构深入：TiKV 按 Region 分片（默认 96MB），PD 自动进行 Region 调度（热点/负载均衡/扩容），TiFlash 提供列存引擎支持 HTAP。NewSQL 的权衡：强一致性不如原生 RDBMS 严格、分布式事务在跨地域场景下延迟较高、复杂 JOIN 查询性能不如单机数据库。什么时候选 NewSQL：数据量 TB 级+，需要在线弹性扩缩容，需要强一致性和 SQL 支持。",
-    "hints": [
-      "Spanner 的 TrueTime 怎么解决时钟问题",
-      "计算存储分离为什么是云原生数据库的趋势"
-    ],
-    "tags": [
-      "NewSQL",
-      "分布式",
-      "云原生"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "SQL 注入攻击与防护",
-    "content": "请解释 SQL 注入攻击的原理以及在各层的最佳防御实践。",
-    "answer": "答案：SQL 注入是通过拼接未过滤的用户输入到 SQL 查询中执行恶意代码的攻击\n\n解析：攻击原理：应用层将用户输入直接拼接到 SQL 语句中（如 WHERE id = '\" + userInput + \"'），攻击者通过输入 ' OR 1=1 -- 等 payload 改变查询语义，获取未授权数据或执行破坏操作。常见注入类型：1）UNION 注入 — 利用 UNION 追加查询窃取数据 2）盲注 — 通过布尔/时间判断逐字符猜解数据 3）堆叠注入 — 执行多条语句 4）报错注入 — 通过报错信息泄露数据 5）二阶注入 — 先存入恶意数据，后续操作触发。\n\n扩展延伸：防御最佳实践（多层防御）：1）第一层 — 预编译语句（Prepared Statement / Parameterized Query）是根除 SQL 注入最有效的手段，SQL 语句模板和参数分开传输，数据库执行时参数永远不参与编译 2）第二层 — ORM 框架（MyBatis/MP/JPA）规范使用 #{} 而非 ${}，严格过滤动态表名和 ORDER BY 子句（用白名单校验）3）第三层 — 数据库权限最小化（应用账号只赋予 INSERT/SELECT/UPDATE/DELETE 特定表权限，禁止 DROP/CREATE/ALTER）4）第四层 — WAF 检测和拦截 SQL 注入 payload（阿里云 WAF/Cloudflare/ModSecurity）。注意：存储过程如果内部使用动态 SQL 拼接同样有注入风险，不能作为防御手段依赖。",
-    "hints": [
-      "预编译语句为什么能防止 SQL 注入",
-      "为什么存储过程不能完全防止 SQL 注入"
-    ],
-    "tags": [
-      "安全",
-      "SQL注入",
-      "数据库"
-    ]
-  },
-  {
-    "category": "database_extras",
     "difficulty": "medium",
-    "type": "choice",
-    "title": "数据库范式",
-    "content": "一个关系表 R(A, B, C, D)，函数依赖为 AB→C, B→D，该表最高属于第几范式？",
-    "options": [
-      "A) 第一范式（1NF）",
-      "B) 第二范式（2NF）",
-      "C) 第三范式（3NF）",
-      "D) 巴斯科德范式（BCNF）"
-    ],
-    "answer": "A",
-    "hints": [
-      "存在部分函数依赖 B→D（B 是候选键 AB 的真子集）说明不满足 2NF"
-    ],
-    "tags": [
-      "数据库",
-      "范式",
-      "设计"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
     "type": "short_answer",
     "title": "数据库透明加密 TDE",
     "content": "请解释数据库透明加密（TDE）的原理及其在数据安全中的作用。",
-    "answer": "答案：TDE 在数据库存储层透明地加密数据文件，防止物理介质泄露导致的数据泄露\n\n解析：TDE 的核心原理是在数据写入磁盘时加密、读取时解密，对上层应用完全透明。MySQL 的 TDE 实现（MySQL Enterprise TDE / Percona Server）：使用表空间加密（tablespace encryption），每个表空间有自己的加密密钥，主密钥保存在 KMIP 或文件系统中。InnoDB 在将缓冲池中的 dirty page 写入磁盘前用 AES-256 加密，读入时解密。redo log 和 undo log 也加密。性能影响：加密/解密在 CPU 上进行，选用 AES-NI 指令集的 CPU 可大幅降低开销（通常 3-5% 性能影响）。\n\n扩展延伸：密钥层次架构：主密钥（Master Key） -> 表空间密钥（Tablespace Key）。主密钥由外部 KMS（密钥管理服务）管理，表空间密钥由主密钥加密后存储在表空间头部。层次化设计的优势在于：更换主密钥时只需重新加密表空间密钥（Key Rotation），无需重新加密整个数据库。合规要求：TDE 是 PCI-DSS、GDPR、HIPAA 等合规审查中的常见要求。TDE 的局限：不能防护传输过程中的攻击（需配合 TLS）、不能防护 SQL 注入和数据访问权限滥用（需配合访问控制和审计）。在云环境中建议使用云厂商的 KMS（AWS KMS / Azure Key Vault / 阿里云 KMS）管理主密钥。",
+    "answer": "TDE 在数据库存储层透明地加密数据文件，防止物理介质泄露导致的数据泄露\n\n解析：TDE 的核心原理是在数据写入磁盘时加密、读取时解密，对上层应用完全透明。MySQL 的 TDE 实现（MySQL Enterprise TDE / Percona Server）：使用表空间加密（tablespace encryption），每个表空间有自己的加密密钥，主密钥保存在 KMIP 或文件系统中。InnoDB 在将缓冲池中的 dirty page 写入磁盘前用 AES-256 加密，读入时解密。redo log 和 undo log 也加密。性能影响：加密/解密在 CPU 上进行，选用 AES-NI 指令集的 CPU 可大幅降低开销（通常 3-5% 性能影响）。\n\n扩展延伸：密钥层次架构：主密钥（Master Key） -> 表空间密钥（Tablespace Key）。主密钥由外部 KMS（密钥管理服务）管理，表空间密钥由主密钥加密后存储在表空间头部。层次化设计的优势在于：更换主密钥时只需重新加密表空间密钥（Key Rotation），无需重新加密整个数据库。合规要求：TDE 是 PCI-DSS、GDPR、HIPAA 等合规审查中的常见要求。TDE 的局限：不能防护传输过程中的攻击（需配合 TLS）、不能防护 SQL 注入和数据访问权限滥用（需配合访问控制和审计）。在云环境中建议使用云厂商的 KMS（AWS KMS / Azure Key Vault / 阿里云 KMS）管理主密钥。",
     "hints": [
       "TDE 为什么使用两层密钥架构",
       "TDE 能防御哪些攻击场景"
@@ -1277,27 +165,9 @@
     "category": "database",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "数据库分片（Sharding）与分区（Partitioning）设计对比",
-    "content": "数据库分片（Sharding）和分区（Partitioning）都是将数据拆分的技术。它们的核心区别是什么？在架构设计中如何选择？两者可以共存吗？",
-    "answer": "答案：分区（Partitioning）是在同一数据库实例内将表物理拆分为多个文件（对应用透明），分片（Sharding）是将数据分布到多个独立数据库实例（应用需感知路由规则）。分区解决单表过大问题，分片解决单机容量和性能上限问题。\n\n解析：核心区别——1）分区：MySQL 分区表或 PostgreSQL 表继承/分区表，数据仍然在同一数据库实例中，只是底层存储文件分开（如按时间分区的历史数据归档）。对应用完全透明，不需要修改 SQL。分区能改善查询性能（分区裁剪）和管理便利（删除分区比 DELETE 快）。但分区不能突破单机资源限制（CPU、内存、磁盘 IO 共享）。2）分片：数据分布到多台机器，每台机器有独立的计算和存储资源。需要分片中间件（ShardingSphere/MyCAT）或应用层路由。分片可以线性扩展（加机器 = 加性能），但带来分布式事务、跨分片查询、数据迁移等复杂问题。\n\n扩展延伸：3）两者共存——可以。先分区再分片：每个分片上的表使用分区表。如订单表按用户 ID 分片到 16 个库，每个库内的订单表按月分区。这样既实现了水平扩展又便于历史数据管理。4）选择原则——单表超千万行且查询通过索引能优化 -> 分区（更简单）。单表超亿行或总数据量超单机承载 -> 分片（必须突破单机限制）。5）替代方案——在考虑分片之前，先尝试：索引优化 + 读写分离 + 缓存 + 分区表 + 冷热分离。如果这些都无法满足，再考虑分片。",
-    "hints": [
-      "分区和分片最本质的区别在于是否跨数据库实例",
-      "为什么分区不能替代分片来解决单机瓶颈"
-    ],
-    "tags": [
-      "数据库",
-      "分片",
-      "分区",
-      "架构设计"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "InnoDB 缓冲池（Buffer Pool）管理与 LRU 优化",
     "content": "InnoDB 的缓冲池（Buffer Pool）是如何管理的？InnoDB 对传统 LRU 算法做了哪些优化来防止缓冲池被污染（Buffer Pool Pollution）？如何监控 Buffer Pool 的健康状态？",
-    "answer": "答案：InnoDB Buffer Pool 是 InnoDB 在内存中缓存数据页和索引页的区域（默认 128MB，通常设为物理内存的 60-80%）。InnoDB 使用改进的 LRU 算法——将 LRU 链表分为年轻代（New Sublist，约 5/8）和老年代（Old Sublist，约 3/8），新读取的页先插入 Old Sublist 的 midpoint，避免一次全表扫描将热点数据全部挤出。\n\n解析：Buffer Pool 管理机制——1）LRU 链表分为两部分：New Sublist（5/8）存储热点数据页，Old Sublist（3/8）存储冷数据页。新读取的页插入到 Old Sublist 的头部，只有在 Old Sublist 中存活超过 innodb_old_blocks_time（默认 1000ms）且被再次访问时才移到 New Sublist。2）这种改进解决了缓冲池污染问题——全表扫描或索引扫描一次性读取大量页，如果不做分代，这些只读一次的冷数据会把真正的热点数据全部挤出 Buffer Pool。\n\n扩展延伸：3）Buffer Pool 配置——innodb_buffer_pool_size：建议设为物理内存的 60-80%（MySQL 8.0 可在线调整）。innodb_buffer_pool_instances：将 Buffer Pool 拆分为多个实例减少锁竞争。innodb_old_blocks_time：冷数据在 Old Sublist 的存活时间。4）监控——SHOW ENGINE INNODB STATUS 的 BUFFER POOL AND MEMORY 部分：Buffer pool hit rate（命中率，>99% 为健康）、Free buffers（空闲页数）。5）Buffer Pool 预热——MySQL 5.7+ 支持 SHUTDOWN 时将 Buffer Pool 状态保存到磁盘（innodb_buffer_pool_dump_at_shutdown=ON），启动时加载（innodb_buffer_pool_load_at_startup=ON），避免重启后命中率从 0% 开始爬坡。",
+    "answer": "InnoDB Buffer Pool 是 InnoDB 在内存中缓存数据页和索引页的区域（默认 128MB，通常设为物理内存的 60-80%）。InnoDB 使用改进的 LRU 算法——将 LRU 链表分为年轻代（New Sublist，约 5/8）和老年代（Old Sublist，约 3/8），新读取的页先插入 Old Sublist 的 midpoint，避免一次全表扫描将热点数据全部挤出。\n\n解析：Buffer Pool 管理机制——1）LRU 链表分为两部分：New Sublist（5/8）存储热点数据页，Old Sublist（3/8）存储冷数据页。新读取的页插入到 Old Sublist 的头部，只有在 Old Sublist 中存活超过 innodb_old_blocks_time（默认 1000ms）且被再次访问时才移到 New Sublist。2）这种改进解决了缓冲池污染问题——全表扫描或索引扫描一次性读取大量页，如果不做分代，这些只读一次的冷数据会把真正的热点数据全部挤出 Buffer Pool。\n\n扩展延伸：3）Buffer Pool 配置——innodb_buffer_pool_size：建议设为物理内存的 60-80%（MySQL 8.0 可在线调整）。innodb_buffer_pool_instances：将 Buffer Pool 拆分为多个实例减少锁竞争。innodb_old_blocks_time：冷数据在 Old Sublist 的存活时间。4）监控——SHOW ENGINE INNODB STATUS 的 BUFFER POOL AND MEMORY 部分：Buffer pool hit rate（命中率，>99% 为健康）、Free buffers（空闲页数）。5）Buffer Pool 预热——MySQL 5.7+ 支持 SHUTDOWN 时将 Buffer Pool 状态保存到磁盘（innodb_buffer_pool_dump_at_shutdown=ON），启动时加载（innodb_buffer_pool_load_at_startup=ON），避免重启后命中率从 0% 开始爬坡。",
     "hints": [
       "InnoDB 的 LRU 为什么分为 young 和 old 两个 sublist",
       "innodb_old_blocks_time 参数对 SSD 和 HDD 场景的不同影响"
@@ -1307,61 +177,6 @@
       "InnoDB",
       "Buffer Pool",
       "LRU"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据库连接池容量计算公式与最佳实践",
-    "content": "数据库连接池的容量（最大连接数）应该如何计算？连接池大小的确定公式是什么？连接数过多或过少分别有什么影响？",
-    "answer": "答案：连接池最大连接数没有万能公式，但有一个广泛引用的经验起点：maximumPoolSize = Tn × (C - 1) + 1，其中 Tn = CPU 核心数，C = 单个连接处理的并发请求数。更简化的公式：核心数 × 2 + 磁盘数。核心原则：连接池大小应以数据库能有效处理的并行请求数为上限。\n\n解析：1）理论推导——连接池的本质是复用 TCP 连接。假设单个数据库连接的处理能力是 C 个请求/秒，CPU 核心数为 Tn，则数据库能处理的 TPS 上限 ≈ Tn × C。当连接数超过 Tn × C 时，增加连接只会增加上下文切换而不增加吞吐。2）实践经验——OLTP 场景（短查询，每次 1-5ms）：4 核机器建议 8-16 个连接，8 核机器建议 16-32 个连接。N 个应用实例 × 每个实例的连接池大小不应超过数据库 max_connections。3）过大的影响——CPU 上下文切换加剧，锁竞争增加（InnoDB 的行锁/间隙锁），数据库内存消耗增加（每个连接约 2-5MB），TPS 反而下降（拐点效应）。\n\n扩展延伸：4）HikariCP 的设计哲学——作者认为连接池不是越大越好，10 个连接通常比 100 个连接更快（因为避免了大量上下文切换）。5）不同负载类型的调整——OLTP（短事务）：池小（10-20）。批处理（长事务）：池可适度增大（50-100），单连接处理一条长 SQL。混合负载：拆分数据源，OLTP 用小池，分析类用大池。6）监控指标——活跃连接数（active）、等待线程数（pending）、连接获取超时次数（timeout）。active 持续接近 maximumPoolSize 且 pending > 0 说明连接池不够或 SQL 需要优化。",
-    "hints": [
-      "为什么连接池最大连接数不应该超过 CPU 核心数的 2-3 倍",
-      "如何通过监控指标判断连接池是否过小"
-    ],
-    "tags": [
-      "数据库",
-      "连接池",
-      "容量规划",
-      "HikariCP"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "覆盖索引与仅索引扫描（Index-Only Scan）对比",
-    "content": "覆盖索引（Covering Index）和仅索引扫描（Index-Only Scan）在 MySQL 和 PostgreSQL 中的实现有何不同？什么是 PostgreSQL 中的 Visibility Map？为什么 MySQL 的覆盖索引不需要 Visibility Map？",
-    "answer": "答案：覆盖索引指查询所需的所有列都包含在索引中，无需回表（MySQL 的 Extra=Using index）。PostgreSQL 的 Index-Only Scan 类似但需要 Visibility Map 辅助来判断可见性——因为 PostgreSQL 的 MVCC 将死元组保留在数据页中，索引项可能指向不可见的元组，需要通过 Visibility Map 跳过不可见行。MySQL InnoDB 的二级索引只包含主键，通过 MVCC 的 Undo Log 判断可见性，不存在此问题。\n\n解析：MySQL 覆盖索引——InnoDB 的二级索引叶子节点包含索引列值 + 主键值。如果查询所需的列全部在索引中（SELECT 和 WHERE 列都是索引的一部分），则无需回表访问聚簇索引。Extra=Using index 表示使用了覆盖索引。条件是索引必须包含所有 SELECT 列和 WHERE 列（即索引覆盖了查询）。\n\nPostgreSQL Index-Only Scan——PG 的索引不包含 TID（Tuple ID）之外的可见性信息。如果索引项指向的元组已经更新（新元组可能在不同页面），需要回表检查可见性。PG 通过 Visibility Map（每个数据页的可见性位图）来加速——如果数据页的全部元组对当前所有事务都可见，则直接从索引返回，不需要回表。Visibility Map 由 VACUUM 维护。\n\n扩展延伸：3）性能对比——MySQL 的覆盖索引本质上是在索引中「冗余」存储数据列，索引体积可能更大但免去了回表 IO。PG 的 Index-Only Scan 无需冗余存储，但依赖 VACUUM 及时更新 Visibility Map。4）设计策略——MySQL：将高频查询的列加入索引以形成覆盖索引。PG：通过 VACUUM 及时清理死元组，保持 Visibility Map 的有效性。5）适用场景——MySQL 覆盖索引适合查询列集相对固定的场景。PG 的 Index-Only Scan 适合数据更新不频繁、VACUUM 及时的场景（频繁更新导致 Visibility Map 有效性下降）。",
-    "hints": [
-      "PostgreSQL 为什么需要 Visibility Map 来实现 Index-Only Scan",
-      "MySQL 的覆盖索引和 PostgreSQL 的 Index-Only Scan 在索引设计上有何不同"
-    ],
-    "tags": [
-      "覆盖索引",
-      "Index-Only Scan",
-      "MySQL",
-      "PostgreSQL"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "快照隔离（Snapshot Isolation）与可串行化隔离级别实现",
-    "content": "快照隔离（Snapshot Isolation）是数据库多版本并发控制的一种实现。它和可串行化（Serializable）隔离级别有什么区别？为什么快照隔离不保证可串行化？写偏斜（Write Skew）问题是什么？",
-    "answer": "答案：快照隔离（SI）保证事务读取的是事务开始时刻的一致性快照（解决了脏读、不可重复读、幻读），但不保证可串行化。SI 可能出现写偏斜（Write Skew）问题——两个并发事务读取同一组数据但更新不同子集时，各自基于旧快照做决策，导致违反业务约束。可串行化隔离级别（如 PostgreSQL 的 Serializable Snapshot Isolation, SSI）通过检测读写冲突避免写偏斜。\n\n解析：1）快照隔离的保证——事务读取的是提交时的一致性快照。写操作采用 First-Committer-Wins 规则：两个并发事务写同一行时，先提交者成功，后提交者回滚。SI 被许多数据库作为默认或高级隔离级别使用（Oracle 的默认 RC 实际上是一种 SI，PostgreSQL 的 RC 和 RR 都基于 SI）。\n\n2）写偏斜（Write Skew）——经典例子：医生值班系统，要求至少有一位医生值班。事务 A：检查值班医生数 >= 2 后更新自己「不值」。事务 B：检查值班医生数 >= 2 后更新自己「不值」。两个事务基于相同的快照看到值班医生数为 2，都认为自己可以离开，各自更新自己的状态。结果：值班医生从 2 变成 0，违反业务规则。这个场景在 Serializable 级别下会被阻止（因为 SSI 检测到了读写冲突并回滚其中一个事务）。\n\n扩展延伸：3）PostgreSQL SSI（Serializable Snapshot Isolation, PG 9.1+）——在 SI 基础上增加读写冲突检测（SIREAD 锁），通过等待图异常检测来判断是否存在写偏斜风险。检测到潜在的可串行化冲突时回滚一个事务让另一个成功。4）MySQL Serializable——通过将所有 SELECT 隐式转换为 SELECT ... FOR SHARE（共享锁），完全使用锁机制而非 SI。可串行化但并发性能远低于 SSI。5）其他 SI 变体——Microsoft SQL Server 的 SNAPSHOT 隔离级别是 SI（需要单独启用 ALLOW_SNAPSHOT_ISOLATION）。MySQL InnoDB 的 REPEATABLE READ 也是基于 SI（同时使用 Next-Key Lock 减少了幻读和部分写偏斜）。",
-    "hints": [
-      "写偏斜（Write Skew）与脏写（Dirty Write）有什么区别",
-      "PostgreSQL 的 SSI 如何在不使用全表锁的情况下检测写偏斜"
-    ],
-    "tags": [
-      "快照隔离",
-      "可串行化",
-      "写偏斜",
-      "SSI",
-      "PostgreSQL"
     ]
   },
   {
@@ -1401,42 +216,6 @@
   },
   {
     "category": "database_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "数据库连接池 HikariCP 优化",
-    "content": "解释 HikariCP 连接池的关键配置参数及其优化策略。如何确定合适的连接池大小？HikariCP 相比其他连接池（如 DBCP、C3P0）做了哪些性能优化？",
-    "answer": "HikariCP 是 Spring Boot 默认的数据库连接池，以高性能著称。\\n\\n关键参数：\\n- maximumPoolSize：最大连接数。经验公式为 T = (core_count * 2) + effective_spindle_count，通常建议保持在 10-20 左右，过大会导致数据库端连接竞争加剧。\\n- minimumIdle：最小空闲连接数（建议等于 maximumPoolSize 或接近以消除创建延迟）。\\n- connectionTimeout：获取连接的超时时间（默认 30000ms）。\\n- idleTimeout：连接最大空闲时间（仅当 pool 超过 minimumIdle 时生效）。\\n- maxLifetime：连接最大寿命（应小于数据库的 wait_timeout）。\\n- poolName：便于监控。\\n\\n性能优化原理：\\n1. ConcurrentBag：无锁设计，比有锁队列性能高几个数量级。\\n2. 减少上下文切换：单一内部队列 + 极小程度竞争。\\n3. 字节码优化：使用 Javassist 替代 CGLIB 生成动态代理（减少方法调用开销）。\\n4. 直接初始化：编译器优化级别更高。\\n\\n优化建议：\\n- 监控实际连接利用率而非猜测池大小。\\n- 池大小并非越大越好——数据库连接是重量级资源，过多连接导致上下文切换和锁竞争。\\n- maxLifetime 建议设为略小于数据库的 wait_timeout。\\n- prepareStatementCache 按需开启，合理设置 cache size。",
-    "hints": [
-      "为什么数据库连接池不是越大越好",
-      "HikariCP 用哪种无锁数据结构替代了有锁队列"
-    ],
-    "tags": [
-      "HikariCP",
-      "连接池",
-      "Java",
-      "性能优化"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "分区裁剪",
-    "content": "解释数据库分区裁剪（Partition Pruning）的原理。MySQL 和 PostgreSQL 分别如何实现分区裁剪？什么情况下分区裁剪会失效？如何设计分区键以最大化裁剪效果？",
-    "answer": "分区裁剪是数据库查询优化器通过分析 WHERE 条件中的分区键，跳过无关分区的技术。\\n\\nMySQL 实现方式：\\n- 静态裁剪：在查询规划阶段，根据 WHERE 条件中的分区键范围直接确定需访问的分区。\\n- 动态裁剪：在执行阶段，对子查询等运行时才能确定值的条件进行裁剪（需版本支持）。\\n- 支持 RANGE、LIST、HASH、KEY、COLUMNS 等分区类型。\\n- EXPLAIN PARTITIONS 可查看查询命中的分区。\\n\\nPostgreSQL 实现方式：\\n- 基于约束排除（Constraint Exclusion），在 PG 10+ 通过声明式分区（Declarative Partitioning）原生支持。\\n- 利用 CHECK 约束逐分区排除。\\n- 分区键必须出现在 WHERE 条件中才能触发裁剪。\\n\\n裁剪失效场景：\\n1. 在 WHERE 中对分区键使用函数：WHERE YEAR(create_time) = 2024（应改为 create_time BETWEEN 「2024-01-01」 AND 「2024-12-31」）。\\n2. 隐式类型转换导致索引/分区键无法匹配。\\n3. 多表 JOIN 条件不包含分区键。\\n4. 分区表达式复杂导致优化器无法推测。\\n\\n设计建议：\\n- 分区键应选择查询中最常用的过滤列。\\n- 范围分区的时间粒度应与查询模式匹配。\\n- 避免在 WHERE 中对分区键做函数包裹或运算。",
-    "hints": [
-      "WHERE YEAR(partition_col) = 2024 能触发分区裁剪吗",
-      "MySQL 和 PG 分区裁剪的实现方式有何不同"
-    ],
-    "tags": [
-      "分区表",
-      "MySQL",
-      "PostgreSQL",
-      "查询优化"
-    ]
-  },
-  {
-    "category": "database_extras",
     "difficulty": "hard",
     "type": "short_answer",
     "content": "MySQL 8.0 窗口函数的执行模型是什么？优化器如何选择执行策略？如何设计索引和查询以优化窗口函数性能？ROWS、RANGE、GROUPS 三种帧模式有什么区别？",
@@ -1455,87 +234,7 @@
   },
   {
     "category": "database_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "InnoDB 行锁与间隙锁类型详解",
-    "content": "InnoDB 在 REPEATABLE READ 隔离级别下实现了多种锁类型：Record Lock、Gap Lock、Next-Key Lock、Insert Intention Lock。请说明这四种锁的区别，以及 Next-Key Lock 如何解决幻读问题。",
-    "answer": "答案：Record Lock 锁住索引记录本身；Gap Lock 锁住索引记录之间的间隙（不锁记录）；Next-Key Lock = Record Lock + Gap Lock 的组合，锁住记录及其前的间隙；Insert Intention Lock 是插入操作在插入前获取的一种特殊间隙锁（多个事务的 Insert Intention Lock 互不阻塞除非间隙上有 Gap Lock）。\n\n解析：1）Record Lock——锁住单条索引记录（不是行，而是索引记录）。InnoDB 的所有行锁都是基于索引实现的——如果 SQL 没有用到索引，InnoDB 会使用聚簇索引（相当于锁表）。2）Gap Lock——锁住两条索引记录之间的空间，防止其他事务在间隙中插入新行，解决幻读。Gap Lock 只存在于 RR 级别（RC 级别禁用）。3）Next-Key Lock——默认的 RR 级别锁算法，锁住一个左开右闭区间（前一个值, 当前值]。当查询走唯一索引的等值条件时退化为 Record Lock。4）Insert Intention Lock——插入操作特有，多个事务在间隙上插入不同位置时互不阻塞（提高插入并发），但如果间隙上有 Gap Lock 则等待。\n\n扩展延伸：Next-Key Lock 如何解决幻读：以 WHERE id > 5 FOR UPDATE 为例，InnoDB 锁住 (5, +∞) 范围内的所有间隙和记录。当另一个事务 INSERT id=10 时，Insert Intention Lock 与 Gap Lock 冲突而等待。这样当前事务再次 SELECT 时不会多出幻影行。注意：RC 级别下没有 Gap Lock，所以无法通过 Next-Key Lock 防止幻读。RR 级别下并非所有 SQL 都加 Gap Lock——唯一索引等值匹配退化为 Record Lock。",
-    "hints": [
-      "唯一索引等值查询时 Next-Key Lock 退化为 Record Lock 的条件是什么",
-      "为什么 RC 级别无法通过 Gap Lock 防止幻读"
-    ],
-    "tags": [
-      "MySQL",
-      "InnoDB",
-      "行锁",
-      "间隙锁",
-      "Next-Key Lock"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "InnoDB 多范围读取（MRR）",
-    "content": "Multi-Range Read（MRR）是 MySQL 5.6 引入的优化，适用于通过{{____}}索引查询大量数据时的场景。MRR 先将满足条件行的{{____}}收集到缓冲区中按{{____}}排序，然后批量回表读取数据行。MRR 将回表的{{____}}I/O 转化为{{____}}I/O，大幅减少磁盘寻道次数。MRR 的开启通过{{____}}优化器开关控制。",
-    "answer": "{\"correct\":[[\"二级\",\"辅助\"],[\"主键值\",\"RowID\"],[\"主键\",\"RowID\"],[\"随机\"],[\"顺序\"],[\"mrr\"]],\"distractors\":[\"聚簇\",\"索引值\",\"时间\",\"顺序\",\"随机\",\"index_merge\"]}",
-    "hints": [
-      "MRR 在什么场景下收益最大——大量的范围扫描需要回表时",
-      "MRR 和索引下推（ICP）可以同时使用吗"
-    ],
-    "tags": [
-      "MySQL",
-      "MRR",
-      "SQL优化",
-      "回表",
-      "随机I/O"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "choice",
-    "title": "MySQL 8.0 降序索引",
-    "content": "关于 MySQL 8.0 的降序索引（Descending Index），以下说法正确的是？",
-    "options": [
-      "A) MySQL 8.0 之前的版本已经支持降序索引，但优化器不会使用它",
-      "B) 降序索引通过在 B+ Tree 中按降序存储键值，避免了 ORDER BY col DESC 的文件排序",
-      "C) 降序索引只支持 InnoDB 引擎，MyISAM 不支持",
-      "D) 降序索引不能与复合索引一起使用"
-    ],
-    "answer": "答案：B) 降序索引通过在 B+ Tree 中按降序存储键值，避免了 ORDER BY col DESC 的文件排序\n\n解析：MySQL 8.0 之前，虽然可以指定 DESC 创建索引（如 INDEX idx (a DESC)），但 MySQL 实际仍然按升序存储，优化器忽略 DESC 关键字。当查询需要降序排列时，MySQL 必须在内存或磁盘中做额外排序（filesort）。MySQL 8.0 真正实现降序索引——B+ Tree 中相邻叶子按降序排列，ORDER BY a DESC 可以直接走索引避免 filesort。\n\n扩展延伸：降序索引的最大价值在复合索引中：假设有索引 (a ASC, b DESC)，查询 WHERE a=1 ORDER BY b DESC 可以直接利用索引的有序性升序遍历 a、降序遍历 b，无需额外排序。反之，如果只有 (a, b) 普通索引，ORDER BY a ASC, b DESC 无法利用 b 列的索引顺序，需要 filesort。适用场景：需要正反混合排序的列（如按时间升序查询但某列降序排列）。空间开销：与升序索引相同，无额外存储成本。注意：降序索引在 MySQL 8.0 中仍不如升序索引高效，因为 B+ Tree 本质上更适合按升序遍历。",
-    "hints": [
-      "复合索引中混合排序（ASC + DESC）如何利用降序索引避免 filesort",
-      "MySQL 8.0 之前指定 DESC 索引为什么被优化器忽略"
-    ],
-    "tags": [
-      "MySQL",
-      "降序索引",
-      "Descending Index",
-      "SQL优化"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL 半连接优化（Semi-join）",
-    "content": "MySQL 对 IN、EXISTS 等子查询实现了半连接（Semi-join）优化。请说明 Semi-join 有哪几种执行策略？优化器如何选择？DISTINCT 和 Semi-join 有什么关系？",
-    "answer": "答案：Semi-join 是 MySQL 5.6+ 对 IN/EXISTS 子查询的优化——不是先执行子查询再过滤外层查询，而是将子查询与外层查询做半连接（只返回外层表的行，且每行最多返回一次）。Semi-join 五种策略：Duplicate Weedout、FirstMatch、LooseScan、Materialization、Materialization-Scan。\n\n解析：1）Duplicate Weedout——子查询和外层 JOIN 后通过临时表去重（主键或唯一键），保证外层行只出现一次。适用：外层数据量大且需要去重。2）FirstMatch——外层逐行遍历，匹配到子查询的第一条满足记录就返回，不再继续匹配。效率高但依赖外层到子查询的索引。3）LooseScan——子查询的索引上有重复值，每个重复组只取一个值参与连接。4）Materialization——将子查询结果物化成临时表，再与外层表做连接。适合子查询结果集小、外层无索引的场景。5）Materialization-Scan——Materialization 的变体，扫描物化表而不是在物化表上建立索引查找。\n\n扩展延伸：Semi-join 通过 optimizer_switch 中 semijoin=on/off 控制。EXPLAIN 中的 Extra 字段显示 Start/End materialization、FirstMatch(t1) 等标记。DISTINCT 与 Semi-join 的关系：Semi-join 天然包含去重语义（外层表行只会被返回一次），与 IN 子查询的语义一致。如果 SQL 写为 WHERE EXISTS (SELECT 1 ...)，MySQL 也会转化为 Semi-join。不能优化的子查询：子查询中使用 LIMIT、UNION 等复杂操作时 Semi-join 可能失效。",
-    "hints": [
-      "FirstMatch 和 Duplicate Weedout 各自的适用场景",
-      "Semi-join 为什么不适用于子查询含 LIMIT 的场景"
-    ],
-    "tags": [
-      "MySQL",
-      "Semi-join",
-      "子查询优化",
-      "SQL优化"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "InnoDB 独立表空间与共享表空间",
     "content": "将 InnoDB 的系统表空间（ibdata1）和用户表的独立表空间（.ibd 文件）分离部署，使用 innodb_file_per_table=ON 时，可以独立回收每个表的磁盘空间。因此，DROP TABLE 或者 TRUNCATE TABLE 后，系统表空间中的对应空间也会自动释放回操作系统。",
@@ -1557,146 +256,7 @@
   },
   {
     "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 死锁分析与全局锁排查",
-    "content": "线上 MySQL 发生死锁时，如何快速定位死锁根因？InnoDB 的全局锁（LOCK TABLES 和 MDL）导致的死锁与行级死锁有什么不同？如何从应用层面系统性地预防死锁？",
-    "answer": "答案：SHOW ENGINE INNODB STATUS 查看 LATEST DETECTED DEADLOCK；全局锁死锁通常涉及表锁或元数据锁（MDL），行级死锁涉及记录锁和间隙锁。\n\n解析：排查步骤：1）执行 SHOW ENGINE INNODB STATUS\\G 找到 LATEST DETECTED DEADLOCK 段，查看事务 1 和事务 2 的 SQL、等待的锁（WAITING FOR THIS LOCK TO BE GRANTED）和当前持有的锁（HOLDS THE LOCK）。2）ROW LEVEL DEADLOCK 常见于两个事务加锁顺序相反，或二级索引与聚簇索引加锁顺序差异。3）MDL（元数据锁）死锁——ALTER TABLE 等待 DDL，DDL 被正在执行查询的事务阻塞。排查：performance_schema.metadata_locks 表看 MDL 等待链。\n\n扩展延伸：系统性预防策略：1）确保所有事务按相同的顺序访问表和行。2）保持事务短小（快速提交/回滚），减少锁持有时间。3）对高并发更新的表使用 READ COMMITTED 级别（无 Gap Lock 减少冲突）。4）合理设计索引——避免大范围锁扫描。5）SQL 语句使用明确的 ORDER BY 保证加锁顺序一致。6）设置 innodb_lock_wait_timeout（默认 50s）避免无限等待，设置较短的超时（如 5s）快速失败重试。7）兜底：应用层重试机制（捕获 DeadlockException 后 sleep 随机时间重试）。",
-    "hints": [
-      "SHOW ENGINE INNODB STATUS 中如何解读 LOCK WAIT 和 DEADLOCK 信息",
-      "MDL 死锁在什么场景下最容易出现——DDL 与长查询并发"
-    ],
-    "tags": [
-      "MySQL",
-      "死锁",
-      "MDL",
-      "行锁",
-      "排查"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "choice",
-    "title": "联合索引最左前缀与 Skip Scan",
-    "content": "表 t 上有联合索引 (a, b, c)，以下哪个查询能最充分利用该索引的三列进行索引扫描？",
-    "options": [
-      "A) WHERE b = 1 AND c = 2",
-      "B) WHERE a = 1 AND c = 2",
-      "C) WHERE a = 1 AND b = 2 AND c = 3",
-      "D) WHERE a > 1 AND b = 2"
-    ],
-    "answer": "答案：C)。解析：最左前缀原则要求从索引最左列开始匹配且不能跳过中间列。C) 完全匹配三列，三列都走索引（ref 访问）。A) 没有 a 列，索引完全失效（除非 MySQL 8.0 Skip Scan 能优化）。B) 跳过了 b 列，a 列用索引但 c 列无法直接利用（可能通过 ICP 下推过滤）。D) a > 1 是范围查询，a 范围扫描后 b 列无法利用排序（range 之后所有列失效）。注意：MySQL 8.0.13+ 的 Skip Scan 优化可以在特定条件下跳过最左列直接使用非首列——条件是优化器判断 a 列不同值较少且 b 列过滤性好。",
-    "hints": [
-      "范围查询（>, <, BETWEEN）后的索引列为什么失效——B+ 树的有序性被破坏",
-      "MySQL 8.0 Skip Scan 在什么条件下才能触发——a 列 distinct 值少 + b 列过滤性好"
-    ],
-    "tags": [
-      "MySQL",
-      "索引",
-      "最左前缀",
-      "Skip Scan",
-      "ICP"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "MySQL WAL 两阶段提交步骤",
-    "content": "MySQL 两阶段提交确保 redo log 和 binlog 一致：第一阶段 InnoDB 将 redo log 写入磁盘并标记为___状态。第二阶段 Server 层将 binlog 写入磁盘后，InnoDB 将 redo log 标记为___状态。如果在 prepare 完成后写入 binlog 前发生崩溃，___机制会回滚该事务；如果 binlog 已写完但 redo log 尚未标记完成时崩溃，重启后会自动___该事务。",
-    "answer": "{\"correct\": [[\"prepare\", \"准备\"], [\"commit\", \"提交\"], [\"崩溃恢复\", \"crash recovery\"], [\"提交\", \"commit\"]], \"distractors\": [\"undo\", \"rollback\", \"checkpoint\", \"purge\"]}",
-    "hints": [
-      "为什么必须先写 redo log 再写 binlog——崩溃恢复时以 binlog 为准",
-      "崩溃恢复时如果 redo log 处于 prepare 且 binlog 完整，事务应该提交还是回滚"
-    ],
-    "tags": [
-      "MySQL",
-      "WAL",
-      "两阶段提交",
-      "崩溃恢复",
-      "redo log"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "MySQL JOIN 算法演进与优化",
-    "content": "MySQL 执行 JOIN 查询时有哪几种连接算法？各自在什么场景下被优化器选择？如何通过索引设计和参数调优优化 JOIN 性能？",
-    "answer": "答案：三种算法：Nested Loop Join（有索引）、Block Nested Loop Join（无索引、MySQL 5.6+）、Hash Join（等值连接、MySQL 8.0.18+）。\n\n解析：1）Nested Loop Join（NLJ）——驱动表遍历每条记录，在被驱动表上用索引查找匹配，复杂度 O(N × logM)。最优方案但要求被驱动表有有效索引。2）Block Nested Loop Join（BNL）——驱动表一批记录（join_buffer_size 控制）缓存到 join buffer，一次批量匹配被驱动表全表扫描，减少 IO 次数。无索引时的次优方案。3）Hash Join——驱动表构建哈希表（内存），被驱动表逐条探测。等值 JOIN、两表均无索引时性能最好（比 BNL 快很多）。\n\n扩展延伸：优化策略：1）被驱动表 JOIN 列加索引——让优化器选择 NLJ 而非 BNL，这是最重要的优化。2）调整 join_buffer_size（默认 256KB）——BNL 时一次缓存更多驱动表记录，减少被驱动表扫描次数。但不要设过大（全局共享，过大浪费内存）。3）小表驱动大表——驱动表越小，被驱动表的索引查找次数越少。4）EXPLAIN 中 Extra 出现「Using join buffer (Block Nested Loop)」就是优化信号——需要检查被驱动表索引。",
-    "hints": [
-      "为什么被驱动表加索引对 JOIN 性能影响最大——NLJ 将全表扫描变为索引查找",
-      "Hash Join 为什么只适用于等值连接——哈希探测需要精确匹配"
-    ],
-    "tags": [
-      "MySQL",
-      "JOIN",
-      "NLJ",
-      "Hash Join",
-      "优化"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "true_false",
-    "title": "MySQL 临时表的存储位置",
-    "content": "MySQL 在执行包含 DISTINCT、GROUP BY 或 UNION 的查询时，如果发现无法使用索引完成操作，会在 Extra 中显示「Using temporary」。这些临时表一定创建在磁盘上，会触发大量磁盘 IO 导致查询变慢。",
-    "options": [
-      "A) 正确",
-      "B) 错误"
-    ],
-    "answer": "B",
-    "hints": [
-      "MySQL 临时表优先使用 MEMORY 引擎存放在内存中",
-      "tmp_table_size 和 max_heap_table_size 参数控制了内存临时表的最大大小"
-    ],
-    "tags": [
-      "MySQL",
-      "临时表",
-      "Using temporary",
-      "MEMORY引擎"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 子查询优化：半连接与物化策略",
-    "content": "MySQL 优化器如何处理 IN 和 EXISTS 子查询？什么是半连接（Semi-join）和物化（Materialization）？",
-    "answer": "答案：MySQL 优化器对 IN/EXISTS 子查询有多种优化策略。半连接（Semi-join）将子查询转换为类似 JOIN 的形式（但只返回外表匹配的行，每个内表行只匹配一次），物化（Materialization）将子查询的结果集先物化为临时表再进行 JOIN。\n\n解析：半连接优化（MySQL 5.6+）：1）Duplicate Weedout——通过临时表消除子查询结果的重复值，外表 JOIN 内表结果集，确保外表行只返回一次。2）First Match——对每个外表行，一旦在内表中找到第一个匹配就停止扫描并返回该外表行。3）Loose Scan——利用索引跳过重复的匹配值。4）Materialization-Lookup——将子查询结果物化为临时表，建索引后用外表行去探测。\n\n扩展延伸：Semi-join 不生效的情况：子查询中使用了 GROUP BY/LIMIT/聚合函数，或子查询过于复杂时优化器退化为 EXISTS 执行方式。NOT IN/NOT EXISTS 与 Anti-join——MySQL 5.6+ 对 NOT IN/NOT EXISTS 也有反连接（Anti-join）优化。判断是半连接还是物化：EXPLAIN 中 select_type 出现 MATERIALIZED（子查询物化）或 DEPENDENT SUBQUERY（依赖子查询，逐行执行，性能差）。SUBQUERY（非依赖子查询，执行一次）。生产实战：IN (SELECT id FROM t2) 在 t2 表数据量小时优先用半连接，数据量大时物化更优。如果子查询表有索引优先用 Semi-join，否则物化可能更好。",
-    "hints": [
-      "EXPLAIN 中 MATERIALIZED、DEPENDENT SUBQUERY、SUBQUERY 的区别",
-      "为什么 NOT IN 比 NOT EXISTS 更容易产生性能问题"
-    ],
-    "tags": [
-      "MySQL",
-      "子查询",
-      "优化器",
-      "半连接"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
-    "type": "fill_in_blank",
-    "title": "MySQL 主从复制的三种模式",
-    "content": "MySQL 主从复制有三种模式：___（主库提交后立即返回，不等待从库确认），___（至少一个从库写入 relay log 后主库才返回），以及___（基于 Paxos 协议的多主写入模式）。",
-    "answer": "{\"correct\":[[\"异步复制\"],[\"半同步复制\"],[\"组复制（MGR）\"]],\"distractors\":[[\"同步复制\",\"全同步复制\"],[\"全同步复制\",\"强同步复制\"],[\"Galera Cluster\",\"InnoDB Cluster\",\"NDB Cluster\"]]}",
-    "hints": [
-      "半同步复制在超时后会退化为什么模式",
-      "MGR 与半同步复制的核心差异是什么"
-    ],
-    "tags": [
-      "MySQL",
-      "主从复制",
-      "高可用"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "MySQL 派生表合并优化",
     "content": "MySQL 优化器可以将派生表（Derived Table）合并到外层查询中，避免物化派生表。但在派生表中包含 LIMIT、ORDER BY 或聚合函数时，优化器无法合并派生表。",
@@ -1704,7 +264,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确\n\n解析：派生表合并（Derived Table Merging）是 MySQL 5.7+ 引入的优化，优化器将 FROM 子句中的子查询（派生表）合并到外层查询中，直接访问基表的索引，避免创建和扫描临时表。但以下场景中派生表无法合并：派生表使用 LIMIT（限制行数后语义可能改变）、派生表使用 ORDER BY（外层查询的排序需求可能不同）、派生表包含聚合函数（GROUP BY/MIN/MAX/SUM 等，合并后外层 GROUP BY 可能影响内层结果）、派生表是 UNION 的结果集、派生表使用了聚合函数或 DISTINCT。\n\n扩展延伸：无法合并时，MySQL 5.6+ 会派生表物化（Materialization），将派生表结果写入临时表，再进行外层查询。如果派生表的数据量不大，派生表合并的效果显著（省去了临时表的创建和销毁）。开发者可通过优化派生表的使用来提升性能：尽量将过滤条件下推到派生表内部（WHERE 条件越早过滤越好），避免在派生表中使用 LIMIT/ORDER BY 导致无法合并。EXPLAIN 中 select_type 为 DERIVED 表示派生表被物化。MySQL 8.0.14+ 进一步支持 Lateral Derived Table（LATERAL 关键字），允许派生表引用前面表的值。",
+    "answer": "正确\n\n解析：派生表合并（Derived Table Merging）是 MySQL 5.7+ 引入的优化，优化器将 FROM 子句中的子查询（派生表）合并到外层查询中，直接访问基表的索引，避免创建和扫描临时表。但以下场景中派生表无法合并：派生表使用 LIMIT（限制行数后语义可能改变）、派生表使用 ORDER BY（外层查询的排序需求可能不同）、派生表包含聚合函数（GROUP BY/MIN/MAX/SUM 等，合并后外层 GROUP BY 可能影响内层结果）、派生表是 UNION 的结果集、派生表使用了聚合函数或 DISTINCT。\n\n扩展延伸：无法合并时，MySQL 5.6+ 会派生表物化（Materialization），将派生表结果写入临时表，再进行外层查询。如果派生表的数据量不大，派生表合并的效果显著（省去了临时表的创建和销毁）。开发者可通过优化派生表的使用来提升性能：尽量将过滤条件下推到派生表内部（WHERE 条件越早过滤越好），避免在派生表中使用 LIMIT/ORDER BY 导致无法合并。EXPLAIN 中 select_type 为 DERIVED 表示派生表被物化。MySQL 8.0.14+ 进一步支持 Lateral Derived Table（LATERAL 关键字），允许派生表引用前面表的值。",
     "hints": [
       "为什么 LIMIT 会导致派生表无法合并",
       "EXPLAIN 中 DERIVED 表示什么"
@@ -1713,23 +273,6 @@
       "MySQL",
       "派生表",
       "优化器"
-    ]
-  },
-  {
-    "category": "database",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 7.0 新特性与功能增强",
-    "content": "Redis 7.0 引入了哪些重大新特性？对现有功能做了哪些改进？",
-    "answer": "答案：Redis 7.0（2022 年发布）是 Redis 史上最大的版本之一，引入和改进了多项核心功能：AOF 增强（Multi-Part AOF）、函数（Redis Functions）、集群改进（Sharded Pub/Sub、ACL V2、集群链路优化）、内存效率提升（listpack 全面替代 ziplist）、自动 AOF 重写等。\n\n解析：1）Multi-Part AOF——将单个 AOF 文件拆分为 Base（基础 RDB 格式）+ Incremental（增量日志）+ Manifest（清单文件）三部分。解决了 AOF 重写期间的磁盘双倍占用问题，提高了 AOF 重写的稳定性。2）Redis Functions——替代 EVAL/EVALSHA，将 Lua 脚本作为一等公民管理。支持函数库（Library）、命名空间、版本管理，可以在服务端预加载管理，减少客户端传输脚本的带宽开销。3）Sharded Pub/Sub——在 Redis Cluster 中，Pub/Sub 消息不再广播到所有节点，而是限制在 hash slot 范围内（SSUBSCRIBE/SPUBLISH），解决了 Cluster 模式下 Pub/Sub 广播的带宽浪费问题。\n\n扩展延伸：4）Listpack 全面替代 Ziplist——Redis 7.0 用 listpack 替代了 ziplist 的所有使用场景（Hash Listpack、ZSet Listpack、List Quicklist 节点）。listpack 的每个元素记录自身长度而不是前一个元素的长度，解决了 ziplist 的连锁更新问题。5）ACL V2——支持 key-based 权限通配符（~* 和 %* 分别控制读写模式）。6）集群改进——Cluster 集群支持节点间更高效的故障检测（Faster Failure Detection）、集群迁移更少的阻塞时间。7）ROLE 命令增强、INFO 命令改进、内存报告更精确。需要注意的是：Redis 7.2 和 7.4 已发布，7.0 是重要的功能里程碑版本，标志着 Redis 在函数式管理和集群可扩展性上的大幅提升。",
-    "hints": [
-      "Multi-Part AOF 如何解决 AOF 重写的磁盘双倍占用",
-      "Redis Functions 相比 EVAL/EVALSHA 的优势"
-    ],
-    "tags": [
-      "Redis",
-      "7.0",
-      "新特性"
     ]
   },
   {
@@ -1744,7 +287,7 @@
       "C) SCAN 是非阻塞命令，通过游标分批遍历，每次返回有限数量的 key，不会长时间阻塞 Redis",
       "D) KEYS 命令在 Redis 6.0 后已经被废弃，应始终使用 SCAN"
     ],
-    "answer": "答案：C) SCAN 是非阻塞命令，通过游标分批遍历，每次返回有限数量的 key，不会长时间阻塞 Redis\n\n解析：KEYS * 命令是 O(N) 操作，在 Redis 单线程模型下执行时阻塞所有其他操作（包括读写请求），如果 key 数量很大（数百万个），可能阻塞数秒到数十秒。SCAN 命令通过游标（cursor）机制分批遍历，每次返回 COUNT 个（默认 10）key，遍历之间可以穿插执行其他命令。每次 SCAN 的时间复杂度约为 O(1)（返回一小批），整体遍历完仍然是 O(N) 但分摊到多次调用。\n\n扩展延伸：SCAN 命令的特点：1）每次返回的 key 数量不保证精确等于 COUNT（可能多可能少）。2）遍历过程中新增或删除的 key 不一定被返回（不提供完整一致性）。3）遍历过程中 key 可能被返回多次（客户端需要去重）。4）同一 Session 中 SCAN 的 cursor 有效，但长间隔可能导致 cursor 失效。5）SCAN 同样支持 SSCAN（Set）、HSCAN（Hash）、ZSCAN（ZSet）等类型特定的遍历。生产最佳实践：永远不要在生产环境使用 KEYS * 命令。使用 SCAN + COUNT 控制每次扫描量（建议 COUNT 100-1000），在低峰期执行。\n\n",
+    "answer": "C) SCAN 是非阻塞命令，通过游标分批遍历，每次返回有限数量的 key，不会长时间阻塞 Redis\n\n解析：KEYS * 命令是 O(N) 操作，在 Redis 单线程模型下执行时阻塞所有其他操作（包括读写请求），如果 key 数量很大（数百万个），可能阻塞数秒到数十秒。SCAN 命令通过游标（cursor）机制分批遍历，每次返回 COUNT 个（默认 10）key，遍历之间可以穿插执行其他命令。每次 SCAN 的时间复杂度约为 O(1)（返回一小批），整体遍历完仍然是 O(N) 但分摊到多次调用。\n\n扩展延伸：SCAN 命令的特点：1）每次返回的 key 数量不保证精确等于 COUNT（可能多可能少）。2）遍历过程中新增或删除的 key 不一定被返回（不提供完整一致性）。3）遍历过程中 key 可能被返回多次（客户端需要去重）。4）同一 Session 中 SCAN 的 cursor 有效，但长间隔可能导致 cursor 失效。5）SCAN 同样支持 SSCAN（Set）、HSCAN（Hash）、ZSCAN（ZSet）等类型特定的遍历。生产最佳实践：永远不要在生产环境使用 KEYS * 命令。使用 SCAN + COUNT 控制每次扫描量（建议 COUNT 100-1000），在低峰期执行。\n\n",
     "hints": [
       "为什么 KEYS * 命令在高 QPS 场景下特别危险",
       "SCAN 命令的游标机制如何避免阻塞"
@@ -1758,11 +301,11 @@
   },
   {
     "category": "database_extras",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "MySQL 8.0 ALGORITHM=INSTANT 即时 DDL",
     "content": "关于 MySQL 8.0 的 ALGORITHM=INSTANT DDL，以下说法正确的是？",
-    "answer": "答案：C) ALGORITHM=INSTANT 只修改数据字典而不重建表，部分 DDL 操作（如加列）可以使用该算法\n\n解析：MySQL 8.0.12+ 引入 ALGORITHM=INSTANT，支持的 DDL 操作包括在表末尾加列（非 array 类型）、加/删索引（但索引操作实质用 INPLACE）、修改列的默认值等。INSTANT 只修改数据字典（metadata），不重建表，因此不阻塞 DML。OLTP 场景下 CTAS 或 LOCK=DEFAULT 可能触发 INSTANT 或回退到 INPLACE。\n\n扩展延伸：INSTANT 加列不会回填历史数据，新列在老记录的 Record Header 中以「隐含默认值」标记。8.0.29+ 支持 INSTANT DROP COLUMN，但 8.0.29 以下版本只能加不能删。同一张表使用 INSTANT 加列次数受 row_format 和列数限制（通常约 64 次）。",
+    "answer": "C) ALGORITHM=INSTANT 只修改数据字典而不重建表，部分 DDL 操作（如加列）可以使用该算法\n\n解析：MySQL 8.0.12+ 引入 ALGORITHM=INSTANT，支持的 DDL 操作包括在表末尾加列（非 array 类型）、加/删索引（但索引操作实质用 INPLACE）、修改列的默认值等。INSTANT 只修改数据字典（metadata），不重建表，因此不阻塞 DML。OLTP 场景下 CTAS 或 LOCK=DEFAULT 可能触发 INSTANT 或回退到 INPLACE。\n\n扩展延伸：INSTANT 加列不会回填历史数据，新列在老记录的 Record Header 中以「隐含默认值」标记。8.0.29+ 支持 INSTANT DROP COLUMN，但 8.0.29 以下版本只能加不能删。同一张表使用 INSTANT 加列次数受 row_format 和列数限制（通常约 64 次）。",
     "options": [
       "A) ALGORITHM=INSTANT 和 ALGORITHM=INPLACE 完全相同",
       "B) ALGORITHM=INSTANT 会在 DDL 执行期间阻塞所有 DML",
@@ -1782,47 +325,11 @@
   },
   {
     "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 8.0 CTE 与递归公用表表达式",
-    "content": "MySQL 8.0 引入了公用表表达式（CTE）和递归 CTE。请说明 CTE 与派生表、临时表的区别，以及递归 CTE 的工作原理、递归深度限制和典型使用场景。",
-    "answer": "答案：CTE（Common Table Expression）使用 WITH 子句定义，生成临时结果集仅对当前查询可见，不重复计算引擎多次引用时的执行结果（相比派生表多次引用可能多次执行）。\n\n解析：非递归 CTE 语法：WITH cte_name AS (SELECT ...) SELECT ... FROM cte_name。递归 CTE 语法：WITH RECURSIVE cte AS (SELECT ... -- 基项 UNION ALL SELECT ... FROM cte WHERE ... -- 递归项) SELECT ... FROM cte。执行流程：先计算基项（非递归部分），结果作为初始工作集；每次递归项基于当前工作集计算下一轮结果，直到递归返回空。递归深度由 cte_max_recursion_depth（默认 1000）控制。\n\n扩展延伸：典型场景包括树形结构遍历（组织架构、分类树）、斐波那契数列/日期维度生成、以及图路径搜索。与 Oracle CONNECT BY 不同，MySQL 的递归 CTE 不支持 LEVEL 伪列和 SYS_CONNECT_BY_PATH 函数，需要手动维护深度。",
-    "hints": [
-      "CTE 和派生表的执行引擎重利用有什么区别",
-      "递归 CTE 的基项和递归项的执行顺序"
-    ],
-    "tags": [
-      "MySQL",
-      "CTE",
-      "递归查询",
-      "SQL优化"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "MySQL 8.0 JSON 数据类型与 Multi-Value Index",
-    "content": "MySQL 8.0 的 JSON 类型支持 Multi-Value Index（多值索引）。请说明 Multi-Value Index 的作用、创建方式，以及它如何加速 JSON 数组的查询。与传统的 Generated Column + 索引方案相比有何优势？",
-    "answer": "答案：Multi-Value Index 是 MySQL 8.0.17+ 引入的二级索引，专门用于对 JSON 数组中的值创建索引，支持对 JSON 数组元素的等值查询和 MEMBER OF、JSON_CONTAINS 等操作进行索引加速。\n\n解析：创建语法：CREATE INDEX idx ON t((CAST(data->'$.tags' AS UNSIGNED ARRAY)))；核心原理是将 JSON 数组中每个元素作为单独的索引条目存储，查询时通过数组值直接定位到主键。相比 Generated Column + 索引方案：Multi-Value Index 不需要预先定义虚拟列，对 JSON 结构变化更灵活。但它只能用在二级索引（不能做聚簇索引或全文索引），且仅支持等值查询、MEMBER OF、JSON_CONTAINS 等特定操作，不支持范围查询。\n\n扩展延伸：使用限制——只能对一个数组字段创建、被索引的 JSON 路径必须是数组类型、索引列必须是显式的 CAST(... AS type ARRAY)、一个表最多 64 个 Multi-Value Index（受索引总数限制）。适用于标签系统、分类 ID 列表等场景。",
-    "hints": [
-      "Multi-Value Index 是针对 JSON 哪个结构设计的",
-      "与虚拟列索引方案对比的优势是什么"
-    ],
-    "tags": [
-      "MySQL",
-      "JSON",
-      "多值索引",
-      "索引优化"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "MySQL 8.0 CHECK 约束",
     "content": "MySQL 8.0.16 开始支持 CHECK 约束，但 CHECK 约束只对 INSERT 操作生效，对 UPDATE 操作无效。",
-    "answer": "答案：错误\n\n解析：MySQL 8.0.16+ 的 CHECK 约束对 INSERT 和 UPDATE 操作都生效。当插入新行或更新现有行时，如果 CHECK 约束条件不满足则操作被拒绝。MySQL 对 CHECK 约束的实现符合 SQL 标准，支持列级约束和表级约束。在 8.0.16 之前 MySQL 虽然解析 CHECK 子句但不会实际验证数据。\n\n扩展延伸：CHECK 约束可以包含复杂表达式（如 JSON_VALID、多个列的比较），但不可包含子查询和存储函数。启用/禁用约束需要重建表（ALTER TABLE ... ALTER CHECK ... ENFORCED/NOT ENFORCED）。推荐使用 CHECK 约束而非触发器来实现简单的列值校验，因为 CHECK 约束优化器感知且执行效率更高。",
+    "answer": "错误\n\n解析：MySQL 8.0.16+ 的 CHECK 约束对 INSERT 和 UPDATE 操作都生效。当插入新行或更新现有行时，如果 CHECK 约束条件不满足则操作被拒绝。MySQL 对 CHECK 约束的实现符合 SQL 标准，支持列级约束和表级约束。在 8.0.16 之前 MySQL 虽然解析 CHECK 子句但不会实际验证数据。\n\n扩展延伸：CHECK 约束可以包含复杂表达式（如 JSON_VALID、多个列的比较），但不可包含子查询和存储函数。启用/禁用约束需要重建表（ALTER TABLE ... ALTER CHECK ... ENFORCED/NOT ENFORCED）。推荐使用 CHECK 约束而非触发器来实现简单的列值校验，因为 CHECK 约束优化器感知且执行效率更高。",
     "options": [
       "正确",
       "错误"
@@ -1836,24 +343,6 @@
       "CHECK约束",
       "数据校验",
       "DDL"
-    ]
-  },
-  {
-    "category": "database_extras",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "MySQL Thread Pool 线程池架构",
-    "content": "MySQL 企业版和 Percona Server 的 Thread Pool 将连接分组管理。每个连接被分配到 ___ 组中，每组保持 ___ 个工作线程。核心参数 ___ 控制线程组总数，___ 参数用于判断线程是否因死锁等原因被阻塞并触发新线程创建。当组内所有线程都忙时，新请求进入 ___ 队列。",
-    "answer": "{\"correct\":[[\"固定数量/固定数目\"],[\"一个/1/单个\"],[\"thread_pool_size\"],[\"thread_pool_stall_limit\",\"stall_limit\"],[\"等待/排队\"]],\"distractors\":[\"随机分配\",\"动态变化\",\"innodb_thread_concurrency\",\"max_connections\",\"thread_cache_size\",\"thread_pool_high_priority\",\"先进先出\"]}",
-    "hints": [
-      "stall_limit 参数如何检测线程是否卡住",
-      "Thread Pool 和连接池的区别"
-    ],
-    "tags": [
-      "MySQL",
-      "Thread Pool",
-      "连接管理",
-      "并发控制"
     ]
   }
 ]

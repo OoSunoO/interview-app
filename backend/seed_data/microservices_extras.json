@@ -1,11 +1,11 @@
 [
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Seata AT 模式二阶段提交详解",
     "content": "请详细解释 Seata AT 模式的一阶段和二阶段分别做了什么，以及如何实现全局事务的自动回滚。",
-    "answer": "答案：Seata AT（Automatic Transaction）模式是一种针对数据库的分布式事务解决方案，核心思想是业务零侵入。\n\n一阶段：TM 向 TC 注册全局事务，获取 XID。RM（数据库层面）执行业务 SQL，Seata 拦截 JDBC 请求，在提交前生成 undolog（记录 before image 和 after image），然后执行本地事务提交。此时数据已释放锁（非 XA 的阻塞方式）。\n\n二阶段：TC 协调所有 RM。如果全部成功——TM 通知 TC 全局提交，TC 通知各 RM 异步删除 undolog。如果任一失败——TM 通知 TC 全局回滚，TC 通知各 RM 用 undolog 的 before image 构造逆向 SQL 恢复数据（补偿回滚）。\n\n关键设计：undolog 表和业务数据在同一个本地事务中，保证了本地事务的原子性。回滚时没有新数据写入冲突则直接回滚；如果回滚期间有新的脏写，则需要人工介入。",
+    "answer": "Seata AT（Automatic Transaction）模式是一种针对数据库的分布式事务解决方案，核心思想是业务零侵入。\n\n一阶段：TM 向 TC 注册全局事务，获取 XID。RM（数据库层面）执行业务 SQL，Seata 拦截 JDBC 请求，在提交前生成 undolog（记录 before image 和 after image），然后执行本地事务提交。此时数据已释放锁（非 XA 的阻塞方式）。\n\n二阶段：TC 协调所有 RM。如果全部成功——TM 通知 TC 全局提交，TC 通知各 RM 异步删除 undolog。如果任一失败——TM 通知 TC 全局回滚，TC 通知各 RM 用 undolog 的 before image 构造逆向 SQL 恢复数据（补偿回滚）。\n\n关键设计：undolog 表和业务数据在同一个本地事务中，保证了本地事务的原子性。回滚时没有新数据写入冲突则直接回滚；如果回滚期间有新的脏写，则需要人工介入。",
     "hints": [
       "undolog 的 before image 和 after image 分别记录了什么",
       "什么情况下 AT 模式会回滚失败"
@@ -14,16 +14,16 @@
       "分布式事务",
       "Seata",
       "AT模式",
-      "undolog"
+      "Undo Log"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "TCC 分布式事务模式详解",
     "content": "请解释 TCC（Try-Confirm-Cancel）分布式事务模式的工作原理，与 Seata AT 模式的核心区别，以及在什么场景下应该选择 TCC 而非 AT。",
-    "answer": "答案：TCC 是一种侵入式的分布式事务解决方案，需要业务方实现三个接口：Try（预留资源）、Confirm（确认执⾏）、Cancel（回滚释放）。\n\nTry 阶段：尝试执行业务，完成所有业务检查（一致性保证），预留必要资源（隔离性保证）。Confirm 阶段：对 Try 阶段预留的资源进行确认提交。Cancel 阶段：取消 Try 阶段预留的资源。\n\n与 AT 的核心区别：AT 基于数据库中间件层自动生成逆向 SQL，对业务代码零侵入；TCC 需要业务方手动实现 Try/Confirm/Cancel 三个接口（业务侵入）。AT 回滚通过 undolog 恢复数据；TCC 通过 Cancel 释放预留资源。AT 适用于简单的单库 CRUD 场景；TCC 适用于跨服务、跨数据源、有资源预留需求的场景。\n\n典型 TCC 场景：账户扣款（Try 冻结金额 → Confirm 扣减 → Cancel 解冻）、库存扣减（Try 预占库存 → Confirm 出库 → Cancel 释放库存）、优惠券发放（Try 预占名额 → Confirm 发放 → Cancel 释放名额）。",
+    "answer": "TCC 是一种侵入式的分布式事务解决方案，需要业务方实现三个接口：Try（预留资源）、Confirm（确认执⾏）、Cancel（回滚释放）。\n\nTry 阶段：尝试执行业务，完成所有业务检查（一致性保证），预留必要资源（隔离性保证）。Confirm 阶段：对 Try 阶段预留的资源进行确认提交。Cancel 阶段：取消 Try 阶段预留的资源。\n\n与 AT 的核心区别：AT 基于数据库中间件层自动生成逆向 SQL，对业务代码零侵入；TCC 需要业务方手动实现 Try/Confirm/Cancel 三个接口（业务侵入）。AT 回滚通过 undolog 恢复数据；TCC 通过 Cancel 释放预留资源。AT 适用于简单的单库 CRUD 场景；TCC 适用于跨服务、跨数据源、有资源预留需求的场景。\n\n典型 TCC 场景：账户扣款（Try 冻结金额 → Confirm 扣减 → Cancel 解冻）、库存扣减（Try 预占库存 → Confirm 出库 → Cancel 释放库存）、优惠券发放（Try 预占名额 → Confirm 发放 → Cancel 释放名额）。",
     "hints": [
       "空回滚和悬挂问题是 TCC 的典型陷阱——如何通过事务日志和 XID 来防范",
       "Confirm 和 Cancel 本身需要保证幂等"
@@ -37,11 +37,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Saga 编排模式 vs 编排器模式",
     "content": "请对比 Saga 编排模式（Choreography）和 Saga 编 排器模式（Orchestrator）的实现方式、优缺点和适用场景。",
-    "answer": "答案：Saga 是长事务的分布式事务解决方案，将一个全局事务拆分成一系列本地事务，每个本地事务对应一个补偿事务。\n\n编排模式（Choreography）：各服务通过事件驱动协作——服务 A 完成后发消息到 Kafka/RocketMQ，服务 B 消费事件后执行，失败时各服务自行触发自己的补偿逻辑。优点：松耦合、无中心节点、性能高。缺点：业务逻辑分散在各服务中、流程可观测性差、循环依赖调试困难。\n\n编排器模式（Orchestrator）：引入一个 Saga Orchestrator（编排器）集中管理流程。编排器告诉每个服务该做什么，每个服务完成后回报结果。失败时编排器统一指挥补偿。优点：流程清晰、集中管理、易于监控和调试。缺点：编排器是单点（可用集群解决）、编排器本身可能成为性能瓶颈。\n\n选型建议：简单线性流程（2-3 个服务）用编排模式即可。复杂流程（分支/并行/条件判断）用编排器模式。目前业界更倾向编排器模式（如 Seata Saga、Apache Camel、AWS Step Functions）。",
+    "answer": "Saga 是长事务的分布式事务解决方案，将一个全局事务拆分成一系列本地事务，每个本地事务对应一个补偿事务。\n\n编排模式（Choreography）：各服务通过事件驱动协作——服务 A 完成后发消息到 Kafka/RocketMQ，服务 B 消费事件后执行，失败时各服务自行触发自己的补偿逻辑。优点：松耦合、无中心节点、性能高。缺点：业务逻辑分散在各服务中、流程可观测性差、循环依赖调试困难。\n\n编排器模式（Orchestrator）：引入一个 Saga Orchestrator（编排器）集中管理流程。编排器告诉每个服务该做什么，每个服务完成后回报结果。失败时编排器统一指挥补偿。优点：流程清晰、集中管理、易于监控和调试。缺点：编排器是单点（可用集群解决）、编排器本身可能成为性能瓶颈。\n\n选型建议：简单线性流程（2-3 个服务）用编排模式即可。复杂流程（分支/并行/条件判断）用编排器模式。目前业界更倾向编排器模式（如 Seata Saga、Apache Camel、AWS Step Functions）。",
     "hints": [
       "编排模式的死循环风险——服务 A 的事件触发 B，B 的事件又触发 A",
       "编排器模式中如何保证编排器自身的高可用"
@@ -59,7 +59,7 @@
     "type": "short_answer",
     "title": "Spring Cloud Alibaba 生态核心组件",
     "content": "请列出 Spring Cloud Alibaba 生态的核心组件及其各自的作用。",
-    "answer": "答案：Spring Cloud Alibaba 是阿里巴巴微服务解决方案的 Spring Cloud 实现，核心组件包括：\n\n1. Nacos——注册中心 + 配置中心。替代 Eureka + Config Server。支持 AP（Distro 协议）和 CP（Raft 协议）一致性切换。\n2. Sentinel——流量治理组件。替代 Hystrix。支持限流、熔断降级、系统保护、热点限流、实时监控。\n3. Seata——分布式事务解决方案。支持 AT、TCC、Saga、XA 四种模式。\n4. RocketMQ——消息队列。支持事务消息、顺序消息、延迟消息、批量消息。\n5. Dubbo——RPC 框架。支持多种协议（Dubbo/triple/gRPC）和多种注册中心。\n6. Spring Cloud Alibaba Router——灰度流量治理，结合 Nacos 和 Sentinel 实现全链路灰度。\n7. Alibaba Cloud ACM——阿里云配置管理服务（远端 Nacos）。\n8. Alibaba Cloud OSS——阿里云对象存储服务集成。\n\n这些组件与 Spring Cloud Netflix（已进入维护期）形成对比，是目前国内 Java 微服务的事实标准。",
+    "answer": "Spring Cloud Alibaba 是阿里巴巴微服务解决方案的 Spring Cloud 实现，核心组件包括：\n\n1. Nacos——注册中心 + 配置中心。替代 Eureka + Config Server。支持 AP（Distro 协议）和 CP（Raft 协议）一致性切换。\n2. Sentinel——流量治理组件。替代 Hystrix。支持限流、熔断降级、系统保护、热点限流、实时监控。\n3. Seata——分布式事务解决方案。支持 AT、TCC、Saga、XA 四种模式。\n4. RocketMQ——消息队列。支持事务消息、顺序消息、延迟消息、批量消息。\n5. Dubbo——RPC 框架。支持多种协议（Dubbo/triple/gRPC）和多种注册中心。\n6. Spring Cloud Alibaba Router——灰度流量治理，结合 Nacos 和 Sentinel 实现全链路灰度。\n7. Alibaba Cloud ACM——阿里云配置管理服务（远端 Nacos）。\n8. Alibaba Cloud OSS——阿里云对象存储服务集成。\n\n这些组件与 Spring Cloud Netflix（已进入维护期）形成对比，是目前国内 Java 微服务的事实标准。",
     "hints": [
       "Nacos 的 AP/CP 切换时机——临时实例用 AP，持久实例用 CP",
       "Sentinel 与 Hystrix 的核心区别在于线程池隔离 vs 信号量隔离"
@@ -74,11 +74,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Nacos 注册中心 AP/CP 一致性切换",
     "content": "Nacos 支持 AP 和 CP 两种一致性模式，请解释两者的区别、切换机制和适用场景。",
-    "answer": "答案：Nacos 的核心设计是一致性内核（Distro+Raft）+ 分层架构，根据实例类型动态选择一致性协议。\n\n临时实例（AP 模式）：使用 Distro 协议——每个节点只负责一部分实例的写操作，读操作会广播到所有节点。数据最终一致，允许短暂不一致。心跳检测（默认 5 秒）用于健康检查，30 秒无心跳标记不健康，60 秒彻底剔除。\n\n持久实例（CP 模式）：使用 Raft 协议——写入必须经过 Leader 节点，多数节点写入成功才算成功。强一致性，但延迟略高。通常用于配置管理。\n\n切换方式：通过 `ephemeral=true/false` 参数控制实例类型。Server 端根据实例类型自动选择底层一致性协议，对客户端透明。\n\n适用场景：服务发现用 AP（CAP 理论中 AP 优先，注册信息短暂不一致是可接受的），配置管理用 CP（配置不一致可能导致雪崩）。",
+    "answer": "Nacos 的核心设计是一致性内核（Distro+Raft）+ 分层架构，根据实例类型动态选择一致性协议。\n\n临时实例（AP 模式）：使用 Distro 协议——每个节点只负责一部分实例的写操作，读操作会广播到所有节点。数据最终一致，允许短暂不一致。心跳检测（默认 5 秒）用于健康检查，30 秒无心跳标记不健康，60 秒彻底剔除。\n\n持久实例（CP 模式）：使用 Raft 协议——写入必须经过 Leader 节点，多数节点写入成功才算成功。强一致性，但延迟略高。通常用于配置管理。\n\n切换方式：通过 `ephemeral=true/false` 参数控制实例类型。Server 端根据实例类型自动选择底层一致性协议，对客户端透明。\n\n适用场景：服务发现用 AP（CAP 理论中 AP 优先，注册信息短暂不一致是可接受的），配置管理用 CP（配置不一致可能导致雪崩）。",
     "hints": [
       "为什么服务发现用 AP 不用 CP——宁可拿到旧地址列表，也不能拿不到地址列表",
       "Nacos 的 Distro 协议与 Redis Cluster 的 hash slot 设计理念相似"
@@ -93,11 +93,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Sentinel 限流底层实现：滑动窗口与漏桶令牌桶",
     "content": "请详细解释 Sentinel 限流的底层实现原理，包括滑动窗口、漏桶和令牌桶三种算法的实现方式。",
-    "answer": "答案：Sentinel 的限流实现基于三个核心概念：资源（Resource）、规则（Rule）、Slot Chain（责任链）。\n\n1. 滑动窗口算法（Sentinel 默认）：将时间划分为多个小窗口（如 1 秒划分成 2 个 500ms 窗口），维护一个滑动窗口数组。当请求到达时，累加当前时间所在窗口以及之前 N-1 个窗口的计数。如果有配置了排队等待，请求可以排队通过。相对于固定窗口的「临界突变」问题（窗口切换瞬间流量暴增），滑动窗口更平滑。\n\n2. 漏桶算法：请求先进入一个队列（桶），以固定速率从桶中取出请求处理。如果桶满了，新请求被拒绝。Sentinel 的 `RateLimiterController` 实现了漏桶控制，通过计算期望通过时间和实际时间的差值来控制请求速率。\n\n3. 令牌桶算法：以固定速率向桶中添加令牌，请求到来时从桶中获取令牌。有令牌则通过，无令牌则拒绝。相对于漏桶，令牌桶可以应对突发流量（积攒的令牌可以支持短期突发）。\n\n扩展延伸：Sentinel 的限流粒度比 Hystrix 细——Hystrix 只能做到线程池或信号量隔离，Sentinel 能做到 API 级、参数级、甚至热点参数级限流。",
+    "answer": "Sentinel 的限流实现基于三个核心概念：资源（Resource）、规则（Rule）、Slot Chain（责任链）。\n\n1. 滑动窗口算法（Sentinel 默认）：将时间划分为多个小窗口（如 1 秒划分成 2 个 500ms 窗口），维护一个滑动窗口数组。当请求到达时，累加当前时间所在窗口以及之前 N-1 个窗口的计数。如果有配置了排队等待，请求可以排队通过。相对于固定窗口的「临界突变」问题（窗口切换瞬间流量暴增），滑动窗口更平滑。\n\n2. 漏桶算法：请求先进入一个队列（桶），以固定速率从桶中取出请求处理。如果桶满了，新请求被拒绝。Sentinel 的 `RateLimiterController` 实现了漏桶控制，通过计算期望通过时间和实际时间的差值来控制请求速率。\n\n3. 令牌桶算法：以固定速率向桶中添加令牌，请求到来时从桶中获取令牌。有令牌则通过，无令牌则拒绝。相对于漏桶，令牌桶可以应对突发流量（积攒的令牌可以支持短期突发）。\n\n扩展延伸：Sentinel 的限流粒度比 Hystrix 细——Hystrix 只能做到线程池或信号量隔离，Sentinel 能做到 API 级、参数级、甚至热点参数级限流。",
     "hints": [
       "滑动窗口的时间精度决定了限流的平滑程度——窗口越小越精确，但内存开销越大",
       "Sentinel 的热点参数限流是通过 LRU 计数器实现的"
@@ -115,7 +115,7 @@
     "type": "short_answer",
     "title": "K8s 微服务健康检查：Readiness 与 Liveness",
     "content": "Kubernetes 中 Readiness Probe 和 Liveness Probe 的区别是什么？在微服务架构中应该如何配置？",
-    "answer": "答案：K8s 提供了三种探针用于服务健康检查：Readiness（就绪探针）、Liveness（存活探针）、Startup（启动探针）。\n\nReadiness Probe：检查应用的「是否准备好接收流量「——返回失败时，K8s 从 Service Endpoint 列表中移除该 Pod，不转发流量。适用于检查依赖服务是否就绪、缓存是否预热等场景。\n\nLiveness Probe：检查应用的「是否还活着「——返回失败时，K8s 会重新启动该 Pod（根据 restartPolicy）。适用于死锁检测、内存泄漏导致的假死等场景。\n\nStartup Probe（K8s 1.16+）：检查应用「是否已经启动完成「——在启动探针成功之前，不执行 Readiness/Liveness 检查。适用于启动时间较长的应用（如 Java 应用启动需要分钟级）。\n\n微服务最佳实践：Spring Boot Actuator 的 `/health` 端点集成 K8s，区分 `livenessState`（只检查内部状态，不依赖外部）和 `readinessState`（检查 DB/Redis 等依赖）。禁止 Liveness 检查依赖外部服务（否则外部故障会导致所有 Pod 重启，形成级联故障）。",
+    "answer": "K8s 提供了三种探针用于服务健康检查：Readiness（就绪探针）、Liveness（存活探针）、Startup（启动探针）。\n\nReadiness Probe：检查应用的「是否准备好接收流量「——返回失败时，K8s 从 Service Endpoint 列表中移除该 Pod，不转发流量。适用于检查依赖服务是否就绪、缓存是否预热等场景。\n\nLiveness Probe：检查应用的「是否还活着「——返回失败时，K8s 会重新启动该 Pod（根据 restartPolicy）。适用于死锁检测、内存泄漏导致的假死等场景。\n\nStartup Probe（K8s 1.16+）：检查应用「是否已经启动完成「——在启动探针成功之前，不执行 Readiness/Liveness 检查。适用于启动时间较长的应用（如 Java 应用启动需要分钟级）。\n\n微服务最佳实践：Spring Boot Actuator 的 `/health` 端点集成 K8s，区分 `livenessState`（只检查内部状态，不依赖外部）和 `readinessState`（检查 DB/Redis 等依赖）。禁止 Liveness 检查依赖外部服务（否则外部故障会导致所有 Pod 重启，形成级联故障）。",
     "hints": [
       "Liveness 探针的 failureThreshold 设置不宜过小——给 Java GC 停顿留缓冲",
       "Spring Boot 2.3+ 的 Kubernetes Health Groups 可以优雅区分两种探针端点"
@@ -133,7 +133,7 @@
     "type": "short_answer",
     "title": "云原生微服务与 K8s Service 发现机制",
     "content": "在 Kubernetes 环境中，服务发现是如何实现的？与 Nacos/Eureka 等服务注册中心相比有什么优劣势？",
-    "answer": "答案：K8s 通过内置 DNS + Service 机制实现服务发现。\n\nK8s 原生方式：每个 Service 被分配一个 DNS 名称（如 `my-svc.namespace.svc.cluster.local`），Pod 启动时 `/etc/resolv.conf` 指向 CoreDNS（或 kube-dns）。服务 A 直接通过 DNS 名称调用服务 B，K8s 自动做负载均衡——支持 ClusterIP（集群内）、NodePort（节点端口）、LoadBalancer（云负载器）。\n\nvs Nacos/Eureka 的对比：\n- 配置复杂度：K8s DNS 无额外组件维护，但 HTTP 层面负载均衡（kube-proxy iptables/IPVS 转发）。Nacos/Eureka 需额外部署，但提供更丰富的健康检查（心跳 vs 被动检测）。\n- 功能丰富度：K8s Service 只做基本的流量转发和负载均衡。Nacos 分组/命名空间/权重/元数据/灰度路由等功能更丰富。\n- 协议支持：K8s DNS 天然支持所有 TCP/UDP。Eureka 只支持 HTTP、Nacos 支持 HTTP/gRPC/Dubbo。\n- 适用场景：纯 K8s 环境 + Spring Cloud 可选 K8s Service（用 `spring.cloud.kubernetes.discovery`）；混合架构、强调灰度/流量治理的用 Nacos。",
+    "answer": "K8s 通过内置 DNS + Service 机制实现服务发现。\n\nK8s 原生方式：每个 Service 被分配一个 DNS 名称（如 `my-svc.namespace.svc.cluster.local`），Pod 启动时 `/etc/resolv.conf` 指向 CoreDNS（或 kube-dns）。服务 A 直接通过 DNS 名称调用服务 B，K8s 自动做负载均衡——支持 ClusterIP（集群内）、NodePort（节点端口）、LoadBalancer（云负载器）。\n\nvs Nacos/Eureka 的对比：\n- 配置复杂度：K8s DNS 无额外组件维护，但 HTTP 层面负载均衡（kube-proxy iptables/IPVS 转发）。Nacos/Eureka 需额外部署，但提供更丰富的健康检查（心跳 vs 被动检测）。\n- 功能丰富度：K8s Service 只做基本的流量转发和负载均衡。Nacos 分组/命名空间/权重/元数据/灰度路由等功能更丰富。\n- 协议支持：K8s DNS 天然支持所有 TCP/UDP。Eureka 只支持 HTTP、Nacos 支持 HTTP/gRPC/Dubbo。\n- 适用场景：纯 K8s 环境 + Spring Cloud 可选 K8s Service（用 `spring.cloud.kubernetes.discovery`）；混合架构、强调灰度/流量治理的用 Nacos。",
     "hints": [
       "K8s Service 的负载均衡在 TCP 层，不会处理 HTTP 层的请求路由",
       "Istio 等 Service Mesh 可以弥补 K8s 原生服务发现在流量治理上的不足"
@@ -151,7 +151,7 @@
     "type": "short_answer",
     "title": "微服务可观测性：Metrics 指标体系设计",
     "content": "请设计一套微服务的 Metrics 指标体系，说明 RED 和 USE 方法的区别，以及需要关注的关键指标。",
-    "answer": "答案：微服务可观测性的 Metrics 设计遵循两种经典方法论。\n\nRED 方法（面向服务）：Rate（请求率）——每秒请求数（RPS/QPS）、Error（错误率）——HTTP 5xx/4xx 比例、超时异常比例、Duration（持续时间）——P50/P99/P999 延迟。适用于用户维度的服务质量监控。\n\nUSE 方法（面向资源）：Utilization（利用率）——CPU/内存/磁盘/网络带宽、Saturation（饱和度）——线程池队列深度、连接池等待数、I/O 等待、Errors（错误）——丢包、磁盘 I/O 错误。适用于基础设施维度的健康监控。\n\n关键指标清单：\n- 应用层：请求总量、错误总量、响应延迟分布（P50/P90/P99/P999）、慢 SQL 数量、GC 暂停时间\n- 业务层：订单转化率、支付成功率、关键链路超时次数\n- 资源层：CPU 利用率（按 container/pod）、JVM 堆内存/非堆/直接内存、线程数（活跃/峰值/阻塞）、DB 连接池使用率、缓存命中率\n- 中间件层：MQ 积压量、注册中心健康实例数、配置中心变更频率\n\n存储方案：Prometheus + Grafana 是目前标准的套路。指标以 15 秒间隔采集，保留 15-30 天。",
+    "answer": "微服务可观测性的 Metrics 设计遵循两种经典方法论。\n\nRED 方法（面向服务）：Rate（请求率）——每秒请求数（RPS/QPS）、Error（错误率）——HTTP 5xx/4xx 比例、超时异常比例、Duration（持续时间）——P50/P99/P999 延迟。适用于用户维度的服务质量监控。\n\nUSE 方法（面向资源）：Utilization（利用率）——CPU/内存/磁盘/网络带宽、Saturation（饱和度）——线程池队列深度、连接池等待数、I/O 等待、Errors（错误）——丢包、磁盘 I/O 错误。适用于基础设施维度的健康监控。\n\n关键指标清单：\n- 应用层：请求总量、错误总量、响应延迟分布（P50/P90/P99/P999）、慢 SQL 数量、GC 暂停时间\n- 业务层：订单转化率、支付成功率、关键链路超时次数\n- 资源层：CPU 利用率（按 container/pod）、JVM 堆内存/非堆/直接内存、线程数（活跃/峰值/阻塞）、DB 连接池使用率、缓存命中率\n- 中间件层：MQ 积压量、注册中心健康实例数、配置中心变更频率\n\n存储方案：Prometheus + Grafana 是目前标准的套路。指标以 15 秒间隔采集，保留 15-30 天。",
     "hints": [
       "RED 方法适合从上往下看用户感知的服务质量，USE 方法适合从下往上排查瓶颈",
       "P999 延迟比平均延迟更有意义——平均值会掩盖长尾延迟"
@@ -170,7 +170,7 @@
     "type": "short_answer",
     "title": "OpenTelemetry 分布式链路追踪实践",
     "content": "请说明 OpenTelemetry（OTel）在微服务链路追踪中的架构组件和工作流程，以及 W3C TraceContext 传播机制。",
-    "answer": "答案：OpenTelemetry 是 CNCF 的观测性标准，提供统一的 API/SDK，可导出到 Jaeger/Zipkin/云厂商。\n\n核心组件：\n1. OTel SDK——嵌入应用，负责数据采集（Span、Metrics、Logs）。\n2. OTel Collector——接收、处理、导出 Telemetry 数据。包括 Receiver（接收）、Processor（处理/采样/过滤）、Exporter（导出）。\n3. Instrumentation——自动或手动埋点。Java 用 Byte Buddy 字节码增强，自动拦截 HTTP/DB/MQ 等框架。\n\nW3C TraceContext 传播：\n`traceparent` 头（`00-traceid-spanid-traceflags`）在下游服务间传递。trace_id 是全局唯一的 128 位 ID，span_id 是当前 Span 的 64 位 ID。当服务 A 调用服务 B 时，将 `traceparent` 头传入 HTTP 请求，B 收到后以此为 parent span，生成新的 span_id。\n\n关键设计：采样策略——头部采样（Head Sampling）在请求入口决定是否采样，简单但决策时缺乏延迟信息。尾部采样（Tail Sampling）收集全部数据后再决定，信息完整但资源消耗大。推荐结合使用：全体采集头部信息（错误必采）+ 尾部按采样率抽取。",
+    "answer": "OpenTelemetry 是 CNCF 的观测性标准，提供统一的 API/SDK，可导出到 Jaeger/Zipkin/云厂商。\n\n核心组件：\n1. OTel SDK——嵌入应用，负责数据采集（Span、Metrics、Logs）。\n2. OTel Collector——接收、处理、导出 Telemetry 数据。包括 Receiver（接收）、Processor（处理/采样/过滤）、Exporter（导出）。\n3. Instrumentation——自动或手动埋点。Java 用 Byte Buddy 字节码增强，自动拦截 HTTP/DB/MQ 等框架。\n\nW3C TraceContext 传播：\n`traceparent` 头（`00-traceid-spanid-traceflags`）在下游服务间传递。trace_id 是全局唯一的 128 位 ID，span_id 是当前 Span 的 64 位 ID。当服务 A 调用服务 B 时，将 `traceparent` 头传入 HTTP 请求，B 收到后以此为 parent span，生成新的 span_id。\n\n关键设计：采样策略——头部采样（Head Sampling）在请求入口决定是否采样，简单但决策时缺乏延迟信息。尾部采样（Tail Sampling）收集全部数据后再决定，信息完整但资源消耗大。推荐结合使用：全体采集头部信息（错误必采）+ 尾部按采样率抽取。",
     "hints": [
       "TraceContext 传播是分布式追踪正确性的基础——丢失一个 header 整个链路就断了",
       "尾部采样可以配置只采样错误 trace + 一定比例的慢 trace"
@@ -184,11 +184,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "微服务契约测试与 Spring Cloud Contract",
     "content": "什么是消费者驱动的契约测试（CDC）？与集成测试和端到端测试相比有什么优势？",
-    "answer": "答案：消费者驱动的契约测试（Consumer-Driven Contract, CDC）是一种微服务测试策略，核心思想是由消费者（调用方）定义对提供者的期望，提供者需要满足这些期望。\n\n实现方式：消费者定义契约文件（描述输入 + 期望输出），提供者根据契约文件运行测试桩来验证自己的实现是否符合契约。Spring Cloud Contract 通过 Groovy DSL 或 YAML 定义契约，自动生成测试桩和验证测试。\n\nvs 集成测试：集成测试需要启动真实的服务、DB、缓存等基础设 施，启动慢、不稳定（脆弱的测试环境）、维护成本高。CDC 只验证服务间的接口契约，不需要启动整个环境。\n\nvs E2E 测试：E2E 测试覆盖全链路流程，但因为覆盖了太多变化点，失败时难以定位是哪个服务的问题。CDC 精确定位到接口级别。\n\n综合策略（测试金字塔）：底层轻量级单元测试（大量）→ 中间层 CDC/契约测试 → 少量集成测试（关键路径）→ 极少 E2E（核心用户场景）。不推荐用大量 E2E 替代 CDC。",
+    "answer": "消费者驱动的契约测试（Consumer-Driven Contract, CDC）是一种微服务测试策略，核心思想是由消费者（调用方）定义对提供者的期望，提供者需要满足这些期望。\n\n实现方式：消费者定义契约文件（描述输入 + 期望输出），提供者根据契约文件运行测试桩来验证自己的实现是否符合契约。Spring Cloud Contract 通过 Groovy DSL 或 YAML 定义契约，自动生成测试桩和验证测试。\n\nvs 集成测试：集成测试需要启动真实的服务、DB、缓存等基础设 施，启动慢、不稳定（脆弱的测试环境）、维护成本高。CDC 只验证服务间的接口契约，不需要启动整个环境。\n\nvs E2E 测试：E2E 测试覆盖全链路流程，但因为覆盖了太多变化点，失败时难以定位是哪个服务的问题。CDC 精确定位到接口级别。\n\n综合策略（测试金字塔）：底层轻量级单元测试（大量）→ 中间层 CDC/契约测试 → 少量集成测试（关键路径）→ 极少 E2E（核心用户场景）。不推荐用大量 E2E 替代 CDC。",
     "hints": [
       "CDC 的痛点是契约版本管理——接口变更时消费者和提供者的升级顺序",
       "Pact 是另一个流行的 CDC 框架（侧重 Ruby/Node.js），Spring Cloud Contract 侧重 Java"
@@ -206,7 +206,7 @@
     "type": "short_answer",
     "title": "分布式配置中心 Apollo 实时推送原理",
     "content": "请解释 Apollo 配置中心的实时推送机制，包括通知链、长轮询和客户端拉取的完整流程。",
-    "answer": "答案：Apollo 的配置推送采用「通知 + 拉取「的混合模式，保证实时性和可靠性。\n\n1. 配置变更入口：用户在 Apollo Portal 修改配置 → 提交到 Config DB。\n2. 通知 Admin Service：Portal 通过 Meta Server 通知 Admin Service → 写入 Release Message DB。\n3. 通知 Config Service：Config Service 定时扫描 Release Message DB（每秒一次）→ 有新发布通知时，通知 Notification Server（基于 HTTP 长轮询）。\n4. 通知客户端：客户端与 Config Service 建立长轮询连接（默认 60 秒超时）。当 Config Service 收到新版本通知 → 立即返回给客户端。\n5. 拉取配置：客户端收到通知后，主动拉取最新配置 → 写入本地缓存文件（容灾）→ 更新 Spring Environment。\n6. 实时生效：通过 Spring 的 `@Value` 或 `@ConfigurationProperties` + `@RefreshScope` 刷新 Bean。\n\n容灾设计：客户端本地缓存文件（上次拉取结果）是最后的防御。Config Service 不可用时，客户端继续使用本地缓存。多 Config Service 部署，无单点。\n\n与 Nacos 对比：Apollo 有 Portal 的管理界面（人机交互更完善），命名空间支持多环境多集群管理（dev/test/prod），灰度发布能力更强。Nacos 部署更轻量，社区活跃度更高。",
+    "answer": "Apollo 的配置推送采用「通知 + 拉取「的混合模式，保证实时性和可靠性。\n\n1. 配置变更入口：用户在 Apollo Portal 修改配置 → 提交到 Config DB。\n2. 通知 Admin Service：Portal 通过 Meta Server 通知 Admin Service → 写入 Release Message DB。\n3. 通知 Config Service：Config Service 定时扫描 Release Message DB（每秒一次）→ 有新发布通知时，通知 Notification Server（基于 HTTP 长轮询）。\n4. 通知客户端：客户端与 Config Service 建立长轮询连接（默认 60 秒超时）。当 Config Service 收到新版本通知 → 立即返回给客户端。\n5. 拉取配置：客户端收到通知后，主动拉取最新配置 → 写入本地缓存文件（容灾）→ 更新 Spring Environment。\n6. 实时生效：通过 Spring 的 `@Value` 或 `@ConfigurationProperties` + `@RefreshScope` 刷新 Bean。\n\n容灾设计：客户端本地缓存文件（上次拉取结果）是最后的防御。Config Service 不可用时，客户端继续使用本地缓存。多 Config Service 部署，无单点。\n\n与 Nacos 对比：Apollo 有 Portal 的管理界面（人机交互更完善），命名空间支持多环境多集群管理（dev/test/prod），灰度发布能力更强。Nacos 部署更轻量，社区活跃度更高。",
     "hints": [
       "长轮询不是 WebSocket——它是请求保持连接直到有数据或超时才返回",
       "Apollo 的本地缓存文件是 JSON 格式，可以手动修改用于紧急恢复"
@@ -224,13 +224,13 @@
     "type": "short_answer",
     "title": "分布式链路追踪与 TID 动态赋值",
     "content": "在微服务系统中，如何保证 TraceId 在异步线程、消息队列和网关三个场景下的正确传播？",
-    "answer": "答案：TraceId 的跨线程、跨组件传播是分布式追踪正确性的核心挑战。\n\n1. 异步线程场景：Java 的 ThreadLocal 只能在当前线程传递 TraceId。异步任务（@Async、CompletableFuture、线程池）会丢失上下文。解决方案——包装线程池：使用 `ThreadPoolTaskExecutor` 的 `setTaskDecorator`，在 execute 前从主线程复制 MDC，在 run 完成后清理。TransmittableThreadLocal（Alibaba TTL）解决线程池复用场景的上下文传递。\n\n2. 消息队列场景：消息生产者将 TraceContext 序列化到消息头（JMS 的 `properties`、Kafka 的 `headers`），消费者启动消费时从消息头反序列化重建 TraceContext。RocketMQ 原生支持消息 Trace。Kafka 需手动在 `ProducerRecord.headers()` 设置。\n\n3. 网关场景：网关（Spring Cloud Gateway/Kong/Nginx）是 TraceId 的入口。网关在请求进入时：如果没有 `traceparent` header → 生成新 TraceId；如果有 → 提取并延续。保证一次用户请求在全链路中共享同一个 TraceId。\n\n通用方案：使用 OpenTelemetry 自动埋点，通过 Java Agent 字节码增强自动处理上述三种场景，业务代码无需关注 TraceId 传递。",
+    "answer": "TraceId 的跨线程、跨组件传播是分布式追踪正确性的核心挑战。\n\n1. 异步线程场景：Java 的 ThreadLocal 只能在当前线程传递 TraceId。异步任务（@Async、CompletableFuture、线程池）会丢失上下文。解决方案——包装线程池：使用 `ThreadPoolTaskExecutor` 的 `setTaskDecorator`，在 execute 前从主线程复制 MDC，在 run 完成后清理。TransmittableThreadLocal（Alibaba TTL）解决线程池复用场景的上下文传递。\n\n2. 消息队列场景：消息生产者将 TraceContext 序列化到消息头（JMS 的 `properties`、Kafka 的 `headers`），消费者启动消费时从消息头反序列化重建 TraceContext。RocketMQ 原生支持消息 Trace。Kafka 需手动在 `ProducerRecord.headers()` 设置。\n\n3. 网关场景：网关（Spring Cloud Gateway/Kong/Nginx）是 TraceId 的入口。网关在请求进入时：如果没有 `traceparent` header → 生成新 TraceId；如果有 → 提取并延续。保证一次用户请求在全链路中共享同一个 TraceId。\n\n通用方案：使用 OpenTelemetry 自动埋点，通过 Java Agent 字节码增强自动处理上述三种场景，业务代码无需关注 TraceId 传递。",
     "hints": [
       "阿里巴巴的 TransmittableThreadLocal 比 InheritableThreadLocal 更适合线程池复用场景",
       "Kafka 跨系统传递 TraceId 时要注意消息头的最大大小限制"
     ],
     "tags": [
-      "TraceId",
+      "Trace ID",
       "ThreadLocal",
       "异步",
       "消息队列",
@@ -239,11 +239,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "微服务混沌工程与故障注入实践",
     "content": "什么是混沌工程？在微服务架构中如何实施混沌工程以验证系统韧性？",
-    "answer": "答案：混沌工程（Chaos Engineering）是一种通过主动注入故障来验证系统韧性的实践方法。不是随意破坏，而是有控制的实验。\n\n核心理念（源自 Netflix Chaos Monkey）：将故障视为必然发生的事情，而不是意外。通过主动制造故障，验证系统能否自动恢复。\n\n实施步骤：\n1. 定义稳态——系统正常运行时的指标（如 P99 < 200ms、错误率 < 0.1%）。\n2. 提出假设——如」A 服务故障时，降级策略会生效，用户体验降级但系统可用「。\n3. 注入故障——网络延迟/丢包、CPU 跑满/内存溢出、服务不可用、DB 连接池耗尽等。\n4. 最小爆炸半径——从非核心链路开始，逐步扩大。必须可回滚。\n\n常用工具：ChaosBlade（阿里巴巴开源，支持丰富的故障类型）、Litmus（K8s 原生）、Gremlin（商业）。\n\n微服务常见实验：随机 Pod  Kill（K8s 中模拟 Pod 崩溃）、网络分区（模拟部分服务不可达）、依赖降级（切断对某个下游服务的调用，验证本地兜底逻辑）、DB 延迟注入（验证连接池超时配置）。",
+    "answer": "混沌工程（Chaos Engineering）是一种通过主动注入故障来验证系统韧性的实践方法。不是随意破坏，而是有控制的实验。\n\n核心理念（源自 Netflix Chaos Monkey）：将故障视为必然发生的事情，而不是意外。通过主动制造故障，验证系统能否自动恢复。\n\n实施步骤：\n1. 定义稳态——系统正常运行时的指标（如 P99 < 200ms、错误率 < 0.1%）。\n2. 提出假设——如」A 服务故障时，降级策略会生效，用户体验降级但系统可用「。\n3. 注入故障——网络延迟/丢包、CPU 跑满/内存溢出、服务不可用、DB 连接池耗尽等。\n4. 最小爆炸半径——从非核心链路开始，逐步扩大。必须可回滚。\n\n常用工具：ChaosBlade（阿里巴巴开源，支持丰富的故障类型）、Litmus（K8s 原生）、Gremlin（商业）。\n\n微服务常见实验：随机 Pod  Kill（K8s 中模拟 Pod 崩溃）、网络分区（模拟部分服务不可达）、依赖降级（切断对某个下游服务的调用，验证本地兜底逻辑）、DB 延迟注入（验证连接池超时配置）。",
     "hints": [
       "混沌工程不是在生产环境直接搞破坏——先做「弹力测试「验证已知场景",
       "与单元测试的理念一致：先有预期结果再执行实验，实验失败等于找到了 Bug"
@@ -261,7 +261,7 @@
     "type": "short_answer",
     "title": "分布式 ID 生成方案选型",
     "content": "请对比雪花算法（Snowflake）、Redis INCR、数据库自增 ID、UUID 和美团 Leaf 的优缺点与适用场景。",
-    "answer": "答案：分布式 ID 生成的核心要求：全局唯一 + 趋势递增（B+Tree 索引友好） + 高可用 + 高吞吐。\n\n1. 雪花算法（Snowflake）：64 位 long——1 位符号 + 41 位时间戳（69 年） + 10 位工作节点 + 12 位序列号（4096/ms）。优点是本地生成无需网络调用、高性能（百万/秒）。缺点是强依赖机器时钟、时钟回拨会 ID 冲突。\n\n2. Redis INCR：利用 Redis 原子递增。优点是实现简单 ID 连续递增。缺点是每次都需网络调用、Redis 故障影响全局。\n\n3. 数据库自增 ID：利用 DB auto_increment。优点是绝对连续。缺点是单点性能瓶颈、分库分表扩展难。\n\n4. UUID：128 位全局唯一。优点是无中心化、生成简单。缺点是字符串随机无序，B+Tree 频繁页分裂、性能极差、存储膨胀。\n\n5. 美团 Leaf：Leaf-segment（号段模式，从 DB 批量取号段缓存到本地）+ Leaf-snowflake（解决时钟回拨：ZooKeeper 持久化上次最大时间戳）。克服了各自原方案的缺点。\n\n选型建议：中小项目可用 Redis INCR 或雪花算法（做好时钟回拨兜底）。大流量项目推荐 Leaf-segment 模式。无特殊要求不推荐 UUID。",
+    "answer": "分布式 ID 生成的核心要求：全局唯一 + 趋势递增（B+Tree 索引友好） + 高可用 + 高吞吐。\n\n1. 雪花算法（Snowflake）：64 位 long——1 位符号 + 41 位时间戳（69 年） + 10 位工作节点 + 12 位序列号（4096/ms）。优点是本地生成无需网络调用、高性能（百万/秒）。缺点是强依赖机器时钟、时钟回拨会 ID 冲突。\n\n2. Redis INCR：利用 Redis 原子递增。优点是实现简单 ID 连续递增。缺点是每次都需网络调用、Redis 故障影响全局。\n\n3. 数据库自增 ID：利用 DB auto_increment。优点是绝对连续。缺点是单点性能瓶颈、分库分表扩展难。\n\n4. UUID：128 位全局唯一。优点是无中心化、生成简单。缺点是字符串随机无序，B+Tree 频繁页分裂、性能极差、存储膨胀。\n\n5. 美团 Leaf：Leaf-segment（号段模式，从 DB 批量取号段缓存到本地）+ Leaf-snowflake（解决时钟回拨：ZooKeeper 持久化上次最大时间戳）。克服了各自原方案的缺点。\n\n选型建议：中小项目可用 Redis INCR 或雪花算法（做好时钟回拨兜底）。大流量项目推荐 Leaf-segment 模式。无特殊要求不推荐 UUID。",
     "hints": [
       "雪花算法应对时钟回拨的常用策略：等待回拨时间到达、记录上次 ID",
       "Leaf-segment 的双 buffer 预加载设计避免号段用尽时的毛刺"
@@ -279,7 +279,7 @@
     "type": "short_answer",
     "title": "全链路灰度发布实现方案",
     "content": "请描述如何实现微服务全链路灰度发布，包括流量染色、标签传递和路由决策的完整流程。",
-    "answer": "答案：全链路灰度发布的本质是在整个调用链上维持「灰度标签「的一致性，保证灰度流量不会走到基线环境。\n\n1. 流量染色：入口（网关/Nginx/负载器）根据规则给请求打标。规则可以是 Header（`x-canary: true`、`x-version: v2`）、Cookie、用户 ID 哈希。入口识别灰度用户 → 在请求头注入灰度标签。\n\n2. 标签传递：下游服务必须传递灰度标签。Spring Cloud 场景下通过 RestTemplate/OpenFeign 的 RequestInterceptor 自动传递 Header。异步线程场景需手动传递（MDC/TTL）。MQ 场景传递到消息头。\n\n3. 路由决策：每个服务收到请求后，根据灰度标签选择路由目标。实现方式：\n- Nacos/Sentinel 标签路由：服务注册时携带元数据标签（`version=grey`），调用方根据请求头选择匹配版本。\n- Spring Cloud LoadBalancer：自定义 ReactiveLoadBalancer 规则，根据请求头筛选灰度实例。\n- Istio VirtualService/DestinationRule：根据 Header 路由到不同版本的 Subset。\n\n4. 兜底策略：灰度服务异常时，自动将请求降级到基线版本（熔断 → 回退）。灰度结束后，逐步增大灰度流量比例，全量后下线旧版本。",
+    "answer": "全链路灰度发布的本质是在整个调用链上维持「灰度标签「的一致性，保证灰度流量不会走到基线环境。\n\n1. 流量染色：入口（网关/Nginx/负载器）根据规则给请求打标。规则可以是 Header（`x-canary: true`、`x-version: v2`）、Cookie、用户 ID 哈希。入口识别灰度用户 → 在请求头注入灰度标签。\n\n2. 标签传递：下游服务必须传递灰度标签。Spring Cloud 场景下通过 RestTemplate/OpenFeign 的 RequestInterceptor 自动传递 Header。异步线程场景需手动传递（MDC/TTL）。MQ 场景传递到消息头。\n\n3. 路由决策：每个服务收到请求后，根据灰度标签选择路由目标。实现方式：\n- Nacos/Sentinel 标签路由：服务注册时携带元数据标签（`version=grey`），调用方根据请求头选择匹配版本。\n- Spring Cloud LoadBalancer：自定义 ReactiveLoadBalancer 规则，根据请求头筛选灰度实例。\n- Istio VirtualService/DestinationRule：根据 Header 路由到不同版本的 Subset。\n\n4. 兜底策略：灰度服务异常时，自动将请求降级到基线版本（熔断 → 回退）。灰度结束后，逐步增大灰度流量比例，全量后下线旧版本。",
     "hints": [
       "全链路灰度的最大难点是标签传递的一致性——漏传一个节点就可能导致灰度请求打到基线服务",
       "Istio 的请求路由支持基于 Header/Cookie/URI 的路由规则"
@@ -297,7 +297,7 @@
     "type": "short_answer",
     "title": "Seata AT 模式的全局锁与脏写预防",
     "content": "Seata AT 模式如何处理全局锁？在分支事务提交后、全局事务提交前，另一个事务修改了同一行数据会发生什么？",
-    "answer": "答案：这是 Seata AT 模式最核心的隔离性问题。\n\n全局锁机制：Seata TC 维护一张全局锁表。一阶段本地事务提交后，RM 向 TC 注册分支事务并申请全局锁（行级别锁）。全局锁释放的时机——二阶段全局提交时立即释放；全局回滚时在 undolog 回滚完成后释放。\n\n脏写场景：假设全局事务 A 修改了 id=1 的 balance=100，一阶段提交但全局未提交。本地事务 B 直接修改同一条数据——这种场景下，如果事务 B 是独立本地事务，它不经过 TC，直接修改成功后，全局事务 A 发现数据被本地事务修改（通过 undolog 和镜像对比检测到脏写），全局回滚时无法自动恢复（因为当前数据与 after image 不一致），会触发异常并需要人工介入。\n\nSeata 的防御机制：如果事务 A 的全局锁未释放，事务 B 恰好也是 Seata 管理的分支事务——事务 B 在二阶段提交时会尝试申请同行的全局锁，发现已被 A 持有，Seata 会等待（默认 30 秒超时）后报锁冲突异常。但非 Seata 管理的本地事务／原生 SQL 不会受 Seata 控制——这是 Seata AT 的局限。\n\n解决方案：对关键数据（如金额、库存）的访问强制走 Seata 全局事务，或者使用悲观锁 / 分布式锁来防止非 Seata 事务的脏写。",
+    "answer": "这是 Seata AT 模式最核心的隔离性问题。\n\n全局锁机制：Seata TC 维护一张全局锁表。一阶段本地事务提交后，RM 向 TC 注册分支事务并申请全局锁（行级别锁）。全局锁释放的时机——二阶段全局提交时立即释放；全局回滚时在 undolog 回滚完成后释放。\n\n脏写场景：假设全局事务 A 修改了 id=1 的 balance=100，一阶段提交但全局未提交。本地事务 B 直接修改同一条数据——这种场景下，如果事务 B 是独立本地事务，它不经过 TC，直接修改成功后，全局事务 A 发现数据被本地事务修改（通过 undolog 和镜像对比检测到脏写），全局回滚时无法自动恢复（因为当前数据与 after image 不一致），会触发异常并需要人工介入。\n\nSeata 的防御机制：如果事务 A 的全局锁未释放，事务 B 恰好也是 Seata 管理的分支事务——事务 B 在二阶段提交时会尝试申请同行的全局锁，发现已被 A 持有，Seata 会等待（默认 30 秒超时）后报锁冲突异常。但非 Seata 管理的本地事务／原生 SQL 不会受 Seata 控制——这是 Seata AT 的局限。\n\n解决方案：对关键数据（如金额、库存）的访问强制走 Seata 全局事务，或者使用悲观锁 / 分布式锁来防止非 Seata 事务的脏写。",
     "hints": [
       "Seata AT 适合内部微服务全部接入 Seata 的场景，无法防护外部系统直接操作数据库",
       "金融级场景推荐 TCC 模式——业务层自己控制资源预留和确认释放"
@@ -315,7 +315,7 @@
     "type": "short_answer",
     "title": "微服务日志规范与日志采集架构",
     "content": "请设计微服务架构下的日志规范，包括日志格式、级别策略、全链路追踪关联和采集方案。",
-    "answer": "答案：微服务日志的核心挑战是分散在不同服务中的日志如何关联和检索。\n\n日志格式：统一 JSON 格式（便于结构化检索），包含字段：`timestamp`（ISO 8601）、`level`、`traceId`（关联全链路）、`service`（服务名）、`instance`（实例 ID）、`class`、`message`、`contextMap`（业务上下文）。\n\n日志级别策略：线上环境——ERROR（所有异常） + WARN（降级/限流触发） + INFO（请求入口/出口/关键状态变更）。禁止 DEBUG 日志上生产，TRACE 日志必须用开关控制。\n\n全链路关联：所有日志必须包含 traceId（MDC 自动注入）。日志采集端通过 traceId 聚合跨服务的日志。\n\n采集架构：\n- 方案一（EFK/ELK）：Filebeat 采集 Pod 日志 → Kafka 缓冲 → Logstash 解析 → Elasticsearch 存储 → Kibana 查询。\n- 方案二（Loki 轻量）：Promtail 采集 → Loki 存储 → Grafana 查询（原生与 Prometheus 和 Tempo 集成，通过 traceId 关联 Metrics 和 Traces）。\n- 方案三（云厂商）：采集到云日志服务（SLS/CloudWatch Logs）。\n\n最佳实践：日志不能包含密码/Token/身份证号等敏感信息。日志总大小需控制（每个请求不超过 10KB，峰值时日志带宽不超过网络 5%）。",
+    "answer": "微服务日志的核心挑战是分散在不同服务中的日志如何关联和检索。\n\n日志格式：统一 JSON 格式（便于结构化检索），包含字段：`timestamp`（ISO 8601）、`level`、`traceId`（关联全链路）、`service`（服务名）、`instance`（实例 ID）、`class`、`message`、`contextMap`（业务上下文）。\n\n日志级别策略：线上环境——ERROR（所有异常） + WARN（降级/限流触发） + INFO（请求入口/出口/关键状态变更）。禁止 DEBUG 日志上生产，TRACE 日志必须用开关控制。\n\n全链路关联：所有日志必须包含 traceId（MDC 自动注入）。日志采集端通过 traceId 聚合跨服务的日志。\n\n采集架构：\n- 方案一（EFK/ELK）：Filebeat 采集 Pod 日志 → Kafka 缓冲 → Logstash 解析 → Elasticsearch 存储 → Kibana 查询。\n- 方案二（Loki 轻量）：Promtail 采集 → Loki 存储 → Grafana 查询（原生与 Prometheus 和 Tempo 集成，通过 traceId 关联 Metrics 和 Traces）。\n- 方案三（云厂商）：采集到云日志服务（SLS/CloudWatch Logs）。\n\n最佳实践：日志不能包含密码/Token/身份证号等敏感信息。日志总大小需控制（每个请求不超过 10KB，峰值时日志带宽不超过网络 5%）。",
     "hints": [
       "ELK 方案在大流量下成本较高（存储和计算），Loki 只索引元数据更省钱",
       "Grafana Tempo 可以直接通过 traceId 跳转到关联的日志和 Metrics"
@@ -333,7 +333,7 @@
     "type": "short_answer",
     "title": "微服务安全架构：认证与授权体系",
     "content": "微服务架构下的认证授权有哪些常见方案？JWT Token 刷新机制和分布式 Session 的对比是什么？",
-    "answer": "答案：微服务安全架构的核心是认证（你是谁）和授权（你能做什么）的解耦。\n\n常见方案：\n1. JWT（JSON Web Token）：服务端生成带签名的 Token（包含用户信息和数据权限），客户端每次请求携带。各服务本地验证签名，无需集中式 Session 存储。\n2. OAuth2 + Spring Security：第三方登录授权协议，通过 Token 中继 + Scope 控制 API 访问范围。\n3. Session 复制 + Redis（迁移兼容）：传统方案，各服务共享 Redis Session 存储，不适合云原生场景。\n4. mTLS（双向 TLS）：服务间通信的传输层安全解决方案，常用于 Service Mesh。\n\nJWT Token 刷新：Access Token（短期 15-30 分钟） + Refresh Token（长期 7-30 天）。Access Token 过期后用 Refresh Token 获取新的 Access Token 和 Refresh Token（轮转策略，防止 Refresh Token 泄露长期可用）。\n\n分布式 Session vs JWT：分布式 Session 有状态（Redis 挂了 Session 全丢），需要粘性会话或 Session 同步。JWT 无状态（Token 中携带用户信息），各服务独立验证。JWT 缺点是 Token 无法主动失效（需要黑名单支持），Token 体积较大（每次请求携带）。\n\n推荐方案：API 网关层做 JWT 验证 + 下 游服务通过 JWT Claims 获取用户信息。需要主动失效用 Token 黑名单（Redis 维护）。",
+    "answer": "微服务安全架构的核心是认证（你是谁）和授权（你能做什么）的解耦。\n\n常见方案：\n1. JWT（JSON Web Token）：服务端生成带签名的 Token（包含用户信息和数据权限），客户端每次请求携带。各服务本地验证签名，无需集中式 Session 存储。\n2. OAuth2 + Spring Security：第三方登录授权协议，通过 Token 中继 + Scope 控制 API 访问范围。\n3. Session 复制 + Redis（迁移兼容）：传统方案，各服务共享 Redis Session 存储，不适合云原生场景。\n4. mTLS（双向 TLS）：服务间通信的传输层安全解决方案，常用于 Service Mesh。\n\nJWT Token 刷新：Access Token（短期 15-30 分钟） + Refresh Token（长期 7-30 天）。Access Token 过期后用 Refresh Token 获取新的 Access Token 和 Refresh Token（轮转策略，防止 Refresh Token 泄露长期可用）。\n\n分布式 Session vs JWT：分布式 Session 有状态（Redis 挂了 Session 全丢），需要粘性会话或 Session 同步。JWT 无状态（Token 中携带用户信息），各服务独立验证。JWT 缺点是 Token 无法主动失效（需要黑名单支持），Token 体积较大（每次请求携带）。\n\n推荐方案：API 网关层做 JWT 验证 + 下 游服务通过 JWT Claims 获取用户信息。需要主动失效用 Token 黑名单（Redis 维护）。",
     "hints": [
       "JWT 签名用 RS256（非对称）而不是 HS256（对称）——各服务只需要公钥",
       "Token 黑名单会引入状态——JWT 无状态的优点就打了折扣"
@@ -348,29 +348,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "微服务重试策略与退避算法",
-    "content": "微服务调用失败时，重试策略应该怎么设计？指数退避和抖动退避的原理是什么？",
-    "answer": "答案：重试策略的核心问题是「在什么时候、重试多少次、重试间隔如何增加「。\n\n重试条件：只有幂等的请求才能安全重试。GET/HEAD 天然幂等。PUT/DELETE 通常是幂等的。POST 创建类请求非幂等，需要业务层去重（幂等 Key）。\n\n重试次数：一般 2-3 次。超过 3 次的收益急剧下降，且重试流量本身可能压垮系统。\n\n指数退避（Exponential Backoff）：第 n 次重试的等待时间 = 初始间隔 × 2^(n-1)。例如 1s → 2s → 4s → 8s。优点是指数级降低对下游的冲击。\n\n抖动退避（Jittered Backoff）：在指数退避的基础上加入随机抖动，避免「惊群效应「（大量请求在重试窗口同时重试）。公式：`random_between(base, base × 2^n)` 或 `base × 2^n + random(0, base × 2^(n-1))`。\n\n最大重试间隔：需要设置上限（如 30 秒），否则退避时间过长失去重试意义。\n\nSpring 实现：Spring Retry 库的 `@Retryable` + ExponentialBackOffPolicy。Resilience4j 的 Retry 模块直接支持指数退避 + 随机抖动的配置。\n\n关键注意：重试需要结合熔断——当错误率达到阈值时停止重试，转为快速失败。否则重试流量反过来可能加重故障（Retry Storm）。",
-    "hints": [
-      "Retry Storm 比雪崩更隐蔽——你的重试流量可能成为杀死下游的最后一根稻草",
-      "分布式系统重试必须保证幂等，否则扣款接口重试三次用户被扣三倍钱"
-    ],
-    "tags": [
-      "重试",
-      "退避",
-      "幂等",
-      "Retry"
-    ]
-  },
-  {
-    "category": "microservices",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "Serverless 与微服务的异同",
     "content": "Serverless 架构与传统微服务架构的核心区别是什么？在什么场景下应该选择 Serverless 而非微服务？",
-    "answer": "答案：Serverless 不是微服务的替代，而是微服务的补充和演进方向。\n\n核心区别：\n1. 粒度：微服务按业务功能拆分到服务级别（每个服务上千行代码），Serverless 按函数级别拆分（每个函数几十到几百行）。\n2. 部署：微服务需自建 CI/CD 部署容器/Pod，Serverless 只需上传代码（FaaS 平台自动管理）。\n3. 扩缩：微服务 HPA 扩缩单位是一个 Pod（分钟级），Serverless 扩缩单位是一个函数实例（秒级/毫秒级）。\n4. 计费：微服务按资源规格付费（即使空闲），Serverless 按调用次数和执行时间付费（精确到 100ms）。\n5. 无状态性：微服务可以有状态（如连接池），Serverless 函数强制无状态（状态存外部存储）。\n\n适合 Serverless 的场景：\n- 事件驱动型——MQ 消息处理、文件上传后的转码/压缩/OCR\n- 定时任务——Cron 执行数据统计/清理/报表\n- 轻量 API——CRUD 转发/简单聚合/第三方代理\n- 突发流量——秒杀/抽奖/红包（Serverless 自动扩容无需预置资源）\n\n不适合的场景：\n- 长连接/WebSocket 场景（函数有超时限制，如 AWS Lambda 最长 15 分钟）\n- 状态密集型应用\n- 强一致性分布式事务场景\n\n现状：越来越多大厂采用「微服务底座 + Serverless 基因「的混合架构。核心业务用微服务（可控可靠），边缘/弹性业务用 Serverless（灵活弹性）。",
+    "answer": "Serverless 不是微服务的替代，而是微服务的补充和演进方向。\n\n核心区别：\n1. 粒度：微服务按业务功能拆分到服务级别（每个服务上千行代码），Serverless 按函数级别拆分（每个函数几十到几百行）。\n2. 部署：微服务需自建 CI/CD 部署容器/Pod，Serverless 只需上传代码（FaaS 平台自动管理）。\n3. 扩缩：微服务 HPA 扩缩单位是一个 Pod（分钟级），Serverless 扩缩单位是一个函数实例（秒级/毫秒级）。\n4. 计费：微服务按资源规格付费（即使空闲），Serverless 按调用次数和执行时间付费（精确到 100ms）。\n5. 无状态性：微服务可以有状态（如连接池），Serverless 函数强制无状态（状态存外部存储）。\n\n适合 Serverless 的场景：\n- 事件驱动型——MQ 消息处理、文件上传后的转码/压缩/OCR\n- 定时任务——Cron 执行数据统计/清理/报表\n- 轻量 API——CRUD 转发/简单聚合/第三方代理\n- 突发流量——秒杀/抽奖/红包（Serverless 自动扩容无需预置资源）\n\n不适合的场景：\n- 长连接/WebSocket 场景（函数有超时限制，如 AWS Lambda 最长 15 分钟）\n- 状态密集型应用\n- 强一致性分布式事务场景\n\n现状：越来越多大厂采用「微服务底座 + Serverless 基因「的混合架构。核心业务用微服务（可控可靠），边缘/弹性业务用 Serverless（灵活弹性）。",
     "hints": [
       "Serverless 的冷启动延迟（尤其是 Java 类的 Lambda）是最常见的坑",
       "Spring Cloud Function 可以将 Spring Bean 无缝部署到 AWS Lambda 等平台"
@@ -388,7 +370,7 @@
     "type": "short_answer",
     "title": "微服务数据库设计：每个服务一个数据库",
     "content": "微服务架构中「每个服务一个数据库「的原则如何落地？如何处理跨服务的查询和事务问题？",
-    "answer": "答案：数据库分拆是微服务的核心挑战，也是最具争议的话题。\n\n原则：每个微服务拥有自己的数据存储，其他服务必须通过 API/事件访问数据，不能直接访问其他服务的数据库。\n\n跨服务查询方案：\n- API 聚合层：BFF 分别调用各服务的 API 再聚合数据。简单但延迟叠加、数据量大的场景性能差。\n- CQRS + 物化视图：建一个专门用于查询的只读数据库，通过 CDC（Debezium + Kafka）同步各服务的数据变更。优点：查询性能好、不侵入源服务。缺点：维护数据同步管道、最终一致（短暂不一致）。\n- API Composition：用一个聚合器服务并行调用各服务 API 并合并结果，适合简单查询场景。\n\n跨服务事务方案：\n- Saga 模式（推荐）：长事务拆解为带有补偿机制的本地事务序列。适用于最终一致的场景。\n- 事件驱动 + 幂等消费：服务 A 完成后发事件 → 服务 B 消费执行，消费接口需幂等。\n- 分布式事务（Seata AT/TCC）：需要在异构语言的微服务环境中实现，统一事务协调器。\n\n常见陷阱：「先分再说「——业务边界不清晰就直接分库，导致频繁跨服务调用性能极差。正确做法是保持模块内聚，先用逻辑模块划分，确认边界稳定后再物理拆分。",
+    "answer": "数据库分拆是微服务的核心挑战，也是最具争议的话题。\n\n原则：每个微服务拥有自己的数据存储，其他服务必须通过 API/事件访问数据，不能直接访问其他服务的数据库。\n\n跨服务查询方案：\n- API 聚合层：BFF 分别调用各服务的 API 再聚合数据。简单但延迟叠加、数据量大的场景性能差。\n- CQRS + 物化视图：建一个专门用于查询的只读数据库，通过 CDC（Debezium + Kafka）同步各服务的数据变更。优点：查询性能好、不侵入源服务。缺点：维护数据同步管道、最终一致（短暂不一致）。\n- API Composition：用一个聚合器服务并行调用各服务 API 并合并结果，适合简单查询场景。\n\n跨服务事务方案：\n- Saga 模式（推荐）：长事务拆解为带有补偿机制的本地事务序列。适用于最终一致的场景。\n- 事件驱动 + 幂等消费：服务 A 完成后发事件 → 服务 B 消费执行，消费接口需幂等。\n- 分布式事务（Seata AT/TCC）：需要在异构语言的微服务环境中实现，统一事务协调器。\n\n常见陷阱：「先分再说「——业务边界不清晰就直接分库，导致频繁跨服务调用性能极差。正确做法是保持模块内聚，先用逻辑模块划分，确认边界稳定后再物理拆分。",
     "hints": [
       "数据库拆分一旦完成就很难合并——拆分前务必确认服务边界是稳定的",
       "Debezium 的 CDC 监听 MySQL binlog 实现数据同步是目前最主流的方案"
@@ -406,7 +388,7 @@
     "type": "short_answer",
     "title": "限流熔断降级的级联故障防范",
     "content": "什么是微服务级联故障（Cascading Failure）？通过限流、熔断和降级的组合策略如何防范？",
-    "answer": "答案：级联故障是指一个服务的故障像多米诺骨牌一样传播到整个系统。经典的案例是 2021 年某大厂全站宕机——一个依赖服务的慢查询导致上游线程池耗尽，连锁效应扩散到全站。\n\n级联故障的传播路径：依赖服务 A 变慢 → B 调用 A 的线程被阻塞 → B 线程池耗尽 → B 无法响应 C → C 的线程也被阻塞 → 雪崩。\n\n三件套防御：\n1. 限流（Rate Limiting）：保护自身不被过量请求压垮。入口限流（网关层）+ 出口限流（调用下游前）。Sentinel 的 QPS/线程数限流保护线程池不耗尽。\n2. 熔断（Circuit Breaker）：当下游故障率达到阈值（如 50% 请求失败），熔断器打开——后续请求快速失败（不等待超时），给下游恢复时间。Sentinel/Resilience4j 支持半开状态（一段时间后放少量探针请求测试恢复情况）。\n3. 降级（Degradation）：熔断后提供 fallback 逻辑——返回缓存数据、默认值、错误提示。优先保证核心功能可用，牺牲非核心功能。\n\n举 例：订单服务调用积分服务，积分服务响应变慢。Sentinel 熔断后：订单服务不再阻塞等待积分调用（快速失败），返回用户积分缓存数据（降级）。积分服务恢复后 Sentinel 半开探测成功，关闭熔断器。整个过程订单主流程不受影响。",
+    "answer": "级联故障是指一个服务的故障像多米诺骨牌一样传播到整个系统。经典的案例是 2021 年某大厂全站宕机——一个依赖服务的慢查询导致上游线程池耗尽，连锁效应扩散到全站。\n\n级联故障的传播路径：依赖服务 A 变慢 → B 调用 A 的线程被阻塞 → B 线程池耗尽 → B 无法响应 C → C 的线程也被阻塞 → 雪崩。\n\n三件套防御：\n1. 限流（Rate Limiting）：保护自身不被过量请求压垮。入口限流（网关层）+ 出口限流（调用下游前）。Sentinel 的 QPS/线程数限流保护线程池不耗尽。\n2. 熔断（Circuit Breaker）：当下游故障率达到阈值（如 50% 请求失败），熔断器打开——后续请求快速失败（不等待超时），给下游恢复时间。Sentinel/Resilience4j 支持半开状态（一段时间后放少量探针请求测试恢复情况）。\n3. 降级（Degradation）：熔断后提供 fallback 逻辑——返回缓存数据、默认值、错误提示。优先保证核心功能可用，牺牲非核心功能。\n\n举 例：订单服务调用积分服务，积分服务响应变慢。Sentinel 熔断后：订单服务不再阻塞等待积分调用（快速失败），返回用户积分缓存数据（降级）。积分服务恢复后 Sentinel 半开探测成功，关闭熔断器。整个过程订单主流程不受影响。",
     "hints": [
       "线程池隔离（Bulkhead）是防止级联故障的最后一道防线——即使熔断没触发，线程池满了也能保住其他功能",
       "降级的优先级策略：核心支付（必须成功）> 订单（尽力）> 推荐/积分（可降级）"
@@ -424,7 +406,7 @@
     "type": "short_answer",
     "title": "API 网关 vs BFF 模式的选择",
     "content": "API 网关和 BFF（Backend for Frontend）在架构中如何协作？各自的职责边界是什么？",
-    "answer": "答案：API 网关和 BFF 是不同层次的概念，最佳实践中网关在前、BFF 在后，形成两级架构。\n\nAPI 网关职责（通用层）：\n- 统一入口：TLS 卸载、域名路由、协议转换（HTTP/gRPC/WebSocket）\n- 认证鉴权：JWT/OAuth2 Token 校验\n- 流量控制：限流、熔断、黑白名单\n- 请求转发：路径匹配、负载均衡\n- 日志监控：全量访问日志、Metrics 采集\n\nBFF 职责（业务层）：\n- 数据聚合：为特定前端组装数据（App BFF 提供 App 格式的数据、Web BFF 提供 Web 格式的）\n- 字段裁剪：只返回前端需要的字段，减少网络传输\n- 协议适配：将后端返回的数据转换为前端易消费的格式\n- 编排调用：一个 BFF 接口可能调用多个后端微服务\n\n协作流程：客户端 → API 网关（统一鉴权 + 流量控制）→ BFF（业务编排 + 数据聚合）→ 后端微服务。\n\n选型建议：系统规模较小时，先只上网关（Spring Cloud Gateway/Kong/APISIX），BFF 以通用方式在网关层聚合。当出现多个前端端（App/Web/小程序）且诉求差异明显时引入 BFF。BFF 可以按端拆分（Mobile BFF、Web BFF、MiniProgram BFF），也可以按团队拆分（一个团队维护一个 BFF）。",
+    "answer": "API 网关和 BFF 是不同层次的概念，最佳实践中网关在前、BFF 在后，形成两级架构。\n\nAPI 网关职责（通用层）：\n- 统一入口：TLS 卸载、域名路由、协议转换（HTTP/gRPC/WebSocket）\n- 认证鉴权：JWT/OAuth2 Token 校验\n- 流量控制：限流、熔断、黑白名单\n- 请求转发：路径匹配、负载均衡\n- 日志监控：全量访问日志、Metrics 采集\n\nBFF 职责（业务层）：\n- 数据聚合：为特定前端组装数据（App BFF 提供 App 格式的数据、Web BFF 提供 Web 格式的）\n- 字段裁剪：只返回前端需要的字段，减少网络传输\n- 协议适配：将后端返回的数据转换为前端易消费的格式\n- 编排调用：一个 BFF 接口可能调用多个后端微服务\n\n协作流程：客户端 → API 网关（统一鉴权 + 流量控制）→ BFF（业务编排 + 数据聚合）→ 后端微服务。\n\n选型建议：系统规模较小时，先只上网关（Spring Cloud Gateway/Kong/APISIX），BFF 以通用方式在网关层聚合。当出现多个前端端（App/Web/小程序）且诉求差异明显时引入 BFF。BFF 可以按端拆分（Mobile BFF、Web BFF、MiniProgram BFF），也可以按团队拆分（一个团队维护一个 BFF）。",
     "hints": [
       "BFF 的最大风险是变成「上帝服务「——所有逻辑都塞进 BFF，导致它变成另一个单体",
       "GraphQL 可作为 BFF 的替代方案——前端声明需要什么字段，BFF 按需查询"
@@ -442,7 +424,7 @@
     "type": "short_answer",
     "title": "Spring Cloud 和 Dubbo 的对比",
     "content": "Spring Cloud 和 Dubbo 在服务治理方面有什么核心区别？现在的趋势是选择哪一个？",
-    "answer": "答案：Spring Cloud 和 Dubbo 代表了两种不同理念的微服务实现。\n\n核心区别：\n1. 通信协议：Spring Cloud 基于 HTTP REST（JSON，跨语言），Dubbo 基于 TCP 自定义协议（Dubbo 协议 / Triple，二进制，性能更高）。\n2. 服务治理：Spring Cloud 用 Netflix 组件（Eureka/Hystrix/Config）→ 进入维护期 → 迁移到 Spring Cloud Alibaba。Dubbo 从 2.7 版本开始强化治理能力（路由/灰度/鉴权），3.0 支持应用级注册（解决 10 万级实例注册问题）。\n3. 性能：Dubbo 的 RPC 协议比 HTTP 快 3-10 倍，适合高吞吐内部调用。Spring Cloud HTTP 协议调试方便，跨语言互调用更自然。\n4. 生态：Spring Cloud 与 Spring Boot 生态（Config Bus/Stream/Security）深度整合，开发体验统一。Dubbo 主要聚焦 RPC 和治理。\n\n现在的趋势：混合使用——内部高性能调用用 Dubbo（同时满足云原生，支持 triple 协议和 gRPC 互通），对外 API 用 Spring Cloud Gateway。Dubbo 3.0 + Spring Boot 是目前 Java 微服务的常见组合。\n\n个人建议：纯 Java 团队内部服务优先 Dubbo（性能和治理能力强），需要跨语言、开放 API 走 HTTP/gRPC。Spring Cloud Alibaba + Dubbo 是目前国内 Java 微服务技术栈的主流选择。",
+    "answer": "Spring Cloud 和 Dubbo 代表了两种不同理念的微服务实现。\n\n核心区别：\n1. 通信协议：Spring Cloud 基于 HTTP REST（JSON，跨语言），Dubbo 基于 TCP 自定义协议（Dubbo 协议 / Triple，二进制，性能更高）。\n2. 服务治理：Spring Cloud 用 Netflix 组件（Eureka/Hystrix/Config）→ 进入维护期 → 迁移到 Spring Cloud Alibaba。Dubbo 从 2.7 版本开始强化治理能力（路由/灰度/鉴权），3.0 支持应用级注册（解决 10 万级实例注册问题）。\n3. 性能：Dubbo 的 RPC 协议比 HTTP 快 3-10 倍，适合高吞吐内部调用。Spring Cloud HTTP 协议调试方便，跨语言互调用更自然。\n4. 生态：Spring Cloud 与 Spring Boot 生态（Config Bus/Stream/Security）深度整合，开发体验统一。Dubbo 主要聚焦 RPC 和治理。\n\n现在的趋势：混合使用——内部高性能调用用 Dubbo（同时满足云原生，支持 triple 协议和 gRPC 互通），对外 API 用 Spring Cloud Gateway。Dubbo 3.0 + Spring Boot 是目前 Java 微服务的常见组合。\n\n个人建议：纯 Java 团队内部服务优先 Dubbo（性能和治理能力强），需要跨语言、开放 API 走 HTTP/gRPC。Spring Cloud Alibaba + Dubbo 是目前国内 Java 微服务技术栈的主流选择。",
     "hints": [
       "Dubbo 3.0 的应用级服务注册解决了 2.7 之前接口级注册时注册表过大的问题",
       "Spring Cloud 2023 官方推荐用 Spring Cloud Alibaba 替代已进入维护的 Netflix 组件"
@@ -456,11 +438,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
-    "title": "ThredPool 隔离 vs 信号量隔离",
+    "title": "ThreadPool 隔离 vs 信号量隔离",
     "content": "Hystrix 和 Sentinel 的线程池隔离（Bulkhead）与信号量隔离的区别？如何选择？",
-    "answer": "答案：线程池隔离和信号量隔离是两种限制资源使用的方式。\n\n线程池隔离：每个依赖服务有独立线程池。即使调用下游的线程全部阻塞在主线程池，其他服务的调用链路不受影响。代价：线程上下文切换开销大、每个服务独立线程池占用内存。\n\n信号量隔离：不分配独立线程，通过信号量（Semaphore）限制同时并发的调用数。超出的请求直接失败。代价：无线程池缓冲，调用线程是调用方的主线程（依赖服务慢会影响调用方的处理能力）。\n\nHystrix 实现：线程池隔离（默认，需要配置线程池大小）和信号量隔离（隔离级别较弱但零额外线程开销）。推荐对高延迟/可能阻塞的第三方调用用线程池隔离，对内存调用/快速失败场景用信号量隔离。\n\nSentinel 实现：只支持信号量隔离（通过控制并发线程数限流）。由于 Sentinel 本身不依赖线程隔离，它通过控制同时执行业务的线程数量来限流。优势是零额外线程开销，不增加 JVM 线程数。不足是无法隔离线程间的资源争抢。\n\n选型建议：高延迟依赖（如调用第三方支付网关）→ 线程池隔离（独立线程池，防止阻塞扩散）。低延迟依赖（如缓存查询/本地服务）→ 信号量隔离（零开销）。纯 Sentinel 用户可以通过设置线程数阈值来模拟信号量隔离的效果。",
+    "answer": "线程池隔离和信号量隔离是两种限制资源使用的方式。\n\n线程池隔离：每个依赖服务有独立线程池。即使调用下游的线程全部阻塞在主线程池，其他服务的调用链路不受影响。代价：线程上下文切换开销大、每个服务独立线程池占用内存。\n\n信号量隔离：不分配独立线程，通过信号量（Semaphore）限制同时并发的调用数。超出的请求直接失败。代价：无线程池缓冲，调用线程是调用方的主线程（依赖服务慢会影响调用方的处理能力）。\n\nHystrix 实现：线程池隔离（默认，需要配置线程池大小）和信号量隔离（隔离级别较弱但零额外线程开销）。推荐对高延迟/可能阻塞的第三方调用用线程池隔离，对内存调用/快速失败场景用信号量隔离。\n\nSentinel 实现：只支持信号量隔离（通过控制并发线程数限流）。由于 Sentinel 本身不依赖线程隔离，它通过控制同时执行业务的线程数量来限流。优势是零额外线程开销，不增加 JVM 线程数。不足是无法隔离线程间的资源争抢。\n\n选型建议：高延迟依赖（如调用第三方支付网关）→ 线程池隔离（独立线程池，防止阻塞扩散）。低延迟依赖（如缓存查询/本地服务）→ 信号量隔离（零开销）。纯 Sentinel 用户可以通过设置线程数阈值来模拟信号量隔离的效果。",
     "hints": [
       "线程池隔离每个依赖多一个线程池，100 个服务就是 100 个线程池——内存开销不可忽视",
       "Sentinel 的线程数限流可以配合熔断机制：线程数超限时快速失败，避免排队等待"
@@ -478,7 +460,7 @@
     "type": "short_answer",
     "title": "docker-compose vs K8s 的选择",
     "content": "小团队微服务部署应该选 docker-compose 还是 K8s？各自的边界在哪里？",
-    "answer": "答案：这不是技术能力问题，是运维人力问题。\n\ndocker-compose 适合场景：\n- 服务数量 < 10 个\n- 团队无专职运维/基础设施\n- 单机部署足够（流量不大）\n- 开发/测试环境（快速启动）\n优点：学习成本极低、Docker Compose 文件写起来快、一台机器搞定所有。缺点：无自动扩缩、无自愈（出问题重启的脚本都得自己写）、单机瓶颈。\n\nK8s 适合场景：\n- 服务数量 > 10 个或计划扩展到 10+ 个\n- 需要自动扩缩、自愈、滚动更新、金丝雀发布\n- 多环境管理（dev/test/staging/prod）\n- 有运维人力（或愿意用托管 K8s 如 ACK/TKE/EKS）\n缺点：学习曲线陡峭、日常运维成本高、资源占用（Master 节点至少 2 台机器）。\n\n过渡方案：用 docker-compose 起步（小团队 MVP 阶段）→ 当服务数增加到 10+、需要灰度发布/滚动更新/多环境管理时平滑迁移到 K8s（通过 Compose to K8s 转换工具或逐步迁移）。\n\n折中方案：使用 K3s（轻量 K8s）/Nomad/K8s 托管服务——降低运维负担的同时保留 K8s 的编排能力。",
+    "answer": "这不是技术能力问题，是运维人力问题。\n\ndocker-compose 适合场景：\n- 服务数量 < 10 个\n- 团队无专职运维/基础设施\n- 单机部署足够（流量不大）\n- 开发/测试环境（快速启动）\n优点：学习成本极低、Docker Compose 文件写起来快、一台机器搞定所有。缺点：无自动扩缩、无自愈（出问题重启的脚本都得自己写）、单机瓶颈。\n\nK8s 适合场景：\n- 服务数量 > 10 个或计划扩展到 10+ 个\n- 需要自动扩缩、自愈、滚动更新、金丝雀发布\n- 多环境管理（dev/test/staging/prod）\n- 有运维人力（或愿意用托管 K8s 如 ACK/TKE/EKS）\n缺点：学习曲线陡峭、日常运维成本高、资源占用（Master 节点至少 2 台机器）。\n\n过渡方案：用 docker-compose 起步（小团队 MVP 阶段）→ 当服务数增加到 10+、需要灰度发布/滚动更新/多环境管理时平滑迁移到 K8s（通过 Compose to K8s 转换工具或逐步迁移）。\n\n折中方案：使用 K3s（轻量 K8s）/Nomad/K8s 托管服务——降低运维负担的同时保留 K8s 的编排能力。",
     "hints": [
       "在 docker-compose 阶段就需要标准化 Dockerfile 和镜像构建流程——这是迁移到 K8s 的前提",
       "K8s 真正的价值不是容器编排而是声明式运维——你想达到什么状态而不是告诉它怎么操作"
@@ -496,7 +478,7 @@
     "type": "short_answer",
     "title": "MySQL 数据迁移到微服务多库的平滑方案",
     "content": "单体 MySQL 库如何平滑迁移到微服务多数据库架构？有哪些迁移策略？",
-    "answer": "答案：从单库到多库是最危险的微服务迁移步骤之一。有三种主流策略：\n\n1. 逐步拆分（推荐）：第一阶段——逻辑拆分（不改数据库），应用代码层面按模块分包，通过接口和模块边界限制，但底层还是同一数据库。第二阶段——分库写入双写，通过 A/B 测试验证新库正确性。第三阶段——切读流量到新库（灰度）。第四阶段——下线旧表和旧代码。\n\n2. 绞杀者模式（Strangler Fig）：新建一个独立的微服务数据库，旧代码和新代码并存。请求先经过新代码（如果新服务能处理就走新库），不能处理的继续走旧库。逐步扩大新服务覆盖的功能范围，直到旧库完全退役。\n\n3. 直接迁移（高风险）：一次性把所有表迁出，通过 ETL 脚本 + 数据校验。适合规模小（<10 张表）或停机迁移的场景。\n\n关键注意：\n- 数据一致性：双写期间需要对账，确保新旧库数据一致。\n- 分布式 ID：迁移前确保所有表主键改为分布式 ID（雪花算法/Leaf），而不是自增 ID。\n- 外键依赖：拆分后不再有数据库外键约束，改为应用层保证。\n- 事务边界：原有跨表事务需要重构为 Saga 或最终一致性方案。",
+    "answer": "从单库到多库是最危险的微服务迁移步骤之一。有三种主流策略：\n\n1. 逐步拆分（推荐）：第一阶段——逻辑拆分（不改数据库），应用代码层面按模块分包，通过接口和模块边界限制，但底层还是同一数据库。第二阶段——分库写入双写，通过 A/B 测试验证新库正确性。第三阶段——切读流量到新库（灰度）。第四阶段——下线旧表和旧代码。\n\n2. 绞杀者模式（Strangler Fig）：新建一个独立的微服务数据库，旧代码和新代码并存。请求先经过新代码（如果新服务能处理就走新库），不能处理的继续走旧库。逐步扩大新服务覆盖的功能范围，直到旧库完全退役。\n\n3. 直接迁移（高风险）：一次性把所有表迁出，通过 ETL 脚本 + 数据校验。适合规模小（<10 张表）或停机迁移的场景。\n\n关键注意：\n- 数据一致性：双写期间需要对账，确保新旧库数据一致。\n- 分布式 ID：迁移前确保所有表主键改为分布式 ID（雪花算法/Leaf），而不是自增 ID。\n- 外键依赖：拆分后不再有数据库外键约束，改为应用层保证。\n- 事务边界：原有跨表事务需要重构为 Saga 或最终一致性方案。",
     "hints": [
       "迁移最常踩的坑是数据库外键——拆分后发现删除数据时不报错反而数据不一致",
       "双写期间的补偿机制需要强力监控和修复脚本"
@@ -514,7 +496,7 @@
     "type": "short_answer",
     "title": "K8s 微服务部署策略对比",
     "content": "K8s 中有哪些常见的微服务部署策略？各自的优缺点和适用场景是什么？",
-    "answer": "答案：K8s 支持多种部署策略，通过 Deployment/Service/Ingress 配合实现。\n\n1. 滚动更新（Rolling Update，默认）：逐个替换旧 Pod 为新 Pod。优点：零停机、自动回滚（通过 revision history）。缺点：速度慢、无灰度控制（新旧版本混在一起，早期用户无感知）。适合大多数无状态服务。\n\n2. 蓝绿部署（Blue-Green）：维护两套完整环境（蓝=旧、绿=新）。切换 Service Selector 从蓝到绿一次性完成流量切换。优点：切换瞬间完成，回滚也瞬间完成（切回蓝）。缺点：双倍资源成本（两套环境同时运行）。适合核心服务。\n\n3. 金丝雀发布（Canary）：先升级少量 Pod（如 10%），通过 Service Mesh 或 Ingress 控制灰度流量比例，观察指标后逐步扩大到 100%。优点：风险最低，可在灰度期间监控错误率和性能。缺点：部署流程复杂、灰度期间的 A/B 流量处理需要专门支持。适合高流量关键服务。\n\n4. A/B 测试（与金丝雀的区别）：不是部署策略而是测试策略。同时运行两个版本，基于用户特征（地域/客户端版本/白名单）将特定用户路由到新版，验证业务效果。\n\n5. 重建（Recreate，不推荐）：先删除旧 Pod 再创建新 Pod。缺点：有停机时间。只在数据库迁移等需要排他访问的场景下使用。",
+    "answer": "K8s 支持多种部署策略，通过 Deployment/Service/Ingress 配合实现。\n\n1. 滚动更新（Rolling Update，默认）：逐个替换旧 Pod 为新 Pod。优点：零停机、自动回滚（通过 revision history）。缺点：速度慢、无灰度控制（新旧版本混在一起，早期用户无感知）。适合大多数无状态服务。\n\n2. 蓝绿部署（Blue-Green）：维护两套完整环境（蓝=旧、绿=新）。切换 Service Selector 从蓝到绿一次性完成流量切换。优点：切换瞬间完成，回滚也瞬间完成（切回蓝）。缺点：双倍资源成本（两套环境同时运行）。适合核心服务。\n\n3. 金丝雀发布（Canary）：先升级少量 Pod（如 10%），通过 Service Mesh 或 Ingress 控制灰度流量比例，观察指标后逐步扩大到 100%。优点：风险最低，可在灰度期间监控错误率和性能。缺点：部署流程复杂、灰度期间的 A/B 流量处理需要专门支持。适合高流量关键服务。\n\n4. A/B 测试（与金丝雀的区别）：不是部署策略而是测试策略。同时运行两个版本，基于用户特征（地域/客户端版本/白名单）将特定用户路由到新版，验证业务效果。\n\n5. 重建（Recreate，不推荐）：先删除旧 Pod 再创建新 Pod。缺点：有停机时间。只在数据库迁移等需要排他访问的场景下使用。",
     "hints": [
       "K8s 滚动更新需要配合 readinessProbe 和 podAntiAffinity 才能做到无损更新",
       "蓝绿部署在 K8s 中可以通过两个 Deployment + 同一个 Service + Selector 切换实现"
@@ -533,7 +515,7 @@
     "type": "short_answer",
     "title": "消息队列选型：RocketMQ vs Kafka vs RabbitMQ",
     "content": "在微服务架构中，RocketMQ、Kafka 和 RabbitMQ 的对比和选型建议是什么？",
-    "answer": "答案：不同 MQ 的设计哲学不同，适合的场景也不同。\n\nKafka：分布式流处理平台。优点：吞吐量最高（百万级/秒）、持久化好（基于磁盘顺序读写）、分区消费便于扩容。缺点：不支持延迟消息、不支持重试队列（需自建）、运维复杂度高。适用：日志采集、大数据管道、流处理（Flink 上游）、事件溯源、CDC。\n\nRocketMQ：阿里巴巴开源的消息中间件。优点：功能最全——事务消息（半消息机制）、顺序消息（生产者 hash 到同一队列）、延迟消息（18 个级别）、死信队列（自动重试 16 次）、消息轨迹、批量消息。缺点：Java 生态绑定（RocketMQ 客户端只有 Java 实现完善）、吞吐量约 10 万/秒（比 Kafka 低一个数量级）。适用：金融级事务、业务消息、订单/支付/积分场景。\n\nRabbitMQ：老牌 MQ。优点：功能丰富（路由灵活/延迟队列/DLX/死信）、运维友好（管理界面好用）、Erlang 实现的稳定性。缺点：吞吐量最低（万级/秒）、消息堆积性能急剧下降。适用：中小规模业务、灵活的发布订阅模式。\n\n选型建议：大数据/日志/流处理 → Kafka。Java 微服务业务消息（事务/顺序/可靠） → RocketMQ。轻量级/多语言/部署简单 → RabbitMQ。",
+    "answer": "不同 MQ 的设计哲学不同，适合的场景也不同。\n\nKafka：分布式流处理平台。优点：吞吐量最高（百万级/秒）、持久化好（基于磁盘顺序读写）、分区消费便于扩容。缺点：不支持延迟消息、不支持重试队列（需自建）、运维复杂度高。适用：日志采集、大数据管道、流处理（Flink 上游）、事件溯源、CDC。\n\nRocketMQ：阿里巴巴开源的消息中间件。优点：功能最全——事务消息（半消息机制）、顺序消息（生产者 hash 到同一队列）、延迟消息（18 个级别）、死信队列（自动重试 16 次）、消息轨迹、批量消息。缺点：Java 生态绑定（RocketMQ 客户端只有 Java 实现完善）、吞吐量约 10 万/秒（比 Kafka 低一个数量级）。适用：金融级事务、业务消息、订单/支付/积分场景。\n\nRabbitMQ：老牌 MQ。优点：功能丰富（路由灵活/延迟队列/DLX/死信）、运维友好（管理界面好用）、Erlang 实现的稳定性。缺点：吞吐量最低（万级/秒）、消息堆积性能急剧下降。适用：中小规模业务、灵活的发布订阅模式。\n\n选型建议：大数据/日志/流处理 → Kafka。Java 微服务业务消息（事务/顺序/可靠） → RocketMQ。轻量级/多语言/部署简单 → RabbitMQ。",
     "hints": [
       "RocketMQ 的事务消息通过半消息 + 回调确认保证本地事务与消息发送的一致性",
       "Kafka 的强项不是消息队列是流处理——不要用 Kafka 做传统消息队列的工作"
@@ -552,7 +534,7 @@
     "type": "short_answer",
     "title": "Spring Cloud Gateway 过滤器原理与自定义过滤器",
     "content": "Spring Cloud Gateway 中的过滤器链（Filter Chain）是如何工作的？如何实现一个自定义过滤器？",
-    "answer": "答案：Spring Cloud Gateway 基于 Spring WebFlux 的响应式编程模型。\n\n过滤器链：Gateway 的过滤器分为 Pre（请求转发前）和 Post（响应返回后）。核心链路——`GatewayFilterChain` 按顺序执行过滤器链，每个过滤器调用 `chain.filter(exchange)` 传递给链中的下一个过滤器。\n\n内置过滤器类型：\n- 路由过滤器：`AddRequestHeader`/`AddResponseHeader`/`PrefixPath`/`StripPrefix` 等\n- 限流过滤器：`RequestRateLimiter`（集成 Redis + Lua 限流脚本）\n- 熔断过滤器：`CircuitBreaker`（集成 Resilience4j）\n- 重试过滤器：`Retry`\n\n自定义过滤器实现方式：\n1. 全局过滤器：实现 `GlobalFilter` + `Ordered` 接口，作用于所有路由。\n2. 局部过滤器：继承 `AbstractGatewayFilterFactory`，通过配置指定作用于特定路由。\n\n示例场景：自定义全局过滤器做灰度流量的 Header 注入。在 `filter(exchange, chain)` 中从请求获取用户 ID → 根据规则判断灰度 → `ServerWebExchange` 的 `mutate()` 添加灰度 Header → `chain.filter(mutatedExchange)`。\n\n注意：Gateway 基于 Netty 的 Reactor 模型，过滤器中不能做阻塞调用（JDBC/Thread.sleep），必须使用响应式 API（WebClient 替代 RestTemplate）。",
+    "answer": "Spring Cloud Gateway 基于 Spring WebFlux 的响应式编程模型。\n\n过滤器链：Gateway 的过滤器分为 Pre（请求转发前）和 Post（响应返回后）。核心链路——`GatewayFilterChain` 按顺序执行过滤器链，每个过滤器调用 `chain.filter(exchange)` 传递给链中的下一个过滤器。\n\n内置过滤器类型：\n- 路由过滤器：`AddRequestHeader`/`AddResponseHeader`/`PrefixPath`/`StripPrefix` 等\n- 限流过滤器：`RequestRateLimiter`（集成 Redis + Lua 限流脚本）\n- 熔断过滤器：`CircuitBreaker`（集成 Resilience4j）\n- 重试过滤器：`Retry`\n\n自定义过滤器实现方式：\n1. 全局过滤器：实现 `GlobalFilter` + `Ordered` 接口，作用于所有路由。\n2. 局部过滤器：继承 `AbstractGatewayFilterFactory`，通过配置指定作用于特定路由。\n\n示例场景：自定义全局过滤器做灰度流量的 Header 注入。在 `filter(exchange, chain)` 中从请求获取用户 ID → 根据规则判断灰度 → `ServerWebExchange` 的 `mutate()` 添加灰度 Header → `chain.filter(mutatedExchange)`。\n\n注意：Gateway 基于 Netty 的 Reactor 模型，过滤器中不能做阻塞调用（JDBC/Thread.sleep），必须使用响应式 API（WebClient 替代 RestTemplate）。",
     "hints": [
       "Gateway 的 Ordered 执行顺序：数字越小越先执行 Pre 阶段，但 Post 阶段顺序相反",
       "在 Gateway 的过滤器中做阻塞调用会导致 Netty EventLoop 阻塞——整个网关不可用"
@@ -566,11 +548,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "微服务链路超时设置的黄金法则",
     "content": "微服务调用链路中的超时应该如何逐层设置？有哪些黄金法则和经验值？",
-    "answer": "答案：超时设置是微服务中最容易被忽视但影响最大的配置。设置不当会导致级联故障。\n\n核心原则：逐层递减（从用户到底层，超时越来越短）。\n\n典型链路超时设置（从上到下）：\n- 负载器/Nginx：连接 5s、读取 10s\n- API 网关：连接 3s、读取 8s\n- 应用服务超时调用下游：连接 2s、读取 5s\n- 数据库连接池：最大等待时间 3s\n- 缓存 Redis：读写超时 1s\n\n为什么逐层递减？——如果网关超时是 10s，应用调下游超时也是 10s，网关超时没有意义（用户等 10 秒后收到网关报错，但应用还在等下游的超时响应）。逐层递减以保证「超时的决策由上层而不是底层触发「。\n\n经验法则：\n- 连接超时 < 读取超时（建立连接应该比读写快得多）\n- 读取超时 = P99 延迟 × 3～5（给足够的缓冲）\n- 重试超时 = 初始超时 × (2^重试次数) + 抖动\n- 熔断器的最小调用数 = 当前服务每秒请求数 × 10 秒\n\n常见错误：所有服务统一设置 5s 超时、不区分连接和读取超时、超时值固定不随 P99 延迟调整。",
+    "answer": "超时设置是微服务中最容易被忽视但影响最大的配置。设置不当会导致级联故障。\n\n核心原则：逐层递减（从用户到底层，超时越来越短）。\n\n典型链路超时设置（从上到下）：\n- 负载器/Nginx：连接 5s、读取 10s\n- API 网关：连接 3s、读取 8s\n- 应用服务超时调用下游：连接 2s、读取 5s\n- 数据库连接池：最大等待时间 3s\n- 缓存 Redis：读写超时 1s\n\n为什么逐层递减？——如果网关超时是 10s，应用调下游超时也是 10s，网关超时没有意义（用户等 10 秒后收到网关报错，但应用还在等下游的超时响应）。逐层递减以保证「超时的决策由上层而不是底层触发「。\n\n经验法则：\n- 连接超时 < 读取超时（建立连接应该比读写快得多）\n- 读取超时 = P99 延迟 × 3～5（给足够的缓冲）\n- 重试超时 = 初始超时 × (2^重试次数) + 抖动\n- 熔断器的最小调用数 = 当前服务每秒请求数 × 10 秒\n\n常见错误：所有服务统一设置 5s 超时、不区分连接和读取超时、超时值固定不随 P99 延迟调整。",
     "hints": [
       "连接超时和读取超时是两回事——连接超时是建立 TCP 连接的时间，读取超时是拿到响应的总时间",
       "数据库连接池超时设置不当比代码 Bug 更容易导致服务雪崩"
@@ -624,7 +606,7 @@
     "type": "short_answer",
     "title": "Spring Boot Actuator 在生产环境的配置",
     "content": "Spring Boot Actuator 提供了哪些有用的生产端点和安全配置注意事项？",
-    "answer": "答案：Actuator 是 Spring Boot 的生产就绪功能，提供了各种管理端点。\n\n核心端点：\n- `/health`：健康检查（Readiness + Liveness 可分离）\n- `/info`：应用信息（git commit、构建时间、Java 版本）\n- `/metrics`：JVM 指标（内存/线程/GC/类加载）和自定义指标\n- `/env`：环境配置（需限制访问，可能泄露密码）\n- `/loggers`：运行时修改日志级别（线上调试有力工具）\n- `/threaddump`：线程 dump（快速定位死锁/线程阻塞）\n- `/heapdump`：Heap Dump（文件较大，按需触发）\n- `/prometheus`：Prometheus 格式的 Metrics\n\n安全配置：\n1. 绝对不能暴露的端点：`/env`（泄露数据库密码和 Secret）、`/dump`（泄露内存数据）、`/heapdump`（泄露业务数据）\n2. 暴露策略：只暴露 `/health`、`/info`、`/prometheus` 到外部。`/loggers`、`/threaddump` 限制内网 IP 或需要 Token。\n3. 配置示例：`management.endpoints.web.exposure.include=health,info,prometheus`，`management.endpoint.loggers.enabled=false`（关闭）或结合 Spring Security 设置角色访问。\n4. 版本安全：Spring Boot 2.x 的 /actuator 路径前缀可配置，不要用默认路径（增加安全通过模糊化）。",
+    "answer": "Actuator 是 Spring Boot 的生产就绪功能，提供了各种管理端点。\n\n核心端点：\n- `/health`：健康检查（Readiness + Liveness 可分离）\n- `/info`：应用信息（git commit、构建时间、Java 版本）\n- `/metrics`：JVM 指标（内存/线程/GC/类加载）和自定义指标\n- `/env`：环境配置（需限制访问，可能泄露密码）\n- `/loggers`：运行时修改日志级别（线上调试有力工具）\n- `/threaddump`：线程 dump（快速定位死锁/线程阻塞）\n- `/heapdump`：Heap Dump（文件较大，按需触发）\n- `/prometheus`：Prometheus 格式的 Metrics\n\n安全配置：\n1. 绝对不能暴露的端点：`/env`（泄露数据库密码和 Secret）、`/dump`（泄露内存数据）、`/heapdump`（泄露业务数据）\n2. 暴露策略：只暴露 `/health`、`/info`、`/prometheus` 到外部。`/loggers`、`/threaddump` 限制内网 IP 或需要 Token。\n3. 配置示例：`management.endpoints.web.exposure.include=health,info,prometheus`，`management.endpoint.loggers.enabled=false`（关闭）或结合 Spring Security 设置角色访问。\n4. 版本安全：Spring Boot 2.x 的 /actuator 路径前缀可配置，不要用默认路径（增加安全通过模糊化）。",
     "hints": [
       "/heapdump 在 OOM 时自动触发（`-XX:+HeapDumpOnOutOfMemoryError`），但要配置路径防止磁盘写满",
       "线上修改日志级别用 /loggers 端点 + POST，下策才是重启服务改配置"
@@ -640,45 +622,9 @@
     "category": "microservices",
     "difficulty": "medium",
     "type": "short_answer",
-    "title": "Protobuf 与 gRPC 在微服务中的实践",
-    "content": "Protobuf（Protocol Buffers）和 gRPC 在微服务通信中有什么优势？什么场景适合引入 gRPC？",
-    "answer": "答案：gRPC 是 Google 开源的高性能 RPC 框架，底层基于 HTTP/2 和 Protobuf。\n\nProtobuf 的优势：二进制编码（比 JSON 小 3-10 倍，解析速度更快）、强类型 Schema（proto 文件即接口契约）、向后兼容（字段编号机制支持增删字段）、多语言自动代码生成。\n\ngRPC 的优势：HTTP/2 多路复用（一个连接上并行处理多个请求，减少连接数）、流式通信（支持 Server Streaming/Client Streaming/Bidirectional Streaming）、双向 TLS + 鉴权集成、内置负载均衡（支持 gRPC LB 策略）。\n\n适合引入的场景：\n- 微服务间内部高频调用（延迟敏感、流量大）\n- 需要流式通信的实时场景（如股票行情推送、聊天消息）\n- 多语言异构系统（一个 proto 文件 = 跨语言接口契约）\n- 移动端→后端（二进制协议节省带宽和电量）\n\n不适合的场景：\n- 浏览器端直接调用（需要 gRPC-Web 转换，有额外的网关开销）\n- 系统调试和人工测试比 RPC 麻烦（需要 grpcurl 或 Bloom RPC 等工具，不如 RESTful 直观）\n- 简单 CRUD 服务（用 REST 更简单，gRPC 的价值不明显）\n\n实际建议：内部通信用 gRPC（高性能跨语言），外部提供 HTTP/REST API（方便浏览器和外部系统调用），用 gRPC-Gateway 生成 REST ↔ gRPC 的转换。",
-    "hints": [
-      "gRPC 的 HTTP/2 连接复用比 REST 的短连接减少约 30-50% 延迟",
-      "gRPC 的四层通信模型极其适合 AI Agent 场景下的事件流/数据流传输"
-    ],
-    "tags": [
-      "gRPC",
-      "Protobuf",
-      "RPC",
-      "HTTP/2"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Dapr 分布式应用运行时架构",
-    "content": "Dapr（Distributed Application Runtime）是什么？它的架构设计如何简化微服务开发？",
-    "answer": "答案：Dapr 是微软开源的可移植、事件驱动、无服务器运行时，通过 Sidecar 方式为微服务提供分布式能力。\n\n核心理念：通过 Sidecar 封装分布式基础设施能力，使开发人员只需关注业务逻辑。\n\n构建块（Building Blocks）：\n1. Service Invocation：HTTP/gRPC 服务调用（自动重试、容错、Service Discovery）\n2. State Management：状态管理（Redis/MongoDB/CosmosDB 等，键值操作封装一致）\n3. Publish & Subscribe：发布订阅（Kafka/RabbitMQ/Redis Streams 等，云原生事件总线）\n4. Bindings：外部系统绑定（输入/输出绑定，将 K8s 事件/Cron/数据库变更绑定到服务）\n5. Actors：虚拟 Actor 模式（Orleans 的分布式 Actor 实现）\n6. Secrets：密钥管理（从云 Secrets Manager/K8s Secrets 获取敏感配置）\n7. Observability：分布式追踪（自动集成 OpenTelemetry）\n8. Configuration：配置管理（热更新支持）\n\n架构：每个服务旁边运行一个 Dapr Sidecar（daprd），服务通过 localhost:3500 调用 Dapr API。Sidecar 之间通过 gRPC 通信。控制面（placement、sentry、operator）管理全局状态、Actor 分布、mTLS 证书。\n\n与 Service Mesh 对比：Service Mesh 解决服务间通信（网络层），Dapr 解决编程问题（应用层 API）。可以共存：Istio 管流量，Dapr 提供状态管理/发布订阅/Actor。",
-    "hints": [
-      "Dapr 最大的价值是云移植性——同一个服务可以部署在 AKS/EKS/ACK 甚至本地",
-      "Dapr 的 Actor 模式解决了分布式 Actor 的难题——自动激活/闲置回收/状态持久化"
-    ],
-    "tags": [
-      "Dapr",
-      "Sidecar",
-      "运行时",
-      "云原生"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "medium",
-    "type": "short_answer",
     "title": "SOP：微服务上线前的检查清单",
     "content": "一个微服务上线（上生产）前应该检查哪些方面？请给出一个 SOP 检查清单。",
-    "answer": "答案：微服务上线检查清单（SOP）：\n\n基础设施检查：\n- [ ] CPU/Memory/存储资源配置（Limit 和 Request 已设置）\n- [ ] HPA 配置（最小/最大副本数，扩缩容指标和阈值）\n- [ ] PodDisruptionBudget 配置（保证最小可用副本数）\n- [ ] 环境变量和 Secrets 配置正确（不包含硬编码）\n\n可观测性检查：\n- [ ] 健康检查端点（Readiness 和 Liveness Probe 配置了不同的路径）\n- [ ] Metrics（Prometheus 指标采集，至少暴露 RED 指标）\n- [ ] 日志（JSON 格式，traceId 已注入 MDC）\n- [ ] 告警规则已配置（错误率/延迟 P99/CPU/GC）\n\n依赖检查：\n- [ ] 数据库连接池大小已配置（非默认，根据压测结果）\n- [ ] 消息队列消费组已创建（消费者幂等已实现）\n- [ ] 缓存预热策略（启动时冷缓存导致的慢请求）\n- [ ] 外部 API 超时/重试/熔断已配置\n\n发布检查：\n- [ ] 回滚计划（回滚脚本验证过，数据库兼容新旧版本）\n- [ ] 灰度计划（金丝雀比例、观察期、监控告警）\n- [ ] 上线变更知会下游和依赖团队\n\n运维检查：\n- [ ] 域名和 DNS 配置正确\n- [ ] 启停脚本/API 可用（优雅停机）\n- [ ] 容量规划和压测数据（高峰流量 2 倍以上的容量）",
+    "answer": "微服务上线检查清单（SOP）：\n\n基础设施检查：\n- [ ] CPU/Memory/存储资源配置（Limit 和 Request 已设置）\n- [ ] HPA 配置（最小/最大副本数，扩缩容指标和阈值）\n- [ ] PodDisruptionBudget 配置（保证最小可用副本数）\n- [ ] 环境变量和 Secrets 配置正确（不包含硬编码）\n\n可观测性检查：\n- [ ] 健康检查端点（Readiness 和 Liveness Probe 配置了不同的路径）\n- [ ] Metrics（Prometheus 指标采集，至少暴露 RED 指标）\n- [ ] 日志（JSON 格式，traceId 已注入 MDC）\n- [ ] 告警规则已配置（错误率/延迟 P99/CPU/GC）\n\n依赖检查：\n- [ ] 数据库连接池大小已配置（非默认，根据压测结果）\n- [ ] 消息队列消费组已创建（消费者幂等已实现）\n- [ ] 缓存预热策略（启动时冷缓存导致的慢请求）\n- [ ] 外部 API 超时/重试/熔断已配置\n\n发布检查：\n- [ ] 回滚计划（回滚脚本验证过，数据库兼容新旧版本）\n- [ ] 灰度计划（金丝雀比例、观察期、监控告警）\n- [ ] 上线变更知会下游和依赖团队\n\n运维检查：\n- [ ] 域名和 DNS 配置正确\n- [ ] 启停脚本/API 可用（优雅停机）\n- [ ] 容量规划和压测数据（高峰流量 2 倍以上的容量）",
     "hints": [
       "数据库连接池大小不是越大越好——连接过多反而增加数据库负担导致性能下降",
       "回滚验证比上线验证更重要——90% 的上线问题出在回滚时"
@@ -696,7 +642,7 @@
     "type": "short_answer",
     "title": "微服务弹性伸缩设计与 K8s HPA",
     "content": "K8s HPA（Horizontal Pod Autoscaler）如何工作？弹性伸缩设计有哪些关键参数和实践建议？",
-    "answer": "答案：HPA 是 K8s 的自动水平伸缩机制，根据 Pod 的 Metrics 自动调整副本数。\n\n工作原理：HPA 控制器定期（默认 15 秒）查询 Metrics Server 获取 Pod 指标（CPU/Memory 或自定义 Metrics），计算期望副本数 `ceil(current_replicas × (current_value / target_value))`。当指标高于目标一定比例时扩容，低于时缩容。\n\n关键参数：\n- `minReplicas` / `maxReplicas`：最小/最大副本数。min 至少 2（高可用），max 根据压测数据预留 2-3 倍容量。\n- `targetCPUUtilizationPercentage`：目标 CPU 利用率（通常 50-70%）。\n- `scaleDown`：缩容策略——`stabilizationWindowSeconds`（稳定窗口，避免频繁缩容，推荐 300 秒），`policies`（缩容速率控制，如每分钟最多缩 1 个 Pod）。\n\n实践建议：\n1. 不要只用 CPU 扩缩——内存/自定义 Metrics（QPS/延迟）更反映真实负载。\n2. 扩容要快（指标聚合周期 < 30 秒），缩容要慢（稳定窗口 5 分钟）。\n3. 扩容步长：大批量请求陡增时，步长设大（如一次加 4 个 Pod），应对突发的流量尖峰。\n4. 配合 PodDisruptionBudget 防止缩容时同时关闭太多 Pod。\n5. 冷启动时间长的 Java 应用用 Startup Probe 或提前预热（Prewarming），避免扩上去的 Pod 来不及响应。",
+    "answer": "HPA 是 K8s 的自动水平伸缩机制，根据 Pod 的 Metrics 自动调整副本数。\n\n工作原理：HPA 控制器定期（默认 15 秒）查询 Metrics Server 获取 Pod 指标（CPU/Memory 或自定义 Metrics），计算期望副本数 `ceil(current_replicas × (current_value / target_value))`。当指标高于目标一定比例时扩容，低于时缩容。\n\n关键参数：\n- `minReplicas` / `maxReplicas`：最小/最大副本数。min 至少 2（高可用），max 根据压测数据预留 2-3 倍容量。\n- `targetCPUUtilizationPercentage`：目标 CPU 利用率（通常 50-70%）。\n- `scaleDown`：缩容策略——`stabilizationWindowSeconds`（稳定窗口，避免频繁缩容，推荐 300 秒），`policies`（缩容速率控制，如每分钟最多缩 1 个 Pod）。\n\n实践建议：\n1. 不要只用 CPU 扩缩——内存/自定义 Metrics（QPS/延迟）更反映真实负载。\n2. 扩容要快（指标聚合周期 < 30 秒），缩容要慢（稳定窗口 5 分钟）。\n3. 扩容步长：大批量请求陡增时，步长设大（如一次加 4 个 Pod），应对突发的流量尖峰。\n4. 配合 PodDisruptionBudget 防止缩容时同时关闭太多 Pod。\n5. 冷启动时间长的 Java 应用用 Startup Probe 或提前预热（Prewarming），避免扩上去的 Pod 来不及响应。",
     "hints": [
       "HPA 的扩容响应时间 = Metrics 采集间隔 + 聚合周期 + HPA 评估周期 ≈ 1-3 分钟",
       "对于秒级突发的流量，HPA 来不及响应——需要配合 VPA 或 Cluster Autoscaler 预置资源"
@@ -710,47 +656,11 @@
   },
   {
     "category": "microservices",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "gRPC 健康检查与负载均衡",
-    "content": "gRPC 的负载均衡和健康检查机制是什么？在 K8s 环境中如何正确配置 gRPC 服务的负载均衡？",
-    "answer": "答案：gRPC 使用 HTTP/2 多路复用，一个 TCP 连接可以处理多个请求。这给传统基于 4 层（TCP）的 K8s Service 负载均衡带来挑战。\n\n问题：K8s Service 的负载均衡（通过 kube-proxy IPVS/iptables）是基于 TCP 连接的——一旦连接建立，后续所有 gRPC 请求都发到同一个 Pod。无法像 HTTP/1.1 短连接那样每请求负载均衡。\n\n解决方案：\n1. 客户端侧负载均衡（推荐）：gRPC 客户端内置负载均衡策略。通过 DNS 解析获取所有端点，客户端自行做 RoundRobin/WeightedRoundRobin/PickFirst。需要配置 `grpc.defaultLbPolicy=round_robin`。\n2. Headless Service：K8s Headless Service（`clusterIP: None`）返回所有 Pod IP。gRPC 客户端通过 DNS 解析获得 IP 列表，自行做负载均衡。\n3. Service Mesh：Envoy 代理 gRPC 流量，Envoy 做 HTTP/2 级别的负载均衡（逐请求分发）。\n4. gRPC-LB Protocol：使用外部 Load Balancer（如 Envoy/Nginx/gRPC LB），客户端通过 LB 代理。\n\n健康检查：gRPC 健康检查协议（`grpc.health.v1.Health/Check`）返回 SERVING/NOT_SERVING。K8s 1.24+ 支持 gRPC Probe（`grpc` action），直接调用 gRPC 健康检查端点。之前的版本需要用 `exec` 或通过 HTTP 转换。",
-    "hints": [
-      "gRPC 使用 HTTP/2 多路复用时，K8s Service 的 4 层负载均衡会把多发到同一个 Pod——一定要用客户端 LB 或 Service Mesh",
-      "gRPC-Health-Probe 开源工具可以将 gRPC 健康检查转换为 HTTP 端点用于老版本 K8s"
-    ],
-    "tags": [
-      "gRPC",
-      "负载均衡",
-      "K8s",
-      "健康检查"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "微服务异步通信模式：事件驱动设计",
-    "content": "答案：事件驱动架构（EDA）通过异步消息实现服务间的解耦。与同步 HTTP/RPC 调用相比，提供了更好的弹性、松耦合和可扩展性。\n\n关键模式：\n1. 事件通知（Event Notification）：服务 A 发生某事件 → 发送通知 → 服务 B 接收后自行查询所需数据。简单但导致多次往返（收到通知后还要查接口）。\n2. 事件携带的状态传输（Event-Carried State Transfer）：事件消息中携带足够的数据，消费者不需要再查源服务。减少调用次数但增加了数据冗余，需要处理数据一致性。\n3. CQRS：将命令（写）和查询（读）分离。写端用事件溯源记录变更，读端通过监听事件构建物化视图。\n4. Saga：长事务通过事件驱动协调各服务的本地事务，失败时触发补偿。\n\n设计要点：\n- 消息格式：使用 Schema Registry（如 Avro/Protobuf Schema Registry）保证消息格式的向后兼容。\n- 死信队列：消费失败的消息不丢弃，进入 DLD（死信队列）人工处理或重试。\n- 幂等消费：事件可能重复投递，消费端必须幂等（通过去重表/唯一 Key）。\n- 事件顺序：如果消息必须顺序消费，用分区（Partition）Key 哈希确保同一条业务线的消息到同一个分区。\n- 消息大小：事件消息不宜过大（建议 < 1MB），大数据通过引用（如 OSS URL）传递。",
-    "hints": [
-      "事件携带状态传递是一把双刃剑——减少调用但导致数据复制，需要有对应的数据同步机制",
-      "死信队列的监控比主消费链路更重要——死信长期无人处理等于数据丢失"
-    ],
-    "tags": [
-      "事件驱动",
-      "EDA",
-      "CQRS",
-      "异步"
-    ],
-    "answer": "事件驱动架构（Event-Driven Architecture, EDA）是微服务异步解耦的核心模式，通过事件总线实现服务间最终一致性通信。\n\n核心组件：\n1. 事件（Event）：不可变的事实记录，如 OrderCreated、PaymentCompleted\n2. 事件总线（Event Bus/Message Broker）：Kafka/RocketMQ/RabbitMQ\n3. 生产者（Publisher）：发布事件到 Broker\n4. 消费者（Subscriber）：从 Broker 订阅并消费事件\n\n优势：\n- 解耦：生产者不关心谁来消费\n- 弹性：消费者故障不影响生产者\n- 扩展性：消费者可以独立扩容\n- 审计：事件日志天然提供审计轨迹\n\n挑战与解决方案：\n1. 顺序保证：Kafka Partition 内保证顺序，按业务 ID 路由到同一 Partition\n2. 幂等消费：每条事件携带唯一 ID，消费者去重（DB 唯一索引/Redis 布隆）\n3. 事务一致性：本地事务 + 事件表，或 CDC（Debezium 监听 Binlog）\n4. 死信处理：重试次数超限的事件进入死信队列（DLQ），人工补偿\n5. 版本兼容：事件 schema 用 Avro/Protobuf 管理，Schema Registry 兼容性检查\n\n事件模式分类：\n- Event Notification：通知下游某个事情发生了（最简单）\n- Event-Carried State Transfer：事件携带完整数据，减少下游回查\n- Event Sourcing：用事件序列存储状态（CQRS 配套模式）\n\nSaga 模式：\n- Choreography（编排）：每个服务监听事件并执行本地事务 + 发布补偿事件\n- Orchestration（协调）：一个 Saga 协调者发出指令，服务响应后决定下一步\n\n适用场景：\n✅ 跨多个服务的业务流程（订单→支付→库存→物流）\n✅ 需要弹性降级的非核心流程\n✅ 异步通知（发邮件/SMS/推送）\n\n不适用场景：\n❌ 强一致性要求的实时查询\n❌ 请求-响应模式（同步交互）\n❌ 简单的 CRUD（过度设计）"
-  },
-  {
-    "category": "microservices",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "Seata AT vs TCC vs Saga 综合对比",
     "content": "Seata AT、TCC 和 Saga 三种分布式事务模式的综合对比，以及在什么情况下选哪一种？",
-    "answer": "答案：三种模式解决不同场景下的分布式事务问题。\n\n| 特性 | AT | TCC | Saga |\n|------|----|-----|------|\n| 业务侵入 | 低（自动生成逆向SQL） | 高（手写Try/Confirm/Cancel） | 中（需定义补偿事务） |\n| 隔离性 | 全局锁 + 写隔离 | 业务层资源预留 | 无隔离（最终一致性） |\n| 一致性 | 强一致（2PC思想） | 强一致（资源预留） | 最终一致 |\n| 性能 | 中（全局锁开销） | 高（无锁，资源预留） | 高（无锁、异步） |\n| 回滚能力 | 自动（undolog补偿） | 手动（Cancel） | 手动（定义补偿） |\n| 适用场景 | 简单CRUD，单库操作 | 跨服务/异构资源 | 长事务/异步/高吞吐 |\n\n选型建议：\n- 简单数据库操作（单库 CRUD，不需要跨异构资源）：AT 模式最简单（零业务侵入），银行转账、订单库存类。\n- 异构资源（第三方支付/短信/发券）、需要资源预留：TCC 模式（如支付平台冻结资金→确认扣费）。\n- 长事务（涉及多个服务、长时间执行、高并发）：Saga 模式（如旅游预订：机票+酒店+租车）。\n- 组合使用：一个全局事务中混合 AT + TCC + Saga（如 TCC 控制资金+AT 控制数据库+Saga 控制跨系统）。\n\n注意：没有银弹。分布式事务的最佳实践是尽量避免分布式事务——设计上通过最终一致性、本地消息表、事件驱动来规避强一致性需求。",
+    "answer": "三种模式解决不同场景下的分布式事务问题。\n\n| 特性 | AT | TCC | Saga |\n|------|----|-----|------|\n| 业务侵入 | 低（自动生成逆向SQL） | 高（手写Try/Confirm/Cancel） | 中（需定义补偿事务） |\n| 隔离性 | 全局锁 + 写隔离 | 业务层资源预留 | 无隔离（最终一致性） |\n| 一致性 | 强一致（2PC思想） | 强一致（资源预留） | 最终一致 |\n| 性能 | 中（全局锁开销） | 高（无锁，资源预留） | 高（无锁、异步） |\n| 回滚能力 | 自动（undolog补偿） | 手动（Cancel） | 手动（定义补偿） |\n| 适用场景 | 简单CRUD，单库操作 | 跨服务/异构资源 | 长事务/异步/高吞吐 |\n\n选型建议：\n- 简单数据库操作（单库 CRUD，不需要跨异构资源）：AT 模式最简单（零业务侵入），银行转账、订单库存类。\n- 异构资源（第三方支付/短信/发券）、需要资源预留：TCC 模式（如支付平台冻结资金→确认扣费）。\n- 长事务（涉及多个服务、长时间执行、高并发）：Saga 模式（如旅游预订：机票+酒店+租车）。\n- 组合使用：一个全局事务中混合 AT + TCC + Saga（如 TCC 控制资金+AT 控制数据库+Saga 控制跨系统）。\n\n注意：没有银弹。分布式事务的最佳实践是尽量避免分布式事务——设计上通过最终一致性、本地消息表、事件驱动来规避强一致性需求。",
     "hints": [
       "最可靠的分布式事务是「没有分布式事务「——优先从架构层面规避跨服务事务",
       "TCC 的空回滚和幂等处理是最大的实现难点——实现不好比不用更糟"
@@ -769,7 +679,7 @@
     "type": "short_answer",
     "title": "SRE 核心概念：SLI/SLO/SLA",
     "content": "请解释 SRE 中的 SLI、SLO 和 SLA 的概念，以及如何在微服务中设定合理的 SLO 目标。",
-    "answer": "答案：SLI/SLO/SLA 是 Google SRE 提出的服务等级体系。\n\nSLI（Service Level Indicator）——服务质量指标。可量化的指标如请求延迟 P99、错误率、可用性（请求成功率）。SLI 的选择原则：「用户能感受到的才是 SLI「——内部技术指标（如 CPU 利用率）不是 SLI，用户看到的延迟/错误率才是。\n\nSLO（Service Level Objective）——服务质量目标。对 SLI 设定的目标阈值。如「过去 30 天内 P99 延迟 < 200ms 的比例达到 99.9%「。SLO 的设置需要留有余量——不要设 100%（不可能达到），也不要设得太低（用户不满意）。\n\nSLA（Service Level Agreement）——服务质量协议。SLO 未达标时的商业后果（赔偿/退款）。SLA 数字通常比 SLO 宽松（如 SLO=99.9%，SLA=99.5%），预留 Buffer。\n\n微服务 SLO 设定建议：\n1. 从用户角度设定——不是」CPU < 80%「而是」API 错误率 < 0.1%「。\n2. 按服务重要性分级——核心支付 SLO=99.99%，非核心推荐 SLO=99.9%。\n3. 预算（Error Budget）管理：100% - SLO = 可容忍的错误预算。用错误预算决定发布节奏——预算充足可发布，预算耗尽可能停机优化。\n4. SLO 不可用一个值覆盖所有时段——区分高峰期和低谷期（如白天 SLO=99.99%，夜晚 SLO=99.9%）。\n5. SLO 不达标后要复盘，但不要因为不达标就降低 SLO（那是掩耳盗铃）。",
+    "answer": "SLI/SLO/SLA 是 Google SRE 提出的服务等级体系。\n\nSLI（Service Level Indicator）——服务质量指标。可量化的指标如请求延迟 P99、错误率、可用性（请求成功率）。SLI 的选择原则：「用户能感受到的才是 SLI「——内部技术指标（如 CPU 利用率）不是 SLI，用户看到的延迟/错误率才是。\n\nSLO（Service Level Objective）——服务质量目标。对 SLI 设定的目标阈值。如「过去 30 天内 P99 延迟 < 200ms 的比例达到 99.9%「。SLO 的设置需要留有余量——不要设 100%（不可能达到），也不要设得太低（用户不满意）。\n\nSLA（Service Level Agreement）——服务质量协议。SLO 未达标时的商业后果（赔偿/退款）。SLA 数字通常比 SLO 宽松（如 SLO=99.9%，SLA=99.5%），预留 Buffer。\n\n微服务 SLO 设定建议：\n1. 从用户角度设定——不是」CPU < 80%「而是」API 错误率 < 0.1%「。\n2. 按服务重要性分级——核心支付 SLO=99.99%，非核心推荐 SLO=99.9%。\n3. 预算（Error Budget）管理：100% - SLO = 可容忍的错误预算。用错误预算决定发布节奏——预算充足可发布，预算耗尽可能停机优化。\n4. SLO 不可用一个值覆盖所有时段——区分高峰期和低谷期（如白天 SLO=99.99%，夜晚 SLO=99.9%）。\n5. SLO 不达标后要复盘，但不要因为不达标就降低 SLO（那是掩耳盗铃）。",
     "hints": [
       "错误预算是 SRE 最强大的概念——它量化了「我们可以冒多大风险」",
       "不要把内部运营指标（如 DB 延迟）当作 SLI——用户感受不到的指标不能算服务等级"
@@ -788,7 +698,7 @@
     "type": "short_answer",
     "title": "微服务容灾与多活架构设计",
     "content": "微服务容灾架构的三个级别（同城双活、两地三中心、异地多活）的区别和实现难点是什么？",
-    "answer": "答案：容灾架构按可用性和 RTO/RPO 要求分为三个级别。\n\n1. 同城双活：在同一城市部署两个数据中心，同时承载流量。RTO < 5 分钟，RPO < 1 分钟。实现难点——数据库同步延迟（同城光纤专线延迟 < 1ms，MySQL 异步/半同步复制可接受）、流量分配（DNS 智能解析或全局负载器）。适合金融/互联网核心业务。\n\n2. 两地三中心：同城双活 + 异地灾备（冷备/半冷备）。同城两个数据中心（同时在线），异地一个灾备中心（异步复制、备而不活）。同城全挂时切换异地。RTO < 30 分钟，RPO < 15 分钟。难点——异地的数据延迟（跨城专线 10-30ms）、灾备切换流程的自动化、切换后的流量重定向。\n\n3. 异地多活：多个数据中心同时在线，「写就近「用户写入最近的机房，通过跨城分布式数据库或业务层数据分片解决数据冲突。RTO < 1 分钟，RPO ≈ 0。实现极难——冲突处理（同一用户在不同机房同时修改同一数据）、跨机房事务（2PC 跨城延迟不可接受）、单元化（按用户 ID 路由到指定单元）。\n\n选择依据：\n- 同城双活：核心业务基本标配，成本相对可控。\n- 两地三中心：监管要求（如金融行业），或单城市故障概率很高的场景。\n- 异地多活：只有大型互联网公司（阿里/腾讯/字节）真正实现了——付出了巨大的技术成本。\n\n建议：不要追求「完美容灾「，根据业务价值选择适当级别。对于大多数公司，同城双活 + 快速恢复脚本已经足够。",
+    "answer": "容灾架构按可用性和 RTO/RPO 要求分为三个级别。\n\n1. 同城双活：在同一城市部署两个数据中心，同时承载流量。RTO < 5 分钟，RPO < 1 分钟。实现难点——数据库同步延迟（同城光纤专线延迟 < 1ms，MySQL 异步/半同步复制可接受）、流量分配（DNS 智能解析或全局负载器）。适合金融/互联网核心业务。\n\n2. 两地三中心：同城双活 + 异地灾备（冷备/半冷备）。同城两个数据中心（同时在线），异地一个灾备中心（异步复制、备而不活）。同城全挂时切换异地。RTO < 30 分钟，RPO < 15 分钟。难点——异地的数据延迟（跨城专线 10-30ms）、灾备切换流程的自动化、切换后的流量重定向。\n\n3. 异地多活：多个数据中心同时在线，「写就近「用户写入最近的机房，通过跨城分布式数据库或业务层数据分片解决数据冲突。RTO < 1 分钟，RPO ≈ 0。实现极难——冲突处理（同一用户在不同机房同时修改同一数据）、跨机房事务（2PC 跨城延迟不可接受）、单元化（按用户 ID 路由到指定单元）。\n\n选择依据：\n- 同城双活：核心业务基本标配，成本相对可控。\n- 两地三中心：监管要求（如金融行业），或单城市故障概率很高的场景。\n- 异地多活：只有大型互联网公司（阿里/腾讯/字节）真正实现了——付出了巨大的技术成本。\n\n建议：不要追求「完美容灾「，根据业务价值选择适当级别。对于大多数公司，同城双活 + 快速恢复脚本已经足够。",
     "hints": [
       "异地多活的真正难点不是技术而是业务——数据分片必须与业务单元绑定",
       "容灾方案不经过定期演练就是假的——每年至少一次全量容灾演练"
@@ -802,542 +712,170 @@
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务中的事件驱动架构（EDA）？",
-    "content": "什么是微服务中的事件驱动架构（EDA）？",
-    "answer": "答案：事件驱动架构（EDA）是微服务间通过事件进行异步通信的架构风格。核心角色：事件生产者（发布事件到事件总线）、事件总线（存储和路由事件，如 Kafka/RabbitMQ）、事件消费者（订阅并处理事件）。\n\n两种模式：事件通知（生产者发布事件，消费者自行决定如何处理）、事件溯源（Event Sourcing，将所有状态变更存储为事件序列，当前状态由事件重放得到）。\n\n优点：服务间解耦（生产者不知道消费者）、可扩展性（消费者可独立伸缩）、审计追踪。缺点：最终一致性（不是立即一致）、事件模式演化的复杂性、异步链路追踪成本高。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 CQRS（Command Query Responsibility Segregation）模式？",
-    "content": "什么是 CQRS（Command Query Responsibility Segregation）模式？",
-    "answer": "答案：CQRS 将数据读写分离为不同的模型——Command 模型处理写操作（INSERT/UPDATE/DELETE），Query 模型处理读操作（SELECT）。两者可以使用不同的数据存储和不同的数据格式。\n\n实现方式：简单 CQRS（读写使用不同的 Repository 或 Service，同一个数据库）。完整 CQRS（读写使用不同的数据库，通过事件同步，Query 数据库可能使用更适合查询的格式如 Elasticsearch）。\n\n与 Event Sourcing 结合：Event Sourcing 作为写模型（存储事件流），CQRS 的读模型从事件流投影（Projection）出专门的查询视图。\n\n适用场景：读写负载差异大的系统（如报表面板 99% 是读）。复杂查询场景（写模型是规范化表但读模型需要复杂聚合）。不适用：简单的 CRUD 系统。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 Strangler Fig（绞杀者）模式？",
-    "content": "什么是 Strangler Fig（绞杀者）模式？",
-    "answer": "答案：Strangler Fig 是渐进式将单体应用迁移到微服务的模式（得名于绞杀榕慢慢缠绕宿主树直至取代）。流程：在现有单体旁边新建微服务，通过路由层（如反向代理/网关）逐步将特定功能的路由指向新服务，最终绞杀（替换）整个单体。\n\n实现步骤：1) 识别可剥离的模块（bounded context）2) 在新服务中实现该模块的功能 3) 配置网关将相关请求路由到新服务（保留旧路径作为回退）4) 旧功能不再被调用后删除单体中的对应代码 5) 重复直到单体被完全替代。\n\n优点：低风险逐步迁移（每次只替换一小块）、随时可回滚（切换路由即可）。缺点：过渡期内单体+微服务共存，运维复杂度增加。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "什么是 Resilience4j 的断路器模式？",
     "content": "什么是 Resilience4j 的断路器模式？",
-    "answer": "答案：Resilience4j 是 Netflix Hystrix 停更后的推荐替代（轻量级，函数式编程）。断路器三种状态：CLOSED（正常，请求直接通过）→ OPEN（故障率超阈值，请求快速失败）→ HALF_OPEN（尝试放行少量请求探测是否恢复）。\n\n参数配置：滑动窗口大小（如 10 次调用或 5 秒）、阈值（如 50% 失败率触发 OPEN）、OPEN 持续时间（如 30 秒后进入 HALF_OPEN）、HALF_OPEN 状态的最大调用次数。\n\nResilience4j 的其他模块：RateLimiter（限流）、Retry（重试，指数退避）、Bulkhead（隔离，信号量/线程池隔离）、TimeLimiter（超时控制）、Cache（结果缓存）。\n\n与 Hystrix 的不同：Hystrix 只支持线程池隔离和信号量隔离；Resilience4j 以装饰器模式组合各种模块。",
+    "answer": "Resilience4j 是 Netflix Hystrix 停更后的推荐替代（轻量级，函数式编程）。断路器三种状态：CLOSED（正常，请求直接通过）→ OPEN（故障率超阈值，请求快速失败）→ HALF_OPEN（尝试放行少量请求探测是否恢复）。\n\n参数配置：滑动窗口大小（如 10 次调用或 5 秒）、阈值（如 50% 失败率触发 OPEN）、OPEN 持续时间（如 30 秒后进入 HALF_OPEN）、HALF_OPEN 状态的最大调用次数。\n\nResilience4j 的其他模块：RateLimiter（限流）、Retry（重试，指数退避）、Bulkhead（隔离，信号量/线程池隔离）、TimeLimiter（超时控制）、Cache（结果缓存）。\n\n与 Hystrix 的不同：Hystrix 只支持线程池隔离和信号量隔离；Resilience4j 以装饰器模式组合各种模块。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 Bulkhead（隔舱）模式？信号量隔离和线程池隔离的区别？",
-    "content": "什么是 Bulkhead（隔舱）模式？信号量隔离和线程池隔离的区别？",
-    "answer": "答案：Bulkhead 模式将系统资源（线程/连接）划分为独立隔离区，防止某个服务的故障耗尽全部资源（类似船舱隔板）。\n\n线程池隔离：每个服务/依赖分配独立的线程池。A 服务线程池满只影响 A，不影响其他服务。优点：线程上下文完全隔离。缺点：线程切换开销、占用更多内存。适合异步/并发要求高的场景。\n\n信号量隔离：不创建额外线程，通过信号量限制并发请求数（在调用者线程中执行被调方）。优点：无线程切换开销、内存占用少。缺点：不能设置超时。适合低延迟/同步调用场景。\n\n选型建议：有网络开销（远程调用）用线程池隔离；纯内存操作（本地缓存查询）用信号量隔离。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务中的重试和退避策略？",
-    "content": "什么是微服务中的重试和退避策略？",
-    "answer": "答案：重试策略：调用远程服务失败时自动重试（通常只对幂等操作重试）。常见问题：重试风暴（大量重试压垮下游）、超时累积（重试乘以超时时间 = 总等待时间）。\n\n退避策略：固定间隔退避（每次重试固定时间，如 100ms）、随机退避（防止惊群效应）、指数退弊（间隔指数增长，如 100ms/200ms/400ms/800ms）、指数退避+抖动（Jitter，添加随机偏移避免重试同步）。\n\n最佳实践：对非幂等操作不重试（或使用去重 Token）。重试次数限制（通常 3 次是上限）。结合断路器使用（重试失败后熔断）。跨网络调用时设置总超时（如 2s）避免重试链过长。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 API 版本管理策略？",
-    "content": "什么是微服务的 API 版本管理策略？",
-    "answer": "答案：常见版本策略：URI 路径版本（/v1/orders, /v2/orders）——最直观。请求头版本（Accept: application/vnd.myapp.v1+json）——RESTful 方式，URL 干净但调试麻烦。查询参数（/orders?version=1）——简单但容易污染 URL 缓存。\n\n兼容性规则：向后兼容（新增字段可选、新增端点不影响旧客户端）、不兼容变更（删除/重命名字段、修改类型、修改端点语义）必须大版本号。\n\n最佳实践：1) 先不做版本（前 N 个版本内部消化）2) 必须版本时用 URI 路径 3) 维护过期版本淘汰策略。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "什么是微服务的 Outbox（发件箱）模式？",
     "content": "什么是微服务的 Outbox（发件箱）模式？",
-    "answer": "答案：Outbox 模式解决双写问题（业务数据库变更+发送消息到消息队列两个操作需要原子性）。核心思路：将发送消息变为在本地数据库插入一条发件箱记录，与业务操作在同一个本地事务中。\n\n流程：1) 服务执行业务操作 + 在同一个事务中插入 Outbox 记录（消息内容 + 状态 = pending）2) 后台进程轮询状态为 pending 的记录 3) 发送消息到消息队列 4) 发送成功后将状态更新为 sent。\n\n关键技术：轮询（间隔 1-5 秒，有延迟但简单）、CDC（Change Data Capture，如 Debezium 监听 binlog 变更，低延迟且无轮询开销）。\n\n对比：直接发消息（不在本地事务中）有消息丢失风险。Outbox 确保最终一致性。",
+    "answer": "Outbox 模式解决双写问题（业务数据库变更+发送消息到消息队列两个操作需要原子性）。核心思路：将发送消息变为在本地数据库插入一条发件箱记录，与业务操作在同一个本地事务中。\n\n流程：1) 服务执行业务操作 + 在同一个事务中插入 Outbox 记录（消息内容 + 状态 = pending）2) 后台进程轮询状态为 pending 的记录 3) 发送消息到消息队列 4) 发送成功后将状态更新为 sent。\n\n关键技术：轮询（间隔 1-5 秒，有延迟但简单）、CDC（Change Data Capture，如 Debezium 监听 binlog 变更，低延迟且无轮询开销）。\n\n对比：直接发消息（不在本地事务中）有消息丢失风险。Outbox 确保最终一致性。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Saga vs 2PC vs Outbox 的选型建议？",
     "content": "Saga vs 2PC vs Outbox 的选型建议？",
-    "answer": "答案：三种方案对比：\n\n2PC（XA 协议）——强一致性、同步阻塞、准备阶段锁定资源（长事务性能差）。适合短事务、小规模、对一致性要求极高的场景。缺点：协调者单点、锁持有时间长、参与者故障阻塞整个事务。\n\nSaga（TCC/编排/编排器）——最终一致性、每个步骤释放资源、需要补偿逻辑。适合跨服务、长事务场景。补偿逻辑可能复杂。\n\nOutbox + CDC——最终一致性、可靠异步消息、业务侵入小。适合事件驱动场景（订单状态变更后发送通知、同步数据到搜索引擎）。\n\n选型原则：能用 Outbox 异步解决就不用 Saga，能用 Saga 就不用 2PC。强一致性尽量限制在单个服务内部。",
+    "answer": "三种方案对比：\n\n2PC（XA 协议）——强一致性、同步阻塞、准备阶段锁定资源（长事务性能差）。适合短事务、小规模、对一致性要求极高的场景。缺点：协调者单点、锁持有时间长、参与者故障阻塞整个事务。\n\nSaga（TCC/编排/编排器）——最终一致性、每个步骤释放资源、需要补偿逻辑。适合跨服务、长事务场景。补偿逻辑可能复杂。\n\nOutbox + CDC——最终一致性、可靠异步消息、业务侵入小。适合事件驱动场景（订单状态变更后发送通知、同步数据到搜索引擎）。\n\n选型原则：能用 Outbox 异步解决就不用 Saga，能用 Saga 就不用 2PC。强一致性尽量限制在单个服务内部。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的观测性（Observability）三大支柱？",
-    "content": "什么是微服务的观测性（Observability）三大支柱？",
-    "answer": "答案：三大支柱：日志（Logging）+ 指标（Metrics）+ 链路追踪（Tracing）。\n\n日志：结构化日志（JSON 格式），包含 timestamp/level/service/traceId/message 等字段。集中采集（Filebeat/Fluentd）→ 存储（Elasticsearch）→ 查询（Kibana）。\n\n指标（Metrics）：服务的数值化时间序列数据。黄金信号（Google SRE 四个指标）：延迟（Latency）、流量（Traffic）、错误（Errors）、饱和度（Saturation）。Prometheus + Grafana 是目前的主流方案。\n\n链路追踪（Tracing）：TraceID 贯穿请求全链路，SpanID 标记每一跳。OpenTelemetry 是 CNCF 的标准，支持多种语言和导出后端（Jaeger、Zipkin、Tempo）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 SLA、SLO、SLI？",
-    "content": "什么是微服务的 SLA、SLO、SLI？",
-    "answer": "答案：SLA（Service Level Agreement）——服务等级协议，是服务提供商与客户之间的合同（法律承诺）。如 99.9% 可用性，否则退款 10%。\n\nSLI（Service Level Indicator）——服务等级指标，具体可测量的数据。常见的 SLI：请求延迟（P99 < 200ms）、错误率（< 1%）、吞吐量（> 1000 QPS）、可用性（请求成功率 > 99.9%）。\n\nSLO（Service Level Objective）——服务等级目标，团队内部设定的目标值（比 SLA 更严格）。如 P99 延迟 < 100ms 是 SLO（内部目标），SLA 对外承诺可能是 P99 < 200ms。\n\nSLO 是 SLA 的安全缓冲（Error Budget）。SRE 实践中，error budget 耗尽时停止新功能发布、优先做稳定性工作。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "什么是 Error Budget（错误预算）？",
     "content": "什么是 Error Budget（错误预算）？",
-    "answer": "答案：Error Budget = 1 - SLO。如果 SLO 是 99.9%（3 个 9），年度错误预算 = 0.1% = 约 8.76 小时宕机。这个预算相当于团队允许犯错的时间额度。\n\n理念：100% 可用性不是目标（代价过高），团队应该在可靠性和创新速度之间做平衡。Error Budget 耗尽→停止新功能发布（稳定性优先）；Error Budget 充足→可以继续发布。\n\n实践：监控 SLO 达成率，预算消耗速度预警（月消耗 > 预算/12 触发告警）。当发布导致错误预算快速消耗，自动化门禁阻断发布流水线。",
+    "answer": "Error Budget = 1 - SLO。如果 SLO 是 99.9%（3 个 9），年度错误预算 = 0.1% = 约 8.76 小时宕机。这个预算相当于团队允许犯错的时间额度。\n\n理念：100% 可用性不是目标（代价过高），团队应该在可靠性和创新速度之间做平衡。Error Budget 耗尽→停止新功能发布（稳定性优先）；Error Budget 充足→可以继续发布。\n\n实践：监控 SLO 达成率，预算消耗速度预警（月消耗 > 预算/12 触发告警）。当发布导致错误预算快速消耗，自动化门禁阻断发布流水线。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是消费者驱动契约测试（CDC）？",
-    "content": "什么是消费者驱动契约测试（CDC）？",
-    "answer": "答案：消费者驱动契约测试（CDC）是微服务集成测试的一种实践——消费者定义对提供者的期望（契约），提供者运行这些契约确保不破坏兼容性。\n\n工具：Pact（最流行，支持多种语言）、Spring Cloud Contract（集成 Spring 生态）。\n\n流程：1) 消费者编写契约（Pact 文件，描述请求和期望响应）2) 消费者端测试使用契约模拟提供者 3) 契约发布到 Pact Broker 4) 提供者拉取契约并验证。\n\n优点：消费者决定 API 形状（不是提供者单方面设计）、早期发现破坏性变更（CI 阶段）。缺点：契约维护成本、版本管理复杂。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "什么是 Feature Flags？如何用于渐进式发布？",
     "content": "什么是 Feature Flags？如何用于渐进式发布？",
-    "answer": "答案：Feature Flags 是代码中的条件开关，控制功能的打开/关闭，无需部署即可控制功能可见性。\n\n类型：Release Toggle（发布开关，将未完成的功能隐藏在主线代码中）、Experiment Toggle（A/B 测试开关）、Ops Toggle（运维开关，如降级开关）、Permission Toggle（按用户权限打开功能）。\n\n渐进式发布流程：1) 开发时开关注入（默认关闭）2) 内测环境开发者开启 3) QA 环境部分人员开启 4) 生产环境 X% 流量开启（金丝雀）5) 确认没问题后 100% 开启 6) 稳定后删除开关代码。\n\n工具：LaunchDarkly（商业 SaaS）、Flagsmith（开源）、Unleash（开源）。注意：大量 Flag 未及时清理会导致技术债务。",
+    "answer": "Feature Flags 是代码中的条件开关，控制功能的打开/关闭，无需部署即可控制功能可见性。\n\n类型：Release Toggle（发布开关，将未完成的功能隐藏在主线代码中）、Experiment Toggle（A/B 测试开关）、Ops Toggle（运维开关，如降级开关）、Permission Toggle（按用户权限打开功能）。\n\n渐进式发布流程：1) 开发时开关注入（默认关闭）2) 内测环境开发者开启 3) QA 环境部分人员开启 4) 生产环境 X% 流量开启（金丝雀）5) 确认没问题后 100% 开启 6) 稳定后删除开关代码。\n\n工具：LaunchDarkly（商业 SaaS）、Flagsmith（开源）、Unleash（开源）。注意：大量 Flag 未及时清理会导致技术债务。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是服务网格数据面转发延迟？如何优化？",
-    "content": "什么是服务网格数据面转发延迟？如何优化？",
-    "answer": "答案：服务网格（Istio/Linkerd）通过 Sidecar 代理拦截所有进出流量。Sidecar 路径：应用出站 → iptables 重定向 → Envoy Inbound Handler → Envoy 路由匹配 → Envoy Outbound Handler → 目标服务 Sidecar → 目标应用。\n\n延迟构成：iptables 规则匹配（< 1μs）、Envoy 连接管理和 TLS 握手（新连接约 1-5ms）、HTTP 解析和路由（约 100-500μs）、mTLS 加密/解密（约 50-200μs）。\n\n优化手段：1) 调整 Envoy 空闲超时和连接池减少握手次数 2) 使用 Wasm Filter 3) 减少 Sidecar 集群规模 4) 考虑 ambient mesh（无 Sidecar，用每个节点代理替代）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Liveness 和 Readiness 探针的区别？",
-    "content": "Liveness 和 Readiness 探针的区别？",
-    "answer": "答案：Kubernetes 支持三种探针：Liveness Probe（存活探针——服务是否活着？挂了则重启 Pod）、Readiness Probe（就绪探针——服务是否可处理请求？未就绪则从 Service Endpoint 摘除）、Startup Probe（启动探针——用于启动慢的服务，成功前禁用 Liveness 和 Readiness）。\n\nLiveness 检查内容：进程是否存活、是否有严重死锁。失败动作：Kubelet 重启容器。\n\nReadiness 检查内容：服务是否已 Warm Up（JIT 预热）、依赖的外部服务是否可达。失败动作：从 Service 的 Endpoint 列表中移除。\n\nStartup Probe 场景：Spring Cloud 应用启动慢（30-60 秒），用 Startup Probe 延迟 Liveness/Readiness 检查，避免启动误判。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "什么是微服务的 Zero Trust（零信任）架构？",
     "content": "什么是微服务的 Zero Trust（零信任）架构？",
-    "answer": "答案：微服务安全层级：传输安全（mTLS 服务间加密）、认证（OAuth2/JWT 用户认证）、鉴权（RBAC/ABAC 权限控制）、密钥管理（Vault/Secrets Manager）。\n\nZero Trust 核心原则：永不信任、始终验证。所有通信都加密（不论网络边界）、所有请求都需要认证（不仅是外部请求，内部请求也需要）、最小权限原则。\n\nIstio 实现：自动 mTLS（服务间通信加密）、AuthorizationPolicy（精细访问控制，支持 IP/路径/方法/请求头匹配）。\n\nSpring Cloud Security：JWT Token 在各服务间传递、Gateway 统一认证校验、各服务通过 @PreAuthorize 进行方法级别鉴权。",
+    "answer": "微服务安全层级：传输安全（mTLS 服务间加密）、认证（OAuth2/JWT 用户认证）、鉴权（RBAC/ABAC 权限控制）、密钥管理（Vault/Secrets Manager）。\n\nZero Trust 核心原则：永不信任、始终验证。所有通信都加密（不论网络边界）、所有请求都需要认证（不仅是外部请求，内部请求也需要）、最小权限原则。\n\nIstio 实现：自动 mTLS（服务间通信加密）、AuthorizationPolicy（精细访问控制，支持 IP/路径/方法/请求头匹配）。\n\nSpring Cloud Security：JWT Token 在各服务间传递、Gateway 统一认证校验、各服务通过 @PreAuthorize 进行方法级别鉴权。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "gRPC 在微服务中的优势是什么？与 REST 对比？",
-    "content": "gRPC 在微服务中的优势是什么？与 REST 对比？",
-    "answer": "答案：gRPC 是 Google 开源的高性能 RPC 框架（基于 HTTP/2 + Protobuf）。支持流式传输（Server/Client/Bidirectional）、强类型（.proto 文件定义接口和类型）、多语言支持。\n\n与 REST 对比：gRPC 使用二进制 Protobuf（比 JSON 小 3-10 倍，解析快 20-100 倍）、HTTP/2 多路复用（一个连接可同时处理多个请求）、自动生成客户端 SDK、流式传输。\n\n局限：浏览器端需要 gRPC-Web（功能受限）、调试不如 REST 直观、负载均衡需支持 HTTP/2 连接层均衡。\n\n适用场景：内部服务间高频调用、流式数据处理（如 LLM Token 流式返回）、多语言协作。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "微服务测试金字塔的形态？",
-    "content": "微服务测试金字塔的形态？",
-    "answer": "答案：微服务测试金字塔（自底向上）：单元测试（最多，单服务内部函数的纯逻辑测试）→ 集成测试（数据库/消息队列交互）→ 契约测试（消费者驱动契约，验证服务间 API 兼容性）→ 端到端测试（最少，部署完整环境验证关键业务流程）。\n\n与传统单体测试金字塔的区别：契约测试替代了传统的大量集成测试。端到端测试数量减少（维护成本高），但覆盖关键路径（用户注册→下单→支付→发货）。\n\n测试策略原则：每个服务独立测试其业务逻辑。契约保证服务间交互正确。E2E 只测关键业务流（控制在 10-20 个以内）。推荐使用 Testcontainers 做集成测试。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "API 网关统一认证：JWT 和 Session 选型？",
-    "content": "API 网关统一认证：JWT 和 Session 选型？",
-    "answer": "答案：JWT（自包含 Token）：包含 Header + Payload（用户信息/角色/过期时间）+ Signature。优点——无状态（服务端不需要存储 Session）、跨语言/跨服务传递；缺点——无法主动失效（必须等过期）、Payload 大。\n\nSession（服务端存储会话）：Session ID 通过 Cookie 传递，服务端存储用户数据。优点——可主动失效；缺点——需要集中存储（Redis）、分布式部署需 Session 同步。\n\n微服务推荐：JWT 是更常用的选择（无状态适合水平扩展）。Gateway 统一颁发和校验 JWT，下游服务直接解析 JWT 获取用户信息。使用 Refresh Token 解决 JWT 无法失效的问题。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "如何优化 Envoy Sidecar 的 CPU 和内存开销？",
-    "content": "如何优化 Envoy Sidecar 的 CPU 和内存开销？",
-    "answer": "答案：Istio 的 Envoy Sidecar 资源开销：CPU（约 50-200m cores）、内存（约 50-200MB）。对于大规模集群（200+ Pod），总资源消耗可观。\n\n优化：1) 调整 Envoy 线程数（默认 2，可减为 1，环境变量 ENVOY_CONCURRENCY）2) 限制监听器范围（Sidecar CRD 限制 Sidecar 只监听相关服务流量）3) 启用 Wasm Filter 缓存 4) 使用 Istio Ambient Mesh（无 Sidecar，用每个节点的 ztunnel 代理处理 L4 流量）。\n\nAmbient Mesh 优势：ztunnel（约 10-50MB 内存/Pod），可减少 70-80% 的 Sidecar 资源开销。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "BFF 模式的常见变体有哪些？",
-    "content": "BFF 模式的常见变体有哪些？",
-    "answer": "答案：传统 BFF——每个客户端一个 BFF（Web BFF、iOS BFF、Android BFF）。优点：完全适配客户端。缺点：维护多套 BFF。\n\nGraphQL BFF——使用 GraphQL 作为 BFF 层，前端声明式查询。优点：减少 BFF 数量。缺点：复杂查询性能难保证。\n\n统一 BFF + 客户端差异化——一个 BFF 服务所有客户端，通过 Client ID 做差异化处理。优点：运维简单。缺点：BFF 代码逻辑随客户端数量增加而复杂。\n\n无 BFF——前端直接调用微服务（适用于小团队、简单项目，或使用 GraphQL Federation）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Database per Service 和 Shared Database 的利弊？",
-    "content": "Database per Service 和 Shared Database 的利弊？",
-    "answer": "答案：Database per Service（每个服务独享数据库）是微服务的核心原则。每个服务拥有自己的数据库 Schema，其他服务不能直接访问。\n\n优点：服务间完全解耦、可独立选择数据技术、数据规模控制。缺点：跨服务查询困难、分布式事务复杂、管理多个数据库的运维成本。\n\nShared Database（共享数据库）：所有服务共用同一个数据库。优点：跨服务查询简单、事务容易。缺点：服务耦合严重、无法独立选择数据技术、数据库成为单点瓶颈。\n\n权衡：新项目从 Shared Database 出发快速验证→验证可行后逐步拆分为 Database per Service。不要一开始就完美主义地拆分一切。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 Event Storming（事件风暴）？",
-    "content": "什么是 Event Storming（事件风暴）？",
-    "answer": "答案：Event Storming 是 Alberto Brandolini 发明的 DDD 实践工作坊，用于快速发现业务领域事件和聚合。\n\n核心元素：橙色便利贴（领域事件，过去时态的陈述，如「订单已创建」）、蓝色（命令，触发事件的动作）、绿色（聚合）、紫色（外部系统）、红色（热点问题）。\n\n四种流程：Big Design（全团队探索整个业务域，适合 10-20 人）、Process Modeling（聚焦一个流程）、Domain Snapshot（快速梳理微服务边界）、DDD 入门。\n\n输出结果：bounded context 拆分方案、核心聚合根、领域事件定义、服务间通信方式。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "微服务的响应时间和可用性 SLA 设计？如何计算几个 9？",
-    "content": "微服务的响应时间和可用性 SLA 设计？如何计算几个 9？",
-    "answer": "答案：可用性计算公式：Availability = (总时间 - 宕机时间) / 总时间。1 个 9 = 90% = 年宕机 36.5 天，2 个 9 = 99% = 3.65 天，3 个 9 = 99.9% = 8.76 小时，4 个 9 = 99.99% = 52.56 分钟，5 个 9 = 99.999% = 5.26 分钟。\n\n响应时间 SLA 通常描述为 Percentile：P50（中位数）、P95（95% 请求在此值以下）、P99（99% 请求在此值以下）。\n\n设计多层 SLA：微服务 A 依赖 B，B 的 SLA = 99.9%，A 的对外 SLA 才能承诺超过 99.9%（系统整体可用率 = 每个依赖的可用性乘积）。\n\n降级策略：SLA 无法达成时通过快速降级（返回缓存/默认值）保证不违反 SLA。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 Data Mesh（数据网格）？",
-    "content": "什么是 Data Mesh（数据网格）？",
-    "answer": "答案：Data Mesh 是 Zhamak Dehghani 提出的去中心化数据架构范式。核心理念：领域数据所有权（业务域拥有和治理自己的数据）、数据即产品、自助式数据基础设施、计算治理。\n\n与数据中台对比：数据中台集中数据→统一处理→服务业务；Data Mesh 数据分散在各领域→领域自行发布数据产品。\n\nData Mesh 在微服务中的角色：每个微服务发布数据产品（除实时 API 外，还包括批量数据导出、变更事件流等），其他服务或分析平台消费这些数据产品。\n\n技术栈：Kafka（事件流）、域数据湖（Domain Data Lake）、数据目录（Data Catalog）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Java 微服务 Docker 镜像如何优化？",
     "content": "Java 微服务 Docker 镜像如何优化？",
-    "answer": "答案：基础镜像选择：ubuntu → alpine → distroless → static（从大到小）。Eclipse Temurin 的 alpine（~150MB）→ distroless java（~100MB）。\n\n多阶段构建：阶段 1（Maven/Gradle 构建，使用 JDK 完整镜像）→ 阶段 2（只复制构建产物到 jre 镜像）。分层最佳实践：经常变化的层放后面。\n\nSpring Boot 分层 Jar（2.3+）：将 dependencies/spring-boot-loader/snapshot-dependencies/application 分离为独立层。\n\njlink 工具（JDK 17+）：jlink --add-modules java.base,java.sql --output jre-custom 创建定制 JRE（可缩小到 30-40MB）。GraalVM Native Image 可编译为原生可执行文件（~20-50MB，启动毫秒级）。",
+    "answer": "基础镜像选择：ubuntu → alpine → distroless → static（从大到小）。Eclipse Temurin 的 alpine（~150MB）→ distroless java（~100MB）。\n\n多阶段构建：阶段 1（Maven/Gradle 构建，使用 JDK 完整镜像）→ 阶段 2（只复制构建产物到 jre 镜像）。分层最佳实践：经常变化的层放后面。\n\nSpring Boot 分层 Jar（2.3+）：将 dependencies/spring-boot-loader/snapshot-dependencies/application 分离为独立层。\n\njlink 工具（JDK 17+）：jlink --add-modules java.base,java.sql --output jre-custom 创建定制 JRE（可缩小到 30-40MB）。GraalVM Native Image 可编译为原生可执行文件（~20-50MB，启动毫秒级）。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Spring Cloud Gateway 的过滤器链是什么？",
-    "content": "Spring Cloud Gateway 的过滤器链是什么？",
-    "answer": "答案：Spring Cloud Gateway 的核心是过滤器链（Filter Chain），请求经过 Gateway Handler Mapping 匹配路由 → WebHandler 执行过滤器链 → 代理转发。\n\n过滤器类型：全局过滤器（GlobalFilter）——作用于所有路由，实现 GlobalFilter + Ordered 接口。局部过滤器（GatewayFilter）——作用于特定路由，内置 30+ 种：AddRequestHeader、Retry、CircuitBreaker、RequestRateLimiter 等。\n\n流程：pre 过滤器（认证鉴权、限流、修改请求头和参数）→ 发送请求到下游 → post 过滤器（修改响应、日志记录、异常处理）。\n\n自定义过滤器：继承 AbstractGatewayFilterFactory 或实现 GlobalFilter 和 Ordered 接口。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "gRPC 的四种流式通信模式是什么？",
     "content": "gRPC 的四种流式通信模式是什么？",
-    "answer": "答案：gRPC 四种通信模式：\n\n1) 一元 RPC（Unary RPC）——类似传统 RPC，客户端发送一个请求→服务器回复一个响应。适用：查询/更新等典型请求响应模式。\n\n2) 服务端流式 RPC（Server Streaming）——客户端发一个请求→服务器返回多个消息流。适用：大数据批量查询、实时事件推送。\n\n3) 客户端流式 RPC（Client Streaming）——客户端发送多个消息→服务器发回一个响应。适用：批量上传、大对象分段传输。\n\n4) 双向流式 RPC（Bidirectional Streaming）——双方独立发送消息（全双工）。适用：实时聊天、AI 实时对话、LLM Token 流式交互。",
+    "answer": "gRPC 四种通信模式：\n\n1) 一元 RPC（Unary RPC）——类似传统 RPC，客户端发送一个请求→服务器回复一个响应。适用：查询/更新等典型请求响应模式。\n\n2) 服务端流式 RPC（Server Streaming）——客户端发一个请求→服务器返回多个消息流。适用：大数据批量查询、实时事件推送。\n\n3) 客户端流式 RPC（Client Streaming）——客户端发送多个消息→服务器发回一个响应。适用：批量上传、大对象分段传输。\n\n4) 双向流式 RPC（Bidirectional Streaming）——双方独立发送消息（全双工）。适用：实时聊天、AI 实时对话、LLM Token 流式交互。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "微服务 APM 工具有哪些？如何选型？",
     "content": "微服务 APM 工具有哪些？如何选型？",
-    "answer": "答案：APM 核心功能：拓扑发现（自动发现服务间依赖关系）、事务追踪（用户请求的完整调用链）、性能分析（各 Span 耗时）、告警和 Dashboard。\n\n主流工具：Datadog APM（商业，功能最全，自动仪表化）、SkyWalking（Apache 开源，CNCF 项目，支持多种语言）、Pinpoint（Naver 开源，Java 应用自动发现）、Zipkin（Twitter 开源，轻量级分布式追踪）。\n\n选择建议：开源用 SkyWalking。有预算用 Datadog。已有 Prometheus + Grafana 技术栈可搭配 Tempo。",
+    "answer": "APM 核心功能：拓扑发现（自动发现服务间依赖关系）、事务追踪（用户请求的完整调用链）、性能分析（各 Span 耗时）、告警和 Dashboard。\n\n主流工具：Datadog APM（商业，功能最全，自动仪表化）、SkyWalking（Apache 开源，CNCF 项目，支持多种语言）、Pinpoint（Naver 开源，Java 应用自动发现）、Zipkin（Twitter 开源，轻量级分布式追踪）。\n\n选择建议：开源用 SkyWalking。有预算用 Datadog。已有 Prometheus + Grafana 技术栈可搭配 Tempo。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "API Gateway vs Service Mesh 的职责边界是什么？",
     "content": "API Gateway vs Service Mesh 的职责边界是什么？",
-    "answer": "答案：API Gateway（如 Kong、Spring Cloud Gateway）是南北向通信（外部请求→内部服务）的入口，处理认证、限流、路由、请求/响应转换、API 版本管理。\n\nService Mesh（如 Istio/Linkerd）处理东西向通信（内部服务间），透明代理流量、mTLS 加密、灰度发布、流量镜像、服务间访问控制、可观测性。\n\n叠加使用：API Gateway 在最外层处理外部流量，Service Mesh 处理 Gateway 到各服务的内部流量以及服务间流量。\n\n趋势：部分功能开始重叠，但仍建议保持职责分离——Gateway 管谁来访问，Mesh 管怎么访问。",
+    "answer": "API Gateway（如 Kong、Spring Cloud Gateway）是南北向通信（外部请求→内部服务）的入口，处理认证、限流、路由、请求/响应转换、API 版本管理。\n\nService Mesh（如 Istio/Linkerd）处理东西向通信（内部服务间），透明代理流量、mTLS 加密、灰度发布、流量镜像、服务间访问控制、可观测性。\n\n叠加使用：API Gateway 在最外层处理外部流量，Service Mesh 处理 Gateway 到各服务的内部流量以及服务间流量。\n\n趋势：部分功能开始重叠，但仍建议保持职责分离——Gateway 管谁来访问，Mesh 管怎么访问。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "什么是微服务的分布式缓存策略？Redis 在微服务中的使用模式？",
     "content": "什么是微服务的分布式缓存策略？Redis 在微服务中的使用模式？",
-    "answer": "答案：微服务中 Redis 的常见使用模式：\n\n缓存模式：Cache-Aside（应用同时维护缓存和数据库，先查缓存，miss 后查数据库并写入缓存）、Read-Through（缓存层自动回源加载，应用只和缓存交互）、Write-Through（写操作同时更新缓存和数据库。适合一致性要求高的场景）。\n\nSession 存储：使用 Redis 集中管理用户 Session，所有服务实例共享（水平扩展时不丢失 Session）。\n\n分布式锁：Redlock 算法或 Redis SET NX + Lua 脚本实现跨服务互斥。\n\n计数器/限流：INCR/DECR + EXPIRE 实现时间窗口内的访问计数。\n\n消息队列：List 的 LPUSH/BRPOP 或 Stream 实现轻量级消息通信。",
+    "answer": "微服务中 Redis 的常见使用模式：\n\n缓存模式：Cache-Aside（应用同时维护缓存和数据库，先查缓存，miss 后查数据库并写入缓存）、Read-Through（缓存层自动回源加载，应用只和缓存交互）、Write-Through（写操作同时更新缓存和数据库。适合一致性要求高的场景）。\n\nSession 存储：使用 Redis 集中管理用户 Session，所有服务实例共享（水平扩展时不丢失 Session）。\n\n分布式锁：Redlock 算法或 Redis SET NX + Lua 脚本实现跨服务互斥。\n\n计数器/限流：INCR/DECR + EXPIRE 实现时间窗口内的访问计数。\n\n消息队列：List 的 LPUSH/BRPOP 或 Stream 实现轻量级消息通信。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 CQRS 的事件回溯（Event Sourcing）？如何实现聚合重建？",
-    "content": "什么是 CQRS 的事件回溯（Event Sourcing）？如何实现聚合重建？",
-    "answer": "答案：Event Sourcing 将所有业务变更存储为事件流（而非当前状态快照）。当前状态由重放事件（Event Replay）得到。\n\n聚合重建流程：从事件存储中读取该聚合的所有事件（按序号排序）→ 从零开始或从快照开始应用每个事件（事件处理方法更新聚合状态）→ 得到当前最新状态。\n\n快照（Snapshot）优化：每 N 个事件保存一次聚合状态的快照。重建时从最近的快照开始，只重放快照之后的事件。减少重建时间。\n\nEvent Sourcing 的好处：完整审计追踪、时间旅行调试、CQRS 的读模型可以从事件流任意投影。代价：事件模式演化复杂、存储需求大、重建可能耗时。\n\n框架支持：Axon Framework（Java，完整 CQRS/ES 支持）、EventStore（专门的 ESDB 数据库）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 API 网关的流量控制？Sentinel 如何实现 gateway 流控？",
-    "content": "什么是 API 网关的流量控制？Sentinel 如何实现 gateway 流控？",
-    "answer": "答案：API 网关流量控制包括：全局 QPS 限制、用户级限额、接口级配额。\n\nSentinel Gateway 流控：基于 Sentinel 的 API Gateway 适配器，支持 route 维度（按 API 路由限流）和 API 分组维度（按自定义 API 分组）。流控模式：QPS 限流、并发线程数限流。flowRule 配置：resource（API 名称）、threshold（限流阈值）、intervalSec（统计周期）。\n\n热点参数限流：针对请求中的特定参数（如商品 ID、用户 ID）进行更精细的限流。\n\n降级处理：BlockException 触发后返回自定义错误响应（如 429 Too Many Requests），也可以通过 fallback 返回缓存数据。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Metrics 采集？Micrometer 在 Spring Boot 中的使用？",
-    "content": "什么是微服务的 Metrics 采集？Micrometer 在 Spring Boot 中的使用？",
-    "answer": "答案：Micrometer 是 Java 生态系统中的指标采集门面（类似 SLF4J 对于日志）。Spring Boot Actuator 默认使用 Micrometer 采集指标。\n\n核心概念：Meter（度量器）：Counter（计数器，只增不减）、Gauge（仪表盘，可增可减，如当前线程数）、Timer（计时器，记录耗时和次数）、DistributionSummary（分布概览，记录数据分布）。\n\n常见指标：JVM 指标（内存、GC、线程、类加载）、CPU 指标（系统 CPU 使用率、JVM CPU 使用率）、Tomcat 指标（请求数、活跃线程数）、数据源指标（连接数、空闲连接数）。\n\n导出方式：MeterRegistry 的实现注册到 Prometheus（micrometer-registry-prometheus）、Datadog、InfluxDB 等。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是分布式系统的 Clock Skew（时钟偏差）问题？如何解决？",
-    "content": "什么是分布式系统的 Clock Skew（时钟偏差）问题？如何解决？",
-    "answer": "答案：Clock Skew 是分布式系统中不同节点的时间差异。问题：日志排序混乱（无法按时间戳精确排序）、分布式事务 2PC/3PC 超时判断不准、缓存过期和 TTL 不精确、分布式 ID 生成（Snowflake 依赖时间戳）。\n\n解决方案：NTP（Network Time Protocol，将机器时间同步到 NTP 服务器，偏差通常在 1-50ms 内）。逻辑时钟（Lamport Clock 或 Vector Clock，用计数器而非物理时间排序事件）。混合逻辑时钟（HLC，结合物理时间和逻辑计数器。Spanner 的 TrueTime API 就是典型实现）。\n\nSpanner 的 TrueTime：用 GPS + 原子钟提供时间置信区间 [earliest, latest]，读操作等待 confidence 过去来保证外部一致性。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "什么是 CAP 定理在微服务架构中的实践？常见误区？",
     "content": "什么是 CAP 定理在微服务架构中的实践？常见误区？",
-    "answer": "答案：CAP 定理：一致性和可用性和分区容错性三者只能选两个。\n\n常见误区：1) 不是「三选二」而是「P 必须选，C 和 A 之间做权衡」——分区一定会发生（网络不可靠），所以在 P 的前提下在 C 和 A 之间做选择。2) 「CP 系统完全不可用」——错误。CP 系统在分区时放弃可用性（停止写入），分区恢复后恢复可用。3) 「CA 系统存在」——错误。不考虑分区容错的系统在分布式环境中没有意义。\n\n微服务实践：关键业务（支付）优先强一致性（CP 模式）；非关键业务（用户头像、推荐内容）优先可用性（AP 模式 + 最终一致性）。一致性级别可选：强一致性、最终一致性、单调读、读写一致性等。",
+    "answer": "CAP 定理：一致性和可用性和分区容错性三者只能选两个。\n\n常见误区：1) 不是「三选二」而是「P 必须选，C 和 A 之间做权衡」——分区一定会发生（网络不可靠），所以在 P 的前提下在 C 和 A 之间做选择。2) 「CP 系统完全不可用」——错误。CP 系统在分区时放弃可用性（停止写入），分区恢复后恢复可用。3) 「CA 系统存在」——错误。不考虑分区容错的系统在分布式环境中没有意义。\n\n微服务实践：关键业务（支付）优先强一致性（CP 模式）；非关键业务（用户头像、推荐内容）优先可用性（AP 模式 + 最终一致性）。一致性级别可选：强一致性、最终一致性、单调读、读写一致性等。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Sidecar 代理的生命周期管理？",
-    "content": "什么是微服务的 Sidecar 代理的生命周期管理？",
-    "answer": "答案：Sidecar 代理（如 Istio 的 Envoy）的生命周期管理：\n\n注入方式：自动注入（K8s Admission Webhook 在 Pod 创建时注入 Sidecar 容器）、手动注入（istioctl kube-inject 修改 deployment yaml）。\n\n启动顺序：Sidecar 必须在主容器之前启动（等待 Sidecar 就绪后主容器才收到流量）。Istio 通过 HoldApplicationUntilProxyStarts（-c 主容器的 postStart 等待 Sidecar 监听端口）确保顺序。\n\n关闭顺序：主容器先停止（不再接收新请求，处理完已有请求）→ Sidecar 停止（优雅关闭连接）。K8s 的 preStop hook + terminationGracePeriodSeconds 协调两者。\n\n重启策略：Sidecar 异常退出后 K8s 自动重启（livness probe），重启期间主容器的流量在 iptables 层面被重定向到已关闭的端口——需要处理 Traffic Breakage（使用 holdApplicationUntilProxyStarts 或 restart proxy 自动切回）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的配置漂移（Configuration Drift）？如何防止？",
-    "content": "什么是微服务的配置漂移（Configuration Drift）？如何防止？",
-    "answer": "答案：配置漂移指微服务的配置文件随着时间推移和环境差异逐渐偏离原始/预期状态。\n\n常见原因：手动修改生产环境配置（直接 SSH 到服务器修改配置文件）、不同环境（开发/测试/生产）的配置差异积累、配置变更未经过 Code Review 直接上线。\n\n防止策略：1) 所有配置进入版本控制（GitOps 模式——变更必须通过 Git PR 修改）2) 配置中心统一管理（Nacos/Apollo 的配置持久化 + 版本对比）3) Kubernetes 的 ConfigMap 不可变（immutable 字段防止配置被意外修改）4) 定期配置审计（对比实际运行配置和 Git 中的期望配置差异）5) 不可变基础设施——配置随镜像发布（不修改运行中的 Pod 配置）。\n\n工具：Kubeaudit（K8s 安全审计）、Config Auditor（Spring Cloud Config 的审计支持）、Polaris（K8s 配置检查）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务中的分布式 Session 方案？",
-    "content": "什么是微服务中的分布式 Session 方案？",
-    "answer": "答案：微服务中分布式 Session 的常见方案：\n\n1) Redis Session Storage（最常用）——Spring Session + Redis。所有服务从同一个 Redis 读取 Session 数据。优点：独立于服务实例、水平扩展无 Session 丢失。缺点：Redis 需要高可用（Redis Cluster/Sentinel）。\n\n2) JWT Token（无状态 Session）——用户在 Gateway 认证后获得 JWT（包含用户身份和声明），下游服务解析 JWT 即可。优点：完全无状态、服务不需要访问 Session 存储。缺点：Token 不可撤销（需 Refresh Token）、Payload 大小影响请求性能。\n\n3) Session Sticky（粘性 Session）——负载均衡将同一用户的请求始终发送到同一个服务实例（Nginx IP Hash / Cookie Sticky）。优点：最简单（不需要修改应用）。缺点：服务扩容缩容时 Session 丢失、灰度发布困难。\n\n4) 分布式缓存（GemFire/Hazelcast）——Session 数据缓存在集群内存中。优点：低延迟（进程内缓存）。缺点：集群规模大时同步复杂。\n\n推荐：无特殊要求用 Spring Session + Redis。无状态服务尽可能用 JWT。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Graceful Shutdown（优雅关闭）？",
-    "content": "什么是微服务的 Graceful Shutdown（优雅关闭）？",
-    "answer": "答案：优雅关闭指服务停止时保证已有请求处理完再关闭（不中断正在处理的请求）。\n\nK8s 的优雅关闭流程：Pod 进入 Terminating 状态 → PreStop Hook 执行（等 10-30s 给服务处理完请求）→ 发送 SIGTERM 信号给进程 → 等待 terminationGracePeriodSeconds（默认 30s）→ 超时后强制 SIGKILL。\n\nSpring Boot 的优雅关闭：server.shutdown=graceful（Spring Boot 2.3+）。Spring Boot 在收到 SIGTERM 后停止接收新请求（Tomcat 设置不再接受），给正在处理的请求一个宽限时间（spring.lifecycle.timeout-per-shutdown-phase=30s）。\n\nSpring Cloud 的服务下线：@PreDestroy 或 ApplicationListener<ContextClosedEvent> 在关闭前向注册中心（Nacos/Eureka）反注册服务实例，并调用负载均衡器的下线接口。\n\nIstio 优雅关闭：主容器 preStop 中 sleep 一段时间（等待 Sidecar 确认连接池耗尽）再关闭。\n\n注意：K8s 关闭 Pod 时，Pod 先被从 Service Endpoint 移除（不再接收新请求），然后执行 PreStop 等待，再发 SIGTERM。如果等待时间不够请求还没处理完就被强制 kill（需要根据请求时长合理设置 terminationGracePeriodSeconds）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "什么是微服务的 Log Aggregation（日志聚合）？ELK 和 Loki 的对比？",
     "content": "什么是微服务的 Log Aggregation（日志聚合）？ELK 和 Loki 的对比？",
-    "answer": "答案：日志聚合将分散在多个微服务实例中的日志集中收集、存储和查询。\n\nELK Stack（Elasticsearch + Logstash + Kibana）：Logstash 从 Filebeat/Fluentd 收集日志并解析转换后写入 Elasticsearch。优点：全文搜索能力强（Elasticsearch 的倒排索引）、Kibana 可视化丰富。缺点：资源消耗大（Elasticsearch 较重量级）、成本高。\n\nLoki（Grafana Loki + Promtail + Grafana）：Promtail 收集日志，Loki 存储（只索引元数据标签而非全文）。优点：轻量级（不索引全文故存储更少、查询更快）、与 Prometheus 标签体系一致、Grafana 统一 Dashboard。缺点：全文搜索能力弱于 Elasticsearch。\n\n选型：日志量巨大（TB/天）且查询模式固定（按标签而非全文）→ Loki。需要复杂全文搜索（如按特定关键词在任意日志中搜索）→ ELK。\n\n最佳实践：所有服务输出结构化日志（JSON 格式），包含全局唯一 TraceID 以关联请求链路。",
+    "answer": "日志聚合将分散在多个微服务实例中的日志集中收集、存储和查询。\n\nELK Stack（Elasticsearch + Logstash + Kibana）：Logstash 从 Filebeat/Fluentd 收集日志并解析转换后写入 Elasticsearch。优点：全文搜索能力强（Elasticsearch 的倒排索引）、Kibana 可视化丰富。缺点：资源消耗大（Elasticsearch 较重量级）、成本高。\n\nLoki（Grafana Loki + Promtail + Grafana）：Promtail 收集日志，Loki 存储（只索引元数据标签而非全文）。优点：轻量级（不索引全文故存储更少、查询更快）、与 Prometheus 标签体系一致、Grafana 统一 Dashboard。缺点：全文搜索能力弱于 Elasticsearch。\n\n选型：日志量巨大（TB/天）且查询模式固定（按标签而非全文）→ Loki。需要复杂全文搜索（如按特定关键词在任意日志中搜索）→ ELK。\n\n最佳实践：所有服务输出结构化日志（JSON 格式），包含全局唯一 TraceID 以关联请求链路。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Blue-Green Deployment 的流量切换策略？",
-    "content": "什么是微服务的 Blue-Green Deployment 的流量切换策略？",
-    "answer": "答案：蓝绿部署的流量切换策略：\n\n一次性切换（Instant Cutover）：通过负载均衡器（Nginx/ALB/Gateway）或 K8s Service 的 selector 一次性从 Blue 切到 Green。优点：瞬间完成、切换成本低。缺点：新版本问题会影响所有用户、回滚是完整的另一轮切换。\n\n渐进式切换（Progressive Rollout / Traffic Mirroring）：先将小部分流量（如 1-5%）引导到 Green 环境观察，确认无误后逐步增加比例直到 100%。期间同时运行两套完整环境。工具：Istio 的 VirtualService weight、Nginx 的 split_clients。\n\n蓝绿部署的成本：维护两套完整环境（2x 资源成本）。切换粒度：可以通过 DNS 切换（Old DNS → Blue，New DNS → Green，完成后修改 DNS 记录指向 Green）或负载均衡器切换。\n\n回滚：切回 Blue（保留旧环境的 Service 配置，切换 selector 或 DNS 即可）。注意：如果绿环境修改了数据库 Schema，回滚需要数据库回滚（最复杂的部分）。\n\n建议：数据平面层（数据库/消息队列）兼容新旧版本，否则蓝绿部署对数据库变更不友好（考虑 Rolling Update 或 Expand-Contract 模式）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "什么是微服务的 Prometheus 指标采集模式？Push vs Pull？",
     "content": "什么是微服务的 Prometheus 指标采集模式？Push vs Pull？",
-    "answer": "答案：Prometheus 采用 Pull（拉取）模式采集指标——Prometheus Server 定期向各服务实例的 /metrics 端点发送 HTTP 请求拉取指标数据。\n\nPull 模式优点：1) 容易判断服务存活（拉取失败表示服务不可用）2) 不需要在服务端配置推送地址（配置中心统一管理）3) 控制采集节奏（Prometheus 端调 scrape_interval 控制频率）。\n\nPull 模式局限：1) 服务必须可被 Prometheus 直接访问（Service 网络连通性）2) Push Gateway 用于短任务（批处理、Job）的中间 bridge（任务推送到 Push Gateway，Prometheus 再从 PushGateway 拉取）3) 服务发现依赖（K8s 自动发现 Pod 的 annotation）。\n\nPush 模式（Prometheus Pushgateway）：短生命周期任务在完成时将指标推送到 PushGateway（Prometheus 定期从 PushGateway 拉取）。适用场景：CronJob、批处理任务、函数计算。缺点：PushGateway 是中间层（可能会丢数据、需高可用）。\n\nSpring Boot 集成：micrometer-registry-prometheus 暴露 /actuator/prometheus 端点，配合 Prometheus 的 K8s Service Discovery 自动发现所有 Pod。",
+    "answer": "Prometheus 采用 Pull（拉取）模式采集指标——Prometheus Server 定期向各服务实例的 /metrics 端点发送 HTTP 请求拉取指标数据。\n\nPull 模式优点：1) 容易判断服务存活（拉取失败表示服务不可用）2) 不需要在服务端配置推送地址（配置中心统一管理）3) 控制采集节奏（Prometheus 端调 scrape_interval 控制频率）。\n\nPull 模式局限：1) 服务必须可被 Prometheus 直接访问（Service 网络连通性）2) Push Gateway 用于短任务（批处理、Job）的中间 bridge（任务推送到 Push Gateway，Prometheus 再从 PushGateway 拉取）3) 服务发现依赖（K8s 自动发现 Pod 的 annotation）。\n\nPush 模式（Prometheus Pushgateway）：短生命周期任务在完成时将指标推送到 PushGateway（Prometheus 定期从 PushGateway 拉取）。适用场景：CronJob、批处理任务、函数计算。缺点：PushGateway 是中间层（可能会丢数据、需高可用）。\n\nSpring Boot 集成：micrometer-registry-prometheus 暴露 /actuator/prometheus 端点，配合 Prometheus 的 K8s Service Discovery 自动发现所有 Pod。",
     "hints": [],
     "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 sentinel 熔断降级规则？",
-    "content": "什么是微服务的 sentinel 熔断降级规则？",
-    "answer": "答案：Sentinel 的熔断降级规则（DegradeRule）三种策略：\n\n慢调用比例（SLOW_REQUEST_RATIO）：当单位统计时长内请求数达到最小请求数，且慢调用比例超过阈值时触发熔断。熔断时长（count ms）内请求快速失败，熔断结束后探测 HALF_OPEN。\n\n异常比例（ERROR_RATIO）：当单位统计时长内请求数达到最小请求数，且异常比例超过阈值时触发熔断。\n\n异常数（ERROR_COUNT）：当单位统计时长内异常数超过阈值时触发熔断。注意：只有满足最小请求数（minRequestAmount）才会触发判断。\n\n熔断与限流的区别：限流（FlowRule）控制 QPS/线程数，超出即拒绝（pass/block 处理）。熔断（DegradeRule）控制错误率/慢调用比例，达到阈值后短时间快速失败（给服务恢复时间）。\n\nSentinel vs Hystrix：Hystrix 使用线程池隔离和信号量隔离，熔断基于失败率。Sentinel 基于滑动窗口（秒级/分钟级）更细粒度，支持实时热点限流、系统自适应保护、SPI 扩展。\n\n实践：降级后通常配合 fallback 方法（@SentinelResource( fallback = 'handleFallback' )）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
@@ -1346,46 +884,10 @@
     "type": "short_answer",
     "title": "什么是微服务的 Reactive Programming（响应式编程）？WebFlux 和 WebMVC 的选择？",
     "content": "什么是微服务的 Reactive Programming（响应式编程）？WebFlux 和 WebMVC 的选择？",
-    "answer": "答案：响应式编程基于 Reactive Streams 规范（Publisher-Subscriber 模式），Spring WebFlux 是其 Web 层实现。\n\nWebFlux（Reactive Stack）：基于 Netty 或 Servlet 3.1+ 的非阻塞 IO。EventLoop 模式（少量线程处理大量并发）。核心 API：Mono（0-1 个元素）、Flux（0-N 个元素）。\n\nWebMVC（Servlet Stack）：基于 Tomcat/Jetty 的阻塞 IO。线程池模式（每个请求一个线程，同步阻塞）。\n\n选型：WebFlux 适合 IO 密集型（大量数据库/外部 API 调用，线程等待时间长）和高并发（WebFlux 用少量线程处理大量连接，减少上下文切换）。复杂度更高（学习曲线、与传统 JDBC 集成需要 R2DBC）。\n\nWebMVC 适合计算密集型（少 IO 等待），或团队熟悉 Servlet 模型。更简单的调试和更丰富的生态。\n\n注意：WebFlux 的 Thread Safety 模型不同（无 ThreadLocal，使用 Context API 传请求上下文）。WebFlux 的数据库层需要 R2DBC（替换 JDBC 阻塞驱动）。如果项目主要用 Spring Data JPA 和 JDBC 且转型成本高，WebFlux 的数据库层改造成本大于收益。",
+    "answer": "响应式编程基于 Reactive Streams 规范（Publisher-Subscriber 模式），Spring WebFlux 是其 Web 层实现。\n\nWebFlux（Reactive Stack）：基于 Netty 或 Servlet 3.1+ 的非阻塞 IO。EventLoop 模式（少量线程处理大量并发）。核心 API：Mono（0-1 个元素）、Flux（0-N 个元素）。\n\nWebMVC（Servlet Stack）：基于 Tomcat/Jetty 的阻塞 IO。线程池模式（每个请求一个线程，同步阻塞）。\n\n选型：WebFlux 适合 IO 密集型（大量数据库/外部 API 调用，线程等待时间长）和高并发（WebFlux 用少量线程处理大量连接，减少上下文切换）。复杂度更高（学习曲线、与传统 JDBC 集成需要 R2DBC）。\n\nWebMVC 适合计算密集型（少 IO 等待），或团队熟悉 Servlet 模型。更简单的调试和更丰富的生态。\n\n注意：WebFlux 的 Thread Safety 模型不同（无 ThreadLocal，使用 Context API 传请求上下文）。WebFlux 的数据库层需要 R2DBC（替换 JDBC 阻塞驱动）。如果项目主要用 Spring Data JPA 和 JDBC 且转型成本高，WebFlux 的数据库层改造成本大于收益。",
     "hints": [],
     "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Mutation Testing（变异测试）？",
-    "content": "什么是微服务的 Mutation Testing（变异测试）？",
-    "answer": "答案：变异测试（Mutation Testing）通过对代码做微小变异（如 > 变 <、true 变 false）测试测试套件是否能发现这些变化——衡量测试套件的质量。\n\n变异算子：条件变化（== → !=）、返回值变化（null → empty list）、移除方法调用、算术运算变化等。每个变异创建一个新的 mutant，运行测试检查是否能 kill 该 mutant。\n\n工具：Pitest（Java 最流行的变异测试框架）、Stryker（JS/TS/Java/C# 等多语言）。\n\n变异测试在微服务中的价值：1) 评估测试覆盖率的质量（100% 行覆盖率但测试断言不足时变异测试能暴露）2) 确认契约测试的有效性（提供者的验证是否真的检测到了破坏性变化）3) CI 门禁（Pitest 设置 mutation coverage 阈值）。\n\n注意：变异测试计算量大（每个微服务大量 mutant），通常只对核心服务或关键模块运行。建议在 PR 阶段对修改的代码做增量变异测试。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Chaos Mesh？工作流程是怎样的？",
-    "content": "什么是微服务的 Chaos Mesh？工作流程是怎样的？",
-    "answer": "答案：Chaos Mesh 是 CNCF 托管的基于 K8s 的混沌工程平台。\n\n核心组件：Chaos Operator（自定义控制器监听 Chaos 资源）、Chaos Dashboard（Web UI 管理实验）、Sidecar（通过 sidecar 注入故障，如网络延迟、文件系统错误）。\n\n支持的故障类型：Pod 故障（杀死 Pod、Pod 故障注入）、网络故障（延迟、丢包、分区、带宽限制）、压力故障（CPU 压力、内存压力）、IO 故障（延迟、错误、文件系统错误）、HTTP 故障（延迟、中断、状态码修改）。\n\n实验流程：1) 定义实验（YAML 配置故障类型、范围、时间）2) 注入故障 3) 观测稳态指标（监控系统告警是否触发、错误率是否上升）4) 自动恢复（实验时间到自动清理）5) 实验报告。\n\n与 Litmus 对比：Chaos Mesh 聚焦 K8s 原生注入（更顺滑的 K8s 集成）、Web UI 更友好。Litmus 有更丰富的实验市场（Hub）和工作流引擎。两者都是 CNCF 项目。联合使用（Chaos Mesh 注入故障内部，Litmus 管理实验调度和工作流）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Kafka Streams 与 KSQL？流处理在微服务中的使用？",
-    "content": "什么是微服务的 Kafka Streams 与 KSQL？流处理在微服务中的使用？",
-    "answer": "答案：Kafka Streams 是 Java 客户端库，将 Kafka Topic 作为数据源和结果输出，在应用内部做流处理。不需要独立集群（嵌入在应用中）。\n\n核心概念：Stream（无界数据流）、KTable（变更日志，可查询的状态视图）、KGroupedStream（分组后的流，用于聚合）。\n\n操作类型：无状态操作（filter、map、flatMap、peek）、有状态操作（aggregate、reduce、count、join、窗口操作）。\n\nKSQL（Kafka SQL）：基于 Kafka Streams 的 SQL 引擎，通过 SQL 语句描述流处理逻辑。\n\n微服务集成：事件驱动的微服务使用 Kafka Streams 做事件处理（订单处理流程、实时聚合报表）。KTable 在服务内做物化视图（Materialized View）。\n\n场景示例：用户行为分析流→实时计算各个商品在一段时间内的曝光/点击/购买转化率→写入结果 Topic（下游服务消费该 Topic 展示实时数据）。\n\n对比 Flink：Kafka Streams 嵌入在服务内（部署简单），Flink 独立集群（大规模分布式处理）。Kafka Streams 适合中等规模的流处理（单服务内），Flink 适合超大规模（集群级别算子并行度控制）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
@@ -1394,82 +896,22 @@
     "type": "short_answer",
     "title": "什么是微服务的 WebSocket 集群方案？如何广播消息？",
     "content": "什么是微服务的 WebSocket 集群方案？如何广播消息？",
-    "answer": "答案：WebSocket 在微服务集群中的核心问题：WebSocket 连接是长连接（连接到特定实例）。服务多实例部署时如何向所有连接的客户端（集群范围）广播消息？\n\n方案 1：Redis Pub/Sub（简单可用）——服务 A 收到 WebSocket 消息后 publish 到 Redis Channel，所有订阅该 Channel 的服务实例收到消息后向自己维护的 WebSocket 连接推送。优点：简单、Redis 广泛使用。缺点：Redis 单 Channel 的 PUBLISH 是串行的（海量消息时成为瓶颈）。\n\n方案 2：消息队列（Kafka/RabbitMQ）——每个服务实例作为 Consumer，广播消息发布到 Topic/Exchange 上。适合高吞吐和持久化的场景（消息顺序保证、重放能力）。\n\n方案 3：一致性哈希 + 固定路由（Sticky）——负载均衡按用户 ID 哈希将同一用户的 WebSocket 连接路由到固定实例。适合用户维度的消息（消息只发给该用户连接的实例）。\n\n方案 4：分布式 WebSocket 网关（Socket.IO Cluster、SockJS）——专门的 WebSocket 网关层管理连接，后端服务通过内部 API 向网关发送广播消息。适合大规模集群（网关独立扩缩容）。\n\nSpring 集成：Spring Session + Redis 管理 WebSocket Session。stomp-broker-relay 集成 RabbitMQ。@SendTo 注解广播消息到指定 Destination。",
+    "answer": "WebSocket 在微服务集群中的核心问题：WebSocket 连接是长连接（连接到特定实例）。服务多实例部署时如何向所有连接的客户端（集群范围）广播消息？\n\n方案 1：Redis Pub/Sub（简单可用）——服务 A 收到 WebSocket 消息后 publish 到 Redis Channel，所有订阅该 Channel 的服务实例收到消息后向自己维护的 WebSocket 连接推送。优点：简单、Redis 广泛使用。缺点：Redis 单 Channel 的 PUBLISH 是串行的（海量消息时成为瓶颈）。\n\n方案 2：消息队列（Kafka/RabbitMQ）——每个服务实例作为 Consumer，广播消息发布到 Topic/Exchange 上。适合高吞吐和持久化的场景（消息顺序保证、重放能力）。\n\n方案 3：一致性哈希 + 固定路由（Sticky）——负载均衡按用户 ID 哈希将同一用户的 WebSocket 连接路由到固定实例。适合用户维度的消息（消息只发给该用户连接的实例）。\n\n方案 4：分布式 WebSocket 网关（Socket.IO Cluster、SockJS）——专门的 WebSocket 网关层管理连接，后端服务通过内部 API 向网关发送广播消息。适合大规模集群（网关独立扩缩容）。\n\nSpring 集成：Spring Session + Redis 管理 WebSocket Session。stomp-broker-relay 集成 RabbitMQ。@SendTo 注解广播消息到指定 Destination。",
     "hints": [],
     "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   },
   {
     "category": "microservices",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "什么是微服务的 Http 客户端选择？RestTemplate vs WebClient vs Feign？",
     "content": "什么是微服务的 Http 客户端选择？RestTemplate vs WebClient vs Feign？",
-    "answer": "答案：RestTemplate（Spring 传统同步客户端）：基于 Tomcat 的阻塞 IO（每个请求阻塞一个线程）。Spring 5+ 标记为维护模式（不推荐新项目使用）。\n\nWebClient（Spring 5+ 响应式客户端）：基于 Netty 的非阻塞 IO（少量线程处理大量请求）。支持同步（block()）和异步（subscribe()）两种模式。与 WebFlux 搭配使用。不需要整个项目用 WebFlux——WebClient 可作为独立的 HTTP 客户端（与传统 WebMVC 共存）。\n\nFeign / OpenFeign（声明式 HTTP 客户端，Spring Cloud）：通过接口 + 注解声明式定义 HTTP 调用（@FeignClient、@GetMapping、@PostMapping）。集成 Spring Cloud LoadBalancer（原 Ribbon），与 Nacos/Eureka 等服务发现集成。\n\n选型建议：旧项目继续用 RestTemplate。新同步项目用 Feign（声明式更简洁）。响应式/高性能需求用 WebClient。Feign + Spring Cloud 微服务生态集成最好。\n\n性能对比（基准测试）：RestTemplate 和 Feign 底层都是 HttpURLConnection 或 Apache HttpClient，性能接近。WebClient（非阻塞）在高并发下资源占用更低。\n\n注意：Feign 默认不支持文件上传（需要 feign-form 扩展）和 protobuf（需要 feign-protobuf 扩展）。",
+    "answer": "RestTemplate（Spring 传统同步客户端）：基于 Tomcat 的阻塞 IO（每个请求阻塞一个线程）。Spring 5+ 标记为维护模式（不推荐新项目使用）。\n\nWebClient（Spring 5+ 响应式客户端）：基于 Netty 的非阻塞 IO（少量线程处理大量请求）。支持同步（block()）和异步（subscribe()）两种模式。与 WebFlux 搭配使用。不需要整个项目用 WebFlux——WebClient 可作为独立的 HTTP 客户端（与传统 WebMVC 共存）。\n\nFeign / OpenFeign（声明式 HTTP 客户端，Spring Cloud）：通过接口 + 注解声明式定义 HTTP 调用（@FeignClient、@GetMapping、@PostMapping）。集成 Spring Cloud LoadBalancer（原 Ribbon），与 Nacos/Eureka 等服务发现集成。\n\n选型建议：旧项目继续用 RestTemplate。新同步项目用 Feign（声明式更简洁）。响应式/高性能需求用 WebClient。Feign + Spring Cloud 微服务生态集成最好。\n\n性能对比（基准测试）：RestTemplate 和 Feign 底层都是 HttpURLConnection 或 Apache HttpClient，性能接近。WebClient（非阻塞）在高并发下资源占用更低。\n\n注意：Feign 默认不支持文件上传（需要 feign-form 扩展）和 protobuf（需要 feign-protobuf 扩展）。",
     "hints": [],
     "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的分布式锁？Redis Redlock 和 ZooKeeper 的区别？",
-    "content": "什么是微服务的分布式锁？Redis Redlock 和 ZooKeeper 的区别？",
-    "answer": "答案：分布式锁在微服务中确保多个服务实例对共享资源的互斥访问。\n\nRedis Redlock（Redis 官方分布式锁算法）：向 5 个 Redis 节点（独立部署）依次请求加锁，多数节点（> 2）成功加锁且总耗时小于锁超时时才视为加锁成功。缺点：需要独立的 5 个 Redis 节点（不是 Cluster），时钟偏差会导致锁失效。\n\nRedis 简单锁（SET NX + EXPIRE）：SET resource_id uuid NX PX 30000。单个 Redis 节点加锁（没有多数派），可用性由 Redis 主从保证。注意：Redis 主从切换时可能出现锁丢失（主节点崩溃前同步到从节点的锁丢失）。\n\nZooKeeper 分布式锁（Curator InterProcessLock）：基于 ZooKeeper 的顺序临时节点。创建 EPHEMERAL_SEQUENTIAL 节点 -> 检查自己是不是最小的序列号 -> 是则获得锁 -> 否则 watch 前一个节点 -> 前一个节点删除时获得锁。优点：严格的公平性+锁超时不会丢失（临时节点保证锁释放）。缺点：CP 系统（ZooKeeper 挂掉影响加锁），性能低于 Redis。\n\n选型：性能优先 + 可容忍锁偶尔失效（极少发生）→ Redis（大多数微服务选择）。强一致性 + 不能容忍锁双持有 → ZooKeeper（如分布式任务调度、金融级操作）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 OpenAPI/Swagger 规范？如何保证 API 文档质量？",
-    "content": "什么是微服务的 OpenAPI/Swagger 规范？如何保证 API 文档质量？",
-    "answer": "答案：OpenAPI（Swagger 2.0/OpenAPI 3.0）是 RESTful API 的描述规范，定义端点、请求参数、响应格式、认证方式等。\n\nSpring Boot 集成：springdoc-openapi（替代旧的 springfox）自动从 @RestController、@RequestMapping 生成 OpenAPI 文档。\n\n文档质量保证：1) 规范优先级（@Schema 的 description 描述字段含义、@Parameter 的 required/example 提供示例值）2) schema 管理（DTO 复用、nullable/hidden 语义正确）3) API 版本标注（@Tag 分类、deprecated 标记弃用 API）4) OpenAPI 规范验证（spectral 规则检查，确保文档不出语法错误）。\n\n文档 vs 实现一致性：OpenAPI 文档可能过期 → 自动化验证（contract testing / schema conformity test）。API 兼容性检测（openapi-diff 检查向后兼容性）。\n\nUI 工具：Swagger UI（交互式 API 文档）、Redoc（更现代的文档 UI）、Stoplight（全流程 API 设计平台）。\n\n微服务文档聚合：Gateway 层聚合所有微服务的 OpenAPI 文档（SpringDoc Gateway 的 GroupedOpenApi 支持多个微服务的 OpenAPI 组合展示）。\n\n注意：自动化生成的 OpenAPI 文档包含所有端点（包括内部端点），可以通过@Hidden 注解隐藏不想公开的端点。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Coroutines（协程）在 Kotlin 微服务中的应用？",
-    "content": "什么是微服务的 Coroutines（协程）在 Kotlin 微服务中的应用？",
-    "answer": "答案：Kotlin 协程（Coroutines）在微服务中的价值——用同步代码编写非阻塞逻辑。\n\nSpring Boot + Kotlin 协程：Spring WebFlux 支持 Kotlin 协程的 Controller（suspend 函数）。Spring Data R2DBC 支持挂起函数（suspend fun findById()）。\n\n协程 vs WebFlux Mono/Flux：协程代码更接近命令式风格（没有 flatMap/zip 链），直观易调试。协程的 withContext + Dispatchers.IO 替换传统的 CompletableFuture。\n\n协程在微服务中的使用场景：1) 并行调用——async { service1.call() } + async { service2.call() } + awaitAll() 同时调用多个服务。2) 超时控制——withTimeout(1000) 自动取消超时操作。3) 结构化并发——coroutineScope 确保子协程在父协程取消时自动取消。\n\nKotlin 协程 + Feign：WebClient + Kotlin 协程 = 响应式 + 同步语义。Feign 也可以配置异步适配器。\n\n注意：Java 微服务要使用协程需考虑团队成员技术栈。纯 Java 项目中可以考虑虚拟线程替代（JDK 21+ 提供类似效果）。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 APM Trace 采样策略？Tail-Based Sampling vs Head-Based Sampling？",
-    "content": "什么是微服务的 APM Trace 采样策略？Tail-Based Sampling vs Head-Based Sampling？",
-    "answer": "答案：Trace 采样在高吞吐微服务中控制采集数据量（避免存储爆炸）。\n\nHead-Based Sampling（头部采样）：在请求入口决定是否采样（如每 100 个请求采样 1 个）。优点：实现简单、开销低。缺点：遗漏了最重要的长尾延迟和错误的 Trace。\n\nTail-Based Sampling（尾部采样）：收集完整 Trace Span 到缓冲池，在请求结束时根据结果（延迟/错误）决定是否采样保留。优点：只保留有价值的数据（错误、慢调用）。缺点：实现复杂、内存开销大（需要在本地缓冲 Span 等待请求完成）。\n\n常见策略：错误/异常 Trace 全采（100% 采样错误 Trace）、慢调用 Trace 全采（P99 以上延迟）、正常请求按比例采样（1-10%）、关键业务 API 全采（支付/下单等业务关键操作）。\n\nSampling 与 Jaeger：Head-Based——Jaeger Agent 的 sampling.strategy 配置概率。Tail-Based——Jaeger 的 Kafka + gRPC Plugin 实现缓冲和采样决策。\n\nSampling 与 OpenTelemetry：OTel Collector 支持 tail-based sampling 处理器（tailsamplingprocessor），决策策略：always_sample（全量）、numeric_attribute（按数值过滤）、status_code（错误码）、rate_limiting（速率限制）",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
-    ]
-  },
-  {
-    "category": "microservices",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是微服务的 Schema Registry？Avro/Protobuf 在消息队列中的使用？",
-    "content": "什么是微服务的 Schema Registry？Avro/Protobuf 在消息队列中的使用？",
-    "answer": "答案：Schema Registry 管理消息队列中的数据结构定义（Schema），确保生产者和消费者的 Schema 兼容。\n\nAvro 在 Kafka 中的使用：Avro Schema 通过 JSON 定义。每条 Kafka 消息的 Schema ID 写入消息头，Consumer 通过 Schema Registry 根据 ID 获取 Schema 自动反序列化。\n\n兼容性类型：BACKWARD（新 Schema 可以读取旧数据——默认）、FORWARD（旧 Schema 可以读取新数据）、FULL（新旧互读）、NONE（不检查兼容性）。\n\nProtobuf 在微服务中的使用：.proto 文件定义消息结构，protoc 编译为各语言代码。gRPC 使用 Protobuf 作为序列化格式。Protobuf 比 JSON 小 70-80% 且解析快。\n\nProtobuf Any/Oneof：支持动态类型和可选字段。在兼容性方面，Protobuf 的字段编号（field number）一旦分配不可修改（否则反序列化出错）。\n\n微服务集成：Kafka Schema Registry（Confluent Schema Registry）支持 Avro/Protobuf/JSON Schema。Spring Cloud Stream + Schema Registry 自动做序列化/反序列化。\n\n注意：Schema Registry 的高可用性至关重要（Schema Registry 不可用时 Producer/Consumer 无法正常序列化/反序列化）。\n\nCommon pitfalls：删除字段保留编号（reserved）、不兼容的 Schema 演化（修改字段类型）导致运行时错误。",
-    "hints": [],
-    "tags": [
-      "微服务扩展"
+      "微服务"
     ]
   }
 ]

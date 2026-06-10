@@ -18,7 +18,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "HashMap 的底层实现原理",
     "content": "请描述 Java HashMap 的底层数据结构和工作原理。",
@@ -52,7 +52,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "volatile 关键字的作用和原理",
     "content": "请解释 volatile 关键字的作用及其底层实现原理。",
@@ -103,7 +103,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JVM 内存区域划分",
     "content": "请描述 JVM 运行时数据区的各个区域及其作用。",
@@ -137,7 +137,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Java 异常体系",
     "content": "请描述 Java 的异常体系结构，包括受检异常和非受检异常的区别。",
@@ -155,12 +155,13 @@
     "category": "java_basic",
     "difficulty": "easy",
     "type": "short_answer",
-    "title": "面向对象三大特性",
-    "content": "请解释面向对象编程的三大特性：封装、继承、多态。",
-    "answer": "封装：隐藏内部实现，通过公开接口访问。继承：子类继承父类属性和方法，实现代码复用。多态：同一接口不同实现，通过父类引用指向子类对象实现。",
+    "title": "面向对象四大特性",
+    "content": "请解释面向对象编程的四大特性：封装、继承、多态、抽象。",
+    "answer": "封装：隐藏内部实现，通过公开接口访问。继承：子类继承父类属性和方法，实现代码复用。多态：同一接口不同实现，通过父类引用指向子类对象实现。抽象：将事物的共同特征提取出来形成类或接口，忽略非本质细节；Java 中通过抽象类（abstract class）和接口（interface）实现。",
     "hints": [
       "多态的两种形式：编译时多态和运行时多态",
-      "重载和重写分别属于哪种多态"
+      "重载和重写分别属于哪种多态",
+      "抽象类和接口的区别是什么"
     ],
     "tags": [
       "基础",
@@ -179,7 +180,7 @@
       "C) boolean",
       "D) double"
     ],
-    "answer": "答案：B) String\n\n解析：String 是引用类型，不是基本数据类型。Java 的 8 种基本类型为 byte、short、int、long、float、double、boolean、char，它们存储在栈内存中，而引用类型存储在堆内存中。\n\n扩展延伸：基本类型和引用类型的根本区别在于存储方式和传递方式。基本类型变量直接存储值，赋值时拷贝值；引用类型变量存储对象地址，赋值时拷贝引用（指向同一对象）。",
+    "answer": "B) String\n\n解析：String 是引用类型，不是基本数据类型。Java 的 8 种基本类型为 byte、short、int、long、float、double、boolean、char，它们存储在栈内存中，而引用类型存储在堆内存中。\n\n扩展延伸：基本类型和引用类型的根本区别在于存储方式和传递方式。基本类型变量直接存储值，赋值时拷贝值；引用类型变量存储对象地址，赋值时拷贝引用（指向同一对象）。",
     "hints": [
       "基本类型和引用类型的区别"
     ],
@@ -200,7 +201,7 @@
       "C) ArrayList 底层是数组实现",
       "D) 两者都是线程安全的"
     ],
-    "answer": "答案：C) ArrayList 底层是数组实现\n\n解析：ArrayList 底层基于 Object[] 动态数组，优势在于随机访问 O(1)，但中间插入/删除需要移动元素 O(n)。LinkedList 底层是双向链表，插入/删除 O(1) 但随机访问 O(n)。两者均非线程安全，多线程场景需使用 Collections.synchronizedList() 或 CopyOnWriteArrayList。\n\n扩展延伸：ArrayList 默认初始容量为 10，扩容时按 1.5 倍增长（newCapacity = oldCapacity + (oldCapacity >> 1)），通过 Arrays.copyOf() 拷贝到新数组。LinkedList 同时实现了 Deque 接口，可作双端队列使用。",
+    "answer": "C) ArrayList 底层是数组实现\n\n解析：ArrayList 底层基于 Object[] 动态数组，优势在于随机访问 O(1)，但中间插入/删除需要移动元素 O(n)。LinkedList 底层是双向链表，插入/删除 O(1) 但随机访问 O(n)。两者均非线程安全，多线程场景需使用 Collections.synchronizedList() 或 CopyOnWriteArrayList。\n\n扩展延伸：ArrayList 默认初始容量为 10，扩容时按 1.5 倍增长（newCapacity = oldCapacity + (oldCapacity >> 1)），通过 Arrays.copyOf() 拷贝到新数组。LinkedList 同时实现了 Deque 接口，可作双端队列使用。",
     "hints": [
       "各自底层数据结构是什么",
       "插入和访问的时间复杂度各是多少"
@@ -212,7 +213,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "保证线程可见性的关键字",
     "content": "以下哪个关键字可以保证线程间的可见性？",
@@ -222,7 +223,7 @@
       "C) static",
       "D) final"
     ],
-    "answer": "答案：B) volatile\n\n解析：volatile 关键字保证可见性和禁止指令重排序。写操作立即刷新到主存，读操作从主存读取，通过内存屏障实现。但 volatile 不保证原子性，i++ 操作仍需加锁。\n\n扩展延伸：volatile 与 synchronized 的关键区别：volatile 仅保证可见性，synchronized 同时保证可见性和原子性。经典应用场景包括 DCL（双重检查锁）单例模式的状态标志位。推荐阅读《Java 并发编程的艺术》第三章。",
+    "answer": "B) volatile\n\n解析：volatile 关键字保证可见性和禁止指令重排序。写操作立即刷新到主存，读操作从主存读取，通过内存屏障实现。但 volatile 不保证原子性，i++ 操作仍需加锁。\n\n扩展延伸：volatile 与 synchronized 的关键区别：volatile 仅保证可见性，synchronized 同时保证可见性和原子性。经典应用场景包括 DCL（双重检查锁）单例模式的状态标志位。推荐阅读《Java 并发编程的艺术》第三章。",
     "hints": [
       "volatile 和 synchronized 的区别",
       "什么是指令重排序"
@@ -243,7 +244,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确\n\n解析：Java 只有值传递。基本类型传递值的副本，引用类型传递引用的副本（即对象地址的副本）。方法内修改引用指向新对象不会影响外部引用，但修改对象内部属性会影响原对象。\n\n扩展延伸：为什么 swap 函数在 Java 中无效？因为交换的是引用的副本，方法结束后副本销毁，原引用不变。推荐阅读《Core Java Volume I》4.5 节关于参数传递的讨论。",
+    "answer": "正确\n\n解析：Java 只有值传递。基本类型传递值的副本，引用类型传递引用的副本（即对象地址的副本）。方法内修改引用指向新对象不会影响外部引用，但修改对象内部属性会影响原对象。\n\n扩展延伸：为什么 swap 函数在 Java 中无效？因为交换的是引用的副本，方法结束后副本销毁，原引用不变。推荐阅读《Core Java Volume I》4.5 节关于参数传递的讨论。",
     "hints": [
       "传值和传引用的区别",
       "为什么 swap 函数在 Java 中无效"
@@ -255,7 +256,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "String 的线程安全性",
     "content": "String 是不可变类，所以它是线程安全的。",
@@ -263,7 +264,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确\n\n解析：String 是不可变类，一旦创建内容不可变，所有「修改」操作都返回新对象。不可变对象不存在数据竞争条件，天然具备线程安全性，无需同步即可安全地在多线程间共享。\n\n扩展延伸：不可变对象的五大优势：线程安全、可缓存 hash 值（String 的 hashCode 只计算一次）、可自由共享（字符串常量池）、适合作为 Map/Set 的键、防止被篡改。推荐阅读《Effective Java》第 17 条「使可变性最小化」。",
+    "answer": "正确\n\n解析：String 是不可变类，一旦创建内容不可变，所有「修改」操作都返回新对象。不可变对象不存在数据竞争条件，天然具备线程安全性，无需同步即可安全地在多线程间共享。\n\n扩展延伸：不可变对象的五大优势：线程安全、可缓存 hash 值（String 的 hashCode 只计算一次）、可自由共享（字符串常量池）、适合作为 Map/Set 的键、防止被篡改。推荐阅读《Effective Java》第 17 条「使可变性最小化」。",
     "hints": [
       "String 的 + 拼接是否创建新对象",
       "不可变对象的优势有哪些"
@@ -277,11 +278,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Integer 自动装箱的陷阱",
     "content": "以下代码输出什么？请解释原因。\n```java\nInteger a = 127;\nInteger b = 127;\nInteger c = 128;\nInteger d = 128;\nSystem.out.println(a == b);\nSystem.out.println(c == d);\n```",
-    "answer": "答案：true 和 false\n\n解析：执行 Integer.valueOf() 时，JVM 默认缓存了 [-128, 127] 范围内的 Integer 对象。a 和 b 都指向缓存池中的同一对象，== 比较引用地址为 true。128 超出缓存范围，c 和 d 各自 new 新对象，== 为 false。\n\n扩展延伸：所有包装类都有缓存机制：Boolean 缓存全部、Byte/Short/Long 缓存 [-128, 127]、Character 缓存 [0, 127]。比较包装类值应始终使用 equals() 或拆箱后比较。",
+    "answer": "true 和 false\n\n解析：执行 Integer.valueOf() 时，JVM 默认缓存了 [-128, 127] 范围内的 Integer 对象。a 和 b 都指向缓存池中的同一对象，== 比较引用地址为 true。128 超出缓存范围，c 和 d 各自 new 新对象，== 为 false。\n\n扩展延伸：所有包装类都有缓存机制：Boolean 缓存全部、Byte/Short/Long 缓存 [-128, 127]、Character 缓存 [0, 127]。比较包装类值应始终使用 equals() 或拆箱后比较。",
     "hints": [
       "== 比较的是什么？引用还是值",
       "Integer 的缓存范围是多少"
@@ -298,7 +299,7 @@
     "type": "short_answer",
     "title": "循环中字符串拼接的性能陷阱",
     "content": "以下两种字符串拼接方式，哪种性能更好？为什么？\n```java\n// 方式 A\nString s = \"\";\nfor (int i = 0; i < 10000; i++) {\n    s += i;\n}\n\n// 方式 B\nStringBuilder sb = new StringBuilder();\nfor (int i = 0; i < 10000; i++) {\n    sb.append(i);\n}\nString s = sb.toString();\n```",
-    "answer": "答案：方式 B 性能远超方式 A\n\n解析：String 是不可变对象，每次 + 拼接都会创建新的 String 对象。10000 次循环会产生 10000 个中间字符串对象，大量内存浪费和 GC 压力。StringBuilder 是可变对象，append 在内部数组操作，无需反复创建新对象。\n\n扩展延伸：编译器会将单行 + 拼接优化为 StringBuilder（如 String s = a + b + c 会优化）。但循环内的拼接编译器无法优化，每次迭代都会创建新 StringBuilder 对象。这条规则同样适用于 StringBuffer（线程安全版，但性能差于 StringBuilder）。",
+    "answer": "方式 B 性能远超方式 A\n\n解析：String 是不可变对象，每次 + 拼接都会创建新的 String 对象。10000 次循环会产生 10000 个中间字符串对象，大量内存浪费和 GC 压力。StringBuilder 是可变对象，append 在内部数组操作，无需反复创建新对象。\n\n扩展延伸：编译器会将单行 + 拼接优化为 StringBuilder（如 String s = a + b + c 会优化）。但循环内的拼接编译器无法优化，每次迭代都会创建新 StringBuilder 对象。这条规则同样适用于 StringBuffer（线程安全版，但性能差于 StringBuilder）。",
     "hints": [
       "String 的不可变性意味着什么",
       "编译器对 + 拼接做了哪些优化"
@@ -312,11 +313,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "重写 equals 不重写 hashCode 的后果",
     "content": "自定义类只重写了 equals() 但未重写 hashCode()，用做 HashMap 的 key 时会出现什么问题？",
-    "answer": "答案：无法正确根据 equals 相等来存取对象\n\n解析：HashMap 先用 hashCode() 定位桶位置，再用 equals() 比较链表中元素。两个 equals 相等的对象若 hashCode 不同，会被分到不同桶中，导致 put 时存两个条目，get 时只能在其中一个桶里找到。这意味着 equals 逻辑相等的对象无法在 HashMap 中正确工作。\n\n扩展延伸：为什么要求 equals 相等则 hashCode 必须相等（反向不要求）？因为 HashMap 的分桶机制依赖 hashCode 判断是否可能在同一个桶。此外，用可变对象做 HashMap key 极不推荐——修改对象内容后 hashCode 会变，旧桶位置的数据将无法被访问，造成内存泄漏。",
+    "answer": "无法正确根据 equals 相等来存取对象\n\n解析：HashMap 先用 hashCode() 定位桶位置，再用 equals() 比较链表中元素。两个 equals 相等的对象若 hashCode 不同，会被分到不同桶中，导致 put 时存两个条目，get 时只能在其中一个桶里找到。这意味着 equals 逻辑相等的对象无法在 HashMap 中正确工作。\n\n扩展延伸：为什么要求 equals 相等则 hashCode 必须相等（反向不要求）？因为 HashMap 的分桶机制依赖 hashCode 判断是否可能在同一个桶。此外，用可变对象做 HashMap key 极不推荐——修改对象内容后 hashCode 会变，旧桶位置的数据将无法被访问，造成内存泄漏。",
     "hints": [
       "HashMap 如何用 hashCode 和 equals 定位元素",
       "equals 和 hashCode 的约定是什么"
@@ -333,7 +334,7 @@
     "type": "short_answer",
     "title": "try-catch-finally 中 return 的执行顺序",
     "content": "以下代码输出什么？为什么？\n```java\npublic static int test() {\n    try {\n        return 1;\n    } catch (Exception e) {\n        return 2;\n    } finally {\n        return 3;\n    }\n}\n```",
-    "answer": "答案：输出 3\n\n解析：finally 块中的 return 会覆盖 try 块中的 return。执行流程：try 中执行到 return 1 → 暂存返回值 1 → 执行 finally → finally 中有 return 3 → 直接返回 3，try 的返回值被丢弃。\n\n扩展延伸：即使 finally 没有 return，也会在 try 的 return 之前执行。如果 finally 中修改了返回值变量（基本类型无效，引用类型影响对象状态），结果可能出乎意料。最佳实践：永远不要在 finally 块中使用 return，仅用于释放资源。",
+    "answer": "输出 3\n\n解析：finally 块中的 return 会覆盖 try 块中的 return。执行流程：try 中执行到 return 1 → 暂存返回值 1 → 执行 finally → finally 中有 return 3 → 直接返回 3，try 的返回值被丢弃。\n\n扩展延伸：即使 finally 没有 return，也会在 try 的 return 之前执行。如果 finally 中修改了返回值变量（基本类型无效，引用类型影响对象状态），结果可能出乎意料。最佳实践：永远不要在 finally 块中使用 return，仅用于释放资源。",
     "hints": [
       "finally 一定会执行吗",
       "finally 和 try 都有 return 时谁优先"
@@ -346,11 +347,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "SimpleDateFormat 的线程安全问题",
     "content": "在多线程环境下共享同一个 SimpleDateFormat 实例进行日期格式化/解析，可能会有什么问题？如何解决？",
-    "answer": "答案：可能产生数据竞争，导致结果错误甚至 JVM 崩溃\n\n解析：SimpleDateFormat 内部维护 Calendar 对象，parse() 和 format() 方法会修改其内部状态。多个线程同时调用时产生竞态条件，可能出现解析结果错误、NumberFormatException 或死循环。\n\n扩展延伸：四种解决方案 1）每次使用时 new 新实例（简单但开销大）2）加同步锁（影响吞吐）3）使用 ThreadLocal 为每线程缓存实例（推荐）4）使用线程安全的 DateTimeFormatter（Java 8，最佳方案）。JDK 8 的 DateTimeFormatter 是不可变且线程安全的，应作为首选。",
+    "answer": "可能产生数据竞争，导致结果错误甚至 JVM 崩溃\n\n解析：SimpleDateFormat 内部维护 Calendar 对象，parse() 和 format() 方法会修改其内部状态。多个线程同时调用时产生竞态条件，可能出现解析结果错误、NumberFormatException 或死循环。\n\n扩展延伸：四种解决方案 1）每次使用时 new 新实例（简单但开销大）2）加同步锁（影响吞吐）3）使用 ThreadLocal 为每线程缓存实例（推荐）4）使用线程安全的 DateTimeFormatter（Java 8，最佳方案）。JDK 8 的 DateTimeFormatter 是不可变且线程安全的，应作为首选。",
     "hints": [
       "SimpleDateFormat 内部是否有可变状态",
       "Java 8 提供了什么替代方案"
@@ -364,11 +365,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "List.subList 的视图陷阱",
     "content": "以下代码会出什么问题？\n```java\nList<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));\nList<Integer> sub = list.subList(1, 4);\nlist.add(6);\nSystem.out.println(sub.size());\n```",
-    "answer": "答案：抛出 ConcurrentModificationException\n\n解析：subList() 返回的是原列表的视图（view），而非独立副本。对原列表结构性修改（add/remove/size 变化）后，subList 的 modCount 校验会失败，访问 subList 时抛 ConcurrentModificationException。\n\n扩展延伸：subList 视图的修改会同步反映到原列表（如 subList.clear() 会清空原列表对应元素）。如需独立的子列表副本，应使用 new ArrayList<>(list.subList(1, 4))。同理，Arrays.asList() 返回的也是固定长度视图，不支持 add/remove。",
+    "answer": "抛出 ConcurrentModificationException\n\n解析：subList() 返回的是原列表的视图（view），而非独立副本。对原列表结构性修改（add/remove/size 变化）后，subList 的 modCount 校验会失败，访问 subList 时抛 ConcurrentModificationException。\n\n扩展延伸：subList 视图的修改会同步反映到原列表（如 subList.clear() 会清空原列表对应元素）。如需独立的子列表副本，应使用 new ArrayList<>(list.subList(1, 4))。同理，Arrays.asList() 返回的也是固定长度视图，不支持 add/remove。",
     "hints": [
       "subList 返回的是新列表还是视图",
       "什么是结构性和非结构性修改"
@@ -391,7 +392,7 @@
       "C) 数组中可以存储不同类型的数据",
       "D) 数组是对象类型"
     ],
-    "answer": "答案：D) 数组是对象类型\n\n解析：Java 中数组是引用类型（对象），所有数组都继承 Object 类。数组长度一旦确定不可变（length 是 final 属性）。数组只能存储同一类型（或兼容类型）的数据。基本类型数组如 int[] 也是对象。\n\n扩展延伸：数组的父类是 Object，可通过 arr instanceof Object 验证。获取数组类型用 arr.getClass().getName()，如 int[] 输出 [I。Arrays 工具类提供了排序、二分查找、拷贝等实用方法。",
+    "answer": "D) 数组是对象类型\n\n解析：Java 中数组是引用类型（对象），所有数组都继承 Object 类。数组长度一旦确定不可变（length 是 final 属性）。数组只能存储同一类型（或兼容类型）的数据。基本类型数组如 int[] 也是对象。\n\n扩展延伸：数组的父类是 Object，可通过 arr instanceof Object 验证。获取数组类型用 arr.getClass().getName()，如 int[] 输出 [I。Arrays 工具类提供了排序、二分查找、拷贝等实用方法。",
     "hints": [
       "数组的 length 是属性还是方法",
       "int[].class.getName() 输出什么"
@@ -411,7 +412,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确\n\n解析：匿名内部类访问外部局部变量时，编译器将该变量的值拷贝到内部类中（作为构造参数）。为避免拷贝后的值和原值不一致导致混淆，要求变量不可变。JDK 8 之前必须显式声明 final，JDK 8 起只要变量实际未修改（effectively final）即可。\n\n扩展延伸：Lambda 表达式本质上也是匿名内部类的简化形式，捕获外部变量同样要求 effectively final。如果需要在 Lambda 中修改变量值，可用数组包装（如 int[] count = {0}）或使用 AtomicInteger 等容器。",
+    "answer": "正确\n\n解析：匿名内部类访问外部局部变量时，编译器将该变量的值拷贝到内部类中（作为构造参数）。为避免拷贝后的值和原值不一致导致混淆，要求变量不可变。JDK 8 之前必须显式声明 final，JDK 8 起只要变量实际未修改（effectively final）即可。\n\n扩展延伸：Lambda 表达式本质上也是匿名内部类的简化形式，捕获外部变量同样要求 effectively final。如果需要在 Lambda 中修改变量值，可用数组包装（如 int[] count = {0}）或使用 AtomicInteger 等容器。",
     "hints": [
       "为什么局部变量需要 final 或 effectively final",
       "Lambda 表达式是否也有同样的限制"
@@ -423,11 +424,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "深拷贝与浅拷贝的区别",
     "content": "请解释深拷贝和浅拷贝的区别，以及 Java 中实现深拷贝的常见方式。",
-    "answer": "答案：浅拷贝只复制引用地址不复制对象本身，深拷贝递归复制所有引用对象\n\n解析：浅拷贝（Shallow Copy）— 拷贝后的对象和原对象共享内部引用对象，修改引用对象属性会影响双方。Object.clone() 默认是浅拷贝。深拷贝（Deep Copy）— 递归复制所有层级，拷贝后的对象完全独立。\n\n扩展延伸：深拷贝实现方式 1）重写 clone() 并逐层手动 clone 2）序列化方式：对象实现 Serializable，ByteArrayOutputStream + ObjectOutputStream 写入再读取 3）Json 序列化反序列化：如 Jackson / Gson 4）拷贝构造器（需手动写）。实际开发建议优先用 Record 或不可变对象减少拷贝需求。",
+    "answer": "浅拷贝只复制引用地址不复制对象本身，深拷贝递归复制所有引用对象\n\n解析：浅拷贝（Shallow Copy）— 拷贝后的对象和原对象共享内部引用对象，修改引用对象属性会影响双方。Object.clone() 默认是浅拷贝。深拷贝（Deep Copy）— 递归复制所有层级，拷贝后的对象完全独立。\n\n扩展延伸：深拷贝实现方式 1）重写 clone() 并逐层手动 clone 2）序列化方式：对象实现 Serializable，ByteArrayOutputStream + ObjectOutputStream 写入再读取 3）Json 序列化反序列化：如 Jackson / Gson 4）拷贝构造器（需手动写）。实际开发建议优先用 Record 或不可变对象减少拷贝需求。",
     "hints": [
       "Object.clone() 默认是深拷贝还是浅拷贝",
       "序列化为什么能实现深拷贝"
@@ -443,7 +444,7 @@
     "type": "short_answer",
     "title": "Comparable 与 Comparator 的区别",
     "content": "请比较 Comparable 和 Comparator 两个接口的区别及各自的使用场景。",
-    "answer": "答案：Comparable 定义自然排序（内部比较器），Comparator 定义自定义排序（外部比较器）\n\n解析：Comparable 在 java.lang 包中，只有一个 compareTo(T o) 方法，需要被排序的类实现，如 String、Integer 都实现了 Comparable。Comparator 在 java.util 包中，有 compare(T o1, T o2) 方法，独立于被排序的类，可创建多个不同排序规则。\n\n扩展延伸：Comparator 的优势 1）不修改原类代码（开闭原则）2）可定义多种排序方式 3）Java 8 起支持 Lambda 和链式调用：Comparator.comparing(Person::getName).thenComparing(Person::getAge)。",
+    "answer": "Comparable 定义自然排序（内部比较器），Comparator 定义自定义排序（外部比较器）\n\n解析：Comparable 在 java.lang 包中，只有一个 compareTo(T o) 方法，需要被排序的类实现，如 String、Integer 都实现了 Comparable。Comparator 在 java.util 包中，有 compare(T o1, T o2) 方法，独立于被排序的类，可创建多个不同排序规则。\n\n扩展延伸：Comparator 的优势 1）不修改原类代码（开闭原则）2）可定义多种排序方式 3）Java 8 起支持 Lambda 和链式调用：Comparator.comparing(Person::getName).thenComparing(Person::getAge)。",
     "hints": [
       "String 和 Integer 的排序规则是哪种",
       "如何对一个 Person 类分别按姓名和年龄排序"
@@ -455,11 +456,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Java 注解的保留策略",
     "content": "Java 注解（Annotation）的保留策略（RetentionPolicy）有哪些？各有什么用途？",
-    "answer": "答案：SOURCE / CLASS / RUNTIME 三种保留策略\n\n解析：SOURCE—注解仅在源码中保留，编译时丢弃，典型如 @Override、@SuppressWarnings。CLASS—注解在 .class 文件中保留，但运行时不可通过反射获取，是默认策略。RUNTIME—注解在运行时保留，可通过反射读取，自定义框架注解通常用此策略（如 Spring 的 @Component、MyBatis 的 @Select）。\n\n扩展延伸：三种元注解：@Retention（指定保留策略）、@Target（指定可修饰的目标）、@Documented（是否纳入 Javadoc）。Spring 框架大量使用 RUNTIME 策略的注解实现声明式编程。",
+    "answer": "SOURCE / CLASS / RUNTIME 三种保留策略\n\n解析：SOURCE—注解仅在源码中保留，编译时丢弃，典型如 @Override、@SuppressWarnings。CLASS—注解在 .class 文件中保留，但运行时不可通过反射获取，是默认策略。RUNTIME—注解在运行时保留，可通过反射读取，自定义框架注解通常用此策略（如 Spring 的 @Component、MyBatis 的 @Select）。\n\n扩展延伸：三种元注解：@Retention（指定保留策略）、@Target（指定可修饰的目标）、@Documented（是否纳入 Javadoc）。Spring 框架大量使用 RUNTIME 策略的注解实现声明式编程。",
     "hints": [
       "@Override 和 @Autowired 的保留策略分别是什么",
       "框架为什么用 RUNTIME 策略"
@@ -471,11 +472,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "try-with-resources 的原理",
     "content": "请解释 try-with-resources 的语法和底层实现原理。它和传统的 try-finally 有什么优势？",
-    "answer": "答案：try-with-resources 自动关闭实现了 AutoCloseable 的资源，代码更简洁且不会遗漏 close()\n\n解析：语法 try (InputStream is = new FileInputStream(\"file.txt\")) { ... }。在 try 块结束后（无论正常或异常），JVM 自动调用资源的 close() 方法，且关闭顺序与声明顺序相反。编译时会被 desugar 为 try-finally 形式，但额外处理了抑制异常（Suppressed Exception）。\n\n扩展延伸：传统 try-finally 中，如果 try 块抛异常且 finally 的 close() 也抛异常，try 块异常会被 close() 异常覆盖，导致丢失原始异常。try-with-resources 会将 close() 异常添加到抑制异常列表（可通过 getSuppressed() 获取），保留原始异常。JDK 9 起支持在 try 外声明资源变量。",
+    "answer": "try-with-resources 自动关闭实现了 AutoCloseable 的资源，代码更简洁且不会遗漏 close()\n\n解析：语法 try (InputStream is = new FileInputStream(\"file.txt\")) { ... }。在 try 块结束后（无论正常或异常），JVM 自动调用资源的 close() 方法，且关闭顺序与声明顺序相反。编译时会被 desugar 为 try-finally 形式，但额外处理了抑制异常（Suppressed Exception）。\n\n扩展延伸：传统 try-finally 中，如果 try 块抛异常且 finally 的 close() 也抛异常，try 块异常会被 close() 异常覆盖，导致丢失原始异常。try-with-resources 会将 close() 异常添加到抑制异常列表（可通过 getSuppressed() 获取），保留原始异常。JDK 9 起支持在 try 外声明资源变量。",
     "hints": [
       "传统 try-finally 中 close() 抛异常会怎样",
       "getSuppressed() 方法的用途"
@@ -487,7 +488,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "transient 关键字的作用",
     "content": "关于 Java transient 关键字，以下说法正确的是？",
@@ -497,7 +498,7 @@
       "C) transient 可以修饰方法",
       "D) static 变量默认是 transient 的"
     ],
-    "answer": "答案：B) transient 修饰的变量不参与序列化\n\n解析：transient 关键字用于指示 Java 序列化时跳过该字段。反序列化后 transient 字段恢复为默认值（引用类型 null，基本类型 0/false）。transient 只能修饰变量（字段），不能修饰方法或类。static 变量默认不参与序列化（不属于对象状态），无需 transient 修饰。\n\n扩展延伸：transient 的应用场景：缓存字段（如 Hibernate 的一级缓存）、派生字段（可根据其他字段计算得出）、敏感信息（密码等，序列化前已做处理）。Externalizable 接口完全自定义序列化时，transient 不再适用。",
+    "answer": "B) transient 修饰的变量不参与序列化\n\n解析：transient 关键字用于指示 Java 序列化时跳过该字段。反序列化后 transient 字段恢复为默认值（引用类型 null，基本类型 0/false）。transient 只能修饰变量（字段），不能修饰方法或类。static 变量默认不参与序列化（不属于对象状态），无需 transient 修饰。\n\n扩展延伸：transient 的应用场景：缓存字段（如 Hibernate 的一级缓存）、派生字段（可根据其他字段计算得出）、敏感信息（密码等，序列化前已做处理）。Externalizable 接口完全自定义序列化时，transient 不再适用。",
     "hints": [
       "static 变量是否参与序列化",
       "反序列化后 transient 字段的值是什么"
@@ -509,7 +510,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "枚举类型的抽象方法",
     "content": "Java 枚举类型（enum）不能定义抽象方法。",
@@ -517,7 +518,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误\n\n解析：Java 枚举可以定义抽象方法，每个枚举常量通过匿名内部类的方式实现该抽象方法。例如：\n```java\nenum Operation {\n    ADD { int apply(int a, int b) { return a + b; } },\n    SUB { int apply(int a, int b) { return a - b; } };\n    abstract int apply(int a, int b);\n}\n```\n\n扩展延伸：枚举天然单例（Effective Java 推荐为最安全的单例实现方式），且自动提供序列化保护（反序列化不会创建新实例）。编译器为每个枚举常量生成 static final 字段。",
+    "answer": "错误\n\n解析：Java 枚举可以定义抽象方法，每个枚举常量通过匿名内部类的方式实现该抽象方法。例如：\n```java\nenum Operation {\n    ADD { int apply(int a, int b) { return a + b; } },\n    SUB { int apply(int a, int b) { return a - b; } };\n    abstract int apply(int a, int b);\n}\n```\n\n扩展延伸：枚举天然单例（Effective Java 推荐为最安全的单例实现方式），且自动提供序列化保护（反序列化不会创建新实例）。编译器为每个枚举常量生成 static final 字段。",
     "hints": [
       "枚举常量的类体可以包含什么",
       "为什么枚举被认为是最好的单例实现"
@@ -529,11 +530,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Java SPI 机制",
     "content": "什么是 Java SPI（Service Provider Interface）机制？它和 API 有什么区别？典型应用场景有哪些？",
-    "answer": "答案：SPI 是 JDK 内置的服务发现机制，允许第三方为接口提供实现\n\n解析：SPI 工作流程 1）定义标准接口 2）提供方在 META-INF/services/ 目录下创建以接口全限定名命名的文件，内容为实现类全限定名 3）调用方用 ServiceLoader.load(Interface.class) 加载所有实现。API 是「我提供接口你给我实现」，SPI 是「我提供接口你给我扩展」。\n\n扩展延伸：JDK 中的 SPI 示例：JDBC 驱动加载（DriverManager 通过 SPI 发现数据库驱动）、Slf4j 日志门面（通过 SPI 绑定具体日志实现）。ClassPath 上引入 mysql-connector-java.jar 后，ServiceLoader 自动发现 com.mysql.cj.jdbc.Driver。",
+    "answer": "SPI 是 JDK 内置的服务发现机制，允许第三方为接口提供实现\n\n解析：SPI 工作流程 1）定义标准接口 2）提供方在 META-INF/services/ 目录下创建以接口全限定名命名的文件，内容为实现类全限定名 3）调用方用 ServiceLoader.load(Interface.class) 加载所有实现。API 是「我提供接口你给我实现」，SPI 是「我提供接口你给我扩展」。\n\n扩展延伸：JDK 中的 SPI 示例：JDBC 驱动加载（DriverManager 通过 SPI 发现数据库驱动）、Slf4j 日志门面（通过 SPI 绑定具体日志实现）。ClassPath 上引入 mysql-connector-java.jar 后，ServiceLoader 自动发现 com.mysql.cj.jdbc.Driver。",
     "hints": [
       "JDBC 驱动是如何自动被加载的",
       "ServiceLoader 的懒加载特性"
@@ -555,7 +556,7 @@
       "C) int c = System.currentTimeMillis()",
       "D) static int d = 42"
     ],
-    "answer": "答案：B) final int b = 100\n\n解析：编译期常量（Compile-Time Constant）必须同时满足：final 修饰、基本类型或 String、值在编译期可确定（字面量或常量表达式）。编译期常量会被编译器内联到使用处（javac 的常量传播优化），修改常量值需要重新编译所有引用类。\n\n扩展延伸：编译期常量的影响：public static final int MAX = 100 如果被其他类引用，修改为 200 后不重新编译引用类，引用类仍然使用旧的 100（内联到字节码中）。",
+    "answer": "B) final int b = 100\n\n解析：编译期常量（Compile-Time Constant）必须同时满足：final 修饰、基本类型或 String、值在编译期可确定（字面量或常量表达式）。编译期常量会被编译器内联到使用处（javac 的常量传播优化），修改常量值需要重新编译所有引用类。\n\n扩展延伸：编译期常量的影响：public static final int MAX = 100 如果被其他类引用，修改为 200 后不重新编译引用类，引用类仍然使用旧的 100（内联到字节码中）。",
     "hints": [
       "final 变量是否一定是编译期常量",
       "编译期常量的内联优化有什么潜在风险"
@@ -577,7 +578,7 @@
       "C) JRE = JVM + 核心类库",
       "D) JDK = JVM + 核心类库"
     ],
-    "answer": "答案：C) JRE = JVM + 核心类库\n\n解析：JVM（Java Virtual Machine）运行 Java 字节码。JRE = JVM + 核心类库（rt.jar 等），是运行已编译 Java 程序所需的环境。JDK = JRE + 开发工具（javac、jar、jdb 等），是开发 Java 程序的工具包。\n\n扩展延伸：三者包含关系：JDK ⊃ JRE ⊃ JVM。编写 Java 代码只需 JDK，运行只需 JRE。JVM 是跨平台核心——不同平台有不同 JVM 实现，但字节码相同。",
+    "answer": "C) JRE = JVM + 核心类库\n\n解析：JVM（Java Virtual Machine）运行 Java 字节码。JRE = JVM + 核心类库（rt.jar 等），是运行已编译 Java 程序所需的环境。JDK = JRE + 开发工具（javac、jar、jdb 等），是开发 Java 程序的工具包。\n\n扩展延伸：三者包含关系：JDK ⊃ JRE ⊃ JVM。编写 Java 代码只需 JDK，运行只需 JRE。JVM 是跨平台核心——不同平台有不同 JVM 实现，但字节码相同。",
     "hints": [
       "运行 Java 程序和开发 Java 程序分别需要什么",
       "JVM 为什么能跨平台"
@@ -600,7 +601,7 @@
       "C) 重载的方法参数列表必须不同，返回值类型也要求不同",
       "D) 重写可以发生在同一个类中"
     ],
-    "answer": "答案：B) 重写的方法返回值类型必须相同（或协变）\n\n解析：重载发生在同一个类中，方法名相同参数列表不同（个数、类型、顺序），与返回值无关。重写发生在父子类中，方法签名必须相同，返回值类型相同或是其子类型（协变返回类型），访问权限不能更严格，不能抛出更宽泛的异常。\n\n扩展延伸：@Override 注解可帮助校验是否正确重写。重载是编译时多态（静态分派），重写是运行时多态（动态分派）。构造方法不能被重写，但可以被重载。",
+    "answer": "B) 重写的方法返回值类型必须相同（或协变）\n\n解析：重载发生在同一个类中，方法名相同参数列表不同（个数、类型、顺序），与返回值无关。重写发生在父子类中，方法签名必须相同，返回值类型相同或是其子类型（协变返回类型），访问权限不能更严格，不能抛出更宽泛的异常。\n\n扩展延伸：@Override 注解可帮助校验是否正确重写。重载是编译时多态（静态分派），重写是运行时多态（动态分派）。构造方法不能被重写，但可以被重载。",
     "hints": [
       "重载和重写分别属于编译时还是运行时多态",
       "为什么重写不能降低访问权限"
@@ -620,7 +621,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误\n\n解析：== 比较的是引用地址而非数值。Integer 在 [-128, 127] 范围有缓存，该范围内数值相等 == 返回 true，超出范围每次创建新对象 == 返回 false。应用 equals() 比较数值，或拆箱后比较。\n\n扩展延伸：自动装箱通过 Integer.valueOf() 实现，该方法使用了缓存机制。所有包装类（Boolean/Byte/Short/Integer/Long/Character）都有缓存，只是范围不同。基本类型和包装类型的区别还包括：默认值（int=0，Integer=null）、存储位置（栈 vs 堆）、性能开销（包装类涉及对象创建和 GC）。",
+    "answer": "错误\n\n解析：== 比较的是引用地址而非数值。Integer 在 [-128, 127] 范围有缓存，该范围内数值相等 == 返回 true，超出范围每次创建新对象 == 返回 false。应用 equals() 比较数值，或拆箱后比较。\n\n扩展延伸：自动装箱通过 Integer.valueOf() 实现，该方法使用了缓存机制。所有包装类（Boolean/Byte/Short/Integer/Long/Character）都有缓存，只是范围不同。基本类型和包装类型的区别还包括：默认值（int=0，Integer=null）、存储位置（栈 vs 堆）、性能开销（包装类涉及对象创建和 GC）。",
     "hints": [
       "Integer 的缓存范围",
       "自动装箱和拆箱的底层实现"
@@ -636,7 +637,7 @@
     "type": "short_answer",
     "title": "String 为什么设计成不可变",
     "content": "Java 为什么将 String 设计为不可变类？不可变性的好处有哪些？",
-    "answer": "答案：线程安全、哈希缓存、常量池共享、安全防护\n\n解析：1）线程安全——不可变对象无需同步即可在多线程间共享 2）哈希缓存——String 的 hashCode 只计算一次，适合做 HashMap key 3）字符串常量池——不可变确保常量池中的字符串不会被意外修改 4）安全防护——ClassLoader 加载类时使用 String 参数，不可变防止恶意篡改\n\n扩展延伸：String 通过 final class 和 private final char[]（JDK 8）或 byte[]（JDK 9+）实现不可变，所有「修改」操作（concat、replace 等）都返回新对象。不可变不等于常量——引用可变但对象内容不变。推荐阅读《Effective Java》第 17 条。",
+    "answer": "线程安全、哈希缓存、常量池共享、安全防护\n\n解析：1）线程安全——不可变对象无需同步即可在多线程间共享 2）哈希缓存——String 的 hashCode 只计算一次，适合做 HashMap key 3）字符串常量池——不可变确保常量池中的字符串不会被意外修改 4）安全防护——ClassLoader 加载类时使用 String 参数，不可变防止恶意篡改\n\n扩展延伸：String 通过 final class 和 private final char[]（JDK 8）或 byte[]（JDK 9+）实现不可变，所有「修改」操作（concat、replace 等）都返回新对象。不可变不等于常量——引用可变但对象内容不变。推荐阅读《Effective Java》第 17 条。",
     "hints": [
       "String 的 hashCode 为什么只计算一次",
       "如果 String 可变，对 HashMap key 有什么影响"
@@ -652,7 +653,7 @@
     "type": "short_answer",
     "title": "new String(\"abc\") 创建了几个对象",
     "content": "执行 String s = new String(\"abc\") 创建了几个对象？请分析。",
-    "answer": "答案：1 或 2 个对象\n\n解析：如果常量池中已有 \"abc\" 字面量，则只在堆中创建 1 个 String 对象。如果常量池中不存在 \"abc\"，则先在常量池中创建字面量对象，再在堆中创建 1 个 String 对象（共 2 个）。new String() 始终在堆中创建新对象，而双引号字面量走常量池（复用或创建）。\n\n扩展延伸：String s = \"abc\" 和 String s = new String(\"abc\") 的区别——前者直接引用常量池对象（可能复用），后者强制创建新堆对象。intern() 方法可将堆中的字符串引用放入常量池并返回常量池引用。",
+    "answer": "1 或 2 个对象\n\n解析：如果常量池中已有 \"abc\" 字面量，则只在堆中创建 1 个 String 对象。如果常量池中不存在 \"abc\"，则先在常量池中创建字面量对象，再在堆中创建 1 个 String 对象（共 2 个）。new String() 始终在堆中创建新对象，而双引号字面量走常量池（复用或创建）。\n\n扩展延伸：String s = \"abc\" 和 String s = new String(\"abc\") 的区别——前者直接引用常量池对象（可能复用），后者强制创建新堆对象。intern() 方法可将堆中的字符串引用放入常量池并返回常量池引用。",
     "hints": [
       "双引号字面量和 new String() 的区别",
       "常量池中已有相同字符串时会怎样"
@@ -665,11 +666,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "BigDecimal 处理浮点数精度",
     "content": "为什么 0.1 + 0.2 != 0.3？如何用 BigDecimal 正确进行浮点数运算？",
-    "answer": "答案：float/double 采用二进制浮点数表示，无法精确表示 0.1 等十进制小数。BigDecimal 可精确控制精度。\n\n解析：float/double 使用 IEEE 754 标准，二进制无法精确表示 1/10（类似十进制无法精确表示 1/3）。BigDecimal 基于十进制整数运算，精度可控。使用时务必用 BigDecimal 字符串构造器 new BigDecimal(\"0.1\")，而非 new BigDecimal(0.1)（后者仍然有精度误差）。\n\n扩展延伸：BigDecimal 常见陷阱：1）用 double 构造会有精度问题 2）除法需指定精度和舍入模式（RoundingMode.HALF_UP）3）equals 同时比较值和精度（\"1.0\" != \"1.00\"），compareTo 只比较值。推荐在金额计算、货币等场景中强制使用 BigDecimal。",
+    "answer": "float/double 采用二进制浮点数表示，无法精确表示 0.1 等十进制小数。BigDecimal 可精确控制精度。\n\n解析：float/double 使用 IEEE 754 标准，二进制无法精确表示 1/10（类似十进制无法精确表示 1/3）。BigDecimal 基于十进制整数运算，精度可控。使用时务必用 BigDecimal 字符串构造器 new BigDecimal(\"0.1\")，而非 new BigDecimal(0.1)（后者仍然有精度误差）。\n\n扩展延伸：BigDecimal 常见陷阱：1）用 double 构造会有精度问题 2）除法需指定精度和舍入模式（RoundingMode.HALF_UP）3）equals 同时比较值和精度（\"1.0\" != \"1.00\"），compareTo 只比较值。推荐在金额计算、货币等场景中强制使用 BigDecimal。",
     "hints": [
       "为什么二进制无法精确表示 0.1",
       "BigDecimal 的 equals 和 compareTo 有什么区别"
@@ -682,11 +683,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "接口和抽象类的区别",
     "content": "请说明接口（Interface）和抽象类（Abstract Class）的区别及各自的使用场景。",
-    "answer": "答案：接口更强调行为契约（can-do），抽象类强调类层次关系（is-a）\n\n解析：核心区别 1）设计思想——抽象类表示「是什么」，接口表示「能做什么」2）继承 vs 实现——单继承多实现 3）构造方法——抽象类有，接口无 4）成员变量——抽象类可任意，接口只能是 public static final 5）方法——抽象类可有任意方法，JDK 8 起接口有 default/static 方法，JDK 9 起接口有 private 方法\n\n扩展延伸：如何选择？需要共享代码用抽象类（如模板方法模式）；需要定义能力契约用接口（如 Runnable、Comparable）。模板方法模式：抽象类定义骨架（final template method）让子类实现抽象步骤。接口 default 方法解决集合库演进问题（如 List.sort 向后兼容）。",
+    "answer": "接口更强调行为契约（can-do），抽象类强调类层次关系（is-a）\n\n解析：核心区别 1）设计思想——抽象类表示「是什么」，接口表示「能做什么」2）继承 vs 实现——单继承多实现 3）构造方法——抽象类有，接口无 4）成员变量——抽象类可任意，接口只能是 public static final 5）方法——抽象类可有任意方法，JDK 8 起接口有 default/static 方法，JDK 9 起接口有 private 方法\n\n扩展延伸：如何选择？需要共享代码用抽象类（如模板方法模式）；需要定义能力契约用接口（如 Runnable、Comparable）。模板方法模式：抽象类定义骨架（final template method）让子类实现抽象步骤。接口 default 方法解决集合库演进问题（如 List.sort 向后兼容）。",
     "hints": [
       "为什么 Java 是单继承多实现",
       "JDK 8 中接口新增了什么能力"
@@ -698,7 +699,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "构造方法的特点",
     "content": "以下关于 Java 构造方法的描述，错误的是？",
@@ -708,7 +709,7 @@
       "C) 构造方法可以重载（overload）",
       "D) 如果未定义构造方法，编译器自动生成无参构造"
     ],
-    "answer": "答案：B) 构造方法可以被重写\n\n解析：构造方法不能被重写（override），因为它不是普通方法且子类构造方法名与父类不同。构造方法可以重载（不同参数列表）。如果类没有定义任何构造方法，编译器自动生成默认无参构造，参数和访问修饰符与类相同。\n\n扩展延伸：如果显式定义了有参构造，编译器不会生成默认无参构造。子类构造方法第一行隐式调用 super()（父类无参构造），如果父类没有无参构造需显式调用 super(参数)。构造方法可以是 private（单例模式）。",
+    "answer": "B) 构造方法可以被重写\n\n解析：构造方法不能被重写（override），因为它不是普通方法且子类构造方法名与父类不同。构造方法可以重载（不同参数列表）。如果类没有定义任何构造方法，编译器自动生成默认无参构造，参数和访问修饰符与类相同。\n\n扩展延伸：如果显式定义了有参构造，编译器不会生成默认无参构造。子类构造方法第一行隐式调用 super()（父类无参构造），如果父类没有无参构造需显式调用 super(参数)。构造方法可以是 private（单例模式）。",
     "hints": [
       "子类构造方法默认调用父类哪个构造方法",
       "为什么构造方法不能被重写"
@@ -730,7 +731,7 @@
       "C) 局部变量存在于栈内存中",
       "D) 成员变量只能在构造方法中赋值"
     ],
-    "answer": "答案：C) 局部变量存在于栈内存中\n\n解析：成员变量（field）存储在堆中（实例变量随对象，静态变量随类），有默认值（数值 0，引用 null，boolean false）。局部变量存储在栈中，必须显式初始化后才能使用，否则编译错误。成员变量作用范围是整个类，局部变量只在定义它的方法/代码块中有效。\n\n扩展延伸：成员变量和局部变量可同名，局部变量会遮蔽（shadow）成员变量，通过 this 访问成员变量。Java 局部变量不允许被 final 之外的修饰符修饰，而成员变量可被各种访问修饰符修饰。",
+    "answer": "C) 局部变量存在于栈内存中\n\n解析：成员变量（field）存储在堆中（实例变量随对象，静态变量随类），有默认值（数值 0，引用 null，boolean false）。局部变量存储在栈中，必须显式初始化后才能使用，否则编译错误。成员变量作用范围是整个类，局部变量只在定义它的方法/代码块中有效。\n\n扩展延伸：成员变量和局部变量可同名，局部变量会遮蔽（shadow）成员变量，通过 this 访问成员变量。Java 局部变量不允许被 final 之外的修饰符修饰，而成员变量可被各种访问修饰符修饰。",
     "hints": [
       "局部变量和成员变量的初始化有什么区别",
       "this 关键字在变量遮蔽中的作用"
@@ -746,7 +747,7 @@
     "type": "short_answer",
     "title": "Object 类的常见方法",
     "content": "请列举 java.lang.Object 类中的常用方法及其作用。",
-    "answer": "答案：equals/hashCode/toString/clone/finalize/getClass/notify/wait\n\n解析：equals()—判断对象逻辑相等（默认比较引用地址）。hashCode()—返回哈希码，与 equals 有约定关系。toString()—返回字符串表示，默认是 类名@hashCode十六进制。clone()—创建并返回对象的拷贝（默认浅拷贝）。finalize()—GC 回收前调用（JDK 9 已弃用）。getClass()—返回运行时 Class 对象。notify()/notifyAll()/wait()—线程间通信。\n\n扩展延伸：为什么重写 equals 必须重写 hashCode——HashMap 等集合依赖 hashCode 定位桶位置。toString 在日志和调试中至关重要，推荐用 IDE 自动生成或使用 Apache Commons ToStringBuilder。clone 方法需实现 Cloneable 接口（标记接口），否则抛 CloneNotSupportedException。",
+    "answer": "equals/hashCode/toString/clone/finalize/getClass/notify/wait\n\n解析：equals()—判断对象逻辑相等（默认比较引用地址）。hashCode()—返回哈希码，与 equals 有约定关系。toString()—返回字符串表示，默认是 类名@hashCode十六进制。clone()—创建并返回对象的拷贝（默认浅拷贝）。finalize()—GC 回收前调用（JDK 9 已弃用）。getClass()—返回运行时 Class 对象。notify()/notifyAll()/wait()—线程间通信。\n\n扩展延伸：为什么重写 equals 必须重写 hashCode——HashMap 等集合依赖 hashCode 定位桶位置。toString 在日志和调试中至关重要，推荐用 IDE 自动生成或使用 Apache Commons ToStringBuilder。clone 方法需实现 Cloneable 接口（标记接口），否则抛 CloneNotSupportedException。",
     "hints": [
       "equals 和 hashCode 的约定关系",
       "clone 方法为什么需要实现 Cloneable 接口"
@@ -758,11 +759,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JDK 动态代理和 CGLIB 的区别",
     "content": "请说明 JDK 动态代理和 CGLIB 动态代理的区别及各自的使用场景。",
-    "answer": "答案：JDK 动态代理基于接口，CGLIB 基于继承子类\n\n解析：JDK 动态代理要求目标类实现接口，通过 Proxy.newProxyInstance() 创建，内部使用 InvocationHandler 处理调用。CGLIB（Code Generation Library）通过 ASM 生成目标类的子类，覆盖父类方法实现代理，无需接口。Spring AOP 默认使用 JDK 动态代理实现接口，CGLIB 实现类代理。\n\n扩展延伸：Spring Boot 2.0+ 默认使用 CGLIB（spring.aop.proxy-target-class=true）。CGLIB 不能代理 final 方法和 final 类（因为通过继承实现）。性能方面：JDK 7+ 后 JDK 动态代理性能已接近 CGLIB。底层原理：JDK 动态代理在运行时生成代理类字节码，CGLIB 用 ASM 框架操作字节码。",
+    "answer": "JDK 动态代理基于接口，CGLIB 基于继承子类\n\n解析：JDK 动态代理要求目标类实现接口，通过 Proxy.newProxyInstance() 创建，内部使用 InvocationHandler 处理调用。CGLIB（Code Generation Library）通过 ASM 生成目标类的子类，覆盖父类方法实现代理，无需接口。Spring AOP 默认使用 JDK 动态代理实现接口，CGLIB 实现类代理。\n\n扩展延伸：Spring Boot 2.0+ 默认使用 CGLIB（spring.aop.proxy-target-class=true）。CGLIB 不能代理 final 方法和 final 类（因为通过继承实现）。性能方面：JDK 7+ 后 JDK 动态代理性能已接近 CGLIB。底层原理：JDK 动态代理在运行时生成代理类字节码，CGLIB 用 ASM 框架操作字节码。",
     "hints": [
       "Spring AOP 如何选择 JDK 代理还是 CGLIB",
       "为什么 CGLIB 不能代理 final 方法"
@@ -775,11 +776,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "continue、break 和 return 的区别",
     "content": "请说明 Java 中 continue、break 和 return 在循环中的区别。",
-    "answer": "答案：continue 跳过本次循环，break 结束整个循环，return 结束整个方法\n\n解析：continue—结束当前迭代，进入下一次循环（在 for 循环中执行步进表达式）。break—立即退出当前循环体（不执行后续迭代）。return—结束当前方法，返回调用处。break 和 continue 可配合标签（label）控制外层循环——outer: for (...) { for (...) { break outer; } }。\n\n扩展延伸：在 switch 语句中，break 用于防止 case 穿透。带标签的 break/continue 可跳出多层嵌套循环，但可读性差，建议封装为方法或用 return 替代。Java 没有 goto 关键字，但 break/continue 标签实现了受限制的 goto 功能。",
+    "answer": "continue 跳过本次循环，break 结束整个循环，return 结束整个方法\n\n解析：continue—结束当前迭代，进入下一次循环（在 for 循环中执行步进表达式）。break—立即退出当前循环体（不执行后续迭代）。return—结束当前方法，返回调用处。break 和 continue 可配合标签（label）控制外层循环——outer: for (...) { for (...) { break outer; } }。\n\n扩展延伸：在 switch 语句中，break 用于防止 case 穿透。带标签的 break/continue 可跳出多层嵌套循环，但可读性差，建议封装为方法或用 return 替代。Java 没有 goto 关键字，但 break/continue 标签实现了受限制的 goto 功能。",
     "hints": [
       "带标签的 break 和 continue 有什么用",
       "在嵌套循环中如何一次跳出所有循环"
@@ -795,7 +796,7 @@
     "type": "short_answer",
     "title": "Java 8 函数式接口",
     "content": "请列举 Java 8 中 java.util.function 包下的常见函数式接口及其用途。",
-    "answer": "答案：常见的函数式接口：Consumer<T>（消费型）、Supplier<T>（供给型）、Function<T,R>（函数型）、Predicate<T>（断言型）、UnaryOperator<T>（一元操作）、BinaryOperator<T>（二元操作）。\n\n解析：Consumer<T>——接收一个参数，无返回值，用于 forEach 等消费操作。Supplier<T>——无参数，返回一个值，用于延迟求值。Function<T,R>——接收一个 T，返回一个 R，用于 map 转换。Predicate<T>——接收一个 T，返回 boolean，用于 filter 过滤。UnaryOperator<T>——T 到 T 的转换，Function 的特例。BinaryOperator<T>——两个 T 合并为一个 T。每个都有对应的 Bi 版本（BiConsumer、BiFunction、BiPredicate）接收两个参数。\n\n扩展延伸：基本类型特化——IntConsumer、LongFunction、DoublePredicate 等避免拆装箱开销。函数式接口可以用方法引用（ClassName::method）或 Lambda 表达式实现。@FunctionalInterface 注解是可选的，编译器检查是否符合函数式接口定义（有且仅有一个抽象方法）。",
+    "answer": "常见的函数式接口：Consumer<T>（消费型）、Supplier<T>（供给型）、Function<T,R>（函数型）、Predicate<T>（断言型）、UnaryOperator<T>（一元操作）、BinaryOperator<T>（二元操作）。\n\n解析：Consumer<T>——接收一个参数，无返回值，用于 forEach 等消费操作。Supplier<T>——无参数，返回一个值，用于延迟求值。Function<T,R>——接收一个 T，返回一个 R，用于 map 转换。Predicate<T>——接收一个 T，返回 boolean，用于 filter 过滤。UnaryOperator<T>——T 到 T 的转换，Function 的特例。BinaryOperator<T>——两个 T 合并为一个 T。每个都有对应的 Bi 版本（BiConsumer、BiFunction、BiPredicate）接收两个参数。\n\n扩展延伸：基本类型特化——IntConsumer、LongFunction、DoublePredicate 等避免拆装箱开销。函数式接口可以用方法引用（ClassName::method）或 Lambda 表达式实现。@FunctionalInterface 注解是可选的，编译器检查是否符合函数式接口定义（有且仅有一个抽象方法）。",
     "hints": [
       "四大核心函数式接口是 Consumer/Supplier/Function/Predicate",
       "基本类型特化版本可以避免自动拆装箱"
@@ -812,7 +813,7 @@
     "type": "short_answer",
     "title": "Java 包（package）的作用",
     "content": "请说明 Java 中包（package）的作用和使用规范。",
-    "answer": "答案：包用于组织类、避免命名冲突、控制访问权限。\n\n解析：包的作用：1）命名空间管理——不同包中可以有同名类（如 java.util.Date 和 java.sql.Date）。2）访问控制——默认访问权限（package-private）允许同包类访问。3）逻辑组织——按功能模块分组（如 model、service、controller）。命名规范：域名倒写 + 项目名 + 模块名（如 com.example.myapp.service）。import 语句引入其他包的类，静态导入（import static）可以直接使用静态成员。\n\n扩展延伸：Java 9 模块化系统在包之上增加了模块层——module-info.java 通过 exports 控制哪些包对外可见，requires 声明依赖模块。包的目录结构必须与包名匹配（编译时 javac 和运行时 JVM 都依赖此规则）。",
+    "answer": "包用于组织类、避免命名冲突、控制访问权限。\n\n解析：包的作用：1）命名空间管理——不同包中可以有同名类（如 java.util.Date 和 java.sql.Date）。2）访问控制——默认访问权限（package-private）允许同包类访问。3）逻辑组织——按功能模块分组（如 model、service、controller）。命名规范：域名倒写 + 项目名 + 模块名（如 com.example.myapp.service）。import 语句引入其他包的类，静态导入（import static）可以直接使用静态成员。\n\n扩展延伸：Java 9 模块化系统在包之上增加了模块层——module-info.java 通过 exports 控制哪些包对外可见，requires 声明依赖模块。包的目录结构必须与包名匹配（编译时 javac 和运行时 JVM 都依赖此规则）。",
     "hints": [
       "访问修饰符和包的关系（default 和 protected）",
       "JDK 9 模块化下包的访问控制发生了什么变化"
@@ -829,7 +830,7 @@
     "type": "short_answer",
     "title": "instanceof 关键字的使用",
     "content": "请说明 Java 中 instanceof 关键字的用法、原理和注意事项。",
-    "answer": "答案：instanceof 用于检查对象是否是某个类（或接口）的实例，返回 boolean。\n\n解析：语法：obj instanceof ClassName。如果 obj 是 null，返回 false（不会抛 NPE）。原理：JVM 检查对象的 Klass 指针与目标类型的类元数据是否匹配（或存在继承/实现关系）。注意事项：1）instanceof 检查的是运行时类型，不是编译时类型。2）如果 obj 是 null，instanceof 返回 false（安全特性）。3）泛型类型擦除后不能用 instanceof T 或 instanceof List<String>（只能 instanceof List<?> 或原始类型）。4）Java 16+ 支持 instanceof 模式匹配：if (obj instanceof String s) { System.out.println(s.length()); }。\n\n扩展延伸：JDK 16 的 instanceof 模式匹配与 switch 的 pattern matching 结合——可以在一行中完成类型检查和变量赋值。推荐使用模式匹配替代传统的先 instanceof 再强转的写法。",
+    "answer": "instanceof 用于检查对象是否是某个类（或接口）的实例，返回 boolean。\n\n解析：语法：obj instanceof ClassName。如果 obj 是 null，返回 false（不会抛 NPE）。原理：JVM 检查对象的 Klass 指针与目标类型的类元数据是否匹配（或存在继承/实现关系）。注意事项：1）instanceof 检查的是运行时类型，不是编译时类型。2）如果 obj 是 null，instanceof 返回 false（安全特性）。3）泛型类型擦除后不能用 instanceof T 或 instanceof List<String>（只能 instanceof List<?> 或原始类型）。4）Java 16+ 支持 instanceof 模式匹配：if (obj instanceof String s) { System.out.println(s.length()); }。\n\n扩展延伸：JDK 16 的 instanceof 模式匹配与 switch 的 pattern matching 结合——可以在一行中完成类型检查和变量赋值。推荐使用模式匹配替代传统的先 instanceof 再强转的写法。",
     "hints": [
       "instanceof 对 null 的处理是返回 false",
       "JDK 16 的模式匹配如何简化 instanceof 的使用"
@@ -847,7 +848,7 @@
     "type": "short_answer",
     "title": "Java 序列化机制与注意事项",
     "content": "请解释 Java 序列化机制的工作原理。serialVersionUID 的作用是什么？序列化有哪些安全风险？",
-    "answer": "答案：Java 序列化通过 ObjectOutputStream/ObjectInputStream 将对象转为字节流，实现 Serializable 接口的类才可序列化。\n\n解析：序列化过程——ObjectOutputStream.writeObject() 通过反射获取类信息、字段值，写入字节流。反序列化——ObjectInputStream.readObject() 读取字节流，创建对象（不调构造器），恢复字段值。serialVersionUID——序列化版本号，用于验证反序列化时的类版本兼容性。如果类的结构发生不兼容变更（如增减字段），serialVersionUID 变化会导致 InvalidClassException。建议显式声明 private static final long serialVersionUID，避免依赖编译器生成。\n\n扩展延伸：安全风险——1）反序列化漏洞：攻击者构造恶意字节流触发构造链中的危险代码（如 Apache Commons Collections 反序列化 RCE）。2）修复方法：反序列化白名单过滤、使用 SerialKiller/ValidatingObjectInputStream。替代方案——Protobuf、JSON（Jackson/Gson）、Kryo 等跨语言序列化方案。transient 关键字——修饰的字段不参与序列化，用来排除敏感信息或派生字段。",
+    "answer": "Java 序列化通过 ObjectOutputStream/ObjectInputStream 将对象转为字节流，实现 Serializable 接口的类才可序列化。\n\n解析：序列化过程——ObjectOutputStream.writeObject() 通过反射获取类信息、字段值，写入字节流。反序列化——ObjectInputStream.readObject() 读取字节流，创建对象（不调构造器），恢复字段值。serialVersionUID——序列化版本号，用于验证反序列化时的类版本兼容性。如果类的结构发生不兼容变更（如增减字段），serialVersionUID 变化会导致 InvalidClassException。建议显式声明 private static final long serialVersionUID，避免依赖编译器生成。\n\n扩展延伸：安全风险——1）反序列化漏洞：攻击者构造恶意字节流触发构造链中的危险代码（如 Apache Commons Collections 反序列化 RCE）。2）修复方法：反序列化白名单过滤、使用 SerialKiller/ValidatingObjectInputStream。替代方案——Protobuf、JSON（Jackson/Gson）、Kryo 等跨语言序列化方案。transient 关键字——修饰的字段不参与序列化，用来排除敏感信息或派生字段。",
     "hints": [
       "serialVersionUID 不显式声明时由编译器根据类结构自动生成",
       "反序列化漏洞的根本原因是什么"
@@ -865,7 +866,7 @@
     "type": "short_answer",
     "title": "多态的实现原理与性能影响",
     "content": "请解释 Java 中多态（方法重写）的底层实现原理。它对性能有什么影响？",
-    "answer": "答案：Java 多态通过动态分派（虚方法表）实现，运行时根据对象的实际类型确定调用的方法版本。\n\n解析：JVM 在每个类加载时创建虚方法表（vtable），存储方法的实际入口地址。调用重写方法时，通过对象的 Klass 指针找到虚方法表，从中取出实际方法的地址进行调用。这就是动态分派（Dynamic Dispatch）。相比之下，静态方法、私有方法、构造方法和父类的非重写方法使用静态分派（编译时确定，invokestatic/invokespecial 指令）。\n\n扩展延伸：性能影响——动态分派相比静态分派的额外开销是一次虚方法表查找（约 1-2 个 CPU 指令），可以忽略不计。JIT 会做内联缓存（Inline Cache）优化——当调用点只有少数几种实际类型时，JIT 做类型猜测并直接内联。如果猜测失败则退回到虚分派。接口调用（invokeinterface）比类方法调用的虚分派稍慢（接口方法表 itable 查找比 vtable 多一步）。final 方法或 final 类的方法使用 invokespecial 或 invokestatic，不会动态分派。",
+    "answer": "Java 多态通过动态分派（虚方法表）实现，运行时根据对象的实际类型确定调用的方法版本。\n\n解析：JVM 在每个类加载时创建虚方法表（vtable），存储方法的实际入口地址。调用重写方法时，通过对象的 Klass 指针找到虚方法表，从中取出实际方法的地址进行调用。这就是动态分派（Dynamic Dispatch）。相比之下，静态方法、私有方法、构造方法和父类的非重写方法使用静态分派（编译时确定，invokestatic/invokespecial 指令）。\n\n扩展延伸：性能影响——动态分派相比静态分派的额外开销是一次虚方法表查找（约 1-2 个 CPU 指令），可以忽略不计。JIT 会做内联缓存（Inline Cache）优化——当调用点只有少数几种实际类型时，JIT 做类型猜测并直接内联。如果猜测失败则退回到虚分派。接口调用（invokeinterface）比类方法调用的虚分派稍慢（接口方法表 itable 查找比 vtable 多一步）。final 方法或 final 类的方法使用 invokespecial 或 invokestatic，不会动态分派。",
     "hints": [
       "虚方法表（vtable）和接口方法表（itable）的区别",
       "JIT 如何通过内联缓存优化虚方法调用"
@@ -883,7 +884,7 @@
     "type": "short_answer",
     "title": "Java 的四种访问修饰符设计哲学",
     "content": "请说明 Java 四种访问修饰符的设计意图和使用场景。“访问控制”与“封装”的关系是什么？",
-    "answer": "答案：Java 四种访问级别（public/protected/default/private）体现了信息隐藏和封装的设计原则，控制类成员的可见范围。\n\n解析：设计意图——private（类内部实现细节，不对外暴露）、default/package-private（同包协作，不需要对外公开的实现内部）、protected（允许子类访问但不对外公开）、public（对外 API，稳定接口）。public 和 protected 构成对外接口，private 和 default 是内部实现。封装（Encapsulation）通过访问控制实现——对外公开稳定的接口，隐藏可能变化的实现。这降低了代码耦合，允许内部实现自由修改而不影响调用方。\n\n扩展延伸：最小访问权限原则（Effective Java 第 15 条）——尽可能降低类和成员的访问级别。能 private 不 default，能 default 不 protected，能 protected 不 public。JDK 9 模块化在包级别之上增加了模块访问控制——exports 控制哪些包对外可见，opens 控制哪些包允许反射访问。测试类通常与目标类同包（使用默认访问级别），或通过模块的 opens 语句开放测试包。",
+    "answer": "Java 四种访问级别（public/protected/default/private）体现了信息隐藏和封装的设计原则，控制类成员的可见范围。\n\n解析：设计意图——private（类内部实现细节，不对外暴露）、default/package-private（同包协作，不需要对外公开的实现内部）、protected（允许子类访问但不对外公开）、public（对外 API，稳定接口）。public 和 protected 构成对外接口，private 和 default 是内部实现。封装（Encapsulation）通过访问控制实现——对外公开稳定的接口，隐藏可能变化的实现。这降低了代码耦合，允许内部实现自由修改而不影响调用方。\n\n扩展延伸：最小访问权限原则（Effective Java 第 15 条）——尽可能降低类和成员的访问级别。能 private 不 default，能 default 不 protected，能 protected 不 public。JDK 9 模块化在包级别之上增加了模块访问控制——exports 控制哪些包对外可见，opens 控制哪些包允许反射访问。测试类通常与目标类同包（使用默认访问级别），或通过模块的 opens 语句开放测试包。",
     "hints": [
       "最小访问权限原则为什么是良好设计的标志",
       "JDK 9 模块化如何增强访问控制"
@@ -901,7 +902,7 @@
     "type": "short_answer",
     "title": "static 关键字的用途",
     "content": "请说明 Java 中 static 关键字的用途。静态变量、静态方法和静态代码块的加载时机是什么？",
-    "answer": "答案：static 表示类级别（所有实例共享），在类加载时初始化，无需实例即可访问。\n\n解析：static 变量——类的所有实例共享同一份内存，通过类名访问。static 方法——隐含参数没有 this 引用，只能访问 static 成员。static 代码块——在类加载时执行一次，用于初始化静态资源。加载顺序：静态变量声明和静态代码块按代码顺序执行（类加载的准备阶段分配内存赋默认值，初始化阶段执行赋值语句）。实例变量在 new 对象时初始化。\n\n扩展延伸：static 导入——import static java.lang.Math.sin，直接使用 sin() 而不需要 Math.sin()。静态内部类——不持有外部类引用，与普通内部类有本质区别。静态方法的继承——子类可以声明同名静态方法（隐藏父类方法），不支持多态（调用由编译时类型决定）。静态方法不能重写，因为重写基于运行时类型，静态方法基于编译时类型绑定。",
+    "answer": "static 表示类级别（所有实例共享），在类加载时初始化，无需实例即可访问。\n\n解析：static 变量——类的所有实例共享同一份内存，通过类名访问。static 方法——隐含参数没有 this 引用，只能访问 static 成员。static 代码块——在类加载时执行一次，用于初始化静态资源。加载顺序：静态变量声明和静态代码块按代码顺序执行（类加载的准备阶段分配内存赋默认值，初始化阶段执行赋值语句）。实例变量在 new 对象时初始化。\n\n扩展延伸：static 导入——import static java.lang.Math.sin，直接使用 sin() 而不需要 Math.sin()。静态内部类——不持有外部类引用，与普通内部类有本质区别。静态方法的继承——子类可以声明同名静态方法（隐藏父类方法），不支持多态（调用由编译时类型决定）。静态方法不能重写，因为重写基于运行时类型，静态方法基于编译时类型绑定。",
     "hints": [
       "静态变量在类加载的准备阶段分配内存赋默认值",
       "静态方法不能重写（Override）但可以隐藏（Hide）"
@@ -919,7 +920,7 @@
     "type": "short_answer",
     "title": "hashCode 和 equals 的契约",
     "content": "请说明 Java 中 hashCode() 和 equals() 的约定关系。为什么重写 equals() 时必须同时重写 hashCode()？如果不这样做会有什么问题？",
-    "answer": "答案：根据 Java 对象约定，两个对象 equals() 返回 true 时，它们的 hashCode() 必须返回相同的值。反之不成立（哈希碰撞允许不同对象有相同哈希码）。重写 equals() 时也必须重写 hashCode()，否则会违反一致性约定，导致基于哈希的集合（HashMap、HashSet、HashTable）行为异常。\n\n解析：Object 规范对 hashCode 的约定——1）同一对象多次调用 hashCode() 应返回相同整数（equals 比较中使用的信息未修改的前提下）。2）如果两个对象 equals() 返回 true，它们的 hashCode() 必须相等。3）如果两个对象 equals() 返回 false，它们的 hashCode() 可以相等（哈希碰撞，但应尽量减少碰撞以提高性能）。\n\n扩展延伸：不重写 hashCode() 的后果——如果只重写 equals() 不重写 hashCode()，HashMap 的 put 和 get 会出问题。因为 HashMap 先根据 hashCode() 定位桶，再用 equals() 比较同一桶中的元素。两个对象 equals() 相等但 hashCode() 不同，会被放入不同的桶，导致在同一个 HashMap 中同时存在两个逻辑相等的 key（无法正确 get）。编写 hashCode 的常见方法：Objects.hash(field1, field2) 或使用 31 质数乘法（如 result = 31 * result + (field != null ? field.hashCode() : 0)）。Lombok 的 @EqualsAndHashCode 也可以自动生成。",
+    "answer": "根据 Java 对象约定，两个对象 equals() 返回 true 时，它们的 hashCode() 必须返回相同的值。反之不成立（哈希碰撞允许不同对象有相同哈希码）。重写 equals() 时也必须重写 hashCode()，否则会违反一致性约定，导致基于哈希的集合（HashMap、HashSet、HashTable）行为异常。\n\n解析：Object 规范对 hashCode 的约定——1）同一对象多次调用 hashCode() 应返回相同整数（equals 比较中使用的信息未修改的前提下）。2）如果两个对象 equals() 返回 true，它们的 hashCode() 必须相等。3）如果两个对象 equals() 返回 false，它们的 hashCode() 可以相等（哈希碰撞，但应尽量减少碰撞以提高性能）。\n\n扩展延伸：不重写 hashCode() 的后果——如果只重写 equals() 不重写 hashCode()，HashMap 的 put 和 get 会出问题。因为 HashMap 先根据 hashCode() 定位桶，再用 equals() 比较同一桶中的元素。两个对象 equals() 相等但 hashCode() 不同，会被放入不同的桶，导致在同一个 HashMap 中同时存在两个逻辑相等的 key（无法正确 get）。编写 hashCode 的常见方法：Objects.hash(field1, field2) 或使用 31 质数乘法（如 result = 31 * result + (field != null ? field.hashCode() : 0)）。Lombok 的 @EqualsAndHashCode 也可以自动生成。",
     "hints": [
       "散列表（HashMap、HashSet）依赖 hashCode() 定位桶位置",
       "两个 equals 相等的对象散列到不同桶会导致内存泄漏和逻辑错误"
@@ -938,7 +939,7 @@
     "type": "short_answer",
     "title": "Comparable 和 Comparator 的区别",
     "content": "请说明 Comparable 和 Comparator 两个接口的区别。各自的使用场景是什么？哪种方式更灵活？",
-    "answer": "答案：Comparable 定义自然排序（compareTo 方法，一个类只能有一种自然排序），Comparator 定义外部比较器（compare 方法，一个类可以有多种排序方式）。Comparator 更灵活，适合多维度排序和不修改原类代码的场景。\n\n解析：Comparable——java.lang.Comparable<T>，compareTo(T o) 方法。对象自身实现该接口定义\"自然排序\"（Natural Ordering）。适用场景：类有明确的排序逻辑（如 String 的字典序、Integer 的数字序）。缺点是只能有一种排序方式。Comparator——java.util.Comparator<T>，compare(T o1, T o2) 方法。独立于被比较对象的外部比较器。适用场景：1）需要多种排序方式（按姓名、按年龄、按日期）。2）不能或不想修改原类代码。3）需要在排序时使用特定逻辑（如忽略大小写、倒序）。\n\n扩展延伸：JDK 8 后 Comparator 有丰富的链式方法——Comparator.comparing(Person::getName).thenComparing(Person::getAge).reversed()。支持 null 值处理——nullsFirst() 和 nullsLast()。当使用 TreeSet 或 TreeMap 时，如果没有提供 Comparator，则使用元素的 Comparable（否则抛出 ClassCastException）。Comparable 和 Comparator 都与 equals() 保持一致性的建议：compareTo 返回 0 时 equals 也返回 true（虽然不是强制要求，但不一致会导致有序集合（SortedSet）的行为异常）。",
+    "answer": "Comparable 定义自然排序（compareTo 方法，一个类只能有一种自然排序），Comparator 定义外部比较器（compare 方法，一个类可以有多种排序方式）。Comparator 更灵活，适合多维度排序和不修改原类代码的场景。\n\n解析：Comparable——java.lang.Comparable<T>，compareTo(T o) 方法。对象自身实现该接口定义\"自然排序\"（Natural Ordering）。适用场景：类有明确的排序逻辑（如 String 的字典序、Integer 的数字序）。缺点是只能有一种排序方式。Comparator——java.util.Comparator<T>，compare(T o1, T o2) 方法。独立于被比较对象的外部比较器。适用场景：1）需要多种排序方式（按姓名、按年龄、按日期）。2）不能或不想修改原类代码。3）需要在排序时使用特定逻辑（如忽略大小写、倒序）。\n\n扩展延伸：JDK 8 后 Comparator 有丰富的链式方法——Comparator.comparing(Person::getName).thenComparing(Person::getAge).reversed()。支持 null 值处理——nullsFirst() 和 nullsLast()。当使用 TreeSet 或 TreeMap 时，如果没有提供 Comparator，则使用元素的 Comparable（否则抛出 ClassCastException）。Comparable 和 Comparator 都与 equals() 保持一致性的建议：compareTo 返回 0 时 equals 也返回 true（虽然不是强制要求，但不一致会导致有序集合（SortedSet）的行为异常）。",
     "hints": [
       "Comparable 是\"内部比较器\"，Comparator 是\"外部比较器\"",
       "Comparator 的链式调用（comparing.thenComparing.reversed）非常灵活"
@@ -956,7 +957,7 @@
     "type": "short_answer",
     "title": "构造器链与 this/super 关键字",
     "content": "请解释 Java 中构造器的调用链是如何形成的。this() 和 super() 在构造器中的使用规则是什么？",
-    "answer": "答案：Java 构造子类对象时，会形成从子类到根父类的构造器链（Constructor Chaining），保证所有父类的初始化先于子类。每个构造器的第一行必须是 this()（调用同类其他构造器）或 super()（调用直接父类构造器），不加时编译器隐式插入 super()。\n\n解析：构造器链规则——1）子类构造器默认第一行是 super()（调用父类无参构造器）。如果父类没有无参构造器，则必须在第一行显式调用 super(参数)。2）this(参数) 调用同类重载构造器，被调用的构造器最终仍然会调用 super()。3）this() 和 super() 不能同时出现在同一个构造器中（它们都必须放在第一行）。4）构造器不能被继承（不能 override），但子类可以通过 super() 调用父类构造器。\n\n扩展延伸：构造器链执行顺序——以 new Child() 为例，执行顺序是：父类静态代码块 → 子类静态代码块 → 父类实例变量初始化 → 父类构造器代码 → 子类实例变量初始化 → 子类构造器代码。注意静态代码块只在类加载时执行一次。final 字段的保证：在构造器中，如果通过 this 引用将当前对象传递出去（逸出），可能导致其他线程看到未完成构造的对象——这个逸出问题被称为\"构造器中的 this 逸出\"，是并发编程中的常见陷阱。",
+    "answer": "Java 构造子类对象时，会形成从子类到根父类的构造器链（Constructor Chaining），保证所有父类的初始化先于子类。每个构造器的第一行必须是 this()（调用同类其他构造器）或 super()（调用直接父类构造器），不加时编译器隐式插入 super()。\n\n解析：构造器链规则——1）子类构造器默认第一行是 super()（调用父类无参构造器）。如果父类没有无参构造器，则必须在第一行显式调用 super(参数)。2）this(参数) 调用同类重载构造器，被调用的构造器最终仍然会调用 super()。3）this() 和 super() 不能同时出现在同一个构造器中（它们都必须放在第一行）。4）构造器不能被继承（不能 override），但子类可以通过 super() 调用父类构造器。\n\n扩展延伸：构造器链执行顺序——以 new Child() 为例，执行顺序是：父类静态代码块 → 子类静态代码块 → 父类实例变量初始化 → 父类构造器代码 → 子类实例变量初始化 → 子类构造器代码。注意静态代码块只在类加载时执行一次。final 字段的保证：在构造器中，如果通过 this 引用将当前对象传递出去（逸出），可能导致其他线程看到未完成构造的对象——这个逸出问题被称为\"构造器中的 this 逸出\"，是并发编程中的常见陷阱。",
     "hints": [
       "编译器会在构造器第一行隐式插入 super()",
       "构造器链的执行顺序是父类先于子类"
@@ -974,7 +975,7 @@
     "type": "short_answer",
     "title": "协变返回类型（Covariant Return Type）",
     "content": "请解释 Java 中的协变返回类型（Covariant Return Type）。它是从哪个 JDK 版本引入的？有什么作用？",
-    "answer": "答案：协变返回类型允许子类重写方法时返回父类方法返回类型的子类型，提升了 API 的灵活性和类型安全性。JDK 5 引入。\n\n解析：基本原理——父类定义 Object clone()，子类重写为 MyClass clone()（返回子类型）。编译器在字节码层面生成一个桥接方法（Bridge Method，返回父类声明类型，调用返回子类型的实际方法）。这样既保持了字节码兼容性（Java 字节码方法签名包含返回类型），又提供给调用方更具体的返回类型。\n\n扩展延伸：JDK 5 之前的赋值需要强制转型：((MyClass) obj.clone())。协变返回类型后可以直接 MyClass copy = obj.clone()（不需要转型）。协变返回类型实际上利用了泛型中的桥接方法机制。常见应用实例：1）Object.clone() → 任何类重写时返回自己的类型。2）工厂方法——abstract Animal create() → Dog create(), Cat create()。注意：返回类型是协变的，参数类型是逆变的（但 Java 不支持参数类型的逆变——重写时参数类型必须完全一致，否则变成重载）。",
+    "answer": "协变返回类型允许子类重写方法时返回父类方法返回类型的子类型，提升了 API 的灵活性和类型安全性。JDK 5 引入。\n\n解析：基本原理——父类定义 Object clone()，子类重写为 MyClass clone()（返回子类型）。编译器在字节码层面生成一个桥接方法（Bridge Method，返回父类声明类型，调用返回子类型的实际方法）。这样既保持了字节码兼容性（Java 字节码方法签名包含返回类型），又提供给调用方更具体的返回类型。\n\n扩展延伸：JDK 5 之前的赋值需要强制转型：((MyClass) obj.clone())。协变返回类型后可以直接 MyClass copy = obj.clone()（不需要转型）。协变返回类型实际上利用了泛型中的桥接方法机制。常见应用实例：1）Object.clone() → 任何类重写时返回自己的类型。2）工厂方法——abstract Animal create() → Dog create(), Cat create()。注意：返回类型是协变的，参数类型是逆变的（但 Java 不支持参数类型的逆变——重写时参数类型必须完全一致，否则变成重载）。",
     "hints": [
       "编译器在字节码中生成桥接方法来实现协变返回类型",
       "协变返回类型避免了调用者的强制类型转换"
@@ -992,7 +993,7 @@
     "type": "short_answer",
     "title": "可变参数（Varargs）与静态导入",
     "content": "请说明 Java 可变参数（Varargs）的语法规则和注意事项。静态导入（Static Import）的使用场景是什么？",
-    "answer": "答案：可变参数用类型... 声明（如 void method(String... args)），允许传入任意数量的参数（包括零个）；静态导入（import static）允许直接使用导入的静态成员，无需类名前缀。\n\n解析：可变参数——实质是语法糖，编译后转换为数组。规则：1）一个方法只能有一个可变参数。2）可变参数必须是方法签名的最后一个参数。3）调用时可以传数组、传多个参数或不传参（空数组）。4）重载时的优先级：固定参数方法优先于可变参数方法。常见陷阱：性能问题（每次调用都创建数组），频繁调用应使用方法重载替代。静态导入——import static java.lang.Math.max; 或 import static java.lang.Math.*; 之后可以直接使用 max(1, 2)，不需要 Math.max(1, 2)。适用场景：工具类方法（Math、Collections、Arrays）和常量使用频繁时。\n\n扩展延伸：可变参数——JDK 5 引入。在反射和方法句柄（MethodHandle）中广泛使用。注意数组兼容性：如果调用时传入 null，方法内部会得到 null 而非空数组（这是一个常见的 NPE 来源）。静态导入——过度使用会降低代码可读性（破坏命名空间），建议仅用于频繁使用且语义清晰的静态成员（如 Assert 中的 assertEquals）。也可导入常量和枚举值。",
+    "answer": "可变参数用类型... 声明（如 void method(String... args)），允许传入任意数量的参数（包括零个）；静态导入（import static）允许直接使用导入的静态成员，无需类名前缀。\n\n解析：可变参数——实质是语法糖，编译后转换为数组。规则：1）一个方法只能有一个可变参数。2）可变参数必须是方法签名的最后一个参数。3）调用时可以传数组、传多个参数或不传参（空数组）。4）重载时的优先级：固定参数方法优先于可变参数方法。常见陷阱：性能问题（每次调用都创建数组），频繁调用应使用方法重载替代。静态导入——import static java.lang.Math.max; 或 import static java.lang.Math.*; 之后可以直接使用 max(1, 2)，不需要 Math.max(1, 2)。适用场景：工具类方法（Math、Collections、Arrays）和常量使用频繁时。\n\n扩展延伸：可变参数——JDK 5 引入。在反射和方法句柄（MethodHandle）中广泛使用。注意数组兼容性：如果调用时传入 null，方法内部会得到 null 而非空数组（这是一个常见的 NPE 来源）。静态导入——过度使用会降低代码可读性（破坏命名空间），建议仅用于频繁使用且语义清晰的静态成员（如 Assert 中的 assertEquals）。也可导入常量和枚举值。",
     "hints": [
       "可变参数编译后就是数组，每次调用创建新数组",
       "静态导入过度使用会让代码难以阅读和理解来源"
@@ -1010,7 +1011,7 @@
     "type": "short_answer",
     "title": "组合优先于继承",
     "content": "请解释\"组合优先于继承\"（Favor Composition over Inheritance）的设计原则。在什么情况下继承仍然是最佳选择？组合比继承的优势在哪里？",
-    "answer": "答案：组合优先于继承是指尽量通过对象组合（在一个类中引用其他类的对象）来实现代码复用，而不是通过继承。\n\n组合的优势：\n1. 更低耦合：组合的类之间通过接口交互，不继承实现的细节。子类耦合父类实现的每个细节。\n2. 更好的封装：继承打破封装，子类可以访问父类的受保护成员。组合通过公共接口访问。\n3. 更灵活：运行时可以替换组件（策略模式），继承在编译时已经固定。\n4. 避免脆弱的基类问题：父类实现变化会破坏所有子类（Fragile Base Class Problem）\n5. 不涉及复杂的层次结构：多层继承容易导致菱形问题（Diamond Problem）\n\n继承仍然是最佳选择的场景：\n1. 子类是父类的一种特化，符合 is-a 关系（如 Dog extends Animal）\n2. 子类不需要改变父类的行为，只需要扩展行为\n3. 父类的设计就是为了被继承（抽象类或设计好的模板方法）\n4. 需要利用多态（Polymorphism）——用统一接口处理不同子类\n\n设计的经验法则：\n- Has-a 关系使用组合，Is-a 关系使用继承\n- 优先使用接口（Interface）定义协议，组合实现具体行为\n- 设计抽象类时，考虑是否真的需要继承层次结构\n\n扩展延伸：Go 语言通过嵌入（Embedding）提供了另一种思路——类似继承的语法但本质是组合。Java 的 @Override 注解帮助检测继承错误（父类方法签名改变时编译报错）。Favor Composition over Inheritance 是 Design Patterns（GoF）中反复出现的核心原则。",
+    "answer": "组合优先于继承是指尽量通过对象组合（在一个类中引用其他类的对象）来实现代码复用，而不是通过继承。\n\n组合的优势：\n1. 更低耦合：组合的类之间通过接口交互，不继承实现的细节。子类耦合父类实现的每个细节。\n2. 更好的封装：继承打破封装，子类可以访问父类的受保护成员。组合通过公共接口访问。\n3. 更灵活：运行时可以替换组件（策略模式），继承在编译时已经固定。\n4. 避免脆弱的基类问题：父类实现变化会破坏所有子类（Fragile Base Class Problem）\n5. 不涉及复杂的层次结构：多层继承容易导致菱形问题（Diamond Problem）\n\n继承仍然是最佳选择的场景：\n1. 子类是父类的一种特化，符合 is-a 关系（如 Dog extends Animal）\n2. 子类不需要改变父类的行为，只需要扩展行为\n3. 父类的设计就是为了被继承（抽象类或设计好的模板方法）\n4. 需要利用多态（Polymorphism）——用统一接口处理不同子类\n\n设计的经验法则：\n- Has-a 关系使用组合，Is-a 关系使用继承\n- 优先使用接口（Interface）定义协议，组合实现具体行为\n- 设计抽象类时，考虑是否真的需要继承层次结构\n\n扩展延伸：Go 语言通过嵌入（Embedding）提供了另一种思路——类似继承的语法但本质是组合。Java 的 @Override 注解帮助检测继承错误（父类方法签名改变时编译报错）。Favor Composition over Inheritance 是 Design Patterns（GoF）中反复出现的核心原则。",
     "hints": [
       "组合（has-a）低耦合灵活，继承（is-a）强耦合但支持多态",
       "脆弱的基类问题：父类变化破坏所有子类"
@@ -1028,7 +1029,7 @@
     "type": "short_answer",
     "title": "接口与抽象类的选型",
     "content": "在 Java 中，接口（Interface）和抽象类（Abstract Class）的使用场景如何选择？JDK 8+ 中接口增加了默认方法（default method）后，两者的区别发生了什么变化？",
-    "answer": "答案：接口和抽象类都是抽象类型，但有不同的设计意图和适用场景。\n\nJDK 8+ 之前的核心区别：\n1. 接口：只能声明抽象方法（不能有实现），字段只能是 public static final\n2. 抽象类：可以有具体方法、字段、构造函数\n\nJDK 8 之后的变化：\n1. 接口增加了 default method（默认方法）和 static method\n2. 接口也可以写方法实现，一定程度上模糊了接口和抽象类的界限\n\n接口 vs 抽象类的选择标准：\n\n使用接口的场景：\n- 定义契约（Contract）：\"你的对象能做到什么\"（行为的抽象）\n- 不相关的类之间共享行为：如 Comparable、Runnable\n- 多重类型继承：一个类可实现多个接口\n- 需要被多个不同的抽象层级实现\n\n使用抽象类的场景：\n- 相关类之间共享状态和实现：\"你的对象是什么\"（状态的抽象）\n- 提供部分实现 + 模板方法模式\n- 有受保护成员需要被子类访问\n- 需要非 public static final 字段\n\n本质上：接口表达能力（ability），抽象类表达身份（identity）。\n\n经验法则：\n- 优先使用接口定义类型\n- 优先使用接口定义的默认方法提供辅助实现\n- 只在需要共享状态或模板方法时使用抽象类\n- SimpleDateFormat 是\"抽象类比接口更合适\"的反面例子——DateFormat 是抽象类\n\n扩展延伸：Java 的 函数式接口（Functional Interface，只有一个抽象方法的接口）是 Lambda 表达式的基础。@FunctionalInterface 注解确保接口只有一个抽象方法。Java 8 引入的默认方法的动机是 Stream API 的向后兼容性（让 Collections API 新增 default 方法而不破坏已有实现）。",
+    "answer": "接口和抽象类都是抽象类型，但有不同的设计意图和适用场景。\n\nJDK 8+ 之前的核心区别：\n1. 接口：只能声明抽象方法（不能有实现），字段只能是 public static final\n2. 抽象类：可以有具体方法、字段、构造函数\n\nJDK 8 之后的变化：\n1. 接口增加了 default method（默认方法）和 static method\n2. 接口也可以写方法实现，一定程度上模糊了接口和抽象类的界限\n\n接口 vs 抽象类的选择标准：\n\n使用接口的场景：\n- 定义契约（Contract）：\"你的对象能做到什么\"（行为的抽象）\n- 不相关的类之间共享行为：如 Comparable、Runnable\n- 多重类型继承：一个类可实现多个接口\n- 需要被多个不同的抽象层级实现\n\n使用抽象类的场景：\n- 相关类之间共享状态和实现：\"你的对象是什么\"（状态的抽象）\n- 提供部分实现 + 模板方法模式\n- 有受保护成员需要被子类访问\n- 需要非 public static final 字段\n\n本质上：接口表达能力（ability），抽象类表达身份（identity）。\n\n经验法则：\n- 优先使用接口定义类型\n- 优先使用接口定义的默认方法提供辅助实现\n- 只在需要共享状态或模板方法时使用抽象类\n- SimpleDateFormat 是\"抽象类比接口更合适\"的反面例子——DateFormat 是抽象类\n\n扩展延伸：Java 的 函数式接口（Functional Interface，只有一个抽象方法的接口）是 Lambda 表达式的基础。@FunctionalInterface 注解确保接口只有一个抽象方法。Java 8 引入的默认方法的动机是 Stream API 的向后兼容性（让 Collections API 新增 default 方法而不破坏已有实现）。",
     "hints": [
       "接口 = 能力契约（多继承），抽象类 = 身份抽象（状态共享+模板方法）",
       "默认方法模糊了界限但仍保留核心区别：字段、构造函数、受保护成员"
@@ -1046,7 +1047,7 @@
     "type": "short_answer",
     "title": "注解处理器",
     "content": "请介绍 Java 注解处理器（Annotation Processor）的原理和使用场景。它在编译时的处理流程是什么？Lombok 和 MapStruct 是如何利用注解处理器实现代码生成的？",
-    "answer": "答案：注解处理器在编译时扫描和处理注解，自动生成代码。\n\n处理流程：\n1. 编译开始，javac 调用注解处理器（通过 SPI 注册，类路径下 META-INF/services/javax.annotation.processing.Processor）\n2. 处理器的 process() 方法被调用，传入 RoundEnvironment（包含标注了特定注解的元素）\n3. 处理器分析被注解的元素（类、方法、字段），生成 Java 源文件或字节码\n4. 如果生成了新文件，启动新一轮处理（直到没有新文件生成）\n5. 编译新生成的源文件，最终一起编译为 .class\n\n核心 API：\n- AbstractProcessor：所有处理器的基类，实现 process() 方法\n- RoundEnvironment：当前轮次的注解环境，获取被注解的元素\n- Filer：创建新文件（源文件、类文件、资源文件）的工具\n- Messager：输出编译日志（注意、警告、错误）\n- Elements/TypeMirror：类型和元素的反射 API\n\nLombok 的原理：\n- 利用注解处理器的 API，在编译时修改 AST（抽象语法树）\n- @Getter/@Setter：在 AST 中插入 getter/setter 方法\n- @Builder：生成 Builder 设计模式的辅助类\n- 注：Lombok 使用的不是标准 Filer API（生成新文件），而是直接操作编译器的内部 AST（利用非标准 API）\n\nMapStruct 的原理：\n- 在编译时自动生成 Bean 映射代码（类似于 ModelMapper，但零运行时反射）\n- 读取目标接口的方法签名，为每个方法生成映射实现类\n- 生成的代码是普通的 Java 类，没有运行时依赖\n\n扩展延伸：Google Auto 提供 @AutoService、@AutoValue 等注解。Error Prone 使用注解处理器做静态分析。注解处理器不会增加运行时开销（编译时已完成代码生成）。KAPT（Kotlin Annotation Processing Tool）支持在 Kotlin 中使用 Java 注解处理器。",
+    "answer": "注解处理器在编译时扫描和处理注解，自动生成代码。\n\n处理流程：\n1. 编译开始，javac 调用注解处理器（通过 SPI 注册，类路径下 META-INF/services/javax.annotation.processing.Processor）\n2. 处理器的 process() 方法被调用，传入 RoundEnvironment（包含标注了特定注解的元素）\n3. 处理器分析被注解的元素（类、方法、字段），生成 Java 源文件或字节码\n4. 如果生成了新文件，启动新一轮处理（直到没有新文件生成）\n5. 编译新生成的源文件，最终一起编译为 .class\n\n核心 API：\n- AbstractProcessor：所有处理器的基类，实现 process() 方法\n- RoundEnvironment：当前轮次的注解环境，获取被注解的元素\n- Filer：创建新文件（源文件、类文件、资源文件）的工具\n- Messager：输出编译日志（注意、警告、错误）\n- Elements/TypeMirror：类型和元素的反射 API\n\nLombok 的原理：\n- 利用注解处理器的 API，在编译时修改 AST（抽象语法树）\n- @Getter/@Setter：在 AST 中插入 getter/setter 方法\n- @Builder：生成 Builder 设计模式的辅助类\n- 注：Lombok 使用的不是标准 Filer API（生成新文件），而是直接操作编译器的内部 AST（利用非标准 API）\n\nMapStruct 的原理：\n- 在编译时自动生成 Bean 映射代码（类似于 ModelMapper，但零运行时反射）\n- 读取目标接口的方法签名，为每个方法生成映射实现类\n- 生成的代码是普通的 Java 类，没有运行时依赖\n\n扩展延伸：Google Auto 提供 @AutoService、@AutoValue 等注解。Error Prone 使用注解处理器做静态分析。注解处理器不会增加运行时开销（编译时已完成代码生成）。KAPT（Kotlin Annotation Processing Tool）支持在 Kotlin 中使用 Java 注解处理器。",
     "hints": [
       "注解处理器在编译时通过 SPI 发现，每轮生成新文件触发下一轮",
       "Lombok 操作 AST（非标准），MapStruct 生成映射实现文件（标准 Filer）"
@@ -1060,11 +1061,11 @@
   },
   {
     "category": "java",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "服务加载器 SPI",
     "content": "请介绍 Java 的 ServiceLoader 和服务加载机制（SPI）。SPI 和 API 的区别是什么？在 Spring Boot 自动配置和 JDBC 驱动加载中是如何使用 SPI 的？",
-    "answer": "答案：SPI（Service Provider Interface）是 Java 内置的插件机制，允许在运行时发现和加载服务提供者。\n\nSPI vs API：\n- API（Application Programming Interface）：由提供者定义接口，调用者使用\n- SPI（Service Provider Interface）：由框架定义接口，提供者实现。框架负责发现和加载所有实现\n- 典型例子：JDBC API 是 API（大家调用 java.sql.Connection），JDBC Driver 是 SPI（数据库厂商实现 java.sql.Driver 并通过 META-INF/services 注册）\n\nServiceLoader 机制：\n1. 服务提供者在 JAR 的 META-INF/services/ 目录下创建文件，文件名=服务接口全限定名\n2. 文件内容=实现类的全限定名（每行一个，支持多实现）\n3. 运行时 ServiceLoader.load(ServiceInterface.class) 读取该文件并加载实现类\n4. 实现类通过无参构造函数实例化\n\nJDBC 驱动加载：\n- 传统方法（JDK 6 之前）：Class.forName(\"com.mysql.jdbc.Driver\")——手动注册\n- SPI 方法（JDK 6+）：DriverManager 在初始化时通过 ServiceLoader 加载所有 META-INF/services/java.sql.Driver 中注册的驱动\n- 各数据库厂商标明实现类：mysql-connector-java.jar 中包含 META-INF/services/java.sql.Driver→com.mysql.cj.jdbc.Driver\n\nSpring Boot 自动配置：\n- 使用 spring.factories 或 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports 注册自动配置类\n- Spring Boot 启动时用 SpringFactoriesLoader（类似于 ServiceLoader 但更灵活）加载注册的自动配置\n- AutoConfiguration.imports 文件按条件（@ConditionalOnClass 等）决定哪些自动配置生效\n\n扩展延伸：Java 9+ 模块化系统中，SPI 通过 provides...with 语句声明（module-info.java）。Java 9 的 ServiceLoader 支持模块路径的跨模块加载。自定义 ServiceLoader 需要考虑线程上下文类加载器（Thread Context ClassLoader），在框架环境中尤为重要。",
+    "answer": "SPI（Service Provider Interface）是 Java 内置的插件机制，允许在运行时发现和加载服务提供者。\n\nSPI vs API：\n- API（Application Programming Interface）：由提供者定义接口，调用者使用\n- SPI（Service Provider Interface）：由框架定义接口，提供者实现。框架负责发现和加载所有实现\n- 典型例子：JDBC API 是 API（大家调用 java.sql.Connection），JDBC Driver 是 SPI（数据库厂商实现 java.sql.Driver 并通过 META-INF/services 注册）\n\nServiceLoader 机制：\n1. 服务提供者在 JAR 的 META-INF/services/ 目录下创建文件，文件名=服务接口全限定名\n2. 文件内容=实现类的全限定名（每行一个，支持多实现）\n3. 运行时 ServiceLoader.load(ServiceInterface.class) 读取该文件并加载实现类\n4. 实现类通过无参构造函数实例化\n\nJDBC 驱动加载：\n- 传统方法（JDK 6 之前）：Class.forName(\"com.mysql.jdbc.Driver\")——手动注册\n- SPI 方法（JDK 6+）：DriverManager 在初始化时通过 ServiceLoader 加载所有 META-INF/services/java.sql.Driver 中注册的驱动\n- 各数据库厂商标明实现类：mysql-connector-java.jar 中包含 META-INF/services/java.sql.Driver→com.mysql.cj.jdbc.Driver\n\nSpring Boot 自动配置：\n- 使用 spring.factories 或 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports 注册自动配置类\n- Spring Boot 启动时用 SpringFactoriesLoader（类似于 ServiceLoader 但更灵活）加载注册的自动配置\n- AutoConfiguration.imports 文件按条件（@ConditionalOnClass 等）决定哪些自动配置生效\n\n扩展延伸：Java 9+ 模块化系统中，SPI 通过 provides...with 语句声明（module-info.java）。Java 9 的 ServiceLoader 支持模块路径的跨模块加载。自定义 ServiceLoader 需要考虑线程上下文类加载器（Thread Context ClassLoader），在框架环境中尤为重要。",
     "hints": [
       "SPI = 框架定义接口 + 提供者实现 + META-INF/services 注册",
       "JDBC 驱动通过 SPI 自动注册，Spring Boot 的 spring.factories 是 SPI 的扩展"
@@ -1082,7 +1083,7 @@
     "type": "short_answer",
     "title": "并发修改异常",
     "content": "请解释 Java 的 ConcurrentModificationException（并发修改异常）的触发条件和解决方法。在 for-each 循环中删除集合元素为什么可能抛出该异常？",
-    "answer": "答案：ConcurrentModificationException 发生在遍历集合时，集合的结构被并发修改（增删元素）。\n\n触发原因：\n1. 单线程：在 for-each 循环（使用 Iterator）中直接调用集合的 remove() 方法\n2. 多线程：一个线程遍历集合的同时，另一线程修改集合\n\n问题本质：\n- for-each 循环本质上是 Iterator 的语法糖\n- Iterator 持有 modCount 的副本（期望修改次数）\n- 每次调用 next() 时检查 modCount 是否等于 expectedModCount\n- 集合的 remove() 方法会修改 modCount 但 Iterator 不知道\n- 检测到不一致就抛出 ConcurrentModificationException（fail-fast 行为）\n\n代码示例（触发异常）：\nList<String> list = new ArrayList<>(Arrays.asList(\"a\", \"b\", \"c\"));\nfor (String s : list) {\n    if (s.equals(\"b\")) list.remove(s);  // 抛 ConcurrentModificationException\n}\n\n解决方法：\n1. 使用 Iterator 的 remove()：iterator.remove()（会同步更新 expectedModCount）\n2. 使用 Collection.removeIf()：list.removeIf(s -> s.equals(\"b\"))（内部使用 Iterator 的 remove()）\n3. 收集到新集合后再批量删除：List<String> toRemove = ...; list.removeAll(toRemove);\n4. 使用 CopyOnWriteArrayList（多线程场景）：迭代器遍历的是快照，修改的是新副本\n5. 使用 Stream filter：list.stream().filter(s -> !s.equals(\"b\")).collect(toList())\n\n扩展延伸：ConcurrentHashMap、CopyOnWriteArrayList 等并发集合不会抛 ConcurrentModificationException（使用弱一致性迭代器——返回的数据可能是过时的但不会崩溃）。fail-fast 机制是一种缺陷检测机制，不是锁。Vector 和 Collections.synchronizedList 虽然线程安全但也会在 for-each 时抛该异常（需要手动加锁遍历）。",
+    "answer": "ConcurrentModificationException 发生在遍历集合时，集合的结构被并发修改（增删元素）。\n\n触发原因：\n1. 单线程：在 for-each 循环（使用 Iterator）中直接调用集合的 remove() 方法\n2. 多线程：一个线程遍历集合的同时，另一线程修改集合\n\n问题本质：\n- for-each 循环本质上是 Iterator 的语法糖\n- Iterator 持有 modCount 的副本（期望修改次数）\n- 每次调用 next() 时检查 modCount 是否等于 expectedModCount\n- 集合的 remove() 方法会修改 modCount 但 Iterator 不知道\n- 检测到不一致就抛出 ConcurrentModificationException（fail-fast 行为）\n\n代码示例（触发异常）：\nList<String> list = new ArrayList<>(Arrays.asList(\"a\", \"b\", \"c\"));\nfor (String s : list) {\n    if (s.equals(\"b\")) list.remove(s);  // 抛 ConcurrentModificationException\n}\n\n解决方法：\n1. 使用 Iterator 的 remove()：iterator.remove()（会同步更新 expectedModCount）\n2. 使用 Collection.removeIf()：list.removeIf(s -> s.equals(\"b\"))（内部使用 Iterator 的 remove()）\n3. 收集到新集合后再批量删除：List<String> toRemove = ...; list.removeAll(toRemove);\n4. 使用 CopyOnWriteArrayList（多线程场景）：迭代器遍历的是快照，修改的是新副本\n5. 使用 Stream filter：list.stream().filter(s -> !s.equals(\"b\")).collect(toList())\n\n扩展延伸：ConcurrentHashMap、CopyOnWriteArrayList 等并发集合不会抛 ConcurrentModificationException（使用弱一致性迭代器——返回的数据可能是过时的但不会崩溃）。fail-fast 机制是一种缺陷检测机制，不是锁。Vector 和 Collections.synchronizedList 虽然线程安全但也会在 for-each 时抛该异常（需要手动加锁遍历）。",
     "hints": [
       "for-each 循环中调用集合的 remove() 会触发 modCount 不一致",
       "Iterator.remove()、removeIf()、CopyOnWriteArrayList 是常用解决方案"
@@ -1100,7 +1101,7 @@
     "type": "short_answer",
     "title": "Java 21 虚拟线程（Virtual Threads）",
     "content": "请介绍 Java 21 正式发布的虚拟线程（Virtual Threads / Project Loom）。虚拟线程与平台线程（操作系统线程）的区别是什么？虚拟线程适合什么场景？",
-    "answer": "答案：虚拟线程是 Java 21 正式版（JEP 444）引入的轻量级线程，由 JVM 管理而非操作系统，大幅降低线程创建成本。\n\n核心区别：\n- 平台线程（Platform Thread）：由 OS 内核管理，创建成本高（约 1MB 栈），数量受限（几千个）\n- 虚拟线程（Virtual Thread）：由 JVM 在用户态管理，创建成本极低（几百字节），可以创建百万级\n- 虚拟线程运行在平台线程（Carrier Thread）上，当虚拟线程执行阻塞操作时自动 Yield 释放 Carrier\n\n工作原理：\n1. 虚拟线程由 java.util.concurrent.ThreadFactory 创建（Thread.ofVirtual()）\n2. JVM 的调度器（ForkJoinPool）将虚拟线程映射到 Carrier 线程执行\n3. 遇到阻塞操作（I/O、锁、Future.get()）时，虚拟线程从 Carrier 上 unmount，Carrier 执行其他虚拟线程\n4. 阻塞操作完成后，虚拟线程重新 mount 到某个 Carrier 继续执行\n\n适用场景：\n- 高并发 I/O 密集型应用（Web 服务器、数据库访问、RPC 调用）\n- 每个请求一个线程模型（Thread-per-request），无需异步编程\n- 大量短连接场景\n\n不适用场景：\n- CPU 密集型计算（虚拟线程无法利用多核加速计算）\n- 长时间运行的 synchronized 块（会导致 Carrier 被 Pin 住）\n\n扩展延伸：虚拟线程的 Pin 机制——当虚拟线程在 synchronized 块或 native 方法中阻塞时，JVM 无法 unmount，会 Pin 住 Carrier 线程。解决方法：用 ReentrantLock 替代 synchronized。虚拟线程 + StructuredTaskScope 可实现结构化并发——子任务的生命周期与父任务绑定。",
+    "answer": "虚拟线程是 Java 21 正式版（JEP 444）引入的轻量级线程，由 JVM 管理而非操作系统，大幅降低线程创建成本。\n\n核心区别：\n- 平台线程（Platform Thread）：由 OS 内核管理，创建成本高（约 1MB 栈），数量受限（几千个）\n- 虚拟线程（Virtual Thread）：由 JVM 在用户态管理，创建成本极低（几百字节），可以创建百万级\n- 虚拟线程运行在平台线程（Carrier Thread）上，当虚拟线程执行阻塞操作时自动 Yield 释放 Carrier\n\n工作原理：\n1. 虚拟线程由 java.util.concurrent.ThreadFactory 创建（Thread.ofVirtual()）\n2. JVM 的调度器（ForkJoinPool）将虚拟线程映射到 Carrier 线程执行\n3. 遇到阻塞操作（I/O、锁、Future.get()）时，虚拟线程从 Carrier 上 unmount，Carrier 执行其他虚拟线程\n4. 阻塞操作完成后，虚拟线程重新 mount 到某个 Carrier 继续执行\n\n适用场景：\n- 高并发 I/O 密集型应用（Web 服务器、数据库访问、RPC 调用）\n- 每个请求一个线程模型（Thread-per-request），无需异步编程\n- 大量短连接场景\n\n不适用场景：\n- CPU 密集型计算（虚拟线程无法利用多核加速计算）\n- 长时间运行的 synchronized 块（会导致 Carrier 被 Pin 住）\n\n扩展延伸：虚拟线程的 Pin 机制——当虚拟线程在 synchronized 块或 native 方法中阻塞时，JVM 无法 unmount，会 Pin 住 Carrier 线程。解决方法：用 ReentrantLock 替代 synchronized。虚拟线程 + StructuredTaskScope 可实现结构化并发——子任务的生命周期与父任务绑定。",
     "hints": [
       "虚拟线程 = JVM 管理的轻量级线程（创建成本极低，百万级），与 OS 平台线程（1MB 栈，千级别）区别",
       "原理：虚拟线程在 Carrier 线程上运行，阻塞时自动 Yield 释放 Carrier",
@@ -1115,11 +1116,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "模式匹配（Pattern Matching）的演进",
     "content": "请介绍 Java 中模式匹配（Pattern Matching）的演进路线。从 instanceof 模式匹配到 switch 模式匹配再到 Record 模式匹配，每个版本引入了什么？",
-    "answer": "答案：模式匹配是 Java 从 16 到 21 持续演进的核心语言特性，让代码更简洁、更安全。\n\n演进路线：\n\nJava 16（JEP 394）：instanceof 模式匹配\n- 旧写法：if (obj instanceof String) { String s = (String) obj; ... }\n- 新写法：if (obj instanceof String s) { ... }  // 直接绑定变量\n- 作用：消除强制类型转换\n\nJava 17（JEP 406）：密封类的模式匹配预览\n- 编译器可检查 switch 是否穷举了所有密封类的子类型\n- 为 switch 模式匹配铺路\n\nJava 21（JEP 441）：switch 模式匹配（正式版）\n- 语法：switch (obj) { case Integer i -> ...; case String s -> ...; default -> ... }\n- 类型匹配：不用显式 instanceof，switch 直接匹配类型\n- null 处理：case null -> ...（之前 switch 遇到 null 抛 NPE）\n- 守卫（Guard）：case String s && s.length() > 5 -> ...\n- 穷举性：编译器检查所有可能类型是否覆盖\n\nJava 21（JEP 440）：Record 模式匹配（正式版）\n- 解构 Record：if (obj instanceof Point(int x, int y)) { ... }\n- 嵌套解构：if (obj instanceof Line(Point(int x1, int y1), Point(int x2, int y2))) { ... }\n- 在 switch 中配合 Record 模式：case Point(int x, int y) -> ...\n\n实战对比：\n旧写法（多层 if-else + 强制转换）：\nif (obj instanceof String) {\n    String s = (String) obj;\n    if (s.length() > 5) { ... }\n} else if (obj instanceof Integer) { ... }\n\n新模式匹配（简洁、安全）：\nswitch (obj) {\n    case String s && s.length() > 5 -> ...\n    case Integer i -> ...\n    default -> ...\n}\n\n扩展延伸：模式匹配的下一步——Deconstruction Pattern（自定义解构模式）、Array 模式匹配。模式匹配让 Java 的函数式编程风格更加自然，是 Java 从 OOP 语言向多范式语言演进的关键步骤。",
+    "answer": "模式匹配是 Java 从 16 到 21 持续演进的核心语言特性，让代码更简洁、更安全。\n\n演进路线：\n\nJava 16（JEP 394）：instanceof 模式匹配\n- 旧写法：if (obj instanceof String) { String s = (String) obj; ... }\n- 新写法：if (obj instanceof String s) { ... }  // 直接绑定变量\n- 作用：消除强制类型转换\n\nJava 17（JEP 406）：密封类的模式匹配预览\n- 编译器可检查 switch 是否穷举了所有密封类的子类型\n- 为 switch 模式匹配铺路\n\nJava 21（JEP 441）：switch 模式匹配（正式版）\n- 语法：switch (obj) { case Integer i -> ...; case String s -> ...; default -> ... }\n- 类型匹配：不用显式 instanceof，switch 直接匹配类型\n- null 处理：case null -> ...（之前 switch 遇到 null 抛 NPE）\n- 守卫（Guard）：case String s && s.length() > 5 -> ...\n- 穷举性：编译器检查所有可能类型是否覆盖\n\nJava 21（JEP 440）：Record 模式匹配（正式版）\n- 解构 Record：if (obj instanceof Point(int x, int y)) { ... }\n- 嵌套解构：if (obj instanceof Line(Point(int x1, int y1), Point(int x2, int y2))) { ... }\n- 在 switch 中配合 Record 模式：case Point(int x, int y) -> ...\n\n实战对比：\n旧写法（多层 if-else + 强制转换）：\nif (obj instanceof String) {\n    String s = (String) obj;\n    if (s.length() > 5) { ... }\n} else if (obj instanceof Integer) { ... }\n\n新模式匹配（简洁、安全）：\nswitch (obj) {\n    case String s && s.length() > 5 -> ...\n    case Integer i -> ...\n    default -> ...\n}\n\n扩展延伸：模式匹配的下一步——Deconstruction Pattern（自定义解构模式）、Array 模式匹配。模式匹配让 Java 的函数式编程风格更加自然，是 Java 从 OOP 语言向多范式语言演进的关键步骤。",
     "hints": [
       "演进：Java 16 instanceof 模式匹配 → Java 17 密封类 → Java 21 switch 模式匹配 + Record 模式匹配",
       "switch 模式匹配：类型匹配 + null 处理 + Guard 守卫 + 穷举性检查",
@@ -1138,7 +1139,7 @@
     "type": "short_answer",
     "title": "密封类（Sealed Class）的使用场景",
     "content": "请介绍 Java 17 引入的密封类（Sealed Class / JEP 409）。密封类解决了什么问题？与 final 和 abstract 的区别是什么？",
-    "answer": "答案：密封类限制哪些类可以继承或实现它，让类的层次结构变的可控且可预测。\n\n密封类解决的问题：\n- 传统问题：非 final 类任何人都可以继承（不可控），final 类不允许继承（太严格）\n- 密封类介于两者之间：允许有限的、显式声明的子类列表\n- 核心价值：编译器知道所有可能的子类型 → 可以实现穷举性模式匹配\n\n语法：\npublic sealed class Shape permits Circle, Rectangle, Triangle { ... }\n- sealed：声明为密封类\n- permits：列出允许继承的子类（必须在同一个模块或包中）\n\n子类的约束：\n- final：不再被继承（终止密封链）——大多数情况\n- sealed：继续限制子类的子类（扩展密封链）\n- non-sealed：开放给未知子类（打破密封链，退回传统继承）\n\n示例：\npublic sealed class Shape permits Circle, Rectangle { }\npublic final class Circle extends Shape { }           // 终止密封\npublic sealed class Rectangle extends Shape permits Square { }  // 继续密封\npublic final class Square extends Rectangle { }         // 终止密封\n\n使用场景：\n1. 领域建模：订单状态（创建/支付/发货/完成/取消）——有限且已知的状态\n2. AST 节点类型：表达式、语句、声明等——编译期检查是否穷举\n3. 错误类型：有限且已知的错误类型，配合模式匹配处理\n4. JSON 类型：对象/数组/字符串/数字/布尔/null——穷举匹配\n\n与 final 和 abstract 的区别：\n- final：完全禁止继承（class 级别的封闭）\n- abstract：鼓励继承但开放给所有人\n- sealed：允许继承但限定范围，是 final 和 abstract 之间的折中\n\n扩展延伸：密封类 + 模式匹配 = 强大的组合。编译器可以检查 switch 是否穷举了所有子类——如果新增一个子类，所有 switch 都要加对应分支（编译错误提示）。这让代码更加健壮——修改类型层次时不会遗漏处理分支。",
+    "answer": "密封类限制哪些类可以继承或实现它，让类的层次结构变的可控且可预测。\n\n密封类解决的问题：\n- 传统问题：非 final 类任何人都可以继承（不可控），final 类不允许继承（太严格）\n- 密封类介于两者之间：允许有限的、显式声明的子类列表\n- 核心价值：编译器知道所有可能的子类型 → 可以实现穷举性模式匹配\n\n语法：\npublic sealed class Shape permits Circle, Rectangle, Triangle { ... }\n- sealed：声明为密封类\n- permits：列出允许继承的子类（必须在同一个模块或包中）\n\n子类的约束：\n- final：不再被继承（终止密封链）——大多数情况\n- sealed：继续限制子类的子类（扩展密封链）\n- non-sealed：开放给未知子类（打破密封链，退回传统继承）\n\n示例：\npublic sealed class Shape permits Circle, Rectangle { }\npublic final class Circle extends Shape { }           // 终止密封\npublic sealed class Rectangle extends Shape permits Square { }  // 继续密封\npublic final class Square extends Rectangle { }         // 终止密封\n\n使用场景：\n1. 领域建模：订单状态（创建/支付/发货/完成/取消）——有限且已知的状态\n2. AST 节点类型：表达式、语句、声明等——编译期检查是否穷举\n3. 错误类型：有限且已知的错误类型，配合模式匹配处理\n4. JSON 类型：对象/数组/字符串/数字/布尔/null——穷举匹配\n\n与 final 和 abstract 的区别：\n- final：完全禁止继承（class 级别的封闭）\n- abstract：鼓励继承但开放给所有人\n- sealed：允许继承但限定范围，是 final 和 abstract 之间的折中\n\n扩展延伸：密封类 + 模式匹配 = 强大的组合。编译器可以检查 switch 是否穷举了所有子类——如果新增一个子类，所有 switch 都要加对应分支（编译错误提示）。这让代码更加健壮——修改类型层次时不会遗漏处理分支。",
     "hints": [
       "密封类 = 声明有限的、显式的子类列表（介于 final 的严格和 abstract 的开放之间）",
       "子类选项：final（终止链）/ sealed（继续限制）/ non-sealed（开放）",
@@ -1153,11 +1154,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Record 的自定义构造器与验证",
     "content": "请介绍 Java 16 正式引入的 Record 类型。Record 的构造器有哪些写法？如何在 Record 中做参数验证和数据规范？",
-    "answer": "答案：Record 是 Java 中简洁的数据载体类型，自动生成构造器、getter、equals/hashCode/toString。\n\nRecord 的基本特点：\n- 语法：public record Point(int x, int y) { }\n- 自动生成：全参构造器、getter（x()、y() 而非 getX()/getY()）、equals/hashCode、toString\n- 不可变：所有字段都是 private final\n- 不能继承其他类（隐含 extends java.lang.Record）\n- 可以实现接口\n\n三种构造器写法：\n\n1. 紧凑构造器（Compact Constructor）——最常用，用于参数验证和规范：\npublic record Range(int start, int end) {\n    public Range {  // 没有参数列表，this.start 和 this.end 会在构造器末尾自动赋值\n        if (start > end) throw new IllegalArgumentException(\"start must be <= end\");\n        // 可做数据规范：this.start = Math.max(0, start); // 但注意紧凑构造器末尾会自动赋值\n    }\n}\n\n2. 规范构造器（Canonical Constructor）——手动写全参数：\npublic record Range(int start, int end) {\n    public Range(int start, int end) {\n        if (start > end) throw new IllegalArgumentException(\"start must be <= end\");\n        this.start = start;\n        this.end = end;\n    }\n}\n\n3. 非规范构造器（Non-canonical）——委托到规范构造器：\npublic record Range(int start, int end) {\n    public Range(int end) {  // 只有 end，start 默认为 0\n        this(0, end);  // 必须委托\n    }\n}\n\n数据规范和转换示例：\npublic record Email(String address) {\n    public Email {  // 紧凑构造器\n        Objects.requireNonNull(address);\n        if (!address.contains(\"@\")) throw new IllegalArgumentException(\"invalid email\");\n        address = address.trim().toLowerCase();  // 数据规范化\n    }\n}\n\nRecord 的限制：\n- 不能有实例变量（只能有 static 变量）\n- 不能继承其他类\n- 字段隐式为 final，不能修改\n- 不能声明 native 方法\n\n扩展延伸：Record 适合做 DTO（数据传输对象）、值对象、不可变数据模型。与 Builder 模式不同——Record 用紧凑构造器做验证，Builder 适合有很多可选参数的场景。Record + 密封类 + 模式匹配是 Java 现代编程的三驾马车。",
+    "answer": "Record 是 Java 中简洁的数据载体类型，自动生成构造器、getter、equals/hashCode/toString。\n\nRecord 的基本特点：\n- 语法：public record Point(int x, int y) { }\n- 自动生成：全参构造器、getter（x()、y() 而非 getX()/getY()）、equals/hashCode、toString\n- 不可变：所有字段都是 private final\n- 不能继承其他类（隐含 extends java.lang.Record）\n- 可以实现接口\n\n三种构造器写法：\n\n1. 紧凑构造器（Compact Constructor）——最常用，用于参数验证和规范：\npublic record Range(int start, int end) {\n    public Range {  // 没有参数列表，this.start 和 this.end 会在构造器末尾自动赋值\n        if (start > end) throw new IllegalArgumentException(\"start must be <= end\");\n        // 可做数据规范：this.start = Math.max(0, start); // 但注意紧凑构造器末尾会自动赋值\n    }\n}\n\n2. 规范构造器（Canonical Constructor）——手动写全参数：\npublic record Range(int start, int end) {\n    public Range(int start, int end) {\n        if (start > end) throw new IllegalArgumentException(\"start must be <= end\");\n        this.start = start;\n        this.end = end;\n    }\n}\n\n3. 非规范构造器（Non-canonical）——委托到规范构造器：\npublic record Range(int start, int end) {\n    public Range(int end) {  // 只有 end，start 默认为 0\n        this(0, end);  // 必须委托\n    }\n}\n\n数据规范和转换示例：\npublic record Email(String address) {\n    public Email {  // 紧凑构造器\n        Objects.requireNonNull(address);\n        if (!address.contains(\"@\")) throw new IllegalArgumentException(\"invalid email\");\n        address = address.trim().toLowerCase();  // 数据规范化\n    }\n}\n\nRecord 的限制：\n- 不能有实例变量（只能有 static 变量）\n- 不能继承其他类\n- 字段隐式为 final，不能修改\n- 不能声明 native 方法\n\n扩展延伸：Record 适合做 DTO（数据传输对象）、值对象、不可变数据模型。与 Builder 模式不同——Record 用紧凑构造器做验证，Builder 适合有很多可选参数的场景。Record + 密封类 + 模式匹配是 Java 现代编程的三驾马车。",
     "hints": [
       "Record：自动生成构造器/getter/equals/hashCode/toString，不可变数据载体",
       "三种构造器：紧凑（Compact，验证+规范）+ 规范（Canonical，全参）+ 非规范（委托）",
@@ -1172,11 +1173,11 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "switch 表达式的完整性与穷举性",
     "content": "请介绍 Java 14 正式引入的 switch 表达式以及后续增强。switch 表达式和 switch 语句有什么区别？什么是穷举性？如何处理所有分支？",
-    "answer": "答案：switch 表达式是 switch 语句的增强版本，可以作为表达式使用（有返回值），且要求穷举所有可能的分支。\n\nswitch 表达式 vs switch 语句：\n\nswitch 语句（传统）：\nswitch (day) {\n    case MONDAY:\n    case FRIDAY: System.out.println(\"work\"); break;\n    case SATURDAY:\n    case SUNDAY: System.out.println(\"rest\"); break;\n    default: System.out.println(\"unknown\");\n}\n- 语句（statement），没有返回值\n- 容易忘记 break（fall-through 问题）\n- default 非必须\n\nswitch 表达式：\nString result = switch (day) {\n    case MONDAY, FRIDAY -> \"work\";\n    case SATURDAY, SUNDAY -> \"rest\";\n    default -> \"unknown\";\n};\n- 表达式（expression），有返回值\n- -> 语法没有 fall-through\n- 必须穷举所有可能的值\n\n穷举性（Exhaustiveness）：\n- switch 表达式必须覆盖所有可能的输入值\n- 对于 enum，编译器可检查是否覆盖所有枚举常量（否则编译器报错）\n- 对于 sealed 类型，编译器检查是否覆盖所有 permitted 子类型\n- 对于普通类型，必须包含 default 分支来满足穷举性\n\n处理所有分支的策略：\n1. enum：显示列出所有枚举常量（新增常量时编译报错，强制更新）\n2. sealed class：显示列出所有子类型（新增子类型时编译报错）\n3. 普通类型：必须加 default 分支\n4. 推荐做法：先用显式分支覆盖所有已知 case，default 分支处理意外情况并记录日志\n\n箭头语法（->）：\n- 单行：case MONDAY -> \"work\";\n- 多行（代码块）：case MONDAY -> { System.out.println(\"working\"); yield \"work\"; }\n- yield 从 switch 表达式的代码块中返回值（类似 return）\n\n冒号语法（:）with yield：\nString result = switch (day) {\n    case MONDAY:\n    case FRIDAY: yield \"work\";\n    default: yield \"unknown\";\n};\n- 传统冒号语法 + yield 返回值（新的写法，不建议与传统 break 混用）\n\n扩展延伸：switch 表达式 + 模式匹配（Java 21）进一步提升穷举性的价值——case String s -> 处理字符串类型、case Integer i && i > 0 -> 处理正整数。穷举性让代码更加健壮——新类型加入时，编译器会告诉你哪些 switch 需要更新。",
+    "answer": "switch 表达式是 switch 语句的增强版本，可以作为表达式使用（有返回值），且要求穷举所有可能的分支。\n\nswitch 表达式 vs switch 语句：\n\nswitch 语句（传统）：\nswitch (day) {\n    case MONDAY:\n    case FRIDAY: System.out.println(\"work\"); break;\n    case SATURDAY:\n    case SUNDAY: System.out.println(\"rest\"); break;\n    default: System.out.println(\"unknown\");\n}\n- 语句（statement），没有返回值\n- 容易忘记 break（fall-through 问题）\n- default 非必须\n\nswitch 表达式：\nString result = switch (day) {\n    case MONDAY, FRIDAY -> \"work\";\n    case SATURDAY, SUNDAY -> \"rest\";\n    default -> \"unknown\";\n};\n- 表达式（expression），有返回值\n- -> 语法没有 fall-through\n- 必须穷举所有可能的值\n\n穷举性（Exhaustiveness）：\n- switch 表达式必须覆盖所有可能的输入值\n- 对于 enum，编译器可检查是否覆盖所有枚举常量（否则编译器报错）\n- 对于 sealed 类型，编译器检查是否覆盖所有 permitted 子类型\n- 对于普通类型，必须包含 default 分支来满足穷举性\n\n处理所有分支的策略：\n1. enum：显示列出所有枚举常量（新增常量时编译报错，强制更新）\n2. sealed class：显示列出所有子类型（新增子类型时编译报错）\n3. 普通类型：必须加 default 分支\n4. 推荐做法：先用显式分支覆盖所有已知 case，default 分支处理意外情况并记录日志\n\n箭头语法（->）：\n- 单行：case MONDAY -> \"work\";\n- 多行（代码块）：case MONDAY -> { System.out.println(\"working\"); yield \"work\"; }\n- yield 从 switch 表达式的代码块中返回值（类似 return）\n\n冒号语法（:）with yield：\nString result = switch (day) {\n    case MONDAY:\n    case FRIDAY: yield \"work\";\n    default: yield \"unknown\";\n};\n- 传统冒号语法 + yield 返回值（新的写法，不建议与传统 break 混用）\n\n扩展延伸：switch 表达式 + 模式匹配（Java 21）进一步提升穷举性的价值——case String s -> 处理字符串类型、case Integer i && i > 0 -> 处理正整数。穷举性让代码更加健壮——新类型加入时，编译器会告诉你哪些 switch 需要更新。",
     "hints": [
       "switch 表达式 = 有返回值的 switch，用 -> 箭头语法替代: + break，没有 fall-through",
       "穷举性：必须覆盖所有可能输入值（enum 显式列出/sealed class 列出子类型/普通类型加 default）",
@@ -1195,7 +1196,7 @@
     "type": "short_answer",
     "title": "Java 值传递与引用传递",
     "content": "请解释 Java 中「值传递」的含义及其对方法参数传递的影响。",
-    "answer": "答案：Java 只有值传递（pass-by-value），没有引用传递\n\n解析：对于基本类型（int/boolean/char 等），方法参数传递的是值的副本，方法内修改不会影响原变量。对于引用类型（对象/数组/List），传递的是引用值的副本——即对象的地址，所以方法内通过引用修改对象属性会影响原对象，但如果将引用指向新对象（在方法内 new 一个对象赋值给参数），外部的引用不会改变。这一点常被误解为「引用传递」，实际上传递的是引用变量的副本的值，指针本身是按值传递的。对比 C++ 的 int& 真正的引用传递（引用本身不可变，且操作的就是原变量）。\n\n扩展延伸：String 的特殊性：String 是不可变对象，方法内修改 String 参数（s = \"new\") 实际上是创建新对象并让局部变量指向它，不影响外部引用。所以 String 的效果类似基本类型。自动装箱拆箱中也有类似陷阱：Integer i = 128 在方法内赋值不会影响外部（Java 缓存 -128~127 的 Integer 对象）。在需要修改调用方的基本类型时使用返回新值或 atomic 引用（AtomicReference）。Java 没有 C++ 的指针的指针（int**）等价物。",
+    "answer": "Java 只有值传递（pass-by-value），没有引用传递\n\n解析：对于基本类型（int/boolean/char 等），方法参数传递的是值的副本，方法内修改不会影响原变量。对于引用类型（对象/数组/List），传递的是引用值的副本——即对象的地址，所以方法内通过引用修改对象属性会影响原对象，但如果将引用指向新对象（在方法内 new 一个对象赋值给参数），外部的引用不会改变。这一点常被误解为「引用传递」，实际上传递的是引用变量的副本的值，指针本身是按值传递的。对比 C++ 的 int& 真正的引用传递（引用本身不可变，且操作的就是原变量）。\n\n扩展延伸：String 的特殊性：String 是不可变对象，方法内修改 String 参数（s = \"new\") 实际上是创建新对象并让局部变量指向它，不影响外部引用。所以 String 的效果类似基本类型。自动装箱拆箱中也有类似陷阱：Integer i = 128 在方法内赋值不会影响外部（Java 缓存 -128~127 的 Integer 对象）。在需要修改调用方的基本类型时使用返回新值或 atomic 引用（AtomicReference）。Java 没有 C++ 的指针的指针（int**）等价物。",
     "hints": [
       "String 参数在方法内部重新赋值时为什么不会影响外部",
       "Integer 在缓存范围内的赋值行为是否不同"
@@ -1208,7 +1209,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "Java final 关键字的含义",
     "content": "以下关于 Java final 关键字的描述，错误的是？",
@@ -1235,7 +1236,7 @@
     "type": "short_answer",
     "title": "Java 内部类分类",
     "content": "请对比 Java 的四种内部类：静态内部类、成员内部类、局部内部类和匿名内部类。",
-    "answer": "答案：四种内部类有不同的访问权限、生命周期和使用场景\n\n解析：1）静态内部类（static class Inner）— 不持有外部类的隐式引用，不能访问外部类的实例成员，可以独立于外部类实例创建。典型应用：Builder 模式（如 StringBuilder 中的 Builder 静态内部类）。2）成员内部类（class Inner）— 持有外部类的 this 引用，可以访问外部类的所有成员（包括 private）。创建时需要外部实例：outer.new Inner()。3）局部内部类（方法内定义的类）— 作用域在方法内，可以访问方法中的 final/effectively final 局部变量。4）匿名内部类（new Interface() {}）— 没有类名，适合一次性使用的回调/事件监听器，Java 8+ 被 Lambda 表达式取代。\n\n扩展延伸：内部类的编译产物：每个内部类编译为独立的 .class 文件（Outer$Inner.class）。成员内部类持有外部类引用可能导致内存泄漏（如果内部类比外部类生命周期长）。局部内部类和匿名内部类在 Java 8 之前要求捕获的局部变量必须是 final，Java 8+ 允许 effectively final（变量初始化后没被修改）。匿名内部类 vs Lambda：匿名内部类创建一个新类实例，Lambda 使用 invokedynamic，Lambda 更轻量（不创建额外 .class 文件）。",
+    "answer": "四种内部类有不同的访问权限、生命周期和使用场景\n\n解析：1）静态内部类（static class Inner）— 不持有外部类的隐式引用，不能访问外部类的实例成员，可以独立于外部类实例创建。典型应用：Builder 模式（如 StringBuilder 中的 Builder 静态内部类）。2）成员内部类（class Inner）— 持有外部类的 this 引用，可以访问外部类的所有成员（包括 private）。创建时需要外部实例：outer.new Inner()。3）局部内部类（方法内定义的类）— 作用域在方法内，可以访问方法中的 final/effectively final 局部变量。4）匿名内部类（new Interface() {}）— 没有类名，适合一次性使用的回调/事件监听器，Java 8+ 被 Lambda 表达式取代。\n\n扩展延伸：内部类的编译产物：每个内部类编译为独立的 .class 文件（Outer$Inner.class）。成员内部类持有外部类引用可能导致内存泄漏（如果内部类比外部类生命周期长）。局部内部类和匿名内部类在 Java 8 之前要求捕获的局部变量必须是 final，Java 8+ 允许 effectively final（变量初始化后没被修改）。匿名内部类 vs Lambda：匿名内部类创建一个新类实例，Lambda 使用 invokedynamic，Lambda 更轻量（不创建额外 .class 文件）。",
     "hints": [
       "成员内部类为什么可能导致内存泄漏",
       "局部内部类访问的局部变量为什么需要是 effectively final"
@@ -1252,7 +1253,7 @@
     "type": "short_answer",
     "title": "Java 序列化机制",
     "content": "请解释 Java 序列化的底层机制以及 serialVersionUID 的作用。",
-    "answer": "答案：Java 序列化将对象转换为字节流以便存储或传输，反序列化将字节流恢复为对象\n\n解析：实现 java.io.Serializable 接口的对象可以通过 ObjectOutputStream.writeObject() 序列化。序列化过程使用反射获取对象的实例字段（包括父类非 transient 字段）及其类型信息，递归序列化所有引用对象（如果也实现了 Serializable）。反序列化：从字节流读取类元数据（不调用构造方法），使用 native 方法直接分配内存并恢复字段值。serialVersionUID 是类的版本标识，在序列化时写入流，反序列化时校验当前类的 UID 与流中的 UID 是否一致（不一致抛 InvalidClassException）。显式声明 private static final long serialVersionUID 防止类结构变化后默认生成不同而导致的反序列化失败。\n\n扩展延伸：transient 关键字标记的字段不会被序列化，适合密码、连接等不应持久化的字段。自定义序列化：通过 writeObject()/readObject() 方法自定义序列化逻辑（如加密敏感字段）。Externalizable 接口通过 writeExternal()/readExternal() 完全自定义序列化过程，比 Serializable 更灵活但需自行处理父类和类型信息。序列化的安全问题：反序列化可能执行恶意代码（通过构造恶意字节流触发类中的潜在漏洞），所以反序列化的数据必须来自可信来源。替代方案：JSON（Jackson/Gson）、Protocol Buffers、Kryo 等现代序列化方案跨语言兼容、性能更好且更安全。Java 9+ 的 filter 机制（ObjectInputFilter）允许在反序列化时校验类名白名单。",
+    "answer": "Java 序列化将对象转换为字节流以便存储或传输，反序列化将字节流恢复为对象\n\n解析：实现 java.io.Serializable 接口的对象可以通过 ObjectOutputStream.writeObject() 序列化。序列化过程使用反射获取对象的实例字段（包括父类非 transient 字段）及其类型信息，递归序列化所有引用对象（如果也实现了 Serializable）。反序列化：从字节流读取类元数据（不调用构造方法），使用 native 方法直接分配内存并恢复字段值。serialVersionUID 是类的版本标识，在序列化时写入流，反序列化时校验当前类的 UID 与流中的 UID 是否一致（不一致抛 InvalidClassException）。显式声明 private static final long serialVersionUID 防止类结构变化后默认生成不同而导致的反序列化失败。\n\n扩展延伸：transient 关键字标记的字段不会被序列化，适合密码、连接等不应持久化的字段。自定义序列化：通过 writeObject()/readObject() 方法自定义序列化逻辑（如加密敏感字段）。Externalizable 接口通过 writeExternal()/readExternal() 完全自定义序列化过程，比 Serializable 更灵活但需自行处理父类和类型信息。序列化的安全问题：反序列化可能执行恶意代码（通过构造恶意字节流触发类中的潜在漏洞），所以反序列化的数据必须来自可信来源。替代方案：JSON（Jackson/Gson）、Protocol Buffers、Kryo 等现代序列化方案跨语言兼容、性能更好且更安全。Java 9+ 的 filter 机制（ObjectInputFilter）允许在反序列化时校验类名白名单。",
     "hints": [
       "serialVersionUID 的显式声明为什么比默认生成更好",
       "为什么推荐用 JSON 或 Protobuf 替代 Java 原生序列化"
@@ -1269,7 +1270,7 @@
     "type": "short_answer",
     "title": "Java 反射机制原理",
     "content": "请解释 Java 反射机制的工作原理及其常见的性能和安全问题。",
-    "answer": "答案：反射使程序在运行时获取类的结构信息并操作类/对象，基于 JVM 的类元数据\n\n解析：JVM 加载类时将类的元数据（Class 对象）存储在方法区（Java 8 后是 Metaspace）。Class.forName() 或 对象.getClass() 返回这个 Class 对象的引用。通过 Class 对象可以获取字段（Field）、方法（Method）、构造方法（Constructor），调用 setAccessible(true) 可以绕过 Java 访问控制检查（使 private 成员也可访问）。Method.invoke() 通过 JNI（Java Native Interface）调用 native 方法（sun.reflect.MethodAccessor.invoke），相当于动态分派与直接调用的组合。在 HotSpot 中，反射调用次数少时使用委派（DelegatingMethodAccessorImpl），调用次数超过 15 次阈值时生成字节码实现（GeneratedMethodAccessor），接近直接调用的性能。\n\n扩展延伸：反射性能开销：1）类型安全检查（每次调用检查访问权限）2）自动装箱/拆箱 3）可变参数数组创建 4）JIT 无法内联优化。优化手段：缓存 Method/Field 对象复用、setAccessible(true) 减少安全检查。反射的现代替代：Java 17 引入的 MethodHandle（java.lang.invoke）类似反射但更轻量（JIT 可内联），用于 Lambda 表达式和框架内部实现。VarHandle 访问字段和数组元素。模块系统（JPMS）通过反射限制——非 open 模块中的私有成员反射访问在 Java 17+ 默认被限制（除非启动参数 --add-opens）。框架（Spring）内部广泛使用反射，性能影响在大厂框架下通常可接受（核心 bean 在启动时预先反射调用一次，运行时不再反射）。",
+    "answer": "反射使程序在运行时获取类的结构信息并操作类/对象，基于 JVM 的类元数据\n\n解析：JVM 加载类时将类的元数据（Class 对象）存储在方法区（Java 8 后是 Metaspace）。Class.forName() 或 对象.getClass() 返回这个 Class 对象的引用。通过 Class 对象可以获取字段（Field）、方法（Method）、构造方法（Constructor），调用 setAccessible(true) 可以绕过 Java 访问控制检查（使 private 成员也可访问）。Method.invoke() 通过 JNI（Java Native Interface）调用 native 方法（sun.reflect.MethodAccessor.invoke），相当于动态分派与直接调用的组合。在 HotSpot 中，反射调用次数少时使用委派（DelegatingMethodAccessorImpl），调用次数超过 15 次阈值时生成字节码实现（GeneratedMethodAccessor），接近直接调用的性能。\n\n扩展延伸：反射性能开销：1）类型安全检查（每次调用检查访问权限）2）自动装箱/拆箱 3）可变参数数组创建 4）JIT 无法内联优化。优化手段：缓存 Method/Field 对象复用、setAccessible(true) 减少安全检查。反射的现代替代：Java 17 引入的 MethodHandle（java.lang.invoke）类似反射但更轻量（JIT 可内联），用于 Lambda 表达式和框架内部实现。VarHandle 访问字段和数组元素。模块系统（JPMS）通过反射限制——非 open 模块中的私有成员反射访问在 Java 17+ 默认被限制（除非启动参数 --add-opens）。框架（Spring）内部广泛使用反射，性能影响在大厂框架下通常可接受（核心 bean 在启动时预先反射调用一次，运行时不再反射）。",
     "hints": [
       "MethodHandles 相比传统反射的优势是什么",
       "Java 模块系统为什么限制反射访问"
@@ -1319,7 +1320,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Record 模式的嵌套解构与 switch 结合",
     "content": "请介绍 Java 21 中 Record 模式（Record Pattern）的语法规则，以及如何与 switch 表达式结合实现深层解构。",
@@ -1338,7 +1339,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "密封类的 permits 与子类传播规则",
     "content": "请详细解释密封类（sealed class）中 permits 子句的限制，以及子类必须使用的 sealed、non-sealed、final 三种传播方式。",
@@ -1349,7 +1350,7 @@
     ],
     "tags": [
       "密封类",
-      "sealed",
+      "Sealed",
       "继承",
       "Java 17",
       "模式匹配"
@@ -1390,7 +1391,7 @@
       "platform-thread",
       "mount",
       "unmount",
-      "java21"
+      "Java 21"
     ]
   },
   {
@@ -1409,7 +1410,7 @@
       "switch",
       "guarded-pattern",
       "null-safety",
-      "java21"
+      "Java 21"
     ]
   },
   {
@@ -1424,11 +1425,11 @@
       "紧凑构造器中修改参数值会被自动映射到对应 Record 组件"
     ],
     "tags": [
-      "record",
+      "Record",
       "compact-constructor",
       "validation",
       "normalization",
-      "java16"
+      "Java 16"
     ]
   },
   {
@@ -1447,7 +1448,7 @@
       "permits",
       "exhaustiveness",
       "pattern-matching",
-      "java17"
+      "Java 17"
     ]
   },
   {
@@ -1465,13 +1466,13 @@
       "text-block",
       "indent",
       "strip-indent",
-      "java15",
-      "string"
+      "Java 15",
+      "String"
     ]
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "String不可变性的设计考量",
     "content": "Java中String被设计为final不可变类，请列举至少三个不可变性的设计好处，并说明String常量池（String Pool）与不可变性之间的关系。",
@@ -1490,7 +1491,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "choice",
     "title": "equals()与hashCode()协变契约",
     "content": "以下关于equals()和hashCode()的描述，哪一项是正确的？",
@@ -1535,7 +1536,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "基本类型默认值与局部变量",
     "content": "Java中局部变量与成员变量有相同的默认值规则——int类型局部变量未初始化时默认值为0。",
@@ -1577,7 +1578,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Java String 不可变性的实现保障",
     "content": "以下关于 Java String 不可变性的说法，哪一项是正确的？\nA) String 被声明为 final 类的唯一原因是禁止继承\nB) String 内部的 char[] 被声明为 final 意味着数组内容不可修改\nC) String 的不可变性由 final class、private final char[] 字段以及不暴露修改方法三者共同保障\nD) String 的不可变性仅由 JVM 运行时负责，与编译器无关",
@@ -1594,7 +1595,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "static 关键字加载时机与特殊边界",
     "content": "请解释 Java 中 static 变量、static 代码块和 static 内部类的加载时机。什么情况下 static 变量不会被初始化？static final 编译时常量有何特殊行为？",
@@ -1664,7 +1665,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Pattern Matching for instanceof 流分析作用域",
     "content": "在 JDK 17+（JEP 394）中，Pattern Matching for instanceof 引入了基于流分析（Flow Analysis）的变量作用域规则。以下哪项描述是正确的？\nA) 模式匹配变量的作用域严格限定在匹配成功的代码块内（if 的 true 分支），从不扩展到 else 分支或 if 语句之后\nB) 当 if 条件为 `!(obj instanceof X x)` 且 true 分支必然抛出异常或返回时，模式变量 x 在 if 语句之后可见\nC) 模式匹配变量只能在 if 语句中使用，不能在 switch 规则或 while 循环条件中使用\nD) 模式匹配变量在 switch 箭頭規則（->）右侧表达式中不可直接引用，必须放在大括号代码块中",
@@ -1702,7 +1703,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Sealed class 对 permitted 子类的限制",
     "content": "在 Java 17+ 中，定义 sealed class 或 sealed interface 时，permits 子句指定的子类必须满足什么关键字约束？请列出三种可能的关键字并简要解释各自含义。",
@@ -1715,7 +1716,7 @@
       "sealed-class",
       "inheritance",
       "jep-409",
-      "java-17",
+      "Java 17",
       "permitted-subclasses"
     ]
   },
@@ -1756,8 +1757,8 @@
       "text-block",
       "strip-indent",
       "jep-378",
-      "string",
-      "java-15"
+      "String",
+      "Java 15"
     ]
   },
   {
@@ -1804,7 +1805,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "strictfp 关键字与跨平台浮点运算确定性",
     "content": "使用 strictfp 修饰的方法或类，其中所有的浮点运算（float 和 double）在任何 JVM 实现上都会产生完全相同的位级（bitwise）结果。",

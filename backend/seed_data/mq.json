@@ -39,7 +39,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka 分区分配策略",
     "content": "Kafka 消费者组的分区分配策略有哪些（Range、RoundRobin、Sticky、Cooperative Sticky）？各有什么优缺点？如何选择合适的分区分配策略？KIP-848 的新消费者组协议有什么变化？",
@@ -58,7 +58,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka 安全认证与授权",
     "content": "Kafka 支持哪些安全认证机制（SASL/SSL）？SASL/PLAIN、SASL/SCRAM、SASL/GSSAPI（Kerberos）各有什么区别和适用场景？ACL 如何配置？",
@@ -77,7 +77,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka 监控与运维指标",
     "content": "Kafka 需要监控哪些核心指标？JMX 暴露哪些关键 Metric？消费者 Lag 如何监控和告警？如何进行 Kafka 集群的健康检查和容量规划？",
@@ -96,7 +96,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RocketMQ NameServer 架构",
     "content": "RocketMQ 的 NameServer 的作用是什么？为什么 RocketMQ 用 NameServer 而不是 ZooKeeper（像 Kafka 一样）？NameServer 的无状态设计有什么好处？Broker 如何向 NameServer 注册？",
@@ -152,7 +152,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "RabbitMQ Exchange 与 Binding 详解",
     "content": "RabbitMQ 的四种 Exchange 类型（Direct、Topic、Fanout、Headers）的区别和使用场景是什么？Binding Key 和 Routing Key 的匹配规则是什么？TTL 和 DLX（死信交换机）如何配合实现延迟队列？",
@@ -171,7 +171,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RabbitMQ 仲裁队列与数据安全",
     "content": "RabbitMQ 的仲裁队列（Quorum Queue，3.8+）相比镜像队列（Mirrored Queue，已弃用）有什么优势？仲裁队列的 Raft 共识是如何实现的？仲裁队列与 Stream 队列的选型建议？",
@@ -228,7 +228,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka Producer 架构与分区写入策略",
     "content": "详细说明 Kafka Producer 的内部架构，包括分区器（Partitioner）、累加器（RecordAccumulator）、Sender 线程的工作流程。\n\n讨论生产者如何选择目标分区（key hash 轮询、自定义分区器、粘性分区 Sticky Partition），以及批次发送与缓冲区控制（buffer.memory、max.block.ms）。",
@@ -239,8 +239,8 @@
       "幂等生产者通过 PID + 序列号实现精确一次"
     ],
     "tags": [
-      "kafka",
-      "producer"
+      "Kafka",
+      "Producer"
     ]
   },
   {
@@ -256,14 +256,14 @@
       "CooperativeSticky 是目前推荐的分区分配策略"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "consumer",
-      "rebalance"
+      "Rebalance"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka 日志压缩（Log Compaction）原理",
     "content": "解释 Kafka 日志压缩（Log Compaction）的工作原理。它与基于时间的日志保留策略（TTL）有何区别？在什么场景下使用 Log Compaction？cleanup.policy=compact 的配置对 broker 和 topic 的影响是什么？",
@@ -274,8 +274,8 @@
       "墓碑消息（null value）在 delete.retention.ms 后才被清理"
     ],
     "tags": [
-      "kafka",
-      "compaction"
+      "Kafka",
+      "Compaction"
     ]
   },
   {
@@ -291,13 +291,13 @@
       "read_committed 隔离级别隐藏未提交消息"
     ],
     "tags": [
-      "kafka",
-      "exactly-once"
+      "Kafka",
+      "Exactly-Once"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka Connect 架构与实践",
     "content": "介绍 Kafka Connect 的架构设计：Source Connector、Sink Connector、Worker 节点（Standalone vs Distributed 模式）、任务与分片机制。讨论如何实现自定义 Connector，以及 Connect 在 CDC 场景中的典型应用。",
@@ -308,8 +308,8 @@
       "Debezium + Kafka Connect 是 CDC 的标准方案"
     ],
     "tags": [
-      "kafka",
-      "connect"
+      "Kafka",
+      "Connect"
     ]
   },
   {
@@ -325,13 +325,13 @@
       "Kafka Streams 提供 exactly-once 处理语义"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "streams"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka 分区键设计与数据倾斜治理",
     "content": "讨论 Kafka 分区键（Message Key）的设计策略，分析数据倾斜（Data Skew）的成因与影响。如何通过分区键设计和分区数规划来避免热点分区？列举常见的倾斜治理手段。",
@@ -342,13 +342,13 @@
       "通过消费者 lag 可以发现分区级别的倾斜"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "partitioning"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Kafka 分层存储（Tiered Storage）设计",
     "content": "解释 Kafka 3.6+ 引入的分层存储（Tiered Storage）架构。分层存储如何解决本地磁盘容量限制？Remote Log Manager 与 Remote Storage 层的工作原理是什么？讨论生产环境中使用分层存储的利弊。",
@@ -359,7 +359,7 @@
       "不支持事务和 Log Compaction"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "tiered-storage"
     ]
   },
@@ -376,14 +376,14 @@
       "同步消费者组 offset 实现客户端无感切换"
     ],
     "tags": [
-      "kafka",
-      "mirrormaker",
+      "Kafka",
+      "MirrorMaker",
       "disaster-recovery"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RabbitMQ 集群架构与镜像队列",
     "content": "介绍 RabbitMQ 集群的工作原理，包括节点类型（Disk Node vs RAM Node）、Erlang Cookie 认证机制、以及镜像队列（Mirrored Queues）和仲裁队列（Quorum Queues）的高可用实现。对比镜像队列和仲裁队列的优劣。",
@@ -394,13 +394,13 @@
       "仲裁队列适合关键业务，镜像队列适合性能要求高的场景"
     ],
     "tags": [
-      "rabbitmq",
-      "cluster"
+      "RabbitMQ",
+      "Cluster"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RabbitMQ 死信队列与消息 TTL 机制",
     "content": "详细解释 RabbitMQ 的死信交换器（DLX）和消息 TTL 机制。消息在哪些情况下会成为死信？死信交换器的配置参数有哪些？如何使用 TTL 和 DLX 实现延迟队列？给出完整的延迟队列设计方案。",
@@ -411,14 +411,14 @@
       "使用 DLX 实现延迟队列需要多个 TTL 粒度或使用官方插件"
     ],
     "tags": [
-      "rabbitmq",
-      "dlx",
-      "ttl"
+      "RabbitMQ",
+      "DLX",
+      "TTL"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "RabbitMQ Shovel 与 Federation 跨集群转发",
     "content": "对比 RabbitMQ 的 Shovel 和 Federation 两种跨集群消息转发机制。它们各自的架构、适用场景、配置方式有何不同？如何选择？在跨机房数据同步场景下，哪种更合适？",
@@ -429,14 +429,14 @@
       "跨机房持续同步推荐使用 Federation"
     ],
     "tags": [
-      "rabbitmq",
-      "shovel",
-      "federation"
+      "RabbitMQ",
+      "Shovel",
+      "Federation"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RocketMQ Broker 架构与刷盘机制",
     "content": "深入分析 RocketMQ Broker 的架构：包括消息存储结构（CommitLog、ConsumeQueue、IndexFile）、刷盘策略（同步刷盘 vs 异步刷盘）、以及 RAFT-based DLedger 的高可用实现。对比同步刷盘和异步刷盘的性能与可靠性差异。",
@@ -447,14 +447,14 @@
       "DLedger 用 Raft 替代主从同步，自动故障转移"
     ],
     "tags": [
-      "rocketmq",
-      "broker",
+      "RocketMQ",
+      "Broker",
       "storage"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "RocketMQ 消费者模型：Pull vs Push 与负载均衡",
     "content": "对比 RocketMQ 的 DefaultMQPushConsumer 与 DefaultMQPullConsumer 的设计差异。分析 RocketMQ 的 Rebalance 机制（平均分配算法 vs 一致性哈希）以及消息队列分配策略对消费并发度的影响。",
@@ -465,13 +465,13 @@
       "消费者数 > 队列数时多出的消费者闲置"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "consumer"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RocketMQ 延迟消息与定时消息机制",
     "content": "说明 RocketMQ 实现延迟消息/定时消息的技术原理。RocketMQ 支持哪些延迟级别？解释延迟消息的存储结构——Schedule topic 中如何进行消息分级存储，以及延迟到期后如何投递。对比 Kafka 需要外部实现的延迟方案。",
@@ -482,13 +482,13 @@
       "RocketMQ 延迟消息比 Kafka 方案更简单但灵活性差"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "delay"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Apache Pulsar Geo-Replication 原理与设计",
     "content": "阐述 Apache Pulsar 的异地复制（Geo-Replication）实现原理。包括跨地域复制的配置模型、复制保证级别、以及使用 BookKeeper 的分布式存储如何在物理上支持数据同步。与 Kafka MirrorMaker 对比优劣。",
@@ -499,7 +499,7 @@
       "每个集群有独立存储，复制通过异步分发实现"
     ],
     "tags": [
-      "pulsar",
+      "Pulsar",
       "geo-replication"
     ]
   },
@@ -516,14 +516,14 @@
       "Pulsar Functions 适合简单转换，Kafka Streams 适合复杂业务逻辑"
     ],
     "tags": [
-      "pulsar",
+      "Pulsar",
       "pulsar-functions",
-      "kafka-streams"
+      "Kafka Streams"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "消息顺序保证：全局有序与分区有序的设计",
     "content": "深入讨论消息队列中顺序保证的设计方案。全局有序和分区（partition）有序各自如何实现？Kafka、RocketMQ、RabbitMQ 分别如何保证消息顺序？顺序消费的实现对性能的影响以及常见的顺序消费误区。",
@@ -534,13 +534,13 @@
       "重试逻辑会破坏顺序，需要特殊设计"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "ordering"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "消息幂等消费与去重方案设计",
     "content": "讨论分布式消息系统中幂等消费的设计策略。为什么消息可能被重复消费？列举常见的去重方案（唯一键法、状态机法、事务法、幂等表），分析各自的适用场景和局限性。",
@@ -551,7 +551,7 @@
       "接口幂等设计比去重更本质——重复消费也产生正确结果"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "idempotent"
     ]
   },
@@ -568,8 +568,8 @@
       "合理设置消费者的 prefetch/拉取参数可以避免大部分反压问题"
     ],
     "tags": [
-      "mq",
-      "backpressure"
+      "MQ",
+      "Backpressure"
     ]
   },
   {
@@ -585,7 +585,7 @@
       "死信队列需要监控告警和自动/人工处理流程"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "retry",
       "dead-letter"
     ]
@@ -603,9 +603,9 @@
       "消费者速率需要配合下游处理能力动态调整"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "flow-control",
-      "rate-limiting"
+      "Rate Limiting"
     ]
   },
   {
@@ -621,9 +621,9 @@
       "RocketMQ 内置 Trace、Kafka 靠拦截器、RabbitMQ 靠插件"
     ],
     "tags": [
-      "mq",
-      "tracing",
-      "observability"
+      "MQ",
+      "Tracing",
+      "Observability"
     ]
   },
   {
@@ -639,7 +639,7 @@
       "Pulsar 存算分离架构更适合云原生和多租户"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "comparison"
     ]
   },
@@ -656,14 +656,14 @@
       "RocketMQ 事务消息 + 回查机制实现 EOS"
     ],
     "tags": [
-      "mq",
-      "exactly-once",
+      "MQ",
+      "Exactly-Once",
       "semantics"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "MQ 大规模消息积压的排查与处理",
     "content": "当消息队列出现大规模积压时，应该如何快速排查和处理？积压的常见原因（消费者故障、处理能力不足、下游抖动、消息体过大）及对应的处理策略。给出一个系统化的积压响应流程。",
@@ -674,7 +674,7 @@
       "大面积积压时考虑消息降级（跳过不重要消息）"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "backlog",
       "troubleshooting"
     ]
@@ -692,7 +692,7 @@
       "RabbitMQ 仲裁队列比镜像队列对网络分区容忍更好"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "network-partition",
       "consistency"
     ]
@@ -710,7 +710,7 @@
       "retention.ms（delete）与 cleanup.policy=compact 可组合使用"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "topic-design"
     ]
   },
@@ -727,7 +727,7 @@
       "多个 Topic + Tag 组合是最灵活的设计方式"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "message-filtering"
     ]
   },
@@ -744,7 +744,7 @@
       "批量消费时注意处理超时和 offset 提交时机"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "batching",
       "compression"
     ]
@@ -762,8 +762,8 @@
       "读写分离需要容忍 Slave 的数据延迟"
     ],
     "tags": [
-      "rocketmq",
-      "high-availability"
+      "RocketMQ",
+      "High Availability"
     ]
   },
   {
@@ -779,7 +779,7 @@
       "两者都需要消费端幂等"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "transactional-message"
     ]
   },
@@ -796,8 +796,8 @@
       "幂等设计和死信监控是 Saga 落地的关键"
     ],
     "tags": [
-      "mq",
-      "saga"
+      "MQ",
+      "Saga"
     ]
   },
   {
@@ -813,7 +813,7 @@
       "lz4 最快、zstd 压缩率最高、gzip 最通用"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "compression"
     ]
   },
@@ -830,7 +830,7 @@
       "delayed_message_exchange 插件实现延迟消息"
     ],
     "tags": [
-      "rabbitmq",
+      "RabbitMQ",
       "plugins"
     ]
   },
@@ -847,8 +847,8 @@
       "测试全流程：发送 → 消费 → 重试 → 死信 → 故障恢复"
     ],
     "tags": [
-      "mq",
-      "testing"
+      "MQ",
+      "Testing"
     ]
   },
   {
@@ -864,8 +864,8 @@
       "心跳参数和 session timeout 需要根据网络状况调优"
     ],
     "tags": [
-      "kafka",
-      "rebalance"
+      "Kafka",
+      "Rebalance"
     ]
   },
   {
@@ -881,8 +881,8 @@
       "只添加可选字段是最安全的演化策略"
     ],
     "tags": [
-      "mq",
-      "schema-registry"
+      "MQ",
+      "Schema Registry"
     ]
   },
   {
@@ -897,7 +897,7 @@
       "Compaction 只保留每个 key 的最新值"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "storage",
       "log"
     ]
@@ -914,8 +914,8 @@
       "事务 = 批量消息原子提交 + consumer offset 原子提交"
     ],
     "tags": [
-      "kafka",
-      "exactly-once",
+      "Kafka",
+      "Exactly-Once",
       "idempotent"
     ]
   },
@@ -931,9 +931,9 @@
       "多数派写入 = 写入 3 副本中的 2 个成功才算确认"
     ],
     "tags": [
-      "rabbitmq",
-      "quorum-queue",
-      "raft"
+      "RabbitMQ",
+      "Quorum Queue",
+      "Raft"
     ]
   },
   {
@@ -948,7 +948,7 @@
       "Standby Replicas 热备减少故障恢复时间"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "streams",
       "state-store"
     ]
@@ -965,9 +965,9 @@
       "故障切换 3-7 秒（Leader 检测 + 选举）"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "dledger",
-      "raft"
+      "Raft"
     ]
   },
   {
@@ -982,8 +982,8 @@
       "E/W/Q 灵活配置数据分布和持久化级别"
     ],
     "tags": [
-      "pulsar",
-      "bookkeeper",
+      "Pulsar",
+      "BookKeeper",
       "storage"
     ]
   },
@@ -999,7 +999,7 @@
       "死信队列告警 + 人工干预是兜底方案"
     ],
     "tags": [
-      "dlq",
+      "DLQ",
       "retry",
       "dead-letter"
     ]
@@ -1016,9 +1016,9 @@
       "KRaft 替代 ZK 实现自管理的元数据一致性"
     ],
     "tags": [
-      "kafka",
-      "controller",
-      "kraft"
+      "Kafka",
+      "Controller",
+      "KRaft"
     ]
   },
   {
@@ -1033,7 +1033,7 @@
       "MM2 的 offset sync 保证消息不丢不重"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "geo-replication"
     ]
   },
@@ -1049,7 +1049,7 @@
       "适合简单 ETL，复杂场景还是用 Flink/Kafka Streams"
     ],
     "tags": [
-      "pulsar",
+      "Pulsar",
       "functions"
     ]
   },
@@ -1065,7 +1065,7 @@
       "请求/响应队列解耦网络层和 IO 层"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "networking",
       "architecture"
     ]
@@ -1082,8 +1082,8 @@
       "路由信息最终一致（~30s 传播延迟）"
     ],
     "tags": [
-      "rocketmq",
-      "nameserver"
+      "RocketMQ",
+      "NameServer"
     ]
   },
   {
@@ -1098,9 +1098,9 @@
       "CQRS + Event Sourcing 通过 Outbox Pattern 解决双写一致性问题"
     ],
     "tags": [
-      "event-sourcing",
-      "kafka",
-      "cqrs"
+      "Event Sourcing",
+      "Kafka",
+      "CQRS"
     ]
   },
   {
@@ -1116,8 +1116,8 @@
     ],
     "tags": [
       "serialization",
-      "avro",
-      "protobuf"
+      "Avro",
+      "Protobuf"
     ]
   },
   {
@@ -1132,7 +1132,7 @@
       "同步刷盘保证零丢失，异步刷盘性能好但有丢失窗口"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "storage"
     ]
   },
@@ -1148,8 +1148,8 @@
       "Tiered Storage 自动卸载旧数据到 S3 降低存储成本"
     ],
     "tags": [
-      "pulsar",
-      "ttl",
+      "Pulsar",
+      "TTL",
       "tiered-storage"
     ]
   },
@@ -1165,7 +1165,7 @@
       "Range 不均匀，RoundRobin 均匀但重平衡全量移动"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "consumer",
       "partition-assignor"
     ]
@@ -1182,7 +1182,7 @@
       "跨网络传输必须用 TLS 加密"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "security",
       "authentication"
     ]
@@ -1199,13 +1199,13 @@
       "Consumer Lag 持续增长 = 消费端跟不上"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "monitoring"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "RocketMQ 的 Broker 路由与负载均衡",
     "content": "分析 RocketMQ 的 Producer 和 Consumer 端负载均衡。Producer 端的发送队列选择——轮询/算法指定。Consumer 端的 Queue 均衡——平均分配/环形分配。Broker 故障时的路由感知和切换。消息发送到同机房 Broker 的延迟优化。",
@@ -1215,7 +1215,7 @@
       "sendLatencyFaultEnable 实现机架感知发送"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "load-balancing"
     ]
   },
@@ -1231,7 +1231,7 @@
       "多租户通过 Tenant → Namespace → Topic 三层隔离"
     ],
     "tags": [
-      "pulsar",
+      "Pulsar",
       "proxy"
     ]
   },
@@ -1247,7 +1247,7 @@
       "磁盘 = 保留时间 × 速率 × 大小 × 副本"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "deployment",
       "architecture"
     ]
@@ -1264,8 +1264,8 @@
       "Stream 适合事件日志，Classic Queue 适合任务分发"
     ],
     "tags": [
-      "rabbitmq",
-      "stream"
+      "RabbitMQ",
+      "Stream"
     ]
   },
   {
@@ -1280,7 +1280,7 @@
       "性能隔离的终极方案 = 独立集群"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "multi-tenant"
     ]
   },
@@ -1296,7 +1296,7 @@
       "Kafka 原生不支持延迟消息（需要外部实现）"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "delay-message"
     ]
   },
@@ -1312,14 +1312,14 @@
       "协议兼容层降低迁移成本和运维复杂度"
     ],
     "tags": [
-      "pulsar",
+      "Pulsar",
       "kop",
-      "protocol"
+      "Protocol"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Kafka 内存管理与页缓存优化",
     "content": "讨论 Kafka 的 JVM 堆内存和 OS 页缓存使用策略。Kafka 为什么依赖页缓存（Page Cache）。JVM Heap 的合理大小（避免 GC 压力）。堆外内存（Off-Heap）的应用。Kafka 的零拷贝路径。内存调优案例分析。",
@@ -1329,9 +1329,9 @@
       "预留系统内存给页缓存（至少一半）是关键调优"
     ],
     "tags": [
-      "kafka",
-      "memory",
-      "page-cache"
+      "Kafka",
+      "Memory",
+      "Page Cache"
     ]
   },
   {
@@ -1346,7 +1346,7 @@
       "消费幂等需要业务层配合（去重表/幂等键）"
     ],
     "tags": [
-      "pulsar",
+      "Pulsar",
       "deduplication",
       "idempotent"
     ]
@@ -1363,7 +1363,7 @@
       "CDC（Debezium）比轮询更优雅（零侵入、低延迟）"
     ],
     "tags": [
-      "outbox",
+      "Outbox",
       "pattern",
       "consistency"
     ]
@@ -1380,7 +1380,7 @@
       "SSD 更适合 ConsumeQueue 的随机访问"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "disk-io",
       "optimization"
     ]
@@ -1397,7 +1397,7 @@
       "尽量用 Tag + 多 Topic 组合避免复杂 SQL92 过滤"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "filtering"
     ]
   },
@@ -1413,9 +1413,9 @@
       "迁移路径：ZK → Migration → KRaft"
     ],
     "tags": [
-      "kafka",
-      "kraft",
-      "zookeeper"
+      "Kafka",
+      "KRaft",
+      "ZooKeeper"
     ]
   },
   {
@@ -1430,7 +1430,7 @@
       "版本管理 + Schema Registry = 可靠的消息演化"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "message-design"
     ]
   },
@@ -1446,7 +1446,7 @@
       "Bundle 负载均衡实现 Broker 间的自动扩展"
     ],
     "tags": [
-      "pulsar",
+      "Pulsar",
       "bundle",
       "load-balancing"
     ]
@@ -1463,7 +1463,7 @@
       "Grace Period 控制乱序事件的容忍度"
     ],
     "tags": [
-      "kafka",
+      "Kafka",
       "streams",
       "timestamp"
     ]
@@ -1480,13 +1480,13 @@
       "KoP 零代码修改平滑过渡"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "migration"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "消息队列事件流处理模式总结",
     "content": "总结消息队列事件流处理的常见模式。事件通知（Event Notification）——通知下游。事件状态传递（Event Carried State Transfer）——减少查询。事件溯源（Event Sourcing）——重建状态。CQRS（Command Query Responsibility Segregation）——读写分离。事件编年（Event Chronicle）——审计日志。",
@@ -1496,14 +1496,14 @@
       "Event Sourcing + CQRS 是最复杂但最强大的模式"
     ],
     "tags": [
-      "mq",
-      "event-driven",
+      "MQ",
+      "Event Driven",
       "patterns"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RocketMQ 的批量消息与事务批量处理",
     "content": "分析 RocketMQ 的批量消息。批量发送的条件和限制（同一 Topic、同一批次）。批量消息的大小限制（默认 1MB）。事务批量消息的原子性。批量处理 vs 单条处理的性能对比。批量发送的配置和注意事项。",
@@ -1513,13 +1513,13 @@
       "事务消息不支持批量（需要外部协调）"
     ],
     "tags": [
-      "rocketmq",
+      "RocketMQ",
       "batching"
     ]
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "MQ 在微服务中的异步通信模式对比",
     "content": "对比微服务中 MQ 异步通信的模式。异步请求-响应（Request-Async-Response）——通过回调队列实现 RPC over MQ。事件驱动协作。任务分发和工作队列。MQ 在微服务中的优势和引入的复杂度。",
@@ -1529,7 +1529,7 @@
       "但引入幂等、追踪、调试复杂度"
     ],
     "tags": [
-      "mq",
+      "MQ",
       "microservices"
     ]
   },
@@ -1589,7 +1589,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Pulsar IO 框架：Source/Sink 连接器与 NAR 打包机制",
     "content": "Pulsar IO 的 Source 和 Sink 框架如何工作？Pulsar 内置了哪些常用的连接器？NAR 打包机制是什么？如何开发自定义 Pulsar IO 连接器？",
@@ -1679,7 +1679,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "MQ Prometheus 监控：核心指标与告警规则设计",
     "content": "Kafka、RabbitMQ、RocketMQ 和 Pulsar 各自需要监控哪些核心指标？Prometheus JMX Exporter 和各 MQ 的原生 Exporter 如何配置？Grafana 上有哪些推荐的 Dashboard？关键告警规则如何设计？",
@@ -1697,7 +1697,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "MQ 基准测试方法与工具：吞吐量与延迟测量",
     "content": "MQ 基准测试的主要目的是什么？常用的测试工具（Apache JMeter、Kafka 自带压测工具、OpenMessaging Benchmark）如何使用？吞吐量（Throughput）和延迟（Latency）如何衡量？测试时常见的坑有哪些？",
@@ -1715,7 +1715,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "RabbitMQ Shovel 插件配置与动态管理",
     "content": "RabbitMQ Shovel 插件的作用是什么？静态 Shovel 和动态 Shovel 有什么区别？Shovel 的配置项包括哪些？Shovel 在消息迁移中的典型应用场景是什么？Shovel 与 Federation 的适用场景有何不同？",
@@ -1733,7 +1733,7 @@
   },
   {
     "category": "mq",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "消息队列路由机制：Topic Exchange 与路由键绑定规则",
     "content": "RabbitMQ 的 Topic Exchange 如何进行消息路由？routing key 和 binding key 的匹配规则是什么（包括通配符 * 和 #）？Kafka 和 RocketMQ 的路由机制与 RabbitMQ 有何不同？如何设计高效的路由键模式？",

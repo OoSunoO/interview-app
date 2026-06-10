@@ -58,7 +58,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "AI 推理中的 Prefix Caching 与语义缓存",
     "content": "LLM 推理中的 Prefix Caching（前缀缓存）和 Semantic Caching（语义缓存）有什么区别？RadixTree 在 Prefix Caching 中的作用是什么？SGLang 的 RadixAttention 如何工作？",
@@ -96,7 +96,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "AI Gateway 架构设计",
     "content": "AI Gateway（如 Portkey、Helicone、Azure API Management for AI）的核心功能是什么？AI Gateway 如何实现多模型路由、Fallback、Rate Limiting 和 Cost Management？AI Gateway 与通用 API Gateway 的区别？",
@@ -115,7 +115,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RAG 基础设施：Embedding 模型与向量数据库",
     "content": "RAG（Retrieval-Augmented Generation）架构中的基础设施组件有哪些？Embedding Model 的选型考虑因素是什么？向量数据库（Pinecone / Weaviate / Milvus）的核心指标和选型对比？",
@@ -191,7 +191,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "LLM 缓存策略：从 Prompt Cache 到 Semantic Cache",
     "content": "LLM 应用的缓存层次有哪些？KV Cache Prefix Caching（GPU 级）、Response Cache（应用级）、Semantic Cache（语义级）分别解决什么问题？GPTCache 和 Redis + 向量搜索的实现差异？",
@@ -210,7 +210,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "NVIDIA GPU 分区技术：MIG vs MPS vs Time-Slicing",
     "content": "NVIDIA GPU 的三种分区技术——MIG（Multi-Instance GPU）、MPS（Multi-Process Service）、Time-Slicing——各自的工作原理是什么？分别在什么场景下使用？如何选择？",
@@ -229,7 +229,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "FlashAttention：加速注意力计算的原理与演进",
     "content": "FlashAttention 系列（v1/v2/v3）的核心优化思想是什么？FlashAttention 如何通过 tiling 和 recomputation 降低显存消耗和计算量？FlashAttention-2 和 FlashAttention-3 的改进点？",
@@ -239,8 +239,8 @@
       "FlashAttention-2 优化了 warp 调度，FlashAttention-3 利用了 H100 的 FP8 和异步计算能力"
     ],
     "tags": [
-      "FlashAttention",
-      "Attention",
+      "Flash Attention",
+      "attention",
       "GPU",
       "显存优化",
       "推理加速"
@@ -261,7 +261,7 @@
       "LLM",
       "推测解码",
       "推理加速",
-      "Speculative Decoding",
+      "speculative_decoding",
       "优化"
     ]
   },
@@ -286,7 +286,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "LLM 推理的容器化与部署优化",
     "content": "如何为 LLM 推理服务设计高效的 Docker 容器和部署策略？模型热加载、GPU 内存预热、Horizontial Scaling 的最佳实践是什么？",
@@ -343,7 +343,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "ML Pipeline 编排与工作流管理",
     "content": "如何设计可生产的 ML Pipeline？Airflow、Kubeflow、Flyte、ZenML 等 Pipeline 编排工具的核心差异是什么？Feature Engineering → Training → Evaluation → Deployment 的自动化流程如何设计？",
@@ -362,7 +362,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 基础设施安全：模型访问控制与数据隔离",
     "content": "AI 基础设施特有的安全风险有哪些？模型访问控制（Model Access Control）、推理数据隔离、训练数据防泄漏的最佳实践是什么？",
@@ -413,13 +413,13 @@
       "部署",
       "Canary",
       "Shadow",
-      "A/B测试",
+      "A/B 测试",
       "模型服务"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "模型压缩技术：蒸馏、剪枝与量化对比",
     "content": "模型压缩的三条主要路径——知识蒸馏（Knowledge Distillation）、剪枝（Pruning）、量化（Quantization）——各自原理是什么？如何组合使用？各自的最佳适用场景？",
@@ -438,7 +438,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "多模态推理基础设施",
     "content": "多模态模型（视觉-语言、语音-文本）的推理基础设施和纯文本模型有什么不同？图像/音频的编码和推理 Pipeline 如何设计？多模态推理的瓶颈在哪里？",
@@ -493,7 +493,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "GPU 虚拟化与 MIG/MPS 技术",
     "content": "详细说明 NVIDIA GPU 虚拟化方案：MIG（Multi-Instance GPU，A100/H100）和 MPS（Multi-Process Service）。MIG 的硬件隔离原理——GPU 内存、L2 cache、计算单元如何划分。MPS 的 CUDA stream 级别并发。在推理场景中如何选择？",
@@ -505,7 +505,7 @@
     ],
     "tags": [
       "ai-infra",
-      "gpu",
+      "GPU",
       "virtualization"
     ]
   },
@@ -540,7 +540,7 @@
     ],
     "tags": [
       "ai-infra",
-      "distributed-training"
+      "Distributed Training"
     ]
   },
   {
@@ -574,7 +574,7 @@
     ],
     "tags": [
       "ai-infra",
-      "model-registry"
+      "Model Registry"
     ]
   },
   {
@@ -591,7 +591,7 @@
     ],
     "tags": [
       "ai-infra",
-      "inference-optimization"
+      "Inference Optimization"
     ]
   },
   {
@@ -608,7 +608,7 @@
     ],
     "tags": [
       "ai-infra",
-      "moe"
+      "MoE"
     ]
   },
   {
@@ -625,7 +625,7 @@
     ],
     "tags": [
       "ai-infra",
-      "mlops"
+      "MLOps"
     ]
   },
   {
@@ -642,8 +642,8 @@
     ],
     "tags": [
       "ai-infra",
-      "fp8",
-      "precision-training"
+      "FP8",
+      "Precision Training"
     ]
   },
   {
@@ -728,8 +728,8 @@
     ],
     "tags": [
       "ai-infra",
-      "kubernetes",
-      "gpu"
+      "Kubernetes",
+      "GPU"
     ]
   },
   {
@@ -746,7 +746,7 @@
     ],
     "tags": [
       "ai-infra",
-      "benchmark"
+      "Benchmark"
     ]
   },
   {
@@ -763,7 +763,7 @@
     ],
     "tags": [
       "ai-infra",
-      "kv-cache"
+      "KV Cache"
     ]
   },
   {
@@ -780,7 +780,7 @@
     ],
     "tags": [
       "ai-infra",
-      "experiment-tracking"
+      "Experiment Tracking"
     ]
   },
   {
@@ -814,7 +814,7 @@
     ],
     "tags": [
       "ai-infra",
-      "checkpoint"
+      "Checkpoint"
     ]
   },
   {
@@ -831,7 +831,7 @@
     ],
     "tags": [
       "ai-infra",
-      "caching"
+      "Caching"
     ]
   },
   {
@@ -848,8 +848,8 @@
     ],
     "tags": [
       "ai-infra",
-      "lora",
-      "fine-tuning"
+      "LoRA",
+      "Fine-Tuning"
     ]
   },
   {
@@ -866,7 +866,7 @@
     ],
     "tags": [
       "ai-infra",
-      "finops"
+      "FinOps"
     ]
   },
   {
@@ -900,7 +900,7 @@
     ],
     "tags": [
       "ai-infra",
-      "slo"
+      "SLO"
     ]
   },
   {
@@ -951,12 +951,12 @@
     ],
     "tags": [
       "ai-infra",
-      "chaos-engineering"
+      "Chaos Engineering"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 训练与推理的基础设施对比",
     "content": "全面对比 AI 训练和推理的基础设施需求。训练对算力的需求：高吞吐计算 + 高带宽通信。推理对延迟的要求：低延迟 + 高并发。GPU 选型：训练用 H100/B200 vs 推理用 L40S/A10。CPU/内存/网络的差异。",
@@ -973,7 +973,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "GPU 集群网络拓扑与 AllReduce 通信",
     "content": "深入分析 GPU 集群的网络拓扑对分布式训练的影响。AllReduce 的 Ring 和 Tree 算法对比。NVLink + NVSwitch 的域内通信。跨节点的 NCCL 通信（RoCE 或 InfiniBand）。网络拓扑设计——fat-tree 与 3D-Torus。",
@@ -985,12 +985,12 @@
     "tags": [
       "ai-infra",
       "networking",
-      "nccl"
+      "NCCL"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "分布式训练的并行策略选择与权衡",
     "content": "深入对比分布式训练的并行策略。数据并行（DP/FSDP）——每 GPU 完整模型 + 分片数据。张量并行（TP）——单层切分到多 GPU。流水线并行（PP）——层间切分。序列并行（SP）——长序列切分。Expert Parallelism——MoE 的 EP。组合策略（3D/4D 并行）。",
@@ -1002,7 +1002,7 @@
     "tags": [
       "ai-infra",
       "parallelism",
-      "distributed-training"
+      "Distributed Training"
     ]
   },
   {
@@ -1018,7 +1018,7 @@
     ],
     "tags": [
       "ai-infra",
-      "checkpoint",
+      "Checkpoint",
       "training"
     ]
   },
@@ -1041,7 +1041,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LLM Serving 的 Continuous Batching 机制",
     "content": "深入分析 Continuous Batching（连续批处理）的原理。Static Batching（传统）vs Dynamic Batching（排队）vs Continuous Batching。Decoding 阶段如何动态添加/移除请求。Iteration-level Scheduling——每步都检查能否加新请求。对 GPU 利用率的影响。",
@@ -1069,7 +1069,7 @@
     ],
     "tags": [
       "ai-infra",
-      "memory",
+      "Memory",
       "optimization"
     ]
   },
@@ -1086,7 +1086,7 @@
     ],
     "tags": [
       "ai-infra",
-      "kv-cache",
+      "KV Cache",
       "optimization"
     ]
   },
@@ -1103,13 +1103,13 @@
     ],
     "tags": [
       "ai-infra",
-      "kubernetes",
-      "gpu"
+      "Kubernetes",
+      "GPU"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "模型量化技术全览：PTQ、QAT 与量化感知训练",
     "content": "全面分析模型量化技术。权重量化（Weight-only）——W4A16/W8A16。权重+激活量化——W8A8（INT8/FP8）。量化方法：RTN（Round-to-Nearest）、GPTQ、AWQ、SmoothQuant。量化感知训练（QAT）——在训练中模拟量化。量化校准数据集。",
@@ -1159,7 +1159,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "vLLM 推理架构与 PagedAttention",
     "content": "深入分析 vLLM 的推理架构。PagedAttention 的原理——KV-Cache 分块管理（类比虚拟内存）。Block Manager 的分配和回收。vLLM 的调度器——Continuous Batching + 优先级。vLLM 的 prefix caching。vLLM 的多节点推理。",
@@ -1170,13 +1170,13 @@
     ],
     "tags": [
       "ai-infra",
-      "vllm",
+      "vLLM",
       "inference"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "MoE（混合专家模型）的分布式训练",
     "content": "深入分析 MoE 模型的分布式训练挑战。Expert Parallelism——不同专家在不同 GPU。Token Routing——Token 分配到专家的负载均衡。Top-K 路由的 All-to-All 通信。负载不均问题——Experts 的 Skill 不平衡和丢弃策略。MoE 训练的显存优化。",
@@ -1187,13 +1187,13 @@
     ],
     "tags": [
       "ai-infra",
-      "moe",
-      "distributed-training"
+      "MoE",
+      "Distributed Training"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 推理的冷启动与模型加载优化",
     "content": "讨论 AI 推理服务的冷启动问题。模型加载时间——从 S3/HDFS 下载模型。模型预热——warmup 请求填充 KV-Cache。模型分片加载——边加载边服务。模型缓存——本地缓存模型文件。模型加载的并行化和流水线。",
@@ -1204,13 +1204,13 @@
     ],
     "tags": [
       "ai-infra",
-      "cold-start",
-      "model-loading"
+      "Cold Start",
+      "Model Loading"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "AI 训练的数据加载与预处理管线",
     "content": "讨论大规模训练的数据加载优化。DataLoader 的多进程预取。数据存储（对象存储 vs 分布式文件系统 vs 本地 SSD）。数据预处理（清洗/Tokenize/Shuffle）的流水线。数据加载的瓶颈定位。TFRecord/MMap 和 WebDataset 的高效格式。",
@@ -1227,7 +1227,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "LLM 推理的 Speculative Decoding",
     "content": "深入分析 Speculative Decoding 加速推理的原理。自回归解码的瓶颈——每步一个 token。Draft Model（草稿模型）+ Target Model（验证模型）的协作。草稿模型的候选 token 生成。验证阶段的并行接受。Speculative Decoding 的性能提升。",
@@ -1238,7 +1238,7 @@
     ],
     "tags": [
       "ai-infra",
-      "speculative-decoding",
+      "speculative_decoding",
       "inference"
     ]
   },
@@ -1255,13 +1255,13 @@
     ],
     "tags": [
       "ai-infra",
-      "mlops",
-      "experiment-tracking"
+      "MLOps",
+      "Experiment Tracking"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 部署的 A/B 测试与金丝雀发布",
     "content": "讨论 AI 模型的生产部署策略。模型 A/B 测试——流量分桶对比。金丝雀发布——渐进式切流。模型路由——按用户/场景路由到不同模型。模型回滚策略。在线评估指标和监控。",
@@ -1273,7 +1273,7 @@
     "tags": [
       "ai-infra",
       "deployment",
-      "canary"
+      "Canary"
     ]
   },
   {
@@ -1295,7 +1295,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "AI 推理中的显存墙与解决方案",
     "content": "讨论 LLM 推理的显存墙问题。单 GPU 显存限制——4090 24GB / A100 80GB / H100 80GB。超过显存时的方案：模型并行（TP/PP）+ KV-Cache 优化 + 量化。FlashAttention 减少显存占用。显存——计算——延迟的三角权衡。",
@@ -1307,12 +1307,12 @@
     "tags": [
       "ai-infra",
       "memory-wall",
-      "flashattention"
+      "Flash Attention"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "MLOps 持续集成与持续训练（CT）",
     "content": "讨论 MLOps 的 CI/CD/CT 实践。数据验证——数据漂移和 Schema 检查。模型验证——精度 + 性能 + 安全测试。持续训练（CT）——自动触发训练。模型部署——自动发布的流水线。AI 系统的监控和告警。",
@@ -1323,13 +1323,13 @@
     ],
     "tags": [
       "ai-infra",
-      "mlops",
-      "pipeline"
+      "MLOps",
+      "Pipeline"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "DPO/RLHF 训练的基础设施挑战",
     "content": "讨论 RLHF/DPO 训练的特殊基础设施需求。RLHF 的四模型：Policy/Reference/ Reward/Critic。PPO 训练的 KL 散度和奖励信号。Inference 和 Training 交替的调度。RLHF 的显存开销（4 个模型同时加载）。DPO 简化后的优势。",
@@ -1340,7 +1340,7 @@
     ],
     "tags": [
       "ai-infra",
-      "rlhf",
+      "RLHF",
       "training"
     ]
   },
@@ -1363,7 +1363,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 模型的安全沙箱与内容审核",
     "content": "讨论 AI 推理服务的安全措施。输入过滤——恶意提示检测。输出过滤——敏感内容拦截。模型安全——对抗攻击防护。推理沙箱——进程隔离和资源限制。内容审核——分类器 + 规则引擎。",
@@ -1375,12 +1375,12 @@
     "tags": [
       "ai-infra",
       "security",
-      "safety"
+      "Safety"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "AI 训练中的通信与计算重叠",
     "content": "深入分析分布式训练中通信与计算的重叠技术。通信隐藏（Communication Overlap）——在计算时同时通信。AllReduce 与反向传播的 overlap——梯度计算完立刻通信。Fusion Buffer——合并小通信包减少次数。通信拓扑感知的调度。",
@@ -1392,7 +1392,7 @@
     "tags": [
       "ai-infra",
       "communication",
-      "distributed-training"
+      "Distributed Training"
     ]
   },
   {
@@ -1425,13 +1425,13 @@
     ],
     "tags": [
       "ai-infra",
-      "finops",
-      "cost"
+      "FinOps",
+      "Cost"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "长序列模型的训练优化：Ring Attention 与 FlashAttention",
     "content": "讨论长序列（Long Context）训练的技术挑战和解决方案。标准 Attention 的 O(N²) 计算和显存。FlashAttention——分块计算 + 显存优化。Ring Attention——多 GPU 的序列并行。ALiBI/RoPE 的位置编码对序列扩展的影响。",
@@ -1442,13 +1442,13 @@
     ],
     "tags": [
       "ai-infra",
-      "long-context",
+      "Long Context",
       "attention"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "推理服务的高可用与负载均衡",
     "content": "讨论 AI 推理服务的生产级高可用架构。多副本部署 + 负载均衡。请求级别的故障切换。模型推理的超时和重试策略。推理服务的优雅关闭。监控和告警指标。",
@@ -1459,13 +1459,13 @@
     ],
     "tags": [
       "ai-infra",
-      "high-availability",
+      "High Availability",
       "serving"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "训练作业的任务调度与资源仲裁",
     "content": "讨论 GPU 集群的作业调度策略。作业排队和优先级调度。公平调度（Fair Scheduling）——多团队共享 GPU 集群。Gang Scheduling——所有 GPU 同时就绪。作业抢占——高优先级任务抢占资源。碎片整理——GPU 资源碎片。",
@@ -1476,8 +1476,8 @@
     ],
     "tags": [
       "ai-infra",
-      "scheduling",
-      "resource-management"
+      "Scheduling",
+      "Resource Management"
     ]
   },
   {
@@ -1494,12 +1494,12 @@
     "tags": [
       "ai-infra",
       "gpu-virtualization",
-      "mig"
+      "MIG"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 基础设施的容量规划与扩展",
     "content": "讨论 AI 基础设施的容量规划。训练容量的估算——模型大小 × token 数 × FLOPS 利用率。推理容量的估算——QPS × 延迟要求。GPU 池化——训练/推理共享。未来需求的趋势预测。扩缩容策略——弹性和计划性。",
@@ -1510,7 +1510,7 @@
     ],
     "tags": [
       "ai-infra",
-      "capacity-planning",
+      "Capacity Planning",
       "scaling"
     ]
   },
@@ -1527,8 +1527,8 @@
     ],
     "tags": [
       "ai-infra",
-      "fine-tuning",
-      "lora"
+      "Fine-Tuning",
+      "LoRA"
     ]
   },
   {
@@ -1544,13 +1544,13 @@
     ],
     "tags": [
       "ai-infra",
-      "onnx",
+      "ONNX",
       "deployment"
     ]
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 模型的持续监控与退化检测",
     "content": "讨论 AI 模型的在线监控和退化检测。数据漂移（Data Drift）——输入分布变化。概念漂移（Concept Drift）——输入-输出关系变化。模型退化检测——准确率/延迟/异常。监控告警和自动重训触发。",
@@ -1562,7 +1562,7 @@
     "tags": [
       "ai-infra",
       "monitoring",
-      "drift-detection"
+      "Drift Detection"
     ]
   },
   {

@@ -1,7 +1,7 @@
 [
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 运行时数据区域",
     "content": "JVM 运行时数据区包括：程序计数器、___、本地方法栈、___、方法区（JDK 8 后改为___）。",
@@ -16,8 +16,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Java 堆内存分区",
     "content": "Java 堆被分为三个区域：___（新生代和老年代）、___（可选，JDK 7 后移除）。新生代又分为：___、Survivor 0 和 Survivor 1。",
@@ -32,8 +32,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "GC Roots 包括哪些",
     "content": "可作为 GC Roots 的对象包括：虚拟机栈中___的对象、方法区中___引用的对象、方法区中___引用的对象、JNI（即一般说的 Native 方法）中引用的对象。",
@@ -48,7 +48,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "类加载过程的步骤",
@@ -64,8 +64,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "对象存活判断算法",
     "content": "JVM 判断对象是否存活有两种算法：___法（无法解决循环引用问题，不为主流）和___分析法（从 GC Roots 开始搜索，不可达的对象即为可回收对象）。",
@@ -80,8 +80,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "主流 GC 收集器",
     "content": "JDK 11+ 默认的 GC 收集器是___，它通过将堆划分为多个固定大小的 Region 来实现可预测的停顿。JDK 21+ 引入的___（JDK 15 Preview、JDK 21 GA）使用染色指针和读屏障，将停顿时间控制在___以下。",
@@ -98,7 +98,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 堆内存大小参数",
@@ -115,8 +115,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Java 对象头结构",
     "content": "在 64 位 JVM（未开启指针压缩）中，一个普通 Java 对象的对象头包含两个部分：___（存储哈希码、GC 分代年龄、锁状态标志、偏向线程 ID 等）和___（指向该对象所属类元数据的指针）。开启指针压缩后，第二部分在 64 位系统中从 8 字节压缩到___字节。",
@@ -132,7 +132,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Minor GC / Major GC / Full GC",
@@ -149,7 +149,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Java 引用类型强度",
@@ -166,8 +166,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "类与实例的初始化顺序",
     "content": "类初始化时先执行___的 <clinit>（类构造器），再执行当前类的 <clinit>。创建对象时先执行___的 <init>（实例变量初始化 + 构造代码块 + 构造函数），再执行子类的。静态变量赋值和静态代码块按___顺序执行。",
@@ -183,8 +183,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "String Pool 与 intern()",
     "content": "JDK 7+ 中 String Pool 位于___。String s = new String(\"a\") + new String(\"b\") 执行后 s 指向堆中的___。调用 s.intern() 时，如果池中已有则___；如果池中没有则___（JDK 7+ 的实现策略）。",
@@ -200,8 +200,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "DCL 单例与 volatile",
     "content": "双重检查锁定（DCL）单例中 instance 必须用___修饰。new 操作分为三步：分配内存、___、___，JIT 可能重排序后两步。不加关键字时另一个线程可能在第一步判断 instance 不为 null 后读取到___。",
@@ -218,7 +218,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JIT 编译器与分层编译",
@@ -235,8 +235,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "栈上分配与 TLAB",
     "content": "未被逃逸分析识别为___的对象可以在___（线程栈）上分配，方法结束时随栈帧自动销毁。___（Thread Local Allocation Buffer）是每个线程在 Eden 区预分配的内存区域，用于___避免线程竞争 CAS 操作。",
@@ -253,7 +253,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "三色标记法与并发标记",
@@ -271,8 +271,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "安全点（SafePoint）与安全区域",
     "content": "安全点（SafePoint）是线程执行到某处时___信息是完整可描述的状态——JVM 在该位置执行 GC 等全局操作。线程在安全点通过___（轮询标志位）机制响应 GC 请求。安全区域（SafeRegion）是线程不执行 Java 代码时（如___或___状态）的区域，线程在这个区域时不需要响应 GC 请求但需要记录自己已经进入安全区域。",
@@ -289,8 +289,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "双亲委派模型",
     "content": "JVM 类加载器按双亲委派模型工作：当一个类加载器收到类加载请求时，先将请求___给父类加载器（依次向上委派，直到 Bootstrap ClassLoader），只有当___（父类加载器找不到该类）时，才由当前类加载器尝试___。三个核心类加载器：___（加载 rt.jar）、___（加载 JRE/lib/ext）、Application ClassLoader（加载 CLASSPATH）。",
@@ -307,7 +307,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "堆外内存与 DirectByteBuffer",
@@ -325,7 +325,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Java 对象创建过程",
@@ -343,7 +343,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "GC 调优核心参数",
@@ -361,7 +361,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "类加载器层次结构",
@@ -379,7 +379,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Java 四种引用类型",
@@ -397,7 +397,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "元空间（Metaspace）",
@@ -415,7 +415,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JIT 编译触发条件",
@@ -434,7 +434,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CMS GC 阶段与停顿",
@@ -452,8 +452,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "GC Root 对象类型",
     "content": "在 JVM 中，可作为 GC Root 的对象类型包括：___中的对象（当前栈帧引用的对象）、___（类静态属性引用的对象）、___（字符串常量池中的引用）、JNI ___（JNI 全局引用）、以及所有活跃线程的___。",
@@ -470,7 +470,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "G1 GC 的 Region 与停顿预测",
@@ -488,7 +488,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 内存区域划分",
@@ -506,8 +506,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "对象分配与指针压缩",
     "content": "64 位 JVM 中，对象引用占___字节（开启压缩后占 4 字节）。对象在堆中的分配优先在___线程本地缓冲区（TLAB）中分配。如果 TLAB 空间不足，对象会直接进入___（Eden）。-XX：___控制是否启用指针压缩（默认开启）。指针压缩在堆大小不超过___时生效。",
@@ -524,8 +524,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "类加载过程",
     "content": "Java 类加载过程包括{{____}}、{{____}}、{{____}}、{{____}}和{{____}}五个阶段。其中{{____}}阶段主要是通过类的全限定名获取定义此类的二进制字节流。验证阶段包括文件格式验证、{{____}}验证、字节码验证和符号引用验证。初始化阶段执行<clinit>() 方法——收集{{____}}和{{____}}的赋值动作。",
@@ -542,7 +542,7 @@
     ]
   },
   {
-    "category": "java",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JVM 调优参数分类",
@@ -560,8 +560,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JDK 命令行工具",
     "content": "JDK 自带的命令行诊断工具中，{{____}}用于查看 JVM 进程状态（类似 ps），{{____}}用于监控 GC 统计信息，{{____}}用于生成堆 Dump 快照，{{____}}用于查看 JVM 线程栈信息。其中生成堆 Dump 还可以使用{{____}}命令（更推荐，JDK 8+）。Arthas 是阿里巴巴开源的{{____}}诊断工具。",
@@ -578,7 +578,7 @@
     ]
   },
   {
-    "category": "java",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "逃逸分析与标量替换",
@@ -596,8 +596,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Compressed Oops 指针压缩",
     "content": "Compressed Oops（Ordinary Object Pointers）是 JVM 的{{____}}优化技术。在 64 位 JVM 中，对象引用默认是{{____}}位（8 字节），压缩后为{{____}}位（4 字节）。开启条件：堆大小 < {{____}}GB。使用 -XX:{{____}} 手动控制。指针压缩可以减少{{____}}占用和{{____}}带宽。在 JDK 8 中，如果堆小于 32GB 则{{____}}启用。",
@@ -614,7 +614,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ZGC 的核心阶段",
@@ -631,8 +631,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Shenandoah GC 的关键技术",
     "content": "Shenandoah GC 使用___指针实现并发压缩，每次 GC 开始时在对象头前插入一个___字段，GC 移动对象后只需更新该字段。Shenandoah GC 的屏障是___屏障。",
@@ -648,7 +648,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CDS 归档加载方式",
@@ -666,7 +666,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JIT 分层编译层次",
@@ -683,8 +683,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 调优关键参数",
     "content": "JVM 调优中，设置堆大小的参数是___和___；设置栈大小的参数是___；设置元空间大小的参数是___。",
@@ -700,7 +700,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CMS GC 工作阶段",
@@ -717,7 +717,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "ZGC 核心概念",
@@ -734,8 +734,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 对象内存布局",
     "content": "Java 对象在堆中的内存布局分为三部分：___（存储哈希码、GC 分代年龄、锁状态标志等）、___（指向类元数据的指针，JDK 8+ 默认压缩为 4 字节）、以及___（实例字段数据，按类型对齐）。",
@@ -751,7 +751,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "G1 GC Region 类型",
@@ -768,8 +768,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "类的生命周期阶段",
     "content": "类的生命周期分为七个阶段：加载→___→准备→___→初始化→使用→___。其中验证阶段包括四个动作：文件格式验证、___验证、字节码验证和符号引用验证。",
@@ -785,7 +785,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JIT 编译的触发条件",
@@ -803,8 +803,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "类加载器的双亲委派模型",
     "content": "Java 类加载器的双亲委派模型（Parent Delegation Model）的工作流程：当一个类加载器收到类加载请求时，它首先将请求委派给___类加载器加载。只有当父加载器无法加载（抛出___异常）时，子加载器才尝试自己加载。三个核心类加载器从顶层到下层依次是：___、扩展类加载器（JDK 9 后为平台类加载器）和___。",
@@ -821,8 +821,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "String 常量池的位置变化",
     "content": "String 常量池（String Pool / StringTable）在不同 JDK 版本中的位置不同：JDK 6 及之前位于___（通过 -XX:PermSize 控制）；JDK 7 之后移到了___（因为永久代空间太小导致 intern 失败）；JDK 8 移除永久代后，常量池在___中分配。",
@@ -839,8 +839,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 堆内存参数设置",
     "content": "JVM 堆内存相关的关键参数：-Xms 设置___；-Xmx 设置___；-Xmn 设置___大小；-XX:NewRatio 设置___与老年代的比例（默认 1:2 即年轻代占堆的 1/3）；-XX:SurvivorRatio 设置 Eden 与___区的比例（默认 8:1:1）。",
@@ -857,8 +857,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "GC 日志相关 JVM 参数",
     "content": "JDK 8 中开启 GC 日志的核心参数：-XX:+PrintGCDetails（打印 GC 详细信息）、-XX:+PrintGCDateStamps（打印 GC 发生的___）、-Xloggc:gc.log（指定 GC 日志的___）。JDK 9+ 使用统一的日志系统：-Xlog:gc*:file=gc.log:time,uptime,level,tags。通过 GC 日志可以分析___GC 频率、Full GC 频率、___和晋升情况。",
@@ -875,8 +875,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "GC 根节点枚举",
     "content": "GC 根节点（GC Roots）枚举需要在___（安全点/安全区域）进行。OopMap 记录了栈帧中哪些位置是___引用。在___（解释/编译）代码中 OopMap 更易维护。SafePoint 轮询通过___实现（读取一个内存页）。默认安全点间隔参数为___。",
@@ -893,8 +893,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "记忆集与卡表",
     "content": "GC 中的记忆集（Remembered Set）用于记录___（跨代/跨 Region）引用，避免扫描整个堆。卡表（Card Table）是记忆集的实现方式之一——将堆划分为多个___（512 字节），通过___（写屏障）在对象引用变更时标记对应卡页为脏页。G1 使用___（Per-Region Remembered Set）更精确地记录跨 Region 引用。卡表的写屏障是一种___（精确/近似）的内存屏障。",
@@ -911,8 +911,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Stop-The-World 机制",
     "content": "JVM 进行 Full GC 时所有用户线程会进入___状态。这个机制称为___（STW / Stop-The-World）。在___（安全点/安全区域）线程的状态信息是完整一致的。STW 是通过在___代码中插入安全点检查实现的。JVM 通过___信号机制中断长时间未到达安全点的线程。",
@@ -929,7 +929,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "类加载器 API",
@@ -947,8 +947,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "方法区结构",
     "content": "JDK 8 中方法区移到了___（本地内存）。方法区存储：___（类的版本、字段、方法、接口信息）、运行时常量池（字面量和符号引用）、___（JIT 编译后的代码）、JNI 相关数据。___（-XX:MaxMetaspaceSize）控制方法区的最大大小。如果类加载过多导致方法区溢出，会抛出___。",
@@ -965,8 +965,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "堆的分代布局",
     "content": "HotSpot JVM 的堆内存按照_____观点分为新生代、老年代和元空间。新生代进一步划分为 Eden 区和两个_____区（S0 和 S1）。对象首先分配在_____区，经过多次 GC 后仍存活的对象被晋升到_____代。",
@@ -979,8 +979,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "GC Root 类型",
     "content": "在 JVM 的 GC Roots 分析中，以下几种是常见的 GC Root：活动线程的栈帧中的_____引用、静态变量引用的对象、JNI 全局引用的对象、_____中的引用类型等。GC Root 是 GC 的可达性分析的_____。",
@@ -993,8 +993,8 @@
     ]
   },
   {
-    "category": "java",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "G1 Region 类型",
     "content": "G1 GC 将堆划分为大小相等的 Region，每个 Region 可以扮演三种角色：_____（E）、Survivor（S）或 Old（O）。这个设计使 G1 不需要在物理上连续的新生代和老年代空间。G1 的并发标记阶段标记_____对象。Mixed GC 同时在新生代和_____代回收对象。",
@@ -1007,7 +1007,7 @@
     ]
   },
   {
-    "category": "java",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "对象晋升阈值",
@@ -1021,7 +1021,7 @@
     ]
   },
   {
-    "category": "java",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Direct Memory 特点",
@@ -1035,8 +1035,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "GC 停顿类型",
     "content": "在 G1 GC 中，____ 停顿进行年轻代垃圾回收，____ 停顿进行全局并发标记和混合回收。",
@@ -1046,12 +1046,12 @@
       "Mixed GC 处理年轻代和老年代的混合回收，分多次完成"
     ],
     "tags": [
-      "jvm"
+      "JVM"
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "对象头 Mark Word",
     "content": "在 64 位 JVM 中，对象头的 Mark Word 占用 ____ 字节。处于偏向锁状态时，Mark Word 中存储的是____。",
@@ -1061,12 +1061,12 @@
       "偏向锁模式：存储线程 ID + epoch + 分代年龄 + 偏向锁标志位"
     ],
     "tags": [
-      "jvm"
+      "JVM"
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "方法区与 MetaSpace",
     "content": "JDK 8 中永久代（PermGen）被移除，替代的是____。它与永久代的最大区别是使用____内存而非 JVM 堆内存。",
@@ -1076,12 +1076,12 @@
       "避免 PermGen 的 OOM（PermGen 大小固定且有限）"
     ],
     "tags": [
-      "jvm"
+      "JVM"
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ZGC 染色指针",
     "content": "ZGC 使用____位地址空间来编码对象状态（标记、重映射、最终化），称为染色指针（Colored Pointers）。",
@@ -1091,12 +1091,12 @@
       "染色指针使 ZGC 可以在不访问对象的前提下判断对象状态"
     ],
     "tags": [
-      "jvm"
+      "JVM"
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "类加载双亲委派",
     "content": "JVM 的类加载双亲委派模型中，如果一个类加载器收到类加载请求，它首先将请求____。防止 Java 核心 API 被篡改。",
@@ -1106,12 +1106,12 @@
       "父加载器找不到类时，子加载器才尝试自己加载"
     ],
     "tags": [
-      "jvm"
+      "JVM"
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 对象结构",
     "content": "在 HotSpot JVM 中，一个 Java 对象在堆中的结构由三部分组成：对象头（包含 ___(1)___ 和 ___(2)___）、实例数据和对齐填充。",
@@ -1126,8 +1126,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "GC 停顿分析",
     "content": "JVM Full GC 通常包括标记、___(1)___ 和 ___(2)___ 三个阶段。",
@@ -1142,8 +1142,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 命令行诊断工具",
     "content": "在排查 JVM 问题时常使用命令行工具：___(1)___ 查看虚拟机进程，___(2)___ 导出堆快照。",
@@ -1158,8 +1158,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 编译模式",
     "content": "HotSpot JIT 编译模式包括 ___(1)___（客户端编译器）、___(2)___（服务端编译器）和 Tiered Compilation（分层编译）。",
@@ -1174,7 +1174,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "直接内存与零拷贝",
@@ -1190,8 +1190,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "ZGC 指针染色管理引用",
     "content": "ZGC 使用 ___ 指针染色来管理引用，在 64 位指针的高 ___ 位中编码对象状态（Finalizable、Remapped、Mark0、Mark1）。",
@@ -1207,7 +1207,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Java 21 默认垃圾回收器",
@@ -1225,7 +1225,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "压缩 OOP 开启参数",
@@ -1243,7 +1243,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "运行时常量池存放区域",
@@ -1261,8 +1261,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "hard",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "最大堆对齐因子",
     "content": "最大堆对齐因子是 ___。HotSpot JVM 要求对象起始地址必须是 ___ 的整数倍，压缩指针通过左移 ___ 位将 32 位引用扩展为 64 位地址（2^32 x 8 = 32GB 寻址空间）。",
@@ -1279,7 +1279,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM 默认最大堆内存",
@@ -1296,8 +1296,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "CMS GC 的生命周期",
     "content": "CMS（Concurrent Mark Sweep）垃圾回收器在 JDK 9 中被标注为___，在 JDK 14 中被正式___。它的主要替代方案是___垃圾回收器。",
@@ -1314,7 +1314,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM GC 日志参数",
@@ -1332,8 +1332,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "字符串常量池的位置",
     "content": "JDK 7 之前，字符串常量池位于___中。JDK 7 之后字符串常量池被移入___中。JDK 8 移除永久代后，字符串常量池仍然位于___中。",
@@ -1350,7 +1350,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Epsilon GC 的特性",
@@ -1368,8 +1368,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "栈帧的组成部分",
     "content": "每个栈帧包含四个主要部分：___（存储方法参数和局部变量，以 slot 为单位）、___（字节码指令的工作区）、___（指向运行时常量池中当前方法所属类的引用）和___（方法正常退出或异常退出时的恢复信息）。",
@@ -1386,7 +1386,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Humongous Region 与大对象分配",
@@ -1405,8 +1405,8 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Card Table 与写屏障",
     "content": "JVM 的卡表（Card Table）将堆内存划分为多个___字节的卡页（Card Page）。当跨代引用发生变化时，JVM 通过___机制将对应的卡页标记为脏页。Minor GC 扫描老年代中的脏卡页来找到跨代引用，从而避免___整个老年代。G1 使用更精确的___（Per-Region Remembered Set）来记录跨 Region 引用。",
@@ -1424,7 +1424,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "对象对齐填充规则",
@@ -1442,7 +1442,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Full GC 的常见触发原因",
@@ -1461,7 +1461,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "medium",
     "type": "fill_in_blank",
     "title": "Native Memory Tracking 堆外内存追踪",
@@ -1480,7 +1480,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "编译器线程数与容器适配",
@@ -1499,7 +1499,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "大内存页（Huge Pages）优化",
@@ -1518,7 +1518,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "medium",
     "type": "fill_in_blank",
     "title": "G1 字符串去重（String Deduplication）",
@@ -1537,7 +1537,7 @@
     ]
   },
   {
-    "category": "jvm_fill_blank",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "GC Overhead Limit Exceeded 错误",
@@ -1556,8 +1556,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "JVM HeapDump 自动触发参数",
     "content": "JVM 在 OOM 时自动生成堆转储文件的参数是___。指定转储文件路径用___。JDK 9+ 中在 OOM 后强制 JVM 立即退出用___。jmap -dump 子参数中___表示只转储存活对象（触发 Full GC 后转储）。HeapDumpOnOutOfMemoryError 生成的转储包含___（所有对象 / 仅存活对象）。",
@@ -1574,7 +1574,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "medium",
     "type": "fill_in_blank",
     "title": "JVM 容器资源检测参数",
@@ -1592,7 +1592,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Compact Strings 字符串内部表示",
@@ -1610,7 +1610,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "CodeCache 代码缓存管理",
@@ -1628,7 +1628,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JVM OOM 应急钩子与退出策略",
@@ -1646,7 +1646,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "G1 Mixed GC 的触发时机",
@@ -1664,7 +1664,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "空间分配担保机制",
@@ -1682,7 +1682,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "Full GC 的常见触发条件",
@@ -1700,7 +1700,7 @@
     ]
   },
   {
-    "category": "java_advanced",
+    "category": "jvm",
     "difficulty": "hard",
     "type": "fill_in_blank",
     "title": "JIT 方法内联的限制条件",
@@ -1718,8 +1718,8 @@
     ]
   },
   {
-    "category": "java_advanced",
-    "difficulty": "medium",
+    "category": "jvm",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Graal JIT 编译器",
     "content": "Graal JIT 编译器是 Oracle 用___语言实现的 JIT 编译器（替代 C2）。它在 JDK 17+ 中作为___（实验性特性）可用。Graal 的核心优势是___（更激进的优化如自动向量化、部分逃逸分析）和___（可以作为提前编译 AOT 和即时编译 JIT 的统一编译器框架）。在 JDK 21+ 中 Graal 可通过___参数启用。与 C2 相比，Graal 在___（代码生成速度）上通常优于 C2。",

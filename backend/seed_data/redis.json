@@ -1,26 +1,7 @@
 [
   {
     "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 单线程模型与高性能",
-    "content": "Redis 为什么是单线程的？单线程如何支撑 10 万 + QPS？Redis 6.0 引入的多线程 IO 解决了什么问题？为什么 Redis 仍然不建议在多线程模式下执行命令？",
-    "answer": "Redis 的核心处理逻辑是单线程的（一个主线程处理所有命令），但 IO 读写在 6.0+ 可以使用多线程。\n\n单线程模型的优势：1）避免了锁竞争和线程上下文切换的开销。所有命令在单线程中序列化执行，天然线程安全（不需要 Mutex/Lock）。2）基于内存操作，瓶颈在 IO 和网络带宽不在 CPU，单线程足够。3）实现简单（不需要考虑并发控制，不需要事务隔离）。\n\n为什么单线程能支撑 10 万+ QPS：1）完全基于内存——所有操作在内存中完成，纳秒级延迟。2）IO 多路复用（epoll）——Redis 使用 epoll（Linux）或 kqueue（macOS）同时监听多个 Socket fd，基于事件驱动处理。单线程可以同时处理数千个客户端连接。3）高效的数据结构——哈希表、跳表、压缩列表等定制数据结构在内存中操作极快。4）协议简单——Redis RESP 协议是文本行协议（固定分隔符，容易解析），相比 SQL 解析轻量得多。\n\nRedis 6.0 多线程 IO：1）问题——随着网络带宽提升（10Gbps+），单线程读写 Socket 成为瓶颈（IO 读写需要内核态-用户态拷贝）。2）方案——主线程仍然串行执行命令，但 IO 读写操作由多个 IO 线程并行处理。通过 io-threads 配置控制 IO 线程数（建议 2-4，N-1 个 IO 线程，1 个主线程）。3）限制——IO 线程只负责 Socket 读写和协议解析（编解码），命令执行仍然是单线程。这样既保留了单线程执行的无锁优势，又突破了网络 IO 瓶颈。\n\n为什么 Redis 不建议在多线程模式下执行命令：1）原子性问题——虽然可以给多线程加锁保证原子性，但 Redis 核心卖点之一就是单线程的简单性/可预测性。2）复杂度剧增——涉及数据结构的并发控制、内存分配器的线程安全等。3）收益有限——Redis 的瓶颈从来不在命令执行（CPU 密集型命令如 KEYS/SORT 可以单独优化），而在 IO 和内存。",
-    "hints": [
-      "Redis 单线程模型的 CPU 利用率如何？瓶颈在哪里",
-      "Redis 6.0 多线程 IO 和命令执行的关系是什么"
-    ],
-    "tags": [
-      "Redis",
-      "单线程",
-      "IO 多路复用",
-      "epoll",
-      "架构"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Redis IO 多路复用与事件驱动",
     "content": "Redis 的事件驱动模型是如何设计的？aeEventLoop 的核心组件是什么？epoll 如何与 Redis 的事件处理相结合？",
@@ -41,42 +22,6 @@
     "category": "redis",
     "difficulty": "easy",
     "type": "short_answer",
-    "title": "Redis 五种基本数据类型及底层编码",
-    "content": "Redis 的 string、list、hash、set、zset 五种基本数据结构分别对应什么底层编码？不同编码之间如何转换？如何选择合适的数据类型？",
-    "answer": "Redis 每种数据类型有多种底层编码实现，根据数据特征自动切换。\n\nString：1）int——纯整数（8 字节 long），直接存储数值。2）embstr——短字符串（≤44 字节），RedisObject 和 SDS 连续分配（一次内存分配）。3）raw——长字符串（>44 字节），RedisObject 和 SDS 分开分配（两次内存分配）。\n\nList（Redis 3.2+ 统一用 quicklist）：1）quicklist——双向链表 + 压缩列表（ziplist）的混合体。每个 quicklist node 是一个 ziplist（默认 8KB），减少链表指针开销。\n\nHash：1）ziplist——键值对少时（默认 < 512 个字段，值 < 64 字节），用压缩列表存储（连续内存空间）。2）hashtable——数据量大时转为哈希表（O(1) 查找）。\n\nSet：1）intset——所有元素是整数且数量少时（默认 < 512 个），用整数集合（有序定长数组，二分查找）。2）hashtable——其他情况，用哈希表存储（O(1) 查找，只使用 key，value 为 NULL）。\n\nZSet：1）ziplist——数据量少时（默认 < 128 个元素，值 < 64 字节），按 score 升序。2）skiplist + hashtable——数据量大时使用。跳表维护排序（O(logN) 范围查询），哈希表维护成员到 score 的映射（O(1) 查找权重）。\n\n选型原则：1）需要排序 → zset。2）唯一性检查（是否存在）→ set 或 hash。3）计数 → string（INCR/DECR）。4）时间序列 → list LPUSH（追加新数据）→ LTRIM（固定长度）或 Stream。5）对象存储 → hash（多个字段）或 string（序列化后的 JSON）。\n\n配置参数调整：hash-max-ziplist-entries、set-max-intset-entries、zset-max-ziplist-entries 等控制编码切换阈值。调大阈值可以节省内存（数据量适中的场景），但查询性能下降（ziplist 是 O(N)）。",
-    "hints": [
-      "String 的 embstr 和 raw 有什么区别——44 字节分界线",
-      "ziplist 和 hashtable 的切换阈值默认是多少"
-    ],
-    "tags": [
-      "Redis",
-      "数据结构",
-      "编码",
-      "内存优化"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 底层 SDS 实现",
-    "content": "SDS（Simple Dynamic String）相比 C 语言原生字符串有什么优势？SDS 如何实现 O(1) 长度获取和二进制安全？SDS 的扩容策略是什么？",
-    "answer": "SDS 是 Redis 自己实现的动态字符串，替代 C 语言的 char*。在 Redis 3.2+，SDS 有 5 种类型（sdshdr5/sdshdr8/sdshdr16/sdshdr32/sdshdr64），根据字符串长度选择最小的 header 类型。\n\n相比 C 字符串的优势：1）O(1) 长度获取——SDS header 中存了 len 字段（长度），strlen() 不需要遍历。2）二进制安全（Binary Safe）——len 记录长度而不是依赖 '\u0000' 结尾。SDS 可以存储二进制数据（如图片、序列化对象、'\u0000' 字符）。C 字符串以 '\u0000' 判定结束，不能存包含 '\u0000' 的数据。3）杜绝缓冲区溢出——SDS 的 API 在拼接字符串时先检查空间是否足够，不够则自动扩容。C 字符串 strcat 不检查目标缓冲区大小（溢出覆盖相邻内存）。4）内存预分配（减少 realloc）——SDS 扩容时分配更多空间（减少未来扩容次数）。\n\n扩容策略（sdsMakeRoomFor）：1）新长度 < 1MB → 分配 2 倍空间（len + free = 2 * oldLen）。2）新长度 ≥ 1MB → 每次额外分配 1MB（len + free = oldLen + 1MB）。3）惰性空间释放——字符串缩短时不释放多余内存（用 free 字段记录多余空间），避免频繁 realloc。有 SDS API（sdsRemoveFreeSpace）可以主动释放。\n\n5 种 SDS 类型：sdshdr5（未使用）、sdshdr8（< 256B）、sdshdr16（< 64KB）、sdshdr32（< 4GB）、sdshdr64（≥ 4GB）。每种类型使用最小宽度的 unsigned int 存储 len 和 alloc（节省内存）。注意：sdshdr5 的 flags 和数据共用首字节（不存 len，长度从 char[0] 推断，限于 32 字符以下，实际 Redis 内部字符串默认用 sdshdr8）。",
-    "hints": [
-      "SDS 的二进制安全和 C 字符串的 '\u0000' 终止的关系",
-      "SDS 扩容为什么小于 1MB 时翻倍、大于 1MB 时每次加 1MB"
-    ],
-    "tags": [
-      "Redis",
-      "SDS",
-      "字符串",
-      "底层原理"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
     "title": "Redis 压缩列表（ziplist）设计",
     "content": "Redis 的 ziplist（压缩列表）的内部结构是什么？为什么 ziplist 在数据量少时能节省内存？ziplist 的连锁更新问题（Cascading Update）是什么？",
     "answer": "Ziplist 是一块连续内存（字节数组），以紧凑的方式存储多个元素。每个元素可以是一个字节数组或整数。\n\n内部结构（按字节偏移）：1）zlbytes（4 字节）——整个 ziplist 占用的字节数。2）zltail（4 字节）——末尾元素相对 ziplist 起始地址的偏移量（用于从尾部反向遍历 POP）。3）zllen（2 字节）——元素数量（< 65535 时准确值，≥ 65535 时需要遍历统计）。4）entry X——每个元素包含：prevlen（前一个元素的长度编码，用于反向遍历）、encoding（编码类型和当前元素长度）、content（实际数据）。5）zlend（1 字节，0xFF）——结束标记。\n\n为什么节省内存：1）所有数据在连续内存（一次 malloc，空间局部性好，CPU 缓存命中率高）。2）每个 entry 不存完整指针（prevlen 和 encoding 使用变长编码，小数据用 1 字节，大数据用 5 字节）。3）整数直接编码（存储整数时不用指针指向外部对象）。相比 hashtable（每个 key/value 分别 malloc + 额外指针开销），ziplist 节省 60-80% 的内存。\n\n连锁更新问题：1）prevlen 使用变长编码：前一个元素长度 < 254 字节时，prevlen 占 1 字节；≥ 254 时占 5 字节。2）问题场景——连续多个元素长度在 250-253 字节之间。新的元素插入头部，导致第一个 entry 的 prevlen 从 1 字节变成 5 字节（因为新元素 > 253），第一个 entry 膨胀 4 字节 → 第二个 entry 的 prevlen 也膨胀 → 链式反应。3）后果——ziplist 逐字节更新（memmove）造成 O(N²) 时间复杂度和多次内存重分配。4）实际影响——极端情况下有性能问题，但正常使用中连锁更新不常见（需要恰好多个元素长度在 250-253 之间）。Redis 7.0 引入 listpack 替代 ziplist（listpack 的 entry 不存储前一个元素的长度，彻底解决了连锁更新）。",
@@ -93,102 +38,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 跳表（skiplist）原理",
-    "content": "Redis 为什么用跳表（skiplist）而不是平衡树（如红黑树）实现有序集合？跳表的插入、删除、范围查询的复杂度是多少？跳表如何保持性能平衡？",
-    "answer": "Redis 的 zset 使用跳表（skiplist）+ 哈希表（dict）的组合：跳表负责按 score 排序和范围查询，哈希表负责 O(1) 查找成员到 score 的映射。\n\n为什么用跳表而不是平衡树：1）范围查询更简单——跳表是按序排列的链表，范围查询（ZRANGEBYSCORE）只需找到起点后沿 forward 指针遍历。红黑树的范围查询需要中序遍历（比跳表复杂）。2）实现更简单——插入/删除不需要复杂的旋转和染色操作（红黑树的左旋/右旋/重染色）。跳表只需要调整指针。3）内存占用可调——通过调整跳表的层数（p 因子和 maxLevel），可以在内存和查询性能之间权衡。4）平均复杂度与红黑树相同——O(logN) 的概率保证（而不是像红黑树的严格保证）。但在工程中实际性能接近。\n\n跳表结构：1）每个节点（zskiplistNode）包含：sds ele（成员值）、double score（分数）、backward 指针（后退指针）、level[] 数组（每层一个 forward 前进指针 + span 跨度）。2）zskiplist 头节点：header（头节点，不存数据，有 64 层）、tail（尾节点指针）、length（元素总数）、level（当前最大层数）。\n\n操作复杂度：1）插入——从最高层开始找插入位置，逐层下降，记录每层的前驱节点。平均 O(logN)，最坏 O(N)（但概率极低）。2）删除——类似插入。O(logN)。3）按 score 范围查询——找到起点后沿 forward 指针遍历。O(logN + M)（M 为返回元素数）。4）按排名（rank）查询——O(logN)，利用每层的 span 字段计算排名。\n\n性能平衡（更新层数概率）：Redis 跳表使用幂律分布（power law）决定层数：每次上升到下一层的概率为 1/4（p=0.25），最大层数为 64。p=0.25 的权衡：相比标准跳表的 p=0.5（更平衡的层数分布），Redis 使用 p=0.25 以牺牲少量查询性能换取更低的内存开销（层数少一半，指针占用少）。参考论文：William Pugh, “Skip Lists: A Probabilistic Alternative to Balanced Trees” (1990)。",
-    "hints": [
-      "跳表 vs 红黑树——范围查询和实现复杂度对比",
-      "Redis 跳表的 p=0.25 和标准 p=0.5 的区别——内存 vs 速度"
-    ],
-    "tags": [
-      "Redis",
-      "跳表",
-      "skiplist",
-      "zset",
-      "数据结构"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 主从复制原理：PSYNC2",
-    "content": "Redis 主从复制的工作流程是什么？PSYNC2（Redis 4.0+）相比 PSYNC1 有什么改进？部分重同步（Partial Resync）是如何实现的？repl_backlog 和 runid 的作用是什么？",
-    "answer": "Redis 主从复制分为全量重同步（Full Resync）和部分重同步（Partial Resync）。\n\n全量重同步流程：1）从节点发送 PSYNC ? -1（第一次连接，不知道主节点的 runid 和 offset）。2）主节点返回 FULLRESYNC {runid} {offset}，触发全量同步。3）主节点执行 BGSAVE 生成 RDB 快照。4）主节点将 RDB 文件发送给从节点。5）从节点清空当前数据，加载 RDB。6）主节点将增量命令（在 BGSAVE 期间产生的写入）发送给从节点（通过 repl_backlog 缓冲区）。\n\n部分重同步（PSYNC2，Redis 4.0+）：1）主节点维护 repl_backlog 缓冲区（环形缓冲区，默认 1MB，通过 repl-backlog-size 配置）。2）从节点断线重连后，发送 PSYNC {last_runid} {last_offset}。3）主节点检查：runid 匹配（说明连的是同一台主节点）&& offset 在 repl_backlog 范围内（断开期间的数据还在缓冲区中）→ 执行部分重同步（只发送增量数据，不需要全量 RDB）。4）如果 offset 不在 repl_backlog 范围内（断开太久，数据已被覆盖）→ 触发全量重同步。\n\nPSYNC2（Redis 4.0+）相比 PSYNC1 的改进：PSYNC1 中，主节点重启后 runid 改变（从节点无法部分重同步，每次主重启都需要全量同步）。PSYNC2 引入 replication ID（主节点标识）和 replication ID2（上一个主节点标识，用于主从切换后从节点连接新主）。主从切换后的部分重同步：A（旧主）→ B（新主），C（旧从），切换后 C 连接 B 时，C 的 master_replid = A 的 replid，B 的 replid2 = A 的 replid，所以 C 和 B 共享 replid 历史 → 可以进行部分重同步。\n\n复制缓冲区设置：repl-backlog-size 设为 BDP（带宽 × RTT）的 2 倍或其他值。例如每秒写入 1MB，预期最大复制断连 30 秒 → backlog 大小 ≈ 30MB + 安全余量。监控 master_repl_offset 和 slave_repl_offset 的差距，如果差距大于 repl-backlog-size，则需要增加 backlog。",
-    "hints": [
-      "PSYNC2 如何实现主从切换后的部分重同步——replication ID2 的作用",
-      "repl_backlog 太小导致频繁全量重同步——如何计算合适的大小"
-    ],
-    "tags": [
-      "Redis",
-      "主从复制",
-      "PSYNC2",
-      "RDB",
-      "高可用"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis AOF 重写与 fsync 策略",
-    "content": "Redis AOF 持久化的完整流程是什么？AOF 重写（BGREWRITEAOF）如何在不阻塞主线程的前提下完成？appendfsync always/everysec/no 三种策略的区别和风险是什么？",
-    "answer": "AOF（Append Only File）持久化记录每次写操作的命令，重启时通过回放 AOF 重建数据。\n\nAOF 写入流程：1）当写命令执行完，Redis 将命令追加到 server.aof_buf（AOF 缓冲区，内存）。2）事件循环结束前，根据 appendfsync 策略将 aof_buf 刷入文件系统的页缓存（Page Cache），然后调用 fsync 强制刷盘。3）appendfsync always——每个命令都 fsync（最安全，但写入吞吐极低，约 200-300 ops/s）。4）appendfsync everysec（默认）——每秒 fsync 一次（最多丢 1 秒的数据，推荐）。5）appendfsync no——由操作系统决定什么时候刷盘（最多丢数十秒数据）。\n\nAOF 重写（BGREWRITEAOF）：随着写入增加，AOF 文件不断增长。重写原理：fork 子进程将当前内存中的数据转换为 Redis 命令（如 SET key value），生成新的 AOF 文件（最小化的命令集合），替代旧 AOF。过程：1）触发条件——手动（BGREWRITEAOF）或自动（配置 auto-aof-rewrite-percentage/auto-aof-rewrite-min-size）。2）fork 子进程——子进程拥有父进程的数据快照（fork 的 COW 特性）。3）子进程将数据库中的每个 key-value 转为写命令，写入临时文件。4）重写缓冲区——在重写期间，父进程继续处理写操作，同时将写命令写入 AOF 重写缓冲区（aof_rewrite_buf_blocks）。5）子进程完成重写后，发送信号通知父进程。父进程将重写缓冲区中的增量数据追加到新 AOF 文件。6）原子替换：rename 临时文件为 AOF 文件名。7）注意：AOF 重写时 fork 子进程，fork 时如果内存很大（如 10GB），fork 耗时可能上百毫秒（fork 复制页表）。\n\nAOF 追加阻塞（AOF Blocked fsync）：everysec 策略下，如果上次 fsync 未完成（磁盘写入慢），Redis 主线程会阻塞等待 fsync 完成（最多等待 2 秒）。这是 Redis 延迟尖刺的常见原因。监控 aof_delayed_fsync 指标观察 AOF 阻塞情况。\n\nRDB vs AOF 混合持久化（Redis 4.0+）：aof-use-rdb-preamble yes → AOF 文件开头是 RDB 格式的快照（快速加载），后面追加 AOF 增量数据。结合了 RDB 的加载速度和 AOF 的丢失少量数据优势。",
-    "hints": [
-      "AOF 的三种 fsync 策略在安全性和性能之间的权衡",
-      "AOF 重写为什么需要子进程——COW 机制如何保证数据一致性"
-    ],
-    "tags": [
-      "Redis",
-      "AOF",
-      "持久化",
-      "fsync",
-      "BGREWRITEAOF"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Cluster 通信协议与 Gossip",
-    "content": "Redis Cluster 中节点之间如何通信？Gossip 协议是如何工作的？Cluster 节点之间交换了哪些信息？CLUSTER MEET 的消息传播机制是什么？",
-    "answer": "Redis Cluster 节点之间通过 TCP 总线通信（端口 = 业务端口 + 10000），使用 Cluster Bus 协议（二进制协议）。\n\nGossip 消息类型：1）MEET——新节点加入集群，通过 CLUSTER MEET 发送。2）PING——周期性发送（默认每秒 10 次），随机挑选 5 个节点 + 上次 PONG 最久远的节点。3）PONG——回复 PING，携带本节点信息。4）FAIL——节点检测到某节点疑似下线（PFAIL），向集群广播 FAIL 消息（确认下线后）。\n\n消息内容（ClusterMsgDataGossip）：每个 Gossip 消息包含若干个 gossip 结构（通常 2-3 个），每个结构包含：1）节点 ID（40 字符的十六进制 runid）。2）IP:Port（发送方认为该节点的 IP 和端口）。3）flags（节点的角色：主/从、是否下线、是否 PFAIL/FAIL）。4）ping_sent/pong_recv（最近一次 PING 发送时间和 PONG 接收时间）。\n\n交换信息：1）节点本身的信息（id、IP:Port、epoch、配置纪元）。2）每个 slot 的分布（16000+ 个 slot 的归属）。3）各节点的状态（RUNNING/PFAIL/FAIL）。4）Cluster epoch（配置版本，用于冲突处理——最新 epoch 的路由信息获胜）。\n\n消息传播机制：1）Gossip 的传播速度——每个节点每秒向 5-10 个其他节点发送 Gossip 消息。一个节点加入集群后，消息在数秒内传播到所有节点。2）Gossip 的收敛性——经过 O(logN) 轮传播后，整个集群的所有节点都收到该信息。3）带宽控制——集群节点数增加时，每个节点 PING 的节点增加（随机挑选 N 个中的 5 个，加上最旧的 PONG）。集群节点数越多，每个节点的 Gossip 带宽占用越高。官方建议 Cluster 节点数不宜超过 1000。\n\nCluster Bus 的安全性：Redis 6.0+ Cluster Bus 默认启用 TLS 加密（cluster-preferred-endpoint-type 和 tls-cluster 配置）。Cluster Bus 的协议头包含 CRC64 校验，防止消息损坏。\n\n注意：PING 间隔不是固定的——为了自适应网络条件，Redis 根据节点间延迟动态调整 PING 间隔（cluster_ping_interval）。带宽有限时自动增大间隔。",
-    "hints": [
-      "Gossip 消息的收敛速度与集群规模的关系——O(logN) 轮传播",
-      "Cluster Bus 端口（16379）和业务端口（6379）的隔离设计"
-    ],
-    "tags": [
-      "Redis",
-      "Cluster",
-      "Gossip",
-      "协议",
-      "分布式"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Cluster 故障检测与自动故障转移",
-    "content": "Redis Cluster 如何检测节点故障？PFAIL 和 FAIL 状态是如何转换的？自动故障转移（Failover）的完整流程是什么？集群脑裂如何防止？",
-    "answer": "Redis Cluster 的故障检测是分布式的（无中心化仲裁节点），使用 Gossip 传播状态。\n\n故障检测流程：1）PFAIL（Possible Fail，疑似下线）——节点 A 向节点 B 发 PING，如果 N 秒（cluster-node-timeout）没有收到 PONG，A 将 B 标记为 PFAIL。2）PFAIL 通过 Gossip 传播——A 将 B 标记为 PFAIL 的信息通过 Gossip 消息传播给其他节点。3）FAIL（确认下线）——如果集群中超过半数的主节点（N/2 + 1）将 B 标记为 PFAIL，则 B 的状态晋升为 FAIL。4）判定确认后，第一个达到半数标记的节点向集群广播 FAIL 消息。\n\n自动故障转移（Failover）：1）条件——B 标记为 FAIL，且 B 有从节点。2）从节点选举——从节点检查自己是否有资格（数据延迟不超过最大容忍值）。有资格的从节点向集群中其他主节点发起投票（类似 Raft 的选举）。3）投票机制——每个主节点在一个配置纪元（Config Epoch）内只能投一票。从节点获得超过半数主节点投票后升主。4）完成——选举获胜的从节点执行 SLAVEOF NO ONE，将自己标记为主节点。发布 PONG 消息通知其他节点。5）整个切换过程对客户端是透明的（除了 slot 重映射的瞬间）。\n\n防止脑裂（Split Brain）：1）cluster-node-timeout——如果主节点与集群多数节点失联超过此时间（默认 15 秒），被标记为 FAIL。2）在故障转移前，原主节点如果恢复连接，从节点已经升主。原主节点发现自己的 epoch 低于新主，降级为从节点。3）数据保护——Redis Cluster 是 AP 系统（优先可用性，最终一致性）。网络分区期间，分区的 minority 侧主节点停止接收写入（cluster-require-full-coverage 默认 yes 时，slot 未完全覆盖的节点拒绝写入）。4）实际配置建议——生产环境 cluster-require-full-coverage no（避免少数节点故障导致整个集群不可写），结合客户端侧的跨节点重试。\n\n延迟敏感性：cluster-node-timeout 影响故障切换速度（越小越快，但误判越多）。监控 cluster_state 是否为 ok、cluster_slots_ok 是否完整。",
-    "hints": [
-      "Redis Cluster 的 PFAIL → FAIL 转换需要多少节点确认——超过半数",
-      "脑裂预防——cluster-node-timeout 和 cluster-require-full-coverage"
-    ],
-    "tags": [
-      "Redis",
-      "Cluster",
-      "故障转移",
-      "PFAIL",
-      "脑裂"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Redis 数据分片策略（Slot 迁移）",
     "content": "Redis Cluster 使用 16384 个 Hash Slot 进行数据分片。为什么是 16384 而不是 65536 或其他数量？Slot 迁移过程中客户端如何感知拓扑变化？MIGRATE 命令如何工作？",
@@ -203,25 +53,6 @@
       "Slot",
       "分片",
       "迁移"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "RESP2 vs RESP3 协议",
-    "content": "Redis RESP（REdis Serialization Protocol）2 和 3 的区别是什么？RESP3 解决了什么问题？支持 RESP3 的客户端库有哪些？",
-    "answer": "RESP（Redis Serialization Protocol）是 Redis 客户端-服务端之间的通信协议。RESP2 是 Redis 1.2+ 使用的协议，RESP3 是 Redis 6.0+ 引入的新协议。\n\nRESP2 的设计特点：1）五种数据类型——Simple String（+OK\r\n）、Error（-ERR\r\n）、Integer（:1\r\n）、Bulk String（$5\r\nhello\r\n）、Array（*2\r\n...）。2）缺点——客户端无法区分不同的数据类型（如 Bulk String 和 Array 都是 $ 开头，需要应用层区分）。Nil 和 Null Array 容易混淆（$-1 是 Nil，*-1 是 Null Array）。3）不支持推模式——客户端只能通过轮询或阻塞命令获取数据变化。\n\nRESP3 的改进：1）新增数据类型——Map（% 标识，键值对结构）、Set（~ 标识）、Double（, 标识）、Big Number（( 标识）、Null（_ 标识）、Boolean（# 标识）、Verbatim String（= 标识，带格式信息的字符串）。2）Push 类型（> 标识）——服务端可以主动向客户端推送数据（实现了 Pub/Sub 的 Push 模式，不再需要客户端轮询）。3）流式响应（Streaming）——服务端可以发送 Streaming 类型的部分累积响应（如 CLIENT TRACKING 的失效消息）。4）客户端缓存（Client-side Caching）——RESP3 支持服务端通知客户端缓存失效（Tracking Mode：客户端缓存 key-value，key 被修改时服务端 Push 失效通知），减少服务端查询和网络传输。\n\n升级影响：1）Redis 6.0+ 同时支持 RESP2 和 RESP3（HELLO 2 / HELLO 3 切换协议版本）。2）客户端连接时默认用 RESP2（兼容旧客户端），显式发送 HELLO 3 切换到 RESP3。3）新客户端推荐使用 RESP3（更好的类型安全和服务端 Push）。\n\n支持 RESP3 的客户端：Redis Stack 的 redis-py（>= 4.3.0）、Lettuce（Java，>= 6.0）、node-redis（>= 4.0）、Jedis（>= 4.0）、Go-Redis（>= 9.0）。",
-    "hints": [
-      "RESP3 的 Push 类型——解决了阻塞命令（BLPOP）的什么问题",
-      "RESP3 的 Client-side Caching——服务端 Push 失效通知减少查询"
-    ],
-    "tags": [
-      "Redis",
-      "RESP",
-      "协议",
-      "RESP3",
-      "客户端"
     ]
   },
   {
@@ -245,7 +76,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Redis 在 Kubernetes 中的部署方案",
     "content": "Redis 在 Kubernetes 上部署的最佳实践有哪些？StatefulSet vs Deployment 的选择依据是什么？Redis Operator（如 KubeDB / Spotahome / ZTE）如何实现自动故障转移？Redis 在容器化环境中的性能注意事项有哪些？",
@@ -264,7 +95,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Redis 慢查询与延迟监控",
     "content": "如何排查 Redis 的延迟问题？SLOWLOG 命令的使用和配置。什么情况下 Redis 会出现延迟尖峰（Latency Spike）？如何使用 Redis 的 Latency Monitoring 功能？",
@@ -302,7 +133,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Redis 实现分布式限流",
     "content": "如何用 Redis 实现高性能分布式限流？令牌桶（Token Bucket）和滑动窗口（Sliding Window）的 Redis 实现方案分别是什么？Lua 脚本在限流中的角色是什么？",
@@ -332,7 +163,7 @@
     ],
     "tags": [
       "Redis",
-      "分布式 ID",
+      "分布式ID",
       "INCR",
       "Snowflake",
       "架构"
@@ -340,7 +171,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Redis 作为 Session Store 设计",
     "content": "为什么常用 Redis 作为 Session 存储？相比内存 Session 和 DB Session，Redis Session Store 的设计要点是什么？Session 的序列化、过期、安全如何设计？",
@@ -359,7 +190,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Redis 内存淘汰策略详解",
     "content": "Redis 的 maxmemory 设置和内存淘汰策略（Eviction Policy）有哪些？LRU、LFU、TTL 淘汰策略的原理分别是什么？如何选择适合业务场景的淘汰策略？",
@@ -378,7 +209,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "medium",
+    "difficulty": "hard",
     "type": "short_answer",
     "title": "Redis 发布订阅（Pub/Sub）高级模式",
     "content": "Redis Pub/Sub 的工作原理和性能限制是什么？Pub/Sub 和 Stream 在消息推送场景中的区别？Redis Pub/Sub 在什么场景下会丢失消息？",
@@ -397,131 +228,6 @@
   },
   {
     "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 模块系统与 RediSearch",
-    "content": "Redis 模块（Modules）系统是如何设计的？RediSearch 搜索引擎的原理是什么？RedisJSON / RedisTimeSeries / RedisGraph 等模块的使用场景？",
-    "answer": "Redis 模块系统（Redis 4.0+）允许用 C/C++ 扩展 Redis 功能，实现自定义数据结构和命令，并且保持和原生 Redis 一样的性能（在同一个进程中运行，访问相同的内存空间）。\n\n模块架构：1）初始化——模块的 RedisModule_Init 注册命令和数据类型（RDB 持久化支持）。2）命令处理——模块定义的回调函数在 Redis 主线程中执行（和原生命令一样单线程安全）。3）内存管理——模块使用 RedisModule_Alloc（通过 jemalloc 分配），内存计入 used_memory（受 maxmemory 控制）。4）数据持久化——模块通过 RedisModule_SetDataType 定义数据在 RDB/AOF 中的序列化/反序列化函数。\n\nRediSearch：内置于 Redis Stack 的全文搜索引擎。核心特性：1）倒排索引（Inverted Index）——对文档建立词→文档映射，支持前缀匹配/模糊匹配。2）中文分词——通过 rmmtokenize 支持中文分词（基于 jieba/Friso 等分词器）。3）聚合和排序——FT.SEARCH 支持 Aggregation Pipeline（GROUPBY、REDUCE 等聚合函数）。4）GEO 过滤——在搜索结果中按地理位置过滤（如找附近 5km 内的商家）。\n\nRedisJSON（Redis 4.0+）：1）原生 JSON 数据类型——用 JSONPath 语法直接操作文档的嵌套字段。2）性能——读/写一个嵌套字段不需要全序列化 JSON。3）使用场景——会话 Session（存储复杂嵌套对象）、应用配置（分层 JSON 配置）。\n\nRedisTimeSeries：1）时序数据——压缩存储（双差值编码/Double Delta），自动保留和聚合。2）压缩比——时序点/秒，压缩后每点约 1 字节（通过压缩算法，原始数据每点约 8-16 字节）。3）适用——监控指标收集、IoT 传感器数据。\n\nRedisGraph（已归档为只读维护）：1）图数据库模块——使用 Cypher 查询语言的 Property Graph 模型。底层使用 GraphBLAS（稀疏矩阵）实现图操作。2）弱于 Neo4j——在大型图查询（千万级节点+）的性能和功能上不如 Neo4j。\n\n注意：Redis Stack（将所有官方模块打包）可以在 Docker 中通过 redis/redis-stack-server 镜像一键部署。Redis 模块的内存开销较大（RediSearch 的索引和数据并存在内存中），生产使用前需要评估内存增长。",
-    "hints": [
-      "RediSearch 的全文索引和 MySQL LIKE 查询的性能差距有多大",
-      "Redis 模块为什么能和原生 Redis 同样高性能——同进程同内存空间运行"
-    ],
-    "tags": [
-      "Redis",
-      "模块",
-      "RediSearch",
-      "RedisJSON",
-      "Redis Stack"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 缓存与数据库一致性方案",
-    "content": "Redis 作为数据库前置缓存时，缓存和数据库之间的数据一致性如何保证？Cache-Aside、Write-Through、Write-Behind 三种模式的优劣是什么？先删缓存后更新 DB vs 先更新 DB 后删缓存哪个合适？",
-    "answer": "缓存与数据库的一致性是分布式系统中的经典难题，尤其在并发写场景下。\n\n缓存更新模式：1）Cache-Aside（旁路缓存）——应用读：先查缓存，未命中则查 DB 然后写入缓存。应用写：先更新 DB，然后删除（或更新）缓存。最常用的模式。2）Write-Through（穿透写）——应用只和缓存交互，缓存负责写 DB。保证一致性但延迟增加（每次写都穿透到 DB）。3）Write-Behind（异步写）——应用只写缓存，缓存异步写 DB。性能最好（写缓存立即返回），但一致性最弱（缓存故障可能丢数据）。\n\n经典问题：先删缓存后更新 DB vs 先更新 DB 后删缓存：\n\n先删缓存再更新 DB（问题场景）：线程 A 删除缓存 X（成功）→ 线程 B 读缓存 X 未命中 → B 从 DB 读旧数据 → B 将旧数据写入缓存 → A 更新 DB。结果：缓存一直是旧数据（脏数据）。概率不低。\n\n先更新 DB 再删缓存（更推荐）：线程 A 更新 DB → 删除缓存。并发问题：线程 B 读缓存 X 未命中 → B 从 DB 读（读到 A 更新前的老数据）→ A 更新 DB 并删除缓存 → B 将老数据写入缓存。问题前提：B 读 DB 完成在 A 写 DB 之前（且 A 写 DB 完成后删除缓存晚于 B 读 DB 完成时）。概率比前一种低（因为更新 DB 通常比读 DB 慢）。\n\n一致性强化的方法：1）延迟双删——先删缓存 → 更新 DB → 延迟几百 ms 再删一次缓存。延迟时间 = 主从同步延迟 + 几百 ms 余量。牺牲性能（多一次缓存删除和等待）换取低概率的不一致。2）基于 binlog 的异步删除——通过 Canal（阿里巴巴的 MySQL binlog 订阅工具）监听 MySQL binlog 变更，异步清除对应的缓存。解耦业务代码与缓存逻辑，保证最终一致性。优点是业务代码不需要显式操作缓存。\n\n3）强一致性的选择：缓存与数据库的最终一致性就是现实选择。强一致性需要分布式事务（2PC/TCC/XA），代价极高，不推荐。大多数业务场景接受最终一致性（秒级内的不一致）。关键数据（余额/库存）不用缓存或使用分布式锁保证互斥。\n\n注意：更新缓存而不是删除缓存的问题是更新的写并发：两个线程同时更新同一数据，后更新的值可能被先更新的值覆盖（写后写冲突）。所以推荐更新时删除缓存（而不是更新缓存），下次读时重新装载。",
-    "hints": [
-      "先更新 DB 再删缓存为什么比先删缓存再更新 DB 问题少——写 DB 比读 DB 慢",
-      "延迟双删和 Canal 异步同步的各自适用场景"
-    ],
-    "tags": [
-      "Redis",
-      "缓存",
-      "一致性",
-      "Cache-Aside",
-      "分布式"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Stream 数据结构详解",
-    "content": "详细说明 Redis Stream 的内部实现和用法。Stream 作为可持久化的消息队列，如何实现消息的追加写入、消费者组（Consumer Group）的负载均衡、ACK 机制和 PEL（Pending Entries List）管理。对比 Stream 与 Pub/Sub 和 List 的适用场景。",
-    "answer": "Redis Stream：\n\n1. **核心结构**：\n   - 每个 Stream 是一个具有唯一 ID 的消息链表\n   - 消息 ID 格式：`<millisecondsTime>-<sequenceNumber>`（自动生成或自定义）\n   - 每条消息可以包含多个 field-value 对（类似 Hash）\n\n2. **消费者组机制**：\n   - 通过 XGROUP 创建消费者组，指定起始消费位置\n   - 组内消费者通过 XREADGROUP 读取消息\n   - 每条消息只投递给组内的一个消费者（类似 Kafka 的分区）\n   - **PEL（Pending Entries List）**：已发送但未确认的消息列表\n   - 通过 XACK 从 PEL 中移除已确认消息\n\n3. **可靠性保证**：\n   - **XCLAIM**：其他消费者认领超时的 pending 消息\n   - **XPENDING**：查看 PEL 中的消息详情\n   - **XINFO**：检查 Stream 和消费者组的状态\n\n4. **对比**：\n   - Pub/Sub：即发即忘，不支持持久化，适合实时广播\n   - List（BRPOPLPUSH）：支持可靠消息但缺乏消费者组\n   - Stream：持久化 + 消费者组 + ACK 机制，功能最完整\n\n5. **适用场景**：\n   - 消息队列（任务分发、事件驱动）\n   - 活动流（用户时间线、操作日志）\n   - 跨服务数据同步",
-    "hints": [
-      "Stream ID 格式为 <毫秒时间戳>-<序号>，支持时间范围查询",
-      "消费者组 + PEL 实现了消息的负载均衡和可靠消费",
-      "XCLAIM 可处理消费者故障导致的 PEL 消息堆积"
-    ],
-    "tags": [
-      "redis",
-      "stream"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Bitmap 与 HyperLogLog 原理",
-    "content": "深入分析 Redis 的 Bitmap（位图）和 HyperLogLog（基数统计）的底层实现。Bitmap 如何利用位操作实现高效的大规模去重和统计？HyperLogLog 的误差控制（标准误差 0.81%）是如何通过概率算法保证的？各自的实际应用场景。",
-    "answer": "Bitmap 与 HyperLogLog：\n\n1. **Bitmap**：\n   - 本质是 String 类型的位操作\n   - 8 字节 = 2^32 位（512MB 可表示 42 亿个位）\n   - **操作**：SETBIT、GETBIT、BITCOUNT、BITOP（AND/OR/XOR/NOT）、BITFIELD\n   - **应用**：\n     - 日活用户统计：user_id 作为 offset，登录设为 1\n     - 签到系统：day_of_year 作为 offset\n     - 布隆过滤器替代：适合已知数据集的情况\n\n2. **HyperLogLog**：\n   - 占用 12KB 固定内存，无论数据量多大\n   - **原理**：基于伯努利试验——估计最长前导零串\n   - 多个桶 + 偏差修正 → 标准误差 ≈ 0.81%\n   - **操作**：PFADD（添加）、PFCOUNT（基数估算）、PFMERGE（合并）\n   - **应用**：\n     - UV 统计（千万级用户只需 12KB）\n     - 独立 IP 计数\n     - 搜索词去重\n\n3. **对比**：\n   - Bitmap：精确、灵活，但内存随 user_id 上限增长\n   - HyperLogLog：内存固定但有误差、无法获取元素内容\n   - 组合使用：粗粒度用 HLL，需要精确时回退到 Bitmap",
-    "hints": [
-      "Bitmap 用位操作实现精确统计，内存随数据上限线性增长",
-      "HyperLogLog 12KB 固定内存，0.81% 误差，适合海量基数统计",
-      "HyperLogLog 只能统计基数不能获取元素具体值"
-    ],
-    "tags": [
-      "redis",
-      "bitmap",
-      "hyperloglog"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis GEO（地理位置）数据结构",
-    "content": "解释 Redis GEO 数据结构的底层实现原理和常用命令。GEO 如何基于 Sorted Set + Geohash 编码实现地理位置的存储和范围查询？GEORADIUS 和 GEOSEARCH 的空间搜索算法。设计一个基于 Redis GEO 的附近的人/店铺系统。",
-    "answer": "Redis GEO：\n\n1. **底层实现**：\n   - 基于 Sorted Set（ZSET）实现\n   - 经纬度 → Geohash 编码（52 位整数）→ 作为 score 存入 ZSET\n   - Geohash 特性：前缀匹配越长的两个位置距离越近\n\n2. **常用命令**：\n   - **GEOADD**：添加地理位置（key, longitude, latitude, member）\n   - **GEOPOS**：获取成员经纬度\n   - **GEODIST**：计算两点距离（单位 m/km/mi/ft）\n   - **GEORADIUS/GEOSEARCH**：基于圆心+半径的范围查询\n   - **GEOSEARCHSTORE**：结果存储到新 key\n\n3. **搜索算法**：\n   - GEORADIUS：以给定经纬度为圆心，计算覆盖该圆的最小 Geohash 矩形\n   - 在该矩形内执行 ZRANGEBYSCORE 搜索\n   - 对边界点进行精确距离过滤\n   - 距离 = R * acos(sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon1-lon2))\n\n4. **附近的人设计**：\n   - Key = city:beijing:users，member = user_id，score = geohash\n   - GEOADD 用户位置 → GEORADIUS 查询附近 N km 的用户\n   - 定时刷新（如每 5 分钟）\n   - **优化**：分城市存储，避免全局集合过大\n   - **局限**：单机 Redis 无法分布式存储大量 GEO 数据",
-    "hints": [
-      "GEO 基于 Sorted Set + Geohash 编码",
-      "GEORADIUS 先按 Geohash 矩形粗筛再精确距离过滤",
-      "分城市/区域存储可优化大规模 GEO 查询性能"
-    ],
-    "tags": [
-      "redis",
-      "geo"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Lua 脚本与原子操作",
-    "content": "详细说明 Redis Lua 脚本在原子操作中的应用。EVAL/EVALSHA 命令的工作流程、脚本缓存机制、以及 Lua 脚本在 Redis 中的沙箱限制。如何利用 Lua 脚本实现自定义原子操作（如分布式锁续期、限流令牌桶）？对比 Lua 脚本与 Redis Transactions（MULTI/EXEC）的异同。",
-    "answer": "Redis Lua 脚本：\n\n1. **执行机制**：\n   - EVAL：直接执行 Lua 脚本，可带参数\n   - EVALSHA：执行已缓存脚本的 SHA1 摘要（减少带宽）\n   - **SCRIPT LOAD**：手动缓存脚本\n   - **原子性**：脚本执行期间阻塞所有其他命令（单线程优势）\n\n2. **沙箱限制**：\n   - 不能访问外部系统（无文件 IO、网络 IO）\n   - 不能使用全局变量（使用 Lua 的 KEYS 和 ARGV）\n   - 只有有限的库：base、string、table、math、cjson、cmsgpack\n   - 超时限制：lua-time-limit（默认 5 秒）→ 超时后发送 SCRIPT KILL\n\n3. **应用实例**：\n   - **分布式锁续期**：检查锁是否仍持有 → 是则续期 → 原子完成\n   - **令牌桶限流**：检查令牌 → 消耗令牌 → 更新剩余 → 原子完成\n   - **库存扣减**：检查库存 > 0 → 扣减 → 返回结果\n\n4. **Lua vs Transactions**：\n   - MULTI/EXEC：命令批量执行、不保证条件原子性（WATCH 是乐观锁）\n   - Lua 脚本：真正的原子执行、条件逻辑\n   - Lua 更适合需要条件判断的复杂操作\n   - 简单批量操作用 MULTI/EXEC 足够",
-    "hints": [
-      "Lua 脚本在 Redis 中是原子执行的（单线程）",
-      "沙箱限制 Lua 不能访问外部系统或使用全局变量",
-      "Lua 脚本适合复杂条件逻辑，MULTI/EXEC 适合简单批量操作"
-    ],
-    "tags": [
-      "redis",
-      "lua"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis ACL 与安全配置",
-    "content": "讨论 Redis 6+ 的 ACL（访问控制列表）系统。如何创建用户、分配权限、限制可访问的命令和 key？ACL 的两种配置方式。SSL/TLS（Redis 6.2+）加密传输的配置。安全加固的最佳实践（端口、认证、命令禁用）。",
-    "answer": "Redis ACL 与安全：\n\n1. **ACL 核心概念**：\n   - **用户**：default + 自定义用户\n   - **权限规则**：+command（允许）/ -command（禁止）、@category（命令类别）\n   - **Key 权限**：~pattern（可访问的 key 模式）\n   - **通道**：&pattern（Pub/Sub 通道限制）\n\n2. **配置方式**：\n   - **命令行**：ACL SETUSER alice on >password ~cached:* +get +set\n   - **配置文件**：在 redis.conf 中使用 user 指令\n   - **ACL 文件**：使用 aclfile 参数指定独立的 ACL 配置文件\n   - **ACL SAVE**：将当前规则保存到文件\n\n3. **示例**：\n   - 只读用户：`ACL SETUSER readonly on >pass ~* +@read -@dangerous`\n   - 缓存管理用户：`ACL SETUSER cacheadmin on >pass ~cache:* +get +set +del`\n\n4. **安全加固**：\n   - 绑定 localhost 或内网 IP（bind 127.0.0.1）\n   - 设置 requirepass（主密码）\n   - 重命名/禁用危险命令：rename-command FLUSHALL \"\"\n   - 启用保护模式（protected-mode yes）\n   - TLS/SSL：tls-port + tls-cert-file + tls-key-file\n   - 不在生产环境使用 --protected-mode no",
-    "hints": [
-      "ACL 支持命令、key、通道三级权限控制",
-      "重命名危险命令（FLUSHALL、KEYS、CONFIG）是基本加固",
-      "ACL 和 TLS 是 Redis 6 的两大安全特性"
-    ],
-    "tags": [
-      "redis",
-      "acl",
-      "security"
-    ]
-  },
-  {
-    "category": "redis",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "Redis 管道（Pipeline）与批量操作优化",
@@ -533,79 +239,8 @@
       "Pipeline + MULTI/EXEC 组合 = 原子批量操作"
     ],
     "tags": [
-      "redis",
-      "pipeline"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 内存碎片处理与内存优化",
-    "content": "讨论 Redis 内存碎片产生的根本原因（jemalloc 分配器 + 键值对频繁增删）。如何监控内存碎片率（mem_fragmentation_ratio）？何时需要手动碎片整理？Redis 4.0+ 的自动内存碎片整理（ACTIVE DEFRAG）原理。内存优化策略：共享对象池、小数据结构的编码优化。",
-    "answer": "Redis 内存碎片：\n\n1. **碎片成因**：\n   - jemalloc 内存分配器按固定大小（8/16/32/64…）分配\n   - 键值对频繁新增/修改/删除 → 内存释放不连续\n   - 不同数据结构的生命周期不同\n\n2. **监控指标**：\n   - **mem_fragmentation_ratio** = used_memory_rss / used_memory\n   - < 1：内存不足（使用 swap）→ 危险\n   - 1-1.5：正常\n   - > 1.5：碎片过多，需要整理\n   - INFO memory 命令查看\n\n3. **碎片整理**：\n   - **ACTIVE DEFRAG（Redis 4.0+）**：\n     - 后台线程扫描内存 → 将碎片中的对象移动到连续区域\n     - activedefrag yes（配置开启）\n     - active-defrag-ignore-bytes：碎片超过 100MB 开始整理\n     - active-defrag-threshold-lower：碎片率超过 10% 开始整理\n     - active-defrag-cycle-min：CPU 时间占比（最低 5%）\n\n4. **内存优化**：\n   - **共享对象池**：0-9999 的整数共享内存（hash-max-ziplist-value）\n   - **小数据编码**：ziplist、intset、quicklist 等紧凑编码\n   - **Maxmemory**：设置合理上限 + 淘汰策略\n   - **避免大 key**：拆分大数据结构\n\n5. **最佳实践**：\n   - 碎片整理有性能开销（CPU + 短暂阻塞）\n   - 低峰期执行手动整理\n   - 预估数据量 + 预留 30-50% 额外内存",
-    "hints": [
-      "mem_fragmentation_ratio > 1.5 说明碎片过多",
-      "Active Defrag 在后台整理碎片但消耗 CPU",
-      "使用紧凑编码（ziplist/intset）可减少内存碎片"
-    ],
-    "tags": [
-      "redis",
-      "memory",
-      "defragmentation"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 数据持久化的 AOF 与 RDB 混合模式",
-    "content": "深入分析 Redis 的混合持久化模式（RDB + AOF）。混合持久化（Redis 4.0+）如何结合 RDB 和 AOF 的优点？aof-use-rdb-preamble 开启后，AOF 文件以 RDB 格式保存全量数据 + 增量操作日志。设计一个 Redis 数据恢复方案：不同模式的 RTO（恢复时间目标）和 PIO（数据丢失容忍度）。",
-    "answer": "混合持久化：\n\n1. **RDB（快照）**：\n   - 全量数据 dump 到磁盘\n   - 优点：文件小、恢复快\n   - 缺点：丢失两次快照间的数据\n   - 触发：save 指令、bgsave、配置的自动保存条件\n\n2. **AOF（追加日志）**：\n   - 每条写操作追加到文件\n   - 优点：数据丢失少（取决于 fsync 策略）\n   - 缺点：文件大、恢复慢\n   - 策略：always（每条）> everysec（每秒）> no（系统刷）\n\n3. **混合模式（Redis 4.0+）**：\n   - aof-use-rdb-preamble yes\n   - AOF 文件前半段：RDB 格式的全量快照\n   - AOF 文件后半段：Redis 协议格式的增量操作\n   - 优点：结合 RDB 的快速恢复 + AOF 的低数据丢失\n\n4. **恢复方案**：\n   - RDB only：丢失大、恢复快，适合缓存\n   - AOF only（everysec）：最多丢 1 秒数据，恢复稍慢，适合多数场景\n   - 混合模式：丢失少 + 恢复快，适合大部分生产场景\n   - AOF（always）：零丢失，性能代价高，适合金融场景\n\n5. **最佳实践**：\n   - 生产推荐：混合持久化 + AOF everysec\n   - 定期手动 bgsave 做备份\n   - 跨机房备份：RDB 文件异地同步",
-    "hints": [
-      "混合模式 = RDB 全量 + AOF 增量，兼顾恢复速度和数据安全",
-      "AOF everysec 是最均衡的 fsync 策略",
-      "混合模式是 Redis 4.0+ 生产环境的首选"
-    ],
-    "tags": [
-      "redis",
-      "persistence"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Sentinel 的 Raft 变体与故障转移",
-    "content": "深入分析 Redis Sentinel 的分布式共识机制。Sentinel 基于 Raft 的变体（Gossip + Quorum）实现主节点故障检测和自动故障转移。Quorum 的作用是什么？majority 和 quorum 的区别？主观下线（SDOWN）和客观下线（ODOWN）的判定流程以及脑裂防护。",
-    "answer": "Redis Sentinel：\n\n1. **故障检测**：\n   - **SDOWN（主观下线）**：单个 Sentinel 检测到 master 在 down-after-milliseconds 内无响应\n   - **ODOWN（客观下线）**：多个 Sentinel 都认为 master 已下线，达到 quorum 数量\n\n2. **Quorum vs Majority**：\n   - **Quorum**：ODOWN 判定所需的最小确认数（可配置）\n   - **Majority**：leader 选举所需的大多数（N/2 + 1）\n   - 例：5 个 Sentinel，quorum=2 → 2 个确认 ODOWN 即可触发切换，但 leader 选举需要 3 个\n\n3. **故障转移流程**：\n   - 判定 ODOWN → 选举 leader Sentinel（Raft 风格的选举）\n   - Leader Sentinel 从 replica 中选新 master（优先级 → 最新复制偏移量 → runid）\n   - 让其他 replica 复制新 master\n   - 更新原 master 的配置（强制降级）\n\n4. **脑裂防护**：\n   - **min-replicas-to-write**：master 至少与 N 个 replica 连接才接受写\n   - **min-replicas-max-lag**： replica 的延迟上限\n   - 网络分区时，master 无法同步大多数 replica → 停止接受写入\n\n5. **与 Redis Cluster 对比**：\n   - Sentinel：主从 + 自动故障转移，总有一个 master\n   - Cluster：多分片 + 自动分片 + 自动故障转移\n   - Sentinel 适合中小规模高可用，Cluster 适合大规模",
-    "hints": [
-      "SDOWN = 单个 Sentinel 判定，ODOWN = quorum 个 Sentinel 达成一致",
-      "Quorum 不等于 Majority——Quorum 是 ODOWN 阈值，Majority 是选举要求",
-      "min-replicas-to-write 和 max-lag 是脑裂防护的关键配置"
-    ],
-    "tags": [
-      "redis",
-      "sentinel",
-      "high-availability"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Cluster 的 gossip 通信与故障检测",
-    "content": "详细分析 Redis Cluster 的 Gossip 通信协议。节点之间如何通过 MEET/PING/PONG 消息交换状态信息？Gossip 消息的格式和频率（cluster-node-timeout 的作用）。节点故障的检测流程：PFALL（疑似故障）→ FAIL 确认。消息传播的带宽优化。",
-    "answer": "Redis Cluster Gossip：\n\n1. **Gossip 消息类型**：\n   - **MEET**：邀请加入集群\n   - **PING**：定期随机选择节点发送心跳\n   - **PONG**：回复 PING + 携带本地状态\n   - **FAIL**：广播节点故障消息\n\n2. **消息内容**：\n   - 发送者的信息（epoch、状态、slot 映射）\n   - 随机 N 个其他节点的状态（当前纪元、状态标志）\n   - 消息体 ≈ 每个节点 30-50 bytes\n\n3. **检测与传播**：\n   - 节点 A 在 cluster-node-timeout 内未收到 B 的 PONG\n   - A 标记 B 为 PFAIL（possible failure）\n   - A 在 Gossip 消息中传播 B 的 PFAIL\n   - 大多数持有 B 的 slot 的 master 确认 PFAIL → 升级为 FAIL\n   - FAIL 消息 Gossip 全网传播\n\n4. **带宽优化**：\n   - PING 间隔 ≈ 1 秒（但可选多个节点）\n   - cluster-node-timeout 越大，PING 频率越低\n   - 消息体包含所有节点信息的子集（随机抽样）\n   - 大规模集群 > 1000 节点时需调优\n\n5. **实践建议**：\n   - cluster-node-timeout 默认 15s → 可根据网络状况调整\n   - 节点数 < 100 时 Gossip 带宽可控\n   - 大规模集群考虑 Gossip 分区",
-    "hints": [
-      "Gossip 协议通过 PING/PONG 交换节点状态，PFALL→FAIL 两阶段确认",
-      "Gossip 消息携带随机节点子集的信息，控制带宽消耗",
-      "cluster-node-timeout 影响故障检测速度"
-    ],
-    "tags": [
-      "redis",
-      "cluster",
-      "gossip"
+      "Redis",
+      "Pipeline"
     ]
   },
   {
@@ -621,9 +256,9 @@
       "ZooKeeper/etcd 提供更强的一致性保证"
     ],
     "tags": [
-      "redis",
+      "Redis",
       "distributed-lock",
-      "redlock"
+      "Redlock"
     ]
   },
   {
@@ -639,7 +274,7 @@
       "ZREVRANGE 获取 Top N 时间复杂度 O(log(N) + M)"
     ],
     "tags": [
-      "redis",
+      "Redis",
       "leaderboard"
     ]
   },
@@ -656,76 +291,8 @@
       "实时在线用 ZSET + 定期清理过期用户"
     ],
     "tags": [
-      "redis",
+      "Redis",
       "user-statistics"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 实现分布式限流的令牌桶与漏桶",
-    "content": "使用 Redis 实现分布式限流算法：令牌桶（Token Bucket）、漏桶（Leaky Bucket）和滑动窗口（Sliding Window）。各算法的 Lua 脚本实现。对比 INCR + EXPIRE 的简单窗口限流的精度问题。如何选择合适的限流算法？",
-    "answer": "Redis 限流方案：\n\n1. **简单计数器（固定窗口）**：\n   - INCR key → 首次 SETEX key 1 TTL\n   - 缺点：窗口边界处可能双倍流量\n   - 适用：要求不高的简单限流\n\n2. **滑动窗口（Sorted Set）**：\n   - ZREMRANGEBYSCORE key now - period\n   - ZCARD key < limit → ZADD key now request_id\n   - 精确但内存开销大\n\n3. **令牌桶（Lua 实现）**：\n   - 每个 key 存储：上次更新时间 + 当前令牌数\n   - 每次请求：计算时间差 → 补充令牌 → 消费令牌\n   - 支持突发流量（积累令牌）\n   - Lua 脚本保证原子性\n\n4. **漏桶（Lua 实现）**：\n   - 固定速率流出（如每秒 10 个）\n   - 请求量超过桶容量 → 拒绝\n   - 适合平滑流量（保护下游）\n   - 不支持突发\n\n5. **算法选择**：\n   - 允许突发 → 令牌桶\n   - 严格平滑 → 漏桶\n   - 简单可用 → 滑动窗口（Sorted Set 实现较精确）\n   - 最常用：令牌桶（灵活性最好）",
-    "hints": [
-      "令牌桶支持突发，漏桶强制平滑，滑动窗口精度最高",
-      "Lua 脚本保证限流检查 + 令牌消耗的原子性",
-      "简单计数器有窗口边界加倍问题，滑动窗口用 Sorted Set 解决"
-    ],
-    "tags": [
-      "redis",
-      "rate-limiting"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 实现布隆过滤器与缓存穿透防护",
-    "content": "讨论 Redis 布隆过滤器（Bloom Filter）的原理和在缓存穿透防护中的应用。Redis 模块 RediSearch 对 Bloom Filter 的支持。如何使用 Bitmap 手动实现简单的布隆过滤器？布隆过滤器的误判率与位数组大小和哈希函数数量的关系。布谷鸟过滤器（Cuckoo Filter）的改进。",
-    "answer": "Redis 布隆过滤器：\n\n1. **原理**：\n   - 用 k 个哈希函数将元素映射到 m 位的位数组中\n   - 判断存在：检查 k 个位是否全为 1\n   - 特性：不存在一定正确（无假阴性），存在可能误判（假阳性）\n   - 不能删除元素\n\n2. **Redis 实现方式**：\n   - **RediSearch 模块**：BF.ADD / BF.EXISTS / BF.INFO\n   - **Bitmap 手动实现**：SETBIT / GETBIT + 多个哈希函数\n   - **手动实现局限**：需要考虑扩容（超过预期容量后误判率上升）\n\n3. **参数设计**：\n   - 位数组大小 m = -(n * ln p) / (ln 2)^2（n=预期数量，p=误判率）\n   - 哈希函数数量 k = (m/n) * ln 2\n   - 例：100 万元素、1% 误判率 → m ≈ 11.5 MB，k ≈ 7\n\n4. **缓存穿透防护**：\n   - 查询 key 先检查 Bloom Filter\n   - 不存在 → 直接返回\"不存在\"（不查 DB）\n   - 可能存在 → 查 DB + 更新缓存\n   - 注意：Bloom Filter 不能删除，数据删除时需要重建\n\n5. **Cuckoo Filter**：\n   - 支持删除操作\n   - 空间效率更高（每个元素约 7 bits）\n   - Redis 中通过模块实现\n   - 适合需要删除元素的场景",
-    "hints": [
-      "布隆过滤器无假阴性（说没有就一定没有），有假阳性",
-      "参数公式：m = -n*ln(p)/(ln2)^2，k = (m/n)*ln2",
-      "布隆过滤器不适合需要删除元素的场景（改用布谷鸟过滤器）"
-    ],
-    "tags": [
-      "redis",
-      "bloom-filter"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 实现消息通知系统的设计",
-    "content": "使用 Redis 设计一个支持多端同步的消息通知系统。设计目标：用户收到新消息通知（未读数）、消息列表的分页拉取、已读/未读状态管理。讨论使用 Hash 存储通知内容、List 存储用户通知列表、以及使用 Pub/Sub 实现实时推送的组合方案。",
-    "answer": "Redis 消息通知系统：\n\n1. **数据模型**：\n   - **通知内容**：Hash（HMSET notify:{id} type title content time url）\n   - **用户通知列表**：List（LPUSH user:{uid}:notifications notify:{id}）\n   - **未读计数**：String（INCR user:{uid}:unread）\n   - **已读状态**：Set（SADD user:{uid}:read:2024-01 notify:{id}）\n\n2. **未读计数**：\n   - INCR user:{uid}:unread（有新通知）\n   - DECR user:{uid}:unread（阅读通知）\n   - GET user:{uid}:unread（获取未读数）\n   - 使用 Lua 脚本原子操作\n\n3. **分页拉取**：\n   - LRANGE user:{uid}:notifications 0 19（获取最新 20 条）\n   - 用 List 做时间线（最新的在左边）\n   - 已读状态在客户端或服务端标注\n\n4. **实时推送**：\n   - PUBLISH user:{uid}:notifications notify_data\n   - WebSocket 订阅该频道\n   - 用户在线时通过 Pub/Sub 实时推送\n   - 不在线时下次登录拉取未读数\n\n5. **持久化考虑**：\n   - 通知数据也落 DB 做持久化\n   - Redis 做热缓存 + 未读计数\n   - 定期清理已读通知 List（LTRIM）\n   - 历史通知从 DB 读取",
-    "hints": [
-      "Hash 存通知内容、List 存通知列表、String 存未读计数",
-      "LPUSH + LTRIM 实现有限长度的通知时间线",
-      "Pub/Sub 实现实时推送，Redis 缓存 + DB 落盘保证不丢"
-    ],
-    "tags": [
-      "redis",
-      "notification"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 实现购物车系统的设计",
-    "content": "使用 Redis Hash 设计购物车系统。分析购物车的核心操作（添加商品、修改数量、删除商品、查询购物车、合并登录前后购物车）的 Redis 命令实现。讨论购物车数据的过期策略（未登录购物车的 TTL）和持久化方案。",
-    "answer": "Redis 购物车设计：\n\n1. **数据结构**：\n   - **Hash**：`cart:{user_id}` 字段 = sku_id，值 = quantity\n   - HSET cart:123 sku_1001 2\n   - HGETALL cart:123（获取全部商品）\n   - HDEL cart:123 sku_1001（删除商品）\n   - HLEN cart:123（统计商品种类数）\n\n2. **操作模式**：\n   - **添加**：HSET cart:{uid} {sku_id} quantity（有则覆盖，无则新增）\n   - **修改数量**：HINCRBY cart:{uid} {sku_id} 1（+1）/-1（-1）\n   - **删除**：HDEL cart:{uid} {sku_id}\n   - **清空**：DEL cart:{uid}\n   - **批量查**：HGETALL cart:{uid} + 根据 sku_id 查商品详情（MGET）\n\n3. **登录合并**：\n   - 未登录：key = cart:temp:{temp_token}（7 天过期）\n   - 登录时：HGETALL cart:temp:{token} → 遍历合并到 cart:{uid}\n   - 合并策略：取最大数（登录前 2 + 登录后 1 → 2）\n   - 合并后删除临时 cart\n\n4. **过期策略**：\n   - 未登录购物车：EXPIRE cart:temp:{token} 604800（7 天）\n   - 已登录购物车：不主动过期（与用户账号绑定）\n   - 长时间未操作的已登录购物车 → 定期清理\n\n5. **持久化**：\n   - Redis 做主存储（写多读少，Hash 高效）\n   - 辅助 DB 存储购物车快照（恢复用）\n   - 利用 Redis AOF 持久化保证不丢",
-    "hints": [
-      "Hash 结构天然适合购物车（field = 商品 ID，value = 数量）",
-      "未登录购物车设 7 天 TTL，登录时合并到用户购物车",
-      "HINCRBY 原子增减数量，减少读取后修改的竞争"
-    ],
-    "tags": [
-      "redis",
-      "shopping-cart"
     ]
   },
   {
@@ -741,112 +308,8 @@
       "Feed 流采用推拉结合模式（大 V 拉、普通人推）"
     ],
     "tags": [
-      "redis",
+      "Redis",
       "social-network"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 在微服务架构中的服务发现与配置中心",
-    "content": "如何使用 Redis 实现微服务的服务发现和配置中心？服务注册：Hash 存储服务实例的元数据（IP、端口、健康状态）。健康检查：利用 TTL 和 Key 过期自动剔除故障实例。配置管理：使用 Pub/Sub 实现配置变更的实时推送。讨论与 Consul/Nacos 的对比。",
-    "answer": "Redis 服务发现：\n\n1. **服务注册**：\n   - 每个服务实例：HMSET service:{name}:{instance_id} host port meta\n   - 注册列表：SADD services {name}:{instance_id}\n   - 发现服务：SMEMBERS services → HGETALL 获取元数据\n   - 示例：HMSET service:user-api:192.168.1.1 host 192.168.1.1 port 8080\n\n2. **健康检查**：\n   - 服务启动时 SETEX health:{name}:{instance} 10 alive\n   - 定时续期（每 5 秒 SETEX -> TTL 10 秒）\n   - 过期 → 自动剔除（监听 Keyspace Notification）\n   - 替代方案：ZADD heartbeat 时间戳 + 定时扫描\n\n3. **配置中心**：\n   - 配置存储：HMSET config:{app}:{env} key1 value1 key2 value2\n   - 动态通知：PUBLISH config:changed {app}:{env}\n   - 客户端订阅 → 收到通知 → 重新加载配置\n   - 配置版本化：使用 Sorted Set 存储配置历史\n\n4. **对比成熟方案**：\n   - 优势：简单、低延迟（毫秒级）、不引入新组件\n   - 劣势：无版本管理、命名空间弱、无需熔断等功能\n   - 适合：中小规模微服务（<50 个服务）\n   - 大规模推荐：Consul（服务发现）/ Nacos（配置中心）\n\n5. **生产建议**：\n   - 仅作为轻量级补充方案\n   - 配置变更必须经过审核流程（不是在 Redis 里直接改）\n   - 配置最好有本地文件兜底",
-    "hints": [
-      "Redis 可用作轻量级服务发现（Hash 存元数据 + TTL 做健康检查）",
-      "Pub/Sub 实现配置变更实时推送",
-      "适合中小规模，大规模推荐 Consul/Nacos"
-    ],
-    "tags": [
-      "redis",
-      "service-discovery"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 作为实时特征存储（Feature Store）",
-    "content": "讨论 Redis 在 ML 特征存储（Feature Store）中的应用。设计一个基于 Redis 的实时特征存储，支持特征的在线获取和高频更新。特征数据的存储结构设计（Hash vs String）、特征时效性管理（TTL）、批量特征获取（MGET/HMGET）。与离线特征（Hive/Parquet）的同步方案。",
-    "answer": "Redis Feature Store：\n\n1. **特征数据模型**：\n   - **用户特征**：HMSET feature:user:{uid} age 30 city beijing ltv 12500.0\n   - **物品特征**：HMSET feature:item:{id} category electronics price 2999\n   - **上下文特征**：SET feature:context:time_of_day morning\n   - **批量获取**：HMGET feature:user:{uid} age city ltv\n\n2. **时效性管理**：\n   - **TTL**：设定特征的有效期（不同特征不同 TTL）\n   - **版本控制**：ZADD feature:user:{uid}:version timestamp version\n   - **过期通知**：Keyspace Notification 触发特征更新\n\n3. **高性能设计**：\n   - Pipeline 批量获取（模型推理时一次获取数十个特征）\n   - Hash 对同一实体的多特征操作高效\n   - 连接池避免频繁建连\n   - **特征预热**：启动时加载热点特征\n\n4. **与离线特征同步**：\n   - 离线训练：Hive/Spark → Parquet → 特征数据集\n   - 在线推理：Redis → HMGET 实时获取\n   - **同步流程**：离线 Batch 计算特征 → 批量写入 Redis\n   - **增量更新**：实时流（Kafka）→ Flink → Redis\n\n5. **容灾**：\n   - 本地缓存（Caffeine）兜底\n   - Redis 故障时使用离线特征估计\n   - 特征默认值配置",
-    "hints": [
-      "Hash 存实体多维特征、String 存上下文特征",
-      "TTL 管理特征时效性、本地缓存做兜底",
-      "离线 Batch 计算 + 在线实时更新 = 完整的 Feature Store"
-    ],
-    "tags": [
-      "redis",
-      "feature-store",
-      "ml"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 实现高频计数与实时仪表盘",
-    "content": "使用 Redis 设计一个实时业务仪表盘（Dashboard）系统。从多个数据源收集事件（PV/UV、订单量、收入）、使用 Hash 或 Sorted Set 进行多维聚合、用 Pub/Sub 推送到前端。讨论计数器性能优化（事件缓冲 + 批量写入）、多时间窗口的聚合策略。",
-    "answer": "Redis 实时仪表盘：\n\n1. **事件收集**：\n   - 简单计数：INCR stats:{metric}:{date}:{hour}\n   - 多维统计：HINCRBY stats:pageview:2024-01-01 page:/home count\n   - 分桶统计：ZINCRBY stats:revenue:2024-01-01 category:electronics 2999\n\n2. **时间窗口聚合**：\n   - **分钟级**：INCR stats:orders:2024-01-01:14:05\n   - **小时级**：定时对分钟级求和后写入 =INCRBY stats:orders:2024-01-01:14\n   - **天级**：定时对小时级求和\n   - **滚动窗口（最近 N 分钟）**：Sorted Set + ZREMRANGEBYSCORE\n\n3. **推送前端**：\n   - PUBLISH dashboard:orders {\"value\": 123, \"time\": \"...\"}\n   - WebSocket Server 订阅 → 推送到浏览器\n   - 前端定时拉取（防止 WebSocket 断开）\n\n4. **性能优化**：\n   - 缓冲 + 批量写入：事件先攒到本地队列（100 条或 100ms）→ Pipeline 写入\n   - 高频 key 做聚合：多个 PV 合并为 1 次 INCRBY\n   - 分 key 避免热点：stats:pageview:2024-01-01:14:05:shard_{0-9}\n\n5. **持久化与备份**：\n   - 实时数据在 Redis\n   - 定期（每分钟）快照到 DB 做历史趋势\n   - 仪表盘只展示最近 48 小时的实时数据",
-    "hints": [
-      "分段聚合（分钟→小时→天）降低写入频率",
-      "事件缓冲 + Pipeline 批量写入提升吞吐",
-      "Pub/Sub 推送到前端实现实时更新"
-    ],
-    "tags": [
-      "redis",
-      "dashboard"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 在 AI/ML 推理中的应用",
-    "content": "讨论 Redis 在 AI/ML 推理系统中的应用场景。使用 Redis 作为 LLM 的 KV-Cache 分布式缓存、模型推理结果的缓存（语义缓存 Semantic Caching）、特征存储（Feature Store）、以及模型版本管理和 A/B 测试的路由。设计一个 LLM 语义缓存方案。",
-    "answer": "Redis AI/ML 应用：\n\n1. **KV-Cache 分布式共享**：\n   - 多推理节点共享 KV-Cache（减少重复计算）\n   - key = prompt_prefix_hash，value = KV tensor\n   - 挑战：tensor 数据量大、序列化开销\n   - 适用：共享前缀的长 prompt 场景\n\n2. **语义缓存（Semantic Caching）**：\n   - 输入嵌入 → 向量相似度搜索 → 命中则返回缓存结果\n   - **Redis Stack**：支持向量搜索（FT.SEARCH + VSS）\n   - 缓存结构：HASH（嵌入向量 + 原始输入 + 输出 + 元数据）\n   - **策略**：\n     - 相似度阈值（如 cosine > 0.95）→ 命中\n     - TTL 控制缓存有效期\n     - 缓存穿透保护（并发请求只一个查 LLM）\n\n3. **模型版本与路由**：\n   - ZSET model:versions model_name version score\n   - Redis 实时切换模型版本（A/B 测试）\n   - 按用户分段路由（HASH 存 user:model_mapping）\n\n4. **Feature Store（特征存储）**：\n   - 实时特征：Hash 存用户/物品特征\n   - 批量获取：HMGET 用于模型推理时的特征拼接\n\n5. **性能关键**：\n   - 语义缓存命中率可达到 30-60%（取决于场景）\n   - LLM 输出缓存延迟降低 50-80%\n   - Token 成本节省 30-50%",
-    "hints": [
-      "语义缓存通过向量相似度实现 LLM 输出复用",
-      "KV-Cache 共享减少长 prompt 重复计算",
-      "模型版本路由实现 A/B 测试的实时切换"
-    ],
-    "tags": [
-      "redis",
-      "ai",
-      "semantic-cache"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 的 Keyspace Notification 与事件驱动",
-    "content": "解释 Redis Keyspace Notification（键空间通知）的机制和配置。如何通过订阅 Redis 的 Pub/Sub 通知来监听 key 的过期、修改、删除事件？Keyspace 与 Keyevent 两种通知格式的区别。事件驱动架构中的典型应用：缓存重建、延迟任务、数据同步。",
-    "answer": "Keyspace Notification：\n\n1. **机制**：\n   - Redis 在 key 发生变更时发布 Pub/Sub 消息\n   - 通知格式：\n     - **Keyspace**：`__keyspace@0__:mykey` → 事件类型\n     - **Keyevent**：`__keyevent@0__:del` → 发生事件的 key\n   - 配置：notify-keyspace-events KEA（所有事件）\n\n2. **配置参数**：\n   - K：keyspace 事件\n   - E：keyevent 事件\n   - g：通用命令（DEL、EXPIRE、RENAME）\n   - $：字符串命令\n   - l：列表命令\n   - x：过期事件\n   - e：淘汰事件\n   - A：g$lshzxe 的别名（\"所有\"）\n\n3. **典型应用**：\n   - **缓存重建**：key 过期 → 收到通知 → 从 DB 重新加载 → SET 新 key\n   - **延迟任务**：SET task:{id} payload EX 300 → 过期 → 执行任务\n   - **数据同步**：key 变更 → 通知同步到其他存储\n   - **会话管理**：session 过期 → 清理用户状态\n\n4. **局限与风险**：\n   - Pub/Sub \"即发即忘\"：如果客户端未连接 → 通知丢失\n   - 大量 key 过期 → 通知风暴\n   - 建议：使用 Redis Stream 替代（支持持久化）\n   - 集群模式：通知只在事件发生的节点发布\n\n5. **最佳实践**：\n   - 仅监听必要的事件类型（不要用 A）\n   - 结合 Redis Stream 实现可靠消费\n   - 处理逻辑必须幂等",
-    "hints": [
-      "Keyspace Notification 通过 Pub/Sub 发布 key 变更事件",
-      "通知可能丢失（Pub/Sub 即发即忘），关键场景用 Stream",
-      "避免监听过多事件类型（防止通知风暴）"
-    ],
-    "tags": [
-      "redis",
-      "keyspace-notification"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 主从复制的全量与增量同步协议",
-    "content": "深入分析 Redis 主从复制的实现原理。全量同步（RDB 文件传输 + buffer 增量）和增量同步（PSYNC2）的完整流程。replication backlog 的作用和大小配置。Redis 7.0 的 Replication ID 变化对 PSYNC2 的影响。无盘复制（Diskless Replication）的机制和适用场景。",
-    "answer": "Redis 主从复制：\n\n1. **全量同步**：\n   - 从节点发送 PSYNC ? -1（不知道主节点 runid）\n   - 主节点执行 BGSAVE 生成 RDB\n   - 传输 RDB 给从节点（磁盘或 socket 直接传输）\n   - 复制缓冲区（client-output-buffer-limit）中的增量命令\n   - 从节点加载 RDB + 执行增量命令 → 追上主节点\n\n2. **增量同步（PSYNC2）**：\n   - 从节点保存主节点的 replication ID 和 offset\n   - 重连时发送 PSYNC {repl_id} {offset}\n   - 主节点检查 offset 是否在 backlog 范围内\n   - 在范围内 → 只发送 backlog 中的增量命令\n   - 不在范围内 → 触发全量同步\n\n3. **Replication Backlog**：\n   - 固定大小的环形缓冲区（repl-backlog-size，默认 1MB）\n   - 存储最近的写命令\n   - 大小决定增量同步的容忍时长\n   - 公式：repl-backlog-size = 重连最大间隔时间 × 峰值写入量\n\n4. **Replication ID（Redis 7.0）**：\n   - 主节点每次选举后生成新的 replication ID\n   - 旧 ID 保留为 secondary_repl_id（支持断线重连）\n   - 从节点可同时缓存新旧 ID → 提高增量同步成功率\n\n5. **Diskless Replication**：\n   - RDB 不落盘，直接通过 socket 发给从节点\n   - 适用：磁盘慢但网络快的环境（如云服务器）\n   - 配置：repl-diskless-sync yes",
-    "hints": [
-      "全量同步：BGSAVE + RDB 传输 + backlog 增量",
-      "增量同步（PSYNC2）：repl_id + offset 在 backlog 范围内即可",
-      "repl-backlog-size 决定断开多久后仍能增量同步"
-    ],
-    "tags": [
-      "redis",
-      "replication"
     ]
   },
   {
@@ -862,25 +325,8 @@
       "Write-Behind 以丢数据风险换取写入吞吐"
     ],
     "tags": [
-      "redis",
+      "Redis",
       "caching-patterns"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 大 Key 问题：检测与治理",
-    "content": "讨论 Redis 大 Key（Big Key）的问题。多大的 Key 算大？大 Key 的危害（阻塞命令、网络延迟、内存倾斜）。检测大 Key 的方法（redis-cli --bigkeys、DEBUG OBJECT、MEMORY USAGE、RDB 分析）。治理方案：拆分、压缩、冷热分离。",
-    "answer": "大 Key 问题：\n\n1. **定义**：\n   - String > 10KB\n   - List/Set/Sorted Set > 5000 个元素\n   - Hash > 5000 个字段\n   - 单个 key 内存 > 几 MB\n\n2. **危害**：\n   - **阻塞**：大 key 的操作（DEL、HGETALL、SMEMBERS）阻塞 Redis 单线程数秒\n   - **网络**：大 key 的查询结果占用大量网络带宽\n   - **内存倾斜**：集群模式下大 key 所在分片内存爆满\n   - **持久化**：大 key 导致 BGSAVE/AOF rewrite 变慢\n   - **复制延迟**：大 key 传输增加主从延迟\n\n3. **查询方法**：\n   - **redis-cli --bigkeys**：扫描所有 key，按类型统计最大的\n   - **DEBUG OBJECT key**：查看 key 的序列化长度\n   - **MEMORY USAGE key**：查看 key 的内存占用（更精确）\n   - **RDB 分析**：使用 redis-rdb-tools 离线分析\n   - **MONITOR**（低概率采样）\n\n4. **治理方案**：\n   - **拆分大 Hash**：按字段哈希拆分到多个 key\n   - **分页**：List 不需要保留全部历史，LTRIM 裁剪\n   - **压缩**：大 String 用压缩算法（Snappy/Gzip）存储\n   - **冷热分离**：热数据在 Redis、冷数据在 DB/对象存储\n   - **异步删除**：UNLINK 替代 DEL（后台线程回收）",
-    "hints": [
-      "大 key 阻塞 Redis 单线程，影响所有操作",
-      "redis-cli --bigkeys 是最简单的检测工具",
-      "UNLINK 异步删除替代 DEL 避免阻塞"
-    ],
-    "tags": [
-      "redis",
-      "big-key"
     ]
   },
   {
@@ -896,58 +342,8 @@
       "key 分片通过散列到多个 key 分散读负载"
     ],
     "tags": [
-      "redis",
+      "Redis",
       "hot-key"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 7.0 新特性与演进趋势",
-    "content": "总结 Redis 7.0（2023）和 Redis 7.2 的主要新特性。Function 脚本（替代 Lua EVAL）、ACL v2 改进、Sharded Pub/Sub（集群下的 Pub/Sub 扩展性）、Auto-failover 改进、以及 Redis Stack 的演进。讨论 Redis 未来的发展方向和竞争格局。",
-    "answer": "Redis 7.0+ 新特性：\n\n1. **Redis Functions**：\n   - 类似 Lua 脚本但可管理（持久化、可命名、版本控制）\n   - FCALL 替代 EVAL，Function 库集中存储\n   - 比 EVAL 更适合生产环境管理\n\n2. **ACL v2（Selectors）**：\n   - 多规则选择器（ACL SETUSER alice (~cached:* +get) (~analytics:* +@read)）\n   - 细粒度命令日志（ACL LOG 记录越权操作）\n\n3. **Sharded Pub/Sub**：\n   - 传统 Pub/Sub 在集群模式下会广播到所有节点\n   - Sharded Pub/Sub：消息只发送到相关分片\n   - 解决集群 Pub/Sub 的扩展性问题\n\n4. **其他重要改进**：\n   - **Redis 7.2**：新的内存管理机制、改进的哨兵、更好的集群自动故障转移\n   - **Auto-failover**：Redis 集群自动故障转移更加智能\n   - **RESP3 协议增强**：支持推送（Push）类型\n\n5. **Redis Stack**：\n   - 整合：RediSearch、RedisJSON、RedisTimeSeries、RedisGraph、RedisBloom\n   - 提供文档、图、时序等能力\n   - 竞争：DragonFly（多线程 Redis 兼容）、KeyDB、Valkey\n\n6. **趋势**：\n   - 从缓存走向多维数据平台\n   - 开源许可变更（SSPL）→ Valkey 等 fork\n   - 云原生：Redis on K8s（Operator）、Tiered Storage",
-    "hints": [
-      "Redis Functions 比 Lua EVAL 更适合生产环境管理",
-      "Sharded Pub/Sub 解决集群模式的扩展性问题",
-      "Redis Stack 整合多模块走向数据平台"
-    ],
-    "tags": [
-      "redis",
-      "redis7"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 主从复制原理与拓扑演进",
-    "content": "详细分析 Redis 主从复制的实现。PSYNC2（部分同步）的工作原理——复制偏移量 + 复制积压缓冲区。全量重同步的流程 - RDB 生成 + 传输 + 加载。Redis 复制的拓扑结构——链式复制（中间层降低主库压力）。复制在 Sentinel 和 Cluster 中的差异。",
-    "answer": "Redis 主从复制：\n\n1. **PSYNC2（部分同步）**：\n   - **主库**：维护复制偏移量（repl_backlog）\n   - **从库**：发送 replconf ACK 上报偏移量\n   - 断线重连 → 从库发 PSYNC {runid} {offset}\n   - 检查：主库 backlog 中是否包含 offset\n   - 包含 → 部分同步（只发缺失数据）\n   - 不包含 → 全量同步（RDB）\n\n2. **全量同步**：\n   - 从库发送 SYNC/PSYNC\n   - 主库 fork 子进程生成 RDB（不阻塞）\n   - 传输 RDB 到从库\n   - 从库清空加载 RDB\n   - 主库补发 RDB 期间的增量数据\n\n3. **链式复制**：\n   - 从库挂载到其他从库\n   - 减少主库的复制压力\n   - 拓扑：主 → 从1 → 从2\n\n4. **Sentinel vs Cluster**：\n   - Sentinel：主从模式 + 自动故障切换\n   - Cluster：分片 + 主从 + Gossip 复制\n\n5. **优化**：\n   - repl-backlog-size：足够大避免全量同步\n   - repl-disable-tcp-nodelay：合并小包\n   - slave-read-only：只读从库",
-    "hints": [
-      "PSYNC2 通过复制偏移量实现断线部分同步",
-      "链式复制减少主库的复制压力"
-    ],
-    "tags": [
-      "redis",
-      "replication"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Cluster Gossip 协议深度分析",
-    "content": "深入分析 Redis Cluster 的 Gossip 通信。Gossip 消息类型：PING/PONG/MEET/FAIL。Gossip 的集群状态传播——节点间交换槽位信息和故障状态。Gossip 协议收敛时间和网络开销。节点数量的 Gossip 缩放性。CLUSTER SLOTS 的缓存和更新。",
-    "answer": "Redis Cluster Gossip：\n\n1. **Gossip 消息**：\n   - **PING**：探活 + 交换状态（随机选择节点）\n   - **PONG**：响应 PING（携带自己的状态）\n   - **MEET**：加入集群\n   - **FAIL**：报告节点故障\n\n2. **状态传播**：\n   - 每个节点维护 clusterState（所有节点的信息）\n   - PING 携带：本节点已知的其他节点状态\n   - 接收方：更新已知节点信息\n   - **收敛性**：O(log N) 轮次后全集群感知\n\n3. **Gossip 频率**：\n   - 默认每秒随机 ping 5 个节点\n   - 每 100ms 检查是否需要手动 PING（延迟阈值）\n   - 网络开销：O(N) 节点越多越高\n\n4. **节点限制**：\n   - 推荐 1000 节点以下\n   - 超过 1000：Gossip 消息增长，CPU 占用上升\n   - **优化**：大集群分多个 Cluster\n\n5. **CLUSTER SLOTS**：\n   - 每个节点缓存槽位映射\n   - MOVED/ASK 重定向时更新\n   - gossip pong 带槽位信息",
-    "hints": [
-      "Gossip + 槽位映射 = Redis Cluster 的一致性基础",
-      "1000 节点以下的 Gossip 开销可控"
-    ],
-    "tags": [
-      "redis",
-      "cluster",
-      "gossip"
     ]
   },
   {
@@ -962,428 +358,9 @@
       "ACTIVE DEFRAG 自动整理（4.0+）"
     ],
     "tags": [
-      "redis",
-      "memory",
+      "Redis",
+      "Memory",
       "fragmentation"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 线程模型与 IO 多路复用",
-    "content": "深入分析 Redis 的线程模型演进。单线程事件循环（Reactor 模式）——aeEventLoop 的实现。IO 多路复用封装（select/epoll/kqueue/evport）。Redis 6 的多线程 IO（IO 线程处理网络读写，主线程执行命令）。多线程 IO 的配置和适用场景。",
-    "answer": "Redis 线程模型：\n\n1. **单线程 Reactor**：\n   - aeEventLoop 事件循环\n   - 文件事件（Socket 读写） + 时间事件（定时任务）\n   - 单线程顺序执行命令\n   - **优势**：无锁、可预测、简单\n\n2. **IO 多路复用**：\n   - ae_select/ae_epoll/ae_kqueue/ae_evport\n   - epoll（Linux）：水平触发 + 事件驱动\n   - kqueue（Mac）：类似 epoll\n   - 封装统一 API：aeApiPoll\n\n3. **Redis 6 多线程 IO**：\n   - 主线程继续单线程执行命令\n   - IO 线程处理 Socket 读写（read/write）\n   - 配置：io-threads（默认 4）\n   - 流程：主线程接收连接 → 分发到 IO 线程读取 → 主线程执行 → IO 线程写回\n\n4. **适用场景**：\n   - 单线程：99% 场景足够（瓶颈通常在网络/内存）\n   - 多线程 IO：大流量场景（10w+ qps）\n\n5. **限制**：\n   - 多线程只提升网络吞吐\n   - CPU 密集型命令（KEYS/SORT）可能阻塞其他命令",
-    "hints": [
-      "单线程执行命令 + 多线程 IO 读写 = Redis 6 的混合模型",
-      "99% 场景单线程 IO 就够"
-    ],
-    "tags": [
-      "redis",
-      "threading",
-      "io-multiplexing"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 的 LFU 淘汰策略与访问频率衰减",
-    "content": "深入分析 Redis 的 LFU（Least Frequently Used）淘汰策略。LFU 的计数器实现——Morris 计数器（对数概率递增）。访问频率的衰减机制。LFU 的参数调优：lfu-log-factor 和 lfu-decay-time。LFU vs LRU 的命中率对比。",
-    "answer": "Redis LFU：\n\n1. **计数器 Morris Counter**：\n   - 16-bit 计数器（不是 32-bit）\n   - 指数概率递增（高频访问增长慢，低频增长快）\n   - 公式：p = 1/(counter * lfu-log-factor + 1)\n\n2. **衰减机制**：\n   - lfu-decay-time（分钟为单位）\n   - N 分钟无访问 → 计数器减 N\n   - 避免历史高频访问永久占据缓存\n\n3. **参数调优**：\n   - lfu-log-factor（默认 10）：越大高频访问计数增长越慢\n   - lfu-decay-time（默认 1）：每分钟衰减\n\n4. **LFU vs LRU**：\n   - LRU：只考虑访问时间（最近没用过淘汰）\n   - LFU：考虑访问频率（经常用的保留）\n   - LFU 在周期性访问模式中更好\n   - LFU 内存开销稍大（16-bit counter）\n\n5. **配置**：\n   - maxmemory-policy allkeys-lfu / volatile-lfu\n   - 需要先设置 maxmemory",
-    "hints": [
-      "LFU 用 Morris 计数器实现 ≈ 16-bit 的近似精确计数",
-      "衰减机制防止历史高频访问占据缓存永久"
-    ],
-    "tags": [
-      "redis",
-      "eviction",
-      "lfu"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 的 RESP3 协议与客户端交互",
-    "content": "介绍 Redis RESP3 协议（Redis 6+）相比 RESP2 的改进。RESP3 的数据类型——Map/Set/Push/Stream/Bool/Null。Push 类型的服务器推送——Pub/Sub 和 Client Tracking 的推送。RESP3 对客户端库的影响。协议兼容性。",
-    "answer": "Redis RESP3：\n\n1. **RESP2 vs RESP3**：\n   - RESP2：简单字符串、错误、整数、批量字符串、数组\n   - RESP3：增加 Map/Set/Stream/Push/Bool/Null/Array\n   - RESP3 减少客户端逻辑（服务器直接返回原生类型）\n\n2. **新类型**：\n   - **Map**：key-value 映射（替代 RESP2 的 flat array）\n   - **Set**：集合\n   - **Push**：服务器推送（Pub/Sub 消息、Client Tracking）\n   - **Stream**：批量字符串流\n   - **Bool**：布尔值\n   - **Null**：空值\n\n3. **Push 机制**：\n   - 服务器可以主动 Push 数据\n   - Pub/Sub 消息不再需要轮询\n   - Client Tracking（缓存失效通知）\n   - RESP2 不能区分 Push 和命令响应\n\n4. **客户端影响**：\n   - 客户端实现更简单（不需要猜测响应格式）\n   - 向后兼容 RESP2\n   - 客户端通过 HELLO 3 切换 RESP3\n\n5. **实际应用**：\n   - Redis CLI 6+ 默认 RESP3\n   - 主流客户端（Jedis/Lettuce）支持\n   - 应用透明（客户端库封装）",
-    "hints": [
-      "RESP3 新增 Map/Set/Push/Stream 等原生类型",
-      "服务器 Push 替代客户端轮询（Pub/Sub + Client Tracking）"
-    ],
-    "tags": [
-      "redis",
-      "protocol"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 的 key 过期与 lazy-free 机制",
-    "content": "深入 Redis key 过期机制。过期 key 的删除策略：定时删除 + 惰性删除 + 定时扫表。expires 字典的存储。UNLINK 替代 DEL——lazy-free 的异步删除。lazy-free 在 Flush/大 key 删除中的效果。lazy-free 的内存回收和 CPU 权衡。",
-    "answer": "Redis 过期机制：\n\n1. **定时删除**：\n   - 每 100ms 运行一次 activeExpireCycle\n   - 每个 DB 随机抽样 20 个过期 key\n   - 删除所有过期的 key\n   - 如果超过 25% 过期 → 继续扫描\n\n2. **惰性删除**：\n   - 访问 key 时检查是否过期\n   - 过期 → 删除 → 返回 nil\n   - 保证不会返回过期数据\n\n3. **expires 字典**：\n   - dict 的一个特殊哈希表（expires）\n   - 存储 key → expire time 的映射\n   - 与主 dict 独立的过期字典\n\n4. **lazy-free（UNLINK）**：\n   - DEL：同步删除（阻塞主线程）\n   - UNLINK：异步删除（后台线程回收内存）\n   - 大 key（list/set/zset 百万级）删除时主线程不阻塞\n\n5. **配置**：\n   - lazyfree-lazy-eviction=yes（淘汰时异步）\n   - lazyfree-lazy-expire=yes（过期删除异步）\n   - lazyfree-lazy-server-del=yes\n   - slave-lazy-flush=yes（从库清空异步）\n   - 异步删除延迟回收但主线程更流畅",
-    "hints": [
-      "过期 = 定时扫描 + 惰性删除 + 定时扫表三重保障",
-      "lazy-free 用后台线程异步删除大 key（避免阻塞）"
-    ],
-    "tags": [
-      "redis",
-      "expiry",
-      "lazy-free"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 缓存穿透、击穿、雪崩方案",
-    "content": "全面分析缓存三大问题及解决方案。缓存穿透——布隆过滤器 + 空值缓存。缓存击穿——互斥锁 + 逻辑过期。缓存雪崩——随机过期时间 + 多级缓存。三者之间的关联和区别。Redis 端的优化措施。",
-    "answer": "缓存三大问题：\n\n1. **缓存穿透**：\n   - 查询不存在的数据（绕过缓存直击 DB）\n   - 方案：布隆过滤器预过滤、空值短时间缓存、参数校验\n\n2. **缓存击穿**：\n   - 热点 key 过期 + 高并发同时查询\n   - 方案：\n     - **互斥锁**：第一个线程查 DB + 重建缓存，其他等待\n     - **逻辑过期**：缓存永不过期 + 后台异步更新\n   - 代码：SETNX 实现分布式锁\n\n3. **缓存雪崩**：\n   - 大量 key 同时过期 / Redis 宕机\n   - 方案：\n     - 过期时间加随机值（+ 300-600s 随机）\n     - 多级缓存（本地 + 分布式）\n     - Redis 高可用（Sentinel/Cluster）\n     - 限流降级\n\n4. **区别**：\n   - 穿透：数据不存在\n   - 击穿：热点 key 挂了\n   - 雪崩：大量 key 同时挂\n\n5. **Redis 侧**：\n   - maxmemory 合理设置\n   - 淘汰策略选择\n   - 持久化 + 高可用",
-    "hints": [
-      "穿透 = 不存在数据，击穿 = 热点 key 过期，雪崩 = 大量 key 同时过期",
-      "布隆过滤器 + 互斥锁 + 随机过期时间 = 完整方案"
-    ],
-    "tags": [
-      "redis",
-      "caching",
-      "pattern"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 的 Stream 消费组与消息确认",
-    "content": "深入分析 Redis Stream 消费组的机制。消费组的 XREADGROUP——pending 消息和消费者跟踪。消息确认（XACK）和 pending 队列。消息的三种状态：从未投递/已投递待确认/已确认。XPENDING 命令的诊断和死信处理。Stream 的 CAP 权衡。",
-    "answer": "Redis Stream 消费组：\n\n1. **消费组结构**：\n   - 一个 Stream 可以有多个消费组\n   - 每个消费组有多个消费者\n   - 每个消费组有 last_delivered_id\n   - 消费者有 pending list（已投递未确认的消息）\n\n2. **XREADGROUP**：\n   - `>` 参数：只返回未投递的消息\n   - `0` 参数：返回 pending 消息\n   - 自动创建消费者（首次读取时）\n\n3. **消息状态**：\n   - **从未投递**：在 Stream 中，未被任何消费者读取\n   - **已投递待确认**：给消费者投递了但未 ACK\n   - **已确认**：XACK 确认\n\n4. **XPENDING**：\n   - 查看待确认消息的数量和详情\n   - 诊断消费者崩溃（消息永远待确认）\n   - **死信**：XCLAIM 将消息转移给其他消费者\n\n5. **CAP 权衡**：\n   - Stream 是 AP（可用 + 分区容忍）\n   - 故障时消息可能重复投递\n   - **XACK 幂等**",
-    "hints": [
-      "消费组 + pending 列表 + XACK 实现可靠消费",
-      "XPENDING 诊断 + XCLAIM 处理死信"
-    ],
-    "tags": [
-      "redis",
-      "stream",
-      "consumer-group"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 分布式锁 Redlock 正确性分析",
-    "content": "详细分析 Redlock 分布式锁算法。Redlock 的步骤——获取当前时间 → N 个实例依次加锁 → 检查是否多数成功。Redlock 面临的问题——时钟漂移、GC 停顿、网络延迟。Redlock 的争议（Martin Kleppmann vs Antirez）。Redlock 与 etcd/ZK 锁的对比。",
-    "answer": "Redlock 分析：\n\n1. **Redlock 算法**：\n   - 5 个独立 Redis 实例（不一定是 Cluster）\n   - 步骤：\n     - 获取当前时间（T1）\n     - 依次向所有实例 SET key random_value NX PX ttl\n     - 计算总耗时\n     - 成功获取多数（>=3）且耗时 < ttl → 加锁成功\n\n2. **问题**：\n   - **时钟漂移**：服务器时间回拨 → 过期时间不准\n   - **GC 停顿**：持有锁的线程 GC 停顿 → 锁过期 → 另一个线程拿到锁\n   - **网络延迟**：超时时间估算困难\n\n3. **争议**：\n   - Martin：Redlock 不是可靠锁（系统模型假设不严谨）\n   - Antirez：实际场景下够用\n   - 核心分歧：是否需要 fencing token\n\n4. **与 etcd/ZK 对比**：\n   - etcd/ZK：线性一致、fencing token 机制\n   - Redis：AP 系统（数据一致性不是强保证）\n   - etcd/ZK 锁更安全但性能较差\n\n5. **建议**：\n   - 不需要强一致性 → Redlock 够用\n   - 需要强一致性 → etcd/ZK\n   - 单节点 SET NX + 大多数场景已够",
-    "hints": [
-      "Redlock 争议核心：时钟漂移 + GC 停顿导致锁安全性不足",
-      "etcd/ZK 提供 fencing token 保证锁的线性一致性"
-    ],
-    "tags": [
-      "redis",
-      "distributed-lock",
-      "redlock"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 的 RDB 持久化实现与子进程 fork",
-    "content": "深入分析 Redis RDB 持久化的底层实现。fork 子进程的 COW（Copy-on-Write）机制——为什么子进程不影响主进程写入。RDB 文件格式（Redis-specific encoding/dump.rdb 结构）。RDB 的压缩和校验。fork 进程的耗时和内存开销。",
-    "answer": "Redis RDB：\n\n1. **fork + COW**：\n   - fork() 创建子进程（共享父进程内存）\n   - COW：任一进程写数据时 → 复制页面再修改\n   - 子进程写 RDB 时使用父进程的页面快照\n   - 主进程正常服务\n\n2. **fork 性能影响**：\n   - 内存越大 fork 越慢（页表复制）\n   - 24GB 内存实例 → fork 可能需要 1-2s\n   - 期间主进程阻塞\n\n3. **RDB 文件格式**：\n   - Magic + Version + 数据库内容 + Checksum\n   - 序列化：Redis 内部编码（不是 JSON）\n   - 压缩：压缩字符串\n\n4. **COW 内存**：\n   - 子进程使用父进程的物理内存\n   - 只有修改的页面被复制\n   - 写繁忙 → COW 可能复制大量页面\n\n5. **配置**：\n   - save 900 1（900 秒内 1 次变更）\n   - stop-writes-on-bgsave-error yes\n   - rdbcompression yes\n   - rdbchecksum yes",
-    "hints": [
-      "fork + COW 让 RDB 持久化不影响主进程写入",
-      "大内存实例 fork 耗时 ~1ms/GB 内存"
-    ],
-    "tags": [
-      "redis",
-      "rdb",
-      "persistence"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 的 AOF 重写实现机制",
-    "content": "详细分析 Redis AOF 重写的实现。AOF 重写的触发——手动 BGREWRITEAOF 或自动 trigger。重写子进程的管道机制——父子进程间的增量命令缓存。AOF 重写与 RDB 的双重持久化策略。AOF 重写中的 COW 内存开销。",
-    "answer": "Redis AOF 重写：\n\n1. **触发方式**：\n   - 手动：BGREWRITEAOF 命令\n   - 自动：auto-aof-rewrite-percentage + auto-aof-rewrite-min-size\n   - 策略：AOF 文件增长超过 100%（默认）且 > 64MB\n\n2. **重写流程**：\n   - 主进程 fork 子进程\n   - 子进程遍历内存 → 生成最小命令集\n   - 父进程继续服务 → 增量命令写入 AOF 重写缓冲区\n   - 子进程完成后 → 父进程追加缓冲区到新 AOF\n   - 原子替换新 AOF\n\n3. **AOF 重写缓冲区**：\n   - 子进程创建后：父进程的写入同时发到旧 AOF + 重写缓冲区\n   - 重写完成后父进程收尾\n\n4. **混合持久化**：\n   - aof-use-rdb-preamble yes（4.0+）\n   - AOF 文件开头 = RDB 格式（快照）\n   - RDB 部分后 = AOF 格式（增量）\n   - 加载更快 + 文件更小\n\n5. **最佳实践**：\n   - 同时开启 RDB + AOF（数据安全最高）\n   - 只有 AOF 也可（恢复更完整）\n   - 重写期间注意内存和 CPU",
-    "hints": [
-      "AOF 重写子进程 + 缓冲区保证不丢失增量",
-      "混合持久化（RDB 前置 + AOF 增量）= 加载快 + 数据安全"
-    ],
-    "tags": [
-      "redis",
-      "aof",
-      "persistence"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 管道与事务对比",
-    "content": "对比 Redis 的 Pipeline（管道）和 Transaction（事务）。Pipeline 的批量发送/接收机制（减少网络 RTT）。事务的 MULTI/EXEC/DISCARD 和 WATCH 乐观锁。Pipe 的流式批量 vs 事务的原子性。Pipe + 事务的组合使用。",
-    "answer": "Redis 管道 vs 事务：\n\n1. **Pipeline（管道）**：\n   - 客户端批量发送命令（不等待响应）\n   - 最后一次性读取所有响应\n   - 减少网络 RTT\n   - **没有原子性**：命令可能部分执行\n\n2. **Transaction（事务）**：\n   - MULTI 开始 → EXEC 执行\n   - EXEC 前命令 QUEUED（不立即执行）\n   - EXEC 后原子提交（全部成功或全部失败）\n   - **隔离性**：EXEC 时阻塞执行\n\n3. **WATCH 乐观锁**：\n   - WATCH key → 监视 key 变化\n   - MULTI → EXEC → 检查 WATCH 的 key\n   - 如果被修改 → EXEC 返回 nil（事务取消）\n   - 类似 CAS（Compare-and-Swap）\n\n4. **Pipe + 事务**：\n   - Pipline 中发送 MULTI/EXEC\n   - 批量发送 + 原子执行\n   - 最常用组合\n\n5. **性能对比**：\n   - Pipeline：吞吐提升 5-10x\n   - 事务：吞吐略有下降（QUEUED + EXEC）\n   - Pipeline 在大批量操作中效果显著",
-    "hints": [
-      "Pipeline 减少 RTT（吞吐），Transaction 保证原子性（正确性）",
-      "WATCH + MULTI = 乐观锁 CAS 模式"
-    ],
-    "tags": [
-      "redis",
-      "pipeline",
-      "transaction"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Cluster 的 Hash Slot 重分配",
-    "content": "深入分析 Redis Cluster 的槽位重分配机制。reshard 流程——源节点导出 → 目标节点导入。Migrating 和 Importing 状态。ASK 重定向和 MOVED 重定向的区别。槽位迁移中客户端的正确处理。在线重分配时对性能的影响。",
-    "answer": "Redis Cluster 重分片：\n\n1. **reshard 流程**：\n   - CLUSTER SETSLOT {slot} MIGRATING {src_node}\n   - CLUSTER SETSLOT {slot} IMPORTING {dst_node}\n   - 源节点逐个迁移 key（MIGRATE 命令）\n   - 迁移完成后 SETSLOT NODE {dst_node}\n   - 通过 Gossip 更新所有节点\n\n2. **ASK 重定向**：\n   - 槽位处于 MIGRATING 状态\n   - 客户端请求源节点\n   - 源节点返回 ASK {dst_ip}:{port}（临时重定向）\n   - 客户端先发 ASKING → 再发命令到目标\n\n3. **MOVED 重定向**：\n   - 槽位永久移动（节点槽位表已更新）\n   - 客户端需要更新槽位缓存\n   - 永久重定向\n\n4. **客户端处理**：\n   - MOVED：更新本地槽位映射\n   - ASK：ASKING + 请求目标节点\n   - Jedis/Lettuce 自动处理\n\n5. **性能影响**：\n   - 迁移期间源节点增加读取开销\n   - 大 key 迁移耗时（阻塞 MIGRATE）\n   - 建议低峰期执行",
-    "hints": [
-      "MIGRATING（转移中）→ ASK 临时重定向",
-      "MOVED 永久重定向（客户端更新槽位映射）"
-    ],
-    "tags": [
-      "redis",
-      "cluster",
-      "resharding"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 的 SCAN 与游标迭代器",
-    "content": "分析 Redis SCAN 命令的游标迭代实现。SCAN 的跳跃（scheme）——基于 Hash Slot 的高位递增。FULL 和 COUNT 参数控制迭代精度。SCAN 的近似全量（保证不遗漏但可能重复）。SCAN vs KEYS 在大数据量下的性能差异。",
-    "answer": "Redis SCAN：\n\n1. **游标实现**：\n   - SCAN cursor [MATCH pattern] [COUNT count]\n   - 服务器返回新游标（0 = 完成）+ 一批 key\n   - 基于哈希表的遍历\n\n2. **高位递增**：\n   - 不是从 0 递增（避免 rehash 冲突）\n   - 二进制反序（reverse bits）\n   - rehash 后不会遗漏也不会重复\n   - 保证每个 hash slot 被遍历\n\n3. **COUNT vs FULL**：\n   - COUNT：提示要返回的 key 数（不是精确值）\n   - 默认 10（小批量适合）\n   - TYPE：按类型过滤\n\n4. **SCAN vs KEYS**：\n   - KEYS：阻塞所有其他命令（百万 key 时阻塞数秒）\n   - SCAN：游标分批返回（每次短暂阻塞）\n   - **线上绝对不要用 KEYS**\n\n5. **变体**：\n   - SSCAN：Set 的元素迭代\n   - HSCAN：Hash 的 field 迭代\n   - ZSCAN：ZSet 的元素迭代\n   - 同样游标机制",
-    "hints": [
-      "SCAN 的高位递增保证 rehash 后不遗漏不漏计",
-      "线上用 SCAN 替代 KEYS（不阻塞主线程）"
-    ],
-    "tags": [
-      "redis",
-      "scan"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 的 HyperLogLog 算法原理",
-    "content": "深入分析 Redis HyperLogLog 的实现。HLL 的伯努利实验原理——通过最大前导 0 估算基数。LogLog 到 HyperLogLog 的优化——调和平均减少误差。Redis 的 HLL 编码——稀疏（Dense）和紧凑（Sparse）转换。HLL 的误差率和内存占用。",
-    "answer": "HyperLogLog 原理：\n\n1. **算法原理**：\n   - 哈希函数将元素映射为二进制串\n   - 统计最大前导 0 个数（ρ）\n   - 基数估算 ≈ 2^ρ\n\n2. **LogLog → HyperLogLog**：\n   - LogLog：取多个哈希值的 ρ 的算术平均\n   - HyperLogLog：调和平均（降低异常值影响）\n   - 误差率：~1.04/√m（m=16384 → ~0.81%）\n\n3. **Redis 实现**：\n   - 16384 个寄存器（6-bit = 12KB）\n   - 每个寄存器存储最大前导 0 个数\n   - 总内存 = 16384 × 6 / 8 = 12KB\n\n4. **编码**：\n   - **稀疏编码**：元素少时用（2KB）\n   - **紧凑编码**：元素多时用（12KB）\n   - 自动转换（sparseness 阈值）\n\n5. **合并**：\n   - PFMERGE：多个 HLL 合并（取每个寄存器最大值）\n   - 可分布式聚合",
-    "hints": [
-      "HyperLogLog ≈ 12KB 内存估算任意数量级的基数",
-      "误差率 ~0.81%（远超精确计数的内存效率）"
-    ],
-    "tags": [
-      "redis",
-      "hyperloglog"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 布隆过滤器模块",
-    "content": "讨论 RedisBloom 模块的布隆过滤器实现。布隆过滤器的哈希函数和位数组。BF.ADD/BF.MADD/BF.EXISTS/BF.MEXISTS 命令。布隆过滤器的误判率（false positive rate）——位数组大小和哈希函数数的关系。布隆过滤器在缓存穿透防护中的应用。",
-    "answer": "Redis 布隆过滤器：\n\n1. **原理**：\n   - m 位数组 + k 个哈希函数\n   - 添加：k 个哈希 → 对应位设 1\n   - 查询：k 个哈希 → 所有位为 1 → 可能存在\n   - 特性：不存在一定准确，存在可能误判\n\n2. **参数设计**：\n   - 位数组大小 m = -n * ln(p) / (ln(2))^2\n   - 哈希函数数 k = m/n * ln(2)\n   - p = 期望误判率\n   - 示例：n=1M, p=1% → m=10M bits(1.2MB), k=7\n\n3. **RedisBloom 命令**：\n   - BF.RESERVE key error_rate capacity（初始化）\n   - BF.ADD / BF.MADD（批量添加）\n   - BF.EXISTS / BF.MEXISTS（批量查询）\n   - 自动按需扩容\n\n4. **应用**：\n   - **缓存穿透防护**：查询前检查是否存在\n   - **爬虫去重**：URL 去重\n   - **推荐去重**：已推荐内容过滤\n\n5. **局限**：\n   - 不能删除元素\n   - 位数组越大误判率越低（内存权衡）\n   - 不适合精确去重场景",
-    "hints": [
-      "布隆过滤器：不存在一定准，存在可能误判",
-      "参数 m,k 根据数据量和期望误判率计算"
-    ],
-    "tags": [
-      "redis",
-      "bloom-filter",
-      "redibloom"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 的编码与对象结构",
-    "content": "深入分析 Redis 的底层编码结构。String 的三种编码：int/embstr/raw。Hash 的 ziplist → 哈希表 转换。List 的 quicklist 结构（ziplist 链表）。Set 的 intset → 哈希表 转换。ZSet 的 ziplist → skiplist 转换。配置阈值和转换条件。",
-    "answer": "Redis 编码：\n\n1. **String**：\n   - **int**：整数（≤ 2^63-1）\n   - **embstr**：短字符串（≤ 44 bytes）\n   - **raw**：长字符串\n   - embstr 和 raw 差别：embstr 一次分配（redisObject + sdshdr 连续）\n\n2. **Hash**：\n   - **ziplist**：field 数 < 512 且 value < 64 bytes\n   - **哈希表**：超过阈值\n\n3. **List**：\n   - **quicklist**：ziplist 的链表\n   - 每个 ziplist 默认 8KB\n   - 压缩：compress 深度\n\n4. **Set**：\n   - **intset**：所有元素是整数且数 < 512\n   - **哈希表**：超过阈值\n\n5. **ZSet**：\n   - **ziplist**：元素数 < 128 且 value < 64 bytes\n   - **skiplist**：超过阈值\n\n6. **配置**：\n   - hash-max-ziplist-entries / hash-max-ziplist-value\n   - set-max-intset-entries\n   - zset-max-ziplist-entries / zset-max-ziplist-value",
-    "hints": [
-      "Redis 自动选择最优编码（小 = ziplist/intset，大 = 哈希表/skiplist）",
-      "编码在值变化时自动转换（只升不降）"
-    ],
-    "tags": [
-      "redis",
-      "encoding"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 的 SkipList 与 ZSet 实现",
-    "content": "深入分析 Redis ZSet 的跳表（SkipList）实现。跳表的层级结构——多级索引的概率生成。ZSet 的双结构——哈希表（快速查找） + 跳表（有序范围查询）。跳表的插入/删除/更新复杂度。跳表 vs 平衡树的对比。",
-    "answer": "Redis ZSet：\n\n1. **双结构**：\n   - **哈希表**：元素 → score 的映射（O(1) 查找）\n   - **跳表**：score 排序的索引（O(log N) 范围查询）\n   - 两者协同\n\n2. **跳表层级**：\n   - 每个节点随机生成层数（幂律分布，level=1 概率 0.5）\n   - 典型最大层数 32（Redis 代码限制 32）\n   - 每层 B+1 个指针\n\n3. **操作复杂度**：\n   - ZADD：O(log N)（更新时同时更新哈希表和跳表）\n   - ZRANGE：O(log N + M)（M = 结果数）\n   - ZSCORE：O(1)（直接从哈希表取）\n\n4. **跳表 vs 平衡树**：\n   - 跳表：实现简单、范围查询方便、内存占用中等\n   - 平衡树（RB-Tree）：更复杂、范围查询需中序遍历\n   - Redis 选择的理由：实现简单、足够高效\n\n5. **ziplist → skiplist**：\n   - 元素数 < 128 且 score 串 < 64 bytes → ziplist\n   - 超过 → skiplist + hashtable",
-    "hints": [
-      "ZSet = 哈希表（O(1) ZSCORE）+ 跳表（O(log N) ZRANGE）",
-      "跳表比平衡树实现简单，性能接近"
-    ],
-    "tags": [
-      "redis",
-      "zset",
-      "skiplist"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 预警与慢查询分析",
-    "content": "讨论 Redis 的监控和诊断工具。SLOWLOG 慢查询的捕获和分析。MONITOR 命令的线上使用风险。Redis-cli 的 --stat/--latency/--bigkeys 诊断。Redis 的 INFO 命令关键指标解读。Redison 等第三方监控工具的集成。",
-    "answer": "Redis 诊断：\n\n1. **SLOWLOG**：\n   - 记录执行时间超过 slowlog-log-slower-than（默认 10ms）的命令\n   - SLOWLOG GET：查看慢查询\n   - 常用：SLOWLOG GET 100\n\n2. **MONITOR**：\n   - 实时打印所有命令\n   - 风险：高流量下输出巨大、降低 Redis 性能\n   - 线上不推荐使用（只在低峰期）\n\n3. **redis-cli 工具**：\n   - `--stat`：实时统计（ops、内存、命中率）\n   - `--latency`：延迟测试\n   - `--bigkeys`：扫描大 key\n   - `--hotkeys`：扫描热点 key\n\n4. **INFO 关键指标**：\n   - instantaneous_ops_per_sec：QPS\n   - hit ratio：keyspace_hits / (keyspace_hits + keyspace_misses)\n   - connected_clients：连接数\n   - used_memory_rss：实际 RSS 内存\n\n5. **第三方工具**：\n   - Redis-Prometheus Exporter\n   - Redison（Grafana 面板）\n   - CacheCloud（携程：Redis 管理平台）",
-    "hints": [
-      "SLOWLOG GET 查慢查询，redis-cli --bigkeys 查大 key",
-      "MONITOR 线上慎用（高流量降性能）"
-    ],
-    "tags": [
-      "redis",
-      "monitoring",
-      "slowlog"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Lua 脚本的原子性与执行模型",
-    "content": "深入分析 Redis Lua 脚本的执行模型。EVAL 命令——脚本上传 + SHA1 缓存 + EVALSHA。脚本复制——从库执行还是主库传播效果？Redis 7 的 Function（代替 EVAL 的脚本管理）。脚本执行时的全局锁。Lua 脚本的最佳实践和限制。",
-    "answer": "Redis Lua：\n\n1. **EVAL/EVALSHA**：\n   - EVAL script numkeys key1 val1\n   - 服务器缓存脚本的 SHA1 摘要\n   - EVALSHA sha1 numkeys...（减少带宽）\n   - SCRIPT LOAD + EVALSHA 两步\n\n2. **原子性**：\n   - Lua 脚本执行中阻塞其他命令（全局锁）\n   - 脚本执行期间其他客户端等待\n   - **不要写长时间运行的脚本**（阻塞所有）\n\n3. **复制**：\n   - 默认：复制脚本效果（EVAL 传到从库执行）\n   - 随机命令（SPOP/TIME/RANDOMKEY）在复制中可能不一致\n   - Redis 使用 SET_REPL 复制效果（不是源命令）\n\n4. **Redis 7 Function**：\n   - FUNCTION LOAD：注册函数（不传命令）\n   - FCALL：调用函数\n   - 函数持久化在 RDB/AOF\n   - 优势：统一管理、自动同步到从库\n\n5. **限制**：\n   - 脚本执行时间默认 5s（lua-time-limit）\n   - 超时后只 log warning 不自动停止\n   - 不允许访问系统状态（文件、网络）",
-    "hints": [
-      "Lua 脚本原子执行（全局锁），不要写长脚本",
-      "Redis 7 Function 替代 EVAL（持久化 + 自动同步）"
-    ],
-    "tags": [
-      "redis",
-      "lua",
-      "scripting"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis Sentinel 的 Raft 风格故障转移",
-    "content": "深入分析 Redis Sentinel 的故障转移机制。Sentinel 的 Raft 风格选举——quorum 和 majority。主观下线（S_DOWN）和客观下线（O_DOWN）。Leader Sentinel 的故障转移流程。Split-brain（脑裂）的防护。",
-    "answer": "Sentinel 故障转移：\n\n1. **心跳探活**：\n   - sentinel 每秒 PING 所有节点\n   - 超过 down-after-milliseconds 未响应 → S_DOWN\n\n2. **O_DOWN 判断**：\n   - sentinel_a 发现 S_DOWN → 询问其他 sentinel\n   - 获得 quorum 个 sentinel 同意 → O_DOWN\n   - quorum 通常 = sentinel 数/2 + 1\n\n3. **Leader 选举**：\n   - Sentinel 发现 O_DOWN → 发起 Leader 选举\n   - 其他 Sentinel 投票\n   - 获得多数票 → 成为 Leader\n\n4. **故障转移**：\n   - Leader Sentinel 执行：\n   - 选一个新主库（slave 优先级高、复制偏移量大）\n   - SLAVEOF no one\n   - 其他从库指向新主库\n   - 配置重写\n\n5. **脑裂防护**：\n   - **min-slaves-to-write**：写入需要最少从库数\n   - **min-slaves-max-lag**：从库最大复制延迟\n   - 主库孤立时拒绝写入（防止脑裂数据不一致）",
-    "hints": [
-      "Sentinel 用类 Raft 协议选举执行故障转移",
-      "min-slaves-to-write 防止脑裂写入"
-    ],
-    "tags": [
-      "redis",
-      "sentinel"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 7.0 Redis Function 与 ACL 增强",
-    "content": "介绍 Redis 7.0 的主要新特性。Redis Functions（替代 EVAL 的脚本管理）——持久化、复制、权限控制。ACL 的增强——key 权限（read/write 的 key pattern）和 command 分类管理。Redis 7.0 的发布与订阅、Stream 改进。性能改进和内存优化。",
-    "answer": "Redis 7.0：\n\n1. **Redis Functions**：\n   - FUNCTION LOAD：注册脚本为函数\n   - FCALL：按函数名调用（不是按 SHA）\n   - 函数保存在 RDB/AOF（重启不丢）\n   - 自动同步到副本\n\n2. **ACL 增强**：\n   - key 权限：`ACL SETUSER alice ~app1:*`（只允许访问 app1: 开头的 key）\n   - command 分类：只允许读命令（`+@read`）\n   - selector 语法：`(<command>|<category>)`\n\n3. **Stream 改进**：\n   - XGROUP CREATECONSUMER：自动创建消费者\n   - XAUTOCLAIM：自动认领 pending 消息\n\n4. **性能改进**：\n   - 避免一些不必要的 key 过期扫描\n   - 内存使用减少（改进的 ziplist 等）\n\n5. **集群改进**：\n   - 集群节点上线更快的状态同步\n   - 更好的集群槽迁移用户体验",
-    "hints": [
-      "Redis Functions 将脚本持久化存储（重启不丢）",
-      "Redis 7 ACL 支持 key pattern 级别的权限控制"
-    ],
-    "tags": [
-      "redis",
-      "redis7"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 与 MySQL 一致性保障方案",
-    "content": "讨论 Redis 缓存与 MySQL 数据库的一致性方案。Cache-Aside 模式的读/写流程。先写 DB 后删除缓存（推荐方案）的缓存一致性。延迟双删策略（先删缓存 → 写 DB → 延迟再删）。Binlog 监听（Canal）的异步 Cache 同步。最终一致性 vs 强一致性的选择。",
-    "answer": "Redis + MySQL 一致性：\n\n1. **Cache-Aside（常用）**：\n   - 读：先查缓存 → 未命中→ 查 DB → 写缓存\n   - 写：先写 DB → 删除缓存\n   - **问题**：写 DB 和删除缓存不是原子操作\n\n2. **先删缓存再写 DB**：\n   - 并发问题：A 删缓存 → B 读缓存未命中→ 读 DB → A 写 DB\n   - B 读到旧数据写入缓存（缓存永远脏）\n\n3. **延迟双删**：\n   - 删缓存 → 写 DB → 延迟（~500ms）→ 再删缓存\n   - 延迟时间 > 读 DB + 写缓存 的时间\n   - 减少脏数据的窗口\n\n4. **Binlog 监听（Canal）**：\n   - 监听 MySQL Binlog → 解析变更 → 同步到 Redis\n   - 解耦应用和缓存更新\n   - 缺点：引入 Canal 运维复杂度\n\n5. **选择**：\n   - 弱一致性场景：Cache-Aside（先写 DB 再删缓存）\n   - 要求高一致性：延迟双删 + Binlog 兜底\n   - 强一致性：不依赖缓存（走 DB + read-through）",
-    "hints": [
-      "先写 DB 再删缓存是 Cache-Aside 推荐方案",
-      "延迟双删 + Binlog 兜底保证最终一致性"
-    ],
-    "tags": [
-      "redis",
-      "mysql",
-      "consistency"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 的事务隔离性与 Lua 对比",
-    "content": "深入分析 Redis 事务的隔离级别。MULTI/EXEC 在 Redis 单线程模型下的隔离效果。Lua 脚本的原子性隔离。Redis 不支持回滚（rollback）的设计哲学。对比 ACID 特性在 Redis 事务中的满足情况。WATCH 的多 key 原子性检查。",
-    "answer": "Redis 事务隔离：\n\n1. **MULTI/EXEC 隔离**：\n   - 单个 EXEC 执行时阻塞所有其他命令\n   - EXEC 内的命令顺序执行\n   - 其他连接的命令在 EXEC 执行完成后才执行\n   - 隔离级别 ≈ 可序列化\n\n2. **Lua 隔离**：\n   - 脚本执行期间同样阻塞\n   - 但脚本内的多条命令可以包含逻辑\n   - Lua 隔离性 = 事务隔离性（单线程 + 阻塞）\n\n3. **原子性**：\n   - EXEC：命令全部执行或 Queue 阶段出错则不执行\n   - Queue 成功但执行出错（如类型错误）→ 不回滚\n   - Redis 设计哲学：不回滚（错误是因为开发者犯错）\n\n4. **ACID**：\n   - A（原子性）：部分满足（语法错误不执行，运行时错误不回滚）\n   - C（一致性）：满足（执行中阻塞保证一致性）\n   - I（隔离性）：满足（串行执行）\n   - D（持久性）：取决于 AOF/RDB 配置\n\n5. **WATCH 限制**：\n   - 不能监控多个 key 的原子变更（watch a,b transaction 可能失败）\n   - watch 的 key 变化时整个事务取消",
-    "hints": [
-      "Redis 事务可序列化隔离（单线程串行执行）",
-      "运行时出错不回滚（设计哲学：错误是开发者的问题）"
-    ],
-    "tags": [
-      "redis",
-      "transaction",
-      "isolation"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 在排行榜场景的 ZSet 应用",
-    "content": "讨论 Redis ZSet 在排行榜中的深度应用。实时排行榜的 ZADD/ZINCRBY。排名的 ZRANK/ZREVRANK。TopN 的 ZREVRANGE。区间排名（如 3-5 名）的 ZREVRANGE。同分排名的问题——时间优先的 ZSet 排序技巧。",
-    "answer": "ZSet 排行榜：\n\n1. **基础操作**：\n   - ZINCRBY leaderboard user1 10：加 10 分\n   - ZREVRANK leaderboard user1：查看排名\n   - ZREVRANGE leaderboard 0 9 WITHSCORES：Top10\n\n2. **同分处理**：\n   - ZSet 同分时按字典序（lexicographical order）\n   - 期望：先到先得（时间优先）\n   - **技巧**：score = 分数 + 1 - timestamp / 1e10\n   - 或：分数 + (MAX_TIMESTAMP - timestamp) / 1e10\n\n3. **分页**：\n   - ZREVRANGE leaderboard 0 9（第一页）\n   - ZREVRANGE leaderboard 10 19（第二页）\n\n4. **聚合**：\n   - 天榜：每天新 ZSet（leaderboard:20260604）\n   - 周榜：ZUNIONSTORE 合并天榜\n   - ZUNIONSTORE week:1 7 leaderboard:20260604 ... AGGREGATE SUM\n\n5. **大规模优化**：\n   - 百万级数据：ZSet 占用内存 O(N)\n   - 只保留 Top 1000（ZREMRANGEBYRANK）\n   - 非 Top 数据存 DB",
-    "hints": [
-      "ZSet 同分按字典序（用 score 编码实现时间优先）",
-      "天榜独立 + ZUNIONSTORE 周榜 = 高效聚合"
-    ],
-    "tags": [
-      "redis",
-      "zset",
-      "leaderboard"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 位图与用户行为分析",
-    "content": "讨论 Redis 位图（BitMap）在用户行为分析中的应用。SETBIT/GETBIT 的位操作。BITCOUNT 的统计实现。BITOP 的多位图运算（AND/OR/XOR/NOT）。位图在日活跃用户（DAU）、签到功能中的存储效率。位图 vs HyperLogLog 的精确度对比。",
-    "answer": "Redis 位图：\n\n1. **位图原理**：\n   - String 的位操作\n   - SETBIT key offset 0/1（设置某一位）\n   - GETBIT key offset（获取某一位）\n   - 底层：SDS + 位数组\n\n2. **统计**：\n   - BITCOUNT key：统计 1 的个数\n   - BITPOS key 1：查找第一个 1\n\n3. **多图运算**：\n   - BITOP AND dest key1 key2：交集\n   - BITOP OR dest key1 key2：并集\n   - BITOP XOR dest key1 key2：异或\n\n4. **DAU 场景**：\n   - 每天一个 bit key（dau:20260604）\n   - 用户 ID 作为 offset\n   - BITCOUNT dau:20260604 = DAU\n   - BITOP OR dau:week1 dau:20260604 dau:20260605 ... = 周活跃\n   - 内存：1 亿用户 ≈ 12MB/天\n\n5. **BitMap vs HLL**：\n   - 位图：精确计数、占用内存 O(N)\n   - HLL：近似计数（~0.81% 误差）、固定 12KB\n   - 选型：精确 → 位图、大基数 → HLL",
-    "hints": [
-      "位图存储用户状态（签到/DAU）按位存储、按位统计",
-      "BITOP 实现多日聚合运算"
-    ],
-    "tags": [
-      "redis",
-      "bitmap",
-      "analytics"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 实现分布式限流方案",
-    "content": "讨论基于 Redis 的分布式限流实现。计数器模式——INCR + EXPIRE。滑动窗口——有序集合（ZSet）的时间窗口。令牌桶（Token Bucket）——Redis Hash 存储令牌。漏斗（Leaky Bucket）——固定速率漏出。Redis 限流的原子性问题（Lua 脚本）。",
-    "answer": "Redis 限流：\n\n1. **计数器模式**：\n   - INCR key + EXPIRE key 60\n   - 值超过阈值 → 限流\n   - 问题：临界值突刺（边界重置瞬间超量）\n\n2. **滑动窗口**：\n   - ZADD key timestamp value\n   - ZREMRANGEBYSCORE key timestamp - window\n   - ZCARD key < threshold\n   - 更精确（解决临界值问题）\n\n3. **令牌桶**：\n   - Lua 脚本实现：\n   - 上次补充时间 → 计算应补充的令牌\n   - 消耗令牌 → 更新\n   - 支持突发流量\n\n4. **原子性**：\n   - 限流必须原子（竞争条件导致超限）\n   - Lua 脚本保证原子性\n   - 推荐：Redis Lua 实现限流\n\n5. **应用场景**：\n   - 接口限流（每用户/每 IP）\n   - 分布式限流（全局 QPS 控制）\n   - 令牌桶适合 API 限流（允许突发）",
-    "hints": [
-      "滑动窗口比计数器更精确（避免边界突刺）",
-      "Lua 脚本保证限流判断和执行的原子性"
-    ],
-    "tags": [
-      "redis",
-      "rate-limiting",
-      "distributed"
     ]
   },
   {
@@ -1398,129 +375,8 @@
       "lazy-free 配置全面（eviction/expire/flush）"
     ],
     "tags": [
-      "redis",
+      "Redis",
       "lazy-free"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 连接池与连接管理",
-    "content": "讨论 Redis 连接池的配置和管理。连接池的核心参数：maxTotal/maxIdle/minIdle。Jedis/Lettuce 连接池配置。连接池耗尽的影响和诊断。连接泄露的检测。Redis 的 maxclients 限制。连接管理最佳实践。",
-    "answer": "Redis 连接池：\n\n1. **池参数**：\n   - **maxTotal**：最大连接数（根据 QPS 和延迟）\n   - **maxIdle**：最大空闲数\n   - **minIdle**：最小空闲数（预热）\n   - **maxWaitMillis**：获取连接超时\n\n2. **Jedis vs Lettuce**：\n   - Jedis：阻塞式、需要连接池\n   - Lettuce：异步 Netty、连接复用\n   - Lettuce 连接效率更高（单连接多请求）\n\n3. **连接池耗尽**：\n   - 效果：获取连接等待 → 超时异常\n   - 原因：慢查询 blocking、连接泄露、突发流量\n   - 诊断：连接池监控\n\n4. **maxclients**：\n   - Redis 服务端最大连接数（默认 10000）\n   - 超过 → 拒绝连接\n   - 每个连接 ~10KB 内存\n\n5. **最佳实践**：\n   - 用连接池（不要每次创建新连接）\n   - 配置超时时间（避免无限等待）\n   - 监控连接池指标\n   - 连接预热（minIdle > 0）",
-    "hints": [
-      "Lettuce 异步连接比 Jedis 阻塞连接更高效",
-      "maxclients + 连接池耗尽监控 = Redis 运维基础"
-    ],
-    "tags": [
-      "redis",
-      "connection-pool"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 的性能基准与极限压测",
-    "content": "讨论 Redis 的性能基准测试方法和极限。redis-benchmark 的使用和参数。单实例的 QPS 极限（~10w ops/s）。Pipeline 下的吞吐（~100w ops/s）。影响 Redis 性能的关键因素：网络延迟、内存带宽、值大小。memtier_benchmark 的对比测试。",
-    "answer": "Redis 性能基准：\n\n1. **redis-benchmark**：\n   - `redis-benchmark -h host -p port -c 50 -n 10000 -q`\n   - 选项：-c（并发数）、-n（请求数）、-d（值大小）\n   - -P（Pipeline 数）、-t（只测某些命令）\n\n2. **单实例极限**：\n   - 简单 GET/SET：~10w qps\n   - Pipeline（10 一批）：~100w qps\n   - 瓶颈通常是网络或内存带宽\n\n3. **影响因素**：\n   - **网络延迟**：1ms 延迟 → 10w qps（单线程需要时间）\n   - **值大小**：10KB vs 100 bytes → 吞吐差异 10x\n   - **内存带宽**：大值场景内存带宽成为瓶颈\n\n4. **memtier_benchmark**：\n   - 比 redis-benchmark 更现代的压测工具\n   - 支持 JSON 输出、多线程、百分比统计\n   - 更适合综合测试\n\n5. **生产压测**：\n   - 压测环境与生产配置一致\n   - 监控：Redis 延迟（p99）和系统 CPU 使用\n   - 定位瓶颈：网络/内存/CPU/磁盘（RDB/AOF）",
-    "hints": [
-      "单实例 ~10w qps（无 Pipeline），Pipeline ~100w qps",
-      "瓶颈通常是网络或内存带宽（不是 CPU）"
-    ],
-    "tags": [
-      "redis",
-      "benchmark",
-      "performance"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 多数据库与命名空间设计",
-    "content": "讨论 Redis 的 database（select 0-15）和命名规范。Redis 16 个 db 的用途和限制。Redis Cluster 不支持多 db（只有一个 db 0）。key 的命名空间设计——冒号分隔的分层命名（user:123:profile）。key 长度的最佳实践。",
-    "answer": "Redis 命名空间：\n\n1. **database 选择**：\n   - SELECT 0-15（共 16 个 db）\n   - 用途：隔离不同业务\n   - 局限：不适用于 Cluster（只有 db 0）\n   - 不隔离权限（ACL 粒度到 db）\n\n2. **key 命名规范**：\n   - `project:module:entity:id:field`\n   - 示例：`app:user:123:profile`、`app:order:456:status`\n   - SCAN/KEYS 可以用 pattern 扫描\n   - 自动按前缀分组\n\n3. **key 长度**：\n   - key 越短越好（内存占用）\n   - 太短失去可读性\n   - 建议：20-50 字符\n\n4. **Hashed key**：\n   - Hash Tag：`{user:123}:profile`\n   - Cluster 模式下用 hash tag 让相关 key 在同一个 slot\n   - 括号中的部分作为 hash 输入\n\n5. **最佳实践**：\n   - Cluster 环境：只用一个 db 0\n   - 命名统一规范\n   - Hash Tag 让批量操作更高效\n   - 避免超长 key",
-    "hints": [
-      "Cluster 模式下只有 db 0（所有 key 在同一个命名空间）",
-      "Hash Tag { } 关联 key 到同一 slot"
-    ],
-    "tags": [
-      "redis",
-      "naming"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 7.4/7.6 新特性详解",
-    "content": "Redis 7.4 和 7.6 版本引入了哪些主要新特性？这些版本在性能、安全性和可观测性方面有什么重要改进？",
-    "answer": "Redis 7.4 和 7.6 延续了 Redis 向数据基础设施平台演进的趋势，重点加强了性能、安全和运维友好性。\n\nRedis 7.4 主要特性：\n1）加强的 ACL 功能——支持更灵活的键空间权限模式，在命令级别设置更细粒度的访问控制。\n2）性能优化——改进了内存分配策略减少内存碎片，优化主从复制增量同步效率。\n3）可观测性增强——新增更详细的延迟监控指标，支持按命令类别统计延迟分布。\n4）模块 API 扩展——为模块开发者提供更多钩子和回调接口。\n\nRedis 7.6 主要特性：\n1）集群管理增强——改进了 Cluster 节点发现和配置传播机制，减少节点变更时的集群抖动。\n2）持久化优化——优化了 AOF 重写过程中的内存使用，大实例的 AOF 重写更加高效。\n3）新命令扩展——扩展了现有数据结构的命令集，减少客户端逻辑复杂度。\n4）安全加固——增强 TLS 连接支持，改进 ACL 日志审计功能。\n\n两个版本都着重降低大规模部署的运维复杂度，体现 Redis 从缓存工具向通用数据基础设施的演进方向。",
-    "hints": [
-      "Redis 7.4 在 ACL 和可观测性方面的改进",
-      "Redis 7.6 对集群管理和持久化的优化"
-    ],
-    "tags": [
-      "Redis",
-      "新特性",
-      "版本演进",
-      "7.6"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "RedisJSON 模块与 JSON 数据类型",
-    "content": "RedisJSON 模块是什么？它如何支持 JSON 数据类型的存储和查询？与直接存储 JSON 字符串相比有什么优势？",
-    "answer": "RedisJSON 模块（Redis 4.0+）为 Redis 添加原生 JSON 数据类型支持。\n\n核心功能：\n1）JSON.SET key $ json_string——存储 JSON 文档，内部使用树形结构存储每个 JSON 元素。\n2）JSON.GET key $path——使用 JSONPath 语法查询嵌套字段，例如 $.store.book[0].title。\n3）JSON.ARRAPPEND、JSON.NUMINCRBY——原子地操作数组和数值，无需读-改-写整个文档。\n4）JSON.DEL key path——删除指定路径的字段。\n\nJSONPath 查询：1）点表示法 $.user.name 和递归搜索 $..author 查找所有 author 字段。2）支持通配符 $.store.book[*].title 匹配数组所有元素。3）支持过滤表达式 $.store.book[?(@.price<10)] 条件筛选。\n\n性能优势：1）部分更新——只重写变更的 JSON 节点，而不是整个序列化和反序列化。2）内存效率——树形结构避免重复存储字段名（相比多个 String key）。3）类型保留——直接读取 JSON 内部的数字和布尔类型，不需要从字符串解析。\n\n对比直接存储 JSON 字符串：JSON.SET 可以修改文档的某个字段而不影响其他字段（类似 MongoDB 的 $set），而字符串方案必须读-改-写整个 JSON，在频繁部分更新场景下 RedisJSON 性能优势明显。",
-    "hints": [
-      "JSONPath 语法在 RedisJSON 中的使用方式",
-      "部分更新相比全量替换的性能优势"
-    ],
-    "tags": [
-      "Redis",
-      "RedisJSON",
-      "JSON",
-      "模块"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "RedisSearch 索引构建与全文搜索",
-    "content": "RedisSearch 模块如何实现全文搜索和二级索引？索引结构、聚合查询和性能特点是什么？",
-    "answer": "RedisSearch 为 Redis 提供二级索引、全文搜索和聚合分析能力，数据存储在 Hash 或 JSON 中自动索引。\n\n索引创建：\n1）FT.CREATE idx ON HASH PREFIX 1 doc: SCHEMA title TEXT WEIGHT 5.0 body TEXT url TAG。\n2）支持在 Hash 或 JSON 数据类型上自动索引（写入数据时自动更新索引）。\n3）字段类型——TEXT（全文索引）、TAG（精确匹配标签）、NUMERIC（范围查询）、GEO（地理位置）。\n\n索引结构：1）使用倒排索引——每个词条映射到包含该词的文档 ID 列表。2）评分算法——使用 TF-IDF 和 BM25 算法计算相关性分数。3）中文分词——需额外配置中文分词插件（如 Friso），通过 RedisModule 方式加载。\n\n查询能力：1）FT.SEARCH——支持 AND/OR/NOT 布尔查询、模糊匹配、前缀匹配和短语查询。2）FT.AGGREGATE——类似 SQL GROUP BY 的聚合管道：GROUP BY 分组、REDUCE 聚合函数（COUNT/SUM/AVG/MIN/MAX）、SORT BY 排序、APPLY 表达式计算。3）GEO 过滤——搜索结果按地理位置过滤。4）自动补全——FT.SUGADD 和 FT.SUGGET 实现搜索建议。\n\n性能特点：1）索引构建在主线程执行，大量文档批量索引可能阻塞 Redis。生产环境建议从 RDB 恢复后重建索引。2）查询延迟——索引查询时间复杂度为 O(logN+M)（N 文档总数，M 结果集大小）。3）内存开销——索引本身占用额外内存，通常为原始数据的 0.5-2 倍。",
-    "hints": [
-      "RedisSearch 的倒排索引结构与文本评分算法",
-      "FT.AGGREGATE 聚合管道的使用场景"
-    ],
-    "tags": [
-      "Redis",
-      "RediSearch",
-      "全文搜索",
-      "索引"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "RedisTimeSeries 时间序列模块详解",
-    "content": "RedisTimeSeries 模块如何设计时间序列数据的存储和查询？压缩、降采样和保留策略是怎样的？",
-    "answer": "RedisTimeSeries 是 Redis 的时间序列数据类型模块，专为监控指标、IoT 传感器和金融时序数据设计。\n\n核心设计：1）TS.CREATE key——创建时间序列，可配置 RETENTION（保留时长，毫秒）、LABELS（标签键值对用于分类查询）。2）TS.ADD key timestamp value——添加数据点，支持自动生成时间戳。3）TS.MADD——批量添加多个数据点。4）内部使用压缩的 Radix Tree 和双块链表存储。\n\n查询能力：1）TS.RANGE key fromTs toTs——范围查询，返回时间戳和值对。2）TS.MRANGE——按标签匹配同时查询多个序列（如所有 metric_name=cpu 的序列）。3）TS.GET——获取最新数据点。4）TS.MGET——批量获取多个序列的最新值。\n\n降采样与聚合：1）查询时指定 bucketDuration（时间窗口），自动在窗口内聚合。例如 TS.RANGE cpu:util 0 - AGGREGATION AVG 300000 表示每 5 分钟聚合求平均。2）支持的聚合函数——AVG、MIN、MAX、SUM、COUNT、FIRST、LAST、STD.P、STD.S、RANGE。\n\n压缩与存储：1）每个数据点压缩后约占 16 字节（时间戳 8 字节 + 双精度值 8 字节）。2）RETENTION 参数控制数据保留时长，超期数据自动删除（类似 TTL 机制）。3）DUPLICATE_POLICY——处理重复时间戳的策略：BLOCK（拒绝）、FIRST、LAST、MIN、MAX、SUM。\n\n适用场景：服务器监控指标、IoT 传感器数据流、金融时序数据（股价/汇率）、应用性能追踪。",
-    "hints": [
-      "RedisTimeSeries 的降采样和聚合查询功能",
-      "标签系统在多维时间序列查询中的作用"
-    ],
-    "tags": [
-      "Redis",
-      "TimeSeries",
-      "时序",
-      "监控"
     ]
   },
   {
@@ -1543,24 +399,6 @@
   },
   {
     "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis ACL 深度配置与权限管理",
-    "content": "Redis 6.0 引入的 ACL 系统如何实现细粒度权限控制？用户管理、命令分类和键空间权限如何配置？",
-    "answer": "Redis ACL 提供了基于用户、命令和 key 模式的三维权限控制体系。\n\n用户管理：1）ACL SETUSER username on >password——创建用户并设置密码。2）ACL SETUSER username off——禁用用户。3）ACL DELUSER username——删除用户。4）ACL LIST——查看所有用户权限。5）ACL GETUSER username——查看指定用户详细信息。\n\n命令权限控制：1）+command（允许）和 -command（禁止）单个命令。例如 +SET -FLUSHALL。2）命令类别——+@read（所有读命令）、+@write（所有写命令）、+@admin（管理命令）、+@dangerous（危险命令如 FLUSHALL/KEYS/CONFIG/DEBUG）。3）+@all 允许所有命令。4）ACL CAT——列出所有命令类别及包含的命令。\n\n键空间权限：1）~pattern——限制用户可操作的 key 模式。~cached:* 表示只能操作 cached: 前缀的 key。2）~* 表示所有 key。3）支持多个模式 ~cached:* ~session:*。4）Redis 7.0+ 的 Selector 语法——( +GET ~app:* ) ( +SET ~cache:* ) 根据不同命令类型应用不同 key 模式。\n\n发布订阅通道限制：1）&pattern——限制可订阅的 Pub/Sub 通道。&chat:* 限制只能订阅 chat: 频道。2）&* 允许所有通道。\n\nACL 持久化：1）aclfile /path/to/users.acl——在 redis.conf 中指定 ACL 文件路径。2）ACL SAVE——将当前配置保存到 ACL 文件。3）ACL LOAD——重新加载 ACL 文件。\n\n最佳实践：1）删除 default 用户或为其设置强密码。2）每个应用使用独立用户。3）只读应用仅授予 +@read 权限。4）定期审查 ACL LOG 发现异常访问。5）使用 ACL 文件集中管理。",
-    "hints": [
-      "ACL 的三维权限模型——用户、命令和 Key 模式",
-      "ACL 持久化方式和 Selector 高级语法"
-    ],
-    "tags": [
-      "Redis",
-      "ACL",
-      "权限",
-      "用户管理"
-    ]
-  },
-  {
-    "category": "redis",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "Redis on Flash 分层存储技术",
@@ -1575,24 +413,6 @@
       "Flash",
       "SSD",
       "分层存储"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis Cluster 弹性扩缩容实践",
-    "content": "Redis Cluster 如何进行弹性扩缩容？添加和移除节点的具体步骤、数据迁移流程和注意事项是什么？",
-    "answer": "Redis Cluster 的扩缩容涉及数据重分片、连接迁移和集群拓扑更新三个关键环节。\n\n扩容流程：\n1）启动新节点并加入集群——CLUSTER MEET new_node_ip new_node_port。新节点加入后初始不持有任何 slot。\n2）计算迁移计划——redis-cli --cluster reshard src_host:src_port，工具自动计算每个节点应获得的 slot 数量。\n3）迁移 slot——逐个迁移 slot 中的 key：源节点 CLUSTER SETSLOT slot MIGRATING dest_id，目标节点 CLUSTER SETSLOT slot IMPORTING src_id，然后 MIGRATE 逐个搬运 key。\n4）确认迁移——CLUSTER SETSLOT slot NODE dest_id，集群通过 Gossip 广播拓扑变更。\n\n缩容流程：1）将被移除节点的 slot 迁移到其他节点（通过 reshard 完成）。2）CLUSTER FORGET node_id——从集群中删除节点。所有其他节点需执行此命令。3）注意 60 秒超时——如果超时后被遗忘的节点可能通过 Gossip 重新加入。4）从节点处理——先让其他从节点接管复制，或直接移除。\n\n迁移影响：1）迁移中 key 的读写——源节点返回 ASK 重定向，客户端 SDK 需实现 ASK 重定向逻辑。2）MIGRATE 命令同步阻塞——大 key 迁移期间阻塞源节点。建议拆分大 key。3）网络开销——迁移占用带宽，监控节点间网络流量。\n\n最佳实践：1）避免业务高峰期操作。2）先添加从节点作为冗余保障。3）cluster-migration-barrier 控制最小从节点数量。4）分批次迁移，控制迁移速度。5）迁移前检查大 key 和热点 key 分布。",
-    "hints": [
-      "Redis Cluster 扩缩容中的 ASK 重定向机制",
-      "Slot 迁移过程中对业务读写的影响"
-    ],
-    "tags": [
-      "Redis",
-      "Cluster",
-      "扩缩容",
-      "Slot迁移"
     ]
   },
   {
@@ -1617,60 +437,6 @@
     "category": "redis",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "Redis Pub/Sub 与 Stream 深度对比",
-    "content": "Redis Pub/Sub 和 Stream 两种消息模式在广播、可靠性、持久化和适用场景方面有什么本质区别？",
-    "answer": "Pub/Sub 和 Stream 虽然都支持消息传递，但设计哲学和可靠性保障完全不同。\n\nPub/Sub 特点：\n1）Fire-and-Forget——消息不持久化，没有订阅者在线的消息直接丢失。\n2）广播模式——一条消息发送给所有订阅者，不支持消费组内负载均衡。\n3）无状态——发布者不关心谁在消费。\n4）低延迟——无持久化开销，端到端延迟微秒级。\n5）模式订阅——PSUBSCRIBE 支持通配符匹配频道。\n6）Redis 7.0+ Sharded Pub/Sub 支持集群广播。\n\nStream 特点：1）消息持久化——写入 RDB/AOF，重启不丢失。2）消费组——XGROUP CREATE 创建消费组，组内消费者负载均衡（类似 Kafka 分区）。3）消息确认——XACK 确认消费，XPENDING 查看未确认消息。4）消息回溯——从任意时间点消费（$ 从最新开始，ID 从指定位置开始）。5）容量管理——XTRIM 和 MAXLEN 控制消息数量上限。6）阻塞读取——XREAD BLOCK 支持长时间等待。\n\n可靠性对比：1）消息丢失——Pub/Sub 在订阅者离线、网络闪断或客户端缓冲区溢出时丢消息；Stream 消息持久化在 Redis 中，消费者通过 XACK 确认消费。2）消费确认——Pub/Sub 发送即确认，Redis 不关心客户端是否收到；Stream 客户端必须 XACK，否则消息留在 PEL（Pending Entry List）中。3）消息回溯——Pub/Sub 不能回溯只能消费当前及之后的消息；Stream 可从任意 ID 回溯消费。\n\n选型建议：Pub/Sub 适用于实时通知、在线状态广播和对偶尔丢消息不敏感的场景。Stream 适用于需要可靠消费、消息回溯和消费组负载均衡的场景（任务队列、事件驱动架构）。",
-    "hints": [
-      "Pub/Sub 的 Fire-and-Forget 模型与 Stream 的持久化模型对比",
-      "Stream 消费组和 PEL 如何保证消息不丢"
-    ],
-    "tags": [
-      "Redis",
-      "Pub/Sub",
-      "Stream",
-      "消息队列"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis Keyspace 通知机制详解",
-    "content": "Redis Keyspace Notification 的事件类型有哪些？如何配置？生产环境中的使用场景和注意事项是什么？",
-    "answer": "Redis Keyspace Notification 允许客户端通过 Pub/Sub 订阅 key 空间变化事件。\n\n事件类型：1）keyspace 事件——格式 __keyspace@db__:key，消息内容为事件名称（set/del/expire）。通知哪个 key 发生了变化。2）keyevent 事件——格式 __keyevent@db__:event，消息内容为发生变化的 key。通知发生了哪种操作。\n\n配置参数（notify-keyspace-events）：\nK（keyspace 事件）、E（keyevent 事件）、g（通用命令 DEL/EXPIRE/RENAME）、$(字符串)、l（列表）、s（集合）、h（哈希）、z（有序集合）。\nx（过期事件）、e（淘汰事件 maxmemory 驱逐）、A（g$lshzxe 的别名）。\n常见配置：KEA（所有事件）或 Ex（仅 keyevent 过期事件）。\n\n使用场景：1）缓存失效——监听 __keyevent@0__:expired 驱逐过期缓存，触发重新计算。2）数据同步——监听特定前缀 key 变更事件，实时同步到搜索引擎或数据仓库。3）延迟队列——利用 key 的 TTL 加上过期通知实现延迟消息。key 过期时触发对应业务逻辑。4）Session 管理——监听 session key 过期和删除事件，清理关联资源。\n\n注意事项：1）性能影响——大量 key 频繁变更时通知消息可能堆积。配置 client-output-buffer-limit pubsub 防止订阅者过慢导致内存暴涨。2）集群模式——事件通知只在事件发生的节点上发布，客户端需要 SUBSCRIBE 到所有主节点。3）可靠性——基于 Pub/Sub 实现，订阅者不在线会丢失通知。不适用于关键业务事件追踪。",
-    "hints": [
-      "Keyspace 事件和 Keyevent 事件的区别",
-      "过期通知在延迟队列场景中的应用"
-    ],
-    "tags": [
-      "Redis",
-      "Keyspace",
-      "通知",
-      "事件"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 备份与恢复最佳实践",
-    "content": "Redis 的 RDB 和 AOF 备份策略如何制定？灾难恢复的完整流程和最佳实践是什么？",
-    "answer": "Redis 备份和恢复需要结合 RDB 快照和 AOF 日志制定完整策略。\n\nRDB 全量备份：\n1）在从节点执行 BGSAVE 生成 RDB，避免 fork 对主节点性能影响。\n2）备份频率——关键业务每小时，一般业务每天。\n3）定期上传到 S3/OSS/NAS 等对象存储。\n4）备份保留——近 7 天每小时、近 30 天每天、近 12 月每月。\n\nAOF 增量备份：1）AOF 文件记录所有写操作，可作为实时备份。2）建议在从节点启用 AOF（主节点关闭 AOF 减少 fsync 开销）。3）定期备份 AOF 文件，确保备份存储与 Redis 实例分离。\n\n恢复流程：1）确定恢复目标——恢复到指定时间点（PITR）还是最新数据。2）停止 Redis 实例确保一致性。3）将备份 RDB 文件拷贝到工作目录，文件名匹配配置。4）PITR 场景——使用 AOF 回放到目标时间点。redis-check-aof --fix 修复截断的 AOF。5）Redis 7.0+ AOF 文件放在 appendonlydir 目录。6）RDB+AOF 混合恢复——Redis 启动时优先加载 AOF（更完整），AOF 不存在则加载 RDB。\n\n验证与演练：1）使用 redis-check-rdb 验证 RDB 文件完整性。2）使用 redis-check-aof 验证 AOF 文件。3）定期做恢复演练确保备份可用。4）备份文件加密存储，异地备份到不同区域的对象存储。",
-    "hints": [
-      "RDB 和 AOF 备份各自的最佳频率",
-      "灾难恢复中 PITR 的 AOF 回放流程"
-    ],
-    "tags": [
-      "Redis",
-      "备份",
-      "恢复",
-      "RDB"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "Redis 性能调优与内核参数配置",
     "content": "Redis 生产环境的操作系统级调优有哪些关键参数？THP、vm.overcommit、网络参数如何配置？",
     "answer": "Redis 性能调优涉及操作系统参数、内存配置和 Redis 内部参数的全面优化。\n\n内存相关：1）vm.overcommit_memory = 1——允许内存超分，确保 BGSAVE/BGREWRITEAOF fork 子进程时不会因内存不足失败。2）vm.swappiness = 1——尽量不使用交换分区，避免 Redis 进程被内核换出。3）预留 20-30% 内存给操作系统和 fork 子进程（maxmemory 设为物理内存的 70%）。\n\nTHP（Transparent Huge Pages）：1）问题——Linux 默认启用透明大页（2MB），Redis fork 时写时复制即使修改 1 字节也需要复制整个 2MB 页面，造成大量额外内存和 CPU 开销。2）禁用——echo never > /sys/kernel/mm/transparent_hugepage/enabled。3）验证——cat 该文件输出 [never] 表示已禁用。4）持久化——在 /etc/rc.local 或 systemd 服务中添加禁用命令。\n\n网络参数：1）net.core.somaxconn = 65535——增大 TCP 监听队列，防止高并发时连接被拒绝。2）net.ipv4.tcp_max_syn_backlog = 65535——增大 SYN 半连接队列。3）net.ipv4.tcp_tw_reuse = 1——启用 TIME_WAIT 快速回收，防止端口耗尽。4）net.core.rmem_max 和 wmem_max 增大 Socket 缓冲区（建议 32MB+）。\n\nCPU 与 NUMA：1）Redis 绑定固定 CPU 核心和内存节点——numactl --cpunodebind=0 --membind=0 redis-server。2）避免 Redis 进程在不同 NUMA 节点间迁移导致延迟增加。3）taskset 绑定 CPU 核心避免上下文切换。\n\n内存碎片管理：1）activedefrag yes——启用自动碎片整理。2）配置 active-defrag-threshold-lower 10（碎片率超过 10% 开始整理）。3）jemalloc 内存分配器默认比 glibc malloc 碎片更低。",
@@ -1687,97 +453,7 @@
   },
   {
     "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 客户端缓存与 Tracking 机制",
-    "content": "Redis 6.0 的服务端辅助客户端缓存（Tracking）如何工作？RESP3 中的实现机制和适用场景是什么？",
-    "answer": "Redis 6.0+ 的 Tracking 机制允许客户端缓存热点数据，服务端在数据变更时推送失效通知。\n\n普通模式（默认）：1）CLIENT TRACKING ON——启用后服务端记录该客户端读取的 key。2）客户端缓存 key-value 到本地内存。3）当 key 被修改或删除时，服务端通过 RESP3 Push 消息主动发送 INVALIDATION 通知。4）服务端使用 Invalidation Table 维护跟踪状态（每个 key 指向读取过它的客户端 ID）。5）服务端内存开销——跟踪数量多时可能占用大量内存。\n\n广播模式（BCAST）：1）CLIENT TRACKING ON BCAST PREFIX prefix——客户端声明关注指定前缀的所有 key。2）服务端按前缀广播失效通知，不需要逐 key 跟踪。3）减少服务端内存开销（不维护逐 key 映射表），但失效通知数量增多（任何匹配前缀的变更都会通知）。\n\nOPTIN 模式：1）客户端需要显式标记需要跟踪的 key（CLIENT CACHING YES 命令，然后发送读命令）。2）适用于客户端精确控制哪些 key 入缓存的场景。\n\nRESP3 实现：1）失效通知通过 RESP3 的 Push 类型消息发送。2）客户端通过 HELLO 3 切换到 RESP3 协议。3）老版本 RESP2 客户端需升级。\n\n多连接管理：1）CLIENT TRACKING ON REDIRECT client_id——将失效通知汇总到一个连接处理。2）应用内所有连接共享缓存失效状态。\n\n性能收益：1）热点 key 读取零网络延迟（客户端内存直接返回）。2）Redis 服务端负载降低（重复读请求被客户端缓存拦截）。3）网络带宽显著降低。",
-    "hints": [
-      "Tracking 普通模式和广播模式的内存开销对比",
-      "RESP3 Push 消息在缓存失效通知中的作用"
-    ],
-    "tags": [
-      "Redis",
-      "客户端缓存",
-      "Tracking",
-      "RESP3"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis Functions 详解与 Lua 脚本对比",
-    "content": "Redis 7.0 引入的 Functions 与 Lua 脚本（EVAL）有什么区别？在可管理性和部署方面有什么优势？",
-    "answer": "Redis Functions 是 Lua 脚本的进化版本，解决了 EVAL/EVALSHA 在生产环境中的管理难题。\n\n核心概念：1）Function 库——一组相关 Lua 函数的集合，通过 FUNCTION LOAD 注册到 Redis。每个 Library 有独立命名空间。2）FCALL——按函数名调用（不需要计算 SHA 散列）。3）持久化——Functions 保存在 RDB 和 AOF 中，重启自动恢复，不需要重新注册。4）自动同步——主节点注册的 Functions 自动复制到从节点和副本。\n\n与 EVAL 对比：1）EVAL 的问题——脚本内容不持久化重启丢失；不支持版本管理；重复注册浪费带宽；脚本内容不在 Redis 中集中管理。2）Functions 的优势——集中注册和查看（FUNCTION LIST）；支持版本号和描述；自动持久化和复制；引擎向后兼容。3）运行时性能一致——两者都基于 Lua 5.1 引擎。\n\n使用方式：1）注册——FUNCTION LOAD \"#!lua name=mylib\nredis.register_function(\"myfunc\", function(keys, args) return redis.call(\"GET\", keys[1]) end)\"。2）调用——FCALL myfunc 1 mykey。3）列出——FUNCTION LIST。4）删除——FUNCTION DELETE libname。\n\n迁移建议：1）将 EVAL 脚本封装为 FUNCTION LOAD 的独立函数。2）客户端从 EVALSHA shahash 改为 FCALL functionName。3）利用 FUNCTION LIST 统一管理所有脚本版本。4）在 CI/CD 流程中将 FUNCTION LOAD 作为部署步骤之一。\n\n引擎拓展：Redis 7.4+ 开始探索 JavaScript 引擎支持，未来 Functions 可能支持多语言。",
-    "hints": [
-      "Functions 相比 EVAL 在持久化和可管理性上的改进",
-      "从 EVAL/EVALSHA 迁移到 FCALL 的步骤"
-    ],
-    "tags": [
-      "Redis",
-      "Functions",
-      "Lua",
-      "脚本"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 数据分片策略对比",
-    "content": "Redis 有哪些数据分片策略？Hash Tag、一致性哈希、预分片的原理和适用场景分别是什么？",
-    "answer": "Redis 数据分片通过将数据分布到多个节点突破单机内存限制，不同策略各有适用场景。\n\nHash Tag 机制：\n1）原理——Redis Cluster 使用 CRC16(key) % 16384 计算 slot。key 中包含 {} 时只计算花括号内的字符串。例如 user:{123}:profile 和 user:{123}:orders 的 slot 相同。\n2）作用——保证关联 key 分布在同一节点，支持事务（MULTI/EXEC）和 Lua 脚本操作关联数据。\n3）风险——过度使用 Hash Tag 会导致数据倾斜。避免将大量 key 映射到少数 slot。\n\n一致性哈希：1）原理——哈希值空间组织成环（0-2^32-1），节点映射到环上，key 顺时针找到最近的节点。2）优点——添加或删除节点只影响相邻节点的数据，重新映射比例约为 N/(N+1)。3）在 Redis 中的应用——Twemproxy 使用 ketama 一致性哈希。Redis Cluster 不使用一致性哈希而采用固定 Slot 映射。\n\n预分片（Presharding）：1）原理——数据量小时就分配大量虚拟分片（如 1024 个），每个分片映射到少量物理节点。数据增长时物理节点增加，分片重新分配。2）优势——避免后期大规模数据迁移。分片数固定，扩容只需迁移部分分片。3）Redis 实现——Cluster 的 16384 个 slot 本身就是预分片。3 节点时所有 16384 slot 已预先分配。\n\n总结：Hash Tag 解决关联数据路由；一致性哈希最小化扩缩容时的数据迁移量；预分片用固定分片数避免大规模重新分布。生产环境中常组合使用，根据一致性、可用性和运维成本权衡。",
-    "hints": [
-      "Hash Tag 的 {} 语法和可能的数据倾斜风险",
-      "一致性哈希和固定 Slot 映射的区别"
-    ],
-    "tags": [
-      "Redis",
-      "分片",
-      "Hash Tag",
-      "一致性哈希"
-    ]
-  },
-  {
-    "category": "redis",
     "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Redis 持久化调优与工作负载适配",
-    "content": "不同工作负载下如何选择 RDB、AOF 或混合持久化？持久化策略对性能和数据安全的影响是什么？",
-    "answer": "Redis 持久化需要在性能和数据安全之间权衡，不同工作负载适合不同策略。\n\nRDB 调优：\n1）触发频率——save 900 1（15 分钟至少 1 次写）、save 300 10、save 60 10000。频率过高导致频繁 fork 增加内存和延迟，频率过低增加数据丢失风险。\n2）fork 优化——大实例（>10GB）fork 耗时数秒。设 vm.overcommit_memory=1 预分配内存，禁用 THP 减少 COW 额外拷贝。\n3）rdbcompression yes——LZF 压缩节省磁盘但消耗 CPU。\n\nAOF 调优：1）fsync 策略——always（最安全但 <200 ops/s）、everysec（推荐，最多丢 1 秒）、no（系统控制，丢失量不可预测）。2）重写配置——auto-aof-rewrite-percentage 100（超过上次 100% 触发）和 auto-aof-rewrite-min-size 64mb。大写入量场景下调百分比增加重写频率。3）监控 AOF 文件大小防止磁盘写满。手动 bgrewriteaof 压缩。\n\n混合持久化（Redis 4.0+）：1）aof-use-rdb-preamble yes——AOF 文件头部包含 RDB 快照，尾部追加增量 AOF。2）重启加载速度接近纯 RDB（直接加载头部 RDB），数据安全性接近 AOF。3）磁盘占用介于纯 RDB 和纯 AOF 之间。\n\n工作负载建议：1）纯缓存场景——关闭持久化，仅靠主从复制保障高可用。2）数据重要但可接受秒级丢失——AOF everysec + RDB 定期快照。3）最高数据安全——AOF always + RDB + 主从复制。4）大实例快速重启——混合持久化 + AOF everysec。",
-    "hints": [
-      "不同 fsync 策略的吞吐量和数据丢失风险",
-      "RDB+AOF 混合持久化的重启加载速度优势"
-    ],
-    "tags": [
-      "Redis",
-      "持久化",
-      "RDB",
-      "AOF"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Redis 安全最佳实践",
-    "content": "Redis 生产环境的安全加固措施有哪些？chroot 隔离、网络层安全、rename-command 如何配置？",
-    "answer": "Redis 安全需要从网络、认证、命令和系统层四个维度全面加固。\n\n网络层：1）绑定内网——bind 127.0.0.1 192.168.x.x，不暴露到公网。2）防火墙——iptables 限制只有应用服务器能访问 Redis 端口。3）TLS 加密——Redis 6.0+ 支持 tls-port、tls-cert-file、tls-key-file 配置。tls-auth-clients yes 启用双向 TLS 认证。4）VPN/专线——跨网络部署使用加密通道。\n\n身份认证：1）requirepass——设置强密码，建议 32 位以上随机字符串。2）masterauth——主从复制时从节点连接主节点的密码，必须与 requirepass 一致。3）ACL 用户——为不同应用创建独立用户，限制命令和 key 访问范围。\n\n命令安全：1）rename-command——将危险命令重命名或禁用：rename-command FLUSHALL \"\"、rename-command CONFIG \"\"、rename-command KEYS \"\"、rename-command SHUTDOWN \"\"、rename-command DEBUG \"\"。2）ACL 命令阻止——-@dangerous 阻止所有危险命令。\n\n系统层隔离：1）chroot/容器化——使用 Docker 或 systemd ProtectSystem 限制文件系统访问。2）最小权限用户——创建专有 redis 用户运行 Redis，仅拥有数据目录权限。3）AppArmor/SELinux——配置强制访问控制策略。Ubuntu 用 aa-status，CentOS 用 getenforce。4）数据加密——RDB 和 AOF 文件在磁盘上加密存储。\n\n监控与审计：1）定期审查 ACL LOG 发现异常访问。2）使用 slowlog 监控慢命令。3）监控安全相关事件（认证失败、配置变更）。4）确保 Redis 版本及时更新安全补丁。",
-    "hints": [
-      "rename-command 禁用危险命令的配置方法",
-      "chroot 隔离和 TLS 加密的配置要点"
-    ],
-    "tags": [
-      "Redis",
-      "安全",
-      "chroot",
-      "TLS"
-    ]
-  },
-  {
-    "category": "redis",
-    "difficulty": "medium",
     "type": "short_answer",
     "title": "Redis 与 Spring Cache 集成实践",
     "content": "Spring Boot 中如何使用 @Cacheable 集成 Redis？序列化配置、TTL 设置和缓存管理的最佳实践是什么？",

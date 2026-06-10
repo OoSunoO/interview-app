@@ -1,7 +1,7 @@
 [
   {
     "category": "jvm",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JVM 运行时数据区深度解析",
     "content": "请详细描述 JVM 运行时数据区各个部分（程序计数器、虚拟机栈、本地方法栈、堆、方法区、运行时常量池、直接内存）的作用、存储内容、线程共享属性和可能抛出的异常。",
@@ -18,7 +18,7 @@
   },
   {
     "category": "jvm",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "G1 GC 分代收集与 Region 设计",
     "content": "G1（Garbage-First）收集器的 Region 设计、分代模型和收集流程是怎样的？与 CMS 相比有什么优势？",
@@ -36,7 +36,7 @@
   },
   {
     "category": "jvm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ZGC 并发标记-压缩原理",
     "content": "ZGC（Z Garbage Collector）是如何做到 10ms 以内停顿的？它的染色指针和读屏障是如何工作的？",
@@ -54,7 +54,7 @@
   },
   {
     "category": "jvm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "GC 日志分析与调优实战",
     "content": "如何通过 GC 日志分析和调优 JVM？请列出需要关注的关键指标和常见调优参数。",
@@ -127,7 +127,7 @@
   },
   {
     "category": "jvm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "逃逸分析与栈上分配",
     "content": "JVM 逃逸分析（Escape Analysis）是如何工作的？它能做哪些优化？什么情况下会失效？",
@@ -289,7 +289,7 @@
   },
   {
     "category": "jvm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Compressed OOP 压缩指针",
     "content": "JVM 的压缩 OOP（Ordinary Object Pointer）是什么？为什么建议堆不要超过 32GB？",
@@ -523,7 +523,7 @@
   },
   {
     "category": "jvm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 对象头与 Mark Word",
     "content": "Java 对象头（Object Header）的结构是怎样的？Mark Word 在不同状态下分别存储什么信息？",
@@ -554,7 +554,7 @@
       "JVM",
       "JPMS",
       "模块化",
-      "JDK9"
+      "JDK 9"
     ]
   },
   {
@@ -572,7 +572,7 @@
       "JVM",
       "GC触发",
       "System.gc()",
-      "FullGC"
+      "Full GC"
     ]
   },
   {
@@ -643,7 +643,7 @@
     "tags": [
       "JVM",
       "G1",
-      "FullGC",
+      "Full GC",
       "调优"
     ]
   },
@@ -734,727 +734,7 @@
       "JVM",
       "Record",
       "模式匹配",
-      "Java17"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "JVM 性能监控工具有哪些？jstat/jmap/jstack/jcmd 的用法是什么？",
-    "content": "JVM 性能监控工具有哪些？jstat/jmap/jstack/jcmd 的用法是什么？",
-    "answer": "答案：JDK 内置性能监控工具：jps（列出 Java 进程）、jstat（GC 和类加载统计）、jmap（堆转存和内存信息）、jstack（线程栈快照）、jcmd（多功能诊断）、jinfo（运行时 JVM 参数）、jstatd（远程 jstat 服务）、jhsdb（JDK 9+ 的瑞士军刀）。\n\njstat -gcutil <pid> 1000 每秒输出 GC 百分比。jmap -dump:format=b,file=heap.hprof <pid> 生成堆转存。jstack <pid> 输出线程栈（重点看 BLOCKED 和 WAITING 状态的线程）。jcmd <pid> GC.heap_info 查看堆概况。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的类文件结构？",
-    "content": "什么是 JVM 的类文件结构？",
-    "answer": "答案：Class 文件是 8 位字节流（大端序），包含：魔数（0xCAFEBABE）+ 版本号（minor+major）+ 常量池（Constant Pool，类的所有字面量和符号引用）+ 访问标志（public/abstract/final/interface）+ 类索引/父类索引/接口索引集合 + 字段表集合 + 方法表集合 + 属性表集合（Code 属性存储字节码）。\n\n常量池中最重要的两类常量：CONSTANT_Utf8_info（字符串字面量）和 CONSTANT_Methodref_info（方法符号引用）。JVM 在类加载的解析阶段将符号引用替换为直接引用。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的字节码？常见指令有哪些？",
-    "content": "什么是 JVM 的字节码？常见指令有哪些？",
-    "answer": "答案：JVM 字节码是中间表示，共 256 条指令。常见类别：加载/存储（aload_0, iload, astore）、算术运算（iadd, imul）、类型转换（i2l, checkcast）、对象创建（new, putfield, getfield）、栈操作（dup, pop）、控制转移（ifeq, goto, tableswitch）、方法调用（invokevirtual, invokespecial, invokestatic, invokeinterface, invokedynamic）。\n\n方法调用指令：invokevirtual（虚方法分派，根据运行时类型）、invokespecial（构造函数、私有方法、父类方法）、invokestatic（类方法）、invokeinterface（接口方法）、invokedynamic（JDK 7+，动态类型语言支持，Lambda 底层使用）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "JVM 的 -X 和 -XX 参数有什么区别？常见的 JVM 调优参数有哪些？",
-    "content": "JVM 的 -X 和 -XX 参数有什么区别？常见的 JVM 调优参数有哪些？",
-    "answer": "答案：-X 参数（如 -Xms、-Xmx、-Xss）是标准 HotSpot 参数，较稳定。常见：-Xms<size>（初始堆大小）、-Xmx<size>（最大堆大小）、-Xss<size>（线程栈大小，默认 1MB）。\n\n-XX 参数是 HotSpot 专用参数。布尔型：-XX:+<flag>（启用）/-XX:-<flag>（禁用）。数值型：-XX:<flag>=<value>。常见：-XX:MetaspaceSize、-XX:MaxMetaspaceSize、-XX:MaxDirectMemorySize、-XX:+UseG1GC、-XX:+HeapDumpOnOutOfMemoryError。\n\n生产环境推荐：-server -Xms4g -Xmx4g -Xss256k -XX:+UseG1GC -XX:+HeapDumpOnOutOfMemoryError -XX:+ExitOnOutOfMemoryError。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 JFR（JDK Flight Recorder）？",
-    "content": "什么是 JVM 的 JFR（JDK Flight Recorder）？",
-    "answer": "答案：JFR 是 JDK 11+ 内置的低开销性能事件采集框架（之前是 JDK 7u40 的商业特性）。核心特点：极低开销（低于 1%）、可长时间开启、事件驱动（不是采样）。\n\n常用事件：GC 事件（停顿时间、回收量）、CPU 使用率、锁竞争（阻塞时间最长的锁）、IO 事件、类加载、方法分析（热点方法）、分配分析（TLAB 外分配）、异常抛出的位置和次数。\n\n使用方式：jcmd <pid> JFR.start duration=60s filename=recording.jfr；JMC (JDK Mission Control) 读取分析。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 CDS（Class Data Sharing）和 AppCDS？",
-    "content": "什么是 CDS（Class Data Sharing）和 AppCDS？",
-    "answer": "答案：CDS（Class Data Sharing）将核心类（rt.jar）的元数据预加载到共享归档（shared archive），多个 JVM 进程共享该归档，减少启动时间和内存占用。JDK 1.5 引入，最初只支持 Bootstrap Class Loader。\n\nAppCDS（Application Class Data Sharing，JDK 10+）扩展 CDS 支持应用类加载器。流程：1) -XX:DumpLoadedClassList=<list> 运行一次生成类列表 2) -Xshare:dump -XX:SharedArchiveFile=<jsa> 创建归档 3) -Xshare:on -XX:SharedArchiveFile=<jsa> 使用归档。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的对象头（Mark Word 和 Klass Pointer）？",
-    "content": "什么是 JVM 的对象头（Mark Word 和 Klass Pointer）？",
-    "answer": "答案：HotSpot 对象头包含两部分（64 位 JVM 默认使用 Compressed OOPs）：Mark Word（64 位）存储锁状态、GC 分代年龄、哈希码。Klass Pointer（32 位压缩后）指向对象的类元数据（方法区中的 Klass 结构）。\n\nMark Word 复用设计（64 位，无锁态）：[unused:25, hash:31, unused:1, age:4, biased_lock:1, lock:2]。锁升级时复用 Mark Word 存储不同信息：偏向锁存线程 ID，轻量级锁存栈中 Lock Record 指针，重量级锁存 Monitor 指针。\n\n除了对象头，实例数据（Instance Data）和对齐填充（Padding，8 字节对齐）也是对象组成部分。数组对象的对象头比普通对象多 4 字节记录数组长度。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的容器感知（Container Awareness）？",
-    "content": "什么是 JVM 的容器感知（Container Awareness）？",
-    "answer": "答案：JDK 10+ 支持容器环境（Docker/K8s）感知。核心设置：-XX:+UseContainerSupport（JDK 10 默认开启）使 JVM 识别 cgroup 限制的 CPU 和内存。否则 JVM 读取宿主机的 CPU 数和内存。-XX:ActiveProcessorCount=<n> 手动指定可用 CPU。-XX:InitialRAMPercentage/-XX:MaxRAMPercentage/-XX:MinRAMPercentage 按比例分配容器内存给堆。\n\nJDK 8u191+ 通过 -XX:+UseContainerSupport 向后移植了容器支持。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Shenandoah GC？",
-    "content": "什么是 JVM 的 Shenandoah GC？",
-    "answer": "答案：Shenandoah 是 JDK 12 引入（JDK 15 转正）的低延迟 GC，与 ZGC 目标类似（<10ms 停顿）。核心特点：并发压缩（GC 全过程与 Java 线程并发，包括对象重定位）。使用 Brooks Pointer（对象头前加一个指针）而非 ZGC 的染色指针实现并发移动。\n\n与 ZGC 区别：Shenandoah 使用 Brooks Pointer（需要额外内存），ZGC 使用染色指针（借用指针高 4 位）。Shenandoah 支持压缩 OOPs，ZGC 不支持。Shenandoah 更适合大堆（几百 GB），ZGC 更适合超大堆（TB 级）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "JDK 9+ 的默认 GC 和日志怎么配置？",
-    "content": "JDK 9+ 的默认 GC 和日志怎么配置？",
-    "answer": "答案：JDK 9+ 默认 GC：G1（JDK 9 起）。服务器类（2+ CPU，2+ GB 内存）默认 G1，否则 Serial。\n\n统一日志（JDK 9+ 用 -Xlog 取代了 PrintGC/PrintGCDetails）：-Xlog:gc（GC 基本信息）、-Xlog:gc*（全部 GC 信息）、-Xlog:gc+heap=debug（堆信息）、-Xlog:safepoint（安全点信息）。格式：-Xlog:gc*:file=gc.log:time,uptime,pid（写入文件带时间戳）。\n\nJDK 8 及以前的日志参数：-XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 JIT 编译日志（PrintCompilation）？",
-    "content": "什么是 JVM 的 JIT 编译日志（PrintCompilation）？",
-    "answer": "答案：-XX:+PrintCompilation（JDK 9+ 用 -Xlog:jit+compilation=debug）输出 JIT 编译日志。每行格式：[timestamp] [compile_id] 标志 [层级] 方法名 (字节码大小)。含义：% 表示 OSR（栈上替换），s 表示同步方法，! 表示异常处理器。\n\n示例解读：132 34 % ! 3 java.lang.String::equals (48 bytes) —— 第 132ms，编译 ID 34，OSR 编译，有异常处理器，3 级（C2），方法 String.equals，48 字节。\n\n通过日志可观察热点方法编译情况：未编译（0）、C1 简单（1）、C1 受限（2）、C1 全量（3）、C2（4）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的栈上替换（OSR，On-Stack Replacement）？",
-    "content": "什么是 JVM 的栈上替换（OSR，On-Stack Replacement）？",
-    "answer": "答案：OSR 是 JIT 编译器的高级能力——当方法中的循环被编译为优化版本后，正在执行循环的线程可以就地替换栈帧中的解释执行版本为编译版本，无需等待方法返回。标记为 %（PrintCompilation 中的 % 号）。\n\n触发条件：方法内包含长时间运行的循环，循环迭代次数超过 CompileThreshold 时触发 OSR 编译。OSR 编译的编译级别通常低于标准编译（因为时间更紧迫）。OSR 使得长时间运行的循环同样能享受 JIT 优化的好处。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 Epsilon GC（JDK 11 引入的无操作 GC）？",
-    "content": "什么是 Epsilon GC（JDK 11 引入的无操作 GC）？",
-    "answer": "答案：Epsilon GC（-XX:+UseEpsilonGC）是 JDK 11 的实验性零开销 GC——不执行任何垃圾回收，对象分配完堆空间后 JVM 直接退出。\n\n使用场景：短生命周期的服务（函数计算/FaaS，执行完就退出的批处理任务）；性能测试（消除 GC 噪音，测量基准性能）；延迟敏感性测试（确认在无 GC 场景下的毛刺消除率）。\n\n注意：Epsilon 不适用于长期运行的应用——堆满后进程直接因 OOM 退出。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的崩溃分析（hs_err_pid 日志）？",
-    "content": "什么是 JVM 的崩溃分析（hs_err_pid 日志）？",
-    "answer": "答案：JVM 崩溃时自动生成 hs_err_pid<pid>.log。内容结构：当前线程及信号信息、寄存器值和栈顶 PC 地址、加载的共享库（可能的冲突源）、JVM 标志、线程栈（Native 帧和 Java 帧）。\n\n关键定位步骤：1) #Problematic frame 指明崩溃位置（JVM 内部 / JNI 代码 / 动态库）2) siginfo 的 SEGV_MAPERR/SIGFPE 判断崩溃类型 3) Native 栈看哪个动态库的哪个函数崩溃。常见原因：JNI 代码内存访问错误、GC 某些 bug（高频）、字节码验证问题。\n\n好习惯：生产环境 -XX:+CreateCoredumpOnCrash 产生 core dump 用于离线分析。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 MethodHandle 和 VarHandle（JDK 9+）？",
-    "content": "什么是 JVM 的 MethodHandle 和 VarHandle（JDK 9+）？",
-    "answer": "答案：MethodHandle 是 JDK 7 引入的方法句柄，类似反射（Method）但更快更轻量。通过 lookup() 创建，invoke() 执行。底层使用 invokedynamic 指令（JDK 7+）。Lambda 表达式的底层实现就是 MethodHandle + invokedynamic。\n\nVarHandle（JDK 9+）是替代 Unsafe 的变量句柄：支持普通读/写、volatile 读/写、Opaque 模式、CAS、compareAndExchange。优势：类型安全、不依赖 Unsafe、支持不同内存排序语义。\n\n对比反射：MethodHandle/VarHandle 在编译时进行类型检查（invokedynamic 的 bootstrap），反射在运行时检查。MethodHandle 可以被 JIT 内联优化，反射很难。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 invokedynamic 指令？Lambda 表达式是如何实现的？",
-    "content": "什么是 JVM 的 invokedynamic 指令？Lambda 表达式是如何实现的？",
-    "answer": "答案：invokedynamic 是 JDK 7 引入的字节码指令，支持动态语言的方法分派。核心机制：Bootstrap Method（BSM）在首次执行时生成 CallSite，后续执行直接调用目标方法，无需反射。\n\nLambda 实现：编译器将 Lambda 体编译为私有静态方法（invokedynamic 的 target），编译期生成 invokedynamic 指令指向 LambdaMetafactory.metafactory()。运行时首次执行时，Bootstrap 方法通过 ASM 生成内部类（要实现函数式接口），后续每次调用复用 CallSite。\n\n与匿名内部类的区别：匿名内部类每次 new 都加载一个新的 Class 文件；Lambda 的 invokedynamic 在首次执行时生成一次实现，后续复用，启动性能更好。变量捕获：匿名内部类捕获的是引用（this），Lambda 不捕获 this（除非使用 this）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的异常处理机制（异常表）？",
-    "content": "什么是 JVM 的异常处理机制（异常表）？",
-    "answer": "答案：Java 异常处理通过异常表（Exception Table）实现。编译后的方法包含异常表条目：[from_pc, to_pc] 表示监控范围，handler_pc 表示跳转地址，catch_type 表示捕获的异常类型（0 = finally）。\n\n抛出异常时的 JVM 行为：1) 创建异常对象（new + dup + invokespecial init）2) athrow 指令抛出 3) JVM 在当前方法的异常表查找匹配范围 4) 如果匹配，清除当前栈帧的操作数栈，将异常对象压入栈，跳转到 handler_pc 5) 当前方法没有匹配则在栈展开（unwinding），上一帧继续查找。\n\n空异常栈的优化：JIT 编译的代码中，NullPointerException 等常见异常在频繁抛出的路径上，JIT 可以优化掉异常栈填充。JVM 设置 -XX:-OmitStackTraceInFastThrow 禁用此优化。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "JDK 21 的虚拟线程在 JVM 层面是如何实现的？",
-    "content": "JDK 21 的虚拟线程在 JVM 层面是如何实现的？",
-    "answer": "答案：虚拟线程是 JDK 21 正式发布的轻量级线程（Project Loom）。JVM 实现核心：Continuation（延续性）——保存和恢复执行状态的能力。当虚拟线程在阻塞操作（锁、IO、park）时，Continuation.yield() 将栈帧从平台线程拷贝到堆中，然后平台线程切换执行其他虚拟线程。resume 时将栈帧从堆拷贝回平台线程栈。\n\n关键组件：ForkJoinPool 作为虚拟线程调度器（默认 parallelism = CPU 核数）。每次 mount/unmount 通过 JVM 的 Continuation 机制实现。\n\n限制：synchronized 块中的阻塞会 PIN 住平台线程（虚拟线程不能 unmount），JDK 21 优化了部分 synchronized 场景，但文件 IO 和 JNI 调用仍然会 PIN。建议虚拟线程中 synchronized 替换为 ReentrantLock。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "JVM 的 GC 算法演进历史是怎样的？",
-    "content": "JVM 的 GC 算法演进历史是怎样的？",
-    "answer": "答案：串行 GC（JDK 1.3 前）→ Parallel GC（JDK 1.4.2）→ CMS（JDK 1.5，JDK 9 废弃，JDK 14 移除）→ G1（JDK 7u4 实验，JDK 9 默认）→ ZGC（JDK 11 实验，JDK 15 转正）→ Shenandoah（JDK 12 实验，JDK 15 转正）→ Epsilon（JDK 11 实验）。\n\n演进方向：STW 越来越短→并发范围越来越大。Serial 全 STW → Parallel 年轻代并行 → CMS 老年代并发标记 → G1 分 Region 并行+并发 → ZGC/Shenandoah 几乎全并发。JDK 8 到 JDK 21 的默认 GC 路径：Parallel → G1（JDK 9+ 默认）→ G1+ZGC 可选。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 JMX（Java Management Extensions）？",
-    "content": "什么是 JVM 的 JMX（Java Management Extensions）？",
-    "answer": "答案：JMX 是 Java 官方的监控管理框架，通过 MBean 暴露 JVM 运行时信息。内置 MBean 包括：MemoryMXBean（堆/非堆/内存池）、ThreadMXBean（线程数和死锁检测）、GC MXBean（各 GC 的收集次数和耗时）、ClassLoadingMXBean（加载/卸载的类数）、OperatingSystemMXBean（系统 CPU/负载/文件描述符）。\n\n远程监控配置：-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010。生产环境必须开启认证和 SSL。JDK 9+ 新增 PlatformManagedObject API。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的堆外内存管理？Netty 如何使用 DirectBuffer？",
-    "content": "什么是 JVM 的堆外内存管理？Netty 如何使用 DirectBuffer？",
-    "answer": "答案：堆外内存（Off-Heap）使用 java.nio.ByteBuffer.allocateDirect() 或 Unsafe.allocateMemory() 分配。分配在 native 内存，不受 -Xmx 限制，由 -XX:MaxDirectMemorySize 控制（默认 0 = 不限制）。GC 默认不回收堆外内存（除非关联的 DirectByteBuffer 对象被回收且 Cleaner 执行）。\n\nNetty 的堆外内存管理：使用 PooledByteBufAllocator（内存池）管理 DirectBuffer，池化分配/释放，避免频繁系统调用。使用 PoolChunk（大块内存区域）和 PoolSubpage（小块内存）。Netty 也支持堆外内存的引用计数（ReferenceCounted 接口），避免内存泄漏。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 String 性能优化？字符串拼接的底层实现是什么？",
-    "content": "什么是 JVM 的 String 性能优化？字符串拼接的底层实现是什么？",
-    "answer": "答案：String 是不可变类，内部使用 final byte[]（JDK 9+，以前是 char[]）。Compact Strings（JDK 9+）根据字符决定编码：如果所有字符都是 Latin-1 则用 1 字节/字符，否则 2 字节。StringDeduplication（G1 GC 参数）自动去重堆中重复字符串的 char[]。\n\n字符串拼接优化：简单拼接（如 a + b）编译器自动优化为 StringBuilder.append()。循环内拼接编译器优化可能创建多个 StringBuilder（每个循环迭代一个），建议手动使用 StringBuilder。JDK 9+ 使用 invokedynamic + StringConcatFactory.makeConcatWithConstants() 替代 StringBuilder。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的类加载器命名空间？不同类加载器加载相同类会冲突吗？",
-    "content": "什么是 JVM 的类加载器命名空间？不同类加载器加载相同类会冲突吗？",
-    "answer": "答案：JVM 中类的全限定名 = 类名 + 定义类加载器（Defining Class Loader）。同一个 ClassLoader 载入的同一个类才被认为是同一个类。如果两个不同的类加载器加载相同全限定名的类，JVM 视为两个不同的类（instanceof 返回 false）。\n\n类加载器命名空间隔离：Tomcat 的 WebAppClassLoader 为每个 Web 应用创建独立命名空间，应用间同名类互不干扰。OSGi 更进一步，每个 Bundle 有独立的类加载器，通过 Import-Package/Export-Package 精确控制可见性。\n\n常见问题：NoSuchMethodError 通常是因为不同类加载器加载了不同版本的类。ClassCastException 是因为类型转换跨越了类加载器边界。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 GC 调优？常见策略有哪些？",
-    "content": "什么是 JVM 的 GC 调优？常见策略有哪些？",
-    "answer": "答案：GC 调优目标：根据应用需求平衡三个指标——停顿时间（Latency）、吞吐量（Throughput）、内存占用（Footprint）。不可能三角：三者不能兼得。\n\n调优步骤：1) 确定目标（追求低停顿还是高吞吐）2) 收集 GC 日志和监控数据（JFR/JMX）3) 分析 GC 频率、停顿时间、各代使用率 4) 调整堆大小和代比例。\n\n常见策略：大堆（减少 GC 频率但停顿时间长）/ 小堆（高频率但短停顿）。吞吐优先：Parallel GC + 大堆 + 大年轻代。低延迟优先：G1/ZGC + 设置 -XX:MaxGCPauseMillis。避免 Full GC：G1 的 InitiatingHeapOccupancyPercent 调低让并发标记提前。\n\n黄金法则：GC 调优不超过总投入的 5% 否则应该换收集器。先加内存再调参数。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Graal JIT 编译器？",
-    "content": "什么是 JVM 的 Graal JIT 编译器？",
-    "answer": "答案：Graal JIT 编译器是用 Java 写的 JIT 编译器（传统 C1/C2 编译器是用 C++ 写的）。Graal 基于 Graal IR，支持更激进的优化和内联策略。GraalVM 项目中的主要 JIT 编译器。\n\n启用方式（JDK 16+）：-XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler。Graal 的优势：更激进的优化（部分场景比 C2 快 10-20%）、AOT（提前编译）支持、跨语言内联优化（Truffle 框架）。劣势：编译开销更高、成熟度不如 C2。\n\nGraalVM 的 Native Image（Substrate VM）将 Java 编译为原生可执行文件——不支持动态类加载和反射（需要配置 reflect-config.json），启动时间从秒级降到毫秒级（适合 FaaS/Serverless）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Barrier 技术（读屏障/写屏障/卡表）？",
-    "content": "什么是 JVM 的 Barrier 技术（读屏障/写屏障/卡表）？",
-    "answer": "答案：JVM 的 Barrier 是 GC 管理引用更新的机制。写屏障（Write Barrier）在引用赋值时触发，用于记录指针修改（GC 的 SATB/增量更新）。读屏障（Load Barrier）在引用读取时触发（ZGC 使用，修正引用指向）。\n\n卡表（Card Table）是 G1/Parallel GC 使用的写屏障实现——将堆划分为 512 字节的 Card，写屏障将修改过的 Card 标记为 Dirty。Minor GC 时只扫描 Dirty Card 对应的 Old→Young 引用，避免全量扫描老年代。\n\nG1 的 RSet（Remembered Set）在 Card Table 之上增加了 Region 粒度的引用记录——每个 Region 维护其被哪些 Region 的哪些 Card 引用。RSet 是 G1 能实现 Region 独立收集（而非全堆扫描）的关键。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 AOT（提前编译）？",
-    "content": "什么是 JVM 的 AOT（提前编译）？",
-    "answer": "答案：AOT 编译将 Java 源代码或字节码提前编译为机器码（应用启动前完成，而非运行时 JIT 编译）。JDK 9 引入 jaotc（实验性）：jaotc --output lib.so --module java.base 为 JDK 核心类生成 AOT 库。JDK 17 的 jaotc 已被标记为废弃。\n\n替代方案：GraalVM Native Image（Substrate VM）——通过封闭世界分析（Closed World Analysis）将 Java 应用编译为原生可执行文件。优点：启动时间毫秒级、内存占用低、无 GC 预热。缺点：完全静态分析（不支持运行时动态类加载）、反射和动态代理需要配置。\n\n基于 OpenJDK 的 Leyden 项目正在探索更友好的 AOT 方案。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JMM？volatile 和 final 的内存语义是什么？",
-    "content": "什么是 JMM？volatile 和 final 的内存语义是什么？",
-    "answer": "答案：JMM（Java Memory Model）定义了多线程环境下共享变量的可见性、有序性和原子性规则。核心概念：happens-before 规则（程序次序规则、监视器锁规则、volatile 规则、传递性等）。\n\nvolatile 语义：写 volatile 变量时，将当前处理器缓存行写入主存（StoreLoad Barrier）。读 volatile 变量时，从主存读取（LoadLoad + LoadStore Barrier）。效果：volatile 写之前的普通写也可见（写冲刷），volatile 读之后的普通读也可见（读屏障）。\n\nfinal 语义：构造函数中 final 字段写入与后续引用发布的禁止重排序。确保对象被正确构造后（this 引用不逃逸），所有线程看到的 final 字段都是初始化后的值。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 JNI（Java Native Interface）？",
-    "content": "什么是 JVM 的 JNI（Java Native Interface）？",
-    "answer": "答案：JNI 允许 Java 代码调用 C/C++ 原生代码，也可从原生代码调用 Java。核心函数：CallStaticVoidMethod、GetFieldID、NewGlobalRef 等。使用步骤：编写 native 方法 → javah 生成头文件 → C 实现 → 编译成动态库（so/dll）→ System.loadLibrary() 加载。\n\nJNI 开销：方法调用的固定开销（参数转换、类型检查）约 10-20 个 CPU 指令。跨边界数据传递：数组用 GetByteArrayElements / GetPrimitiveArrayCritical（避免拷贝但有 PIN 住对象的代价）。异常处理：JNI 中的异常不自动传播，需 ExceptionCheck() 显式检查。\n\n注意事项：JNI 不会自动处理 GC（需要 GlobalRef/NewGlobalRef 阻止对象被回收）；JNI 代码中的栈溢出和段错误直接崩溃 JVM。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 Async Profiler？它的工作原理是什么？",
-    "content": "什么是 Async Profiler？它的工作原理是什么？",
-    "answer": "答案：Async Profiler 是低开销的 Java Profiler（基于 Linux perf_event + eBPF）。核心能力：CPU 采样、Allocation Profiling、锁竞争分析。\n\n工作原理：CPU 采样使用 perf_event_open 设置定时器中断（默认 1ms），在中断处理中获取当前线程的栈快照。AsyncGetCallTrace（JVM 提供的 API）在线程挂起状态下获取调用栈。\n\n与 JFR 对比：Async Profiler 更适合 CPU 热点和分配热点定位，JFR 更适合全面的事件收集（GC、锁、异常等）。搭配火焰图可直接定位性能瓶颈。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "JVM 中 String 的 hashCode() 为什么选择 31 作为乘数？",
-    "content": "JVM 中 String 的 hashCode() 为什么选择 31 作为乘数？",
-    "answer": "答案：String 的 hashCode() 计算：s[0]*31^(n-1) + s[1]*31^(n-2) + ... + s[n-1]。使用 int 类型，溢出时直接截断（环绕）。计算结果缓存到 hash 字段（第一次计算后缓存，String 不可变保证缓存有效）。\n\n为什么选 31：1) 奇素数——偶数乘数可能导致溢出信息丢失（乘法的低位变 0）。2) 31 可以优化为 (i << 5) - i，JVM 自动优化为移位+减法（性能优于乘法）。3) 31 的冲突率较低（实验表明 33、37、39 等乘数也没有显著更好）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Thread Dump 分析？如何定位性能瓶颈？",
-    "content": "什么是 JVM 的 Thread Dump 分析？如何定位性能瓶颈？",
-    "answer": "答案：Thread Dump 是 JVM 线程状态的快照，包含所有线程的栈轨迹、锁信息、线程状态。\n\n获取方式：jstack <pid>、kill -3 <pid>（发送 SIGQUIT 信号）、jcmd <pid> Thread.print、JMX 的 ThreadMXBean.dumpAllThreads()。\n\n分析重点：BLOCKED 状态的线程（锁竞争）、WAITING 状态的线程（可能死锁）、RUNNABLE 但 CPU 高的线程（热点方法）、死锁检测（Found one Java-level deadlock）。\n\n工具：fastthread.io（在线分析）、VisualVM、JMC、Async Profiler。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 ClassLoader 双亲委托模型？如何打破它？",
-    "content": "什么是 JVM 的 ClassLoader 双亲委托模型？如何打破它？",
-    "answer": "答案：双亲委托模型：一个类加载器收到类加载请求时，先委托给父类加载器去加载，只有在父类无法加载时才自己尝试。\n\n层次结构：Bootstrap ClassLoader → Extension ClassLoader → Application ClassLoader。\n\n打破双亲委托：1) 重写 loadClass() 方法（不委托给父类，如 Tomcat 的 WebAppClassLoader 优先加载 Web 应用自己的类）2) 线程上下文类加载器（Thread.currentThread().getContextClassLoader()，如 JDBC 驱动加载 3) SPI 机制（ServiceLoader 使用线程上下文类加载器绕过双亲委托）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的方法内联？内联阈值是什么？",
-    "content": "什么是 JVM 的方法内联？内联阈值是什么？",
-    "answer": "答案：方法内联是 JIT 编译器最重要的优化之一——将方法调用替换为方法体本身，消除调用开销（栈帧创建/销毁、参数传递、虚方法分派）。\n\n内联阈值：-XX:MaxInlineSize（默认 35 字节，小方法内联）、-XX:FreqInlineSize（默认 325 字节，热点方法内联）、-XX:InlineSmallCode（默认 2000 字节，编译后的代码大小限制）。\n\n虚方法内联：JIT 通过类型 Profile（Class Hierarchy Analysis）判断接口/抽象方法的实际实现类型，如果可以唯一确定则进行内联（否则保留虚分派）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 GC Root？有哪些类型？",
-    "content": "什么是 JVM 的 GC Root？有哪些类型？",
-    "answer": "答案：GC Root 是 GC 判断对象是否存活的起点。从 GC Root 出发可达的对象为存活，不可达的为垃圾。\n\nGC Root 类型：1) 栈帧中的局部变量（线程栈中的引用）2) 静态变量（方法区中类的静态字段）3) JNI 全局引用（GlobalRef）4) 活跃线程（Thread 对象本身）5) 同步监视器（被 synchronized 持有的对象）6) JVM 内部引用（系统类加载器、JIT 编译代码中的引用）。\n\n注意：GC Root 不是固定的——不同的垃圾收集器可能选择不同的根集合。CMS 和 G1 的初始标记阶段就是枚举 GC Root 的过程。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Monitor（管程）？ObjectMonitor 的结构？",
-    "content": "什么是 JVM 的 Monitor（管程）？ObjectMonitor 的结构？",
-    "answer": "答案：Monitor 是 Java 中 synchronized 的底层实现机制（重量级锁阶段）。每个 Java 对象关联一个 ObjectMonitor（HotSpot 实现）。\n\nObjectMonitor 结构：_owner（持有锁的线程）、_cxq（竞争队列，CAS 入队）、_EntryList（等待锁的线程队列）、_WaitSet（调用 wait() 的线程队列）、_recursions（重入计数）。\n\n工作流程：线程进入 synchronized → CAS 尝试设置 _owner → 失败则入 _cxq → 竞争失败的线程挂起。线程调用 wait() → 释放锁并进入 _WaitSet。线程调用 notify() → 从 _WaitSet 移出到 _EntryList 或 _cxq。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Dirty Card 和 refine 线程？",
-    "content": "什么是 JVM 的 Dirty Card 和 refine 线程？",
-    "answer": "答案：Dirty Card 是 G1 GC 中 Card Table 标记为脏的条目。当并发标记阶段应用线程修改引用时，写屏障记录下修改的 Card（标记为 Dirty）。\n\nRefine 线程（G1 的并发优化线程）：后台处理 Dirty Card 的更新（更新 RSet），减少 Mixed GC 时 STW 的处理量。参数：-XX:G1ConcRefinementThreads（并发 refine 线程数，默认 ParallelGCThreads）。\n\nRefine 的三种模式：1) 空闲（IDEA，等待）2) 处理（REFINE，处理 Dirty Card）3) 停止（STOP，队列太满时暂停）——通过 Mutex 协调。\n\nGreen/Yellow/Red 阈值控制 refine 线程的热情程度，当队列长度超过 Red 阈值时应用线程也会帮忙处理（refine 赶不上生产速度）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Allocation Profiling？TLAB 回退机制？",
-    "content": "什么是 JVM 的 Allocation Profiling？TLAB 回退机制？",
-    "answer": "答案：Allocation Profiling 是分析对象分配位置和频率的技术。主要实现：JFR 的 TLAB 事件（TLAB 分配和 TLAB 外部分配）、Async Profiler 的分配采样、Java Agent 的 Instrumentation。\n\nTLAB（Thread Local Allocation Buffer）回退机制：当对象大小超过 TLAB 剩余空间时：1) 如果对象大小 > TLAB 大小的指定比例（-XX:TLABRefillWasteFraction 默认 64，即 1/64），直接在 Eden 区分配（TLAB 外部分配）2) 否则当前 TLAB 废弃，申请新的 TLAB。\n\nTLAB 外部分配（Slow Allocation）：需要加锁（JVM 级别的线程安全），是性能热点。优化方式：增大 TLAB（-XX:TLABSize）、调整 Waste 比例。JFR 的 Allocation Requiring GC 事件记录 TLAB 外部分配。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Native Memory Tracking（NMT）？",
-    "content": "什么是 JVM 的 Native Memory Tracking（NMT）？",
-    "answer": "答案：NMT（Native Memory Tracking）是 JVM 追踪 native 内存分配的功能（-XX:NativeMemoryTracking=summary/detail）。通过 jcmd <pid> VM.native_memory 查看 native 内存各区域的分配量。\n\n主要区域：Java Heap（堆内存）、Class（元空间）、Thread（线程栈空间）、Code（JIT 编译代码缓存）、GC（GC 相关数据结构）、Compiler（编译器内存）、Internal（JVM 内部数据结构）、Other（其他）、Symbol（符号表）、Native Memory Tracking（NMT 自身开销）。\n\n使用场景：排查堆外内存泄漏（对比 baseline 发现异常增长）。注意：开启 NMT 有约 5-10% 的性能开销，生产环境建议用 summary 级别。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的远程调试（JDWP）？如何配置？",
-    "content": "什么是 JVM 的远程调试（JDWP）？如何配置？",
-    "answer": "答案：JDWP（Java Debug Wire Protocol）是 JVM 远程调试的协议。Java 进程启动时指定调试参数，调试器（IDE）可远程连接。\n\n参数配置：-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005。transport=dt_socket（网络套接字传输）、server=y（作为调试服务器）、suspend=n（不等待调试器连接就启动）、address=5005（监听端口）。\n\n安全注意：JDWP 协议无认证和加密，生产环境绝不能开启远程调试。否则任何人都可以通过调试协议连接并执行任意 Java 代码。调试时也必须限制 IP 白名单。\n\n替代方案：在开发/测试环境使用，通过 ssh 转发端口远程连接调试。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Strong/Soft/Weak/Phantom Reference？",
-    "content": "什么是 JVM 的 Strong/Soft/Weak/Phantom Reference？",
-    "answer": "答案：Java 四种引用类型（强度递减）：\n\nStrong Reference（强引用）：new 创建的对象，只要有强引用指向就不会被 GC 回收。\n\nSoft Reference（软引用，SoftReference）：内存足够时不回收，内存不足时在 OOM 前回收。适合缓存（如图片缓存）。\n\nWeak Reference（弱引用，WeakReference）：下次 GC 时无论内存是否充足都被回收。更适合 WeakHashMap、ThreadLocalMap 的 Entry 中的 key。\n\nPhantom Reference（虚引用，PhantomReference）：任何时候都可能被回收，get() 总是返回 null。get() 返回 null。唯一的用途：与 ReferenceQueue 配合跟踪对象被 GC 回收的时间（Cleaner 的底层实现）。\n\nReferenceQueue：引用关联的队列，当引用指向的对象被回收后，引用自身被入队。应用可以处理队列来知道哪些对象被回收了。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的偏向锁撤销（Bulk Rebias and Bulk Revocation）？",
-    "content": "什么是 JVM 的偏向锁撤销（Bulk Rebias and Bulk Revocation）？",
-    "answer": "答案：偏向锁撤销的批量优化（JDK 6 引入）。当大量偏向锁需要撤销时，JVM 不做逐个撤销，而是进行批量操作。\n\nBulk Rebias（批量重偏向）：当同一个类的偏向锁撤销次数达到 -XX:BiasedLockingBulkRebiasThreshold（默认 20）时，JVM 标记该类为可重偏向状态。后续该类的锁可以直接偏向到新线程（不再逐个撤销再重偏向）。\n\nBulk Revocation（批量撤销）：当同一个类的偏向锁撤销次数达到 -XX:BiasedLockingBulkRevokeThreshold（默认 40）时，JVM 撤销该类所有的偏向锁，并禁用该类未来的偏向锁。在该 Class 的保护下，所有实例下次 STW 时消除偏向。\n\nJDK 15+ 默认禁用偏向锁（-XX:-UseBiasedLocking），以上机制不再重要。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Code Cache？如何监控？",
-    "content": "什么是 JVM 的 Code Cache？如何监控？",
-    "answer": "答案：Code Cache 是 JVM 存储 JIT 编译后的机器码的内存区域。每个被 JIT 编译的方法的机器码存储在 Code Cache 中，后续直接执行机器码而非解释执行。\n\n大小控制：-XX:ReservedCodeCacheSize（最大大小，默认 240MB。JDK 8 默认 48MB，JDK 11+ 默认 240MB）。-XX:InitialCodeCacheSize（初始大小，默认 48MB）。\n\n监控方式：jcmd <pid> Compiler.codecache 查看 Code Cache 的使用情况。JFR 的 Code Cache Statistics 事件。\n\nCode Cache 满时：JVM 不再编译新方法（退回到解释执行），性能骤降。UseCodeCacheFlushing 参数可以启用脑满时清理不常用方法的机器码。\n\n分层编译的 Code Cache（JDK 9+）：将 Code Cache 分为 non-profiled（C2）、profiled（C1）、non-method（其他）三个独立区域，避免某个层级的编译撑爆其他层级。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Compiler Control（编译器控制）？",
-    "content": "什么是 JVM 的 Compiler Control（编译器控制）？",
-    "answer": "答案：Compiler Control 是 JDK 8u40+ 引入的通过指令文件控制 JIT 编译行为的机制。通过 -XX:CompilerDirectivesFile=<file.json> 指定指令文件。\n\n指令示例：{ match: ['org/example/**/*'], inline: ['+org/example/service/**'], exclude: ['org/example/debug/*'], PrintAssembly: true }\n\n支持指令：inline（内联/不内联特定方法）、exclude（排除特定方法不编译）、PrintAssembly（打印汇编）、Log（编译日志）、BreakAtExecute（断点执行）。\n\n使用场景：调试热点方法、强制/禁止特定方法内联、诊断 JIT 编译问题。比 -XX:CompileCommand 更灵活（支持通配符和 JSON 配置）。\n\n注意：这是诊断和调优工具，生产环境谨慎使用（可能影响性能）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Serviceability Agent（SA）？",
-    "content": "什么是 JVM 的 Serviceability Agent（SA）？",
-    "answer": "答案：Serviceability Agent（SA）是 JVM 的调试和分析框架。通过 SA，可以用 Java 代码访问 JVM 的核心数据结构（堆、栈、元数据等），即使目标 JVM 已经崩溃或暂停。\n\nSA 的使用方式：作为独立进程（hsdb：jhsdb hsdb --pid <pid>）连接到目标 JVM。SA 可以直接读取 JVM 进程的内存（通过 /proc/<pid>/mem 或 ptrace 或 core dump）。\n\nSA 的能力：查看堆对象（object histogram）、查看类和类加载器、查看线程栈、查看 Critical Section、查看 JIT 编译代码反汇编。\n\nSA 的用途：离线分析 core dump、开发自定义 JVM 诊断工具。SA 的代码在 $JAVA_HOME/lib/sa.jar 中。\n\n注意：SA 的 API 不稳定（内部接口，版本间可能变化）。JDK 9+ SA 被整合到 jhsdb 工具中。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 GC 日志格式（JDK 9+ Unified Logging）？",
-    "content": "什么是 JVM 的 GC 日志格式（JDK 9+ Unified Logging）？",
-    "answer": "答案：JDK 9+ 的统一日志（-Xlog）取代了旧的 -XX:+PrintGCDetails 参数。\n\nXlog 语法：-Xlog:[tag1,tag2,...][:output][:decorators][:level]。tag 组合（如 gc、gc+heap、gc+age、gc+ergonomics、gc+ref、gc+stringtable），level（trace/debug/info/warning/error）。\n\n示例解读：-Xlog:gc*:file=gc.log:time,uptime,micros:info 含义——gc* 包括所有 gc 子标签，输出到 gc.log，包含时间和运行时间装饰器，info 级别。\n\n典型日志行：[0.456s][info][gc,start] GC(0) Pause Young (Normal) (G1 Evacuation Pause) —— 启动时间 0.456s，info 级别，gc 标签，GC ID 0，G1 Evacuation Pause 开始。\n\n常用配置：-Xlog:gc+region+stats=debug（Region 统计）、-Xlog:gc+age=trace（分代年龄分布）、-Xlog:gc+ergonomics=trace（Ergonomics 决策日志）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Class Data Sharing 在 Lambda 中的问题？",
-    "content": "什么是 JVM 的 Class Data Sharing 在 Lambda 中的问题？",
-    "answer": "答案：Lambda 表达式使用 invokedynamic + LambdaMetafactory 生成内部类。这些生成的内部类默认不会被 CDS 归档（因为是在运行时动态生成）。\n\nCDS 对 Lambda 的限制：应用第一次运行生成动态类列表 → 第二次运行创建 CDS 归档 → Lambda 生成的类如果符合条件（Lambdas 实现类不是动态代理）可以被归档。但 Lambda 的 CapturedArgument 和 Descriptor 决定其具体类型，不同的捕获变量会导致不同类。\n\n解决：JDK 16+ 支持 Lambda 的动态 CDS 归档（Dynamic CDS Archive + Lambda Proxy 类归档）。运行时 Lambda 的代理类可以被动态归档到 CDS 中，在后续启动直接加载（避免重新生成和类加载开销）。\n\n注意：使用 -XX:ArchiveClassesAtExit=<jsa> 参数可以在程序退出时自动归档所有加载的类（包括 Lambda 生成的类）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 ProtectionDomain 和 CodeSource？",
-    "content": "什么是 JVM 的 ProtectionDomain 和 CodeSource？",
-    "answer": "答案：ProtectionDomain 是 Java 安全模型（SecurityManager）中的概念，封装了类的权限集（Permissions）和来源（CodeSource）。每个类被加载时关联一个 ProtectionDomain。\n\nCodeSource：标识类来自哪个代码库（URL）和是否有签名。Permission：该类拥有的权限（如 java.io.FilePermission /etc/config r）。\n\nProtectionDomain 的缓存：同一 CodeSource 的类共享 ProtectionDomain 实例，减少内存占用。Policy 文件配置权限（$JAVA_HOME/lib/security/java.policy）。\n\n当前状态：JDK 17+ 默认禁用 SecurityManager（标记为弃用），JDK 21 中 SecurityManager 仍存在但建议不使用。ProtectionDomain 在无 SecurityManager 环境下基本不再使用。\n\n类加载器缓存 ProtectionDomain：-Djava.security.manager 启用后，每个 URLClassLoader 会缓存 ProtectionDomain 并关联类。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 HeapDump 自动分析？OOM 时如何自动获取诊断信息？",
-    "content": "什么是 JVM 的 HeapDump 自动分析？OOM 时如何自动获取诊断信息？",
-    "answer": "答案：OOM 自动诊断的关键 JVM 参数组合。\n\n-XX:+HeapDumpOnOutOfMemoryError：OOM 时自动生成 heap dump（文件位置：-XX:HeapDumpPath=/path/dump.hprof）。\n-XX:+ExitOnOutOfMemoryError：OOM 时 JVM 直接退出（避免不可预测的烂状态继续运行）。\n-XX:OnOutOfMemoryError=<script>：OOM 时执行自定义脚本（如发送告警、重启进程、执行诊断命令）。\n-XX:+CrashOnOutOfMemoryError：OOM 时模拟 JVM Crash 生成 hs_err 日志。\n\n最佳实践：容器环境中使用 -XX:+ExitOnOutOfMemoryError 让 K8s 重启 Pod。结合 -XX:HeapDumpPath 将 dump 文件挂在到持久卷。使用 MAT/Eclipse Memory Analyzer 或 fastthread.io 自动分析 heap dump。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 JVMCI（JVM Compiler Interface）？",
-    "content": "什么是 JVM 的 JVMCI（JVM Compiler Interface）？",
-    "answer": "答案：JVMCI（JVM Compiler Interface，JDK 9+）是 JVM 开放给外部编译器的编程接口。使第三方 JIT 编译器可以嵌入到 JVM 中（替代 C1/C2）。\n\n核心组件：JVMCI 接口定义了编译器需要实现的方法（编译请求、安装编译代码、获取元数据等）。HotSpot 通过 JVMCI 将编译任务委托给外部编译器。\n\n主要实现：Graal JIT Compiler（通过 -XX:+UseJVMCICompiler 启用）。Graal 编译器的 IR（Intermediate Representation）通过 JVMCI 与 HotSpot 交互。\n\n限制：JVMCI 编译器（如 Graal）在启动时编译自身到 C2 生成的机器码（鸡生蛋问题），使用 -XX:JVMCINMethodSizeLimit 控制编译大小。JDK 17+ 的 Vector API 可以利用 JVMCI 的向量化编译能力。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Tiered Compilation（分层编译）？各层级的含义？",
-    "content": "什么是 JVM 的 Tiered Compilation（分层编译）？各层级的含义？",
-    "answer": "答案：分层编译（-XX:+TieredCompilation，JDK 7 默认）将编译分为 5 个层级：\n\n0 - 解释执行（Interpreter）。不编译，直接解释字节码。\n1 - 简单 C1（C1 不带 profiling，完全优化）。\n2 - 限制的 C1（C1 带部分 profiling，仅方法调用和循环回边计数）。\n3 - 全 C1（C1 带全部 profiling，包括类型信息、分支跳转频率等）。\n4 - C2（最长编译时间、最优优化）。\n\n正常路径：0→3→4（热点方法从解释到 C1 收集 profile 再到 C2 极致优化）。\n退化路径：0→2→3→4（轻度 C1 profiling→全 C1→C2）。\n回退：4→0（C2 编译失败或逆优化时回退到解释执行）。\n\nprofile 收集：方法调用计数器（-XX:CompileThreshold=10000，不过分层编译下阈值动态调整）和回边计数器（OSR 循环阈值）。\n\n启动性能 vs 峰值性能的权衡：无分层（纯 C2）峰值性能高但启动慢；有分层启动快但编译开销大。JDK 默认开启分层编译。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 C1 和 C2 编译器的区别？",
-    "content": "什么是 JVM 的 C1 和 C2 编译器的区别？",
-    "answer": "答案：C1（Client Compiler）——轻量级 JIT 编译器（编译快，优化少）。适合桌面应用和启动快的需求。主要优化：简单内联、常量折叠、死代码消除、局部变量优化。\n\nC2（Server Compiler，C2 = Opto Compiler）——重量级 JIT 编译器（编译慢，优化极强）。适合需要峰值性能的服务端应用。主要优化：内联（跨更多边界）、循环优化（循环展开、循环不变代码外提、循环向量化）、逃逸分析（栈上分配、标量替换、锁消除）、全局值编号（GVN）、范围检查消除、类型特化。\n\nC1 编译约 10-50ms（小方法），C2 编译约 100-500ms（小方法），大方法 C2 可到秒级。C2 的代码质量比 C1 提升 30-50%（峰值性能）。\n\n分层编译结合两者：0→3(C1 full)→4(C2)。C1 快速收集 profile，C2 基于 profile 进行深度优化。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的逆优化（Deoptimization）？",
-    "content": "什么是 JVM 的逆优化（Deoptimization）？",
-    "answer": "答案：逆优化（Deoptimization）是 JIT 编译器将已编译的机器码回退到解释执行的过程。原因：编译时的假设不再成立。\n\n触发场景：1) 类层次变更（-XX:+PrintCompilation 输出 made not entrant）——C2 假设某接口/抽象类只有一个实现（CHA 分析），后来加载了新子类使假设不成立。2) 偏转锁撤销失败。3) 组合编译假设被打破。4) 激进优化（如 null check elimination）假设不成立。\n\n执行机制：JVM 在被逆优化的方法入口处设置陷阱（trap），下次调用时进入解释器。编译代码被标记为 not entrant（不再进入）或 zombie（僵尸代码，后续被 Code Cache 清理）。\n\n性能影响：频繁逆优化导致性能抖动（重新解释执行直到重新编译）。常见于 C2 的不稳定类型假设被打破。\n\n监控：-XX:+UnlockDiagnosticVMOptions -XX:+PrintDeoptimizationWarning 和 JFR 的 Deoptimization Event。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 safe point 机制？为什么不能在所有指令处设置？",
-    "content": "什么是 JVM 的 safe point 机制？为什么不能在所有指令处设置？",
-    "answer": "答案：SafePoint 是线程可以安全暂停检查 GC 请求的点。设置原则：频繁足够以便及时响应 GC 请求（不导致 GC 等待太久），稀疏足够以减少运行时开销。\n\nSafePoint 位置：方法调用的返回处、循环回跳处、异常抛出处。这些位置是 JVM 的字节码执行流自然中断的地方。\n\n为什么不能所有指令都设置：每个 SafePoint 需要 JIT 编译器插入 OOP Map（记录了哪些栈位置是对象引用），全部指令设置 OOP Map 会爆炸性增加元数据内存和编译时间。\n\n线程阻塞在 SafePoint 外的手段：JVM 采用 Safepoint Polling——在方法返回和循环回跳处检查全局的 Safepoint 状态页（guard page），如果需要暂停则 trap 进入 Safepoint 处理。\n\nTTSP（Time To Safepoint）：从发起 Safepoint 到所有线程到达 Safepoint 的时间。长 TTSP 可能由不检查 Safepoint 的循环导致（-XX:+UseCountedLoopSafepoints 强制计数循环检查 SafePoint）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Object.notify() 和 notifyAll() 的底层实现？",
-    "content": "什么是 JVM 的 Object.notify() 和 notifyAll() 的底层实现？",
-    "answer": "答案：notify() 和 notifyAll() 的底层行为通过 ObjectMonitor 实现（重量级锁阶段）。\n\nnotify() 实现：从 ObjectMonitor 的 _WaitSet 队列头部取出一个线程（或根据策略选择），将其状态从 WAITING 改为就绪（移入 _cxq 或 _EntryList）。具体：将线程从 _WaitSet 移除，移动到 _EntryList 尾部（JDK 8 的默认行为），称为 unpark 操作。\n\nnotifyAll() 实现：将 _WaitSet 中所有线程转移到 _EntryList（或 _cxq），它们都会竞争锁但不是同时获得（队列顺序依次获得）。\n\n线程被唤醒后的行为：线程重新竞争锁（不保证立即获得）。notify 后原持有锁的线程仍持有锁（未释放 notify 后保持锁直到退出 synchronized 块）。建议：在 synchronized 块末尾再 notify（避免刚唤醒的线程再次阻塞）。\n\nspurious wakeup（虚假唤醒）：即使没有 notify，等待的线程也可能被唤醒。所以 wait() 必须在循环中检查条件。\n\n高级：_WaitSet 使用双向链表，_cxq 使用单向链表（CAS 操作），_EntryList 使用双向链表。notify 选择 _WaitSet 中的线程使用 Monitor Deflation 策略（偏向于先进先出）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 System.gc() 和 GC 调优的 ExplicitGCInvokesConcurrent？",
-    "content": "什么是 JVM 的 System.gc() 和 GC 调优的 ExplicitGCInvokesConcurrent？",
-    "answer": "答案：System.gc() 触发 Full GC（默认是 STW 的 Full GC）。对于 G1 GC，System.gc() 默认是串行 Full GC（单线程）。\n\n-XX:+ExplicitGCInvokesConcurrent：将 System.gc() 从串行 Full GC 改为并发 GC（G1 的并发周期或 Parallel 的并行 Full GC）。这个参数对使用 NIO/DirectByteBuffer 的应用特别重要（DirectByteBuffer 在大块堆外内存分配失败时会调用 System.gc() 触发堆内 DirectByteBuffer 对象的回收，从而触发 Cleaner）。\n\n-XX:+DisableExplicitGC：完全禁用 System.gc() 的调用。适合 RMI 等框架会定时触发 GC 的场景。注意：关闭后 DirectByteBuffer 的回收可能不及时，需要 -XX:MaxDirectMemorySize 控制。\n\n最佳实践：生产环境推荐 -XX:+ExplicitGCInvokesConcurrent（G1/ZGC）。-XX:+DisableExplicitGC 需要确认应用不依赖 System.gc() 来回收直接内存。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Synchronized 的锁消除（Lock Elision）和锁粗化（Lock Coarsening）？",
-    "content": "什么是 JVM 的 Synchronized 的锁消除（Lock Elision）和锁粗化（Lock Coarsening）？",
-    "answer": "答案：锁消除（Lock Elimination）：JIT 通过逃逸分析发现同步代码块中的对象不逃逸出当前线程，消除锁操作。优化基础：如果对象只有一个线程可以访问，synchronized 没有意义。\n\n例子：StringBuffer（线程安全的字符串拼接）在方法内使用时无多线程竞争——JIT 消除 StringBuffer 的锁。\n\n锁粗化（Lock Coarsening）：JIT 将连续的细粒度锁合并为一个粗粒度锁，减少获取/释放锁的开销。\n\n例子：循环中的 StringBuilder 如果每次迭代 append 前都加锁，JIT 将锁粗化为循环外（只加一次锁）。\n\n控制参数：-XX:+EliminateLocks（默认开启，锁消除）。-XX:+UseOptoBiasInlining（Bias 锁的内联优化）。\n\n注意：逃逸分析不逃逸 + 锁消除是 JIT 最强大的优化组合之一。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Epsilon GC 在性能测试中的应用？",
-    "content": "什么是 JVM 的 Epsilon GC 在性能测试中的应用？",
-    "answer": "答案：Epsilon GC（-XX:+UseEpsilonGC）是 JDK 11 引入的无操作 GC——完全不执行垃圾回收。\n\n性能测试中的价值：1) 基准线测量（Baseline）——消除 GC 噪音后的极致性能，与其他 GC 对比量化 GC 开销。2) 分配吞吐量上限测量——在不考虑回收的情况下测量分配压力最大性能。3) 延迟毛刺最小化——验证应用程序在无 GC 情况下的延迟地板值。\n\n典型对比实验：-XX:+UseSerialGC（串行基准）→ -XX:+UseG1GC（G1 延迟）→ -XX:+UseZGC（ZGC 并发）→ -XX:+UseEpsilonGC（理论上限）。差异 = 各个 GC 引入的性能成本。\n\n注意：Epsilon 只在确定程序生命周期内不会堆满时可用（例如短时间基准测试或一次性批处理）。Epsilon 不适用于运行时间不确定的应用。\n\nJDK 11+ Epsilon 是实验性参数（-XX:+UnlockExperimentalVMOptions -XX:+UseEpsilonGC）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的虚拟线程的 Continuation 机制？",
-    "content": "什么是 JVM 的虚拟线程的 Continuation 机制？",
-    "answer": "答案：虚拟线程（Project Loom）的核心实现机制——Continuation（延续性）。Continuation 保存和恢复执行状态（栈帧、局部变量、程序计数器）的能力。\n\nJVM 内部的 Continuation：一个包含未完成计算的对象。可以调用 Continuation.yield() 暂停执行并保存状态到堆中，之后调用 Continuation.run() 恢复执行。\n\n与虚拟线程的关系：每个虚拟线程内部包装了一个 Continuation。当虚拟线程在阻塞点阻塞时，Continuation.yield() 被调用，栈帧从平台线程栈拷贝到堆中的 Continuation 对象。当虚拟线程被唤醒时，Continuation.run() 从堆中恢复栈帧到平台线程栈。\n\n实现细节：JVM 通过改变线程的栈基址和栈指针来实现 Continuation 的 mount/unmount。Carrier 线程（平台线程）在执行虚拟线程的 Continuation 代码时，使用的是 Carrier 线程的物理栈，但栈帧逻辑上属于虚拟线程。yield 时通过 JVM 的 cont-op 将栈帧从 Carrier 线程栈拷贝到堆中的字节数组中。\n\n关键优化：虚拟线程的 Continuation 栈拷贝的量取决于实际使用深度，而非固定最大栈（通常只有几十 KB，不像平台线程预分配 1MB+ 栈空间）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
-    ]
-  },
-  {
-    "category": "jvm",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "什么是 JVM 的 Stack Walking API（JDK 9+）？",
-    "content": "什么是 JVM 的 Stack Walking API（JDK 9+）？",
-    "answer": "答案：Stack Walking API（JDK 9+，java.lang.StackWalker）是获取调用栈的新方法，比 Throwable.getStackTrace() 更高效。\n\n基本用法：StackWalker.getInstance().forEach(frame -> System.out.println(frame.getClassName() + '.' + frame.getMethodName()))。\n\nStackWalker.Option：RETAIN_CLASS_REFERENCE（保留 Class 引用，支持反射获取调用者类）、SHOW_REFLECT_FRAMES（显示反射调用帧）、SHOW_HIDDEN_FRAMES（显示 JVM 内部帧）。\n\n效率对比：Throwable.getStackTrace() 每次创建快照创建完整栈帧数组。StackWalker 支持延迟遍历（Lazy Traversal，只保留当前帧，每次 walk 消耗一帧）。StackWalker 在获取调用者 Class 时比 sun.reflect.Reflection.getCallerClass() 更高效（后者需要 JVM 内部方法支持）。\n\n使用场景：日志框架获取调用者信息（Logger 的调用链）、安全框架的访问控制（检查调用链中的权限）、性能分析（特定方法调用轨迹）。",
-    "hints": [],
-    "tags": [
-      "JVM扩展"
+      "Java 17"
     ]
   }
 ]

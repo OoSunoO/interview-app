@@ -1,7 +1,7 @@
 [
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JVM 垃圾回收算法",
     "content": "请介绍 JVM 中常见的垃圾回收算法及其优缺点。",
@@ -18,7 +18,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "线程池的核心参数",
     "content": "请解释 ThreadPoolExecutor 的核心参数及其作用。",
@@ -51,7 +51,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "NIO 与 BIO 的区别",
     "content": "请比较 Java NIO 和传统 BIO 的区别及适用场景。",
@@ -84,7 +84,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "泛型的类型擦除",
     "content": "请解释 Java 泛型的类型擦除机制及其影响。",
@@ -100,7 +100,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "类加载机制与双亲委派模型",
     "content": "请描述 JVM 类加载机制和双亲委派模型的工作原理。",
@@ -117,7 +117,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ReentrantLock 与 synchronized 的区别",
     "content": "请比较 ReentrantLock 和 synchronized 的区别。",
@@ -133,7 +133,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "CompletableFuture 异步编程",
     "content": "请介绍 CompletableFuture 的核心用法及异步编排能力。",
@@ -165,7 +165,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "JVM 垃圾回收器选型",
     "content": "关于 JVM 垃圾回收器，以下说法正确的是？",
@@ -175,7 +175,7 @@
       "C) CMS 是并行回收器",
       "D) G1 是分代收集器"
     ],
-    "answer": "答案：D) G1 是分代收集器\n\n解析：G1 将堆划分成多个 Region，兼顾新生代和老年代。新生代使用标记-复制算法，老年代使用标记-整理算法。CMS 是并发回收器（非并行），目标是降低停顿时间。\n\n扩展延伸：G1 的设计目标是替代 CMS，支持可预测的停顿时间模型（-XX:MaxGCPauseMillis）。相比 CMS，G1 的优势在于减少了内存碎片且停顿更可预测。推荐阅读《深入理解 Java 虚拟机》第 3 章。",
+    "answer": "D) G1 是分代收集器\n\n解析：G1 将堆划分成多个 Region，兼顾新生代和老年代。新生代使用标记-复制算法，老年代使用标记-整理算法。CMS 是并发回收器（非并行），目标是降低停顿时间。\n\n扩展延伸：G1 的设计目标是替代 CMS，支持可预测的停顿时间模型（-XX:MaxGCPauseMillis）。相比 CMS，G1 的优势在于减少了内存碎片且停顿更可预测。推荐阅读《深入理解 Java 虚拟机》第 3 章。",
     "hints": [
       "CMS 和 G1 的核心区别",
       "什么是 Stop-The-World"
@@ -188,7 +188,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "choice",
     "title": "ThreadPoolExecutor 描述错误的是",
     "content": "以下关于 ThreadPoolExecutor 的描述，错误的是？",
@@ -198,7 +198,7 @@
       "C) 默认拒绝策略是 AbortPolicy",
       "D) keepAliveTime 对核心线程也生效"
     ],
-    "answer": "答案：D) keepAliveTime 对核心线程也生效\n\n解析：keepAliveTime 默认只对超出 corePoolSize 的额外空闲线程生效。核心线程默认一直存活，如需要对核心线程也生效需调用 allowCoreThreadTimeOut(true)。\n\n扩展延伸：线程池处理流程：提交任务 → 核心线程满 → 入队列 → 队列满 → 创建新线程至 maximumPoolSize → 超限则执行拒绝策略。四种拒绝策略：AbortPolicy（默认，抛异常）、CallerRunsPolicy（调用者线程执行）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃最旧未处理任务）。",
+    "answer": "D) keepAliveTime 对核心线程也生效\n\n解析：keepAliveTime 默认只对超出 corePoolSize 的额外空闲线程生效。核心线程默认一直存活，如需要对核心线程也生效需调用 allowCoreThreadTimeOut(true)。\n\n扩展延伸：线程池处理流程：提交任务 → 核心线程满 → 入队列 → 队列满 → 创建新线程至 maximumPoolSize → 超限则执行拒绝策略。四种拒绝策略：AbortPolicy（默认，抛异常）、CallerRunsPolicy（调用者线程执行）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃最旧未处理任务）。",
     "hints": [
       "线程池处理任务的完整流程",
       "四种拒绝策略分别是什么"
@@ -210,7 +210,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "Java 并发包同步辅助类",
     "content": "以下哪个属于 java.util.concurrent 包中的同步辅助类？",
@@ -220,7 +220,7 @@
       "C) FileReader",
       "D) StringBuffer"
     ],
-    "answer": "答案：B) CountDownLatch\n\n解析：CountDownLatch 是 java.util.concurrent 包中的同步辅助类，允许一个或多个线程等待其他线程完成操作。类似工具还包括 CyclicBarrier（可循环屏障）和 Semaphore（信号量，控制并发数量）。\n\n扩展延伸：CountDownLatch 与 CyclicBarrier 的关键区别：CountDownLatch 是一次性的、一个或多个线程等待其他线程完成；CyclicBarrier 是可循环使用的、多个线程相互等待到达同一屏障点。Semaphore 适用于限流场景，通过 acquire/release 控制许可证数量。",
+    "answer": "B) CountDownLatch\n\n解析：CountDownLatch 是 java.util.concurrent 包中的同步辅助类，允许一个或多个线程等待其他线程完成操作。类似工具还包括 CyclicBarrier（可循环屏障）和 Semaphore（信号量，控制并发数量）。\n\n扩展延伸：CountDownLatch 与 CyclicBarrier 的关键区别：CountDownLatch 是一次性的、一个或多个线程等待其他线程完成；CyclicBarrier 是可循环使用的、多个线程相互等待到达同一屏障点。Semaphore 适用于限流场景，通过 acquire/release 控制许可证数量。",
     "hints": [
       "CountDownLatch 和 CyclicBarrier 的区别",
       "Semaphore 的作用"
@@ -232,7 +232,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Java 泛型运行时类型信息",
     "content": "Java 泛型在运行时可以获取具体的泛型参数类型。",
@@ -240,7 +240,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误\n\n解析：Java 泛型通过类型擦除实现，编译后泛型参数信息被擦除为原始类型（Raw Type），List<String> 和 List<Integer> 运行时是同一个 Class。但可通过反射和 TypeToken 技巧间接获取泛型参数。\n\n扩展延伸：类型擦除的具体过程：编译器将 T 替换为 Object（无界）或上界类型，并插入必要的强制转换。桥方法（Bridge Method）是编译器在子类中生成的合成方法，确保多态正确。推荐阅读《Java 核心技术 卷 I》第 8 章泛型部分。",
+    "answer": "错误\n\n解析：Java 泛型通过类型擦除实现，编译后泛型参数信息被擦除为原始类型（Raw Type），List<String> 和 List<Integer> 运行时是同一个 Class。但可通过反射和 TypeToken 技巧间接获取泛型参数。\n\n扩展延伸：类型擦除的具体过程：编译器将 T 替换为 Object（无界）或上界类型，并插入必要的强制转换。桥方法（Bridge Method）是编译器在子类中生成的合成方法，确保多态正确。推荐阅读《Java 核心技术 卷 I》第 8 章泛型部分。",
     "hints": [
       "类型擦除的具体过程",
       "什么是桥方法"
@@ -260,7 +260,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确\n\n解析：ReentrantLock 构造器接受 fair 参数控制模式。公平锁按线程等待时间顺序获取锁，避免饥饿但吞吐量低；非公平锁允许插队（默认），性能更高但极端情况可能导致线程饥饿。\n\n扩展延伸：synchronized 是非公平的，性能与 ReentrantLock 差距已缩小（JDK 6 锁优化）。ReentrantLock 在需要可中断锁、定时锁、公平锁或条件变量（Condition）的场景仍不可替代。推荐阅读《Java 并发编程实战》第 13 章。",
+    "answer": "正确\n\n解析：ReentrantLock 构造器接受 fair 参数控制模式。公平锁按线程等待时间顺序获取锁，避免饥饿但吞吐量低；非公平锁允许插队（默认），性能更高但极端情况可能导致线程饥饿。\n\n扩展延伸：synchronized 是非公平的，性能与 ReentrantLock 差距已缩小（JDK 6 锁优化）。ReentrantLock 在需要可中断锁、定时锁、公平锁或条件变量（Condition）的场景仍不可替代。推荐阅读《Java 并发编程实战》第 13 章。",
     "hints": [
       "公平锁和非公平锁的性能差异",
       "synchronized 是公平的还是非公平的"
@@ -272,11 +272,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ThreadLocal 内存泄漏场景",
     "content": "ThreadLocal 为什么可能导致内存泄漏？使用时应注意什么？",
-    "answer": "答案：ThreadLocalMap 的 key 是弱引用（WeakReference），value 是强引用\n\n解析：ThreadLocalMap.Entry 继承 WeakReference，key（ThreadLocal 实例）为弱引用，value 为强引用。当 ThreadLocal 外部强引用被回收后，GC 会回收 key（弱引用），但 value 仍有强引用链（Thread → ThreadLocalMap → Entry → value）。只要线程存活，value 就无法回收，造成内存泄漏。\n\n扩展延伸：最佳实践 1）每次使用后调用 remove() 清除 Entry 2）使用 try-finally 确保 remove 执行 3）线程池场景尤其危险——线程复用会持续累积泄漏。Tomcat、Jetty 等容器经常有大流量经过，ThreadLocal 泄漏可能快速撑满老年代引发 Full GC。",
+    "answer": "ThreadLocalMap 的 key 是弱引用（WeakReference），value 是强引用\n\n解析：ThreadLocalMap.Entry 继承 WeakReference，key（ThreadLocal 实例）为弱引用，value 为强引用。当 ThreadLocal 外部强引用被回收后，GC 会回收 key（弱引用），但 value 仍有强引用链（Thread → ThreadLocalMap → Entry → value）。只要线程存活，value 就无法回收，造成内存泄漏。\n\n扩展延伸：最佳实践 1）每次使用后调用 remove() 清除 Entry 2）使用 try-finally 确保 remove 执行 3）线程池场景尤其危险——线程复用会持续累积泄漏。Tomcat、Jetty 等容器经常有大流量经过，ThreadLocal 泄漏可能快速撑满老年代引发 Full GC。",
     "hints": [
       "WeakReference 在 GC 时怎么处理",
       "为什么线程池会放大这个泄漏问题"
@@ -290,11 +290,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "线程池异常吞没陷阱",
     "content": "用 ExecutorService.submit() 提交任务，任务中抛出的运行时异常会发生什么？execute() 和 submit() 对异常处理有何区别？",
-    "answer": "答案：submit() 会吞没异常，execute() 会抛出异常\n\n解析：submit() 返回 Future，任务异常被封装在 Future.get() 返回的 ExecutionException 中。如果从未调用 Future.get()，异常会被静默吞没。execute() 提交的任务抛异常时，未被捕获的异常会传播到线程池的 uncaughtExceptionHandler，线程销毁并创建新线程替换。\n\n扩展延伸：如何避免 1）调用 Future.get() 捕获异常 2）使用 execute() 提交关键任务 3）设置自定义 UncaughtExceptionHandler 记录日志 4）使用 afterExecute() 钩子（ThreadPoolExecutor 扩展点）。生产中线上问题排查往往因异常被吞没而无从下手，建议所有 submit 的任务都显式处理异常。",
+    "answer": "submit() 会吞没异常，execute() 会抛出异常\n\n解析：submit() 返回 Future，任务异常被封装在 Future.get() 返回的 ExecutionException 中。如果从未调用 Future.get()，异常会被静默吞没。execute() 提交的任务抛异常时，未被捕获的异常会传播到线程池的 uncaughtExceptionHandler，线程销毁并创建新线程替换。\n\n扩展延伸：如何避免 1）调用 Future.get() 捕获异常 2）使用 execute() 提交关键任务 3）设置自定义 UncaughtExceptionHandler 记录日志 4）使用 afterExecute() 钩子（ThreadPoolExecutor 扩展点）。生产中线上问题排查往往因异常被吞没而无从下手，建议所有 submit 的任务都显式处理异常。",
     "hints": [
       "Future.get() 会抛出什么异常",
       "execute 和 submit 内部实现有何不同"
@@ -308,11 +308,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ConcurrentModificationException 场景",
     "content": "在什么情况下会抛出 ConcurrentModificationException？如何在遍历时安全删除集合元素？",
-    "answer": "答案：遍历集合时直接调用集合的 remove/add 方法会抛此异常\n\n解析：ArrayList、HashMap 等集合的迭代器采用 fail-fast 机制，内部维护 modCount 计数器。遍历期间若非通过迭代器修改集合（如 list.remove()），modCount 与预期值不符即抛出 ConcurrentModificationException。\n\n扩展延伸：三种安全删除方式 1）使用 Iterator.remove()（单线程安全）2）使用 ConcurrentHashMap/CopyOnWriteArrayList（并发场景）3）使用 Java 8 的 removeIf() 内部已处理迭代器同步。需要注意的是，即使单线程也可能在多处代码间接修改集合时触发此异常。",
+    "answer": "遍历集合时直接调用集合的 remove/add 方法会抛此异常\n\n解析：ArrayList、HashMap 等集合的迭代器采用 fail-fast 机制，内部维护 modCount 计数器。遍历期间若非通过迭代器修改集合（如 list.remove()），modCount 与预期值不符即抛出 ConcurrentModificationException。\n\n扩展延伸：三种安全删除方式 1）使用 Iterator.remove()（单线程安全）2）使用 ConcurrentHashMap/CopyOnWriteArrayList（并发场景）3）使用 Java 8 的 removeIf() 内部已处理迭代器同步。需要注意的是，即使单线程也可能在多处代码间接修改集合时触发此异常。",
     "hints": [
       "迭代器的 fail-fast 机制是什么",
       "CopyOnWriteArrayList 为什么不会抛此异常"
@@ -325,11 +325,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "线上 CPU 100% 排查思路",
     "content": "线上应用突然 CPU 持续 100%，你如何定位根因？请描述完整排查流程。",
-    "answer": "答案：top → top -H → jstack → 分析线程栈\n\n解析：1）top 确认 CPU 100% 的进程 PID 2）top -H -p PID 找到 CPU 最高的线程 TID 3）printf '%x\\n' TID 转十六进制 4）jstack PID | grep -A 30 TID_HEX 查看线程栈。常见原因包括：死循环（无锁）、频繁 GC（内存不足/泄漏）、锁竞争激烈（上下文切换开销）、正则表达式回溯过多。\n\n扩展延伸：如果是频繁 GC 导致 CPU 高，重点排查堆内存和 GC 日志。如果是锁竞争，看线程是否大量处于 BLOCKED 状态。如果周期性飙升，可能和大对象分配/定时任务有关。高级工具：Arthas（在线诊断）、async-profiler（火焰图）、VisualVM（离线分析）。",
+    "answer": "top → top -H → jstack → 分析线程栈\n\n解析：1）top 确认 CPU 100% 的进程 PID 2）top -H -p PID 找到 CPU 最高的线程 TID 3）printf '%x\\n' TID 转十六进制 4）jstack PID | grep -A 30 TID_HEX 查看线程栈。常见原因包括：死循环（无锁）、频繁 GC（内存不足/泄漏）、锁竞争激烈（上下文切换开销）、正则表达式回溯过多。\n\n扩展延伸：如果是频繁 GC 导致 CPU 高，重点排查堆内存和 GC 日志。如果是锁竞争，看线程是否大量处于 BLOCKED 状态。如果周期性飙升，可能和大对象分配/定时任务有关。高级工具：Arthas（在线诊断）、async-profiler（火焰图）、VisualVM（离线分析）。",
     "hints": [
       "如何将线程 ID 从十进制转十六进制",
       "jstack 输出的线程状态有哪些含义"
@@ -342,11 +342,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "死锁的排查与预防",
     "content": "请描述死锁的四个必要条件，以及如何排查和预防死锁。",
-    "answer": "答案：互斥、占有且等待、不可抢占、循环等待\n\n解析：排查死锁步骤 1）jps 找到进程 PID 2）jstack PID 搜索 deadlock 关键字 3）JVM 会在死锁检测中输出线程持有和等待的锁信息。预防策略：统一加锁顺序（最重要的）、使用 tryLock 带超时（Lock API）、缩小锁粒度、使用无锁数据结构。\n\n扩展延伸：实战中数据库死锁比代码死锁更常见——两个事务以不同顺序加行锁导致。从死锁恢复：jstack 检测后可以 kill -3 触发线程转储，或重启进程。长期方案：代码审查中加入锁顺序检查、使用静态分析工具（FindBugs 等）检测违反锁顺序的代码。",
+    "answer": "互斥、占有且等待、不可抢占、循环等待\n\n解析：排查死锁步骤 1）jps 找到进程 PID 2）jstack PID 搜索 deadlock 关键字 3）JVM 会在死锁检测中输出线程持有和等待的锁信息。预防策略：统一加锁顺序（最重要的）、使用 tryLock 带超时（Lock API）、缩小锁粒度、使用无锁数据结构。\n\n扩展延伸：实战中数据库死锁比代码死锁更常见——两个事务以不同顺序加行锁导致。从死锁恢复：jstack 检测后可以 kill -3 触发线程转储，或重启进程。长期方案：代码审查中加入锁顺序检查、使用静态分析工具（FindBugs 等）检测违反锁顺序的代码。",
     "hints": [
       "jstack 输出中如何识别死锁",
       "为什么统一加锁顺序可以预防死锁"
@@ -359,11 +359,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "线上 OOM 排查完整流程",
     "content": "线上服务频繁 OOM，你如何定位内存泄漏的根因？",
-    "answer": "答案：配置 OOM dump → 使用 MAT/Eclipse Memory Analyzer 分析\n\n解析：排查流程 1）JVM 启动参数上加 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof 2）服务 OOM 后自动生成 dump 文件 3）用 MAT 打开 dump，查看 Leak Suspects Report（泄漏嫌疑报告）4）查看 Dominator Tree（支配树），按保留堆大小排序找最大对象 5）检查 GC Roots 引用链确定泄漏源头。\n\n扩展延伸：常见泄漏类型 a）集合类泄漏（HashMap key 未移除）b）回调/监听器未注销 c）类加载器泄漏（Tomcat 热部署）d）ThreadLocal 不 remove e）直接内存泄漏（ByteBuffer.allocateDirect 未释放）。建议结合 jstat -gcutil 观察 GC 趋势和内存上涨斜率来预警。",
+    "answer": "配置 OOM dump → 使用 MAT/Eclipse Memory Analyzer 分析\n\n解析：排查流程 1）JVM 启动参数上加 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof 2）服务 OOM 后自动生成 dump 文件 3）用 MAT 打开 dump，查看 Leak Suspects Report（泄漏嫌疑报告）4）查看 Dominator Tree（支配树），按保留堆大小排序找最大对象 5）检查 GC Roots 引用链确定泄漏源头。\n\n扩展延伸：常见泄漏类型 a）集合类泄漏（HashMap key 未移除）b）回调/监听器未注销 c）类加载器泄漏（Tomcat 热部署）d）ThreadLocal 不 remove e）直接内存泄漏（ByteBuffer.allocateDirect 未释放）。建议结合 jstat -gcutil 观察 GC 趋势和内存上涨斜率来预警。",
     "hints": [
       "HeapDumpOnOutOfMemoryError 有什么用",
       "MAT 的 Leak Suspects 和 Dominator Tree 分别看什么"
@@ -377,7 +377,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "choice",
     "title": "AQS 的核心实现原理",
     "content": "关于 AbstractQueuedSynchronizer（AQS）的核心实现原理，以下描述正确的是？",
@@ -387,7 +387,7 @@
       "C) AQS 只支持独占模式",
       "D) AQS 基于自旋锁实现"
     ],
-    "answer": "答案：B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列\n\n解析：AQS 维护一个 volatile int state（同步状态）和一个 CLH 双向队列（等待线程队列）。通过 CAS 操作 state，子类通过 tryAcquire/tryRelease 模板方法控制状态变化。支持独占（如 ReentrantLock）和共享（如 Semaphore）两种模式。\n\n扩展延伸：AQS 是 JUC 包的基石，基于它的同步器包括 ReentrantLock（tryAcquire）、Semaphore（tryAcquireShared）、CountDownLatch（tryAcquireShared）、ReentrantReadWriteLock（读写分离）。条件队列（ConditionObject）也是 AQS 的内部实现。",
+    "answer": "B) AQS 的核心是一个 volatile int 状态变量和 CLH 双向队列\n\n解析：AQS 维护一个 volatile int state（同步状态）和一个 CLH 双向队列（等待线程队列）。通过 CAS 操作 state，子类通过 tryAcquire/tryRelease 模板方法控制状态变化。支持独占（如 ReentrantLock）和共享（如 Semaphore）两种模式。\n\n扩展延伸：AQS 是 JUC 包的基石，基于它的同步器包括 ReentrantLock（tryAcquire）、Semaphore（tryAcquireShared）、CountDownLatch（tryAcquireShared）、ReentrantReadWriteLock（读写分离）。条件队列（ConditionObject）也是 AQS 的内部实现。",
     "hints": [
       "ReentrantLock 和 Semaphore 在 AQS 上的实现差异",
       "CLH 队列和条件队列的关系"
@@ -399,7 +399,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "虚拟线程与平台线程的关系",
     "content": "JDK 21 的虚拟线程（Virtual Threads）旨在完全替代平台线程（Platform Threads）。",
@@ -407,7 +407,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：错误\n\n解析：虚拟线程是 JDK 实现的用户态线程（纤程），挂载在平台线程上执行，不是替代关系。适用 IO 密集型任务（大量阻塞等待），不适用 CPU 密集型任务。虚拟线程的优势在于可以创建数百万级别，但同步锁（synchronized）内会 pin 住载体线程，建议改用 ReentrantLock。\n\n扩展延伸：虚拟线程底层通过 Continuation 实现 yield 和 resume，遇到阻塞操作时自动从载体线程卸载。使用时注意：synchronized 块内虚拟线程不会卸载，大量 synchronized 会降低虚拟线程的优势。推荐阅读 JEP 444。",
+    "answer": "错误\n\n解析：虚拟线程是 JDK 实现的用户态线程（纤程），挂载在平台线程上执行，不是替代关系。适用 IO 密集型任务（大量阻塞等待），不适用 CPU 密集型任务。虚拟线程的优势在于可以创建数百万级别，但同步锁（synchronized）内会 pin 住载体线程，建议改用 ReentrantLock。\n\n扩展延伸：虚拟线程底层通过 Continuation 实现 yield 和 resume，遇到阻塞操作时自动从载体线程卸载。使用时注意：synchronized 块内虚拟线程不会卸载，大量 synchronized 会降低虚拟线程的优势。推荐阅读 JEP 444。",
     "hints": [
       "虚拟线程和操作系统线程的映射关系",
       "什么场景下虚拟线程性能不如平台线程"
@@ -420,7 +420,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "CAS 操作的 ABA 问题",
     "content": "CAS 操作中的 ABA 问题是指什么？以下哪种方式可以解决？",
@@ -430,7 +430,7 @@
       "C) 使用 synchronized 代替 CAS",
       "D) 增大自旋次数"
     ],
-    "answer": "答案：A) 值从 A 变 B 又变回 A，CAS 误认为未修改过\n\n解析：ABA 问题的本质是 CAS 只检查值是否和预期相同，不关心中间是否修改过。在指针复用场景中特别危险（如栈操作时，A→B→A 的指针可能指向已被回收的对象）。\n\n扩展延伸：解决方案 1）AtomicStampedReference（带版本号的原子引用，每次修改更新 stamp）2）AtomicMarkableReference（带布尔标记）3）使用传统的锁。Java 的 ConcurrentLinkedDeque 等无锁数据结构内部已处理了 ABA 问题。",
+    "answer": "A) 值从 A 变 B 又变回 A，CAS 误认为未修改过\n\n解析：ABA 问题的本质是 CAS 只检查值是否和预期相同，不关心中间是否修改过。在指针复用场景中特别危险（如栈操作时，A→B→A 的指针可能指向已被回收的对象）。\n\n扩展延伸：解决方案 1）AtomicStampedReference（带版本号的原子引用，每次修改更新 stamp）2）AtomicMarkableReference（带布尔标记）3）使用传统的锁。Java 的 ConcurrentLinkedDeque 等无锁数据结构内部已处理了 ABA 问题。",
     "hints": [
       "AtomicStampedReference 和 AtomicReference 的区别",
       "为什么说 ABA 问题对数值操作通常无害"
@@ -442,11 +442,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "锁升级过程（偏向锁→轻量级锁→重量级锁）",
     "content": "请描述 synchronized 在 HotSpot JVM 中的锁升级过程，包括偏向锁、轻量级锁、重量级锁的触发条件和切换机制。",
-    "answer": "答案：无锁 → 偏向锁 → 轻量级锁 → 重量级锁（单向升级，不可降级）\n\n解析：偏向锁：第一个获取锁的线程将对象头 Mark Word 设为偏向模式，记录线程 ID，后续该线程再次获取无需同步操作。轻量级锁：有另一个线程竞争时，偏向锁撤销，升级为轻量级锁（自旋获取）。重量级锁：自旋超过阈值或等待线程数过多，膨胀为重量级锁，未获取到的线程阻塞进入等待队列。\n\n扩展延伸：JDK 15 起默认禁用偏向锁（JEP 374），因为偏向锁的撤销在高并发场景下成本较高（需要在全局安全点执行）。自适应自旋（JDK 6 引入）让 JVM 根据上次自旋结果动态调整自旋次数。",
+    "answer": "无锁 → 偏向锁 → 轻量级锁 → 重量级锁（单向升级，不可降级）\n\n解析：偏向锁：第一个获取锁的线程将对象头 Mark Word 设为偏向模式，记录线程 ID，后续该线程再次获取无需同步操作。轻量级锁：有另一个线程竞争时，偏向锁撤销，升级为轻量级锁（自旋获取）。重量级锁：自旋超过阈值或等待线程数过多，膨胀为重量级锁，未获取到的线程阻塞进入等待队列。\n\n扩展延伸：JDK 15 起默认禁用偏向锁（JEP 374），因为偏向锁的撤销在高并发场景下成本较高（需要在全局安全点执行）。自适应自旋（JDK 6 引入）让 JVM 根据上次自旋结果动态调整自旋次数。",
     "hints": [
       "JDK 15 为什么默认禁用了偏向锁",
       "轻量级锁自旋失败会立即升级吗"
@@ -463,7 +463,7 @@
     "type": "short_answer",
     "title": "JMM 与 happens-before 原则",
     "content": "请解释 Java 内存模型（JMM）中的 happens-before 原则，列举常见的 happens-before 规则。",
-    "answer": "答案：happens-before 确保前一个操作的结果对后续操作可见\n\n解析：JMM 是抽象的内存模型，定义了多线程环境下共享变量的可见性规则。happens-before 原则用于判断数据是否存在竞争，无需关心具体的重排序和内存屏障实现细节。\n\n扩展延伸：八条 happens-before 规则 1）程序次序规则—同一线程前一个操作 happens-before 后一个 2）volatile 规则—volatile 变量的写 happens-before 读 3）锁规则—解锁 happens-before 加锁 4）传递性—A happens-before B, B happens-before C ⇒ A happens-before C 5）线程 start 规则—start() happens-before 该线程任何动作 6）线程 join 规则—线程的所有操作 happens-before join() 返回 7）中断规则—interrupt() happens-before 检测到中断 8）对象终结规则—构造函数结束 happens-before finalize()。",
+    "answer": "happens-before 确保前一个操作的结果对后续操作可见\n\n解析：JMM 是抽象的内存模型，定义了多线程环境下共享变量的可见性规则。happens-before 原则用于判断数据是否存在竞争，无需关心具体的重排序和内存屏障实现细节。\n\n扩展延伸：八条 happens-before 规则 1）程序次序规则—同一线程前一个操作 happens-before 后一个 2）volatile 规则—volatile 变量的写 happens-before 读 3）锁规则—解锁 happens-before 加锁 4）传递性—A happens-before B, B happens-before C ⇒ A happens-before C 5）线程 start 规则—start() happens-before 该线程任何动作 6）线程 join 规则—线程的所有操作 happens-before join() 返回 7）中断规则—interrupt() happens-before 检测到中断 8）对象终结规则—构造函数结束 happens-before finalize()。",
     "hints": [
       "volatile 写和读的 happens-before 关系",
       "传递性如何推导出对某个字段的可见性保证"
@@ -475,11 +475,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "安全点（Safepoint）是什么",
     "content": "请解释 JVM 中的安全点（Safepoint）是什么，它有什么作用？哪些场景会触发全局安全点？",
-    "answer": "答案：Safepoint 是所有线程都到达的一个安全状态点，JVM 在此可以执行全局操作\n\n解析：JVM 需要所有线程到达 Safepoint 才能执行 STW 操作。线程在 Safepoint 时栈状态是确定的，可以安全地进行 GC、偏向锁撤销、类重定义等操作。线程通过主动轮询检查 Safepoint 标志来进入 Safepoint。\n\n扩展延伸：触发全局 Safepoint 的场景：1）GC 停顿（最常见）2）偏向锁撤销 3）JIT 编译优化 4）线程堆栈 dump。Safepoint 导致的长时间停顿问题：循环中没有 Safepoint 轮询点（如大数组遍历）导致线程迟迟无法进入。JVM 参数 -XX:+PrintSafepointStatistics 可打印 Safepoint 日志。",
+    "answer": "Safepoint 是所有线程都到达的一个安全状态点，JVM 在此可以执行全局操作\n\n解析：JVM 需要所有线程到达 Safepoint 才能执行 STW 操作。线程在 Safepoint 时栈状态是确定的，可以安全地进行 GC、偏向锁撤销、类重定义等操作。线程通过主动轮询检查 Safepoint 标志来进入 Safepoint。\n\n扩展延伸：触发全局 Safepoint 的场景：1）GC 停顿（最常见）2）偏向锁撤销 3）JIT 编译优化 4）线程堆栈 dump。Safepoint 导致的长时间停顿问题：循环中没有 Safepoint 轮询点（如大数组遍历）导致线程迟迟无法进入。JVM 参数 -XX:+PrintSafepointStatistics 可打印 Safepoint 日志。",
     "hints": [
       "循环中有没有 Safepoint 轮询点的影响",
       "长时间 STW 的常见原因有哪些"
@@ -495,7 +495,7 @@
     "type": "short_answer",
     "title": "Record 类（JDK 16）",
     "content": "请介绍 Java 14 预览、JDK 16 正式发布的 Record 类型。它和普通类有什么区别？",
-    "answer": "答案：Record 是用于创建不可变数据载体的特殊类，自动生成构造器、getter、equals/hashCode/toString\n\n解析：声明 record Point(int x, int y) {} 等效于一个包含 private final 字段、全参构造器、x()/y() 访问方法（不是 getX()）、equals/hashCode/toString 的普通类。Record 是 final 类，不能继承也不能被继承，所有字段隐式为 final。\n\n扩展延伸：Record 的优势 1）极大简化 POJO/DTO 的编写 2）自动提供的 equals/hashCode 基于所有字段（按值比较而非引用）3）构造器可做验证：Record Point { Point { if (x < 0) throw new IllegalArgumentException(); } }。不适合场景：需要 JPA/Hibernate 代理的实体类、需要继承的类。推荐阅读 JEP 395。",
+    "answer": "Record 是用于创建不可变数据载体的特殊类，自动生成构造器、getter、equals/hashCode/toString\n\n解析：声明 record Point(int x, int y) {} 等效于一个包含 private final 字段、全参构造器、x()/y() 访问方法（不是 getX()）、equals/hashCode/toString 的普通类。Record 是 final 类，不能继承也不能被继承，所有字段隐式为 final。\n\n扩展延伸：Record 的优势 1）极大简化 POJO/DTO 的编写 2）自动提供的 equals/hashCode 基于所有字段（按值比较而非引用）3）构造器可做验证：Record Point { Point { if (x < 0) throw new IllegalArgumentException(); } }。不适合场景：需要 JPA/Hibernate 代理的实体类、需要继承的类。推荐阅读 JEP 395。",
     "hints": [
       "Record 和 Lombok @Data 的区别",
       "Record 的访问方法为什么是字段名而不是 getX()"
@@ -507,7 +507,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "choice",
     "title": "ForkJoinPool 的描述",
     "content": "关于 ForkJoinPool 框架，以下描述正确的是？",
@@ -517,7 +517,7 @@
       "C) ForkJoinPool 的任务队列是全局统一的",
       "D) ForkJoinPool 只能用于递归任务"
     ],
-    "answer": "答案：B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制\n\n解析：ForkJoinPool 采用工作窃取算法：每个工作线程维护自己的双端任务队列，完成自己队列任务后从其他线程队列尾部「窃取」任务执行。这充分利用多核 CPU，减少线程竞争。\n\n扩展延伸：ForkJoinPool.commonPool() 是全局共享实例（默认并行度 = CPU 核心数 - 1）。Java 8 的 parallelStream 默认使用 commonPool。但 I/O 密集型任务不应使用 parallelStream（会阻塞公共池线程）。",
+    "answer": "B) 工作窃取（Work-Stealing）是 ForkJoinPool 的核心机制\n\n解析：ForkJoinPool 采用工作窃取算法：每个工作线程维护自己的双端任务队列，完成自己队列任务后从其他线程队列尾部「窃取」任务执行。这充分利用多核 CPU，减少线程竞争。\n\n扩展延伸：ForkJoinPool.commonPool() 是全局共享实例（默认并行度 = CPU 核心数 - 1）。Java 8 的 parallelStream 默认使用 commonPool。但 I/O 密集型任务不应使用 parallelStream（会阻塞公共池线程）。",
     "hints": [
       "工作窃取算法为什么从队列尾部窃取",
       "parallelStream 使用的什么线程池"
@@ -533,7 +533,7 @@
     "type": "short_answer",
     "title": "JVM 调优方法论与核心原则",
     "content": "JVM 调优应该遵循什么方法论？什么时候需要调优？调优的核心原则是什么？",
-    "answer": "答案：JVM 调优应遵循「问题驱动」原则：先明确症状（GC 频繁/响应抖动/OOM）→ 诊断定位（工具分析）→ 针对性调参 → 验证效果。核心是理解 JVM 的工作原理，而不是死记参数。\n\n解析：调优的前提是明确「为什么需要调优」。常见症状：1）GC 频繁——Young GC 每秒多次或 Full GC 频繁触发。2）响应抖动（Pause）——GC 停顿导致请求延迟突增。3）内存泄漏/OOM——堆内存持续增长无法回收。4）CPU 高但业务 QPS 低——GC 线程或编译线程占 CPU。\n\n诊断工具选型：1）快速排查——jstat -gcutil PID 1000 看 GC 频率和耗时。2）线程问题——jstack 看死锁/卡顿。3）堆分析——jmap -histo 看对象分布，OOM 时 Heap Dump + MAT 分析 Dominator Tree。4）在线诊断——Arthas watch/trace 实时观测方法级调用。5）GC 日志——开启 GC 日志（JDK 8: -Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps；JDK 9+: -Xlog:gc*:file=gc.log），用 GCeasy 在线分析。\n\n扩展延伸：常见调优场景及思路：1）吞吐量优先（批处理/离线计算）→ Parallel Scavenger + Parallel Old，堆设大些减少 GC 次数。2）低延迟优先（在线服务/API）→ G1/ZGC，控制 MaxGCPauseMillis。3）内存占用优先（资源受限）→ 合理设 Xmx，避免内存泄漏。4）容器化环境注意 -Xmx 不能超过容器内存限制，UseContainerSupport（JDK 8u191+ 默认开启）。\n\n黄金原则：不要为了调优而调优——先确认问题，再针对性调参。调优后用 GC 日志验证效果，持续监控。理解 JVM 的内存模型和 GC 算法比记忆具体参数重要得多。",
+    "answer": "JVM 调优应遵循「问题驱动」原则：先明确症状（GC 频繁/响应抖动/OOM）→ 诊断定位（工具分析）→ 针对性调参 → 验证效果。核心是理解 JVM 的工作原理，而不是死记参数。\n\n解析：调优的前提是明确「为什么需要调优」。常见症状：1）GC 频繁——Young GC 每秒多次或 Full GC 频繁触发。2）响应抖动（Pause）——GC 停顿导致请求延迟突增。3）内存泄漏/OOM——堆内存持续增长无法回收。4）CPU 高但业务 QPS 低——GC 线程或编译线程占 CPU。\n\n诊断工具选型：1）快速排查——jstat -gcutil PID 1000 看 GC 频率和耗时。2）线程问题——jstack 看死锁/卡顿。3）堆分析——jmap -histo 看对象分布，OOM 时 Heap Dump + MAT 分析 Dominator Tree。4）在线诊断——Arthas watch/trace 实时观测方法级调用。5）GC 日志——开启 GC 日志（JDK 8: -Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps；JDK 9+: -Xlog:gc*:file=gc.log），用 GCeasy 在线分析。\n\n扩展延伸：常见调优场景及思路：1）吞吐量优先（批处理/离线计算）→ Parallel Scavenger + Parallel Old，堆设大些减少 GC 次数。2）低延迟优先（在线服务/API）→ G1/ZGC，控制 MaxGCPauseMillis。3）内存占用优先（资源受限）→ 合理设 Xmx，避免内存泄漏。4）容器化环境注意 -Xmx 不能超过容器内存限制，UseContainerSupport（JDK 8u191+ 默认开启）。\n\n黄金原则：不要为了调优而调优——先确认问题，再针对性调参。调优后用 GC 日志验证效果，持续监控。理解 JVM 的内存模型和 GC 算法比记忆具体参数重要得多。",
     "hints": [
       "调优前如何确认 JVM 是否真的需要调优",
       "容器化环境中 JVM 参数配置需要注意什么"
@@ -548,7 +548,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "String.intern() 与常量池",
     "content": "String.intern() 方法会将字符串放入运行时常量池，并返回常量池中的引用。",
@@ -556,7 +556,7 @@
       "正确",
       "错误"
     ],
-    "answer": "答案：正确\n\n解析：intern() 方法检查字符串常量池中是否存在 equals 相等的字符串，存在则返回常量池中的引用，不存在则在常量池中创建并返回引用。JDK 7 之前常量池在方法区（永久代），JDK 7 起常量池移到了堆中。\n\n扩展延伸：大量重复字符串场景下 intern() 可显著节省内存（如数据库查询返回的相同状态码）。但滥用 intern() 会导致常量池膨胀。String 字面量（如 \"hello\"）自动执行 intern 行为，new String(\"hello\") 会创建两个对象：堆中的 String 对象和常量池中的字面量。",
+    "answer": "正确\n\n解析：intern() 方法检查字符串常量池中是否存在 equals 相等的字符串，存在则返回常量池中的引用，不存在则在常量池中创建并返回引用。JDK 7 之前常量池在方法区（永久代），JDK 7 起常量池移到了堆中。\n\n扩展延伸：大量重复字符串场景下 intern() 可显著节省内存（如数据库查询返回的相同状态码）。但滥用 intern() 会导致常量池膨胀。String 字面量（如 \"hello\"）自动执行 intern 行为，new String(\"hello\") 会创建两个对象：堆中的 String 对象和常量池中的字面量。",
     "hints": [
       "new String(\"hello\") 创建了几个对象",
       "JDK 6 和 JDK 7+ 的 intern() 行为有何不同"
@@ -569,11 +569,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "HashMap 线程不安全的表现",
     "content": "为什么 HashMap 是线程不安全的？多线程环境下使用 HashMap 会出现哪些问题？",
-    "answer": "答案：死循环（JDK 7）、数据覆盖、modCount 不一致\n\n解析：JDK 7 中 put 触发扩容时（transfer 方法），头插法在多线程并发 resize 下可能形成环形链表，导致 get 时死循环（CPU 100%）。数据覆盖：两个线程同时 put，后写入覆盖前写入。modCount 不一致：迭代时其他线程修改结构，触发 fail-fast 抛 ConcurrentModificationException。\n\n扩展延伸：JDK 8 改用尾插法修复了死循环问题，但仍有数据覆盖和 ConcurrentModificationException 问题。线程安全替代方案：ConcurrentHashMap（分段锁/CAS + synchronized）、Collections.synchronizedMap（全表锁）、Hashtable（全表锁）。",
+    "answer": "死循环（JDK 7）、数据覆盖、modCount 不一致\n\n解析：JDK 7 中 put 触发扩容时（transfer 方法），头插法在多线程并发 resize 下可能形成环形链表，导致 get 时死循环（CPU 100%）。数据覆盖：两个线程同时 put，后写入覆盖前写入。modCount 不一致：迭代时其他线程修改结构，触发 fail-fast 抛 ConcurrentModificationException。\n\n扩展延伸：JDK 8 改用尾插法修复了死循环问题，但仍有数据覆盖和 ConcurrentModificationException 问题。线程安全替代方案：ConcurrentHashMap（分段锁/CAS + synchronized）、Collections.synchronizedMap（全表锁）、Hashtable（全表锁）。",
     "hints": [
       "JDK 7 的头插法为什么会导致死循环",
       "JDK 8 为什么改为尾插法"
@@ -587,7 +587,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "HashMap 长度为什么是 2 的幂次方",
     "content": "HashMap 要求初始容量是 2 的幂次方，主要原因是什么？",
@@ -597,7 +597,7 @@
       "C) 节省内存空间",
       "D) 方便扩容时重新哈希"
     ],
-    "answer": "答案：B) 可以用位运算 (n - 1) & hash 替代取模提高性能\n\n解析：HashMap 用 (n - 1) & hash 计算桶位置，等价于 hash % n 但位运算更快。这要求 n 是 2 的幂次方，此时 (n-1) 的二进制是全 1，与 hash 做 & 运算能充分利用 hash 值的低位，分布均匀。\n\n扩展延伸：如果指定容量不是 2 的幂，HashMap 会通过 tableSizeFor() 方法向上取整到最近的 2 的幂（通过多次无符号右移和或运算实现）。扩容时重新计算位置：元素在新数组中的位置要么在原位置，要么在原位置 + 旧容量，这得益于容量始终是 2 的幂。",
+    "answer": "B) 可以用位运算 (n - 1) & hash 替代取模提高性能\n\n解析：HashMap 用 (n - 1) & hash 计算桶位置，等价于 hash % n 但位运算更快。这要求 n 是 2 的幂次方，此时 (n-1) 的二进制是全 1，与 hash 做 & 运算能充分利用 hash 值的低位，分布均匀。\n\n扩展延伸：如果指定容量不是 2 的幂，HashMap 会通过 tableSizeFor() 方法向上取整到最近的 2 的幂（通过多次无符号右移和或运算实现）。扩容时重新计算位置：元素在新数组中的位置要么在原位置，要么在原位置 + 旧容量，这得益于容量始终是 2 的幂。",
     "hints": [
       "位运算 (n - 1) & hash 和 hash % n 等价的条件",
       "扩容时元素位置为什么要么不变要么偏移旧容量"
@@ -610,7 +610,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "ConcurrentHashMap 复合操作原子性",
     "content": "关于 ConcurrentHashMap 的原子性，以下说法正确的是？",
@@ -620,7 +620,7 @@
       "C) 遍历时不会抛 ConcurrentModificationException",
       "D) 多线程 put 一定互相覆盖"
     ],
-    "answer": "答案：B) putIfAbsent() 是原子操作，但先 get 再 put 不是\n\n解析：ConcurrentHashMap 的单个方法（put、get、putIfAbsent、replace）是线程安全的原子操作。但组合操作如 if (!map.containsKey(key)) { map.put(key, value); } 不是原子性的，两个线程可能同时通过检查并 put。\n\n扩展延伸：ConcurrentHashMap 提供的原子复合方法：putIfAbsent(key, val)（不存在才 put）、compute(key, (k, v) -> ...)（原子更新）、merge(key, val, (old, new) -> ...)（原子合并）。这些方法内部用 CAS + synchronized 保证原子性。推荐使用这些原子方法替代手动组合的 get-then-put 模式。",
+    "answer": "B) putIfAbsent() 是原子操作，但先 get 再 put 不是\n\n解析：ConcurrentHashMap 的单个方法（put、get、putIfAbsent、replace）是线程安全的原子操作。但组合操作如 if (!map.containsKey(key)) { map.put(key, value); } 不是原子性的，两个线程可能同时通过检查并 put。\n\n扩展延伸：ConcurrentHashMap 提供的原子复合方法：putIfAbsent(key, val)（不存在才 put）、compute(key, (k, v) -> ...)（原子更新）、merge(key, val, (old, new) -> ...)（原子合并）。这些方法内部用 CAS + synchronized 保证原子性。推荐使用这些原子方法替代手动组合的 get-then-put 模式。",
     "hints": [
       "compute() 和 putIfAbsent() 为什么是原子的",
       "先判断 containsKey 再 put 有什么问题"
@@ -634,11 +634,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Java 语法糖",
     "content": "什么是 Java 语法糖？列举 Java 中常见的语法糖及其底层实现。",
-    "answer": "答案：语法糖是编译器提供的便捷语法，本质由编译器 desugar 为底层代码\n\n解析：泛型——编译时擦除为强制转换和 Object 操作。自动拆装箱——编译为 Integer.valueOf() 和 intValue()。for-each 循环——编译为 Iterator 迭代（数组为 fori）。枚举（enum）——编译为继承 Enum 的 final 类。变长参数——编译为数组参数。try-with-resources——编译为 try-finally + close 调用。switch 支持 String——编译为 hashCode + equals。\n\n扩展延伸：语法糖在编译阶段（javac）解析，生成的字节码与手写底层代码等价。反编译工具（如 jad、CFR）可查看 desugar 后的代码。理解语法糖有助于避免陷阱——如 for-each 在遍历时 remove 会抛 ConcurrentModificationException，因为底层仍是 Iterator。",
+    "answer": "语法糖是编译器提供的便捷语法，本质由编译器 desugar 为底层代码\n\n解析：泛型——编译时擦除为强制转换和 Object 操作。自动拆装箱——编译为 Integer.valueOf() 和 intValue()。for-each 循环——编译为 Iterator 迭代（数组为 fori）。枚举（enum）——编译为继承 Enum 的 final 类。变长参数——编译为数组参数。try-with-resources——编译为 try-finally + close 调用。switch 支持 String——编译为 hashCode + equals。\n\n扩展延伸：语法糖在编译阶段（javac）解析，生成的字节码与手写底层代码等价。反编译工具（如 jad、CFR）可查看 desugar 后的代码。理解语法糖有助于避免陷阱——如 for-each 在遍历时 remove 会抛 ConcurrentModificationException，因为底层仍是 Iterator。",
     "hints": [
       "for-each 在遍历删除时会怎样",
       "枚举在字节码层面是什么样的"
@@ -654,7 +654,7 @@
     "type": "short_answer",
     "title": "动态代理原理",
     "content": "请解释 JDK 动态代理和 CGLIB 动态代理的实现原理和区别。Spring AOP 默认使用哪种？",
-    "answer": "答案：JDK 动态代理基于接口实现：通过 Proxy.newProxyInstance() 创建代理类，代理类实现了目标接口并在 InvocationHandler.invoke() 中执行增强逻辑。代理类继承 java.lang.reflect.Proxy。\n\nCGLIB 动态代理基于继承实现：通过 ASM 字节码技术生成目标类的子类（代理类），在子类中重写父类方法并织入增强逻辑。\n\n区别：1）JDK 代理只能代理接口，CGLIB 可以代理普通类；2）JDK 代理使用 Java 反射 API，CGLIB 使用 ASM 直接操作字节码；3）CGLIB 不能代理 final 类和方法；4）CGLIB 性能更好（生成代理类后调用时无需反射）。\n\nSpring AOP 默认策略：如果 Bean 实现了接口，使用 JDK 动态代理；如果 Bean 没有实现接口，使用 CGLIB 代理。可以通过 @EnableAspectJAutoProxy(proxyTargetClass=true) 强制使用 CGLIB。\n\n扩展延伸：Spring Boot 2.0+ 默认将 proxy-target-class 设为 true（总是使用 CGLIB），即使 Bean 实现了接口。这是因为 JDK 代理的类转换限制（只能转换到接口类型）在实际开发中容易引发 ClassCastException。",
+    "answer": "JDK 动态代理基于接口实现：通过 Proxy.newProxyInstance() 创建代理类，代理类实现了目标接口并在 InvocationHandler.invoke() 中执行增强逻辑。代理类继承 java.lang.reflect.Proxy。\n\nCGLIB 动态代理基于继承实现：通过 ASM 字节码技术生成目标类的子类（代理类），在子类中重写父类方法并织入增强逻辑。\n\n区别：1）JDK 代理只能代理接口，CGLIB 可以代理普通类；2）JDK 代理使用 Java 反射 API，CGLIB 使用 ASM 直接操作字节码；3）CGLIB 不能代理 final 类和方法；4）CGLIB 性能更好（生成代理类后调用时无需反射）。\n\nSpring AOP 默认策略：如果 Bean 实现了接口，使用 JDK 动态代理；如果 Bean 没有实现接口，使用 CGLIB 代理。可以通过 @EnableAspectJAutoProxy(proxyTargetClass=true) 强制使用 CGLIB。\n\n扩展延伸：Spring Boot 2.0+ 默认将 proxy-target-class 设为 true（总是使用 CGLIB），即使 Bean 实现了接口。这是因为 JDK 代理的类转换限制（只能转换到接口类型）在实际开发中容易引发 ClassCastException。",
     "hints": [
       "JDK 代理基于接口，CGLIB 基于继承",
       "Spring Boot 2.0+ 默认使用 CGLIB"
@@ -672,7 +672,7 @@
     "type": "short_answer",
     "title": "反射性能优化",
     "content": "Java 反射的性能开销主要来自哪里？有哪些优化反射性能的方法？",
-    "answer": "答案：反射的性能开销主要来自：\n1. 方法查找：Class.getMethod() 需要遍历类的所有 public 方法，时间复杂度 O(N)。\n2. 安全检查：每次 invoke() 都会进行访问权限校验（AccessibleObject 的 checkAccess）。\n3. 参数装箱/拆箱：反射调用时参数需要包装为 Object[]。\n4. JIT 无法内联：反射调用点无法被 JIT 编译器正常内联优化。\n5. 类型检查：每次调用检查方法签名和参数类型是否匹配。\n\n优化方法：\n1. 缓存 Method 对象：将 getMethod() 结果缓存到 Map 中，避免重复查找。\n2. setAccessible(true)：跳过安全检查，显著加速（可以提升 2-3 倍）。\n3. MethodHandles（Java 7+）：比反射更轻量，JIT 可以内联。\n4. LambdaMetafactory（Java 8+）：生成函数式接口实现，调用性能接近直接调用。\n5. 编译期处理（APT）：在编译期生成代码，零运行期开销（如 MapStruct、Lombok）。\n\n扩展延伸：Spring 5 和 Spring Boot 内部大量使用 MethodHandles 替代传统反射（如 GenericTypeResolver）。LambdaMetafactory 可以将任意方法转换为函数式接口，调用性能比反射高 10 倍以上。",
+    "answer": "反射的性能开销主要来自：\n1. 方法查找：Class.getMethod() 需要遍历类的所有 public 方法，时间复杂度 O(N)。\n2. 安全检查：每次 invoke() 都会进行访问权限校验（AccessibleObject 的 checkAccess）。\n3. 参数装箱/拆箱：反射调用时参数需要包装为 Object[]。\n4. JIT 无法内联：反射调用点无法被 JIT 编译器正常内联优化。\n5. 类型检查：每次调用检查方法签名和参数类型是否匹配。\n\n优化方法：\n1. 缓存 Method 对象：将 getMethod() 结果缓存到 Map 中，避免重复查找。\n2. setAccessible(true)：跳过安全检查，显著加速（可以提升 2-3 倍）。\n3. MethodHandles（Java 7+）：比反射更轻量，JIT 可以内联。\n4. LambdaMetafactory（Java 8+）：生成函数式接口实现，调用性能接近直接调用。\n5. 编译期处理（APT）：在编译期生成代码，零运行期开销（如 MapStruct、Lombok）。\n\n扩展延伸：Spring 5 和 Spring Boot 内部大量使用 MethodHandles 替代传统反射（如 GenericTypeResolver）。LambdaMetafactory 可以将任意方法转换为函数式接口，调用性能比反射高 10 倍以上。",
     "hints": [
       "setAccessible(true) 跳过安全检查是最直接的优化",
       "MethodHandles 和 LambdaMetafactory 是反射的现代替代品"
@@ -690,7 +690,7 @@
     "type": "short_answer",
     "title": "Synchronized 锁优化",
     "content": "请解释 Java 中 synchronized 关键字的锁升级过程（偏向锁→轻量级锁→重量级锁），以及 JDK 15+ 的变动。",
-    "answer": "答案：synchronized 通过对象头中的 Mark Word 实现锁状态存储，锁升级是单向不可逆的：\n\n1. 偏向锁（Biased Locking）：线程首次获得锁时，Mark Word 记录线程 ID。后续该线程进入同步块时无需 CAS 操作。适用于锁大部分时间被同一个线程持有的场景。\n2. 轻量级锁（Lightweight Lock）：当另一个线程竞争偏向锁时，偏向锁撤销并升级为轻量级锁。线程通过 CAS 在 Mark Word 中记录 Lock Record 地址。适用于少量线程交替获取锁的场景。\n3. 重量级锁（Heavyweight Lock / Mutex Lock）：当 CAS 失败或线程自旋超过阈值（默认 10 次），锁膨胀为重量级锁。线程阻塞，由操作系统管调度，涉及用户态到内核态的切换。\n\nJDK 15+ 的变动：JDK 15 默认禁用了偏向锁（通过 -XX:-UseBiasedLocking）。因为偏向锁的撤销（尤其是遇到批量重偏向和高并发场景时）在高版本 JDK 中的维护成本超过了收益。JDK 21 彻底移除了偏向锁实现。\n\n扩展延伸：synchronized 锁升级的优化思路是尽量在无竞争或低竞争场景下使用轻量级机制（偏向/CAS），只有在高竞争时才使用重量级互斥量。锁粗化（Lock Coarsening）和锁消除（Lock Elimination）是 JIT 编译器做的额外优化。",
+    "answer": "synchronized 通过对象头中的 Mark Word 实现锁状态存储，锁升级是单向不可逆的：\n\n1. 偏向锁（Biased Locking）：线程首次获得锁时，Mark Word 记录线程 ID。后续该线程进入同步块时无需 CAS 操作。适用于锁大部分时间被同一个线程持有的场景。\n2. 轻量级锁（Lightweight Lock）：当另一个线程竞争偏向锁时，偏向锁撤销并升级为轻量级锁。线程通过 CAS 在 Mark Word 中记录 Lock Record 地址。适用于少量线程交替获取锁的场景。\n3. 重量级锁（Heavyweight Lock / Mutex Lock）：当 CAS 失败或线程自旋超过阈值（默认 10 次），锁膨胀为重量级锁。线程阻塞，由操作系统管调度，涉及用户态到内核态的切换。\n\nJDK 15+ 的变动：JDK 15 默认禁用了偏向锁（通过 -XX:-UseBiasedLocking）。因为偏向锁的撤销（尤其是遇到批量重偏向和高并发场景时）在高版本 JDK 中的维护成本超过了收益。JDK 21 彻底移除了偏向锁实现。\n\n扩展延伸：synchronized 锁升级的优化思路是尽量在无竞争或低竞争场景下使用轻量级机制（偏向/CAS），只有在高竞争时才使用重量级互斥量。锁粗化（Lock Coarsening）和锁消除（Lock Elimination）是 JIT 编译器做的额外优化。",
     "hints": [
       "锁升级方向：偏向锁→轻量级锁→重量级锁，单向不可逆",
       "JDK 15+ 禁用了偏向锁"
@@ -708,7 +708,7 @@
     "type": "short_answer",
     "title": "Fork/Join 框架",
     "content": "请解释 Java 7 引入的 Fork/Join 框架的核心原理和适用场景。工作窃取（Work-Stealing）算法是如何工作的？",
-    "answer": "答案：Fork/Join 框架将大任务递归分解（Fork）为小任务并行执行，再合并（Join）结果。核心类：ForkJoinPool（线程池）、ForkJoinTask（任务抽象类）、RecursiveTask（有返回值）/RecursiveAction（无返回值）。\n\n工作窃取（Work-Stealing）算法：每个工作线程维护一个双端队列（Deque），自己从队头拿任务执行。当线程的队列为空时，从其他线程队列的队尾窃取（Steal）任务执行。\n\n优势：1）自动负载均衡——空闲线程帮忙繁忙线程；2）减少了线程间的竞争（窃取从队尾取，正常执行从队头）；3）适合递归分解的分治算法。\n\n适用场景：1）数值计算和科学计算（数组求和、矩阵乘法）；2）排序和搜索（快速排序、二分查找的并行版本）；3）大规模数据处理；4）递归算法（树的遍历和计算）。\n\n扩展延伸：ForkJoinPool.commonPool() 是 JVM 提供的全局 ForkJoinPool（默认 size = CPU 核数 - 1），CompletableFuture 的并行执行也使用这个线程池。Fork/Join 的拆分粒度很重要——任务太小会导致任务创建和调度的开销大于计算本身，一般经验是阈值为 100-10000 个元素。",
+    "answer": "Fork/Join 框架将大任务递归分解（Fork）为小任务并行执行，再合并（Join）结果。核心类：ForkJoinPool（线程池）、ForkJoinTask（任务抽象类）、RecursiveTask（有返回值）/RecursiveAction（无返回值）。\n\n工作窃取（Work-Stealing）算法：每个工作线程维护一个双端队列（Deque），自己从队头拿任务执行。当线程的队列为空时，从其他线程队列的队尾窃取（Steal）任务执行。\n\n优势：1）自动负载均衡——空闲线程帮忙繁忙线程；2）减少了线程间的竞争（窃取从队尾取，正常执行从队头）；3）适合递归分解的分治算法。\n\n适用场景：1）数值计算和科学计算（数组求和、矩阵乘法）；2）排序和搜索（快速排序、二分查找的并行版本）；3）大规模数据处理；4）递归算法（树的遍历和计算）。\n\n扩展延伸：ForkJoinPool.commonPool() 是 JVM 提供的全局 ForkJoinPool（默认 size = CPU 核数 - 1），CompletableFuture 的并行执行也使用这个线程池。Fork/Join 的拆分粒度很重要——任务太小会导致任务创建和调度的开销大于计算本身，一般经验是阈值为 100-10000 个元素。",
     "hints": [
       "Fork/Join 的核心设计是工作窃取算法",
       "拆分粒度太细反而降低性能"
@@ -726,7 +726,7 @@
     "type": "short_answer",
     "title": "try-with-resources",
     "content": "请解释 Java 7 引入的 try-with-resources 语句的原理和优势。哪些类可以使用 try-with-resources？",
-    "answer": "答案：try-with-resources 是自动资源管理的语法糖，确保实现了 AutoCloseable 接口的资源在使用完毕后自动调用 close() 方法。\n\n原理：编译器将 try-with-resources 编译为 try-finally 块，在 finally 中按资源声明顺序的逆序关闭资源。如果 try 块和 close() 都抛出了异常，close() 的异常会被抑制（Suppressed）并附加到 try 块的异常上。\n\n哪些类可以使用：所有实现了 java.lang.AutoCloseable 接口的类。常见包括：java.io.InputStream/OutputStream（文件流）、java.sql.Connection/Statement/ResultSet（数据库连接）、java.io.Reader/Writer。AutoCloseable 是 Closeable 的父接口，区别在于 Closeable.close() 声明抛出 IOException 且要求幂等。\n\n优势：1）代码简洁——不用手动在 finally 中写 close()；2）异常处理更完善——不会因为 close() 的异常覆盖掉业务异常；3）防止资源泄漏——即使 try 块异常退出资源也会被关闭。\n\n扩展延伸：Java 9 允许在 try-with-resources 中使用 effectively final 的外部变量（try (conn; stmt) 格式）。可以自定义实现 AutoCloseable 接口来管理非 I/O 资源（如 Redis 连接、Netty Channel）。getSuppressed() 方法可以获取被抑制的异常数组。",
+    "answer": "try-with-resources 是自动资源管理的语法糖，确保实现了 AutoCloseable 接口的资源在使用完毕后自动调用 close() 方法。\n\n原理：编译器将 try-with-resources 编译为 try-finally 块，在 finally 中按资源声明顺序的逆序关闭资源。如果 try 块和 close() 都抛出了异常，close() 的异常会被抑制（Suppressed）并附加到 try 块的异常上。\n\n哪些类可以使用：所有实现了 java.lang.AutoCloseable 接口的类。常见包括：java.io.InputStream/OutputStream（文件流）、java.sql.Connection/Statement/ResultSet（数据库连接）、java.io.Reader/Writer。AutoCloseable 是 Closeable 的父接口，区别在于 Closeable.close() 声明抛出 IOException 且要求幂等。\n\n优势：1）代码简洁——不用手动在 finally 中写 close()；2）异常处理更完善——不会因为 close() 的异常覆盖掉业务异常；3）防止资源泄漏——即使 try 块异常退出资源也会被关闭。\n\n扩展延伸：Java 9 允许在 try-with-resources 中使用 effectively final 的外部变量（try (conn; stmt) 格式）。可以自定义实现 AutoCloseable 接口来管理非 I/O 资源（如 Redis 连接、Netty Channel）。getSuppressed() 方法可以获取被抑制的异常数组。",
     "hints": [
       "try-with-resources 确保 AutoCloseable 资源自动关闭",
       "关闭异常被抑制（Suppressed）而非覆盖业务异常"
@@ -744,7 +744,7 @@
     "type": "short_answer",
     "title": "Java 模块化系统（JPMS）",
     "content": "请介绍 Java 9 引入的模块化系统（JPMS）的核心概念和优势。模块化对现有代码有何影响？",
-    "answer": "答案：JPMS（Java Platform Module System）通过 module-info.java 定义模块，实现强封装和显式依赖。\n\n解析：模块声明通过 module 关键字定义，exports 导出包给其他模块，requires 声明对其他模块的依赖，opens 允许反射访问。模块化解决了长期以来 JAR 地狱（类路径冲突）和内部 API 无限制访问的问题。未命名模块（unnamed module）中的代码可以访问类路径上的所有 JAR，但命名模块不能访问未命名模块中的类。\n\n扩展延伸：影响 1）JDK 内部 API 被封裝——sun.misc.Unsafe 等需要通过 --add-opens 才能反射访问。2）Spring Boot 2.x 和 3.x 对 JPMS 的支持情况——Spring 5 通过自动模块支持 JPMS。3）迁移策略：先加 module-info.java 到模块路径测试，逐步将类路径迁移到模块路径。4）jlink 工具——基于模块化的自定义 JRE 构建工具，可以生成仅包含所需模块的最小运行时镜像。",
+    "answer": "JPMS（Java Platform Module System）通过 module-info.java 定义模块，实现强封装和显式依赖。\n\n解析：模块声明通过 module 关键字定义，exports 导出包给其他模块，requires 声明对其他模块的依赖，opens 允许反射访问。模块化解决了长期以来 JAR 地狱（类路径冲突）和内部 API 无限制访问的问题。未命名模块（unnamed module）中的代码可以访问类路径上的所有 JAR，但命名模块不能访问未命名模块中的类。\n\n扩展延伸：影响 1）JDK 内部 API 被封裝——sun.misc.Unsafe 等需要通过 --add-opens 才能反射访问。2）Spring Boot 2.x 和 3.x 对 JPMS 的支持情况——Spring 5 通过自动模块支持 JPMS。3）迁移策略：先加 module-info.java 到模块路径测试，逐步将类路径迁移到模块路径。4）jlink 工具——基于模块化的自定义 JRE 构建工具，可以生成仅包含所需模块的最小运行时镜像。",
     "hints": [
       "module-info.java 中的 exports/requires/opens 分别控制什么",
       "自动模块和未命名模块的区别"
@@ -758,11 +758,11 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "密封类（Sealed Class）",
     "content": "请介绍 Java 17 正式发布的密封类（Sealed Class）的作用和用法。它与 final 类有什么区别？",
-    "answer": "答案：密封类通过 sealed 关键字限制哪些类或接口可以继承或实现它，提供比访问修饰符更精细的继承控制。\n\n解析：声明语法：sealed class Shape permits Circle, Rectangle, Triangle { }。子类必须使用 final（禁止继续继承）、sealed（继续限制子类）或 non-sealed（开放继承）之一来声明。密封类结合 switch 模式匹配（Java 17+ 预览，Java 21 正式）可以实现穷举检查——编译器确保 switch 覆盖了所有允许的子类型，无需 default 分支。\n\n扩展延伸：密封类在领域驱动设计中的应用——精确建模有限子类型（如支付方式、订单状态）。密封接口（sealed interface）同样支持。与 final 的区别：final 完全禁止继承；密封类允许有限的、可控的继承。框架开发者可以用密封类限制用户只能扩展特定子类。",
+    "answer": "密封类通过 sealed 关键字限制哪些类或接口可以继承或实现它，提供比访问修饰符更精细的继承控制。\n\n解析：声明语法：sealed class Shape permits Circle, Rectangle, Triangle { }。子类必须使用 final（禁止继续继承）、sealed（继续限制子类）或 non-sealed（开放继承）之一来声明。密封类结合 switch 模式匹配（Java 17+ 预览，Java 21 正式）可以实现穷举检查——编译器确保 switch 覆盖了所有允许的子类型，无需 default 分支。\n\n扩展延伸：密封类在领域驱动设计中的应用——精确建模有限子类型（如支付方式、订单状态）。密封接口（sealed interface）同样支持。与 final 的区别：final 完全禁止继承；密封类允许有限的、可控的继承。框架开发者可以用密封类限制用户只能扩展特定子类。",
     "hints": [
       "密封类的三种子类声明方式：final/sealed/non-sealed",
       "密封类与 switch 模式匹配的结合"
@@ -770,7 +770,7 @@
     "tags": [
       "Java",
       "密封类",
-      "Sealed Class",
+      "sealed-class",
       "JDK 17"
     ]
   },
@@ -780,7 +780,7 @@
     "type": "short_answer",
     "title": "ZGC 垃圾回收器",
     "content": "请介绍 ZGC（Z Garbage Collector）的设计目标和核心原理。ZGC 如何做到几乎无停顿？",
-    "answer": "答案：ZGC 是 JDK 11 引入的实验性低延迟垃圾回收器（JDK 15 正式），目标是将 GC 停顿时间控制在 10ms 以内，且停顿时间不随堆大小增长。\n\n解析：核心设计 1）染色指针（Colored Pointer）——对象头中 64 位地址的高 4 位（42-45 bit）存储元数据状态（Finalizable/Remapped/Marked0/Marked1），不需要对象头额外字段。2）读屏障（Load Barrier）——读对象引用时，如果指针状态标记显示需要修正，读屏障会立即修复指针引用到正确地址。3）并发回收——几乎全部阶段（标记、转移、重映射）都是并发的，仅初始标记和最终标记有极短暂的 STW。4）Region 化——堆分为大小 Region（小 2MB、中 32MB、大 N*2MB），动态管理。\n\n扩展延伸：与 Shenandoah 的区别——ZGC 用染色指针实现并发标记和转移；Shenandoah 用 Brooks 转发指针（读/写屏障）。ZGC 在 JDK 16+ 支持了并发栈处理（Concurrent Thread Stack Processing），进一步减少 STW 时间。ZGC 当前不支持分代收集（JDK 21 引入分代 ZGC 实验特性），这意味着如果对象存活率高，全堆遍历还是可能带来一些性能开销。推荐使用参数 -XX:+UseZGC。",
+    "answer": "ZGC 是 JDK 11 引入的实验性低延迟垃圾回收器（JDK 15 正式），目标是将 GC 停顿时间控制在 10ms 以内，且停顿时间不随堆大小增长。\n\n解析：核心设计 1）染色指针（Colored Pointer）——对象头中 64 位地址的高 4 位（42-45 bit）存储元数据状态（Finalizable/Remapped/Marked0/Marked1），不需要对象头额外字段。2）读屏障（Load Barrier）——读对象引用时，如果指针状态标记显示需要修正，读屏障会立即修复指针引用到正确地址。3）并发回收——几乎全部阶段（标记、转移、重映射）都是并发的，仅初始标记和最终标记有极短暂的 STW。4）Region 化——堆分为大小 Region（小 2MB、中 32MB、大 N*2MB），动态管理。\n\n扩展延伸：与 Shenandoah 的区别——ZGC 用染色指针实现并发标记和转移；Shenandoah 用 Brooks 转发指针（读/写屏障）。ZGC 在 JDK 16+ 支持了并发栈处理（Concurrent Thread Stack Processing），进一步减少 STW 时间。ZGC 当前不支持分代收集（JDK 21 引入分代 ZGC 实验特性），这意味着如果对象存活率高，全堆遍历还是可能带来一些性能开销。推荐使用参数 -XX:+UseZGC。",
     "hints": [
       "染色指针和读屏障是 ZGC 的核心技术",
       "ZGC 的 STW 阶段有哪些"
@@ -798,7 +798,7 @@
     "type": "short_answer",
     "title": "Shenandoah GC",
     "content": "请介绍 Shenandoah GC 的核心设计。它和 ZGC 的异同是什么？",
-    "answer": "答案：Shenandoah 是 JDK 12 引入的低延迟 GC（JDK 15 转正），通过 Brooks 转发指针和读/写屏障实现并发转移，目标也是降低停顿时间。\n\n解析：Shenandoah 的核心机制是 Brooks Pointer——对象头部新增一个转发指针字段。当对象被转移后，原对象的转发指针指向新对象。读屏障检查被访问对象的转发指针，如果被转移则跟随转发指针获取新对象。转移过程是并发的，不需要 STW 来移动对象。\n\n与 ZGC 的异同：同——都是几乎全并发的低延迟 GC，目标停顿时间 < 10ms。异 1）实现方式：ZGC 使用染色指针（读屏障检查指针标记位），Shenandoah 使用 Brooks 转发指针（对象头额外字段 + 读/写屏障）。2）堆内存：ZGC 需要额外地址空间做染色指针预留；Shenandoah 没有染色指针开销。3）ZGC 在 JDK 21 前不支持分代，Shenandoah 在 JDK 17+ 支持分代模式（-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational）。4）Shenandoah 的写屏障开销略高。\n\n扩展延伸：Shenandoah 从 JDK 18 开始被包含在 Oracle OpenJDK 中（之前仅在 Red Hat 构建的 OpenJDK 中）。使用参数 -XX:+UseShenandoahGC。",
+    "answer": "Shenandoah 是 JDK 12 引入的低延迟 GC（JDK 15 转正），通过 Brooks 转发指针和读/写屏障实现并发转移，目标也是降低停顿时间。\n\n解析：Shenandoah 的核心机制是 Brooks Pointer——对象头部新增一个转发指针字段。当对象被转移后，原对象的转发指针指向新对象。读屏障检查被访问对象的转发指针，如果被转移则跟随转发指针获取新对象。转移过程是并发的，不需要 STW 来移动对象。\n\n与 ZGC 的异同：同——都是几乎全并发的低延迟 GC，目标停顿时间 < 10ms。异 1）实现方式：ZGC 使用染色指针（读屏障检查指针标记位），Shenandoah 使用 Brooks 转发指针（对象头额外字段 + 读/写屏障）。2）堆内存：ZGC 需要额外地址空间做染色指针预留；Shenandoah 没有染色指针开销。3）ZGC 在 JDK 21 前不支持分代，Shenandoah 在 JDK 17+ 支持分代模式（-XX:+UseShenandoahGC -XX:ShenandoahGCMode=generational）。4）Shenandoah 的写屏障开销略高。\n\n扩展延伸：Shenandoah 从 JDK 18 开始被包含在 Oracle OpenJDK 中（之前仅在 Red Hat 构建的 OpenJDK 中）。使用参数 -XX:+UseShenandoahGC。",
     "hints": [
       "Brooks 转发指针的工作原理",
       "为什么 Shenandoah 需要写屏障而 ZGC 不需要"
@@ -816,7 +816,7 @@
     "type": "short_answer",
     "title": "Lambda 表达式的底层实现",
     "content": "请解释 Java Lambda 表达式在字节码层面的实现原理。它与匿名内部类有何不同？",
-    "answer": "答案：Lambda 表达式通过 invokedynamic 指令在运行时动态生成函数式接口实现，而不是编译为匿名内部类。\n\n解析：编译器将 Lambda 表达式编译为 invokedynamic 指令 + 引导方法（Bootstrap Method）。引导方法调用 LambdaMetafactory.metafactory()，在运行时通过 ASM 生成函数式接口的实现类。生成的类实现了函数式接口的抽象方法，方法体指向 Lambda 表达式体。核心优势 1）没有匿名内部类文件（减少类加载开销和 Metaspace 占用）。2）invokedynamic 链接后的调用点可以像普通方法调用一样被 JIT 内联。3）捕获的变量直接作为方法参数传入生成的实现方法，无需生成额外的实例字段。\n\n扩展延伸：性能对比——匿名内部类每次创建都生成新的 .class 文件，首次使用需要类加载验证准备初始化，Lambda 的 invokedynamic 只在首次调用时执行引导方法，后续调用直接调用已链接的方法句柄（方法句柄可以更容易被 JIT 内联）。序列化——Lambda 表达式不推荐序列化（其实现类是运行时生成的，序列化形式依赖于具体的 JVM 实现）。调试——Lambda 的栈跟踪信息在早期 JDK 8 中较模糊，JDK 8u20+ 通过 -Dlambda.formalized.parameters=true 改善了这个问题。",
+    "answer": "Lambda 表达式通过 invokedynamic 指令在运行时动态生成函数式接口实现，而不是编译为匿名内部类。\n\n解析：编译器将 Lambda 表达式编译为 invokedynamic 指令 + 引导方法（Bootstrap Method）。引导方法调用 LambdaMetafactory.metafactory()，在运行时通过 ASM 生成函数式接口的实现类。生成的类实现了函数式接口的抽象方法，方法体指向 Lambda 表达式体。核心优势 1）没有匿名内部类文件（减少类加载开销和 Metaspace 占用）。2）invokedynamic 链接后的调用点可以像普通方法调用一样被 JIT 内联。3）捕获的变量直接作为方法参数传入生成的实现方法，无需生成额外的实例字段。\n\n扩展延伸：性能对比——匿名内部类每次创建都生成新的 .class 文件，首次使用需要类加载验证准备初始化，Lambda 的 invokedynamic 只在首次调用时执行引导方法，后续调用直接调用已链接的方法句柄（方法句柄可以更容易被 JIT 内联）。序列化——Lambda 表达式不推荐序列化（其实现类是运行时生成的，序列化形式依赖于具体的 JVM 实现）。调试——Lambda 的栈跟踪信息在早期 JDK 8 中较模糊，JDK 8u20+ 通过 -Dlambda.formalized.parameters=true 改善了这个问题。",
     "hints": [
       "invokedynamic 指令和 LambdaMetafactory 的作用",
       "为什么 Lambda 比匿名内部类性能更好"
@@ -834,7 +834,7 @@
     "type": "short_answer",
     "title": "Java 代理的三种实现方式对比",
     "content": "请比较 JDK 动态代理、CGLIB 和字节码增强（Javaassist/ASM）三种代理实现方式的优劣。",
-    "answer": "答案：三种代理方式各有优劣：JDK 动态代理基于接口、CGLIB 基于继承子类、字节码增强直接操作字节码。\n\n解析：1）JDK 动态代理——通过 Proxy.newProxyInstance() 创建，基于 InvocationHandler 反射调用。优点是 JDK 原生支持，不需要额外依赖；缺点是被代理类必须实现接口。2）CGLIB——通过 ASM 生成子类字节码，覆盖父类方法。优点是不需要接口，可以代理普通类；缺点是不能代理 final 类/final 方法，且需依赖 CGLIB 库。3）字节码增强（ASM/Javaassist/ByteBuddy）——直接操作字节码，可以生成任意结构的类。优点是灵活性最高，可以完全控制生成的字节码；缺点是学习成本高，容易出错。\n\n扩展延伸：Spring AOP 默认策略——Spring Boot 2.0+ 强制使用 CGLIB（proxy-target-class=true），即使 Bean 实现了接口。性能对比——JDK 动态代理和 CGLIB 在 JDK 8+ 后性能接近。ByteBuddy 是 CGLIB 的现代替代品，被 Hibernate、Mockito 等广泛使用。实际应用中代理创建的开销通常远小于代理调用的优化收益，不应过度关注微基准测试中的差异。",
+    "answer": "三种代理方式各有优劣：JDK 动态代理基于接口、CGLIB 基于继承子类、字节码增强直接操作字节码。\n\n解析：1）JDK 动态代理——通过 Proxy.newProxyInstance() 创建，基于 InvocationHandler 反射调用。优点是 JDK 原生支持，不需要额外依赖；缺点是被代理类必须实现接口。2）CGLIB——通过 ASM 生成子类字节码，覆盖父类方法。优点是不需要接口，可以代理普通类；缺点是不能代理 final 类/final 方法，且需依赖 CGLIB 库。3）字节码增强（ASM/Javaassist/ByteBuddy）——直接操作字节码，可以生成任意结构的类。优点是灵活性最高，可以完全控制生成的字节码；缺点是学习成本高，容易出错。\n\n扩展延伸：Spring AOP 默认策略——Spring Boot 2.0+ 强制使用 CGLIB（proxy-target-class=true），即使 Bean 实现了接口。性能对比——JDK 动态代理和 CGLIB 在 JDK 8+ 后性能接近。ByteBuddy 是 CGLIB 的现代替代品，被 Hibernate、Mockito 等广泛使用。实际应用中代理创建的开销通常远小于代理调用的优化收益，不应过度关注微基准测试中的差异。",
     "hints": [
       "JDK 动态代理要求目标类实现接口",
       "Spring Boot 2.0+ 默认使用 CGLIB 而非 JDK 动态代理"
@@ -853,7 +853,7 @@
     "type": "short_answer",
     "title": "Java 内存泄漏的 8 种典型场景",
     "content": "请列举 Java 中 8 种典型的内存泄漏场景，以及如何检测和预防。",
-    "answer": "答案：8 种典型内存泄漏场景：1）静态集合类持有对象引用 2）未关闭的资源 3）ThreadLocal 未调用 remove 4）内部类持有外部类引用 5）equals 和 hashCode 不一致 6）String.intern() 滥用 7）类加载器泄漏 8）回调/监听器未注销。\n\n解析：1）静态集合——static List 持有对象，导致对象无法被 GC。2）未关闭资源——InputStream/Connection 未关闭导致堆外内存泄漏。3）ThreadLocal——线程池中线程复用，弱引用 Key 被回收后 Value 仍存活。4）非静态内部类——持有外部类强引用，外部类无法回收。5）equals/hashCode 不一致——HashMap key 无法被访问。6）intern() 滥用——字符串常量池膨胀。7）类加载器泄漏——Tomcat 热部署时 PermGen/Metaspace 上涨。8）监听器/回调——注册后未反注册。\n\n扩展延伸：检测工具——MAT 的 Leak Suspects Report、Dominator Tree 分析、OQL 查询；JProfiler 的堆遍历器；Eclipse Memory Analyzer 的 GC Root 链分析。预防方法——代码审查中加入资源管理检查、使用 try-with-resources、ThreadLocal 用后 remove()、静态内部类代替非静态内部类、使用弱引用或虚引用管理回调。",
+    "answer": "8 种典型内存泄漏场景：1）静态集合类持有对象引用 2）未关闭的资源 3）ThreadLocal 未调用 remove 4）内部类持有外部类引用 5）equals 和 hashCode 不一致 6）String.intern() 滥用 7）类加载器泄漏 8）回调/监听器未注销。\n\n解析：1）静态集合——static List 持有对象，导致对象无法被 GC。2）未关闭资源——InputStream/Connection 未关闭导致堆外内存泄漏。3）ThreadLocal——线程池中线程复用，弱引用 Key 被回收后 Value 仍存活。4）非静态内部类——持有外部类强引用，外部类无法回收。5）equals/hashCode 不一致——HashMap key 无法被访问。6）intern() 滥用——字符串常量池膨胀。7）类加载器泄漏——Tomcat 热部署时 PermGen/Metaspace 上涨。8）监听器/回调——注册后未反注册。\n\n扩展延伸：检测工具——MAT 的 Leak Suspects Report、Dominator Tree 分析、OQL 查询；JProfiler 的堆遍历器；Eclipse Memory Analyzer 的 GC Root 链分析。预防方法——代码审查中加入资源管理检查、使用 try-with-resources、ThreadLocal 用后 remove()、静态内部类代替非静态内部类、使用弱引用或虚引用管理回调。",
     "hints": [
       "ThreadLocal 在线程池中造成的泄漏最隐蔽",
       "类加载器泄漏在 Tomcat 热部署时最明显"
@@ -871,7 +871,7 @@
     "type": "short_answer",
     "title": "Java 值类型与引用类型的本质区别",
     "content": "请解释 Java 中值类型（基本类型）和引用类型的本质区别，包括存储方式、传递方式和 GC 行为。",
-    "answer": "答案：基本类型直接存储值在栈上，引用类型存储对象地址在栈上、对象数据在堆上。\n\n解析：存储方式——基本类型变量直接包含值（如 int a = 10 在栈帧中直接存 10）；引用类型变量存储对象在堆中的地址（如 String s = \"hello\" 在栈中存地址，堆中存对象数据）。传递方式——都是值传递：基本类型传递值的副本；引用类型传递引用的副本（地址的副本），所以修改引用指向不影响外部变量，但修改引用指向的对象内部会影响。GC 行为——基本类型随栈帧弹出自动销毁；引用类型的对象由 GC 管理，当没有引用指向时被回收。\n\n扩展延伸：JDK 24 的 Valhalla 项目计划引入值类型（Value Type / Primitive Class），将不可变的对象实例直接内联到栈上或对象字段中（无需通过指针间接访问），大幅减少内存占用和缓存未命中。",
+    "answer": "基本类型直接存储值在栈上，引用类型存储对象地址在栈上、对象数据在堆上。\n\n解析：存储方式——基本类型变量直接包含值（如 int a = 10 在栈帧中直接存 10）；引用类型变量存储对象在堆中的地址（如 String s = \"hello\" 在栈中存地址，堆中存对象数据）。传递方式——都是值传递：基本类型传递值的副本；引用类型传递引用的副本（地址的副本），所以修改引用指向不影响外部变量，但修改引用指向的对象内部会影响。GC 行为——基本类型随栈帧弹出自动销毁；引用类型的对象由 GC 管理，当没有引用指向时被回收。\n\n扩展延伸：JDK 24 的 Valhalla 项目计划引入值类型（Value Type / Primitive Class），将不可变的对象实例直接内联到栈上或对象字段中（无需通过指针间接访问），大幅减少内存占用和缓存未命中。",
     "hints": [
       "基本类型和引用类型在方法参数传递时的行为差异",
       "Valhalla 项目的值类型计划在未来如何改变这一点"
@@ -889,7 +889,7 @@
     "type": "short_answer",
     "title": "GC 日志分析与调优实践",
     "content": "如何通过 GC 日志分析 JVM 内存健康状况？关键指标有哪些？如何基于日志进行调优决策？",
-    "answer": "答案：通过 GC 日志分析 Young GC 和 Full GC 频率、单次耗时、堆内存变化趋势来诊断内存问题。\n\n解析：开启 GC 日志——JDK 8：-Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps；JDK 9+：-Xlog:gc*:file=gc.log:time,uptime,level,tags。关键指标：1）Young GC 频率——每秒/每几分钟一次。过高说明新生代过小或分配速率过高。2）Young GC 耗时——正常 < 100ms，过高说明存活对象多（晋升多）。3）Full GC 频率——最好为 0，Full GC 间隔短说明老年代空间不足或存在内存泄漏。4）GC 暂停总时间——GC 耗时占总运行时间的比例（吞吐量损耗）。5）晋升（Promotion）大小——每次 Young GC 升到老年代的对象大小。6）堆使用趋势——持续上涨不回落说明泄漏。\n\n扩展延伸：调优决策——1）Young GC 太频繁（< 1 秒一次）→ 增大 -Xmn 或 -XX:NewRatio。2）晋升过快（老年代短时间被填满）→ 增大 Survivor 空间或晋升阈值 -XX:MaxTenuringThreshold。3）Full GC 太频繁（几十分钟一次）→ 查看老年代使用率是否持续上涨，考虑堆内存泄漏检测。4）CMS 并发模式失败（Concurrent Mode Failure）→ 增大老年代或调低 CMSInitiatingOccupancyFraction。5）G1 的 Mixed GC 暂停长 → 调整 -XX:G1MixedGCLiveThresholdPercent。推荐使用 GCeasy 在线分析工具或 gceasy.io 的 GC 日志分析报告。",
+    "answer": "通过 GC 日志分析 Young GC 和 Full GC 频率、单次耗时、堆内存变化趋势来诊断内存问题。\n\n解析：开启 GC 日志——JDK 8：-Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps；JDK 9+：-Xlog:gc*:file=gc.log:time,uptime,level,tags。关键指标：1）Young GC 频率——每秒/每几分钟一次。过高说明新生代过小或分配速率过高。2）Young GC 耗时——正常 < 100ms，过高说明存活对象多（晋升多）。3）Full GC 频率——最好为 0，Full GC 间隔短说明老年代空间不足或存在内存泄漏。4）GC 暂停总时间——GC 耗时占总运行时间的比例（吞吐量损耗）。5）晋升（Promotion）大小——每次 Young GC 升到老年代的对象大小。6）堆使用趋势——持续上涨不回落说明泄漏。\n\n扩展延伸：调优决策——1）Young GC 太频繁（< 1 秒一次）→ 增大 -Xmn 或 -XX:NewRatio。2）晋升过快（老年代短时间被填满）→ 增大 Survivor 空间或晋升阈值 -XX:MaxTenuringThreshold。3）Full GC 太频繁（几十分钟一次）→ 查看老年代使用率是否持续上涨，考虑堆内存泄漏检测。4）CMS 并发模式失败（Concurrent Mode Failure）→ 增大老年代或调低 CMSInitiatingOccupancyFraction。5）G1 的 Mixed GC 暂停长 → 调整 -XX:G1MixedGCLiveThresholdPercent。推荐使用 GCeasy 在线分析工具或 gceasy.io 的 GC 日志分析报告。",
     "hints": [
       "Young GC 频率是判断新生代大小是否合适的第一指标",
       "Full GC 几乎总是需要优化的对象"
@@ -907,7 +907,7 @@
     "type": "short_answer",
     "title": "String 常量池与 Integer 缓存池的实现差异",
     "content": "请比较 String 常量池和 Integer 缓存池在实现机制、存储位置和管理方式上的异同。",
-    "answer": "答案：String 常量池在堆中（JDK 7+），存储 String 对象，通过 intern() 管理；Integer 缓存池是 IntegerCache 内部类，缓存 [-128, 127] 的 Integer 对象。\n\n解析：String 常量池——1）存储位置：JDK 6 在永久代，JDK 7+ 在堆中。2）存储内容：String 对象（字面量和 intern 引入的）。3）管理方式：JVM 自身管理，String.intern() 手动入池。4）无大小限制（受堆大小限制）。Integer 缓存池——1）存储位置：堆（IntegerCache 的静态数组）。2）存储内容：Integer 对象（范围 -128~127）。3）管理方式：类加载时创建，通过 Integer.valueOf() 使用。4）上限可通过 -XX:AutoBoxCacheMax 调整。\n\n扩展延伸：String 常量池大小可通过 -XX:StringTableSize 设置（JDK 6 默认 1009，JDK 7+ 默认 60013，可调大减少冲突）。大量不同字符串 intern 会导致常量池膨胀和 GC 压力（因为 StringTable 是固定大小的哈希表）。Integer 缓存池不可变，所有 Integer 在范围内都使用同一组对象。其他包装类也有类似缓存：Boolean（全部布尔值）、Byte/Short/Long（-128~127）、Character（0~127），但只有 Integer 可以配置上限。",
+    "answer": "String 常量池在堆中（JDK 7+），存储 String 对象，通过 intern() 管理；Integer 缓存池是 IntegerCache 内部类，缓存 [-128, 127] 的 Integer 对象。\n\n解析：String 常量池——1）存储位置：JDK 6 在永久代，JDK 7+ 在堆中。2）存储内容：String 对象（字面量和 intern 引入的）。3）管理方式：JVM 自身管理，String.intern() 手动入池。4）无大小限制（受堆大小限制）。Integer 缓存池——1）存储位置：堆（IntegerCache 的静态数组）。2）存储内容：Integer 对象（范围 -128~127）。3）管理方式：类加载时创建，通过 Integer.valueOf() 使用。4）上限可通过 -XX:AutoBoxCacheMax 调整。\n\n扩展延伸：String 常量池大小可通过 -XX:StringTableSize 设置（JDK 6 默认 1009，JDK 7+ 默认 60013，可调大减少冲突）。大量不同字符串 intern 会导致常量池膨胀和 GC 压力（因为 StringTable 是固定大小的哈希表）。Integer 缓存池不可变，所有 Integer 在范围内都使用同一组对象。其他包装类也有类似缓存：Boolean（全部布尔值）、Byte/Short/Long（-128~127）、Character（0~127），但只有 Integer 可以配置上限。",
     "hints": [
       "String 常量池通过 hashtable 实现，Integer 缓存池通过静态数组实现",
       "Integer 缓存池大小可以配置，String 常量池在 JDK 7+ 在堆中"
@@ -926,7 +926,7 @@
     "type": "short_answer",
     "title": "ZGC 的并发标记与重定位原理",
     "content": "请详细解释 ZGC（Z Garbage Collector）的并发标记和并发重定位（Relocation）是如何实现的。ZGC 为什么能做到极低的暂停时间？",
-    "answer": "答案：ZGC 通过染色指针（Colored Pointers）和读屏障（Load Barrier）实现并发标记和并发重定位，暂停时间与堆大小无关。\n\n解析：ZGC 的核心创新——1）染色指针（Colored Pointers）：在 64 位指针的高 4 位（Linux 仅使用 42 位地址，AMD64 虚拟地址空间高 18 位未使用）中编码标记信息。指针的 4 个额外位分别是 Finalizable、Remapped、Marked1、Marked0。通过这些位判断对象的标记状态，无需对象头额外空间。2）读屏障（Load Barrier）：每次从堆中读取对象引用时执行检查。根据指针的染色位决定是否需要处理（如标记或重映射），处理成本极低。3）并发重定位：ZGC 在重定位期间通过读屏障拦截访问，如果访问到已移动的对象，读屏障自动将引用更新为新地址（自愈，Self-Healing）。\n\n扩展延伸：ZGC 的标记阶段分为 Mark Start（STW，初始化标记根）、Concurrent Mark（并发遍历对象图，使用染色指针标记）、Mark End（STW，处理漏标的根）、Concurrent Prepare Relocation（计算要回收的 Region）、Concurrent Relocate（并发重定位存活对象到其他 Region）。重定位中读屏障自愈机制——访问旧地址时通过读屏障检测到 Remapped 位未设置，触发转发到新地址并更新引用，后续访问直接命中新地址。ZGC 适用于大堆（TB 级）和低延迟（<10ms 暂停）要求的场景，与 G1 相比牺牲了吞吐量换取更低的延迟。",
+    "answer": "ZGC 通过染色指针（Colored Pointers）和读屏障（Load Barrier）实现并发标记和并发重定位，暂停时间与堆大小无关。\n\n解析：ZGC 的核心创新——1）染色指针（Colored Pointers）：在 64 位指针的高 4 位（Linux 仅使用 42 位地址，AMD64 虚拟地址空间高 18 位未使用）中编码标记信息。指针的 4 个额外位分别是 Finalizable、Remapped、Marked1、Marked0。通过这些位判断对象的标记状态，无需对象头额外空间。2）读屏障（Load Barrier）：每次从堆中读取对象引用时执行检查。根据指针的染色位决定是否需要处理（如标记或重映射），处理成本极低。3）并发重定位：ZGC 在重定位期间通过读屏障拦截访问，如果访问到已移动的对象，读屏障自动将引用更新为新地址（自愈，Self-Healing）。\n\n扩展延伸：ZGC 的标记阶段分为 Mark Start（STW，初始化标记根）、Concurrent Mark（并发遍历对象图，使用染色指针标记）、Mark End（STW，处理漏标的根）、Concurrent Prepare Relocation（计算要回收的 Region）、Concurrent Relocate（并发重定位存活对象到其他 Region）。重定位中读屏障自愈机制——访问旧地址时通过读屏障检测到 Remapped 位未设置，触发转发到新地址并更新引用，后续访问直接命中新地址。ZGC 适用于大堆（TB 级）和低延迟（<10ms 暂停）要求的场景，与 G1 相比牺牲了吞吐量换取更低的延迟。",
     "hints": [
       "染色指针在 64 位指针的高 4 位编码状态信息",
       "读屏障在对象引用加载时执行，实现自愈"
@@ -944,7 +944,7 @@
     "type": "short_answer",
     "title": "Shenandoah GC 原理",
     "content": "请介绍 Shenandoah GC 的工作原理。它与 ZGC 有什么异同？",
-    "answer": "答案：Shenandoah 是 OpenJDK 的另一种低延迟 GC，通过 Brooks Pointer（转发指针）实现并发压缩，暂停时间与堆大小无关。\n\n解析：Shenandoah 的核心机制——1）Brooks Pointer：在对象头部增加一个转发指针（forward pointer），初始指向自身。对象被移动后，转发指针更新为新地址。所有对象访问通过 Brooks Pointer 间接寻址。2）读屏障：Shenandoah 使用读屏障（-XX:+UseShenandoahGC 后默认开启），每次对象读取都检查 Brooks Pointer 是否需要转发。3）并发压缩：Shenandoah 可以并发地移动对象、压缩堆，不需要像 CMS 那样在 Remark 阶段 STW。\n\n扩展延伸：Shenandoah 与 ZGC 的对比——相同点：都实现并发标记和并发重定位，暂停时间与堆大小无关，目标 <10ms 暂停。不同点：1）屏障位置：ZGC 在读引用时（Load Barrier），Shenandoah 在读写对象时（Brooks Pointer Access Barrier）。2）指针技术：ZGC 用染色指针（利用高位 bit），Shenandoah 用 Brooks Pointer（对象头额外字段）。3）JDK 支持：ZGC 在 JDK 11 实验性引入（JDK 15 正式），Shenandoah 在 JDK 12 实验性引入（JDK 15 正式）。4）堆大小限制：ZGC 最大支持 16TB，Shenandoah 支持大堆但性能在 TB 级不如 ZGC。",
+    "answer": "Shenandoah 是 OpenJDK 的另一种低延迟 GC，通过 Brooks Pointer（转发指针）实现并发压缩，暂停时间与堆大小无关。\n\n解析：Shenandoah 的核心机制——1）Brooks Pointer：在对象头部增加一个转发指针（forward pointer），初始指向自身。对象被移动后，转发指针更新为新地址。所有对象访问通过 Brooks Pointer 间接寻址。2）读屏障：Shenandoah 使用读屏障（-XX:+UseShenandoahGC 后默认开启），每次对象读取都检查 Brooks Pointer 是否需要转发。3）并发压缩：Shenandoah 可以并发地移动对象、压缩堆，不需要像 CMS 那样在 Remark 阶段 STW。\n\n扩展延伸：Shenandoah 与 ZGC 的对比——相同点：都实现并发标记和并发重定位，暂停时间与堆大小无关，目标 <10ms 暂停。不同点：1）屏障位置：ZGC 在读引用时（Load Barrier），Shenandoah 在读写对象时（Brooks Pointer Access Barrier）。2）指针技术：ZGC 用染色指针（利用高位 bit），Shenandoah 用 Brooks Pointer（对象头额外字段）。3）JDK 支持：ZGC 在 JDK 11 实验性引入（JDK 15 正式），Shenandoah 在 JDK 12 实验性引入（JDK 15 正式）。4）堆大小限制：ZGC 最大支持 16TB，Shenandoah 支持大堆但性能在 TB 级不如 ZGC。",
     "hints": [
       "Brooks Pointer 在对象头中存储转发地址",
       "Shenandoah 使用读屏障 + 写屏障（取决于版本）"
@@ -962,7 +962,7 @@
     "type": "short_answer",
     "title": "Project Valhalla 与值类型（Value Types）",
     "content": "请介绍 Project Valhalla 引入的值类型（Value Types / Inline Types）概念。它解决了什么问题？对 Java 性能有何影响？",
-    "answer": "答案：Project Valhalla 旨在为 Java 引入值类型（Value Types，JEP 401），让开发者可以定义没有对象身份（Identity）的轻量级数据类型，消除对象头的内存开销和间接访问。\n\n解析：值类型用 value 关键字声明（如 value record Point(int x, int y)），特性——1）无对象身份：值类型实例没有对象头（Mark Word + Klass Pointer），只有字段数据。在栈上、数组中和作为其他对象的字段时直接内联存储（Flattened），而不是通过引用间接访问。2）不可变：值类型字段隐式为 final，实例创建后不可变（有利于 JIT 优化和并发安全）。3）可为空值类型（Nullable Value Types）：通过包装引用实现，可赋值为 null。\n\n扩展延伸：性能优势——1）内存减少：值类型数组直接存储数据（如 Point[] 直接存 x,y 整数对），而对象数组存引用 + 堆中对象（多一层间接和对象头开销）。2）缓存局部性改善：连续内存存储，无指针跳跃。3）JIT 优化：内联特性使得逃逸分析、标量替换更有效。现状：Project Valhalla 仍在预览阶段（JDK 22+ 有预览 JEP），需要等到 JDK 24+ 才可能正式发布。与原始类型（int, long）不同，值类型是用户自定义的，编译器会将其视为原始类型的扩展。",
+    "answer": "Project Valhalla 旨在为 Java 引入值类型（Value Types，JEP 401），让开发者可以定义没有对象身份（Identity）的轻量级数据类型，消除对象头的内存开销和间接访问。\n\n解析：值类型用 value 关键字声明（如 value record Point(int x, int y)），特性——1）无对象身份：值类型实例没有对象头（Mark Word + Klass Pointer），只有字段数据。在栈上、数组中和作为其他对象的字段时直接内联存储（Flattened），而不是通过引用间接访问。2）不可变：值类型字段隐式为 final，实例创建后不可变（有利于 JIT 优化和并发安全）。3）可为空值类型（Nullable Value Types）：通过包装引用实现，可赋值为 null。\n\n扩展延伸：性能优势——1）内存减少：值类型数组直接存储数据（如 Point[] 直接存 x,y 整数对），而对象数组存引用 + 堆中对象（多一层间接和对象头开销）。2）缓存局部性改善：连续内存存储，无指针跳跃。3）JIT 优化：内联特性使得逃逸分析、标量替换更有效。现状：Project Valhalla 仍在预览阶段（JDK 22+ 有预览 JEP），需要等到 JDK 24+ 才可能正式发布。与原始类型（int, long）不同，值类型是用户自定义的，编译器会将其视为原始类型的扩展。",
     "hints": [
       "值类型没有对象身份，没有对象头，没有引用语义",
       "值类型在多维数组和集合中性能提升最明显"
@@ -980,7 +980,7 @@
     "type": "short_answer",
     "title": "虚拟线程（Virtual Threads）的原理与应用",
     "content": "请解释 Project Loom 引入的虚拟线程（Virtual Threads）的原理。虚拟线程和平台线程（Platform Threads）有什么区别？使用虚拟线程需要注意什么？",
-    "answer": "答案：虚拟线程是 JDK 21 正式发布的轻量级线程（JEP 444），由 JVM 调度而非操作系统，数百万个虚拟线程可以在少量平台线程上运行。\n\n解析：虚拟线程的核心机制——1）载体线程（Carrier Thread）：虚拟线程在平台线程（称为载体）上运行。当虚拟线程执行阻塞操作（如 I/O、锁等待）时，虚拟线程从载体线程上 yield（卸载），载体线程去执行其他虚拟线程。2）Continuation：虚拟线程的底层实现是 Continuation（可暂停和恢复的执行上下文）。JVM 在虚拟线程阻塞时保存 Continuation 状态，切换出来；阻塞完成后恢复执行。3）ForkJoinPool：虚拟线程的调度器是 ForkJoinPool，它管理载体线程池。\n\n扩展延伸：与平台线程的对比——1）创建成本：平台线程 ≈ 1MB 栈空间 + OS 内核线程；虚拟线程 ≈ 几百字节。2）最大数量：平台线程数千到数万；虚拟线程百万级。3）适用场景：虚拟线程适合大量 IO 密集型任务，特别适合 Web 服务器（每个请求一个虚拟线程）。注意事项：1）避免 synchronized 阻塞（pinned 问题——虚拟线程阻塞在 synchronized 上时会 pinned 到载体线程，使载体线程不可用，影响吞吐量）。建议使用 ReentrantLock 替代。2）避免 CPU 密集型任务（虚拟线程切换也有开销）。3）谨慎使用 ThreadLocal（虚拟线程数量巨大时 ThreadLocal 内存量巨大）。",
+    "answer": "虚拟线程是 JDK 21 正式发布的轻量级线程（JEP 444），由 JVM 调度而非操作系统，数百万个虚拟线程可以在少量平台线程上运行。\n\n解析：虚拟线程的核心机制——1）载体线程（Carrier Thread）：虚拟线程在平台线程（称为载体）上运行。当虚拟线程执行阻塞操作（如 I/O、锁等待）时，虚拟线程从载体线程上 yield（卸载），载体线程去执行其他虚拟线程。2）Continuation：虚拟线程的底层实现是 Continuation（可暂停和恢复的执行上下文）。JVM 在虚拟线程阻塞时保存 Continuation 状态，切换出来；阻塞完成后恢复执行。3）ForkJoinPool：虚拟线程的调度器是 ForkJoinPool，它管理载体线程池。\n\n扩展延伸：与平台线程的对比——1）创建成本：平台线程 ≈ 1MB 栈空间 + OS 内核线程；虚拟线程 ≈ 几百字节。2）最大数量：平台线程数千到数万；虚拟线程百万级。3）适用场景：虚拟线程适合大量 IO 密集型任务，特别适合 Web 服务器（每个请求一个虚拟线程）。注意事项：1）避免 synchronized 阻塞（pinned 问题——虚拟线程阻塞在 synchronized 上时会 pinned 到载体线程，使载体线程不可用，影响吞吐量）。建议使用 ReentrantLock 替代。2）避免 CPU 密集型任务（虚拟线程切换也有开销）。3）谨慎使用 ThreadLocal（虚拟线程数量巨大时 ThreadLocal 内存量巨大）。",
     "hints": [
       "虚拟线程是 JVM 管理的用户态线程，非 OS 线程",
       "synchronized 和 native 方法会导致虚拟线程 pinned"
@@ -998,7 +998,7 @@
     "type": "short_answer",
     "title": "Foreign Function & Memory API（FFM API）",
     "content": "请介绍 Java 的 Foreign Function & Memory API（FFM API, JEP 454）以及它的前身。它和 JNI 相比有什么优势？",
-    "answer": "答案：FFM API（JDK 22 正式发布，JEP 454）是 Java 用于调用外部函数和访问外部内存的新 API，取代 JNI 更安全、更易用。\n\n解析：FFM API 分为两部分——1）Foreign Memory API（java.lang.foreign.MemorySegment）：提供安全的内存访问，支持堆内、堆外和映射文件内存。MemorySegment 具有空间和时间边界检查，防止野指针和 use-after-free。2）Foreign Function API（java.lang.foreign.Linker）：允许 Java 代码调用 C 库函数（如调用操作系统 API），不需要写 C 头文件和 JNI 胶水代码。通过 SymbolLookup 查找库函数，通过 MethodHandle 调用。\n\n扩展延伸：与 JNI 对比——1）安全性：FFM API 有类型检查和内存边界检查，JNI 出现错误时可能导致 JVM 崩溃。2）性能：FFM API 调用开销比 JNI 低（无线程状态切换开销）。3）易用性：FFM API 从 Java 侧直接声明函数签名和内存布局，不需要 C 编译器和平台特定的头文件处理。4）依赖：JNI 需编写 C 代码、编译成动态库；FFM API 只需 Java 代码。典型应用：Panama 项目（FFM API 是其成果）使得 Java 可以直接调用 C 标准库、OS API、GPU 库（CUDA）等，为 Java 在底层系统编程和高性能计算领域打开新空间。",
+    "answer": "FFM API（JDK 22 正式发布，JEP 454）是 Java 用于调用外部函数和访问外部内存的新 API，取代 JNI 更安全、更易用。\n\n解析：FFM API 分为两部分——1）Foreign Memory API（java.lang.foreign.MemorySegment）：提供安全的内存访问，支持堆内、堆外和映射文件内存。MemorySegment 具有空间和时间边界检查，防止野指针和 use-after-free。2）Foreign Function API（java.lang.foreign.Linker）：允许 Java 代码调用 C 库函数（如调用操作系统 API），不需要写 C 头文件和 JNI 胶水代码。通过 SymbolLookup 查找库函数，通过 MethodHandle 调用。\n\n扩展延伸：与 JNI 对比——1）安全性：FFM API 有类型检查和内存边界检查，JNI 出现错误时可能导致 JVM 崩溃。2）性能：FFM API 调用开销比 JNI 低（无线程状态切换开销）。3）易用性：FFM API 从 Java 侧直接声明函数签名和内存布局，不需要 C 编译器和平台特定的头文件处理。4）依赖：JNI 需编写 C 代码、编译成动态库；FFM API 只需 Java 代码。典型应用：Panama 项目（FFM API 是其成果）使得 Java 可以直接调用 C 标准库、OS API、GPU 库（CUDA）等，为 Java 在底层系统编程和高性能计算领域打开新空间。",
     "hints": [
       "FFM API 是 Panama 项目的一部分，标准库替代 JNI",
       "MemorySegment 提供内存边界检查，防止野指针"
@@ -1007,7 +1007,7 @@
       "JVM",
       "FFM",
       "JNI",
-      "Panama",
+      "panama",
       "外部内存"
     ]
   },
@@ -1017,7 +1017,7 @@
     "type": "short_answer",
     "title": "JIT 编译优化技术",
     "content": "请介绍 HotSpot JIT 编译器的几种重要优化技术。逃逸分析（Escape Analysis）如何实现栈上分配和锁消除？方法内联（Inlining）的触发条件是什么？",
-    "answer": "答案：JIT（Just-In-Time）编译器将热点代码编译为机器码，并在编译过程中应用多种优化。\n\n逃逸分析（Escape Analysis）：\n- 分析对象的作用域是否逃逸出方法或线程\n- 不逃逸的优化：栈上分配（Stack Allocation）——对象直接在栈帧中分配，无需 GC\n- 不逃逸的优化：锁消除（Lock Elision）——去掉不必要的同步锁\n- 不逃逸的优化：标量替换（Scalar Replacement）——将对象拆散为多个局部变量\n- -XX:+DoEscapeAnalysis 开启（JDK 8+ 默认）\n\n方法内联（Inlining）：\n- 将调用方法的字节码直接嵌入到当前方法的编译代码中\n- 减少方法调用开销（栈帧创建、参数传递）\n- 触发条件：方法足够小（-XX:MaxInlineSize=35 字节）、热点代码（调用计数超过阈值）、final 方法更易内联\n- -XX:CompileThreshold=10000（混合模式下方法调用计数阈值）\n- 内联后的代码可以做更多优化（因为去除了调用边界）\n\n其他优化技术：\n1. 循环优化：循环展开（Loop Unrolling）、循环剥离（Loop Peeling）\n2. 死代码消除（Dead Code Elimination）\n3. 常量折叠与传播（Constant Folding & Propagation）\n4. 公共子表达式消除（Common Subexpression Elimination）\n\n扩展延伸：C1（Client）编译器做轻量快速编译，C2（Server）编译器做深度优化编译。分层编译（Tiered Compilation）结合两者优势——方法先被 C1 快速编译，热点达到阈值后被 C2 重新深度编译。Graal JIT 是新一代 JIT 编译器，支持更激进的优化（如部分逃逸分析）。",
+    "answer": "JIT（Just-In-Time）编译器将热点代码编译为机器码，并在编译过程中应用多种优化。\n\n逃逸分析（Escape Analysis）：\n- 分析对象的作用域是否逃逸出方法或线程\n- 不逃逸的优化：栈上分配（Stack Allocation）——对象直接在栈帧中分配，无需 GC\n- 不逃逸的优化：锁消除（Lock Elision）——去掉不必要的同步锁\n- 不逃逸的优化：标量替换（Scalar Replacement）——将对象拆散为多个局部变量\n- -XX:+DoEscapeAnalysis 开启（JDK 8+ 默认）\n\n方法内联（Inlining）：\n- 将调用方法的字节码直接嵌入到当前方法的编译代码中\n- 减少方法调用开销（栈帧创建、参数传递）\n- 触发条件：方法足够小（-XX:MaxInlineSize=35 字节）、热点代码（调用计数超过阈值）、final 方法更易内联\n- -XX:CompileThreshold=10000（混合模式下方法调用计数阈值）\n- 内联后的代码可以做更多优化（因为去除了调用边界）\n\n其他优化技术：\n1. 循环优化：循环展开（Loop Unrolling）、循环剥离（Loop Peeling）\n2. 死代码消除（Dead Code Elimination）\n3. 常量折叠与传播（Constant Folding & Propagation）\n4. 公共子表达式消除（Common Subexpression Elimination）\n\n扩展延伸：C1（Client）编译器做轻量快速编译，C2（Server）编译器做深度优化编译。分层编译（Tiered Compilation）结合两者优势——方法先被 C1 快速编译，热点达到阈值后被 C2 重新深度编译。Graal JIT 是新一代 JIT 编译器，支持更激进的优化（如部分逃逸分析）。",
     "hints": [
       "逃逸分析→栈上分配、锁消除、标量替换",
       "方法内联→MaxInlineSize=35，CompileThreshold=10000"
@@ -1035,7 +1035,7 @@
     "type": "short_answer",
     "title": "虚拟线程原理与限制",
     "content": "请深入解释 JDK 21 虚拟线程（Virtual Threads，Project Loom）的实现原理。虚拟线程如何实现轻量级调度？它在哪些场景下不能提升性能？",
-    "answer": "答案：虚拟线程是 JDK 21 正式发布的轻量级用户态线程，由 JVM 调度而非 OS。\n\n实现原理：\n1. 虚拟线程由 JVM 的 Carrier Thread（载体线程，普通的平台线程）调度执行\n2. 当虚拟线程执行阻塞操作（如 I/O、锁、Thread.sleep）时，会自动从 Carrier Thread 上 unmount（卸载），Carrier Thread 转而执行其他虚拟线程\n3. 阻塞操作完成后，虚拟线程重新 mount 到 Carrier Thread 继续执行\n4. 这个 unmount/mount 操作称为 Continuation（协程挂起恢复），是虚拟线程的核心机制\n\n调度模型：M:N 调度——M 个虚拟线程映射到 N 个 Carrier Thread（通常 N = CPU 核心数）。\n\n适用场景：\n- 大量并发 I/O 操作（Web 服务器、数据库客户端、微服务间调用）\n- 请求-响应模型（每个请求一个虚拟线程）\n\n不能提升性能的场景：\n1. CPU 密集型计算：虚拟线程不能并行利用 CPU（并行需要平台线程，虚拟线程在载体线程上串行执行）\n2. synchronized 块中使用：虚拟线程在 synchronized 块中执行阻塞操作时不能 unmount（固定到载体线程），会阻塞整个载体线程\n3. 使用原生方法（JNI）：执行 native 代码时会固定到载体线程\n4. 存在锁竞争的热点代码：当多个虚拟线程竞争同一把锁时，载体线程也会被阻塞\n\n扩展延伸：JDK 21 的虚拟线程是预览特性，JDK 21 正式转正。使用 ReentrantLock 替代 synchronized（synchronized 会固定虚拟线程）。虚拟线程的协程机制基于 Continuation，类似 Go 的 goroutine 和 Kotlin 的协程。虚拟线程的栈大小初始很小（~10KB）并按需扩展，支持千万级并发线程。",
+    "answer": "虚拟线程是 JDK 21 正式发布的轻量级用户态线程，由 JVM 调度而非 OS。\n\n实现原理：\n1. 虚拟线程由 JVM 的 Carrier Thread（载体线程，普通的平台线程）调度执行\n2. 当虚拟线程执行阻塞操作（如 I/O、锁、Thread.sleep）时，会自动从 Carrier Thread 上 unmount（卸载），Carrier Thread 转而执行其他虚拟线程\n3. 阻塞操作完成后，虚拟线程重新 mount 到 Carrier Thread 继续执行\n4. 这个 unmount/mount 操作称为 Continuation（协程挂起恢复），是虚拟线程的核心机制\n\n调度模型：M:N 调度——M 个虚拟线程映射到 N 个 Carrier Thread（通常 N = CPU 核心数）。\n\n适用场景：\n- 大量并发 I/O 操作（Web 服务器、数据库客户端、微服务间调用）\n- 请求-响应模型（每个请求一个虚拟线程）\n\n不能提升性能的场景：\n1. CPU 密集型计算：虚拟线程不能并行利用 CPU（并行需要平台线程，虚拟线程在载体线程上串行执行）\n2. synchronized 块中使用：虚拟线程在 synchronized 块中执行阻塞操作时不能 unmount（固定到载体线程），会阻塞整个载体线程\n3. 使用原生方法（JNI）：执行 native 代码时会固定到载体线程\n4. 存在锁竞争的热点代码：当多个虚拟线程竞争同一把锁时，载体线程也会被阻塞\n\n扩展延伸：JDK 21 的虚拟线程是预览特性，JDK 21 正式转正。使用 ReentrantLock 替代 synchronized（synchronized 会固定虚拟线程）。虚拟线程的协程机制基于 Continuation，类似 Go 的 goroutine 和 Kotlin 的协程。虚拟线程的栈大小初始很小（~10KB）并按需扩展，支持千万级并发线程。",
     "hints": [
       "虚拟线程在阻塞时自动从 Carrier Thread 卸载（unmount）",
       "synchronized 和 CPU 密集型任务会固定虚拟线程，无法发挥优势"
@@ -1053,7 +1053,7 @@
     "type": "short_answer",
     "title": "Foreign Function & Memory API",
     "content": "请介绍 JDK 22 Foreign Function & Memory API（Project Panama）的原理和用法。它比 JNI 的优势在哪里？如何安全地操作堆外内存？",
-    "answer": "答案：FFM API（Foreign Function & Memory API）替代 JNI，提供纯 Java 调用原生代码和操作堆外内存的能力。\n\n核心组件：\n1. Arena：内存生命周期管理器。分配的内存自动在 Arena 关闭时释放（类似 try-with-resources）\n2. MemorySegment：堆外或堆内的连续内存区域。提供类型安全的内存访问。\n3. MemoryLayout：定义内存布局（字节对齐、字段偏移量），确保跨平台的兼容性\n4. Linker：原生函数链接器，将 Java 方法调用链接到 C 函数\n5. SymbolLookup：查找原生库中的符号（函数地址）\n\n比 JNI 的优势：\n1. 消除 JNI 的胶水代码（不再需要 javah 生成头文件，不需要手写 C 桩函数）\n2. 类型安全：MemoryLayout 和 VarHandle 提供类型安全的内存访问，JNI 的 GetIntArrayElement 等不检查边界\n3. 性能更好：FFM API 的内联优化比 JNI 的跨边界调用更高效\n4. 自动内存管理：Arena 关闭时自动释放内存（类似 RAII），JNI 需要手动 Release 或 Delete\n5. 支持堆外内存的直接操作（DirectByteBuffer 的现代替代方案）\n\n安全操作堆外内存：\n1. 使用 Arena 限定内存生命周期（避免 dangling pointer）\n2. MemoryLayout 确保正确的字节对齐和字段布局\n3. MemoryAccess 提供类型安全的 get/set 方法\n4. 通过 MemorySegment 的边界检查防止缓冲区溢出\n\n扩展延伸：FFM API 在 JDK 19 预览，JDK 22 转正。标准库中已有使用——如 java.util.zip 使用 FFM API 调用 zlib。典型应用场景：调用 C 库（如 TensorFlow C API、libfuse）、操作共享内存、实现序列化协议。",
+    "answer": "FFM API（Foreign Function & Memory API）替代 JNI，提供纯 Java 调用原生代码和操作堆外内存的能力。\n\n核心组件：\n1. Arena：内存生命周期管理器。分配的内存自动在 Arena 关闭时释放（类似 try-with-resources）\n2. MemorySegment：堆外或堆内的连续内存区域。提供类型安全的内存访问。\n3. MemoryLayout：定义内存布局（字节对齐、字段偏移量），确保跨平台的兼容性\n4. Linker：原生函数链接器，将 Java 方法调用链接到 C 函数\n5. SymbolLookup：查找原生库中的符号（函数地址）\n\n比 JNI 的优势：\n1. 消除 JNI 的胶水代码（不再需要 javah 生成头文件，不需要手写 C 桩函数）\n2. 类型安全：MemoryLayout 和 VarHandle 提供类型安全的内存访问，JNI 的 GetIntArrayElement 等不检查边界\n3. 性能更好：FFM API 的内联优化比 JNI 的跨边界调用更高效\n4. 自动内存管理：Arena 关闭时自动释放内存（类似 RAII），JNI 需要手动 Release 或 Delete\n5. 支持堆外内存的直接操作（DirectByteBuffer 的现代替代方案）\n\n安全操作堆外内存：\n1. 使用 Arena 限定内存生命周期（避免 dangling pointer）\n2. MemoryLayout 确保正确的字节对齐和字段布局\n3. MemoryAccess 提供类型安全的 get/set 方法\n4. 通过 MemorySegment 的边界检查防止缓冲区溢出\n\n扩展延伸：FFM API 在 JDK 19 预览，JDK 22 转正。标准库中已有使用——如 java.util.zip 使用 FFM API 调用 zlib。典型应用场景：调用 C 库（如 TensorFlow C API、libfuse）、操作共享内存、实现序列化协议。",
     "hints": [
       "FFM API = Arena + MemorySegment + MemoryLayout + Linker",
       "优势：无胶水代码、类型安全、自动内存管理、性能更好"
@@ -1061,7 +1061,7 @@
     "tags": [
       "Java",
       "FFM",
-      "Panama",
+      "panama",
       "JNI 替代"
     ]
   },
@@ -1071,7 +1071,7 @@
     "type": "short_answer",
     "title": "作用域值与结构化并发",
     "content": "请介绍 JDK 21 的 ScopedValue（作用域值）和 StructuredTaskScope（结构化并发）。ScopedValue 与 ThreadLocal 的区别是什么？结构化并发如何改进线程管理？",
-    "answer": "答案：ScopedValue 和 StructuredTaskScope 是 JDK 21 的预览特性，分别改进上下文传递和并发任务管理。\n\nScopedValue：\n- 不可变的、限定作用域的上下文值传递机制\n- 通过 ScopedValue.where(key, value).run(() -> { ... }) 绑定值\n- 在 run 方法的执行边界内，绑定的值对调用栈可见\n- 子任务自动继承父作用域的 ScopedValue（无需手动传递）\n\nScopedValue vs ThreadLocal：\n1. 不可变性：ScopedValue 绑定后不可修改（final 语义），ThreadLocal 可随意 set/get\n2. 生命周期：ScopedValue 绑定到代码块的作用域（try-with-resources），ThreadLocal 绑定到线程的整个生命周期\n3. 继承性：虚拟线程场景下，ScopedValue 自动传递到子任务，ThreadLocal 在虚拟线程中需要手动传递\n4. 内存：ScopedValue 的副本数 = 载体线程数（少量），ThreadLocal 的副本数 = 线程数（可能大量）\n5. 安全性：ScopedValue 是只读的，防止无意中修改上层传入的值\n\nStructuredTaskScope（结构化并发）：\n- 将并发任务的创建-执行-结果收集绑定到一个结构化代码块中\n- 所有子任务必须在作用域结束前完成（join 或 cancel）\n- 确保不会\"泄露\"线程（结构化保证）\n\n示例场景：\n- ShutdownOnSuccess：适用于\"任一子任务成功即可\"的场景（race 模式）\n- ShutdownOnFailure：适用于\"全部子任务成功\"的场景（all 模式）\n\n扩展延伸：结构化并发解决的核心问题是线程泄露——传统 ExecutorService 提交任务后，如果忘记获取 Future 的结果，任务可能一直运行。StructuredTaskScope 在作用域关闭时自动中断未完成的任务。ScopedValue + 虚拟线程 + 结构化并发是 JDK 21 的三大并发特性更新，共同构建 Java 的现代并发编程模型。",
+    "answer": "ScopedValue 和 StructuredTaskScope 是 JDK 21 的预览特性，分别改进上下文传递和并发任务管理。\n\nScopedValue：\n- 不可变的、限定作用域的上下文值传递机制\n- 通过 ScopedValue.where(key, value).run(() -> { ... }) 绑定值\n- 在 run 方法的执行边界内，绑定的值对调用栈可见\n- 子任务自动继承父作用域的 ScopedValue（无需手动传递）\n\nScopedValue vs ThreadLocal：\n1. 不可变性：ScopedValue 绑定后不可修改（final 语义），ThreadLocal 可随意 set/get\n2. 生命周期：ScopedValue 绑定到代码块的作用域（try-with-resources），ThreadLocal 绑定到线程的整个生命周期\n3. 继承性：虚拟线程场景下，ScopedValue 自动传递到子任务，ThreadLocal 在虚拟线程中需要手动传递\n4. 内存：ScopedValue 的副本数 = 载体线程数（少量），ThreadLocal 的副本数 = 线程数（可能大量）\n5. 安全性：ScopedValue 是只读的，防止无意中修改上层传入的值\n\nStructuredTaskScope（结构化并发）：\n- 将并发任务的创建-执行-结果收集绑定到一个结构化代码块中\n- 所有子任务必须在作用域结束前完成（join 或 cancel）\n- 确保不会\"泄露\"线程（结构化保证）\n\n示例场景：\n- ShutdownOnSuccess：适用于\"任一子任务成功即可\"的场景（race 模式）\n- ShutdownOnFailure：适用于\"全部子任务成功\"的场景（all 模式）\n\n扩展延伸：结构化并发解决的核心问题是线程泄露——传统 ExecutorService 提交任务后，如果忘记获取 Future 的结果，任务可能一直运行。StructuredTaskScope 在作用域关闭时自动中断未完成的任务。ScopedValue + 虚拟线程 + 结构化并发是 JDK 21 的三大并发特性更新，共同构建 Java 的现代并发编程模型。",
     "hints": [
       "ScopedValue = 不可变的块作用域上下文，ThreadLocal = 线程作用域可变上下文",
       "结构化并发保证所有子任务在作用域结束前完成或取消"
@@ -1089,7 +1089,7 @@
     "type": "short_answer",
     "title": "动态 CDS 归档",
     "content": "请介绍 JDK 的 Class Data Sharing（CDS）和 Application Class-Data Sharing（AppCDS）机制。动态 CDS 归档（Dynamic CDS Archive, JDK 13+）如何加速应用启动？",
-    "answer": "答案：CDS 通过共享类元数据加速 JVM 启动并减少内存占用。\n\n传统 CDS（JDK 5+）：\n- JRE 安装时创建 classes.jsa（Class Sharing Archive），包含核心类库的元数据\n- 多个 JVM 进程共享只读的类元数据（通过内存映射文件）\n- 减少启动时间（类加载时不需要读取和解析 class 文件）\n- 减少内存占用（多个 JVM 共享同一份类元数据）\n\nApplication CDS（AppCDS, JDK 10+）：\n- 将 CDS 从核心类库扩展到应用类\n- 通过三步骤使用：\n  1. 记录：-XX:DumpLoadedClassList=classes.lst 记录应用启动时加载的类\n  2. 归档：-Xshare:dump -XX:SharedArchiveFile=app.jsa -XX:SharedClassListFile=classes.lst\n  3. 使用：-Xshare:auto -XX:SharedArchiveFile=app.jsa\n- 大幅减少应用启动时间（30-50%）\n\n动态 CDS 归档（JDK 13+）：\n- 消除了显式记录类列表的步骤（不需要 -XX:DumpLoadedClassList）\n- JVM 退出时自动生成默认归档文件（默认位置：java_XXXX.jsa in temp dir）\n- 使用：-XX:ArchiveClassesAtExit=app.jsa（退出时生成归档）\n- 后续启动使用 -XX:SharedArchiveFile=app.jsa\n\n进一步优化：\n- 训练运行（Training Run）：启动应用并预热后退出生成归档\n- 生产环境中，应用第一次启动的类加载信息保存在归档中，后续启动直接使用\n- AOT 编译（JaOTC, JDK 17+）将类提前编译为机器码，与 CDS 互补\n\n扩展延伸：Spring Boot 应用的启动加速——通过 CDS 归档 + AOT 编译可以显著缩短启动时间。Spring Framework 6.1+ 支持自动生成 CDS 归档。Pitchfork（Spring 的 AOT 框架）使用 CDS + AOT 降低云原生环境的冷启动延迟。",
+    "answer": "CDS 通过共享类元数据加速 JVM 启动并减少内存占用。\n\n传统 CDS（JDK 5+）：\n- JRE 安装时创建 classes.jsa（Class Sharing Archive），包含核心类库的元数据\n- 多个 JVM 进程共享只读的类元数据（通过内存映射文件）\n- 减少启动时间（类加载时不需要读取和解析 class 文件）\n- 减少内存占用（多个 JVM 共享同一份类元数据）\n\nApplication CDS（AppCDS, JDK 10+）：\n- 将 CDS 从核心类库扩展到应用类\n- 通过三步骤使用：\n  1. 记录：-XX:DumpLoadedClassList=classes.lst 记录应用启动时加载的类\n  2. 归档：-Xshare:dump -XX:SharedArchiveFile=app.jsa -XX:SharedClassListFile=classes.lst\n  3. 使用：-Xshare:auto -XX:SharedArchiveFile=app.jsa\n- 大幅减少应用启动时间（30-50%）\n\n动态 CDS 归档（JDK 13+）：\n- 消除了显式记录类列表的步骤（不需要 -XX:DumpLoadedClassList）\n- JVM 退出时自动生成默认归档文件（默认位置：java_XXXX.jsa in temp dir）\n- 使用：-XX:ArchiveClassesAtExit=app.jsa（退出时生成归档）\n- 后续启动使用 -XX:SharedArchiveFile=app.jsa\n\n进一步优化：\n- 训练运行（Training Run）：启动应用并预热后退出生成归档\n- 生产环境中，应用第一次启动的类加载信息保存在归档中，后续启动直接使用\n- AOT 编译（JaOTC, JDK 17+）将类提前编译为机器码，与 CDS 互补\n\n扩展延伸：Spring Boot 应用的启动加速——通过 CDS 归档 + AOT 编译可以显著缩短启动时间。Spring Framework 6.1+ 支持自动生成 CDS 归档。Pitchfork（Spring 的 AOT 框架）使用 CDS + AOT 降低云原生环境的冷启动延迟。",
     "hints": [
       "AppCDS 将应用类的元数据归档到 .jsa 文件",
       "动态 CDS 归档（JDK 13+）自动在 JVM 退出时生成归档"
@@ -1107,7 +1107,7 @@
     "type": "short_answer",
     "title": "StructuredTaskScope 结构化并发",
     "content": "请介绍 Java 21 引入的 StructuredTaskScope（结构化并发 / JEP 453）。结构化并发解决了什么问题？StructuredTaskScope 与 ExecutorService 的区别是什么？",
-    "answer": "答案：结构化并发将并发任务的生命周期与代码块绑定——子任务在代码块结束前必须完成，避免任务泄漏和取消传播问题。\n\n解决的问题：\n- 任务泄漏：提交给 ExecutorService 的任务可能在主线程结束后仍然运行（孤儿线程）\n- 取消传播：一个子任务失败时，其他相关子任务得不到通知，继续运行浪费资源\n- 错误处理：传统编程需要手动管理所有 Future 的取消、超时和异常合并\n\nStructuredTaskScope 的核心：\n- try-with-resources 管理生命周期：Scope 关闭时自动等待所有子任务完成或取消\n- 子任务与 Scope 绑定：子任务在 Scope 内创建，Scope 关闭前必须全部 Join\n\n基本用法：\ntry (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n    Future<String> user = scope.fork(() -> fetchUser(id));\n    Future<String> order = scope.fork(() -> fetchOrder(id));\n    scope.join();              // 等待所有任务\n    scope.throwIfFailed();     // 如果有任务失败，抛出异常\n    return user.resultNow() + order.resultNow();\n}  // Scope 自动关闭，未完成的任务被取消\n\n两种策略：\n1. ShutdownOnFailure：任一子任务失败 → 取消其他未完成的任务（适合「并发请求，一个失败全取消」的场景）\n2. ShutdownOnSuccess：任一子任务成功 → 取消其他未完成的任务（适合「并发请求，取最快响应」的场景）\n\n与 ExecutorService 的对比：\n- ExecutorService.submit()：任务提交后返回 Future，需要调用方手动 cancel 和处理异常\n- StructuredTaskScope.fork()：任务与 Scope 绑定，scope.join() 统一等待，scope 关闭自动清理\n- 结构化并发保证：所有子任务的生命周期不会超过创建它的代码块\n\n扩展延伸：StructuredTaskScope + 虚拟线程 = 最佳实践——每个子任务对应一个虚拟线程，创建成本极低。自定义策略：可以继承 StructuredTaskScope 实现自定义的关闭策略（如「多数投票成功即可」）。结构化并发是 Java 对 Go 的 errgroup 和 Kotlin 的 coroutineScope 概念的实现。",
+    "answer": "结构化并发将并发任务的生命周期与代码块绑定——子任务在代码块结束前必须完成，避免任务泄漏和取消传播问题。\n\n解决的问题：\n- 任务泄漏：提交给 ExecutorService 的任务可能在主线程结束后仍然运行（孤儿线程）\n- 取消传播：一个子任务失败时，其他相关子任务得不到通知，继续运行浪费资源\n- 错误处理：传统编程需要手动管理所有 Future 的取消、超时和异常合并\n\nStructuredTaskScope 的核心：\n- try-with-resources 管理生命周期：Scope 关闭时自动等待所有子任务完成或取消\n- 子任务与 Scope 绑定：子任务在 Scope 内创建，Scope 关闭前必须全部 Join\n\n基本用法：\ntry (var scope = new StructuredTaskScope.ShutdownOnFailure()) {\n    Future<String> user = scope.fork(() -> fetchUser(id));\n    Future<String> order = scope.fork(() -> fetchOrder(id));\n    scope.join();              // 等待所有任务\n    scope.throwIfFailed();     // 如果有任务失败，抛出异常\n    return user.resultNow() + order.resultNow();\n}  // Scope 自动关闭，未完成的任务被取消\n\n两种策略：\n1. ShutdownOnFailure：任一子任务失败 → 取消其他未完成的任务（适合「并发请求，一个失败全取消」的场景）\n2. ShutdownOnSuccess：任一子任务成功 → 取消其他未完成的任务（适合「并发请求，取最快响应」的场景）\n\n与 ExecutorService 的对比：\n- ExecutorService.submit()：任务提交后返回 Future，需要调用方手动 cancel 和处理异常\n- StructuredTaskScope.fork()：任务与 Scope 绑定，scope.join() 统一等待，scope 关闭自动清理\n- 结构化并发保证：所有子任务的生命周期不会超过创建它的代码块\n\n扩展延伸：StructuredTaskScope + 虚拟线程 = 最佳实践——每个子任务对应一个虚拟线程，创建成本极低。自定义策略：可以继承 StructuredTaskScope 实现自定义的关闭策略（如「多数投票成功即可」）。结构化并发是 Java 对 Go 的 errgroup 和 Kotlin 的 coroutineScope 概念的实现。",
     "hints": [
       "结构化并发 = 子任务生命周期与代码块绑定（try-with-resources），Scope 关闭前所有子任务必须完成",
       "两种策略：ShutdownOnFailure（一个失败全取消）+ ShutdownOnSuccess（一个成功全取消）",
@@ -1126,7 +1126,7 @@
     "type": "short_answer",
     "title": "Vector API 向量计算",
     "content": "请介绍 Java 22 正式发布的 Vector API（Project Panama 的一部分 / JEP 460）。Vector API 的作用是什么？如何在 Java 中利用 SIMD 指令加速计算？",
-    "answer": "答案：Vector API 让 Java 程序可以显式利用 CPU 的 SIMD（Single Instruction Multiple Data）指令集，在循环计算中获得显著的性能提升（2-16 倍）。\n\nSIMD 原理：\n- 普通代码（SISD）：一条指令处理一个数据元素\n- SIMD：一条指令同时处理多个数据元素（如一次处理 8 个 int 或 4 个 double）\n- 现代 CPU 都支持：x86 的 AVX-512（512 位）、ARM 的 NEON（128 位）、SVE（可变长度）\n\n传统做法的问题：\n- JIT 编译器会自动向量化一些简单循环（如数组求和），但条件复杂时无法自动向量化\n- 无法利用新指令集（如 AVX-512 的掩码操作）\n\nVector API 示例：\n\n// 传统标量计算\nfloat[] a, b, c;\nfor (int i = 0; i < N; i++) c[i] = a[i] * b[i] + c[i];  // 一次一个元素\n\n// Vector API 向量计算\nvar species = FloatVector.SPECIES_256;  // 256 位 = 8 个 float\nfor (int i = 0; i < N; i += species.length()) {\n    var va = FloatVector.fromArray(species, a, i);\n    var vb = FloatVector.fromArray(species, b, i);\n    var vc = FloatVector.fromArray(species, c, i);\n    va.mul(vb).add(vc).intoArray(c, i);  // 一次 8 个元素\n}\n\n性能提升场景：\n1. 矩阵乘法：2-4 倍加速\n2. 图像处理（像素操作）：4-8 倍加速\n3. 神经网络推理：2-4 倍加速\n4. 加密算法：3-6 倍加速\n5. 科学计算（FFT、卷积）：4-16 倍加速\n\nVector Species（向量宽度）：\n- FloatVector.SPECIES_128 / 256 / 512：对应 128/256/512 位宽\n- FloatVector.SPECIES_MAX：使用 CPU 支持的最大宽度\n- 不同 CPU 支持不同宽度，Vector API 自动适配\n\n扩展延伸：Vector API 经过多次迭代（JEP 414 孵化 → JEP 417 再次孵化 → JEP 426 预览 → JEP 438 第二次预览 → JEP 460 正式版）。Vector API 不是替代 JIT 自动向量化的——自动向量化处理简单场景，Vector API 处理 JIT 无法处理的复杂场景。实际使用建议：先在性能热点上用 Vector API 重写，用 JMH 验证加速效果。",
+    "answer": "Vector API 让 Java 程序可以显式利用 CPU 的 SIMD（Single Instruction Multiple Data）指令集，在循环计算中获得显著的性能提升（2-16 倍）。\n\nSIMD 原理：\n- 普通代码（SISD）：一条指令处理一个数据元素\n- SIMD：一条指令同时处理多个数据元素（如一次处理 8 个 int 或 4 个 double）\n- 现代 CPU 都支持：x86 的 AVX-512（512 位）、ARM 的 NEON（128 位）、SVE（可变长度）\n\n传统做法的问题：\n- JIT 编译器会自动向量化一些简单循环（如数组求和），但条件复杂时无法自动向量化\n- 无法利用新指令集（如 AVX-512 的掩码操作）\n\nVector API 示例：\n\n// 传统标量计算\nfloat[] a, b, c;\nfor (int i = 0; i < N; i++) c[i] = a[i] * b[i] + c[i];  // 一次一个元素\n\n// Vector API 向量计算\nvar species = FloatVector.SPECIES_256;  // 256 位 = 8 个 float\nfor (int i = 0; i < N; i += species.length()) {\n    var va = FloatVector.fromArray(species, a, i);\n    var vb = FloatVector.fromArray(species, b, i);\n    var vc = FloatVector.fromArray(species, c, i);\n    va.mul(vb).add(vc).intoArray(c, i);  // 一次 8 个元素\n}\n\n性能提升场景：\n1. 矩阵乘法：2-4 倍加速\n2. 图像处理（像素操作）：4-8 倍加速\n3. 神经网络推理：2-4 倍加速\n4. 加密算法：3-6 倍加速\n5. 科学计算（FFT、卷积）：4-16 倍加速\n\nVector Species（向量宽度）：\n- FloatVector.SPECIES_128 / 256 / 512：对应 128/256/512 位宽\n- FloatVector.SPECIES_MAX：使用 CPU 支持的最大宽度\n- 不同 CPU 支持不同宽度，Vector API 自动适配\n\n扩展延伸：Vector API 经过多次迭代（JEP 414 孵化 → JEP 417 再次孵化 → JEP 426 预览 → JEP 438 第二次预览 → JEP 460 正式版）。Vector API 不是替代 JIT 自动向量化的——自动向量化处理简单场景，Vector API 处理 JIT 无法处理的复杂场景。实际使用建议：先在性能热点上用 Vector API 重写，用 JMH 验证加速效果。",
     "hints": [
       "Vector API = Java 中显式利用 CPU SIMD 指令（一条指令处理多个数据），实现 2-16 倍性能提升",
       "示例：FloatVector.SPECIES_256 一次处理 8 个 float，替代 for 循环一个一个处理",
@@ -1145,7 +1145,7 @@
     "type": "short_answer",
     "title": "CompletableFuture 深度：异步编排与线程模型",
     "content": "请深入介绍 CompletableFuture 的异步编排能力。thenApply 与 thenApplyAsync 的线程模型有什么区别？如何处理多个 CompletableFuture 的组合和异常？",
-    "answer": "答案：CompletableFuture 是 Java 8 引入的异步编程工具，Java 9+ 进一步增强，支持丰富的任务编排和灵活的线程模型。\n\n线程模型（关键！！！）：\n- thenApply/Fnally/accept：由上一个阶段的完成线程执行（不切换线程）\n- thenApplyAsync/FnallyAsync/acceptAsync：由 ForkJoinPool.commonPool()（或指定 Executor）执行\n- 区别：Async 版本保证在新的线程池中执行，非 Async 版本可能在调用线程或已完成线程中执行\n\n规则：\n1. 如果前一阶段已完成，当前回调在执行代码的线程中立即执行（非 Async）\n2. 如果前一阶段未完成，当前回调在完成前一阶段的线程中执行（非 Async）\n3. Async 版本始终在指定线程池中执行\n\n任务编排方法：\n\n1. 串行编排：\n   CompletableFuture.supplyAsync(() -> fetchUser())\n       .thenApply(user -> process(user))       // 同一线程\n       .thenApplyAsync(user -> save(user))      // 新线程池\n       .exceptionally(e -> handleError(e));\n\n2. 并行编排：\n   // 两个并行任务 + 结果合并\n   CompletableFuture<String> f1 = CompletableFuture.supplyAsync(() -> fetchA());\n   CompletableFuture<String> f2 = CompletableFuture.supplyAsync(() -> fetchB());\n   f1.thenCombine(f2, (a, b) -> a + b);        // 两者都完成\n\n3. 任意完成：\n   CompletableFuture.anyOf(f1, f2, f3)          // 任一完成即返回\n\n4. 全部完成：\n   CompletableFuture.allOf(f1, f2, f3).thenRun(() -> /* all done */)\n\n异常处理：\n- exceptionally(e -> defaultValue)：类似 catch，对异常提供默认值\n- handle((result, e) -> ...)：不管成功/失败都调用，返回新结果\n- whenComplete((result, e) -> ...)：类似 finally，不改变结果\n\n常见陷阱：\n1. 默认线程池（ForkJoinPool.commonPool()）是所有并行流的共享池，阻塞操作会导致整个池阻塞\n2. 必须使用 Async 版本 + 自定义线程池处理阻塞 I/O\n3. CompletableFuture.get() 阻塞调用线程 → 应使用 thenApply 链式调用避免阻塞\n4. get() 抛出的异常包装在 ExecutionException 中，需要拆开\n\n扩展延伸：Java 21 的 StructuredTaskScope 是 CompletableFuture 的替代方案——更适合虚拟线程场景。CF 的链式调用与虚拟线程的「每个请求一个线程」是两种不同的并发模型。在虚拟线程时代，StructuredTaskScope 通常比 CF 更优（代码更简单、更容易理解）。",
+    "answer": "CompletableFuture 是 Java 8 引入的异步编程工具，Java 9+ 进一步增强，支持丰富的任务编排和灵活的线程模型。\n\n线程模型（关键！！！）：\n- thenApply/Fnally/accept：由上一个阶段的完成线程执行（不切换线程）\n- thenApplyAsync/FnallyAsync/acceptAsync：由 ForkJoinPool.commonPool()（或指定 Executor）执行\n- 区别：Async 版本保证在新的线程池中执行，非 Async 版本可能在调用线程或已完成线程中执行\n\n规则：\n1. 如果前一阶段已完成，当前回调在执行代码的线程中立即执行（非 Async）\n2. 如果前一阶段未完成，当前回调在完成前一阶段的线程中执行（非 Async）\n3. Async 版本始终在指定线程池中执行\n\n任务编排方法：\n\n1. 串行编排：\n   CompletableFuture.supplyAsync(() -> fetchUser())\n       .thenApply(user -> process(user))       // 同一线程\n       .thenApplyAsync(user -> save(user))      // 新线程池\n       .exceptionally(e -> handleError(e));\n\n2. 并行编排：\n   // 两个并行任务 + 结果合并\n   CompletableFuture<String> f1 = CompletableFuture.supplyAsync(() -> fetchA());\n   CompletableFuture<String> f2 = CompletableFuture.supplyAsync(() -> fetchB());\n   f1.thenCombine(f2, (a, b) -> a + b);        // 两者都完成\n\n3. 任意完成：\n   CompletableFuture.anyOf(f1, f2, f3)          // 任一完成即返回\n\n4. 全部完成：\n   CompletableFuture.allOf(f1, f2, f3).thenRun(() -> /* all done */)\n\n异常处理：\n- exceptionally(e -> defaultValue)：类似 catch，对异常提供默认值\n- handle((result, e) -> ...)：不管成功/失败都调用，返回新结果\n- whenComplete((result, e) -> ...)：类似 finally，不改变结果\n\n常见陷阱：\n1. 默认线程池（ForkJoinPool.commonPool()）是所有并行流的共享池，阻塞操作会导致整个池阻塞\n2. 必须使用 Async 版本 + 自定义线程池处理阻塞 I/O\n3. CompletableFuture.get() 阻塞调用线程 → 应使用 thenApply 链式调用避免阻塞\n4. get() 抛出的异常包装在 ExecutionException 中，需要拆开\n\n扩展延伸：Java 21 的 StructuredTaskScope 是 CompletableFuture 的替代方案——更适合虚拟线程场景。CF 的链式调用与虚拟线程的「每个请求一个线程」是两种不同的并发模型。在虚拟线程时代，StructuredTaskScope 通常比 CF 更优（代码更简单、更容易理解）。",
     "hints": [
       "线程模型：thenApply（不切换线程，在完成线程执行）vs thenApplyAsync（始终在线程池执行）",
       "串行：thenApply/thenCompose；并行：thenCombine；任意：anyOf；全部：allOf",
@@ -1164,7 +1164,7 @@
     "type": "short_answer",
     "title": "ScopedValue 与线程局部变量对比",
     "content": "请介绍 Java 21 预览的 ScopedValue（JEP 446 / Project Loom）。ScopedValue 与 ThreadLocal 相比有什么优势？ScopedValue 如何解决 ThreadLocal 的内存泄漏和传递问题？",
-    "answer": "答案：ScopedValue 是 ThreadLocal 的现代化替代方案，不可变、安全、支持虚拟线程，解决 ThreadLocal 的多个根本问题。\n\nThreadLocal 的问题：\n1. 内存泄漏：ThreadLocal 中的值存活时间 = 线程生命周期（特别在线程池中，线程复用导致泄漏）\n2. 可修改性：用 ThreadLocal 传递的上下文可以被任何代码修改（安全隐患）\n3. 虚拟线程不可用：虚拟线程数量巨大（百万级），每个 ThreadLocal 占用的内存不可接受\n4. 传递困难：线程池中新建的线程不继承父线程的 ThreadLocal（需要手动传递）\n\nScopedValue 的设计：\n- 不可变（Immutable）：值在绑定后不能被修改\n- 有限生命周期：值存活在 try-with-resources 代码块内（超出范围自动释放）\n- 继承语义：子线程自动继承 ScopedValue（剪枝继承——只继承被捕获的值的快照）\n- 轻量级：虚拟线程可以安全使用（不会被 Pin 住）\n\n使用方式：\n// 定义 ScopedValue（静态常量）\nprivate static final ScopedValue<User> CURRENT_USER = ScopedValue.newInstance();\n\n// 绑定值（只能在一个线程内绑定一次）\nScopedValue.where(CURRENT_USER, user)  // 绑定用户到当前上下文\n    .run(() -> {\n        // 在这个 lambda 中可读取 CURRENT_USER.get()\n        handleRequest();\n    });  // 离开 run 后 CURRENT_USER 自动释放\n\n// 读取\nUser user = CURRENT_USER.get();\n\n// 不可修改：在 run() 中不能调用 CURRENT_USER.set(user2)（没有 set 方法）\n// 重新绑定（嵌套）：ScopedValue.where(CURRENT_USER, admin).run(() -> { ... })\n\n对比总结：\n| 特性 | ThreadLocal | ScopedValue |\n|------|------------|-------------|\n| 可变性 | 可修改 | 不可变 |\n| 生命周期 | 线程生命周期 | 代码块生命周期 |\n| 虚拟线程 | 不友好（内存大） | 友好（轻量） |\n| 内存泄漏 | 常见 | 不会（超出自动释放） |\n| 继承 | 不可靠 | 可靠（值捕获） |\n\n扩展延伸：ScopedValue 在 Web 框架中可以替代 ThreadLocal 做请求上下文的传递（当前用户、请求 ID、租户）。在虚拟线程时代，ThreadLocal 被设计为「不推荐使用」（deprecate），ScopedValue 是推荐的替代方案。ScopedValue 还支持 rebind（重新绑定），用于在不改变父作用域值的情况下，创建子作用域的新值。",
+    "answer": "ScopedValue 是 ThreadLocal 的现代化替代方案，不可变、安全、支持虚拟线程，解决 ThreadLocal 的多个根本问题。\n\nThreadLocal 的问题：\n1. 内存泄漏：ThreadLocal 中的值存活时间 = 线程生命周期（特别在线程池中，线程复用导致泄漏）\n2. 可修改性：用 ThreadLocal 传递的上下文可以被任何代码修改（安全隐患）\n3. 虚拟线程不可用：虚拟线程数量巨大（百万级），每个 ThreadLocal 占用的内存不可接受\n4. 传递困难：线程池中新建的线程不继承父线程的 ThreadLocal（需要手动传递）\n\nScopedValue 的设计：\n- 不可变（Immutable）：值在绑定后不能被修改\n- 有限生命周期：值存活在 try-with-resources 代码块内（超出范围自动释放）\n- 继承语义：子线程自动继承 ScopedValue（剪枝继承——只继承被捕获的值的快照）\n- 轻量级：虚拟线程可以安全使用（不会被 Pin 住）\n\n使用方式：\n// 定义 ScopedValue（静态常量）\nprivate static final ScopedValue<User> CURRENT_USER = ScopedValue.newInstance();\n\n// 绑定值（只能在一个线程内绑定一次）\nScopedValue.where(CURRENT_USER, user)  // 绑定用户到当前上下文\n    .run(() -> {\n        // 在这个 lambda 中可读取 CURRENT_USER.get()\n        handleRequest();\n    });  // 离开 run 后 CURRENT_USER 自动释放\n\n// 读取\nUser user = CURRENT_USER.get();\n\n// 不可修改：在 run() 中不能调用 CURRENT_USER.set(user2)（没有 set 方法）\n// 重新绑定（嵌套）：ScopedValue.where(CURRENT_USER, admin).run(() -> { ... })\n\n对比总结：\n| 特性 | ThreadLocal | ScopedValue |\n|------|------------|-------------|\n| 可变性 | 可修改 | 不可变 |\n| 生命周期 | 线程生命周期 | 代码块生命周期 |\n| 虚拟线程 | 不友好（内存大） | 友好（轻量） |\n| 内存泄漏 | 常见 | 不会（超出自动释放） |\n| 继承 | 不可靠 | 可靠（值捕获） |\n\n扩展延伸：ScopedValue 在 Web 框架中可以替代 ThreadLocal 做请求上下文的传递（当前用户、请求 ID、租户）。在虚拟线程时代，ThreadLocal 被设计为「不推荐使用」（deprecate），ScopedValue 是推荐的替代方案。ScopedValue 还支持 rebind（重新绑定），用于在不改变父作用域值的情况下，创建子作用域的新值。",
     "hints": [
       "ThreadLocal 的问题：内存泄漏（线程池）、可修改（不安全）、虚拟线程不友好、线程间传递困难",
       "ScopedValue 的设计：不可变 + try-with-resources 有限生命周期 + 自动继承 + 虚拟线程友好",
@@ -1183,7 +1183,7 @@
     "type": "short_answer",
     "title": "Continuation 与栈恢复",
     "content": "请介绍 Java 中 Continuation（协程的底层机制）的概念。Continuation 与虚拟线程的关系是什么？什么是栈恢复（Stack Recovery）？",
-    "answer": "答案：Continuation 是虚拟线程的底层实现机制，是一种可以暂停和恢复执行的计算状态。\n\nContinuation 的概念：\n- Continuation 表示程序执行到某个点的状态（包括局部变量、栈帧、程序计数器）\n- 可以暂停（yield）当前执行，保存状态\n- 稍后从暂停点恢复执行（resume）\n\nContinuation 与虚拟线程：\n- 虚拟线程的底层使用 Continuation 实现（JDK 内部 jdk.internal.vm.Continuation）\n- 当虚拟线程执行阻塞操作（如 I/O、锁）时，Continuation 自动 yield（保存当前栈帧）\n- 当阻塞操作完成时，Continuation resume（恢复栈帧，继续执行）\n- 这种机制称为 JVM 内部的栈恢复（Stack Recovery）\n\n栈恢复（Stack Recovery）的原理：\n1. 虚拟线程运行在 Carrier 线程上，执行到阻塞调用时\n2. Continuation.yield() 被调用——虚拟线程的栈帧从 Carrier 的栈上拷贝到堆内存（拷贝栈）\n3. Carrier 线程被释放，可以执行其他虚拟线程\n4. 阻塞操作完成后（如 I/O 数据就绪）\n5. Continuation.resume() 被调用——堆内存中的栈帧恢复回某个 Carrier 线程的栈\n\n栈恢复的技术挑战：\n1. 栈帧拷贝：需要将 native 栈帧拷贝到堆（JVM 内部有完善的机制）\n2. 栈回滚（Stack Unwalk）：virtual thread 在 yield 时需要 unwalk 栈\n3. Pin 问题：在 synchronized 块或 native 方法中无法 yield（栈帧 pinned）\n\n扩展延伸：Continuation 是编程语言层面的协程原语。Kotlin 的协程（suspend/resume）也是基于类似 Continuation 的概念。Java 的 Continuation 在 JDK 内部使用（不对外公开 API），是虚拟线程的基石。理解 Continuation 有助于理解为什么虚拟线程在 synchronized 块中会被 Pin 住（因为 synchronized 的栈帧结构阻止了安全的 yield）。",
+    "answer": "Continuation 是虚拟线程的底层实现机制，是一种可以暂停和恢复执行的计算状态。\n\nContinuation 的概念：\n- Continuation 表示程序执行到某个点的状态（包括局部变量、栈帧、程序计数器）\n- 可以暂停（yield）当前执行，保存状态\n- 稍后从暂停点恢复执行（resume）\n\nContinuation 与虚拟线程：\n- 虚拟线程的底层使用 Continuation 实现（JDK 内部 jdk.internal.vm.Continuation）\n- 当虚拟线程执行阻塞操作（如 I/O、锁）时，Continuation 自动 yield（保存当前栈帧）\n- 当阻塞操作完成时，Continuation resume（恢复栈帧，继续执行）\n- 这种机制称为 JVM 内部的栈恢复（Stack Recovery）\n\n栈恢复（Stack Recovery）的原理：\n1. 虚拟线程运行在 Carrier 线程上，执行到阻塞调用时\n2. Continuation.yield() 被调用——虚拟线程的栈帧从 Carrier 的栈上拷贝到堆内存（拷贝栈）\n3. Carrier 线程被释放，可以执行其他虚拟线程\n4. 阻塞操作完成后（如 I/O 数据就绪）\n5. Continuation.resume() 被调用——堆内存中的栈帧恢复回某个 Carrier 线程的栈\n\n栈恢复的技术挑战：\n1. 栈帧拷贝：需要将 native 栈帧拷贝到堆（JVM 内部有完善的机制）\n2. 栈回滚（Stack Unwalk）：virtual thread 在 yield 时需要 unwalk 栈\n3. Pin 问题：在 synchronized 块或 native 方法中无法 yield（栈帧 pinned）\n\n扩展延伸：Continuation 是编程语言层面的协程原语。Kotlin 的协程（suspend/resume）也是基于类似 Continuation 的概念。Java 的 Continuation 在 JDK 内部使用（不对外公开 API），是虚拟线程的基石。理解 Continuation 有助于理解为什么虚拟线程在 synchronized 块中会被 Pin 住（因为 synchronized 的栈帧结构阻止了安全的 yield）。",
     "hints": [
       "Continuation = 程序执行状态的保存和恢复（暂停/恢复），是虚拟线程的底层实现",
       "栈恢复（Stack Recovery）：虚拟线程阻塞时栈帧从 Carrier 拷贝到堆，完成后恢复回栈",
@@ -1202,7 +1202,7 @@
     "type": "short_answer",
     "title": "JMM 与 happens-before 规则",
     "content": "请解释 Java 内存模型（JMM）中的 happens-before 规则及其在并发编程中的作用。",
-    "answer": "答案：happens-before 是 JMM 保证多线程操作可见性和有序性的核心规则\n\n解析：happens-before 规则定义了一组操作之间的偏序关系。如果操作 A happens-before 操作 B，则 A 对所有后续线程的可见效果在 B 执行前已确定。关键规则包括：1）程序顺序规则——同一个线程中的每个操作 happens-before 该线程的后续操作（as-if-serial 语义）2）监视器锁规则——对一个锁的解锁 happens-before 后续对该锁的加锁 3）volatile 规则——对 volatile 变量的写 happens-before 后续对该 volatile 变量的读 4）传递性——A happens-before B 且 B happens-before C，则 A happens-before C 5）线程启动/中断/终止规则——Thread.start() happens-before 新线程的任意操作，线程中操作 happens-before Thread.join() 返回。\n\n扩展延伸：JMM 不要求时间上的先后顺序（物理时间上 A 先执行 B 不一定意味着 A happens-before B），只保证可见性和有序性。重排序在满足 happens-before 时是安全的：编译器/CPU 可以在不违反 happens-before 的前提下自由对指令重排以提高性能。volatile 实现原理：JVM 在 volatile 写之前插入 StoreStore 屏障（禁止前面的写与 volatile 写重排），写后插入 StoreLoad 屏障（强制刷新到主存）。synchronized 实现：Java 1.6 后大量优化（偏向锁、轻量级锁、锁粗化、锁消除），在无竞争时代价很小。hb(volatile写) -> hb(volatile读) —— 这道保证是双检锁（DCL）单例模式可以配合 volatile 使用的理论基础。",
+    "answer": "happens-before 是 JMM 保证多线程操作可见性和有序性的核心规则\n\n解析：happens-before 规则定义了一组操作之间的偏序关系。如果操作 A happens-before 操作 B，则 A 对所有后续线程的可见效果在 B 执行前已确定。关键规则包括：1）程序顺序规则——同一个线程中的每个操作 happens-before 该线程的后续操作（as-if-serial 语义）2）监视器锁规则——对一个锁的解锁 happens-before 后续对该锁的加锁 3）volatile 规则——对 volatile 变量的写 happens-before 后续对该 volatile 变量的读 4）传递性——A happens-before B 且 B happens-before C，则 A happens-before C 5）线程启动/中断/终止规则——Thread.start() happens-before 新线程的任意操作，线程中操作 happens-before Thread.join() 返回。\n\n扩展延伸：JMM 不要求时间上的先后顺序（物理时间上 A 先执行 B 不一定意味着 A happens-before B），只保证可见性和有序性。重排序在满足 happens-before 时是安全的：编译器/CPU 可以在不违反 happens-before 的前提下自由对指令重排以提高性能。volatile 实现原理：JVM 在 volatile 写之前插入 StoreStore 屏障（禁止前面的写与 volatile 写重排），写后插入 StoreLoad 屏障（强制刷新到主存）。synchronized 实现：Java 1.6 后大量优化（偏向锁、轻量级锁、锁粗化、锁消除），在无竞争时代价很小。hb(volatile写) -> hb(volatile读) —— 这道保证是双检锁（DCL）单例模式可以配合 volatile 使用的理论基础。",
     "hints": [
       "dcl 双检锁单例模式中 volatile 关键字的含义",
       "重排序在满足 happens-before 时如何保证安全"
@@ -1219,7 +1219,7 @@
     "type": "short_answer",
     "title": "Java Fork/Join 框架",
     "content": "请解释 Fork/Join 框架的工作窃取算法及其适用场景。",
-    "answer": "答案：Fork/Join 框架通过分治法和工作窃取算法高效利用多核 CPU\n\n解析：核心概念：将大任务（ForkJoinTask）递归拆分为子任务，子任务的结果再合并（Join）。工作窃取（Work-Stealing）算法：每个工作线程拥有一个双端队列（Deque）存放自己的子任务，线程从队头取任务执行；空闲线程从其他线程的队尾窃取任务执行。这种设计减少了线程之间的竞争（头尾互不冲突）。ForkJoinPool 维护一个全局提交队列，通过 execute/submit/invoke 提交外部任务。任务类型：RecursiveAction（无返回值，如数组排序）、RecursiveTask（有返回值，如求和）。ForkJoinTask 在 Java 8 中作为并行流（Parallel Stream）的底层实现。\n\n扩展延伸：Fork/Join 适合纯计算密集型且任务可独立拆分的场景——数组/列表的排序、遍历、矩阵运算、归并操作。不适合：IO 密集型任务（因为在等待 IO 时无法窃取别人的任务）。ForkJoinPool 的线程数默认 = Runtime.availableProcessors() - 1。阈值（Threshold）选择：任务拆分的最小大小，太小任务拆分开销大，太大无法充分利用多核。通常经过实验确定（如数组排序任务拆分到 10000 个元素作为基准）。工作窃取可能导致更多缓存缺失（因为线程从一个核心窃取数据到另一个核心）。Common Pool（ForkJoinPool.commonPool()）被 CompletableFuture 和 Parallel Stream 共享，应避免阻塞操作（如 sleep 或同步 IO 阻塞公共池中的线程）。ManagedBlocker 接口用于在公共池中处理阻塞操作。",
+    "answer": "Fork/Join 框架通过分治法和工作窃取算法高效利用多核 CPU\n\n解析：核心概念：将大任务（ForkJoinTask）递归拆分为子任务，子任务的结果再合并（Join）。工作窃取（Work-Stealing）算法：每个工作线程拥有一个双端队列（Deque）存放自己的子任务，线程从队头取任务执行；空闲线程从其他线程的队尾窃取任务执行。这种设计减少了线程之间的竞争（头尾互不冲突）。ForkJoinPool 维护一个全局提交队列，通过 execute/submit/invoke 提交外部任务。任务类型：RecursiveAction（无返回值，如数组排序）、RecursiveTask（有返回值，如求和）。ForkJoinTask 在 Java 8 中作为并行流（Parallel Stream）的底层实现。\n\n扩展延伸：Fork/Join 适合纯计算密集型且任务可独立拆分的场景——数组/列表的排序、遍历、矩阵运算、归并操作。不适合：IO 密集型任务（因为在等待 IO 时无法窃取别人的任务）。ForkJoinPool 的线程数默认 = Runtime.availableProcessors() - 1。阈值（Threshold）选择：任务拆分的最小大小，太小任务拆分开销大，太大无法充分利用多核。通常经过实验确定（如数组排序任务拆分到 10000 个元素作为基准）。工作窃取可能导致更多缓存缺失（因为线程从一个核心窃取数据到另一个核心）。Common Pool（ForkJoinPool.commonPool()）被 CompletableFuture 和 Parallel Stream 共享，应避免阻塞操作（如 sleep 或同步 IO 阻塞公共池中的线程）。ManagedBlocker 接口用于在公共池中处理阻塞操作。",
     "hints": [
       "工作窃取为什么从双端队列的队尾窃取",
       "ForkJoinPool 的线程数怎么确定以及为什么不适合 IO 密集"
@@ -1232,7 +1232,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "choice",
     "title": "Java 内存泄漏场景",
     "content": "以下哪个场景不会导致 Java 堆内存泄漏？",
@@ -1258,7 +1258,7 @@
     "type": "short_answer",
     "title": "Java 伪共享 False Sharing",
     "content": "请解释 Java 并发编程中的伪共享（False Sharing）问题以及常见的解决方案。",
-    "answer": "答案：伪共享是指多个线程修改同一缓存行的不同变量导致不必要的缓存同步\n\n解析：CPU 缓存以缓存行（Cache Line，通常 64 字节）为单位从内存加载数据。当两个线程运行在不同 CPU 核心上，各自修改同一缓存行中的不同变量时，缓存一致性协议（MESI）会让两个核心的缓存行在每次写入时互相失效。即使线程操作的是不同变量（逻辑上无关），物理上在同一缓存行仍会触发缓存行状态的频繁切换，导致严重的性能下降（可能降低 10-100 倍）。解决方案的核心是缓存行填充（Padding）：在变量前后填充无用字节，确保不同线程操作的变量位于不同缓存行。\n\n扩展延伸：Java 中的解决方案演进：1）Java 8 前手动填充（long p1, p2, ... p7 在 volatile long value 前后）2）Java 8 引入 @Contended 注解（JVM 参数 -XX:-RestrictContended 开启），自动填充到缓存行对齐。3）JCTools（Java Concurrency Tools）等并发库内部广泛使用了缓存行填充。Log4j 2 的 RingBuffer（LMAX Disruptor）架构是避免伪共享的经典实践。检测伪共享：使用 Linux perf（查看 cache-misses 指标）和 JDK Flight Recorder 分析缓存行为。现代 CPU 的 MESI 优化方向：不同 Intel 微架构的各级缓存命中/失效行为不同，伪共享的惩罚在不同 CPU 上不同（从几纳秒到几百纳秒）。",
+    "answer": "伪共享是指多个线程修改同一缓存行的不同变量导致不必要的缓存同步\n\n解析：CPU 缓存以缓存行（Cache Line，通常 64 字节）为单位从内存加载数据。当两个线程运行在不同 CPU 核心上，各自修改同一缓存行中的不同变量时，缓存一致性协议（MESI）会让两个核心的缓存行在每次写入时互相失效。即使线程操作的是不同变量（逻辑上无关），物理上在同一缓存行仍会触发缓存行状态的频繁切换，导致严重的性能下降（可能降低 10-100 倍）。解决方案的核心是缓存行填充（Padding）：在变量前后填充无用字节，确保不同线程操作的变量位于不同缓存行。\n\n扩展延伸：Java 中的解决方案演进：1）Java 8 前手动填充（long p1, p2, ... p7 在 volatile long value 前后）2）Java 8 引入 @Contended 注解（JVM 参数 -XX:-RestrictContended 开启），自动填充到缓存行对齐。3）JCTools（Java Concurrency Tools）等并发库内部广泛使用了缓存行填充。Log4j 2 的 RingBuffer（LMAX Disruptor）架构是避免伪共享的经典实践。检测伪共享：使用 Linux perf（查看 cache-misses 指标）和 JDK Flight Recorder 分析缓存行为。现代 CPU 的 MESI 优化方向：不同 Intel 微架构的各级缓存命中/失效行为不同，伪共享的惩罚在不同 CPU 上不同（从几纳秒到几百纳秒）。",
     "hints": [
       "@Contended 注解怎么实现缓存行填充",
       "Disruptor 框架是怎么解决伪共享的"
@@ -1275,7 +1275,7 @@
     "type": "short_answer",
     "title": "Java 偏置锁撤销机制",
     "content": "请解释 Java 偏向锁的撤销过程和 JDK 15 后偏置锁被禁用的原因。",
-    "answer": "答案：偏向锁减少同一线程重复获取锁的 CAS 开销，但撤销成本高且复杂\n\n解析：偏向锁在对象头 Mark Word 中存储偏向线程 ID，当该线程再次获取同一锁时无需任何 CAS 操作。偏向锁撤销发生在另一个线程尝试竞争该锁时：1）检查偏向线程是否存活 2）如果存活，在全局安全点暂停偏向线程 3）检查偏向线程是否仍在持有该锁（如果已退出同步块，则撤销 4）如果是，将偏向锁升级为轻量级锁或膨胀为重量级锁。回退方案：如果偏向线程已释放，可退回到无锁状态或轻量级锁。撤销操作需要在全局安全点暂停所有线程，触发所有线程的 Stop-The-World 暂停，这在高并发应用中可能显著增加延迟。\n\n扩展延伸：JDK 15 通过 JEP 374 默认禁用了偏向锁（-XX：-UseBiasedLocking）。原因：1）偏向锁的撤销必须在全局安全点进行，在高吞吐应用（如 Web 应用）中，持有同一个锁的线程竞争很常见，撤销频繁导致 STW 暂停 2）现代应用的同步块趋向于短时间，轻量级锁 CAS 开销已经很小 3）偏向锁的代码复杂度显著增加了 JVM 的维护成本。JDK 21 移除了偏向锁代码。替代方案：对于有大量锁竞争且没有线程偏向的场景，默认使用轻量级锁（通过 CAS 加锁）就足够了。对于非常明确是单线程访问的锁，可以考虑消除锁（Lock Elimination）——JIT 通过逃逸分析自动优化。",
+    "answer": "偏向锁减少同一线程重复获取锁的 CAS 开销，但撤销成本高且复杂\n\n解析：偏向锁在对象头 Mark Word 中存储偏向线程 ID，当该线程再次获取同一锁时无需任何 CAS 操作。偏向锁撤销发生在另一个线程尝试竞争该锁时：1）检查偏向线程是否存活 2）如果存活，在全局安全点暂停偏向线程 3）检查偏向线程是否仍在持有该锁（如果已退出同步块，则撤销 4）如果是，将偏向锁升级为轻量级锁或膨胀为重量级锁。回退方案：如果偏向线程已释放，可退回到无锁状态或轻量级锁。撤销操作需要在全局安全点暂停所有线程，触发所有线程的 Stop-The-World 暂停，这在高并发应用中可能显著增加延迟。\n\n扩展延伸：JDK 15 通过 JEP 374 默认禁用了偏向锁（-XX：-UseBiasedLocking）。原因：1）偏向锁的撤销必须在全局安全点进行，在高吞吐应用（如 Web 应用）中，持有同一个锁的线程竞争很常见，撤销频繁导致 STW 暂停 2）现代应用的同步块趋向于短时间，轻量级锁 CAS 开销已经很小 3）偏向锁的代码复杂度显著增加了 JVM 的维护成本。JDK 21 移除了偏向锁代码。替代方案：对于有大量锁竞争且没有线程偏向的场景，默认使用轻量级锁（通过 CAS 加锁）就足够了。对于非常明确是单线程访问的锁，可以考虑消除锁（Lock Elimination）——JIT 通过逃逸分析自动优化。",
     "hints": [
       "偏向锁撤销发生在什么时候",
       "JDK 15 移除偏向锁的根本原因是什么"
@@ -1307,7 +1307,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Vector API 的 Species 选择与 FMA 运算",
     "content": "请介绍 Vector API 中 Species（向量物种）的作用，以及熔乘加（FMA）运算在数值计算中的优势。",
@@ -1326,7 +1326,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "结构化并发的错误传播与任务取消",
     "content": "请解释结构化并发中 ShutdownOnFailure 和 ShutdownOnSuccess 策略如何传播错误和取消任务，以及 StructuredTaskScope 的生命周期保证。",
@@ -1345,7 +1345,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ScopedValue 的绑定生命周期与传递规则",
     "content": "请解释 ScopedValue 的绑定（binding）生命周期机制，以及它在虚拟线程间传递数据时相比 ThreadLocal 的优势。",
@@ -1378,7 +1378,7 @@
       "SequencedMap",
       "Java 21",
       "集合框架",
-      "API 设计"
+      "API设计"
     ]
   },
   {
@@ -1435,7 +1435,7 @@
       "StructuredTaskScope",
       "shutdown",
       "lomb",
-      "java21"
+      "Java 21"
     ]
   },
   {
@@ -1472,7 +1472,7 @@
       "SequencedCollection",
       "SequencedMap",
       "reversed",
-      "java21",
+      "Java 21",
       "collection-framework"
     ]
   },
@@ -1497,7 +1497,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ConcurrentHashMap读操作为何无锁",
     "content": "Java 8的ConcurrentHashMap在get()操作中完全不使用锁（lock-free），请从内部数据结构和volatile使用的角度解释其实现原理。Node的val和next字段用了什么机制保证内存可见性？",
@@ -1510,14 +1510,14 @@
     "tags": [
       "ConcurrentHashMap",
       "volatile",
-      "lock-free",
+      "Lock-Free",
       "JMM",
       "concurrency"
     ]
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "volatile与synchronized语义差异",
     "content": "关于volatile关键字和synchronized关键字的区别，以下哪项描述是正确的？",
@@ -1543,7 +1543,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "ThreadLocal内存泄漏风险",
     "content": "ThreadLocal在使用后若不显式调用remove()，在线程池场景下可能导致内存泄漏，其根本原因是Entry的key（ThreadLocal实例）是弱引用，但value是强引用。",
@@ -1576,7 +1576,7 @@
       "notify可能在什么场景丢失信号"
     ],
     "tags": [
-      "blocking queue",
+      "BlockingQueue",
       "wait/notify",
       "并发",
       "环形缓冲区"
@@ -1584,7 +1584,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "泛型类型擦除的运行时真相",
     "content": "Java 的泛型通过类型擦除实现，运行时无法获取泛型参数的具体类型。因此 List<String> 和 List<Integer> 在运行时是相同的 Class 对象。\nA) 正确\nB) 错误",
@@ -1601,7 +1601,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ClassLoader 双亲委派模型的核心机制",
     "content": "关于 ClassLoader 双亲委派模型的描述，哪一项是正确的？\nA) 类加载时首先由子 ClassLoader 尝试加载，加载失败后才交给父 ClassLoader\nB) 自定义 ClassLoader 必须重写 loadClass 方法才能遵循双亲委派模型\nC) loadClass 方法的核心逻辑是先委派父 ClassLoader 加载，父加载失败后才由自己尝试加载\nD) Thread.currentThread().getContextClassLoader() 返回当前类所属的 ClassLoader",
@@ -1618,7 +1618,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JIT 编译的核心优化技术详解",
     "content": "请列举 HotSpot JVM 中至少 5 种 JIT 编译优化技术，并重点说明方法内联和逃逸分析的工作原理。方法内联在哪些场景下会失效？逃逸分析的标量替换如何实现栈上分配？",
@@ -1682,7 +1682,7 @@
       "事件启用/禁用可由配置 files（.jfc 文件）或 programmatic configuration 控制，禁用的事件几乎零开销（只生成一个空方法调用）"
     ],
     "tags": [
-      "jfr",
+      "JFR",
       "jep-349",
       "event",
       "profiling",
@@ -1691,7 +1691,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JDK 9+ String 拼接 invokeDynamic 优化",
     "content": "在 JDK 9+ 中，Java 编译器将 String 的 + 拼接操作符编译为 invokedynamic 调用，而非传统的 StringBuilder。以下关于这种优化的描述，哪项是正确的？\nA) invokedynamic 方式在每次运行时都通过反射构造 StringBuilder，因此比 JDK 8 的显式 StringBuilder 更慢\nB) invokedynamic 方式使用 StringConcatFactory 作为 bootstrap method，在首次调用时生成最优的拼接实现策略，后续调用直接使用生成的 MethodHandle，JIT 可进一步内联优化\nC) invokedynamic 方式仅适用于 String 字面量的拼接，变量拼接仍然使用 StringBuilder\nD) 拼接结果仍然通过 StringBuilder.toString() 返回，只是创建 StringBuilder 的方式改用了 invokedynamic",
@@ -1710,7 +1710,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JIT 分层编译中 C1 和 C2 的协作机制",
     "content": "HotSpot VM 的分层编译（Tiered Compilation）将编译分为 5 个级别（0-4）。以下关于各编译级别之间协作机制的描述，哪项是正确的？\nA) 代码从 level 0（解释器）直接升级到 level 4（C2），中间不经过带 profiling 的编译级别\nB) level 2（C1 不带 profiling）和 level 3（C1 带 profiling）是可选的中间状态；C2 编译基于 level 3 收集的类型 profiling 信息做出更激进的优化决策，如虚方法内联和分支预测\nC) C1 编译的所有级别（1-3）都不记录运行时类型信息，这些信息仅在解释器中收集\nD) level 3 带 profiling 的 C1 代码与 level 4 C2 代码可以共存，但 JVM 不会自动从 level 4 回退到较低级别",
@@ -1720,16 +1720,16 @@
       "C2 的优化质量依赖 C1 收集的 profile 数据——包括分支命中率和类型接收者分布"
     ],
     "tags": [
-      "jit",
+      "JIT",
       "tiered-compilation",
-      "c1",
-      "c2",
+      "C1",
+      "C2",
       "hotspot-profile"
     ]
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "Epsilon GC 在内存耗尽时的行为",
     "content": "Epsilon GC（JEP 318）是一种无操作（no-op）垃圾收集器。当堆内存耗尽时，Epsilon GC 不会触发任何垃圾收集，而是直接抛出 OutOfMemoryError。如果堆中仍有大量可回收的不可达对象，Epsilon GC 也不会回收它们。",
@@ -1745,14 +1745,14 @@
     "tags": [
       "epsilon-gc",
       "jep-318",
-      "gc",
+      "GC",
       "no-op-gc",
       "outofmemoryerror"
     ]
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ScopedValue 与 ThreadLocal 核心区别",
     "content": "ScopedValue（JEP 429，JDK 21+）是 JDK 新引入的线程上下文传值机制。请说明 ScopedValue 与 ThreadLocal 在以下三个方面的核心区别：1) 可变性约束 2) 生命周期范围 3) 对虚拟线程继承行为的支持。",
@@ -1762,11 +1762,11 @@
       "ScopedValue 的 bounded 模式（rebind）虽然允许在嵌套作用域中绑定新值，但仍遵循 stack-like 的进出规则"
     ],
     "tags": [
-      "scopedvalue",
-      "threadlocal",
-      "virtual-threads",
+      "ScopedValue",
+      "ThreadLocal",
+      "Virtual Threads",
       "jep-429",
-      "java-21"
+      "Java 21"
     ]
   },
   {
@@ -1792,7 +1792,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "hard",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ConstantDynamic (Condy) 引导方法解析机制",
     "content": "ConstantDynamic（Condy，JDK 11+ JEP 309）允许在 class 文件的常量池中定义用户自定义常量。以下关于 Condy 引导方法解析机制的描述，哪项是正确的？\nA) 引导方法在类加载阶段对所有 Condy 常量池条目进行批量调用，并将结果缓存到运行时常量池\nB) 引导方法在 JIT 编译阶段被调用，编译结果直接嵌入机器码，不经过运行时常量池\nC) 引导方法在 CONSTANT_Dynamic 常量池条目首次被解析时调用，结果由 JVM 缓存供后续访问复用\nD) 引导方法每次访问 Condy 常量时都被重新调用，以确保返回值的「新鲜度」",
@@ -1813,7 +1813,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "true_false",
     "title": "VarHandle opaque 模式的内存排序语义",
     "content": "VarHandle 的 opaque 模式（setOpaque/getOpaque）保证了对变量的原子性访问和完全的有序性保证，即禁止编译器和处理器对该变量相关的所有内存操作进行重排序。",
