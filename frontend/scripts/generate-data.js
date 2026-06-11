@@ -67,7 +67,7 @@ for (const cat of sortedCats) {
       type: q.type,
       title: q.title,
       tags: q.tags || [],
-      company: q.company || "",
+      source: q.source || "",
       content_hash: q.content_hash,
     });
   }

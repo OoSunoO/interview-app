@@ -17,6 +17,12 @@ import { knowledge as aiAgent } from "./knowledge-data/ai-agent.js";
 import { knowledge as systemDesign } from "./knowledge-data/system-design.js";
 import { knowledge as algorithms } from "./knowledge-data/algorithms.js";
 import { knowledge as softSkills } from "./knowledge-data/soft-skills.js";
+import { knowledge as linux } from "./knowledge-data/linux.js";
+import { knowledge as devops } from "./knowledge-data/devops.js";
+import { knowledge as security } from "./knowledge-data/security.js";
+import { knowledge as redis } from "./knowledge-data/redis.js";
+import { knowledge as mq } from "./knowledge-data/mq.js";
+import { knowledge as distributed } from "./knowledge-data/distributed.js";
 
 // Merge all knowledge data
 export const knowledgeContent = {
@@ -32,6 +38,12 @@ export const knowledgeContent = {
   ...systemDesign,
   ...algorithms,
   ...softSkills,
+  ...linux,
+  ...devops,
+  ...security,
+  ...redis,
+  ...mq,
+  ...distributed,
 };
 
 /**

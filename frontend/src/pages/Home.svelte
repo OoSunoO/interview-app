@@ -462,67 +462,32 @@
         </div>
       {/if}
 
-      <button class="btn-wrap start-cta" onclick={() => onNavigate("browse")}>
-        开始刷题
-        <span class="btn-icon">
-          <svg aria-hidden="true"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </span>
-      </button>
-
-      <button class="random-btn" onclick={() => {
-        const q = api.questions.random();
-        if (q) onNavigate("quiz", { questionId: q.id });
-      }}>
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round"><polyline points="16 3 21 3 21 8" />
-          <line x1="4" y1="20" x2="21" y2="3" />
-          <polyline points="21 16 21 21 16 21" />
-          <line x1="15" y1="15" x2="21" y2="21" />
-          <line x1="4" y1="4" x2="9" y2="9" /></svg>
-        随机一题
-      </button>
-
-      <button class="lp-entry-btn" onclick={() => onNavigate("learning-paths")}>
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M16 8.2C14.4 6.8 12 6 9.5 6c-3 0-5.5 1.5-7 3.5l2.5 2.5C6 10.5 7.5 9 9.5 9c1.8 0 3.5.6 4.8 1.7L12 13l6 1-1-6-2.1 2.2z" /></svg>
-        学习路径
-      </button>
-
-      <button class="qr-entry-btn" onclick={openQuickReview}>
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
-          <path d="M12 6v6l4 2" /></svg>
-        速记模式
-      </button>
-
-      <button class="mi-entry-btn" onclick={() => (showMIDialog = true)}>
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" />
-          <path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
-        模拟面试
-      </button>
-
-      <button class="ai-mi-entry-btn" onclick={() => onNavigate("ai-interview")}>
-        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-          stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
-        AI 面试官
-      </button>
+      <div class="action-grid">
+        <button class="action-btn start-cta" onclick={() => onNavigate("browse")}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          开始刷题
+        </button>
+        <button class="action-btn random-btn" onclick={() => { const q = api.questions.random(); if (q) onNavigate("quiz", { questionId: q.id }); }}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8" /><line x1="4" y1="20" x2="21" y2="3" /><polyline points="21 16 21 21 16 21" /><line x1="15" y1="15" x2="21" y2="21" /><line x1="4" y1="4" x2="9" y2="9" /></svg>
+          随机一题
+        </button>
+        <button class="action-btn lp-entry-btn" onclick={() => onNavigate("learning-paths")}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M16 8.2C14.4 6.8 12 6 9.5 6c-3 0-5.5 1.5-7 3.5l2.5 2.5C6 10.5 7.5 9 9.5 9c1.8 0 3.5.6 4.8 1.7L12 13l6 1-1-6-2.1 2.2z" /></svg>
+          学习路径
+        </button>
+        <button class="action-btn qr-entry-btn" onclick={openQuickReview}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+          速记模式
+        </button>
+        <button class="action-btn mi-entry-btn" onclick={() => (showMIDialog = true)}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
+          模拟面试
+        </button>
+        <button class="action-btn ai-mi-entry-btn" onclick={() => onNavigate("ai-interview")}>
+          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
+          AI 面试官
+        </button>
+      </div>
     {/if}
   </div>
 </div>
@@ -1016,12 +981,72 @@
     padding: 20px 0;
   }
 
-  /* ── CTA ── */
-  .start-cta {
-    width: 100%;
+  /* ── Action Grid ── */
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .action-btn {
+    display: flex;
+    align-items: center;
     justify-content: center;
-    font-size: 16px;
-    padding: 12px 24px 12px 28px;
+    gap: 6px;
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s var(--spring);
+    border: 1px solid;
+  }
+  .action-btn:active {
+    transform: scale(0.96);
+  }
+  .action-btn.start-cta {
+    background: var(--accent-gradient);
+    color: #fff;
+    border: none;
+  }
+  .action-btn.random-btn,
+  .action-btn.qr-entry-btn,
+  .action-btn.ai-mi-entry-btn {
+    background: none;
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .action-btn.random-btn:active,
+  .action-btn.qr-entry-btn:active,
+  .action-btn.ai-mi-entry-btn:active {
+    background: var(--accent-bg);
+  }
+  .action-btn.lp-entry-btn {
+    background: none;
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .action-btn.lp-entry-btn:active {
+    background: var(--success-bg);
+  }
+  .action-btn.mi-entry-btn {
+    background: none;
+    color: var(--danger);
+    border-color: var(--danger);
+  }
+  .action-btn.mi-entry-btn:active {
+    background: var(--danger-bg);
+  }
+
+  @media (max-width: 600px) {
+    .action-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 400px) {
+    .action-grid {
+      grid-template-columns: 1fr;
+    }
   }
 
   /* ── Mobile ── */
@@ -1059,122 +1084,6 @@
       font-size: 14px;
     }
   }
-
-/* ── Random Button ── */
-.random-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.3s var(--spring);
-}
-.random-btn:active {
-  transform: scale(0.97);
-  background: var(--accent-bg);
-}
-
-/* ── Learning Paths Entry Button ── */
-.lp-entry-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--success);
-  border: 1px solid var(--success);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.3s var(--spring);
-}
-.lp-entry-btn:active {
-  transform: scale(0.97);
-  background: var(--success-bg);
-}
-
-/* ── Quick Review Entry Button ── */
-.qr-entry-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.3s var(--spring);
-}
-.qr-entry-btn:active {
-  transform: scale(0.97);
-  background: var(--accent-bg);
-}
-
-.mi-entry-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--danger);
-  border: 1px solid var(--danger);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.3s var(--spring);
-  margin-top: 8px;
-}
-.mi-entry-btn:active {
-  transform: scale(0.97);
-  background: var(--danger-bg);
-}
-
-/* ── AI Mock Interview Entry Button ── */
-.ai-mi-entry-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.3s var(--spring);
-  margin-top: 8px;
-}
-.ai-mi-entry-btn:active {
-  transform: scale(0.97);
-  background: var(--accent-bg);
-}
 
 /* ── Reminder Toggle ── */
 .reminder-toggle {

@@ -27,6 +27,7 @@ export const ready = (async () => {
 
 import { rateCard, getDefaultProgress, QUICK_REVIEW_MAP, RATINGS } from "./sm2.js";
 import { CATEGORY_LABELS, MAIN_CATEGORY } from "./categories.js";
+import { CATEGORY_TO_DOMAIN, DOMAINS, domainLabel } from "./knowledge-data/domains.js";
 import { version as buildVersion } from "../../package.json";
 import { gistSync } from "./gist-sync.js";
 
@@ -186,8 +187,8 @@ export const api = {
       if (params.tag) result = result.filter((q) => q.tags.includes(params.tag));
 
       const progress = getProgress();
-      if (params.company) {
-        result = result.filter((q) => q.company && q.company.includes(params.company));
+      if (params.source) {
+        result = result.filter((q) => q.source && q.source.includes(params.source));
       }
       if (params.status) {
         result = result.filter((q) => (progress[q.id]?.status || "new") === params.status);
@@ -222,7 +223,7 @@ export const api = {
           type: q.type,
           title: q.title,
           tags: q.tags,
-          company: q.company || "",
+          source: q.source || "",
           status: p.status || "new",
           wrong_count: p.wrong_count || 0,
           bookmarked: p.bookmarked || false,
@@ -247,12 +248,12 @@ export const api = {
       return scores.sort((a, b) => b.score - a.score).slice(0, limit);
     },
 
-    /** Return unique company names across all questions, sorted by frequency */
-    companies() {
+    /** Return unique source names across all questions, sorted by frequency */
+    sources() {
       const freq = Object.create(null);
       for (const q of questionIndex) {
-        if (!q.company) continue;
-        for (const c of q.company.split(",")) {
+        if (!q.source) continue;
+        for (const c of q.source.split(",")) {
           const name = c.trim();
           if (name) freq[name] = (freq[name] || 0) + 1;
         }
@@ -310,7 +311,7 @@ export const api = {
       const p = getProgress()[id] || {};
       return {
         ...q,
-        company: q.company || "",
+        source: q.source || "",
         status: p.status || "new",
         review_count: p.review_count || 0,
         wrong_count: p.wrong_count || 0,
@@ -802,13 +803,19 @@ export const api = {
       }
 
       let entries = Object.entries(tagMap)
-        .map(([tag, ids]) => ({
-          name: tag,
-          question_count: ids.length,
-          mastery: ids.length > 0 ? computeMastery(tag, progress) : 0,
-          categories: tagCategories[tag] || [knowledgeMap[tag]?.category || "其他"],
-          has_content: !!getKnowledgeForTag(tag),
-        }))
+        .map(([tag, ids]) => {
+          const cat = tagCategories[tag]?.[0] || knowledgeMap[tag]?.category || "";
+          const domainId = CATEGORY_TO_DOMAIN[cat] || "";
+          return {
+            name: tag,
+            question_count: ids.length,
+            mastery: ids.length > 0 ? computeMastery(tag, progress) : 0,
+            categories: tagCategories[tag] || [knowledgeMap[tag]?.category || "其他"],
+            has_content: !!getKnowledgeForTag(tag),
+            domain: domainId,
+            domain_label: domainLabel(domainId),
+          };
+        })
         .sort((a, b) => b.question_count - a.question_count);
 
       // Search within name, categories, AND content text
@@ -842,11 +849,16 @@ export const api = {
       const tagCategories = getTagCategoryMap();
       const stored = getKnowledgeForTag(tag);
 
+      const cat = tagCategories[tag]?.[0] || stored?.category || "";
+      const domainId = CATEGORY_TO_DOMAIN[cat] || stored?.domain || "";
       return {
         name: tag,
         question_count: tagQuestions.length,
         mastery: tagQuestions.length > 0 ? computeMastery(tag, progress) : 0,
         categories: tagCategories[tag] || (stored ? [stored.category || ""] : []),
+        domain: domainId,
+        domain_label: domainLabel(domainId),
+        source: stored?.source || "",
         content: stored?.content || "",
         questions: tagQuestions.map((q) => {
           const p = progress[q.id] || {};
@@ -899,7 +911,7 @@ export const api = {
       const tags = (q.tags || []).map((t) => `\`${t}\``).join(" ");
 
       md += `---\n\n### ${q.id}. ${q.title}\n\n**分类：** ${catLabel} | **难度：** ${diffLabel} | **题型：** ${typeLabel}`;
-      if (q.company) md += ` | **来源：** ${q.company}`;
+      if (q.source) md += ` | **来源：** ${q.source}`;
       md += `\n\n`;
       if (tags) md += `${tags}\n\n`;
       md += `${q.content}\n\n`;

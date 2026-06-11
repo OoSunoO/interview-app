@@ -2,6 +2,9 @@
   import { onMount } from "svelte";
   import { api } from "../lib/local-api.js";
   import { categoryLabel } from "../lib/categories.js";
+  import {
+    DOMAINS, topDomains, domainChildren, domainLabel, CATEGORY_TO_DOMAIN,
+  } from "../lib/knowledge-data/domains.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import Pagination from "../components/Pagination.svelte";
 
@@ -11,44 +14,69 @@
   let loading = $state(true);
   let error = $state(null);
   let searchQuery = $state("");
-  let expandedCategory = $state(null);
+  let expandedDomain = $state(null);
+  let expandedSub = $state(null);
   let expandedKp = $state(null);
+  let showOnlyContent = $state(true);
 
-  const PAGE_SIZE = 6;
+  const PAGE_SIZE = 8;
   let currentPage = $state(1);
 
-  // Group points by first category into hierarchical structure
-  let grouped = $derived.by(() => {
-    const map = {};
+  // Domain tree: group points by domain structure
+  let domainTree = $derived.by(() => {
+    // Partition points by domain
+    const byDomain = {};
     for (const p of points) {
-      const cat = p.categories[0] || "其他";
-      if (!map[cat]) {
-        map[cat] = { id: cat, label: categoryLabel(cat), totalQuestions: 0, totalMastery: 0, count: 0, children: [] };
-      }
-      map[cat].children.push({
-        name: p.name,
-        question_count: p.question_count,
-        mastery: p.mastery,
-        has_content: p.has_content,
-      });
-      map[cat].totalQuestions += p.question_count;
-      map[cat].totalMastery += p.mastery;
-      map[cat].count++;
+      const d = p.domain || "other";
+      if (!byDomain[d]) byDomain[d] = [];
+      byDomain[d].push(p);
     }
-    return Object.values(map).sort((a, b) => b.totalQuestions - a.totalQuestions);
+
+    // Build tree from domain hierarchy
+    function buildDomain(id) {
+      const def = DOMAINS[id];
+      if (!def) return null;
+      const children = (def.children || []).map(buildDomain).filter(Boolean);
+      const ownPoints = byDomain[id] || [];
+      return {
+        id,
+        label: domainLabel(id),
+        points: ownPoints,
+        children,
+        totalQuestions: ownPoints.reduce((s, p) => s + p.question_count, 0),
+        totalMastery: ownPoints.reduce((s, p) => s + p.mastery, 0),
+        count: ownPoints.length,
+      };
+    }
+
+    return topDomains().map(buildDomain).filter(Boolean);
   });
 
-  // Paginate grouped categories
-  let totalPages = $derived(Math.max(1, Math.ceil(grouped.length / PAGE_SIZE)));
-  let pagedGrouped = $derived(grouped.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE));
+  // Filter out domains with no content if showOnlyContent is on
+  let filteredTree = $derived.by(() => {
+    if (!showOnlyContent) return domainTree;
+    return domainTree
+      .map((d) => {
+        const filtered = d.points.filter((p) => p.has_content);
+        const children = d.children
+          .map((c) => {
+            const cp = c.points.filter((p) => p.has_content);
+            return { ...c, points: cp, count: cp.length, totalQuestions: cp.reduce((s, p) => s + p.question_count, 0), totalMastery: cp.reduce((s, p) => s + p.mastery, 0) };
+          })
+          .filter((c) => c.count > 0 || c.children.length > 0);
+        const fp = d.points.filter((p) => p.has_content || children.some((c) => c.points.includes(p)));
+        return { ...d, points: fp, children, count: fp.length + children.length };
+      })
+      .filter((d) => d.count > 0 || d.children.length > 0);
+  });
 
-  // Cache for knowledge detail content
+  let totalPages = $derived(Math.max(1, Math.ceil(filteredTree.length / PAGE_SIZE)));
+  let pagedTree = $derived(filteredTree.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE));
+
   let detailCache = $state({});
-
   let searchTimeout;
 
   $effect(() => {
-    // Debounced re-fetch when search changes
     if (searchTimeout) clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       loadPoints(searchQuery);
@@ -72,8 +100,12 @@
     }
   }
 
-  function toggleCategory(id) {
-    expandedCategory = expandedCategory === id ? null : id;
+  function toggleDomain(id) {
+    expandedDomain = expandedDomain === id ? null : id;
+  }
+
+  function toggleSub(id) {
+    expandedSub = expandedSub === id ? null : id;
   }
 
   async function toggleKp(name) {
@@ -121,8 +153,8 @@
 
 <div class="page kp-page">
   <div class="page-header">
-    <h1 class="page-title" data-testid="page-title">知识点</h1>
-    <p class="page-sub">共 {points.length} 个知识点，按领域分类</p>
+    <h1 class="page-title" data-testid="page-title">知识体系</h1>
+    <p class="page-sub">共 {points.length} 个知识点，按领域树浏览</p>
   </div>
 
   <div class="search-wrap">
@@ -145,37 +177,41 @@
       bind:value={searchQuery}
       oninput={() => { currentPage = 1; }}
     />
+    <label class="content-toggle">
+      <input type="checkbox" bind:checked={showOnlyContent} />
+      <span>仅看有讲解</span>
+    </label>
   </div>
 
   {#if error}
     <ErrorAlert message={error} onRetry={loadPoints} />
   {:else if loading}
     <div class="skeleton-grid">
-      {#each Array(6) as _}
-        <div class="skeleton" style="height: 100px"></div>
+      {#each Array(4) as _}
+        <div class="skeleton" style="height: 120px"></div>
       {/each}
     </div>
-  {:else if grouped.length === 0}
-    <p class="empty">暂无匹配的领域</p>
+  {:else if filteredTree.length === 0}
+    <p class="empty">暂无匹配的知识点</p>
   {:else}
-    <div class="cat-list">
-      {#each pagedGrouped as cat}
-        <div class="cat-card card" data-testid="category-card" class:expanded={expandedCategory === cat.id}>
-          <button class="cat-header" data-testid="category-header" onclick={() => toggleCategory(cat.id)}>
-            <div class="cat-header-left">
-              <span class="cat-label">{cat.label}</span>
-              <span class="cat-stats">{cat.count} 个知识点</span>
+    <div class="domain-list">
+      {#each pagedTree as domain}
+        <div class="domain-card card" class:expanded={expandedDomain === domain.id}>
+          <button class="domain-header" onclick={() => toggleDomain(domain.id)}>
+            <div class="domain-header-left">
+              <span class="domain-label">{domain.label}</span>
+              <span class="domain-stats">{domain.count} 个知识点 · {domain.totalQuestions} 题</span>
             </div>
-            <div class="cat-header-right">
+            <div class="domain-header-right">
               <span
                 class="mastery-badge"
-                style="color: {getMasteryColor(Math.round(cat.totalMastery / Math.max(cat.children.length, 1)))}"
+                style="color: {getMasteryColor(Math.round(domain.totalMastery / Math.max(domain.count, 1)))}"
               >
-                掌握 {Math.round(cat.totalMastery / Math.max(cat.children.length, 1))}%
+                掌握 {Math.round(domain.totalMastery / Math.max(domain.count, 1))}%
               </span>
               <svg aria-hidden="true"
-                class="cat-arrow"
-                class:rotated={expandedCategory === cat.id}
+                class="domain-arrow"
+                class:rotated={expandedDomain === domain.id}
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -185,70 +221,102 @@
               >
             </div>
           </button>
-          {#if expandedCategory === cat.id}
-            <div class="cat-children">
-              {#each cat.children as kp}
-                <div class="kp-wrapper" data-testid="knowledge-item">
-                  <button
-                    class="child-item"
-                    class:expanded={expandedKp === kp.name}
-                    onclick={() => toggleKp(kp.name)}
-                  >
-                    <div class="child-info">
-                      <span class="child-name">{kp.name}</span>
-                      <span class="child-count">{kp.question_count} 题</span>
-                      {#if kp.has_content}
-                        <span class="content-badge"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> 有讲解</span>
-                      {/if}
-                    </div>
-                    <div class="child-mastery">
-                      <div class="mastery-bar-bg">
-                        <div
-                          class="mastery-bar-fill"
-                          style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"
-                        ></div>
-                      </div>
-                      <span
-                        class="mastery-label"
-                        style="color: {getMasteryColor(kp.mastery)}; font-size: 11px;"
-                      >
-                        {kp.mastery}%
-                      </span>
-                    </div>
-                    <svg aria-hidden="true"
-                      class="child-arrow"
-                      class:rotated={expandedKp === kp.name}
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                  {#if expandedKp === kp.name}
-                    <div class="kp-preview">
-                      {#if detailCache[kp.name]?.content}
-                        <div class="kp-content-preview">
-                          {stripMarkdown(detailCache[kp.name].content).slice(0, 300)}
-                          {#if detailCache[kp.name].content.length > 300}
-                            <span class="content-more">...</span>
+
+          {#if expandedDomain === domain.id}
+            <div class="domain-body">
+              {#if domain.children.length > 0}
+                {#each domain.children as sub}
+                  <div class="sub-section" class:expanded={expandedSub === sub.id}>
+                    <button class="sub-header" onclick={() => toggleSub(sub.id)}>
+                      <span class="sub-label">{sub.label}</span>
+                      <span class="sub-stats">{sub.count} 个知识点</span>
+                      <svg aria-hidden="true"
+                        class="sub-arrow"
+                        class:rotated={expandedSub === sub.id}
+                        width="14" height="14" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
+                    </button>
+                    {#if expandedSub === sub.id}
+                      <div class="sub-points">
+                        {#each sub.points as kp}
+                          <button class="kp-item" onclick={() => toggleKp(kp.name)}>
+                            <div class="kp-info">
+                              <span class="kp-name">{kp.name}</span>
+                              <span class="kp-count">{kp.question_count} 题</span>
+                              {#if kp.has_content}
+                                <span class="content-badge"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> 讲解</span>
+                              {/if}
+                            </div>
+                            <div class="kp-mastery">
+                              <div class="mastery-bar-bg">
+                                <div class="mastery-bar-fill" style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"></div>
+                              </div>
+                              <span class="mastery-label" style="color: {getMasteryColor(kp.mastery)}">{kp.mastery}%</span>
+                            </div>
+                          </button>
+                          {#if expandedKp === kp.name}
+                            <div class="kp-preview">
+                              {#if detailCache[kp.name]?.content}
+                                <div class="kp-content-preview">
+                                  {stripMarkdown(detailCache[kp.name].content).slice(0, 300)}
+                                  {#if detailCache[kp.name].content.length > 300}
+                                    <span class="content-more">...</span>
+                                  {/if}
+                                </div>
+                              {:else if detailCache[kp.name]}
+                                <p class="kp-no-content">暂无知识讲解内容</p>
+                              {:else}
+                                <p class="kp-loading">加载中...</p>
+                              {/if}
+                              <button class="kp-detail-btn" onclick={() => goToDetail(kp.name)}>查看完整内容 →</button>
+                            </div>
                           {/if}
+                        {/each}
+                      </div>
+                    {/if}
+                  </div>
+                {/each}
+              {/if}
+              {#if domain.points.length > 0}
+                <div class="direct-points">
+                  {#each domain.points as kp}
+                    <button class="kp-item" onclick={() => toggleKp(kp.name)}>
+                      <div class="kp-info">
+                        <span class="kp-name">{kp.name}</span>
+                        <span class="kp-count">{kp.question_count} 题</span>
+                        {#if kp.has_content}
+                          <span class="content-badge"><svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> 讲解</span>
+                        {/if}
+                      </div>
+                      <div class="kp-mastery">
+                        <div class="mastery-bar-bg">
+                          <div class="mastery-bar-fill" style="width: {kp.mastery}%; background: {getMasteryColor(kp.mastery)}"></div>
                         </div>
-                      {:else if detailCache[kp.name]}
-                        <p class="kp-no-content">暂无知识讲解内容</p>
-                      {:else}
-                        <p class="kp-loading">加载中...</p>
-                      {/if}
-                      <button class="kp-detail-btn" onclick={() => goToDetail(kp.name)}>
-                        查看完整内容 →
-                      </button>
-                    </div>
-                  {/if}
+                        <span class="mastery-label" style="color: {getMasteryColor(kp.mastery)}">{kp.mastery}%</span>
+                      </div>
+                    </button>
+                    {#if expandedKp === kp.name}
+                      <div class="kp-preview">
+                        {#if detailCache[kp.name]?.content}
+                          <div class="kp-content-preview">
+                            {stripMarkdown(detailCache[kp.name].content).slice(0, 300)}
+                            {#if detailCache[kp.name].content.length > 300}
+                              <span class="content-more">...</span>
+                            {/if}
+                          </div>
+                        {:else if detailCache[kp.name]}
+                          <p class="kp-no-content">暂无知识讲解内容</p>
+                        {:else}
+                          <p class="kp-loading">加载中...</p>
+                        {/if}
+                        <button class="kp-detail-btn" onclick={() => goToDetail(kp.name)}>查看完整内容 →</button>
+                      </div>
+                    {/if}
+                  {/each}
                 </div>
-              {/each}
+              {/if}
             </div>
           {/if}
         </div>
@@ -277,6 +345,7 @@
     position: relative;
     display: flex;
     align-items: center;
+    gap: 8px;
   }
   .search-icon {
     position: absolute;
@@ -286,6 +355,20 @@
   }
   .search {
     padding-left: 36px;
+    flex: 1;
+  }
+  .content-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .content-toggle input {
+    margin: 0;
   }
 
   .empty {
@@ -295,17 +378,17 @@
     font-size: 14px;
   }
 
-  /* Category list (hierarchical) */
-  .cat-list {
+  /* Domain list */
+  .domain-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
   }
-  .cat-card {
+  .domain-card {
     padding: 0;
     overflow: hidden;
   }
-  .cat-header {
+  .domain-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -319,21 +402,21 @@
     gap: 12px;
     transition: background 0.15s;
   }
-  .cat-header:hover {
+  .domain-header:hover {
     background: var(--bg-surface);
   }
-  .cat-header-left {
+  .domain-header-left {
     display: flex;
     align-items: center;
     gap: 10px;
     min-width: 0;
   }
-  .cat-label {
+  .domain-label {
     font-size: 15px;
     font-weight: 700;
     color: var(--text);
   }
-  .cat-stats {
+  .domain-stats {
     font-size: 12px;
     color: var(--text-muted);
     white-space: nowrap;
@@ -341,7 +424,7 @@
     padding: 2px 10px;
     border-radius: 10px;
   }
-  .cat-header-right {
+  .domain-header-right {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -352,33 +435,70 @@
     font-weight: 600;
     white-space: nowrap;
   }
-  .cat-arrow {
+  .domain-arrow {
     transition: transform 0.2s;
     color: var(--text-dim);
   }
-  .cat-arrow.rotated {
+  .domain-arrow.rotated {
     transform: rotate(90deg);
   }
 
-  .cat-children {
+  .domain-body {
     border-top: 1px solid var(--border);
     padding: 8px 16px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
   }
 
-  .kp-wrapper {
+  .sub-section {
     border-radius: 6px;
-    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .sub-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 8px;
+    cursor: pointer;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.12s;
+  }
+  .sub-header:hover {
+    background: var(--bg-surface);
+  }
+  .sub-label {
+    flex: 1;
+  }
+  .sub-stats {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .sub-arrow {
+    transition: transform 0.2s;
+    color: var(--text-dim);
+  }
+  .sub-arrow.rotated {
+    transform: rotate(180deg);
+  }
+  .sub-points {
+    padding-left: 12px;
   }
 
-  .child-item {
+  .direct-points {
+    margin-top: 4px;
+  }
+
+  .kp-item {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 10px 8px;
+    padding: 8px 8px;
     cursor: pointer;
     text-align: left;
     background: none;
@@ -387,26 +507,22 @@
     color: var(--text);
     transition: background 0.12s;
   }
-  .child-item:hover {
+  .kp-item:hover {
     background: var(--bg-surface);
   }
-  .child-item.expanded {
-    background: var(--bg-surface);
-    border-radius: 6px 6px 0 0;
-  }
-  .child-info {
+  .kp-info {
     display: flex;
     align-items: center;
     gap: 8px;
     flex: 1;
     min-width: 0;
   }
-  .child-name {
-    font-size: 14px;
+  .kp-name {
+    font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
   }
-  .child-count {
+  .kp-count {
     font-size: 11px;
     color: var(--text-muted);
     white-space: nowrap;
@@ -424,20 +540,12 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
-  .child-mastery {
+  .kp-mastery {
     display: flex;
     align-items: center;
     gap: 6px;
     width: 100px;
     flex-shrink: 0;
-  }
-  .child-arrow {
-    transition: transform 0.2s;
-    color: var(--text-dim);
-    flex-shrink: 0;
-  }
-  .child-arrow.rotated {
-    transform: rotate(180deg);
   }
 
   .mastery-bar-bg {
@@ -459,7 +567,7 @@
   }
 
   .kp-preview {
-    padding: 8px 8px 12px 8px;
+    padding: 8px 8px 12px 12px;
     border-top: 1px solid var(--border);
     margin: 0 0 2px 0;
     background: var(--bg-card);
@@ -500,29 +608,26 @@
     gap: 10px;
   }
 
-  /* ── Mobile ── */
   @media (max-width: 480px) {
-    .cat-header {
+    .domain-header {
       padding: 12px;
     }
-    .cat-label {
+    .domain-label {
       font-size: 14px;
     }
-    .child-item {
-      flex-wrap: wrap;
+    .kp-item {
       gap: 6px;
       padding: 8px 4px;
     }
-    .child-name {
-      font-size: 13px;
-      white-space: normal;
-      overflow-wrap: break-word;
-    }
-    .child-mastery {
-      width: 80px;
-    }
-    .kp-content-preview {
+    .kp-name {
       font-size: 12px;
+      white-space: normal;
+    }
+    .kp-mastery {
+      width: 70px;
+    }
+    .search-wrap {
+      flex-wrap: wrap;
     }
   }
 </style>

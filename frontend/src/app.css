@@ -341,6 +341,18 @@ textarea:focus {
       max(12px, var(--safe-right));
   }
 }
+@media (min-width: 768px) {
+  .page {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+@media (min-width: 1024px) {
+  .page {
+    max-width: 900px;
+  }
+}
 
 /* ── Card Systems ── */
 .double-bezel {

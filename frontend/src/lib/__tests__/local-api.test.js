@@ -13,7 +13,7 @@ const FIXTURE = [
     hints: [],
     tags: ["Java基础"],
     options: [],
-    company: "",
+    source: "",
   },
   {
     id: 2,
@@ -26,7 +26,7 @@ const FIXTURE = [
     hints: [],
     tags: ["Java基础"],
     options: ["A) a", "B) b"],
-    company: "字节跳动",
+    source: "字节跳动",
   },
   {
     id: 3,
@@ -39,7 +39,7 @@ const FIXTURE = [
     hints: [],
     tags: ["SQL"],
     options: [],
-    company: "",
+    source: "",
   },
   {
     id: 4,
@@ -52,7 +52,7 @@ const FIXTURE = [
     hints: [],
     tags: ["数组"],
     options: [],
-    company: "Google",
+    source: "Google",
   },
   {
     id: 5,
@@ -65,7 +65,7 @@ const FIXTURE = [
     hints: [],
     tags: ["Java基础"],
     options: ["正确", "错误"],
-    company: "",
+    source: "",
   },
   {
     id: 6,
@@ -78,7 +78,7 @@ const FIXTURE = [
     hints: [],
     tags: ["事务"],
     options: ["A) 原子性", "B) 一致性", "C) 隔离性", "D) 冗余性"],
-    company: "腾讯",
+    source: "腾讯",
     content_hash: "hash_6_abc123",
   },
 ];
@@ -90,7 +90,7 @@ const FIXTURE_INDEX = FIXTURE.map((q) => ({
   type: q.type,
   title: q.title,
   tags: q.tags || [],
-  company: q.company || "",
+  source: q.source || "",
   content_hash: q.content_hash || `hash_${q.id}_test`,
 }));
 
@@ -185,10 +185,10 @@ describe("questions.list", () => {
     expect(api.questions.list({ search: "两数" })).toHaveLength(1); // matches title
   });
 
-  it("filters by company", async () => {
+  it("filters by source", async () => {
     const api = await getApi();
-    expect(api.questions.list({ company: "字节跳动" })).toHaveLength(1);
-    expect(api.questions.list({ company: "Google" })).toHaveLength(1);
+    expect(api.questions.list({ source: "字节跳动" })).toHaveLength(1);
+    expect(api.questions.list({ source: "Google" })).toHaveLength(1);
   });
 
   it("tags() returns all unique tags sorted", async () => {
@@ -316,7 +316,7 @@ describe("questions.get", () => {
     expect(q.title).toBe("Java是什么");
     expect(q.content).toBe("问Java核心");
     expect(q).toHaveProperty("status", "new");
-    expect(q).toHaveProperty("company", "");
+    expect(q).toHaveProperty("source", "");
     expect(q).toHaveProperty("notes", "");
     expect(q).toHaveProperty("created_at");
     expect(q).toHaveProperty("updated_at");
@@ -1052,15 +1052,15 @@ describe("questions.related", () => {
   });
 });
 
-describe("questions.companies", () => {
-  it("returns unique company names sorted by frequency", async () => {
+describe("questions.sources", () => {
+  it("returns unique source names sorted by frequency", async () => {
     const api = await getApi();
-    const companies = api.questions.companies();
-    expect(companies).toContain("字节跳动");
-    expect(companies).toContain("Google");
-    expect(companies).toContain("腾讯");
-    // Companies should be ordered by frequency descending
-    expect(companies.length).toBe(3);
+    const sources = api.questions.sources();
+    expect(sources).toContain("字节跳动");
+    expect(sources).toContain("Google");
+    expect(sources).toContain("腾讯");
+    // Sources should be ordered by frequency descending
+    expect(sources.length).toBe(3);
   });
 });
 

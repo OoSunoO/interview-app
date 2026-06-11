@@ -22,7 +22,7 @@ class Question(BaseModel):
     options: list[str] = []
     hints: list[str]
     tags: list[str]
-    company: str = ""
+    source: str = ""
     created_at: datetime
     updated_at: datetime
 
@@ -34,7 +34,7 @@ class QuestionListItem(BaseModel):
     type: str
     title: str
     tags: list[str]
-    company: str = ""
+    source: str = ""
     status: str = "new"
     wrong_count: int = 0
 

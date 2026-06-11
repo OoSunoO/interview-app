@@ -15,7 +15,7 @@ let _filters = $state({
   status: "",
   search: "",
   sort_by: "",
-  company: "",
+  source: "",
   tag: "",
   bookmarked: false,
 });

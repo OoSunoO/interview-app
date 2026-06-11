@@ -271,7 +271,7 @@ async def toggle_bookmark(question_id: int, body: BookmarkToggle):
 async def list_bookmarks():
     db = await get_db()
     cursor = await db.execute("""
-        SELECT q.id, q.title, q.category, q.difficulty, q.type, q.tags, q.company,
+        SELECT q.id, q.title, q.category, q.difficulty, q.type, q.tags, q.source,
                COALESCE(p.status, 'new') as status,
                COALESCE(p.wrong_count, 0) as wrong_count
         FROM questions q
@@ -285,7 +285,7 @@ async def list_bookmarks():
         dict(
             id=r["id"], category=r["category"], difficulty=r["difficulty"],
             type=r["type"], title=r["title"], tags=json.loads(r["tags"]) if isinstance(r["tags"], str) else [],
-            company=r["company"] or "", status=r["status"], wrong_count=r["wrong_count"],
+            source=r["source"] or "", status=r["status"], wrong_count=r["wrong_count"],
         )
         for r in rows
     ]

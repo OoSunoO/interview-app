@@ -17,7 +17,7 @@
   let showRandomHint = $state(false);
   let selectedIds = $state(new Set());
   let selectionMode = $state(false);
-  let companies = $state([]);
+  let sources = $state([]);
   let allTags = $state([]);
   let allTagsWithCount = $state([]);
   let searchInput = $state(null);
@@ -76,7 +76,7 @@
   }
 
   onMount(() => {
-    companies = api.questions.companies();
+    sources = api.questions.sources();
     allTags = api.questions.tags();
     allTagsWithCount = api.questions.tagsWithCount();
     store.loadQuestions();
@@ -202,7 +202,7 @@
     !!store.filters.difficulty ||
     !!store.filters.type ||
     !!store.filters.status ||
-    !!store.filters.company ||
+    !!store.filters.source ||
     !!store.filters.tag ||
     !!store.filters.search ||
     !!store.filters.sort_by ||
@@ -214,7 +214,7 @@
     store.filters.difficulty = "";
     store.filters.type = "";
     store.filters.status = "";
-    store.filters.company = "";
+    store.filters.source = "";
     store.filters.tag = "";
     store.filters.search = "";
     store.filters.sort_by = "";
@@ -286,12 +286,12 @@
       <div class="filter-item">
         <span class="filter-label">来源</span>
         <select
-          bind:value={store.filters.company}
+          bind:value={store.filters.source}
           onchange={applyFilter}
-          class:filter-active={store.filters.company}
+          class:filter-active={store.filters.source}
         >
           <option value="">全部来源</option>
-          {#each companies as c}
+          {#each sources as c}
             <option value={c}>{c}</option>
           {/each}
         </select>
@@ -584,8 +584,8 @@
             <span class="tag">{categoryLabel(q.category)}</span>
             <span class="tag diff {q.difficulty}">{q.difficulty}</span>
             <span class="tag type">{typeLabel(q.type)}</span>
-            {#if q.company}
-              <span class="tag company">{q.company}</span>
+            {#if q.source}
+              <span class="tag company">{q.source}</span>
             {/if}
           </div>
           <p class="q-title">{@html highlight(q.title)}</p>
@@ -653,8 +653,8 @@
           <span class="tag">{categoryLabel(detailQuestion.category)}</span>
           <span class="tag diff {detailQuestion.difficulty}">{detailQuestion.difficulty}</span>
           <span class="tag type">{typeLabel(detailQuestion.type)}</span>
-          {#if detailQuestion.company}
-            <span class="tag company">{detailQuestion.company}</span>
+          {#if detailQuestion.source}
+            <span class="tag company">{detailQuestion.source}</span>
           {/if}
         </div>
         <button class="dp-close" onclick={closeDetail} aria-label="关闭">
@@ -1330,6 +1330,19 @@
     gap: 14px;
     animation: slide-up 0.3s var(--spring) both;
   }
+  @media (min-width: 768px) {
+    .detail-overlay {
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .detail-panel {
+      border-radius: var(--radius) 0 0 var(--radius);
+      max-width: 480px;
+      max-height: 100vh;
+      height: 100%;
+      animation: slide-right 0.3s var(--spring) both;
+    }
+  }
   .dp-header {
     display: flex;
     align-items: flex-start;
@@ -1632,5 +1645,9 @@
   @keyframes slide-up {
     from { transform: translateY(30px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes slide-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
   }
 </style>

@@ -40,6 +40,12 @@
   let analysisResult = $state(null);
   let analysisLoading = $state(false);
   let analysisError = $state(null);
+  let wrongTab = $state(localStorage.getItem("wrongbook_tab") || "list");
+
+  function switchWrongTab(tab) {
+    wrongTab = tab;
+    localStorage.setItem("wrongbook_tab", tab);
+  }
 
   async function loadReviewDetail(index) {
     const q = wrongQuestions[index];
@@ -399,51 +405,36 @@
       <p class="empty">暂无错题 — 继续保持！可以去题库刷更多题</p>
     {:else}
       <p class="summary">共 {wrongQuestions.length} 道待复习</p>
-      <button class="start-review btn-gradient" onclick={() => {
-        reviewMode = true;
-        currentIndex = 0;
-        showAnswer = false;
-        loadReviewDetail(0);
-      }}>
-        开始复习 ({filteredQuestions.length})
-      </button>
 
-      <button class="qr-nav-btn" onclick={() => {
-        const ids = filteredQuestions.map(q => q.id);
-        onNavigate("quick-review", { reviewConfig: { questionIds: ids } });
-      }}>
-        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="23 4 23 10 17 10" />
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-        </svg>
-        速记错题
-      </button>
-
-      <button class="export-btn" onclick={exportWrongAsMarkdown}>
-        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-        </svg>
-        导出为 Markdown
-      </button>
+      <div class="wb-actions">
+        <button class="start-review btn-gradient" onclick={() => {
+          reviewMode = true;
+          currentIndex = 0;
+          showAnswer = false;
+          loadReviewDetail(0);
+        }}>
+          开始复习 ({filteredQuestions.length})
+        </button>
+        <button class="qr-nav-btn" onclick={() => {
+          const ids = filteredQuestions.map(q => q.id);
+          onNavigate("quick-review", { reviewConfig: { questionIds: ids } });
+        }}>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+          速记错题
+        </button>
+        <button class="export-btn" onclick={exportWrongAsMarkdown}>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+          导出
+        </button>
+      </div>
 
       {#if hasSchedule}
         <div class="schedule-section">
           <button class="schedule-header" onclick={() => (showSchedule = !showSchedule)}>
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
             复习日程
             <span class="chevron" class:open={showSchedule}>
-              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </span>
           </button>
           {#if showSchedule}
@@ -462,10 +453,7 @@
                     <span class="schedule-count">{items.length} 题</span>
                     <div class="schedule-questions">
                       {#each items.slice(0, 3) as item}
-                        <button class="schedule-q" onclick={async () => {
-                          await store.startQuiz(wrongQuestions);
-                          onNavigate("quiz", { questionId: item.id });
-                        }}>{item.title}</button>
+                        <button class="schedule-q" onclick={async () => { await store.startQuiz(wrongQuestions); onNavigate("quiz", { questionId: item.id }); }}>{item.title}</button>
                       {/each}
                       {#if items.length > 3}
                         <span class="schedule-more">等 {items.length} 题</span>
@@ -479,191 +467,167 @@
         </div>
       {/if}
 
-      <div class="analysis-section">
-        <button class="analysis-btn" onclick={runAnalysis} disabled={analysisLoading}>
-          {#if analysisLoading}
-            分析中...
-          {:else}
-            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a10 10 0 0 1 10 10c0 2.5-1 5-2.7 6.7L12 12V2z" />
-              <path d="M12 12 7 17.3" />
-              <circle cx="12" cy="12" r="10" />
-            </svg>
-            AI 错题根因分析
+      <div class="tab-bar">
+        <button class="tab-btn" class:active={wrongTab === "list"} onclick={() => switchWrongTab("list")}>错题列表</button>
+        <button class="tab-btn" class:active={wrongTab === "analysis"} onclick={() => switchWrongTab("analysis")}>
+          AI 分析
+          {#if analysisResult}
+            <span class="tab-dot"></span>
           {/if}
         </button>
-
-        {#if analysisError}
-          <p class="analysis-error">{analysisError}</p>
-        {/if}
-
-        {#if analysisResult}
-          <div class="analysis-result">
-            {#if analysisResult.summary}
-              <p class="analysis-summary">{analysisResult.summary}</p>
-            {/if}
-
-            {#if analysisResult.weakest_points && analysisResult.weakest_points.length > 0}
-              <div class="analysis-section-group">
-                <h4>薄弱知识点</h4>
-                {#each analysisResult.weakest_points as point}
-                  <div class="analysis-card {point.severity}">
-                    <div class="analysis-card-header">
-                      <span class="analysis-point">{point.point}</span>
-                      <span class="badge sev-{point.severity}">
-                        {point.severity === "high" ? "严重" : point.severity === "medium" ? "中等" : "轻微"}
-                      </span>
-                    </div>
-                    <p class="analysis-card-text">{point.analysis}</p>
-                    <span class="analysis-count">错 {point.wrong_count} 次</span>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-
-            {#if analysisResult.error_patterns && analysisResult.error_patterns.length > 0}
-              <div class="analysis-section-group">
-                <h4>错误模式</h4>
-                {#each analysisResult.error_patterns as pattern}
-                  <div class="pattern-card">
-                    <strong>{pattern.pattern}</strong>
-                    <p>{pattern.detail}</p>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-
-            {#if analysisResult.learning_suggestions && analysisResult.learning_suggestions.length > 0}
-              <div class="analysis-section-group">
-                <h4>学习建议</h4>
-                {#each analysisResult.learning_suggestions as suggestion}
-                  <div class="suggestion-card {suggestion.priority}">
-                    <span class="badge pri-{suggestion.priority}">
-                      {suggestion.priority === "high" ? "优先" : suggestion.priority === "medium" ? "建议" : "可选"}
-                    </span>
-                    <span>{suggestion.suggestion}</span>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-
-            {#if analysisResult.raw}
-              <div class="analysis-raw">{analysisResult.raw}</div>
-            {/if}
-          </div>
-        {/if}
       </div>
 
-      {#if wrongQuestions.length > 2}
-        <div class="wb-search-wrap">
-          <svg aria-hidden="true" class="wb-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-          <input
-            class="wb-search"
-            placeholder="搜索错题标题..."
-            bind:value={wrongSearch}
-          />
-          {#if wrongSearch}
-            <button class="wb-search-clear" onclick={() => (wrongSearch = "")} aria-label="清除搜索">
-              <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
-            </button>
+      {#if wrongTab === "list"}
+        {#if wrongQuestions.length > 2}
+          <div class="wb-search-wrap">
+            <svg aria-hidden="true" class="wb-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
+            <input class="wb-search" placeholder="搜索错题标题..." bind:value={wrongSearch} />
+            {#if wrongSearch}
+              <button class="wb-search-clear" onclick={() => (wrongSearch = "")} aria-label="清除搜索">
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            {/if}
+          </div>
+          <div class="wb-filters">
+            <select bind:value={wrongFilterCat} class="wb-filter">
+              <option value="">全部分类</option>
+              <option value="algorithm">算法</option>
+              <option value="database">数据库</option>
+              <option value="cs_basics">计算机基础</option>
+              <option value="system_design">系统设计</option>
+              <option value="java_basic">Java 基础</option>
+              <option value="java_advanced">Java 进阶</option>
+              <option value="java_collections">Java 集合</option>
+              <option value="frontend">前端</option>
+              <option value="react">React</option>
+              <option value="devops">DevOps</option>
+              <option value="linux">Linux</option>
+              <option value="ai">AI</option>
+              <option value="agent">AI Agent</option>
+              <option value="kubernetes">Kubernetes</option>
+              <option value="product">产品思维</option>
+              <option value="project_mgmt">项目管理</option>
+              <option value="career">求职与职业发展</option>
+              <option value="behavioral">行为面试</option>
+            </select>
+            <select bind:value={wrongFilterDiff} class="wb-filter">
+              <option value="">全部难度</option>
+              <option value="easy">简单</option>
+              <option value="medium">中等</option>
+              <option value="hard">困难</option>
+            </select>
+            <span class="wb-filter-count">{filteredQuestions.length} 题</span>
+          </div>
+        {/if}
+        <div class="group-list">
+          {#each grouped as group}
+            <div class="group">
+              <div class="group-header">
+                <span class="group-tag">{group.tag}</span>
+                <button class="kp-nav-btn" onclick={() => onNavigate("knowledge-detail", { tag: group.tag })} title="查看知识点">
+                  <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                  知识点
+                </button>
+                <span class="group-wrong">错 {group.totalWrong} 次</span>
+              </div>
+              {#if group.totalQuestions > 0}
+                <div class="group-mastery">
+                  <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width: {group.mastery}%"></div></div>
+                  <span class="mastery-label">{group.mastery}% 掌握</span>
+                </div>
+              {/if}
+              <div class="group-questions">
+                {#each group.questions as q}
+                  <button class="card" onclick={async () => { await store.startQuiz(filteredQuestions); onNavigate("quiz", { questionId: q.id }); }}>
+                    <div class="q-header">
+                      <span class="tag">{categoryLabel(q.category)}</span>
+                      <span class="tag diff {q.difficulty}">{q.difficulty}</span>
+                      <span class="wb-bm-toggle" class:active={q.bookmarked} role="button" tabindex="0" onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }} onclick={(e) => toggleBookmark(e, q)} title={q.bookmarked ? "取消收藏" : "收藏"}>
+                        <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill={q.bookmarked ? "currentColor" : "none"} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+                      </span>
+                      <span class="wrong-count">答错 {q.wrong_count} 次</span>
+                    </div>
+                    <p class="q-title-text">{@html highlightText(q.title)}</p>
+                  </button>
+                {/each}
+              </div>
+            </div>
+          {/each}
+        </div>
+
+      {:else if wrongTab === "analysis"}
+        <div class="analysis-section">
+          {#if !analysisResult && !analysisLoading}
+            <div class="analysis-cta">
+              <p class="analysis-cta-text">AI 将分析你的错题，找出薄弱知识点、错误模式和个性化学习建议</p>
+              <button class="analysis-btn" onclick={runAnalysis}>
+                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10c0 2.5-1 5-2.7 6.7L12 12V2z" /><path d="M12 12 7 17.3" /><circle cx="12" cy="12" r="10" /></svg>
+                开始分析 {wrongQuestions.length} 道错题
+              </button>
+            </div>
+          {:else if analysisLoading}
+            <div class="analysis-loading">
+              <div class="analysis-spinner"></div>
+              <p>AI 正在分析你的错题模式...</p>
+            </div>
+          {/if}
+
+          {#if analysisError}
+            <p class="analysis-error">{analysisError}</p>
+          {/if}
+
+          {#if analysisResult}
+            <div class="analysis-result">
+              <div class="analysis-actions">
+                <button class="analysis-btn-secondary" onclick={runAnalysis}>
+                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" /></svg>
+                  重新分析
+                </button>
+              </div>
+              {#if analysisResult.summary}
+                <p class="analysis-summary">{analysisResult.summary}</p>
+              {/if}
+              {#if analysisResult.weakest_points && analysisResult.weakest_points.length > 0}
+                <div class="analysis-section-group">
+                  <h4>薄弱知识点</h4>
+                  {#each analysisResult.weakest_points as point}
+                    <div class="analysis-card {point.severity}">
+                      <div class="analysis-card-header">
+                        <span class="analysis-point">{point.point}</span>
+                        <span class="badge sev-{point.severity}">{point.severity === "high" ? "严重" : point.severity === "medium" ? "中等" : "轻微"}</span>
+                      </div>
+                      <p class="analysis-card-text">{point.analysis}</p>
+                      <span class="analysis-count">错 {point.wrong_count} 次</span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+              {#if analysisResult.error_patterns && analysisResult.error_patterns.length > 0}
+                <div class="analysis-section-group">
+                  <h4>错误模式</h4>
+                  {#each analysisResult.error_patterns as pattern}
+                    <div class="pattern-card"><strong>{pattern.pattern}</strong><p>{pattern.detail}</p></div>
+                  {/each}
+                </div>
+              {/if}
+              {#if analysisResult.learning_suggestions && analysisResult.learning_suggestions.length > 0}
+                <div class="analysis-section-group">
+                  <h4>学习建议</h4>
+                  {#each analysisResult.learning_suggestions as suggestion}
+                    <div class="suggestion-card {suggestion.priority}">
+                      <span class="badge pri-{suggestion.priority}">{suggestion.priority === "high" ? "优先" : suggestion.priority === "medium" ? "建议" : "可选"}</span>
+                      <span>{suggestion.suggestion}</span>
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+              {#if analysisResult.raw}
+                <div class="analysis-raw">{analysisResult.raw}</div>
+              {/if}
+            </div>
           {/if}
         </div>
-        <div class="wb-filters">
-          <select bind:value={wrongFilterCat} class="wb-filter">
-            <option value="">全部分类</option>
-            <option value="algorithm">算法</option>
-            <option value="database">数据库</option>
-            <option value="cs_basics">计算机基础</option>
-            <option value="system_design">系统设计</option>
-            <option value="java_basic">Java 基础</option>
-            <option value="java_advanced">Java 进阶</option>
-            <option value="java_collections">Java 集合</option>
-            <option value="frontend">前端</option>
-            <option value="react">React</option>
-            <option value="devops">DevOps</option>
-            <option value="linux">Linux</option>
-            <option value="ai">AI</option>
-            <option value="agent">AI Agent</option>
-            <option value="kubernetes">Kubernetes</option>
-            <option value="product">产品思维</option>
-            <option value="project_mgmt">项目管理</option>
-            <option value="career">求职与职业发展</option>
-            <option value="behavioral">行为面试</option>
-          </select>
-          <select bind:value={wrongFilterDiff} class="wb-filter">
-            <option value="">全部难度</option>
-            <option value="easy">简单</option>
-            <option value="medium">中等</option>
-            <option value="hard">困难</option>
-          </select>
-          <span class="wb-filter-count">{filteredQuestions.length} 题</span>
-        </div>
       {/if}
-      <div class="group-list">
-        {#each grouped as group}
-          <div class="group">
-            <div class="group-header">
-              <span class="group-tag">{group.tag}</span>
-              <button
-                class="kp-nav-btn"
-                onclick={() => onNavigate("knowledge-detail", { tag: group.tag })}
-                title="查看知识点"
-              >
-                <svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                知识点
-              </button>
-              <span class="group-wrong">错 {group.totalWrong} 次</span>
-            </div>
-            {#if group.totalQuestions > 0}
-              <div class="group-mastery">
-                <div class="progress-bar-wrap">
-                  <div class="progress-bar-fill" style="width: {group.mastery}%"></div>
-                </div>
-                <span class="mastery-label">{group.mastery}% 掌握</span>
-              </div>
-            {/if}
-            <div class="group-questions">
-              {#each group.questions as q}
-                <button
-                  class="card"
-                  onclick={async () => {
-                    await store.startQuiz(filteredQuestions);
-                    onNavigate("quiz", { questionId: q.id });
-                  }}
-                >
-                  <div class="q-header">
-                    <span class="tag">{categoryLabel(q.category)}</span>
-                    <span class="tag diff {q.difficulty}">{q.difficulty}</span>
-                    <span
-                      class="wb-bm-toggle"
-                      class:active={q.bookmarked}
-                      role="button"
-                      tabindex="0"
-                      onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }}
-                      onclick={(e) => toggleBookmark(e, q)}
-                      title={q.bookmarked ? "取消收藏" : "收藏"}
-                    >
-                      <svg aria-hidden="true"
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill={q.bookmarked ? "currentColor" : "none"}
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
-                    </span>
-                    <span class="wrong-count">答错 {q.wrong_count} 次</span>
-                  </div>
-                  <p class="q-title-text">{@html highlightText(q.title)}</p>
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/each}
-      </div>
     {/if}
   {/if}
 </div>
@@ -1263,16 +1227,12 @@
     white-space: nowrap;
     padding: 10px 16px;
   }
-  .analysis-section {
-    margin: 4px 0 8px;
-  }
   .analysis-btn {
-    width: 100%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 14px;
+    padding: 12px 20px;
     font-size: 14px;
     font-weight: 600;
     background: var(--accent-bg);
@@ -1421,6 +1381,122 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
     padding: 14px;
+  }
+
+  /* ── Tab Bar ── */
+  .tab-bar {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-sm);
+    padding: 3px;
+  }
+  .tab-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .tab-btn.active {
+    background: var(--bg-card);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .tab-btn:active {
+    transform: scale(0.97);
+  }
+  .tab-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ── Wb Actions Row ── */
+  .wb-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .wb-actions .start-review {
+    flex: 2;
+  }
+  .wb-actions .qr-nav-btn,
+  .wb-actions .export-btn {
+    flex: 1;
+  }
+
+  /* ── Analysis CTA ── */
+  .analysis-section {
+    margin: 4px 0 8px;
+  }
+  .analysis-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 20px;
+    background: var(--bg-card);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    text-align: center;
+  }
+  .analysis-cta-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .analysis-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px 20px;
+  }
+  .analysis-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .analysis-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .analysis-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .analysis-btn-secondary:active {
+    color: var(--accent);
+    border-color: var(--accent-dim);
   }
 
   /* ── Mobile ── */

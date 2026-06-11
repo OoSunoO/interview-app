@@ -31,7 +31,7 @@ async def start_quick_review(body: QuickReviewStart):
     where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
     cursor = await db.execute(f"""
-        SELECT id, category, difficulty, type, title, tags, company
+        SELECT id, category, difficulty, type, title, tags, source
         FROM questions {where}
         ORDER BY RANDOM()
         LIMIT ?
@@ -47,7 +47,7 @@ async def start_quick_review(body: QuickReviewStart):
             "type": r["type"],
             "title": r["title"],
             "tags": json.loads(r["tags"]) if isinstance(r["tags"], str) else [],
-            "company": r["company"] or "",
+            "source": r["source"] or "",
         }
         for r in rows
     ]

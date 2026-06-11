@@ -106,6 +106,14 @@
           {getMasteryLabel(detail.mastery)} · {detail.mastery}%
         </div>
       </div>
+      <div class="kp-meta">
+        {#if detail.domain_label}
+          <span class="mini-tag domain">{detail.domain_label}</span>
+        {/if}
+        {#if detail.source}
+          <span class="mini-tag source">📖 {detail.source}</span>
+        {/if}
+      </div>
       {#if detail.categories.length > 0}
         <div class="kp-cats">
           {#each detail.categories as cat}

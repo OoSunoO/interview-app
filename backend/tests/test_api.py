@@ -15,20 +15,20 @@ SEED_QUESTIONS = [
         "id": 1, "category": "java", "difficulty": "easy",
         "type": "short_answer", "title": "Java Q1", "content": "Content 1",
         "answer": "Answer 1", "hints": [], "tags": ["java", "basics"],
-        "options": [], "company": "",
+        "options": [], "source": "",
     },
     {
         "id": 2, "category": "java", "difficulty": "medium",
         "type": "multiple_choice", "title": "Java Q2", "content": "Content 2",
         "answer": "Answer 2", "hints": ["Think about it"],
         "tags": ["java", "concurrency"], "options": ["opt A", "opt B"],
-        "company": "Google",
+        "source": "Google",
     },
     {
         "id": 3, "category": "database", "difficulty": "hard",
         "type": "short_answer", "title": "DB Q3", "content": "Content 3",
         "answer": "Answer 3", "hints": [], "tags": ["sql"],
-        "options": [], "company": "",
+        "options": [], "source": "",
     },
 ]
 
@@ -38,7 +38,7 @@ def _build_q(q):
         q["id"], q["category"], q["difficulty"], q["type"],
         q["title"], q["content"], q["answer"],
         json.dumps(q["hints"]), json.dumps(q["tags"]),
-        json.dumps(q["options"]), q["company"],
+        json.dumps(q["options"]), q["source"],
     )
 
 
@@ -51,7 +51,7 @@ async def _init_test_db(db_path):
     db = await get_db()
     for q in SEED_QUESTIONS:
         await db.execute(
-            """INSERT INTO questions (id, category, difficulty, type, title, content, answer, hints, tags, options, company)
+            """INSERT INTO questions (id, category, difficulty, type, title, content, answer, hints, tags, options, source)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             _build_q(q),
         )
@@ -212,11 +212,11 @@ class TestListQuestions:
         assert len(data) == 1
         assert data[0]["id"] == 1
 
-    def test_list_item_has_company(self, client):
+    def test_list_item_has_source(self, client):
         resp = client.get("/api/questions")
         items = {i["id"]: i for i in resp.json()}
-        assert items[2]["company"] == "Google"
-        assert items[1]["company"] == ""
+        assert items[2]["source"] == "Google"
+        assert items[1]["source"] == ""
 
 
 # ── GET /api/questions/{id} ──
@@ -234,7 +234,7 @@ class TestGetQuestion:
         assert data["hints"] == []
         assert data["tags"] == ["java", "basics"]
         assert data["options"] == []
-        assert data["company"] == ""
+        assert data["source"] == ""
         assert data["status"] == "new"
         assert data["review_count"] == 0
         assert data["wrong_count"] == 0

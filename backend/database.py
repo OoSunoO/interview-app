@@ -24,7 +24,7 @@ async def init_db():
             hints TEXT NOT NULL DEFAULT '[]',
             tags TEXT NOT NULL DEFAULT '[]',
             options TEXT NOT NULL DEFAULT '[]',
-            company TEXT NOT NULL DEFAULT '',
+            source TEXT NOT NULL DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
@@ -60,9 +60,13 @@ async def init_db():
         except Exception:
             pass  # Column already exists
 
-    # Migrate existing databases: add company column if missing
+    # Migrate existing databases: rename company to source if old column exists
     try:
-        await db.execute("ALTER TABLE questions ADD COLUMN company TEXT NOT NULL DEFAULT ''")
+        await db.execute("ALTER TABLE questions RENAME COLUMN company TO source")
+    except Exception:
+        pass  # Column already renamed or does not exist
+    try:
+        await db.execute("ALTER TABLE questions ADD COLUMN source TEXT NOT NULL DEFAULT ''")
     except Exception:
         pass  # Column already exists
 
