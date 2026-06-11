@@ -66,6 +66,7 @@ export const CATEGORY_LABELS = {
   mq: "消息队列",
   mq_extras: "消息队列",
   kubernetes: "Kubernetes",
+  server: "服务器与中间件",
 
   // Other languages
   python: "Python",
@@ -130,6 +131,7 @@ export const MAIN_CATEGORY = {
   system_design_extras: "system_design",
   system_design_micro: "system_design",
 
+  server: "server",
   redis: "redis",
   redis_extras: "redis",
   mq: "mq",
@@ -177,6 +179,7 @@ export const FILTER_CATEGORIES = [
   { value: "redis", label: "Redis" },
   { value: "mq", label: "消息队列" },
   { value: "kubernetes", label: "Kubernetes" },
+  { value: "server", label: "服务器与中间件" },
 
   // ── 前端 ──
   { value: "frontend", label: "前端" },
