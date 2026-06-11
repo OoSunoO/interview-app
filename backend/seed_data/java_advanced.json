@@ -1,7 +1,7 @@
 [
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "JVM 垃圾回收算法",
     "content": "请介绍 JVM 中常见的垃圾回收算法及其优缺点。",
@@ -18,7 +18,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "线程池的核心参数",
     "content": "请解释 ThreadPoolExecutor 的核心参数及其作用。",
@@ -51,7 +51,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "NIO 与 BIO 的区别",
     "content": "请比较 Java NIO 和传统 BIO 的区别及适用场景。",
@@ -68,7 +68,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 反射机制",
     "content": "请解释 Java 反射机制及其常见用途。",
@@ -84,7 +84,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "泛型的类型擦除",
     "content": "请解释 Java 泛型的类型擦除机制及其影响。",
@@ -100,7 +100,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "类加载机制与双亲委派模型",
     "content": "请描述 JVM 类加载机制和双亲委派模型的工作原理。",
@@ -117,7 +117,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ReentrantLock 与 synchronized 的区别",
     "content": "请比较 ReentrantLock 和 synchronized 的区别。",
@@ -133,7 +133,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "CompletableFuture 异步编程",
     "content": "请介绍 CompletableFuture 的核心用法及异步编排能力。",
@@ -149,7 +149,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Stream API 的中间操作和终端操作",
     "content": "请列举 Java Stream API 的常见中间操作和终端操作。",
@@ -188,7 +188,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ThreadPoolExecutor 描述错误的是",
     "content": "以下关于 ThreadPoolExecutor 的描述，错误的是？",
@@ -232,7 +232,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Java 泛型运行时类型信息",
     "content": "Java 泛型在运行时可以获取具体的泛型参数类型。",
@@ -252,7 +252,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "ReentrantLock 公平锁",
     "content": "ReentrantLock 支持公平锁和非公平锁两种模式。",
@@ -272,7 +272,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ThreadLocal 内存泄漏场景",
     "content": "ThreadLocal 为什么可能导致内存泄漏？使用时应注意什么？",
@@ -290,7 +290,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "线程池异常吞没陷阱",
     "content": "用 ExecutorService.submit() 提交任务，任务中抛出的运行时异常会发生什么？execute() 和 submit() 对异常处理有何区别？",
@@ -308,7 +308,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ConcurrentModificationException 场景",
     "content": "在什么情况下会抛出 ConcurrentModificationException？如何在遍历时安全删除集合元素？",
@@ -325,7 +325,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "线上 CPU 100% 排查思路",
     "content": "线上应用突然 CPU 持续 100%，你如何定位根因？请描述完整排查流程。",
@@ -342,7 +342,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "死锁的排查与预防",
     "content": "请描述死锁的四个必要条件，以及如何排查和预防死锁。",
@@ -359,7 +359,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "线上 OOM 排查完整流程",
     "content": "线上服务频繁 OOM，你如何定位内存泄漏的根因？",
@@ -377,7 +377,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "AQS 的核心实现原理",
     "content": "关于 AbstractQueuedSynchronizer（AQS）的核心实现原理，以下描述正确的是？",
@@ -399,7 +399,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "虚拟线程与平台线程的关系",
     "content": "JDK 21 的虚拟线程（Virtual Threads）旨在完全替代平台线程（Platform Threads）。",
@@ -420,7 +420,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CAS 操作的 ABA 问题",
     "content": "CAS 操作中的 ABA 问题是指什么？以下哪种方式可以解决？",
@@ -442,7 +442,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "锁升级过程（偏向锁→轻量级锁→重量级锁）",
     "content": "请描述 synchronized 在 HotSpot JVM 中的锁升级过程，包括偏向锁、轻量级锁、重量级锁的触发条件和切换机制。",
@@ -475,7 +475,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "安全点（Safepoint）是什么",
     "content": "请解释 JVM 中的安全点（Safepoint）是什么，它有什么作用？哪些场景会触发全局安全点？",
@@ -491,7 +491,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Record 类（JDK 16）",
     "content": "请介绍 Java 14 预览、JDK 16 正式发布的 Record 类型。它和普通类有什么区别？",
@@ -507,7 +507,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ForkJoinPool 的描述",
     "content": "关于 ForkJoinPool 框架，以下描述正确的是？",
@@ -569,7 +569,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "HashMap 线程不安全的表现",
     "content": "为什么 HashMap 是线程不安全的？多线程环境下使用 HashMap 会出现哪些问题？",
@@ -587,7 +587,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HashMap 长度为什么是 2 的幂次方",
     "content": "HashMap 要求初始容量是 2 的幂次方，主要原因是什么？",
@@ -610,7 +610,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ConcurrentHashMap 复合操作原子性",
     "content": "关于 ConcurrentHashMap 的原子性，以下说法正确的是？",
@@ -634,7 +634,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 语法糖",
     "content": "什么是 Java 语法糖？列举 Java 中常见的语法糖及其底层实现。",
@@ -722,7 +722,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "try-with-resources",
     "content": "请解释 Java 7 引入的 try-with-resources 语句的原理和优势。哪些类可以使用 try-with-resources？",
@@ -758,7 +758,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "密封类（Sealed Class）",
     "content": "请介绍 Java 17 正式发布的密封类（Sealed Class）的作用和用法。它与 final 类有什么区别？",
@@ -867,7 +867,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 值类型与引用类型的本质区别",
     "content": "请解释 Java 中值类型（基本类型）和引用类型的本质区别，包括存储方式、传递方式和 GC 行为。",
@@ -1232,7 +1232,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Java 内存泄漏场景",
     "content": "以下哪个场景不会导致 Java 堆内存泄漏？",
@@ -1326,7 +1326,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "结构化并发的错误传播与任务取消",
     "content": "请解释结构化并发中 ShutdownOnFailure 和 ShutdownOnSuccess 策略如何传播错误和取消任务，以及 StructuredTaskScope 的生命周期保证。",
@@ -1345,7 +1345,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ScopedValue 的绑定生命周期与传递规则",
     "content": "请解释 ScopedValue 的绑定（binding）生命周期机制，以及它在虚拟线程间传递数据时相比 ThreadLocal 的优势。",
@@ -1497,7 +1497,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ConcurrentHashMap读操作为何无锁",
     "content": "Java 8的ConcurrentHashMap在get()操作中完全不使用锁（lock-free），请从内部数据结构和volatile使用的角度解释其实现原理。Node的val和next字段用了什么机制保证内存可见性？",
@@ -1584,7 +1584,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "泛型类型擦除的运行时真相",
     "content": "Java 的泛型通过类型擦除实现，运行时无法获取泛型参数的具体类型。因此 List<String> 和 List<Integer> 在运行时是相同的 Class 对象。\nA) 正确\nB) 错误",
@@ -1601,7 +1601,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ClassLoader 双亲委派模型的核心机制",
     "content": "关于 ClassLoader 双亲委派模型的描述，哪一项是正确的？\nA) 类加载时首先由子 ClassLoader 尝试加载，加载失败后才交给父 ClassLoader\nB) 自定义 ClassLoader 必须重写 loadClass 方法才能遵循双亲委派模型\nC) loadClass 方法的核心逻辑是先委派父 ClassLoader 加载，父加载失败后才由自己尝试加载\nD) Thread.currentThread().getContextClassLoader() 返回当前类所属的 ClassLoader",
@@ -1618,7 +1618,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "JIT 编译的核心优化技术详解",
     "content": "请列举 HotSpot JVM 中至少 5 种 JIT 编译优化技术，并重点说明方法内联和逃逸分析的工作原理。方法内联在哪些场景下会失效？逃逸分析的标量替换如何实现栈上分配？",
@@ -1691,7 +1691,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "JDK 9+ String 拼接 invokeDynamic 优化",
     "content": "在 JDK 9+ 中，Java 编译器将 String 的 + 拼接操作符编译为 invokedynamic 调用，而非传统的 StringBuilder。以下关于这种优化的描述，哪项是正确的？\nA) invokedynamic 方式在每次运行时都通过反射构造 StringBuilder，因此比 JDK 8 的显式 StringBuilder 更慢\nB) invokedynamic 方式使用 StringConcatFactory 作为 bootstrap method，在首次调用时生成最优的拼接实现策略，后续调用直接使用生成的 MethodHandle，JIT 可进一步内联优化\nC) invokedynamic 方式仅适用于 String 字面量的拼接，变量拼接仍然使用 StringBuilder\nD) 拼接结果仍然通过 StringBuilder.toString() 返回，只是创建 StringBuilder 的方式改用了 invokedynamic",
@@ -1710,7 +1710,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "JIT 分层编译中 C1 和 C2 的协作机制",
     "content": "HotSpot VM 的分层编译（Tiered Compilation）将编译分为 5 个级别（0-4）。以下关于各编译级别之间协作机制的描述，哪项是正确的？\nA) 代码从 level 0（解释器）直接升级到 level 4（C2），中间不经过带 profiling 的编译级别\nB) level 2（C1 不带 profiling）和 level 3（C1 带 profiling）是可选的中间状态；C2 编译基于 level 3 收集的类型 profiling 信息做出更激进的优化决策，如虚方法内联和分支预测\nC) C1 编译的所有级别（1-3）都不记录运行时类型信息，这些信息仅在解释器中收集\nD) level 3 带 profiling 的 C1 代码与 level 4 C2 代码可以共存，但 JVM 不会自动从 level 4 回退到较低级别",
@@ -1729,7 +1729,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Epsilon GC 在内存耗尽时的行为",
     "content": "Epsilon GC（JEP 318）是一种无操作（no-op）垃圾收集器。当堆内存耗尽时，Epsilon GC 不会触发任何垃圾收集，而是直接抛出 OutOfMemoryError。如果堆中仍有大量可回收的不可达对象，Epsilon GC 也不会回收它们。",
@@ -1752,7 +1752,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ScopedValue 与 ThreadLocal 核心区别",
     "content": "ScopedValue（JEP 429，JDK 21+）是 JDK 新引入的线程上下文传值机制。请说明 ScopedValue 与 ThreadLocal 在以下三个方面的核心区别：1) 可变性约束 2) 生命周期范围 3) 对虚拟线程继承行为的支持。",
@@ -1792,7 +1792,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ConstantDynamic (Condy) 引导方法解析机制",
     "content": "ConstantDynamic（Condy，JDK 11+ JEP 309）允许在 class 文件的常量池中定义用户自定义常量。以下关于 Condy 引导方法解析机制的描述，哪项是正确的？\nA) 引导方法在类加载阶段对所有 Condy 常量池条目进行批量调用，并将结果缓存到运行时常量池\nB) 引导方法在 JIT 编译阶段被调用，编译结果直接嵌入机器码，不经过运行时常量池\nC) 引导方法在 CONSTANT_Dynamic 常量池条目首次被解析时调用，结果由 JVM 缓存供后续访问复用\nD) 引导方法每次访问 Condy 常量时都被重新调用，以确保返回值的「新鲜度」",
@@ -1813,7 +1813,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "VarHandle opaque 模式的内存排序语义",
     "content": "VarHandle 的 opaque 模式（setOpaque/getOpaque）保证了对变量的原子性访问和完全的有序性保证，即禁止编译器和处理器对该变量相关的所有内存操作进行重排序。",

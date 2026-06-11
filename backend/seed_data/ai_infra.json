@@ -1,7 +1,7 @@
 [
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LLM 推理引擎架构：vLLM / TensorRT-LLM",
     "content": "LLM 推理引擎（vLLM、TensorRT-LLM、llama.cpp）的核心优化技术有哪些？PagedAttention 如何解决 KV Cache 的内存碎片问题？Continuous Batching 的原理是什么？",
@@ -134,7 +134,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LoRA / QLoRA 微调基础设施",
     "content": "LoRA（Low-Rank Adaptation）和 QLoRA 的微调原理是什么？LoRA 的 Rank 参数如何影响微调效果？QLoRA 的 NF4 量化 + Double Quantization + Paged Optimizer 如何降低显存需求？实战中 LoRA 的训练配置选型？",
@@ -153,7 +153,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "分布式训练框架：DeepSpeed ZeRO / FSDP",
     "content": "DeepSpeed ZeRO（Zero Redundancy Optimizer）的三个阶段（Stage 1/2/3）分别优化了什么？FSDP（Fully Sharded Data Parallel）和 ZeRO Stage 3 的异同？张量并行（TP）和流水线并行（PP）分别解决什么问题？",
@@ -210,7 +210,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "NVIDIA GPU 分区技术：MIG vs MPS vs Time-Slicing",
     "content": "NVIDIA GPU 的三种分区技术——MIG（Multi-Instance GPU）、MPS（Multi-Process Service）、Time-Slicing——各自的工作原理是什么？分别在什么场景下使用？如何选择？",
@@ -229,7 +229,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "FlashAttention：加速注意力计算的原理与演进",
     "content": "FlashAttention 系列（v1/v2/v3）的核心优化思想是什么？FlashAttention 如何通过 tiling 和 recomputation 降低显存消耗和计算量？FlashAttention-2 和 FlashAttention-3 的改进点？",
@@ -248,7 +248,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "推测解码（Speculative Decoding）原理与实现",
     "content": "推测解码（Speculative Decoding）如何加速 LLM 推理？Draft Model 和 Verifier 的两阶段机制是什么？如何选择 Draft Model？Speculative Decoding 的加速比受哪些因素影响？",
@@ -286,7 +286,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LLM 推理的容器化与部署优化",
     "content": "如何为 LLM 推理服务设计高效的 Docker 容器和部署策略？模型热加载、GPU 内存预热、Horizontial Scaling 的最佳实践是什么？",
@@ -381,7 +381,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "模型压缩技术：蒸馏、剪枝与量化对比",
     "content": "模型压缩的三条主要路径——知识蒸馏（Knowledge Distillation）、剪枝（Pruning）、量化（Quantization）——各自原理是什么？如何组合使用？各自的最佳适用场景？",
@@ -419,7 +419,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "AI 基础设施性能基准测试与容量规划",
     "content": "如何对 AI 基础设施进行系统的性能基准测试？LLM 推理的吞吐、延迟、并发能力如何测量和建模？如何进行 GPU 容量规划以平衡成本和服务质量？",
@@ -473,7 +473,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LLM 推理的 Prefill-Decode 分离架构",
     "content": "讨论 LLM 推理的 Prefill-Decode 分离架构。为什么需要将 Prefill（预填充）和 Decode（解码）阶段部署到不同的 GPU 实例上？Splitwise 方案的原理和收益。分离架构对 KV-Cache 管理、调度策略带来的挑战。",
@@ -575,7 +575,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "MLOps：训练数据管道与特征工程平台",
     "content": "设计一个 MLOps 下的训练数据管道。数据采集 → 清洗 → 标注 → 增强 → 特征工程 → 数据集版本控制的完整流程。使用 Feast 或 Tecton 构建特征平台（Feature Platform）的在线/离线特征架构。数据质量监控与异常检测。",
@@ -592,7 +592,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "FP8 精度训练与混合精度策略",
     "content": "讨论 FP8（8-bit 浮点）精度训练的实践。FP8 的两种格式：E4M3（精度优先）和 E5M2（范围优先）。FP8 在 H100/H200 上的硬件支持。混合精度策略（W&B quantized、activations full precision）和损失缩放（Loss Scaling）。FP8 训练的数值稳定性挑战。",
@@ -713,7 +713,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "AI 推理的 KV-Cache 量化与压缩",
     "content": "讨论 KV-Cache 量化和压缩技术。KV-Cache 在推理中占据大量显存，如何通过量化（FP8/INT8）和压缩（窗口压缩、H2O Heavy Hitter、SnapKV）降低显存占用？各种压缩方案对模型质量的影响和速度收益。",
@@ -798,7 +798,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LoRA 微调的分布式训练与部署",
     "content": "讨论 LoRA（Low-Rank Adaptation）的分布式训练和高效部署。LoRA 如何通过低秩矩阵 adapter 实现高效微调。LoRA 的分布式训练策略（DP + FSDP）和显存分析。PEFT 库在多 GPU 训练中的配置。LoRA adapter 在生产环境的动态加载和热切换。",
@@ -867,7 +867,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "GPU 显存管理：碎片整理与共享",
     "content": "分析 GPU 显存管理技术。显存碎片化的原因：KV-Cache 的异构分配和释放。显存管理方案：统一内存池（PyTorch CUDA allocator）、显存整理（defragmentation）、显存共享（vLLM PagedAttention 的显存页管理）。FastTransformer 的 memory pool 设计。",
@@ -969,7 +969,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 训练 Checkpoint 策略与故障恢复",
     "content": "讨论分布式训练 Checkpoint 的策略。Checkpoint 的内容——模型权重 + 优化器状态 + 训练配置。全量 Checkpoint vs 增量 Checkpoint。异步 Checkpoint——不阻塞训练。训练故障的恢复流程。Checkpoint 存储和版本管理。",
@@ -1071,7 +1071,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "模型量化技术全览：PTQ、QAT 与量化感知训练",
     "content": "全面分析模型量化技术。权重量化（Weight-only）——W4A16/W8A16。权重+激活量化——W8A8（INT8/FP8）。量化方法：RTN（Round-to-Nearest）、GPTQ、AWQ、SmoothQuant。量化感知训练（QAT）——在训练中模拟量化。量化校准数据集。",
@@ -1138,7 +1138,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "MoE（混合专家模型）的分布式训练",
     "content": "深入分析 MoE 模型的分布式训练挑战。Expert Parallelism——不同专家在不同 GPU。Token Routing——Token 分配到专家的负载均衡。Top-K 路由的 All-to-All 通信。负载不均问题——Experts 的 Skill 不平衡和丢弃策略。MoE 训练的显存优化。",
@@ -1240,7 +1240,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Prefill-Decomposition（预填充-解码分离）架构",
     "content": "深入分析 Prefill-Decode 分离的推理架构。Prefill 阶段（计算密集型）和 Decode 阶段（显存带宽密集型）的特征。为什么分离可以优化资源利用。分离后的调度——Prefill Worker 和 Decode Worker。跨阶段通信和延迟优化。",
@@ -1444,7 +1444,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "GPU 虚拟化：MIG 与 vGPU",
     "content": "讨论 GPU 虚拟化技术。MIG（Multi-Instance GPU）——A100/H100 的硬件分区。MIG 的分区方案（1g.10gb / 2g.20gb / 3g.40gb / 7g.80gb）。vGPU（NVIDIA 虚拟 GPU）——vSphere 环境。MIG vs 时间片共享的隔离性对比。MIG 的限制。",
@@ -1583,7 +1583,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "AI 模型容器化与 Triton Inference Server 部署",
     "content": "讨论 AI 模型的容器化打包和推理服务部署。Docker 镜像构建：CUDA 基础镜像、Python 依赖、模型文件打包。Triton Inference Server 的架构和模型仓库配置。模型并发、动态批处理和模型流水线。多模型管理和 GPU 资源分配。",
@@ -1655,7 +1655,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 训练推理的弹性成本优化：Spot 实例与预留容量",
     "content": "讨论大规模 AI 训练推理的成本优化策略。Spot 实例：折扣比例、中断处理、Checkpoint 恢复。预留容量：1 年/3 年预留的折扣、容量保证。GPU 自动扩缩容：根据负载动态调整 GPU 数量。按资源类型（训练/推理/开发）的成本分配。",
@@ -1691,7 +1691,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "AI 基础设施网络安全与审计日志",
     "content": "讨论 AI 基础设施的多层安全防护策略。网络隔离：VPC 分割、GPU 集群的南北向和东西向流量控制。模型访问控制：身份认证、API Key 管理、RBAC 权限。审计日志：推理请求日志、模型访问追踪、异常行为检测。合规要求和数据主权。",
@@ -1709,7 +1709,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ML 特征存储：Feast / Tecton 与在线离线特征服务",
     "content": "讨论 ML 特征存储（Feature Store）的架构设计。特征存储的核心功能：特征定义、特征计算、特征服务。在线特征服务：低延迟获取实时特征。离线特征服务：批量特征计算用于训练。Feast 和 Tecton 的架构对比。特征一致性的重要性。",
@@ -1763,7 +1763,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "FP16 训练的数值范围",
     "content": "FP16（半精度浮点数）的表示范围比 FP32 小，在 LLM 训练中使用 FP16 会导致梯度下溢（Underflow）问题，因此需要混合精度训练（AMP）。",
@@ -1781,7 +1781,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "fill_in_blank",
     "title": "分布式训练同步策略",
     "content": "在分布式数据并行（DDP）训练中，All-Reduce 操作用于聚合各个 GPU 的 ________。Ring All-Reduce 的通信复杂度是 ________。",

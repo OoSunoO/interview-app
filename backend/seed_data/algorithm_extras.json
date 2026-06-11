@@ -92,7 +92,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "coding",
     "title": "二叉树的最近公共祖先",
     "content": "给定一个二叉树，找到该树中两个指定节点 p 和 q 的最近公共祖先。最近公共祖先定义为：对于有根树 T 的两个节点 p、q，最近公共祖先表示为一个节点 x，满足 x 是 p、q 的祖先且 x 的深度尽可能大（一个节点也可以是它自己的祖先）。",
@@ -129,7 +129,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "coding",
     "title": "最长回文子串",
     "content": "给你一个字符串 s，找到 s 中最长的回文子串。",
@@ -165,7 +165,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "coding",
     "title": "子集",
     "content": "给你一个整数数组 nums，数组中的元素互不相同。返回该数组所有可能的子集（幂集）。解集不能包含重复的子集。",
@@ -184,7 +184,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "coding",
     "title": "组合总和",
     "content": "给你一个无重复元素的整数数组 candidates 和一个目标整数 target，找出 candidates 中可以使数字和为目标数 target 的所有不同组合。candidates 中的同一个数字可以无限制重复被选取。",
@@ -350,7 +350,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "coding",
     "title": "接雨水",
     "content": "给定 n 个非负整数表示每个宽度为 1 的柱子的高度图，计算按此排列的柱子，下雨之后能接多少雨水。",
@@ -388,7 +388,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "会议室/区间问题（贪心）",
     "content": "给定一个会议时间安排的数组 intervals，每个会议时间包含开始和结束时间 `[[s1,e1],[s2,e2],...]`，请判断一个人是否能参加所有会议（即判断是否存在重叠区间）。",
@@ -541,7 +541,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "coding",
     "title": "课程表（拓扑排序）",
     "content": "你这个学期必须选修 numCourses 门课程，记为 0 到 numCourses-1。在选修某些课程之前需要一些先修课程。先修课程按数组 prerequisites 给出，其中 prerequisites[i] = [ai, bi] 表示要学习课程 ai 则必须先学习课程 bi。判断是否可能完成所有课程的学习。",
@@ -717,7 +717,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "矩阵置零",
     "content": "请解决矩阵置零问题（LeetCode 73）。如何在 O(1) 额外空间下将矩阵中含有 0 的行和列全部置零？",
@@ -735,7 +735,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "颜色分类（荷兰国旗）",
     "content": "请解决颜色分类问题（LeetCode 75）。荷兰国旗问题的三路快排思想是什么？如何在一次遍历（One Pass）中完成排序？",
@@ -879,7 +879,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "多数元素 II",
     "content": "请解决 LeetCode 229 多数元素 II（求众数）。如何在 O(n) 时间和 O(1) 空间内找到数组中出现次数超过 n/3 的元素？摩尔投票法的扩展思路是什么？",
@@ -897,7 +897,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "最长有效括号",
     "content": "请解决最长有效括号问题（LeetCode 32）。如何在 O(n) 时间 O(1) 空间内找到最长有效括号子串？",
@@ -1028,7 +1028,7 @@
   },
   {
     "category": "algorithm",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "coding",
     "title": "交错字符串",
     "content": "给定三个字符串 s1、s2、s3，请判断 s3 是否由 s1 和 s2 交错组成。交错：保持 s1 和 s2 中各字符在原串中的相对顺序，交替取 s1 和 s2 的字符组成新串。例如 s1 = \"aabcc\", s2 = \"dbbca\", s3 = \"aadbbcbcac\" → true。",

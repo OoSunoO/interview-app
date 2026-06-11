@@ -20,7 +20,7 @@
   },
   {
     "category": "distributed_systems",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "PACELC 扩展模型",
     "content": "PACELC 在 CAP 基础上增加了什么维度？它对系统设计有何指导意义？",
@@ -106,7 +106,7 @@
   },
   {
     "category": "distributed_systems",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Raft 角色与任期",
     "content": "Raft 算法中有哪三种角色？Term（任期）的作用是什么？Leader 选举流程是怎样的？",
@@ -188,7 +188,7 @@
   },
   {
     "category": "distributed_systems",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "SAGA 事务模式",
     "content": "SAGA 事务模式的核心思想是什么？什么是补偿（Compensation）？SAGA 有哪两种协调方式？",
@@ -308,7 +308,7 @@
   },
   {
     "category": "distributed_systems",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "分布式 ID 生成方案",
     "content": "分布式系统中生成全局唯一 ID 有哪些方案？它们的优缺点和适用场景是什么？",
@@ -371,7 +371,7 @@
   },
   {
     "category": "distributed_systems",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Fencing Token 机制",
     "content": "什么是 Fencing Token？它如何解决分布式锁的遗留问题？为什么仅靠锁本身不能保证安全性？",
@@ -529,7 +529,7 @@
   },
   {
     "category": "distributed_systems",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "幂等性设计",
     "content": "在分布式系统中实现 Exactly-Once 语义的核心挑战是什么？常用的幂等性策略有哪些？",
@@ -1962,6 +1962,40 @@
       "弹性伸缩",
       "KEDA",
       "HPA"
+    ]
+  },
+  {
+    "category": "distributed_systems",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "Spark 与 Flink 的对比选型",
+    "content": "请对比 Apache Spark 和 Apache Flink 在架构、处理模型和适用场景上的区别。",
+    "answer": "答案：Spark 是微批处理（Mini-Batch），延迟百毫秒级；Flink 是纯流处理（Event-by-Event），延迟毫秒级。\n\n解析：架构差异：Spark 基于 DAG + RDD，每次 Trigger 触发批次计算；Flink 基于 Stream + Operator Chain，数据到达即处理。状态管理：Flink 原生支持 Exactly-Once 状态一致性（Checkpoint + Savepoint），Spark Streaming 依赖外部状态存储。适用场景：Spark 适合批处理、ETL、离线数仓；Flink 适合实时监控、实时风控、CDC 同步。趋势：Streaming Batch Unification——Spark Structured Streaming 和 Flink SQL 都在融合流批一体。",
+    "hints": [
+      "核心区别是微批 vs 纯流",
+      "思考 Exactly-Once 语义的实现差异"
+    ],
+    "tags": [
+      "分布式计算",
+      "Spark",
+      "Flink"
+    ]
+  },
+  {
+    "category": "distributed_systems",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "实时计算与批处理的技术选型",
+    "content": "请对比实时计算（Stream Processing）和批处理（Batch Processing）的架构差异与选型建议。",
+    "answer": "答案：批处理处理全量数据，高吞吐高延迟；实时处理增量数据，低吞吐低延迟。选型取决于业务对延迟的要求。\n\n解析：技术栈对比：批处理（Hive/Spark SQL/Presto/Trino）；实时（Flink/Storm/Kafka Streams/Samza）。Lambda 架构：批处理层 + 实时层 + 服务层合并结果。Kappa 架构：纯流处理替代批处理，通过数据重放实现历史计算。选型建议：离线报表用批处理；实时风控/监控用流处理；日志分析用 Lambda/Kappa 混合。扩展：流批一体（Apache Beam / Flink SQL）是长期方向。",
+    "hints": [
+      "对比 Lambda 和 Kappa 架构的优劣",
+      "思考什么场景必须用批处理"
+    ],
+    "tags": [
+      "分布式计算",
+      "流处理",
+      "架构"
     ]
   }
 ]

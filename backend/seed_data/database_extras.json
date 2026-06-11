@@ -201,7 +201,7 @@
   },
   {
     "category": "database",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "MySQL 派生表合并优化",
     "content": "MySQL 优化器可以将派生表（Derived Table）合并到外层查询中，避免物化派生表。但在派生表中包含 LIMIT、ORDER BY 或聚合函数时，优化器无法合并派生表。",
@@ -246,7 +246,7 @@
   },
   {
     "category": "database_extras",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "MySQL 8.0 CHECK 约束",
     "content": "MySQL 8.0.16 开始支持 CHECK 约束，但 CHECK 约束只对 INSERT 操作生效，对 UPDATE 操作无效。",

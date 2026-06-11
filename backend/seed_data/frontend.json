@@ -312,7 +312,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "HTTP 协议演进",
     "content": "请对比 HTTP/1.1、HTTP/2、HTTP/3 的核心区别和性能优化点。",
@@ -331,7 +331,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "前端包体积优化",
     "content": "如何进行前端包体积优化？Tree Shaking、Code Splitting、资源压缩分别是如何工作的？",
@@ -349,7 +349,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计模式在前端的应用",
     "content": "请举例说明观察者模式、单例模式、工厂模式、策略模式在前端开发中的实际应用场景。",
@@ -366,7 +366,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "前端性能优化实践",
     "content": "前端性能优化可以从哪些维度入手？LCP、FID、CLS 这些 Core Web Vitals 指标分别代表什么？如何针对性优化？",
@@ -475,7 +475,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "前端性能优化：Core Web Vitals",
     "content": "Google 的 Core Web Vitals 指标有哪些？LCP（Largest Contentful Paint）、FID（First Input Delay）、CLS（Cumulative Layout Shift）分别衡量什么？如何优化这些指标？",
@@ -529,7 +529,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "前端构建工具：Webpack 核心原理",
     "content": "Webpack 的核心原理是什么？Loader 和 Plugin 的区别？Tree Shaking 的工作原理？Webpack 5 有哪些重要更新？Webpack 和 Vite 的核心差异？",
@@ -585,7 +585,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Tree Shaking 原理与工程化配置",
     "content": "Tree Shaking 的实现原理是什么？为什么它依赖 ES Module 而不兼容 CommonJS？在 Webpack/Vite 中如何最大化 Tree Shaking 效果？",
@@ -604,7 +604,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Web 无障碍合规实践（WCAG & ARIA）",
     "content": "WCAG 2.1 的四项原则（POUR）是什么？如何实现键盘全操作和屏幕阅读器支持？常见的无障碍违反情形有哪些？",
@@ -714,7 +714,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Vite 与 Webpack 核心原理对比",
     "content": "Vite 和 Webpack 的核心工作原理有什么区别？为什么 Vite 在开发环境下启动和热更新比 Webpack 快？Vite 的生产构建为什么仍然用 Rollup？",
@@ -766,7 +766,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "WebSocket 断线重连策略与心跳机制",
     "content": "在实际项目中，WebSocket 连接可能因网络波动、服务器重启等原因断开。请设计一个健壮的 WebSocket 断线重连策略，包括心跳检测、指数退避重连和消息补偿机制。",
@@ -853,7 +853,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "CSS Houdini Paint API",
     "content": "什么是 CSS Houdini？Paint API（CSS Painting API）的工作原理是什么？它如何突破传统 CSS 的能力边界？",
@@ -1037,7 +1037,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "前端性能优化关键指标",
     "content": "请介绍前端性能优化的核心指标和优化策略。",
@@ -1291,7 +1291,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ResizeObserver与元素尺寸变化",
     "content": "请说明ResizeObserver API的核心原理和主要使用场景，以及它解决了Window resize事件无法处理的问题。",
@@ -1348,7 +1348,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Vite HMR 的热更新原理",
     "content": "请解释 Vite 开发服务器中 HMR（Hot Module Replacement）的实现原理。Vite 的 HMR 相比 Webpack 的 HMR 有什么本质区别？Vite 在浏览器端是如何利用 ESM 实现模块热替换的？",
@@ -1387,7 +1387,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Web Worker 与浏览器多线程",
     "content": "请解释浏览器中 Web Worker 的线程模型。主线程与 Worker 之间如何通信？通信性能瓶颈在哪里？SharedArrayBuffer 和 Atomics API 如何突破这个瓶颈？使用 SharedArrayBuffer 需要满足什么安全条件？",
@@ -1463,7 +1463,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "JavaScript 事件循环深入：微任务、宏任务与渲染时机",
     "content": "请详细描述浏览器中 JavaScript 事件循环（Event Loop）的完整执行流程。宏任务与微任务各自包含哪些 API？requestAnimationFrame 和 requestIdleCallback 在事件循环的哪个阶段执行？浏览器渲染（style/layout/paint）发生在事件循环的什么时机？",
@@ -1501,7 +1501,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "CSS Containment 与 content-visibility",
     "content": "什么是 CSS Containment？contain 属性的 layout、paint、size、style 值各自约束了什么？content-visibility: auto 如何利用 CSS Containment 实现延迟渲染？",
@@ -1610,7 +1610,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "前端国际化(i18n)方案的演进：从 gettext 到 Intl API 与 ICU 消息格式",
     "content": "前端国际化的核心挑战是什么？请对比传统 i18n 方案（gettext、i18next）和现代方案（Intl API、ICU MessageFormat）的差异。Intl.ListFormat、Intl.RelativeTimeFormat 等新型 Intl API 如何帮助前端自动处理复数、列表和时间格式？",
@@ -1628,7 +1628,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "View Transitions API 的 SPA 与 MPA 模式实现",
     "content": "请详细说明 Cross-document View Transitions API（跨文档视图过渡）在 MPA（Multi-Page Application）和 SPA（Single-Page Application）两种架构下的实现差异。重点阐述：\n1) MPA 模式下的 @view-transition 规则与 page-reveal/page-hide 事件的作用；\n2) SPA 模式下 document.startViewTransition() 的调用时机与 Promise 链管理；\n3) 浏览器如何实现旧快照与新快照之间的 morph（变形）动画以及伪元素树（::view-transition-group / ::view-transition-image-pair / ::view-transition-old / ::view-transition-new）的层级结构；\n4) 在视口改变（如响应式布局切换）时如何处理快照尺寸不一致的问题。",
@@ -1664,7 +1664,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Trusted Types 与基于策略的 DOM XSS 防御",
     "content": "Content Security Policy (CSP) 的 Trusted Types 指令（require-trusted-types-for 'script'）是一种什么样的防御机制？它与传统的基于正则的 XSS 过滤（如 DOMPurify）在防御哲学上有何根本区别？请详细说明：\n1) Trusted Types 如何通过拦截 innerHTML、document.write、eval 等 DOM XSS 向下的 sink API 来阻止注入；\n2) TrustedTypePolicy 工厂的定义方式与验证策略；\n3) 与 CSP report-uri/report-to 结合实现 XSS 攻击的事中监控与上报；\n4) 在 Svelte、React 等前端框架中集成 Trusted Types 的兼容性考虑和最佳实践。",
@@ -1813,7 +1813,7 @@
   },
   {
     "category": "frontend",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "盒模型的核心属性",
     "content": "CSS 盒模型中，元素的总宽度计算为 ________ + ________ + ________ + ________。当 box-sizing 设为 ________ 时，width 会包含 border 和 padding。",

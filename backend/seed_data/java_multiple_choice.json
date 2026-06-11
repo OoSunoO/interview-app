@@ -2044,7 +2044,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "线程安全的集合类识别",
     "content": "以下哪些集合是线程安全的，可以直接在多线程环境中使用而不需要额外同步？（多选）\nA) ConcurrentHashMap\nB) CopyOnWriteArrayList\nC) HashMap\nD) Collections.synchronizedMap(new HashMap<>())",
@@ -2061,7 +2061,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "保证迭代顺序的 Map 实现",
     "content": "以下哪些 Map 实现能够保证遍历时键值对的顺序是确定的？（多选）\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",
@@ -2079,7 +2079,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ConcurrentModificationException 的触发路径",
     "content": "以下哪些场景会抛出 ConcurrentModificationException？（多选）\nA) 线程 A 使用 Iterator 遍历 ArrayList 的同时，线程 B 调用 list.add() 添加元素\nB) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 list.remove(index)\nC) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 iterator.remove()\nD) 一个线程遍历 CopyOnWriteArrayList 的同时另一个线程向其中添加元素",
@@ -2133,7 +2133,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "线程上下文类加载器与 SPI 的违背",
     "content": "关于 Java 的线程上下文类加载器（Thread Context ClassLoader, TCCL）在 SPI 机制中的作用，以下哪些描述是正确的？（多选）\nA) SPI 机制的典型实现（如 JDBC DriverManager）使用 TCCL 加载第三方实现类，因为启动类加载器无法访问应用 classpath 中的类\nB) TCCL 的使用是对「双亲委派模型」的一种破坏，因为加载方向变成了从子加载器向父加载器请求\nC) TCCL 默认值就是启动类加载器（Bootstrap ClassLoader），因此 SPI 总是能加载到所有类\nD) TCCL 在 Java 9+ 模块化系统中已完全废弃，被 ModuleLayer 的 findLoader 机制取代",
@@ -2152,7 +2152,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "PhantomReference 与 ReferenceQueue 的交互时机",
     "content": "关于 PhantomReference（虚引用）和 ReferenceQueue 的交互，以下哪些描述是正确的？（多选）\nA) PhantomReference.get() 始终返回 null，无论被引用对象是否可达\nB) PhantomReference 在 GC 确定对象为虚可达后，会清除引用并将 PhantomReference 对象入队到 ReferenceQueue\nC) PhantomReference 所指对象只有在 PhantomReference 本身被清除（clear）或不再可访问时，其内存才会被真正回收\nD) PhantomReference 必须与 ReferenceQueue 配合使用，无参构造方法不存在",
@@ -2190,7 +2190,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Stream collect 与 reduce 的选择原则",
     "content": "Java Stream API 提供了 `collect(Collector)` 和 `reduce(T, BinaryOperator)` 两种归约操作。以下关于二者选择原则的描述，哪些是正确的？（多选）\nA) reduce() 适用于不可变的归约操作（如求和、最大值），其累加器是纯函数，不会修改已有状态\nB) collect() 适用于可变的归约操作（如追加到集合、拼接字符串），其累加器可以修改可变容器\nC) 在并行流中，reduce() 的 combiner 只有在结果类型与输入类型不一致时才被调用\nD) collect() 的 combiner（在 Collector 中定义）必须能处理任意两个部分结果容器的合并，且合并后结果与顺序执行等价",
@@ -2228,7 +2228,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ConcurrentHashMap.search 系列方法的短路终止语义",
     "content": "ConcurrentHashMap 的 search 系列方法（search / searchKeys / searchValues / searchEntries）提供了在映射上应用搜索的并行操作。以下关于这些方法的正确描述是哪些？（多选）\nA) search 方法接受一个函数，应用到映射的每个元素上，返回第一个非 null 的函数结果\nB) 当任一分区找到非 null 结果后，其他正在执行的分区任务会被取消或忽略其返回结果\nC) search 方法会捕获函数中抛出的异常，继续在其他元素上执行搜索\nD) 搜索函数返回的非 null 结果被严格保证是「映射中第一个」满足条件的元素（按迭代顺序）\nE) searchEntries 的搜索函数接收 Map.Entry 作为参数，而 search 接收键值对",
@@ -2249,7 +2249,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Collectors.teeing 多路聚合的特性",
     "content": "Collectors.teeing(Collector, Collector, BiFunction) 是 JDK 12 引入的 Collector。以下关于 teeing 的正确描述是哪些？（多选）\nA) 可以将同一个流中的元素同时发送到两个不同的 Collector 中进行聚合\nB) 两个下游 Collector 共享同一个中间结果容器\nC) 最终通过一个 BiFunction 将两个下游 Collector 的结果合并为一个结果\nD) teeing 要求两个下游 Collector 的类型和中间结果类型完全相同\nE) 在并行流中，teeing 要求两个 Collector 都是 CONCURRENT 且 UNORDERED",
@@ -2291,7 +2291,7 @@
   },
   {
     "category": "java_multiple_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "BlockingQueue.drainTo 方法的并发语义保证",
     "content": "BlockingQueue.drainTo(Collection<? super E> c) 和 drainTo(Collection<? super E> c, int maxElements) 用于将队列中的元素批量转移到目标集合。以下关于 drainTo 并发语义的正确描述是哪些？（多选）\nA) drainTo 将队列中「当前可用」的元素一次性转移到目标集合\nB) drainTo(Collection, int maxElements) 最多转移 maxElements 个元素\nC) 相比循环调用 poll，drainTo 可以减少锁获取次数，提高批量元素获取效率\nD) drainTo 执行期间其他线程添加的元素一定会被包含在本次转移中\nE) drainTo 会在没有可用元素时阻塞等待新元素到达",

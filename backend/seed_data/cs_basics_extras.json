@@ -107,7 +107,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CPU 缓存结构",
     "content": "CPU 三级缓存（L1/L2/L3）的访问延迟大小顺序是？",
@@ -127,7 +127,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "TCP 拥塞控制算法",
     "content": "以下哪个是 TCP 拥塞控制中慢启动阶段的特征？",
@@ -147,7 +147,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "虚拟内存的页面置换",
     "content": "LRU（最近最久未使用）页面置换算法在实际操作系统中被广泛使用，因为它的实现开销极低。",
@@ -198,7 +198,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "协程与线程的上下文切换",
     "content": "协程比线程更轻量，因为协程的上下文切换完全在用户态完成，不需要陷入内核。",
@@ -611,7 +611,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Linux 文件描述符限制",
     "content": "在 Linux 系统中，一个进程默认可以打开的文件描述符数量是无限的。如果进程需要打开更多文件描述符，可以通过 ulimit -n 来调整限制（仅对当前 Shell 及其子进程生效）。",
@@ -1174,7 +1174,7 @@
   },
   {
     "category": "cs_basics_extras",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "浮点数表示",
     "content": "IEEE 754 单精度浮点数中，若符号位=0，指数位=10000001，尾数位=01000000000000000000000，该值约为？",
@@ -1460,7 +1460,7 @@
   },
   {
     "category": "cs_basics_extras",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "缓冲区溢出攻击与栈保护机制",
     "content": "现代操作系统通过 ASLR（地址空间布局随机化）和 NX（No-eXecute）位两种机制的完整组合，可以完全阻止所有形式的缓冲区溢出攻击。",

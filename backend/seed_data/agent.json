@@ -20,7 +20,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 结构化输出强制：JSON 模式、函数调用与输出验证",
     "content": "Agent 系统如何强制 LLM 输出结构化的格式？JSON Mode、Function Calling、Output Validator 三种方案分别怎么用？结构化输出失败时如何处理？",
@@ -39,7 +39,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 状态持久化：会话状态、文件存储与数据库方案",
     "content": "Agent 系统的状态持久化有哪些层次？会话状态、Agent 内部状态、对话历史分别适合用什么样的存储方案？如何在不同存储后端（内存、文件、数据库）之间做选择？",
@@ -167,7 +167,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 评估框架与评测方法",
     "content": "如何全面评估一个 Agent 系统的性能？有哪些主流评估框架和指标？如何避免 Agent 评测中的过拟合？",
@@ -233,7 +233,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 幻觉问题与缓解策略",
     "content": "AI Agent 在运行中可能产生哪些类型的幻觉？幻觉对 Agent 系统有何特殊危害？缓解 Agent 幻觉的策略有哪些？",
@@ -290,7 +290,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "RAG 系统的检索优化策略",
     "content": "RAG（Retrieval-Augmented Generation）系统中，检索质量直接影响最终生成效果。请列举并解释至少 5 种检索优化策略。",
@@ -309,7 +309,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Prompt Injection 攻击与防御",
     "content": "什么是 Prompt Injection 攻击？AI Agent 系统中面临哪些 Prompt Injection 风险？如何从架构层面进行防御？",
@@ -447,7 +447,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Agent 工具调用可靠性",
     "content": "请介绍提高 Agent 工具调用可靠性的方法。如何处理工具返回的异常结果？工具 Schema 设计的最佳实践是什么？",
@@ -531,7 +531,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agentic RAG 模式",
     "content": "请解释 Agentic RAG（智能体检索增强生成）与传统 RAG 的核心区别。",
@@ -586,7 +586,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Agent 安全: 提示注入的分类与防御",
     "content": "请说明 LLM Agent 面临的提示注入（Prompt Injection）攻击分类，以及相应的防御策略。",
@@ -603,7 +603,7 @@
   },
   {
     "category": "ai_agent",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "ReAct Agent Loop 设计要点",
     "content": "解释 ReAct（Reasoning + Acting）模式中 Agent Loop 的设计。Agent 如何在「思考 → 行动 → 观察」的循环中保持状态一致性？如何处理工具调用失败的情况？",

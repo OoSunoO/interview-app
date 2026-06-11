@@ -282,7 +282,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计 API 网关",
     "content": "请设计一个 API 网关，支持路由转发、身份认证、限流、请求日志和协议转换。参考 Kong / APISIX / Spring Cloud Gateway 的架构。",
@@ -354,7 +354,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计一个即时通讯系统（IM）",
     "content": "如何设计一个支持亿级用户的即时通讯系统？消息的实时推送如何实现（长轮询/WebSocket/SSE）？消息的可靠投递和去重？离线消息存储方案？",
@@ -390,7 +390,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计一个 CDN 系统",
     "content": "CDN（内容分发网络）的工作原理是什么？边缘节点如何获取内容（回源/Push/Pull）？CDN 缓存策略（Cache-Control/Expires/ETag）？CDN 在动静分离架构中的作用？",
@@ -426,7 +426,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计评论系统",
     "content": "如何设计一个支持海量用户、多层嵌套的评论系统？评论的分页查询怎么做到高性能？回复通知和敏感词过滤如何实现？",
@@ -444,7 +444,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计实时推荐系统",
     "content": "如何设计一个实时推荐系统？推荐系统的经典架构（召回→排序→重排）是什么？协同过滤和基于内容的推荐有什么区别？实时特征计算如何实现？",
@@ -574,7 +574,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计通知系统",
     "content": "如何设计一个支持邮件、短信、App Push 的全渠道通知系统？需要支持亿级用户、模板管理、频率控制和多渠道分发。",
@@ -812,7 +812,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计统一支付/计费系统",
     "content": "请设计一个支持多业务线、多渠道的统一计费系统（Billing System）架构。",
@@ -846,7 +846,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计文件共享与存储系统",
     "content": "请设计一个类似 Google Drive / Dropbox 的文件存储和共享系统，包括同步和版本控制。",
@@ -863,7 +863,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计 OAuth 2.0 授权系统",
     "content": "请设计一个符合 OAuth 2.0 标准的授权系统，支持第三方应用通过授权码模式访问用户资源。",
@@ -1060,7 +1060,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "混沌工程方法论",
     "content": "请解释混沌工程（Chaos Engineering）的核心原则和成熟度模型。与传统的故障注入测试有什么本质区别？请描述一个完整的混沌实验流程（从稳态假设到爆炸半径控制）。并讨论在生产环境运行混沌实验的注意事项。",
@@ -1121,7 +1121,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计数据目录系统（Data Catalog）",
     "content": "请设计一个企业级数据目录系统（Data Catalog），类似于 Apache Atlas、DataHub 或 Amundsen。包含以下功能：\n1. 元数据采集与自动发现（各类数据源的表/列/分区/血缘）；\n2. 数据血缘（Lineage）的解析与展示（字段级血缘的追踪方法）；\n3. 搜索与发现（搜索索引设计与排名）；\n4. 元数据管理（标签、描述、等级分类、合规标记）。",
@@ -1139,7 +1139,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计一个实时数据看板（Dashboard）系统",
     "content": "如何设计一个支持实时数据聚合与展示的看板系统？需要支持多种数据源、毫秒级延迟刷新和复杂聚合查询。核心挑战是什么？",
@@ -1221,7 +1221,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "缓存更新模式：Cache Aside vs Read Through vs Write Through",
     "content": "以下关于缓存更新模式的描述，哪一个是正确的？",
@@ -1263,7 +1263,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "事件驱动 vs 请求驱动的架构选型",
     "content": "某国际化电商平台需要设计订单处理流程：用户下单后需要执行库存扣减、支付处理、物流单生成、通知推送、积分累计等操作。考虑到未来业务会不断新增后置处理步骤，并且需要保证核心链路的低延迟。以下哪种架构设计最合理？",
@@ -1284,7 +1284,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计分布式工作流引擎",
     "content": "请设计一个分布式工作流引擎（类似 Temporal / Camunda / Airflow），支持长时间运行的工作流定义、定时触发、状态持久化、故障恢复和水平扩展。核心挑战是什么？",
@@ -1320,7 +1320,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计实时风控系统",
     "content": "请设计一个实时风控/欺诈检测系统，需要在毫秒级延迟内判断交易、登录、领取优惠券等行为是否存在风险。规则引擎和机器学习模型如何协同？特征计算如何做到实时？",
@@ -1514,7 +1514,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计社交平台信息流（Twitter/Instagram）",
     "content": "请设计一个社交平台信息流系统（类似 Twitter / Instagram Timeline）。覆盖关注关系、Feed 生成、推拉模式、热门内容推荐、延迟与一致性权衡。",
@@ -1534,7 +1534,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计搜索自动补全（Autocomplete/Trie）",
     "content": "请设计一个搜索自动补全系统（类似 Google Search Autocomplete）。覆盖 Trie 索引构建、前缀搜索、热度排序、动态更新与性能优化。",
@@ -1554,7 +1554,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计分布式缓存系统（如Redis）",
     "content": "请设计一个分布式缓存系统（类似 Redis Cluster / Memcached）。覆盖数据分片、一致性哈希、复制与故障转移、缓存淘汰策略和高可用方案。",
@@ -1614,7 +1614,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "设计在线售票系统（Ticketmaster）",
     "content": "请设计一个在线售票系统（类似 Ticketmaster / 大麦网）。覆盖座位选择、防止超卖、高并发抢票、排队机制与分布式一致性。",
@@ -1744,7 +1744,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "choice",
     "title": "分布式缓存淘汰策略选型",
     "content": "某 Redis 集群用于缓存用户会话数据（所有 key 都有 TTL，最长为 24 小时），同时缓存了少量永不超时的配置项。当内存不足时，需要优先淘汰最近最少使用的 TTL 键。最适合的淘汰策略是：",
@@ -1764,6 +1764,173 @@
       "淘汰策略",
       "LRU",
       "TTL"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "缓存击穿与缓存雪崩的区别及解决方案",
+    "content": "请解释缓存击穿（Cache Breakdown）和缓存雪崩（Cache Avalanche）的区别，以及各自的解决方案。",
+    "answer": "答案：缓存击穿指热点 key 过期瞬间大量并发请求穿透到数据库；缓存雪崩指大量 key 同时过期或 Redis 宕机导致整体流量打到数据库。\n\n解析：缓存击穿解决方案：1) 互斥锁（Mutex Key），只允许一个线程重建缓存；2) 逻辑过期 + 异步刷新，不设置物理过期时间。缓存雪崩解决方案：1) 过期时间加随机偏移避免集体失效；2) 多级缓存（本地+分布式）；3) 缓存预热 + 双 key 模式；4) Redis 高可用（哨兵/集群）防止宕机。\n\n扩展延伸：缓存击穿本质是单点热点问题，缓存雪崩是群体失效问题。实际架构中常组合使用：本地缓存（Caffeine）兜底 + Redis 分布式缓存 + 互斥锁重建。",
+    "hints": [
+      "区分单 key 过期的击穿 vs 大量 key 过期的雪崩",
+      "思考加锁、预热、多级缓存的组合方案"
+    ],
+    "tags": [
+      "缓存",
+      "高可用"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "LFU 缓存淘汰策略",
+    "content": "请解释 LFU（Least Frequently Used）缓存淘汰策略的原理、实现方式及其与 LRU 的对比。",
+    "answer": "答案：LFU 淘汰访问频率最低的数据，核心指标是访问次数；LRU 淘汰最久未访问的数据，核心指标是访问时间。\n\n解析：LFU 实现方案：1) 最小堆（O(log n) 淘汰）；2) 双哈希表 + 频率链表（O(1) 操作，如 Redis LFU 实现）。LFU 问题：缓存污染（历史高频数据不再被访问仍占空间）和频率衰减。优化：LFU-Aging（定期衰减计数）、Window-LFU（只统计最近窗口）。LRU 问题：偶发大量扫描会污染缓存。实际业务中常用 LRU 或近似 LRU（Redis 近似 LRU），LFU 适用于访问模式稳定的场景。",
+    "hints": [
+      "对比 LRU 和 LFU 的淘汰依据",
+      "思考频率衰减如何解决缓存污染"
+    ],
+    "tags": [
+      "缓存",
+      "淘汰策略"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "本地缓存与分布式缓存的选型对比",
+    "content": "请对比本地缓存（如 Caffeine/Guava Cache）和分布式缓存（如 Redis）的优缺点及适用场景。",
+    "answer": "答案：本地缓存：速度快（无网络开销），但容量有限且多实例间不一致；分布式缓存：可共享、大容量、一致性好，但有网络延迟。\n\n解析：选型依据：1) 数据一致性要求（本地缓存存在一致性问题）；2) 数据量大小（单机内存限制）；3) 是否需要跨进程共享。常见组合：Caffeine 作为 L1 缓存 + Redis 作为 L2 缓存（多级缓存架构）。热点缓存问题常通过本地缓存解决——每个实例缓存热点数据，减少 Redis 压力。注意本地缓存需要广播失效机制。",
+    "hints": [
+      "从延迟、容量、一致性三个维度对比",
+      "思考多级缓存架构的典型模式"
+    ],
+    "tags": [
+      "缓存",
+      "架构选型"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "缓存无底洞问题（Hotkey Invalidating）",
+    "content": "请解释分布式缓存中的无底洞问题（Hotkey / 缓存漏斗）及其解决方案。",
+    "answer": "答案：无底洞问题指当缓存 key 被大量请求集中访问时，即使增加缓存节点也无法线性提升吞吐量，反而因网络开销增加导致性能下降。\n\n解析：本质原因是哈希分布 + 批量获取场景下，请求分散到多个节点导致网络往返增加。解决方案：1) 本地缓存兜底热点 key；2) 读写分离 + 副本读；3) 优化批量接口（mget 管道化）；4) 热点发现与隔离（实时统计 + 单独处理）；5) 一致性哈希的虚拟节点优化负载均衡。扩展：Redis 4.0 的 Hot Key 发现和阿里云 Tair 的热点散列方案。",
+    "hints": [
+      "思考为什么缓存节点多了反而更慢",
+      "区分无底洞问题和缓存击穿"
+    ],
+    "tags": [
+      "缓存",
+      "分布式",
+      "Redis"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "数据备份与归档策略设计",
+    "content": "请设计一个大规模系统的数据备份与归档策略，考虑 RPO/RTO 等指标。",
+    "answer": "答案：备份策略：全量备份（每周）+ 增量备份（每日）+ 日志归档（实时），结合 RPO/RTO 目标。归档策略：冷热数据分层，超过 90 天的数据归档到低成本存储。\n\n解析：RPO（恢复点目标）：可接受的数据丢失量，决定备份频率。RTO（恢复时间目标）：可接受的恢复时间，决定恢复方案。分层存储：热数据（SSD）→ 温数据（HDD）→ 冷数据（S3/Glacier/OSS 归档）。备份类型：物理备份（直接复制数据文件）vs 逻辑备份（SQL dump）。大型系统常用增量备份 + binlog 归档实现秒级 RPO。",
+    "hints": [
+      "明确 RPO 和 RTO 的计算方法",
+      "思考冷热数据分层存储策略"
+    ],
+    "tags": [
+      "存储",
+      "高可用",
+      "容灾"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "库存系统设计",
+    "content": "请设计一个高并发库存扣减系统，支持秒杀场景下的库存准确性和性能。",
+    "answer": "答案：库存扣减方案：1) 数据库乐观锁（UPDATE … WHERE stock > 0）；2) Redis 原子减（DECR + 预扣）；3) 分段库存（多个库存桶）。\n\n解析：核心挑战：超卖、少卖、性能。常用方案——预扣 + 最终一致性：Redis 预扣库存（原子操作）→ MQ 异步落库 → 对账补偿。优化手段：库存预热（提前加载到 Redis）、库存分段（降低热点锁竞争）、本地缓存兜底（限流）。最终一致性方案：Redis→MQ→DB→对账，确保不超卖且最终准确。扩展：TCC 模式下的库存预留与确认。",
+    "hints": [
+      "区分预扣模式和立即落库模式",
+      "思考热点库存和分段库存的设计"
+    ],
+    "tags": [
+      "高并发",
+      "库存",
+      "秒杀"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "云存储/网盘系统设计",
+    "content": "请设计一个类似 Google Drive / 百度网盘的云存储系统。",
+    "answer": "答案：核心模块：文件上传/下载、分片上传（断点续传）、文件同步（增量同步+冲突检测）、共享权限、版本管理。存储架构：元数据服务（MySQL/PostgreSQL）+ 对象存储（S3/MinIO）+ 文件分块存储。\n\n解析：关键技术：1) 分块上传（Chunk Upload）+ 秒传（文件 hash 去重）；2) 增量同步（rsync 算法 / CDC）；3) 冲突处理（CRDT / 版本向量 / 手动选择）；4) 数据去重（客户端和服务端双层去重）。存储优化：小文件合并（Small File Merge）、冷热分层。扩展：多端实时同步、文件预览（图片/文档/视频转码）。",
+    "hints": [
+      "从上传、同步、共享、版本四个核心链路入手",
+      "思考分块上传和秒传的实现"
+    ],
+    "tags": [
+      "存储",
+      "系统设计",
+      "FAANG"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "实时弹幕系统设计",
+    "content": "请设计一个支持百万并发在线直播的实时弹幕系统。",
+    "answer": "答案：核心链路：弹幕发送 → 消息广播 → 实时渲染。架构：WebSocket 长连接 + MQ 广播 + HTTP/3（QUIC）弱网优化。\n\n解析：关键设计：1) 连接层：WebSocket 集群 + 负载均衡（IP Hash 保持连接）；2) 广播层：每个房间一个 MQ Topic（Kafka/RocketMQ），扇出给所有连接节点；3) 存储层：滑动窗口内存存储（最近 200 条）+ 持久化到 DB。优化：弹幕合并（类似连连看，高频相同弹幕聚合）、连接迁移（断线重连恢复上下文）、弹幕过滤（敏感词+频率限制）。Redis 有序集合用于弹幕走马灯动画的时间序控制。",
+    "hints": [
+      "从连接管理、消息广播、存储三个维度设计",
+      "思考高频弹幕的合并优化"
+    ],
+    "tags": [
+      "直播",
+      "WebSocket",
+      "系统设计"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "hard",
+    "type": "short_answer",
+    "title": "新闻推送系统设计（News Feed Push）",
+    "content": "请设计一个新闻推送系统，用户订阅主题后实时接收相关新闻推送。",
+    "answer": "答案：推送架构：推模式（Push，写扩散）和拉模式（Pull，读扩散）的混合方案。核心组件：用户画像 → 内容匹配 → 消息推送。\n\n解析：混合推送：大 V（粉丝多）用拉模式避免写放大，普通用户用推模式保证实时性。推送流程：1) 内容审核 → 2) 兴趣标签匹配 → 3) 构建 Feed → 4) Push 到用户连接节点 → 5) WebSocket/APNs/FCM 推送。扩展：个性化优先级排序（CTR 预估）、去重与频控（防止推送疲劳）、A/B 测试推送文案。对比微博 Feed 流的推拉模式选择：新浪微博早期用推模式，后期明星大 V 改为拉模式避免写风暴。",
+    "hints": [
+      "对比推模式（Push）和拉模式（Pull）的优劣",
+      "思考大 V 和普通用户的不同推送策略"
+    ],
+    "tags": [
+      "推送",
+      "Feed",
+      "系统设计"
+    ]
+  },
+  {
+    "category": "system_design",
+    "difficulty": "medium",
+    "type": "short_answer",
+    "title": "分页查询优化设计",
+    "content": "请设计一个支持深度分页的大数据量查询系统，比较不同分页方案的优劣。",
+    "answer": "答案：三种方案：1) OFFSET 分页（传统方式，深度分页性能差）；2) 游标分页（Cursor-based，基于排序列+上一页最后一条 ID）；3) Keyset Pagination（基于索引的分页）。\n\n解析：OFFSET 问题：MySQL 需要扫描并丢弃前 N 行数据，N 越大越慢。游标分页：WHERE id > last_seen_id LIMIT 20，利用索引直接定位，性能恒定 O(log n)。Keyset Pagination：适用于多字段排序，WHERE (date, id) < (last_date, last_id)。Elasticsearch 中深度分页用 Search After（游标模式）而非 From/Size。扩展：分布式场景下的全局分页（按分片聚合再排序）与业务限制（最大翻页 10000）。",
+    "hints": [
+      "思考为什么 OFFSET 在大数据量下性能差",
+      "对比游标分页和传统分页的实现差异"
+    ],
+    "tags": [
+      "数据库",
+      "分页",
+      "性能优化"
     ]
   }
 ]

@@ -1,7 +1,7 @@
 [
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HashMap 底层数据结构",
     "content": "JDK 8 中 HashMap 的底层数据结构是？",
@@ -129,7 +129,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ArrayList 扩容机制",
     "content": "ArrayList 在调用 add() 方法且内部数组已满时的扩容方式是？",
@@ -213,7 +213,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HashMap 线程不安全的表现",
     "content": "HashMap 在多线程环境下可能出现哪些问题？以下说法错误的是？",
@@ -234,7 +234,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "TreeMap 的排序方式",
     "content": "TreeMap 根据什么来排序 key？",
@@ -276,7 +276,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Collection 接口的子接口",
     "content": "以下哪个接口不是 Collection 接口的子接口？",
@@ -297,7 +297,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HashMap 默认初始容量和负载因子",
     "content": "HashMap 的默认初始容量和负载因子分别是多少？",
@@ -360,7 +360,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "解决哈希冲突的方式",
     "content": "以下哪种不是解决哈希冲突的常见方法？",
@@ -381,7 +381,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "迭代器的快速失败机制",
     "content": "在使用迭代器遍历集合时，其他线程修改了集合结构，会发生什么？",
@@ -402,7 +402,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Comparable 与 Comparator 的区别",
     "content": "关于 Comparable 和 Comparator 的区别，以下说法正确的是？",
@@ -444,7 +444,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CopyOnWriteArrayList 的迭代器特性",
     "content": "关于 CopyOnWriteArrayList 的迭代器，以下说法正确的是？",
@@ -486,7 +486,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Collections 工具类的同步包装方法",
     "content": "调用 Collections.synchronizedList(new ArrayList()) 返回的 List，以下说法正确的是？",
@@ -507,7 +507,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Collection 的 toArray() 与 toArray(T[])",
     "content": "关于 ArrayList 的 toArray() 和 toArray(T[] a) 方法，以下说法正确的是？",
@@ -574,7 +574,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Collections.synchronizedList 原理",
     "content": "关于 Collections.synchronizedList() 包装的线程安全列表，以下说法正确的是？",
@@ -881,7 +881,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HashMap 的扰动函数作用",
     "content": "HashMap 中 hash 扰动函数 (h = key.hashCode()) ^ (h >>> 16) 的主要目的是？",
@@ -905,7 +905,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Iterator 遍历时能否删除元素",
     "content": "使用 Iterator 遍历集合时，以下哪种操作是安全的？",
@@ -1170,7 +1170,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "LinkedHashMap 访问顺序",
     "content": "LinkedHashMap 的 accessOrder 参数设置为 true 时，最常访问的元素会移动到链表的最（__）位置？",
@@ -1218,7 +1218,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "IdentityHashMap 比较方式",
     "content": "IdentityHashMap 使用什么方式比较 key 的相等性？",
@@ -1326,7 +1326,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "PriorityQueue 批量建堆",
     "content": "使用 PriorityQueue 的构造函数传入一个已有集合（如 ArrayList）时，建堆的时间复杂度是多少？",
@@ -1347,7 +1347,7 @@
   },
   {
     "category": "java_collections_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Collections.unmodifiableMap 的特点",
     "content": "关于 Collections.unmodifiableMap() 返回的不可修改 Map，以下哪项描述是正确的？",
@@ -1413,7 +1413,7 @@
   },
   {
     "category": "java_collections_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HashSet 与 TreeSet",
     "content": "关于 HashSet 和 TreeSet 的区别，以下说法错误的是？",
@@ -1479,7 +1479,7 @@
   },
   {
     "category": "java_collections_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Stack 与 Deque",
     "content": "Java 官方推荐的栈实现方式是什么？",
@@ -1525,7 +1525,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "IdentityHashMap 的引用比较与典型应用",
     "content": "关于 IdentityHashMap 的键比较方式和典型应用场景，以下说法正确的是？",
@@ -1549,7 +1549,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "PriorityQueue 入队出队的时间复杂度",
     "content": "关于 PriorityQueue 核心操作的时间复杂度，以下选项完全正确的是？",
@@ -1598,7 +1598,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CopyOnWriteArrayList 快照迭代器的弱一致性",
     "content": "关于 CopyOnWriteArrayList 迭代器的快照语义和弱一致性，以下描述正确的是？",
@@ -1623,7 +1623,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ConcurrentHashMap CAS 操作机制",
     "content": "关于 Java 8+ ConcurrentHashMap 的并发控制机制，以下描述正确的是？",
@@ -1648,7 +1648,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CopyOnWriteArrayList 底层数组快照",
     "content": "关于 CopyOnWriteArrayList 的底层数组快照机制和迭代器行为，以下说法正确的是？",
@@ -1723,7 +1723,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "NavigableSet ceiling floor 方法",
     "content": "关于 NavigableSet（如 TreeSet）的 ceiling() 和 floor() 方法的行为，以下说法正确的是？",
@@ -1749,7 +1749,7 @@
   },
   {
     "category": "java_collections_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "PriorityQueue的排序与迭代顺序",
     "content": "关于PriorityQueue的行为，以下描述正确的是哪一项？",
@@ -1824,7 +1824,7 @@
   },
   {
     "category": "java_collections_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CopyOnWriteArrayList的快照语义",
     "content": "以下关于CopyOnWriteArrayList的描述，哪一项是正确的？",
@@ -1874,7 +1874,7 @@
   },
   {
     "category": "java_collections_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "ArrayList 与 LinkedList 的适用场景分析",
     "content": "在以下哪种业务场景中，LinkedList 的性能明显优于 ArrayList？\nA) 按索引频繁随机访问元素\nB) 在列表尾部频繁追加大量元素\nC) 在列表头部频繁执行插入和删除操作\nD) 需要对列表执行频繁的排序操作",
@@ -1892,7 +1892,7 @@
   },
   {
     "category": "java_collections_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "有序 Map 的选择依据",
     "content": "当需要键值对始终按照自然顺序（或自定义 Comparator）排序，且要求单次查找时间复杂度为 O(log n) 时，应选择哪个实现？\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",

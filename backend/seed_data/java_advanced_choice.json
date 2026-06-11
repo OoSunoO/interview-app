@@ -1,7 +1,7 @@
 [
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "JVM 运行时数据区域",
     "content": "以下哪个不是 JVM 运行时数据区的组成部分？",
@@ -22,7 +22,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "堆内存的分代结构",
     "content": "关于 Java 堆内存分代，以下说法正确的是？",
@@ -43,7 +43,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "GC Roots 包括哪些",
     "content": "以下哪个不是可以作为 GC Roots 的对象？",
@@ -85,7 +85,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "双亲委派模型",
     "content": "关于双亲委派模型，以下说法正确的是？",
@@ -106,7 +106,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "类加载的完整过程",
     "content": "JVM 类加载过程按顺序包括哪些阶段？",
@@ -170,7 +170,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "JDK 8 接口的新特性",
     "content": "JDK 8 允许在接口中定义哪种类型的方法？",
@@ -212,7 +212,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Stream 中间操作与终止操作",
     "content": "以下哪个是 Stream 的终止操作？",
@@ -254,7 +254,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "synchronized 的底层实现",
     "content": "JDK 8 中 synchronized 关键字的底层实现机制是？",
@@ -296,7 +296,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ThreadPoolExecutor 的核心参数",
     "content": "ThreadPoolExecutor 的参数中，当任务数超过核心线程数且阻塞队列已满时的处理方式是？",
@@ -359,7 +359,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CAS 操作存在的问题",
     "content": "CAS（Compare And Swap）操作可能面临的问题不包括？",
@@ -380,7 +380,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Java 线程的六种状态",
     "content": "Java 线程在生命周期中不包含以下哪种状态？",
@@ -401,7 +401,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "JDK 8 接口默认方法的冲突解决",
     "content": "当一个类实现了两个接口，两个接口中有相同签名的默认方法时，以下说法正确的是？",
@@ -422,7 +422,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "JVM 参数类型的区分",
     "content": "关于 JVM 参数类型的说法，以下正确的是？",
@@ -464,7 +464,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ThreadLocal 的内存泄漏风险",
     "content": "关于 ThreadLocal 可能导致内存泄漏的原因，以下说法正确的是？",
@@ -596,7 +596,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CAS ABA 问题",
     "content": "关于 CAS（Compare-And-Swap）操作的 ABA 问题，以下说法正确的是？",
@@ -642,7 +642,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Java 反射与注解",
     "content": "关于 Java 反射（Reflection）API，以下哪项描述是正确的？",
@@ -714,7 +714,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Java 异常体系",
     "content": "关于 Java 的异常体系，下列哪项描述是正确的？",
@@ -1050,7 +1050,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "强软弱虚引用回收时机",
     "content": "以下哪种引用类型的对象在内存充足时不会回收，但在内存不足（即将 OOM）时会被回收？",
@@ -1073,7 +1073,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Java 8 接口默认方法的冲突解决规则",
     "content": "当一个类继承了父类并实现了接口，父类和接口有相同签名的方法时，以下哪个描述正确？",
@@ -1239,7 +1239,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ScopedValue 的继承行为",
     "content": "在 JDK 21 中，以下关于 ScopedValue 的描述哪个是正确的？",
@@ -1260,7 +1260,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ZGC 并发处理阶段",
     "content": "ZGC 的哪个阶段需要 STOP THE WORLD？",
@@ -1302,7 +1302,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ForkJoinPool 工作窃取",
     "content": "关于 ForkJoinPool 的工作窃取（Work-Stealing）机制，以下哪个描述是正确的？",
@@ -1388,7 +1388,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ForkJoinPool 的工作窃取调度",
     "content": "ForkJoinPool 的工作窃取（Work-Stealing）算法中，每个工作线程从哪里获取任务？",
@@ -1410,7 +1410,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ThreadLocal 的内存泄漏",
     "content": "ThreadLocal 内存泄漏的根本原因是什么？",
@@ -1432,7 +1432,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "AQS 独占锁的获取流程",
     "content": "在 AQS（AbstractQueuedSynchronizer）中，独占锁（如 ReentrantLock）的获取流程第一步是什么？",
@@ -1454,7 +1454,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "G1 GC 混合回收",
     "content": "关于 G1 GC 的 Mixed GC 阶段，以下说法正确的是？",
@@ -1544,7 +1544,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "虚拟线程的线程模型与调度方式",
     "content": "关于 Java 虚拟线程的线程模型和调度方式，以下描述正确的是？",
@@ -1768,7 +1768,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Stream Gatherers 自定义实现",
     "content": "关于 JDK 22 预览的 Stream Gatherers 特性，以下说法正确的是？",
@@ -1793,7 +1793,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "G1GC与ZGC核心区别",
     "content": "关于G1GC和ZGC两款低延迟垃圾收集器的对比，以下描述哪一项是错误的？",
@@ -1844,7 +1844,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "synchronized的可重入性",
     "content": "以下关于synchronized关键字可重入性的描述，哪一项是正确的？",
@@ -1869,7 +1869,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "volatile的内存可见性保证",
     "content": "以下关于volatile关键字的描述，哪一项是错误的？",
@@ -1894,7 +1894,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "死锁的四个必要条件",
     "content": "以下关于死锁四个必要条件的描述，哪一项是正确的？\n① 互斥条件：资源不能被共享\n② 请求与保持：线程持有资源的同时请求其他资源\n③ 不可剥夺：已分配的资源不能被强制剥夺\n④ 循环等待：存在一条循环等待链",
@@ -1919,7 +1919,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "泛型通配符 PECS 原则",
     "content": "给定 List<? extends Number> list1 和 List<? super Integer> list2，以下哪项操作可以编译通过？\nA) list1.add(Integer.valueOf(1))\nB) list2.add(Integer.valueOf(1))\nC) list1.add(new Object())\nD) list2.add(new Object())",
@@ -1937,7 +1937,7 @@
   },
   {
     "category": "java_advanced_choice",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "@Inherited 元注解的作用范围",
     "content": "关于 @Inherited 元注解的行为，以下哪项描述是正确的？\nA) 父类上声明的所有注解都会自动被子类继承，无需额外标记\nB) @Inherited 使父类上的注解被子类继承，但仅对类层次继承有效，对接口实现和方法重写无效\nC) @Inherited 仅对接口继承有效，对类继承无效\nD) @Inherited 既支持类继承也支持方法重写时的注解继承",

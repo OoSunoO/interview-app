@@ -1,7 +1,7 @@
 [
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Java 中 String 是不可变的",
     "content": "在 Java 中，String 类的对象一旦创建就不可修改。",
@@ -17,7 +17,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "== 比较的是对象的内容",
     "content": "在 Java 中，使用 == 比较两个字符串时，比较的是它们的内容是否相等。",
@@ -33,7 +33,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Java 支持多重继承",
     "content": "Java 支持类的多重继承（即一个类可以同时继承多个父类）。",
@@ -49,7 +49,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "finally 块一定会执行",
     "content": "在 Java 异常处理中，finally 块中的代码在任何情况下都会执行。",
@@ -65,7 +65,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "数组有 length() 方法",
     "content": "在 Java 中，数组有 length() 方法用于获取数组长度。",
@@ -129,7 +129,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "switch 支持 String 类型",
     "content": "Java 的 switch 语句支持 String 类型作为条件表达式。",
@@ -145,7 +145,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "构造方法可以被继承",
     "content": "子类可以继承父类的构造方法。",
@@ -161,7 +161,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "HashMap 允许 null key",
     "content": "HashMap 允许将 null 作为键（key）存储。",
@@ -177,7 +177,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "ArrayList 是线程安全的",
     "content": "ArrayList 是线程安全的集合类，可以在多线程环境下使用。",
@@ -209,7 +209,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "HashMap 默认负载因子是 0.75",
     "content": "HashMap 的默认负载因子（load factor）是 0.75，这是时间与空间的折中值。",
@@ -225,7 +225,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "ConcurrentHashMap key 可以为 null",
     "content": "ConcurrentHashMap 允许 null 作为键。",
@@ -257,7 +257,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "private 方法可以被反射调用",
     "content": "使用 Java 反射机制，可以在运行时调用类的 private 方法。",
@@ -273,7 +273,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Java 只有值传递",
     "content": "Java 只有值传递（pass-by-value），没有引用传递。",
@@ -289,7 +289,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "volatile 保证原子性",
     "content": "volatile 关键字可以保证对变量的操作是原子性的。",
@@ -305,7 +305,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "synchronized 是悲观锁",
     "content": "Java 中的 synchronized 属于悲观锁。",
@@ -337,7 +337,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "方法区在 JDK 8 中被移除",
     "content": "JDK 8 中移除了方法区（Method Area），使用元空间（Metaspace）替代。",
@@ -353,7 +353,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "线程池核心线程会被回收",
     "content": "ThreadPoolExecutor 中，如果 allowCoreThreadTimeOut 设置为 true，核心线程也会因空闲超时被回收。",
@@ -385,7 +385,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Lambda 表达式会生成匿名内部类",
     "content": "Lambda 表达式在编译时会生成匿名内部类。",
@@ -449,7 +449,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "接口中的变量默认是常量",
     "content": "在接口中定义的成员变量默认是 public static final 的。",
@@ -465,7 +465,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "LinkedList 实现了 Deque 接口",
     "content": "LinkedList 不仅实现了 List 接口，还实现了 Deque 接口。",
@@ -525,7 +525,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Java 接口默认方法的冲突",
     "content": "如果一个类同时实现两个接口，两个接口包含同名的 default 方法，该类的实例可以直接调用该 default 方法，编译不会报错。",
@@ -591,7 +591,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "ConcurrentHashMap 读操作需要加锁",
     "content": "JDK 8 的 ConcurrentHashMap 在读操作（get）时也需要加锁以保证线程安全。",
@@ -633,7 +633,7 @@
   },
   {
     "category": "java_collections",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "TreeMap 基于哈希表",
     "content": "TreeMap 的底层是基于哈希表实现的。",
@@ -696,7 +696,7 @@
   },
   {
     "category": "java_advanced",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Arrays.asList 返回的 List 可修改",
     "content": "Arrays.asList() 返回的 List 支持 add() 和 remove() 操作，可以动态增删元素。",
@@ -957,7 +957,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "String 不可变性",
     "content": "String 对象是不可变的（immutable），但 StringBuffer 和 StringBuilder 是可变的。",
@@ -979,7 +979,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "静态内部类",
     "content": "静态内部类（static nested class）的实例可以独立于外部类实例存在。",
@@ -1001,7 +1001,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "泛型类型擦除",
     "content": "Java 泛型在运行期会擦除类型参数，因此 ArrayList<String> 和 ArrayList<Integer> 在运行期是相同的 Class 对象。",
@@ -1038,7 +1038,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "switch 表达式有返回值",
     "content": "Java 14+ 的 switch 表达式（Switch Expression）可以有返回值。",
@@ -1053,7 +1053,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Optional 可以序列化",
     "content": "java.util.Optional 实现了 Serializable 接口。",
@@ -1098,7 +1098,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "接口默认方法的冲突",
     "content": "如果一个类实现了两个接口，这两个接口有同名的默认方法，代码会编译失败。",
@@ -1113,7 +1113,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Integer 缓存池",
     "content": "Java 中 Integer 缓存池默认覆盖 -128 到 127 的范围，在这个范围内使用 == 比较两个 Integer 自动装箱值返回 true。",
@@ -1128,7 +1128,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "try-with-resources 与 suppress 异常",
     "content": "在 try-with-resources 中，如果 try 块抛出异常且 close() 也抛出异常，close() 的异常会被抑制（suppressed）。",
@@ -1158,7 +1158,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "ArrayList 的 subList 视图",
     "content": "ArrayList 的 subList() 返回的是一个独立的新 ArrayList。",
@@ -1233,7 +1233,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Java 受检异常",
     "content": "RuntimeException 及其子类是受检异常（Checked Exception），必须显式捕获或声明抛出。",
@@ -1273,7 +1273,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Lambda 表达式对 effectively final 变量的访问",
     "content": "在 Java 中，Lambda 表达式可以访问被 effectively final（有效只读）的局部变量。",
@@ -1339,7 +1339,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "InheritableThreadLocal vs ThreadLocal 值传递",
     "content": "在 Java 中，默认情况下子线程可以自动继承父线程的 ThreadLocal 值。",
@@ -1384,7 +1384,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "StringBuffer 线程安全",
     "content": "StringBuffer 是线程安全的类，可以在多线程环境下安全使用。",
@@ -1427,7 +1427,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "final 类可以被继承",
     "content": "在 Java 中，使用 final 关键字修饰的类可以被其他类继承。",
@@ -1714,7 +1714,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "CompletableFuture.obtrudeValue 修改已完成状态",
     "content": "CompletableFuture 提供了 obtrudeValue(T value) 和 obtrudeException(Throwable ex) 方法，即使 CompletableFuture 已经处于完成状态，obtrudeValue 也可以强制修改其结果值。",
@@ -1830,7 +1830,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "子类中定义与父类 final 方法同名方法的合法性",
     "content": "父类的 final 实例方法不能被覆盖（override），但子类中可以定义与父类 final 方法同名的方法——这会导致父类方法在子类中被隐藏（hiding），子类实例调用时执行的是子类定义的方法。",
@@ -1878,7 +1878,7 @@
   },
   {
     "category": "java_true_false",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "字符串 switch 语句的 hashCode 冲突两阶段保护",
     "content": "Java 中 switch 语句的字符串实现在字节码层面采用 hashCode 散列定位加 equals 二次验证的两阶段匹配策略，因此即使不同的 case 标签字符串产生相同的 hashCode，也能在运行时通过 equals 验证跳转到正确的分支。",

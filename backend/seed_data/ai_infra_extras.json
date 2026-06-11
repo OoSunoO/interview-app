@@ -179,7 +179,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "张量并行与流水线并行",
     "content": "请解释 LLM 分布式推理中的张量并行（TP）和流水线并行（PP）的区别和适用场景。",
@@ -217,7 +217,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LoRA 与 QLoRA 微调",
     "content": "请解释 LoRA 微调的原理。LoRA 和 QLoRA 的区别是什么？",
@@ -271,7 +271,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Flash Attention 原理",
     "content": "Flash Attention 的核心优化思想是什么？它是如何加速 Transformer 训练和推理的？",
@@ -325,7 +325,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Tokenizer 与词嵌入",
     "content": "LLM 中的 Tokenizer 有哪些类型？BPE、WordPiece、SentencePiece 有什么区别？",
@@ -397,7 +397,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "分布式训练策略对比：DDP / FSDP / DeepSpeed",
     "content": "PyTorch DDP、FSDP 和 DeepSpeed 三种分布式训练策略的核心区别是什么？各适用于什么场景？",
@@ -523,7 +523,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "模型可解释性与可解释 AI（XAI）",
     "content": "为什么深度学习模型需要可解释性？有哪些主流的可解释性方法（LIME、SHAP、Grad-CAM）？它们在什么场景下适用？",
@@ -632,7 +632,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "GPU 显存优化技术",
     "content": "大模型推理时 GPU 显存很快被占满。请介绍主流的 GPU 显存优化技术及其原理。",
@@ -722,7 +722,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Kubeflow 与 ML Pipeline",
     "content": "请介绍 Kubeflow 的架构及其在机器学习工作流编排中的作用。",
@@ -739,7 +739,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "特征存储（Feature Store）设计",
     "content": "请解释特征存储（Feature Store）在 ML 基础设施中的作用和设计要点。",
@@ -756,7 +756,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "模型注册表（Model Registry）设计",
     "content": "请设计一个模型注册表系统，支持模型版本管理、元数据追踪和部署审核。",
@@ -790,7 +790,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "张量并行原理",
     "content": "请解释张量并行（Tensor Parallelism）的原理。Megatron-LM 如何在 Transformer 层内部实现张量切分？Column-wise 和 Row-wise 切分的通信量分别是多少？",
@@ -844,7 +844,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Flash Attention 深入",
     "content": "请深入解释 Flash Attention 的原理。它如何通过 Tiling（分块计算）减少 HBM 读写？Flash Attention 的 Forward 和 Backward 分别如何实现？",
@@ -952,7 +952,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Prompt 优化技术",
     "content": "请介绍 Prompt 优化的主要技术。Hard Prompt Tuning 和 Soft Prompt Tuning 的区别是什么？AutoPrompt 和 OPRO 如何自动搜索最优 Prompt？",
@@ -988,7 +988,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "DeepSpeed 引擎架构",
     "content": "请介绍 DeepSpeed 的 ZeRO 优化引擎架构。ZeRO-1、ZeRO-2、ZeRO-3 分别优化了哪些显存部分？ZeRO-Offload 和 ZeRO-Infinity 如何将显存扩展到 CPU 和 NVMe？",
@@ -1006,7 +1006,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "NCCL 集合通信",
     "content": "请介绍 NCCL（NVIDIA Collective Communications Library）在分布式训练中的作用。All-Reduce、All-Gather、Reduce-Scatter、Broadcast 分别在什么场景下使用？Ring All-Reduce 和 Tree All-Reduce 的区别是什么？",
@@ -1155,7 +1155,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "推理服务冷启动优化",
     "content": "请解释 LLM 推理服务的冷启动问题以及常见的优化策略。",
@@ -1172,7 +1172,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "GPU 算子融合与计算优化",
     "content": "请解释 GPU 算子融合（Operator Fusion）的原理及其在深度学习推理中的优化效果。",
@@ -1282,7 +1282,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "AI 推理芯片: GPU vs TPU vs NPU 架构差异",
     "content": "请比较 GPU、TPU、NPU 三种 AI 推理芯片的架构设计差异和适用场景。",
@@ -1301,7 +1301,7 @@
   },
   {
     "category": "ai_infra",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Tensor Parallelism vs Pipeline Parallelism",
     "content": "请详细比较 Tensor Parallelism（TP）和 Pipeline Parallelism（PP）在分布式训练中的核心差异。包括它们的拆分方式、通信开销、负载均衡特性、以及在 LLM 训练中的典型应用配置。",

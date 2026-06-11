@@ -202,7 +202,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "TCP 三次握手中 SYN 包的作用",
     "content": "在 TCP 三次握手中，客户端发送的第一个 SYN 包主要目的是什么？",
@@ -225,7 +225,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "操作系统分页中页表的作用",
     "content": "操作系统的分页机制中，页表（Page Table）的主要作用是什么？",
@@ -247,7 +247,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HTTP 请求方法中哪些是幂等的",
     "content": "以下哪个 HTTP 方法是幂等的（多次调用结果一致）？",
@@ -270,7 +270,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "HTTPS 使用对称加密传输数据",
     "content": "HTTPS 在整个通信过程中全部使用非对称加密。",
@@ -346,7 +346,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "虚拟内存的分页机制",
     "content": "关于操作系统的虚拟内存分页机制，以下说法正确的是？",
@@ -369,7 +369,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "TCP 可靠性保证",
     "content": "TCP 的三次握手可以保证数据传输过程中不会丢失任何数据包。",
@@ -522,7 +522,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "HTTP 缓存控制",
     "content": "HTTP 缓存控制中，以下哪个响应头用于指定缓存的有效期（即缓存认为资源仍然新的时间）？",
@@ -1106,7 +1106,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Cache 映射方式",
     "content": "某 CPU 的 Cache 容量 64KB，每个 Cache Line 64 字节，8 路组相联，主存地址长度为 32 位。那么 Tag 占多少位？",
@@ -1330,7 +1330,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "RCU（Read-Copy-Update）同步机制",
     "content": "RCU（Read-Copy-Update）是 Linux 内核中的一种同步机制，读者在访问 RCU 保护的数据时不需要获取任何锁，也不需要执行原子操作。写者通过「复制原数据、修改副本、原子替换指针」的方式更新，并在 Grace Period 结束后回收旧数据。因此 RCU 在大量读操作的场景下性能远优于读写锁。",
@@ -1478,7 +1478,7 @@
   },
   {
     "category": "cs_basics",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "volatile 与 long/double 的原子性",
     "content": "Java 中 volatile 关键字可以保证对 long 和 double 类型的读写操作是原子的，同时保证可见性和有序性。",

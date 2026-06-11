@@ -90,7 +90,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计一个通知推送系统",
     "content": "如何设计一个支持多渠道（邮件、短信、App Push）的通知推送系统？",
@@ -126,7 +126,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "设计分布式锁",
     "content": "如何设计一个可靠的分布式锁？基于 Redis 和 ZooKeeper 的实现各有什么优劣？",
@@ -464,7 +464,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "微服务弹性设计（Resilience）",
     "content": "微服务中如何实现弹性设计？熔断、舱壁、重试与退避策略的原理和配置？如何防止级联故障？Elasticity（弹性伸缩）和 Resilience（容错韧性）的区别？",
@@ -483,7 +483,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "微服务可观测性（Observability）",
     "content": "微服务架构下如何实现可观测性？日志聚合、指标监控、链路追踪如何协作？ELK、Prometheus+Grafana、Jaeger 的架构？OpenTelemetry 统一标准的作用？",
@@ -502,7 +502,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "DDD 战术模式：聚合、值对象与领域事件",
     "content": "请解释领域驱动设计（DDD）中的战术模式：聚合（Aggregate）、值对象（Value Object）和领域事件（Domain Event）的核心概念。它们如何帮助构建清晰的业务模型？",
@@ -597,7 +597,7 @@
   },
   {
     "category": "system_design_micro",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "集中式日志系统设计",
     "content": "请设计一个微服务环境下的集中式日志系统，支持海量日志的采集、存储和检索。",
@@ -686,7 +686,7 @@
   },
   {
     "category": "system_design_micro",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "gRPC 流式通信模式",
     "content": "请介绍 gRPC 的四种流式通信模式及其适用场景。",
@@ -830,7 +830,7 @@
   },
   {
     "category": "system_design_micro",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "TCC 与 Saga 分布式事务模式的选型对比",
     "content": "在微服务架构中，TCC（Try-Confirm-Cancel）和 Saga 是两种主流的分布式事务模式。请对比两者的核心原理、实现复杂度、一致性保证、以及各自的典型应用场景。如果业务要求「最终一致性但尽量减少回滚影响」，你会选择哪一种并如何设计？",
@@ -849,7 +849,7 @@
   },
   {
     "category": "system_design_micro",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Sidecar 模式的资源开销与优化策略",
     "content": "Service Mesh 中的 Sidecar 模式通过在每个 Pod 旁注入代理（如 Envoy）来处理服务间通信。请量化分析 Sidecar 模式在 CPU、内存、网络延迟维度的资源开销，并讨论在哪些场景下这些开销不可忽视。提出至少 3 种降低 Sidecar 开销的优化策略。",
@@ -886,7 +886,7 @@
   },
   {
     "category": "system_design_micro",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "配置中心热更新原理与实现机制",
     "content": "配置中心是微服务架构的基础设施组件，热更新能力是其核心价值。请阐述配置热更新的实现原理，包括：\n1. 被动推送（Client Pull，如 Apollo 长轮询）和主动推送（Server Push，如 Nacos Watch）两种模式；\n2. 配置变更的原子性与一致性保障；\n3. 客户端本地缓存 + 回调刷新机制的设计要点；\n4. 热点配置（高频变化的配置项）的性能优化。",
@@ -1009,7 +1009,7 @@
   },
   {
     "category": "system_design_micro",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "实时流处理架构设计",
     "content": "请设计一个实时流处理平台，基于 Flink 或类似的流处理引擎。包括：\n1. 数据接入层如何支持多种数据源（Kafka/Pulsar/CDC 流）的统一接入；\n2. 状态管理与 Checkpoint 机制的原理（如何保证 Exactly-Once 语义）；\n3. 大状态场景下的优化策略（RocksDB State Backend、增量 Checkpoint）；\n4. 反压（Back Pressure）的检测与处理。",

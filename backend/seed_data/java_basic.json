@@ -1,7 +1,7 @@
 [
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 中 == 和 equals() 的区别",
     "content": "请解释 Java 中 == 运算符和 equals() 方法的区别。",
@@ -18,7 +18,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "HashMap 的底层实现原理",
     "content": "请描述 Java HashMap 的底层数据结构和工作原理。",
@@ -36,7 +36,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "final 关键字的作用",
     "content": "请说明 Java 中 final 关键字可以修饰哪些元素，各有什么作用。",
@@ -52,7 +52,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "volatile 关键字的作用和原理",
     "content": "请解释 volatile 关键字的作用及其底层实现原理。",
@@ -87,7 +87,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "String、StringBuilder、StringBuffer 的区别",
     "content": "请比较 String、StringBuilder、StringBuffer 三者的区别。",
@@ -103,7 +103,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "JVM 内存区域划分",
     "content": "请描述 JVM 运行时数据区的各个区域及其作用。",
@@ -137,7 +137,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 异常体系",
     "content": "请描述 Java 的异常体系结构，包括受检异常和非受检异常的区别。",
@@ -153,7 +153,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "面向对象四大特性",
     "content": "请解释面向对象编程的四大特性：封装、继承、多态、抽象。",
@@ -170,7 +170,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "下列哪个不是 Java 基本数据类型",
     "content": "下列哪个不是 Java 的基本数据类型？",
@@ -191,7 +191,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "ArrayList 和 LinkedList 的描述正确的是",
     "content": "以下关于 ArrayList 和 LinkedList 的描述，正确的是？",
@@ -213,7 +213,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "保证线程可见性的关键字",
     "content": "以下哪个关键字可以保证线程间的可见性？",
@@ -236,7 +236,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Java 方法参数传递方式",
     "content": "Java 中方法参数传递全部是值传递，不存在引用传递。",
@@ -256,7 +256,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "String 的线程安全性",
     "content": "String 是不可变类，所以它是线程安全的。",
@@ -278,7 +278,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Integer 自动装箱的陷阱",
     "content": "以下代码输出什么？请解释原因。\n```java\nInteger a = 127;\nInteger b = 127;\nInteger c = 128;\nInteger d = 128;\nSystem.out.println(a == b);\nSystem.out.println(c == d);\n```",
@@ -295,7 +295,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "循环中字符串拼接的性能陷阱",
     "content": "以下两种字符串拼接方式，哪种性能更好？为什么？\n```java\n// 方式 A\nString s = \"\";\nfor (int i = 0; i < 10000; i++) {\n    s += i;\n}\n\n// 方式 B\nStringBuilder sb = new StringBuilder();\nfor (int i = 0; i < 10000; i++) {\n    sb.append(i);\n}\nString s = sb.toString();\n```",
@@ -313,7 +313,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "重写 equals 不重写 hashCode 的后果",
     "content": "自定义类只重写了 equals() 但未重写 hashCode()，用做 HashMap 的 key 时会出现什么问题？",
@@ -347,7 +347,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "SimpleDateFormat 的线程安全问题",
     "content": "在多线程环境下共享同一个 SimpleDateFormat 实例进行日期格式化/解析，可能会有什么问题？如何解决？",
@@ -365,7 +365,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "List.subList 的视图陷阱",
     "content": "以下代码会出什么问题？\n```java\nList<Integer> list = new ArrayList<>(Arrays.asList(1, 2, 3, 4, 5));\nList<Integer> sub = list.subList(1, 4);\nlist.add(6);\nSystem.out.println(sub.size());\n```",
@@ -424,7 +424,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "深拷贝与浅拷贝的区别",
     "content": "请解释深拷贝和浅拷贝的区别，以及 Java 中实现深拷贝的常见方式。",
@@ -440,7 +440,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Comparable 与 Comparator 的区别",
     "content": "请比较 Comparable 和 Comparator 两个接口的区别及各自的使用场景。",
@@ -456,7 +456,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 注解的保留策略",
     "content": "Java 注解（Annotation）的保留策略（RetentionPolicy）有哪些？各有什么用途？",
@@ -472,7 +472,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "try-with-resources 的原理",
     "content": "请解释 try-with-resources 的语法和底层实现原理。它和传统的 try-finally 有什么优势？",
@@ -488,7 +488,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "transient 关键字的作用",
     "content": "关于 Java transient 关键字，以下说法正确的是？",
@@ -530,7 +530,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java SPI 机制",
     "content": "什么是 Java SPI（Service Provider Interface）机制？它和 API 有什么区别？典型应用场景有哪些？",
@@ -633,7 +633,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "String 为什么设计成不可变",
     "content": "Java 为什么将 String 设计为不可变类？不可变性的好处有哪些？",
@@ -649,7 +649,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "new String(\"abc\") 创建了几个对象",
     "content": "执行 String s = new String(\"abc\") 创建了几个对象？请分析。",
@@ -666,7 +666,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "BigDecimal 处理浮点数精度",
     "content": "为什么 0.1 + 0.2 != 0.3？如何用 BigDecimal 正确进行浮点数运算？",
@@ -683,7 +683,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "接口和抽象类的区别",
     "content": "请说明接口（Interface）和抽象类（Abstract Class）的区别及各自的使用场景。",
@@ -721,7 +721,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "成员变量和局部变量的区别",
     "content": "以下关于成员变量和局部变量的描述，正确的是？",
@@ -759,7 +759,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "JDK 动态代理和 CGLIB 的区别",
     "content": "请说明 JDK 动态代理和 CGLIB 动态代理的区别及各自的使用场景。",
@@ -776,7 +776,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "continue、break 和 return 的区别",
     "content": "请说明 Java 中 continue、break 和 return 在循环中的区别。",
@@ -809,7 +809,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 包（package）的作用",
     "content": "请说明 Java 中包（package）的作用和使用规范。",
@@ -826,7 +826,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "instanceof 关键字的使用",
     "content": "请说明 Java 中 instanceof 关键字的用法、原理和注意事项。",
@@ -898,7 +898,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "static 关键字的用途",
     "content": "请说明 Java 中 static 关键字的用途。静态变量、静态方法和静态代码块的加载时机是什么？",
@@ -989,7 +989,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "可变参数（Varargs）与静态导入",
     "content": "请说明 Java 可变参数（Varargs）的语法规则和注意事项。静态导入（Static Import）的使用场景是什么？",
@@ -1079,7 +1079,7 @@
   },
   {
     "category": "java",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "并发修改异常",
     "content": "请解释 Java 的 ConcurrentModificationException（并发修改异常）的触发条件和解决方法。在 for-each 循环中删除集合元素为什么可能抛出该异常？",
@@ -1209,7 +1209,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Java final 关键字的含义",
     "content": "以下关于 Java final 关键字的描述，错误的是？",
@@ -1320,7 +1320,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Record 模式的嵌套解构与 switch 结合",
     "content": "请介绍 Java 21 中 Record 模式（Record Pattern）的语法规则，以及如何与 switch 表达式结合实现深层解构。",
@@ -1339,7 +1339,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "密封类的 permits 与子类传播规则",
     "content": "请详细解释密封类（sealed class）中 permits 子句的限制，以及子类必须使用的 sealed、non-sealed、final 三种传播方式。",
@@ -1358,7 +1358,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "文本块与字符串模板详解",
     "content": "请介绍 Java 15 正式引入的文本块（Text Blocks）和 Java 21 中预览的字符串模板（String Templates）的语法和核心特性。",
@@ -1472,7 +1472,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "String不可变性的设计考量",
     "content": "Java中String被设计为final不可变类，请列举至少三个不可变性的设计好处，并说明String常量池（String Pool）与不可变性之间的关系。",
@@ -1578,7 +1578,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Java String 不可变性的实现保障",
     "content": "以下关于 Java String 不可变性的说法，哪一项是正确的？\nA) String 被声明为 final 类的唯一原因是禁止继承\nB) String 内部的 char[] 被声明为 final 意味着数组内容不可修改\nC) String 的不可变性由 final class、private final char[] 字段以及不暴露修改方法三者共同保障\nD) String 的不可变性仅由 JVM 运行时负责，与编译器无关",
@@ -1595,7 +1595,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "static 关键字加载时机与特殊边界",
     "content": "请解释 Java 中 static 变量、static 代码块和 static 内部类的加载时机。什么情况下 static 变量不会被初始化？static final 编译时常量有何特殊行为？",
@@ -1665,7 +1665,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Pattern Matching for instanceof 流分析作用域",
     "content": "在 JDK 17+（JEP 394）中，Pattern Matching for instanceof 引入了基于流分析（Flow Analysis）的变量作用域规则。以下哪项描述是正确的？\nA) 模式匹配变量的作用域严格限定在匹配成功的代码块内（if 的 true 分支），从不扩展到 else 分支或 if 语句之后\nB) 当 if 条件为 `!(obj instanceof X x)` 且 true 分支必然抛出异常或返回时，模式变量 x 在 if 语句之后可见\nC) 模式匹配变量只能在 if 语句中使用，不能在 switch 规则或 while 循环条件中使用\nD) 模式匹配变量在 switch 箭頭規則（->）右侧表达式中不可直接引用，必须放在大括号代码块中",
@@ -1703,7 +1703,7 @@
   },
   {
     "category": "java_basic",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Sealed class 对 permitted 子类的限制",
     "content": "在 Java 17+ 中，定义 sealed class 或 sealed interface 时，permits 子句指定的子类必须满足什么关键字约束？请列出三种可能的关键字并简要解释各自含义。",

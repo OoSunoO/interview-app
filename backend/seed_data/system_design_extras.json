@@ -18,7 +18,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "CAP 与 BASE 的权衡",
     "content": "在一个分布式支付系统中为了保证最终一致性，以下哪个做法最合理？",
@@ -75,7 +75,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "负载均衡中的会话保持",
     "content": "轮询（Round Robin）负载均衡策略下，业务服务器不需要存储 Session，因为可以每次随机分发请求。",
@@ -92,7 +92,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "Raft 解决分布式共识问题",
     "content": "Raft 是一种用于分布式系统共识的算法，它可以将多个节点模拟为一个可靠的集群。",
@@ -144,7 +144,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "全链路压测方案设计",
     "content": "如何设计生产环境的全链路压测？如何保证压测数据不影响线上真实数据？",
@@ -196,7 +196,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "降级与熔断的阈值确定策略",
     "content": "生产环境中限流、熔断、降级的阈值如何确定？「阈值拍脑袋」的问题怎么解决？",
@@ -251,7 +251,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "遗留系统重构策略",
     "content": "接手一个没有测试覆盖、没有文档、代码耦合严重的遗留系统，如何安全地进行重构？",
@@ -287,7 +287,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "慢 SQL 治理方法论",
     "content": "生产环境慢 SQL 如何系统性地发现、分析和治理？请描述从发现到预防的完整闭环。",
@@ -413,7 +413,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "异地多活架构设计",
     "content": "什么是异地多活架构？同城双活、异地双活、两地三中心的区别？异地多活的数据一致性如何解决？如何应对异地延迟？",
@@ -449,7 +449,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "choice",
     "title": "分布式系统的 CAP 权衡",
     "content": "在一个跨地域部署的分布式系统中，如果网络分区（Network Partition）发生时，选择可用性（A）而非一致性（C），以下哪种行为是正确的？",
@@ -473,7 +473,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "分布式系统的幂等性",
     "content": "幂等性（Idempotency）是指同一个操作无论执行多少次，其结果都应该与执行一次的结果相同。在分布式系统中，HTTP GET 请求天然是幂等的。PUT 和 DELETE 方法在设计上也是幂等的。POST 方法如果设计不当可能不是幂等的。",
@@ -589,7 +589,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "系统容量规划方法",
     "content": "如何做系统容量规划？步骤是什么？扩容阈值如何确定？核心估算指标有哪些？如何应对突发流量？",
@@ -607,7 +607,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "true_false",
     "title": "最终一致性的理解",
     "content": "最终一致性（Eventual Consistency）保证：如果没有新的写入，所有副本最终会收敛到相同的值。但在网络分区期间如果各分区独立接受写入，恢复后可能产生数据冲突，最终一致性本身不解决冲突，需要额外机制（如 CRDT、LWW、Read Repair）来处理。",
@@ -699,7 +699,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Vector Clock 与 CRDT",
     "content": "请解释 Vector Clock（向量时钟）和 CRDT（Conflict-free Replicated Data Type）的原理。两者在分布式最终一致性系统中如何解决冲突检测与合并问题？",
@@ -895,7 +895,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Raft 协议：Leader 选举与日志复制",
     "content": "请介绍 Raft 共识协议的 Leader 选举过程和日志复制机制。",
@@ -933,7 +933,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "漏斗分析方法与 SQL 实现",
     "content": "如何用 SQL 高效实现用户转化漏斗分析？请介绍几种常见的漏斗实现方案。",
@@ -1063,7 +1063,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "API 限流策略设计",
     "content": "请设计一套 API 限流方案，支持多维度限流（用户/IP/接口）并提供友好拒绝体验。",
@@ -1080,7 +1080,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "蓝绿部署与金丝雀发布的容量规划策略",
     "content": "蓝绿部署和金丝雀发布是实现零宕机发布的关键技术。请阐述两种模式的容量需求差异：\n1. 蓝绿部署需要多少冗余容量才能在不降级的情况下完成切换？\n2. 金丝雀发布的流量比例如何动态调整，以及在不同阶段需要预留多少冗余资源？\n3. 在云原生环境下，如何利用 Auto Scaling 动态管理部署所需的额外容量？",
@@ -1098,7 +1098,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "监控告警体系设计：从指标采集到告警降噪",
     "content": "监控告警体系是保障系统稳定性的基石，但告警风暴（Alert Storm）和无效告警（Noise）是普遍痛点。请设计一套完整的监控告警体系，涵盖：\n1. 指标采集的多层架构（基础设施层、应用层、业务层）；\n2. 告警规则的分级管理策略；\n3. 告警降噪的常用技术（聚合、抑制、静默、去重）；\n4. 基于 SLO 的告警设计方法。",
@@ -1173,7 +1173,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "异地多活架构",
     "content": "请解释异地多活架构的原理和设计挑战。对比「冷备」、「主备切换」和「多活」三种灾备模式，说明异地多活的难点和常见解决模式。",
@@ -1418,7 +1418,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "在线教育/直播场景的低延迟架构设计",
     "content": "在线教育或直播场景下，如何保证音视频互动延迟低于 200ms？WebRTC、CDN、RTMP 等技术的选型？如何应对弱网环境？大规模万人直播课 vs 小班 1v1 互动在架构上的区别？",
@@ -1437,7 +1437,7 @@
   },
   {
     "category": "system_design",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "数据生命周期管理与分层存储策略",
     "content": "在数据量持续增长的业务系统中，如何设计数据生命周期管理制度？热/温/冷数据如何分层存储？数据归档、过期清理和合规保留的冲突如何解决？",

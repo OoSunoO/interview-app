@@ -423,7 +423,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "多模态模型：架构与训练",
     "content": "请介绍多模态大模型的主流架构。CLIP、Florence、GPT-4V 等模型是如何处理图像和文本的？图像编码和文本编码如何对齐？",
@@ -441,7 +441,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "扩散模型：原理与应用",
     "content": "请解释扩散模型（Diffusion Model）的核心原理。DDPM 和 DDIM 有什么区别？扩散模型在图像生成之外的领域有哪些应用？",
@@ -459,7 +459,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "注意力机制：从 Soft Attention 到 Flash Attention",
     "content": "请介绍注意力机制（Attention Mechanism）的演进。从原始的 Soft Attention 到 Self-Attention、Multi-Head Attention，再到 Flash Attention，每一步解决了什么问题？",
@@ -476,7 +476,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "知识蒸馏：原理与方法",
     "content": "请解释知识蒸馏（Knowledge Distillation）的原理。什么是 Soft Label 蒸馏？什么是 Feature-based 蒸馏？蒸馏在大模型场景下有什么特殊挑战？",
@@ -548,7 +548,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "迁移学习（Transfer Learning）",
     "content": "什么是迁移学习？预训练-微调（Pretrain-Finetune）范式的原理是什么？什么情况下迁移学习有效，什么情况下会出现负迁移（Negative Transfer）？",
@@ -566,7 +566,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "扩散模型的原理",
     "content": "请解释扩散模型（Diffusion Models）的核心原理，以及它与其他生成模型（GAN、VAE、Autoregressive）相比的优势和劣势。",
@@ -638,7 +638,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "多模态模型的架构设计",
     "content": "请介绍当前主流的多模态大模型（如 GPT-4V、LLaVA、Qwen-VL）的架构设计思路，以及多模态融合的关键技术。",
@@ -656,7 +656,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "扩散模型的训练流程与采样加速",
     "content": "请深入解释扩散模型（Diffusion Model）的训练流程和采样加速方法。",
@@ -724,7 +724,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "词嵌入与 Embedding 方法",
     "content": "请介绍词嵌入（Word Embedding）的发展历程和不同方法。",
@@ -759,7 +759,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "权重初始化方法",
     "content": "请介绍神经网络权重初始化方法。Xavier（Glorot）初始化和 Kaiming（He）初始化的原理和适用场景分别是什么？错误的初始化会导致什么问题？",
@@ -921,7 +921,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "联邦学习基础",
     "content": "请介绍联邦学习（Federated Learning）的核心原理。横向联邦学习和纵向联邦学习分别适用于什么场景？联邦学习中的隐私保护机制是什么？",
@@ -957,7 +957,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "DPO 偏好优化",
     "content": "请介绍直接偏好优化（Direct Preference Optimization, DPO）。DPO 与 RLHF（基于 PPO）的核心区别是什么？DPO 如何绕过显式的奖励模型？",
@@ -975,7 +975,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "混合专家负载均衡",
     "content": "请介绍混合专家模型（MoE）中负载均衡（Load Balancing）的挑战和解决方案。辅助损失（Auxiliary Loss）如何工作？Expert Balancing 和 Router z-loss 是什么？",
@@ -1122,7 +1122,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "PPO 与强化学习微调",
     "content": "请解释 PPO（Proximal Policy Optimization）算法在 RLHF 中的应用原理。",
@@ -1139,7 +1139,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Embedding 维度选择",
     "content": "关于词向量/嵌入（Embedding）维度的选择，以下说法错误的是？",
@@ -1161,7 +1161,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Beam Search 与采样解码策略",
     "content": "请对比 Beam Search、Top-k 采样和 Top-p（Nucleus）采样的原理和适用场景。",
@@ -1178,7 +1178,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "分类模型的评估指标选择",
     "content": "在不平衡分类问题中（正类仅占 1%），以下哪个指标最能准确评估模型性能？",
@@ -1217,7 +1217,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Contrastive Learning 在文本表示中的应用",
     "content": "请解释对比学习（Contrastive Learning）在文本表示学习中的核心思想和典型方法。",
@@ -1267,7 +1267,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "长文本外推: RoPE 位置编码的扩展方法",
     "content": "请解释 RoPE（Rotary Position Embedding）位置编码的长文本外推方法，以及如何让模型处理超过训练长度的序列。",
@@ -1321,7 +1321,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "LLM 知识蒸馏方法",
     "content": "请列举并解释 LLM 领域主要的知识蒸馏方法，包括白盒蒸馏和黑盒蒸馏的区别。请说明 logit-based 蒸馏和 feature-based 蒸馏的实施方式，以及蒸馏在学生模型部署中的作用。",
@@ -1340,7 +1340,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Adapter 微调 vs Prompt 微调对比",
     "content": "请比较 Adapter 微调和 Prompt 微调（Prefix Tuning / Prompt Tuning）两种参数高效微调方法的核心差异。分别说明它们的工作原理、参数量、推理延迟影响和适用场景。",
@@ -1530,7 +1530,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "Constitutional AI / Self-Play RL 对齐方法",
     "content": "关于 Constitutional AI（CAI）和 Self-Play 对齐方法，以下哪个说法是正确的？",
@@ -1591,7 +1591,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Thinking / Reasoning Models（o1/R1 风格推理模型）",
     "content": "请解析 OpenAI o1 / DeepSeek R1 这类推理模型的训练范式和推理机制。它们与传统 LLM 的核心区别是什么？",
@@ -1628,7 +1628,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "Scaling Laws（缩放定律）与 Chinchilla 最优分配",
     "content": "请解释 LLM 领域的 Scaling Laws（缩放定律），以及 Chinchilla 提出的「计算最优训练」的含义。这如何指导实际的大模型训练决策？",
@@ -1646,7 +1646,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "easy",
+    "difficulty": "medium",
     "type": "choice",
     "title": "模型校准与置信度估计",
     "content": "关于 LLM 的模型校准（Calibration）和置信度估计，以下哪个说法是正确的？",
@@ -1708,7 +1708,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "Joint Embedding Predictive Architecture (JEPA)",
     "content": "解释 Yann LeCun 提出的联合嵌入预测架构（JEPA）。JEPA 与传统的生成式模型和对比学习方法有何不同？该架构的关键组件是什么，以及它的主要优势有哪些？",
@@ -1807,7 +1807,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "short_answer",
     "title": "对比学习（Contrastive Learning）进阶详解",
     "content": "请解释对比学习（Contrastive Learning）的核心思想和代表性方法 SimCLR。对比学习如何在没有标签的情况下学到有用的特征表示？InfoNCE 损失函数的原理是什么？SimCLR 中为什么需要大 batch size 和 strong augmentation？对比学习与自回归（Autoregressive）预训练的本质区别是什么？",
@@ -1864,7 +1864,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "hard",
+    "difficulty": "medium",
     "type": "short_answer",
     "title": "大模型推理优化技术全景",
     "content": "请系统性地介绍大语言模型推理优化的关键技术。包括：1. KV Cache 的原理与优化（PagedAttention / vLLM、Prefix Caching）；2. 量化技术（FP16 / INT8 / INT4 / FP8）的原理和精度影响；3. 投机解码（Speculative Decoding）和 Medusa / Eagle 等技术加速推理的原理；4. 高效 Serving 框架（vLLM / TensorRT-LLM / SGLang）的核心架构差异。",
@@ -1914,7 +1914,7 @@
   },
   {
     "category": "ai",
-    "difficulty": "medium",
+    "difficulty": "easy",
     "type": "fill_in_blank",
     "title": "Embedding 的定义",
     "content": "________ 是将离散对象（如词、商品、用户）映射到连续向量空间的技术，使得语义相似的对象在向量空间中距离更近。",
