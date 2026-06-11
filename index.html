@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#1e293b" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <title>面试题练习</title>
+  <style>
+  </style>
+  <script type="module" crossorigin src="./assets/index-EGV9ZENi.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DHuN6-2U.css">
+<script id="vite-plugin-pwa:register-sw" src="./registerSW.js"></script></head>
+<body>
+  <div id="app">
+  </div>
+  <script>
+    // Error catch-all: if Svelte never mounts, show inline error
+    var _appReady = false;
+    var _appObserver = new MutationObserver(function() {
+      if (!_appReady) _appReady = true;
+    });
+    _appObserver.observe(document.getElementById("app"), { childList: true, subtree: true });
+    window.addEventListener("unhandledrejection", function() {
+      if (!_appReady) document.getElementById("app").textContent = "加载失败，请刷新页面";
+    });
+  </script>
+</body>
+</html>

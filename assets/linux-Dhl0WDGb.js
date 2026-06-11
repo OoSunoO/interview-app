@@ -1,0 +1,651 @@
+var e=`linux`,t=[{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`常用文件操作命令`,content:`请列举 Linux 中常用的文件操作命令及其用途。`,answer:`答案：ls（列出目录）、cd（切换目录）、cp（复制）、mv（移动/重命名）、rm（删除）、mkdir（创建目录）、touch（创建空文件/更新时间戳）、cat（查看文件内容）、less/more（分页查看）、head/tail（查看首尾行）、find（查找文件）、tar（压缩/归档）
+
+解析：日常开发最常用的组合：ls -la 查看详细列表含隐藏文件、find . -name '*.js' 递归查找、tail -f app.log 实时跟踪日志、tar -czf archive.tar.gz dir/ 压缩、tar -xzf archive.tar.gz 解压。
+
+扩展延伸：rm -rf 是危险命令（无提醒直接删除）。安全的替代是先在回收站目录 mv，或使用 trash-cli。cp/mv 默认不递归处理目录，需加 -r 选项。`,hints:[`rm 删除了能恢复吗`,`cp 和 mv 的区别是什么`],tags:[`基础`,`文件操作`],content_hash:`9b8791efe9a3`,id:2796},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`进程和端口查看`,content:`如何查看 Linux 中正在运行的进程和端口占用情况？`,answer:`答案：ps（查看进程）、top/htop（实时监控）、netstat（查看端口和网络连接）、lsof（查看打开文件和端口）、ss（现代版 netstat）
+
+解析：常用组合 ps aux | grep java（查找 Java 进程）、netstat -tlnp | grep 8080（查看 8080 端口占用）、lsof -i :8080（查看谁在使用端口）、top -p PID（监控特定进程）。
+
+扩展延伸：kill PID 发送 TERM 信号（可捕获的优雅终止），kill -9 PID 发送 KILL 信号（强制终止，无法捕获）。应先尝试普通 kill，无效再用 -9。ss 比 netstat 更快（直接从内核读取），推荐优先使用。`,hints:[`kill 和 kill -9 的区别`,`netstat 的 -tlnp 各个参数含义`],tags:[`进程`,`网络`,`排查`],company:`腾讯`,content_hash:`98988f866d19`,id:2797},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Linux 文件权限管理`,content:`请解释 Linux 文件权限 rwxr-xr-- 的含义，以及 chmod 的用法。`,answer:`答案：三种权限位（所有者/所在组/其他人），rwx = 读/写/执行
+
+解析：rwxr-xr-- 拆解：所有者 rwx（可读写执行）、所属组 r-x（可读和执行）、其他人 r--（只读）。数字表示：r=4, w=2, x=1，所以 rwx=7, r-x=5, r--=4，chmod 754 等同于该权限。
+
+扩展延伸：chmod +x script.sh 添加执行权限（常用）。目录的执行权限（x）代表能否 cd 进入。chown user:group file 更改所有者和组。权限管理的进阶话题包括 ACL（setfacl/getfacl）和 SELinux（强制访问控制）。`,hints:[`目录的 r 和 x 权限分别代表什么`,`数字权限 755 和 644 分别用于什么场景`],tags:[`基础`,`权限`],company:`华为`,content_hash:`a5b9c639ad67`,id:2798},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`文本处理三剑客：grep、sed、awk`,content:`分别说明 grep、sed、awk 的用途和典型用法。`,answer:`答案：grep 搜索文本行、sed 编辑替换文本、awk 处理结构化数据
+
+解析：grep 'pattern' file（搜索）、grep -r 'TODO' src/（递归搜索）、grep -i 'error' log（忽略大小写）。sed 's/old/new/g' file（全局替换）、sed -i '.bak' 's/old/new/g' file（原地替换+备份）。awk '{print $1, $3}' file（打印第 1/3 列）、awk '$3 > 100 {print}' file（条件过滤）。
+
+扩展延伸：一次完整的排查命令流：grep ERROR app.log | awk '{print $2, $NF}' | sort | uniq -c | sort -rn。管道组合是 Linux 哲学的核心——每个命令做好一件事，串联解决复杂问题。`,hints:[`grep 的 -r、-i、-v 参数各有什么用`,`awk 处理日志的典型场景`],tags:[`文本处理`,`命令`],content_hash:`af4b432e752c`,id:2799},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`系统监控：磁盘、内存、CPU`,content:`如何查看 Linux 系统的磁盘、内存和 CPU 使用情况？`,answer:`答案：df（磁盘）、free（内存）、top/uptime（CPU/负载）
+
+解析：df -h（人类可读的磁盘使用情况）、du -sh *（当前目录各子目录大小）。free -h（内存使用，含 buffer/cache）。top（实时 CPU/内存排序，按 P 按 CPU 排序，按 M 按内存排序）。uptime（系统负载——1/5/15 分钟平均值）。
+
+扩展延伸：性能排查基础 1）CPU 高 → top 找高 CPU 进程 2）内存不足 → free -m、查看 OOM Killer 日志 dmesg 3）磁盘满 → df -h、大文件定位 du -sh * | sort -rh（需要管道组合）4）IO 压力 → iostat -x 1（需 sysstat 包）。`,hints:[`free 输出中 available 和 free 的区别`,`系统负载（load average）多少算正常`],tags:[`基础`,`监控`,`排查`],content_hash:`7a2a8ca7963f`,id:2800},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Shell 脚本常见陷阱`,content:`以下 shell 脚本有什么问题？
+\`\`\`bash
+VALUE = $(cat file.txt)
+if [ -n $VALUE ]
+then
+    echo $VALUE
+fi
+\`\`\``,answer:`答案：三处错误：等号空格、变量引用缺引号、条件判断语法。
+
+解析：1）VALUE = ... 等号两边不能有空格，应为 VALUE=... 2）[ -n $VALUE ] 当 VALUE 为空时展开为 [ -n ]，返回 true。应加引号 [ -n "$VALUE" ] 3）if 语句中 then 应在下一行或用分号 if ...; then。此外 echo 变量也建议加引号避免含空格时多参输出。
+
+扩展延伸：更多 shell 陷阱：忘记在变量赋值前加 export（子进程拿不到变量）、管道中变量修改不回传（| 后的命令在子 shell 运行）、未设置 set -e 导致错误被忽略、使用 for file in $(ls *.txt) 而非 for file in *.txt（文件名含空格会拆分）。最佳实践：始终用 ShellCheck 工具检查脚本。`,hints:[`shell 中变量赋值为什么不能有空格`,`$VALUE 和 "$VALUE" 有什么区别`],tags:[`Shell`,`脚本`,`陷阱`],content_hash:`d4a15edd7714`,id:2801},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`硬链接与软链接的区别`,content:`请解释 Linux 中硬链接和软链接（符号链接）的区别。`,answer:`答案：硬链接是文件 inode 的另一个名字，软链接是一个独立文件指向目标路径
+
+解析：硬链接与原始文件共享同一 inode（文件数据块），删除一个不影响另一个。软链接是一个特殊文件，存储目标文件的路径，目标文件删除后软链接变成断链（dangling）。硬链接不能跨文件系统、不能链接目录；软链接无此限制。
+
+扩展延伸：ln source link 创建硬链接，ln -s source link 创建软链接。ls -i 查看文件 inode 号，硬链接的 inode 号相同。为什么不能对目录做硬链接？防止循环引用导致 fsck 无法处理。软链接在项目中用于管理配置文件版本、切换环境变量等场景。`,hints:[`ln 和 ln -s 的区别`,`硬链接删除后原文件数据还在吗`],tags:[`基础`,`文件系统`],content_hash:`21d8b0833522`,id:2802},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`crontab 定时任务`,content:`请说明 crontab 的语法格式和常见用法。`,answer:`答案：五个时间字段：分 时 日 月 周，后跟要执行的命令
+
+解析：格式：* * * * * command。各字段：分钟(0-59) 小时(0-23) 日(1-31) 月(1-12) 周(0-7,0和7都表示周日)。示例：0 3 * * * /script.sh（每天凌晨 3 点）、*/5 * * * * /monitor.sh（每 5 分钟）、0 9-17 * * 1-5 /work.sh（工作日 9-17 点每小时）。
+
+扩展延伸：crontab -e 编辑、crontab -l 列出、crontab -r 删除。常见坑 1）cron 环境变量极少，脚本内 PATH 需自行设定 2）日志重定向 > /tmp/cron.log 2>&1（否则出错无反馈）3）cron 中的 % 需转义 \\%。推荐在脚本开头设置 PATH 和 source 环境文件。`,hints:[`cron 脚本的环境变量和 SSH 登录有何不同`,`如何调试 cron 任务不执行的问题`],tags:[`基础`,`定时任务`],content_hash:`4189563e6e2e`,id:2803},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Linux IO 模型：select、poll、epoll`,content:`请解释 Linux 的 IO 多路复用机制，select、poll、epoll 的区别。`,answer:`答案：三者都是 IO 多路复用机制，epoll 性能最优
+
+解析：select：监听 fd 集合有上限（FD_SETSIZE，默认 1024），每次调用需将 fd 集合从用户态拷贝到内核态，O(n) 遍历所有 fd。poll：相比 select 去除了 1024 上限，但仍有大集合拷贝和遍历开销。epoll：事件驱动，只返回就绪的 fd（O(1)），无上限，通过 mmap 共享内存减少拷贝，支持边缘触发（ET）和水平触发（LT）。
+
+扩展延伸：适用场景 select/poll 适合少量连接（小于 100），epoll 适合大量连接（高并发服务如 Nginx、Redis）。Nginx 架构就是基于 epoll 的事件驱动模型。Java NIO 的 Selector 在 Linux 上底层使用 epoll（JDK 1.4+）。面试中常问：epoll 的两种触发模式 ET 和 LT 的区别。`,hints:[`select 的 1024 限制从何而来`,`epoll 的 ET（边缘触发）和 LT（水平触发）的区别`],tags:[`IO`,`网络`,`高级`],company:`华为`,content_hash:`f40041b1a4ff`,id:2804},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`线上服务器排查实战`,content:`一台 Linux 服务器变慢，你怎么排查？请描述从系统级到应用级的完整流程。`,answer:`答案：top → dmesg → iostat → free → netstat → strace
+
+解析：1）top 看 CPU/内存占用，高 CPU 的进程序号 TID 转 jstack 查 Java 应用线程栈。2）dmesg -T 查看内核日志（OOM Killer、内核异常）。3）iostat -x 1 看磁盘 IO（%util > 70% 表示 IO 瓶颈，await 高说明响应慢）。4）free -h 看内存，关注 available 而非 free（Linux 会用内存做缓存）。5）netstat -i 看网络丢包。6）strace -p PID 跟踪系统调用（如果怀疑某进程行为异常）。
+
+扩展延伸：磁盘 IO 的排查重点：iostat 的 r/s、w/s（每秒 IO 请求数）和 await（平均响应时间）。网络问题：ss -s 看连接统计，tcpdump 抓包分析。内存问题：cat /proc/meminfo 查看内核内存细节，/proc/PID/smaps 分析进程内存分布。工具链：perf（性能分析）、sar（历史性能数据）。`,hints:[`iostat 中 %util 和 await 如何解读`,`free 显示 cached 和 available 的区别`],tags:[`排查`,`性能`,`实战`],content_hash:`7a220f3d497a`,id:2805},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`systemd 基础`,content:`请介绍 systemd 的核心概念和常用命令。Linux 上如何用 systemd 管理一个服务？`,answer:`答案：systemd 是 Linux 的系统和服务管理器，核心概念是 Unit（单元），通过 .service 文件定义服务。
+
+解析：1）Unit 类型：.service（服务）、.timer（定时任务/Cron 替代）、.socket（套接字激活）、.mount（挂载点）。2）常用命令：systemctl start/stop/restart/status servicename（启动/停止/重启/查看状态）、systemctl enable/disable servicename（设置开机自启/禁用）、systemctl list-units（列出运行中的单元）、journalctl -u servicename（查看服务日志）。3）Service 文件位置：/etc/systemd/system/（用户自定义）、/lib/systemd/system/（系统默认）。
+
+扩展延伸：写一个简单的 service 文件：
+\`\`\`
+[Unit]
+Description=My App
+After=network.target
+
+[Service]
+ExecStart=/opt/myapp/start.sh
+Restart=always
+User=myapp
+
+[Install]
+WantedBy=multi-user.target
+\`\`\`
+
+关键配置：Restart=on-failure（异常退出时重启）、RestartSec=5（重启等待时间）、LimitNOFILE=65536（文件描述符上限）。与 Crond 的对比：systemd timer 比 crontab 提供更细粒度的控制（依赖关系、资源限制、日志集成）。`,hints:[`systemctl 和 service 命令的区别`,`journalctl 如何按时间范围过滤日志`],tags:[`systemd`,`服务管理`],content_hash:`15b862f83fb4`,id:2806},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Docker 容器基础`,content:`请解释 Docker 的核心概念：镜像、容器、数据卷、网络。`,answer:`答案：镜像（Image）是只读模板，容器（Container）是镜像的运行实例，数据卷（Volume）是持久化存储，网络（Network）是容器间通信的通道。
+
+解析：1）镜像——分层文件系统（UnionFS），每层是一个只读快照。Dockerfile 每个指令创建一层。基础镜像（FROM）→ 依赖安装（RUN）→ 文件复制（COPY）→ 启动命令（CMD）。2）容器——镜像的运行态，有独立的文件系统、网络、进程空间。启动停止不会丢失数据（除非容器删除）。3）数据卷——独立于容器生命周期的存储。三种方式：bind mount（宿主机目录映射）、volume（docker 管理）、tmpfs（内存挂载）。4）网络——bridge（默认，NAT 隔离）、host（共享宿主机网络）、none（无网络）、overlay（跨宿主机通信）。
+
+扩展延伸：常用命令：docker pull/push（拉推镜像）、docker run -d -p 8080:80 nginx（后台运行映射端口）、docker exec -it container sh（进入容器）、docker logs -f container（跟踪日志）、docker-compose up（多容器编排）。注意：容器的最佳实践是一个容器一个进程，数据卷是持久化的唯一可靠方式。`,hints:[`Docker 镜像的分层结构如何影响构建速度`,`docker run 的 --rm 参数有什么作用`],tags:[`Docker`,`容器`],content_hash:`bac48a492e9b`,id:2807},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 网络配置排查`,content:`如何处理 Linux 服务器上的网络问题？常用的网络排查命令有哪些？`,answer:`答案：排查流程从近到远：网卡 → IP 配置 → 路由 → DNS → 外网连通性。
+
+解析：常用命令链：1）ip addr（查看 IP 和网卡状态，替代 ifconfig）——确认网卡 up、IP 分配正确。2）ip route（查看路由表，替代 route -n）——确认默认网关正确。3）ping target（基本连通性测试）。4）ss -tlnp（查看监听端口，替代 netstat）——确认服务在正确端口监听。5）traceroute target（追踪路由路径，定位网络跳转点）。6）nslookup/domain 域名（DNS 解析测试）。7）curl -v http://target（HTTP 层连通性测试，查看响应头）。
+
+扩展延伸：常见问题：1）端口不通 → 防火墙/安全组拦截、服务未启动、监听在 127.0.0.1 而非 0.0.0.0。2）丢包严重 → mtr target（结合 traceroute 和 ping 的实时监测工具）。3）TCP 连接数满 → ss -s 看连接统计，调整 net.ipv4.tcp_max_tw_buckets 和 net.ipv4.tcp_tw_reuse。4）带宽占用高 → nethogs（按进程查看流量）、iftop（实时带宽监控）。`,hints:[`ifconfig 和 ip 命令的区别`,`TCP 三次握手在哪步可能出现问题`],tags:[`网络`,`排查`],content_hash:`8fdde14a0277`,id:2808},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`进程管理：后台运行与守护进程`,content:`如何在 Linux 中将一个进程放到后台运行？nohup、&、screen、tmux 有什么区别？`,answer:`答案：四种方案的持久化能力不同：& 最简单但终端关闭后进程终止，nohup 忽略 SIGHUP 信号，screen/tmux 提供完整的会话管理。
+
+解析：1）command &——将进程放到后台运行，但关闭终端后收到 SIGHUP 信号终止进程。可用 disown 解除终端关联。2）nohup command &——忽略 SIGHUP 信号，终端关闭后进程继续运行。输出默认重定向到 nohup.out。3）screen——创建虚拟终端会话，进程在会话中运行不受终端关闭影响。命令：screen -S session_name（创建），Ctrl+A D（分离），screen -r session_name（重新附着）。4）tmux——功能更强大的终端复用器。支持分屏、窗口、会话管理。命令：tmux new -s name（创建），Ctrl+B d（分离），tmux attach -t name（重新附着）。
+
+扩展延伸：资源限制相关：ulimit -a 查看所有限制，ulimit -n 65536 设置文件描述符上限。进程优先级：nice -n -10 command（提高优先级，范围 -20~19，值越小优先级越高）、renice -n 5 -p PID（运行时调整优先级）。`,hints:[`SIGHUP 信号什么时候发送`,`tmux 和 screen 的核心区别`],tags:[`进程`,`后台运行`],content_hash:`5fecac893ff2`,id:2809},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`SSH 远程连接与安全配置`,content:`请介绍 SSH 的工作原理和常用安全配置。`,answer:`答案：SSH 基于客户端-服务端模型，使用公钥加密建立安全连接。服务端监听 22 端口，客户端发起连接时通过密钥交换协商会话密钥。
+
+解析：1）连接流程——客户端发起 TCP 连接 → 服务端返回公钥 → 客户端验证指纹 → 协商对称密钥 → 建立加密通道 → 用户认证。2）认证方式——密码认证（简单但易暴力破解）、密钥认证（ssh-keygen 生成公私钥对，公钥写入 ~/.ssh/authorized_keys，更安全推荐使用）。3）常用命令——ssh user@host（基本连接）、scp file user@host:/path（远程复制）、ssh -L 8080:localhost:80 user@host（本地端口转发）。
+
+扩展延伸：安全加固：1）禁用密码认证（PasswordAuthentication no）。2）禁用 root 登录（PermitRootLogin no）。3）更换非默认端口（Port 2222，减少扫描攻击）。4）使用 Fail2Ban 自动封禁暴力破解 IP。5）配置 SSH 别名：~/.ssh/config 文件写入 Host 别名 + HostName + User + IdentityFile。6）跳板机场景用 ProxyJump 或 ProxyCommand 实现连接中转。`,hints:[`为什么密钥认证比密码认证更安全`,`SSH 端口转发如何在本地访问远程服务`],tags:[`SSH`,`远程连接`,`安全`],content_hash:`f1e022d13906`,id:2810},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Bash 脚本编程基础`,content:`请介绍 Bash 脚本中的变量、条件判断和循环结构的用法。`,answer:'答案：Bash 脚本中变量赋值等号两侧不能有空格，条件判断用 if/test/[ ]/[[ ]]，循环结构 for/while/until 各有适用场景。\n\n解析：1）变量——`name="value"` 赋值，`$name` 或 `${name}` 引用。数字变量用 `$((算术运算))`。局部变量用 `local` 修饰。2）条件判断——`if [ condition ]; then ... fi`。文件判断：`-f`（文件存在）、`-d`（目录存在）、`-x`（可执行）。字符串比较：`= != -z -n`。数字比较：`-eq -ne -lt -gt -le -ge`。双中括号 `[[ ]]` 支持正则 `=~` 和模式匹配。3）循环——`for i in list; do ... done`（遍历列表）、`for ((i=0; i<10; i++)); do ... done`（C 风格）、`while [ condition ]; do ... done`（条件循环）、`until [ condition ]; do ... done`（直到条件成立）。\n\n扩展延伸：脚本中容易踩的坑：1）变量引用不加引号导致含空格时拆分 —— 总是写 `"$var"` 而非 `$var`。2）`[ $? -eq 0 ]` 不如直接用 `if command; then`。3）`set -e` 让脚本遇到错误时退出（防止错误被忽略），`set -u` 让使用未定义变量时报错。4）脚本首行 `#!/bin/bash` 指定解释器。5）调试技巧：`bash -x script.sh` 跟踪执行过程，逐行打印命令。',hints:[`Bash 中单中括号 [ ] 和双中括号 [[ ]] 的区别`,`set -e 和 set -u 分别有什么作用`],tags:[`Shell`,`Bash`,`脚本`],content_hash:`1c1884365ebe`,id:2811},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Linux 文件系统层次结构`,content:`请解释 Linux 文件系统主要目录的作用：/bin、/etc、/var、/proc、/tmp。`,answer:"答案：Linux 的文件系统从根目录 `/` 开始，遵循 FHS（Filesystem Hierarchy Standard）规范组织各目录的用途。\n\n解析：1）`/bin` 和 `/usr/bin`——用户可执行命令（ls、cp、cat 等），系统启动必需的二进制文件。`/sbin` 是系统管理命令（fdisk、mkfs）。2）`/etc`——系统配置文件。网络配置（/etc/network/）、用户密码（/etc/passwd、/etc/shadow）、软件配置（/etc/nginx/nginx.conf）。大部分配置文件的修改需要 root 权限。3）`/var`——变化的数据文件。日志（/var/log/syslog）、数据库（/var/lib/mysql）、缓存（/var/cache/apt）、打印队列。日志文件可能填满磁盘，需要定期清理或 logrotate 管理。4）`/proc`——虚拟文件系统，内核数据结构的运行时视图。`/proc/cpuinfo`（CPU 信息）、`/proc/meminfo`（内存信息）、`/proc/PID/`（每个进程的信息）。修改 `/proc/sys/` 下的文件可动态调整内核参数（如 `sysctl -w net.ipv4.ip_forward=1`）。5）`/tmp`——临时文件目录，重启后通常清空。所有用户可写但不可互相删除（粘滞位）。\n\n扩展延伸：`/dev`——设备文件（/dev/sda1 是磁盘分区），`/sys`——比 /proc 更结构化的内核对象视图（硬件拓扑），`/opt`——第三方软件安装目录（如 google-chrome、JetBrains IDE），`/home`——用户家目录。理解这些目录便于排查问题：日志放 /var/log、配置文件改 /etc、临时文件放 /tmp、性能数据查 /proc。",hints:[`/proc 和 /sys 有什么区别`,`为什么 /tmp 目录有粘滞位（sticky bit）`],tags:[`文件系统`,`基础`],content_hash:`09aa3ab86c22`,id:2812},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`iptables/nftables 防火墙`,content:`请解释 iptables 的链表和表结构，以及如何用 iptables 实现基本的网络访问控制。`,answer:"答案：iptables 是 Linux 内核 netfilter 框架的用户态工具，按表（Table）→ 链（Chain）→ 规则（Rule）三级组织。主流 Linux 发行版已转向 nftables 作为新一代替代。\n\n解析：1）iptables 的表链结构——Filter 表（INPUT/OUTPUT/FORWARD 链）做包过滤，NAT 表（PREROUTING/POSTROUTING/OUTPUT 链）做地址转换，Mangle 表修改包头部。2）常用命令——`iptables -L -n -v`（列出当前规则及计数）、`iptables -A INPUT -p tcp --dport 22 -j ACCEPT`（允许 SSH 访问）、`iptables -A INPUT -s 10.0.0.0/8 -j ACCEPT`（允许内网）、`iptables -P INPUT DROP`（默认拒绝入站）。3）策略——默认策略 ACCEPT + 逐条拒绝（白名单要改为默认 DROP + 逐条允许）。4）持久化——`iptables-save > /etc/iptables/rules.v4` 保存，`iptables-restore` 恢复。\n\n扩展延伸：nftables 是 iptables 的替代品（Debian 11+ / RHEL 8+ 默认）。核心区别：nftables 用单一命令行工具 nft，链和表都在 nftables 框架内统一管理（不再分 filter/nat/mangle 表），语法更简洁——`nft add rule inet filter input tcp dport 22 accept`。配置存储在 `/etc/nftables.conf`。iptables 的规则是线性匹配的，规则越多性能越低；nftables 引入了 set 和 map 数据结构可一次匹配多个条件。生产环境建议直接使用 nftables 而非 iptables。",hints:[`iptables 的 filter、NAT、Mangle 表分别负责什么`,`iptables 和 nftables 的核心区别`],tags:[`网络`,`防火墙`,`安全`],content_hash:`e8c4709c8b71`,id:2813},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 性能分析工具：perf 与火焰图`,content:`请介绍 Linux 性能分析工具 perf 的用法，以及如何生成火焰图。`,answer:"答案：perf 是 Linux 内核自带的性能分析工具，基于性能监控单元（PMU）和内核跟踪点，支持 CPU 采样、硬件计数器、tracepoint 追踪、动态探针。\n\n解析：1）常用 perf 命令——`perf top`（实时显示热点函数，类似 top 但看到的是内核和进程内部的函数）、`perf record -a -g -- sleep 60`（全系统采样 60 秒，-g 记录调用栈，-a 所有 CPU）、`perf report`（分析采样数据，查看热点函数和调用栈）、`perf stat -a -e cycles,instructions,cache-misses -- sleep 5`（统计硬件计数器）。2）perf 适用场景——CPU 性能瓶颈定位（哪些函数占 CPU）、缓存命中率分析（cache-misses 高说明内存访问模式有问题）、上下文切换频率。\n\n扩展延伸：火焰图（Flame Graph）是 Brendan Gregg 发明的可视化 CPU 采样结果的方法。生成步骤：`perf record -a -g -- sleep 60` → `perf script > out.perf` → 用 FlameGraph 工具集的 stackcollapse-perf.pl 和 flamegraph.pl 生成 SVG。火焰图解读：X 轴是函数调用栈宽度（占 CPU 时间比例），Y 轴是调用深度（从底部到顶部的调用链）。宽方块是重点优化对象——一个函数占的宽度越大，优化它收益越高。注意区分：CPU 火焰图（采样 CPU 周期）vs Off-CPU 火焰图（采样睡眠时间，用于定位 IO/锁瓶颈）。",hints:[`perf top 和 perf record/report 的区别`,`火焰图的 X 轴和 Y 轴分别表示什么`],tags:[`性能`,`分析`,`工具`],content_hash:`6973fb59048b`,id:2814},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`LVM 逻辑卷管理`,content:`请介绍 Linux LVM（逻辑卷管理）的概念和常用操作。`,answer:"答案：LVM 在物理磁盘和文件系统之间增加一层抽象，将多个物理磁盘组合为卷组（VG），再从卷组中划分逻辑卷（LV），实现灵活的磁盘空间管理。\n\n解析：1）三层结构——PV（Physical Volume，物理卷）：磁盘或分区初始化后的 LVM 单元。VG（Volume Group，卷组）：多个 PV 组成的存储池。LV（Logical Volume，逻辑卷）：从 VG 中划分的逻辑磁盘，格式化后挂载使用。2）常用命令——`pvcreate /dev/sdb`（创建 PV）、`vgcreate myvg /dev/sda /dev/sdb`（创建 VG）、`lvcreate -L 100G -n mylv myvg`（创建 100G 的 LV）、`mkfs.ext4 /dev/myvg/mylv`（格式化）、`mount /dev/myvg/mylv /mnt/data`（挂载）。3）核心优势——`lvextend -L +50G /dev/myvg/mylv`（在线扩展 LV，不需停机）、`lvresize -L -20G /dev/myvg/mylv`（缩减空间需先卸载）。\n\n扩展延伸：快照功能——`lvcreate -L 10G -s -n snap /dev/myvg/mylv` 创建只读快照用于备份。生产环境中 LVM 的典型场景：1）数据库服务器磁盘不够用——加新硬盘 → pvcreate → vgextend → lvextend → 文件系统扩容，不停机完成。2）快照备份——创建 LVM 快照 → 挂载快照做备份 → 删除快照。注意：LVM 快照的性能取决于原始数据变化量，变化越多快照越慢。LVM 不是替代 RAID——RAID 解决的是冗余和性能，LVM 解决的是空间灵活管理，两者常配合使用（LVM over RAID）。",hints:[`LVM 的 PV/VG/LV 三层结构分别是什么`,`LVM 快照的性能特点和适用场景`],tags:[`存储`,`磁盘`,`LVM`],content_hash:`a82975a0f364`,id:2815},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 内核参数调优（sysctl）`,content:`请介绍 Linux 内核参数的调优方法（sysctl），以及常见的网络、内存、文件系统参数配置。`,answer:"答案：sysctl 在运行时修改内核参数，配置写入 /etc/sysctl.conf（或 /etc/sysctl.d/ 下拆分文件）。sysctl -p 重新加载配置。\n\n解析：1）网络参数优化——`net.ipv4.tcp_tw_reuse = 1`（允许将 TIME_WAIT socket 用于新连接，缓解端口耗尽）、`net.ipv4.tcp_fin_timeout = 30`（减小 FIN-WAIT-2 超时）、`net.core.somaxconn = 65535`（增大 listen 队列长度）、`net.ipv4.tcp_max_syn_backlog = 65535`（SYN 半连接队列）、`net.ipv4.ip_local_port_range = 1024 65535`（增大临时端口范围）。2）内存参数优化——`vm.swappiness = 10`（降低 swap 使用倾向，优先用内存，SSD 服务器可设 0-10）、`vm.dirty_ratio = 20`（脏页占内存百分比阈值，达到后阻塞写入）、`vm.dirty_background_ratio = 10`（后台刷脏页阈值）。3）文件系统参数——`fs.file-max = 1000000`（系统级文件描述符上限）、`fs.inotify.max_user_watches = 524288`（inotify 监控数上限，开发工具如 VS Code/Webpack 需要此参数）。\n\n扩展延伸：生效方式：持久化修改（写入 /etc/sysctl.conf，sysctl -p 加载）、临时调试（直接 echo value > /proc/sys/net/ipv4/tcp_tw_reuse，重启失效）。优化前先做基准性能测试（perf、ab、wrk），优化后再测对比。调优不是万能的——不合理配置可能适得其反（如 tcp_tw_reuse 可能导致数据错乱风险，需确保对端支持时间戳选项）。核心原则：先找瓶颈再调优（而不是盲目套参数）。",hints:[`net.ipv4.tcp_tw_reuse 的原理和风险`,`vm.swappiness = 0 和 vm.swappiness = 1 的区别`],tags:[`内核`,`调优`,`性能`,`sysctl`],content_hash:`f01276d44ca8`,id:2816},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`cgroup 与容器资源隔离`,content:`请解释 Linux cgroup（控制组）的原理。Docker 如何使用 cgroup 实现容器资源的限制和隔离？`,answer:`答案：cgroup（Control Groups）是 Linux 内核功能，限制、记录和隔离进程组的资源使用（CPU、内存、IO、网络）。Docker 通过 cgroup 为每个容器设置资源上限。
+
+解析：cgroup v1 以子系统方式组织（每个子系统一个层级树）：cpu——控制 CPU 时间分配（cpu.shares 权重、cpu.cfs_quota_us 设置 CPU 使用上限）。memory——限制内存使用量（memory.limit_in_bytes 硬限制、memory.soft_limit_in_bytes 软限制、memory.oom_control 控制 OOM Killer 行为）。blkio——限制块设备 IO（blkio.throttle.read_iops 读 IOPS、blkio.throttle.write_bps 写带宽）。cpuset——绑定 CPU 核/内存节点（适合 CPU 密集型和 NUMA 场景）。
+
+cgroup v2（Linux 4.5+，systemd 默认）——统一层级（所有控制器在同一个树），更简洁安全的接口。Docker 使用 cgroup 的方式：\`docker run --memory=512m --cpus=2 --cpuset-cpus=0,1\` 对应写入 memory.limit_in_bytes = 512M、cpu.cfs_quota_us / cpu.cfs_period_us 计算 2 核限制、cpuset.cpus = 0,1。
+
+扩展延伸：相关机制：1）Namespace——与 cgroup 配合：cgroup 管资源上限，Namespace 管可见性隔离（PID/net/mnt 等六种 Namespace）。Docker 容器 = Namespace 做隔离 + cgroup 做限制 + 联合文件系统做镜像。2）CPU 压缩 vs 非压缩资源——CPU 是可压缩资源（cgroup 限制后进程只是变慢），内存是不可压缩资源（超限触发 OOM Killer）。3）容器资源监控——docker stats 底层读取 /sys/fs/cgroup/memory/docker/<container-id>/ 下的文件。4）CFS（Completely Fair Scheduler）调度——cgroup 的 CPU 限制基于 CFS 的调度周期时间片（cfs_period_us 通常 100ms）。`,hints:[`cgroup v1 和 v2 的核心架构差异`,`为什么说内存是不可压缩资源而 CPU 是可压缩的`],tags:[`cgroup`,`资源隔离`,`Docker`,`虚拟化`],content_hash:`f6db6ff4293a`,id:2817},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Linux 启动流程`,content:`请描述 Linux 系统从按下电源键到登录界面的完整启动流程。`,answer:"答案：BIOS/UEFI 自检 → 引导加载程序（GRUB）→ 加载内核 → 启动 init 进程 → systemd 初始化系统环境。\n\n解析：各阶段详解：1）BIOS/UEFI 阶段——通电后主板上固件执行自检（POST，Power-On Self Test），检测 CPU/内存/磁盘等基本硬件。UEFI（现代替代 BIOS）支持安全启动、GPT 分区、更快启动速度。2）GRUB 阶段——GRUB 从磁盘加载引导配置（/boot/grub/grub.cfg），显示内核选择菜单（可选多个内核版本或挽救模式）。选定后加载内核到内存。3）内核阶段——内核解压（现在内核通常是压缩的 vmlinuz），初始化内存管理、进程调度、设备驱动加载、挂载根文件系统（从 initramfs/initrd 加载临时文件系统，加载必要的驱动模块，然后切换到真实根文件系统）。4）init 阶段——内核启动第一个用户态进程 init（PID 1），现代 Linux 使用 systemd。systemd 读取 /etc/systemd/system/default.target（通常是 multi-user.target 或 graphical.target），按依赖关系并行启动系统服务（网络、SSH、显示管理器等）。\n\n扩展延伸：启动过程中常见问题排查：1）GRUB 不显示——进入 BIOS 改启动顺序。2）内核 panic——查看屏幕输出定位驱动或文件系统问题。3）init 失败——启动时在 GRUB 菜单按 e 编辑内核参数，加 `init=/bin/bash` 进入紧急模式修复。4）启动耗时分析——`systemd-analyze blame` 按耗时排序各服务启动时间、`systemd-analyze critical-chain` 查看关键启动链。优化启动速度：禁用不必要的 systemd 服务、使用 SSD、减少 initramfs 大小。",hints:[`BIOS 和 UEFI 启动流程的区别`,`systemd-analyze blame 和 critical-chain 如何辅助排查启动慢`],tags:[`启动`,`系统`,`基础`],content_hash:`d1c485d6534b`,id:2818},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`文件描述符与重定向机制`,content:`请解释 Linux 文件描述符的概念，以及标准输入/输出/错误的重定向机制。2>&1 是什么意思？`,answer:"答案：文件描述符（File Descriptor，FD）是内核为每个进程维护的文件索引（非负整数）。每个进程默认有 0（stdin，标准输入）、1（stdout，标准输出）、2（stderr，标准错误）。重定向利用 FD 实现输入输出流的灵活控制。\n\n解析：1）FD 的本质——进程通过 FD 访问打开的文件/socket/管道。FD 表在进程 PCB（task_struct）中维护，指向系统级打开文件表。`ulimit -n` 查看 FD 上限（默认 1024，高并发服务需调大）。常见的 FD 泄露排查：`lsof -p PID | wc -l` 查看进程 FD 数，监视是否持续增长。\n\n2）重定向操作符——`>`（stdout 重定向，等价于 1>）、`<`（stdin 重定向）、`2>`（stderr 重定向）。示例：`command > out.log 2>&1`——`2>&1` 的意思是「把 stderr（FD 2）重定向到 stdout（FD 1）当前指向的目标」，即 stderr 和 stdout 都写入 out.log。`2>&1` 的关键是顺序：必须先 `> out.log`（改变 FD 1 的目标），再 `2>&1`（FD 2 复制 FD 1 的目标）。如果写成 `2>&1 > out.log`，stderr 会指向终端而非文件。\n\n3）管道（`|`）——将前一个命令的 stdout 连接到后一个命令的 stdin。`ls -la | grep .txt`：ls 的 FD 1 连接到 pipe 写端，grep 的 FD 0 连接到 pipe 读端。管道是单向的（不能同时双向通信）。管道缓冲——默认 65536 字节（pipe buffer），满时写阻塞，空时读阻塞。\n\n扩展延伸：高阶用法：1）命名管道（FIFO）——`mkfifo mypipe`，通过文件系统路径实现进程间通信，与匿名管道不同。2）`/dev/null`——黑洞，丢弃数据：`command > /dev/null 2>&1` 丢弃所有输出。3）`/dev/fd/N`——当前进程的 FD N 可通过此路径访问（Bash 内部使用）。4）`exec` 永久重定向——`exec 3> /tmp/log` 在当前 shell 中打开 FD 3 指向文件，后续 `echo msg >&3` 写入。5）进程替换 `<(command)`——`diff <(ls dir1) <(ls dir2)`，Bash 将命令输出连接到命名 FIFO，将 FIFO 路径作为参数传递。",hints:[`2>&1 和 2>1 的区别（后者是什么结果）`,`为什么 echo msg > file 必须紧跟文件而不能有空格`],tags:[`文件描述符`,`重定向`,`IO`],content_hash:`15c48ca213b1`,id:2819},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux 安全模块：SELinux 与 AppArmor`,content:`请解释 SELinux 和 AppArmor 的工作原理及配置方法。它们如何增强 Linux 系统的安全性？`,answer:"答案：SELinux 和 AppArmor 都是 Linux 安全模块（LSM，基于内核的强制访问控制 MAC 框架），在传统的 DAC（自主访问控制，即 UNIX 权限 rwx）之上增加 MAC（强制访问控制）层。\n\n解析：1）SELinux（NSA 开发，Red Hat/CentOS 默认）——通过安全上下文（Security Context）标记主体（进程）和客体（文件/socket/端口）。策略规则决定主体能否访问客体。上下文格式：`user:role:type:level`（类型强制 TE 是核心）。模式：Enforcing（强制执行策略）、Permissive（只记录不阻止）、Disabled（关闭）。日常管理：`ls -Z`（查看文件上下文）、`ps auxZ`（查看进程上下文）、`chcon`（修改上下文）、`audit2allow`（从审计日志生成允许规则）。常用：Web 服务器需要为网站目录设置 httpd_sys_content_t 类型。\n\n2）AppArmor（Canonical 开发，Ubuntu/Debian 默认）——基于路径的 MAC。每个程序关联一个 profile（配置文件），描述该程序能访问哪些文件路径、网络、capability。模式：enforce（强制）和 complain（仅记录）。配置在 /etc/apparmor.d/ 下。示例：`/usr/sbin/nginx { /etc/nginx/** r, /var/log/nginx/* w, network tcp, }`。\n\n扩展延伸：核心区别：SELinux 基于标签（Label-Based，所有对象打标签），AppArmor 基于路径（Path-Based，按程序文件路径关联规则）。SELinux 更细粒度但配置更复杂——策略语言复杂（有 M4 宏 + 编译步骤），红帽提供了 targeted 策略（默认只保护关键系统服务）简化管理。AppArmor 更容易上手——为每个程序写自然语言的路径规则即可。排错：SELinux 被误认为是「关闭了 SELinux 才解决问题」的最大原因——碰到权限问题时先看 /var/log/audit/audit.log（SELinux）或 /var/log/syslog（AppArmor）。生产建议：保持 Enforcing（不要关 SELinux/AppArmor），用 Permissive/complain 模式收集规则后再切 enforce。Docker 容器默认禁用 SELinux 约束（`--security-opt label=type:container_t` 开启）。",hints:[`SELinux 的 Enforcing 和 Permissive 模式在生产中的使用建议`,`Docker 容器中 SELinux/AppArmor 的工作方式`],tags:[`安全`,`SELinux`,`AppArmor`,`MAC`],content_hash:`fcc2f9b2f342`,id:2820},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux Namespace 隔离`,content:`Linux Namespace 有哪些类型？它们各自隔离了哪些资源？容器是如何利用 Namespace 实现环境隔离的？`,answer:`答案：Linux Namespace 将全局系统资源封装在隔离的命名空间中，使进程组只能看到自己的资源视图。Docker 等容器技术使用 Namespace 实现 8 种隔离。
+
+解析：8 种 Namespace——1）Mount（mnt）——隔离文件系统挂载点。每个 Namespace 有自己的挂载树（/proc/mounts）。容器修改挂载不影响宿主机。2）PID——隔离进程号空间。容器内 PID 从 1 开始，看不到宿主机其他进程。3）Network（net）——隔离网络设备、IP 地址、端口、路由表、iptables。容器有自己独立的网络栈。4）IPC——隔离 System V IPC 和 POSIX 消息队列。5）UTS——隔离主机名和域名（hostname）。6）User（user）——隔离用户和组 ID。容器内 root（UID 0）在宿主机上是普通用户（如 UID 10000）。7）Cgroup——隔离 cgroups 视图（容器只能看到自己的 cgroup）。8）Time（Linux 5.6+）——隔离系统时间。
+
+扩展延伸：创建 Namespace——1）clone() 使用 CLONE_NEW* 标志创建新进程和新 Namespace。2）unshare() 让当前进程进入新 Namespace。3）setns() 让进程加入已有 Namespace。Docker 的隔离：1）docker run 启动时指定（--ipc=host 共享 IPC、--pid=host 共享进程空间）。2）默认启用 mnt/pid/net/ipc/uts/user/cgroup，time 需要额外配置。3）用户 Namespace 映射：\`/etc/subuid\` 和 \`/etc/subgid\` 定义容器 UID 到宿主 UID 的映射。安全意义：用户 Namespace 是容器安全的关键——容器内 root 在宿主机是普通用户。`,hints:[`容器内 PID 为 1 的进程——为什么容器需要特殊的僵尸进程回收机制（init 进程的职责）`,`用户 Namespace 的 root 映射——容器内 root 怎么做到在宿主机上不是 root`],tags:[`Linux`,`Namespace`,`容器`,`隔离`],content_hash:`930a035f1eda`,id:2821},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux OOM Killer 机制`,content:`当系统内存不足时，Linux OOM Killer 如何选择要杀掉的进程？oom_score 和 oom_score_adj 是如何计算的？如何保护关键进程不被 OOM Killer 杀死？`,answer:`答案：OOM Killer 在系统内存耗尽时触发，根据一个「坏分数」（oom_score）选择得分最高的进程杀掉。oom_score 基于进程的内存占用（RSS、Swap 使用量等）和 oom_score_adj 调整值计算。/proc/<pid>/oom_adj 或 oom_score_adj 设负值降低被杀概率，设 -1000 表示 OOM_DISABLE（完全免于被杀）。
+
+解析：oom_score 计算——1）基础分数：进程占用的物理内存 RSS 页数（包括共享页面按比例分摊）。内存占用越大分数越高。2）CPU 时间、进程运行时间、子进程数量等因素也影响。3）最终 oom_score = 基础分数 + oom_score_adj。
+
+扩展延伸：保护进程——1）设置 oom_score_adj = -1000 到 /proc/<pid>/oom_score_adj（需要 root）。等价于旧的 oom_adj = -17。2）Docker 的 --oom-score-adj 参数：docker run --oom-score-adj=-500。3）Docker 默认 --oom-kill-disable 不推荐（可能导致系统完全死锁，连 SSH 都无法响应）。系统层面的 OOM 预防：1）设置 vm.swappiness 控制 SWAP 使用倾向（默认 60，越低越少用 SWAP）。2）设置 vm.overcommit_memory（=0 启发式、=1 总是允许、=2 禁止超过 overcommit_ratio）。3）使用 Systemd 的 MemoryLimit 限制服务的内存使用（在 cgroup 层面限制，OOM Killer 只杀超限的服务而非随机杀进程）。`,hints:[`为什么 Docker 的 --oom-kill-disable 不推荐使用——内存耗尽时系统可能完全死锁`,`oom_score_adj = -1000 和设置为其他负值的本质区别——OOM_DISABLE vs 降低得分`],tags:[`Linux`,`OOM`,`内存管理`,`内核`],content_hash:`33fb44aaa085`,id:2822},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Linux inode 与软/硬链接`,content:`Linux 文件系统中的 inode 是什么？硬链接和软链接（符号链接）的区别是什么？ln 和 ln -s 命令的实现原理？`,answer:`答案：inode（索引节点）保存文件的元数据（权限、所有者、大小、时间戳、数据块指针），不包含文件名。硬链接是多个目录项指向同一个 inode（ls -l 的第二列就是链接计数），软链接是一个特殊的文件，内容指向目标文件的路径。
+
+解析：硬链接——1）ln 源文件 目标文件。目录项（dentry）指向同一个 inode，inode 的 link count 递增。2）删除一个硬链接只是递减 link count，当 link count = 0 时才释放 inode 和数据块。3）限制：不能跨文件系统（不同文件系统的 inode 编号不互通），不能链接目录（防止环）。软链接（符号链接）——1）ln -s 源文件 目标文件。创建一个新文件（新 inode），文件内容是指向源文件的路径字符串。2）访问软链接时内核透明地重定向到目标路径（类似快捷方式）。3）可以跨文件系统、可以链接目录。4）风险：原文件被删除后软链接变成「悬空链接」（dangling symlink，ls -l 红底闪烁）。
+
+扩展延伸：inode 相关的系统限制——1）df -i 查看 inode 使用情况（inode 耗尽时即使有磁盘空间也无法创建新文件）。2）find / -nouser -o -nogroup 找到 inode 对应所有者已被删除的孤儿文件。3）ext4 默认 inode 大小 256 字节，mkfs.ext4 -I 512 可指定。4）stat 命令查看文件 inode 信息（stat file.txt 包括 inode 号、大小、块数、权限、时间戳）。procfs 和 sysfs——/proc 和 /sys 中的文件没有 inode（它们在内存中动态生成，不是磁盘文件系统）。`,hints:[`为什么硬链接不能跨文件系统——inode 编号只在同一个文件系统内唯一`,`软链接的「悬空链接」在什么场景下最常见——移动/重命名目标文件后未更新链接`],tags:[`Linux`,`inode`,`文件系统`,`链接`],content_hash:`f6313c566f9a`,id:2823},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`strace 与 perf 性能分析`,content:`strace 和 perf 分别用于什么场景？strace 追踪系统调用的原理是什么？perf 的采样模式如何工作？strace 在生产环境使用时有什么风险？`,answer:`答案：strace 追踪进程的系统调用和信号（适合排查「程序在做什么、卡在哪里」），perf 进行 CPU 级的性能采样和分析（适合「CPU 花在哪了、哪里成为瓶颈」）。strace 基于 ptrace 系统调用，perf 基于内核 perf_event 子系统。
+
+解析：strace——1）原理：ptrace(PTRACE_SYSCALL, pid) 在每次系统调用入口和出口暂停目标进程。每次系统调用触发两次 ptrace 暂停（进入和返回），产生约 50-100 微秒的延迟。2）常用：strace -p <pid>（跟踪运行中的进程）、strace -e trace=network,file（只跟踪网络和文件相关的系统调用）、strace -c（统计系统调用耗时）。3）诊断：\`No such file or directory\` 但文件存在→ 文件搜索顺序、权限问题、chroot/容器环境。perf——1）perf stat（统计模式）：统计 CPU 周期、指令数、分支预测失败、缓存未命中。perf record / perf report（采样模式）：按频率采样 CPU 的程序计数器（PC），生成火焰图。2）perf top（实时查看当前系统最热的函数）。
+
+扩展延伸：strace 的生产风险——strace 让目标进程每次系统调用暂停两次，可能导致进程延迟成倍增加。极高 QPS 的服务被 strace 后可能触发超时雪崩。替代方案：1）bpftrace 使用 eBPF 追踪系统调用（无需暂停目标进程，性能影响极小）。2）perf trace（perf 子命令，类似 strace 但基于 eBPF 实现，更安全）。perf 的进阶——1）perf sched（调度器分析：谁在抢 CPU、谁在等 IO）。2）perf c2c（缓存一致性分析）。3）perf stat -d（更多硬件指标：L1/L2/L3 缓存命中率）。`,hints:[`strace 为什么在高 QPS 的生产环境是危险操作——ptrace 暂停目标进程的开耗很大`,`bpftrace 如何实现比 strace 更安全的系统调用追踪——基于 eBPF 无需暂停进程`],tags:[`Linux`,`strace`,`perf`,`性能分析`],content_hash:`efac4ce345d1`,id:2824},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 网络工具与排查`,content:`Linux 中常用的网络排查工具有哪些？ping/traceroute/telnet/nc/ss/tcpdump 的使用场景是什么？如何定位网络不通的问题？`,answer:"答案：网络排查工具链——ping（检查目标是否可达和延迟）、traceroute（追踪路由路径）、telnet/nc（测试端口连通性）、ss（查看 socket 状态，替代 netstat）、tcpdump（抓包分析）、mtr（ping + traceroute 的结合）。\n\n解析：排查思路——1）先检查本地网络：`ip addr` 确认 IP 配置，`ping localhost` 检查本地协议栈。2）检查网关和 DNS：`ping 网关 IP` 确认本地网络，`nslookup 域名` 检查 DNS 解析。3）检查目标可达性：`ping 目标 IP` 确认网络层是否通，`traceroute 目标` 看路由在哪一跳中断。4）检查端口：`telnet 目标 IP 端口` 或 `nc -zv 目标 IP 端口` 测试端口连通性。`ss -tlnp` 查看本地监听端口。5）抓包分析：`tcpdump -i eth0 host 目标IP and port 8080` 过滤抓包，结合 Wireshark 分析。\n\n扩展延伸：常用参数——1）ss（替代 netstat）：`ss -tlnp`（TCP 监听）、`ss -tunap`（所有 TCP/UDP 连接 + 进程）、`ss -s`（连接统计摘要）。2）tcpdump：`tcpdump -i any port 80`、`tcpdump -w capture.pcap`（保存到文件）、`tcpdump -X`（打印 hex+ASCII）。3）mtr：增强版的 ping+traceroute，持续追踪路由并统计每跳的丢包率和延迟。4）curl 用于 HTTP 层排查：`curl -v`（详细请求/响应）、`curl -w '%{http_code}'`（只输出状态码）。注意——telnet 可能未安装（用 nc/nmap 替代）。生产环境 tcpdump 需要 root 权限（用 sudo）。",hints:[`网络排查顺序——本地 IP 配置 → 网关 → DNS → 目标可达性 → 端口连通性 → 抓包`,`ss（替代 netstat）最常用参数——ss -tlnp（TCP 监听端口 + 进程），ss -s（连接统计）`],tags:[`Linux`,`网络排查`,`tcpdump`,`运维`],content_hash:`7ded3a45d452`,id:2825},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 进程管理：ps、top、htop`,content:`Linux 中如何查看和管理进程？ps、top、htop 的区别和常用参数？进程状态（R/S/D/Z/T）的含义？如何找出 CPU 或内存最高的进程？`,answer:"答案：ps 查看进程快照（一次性的进程列表），top 实时监控进程和系统资源（交互式），htop 是 top 的增强版（彩色、鼠标操作、树形显示）。进程状态：R（运行/Runnable）、S（可中断睡眠）、D（不可中断睡眠，通常是 IO 等待）、Z（僵尸进程）、T（停止/暂停）。\n\n解析：常用命令——1）ps：`ps aux`（所有进程详细信息）、`ps -ef`（标准格式）、`ps -eo pid,ppid,cmd,%cpu,%mem --sort=-%cpu`（按 CPU 排序）、`ps -eo pid,ppid,stat,cmd`（查看进程状态和父子关系）。2）top：按 CPU 使用排序实时显示进程。按 `P`（CPU 排序）、`M`（内存排序）、`k`（终止进程）、`f`（选择显示的字段）。按 `1` 查看各 CPU 核的使用情况。3）htop：颜色标识（红色=高使用）、鼠标操作、F5 树形视图、F6 排序、F9 终止进程。\n\n扩展延伸：进程管理——1）CPU 最高的进程：`top -o %CPU` 或 `ps aux --sort=-%cpu | head`。2）内存最高的进程：`ps aux --sort=-%mem | head`。3）僵尸进程：`ps aux | grep Z`。僵尸进程无法被 kill 杀死（已经死了），需要 kill 其父进程来回收。4）后台运行：`nohup command &` 忽略 HUP 信号，`command &` 后台运行。`jobs` 查看后台任务，`fg` 切换到前台。5）进程优先级：`nice -n -5 command`（设置优先级，范围 -20 到 19，越小优先级越高）、`renice -n -5 -p PID`（修改运行中进程的优先级）。",hints:[`进程状态中 D（Disk Sleep）不可中断——通常等待 IO，大量 D 状态说明磁盘或网络 IO 有问题`,`僵尸进程（Z）不能被 kill——需要 kill 父进程让其 wait() 回收子进程`],tags:[`Linux`,`进程管理`,`ps`,`top`],content_hash:`c26e6692fd31`,id:2826},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 系统性能分析命令`,content:`Linux 系统性能分析常用的命令有哪些？CPU/内存/磁盘/网络四大维度的排查工具分别是？如何快速定位系统瓶颈？`,answer:"答案：四大维度工具——CPU（top/vmstat/mpstat/perf）、内存（free/vmstat/smem）、磁盘（iostat/iotop/df/du）、网络（sar/ss/tcpdump/nethogs）。综合分析工具：dstat（统一显示 CPU/磁盘/网络）、atop（记录历史性能数据）、bcc/ebpf（内核追踪）。\n\n解析：各维度排查——1）CPU 瓶颈：`top` 看 CPU idle 和 load average。`vmstat 1` 看 procs（r=运行队列，b=不可中断睡眠）和 CPU（us/sy/id/wa/st）。`mpstat -P ALL 1` 看各 CPU 核的使用率。2）内存瓶颈：`free -h`（总内存/已用/可用）。`vmstat 1` 的 si/so（swap in/out——非零说明内存不足）。`smem -t`（更详细的内存统计 RSS/PSS/USS）。3）磁盘瓶颈：`iostat -xz 1`（r/s 读请求数、w/s 写请求数、await 平均 IO 延迟、%util 磁盘利用率）。`iotop`（按进程看 IO 使用）。4）网络瓶颈：`sar -n DEV 1`（网卡流量 PPS/BPS）。`ss -s`（连接数）。`nethogs`（按进程看流量）。\n\n扩展延伸：USE（Utilization/Saturation/Errors）方法论——1）每个资源检查：使用率（资源有多忙）、饱和（是否有等待队列）、错误（是否有错误计数）。2）快速定位脚本：`uptime`（load average 是否 > CPU 核数）、`dmesg -T | tail`（内核错误 OOM/soft lockup）、`vmstat 1`（r 列运行队列 > CPU*2 说明 CPU 不足）。perf 工具——`perf top`（实时热点函数）、`perf record -a -g`（全量采样 + 调用链）、`perf report`（分析采样结果）。火焰图（Flame Graph）——perf sample 生成的调用栈可视化。",hints:[`vmstat 1 的 r（运行队列）> CPU 核数 = CPU 瓶颈；si/so > 0 = 内存不足（swap）；wa 高 = IO 瓶颈`,`USE 方法论——每个资源检查 Utilization（使用率）、Saturation（饱和程度）、Errors（错误数）`],tags:[`Linux`,`性能分析`,`vmstat`,`iostat`],content_hash:`32c1eab975ae`,id:2827},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux 内核参数调优`,content:`Linux 内核参数如何调优？sysctl 配置的基本原则？网络/内存/文件系统常见的内核参数优化？如何持久化配置？`,answer:"答案：Linux 内核参数通过 sysctl 接口调整。临时修改：`sysctl -w net.core.somaxconn=65535`。持久化：写入 `/etc/sysctl.conf` 或 `/etc/sysctl.d/` 下的 `.conf` 文件，执行 `sysctl -p` 生效。\n\n解析：常见调优——1）网络：`net.core.somaxconn = 65535`（监听队列长度，高并发服务需调大）。`net.ipv4.tcp_tw_reuse = 1`（TIME_WAIT socket 复用，减少端口占用）。`net.ipv4.tcp_keepalive_time = 600`（TCP Keepalive 间隔，减少半开连接）。`net.core.rmem_max / wmem_max = 16777216`（Socket 缓冲区最大大小）。`net.ipv4.ip_local_port_range = 1024 65535`（临时端口范围，高并发客户端需扩大）。2）内存：`vm.swappiness = 1`（尽可能少用 swap，仅在内存极紧时才 swap）。`vm.vfs_cache_pressure = 50`（降低缓存 inode/dentry 的回收倾向）。`vm.dirty_ratio = 30`（脏页达到内存 30% 时触发回写）。3）文件系统：`fs.file-max = 2097152`（系统级最大文件句柄数）。`fs.nr_open = 1048576`（进程级最大文件句柄数）。\n\n扩展延伸：查看参数——`sysctl -a` 列出所有参数。`sysctl net.ipv4.tcp_tw_reuse` 查看单个参数。优化原则——1）每次只改有需求的参数（不要盲目套用网上的优化配置）。2）改前改后做对比测试（确认实际效果）。3）不同发行版的默认值可能不同（CentOS vs Ubuntu）。4）部分参数在容器内不可修改（需要宿主机层面修改或 privileged 容器）。5）tcp_tw_reuse 和 tcp_tw_recycle 区别——tcp_tw_recycle 在 NAT 环境下有严重问题（已从 Linux 4.12 移除）。",hints:[`sysctl 临时修改（即时生效）和持久化配置（写入 /etc/sysctl.conf）的区别`,`vm.swappiness=1 让系统尽可能少用 swap——swap 用多了 IO 延迟大增`],tags:[`Linux`,`内核参数`,`sysctl`,`调优`],content_hash:`8da6a8e3b3d5`,id:2828},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`内核空间与用户空间`,content:`请解释 Linux 内核空间和用户空间的区别，以及系统调用的工作流程。`,answer:`答案：Linux 将虚拟内存分为内核空间（高地址，Ring 0）和用户空间（低地址，Ring 3）。用户程序通过系统调用（syscall）陷入内核态执行特权操作（如文件读写、网络通信、进程创建）。用户空间进程无法直接访问内核空间内存，保证系统安全和稳定。
+
+解析：系统调用流程：用户程序调用 glibc 封装函数（如 read()）→ CPU 执行 syscall 指令（软中断，从用户态切换到内核态）→ 内核根据系统调用号查找 sys_call_table 中的处理函数 → 在核心态执行操作 → 返回结果到用户空间。常见的系统调用：文件操作（open/read/write/close）、进程管理（fork/execve/exit）、网络（socket/bind/connect/send/recv）、内存（mmap/brk）。系统调用有开销（上下文切换 + 权限检查），高性能编程中应减少频繁调用。
+
+扩展延伸：内核态和用户态切换的代价——约 0.5-2us 一次。大量小 IO 操作时的优化：1）使用缓冲区（缓冲 IO vs 直接 IO）。2）使用 mmap（内存映射文件，避免读写系统调用）。3）设置大页面（Huge Pages，减少 TLB Miss）。4）使用异步 IO（io_uring，Linux 5.1+，减少系统调用次数）。注意：用户空间和内核空间的边界正在模糊——eBPF 允许用户在受控的环境下在内核空间执行自定义代码，用于性能追踪、网络过滤和安全监控。`,hints:[`系统调用的开销主要来自哪里`,`用户态和内核态切换时哪些寄存器或内存需要保存和恢复`],tags:[`Linux`,`内核`,`系统调用`],content_hash:`169c31e1246c`,id:2829},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`进程间通信 IPC`,content:`请介绍 Linux 中主要的进程间通信（IPC）方式及其适用场景。`,answer:`答案：Linux 进程间通信方式：管道（Pipe）、信号（Signal）、消息队列（Message Queue）、共享内存（Shared Memory）、信号量（Semaphore）、套接字（Socket）。各自适用不同场景和性能特点。
+
+解析：1）管道——分为匿名管道（pipe，父子进程间单向通信）和命名管道（FIFO，任意进程间通信）。适用于简单流式数据传输，半双工。2）信号——异步通知机制，如 SIGINT（Ctrl+C）、SIGKILL（强制终止）。适用于事件通知，传递的信息量小。3）消息队列——System V/POSIX 消息队列，进程间传递结构化的消息块。适用于异步消息传递，但现代应用较少直接使用（更多用 MQ 中间件）。4）共享内存——多个进程映射同一块物理内存，最快的 IPC 方式（零拷贝）。通常配合信号量同步。适用于高频数据共享（如 Nginx worker 进程间共享缓存）。5）信号量——进程间同步原语（P/V 操作），解决共享资源的互斥访问。6）Unix Domain Socket——本地进程间通信，比 TCP Socket 更快（绕过网络协议栈），支持流式（SOCK_STREAM）和数据报（SOCK_DGRAM）模式。
+
+扩展延伸：性能对比（从快到慢）：共享内存 > Unix Socket > 消息队列 > 命名管道 > TCP Socket。实际场景建议：同机进程间高吞吐数据共享用共享内存 + 信号量；C/S 通信用 Unix Domain Socket；分布式跨节点用 TCP Socket 或 MQ 中间件。mmap 与共享内存的区别：mmap 是文件映射到内存（数据可持久化到文件），共享内存是纯粹的匿名内存映射（数据不持久化）。`,hints:[`共享内存为什么是最快的 IPC 方式`,`Unix Domain Socket 和 TCP Socket 的性能差异来源`],tags:[`Linux`,`IPC`,`进程`],content_hash:`2e9d45694883`,id:2830},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`网络模型与 socket`,content:`请介绍 Linux 网络编程中的 socket 模型，包括阻塞 IO、非阻塞 IO、IO 多路复用（select/poll/epoll）的区别。`,answer:`答案：Socket 是网络通信的端点抽象，提供进程间跨网络的数据收发能力。Linux IO 模型分为阻塞 IO、非阻塞 IO、IO 多路复用（select/poll/epoll）、信号驱动 IO、异步 IO（AIO/io_uring）。其中 epoll 是 Linux 下高性能网络编程的事实标准（Nginx、Redis、Netty 等均基于 epoll）。
+
+解析：1）阻塞 IO——进程调用 recvfrom 时，如果数据未到达则挂起等待，直到数据到达且拷贝完成。编程简单但每个连接需要一个线程（C10K 问题）。2）非阻塞 IO——recvfrom 立即返回 EAGAIN/EWOULDBLOCK。需要轮询（busy waiting），浪费 CPU。3）IO 多路复用——select/poll/epoll 用一个线程监视多个 fd 的 IO 事件。select：监听数量有限（FD_SETSIZE=1024），每次调用全量拷贝 fd 集合到内核，遍历所有 fd。poll：无最大数量限制，但仍有全量拷贝+遍历问题。epoll：事件驱动，只返回就绪的 fd（无需遍历），使用 mmap 共享内核和用户空间的数据（减少拷贝），支持边缘触发（ET）和水平触发（LT）。
+
+扩展延伸：epoll 的核心机制：调用 epoll_create 创建 epoll 实例，epoll_ctl 注册/修改/删除 fd 及其关注的事件，epoll_wait 等待事件就绪。就绪的 fd 通过 epoll_event 数组返回（O(1) 复杂度）。边缘触发（ET）模式更高效但需一次读完所有数据（否则丢失事件通知），水平触发（LT）可以不一次读完（剩余数据下次仍会通知）。io_uring（Linux 5.1+）是更现代的异步 IO 模型——通过共享的 SQ（提交队列）和 CQ（完成队列）实现真正的异步 IO，无需系统调用，性能比 epoll 更高，特别适合高 IOPS 场景。`,hints:[`epoll 相比 select/poll 的性能提升来自哪些设计`,`边缘触发（ET）和水平触发（LT）在编程上的区别`],tags:[`Linux`,`网络`,`epoll`,`IO`],content_hash:`1ef107d03ba9`,id:2831},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`僵尸进程与孤儿进程的成因与处理`,content:`Linux 系统中的僵尸进程和孤儿进程是面试中的高频问题。请说明两者的定义、产生原因、对系统的危害，以及如何正确处理和预防。特别说明 init 进程（systemd）在孤儿进程收养中的作用，以及 SIGCHLD 信号的处理机制。`,answer:`答案：僵尸进程（Zombie Process）：子进程已经退出但父进程尚未调用 wait()/waitpid() 读取其退出状态，进程表项未被回收。此时进程状态为 Z，已释放绝大多数资源但仍在进程表中占用一个 slot（PID 和 kernel stack）。孤儿进程（Orphan Process）：父进程先于子进程退出，子进程被 init 进程（PID 1，通常是 systemd）收养，init 自动调用 wait 回收子进程。
+
+处理方式：僵尸进程的父进程必须调用 wait()/waitpid() 才能回收子进程。如果父进程反复不回收，僵尸进程堆积会耗尽系统 PID 上限。预防僵尸进程的方法：1) 父进程及时 wait 子进程；2) 设置 SIGCHLD 信号处理函数为 SIG_IGN，系统自动回收子进程（某些系统有效）；3) 通过信号处理器中调用 waitpid 来收集退出状态；4) 使用双 fork 技术 —— 父进程 fork 子进程后立即 wait，子进程再次 fork 孙进程后退出，孙进程由 init 收养。
+
+解析：SIGCHLD 信号在子进程状态改变（退出、暂停、恢复）时发给父进程。父进程在 sigaction 的 handler 中使用 WNOHANG 标志非阻塞地调用 waitpid(-1, &status, WNOHANG)，循环回收所有已退出的子进程。
+
+扩展延伸：容器环境中需要特别注意僵尸进程问题 —— 如果容器 entrypoint 进程（PID 1）没有正确处理 SIGCHLD，容器内的僵尸进程将无法被回收。解决方案包括使用 tini/supervisord 等专业的 init 进程作为容器入口点。`,hints:[`区分僵尸和孤儿：根本区别在于父/子谁先退出`,`僵尸进程的危害在于消耗 PID 和进程表资源`,`SIGCHLD + waitpid(WNOHANG) 是标准处理方法`],tags:[`Linux`,`进程管理`,`僵尸进程`,`孤儿进程`,`SIGCHLD`],content_hash:`3a2a0afe030c`,id:2832},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`systemd journald 与 journalctl 日志管理`,content:`请介绍 systemd journald 的日志收集机制、日志存储格式，以及 journalctl 的常用查询与维护操作。`,answer:`答案：systemd journald 是 systemd 的日志收集守护进程，负责收集内核日志（dmesg）、系统服务日志（stdout/stderr）、syslog 消息和审计日志。日志以二进制格式（Journal）存储在 /var/log/journal/ 或 /run/log/journal/（非持久化模式）目录下，支持结构化字段（_PID、_COMM、_SYSTEMD_UNIT、PRIORITY 等），比传统文本日志更适合程序化查询和分析。
+
+解析：journalctl 是查询 journal 日志的命令行工具。常用用法：journalctl -u nginx.service（查看指定服务日志）；journalctl -k（仅内核日志）；journalctl --since "1 hour ago"（时间范围过滤）；journalctl -p err（按优先级过滤，支持 emerg/debug）；journalctl -f（实时跟踪 tail 模式）；journalctl -o json-pretty（JSON 格式化输出）；journalctl --disk-usage（查看日志磁盘占用）。日志大小控制通过 /etc/systemd/journald.conf 的 SystemMaxUse、SystemMaxFileSize、MaxRetentionSec 等参数配置。
+
+扩展延伸：生产环境建议：1) 持久化存储 —— Journal 默认仅写入内存（/run/log/journal），重启后丢失。需创建 /var/log/journal/ 目录并设置 Systemd 的 Storage=persistent 实现持久化；2) 日志转发 —— journald 支持将日志转发到远程 syslog 服务器或 Elasticsearch 等外部系统（通过 ForwardToSyslog、ForwardToWall 等选项或 journald-upload 工具）；3) 注意日志 IO 性能 —— 高强度日志写入可能因磁盘 IO 受限影响系统性能，可设置 RateLimitIntervalSec 和 RateLimitBurst 限流。`,hints:[`journalctl -u 和 journalctl --since 是最常用的过滤方式`,`持久化存储需要创建 /var/log/journal/ 并重启 systemd-journald`,`/etc/systemd/journald.conf 控制日志的大小和保留策略`],tags:[`Linux`,`systemd`,`journald`,`journalctl`],content_hash:`0da245131e27`,id:2833},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`systemd timer 定时器配置`,content:`请说明 systemd timer 的工作原理、配置格式，以及与 cron 定时任务相比的优势。`,answer:`答案：systemd timer 是 systemd 的定时器单元（.timer 文件），取代传统 cron 实现周期性或一次性任务调度。每个 .timer 文件绑定一个对应的 .service 文件，timer 到期时 systemd 自动启动对应的 service。支持两种触发方式：Monotonic（相对时间，如启动后 5 分钟）和 Realtime（绝对时间，类似 cron 的日历时间）。
+
+解析：timer 配置示例：OnCalendar=daily 每天执行；OnCalendar=Mon..Fri 09:00:00 周一到周五上午九点；OnUnitActiveSec=1h 服务上次激活后 1 小时（比固定间隔更精确）。AccuracySec 控制定时精度（默认 1 分钟，可设置为 1s）。Persistent=true 允许在系统关机期间错过了触发时间后补执行。RandomizedDelaySec 在触发时间上添加随机延迟，避免"惊群效应"（大量定时任务同时触发）。
+
+扩展延伸：systemd timer 相比 cron 的优势：1) 集成 systemd 的日志管理 —— 任务日志由 journald 统一管理，无需单独配置邮件通知；2) 依赖管理 —— 可设置 After=、Requires= 等依赖关系，确保网络等条件满足后执行；3) 错过触发处理 —— 系统关机期间错过的任务，下次开机可通过 Persistent=true 补执行；4) 随机延迟避免高峰 —— RandomizedDelaySec 在分布式系统中尤其有用；5) 支持实时监控 —— 通过 systemctl list-timers 查看所有定时器状态。缺点：配置比 cron 复杂，不适合简单场景。`,hints:[`.timer 文件必须和同名的 .service 文件配对使用`,`OnCalendar 接受类似 cron 的日历表达式，但格式不同`,`RandomizedDelaySec 用于避免定时任务"雪崩"`],tags:[`Linux`,`systemd`,`Timer`,`定时任务`],content_hash:`b1c5fdc956a9`,id:2834},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`rsync 增量同步原理与常用场景`,content:`请详细介绍 rsync 的同步算法、常用选项，以及本地和远程文件同步的常见场景。`,answer:`答案：rsync（Remote Sync）是 Linux 下高效的文件同步工具，核心优势在于增量传输 —— 只传输文件有变化的部分而非整个文件。其算法（rsync algorithm）将文件分成固定大小的块，通过校验和对比识别变化块，仅在网络上传输差异部分，极大节省带宽和时间。
+
+解析：常用选项：-a（归档模式，递归同步并保留权限、时间戳、符号链接等）；-v（显示详情）；-z（传输时压缩）；--delete（删除目标端多余文件，保持两端完全一致）；--exclude 和 --include（文件过滤）；-n（dry-run 预览模式，安全验证）；-P（显示进度并支持断点续传）。远程同步示例：rsync -avz /local/path/ user@host:/remote/path/（推送到远程）；rsync -avz user@host:/remote/path/ /local/path/（从远程拉取）。尾部斜杠的区别：rsync -avz src/ dest/ 表示同步 src/ 目录下的内容到 dest/；去掉斜杠则同步 src 目录本身。
+
+扩展延伸：高级用法：1) rsync + SSH 隧道实现安全加密传输（默认使用 SSH）；2) rsync daemon 模式（rsync:// protocol）适合局域网批量同步；3) --link-dest 选项实现增量备份 —— 基于上一次备份创建新备份，未变化的文件通过硬链接共享存储空间；4) 大文件同步建议配合 --partial 启用断点续传；5) rsync 不适合实时同步场景（实时同步应使用 lsyncd、inotify 或 DRBD）。`,hints:[`尾部斜杠（/）的有无决定了源目录的同步行为`,`--delete 参数能保持两端完全一致，但需谨慎使用`,`--link-dest 可实现高效的增量备份链`],tags:[`Linux`,`rsync`,`文件同步`,`备份`],content_hash:`ae4c51f97a5d`,id:2835},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`LVM 高级功能：逻辑卷快照与 Thin Provisioning`,content:`请深入讲解 LVM 的快照（Snapshot）和精简配置（Thin Provisioning）的原理、使用场景和注意事项。`,answer:`答案：LVM Snapshots 利用 COW（Copy-on-Write）机制创建逻辑卷的时间点快照。创建快照后，原始卷修改数据时先将原数据复制到快照预留空间（COW 区域），快照因此能保留创建时刻的数据状态。Snapshots 可用于备份、数据恢复、测试环境快速回滚。Thin Provisioning（精简配置）允许创建比物理存储更大的逻辑卷，数据按需分配（thin pool），仅在写入时才占用物理空间。
+
+解析：LVM Snapshot 的详细原理：创建快照时分配一块 COW 存储空间，初始不占用空间。当原始卷的某个数据块被修改时，该块的原始内容被复制到 COW 区域，快照从 COW 区域读取原始数据。快照大小取决于写入量而非原始卷大小 —— 若写入数据超过 COW 区域，快照会失效（需手动设置 auto extend）。Thin Provisioning 使用 thin_data 和 thin_metadata 两个设备组成 thin pool，元数据设备存储逻辑地址到物理地址的映射。支持虚拟化环境（如 QEMU/KVM 磁盘镜像）、容器存储、开发/测试环境。
+
+扩展延伸：生产环境最佳实践：1) 快照大小建议为原始卷的 15-20%，并通过监控自动扩展（snapshot_autoextend_threshold 和 snapshot_autoextend_percent）；2) Thin Pool 的监控至关重要 —— 当 thin pool 写满时所有 thin volume 变为只读，可能导致应用崩溃，需设置 dmeventd 自动扩展；3) 快照对写性能有影响 —— COW 操作增加写 IO 链长度；4) LVM Thin Snapshots 通过递归方式在同一 thin pool 中创建快照，无需预分配 COW 区域；5) 大批量快照建议使用 Thin Provisioning + Thin Snapshot 组合。`,hints:[`COW 快照的写放大效应对性能的影响`,`Thin Pool 写满是生产环境的严重故障，必须监控`,`Thin Snapshot 不消耗 COW 空间，依赖 thin pool 的 metadata`],tags:[`Linux`,`LVM`,`快照`,`Thin Provisioning`],content_hash:`4cac0c97b9d5`,id:2836},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`/proc 虚拟文件系统深度解析`,content:`请详细说明 Linux /proc 文件系统的架构、核心文件作用，以及在系统排查和性能调优中的常见用法。`,answer:`答案：/proc 是 Linux 内核暴露运行时信息的虚拟文件系统，存储在内存中而非磁盘上。它以文件和目录的形式呈现内核数据结构，包括进程信息（/proc/[pid]/）、系统信息（/proc/cpuinfo、/proc/meminfo）、设备信息、网络信息、内核参数（/proc/sys/）等。读取/proc下的文件时，内核实时生成内容；写入部分文件可动态调整内核行为。
+
+解析：排查和调优中常用的 /proc 文件：/proc/cpuinfo（CPU 型号、核数、标志位）；/proc/meminfo（内存总量、可用量、缓冲区、Swap 等详细指标）；/proc/loadavg（系统负载 —— 1/5/15 分钟平均运行队列长度）；/proc/diskstats（磁盘 IO 统计 —— 可计算 IOPS、延迟、吞吐量）；/proc/net/tcp（TCP 连接状态统计）；/proc/PID/status（进程状态、内存占用 VmRSS/VmSize、线程数）；/proc/PID/fd/（进程打开的文件描述符符号链接）；/proc/PID/smaps（进程内存映射的详细分析，含 PSS/RSS）；/proc/sys/ 下通过 sysctl 可调整内核参数（如 net.ipv4.tcp_tw_reuse、vm.swappiness）。
+
+扩展延伸：高级/特殊文件：/proc/PID/stack（进程内核栈回溯，排查进程卡在内核态的问题）；/proc/PID/maps（进程内存映射，分析共享库加载地址）；/proc/PID/environ（进程环境变量，排查配置问题）；/proc/PID/root（进程根目录符号链接，容器场景下查看另一个容器的文件系统非常有用）。性能排查时常用命令："cat /proc/meminfo | grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree|Dirty)'" 快速查看内存状态；"cat /proc/softirqs" 查看软中断分布。`,hints:[`/proc 是伪文件系统，内容实时生成不占用磁盘`,`/proc/PID/fd/ 的软连接指向实际文件路径可排查文件泄露`,`/proc/PID/root 在容器排查时非常实用`],tags:[`Linux`,`/proc`,`虚拟文件系统`,`系统排查`],content_hash:`6678cd76771e`,id:2837},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`strace 系统调用跟踪`,content:`请介绍 strace 的 -c、-e、-p、-f 等关键参数及其典型使用场景。`,answer:`答案：strace 是基于 ptrace 系统调用的跟踪工具，拦截并记录进程发起的系统调用及其信号。关键参数：1) -c（count）——在程序退出时汇总各系统调用的次数、耗时、错误数，适合性能分析和瓶颈定位；2) -e（expression）——按系统调用名过滤跟踪范围，如 -e trace=open,read,write（文件操作）、-e trace=network（网络相关）；3) -p <PID>——附加到已在运行的进程进行跟踪；4) -f（follow forks）——跟踪子进程，对多进程/多线程程序必须开启；5) -t/-tt/-ttt 添加时间戳；6) -T 显示每个系统调用的耗时。
+
+解析：strace 使用 ptrace(PTRACE_SYSCALL, pid) 在系统调用入口和返回处分别暂停目标进程两次，被跟踪的程序运行速度会显著下降（典型情况慢 10-100 倍），因此不适合生产环境长期使用。替代方案：生产环境用 perf trace（基于 perf_event，开销更低）或 bpftrace（基于 BPF，安全且开销小）。容器内 strace 需要 SYS_PTRACE capability。
+
+扩展延伸：strace 的 -z 参数可以只显示错误返回的系统调用。高级用法：strace -e trace=openat -P /etc/passwd 只跟踪对特定文件的操作。ltrace 则跟踪库函数调用。对于系统调用级别的跟踪，现代替代是 eBPF 工具如 opensnoop（跟踪文件打开）、tcpconnect（跟踪 TCP 连接）。`,hints:[`strace 的 -c 参数与默认模式的核心区别`,`strace 为什么不适合生产环境长期运行`],tags:[`Linux`,`strace`,`调试`],content_hash:`c6f8d5b09c1d`,id:2838},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`bpftrace 动态追踪`,content:`请介绍 bpftrace 的原理、编程模型和典型使用场景。`,answer:`答案：bpftrace 是一种基于 eBPF（Extended Berkeley Packet Filter）的高级动态追踪语言/工具，允许用户以类似 awk 的单行脚本在内核中安全地挂载探针（kprobe/uprobe/tracepoint/USDT）并获取系统运行时数据。原理：bpftrace 脚本经 Clang/LLVM 编译为 BPF 字节码，通过 bpf() 系统调用加载到内核，BPF 验证器确保程序终止（有界循环、不访问非法内存）、不会导致内核崩溃。编程模型：BEGIN -> 探针定义 -> 动作 -> END（退出时聚合输出）。内置函数：count()、sum()、hist()（直方图）、kstack()/ustack()（调用栈）。
+
+解析：典型单行命令：bpftrace -e 'kprobe:do_sys_open { @[comm] = count(); }' 统计各进程的 open 调用次数；bpftrace -e 'tracepoint:syscalls:sys_enter_read { @[pid, comm] = sum(args->count); }' 统计各进程读取字节量。bpftrace 的一行模式适合快速问题定位，脚本模式（.bt 文件）功能更强。bpftrace 依赖内核支持 BTF（BPF Type Format，5.4+）。
+
+扩展延伸：bpftrace 的前身是 DTrace（Solaris）和 SystemTap（Linux），但 eBPF 提供了安全性和可移植性。bpftrace 的限制：不能做无限循环、不能写文件系统、不能做阻塞操作。生产环境中，bpftrace 开销极小（微秒级）且安全。BCC（BPF Compiler Collection）是 bpftrace 的底层库，提供 Python/Lua 接口的 eBPF 编程框架。`,hints:[`bpftrace 的探针类型（kprobe/uprobe/tracepoint）的区别`,`eBPF 验证器如何保证安全性`],tags:[`Linux`,`bpftrace`,`eBPF`,`追踪`],content_hash:`e76b77ddfd07`,id:2839},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`io_uring 异步 I/O 框架`,content:`请介绍 Linux io_uring 的原理、核心数据结构及其相比传统 AIO 和 epoll 的优势。`,answer:`答案：io_uring 是 Linux 5.1 引入的异步 I/O 框架，核心设计是两个共享的环形缓冲区（ring buffer）在用户态和内核态之间共享内存——SQ（Submission Queue）存放 I/O 请求，CQ（Completion Queue）存放完成事件。提交和收割 I/O 时无需系统调用（通过 MMAP 共享内存 + 内存屏障即可），仅在需要唤醒内核时使用 io_uring_enter()。三种操作模式：1) 中断驱动模式（默认）；2) 轮询模式（IORING_SETUP_IOPOLL）——用户态主动轮询 CQ；3) 内核轮询模式（IORING_SETUP_SQPOLL）——内核线程轮询 SQ，用户态完全不需要系统调用。
+
+解析：io_uring 相比 libaio 的优势：libaio 只支持 O_DIRECT 文件（跳过页缓存），不支持 buffered I/O、socket、pipe；io_uring 支持所有文件类型且通过 IOSQE_FIXED_FILE 和预注册缓冲区进一步减少开销。相比 epoll 的优势：epoll 只做事件通知（告诉你 FD 可读/可写），数据读写仍需同步系统调用；io_uring 将通知 + 数据读写在一个接口中完成。
+
+扩展延伸：io_uring 生态日益成熟：liburing 提供了用户态辅助库。内核 5.19+ 引入了 IORING_SETUP_COOP_TASKRUN 和 IORING_SETUP_DEFER_TASKRUN（减少不必要的 IPI）。Redis 6.2+ 支持 io_uring 后端，在 NVMe 场景下吞吐提升 20-40%。RocksDB、ScyllaDB 也相继支持 io_uring。推荐内核 5.19+ 使用 io_uring。`,hints:[`io_uring 如何实现零系统调用 I/O？`,`io_uring 与 epoll 在数据模型上的本质差异`],tags:[`Linux`,`io_uring`,`异步I/O`],content_hash:`83b5c1d28bbd`,id:2840},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`/sys 文件系统详解`,content:`请介绍 Linux /sys 文件系统的结构和用途，以及它和 /proc 的主要区别。`,answer:`答案：/sys（sysfs）是 Linux 2.6 引入的虚拟文件系统，将内核对象以文件和目录形式暴露给用户空间。目录结构：/sys/class/——按设备功能分类（block、net、drm、tty、input）；/sys/devices/——所有设备真正的硬件拓扑路径；/sys/bus/——按总线类型（pci、usb、i2c、spi）将设备与驱动关联；/sys/block/——块设备；/sys/module/——已加载的内核模块参数；/sys/fs/——文件系统对象（如 /sys/fs/cgroup）；/sys/kernel/——内核全局参数；/sys/power/——电源管理状态控制。核心特征：文件内容通常是单行可读的；部分文件支持写入以修改内核行为。
+
+解析：/sys 与 /proc 的区别：/proc 按进程组织（/proc/[pid]/），展示每个进程的资源（mm、fd、maps、status），虽有 /proc/cpuinfo、/proc/meminfo 等系统信息但结构混乱；/sys 按内核对象类型组织，结构清晰。关键原则：/sys 暴露的是内核对象（device、driver、bus）的属性和关系，/proc 暴露的是进程和系统状态。
+
+扩展延伸：sysfs 由内核驱动通过 kobject_create_and_add() 在驱动初始化时注册。用户空间可以通过 udev（systemd）监听 uevent（通过 netlink 广播的设备增删事件）来实现动态设备管理。新版本内核（6.x）中 /sys 还增加了对 CXL 内存设备、IOMMU 硬件分区的支持。在容器中 /sys 通常被限制（通过 cgroup 和 mount namespace），容器内的 /sys 仅反映当前 cgroup 子树的视图。`,hints:[`/sys/class/ 和 /sys/devices/ 的组织逻辑差异`,`/sys 与 /proc 在信息组织方式上的本质区别`],tags:[`Linux`,`/sys`,`文件系统`],content_hash:`b3e137f49864`,id:2841},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 内存管理`,content:`请介绍 Linux 的内存管理机制。虚拟内存和物理内存如何映射？什么是缺页中断（Page Fault）？OOM Killer（Out-Of-Memory Killer）如何选择被杀掉的进程？`,answer:`答案：Linux 通过虚拟内存管理实现进程隔离和内存高效利用。
+
+虚拟内存与物理内存：
+- 每个进程拥有独立的虚拟地址空间（取决于架构，32 位 4GB，64 位 128TB）
+- 虚拟地址通过 MMU（内存管理单元）+ 页表映射到物理地址
+- 页表是多级结构（x86-64 使用 4 级页表）
+- 页大小：默认 4KB（HugePages 支持 2MB/1GB，减少 TLB 未命中）
+
+缺页中断（Page Fault）：
+1. 硬缺页（Major Page Fault）：需要从磁盘读取数据（如程序启动时从 Swap 换入）
+   - 开销很大（磁盘 IO，毫秒级）
+2. 软缺页（Minor Page Fault）：页在内存中但页表未建立映射（如首次访问已分配的页）
+   - 开销小（只需建立页表映射）
+3. 无效缺页（Segfault）：访问非法地址 → 发送 SIGSEGV 信号终止进程
+
+OOM Killer：
+- 当系统内存耗尽时触发（vm.overcommit_memory 和 vm.overcommit_ratio 控制过度分配策略）
+- 选择被杀进程的评分（oom_score）：
+  - 占用内存越多 → oom_score 越高（贡献占比约 60%）
+  - 子进程数越多 → oom_score 越高
+  - root 权限 → oom_score 稍微降低
+- 用户可调整：/proc/PID/oom_adj（-17=不杀死到 15=优先杀死）
+- 实际影响：oom_score 最高的进程被 oom_killer 终止
+
+Swap（交换空间）：
+- 将不常用的内存页换到磁盘（扩展可用内存）
+- swapiness（vm.swappiness）：控制倾向使用 Swap 的程度（0-100，默认 60）
+- 数据库服务器通常建议降低 swapiness（如 10）
+
+扩展延伸：cgroups（控制组）——限制/隔离进程组的资源使用（CPU、内存、IO）。memory cgroup 可以设置内存上限（limit_in_bytes），超过上限触发 OOM。NUMA（非统一内存访问）——多 CPU 架构中每个 CPU 有自己的本地内存（访问快），跨 CPU 访问远端内存（访问慢）。`,hints:[`虚拟内存 = 页表（多级）→ 物理内存 + MMU 地址翻译`,`缺页：硬缺页（磁盘 IO，慢）+ 软缺页（建页表，快）+ 无效缺页（段错误，SIGSEGV）`,`OOM Killer选择：内存占用高 + 子进程多 = oom_score 高`],tags:[`Linux`,`内存`,`虚拟内存`,`Page Fault`],content_hash:`167726240b39`,id:2842},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 进程与线程`,content:`请介绍 Linux 进程和线程的实现。fork() 和 exec() 的区别是什么？写时复制（Copy-on-Write）如何优化 fork 性能？线程在 Linux 中如何实现？`,answer:`答案：Linux 中线程是轻量级进程（LWP），通过 clone() 系统调用创建。
+
+进程创建：
+- fork()：创建当前进程的副本（子进程获得父进程的完整副本）
+  返回值：子进程返回 0，父进程返回子进程 PID
+- exec()：用新程序替换当前进程（加载可执行文件并运行）
+- fork + exec 是经典组合：fork 创建子进程 → exec 加载新程序
+
+写时复制（Copy-on-Write, COW）：
+- fork 时子进程共享父进程的物理内存页（不复制）
+- 父子进程的虚拟地址页都标记为只读
+- 当任一方尝试写入时触发缺页异常 → 内核复制该页 → 两个进程各自拥有独立副本
+- 好处：fork 几乎不需要复制内存（只需复制页表），写入时才真正复制
+- 大部分 fork 后立即 exec（新程序不继承父进程内存），COW 避免了大量无用复制
+
+Linux 线程：
+- 线程通过 clone() 系统调用创建（轻量级 fork）
+- clone() 可以指定共享的资源：
+  CLONE_VM（共享地址空间）、CLONE_FILES（共享文件描述符）、CLONE_SIGHAND（共享信号处理器）
+- 线程 = 使用 CLONE_VM 和 CLONE_FILES 标志的 clone 进程
+- 线程有自己的：栈、寄存器、线程 ID（TID）
+- 线程共享：地址空间、文件描述符、信号处理器
+
+进程 vs 线程：
+- 进程：独立的地址空间（页表）、独立的 PID、上下文切换开销大
+- 线程：共享地址空间（同一进程的线程之间通信只需读写内存）、独立 TID、切换开销小
+- 进程切换需要切换页表（TLB 刷新），线程切换不需要
+
+扩展延伸：僵尸进程——子进程退出但父进程未调用 wait()，进程表条目保持存在。孤儿进程——父进程先退出，子进程由 init（PID 1）收养。pid_max 和线程数上限（/proc/sys/kernel/threads-max）。`,hints:[`fork() = 复制进程 → exec() = 加载新程序（通常 fork + exec 组合使用）`,`COW = fork 时共享内存（只读标记），写入时复制页（避免大量无用复制）`,`Linux 线程 = clone(CLONE_VM|CLONE_FILES) → 共享地址空间的任务`],tags:[`Linux`,`进程`,`线程`,`fork`],content_hash:`63482b69d5e3`,id:2843},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux IO 模型`,content:`请介绍 Linux 的 5 种 IO 模型。阻塞 IO、非阻塞 IO、IO 多路复用、信号驱动 IO、异步 IO 各有什么特点？select、poll、epoll 的区别是什么？`,answer:`答案：Linux 5 种 IO 模型的核心区别在于是否阻塞和何时通知就绪。
+
+5 种 IO 模型：
+1. 阻塞 IO（Blocking IO）：
+   - recvfrom() 一直等待直到数据就绪
+   - 特点：简单但线程被挂起，无法处理其他任务
+   - 适用：低并发场景
+2. 非阻塞 IO（Non-Blocking IO）：
+   - recvfrom() 立即返回（有数据返回数据，无数据返回 EAGAIN）
+   - 特点：需要轮询（busy waiting），浪费 CPU
+   - 几乎不直接使用
+3. IO 多路复用（IO Multiplexing）：
+   - select/poll/epoll 监控多个 FD，有就绪时通知应用
+   - 特点：单线程可管理数千连接，事件驱动
+   - 适用：Nginx、Redis、Netty 等高性能服务器
+4. 信号驱动 IO（Signal-Driven IO）：
+   - 注册 SIGIO 信号处理器，数据就绪时内核发送信号通知
+   - 特点：不阻塞，但信号处理复杂
+   - 实际使用较少
+5. 异步 IO（AIO / Async IO）：
+   - 发起 IO 操作后立即返回，内核完成操作后通知
+   - 与信号驱动的区别：信号驱动通知"可以读了"（同步），异步 IO 通知"已经读完"
+   - Linux AIO 实现有限，io_uring（Linux 5.1+）是真正的异步 IO
+
+select / poll / epoll 对比：
+- select：
+  - 最大 FD 数限制（1024，由 FD_SETSIZE 决定）
+  - 每次调用需要将 FD 集合从用户态复制到内核态
+  - 遍历所有 FD 检查就绪状态（O(N)）
+- poll：
+  - 没有最大 FD 数限制（基于链表）
+  - 仍然需要遍历所有 FD（O(N)）
+  - 同样需要复制到内核态
+- epoll（Linux 2.6+，推荐）：
+  - epoll_create → epoll_ctl → epoll_wait
+  - 只在首次注册时将 FD 事件注册到内核（不重复复制）
+  - 内核维护事件表，直接返回就绪的 FD 列表（O(1)，不遍历所有 FD）
+  - 支持边缘触发（Edge-Triggered）和水平触发（Level-Triggered）
+    - 水平触发（LT）：默认，只要未读完就持续通知
+    - 边缘触发（ET）：只在状态变化时通知一次（需要配合非阻塞 IO + 循环读取）
+
+扩展延伸：io_uring（Linux 5.1+）——基于共享内存的异步 IO 接口，避免系统调用开销。通过 sqe（Submission Queue Entry）提交请求，cqe（Completion Queue Entry）获取结果。io_uring 是 Linux 异步 IO 的未来方向。`,hints:[`5 种 IO 模型：阻塞（等）→ 非阻塞（轮询）→ 多路复用（select/poll/epoll）→ 信号驱动 → 异步（io_uring）`,`epoll = O(1) 事件通知 + 内核维护事件表（不重复复制）+ 边缘触发/水平触发`],tags:[`Linux`,`IO模型`,`epoll`,`多路复用`],content_hash:`5d8b1311ec24`,id:2844},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 文件系统`,content:`请介绍 Linux 文件系统的结构。inode 和 dentry 的区别是什么？硬链接和软链接（符号链接）的区别？df 显示的 Filesystem 使用率为什么和 du 计算的结果不一致？`,answer:`答案：Linux 文件系统由 inode、dentry 和数据块组成。
+
+inode（索引节点）：
+- 存储文件的元数据（不包括文件名！）
+- 文件类型、权限（rwx）、所有者、大小、时间戳（atime/mtime/ctime）
+- 数据块指针（直接指针 + 间接指针 + 双重间接指针）
+- inode 数量在格式化时固定（目录可存的文件数受 inode 数量限制）
+
+dentry（目录项）：
+- 文件名到 inode 的映射（目录的本质是 dentry 列表）
+- 一个 dentry 由一个文件名和一个 inode 号组成
+- 多个 dentry 可以指向同一个 inode（硬链接）
+- dentry 缓存在内存（dcache）中加速路径解析
+
+硬链接 vs 软链接：
+- 硬链接（ln target link_name）：多个文件名指向同一个 inode（inode 引用计数 +1）
+  - 不能跨文件系统（inode 号在文件系统内唯一）
+  - 不能链接目录（防止循环引用）
+  - 删除原文件不影响硬链接文件（引用计数减到 0 才删除数据）
+- 软链接/符号链接（ln -s target link_name）：
+  - 独立的文件（独立的 inode），内容是目标路径
+  - 可以跨文件系统、可以链接目录
+  - 原文件删除后软链接变成"dead link"
+
+df vs du 不一致的原因：
+- df 查看文件系统的 block 使用情况（从超级块读取，显示所有已分配的 block）
+- du 遍历目录树计算文件大小之和（只统计用户可见的文件）
+- 差异原因：
+  1. 已删除但仍在被进程持有的文件（进程打开文件句柄，文件未真正删除）
+     → df 显示已使用，du 不显示（文件已不在目录树中）
+  2. 超级块/日志/inode 等元数据占用的 block（df 统计，du 不统计）
+  3. 保留块（root 保留 5%，mkfs.ext4 -m 可调整）
+
+扩展延伸：ext4（默认，日志文件系统，支持 1EB+ 文件系统/16TB 单文件）→ XFS（大文件高性能，RHEL 7+ 默认）→ Btrfs（写时复制、快照、压缩）。VFS（虚拟文件系统层）——Linux 统一所有文件系统接口。tmpfs——基于内存的临时文件系统（/dev/shm）。`,hints:[`inode = 文件元数据（不含文件名），dentry = 文件名→inode 的映射`,`硬链接共享 inode（同一文件多个名字），软链接是独立的文件（存目标路径）`,`df > du 原因：已删但进程持有文件 + 元数据 + 保留块`],tags:[`Linux`,`文件系统`,`inode`,`硬链接`],content_hash:`096f5db5517c`,id:2845},{category:`linux`,difficulty:`easy`,type:`short_answer`,title:`Linux 性能分析工具`,content:`请介绍常用的 Linux 性能分析工具。如何定位 CPU 高、内存泄漏、IO 瓶颈和网络问题？top、vmstat、iostat、netstat、perf 的常用场景是什么？`,answer:`答案：Linux 性能分析遵循 USE 方法论（Utilization/Saturation/Errors）。
+
+CPU 问题：
+- top / htop：查看 CPU 使用率（us=用户态、sy=内核态、id=空闲、wa=IO 等待、st=偷取时间）
+- perf top：查看 CPU 热点函数（火焰图数据来源）
+- mpstat -P ALL：查看每个 CPU 核的使用率
+- 高 CPU 排查：top 找到高 CPU 进程 → top -Hp PID 找到高 CPU 线程 → perf 或 jstack 定位代码
+
+内存问题：
+- free -h：查看内存总量、已用、可用、Swap 使用
+- vmstat 1：每秒查看内存/CPU/IO 概要（si/so 表示换入/换出量，持续非 0 表示内存不足）
+- top 按 RES（常驻内存）排序：找到内存占用高的进程
+- /proc/PID/smaps：查看进程内存映射详情
+- valgrind / AddressSanitizer：检测内存泄漏（C/C++ 程序）
+
+IO 问题：
+- iostat -x 1：查看磁盘 IO（r/s=读次数、w/s=写次数、await=IO 平均耗时、%util=磁盘利用率）
+- iostat 的 %util 接近 100% 表示磁盘饱和（但对于 SSD 不完全准确，因为 SSD 可以并行处理请求）
+- iotop：按进程查看 IO 使用量
+- strace -e trace=file -p PID：跟踪进程的文件系统调用
+
+网络问题：
+- netstat -anp / ss -tup：查看网络连接状态（LISTEN/ESTABLISHED/TIME_WAIT）
+- sar -n DEV 1：查看网络接口的吞吐量
+- tcpdump：抓包分析（配合 Wireshark 或 tcpdump -w file.pcap）
+- ping / mtr / traceroute：排查网络延迟和丢包
+
+综合工具：
+- dstat：top + vmstat + iostat + netstat 的合体
+- atop：带历史记录的全面监控
+- bcc / bpftrace：基于 eBPF 的动态追踪（Brendan Gregg 主导）
+
+扩展延伸：火焰图（Flame Graph）——Brendan Gregg 发明的 CPU/内存/IO 热点可视化工具。perf record + perf script → FlameGraph 脚本生成 SVG。USE 方法论——Check Utilization（利用率）、Saturation（饱和度）、Errors（错误率）来快速定位瓶颈。`,hints:[`CPU 问题：top → perf top / perf record（生成火焰图）`,`内存问题：free -h + vmstat 1（si/so 换页）+ top 按 RES 排序`,`IO 问题：iostat -x 1（await/%util）+ iotop（按进程）`,`网络问题：netstat/ss（连接状态）+ tcpdump（抓包）`],tags:[`Linux`,`性能`,`工具`,`火焰图`],content_hash:`61d7d115a773`,id:2846},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 进程调度策略`,content:`请介绍 Linux 的进程调度策略（SCHED_OTHER/SCHED_FIFO/SCHED_RR）及其适用场景。`,answer:`答案：Linux 的进程调度策略分为普通进程和实时进程两大类。
+
+默认分时调度策略：
+
+1. SCHED_OTHER（SCHED_NORMAL）：
+   - 完全公平调度（CFS，Completely Fair Scheduler）
+   - 基于虚拟运行时间（vruntime）的红黑树
+   - 优先级由 nice 值控制（-20 ~ +19，默认 0）
+   - 分配时间片 = 公平共享 × nice 权重
+   - 适用：普通用户进程
+
+2. SCHED_BATCH：
+   - 类似 SCHED_OTHER，但更适合批量任务
+   - 更少唤醒抢占（减少上下文切换）
+   - 适用：批处理、后台编译
+
+3. SCHED_IDLE：
+   - 最低优先级，只在系统空闲时运行
+   - 适用：低优先级后台任务
+
+实时调度策略：
+
+1. SCHED_FIFO（先入先出）：
+   - 优先级范围 1-99（数值越大优先级越高）
+   - 一旦运行，除非被更高优先级抢占或主动让出 CPU
+   - 没有时间片限制（可以一直运行）
+   - 适用：需要严格实时响应的任务（如硬实时）
+
+2. SCHED_RR（轮转）：
+   - 类似 SCHED_FIFO，但有固定时间片
+   - 时间片用完后放回同优先级队列末尾
+   - 适用：同优先级进程都需要执行的实时场景
+
+3. SCHED_DEADLINE（3.14+）：
+   - 基于 EDF（Earliest Deadline First）算法
+   - 参数：周期、运行时间、截止时间
+   - 最严格的实时保证
+   - 适用：有明确截止时间要求的任务
+
+调度策略优先级：
+SCHED_DEADLINE > SCHED_FIFO/RR（实时）> SCHED_OTHER（普通）
+
+CFS 关键实现：
+- 红黑树按 vruntime 排序（最左侧的进程是最应该运行的）
+- vruntime 增长速率受 nice 权重影响
+- 调度周期：默认 6ms（桌面）到 0.75ms（服务器）× 进程数
+- 支持 CPU 亲和性（sched_setaffinity）
+
+扩展延伸：容器环境下的调度——CFS 配额（cpu.cfs_quota_us）用于限制容器 CPU 使用上限。K8s 的 CPU limit 底层就是通过 CFS 配额实现的。过度限制会导致进程被强制节流（Throttling）。`,hints:[`普通策略：SCHED_OTHER（CFS 完全公平，nice 控制优先级）、SCHED_BATCH（批量）、SCHED_IDLE（空闲）`,`实时策略：SCHED_FIFO（无时间片，严格优先级）、SCHED_RR（有时间片，轮转）、SCHED_DEADLINE（EDF）`,`K8s CPU limit 底层通过 CFS 配额（cfs_quota_us）实现`],tags:[`Linux`,`进程调度`,`CFS`,`实时调度`],content_hash:`daeb4142e1bd`,id:2847},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 零拷贝技术`,content:`请介绍 Linux 中的零拷贝技术（Zero Copy）及其实现方式（sendfile、mmap、splice）。`,answer:`答案：零拷贝技术用于减少数据在内核和用户空间之间的拷贝次数。
+
+传统 I/O 路径（4 次拷贝）：
+1. 磁盘 → 内核缓冲区（DMA）
+2. 内核缓冲区 → 用户缓冲区（CPU）
+3. 用户缓冲区 → Socket 缓冲区（CPU）
+4. Socket 缓冲区 → 网卡（DMA）
+
+共 4 次上下文切换（read/write 系统调用）和 4 次拷贝（2 次 DMA + 2 次 CPU）。
+
+零拷贝实现方式：
+
+1. sendfile：
+   - 直接从文件到 Socket 的传输
+   - 路径：磁盘 → 内核缓冲区（DMA）→ Socket 缓冲区 → 网卡（DMA）
+   - 减少到 2 次拷贝（全部 DMA，无需 CPU 拷贝）
+   - 适用：文件服务器（Nginx 静态文件）
+
+\`\`\`c
+// 从文件描述符直接发到 Socket
+ssize_t sendfile(int out_fd, int in_fd, off_t *offset, size_t count);
+\`\`\`
+
+2. mmap：
+   - 将文件映射到进程地址空间
+   - 路径：磁盘 → 内核缓冲区（DMA）→ 映射到用户地址空间 → Socket
+   - 比传统少一次 CPU 拷贝（内核到用户的拷贝被映射替代）
+   - 但写 Socket 时仍有一次 CPU 拷贝
+   - 适用：需要部分读写文件的场景
+
+3. splice：
+   - 在两个文件描述符之间移动数据（不经过用户空间）
+   - 路径：磁盘 → 内核缓冲区（DMA）→ pipe → Socket（DMA）
+   - 零 CPU 拷贝
+   - 适用：任意两个 fd 之间的数据传输
+
+4. 写时复制（COW）：
+   - 当多个进程共享相同内存页时
+   - 只在写入时才拷贝
+   - 减少不必要的拷贝
+
+实际应用中的零拷贝：
+- Nginx：sendfile on; 启用零拷贝静态文件服务
+- Kafka：利用 FileChannel.transferTo() 实现零拷贝
+- MySQL：O_DIRECT 绕过 PageCache（减少一次拷贝）
+
+扩展延伸：零拷贝技术的代价——sendfile 无法对数据做处理（如加密、压缩）。如果需要处理数据，必须经过用户空间。DPDK 实现了用户空间的网卡驱动（零拷贝 + 零中断），适用于极高吞吐场景（如核心网）。`,hints:[`传统 I/O：4 次拷贝（2 DMA + 2 CPU），零拷贝减少 CPU 拷贝`,`sendfile：磁盘→内核→Socket，CPU 零拷贝（Nginx 静态文件）`,`mmap：文件映射到用户空间，省一次 CPU 拷贝；splice：任意 fd 间零拷贝`],tags:[`Linux`,`零拷贝`,`sendfile`,`mmap`],content_hash:`23e025cd262d`,id:2848},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 网络协议栈与 epoll`,content:`请介绍 Linux 网络协议栈从网卡到应用的数据流以及 epoll 的实现原理。`,answer:`答案：理解网络数据从硬件到应用的路径是性能调优的基础。
+
+数据接收流程：
+
+1. 网卡接收：
+   - 数据到达网卡 → DMA 写入 Ring Buffer
+   - 网卡触发硬件中断（IRQ）
+
+2. 中断处理：
+   - 上半部（Top Half）：快速处理硬件中断（禁止中断嵌套）
+   - 下半部（Bottom Half / SoftIRQ）：执行实际的协议栈处理
+   - NAPI（New API）：合并多个中断为轮询模式（减少中断次数）
+
+3. 协议栈处理：
+   - IP 层：路由查找、IP 分片重组
+   - TCP 层：序列号检查、流量控制、拥塞控制
+   - 从 Socket 接收队列中取出数据
+
+4. 应用层读取：
+   - 通过系统调用（read/recv/epoll_wait）
+   - 数据从内核缓冲区拷贝到用户态缓冲区
+
+eventpoll（epoll）实现原理：
+
+数据结构：
+- epoll 实例维护三个结构：
+  1. 红黑树（rbr）：存储所有注册的文件描述符
+  2. 就绪链表（rdllist）：存储有事件发生的 fd
+  3. wait queue：等待 epoll_wait 的进程
+
+核心操作：
+1. epoll_create：创建 epoll 实例
+2. epoll_ctl：向红黑树注册/修改/删除 fd
+   - EPOLL_CTL_ADD：将 fd 加入红黑树
+   - 注册回调函数（当 fd 有事件时，回调将 fd 加入就绪链表）
+3. epoll_wait：
+   - 如果就绪链表非空 → 直接返回（不阻塞）
+   - 如果就绪链表为空 → 当前进程加入 wait queue 休眠
+   - 唤醒条件：事件到达（fd 有数据可读/写）
+
+触发模式：
+- LT（水平触发）：fd 还有未读数据就继续通知（默认安全）
+- ET（边缘触发）：只在状态变化时通知一次（高性能，需非阻塞 I/O）
+
+扩展延伸：SO_REUSEPORT 支持多进程监听同一端口（内核级负载均衡）。RPS（Receive Packet Steering）将软中断分到多个 CPU 核心。XDP（eXpress Data Path）在网卡驱动层直接处理数据包（绕过协议栈），适用于 DDoS 防护和负载均衡。`,hints:[`接收路径：网卡 DMA → 中断（NAPI 轮询）→ 协议栈（IP/TCP）→ Socket 队列 → 应用系统调用`,`epoll 三结构：红黑树（注册 fd）+ 就绪链表（有事件 fd）+ 等待队列（休眠进程）`,`LT 模式（水平触发，安全默认）vs ET 模式（边缘触发，需非阻塞 I/O 配合）`],tags:[`Linux`,`epoll`,`网络协议栈`,`NAPI`],content_hash:`c9f4a48cd314`,id:2849},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux cgroup 资源隔离`,content:`请介绍 Linux cgroup（v1/v2）的资源隔离机制及其在容器化中的应用。`,answer:`答案：cgroup（Control Groups）是 Linux 内核的资源隔离和限制机制，是容器技术的基石。
+
+cgroup v1：
+
+子系统（每个资源类型独立层级树）：
+- cpu：CPU 时间分配（CFS 配额、权重）
+- cpuacct：CPU 使用统计
+- memory：内存限制和统计
+- blkio：块设备 I/O 限制
+- devices：设备访问控制
+- net_cls：网络流量分类
+- pids：进程数限制
+- freezer：进程冻结/恢复
+
+问题：
+- 层级树不统一（每个子系统一个树）
+- 管理复杂（多个挂载点）
+- 控制器间的进程归属可能冲突
+
+cgroup v2（4.5+，5.2 后推荐）：
+
+统一层级树（Single Hierarchy）：
+- 所有控制器在同一个层级树中
+- 通过 /sys/fs/cgroup 统一挂载
+
+关键改进：
+\`\`\`
+/sys/fs/cgroup/
+├── cpu.max           # CPU 配额（类似 v1 的 cpu.cfs_quota_us）
+├── memory.max        # 内存上限
+├── memory.current    # 当前内存使用
+├── io.max            # I/O 限制
+├── pids.max          # 进程数限制
+└── cgroup.controllers # 该节点可用的控制器列表
+\`\`\`
+
+改进点：
+- 写时回传（Writeback）：脏页回写计入正确的 cgroup
+- 统一统计：内存统计包含内核内存和用户内存
+- PSI（Pressure Stall Information）：资源压力信息（cpu.pressure, memory.pressure, io.pressure）
+
+在容器化中的应用：
+
+Docker：
+- --cpus：CPU 限制（通过 CFS 配额）
+- --memory：内存限制（通过 memory cgroup）
+- --device-write-bps：磁盘写入限速
+
+Kubernetes：
+- CPU request/limit → cgroup cpu.weight / cpu.max
+- Memory request/limit → cgroup memory.min / memory.max
+- Guaranteed/Burstable/BestEffort QoS 类 → 不同 cgroup 配置
+
+关键配置：
+- memory.min（v2）：保证最小可用内存
+- memory.high（v2）：触发内存回收的水位线
+- memory.swap.max（v2）：swap 上限
+
+扩展延伸：PSI（Pressure Stall Information）是 cgroup v2 的重要特性——通过 /proc/pressure/{cpu,memory,io} 可以查看系统是否在等待资源。当 memory.pressure > 0.5 时，说明系统在频繁回收内存，需要增加内存限制或优化内存使用。`,hints:[`cgroup v1：多层级树（每个子系统独立），管理复杂`,`cgroup v2：统一层级树（/sys/fs/cgroup），写回传、PSI 压力信息，推荐使用`,`K8s 底层：CPU request/limit → cgroup cpu.weight/cpu.max；Memory → memory.min/memory.max`],tags:[`Linux`,`cgroup`,`容器`,`资源隔离`],content_hash:`aa49cb2cf50d`,id:2850},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 文件权限与 ACL`,content:`请解释 Linux 文件权限模型（Owner/Group/Other）和 ACL 扩展权限。`,answer:`答案：Linux 传统文件权限基于 User-Group-Other 三元组 + rwx 权限位，ACL 提供更细粒度的控制
+
+解析：传统权限：每个文件有 12 个权限位（3 位 suid/sgid/sticky + 9 位 rwx 分别对应 owner/group/other）。rwx 对文件含义：r（读内容）、w（修改内容）、x（执行文件）；对目录含义：r（列出目录内容）、w（创建/删除目录内文件）、x（进入目录）。chmod 用数字模式（如 755 = rwxr-xr-x）或符号模式（u+x）设置。umask 控制新建文件的默认权限（文件 666-umask，目录 777-umask）。ACL 通过 setfacl/getfacl 设置：setfacl -m u:alice:rwx file（对特定用户 alice 设置权限）、setfacl -m g:devteam:rx file（对组设置）。ACL 通过 ACL mask 限制最大权限。
+
+扩展延伸：特殊权限：SUID（chmod u+s）— 运行时以文件所有者的身份执行（如 /usr/bin/passwd 普通用户也能改密码）；SGID（chmod g+s）— 文件上表示运行时以文件组身份执行，目录上表示该目录下新建文件继承目录的组；Sticky Bit（chmod o+t）— 目录下只有文件所有者和 root 才能删除文件（如 /tmp）。文件属性（chattr）：+i 不可修改（包括 root 也不能删）、+a 只追加（日志安全）。lsattr 查看。安全增强：SELinux（强制访问控制，通过安全上下文标签策略限制进程对文件的访问）和 AppArmor（路径级 MAC）。chmod 的局限性：无法对单个用户/组分配权限，大规模团队共享目录时必须用 ACL 或 LDAP 统一管理。`,hints:[`SUID 权限的安全风险是什么`,`chmod 和 ACL 的适用边界在哪里`],tags:[`Linux`,`权限`,`ACL`],content_hash:`1b36b84f8cfb`,id:2851},{category:`linux`,difficulty:`medium`,type:`choice`,title:`Linux 进程状态`,content:`以下哪个 Linux 进程状态表示进程在等待 I/O 完成？`,options:[`A) S（Interruptible Sleep）`,`B) D（Uninterruptible Sleep）`,`C) R（Running/Runnable）`,`D) T（Stopped）`],answer:`B) D（Uninterruptible Sleep）
+
+解析：Linux 进程的核心状态——R（Running/Runnable）：正在运行或可运行（在运行队列中）。S（Interruptible Sleep）：可中断睡眠，等待某条件满足（如 I/O 完成），收到信号可唤醒。D（Uninterruptible Sleep）：不可中断睡眠，通常在等待内核 I/O（如磁盘读写），此状态下进程不响应信号（包括 SIGKILL）。T（Stopped）：暂停，收到 SIGSTOP/SIGTSTP 信号后进入。Z（Zombie）：僵尸进程，子进程已结束但父进程未调用 wait() 获取退出状态。题目问「等待 I/O 完成」——D 状态是最准确的答案，因为 S 状态虽然也在等待，但可被信号中断。`,hints:[`D 状态（不可中断睡眠）通常意味着进程在内核态等待 IO 完成`],tags:[`Linux`,`进程`,`状态`],content_hash:`d47a5b92f089`,id:2852},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 文件系统 VFS`,content:`请解释 Linux 虚拟文件系统（VFS）的架构和作用。`,answer:`答案：VFS 是 Linux 内核的抽象层，为上层应用提供统一的文件操作接口，屏蔽底层具体文件系统差异
+
+解析：VFS 定义了通用文件模型，核心对象：1）super_block — 已挂载文件系统的信息（类型、大小、操作函数指针等）2）dentry（目录项）— 路径名和 inode 的映射，缓存目录结构，dcache 加速路径解析 3）inode — 文件的元数据（权限、所有者、大小、数据块位置，不包含文件名）4）file — 打开的文件描述符状态（当前读写位置、打开模式）。VFS 将系统调用（如 read/write/open）转发到具体文件系统（如 ext4、XFS、tmpfs）的实现函数。文件系统通过注册超级块操作（super_operations）和 inode 操作（inode_operations）嵌入 VFS。
+
+扩展延伸：VFS 的页缓存（page cache）：VFS 层为所有基于文件的 IO 提供统一的缓存机制，减少磁盘访问。数据先写入 page cache，内核按需或定期刷到磁盘（通过 bdflush/pdflush/flusher 线程）。Dentry Cache（dcache）缓存路径名到 dentry 的解析结果，下次访问同一路径直接命中。inode 缓存缓存在内存中减少磁盘读取 inode 表。/proc 和 /sys 也是基于 VFS 实现的虚拟文件系统——不占用磁盘空间，文件和目录在内核中动态生成。FUSE（用户空间文件系统）允许在用户态实现文件系统（通过 libfuse + 内核 FUSE 模块），如 s3fs（挂载 S3）、rclone mount。FUSE 的瓶颈是用户态/内核态切换开销，只适合 IOPS 要求不高的场景。`,hints:[`VFS 的 dentry 和 inode 缓存分别解决什么问题`,`FUSE 文件系统的性能瓶颈在哪里`],tags:[`Linux`,`VFS`,`文件系统`],content_hash:`6451a30634ab`,id:2853},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux PID/Network/Mount 命名空间隔离原理`,content:`Linux 的命名空间（Namespace）是实现容器隔离的基础。请分别解释 PID Namespace、Network Namespace、Mount Namespace 的隔离机制。容器启动时这些命名空间是如何创建的？`,answer:`答案：PID Namespace 隔离进程 ID（容器内只能看到自己的进程），Network Namespace 隔离网络栈（容器有自己的网络接口和路由表），Mount Namespace 隔离挂载点（容器有自己的文件系统视图）。容器运行时（如 runc）通过 clone() 系统调用并传入 CLONE_NEWPID|CLONE_NEWNET|CLONE_NEWNS 等标志创建隔离环境。
+
+解析：1）PID Namespace——在 PID Namespace 内，进程的 PID 从 1 开始（init 进程）。子 Namespace 中的进程在父 Namespace 中有映射的 PID。init 进程（PID=1）负责回收僵尸进程。使用 unshare(CLONE_NEWPID) 创建新 PID 命名空间。特点：容器内看不到宿主机进程，宿主机可以看到容器内所有进程。
+
+2）Network Namespace——每个 Network Namespace 有独立的网络接口（lo/eth0）、IP 地址、路由表、iptables/ nftables 规则。容器网络通过 veth pair（虚拟网卡对）连接到宿主机网桥（docker0/cni0）。NR = CLONE_NEWNET。容器通信通过网桥转发或 Overlay 网络（VXLAN）。
+
+3）Mount Namespace——隔离文件系统的挂载点。容器启动时使用 rootfs（镜像层 + 可写层）作为根文件系统，通过 pivot_root 或 chroot 切换到新的根。/proc 和 /sys 等虚拟文件系统也会重新挂载。Mount Propagtion：shared/slave/private/unbindable 控制挂载事件是否传播到其他 Namespace。
+
+扩展延伸：4）各 Namespace 的创建方式——clone()：创建新进程并指定命名空间标志。unshare()：将当前进程移出到新命名空间。setns()：将进程加入已存在的命名空间。5）完整隔离的容器需要 6+2 个命名空间：PID/Network/Mount/UTS（主机名）/IPC（进程间通信）/User（用户 ID）+ cgroup v2 Namespace + Time Namespace。6）注意——User Namespace 的 ID 映射（uid_map/gid_map）允许容器内以 root（uid=0）运行但实际映射到宿主机非特权用户，增加安全性。`,hints:[`PID Namespace 中 PID=1 的进程在容器中的特殊角色是什么`,`veth pair 如何实现容器和宿主机之间的网络通信`],tags:[`Linux`,`Namespace`,`容器`,`隔离`,`PID`,`Network`],content_hash:`46aae83a7aff`,id:2854},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`systemd 单元依赖关系与启动顺序管理`,content:`systemd 如何管理单元（Unit）之间的依赖关系和启动顺序？Unit 的 After/Before/Requires/Wants/PartOf 等指令的区别是什么？如何处理循环依赖？systemd 的并行启动是如何实现的？`,answer:`答案：systemd 通过声明式依赖指令在 Unit 文件中定义启动顺序和执行条件。After/Before 控制启动顺序（时序依赖），Requires/Wants 控制依赖关系（功能性依赖），PartOf 控制集合关系。systemd 使用事务解决依赖关系，在激活一个 Unit 时自动激活其依赖项，遇到循环依赖时触发冲突检测并报错。并行启动通过解析依赖 DAG 图，无依赖关系的 Unit 并行启动（默认同时启动多个服务）。
+
+解析：1）时序依赖 vs 功能依赖——After=network.target：本服务在 network.target 之后启动（不要求 network.target 必须启动）。Requires=postgresql.service：本服务需要 postgresql.service 一起启动（如果 postgresql 启动失败，本服务也会失败）。Wants=redis.service：本服务希望 redis 一起启动但非必需（redis 启动失败本服务仍可启动）。
+
+2）常见指令——Before：在指定 Unit 之前启动（反向的 After）。Requires：强依赖——指定 Unit 必须随本 Unit 一起启动/停止。Wants：弱依赖——建议一起启动但不强制。BindsTo：更强版的 Requires——指定 Unit 停止时本 Unit 也必须停止。PartOf：本 Unit 是集合的一部分，集合停止时本 Unit 也停止。Conflicts：冲突关系——本 Unit 激活时会自动停止冲突的 Unit。
+
+3）并行启动实现——systemd 将所有 Unit 构建为 DAG（有向无环图），依赖边决定启动顺序。没有依赖关系或依赖关系中前置条件满足的 Unit 可以同时启动（利用 Linux 的 fork 并发能力）。systemd 默认根据 CPU 核数创建并行任务队列。
+
+扩展延伸：4）调试命令——systemd-analyze：查看启动时间和关键链。systemd-analyze blame：按启动耗时排序。systemd-analyze critical-chain：找出启动顺序中的关键链路。systemctl list-dependencies：查看 Unit 的依赖关系。5）循环依赖处理——systemd 会检测循环依赖，将循环链路中的某个依赖降级为 Wants（弱依赖）来打破循环。设计原则：尽量减少显式依赖，使用 target（network.target、multi-user.target）作为依赖点。6）Socket 激活——systemd 支持 Socket 激活（监听端口），服务进程还没启动时 socket 由 systemd 监听，请求到达时 systemd 启动服务并传递 socket 文件描述符（实现按需启动）。`,hints:[`After 和 Requires 在系统启动中的行为有什么不同——时序 vs 功能依赖`,`systemd-analyze critical-chain 如何帮助定位启动瓶颈`],tags:[`Linux`,`systemd`,`启动管理`,`依赖关系`],content_hash:`33567058f30c`,id:2855},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux OOM Killer 评分机制与进程选择算法`,content:`当 Linux 系统内存不足时，OOM Killer 如何选择要杀死的进程？oom_score 和 oom_score_adj 是如何计算的？如何保护关键进程不被 OOM Killer 误杀？swap 耗尽是否也会触发 OOM Killer？`,answer:`答案：OOM Killer 在系统内存严重不足（包括物理内存 + swap 耗尽）且无法通过内存回收释放足够内存时触发。选择目标进程的依据是 oom_score（分数最高的进程被选中）。oom_score 综合考虑进程的 RSS（驻留内存）、swap 使用量、页表大小、进程运行时长、进程的 root 权限等因素。通过 oom_score_adj（范围 -1000 到 +1000）可以人为调整进程被选中的权重。
+
+解析：1）oom_score 的计算——内核的 badness() 函数计算：基础来自进程的 RSS + swap 使用 + 页表大小（以物理内存页为单位）。运行时间越长，分数越低（/18 衰减）。Root 进程分数略低（/4 衰减）。子进程多的进程分数更高（因为杀死一个进程会连带杀死所有子进程）。内核中 oom_badness() 函数的简化逻辑：points = (total_vm / 100) * oom_score_adj 调整 + rss + swap + pgtables。
+
+2）oom_score_adj——/proc/PID/oom_score_adj 文件控制。值范围 -1000 到 +1000。设置为 -1000 表示完全禁用 OOM Killer 对该进程的杀死（OOM_DISABLE）。设置 +1000 表示优先杀死该进程。常用：系统关键服务（sshd/docker/critical app）设置 -500 到 -1000。调试/测试进程可设置 +500。
+
+3）触发条件——内核在 __alloc_pages_nodemask() 中多次重试分配内存失败后调用 out_of_memory()。检查 /proc/<pid>/oom_score 查看当前得分。/var/log/messages 或 dmesg 中记录 OOM Killer 的日志（被杀死的进程名、分数、内存使用、CPU 等信息）。
+
+扩展延伸：4）保护策略——设置 oom_score_adj = -1000（完全保护）。设置 vm.swappiness=1（尽量少用 swap，减少 OOM 触发概率）。关闭 overcommit（vm.overcommit_memory=2），保证内存分配不会超过实际可用内存的某个比例（除非应用显式请求）。5）内核参数——panic_on_oom：触发 OOM 时直接 panic 重启系统（而不是杀死进程），用于关键系统。oom_kill_allocating_task：杀死触发 OOM 的当前进程而非全局评分最高者。6）OOM 的预防——设置 cgroup 的 memory.max 限制容器的内存使用上限。使用 Memory Limits 和 Reservations（K8s requests/limits）。监控内存使用趋势（Prometheus + 告警），在 OOM 发生前扩容或优化。`,hints:[`oom_score_adj = -1000 和不设置 oom_score_adj 在 OOM Killer 决策时的区别是什么`,`vm.swappiness 参数如何影响 OOM Killer 触发的频率`],tags:[`Linux`,`OOM Killer`,`内存管理`,`进程保护`],content_hash:`ba175f628c1d`,id:2856},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 文件描述符限制`,content:`解释 Linux 文件描述符（File Descriptor）的限制机制。系统级（fs.file-max）和进程级（ulimit -n）的 soft/hard 限制分别是什么？如何诊断 FD 耗尽问题？如何正确修改限制？`,answer:"答案：Linux 文件描述符限制有三层：\\n\\n1. 系统级限制：\\n- 内核参数 fs.file-max：整个系统能打开的 FD 总数。\\n- 查看：`sysctl fs.file-max` 或 `cat /proc/sys/fs/file-nr`（第一列是已分配数，第三列是上限）。\\n- 修改：`sysctl -w fs.file-max=1000000` 或写入 `/etc/sysctl.conf`。\\n\\n2. 进程级限制（ulimit -n）：\\n- Soft Limit（当前限制）：`ulimit -Sn`，进程当前可用的最大 FD 数。可以调高到 Hard Limit。\\n- Hard Limit（最大限制）：`ulimit -Hn`，进程可设置的上限。\\n- 查看进程限制：`cat /proc/<PID>/limits`。\\n\\n3. 配置方法：\\n- 用户级别：`/etc/security/limits.conf`（如 `* soft nofile 65536`）。\\n- systemd 服务：Unit 文件中 `LimitNOFILE=65536`。\\n- 容器级别：`--ulimit nofile=65536:65536`（Docker）。\\n\\nFD 耗尽症状：\\n- 应用日志：「Too many open files」。\\n- 新的网络连接失败，文件打不开。\\n- `lsof -p <PID> | wc -l` 查看进程 FD 数。\\n\\n常见原因：\\n- 高并发连接（网络服务器）。\\n- 连接泄漏（未正确 close）。\\n- 大量日志文件句柄未释放。\\n- 线程池实现的连接管理不当。\\n\\n诊断工具：\\n- `lsof -p <PID>`：列出所有打开的文件。\\n- `fuser`：查看文件被哪些进程使用。\\n- `/proc/sys/fs/file-nr`：系统 FD 使用统计。\\n- `strace -e trace=open,openat,close -p <PID>`：追踪 FD 操作。",hints:[`soft limit 和 hard limit 的区别是什么`,`检查系统当前已分配的 FD 总数使用什么命令`],tags:[`Linux`,`文件描述符`,`系统调优`,`ulimit`],content_hash:`c60e05d40ccd`,id:2857},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`iptables 规则链`,content:`解释 iptables 中 packet 在 filter 和 nat 表的规则链中的完整遍历路径。Pre-routing、Input、Forward、Output、Post-routing 五条链分别处理什么时机？规则的匹配顺序是什么？`,answer:"答案：iptables 数据包遍历路径：\\n\\n入站包（发往本机）：\\nPREROUTING (raw/mangle/nat) → INPUT (mangle/filter) → 本地进程\\n\\n转发包（路由器模式）：\\nPREROUTING (raw/mangle/nat) → FORWARD (mangle/filter) → POSTROUTING (mangle/nat)\\n\\n出站包（本机发出）：\\nOUTPUT (raw/mangle/nat/filter) → POSTROUTING (mangle/nat)\\n\\n各链功能：\\n1. PREROUTING：包到达网络接口后最先经过，用于 DNAT（端口转发、负载均衡）、报文修改。\\n2. INPUT：发往本机的包经过，用于本地服务的安全控制。\\n3. FORWARD：经本机转发的包经过，用于路由/NAT 场景的安全控制。\\n4. OUTPUT：本机发出的包经过，用于出站控制。\\n5. POSTROUTING：路由决策后，包离开前，用于 SNAT/MASQUERADE。\\n\\n规则匹配顺序：\\n- 同一链内规则按顺序匹配，匹配即执行（ACCEPT/DROP/REJECT 等），后续规则不再处理。\\n- 默认策略（Default Policy）：如果所有规则都不匹配，使用链默认策略（ACCEPT 或 DROP）。\\n- 对于同一个表，同一链内的规则有序；对于不同表，按 table priority 顺序（raw > mangle > nat > filter）。\\n\\n连接跟踪（conntrack）：\\n- `-m state --state ESTABLISHED,RELATED`：允许已建立连接和关联连接的返回包。\\n- 典型规则：`iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT`。\\n- 使防火墙对出站连接的返回包自动放行，无需手动编写对应规则。\\n\\n最佳实践：\\n- filter INPUT 默认 DROP，显式允许必要端口。\\n- 利用 `-m conntrack` 做状态防火墙。\\n- 定期保存 `iptables-save > /etc/iptables/rules.v4`。",hints:[`一个从外部访问本机 80 端口的 TCP 包依次经过哪些链`,`-m state --state ESTABLISHED,RELATED 解决了什么问题`],tags:[`Linux`,`iptables`,`网络安全`,`网络`],content_hash:`4a58e59411ff`,id:2858},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`系统调用上下文切换开销`,content:`解释 Linux 系统调用（System Call）的上下文切换开销。从用户态切换到内核态涉及哪些成本？包括寄存器保存/恢复、TLB 刷新、缓存污染、Spectre/Meltdown 缓解措施的影响。如何通过 io_uring 缓解系统调用开销？`,answer:`答案：系统调用上下文切换开销：\\n\\n1. 模式切换成本：\\n- CPU 从 Ring 3（用户态）切换到 Ring 0（内核态），权限级别变化。\\n- 切换堆栈（从用户栈切换到内核栈）。\\n- 保存和恢复通用寄存器。\\n\\n2. TLB 刷新：\\n- 传统上，切换到内核态需要刷新 TLB（用户地址空间 → 内核地址空间）。\\n- PCID（Process Context IDentifiers）：允许用户和内核地址的 TLB entry 共存，减少刷新量。\\n- KPTI（Kernel Page Table Isolation）：Meltdown 缓解措施，但仍增加了 TLB 开销。\\n\\n3. 缓存污染：\\n- 内核代码/数据会驱逐用户空间的 L1/L2 缓存行。\\n- 返回用户态后，用户程序需要重新加载热数据，造成缓存未命中。\\n\\n4. Spectre/Meltdown 缓解：\\n- KPTI：用户态 → 内核态切换时刷新 TLB，增加 ~30-50% 系统调用开销。\\n- Retpoline：间接分支预测的安全替代方案，会增加分支预测开销。\\n\\n开销测量：\\n- 一次简单的 gettimeofday() 系统调用约 50-200ns（现代硬件）。\\n- 更复杂的系统调用（如 read/write）在 200-1000ns 范围。\\n\\nio_uring 缓解方案：\\n- 原理：通过内核和用户共享的环形缓冲区（Submission Queue + Completion Queue）提交 IO 请求和获取结果。\\n- 大多数 IO 操作无需 enter 系统调用（仅在需要内核介入时使用）。\\n- 批量提交：一次系统调用可提交多个 IO 请求。\\n- 零拷贝：共享缓冲区避免数据拷贝。\\n- 适合：高 IOPS 场景（数据库、文件服务器、消息队列）。\\n\\n其他缓解措施：\\n- 批处理系统调用（readv/writev 合并多个 IO）。\\n- 使用 eBPF 将部分逻辑下放到内核执行。\\n- 使用 VDSO（Virtual Dynamic Shared Object）减少常见系统调用（如 gettimeofday、clock_gettime）的上下文切换。`,hints:[`KPTI 为什么增加了系统调用的开销`,`io_uring 如何实现在大多数 IO 操作中避免系统调用`],tags:[`Linux`,`系统调用`,`性能`,`内核`],content_hash:`c9b8322846d3`,id:2859},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`mmap 与 brk 堆分配`,content:`解释 Linux 进程内存分配中 mmap 和 brk/sbrk 的区别。glibc 的 malloc 如何在这两种分配方式之间选择？什么是 MMAP_THRESHOLD？线程本地 Arena 如何减少锁竞争？`,answer:`答案：Linux 堆内存分配机制：\\n\\nbrk/sbrk：\\n- 通过移动 Program Break（程序断点）改变数据段大小。\\n- 分配连续地址空间的堆内存。\\n- 适合小内存分配——开销低、地址连续、局部性好。\\n\\nmmap：\\n- 通过映射匿名页面分配独立内存区域。\\n- 内存不连续，不受堆扩展限制。\\n- 释放时立即归还给系统（munmap）。\\n- 适合大内存分配。\\n\\nglibc malloc 分配策略（ptmalloc）：\\n1. Fastbin：极小分配（<= global_max_fast，默认 ~64B），LIFO 策略，不合并。\\n2. Small/Large Bins：从主 Arena 或 Thread-Local Arena 分配的 bin 中查找。\\n3. Top Chunk（主堆顶）：大块分配从堆顶切分。\\n4. mmap（MMAP_THRESHOLD，默认 128KB 以上）：超过阈值的分配直接用 mmap。\\n\\nMMAP_THRESHOLD：\\n- 默认 128KB。\\n- 可动态调整（根据 mmap 和 brk 的使用模式自适应）。\\n- 调低阈值：减少堆碎片但增加系统调用频率。\\n- 调高阈值：减少 mmap 数量和系统调用次数但可能增加堆碎片。\\n\\n线程本地 Arena：\\n- 多线程场景下，多个线程同时 malloc 会造成主 Arena 的锁竞争。\\n- ptmalloc 为每个线程创建独立的 Arena（最多 2 * CPU核数 + 1 个，64 位系统默认为 64）。\\n- 每个线程优先从自己的 Arena 分配内存，减少锁冲突。\\n- Arena 之间不能直接共享已分配内存，但 free 时可以释放到任意 Arena。\\n- 每个 Arena 使用 mmap 分配子堆（Subheap，默认 64MB 区域）。\\n\\n注意：Arena 数量上限（per-thread arenas）有限，超出后线程会共享 Arena。`,hints:[`mmap 分配的阈值默认是多少？释放后有何行为差异`,`多线程 malloc 为什么会使用 Thread-Local Arena`],tags:[`Linux`,`内存分配`,`mmap`,`brk`,`glibc`,`ptmalloc`],content_hash:`6ef7f005249f`,id:2860},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux 虚拟内存与缺页中断处理`,content:`请说明 Linux 虚拟内存地址空间布局、MMU 分页机制、缺页中断（Page Fault）的几种类型以及处理流程。OOM Killer 在什么时候被触发？如何选择被 kill 的进程？`,answer:`答案：Linux 虚拟内存将进程地址空间分为内核空间（高地址）和用户空间（低地址），通过 MMU 将虚拟地址映射到物理地址。缺页中断（Page Fault）分为三种类型：Major（页不在内存，需磁盘 I/O 读入）、Minor（页在内存但未建立映射）、Invalid（访问非法地址导致段错误）。OOM Killer 在系统物理内存耗尽且无法通过内存回收满足申请时触发，通过 oom_badness 打分选择要 kill 的进程。
+
+解析：虚拟地址空间布局（x86-64 典型）：用户空间 0x0000000000000000-0x00007fffffffffff（约 128TB），内核空间 0xffff800000000000 以上。用户态通过页表（Page Table）多级映射（x86-64 使用 4 级页表）访问物理内存，各段包含：Text（代码段）、Data（全局/静态变量）、Heap（堆）、Memory Mapping（mmap 映射区）、Stack（栈）。缺页中断处理流程：1）MMU 发现页表项的 Present 位为 0，触发缺页异常。2）内核检查虚拟地址是否合法。3）如果是 Minor Fault——页已在 swap/page cache 中但页表未建立映射，只需建立映射即可。4）如果是 Major Fault——页不在内存中，需要从磁盘读取（swap 换入或文件 mmap 读取），进程被阻塞等待 I/O 完成。
+
+扩展延伸：OOM Killer 触发条件——当 /proc/sys/vm/overcommit_memory=0（默认）时，内核允许一定程度的内存超卖（overcommit）。当物理内存+swap 耗尽且无法直接回收时，触发 OOM Killer。打分标准：进程占用的内存量（越大分越高）、运行时间（越短分越高）、是否是 root 进程（加分）。通过 /proc/PID/oom_score 查看当前分数，oom_score_adj（-1000 到 1000）可手动调整优先级。调优建议：设置 vm.overcommit_memory=2（禁止 overcommit，malloc 时严格检查）避免 OOM Killer 触发；调整 oom_score_adj 保护重要进程（如设置 -1000 让 OOM Killer 永不 kill）。注意：OOM Killer 只解决内核无法分配内存的问题，不能解决内存泄漏——需要配合监控工具（如 top/htop/vmstat）定位泄漏源。`,hints:[`Major Page Fault 和 Minor Page Fault 对性能的影响差异`,`OOM Killer 如何通过 oom_score_adj 保护关键进程`],tags:[`Linux`,`虚拟内存`,`MMU`,`缺页中断`,`OOM Killer`],content_hash:`0064f59ec939`,id:2861},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux 进程间通信（IPC）机制对比`,content:`Linux 提供了多种进程间通信（IPC）机制：管道（Pipe）、消息队列（Message Queue）、共享内存（Shared Memory）、信号量（Semaphore）、信号（Signal）、Socket。请说明这些机制的通信模式和各自的适用场景。`,answer:`答案：Linux IPC 机制可分为三类：数据传输（管道、消息队列、Socket）、共享内存（Shared Memory + 信号量做同步）、信号驱动（Signal）。不同的 IPC 机制在传递数据量、通信速度和编程复杂度上有显著差异。
+
+解析：1）管道（Pipe）——半双工通信，父子进程间使用（匿名管道），任意两个进程间使用（命名管道/FIFO）。数据流模型，无消息边界。适用：简单的数据流传输（如 shell 命令的 | 操作）。2）消息队列（POSIX/System V）——有消息边界，支持优先级。数据在内核空间传递（需要两次拷贝：用户→内核→用户）。适用：需要消息边界的少量数据传输。3）共享内存（SHM，POSIX/System V）——多个进程共享同一物理内存页，不需要系统调用传递数据（最快 IPC）。需配合信号量或互斥锁同步。适用：大量数据的高速共享（如数据库缓冲池、视频帧共享）。4）信号量（Semaphore）——不是数据传输 IPC，而是同步原语（解决进程间对共享资源的互斥访问）。支持 P/V 操作。5）信号（Signal）——异步事件通知机制，但携带信息量极少（仅信号编号），且信号处理函数存在重入问题。适用：进程终止通知、定时器到期、用户态中断。6）Socket——支持本地通信（Unix Domain Socket）和远程通信（TCP/UDP Socket）。Unix Domain Socket 使用文件系统路径作为地址，数据传输直接在内核中完成（不经过网络协议栈），性能优于 TCP Socket。
+
+扩展延伸：性能对比（单机场景，从快到慢）：共享内存 > Unix Domain Socket > TCP Socket (localhost) > 管道 > 消息队列 > 信号。并发场景的选择原则：需要进程间共享大块数据→共享内存 + 信号量；需要可靠的字节流通信→Unix Domain Socket（兼具性能和灵活性）；需要简单父子进程数据流→匿名管道；需要事件通知→信号或 eventfd。注意：共享内存虽然最快，但需要自行处理同步和并发访问的复杂性。epoll 配合 Unix Domain Socket 是实现高性能本地 IPC 的推荐组合。`,hints:[`共享内存为什么是最快的 IPC 机制`,`Unix Domain Socket 为什么比 TCP Loopback 更快`],tags:[`Linux`,`IPC`,`共享内存`,`管道`,`Socket`],content_hash:`863f6404d04c`,id:2862},{category:`linux`,difficulty:`medium`,type:`choice`,title:`Linux 进程与线程的实现`,content:`在 Linux 中，关于进程与线程的实现机制，以下描述正确的是？`,options:[`A) Linux 内核在 task_struct 中区分进程和线程类型，使用不同的调度策略`,`B) 同一进程中的多个线程完全共享地址空间、文件描述符和信号处理，任何线程崩溃都会导致整个进程退出`,`C) Linux 的线程本质上是轻量级进程（LWP），通过 clone 系统调用创建，调用时传递 CLONE_VM/CLONE_FILES/CLONE_SIGHAND 等标志共享资源`,`D) Linux 线程之间的上下文切换开销远大于进程之间的上下文切换`],answer:`C)。解析：Linux 内核不区分进程和线程——两者都用 task_struct 表示。线程（LWP）通过 clone 系统调用创建，传入 CLONE_VM（共享地址空间）、CLONE_FILES（共享文件描述符表）、CLONE_SIGHAND（共享信号处理）等标志。A) 错，内核统一视作 task，调度策略是普适的（不区分进程/线程）。B) 错，同一进程的线程共享地址空间、fd、信号处理等，但一个线程崩溃（比如 SIGSEGV）默认会使整个进程退出——不是「任何」崩溃都会导致进程退出，取决于信号处理。D) 错，线程切换（同进程内）比进程切换快得多——因为不需要切换地址空间（MMU TLB 不必刷新），上下文切换开销更小。Linux 线程通过 NPTL（Native POSIX Thread Library）实现，遵守 1:1 线程模型（一个用户线程对应一个内核 task）。`,hints:[`clone 系统调用的 flags 如何控制父子进程之间的资源共享程度`,`为什么线程切换比进程切换快——同进程内线程切换不需要切换 CR3（页表基址），TLB 不必刷新`],tags:[`Linux`,`进程`,`线程`,`LWP`,`clone`],content_hash:`cd79e527e5ed`,id:2863},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 虚拟内存与缺页中断详解`,content:`Linux 进程的虚拟地址空间如何通过多级页表映射到物理内存？x86_64 的四级页表（PML4 → PDPT → PD → PT）如何节省内存？缺页中断（Page Fault）有哪几种类型，各自的处理流程是什么？请说明写时复制（COW）的实现机制。`,answer:`答案：虚拟地址通过 MMU + 页表转换为物理地址。四级页表按需分配（只有用到的虚拟地址范围才建立页表项），比单级连续页表节省大量内存。缺页分 Major（磁盘IO）、Minor（仅缺页表项）、Invalid（非法访问）三种。COW 在 fork 时共享物理页，写入时触发缺页复制。
+
+解析：x86_64 四级页表转换：虚拟地址 48 位分为 PML4(9bit) → PDPT(9bit) → PD(9bit) → PT(9bit) → Offset(12bit)。每级页表 512 项（2^9），每项 8 字节，共 4KB。如果整个用户空间都需要映射但只使用了少量区域，多级页表只需在 PML4 层建立几项（而不是 512*512*512 页表项）。
+
+扩展延伸：缺页中断类型：1）Major Page Fault——数据不在物理内存中（如 mmap 映射的文件尚未加载，或 swap 换出的页被访问），需要磁盘 IO。处理流程：内核找到空闲页帧 → 发起磁盘读取 → 页表项建立 → 进程被标记为睡眠 → IO 完成后唤醒。耗时毫秒级。2）Minor Page Fault——物理页已在内存但页表项不存在（如共享内存首次访问、fork 后 COW 页、懒加载的堆栈页）。无需磁盘 IO，仅分配页表项，微秒级。3）Invalid Page Fault——访问未被映射的虚拟地址（如 NULL 指针、越界访问），内核发送 SIGSEGV（段错误）终止进程。COW 流程：fork 后父子进程的虚拟地址指向相同物理页，内核将页表项设为只读。当任一进程尝试写入时触发缺页中断——内核检查 VMA 权限发现页是 COW 可写的，分配新物理页，复制原页内容，更新页表项为可写，返回到写入指令重新执行。`,hints:[`为什么 64 位系统实际只用了 48 位地址空间——当前硬件限制，理论上 64 位寻址空间太大不需要`,`Major Page Fault 和 Minor Page Fault 的数量级差距——Major 毫秒级（磁盘 IO），Minor 微秒级（仅内存操作）`],tags:[`Linux`,`虚拟内存`,`页表`,`缺页中断`,`COW`],content_hash:`e26b01866efa`,id:2864},{category:`linux`,difficulty:`easy`,type:`choice`,title:`Linux 文件描述符与重定向`,content:`在 Linux 中，每个进程启动时默认打开三个标准文件描述符。以下关于这三个 fd 的重定向操作，描述错误的是？`,options:[`A) fd 0 是标准输入（stdin），默认从键盘读取，可以使用 < file 将输入重定向到文件`,`B) fd 1 是标准输出（stdout），默认输出到终端，可以使用 > file 将输出重定向到文件`,`C) fd 2 是标准错误（stderr），默认也输出到终端，但 stderr 不能与其他文件描述符合并重定向`,`D) 使用 2>&1 可以将 stderr 合并到 stdout，然后一起通过管道传输或重定向到文件`],answer:`C)。解析：stderr（fd 2）不仅可以重定向，而且是频繁需要重定向的——因为 stdout 和 stderr 默认都输出到终端，如果不分开，错误信息和正常输出混在一起。常用重定向组合：2>&1（stderr 合并到 stdout）、2>&1 | tee log.txt（终端 + 文件）、command &> file（bash 4+ 同时重定向 stdout 和 stderr）。A/B 正确。文件描述符是内核管理打开文件的数据结构——每个进程的 task_struct 中有 files_struct，包含一个指向 file 结构体的指针数组（fd 数组）。ulimit -n 查看进程最大 fd 数限制（默认 1024），大流量服务（如 Nginx、Redis）需要调高到 65535 以上。`,hints:[`文件描述符表和系统级打开文件表的关系——fd 指向 file 结构体，file 通过 inode 指向具体文件`,`为什么高并发网络服务需要调大 ulimit -n——每个 TCP 连接占用一个 fd，默认 1024 只能支撑约 1000 个并发连接`],tags:[`Linux`,`文件描述符`,`重定向`,`stdout`,`stderr`],content_hash:`fe9a5b5ea654`,id:2865},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Systemd 服务管理与启动优化`,content:`Systemd 的 Unit 类型有哪些？一个典型的 Service Unit 文件包含哪些配置段？systemctl enable/start/daemon-reload 各自的作用是什么？Systemd 相比传统 SysV init 在并行启动和依赖管理上有什么本质改进？如何分析和优化系统启动速度？`,answer:`答案：Systemd Unit 类型：.service/.socket/.timer/.mount/.path/.target。Service Unit 核心段：[Unit]、[Service]、[Install]。Systemd 通过依赖拓扑图实现并行启动，取代 SysV init 的顺序串行启动。
+
+解析：1）[Unit]——Description（描述）、After/Before（启动顺序）、Requires/Wants（依赖关系：硬依赖/软依赖）、Conflicts（冲突）。2）[Service]——Type（simple/forking/oneshot/dbus/notify）、ExecStart（启动命令）、ExecStop（优雅停止）、Restart（on-failure/always/on-abnormal）、User/Group（运行用户）、WorkingDirectory、Environment、LimitNOFILE（文件描述符限制）。3）[Install]——WantedBy（指定 target，如 multi-user.target）。
+
+扩展延伸：systemctl enable vs start vs daemon-reload：enable——创建符号链接到 /etc/systemd/system/multi-user.target.wants/，使服务随系统启动。start——立即启动服务。daemon-reload——重新扫描 Unit 文件（修改了 .service 文件后必须先 daemon-reload 再 restart）。Systemd 并行启动原理：解析所有 Unit 的 Requires/Wants/After 关系形成依赖有向无环图（DAG），无依赖关系的 Unit 并行启动。对比 SysV init：串行执行 /etc/rc.d/ 下的脚本，即使无关服务也一个一个启动。启动速度分析工具：systemd-analyze blame（按耗时降序列出每个 Unit 的启动时间）、systemd-analyze critical-chain（显示启动关键路径）、systemd-analyze plot > boot.svg（生成可视化启动时间图）。优化技巧：将非关键服务延迟启动（通过 After 延迟依赖），没用到的服务 mask 掉（systemctl mask）。`,hints:[`systemd-analyze blame 和 systemd-analyze critical-chain 在优化方向上的区别——blame 找最慢的服务，critical-chain 找启动关键路径瓶颈`,`After=network.target 真的能保证网络已就绪吗——不能，network.target 只表示网络服务已启动，不保证 IP 已分配`],tags:[`systemd`,`服务管理`,`Unit`,`启动优化`,`systemctl`],content_hash:`5c138d77579a`,id:2866},{category:`linux`,difficulty:`medium`,type:`choice`,title:`Linux 文件权限特殊位：SUID/SGID/Sticky`,content:`关于 Linux 文件权限中的特殊位（SUID、SGID、Sticky Bit），以下哪个说法是正确的？`,options:[`A) SUID 让任何用户执行该文件时，获得文件所有者组的权限`,`B) Sticky Bit（粘滞位）设置在目录上时，只有文件所有者或 root 才能删除目录中的文件`,`C) SGID 只对可执行文件有效，对目录无效`,`D) 特殊位用 chmod 755 设置，与普通权限无关`],answer:`B) Sticky Bit（粘滞位）设置在目录上时，只有文件所有者或 root 才能删除目录中的文件
+
+解析：Sticky Bit（粘滞位，chmod +t /tmp 或 chmod 1777 /tmp）设置在目录上时，即使目录是所有人可写（777），非所有者也不能删除或重命名目录中其他用户的文件。/tmp 目录默认有粘滞位就是出于这个安全原因。SUID（chmod u+s，如 /usr/bin/passwd 文件有 SUID 位）在执行时赋予调用者文件所有者的权限（而不是所有者组）。SGID 对目录也有效——目录设置 SGID 后，在其中创建的新文件自动继承目录的所属组（用于共享目录的权限管理）。
+
+扩展延伸：特殊位的数字表示：4xxx = SUID（如 4755）、2xxx = SGID（如 2755）、1xxx = Sticky（如 1777）。查看：ls -l 显示 SUID 为 s（原来是 x 的位置）、SGID 为 s、Sticky 为 t。SUID 风险——不安全的 SUID 程序可被利用进行提权攻击。find / -perm -4000 查找所有 SUID 文件，定期审计不必要的 SUID 文件（如 ping 等命令可以移除 SUID）。SUID 容器中的特殊情况：Docker 容器默认禁用 SUID（因为容器的 Capability 限制），--privileged 模式除外。`,hints:[`ls -l 中 SUID/SGID/Sticky 的显示方式`,`为什么 /tmp 目录需要有粘滞位`],tags:[`Linux`,`权限`,`SUID`,`Sticky`],content_hash:`e11488345f87`,id:2867},{category:`linux`,difficulty:`medium`,type:`choice`,title:`Linux 文件系统选择：ext4 与 XFS`,content:`关于 Linux 文件系统 ext4 和 XFS 的对比，以下说法正确的是？`,options:[`A) XFS 不支持超过 16TB 的单个文件系统，ext4 支持更大容量`,`B) ext4 比 XFS 更适合大规模文件（超过 50GB 的单个文件）的读写场景`,`C) XFS 更适合大文件和大容量存储场景（如数据库、视频存储），ext4 更适合小文件密集场景`,`D) 两者在元数据性能上没有差异，只是文件名长度限制不同`],answer:`C) XFS 更适合大文件和大容量存储场景（如数据库、视频存储），ext4 更适合小文件密集场景
+
+解析：XFS（SGI 开发，RHEL/CentOS 7+ 默认）采用 B+ Tree 管理文件和目录，对大文件（GB/TB 级）的读写性能优秀，支持的最大文件系统和文件大小可达 8EB（64 位）。ext4（大多数 Linux 发行版默认）兼容性好（可从 ext2/ext3 升级），在包含大量小文件（如源代码仓库、邮件存储）的场景下因目录索引（htree）表现出色。XFS 的劣势：无法缩小文件系统（只能扩大，不能缩小），删除大量小文件时性能不如 ext4（xfs_rm 不是真正的删除）。ext4 的劣势：在文件系统层面出现问题时修复工具 e2fsck 比 xfs_repair 慢得多，ext4 最大文件 16TB（在 4K 块大小下）。
+
+扩展延伸：文件系统选择建议：数据库（MySQL/PostgreSQL）→ XFS（大文件高性能、并发 IO 好）。容器镜像存储层（OverlayFS）的底层文件系统→ XFS（支持 d_type，适合容器运行时的文件属性查询）。大量小文件（源码仓库、邮件服务器）→ ext4（小文件元数据操作更高效）。大容量存储（视频、备份）→ XFS。需要注意：在 Docker/容器运行时下层，containerd 推荐底层文件系统支持 d_type（XFS 和 ext4 都支持，Btrfs 不支持时会有警告）。生产文件系统的格式化参数（block size、inode 密度、RAID stripe size）也影响性能。`,hints:[`XFS 和 ext4 在各文件大小区间的性能表现不同`,`Docker 容器存储对底层文件系统有什么要求`],tags:[`Linux`,`文件系统`,`ext4`,`XFS`],content_hash:`183ebc59b50c`,id:2868},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 磁盘分区与挂载：parted、fdisk、mount`,content:`在 Linux 新加一块磁盘后，如何将其分区、格式化并挂载到系统？parted、fdisk、mkfs、mount、blkid 分别用于什么任务？如何设置开机自动挂载？`,answer:`答案：完整流程：识别磁盘（lsblk/fdisk -l）→ 分区（parted/fdisk）→ 格式化（mkfs.ext4/mkfs.xfs）→ 挂载（mount）→ 持久化（/etc/fstab）。
+
+解析：各工具用途：1）lsblk 或 fdisk -l——列出所有块设备，确认新磁盘的设备名（如 /dev/sdb）。2）分区——fdisk /dev/sdb（MBR 分区表，适用于 < 2TB 的磁盘且兼容性最好），或 parted /dev/sdb mklabel gpt && mkpart primary ext4 0% 100%（GPT 分区表，支持 > 2TB 的磁盘，推荐用于现代系统）。3）格式化——mkfs.ext4 /dev/sdb1 或 mkfs.xfs /dev/sdb1（创建文件系统）。4）挂载——mount /dev/sdb1 /mnt/data（临时挂载）。5）blkid /dev/sdb1——查看 UUID（唯一标识符，用于 /etc/fstab 持久化）。6）/etc/fstab——添加 UUID=xxx /mnt/data ext4 defaults 0 2（开机自动挂载）。
+
+扩展延伸：分区表选择：MBR（fdisk）支持最大 2TB 磁盘和最多 4 个主分区，GPT（parted）支持最大 9.4ZB（几乎无限制）和 128 个主分区。新磁盘（> 2TB）必须用 GPT。挂载选项优化：defaults（rw, suid, dev, exec, auto, nouser, async）中的 noatime 和 nodiratime（禁用 access time 更新，减少 IO 写入）对数据库服务器特别有用。写入缓存：在 /etc/fstab 中加 barrier=1（保证写顺序，默认开启）或 nobarrier（更快的写入但降低崩溃恢复保障）。检查已挂载的磁盘：df -hT（文件系统类型和空间使用）和 mount（查看挂载参数）。卸载：umount /mnt/data（确保没有进程使用该挂载点，否则用 fuser -km /mnt/data 强制关闭进程再卸载）。`,hints:[`MBR 和 GPT 分区表的核心区别`,`/etc/fstab 中 UUID 和设备名的优劣对比`],tags:[`Linux`,`磁盘`,`分区`,`挂载`],content_hash:`17aad3d03a03`,id:2869},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`eBPF 原理与应用场景`,content:`什么是 eBPF（Extended Berkeley Packet Filter）？eBPF 的工作原理是什么？它在可观测性、网络安全和性能优化方面有哪些典型应用？`,answer:`答案：eBPF 是一项允许用户在 Linux 内核中安全运行沙箱化程序的技术（无需修改内核源码或加载内核模块）。eBPF 程序通过 verifier（验证器）检查安全性后，由 JIT 编译器编译为内核可执行代码，附加到内核事件钩子（tracepoint/kprobe/perf_event/XDP 等）上执行。
+
+解析：eBPF 的工作流程：1）用户编写 eBPF 程序（用 C 语言，受限于有限的指令集和可用的辅助函数）。2）通过 LLVM Clang 编译为 BPF 字节码。3）通过 bpf() 系统调用加载到内核。4）内核的 BPF verifier 静态分析字节码确保安全性（无循环、无越界、有限的指令数 4096+）。5）JIT 编译器将字节码编译为机器码。6）程序附加到指定事件钩子上，事件触发时自动执行。7）eBPF map（内核态和用户态的共享数据结构）用于数据交换。
+
+扩展延伸：典型应用场景：1）可观测性——Cilium 的 Hubble（网络流量可视化）、Pixie（无侵入应用监控）、eBPF Exporter（自定义内核指标暴露给 Prometheus）。传统上用 ptrace/strace 的系统调用追踪在性能上远不如 eBPF（如 bpftrace 替代 strace 可零额外开销追踪系统调用）。2）网络安全——Cilium 的 NetworkPolicy 基于 eBPF 实现 L3/L4 网络策略，比 iptables 规则更高效。Falco（运行时安全）基于 eBPF 检测异常系统调用。3）性能优化——Cilium 替换 kube-proxy（eBPF 直接实现 Service 负载均衡，绕过 iptables），性能提升明显。XDP（eXpress Data Path）在网卡驱动层就完成包处理（如 DDoS 防护），达到线速处理。注意：eBPF 需要 Linux 内核 4.8+（基础功能），更高级功能（如 CO-RE、BTF）需要 5.x+ 内核。bcc 和 bpftrace 是开发 eBPF 程序的主流工具集。`,hints:[`eBPF verifier 做了哪些安全检查`,`eBPF 为何在可观测性领域比传统 strace 更优`],tags:[`Linux`,`eBPF`,`内核`,`可观测性`],content_hash:`14aa7aacbec6`,id:2870},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux SO_REUSEPORT 多进程套接字负载均衡`,content:`Linux 内核 3.9 引入了 SO_REUSEPORT socket 选项。请说明 SO_REUSEPORT 的工作原理——它如何允许多个进程/线程绑定到同一端口，以及内核如何实现连接的负载均衡。与传统的 accept 模型（单 listener + worker 线程）相比有什么优势和问题？`,answer:`答案：SO_REUSEPORT 允许多个 socket 绑定到完全相同的 IP 地址和端口号，内核在接收连接时使用哈希算法将新连接分配到不同的 listener socket，实现内核级别的 TCP 连接分发。
+
+解析：工作原理：所有使用 SO_REUSEPORT 的 socket 在协议栈的查找表（inet hash table / UDP hash table）中共享同一个 4-tuple 条目。当新的 TCP 连接建立（SYN 到来）或 UDP 数据包到达时，内核使用对端地址（IP + port）计算哈希值，通过取模或 jhash 映射到具体的一个 socket。优势：1）内核级负载均衡——免除单 listener 的 accept 锁竞争（accept 惊群问题解决）。2）平滑重启——旧进程仍然服务的同时启动新进程绑定同一端口。3）独立进程隔离——某个进程 crash 不影响其他进程的 socket。
+
+扩展延伸：对比 NGINX 的 SO_REUSEPORT 改进：NGINX 在 1.9.1 引入 SO_REUSEPORT 支持后，多 worker 场景的吞吐量提升了 2-3 倍。问题：对端 IP 相同的大量连接可能分到同一个 listener 上（哈希不均匀）、需要内核 3.9+、SELinux 和防火墙规则兼容性问题。SO_REUSEADDR 与 SO_REUSEPORT 不同——前者仅允许端口复用（绑定不同 IP 或通配），后者允许完全相同的绑定。`,hints:[`SO_REUSEPORT 如何解决 accept 惊群问题`,`内核通过什么算法分配连接到不同的 listener`],tags:[`Linux`,`SO_REUSEPORT`,`Socket`,`网络`,`负载均衡`],content_hash:`4abb39cdf980`,id:2871},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux fallocate 文件预分配与稀疏文件`,content:`Linux 的 fallocate 系统调用（以及 fallocate 命令）用于文件空间预分配。请说明 fallocate 的典型模式（FALLOC_FL_KEEP_SIZE、FALLOC_FL_PUNCH_HOLE 等），以及它和稀疏文件（sparse file）、预分配文件的区别。在数据库和虚拟化场景中 fallocate 有什么重要作用？`,answer:`答案：fallocate（通过底层的 FALLOC_FL_ZERO_RANGE）调用向文件系统分配或释放磁盘空间，操作后的文件表现为已写入了指定范围的数据但实际可能没有 IO 操作。
+
+解析：关键模式：1）默认模式（无 flag）——预分配磁盘块，保持文件大小不变（除非使用 KEEP_SIZE 修饰），相当于 mkfile 命令。2）FALLOC_FL_KEEP_SIZE——在现有文件末尾追加分配空间但不更新文件大小。3）FALLOC_FL_PUNCH_HOLE（Linux 2.6.38+）——释放指定范围的块，形成稀疏文件。4）FALLOC_FL_ZERO_RANGE——将范围置零（减少实际写入）。5）FALLOC_FL_COLLAPSE_RANGE——去除文件中间一段（需对齐 filesystem block size）。6）FALLOC_FL_INSERT_RANGE——在文件中间插入空洞。与稀疏文件的区别：稀疏文件是文件尾部有空洞（未分配块，读返回零），透明应用程序。预分配文件明确分配块但没有数据，确保后续写入不会因 ENOSPC 失败。
+
+扩展延伸：数据库场景：MySQL 的 innodb_file_per_table 和 innodb_use_fallocate 在创建/扩展表空间时使用 fallocate 预分配盘空间，确保文件扩展时分配空间而非「按需分配」。虚拟化：QEMU/KVM 的 qcow2 创建使用 fallocate 加速文件创建。稀疏文件的风险：cp 命令默认会读出零块并写入新文件导致硬盘写满（cp --sparse=never/always）。df 查看时稀疏文件占用远小于其大小（实际分配块 vs 文件大小）。`,hints:[`fallocate 和普通的 lseek + write 写零有什么区别`,`PUNCH_HOLE 模式的作用是什么`],tags:[`Linux`,`fallocate`,`文件系统`,`稀疏文件`,`存储`],content_hash:`7adf80715258`,id:2872},{category:`linux`,difficulty:`medium`,type:`choice`,title:`Linux inotify 文件系统事件监控`,content:`关于 Linux inotify 文件系统事件监控机制，以下说法正确的是？`,answer:`B) inotify 通过 inotify_init 创建文件描述符，用 inotify_add_watch 注册监控路径，通过 read 读取事件，支持 IN_MODIFY、IN_CREATE、IN_DELETE 等事件类型
+
+解析：inotify 是 Linux 2.6.13 引入的文件系统事件监控机制。接口：inotify_init() 创建 inotify fd，inotify_add_watch(fd, path, mask) 注册监控，通过 read(fd, buf, size) 读取 inotify_event 结构体。IN_MODIFY（文件修改）、IN_CREATE（创建文件/目录）、IN_DELETE（删除）、IN_MOVED_FROM/TO（移动/重命名）。默认 inotify 不递归监控子目录（需要分别添加 watch），每个用户可创建的 watch 数由 /proc/sys/fs/inotify/max_user_watches 控制（默认 8192）。
+
+扩展延伸：inotify 限制：不监控自身 inode 变化（需其他机制）、目录重命名时子目录的 watch 需要重建、单次 read 返回多个事件（需拼接处理）。替代方案：fanotify（2.6.36+）支持全局监控和访问决策。inotify 典型应用：systemd 监控配置文件变更、rsync 增量同步、IDE 热重载。性能关注点：大量文件监控时 max_user_watches 需要调大（例如 524288），每个 watch 占用约 1KB 内核内存。`,options:[`A) inotify 默认递归监控所有子目录`,`B) inotify 通过 inotify_init 创建文件描述符，用 inotify_add_watch 注册监控路径，通过 read 读取事件，支持 IN_MODIFY、IN_CREATE、IN_DELETE 等事件类型`,`C) inotify 不需要 read 事件，回调函数自动触发`,`D) inotify 可以监控远程 NFS 文件系统的变更`],hints:[`inotify 用什么系统调用注册监控`,`inotify 是否递归监控子目录`],tags:[`Linux`,`inotify`,`文件系统`,`事件监控`],content_hash:`3a10a294fa82`,id:2873},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux prctl 进程运行时行为控制`,content:`Linux prctl 系统调用为进程提供了细粒度的运行时行为控制能力。请说明 prctl 的常用子功能（如 PR_SET_NAME、PR_SET_PDEATHSIG、PR_SET_SECCOMP、PR_SET_MM、PR_GET_CHILD_SUBREAPER 等），以及它在容器运行时和守护进程中的作用。`,answer:`答案：prctl（Process Control）是 Linux 进程控制接口，允许用户空间修改当前进程的运行时属性，涵盖进程命名、安全策略、资源限制和子进程管理等多个维度。
+
+解析：常用子功能：1）PR_SET_NAME——设置进程名（/proc/self/comm 显示的名称，限 16 字节，默认 pthread 名）。2）PR_SET_PDEATHSIG——设置父进程死亡时给子进程发送的信号（防止孤儿进程「失联」）。3）PR_SET_SECCOMP——设置 seccomp-bpf 过滤器（容器运行时隔离层）。4）PR_SET_MM——修改进程内存映射信息（如 PR_SET_MM_EXE_FILE 给无文件进程设置 /proc/self/exe —— 用于容器不共享宿主机 PID namespace 时）。5）PR_GET_CHILD_SUBREAPER/PR_SET_CHILD_SUBREAPER——设置进程为 subreaper，接收其子进程的孤儿进程（systemd 作为 init 的 subreaper 替代）。6）PR_CAPBSET_DROP——从 bounding set 中永久移除某个 cap。7）PR_SET_TIMING——设置进程计时器模式（STAT 模式）。
+
+扩展延伸：容器场景：Docker/containerd 使用 PR_SET_PDEATHSIG 保证容器 init 进程退出时通知容器内的其他进程。PR_SET_MM 被 runc 用于创建容器的 exe 链接。守护进程场景：supervisor 类进程用 PR_SET_CHILD_SUBREAPER 接管子进程的僵尸收尸。安全场景：PR_SET_NO_NEW_PRIVS 防止进程获得新的权限（搭配 seccomp 使用）。注意：prctl 是对当前线程生效（线程级），PR_SET_PDEATHSIG 按线程设置。`,hints:[`prctl 的 PR_SET_PDEATHSIG 在容器中的作用`,`PR_SET_CHILD_SUBREAPER 解决什么问题`],tags:[`Linux`,`prctl`,`进程控制`,`容器运行时`,`安全`],content_hash:`e48b9e905844`,id:2874},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux seccomp-bpf 系统调用过滤`,content:`seccomp-bpf（Secure Computing with Berkeley Packet Filters）是 Linux 内核的安全机制。请说明 seccomp 的两种模式（STRICT 和 FILTER），seccomp-bpf BPF 程序的规则结构，以及它在 Docker 容器安全中的应用。如何编写一个允许特定系统调用的 seccomp 规则？`,answer:`答案：seccomp-bpf 允许进程定义白名单/黑名单的系统调用过滤器，限制进程可以使用的系统调用，降低内核攻击面。
+
+解析：两种模式：1）STRICT 模式（PR_SET_SECCOMP SECCOMP_MODE_STRICT）——只允许 read、write、exit、sigreturn 四个系统调用，几乎不可用。2）FILTER 模式（SECCOMP_MODE_FILTER）——用户提供 BPF 程序（结构同网络 BPF，但用 cBPF 指令），内核在每次系统调用时执行 BPF 程序，根据返回值决定：SECCOMP_RET_ALLOW（允许）、SECCOMP_RET_KILL（终止进程）、SECCOMP_RET_TRAP（发 SIGSYS 信号）、SECCOMP_RET_ERRNO（返回指定 errno）、SECCOMP_RET_LOG（记录但不拒绝）。BPF 规则通过 seccomp_data 结构体获取系统调用号（nr）、架构（arch）和参数。编写方式通常使用 libseccomp 库（SCMP_ACT_ALLOW/SCMP_ACT_KILL），编译成 BPF 程序注入。
+
+扩展延伸：Docker 的默认 seccomp 配置在白名单模式下定义了约 300 个允许的系统调用（完整列表在 containerd 的 default.json）。Docker 的 --security-opt seccomp=profile.json 支持自定义策略。seccomp 卸载（unhook）场景：strace 需要 ptrace 系统调用，默认容器 seccomp 配置禁止 ptrace。性能开销：无匹配时几乎为 0（检查架构和系统调用号即可），大量匹配时略微增加，但通常可忽略。内核 5.0+ 支持 seccomp 的 user notification（SECCOMP_USER_NOTIF_FLAG_CONTINUE）——用户态进程处理系统调用。`,hints:[`seccomp-bpf 的 FILTER 模式有哪几种返回值`,`Docker 的默认 seccomp 策略允许多少系统调用`],tags:[`Linux`,`Seccomp`,`BPF`,`安全`,`容器`],content_hash:`889a6a192afa`,id:2875},{category:`linux`,difficulty:`medium`,type:`short_answer`,title:`Linux 进程调度器演进`,content:`请解释 Linux 进程调度器的演进历程：从 O(n) 调度器到 O(1) 调度器，再到 CFS（Completely Fair Scheduler）。CFS 的核心设计思想是什么（红黑树 + vruntime）？CFS 如何保证「完全公平」？调度延迟和最小粒度是如何控制的？在 CFS 基础上，Linux 5.0+ 引入的 EEVDF 调度器又改进了什么？`,answer:`答案：Linux 调度器的演进本质上是从「时间片分配」到「加权公平队列」的转变。
+
+解析：1. 演进历程：
+- O(n) 调度器（Linux 2.4）：每次调度遍历所有进程找「最好」的那个。复杂度 O(n)，进程数多时性能急剧下降。
+- O(1) 调度器（Linux 2.6.0-2.6.22）：用 140 个优先级的 bitmap 队列（active + expired 双队列）。O(1) 复杂度但不公平——交互式进程的启发式算法复杂且不可预测。
+- CFS（Linux 2.6.23+，Ingo Molnar）：完全公平调度器。
+
+2. CFS 核心设计：
+- 理想模型：假设 CPU 可以在极短时间片内同时运行所有进程。每个进程获得 1/N 的 CPU 时间。
+- 实践模型：用红黑树（Red-Black Tree）组织所有可运行进程。键值 = vruntime（虚拟运行时间）。
+- vruntime = 进程实际运行时间 * (1024 / 进程权重)。权重越大（优先级越高），vruntime 增长越慢。
+- 调度决策：每次选 vruntime 最小的进程运行（红黑树最左节点）。
+
+3. 公平性保证：
+- CFS 的「公平」不是每个进程获得相同的时间片——而是每个进程根据权重获得按比例的 CPU 时间。
+- 调度延迟（sched_latency，默认 6ms 到 24ms 之间）：关注所有进程被调度一遍的总时间。当就绪进程数少于 sched_nr_latency 时，不拆分调度延迟——每个进程运行一整个 sched_latency/N。
+- 最小粒度（min_granularity，默认 0.75ms）：进程至少运行的时间——避免上下文切换开销过高。
+- 睡眠进程补偿：进程睡眠醒来后，vruntime 会被向前推进（不大于 min_vruntime），相当于获得了「补偿」——交互式进程（等待用户输入的进程）响应更快。
+
+4. EEVDF（Earliest Eligible Virtual Deadline First, Linux 6.6+）：
+- CFS 的 vruntime 只考虑了「已经运行了多少」，没有考虑「期望运行多久」。
+- EEVDF 为每个进程维护两个属性：eligible_time（最早可调度时间）和 deadline（最晚必须被调度的时间）。
+- 优势：更好的延迟边界保证（Latency Niceness），长作业和短作业之间的隔离更好。`,hints:[`CFS 的红黑树按 vruntime 排序——每次选最左（vruntime 最小）的进程运行，确保每个进程都能获得 CPU 时间`,`CFS 的「公平」不是绝对的均分——高优先级（低 nice 值）进程的 vruntime 增长慢，从而获得更多 CPU 时间`],tags:[`Linux`,`CFS`,`进程调度`,`EEVDF`,`操作系统`],content_hash:`54fdbd95bc19`,id:2876},{category:`linux`,difficulty:`hard`,type:`short_answer`,title:`Linux 调试与性能分析工具`,content:`请系统性地介绍 Linux 系统调试和性能分析的工具链和方法论。覆盖：1. USE 方法论（Utilization / Saturation / Errors）在定位性能瓶颈时的应用；2. 关键工具及其使用场景：top/htop、iostat、vmstat、netstat/ss、pidstat、perf、strace、bpftrace；3. 火焰图（Flame Graph）的生成和解读——CPU 火焰图、Off-CPU 火焰图、内存火焰图的区别和用途；4. 系统调用追踪（strace）和动态追踪（bpftrace）的本质区别。`,answer:`答案：Linux 性能分析的核心方法论是「从全局到局部，从现象到根因」。先找到瓶颈区域，再深入细节。
+
+解析：1. USE 方法论（Brendan Gregg）：对每个资源（CPU / 内存 / 磁盘 / 网络）检查三个指标：
+- Utilization（利用率）：资源繁忙的时间占比。CPU 100% -> 饱和，磁盘 100% -> 瓶颈。
+- Saturation（饱和度）：资源的排队长度。运行队列长度 > CPU 核数 * 2 -> CPU 饱和。
+- Errors（错误数）：资源的错误计数。NIC 的 drop/error 计数增长 -> 网络问题。
+
+2. 关键工具：
+- top/htop：进程级 CPU/内存概览。按 CPU 使用率排序，看哪个进程在吃资源。
+- iostat -x 1：磁盘 I/O 的详细统计（r/s、w/s、await、svctm、%util）。
+- vmstat 1：系统级别的 CPU、内存、I/O 统计（r 列显示运行队列长度，b 列显示阻塞的进程数）。
+- pidstat：按进程统计的资源使用（CPU、内存、I/O 分开）。
+- perf：基于 CPU PMU（Performance Monitoring Unit）的采样分析。perf top、perf record/report。
+- netstat/ss：网络连接统计。ss -tan 显示所有 TCP 连接状态。
+- strace：追踪进程的系统调用。strace -p PID -e trace=network,file 只看网络和文件操作。
+- bpftrace：基于 eBPF 的动态追踪。可以编写简短的脚本在内核中安全执行。
+
+3. 火焰图（Brendan Gregg 发明）：
+- CPU 火焰图（On-CPU）：堆栈采样结果的可视化。横轴是采样数（按函数名聚合），纵轴是调用栈深度。宽的函数 = CPU 耗时多。定位 CPU 消耗在哪个函数。
+- Off-CPU 火焰图（Off-CPU / I/O）：追踪进程睡眠（sched:sched_switch 事件）的原因。定位 I/O 等待、锁竞争导致的性能问题。
+- 内存火焰图：追踪内存分配/释放事件，定位内存泄漏的热点。
+
+4. strace vs bpftrace：
+- strace：基于 ptrace（进程跟踪）。追踪每次系统调用——会停下目标进程 + 上下文切换。性能开销很大（生产环境通常禁用）。
+- bpftrace：基于 eBPF（虚拟机在内核安全执行 BPF 程序）。通过 kprobe/tracepoint 挂载——不需要停下目标进程，不产生上下文切换。开销极低（纳秒级），适合生产环境。
+- 最佳实践：快速定位用 bpftrace（安全、低开销），需要详细参数时用 strace（更全、但不能在生产环境用）。`,hints:[`USE 方法论的核心是检查每个资源的 Utilization、Saturation、Errors——不遗漏任何维度`,`strace 在生产环境是危险的（ptrace 会停下进程），bpftrace 是安全的生产环境替代方案`],tags:[`Linux`,`性能分析`,`火焰图`,`eBPF`,`bpftrace`],content_hash:`48d236da3d91`,id:2877}];export{e as category,t as questions};

@@ -1,0 +1,968 @@
+var e=`python`,t=[{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 中的可变与不可变对象`,content:`Python 中哪些数据类型是可变的（Mutable），哪些是不可变的（Immutable）？赋值、传参和默认参数在不同类型下的行为有什么陷阱？`,answer:`答案：不可变类型：int、float、str、tuple、frozenset、bytes。可变类型：list、dict、set、bytearray、自定义类的实例。赋值和传参本质上都是「引用赋值」，修改可变对象会影响到所有引用；不可变对象「修改」时会创建新对象。
+
+解析：可变对象的行为——list 的 append 是原地修改，所有引用都看到变化。不可变对象——str 的 += 操作实际上是创建新对象 + 重新绑定。传参机制——Python 的参数传递是「传对象引用」（Call by Object Reference），类似于「传指针的值」。函数内修改可变参数会影响外部对象，但重新赋值（=）不会。默认参数的陷阱——默认参数在函数定义时只计算一次（在定义时创建），之后每次调用复用同一个对象。所以用可变对象（如空列表 []）作默认参数时，多次调用会共享同一个列表。正确做法：def func(x=None): if x is None: x = []。
+
+扩展延伸：内存与性能——不可变对象可以作为 dict 的 key（因为 hash 值不变），可变对象不行。不可变对象可以安全地在多线程间共享（不需要同步）。CPython 对小整数（-5 到 256）和短字符串做了 intern 缓存——不同变量赋相同值可能指向同一对象，用 is 判断可能出乎意料。`,hints:[`Python 函数默认参数用可变对象（如 []）为什么是常见的 BUG 来源`,`is 和 == 在比较不可变对象时的区别`],tags:[`Python`,`可变`,`不可变`,`传参`],content_hash:`3604f9158c62`,id:3330},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的装饰器（Decorator）`,content:`Python 装饰器的工作原理是什么？如何实现一个带参数的装饰器？装饰器在工程中有哪些经典应用场景？`,answer:`答案：装饰器是一个接受函数作为参数并返回新函数的高阶函数。@decorator 语法糖等价于 func = decorator(func)。带参数的装饰器需要三层嵌套——外层接收参数、中层接收函数、内层包装逻辑。经典应用：日志记录、性能计时、权限校验、缓存、重试、事务管理。
+
+解析：装饰器的本质分析——1）函数在 Python 中是一等公民（First-class Citizen），可以作为参数传递和作为返回值。2）@语法糖——@log 等价于 func = log(func)，在模块导入时立即执行。3）简单装饰器结构：def log(func): def wrapper(*args, **kwargs): ...; return wrapper。4）带参数装饰器：@retry(max_attempts=3) 等价于 retry(max_attempts=3)(func)。实现：def retry(max_attempts): def decorator(func): def wrapper(*args, **kwargs): ...; return wrapper; return decorator。
+
+扩展延伸：functools.wraps——wrapper 函数会丢失原函数的 __name__、__doc__ 等元信息。用 @functools.wraps(func) 装饰 wrapper 可复制元信息。类装饰器——用 __call__ 实现装饰器类：class Timer: def __call__(self, func): ...。装饰器的执行顺序——多层装饰器从内到外装饰（从下到上语法），从外到内执行。经典实践——Flask 的路由装饰器 @app.route() + 权限 @login_required，先判定权限再路由。`,hints:[`为什么装饰器会丢失原函数的元信息——functools.wraps 的作用是什么`,`多个装饰器的执行顺序——从下到上装饰，从上到下执行`],tags:[`Python`,`装饰器`,`Decorator`,`高阶函数`],content_hash:`80f164482233`,id:3331},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的 GIL（全局解释器锁）`,content:`什么是 Python 的 GIL（Global Interpreter Lock）？它为什么存在？GIL 对多线程和多进程程序的影响是什么？如何绕过 GIL？`,answer:`答案：GIL 是 CPython 解释器中的一个互斥锁，保证同一时刻只有一个线程执行 Python 字节码。它因为 CPython 的内存管理不是线程安全的而存在。GIL 使得 CPU 密集型多线程程序实际上退化为串行执行，但对 I/O 密集型程序影响较小。绕过方式：多进程（multiprocessing）、使用 C 扩展（Cython、ctypes 释放 GIL）、使用其他 Python 实现（Jython、IronPython 无 GIL）。
+
+解析：为什么需要 GIL——CPython 的引用计数（Reference Counting）不是原子操作，没有 GIL 时两个线程同时修改同一对象的引用计数会导致计数错误，造成对象过早释放或内存泄漏。Python 选择了 GIL 这个简单的方案而不是细粒度锁。GIL 的影响——CPU 密集型：4 个线程算圆周率，没有 GIL 理想加速 4 倍，有 GIL 还是 1 倍（甚至更慢，因为线程切换开销）。I/O 密集型：4 个线程做网络请求，GIL 在 I/O 等待时会被释放（每个 I/O 操作前释放 GIL），所以并发效果很好。
+
+扩展延伸：GIL 的移除——Python 3.13 引入了「自由线程」（Free-threaded）模式（--disable-gil），3.14 将进一步改进。但无 GIL 模式下单线程性能会下降（因为需要更细粒度的锁）。建议：目前生产环境仍假设有 GIL。多进程方案——multiprocessing 使用子进程（每个进程有自己的解释器和 GIL），绕过了 GIL 限制。通信代价较高（IPC），适用于 CPU 密集型任务。Numba/Cython——对于数值计算，Numba 的 JIT 编译可以生成不持有 GIL 的机器码（nopython mode + nogil=True），结合多线程实现真正的并行。`,hints:[`为什么 Python 选择了 GIL 而不是细粒度锁——历史原因和实现复杂度`,`Python 3.13 的自由线程模式为什么会导致单线程性能下降`],tags:[`Python`,`GIL`,`并发`,`CPython`],content_hash:`33048b5f3ceb`,id:3332},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的生成器与协程`,content:`Python 中生成器（Generator）的工作原理是什么？yield 和 yield from 的区别？生成器如何演变为协程？`,answer:`答案：生成器是包含 yield 关键字的函数，调用时返回生成器对象，支持延迟计算（惰性求值）。yield 暂停函数执行并返回值，next() 恢复执行。yield from 委托给另一个生成器（语法糖，自动迭代子生成器）。协程是生成器的扩展（PEP 342/380），send() 可以向生成器发送值，实现双向通信。Python 3.5 引入 async/await 原生协程，本质上是生成器协程的语法糖。
+
+解析：生成器的状态——生成器函数执行到 yield 时保存当前状态（局部变量、指令指针），返回控制权给调用者。再次调用 next() 时从上次暂停处恢复。状态机由 CPython 在编译时自动生成。yield from 的作用——for value in gen: yield value 的简写。yield from gen 自动处理子生成器的异常传播和返回值。生成器 vs 列表——生成器不一次性把所有值加载到内存，适合处理大数据或无限序列。
+
+扩展延伸：协程的历史——Python 2.5 的 PEP 342 给生成器增加了 send()、throw()、close() 方法，使生成器可以接收值，成为「协程」。Python 3.3 的 PEP 380 增加 yield from。Python 3.5 的 PEP 492 引入 async/await，本质是基于生成器的协程的语法糖。async/await vs 生成器协程——async def 定义原生协程，await 替代 yield from。原生协程是独立的类型（coroutine），不再混用生成器语义。asyncio 事件循环调度协程的执行。实际选型——新代码用 async/await 原生协程。生成器仍然大量用于数据管道（Streaming processing、大数据分批处理）。`,hints:[`yield from 和 for 循环迭代子生成器的区别——异常传播和返回值的处理`,`asyncio 的 async/await 和生成器协程的本质联系是什么`],tags:[`Python`,`生成器`,`协程`,`yield`],content_hash:`cdecdc3bf31d`,id:3333},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的上下文管理器与 with 语句`,content:`Python 中 with 语句和上下文管理器的工作原理是什么？如何自定义上下文管理器？contextlib 模块有哪些实用工具？`,answer:`答案：with 语句管理上下文管理器（实现了 __enter__ 和 __exit__ 的对象），在进入和退出代码块时自动执行资源获取和释放操作。自定义上下文管理器可以实现 __enter__/__exit__ 方法，或用 @contextmanager 装饰器将生成器函数转为上下文管理器。contextlib 提供了 closing()、suppress()、redirect_stdout()、ExitStack 等实用工具。
+
+解析：__enter__ 和 __exit__——with 执行时，调用 __enter__ 获取资源（可返回对象赋值给 as 变量）。代码块结束时调用 __exit__，无论代码块是否异常都会执行。__exit__ 接收 exc_type、exc_val、exc_tb 三个参数（无异常时均为 None），返回 True 表示吞掉异常。@contextmanager 装饰器——将 yield 之前的代码视为 __enter__，yield 之后的代码视为 __exit__。yield 的值会被 as 接收。如果 yield 内部发生异常，在使用 @contextmanager 时异常会被重新抛出需要在 try/finally 中确保清理代码执行。
+
+扩展延伸：contextlib 的高级工具——1）closing()：确保对象调用 close() 方法，适合不支持上下文管理器但有 close() 的对象。2）suppress()：忽略指定异常——with suppress(FileNotFoundError): os.remove('file')。3）ExitStack：组合管理多个上下文管理器，支持动态入栈和出栈。exit_stack.enter_context(cm) 动态添加。4）redirect_stdout()/redirect_stderr()：临时重定向标准输出。with contextlib.redirect_stdout(f): print('到文件了')。实际应用——数据库事务上下文（事务自动提交/回滚）、锁管理、临时文件清理、Numpy/Pandas 的打印选项临时设置。`,hints:[`@contextmanager 装饰器实现的上下文管理器中 try/finally 为什么是必要的`,`ExitStack 在什么场景下比嵌套 with 更优雅`],tags:[`Python`,`上下文管理器`,`with`,`contextlib`],content_hash:`7a6328705076`,id:3334},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的元类（Metaclass）`,content:`什么是 Python 的元类（Metaclass）？它解决什么问题？type 和元类之间的关系是什么？实际项目中有哪些元类的经典应用？`,answer:`答案：元类是创建类的类——类是元类的实例。默认元类是 type，type('ClassName', (bases,), {dict}) 可以动态创建类。元类在类定义创建时介入，可以修改类的属性和方法。经典应用：ORM 框架的模型定义（SQLAlchemy、Django ORM）、单例模式、注册模式、API 验证框架。
+
+解析：元类的工作机制——当 Python 执行 class 语句时：1）确定元类：如果类或父类定义了 __metaclass__，使用它；否则使用 type。2）准备 namespace：调用元类的 __prepare__（返回 dict 或 OrderedDict）。3）执行类体：在 namespace 中填充属性和方法。4）创建类：调用元类（类名、基类元组、namespace）。__new__ 和 __init__——元类的 __new__ 在类创建时调用，可以修改类的定义（如添加方法、验证属性）。元类的 __init__ 在 __new__ 之后调用，用于初始化类对象。
+
+扩展延伸：元类的实际应用——1）Django/SQLAlchemy 的 Model 定义：class User(Model): name = CharField(max_length=100) 通过元类在类创建时将字段信息提取到 Meta 中并生成 __table__。2）单例模式元类：class SingletonMeta(type): _instances = {}; def __call__(cls, *args, **kwargs): if cls not in cls._instances: cls._instances[cls] = super().__call__(*args, **kwargs); return cls._instances[cls]。3）接口/抽象基类：ABC 借助元类（ABCMeta）实现 register() 和 @abstractmethod 检测。警告——元类是非常强大的工具，但也是 Python 中最容易过度设计的特性之一。99% 的场景用装饰器、继承、描述符就足够了。Python 3.6+ 的 __init_subclass__ 可以替代大多数简单元类的使用场景。`,hints:[`Python 的 class 语句执行时元类的调用顺序——__new__ vs __init__`,`__init_subclass__ 如何替代简单元类场景`],tags:[`Python`,`元类`,`Metaclass`,`type`],content_hash:`6711f8f21117`,id:3335},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的描述符（Descriptor）`,content:`什么是 Python 的描述符协议？@property、@classmethod、@staticmethod 底层是如何通过描述符实现的？`,answer:`答案：描述符是实现了 __get__、__set__、__delete__ 中至少一个方法的对象。描述符协议控制属性访问的优先级和查找链。@property 是一个数据描述符（实现了 __get__ 和 __set__），将方法调用伪装成属性访问。@classmethod 是一个非数据描述符（只实现 __get__），自动传入 cls 参数。@staticmethod 也是非数据描述符，移除方法绑定。
+
+解析：描述符协议——当你访问 obj.attr 时，Python 查找 attr 的优先级：1）数据描述符（同时有 __get__ 和 __set__）的 __get__；2）实例的 __dict__；3）非数据描述符（只有 __get__）的 __get__；4）类的 __dict__。数据描述符的优先级高于实例属性，这是 @property 能工作的关键。@property 的实现——property() 是一个数据描述符类。prop = property(getter, setter, deleter, doc) 将 getter 方法赋值给 fget，访问 prop 时调用 __get__ 触发 getter。
+
+扩展延伸：@classmethod vs @staticmethod——classmethod 绑定到类（第一个参数是 cls），staticmethod 完全不绑定。classmethod 多用于工厂方法。staticmethod 多用于与类逻辑相关但不需要类或实例的纯函数。描述符的应用——Django ORM 的 QuerySet 链式调用、类型检查（如设定 int 属性只接受 int 值）、延迟计算属性（第一次访问时计算并缓存）。LazyProperty 实现——在 __get__ 中将实例 dict 中的对应值替换为计算结果，后续访问走实例 dict 跳过描述符。`,hints:[`数据描述符（有 __set__）和非数据描述符（只有 __get__）的查找优先级差异`,`描述符实现的 LazyProperty 是如何缓存计算结果的`],tags:[`Python`,`描述符`,`Descriptor`,`property`],content_hash:`d6cc01e9393d`,id:3336},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的列表推导式与生成器表达式`,content:`列表推导式（List Comprehension）和生成器表达式（Generator Expression）的区别是什么？推导式与 map/filter 的对比？嵌套推导式如何用？`,answer:`答案：列表推导式用 [] 包裹，立即计算出所有元素返回 list。生成器表达式用 () 包裹，惰性求值返回生成器对象。推导式比 map/filter 更可读（语法更接近自然语言），但 map/filter 在某些场景下内存效率更高。嵌套推导式语法：[[expr for y in inner] for x in outer]，从外到内读。
+
+解析：性能差异——列表推导式一次性生成全部元素到内存，适合数据量小的场景。生成器表达式逐个生成元素，节省内存（但对 Python 来说执行速度不一定更快，因为生成器有额外的 yield/resume 开销）。推导式 vs map/filter——map/filter 省去 lambda 时比推导式快（map(len, strings) 快于 [len(s) for s in strings]）。推导式可读性更好，大部分场景优先用推导式。
+
+扩展延伸：嵌套推导式的执行顺序——[[x*y for y in range(3)] for x in range(3)] 相当于：for x in range(3): sublist = []; for y in range(3): sublist.append(x*y)。读嵌套推导式的技巧：从外到内读，最外层 for 是外层循环。推导式的性能——推导式比 for 循环显式 append 快（因为 append 是属性查找 + 方法调用，推导式底层直接调用 LIST_APPEND 操作码）。不滥用——不要写超过两层的嵌套推导式（可读性急剧下降），复杂逻辑用普通 for 循环或拆分为多行。dict/set 也有推导式：{k: v for k, v in items} 和 {x**2 for x in range(10)}，使用方式类似。`,hints:[`为什么列表推导式比 for 循环 + append 更快——CPython 操作码优化`,`嵌套推导式的可读性在什么复杂度下应该用普通循环替代`],tags:[`Python`,`推导式`,`列表`,`生成器`],content_hash:`b24231618b4f`,id:3337},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的深拷贝与浅拷贝`,content:`Python 中深拷贝（Deep Copy）和浅拷贝（Shallow Copy）的区别是什么？如何实现自定义对象的拷贝？copy 模块的原理？`,answer:`答案：浅拷贝创建新对象但不递归复制嵌套对象（只复制引用），所以修改嵌套对象会影响原对象。深拷贝递归复制所有嵌套对象，新旧对象完全独立。浅拷贝：copy.copy()、列表切片 [:]、dict.copy()、list() 构造。深拷贝：copy.deepcopy()。自定义对象实现 __copy__() 和 __deepcopy__(memodict) 控制拷贝行为。
+
+解析：浅拷贝的行为——a = [[1, 2], [3, 4]]; b = copy.copy(a); b[0][0] = 99 → a[0][0] 也变成了 99。因为 b[0] 和 a[0] 指向同一个 list 对象。浅拷贝适用于没有嵌套可变对象的一层结构。深拷贝的行为——b = copy.deepcopy(a) 递归复制所有对象，a 和 b 完全无关。深拷贝的递归问题——如果对象有循环引用（如 a.next = a），deepcopy 使用 memo dict 跟踪已复制的对象防止死循环。
+
+扩展延伸：性能考虑——深拷贝比浅拷贝慢得多（需要递归遍历整个对象图）。避免对大对象使用 deepcopy。如果只需要「冻结」对象副本，考虑替代方案：1）使用不可变数据结构（tuple 替代 list）。2）序列化反序列化（pickle.loads(pickle.dumps(obj)) 也是一种深拷贝，但更慢）。3）手动实现 __deepcopy__ 选择性复制必要字段。自定义拷贝——__copy__() 返回浅拷贝实例。__deepcopy__(memodict) 返回深拷贝实例，使用 memodict 记录已复制的对象。不可变对象的特殊行为——int、str、tuple 是不可变的，它们的拷贝没有实际意义（copy.copy 返回自身）。`,hints:[`深拷贝遇到循环引用时如何避免栈溢出——memo dict 的作用`,`序列化（pickle）和 deepcopy 在深拷贝实现上的差异`],tags:[`Python`,`深拷贝`,`浅拷贝`,`内存`],content_hash:`37f2042dc4de`,id:3338},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的 __slots__`,content:`Python 类的 __slots__ 的作用是什么？它如何节省内存？使用 __slots__ 有哪些限制和注意事项？`,answer:`答案：__slots__ 告诉 Python 只为指定的属性分配空间，而不使用实例的 __dict__ 字典。每个实例节省一个字典的内存（通常节省 50-70% 的内存）。限制：不能动态添加未在 __slots__ 中定义的属性；多继承时需注意 __slots__ 的合并；定义了 __slots__ 的类不再支持 __weakref__（除非显式包含）。
+
+解析：为什么 __slots__ 省内存——每个 Python 实例默认有一个 __dict__（存储实例属性的字典），字典本身开销很大（哈希表、负载因子 ~2/3）。用 __slots__ 后，属性存储在类似 C 结构体的固定数组中（通过描述符访问），每个属性只是一个指针。内存对比：一个普通对象默认 ~56 字节（空字典）+ 每个属性 ~50 字节。__slots__ 对象 ~24 字节 + 每个属性 8 字节（指针）。
+
+扩展延伸：__slots__ 的实现——每个 __slots__ 中的属性名在类中成为描述符（具有 __get__ 和 __set__），属性值存储在实例的预留空间中（通过偏移量访问），而不是 __dict__。__slots__ 和继承——子类如果没有定义 __slots__，仍然会有 __dict__，父类的 __slots__ 效果被稀释。子类如果也定义了 __slots__，需要把父类的 slots 一起包含：__slots__ = (*ParentClass.__slots__, 'child_attr')。适用场景——大量创建的同构对象（如 ORM 的模型行、引擎中的粒子系统）。不适用——小型脚本、类数不多的场景（优化过度，且失去灵活性）。`,hints:[`__slots__ 为什么能节省内存——从字典存储到 C 结构体数组`,`继承中使用 __slots__ 的常见陷阱——子类如何正确继承 __slots__`],tags:[`Python`,`__slots__`,`内存`,`性能`],content_hash:`f52c43312d20`,id:3339},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 的 asyncio 事件循环`,content:`Python asyncio 的事件循环（Event Loop）是如何工作的？async/await 关键字的执行流程是什么？协程、任务、Future 三者的关系？`,answer:`答案：事件循环是 asyncio 的核心，维护一个就绪队列和 I/O 等待队列，循环从队列中取出可执行的协程运行。async 定义协程函数，返回协程对象；await 挂起当前协程让出控制权给事件循环。Coroutine 是最底层的可挂起函数；Task 是包装了协程的「未来对象」（running in background）；Future 是异步返回值的容器（低层原语，Task 是其子类）。
+
+解析：事件循环的调度——协程遇到 await 时挂起，事件循环切换到下一个就绪协程。I/O 操作通过 selector 模块注册到系统 epoll/kqueue/IOCP。当 I/O 就绪时，对应的协程被放回就绪队列。单线程内实现并发（不是并行）。async/await 的执行——调用 async 函数不执行代码，返回 coroutine 对象。await coroutine 将协程包装为 Task（隐式），挂起当前协程直到被 await 的协程完成。awaitable 对象：coroutine、Task、Future 以及实现了 __await__ 的对象。
+
+扩展延伸：高级模式——1）gather：asyncio.gather(*tasks) 并发执行多个协程，返回所有结果列表。如果任意一个失败，默认取消其他任务（return_exceptions=True 改变行为）。2）wait：asyncio.wait(tasks, return_when=FIRST_COMPLETED) 更精细的控制。3）Semaphore 限流：限制并发量。4）Queue：协程间通信。常见陷阱——回调地狱（asyncio 虽然避免了回调，但复杂的协程编排可能变成「await 地狱」）；CPU 密集型任务在事件循环中会阻塞所有协程，需要用 loop.run_in_executor 交给线程池。uvloop——将事件循环替换为 libuv 实现（Node.js 同一底层），性能提升 2-4 倍。`,hints:[`asyncio 是并发（Concurrency）不是并行（Parallelism）——单线程内交替执行`,`CPU 密集型任务在 asyncio 中为什么会阻塞所有协程——解决方案是什么`],tags:[`Python`,`asyncio`,`事件循环`,`Async`],content_hash:`985e1b245296`,id:3340},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的垃圾回收机制`,content:`Python 的垃圾回收（GC）是如何工作的？引用计数和标记清除（Mark and Sweep）的关系？循环引用如何处理？`,answer:`答案：Python 使用以引用计数为主、标记清除为辅的 GC 策略。引用计数：每个对象维护 ob_refcnt，计数归零时立即回收。标记清除：通过 GC 模块处理循环引用，定期扫描所有容器对象（list、dict、set、custom class），标记不可达对象并回收。分代回收：将对象分为 3 代（0/1/2），越年轻的对象越频繁扫描。
+
+解析：引用计数的局限——1）循环引用：a.next = b; b.prev = a 导致双方引用计数永不为 0。2）引用计数无法处理循环引用的容器。3）引用计数更新频繁（每次赋值、传参、容器操作），需要原子操作确保线程安全。标记清除算法——1）标记阶段：从 GC Roots（全局变量、栈帧中的局部变量、活动线程）出发，标记所有可达对象。2）清除阶段：扫描堆中所有容器对象，未被标记的就是垃圾，回收。3）效率依赖于可达对象数量和容器对象总数的比例。
+
+扩展延伸：分代回收的阈值——gc.get_threshold() 返回 (700, 10, 10) 意味着：第 0 代分配了 700 个对象时触发 GC → 幸存到第 1 代 → 第 1 代 GC 触发 10 次后 → 触发第 2 代 GC。手动 GC——gc.collect(0/1/2) 强制回收指定代。gc.disable() 关闭 GC（但引用计数仍工作，只是不处理循环引用）。什么时候需要调 GC——频繁创建和销毁大量容器对象（如数据处理流水线）、长服务中的内存泄漏排查。gc.set_debug(gc.DEBUG_LEAK) 可以输出未回收的对象信息。
+
+注意：Python 的 GC 不同于 JVM 的 GC——Python 的 GC 只处理容器对象间的循环引用，不处理普通内存管理（那是引用计数的工作）。`,hints:[`引用计数和标记清除在 Python GC 中的分工——引用计数管常规回收，标记清除管循环引用`,`Python 的分代回收阈值（700, 10, 10）的实际含义`],tags:[`Python`,`GC`,`垃圾回收`,`内存管理`],content_hash:`f06774faf874`,id:3341},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的包与模块机制`,content:`Python 中 import 导入模块的完整流程是什么？相对导入和绝对导入的区别？__init__.py 的作用？模块和包的区别？`,answer:`答案：import 流程：1）在 sys.modules 中查找（缓存，避免重复加载）。2）未找到则使用 finder 定位模块（以标准库 finder 优先、再到 sys.path 中的路径）。3）loader（importlib 模块）加载模块并执行。4）添加到 sys.modules，执行导入语句的变量绑定。包是包含 __init__.py 的目录。__init__.py 在包被导入时执行，用于初始化包和定义 __all__。
+
+解析：绝对导入 vs 相对导入——绝对导入：import package.module，从 sys.path 的根目录开始搜索。相对导入：from . import sibling_module，使用 .（当前包）和 ..（父包），必须在包内使用（from .module import func）。相对导入在脚本直接运行时（__name__ == '__main__'）会失败。
+
+扩展延伸：sys.modules vs sys.path——sys.modules 是已加载模块的缓存字典（dict，key=模块名）。sys.path 是模块搜索路径列表（默认含当前目录、PYTHONPATH、标准库路径、site-packages）。模块重载——importlib.reload(module) 重新加载模块（注意：旧模块的实例不会自动更新）。dunder 导入——__all__ 声明 from module import * 导出的名字。如果没有 __all__，_ 开头的私有名字不会被导出。命名空间包——Python 3.3+ 允许没有 __init__.py 的目录作为命名空间包（Namespace Package），支持同一个包分布在不同目录下（如 project/pkg1/ 和 other/pkg1/ 组成同一个 pkg1）。`,hints:[`为什么相对导入在 __main__ 中会失败——__package__ 变量没有设置`,`命名空间包（PEP 420）和常规包的核心区别`],tags:[`Python`,`模块`,`包`,`导入`],content_hash:`fb01e0a7f93b`,id:3342},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的 MRO 与 C3 线性化`,content:`Python 中多继承的方法解析顺序（MRO）是如何确定的？C3 线性化算法的工作原理是什么？super() 在 MRO 中的作用？`,answer:`答案：Python 的 MRO 使用 C3 线性化算法（C3 Linearization），确保：1）子类优先于父类。2）从左到右按继承顺序。3）单调性——一个类的 MRO 是其所有父类 MRO 的线性扩展。super() 不是调用「父类」的方法，而是按照 MRO 顺序调用下一个类的方法。
+
+解析：C3 算法——合并所有父类的 MRO 列表和父类本身到单个列表中。合并规则：取第一个列表的头部（首个元素），如果该头部不在任何其他列表的尾部（除首元素外的剩余部分）中出现，则取出它；否则移动到下一个列表。举例：D(B, C) 的 MRO 计算：合并 B 的 MRO、C 的 MRO、[B, C]。[D] + merge([B, A, O], [C, A, O], [B, C]) → [D, B, C, A, O]。super() 的工作原理——super(C, self) 在 self.__class__ 的 MRO 中找到 C 之后的类。super().__init__() 就是按照 MRO 顺序调用下一个类的 __init__。
+
+扩展延伸：钻石继承（Diamond Inheritance）——D(B, C) 其中 B 和 C 都继承自 A。MRO 保证 A 只被初始化一次（最后一个），B 和 C 在 A 之前。这解决了经典钻石继承问题（Python 的 C3 保证每个父类在 MRO 中只出现一次）。super() 在协作多继承中的使用——使用 super() 的类可以安全地参与复杂的继承图，因为 super() 知道 MRO 中的下一个类。所有参与类需要用 super() 调用父类方法并接受 **kwargs（确保参数链正确传递）。`,hints:[`为什么 Python 使用 C3 线性化而不是简单的深度优先——单调性保证`,`super() 在协作多继承（Cooperative Multiple Inheritance）中的设计模式`],tags:[`Python`,`MRO`,`继承`,`C3`],content_hash:`ccfc8224ecff`,id:3343},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的异常处理与最佳实践`,content:`Python 的异常处理机制（try/except/finally/else）的执行顺序是什么？raise 和 raise from 的区别？为什么不建议捕获所有异常？`,answer:`答案：执行顺序：try 块 → 无异常则执行 else → 始终执行 finally。raise 重新抛出当前异常（保留 traceback）；raise X from Y 链式异常，将 Y 设为 X 的 __cause__。捕获所有异常（except: 或 except Exception:）会隐藏系统退出信号（KeyboardInterrupt、SystemExit），还可能隐藏意料之外的编程错误。
+
+解析：异常传播——函数内未捕获的异常逐层向外传播，直到被捕获或到达主程序导致崩溃。每层传播时 traceback 会记录调用栈。异常性能——try/except 在无异常时几乎零开销（十条 push/pop 字节码指令）。抛出异常时开销大（需要收集 traceback、遍历调用栈）。所以异常不应用于流程控制。else 块的用途——没有异常时执行，且在 finally 之前执行。如果需要区分「没有异常/正常执行」和「有异常/跳过」时使用。
+
+扩展延伸：raise from 的用途——异常转换时保留原始异常信息：try: 1/0; except ZeroDivisionError as e: raise RuntimeError('计算失败') from e。在 __cause__ 中保留原始异常。自定义异常——继承 Exception：class MyAppError(Exception): pass。自定义异常的 __init__ 可以添加额外字段（error_code、details）。异常链的最佳实践——API 边界处做异常转换（内部异常→统一的 APIException）。不要丢失原始异常的 traceback。finally 中的 return——finally 块中如果有 return，会覆盖 try/except 中的 return 值（重要陷阱！）。`,hints:[`finally 中的 return 为什么会覆盖 try 中的 return——Python 的异常处理语义`,`raise X from Y 和 raise X 的区别——异常链的 __cause__ vs __context__`],tags:[`Python`,`异常`,`错误处理`,`try`],content_hash:`4b716d8cec4e`,id:3344},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的 typing 模块与类型注解`,content:`Python 的类型注解（Type Hints）如何工作？typing 模块提供了哪些核心工具？类型注解在运行时是否生效？Pydantic/FastAPI 如何利用类型注解？`,answer:`答案：类型注解是 Python 3.5+ (PEP 484) 引入的语法，允许在函数参数和返回值上标注类型。typing 提供 List、Dict、Optional、Union、Any、TypeVar、Generic 等工具。类型注解不在运行时强制检查（Python 仍动态类型），但可以通过 mypy、pyright 等静态检查器在开发时发现问题。Pydantic/FastAPI 利用类型注解在运行时做数据校验和序列化/反序列化。
+
+解析：基本语法——def func(name: str, age: int = 18) -> str: ...。注意：注解不会改变 Python 的动态类型行为——传入 int 给 name 参数也能运行，但代码检查器会警告。typing 核心——Optional[str] = Union[str, None]；List[int] 泛型列表；Dict[str, int] 键值类型；Tuple[str, int, int] 固定长度元组。TypeVar——泛型变量：T = TypeVar('T'); def first(items: list[T]) -> T: return items[0]。
+
+扩展延伸：渐进类型化（Gradual Typing）——Python 的类型系统是渐进的，可以全量使用类型注解，也可以只在关键接口上使用。小项目或脚本可以不用，大项目强烈推荐。Pydantic/FastAPI——Pydantic 的 BaseModel 通过元类在运行时读取类型注解，自动生成数据校验逻辑。FastAPI 利用 Pydantic 类型注解自动生成 OpenAPI 文档和请求校验。NewType——定义新类型（本质是不同函数签名的别名）：UserId = NewType('UserId', int); def get_user(id: UserId): ...。Protocol——结构化子类型（鸭子类型的静态检查）：class Stream(Protocol): def read(self) -> bytes: ...。TypedDict——定义字典的键值类型结构。`,hints:[`Python 类型注解和 TypeScript 类型系统的核心差异——Python 不在运行时强制检查`,`Pydantic 如何利用 __annotations__ 在运行时获取类型信息做校验`],tags:[`Python`,`typing`,`类型注解`,`Mypy`],content_hash:`056aea25b200`,id:3345},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 的 C 扩展与 JIT 编译`,content:`如何用 C 语言编写 Python 扩展模块？CPython 的 C API 提供了哪些核心接口？Cython 和 Numba 分别做了什么？Python 有 JIT 吗？`,answer:`答案：编写 C 扩展：1）编写 .c 文件（包含 Python.h，实现模块函数和 PyMethodDef 数组）。2）定义模块初始化函数 PyInit_modulename。3）用 setuptools 的 Extension 类编译打包。CPython C API 的核心接口：PyArg_ParseTuple、Py_BuildValue、类型转换函数、引用计数（Py_INCREF/Py_DECREF）。Cython 是 Python 的超集（Python 代码 + C 类型声明），编译为 C 扩展。Numba 是实时 JIT 编译器（LLVM 后端），将 Python 数值运算编译为机器码。Python 没有通用的 JIT（PyPy 有 JIT 但不是 CPython），但 Numba 提供了特定领域的 JIT。
+
+解析：C 扩展开发——签名：static PyObject* my_func(PyObject* self, PyObject* args); 参数解析：PyArg_ParseTuple(args, &format, &vars)。注意引用计数管理——C 代码中不正确地增减引用会导致段错误或内存泄漏。Cython——将 .pyx 文件编译为 .so（C 扩展）。关键语法：cdef int x（C 类型声明），@cython.cfunc、@cython.locals、@cython.boundscheck(False)。
+
+扩展延伸：Numba 的 @jit 装饰器——@jit(nopython=True) 强制 JIT 编译（不使用 Python C API 的纯数值函数）。在循环和数值计算上可以接近 C 速度。局限性：只支持数值类型和 Numpy，不支持大部分 Python 对象。CFFI/ctypes——不需要写 C 扩展代码就能调用 C 库。ctypes 是标准库的一部分，但调用开销较大。CFFI 更现代（ABI/API 模式可选）。
+
+PyPy vs CPython——PyPy 有 JIT，长期运行的程序可能比 CPython 快 4-5 倍。但 CPython 仍然是默认实现，兼容性最好。大多数 Web 应用/脚本仍然用 CPython，因为 PyPy 的 C 扩展兼容性是问题。`,hints:[`为什么 Python 没有像 Java/JVM 那样通用的 JIT——CPython 的设计历史`,`Numba 的 nopython=True 模式的限制——为什么只支持数值运算`],tags:[`Python`,`C扩展`,`Cython`,`Numba`],content_hash:`537877ccb02c`,id:3346},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的常见数据结构复杂度`,content:`Python 内建数据结构（list、dict、set、tuple）的各种操作的时间复杂度是多少？哪些操作需要注意性能陷阱？`,answer:`答案：list：索引 O(1)、追加 O(1) 均摊、插入/删除 O(n)、包含检查 O(n)。dict/set：查找/插入/删除 O(1) 均摊、遍历 O(n)。tuple：同 list 的索引 O(1)。性能陷阱：list 的 in 操作（contains）是 O(n)，大列表上频繁检查应该用 set；dict 的哈希碰撞极端情况下退化为 O(n)；list 头部插入/删除 O(n)，应该用 deque 替代。
+
+解析：list 的实现——动态数组（C 的 PyObject* 数组），尾部追加均摊 O(1)，头部插入需要移动所有后续元素。扩容策略：约 1.125 倍（CPython 3.12+），旧版是 4 倍（小列表）/2 倍（大列表）。dict 的实现——哈希表（开放寻址法），负载因子 ~2/3。int 和 str 的哈希值 64 位随机化（Hash Randomization，防止 DoS 攻击）。插入 O(1)—前提是哈希分布均匀、负载因子低于阈值。
+
+扩展延伸：collections 模块的高效替代——deque：双端队列，两端 O(1) 插入/删除，支持 maxlen。Counter：统计可哈希元素频率的 dict 子类。defaultdict：带默认值工厂的 dict。OrderedDict：保持插入顺序的 dict（Python 3.7+ 的普通 dict 也保持插入顺序，但 OrderedDict 支持 move_to_end）。性能对比——list 头插 O(n) vs deque 头插 O(1)，但 deque 中间索引 O(n)。成员检查频繁时——list O(n) vs set O(1)，但 set 有额外内存开销（~20 bytes/element vs list 的 ~8 bytes/element）。`,hints:[`为什么 list 的尾部追加是 O(1) 均摊——动态数组的扩容策略`,`在什么条件下 dict 的插入会退化为 O(n)——哈希碰撞`],tags:[`Python`,`复杂度`,`数据结构`,`性能`],content_hash:`b0d100a0da95`,id:3347},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 中的迭代器（Iterator）与可迭代对象（Iterable）`,content:`Python 的可迭代对象（Iterable）和迭代器（Iterator）的区别是什么？for 循环的底层执行流程？如何自定义可迭代对象？`,answer:`答案：可迭代对象实现了 __iter__() 方法（返回迭代器）。迭代器实现了 __iter__()（返回 self）和 __next__()（返回下一个元素，没有时抛出 StopIteration）。for x in iterable 的底层：调用 iter(obj) 获取迭代器 → 循环调用 next(iterator) → 捕获 StopIteration 退出。自定义可迭代对象可以实现 __iter__ 返回生成器，或实现 __getitem__ 支持索引访问。
+
+解析：迭代协议——1）任何实现 __iter__() 的对象是可迭代的。2）如果类没有 __iter__()，实现了 __getitem__(index) 且 index 从 0 递增也会被视为可迭代（Python 的 fallback 机制）。3）for 循环通过 PyObject_GetIter 获取迭代器。迭代器的惰性——迭代器是惰性的，只在调用 next() 时生成元素。这也是生成器（Generator）的核心优势。
+
+扩展延伸：itertools 模块——无限迭代器：count(start, step)、cycle(iterable)、repeat(elem, n)。组合迭代器：product（笛卡尔积）、permutations/combinations。排序分组：groupby（类似 SQL 的 GROUP BY，但需要先排序）。chain（串联多个可迭代对象）。自定义迭代器——类实现 __iter__ 和 __next__：class MyRange: def __iter__(self): return self; def __next__(self): if self.n >= self.max: raise StopIteration; self.n += 1; return self.n-1。或者用生成器函数（更简单）：def my_range(n): i = 0; while i < n: yield i; i += 1。`,hints:[`为什么 for 循环比 while 循环更 Pythonic——迭代器协议和 StopIteration`,`itertools.groupby 和 SQL GROUP BY 的区别——需要预先排序`],tags:[`Python`,`迭代器`,`Iterable`,`itertools`],content_hash:`6786426c803f`,id:3348},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 的 Context Variables 与异步上下文`,content:`什么是 Python 的 ContextVar？它解决什么问题？为什么 ThreadLocal 在异步编程中不够用？ContextVar 如何实现上下文自动传递？`,answer:`答案：ContextVar（上下文变量，Python 3.7+）是在异步编程中替代 ThreadLocal 的变量方案。ThreadLocal 在异步编程中失效——因为多个协程在同一个线程上交替运行，ThreadLocal 变量会被不同协程互相覆盖。ContextVar 通过 PEP 567 的 Context 对象实现「逻辑上下文」——协程切换时自动保存和恢复上下文，不会互相干扰。
+
+解析：ThreadLocal 的问题——asyncio 中多个协程在同一个事件循环线程上交替执行。协程 A set ThreadLocal x=1，切换到协程 B，B 读到 x=1（错误），B 改 x=2，切回 A，A 读到 x=2（也错了）。ContextVar 的解决——每个协程有自己的 Context（逻辑执行上下文），协程切换时自动保存/恢复 Context。ContextVar 的 get/set 操作的是当前协程的 Context，不影响其他协程。ContextVar 的定义——var = ContextVar('var_name', default=None)，var.set(value) 设置值，var.get() 获取值。
+
+扩展延伸：Context 的工作原理——每个 Task（asyncio.Task）在创建时获取当前上下文的浅拷贝（context.copy()），Task 内所有的 ContextVar 操作都在这个拷贝上进行。Task 切换时，Python 的事件循环自动恢复 Task 关联的 Context。Context.run()——手动在指定上下文中执行代码：ctx = contextvars.copy_context(); ctx.run(func)。适用于在回调或线程中传递上下文。实际应用——1）请求级别的跟踪 ID（Trace ID）：在 Web 请求的协程中设置 Trace ID，所有子协程自动携带。2）数据库会话绑定：在 FastAPI 中间件中分配数据库连接，子协程自动使用同一连接。3）用户上下文传递：当前用户信息、权限上下文等。
+
+注意：ContextVar 不是线程安全的（应该不需要，因为异步中一个协程只在一个线程上执行）。如果需要跨线程传递上下文，需要用 contextvars.copy_context() 手动传递。`,hints:[`为什么 ThreadLocal 在 asyncio 中会失效——多个协程共享同一个线程`,`ContextVar 在异步框架（如 FastAPI/Sanic）中如何实现请求级别的 Context`],tags:[`Python`,`ContextVar`,`异步`,`上下文`],content_hash:`3b06a06c4bb0`,id:3349},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的 for-else 与 while-else`,content:`Python 中 for-else 和 while-else 的语法有什么用？else 块在什么情况下执行？这个特性在什么时候特别有用？`,answer:`答案：for-else 的 else 块在循环正常结束（没有 break）时执行。适用于「在循环中搜索，没找到就执行 XX」的模式。while-else 同样的语义：while 条件正常退出（条件变为 False）时执行 else，break 退出时不执行。经典用途：搜索循环、质数判断、循环中异常检测。
+
+解析：循环结束的条件——正常结束：for 循环遍历完所有元素或 while 条件变为 False 时执行 else。非正常结束：循环被 break 语句中断时跳过 else。循环没有执行：如果 for 的序列是空或 while 条件初始为 False，else 也会执行（因为没有任何 break）。for item in container: if matches(item): break; else: handle_not_found() 等价于常见的 search_flag 模式但更简洁。
+
+扩展延伸：完整例子——质数判断：for n in range(2, int(sqrt(num))+1): if num % n == 0: break; else: print(f'{num} 是质数')。不是 for-else 难以理解，而是名字起得不好（应该叫 nobreak）。Python 创造者 Guido 曾表示如果重新设计，会改名为 for...then...。for-else 和 try-else 的对比——try-else 的 else 在无异常时执行；for-else 的 else 在无 break 时执行。异常 vs break 在这些上下文中都是「提前退出」的机制。`,hints:[`为什么 Guido 认为 for-else 应该改名为 for-then——else 的语义误解`,`for-else 如何消除常见的搜索成功/失败标志变量`],tags:[`Python`,`循环`,`else`,`语法`],content_hash:`f2c65be7d76c`,id:3350},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的弱引用（weakref）`,content:`什么是 Python 的弱引用（Weak Reference）？它解决什么问题？weakref 模块的 ref、WeakValueDictionary、WeakSet 分别如何使用？`,answer:`答案：弱引用不增加对象的引用计数，允许对象被 GC 回收。主要解决循环引用导致的无法回收和缓存场景中的「引用阻止对象回收」问题。weakref.ref(obj) 创建弱引用，通过 () 调用获取原对象（如果还活着）。WeakValueDictionary 的 value 是弱引用——value 对象被回收后自动从字典中删除。WeakSet 的元素是弱引用。
+
+解析：什么时候需要弱引用——1）缓存：缓存字典中存储的对象不应该阻止其被回收。如果普通 dict 引用了一个大对象，该对象永远不会被 GC 回收。用 WeakValueDictionary 作为缓存——外部引用消失后缓存自动失效。2）回调注册：观察者模式中，订阅者列表存储弱引用。订阅者被销毁时，自动从通知列表中移除。3）避免循环引用：虽然 Python GC 能处理循环引用，但用弱引用可以更早、更确定地回收对象。
+
+扩展延伸：弱引用的限制——1）int、str、list、dict、tuple、set 等内建类型不支持弱引用（但它们的子类可以）。2）自定义类默认支持弱引用（有 __weakref__ 属性），使用 __slots__ 时需要显式加入 __weakref__。weakref 的回调——ref(obj, callback) 在 obj 被回收时调用 callback（通常用于清理通知）。finalize——weakref.finalize(obj, func, *args) 在 obj 被回收时注册清理函数，比 __del__ 更可靠（不会在异常时被跳过）。代理（proxy）——weakref.proxy(obj) 创建一个像代理对象一样的弱引用，访问时不需要 () 调用（直接用 proxy.attr）。但不推荐（接口不明确，容易混淆）。`,hints:[`为什么内建类型（int、str、list）不支持弱引用——性能考虑`,`WeakValueDictionary 作为缓存时如何自动清理失效条目`],tags:[`Python`,`weakref`,`弱引用`,`内存`],content_hash:`1f486fe87ab8`,id:3351},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 虚拟环境与包管理`,content:`Python 的虚拟环境（venv/virtualenv）的工作原理是什么？pip、conda、poetry 各自的优缺点？如何选择包管理工具？`,answer:`答案：虚拟环境通过创建独立的 Python 解释器和 site-packages 目录实现隔离。原理：将 PYTHONHOME 指向环境目录，修改 sys.path 指向环境内的 site-packages。pip：标准包管理，简单直接（requirements.txt）。conda：跨语言包管理（Python + C 库），二进制安装（无编译烦恼），适合数据科学。poetry：现代 Python 项目管理（pyproject.toml），依赖解析更好（确定性锁文件），支持发布到 PyPI。选型：个人脚本/小项目用 pip + venv；数据科学用 conda；库/团队项目用 poetry 或 pip-tools。
+
+解析：venv 的工作原理——运行 python -m venv .venv 创建包含 Python 解释器副本（软链接/硬链接）和 site-packages 目录的环境。激活 (source .venv/bin/activate) 修改 PATH 优先使用环境内的 Python。不激活也可以直接 .venv/bin/python script.py。pip 的局限性——依赖解析器不是 SAT 求解器（幂等性不足），同一包的不同版本依赖可能冲突。
+
+扩展延伸：较新的包管理方案——uv：Rust 实现的极速 pip/venv 替代，pip install 快 10-100 倍，兼容 requirements.txt 和 pyproject.toml。pip-tools：pip-compile 生成确定的 requirements.txt，pip-sync 同步环境到锁文件状态。PEX：将整个 Python 应用打包为单个可执行文件（self-contained），类似 Java 的 fat JAR。锁文件（Lock File）——pyproject.lock (poetry)、requirements.txt 哈希锁定 (pip-compile --generate-hashes)。确保不同环境安装的依赖版本完全一致（repeatable builds）。`,hints:[`为什么 pip 的依赖解析有时会产生冲突——扁平依赖 vs 嵌套依赖的差异`,`uv 作为 pip 替代的速度提升主要来源于 Rust 实现还是更优的算法`],tags:[`Python`,`venv`,`pip`,`Poetry`],content_hash:`6b06efcc768a`,id:3352},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的编码与 Unicode 处理`,content:`Python 3 中 str 和 bytes 的区别是什么？encode()/decode() 什么用？常见的 Unicode 处理陷阱有哪些？`,answer:`答案：str 是 Unicode 字符串（Python 3 中所有字符串都是 Unicode），bytes 是原始字节序列（0-255 的整数序列）。encode() 将 str → bytes（指定编码如 UTF-8），decode() 将 bytes → str。常见陷阱：文件读写时的编码不一致、ASCII 兼容假设、混合 str 和 bytes 的操作（TypeError）。
+
+解析：Unicode 基础——Unicode 为每个字符分配码点（Code Point，如 U+4E2D）。UTF-8 是一种变长编码（1-4 字节），ASCII 字符编码为 1 字节，中文等 3 字节。Python 3 的 str 是码点序列，内部以 UCS-4 或 UCS-2（取决于编译选项）存储。文件 I/O——open() 默认使用 locale 编码（通常 UTF-8）。建议始终显式指定 encoding：open('file.txt', encoding='utf-8')。二进制模式（'rb'/'wb'）返回 bytes。
+
+扩展延伸：Unicode 陷阱——1）== 比较可能出乎意料：'é' 可以是单个码点 U+00E9 也可以是 'e' + 组合符号 U+0301。unicodedata.normalize('NFC', s) 可以归一化。2）大小写转换不总是 1:1：'ß'.upper() → 'SS'。3）str 的 len() 返回的是码点数量不是用户感知的字符数。复杂 emoji 如 👨‍👩‍👧‍👦（家庭 emoji）由多个码点组合而成，len() 返回 7+！4）文件读写最常见的错误：UnicodeDecodeError——尝试用 ASCII 读 UTF-8 文件。诊断：用 chardet 或 cchardet 检测编码。5）BOM（Byte Order Mark）：﻿ 在文件开头标识编码是大端还是小端。UTF-8 不需要 BOM（但有 BOM 也是合法的）。`,hints:[`为什么 emoji 的 len() 会比视觉长度长很多——组合字符与代理对`,`unicodedata.normalize 的 NFC/NFD/NFKC/NFKD 四种归一化方式的应用场景`],tags:[`Python`,`Unicode`,`编码`,`str`],content_hash:`cf21fdd6c2f3`,id:3353},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 的属性访问控制`,content:`Python 中「私有」属性（_ 和 __ 前缀）的实际语义是什么？property、__getattr__、__getattribute__ 三者的区别？如何实现属性验证？`,answer:`答案：_ 前缀是命名约定（表示内部使用，不会强制）。__ 前缀触发名称修饰（Name Mangling）：__attr 在类内部变成 _ClassName__attr 避免子类冲突。property 定义 getter/setter 对有副作用的属性。__getattr__ 在属性在正常查找路径中找不到时触发（用于动态属性）。__getattribute__ 在每次属性访问时触发（所有属性，需谨慎使用性能和安全）。属性验证用 property 的 setter 或描述符。
+
+解析：名称修饰（Name Mangling）——class A: __secret = 1; A._A__secret = 1 才能访问。用途：防止子类意外覆盖父类的内部属性。不是真正的私有（通过映射后的名字仍然可以访问）。属性查找链——obj.attr 的完整路径：1）类型 MRO 中的数据描述符（有 __set__/__delete__）。2）实例的 __dict__。3）类型 MRO 中的非数据描述符（只有 __get__）。4）类型的 __dict__。5）触发 __getattr__（如果定义了的话）。__getattr__ vs __getattribute__——大多数场景用 __getattr__（只在找不到时触发）。__getattribute__ 在每次访问时都触发，很容易导致递归（需用 super().__getattribute__(name) 避免）。
+
+扩展延伸：property 的 setter——@property def age(self): return self._age; @age.setter def age(self, value): if not 0 <= value <= 150: raise ValueError; self._age = value。属性验证的其他方式——1）Python 3.10+ dataclass 的 field validator：@dataclass; class Person: name: str = field(metadata={'min_len': 1})。2）Pydantic 的 @validator 装饰器。3）描述符（Descriptor）做可复用的验证器。
+
+__setattr__——拦截所有属性设置。常用于属性变化通知、ORM 的 dirty tracking。需注意避免递归：def __setattr__(self, name, value): ...; super().__setattr__(name, value)。`,hints:[`Python 的 __ 名称修饰（Name Mangling）和 Java 的 private 的本质区别`,`__getattr__ 和 __getattribute__ 的性能差异——后者每次属性访问都触发`],tags:[`Python`,`属性`,`私有`,`property`],content_hash:`e0fe129936b8`,id:3354},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 的性能优化策略`,content:`Python 程序性能优化的核心方法有哪些？如何定位性能瓶颈？常见优化手段的预期提升幅度是多少？`,answer:`答案：优化流程：Profile 定位瓶颈 → 针对瓶颈优化 → 重新 Profile 验证。定位工具：cProfile（函数级）、py-spy（采样式，生产安全）、line_profiler（行级）。优化手段及预期提升：数据结构优化（list→set，含检查 O(n)→O(1) 常用于 10-100 倍提升）、局部变量绑定（减少全局查找 ~10%）、使用内建函数/C 扩展（10-100 倍）、缓存（memorization 避免重复计算 100 倍+）、代码编译（Numba/JIT 10-100 倍）、异步 I/O（I/O 密集型 2-10 倍）。
+
+解析：Profile 驱动——不要猜测性能瓶颈。cProfile 示例：python -m cProfile -o output.prof script.py; python -m pstats output.prof。优化前先确认哪段代码占用了最多时间。常见优化——1）局部变量加速：频繁访问的全局变量（如函数名、模块属性）绑定为局部变量：_len = len; 然后在循环中用 _len(obj)。避免在循环中使用 .（属性访问）。2）列表推导式 vs for 循环：推导式 1.5-2 倍加速。3）字符串拼接：大量拼接用 ''.join(list)，而不是 +=（O(n²) 退化）。4）使用 slots：大量同构对象减少 50-70% 内存。
+
+扩展延伸：高阶优化——1）C 扩展：对关键的热路径用 Cython 编译或 C 扩展（预期 10-100 倍）。2）多进程：CPU 密集型用 multiprocessing（避开 GIL），进程数 = CPU 核心数。3）缓存：@functools.lru_cache(maxsize=None) 自动缓存函数结果，适合纯函数计算（DP、斐波那契数列从 O(2^n) 降到 O(n)）。4）延迟计算：generator 替代 list，减少内存。5）array.array/numpy：比 Python list 更紧凑（类型化数组），数值计算用 numpy 比纯 Python 循环快 100 倍 +。6）Pypy：对纯 Python 代码（无 C 扩展依赖）可获 4-5 倍提升。
+
+注意：优化优先考虑算法和数据结构（从 O(n²) 降到 O(n log n) 比微观优化效果好 1000 倍）。`,hints:[`为什么局部变量绑定能加速——Python 的 LOAD_FAST 比 LOAD_GLOBAL 快一个数量级`,`优化前 Profile 为什么很重要——猜测的瓶颈和实际的瓶颈可能完全不同`],tags:[`Python`,`性能`,`优化`,`Profile`],content_hash:`5154cac802d6`,id:3355},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 中的闭包和作用域`,content:`Python 中的作用域规则（LEGB）是什么？闭包是如何工作的？nonlocal 关键字的作用？闭包和 lambda 的组合有哪些陷阱？`,answer:`答案：LEGB 作用域优先级：Local（局部）→ Enclosing（外层函数）→ Global（模块级）→ Built-in（内建）。闭包是内层函数引用了外层函数的变量，外层函数返回后内层函数仍然持有对外层变量的引用。nonlocal 关键字允许在内层函数中修改外层函数的变量（类似 global 但用于非全局的外层作用域）。
+
+解析：LEGB 详解——1）Local：当前函数内定义的变量。2）Enclosing：外层函数（嵌套函数的外层）的变量。3）Global：模块顶层的变量。4）Built-in：print、len 等内建函数。查找时从内到外依次查找。闭包的捕获机制——内层函数在定义时捕获外层变量的引用（Late Binding）。所以如果外层变量变化，内层函数看到的是变化后的值。经典陷阱——lambda 表达式在循环中捕获循环变量：lambdas = [lambda: i for i in range(5)]; lambdas[0]() → 4（所有 lambda 共享同一个 i）。
+
+扩展延伸：闭包的工程应用——1）函数工厂：定义一个返回函数的函数，外层参数被闭包记住。def make_adder(n): return lambda x: x + n。2）偏函数：提前绑定部分参数。3）装饰器：几乎所有装饰器都依赖闭包。nonlocal 的应用——计数器函数：def counter(): count = 0; def inc(): nonlocal count; count += 1; return count; return inc。没有 nonlocal 时，内层函数无法修改外层函数的变量（赋值操作默认创建局部变量）。闭包的循环陷阱解决方案——1）默认参数：lambda x=x: x（立即求值）。2）functools.partial：partial(lambda x, i=i: x * i, i=i)。3）循环内定义执行函数。`,hints:[`为什么 Python 的闭包中循环变量会「共享」而非「快照」——Late Binding 机制`,`nonlocal 和 global 的区别——nonlocal 跳过全局作用域直接修改外层函数的变量`],tags:[`Python`,`闭包`,`作用域`,`LEGB`],content_hash:`d5d73e606041`,id:3356},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的常见魔术方法（Dunder Methods）`,content:`Python 类中有哪些常用的魔术方法（Dunder Methods）？__new__ 和 __init__ 的区别？__call__ 的作用？__repr__ 和 __str__ 的区别？`,answer:`答案：__new__(cls, ...) 在 __init__ 之前调用，创建并返回新实例（单例模式、不可变类型继承时使用）。__init__(self, ...) 初始化实例。__call__(self, ...) 使对象可调用（像函数一样调用）。__repr__ 返回开发者友好的表示（eval 可重建），__str__ 返回用户友好的表示。print(obj) 调用 __str__、repr(obj) 调用 __repr__。
+
+解析：__new__ vs __init__——__new__ 是真正的构造函数（class method），决定如何创建实例。__init__ 是初始化方法，对新实例设置属性。元类中 __new__ 在创建类时调用。__new__ 在不可变类型（int、str、tuple）的子类中必须使用（因为这些类型的实例在 __new__ 中创建后不可修改）。
+
+扩展延伸：常用魔术方法分类——1）字符串表示：__repr__（精确，建议符合 eval(repr(obj)) == obj 惯例）、__str__（可读，默认 delegating to __repr__）、__format__（format() 调用）。2）比较：__eq__、__ne__、__lt__、__le__、__gt__、__ge__。@functools.total_ordering 可以只定义 __eq__ + 一个其他方法，自动补全其余。3）容器：__len__、__getitem__、__setitem__、__delitem__、__contains__、__iter__、__next__。实现 __getitem__ 的类自动可迭代（Python 的 fallback 机制）。4）数值运算：__add__、__sub__、__mul__、__truediv__、__floordiv__。__radd__（反射加法，当左操作数不支持 __add__ 时调用）。@functools.singledispatch 提供单分派泛函数（替代类型判断）。`,hints:[`为什么继承 int 的子类必须在 __new__ 中初始化而不能在 __init__ 中——不可变类型的限制`,`@functools.total_ordering 如何用两个比较方法自动补全其余四个`],tags:[`Python`,`魔术方法`,`Dunder`,`元编程`],content_hash:`7e0b81bcf705`,id:3357},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python GIL 原理与规避`,content:`什么是 Python 的 GIL（Global Interpreter Lock）？GIL 为什么存在？如何在多线程 Python 程序中规避 GIL 的限制？`,answer:`答案：GIL 是 CPython 解释器中的全局锁，保证同一时刻只有一个线程执行 Python 字节码。GIL 存在的历史原因：CPython 的内存管理不是线程安全的（引用计数 + 垃圾回收）。GIL 简化了底层的内存管理但限制了多线程的并行执行。
+
+解析：GIL 的调度——1）Python 3.2+ 的 GIL 基于超时机制：线程执行一段时间（默认 5ms）后释放 GIL，其他线程竞争获取。2）IO 密集型任务中 GIL 影响小：线程在等待 IO 时会释放 GIL，其他线程可以执行。3）CPU 密集型任务中 GIL 影响大：N 个线程做 CPU 计算时，实际上只有一个线程在运行（其他在等 GIL），性能可能还不如单线程（加上线程切换开销）。
+
+扩展延伸：规避方法——1）multiprocessing：多进程（每个进程有自己的 GIL），利用多核 CPU。使用 ProcessPoolExecutor 或 multiprocessing 模块。注意：进程间通信（IPC）的开销比线程间大。2）C 扩展：用 C 语言写计算密集型模块（使用 Cython、ctypes、cffi），C 扩展在调用时可以释放 GIL。3）asyncio：协程（单线程并发），适合 IO 密集型任务。不需要 GIL，因为所有协程在同一个线程中运行。4）Jython / IronPython：没有 GIL 的 Python 实现（基于 Java / .NET 平台）。但 CPython 仍然是主流。5）Python 3.13+ 的 experimental 无 GIL 构建（--disable-gil）。注意：GIL 对于大多数应用（IO 密集型、胶水语言场景）不是真正的瓶颈。只在 CPU 密集型多线程场景下需要规避。`,hints:[`GIL 在 IO 密集型场景下为什么影响不大——等待 IO 时线程主动释放 GIL`,`Python 3.13 的实验性无 GIL 模式——CPython 正在走向移除 GIL 但会牺牲单线程性能`],tags:[`Python`,`GIL`,`多线程`,`并发`],content_hash:`a182679727aa`,id:3358},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python asyncio 异步编程`,content:`Python asyncio 的事件循环（Event Loop）是如何工作的？async/await 关键字的作用是什么？协程和线程的区别是什么？`,answer:`答案：asyncio 是 Python 的异步 IO 框架，基于事件循环（Event Loop）调度协程（Coroutine）。async def 定义协程函数，await 挂起当前协程等待异步操作完成。协程是用户态轻量级调度（协作式），线程是内核态抢占式调度。
+
+解析：事件循环的工作——1）事件循环维护一个 Task 队列。2）协程执行到 await 时让出控制权回事件循环（不会阻塞线程）。3）事件循环在等待 IO 完成期间调度其他协程。4）当 await 的 IO 操作完成后，事件循环恢复该协程的执行。5）事件循环在一个线程中运行（如果协程中没有阻塞调用，这个线程永远不会阻塞）。
+
+扩展延伸：关键 API——1）asyncio.run(main()) — 创建事件循环，运行 main，关闭循环。2）asyncio.create_task(coro()) — 将协程包装为 Task 并调度（后台运行）。3）asyncio.gather(c1(), c2(), c3()) — 并发运行多个协程并等待所有完成。4）asyncio.wait_for(coro(), timeout=10) — 带超时的等待。协程 vs 线程——1）协程：单线程内切换（用户态），切换成本极低（几个微秒），数量可以数十万。2）线程：内核态切换，成本高（上下文切换），数量受系统限制。注意：asyncio 不是银弹——如果协程中有 CPU 密集型操作或阻塞 IO，整个事件循环都会被阻塞。需要将阻塞操作放到线程池（loop.run_in_executor）或使用异步库（aiohttp 替代 requests，aiomysql 替代 pymysql）。`,hints:[`asyncio 的 await 不是让 CPU 停下来——是协程主动让出执行权给事件循环调度其他协程`,`协程中不能用标准 requests/MySQL 驱动——这些是同步阻塞的，会阻塞整个事件循环`],tags:[`Python`,`asyncio`,`协程`,`异步`],content_hash:`c8f9fcef229a`,id:3359},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 协程与 asyncio 深入`,content:`Python asyncio 的核心概念有哪些？事件循环（Event Loop）、协程（Coroutine）、任务（Task）和 Future 的关系？async/await 关键字的工作原理？asyncio 的并发模型和线程的区别？`,answer:`答案：asyncio 是基于协程的并发框架——事件循环是核心调度器（管理所有待执行协程）。协程（async def 定义）是挂起/恢复的生成器函数。Task 是 Future 的子类（将协程包装为可调度的任务）。await 挂起当前协程让出控制权到事件循环。
+
+解析：原理——1）事件循环（Event Loop）：不断检查待执行队列（Task/回调/I/O 事件），有可执行任务就执行直到遇到 await（挂起点），然后切换到下一个任务。整个过程在单线程中完成。2）协程和生成器的关系：Python 的协程基于生成器的机制（PEP 342/380）。async/await 是语法糖（本质是基于 yield from 的生成器）。3）Task 与 Future：Task 是 Future 的子类——Future 表示一个「未来结果」的占位符，Task 包装协程并驱动其执行。
+
+扩展延伸：asyncio vs 线程——1）并发模型：asyncio 单线程 + 协作式多任务（显式挂起点 await）。线程：OS 调度 + 抢占式多任务（随时可能被切换）。2）上下文切换：asyncio 的 await 切换成本极低（函数调用级别），线程切换需要内核态切换（微秒级）。3）GIL：asyncio 不受 GIL 影响（单线程），但 CPU 密集型任务会阻塞事件循环。需要 CPU 密集任务时用 run_in_executor（丢到线程池）。4）常见模式：asyncio.run(main()) 启动事件循环。asyncio.create_task() 创建并发任务。asyncio.gather() 等待多个任务。asyncio.wait_for() 超时控制。asyncio 适合 IO 密集（网络请求/文件读写/数据库查询），CPU 密集还是需要多进程。`,hints:[`asyncio 单线程协作式并发——await 是挂起点，协程在此处让出控制权给事件循环`,`CPU 密集型任务不应直接在 async 函数中执行——用 run_in_executor 丢到线程池`],tags:[`Python`,`asyncio`,`协程`,`并发`],content_hash:`d43b264d1a5b`,id:3360},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 的 import 机制`,content:`Python 的 import 机制是如何工作的？sys.path 的搜索顺序？相对导入和绝对导入的区别？__init__.py 的作用？循环导入如何解决？`,answer:"答案：Python import 的流程——1）在 sys.modules 中查找（已缓存的模块字典）。2）未找到则使用 finder（查找器）在 sys.path 的路径中查找模块。3）找到后使用 loader（加载器）加载模块并执行模块代码。4）将模块加入 sys.modules。\n\n解析：sys.path 搜索顺序——1）当前脚本所在目录（或 PYTHONPATH）。2）环境变量 PYTHONPATH。3）标准库路径。4）site-packages 中的第三方包。绝对导入（`import os.path`）使用 sys.path 搜索。相对导入（`from . import utils`）使用当前模块的 __package__ 属性定位，只能在包内使用。__init__.py——将目录标记为 Python 包。Python 3.3+ 支持隐式命名空间包（没有 __init__.py 也可以）。\n\n扩展延伸：循环导入——当模块 A import 模块 B，模块 B 又 import 模块 A 时发生。此时 A 尚未完全加载（在 sys.modules 中但部分属性未定义），B 尝试导入 A 时拿到的是不完整的 A。解决方式——1）延迟导入：在函数内（而非模块顶层）导入。2）重构：将共同依赖的部分提取到第三个模块。3）重新设计：循环导入通常说明模块职责划分有问题。import 缓存——`sys.modules` 缓存所有已导入模块。`importlib.reload(module)` 重新加载。注意：reload 不会更新已引用的对象（如 `from module import func` 后 reload 不会更新 func）。",hints:[`sys.path 搜索顺序——当前目录 → PYTHONPATH → 标准库 → site-packages`,`循环导入在顶层 import 时触发——延迟到函数内导入可避开（但不治本）`],tags:[`Python`,`Import`,`模块`,`路径`],content_hash:`8f8df72a726e`,id:3361},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 性能优化策略`,content:`Python 程序性能优化有哪些常用策略？从代码层面到架构层面如何逐步优化？常用的性能分析工具有哪些？什么时候应该考虑用 C 扩展或 JIT？`,answer:`答案：Python 性能优化层次——1）算法和数据结构层面（最有效，如用 set 替代 list 做查找）。2）语言特性优化（列表推导式比 for 循环快、局部变量比全局变量快）。3）使用内置函数和标准库（map/filter/itertools 等 C 实现的函数）。4）用 C 扩展（Cython/PyPy/Numba）。5）架构层面（缓存/异步/多进程）。
+
+解析：具体优化——1）使用合适的数据结构：set 查找 O(1) vs list O(n)。dict 做计数器 vs 手写 if-else。collections.deque 做队列 vs list pop(0)。2）减少 Python 级别的循环：用 NumPy 向量化替代 Python for 循环。用 map/filter/reduce 替代显式循环。3）字符串拼接：用 ''.join(list) 而非 +=（前者 O(n)，后者可能 O(n^2)）。4）使用 __slots__：减少实例对象的内存占用和属性访问时间。5）局部变量优化：频繁访问的全局变量（如 len/max）赋值给局部变量。
+
+扩展延伸：性能分析工具——1）cProfile：内置的性能分析器（\`python -m cProfile script.py\`）。输出每个函数的调用次数和耗时。2）line_profiler：逐行分析（@profile 装饰器标记要分析的函数）。3）memory_profiler：逐行分析内存使用。4）py-spy：无需修改代码的采样分析器（适合生产环境）。5）timeit：测量小段代码的执行时间。JIT/C 扩展——PyPy（JIT 编译器，纯 Python 代码可能快 4-10 倍）。Cython（将 Python 编译为 C 扩展，适合重计算）。Numba（@jit 装饰器，将 Python 函数编译为机器码，适合 NumPy 操作）。优化第一原则——先测量再优化，不要过早优化。根据 Profile 结果找到真正的瓶颈（通常是 20% 的代码占 80% 的时间）。`,hints:[`Python 优化第一原则——先用 cProfile 找到瓶颈（80% 时间在 20% 代码中），不要盲目优化`,`列表推导式比 for 循环快、set 比 list 查找快、局部变量比全局变量快——基础优化技巧`],tags:[`Python`,`性能优化`,`cProfile`,`JIT`],content_hash:`45883f93cedf`,id:3362},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 元类（Metaclass）`,content:`什么是 Python 的元类？元类与继承的关系是什么？__new__ 和 __init__ 在元类中各起什么作用？有哪些实际应用场景？`,answer:`答案：元类是「类的类」——类是元类的实例。默认元类是 type，通过继承 type 并重写 __new__ / __init__ 可以控制类的创建行为。
+
+解析：1）创建机制——class Foo: pass 等价于 Foo = type('Foo', (), {})。type 是默认元类。自定义元类：class Meta(type): def __new__(mcs, name, bases, namespace): ...; return super().__new__(...)。__new__ 负责创建类对象（返回新类），__init__ 负责初始化类对象（设置属性）。2）元类的继承链——object 是 type 的实例（因为 object 是类），type 是 object 的子类（因为 type 是类）。type 是自身的实例（type 是元类）。3）拦截逻辑——__new__ 中可以修改类的命名空间（添加/删除方法）、验证方法签名、自动注册类。
+
+扩展延伸：实际应用——1）ORM 模型（SQLAlchemy、Django）：class User(Model): name = StringField() 中元类在创建 User 类时将字段转换为列映射。2）单例模式：元类 __call__ 中控制实例创建逻辑。3）API 自动注册：Flask 的 @route 本质不是元类，但 Web 框架的 Resource 注册常用元类。4）接口校验抽象类（ABCMeta）：ABCMeta 是标准库中元类的典型应用。元类 vs 装饰器——元类在类创建时执行（类定义完成后立即执行），装饰器在运行时执行。能用装饰器解决的问题尽量不用元类——元类复杂度高且容易造成继承冲突。`,hints:[`type 为什么是它自己的实例——理解 type 和 object 的循环引用关系`,`__new__ 和 __init__ 在元类中的调用顺序是什么`],tags:[`Python`,`元类`,`Metaclass`,`type`],content_hash:`20df3d78cabc`,id:3363},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 描述符（Descriptor）`,content:`Python 描述符协议是什么？property、classmethod、staticmethod 是如何通过描述符实现的？描述符的查找优先级是怎样的？`,answer:`答案：描述符是实现了 __get__、__set__、__delete__ 中任意方法的对象，用于控制属性访问行为。property 是数据描述符（实现了 __get__ 和 __set__），classmethod 和 staticmethod 是非数据描述符（仅实现 __get__）。
+
+解析：描述符协议——1）数据描述符：同时实现 __get__ 和 __set__（或 __delete__）。优先级最高，覆盖实例字典。2）非数据描述符：仅实现 __get__。优先级低于实例字典。3）查找顺序（对于 obj.attr）：数据描述符 → 实例 __dict__ → 非数据描述符 → 类 __dict__ → 父类 MRO。
+
+扩展延伸：各内置描述符的实现——property(fget, fset, fdel, doc) 相当于定义了一个数据描述符。classmethod：__get__ 返回绑定 method 到类的 bound method（第一个参数是 cls）。staticmethod：__get__ 直接原样返回函数（不做任何绑定）。
+
+扩展延伸：自定义描述符——@property 的替代实现——class ReadOnly: def __get__(self, obj, objtype=None): return ... ; def __set__(self, obj, value): raise AttributeError。类型校验描述符（如 Django ORM 的 IntegerField）——在 __set__ 中做 isinstance 检查。描述符只有在类级别定义时才能生效（实例级别定义不触发描述符协议）。Lazy/ cached_property ——第一次访问时计算并缓存，后续直接从实例字典返回值（因为非数据描述符优先级低于实例字典）。`,hints:[`数据描述符和非数据描述符的区别是什么`,`cached_property 为什么能用描述符实现惰性求值`],tags:[`Python`,`描述符`,`Descriptor`,`属性`],content_hash:`3aea4a38765e`,id:3364},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 协程与生成器（Coroutine vs Generator）`,content:`Python 中生成器和协程有何区别与联系？yield、yield from、await、async def 的演化脉络是怎样的？`,answer:`答案：生成器是迭代器的子集，通过 yield 产出值、通过 send() 接收值。协程在 Python 3.5+ 用 async def 定义，本质是对生成器的高级封装。yield from 将子生成器委派给外层，async/await 将协程委派给事件循环。
+
+解析：演进路线——1）Python 2.2：yield 生成器（暂停/恢复）。2）Python 2.5：send()、throw()、close()——生成器可以接收值（双向通信），成为「协程的雏形」。3）Python 3.3：yield from——委派生成器，让子生成器直接与调用方通信（不再需要手动迭代）。4）Python 3.5：async/await——语法糖，await 等价于 yield from，但限定只能用于协程（普通的生成器不可 await）。
+
+扩展延伸：协程 vs 生成器的关键区别——1）语义目的：生成器用于惰性迭代（数据生产者），协程用于并发控制（多任务协作）。2）事件循环：协程需要事件循环驱动（asyncio.run），生成器由迭代驱动（next()/for）。3）错误处理：协程中的异常通过事件循环捕获，生成器的异常通过 throw() 注入。4）协作式多任务——await asyncio.sleep(0) 主动让出控制权，事件循环调度另一个协程。这是协程实现并发的核心机制（非抢占式）。
+
+扩展延伸：async/await 的实现原理——Python 将 async def 函数编译为协程对象（coroutine object），内部采用与生成器相似的帧栈结构。await 关键字在字节码层面被转换为 YIELD_FROM 指令。asyncio 的事件循环本质上是在做 \`send(None) → 捕获 StopIteration → 获取返回值\` 的循环。`,hints:[`yield from 解决了生成器嵌套时什么样的痛点`,`async/await 在字节码层面与 yield from 的关系`],tags:[`Python`,`协程`,`生成器`,`async/await`,`asyncio`],content_hash:`00cc26b062a9`,id:3365},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`CPython GIL 深度解析`,content:`CPython GIL 的具体调度机制是怎样的？GIL 切换的触发条件是什么？Python 3.12+ 的 GIL 改进有哪些？为什么取消 GIL 后单线程性能会下降？`,answer:`答案：CPython GIL 基于 ticks（指令计数）和 I/O 阻塞两种机制调度。GIL 每执行约 100 条字节码（default sys.getcheckinterval，Python 3.2+ 改为了基于时间的 5ms）切换到其他线程。I/O 操作前主动释放 GIL（_PY_READ/ _PY_WRITE 宏）。
+
+解析：Python 3.2 前的 GIL 调度——基于 ticks 计数器。解释器每执行 100 条字节码后检查是否有其他线程等待 GIL，有则切换。问题：CPU 密集型线程长时间占用 GIL，I/O 线程得不到及时执行。Python 3.2+ 的新 GIL（Antoine Pitrou 设计）——基于超时/条件变量（Condition Variable）的 GIL 调度。等待 GIL 的线程会等待 5ms 超时。持有 GIL 的线程，如果有其他线程在等待，会在约 5ms 后主动释放 GIL。效果：I/O 线程的响应时间从 O(1s) 降到 O(5ms)，了对 I/O 密集型程序的友好度大幅提升。
+
+扩展延伸：Python 3.12 的 GIL 改进——PEP 684（Per-Interpreter GIL），每个子解释器拥有独立的 GIL，多核利用率提升，但仍在实验阶段。Python 3.13 — PEP 703（自由线程模式）：--disable-gil 编译，在运行时通过 per-object locking 和 biased reference counting 替代全局锁。为什么无 GIL 会降性能——1）偏置引用计数（Biased RC）：假设大部分对象只被单线程访问，减少原子操作开销。2）当对象被跨线程访问时退化为完整引用计数（完整 RC 需要原子操作——LOCK CMPXCHG，比普通 INC/DEC 慢很多）。3）对象头占用增大（从 16 字节到 24 字节，缓存不友好）。推测无 GIL 模式性能下降约 10-30%（取决于工作负载）。推荐：I/O 密集仍然用默认有 GIL 模式，CPU 密集用多进程或 --disable-gil。`,hints:[`Python 3.2 前后 GIL 调度机制的核心区别`,`偏置引用计数（Biased Reference Counting）为什么能提升无 GIL 模式的性能`],tags:[`Python`,`GIL`,`CPython`,`并发`,`多线程`],content_hash:`bbf2418a851a`,id:3366},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Cython 的原理与应用`,content:`Cython 是什么？它是如何将 Python 代码转换为 C 扩展并提升性能的？静态类型声明、nogil 模式和与 C 交互的核心机制是什么？`,answer:`答案：Cython 是一个将 Python 代码编译为 C 扩展的工具。它通过静态类型声明（cdef）、C 函数调用和可选 GIL 释放实现接近 C 的性能。
+
+解析：Cython 的工作流程——1）Cython 编译器将 .pyx 代码翻译为 .c 文件（包含 CPython API 调用）。2）C 编译器将 .c 编译为 .so/.pyd 动态库（Python C 扩展）。3）导入时动态库的 PyInit_xxx 函数被调用，注册模块。核心优化手段——1）静态类型声明：cdef int i = 0 避免 Python 对象装箱拆箱（PyObject* 操作开销极高）。2）cdef 函数：仅在 C 层调用（比 def 函数快一个数量级），不创建 Python 函数对象。3）cpdef 函数：同时暴露给 C 和 Python。4）nogil 模式——with nogil: 块中不能操作 Python 对象，此代码块无 GIL 限制，多线程可真正并行执行。
+
+扩展延伸：Cython 的应用场景——1）NumPy 底层用 Cython 编写数组操作（ufunc 的循环体），比纯 Python 做相同操作快 10-100x。2）游戏引擎/物理模拟：在 nogil 块中做大量数学运算（float/int 无 Python 对象操作），充分利用多核。3）C 库封装：用 cdef extern from 'xxx.h' 直接调用 C 函数。4）PEP 484 类型提示 vs Cython 类型——类型提示不影响运行时性能，Cython 的 cdef 类型在编译期转化为 C 原生类型。Cython vs mypyc——mypyc 是独立于 Cython 的替代方案，将类型标注的 Python 代码编译为 C 扩展，但成熟度不如 Cython。`,hints:[`cdef 和 def 函数在性能上的本质区别是什么`,`nogil 块中为什么不能操作 Python 对象`],tags:[`Python`,`Cython`,`性能优化`,`C扩展`],content_hash:`92b026c1fc7f`,id:3367},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 装饰器的高级用法与 functools.wraps`,content:`Python 装饰器的实现原理是什么？functools.wraps 的作用是什么？类装饰器如何实现？装饰器有哪些经典应用场景和注意事项？`,answer:`答案：装饰器本质上是一个接受函数作为参数并返回新函数的高阶函数。@decorator 语法糖等价于 func = decorator(func)，在模块导入时执行。functools.wraps 将原函数的 __name__、__doc__、__module__ 等元信息复制到 wrapper 函数上。类装饰器通过 __init__ 接收函数、__call__ 包装逻辑来实现。
+
+解析：functools.wraps 的原理——wraps 实际上是 partial(update_wrapper, wrapped=func)，将 __name__、__qualname__、__doc__、__dict__、__module__、__annotations__ 复制到 wrapper，同时设置 __wrapped__ 属性指向原函数。不调用 wraps 时，wrapper 函数会丢失原始函数的元信息，导致 help(func) 和 inspect 模块无法正常工作。
+
+类装饰器——实现 __init__(self, func) 和 __call__(self, *args, **kwargs)，适合维护状态的场景（如统计函数调用次数）。注意：类实例必须在类级别创建，装饰的时机是定义时而非调用时。
+
+扩展延伸：经典应用——1）日志记录：@log 自动记录函数名、参数和耗时。2）权限校验：@require_auth 检查用户是否登录。3）缓存：@lru_cache(maxsize=128) 自动缓存函数结果。4）重试：@retry(max_attempts=3) 在失败时自动重试。5）性能计时：@timer 输出函数执行时间。注意事项——多层装饰器从下到上装饰（语法糖顺序），从上到下执行（调用顺序）。装饰器增加函数调用栈深度，大量装饰器嵌套可能影响性能。`,hints:[`functools.wraps 主要解决什么问题——装饰后函数丢失元信息`,`多层装饰器的执行顺序——从下到上装饰，从上到下执行`],tags:[`Python`,`装饰器`,`functools`,`高阶函数`],content_hash:`6e53b8acb242`,id:3368},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 生成器高级特性与 yield from`,content:`Python 生成器的内部状态机是如何工作的？yield from 和普通 for 循环迭代有什么区别？send()、throw()、close() 方法的作用是什么？生成器在数据管道中有哪些实践？`,answer:`答案：生成器函数在执行到 yield 时保存当前状态（局部变量、指令指针、栈帧），返回控制权给调用者。再次调用 next() 从上次暂停处恢复。CPython 编译时将生成器函数编译为内部状态机。yield from 不是简单的 for 循环替代——它会建立调用方和子生成器之间的直接通道，自动处理异常传播和返回值。子生成器的 return 值会成为 yield from 表达式的值。
+
+解析：yield from 的内部机制——PEP 380 定义的 yield from 语义：1）自动将 send() 值转发给子生成器。2）子生成器的返回值通过 StopIteration.value 传递。3）调用方通过 throw() 传入的异常直接传递给子生成器。4）生成器通过 return value 返回值，等价于 raise StopIteration(value)。相比之下，for 循环迭代无法获取子生成器的 return 值，异常处理也需要手动传递。
+
+send(value)——向生成器内部发送值，作为当前 yield 表达式的返回值。首次调用生成器时必须先 send(None) 或 next()（因为生成器还没有执行到 yield）。
+
+扩展延伸：生成器数据管道——1）流式处理大文件：def read_lines(file): for line in file: yield line.strip()。2）管道链：lines = read_lines('log')，filtered = (l for l in lines if 'ERROR' in l)，parsed = (parse(l) for l in filtered)。每个步骤惰性求值，不占用额外内存。3）无限序列：def fibonacci(): a, b = 0, 1; while True: yield a; a, b = b, a+b。4）状态机：用 yield 在不同状态间切换，每次 next() 推进状态。async/await 本质上是生成器协程的语法糖——Python 3.5 的 async def 编译为协程对象，await 在字节码层面转换为 YIELD_FROM 指令。`,hints:[`yield from 和 for 循环迭代子生成器的区别是什么——异常传播和返回值`,`send() 首次调用为什么必须先 send(None)——生成器尚未到达 yield`],tags:[`Python`,`生成器`,`yield from`,`状态机`,`管道`],content_hash:`0943452aee6c`,id:3369},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python asyncio 事件循环与协程调度`,content:`Python asyncio 的事件循环是如何调度协程的？await 关键字在底层做了什么？Task 和 Future 的区别是什么？asyncio 适合什么场景？常见的陷阱有哪些？`,answer:`答案：asyncio 的事件循环（Event Loop）是一个调度器，维护就绪队列和等待队列。底层通过 epoll（Linux）/ kqueue（macOS）/ IOCP（Windows）实现 I/O 多路复用。await 挂起当前协程，将控制权交还给事件循环。Task 是 Future 的子类，用于包装协程并调度执行。asyncio 适合 I/O 密集型任务（网络请求、数据库查询），不适合 CPU 密集型。
+
+解析：await 的底层机制——1）当协程执行到 await 时，如果 await 的对象尚未就绪，当前协程被挂起（保存栈帧到堆上），事件循环切换到下一个就绪协程。2）await 的对象必须是 awaitable（实现了 __await__ 方法的对象，返回迭代器）。3）可等待对象包括：coroutine、Task、Future。
+
+Task vs Future——Future 代表一个异步操作的未来结果（低层级），需要手动 set_result。Task 是协程的调度单元：asyncio.create_task(coro) 将协程包装为 Task 并自动调度到事件循环。Task 是 Future 的子类，所以可以 await。
+
+扩展延伸：常见陷阱——1）不要在异步函数中执行 CPU 密集型操作（会阻塞事件循环）。用 loop.run_in_executor(None, sync_func) 提交到线程池。2）asyncio.gather() 任一异常默认取消其他任务，用 return_exceptions=True 改变。3）协程泄漏：调用异步函数但不 await 会返回未使用的协程对象，触发 RuntimeWarning。4）asyncio.run() 每次创建新事件循环，不能在同一循环中多次调用。5）asyncio.Queue 协程安全，threading.Queue 在协程中会阻塞事件循环。`,hints:[`CPU 密集型任务为什么不能直接在协程中执行——会阻塞事件循环导致所有协程等待`,`asyncio.run() 为什么不能在同一事件循环中多次调用`],tags:[`Python`,`asyncio`,`事件循环`,`协程`,`异步`],content_hash:`c7bea93060ca`,id:3370},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 类型注解（Type Hints）体系`,content:`Python 类型注解（Type Hints）的作用是什么？typing 模块提供了哪些核心类型？Optional、Union、Any、TypeVar、Generic 的用法？类型注解在运行时是否生效？`,answer:`答案：类型注解为 Python 代码提供静态类型信息，主要用于类型检查工具（mypy、pyright）和 IDE 智能提示，在运行时默认不生效。typing 核心类型：Optional[X] = Union[X, None]，Union[X, Y] 表示 X 或 Y，Any 表示任意类型（关闭类型检查），TypeVar 定义泛型类型变量，Generic 创建泛型类。
+
+解析：常用类型——1）List[int] 和 list[int]（Python 3.9+ 内置泛型）：元素为 int 的列表。2）Dict[str, int] 和 dict[str, int]：键 str 值 int 的字典。3）Tuple[int, str, float]：三个元素的元组。4）Optional[str]：Union[str, None]。5）Union[int, float]：接受 int 或 float。6）Any：关闭类型检查，适用于动态类型场景（如 JSON 解析）。
+
+TypeVar 与 Generic——TypeVar('T') 声明类型变量，用于泛型函数：def first(items: list[T]) -> T。约束：TypeVar('T', int, float) 限制 T 只能是 int 或 float。泛型类：class Stack[T]: def push(self, item: T) -> None: ...（Python 3.12+ 语法）。
+
+扩展延伸：进阶——1）Protocol（PEP 544）：结构子类型（鸭子类型），定义接口无需继承。2）TypedDict（PEP 589）：字典的键值类型注解。3）Literal（PEP 586）：精确值约束，def set_mode(mode: Literal['r', 'w'])。4）Final（PEP 591）：常量注解。5）@overload：同一函数的多种类型签名。运行时校验工具——pydantic 利用类型注解做运行时校验，FastAPI 自动生成 OpenAPI 文档。`,hints:[`类型注解默认不影响运行时——需要 mypy 做静态检查或 pydantic 运行时校验`,`TypeVar 和 typing 模块中 Generic 的用法区别是什么`],tags:[`Python`,`类型注解`,`Type Hints`,`typing`,`泛型`],content_hash:`58bd79ffef5d`,id:3371},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python C 扩展方案对比与应用`,content:`Python 调用 C/C++ 扩展有哪些方式？ctypes、CFFI、Cython、pybind11 各有什么优缺点？性能优化的决策路径是什么？`,answer:`答案：Python 调用 C/C++ 扩展的方式包括：ctypes（标准库直接加载动态库）、CFFI（C Foreign Function Interface）、Cython（将 Python 编译为 C 扩展）、pybind11（C++ 模板绑定）。选择顺序：先用 NumPy 向量化或 Numba JIT，不行再考虑 C 扩展。
+
+解析：各方案对比——1）ctypes：标准库自带，无需 C 编译器。调用开销大（每次调用的类型封送），适合低频调用简单 C 库。通过 .argtypes 和 .restype 声明类型可提升性能。2）CFFI：API 模式需要 C 编译器安装时编译，性能优于 ctypes。ABI 模式类似 ctypes。适合调用 C 库但不想写额外绑定代码的场景。
+
+3）Cython：Python 的超集，编译为 C 扩展。在关键路径添加 cdef 静态类型声明可获得接近 C 的性能。支持 nogil 模式（释放 GIL 实现真正的多线程并行）。cdef 函数仅 C 层调用，def 函数暴露给 Python，cpdef = cdef + def。缺点是调试困难、编译配置复杂。
+
+4）pybind11：头文件库（C++11+），通过模板自动生成 Python 绑定。支持 STL 容器自动转换、运算符重载、异常转换、NumPy 集成。通过 py::class_、py::module_ 声明绑定。
+
+扩展延伸：决策路径——1）纯 Python 层面先优化：算法改进、数据结构优化、使用内置函数（map/filter/reduce）。2）NumPy 向量化：将循环转为数组运算，C 层面执行。3）Numba：nopython 模式 JIT 编译热点函数。4）多进程 multiprocessing：利用多核 CPU。5）以上都不够 → C 扩展。应用场景：数值计算热点循环、已有 C/C++ 库封装、硬件交互。nanobind：pybind11 作者的新项目，编译更快、库更小。`,hints:[`性能优化应该从哪个层面开始——先尝试 NumPy/Numba 再考虑 C 扩展`,`Cython 和 pybind11 分别适合什么场景——Python 重写 vs C++ 封装`],tags:[`Python`,`C扩展`,`Cython`,`pybind11`,`性能优化`],content_hash:`99a5fcd99bea`,id:3372},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`functools 高阶函数实战`,content:`Python 标准库 functools 中 lru_cache、partial、wraps、singledispatch 等工具分别在什么场景下使用？请结合代码示例说明它们的实现原理和作用。`,answer:`答案：functools 是面向函数式编程的工具箱，核心功能包括缓存优化（lru_cache）、函数柯里化（partial）、函数元数据保留（wraps）和单分派泛型（singledispatch）。
+
+解析：1）lru_cache——基于 LRU（Least Recently Used）算法的函数结果缓存装饰器。@functools.lru_cache(maxsize=128) 缓存函数最近 maxsize 次调用（参数 → 返回值映射）。递归斐波那契数列使用 lru_cache 后时间复杂度从 O(2^n) 降到 O(n)。实现原理：使用字典存储 (args, kwargs) → result 映射，双向链表维护访问顺序。当缓存满时淘汰最久未访问的条目。注意：函数参数必须是 hashable 的。
+
+2）partial——冻结部分参数，生成新函数。from functools import partial; int_base2 = partial(int, base=2); int_base2('1001') → 9。常用于回调函数传参、减少重复参数。实现原理：在函数调用时，将传入的预置参数与调用时参数合并。
+
+3）wraps——用在装饰器中保留原函数的元信息（__name__、__doc__、__module__ 等）。不加 @wraps(func) 时，装饰后的函数会丢失原函数的签名和文档字符串，增加调试困难。
+
+4）singledispatch——实现泛型函数（根据第一个参数类型选择不同实现）。@singledispatch def process(data): 默认实现; @process.register(str): 当 data 是 str 时的实现; @process.register(list): 当 data 是 list 时的实现。
+
+扩展延伸：cache 是 3.9 引入的无上限简化版 lru_cache（相当于 lru_cache(maxsize=None)）。total_ordering 自动补全比较运算符（只需定义 __eq__ + 一个比较方法，自动生成 __lt__/__le__/__gt__/__ge__）。reduce 是 functools 中用于折叠操作的函数（类似 sum 的通用版），在函数式编程风格中有广泛使用。注意：lru_cache 不当使用可能导致内存泄漏（如缓存实例方法时，self 被缓存阻止 GC）。`,hints:[`lru_cache 装饰递归函数时缓存了什么——为什么能让指数级复杂度降到线性`,`使用 lru_cache 缓存实例方法时有什么陷阱`],tags:[`Python`,`functools`,`函数式`,`标准库`],content_hash:`46702d0a52d0`,id:3373},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`dataclasses vs TypedDict vs attrs 数据类方案对比`,content:`Python 提供了多种定义结构化数据的方式：dataclasses、TypedDict、attrs、NamedTuple。它们之间有什么区别？分别在什么场景下使用？`,answer:`答案：dataclasses 是 Python 3.7+ 标准库中用于简化类定义（自动生成 __init__、__repr__、__eq__ 等）的装饰器；TypedDict 用于定义字典的结构类型注解（3.8+）；attrs 是第三方库（dataclasses 的前身和超集）；NamedTuple 是不可变的轻量元组子类。
+
+解析：核心对比——1）NamedTuple（collections.namedtuple 或 typing.NamedTuple）：继承自 tuple，不可变（immutable），性能极高（存储紧凑）。适合简单的不可变数据容器，如坐标、配置项。通过拆包和解构赋值提升可读性。2）dataclasses：可变的 @dataclass，支持默认值、类型注解、__post_init__ 后初始化逻辑。frozen=True 可变为不可变。支持 field() 函数精细控制（默认值工厂、排除 repr、比较等）。3）TypedDict：不是类实例，只是 dict 的类型注解。类型检查时生效，运行时仍然是普通 dict。适合与 JSON API 交互的场景（数据天然是 dict 形式）。支持 total=False 定义可选字段。4）attrs：功能最丰富的方案，支持转换器（converter）、验证器（validator）、slots 优化、别名等。@define 装饰器比 dataclasses 更强。适合对数据类有高级需求的场景。
+
+扩展延伸：性能：NamedTuple ≈ attrs(slots=True) > dataclasses（无 __slots__）> dict。序列化：dataclasses 需要配合 dataclasses.asdict() 或 marshmallow/pydantic 转为 dict；TypedDict 本身是 dict 可直接 json.dumps。模式匹配（Python 3.10+）：dataclasses 原生支持结构模式匹配（match/case）。选择建议：1）简单不可变数据 → NamedTuple。2）标准可变数据 → dataclasses。3）JSON API 交互 → TypedDict。4）需要验证/转换/性能优化 → attrs 或 pydantic。`,hints:[`为什么 TypedDict 在运行时和普通 dict 没有区别——类型检查只在静态分析时生效`,`frozen=True 的 dataclass 和 NamedTuple 有什么本质区别`],tags:[`Python`,`dataclasses`,`TypedDict`,`类型系统`],content_hash:`40c32d2ef664`,id:3374},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`ASGI vs WSGI：Python Web 异步服务器规范`,content:`ASGI（Asynchronous Server Gateway Interface）和 WSGI（Web Server Gateway Interface）的核心区别是什么？为什么 ASGI 在异步框架（FastAPI/Starlette）中不可替代？一个 ASGI 应用的基本结构是怎样的？`,answer:`答案：WSGI 是同步的请求-响应模型（一个请求一个响应，全程阻塞），ASGI 是异步的事件驱动模型（支持 WebSocket、SSE、长连接、HTTP/2 等多协议）。ASGI 是 WSGI 的超集，可以处理 WSGI 不能处理的异步场景。
+
+解析：WSGI 的工作原理——application(environ, start_response) 接收环境字典和响应回调，返回可迭代的 body。WSGI 的局限：① 请求处理是同步阻塞的，处理过程中无法响应其他请求。② 只支持 HTTP 请求-响应模式，不支持 WebSocket 等双向通信。③ 每个请求对应一个线程，高并发时线程开销大。
+
+ASGI 的工作原理——application(scope, receive, send) 接收连接范围信息（scope）、消息接收协程和发送协程。scope 包含协议类型（http/websocket）、请求头等。receive 和 send 是 async 函数，允许在单个进程内并发处理多个连接。ASGI 将应用分为 Lifespan（启动/关闭事件）、HTTP、WebSocket 三个处理层面。
+
+为什么 ASGI 不可替代——1）WebSocket 支持：实时推送、在线协作等场景必须。2）异步 I/O：数据库查询、外部 API 调用可以并发执行，不阻塞事件循环。3）服务器推送事件（SSE）：AI 对话流式输出、日志实时推送。4）HTTP/2 多路复用：单个 TCP 连接处理多个请求。
+
+扩展延伸：ASGI 的三种模式——1）纯 HTTP 模式：相当于异步版 WSGI。2）WebSocket 模式：通过 scope['type'] == 'websocket' 区分。3）Lifespan 模式：应用启动/关闭时执行初始化/清理代码。主流 ASGI 服务器：Uvicorn（基于 uvloop 和 httptools）、Daphne（Django Channels 官方）、Hypercorn（支持 HTTP/2 和 TLS）。Uvicorn + Gunicorn 组合：Gunicorn 管理 worker 进程，每个 worker 内运行 Uvicorn worker 类（uvicorn.workers.UvicornWorker）。注意：ASGI 应用的中间件也需要是异步的——普通的 WSGI 中间件不能直接用于 ASGI。`,hints:[`为什么 WSGI 不能直接处理 WebSocket 连接`,`Uvicorn 和 Gunicorn 在部署中各自扮演什么角色`],tags:[`Python`,`ASGI`,`WSGI`,`异步`,`Web`],content_hash:`c34295b8c52f`,id:3375},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`pytest 高级特性：fixture 作用域与 Mock 策略`,content:`pytest 中 fixture 的作用域（scope）有哪些？如何用 pytest 的 monkeypatch 和 unittest.mock 进行 Mock 测试？conftest.py 的层级结构和自动使用（autouse）fixture 如何设计？`,answer:`答案：pytest fixture 有五种作用域：function（默认）、class、module、package（3.7+）和 session。Mock 策略：monkeypatch 用于修改对象/环境变量，unittest.mock 用于创建 Mock 对象和断言调用行为。
+
+解析：fixture 作用域详解——1）function：每个测试函数调用一次，最常用，隔离性好。2）class：每个测试类调用一次。3）module：每个 .py 文件调用一次，适合模块级初始化（如数据库连接池创建）。4）package：每个包目录调用一次。5）session：整个测试会话调用一次，适合全局资源（如测试数据库初始化）。高作用域 fixture 不可依赖低作用域 fixture（如 session 不能依赖 function 作用域的 fixture）。
+
+Mock 策略——1）monkeypatch：pytest 内置，轻量级。monkeypatch.setattr(obj, 'attr', value) 修改对象属性；monkeypatch.setenv('KEY', 'value') 设置环境变量；monkeypatch.setitem(dict, 'key', value) 修改字典。测试完成后自动恢复。2）unittest.mock：Python 标准库。patch('module.ClassName') 作为上下文管理器或装饰器。Mock 对象有 assert_called_once_with、assert_any_call、call_count 等断言方法。搭配 spec=ClassName 可限制 Mock 只接受真实 API 的调用。
+
+conftest.py 层级——每个目录可以有一个 conftest.py，其定义的 fixture 对该目录及其子目录中的所有测试可见。不同目录层级可以覆盖（override）父级 fixture。autouse fixture：在 conftest.py 中定义 @pytest.fixture(autouse=True) 的 fixture 对范围内所有测试自动生效，无需显式引用。常用于环境准备和清理。
+
+扩展延伸：pytest 的 fixture 请求（request）内省对象可以访问当前测试上下文，如 request.module、request.function、request.cls 等。fixture 可以使用 yield 实现拆卸（teardown）逻辑——yield 之前的代码是 setUp，yield 之后的代码是 tearDown。pytest-mock 插件提供了更便捷的 mocker 参数（相当于 unittest.mock 的封装）。编写 Mock 测试的核心原则：把外部依赖（网络、数据库、文件系统）替换为可控的桩件，让测试只验证业务逻辑。`,hints:[`高作用域 fixture（session）能否依赖低作用域 fixture（function）`,`monkeypatch 和 unittest.mock.Mock 各有什么适用场景`],tags:[`Python`,`pytest`,`测试`,`Mock`],content_hash:`676b376636a0`,id:3376},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 性能分析工具链`,content:`如何分析 Python 程序的性能瓶颈？cProfile、py-spy、memory_profiler、line_profiler 等工具分别适用什么场景？优化的基本流程是什么？`,answer:`答案：性能分析的基本流程：测量 → 定位瓶颈 → 优化 → 再次测量验证。分析工具按维度分：CPU 热点（cProfile/py-spy）、逐行耗时（line_profiler）、内存使用（memory_profiler）、阻塞/线程（py-spy top）。
+
+解析：各工具详解——1）cProfile：Python 内置的确定性分析器（Deterministic Profiler），记录每个函数的调用次数、耗时、累计耗时。用法：python -m cProfile -o output.prof my_script.py。结果可用 pstats 模块分析，或使用 snakeviz（可视化火焰图）查看。优势是无需安装；劣势是 hook 所有函数调用有显著开销（约 10-30x 减速），不适合生产环境。
+
+2）py-spy：采样分析器（Sampling Profiler），定期快照进程堆栈。优势：① 零开销（不减速程序运行）。② 可 attach 到正在运行的 Python 进程（无需修改代码）。③ 支持分析多线程程序。④ py-spy top 实时显示最活跃的函数，类似 htop。用法：py-spy record -o profile.svg --pid 12345。
+
+3）memory_profiler：按行跟踪内存使用。@profile 装饰器标记函数，逐行打印内存变化。配合 mprof 可生成时间-内存曲线图。注意：在已有 @profile 装饰器的脚本中运行 python -m memory_profiler my_script.py。
+
+4）line_profiler：逐行分析函数耗时。@profile 装饰器标记函数后，kernprof -l -v my_script.py 输出每行代码的执行次数和耗时。最适合定位「哪一行代码最慢」。
+
+扩展延伸：优化的一般策略——先 profile 再优化，不要猜测性能瓶颈。常见性能陷阱：不当的数据结构（如在循环中用 list 做查找 → 改为 set/dict）、不必要的属性访问（局部变量缓存）、字符串拼接（' '.join() > +=）。使用 __slots__ 减少实例内存。异步 I/O 绑定的程序请用 asyncio 而非多线程。数值计算优先用 NumPy/Numba。注意：在 import 语句处的 profile 可能包含模块加载时间，distinguish「加载耗时」与「执行耗时」。`,hints:[`cProfile（确定性分析）和 py-spy（采样分析）各有什么优劣`,`为什么应该在优化之前先 profile 而不是凭直觉猜性能瓶颈`],tags:[`Python`,`性能`,`Profile`,`优化`],content_hash:`364fc36d0236`,id:3377},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`TaskGroup 与结构化并发`,content:`Python 3.11 中引入的 TaskGroup 是什么？与传统 asyncio.gather 相比有什么优势？用 ExceptionGroup 如何处理并发任务中的多异常？`,answer:`答案：TaskGroup（通过 asyncio.TaskGroup 上下文管理器使用）是 Python 3.11 中引入的结构化并发原语，保证所有子任务在退出上下文时全部完成，且自动传播异常。相比 asyncio.gather，TaskGroup 提供了更强的安全保证。
+
+解析：asyncio.gather 的问题——1）如果其中一个任务抛异常，其他任务不会被自动取消（成为「孤儿任务」，在后台默默运行）。2）需要手动管理任务创建和收集，容易遗漏某些任务的异常。TaskGroup 的设计——用 async with asyncio.TaskGroup() as tg: 创建任务组，通过 tg.create_task(coro()) 添加任务。退出上下文时：等待所有子任务完成；如果有任务抛异常，立即取消所有其他任务；收集所有异常到 ExceptionGroup 中抛出。这保证了任务组不存在「既不知道成功也不知道失败」的任务。
+
+扩展延伸：ExceptionGroup——Python 3.11 引入的新异常类型，可以包含多个异常实例。用 except* 语法捕获：except* ValueError as eg:。在 TaskGroup 中如果多个任务抛出不同类型的异常，ExceptionGroup 会统一包装。TimeoutGroup——Python 3.12 引入了 asyncio.timeout() 上下文管理器，与 TaskGroup 配合使用效果更好。结构化并发（Structured Concurrency）的核心理念——Triol 库率先提出，后被 trio、anyio 采用，最终 Python 官方引入。原则：并发任务的生命周期不会超过其父作用域，异常不会遗失。这对于编写健壮的异步代码至关重要。`,hints:[`asyncio.gather 的 return_exceptions=True 参数和 ExceptionGroup 有何不同`,`结构化并发为什么说比传统的 fire-and-forget 模式更安全`],tags:[`Python`,`asyncio`,`TaskGroup`,`ExceptionGroup`,`并发`],content_hash:`4f5e7948dc0b`,id:3378},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`match 语句与结构模式匹配`,content:`Python 3.10 引入的 match/case 语句（结构模式匹配）的语法是什么？它和传统的 if/elif/else 相比有什么优势？支持哪些模式匹配类型？`,answer:`答案：match/case 是 Python 3.10 引入的结构模式匹配（Structural Pattern Matching），语法为 match subject: case pattern: action。它允许基于数据结构形状的匹配，而非仅值比较，是 Python 多年来最重要的语法增强之一。
+
+解析：六种匹配模式——1）字面量模式：case 42:、case 'hello':。2）捕获模式：case x:（匹配任意值并绑定到变量 x）。3）通配符模式：case _:。4）序列模式：case [x, y, *rest]:。5）映射模式：case {'key': value}:。6）类模式：case Point(x=0, y=y):。守卫（Guards）：在 case 后加 if 条件，如 case [x, y] if x > y:。与 if/elif/else 对比的优势——1）更清晰地表达基于数据形状的分支逻辑（如解析 AST、处理 JSON 消息）。2）嵌套解构赋值和条件检查合成一个表达式。3）编译器可做模式穷尽性检查（对枚举/联合类型）。4）可读性提升——用形如 case {'type': 'circle', 'radius': r}: 取代 chain of dict 键检查和 isinstance 调用。
+
+扩展延伸：应用场景——1）AST 处理：lint 工具、编译器、代码分析器（替代 ast.NodeVisitor 的大量 if isinstance）。2）JSON 消息路由：根据消息的 type 字段执行不同处理逻辑。3）HTTP 请求转发：根据 method 和 path 模式路由。4）状态机实现。注意：匹配顺序——case 按从上到下顺序匹配，第一个匹配成功即执行。匹配失败不会 fall through（不像 C 语言的 switch 需要 break）。虽然 match/case 让代码更简洁，但对简单值比较（单个变量 vs 几个常量）仍优先用 if/elif——不要为了用新语法而用。`,hints:[`match/case 中的通配符 _ 和捕获模式有什么不同——为什么顺序很重要`,`类模式匹配时 __match_args__ 特殊属性的作用是什么`],tags:[`Python`,`模式匹配`,`match/case`,`3.10+`],content_hash:`79750586898b`,id:3379},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Self 类型与类型注解增强`,content:`Python 3.11 中引入的 Self 类型解决了什么问题？TypeVarTuple 和 ParamSpec 分别用于什么场景？`,answer:`答案：Self 类型允许在类方法中注解返回值类型为「当前类的实例」，支持更准确的继承类型推断。TypeVarTuple 用于可变长度泛型元组的类型注解，ParamSpec 用于对可调用对象参数类型的泛型表达。
+
+解析：Self 类型的价值——在 Python 3.11 之前，类方法返回 self 或其子类实例时，类型检查器无法准确推断实际类型。如 class A: def copy(self) -> 'A'; class B(A): ...，B.copy() 的返回类型被推断为 A（而非 B），需要强制类型转换。用 Self：def copy(self) -> Self，类型检查器自动推断 B.copy() 返回 B。TypeVarTuple——用在需要表示任意数量类型参数的场景（如元组解包、*args 泛型）。语法：Ts = TypeVarTuple('Ts')，用于 def zip(x: *Ts) -> tuple[*Ts]。ParamSpec——用在装饰器场景，需要捕获和转发原函数的参数类型。语法：P = ParamSpec('P')，用于 def decorator(f: Callable[P, R]) -> Callable[P, R]。
+
+扩展延伸：3.10+ 的其他类型注解增强——1）类型联合简写 int | str（而非 Union[int, str]）。2）TypeGuard：自定义类型窄化函数，如 def is_str_list(val: list[object]) -> TypeGuard[list[str]]。3）typing.Protocol：支持鸭子类型的结构化子类型（Structural Subtyping）。4）@typing.overload 装饰器：重载函数签名。在实际项目中，mypy 或 pyright 是类型检查的标准工具，建议在新项目中启用 strict 模式。类型注解主要服务于工具（IDE 补全、静态检查、代码审查），而非运行时（虽然 pydantic 等库利用注解做运行时校验）。`,hints:[`Self 类型和 TypeVar(bound=...) 有什么区别`,`TypeVarTuple 在什么场景下比传统的 Tuple[Any, ...] 更有优势`],tags:[`Python`,`类型注解`,`Self`,`TypeVarTuple`,`ParamSpec`],content_hash:`af90643c15ee`,id:3380},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`itertools 高效迭代工具`,content:`Python 标准库 itertools 中有哪些实用的迭代工具？product、permutations、combinations、groupby 的用法各是什么？itertools 为什么被称为「迭代器的瑞士军刀」？`,answer:`答案：itertools 是 Python 标准库中用于高效操作迭代器的工具集。核心工具：product 笛卡尔积、permutations 排列、combinations 组合、groupby 分组。此外还有 count、cycle、chain、zip_longest、islice、takewhile、dropwhile、accumulate 等实用工具。
+
+解析：详细用法——product(*iterables, repeat=1)：生成输入可迭代对象的笛卡尔积，等价于嵌套 for 循环。示例：product('AB', '12') → ('A','1'),('A','2'),('B','1'),('B','2')。permutations(iterable, r)：从 iterable 中选 r 个元素的所有排列，考虑顺序。combinations(iterable, r)：所有组合，不考虑顺序。combinations_with_replacement(iterable, r)：允许元素重复的组合。groupby(iterable, key=None)：将连续相同 key 的元素分组，生成 (key, group_iterator) 对。注意：groupby 只对连续相同 key 分组，使用前通常需要按同一 key 排序。
+
+扩展延伸：itertools 的设计哲学——所有函数返回迭代器（惰性求值），不占用额外内存（不像列表推导式会创建临时列表）。与生成器表达式配合使用可构建高效的数据管道。工程实用组合——1）accumulate：累积运算（前缀和、累计乘积）。2）chain.from_iterable：展平嵌套可迭代对象。3）islice：切片迭代器（替代列表切片，节省内存）。4）takewhile/dropwhile：按条件切分序列。性能提示——itertools 的函数是用 C 实现的，性能远优于纯 Python 手写循环。如果是大数据量的遍历，优先考虑 itertools 实现。在数据分析中，itertools.groupby + sorted 可以实现 SQL 的 GROUP BY 功能（虽然 pandas 更直接）。`,hints:[`itertools.groupby 和 SQL 的 GROUP BY 有什么不同`,`product 和嵌套 for 循环在性能上对比如何`],tags:[`Python`,`itertools`,`迭代器`,`性能`],content_hash:`fc8eaa5f93c6`,id:3381},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`zoneinfo 与时区处理`,content:`Python 3.9+ 中的 zoneinfo 模块是什么？它如何解决了 datetime 时区处理的痛点？pytz 和 zoneinfo 有什么区别？`,answer:`答案：zoneinfo 是 Python 3.9 引入的标准库模块，提供 IANA 时区数据库支持（使用系统时区数据或 tzdata 包）。它正式替代了第三方库 pytz，成为 Python 时区处理的标准方案。
+
+解析：传统 datetime 的时区问题——naive datetime（无时区信息的 datetime）在比较和计算时会导致微妙错误。pytz 的局限性：1）pytz 对本地化时间（localize）和归一化（normalize）有特殊要求——不能直接用 datetime 构造函数设定时区（如 datetime(2024, 1, 1, tzinfo=pytz.timezone('Asia/Shanghai')) 会得到错误结果——需要 tz.localize(dt)）。2）pytz 不是标准库，需要额外安装。zoneinfo 的优势——1）标准库，零外部依赖。2）可以直接在 datetime 构造函数中使用 tzinfo=zoneinfo.ZoneInfo('Asia/Shanghai')。3）正确处理夏令时（DST）转换（自动处理重复和缺失的时间点）。4）ZoneInfo 对象是可哈希的，可作为 dict 的 key。
+
+扩展延伸：使用示例——1）创建带时区的 datetime：from zoneinfo import ZoneInfo; dt = datetime(2024, 6, 15, 12, 0, tzinfo=ZoneInfo('Asia/Shanghai'))。2）时区转换：dt_utc = dt.astimezone(ZoneInfo('UTC'))。3）获取当前时间（推荐）：datetime.now(ZoneInfo('Asia/Shanghai'))。4）不支持的系统：macOS（10.15 前）/某些 Linux 发行版——需要 pip install tzdata 补充时区数据库。常见陷阱——1）给 naive datetime 添加时区应该用 dt.replace(tzinfo=ZoneInfo(...)) 而非 dt.astimezone()（astimezone 要求源 datetime 已有 tzinfo）。2）夏令时转换边界：每年 DST 切换那天某些时间不存在或重复，zoneinfo 按 IANA 规则正确处理。3）Python 3.9+ 项目中新代码应优先使用 zoneinfo 而非 pytz。需要兼容 Python 3.8 及以下的旧项目可以继续使用 pytz。`,hints:[`为什么说 pytz 的 localize 和 normalize 是使用陷阱`,`zoneinfo 在哪些系统上需要额外安装 tzdata 包`],tags:[`Python`,`zoneinfo`,`时区`,`datetime`],content_hash:`06241042dd08`,id:3382},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 描述符协议`,content:`请解释 Python 描述符（Descriptor）协议及其应用。@property、@classmethod、@staticmethod 底层都是描述符吗？`,answer:`答案：描述符是实现了 __get__()、__set__()、__delete__() 中任意一个方法的类。当描述符被赋值给类属性时，访问该属性会触发描述符协议。
+
+完整描述符协议：
+- object.__get__(self, instance, owner) → value：访问属性时调用
+- object.__set__(self, instance, value)：赋值时调用
+- object.__delete__(self, instance)：删除时调用
+
+只实现了 __get__ 的是"非数据描述符"，同时实现了 __get__ 和 __set__（或 __delete__）的是"数据描述符"。数据描述符优先于实例属性。
+
+@property 是数据描述符（实现了 __get__ 和 __set__/__deleter__）。
+@classmethod 是数据描述符（绑定方法到类）。
+@staticmethod 是数据描述符（返回原始函数）。
+
+扩展延伸：描述符是 Python 很多高级特性的底层机制。Django ORM 的模型字段使用描述符实现延迟加载。类型注解（type hints）不通过描述符实现（它们是元数据，不是行为控制）。slot（__slots__）阻止描述符的默认 __getattribute__ 行为。`,hints:[`描述符定义 __get__/__set__/__delete__ 方法`,`property/classmethod/staticmethod 都是描述符`],tags:[`Python`,`描述符`,`协议`],content_hash:`b4033f1a1c95`,id:3383},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`MRO 与 C3 线性化`,content:`请解释 Python 的方法解析顺序（MRO）和 C3 线性化算法。为什么 Python 使用 C3 算法？钻石继承（菱形继承）在 Python 中如何处理？`,answer:`答案：MRO 决定了在类层次结构中搜索方法的顺序。Python 2.3+ 使用 C3 线性化算法。
+
+C3 算法的三个原则：
+1. 子类优先于父类
+2. 多个父类按定义顺序
+3. 单调性——某个类的 MRO 在子类中保持
+
+钻石继承问题：
+class D(B, C) 其中 B 和 C 都继承自 A。
+- Python 的 MRO：D → B → C → A
+- 调用 super() 时，B 中的 super() 会调用 C 中的方法，C 中的 super() 调用 A
+- 这就是"协作式多继承"——super() 不一定是调用直接父类，而是 MRO 链上的下一个类
+
+为什么 C3：保证了单调性和局部优先顺序。不像深度优先（DFS）会重复访问基类，也不像广度优先（BFS）在多继承中破坏局部顺序。
+
+扩展延伸：D.mro() 查看 MRO 列表。super() 的本质是 super(type, object-or-type)——根据 MRO 找到 type 的下一个类。多个父类中有同名方法时，在 MRO 中先出现的类的方法被调用。尽量避免复杂的多继承——优先使用 Mixin 类和组合。`,hints:[`Python MRO 使用 C3 线性化算法`,`super() 不一定是直接父类，而是 MRO 链上的下一类`],tags:[`Python`,`MRO`,`C3`,`多继承`],content_hash:`8bb87d4a9d0e`,id:3384},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`GIL 与并发编程`,content:`请介绍 Python 的 GIL（全局解释器锁）及其对并发编程的影响。为什么 CPython 有 GIL？GIL 对多线程和多进程的影响有何不同？如何绕过 GIL 的限制？`,answer:`答案：GIL 是 CPython 解释器中的互斥锁，确保同一时间只有一个线程执行 Python 字节码。
+
+为什么有 GIL：
+- CPython 的内存管理不是线程安全的（引用计数，Python 内部全局变量）
+- 如果不加 GIL，需要为每个对象加细粒度锁（开销大，容易死锁）
+- 早期 CPU 单核，GIL 不是问题
+- 移除 GIL 会让单线程性能下降 30%+（Free Threading CPython 尝试解决）
+
+GIL 对多线程的影响：
+- CPU 密集型任务：多线程不加速（因为 GIL 让同一时间只有一个线程在运行）
+- IO 密集型任务：多线程加速（线程在等待 IO 时释放 GIL，其他线程可以执行）
+- GIL 切换周期：每 100 个字节码指令（或 sys.setswitchinterval，默认 5ms）
+
+多进程 vs 多线程：
+- 多进程（multiprocessing）：每个进程有独立的 GIL，可以充分利用多核
+  使用 \`if __name__ == "__main__": multiprocessing.set_start_method("spawn")\`
+- 多线程（threading）：共享内存，但 GIL 限制 CPU 密集型加速
+
+绕过 GIL 的方法：
+1. 多进程（multiprocessing）：每个进程独享 GIL
+   ProcessPoolExecutor（线程池的进程版）
+2. 使用 C 扩展：C 扩展在执行时可以释放 GIL
+   - Cython 的 \`with nogil:\`，C 代码中释放 GIL
+   - NumPy/SciPy 等库的 CPU 密集型操作释放 GIL
+3. 使用异步 IO（asyncio）：单线程并发，不依赖 GIL
+   适合高 IO 场景（Web 服务器）
+4. Python 3.13 的 Free-Threading 模式（实验性）：通过 --disable-gil 编译
+
+扩展延伸：asyncio——协程（coroutine）在单线程中实现并发。与线程的区别：协程在用户空间调度（协作式），线程由操作系统调度（抢占式）。asyncio 适合 IO 密集型（如 Web 服务器每秒数千请求）。concurrent.futures——ThreadPoolExecutor 和 ProcessPoolExecutor 的统一接口。`,hints:[`GIL = 同一时间只有一个线程执行 Python 字节码（保证引用计数安全）`,`CPU 密集用多进程（每个进程独享 GIL），IO 密集用多线程（等待 IO 时释放 GIL）`,`绕过 GIL：多进程 + C 扩展释放 GIL + asyncio + Python 3.13 Free-Threading`],tags:[`Python`,`GIL`,`并发`,`多线程`],content_hash:`e9cd4fd94336`,id:3385},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 装饰器`,content:`请介绍 Python 装饰器（Decorator）的原理和应用。函数装饰器和类装饰器怎么写？functools.wraps 的作用是什么？装饰器在哪些场景下使用？`,answer:`答案：装饰器在函数/类定义时修改其行为，本质是接受一个函数并返回一个新函数的高阶函数。
+
+函数装饰器原理：
+@decorator
+def func():
+    pass
+# 等价于：func = decorator(func)
+
+实现：
+def timer(func):
+    import functools
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        print(f"{func.__name__} took {time.time()-start:.2f}s")
+        return result
+    return wrapper
+
+@timer
+def slow_function():
+    time.sleep(1)
+
+带参数的装饰器：
+def repeat(n):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            for _ in range(n):
+                result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+
+@repeat(n=3)
+def say_hi(name):
+    print(f"Hi {name}")
+# 等价于：say_hi = repeat(n=3)(say_hi)
+
+functools.wraps 的作用：
+- 保留原函数的元信息（__name__、__doc__、__module__ 等）
+- 如果没有 @functools.wraps(func)，wrapper 函数会掩盖原函数的名称和文档
+
+常用装饰器场景：
+- 计时（@timer）：测量函数执行时间
+- 缓存（@functools.lru_cache）：函数结果缓存
+- 权限校验（@login_required）：检查用户是否登录
+- 重试（@retry）：函数失败时自动重试
+- 日志（@log）：自动记录函数调用参数和结果
+- 单例模式（@singleton）：类装饰器实现单例
+
+类装饰器：
+def singleton(cls):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    return getinstance
+
+扩展延伸：类作为装饰器——通过实现 __call__ 方法（保持状态）。内置装饰器——@staticmethod、@classmethod、@property。装饰器的执行顺序——靠近函数的装饰器先执行（从下到上）。装饰器在 Web 框架中大量使用（Flask 路由 @app.route()、Django 认证 @login_required）。`,hints:[`装饰器 = 高阶函数，接受函数返回新函数（func = decorator(func)）`,`@functools.wraps 保留原函数的 __name__ 和 __doc__`],tags:[`Python`,`装饰器`,`高阶函数`,`AOP`],content_hash:`8029e7343206`,id:3386},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 上下文管理器`,content:`请介绍 Python 的上下文管理器（Context Manager）。with 语句如何工作？如何用 __enter__ 和 __exit__ 实现自动资源管理？contextlib 模块提供了哪些便利工具？`,answer:`答案：上下文管理器通过 with 语句自动管理资源的获取和释放。
+
+核心协议：__enter__ 和 __exit__
+class FileOpen:
+    def __init__(self, filename, mode):
+        self.filename = filename
+        self.mode = mode
+
+    def __enter__(self):
+        self.file = open(self.filename, self.mode)
+        return self.file  # with 语句的 as 变量接收这个返回值
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
+        # 返回 True 表示抑制异常（不向上传播）
+        # 返回 False 或 None 表示异常继续传播
+        return False
+
+with FileOpen("test.txt", "r") as f:
+    content = f.read()
+
+执行流程：
+1. 调用 FileOpen("test.txt", "r") 得到上下文对象
+2. 调用 __enter__() → 返回值赋给 as 后面的变量
+3. 执行 with 代码块
+4. 无论代码块是否异常，都调用 __exit__()
+5. 如果代码块异常，exc_type/exc_val/exc_tb 为异常信息
+6. 如果 __exit__ 返回 True，异常被抑制
+
+@contextmanager 装饰器（contextlib 模块）：
+from contextlib import contextmanager
+
+@contextmanager
+def file_open(filename, mode):
+    file = open(filename, mode)
+    try:
+        yield file  # yield 前的代码 = __enter__，yield 后的 = __exit__
+    finally:
+        file.close()
+
+with file_open("test.txt", "r") as f:
+    content = f.read()
+
+contextlib 的其他工具：
+- closing(obj)：在退出 with 块时自动调用 obj.close()
+- suppress(*exceptions)：忽略指定异常（替代 try/except/pass）
+- redirect_stdout/redirect_stderr：临时重定向标准输出
+- ExitStack：动态管理多个上下文管理器（在不确定数量时使用）
+
+with ExitStack() as stack:
+    files = [stack.enter_context(open(f)) for f in filenames]
+    # 所有文件会在退出时自动关闭
+
+常见应用：
+- 文件操作（自动关闭文件）
+- 数据库连接（自动提交/回滚）
+- 锁（自动释放 Lock）
+- 测试中的 mock 替换
+- 临时修改环境变量
+
+扩展延伸：异步上下文管理器——__aenter__ 和 __aexit__，用于 async with 语句（如 aiohttp 的客户端会话）。contextlib.ContextDecorator——将上下文管理器作为装饰器使用。contextvars——上下文变量（与 asyncio 配合，替代 threading.local）。`,hints:[`__enter__（分配资源 + 返回资源） + __exit__（释放资源 + 处理异常）`,`@contextmanager = yield 前 = __enter__，yield 后 = __exit__（自动生成 __enter__/__exit__）`],tags:[`Python`,`上下文管理器`,`with`,`资源管理`],content_hash:`cc605d383e5e`,id:3387},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 数据类型与性能`,content:`请介绍 Python 内置数据类型的性能特点。list、dict、set、tuple 的时间复杂度各是多少？什么时候用 list 代替 dict？list 的 append 和 insert 性能为什么差异很大？`,answer:`答案：不同数据结构在不同操作上有不同的时间复杂度。
+
+list（动态数组）：
+- 索引 O(1)
+- append O(1) 摊还（偶尔扩容 O(n)，但均摊为 O(1)）
+- insert(i, x) / pop(i) O(n)（需要移动后续元素）
+- 查找（in）O(n)（线性搜索）
+- sort O(n log n)（Timsort）
+- 在列表开头插入/删除很慢（所有元素需要移动）
+- 适合：按索引访问、末尾增删、不需要快速查找的场景
+
+dict（哈希表）：
+- 键查找/插入/删除 平均 O(1)，最坏 O(n)（哈希冲突严重时）
+- 内存占用大（哈希表的负载因子和冲突链表）
+- Python 3.7+ 的 dict 保持插入顺序
+- dict 的 key 必须是可哈希的（hashable）
+- 适合：键值映射、快速查找、去重
+
+set（哈希集合）：
+- 查找/插入/删除 平均 O(1)（与 dict 基于相同的哈希表实现）
+- 本质是不带值的 dict
+- 适合：快速成员检查、去重、集合运算（交集/并集/差集）
+
+tuple（不可变序列）：
+- 与 list 相同的 O(1) 索引和 O(n) 查找
+- 比 list 更省内存（固定大小，不需要扩容预留空间）
+- 可作为 dict 的 key（因为不可变）
+- 适合：固定结构的数据、字典键、函数返回多个值
+
+list vs deque（collections.deque）：
+- deque 的两端增删都是 O(1)（双向链表实现）
+- deque 的索引是 O(n)（需要遍历）
+- 适合队列/栈场景（两端操作频繁）
+
+list 的 append vs insert 性能差异：
+- append 在末尾添加：只在数组已满时触发扩容（均摊 O(1)）
+- insert(0, x) 在开头插入：所有元素后移一位（O(n)）
+- 数据量大时 insert(0, x) 比 append 慢几十到几百倍
+- 需要频繁在开头添加时：使用 deque 或 reverse 后 append
+
+扩展延伸：__slots__——减少自定义类的内存占用（禁止动态添加 __dict__）。array.array——类型化数组（所有元素同类型，省内存）。NumPy 的 ndarray——连续内存的数值数组（比 Python list 快几个数量级）。`,hints:[`list = O(1)索引/O(n)查找/O(1)append/O(n)insert`,`dict/set = O(1)查找/插入/删除（内存占用大）`,`tuple = 比 list 省内存（不可变，无扩容空间），可用作 dict key`],tags:[`Python`,`数据结构`,`性能`,`List`],content_hash:`da6d08baf3d3`,id:3388},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 元类`,content:`请介绍 Python 的元类（Metaclass）。什么是元类？如何用元类实现 ORM 模型或单例模式？__new__ 和 __init__ 在元类中的调用顺序是怎样的？`,answer:`答案：元类是类的类——控制其他类的创建和行为。
+
+类也是对象：
+- 所有类由 type 创建（type 是默认的元类）
+- MyClass = type("MyClass", (BaseClass,), {"attr": value})
+- 定义一个类时，Python 调用元类的 __new__ 和 __init__ 创建类对象
+
+自定义元类：
+class Meta(type):
+    def __new__(mcs, name, bases, namespace):
+        # name = 类名，bases = 父类元组，namespace = 类的属性字典
+        # 在类创建前修改类定义
+        print(f"Creating class {name}")
+        if "required_method" not in namespace:
+            raise TypeError(f"{name} must implement required_method")
+        return super().__new__(mcs, name, bases, namespace)
+
+    def __init__(cls, name, bases, namespace):
+        # 类创建后的初始化
+        super().__init__(name, bases, namespace)
+        cls.created_at = time.time()  # 所有类自动获得 created_at 属性
+
+class MyBase(metaclass=Meta):
+    def required_method(self):
+        pass
+
+调用顺序：
+1. Meta.__new__(mcs, name, bases, namespace) → 创建类对象
+2. Meta.__init__(cls, name, bases, namespace) → 初始化类对象
+3. 实例化时：类.__new__ → 类.__init__
+
+元类创建流程：
+1. Python 找到 metaclass（从类定义或父类继承）
+2. 准备 namespace（__prepare__ 方法可以返回自定义的 dict）
+3. 执行类体填充 namespace
+4. 调用元类的 __new__ 创建类
+5. 调用元类的 __init__ 初始化类
+
+元类 vs 装饰器：
+- 类装饰器在类创建后修改类（相当于手动调用装饰函数）
+- 元类在类创建过程中拦截（更底层，可以控制类创建的全部流程）
+- 元类对类的子类自动生效（继承），装饰器需要手动装饰每个子类
+
+常见应用：
+- ORM：SQLAlchemy 使用元类将类属性映射到数据库字段
+- 单例模式：元类控制 __call__ 方法，确保只有一个实例
+- 接口/抽象基类（ABC）：检查子类是否实现了必要方法
+- 自动注册：类定义时自动注册到某个注册表
+
+扩展延伸：__init_subclass__——一个更简单的方式在子类创建时执行代码（Python 3.6+）。不需要元类时优先使用 __init_subclass__。__set_name__——描述符在属性名确定时自动获取名称。Python 的描述符协议（__get__/__set__/__delete__）是 property/staticmethod/classmethod 的底层实现。`,hints:[`元类 = 类的类（type 是默认元类）。自定义元类继承 type，覆盖 __new__ 和 __init__`,`创建类：元类.__new__ → 元类.__init__。实例化：类.__new__ → 类.__init__`,`常用：ORM 映射（SQLAlchemy）、单例控制、接口检查、自动注册`],tags:[`Python`,`元类`,`Metaclass`,`type`],content_hash:`2efa270aba0f`,id:3389},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python GIL 的原理与影响`,content:`请介绍 Python 的全局解释器锁（GIL）的实现原理及其对多线程编程的影响。`,answer:`答案：GIL 是 CPython 解释器中的一个互斥锁，保证同一时刻只有一个线程执行 Python 字节码。
+
+GIL 存在的必要性：
+1. CPython 的内存管理不是线程安全的（引用计数）
+2. 去掉 GIL 会使单线程性能下降（细粒度锁的开销）
+3. 历史上尝试去 GIL 的项目（FreeThreading）都导致性能回归
+
+GIL 的工作机制：
+- 每个线程在执行前必须获取 GIL
+- 每执行 100 条字节码（sys.getcheckinterval，Python 2）释放并重新获取 GIL
+- Python 3.2 后改为基于时间的切换（sys.setswitchinterval，默认 5ms）
+- I/O 操作时自动释放 GIL（如 time.sleep、read/write）
+
+对多线程的影响：
+- CPU 密集型任务：多线程无法利用多核，甚至比单线程慢（锁竞争开销）
+- I/O 密集型任务：多线程有效（I/O 操作释放 GIL，其他线程可以运行）
+
+解决方案：
+1. 多进程（multiprocessing）：每个进程有独立的 GIL
+2. 协程（asyncio）：单线程并发，无 GIL 问题
+3. C 扩展：在 C 代码中释放 GIL（Py_BEGIN_ALLOW_THREADS / Py_END_ALLOW_THREADS）
+4. 使用其他实现：Jython（无 GIL）、PyPy（有 GIL）
+
+Python 3.13 的 free-threading（自由线程）：
+- 实验性特性：--disable-gil 编译选项
+- 每个对象使用细粒度锁替代全局锁
+- 可选开启，默认仍启用 GIL
+- 当前有 5-10% 的单线程性能损失
+
+扩展延伸：Python 社区对 GIL 的态度在变化。PEP 703（nogil）计划在 Python 3.13 引入实验性自由线程模式。但实际工程中，大多数 Python 高性能场景走 C 扩展（NumPy/Pandas）或多进程路径，GIL 并不是主要瓶颈。`,hints:[`GIL 保证同一时刻只有一个线程执行字节码，因为 CPython 内存管理不是线程安全的`,`CPU 密集型多线程无效，I/O 密集型多线程有效（I/O 时释放 GIL）`,`替代方案：多进程（multiprocessing）、协程（asyncio）、C 扩展释放 GIL`],tags:[`Python`,`GIL`,`多线程`,`并发`],content_hash:`0e138d73e542`,id:3390},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 装饰器的实现原理`,content:`请介绍 Python 装饰器（Decorator）的工作原理及其应用场景。`,answer:`答案：装饰器是 Python 的一种语法糖，用于在不修改原函数的情况下增强其功能。
+
+基本原理：
+
+装饰器的本质是一个接受函数作为参数并返回新函数的高阶函数：
+
+\`\`\`python
+def decorator(func):
+    def wrapper(*args, **kwargs):
+        # 调用前的逻辑
+        result = func(*args, **kwargs)
+        # 调用后的逻辑
+        return result
+    return wrapper
+
+@decorator
+def my_func():
+    pass
+# 等价于：my_func = decorator(my_func)
+\`\`\`
+
+带参数的装饰器：
+\`\`\`python
+def repeat(n):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for _ in range(n):
+                result = func(*args, **kwargs)
+            return result
+        return wrapper
+    return decorator
+
+@repeat(3)
+def say_hi():
+    print("hi")
+# 等价于：say_hi = repeat(3)(say_hi)
+\`\`\`
+
+functools.wraps：
+- 保留原函数的元信息（name、docstring、signature）
+- 作用：wrapper.__name__ 不会变成 wrapper
+- 内部实现：复制 __module__、__name__、__qualname__、__doc__、__dict__、__wrapped__
+
+应用场景：
+1. 日志：记录函数调用参数和返回值
+2. 权限检查：验证用户是否有权限调用
+3. 缓存/记忆化：functools.lru_cache
+4. 重试机制：失败后自动重试
+5. 性能计时：记录函数执行时间
+6. 事务管理：开启/提交/回滚事务
+
+类装饰器：
+- 通过 __call__ 方法实现
+- 可维护状态（如计数器的次数统计）
+
+多个装饰器的顺序：
+\`\`\`python
+@decorator_a
+@decorator_b
+def f():
+    pass
+# f = decorator_a(decorator_b(f))——从下往上应用，从上往下执行
+\`\`\`
+
+扩展延伸：装饰器是 Python 元编程的基础。更高级的用法包括使用装饰器实现依赖注入（FastAPI 的路由装饰器）、注册模式（Flask 的蓝图注册）、以及参数校验（Pydantic 的验证装饰器）。`,hints:[`本质：高阶函数——接收函数参数，返回增强后的包装函数`,`关键：functools.wraps 保留原函数元信息（name、docstring）`,`应用：日志、权限、缓存（lru_cache）、重试、计时、事务`],tags:[`Python`,`装饰器`,`元编程`,`高阶函数`],content_hash:`0cf949d986f4`,id:3391},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的 Garbage Collection`,content:`请介绍 Python 的垃圾回收机制，包括引用计数和循环垃圾收集器。`,answer:`答案：Python（CPython）使用引用计数为主、标记清除为辅的垃圾回收策略。
+
+引用计数（Reference Counting）：
+
+原理：
+- 每个对象维护一个引用计数（PyObject.ob_refcnt）
+- 被引用时 +1，引用解除时 -1
+- 降为 0 时立即回收
+
+优点：
+- 实时性（对象不再被引用立即回收）
+- 实现简单
+
+缺点：
+- 循环引用：两个对象互相引用，外部不再引用时也无法回收
+- 性能开销：每次赋值和删除都需要修改引用计数
+- 多线程安全需要原子操作
+
+循环垃圾收集器（Cyclic GC）：
+
+原理：
+- 负责回收引用计数无法处理的循环引用
+- 基于分代回收（Generational Collection）
+- 使用标记-清除（Mark and Sweep）算法
+
+三代结构：
+- 第 0 代：新创建对象（回收最频繁）
+- 第 1 代：经历一次 GC 仍然存活
+- 第 2 代：经历两次 GC 仍然存活（回收频率最低）
+
+触发条件：
+- 每分配一定数量的对象 - 释放数量 > 阈值
+- 各代阈值：gc.get_threshold() → (700, 10, 10)
+- 第 0 代每分配 700 个对象触发
+- 第 0 代触发 10 次后触发第 1 代
+- 第 1 代触发 10 次后触发第 2 代
+
+gc 模块：
+- gc.disable()：禁用垃圾收集器（对引用计数无影响）
+- gc.collect()：手动触发垃圾回收
+- gc.get_objects()：获取所有被跟踪的对象
+- gc.set_debug()：调试内存泄漏
+
+弱引用（weakref）：
+- 不增加引用计数
+- 用于缓存（weakref.WeakValueDictionary）
+- 回调：对象被回收时自动通知
+
+扩展延伸：大内存应用（如机器学习）中，gc 可能导致明显的暂停（Stop-the-World）。可以通过 gc.set_threshold() 调大阈值减少 GC 频率，或在低峰期手动 gc.collect()。但绝不要在生产环境中 gc.disable()——循环引用会导致内存泄漏。`,hints:[`双机制：引用计数（主要，对象无引用立即回收）+ 分代 GC（辅助，解决循环引用）`,`三代回收（0/1/2 代），阈值可调（gc.get_threshold），分配对象数触发`,`弱引用（weakref）不增加引用计数，适合缓存场景`],tags:[`Python`,`GC`,`内存管理`,`引用计数`],content_hash:`3bfa4d4877bb`,id:3392},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 的 asyncio 与事件循环`,content:`请介绍 Python asyncio 的协程模型和事件循环的工作原理。`,answer:`答案：asyncio 是 Python 的异步 I/O 框架，基于协程和事件循环实现并发。
+
+核心概念：
+
+1. 协程（Coroutine）：
+   - 使用 async def 定义，await 挂起
+   - 协程挂起时释放控制权给事件循环
+   - 不同于生成器，协程是专门为异步设计的
+
+2. 可等待对象（Awaitable）：
+   - 协程（Coroutine）
+   - 任务（Task）：包装协程，在事件循环中调度
+   - 未来（Future）：代表将来会有的结果
+
+3. 事件循环（Event Loop）：
+   - 不断循环检查是否有任务可以执行
+   - 维护就绪队列（Ready Queue）和等待队列（Waiting Queue）
+   - 调度协程的执行
+
+执行流程：
+1. asyncio.run() 创建事件循环
+2. 协程被包装为 Task，加入事件循环
+3. 当前 Task 遇到 await → 挂起，切换到其他 Task
+4. I/O 就绪 → 对应的 Task 恢复执行
+5. 所有 Task 完成 → 事件循环退出
+
+await 的挂起与恢复：
+- await asyncio.sleep(1)：挂起当前协程，1 秒后恢复
+- await socket.read()：挂起当前协程，数据就绪后恢复
+- 挂起期间事件循环可以运行其他协程
+
+关键函数：
+- asyncio.gather()：并发执行多个协程
+- asyncio.create_task()：创建 Task 加入事件循环
+- asyncio.wait_for()：带超时的等待
+- asyncio.shield()：防止协程被取消
+
+与传统线程的对比：
+- 协程切换在用户态完成（无需系统调用）
+- 协程数量可以很多（十万级别）
+- 线程由操作系统调度，协程由事件循环调度
+
+扩展延伸：Python 3.12 的 asyncio 改进了错误消息和调试体验。uvloop 是第三方的替代事件循环（基于 libuv，Node.js 的底层库），比默认事件循环快 2 倍。在需要极高并发 I/O 的场景中，建议用 uvicorn（基于 uvloop）运行 FastAPI。`,hints:[`协程（async def）通过 await 挂起/恢复，基于事件循环调度`,`事件循环维护就绪队列和等待队列，协程挂起时释放控制权给其他协程`,`asyncio 适合 I/O 密集型（十万协程级别），uvloop 是更快的第三方事件循环`],tags:[`Python`,`asyncio`,`协程`,`事件循环`],content_hash:`7eaf19852bd1`,id:3393},{category:`python`,difficulty:`medium`,type:`choice`,title:`Python 列表推导式的执行顺序`,content:"以下 Python 列表推导式的执行顺序是什么？\n```python\n[(x, y) for x in range(3) for y in range(2)]\n```",answer:`A) 先执行外层 for 再执行内层 for（等价于嵌套 for 循环）`,correct:`A`,hints:[`列表推导式中的多个 for 子句按从左到右的顺序嵌套，等价于普通的嵌套 for 循环`],tags:[`Python`,`基础`],options:[`A) 先执行外层 for 再执行内层 for（等价于嵌套 for 循环）`,`B) 先执行内层 for 再执行外层 for`,`C) 并行执行两个 for`,`D) 随机顺序执行`],content_hash:`226767e3f6d6`,id:3394},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 元类与 Metaclass`,content:`请解释 Python 的元类（Metaclass）机制及其使用场景。`,answer:`答案：元类是创建类的类，控制类的创建过程，可以修改类定义的行为
+
+解析：Python 中一切皆对象：类是对象，用元类创建。默认元类 type：type('MyClass', (object,), {'x': 1}) 等价于 class MyClass: x = 1。自定义元类继承 type，重写 __new__（创建类对象前修改属性字典）或 __init__（类创建后处理）。__new__(mcs, name, bases, namespace) 返回修改后的类对象。__call__ 控制类的实例化。查找元类的 MRO：类定义中的 metaclass 关键字 -> 基类的元类 -> type。元类语法：class MyClass(metaclass=MyMeta): pass。
+
+扩展延伸：典型使用场景：1）ORM 框架（SQLAlchemy、Django ORM）的模型定义——声明式定义字段（class User(Model): name = CharField(max_length=255)），元类将字段收集到 _meta 并生成表结构 2）单例模式（元类 __call__ 控制实例化）3）自动注册（所有子类自动注册到父类的注册表）4）参数校验（在类创建时检查方法签名）。现代框架倾向于用装饰器或 __init_subclass__（Python 3.6+）替代元类。__init_subclass__ 在子类创建时自动调用父类的该方法，比元类更简单。抽象基类（ABC）也可通过 ABCMeta 元类实现。元类导致的问题：多重继承下多个元类冲突（TypeError: metaclass conflict），需要手动协调。元类增加了理解难度，实用中除了框架和库，普通应用代码不建议使用。`,hints:[`元类的 __new__ 和 __init__ 在类创建时的角色是什么`,`为什么 ORM 框架倾向于用元类定义模型`],tags:[`Python`,`元类`,`面向对象`],content_hash:`dd722dfac214`,id:3395},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python GIL 与并行计算`,content:`请解释 Python GIL 对多线程并发的影响以及在 CPU 密集任务中如何绕过。`,answer:`答案：GIL（全局解释器锁）确保同一时刻只有一个线程运行 Python 字节码
+
+解析：GIL 是 CPython 实现的历史性设计——为了简化 C 扩展的线程安全（内存管理引用计数不需要额外锁）。每个线程在执行 Python 代码时必须先获取 GIL，这意味着即使有多个 CPU 核，多线程也无法并行执行纯 Python 代码。GIL 的切换基于检查间隔（sys.setswitchinterval，默认 5ms）或 IO 阻塞时自动释放。IO 密集型任务中线程在等待 IO 时释放 GIL，所以多线程仍有收益。CPU 密集型任务中多线程不仅无益，反而有 GIL 争用的开销。
+
+扩展延伸：绕过 GIL 的方案：1）多进程（multiprocessing）— 每个进程独立 GIL，利用多核。开销在于进程间通信（IPC），通过 Queue/Pipe/Shared Memory 传递数据。2）C 扩展释放 GIL — 在 CPython C API 中显式调用 Py_BEGIN_ALLOW_THREADS / Py_END_ALLOW_THREADS。NumPy/Pandas 的底层 C 操作会释放 GIL，所以即使 GIL 存在 Python 的数据科学计算仍能利用多核。3）asyncio — 协程式并发适用于 IO 密集型任务，单线程通过事件循环调度，不受 GIL 影响但没有并行执行。4）Jython / IronPython — 无需 GIL 的 Python 实现但落后于 CPython 版本。PEP 703（nogil）计划在 Python 3.13 之后实验性地让 CPython 可选关闭 GIL。自由线程（free-threaded）Python 通过每个对象独立的引用计数（biased reference counting）取代全局锁，主要开销来自于对象创建和销毁的计数器管理。`,hints:[`GIL 在 IO 密集和 CPU 密集任务中分别有什么影响`,`NumPy 为什么不受 GIL 限制`],tags:[`Python`,`GIL`,`并发`],content_hash:`6c292bf783fc`,id:3396},{category:`python`,difficulty:`medium`,type:`choice`,title:`Python 变量作用域`,content:`在 Python 中，以下代码会打印什么？x = 10; def foo(): x = 20; foo(); print(x)`,options:[`A) 10`,`B) 20`,`C) None`,`D) 报错：UnboundLocalError`],answer:`A. LEGB 规则（Local → Enclosing → Global → Built-in）：Python 按照本地作用域、闭包外层、全局作用域、内置作用域的逐层搜索规则解析变量引用`,hints:[`函数内部的 x = 20 是局部变量赋值，不影响全局 x。x += 1 才会报 UnboundLocalError`],tags:[`Python`,`作用域`,`基础`],content_hash:`d35f6ac0ce79`,id:3397},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 异步迭代器与异步生成器`,content:`请解释 Python 的异步迭代器（Async Iterator）和异步生成器（Async Generator）的区别和使用场景。`,answer:`答案：异步迭代器实现 __aiter__ 和 __anext__，异步生成器用 async for 定义
+
+解析：异步迭代器符合 AsyncIterator 协议：类实现 __aiter__(self) 返回 self，__anext__(self) 是 async def 返回 awaitable（迭代完成时抛出 StopAsyncIteration）。使用 async for item in async_iter: 遍历。异步生成器：用 async def 定义且包含 yield 语句的函数。async def gen(): for i in range(10): await asyncio.sleep(1); yield i。异步生成器同时实现了 AsyncIterator 和 AsyncIterable 协议。支持 .asend()、.athrow()、.aclose() 方法。在 for 循环内部可以使用 await。
+
+扩展延伸：适用场景：1）异步分页请求 API（每次从远程 API 获取一页数据 yield 返回，同时可以 await 其他 IO 操作）2）异步流式处理大文件（逐行读取不阻塞事件循环）3）数据库游标逐行返回结果（aiohttp/aiofiles 等的典型模式）。异步迭代器 vs 普通迭代器：普通迭代器在 __next__ 阻塞整个线程，异步迭代器在 __anext__ 让出控制权给事件循环。异步上下文管理器（__aenter__/__aexit__）配合异步迭代器在数据库查询中很常见：async with pool.acquire() as conn: async for row in conn.cursor(): process(row)。注意异步生成器会在垃圾回收时发出 RuntimeWarning 如果未被完整消费（需要 .aclose() 或确保循环完成）。`,hints:[`StopAsyncIteration 和 StopIteration 在异步场景中的区别`,`异步生成器为什么比回调方式更可读`],tags:[`Python`,`异步`,`迭代器`],content_hash:`4b9b9d4e3683`,id:3398},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 描述器协议 Descriptor`,content:`请解释 Python 描述器协议（__get__/__set__/__delete__）及其在 property 和 classmethod 中的作用。`,answer:`答案：描述器是实现了 __get__、__set__ 或 __delete__ 任一方法的对象，控制属性访问行为
+
+解析：描述器协议：obj.attr 触发属性的查找链 —— 如果 attr 在类（或其父类）的 __dict__ 中找到且是描述器（即实现了 __get__ 方法），优先调用描述器的 __get__ 而非返回实例属性。覆盖型描述器（实现了 __set__）优先级高于实例 __dict__ 同名属性；非覆盖型描述器（仅实现 __get__）优先级低于实例属性。property 的本质是一个覆盖型描述器：property.__get__ 返回 getter 函数调用结果，property.__set__ 调用 setter。classmethod 是覆盖型描述器，其 __get__ 返回绑定到类的 bound_method。staticmethod 是非覆盖型描述器，直接返回函数本身不绑定。
+
+扩展延伸：自定义描述器的用途：1）类型校验（属性赋值时自动检查类型）2）延迟计算（第一次访问时计算结果并缓存到实例 __dict__，使后续调用不用重新计算）3）ORM 字段定义（Django/SQLAlchemy 用描述器实现字段懒加载和数据会话跟踪）。描述器查找顺序：数据描述器（实现 __set__/__delete__）-> 实例 __dict__ -> 非数据描述器/普通类属性。slots（__slots__）通过在类中预定义属性名称避免创建实例 __dict__，节省内存同时加速属性访问。slotted 类的属性不能通过实例 __dict__ 设置，因此描述器是访问 slotted 类属性信息的首选途径。注意：描述器对类属性访问不起作用（只有实例访问触发）。`,hints:[`property 是怎么通过描述器协议实现属性计算的`,`类属性访问时不触发描述器协议的原因是什么`],tags:[`Python`,`描述器`,`面向对象`],content_hash:`94310f62582b`,id:3399},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python GIL 在 I/O 与 CPU 密集场景下的释放行为`,content:`Python 的 GIL（全局解释器锁）在 I/O 密集型任务和 CPU 密集型任务中分别如何表现？什么时候 GIL 被释放，什么时候一直持有？请解释 GIL 的释放机制（check interval / eval breaker）。`,answer:`答案：GIL 在 I/O 操作前会主动释放——因为 I/O 等待不涉及 Python 对象操作，释放 GIL 让其他线程运行。CPU 密集型任务（纯 Python 循环/计算）会持续持有 GIL，必须等待 sys.setswitchinterval 设置的检查点（每 5ms 或特定字节码指令数）才尝试切换线程。
+
+解析：释放机制——CPython 通过「eval breaker」机制处理 GIL 切换。每执行一定数量的字节码指令（早期是 100 条 tick，现在基于超时），主线程会检查是否有其他线程在等待 GIL，如果有则释放 GIL 并让出。但 CPU 密集线程在两次检查之间一直持有 GIL，所以多线程做计算无法并行——4 个线程算质数，用户态 CPU 总时间仍然是 1 核的（实际加上切换开销可能更慢）。I/O 密集则不同：执行 socket.recv()、文件读写、数据库查询等操作时，C 级别的 I/O 函数会调用 Py_BEGIN_ALLOW_THREADS 宏显式释放 GIL，操作完成后再通过 Py_END_ALLOW_THREADS 重新获取。
+
+扩展延伸：数线程用多线程做 HTTP 请求（I/O 密集型），阻塞时间远大于计算时间，GIL 释放后其他线程可继续发送/接收请求。C 扩展和 GIL——通过 CPython C API 手动释放 GIL 可实现真正的并行，Cython 中用 nogil 声明函数不持有 GIL。Python 3.13 实验性的自由线程模式（--disable-gil）去掉了 GIL，但每个对象的引用计数操作需要更细粒度的锁，单线程性能会下降 5~15%。`,hints:[`为什么 I/O 操作前 GIL 会被释放而纯 Python 计算不会`,`Python 3.13 的去 GIL 实验为什么会导致单线程性能下降`],tags:[`Python`,`GIL`,`并发`,`CPython`],content_hash:`4b14efa0a692`,id:3400},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 元类实战与 __init_subclass__ 替代方案`,content:`Python 元类（Metaclass）有哪些实际应用场景？__init_subclass__ 是什么、它与元类有什么关联？在什么情况下你应优先使用 __init_subclass__ 而不是自定义元类？`,answer:`答案：元类的典型应用——ORM 模型定义（Django/SQLAlchemy 的 Model 基类通过元类自动注册表映射）、单例模式、类注册表、API 校验（自动为子类添加校验逻辑）。__init_subclass__ 是 Python 3.6 引入的 hook，在父类被继承时自动调用，是元类的轻量替代方案。
+
+解析：元类本质——元类是创建类的类。type('MyClass', (Base,), {'attr': value}) 等同于 class MyClass(Base): attr = value。自定义元类继承 type 并覆盖 __new__ 或 __init__。场景举例——Django Model 的元类在类创建时读取 fields 定义并自动生成数据库表映射、validators 等。__init_subclass__——在父类上定义了此类方法后，任何子类定义时都会自动调用它（子类作为参数传入）。比元类简单得多，只需覆盖一个方法而无需理解完整的元类机制。
+
+扩展延伸：何时用 __init_subclass__ vs 元类——1）只需在子类创建时做一些配置/注册 → __init_subclass__，如自动注册所有子类到工厂。2）需要修改子类的类体（如添加方法、修改属性）→ 元类（因为 __init_subclass__ 调用时类已经创建完成）。3）需要拦截属性访问等更底层操作 → 元类。缺陷——元类冲突问题：如果一个类继承了两个有不同元类的父类，会引发 TypeError（除非手动组合元类），__init_subclass__ 无此问题。`,hints:[`__init_subclass__ 和元类在调用时机上有什么区别`,`什么情况下 __init_subclass__ 无法替代元类`],tags:[`Python`,`元类`,`Metaclass`,`OOP`],content_hash:`249f2aa17dbe`,id:3401},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`asyncio 事件循环实现：SelectorEventLoop 与 ProactorEventLoop`,content:`Python asyncio 在不同操作系统上使用的事件循环实现有什么不同？SelectorEventLoop 和 ProactorEventLoop 分别基于什么系统调用？为什么 Windows 上 ProactorEventLoop 是更好的选择？`,answer:`答案：SelectorEventLoop 基于 selectors 模块（底层使用 epoll/Linux、kqueue/macOS、select/Windows），是「就绪通知」模型——内核通知应用可以读/写了，应用再去执行操作。ProactorEventLoop 基于 Windows I/O Completion Ports (IOCP)，是「完成通知」模型——内核完成读写操作后通知应用结果。
+
+解析：SelectorEventLoop（Unix 默认）——使用 select/poll/epoll/kqueue 等 I/O 多路复用机制。应用注册感兴趣的文件描述符和事件类型，事件循环调用 select() 等待事件就绪，就绪后回调执行实际读写。epoll（Linux）和 kqueue（macOS/BSD）性能好。但在 Windows 上 select 只能处理 socket，不支持普通文件/管道。ProactorEventLoop（Python 3.8 起 Windows 默认）——使用 Windows IOCP，subprocess 也通过 IOCP 支持。IOCP 是真正的异步 I/O：应用发起 ReadFile/WriteFile 后立即返回，I/O 操作由内核完成，完成后将结果放入完成端口，事件循环从完成端口取结果。不存在类似 epoll 「就绪后还要应用自己读」的问题。
+
+扩展延伸：Python 3.10+ 在 Unix 上也开始支持基于 IOCP 思想的实验性 Proactor 实现。asyncio 运行时会根据平台自动选择事件循环（通过 PlatformEventLoop）。在 Linux 上，asyncio 事件循环还支持 subprocess 的进程间通信管道监控。自定义事件循环——可以继承 BaseEventLoop 实现自己的调度器，但绝大多数情况不需要。uvloop 是第三方高性能事件循环实现（基于 libuv，Node.js 用的也是 libuv），在 Unix 上可替换 asyncio 默认循环，性能提升 2~4 倍。`,hints:[`「就绪通知」和「完成通知」两种模型在并发处理上的本质区别`,`uvloop 为什么比 Python 内置的事件循环更快`],tags:[`Python`,`asyncio`,`事件循环`,`I/O`],content_hash:`2b883b7d744c`,id:3402},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 描述符协议：__get__ / __set__ / __delete__ 详解`,content:`请解释 Python 描述符（Descriptor）协议中 __get__、__set__、__delete__ 三个方法的作用和调用时机。什么是数据描述符和非数据描述符？property、classmethod、staticmethod 是如何利用描述符实现的？`,answer:`答案：描述符协议定义了一个对象如何管理另一个类的属性访问。__get__(self, instance, owner) 在访问属性时调用，__set__(self, instance, value) 在赋值时调用，__delete__(self, instance) 在 del 属性时调用。只定义了 __get__ 的是非数据描述符，同时定义了 __get__ 和 __set__（或 __delete__）的是数据描述符。数据描述符的优先级高于实例属性字典。
+
+解析：属性查找链优先级——数据描述符 > 实例属性（__dict__）> 非数据描述符。为什么要区分？因为非数据描述符优先级低于实例属性，所以才允许相同名称的实例属性覆盖方法——这正是方法的查找机制：函数对象是非数据描述符（实现了 __get__ 绑定实例），但实例变量名可以同名覆盖方法。property 实现——property 是一个数据描述符，__get__ 执行 getter 函数，__set__ 执行 setter 函数。classmethod——是一个非数据描述符，__get__ 返回绑定到类的 bound method（第一个参数是 cls 而非 self）。staticmethod——也是非数据描述符，__get__ 原样返回被包装的函数，不做绑定。
+
+扩展延伸：描述符是 Python 底层的核心机制——方法（function）自动绑定到实例就是通过描述符协议实现的。@property、@classmethod、@staticmethod 都是描述符的语法糖。Django ORM 的 Field 字段也是描述符——在 Model 实例上访问字段属性时自动执行数据库查询。描述符 vs __getattr__/__getattribute__——描述符管理的是「类属性」级别，定义在类上的描述符对象才能拦截属性访问；__getattribute__ 是实例级别的属性访问拦截器，优先级在所有常规查找之上。`,hints:[`函数（function）为什么在作为类属性时访问会返回 bound method`,`数据描述符为什么优先级高于实例属性字典`],tags:[`Python`,`描述符`,`Descriptor`,`OOP`],content_hash:`8d3e28c7c6c5`,id:3403},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 导入系统：sys.meta_path 与查找器/加载器`,content:`请解释 Python 的导入系统是如何工作的。sys.meta_path 中的 Finder（查找器）和 Loader（加载器）分别起什么作用？如何实现一个自定义导入钩子（Import Hook）？`,answer:`答案：Python 的 import 语句按以下流程工作——1）检查 sys.modules 缓存。2）遍历 sys.meta_path 中的 Finder 对象，调用 find_spec(fullname, path, target=None) 查找模块规格（ModuleSpec）。3）如果 Finder 返回了 ModuleSpec，调用其中的 Loader 执行模块加载（执行代码、创建模块对象）。4）将模块存入 sys.modules。5）返回模块。
+
+解析：sys.meta_path 默认包含三个 Finder：1）BuiltinImporter——导入内置模块（如 sys、math），直接加载 C 扩展。2）FrozenImporter——导入冻结模块。3）PathFinder——基于 sys.path 的文件系统查找器，负责在磁盘路径中定位 .py/.pyc/C 扩展模块。每个 Finder 返回 ModuleSpec 对象（包含 name、loader、origin、submodule_search_locations 等）。Loader 的 exec_module(module) 负责真正执行模块代码并填充 module.__dict__。
+
+扩展延伸：自定义导入钩子的实现——编写一个实现了 find_spec 的类，将其加入 sys.meta_path 开头（优先于默认查找器）。典型用途：1）从 ZIP/数据库/网络导入模块（如 zipimporter）。2）自动转换导入代码（如文件加载时自动用 Babel 转译）。3）虚拟模块——在运行时生成伪模块提供功能。需要注意的陷阱——sys.modules 的操作需要谨慎，导入失败时需 pop 移除避免半初始化模块继续存在。Python 3.10 起添加了 importlib.resources 替代 pkg_resources，用于访问包内资源文件而不依赖 __file__。`,hints:[`sys.meta_path 中的 PathFinder 是如何遍历 sys.path 的`,`自定义导入钩子为什么需要放在 sys.meta_path 开头`],tags:[`Python`,`导入`,`Import`,`模块`],content_hash:`dad6f22c3edd`,id:3404},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python asyncio事件循环原理`,content:`请解释Python asyncio事件循环（Event Loop）的核心工作原理，包括协程调度、任务队列、I/O多路复用以及事件循环的各个阶段（Phase）。`,answer:`答案：1. 事件循环核心模型：事件循环本质是一个while True循环，在每次循环迭代中处理多个任务。它维护着一个就绪队列（ready queue）和多个回调队列。其核心组件是选择器（Selector），基于I/O多路复用（如epoll/kqueue/iocp）检测文件描述符的可读/可写状态。\\n2. 事件循环各阶段（Phase）：\\n   - Poll（轮询）阶段：调用select/poll/epoll监听已注册的socket读写事件，可以设置超时（timeout=0表示不阻塞，>0表示最多阻塞该时长）。当有事件就绪时，将对应的回调放入待执行队列；\\n   - Timer（定时器）阶段：检查所有注册的定时器（asyncio.sleep、call_later、call_at），将到期的定时器回调加入就绪队列；\\n   - Callback（回调）阶段：执行就绪队列中的所有回调和协程的send操作（驱动协程运行）。每个回调都会被执行直到队列为空或达到最大迭代次数；\\n   - Idle（空闲）阶段：执行idle回调（call_soon的callbacks被处理完后的空闲处理）；\\n   - Cleanup（清理）阶段：必要时关闭资源、处理信号。\\n3. 协程调度过程：\\n   - 使用await挂起当前协程时，控制权返回事件循环；\\n   - 事件循环通过Future/Awaitable对象的add_done_callback注册恢复回调；\\n   - 当Future的结果就绪（如socket可读、sleep到期），事件循环调用恢复回调，通过coro.send(None)继续执行协程；\\n   - 如果协程抛出StopIteration异常（正常返回），事件循环捕获该异常并获取返回值。\\n4. I/O多路复用：\\n   - Linux：使用epoll（优）或poll（备），select（备）；\\n   - macOS：使用kqueue；\\n   - Windows：使用IOCP（I/O Completion Ports，通过ProactorEventLoop）或select（SelectorEventLoop）；\\n   - 事件循环通过_Selector.register(fd, events, callback)注册I/O监听，通过_Selector.modify()修改监听事件类型。\\n5. 执行器（Executor）的作用：\\n   - 事件循环不能执行CPU密集或阻塞的I/O操作（如文件读写、requests同步请求）；\\n   - run_in_executor(default_executor, func, ...)将阻塞操作放入线程池或进程池执行；\\n   - 线程池（ThreadPoolExecutor）处理不释放GIL的阻塞操作（如文件I/O），进程池（ProcessPoolExecutor）处理CPU密集操作。\\n6. 与Node.js事件循环的对比：\\n   - Node.js事件循环有6个阶段（timers→pending callbacks→idle/prepare→poll→check→close callbacks）；\\n   - Python asyncio的架构更简洁，但缺乏内置的微任务队列管理（microtask，Python中通过awaits链形成隐式的优先级控制）。\\n7. 事件循环的实现差异：\\n   - SelectorEventLoop（默认）：基于selectors模块，支持多路复用；\\n   - ProactorEventLoop（Windows推荐）：基于IOCP，更好地支持管道和子进程；\\n   - uvloop：基于libuv（Node.js底层库）的替代实现，性能比默认循环提升2~4倍。`,hints:[`把事件循环理解为一个「永不结束的调度器」——它不断执行「等I/O→执行就绪的回调→检查定时器→继续等I/O」的循环`,`协程本质上是可暂停的函数，事件循环通过Future将协程的恢复与I/O事件或定时器关联起来——这就是「异步」的核心`],tags:[`asyncio`,`事件循环`,`协程`,`I/O多路复用`,`Python`],content_hash:`55077bfb3b64`,id:3405},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`CPython中GIL的释放时机`,content:`请说明CPython中全局解释器锁（GIL）在什么情况下会被释放和重新获取，以及这对并发编程意味着什么。`,answer:`答案：1. 什么是GIL：GIL（Global Interpreter Lock）是CPython解释器中的一个互斥锁，它保证同一时刻只有一个线程在执行Python字节码。这是CPython内存管理（引用计数）的线程安全基础——不需要为每个对象单独加锁。但这也使CPU密集型的多线程代码在多核机器上无法并行加速。\\n2. GIL的释放时机：\\n   - I/O阻塞操作：当线程执行I/O操作（如socket.recv、文件读写、urllib请求、print）时，GIL会被立即释放。因为这些操作通常需要很长时间（相对CPU而言），释放GIL让其他线程可以继续运行。I/O完成后，重新竞争获取GIL；\\n   - C扩展函数中的显式释放：使用C语言编写的扩展模块（如NumPy、Pandas、OpenCV、正则表达式引擎的部分实现）在执行CPU密集型操作时可以通过Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS宏显式释放并重新获取GIL；\\n   - Python字节码执行的时间片切换：CPython解释器中的check_interval/评估计数器——早期版本是每执行100条字节码指令检查一次是否需要切换；Python 3.2+引入了基于时间片的GIL切换机制。当前线程执行一段时间后（大约5ms，由sys.setswitchinterval控制），解释器会给其他线程机会获取GIL；\\n   - 线程主动切换：threading模块的sleep或wait操作会主动释放GIL；\\n   - 使用多进程（multiprocessing）：每个进程有独立的GIL，不共享，天然绕过GIL限制（但进程间通信/共享内存的开销较大）。\\n3. GIL的重新获取：释放GIL的线程必须通过竞争重新获取GIL。在Python 3.2+的新的GIL实现（Dave Beazley / Antoine Pitrou设计）中，等待线程会被划分为待运行队列，有一定优先级保障机制防止高优先级线程被饿死。获取GIL使用条件变量（threading.Condition）来通知。\\n4. 对并发编程的影响：\\n   - I/O密集型任务：多线程在I/O等待时释放GIL，其他线程在此期间可以执行，因此多线程对I/O密集型任务有效（如Web服务器处理大量请求）；\\n   - CPU密集型任务：多线程无法利用多核，因为GIL在时间片切换时仍然是同一时间只有一个线程在执行Python字节码，实际运行速度甚至比单线程还慢（因为切换开销）；\\n   - 混I/O+CPU的任务：GIL导致CPU部分无法并行，I/O部分可以重叠，整体性能受限；\\n   - C扩展库（如NumPy）：在执行矩阵运算等长时间操作时释放GIL，因此Python多线程使用NumPy做数值计算可以获得一定并行度。\\n5. 绕过GIL的策略：\\n   - 使用多进程（multiprocessing.Process / concurrent.futures.ProcessPoolExecutor）；\\n   - 使用C扩展并在耗时操作中释放GIL；\\n   - 使用Jython/IronPython（没有GIL，但兼容性差且已基本停止维护）；\\n   - Python 3.12+引入了PEP 703（nogil），目前正作为实验性特性开发中，目标是在Free-threading模式下移除GIL。\\n6. 常见误区：\\n   - GIL不是说多线程完全不能并行——I/O密集场景下GIL经常被充分释放，多线程效果显著；\\n   - GIL不在协程（asyncio）场景下构成问题——因为asyncio在单线程内通过事件循环调度协程，不存在GIL竞争。`,hints:[`GIL的核心机制可以总结为：I/O阻塞时释放、C扩展可显式释放、纯Python执行时间片到时尝试切换——理解这三种场景就理解了GIL的行为`,`Python 3.2+的GIL改进引入的机制是：等待GIL的线程会先进入「待运行」状态，当前线程释放GIL时优先把GIL给在等待的线程，避免了旧版本中的「乒乓」问题`],tags:[`GIL`,`CPython`,`并发`,`多线程`,`Python`],content_hash:`52078473c520`,id:3406},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`typing模块Protocol与结构子类型`,content:`请解释Python typing模块中Protocol的作用及其与抽象基类（ABC）的区别，以及什么是结构子类型（Structural Subtyping）。`,answer:`答案：1. Protocol的定义：Protocol是PEP 544引入的Python类型机制，用于定义结构子类型（Structural Subtyping，也叫鸭子类型Duck Typing的静态版本）。一个类只要实现了Protocol中声明的所有方法/属性，就被视为该Protocol的子类型，无需显式继承。\\n2. 用法：\\n   from typing import Protocol\\n\\n   class Drawable(Protocol):\\n       def draw(self) -> None: ...\\n\\n   class Circle:  // 没有继承Drawable\\n       def draw(self) -> None:\\n           print(「Circle.draw」)\\n\\n   def render(obj: Drawable) -> None:  // 类型检查通过\\n       obj.draw()\\n\\n   render(Circle())  // 静态类型检查和运行时均通过\\n3. 与ABC（抽象基类）的区别：\\n   - ABC使用名义子类型（Nominal Subtyping）：必须通过继承关系（class Circle(Drawable)）来确认子类型关系，是一种「显式声明」的模式；\\n   - Protocol使用结构子类型（Structural Subtyping）：只要类有相同的形状（相同的方法签名和属性），就自动被认为是子类型，不需要显式继承或注册（register）；\\n   - ABC可以通过@abstractmethod强制子类实现某些方法（在实例化时检查），Protocol的类型检查由静态类型检查器（如mypy、pyright）执行，运行时没有强制检查（除非使用@runtime_checkable）；\\n   - ABC可以包含具体的方法实现（模板方法模式），Protocol只能定义接口（方法签名/属性注解），不能包含实现（PEP 544规定Protocol中的方法可以有默认实现，但这不是通用用法）。\\n4. @runtime_checkable：\\n   - 默认情况下Protocol的isinstance(obj, Protocol)在运行时检查会失败（因为运行时没有结构类型信息）；\\n   - 加上@runtime_checkable装饰器后，isinstance可以检查该对象是否具有Protocol中定义的所有属性和方法（通过hasattr逐项检查）。\\n5. 使用场景：\\n   - 编写通用的处理函数/库，接受「任何具有某种行为的对象」而不要求显式继承（如函数接收任何实现了.close()的对象）；\\n   - 实现插拔式的组件系统，不同实现不需要继承同一个基类；\\n   - 编写类型安全的回调/回调集（如Callable太弱，Protocol可以定义多个方法）。\\n6. 协议组合与继承：\\n   - Protocol可以继承多个其他Protocol（类似接口组合）；\\n   - 通过定义class SupportsClose(Protocol): def close(self) -> None: ... 来捕获所有有close方法的类；\\n   - 类型变量的Protocol约束：T = TypeVar('T', bound=SupportsClose)。\\n7. 常见的标准库Protocol：\\n   - Iterable[T]、Iterator[T]、Sized、Hashable、Container[T]、Reversible[T]；\\n   - SupportsInt、SupportsFloat、SupportsBytes、SupportsIndex、SupportsAbs[T]\\n   - 这些内置Protocol在collections.abc或typing模块中可以用于泛化约束。`,hints:[`记住结构性类的核心思想：「如果它走路像鸭子、叫起来像鸭子，它就是鸭子」——Protocol让静态类型检查器也能按这个规则工作`,`ABC适合你「控制类层次结构」的场景（框架设计），Protocol适合你「不控制类的继承但想类型安全」的场景（库/函数设计）`],tags:[`Python`,`typing`,`Protocol`,`结构子类型`,`类型系统`],content_hash:`1c6bd6a4a770`,id:3407},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python async/await协程状态机`,content:`请解释Python中async/await协程的实现原理，特别是编译器如何将协程函数转换为状态机，以及await挂起/恢复的底层机制。`,answer:`答案：1. 协程对象的本质：async def定义的函数被调用时不会立即执行函数体，而是返回一个coroutine对象。这个对象内部封装了一个生成器（generator），通过.send()方法驱动执行，通过.throw()注入异常。实际上CPython早期实现（Python 3.5/3.6）中，协程底层就是基于生成器（PEP 380/492）的语法糖。\\n2. 编译器转换状态机：\\n   - Python编译器在处理async def函数时，将其转换为一个状态机（类似生成器）；\\n   - 函数体被划分为多个基本块（basic blocks），每个await表达式成为一个状态转换点（yield point）；\\n   - 协程对象有一个内部状态字段（coroutine_state或类似的标志位），值为CORO_CREATED/CORO_RUNNING/CORO_SUSPENDED/CORO_CLOSED；\\n   - 每一次await调用都创建一个挂起点（suspension point），将当前协程的局部变量和指令指针保存到协程的frame对象中。\\n3. await机制：\\n   - await expression内部调用expression.__await__()获取一个迭代器（iterator）；\\n   - 被await的对象必须是Awaitable（实现了__await__方法返回迭代器）；\\n   - 然后协程调用迭代器的__next__()或send(None)——如果迭代器yield了值，当前协程被挂起，控制权返回到事件循环；\\n   - 当事件循环确定等待的条件就绪时（如Future已resolved），它调用coro.send(result)，协程从挂起点恢复执行；\\n   - 协程的恢复过程：从frame中读取保存的指令指针和局部变量，继续执行字节码。\\n4. awaitable对象的类型：\\n   - Coroutine（另一个协程）：await另一个协程导致当前协程等待子协程完成；\\n   - Task：await Task时，Task内部包装的协程被事件循环调度执行，当前协程在Task完成时恢复；\\n   - Future：await Future时，当前协程挂起，当Future.result()可用时（通过add_done_callback注册恢复回调）恢复；\\n   - 自定义Awaitable：实现__await__方法返回迭代器。\\n5. 协程的状态机字节码示例（伪代码）：\\n   async def foo():       # bytecode 入口切换到 state 0\\n       a = await f1()    # state 0: CALL f1 -> GET_AWAITABLE -> YIELD_FROM -> SUSPEND\\n       b = await f2(a)   # state 1: LOAD a -> CALL f2 -> GET_AWAITABLE -> YIELD_FROM -> SUSPEND\\n       return a + b      # state 2: LOAD a + b -> RETURN_VALUE\\n   编译器生成的状态转换表：state 0 → await f1 完成后 → state 1；state 1 → await f2 完成后 → state 2；state 2 → 返回值。\\n6. 与生成器yield from的关系：\\n   - yield from本质上是「委托给另一个生成器」，await本质上是「委托给另一个awaitable」；\\n   - await和yield from在字节码级别都使用YIELD_FROM操作码（Python 3.5/3.6中的实现，后期版本引入SEND等新操作码）；\\n   - Python 3.7+开始协程不再是生成器的子类（coroutine.__class__.__bases__不再包含GeneratorType），但底层机制仍类似。\\n7. 协程的销毁：\\n   - 协程被GC销毁或显式调用close()时，会抛出GeneratorExit异常使协程退出；\\n   - 如果协程await了一个未完成的Future然后被销毁，会发出RuntimeWarning（"coroutine was never awaited"）；\\n   - 推荐使用asyncio.create_task()将协程显式调度执行，或await确保完成，避免悬空协程。`,hints:[`把async函数看作一个「可暂停函数」，每次await就是编译器为你插入的一个「暂停点」——暂停后保存现场，恢复后继续执行下一条语句`,`Python协程本质上就是一个状态机：每个await/return/raise都是状态转换点，协程对象内部存储了当前状态和局部变量`],tags:[`async/await`,`协程`,`状态机`,`CPython`,`Python`],content_hash:`a5e8770e91dc`,id:3408},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python __slots__与属性访问优化`,content:`请解释Python中__slots__的作用原理及其对属性访问性能、内存使用的影响，以及使用时需要注意的限制和陷阱。`,answer:`答案：1. __slots__的作用：在类定义中声明__slots__ = ('attr1', 'attr2')告诉Python不要为该类实例创建__dict__字典，而是为每个声明的属性分配固定长度的C数组（PyObject*数组）。每个实例不再有独立的属性字典，节省了大量内存。\\n2. 内部机制：\\n   - 没有__slots__的类：每个实例都有一个__dict__字典（存储实例属性）和一个__weakref__属性（支持弱引用）。__dict__是哈希表，即使只有一个属性也占用大量内存（空dict约56字节+哈希表开销）；\\n   - 有__slots__的类：实例的内部结构变成一个固定长度的数组（tp_dictoffset之后直接是slot数组），属性通过描述器（descriptor）在类级别定义。访问obj.attr通过slot号码（index）直接从数组读取，不需要字典查找；\\n   - 内存节省：不包含__dict__的实例每个有一个__dict__，一个属性占用约56~72字节（Python 3.11+，取决于dict实现方式）。使用__slots__后，每个属性只占用指针大小（8字节）加上实例对象自身的固定开销，所有slot属性加起来约8*N字节。对于百万级实例的对象，内存节省非常显著（通常减少50%~70%）。\\n3. 属性访问速度提升：\\n   - 普通属性访问：需要先在实例的__dict__中做哈希查找（O(1)但哈希函数+冲突处理有一定开销）；\\n   - __slots__属性访问：直接通过描述器从slot数组中按偏移量读取，相当于C语言的结构体字段访问，避免了字典查找的开销；\\n   - 基准测试：__slots__属性访问通常比__dict__属性访问快10%~30%。\\n4. 使用限制与陷阱：\\n   - 继承中的__slots__：子类必须显式定义自己的__slots__，否则父类的__slots__被生效但子类仍会创建__dict__（因为没在子类声明__slots__时，Python自动为子类实例创建__dict__）；\\n   - 不允许添加未在__slots__中声明的属性：尝试给实例设置未声明的属性会抛出AttributeError（这是feature不是bug——捕获拼写错误）；\\n   - 多重继承中多个父类定义非空的__slots__时会引发TypeError（解决方案：只有一个父类定义__slots__，其他父类使用__dict__）；\\n   - 默认不支持弱引用：如果__slots__中没有包含'__weakref__'，实例不支持弱引用。如需弱引用支持，在__slots__中加入'__weakref__'；\\n   - 默认不支持__dict__：如果需要在__slots__之外动态添加属性，在__slots__中加入'__dict__'（但不推荐这样做，会失去__slots__的部分内存优势）；\\n   - 默认值：__slots__不能为属性设置默认值。需要在__init__中赋值（这是常见误解）。\\n5. 典型应用场景：\\n   - ORM模型类（如SQLAlchemy的declarative模型、Pydantic v1的部分优化）；\\n   - 数据类（@dataclass(slots=True)——Python 3.10+支持使用__slots__优化的dataclass）；\\n   - 大量实例的数据结构（如游戏引擎中的实体、科学计算中的粒子系统、配置对象）；\\n   - NamedTuple（内部已基于__slots__实现为轻量级元组）。\\n6. vs @dataclass的slots参数：\\n   - Python 3.10+的@dataclass支持slots=True，自动为数据类生成__slots__；\\n   - 与手动声明__slots__效果相同但语法上更简洁；\\n   - 但仍然要考虑继承时的__slots__限制（需要在每个子类中重置slots=True）。`,hints:[`__slots__的本质是「用固定大小的C数组替换哈希表字典」——从O(1)哈希表查找变成O(1)数组索引访问，同时消除了字典的内存开销`,`当你有大量实例（数万到数百万）时，__slots__的价值最大。只有几个实例的场景下，__slots__的优化效果非常有限`],tags:[`__slots__`,`内存优化`,`Python`,`性能`,`描述器`],content_hash:`cb2abb892e32`,id:3409},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 元类（Metaclass）与类创建机制`,content:"请解释 Python 元类（Metaclass）的实现原理。元类与装饰器在修改类行为上有什么本质区别？`type()` 和 `__new__` 在元类中如何协作？元类在 ORM、序列化框架（如 Django ORM、SQLAlchemy、Pydantic）中如何应用？",answer:`答案：元类是「创建类的类」，其核心机制是当 Python 遇到 class 语句时，会调用元类的 __new__ 和 __init__ 方法创建类对象。默认元类是 type。元类在类定义时（而非实例化时）拦截类的创建过程，用于自动注册、验证字段、注入方法等元编程需求。
+
+解析：类的创建过程——当 Python 执行 class Foo(Bar): 语句时，解释器依次进行：1）收集类体中的属性和方法放入 namespace（类定义命名空间）。2）确定元类：如果类或父类中定义了 __metaclass__（Python 2）/ metaclass（Python 3），则使用指定的元类，否则使用 type。3）调用 metaclass.__new__(mcs, name, bases, namespace) 创建类对象。4）调用 metaclass.__init__(cls, name, bases, namespace) 初始化类。5）将创建好的类对象绑定到类名称。
+
+元类 vs 类装饰器的区别——1）元类在类创建时（class 语句执行时）拦截，类装饰器在类创建之后拦截。元类可以修改类被创建之前的状态（如 namespace 中的内容），而装饰器只能处理已经创建好的类对象。2）元类通过继承机制自动传播给子类（子类继承父类的 metaclass），装饰器需要手动应用到每个类。3）元类适合跨层级自动注册和约束验证的场景。
+
+扩展延伸：Django ORM 的 Model 元类——用户定义 class User(models.Model): name = CharField() 时，ModelBase 元类在类创建阶段将 CharField 从类中移除，替换为 descriptor，同时将字段信息注册到 _meta 中。SQLAlchemy 的 DeclarativeMeta 元类——将 Table、Mapper 和类关联起来，在类创建时自动生成 __tablename__、__table__ 等。Pydantic 的 ModelMetaclass——BaseModel 使用 __init_subclass__（Python 3.6+ 提供的替代元类的钩子）来收集字段类型注解并生成校验逻辑。现代 Python 中 __init_subclass__ 和 描述符协议在很多场景下可以作为元类的更轻量替代。`,hints:[`元类在类定义那一刻拦截`,`Django ORM 如何用元类定义表结构`],tags:[`Python`,`元类`,`Metaclass`,`元编程`,`ORM`],content_hash:`09b3bbf534d0`,id:3410},{category:`python`,difficulty:`easy`,type:`choice`,title:`Python 弱引用与内存管理`,content:`Python 中 weakref 模块的作用是允许引用对象但不增加引用计数，当对象仅剩弱引用时 GC 会回收它。以下关于弱引用的描述，哪个是正确的？`,options:[`A) 弱引用可以引用任意 Python 对象，包括 int、str、tuple 等内置不可变类型`,`B) weakref.ref 的回调函数在对象被回收时自动调用，用于清理相关资源`,`C) weakref.WeakValueDictionary 的键被回收时，对应的条目自动删除`,`D) 弱引用指向的对象被回收后，调用弱引用返回 None，但访问回调函数仍可行`],answer:`B. weakref 模块提供了 WeakReference 和 WeakValueDictionary，允许引用对象但不增加引用计数，当对象被回收时引用自动失效`,hints:[`不可变对象不能被弱引用`,`WeakValue 值被自动回收`],tags:[`Python`,`内存管理`,`弱引用`,`GC`],content_hash:`06cddecafb60`,id:3411},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python Asyncio 调度器与事件循环原理`,content:`请解释 Python asyncio 的事件循环（Event Loop）调度机制。Task、Future、Coroutine 三者的关系是怎样的？事件循环如何从一个协程切换到另一个协程？await 关键字底层发生了什么？asyncio 在 CPU 密集型任务场景下有什么限制？`,answer:`答案：asyncio 的事件循环是一个单线程调度器，维护一个就绪队列（Ready Queue）和 I/O 等待列表。协程通过 await 挂起自身，将控制权交还给事件循环；事件循环从就绪队列中选择下一个协程执行。Task 是 Future 的子类，它将协程包装为可调度的任务，并管理协程的执行状态和结果。asyncio 在 await 处通过生成器 yield 机制挂起协程，本质上是协作式多任务——协程必须主动让出控制权。
+
+解析：Coroutine / Task / Future 的关系——1）Coroutine（协程）：async def 定义的协程函数，调用后返回一个 coroutine 对象。协程本身不可直接执行，需要被 await 或包装为 Task 才能运行。2）Future：底层抽象，代表一个「将来会有的结果」。它有状态（pending/finished/cancelled），通过 set_result() 设置结果、add_done_callback() 注册回调。对外部代码来说 Future 是一个可等待对象（awaitable）。3）Task：Future + Coroutine，是事件循环调度的实际单元。创建 Task 时（asyncio.create_task(coro)），事件循环将 coro 注册到调度器中，并在就绪队列中排队。
+
+事件循环的调度过程——1）事件循环从就绪队列取出一个 Task，调用 task.__step() 方法。2）task.__step() 通过 coro.send(None) 驱动协程执行，直到遇到 await 表达式。3）在 await 处，如果等待的 Future 未就绪（如 socket 数据未到达），事件循环将当前 Task 挂起并注册回调，切换到就绪队列中的下一个 Task。4）当 Future 就绪（如 I/O 完成），回调将 Task 重新放回就绪队列。5）这个循环就是事件循环的本质——单线程、协作式、非抢占的多任务调度。
+
+扩展延伸：asyncio 的 I/O 模型——基于 epoll（Linux）、kqueue（macOS）、IOCP（Windows）实现非阻塞 I/O。asyncio 把系统 I/O 操作注册到 selector，事件循环在 poll 时检查哪些 fd 就绪。await asyncio.sleep(0) 的效果是主动让出当前时间片，立即切换到就绪队列中下一个 Task——类似于线程的 yield。asyncio 的局限性——CPU 密集型任务会阻塞事件循环（协程不主动让出控制权时，事件循环无法切换），需要将 CPU 密集型任务交给 concurrent.futures.ProcessPoolExecutor 或 ThreadPoolExecutor 执行。Python 3.13 的 no-GIL 模式对 asyncio 的影响：在自由线程模式下，asyncio 仍然在单线程运行，CPU 密集型瓶颈不变，但 I/O 回调可以在不同线程并行执行。`,hints:[`协程必须 await 才能让出控制权`,`CPU 密集任务会阻塞事件循环`],tags:[`Python`,`asyncio`,`事件循环`,`协程`,`并发`],content_hash:`346c921505c0`,id:3412},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python C 扩展与 ctypes/cffi`,content:`Python 调用 C/C++ 代码有 ctypes、cffi、Cython、Pybind11 等多种方式。请比较它们的核心原理、性能差异和适用场景。CPython 的 Python C API 是什么层次的概念？编写 C 扩展时需要注意哪些 GIL 相关问题？`,answer:`答案：ctypes 在纯 Python 层面加载动态库并调用函数（不需要 C 编译），适合简单封装但调用开销大、类型安全检查弱。cffi 提供更完善的类型系统支持，支持 ABI 和 API 两种模式。Cython 将 Python 代码编译为 C 扩展模块，可内联 C 类型声明实现接近原生的性能。Pybind11 是 C++ 绑定工具（基于现代 C++11/14/17），轻量级且类型安全。编写 C 扩展时必须在阻塞操作前释放 GIL（Py_BEGIN_ALLOW_THREADS/Py_END_ALLOW_THREADS），防止阻塞整个 Python 进程。
+
+解析：各方案对比——1）ctypes：在 Python 运行时加载 .so/.dylib/.dll，通过 FFI（Foreign Function Interface）调用 C 函数。每个函数调用涉及参数封送（marshalling）和类型转换。对于简单函数调用，ctypes 的开销约 100-200ns，远高于原生 Python 函数调用。优点：无需 C 编译器编译扩展、纯 Python 实现、动态加载。缺点：类型错误在运行时暴露、不支持 C++ ABI、性能有限。2）cffi：提供 API 模式和 ABI 模式。API 模式需要用 C 编译器但能内联 C 代码，性能接近原生 C 扩展。支持更完善的 struct/union 到 Python 对象的转换。3）Cython：将 Python（或 Python-like）代码编译为 C 扩展。通过添加类型声明（cdef int x），可以生成高度优化的 C 代码。性能可达原生 C 的 80-90%。适合对性能关键路径做增量优化——先在 .py 中实现原型，再逐步添加类型声明用 Cython 编译。NumPy、Pandas 等科学计算库大量使用 Cython。4）Pybind11：C++ 绑定工具，自动处理 C++ 与 Python 之间的类型转换（包括 STL 容器、智能指针、自定义类继承）。使用模板元编程在编译期生成类型映射代码。
+
+GIL 相关——C 扩展的阻塞操作（磁盘 I/O、网络 I/O、CPU 密集计算）必须释放 GIL，否则整个 Python 进程被阻塞。宏 Py_BEGIN_ALLOW_THREADS 释放 GIL，Py_END_ALLOW_THREADS 重新获取。释放后 Python 其他线程可以执行，但 C 代码不能再访问 Python 对象（因为引用计数不安全）。Pybind11 中的 py::call_guard<py::gil_scoped_release>() 自动管理。如果 C 扩展不释放 GIL，Python 多线程程序在这个扩展调用期间完全无法并发。`,hints:[`C 扩展阻塞操作必须释放 GIL`,`Cython 通过类型声明实现原生性能`],tags:[`Python`,`C扩展`,`ctypes`,`Cython`,`性能`],content_hash:`8fedc946e977`,id:3413},{category:`python`,difficulty:`medium`,type:`choice`,title:`Python 描述符协议与属性访问`,content:`关于 Python 描述符协议（Descriptor Protocol）的描述，以下哪个是错误的？`,options:[`A) 实现了 __get__ 方法的对象称为非数据描述符，实现了 __get__ 和 __set__ 或 __delete__ 的称为数据描述符`,`B) 数据描述符的优先级高于实例属性（instance.__dict__），非数据描述符的优先级低于实例属性`,`C) @property 是使用数据描述符实现的，因此实例属性无法覆盖 property 的行为`,`D) @staticmethod 和 @classmethod 都是通过非数据描述符实现的`],answer:`D. 描述符协议通过 __get__/__set__/__delete__ 方法实现属性访问控制，property、classmethod、staticmethod 都是描述符的具体实现`,hints:[`数据描述符优先级高于实例属性`,`@staticmethod 底层是数据描述符`],tags:[`Python`,`描述符`,`元编程`,`属性访问`],content_hash:`83c2efc8e6de`,id:3414},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python asyncio 事件循环实现细节与协程调度`,content:`Python asyncio 的事件循环内部是如何调度协程的？就绪队列和 I/O 等待队列如何协同工作？如何实现协程的超时和取消？为什么 CPU 密集型协程会阻塞整个事件循环，解决方案是什么？`,answer:`答案：asyncio 事件循环的核心是一个调度循环，维护一个就绪队列（ready queue）和一个 I/O 等待队列。每次迭代中，事件循环处理完就绪队列中的所有协程，然后通过 selector 模块（封装了 epoll/kqueue/IOCP）检查 I/O 事件，将 I/O 就绪的回调加入就绪队列，最后挂起等待新的 I/O 事件（如果没有就绪协程）。
+
+解析：协程调度细节——1）当一个协程执行 await 时，它挂起当前协程，将控制权交还给事件循环。2）事件循环从就绪队列弹出下一个协程继续执行。3）I/O 操作通过 loop.add_reader(fd, callback) 注册到 selector，当 fd 可读时 callback 被加入就绪队列。4）超时通过 call_later(delay, callback) 实现——维护一个最小堆（按到期时间排序），每次循环前检查堆顶是否到期，到期则将对应回调加入就绪队列。协程取消——通过 Task.cancel() 实现：在 Task 对象内部设置一个 cancelled 标志，下次该协程执行 await 时抛出 CancelledError。被取消的协程可以在 except CancelledError 中执行清理后重新抛出（如 asyncio.shield() 保护关键操作不被取消）。
+
+扩展延伸：CPU 密集型协程的问题——如果一个协程运行 CPU 密集型计算（如大数循环、图像处理），它不会主动 yield 给事件循环，导致其他协程饥饿、I/O 响应延迟。解决方案：1）loop.run_in_executor() 将 CPU 密集型任务交给线程池或进程池执行，不阻塞事件循环。2）手动插入 await asyncio.sleep(0) 主动让出控制权（但需要代码配合）。3）使用 multiprocessing 模块创建独立进程处理。uvloop——将事件循环替换为 libuv 实现（Node.js 同一底层），asyncio 的纯 Python 实现替换为 C 扩展，性能提升 2-4 倍。uvloop 在处理大量并发连接时表现优异（接近 Node.js 的性能水平）。`,hints:[`run_in_executor 如何让 CPU 密集型任务不阻塞事件循环——交给线程池/进程池`,`uvloop 为什么比默认事件循环快——基于 libuv 的 C 扩展实现`],tags:[`Python`,`asyncio`,`事件循环`,`协程`,`并发`],content_hash:`108ea0907f7b`,id:3415},{category:`python`,difficulty:`medium`,type:`choice`,title:`Python GIL 移除计划与自由线程`,content:`关于 Python 3.13 引入的自由线程（Free-Threaded）模式（--disable-gil），以下说法错误的是：`,options:[`A) 自由线程模式允许 Python 程序真正并行利用多核 CPU 执行 Python 字节码`,`B) 自由线程模式下单线程 Python 程序的运行性能相比有 GIL 版本会有所下降`,`C) 自由线程模式下所有 C 扩展模块无需修改即可安全运行`,`D) 自由线程模式通过细粒度锁（Per-Object Lock）替代全局锁来保证线程安全`],answer:`C) 自由线程模式下所有 C 扩展模块无需修改即可安全运行
+
+解析：说法 C 错误。自由线程模式下，C 扩展模块需要修改才能安全运行。Python 的核心 C 扩展（如 numpy、pandas、Cython 生成的扩展）通常假设 GIL 的存在，在自由线程模式下会出现竞争条件。Python 社区正在推动 C 扩展添加 Py_mod_gil 标志，声明是否支持自由线程。不支持自由线程的模块在导入时会触发警告或错误。
+
+扩展延伸：自由线程模式（PEP 703）的技术挑战——1）引用计数不再全局安全，需要改为每对象引用计数（biased reference counting）或移向垃圾回收器管理。2）C 扩展需要显式声明线程安全性。3）垃圾回收器需要更复杂的标记清除算法应对线程竞争。4）单线程性能下降约 5-15%（因为增加了细粒度锁的开销）。当前状态——Python 3.13 将自由线程标记为实验性（--disable-gil 编译选项），3.14 将进一步优化。生产环境建议：2026 年前仍假设 GIL 存在。多线程 CPU 密集型任务仍推荐 multiprocessing 方案。`,hints:[`C 扩展模块为什么需要修改才能在自由线程模式下安全运行——模块代码通常假设 GIL 存在`,`自由线程模式下单线程性能为什么会下降——细粒度锁的开销`],tags:[`Python`,`GIL`,`自由线程`,`并发`,`CPython`],content_hash:`1175ca9bcec1`,id:3416},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 引用计数与垃圾回收调优`,content:`Python 的引用计数机制有哪些性能开销？gc 模块的 set_threshold 如何调优？为什么大量创建临时对象会导致 GC 频繁触发？如何分析和优化 Python 的内存使用？`,answer:`答案：引用计数的性能开销——1）每次赋值、传参、容器操作都需要更新 ob_refcnt（原子操作，多线程下开销更大）。2）循环引用无法被引用计数处理（漏网）。3）引用计数本身不释放内存，需要 GC 补充。CPython 使用以引用计数为主、分代 GC 为辅的策略。
+
+解析：gc 模块的调优——gc.get_threshold() 返回 (700, 10, 10) 的含义：第 0 代分配了 700 个对象时触发 GC；第 0 代 GC 触发 10 次后触发第 1 代 GC；第 1 代 GC 触发 10 次后触发第 2 代 GC。调优场景：如果程序频繁创建大量临时对象（如数据处理管道、ORM 批量操作），第 0 代阈值 700 可能太低，导致 GC 频繁触发。可调高阈值：gc.set_threshold(5000, 10, 10) 降低 GC 频率。但阈值太高可能导致内存峰值过高。
+
+扩展延伸：分析和优化工具——1）gc.get_objects() 获取所有被 GC 追踪的对象，用于排查内存泄漏。2）objgraph 模块可视化对象引用图。3）tracemalloc（Python 3.4+）跟踪内存分配的 traceback，定位大内存的源头。4）pympler 提供更详细的内存统计。优化实践——1）减少临时对象创建：使用生成器替代列表、字符串拼接用 join 而非 +、使用 __slots__。2）手动触发 GC：在批量处理结束后调用 gc.collect() 立即回收。3）禁用 GC：对不产生循环引用的短期脚本可以 gc.disable()。4）使用 weakref 避免非预期的循环引用（如回调中的 self 引用）。5）Line Profiler 和 memory_profiler 定位热点。注意：Python 的 GC 不是 JVM 的 GC——它只处理容器对象间的循环引用，不管理普通内存（那是引用计数的工作）。`,hints:[`gc.set_threshold(5000, 10, 10) 如何降低批量创建临时对象场景的 GC 频率`,`tracemalloc 如何帮助定位 Python 内存泄漏——记录每次内存分配的 traceback`],tags:[`Python`,`GC`,`垃圾回收`,`引用计数`,`内存优化`],content_hash:`e10696a3af55`,id:3417},{category:`python`,difficulty:`easy`,type:`short_answer`,title:`Python 描述符协议深入：数据描述符与非数据描述符`,content:`请详细解释 Python 的描述符协议。数据描述符（Data Descriptor）与非数据描述符（Non-Data Descriptor）的区别是什么？属性访问的完整查找顺序是怎样的？@property、@classmethod、@staticmethod 在底层如何通过描述符实现？`,answer:`答案：描述符是实现了 __get__、__set__、__delete__ 中至少一个方法的对象。数据描述符实现了 __get__ 和 __set__(或 __delete__)，非数据描述符只实现了 __get__。属性访问优先级：数据描述符 > 实例 __dict__ > 非数据描述符 > 类 __dict__。
+
+解析：属性查找的完整顺序（以 obj.attr 为例）——1）如果 type(obj).__mro__ 上有 attr 且是数据描述符（同时有 __get__ 和 __set__），调用其 __get__。2）如果 attr 在 obj.__dict__ 中（实例属性），返回它。3）如果 type(obj).__mro__ 上有 attr 且是非数据描述符（只有 __get__），调用其 __get__。4）如果 type(obj).__mro__ 上有 attr 且不是描述符（普通类属性），返回它。5）抛出 AttributeError。关键区别：数据描述符优先级高于实例属性，这是 @property 能正常工作的基础。因为 property() 是数据描述符（实现了 __get__ 和 __set__），所以即使实例 __dict__ 中有同名属性，访问时仍会触发 property 的 __get__。非数据描述符优先级低于实例属性——所以如果实例 __dict__ 中有同名属性，方法（非数据描述符）的绑定会被覆盖。
+
+扩展延伸：内置描述符的实现——1）@property：是数据描述符（包含 fget、fset、fdel）。prop = property(getter, setter, deleter, doc)，访问 obj.prop 时调用 property.__get__() 触发 fget。2）@classmethod：是非数据描述符。在 __get__ 中忽略实例/类，始终将第一个参数绑定为 cls。3）@staticmethod：是非数据描述符。__get__ 直接返回原始函数，不做任何绑定。描述符工程应用——1）类型校验：class Integer: def __set_name__(self, owner, name): self.name = name; def __get__(self, obj, cls): return obj.__dict__[self.name]; def __set__(self, obj, val): if not isinstance(val, int): raise TypeError; obj.__dict__[self.name] = val。2）延迟计算属性（LazyProperty）：在 __get__ 中将实例 dict 中的值替换为计算结果，后续访问走实例 dict 跳过描述符。3）ORM 中字段定义（SQLAlchemy/Django 的 Field 描述符）。4）Python 3.6+ 的 __set_name__ 协议在类创建时自动调用，告知描述符它被赋值的属性名。`,hints:[`数据描述符优先级高于实例属性，非数据描述符优先级低于实例属性——这个差异是关键`,`@property 是数据描述符，@classmethod 和 @staticmethod 是非数据描述符`],tags:[`Python`,`描述符`,`Descriptor`,`property`,`元编程`],content_hash:`dc348e54c6c2`,id:3418},{category:`python`,difficulty:`hard`,type:`choice`,title:`Python __slots__ 的内存优化机制`,content:`关于 Python 类的 __slots__ 机制，以下说法正确的是：`,options:[`A) __slots__ 通过将实例属性存储在字典中但禁用动态添加属性来节省内存`,`B) __slots__ 通过将实例属性存储在类似于 C 结构体的固定数组中，完全消除实例的 __dict__ 来节省内存`,`C) __slots__ 会提升属性访问速度，因为省去了属性查找链中的步骤`,`D) __slots__ 定义的子类如果也定义了 __slots__，会自动继承父类的 __slots__ 而无需手动合并`],answer:`B) __slots__ 通过将实例属性存储在类似于 C 结构体的固定数组中，完全消除实例的 __dict__ 来节省内存
+
+解析：__slots__ 声明后，Python 不为实例创建 __dict__（默认的字典存储），而是为每个 __slots__ 中的名称在实例上预留一个固定偏移量的存储位（通过描述符访问，类似 C 结构体的成员）。由于不再存储字典（字典是哈希表，负载因子 ~2/3，每个条目额外开销 ~50 字节），每个实例可节省 50-70% 的内存。说法 A 错误——__slots__ 消除 __dict__ 而非「存储在字典中」。说法 C 正确——属性访问确实更快（省去了字典查找的哈希计算和冲突解决），但这不是主要目的。说法 D 错误——子类如果定义了 __slots__，父类的 __slots__ 不会自动合并到子类中，子类需要显式包含父类的 slots：__slots__ = (*ParentClass.__slots__, 'child_attr')。
+
+扩展延伸：__slots__ 的注意事项——1）定义了 __slots__ 的类不支持 __weakref__（除非在 __slots__ 中显式包含 '__weakref__'）。2）不能动态添加未在 __slots__ 中列出的属性（AttributeError）。3）多继承时如果多个父类定义了非空的 __slots__，需要手动合并（且不能有重复名称）。4）__slots__ 对属性访问速度的提升在 CPython 上约为 10-20%（因为省去了 LOAD_ATTR 中的字典查找）。适用场景——大量创建的同构对象：ORM 模型行（Django 的 Model）、数据类（dataclass 的 slots=True 参数）、游戏引擎中的实体。不适用场景——小型脚本、类数量不多的场景（优化过度且失去灵活性）。Python 3.10+ 的 dataclass 支持 slots=True：@dataclass(slots=True) 自动生成 __slots__。`,hints:[`__slots__ 消除 __dict__ 是省内存的关键——字典的哈希表结构本身开销很大`,`使用 __slots__ 的类为什么不能动态添加属性——没有 __dict__ 来存储新属性`],tags:[`Python`,`__slots__`,`内存优化`,`性能`,`CPython`],content_hash:`a6fe50b7e449`,id:3419},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python logging 模块的组件架构与日志传播机制`,content:`请说明 Python logging 模块的四层组件架构（Logger、Handler、Formatter、Filter）如何协作。日志记录在 Logger 层级之间的传播（Propagation）机制是怎样的？如何避免日志重复输出？`,answer:`答案：Logger 是应用使用的入口（记录消息）；Handler 将日志发送到目的地（文件、控制台、网络）；Formatter 格式化日志内容（时间、级别、消息）；Filter 基于额外条件过滤日志。Logger 有层级父子关系（如 'app.module' 是 'app' 的子 Logger），日志默认向父 Logger 传播（propagate=True），如果父 Logger 也有匹配的 Handler，同一日志会被多次记录，这是日志重复的常见原因。
+
+解析：四层组件详解——1）Logger：应用通过 logging.getLogger(name) 获取 Logger。Logger 按名称的 '.' 分隔符形成树结构（根 Logger 是树根）。Logger 有自己的日志级别（Level），低于级别的消息被忽略。Logger 的基本方法：debug/info/warning/error/critical。2）Handler：决定日志的去向。StreamHandler（控制台）、FileHandler（文件）、RotatingFileHandler（按大小轮转）、TimedRotatingFileHandler（按时间轮转）、SMTPHandler（邮件）、HTTPHandler（HTTP 推送）。3）Formatter：使用 % 格式或 str.format 格式定义日志模板。标准格式：'%(asctime)s - %(name)s - %(levelname)s - %(message)s'。4）Filter：通过 filter(record) 方法返回 True/False 决定日志是否输出，可实现更细粒度的过滤（如只包含特定 User-Agent 的请求日志）。
+
+扩展延伸：传播机制与重复排查——1）传播路径：子 Logger 的日志默认向父 Logger 传播。如果 app 的 Logger 有控制台 Handler，app.module 也有控制台 Handler，则 app.module 中的一条日志在两个 Logger 上各输出一次 → 控制台显示两条相同消息。2）解决方案：为不同 Logger 设置 propagate=False，或只在根 Logger 配置 Handler，其他 Logger 只设置级别不设 Handler。3）最佳实践配置：在应用入口（如 __main__）中执行一次 basicConfig() 或显式配置根 Logger，非根 Logger 只获取 Logger 实例并使用（不添加 Handler）。
+
+进阶模式——1）dictConfig：使用 logging.config.dictConfig 声明式配置所有 Logger/Handler/Formatter/Filter，避免散落在代码各处的 addHandler 调用。2）Filter 的应用：在 Web 应用中实现请求级别的日志上下文（结合 ContextVar 传递 trace_id、user_id）。3）JSON 日志结构化：使用 python-json-logger 输出 JSON 格式日志，方便日志系统（ELK/Loki）解析。4）性能注意事项：在 DEBUG 级别的大量日志中使用 logger.debug('msg: %s', expensive_computation()) 改为 logger.debug('msg: %s', expensive_computation()) when... 实际上应该使用 logger.debug('msg: %s', expensive_computation()) 但更好的做法是检查级别：if logger.isEnabledFor(logging.DEBUG): logger.debug('msg: %s', expensive_computation())。`,hints:[`日志重复输出的最常见原因——Handler 在父子 Logger 上各附加了一次，propagate 导致叠加`,`logging.config.dictConfig 相比散落在代码中的 addHandler 调用有何优势`],tags:[`Python`,`Logging`,`日志`,`调试`],content_hash:`ff34f1ad9f9f`,id:3420},{category:`python`,difficulty:`medium`,type:`choice`,title:`@functools.singledispatch 泛函数与类型分发`,content:`关于 Python 中 @functools.singledispatch 装饰器，以下说法正确的是？`,options:[`A) singledispatch 根据函数参数的名称进行分派，参数名不同则调用不同的实现`,`B) singledispatch 的默认实现处理任意类型，register() 注册的类型专属实现优先级高于默认实现`,`C) singledispatch 只能用于类方法，不能在普通函数上使用`,`D) singledispatch 在运行时检查参数的类型注解（type hint）来决定调用哪个实现`],answer:`B) singledispatch 的默认实现处理任意类型，register() 注册的类型专属实现优先级高于默认实现。
+
+解析：@functools.singledispatch 将普通函数转换为泛函数（Generic Function）——根据第一个参数的实际运行时类型（type(first_arg)）来分派到不同的函数实现。默认实现（不带 register 的原始函数）是兜底的，适用于所有类型。通过 @func.register(type) 装饰器注册特定类型的处理函数。A 选项错误：分派基于第一个参数的类型，而非参数名。C 选项错误：singledispatch 用于普通函数（且是函数，不是类方法）。D 选项错误：分派基于运行时类型（isinstance 检查），与类型注解（type hints）无关。
+
+扩展延伸：使用方式——
+\`\`\`python
+from functools import singledispatch
+
+@singledispatch
+def to_json(obj):
+    raise TypeError(f'Unsupported type: {type(obj)}')
+
+@to_json.register(int)
+def _(obj):
+    return str(obj)
+
+@to_json.register(list)
+def _(obj):
+    return '[' + ', '.join(to_json(x) for x in obj) + ']'
+
+@to_json.register(dict)
+def _(obj):
+    items = ', '.join(f'{k!r}: {to_json(v)}' for k, v in obj.items())
+    return '{' + items + '}'
+\`\`\`
+
+singledispatchmethod（Python 3.8+）——用于类方法分派：@singledispatchmethod 装饰类方法，根据 self 之后的第一个参数类型分派。适用于 __init__ 重载（模拟构造函数重载）。对比多分派——singledispatch 是单分派（只有一个参数参与类型判断），functools.singledispatch 的变体没有多分派版本，PEP 443 明确只支持单分派。如果需要多分派（多个参数类型组合决定调用哪个实现），可以使用第三方库 multipledispatch。
+
+常见应用场景——1）实现类型安全的序列化/反序列化函数（如自定义 JSON 编码器）。2）在访问者模式（Visitor Pattern）中替代类型判断的 if-elif 链。3）解析 AST 节点时按不同节点类型调用不同的处理函数。`,hints:[`singledispatch 根据哪个参数的类型进行分派——位置还是名称`,`singledispatchmethod 与普通 singledispatch 在分派逻辑上的区别`],tags:[`Python`,`functools`,`泛函数`,`类型分派`],content_hash:`337cc684c569`,id:3421},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python AST 模块的节点类型与代码变换 Pipeline`,content:`Python 的 ast 模块提供了抽象语法树的解析和操作能力。请说明 ast.parse() 输出的节点树结构、NodeVisitor 与 NodeTransformer 的区别，以及如何实现一个代码变换（如将所有 print 调用替换为 logging 调用）。`,answer:`答案：ast.parse(source) 将 Python 源代码解析为 AST 节点树，根节点是 ast.Module。NodeVisitor 遍历树时通过 visit_NodeType 方法模式匹配节点类型（不修改树）。NodeTransformer 继承 NodeVisitor 并在 visit 方法中返回新节点替代旧节点（实现 AST 变换）。代码变换的核心流程：parse → transform → unparse（ast.unparse 将 AST 转回源代码）。
+
+解析：AST 节点树结构——ast.parse('x = 1 + 2') 的输出：Module(body=[Assign(targets=[Name(id='x')], value=BinOp(left=Constant(value=1), op=Add(), right=Constant(value=2)))]), type_ignores=[]。常用节点类型：Module, FunctionDef, ClassDef, Return, Assign, For, While, If, BinOp, Compare, Call, Name, Constant, Attribute, Subscript。NodeVisitor 的使用——
+\`\`\`python
+class PrintFinder(ast.NodeVisitor):
+    def visit_Call(self, node):
+        if isinstance(node.func, ast.Name) and node.func.id == 'print':
+            print(f'Found print at line {node.lineno}')
+        self.generic_visit(node)  # 继续遍历子节点
+\`\`\`
+NodeTransformer 的使用——实现 print → logging 替换：在 visit_Call 中检查是否是 print 调用，创建 logging.info(...) 的 AST 节点替换之。必须调用 self.generic_visit(node) 确保子节点也被变换。
+
+扩展延伸：实际应用——1）代码分析工具（flake8 插件、pylint 规则）使用 NodeVisitor 检查代码风格和潜在问题。2）代码变换工具（2to3、pyupgrade、autoflake）使用 NodeTransformer 自动升级语法。3）性能分析注入：自动向函数入口/出口插入性能计时代码。4）Pytest 的 fixture 重写机制（pytest 在 import hook 中通过 AST 变换修改测试代码）。
+
+高级用法——1）ast.parse 的 type_comments=True 参数支持类型注释。2）feature_version 控制解析器支持的最低 Python 语法版本。3）lineno 和 col_offset 属性在每个节点上标记源代码位置，便于错误报告。4）ast.increment_lineno(node, n) 在代码生成时调整行号。注意：AST 操作不执行语义分析（不检查类型），只管语法层面。对于类型安全的变换（如重命名变量），需要配合符号表和作用域分析。`,hints:[`NodeTransformer 的 visit 方法与 NodeVisitor 的 visit 方法在返回值上的关键区别`,`为什么 AST 变换只保证语法正确性而不保证语义正确性`],tags:[`Python`,`AST`,`元编程`,`代码分析`],content_hash:`c17456814c4b`,id:3422},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 序列化方案的技术选型：pickle 的局限与 protobuf 的优势`,content:`Python 有 pickle、JSON、msgpack、protobuf 等多种序列化方案。请分析 pickle 的安全风险和设计局限，对比 protobuf 在跨语言场景下的优势。在微服务架构中，序列化方案应该如何选择？`,answer:`答案：pickle 在序列化和反序列化期间会解析并执行任意的 Python 对象（通过 __reduce__ / __reduce_ex__ 协议重建对象），因此存在严重的安全风险——恶意 pickle 数据可以执行任意代码（无需特殊权限，只需 pickle.loads 恶意的 pickle 字节流）。JSON 安全但性能较差（纯 Python 实现解析），且不支持 bytes/自定义类型。msgpack 提供了比 JSON 更好的性能和更小的体积但同样缺乏 Schema 约束。protobuf 通过 .proto Schema 定义生成跨语言代码，提供强类型约束和向后兼容的字段编号机制。
+
+解析：pickle 的底层协议——pickle 支持 0-5 五个协议版本（Python 3.8 默认 4，3.8+ 新增 Protocol 5 用于 out-of-band 数据）。pickle 流本质上是一个栈虚拟机指令集（PUSH、POP、PUT、GET、REDUCE、STACK_GLOBAL 等）。REDUCE 指令调用 __reduce__ 返回的 (callable, args) 恢复对象，callable 可以是任意可调用对象（包括 os.system、subprocess.check_output）。这就是 pickle 不安全的根源。
+
+protobuf 的优势——1）Schema 版本兼容：通过字段编号（field number）实现向前/向后兼容（新增字段不影响旧客户端）。2）跨语言：.proto 编译为 C++/Java/Python/Go/Rust 等语言的源码，保持数据一致性。3）压缩率高：varint 编码使小整数仅占 1-2 字节，TLV（Type-Length-Value）格式无需包含字段名。4）二进制格式：比 JSON 小 3-10 倍，解析快 10-100 倍。5）显式字段规则：optional/repeated/map 明确字段的约束。Protobuf 的 Python 实现——protobuf 官方 Python 实现使用纯 Python 反射 API 或 C 扩展（upb，更快）。
+
+扩展延伸：选型建议——1）进程内部或同一信任域的管道通信：pickle 可以使用（如 multiprocessing 的默认序列化就是 pickle），但绝不接受外部输入的 pickle 数据。2）HTTP API（RESTful）：JSON（标准最广，调试方便）。3）内部微服务 RPC（gRPC）：protobuf（强制 Schema、高性能、双向流）。4）缓存（Redis）：msgpack 或 protobuf（体积小、性能好）。5）消息队列（Kafka）：protobuf 或 Avro（Schema Registry 确保数据兼容性）。
+
+安全性警示——1）永远不要对不受信任的输入调用 pickle.loads()。2）使用 jsonpickle（在 JSON 中序列化 Python 对象）时同样注意避免 eval 风险。3）一些框架（如 Flask 的 session cookie 使用 pickle）需要确保 SECRET_KEY 不泄露，否则攻击者可构造恶意 session 数据实现 RCE。`,hints:[`pickle 的栈虚拟机指令集如何被用于构造任意的反序列化攻击载荷`,`为什么 protobuf 的字段编号（field number）设计对 Schema 演变更友好`],tags:[`Python`,`序列化`,`pickle`,`Protobuf`,`安全`],content_hash:`7a86fa092a7d`,id:3423},{category:`python`,difficulty:`hard`,type:`choice`,title:`Python 3.12 PEP 695 类型别名语法与 typing.override 装饰器`,content:`Python 3.12 引入的 PEP 695 改进了类型别名的声明方式。以下关于 Python 3.12+ 类型系统新特性的说法，正确的是？`,options:[`A) PEP 695 的新 type 语句(type X = int)与旧的 X = TypeAlias(int)在运行时行为完全相同，没有任何区别`,`B) typing.override 装饰器在运行时强制检查子类方法是否真的覆盖了父类方法，不匹配则抛出 RuntimeError`,`C) type 语句支持泛型参数(type ListOrValue[T] = list[T] | T)，而旧语法(TypeAlias)不支持`,`D) @override 装饰器只能用于抽象方法(abstractmethod)的覆盖，不能用于普通方法`],answer:`C) type 语句支持泛型参数(type ListOrValue[T] = list[T] | T)，而旧语法(TypeAlias)不支持。
+
+解析：PEP 695（Python 3.12）引入的 type 语句显式声明类型别名，支持泛型参数——type Maybe[T] = T | None 等价于 Maybe = TypeAlias('Maybe', T | None) 但更简洁且支持泛型。A 选项错误：旧语法(X = TypeAlias(int))在 Python 3.10-3.11 中需要 from typing import TypeAlias 注解，且不支持泛型参数，而在 Python 3.12 中 type 语句是新的语法元素（解析器级别支持，非运行时）。B 选项错误：typing.override（Python 3.12，或通过 from typing import override 导入）只是一个标记，供静态类型检查器（mypy、pyright）使用。它在运行时没有任何检查——装饰器只是将函数的 __override__ 属性设为 True，运行时无强制行为。D 选项错误：override 可以用于任何方法覆盖，不限于抽象方法。
+
+扩展延伸：Python 3.12 的 typing 改进——1）TypeVar 的 new-style 语法：旧的 T = TypeVar('T', bound=int) 可以写为 type[T: int] 参数或直接使用 type 语句的泛型约束。2）PEP 698（Python 3.12）的 @override 装饰器：
+\`\`\`python
+from typing import override
+
+class Base:
+    def method(self) -> int: ...
+
+class Derived(Base):
+    @override
+    def method(self) -> int: ...  # 正确
+    
+    @override
+    def methood(self) -> int: ...  # 静态检查器报错：没有覆盖任何父类方法
+\`\`\`
+3）PEP 695 的 type 语句与泛型类和函数的泛型语法统一：class Box[T]: 替代 class Box(Generic[T]): 。4）向后兼容——旧式 TypeVar/Generic 用法仍然支持，mypy/pyright 对 PEP 695 已全面支持。
+
+其他 Python 3.12 类型相关改进——1）TypeVarTuple（可变泛型，PEP 646）在 3.12 中更稳定。2）Unpack 用于可迭代参数展开。3）@override 在 mypy 1.0+ 和 pyright 1.1.320+ 中支持检查。生产建议——Python 3.12+ 项目中用 type 声明别名，用 class Box[T]: 替代 class Box(Generic[T]): ，并在方法覆盖处使用 @override 让静态检查器捕获拼写错误和重构后的断链。`,hints:[`PEP 695 的 type 语句是新的语法元素还是 typing 模块修改——运行时层面没有变化`,`@override 在纯运行时 Python 中有没有效果——为什么被称为「静态检查」的装饰器`],tags:[`Python`,`类型系统`,`PEP 695`,`3.12`],content_hash:`3a0026aebcb5`,id:3424},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python 3.12 subinterpreters 与 Per-Interpreter GIL`,content:`Python 3.12 引入的 Per-Interpreter GIL（PEP 684 / PEP 554）改变了 Python 并发的底层模型。请解释：
+1) subinterpreters 与传统 threading（共享同一个 GIL）的并发模型差异；
+2) Per-Interpreter GIL 在 CPython 解释器层面的主要实现变更（包括 PyInterpreterState、PyGILState 的改动）；
+3) 如何通过 _xxsubinterpreters 模块（PEP 554）在 Python 中创建和通信 subinterpreters；
+4) 为什么 subinterpreters 之间的数据隔离既是优势也是限制——具体到哪些数据类型可以安全传递、哪些不可传递；
+5) 与 multiprocessing 相比，subinterpreters 的资源开销和通信延迟差异。`,answer:`答案：subinterpreters 实现了「每个解释器实例独享 GIL」的模型，比 threading 模型中「全局唯一 GIL」显著提高了多核心利用率。
+
+1) 并发模型差异：
+- threading：所有线程共享同一个 PyInterpreterState，共享 GIL，任意时刻仅一个线程执行 Python bytecode。
+- subinterpreters：每个 subinterpreter 拥有独立的 GIL 和 Python 对象空间（独立的对象图、模块命名空间），多个 subinterpreters 可并行执行 bytecode——GIL 不再成为全局瓶颈。
+
+2) CPython 实现变更：
+- PyInterpreterState 扩展了 gil 字段——从全局单例变为每个解释器持有自己的 GIL 锁。
+- PyGILState 的 Ensure()/Release() 逻辑更新为绑定到当前解释器而非全局状态。
+- Python 对象分配：obmalloc 的内存分区从进程全局变为按解释器隔离。
+- free-threaded builds（--disable-gil）在 3.13 以后选择不同路径，与 subinterpreters 互补。
+
+3) PEP 554 的编程模型：
+import _xxsubinterpreters as interpreters
+interp = interpreters.create()
+interpreters.run_string(interp, 'x = 1')
+queue = interpreters.create_queue()
+interpreters.run_string(interp, f'queue.put("hello")')
+result = queue.get()
+
+4) 数据隔离与传递限制：
+- 可安全传递的：基本类型（int、float、str、bytes、None）、通过 Queue 序列化（pickle）的对象。
+- 不可传递的：函数、类、模块、文件句柄、socket 等——这些对象在子解释器中无意义。
+- 优势：无共享可变对象带来的 race condition，天然规避线程安全问题。
+- 缺陷：状态传递需序列化/反序列化，大对象传输有开销。
+
+5) 与 multiprocessing 对比：
+- 子解释器是进程内线程级隔离——资源开销远低于 multiprocessing（后者需 fork 完整进程）。
+- 通信延迟：子解释器 Queue 使用共享内存（序列化后 copy），低于 multiprocessing 的 IPC（pipe/socket）。
+- 子解释器不支持 os.fork，与某些 C 扩展不兼容。`,hints:[`subinterpreters 解决的核心问题是「全局 GIL 导致的多核利用率」，而非异步 I/O。`,`与 multiprocessing 相比，subinterpreters 在同一个进程内，资源开销更少但隔离级别也更低。`],tags:[`Python`,`并发`,`GIL`,`CPython`,`subinterpreters`],content_hash:`54035f16f2ee`,id:3425},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python __new__ 与 __init__ 的对象创建控制`,content:`关于 Python 中 __new__ 与 __init__ 的关系，以下哪一项是正确的？
+
+A) __init__ 是真正的构造函数，负责分配内存和初始化对象；__new__ 仅在 __init__ 之前被调用，负责返回初始化的实例
+B) 在元类中重写 __new__ 可以控制类的创建行为（如注册所有子类），而 __init__ 永远不能返回除 None 以外的值
+C) 如果 __new__ 返回了该类的一个实例（即 isinstance(result, cls) 为真），__init__ 将不会被自动调用
+D) __new__ 是类的静态方法（但不需要 @staticmethod），第一个参数是 cls；__init__ 是实例方法，第一个参数是 self，两者都不能继承`,answer:`答案：B) 在元类中重写 __new__ 可以控制类的创建行为（如注册所有子类），而 __init__ 永远不能返回除 None 以外的值。
+
+解析：A 错误：__new__ 才是真正的分配内存的「构造函数」，它负责创建并返回新实例；__init__ 是「初始化器」，在 __new__ 返回实例后被调用。
+B 正确：元类的 __new__ 可在创建类对象时拦截（如自动收集子类），__init__ 若返回非 None 值会引发 TypeError。
+C 错误：如果 __new__ 返回的对象是 cls 类型的实例，__init__ 会被自动调用（传入相同的参数）。仅当 __new__ 返回非 cls 类型的对象时，__init__ 才不被调用。
+D 错误：__new__ 确实无需 @staticmethod（隐式静态方法），且两者的继承行为不同——__new__ 可被子类覆盖，__init__ 也遵循 MRO 规则正常继承。
+
+实际应用示例：
+- 单例模式：__new__ 返回已缓存的实例。
+- 不可变类型（如 tuple、str）：只能在 __new__ 中初始化（__init__ 在不可变对象创建后无法修改属性）。
+- 元类的 __new__：用于 ORM 框架的 Model 基类注册（如 Django ORM）。`,hints:[`__new__ 创建对象并选择是否返回给 __init__ 初始化；__init__ 仅初始化已创建的对象。`,`str 和 tuple 为什么没有 __init__ 的行为？因为不可变类型必须在创建时固定状态。`],tags:[`Python`,`元编程`,`对象模型`,`类机制`],content_hash:`9f40a275cee8`,id:3426},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python 抽象基类 (abc.ABC) 与 Protocol 的选用策略`,content:`Python 提供了两种「接口」定义机制：abc.ABC（抽象基类）和 typing.Protocol（结构子类型/鸭子类型协议）。请从以下维度对比二者：
+1) 检查机制——isinstance 检查 vs 结构兼容性检查；
+2) 运行时行为——@abstractmethod 的强制继承 vs @runtime_checkable 的结构匹配；
+3) 层次化设计——显式的「IS-A」关系 vs 隐式的「duck-like」关系；
+4) 跨库兼容性。
+在编写数据处理 Pipeline 时，什么情况下应选择 ABC，什么情况下应选择 Protocol？`,answer:`答案：ABC 和 Protocol 代表了两种不同的类型设计哲学：名义子类型（Nominal Subtyping）和结构子类型（Structural Subtyping）。
+
+1) 检查机制：
+- ABC：通过继承建立显式的 is-a 关系。isinstance(obj, MyABC) 仅在 obj 的类继承自 MyABC 时为真。支持 register() 实现虚拟子类注册。
+- Protocol：通过结构兼容性检查。若一个类具有 Protocol 中声明的所有方法/属性签名，则 @runtime_checkable 装饰后 isinstance 也为真，无需显式继承。
+
+2) 运行时行为：
+- ABC：@abstractmethod 标记的方法必须在子类中实现（否则实例化时抛出 TypeError），这是强制契约。
+- Protocol：默认仅用于静态类型检查（mypy、pyright）。仅当标记 @runtime_checkable 后才能用于 isinstance 检查，且此时不验证方法签名——仅验证方法名的存在性。
+
+3) 设计语义：
+- ABC：表达「X is a Y」的层次关系，例如 class Cat(Animal) 表达猫是一种动物。适合有自然继承层次或需要共享实现的场景。
+- Protocol：表达「X behaves like a Y」，例如任何有 .read() 方法的对象都可作为文件类对象使用。适合跨库、跨框架的类型兼容。
+
+4) 选用建议：
+- 选 ABC：需要共享实现（__mro__ 中的基类方法）、需要在 isinstance 检查中建立层次、需要 @abstractmethod 的强制验证、类之间有明显「is-a」关系。
+- 选 Protocol：关注行为兼容而非类型层次、需要与已有第三方库无缝集成（无需修改第三方类的 MRO）、使用静态类型检查为主、需要鸭子类型的最大灵活性。
+
+在数据处理 Pipeline 中：如果处理器之间有明确的转换层次（如 BaseTransformer → Normalizer → StandardScaler），用 ABC 更合适；如果只需要「任何有 transform 方法的对象即可作为 transformer」，Protocol 更灵活。`,hints:[`ABC 靠「继承」建立关系，Protocol 靠「长什么样」建立关系。`,`Protocol 的 @runtime_checkable 仅检查方法存在性，不验证方法签名——这是设计上的权衡。`],tags:[`Python`,`类型系统`,`设计模式`,`抽象基类`,`Protocol`],content_hash:`5c94da492ad7`,id:3427},{category:`python`,difficulty:`hard`,type:`short_answer`,title:`Python functools.lru_cache 的 C 层实现原理`,content:`Python 的 @functools.lru_cache(maxsize=128) 是一个功能强大的记忆化（memoization）装饰器。请从源码和实现角度详细说明：
+1) 它的底层数据结构是什么——为什么使用双向链表 + 哈希表的组合而非单一字典？
+2) LRU 淘汰策略在选择驱逐对象时 O(1) 的算法实现细节；
+3) typed=True 参数的作用和在装饰函数中是如何影响缓存键生成的；
+4) maxsize=None 时的特殊实现（使用普通 dict）；
+5) lru_cache 最适用的函数特征和不适用场景（如函数参数包含可变对象）。
+另外，functools.cache 与 lru_cache(maxsize=None) 是否等价？`,answer:`答案：lru_cache 使用双向链表 + 字典（实际上是 OrderedDict 的变体）实现 LRU 淘汰策略的 O(1) 操作。
+
+1) 数据结构设计：
+- 核心是一个循环双向链表（link 所有缓存条目）和一行字典，字典键为参数（经过可哈希化处理），值为链表节点。
+- 每次访问将节点移到链表头部（O(1) 操作，因节点持有 prev/next 指针），淘汰时移除链表尾部节点。
+- 为什么不用单一 dict：dict 没有顺序概念，无法区分「最近使用」和「最久未使用」。链表的访问顺序自然编码了 LRU 顺序。
+- 为什么用 dict：O(1) 的查找。链表负责顺序，dict 负责快速定位。
+
+2) LRU 淘汰 O(1) 算法：
+- 缓存命中：从 dict 获取节点，将其从链表当前位置摘除（prev.next = next, next.prev = prev，均为 O(1)），插入链表头部。
+- 缓存未命中且需要淘汰：达到 maxsize，移除链表尾部节点（tail.prev 即为最久未使用），从 dict 中同步删除该节点的 key，再将新节点插入头部并加入 dict。
+- 全程无遍历操作，全部 O(1)。
+
+3) typed=True 参数：
+- 缓存键生成时不仅考虑参数值，还考虑参数类型。
+- 例如：f(1) 和 f(1.0) 在 typed=False 时缓存相同（键相同）；typed=True 时分开缓存。
+- 实现原理：在键元组末尾追加一个 type 信息元组（如 (args, frozenset(kwargs.items()), types)）。
+
+4) maxsize=None 的特殊实现：
+- 退化为普通 dict——不维护链表，不执行 LRU 淘汰。
+- 等价于 functools.cache（Python 3.9+），后者语义更清晰表达「无限制缓存」。
+
+5) 适用场景与限制：
+最适用：纯函数（相同参数始终返回相同结果）、CPU 密集型重复计算（如斐波那契、动态规划、递归树搜索）。
+不适用：函数参数包含不可哈希对象（list、dict、set）——会导致 TypeError；函数有副作用的；需要定时失效的缓存场景（此时需自己实现 TTL 逻辑）。
+
+functools.cache 与 lru_cache(maxsize=None) 在 CPython 中的实现完全一致——cache 就是 lru_cache(maxsize=None) 的别名。`,hints:[`lru_cache 在 maxsize>0 时使用双向链表 + 字典实现 O(1) 的访问和淘汰——这是 LRU 缓存的标准实现方式。`,`为什么 maxsize=None 时会使用更简单的实现？思考链表操作的开销在此场景下是否是浪费的。`],tags:[`Python`,`functools`,`缓存`,`LRU`,`CPython 实现`],content_hash:`5c76ad01ab89`,id:3428},{category:`python`,difficulty:`medium`,type:`short_answer`,title:`Python sys.settrace 与调试器/覆盖率工具实现钩子`,content:`关于 Python sys.settrace 与 sys.setprofile 的以下叙述，哪一项是正确的？
+
+A) sys.settrace 设置的追踪函数在每个字节码指令执行后都会被调用，因此对性能影响极大，不适合生产环境使用
+B) sys.settrace 设置的 trace 函数接收三个参数（frame, event, arg），事件类型包括 'call'、'line'、'return'、'exception'、'opcode' 以及 C 函数的 'c_call'、'c_return'、'c_exception'
+C) coverage.py 使用 sys.setprofile（而非 sys.settrace）收集行覆盖率，因为 profile 函数性能开销更低
+D) sys.settrace 设置的追踪函数是全局的——一个进程中只能设置一个 trace 函数，后设置的会覆盖之前的`,answer:`答案：B) sys.settrace 设置的 trace 函数接收三个参数（frame, event, arg），事件类型包括 'call'、'line'、'return'、'exception'、'opcode' 以及 C 函数的 'c_call'、'c_return'、'c_exception'。
+
+解析：A 错误：trace 函数不是按字节码粒度——默认配置下它仅在事件触发（call、line、return、exception）时被调用，而非每个字节码。但这确实影响性能（CPython 需额外检查 Python 层面），非调试时不应开启。
+B 正确：这是 CPython 3.12+ 中 sys.settrace 事件的准确描述。注意 'opcode' 是 3.12 新增（PEP 669），允许在任意字节码前触发。
+C 错误：coverage.py 使用 sys.settrace（或 3.12 后使用 sys.monitoring，PEP 669），而非 sys.setprofile。sys.setprofile 的 profile 函数仅接收 call/return 事件，不支持 line 事件，因此无法用于行覆盖率。
+D 错误：sys.settrace 是「线程本地」设置——每个线程可以独立设置自己的 trace 函数。当前线程的设置不影响其他线程。
+
+补充（PEP 669 低开销监控，Python 3.12+）：
+sys.monitoring 使用零成本的工具检测（不需要 Python 层面的事件循环），性能开销远低于 sys.settrace（微秒级 vs 百微秒级），适合生产环境的性能分析和覆盖率收集。`,hints:[`PEP 669 (sys.monitoring) 在 3.12 中引入的零成本监控器与旧的 sys.settrace 有数量级的性能差异。`,`sys.settrace 的 profile 和 trace 函数各接收哪些事件？trace 接收 line 事件而 profile 不接收。`],tags:[`Python`,`调试`,`覆盖率`,`CPython`,`性能分析`],content_hash:`6f7512fce5f1`,id:3429}];export{e as category,t as questions};

@@ -1,0 +1,789 @@
+var e=`java_collections`,t=[{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`说说 List, Set, Queue, Map 四者的区别？`,content:`说说 List, Set, Queue, Map 四者的区别？`,answer:`答案：- List(对付顺序的好帮手): 存储的元素是有序的、可重复的。- Set(注重独一无二的性质): 存储的元素不可重复的。- Queue(实现排队功能的叫号机): 按特定的排队规则来确定先后顺序，存储的元素是有序的、可重复的。
+
+解析：- Map(用 key 来搜索的专家): 使用键值对（key-value）存储，类似于数学上的函数 y=f(x)，"x" 代表 key，"y" 代表 value，key 是无序的、不可重复的，value 是无序的、可重复的，每个键最多映射到一个值。`,hints:[`存储的元素是有序的、可重复的`,`存储的元素不可重复的`],tags:[`Java集合`],options:[],content_hash:`e4182cf40fc9`,id:2096},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`如何选用集合?`,content:`如何选用集合?`,answer:`答案：我们主要根据集合的特点来选择合适的集合。
+
+解析：比如：
+- 我们需要根据键值获取到元素值时就选用 Map 接口下的集合，需要排序时选择 TreeMap,不需要排序时就选择 HashMap,需要保证线程安全就选用 ConcurrentHashMap。- 我们只需要存放元素值时，就选择实现Collection 接口的集合，需要保证元素唯一时选择实现 Set 接口的集合比如 TreeSet 或 HashSet，不需要就选择实现 List 接口的比如 ArrayList 或 LinkedList，然后再根据实现这些接口的集合的特点来选用。`,hints:[`需要根据键值获取元素 → Map 接口`,`只需要存放元素 → Collection 接口，需唯一 → Set，不需唯一 → List`,`需要排序 → TreeMap / TreeSet，线程安全 → ConcurrentHashMap`],tags:[`Java集合`,`集合`,`并发`,`IO`],options:[],content_hash:`c5395464db7e`,id:2097},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`为什么要使用集合？`,content:`为什么要使用集合？`,answer:`答案：当我们需要存储一组类型相同的数据时，数组是最常用且最基本的容器之一。但是，使用数组存储对象存在一些不足之处，因为在实际开发中，存储的数据类型多种多样且数量不确定。这时，Java 集合就派上用场了。
+
+解析：与数组相比，Java 集合提供了更灵活、更有效的方法来存储多个数据对象。Java 集合框架中的各种集合类和接口可以存储不同类型和数量的对象，同时还具有多样化的操作方式。相较于数组，Java 集合的优势在于它们的大小可变、支持泛型、具有内建算法等。总的来说，Java 集合提高了数据的存储和处理灵活性，可以更好地适应现代软件开发中多样化的数据需求，并支持高质量的代码编写。## List`,hints:[`数组的缺点：长度固定、无法动态扩容`,`集合的优势：大小可变、支持泛型、丰富 API 和算法`],tags:[`Java集合`,`集合`,`泛型`],options:[],content_hash:`322344c38df6`,id:2098},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayList 和 Array（数组）的区别？`,content:`ArrayList 和 Array（数组）的区别？`,answer:`答案：ArrayList 内部基于动态数组实现，比 Array（静态数组） 使用起来更加灵活：
+- ArrayList会根据实际存储的元素动态地扩容或缩容，而 Array 被创建之后就不能改变它的长度了。- ArrayList 允许你使用泛型来确保类型安全，Array 则不可以。- ArrayList 中只能存储对象。
+
+解析：对于基本类型数据，需要使用其对应的包装类（如 Integer、Double 等）。Array 可以直接存储基本类型数据，也可以存储对象。- ArrayList 支持插入、删除、遍历等常见操作，并且提供了丰富的 API 操作方法，比如 add()、remove()等。Array 只是一个固定长度的数组，只能按照下标访问其中的元素，不具备动态添加、删除元素的能力。- ArrayList创建时不需要指定大小，而Array创建时必须指定大小。下面是二者使用的简单对比：
+Array：
+ArrayList ：`,hints:[`数组长度固定，ArrayList 可以动态扩容`,`ArrayList 只能用包装类存基本类型，数组可直接存储`],tags:[`Java集合`,`集合`,`泛型`],options:[],content_hash:`1a8cd01df327`,id:2099},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayList 和 Vector 的区别?（了解即可）`,content:`ArrayList 和 Vector 的区别?（了解即可）`,answer:`答案：- ArrayList 是 List 的主要实现类，底层使用 Object[]存储，适用于频繁的查找工作，线程不安全 。
+- Vector 是 List 的古老实现类，底层使用Object[] 存储，线程安全。`,hints:[`ArrayList 线程不安全，Vector 线程安全`,`Vector 是 JDK 1.0 遗留类，已被 ArrayList 取代`],tags:[`Java集合`,`集合`,`并发`],options:[],content_hash:`867a38706409`,id:2100},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Vector 和 Stack 的区别?（了解即可）`,content:`Vector 和 Stack 的区别?（了解即可）`,answer:`答案：- Vector 和 Stack 两者都是线程安全的，都是使用 synchronized 关键字进行同步处理。- Stack 继承自 Vector，是一个后进先出的栈，而 Vector 是一个列表。随着 Java 并发编程的发展，Vector 和 Stack 已经被淘汰，推荐使用并发集合类（例如 ConcurrentHashMap、CopyOnWriteArrayList 等）或者手动实现线程安全的方法来提供安全的多线程操作支持。`,hints:[`Stack 继承自 Vector，是后进先出的栈`,`两者都是线程安全的（synchronized），但已被淘汰`],tags:[`Java集合`,`集合`,`并发`,`关键字`],options:[],content_hash:`919443f535a5`,id:2101},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayList 可以添加 null 值吗？`,content:`ArrayList 可以添加 null 值吗？`,answer:`答案：ArrayList 中可以存储任何类型的对象，包括 null 值。不过，不建议向ArrayList 中添加 null 值， null 值无意义，会让代码难以维护比如忘记做判空处理就会导致空指针异常。示例代码：
+输出：`,hints:[`ArrayList 可以存储任何类型的对象`,`添加 null 值可能导致 NullPointerException，不建议这样做`],tags:[`Java集合`,`集合`,`异常`],options:[],content_hash:`1ee540452986`,id:2102},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayList 插入和删除元素的时间复杂度？`,content:`ArrayList 插入和删除元素的时间复杂度？`,answer:`答案：对于插入：
+- 头部插入：由于需要将所有元素都依次向后移动一个位置，因此时间复杂度是 O(n)。- 尾部插入：当 ArrayList 的容量未达到极限时，往列表末尾插入元素的时间复杂度是 O(1)，因为它只需要在数组末尾添加一个元素即可；当容量已达到极限并且需要扩容时，则需要执行一次 O(n) 的操作将原数组复制到新的更大的数组中，然后再执行 O(1) 的操作添加元素。
+
+解析：- 指定位置插入：需要将目标位置之后的所有元素都向后移动一个位置，然后再把新元素放入指定位置。这个过程需要移动平均 n/2 个元素，因此时间复杂度为 O(n)。对于删除：
+- 头部删除：由于需要将所有元素依次向前移动一个位置，因此时间复杂度是 O(n)。- 尾部删除：当删除的元素位于列表末尾时，时间复杂度为 O(1)。- 指定位置删除：需要将目标元素之后的所有元素向前移动一个位置以填补被删除的空白位置，因此需要移动平均 n/2 个元素，时间复杂度为 O(n)。这里简单列举一个例子：`,hints:[`需要将目标位置之后的所有元素都向后移动一个位置，然后再把新元素放入指定位置`,`- 头部删除：由于需要将所有元素依次向前移动一个位置，因此时间复杂度是 O(n)`],tags:[`Java集合`,`集合`],options:[],content_hash:`6c8745e5dfeb`,id:2103},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`LinkedList 插入和删除元素的时间复杂度？`,content:`LinkedList 插入和删除元素的时间复杂度？`,answer:`答案：- 头部插入/删除：只需要修改头结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)。- 尾部插入/删除：只需要修改尾结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)。- 指定位置插入/删除：需要先移动到指定位置，再修改指定节点的指针完成插入/删除，不过由于有头尾指针，可以从较近的指针出发，因此需要遍历平均 n/4 个元素，时间复杂度为 O(n)。
+
+解析：这里简单列举一个例子：假如我们要删除节点 9 的话，需要先遍历链表找到该节点。然后，再执行相应节点指针指向的更改，具体的源码可以参考：LinkedList 源码分析 。`,hints:[`只需要修改头结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)`,`只需要修改尾结点的指针即可完成插入/删除操作，因此时间复杂度为 O(1)`],tags:[`Java集合`,`集合`],options:[],content_hash:`d36c0644c071`,id:2104},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`LinkedList 为什么不能实现 RandomAccess 接口？`,content:`LinkedList 为什么不能实现 RandomAccess 接口？`,answer:`答案：RandomAccess 是一个标记接口，用来表明实现该接口的类支持随机访问（即可以通过索引快速访问元素）。由于 LinkedList 底层数据结构是链表，内存地址不连续，只能通过指针来定位，不支持随机快速访问，所以不能实现 RandomAccess 接口。`,hints:[`RandomAccess 是标记接口，表示支持通过索引快速随机访问`,`LinkedList 底层是链表，内存地址不连续，只能通过指针遍历定位`],tags:[`Java集合`,`集合`],options:[],content_hash:`98a365c87bcc`,id:2105},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayList 与 LinkedList 区别?`,content:`ArrayList 与 LinkedList 区别?`,answer:`答案：- **是否保证线程安全：** ArrayList 和 LinkedList 都是不同步的，也就是不保证线程安全；- **底层数据结构：** ArrayList 底层使用的是 **Object 数组**；LinkedList 底层使用的是 **双向链表** 数据结构（JDK1.6 之前为循环链表，JDK1.7 取消了循环。
+
+解析：注意双向链表和双向循环链表的区别，下面有介绍到！）
+- **插入和删除是否受元素位置的影响：**
+- ArrayList 采用数组存储，所以插入和删除元素的时间复杂度受元素位置的影响。比如：执行add(E e)方法的时候， ArrayList 会默认在将指定的元素追加到此列表的末尾，这种情况时间复杂度就是 O(1)。但是如果要在指定位置 i 插入和删除元素的话（add(int index, E element)），时间复杂度就为 O(n)。因为在进行上述操作的时候集合中第 i 和第 i 个元素之后的(n-i)个元素都要执行向后位/向前移一位的操作。- LinkedList 采用链表存储，所以在头尾插入或者删除元素不受元素位置的影响（add(E e)、addFirst(E e)、addLast(E e)、removeFirst()、 removeLast()），时间复杂度为 O(1)，如果是要在指定位置 i 插入和删除元素的话（add(int index, E element)，remove(Object o),remove(int index)）， 时间复杂度为 O(n) ，因为需要先移动到指定位置再插入和删除。- **是否支持快速随机访问：** LinkedList 不支持高效的随机元素访问，而 ArrayList（实现了 RandomAccess 接口） 支持。快速随机访问就是通过元素的序号快速获取元素对象(对应于get(int index)方法)。- **内存空间占用：** ArrayList 的空间浪费主要体现在在 list 列表的结尾会预留一定的容量空间，而 LinkedList 的空间花费则体现在它的每一个元素都需要消耗比 ArrayList 更多的空间（因为要存放直接后继和直接前驱以及数据）。`,hints:[`底层数据结构：ArrayList 是数组，LinkedList 是双向链表`,`插入删除受位置影响：ArrayList 尾部 O(1) 中间 O(n)，LinkedList 头尾 O(1) 中间 O(n)`,`ArrayList 支持快速随机访问，LinkedList 不支持`],tags:[`Java集合`,`集合`,`并发`],options:[],content_hash:`ec269bdd5e6d`,id:2106},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`集合中的 fail-fast 和 fail-safe 是什么？`,content:`集合中的 fail-fast 和 fail-safe 是什么？`,answer:`答案：fail-fast（快速失败）和 fail-safe（安全失败）是Java集合框架在处理并发修改问题时，两种截然不同的设计哲学和容错策略。关于fail-fast引用medium中一篇文章关于fail-fast和fail-safe的说法：
+快速失败的思想即针对可能发生的异常进行提前表明故障并停止运行，通过尽早的发现和停止错误，降低故障系统级联的风险。在java.util包下的大部分集合（如 ArrayList, HashMap）是不支持线程安全的，为了能够提前发现并发操作导致线程安全风险，提出通过维护一个modCount记录修改的次数，迭代期间通过比对预期修改次数expectedModCount和modCount是否一致来判断是否存在并发操作，从而实现快速失败，由此保证在避免在异常时执行非必要的复杂代码。
+
+解析：**ArrayList (fail-fast) 示例：**
+输出：
+程序在线程 t2 修改列表后，线程 t1 的下一次迭代操作立刻就抛出了 ConcurrentModificationException。这是因为 ArrayList 的迭代器在每次 next() 调用时，都会检查 modCount 是否被改变。一旦发现集合在迭代器不知情的情况下被修改，它会立即“快速失败”，以防止在不一致的数据上继续操作导致不可预期的后果。对此我们也给出for循环底层迭代器获取下一个元素时的next方法，可以看到其内部的checkForComodification具有针对修改次数比对的逻辑：
+而fail-safe也就是安全失败的含义，它旨在即使面对意外情况也能恢复并继续运行，这使得它特别适用于不确定或者不稳定的环境：
+该思想常运用于并发容器，最经典的实现就是CopyOnWriteArrayList的实现，通过写时复制（Copy-On-Write）的思想保证在进行修改操作时复制出一份快照，基于这份快照完成添加或者删除操作后，将CopyOnWriteArrayList底层的数组引用指向这个新的数组空间，由此避免迭代时被并发修改所干扰所导致并发操作安全问题，当然这种做法也存在缺点，即进行遍历操作时无法获得实时结果：
+!
+对应我们也给出CopyOnWriteArrayList实现fail-safe的核心代码，可以看到它的实现就是通过getArray获取数组引用然后通过Arrays.copyOf得到一个数组的快照，基于这个快照完成添加操作后，修改底层array变量指向的引用地址由此完成写时复制：
+## Set`,hints:[`fail-fast：检测到 modCount 变化立即抛 ConcurrentModificationException`,`fail-safe：写时复制快照，避免并发修改，但读取可能不是最新的`],tags:[`Java集合`,`集合`,`并发`,`异常`],options:[],content_hash:`300b5dd9fe04`,id:2107},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Comparable 和 Comparator 的区别`,content:`请比较 Comparable 和 Comparator 的区别。`,answer:`答案：Comparable 接口和 Comparator 接口都是 Java 中用于排序的接口，它们在实现类对象之间比较大小、排序等方面发挥了重要作用：
+- Comparable 接口实际上是出自java.lang包 它有一个 compareTo(Object obj)方法用来排序
+- Comparator接口实际上是出自 java.util 包它有一个compare(Object obj1, Object obj2)方法用来排序
+一般我们需要对一个集合使用自定义排序时，我们就要重写compareTo()方法或compare()方法，当我们需要对某一个集合实现两种排序方式，比如一个 song 对象中的歌名和歌手名分别采用一种排序方法的话，我们可以重写compareTo()方法和使用自制的Comparator方法或者以两个 Comparator。`,hints:[`Comparable 在 java.lang 包，Comparator 在 java.util 包`,`String、Integer 的排序用的是哪种？`,`如何对一个类实现两种不同的排序规则`],tags:[`Java集合`,`集合`,`IO`,`重载重写`],options:[],content_hash:`7f77641112df`,id:2108},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`无序性和不可重复性的含义是什么`,content:`请解释 无序性和不可重复性的含义是什么。`,answer:`答案：- 无序性不等于随机性 ，无序性是指存储的数据在底层数组中并非按照数组索引的顺序添加 ，而是根据数据的哈希值决定的。
+- 不可重复性是指添加的元素按照 equals() 判断时 ，返回 false，需要同时重写 equals() 方法和 hashCode() 方法。`,hints:[`无序性：按哈希值决定存储位置，不按添加顺序`,`不可重复性：需要同时重写 equals() 和 hashCode() 来保证`],tags:[`Java集合`,`重载重写`],options:[],content_hash:`90d3ffe1f1e4`,id:2109},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同`,content:`请解释 比较 HashSet、LinkedHashSet 和 TreeSet 三者的异同。`,answer:`答案：- HashSet、LinkedHashSet 和 TreeSet 都是 Set 接口的实现类，都能保证元素唯一，并且都不是线程安全的。- HashSet、LinkedHashSet 和 TreeSet 的主要区别在于底层数据结构不同。HashSet 的底层数据结构是哈希表（基于 HashMap 实现）。
+
+解析：LinkedHashSet 的底层数据结构是链表和哈希表，元素的插入和取出顺序满足 FIFO。TreeSet 底层数据结构是红黑树，元素是有序的，排序的方式有自然排序和定制排序。- 底层数据结构不同又导致这三者的应用场景不同。HashSet 用于不需要保证元素插入和取出顺序的场景，LinkedHashSet 用于保证元素的插入和取出顺序满足 FIFO 的场景，TreeSet 用于支持对元素自定义排序规则的场景。## Queue`,hints:[`三者都保证元素唯一，都不是线程安全的`,`底层数据结构：HashSet→哈希表，LinkedHashSet→链表+哈希表，TreeSet→红黑树`,`LinkedHashSet 维护插入顺序，TreeSet 支持排序`],tags:[`Java集合`,`集合`,`并发`],options:[],content_hash:`72e8161fe53b`,id:2110},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Queue 与 Deque 的区别`,content:`请比较 Queue 与 Deque 的区别。`,answer:`答案：Queue 是单端队列，只能从一端插入元素，另一端删除元素，实现上一般遵循 **先进先出（FIFO）** 规则。Queue 扩展了 Collection 的接口，根据 **因为容量问题而导致操作失败后处理方式的不同** 可以分为两类方法: 一种在操作失败后会抛出异常，另一种则会返回特殊值。| Queue 接口 | 抛出异常  | 返回特殊值 |
+| ------------ | --------- | ---------- |
+| 插入队尾     | add(E e)  | offer(E e) |
+| 删除队首     | remove()  | poll()     |
+| 查询队首元素 | element() | peek()     |
+Deque 是双端队列，在队列的两端均可以插入或删除元素。
+
+解析：Deque 扩展了 Queue 的接口, 增加了在队首和队尾进行插入和删除的方法，同样根据失败后处理方式的不同分为两类：
+| Deque 接口 | 抛出异常      | 返回特殊值      |
+| ------------ | ------------- | --------------- |
+| 插入队首     | addFirst(E e) | offerFirst(E e) |
+| 插入队尾     | addLast(E e)  | offerLast(E e)  |
+| 删除队首     | removeFirst() | pollFirst()     |
+| 删除队尾     | removeLast()  | pollLast()      |
+| 查询队首元素 | getFirst()    | peekFirst()     |
+| 查询队尾元素 | getLast()     | peekLast()      |
+事实上，Deque 还提供有 push() 和 pop() 等其他方法，可用于模拟栈。`,hints:[`Queue 是单端队列（FIFO），Deque 是双端队列`,`Deque 新增了哪些队首/队尾操作方法`,`Deque 可以替代 Stack 吗`],tags:[`Java集合`,`异常`,`IO`],options:[],content_hash:`13c0d8ef929b`,id:2111},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayDeque 与 LinkedList 的区别`,content:`请比较 ArrayDeque 与 LinkedList 的区别。`,answer:`答案：ArrayDeque 和 LinkedList 都实现了 Deque 接口，两者都具有队列的功能，但两者有什么区别呢？- ArrayDeque 是基于可变长的数组和双指针来实现，而 LinkedList 则通过链表来实现。- ArrayDeque 不支持存储 NULL 数据，但 LinkedList 支持。
+
+解析：- ArrayDeque 是在 JDK1.6 才被引入的，而LinkedList 早在 JDK1.2 时就已经存在。- ArrayDeque 插入时可能存在扩容过程, 不过均摊后的插入操作依然为 O(1)。虽然 LinkedList 不需要扩容，但是每次插入数据时均需要申请新的堆空间，均摊性能相比更慢。从性能的角度上，选用 ArrayDeque 来实现队列要比 LinkedList 更好。此外，ArrayDeque 也可以用于实现栈。`,hints:[`ArrayDeque 基于可变长数组+双指针，LinkedList 基于链表`,`ArrayDeque 不支持 null，均摊插入性能更优`,`ArrayDeque 也可用作栈，性能优于 LinkedList`],tags:[`Java集合`,`集合`],options:[],content_hash:`bf51404ced64`,id:2112},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`说一说 PriorityQueue`,content:`说一说 PriorityQueue`,answer:`答案：PriorityQueue 是在 JDK1.5 中被引入的, 其与 Queue 的区别在于元素出队顺序是与优先级相关的，即总是优先级最高的元素先出队。这里列举其相关的一些要点：
+- PriorityQueue 利用了二叉堆的数据结构来实现的，底层使用可变长的数组来存储数据
+- PriorityQueue 通过堆元素的上浮和下沉，实现了在 O(logn) 的时间复杂度内插入元素和删除堆顶元素。- PriorityQueue 是非线程安全的，且不支持存储 NULL 和 non-comparable 的对象。
+
+解析：- PriorityQueue 默认是小顶堆，但可以接收一个 Comparator 作为构造参数，从而来自定义元素优先级的先后。PriorityQueue 在面试中可能更多的会出现在手撕算法的时候，典型例题包括堆排序、求第 K 大的数、带权图的遍历等，所以需要会熟练使用才行。`,hints:[`底层是二叉堆（小顶堆），默认按自然顺序出队`,`插入和删除堆顶的时间复杂度 O(log n)`,`非线程安全，不支持 null，可用 Comparator 自定义优先级`],tags:[`Java集合`,`并发`,`IO`],options:[],content_hash:`be42bef8cfff`,id:2113},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`什么是 BlockingQueue？`,content:`什么是 BlockingQueue？`,answer:`答案：BlockingQueue （阻塞队列）是一个接口，继承自 Queue。BlockingQueue阻塞的原因是其支持当队列没有元素时一直阻塞，直到有元素；还支持如果队列已满，一直等到队列可以放入新元素时再放入。
+
+解析：BlockingQueue 常用于生产者-消费者模型中，生产者线程会向队列中添加数据，而消费者线程会从队列中取出数据进行处理。`,hints:[`队列为空时取元素会阻塞等待，队列满时放元素会阻塞等待`,`经典应用场景：生产者-消费者模型`],tags:[`Java集合`,`并发`,`面向对象`],options:[],content_hash:`2149f63519a7`,id:2114},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`BlockingQueue 的实现类有哪些？`,content:`BlockingQueue 的实现类有哪些？`,answer:`答案：Java 中常用的阻塞队列实现类有以下几种：
+1. ArrayBlockingQueue：使用数组实现的有界阻塞队列。在创建时需要指定容量大小，并支持公平和非公平两种方式的锁访问机制。2. LinkedBlockingQueue：使用单向链表实现的可选有界阻塞队列。
+
+解析：在创建时可以指定容量大小，如果不指定则默认为Integer.MAX_VALUE。和ArrayBlockingQueue不同的是， 它仅支持非公平的锁访问机制。3. PriorityBlockingQueue：支持优先级排序的无界阻塞队列。元素必须实现Comparable接口或者在构造函数中传入Comparator对象，并且不能插入 null 元素。4. SynchronousQueue：同步队列，是一种不存储元素的阻塞队列。每个插入操作都必须等待对应的删除操作，反之删除操作也必须等待插入操作。因此，SynchronousQueue通常用于线程之间的直接传递数据。5. DelayQueue：延迟队列，其中的元素只有到了其指定的延迟时间，才能够从队列中出队。6. ……
+日常开发中，这些队列使用的其实都不多，了解即可。`,hints:[`1. ArrayBlockingQueue：使用数组实现的有界阻塞队列`,`使用单向链表实现的可选有界阻塞队列`],tags:[`Java集合`,`并发`,`IO`],options:[],content_hash:`df4b887044b8`,id:2115},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayBlockingQueue 和 LinkedBlockingQueue 有什么区别？`,content:`ArrayBlockingQueue 和 LinkedBlockingQueue 有什么区别？`,answer:`答案：ArrayBlockingQueue 和 LinkedBlockingQueue 是 Java 并发包中常用的两种阻塞队列实现，它们都是线程安全的。不过，不过它们之间也存在下面这些区别：
+- 底层实现：ArrayBlockingQueue 基于数组实现，而 LinkedBlockingQueue 基于链表实现。- 是否有界：ArrayBlockingQueue 是有界队列，必须在创建时指定容量大小。
+
+解析：LinkedBlockingQueue 创建时可以不指定容量大小，默认是Integer.MAX_VALUE，也就是无界的。但也可以指定队列大小，从而成为有界的。- 锁是否分离： ArrayBlockingQueue中的锁是没有分离的，即生产和消费用的是同一个锁；LinkedBlockingQueue中的锁是分离的，即生产用的是putLock，消费是takeLock，这样可以防止生产者和消费者线程之间的锁争夺。- 内存占用：ArrayBlockingQueue 需要提前分配数组内存，而 LinkedBlockingQueue 则是动态分配链表节点内存。这意味着，ArrayBlockingQueue 在创建时就会占用一定的内存空间，且往往申请的内存比实际所用的内存更大，而LinkedBlockingQueue 则是根据元素的增加而逐渐占用内存空间。`,hints:[`ArrayBlockingQueue 基于数组，LinkedBlockingQueue 基于链表`,`ArrayBlockingQueue 锁未分离，LinkedBlockingQueue 锁分离`,`有界队列和无界队列的内存占用差异`],tags:[`Java集合`,`并发`],options:[],content_hash:`08182e4ad8d8`,id:2116},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`HashMap 在 JDK 8 中插入新元素的时间复杂度`,content:`在 JDK 8 中，HashMap 插入一个键值对（未发生哈希冲突，且无需扩容）的时间复杂度是多少？`,options:[`A) O(1)`,`B) O(log n)`,`C) O(n)`,`D) O(n log n)`],answer:`A) O(1)
+
+解析：在无哈希冲突且无需扩容的理想情况下，HashMap 根据 key 的 hashCode 直接定位到数组槽位，插入操作是常数时间复杂度。当发生哈希冲突时，JDK 8 采用链表 + 红黑树：链表长度 < 8 时 O(n)，>= 8 且数组长度 >= 64 时转为红黑树 O(log n)。
+
+扩展延伸：HashMap 扩容耗时 O(n)，因为需要 rehash 所有元素。所以如果能预估数据量，初始化时指定 capacity 可以避免频繁扩容。HashMap 的负载因子默认 0.75，是时间和空间的平衡——大了省空间但哈希冲突增加，小了反之。`,hints:[`先算 hashCode 再找槽位`,`JDK 8 的 HashMap 相比 JDK 7 有什么改进`],tags:[`Java集合`,`HashMap`],company:`阿里巴巴`,content_hash:`55f44c199b92`,id:2117},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`ConcurrentHashMap 在 JDK 8 中的锁机制`,content:`JDK 8 的 ConcurrentHashMap 在并发写操作时使用什么机制保证线程安全？`,options:[`A) 对整个数组加锁`,`B) synchronized + CAS 对每个数组槽位加锁`,`C) ReentrantLock + 分段锁`,`D) 无锁，全部用 CAS 实现`],answer:`B) synchronized + CAS 对每个数组槽位加锁
+
+解析：JDK 8 的 ConcurrentHashMap 摒弃了 JDK 7 的 Segment 分段锁，改用 synchronized + CAS 实现更细粒度的锁。put 时先 CAS 尝试插入，如果对应槽位为空则 CAS 成功；槽位有元素时对链表/红黑树的头节点加 synchronized 锁。优化点：synchronized 在 JDK 8 经过偏向锁→轻量级锁→重量级锁升级，锁竞争低时性能优于 ReentrantLock。
+
+扩展延伸：ConcurrentHashMap 的 size() 方法通过 baseCount + CounterCell 数组累加来避免加锁遍历。JDK 8 的 ConcurrentHashMap 在并发读操作完全不加锁（Node 的 val 和 next 用 volatile 保证可见性），所以读性能极高。`,hints:[`JDK 7 的 ConcurrentHashMap 用什么锁`,`为什么 JDK 8 改用 synchronized 而不是 ReentrantLock`],tags:[`Java集合`,`并发`,`ConcurrentHashMap`],company:`阿里巴巴`,content_hash:`10ca3c0db1ea`,id:2118},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`ArrayList 初始容量和扩容机制`,content:`使用 new ArrayList() 创建 ArrayList 时，初始数组容量是多少？首次添加元素后容量变为多少？`,options:[`A) 初始 0，首次添加后变为 10`,`B) 初始 10，首次添加后变为 15`,`C) 初始 16，首次添加后变为 25`,`D) 初始 0，首次添加后变为 16`],answer:`A) 初始 0，首次添加后变为 10
+
+解析：JDK 8 中 ArrayList 的无参构造器创建一个空数组（DEFAULTCAPACITY_EMPTY_ELEMENTDATA，容量 0）。首次 add 时调用 ensureCapacityInternal，将容量扩容为 DEFAULT_CAPACITY = 10。后续扩容每次扩大到原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。
+
+扩展延伸：如果知道数据量，使用 new ArrayList<>(initialCapacity) 可以避免多次扩容。ArrayList 的最大容量为 Integer.MAX_VALUE - 8（减去数组对象头预留）。频繁扩容的代价是数组拷贝（Arrays.copyOf），在数据量大的场景下性能影响明显。`,hints:[`无参构造器创建的是不是空数组`,`JDK 8 的扩容因子是多少`],tags:[`Java集合`,`ArrayList`],content_hash:`3a5361216537`,id:2119},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`HashSet 的底层实现`,content:`HashSet 的 add() 方法是如何保证元素不重复的？`,options:[`A) 内部维护一个 HashMap，元素作为 key，PRESENT 对象作为 value`,`B) 内部维护一个 ArrayList，每次 add 时遍历检查 equals()`,`C) 内部维护一个 TreeMap，用 compareTo() 比较`,`D) 内部维护一个数组，用 hashCode 取模存储`],answer:`A) 内部维护一个 HashMap，元素作为 key，PRESENT 对象作为 value
+
+解析：HashSet 底层实际就是一个 HashMap，add(e) 方法调用 map.put(e, PRESENT)，其中 PRESENT 是一个静态的 dummy Object。利用 HashMap 的 key 不可重复特性来实现 Set 的去重。因此，存入 HashSet 的元素必须正确重写 hashCode() 和 equals() 方法。
+
+扩展延伸：LinkedHashSet 继承自 HashSet，底层使用 LinkedHashMap，可以维护插入顺序。TreeSet 底层使用 TreeMap（红黑树），支持排序。HashSet 允许 null 值（因为 HashMap 允许一个 null key）。`,hints:[`HashSet 和 HashMap 什么关系`,`HashSet 允许 null 吗`],tags:[`Java集合`,`HashSet`],content_hash:`d19e80d772c6`,id:2120},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`LinkedList 的底层数据结构`,content:`LinkedList 的底层数据结构是什么？`,options:[`A) 数组`,`B) 双向链表`,`C) 单向链表`,`D) 哈希表`],answer:`B) 双向链表
+
+解析：LinkedList 底层使用双向链表（Doubly Linked List），每个节点（Node）包含三个字段：item（数据）、next（后继引用）、prev（前驱引用）。JDK 1.7 之前是循环链表（最后一个节点的 next 指向头节点），JDK 1.7 之后去掉了循环，改为非循环双向链表。
+
+扩展延伸：双向链表的特点：头尾插入删除 O(1)，指定位置插入/删除 O(n)（需要遍历到目标位置）。因为支持双向遍历，LinkedList 也可以作为双端队列（Deque）使用。LinkedList 的三个角色：List、Deque、Queue。`,hints:[`单向链表和双向链表的区别`,`JDK 7 前后的 LinkedList 有什么变化`],tags:[`Java集合`,`LinkedList`],content_hash:`67fcdb7c5eff`,id:2121},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`ArrayList 遍历时删除元素是否安全`,content:`使用 for-each 循环遍历 ArrayList 时直接调用 list.remove() 删除元素是安全的。`,options:[`正确`,`错误`],answer:`错误
+
+解析：for-each 循环底层使用 Iterator 遍历，遍历过程中通过 list.remove() 直接删除元素会修改 modCount，导致迭代器在下一次 next() 时检测到 expectedModCount != modCount，抛出 ConcurrentModificationException。
+
+扩展延伸：安全的遍历删除方式：1）使用 Iterator 的 remove() 方法 2）使用 for 循环倒序删除 3）使用 Collection.removeIf()（JDK 8+，底层也是 Iterator）4）收集要删除的元素，遍历结束后批量删除。`,hints:[`ConcurrentModificationException 是怎么触发的`,`Iterator 的 remove 和 list 的 remove 有什么区别`],tags:[`Java集合`,`ArrayList`,`异常`],content_hash:`fff7e4add0bb`,id:2122},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`TreeMap 的有序性`,content:`TreeMap 可以根据 key 的自然顺序或自定义 Comparator 进行排序。`,options:[`正确`,`错误`],answer:`正确
+
+解析：TreeMap 底层使用红黑树（Red-Black Tree），key 会按照自然顺序（实现 Comparable 接口）或构造时传入的 Comparator 进行排序。因此 TreeMap 的 key 必须实现 Comparable 或传入 Comparator，否则会抛出 ClassCastException。
+
+扩展延伸：TreeMap 的 put/get/remove 操作都是 O(log n) 时间复杂度。提供的方法：firstKey()/lastKey()/headMap()/tailMap()/subMap() 等用于范围查询。相比 HashMap 的 O(1)，TreeMap 性能稍差但支持有序操作。`,hints:[`红黑树的特点是什么`,`TreeMap 和 HashMap 的应用场景区别`],tags:[`Java集合`,`TreeMap`],content_hash:`4d89a37a91d9`,id:2123},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`HashMap 允许 null 作为 key`,content:`HashMap 允许使用 null 作为 key。`,options:[`正确`,`错误`],answer:`正确
+
+解析：HashMap 允许一个 null key，它会被存放在 table[0] 的位置（hash 值为 0）。ConcurrentHashMap 和 Hashtable 不允许 null key——因为并发场景下无法区分「key 不存在」和「value 为 null」两种情况。
+
+扩展延伸：为什么 ConcurrentHashMap 不允许 null？因为并发环境下 get(key) 返回 null 时，无法判断是 key 对应的 value 就是 null，还是 key 不存在。HashMap 单线程下可以用 containsKey(key) 区分，但并发场景下可能在两次调用之间数据已被修改。`,hints:[`null key 在 HashMap 中怎么存储`,`ConcurrentHashMap 为什么不允许 null key`],tags:[`Java集合`,`HashMap`],company:`阿里巴巴`,content_hash:`ad4704cad31d`,id:2124},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`深挖 HashMap 扩容、树化与退化的触发条件和过程`,content:`深挖 HashMap 在 JDK 8 中的扩容机制、链表转红黑树（树化）和红黑树退化为链表（退化）的触发条件和执行过程。`,answer:`答案：1. 扩容（Resize）：
+- 触发条件：HashMap 中元素数量 > threshold（threshold = capacity × loadFactor，默认容量 16，负载因子 0.75，即元素数 > 12 时触发）。
+- 过程：新容量 = 旧容量 × 2，创建一个新数组（容量为原来的 2 倍），遍历旧数组的每个桶，将元素重新分配到新数组。JDK 8 做了优化：元素在新数组中的索引要么是原位置（原索引），要么是「原索引 + 旧容量」。因为容量变为 2 倍后，key 的 hash 值多了一个 bit 参与取模，这个 bit 是 0 还是 1 决定了新索引的位置。这样就不需要像 JDK 7 那样重新计算 hash。
+- 扩容耗时 O(n)，因为需要 rehash 所有元素。
+
+2. 树化（链表 → 红黑树）：
+- 触发条件：链表长度 >= 8 且数组容量 >= 64。如果链表长度 >= 8 但数组容量 < 64，会先触发扩容而不是树化。
+- 过程：将单向链表转为红黑树（TreeNode），利用红黑树的自平衡特性将查询时间复杂度从 O(n) 优化为 O(log n)。
+- 为什么阈值是 8？因为理想情况下随机 hash 值落在同一个桶的概率服从泊松分布，链表长度达到 8 的概率极低（约 0.0000006），所以 8 是一个安全阈值，防哈希攻击的同时避免过早树化。
+
+3. 退化（红黑树 → 链表）：
+- 触发条件：
+  a) 链表长度 <= 6 时（remove 操作删除了树中的节点），红黑树退化为链表。
+  b) 扩容时，红黑树会被拆分为两个链表（低位链和高位链），如果拆分后的链表长度 <= 6，则保持链表形式，不再维持红黑树结构。
+- 为什么阈值是 6 而不是 8？留 2 的缓冲（hysteresis），避免元素在 7-8 之间频繁插入删除导致树和链表反复转换，浪费性能。
+
+解析：- 扩容 vs 树化：当哈希冲突严重时，JVM 优先选择扩容（扩大数组容量让元素分布更分散），只有当容量已经 >= 64 时才选择树化。这个设计避免了小数组下不必要的数据结构转换。
+- ConcurrentHashMap 的异同：ConcurrentHashMap 同样有扩容、树化和退化的机制，但扩容是并发扩容的（多个线程各自负责一部分桶的迁移，通过 sizeCtl 变量协调）。树化条件相同，但树的节点构造中增加了 sync 同步。
+- 扩容的并发安全：HashMap 的扩容是线程不安全的（JDK 7 中可能出现环形链表死循环，JDK 8 修复了但仍有数据丢失风险），多线程环境应使用 ConcurrentHashMap。`,hints:[`扩容阈值 threshold = capacity × loadFactor，capacity 每次翻倍`,`树化必须同时满足链表长度 >= 8 且数组长度 >= 64`,`扩容时红黑树会拆分为低位和高位两个链表`,`退化阈值为 6，形成 2 的缓冲区间避免反复转换`],tags:[`Java集合`,`HashMap`,`ConcurrentHashMap`,`并发`],content_hash:`a2fed8d5d66d`,id:2125},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？`,content:`ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现有什么区别？`,answer:`答案：JDK 7 采用 Segment（分段锁） + HashEntry 数组实现，JDK 8 采用 Node 数组 + 链表/红黑树 + synchronized + CAS 实现。
+
+解析：JDK 7：将 HashMap 分成多个 Segment（继承 ReentrantLock），每个 Segment 维护一个 HashEntry 数组。并发度 = Segment 数量（默认 16），不同 Segment 可并发操作。写操作需要获取 Segment 的锁，读操作通过 volatile 保证可见性。
+JDK 8：摒弃了分段锁设计，改用 synchronized + CAS 来保证并发安全。锁粒度从 Segment 级别降为单个数组元素（桶）级别，显著提升了并发度。当链表长度 >= 8 且数组长度 >= 64 时，链表会树化为红黑树以降低查询时间复杂度。
+
+扩展延伸：JDK 8 的 put 流程：先检查 table 是否初始化 → CAS 插入空桶 → synchronized 锁定首节点进行链表/红黑树插入 → 检查是否需要树化。JDK 8 的 size() 方法通过 baseCount 和 CounterCell 数组统计元素个数，不再需要遍历所有 Segment。`,hints:[`JDK 7 的分段锁基于 ReentrantLock`,`JDK 8 改用 synchronized + CAS，锁粒度更细`,`JDK 8 引入了红黑树优化`],tags:[`Java`,`集合`,`并发`,`ConcurrentHashMap`],options:[],content_hash:`7e95a2f59b5c`,id:2131},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`CopyOnWriteArrayList 的原理和适用场景是什么？`,content:`CopyOnWriteArrayList 的原理和适用场景是什么？`,answer:`答案：CopyOnWriteArrayList 是基于写时复制（Copy-On-Write）策略的线程安全 List。所有写操作（add/set/remove）都会复制底层数组，修改后替换引用。读操作无锁且直接访问原数组。
+
+解析：核心原理：内部维护一个 volatile 的 Object[] array。add 方法先获取 ReentrantLock 锁，复制一个新数组（长度 +1），在新数组上写入新元素，最后将新数组赋值给 array 引用。读操作不加锁，直接读 array 引用指向的数组。
+优点：读操作完全无锁，适合读多写少的场景。迭代器遍历时不会抛出 ConcurrentModificationException（快照迭代）。
+缺点：写操作成本高（数组复制），内存占用双倍，数据最终一致（不能保证实时一致性）。
+
+扩展延伸：适合场景：白名单/黑名单、事件监听器列表、缓存配置等读多写少的场景。不适合场景：写频繁、对数据实时一致性要求高的场景。类似原理的还有 CopyOnWriteArraySet（内部委托 CopyOnWriteArrayList）。`,hints:[`写时复制策略：每次修改复制新数组`,`读操作无锁，直接读 volatile 数组引用`,`适合读多写少场景`],tags:[`Java`,`集合`,`并发`,`CopyOnWriteArrayList`],options:[],content_hash:`411288fa9bc4`,id:2132},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`BlockingQueue 的 put/take 与 offer/poll 有什么区别？`,content:`BlockingQueue 的 put/take 与 offer/poll 有什么区别？`,answer:`答案：put/take 是阻塞方法，队列满时 put 阻塞，队列空时 take 阻塞。offer/poll 是非阻塞方法，提供返回值标识操作结果，支持超时版本。
+
+解析：put(E e)：队列满时阻塞等待，直到有空间可用。不返回 boolean 值。
+take()：队列空时阻塞等待，直到有元素可取。返回取出的元素。
+offer(E e)：队列满时立即返回 false，不阻塞。不会抛出异常。
+offer(E e, long timeout, TimeUnit unit)：在指定时间内等待可用空间，超时返回 false。
+poll(long timeout, TimeUnit unit)：在指定时间内等待元素，超时返回 null。
+
+扩展延伸：BlockingQueue 还有 add/remove 方法——队列满时 add 抛出 IllegalStateException，队列空时 remove 抛出 NoSuchElementException。drainTo(Collection) 方法可将队列中所有可用元素一次性转移到集合中，减少批处理时的锁竞争。`,hints:[`put/take 是阻塞的，offer/poll 非阻塞`,`offer/poll 有带超时参数的重载版本`,`add/remove 失败直接抛异常`],tags:[`Java`,`集合`,`并发`,`BlockingQueue`],options:[],content_hash:`95223bc346b8`,id:2133},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`TreeMap 的底层红黑树原理是什么？`,content:`TreeMap 的底层红黑树原理是什么？`,answer:`答案：TreeMap 底层基于红黑树（Red-Black Tree）实现，是一种自平衡的二叉查找树。它保证元素的插入、删除和查找的时间复杂度均为 O(log n)。
+
+解析：红黑树的性质：1）每个节点是红色或黑色；2）根节点是黑色；3）叶子节点（NIL）是黑色；4）红色节点的子节点必须是黑色（不能有连续的红色节点）；5）从任一节点到其每个叶子的所有路径包含相同数量的黑色节点（黑高平衡）。
+TreeMap 使用 Comparator 或 Comparable 来决定元素顺序。插入和删除后通过左旋/右旋 + 颜色翻转来维持红黑树的平衡性质。
+
+扩展延伸：TreeMap 提供了丰富的导航方法：lowerKey()/higherKey()、floorKey()/ceilingKey()、firstKey()/lastKey()、subMap()/headMap()/tailMap()。TreeMap 不是线程安全的，可通过 Collections.synchronizedSortedMap 包装。与 HashMap 相比，TreeMap 在需要有序遍历时更有优势，但插入和查找速度较慢（O(log n) vs O(1)）。`,hints:[`红黑树是一种自平衡二叉查找树`,`5 条关键性质保证了 O(log n) 时间复杂度`,`导航方法（lowerKey/higherKey）是 TreeMap 的特色`],tags:[`Java`,`集合`,`TreeMap`,`红黑树`],options:[],content_hash:`1bf635fb32f5`,id:2134},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Collections 工具类有哪些常用方法？`,content:`Collections 工具类有哪些常用方法？`,answer:`答案：Collections 工具类提供排序、查找、同步包装、不可变集合创建、线程安全包装等静态方法。
+
+解析：排序与操作：sort(List)、reverse(List)、shuffle(List)、swap(List, i, j)、rotate(List, distance)、fill(List, T)
+查找与极值：binarySearch(List, key)、max(Collection)、min(Collection)、frequency(Collection, Object)、indexOfSubList/s LastIndexOfSubList
+同步包装：synchronizedCollection/synchronizedList/synchronizedMap/synchronizedSet/synchronizedSortedMap/synchronizedSortedSet——返回由用户提供的集合包装的线程安全视图
+不可变包装：unmodifiableList/unmodifiableMap/unmodifiableSet/unmodifiableCollection——修改操作会抛出 UnsupportedOperationException
+创建空集合/单元素集合：emptyList/emptyMap/emptySet、singletonList/singletonMap/singleton
+
+扩展延伸：Collections.synchronizedList 包装的 List 在迭代时仍需在 synchronized 块中手动同步。不可变集合在 Java 9+ 中多使用 List.of()/Set.of()/Map.of() 等工厂方法替代。emptyList() 返回的是 EMPTY_LIST 常量，不会分配新对象。`,hints:[`同步包装方法返回线程安全视图`,`unmodifiable 系列封装不可变视图`,`Java 9+ 推荐使用 of() 工厂方法替代部分 Collections 方法`],tags:[`Java`,`集合`,`Collections`],options:[],content_hash:`a05acbb24e65`,id:2135},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`LinkedHashMap 实现 LRU 缓存的原理`,content:`请解释如何利用 LinkedHashMap 实现一个 LRU（最近最少使用）缓存。LinkedHashMap 的哪些特性支持这个功能？`,answer:`答案：LinkedHashMap 通过 accessOrder=true 构造参数 + 重写 removeEldestEntry() 实现 LRU 缓存。
+
+解析：LinkedHashMap 默认 accessOrder=false（按插入顺序迭代），设为 true 后每次 get 或 put 已存在的 key 会将对应 Entry 移到链表尾部（访问顺序）。removeEldestEntry(Map.Entry) 方法在每次 put 后调用，返回 true 时移除链表头部的 Entry（最久未访问）。典型实现是重写该方法并限制缓存大小：protected boolean removeEldestEntry(Map.Entry eldest) { return size() > MAX_ENTRIES; }。
+
+扩展延伸：LinkedHashMap 的 LRU 实现不是线程安全的——并发场景下需要 Collections.synchronizedMap 包装或使用 ConcurrentHashMap 配合 ConcurrentLinkedDeque 实现。Guava Cache（Caffeine）提供了更强大的 LRU/LFU/ARC 缓存实现，支持过期时间、自动加载、最大权重等特性。Caffeine 使用 Window TinyLFU 淘汰算法，性能优于 LinkedHashMap 的 LRU。`,hints:[`accessOrder 参数决定插入顺序还是访问顺序`,`removeEldestEntry 的触发时机`],tags:[`Java`,`集合`,`LinkedHashMap`,`LRU`,`缓存`],content_hash:`27b24a1c9007`,id:2136},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`ConcurrentLinkedQueue 的实现原理`,content:`请解释 ConcurrentLinkedQueue 的线程安全实现原理。它是如何在不加锁的情况下保证线程安全的？`,answer:`答案：ConcurrentLinkedQueue 基于 Michael-Scott 非阻塞链表算法，通过 CAS 原子操作实现无锁并发。
+
+解析：核心设计——head 和 tail 节点使用 volatile 修饰保证可见性。入队操作：创建新节点，使用 CAS 将当前尾节点的 next 从 null 更新为新节点。如果 CAS 成功但其他线程同时插入，当前线程会帮助推进 tail 指针。出队操作：使用 CAS 将 head 指向下一个节点（如果 head 节点被删除则 CAS 更新 head）。size() 方法没有计数器，需要遍历整个链表（O(n)），因为并发环境下维护精确计数需要额外的同步。
+
+扩展延伸：ConcurrentLinkedQueue 的 size() 方法在遍历时可能因并发修改而不准确（弱一致性）。与 BlockingQueue 的区别——ConcurrentLinkedQueue 是非阻塞队列，不支持阻塞操作（take/put）。适合高并发但不需要阻塞等待的场景。迭代器是弱一致性的——遍历时看到的是某个时间点的快照，不会抛 ConcurrentModificationException。`,hints:[`Michael-Scott 算法是并发无锁队列的经典实现`,`为什么 ConcurrentLinkedQueue 的 size() 是 O(n)`],tags:[`Java`,`集合`,`并发`,`ConcurrentLinkedQueue`,`无锁`],content_hash:`f87bb69ae1f3`,id:2137},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`WeakHashMap 的用途与原理`,content:`请介绍 WeakHashMap 的原理和典型应用场景。它和普通 HashMap 有什么本质区别？`,answer:`答案：WeakHashMap 的 key 使用 WeakReference，当 key 没有外部强引用时会被 GC 自动回收，对应的 Entry 也会从 Map 中移除。
+
+解析：WeakHashMap 的 Entry 继承 WeakReference，key 被包装为弱引用。当 key 对象不再有外部强引用时，GC 会回收 key（弱引用特性）。WeakHashMap 在每次操作（get/put/size 等）时通过 expungeStaleEntries() 方法清理已被 GC 回收 key 的 Entry。典型应用场景：类加载器元数据缓存——当类加载器被卸载时，与之关联的缓存数据自动清除，防止类加载器泄漏。
+
+扩展延伸：与 HashMap 的本质区别——1）引用类型：WeakHashMap key 是弱引用；HashMap key 是强引用。2）自动清理：WeakHashMap 自动清理 key 被回收的 Entry；HashMap 永远不会自动清理。3）使用场景：WeakHashMap 适合缓存元数据和监听器注册；HashMap 适合常规键值存储。注意：value 是强引用——如果 value 引用了 key 本身，会导致 key 无法被回收（需要 WeakReference value 或手动 null）。`,hints:[`WeakHashMap 自动清理 key 不再被外部引用的 Entry`,`Tomcat 的类加载器缓存为什么使用 WeakHashMap`],tags:[`Java`,`集合`,`WeakHashMap`,`弱引用`],content_hash:`455f25f7b60d`,id:2138},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`IdentityHashMap 的原理与用途`,content:`请介绍 IdentityHashMap 和普通 HashMap 的区别。IdentityHashMap 的应用场景是什么？`,answer:`答案：IdentityHashMap 使用引用相等性（==）而非 equals() 来判断 key 是否相同，适合需要区分对象引用的场景。
+
+解析：HashMap 使用 hashCode() 和 equals() 判断 key 是否相等。IdentityHashMap 使用 System.identityHashCode() 和 == 运算符——只有两个引用指向同一个对象时才算相等。底层实现：IdentityHashMap 不使用哈希表 + 链表/红黑树结构，而是使用线性探测法的开放地址法（Object[] 数组交替存储 key 和 value）。扩容时以 2 的幂为基数（不是 HashMap 的 2 次幂），使用 -1 标记已删除的槽位。
+
+扩展延伸：典型应用场景：1）序列化/深拷贝框架（如 Spring 的深拷贝工具）——避免循环引用。2）调试和监控工具——跟踪对象引用关系。3）代理管理——区分 JDK 动态代理的不同代理实例。4）JVM 内部使用——如 ThreadLocalMap 判断线程局部变量。性能：IdentityHashMap 使用 == 和 identityHashCode，比 equals 和 hashCode 快得多。`,hints:[`IdentityHashMap 用 == 比较 key，用 System.identityHashCode() 计算哈希`,`序列化框架为什么用 IdentityHashMap 来跟踪已处理的对象`],tags:[`Java`,`集合`,`IdentityHashMap`],content_hash:`117726d91006`,id:2139},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`EnumSet 和 EnumMap 的原理与优势`,content:`请介绍 EnumSet 和 EnumMap 的实现原理和性能优势。它们和普通 Set/Map 有何不同？`,answer:`答案：EnumSet 和 EnumMap 是专为枚举类型优化的高性能集合实现，底层使用位向量（EnumSet）和数组（EnumMap）。
+
+解析：EnumSet 使用位向量（bit vector / RegularEnumSet 使用 long 的每个 bit 表示一个枚举常量，JumboEnumSet 使用 long[]），操作直接通过位运算完成，极快且极省内存。EnumMap 底层使用 Object[] 数组（长度等于枚举常量个数），key 的 ordinal() 直接作为数组索引——所以 get/put 都是 O(1) 数组访问，没有哈希计算和冲突处理。两者都按枚举常量的声明顺序迭代。
+
+扩展延伸：性能对比——EnumSet 的 contains() 是 O(1) 位运算（远快于 HashSet 的 O(1) 哈希计算）。EnumMap 的 get/put 是直接数组访问（比 HashMap 快 2-3 倍）。两者都不允许 null key（EnumMap 允许 null value）。EnumSet 不是线程安全的，应该在单线程或同步包装下使用。工厂方法——EnumSet.of()、EnumSet.allOf()、EnumSet.range()、EnumSet.complementOf() 提供了便捷的构造方式。`,hints:[`EnumSet 用位向量存储，适合位运算（如 range、complementOf）`,`EnumMap 用 ordinal() 作为数组索引，是性能最高的 Map 实现`],tags:[`Java`,`集合`,`EnumSet`,`EnumMap`,`性能`],content_hash:`7e3b1aa60cbc`,id:2140},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`NavigableSet 和 TreeSet 的倒序遍历`,content:`请介绍 NavigableSet 接口和它的实现 TreeSet。如何高效地倒序遍历 TreeSet？NavigableSet 有哪些常用方法？`,answer:`答案：NavigableSet 是 JDK 6 扩展的 SortedSet 子接口，提供了导航方法（ceiling、floor、higher、lower、descendingIterator 等），TreeSet 是其标准实现。倒序遍历通过 descendingIterator() 或 descendingSet() 实现。
+
+解析：NavigableSet 的核心方法——1）定向查找：ceiling(e)（>= 的最小元素）、floor(e)（<= 的最大元素）、higher(e)（> 的最小元素）、lower(e)（< 的最大元素）。2）子集视图：subSet(from, fromInclusive, to, toInclusive)、headSet(to, toInclusive)、tailSet(from, fromInclusive)。3）倒序视图：descendingSet() 返回逆序视图（对视图的操作映射到原集合），descendingIterator() 返回逆序迭代器。
+
+扩展延伸：TreeSet 基于 TreeMap（红黑树），操作时间复杂度 O(log n)。与 HashSet（O(1)）和 LinkedHashSet（O(1)）不同，TreeSet 维护了元素的有序性（按 Comparator 或自然排序）。倒序遍历 TreeSet 的性能——descendingIterator() 内部从红黑树的最右节点开始中序遍历（右-根-左），时间复杂度 O(n)、空间 O(log n)（递归栈深度）。注意：TreeSet 的 add/remove/contains 都是 O(log n)，如果频繁查找，要评估是否值得维护有序性的成本。`,hints:[`NavigableSet 是 SortedSet 的子接口，增加了导航方法`,`descendingSet() 返回的是视图，修改操作会反映到原集合`],tags:[`Java`,`集合`,`NavigableSet`,`TreeSet`,`红黑树`],content_hash:`727d45a8f58b`,id:2141},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayDeque 和 LinkedList 的区别`,content:`请从数据结构、性能和使用场景三个方面对比 ArrayDeque 和 LinkedList。作为队列或双端队列使用时，应该选哪个？`,answer:`答案：ArrayDeque 基于循环数组（Circular Array），LinkedList 基于双向链表（Doubly Linked List）。作为队列/双端队列，ArrayDeque 通常比 LinkedList 性能更好。
+
+解析：ArrayDeque——底层是 Object[] 循环数组，head 和 tail 指针指示有效范围。扩容时翻倍（double capacity）。特性：1）随机访问快速（但 Deque 不常用随机访问）。2）内存紧凑——只有数据，没有节点对象开销。3）头尾插入删除 O(1) 均摊。4）不支持 null 元素。LinkedList——底层是双向链表节点（Node<E> 有 prev/next/item 三个字段）。特性：1）头尾插入删除 O(1)。2）中间插入删除 O(n)（需要遍历到位置）。3）支持 null 元素。4）实现了 List 和 Deque 两个接口。5）每个元素额外占用 24+ 字节的节点对象（对象头 + 两个引用 + item）。
+
+扩展延伸：实际性能对比——1）队列操作（offer/poll/peek）：ArrayDeque 比 LinkedList 快 2-3 倍（无节点分配开销、缓存友好）。2）内存占用：100 万个元素，ArrayDeque ≈ 8MB（仅数据），LinkedList ≈ 32MB（数据 + 节点对象）。3）作为栈：ArrayDeque 比 Stack 快，也比 LinkedList 快。Java 文档明确推荐："当需要 Deque 时，ArrayDeque 通常优于 LinkedList"。使用建议：需要队列/双端队列时用 ArrayDeque；需要中间插入删除或需要 List 功能时用 LinkedList。`,hints:[`ArrayDeque 是循环数组，内存连续、缓存友好`,`LinkedList 每个元素都有节点对象开销（对象头 + 指针）`],tags:[`Java`,`集合`,`ArrayDeque`,`LinkedList`,`Deque`],content_hash:`755eb52d83cf`,id:2142},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`为什么应该用 Deque 替代 Stack`,content:`Java 官方文档推荐使用 Deque 替代 Stack，请解释原因。Stack 有什么问题？Deque 作为栈使用时有哪些优势？`,answer:`答案：Stack 是 JDK 1.0 遗留类，继承自 Vector（线程安全但效率低），官方推荐使用 ArrayDeque 替代。Deque 接口提供了完整的栈操作（push/pop/peek），性能更好且设计更合理。
+
+解析：Stack 的问题——1）继承 Vector：Stack 是类继承（is-a 关系）而非接口实现，继承了 Vector 的所有方法（包括不入栈的 add/get/remove 等），破坏了栈的封装性。用户可以调用 stack.add(0, elem) 在栈底插入元素，破坏 LIFO 语义。2）线程安全的代价：Vector 方法全部 synchronized，单线程场景下产生不必要的同步开销。3）遗留设计：基于动态数组（容量不够翻倍），扩容时全量复制。Deque 的优势——1）接口设计（Deque<E>）：定义清晰的 LIFO 操作（push 在头部插入、pop 从头部移除、peek 查看头部）。2）多种实现选择：ArrayDeque（高性能栈实现，默认容量 16 动态扩展）、LinkedList（也实现 Deque）。3）可以禁用不必要的操作：通过 Collections.asLifoQueue(deque) 获取严格 LIFO 视图。
+
+扩展延伸：性能对比——1000 万次 push/pop，ArrayDeque 比 Stack 快约 2-3 倍（无锁竞争、内存局部性更好）。Stack 的遗留影响：JVM 内部的"栈"（操作数栈、本地变量表）与 java.util.Stack 类无关。JVM 的 Stack 帧使用虚拟机的栈结构，不是 java.util.Stack。Deque 在 JDK 6 引入，ArrayDeque 从 JDK 6 开始可用。`,hints:[`Stack 继承 Vector，可以调用非栈方法破坏 LIFO 结构`,`ArrayDeque 作为栈使用时没有同步开销，性能更好`],tags:[`Java`,`集合`,`Stack`,`Deque`,`ArrayDeque`],content_hash:`2a02f865e9e5`,id:2143},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Collections 工具类的常用算法方法`,content:`请介绍 java.util.Collections 工具类中常用的算法方法（rotate、shuffle、fill、reverse、swap 等）。它们分别有什么作用？`,answer:`答案：Collections 提供了大量操作集合的静态算法方法，包括旋转（rotate）、打乱（shuffle）、填充（fill）、反转（reverse）、交换（swap）等，它们都在 O(n) 时间内完成。
+
+解析：核心算法方法——1）reverse(List)：反转列表元素顺序。2）shuffle(List) / shuffle(List, Random)：随机打乱列表，Fisher-Yates 算法，默认使用 SecureRandom。3）fill(List, Object)：用指定值替换列表的所有元素。4）rotate(List, distance)：旋转列表（将 distance 位置的元素移到前面）。正数右旋，负数左旋。如 rotate([1,2,3,4], 1) → [4,1,2,3]。5）swap(List, i, j)：交换列表中 i 和 j 位置的元素。6）replaceAll(List, oldVal, newVal)：替换所有匹配的元素。
+
+扩展延伸：其他重要方法——排序和搜索：sort（归并排序/Timsort）、binarySearch（二分查找，要求有序列表）、indexOfSublist/lastIndexOfSublist（子列表搜索）。不可变集合：unmodifiableList/unmodifiableSet/unmodifiableMap（只读视图）。线程安全包装：synchronizedList/synchronizedSet/synchronizedMap。类型安全包装：checkedList/checkedSet/checkedMap。频率方法：frequency(Collection, Object) 统计出现次数，disjoint(Collection, Collection) 判断是否不相交。注意：shuffle 中使用的 Random 建议显式提供 seed（如 new Random(seed)）以便可复现的测试场景。`,hints:[`Collections.rotate 基于三次反转算法实现`,`Collections.shuffle 使用 Fisher-Yates 算法`],tags:[`Java`,`集合`,`Collections`,`工具类`,`算法`],content_hash:`572d09cf5258`,id:2144},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Collections.checkedList 类型安全视图`,content:`请介绍 Collections.checkedList/checkedSet/checkedMap 的用途和工作原理。它们解决了什么问题？与普通集合有什么区别？`,answer:`答案：checkedList/checkedSet/checkedMap 提供类型安全（Type Safety）视图，在运行时检查插入元素的类型，防止因为 unchecked 警告绕过的类型安全问题。
+
+解析：工作原理——Java 泛型通过类型擦除实现，运行时集合不保存泛型类型信息。通过 unchecked 操作（如原始类型 raw type 赋值）可以在泛型集合中插入错误类型元素（运行时不报错，取出时报 ClassCastException）。checked 包装在运行时保存类型信息（Class<E>），add/put 等操作时对元素进行动态类型检查，插入时立即抛出 ClassCastException。用法：List<String> safeList = Collections.checkedList(new ArrayList<>(), String.class);
+
+扩展延伸：典型场景——1）遗留代码整合：oldCode.getList() 返回 raw type List，newCode 期望 List<String>，checked 包装可以立即发现遗留代码的错误插入。2）序列化反序列化安全检查：反序列化时可能插入任意类型的对象，checked 包装可以防御。3）第三方库接口：当需要确保传递给第三方库的集合不被插入错误类型时。性能影响：checked 包装引入了动态类型检查开销（非常小，仅每次修改时 instanceof 检查）。注意：checked 视图是只读类型检查——通过原始集合直接添加仍然可以绕过（所以要在构造后只保留 checked 引用）。类似地，也可以使用 Collections.checkedQueue、checkedSortedSet、checkedNavigableSet 等。`,hints:[`泛型擦除后运行时无类型信息，checked 包装在运行时添加类型检查`,`checked 包装在插入时立即抛出错误，而不是在取出时才报错`],tags:[`Java`,`集合`,`类型安全`,`泛型`,`Collections`],content_hash:`5e3ac74ccbdd`,id:2145},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ConcurrentHashMap size 方法演进`,content:`请解释 ConcurrentHashMap 的 size() 方法在 JDK 7 和 JDK 8 中的实现差异。为什么 size() 在并发环境下未必精确？`,answer:`答案：JDK 7 的 size() 先尝试不加锁地累加每个 Segment 的 count（最多重试 3 次），如果两次结果不一致则加锁累加。JDK 8 使用 baseCount（CAS 更新）和 CounterCell 数组（冲突时扩容）实现分段计数。sumCount() 累加 baseCount + 所有 CounterCell 的值。
+
+size() 不精确的原因：在多线程并发环境下，调用 size() 的过程中仍然有线程在 put/remove，size() 返回的是"近似值"（弱一致性）。这在并发集合中是预期行为。
+
+扩展延伸：JDK 8 的 size() 映射到 mappingCount()（返回 long，JDK 8 新增）。对于精确监控场景（如线程池队列大小），使用 LinkedBlockingQueue.size()（加锁的精确值）更合适。LongAdder 采用了相同的分段计数思想。`,hints:[`JDK 7 使用 Segment count，JDK 8 使用 baseCount + CounterCell`,`size() 返回的是弱一致性的近似值`],tags:[`Java`,`ConcurrentHashMap`,`size`,`计数`],content_hash:`e7be3cd4897c`,id:2146},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`HashMap resize 扩容机制`,content:`请详细解释 HashMap 的 resize() 扩容机制的完整流程。JDK 8 中扩容后链表元素的分布规律是什么？为什么扩容后元素要么在原位置要么在原位置+旧容量的位置？`,answer:`答案：resize() 在元素数量超过阈值（容量 × 负载因子）时触发。
+
+JDK 8 扩容流程：
+1. 创建容量为原容量 2 倍的新数组
+2. 遍历每个桶位（数组元素）
+3. 如果桶位是单个节点，直接重新计算位置放入新数组
+4. 如果桶位是红黑树，执行 split() 方法拆分树
+5. 如果桶位是链表，将链表拆分为 lo 链表（低位，原位）和 hi 链表（高位，原位+旧容量）
+
+扩容后元素分布规律：key 在新数组中的位置 = hash & (newCap-1)。设旧容量为 16（二进制 10000），新容量为 32（100000）。hash & (32-1) 只需要看 hash 的第 5 位：第 5 位 = 0 → 位置不变；第 5 位 = 1 → 位置 = 原位置 + 16。
+
+JDK 8 使用尾插法（保持元素顺序）避免了 JDK 7 头插法在多线程下的死循环问题。
+
+扩展延伸：负载因子默认 0.75（空间和时间的权衡）。扩容是 HashMap 中最耗性能的操作（数组拷贝 + 重哈希），预估数据量时指定初始容量可以避免多次扩容。最大容量为 1 << 30（2^30）。`,hints:[`扩容后元素要么在原位置，要么在原位置+旧容量`,`JDK 8 使用尾插法避免死循环`],tags:[`Java`,`HashMap`,`resize`,`扩容`],content_hash:`450c2b77e929`,id:2147},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`PriorityQueue 堆实现`,content:`请解释 PriorityQueue 的底层实现原理。它是最大堆还是最小堆？插入和删除操作的时间复杂度是多少？`,answer:`答案：PriorityQueue 底层使用 Object[] 数组实现最小二叉堆（小顶堆——堆顶始终是最小元素）。
+
+实现细节：
+- 使用数组存储完全二叉树，节点 i 的左子节点为 2i+1，右子节点为 2i+2
+- 堆属性：每个父节点的值 <= 子节点的值
+
+插入（offer/add）：O(log n)
+1. 将新元素添加到数组末尾
+2. 执行上滤（siftUp）：与父节点比较，如果小于父节点则交换，重复直到满足堆属性
+
+删除堆顶（poll）：O(log n)
+1. 取出堆顶元素
+2. 将最后一个元素移到堆顶
+3. 执行下滤（siftDown）：与较小的子节点比较，如果大于子节点则交换，重复直到满足堆属性
+
+查看堆顶（peek）：O(1)
+
+扩展延伸：PriorityQueue 通过 Comparator 或元素的自然顺序（Comparable）决定优先级。线程安全的替代：PriorityBlockingQueue。PriorityQueue 不支持 null 和非 Comparable 元素。迭代器不保证顺序（只能通过 poll() 获取有序元素）。`,hints:[`PriorityQueue 基于最小堆实现，堆顶始终是最小元素`,`插入和删除都是 O(log n)，查看堆顶 O(1)`],tags:[`Java`,`PriorityQueue`,`堆`,`数据结构`],content_hash:`84695ad153f1`,id:2148},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`HashSet 底层实现`,content:`请解释 HashSet 的底层实现原理。HashSet 如何保证元素不重复？LinkedHashSet 和 TreeSet 与其有什么不同？`,answer:`答案：HashSet 底层使用 HashMap 实现。
+
+实现原理：
+- HashSet 内部维护一个 HashMap<E, Object> map
+- 添加元素时调用 map.put(e, PRESENT)，PRESENT 是一个虚拟的 Object 常量
+- HashMap 的 key 保证唯一性（通过 hashCode() 和 equals()）
+- 元素迭代顺序不保证
+
+LinkedHashSet：继承 HashSet，底层使用 LinkedHashMap。维护了双向链表记录插入顺序，迭代顺序 === 插入顺序。
+
+TreeSet：底层使用 TreeMap（红黑树）。元素按自然顺序或 Comparator 顺序排序。操作 O(log n)，而 HashSet O(1)。
+
+扩展延伸：HashSet 的 add() 返回 boolean——如果元素已存在返回 false。HashSet 允许 null（最多一个）。数组容量等 HashMap 参数可以通过 HashSet 构造方法间接设置。性能关键：需要良好的 hashCode() 分布。`,hints:[`HashSet 底层是 HashMap（元素作为 key）`,`LinkedHashSet 保持插入顺序，TreeSet 保持排序顺序`],tags:[`Java`,`HashSet`,`Set`,`集合`],content_hash:`67602cc6ae67`,id:2149},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`NavigableMap 接口`,content:`请介绍 NavigableMap 和 TreeMap 提供的导航方法（lowerKey/floorKey/ceilingKey/higherKey、headMap/subMap/tailMap）。这些方法在实际开发中有哪些用途？`,answer:`答案：NavigableMap 扩展了 SortedMap，提供了查找匹配 key 的导航方法。TreeMap 实现了 NavigableMap。
+
+导航方法：
+- lowerKey(key)：严格小于给定 key 的最大 key
+- floorKey(key)：小于等于给定 key 的最大 key
+- ceilingKey(key)：大于等于给定 key 的最小 key
+- higherKey(key)：严格大于给定 key 的最小 key
+
+范围视图：
+- headMap(toKey, inclusive)：小于 toKey 的子映射
+- subMap(fromKey, fromInclusive, toKey, toInclusive)：中间范围的子映射
+- tailMap(fromKey, inclusive)：大于等于 fromKey 的子映射
+
+实际用途：
+1. 时间序列数据——查询某个时间点之前/之后的数据
+2. 范围查询——按分数段查找学生、按价格区间查找商品
+3. 最近邻查找——查找与输入值最接近的元素
+4. 分页查询——从指定 key 开始获取后续 N 条记录
+5. 区间统计——统计某个范围内的数据量
+
+扩展延伸：NavigableSet 是 Set 对应的版本（TreeSet 实现）。descendingMap() 返回逆序视图。descendingKeySet() 返回逆序 key 集。ConcurrentSkipListMap 是 NavigableMap 的并发实现。`,hints:[`lower/floor/ceiling/higher 四对方法用于查找临近 key`,`范围视图包括 headMap/subMap/tailMap`],tags:[`Java`,`NavigableMap`,`TreeMap`,`导航`],content_hash:`efd59f5cf64c`,id:2150},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`ConcurrentLinkedQueue 的无锁实现`,content:`请介绍 ConcurrentLinkedQueue 的无锁（Lock-Free）实现原理。它是如何用 CAS 操作实现线程安全队列的？ABA 问题是如何解决的？`,answer:`答案：ConcurrentLinkedQueue 是基于 Michael-Scott 队列算法的无界无锁并发队列，使用 CAS（Compare-And-Swap）操作而非锁实现线程安全。
+
+核心数据结构：
+- Node：每个节点持有 item 和 next 指针（volatile 修饰）
+- head：指向队列头节点（延迟删除——head 可能指向已出队的节点）
+- tail：指向队列尾节点（延迟更新——tail 不一定指向真正的尾节点）
+
+入队（offer）逻辑：
+1. 创建新节点
+2. 循环尝试：找到尾节点（从 tail 开始往后找真正的尾节点）
+3. CAS(p.next, null, newNode) ——尝试将新节点链接到尾节点之后
+4. 如果 CAS 成功，再 CAS(tail, p, newNode) 更新 tail（此步可能被其他线程完成）
+5. 如果 CAS 失败，重新定位尾节点再试
+
+出队（poll）逻辑：
+1. 循环尝试：从 head 找到第一个 item 不为 null 的节点
+2. CAS(item, null, item) ——将 item 置为 null 标记出队
+3. 如果成功，更新 head 并返回 item
+4. 如果失败（其他线程抢了），重新定位 head 再试
+
+延迟更新策略：
+- tail 不总是指向真正的尾节点（减少 CAS 竞争）
+- 当 tail.next 不为 null 时，说明 tail 落后了，使用「哨兵节点」方式定位真正的尾节点
+- 当 tail.next 为 null 且 tail 落后超过一个节点时，CAS 更新 tail
+
+ABA 问题与解决：
+- ABA 问题：一个值从 A 变成 B 再变回 A，CAS 误以为没有变化
+- ConcurrentLinkedQueue 的解决：Node 的 next 指针是单向的，不影响数据一致性
+- 内部使用 AtomicReferenceFieldUpdater 操作 Node 的 volatile 字段
+- 部分 JVM 实现使用 AtomicMarkableReference 处理特定场景
+
+性能特点：
+- 无锁 + CAS 操作在低竞争下性能很好
+- 高竞争下 CAS 的循环重试会增加 CPU 消耗（自旋）
+- 无限制增长（无界），不适合生产者速度 > 消费者速度的场景
+
+扩展延伸：ConcurrentLinkedQueue 适合多生产者-多消费者场景，但无界性质限制了它在生产环境的使用。LinkedBlockingQueue 提供有界阻塞队列，但使用锁。最佳实践：如果能接受有界，用 LinkedBlockingQueue 或 ArrayBlockingQueue；如果需要无锁且无界，用 ConcurrentLinkedQueue。`,hints:[`ConcurrentLinkedQueue = Michael-Scott 队列算法，CAS 实现线程安全（无锁）`,`延迟更新策略：tail 不总指向真正尾节点（减少 CAS 竞争），出队更新 head`,`无锁：低竞争性能好；高竞争 CAS 自旋消耗 CPU；无界不适合生产者快于消费者的场景`],tags:[`Java`,`集合`,`ConcurrentLinkedQueue`,`CAS`],content_hash:`632f39a593ba`,id:2156},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`LinkedHashMap 与 LRU 缓存`,content:`请介绍 LinkedHashMap 的实现原理。如何利用 LinkedHashMap 实现一个 LRU（Least Recently Used）缓存？accessOrder 参数的作用是什么？`,answer:`答案：LinkedHashMap 继承 HashMap，在 HashMap 的基础上维护了双向链表以记录元素顺序。
+
+核心原理：
+- 数据结构：HashMap（数组+链表/红黑树）+ 双向链表（before/after 指针维护顺序）
+- 两种模式：
+  1. insertionOrder（默认）：按插入顺序排列（accessOrder=false）
+  2. accessOrder：按访问顺序排列（最近访问的元素移到末尾，accessOrder=true）
+- 双向链表不增加额外存储开销（before/after 指针复用 Node 的成员变量）
+
+插入顺序 vs 访问顺序：
+// 插入顺序：a → b → c → d（按插入顺序）
+// 访问顺序（accessOrder=true）：
+// 初始：a → b → c → d
+// 访问 b 后：a → c → d → b（b 移到末尾）
+
+LRU 缓存的实现：
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
+    private final int maxCapacity;
+
+    public LRUCache(int maxCapacity) {
+        super(maxCapacity, 0.75f, true);  // accessOrder=true
+        this.maxCapacity = maxCapacity;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > maxCapacity;  // 超过容量时删除最老的元素（链表头部）
+    }
+}
+
+removeEldestEntry 的调用时机：
+- 每次 put/putAll 后调用
+- 返回 true 表示删除最老的元素（链表头节点）
+- 默认返回 false（不自动删除）
+
+性能特点：
+- get 操作：O(1)（HashMap 的 get + 如果 accessOrder 则移动节点到末尾）
+- put 操作：O(1)（HashMap 的 put + 如果需要删除最老节点）
+- 移动节点到末尾：O(1)（双向链表的断开和重连）
+
+与普通 HashMap 的区别：
+- HashMap：不保证顺序
+- LinkedHashMap：保证遍历顺序（插入顺序或访问顺序）
+- TreeMap：按自然顺序或 Comparator 排序
+
+扩展延伸：removeEldestEntry 可以实现其他策略——按时间过期（检查 eldest 的时间戳）、按条目数量限制、按总大小限制（LRU 的变体）。LinkedHashMap 不是线程安全的，LRU 缓存在高并发下需要加锁或使用 ConcurrentLinkedHashMap（Guava Cache / Caffeine 内部使用类似的算法）。`,hints:[`LinkedHashMap = HashMap + 双向链表（before/after 指针复用 Node）`,`两种模式：insertionOrder（插入顺序，默认）和 accessOrder（访问顺序，用于 LRU）`,`LRU 缓存：accessOrder=true + 重写 removeEldestEntry(size() > maxCapacity) 自动删除最老元素`],tags:[`Java`,`集合`,`LinkedHashMap`,`LRU`],content_hash:`fbd9e761accd`,id:2157},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`TreeMap 的红黑树实现`,content:`请介绍 TreeMap 的实现原理。红黑树的五条性质是什么？TreeMap 如何保证 O(log n) 的查找、插入和删除性能？`,answer:`答案：TreeMap 基于红黑树（Red-Black Tree）实现，是一个有序的键值对集合，所有操作的时间复杂度为 O(log n)。
+
+红黑树的五条性质：
+1. 每个节点是红色或黑色
+2. 根节点是黑色
+3. 叶子节点（NIL）是黑色
+4. 红色节点的子节点必须是黑色（不能有两个连续的红色节点）
+5. 任意节点到其所有叶子节点的路径包含相同数量的黑色节点（黑高相等）
+
+这些性质保证：最长路径不超过最短路径的 2 倍 → 树的高度 ≤ 2log₂(n+1) → O(log n) 操作。
+
+TreeMap 的核心实现：
+- Entry<K,V>：包含 key、value、left、right、parent、color
+- Comparator：用户自定义排序规则（或 key 的自然顺序）
+- 查找：标准的二叉搜索树查找（比较 key 大小，左小右大）
+
+插入逻辑（put）：
+1. 标准 BST 插入：从根开始，比较 key 大小，找到插入位置
+2. 插入节点默认为红色（不破坏黑高性质）
+3. 修复红黑树性质：
+   - 如果父节点是黑色 → 插入完成（不破坏任何性质）
+   - 如果父节点是红色 → 需要修复（出现连续红色）
+   - 修复方式：旋转 + 颜色翻转
+   - 三种 case：叔叔节点是红色 → 上移红色/叔叔节点是黑色且当前节点在外侧 → 单旋/在内侧 → 双旋
+
+删除逻辑（remove）：
+1. 标准 BST 删除（找到后继节点替换）
+2. 如果删除的节点是黑色 → 破坏黑高性质，需要修复
+3. 修复方式：旋转 + 颜色调整（情况比插入复杂）
+
+NavigableMap 接口提供的功能：
+- lowerKey/floorKey/ceilingKey/higherKey：基于比较的导航
+- subMap/headMap/tailMap：范围视图
+- firstKey/lastKey/pollFirstEntry/pollLastEntry
+
+性能特点：
+- TreeMap 的操作在有序数据上需要 O(log n) 比较
+- HashMap 是 O(1)，但在需要有序遍历时，TreeMap 是唯一选择
+- 内存比 HashMap 大（每个节点额外存储 left/right/parent/color 指针 + boolean）
+
+扩展延伸：TreeMap 适合需要有序性的场景（范围查询、按顺序遍历、导航操作）。LinkedHashMap 维护插入顺序而非自然顺序。ConcurrentSkipListMap 是 TreeMap 的并发替代方案（基于跳表实现，O(log n) 的并发安全操作）。TreeMap 的 Comparator 实现必须与 equals 一致，否则可能违反 Map 接口的约定。`,hints:[`TreeMap = 红黑树实现的有序 Map，所有操作 O(log n)`,`红黑树五性质：根黑+叶黑+红不连+黑高相等（保证最长路径≤最短路径的2倍）`,`插入修复：BST 插入（红节点）→ 旋转+颜色翻转（父红→叔红上移/叔黑单旋双旋）`],tags:[`Java`,`集合`,`TreeMap`,`红黑树`],content_hash:`efc6dbff7868`,id:2158},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`Deque 与 ArrayDeque 设计`,content:`请介绍 Java 中的 Deque（双端队列）接口及其核心实现 ArrayDeque。ArrayDeque 的循环数组设计是如何实现高效的头部和尾部操作的？`,answer:`答案：Deque（Double Ended Queue）支持在队列的头部和尾部进行插入和删除操作。ArrayDeque 使用循环数组实现。
+
+Deque 接口的方法：
+- 头部操作：addFirst/offerFirst/removeFirst/pollFirst/getFirst/peekFirst
+- 尾部操作：addLast/offerLast/removeLast/pollLast/getLast/peekLast
+- 栈操作：push（=addFirst）/pop（=removeFirst）/peek（=peekFirst）
+- 双端迭代器：descendingIterator（从尾部向前遍历）
+
+ArrayDeque 的循环数组设计：
+- 内部维护 Object[] elements（数组）和 head/tail 指针
+- head：队列头元素在数组中的索引
+- tail：队列尾元素的下一个插入位置（tail == head 时表示队列为空或满）
+- 容量始终为 2 的幂（方便位运算取模）
+
+循环操作的核心：
+- 头部入队（addFirst）：head = (head - 1) & (elements.length - 1)
+  - 减 1 后与容量掩码位与，实现循环回绕
+  - 示例：容量 16，head=0→ addFirst → head=(0-1)&15 = 15
+- 尾部入队（addLast）：elements[tail] = e; tail = (tail + 1) & (elements.length - 1)
+  - 如果 tail == head 则扩容
+- 头部出队（pollFirst）：elements[head] = null; head = (head + 1) & (len - 1)
+- 尾部出队（pollLast）：tail = (tail - 1) & (len - 1); elements[tail] = null
+
+扩容策略：
+- 当 tail == head 时（队列满），扩容为原来的 2 倍
+- 先分配新数组（2× 旧容量）
+- 分两段复制（head 到数组末尾 + 0 到 tail-1）
+- 重置 head=0, tail=旧长度
+
+性能对比：
+| 操作 | ArrayDeque | LinkedList |
+|------|-----------|------------|
+| 头部插入/删除 | O(1) 摊销 | O(1) |
+| 尾部插入/删除 | O(1) 摊销 | O(1) |
+| 内存开销 | 小（数组 + 2 个指针） | 大（每个节点有 prev/next/item 指针）|
+| 随机访问 | O(1) 但需遍历 | O(n) |
+| 局部性 | 好（连续内存） | 差（分散节点）|
+
+扩展延伸：ArrayDeque 是 Java 官方推荐的 Stack 和 Queue 实现（比 Stack 快，比 LinkedList 快）。Stack extends Vector 是遗留类（性能差，加锁浪费），应该用 Deque（new ArrayDeque<>()）。LinkedList 也是 Deque 的实现，但 ArrayDeque 在大多数场景下性能更好（内存紧凑，缓存友好）。`,hints:[`Deque = 双端队列（头尾都可插入/删除），ArrayDeque 使用循环数组实现`,`核心：head/tail 指针 + 容量 2 的幂 + (index) & (len-1) 实现循环回绕`,`ArrayDeque 比 Stack 和 LinkedList 性能更好（内存紧凑，缓存友好）`],tags:[`Java`,`集合`,`Deque`,`ArrayDeque`],content_hash:`4d08e70b127a`,id:2159},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`HashMap 的死循环与树化`,content:`请介绍 HashMap 的并发死循环问题（JDK 1.7）。为什么在并发 put 时会出现死循环？JDK 1.8 的尾插法 + 红黑树如何解决了这个问题？`,answer:`答案：HashMap 的死循环是 JDK 1.7 的经典问题，在多线程并发 put 导致扩容时可能出现。
+
+JDK 1.7 死循环的根因：
+1. 头插法（Head Insertion）：扩容时迁移元素采用头插法（新节点始终插入链表头部）
+2. 多线程并发扩容：两个线程同时执行 transfer()，同时操作链表
+3. 环形链表：头插法在并发下会导致链表形成环
+4. 死循环：后续 get/put 遍历链表时进入死循环（CPU 100%）
+
+头插法的流程：
+// 扩容时迁移：遍历旧 table 每个桶的链表
+// 对新 table 的头插入：e.next = newTable[i]; newTable[i] = e;
+// 结果：链表顺序反转（原链表 A→B→C 变成 C→B→A）
+
+并发问题的成因：
+- 线程 1 执行到 e.next = newTable[i] 后暂停
+- 线程 2 完成整个扩容（链表已反转并迁移到新数组）
+- 线程 1 恢复执行，基于旧的引用继续操作
+- 结果：A.next = B, B.next = A → 环形链表
+
+JDK 1.8 的修复：
+1. 尾插法：扩容时使用尾插法，保持元素顺序不变
+2. 具体：维护 loHead/loTail（低位链表）和 hiHead/hiTail（高位链表），遍历旧链表逐个接到尾部
+3. 尾插法即使并发也不形成环（因为不会出现 A.next = B, B.next = A 的交叉引用）
+
+树化的引入（JDK 1.8）：
+- 当桶中链表长度 ≥ 8 时，链表转为红黑树
+- 条件：链表长度 > 8 且数组长度 ≥ 64
+- 如果数组长度 < 64，先扩容（期望元素分散到更多桶）
+- 树化的目的：防止恶意哈希攻击（构造大量相同哈希值的 key 导致 O(n) 性能退化）
+- 红黑树搜索：O(log n) vs 链表：O(n)
+
+树化的阈值选择（为什么是 8？）：
+- 泊松分布：在随机哈希下，桶中元素个数的概率分布符合泊松分布
+- 链表长度 = 8 的概率约为 0.00000006（几乎不会发生）
+- 所以正常情况不会触发树化，树化是为了防御哈希碰撞攻击
+- 树退化回链表的阈值为 6（避免频繁转换）
+
+扩展延伸：HashMap 仍然不是线程安全的——JDK 1.8 修复了死循环，但并发 put 仍可能导致数据丢失（put 覆盖）。线程安全方案：ConcurrentHashMap（分段锁/CAS）、Collections.synchronizedMap（全表锁）、HashTable（遗留类，全表锁）。`,hints:[`JDK 1.7 死循环根因：头插法 + 并发扩容 → 环形链表 → get() 死循环`,`JDK 1.8 修复：尾插法（保持顺序）+ 引入红黑树（链表≥8→红黑树，防御哈希攻击）`,`树化阈值=8 的原因：泊松分布下概率极低（正常不会树化，树化为防恶意哈希碰撞攻击）`],tags:[`Java`,`集合`,`HashMap`,`并发`],content_hash:`a0341cae78d2`,id:2160},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`HashMap 树化与红黑树`,content:`请解释 HashMap 在 Java 8 中引入的红黑树化机制及其触发条件。`,answer:`答案：当哈希冲突严重导致链表过长时，HashMap 将链表转换为红黑树（TreeNode）以优化查找性能
+
+解析：当链表长度超过 TREEIFY_THRESHOLD（默认 8）且 table 长度 >= MIN_TREEIFY_CAPACITY（64）时，HashMap 将链表转换为红黑树。树化的前提条件要求 table 长度至少 64——如果 table 太小（< 64）即使链表长度超过 8 也不树化，而是优先扩容（resize）以减少冲突。红黑树节点（TreeNode）约为普通 Node 的 2 倍大小，所以树化以空间换时间——链表查找 O(N) 退化为红黑树 O(log N)。当 remove 或 resize 导致红黑树节点数 < UNTREEIFY_THRESHOLD（默认 6）时，红黑树退化为链表（6 和 8 之间差 2 防止频繁转换抖动）。
+
+扩展延伸：为什么阈值选 8？来自泊松分布的统计结果——在随机哈希码下，链表长度达 8 的概率极低（约 0.00000006），意味着树化只在极极端的哈希冲突情况下触发（如恶意构造的哈希碰撞 DoS 攻击或 Key 的 hashCode 实现极差）。HashMap 的树化和退化逻辑只对 static class TreeNode 节点生效，红黑树使用左旋/右旋和变色维持平衡。在 Java 8 之前 HashMap 直接使用 Entry 链表，没有树化保护，构造大量哈希冲突的 key 可以将 HashMap 的 get 复杂度从 O(1) 降为 O(N)。ConcurrentHashMap 也有类似的树化机制但处理更复杂（在 treeifyBin 时需加锁保证线程安全）。`,hints:[`树化阈值为什么是 8 而不是其他数字`,`table 长度小于 64 时链表超长会怎样`],tags:[`Java`,`HashMap`,`红黑树`],content_hash:`cb3085d92605`,id:2161},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`ArrayList vs LinkedList`,content:`以下关于 ArrayList 和 LinkedList 的性能比较，错误的是？`,options:[`A) ArrayList 的 get(index) 是 O(1)，LinkedList 是 O(N)`,`B) ArrayList 尾部插入是均摊 O(1)，LinkedList 尾部插入是 O(1)`,`C) LinkedList 头部插入是 O(1)，ArrayList 头部插入是 O(N)`,`D) ArrayList 和 LinkedList 的 remove(Object) 都是 O(N)`],answer:`D`,hints:[`LinkedList 的 remove(Object) 需要遍历链表查找元素（O(N)），ArrayList 也需要遍历数组查找（O(N)）`],tags:[`Java`,`集合`,`ArrayList`,`LinkedList`],content_hash:`67850e54e1fd`,id:2162},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`HashMap 扩容与 rehash`,content:`请解释 HashMap 在 Java 7 和 Java 8 中扩容机制的差异。`,answer:`答案：Java 8 对 HashMap 的扩容做了重要优化，引入了尾插法和重新计算位置优化
+
+解析：Java 7 的扩容（transfer 方法）使用头插法将旧数组的链表节点搬到新数组：遍历旧 table 每个 bucket 的链表，将节点 rehash 后以头插方式插入新 table。头插法在并发扩容时可能导致循环链表（死循环），因为两个线程同时 transfer 时可能互相覆盖 next 引用形成环形结构。Java 8 改为尾插法（使用 loHead/loTail 和 hiHead/hiTail 两个链表分别收集扩容后位置不变和位置变化的节点），保持了原链表的顺序。并且利用优化：元素在新 table 中的位置要么在原位置（hash & oldCap == 0），要么是原位置 + oldCap（hash & oldCap == 1），不需要重新计算 hash。这一优化基于扩容是 2 倍扩容（oldCap * 2）的特性。
+
+扩展延伸：扩容阈值 threshold = capacity * loadFactor（默认 0.75）。loadFactor 0.75 的时间和空间的折中：太高（如 1）空间利用率高但冲突增加，太低（如 0.5）扩容频繁但冲突少。扩容时间：当 table 从 16 到 32、64、128……每次扩容都需 rehash 所有元素，大量元素时可能触发耗时操作（当 HashMap 包含数十万条记录时，扩容耗时可达毫秒级）。预判容量：new HashMap<>(expectedSize) 设置 initialCapacity 减少扩容次数。最佳 initialCapacity = expectedSize / 0.75 + 1。Java 8+ HashMap 不再死循环但扩容仍然不是线程安全的（丢失数据），并发环境仍然使用 ConcurrentHashMap。`,hints:[`Java 7 的死循环是怎么通过链表节点形成环的`,`扩容后元素在新数组中的位置怎么通过 hash & oldCap 确定`],tags:[`Java`,`HashMap`,`扩容`],content_hash:`651a4ee60b6e`,id:2163},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`ConcurrentHashMap JDK7 vs JDK8`,content:`请对比 ConcurrentHashMap 在 JDK 7 和 JDK 8 中的实现差异。`,answer:`答案：JDK 8 对 ConcurrentHashMap 进行了全面重构，从分段锁改为 CAS + synchronized
+
+解析：JDK 7 使用 Segment 数组（默认 16 个 Segment 继承 ReentrantLock），每个 Segment 对应一个 HashEntry 数组。写操作只需锁住一个 Segment，理论上支持 16 线程并发写。Segment 数量一经初始化不可变，扩容在每个 Segment 内部独立进行。JDK 8 移除了 Segment 设计，采用 CAS + synchronized 实现更细粒度的并发：1）使用 volatile 修饰 Node 数组保证可见性 2）插入 bucket 时如果该位置为空则通过 CAS 写入，否则加 synchronized 锁住链表/红黑树头节点 3）锁粒度从 Segment 级降为 bucket 级，并发度更高 4）引入了红黑树优化长链表。
+
+扩展延伸：JDK 8 的 key 计数（mappingCount/size 方法）改用 CounterCell 数组（类似 LongAdder）来维护元素总数，多个线程更新时分散到不同 Cell 减少 CAS 冲突。helpTransfer 方法允许多个线程协助数据迁移（扩容时），提高扩容效率。transfer 方法支持多线程并发扩容：每个线程负责一部分桶的迁移，通过 ForwardingNode 标记已迁移的桶。JDK 8 的 CHM 在弱一致性上做得更好：由于 get 操作不加锁，读取节点时看到的可能是过时的数据状态（但最终一致性保证）。因此，ConcurrentHashMap 的 size() 和 isEmpty() 方法也是弱一致的（这是特意设计的trade-off）。`,hints:[`Segments 锁分段相比 CAS + synchronized 有什么劣势`,`get 方法不加锁的安全性怎么保证`],tags:[`Java`,`ConcurrentHashMap`,`并发`],content_hash:`9d60a852d0ff`,id:2164},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Collections.unmodifiableList vs List.of`,content:`关于 Collections.unmodifiableList 和 List.of 返回的不可变列表，以下说法正确的是？`,options:[`A) List.of 返回的列表支持 add 操作`,`B) Collections.unmodifiableList 包装的原始列表变化后，unmodifiableList 也会变化`,`C) Collections.unmodifiableList 返回的列表本身是可变的`,`D) List.of 和 Collections.unmodifiableList 的底层实现完全相同`],answer:`B`,hints:[`Collections.unmodifiableList 是视图包装器，原始列表变化会反映到 unmodifiable 视图上`],tags:[`Java`,`集合`,`不可变`],content_hash:`72b50274457f`,id:2165},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ConcurrentLinkedQueue 与 LinkedBlockingQueue 的并发策略对比`,content:`请从并发实现策略、适用场景和性能特征三个方面对比 ConcurrentLinkedQueue 和 LinkedBlockingQueue。`,answer:`答案：ConcurrentLinkedQueue 基于 Michael-Scott 非阻塞队列算法，使用 CAS（Compare-And-Swap）操作更新头尾指针，无锁但有自旋（活锁风险）。是无界队列，不支持阻塞操作。内存开销更低，在低竞争下吞吐量极高。LinkedBlockingQueue 基于 ReentrantLock + Condition 实现阻塞语义，使用双锁（takeLock 和 putLock）分离读写以减少锁竞争。支持有界队列（指定容量），put() 和 take() 支持阻塞等待。选择建议：高吞吐低延迟、不需要阻塞的生产-消费场景用 ConcurrentLinkedQueue；需要控制生产者速度（防止 OOM）、需要阻塞等待语义的场景用 LinkedBlockingQueue。在中等以上竞争下，LinkedBlockingQueue 的阻塞机制比 CAS 自旋更节省 CPU。`,hints:[`CAS 自旋在高竞争下导致 CPU 空转的问题`,`LinkedBlockingQueue 的双锁分离如何提升并发吞吐`],tags:[`并发队列`,`ConcurrentLinkedQueue`,`LinkedBlockingQueue`,`CAS`,`锁`],options:[],content_hash:`30c35925716e`,id:2166},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`TreeMap 与 NavigableMap 的范围查询方法`,content:`请说明 TreeMap 的红黑树实现如何支持 NavigableMap 提供的各种范围查询方法，以及这些方法的时间复杂度。`,answer:`答案：TreeMap 底层是红黑树，每个节点有左子、右子、父节点引用和颜色标记。NavigableMap 接口提供的范围查询方法利用红黑树的中序遍历有序性：lowerKey(K) 返回严格小于的最大键（向左查找最右子节点），floorKey(K) 返回小于等于的最大键，ceilingKey(K) 返回大于等于的最小键，higherKey(K) 返回严格大于的最小键——均为 O(log n)。descendingMap() 返回逆序视图，内部通过 descendingEntryIterator 实现，不复制数据。subMap(fromKey, toKey)、headMap(toKey)、tailMap(fromKey) 返回范围视图，延迟执行，插入/删除操作会映射回原始 TreeMap。范围视图支持非对称边界（inclusive/exclusive）。TreeMap 基于 Comparable 或 Comparator 排序，key 不可为 null。`,hints:[`红黑树的中序遍历如何保证键的有序性`,`subMap 等范围视图是动态视图还是创建时的快照`],tags:[`TreeMap`,`NavigableMap`,`红黑树`,`范围查询`,`排序`],options:[],content_hash:`4f5677829193`,id:2167},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Arrays.parallelPrefix 并行前缀计算原理`,content:`请解释 Arrays.parallelPrefix() 的工作原理、时间复杂度和典型使用场景。`,answer:"答案：Arrays.parallelPrefix() 对数组执行就地并行前缀扫描（prefix scan）。核心算法是并行归并扫描：将数组分为若干段，每段独立计算局部前缀，然后合并段间边界值。例如计算累积和：输入 `[a1, a2, a3, a4, a5, a6]`，先分段并行计算每段前缀，然后逐段传播边界值。时间复杂度从串行 O(n) 降为 O(n/p + log p)(p 为并行度)，但受 ForkJoinPool 线程数和数组大小影响。数据量小于阈值时退化为串行。BinaryOperator 必须是关联的（associative）才能保证正确并行化。典型场景：累积和/累积乘积、霍夫曼编码中的频率累积、排序中的 rank 计算、并行基数排序的桶偏移计算、图像处理的区域积分图（integral image）等。",hints:[`并行前缀扫描的算法如何分治处理`,`BinaryOperator 的关联性对并行结果的正确性有何影响`],tags:[`Arrays`,`parallelPrefix`,`并行`,`前缀扫描`,`ForkJoinPool`],options:[],content_hash:`3ac49bdc75a4`,id:2168},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Collections.checkedList 动态类型检查机制`,content:`请解释 Collections.checkedList() 的作用原理和典型应用场景，以及它解决了泛型擦除带来的什么问题。`,answer:'答案：Collections.checkedList() 返回原始 List 的类型安全视图（checked view）。原理：在每个写入操作（add、addAll、set 等）之前调用 `typeCheck()` 方法，通过 `Class.cast()` 验证元素类型。如果类型不匹配抛出 ClassCastException。解决的是类型擦除问题——泛型仅在编译期生效，运行期不保留类型信息。如果通过原始类型（raw type）绕过编译检查，如 `((List)rawList).add("string")` 可以在 `List<Integer>` 中插入字符串，程序在运行时可能在其他位置抛出 ClassCastException。checkedList 在插入点就捕获了类型错误，更容易定位问题来源。checkedSet()、checkedMap()、checkedQueue()、checkedSortedSet()、checkedNavigableMap() 等方法类似。性能影响极低（仅一次 cast 检查）。常用于集合作为公开 API 参数或反序列化数据时做防御性校验。',hints:[`泛型擦除后运行期如何产生堆污染（heap pollution）`,`checkedList 是在集合的每个写入入口做类型验证`],tags:[`checkedList`,`类型安全`,`泛型擦除`,`防御性编程`],options:[],content_hash:`94b8938b582f`,id:2169},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`Spliterator 的特性标志与拆分策略`,content:`请解释 Spliterator 的 characteristics（特性标志）对 Stream API 并行执行的影响，以及 Spliterator 的拆分策略差异。`,answer:`答案：Spliterator 特性标志以 int 位掩码表示：ORDERED（有序）、DISTINCT（无重复）、SORTED（已排序）、SIZED（大小精确已知）、NONNULL（无 null 元素）、IMMUTABLE（数据源不可变）、CONCURRENT（数据源可并发修改）、SUBSIZED（子 Spliterator 也大小精确）。特性影响 Stream 管线的优化：SIZED 支持精确拆分任务，ORDERED 保证相遇顺序但限制并行优化，DISTINCT 让 distinct 操作可跳过，SORTED 让 sorted 操作可跳过。拆分策略因数据源而异：ArrayList 按索引二分（随机访问高效拆分），LinkedList 遍历到中点拆分（O(n)），HashSet 无顺序随机拆分，TreeSet 按元素范围拆分。拆分目标是在 O(1) 或 O(log n) 内完成，尽可能使任务负载均衡。当数据量低于阈值（ForkJoinPool 的公共池门限）时 trySplit() 返回 null 停止拆分。`,hints:[`ORDERED 特性为什么可能限制并行性能`,`SUBSIZED 和 SIZED 的区别是什么`],tags:[`Spliterator`,`Stream API`,`并行`,`拆分`,`特性标志`],options:[],content_hash:`5ede05257ae3`,id:2170},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ArrayDeque vs LinkedList 性能对比`,content:`请从数据结构、内存布局、操作时间复杂度等方面对比 ArrayDeque 和 LinkedList 的性能差异，并说明各自的最佳使用场景。`,answer:`答案：ArrayDeque 底层基于循环数组（circular array），LinkedList 底层基于双向链表。\\n内存布局：\\n- ArrayDeque：连续内存存储，CPU 缓存友好（spatial locality 好）。初始容量 16，自动扩容（翻倍），扩容时需要复制元素。\\n- LinkedList：节点分散存储，每个节点有前驱和后继指针（额外 16 字节 overhead），缓存局部性差。\\n时间复杂度：\\n- ArrayDeque：两端插入删除 O(1) 均摊（扩容时 O(n)），随机访问 O(1)，但不支持在中间插入。\\n- LinkedList：两端操作 O(1)，中间插入/删除 O(n)（需从头遍历到目标位置）。\\n适用场景：\\n- ArrayDeque：作为栈或队列使用，或双端队列操作，明确比 LinkedList 更快——无节点分配开销，缓存友好。\\n- LinkedList：需要在中间频繁插入/删除，或需要作为 List 使用（有索引访问需求且不在意 O(n) 随机访问），或需要大量节点（超过 100 万）且担心 ArrayDeque 扩容复制开销。\\n结论：大部分场景下 ArrayDeque 优于 LinkedList。`,hints:[`数组的连续内存存储 vs 链表的分散节点存储对缓存命中率的影响`,`ArrayDeque 不支持在中间位置插入元素`],tags:[`ArrayDeque`,`LinkedList`,`performance`,`circular-array`,`doubly-linked-list`],content_hash:`1ce8f422b85e`,id:2171},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`TreeMap 红黑树插入与平衡`,content:`请说明 TreeMap 底层红黑树的插入过程，包括节点查找插入位置、插入后的修复平衡操作，以及红黑树的核心约束规则。`,answer:"答案：红黑树的 5 条核心约束：\\n1. 每个节点红色或黑色。\\n2. 根节点黑色。\\n3. 叶子节点（NIL）黑色。\\n4. 红色节点的子节点必须是黑色（不能有连续红节点）。\\n5. 任意节点到其所有叶子节点的路径包含相同数量的黑色节点（黑高一致）。\\n插入过程：\\n1. 从根节点开始比较（使用 Comparator 或 Comparable），找到插入位置（BST 性质）。\\n2. 插入新节点并着色为红色（不破坏黑高约束）。\\n3. 插入修复（fixAfterInsertion）：\\n   - 情况 1：父节点黑色——无需修复。\\n   - 情况 2：父节点红色且叔节点红色——父和叔变色为黑，祖父变色为红，将祖父作为当前节点继续检查。\\n   - 情况 3：父节点红色且叔节点黑色——通过旋转（左旋或右旋）+ 变色平衡。\\nTreeMap 使用 `fixAfterInsertion` 私有方法处理这些情况。修复最终将根节点强制设为黑色。所有操作时间复杂度 O(log n)。",hints:[`新插入节点为什么着色为红色而非黑色`,`修复操作中左旋和右旋分别解决什么形态的失衡`],tags:[`TreeMap`,`red-black-tree`,`insertion`,`rotation`,`fixAfterInsertion`],content_hash:`ac39241387ad`,id:2172},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`Collections.synchronizedMap 复合操作原子性`,content:`请说明 Collections.synchronizedMap() 返回的同步包装 Map 的线程安全边界在哪里，以及为什么复合操作（如 put-if-absent、iterate-all）需要额外同步。`,answer:"答案：Collections.synchronizedMap() 返回 SynchronizedMap 实例，所有单个方法调用（get、put、remove、containsKey 等）都用 mutex 对象同步加锁。\\n线程安全边界：\\n- 每个独立方法调用是原子的——两个线程同时 put 不会破坏内部数据结构。\\n- 迭代器不是线程安全的——遍历时其他线程修改 map 会抛 ConcurrentModificationException（fail-fast）。\\n复合操作的问题：\\n- put-if-absent：`if (!map.containsKey(k)) map.put(k, v)` 是两个独立调用，之间可能有其他线程插入了 k，导致覆盖。需要全 put-if-absent 用 synchronized(map) { ... } 包裹。\\n- for-each 遍历后修改：遍历过程中另一个线程删除元素可能导致 ConcurrentModificationException。需要在 synchronized(map) { ... } 中遍历。\\n- 先 get 再 put 的更新操作：`map.put(k, map.get(k) + 1)` 不是原子的，需要外部同步。\\n注意：使用 synchronized(map) 块时必须使用与内部 mutex 相同的锁对象。SynchronizedMap 默认使用自身作为 mutex，因此 `synchronized(map)` 即可。",hints:[`Collections.synchronizedMap 只保证每个独立方法的原子性`,`复合操作需要在 synchronized(map) 块中执行才能保证原子性`],tags:[`synchronizedMap`,`synchronizedMap`,`composite-operation`,`thread-safety`,`mutex`],content_hash:`ee78923b05b5`,id:2173},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`PriorityQueue siftUp siftDown 原理`,content:`请说明 PriorityQueue 中 siftUp（上浮）和 siftDown（下沉）的核心算法实现，以及它们在入队和出队操作中的应用。`,answer:"答案：PriorityQueue 基于二叉最小堆实现，底层用 Object[] 数组存储。堆性质：父节点 ≤ 子节点。\\nsiftUp（上浮）：\\n- 用于 offer() 操作。新元素插入到数组末尾（size - 1 位置），然后从该位置开始上浮。\\n- 算法：比较当前节点 k 与父节点 (k-1)/2，如果当前节点小于父节点则交换并继续上浮，直到某次不交换或到达根节点。\\n- 代码关键：`while (k > 0) { int parent = (k - 1) >>> 1; if (key.compareTo(queue[parent]) >= 0) break; queue[k] = queue[parent]; k = parent; }`\\n- 使用 comparator 时走 `siftUpUsingComparator` 分支。\\nsiftDown（下沉）：\\n- 用于 poll() 操作。移除根（堆顶）后，将末尾元素移到根位置，从根开始下沉。\\n- 算法：从根节点 k 开始，取左右子节点中较小的 child。如果当前节点大于 child 则交换并继续下沉。\\n- 只下沉到 half = size >>> 1 位置（非叶子节点范围）。\\n- 批量建堆（heapify）时从最后一个非叶子节点向前依次调用 siftDown，时间复杂度 O(n)。",hints:[`siftUp 用于入队，siftDown 用于出队和建堆`,`批量建堆时为什么从最后一个非叶子节点开始而不是从根开始`],tags:[`PriorityQueue`,`siftUp`,`siftDown`,`heap`,`Offer`,`poll`],content_hash:`2a4aac010560`,id:2174},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`LinkedHashMap accessOrder 与 LRU 实现`,content:`请说明 LinkedHashMap 的 accessOrder 参数对迭代顺序的影响，以及如何利用 accessOrder 特性实现一个简单的 LRU 缓存。`,answer:"答案：LinkedHashMap 继承 HashMap，额外维护一个双向链表记录条目顺序。构造时通过 accessOrder 参数控制迭代顺序：accessOrder=false（默认）按插入顺序（insertion-order）迭代；accessOrder=true 按访问顺序（access-order）迭代。\\naccess-order 机制：\\n- 每次调用 get()、put() 或 putAll() 访问或修改某个条目时，该条目被移动到链表末尾（通过 afterNodeAccess 回调）。\\n- 因此最近访问的条目在末尾，最久未访问的条目在链表头部。\\n实现 LRU 缓存的步骤：\\n1. 设置 `accessOrder = true`。\\n2. 重写 `removeEldestEntry(Map.Entry eldest)` 方法——当返回 true 时自动移除链表头部的条目（最久未访问）。\\n3. 典型实现：`protected boolean removeEldestEntry(Map.Entry eldest) { return size() > maxCapacity; }`\\n4. 每次 put 新条目后，LinkedHashMap 在 afterNodeInsertion 中检查 removeEldestEntry 返回值，若为 true 则删除头部条目。\\n注意：LinkedHashMap 不是线程安全的，LRU 缓存在多线程场景需额外同步或用 Collections.synchronizedMap 包装。",hints:[`accessOrder=true 使 get() 操作将访问的条目移动到链表末尾`,`removeEldestEntry 的调用时机是插入新条目之后`],tags:[`LinkedHashMap`,`access-order`,`LRU-cache`,`removeEldestEntry`,`doubly-linked-list`],content_hash:`33d831d2db29`,id:2175},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`HashMap在Java 8中的扩容与树化机制`,content:`详细说明HashMap在Java 8中的resize()过程。与Java 7相比，Java 8的扩容在数据迁移上做了什么关键优化？为什么不再需要rehash每个节点？链表树化的阈值为什么是8？`,answer:`答案：Java 8的resize()将桶数组长度翻倍，数据迁移的核心优化是：利用新容量是2的幂次这一特性，节点在新桶中的索引要么不变（oldIndex），要么是oldIndex + oldCap。判断依据是看节点hash值的新增最高位（oldCap对应位）是0还是1——0则留在原位，1则移动到oldIndex+oldCap位置。这避免了Java 7中每个节点都要重新计算hash和取模的开销（rehash），同时保证链表节点在迁移后仍然保持原有相对顺序，解决了Java 7多线程并发扩容时可能形成环形链表的问题。
+
+树化阈值选8的依据：遵循泊松分布，在负载因子0.75且随机哈希码的假设下，同一个桶中链表长度达到8的概率极低（约0.00000006），此时树化是值得的。长度降到6时退化为链表，中间留7作为缓冲避免频繁转换。`,hints:[`2的幂扩容从位视角而非取模视角`,`Java 8前rehash会打乱节点顺序`,`泊松分布决定阈值8与6的差值`],tags:[`HashMap`,`resize`,`扩容`,`treeify`,`hash`],content_hash:`39a06fad4d73`,id:2176},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Fail-Fast与Fail-Safe迭代器`,content:`以下关于Java集合迭代器的描述，哪一项是正确的？`,options:[`A) ArrayList的迭代器是fail-fast的，迭代期间任何修改都会立即抛出ConcurrentModificationException`,`B) CopyOnWriteArrayList的迭代器是fail-safe的，基于快照不会抛出ConcurrentModificationException`,`C) HashMap的迭代器在单线程通过remove()方法删除元素时也会抛出ConcurrentModificationException`,`D) ConcurrentHashMap的keySet()迭代器是fail-fast的`],answer:`B`,hints:[`ArrayList检查modCount计数`,`修改时创建新的底层数组`,`迭代器remove会更新modCount`],tags:[`fail-fast`,`fail-safe`,`ConcurrentModificationException`,`迭代器`],content_hash:`e544704682fc`,id:2177},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`TreeMap与红黑树`,content:`TreeMap的底层实现基于红黑树（Red-Black Tree），能保证所有操作（get、put、remove）的最坏情况时间复杂度为O(log n)。`,options:[`A) 正确`,`B) 错误`],answer:`A`,hints:[`红黑树是近似平衡的二叉搜索树`,`与AVL树比红黑树旋转次数更少`,`自平衡防止最坏情况退化成链表`],tags:[`TreeMap`,`红黑树`,`NavigableMap`,`SortedMap`],content_hash:`f18ccd97ca67`,id:2178},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`ConcurrentHashMap禁止null值的设计决策`,content:`为什么ConcurrentHashMap不允许null作为key或value，而HashMap允许？这一设计决策除了面向并发场景的安全性考虑外，还涉及哪些深层次的设计一致性考量？`,answer:`答案：ConcurrentHashMap禁止null值的核心原因：
+
+1) 歧义性问题（最主要）：多线程环境下，map.get(key)返回null时，无法区分是key不存在还是value就是null。在单线程的HashMap中，可以通过containsKey()来解除歧义。但在ConcurrentHashMap中，containsKey()调用后、执行后续逻辑前，另一个线程可能已经插入了该key，导致判断失效。这种to-check-then-act的组合不是原子的。
+
+2) 设计一致性：Doug Lea的并发集合框架中，ConcurrentMap接口明确禁止null值，与支持null的HashMap在语义上划清界限。
+
+3) 底层机制：CHM内部使用CAS和volatile读，需要明确的空值哨兵来标记空槽和删除标记（ForwardingNode、ReservationNode等），null值会干扰这些内部机制。
+
+相比之下，HashMap是单线程或不保证并发的场景，允许null作为value的便利性超过了对歧义的担忧。`,hints:[`get返回null有两种含义`,`containsKey和get不是原子的`,`CHM中null有特殊语义含义`],tags:[`ConcurrentHashMap`,`null`,`并发设计`,`Doug Lea`],content_hash:`f73a18038329`,id:2179},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`synchronizedMap与ConcurrentHashMap对比`,content:`关于Collections.synchronizedMap()和ConcurrentHashMap的选择，以下描述哪一项是正确的？`,options:[`A) synchronizedMap对所有方法使用synchronized互斥，读操作也需要锁；ConcurrentHashMap读操作无锁，写操作只锁对应桶，读多写少场景下并发度更高`,`B) 两者性能等价，因为ConcurrentHashMap内部也是使用synchronized实现同步`,`C) synchronizedMap支持null值，而ConcurrentHashMap也支持null值`,`D) ConcurrentHashMap支持全量操作如size()、containsValue()的常数时间复杂度`],answer:`A`,hints:[`synchronizedMap是粗粒度锁`,`CHM桶粒度锁提升写入并发度`,`size()需要遍历桶或累加器`],tags:[`ConcurrentHashMap`,`synchronizedMap`,`性能`,`并发`],content_hash:`6c03a34bbba6`,id:2180},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`TreeMap 对 null 键的处理策略`,content:`Java 的 TreeMap 允许使用 null 作为键，与 HashMap 的行为一致，因为二者都实现了 Map 接口。
+A) 正确
+B) 错误`,answer:`B`,hints:[`红黑树需要调用 compareTo 确定元素位置`,`null 无法参与自然顺序比较`],tags:[`Java`,`TreeMap`,`集合框架`],content_hash:`4e7fd7eab2f6`,id:2181},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`HashMap 扩容时元素的位移规律`,content:`关于 HashMap 的扩容机制，以下哪项描述是正确的？
+A) HashMap 扩容时将所有元素重新计算 hash 并插入新数组，时间复杂度 O(n)
+B) HashMap 扩容时容量翻倍，旧元素在新数组中的索引要么不变，要么为原索引 + 原数组长度，利用数组长度为 2 的幂次方特性优化
+C) 负载因子默认为 0.75，即元素数量达到数组长度的 75% 时立即触发扩容
+D) 扩容时所有链表会立即转换为红黑树以提高迁移效率`,answer:`答案：B`,hints:[`扩容优化利用 hash & oldCap 判断元素位置`,`红黑树转换在链表长度达到 8 时发生，与扩容无关`],tags:[`Java`,`HashMap`,`扩容`,`集合框架`],content_hash:`5029505e1df1`,id:2182},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`ConcurrentHashMap Java 8 对分段锁的彻底重构`,content:`请比较 ConcurrentHashMap 在 Java 7 和 Java 8 之间的核心实现差异。Java 8 为什么放弃分段锁（Segment）设计？新的并发控制机制是什么？`,answer:`答案：Java 7 CHM：内部包含 Segment[]，每个 Segment 继承 ReentrantLock，默认 16 个分段锁。写操作锁单个 Segment，读操作也需要获取 Segment 锁。size() 先无锁累加尝试 3 次，失败后锁全部 Segment。
+Java 8 放弃分段锁的原因：1) 分段锁内存固定开销大，不论数据量大小 Segment 数量固定 2) 锁竞争按 Segment 粒度分布不均，热点数据集中在少数 Segment 导致局部竞争激烈 3) 扩容时需要锁住所有 Segment 获取一致快照，复杂度高。
+Java 8 新机制：数组 + 链表/红黑树 + CAS + synchronized。锁粒度从 Segment 降级为数组每个桶位的头节点。put 操作利用 CAS 尝试将新节点设为桶头，若 CAS 失败则 synchronized 锁定桶头节点完成插入。get 操作完全无锁，由 volatile 修饰的 Node.val 和 Node.next 保证可见性。扩容采用多线程协同迁移（transfer），每个线程负责一部分桶。size() 使用 CounterCell 分段计数，减少原子累加竞争。`,hints:[`Java 8 的锁粒度从 Segment 级降到桶级`,`get 操作完全无锁得益于 volatile 语义`],tags:[`Java`,`ConcurrentHashMap`,`并发`,`集合框架`],content_hash:`af91941a9b4b`,id:2183},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`CopyOnWriteArrayList 的设计定位与弱一致性`,content:`请说明 CopyOnWriteArrayList 的设计原理、适用场景和核心缺陷。什么是迭代器的弱一致性？为什么它不适合写密集型场景？`,answer:`答案：设计原理：每次写操作（add/set/remove）时加 ReentrantLock，复制当前数组到新数组（长度加一或减一），在新数组上执行修改后替换 volatile 数组引用。读操作直接读取数组引用，完全无锁。
+适用场景：读远多于写的并发场景——典型例子是事件监听器列表、配置缓存、白名单。
+核心缺陷：1) 每次写都 O(n) 数组复制，频繁写入时吞吐量极低 2) 每次写入产生新数组对象，GC 压力巨大 3) 修改期间新旧数组同时存在，内存占用翻倍。
+弱一致性迭代器：iterator() 在创建时保存当前数组快照引用，后续遍历始终基于该快照，不受其他线程后续修改的影响。不抛出 ConcurrentModificationException。代价是迭代器看到的数据可能不是最新的。`,hints:[`读写分离思想的具体实现`,`快照迭代器保证不抛 ConcurrentModificationException`],tags:[`Java`,`CopyOnWriteArrayList`,`并发`,`集合框架`],content_hash:`a65d1e789d16`,id:2184},{category:`java_collections`,difficulty:`hard`,type:`coding`,title:`基于 LinkedHashMap 实现线程安全 LRU 缓存`,content:`请基于 LinkedHashMap 实现一个最大容量为 100 的线程安全 LRU 缓存。说明 accessOrder 参数的行为差异，以及 removeEldestEntry 方法在 LRU 策略中的调用时机。`,answer:`public class LRUCache<K, V> {
+    private final int maxCapacity;
+    private final LinkedHashMap<K, V> map;
+
+    public LRUCache(int maxCapacity) {
+        this.maxCapacity = maxCapacity;
+        this.map = new LinkedHashMap<>(16, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+                return size() > LRUCache.this.maxCapacity;
+            }
+        };
+    }
+
+    public synchronized V get(K key) {
+        return map.get(key);
+    }
+
+    public synchronized void put(K key, V value) {
+        map.put(key, value);
+    }
+}
+
+accessOrder 参数：false（默认）为插入顺序，链表顺序等于元素首次 put 的顺序；true 为访问顺序，每次 get 或 put 已存在的 key 时该 entry 被移动到链表尾部。LRU 缓存必须使用 accessOrder=true。
+removeEldestEntry 调用时机：每次 put 或 putAll 执行完毕后被自动调用，返回 true 时移除链表头部的 entry。执行顺序是——put 先完成插入/更新操作，然后调用 removeEldestEntry 检查是否超出容量，若超出则淘汰最久未访问的头部 entry。这个设计保证了淘汰逻辑不影响正常插入流程。`,hints:[`accessOrder=true 是 LRU 行为的关键开关`,`removeEldestEntry 是 put 完成后的后置回调`],tags:[`Java`,`LRU`,`LinkedHashMap`,`缓存`,`集合框架`],content_hash:`313012797b4b`,id:2185},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`Spliterator 特性对遍历性能的影响`,content:"Spliterator 接口定义了 `characteristics()` 方法，返回一个 int 掩码，包含 ORDERED、DISTINCT、SORTED、SIZED、NONNULL、IMMUTABLE、CONCURRENT、SUBSIZED 等特性。请解释为什么 ORDERED 特性会降低并行 Stream 的性能，以及 SIZED 和 SUBSIZED 如何影响拆分（splitting）行为。",answer:`答案：ORDERED 特性会降低并行 Stream 性能的根本原因：它要求最终结果保持 encounter order。当 Spliterator 带有 ORDERED 特性时，ForkJoinPool 的各个工作线程必须保持分割的顺序（即使任务已经在不同线程处理，合并时必须按照原始顺序重组）。这使得某些优化不可用——例如 map/filter 操作不能使用「任意顺序」的线程本地结果合并，必须使用更昂贵的顺序保持合并策略。极端情况下可能完全抵消并行化的收益。
+
+SIZED 的作用：标记 Spliterator 知道要遍历的元素确切数量（\`estimateSize()\` 返回精确值）。这允许 ForkJoinPool 在做工作窃取（work-stealing）时更精确地分割任务，避免过度拆分或拆分不足。SUBSIZED 是增强特性——不仅当前 Spliterator 是 SIZED，而且 trySplit() 产生的所有子 Spliterator 也保持 SIZED 特性。这意味着整个拆分树都可以精确估计大小，最适合对拆分粒度有严格控制的场景如 Arrays.stream() 的底层实现。`,hints:[`ORDERED 的代价在于「必须保留原始顺序」，这意味著不能简单地先独立处理再随机合并`,`SIZED 和 SUBSIZED 的区分在递归拆分场景下变得关键——SUBSIZED 保证拆分后的每一片都保持精确大小`],tags:[`Spliterator`,`characteristics`,`parallel-stream`,`ordered`,`sized`],content_hash:`d94e6b044316`,id:2186},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`ConcurrentHashMap mappingCount 与 size 的设计意图`,content:`ConcurrentHashMap 同时提供了 \`size()\`（返回 int）和 \`mappingCount()\`（返回 long）两个方法。以下关于二者区别的描述，哪项是正确的？
+A) size() 和 mappingCount() 功能完全相同，都是返回映射数量；mappingCount() 只是为兼容 Map 接口而保留的命名别名
+B) size() 返回的是桶数组的容量（capacity），不是映射数量；mappingCount() 才是真正的映射计数
+C) size() 存在因 int 溢出而丢失精度的问题（当映射数超过 Integer.MAX_VALUE 时），mappingCount() 用 long 返回避免此问题——这是二者同时存在的根本原因；在 JDK 8+ 实现中，size() 内部直接调用 mappingCount() 并截断为 int
+D) size() 是弱一致性视图（可能不反映最新状态），mappingCount() 是强一致性的精确计数`,answer:"答案：C) ConcurrentHashMap 在 JDK 8+ 的实现中，size() 方法是 `return (int) mappingCount()` 的简单包装。二者都返回映射条目数，都基于内部的 `sumCount()` 方法计算（弱一致性视图，不是实时精确值，但在并发场景下足够精确）。存在两个方法的原因是历史兼容——Map 接口定义 size() 返回 int，但 JDK 设计者意识到大内存场景下 ConcurrentHashMap 可能包含超过 Integer.MAX_VALUE 个映射，因此添加了返回 long 的 mappingCount()。",hints:[`想一想：HashMap 的 size() 返回 int，但如果 map 中超过 21 亿条目会怎样？`,`这个问题的历史背景是：JDK 8 引入了 mappingCount() 作为 future-proof 的改进`],tags:[`ConcurrentHashMap`,`size`,`mappingcount`,`int-overflow`,`api-design`],content_hash:`9e994f6191cd`,id:2187},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`LinkedTransferQueue transfer() 阻塞语义`,content:"LinkedTransferQueue 提供了 `transfer(E e)` 和 `tryTransfer(E e)` 方法。请解释 transfer() 的阻塞语义：调用线程在什么条件下返回？它与 SynchronousQueue 的核心行为有什么本质区别？在什么场景下选择使用 LinkedTransferQueue 而非 SynchronousQueue？",answer:`答案：transfer() 的阻塞语义：调用线程将元素直接交给一个等待的消费者线程，如果没有消费者在等待，则当前线程阻塞直到有消费者取走该元素。与 SynchronousQueue 的核心区别：LinkedTransferQueue 可以同时作为普通队列使用（通过 offer/poll 等非阻塞方法），而 SynchronousQueue 不支持缓冲——每个 put 必须等待一个 take。LinkedTransferQueue 的 transfer() 方法相当于在队列上实现了一种「有条件阻塞」的生产者-消费者模式。
+
+选择 LinkedTransferQueue 而非 SynchronousQueue 的场景：
+1) 需要灵活切换阻塞和非阻塞模式的场景——同一队列有时需要 transfer（阻塞等待消费）、有时需要 offer（丢弃或异步）
+2) 需要批量缓冲能力的同时，某些消息需要确保直接交付
+3) 需要遍历或检查队列内容的场景（LinkedTransferQueue 支持 O(n) 遍历，SynchronousQueue 不支持）
+LinkedTransferQueue 的内部实现使用 dual-queue 结构和 slot-based 匹配算法，比 SynchronousQueue 的 transferer 实现更高效且功能更丰富。`,hints:[`transfer() = 阻塞版 offer + 等待消费确认的结合体`,`LinkedTransferQueue 的实现被称为 Dual Queue——同时支持同步交付和异步缓冲两种模式`],tags:[`LinkedTransferQueue`,`transfer`,`SynchronousQueue`,`BlockingQueue`,`concurrency`],content_hash:`a5f9a2ba7bcc`,id:2188},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`DelayQueue 的领导者-跟随者模式`,content:`java.util.concurrent.DelayQueue 内部使用了领导者-跟随者（Leader-Follower）模式来优化等待延迟到期的元素：当多个消费者线程同时调用 take() 时，只有一个线程（Leader）会执行阻塞等待，其他线程（Followers）不会阻塞，而是自旋等待 Leader 完成任务。`,options:[`A) 正确`,`B) 错误`],answer:`B) 错误`,hints:[`DelayQueue 的 take() 实现确实使用了领导者-跟随者模式来避免「惊群效应」(thundering herd)`,`但 Followers 不是「自旋等待」，而是通过 condition.await() 进入阻塞状态，让出 CPU`],tags:[`DelayQueue`,`leader-follower`,`thundering-herd`,`BlockingQueue`,`concurrency`],content_hash:`8f8ebdfff891`,id:2189},{category:`java_collections`,difficulty:`hard`,type:`coding`,title:`ConcurrentSkipListSet 的范围查询方法`,content:`ConcurrentSkipListSet 继承了 NavigableSet 接口的 lower(e)、floor(e)、ceiling(e)、higher(e) 方法。请说明这四个方法的精确语义（包括对 null 和不存在元素的处理），并写一段代码示例展示如何使用它们在一组高并发写入的评分数据中查询给定分数的相邻排名。`,answer:`四个方法的精确语义（与 TreeSet 完全一致）：
+- lower(e): 返回最大的严格小于 e 的元素，如果不存在返回 null
+- floor(e): 返回最大的小于或等于 e 的元素，如果不存在返回 null
+- ceiling(e): 返回最小的大于或等于 e 的元素，如果不存在返回 null
+- higher(e): 返回最小的严格大于 e 的元素，如果不存在返回 null
+
+所有这些方法都不接受 null 参数（ConcurrentSkipListSet 不允许 null 元素），传入 null 会抛出 NullPointerException。
+
+代码示例：
+\`\`\`java
+ConcurrentSkipListSet<Integer> scores = new ConcurrentSkipListSet<>();
+// 高并发的写入场景下，多个线程同时添加分数
+scores.addAll(Set.of(85, 92, 78, 95, 88, 70));
+
+int target = 88;
+// 查询相邻排名
+Integer lower = scores.lower(target);       // 85
+Integer floor = scores.floor(target);       // 88
+Integer ceiling = scores.ceiling(target);   // 88
+Integer higher = scores.higher(target);     // 92
+
+System.out.println("低于 88 的最高分: " + lower);     // 85
+System.out.println("88 及以下的最高分: " + floor);    // 88
+System.out.println("88 及以上的最低分: " + ceiling);  // 88
+System.out.println("高于 88 的最低分: " + higher);    // 92
+
+// 当目标分数不存在于集合中时：
+int target2 = 80;
+System.out.println(scores.ceiling(80));  // 85（大于 80 的最小值）
+System.out.println(scores.floor(80));    // 78（小于 80 的最大值）
+System.out.println(scores.higher(80));   // 85
+System.out.println(scores.lower(80));    // 78
+\`\`\`
+
+注意：在 ConcurrentSkipListSet 上调用这些方法时，由于并发写入，结果可能在方法返回的瞬间就已经「过期」——这是无锁并发数据结构的弱一致性语义。`,hints:[`concurrent 集合的 NavigableSet 方法也是弱一致性的——获得结果后该元素可能已被其他线程移除`,`这四个方法构成了一个以目标值为中心的「开区间/闭区间」语义体系`],tags:[`ConcurrentSkipListSet`,`NavigableSet`,`range-query`,`Skip List`,`concurrency`],content_hash:`fd1a72c67731`,id:2190},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`ConcurrentHashMap.reduceValuesToLong 批量操作的批次边界语义`,content:`请详细解释 ConcurrentHashMap 的 reduceValuesToLong、reduceKeysToLong、reduceEntriesToLong 等批量操作（bulk operation）的批次边界语义。这些方法的 parallelismThreshold 参数如何控制任务拆分？当映射在 reduce 过程中被其他线程并发修改时，reduce 结果的语义是什么？`,answer:`答案：ConcurrentHashMap 的 reduceValuesToLong 等方法采用 ForkJoinPool 进行并行批量操作。parallelismThreshold 参数控制拆分策略：当预计映射中的元素数量超过阈值时，任务被拆分为子任务并行执行；当元素数量不超过阈值时，在当前线程中串行执行。Long.MAX_VALUE 作为阈值表示始终串行。批次边界的核心语义：每个子任务处理一个 Segment-like 的 bin 范围（内部基于 CounterHashCell 的分布）。当映射在 reduce 过程中被其他线程并发修改时，reduce 操作展现的是「弱一致性」语义——它基于遍历的时刻快照（但非一致性快照，而是遍历过程中的所见修改），结果等效于对某个时间点的映射状态进行 reduce，但不保证反映任何单个一致的时间点。具体而言：遍历过程中出现在某个 bin 中的元素会被处理，新添加的元素可能被包含也可能不被包含，被替换的元素可能观察到旧值也可能观察不到。这与 ConcurrentHashMap 迭代器的「弱一致性」一致。如果要求严格的一致性，需要在外部加锁进行 reduce。`,hints:[`reduceValuesToDouble(long parallelismThreshold, ToDoubleFunction<? super V> transformer, DoubleBinaryOperator reducer) 中的 transformer 不能返回 null——如果映射中所有值都被过滤为 null，reduce 返回 identity 值`,`JDK 9 后这些批量操作的内部实现做了优化，使用更精细的拆分粒度（基于 CounterCell 而非整个 ConcurrentHashMap）`],tags:[`ConcurrentHashMap`,`reduceValuesToLong`,`批量操作`,`弱一致性`,`并行`],options:[],company:``,content_hash:`ca65efa7498b`,id:2191},{category:`java_collections`,difficulty:`hard`,type:`short_answer`,title:`TreeMap.descendingMap 逆序视图的 subMap 范围反转规则`,content:`关于 TreeMap.descendingMap() 返回的逆序视图（descending map）及其 subMap 方法的行为，以下哪项描述是正确的？
+A) descendingMap 返回的 subMap 参数顺序不变：subMap(fromKey, toKey) 中的 fromKey 仍然小于 toKey
+B) descendingMap 返回的 subMap 参数自动反转：subMap(fromKey, toKey) 实际表示从 toKey 到 fromKey 的范围
+C) descendingMap 不支持 subMap 操作，调用会抛出 UnsupportedOperationException
+D) descendingMap 的 subMap 行为与正向视图完全一致，不存在差异`,answer:`答案：B) TreeMap.descendingMap() 返回一个 NavigableMap，其 subMap 方法的参数语义自动反转。在 descendingMap 上调用 subMap(fromKey, toKey) 时，fromKey 应大于 toKey（因为视图是逆序的），操作结果表示逆序映射中从原本的 toKey 到 fromKey 的范围（在正向视图中是从 fromKey 到 toKey 的子范围）。具体而言：descendingMap().subMap(highKey, lowKey) 相当于正向视图的 subMap(lowKey, highKey)。NavigableMap 的 descendingMap 文档明确说明「如果指定了参数，则 less 和 greater 的含义在交换后的映射中会被反转」。这一设计使得逆序视图的 subMap 参数签名保持一致——fromKey 仍然表示子范围的「下界」，但这个下界在逆序中对应的是更大的 key。`,hints:[`descendingMap 的 headMap/toKey 的行为也反转：descendingMap().headMap(x) 返回正向视图中大于等于 x 的部分`,`descendingMap 返回的是原 TreeMap 的视图而非副本，对视图的修改直接反映在原映射中`],tags:[`TreeMap`,`descendingMap`,`NavigableMap`,`subMap`,`逆序视图`],options:[],company:``,content_hash:`5d658de49aa9`,id:2192},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`Collections.newSetFromMap 的并发安全性陷阱`,content:`Collections.newSetFromMap(Map<E, Boolean> map) 可以将任何 Map 转换为 Set 视图。请说明以下哪种使用方式是不安全的，为什么？
+方式一：newSetFromMap(new ConcurrentHashMap<>()) — 在并发环境中使用返回的 Set
+方式二：newSetFromMap(new HashMap<>()) — 在并发环境中使用返回的 Set
+方式三：newSetFromMap(new LinkedHashMap<>()) — 在单线程环境中使用返回的 Set
+请详细解释 newSetFromMap 的内部实现机制及其并发安全保障的边界。`,answer:`答案：方式二是不安全的——在并发环境中使用由 HashMap 支撑的 Set。Collections.newSetFromMap(map) 直接返回 map 的 keySet() 视图，所有 add/remove/contains 操作代理到 map 的 put/remove/containsKey。它不在代理方法上添加任何同步机制。因此：
+方式一（ConcurrentHashMap 支撑）——线程安全，因为 ConcurrentHashMap 的 put/remove/containsKey 是线程安全的。
+方式二（HashMap 支撑）——线程不安全，多线程并发 add/remove 会导致 HashMap 的内部结构损坏（死循环、丢失元素等），因为 HashMap 的 put 操作涉及 resize 和链表/树的修改，没有任何内部同步。
+方式三（LinkedHashMap 支撑）——单线程安全，但注意 LinkedHashMap 非线程安全，仅适用于单线程。
+核心原理：newSetFromMap 返回的是 Map 内部类 KeySet 的视图，自己不维护任何数据结构。Set 的所有操作直接委托给 Map。因此 Set 的线程安全性完全由传入的 Map 的线程安全性决定。常见的误用是将不支持并发的 Map（HashMap、TreeMap、LinkedHashMap）传入后在多线程环境中使用返回的 Set。`,hints:[`newSetFromMap 也继承 Map 的大小限制——如果 Map 不允许 null key，则 Set 不允许 null 元素`,`ConcurrentHashMap.newKeySet() 是 newSetFromMap(new ConcurrentHashMap<>()) 的等效快捷方式，语义完全一致`],tags:[`Collections`,`newSetFromMap`,`线程安全`,`ConcurrentHashMap`,`视图`],options:[],company:``,content_hash:`7deb9a44e418`,id:2193},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`AbstractCollection.toString 自引用集合 StackOverflowError`,content:`如果集合直接或间接包含对自身的引用（例如 Set 中包含自身），调用该集合的 toString() 方法会递归进入 StackOverflowError。`,answer:`A) 正确`,hints:[`AbstractCollection.toString() 通过迭代器遍历元素，对每个元素调用 String.valueOf()，如果元素是集合自身则递归调用 toString()`,`即使使用 ArrayList，如果某个元素是 list 自身，list.toString() 会触发无限递归：toString -> [..., list.toString(), ...] -> [..., [..., list.toString(), ...], ...]`],tags:[`AbstractCollection`,`toString`,`StackOverflowError`,`递归`,`集合`],options:[`A) 正确`,`B) 错误`],company:``,content_hash:`4887d9701f14`,id:2194},{category:`java_collections`,difficulty:`medium`,type:`short_answer`,title:`List.of 与 Collections.unmodifiableList 序列化实现差异`,content:`关于 List.of（JDK 9+）返回的不可变列表与 Collections.unmodifiableList 在序列化方面的差异，以下哪项描述是正确的？
+A) List.of 和 Collections.unmodifiableList 的序列化形式完全相同
+B) List.of 返回的列表通过自定义 writeReplace 方法将序列化委托为数组或普通列表，而 unmodifiableList 序列化的是其内部的包装结构
+C) List.of 返回的列表不支持序列化，会抛出 NotSerializableException
+D) Collections.unmodifiableList 的序列化形式直接输出其包装的源列表`,answer:`答案：B) List.of（以及 Set.of、Map.of）返回的不可变集合是 JDK 内部实现类，它们通过 writeReplace() 方法将序列化代理替换为普通数组或标准集合表示——例如 List.of 返回的 ImmutableCollections.List12 在序列化时使用 SerializedList 作为代理，反序列化时重新构造为 List.of 的不可变实例。Collections.unmodifiableList 则序列化其内部的包装结构——它输出 UnmodifiableCollection 序列化代理，反序列化时重新包装。核心区别：List.of 的序列化不保留包装链，直接序列化底层数据元素；而 unmodifiableList 的序列化保留了包装语义，反序列化后仍然是 unmodifiable 的包装视图。这一差异在涉及远程调用和缓存对象序列化的场景中很重要。`,hints:[`List.of() 返回的 ImmutableCollections 内部类的序列化流格式与 ArrayList 不同——数据以紧凑数组形式写入，无容量预留字段`,`Collections.unmodifiableList 的反序列化创建的是包装视图而非深拷贝，修改源列表会反映在反序列化后的对象中（如果源仍然活跃）`],tags:[`List.of`,`unmodifiableList`,`序列化`,`不可变集合`,`writeReplace`],options:[],company:``,content_hash:`e31a7b5fb458`,id:2195},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`HashMap 底层数据结构`,content:`JDK 8 中 HashMap 的底层数据结构是？`,answer:`C) 数组 + 链表 + 红黑树。解析：JDK 8 中 HashMap 底层采用数组 + 链表 + 红黑树实现。当链表长度超过阈值（8）且数组长度 ≥ 64 时，链表转换为红黑树，将查询时间复杂度从 O(n) 降低为 O(log n)。JDK 7 及之前只有数组 + 链表。`,options:[`A) 数组`,`B) 数组 + 链表`,`C) 数组 + 链表 + 红黑树`,`D) 哈希表 + 二叉树`],hints:[`JDK 7 和 JDK 8 的实现不同`,`考虑链表过长时的优化手段`],tags:[`集合`,`HashMap`],content_hash:`104201ad1913`,id:2196},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`HashMap put 方法的执行流程`,content:`关于 HashMap 的 put(K, V) 方法执行流程，下列描述错误的是？`,answer:`D) 如果 key 已存在，直接覆盖旧值并返回 null。解析：当 key 已存在时，put 方法会覆盖旧值，但返回的是被覆盖的旧值（old value），而不是 null。只有 key 不存在时插入才返回 null。`,options:[`A) 先对 key 做 hash 计算，然后定位数组索引`,`B) 如果该位置为空，直接插入新节点`,`C) 如果该位置不为空，遍历链表或红黑树查找 key`,`D) 如果 key 已存在，直接覆盖旧值并返回 null`],hints:[`注意 put 方法的返回值语义`],tags:[`集合`,`HashMap`],content_hash:`0186b3c37370`,id:2197},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`HashMap 扩容机制`,content:`关于 HashMap 的扩容机制，下列哪个说法是正确的？`,answer:`B) 当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍。解析：HashMap 的默认负载因子是 0.75，当元素个数 > capacity × loadFactor 时扩容为原来的 2 倍。扩容后所有元素需要重新计算哈希索引（rehash），因此扩容是较耗时的操作。`,options:[`A) 当链表长度超过 8 时触发扩容`,`B) 当元素个数超过 threshold（容量 × 负载因子）时触发扩容，容量翻倍`,`C) 每次 put 操作都会检查是否需要扩容`,`D) 扩容后元素位置不变，只需复制到新数组`],hints:[`threshold 的计算方式`,`扩容后元素需要 rehash`],tags:[`集合`,`HashMap`],content_hash:`9bc2f425a4f6`,id:2198},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`JDK 7 与 JDK 8 HashMap 的区别`,content:`以下关于 JDK 7 和 JDK 8 中 HashMap 的区别，说法错误的是？`,answer:`B) JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全。解析：尾插法确实解决了扩容时环形链表导致的死循环问题，但这并不意味着 HashMap 变成线程安全。put、get、resize 等操作仍然没有加锁，多线程下仍可能出现数据覆盖、size 不准确等问题。`,options:[`A) JDK 8 引入红黑树优化链表过长时的查询性能`,`B) JDK 8 中使用尾插法解决了死循环问题，因此 HashMap 变为线程安全`,`C) JDK 7 使用头插法，JDK 8 使用尾插法`,`D) JDK 8 的 hash 计算比 JDK 7 更简化`],hints:[`线程安全和数据结构优化是两个不同的问题`],tags:[`集合`,`HashMap`],content_hash:`7eeacce78f15`,id:2199},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`ConcurrentHashMap JDK 7 的同步机制`,content:`JDK 7 中 ConcurrentHashMap 采用什么机制保证线程安全？`,answer:`B) Segment + ReentrantLock 分段锁。解析：JDK 7 的 ConcurrentHashMap 采用分段锁设计，将数据分为多个 Segment（默认 16 个），每个 Segment 持有一把 ReentrantLock 锁。写操作只需锁住对应 Segment，不影响其他 Segment 的读写，从而实现高并发。`,options:[`A) 对整个数组加 synchronized 锁`,`B) Segment + ReentrantLock 分段锁`,`C) CAS + volatile + synchronized`,`D) 使用读写锁 ReadWriteLock`],hints:[`JDK 7 和 JDK 8 的 ConcurrentHashMap 实现完全不同`],tags:[`集合`,`ConcurrentHashMap`],content_hash:`acfe90493e0a`,id:2200},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`ConcurrentHashMap JDK 8 的同步机制`,content:`JDK 8 中 ConcurrentHashMap 采用什么机制保证线程安全？`,answer:`C) CAS + volatile + synchronized（桶粒度锁）。解析：JDK 8 放弃了 Segment 分段锁，改为 CAS + volatile + synchronized 实现。插入时如果桶为空则用 CAS 插入，否则对桶的首节点加 synchronized 锁。粒度更细（从 Segment 级降到桶级），并发性能更好。`,options:[`A) ReentrantLock 分段锁`,`B) 对整个数组加锁`,`C) CAS + volatile + synchronized（桶粒度锁）`,`D) 使用乐观锁 + 版本号`],hints:[`JDK 8 对 ConcurrentHashMap 做了重大重构`],tags:[`集合`,`ConcurrentHashMap`],content_hash:`016995a78786`,id:2201},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`ArrayList 扩容机制`,content:`ArrayList 在调用 add() 方法且内部数组已满时的扩容方式是？`,answer:`A) 扩容为原来的 1.5 倍（oldCapacity + oldCapacity >> 1）。解析：ArrayList 扩容时计算新容量为 oldCapacity + (oldCapacity >> 1)，即 1.5 倍。然后使用 Arrays.copyOf 将原数组元素复制到新数组。`,options:[`A) 扩容为原来的 1.5 倍`,`B) 扩容为原来的 2 倍`,`C) 扩容为原来的 1.25 倍`,`D) 每次固定增加 10 个容量`],hints:[`看源码中的 grow() 方法实现`],tags:[`集合`,`ArrayList`],content_hash:`78facb7e91ba`,id:2202},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`ArrayList 与 LinkedList 的区别`,content:`以下关于 ArrayList 和 LinkedList 的说法，正确的是？`,answer:`D) ArrayList 随机访问快，LinkedList 插入删除快。解析：ArrayList 基于数组实现，支持 O(1) 随机访问；LinkedList 基于双向链表实现，插入和删除只需修改指针为 O(1)，但随机访问需要遍历为 O(n)。两者都不是线程安全的。`,options:[`A) ArrayList 和 LinkedList 都是线程安全的`,`B) LinkedList 随机访问比 ArrayList 快`,`C) ArrayList 插入和删除比 LinkedList 快`,`D) ArrayList 随机访问快，LinkedList 插入删除快`],hints:[`考虑底层数据结构的不同`],tags:[`集合`,`ArrayList`],content_hash:`8122f39c4599`,id:2203},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`Set 的实现类`,content:`下列哪个类不是 Set 接口的实现类？`,answer:`D) Map。解析：Map 是独立的根接口，与 Collection 平级。HashSet、TreeSet、LinkedHashSet 都是 Set 接口的实现类。`,options:[`A) HashSet`,`B) TreeSet`,`C) LinkedHashSet`,`D) Map`],hints:[`Set 是 Collection 的子接口，注意区分 Map`],tags:[`集合`,`Set`],content_hash:`2bdb2af9788f`,id:2204},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`HashSet 如何保证元素不重复`,content:`HashSet 是如何保证元素不重复的？`,answer:`A) 底层基于 HashMap，元素作为 HashMap 的 key 存储。解析：HashSet 的底层实际是 HashMap，添加元素时把元素作为 HashMap 的 key，value 是一个常量 PRESENT（new Object()）。利用 HashMap key 不可重复的特性保证元素不重复，依赖元素的 hashCode() 和 equals() 方法。`,options:[`A) 底层基于 HashMap，元素作为 HashMap 的 key 存储`,`B) 内部维护一个数组，每次添加时遍历检查`,`C) 使用 TreeMap 的排序特性保证不重复`,`D) 通过 CAS 操作实现去重`],hints:[`添加 add() 方法的返回值说明了什么？`],tags:[`集合`,`HashSet`],content_hash:`36aa73e48848`,id:2205},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`HashMap 线程不安全的表现`,content:`HashMap 在多线程环境下可能出现哪些问题？以下说法错误的是？`,answer:`C) 多线程读操作一定会抛出 ConcurrentModificationException。解析：ComcurrentModificationException 只在迭代过程中检测到结构性修改时才会抛出（fast-fail 机制），并非一定会出现。多线程读不一定会抛异常，但可能出现脏读、死循环（JDK 7 头插法导致）、数据覆盖等问题。`,options:[`A) JDK 7 中扩容时可能出现环形链表导致死循环`,`B) 多线程 put 可能导致数据覆盖`,`C) 多线程读操作一定会抛出 ConcurrentModificationException`,`D) 多线程 put 后 get 可能获取不到刚 put 的数据`],hints:[`fast-fail 机制只在特定条件下触发`],tags:[`集合`,`HashMap`],content_hash:`1f2ba13d6b62`,id:2206},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`TreeMap 的排序方式`,content:`TreeMap 根据什么来排序 key？`,answer:`C) 根据 key 的自然顺序（Comparable）或构造时传入的 Comparator。解析：TreeMap 基于红黑树实现，key 必须实现 Comparable 接口或在构造 TreeMap 时传入 Comparator。插入时自动排序，保证 key 有序。`,options:[`A) 按 key 的 hashCode 大小排序`,`B) 按插入顺序排序`,`C) 根据 key 的自然顺序（Comparable）或构造时传入的 Comparator`,`D) 随机排序`],hints:[`TreeMap 的 key 有什么约束？`],tags:[`集合`,`TreeMap`],content_hash:`357acd1e021e`,id:2207},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`HashMap 计算数组索引的方式`,content:`HashMap 如何根据 key 计算在数组中的存放位置？`,answer:`B) h = key.hashCode()，然后 h ^ (h >>> 16) 得到扰动后的 hash，再与数组长度 - 1 做 & 运算。解析：HashMap 先对 key 的 hashCode() 做高 16 位异或低 16 位的扰动计算，目的是让高位也参与寻址，减少哈希碰撞。然后通过 (n - 1) & hash 计算数组下标，等价于取模运算但位运算效率更高。`,options:[`A) 直接使用 key.hashCode() % 数组长度取模`,`B) h = key.hashCode()，h ^ (h >>> 16) 后与 n - 1 做 & 运算`,`C) 使用 key.hashCode() 的绝对值作为下标`,`D) 使用 key.toString().length() 作为下标`],hints:[`为什么 HashMap 的容量必须是 2 的幂？`],tags:[`集合`,`HashMap`],content_hash:`31e1a4eb3626`,id:2208},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Collection 接口的子接口`,content:`以下哪个接口不是 Collection 接口的子接口？`,answer:`C) Map。解析：Collection 的子接口包括 List、Set、Queue。Map 是独立于 Collection 的另一个根接口，两者在类层次结构中是平级的。`,options:[`A) List`,`B) Set`,`C) Map`,`D) Queue`],hints:[`Collection 和 Map 的关系是什么？`],tags:[`集合`,`Collection`],content_hash:`4b3ebf1d905f`,id:2209},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`HashMap 默认初始容量和负载因子`,content:`HashMap 的默认初始容量和负载因子分别是多少？`,answer:`B) 初始容量 16，负载因子 0.75。解析：HashMap 默认初始容量是 1 << 4 = 16，默认负载因子是 0.75f。负载因子 0.75 是时间和空间成本的权衡，过高减少扩容次数但增加哈希碰撞，过低增加内存浪费。`,options:[`A) 初始容量 8，负载因子 0.5`,`B) 初始容量 16，负载因子 0.75`,`C) 初始容量 32，负载因子 0.8`,`D) 初始容量 10，负载因子 0.6`],hints:[`看 HashMap 源码中的 DEFAULT_INITIAL_CAPACITY 和 DEFAULT_LOAD_FACTOR`],tags:[`集合`,`HashMap`],content_hash:`1926fc006974`,id:2210},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`HashMap 链表转红黑树的触发条件`,content:`HashMap 中链表转换为红黑树的条件是什么？`,answer:`C) 链表长度 ≥ 8 且数组长度 ≥ 64。解析：两个条件缺一不可：链表长度达到 TREEIFY_THRESHOLD（8）时，会先检查数组长度——如果 < MIN_TREEIFY_CAPACITY（64），则优先扩容数组而非转红黑树。只有数组长度 ≥ 64 时才会将链表转为红黑树。`,options:[`A) 链表长度 ≥ 8`,`B) 链表长度 ≥ 8 且数组长度 ≥ 16`,`C) 链表长度 ≥ 8 且数组长度 ≥ 64`,`D) 数组长度 ≥ 64`],hints:[`树化需要同时满足两个条件`],tags:[`集合`,`HashMap`],content_hash:`79555526e5eb`,id:2211},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`ConcurrentHashMap 的 size() 方法`,content:`ConcurrentHashMap 的 size() 方法在并发环境下如何保证正确性？`,answer:`D) 先尝试无锁统计，如果竞争激烈则加锁统计。解析：ConcurrentHashMap 的 size() 采用先无锁统计策略：先通过 sumCount() 无锁累加 baseCount 和 CounterCell 数组的值。如果在统计过程中发生了并发修改，会使用 counterCells 辅助记录，最终通过累加所有计数来得到正确结果，无需每次都加锁。`,options:[`A) 直接返回一个变量，不保证准确性`,`B) 每次调用 size() 都会遍历整个哈希表`,`C) 使用 synchronized 保证线程安全`,`D) 先尝试无锁统计，如果竞争激烈则加锁统计`],hints:[`JDK 8 的 CounterCell`],tags:[`集合`,`ConcurrentHashMap`],content_hash:`0fb0c29985ef`,id:2212},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`解决哈希冲突的方式`,content:`以下哪种不是解决哈希冲突的常见方法？`,answer:`D) 位运算法。解析：解决哈希冲突的常见方法有：链地址法（HashMap 使用）、开放地址法（ThreadLocalMap 使用）、再哈希法。位运算是计算哈希值的方法，不是解决冲突的方式。`,options:[`A) 链地址法`,`B) 开放地址法`,`C) 再哈希法`,`D) 位运算法`],hints:[`考虑常见的哈希表实现方式`],tags:[`集合`,`哈希`],content_hash:`8c971d0062c5`,id:2213},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`迭代器的快速失败机制`,content:`在使用迭代器遍历集合时，其他线程修改了集合结构，会发生什么？`,answer:`B) 抛出 ConcurrentModificationException。解析：Java 集合框架中的迭代器采用了 fast-fail 机制。迭代器内部维护一个 modCount 计数器，当检测到 modCount 被修改（即集合结构被修改）时，立即抛出 ConcurrentModificationException，而不是冒险在后续操作中继续。`,options:[`A) 正常完成遍历，但数据可能不准确`,`B) 抛出 ConcurrentModificationException`,`C) 无限循环`,`D) 自动等待其他线程完成修改`],hints:[`fast-fail 的 fail 指的是什么？`],tags:[`集合`,`迭代器`],content_hash:`13f7d5fbf01e`,id:2214},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Comparable 与 Comparator 的区别`,content:`关于 Comparable 和 Comparator 的区别，以下说法正确的是？`,answer:`A) Comparable 定义在元素类内部，Comparator 定义在外部。解析：Comparable 是内部比较器，元素类实现 Comparable 接口的 compareTo() 方法定义自然排序。Comparator 是外部比较器，单独定义比较策略，适用于无法修改源码或需要多种排序方式的场景。`,options:[`A) Comparable 定义在元素类内部，Comparator 定义在外部`,`B) Comparable 可以定义多种排序方式，Comparator 只能定义一种`,`C) Comparator 位于 java.lang 包中`,`D) Comparable 使用 compare() 方法，Comparator 使用 compareTo() 方法`],hints:[`一个是 int compareTo(T o)，一个是 int compare(T o1, T o2)`],tags:[`集合`,`排序`],content_hash:`bd2cf2dc5652`,id:2215},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`LinkedHashMap 的迭代顺序`,content:`关于 LinkedHashMap 的迭代顺序，以下说法正确的是？`,answer:`D) 默认按插入顺序迭代，也可以构造为按访问顺序迭代。解析：LinkedHashMap 继承 HashMap，在 Entry 中额外维护了双向链表记录顺序。默认 accessOrder=false，按插入顺序迭代；可以通过构造函数设置 accessOrder=true 启用访问顺序，此时每次 get 或 put 已存在的 key 会将对应 Entry 移到链表尾部，适用于实现 LRU 缓存。`,options:[`A) LinkedHashMap 的迭代顺序是无序的，和 HashMap 完全一致`,`B) LinkedHashMap 只能按插入顺序迭代，不能改变`,`C) LinkedHashMap 默认按 key 的自然排序迭代`,`D) 默认按插入顺序迭代，也可以构造为按访问顺序迭代`],hints:[`LinkedHashMap 如何实现 LRU 缓存？`],tags:[`集合`,`LinkedHashMap`],content_hash:`dd468393fad3`,id:2216},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`CopyOnWriteArrayList 的迭代器特性`,content:`关于 CopyOnWriteArrayList 的迭代器，以下说法正确的是？`,answer:`A) 迭代器基于创建时的数组快照，迭代过程中不会抛出 ConcurrentModificationException。解析：CopyOnWriteArrayList 的迭代器在创建时保存当前底层数组的快照引用，之后在此快照上遍历。在迭代期间对 List 的修改会创建新数组，不影响已有迭代器的遍历，因此支持 fail-safe 机制，不会抛出 ConcurrentModificationException，但也不保证能读到迭代器创建之后的修改。`,options:[`A) 迭代器基于创建时的数组快照，迭代过程中不会抛出 ConcurrentModificationException`,`B) 迭代器会实时反映迭代过程中的所有修改`,`C) CopyOnWriteArrayList 不支持迭代器遍历`,`D) 迭代过程中如果 List 被修改，迭代器会立即抛出 ConcurrentModificationException`],hints:[`CopyOnWriteArrayList 的「快照」迭代器如何保证线程安全？`],tags:[`集合`,`并发`],content_hash:`acb630bdc84b`,id:2217},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`PriorityQueue 与 ConcurrentLinkedQueue`,content:`关于 PriorityQueue 和 ConcurrentLinkedQueue 的区别，以下说法正确的是？`,answer:`C) PriorityQueue 是无界优先级队列，元素按自然顺序或 Comparator 排序；ConcurrentLinkedQueue 是基于 CAS 的无界线程安全队列，按 FIFO 排序。解析：PriorityQueue 底层使用二叉堆（最小堆/最大堆）实现，基于数组存储，非线程安全。ConcurrentLinkedQueue 使用 Michael-Scott 非阻塞链表算法，通过 CAS 保证线程安全，不阻塞线程，元素按 FIFO 顺序出队。两者都是无界的。`,options:[`A) PriorityQueue 是线程安全的，ConcurrentLinkedQueue 不是`,`B) 两者都按 FIFO 顺序出队`,`C) PriorityQueue 是无界优先级队列，元素按自然顺序或 Comparator 排序；ConcurrentLinkedQueue 是基于 CAS 的无界线程安全队列，按 FIFO 排序`,`D) ConcurrentLinkedQueue 使用锁保证线程安全`],hints:[`PriorityQueue 的底层数据结构是什么？`],tags:[`集合`,`Queue`],content_hash:`4d8a91ceea92`,id:2218},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Collections 工具类的同步包装方法`,content:`调用 Collections.synchronizedList(new ArrayList()) 返回的 List，以下说法正确的是？`,answer:`B) 返回的 List 在每个方法上使用同步块包装，迭代时仍需外部同步。解析：Collections.synchronizedList() 返回同步包装器，它对 add、get、size 等单个方法使用 synchronized 块包装。但迭代器（iterator()、listIterator()）不自动加锁，所以在迭代时必须手动加同步块（synchronized(list)），否则可能产生不一致的视图，因为迭代是多个 get/next 操作的组合。`,options:[`A) 返回的 List 完全线程安全，所有操作包括迭代都自动同步`,`B) 返回的 List 在每个方法上使用同步块包装，迭代时仍需外部同步`,`C) 返回的 List 和 CopyOnWriteArrayList 行为完全一致`,`D) synchronizedList 的性能总是优于 ConcurrentLinkedDeque`],hints:[`同步包装类的迭代器是否需要额外的同步措施？`],tags:[`集合`,`工具类`],content_hash:`0356ba225405`,id:2219},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Collection 的 toArray() 与 toArray(T[])`,content:`关于 ArrayList 的 toArray() 和 toArray(T[] a) 方法，以下说法正确的是？`,answer:`A) toArray() 返回 Object[] 类型，toArray(T[]) 在数组足够大时重用传入数组，否则创建新数组。解析：toArray() 方法返回 Object[]，不能直接强转为其他类型。toArray(T[] a) 是泛型方法：如果传入的数组长度足够（a.length >= size），则直接填入并返回该数组；如果不够，会通过反射创建相同类型的新数组。推荐传入长度为 0 的数组（如 toArray(new String[0])），JDK 会优化创建合适大小的数组。`,options:[`A) toArray() 返回 Object[] 类型，toArray(T[]) 在数组足够大时重用传入数组，否则创建新数组`,`B) toArray() 返回的数组可以直接强转为 String[]`,`C) toArray(T[]) 永远不会使用传入的数组，总是创建新数组`,`D) toArray() 和 toArray(T[]) 的行为完全等价`],hints:[`传入长度为零的数组比传入非零长度数组性能更好吗？`],tags:[`集合`,`数组`],content_hash:`e116bbc2bcea`,id:2220},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`HashMap 树化条件`,content:`关于 HashMap 的树化（Treeify）条件，以下说法正确的是？`,answer:`C) 当链表长度 >= 8 且数组长度 >= 64 时，链表转为红黑树；链表长度 < 6 时红黑树退化为链表。解析：树化有两个条件：链表长度达到阈值 TREEIFY_THRESHOLD=8，且数组长度 >= MIN_TREEIFY_CAPACITY=64。数组长度不足 64 时，即使链表很长也不树化，而是通过 resize 扩容（扩容后元素分散到新位置，链表自然缩短）。退化阈值 UNTREEIFY_THRESHOLD=6，留 2 的缓冲避免频繁转换。`,options:[`A) 只要链表长度 >= 8 就立即树化`,`B) 只要数组长度 >= 64 就全部树化`,`C) 当链表长度 >= 8 且数组长度 >= 64 时，链表转为红黑树；链表长度 < 6 时红黑树退化为链表`,`D) 树化后不会退化为链表`],hints:[`为什么树化需要同时满足链表长度 >= 8 和数组长度 >= 64——避免 resize 前的不必要树化`],tags:[`HashMap`,`红黑树`,`树化`,`集合`],content_hash:`0f4bbccdb859`,id:2221},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`ArrayList subList 陷阱`,content:`关于 ArrayList 的 subList() 方法，以下说法正确的是？`,answer:`D) subList 返回的是原列表的视图（View），对 subList 的修改（如 clear()）会直接反映到原列表，对原列表的结构性修改会导致 subList 抛出 ConcurrentModificationException。解析：subList() 返回内部类 SubList，持有原 List 的引用，没有创建新数组。修改 subList（如 subList.clear() 清空指定范围）直接操作原列表的 elementData。但对原列表做结构性修改（如 add/remove 改变大小）会使 SubList 的 modCount 和原 List 不一致，再次操作 subList 时抛出 ConcurrentModificationException。正确做法：需要独立列表时用 new ArrayList<>(list.subList(from, to))。`,options:[`A) subList 返回的是全新独立的 ArrayList，修改它不影响原列表`,`B) subList 返回的是不可修改的只读视图`,`C) subList 只支持 get 操作，不支持 add/remove/set`,`D) subList 返回的是原列表的视图（View），对 subList 的修改会直接反映到原列表，对原列表的结构性修改会导致 subList 抛出 ConcurrentModificationException`],hints:[`subList 的视图特性——clear() 子列表为什么是清空原列表指定范围的「正确打开方式」`],tags:[`ArrayList`,`subList`,`视图`,`集合`],content_hash:`9905ca714937`,id:2222},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Collections.synchronizedList 原理`,content:`关于 Collections.synchronizedList() 包装的线程安全列表，以下说法正确的是？`,answer:`B) 所有方法都使用 synchronized 代码块加锁（mutex），但遍历时需要外部同步。解析：synchronizedList 通过在 List 的每个方法外套上 synchronized(mutex) 实现线程安全。但是，迭代器（iterator()/listIterator()）不支持加锁——遍历时必须外部同步：synchronized(list) { for (T item : list) { ... } }。这是因为迭代器在遍历过程中会多次调用 next()，单次调用是原子的，但整体遍历过程不是。复合操作（如判断再添加：if (!list.contains(x)) list.add(x)）也需要外部同步。`,options:[`A) synchronizedList 包装后，迭代器也是线程安全的，无需额外同步`,`B) 所有方法都使用 synchronized 代码块加锁（mutex），但遍历时需要外部同步`,`C) synchronizedList 使用 ReentrantLock 实现并发控制`,`D) synchronizedList 包装后的列表，复合操作（如 put-if-absent）也是原子的`],hints:[`同步包装器的迭代器为什么不安全——迭代是多个方法调用的复合操作`],tags:[`Collections`,`同步`,`线程安全`,`集合`],content_hash:`9665773efa96`,id:2223},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`NavigableMap 与 TreeMap`,content:`关于 NavigableMap 和 TreeMap 的特性，以下说法错误的是？`,answer:`D) TreeMap 的 key 不需要实现 Comparable 接口，也不需要提供 Comparator。解析：TreeMap 基于红黑树，key 必须可比较——要么实现 Comparable 接口，要么在构造 TreeMap 时传入 Comparator。两者都不提供时抛出 ClassCastException。NavigableMap 是 SortedMap 的子接口，额外提供了导航方法（ceilingEntry/floorEntry/lowerEntry/higherEntry、descendingMap、subMap/headMap/tailMap 等）。TreeMap 实现了 NavigableMap。ceilingKey(key) 返回 >= key 的最小 key，floorKey(key) 返回 <= key 的最大 key。`,options:[`A) NavigableMap 提供了 ceilingKey/floorKey/lowerKey/higherKey 等导航方法`,`B) TreeMap 实现了 NavigableMap，基于红黑树，支持有序遍历`,`C) NavigableMap 的 descendingMap() 返回逆序视图`,`D) TreeMap 的 key 不需要实现 Comparable 接口，也不需要提供 Comparator`],hints:[`TreeMap 的有序性依赖 key 的比较能力——要么 Comparable 要么 Comparator`],tags:[`TreeMap`,`NavigableMap`,`有序`,`集合`],content_hash:`71dfa90424af`,id:2224},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`ConcurrentHashMap computeIfAbsent 方法`,content:`关于 ConcurrentHashMap 的 computeIfAbsent(key, mappingFunction) 方法，下列描述正确的是？`,answer:`B) mappingFunction 在并发场景下可能被多次执行，但只有第一个计算结果被采用。解析：computeIfAbsent 的 mappingFunction 在 key 不存在时才会执行，且是在加锁状态下执行。但在并发场景中，多个线程可能同时发现 key 不存在，各自执行 mappingFunction，最终只有一个结果被放入 Map，其余结果被丢弃。这是 ConcurrentHashMap 的弱一致性体现之一。
+
+扩展延伸：JDK 9 修复了 computeIfAbsent 在红黑树节点下的死锁问题（JDK-8062841）。使用 computeIfAbsent 应确保 mappingFunction 是轻量且幂等的，避免在 mappingFunction 中操作同一个 Map 导致死循环。`,options:[`A) mappingFunction 只会在第一个线程访问时执行一次，后续线程直接获取缓存结果`,`B) mappingFunction 在并发场景下可能被多次执行，但只有第一个计算结果被采用`,`C) mappingFunction 执行期间不会阻塞其他线程对该 key 的读操作`,`D) computeIfAbsent 和 putIfAbsent 的语义完全相同`],hints:[`考虑多线程同时发现 key 不存在时的竞争`,`JDK 9 修复了红黑树下的死锁问题`],tags:[`Java`,`集合`,`ConcurrentHashMap`],content_hash:`0706992241d0`,id:2230},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`HashMap 的 key 为可变对象时的行为`,content:`如果将已放入 HashMap 的自定义对象作为 key，随后修改了该对象的属性（影响 equals/hashCode 结果），以下哪项描述是正确的？`,answer:`D) 该 key 可能无法被正确查找，因为其 hashCode 已改变，而 HashMap 仍使用原哈希值定位。解析：HashMap 在 put 时计算 key 的 hashCode 并确定桶位置。如果 key 对象在 put 之后被修改，导致 hashCode 发生变化，HashMap 不会重新计算哈希，因此 get 时在新哈希值对应的桶中找不到该 Entry，导致内存泄漏。这也是为什么推荐使用不可变对象（如 String、Integer）作为 HashMap 的 key。
+
+扩展延伸：当 hashCode 变化的对象位于链表中时，即使能通过 equals 匹配到，也可能因为哈希值不同而搜索到错误的桶，造成节点永远无法被访问到。使用 mutable 对象作为 key 是常见的 Java 内存泄漏场景之一。`,options:[`A) HashMap 会自动检测 key 的变化并重新计算哈希`,`B) 修改 key 的属性不会影响已经存储的值`,`C) 只有 equals 方法受影响，hashCode 不会变化`,`D) 该 key 可能无法被正确查找，因为其 hashCode 已改变，而 HashMap 仍使用原哈希值定位`],hints:[`HashMap 只在 put 时计算 hashCode`,`不可变对象更适合作为 Map key`],tags:[`Java`,`集合`,`HashMap`],content_hash:`7dbc22c5245e`,id:2231},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`ConcurrentHashMap 弱一致性迭代器`,content:`关于 ConcurrentHashMap 的迭代器特性，下列哪项是正确的？`,answer:`D) 迭代器具有弱一致性，遍历过程中可以看到部分已完成的并发修改，但不会抛出 ConcurrentModificationException。解析：ConcurrentHashMap 的迭代器是弱一致性的（weakly consistent），而非 fail-fast。它基于遍历时刻的数组快照进行遍历，反映了迭代器创建时或遍历过程中的某个时间点的状态。并发 put 或 remove 操作不会导致 ConcurrentModificationException，但迭代器可能无法反映最新的修改。
+
+扩展延伸：ConcurrentHashMap 的 Size()、isEmpty()、containsValue() 等方法也是弱一致性的。HashMap 的迭代器是 fail-fast 的，并发修改时会抛出 ConcurrentModificationException。`,options:[`A) 迭代器是 fail-fast 的，并发修改会立即抛出 ConcurrentModificationException`,`B) 迭代器是强一致性的，能反映所有已完成修改`,`C) 迭代器不支持遍历过程中的 remove 操作`,`D) 迭代器具有弱一致性，遍历过程中可以看到部分已完成的并发修改，但不会抛出 ConcurrentModificationException`],hints:[`fail-fast 适用于非线程安全的集合`,`弱一致性：不一定反映最新状态`],tags:[`Java`,`集合`,`ConcurrentHashMap`],content_hash:`9d5dba6df339`,id:2232},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`HashMap 树化退化条件`,content:`关于 HashMap 的树化（链表转红黑树）与退化（红黑树转链表），下列描述正确的是？`,answer:`A) 当链表长度 >= 8 且数组长度 >= 64 时触发树化；当 remove 后红黑树节点数 <= 6 时触发退化。解析：树化有两个条件：链表长度 >= TREEIFY_THRESHOLD（8）且数组长度 >= MIN_TREEIFY_CAPACITY（64）。如果数组长度 < 64，即使链表长度 >= 8，HashMap 会选择扩容（resize）而非树化。退化条件是：扩容时或 remove 操作后，红黑树节点数 <= UNTREEIFY_THRESHOLD（6）时退化为链表。8 和 6 之间保留 2 的差值是为了避免频繁的树化/退化震荡。
+
+扩展延伸：树化的根本目的是解决哈希碰撞严重时的性能退化（链表查询 O(n) → 红黑树 O(log n)）。当 hashCode 分布均匀时，树化几乎不会触发。`,options:[`A) 当链表长度 >= 8 且数组长度 >= 64 时触发树化；当 remove 后红黑树节点数 <= 6 时触发退化`,`B) 当链表长度 >= 8 时立即触发树化，与数组长度无关`,`C) 当链表长度 >= 8 时触发树化，当红黑树节点数 < 8 时退化`,`D) 树化和退化阈值相同，都是 8`],hints:[`树化需要同时满足链表长度和数组长度两个条件`,`8 和 6 之间的差值是为了避免震荡`],tags:[`Java`,`集合`,`HashMap`,`红黑树`],content_hash:`7c6a4f59c6c6`,id:2233},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`Map merge 方法`,content:`关于 Map 接口的 merge(key, value, remappingFunction) 方法，下列哪个说法是错误的？`,answer:`C) merge 方法是线程安全的，可以在 ConcurrentHashMap 上无锁使用且结果完全可预测。解析：merge 方法在 HashMap 中不是线程安全的，需要外部同步。在 ConcurrentHashMap 上 merge 是原子的（线程安全），但具有弱一致性语义——多个线程并发 merge 同一个 key 时，remappingFunction 可能被执行多次，最终只有一个结果被保留。因此选项 C 中的“结果完全可预测”不准确。merge 的行为：key 不存在 → 直接放入 value；key 存在且 remappingFunction 返回 null → 删除该 key；key 存在且 remappingFunction 返回非 null → 用新值替换旧值。
+
+扩展延伸：ConcurrentHashMap 的 merge 底层通过 CAS + synchronized 保证原子性。remappingFunction 不应有副作用或操作同一个 Map。`,options:[`A) 当 key 不存在时，merge 方法直接将 value 放入 Map`,`B) 当 remappingFunction 返回 null 时，merge 会删除该 key`,`C) merge 方法是线程安全的，可以在 ConcurrentHashMap 上无锁使用且结果完全可预测`,`D) 当 remappingFunction 返回非 null 时，merge 会用新值替换旧值`],hints:[`注意 merge 在 ConcurrentHashMap 上的弱一致性`,`remappingFunction 在并发竞争时可能被多次执行`],tags:[`Java`,`集合`,`Map`,`ConcurrentHashMap`],content_hash:`8a184fd384a7`,id:2234},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`Queue 与 Deque 的用法区别`,content:`以下关于 Queue 和 Deque 接口的描述，正确的是？`,options:[`A) Deque 不继承 Queue`,`B) Queue 的 offer/poll/peek 操作在失败时返回特殊值`,`C) Queue 的 add/remove/element 操作在失败时返回特殊值`,`D) Deque 不支持栈操作`],answer:`B) Queue 的 offer/poll/peek 操作在失败时返回特殊值
+
+解析：Queue 接口有两组方法——add/remove/element（失败抛异常）和 offer/poll/peek（失败返回特殊值，add 返回 false/IllegalStateException，remove 返回 NoSuchElementException，element 返回 NoSuchElementException，offer 返回 false，poll/peek 返回 null）。Deque 继承 Queue 接口，支持双端操作（addFirst/offerFirst/removeFirst/pollFirst/getFirst/peekFirst 等），同时提供 push/pop/peek 栈操作方法。
+
+扩展延伸：ArrayDeque 是 Deque 的数组实现，性能和内存表现优于 Stack（Stack 继承 Vector，使用 synchronized）。Deque 作为栈使用时，push/pop 是 LIFO 行为。作为队列使用时，offer/poll 是 FIFO 行为。`,hints:[`Queue 的两组方法分别对应失败抛异常和返回特殊值`,`Deque 继承 Queue，同时支持栈操作`],tags:[`Java`,`集合`,`Queue`,`Deque`],content_hash:`b0e2a46d0921`,id:2235},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`HashMap 的扰动函数作用`,content:`HashMap 中 hash 扰动函数 (h = key.hashCode()) ^ (h >>> 16) 的主要目的是？`,options:[`A) 使 key 的哈希值随机化`,`B) 让高位参与低位运算，减少哈希碰撞`,`C) 防止 hash 值超过 Integer.MAX_VALUE`,`D) 提高 hashCode 的计算速度`],answer:`B) 让高位参与低位运算，减少哈希碰撞
+
+解析：HashMap 计算桶索引时使用 (n - 1) & hash，由于 n 通常较小（如 16），只有 hash 的低几位参与运算。扰动函数将 hash 的高 16 位与低 16 位异或，让高位信息也影响低位的分布，减少哈希碰撞。JDK 8 简化了 JDK 7 的多次扰动（4 次位运算）为一次，效果足够好且效率更高。
+
+扩展延伸：扰动函数为什么用异或而非与/或——异或能更均匀地混合高低位（与会产生偏 0 的结果，或会产生偏 1 的结果）。扰动后能改善的典型场景——连续整数（hashCode 是 i）直接与 (n-1) 做 & 运算时分布良好，但自定义对象的 hashCode 往往分布不均匀。`,hints:[`桶索引只依赖低几位，高位完全没用——扰动函数把高位信息混到低位`,`JDK 8 比 JDK 7 的扰动函数简化了`],tags:[`Java`,`集合`,`HashMap`,`哈希`],content_hash:`a9fd9164cb4c`,id:2236},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Iterator 遍历时能否删除元素`,content:`使用 Iterator 遍历集合时，以下哪种操作是安全的？`,options:[`A) 遍历时直接调用 list.remove(element)`,`B) 遍历时直接调用 list.add(element)`,`C) 遍历时调用 iterator.remove()`,`D) 遍历时调用 list.clear()`],answer:`C) 遍历时调用 iterator.remove()
+
+解析：Iterator 的 remove() 方法会删除当前访问的元素，并保证修改后的 expectedModCount 与集合的 modCount 一致。A 选项 list.remove() 会修改 modCount 但不更新迭代器的 expectedModCount，导致下次 next() 时抛 ConcurrentModificationException。B 选项 list.add() 也会触发 fast-fail。D 选项 clear() 同样触发 fast-fail。
+
+扩展延伸：JDK 8 的 removeIf() 方法也是内部使用迭代器的 remove()，可以安全删除——一行实现批量删除：list.removeIf(x -> x > 10)。for-each 循环底层使用 Iterator，所以同样的规则适用。多线程环境下即使使用 iterator.remove() 也可能抛 ConcurrentModificationException（因为其他线程也在修改）。`,hints:[`for-each 循环遍历时直接 remove 会抛 ConcurrentModificationException`,`removeIf() 是 JDK 8 提供的安全删除方式`],tags:[`Java`,`集合`,`迭代器`,`遍历`],content_hash:`0aefed287d30`,id:2237},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`红黑树插入后的自平衡操作`,content:`TreeMap 在插入新元素后，以下哪种不是红黑树自平衡的操作？`,options:[`A) 左旋（Left Rotate）`,`B) 右旋（Right Rotate）`,`C) 颜色翻转（Color Flip）`,`D) 重哈希（Rehash）`],answer:`D) 重哈希（Rehash）
+
+解析：红黑树的自平衡操作为了维持 5 条红黑树性质，使用三种操作：左旋（将父节点变为右子节点的左子节点）、右旋（将父节点变为左子节点的右子节点）、颜色翻转（改变节点颜色）。重哈希是 HashMap 的扩容操作，不属于红黑树的自平衡机制。
+
+扩展延伸：红黑树插入后的修复步骤：将新节点设为红色 → 父节点是黑色则不需调整 → 父节点是红色且叔节点红色→颜色翻转向上传递 → 父节点是红色且叔节点黑色→左旋/右旋 + 颜色调整。TreeMap 的 put 操作在插入后调用 fixAfterInsertion() 修复平衡。`,hints:[`红黑树用旋转 + 颜色翻转保持平衡`,`HashMap 在扩容时使用 rehash`],tags:[`Java`,`集合`,`TreeMap`,`红黑树`],content_hash:`db8738805ad1`,id:2238},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`ConcurrentHashMap computeIfAbsent 的死锁修复`,content:`JDK 8 的 ConcurrentHashMap 在 computeIfAbsent 方法存在一个已知 bug，以下说法正确的是？`,options:[`A) computeIfAbsent 在红黑树结构下可能触发死锁`,`B) computeIfAbsent 可能导致 CPU 100% 的死循环`,`C) computeIfAbsent 不能用于 null 值处理`,`D) computeIfAbsent 在扩容时会触发 NPE`],answer:`A) computeIfAbsent 在红黑树结构下可能触发死锁
+
+解析：JDK 8 的 ConcurrentHashMap 在 computeIfAbsent 方法中，当红黑树（TreeBin）的根节点调用 lockRoot 加锁时，其他线程可能在同一桶上调用 computeIfAbsent 也尝试获取该树的锁，形成死锁。这是 JDK-8062841（已修复）。JDK 9 中的修复引入了新的 ReservationNode 标记节点，在计算期间标记桶首节点为预留状态，防止其他线程操作同一桶。
+
+扩展延伸：这个 bug 在密集并发调用 computeIfAbsent 的代码中才容易被触发（如热点缓存的加载）。修复后 computeIfAbsent 仍保证映射函数最多执行一次（在被放入 map 前），但如果映射函数递归调用了自身（同一个 map 的 computeIfAbsent），仍可能造成 StackOverflowError。`,hints:[`JDK 8 的 computeIfAbsent 在红黑树节点下可能死锁`,`JDK 9 用 ReservationNode 修复了此问题`],tags:[`Java`,`集合`,`ConcurrentHashMap`,`Bug`],content_hash:`bb61312123d3`,id:2239},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`NavigableSet 的 floor 方法`,content:`给定一个 NavigableSet<Integer> 包含 [1, 3, 5, 7, 9]，调用 floor(6) 返回什么？`,options:[`A) 5`,`B) 6`,`C) 7`,`D) null`],answer:`A) 5
+
+解析：NavigableSet.floor(e) 返回集合中小于或等于 e 的最大元素。floor(6) 在 [1,3,5,7,9] 中，<=6 的最大元素是 5。相似方法——ceiling(e)：>= e 的最小元素（ceiling(6) = 7）。lower(e)：< e 的最大元素（lower(6) = 5，floor 返回 <=，lower 返回 <，如果集合包含 6，floor(6)=6 但 lower(6)=5）。higher(e)：> e 的最小元素（higher(6) = 7）。
+
+扩展延伸：这些导航方法在二分查找和范围查询场景非常有用。例如在时间线应用中查找最近时间点：floor 用于向前查找，ceiling 用于向后查找。TreeSet 实现了 NavigableSet，所有这些方法都是 O(log n) 时间。如果集合为空，所有导航方法返回 null。`,hints:[`floor 返回 <= e 的最大元素`,`ceiling 返回 >= e 的最小元素`],tags:[`Java`,`集合`,`NavigableSet`,`TreeSet`],content_hash:`f8032882e0c7`,id:2240},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`ArrayDeque 的扩容机制`,content:`ArrayDeque 默认初始容量是多少？当容量不够时如何扩容？`,options:[`A) 默认 10，扩容时增加 50%`,`B) 默认 16，扩容时翻倍`,`C) 默认 10，扩容时翻倍`,`D) 默认 8，扩容时增加 75%`],answer:`B) 默认 16，扩容时翻倍
+
+解析：ArrayDeque 底层是循环数组（Circular Array），默认初始容量是 16（与 HashMap 不同，不是 10 或 8）。当容量不足时（head 和 tail 重合），扩容为当前容量的两倍（左移一位）。容量始终是 2 的幂（便于位运算计算索引：elements.length - 1 & head/tail）。容量大于 2^30 时抛出 IllegalStateException（越界）。注意：ArrayDeque 不会像 ArrayList 那样自动收缩容量。如果确定元素数量，建议使用 new ArrayDeque<>(numElements) 指定足够大的初始容量。
+
+扩展延伸：ArrayDeque 的构造函数——1）无参：容量 16。2）new ArrayDeque<>(numElements)：实际容量为 >= numElements 的 2 的最小幂（allocateElements 方法计算）。3）new ArrayDeque<>(collection)：按集合大小分配。对比 HashMap——默认 16，负载因子 0.75，扩容翻倍。ArrayList——默认 10，扩容 1.5 倍。`,hints:[`ArrayDeque 初始容量 16，2 的幂`,`扩容翻倍（左移一位）`],tags:[`Java`,`集合`,`ArrayDeque`,`扩容`],content_hash:`c7d291d75140`,id:2241},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`checkedList 抛异常的场景`,content:`假设执行以下代码，哪一行会抛出 ClassCastException？
+List raw = new ArrayList();
+List<String> checked = Collections.checkedList(raw, String.class);
+raw.add(42);                          // 行1
+checked.add("hello");                 // 行2
+checked.add(42);                       // 行3
+String s = (String) raw.get(0);        // 行4`,options:[`A) 行1`,`B) 行2`,`C) 行3`,`D) 行4`],answer:`C) 行3
+
+解析：row 1——直接操作 raw list（原始类型），add(42) 成功（无泛型检查）。row 2——checked.add("hello")，类型为 String，类型检查通过。row 3——checked.add(42)，42 不是 String 类型的实例，checked 包装在插入时检测到类型不匹配，立即抛出 ClassCastException（提示 Attempt to insert element of type java.lang.Integer into collection with element type class java.lang.String）。row 4——raw.get(0) 获取的是 Integer（row 1 存入的 42），强制转型为 String 才会抛出 ClassCastException。（row 3 已经提前执行并抛出了异常）。
+
+扩展延伸：checked 包装的关键价值是 fail-fast——在错误的源头（插入时）立即失败，而不是在使用时（取出时）才发现。这大大简化了调试。行 1 成功的原因是 raw 上的 add 使用了 raw type，绕过了泛型检查，这是遗留代码与泛型代码整合时的常见问题。使用 checked 包装时注意：必须只使用 checked 视图的引用进行写入操作（不要保留 raw 引用），否则 raw 引用仍然可以绕过检查。`,hints:[`checked 包装在插入时检查类型，立即 fail-fast`,`通过 raw type 引用可以直接插入，绕过 checked 检查`],tags:[`Java`,`集合`,`checkedList`,`类型安全`],content_hash:`b61f2719ef2e`,id:2242},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`Collections.shuffle 的效果`,content:`以下关于 Collections.shuffle(List<?> list) 的描述，哪一个是不正确的？`,options:[`A) shuffle 会随机打乱列表元素的顺序`,`B) shuffle 使用 Fisher-Yates 算法`,`C) shuffle 会创建新的列表，不修改原列表`,`D) shuffle 可以接受自定义 Random 种子来控制随机序列`],answer:`C) shuffle 会创建新的列表，不修改原列表
+
+解析：Collections.shuffle() 是就地修改（in-place）操作，直接打乱传入的列表，不会创建新列表。A 正确——shuffle 的功能是随机打乱元素。B 正确——内部使用 Fisher-Yates 算法（从后向前遍历，每个位置随机选一个 0~i 的位置交换）。D 正确——shuffle(List, Random) 重载版本可传入自定义 Random（在测试时使用固定种子确保可复现）。常见误解——很多人以为 shuffle 返回新列表。实际上 Collections 的算法方法（sort、shuffle、reverse、rotate、fill）都是就地修改。如果你需要保留原始顺序，应该先创建副本：var copy = new ArrayList<>(original); Collections.shuffle(copy);
+
+扩展延伸：shuffle 的时间复杂度 O(n)。Fisher-Yates 算法的优势是每个排列的概率相等（均匀分布），且每个元素恰好交换一次。相关的老式算法（如 naive 的每个位置随机再交换）会产生偏斜分布（不是均匀分布）。注意：默认的 shuffle() 使用 Random，不保证密码学安全性。如果需要对敏感数据打乱，考虑使用 shuffle(list, SecureRandom) 或 Collections.shuffle(list, ThreadLocalRandom.current())。`,hints:[`shuffle 是就地修改（in-place）操作`,`需要保留原始顺序时先 copy 再 shuffle`],tags:[`Java`,`集合`,`Collections`,`shuffle`],content_hash:`511f40e82901`,id:2243},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`Stack 和 Deque 的栈操作对比`,content:`以下关于 java.util.Stack 和 java.util.Deque 作为栈使用时的说法，错误的是？`,options:[`A) Stack 继承自 Vector，Deque 是接口`,`B) Deque 可以用 push/pop/peek 实现栈操作`,`C) Stack 的 push 方法不是 synchronized 的`,`D) ArrayDeque 作为栈使用时性能优于 Stack`],answer:`C) Stack 的 push 方法不是 synchronized 的
+
+解析：Stack 的所有方法（push、pop、peek、empty、search）都是 synchronized 的，因为 Stack 继承了 Vector，Vector 的所有 public 方法都是 synchronized。A 正确——Stack extends Vector，Deque 是接口。B 正确——Deque 接口提供了 push（头部插入）、pop（头部移除）、peek（查看头部）等完整的栈操作方法。D 正确——ArrayDeque 在单线程场景下性能远优于 Stack（无同步开销，内存紧凑），这正是官方推荐使用 ArrayDeque 替代 Stack 的原因。
+
+扩展延伸：Stack 类从 JDK 1.0 就存在，是 Java 的遗留类。官方 Javadoc 已经明确说明："Deque 接口及其实现提供了更完整和一致的 LIFO 栈操作集，应该优先使用。" ArrayDeque 作为栈的默认实现，其 push/pop 均摊时间复杂度 O(1)，并且可以调整初始容量避免扩容次数。当需要使用 LIFO 队列（栈）时，ArrayDeque 是通用最佳选择。`,hints:[`Stack 的所有方法都是 synchronized（继承自 Vector）`,`Java 官方文档推荐用 ArrayDeque 替代 Stack`],tags:[`Java`,`集合`,`Stack`,`Deque`,`ArrayDeque`],content_hash:`107904e98533`,id:2244},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`HashMap 树化退化`,content:`当 HashMap 的红黑树节点数小于多少时会退化为链表？`,options:[`A) 8`,`B) 7`,`C) 6`,`D) 5`],answer:`C) 6。
+
+解析：HashMap 中树化阈值为 8（链表→红黑树），退化阈值为 6（红黑树 → 链表）。中间保留 1 的余量（7），避免在链表和红黑树之间频繁切换。
+
+如果树化阈值和退化阈值相同（都是 8），那么在 8 这个临界点上，插入元素触发树化、删除元素触发退化，反复操作会导致性能抖动。
+
+A 错误：8 是树化阈值（链表→红黑树）。
+B 错误：7 不是官方阈值，是用于缓冲的中间值。
+D 错误：5 太低，红黑树在节点 5-7 时的性能优势还不如链表。
+
+扩展延伸：红黑树节点（TreeNode）大约是普通链表节点（Node）的 2 倍大小。红黑树在极端哈希冲突场景下（如恶意哈希攻击）保证查找性能 O(log n)。JDK 8+ 对 String 和 Integer 等类型的 hashCode 做了扰动函数优化以减少哈希冲突。`,hints:[`退化阈值 6，树化阈值 8，差值为缓冲`,`避免频繁的树化↔退化切换`],tags:[`Java`,`HashMap`,`树化`,`红黑树`],content_hash:`9ba314ca1e97`,id:2245},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`ConcurrentHashMap computeIfAbsent`,content:`ConcurrentHashMap 的 computeIfAbsent 方法在 JDK 8 中可能存在什么问题？`,options:[`A) 它不是线程安全的`,`B) 当 mappingFunction 耗时较长时会导致其他线程阻塞`,`C) 它不支持 null 值`,`D) 它不能保证原子性`],answer:`B) 当 mappingFunction 耗时较长时会导致其他线程阻塞。
+
+解析：JDK 8 的 ConcurrentHashMap.computeIfAbsent() 在 key 对应的槽位为 null 时，会锁定该槽位（对链表头或树根加 synchronized），然后执行 mappingFunction。如果 mappingFunction 耗时较长（如访问数据库、调用远程 API），其他尝试操作同一个槽位的线程会被阻塞。
+
+JDK 9 修复了这个问题——mappingFunction 不会在锁内执行，而是先创建占位对象（ ReservationNode），释放锁后再执行。
+
+A 错误：computeIfAbsent 是线程安全的。
+C 错误：ConcurrentHashMap 不支持 null 值（但这不是 computeIfAbsent 特有的问题）。
+D 错误：computeIfAbsent 是原子操作。
+
+扩展延伸：JDK 9 的修复原理：先 CAS 放入 ReservationNode（占位标记），释放锁后执行 mappingFunction，执行完再用真实节点替换 ReservationNode。这被记录为 JDK bug JDK-8062841。类似问题还可能出现在 merge()、compute() 等方法中。`,hints:[`JDK 8 中 computeIfAbsent 在锁内执行 mappingFunction`,`JDK 9 改为先放占位节点再执行`],tags:[`Java`,`ConcurrentHashMap`,`computeIfAbsent`,`并发`],content_hash:`d8ab48c0cc9f`,id:2246},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`Comparable vs Comparator`,content:`关于 Comparable 和 Comparator 的区别，以下说法正确的是？`,options:[`A) Comparable 在类外部实现，Comparator 在类内部实现`,`B) Comparable 用于定义自然排序，Comparator 用于定义定制排序`,`C) Comparator 使用 compareTo() 方法，Comparable 使用 compare() 方法`,`D) Comparable 和 Comparator 都位于 java.util 包中`],answer:`B) Comparable 用于定义自然排序，Comparator 用于定义定制排序。
+
+解析：
+
+B 正确：Comparable 定义类的"自然排序顺序"（如 String 的字典序、Integer 的数值序）。Comparator 用于在不修改类的情况下定义额外的排序顺序（如按长度排序、按日期排序）。
+
+A 错误：Comparable 需要由目标类实现（类内部），Comparator 在类外部实现（独立的类或 Lambda）。
+C 错误：Comparable 使用 compareTo()，Comparator 使用 compare()。
+D 错误：Comparable 在 java.lang 包，Comparator 在 java.util 包。
+
+扩展延伸：Comparator 提供了大量链式方法：thenComparing()、reversed()、nullsFirst()/nullsLast()。TreeSet/TreeMap 同时支持两种排序方式（构造时传入 Comparator 则优先使用）。Stream.sorted() 也支持两者。`,hints:[`Comparable 是"内部比较器"，Comparator 是"外部比较器"`,`Comparator 在 java.util，Comparable 在 java.lang`],tags:[`Java`,`Comparable`,`Comparator`,`排序`],content_hash:`7aa83454703b`,id:2247},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`LinkedHashMap 访问顺序`,content:`LinkedHashMap 的 accessOrder 参数设置为 true 时，最常访问的元素会移动到链表的最（__）位置？`,options:[`A) 头部`,`B) 尾部`,`C) 中间`,`D) 随机`],answer:`B) 尾部。
+
+解析：LinkedHashMap 在 accessOrder = true 时，每次调用 get()/put() 访问某个 Entry 后，该 Entry 会被移动到双向链表的尾部（tail）。因此链表头部的元素是最久未访问的，尾部的元素是最近访问的。
+
+这一特性使 LinkedHashMap 非常适合实现 LRU（Least Recently Used）缓存。只需继承 LinkedHashMap 并重写 removeEldestEntry() 方法，当缓存大小超过阈值时自动移除链表头部的 Entry。
+
+扩展延伸：构造 LinkedHashMap(initialCapacity, loadFactor, accessOrder)。removeEldestEntry(Map.Entry) 返回 true 时移除最旧的 Entry。Guava Cache 和 Caffeine 提供了更强大的 LRU 实现（包括基于时间和容量的过期策略）。`,hints:[`accessOrder=true 时，最近访问的元素移到链表尾部`,`链表头部是最久未访问的元素`],tags:[`Java`,`LinkedHashMap`,`LRU`,`缓存`],content_hash:`91994d1b9cc3`,id:2248},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`ConcurrentSkipListMap 数据结构`,content:`ConcurrentSkipListMap 的底层实现基于什么数据结构？`,options:[`A) 红黑树`,`B) B+树`,`C) 跳表（Skip List）`,`D) 哈希表`],answer:`C) 跳表（Skip List）。
+
+解析：ConcurrentSkipListMap 使用跳表（Skip List）实现，是一种有序的并发 Map。跳表是一种概率性数据结构（通过抛硬币决定层次），在有序链表上构建多层索引来实现 O(log n) 的查找/插入/删除。
+
+A 错误：红黑树是 TreeMap 的底层实现。虽然红黑树也能保证 O(log n)，但在并发环境下实现复杂（需要锁）。
+B 错误：B+树是数据库索引的常见实现。
+D 错误：哈希表是 HashMap 的底层实现，不维护顺序。
+
+为什么并发场景用跳表：1）跳表使用 CAS 实现无锁并发，不需要像红黑树那样复杂的锁机制；2）跳表的插入/删除只影响局部节点，而红黑树可能触发全局的再平衡。
+
+扩展延伸：跳表的空间复杂度 O(n log n)。ConcurrentSkipListSet 是并发有序 Set。跳表在 LevelDB、Redis（有序集合）中也有应用。ConcurrentSkipListMap 实现了 ConcurrentNavigableMap 接口。`,hints:[`ConcurrentSkipListMap 基于跳表实现`,`跳表通过 CAS 实现无锁并发`],tags:[`Java`,`ConcurrentSkipListMap`,`跳表`,`并发`],content_hash:`e5a85d647624`,id:2249},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`IdentityHashMap 比较方式`,content:`IdentityHashMap 使用什么方式比较 key 的相等性？`,options:[`A) equals() 方法`,`B) hashCode() + equals()`,`C) 引用相等性（==）`,`D) Comparator`],answer:`C) 引用相等性（==）。
+
+解析：IdentityHashMap 使用引用相等性（==）而不是 equals() 来比较 key。也就是说，只有当两个 key 是同一个对象引用时，才被视为相等。
+
+这与常规 Map（HashMap、TreeMap 等）不同，后者使用 equals() 进行逻辑相等性比较。IdentityHashMap 也不使用 hashCode()，而是使用 System.identityHashCode()。
+
+典型用途：
+1. 序列化/深度拷贝——跟踪已经处理过的对象（防止循环引用）
+2. 代理/拦截框架——按实例跟踪对象
+3. 调试工具——分析对象的引用关系
+
+扩展延伸：IdentityHashMap 的 hashCode 实现是 identityHashCode（System 方法，基于内存地址的默认 hashCode）。与 HashMap 不同，IdentityHashMap 使用线性探测法（开放定址法）解决哈希冲突，而不是链地址法。它继承 AbstractMap 但不是通用 Map，违反了一些 Map 接口的约定。`,hints:[`IdentityHashMap 使用 == 而非 equals() 比较 key`,`使用 System.identityHashCode() 而非 hashCode()`],tags:[`Java`,`IdentityHashMap`,`引用比较`,`===`],content_hash:`887feb14b8e1`,id:2250},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`HashMap 扩容阈值的动态计算`,content:`关于 HashMap 扩容阈值（threshold）的计算过程，以下描述正确的是？`,answer:`D) 默认 threshold = capacity × loadFactor，但首次 put 时若指定初始容量，threshold 先设为大于容量的最小 2 的幂，再重算。解析：HashMap 默认 threshold = 16 × 0.75 = 12。但构造时若指定初始容量，tableSizeFor() 方法先将 threshold 设为大于等于指定容量的最小 2 的幂（如传入 19 → 32）。首次 put 时在 resize() 中重算 threshold = newCap × loadFactor。此后每次 resize 时 threshold 都等于新容量 × 负载因子。loadFactor 默认 0.75 是空间和时间成本的折中。threshold 是 int 类型，最大值为 Integer.MAX_VALUE。`,options:[`A) threshold 固定为容量的一半，不受负载因子影响`,`B) threshold 在初始化时设为容量 × 2，防止频繁扩容`,`C) threshold 每次扩容后都重设为 Java 允许的 int 最大值`,`D) 默认 threshold = capacity × loadFactor，但首次 put 时若指定初始容量，threshold 先设为大于容量的最小 2 的幂，再重算`],hints:[`tableSizeFor() 方法将任意整数转为大于等于该数的最小 2 的幂`,`threshold 在构造时和首次 put 后的语义有细微差别`],tags:[`HashMap`,`扩容`,`threshold`,`负载因子`],content_hash:`786bf10affec`,id:2263},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`IdentityHashMap 的引用比较与典型应用`,content:`关于 IdentityHashMap 的键比较方式和典型应用场景，以下说法正确的是？`,answer:`C) IdentityHashMap 使用 == 和 System.identityHashCode() 比较键，用于追踪对象身份而非内容相等性。解析：IdentityHashMap 违反 Map 接口的一般约定（使用 equals() 比较键），改用引用相等性（==）和 System.identityHashCode()。典型用途：1）序列化/深拷贝框架追踪已处理的对象引用（防止循环引用）；2）调试工具维护对象身份到元数据的映射；3）分析工具做对象引用图遍历；4）代理或 instrumentation 框架记录原始对象。IdentityHashMap 底层使用线性探测哈希表（open addressing），而非 HashMap 的拉链法。它不是通用的 Map，不适合作为常规映射使用。允许 null 键（使用特殊的 null key 标记）。`,options:[`A) IdentityHashMap 与 HashMap 完全相同，只是增加了线程安全特性`,`B) IdentityHashMap 在比较键时优先使用 equals()，如果不重写则回退到 ==`,`C) IdentityHashMap 使用 == 和 System.identityHashCode() 比较键，用于追踪对象身份`,`D) IdentityHashMap 的底层数据结构和 HashMap 一样使用拉链法`],hints:[`IdentityHashMap 不适合用 equals() 比较键的场景`,`序列化框架利用 IdentityHashMap 追踪已遍历的对象引用`],tags:[`IdentityHashMap`,`引用比较`,`序列化`,`线性探测`],content_hash:`e1e1071038d7`,id:2264},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`PriorityQueue 入队出队的时间复杂度`,content:`关于 PriorityQueue 核心操作的时间复杂度，以下选项完全正确的是？`,answer:`B) offer()：O(log n)，poll()：O(log n)，peek()：O(1)，remove(Object)：O(n)。解析：PriorityQueue 基于二叉最小堆实现。offer() 在数组末尾插入新元素并执行 siftUp（上浮）O(log n)。poll() 移除堆顶元素并将末尾元素移到堆顶执行 siftDown（下沉）O(log n)。peek() 直接返回数组下标 0 的元素 O(1)。remove(Object) 需要线性扫描数组定位元素 O(n)，然后移除并做 siftUp/siftDown O(log n)，总体 O(n)。批量建堆（使用 Collection 构造）通过 heapify 方法在 O(n) 时间内完成。注意 PriorityQueue 不是线程安全的，线程安全版本为 PriorityBlockingQueue。`,options:[`A) offer()：O(log n)，poll()：O(1)，peek()：O(1)，remove()：O(log n)`,`B) offer()：O(log n)，poll()：O(log n)，peek()：O(1)，remove(Object)：O(n)`,`C) offer()：O(1)，poll()：O(log n)，peek()：O(log n)，remove()：O(1)`,`D) 所有操作的时间复杂度均为 O(log n)`],hints:[`siftUp（上浮）和 siftDown（下沉）分别在哪些操作中使用`,`为什么 remove(Object) 不能直接通过索引快速定位`],tags:[`PriorityQueue`,`二叉堆`,`时间复杂度`,`siftUp`,`siftDown`],content_hash:`6a31924f4b0e`,id:2265},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`WeakHashMap 引用队列的清理机制`,content:`关于 WeakHashMap 的弱引用键和引用队列（ReferenceQueue）的配合机制，以下说法错误的是？`,answer:`D) WeakHashMap 的 value 也被弱引用引用，因此 key 被 GC 回收后 value 会自动释放。解析：WeakHashMap 的 Entry 继承自 WeakReference，key 被弱引用包装，但 value 是强引用。当 key 被 GC 回收（仅有弱引用可达）后，WeakReference 被加入 ReferenceQueue。WeakHashMap 在每次调用 put()、get()、size() 等操作时轮询 ReferenceQueue，获取已回收的 WeakReference，清理对应的 Entry 并解除 value 的强引用。如果 value 没有被正确清理，且 value 对象内部持有对自己或 key 的强引用，可能导致 value 泄漏。设计上 WeakHashMap 适合缓存 key→value 映射，其中 key 的生命周期由外部控制。注意 value 不能直接或间接引用 key，否则 key 永远不会被回收（因为 value 到 key 的强引用链阻止了 GC）。`,options:[`A) WeakHashMap 的 Entry 继承自 WeakReference，key 被弱引用包装`,`B) WeakHashMap 每次调用 put()、get()、size() 时检查 ReferenceQueue 清理过期 Entry`,`C) 如果 value 持有对 key 的强引用，会导致 key 无法被 GC 回收，造成内存泄漏`,`D) WeakHashMap 的 value 也被弱引用引用，因此 key 被 GC 回收后 value 会自动释放`],hints:[`弱引用只作用于 key，value 仍然是强引用`,`value 不能直接或间接强引用 key，否则弱引用机制失效`],tags:[`WeakHashMap`,`ReferenceQueue`,`弱引用`,`内存管理`],content_hash:`e9ac4878824d`,id:2266},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`CopyOnWriteArrayList 快照迭代器的弱一致性`,content:`关于 CopyOnWriteArrayList 迭代器的快照语义和弱一致性，以下描述正确的是？`,answer:`C) 迭代器创建时保存底层数组的快照引用，后续对列表的修改不会影响已创建的迭代器，也不会抛出 ConcurrentModificationException。解析：CopyOnWriteArrayList 的迭代器持有创建时底层数组的快照引用。此后对列表的 add()、set()、remove() 操作都会创建新数组副本，迭代器遍历的仍然是旧数组，因此不会抛出 ConcurrentModificationException。这种设计保证了弱一致性（weakly consistent）——迭代器保证看到创建时刻的状态，但不保证看到后续修改。迭代器不支持 remove() 操作（抛出 UnsupportedOperationException）。CopyOnWriteArrayList 适合读多写少的场景（如事件监听器列表、缓存配置），写操作（数组复制）在元素多时开销很大。`,options:[`A) CopyOnWriteArrayList 的迭代器在列表修改时会抛出 ConcurrentModificationException`,`B) 迭代器创建后，后续对列表的修改会实时反映在迭代器中`,`C) 迭代器创建时保存底层数组的快照引用，后续对列表的修改不会影响已创建的迭代器`,`D) CopyOnWriteArrayList 的迭代器支持 remove() 操作删除当前遍历的元素`],hints:[`写时复制（Copy-On-Write）策略决定了迭代器的快照语义`,`弱一致性（weakly consistent）和强一致性的区别`],tags:[`CopyOnWriteArrayList`,`迭代器`,`快照`,`弱一致性`,`写时复制`],content_hash:`0e4956fc22b6`,id:2267},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`ConcurrentHashMap CAS 操作机制`,content:`关于 Java 8+ ConcurrentHashMap 的并发控制机制，以下描述正确的是？`,answer:`B) ConcurrentHashMap 使用 CAS + synchronized 对特定桶位进行细粒度并发控制。解析：Java 8 重构了 ConcurrentHashMap，放弃分段锁（Segment）设计。新实现使用 CAS（Compare-And-Swap）处理大部分操作：table 初始化用 CAS 避免锁争用，桶位首节点用 CAS 插入。当发生哈希冲突（链表或红黑树操作）时使用 synchronized 锁住桶位首节点。这种设计只在发生冲突时才加锁，无冲突时完全无锁，显著提升了并发吞吐量。size() 方法通过 CounterCell 数组累加计数，无需全表扫描。迭代器是弱一致性的——不抛 ConcurrentModificationException，但不保证实时反映最新修改。`,options:[`A) ConcurrentHashMap 在所有写操作中使用全局 ReentrantLock 保证线程安全`,`B) ConcurrentHashMap 使用 CAS + synchronized 对特定桶位进行细粒度并发控制`,`C) ConcurrentHashMap 完全基于分段锁（Segment）实现，与 Java 7 相同`,`D) ConcurrentHashMap 的 size() 方法每次调用都需要全表扫描加锁计算`],hints:[`Java 8 对 ConcurrentHashMap 做了重大重构，放弃了分段锁`,`CAS 用于无竞争场景，synchronized 用于哈希冲突时的桶位锁定`],tags:[`ConcurrentHashMap`,`CAS`,`synchronized`,`concurrency`,`Java 8`],content_hash:`6b9adbd58e68`,id:2268},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`CopyOnWriteArrayList 底层数组快照`,content:`关于 CopyOnWriteArrayList 的底层数组快照机制和迭代器行为，以下说法正确的是？`,answer:`A) CopyOnWriteArrayList 的所有修改操作（add、set、remove）都会创建底层数组的新副本。解析：CopyOnWriteArrayList 的写时复制策略——每次修改操作（add、set、remove）都创建当前数组的完整副本，在副本上修改，然后用副本替换原数组。这个操作使用 ReentrantLock 加锁保证并发安全。读操作（get、迭代）无需加锁，直接访问当前 volatile 数组引用。迭代器创建时持有当时数组的快照引用，对该迭代器的遍历只能看到创建时刻的状态。后续的 add/remove 不会影响已创建的迭代器，也不会抛 ConcurrentModificationException（快照迭代器本质是弱一致性）。迭代器不支持 remove() 操作（抛 UnsupportedOperationException）。适用场景：读远多于写的场景（如事件监听器列表、配置信息缓存）。元素数量大时写成本很高（完整数组复制）。`,options:[`A) CopyOnWriteArrayList 的所有修改操作（add、set、remove）都会创建底层数组的新副本`,`B) CopyOnWriteArrayList 的迭代器在列表被修改时会抛出 ConcurrentModificationException`,`C) CopyOnWriteArrayList 的读操作需要获取 ReentrantLock 以保证可见性`,`D) CopyOnWriteArrayList 适用于写多读少的并发场景`],hints:[`写时复制的本质是牺牲写性能换取读性能`,`迭代器持有的是创建时刻的数组快照，之后的修改不影响已有迭代器`],tags:[`CopyOnWriteArrayList`,`snapshot`,`fail-safe`,`weakly-consistent`,`copy-on-write`],content_hash:`3419210dd27e`,id:2269},{category:`java_collections`,difficulty:`easy`,type:`choice`,title:`BlockingQueue put/take 阻塞机制`,content:`关于 BlockingQueue 的 put() 和 take() 方法的阻塞语义，以下说法正确的是？`,answer:`B) put() 在队列满时无限期阻塞等待直到有空闲位置，take() 在队列空时无限期阻塞等待直到有新元素。解析：BlockingQueue 的 put(E) 方法在队列满时阻塞等待，直到其他线程调用 take() 移除元素腾出空间。take() 方法在队列空时阻塞等待，直到其他线程调用 put() 添加元素。两者都是可中断的阻塞——线程在等待期间可响应中断。非阻塞变体：offer(E) 返回 boolean 表示是否成功入队（不阻塞），offer(E, long, TimeUnit) 限时等待；poll(long, TimeUnit) 限时等待出队，peek() 返回队首但不移除。注意不同 BlockingQueue 实现的行为差异：ArrayBlockingQueue 是有界阻塞队列，必须指定容量；LinkedBlockingQueue 可指定容量也可无边；SynchronousQueue 不存储元素，每个 put 必须等待一个 take。所有 BlockingQueue 实现都是线程安全的。`,options:[`A) put() 在队列满时抛出 IllegalStateException，take() 在队列空时返回 null`,`B) put() 在队列满时无限期阻塞等待直到有空闲位置，take() 在队列空时无限期阻塞等待直到有新元素`,`C) put() 和 take() 只等待 1 秒，超时后分别返回 false 和 null`,`D) put() 和 offer() 行为完全一致，都返回 boolean 表示是否成功`],hints:[`put() 和 take() 是阻塞方法，offer() 和 poll() 是非阻塞或限时的`,`BlockingQueue 的设计目的是解决生产者-消费者模型中的线程协调问题`],tags:[`BlockingQueue`,`put`,`take`,`blocking`,`producer-consumer`],content_hash:`f4cf2e54cac6`,id:2270},{category:`java_collections`,difficulty:`hard`,type:`choice`,title:`HashMap 树化触发的双重条件检测`,content:`关于 HashMap 在 Java 8+ 中链表转红黑树的树化条件和退化为链表的条件，以下说法正确的是？`,answer:`B) 当链表长度超过 8 且数组长度大于等于 64 时才会树化，否则优先触发扩容。解析：HashMap 树化的两个条件必须同时满足：1）链表长度超过 TREEIFY_THRESHOLD（8），2）数组长度大于等于 MIN_TREEIFY_CAPACITY（64）。如果链表长度超过 8 但数组长度小于 64，HashMap 会优先触发 resize() 扩容，将链表分散到新数组中，避免树化。扩容后链表长度通常会降低（重新哈希后元素分布更散）。退化条件：当红黑树中的节点数降低到 UNTREEIFY_THRESHOLD（6）以下时，在 resize() 过程中将红黑树退化为链表。注意退化只在 resize 时发生，不会在 remove 时立即触发（remove 时不做退化为链表的检查）。TREEIFY_THRESHOLD=8 的选择基于泊松分布的概率统计——链表长度达到 8 的概率极低（约 0.00000006），树化是一种防攻击机制而不是常规优化。`,options:[`A) 当链表长度超过 8 时立即可将链表树化为红黑树，无需其他条件`,`B) 当链表长度超过 8 且数组长度大于等于 64 时才会树化，否则优先触发扩容`,`C) 树化后当链表长度降低到 6 以下时立即退化为链表，无需 resize`,`D) 树化阈值为 16，退化阈值为 12，树化和退化都在 put 操作中实时检查`],hints:[`树化是防哈希碰撞攻击的保护机制，不是常态优化`,`链表长度超 8 但数组小时优先扩容而非树化`],tags:[`HashMap`,`treeify`,`untreeify`,`threshold`,`resize`],content_hash:`4e4721706233`,id:2271},{category:`java_collections`,difficulty:`medium`,type:`choice`,title:`NavigableSet ceiling floor 方法`,content:`关于 NavigableSet（如 TreeSet）的 ceiling() 和 floor() 方法的行为，以下说法正确的是？`,answer:`A) ceiling(e) 返回大于等于 e 的最小元素，如果不存在这样的元素则返回 null。解析：NavigableSet 提供了 4 个范围查找方法：1）ceiling(e)：返回 ≥ e 的最小元素，不存在返回 null。2）floor(e)：返回 ≤ e 的最大元素，不存在返回 null。3）higher(e)：返回 > e 的最小元素，严格大于，不存在返回 null。4）lower(e)：返回 < e 的最大元素，严格小于，不存在返回 null。这些方法的时间复杂度均为 O(log n)（基于 TreeSet 的 TreeMap 实现）。四种方法都不会抛出 NoSuchElementException——找不到时返回 null 而非异常。注意区分 ceiling 与 higher、floor 与 lower 的区别在于是否包含等于（inclusive vs exclusive）。这些方法对实现范围查询、分页查询、最近邻查找等场景非常有用。`,options:[`A) ceiling(e) 返回大于等于 e 的最小元素，如果不存在这样的元素则返回 null`,`B) floor(e) 返回小于等于 e 的最大元素，如果不存在则抛出 NoSuchElementException`,`C) higher(e) 返回大于等于 e 的最小元素，与 ceiling(e) 行为完全一致`,`D) lower(e) 返回小于等于 e 的最大元素，与 floor(e) 行为完全一致`],hints:[`ceiling 包含等于（≥）而 higher 不包含等于（>）`,`floor 包含等于（≤）而 lower 不包含等于（<）`],tags:[`NavigableSet`,`TreeSet`,`ceiling`,`floor`,`higher`,`lower`],content_hash:`433b6fa71e77`,id:2272},{category:`java_collections`,difficulty:`easy`,type:`multiple_choice`,title:`ArrayList 的特性`,content:`以下关于 ArrayList 的描述，哪些是正确的？`,answer:`A)、B)、D)。解析：ArrayList 基于动态数组实现，初始容量为 10（懒加载，第一次 add 时初始化），扩容时按 1.5 倍增长（oldCapacity + oldCapacity >> 1）。ArrayList 允许 null 元素，并且通过 ensureCapacity() 可以手动增加容量以减少扩容次数。ArrayList 不是线程安全的，多线程环境下应使用 CopyOnWriteArrayList 或 Collections.synchronizedList()。`,options:[`A) 底层基于动态数组实现`,`B) 扩容时按原容量的 1.5 倍增长`,`C) ArrayList 是线程安全的`,`D) 允许存储 null 元素`],hints:[`看 ArrayList 源码的 grow() 方法`,`线程安全性需要额外保证`],tags:[`集合`,`ArrayList`],content_hash:`44465c8ef2d9`,id:2287},{category:`java_collections`,difficulty:`easy`,type:`multiple_choice`,title:`HashMap 的特性`,content:`以下关于 Java HashMap 的描述，哪些是正确的？`,answer:`A)、C)、D)。解析：HashMap 允许一个 null 键和多个 null 值，null 键的哈希值固定为 0（存储在数组索引 0 的位置）。JDK 8 引入了红黑树优化：当链表长度 ≥ 8 且数组长度 ≥ 64 时链表转为红黑树，将查询复杂度从 O(n) 降为 O(log n)。HashMap 默认负载因子 0.75 是时间和空间的折中。默认初始容量 16 必须是 2 的幂。`,options:[`A) 允许一个 null 键`,`B) HashMap 在 JDK 8 中是线程安全的`,`C) JDK 8 中引入了红黑树优化`,`D) 默认负载因子是 0.75`],hints:[`HashMap 在多线程下存在问题`,`红黑树优化的触发条件`],tags:[`集合`,`HashMap`],content_hash:`96479eda88a1`,id:2288},{category:`java_collections`,difficulty:`hard`,type:`multiple_choice`,title:`HashMap 与 Hashtable 的区别`,content:`以下关于 HashMap 和 Hashtable 区别的描述，哪些是正确的？`,answer:`A)、B)、C)。解析：HashMap 和 Hashtable 的主要区别：1）线程安全：Hashtable 使用 synchronized 保证线程安全，HashMap 非线程安全；2）null 值：HashMap 允许 null key 和 null value，Hashtable 不允许；3）初始容量和扩容：HashMap 初始 16 扩容 2 倍，Hashtable 初始 11 扩容 2 倍 + 1；4）继承关系：Hashtable 继承 Dictionary，HashMap 继承 AbstractMap。Hashtable 是遗留类，推荐使用 ConcurrentHashMap 替代。`,options:[`A) Hashtable 是线程安全的，HashMap 不是`,`B) HashMap 允许 null 键和 null 值`,`C) Hashtable 是遗留类，推荐用 ConcurrentHashMap 替代`,`D) HashMap 的默认初始容量是 11`],hints:[`考虑线程安全、null 处理、容量策略`],tags:[`集合`,`HashMap`],content_hash:`2bd2e77b62e8`,id:2289},{category:`java_collections`,difficulty:`easy`,type:`multiple_choice`,title:`Collections 工具类常用方法`,content:`以下哪些是 java.util.Collections 工具类提供的功能？`,answer:`A)、B)、C)。解析：Collections 提供了丰富的集合操作工具：sort() 对 List 排序（要求元素实现 Comparable 或传入 Comparator）；unmodifiableList/Set/Map 返回不可修改的视图（修改会抛 UnsupportedOperationException）；synchronizedList/Set/Map 返回线程安全的包装视图；binarySearch() 二分查找；reverse() 反转；shuffle() 洗牌等。copyOnWrite 不属于 Collections 工具类，是 JUC 包中 CopyOnWriteArrayList 提供的机制。`,options:[`A) sort() 对 List 进行排序`,`B) unmodifiableList() 返回不可修改的集合视图`,`C) synchronizedList() 返回线程安全的集合包装`,`D) copyOnWrite() 实现写时复制`],hints:[`Collections 是包装类，不是并发包里的类`],tags:[`集合`,`工具类`],content_hash:`8c78370d1f14`,id:2290},{category:`java_collections`,difficulty:`easy`,type:`multiple_choice`,title:`List / Set / Map 的区别`,content:`以下关于 Java 集合框架中 List、Set、Map 的描述，哪些是正确的？`,answer:`B)、C)、D)。解析：List 是有序可重复的集合（ArrayList、LinkedList、Vector）；Set 是无序不可重复的集合（HashSet、TreeSet、LinkedHashSet），判断重复依赖 equals() 和 hashCode()；Map 是键值对集合，键不可重复。Set 不继承 Collection 是错的——Set 继承 Collection，Map 不继承 Collection。List 和 Set 继承 Collection 接口，Map 是独立的接口体系。`,options:[`A) Set 不继承 Collection 接口`,`B) List 是有序且允许重复的集合`,`C) Map 的 key 不可重复，value 可以重复`,`D) HashSet 判断元素重复依赖 equals() 和 hashCode()`],hints:[`Map 和 Collection 是同一层次的两个不同接口体系`,`TreeSet 判断重复依赖 Comparable/Comparator`],tags:[`集合`,`基础`],content_hash:`e5d8152bb041`,id:2298},{category:`java_collections`,difficulty:`hard`,type:`multiple_choice`,title:`ConcurrentHashMap 特性`,content:`以下关于 ConcurrentHashMap JDK 8 实现的描述，哪些是正确的？`,answer:`A)、B)、D)。解析：JDK 8 的 ConcurrentHashMap 底层采用 Node 数组 + 链表/红黑树实现，摒弃了 JDK 7 的 Segment 分段锁。写操作使用 synchronized 锁住数组桶的首节点，配合 CAS 实现原子操作。ConcurrentHashMap 不允许 null key 和 null value（与 Hashtable 一致）。扩容时多线程协同（transfer 方法支持多线程并行迁移），提高了扩容效率。
+
+扩展延伸：size() 通过 baseCount + CounterCell 统计，是弱一致性的。迭代器也是弱一致性的，不会抛出 ConcurrentModificationException。`,options:[`A) 底层采用 Node 数组 + 链表/红黑树`,`B) 写操作使用 synchronized 锁住数组桶的首节点`,`C) 允许 null 作为 key 和 value`,`D) 扩容时支持多线程协同迁移`],hints:[`JDK 8 摒弃了 Segment 分段锁设计`,`JDK 8 ConcurrentHashMap 不允许 null`],tags:[`Java`,`集合`,`ConcurrentHashMap`],content_hash:`77a0ac1a02f8`,id:2314},{category:`java_collections`,difficulty:`easy`,type:`multiple_choice`,title:`CopyOnWriteArrayList 的特性`,content:`以下关于 CopyOnWriteArrayList 的描述，哪些是正确的？`,answer:`A)、C)、D)。解析：CopyOnWriteArrayList 的所有写操作（add/set/remove 等）都通过 ReentrantLock 加锁，复制新数组进行操作后替换引用。读操作不加锁，直接访问 volatile 数组引用。迭代器遍历的是创建时刻的快照，不支持 add/remove 操作（会抛出 UnsupportedOperationException），但遍历过程中不会受并发修改影响。由于读写分离的设计，CopyOnWriteArrayList 适合读多写少的场景。
+
+扩展延伸：CopyOnWriteArrayList 的内存占用较高（写时有两份数组），且数据是最终一致的（读操作可能读不到最新的写入，但能保证最终读到）。`,options:[`A) 写操作通过 ReentrantLock 加锁，复制新数组后替换引用`,`B) 读操作需要加锁以保证数据一致性`,`C) 迭代器遍历的是快照，不会抛出 ConcurrentModificationException`,`D) 适合读多写少的并发场景`],hints:[`写时复制策略的核心是读写分离`,`迭代器基于快照，修改操作受限`],tags:[`Java`,`集合`,`CopyOnWriteArrayList`,`并发`],content_hash:`c5b27cf4a6c2`,id:2315},{category:`java_collections`,difficulty:`easy`,type:`multiple_choice`,title:`TreeMap 与 LinkedHashMap`,content:`以下关于 TreeMap 和 LinkedHashMap 的描述，哪些是正确的？`,answer:`A)、B)、C)。解析：TreeMap 基于红黑树实现，元素按键的自然顺序或 Comparator 排序。LinkedHashMap 继承自 HashMap，通过双向链表维护插入顺序或访问顺序。两者都非线程安全。TreeMap 提供了丰富的导航方法（lowerKey、higherKey、ceilingKey、floorKey、subMap 等）。LinkedHashMap 可设置 accessOrder=true 实现 LRU 缓存（removeEldestEntry 方法）。
+
+扩展延伸：TreeMap 的 put/get/remove 时间复杂度为 O(log n)。LinkedHashMap 的 put/get 时间复杂度为 O(1)。LinkedHashMap 的迭代顺序默认与插入顺序一致，而 TreeMap 始终按键排序。`,options:[`A) TreeMap 基于红黑树实现，元素按键排序`,`B) LinkedHashMap 通过双向链表维护迭代顺序`,`C) LinkedHashMap 可以用来实现 LRU 缓存`,`D) TreeMap 和 LinkedHashMap 都是线程安全的`],hints:[`考虑两种 Map 的底层数据结构差异`,`LRU 缓存需要 accessOrder 和 removeEldestEntry`],tags:[`Java`,`集合`,`TreeMap`,`LinkedHashMap`],content_hash:`a10329741f0f`,id:2316},{category:`java_collections`,difficulty:`medium`,type:`multiple_choice`,title:`Collections 同步包装方法`,content:`以下关于 Collections.synchronizedList 的描述，哪些是正确的？`,answer:`A)、B)、D)。解析：Collections.synchronizedList 返回的 List 在 add/remove/get 等每个方法上都加了 synchronized 块（mutex 对象锁），因此单个方法是线程安全的。但复合操作（如迭代遍历、判断空后添加）仍需要在外部加 synchronized 块并传入 mutex 对象。返回的 List 的迭代器是 fail-fast 的，在迭代时其他线程修改集合会抛出 ConcurrentModificationException，因此迭代时需要在 synchronized 块中手动同步。synchronizedList 的序列化时会强制要求多线程使用同一个 mutex，因此返回了支持序列化的 Sync 内部类。
+
+扩展延伸：与 CopyOnWriteArrayList 相比，synchronizedList 的读操作也需要加锁，并发读性能较差。但 synchronizedList 的写操作不需要复制数组，写性能更好。`,options:[`A) 每个方法都加了 synchronized 保证单个方法的线程安全`,`B) 复合操作仍需外部同步`,`C) 迭代器是弱一致性的，不会抛出 ConcurrentModificationException`,`D) 迭代时需要手动加锁同步`],hints:[`synchronizedList 包装的是同步方法而非同步复合操作`,`迭代器本身是 fail-fast 的`],tags:[`Java`,`集合`,`Collections`,`同步`],content_hash:`e042e326bc0f`,id:2317},{category:`java_collections`,difficulty:`medium`,type:`multiple_choice`,title:`BlockingQueue 实现类比较`,content:`以下关于 BlockingQueue 实现类的描述，哪些是正确的？`,answer:`A)、B)、D)。解析：ArrayBlockingQueue 有界、基于数组、FIFO，创建时需指定容量，内部使用同一把 ReentrantLock 控制 put 和 take（读写竞争同一把锁）。LinkedBlockingQueue 可选有界（默认 Integer.MAX_VALUE）、基于链表、FIFO，内部使用两把锁——takeLock 和 putLock，生产者和消费者可以并发操作，吞吐量通常高于 ArrayBlockingQueue。SynchronousQueue 不存储元素，每个 put 必须等待一个 take，每个 take 必须等待一个 put，容量为 0。PriorityBlockingQueue 是无界优先队列，按优先级排序而非 FIFO。
+
+扩展延伸：LinkedBlockingQueue 默认容量为 Integer.MAX_VALUE 可能导致内存溢出。ArrayBlockingQueue 支持公平/非公平访问模式。SynchronousQueue 常用于直接传递场景（如 Executors.newCachedThreadPool）。`,options:[`A) ArrayBlockingQueue 是有界的，使用一把锁控制入队和出队`,`B) LinkedBlockingQueue 默认无界，使用 takeLock 和 putLock 两把锁`,`C) SynchronousQueue 可以存储一个元素`,`D) PriorityBlockingQueue 是无界的，元素按优先级排序`],hints:[`LinkedBlockingQueue 的锁分离设计`,`SynchronousQueue 容量为 0`],tags:[`Java`,`集合`,`BlockingQueue`,`并发`],content_hash:`da26daf72e8c`,id:2318},{category:`java_collections`,difficulty:`hard`,type:`multiple_choice`,title:`Stream API 特性`,content:`以下关于 Java Stream API 的描述，哪些是正确的？`,options:[`A) Stream 只能被消费一次（一次性）`,`B) Stream 的中间操作是惰性求值的——只有终端操作触发时才执行`,`C) parallelStream() 默认使用 ForkJoinPool.commonPool()`,`D) Stream 可以复用——同一个 Stream 可以多次执行终端操作`],answer:`A)、B)、C)。
+
+解析：
+A 正确：Stream 是 once-only 的，终端操作执行后 Stream 就被消费了。再次调用终端操作会抛出 IllegalStateException。
+B 正确：中间操作（filter、map、distinct 等）在终端操作调用前不会执行。这种惰性求值避免了中间结果的生成，也允许短路操作（limit、findFirst）提前终止。
+C 正确：parallelStream() 默认使用全局的 ForkJoinPool.commonPool()（线程数 = CPU 核心数 - 1）。可以通过传递自定义 ForkJoinPool 改变。
+D 错误：Stream 不能被复用。
+
+扩展延伸：Stream 操作的短路特性（short-circuiting）：limit、findFirst、findAny、anyMatch、allMatch、noneMatch。顺序流和并行流的转换：sequential()/parallel()。流操作不能修改数据源（非干扰 non-interference）。`,hints:[`Stream 是惰性求值的——终端操作触发执行`,`Stream 只能被消费一次`],tags:[`Java`,`Stream`,`惰性求值`,`并行`],content_hash:`5d1e2730b5c8`,id:2329},{category:`java_collections`,difficulty:`hard`,type:`multiple_choice`,title:`反射的替代方案`,content:`以下哪些技术可以作为 Java 反射的现代替代或补充方案？`,options:[`A) MethodHandles（Java 7+）`,`B) LambdaMetafactory（Java 8+）`,`C) 注解处理器（APT）编译期生成代码`,`D) 动态字节码增强（ASM、CGLIB、ByteBuddy）`],answer:`A)、B)、C)、D)。
+
+解析：
+A 正确：MethodHandles 是 Java 7 引入的轻量级反射替代。它比传统反射更轻量（不需要安全检查、不需要包装 Object[]），JIT 可以内联 MethodHandle 调用。
+B 正确：LambdaMetafactory 可以将方法转换为函数式接口的实例。调用性能接近直接调用（比反射快 10 倍以上）。适合需要频繁回调的场景。
+C 正确：注解处理器（Annotation Processing Tool）在编译期生成代码（如 MapStruct、Lombok），零运行期反射开销。
+D 正确：ASM/CGLIB/ByteBuddy 在运行时直接操作字节码，性能优于反射。Spring AOP、Hibernate、MyBatis 都使用这种技术。
+
+扩展延伸：MethodHandles 在 Spring 5 中被广泛使用。LambdaMetafactory 可以将任意方法转换为函数式接口——例如 Client.getAddress() 转换为 Function<Client, Address>。这些技术的共同趋势是"运行时反射→编译期代码生成"。`,hints:[`MethodHandles 和 LambdaMetafactory 是 JDK 自带的反射替代`,`APT 在编译期生成代码，零运行期开销`],tags:[`Java`,`反射`,`MethodHandles`,`优化`],content_hash:`888231d1988d`,id:2330},{category:`java_collections`,difficulty:`medium`,type:`multiple_choice`,title:`Optional 使用最佳实践`,content:`以下关于 Java Optional 的使用建议，哪些是正确的？`,options:[`A) Optional 应该用做方法返回值类型，表示可能为空的结果`,`B) Optional 可以作为方法参数类型`,`C) Optional 可以作为类的字段类型`,`D) Optional 应该避免在序列化类中使用`],answer:`A)、D)。
+
+解析：
+A 正确：Optional 设计的核心用途是方法返回值——告诉调用者结果可能为空，强制调用方处理。
+B 错误：Effective Java 和 Optional 的设计者都不推荐将 Optional 作为方法参数。重载方法或方法重命名更清晰。
+C 错误：Optional 没有实现 Serializable，不能作为类的字段。使用普通类型 + null 检查替代。
+D 正确：Optional 没有实现 Serializable。如果类需要序列化（如 JPA 实体、DTO），不应该使用 Optional 字段。
+
+扩展延伸：Optional 的正确用法：flatMap 链式操作、orElse/orElseGet 提供默认值、orElseThrow 异常处理。Optional 的常见误用：get() 之前不检查 isPresent()、用 Optional 包装集合/数组。IntStream 的 findFirst() 返回 OptionalInt——专门为基本类型设计的 Optional。`,hints:[`Optional 适合做返回值，不适合做字段和参数`,`Optional 没有实现 Serializable`],tags:[`Java`,`Optional`,`最佳实践`],content_hash:`16d4881a1c13`,id:2331},{category:`java_collections`,difficulty:`medium`,type:`multiple_choice`,title:`方法引用类型`,content:`以下哪些是 Java 8 方法引用的合法形式？`,options:[`A) 静态方法引用：ClassName::staticMethod`,`B) 实例方法引用：instance::instanceMethod`,`C) 特定类型的任意对象方法引用：ClassName::instanceMethod`,`D) 构造方法引用：ClassName::new`],answer:`A)、B)、C)、D)。
+
+解析：四种方法引用都是合法的：
+
+A 正确：静态方法引用——Math::max 等价于 (a, b) -> Math.max(a, b)
+B 正确：实例方法引用——System.out::println 等价于 x -> System.out.println(x)
+C 正确：特定类型的任意对象方法引用——String::length 等价于 s -> s.length()。第一个参数作为调用者。
+D 正确：构造方法引用——ArrayList::new 等价于 () -> new ArrayList()
+
+方法引用是 Lambda 的简化语法。编译器通过函数式接口的上下文推断方法引用是否符合目标类型。
+
+扩展延伸：数组构造方法引用 int[]::new 等价于 length -> new int[length]。方法引用还可以与 super 关键字一起使用（super::toString）。方法引用的编译产物与 Lambda 相同（invokedynamic 指令）。`,hints:[`方法引用有 4 种形式：静态、实例、类型方法、构造`,`方法引用是 Lambda 的语法糖`],tags:[`Java`,`方法引用`,`Lambda`,`Java 8`],content_hash:`733a7102206a`,id:2332},{category:`java_collections`,difficulty:`medium`,type:`multiple_choice`,title:`Number 类体系`,content:`以下关于 Java Number 类的描述，哪些是正确的？`,options:[`A) Integer 和 Long 缓存了 -128 到 127 之间的所有值`,`B) BigDecimal 使用 unscaledValue × 10^(-scale) 表示精确小数`,`C) Double 和 Float 有精度问题，不应该用于货币计算`,`D) AtomicInteger 继承自 Number`],answer:`A)、B)、C)、D)。
+
+解析：
+A 正确：Integer、Long、Short、Byte 的 valueOf() 方法都缓存了 -128 到 127 的范围。Character 缓存 0-127。
+B 正确：BigDecimal 将数字表示为 BigInteger unscaledValue × 10^(-int scale)。例如 3.14 = 314 × 10^(-2)。
+C 正确：浮点数（float/double）基于二进制科学计数法，无法精确表示 0.1 等十进制小数。货币计算应使用 BigDecimal。
+D 正确：AtomicInteger、AtomicLong、AtomicBoolean 等原子类都继承自 Number。
+
+扩展延伸：BigDecimal 构造应该使用 BigDecimal(String) 而不是 BigDecimal(double)——new BigDecimal(0.1) 不等于 0.1。Integer 缓存范围可以通过 -XX:AutoBoxCacheMax 调整。浮点数比较应该使用误差范围比较（Math.abs(a - b) < 1e-6）而非 ==。`,hints:[`Integer 缓存 -128 到 127，BigDecimal 适用于货币`,`浮点数不精确，BigDecimal 用 unscaled × 10^(-scale)`],tags:[`Java`,`Number`,`BigDecimal`,`缓存`],content_hash:`8e2f9ac913ac`,id:2333},{category:`java_collections`,difficulty:`hard`,type:`multiple_choice`,title:`Java Module System`,content:`Java 模块系统（JPMS/Project Jigsaw）引入了哪些概念？`,options:[`A) module-info.java 声明模块依赖和导出包`,`B) requires 关键字声明模块依赖`,`C) exports 关键字控制哪些包对哪些模块可见`,`D) opens 关键字允许反射访问私有成员`],answer:`A)、B)、C)、D)。
+
+解析：
+A 正确：module-info.java 是模块描述文件，位于源码根目录，声明模块的依赖、导出、开放、提供服务等。
+B 正确：requires 声明模块依赖。requires transitive 表示传递性依赖。requires static 表示编译期必需但运行期可选。
+C 正确：exports 控制哪些包对外可见。exports com.example.api to com.example.client 限定只对特定模块可见。
+D 正确：opens 允许反射访问（setAccessible）。opens com.example.core to com.example.test 允许测试框架通过反射访问内部类。不 open 的模块在 JDK 17+ 的强封装模式下无法被反射访问。
+
+扩展延伸：provides/uses 实现服务加载（ServiceLoader 的模块化版本）。JDK 9+ 的核心 Java 库被模块化（java.base、java.sql 等）。JDK 17 强封装模式使 --add-opens 成为框架适配期参数。模块化带来的优势：强封装、可靠的配置、可伸缩性。`,hints:[`module-info.java 声明模块的依赖和导出`,`opens 允许反射访问，exports 控制编译期可见性`],tags:[`Java`,`JPMS`,`模块`,`Jigsaw`],content_hash:`e8cb2a5c5da6`,id:2334},{category:`java_collections`,difficulty:`medium`,type:`multiple_choice`,title:`安全编码实践`,content:`以下哪些是 Java 安全编码的推荐实践？`,options:[`A) 使用 PreparedStatement 而非 Statement 防止 SQL 注入`,`B) 对敏感字符串使用 char[] 而非 String，用后立即清空`,`C) 使用 SecurityManager 沙箱限制不可信代码的权限`,`D) 避免在日志中记录敏感信息`],answer:`A)、B)、D)。
+
+解析：
+A 正确：PreparedStatement 使用参数化查询，将 SQL 语句和数据分离，防止 SQL 注入。Statement 的字符串拼接方式容易被注入攻击。
+B 正确：String 是不可变的，在 GC 前一直存在于内存中。char[] 可以在使用后手动填充为 0 清除。敏感信息（密码、密钥）应使用 char[]。
+C 错误：SecurityManager 在 JDK 17 中标记为废弃（deprecated-for-removal），JDK 22 中已移除。模块化系统（JPMS）和操作系统级安全机制替代了 SecurityManager。
+D 正确：日志中不应包含密码、信用卡号、个人身份信息（PII）等敏感数据。使用日志脱敏工具或日志过滤器清洗敏感信息。
+
+扩展延伸：OWASP Top 10 是 Web 安全的重要参考。DO_NOT_LEAK_SENSITIVE_DATA 是代码审查的重点检查项。输入验证（Validation）和输出编码（Encoding）是防御 XSS 的关键。使用参数化查询是防御 SQL 注入的最佳实践。`,hints:[`PreparedStatement 防 SQL 注入，char[] 替代 String 存敏感信息`,`SecurityManager 已被废弃，模块系统替代`],tags:[`Java`,`安全`,`最佳实践`,`OWASP`],content_hash:`4e625e7f7746`,id:2335},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`HashMap 允许 null key`,content:`HashMap 允许将 null 作为键（key）存储。`,answer:`正确。解析：HashMap 允许一个 null key 和多个 null value。null key 总是存储在数组索引 0 的位置（HashMap 对 null 做了特殊处理，hash 值为 0）。而 Hashtable 和 ConcurrentHashMap 不允许 null key。`,tags:[`集合`,`HashMap`],options:[`正确`,`错误`],content_hash:`44ab3d7e0100`,id:2391},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`ArrayList 是线程安全的`,content:`ArrayList 是线程安全的集合类，可以在多线程环境下使用。`,answer:`错误。解析：ArrayList 不是线程安全的。多线程并发修改 ArrayList 可能导致数据不一致或 ConcurrentModificationException。多线程环境下应使用 CopyOnWriteArrayList、Collections.synchronizedList() 或 Vector。`,tags:[`集合`,`ArrayList`],options:[`正确`,`错误`],content_hash:`ea49cdb117d7`,id:2392},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`HashSet 保证元素按插入顺序排列`,content:`HashSet 保证元素的迭代顺序与插入顺序一致。`,answer:`错误。解析：HashSet 基于 HashMap 实现，不保证迭代顺序。元素顺序可能随时间变化。如果需要保持插入顺序，应使用 LinkedHashSet。如果需要排序，应使用 TreeSet。`,tags:[`集合`,`HashSet`],options:[`正确`,`错误`],content_hash:`f78d58499cd6`,id:2393},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`HashMap 默认负载因子是 0.75`,content:`HashMap 的默认负载因子（load factor）是 0.75，这是时间与空间的折中值。`,answer:`正确。解析：默认负载因子 0.75 是权衡的结果。太高会降低空间开销但增加哈希碰撞概率，太低会增加扩容次数浪费内存。0.75 在大多数场景下提供了较好的性能平衡。`,tags:[`集合`,`HashMap`],options:[`正确`,`错误`],content_hash:`0c28adf2cd8b`,id:2394},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`ConcurrentHashMap key 可以为 null`,content:`ConcurrentHashMap 允许 null 作为键。`,answer:`错误。解析：ConcurrentHashMap 不允许 null key 和 null value。原因是 ConcurrentHashMap 用于多线程环境，如果 get() 返回 null，无法区分是 key 不存在还是 value 本身为 null。而 HashMap 允许 null 是因为单线程环境下可以通过 containsKey() 区分。`,tags:[`集合`,`ConcurrentHashMap`],options:[`正确`,`错误`],content_hash:`efdaeb75cbe8`,id:2395},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`PriorityQueue 保证元素按 FIFO 顺序`,content:`PriorityQueue 按照先进先出（FIFO）的顺序处理元素。`,answer:`错误。解析：PriorityQueue 是按照元素优先级顺序（自然顺序或 Comparator 指定的顺序）处理元素，而不是 FIFO 顺序。每次出队（poll）的都是优先级最高的元素。如果需要 FIFO 顺序，应使用 LinkedList 作为 Queue。`,tags:[`集合`,`Queue`],options:[`正确`,`错误`],content_hash:`dc1a06767ebf`,id:2396},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`LinkedList 实现了 Deque 接口`,content:`LinkedList 不仅实现了 List 接口，还实现了 Deque 接口。`,answer:`正确。解析：LinkedList 同时实现了 List 和 Deque 接口，因此既可以作为列表使用，也可以作为双端队列（栈/队列）使用。作为队列时，offer/poll/peek 操作都是 O(1)。`,tags:[`集合`,`LinkedList`],options:[`正确`,`错误`],content_hash:`ecc3d7fd7cd6`,id:2410},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`ConcurrentHashMap 读操作需要加锁`,content:`JDK 8 的 ConcurrentHashMap 在读操作（get）时也需要加锁以保证线程安全。`,answer:`错误。
+
+解析：JDK 8 的 ConcurrentHashMap 的 get 操作不需要加锁。它通过 volatile 关键字保证数组引用和 Node 的 val/next 属性的可见性，从而在不加锁的情况下安全读取。get 方法会先定位桶，如果桶的首节点是目标 key 则直接返回；如果是红黑树节点则通过 TreeBin 查找；否则遍历链表查找。整个过程不需要加锁。
+
+扩展延伸：虽然 get 操作是 lock-free 的，但在扩容迁移过程中访问到的节点如果处于 forwarding 状态，get 会调用 find 方法到新数组中继续查找。`,options:[`正确`,`错误`],hints:[`volatile 保证可见性`,`红黑树的 TreeBin 通过读写锁保证安全`],tags:[`Java`,`集合`,`ConcurrentHashMap`],content_hash:`4eec17b8db74`,id:2416},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`CopyOnWriteArrayList 写操作复制数组`,content:`CopyOnWriteArrayList 在执行 add 操作时，会复制一份全新的底层数组，在副本上添加元素后替换原数组引用。`,answer:`正确。
+
+解析：CopyOnWriteArrayList 的 add 方法先获取 ReentrantLock 锁，然后复制当前数组（长度 +1），在新数组的末尾写入新元素，最后将新数组赋值给 volatile 的 array 引用。这种写时复制策略保证了读操作可以完全无锁进行，但写操作在数组较大时开销较高。
+
+扩展延伸：复制数组使用 Arrays.copyOf 方法。每次 add 都涉及数组复制和 GC 开销，因此不适合写频繁的场景。迭代器创建后基于当时的数组快照，修改原 list 不会影响已创建的迭代器。`,options:[`正确`,`错误`],hints:[`Copy-On-Write 的核心就是写时复制`,`读操作不加锁，写操作加锁并复制`],tags:[`Java`,`集合`,`CopyOnWriteArrayList`],content_hash:`1ff064e888bb`,id:2417},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`TreeMap 基于哈希表`,content:`TreeMap 的底层是基于哈希表实现的。`,answer:`错误。
+
+解析：TreeMap 的底层是基于红黑树（Red-Black Tree）实现的，而非哈希表。红黑树是一种自平衡的二叉查找树，保证了插入、删除、查找操作的时间复杂度为 O(log n)。TreeMap 的元素按键的自然顺序或传入的 Comparator 排序。与基于哈希表实现的 HashMap 不同，TreeMap 提供了有序的键值对存储，以及 lowerKey、ceilingKey、headMap/tailMap/subMap 等导航方法。
+
+扩展延伸：HashMap 基于哈希表，时间复杂度为 O(1)，但元素无序。两个 Map 各有优劣，选择时需根据是否需要有序遍历来决定。LinkedHashMap 则是两者的结合——哈希表 + 双向链表。`,options:[`正确`,`错误`],hints:[`TreeMap 与 HashMap 的底层数据结构不同`,`TreeMap 提供了键的排序和导航功能`],tags:[`Java`,`集合`,`TreeMap`],content_hash:`9a4341b90c85`,id:2418},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`BlockingQueue drainTo 方法`,content:`BlockingQueue 的 drainTo(Collection) 方法是一次性将队列中所有可用元素转移到指定集合，是线程安全的。`,answer:`正确。
+
+解析：drainTo 方法是 BlockingQueue 提供的一个原子批量移除操作，它会一次性将队列中当前所有可用元素转移到传入的 Collection 中，并在操作期间持有内部锁，确保线程安全。使用 drainTo 可以避免逐个 poll 的元素多次获取锁带来的性能开销，是批量消费队列元素的高效方式。
+
+扩展延伸：drainTo 还有带数量限制的重载版本 drainTo(Collection, int)。注意 drainTo 的目标 Collection 不能是队列本身，否则可能产生不可预知的行为。drainTo 在批处理场景下非常有用，如从消息队列中批量取出消息进行处理。`,options:[`正确`,`错误`],hints:[`drainTo 在持有锁时一次完成所有转移`,`比循环 poll 更高效`],tags:[`Java`,`集合`,`BlockingQueue`],content_hash:`1a75dc1c1a4a`,id:2419},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`Collections.unmodifiableList 完全不可修改`,content:`Collections.unmodifiableList 返回的集合是绝对不可修改的，任何尝试修改的操作都会抛出 UnsupportedOperationException。`,answer:`错误。
+
+解析：Collections.unmodifiableList 返回的是原 List 的不可修改视图（unmodifiable view），直接调用 add/remove/set 等方法时会抛出 UnsupportedOperationException。但是，如果原始 List 本身是可修改的，那么对原始 List 的修改会影响这个不可修改视图。换句话说，unmodifiableList 并不保证原始 List 不被修改，它只是阻止了通过该视图的修改操作。要保证真正的不可变，需要确保原始 List 也不被修改，或使用 Java 9+ 的 List.of() 创建真正的不可变集合。
+
+扩展延伸：类似的还有 unmodifiableMap/unmodifiableSet/unmodifiableCollection。这些方法返回的视图在序列化时也会保持不可修改的特性。`,options:[`正确`,`错误`],hints:[`unmodifiable 系列是视图（view）而非副本`,`原始集合的修改会反映到不可修改视图上`],tags:[`Java`,`集合`,`Collections`],content_hash:`89b8b8a76853`,id:2420},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`TreeSet 使用 equals 判断元素是否相等`,content:`TreeSet 使用元素的 equals() 方法来判断两个元素是否相等。`,options:[`正确`,`错误`],answer:`错误。
+
+解析：TreeSet 不使用 equals() 判断元素相等，而是使用 Comparator（如果构造时提供了）或元素的 Comparable.compareTo() 方法。当 compareTo()（或 compare()）返回 0 时，TreeSet 认为两个元素相等（即使 equals() 返回 false）。这是有序集合（SortedSet）与普通 Set 的重要区别。根据 Java 规范，推荐情况是 compareTo 返回 0 时 equals 也返回 true（即自然排序与 equals 一致），否则 TreeSet 会违反 Set 接口的通用约定（不允许重复元素）。
+
+扩展延伸：HashSet 使用 hashCode() + equals() 判断相等。LinkedHashSet（继承 HashSet）相同。TreeSet 使用 Comparator/Comparable。这是为什么如果自定义类同时用于 TreeSet 和 HashSet 时，需要确保 compareTo 和 equals 一致。例如 BigDecimal 的 compareTo("1.0").equals("1.0") 是 false（因为 scale 不同），所以 TreeSet<BigDecimal> 中 1.0 和 1.00 只能共存一个，但 HashSet<BigDecimal> 可以同时存这两个。`,hints:[`TreeSet 根据 compareTo/compare 的返回值判断是否相等（0 表示相等）`,`HashSet 使用 equals() + hashCode() 判断相等`],tags:[`Java`,`集合`,`TreeSet`,`Comparable`,`equals`],content_hash:`75c4822bb7ab`,id:2427},{category:`java_collections`,difficulty:`medium`,type:`true_false`,title:`Collections.unmodifiableList 返回不可修改的列表`,content:`通过 Collections.unmodifiableList() 包装后的列表完全不可修改，任何尝试修改的操作都会抛出 UnsupportedOperationException。`,options:[`正确`,`错误`],answer:`正确。
+
+解析：unmodifiableList() 返回原列表的只读视图（Unmodifiable List），所有修改操作（add、set、remove、clear 等）都抛出 UnsupportedOperationException。但注意：如果原列表在外部被修改，unmodifiable 视图的内容也会变化（因为是视图模式）。真正的"不可变"需要同时确保原列表不再被修改——要么丢弃原引用，要么在包装前复制一份：Collections.unmodifiableList(new ArrayList<>(original))。
+
+扩展延伸：JDK 9 引入了 List.of() 工厂方法创建真正的不可变列表（Immutable List）。与 unmodifiableList 的区别——1）List.of() 返回的列表本身就是不可变的，没有原列表引用（真正不可变）。2）unmodifiableList 只是视图，如果原列表改变，视图跟着变。3）List.of() 不支持 null 元素，unmodifiableList 可以（前提是原列表允许）。相似的包装方法：unmodifiableSet、unmodifiableMap、unmodifiableCollection、unmodifiableSortedSet 等。Guava 的 ImmutableList 也是真正的不可变列表（有独立的拷贝）。`,hints:[`unmodifiableList 是视图模式的只读包装，原列表改变会反映到视图`,`真正的不可变列表应该用 List.of() 或 unmodifiableList(new ArrayList<>(original))`],tags:[`Java`,`集合`,`unmodifiableList`,`不变性`],content_hash:`b51cb4b23f3b`,id:2429},{category:`java_collections`,difficulty:`easy`,type:`true_false`,title:`ArrayDeque 是线程安全的`,content:`ArrayDeque 是线程安全的集合类，可以在多线程环境下安全使用。`,options:[`正确`,`错误`],answer:`错误。
+
+解析：ArrayDeque 不是线程安全的。它是单线程环境下的高性能双端队列实现，没有内部同步机制。多线程并发访问时，如果没有外部同步，会导致数据损坏（元素丢失、内部数据结构损坏等）。如果需要线程安全的 Deque，可以使用：1）Deque<String> safe = new LinkedBlockingDeque<>()（阻塞双端队列，线程安全）。2）Deque<String> safe = Collections.synchronizedDeque(new ArrayDeque<>())（同步包装视图）。3）ConcurrentLinkedDeque（非阻塞并发双端队列，基于 CAS 操作，无锁实现）。
+
+扩展延伸：java.util 包中的非线程安全集合包括：ArrayList、LinkedList、HashSet、TreeSet、HashMap、TreeMap、ArrayDeque 等。线程安全集合包括：Vector、Hashtable、ConcurrentHashMap、CopyOnWriteArrayList、CopyOnWriteArraySet、LinkedBlockingDeque、ConcurrentLinkedDeque、ConcurrentSkipListMap 等。设计原则：默认集合类是非线程安全的（避免不必要的同步开销），需要时才使用并发集合类或同步包装。`,hints:[`ArrayDeque 没有内部同步，不是线程安全的`,`需要线程安全的 Deque 可以使用 LinkedBlockingDeque 或 ConcurrentLinkedDeque`],tags:[`Java`,`集合`,`ArrayDeque`,`线程安全`],content_hash:`32aa9254e140`,id:2430}];export{e as category,t as questions};

@@ -1,0 +1,188 @@
+var e=`design_network_extras`,t=[{category:`design_network_extras`,difficulty:`easy`,type:`short_answer`,title:`QUIC 与 HTTP/3 协议`,content:`请解释 QUIC 协议的核心特性和 HTTP/3 相比 HTTP/2 的优势。`,answer:`答案：QUIC 基于 UDP 实现了类似 TCP 的可靠传输 + TLS 1.3 加密 + 多路复用
+
+解析：QUIC 核心设计：1）基于 UDP — 避免 TCP 在操作系统内核实现的升级困难，可在用户态快速迭代 2）内置 TLS 1.3 — 加密默认且不可协商，握手比 TCP+TLS 少 1 个 RTT（0-RTT 可复用）3）连接迁移 — 用 Connection ID 而非 IP:Port 标识连接，切换网络（WiFi 切 4G）不断连 4）多路复用无队头阻塞 — 单个流丢包不影响其他流。HTTP/3 将 HTTP/2 的 HPACK 头部压缩改为 QPACK（适应乱序到达），帧和流模型基本继承 HTTP/2。
+
+扩展延伸：0-RTT：已连接过的客户端可携带加密数据和 HTTP 请求同时发出，服务端可直接回复，但存在重放攻击风险（幂等性检查）。多级流优先级：HTTP/3 引入了比 HTTP/2 更细粒度的 Extensible Priorities（Urgency + Incremental 标记）。QUIC 丢包检测：使用更精确的 RTT 计算和更快的丢包重传（基于包序号单调递增而非 TCP 的序列号+ACK 歧义）。QUIC 应用的现状：Google 内部（YouTube/Chrome）已广泛使用，CDN 覆盖逐步扩大但仍有中间设备（防火墙/负载均衡器）阻止 UDP 流量的问题。`,hints:[`QUIC 如何解决 TCP 队头阻塞问题`,`0-RTT 的重放攻击风险怎么缓解`],tags:[`QUIC`,`HTTP/3`,`网络协议`],content_hash:`2e2a2a746b92`,id:1242},{category:`design_network_extras`,difficulty:`medium`,type:`short_answer`,title:`DNS 解析深入`,content:`请详细解析 DNS 递归解析和迭代解析的过程及优化方法。`,answer:`答案：DNS 解析将域名转换为 IP 地址，依缓存层级逐级查询
+
+解析：递归解析（通常客户端到本地 DNS 递归器）：客户端问本地 DNS 解析器，解析器负责完成全部分析返回结果。迭代解析（递归器向权威服务器查询的典型模式）：根域名服务器 -> TLD 顶级域服务器（.com/.cn）-> 权威域名服务器（example.com），每一步返回下一步要查询的服务器的地址。解析器的多级缓存：浏览器缓存 -> 操作系统缓存（hosts 文件）-> 本地 DNS 解析器缓存（运营商/公共 DNS 如 8.8.8.8）-> 权威服务器。缓存失效：每个 DNS 记录有 TTL（通常在 60-86400 秒），在 TTL 内缓存结果，过期则重新查询。
+
+扩展延伸：DNS 优化：1）预解析（<link rel="dns-prefetch">）提前解析域名 2）抢占解析（Chrome 的 Predictor，在用户悬停链接时解析）3）HTTP/2 Server Push 可能包含域名解析信息 4）CDN 通过 CNAME 将域名指向 CDN 的 GSLB（全局负载均衡器），自动选择最优 CDN 节点。DNS 扩展机制（EDNS）：支持 DNSSEC（防止缓存投毒）、ECS（EDNS Client Subnet，让 CDN 根据客户端实际 IP 而非解析器位置响应）。解析器类型：运营商 DNS（延迟低但可能缓存污染）、公共 DNS（8.8.8.8/1.1.1.1 可靠但延迟略高）、DoH/DoT（加密 DNS 解析防止窥探/篡改）。`,hints:[`递归解析和迭代解析的区别在哪里`,`ECS（EDNS Client Subnet）解决什么问题`],tags:[`DNS`,`网络协议`,`优化`],content_hash:`9532a6cf35cf`,id:1243},{category:`design_network_extras`,difficulty:`medium`,type:`short_answer`,title:`HTTP/2 多路复用原理`,content:`请介绍 HTTP/2 的多路复用（Multiplexing）原理及其与 HTTP/1.1 的对比。`,answer:`答案：HTTP/2 的多路复用允许在单个 TCP 连接上同时传输多个请求和响应。
+
+核心原理：
+
+1. 流（Stream）：
+   - HTTP/2 将通信抽象为多个并行的流
+   - 每个流有一个唯一的流 ID
+   - 请求和响应在同一个流上传输
+
+2. 帧（Frame）：
+   - HTTP/2 的最小通信单位
+   - HEADERS 帧：传输 HTTP 头部
+   - DATA 帧：传输请求/响应体
+   - SETTINGS 帧：协商连接参数
+   - RST_STREAM 帧：终止某个流
+
+3. 二进制分帧层：
+   - 所有帧以二进制格式编码
+   - 帧通过流 ID 关联到对应的流
+   - 接收方按流 ID 重新组装
+
+与 HTTP/1.1 对比：
+| 特性 | HTTP/1.1 | HTTP/2 |
+|------|----------|--------|
+| 连接复用 | 无（需多个连接或 pipelining） | 单连接多路复用 |
+| 队头阻塞 | 有（请求串行） | 无（流级别） |
+| 数据格式 | 文本 | 二进制 |
+| 优先级 | 无 | 流优先级 |
+| 头部压缩 | 无 | HPACK |
+
+关键优势：
+- 减少连接数：一个域名一个连接
+- 消除队头阻塞：多个请求互不等待
+- 更高效的网络利用：减少 TCP 慢启动次数
+
+注意：HTTP/2 在传输层（TCP）仍有队头阻塞——一个 TCP 丢包会影响所有流。这个问题的解决方案是 HTTP/3（基于 QUIC）。`,hints:[`HTTP/2 将通信抽象为流+帧，一个 TCP 连接承载多个并行流`,`二进制分帧层通过流 ID 关联帧，解决 HTTP/1.1 的队头阻塞`,`TCP 层的队头阻塞仍然存在——这是 HTTP/3（QUIC）要解决的问题`],tags:[`网络`,`HTTP/2`,`多路复用`,`协议`],content_hash:`287b5146ebad`,id:1244},{category:`design_network_extras`,difficulty:`easy`,type:`short_answer`,title:`CDN 的工作原理与路由策略`,content:`请介绍 CDN 的工作原理以及常见的全局负载均衡路由策略。`,answer:`答案：CDN（Content Delivery Network）通过在全球部署边缘节点，将内容缓存到离用户最近的位置。
+
+CDN 的核心组件：
+1. 边缘节点（Edge Node）：存储缓存内容，直接响应用户请求
+2. 源站（Origin）：内容的原始服务器
+3. 全局负载均衡器（GSLB）：DNS 级别的流量调度
+4. 缓存管理系统：内容预热、刷新、淘汰
+
+用户请求流程：
+1. 用户请求某个资源
+2. DNS 解析到 CDN 的 GSLB
+3. GSLB 根据策略选择一个最优的边缘节点 IP
+4. 用户直接请求该边缘节点
+5. 如果边缘节点有缓存 → 直接返回
+6. 如果没有缓存 → 回源（回源到上级节点或源站）→ 缓存 → 返回
+
+常见的 GSLB 路由策略：
+1. 地理位置路由：根据用户 IP 所属的地理位置返回最近的节点
+   - 优点：简单、稳定
+   - 缺点：地理近不一定网络快
+
+2. 实时延迟探测：对各节点进行实时网络探测，返回延迟最低的
+   - 优点：适应性好
+   - 缺点：计算开销大
+
+3. 带宽成本优化：根据各节点的带宽成本和负载情况分配
+   - 适用：大流量场景
+
+4. 一致性哈希：同一用户的请求始终路由到同一节点
+   - 适用：对缓存命中率敏感的动态内容
+
+5. 基于权重的轮询：根据节点容量分配权重
+
+扩展延伸：现代 CDN 还有 DDoS 防护（在边缘层清洗流量）、边缘计算（在 CDN 节点运行自定义代码，如 Cloudflare Workers）、动态加速（优化动态内容的回源链路）等能力。`,hints:[`CDN 核心流程：DNS → GSLB 选择最优节点 → 边缘节点响应（缓存命中则直接返回）`,`GSLB 策略：地理位置、实时延迟、带宽成本、一致性哈希`,`现代 CDN 扩展能力：DDoS 防护、边缘计算（Cloudflare Workers）、动态加速`],tags:[`网络`,`CDN`,`负载均衡`,`DNS`],content_hash:`c04945941436`,id:1245},{category:`design_network_extras`,difficulty:`easy`,type:`short_answer`,title:`正向代理与反向代理`,content:`请介绍正向代理（Forward Proxy）和反向代理（Reverse Proxy）的区别和应用场景。`,answer:`答案：正向代理和反向代理的核心区别在于代理的服务对象不同。
+
+正向代理（Forward Proxy）：
+
+定义：
+- 代表客户端向服务器发起请求
+- 客户端明确知道代理的存在
+- 服务器不知道真正的客户端是谁
+
+应用场景：
+1. 突破访问限制（如翻墙访问国外网站）
+2. 访问控制（公司网络限制员工访问某些网站）
+3. 匿名访问（隐藏客户端真实 IP）
+4. 缓存加速（缓存频繁访问的外部资源）
+5. 审计和日志（记录员工的网络访问行为）
+
+反向代理（Reverse Proxy）：
+
+定义：
+- 代表服务器接收客户端的请求
+- 客户端不知道真正的后端服务器是谁
+- 客户端可能不知道代理的存在（透明）
+
+应用场景：
+1. 负载均衡（分发请求到多个后端服务器）
+2. 安全防护（隐藏后端服务器真实 IP，阻挡恶意请求）
+3. SSL 终结（统一处理 HTTPS 证书，后端用 HTTP）
+4. 缓存加速（缓存静态内容减轻后端压力）
+5. 灰度发布（按比例将流量路由到不同版本）
+
+核心对比：
+| 维度 | 正向代理 | 反向代理 |
+|------|----------|----------|
+| 代表方 | 客户端 | 服务器 |
+| 客户端感知 | 知道 | 可能不知道 |
+| 服务端感知 | 不知道客户端 | 不知道代理存在 |
+| 典型实现 | Squid、Shadowsocks | Nginx、HAProxy |
+| 配置位置 | 客户端（浏览器/应用） | 服务端（网络层） |
+
+一个例子：
+- 正向代理：你通过公司代理访问 Google——Google 不知道是你，只知道是公司代理
+- 反向代理：你访问 baidu.com——你不知道背后有无数服务器，只知道百度首页`,hints:[`正向代理：代表客户端（客户端配置，服务器不知道真实客户端）`,`反向代理：代表服务器（服务器配置，客户端不知道真实服务器）`,`正向代理的典型：翻墙、企业上网控制；反向代理的典型：Nginx 负载均衡`],tags:[`网络`,`正向代理`,`反向代理`,`Nginx`],content_hash:`f7eb43458fa8`,id:1246},{category:`design_network_extras`,difficulty:`hard`,type:`short_answer`,title:`DNS over HTTPS 与 DNS over TLS 的技术对比`,content:`DNS over HTTPS（DoH）和 DNS over TLS（DoT）都是为了解决传统 DNS 明文中存在的隐私和劫持问题。请对比两者在协议栈、传输方式、端口使用、应用场景和部署难度等方面的差异。并讨论为什么 DoH 比 DoT 更容易突破企业防火墙的 DNS 管控——这既是优势也是安全挑战。`,answer:`答案：DoH 将 DNS 查询封装在 HTTPS 中（443 端口），DoT 使用独立的 TLS 连接（853 端口）。两者目标一致但实现策略不同。
+
+解析：**协议对比**：
+| 维度 | DoT (RFC 7858) | DoH (RFC 8484) |
+|------|---------------|---------------|
+| 传输 | 独立 TLS 连接 | HTTPS POST/GET 请求 |
+| 端口 | 853（独立端口） | 443（与 HTTPS 共用） |
+| 封装 | TLS 记录层 | HTTP/2 或 HTTP/3 帧 |
+| 实现复杂度 | 简单 | 较复杂（需 HTTP 栈） |
+| 浏览器支持 | 较少（系统级支持） | Chrome/Firefox 原生支持 |
+
+**差异化分析**：
+- **隐蔽性**：DoT 使用 853 端口 -> 企业防火墙可以识别并阻断。DoH 混在 443 端口的 HTTPS 流量中 -> 难以区分是 DNS 查询还是普通网页请求。
+- **性能**：DoH 可以复用现有的 HTTP/2 连接（0-RTT），DoT 每次查询都需建立新的 TLS 连接。
+- **缓存**：DoH 可利用 HTTP 缓存（Cache-Control），DoT 需自行实现缓存。
+- **隐私分级**：DoT 只能隐藏 DNS 查询内容，但暴露「我在用 DNS」（853 端口）；DoH 隐藏了「我在进行 DNS 查询」这一事实本身。
+
+**为什么 DoH 能突破管控**：
+- 传统 DNS 管控基于 DNS 协议特征（UDP 53 + 明文 Payload）。
+- DoT 用了 853 端口 -> 防火墙只需一条规则「block 853」即可。
+- DoH 走 443 -> 防火墙要么「允许所有 HTTPS」（无法管控 DoH），要么「中间人解密 HTTPS」（成本高且违法）。
+- **安全挑战**：企业失去了对员工 DNS 查询的可见性和管控能力——恶意软件可用 DoH 绕过 DNS 安全策略。
+
+扩展延伸：
+- DoH/DoT 不能防止 DNS 查询的 metadata 泄露——时间、量级仍是可见的。
+- DNSSEC 解决「DNS 应答的完整性」，DoH/DoT 解决「传输的私密性」，两者互补而非替代。
+- 国内情况：公共 DoH 服务（如 Alibaba DNS、腾讯 DNSPod）已有部署，但受限于网络管制政策，可用性和白名单配置需注意。
+- 推荐应用策略：企业内部网络阻断 DoH 到外部解析器 + 自建 DoH 解析器做统一管控。`,hints:[`DoH 的核心策略是「隐身」——把 DNS 查询藏在加密的 HTTPS 流量中`,`端口差异导致了「可管控性」的根本不同——443 端口无法简单阻断`],tags:[`DNS`,`DoH`,`DoT`,`加密DNS`,`网络安全`],content_hash:`ceac00a238cb`,id:1247},{category:`design_network_extras`,difficulty:`easy`,type:`short_answer`,title:`TCP 快速打开 TFO`,content:`请解释 TCP 快速打开（TCP Fast Open, TFO）的原理和优势。它如何减少 TCP 连接的延迟？TFO 的安全考虑和实际部署中的注意事项是什么？`,answer:`答案：TCP 快速打开（TFO）核心原理：\\n- 标准 TCP 需要三次握手才能开始发送数据（1 RTT 的延迟）\\n- TFO 允许客户端在 SYN 包中携带应用数据（如 HTTP 请求）\\n- 服务器在收到 SYN + 数据后，可以直接处理并将响应和数据一起在 SYN-ACK 中返回\\n- 效果：将新建连接的 1-RTT 开销降至 0-RTT（如果是重复连接）\\n\\nTFO 工作流程：\\n1. 首次连接：客户端 SYN + TFO 选项（请求 Cookie）\\n2. 服务器生成 TFO Cookie（基于客户端 IP 加密）→ 通过 SYN-ACK 返回\\n3. 后续连接：客户端 SYN + Cookie + 应用数据一起发送\\n4. 服务器验证 Cookie 有效 → 直接处理数据，通过 SYN-ACK 返回首批响应\\n\\n安全考虑：\\n- TFO Cookie 必须防伪造（服务器用密钥加密客户端 IP + 时间戳）\\n- Cookie 有有效期（通常 24 小时），过期后退化为标准握手\\n- TFO 不提供应用层安全（仍需 TLS 加密数据）\\n- 重放攻击风险：攻击者截获 TFO 数据包可重复发送→服务端需在应用层做幂等性设计\\n\\n实际部署注意事项：\\n- 需要客户端和服务器都支持（Linux 内核 ≥ 3.7）\\n- 支持 TCP 快速打开（tcp_fastopen 内核参数配置：1=客户端, 2=服务端, 3=双向）\\n- TFO 在移动端效果最明显（频繁断开重连的场景）\\n- 负载均衡器需透传 TFO Cookie（某些 LB 会拦截 SYN 包导致 TFO 失效）\\n- Kubernetes / Docker 环境需确认容器网络栈支持 TFO（需宿主机内核支持 + 容器 sysctl 配置）\\n- 性能收益：HTTP 请求 + TLS 握手场景平均节省 1 RTT（约 30-200ms 视距离而定）`,hints:[`TFO 如何避免安全攻击（如 SYN Flood 利用 TFO 放大攻击）？`,`为什么移动端应用从 TFO 获益最大？`],tags:[`TCP`,`TFO`,`网络优化`],content_hash:`306f23f6a36c`,id:1248},{category:`design_network_extras`,difficulty:`hard`,type:`short_answer`,title:`W3C Trace Context 协议`,content:`在分布式追踪系统中，Trace Context 的传播是保证跨服务调用链完整性的基础。请解释 W3C Trace Context 标准（Trace Context Level 1）的核心设计，包括 traceparent 和 tracestate 头部的格式和作用。为什么需要 W3C 标准化而不是各厂商自定协议？它如何解决不同追踪系统（如 Jaeger、Zipkin、SkyWalking）之间的互操作问题？`,answer:`答案：W3C Trace Context（推荐标准 2021）定义了分布式追踪中追踪上下文的传播格式，使不同追踪系统之间能够互相识别和传递追踪信息。
+
+解析：**标准化的必要性**：
+在没有 W3C Trace Context 之前，每个追踪系统定义自己的传播格式：
+- Jaeger：\`uber-trace-id\` Header。
+- Zipkin：\`x-b3-traceid\` + \`x-b3-spanid\` + \`x-b3-sampled\` 等多个 Header。
+- SkyWalking：\`sw8\` Header（自定义 Base64 编码）。
+
+问题：微服务中使用不同追踪 SDK 时，调用链在跨系统边界处断裂（A 服务用 Jaeger、B 服务用 Zipkin -> B 不知道 A 的 trace id 放在哪里）。
+
+**W3C Trace Context 标准（Level 1）**：
+**1. traceparent Header**：
+格式：\`traceparent: 00-<trace-id>-<parent-id>-<trace-flags>\`
+- 00：版本号（2 字节 hex）。
+- trace-id：全局唯一追踪 ID（32 字节 hex = 16 字节，所有服务共享）。
+- parent-id（span-id）：当前调用的 Span ID（16 字节 hex = 8 字节，每次 RPC 重新生成）。
+- trace-flags：追踪标志（2 字节 hex），最低位 = 是否采样（01 采样，00 不采样）。
+- 例：\`traceparent: 00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01\`
+
+**2. tracestate Header**：
+- 用途：携带供应商特定的追踪元数据（如采样率、优先级、租户信息）。
+- 格式：\`tracestate: vendor1=value1,vendor2=value2\`。
+- 例：\`tracestate: congo=t61rcWkgMzE,rojo=00f067aa0ba902b7\`
+- 设计要点：
+  - 保留最新 N 个供应商条目。
+  - 每个供应商只读写自己的 key-value，不修改其他供应商的条目。
+  - 当 tracestate 超过长度限制时，从最老的条目开始截断。
+
+**互操作机制**：
+- 所有 W3C 兼容的追踪 SDK 都会读取和解析 traceparent，无论下游服务使用什么追踪系统。
+- traceparent 是跨系统传递的唯一必需字段。
+- tracestate 用于传递供应商内部的附加信息，不能用于替代 traceparent。
+- 当服务收到 traceparent 时，必须使用该 trace ID，生成新的 span ID 并更新 parent ID。
+
+扩展延伸：
+OpenTelemetry 已原生支持 W3C Trace Context，推荐所有新项目使用 OTel SDK。标准化的收益不仅在于跨系统追踪，还在于：日志框架可以统一提取 trace ID（自动注入所有日志行）、基础设施（网关/LB/Service Mesh）可以统一透传。`,hints:[`W3C Trace Context 解决的核心问题是 trace 上下文在不同追踪系统间的交换——没有标准时各厂商各传各的`,`traceparent 必须按规范透传——网关、MQ、Service Mesh 都不能丢失它`],tags:[`分布式追踪`,`W3C Trace Context`,`OpenTelemetry`,`可观测性`],content_hash:`0a7086347e07`,id:1249},{category:`design_network_extras`,difficulty:`medium`,type:`short_answer`,title:`TCP 拥塞控制算法演进：从 Reno 到 BBR`,content:`TCP 拥塞控制算法从传统的基于丢包检测（Loss-based，如 Reno、CUBIC）发展到基于带宽和延迟的模型（Model-based，如 BBR），核心思路的变化是什么？BBR 为什么在高延迟/高带宽的长肥网络（Long Fat Network）上比 CUBIC 表现更好？BBR 的 ProbeBW 和 ProbeRTT 阶段在做什么？`,answer:`答案：核心变化是从「被动响应丢包」到「主动探测带宽瓶颈」。传统的 Reno/CUBIC 通过 AIMD（加法增乘法减）调整拥塞窗口，丢包视为拥塞信号。BBR（Bottleneck Bandwidth and Round-trip propagation time）直接探测链路瓶颈带宽和最小 RTT，用模型计算发送速率。
+
+解析：1）传统算法（Reno / CUBIC）的问题——以丢包为拥塞信号在深缓冲区网络中失效：路由器缓冲区很大时，丢包前延迟已经很高（Bufferbloat 问题）。在高速网络（> 10Gbps）上，填满缓冲区需要很长时间，CUBIC 的窗口增长到链路带宽很慢。而且还存在不公平竞争问题（RTT 小的连接更容易抢占带宽）。2）BBR 的核心模型——BBR 在任意时刻维护两个估算值：BtlBw（瓶颈带宽，通过测量发送速率和接收 ACK 速率得到）和 RTprop（最小 RTT，反映传播延迟）。发送速率 = min(BtlBw × 增益系数, cwnd / SRTT)。3）BBR 的运行状态机——Startup（启动阶段，以 2/ln2 ≈ 2.89 倍速指数增长探测瓶颈带宽）、Drain（排空阶段，降低发送速率为 2/3 BtlBw 排空 Startup 阶段建立的队列）、ProbeBW（稳定带宽探测，以 1.25/0.75 倍速周期性上下波动探测是否有更大带宽可用，占大多数时间）、ProbeRTT（RTT 探测，当 RTprop 超过 10s 未更新时进入，大幅降低发送速率以获取新的最小 RTT）。
+
+扩展延伸：4）BBR 的问题：与 Reno/CUBIC 共存不公平（BBR 会抢占传统算法的带宽）。BBR 在有少量随机丢包时性能比 CUBIC 差（BBR 对丢包不敏感所以不会降低速率，但丢包导致的实际吞吐下降 BBR 也不会补偿）。BBRv2 正在尝试解决这些问题（增加对丢包的响应）。5）BBR 适用场景：跨地域数据中心传输（高延迟、高带宽）、CDN 边缘回源、视频上传/直播推流。不适用的场景：Web 短连接（BBR 的 Startup 阶段还没完成连接就结束了，不如 CUBIC）。`,hints:[`BBR 为什么不依赖丢包作为拥塞信号——Bufferbloat 问题导致丢包前延迟已经很高`,`BBR 的 ProbeBW 为什么要周期性上下抖动探测——因为瓶颈带宽可能随时间变化（其他流加入/离开）`],tags:[`网络`,`TCP`,`拥塞控制`,`BBR`,`性能`],content_hash:`f890cfcf3493`,id:1250},{category:`design_network_extras`,difficulty:`medium`,type:`short_answer`,title:`HTTP/3 (QUIC) 协议的核心优势与实现原理`,content:`HTTP/3 基于 QUIC 协议，相比 HTTP/2 解决了哪些核心问题？QUIC 建立在 UDP 之上而非 TCP，具体带来了什么好处？0-RTT 连接建立是如何实现的？`,answer:`答案：HTTP/3 (QUIC) 相比 HTTP/2 的核心优势是彻底解决了 TCP 协议层的队头阻塞（Head-of-Line Blocking）问题，并且大幅降低了连接建立的延迟（0-RTT 握手）。
+
+解析：1）队头阻塞——HTTP/2 在单个 TCP 连接上多路复用多个流，但 TCP 是字节流协议，一个 TCP 包丢失会导致后续所有 HTTP 流（即使不相关）都被阻塞等待重传（因为在 TCP 层面数据是按序交付的）。QUIC 在 UDP 之上实现了独立的流（Stream），每个流独立丢包重传，一个流的丢包不影响其他流。2）0-RTT 连接建立——TCP + TLS 1.3 需要 1-RTT（如果之前连接过，TLS 1.3 的 0-RTT 模式下可以直接发数据，但 TCP 本身还是需要一次握手）。QUIC 第一次连接需要 1-RTT 交换传输参数 + TLS 1.3 握手，第二次及之后的连接，客户端可以直接发送加密数据（0-RTT），因为 QUIC 在之前连接中缓存了传输参数和会话密钥（Connection ID 机制保障）。3）其他 QUIC 优势——连接迁移（Connection Migration）：TCP 连接由四元组（src_ip:port, dst_ip:port）标识，网络切换（如 Wi-Fi 切 4G）会断开。QUIC 用 Connection ID 标识连接，IP 变化时连接不中断。内建加密（QUIC 强制 TLS 1.3 加密，不像 TCP 可能明文传输）、改进的流量控制和拥塞控制（QUIC 可以在应用层实现自定义拥塞控制算法，无需修改操作系统内核）。
+
+扩展延伸：部署现状和挑战：1）CDN 支持——Cloudflare、Google、Akamai 已大规模部署 QUIC 和 HTTP/3，约 30%+ 的 Web 流量已经走 QUIC。2）UDP 被运营商限速——某些企业网络/运营商限制 UDP 流量（出于安全考虑），QUIC 在这些网络下 fallback 到 TCP。3）服务器端支持——Nginx 1.25+ 支持 QUIC/HTTP/3，需要 OpenSSL 3.2+ 或 BoringSSL。4）HTTP/3 适合的场景：弱网环境（移动端网络切换频繁）、高延迟场景（0-RTT 优势明显）、页面资源多（多路复用免队头阻塞）。短文件下载/即时通讯类场景收益最大。`,hints:[`QUIC 怎么解决队头阻塞——UDP + 独立流 + 每个流独立丢包重传`,`0-RTT 的安全性缺陷——可能有重放攻击风险（服务器需要防护）`],tags:[`网络`,`HTTP/3`,`QUIC`,`TLS`,`性能优化`],content_hash:`383df5414f0b`,id:1251}];export{e as category,t as questions};

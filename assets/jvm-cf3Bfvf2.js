@@ -1,0 +1,1546 @@
+var e=`jvm`,t=[{category:`jvm`,difficulty:`easy`,type:`short_answer`,title:`JVM 运行时数据区深度解析`,content:`请详细描述 JVM 运行时数据区各个部分（程序计数器、虚拟机栈、本地方法栈、堆、方法区、运行时常量池、直接内存）的作用、存储内容、线程共享属性和可能抛出的异常。`,answer:`答案：JVM 运行时数据区分为线程私有和线程共享两大部分。
+
+【线程私有】
+1. 程序计数器（Program Counter Register）：存储当前线程执行的字节码行号。唯一不会 OOM 的区域。
+2. 虚拟机栈（JVM Stack）：每个方法对应一个栈帧，包含局部变量表（Slot）、操作数栈、动态链接、方法出口。StackOverflowError（递归过深）和 OutOfMemoryError（动态扩展失败）。
+3. 本地方法栈（Native Method Stack）：与虚拟机栈类似，但为 native 方法服务。HotSpot 将两者合二为一。
+
+【线程共享】
+4. 堆（Heap）：存储对象实例和数组。GC 分代管理（Young/Old/永久代或元空间）。最大内存区域，OOM 最常见的地方。
+5. 方法区（Method Area）：存储类型信息、常量、静态变量、JIT 代码缓存。JDK 8 之前为永久代（PermGen，可 OOM），JDK 8+ 改为元空间（Metaspace，使用本地内存）。
+6. 运行时常量池（Runtime Constant Pool）：每个类/接口的常量池表，包含字面量和符号引用。String.intern() 也在这里管理。
+7. 直接内存（Direct Memory）：NIO 的 DirectByteBuffer 使用 native 分配，不受 -Xmx 限制，用 -XX:MaxDirectMemorySize 控制。`,hints:[`为什么 HotSpot 把本地方法栈和虚拟机栈合在一起？——为了简化 GC 和栈遍历`,`JDK 8 为什么用元空间替换永久代？——永久代难以调优，元空间使用 native memory 避免 OOM`],tags:[`JVM`,`运行时数据区`,`内存管理`],content_hash:`eb19ab10aed7`,id:2481},{category:`jvm`,difficulty:`easy`,type:`short_answer`,title:`G1 GC 分代收集与 Region 设计`,content:`G1（Garbage-First）收集器的 Region 设计、分代模型和收集流程是怎样的？与 CMS 相比有什么优势？`,answer:`答案：G1 将堆划分为 2048 个等大小 Region（1-32MB，由 -XX:G1HeapRegionSize 决定），每个 Region 可以动态扮演 Eden、Survivor、Old 或 Humongous（大对象）角色。
+
+核心设计：
+1. Region 化——打破了物理分代隔离，实现了逻辑分代、物理连续。
+2. 停顿预测模型——根据历史 GC 停顿数据估算回收哪个 Region 集合能在指定停顿时间内获得最大收益。
+3. SATB（Snapshot-At-The-Beginning）——并发标记阶段用 SATB 维护存活对象快照，避免 CMS 的增量更新导致的浮动垃圾问题。
+4. Remembered Set（RSet）——每个 Region 记录被哪些 Region 引用（Card Table 级别），避免全堆扫描。
+
+收集流程：
+1. 年轻代 GC：STW，将 Eden 中存活对象复制到 Survivor/Old。
+2. 并发标记周期：初始标记（STW，标记 GC Roots）、并发标记（与用户线程并行）、最终标记（STW，处理 SATB 队列）、筛选回收（STW，根据停顿预测选择 Region 回收）。
+3. Mixed GC：不止收集年轻代，还回收部分高收益 Old Region。
+4. Full GC：当并发回收来不及（对象分配速度超过回收速度），退化为 Serial Full GC（单线程）。
+
+与 CMS 比：G1 停顿可预测、不会产生内存碎片、大对象处理更友好。JDK 9+ 默认 GC 即为 G1。`,hints:[`G1 的 Humongous 对象（>= Region 大小 50%）直接分配到老年代，连续分配多个 Region`,`避免 G1 Full GC 的关键：-XX:G1HeapRegionSize 设置合适、-XX:InitiatingHeapOccupancyPercent 调低`],tags:[`JVM`,`G1`,`GC`,`停顿预测`],content_hash:`9dc35fe7022f`,id:2482},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`ZGC 并发标记-压缩原理`,content:`ZGC（Z Garbage Collector）是如何做到 10ms 以内停顿的？它的染色指针和读屏障是如何工作的？`,answer:`答案：ZGC 是 JDK 11 引入的低延迟 GC（JDK 15 转正），核心设计目标是停顿 < 10ms，与堆大小无关。
+
+染色指针（Colored Pointer）：ZGC 在 64 位指针中借用高 4 位（46-49 位）存储元数据状态：Finalizable、Remapped、Marked1、Marked0。通过指针自身携带 GC 状态，无需对象头额外空间。但这要求 64 位系统（不支持 32 位）和 Linux 的 mremap 支持。
+
+读屏障（Load Barrier）：应用程序读取对象引用时触发（不是写屏障）。在读引用后，检查指针染色位，如果指向非活跃视图，则通过读屏障自愈（self-healing）——将引用修正为最新地址。
+
+收集流程（并发回收）：
+1. 并发标记（并发）：从 GC Roots 开始标记存活对象。读屏障确保应用程序能正确读取被标记的对象。
+2. 并发预备重分配（并发）：找到哪些 Region 需要回收，构建重分配集。
+3. 并发重分配（并发）：将存活对象复制到新 Region，同时使用读屏障更新引用。这是 ZGC 的核心创新——复制和应用程序并发执行。
+4. 并发重映射（并发）：修正旧引用的映射关系。
+
+与传统 GC 对比：CMS/G1 的并发标记是并发，但压缩/复制是 STW。ZGC 的四个阶段几乎都是并发的。`,hints:[`ZGC 的读屏障由 JIT 编译器插入，对 CPU 流水线有轻微影响`,`ZGC 不适合需要 -XX:MaxGCPauseMillis 小于 1ms 的场景——没有 GC 能做到`],tags:[`JVM`,`ZGC`,`染色指针`,`读屏障`],content_hash:`95194b75c37e`,id:2483},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`GC 日志分析与调优实战`,content:`如何通过 GC 日志分析和调优 JVM？请列出需要关注的关键指标和常见调优参数。`,answer:`答案：GC 日志是 JVM 调优最重要的诊断工具。JDK 9+ 统一日志通过 -Xlog:gc* 开启。
+
+关键指标：
+1. GC 频率和间隔：Young GC 频率（正常 > 5 秒间隔）、Full GC 频率（理想为 0）。
+2. GC 停顿时间：系统吞吐量损失 = GC 总停顿 / 运行总时间。
+3. 晋升情况：每次 Young GC 晋升到 Old 的对象大小。晋升过快 → Old 区快速填满 → Full GC。
+4. 堆占用趋势：GC 后存活对象大小是否持续增长（内存泄漏信号）。
+5. 元空间占用：加载的类数量，是否有类加载器泄漏。
+
+调优参数：
+- -Xms = -Xmx：初始堆=最大堆，避免运行时动态调整。
+- -XX:NewRatio：老年代/年轻代比例，默认 2（老年代 2/3，年轻代 1/3）。
+- -XX:SurvivorRatio：Eden/Survivor 比例，默认 8（Eden:Survivor:Survivor = 8:1:1）。
+- -XX:MaxTenuringThreshold：对象晋升老年代的年龄阈值，默认 15（CMS 是 6）。
+- -XX:+UseStringDeduplication：G1 下开启字符串去重。
+
+调优方法论：先分析 GC 日志找到瓶颈 → 确定目标（延迟 vs 吞吐量）→ 针对性调整参数 → 观察效果 → 迭代。不要盲目抄参数。`,hints:[`GC 日志分析优先用工具：GCeasy（在线）、GCViewer（离线）比肉眼看日志高效百倍`,`Full GC 频率 > 1 次/小时就需要关注，> 1 次/10 分钟立即处理`],tags:[`JVM`,`GC日志`,`调优`,`GCViewer`],content_hash:`6498e953fd77`,id:2484},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`OOM 故障排查与 Heap Dump 分析`,content:`Java OOM（OutOfMemoryError）有哪几种类型？请描述从 OOM 发生到根因定位的完整排查流程。`,answer:`答案：OOM 类型和排查流程如下：
+
+【OOM 类型】
+1. Java heap space：堆内存不足。最常见。原因：内存泄漏或堆太小。
+2. Metaspace：元空间不足。原因：CGLIB 动态代理/反射/热部署导致类加载过多。
+3. Direct buffer memory：直接内存不足。原因：Netty/NIO 未正确释放 DirectBuffer。
+4. GC overhead limit exceeded：GC 占 CPU 98%+ 但回收 < 2% 堆。系统濒临崩溃的信号。
+5. Unable to create new native thread：线程数超限。原因：线程泄漏或操作系统限制。
+6. Requested array size exceeds VM limit：请求的数组大小超过 JVM 限制。
+
+【排查流程】
+1. 收集信息：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path 自动转储。
+2. 工具分析：Eclipse MAT / JProfiler / VisualVM 打开 heap dump。
+3. 找嫌疑对象：MAT 的 Leak Suspect Report 自动检测「大对象 + GC Roots 引用链」。
+4. 分析 GC Roots 路径：找到为什么这个对象没有被回收。通常是：Thread -> ThreadLocal -> 对象 -> 持有大量数据。
+5. 代码定位：从引用链反向找到代码位置，修复泄漏点。
+
+实战经验：OOM 后不要立即重启——保留现场（dump 文件）再重启。生产环境务必配置 HeapDumpOnOutOfMemoryError。`,hints:[`MAT 的 Show objects by class + Merge shortest paths to GC roots 是定位泄漏最快的组合`,`Metaspace OOM 通常在热部署场景出现——每个部署创建新的 ClassLoader 加载的类不会卸载`],tags:[`JVM`,`OOM`,`HeapDump`,`MAT`],content_hash:`310cdf3832b8`,id:2485},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`类加载机制：双亲委派模型与破坏`,content:`请解释 JVM 类加载的双亲委派模型。什么是「破坏双亲委派」的场景和方式？`,answer:`答案：双亲委派模型是 Java 类加载的核心安全机制。
+
+工作原理：当一个类加载器收到加载请求时，首先将请求委派给父类加载器处理，只有父类加载器无法加载时，才自己去加载。加载器层级：
+- Bootstrap ClassLoader（C++ 实现）：加载 <JAVA_HOME>/lib/ 核心类（rt.jar）。
+- Extension ClassLoader（JDK 9+ 改为 Platform ClassLoader）：加载 <JAVA_HOME>/lib/ext/ 扩展类。
+- Application ClassLoader：加载 classpath 上的用户类。
+
+委派流程：加载 java.lang.String → Application 委托 Extension → Extension 委托 Bootstrap → Bootstrap 在 rt.jar 中找到 → 直接返回。保证核心库不会被用户自定义类替换。
+
+破坏委派的场景：
+1. SPI 机制（ServiceLoader）：JDK 核心接口（JDBC DriverManager）在 Bootstrap 类加载器中加载，但 SPI 实现类（MySQL 驱动）在 classpath。为了解决这个问题，引入线程上下文类加载器（Thread Context ClassLoader），将加载请求「逆向」交给 Application 类加载器。
+2. Tomcat 容器：每个 Web App 有独立的类加载器，优先加载 WEB-INF/lib/ 下的类（先自己加载再委派上级），实现应用隔离。
+3. 热部署/热替换：每次部署创建新的类加载器加载新版本类，旧类加载器可被卸载。
+4. JDK 9 模块化：模块化后使用模块路径，不再严格遵循双亲委派，支持模块间的明确依赖。`,hints:[`双亲委派的优点是安全（核心类不能被篡改）+ 唯一（同一个类不会被重复加载）`,`Tomcat 的 WebappClassLoader 打破委派：先检查本地目录，再委派父加载器`],tags:[`JVM`,`类加载`,`双亲委派`,`ClassLoader`],content_hash:`17f14ca10cfe`,id:2486},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JIT 编译：C1/C2 编译器与分层编译`,content:`HotSpot JIT 编译器的 C1（Client）和 C2（Server）模式区别是什么？分层编译（Tiered Compilation）如何工作？`,answer:`答案：JIT（Just-In-Time）编译器在运行时将热点字节码编译为本地机器码，大幅提升性能。
+
+C1 编译器（Client Compiler）：编译速度快，但优化程度低。适合桌面应用（短生命周期、快速启动）。使用简单的数据流分析和基础优化。
+
+C2 编译器（Server Compiler）：编译速度慢，但优化程度极高。适合服务端应用（长生命周期、持续高性能）。执行完整的逃逸分析、锁消除、向量化、内联等激进优化。
+
+分层编译（默认 JDK 8+）：结合 C1 和 C2 的优点。5 个等级：
+- 0：解释执行（启动阶段）
+- 1：C1 简单编译（无 profiling）
+- 2：C1 带方法调用 profiling
+- 3：C1 带完整 profiling（分支、类型）
+- 4：C2 编译（最高级优化）
+
+典型流程：代码解释执行 → 到达方法调用阈值（-XX:CompileThreshold=10000）→ C1 编译带 profiling → 到达 C2 阈值 → C2 深度优化编译。
+
+关键参数：-XX:TieredCompilation=true/false、-XX:CompileThreshold、-XX:ReservedCodeCacheSize（JIT 代码缓存默认 240MB）。
+
+实战：C2 可能因为类加载导致编译退化（deoptimization）回解释执行。诊断用 -XX:+PrintCompilation 查看编译日志。`,hints:[`分层编译中 C1 收集的 profiling 数据（分支概率、类型分布）对 C2 优化至关重要`,`CodeCache 满了 JIT 就停止编译——大量方法退化为解释执行，性能骤降`],tags:[`JVM`,`JIT`,`C1`,`C2`,`分层编译`],content_hash:`a1f8aa3a598d`,id:2487},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`逃逸分析与栈上分配`,content:`JVM 逃逸分析（Escape Analysis）是如何工作的？它能做哪些优化？什么情况下会失效？`,answer:`答案：逃逸分析是 C2 编译器的一种高级优化技术，分析对象的动态作用域是否仅限于当前方法或当前线程。
+
+三种逃逸级别：
+1. 不逃逸（No Escape）：对象只在方法内创建和使用，没有被传递到方法外。
+2. 方法逃逸（Arg Escape）：对象作为参数传递给其他方法。
+3. 线程逃逸（Global Escape）：对象被赋值给全局变量或字段，其他线程可访问。
+
+基于逃逸分析的优化：
+1. 栈上分配（Stack Allocation）：不逃逸的对象直接在栈帧中分配空间，GC 时无需扫描。JDK 7 开始 -XX:+DoEscapeAnalysis 默认开启。实测：大量临时小对象场景可减少 GC 压力 50%+。
+2. 标量替换（Scalar Replacement）：将对象拆解为基本类型字段（标量），直接分配在栈上或寄存器中，不需要分配堆内存。
+3. 锁消除（Lock Elimination/Coarsening）：检测到对象不逃逸线程，消除 synchronized 锁。
+
+失效场景：
+- 对象太大（超过栈帧大小限制，仍分配在堆上）
+- 反射调用/动态代理生成的对象（逃逸分析无法追踪）
+- 经过 JNI 边界的对象
+- 通过循环多次创建的对象（热点可能抑制逃逸分析）
+
+开启：-XX:+DoEscapeAnalysis（默认开启），-XX:+EliminateAllocations（标量替换默认开启），-XX:+EliminateLocks（锁消除默认开启）。可用 -XX:- 前缀关闭调试。`,hints:[`逃逸分析只在 C2 中实现，C1 模式下不生效——所以短时间内大量创建对象的代码在分层编译初期 GC 更频繁`,`锁消除不是去掉所有锁——而是去掉不会竞争的锁（比如线程内部使用的锁对象）`],tags:[`JVM`,`逃逸分析`,`栈上分配`,`标量替换`],content_hash:`a79287de39d7`,id:2488},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`Synchronized 锁膨胀过程与偏向锁`,content:`请描述 Java synchronized 从偏向锁到重量级锁的膨胀过程。JDK 15 之后偏向锁为什么被废弃？`,answer:`答案：Java synchronized 通过对象头中的 Mark Word 实现锁状态的升级。
+
+锁的四种状态（从低到高）：
+1. 无锁（001）：对象未被锁定。
+2. 偏向锁（101）：首次获取锁时，CAS 将线程 ID 写入 Mark Word。之后该线程再次获取无需同步操作。无竞争时开销极低。
+3. 轻量级锁（00）：另一个线程尝试获取已被偏向的锁 → 偏向锁撤销 → 升级为轻量级锁。通过 CAS 自旋获取锁，不让线程阻塞。
+4. 重量级锁（10）：自旋超过阈值（默认 10 次）或自旋线程数超过 CPU 核数的 1/2 → 升级为重量级锁。线程阻塞在 OS mutex，等待操作系统调度。
+
+锁只能升级、不能降级（GC 时可能降级但对应用程序来说是透明的）。
+
+偏向锁废弃（JDK 15+）：偏向锁带来极高的实现复杂度且维护成本高。大部分 Java 服务的线程池并发模型中，单个锁几乎总是被多个线程竞争，偏向锁实际上没有收益。废弃后默认使用轻量级锁。JDK 21 的虚拟线程进一步缩小了偏向锁的适用场景。
+
+实战启示：不要依赖偏向锁优化——在高并发服务中，偏向锁的撤销成本可能超过收益。轻量级锁的自旋策略 + 合理的锁粒度控制才是正确方向。`,hints:[`偏向锁的撤销需要等待全局安全点（SafePoint），可能引入额外的 STW 停顿`,`高并发场景加锁的优化方向：减小锁粒度（分段锁、读写锁）、缩短锁持有时间、用 CAS 替代锁`],tags:[`JVM`,`锁`,`synchronized`,`偏向锁`],content_hash:`bd7ec56ad219`,id:2489},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`CMS 收集器并发回收全流程`,content:`CMS（Concurrent Mark Sweep）收集器的完整工作流程和各阶段 STW 情况是怎样的？它为什么被 G1 取代？`,answer:`答案：CMS 是一款以获取最短回收停顿时间为目标的并发收集器，追求「并发」而非「压缩」。
+
+工作流程（4 个阶段）：
+1. 初始标记（Initial Mark，STW）：标记 GC Roots 能直接关联的对象。快，停顿短。
+2. 并发标记（Concurrent Mark，并发）：从 GC Roots 开始遍历所有对象，与用户线程并发执行。慢但不停顿。这个阶段使用增量更新（Incremental Update）记录引用变化。
+3. 重新标记（Remark，STW）：修正并发标记期间因用户线程继续运行产生变动的对象引用。停顿比初始标记长（需要扫描所有线程栈和 Card Table）。
+4. 并发清除（Concurrent Sweep，并发）：清除不可达对象，回收内存空间。与用户线程并发。
+
+CMS 的缺点：
+1. 浮动垃圾（Floating Garbage）：并发清理期间产生的垃圾只能在下一次 GC 清理（需要预留空间给浮动垃圾）。
+2. 内存碎片：使用标记-清除算法（不压缩），长时间运行后产生碎片 → 分配大对象失败 → 触发 Full GC（CMS 退化 Serial Old 做压缩，长停顿）。
+3. 并发模式失败（Concurrent Mode Failure）：老年代在并发标记期间被填满，CMS 无法完成回收 → 退化为 Serial Old Full GC。
+4. CPU 敏感：并发阶段占用 CPU 资源，应用程序吞吐量下降。
+
+JDK 9 标记为废弃，JDK 14 正式移除。G1 作为替代提供了停顿预测和压缩能力。`,hints:[`CMS 调优关键是预留老年代空间（-XX:CMSInitiatingOccupancyFraction=75）避免 Concurrent Mode Failure`,`CMS 的重新标记阶段可以用 -XX:+CMSScavengeBeforeRemark 触发一次 Young GC 减少扫描对象数`],tags:[`JVM`,`CMS`,`GC`,`并发回收`],content_hash:`78c0e7db5b1b`,id:2490},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`SafePoint 与 JVM 停顿机制`,content:`什么是 SafePoint（安全点）？它在 JVM 中的作用是什么？为何某些线程会 Blocked 在 safepoint？`,answer:`答案：SafePoint 是 JVM 中所有线程需要到达的一个安全状态点，只有在这个点上 JVM 才能执行全局操作（如 GC、偏向锁撤销、方法去优化）。
+
+SafePoint 的作用：
+- 线程在此点暂停时，其寄存器中的引用可以被准确枚举（OopMap 记录引用位置）。
+- JIT 编译的代码会在方法调用点、循环回跳点、抛出异常点插入 SafePoint 检查。
+- 所有线程到达 SafePoint 后，JVM 才能执行「全局操作」（如 STW GC）。
+
+检测机制：轮询（Polling）。JIT 编译代码中插入 \`test %eax, safepoint_addr\` 指令。当 JVM 需要全局暂停时，设置 safepoint_addr 为一个特殊值 → 线程执行测试指令时陷入 OS Page Fault → 触发 Safepoint 同步。
+
+阻塞在 safepoint 的原因：
+- 长时间不执行 SafePoint 检查的代码（如大循环体内部没有方法调用，需要 -XX:+UseCountedLoopSafePoint 强制检查）
+- JNI 调用期间（线程在 native 代码中执行，不响应 SafePoint）
+- 线程长时间执行复杂方法（JIT 编译后的巨大方法只有入口/出口有 SafePoint）
+
+排查：用 -XX:+SafepointTimeout -XX:SafepointTimeoutDelay=2000 检测长时间未到达 SafePoint 的线程。Thread dump 中 \`blocked at safepoint\` 就是线索。`,hints:[`SafePoint 不是定时触发的——只有 JVM 需要全局操作时才触发`,`大循环体内无方法调用（如巨大 for 循环）可能是 SafePoint 阻塞的源头——可加 -XX:+UseCountedLoopSafePoint`],tags:[`JVM`,`SafePoint`,`STW`,`GC停顿`],content_hash:`a167f2f9ba13`,id:2491},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 内存模型与 happens-before 规则`,content:`JMM（Java Memory Model）的核心内容是什么？happens-before 规则有哪些？对并发编程的指导意义是什么？`,answer:`答案：JMM 是 Java 为多线程环境下数据一致性制定的规范，解决共享变量的可见性、有序性和原子性问题。
+
+核心概念：
+- 线程间通信通过共享内存（主内存）。每个线程有自己的工作内存（寄存器/缓存）存储变量副本。
+- 当一个线程修改了变量，何时对另一个线程可见由 JMM 规则决定。
+- 指令重排序（编译器 + 处理器）可能导致意料之外的执行顺序。
+
+happens-before 规则（满足前者对后者可见）：
+1. 程序次序规则：一个线程中按控制流顺序，前面的操作 happens-before 后面的。
+2. volatile 规则：volatile 变量的写 happens-before 于读。
+3. 锁规则：锁的释放（unlock）happens-before 于后续的获取（lock）。
+4. 传递性：A happens-before B，B happens-before C → A happens-before C。
+5. 线程启动规则：Thread.start() happens-before 被启动线程中的任何操作。
+6. 线程终止规则：线程中所有操作 happens-before 其他线程检测到该线程终止（Thread.join() 返回或 Thread.isAlive()=false）。
+7. 线程中断规则：interrupt() 调用 happens-before 被中断线程检测到中断。
+8. 对象终结规则：构造方法完成 happens-before finalize() 开始。
+
+对编程的指导：不要依赖直觉判断「时间先后」——代码的执行顺序和观察顺序都由 happens-before 规则决定。正确并发编程 = volatile/synchronized/atomic + 理解 happens-before。`,hints:[`volatile 不保证原子性（i++ 不是原子操作），但保证可见性和有序性`,`final 字段在构造方法完成后的特殊保证：只要 this 不逃逸，其他线程看到 final 字段一定是最新值`],tags:[`JVM`,`JMM`,`happens-before`,`并发`],content_hash:`35f7b5055ec1`,id:2492},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 调优参数全解析`,content:`请列出生产环境 JVM 调优中最关键的 10 个参数及其推荐值。`,answer:`答案：以下 10 个参数是生产环境 JVM 调优的核心参数：
+
+1. -Xms 和 -Xmx（堆大小）：设置为相同值，避免运行期动态调整。推荐：4-8GB（Java 服务典型值，更大堆建议用 G1）。
+
+2. -XX:MetaspaceSize 和 -XX:MaxMetaspaceSize：元空间触发 Full GC 的阈值。推荐设为一个合理值（如 256m），不设上限可能导致 GC 频繁触发。
+
+3. -XX:+UseG1GC（JDK 9+ 默认）：GC 选择。6G 以下堆 → G1，6-10G → G1 或 Parallel，10G+ → ZGC（JDK 17+）。
+
+4. -XX:MaxGCPauseMillis=200：G1/ZGC 的目标停顿时间。不是硬限制，是努力方向。
+
+5. -XX:InitiatingHeapOccupancyPercent=45：G1 并发标记启动阈值（堆占用百分比）。默认 45%，可调整到 55-60% 减少并发标记频率。
+
+6. -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path：OOM 自动 dump。必选参数。
+
+7. -XX:+PrintGCDetails -Xloggc:/path/gc.log（JDK 8）/ -Xlog:gc*:file=gc.log（JDK 9+）：GC 日志。必选参数。
+
+8. -XX:+DisableExplicitGC：禁止 System.gc()。防止框架/代码误触 Full GC。NIO/DirectBuffer 场景需谨慎（RMI 依赖它）。
+
+9. -Xss256k：栈大小。默认 1MB（多数场景太大），256-512k 可支持更多线程。
+
+10. -Djava.security.egd=file:/dev/./urandom：加快 SecureRandom 初始化（Tomcat/Spring 启动加速）。
+
+调试用：-XX:+PrintCompilation（JIT 编译日志）、-XX:+PrintTenuringDistribution（晋升日志）。`,hints:[`堆大小不要超过 32GB——超过后压缩 OOP（Object Pointer）失效，指针从 32 位变 64 位，同样对象占用更大内存`,`禁止 System.gc() 后，RMI 的分布式 GC 需要 -Dsun.rmi.dgc.server.gcInterval= 显式配置间隔`],tags:[`JVM`,`调优参数`,`生产配置`],content_hash:`3afe0b11abfb`,id:2493},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 性能监控工具全套`,content:`请介绍 JDK 自带的 JVM 监控诊断工具：jps、jstat、jmap、jstack、jcmd、jinfo 的用途和典型用法。`,answer:`答案：JDK 自带的命令行工具是 JVM 问题诊断的第一道防线：
+
+1. jps（JVM Process Status）：列出系统中 Java 进程的 PID 和主类。类似 ps aux | grep java。
+
+2. jstat（JVM Statistics Monitoring）：实时监控 GC 和类加载统计。jstat -gcutil <pid> 1s 每秒输出 GC 百分比。关键输出：S0/S1/Eden/Old/Metaspace 使用率，YGC/YGCT/FGC/FGCT。
+
+3. jmap（Memory Map）：生成 heap dump 和查看堆统计。
+- jmap -dump:live,format=b,file=dump.hprof <pid>：只转储存活对象。
+- jmap -heap <pid>：查看堆配置和使用摘要。
+- jmap -histo:live <pid>：按类统计存活对象数量和字节数。
+
+4. jstack（Stack Trace）：生成线程 dump。
+- jstack <pid>：输出所有线程的栈信息。
+- 检查死锁：jstack 自动检测（Found 1 deadlock）。
+- 高 CPU 查因：top -H 找 CPU 高的线程 PID → 转 16 进制 → jstack 中搜索。
+
+5. jcmd（JDK 7+）：多功能诊断命令。替代 jmap/jstack/jstat 的统一入口。
+- jcmd <pid> GC.heap_info
+- jcmd <pid> Thread.print
+- jcmd <pid> VM.flags
+- jcmd <pid> VM.uptime
+
+6. jinfo：查看和动态修改 JVM 参数（支持 -XX:+PrintFlagsFinal）。
+
+其他工具：VisualVM（可视化）、Arthas（阿里巴巴在线诊断神器）、async-profiler（CPU/内存采样）。`,hints:[`jmap -dump 在大型堆（10G+）上可能触发 Full GC 且长时间暂停——生产环境推荐 jcmd`,`Arthas 比 jstack 更强：能在线查看方法入参/返回值/异常，无需重新部署`],tags:[`JVM`,`监控`,`jstack`,`jmap`,`jstat`],content_hash:`62e1d826b6d5`,id:2494},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`String 常量池与 intern() 方法`,content:`Java String 的常量池机制是怎样的？String.intern() 的原理和最佳实践是什么？`,answer:`答案：String 常量池是 JVM 对字符串的优化机制，避免创建重复的字符串对象。
+
+JDK 7+ 常量池位置：在堆中（JDK 6 在永久代）。
+
+创建时机：
+- 字面量：String s = "hello" → 编译期常量折叠后存入 class 常量池，类加载时放入运行时常量池。
+- new：String s = new String("hello") → 即使常量池已有 "hello"，堆上还会创建新对象。
+- 拼接："a" + "b" → 编译期优化为 "ab"（字面量拼接），含变量的拼接会编译为 StringBuilder。
+
+intern() 方法：
+- 调用 s.intern() → 如果常量池中已有 equals 相等的字符串，返回常量池引用；如果没有，将 s 的引用加入常量池（JDK 7+ 只存引用，不复制对象）并返回。
+
+最佳实践：
+- 对于大量重复字符串的场景（如 HTTP Header 解析、ID 缓存），intern 可以大幅减少内存占用。
+- 但不要对每个字符串都 intern——intern 表是 HashMap 实现（Hashtable），字符串过多会降低性能。用 -XX:StringTableSize（默认 60013）增大桶数。
+- 替代方案：Guava 的 Interner 提供了更可控的弱引用字符串池。
+
+常见问题：intern() + 从文件读取大量不重复字符串会导致常量池膨胀，直到 OOM。不建议在不确定字符串重复率的情况下使用。`,hints:[`JDK 7+ intern 只存储引用（不复制对象本身），比 JDK 6 节省内存`,`StringTableSize 是固定桶数（Hashtable），不考虑负载因子——建议设到 100k-1M 减少哈希碰撞`],tags:[`JVM`,`String`,`常量池`,`intern`],content_hash:`d85465c295f9`,id:2495},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JMH 微基准测试实战`,content:`Java 微基准测试中为什么不能简单用 System.currentTimeMillis() 测性能？JMH（Java Microbenchmark Harness）如何解决这些问题？`,answer:`答案：直接用 System.currentTimeMillis() 测一段代码的性能存在多个陷阱：
+
+问题：
+1. JIT 编译：代码运行时从解释执行 → C1 → C2，每阶段性能不同。
+2. 代码消除：JIT 发现计算结果未使用 → 直接删除整个计算代码（Dead Code Elimination）。
+3. 常量折叠：编译期计算出常量表达式，循环体全部消除。
+4. 类加载：第一次执行时触发类加载和解析，比后续调用慢得多。
+5. 系统噪音：GC 停顿、OS 调度、时钟精度。
+
+JMH 的解决方案：
+1. @Warmup(iterations=5)：预热阶段使 JIT 编译稳定后再测量。
+2. @Measurement(iterations=10)：多次测量，报告统计值（Mean, Error, P99）。
+3. @BenchmarkMode(Mode.Throughput)：多种模式——Throughput（吞吐量）、AverageTime（平均耗时）、SampleTime（采样延迟）。
+4. Blackhole.consumeCPU() 和 Blackhole.consume()：防止 JIT 消除未使用的返回值。
+5. @CompilerControl：控制 JIT 编译行为（强制内联/不内联）。
+6. Fork：单独 JVM 进程运行每个基准，隔离 GC 和 JIT 状态。
+
+最佳实践：
+- 不要在测试中使用 Thread.sleep() 或 System.gc()——JMH 自动管理 GC。
+- 参数解析和方法内联会严重影响结果——用 @Param 自动迭代参数组合。
+- 测试结果贴出时注明机器配置（CPU/内存/JDK 版本/JVM 参数）。`,hints:[`JMH 的 @State(Scope.Thread) 保证每个线程独立的变量实例，避免假共享`,`运行 JMH 用 -prof perfasm 可以查看生成的汇编代码——极致优化的必备工具`],tags:[`JVM`,`JMH`,`基准测试`,`性能`],content_hash:`ee1d59845f62`,id:2496},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`Compressed OOP 压缩指针`,content:`JVM 的压缩 OOP（Ordinary Object Pointer）是什么？为什么建议堆不要超过 32GB？`,answer:`答案：压缩 OOP（-XX:+UseCompressedOops，JDK 7+ 默认开启）是 JVM 用 32 位指针代替 64 位指针引用堆对象的技术。
+
+原理：对象分配按 8 字节对齐（对象的起始地址永远是 8 的倍数），因此指针的低 3 位始终为 0。压缩 OOP 存的是 \`地址 / 8\`（32 位无符号整数的缩放值），使用时乘以 8 还原。因此 32 位能表示 2^32 * 8 = 32GB 的堆空间。
+
+收益：
+- 指针从 64 位压缩到 32 位（节省 50%）——同样对象占用更少内存。
+- 更少的内存占用 → 更少的 GC 压力 → 更高的缓存命中率。
+- 减少 CPU 缓存行（Cache Line）污染（一条缓存行能放更多压缩指针）。
+
+为什么 32GB 阈值：超过 32GB 后，8 字节对齐无法保证所有地址在 32 位缩放范围内（2^32 * 8 = 32GB）。超过后必须用 64 位指针，同样对象占用内存增加约 20-30%（指针膨胀）。这意味着：32GB 堆开启压缩 → 实际可用 ≈ 32GB * 压缩收益；33GB 堆关闭压缩 → 实际可用 ≈ 33GB * 膨胀损失。34-35GB 的堆可能比 31GB 的堆能装的对象少！
+
+实战：堆空间需求 ≤ 32GB 时，压缩 OOP 提供显著收益。需求 > 32GB 时，推荐使用多实例（多 JVM 节点）或等新一代 GC（ZGC 对超大堆更友好）。
+
+其他压缩：-XX:+UseCompressedClassPointers（JDK 7+ 默认）压缩元空间中的 Klass 指针。`,hints:[`32GB 不是绝对的——如果 -XX:ObjectAlignmentInBytes=16，阈值扩大到 64GB（但对象对齐浪费更多空间）`,`Docker 容器中 -Xmx 30g 比 -Xmx 32g 可能性能更好——32g 边界时压缩 OOP 可能关闭`],tags:[`JVM`,`压缩OOP`,`对象指针`,`内存优化`],content_hash:`b6eca693c329`,id:2497},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`TLAB 与对象分配流程`,content:`JVM 中对象分配的全流程是什么？TLAB 的作用和分配过程是怎样的？`,answer:`答案：对象分配是 JVM 最频繁的操作之一，性能至关重要。
+
+分配流程（按优先级）：
+1. 栈上分配：如果逃逸分析确定对象不逃逸，在栈帧中分配，方法结束自动销毁。零 GC 开销。
+2. TLAB 分配：线程的本地分配缓冲区（Eden 区中的私有区域）。TLAB 中有空间 → 指针碰撞分配（无锁）。
+3. 共享 Eden 分配：TLAB 空间不足 + 申请新 TLAB 失败 → 在 Eden 区通过 CAS + 指针碰撞分配（多线程竞争）。
+4. 老年代分配：对象太大（超过 TLAB 大小）或需要直接进入老年代（-XX:PretenureSizeThreshold）→ 直接在老年代分配。
+
+TLAB 详解：
+- 每个线程在 Eden 区预分配一块本地缓冲区（默认大小为 Eden 的 1%，可通过 -XX:TLABSize 设置）。
+- 小对象直接在 TLAB 中通过指针碰撞分配（bump-the-pointer），无锁、极快。
+- TLAB 用完后，线程尝试向 Eden 申请新的 TLAB（需要 CAS 竞争）。
+- JVM 动态调整 TLAB 大小：通过统计每个线程的 TLAB 浪费比例，-XX:+ResizeTLAB（默认开启）自动调整。
+- TLAB 浪费：TLAB 未使用完的空间在 Minor GC 前无法给其他线程用，浪费比例通过 -XX:TLABWasteTargetPercent（默认 1%）控制。
+
+-XX:+PrintTLAB 可查看 TLAB 使用统计。`,hints:[`TLAB 是提升多线程分配性能的关键——没有 TLAB 时每次对象分配都需要 CAS 竞争`,`TLAB 分配失败不立即阻塞——先从 Eden 申请一个新 TLAB，如果也失败才走 CAS 分配`],tags:[`JVM`,`TLAB`,`对象分配`,`内存`],content_hash:`dbb352c913fa`,id:2498},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`CPU 100% 排障实战流程`,content:`生产环境 Java 服务 CPU 100% 的排查流程是什么？请给出从发现到定位根因的完整步骤。`,answer:`答案：步骤一：确认现象。top 或 htop 确认 Java 进程 CPU 占用率。确认是用户态 CPU 高还是系统态 CPU 高。
+
+步骤二：定位线程。top -Hp <pid> 找到 CPU 最高的线程 PID（如 12345）。将 PID 转为十六进制：printf '%x\\n' 12345 → 0x3039。
+
+步骤三：线程 Dump。jstack <pid> 或 jcmd <pid> Thread.print。搜索十六进制线程 ID（nid=0x3039），查看线程状态：
+- RUNNABLE + 业务包名 → 业务代码有热点，如死循环、大量计算、频繁正则。
+- RUNNABLE + jvm 内部 → GC 线程（jstat 确认 GC 频率）、JIT 编译线程（-XX:+PrintCompilation 确认）。
+- BLOCKED/WAITING → 锁竞争导致上下文切换频繁，线程多数时间在等待锁。
+
+步骤四：高频采样。用 top -Hp <pid> 间隔 5 秒采样 3-5 次，确认高 CPU 线程是否固定。固定 → 业务死循环。变化 → 定期任务或 GC。
+
+步骤五：更深入的手段：
+- Arthas：thread -n 3 直接显示最忙的 3 个线程及其栈。
+- perf：perf top -p <pid> 显示 CPU 占用最高的汇编/函数。
+- async-profiler：profiler.sh -d 30 -f cpu.html <pid> 生成 CPU 火焰图。
+
+步骤六：火焰图分析：
+- 山顶（顶部）是具体方法（如 regex matcher 或 JSON parser）。
+- 山脊宽度表示该方法的 CPU 占比。
+- 宽的山脊 + Java 标准库 → 检查使用方式（如 Pattern.compile 在循环中）。
+- 宽的山脊 + 业务包 → 优化算法或缓存。`,hints:[`高 CPU 的原因有 60%+ 是 GC——先检查 GC 频率再找业务代码`,`Arthas 的 dashboard 命令一键显示最耗 CPU 的线程及其栈，比手工 jstack 快得多`],tags:[`JVM`,`CPU100%`,`排障`,`火焰图`],content_hash:`b6cc9c3deed4`,id:2499},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Shenandoah GC 原理`,content:`Shenandoah GC 和 ZGC 在低延迟设计上有什么异同？它的 Brooks Pointer 转发指针是什么？`,answer:`答案：Shenandoah 是 Red Hat 贡献给 OpenJDK 12（JDK 15 转正，JDK 21 生产就绪）的低延迟 GC。
+
+与 ZGC 相同点：目标停顿 < 10ms、并发压缩/复制、堆大小无关。
+
+与 ZGC 不同点：
+- Shenandoah 使用 Brooks Pointer（对象头前 4/8 字节存转发指针），而非 ZGC 的染色指针。
+- Shenandoah 使用写屏障（Write Barrier）而非读屏障。
+- ZGC 只支持 Linux/x64（染色指针依赖 mremap），Shenandoah 支持更多平台（Mac/Windows）。
+
+Brooks Pointer（转发指针）：每个对象头部增加一个指针字段（forwardee）。对象被移动时，原对象的 Brooks Pointer 指向新位置。所有访问通过写屏障检查 forwardee：如果非空 → 使用新地址。类似 Go 语言的指针转发机制。
+
+写屏障（Write Barrier）：对引用类型字段写入时触发，检查目标对象是否正在被移动。如果是，帮助完成移动（self-healing）再写入。
+
+收集流程：
+1. 初始标记（STW，短暂）
+2. 并发标记（扫描堆，记录存活）
+3. 最终标记（STW，处理 pending）
+4. 并发清理（回收无存活对象的 Region）
+5. 并发回收（核心：将存活对象复制到新 Region，通过 Brooks Pointer 转发）
+6. 初始引用更新（STW）
+7. 并发引用更新（并发修正所有引用）
+8. 最终引用更新（STW，清理待处理）
+9. 并发清理
+
+适用场景：对延迟敏感的服务，如实时交易系统、在线广告、游戏服务器。`,hints:[`Shenandoah 的写屏障在极端高分配速率场景下可能 GC 吞吐量低于 G1——但始终能保证低停顿`,`JDK 21 的 Shenandoah 增加了 generational 模式（分代 Shenandoah），性能大幅提升`],tags:[`JVM`,`Shenandoah`,`GC`,`低延迟`],content_hash:`050213b2148d`,id:2500},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`ParNew + CMS 组合调优`,content:`ParNew + CMS 组合在 JDK 8 中是常见的 GC 方案。ParNew 和 Parallel Scavenge 的区别是什么？为什么 ParNew 被设计为与 CMS 配合？`,answer:`答案：ParNew 是 CMS 专属的年轻代 GC 实现，本质上是 Parallel Scavenge 的变体。
+
+ParNew vs Parallel Scavenge：
+1. ParNew 支持 CMS 的并发标记带来的「STW 年轻代收集 + 并发标记」交错模式——CMS 的初始标记结束后 ParNew 还可以继续收集。Parallel Scavenge 没有这种交互机制。
+2. ParNew 使用更少的 Stop-The-World 安全点优化，允许 CMS 的并发线程在年轻代 GC 期间继续工作。
+3. Parallel Scavenge 追求吞吐量最大化（自适应调节），ParNew 追求与 CMS 的兼容。
+
+为什么 ParNew 专为 CMS 设计：CMS 的并发标记阶段需要与年轻代 GC 共存——如果用的是 Parallel Scavenge，CMS 的初始标记和重新标记时年轻代收集器必须完全 STW，导致停顿叠加。ParNew 允许 CMS 线程在年轻代 GC 的某些阶段继续工作。
+
+调优要点：
+- -XX:+UseParNewGC（JDK 9 前）显式开启（JDK 8 中 UseConcMarkSweepGC 包含 ParNew）。
+- -XX:ParallelGCThreads：年轻代 GC 并行线程数（默认 = CPU 核数）。
+- -XX:ParGCCardsPerStrideChunk：CMS 并发标记阶段扫描 Card Table 的粒度，影响并发标记效率和 CPU 消耗。
+
+JDK 9 后 ParNew 被移除——CMS 也被移除。替代方案：G1（JDK 9+ 默认）或 ZGC/Shenandoah（低延迟需求）。`,hints:[`ParNew + CMS + Serial Old（Full GC 后备）是 JDK 8 的经典组合，但 Full GC 阶段是单线程的——大堆下令人崩溃`,`为什么 ParNew 不等 CMS 完成就做年轻代 GC？——避免老年代被年轻代晋升的对象填满，导致 Concurrent Mode Failure`],tags:[`JVM`,`ParNew`,`CMS`,`GC组合`],content_hash:`f67b16347c58`,id:2501},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 对象生命周期与分代回收`,content:`请描述一个 Java 对象的完整生命周期（从创建到回收），以及在各个 GC 阶段中发生的变化。`,answer:`答案：一个 Java 对象的完整生命周期：
+
+1. 创建：new 指令 → 类加载检查 → 分配内存（TLAB/Eden） → 零值初始化 → 对象头设置 → 调用 <init> 方法。
+
+2. 存活期：对象在 Eden 区存活。被业务代码引用。如果对象无逃逸，可能栈上分配直接随方法结束销毁。
+
+3. 第一次 Young GC（Minor GC）：Eden 区触发 GC。对象被标记为存活 → 复制到 Survivor 区（From）。年龄 = 1。-XX:+PrintTenuringDistribution 可查看各年龄对象大小。
+
+4. 后续 Young GC：下一次 GC 时，From 和 To 互换。对象在 Survivor 区之间复制，年龄每次 +1。
+
+5. 晋升（Promotion）：当对象年龄达到 -XX:MaxTenuringThreshold（默认 15，CMS 默认 6），或 Survivor 区放不下（动态年龄判定：同年龄对象总和 > Survivor 50%）→ 晋升到老年代。
+
+6. 老年代存活：对象在老年代长期存活。老年代 GC 频率低但耗时长。
+
+7. GC 回收：
+- 并发标记（G1/CMS/ZGC）：标记不可达对象。
+- 清除/压缩：CMS 清除（不压缩，产生碎片），G1 复制（压缩），ZGC 并发重分配（压缩）。
+- 如果对象在 CMS 收集后仍存活，留在老年代直到下一次老年代 GC。
+
+8. 终结：finalize()（JDK 9 标记废弃，不推荐使用）→ GC 回收物理内存。
+
+9. Full GC：老年代空间不足或元空间满 → 触发 Full GC。可能是 G1 退化的 Serial Full，也可能是 Parallel Full。Full GC 是万不得已的「最后一招」。`,hints:[`动态年龄判定（-XX:TargetSurvivorRatio，默认 50%）比 MaxTenuringThreshold 更早触发晋升`,`finalize() 不可靠——它只被执行一次，且执行线程优先级低（可能不执行），推荐用 try-with-resources 替代`],tags:[`JVM`,`对象生命周期`,`GC`,`晋升`],content_hash:`25c3a15bd202`,id:2502},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`虚引用与 DirectByteBuffer 回收`,content:`Java 四种引用类型（强/软/弱/虚）的区别是什么？虚引用在 DirectByteBuffer 的回收中扮演什么角色？`,answer:`答案：Java 提供四种引用类型，用于控制对象的生命周期。
+
+1. 强引用（Strong Reference）：Object obj = new Object()。只要强引用存在，GC 永远不会回收。
+
+2. 软引用（SoftReference）：SoftReference<Object> ref = new SoftReference<>(obj)。内存充足时不回收，内存不足时 GC 前回收。适合缓存实现。
+
+3. 弱引用（WeakReference）：WeakReference<Object> ref = new WeakReference<>(obj)。GC 时无论内存是否充足都回收。WeakHashMap、ThreadLocal 中用到。
+
+4. 虚引用（PhantomReference）：PhantomReference<Object> ref = new PhantomReference<>(obj, queue)。get() 始终返回 null，无法通过虚引用获取对象。唯一的用途是对象被 GC 回收时收到通知。
+
+虚引用的关键作用——DirectByteBuffer 回收：
+- DirectByteBuffer 使用 unsafe.allocateMemory() 分配堆外内存（不受 -Xmx 控制）。
+- DirectByteBuffer 关联一个 PhantomReference（更精确说是 Cleaner，扩展自 PhantomReference）。
+- 当 DirectByteBuffer 对象变为不可达（强引用消失），GC 回收 DirectByteBuffer 对象前，虚引用被加入 ReferenceQueue。
+- JVM 的 Reference Handler 线程处理 ReferenceQueue，调用 Cleaner 的 clean() 方法，释放底层堆外内存。
+
+如果没有虚引用：DirectByteBuffer 对象被 GC 回收了，但底层的堆外内存没有释放 → 堆外内存泄漏。Netty 的 PooledDirectByteBuf 也使用类似的引用计数 + 虚引用机制管理堆外内存池。`,hints:[`软引用在 Android 开发中是缓存标配，但服务器端推荐用 Guava Cache/Caffeine（更可控的淘汰策略）`,`ThreadLocal 使用弱引用作为 Key——Entry 的 Key 是 WeakReference，所以在 ThreadLocal 不再使用后，Entry 的 Key 会被 GC 回收，但 Value 不会——这就是 ThreadLocal 内存泄漏的原因`],tags:[`JVM`,`引用`,`PhantomReference`,`DirectByteBuffer`],content_hash:`aba9440b1c65`,id:2503},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 命令行工具 Arthas 实战`,content:`Arthas（阿尔萨斯）是阿里巴巴开源的 Java 在线诊断工具。它的核心功能和常用命令有哪些？`,answer:`答案：Arthas 是 Java 在线诊断的瑞士军刀，无需重启服务即可动态诊断。
+
+安装：curl -O https://arthas.aliyun.com/arthas-boot.jar && java -jar arthas-boot.jar
+
+核心命令：
+1. dashboard：实时面板——线程信息、内存使用、GC 统计、CPU 占用 Top N（比 top + jstack 一站式）。
+2. thread：查看线程信息和栈。thread -n 3 查看最忙的 3 个线程。thread -b 查看被 BLOCKED 的线程。
+3. sc/sm：查看 JVM 中已加载的类信息和方法信息（类加载、方法签名、类加载器）。
+4. ognl：在线执行 OGNL 表达式。获取 Bean 属性、调用方法、静态变量查看：ognl '@com.xxx.Utils@map'。
+5. watch：监控方法调用——入参、返回值、异常。watch com.xxx.Service methodName '{params, returnObj, throwExp}' -x 2。
+6. trace：方法调用链路耗时追踪。显示方法内部各调用路径的耗时，快速定位性能瓶颈。
+7. tt（TimeTunnel）：记录方法调用现场，可以回放。
+8. redefine：热替换类（需要在目标机器上有新 class 文件）。
+9. vmtool：大量对象查看和 GC Roots 分析（替代 heap dump 的场景）。
+
+最佳实践：
+- watch 和 trace 在线上慎用大范围通配符——可能造成大量日志输出影响性能。
+- 用完用 stop 或 shutdown 关闭退出。
+- 生产环境建议配合 aras（Arthas Tunnel Server）远程诊断能力。`,hints:[`Arthas 的 ognl 命令是最强大的——可以直接调用 Spring Context 的 getBean() 获取任意 Bean`,`Arthas 通过 Java Agent 机制 attach 到目标进程（不修改目标进程代码），使用时 0 侵入`],tags:[`JVM`,`Arthas`,`诊断`,`阿里巴巴`],content_hash:`1de99e930159`,id:2504},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`假共享（False Sharing）与缓存行填充`,content:`什么是 CPU 缓存一致性导致的假共享（False Sharing）？在 Java 中如何检测和规避？`,answer:`答案：假共享是多线程并发修改不同变量但恰好落在同一条 CPU 缓存行（Cache Line，通常 64 字节）时，导致不必要的缓存一致性流量和性能下降。
+
+原理：CPU 核心 1 修改变量 A，CPU 核心 2 修改变量 B，A 和 B 在同一条 Cache Line 上。即使 A 和 B 无关，MESI 协议也会让这条 Cache Line 在两个核之间来回失效 → 性能骤降（比没有并发时还慢一个数量级）。
+
+经典的 Java 案例：
+- Disruptor 框架的 Sequence 对象。
+- Concurrent 框架中的 Striped64（LongAdder 的 Cell 数组）。
+- ThreadPoolExecutor 的 Worker 计数器。
+
+检测：
+- perf stat -e cache-misses 查看程序运行期间的缓存未命中率。
+- JMH 的 -prof perfnorm 可以关联 Java 代码和硬件事件。
+- JDK 17+ 通过 JFR 的事件可以分析假共享。
+
+规避方式：
+1. @Contended 注解（JDK 8+）：@jdk.internal.vm.annotation.Contended 或 @sun.misc.Contended。JVM 自动在变量前后填充 128 字节（64 字节填充 + 64 字节 Cache Line 大小）。需要 -XX:-RestrictContended 解锁。适用于并发框架内部使用。
+2. 手动填充（JDK 8 前）：在变量前后添加 long padding 字段。
+3. 分离不同线程访问的变量：让读写频繁的变量落在不同 Cache Line 上。
+4. 使用线程本地存储（ThreadLocal）：避免跨核共享。
+
+实战：业务代码几乎不需要考虑假共享——它是并发库和框架的作者才需要关注的底层优化。`,hints:[`LongAdder 的 Cell 类使用 @Contended 注解，所以高并发计数器场景比 AtomicLong 性能好得多`,`JDK 16+ 的 @Contended 不再需要 -XX:-RestrictContended（默认对所有内部类可用）`],tags:[`JVM`,`假共享`,`缓存行`,`并发`],content_hash:`978e29bacd9c`,id:2505},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java Agent 字节码增强机制`,content:`Java Agent 的机制是什么？它如何通过 Instrumentation API 实现字节码增强？常见的 Agent 实现有哪些？`,answer:`答案：Java Agent 是 JDK 5 引入的机制，允许在 JVM 启动前/后修改类的字节码。
+
+启动方式：
+1. premain（启动时 Agent）：java -javaagent:myagent.jar -jar app.jar。在 main 方法执行前调用 premain() 方法，JVM 初始化完成后加载的所有类都可以被修改。
+2. agentmain（运行时 Attach）：通过 Attach API 动态挂载到运行中的 JVM。VirtualMachine vm = VirtualMachine.attach(pid); vm.loadAgent(agentJarPath);。
+
+Instrumentation API 核心功能：
+- addTransformer()：注册 ClassFileTransformer，在类加载时/重定义时转换字节码。
+- retransformClasses()：重新转换已加载的类（不需要重新定义，热更新方法体）。
+- redefineClasses()：用新的字节码替换已加载的类（限制：不能增删字段/方法）。
+- getLoadedClasses()：获取 JVM 中所有已加载的类。
+
+字节码操作框架：
+- ASM（底层，直接操作字节码指令，性能最好）
+- ByteBuddy（高层，链式 API，推荐，Arthas 使用）
+- Javassist（源码级 API，最简单但性能和灵活性差一些）
+
+常见的 Agent 工具：
+- Arthas：Java Agent + 动态 attach，在线诊断。
+- SkyWalking/OpenTelemetry Java Agent：自动埋点 tracing。
+- IntelliJ IDEA 的 HotSwap：通过 Agent 实现热部署。
+- JRebel/Spring Loaded：类和资源热加载。
+- Mockito/ByteBuddy：测试中动态创建 Mock 对象。
+
+注意事项：修改核心类（java.* 前缀）需要在 premain 中设置，且某些类（如 String、Integer）在 JDK 9+ 模块化后不允许修改。`,hints:[`Java Agent 不能修改构造方法执行前的字节码（如 String/StringBuilder 等核心类的 <init>）`,`retransformClasses 只能修改方法体，不能增减字段/方法——否则需要 redefineClasses`],tags:[`JVM`,`Java Agent`,`字节码`,`Instrumentation`],content_hash:`51c5f94910b0`,id:2506},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JDK 21 虚拟线程原理`,content:`JDK 21 虚拟线程（Virtual Threads）的底层实现原理是什么？与平台线程的区别和适用场景？`,answer:`答案：虚拟线程是 JDK 19 Preview → JDK 21 正式发布的轻量级线程实现。
+
+原理：虚拟线程是 JVM 管理的用户态线程（不是 OS 线程）。一个平台线程（Carrier Thread）可以运行多个虚拟线程。虚拟线程在阻塞操作（I/O、锁、Future.get()）时自动从 Carrier 上卸载（yield），Carrier 转而运行其他虚拟线程。
+
+实现机制：
+- Continuation（协程基元）：虚拟线程本质上是 JVM 实现的 Continuation（挂起/恢复点）。Blocking 操作 → Continuation.yield → 挂起虚拟线程 → 保存栈帧 → Carrier 复用。I/O 完成 → 唤醒 Continuation → 继续执行。
+- 线程调度器（ForkJoinPool）：虚拟线程的调度由 WorkStealingPool 实现（默认 parallelism = CPU 核数），以 FIFO 模式执行虚拟线程任务。
+- 栈帧复制：虚拟线程挂起时，栈帧从 Carrier 的栈复制到堆（对象存储）；恢复时复制回栈。
+
+vs 平台线程：
+- 数量：平台线程 ≈ 几千（栈占用 ~1MB），虚拟线程 ≈ 百万（栈初始 ~10KB，动态增长）。
+- 上下文切换：平台线程依赖 OS（微秒级），虚拟线程是 JVM 级别（纳秒级 yield）。
+- 适用：虚拟线程适合大量 I/O 密集型任务（HTTP 请求、数据库调用），不适合 CPU 密集型（计算密集时虚拟线程无优势）。
+
+使用：Thread.ofVirtual().start(() -> ...) 或 Executors.newVirtualThreadPerTaskExecutor()。Spring Boot 3.2+（virtual threads supported）。
+
+关键限制：synchronized 和 JNI 调用期间虚拟线程不能 yield（会 pin 住 Carrier 线程）。偏向锁（JDK 15 废弃）与虚拟线程不兼容。`,hints:[`虚拟线程不要用线程池——每任务开一个新虚拟线程（创建成本极低）`,`synchronized 方法会 pin 虚拟线程，尽量用 ReentrantLock 替代（LockSupport.park 支持 yield）`],tags:[`JVM`,`虚拟线程`,`Loom`,`协程`],content_hash:`184d30aa5748`,id:2507},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 异常处理机制与性能开销`,content:`JVM 的异常处理实现机制是什么？try-catch 在正常路径和异常路径的性能开销有多大？`,answer:`答案：JVM 的异常处理通过异常表（Exception Table）实现，并非传统的 if-else 检查。
+
+字节码层面：每个方法编译后附带异常表（Exception Table），表结构包含：start_pc、end_pc、handler_pc、catch_type。当字节码在 [start_pc, end_pc) 范围内抛出 catch_type 异常 → 跳转到 handler_pc。
+
+正常路径：
+- 无异常抛出时，try-catch 的额外开销为 0（不等于不使用异常时就无开销不对——异常表存在但不检查）。
+- JIT 编译器的分析发现 try 块内无异常抛出时，甚至可以消除异常表。
+
+异常路径：
+- 异常对象创建（new Exception()）：构造方法填充栈帧 — 遍历当前线程栈填充 StackTraceElement 数组 — 开销大（O(n) 其中 n 是栈深度）。
+- 异常的栈帧填充是主要开销——频繁创建和填充异常对象会拖垮性能。
+
+实战结论：
+- try-catch 在非异常路径上的性能开销 ≈ 0（可以放心使用）。
+- 不要用异常来做控制流（循环终止、正常业务分支）。
+- 不要频繁创建异常对象（异常池？不如 if-else）。
+- 预创建的异常（no-inline 的 static final Exception）可以避免 StackTrace 填充。JVM 参数 -XX:-StackTraceInThrowable 关闭栈帧填充（但生产不推荐）。
+- 低性能场景的异常栈获取：new Throwable().getStackTrace() 开销大，JDK 9 的 StackWalker 替代方案更高效。`,hints:[`异常的主要性能开销在 fillInStackTrace（遍历栈帧填充数组），不是 try-catch 本身`,`用异常做流程控制（如抛出 ExpectedException）比 if-else 慢 100-1000 倍——绝对不要这样做`],tags:[`JVM`,`异常`,`性能`,`字节码`],content_hash:`f20cd1134a96`,id:2508},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 中 final 关键字的内存语义`,content:`final 字段在 JMM 中有什么特殊的内存语义？为什么说 final 字段的初始化在并发场景是安全的？`,answer:`答案：final 字段在 JMM 中有特殊的内存语义——final 字段的正确初始化保证对其他线程立即可见（即使没有同步）。
+
+final 的 JMM 规则：
+1. 在构造方法中写入 final 字段的操作，与随后将该对象引用赋值给其他线程可见的变量之间，存在 happens-before 关系。
+2. 其他线程读取该 final 字段时，保证看到的是构造方法中写入的值（前提：被构造的对象引用没有在构造方法完成前「逃逸」）。
+
+实现机制：JSR 133（JDK 5）在内存屏障层面增加了 final 的语义——构造方法返回值前插入 StoreStore Barrier → 确保 final 字段在对象发布前全部写入主存。
+
+为什么 final 并发安全：
+- 没有 final 保证时：编译器/CPU 可能重排指令。如 obj = new Obj()（分配内存 → 设置 obj 引用 → 调用构造方法），其他线程看到 obj != null 时，构造方法可能还没执行完。
+- 有 final 保证时：final 字段在构造方法结束前已经写入主存，其他线程看到对象引用时一定能看到 final 字段的正确值。
+
+重要前提——构造逃逸（Constructor Escape）：
+如果 this 在构造方法中发布给其他线程（registerListener、启动线程、赋给静态变量），final 的内存语义可能被破坏。final 字段的 JMM 保证依赖构造方法的 properly synchronized。
+
+实战：String 的不可变性（所有字段 final）使得 String 在并发环境天然安全——不需要任何同步就能安全发布。`,hints:[`final 字段的 JMM 保证不依赖于 final 字段的读端——只有写端（构造方法内）有特殊约束`,`this 引用在构造方法中传递到外部（构造逃逸）是 Java 并发编程最常见的问题之一`],tags:[`JVM`,`final`,`JMM`,`内存语义`],content_hash:`34232eccf512`,id:2509},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`Java 对象头与 Mark Word`,content:`Java 对象头（Object Header）的结构是怎样的？Mark Word 在不同状态下分别存储什么信息？`,answer:`答案：Java 对象头是 GC 和锁机制的核心数据结构。
+
+对象头结构（64 位 JVM，假设压缩 OOP 开启）：
+1. Mark Word（标记字段）：存储对象运行时数据。始终是 8 字节。
+2. Klass Pointer（元数据指针）：指向方法区的 InstanceKlass。压缩后 4 字节。
+3. 数组长度（仅数组对象）：4 字节。
+
+Mark Word 的状态（64 位 JVM）：
+
+【无锁（001）】
+- 前 56 位：未使用（新对象的 HashCode 在首次调用 hashCode() 时才填充）
+- 后 8 位：分代年龄（4 位）+ 偏向锁标志（1 位）+ 锁标志位（2 位）= 001
+
+【偏向锁（101）】
+- 前 54 位：线程 ID（偏向锁持有者）
+- 前 2 位中的 epoch（偏向锁批次号，批量撤销时用）
+- 中间 4 位：分代年龄
+- 后 3 位：101
+
+【轻量级锁（000）】
+- 前 62 位：指向 Lock Record 的指针（线程栈中的栈帧）
+- 后 2 位：00
+
+【重量级锁（010）】
+- 前 62 位：指向 Monitor（ObjectMonitor）的指针
+- 后 2 位：10
+
+【GC 标记（011）】
+- 前 62 位：GC 标记位（用于并发标记阶段的标记）
+- 后 2 位：11
+
+实战意义：锁状态信息存在对象头中，所以 synchronized 的性能与对象头访问相关。Mark Word 的 4 位年龄字段决定了对象最多 15 次 GC 后晋升老年代。`,hints:[`Mark Word 只有 8 字节，所以 HashCode 和偏向锁不能共存——这就是为什么调用 hashCode() 后偏向锁会撤销`,`4 位年龄 = 16 中取 15 为最大值（1111），但 G1 中默认用 6 就晋升了`],tags:[`JVM`,`对象头`,`Mark Word`,`锁`],content_hash:`2f2a9fbdfe04`,id:2510},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 模块化系统（JPMS）`,content:`JDK 9 引入的新模块化系统（JPMS, Java Platform Module System）对 JVM 和 Java 应用有什么影响？`,answer:`答案：JPMS（JSR 376）是 JDK 9 最大的架构变更。
+
+核心变化：
+1. module-info.java：新增的模块描述文件，定义模块需要导出哪些包（exports）、依赖哪些模块（requires）、对其他模块开放哪些包（opens，用于反射）。
+2. JDK 自身模块化：rt.jar 被分解为几十个模块（java.base, java.sql, java.xml 等）。
+3. 类加载器变化：不再有 Extension ClassLoader（JDK 9+ 改为 Platform ClassLoader）+ Application ClassLoader + Bootstrap（built-in modules 由 Bootstrap 加载）。
+4. 反射限制：模块默认只能访问自己 exports 的包。反射访问非导出包的类需要 --add-opens 或模块声明 opens。
+
+对应用的影响：
+- 类路径 vs 模块路径：类路径上的包成为未命名模块（unnamed module），不能访问命名模块的导出包。
+- --add-exports / --add-opens：很多框架（Spring, Hibernate, MyBatis, Guava）在 JDK 9+ 需要这些参数才能通过反射访问 JDK 内部 API。
+- --illegal-access=deny（JDK 16+ 默认）：禁止反射访问 JDK 内部 API。
+
+兼容性考量：
+- 如果应用未显式模块化（还没有 module-info.java），默认在未命名模块中运行，通过类路径访问。
+- 依赖 JDK 内部 API 的旧库（如 sun.misc.Unsafe）需要迁移到标准 API（如 VarHandle、MethodHandles）。
+
+对开发者的意义：新项目可以考虑模块化（更好的依赖管理和封装），但现有项目不必急于迁移——模块化是可选的，非模块化应用向后兼容。`,hints:[`JPMS 最大的实际影响是反射限制——框架告警 Illegal reflective access 意味着需要 --add-opens`,`模块化带来的封装性（exports/opens 区别）对库的设计者有意义，对大多数业务应用开发者的日常编码影响有限`],tags:[`JVM`,`JPMS`,`模块化`,`JDK 9`],content_hash:`c2b062f7d59e`,id:2511},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`System.gc() 与 GC 触发机制`,content:`System.gc() 调用后一定会触发 GC 吗？JVM 中的 GC 触发机制有哪些？`,answer:`答案：System.gc() 只是「建议」JVM 执行 Full GC——是否执行由 JVM 决定。
+
+System.gc() 的行为：
+- 默认行为：调用后触发 Full GC（JDK 9+ 默认 G1 下触发的是 Full GC，由并行 Full GC 或 Serial Full GC 执行）。
+- -XX:+DisableExplicitGC：显式 GC 被禁用，System.gc() 变为空操作（无任何效果）。
+- -XX:+ExplicitGCInvokesConcurrent（G1 可用）：System.gc() 触发并发 Cycle（G1 的并发标记），而非 Full GC。
+
+GC 触发机制（多种）：
+1. 分配失败（Allocation Failure）：Eden 区没有足够空间分配新对象 → 触发 Young GC。这是最常见的 GC 触发方式。
+2. 老年代分配：对象太大直接在老年代分配，老年代空间不足 → 触发 Full GC。
+3. 元空间阈值：-XX:MetaspaceSize 触发的元空间 Full GC。
+4. 堆转储（HeapDump）：jmap -dump 触发 Full GC（如果指定 live）。
+5. GC 锁（GC Locker）：JNI 临界区需要 GC 时触发。
+6. 代码主动调用：System.gc() / Runtime.getRuntime().gc()。
+7. RMI 分布式 GC：RMI 框架默认每小时调用一次 System.gc()（需要 -Dsun.rmi.dgc.client.gcInterval= 和 -Dsun.rmi.dgc.server.gcInterval= 调整）。
+
+实战：
+- -XX:+DisableExplicitGC 在企业级 Java 应用中几乎必加（但 NIO/DirectBuffer 场景需要做堆外内存的显式管理）。
+- RMI 的定期 System.gc() 可以通过设置间隔参数到 Long.MAX_VALUE 关闭。
+- NIO（Netty 等）场景用 -XX:+ExplicitGCInvokesConcurrent 替代 -XX:+DisableExplicitGC——既触发 Cleaner 回收 DirectBuffer，又避免 Full GC 停顿。`,hints:[`System.gc() 触发的是 Full GC（串行，停顿长），不是 CMS 或 G1 的并发收集`,`Netty 的 PlatformDependent 类通过 -Dio.netty.noPreferNoDirectBuffer 控制是否使用 DirectBuffer`],tags:[`JVM`,`GC触发`,`System.gc()`,`Full GC`],content_hash:`6837adf6dc4d`,id:2512},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 锁优化：自适应自旋与锁粗化`,content:`JVM 对 synchronized 做了哪些锁优化？自适应自旋、锁粗化、锁消除的策略是什么？`,answer:`答案：JDK 6 对 synchronized 做了大量优化，使其在低竞争场景下性能不逊于（甚至超过）ReentrantLock。
+
+1. 自适应自旋（Adaptive Spinning）：
+- 传统自旋：线程在轻量级锁竞争时，不立即阻塞（block），而是占用 CPU 等待一段时间（默认 10 次）后再试。
+- 自适应优化：JVM 根据同一个锁上上次自旋的成功率和当前状态动态调整自旋次数。如果最后一次自旋成功 → 增加自旋次数（最多 1000 次）。如果自旋很少成功 → 减少或关闭自旋。
+
+2. 锁粗化（Lock Coarsening）：
+- 场景：连续的加锁解锁操作（如循环内每次加锁） → JIT 将多个锁合并为一个更大的锁范围。
+- 示例：StringBuffer 的 append() 在循环中被 JIT 检测到，锁从每次 append 加一次合并为整个循环加一次锁。
+- 效果：减少锁获取/释放的上下文切换开销。
+
+3. 锁消除（Lock Elimination）：
+- 基于逃逸分析：检测到锁对象不逃逸线程 → 直接消除 synchronized 同步。
+- 示例：局部变量 + synchronized(new Object()) → JIT 消除这个锁（因为其他线程无法访问到这个局部 Object）。
+
+4. 轻量级锁升级（Inflating）：
+- 偏向锁（单线程） → 轻量级锁（CAS 自旋） → 重量级锁（OS mutex）。
+
+实战启示：
+- 锁优化是 JIT 在运行时做的，编译后代码看不到这些优化。
+- 短锁和热点锁 JIT 效果最好。长锁（锁持有时间 > 上下文切换成本）JIT 无法优化。
+- 不要为了「优化」而过度优化——先写出正确的同步代码，性能分析发现瓶颈时再考虑锁优化。`,hints:[`自适应自旋对响应时间敏感的延迟应用可能不利（线程自旋 = 浪费 CPU），但整体吞吐量更好`,`锁粗化最典型的场景是循环内的 synchronized——JIT 会尝试拉出到循环外`],tags:[`JVM`,`锁优化`,`自旋`,`锁消除`],content_hash:`a83ef05cf82f`,id:2513},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Metaspace 内存管理机制`,content:`元空间（Metaspace）的内存管理机制是怎样的？与永久代（PermGen）相比有什么改进？`,answer:`答案：元空间是 JDK 8 替代永久代（PermGen）的新方案。
+
+根本区别：
+- 永久代：位于 JVM 堆内存，大小受 -XX:MaxPermSize 限制（默认 64MB 或 82MB，很容易 OOM）。
+- 元空间：使用本地内存（Native Memory），不受 -Xmx 限制，默认只受系统可用内存限制。
+
+为什么替换：
+1. 永久代大小固定难以调优——字符串常量池（JDK 7 已移到堆）、类元数据的大小不好估计。
+2. 永久代 Full GC 触发频繁——元空间的类卸载与类加载器回收相关，大部分 Web 应用的类加载器不会回收，导致永久代经常 OOM（PermGen OOM 是 JDK 7 最经典的生产问题之一）。
+3. 永久代 GC 效率差——元空间使用 native 内存，不需要 GC 扫描，只有在类加载器卸载时才回收。
+
+元空间内存分配：
+- 类元数据分布在多个 Chunk（块）中，Chunk 按大小分类（1KB、2KB、4KB、8KB、16KB、32KB、64KB 等）。
+- 每个类加载器分配一个 Chunk（不是整个内存块）。类卸载时，Chunk 返回给虚拟空间。
+- 虚拟空间（Virtual Space）：每个元空间管理器的底层是多个连续的虚拟内存段。
+
+关键参数：-XX:MetaspaceSize（初始触发 Full GC 的大小，默认 20MB 左右），-XX:MaxMetaspaceSize（上限，可设 256MB-512MB），-XX:MinMetaspaceFreeRatio（GC 后空闲百分比下限）。
+
+实战：MaxMetaspaceSize 建议设置（如 512MB）——不设置的话，类加载过多时元空间无限膨胀直到耗尽系统内存。`,hints:[`Metaspace Full GC 触发条件：当前元空间容量接近 MaxMetaspaceSize 或 MetaspaceSize`,`ClassLoader 泄漏是 Metaspace OOM 最常见的原因——每次热部署创建的新 ClassLoader 如果没有被 GC，元空间只会增长不会减少`],tags:[`JVM`,`元空间`,`PermGen`,`类加载`],content_hash:`5167672bbac8`,id:2514},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 内存泄漏类型与诊断`,content:`Java 中常见的内存泄漏类型有哪些？如何通过 Heap Dump 分析确认内存泄漏？`,answer:`答案：Java 虽然有 GC，但引用未被正确释放时仍然会发生内存泄漏。
+
+常见类型：
+1. 静态容器类：static Map 不断 put，但没有 remove。非常常见（如全局配置缓存未清理、监听器注册列表持续增长）。
+2. ThreadLocal 泄漏：线程池 + ThreadLocal 不 remove。线程复用时 ThreadLocal 的 Value 无法被 GC 回收（Key 是弱引用可回收，但 Value 是强引用）。
+3. 内部类持有外部类引用：非静态内部类实例隐式持有外部类实例的引用。外部类无法被回收。
+4. 类加载器泄漏：重复部署（热部署）导致每个版本的 ClassLoader 无法被卸载。Metaspace OOM。
+5. 未关闭的资源：InputStream/Connection/Session 未正确关闭，持有的引用链阻止 GC 回收底层资源。
+6. 缓存无限膨胀：使用 HashMap/ConcurrentHashMap 做缓存但没有大小限制（用 WeakHashMap 或 Caffeine 替代）。
+7. Callback/Listener 注册后未取消：注册了回调但忘了移除。
+
+诊断流程：
+1. 确认内存泄漏：监控内存曲线（jstat -gcutil），如果 GC 后堆占用持续增长 → 疑似泄漏。
+2. Heap Dump：jmap -dump:live,format=b,file=heap.hprof <pid>。生产环境小心——大堆 dump 时间较长。
+3. MAT 分析：打开 dump → Leak Suspect Report → 自动分析「最大对象 + GC Roots 路径」。
+4. 手动确认：查看 retain heap（保留集）最大的对象 → Dominator Tree 找到引用链 → 代码定位。
+
+典型工具：Eclipse MAT（最强）、JProfiler（可视化好）、jhat（JDK 自带，不如 MAT）。`,hints:[`ThreadLocal 泄漏是线程池场景的经典问题——你在线程上 set 了值，但线程结束后不清理，下一次请求复用该线程时会读到旧值`,`MAT 的 OQL：SELECT * FROM java.util.HashMap$Entry 可以直接查询所有 HashMap Entry——快速找到容量异常的容器`],tags:[`JVM`,`内存泄漏`,`MAT`,`ThreadLocal`],content_hash:`155fda318858`,id:2515},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`G1 Full GC 原因分析与优化`,content:`G1 在什么情况下会退化为 Full GC？如何通过日志和参数避免 G1 Full GC？`,answer:`答案：G1 的设计目标是避免 Full GC，但某些场景下无法避免。
+
+G1 Full GC 触发原因：
+1. 并发标记跟不上分配速度（Concurrent Mark Cycles Overflows）——并发标记期间对象分配太快，老年代被快速填满 → 退化 Full GC。最常见原因。
+2. Humongous 分配失败——大对象（> Region 的 50%）需要连续 Region 分配，当找不到足够连续空间时 → Full GC。
+3. Promotion Failed——年轻代 GC 时存活对象晋升到老年代，但老年代没有足够空间 → Full GC。
+4. 元空间不足——元空间接近 MaxMetaspaceSize → Full GC。
+5. 显式调用 System.gc()——除非 -XX:+DisableExplicitGC。
+
+从日志定位：
+- GC 日志中搜索 Full GC 或 Pause Full（G1 的 Full GC 类型）。
+- to-space exhausted 表示老年代空间耗尽（Promotion Failed）。
+- concurrent-mark-stack-overflow 表示并发标记栈溢出。
+
+优化方案：
+1. 增大 -XX:G1HeapRegionSize：减少 Humongous 对象分配失败。
+2. 降低 -XX:InitiatingHeapOccupancyPercent（默认 45% → 40-35%）：提前触发并发标记，留更多时间回收。
+3. 增大 -XX:G1ReservePercent（默认 10% → 15-20%）：预留更多空间给晋升。
+4. 增大 -XX:ConcGCThreads（默认 = ParallelGCThreads 的 1/4）：增加并发标记线程数。
+5. 调整 -XX:G1MixedGCLiveThresholdPercent（默认 85%）：控制 Mixed GC 包含的 Region 的存活阈值。
+6. 检查堆大小是否合理（-Xms = -Xmx 避免调整）。
+7. 如果以上都无效 → 换 ZGC（JDK 17+，低延迟场景）或 Parallel GC（吞吐量第一）。`,hints:[`G1 Full GC 是单线程 Serial 执行的——大堆（10G+）下的 G1 Full GC 可能停顿几十秒`,`to-space overflow 是最常见的 G1 Full GC 日志线索——说明老年代预留空间不足`],tags:[`JVM`,`G1`,`Full GC`,`调优`],content_hash:`43943e0a6632`,id:2516},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 中 volatile 关键字底层实现`,content:`volatile 关键字在 JVM 层面是如何实现的？它如何保证可见性和有序性？`,answer:`答案：volatile 是 Java 中最轻量的同步机制（比 synchronized 开销小得多），保证可见性和有序性，不保证原子性。
+
+可见性保证：
+- 写 volatile 变量时，JVM 在写操作后插入一个 StoreLoad Barrier。
+- 读 volatile 变量时，JVM 在读操作前插入一个 LoadLoad Barrier 和一个 LoadStore Barrier。
+- 效果：volatile 变量写完后，其他 CPU 核心立刻能看到最新值（缓存行无效化 via MESI 协议）。
+
+有序性保证（JMM 的 Happens-Before）：
+- 对一个 volatile 变量的写 happens-before 于后续对同一个 volatile 变量的读。
+- JIT 编译器和处理器不能将 volatile 写之后的代码重排到 volatile 写之前。
+- JIT 编译器和处理器不能将 volatile 读之前的代码重排到 volatile 读之后。
+
+字节码层面：volatile 字段在访问时没有特殊的字节码指令——可见性/有序性由 JVM 在运行时插入内存屏障实现。
+
+不同 JVM 的优化实现：
+- x86：StoreLoad Barrier 是唯一需要显式指令的屏障（mfence/lock addl）。其他 LoadLoad/LoadStore/StoreStore 在 x86 强内存模型下是空操作（不需要）。
+- ARM/PowerPC（弱内存模型）：四种屏障都需要显式指令（dmb 指令），volatile 开销远大于 x86。
+
+经典用法：
+- 状态标记：volatile boolean running = true; 线程检查 running 退出循环。
+- Double-Checked Locking（DCL）单例：instance = new Singleton()（需要 volatile 防止指令重排）。
+
+误区：volatile 不能保证 i++ 的原子性——需要 AtomicInteger 或 synchronized。`,hints:[`x86 下 volatile 读几乎零成本（x86 默认保证除 StoreLoad 外的所有内存屏障）`,`DCL 单例中 new 对象的指令重排是 volatile 最经典的说明用例——不加 volatile 可能读到未完全构造的实例`],tags:[`JVM`,`volatile`,`内存屏障`,`JMM`],content_hash:`610eba080d8a`,id:2517},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 启动参数优化与 CDS`,content:`什么是 CDS（Class Data Sharing）和 AppCDS？它对 JVM 启动性能有什么提升？`,answer:`答案：CDS 是 JDK 5 引入的技术（JDK 10 做了大幅改进，JDK 12 引入 AppCDS），通过共享类元数据加速 JVM 启动。
+
+原理：
+- 将核心类库（rt.jar）的解析结果预处理为一个共享归档文件（classes.jsa）。
+- 多个 JVM 进程可以共享这个归档文件中的类元数据（存为 mmap 文件）。
+- 类加载时直接从共享归档读取，跳过字节码解析 → 启动更快，内存更少。
+
+CDS vs AppCDS：
+- CDS：只支持 Bootstrap ClassLoader 加载的核心类。
+- AppCDS（JDK 12+）：支持所有类（Bootstrap + Platform + Application ClassLoader）。可以将应用的 jar 包也加入共享归档。
+
+使用流程：
+# 1. 转储共享归档（包含应用类）
+java -XX:SharedArchiveFile=app.jsa -XX:ArchiveClassesAtExit=app.jsa -jar app.jar
+
+# 2. 使用共享归档启动
+java -XX:SharedArchiveFile=app.jsa -jar app.jar
+
+性能提升：
+- 启动时间：通常减少 20-40%（Spring Boot 应用从 5-8 秒减少到 3-5 秒）。
+- 内存：多个 JVM 共享相同内存页（KVM/容器场景下收益明显）。
+
+限制：
+- 类路径必须完全一致（包括顺序），否则归档失效。
+- 动态类加载（反射、Lambda、动态代理生成的类）不能归档。
+- CDS 归档文件与 JDK 版本绑定。
+
+其他启动优化参数：
+- -XX:+AlwaysPreTouch：启动时预分配和提交所有内存（接触物理页），避免运行期按需分配的性能波动。
+- -XX:+TieredCompilation 减少编译期启动时间（默认开启）。
+- Spring Boot 场景：启用 lazy initialization（spring.main.lazy-initialization=true）减少启动时的类加载数量。`,hints:[`AppCDS 在微服务/容器化环境非常有价值——启动快意味着扩缩容迅速，但不适合启动后立即处理高负载的场景`,`AlwaysPreTouch 可以消除 GC 日志中的 Pause for JIT / Pause for VM operations 等运行期延迟波动`],tags:[`JVM`,`CDS`,`AppCDS`,`启动优化`],content_hash:`33548919ef19`,id:2518},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`直接内存与 Netty 内存池`,content:`Java 直接内存（Direct Memory）的分配与回收机制是什么？Netty 如何通过内存池管理 DirectByteBuffer？`,answer:`答案：直接内存是 Java NIO 引入的堆外内存管理机制。
+
+分配：ByteBuffer.allocateDirect(capacity) → JNI 调用 unsafe.allocateMemory(size) → OS 的 malloc/mmap。
+
+回收：DirectByteBuffer 的引用消失后 → GC 回收 DirectByteBuffer 对象 → Cleaner（PhantomReference）调用 clean() → unsafe.freeMemory(address) 释放堆外内存。关键问题：堆外内存的回收延迟于 DirectByteBuffer 对象的回收——如果 DirectByteBuffer 不被 GC，堆外内存也不会被释放。
+
+为什么需要内存池：
+- DirectByteBuffer 分配和释放开销大（涉及系统调用）。
+- 频繁分配导致堆外内存碎片。
+- GC 回收堆外内存的时机不确定。
+
+Netty 的 PooledByteBufAllocator（默认）：
+1. 内存分桶（PoolArena）：类比 JVM TLAB，每个线程有本地缓存。
+2. 内存分级（Tiny/Small/Normal/Huge）：<512B、<8KB、<16MB、>=16MB 走不同分配策略。
+3. 内存复用：释放的 ByteBuf 回到 Pool，下一次分配直接重用。（类似于 jemalloc 的设计）。
+4. 引用计数（Reference Counted）：通过 refCnt 跟踪 ByteBuf 的使用状态——refCnt == 0 时回收。
+5. Direct Memory 池 vs Heap 池：默认优先 Direct Memory。
+
+关键参数：-Dio.netty.allocator.maxDirectMemory（控制 Pool 最大直接内存）、-Dio.netty.leakDetectionLevel（检测 ByteBuf 泄漏，设 paranoid 会在每次泄漏时打印详细栈）。
+
+实战：Netty OOM 最常发生在 -Dio.netty.allocator.maxOrder 过大（内存碎片增多，默认 11 即 2^11=2048 page）或未正确 release ByteBuf（引用计数泄漏）。`,hints:[`Netty 的 leak detection 在开发/测试环境设置为 paranoid 级别——线上可关闭避免性能开销`,`PooledByteBufAllocator.DEFAULT 在 Android 环境下自动切换为 Unpooled——因为 Android 不支持 direct buffer 池`],tags:[`JVM`,`直接内存`,`Netty`,`DirectBuffer`],content_hash:`ef3a2db7037a`,id:2519},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 线程转储（Thread Dump）分析`,content:`如何通过 Thread Dump 分析 Java 服务的问题？死锁、线程阻塞、资源等待的典型 Dump 特征是什么？`,answer:`答案：Thread Dump 是分析 Java 服务运行时状况的最直接手段。
+
+获取方式：jstack <pid>、jcmd <pid> Thread.print、kill -3 <pid>（发送到 stdout/stderr）、Arthas thread。
+
+线程状态：
+- RUNNABLE：正在执行（CPU 上运行或等待 I/O 就绪）。
+- BLOCKED：等待锁释放（synchronized 竞争失败，等待 Monitor Entry）。
+- WAITING：Object.wait() / Thread.join() / LockSupport.park() 无限期等待。
+- TIMED_WAITING：带超时的等待（Thread.sleep、Object.wait(timeout)）。
+- NEW / TERMINATED：创建但未启动 / 已结束。
+
+典型问题特征：
+
+【死锁】
+- jstack 自动检测并输出 Found one Java-level deadlock:。
+- 两个线程各持有一把锁，相互等待对方的锁。
+- 线程状态为 BLOCKED，waiting to lock 是对方已持有的锁。
+- 解决：锁顺序规范化（按固定顺序获取多个锁）、使用 tryLock 替代内嵌 synchronized。
+
+【线程阻塞/锁竞争】
+- 大量线程在 BLOCKED 状态，等待同一把锁。
+- 栈上显示 waiting for monitor entry [0x...]。
+- 通常是热点资源的锁竞争——流量过高或锁持有时间过长。
+
+【连接池耗尽】
+- 大量线程 WAITING on http-nio-8080-exec-...（Tomcat 线程池满）或 ForkJoinPool.commonPool。
+- 栈底显示数据库/下游连接池等待。
+
+【CPU 高】
+- 线程 RUNNABLE，热点代码在重复执行（死循环/大量计算/频繁 GC）。
+- 配合 top -H + printf '%x' 确认对应线程。`,hints:[`Thread Dump 是快照——需要连续 dump 3-5 次（间隔 5-10 秒），对比观察线程状态的变化`,`Found 1 deadlock 不是唯一信号——看 BLOCKED 线程的数量和分布才能判断锁竞争的严重程度`],tags:[`JVM`,`Thread Dump`,`死锁`,`排障`],content_hash:`a069d52bb6c6`,id:2520},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Record 与模式匹配对 JVM 的影响`,content:`JDK 16+ 的 Record 类和模式匹配（Pattern Matching）在 JVM 层面是如何实现的？改进了什么性能问题？`,answer:`答案：Record 和模式匹配是 Java 增强数据处理的特性，JVM 层面做了多项改进。
+
+Record（JDK 16 正式版）：
+- JVM 实现：自动生成构造函数、equals()/hashCode()/toString()、组件访问方法。这些方法通过 invokedynamic 实现，延迟到运行时生成。
+- 性能优势：Record 的 equals()/hashCode() 由 JVM 内置实现，对 Array 和字段组合做了专门的优化（比手写 IDE 生成的版本更高效）。
+- 内存布局：Record 作为 final 类，JIT 可以更激进地内联和逃逸分析。
+
+模式匹配（Pattern Matching for instanceof，JDK 16+）：
+- 传统写法：if (obj instanceof String) { String s = (String) obj; ... } → 两次类型检查（instanceof + 强制转换时的 CheckCast）。
+- 模式匹配：if (obj instanceof String s) { ... } → 一次类型检查，JVM 自动插入安全转换。
+- JDK 底层优化：CheckCast 次数减少一半，JIT 编译后的代码更简洁。
+
+Switch 模式匹配（JDK 17 Preview → JDK 21 正式）：
+- JVM 实现：Switch 现在可以匹配类型（null 安全、多 case 组合）。编译器使用 invokedynamic 生成跳转表，类型检查在运行时由 bootstrap 方法处理。
+- 性能：与传统 switch 相当（对于枚举/整数类型），但支持更复杂的匹配。
+
+密封类（Sealed Classes，JDK 17）：
+- 限制类的继承层次——所有子类必须在编译期已知。
+- 对 JVM 的影响：密封关系在 class 文件中标记，JVM 的访问控制检查增强，但运行时性能开销为零（只有编译期检查）。
+
+实用建议：Record 默认替代 Lombok 的 @Data（更安全、更可预测的性能）、模式匹配替代手写 instanceof 链（更安全、更简洁、JVM 优化更好）。`,hints:[`Record 的组件访问方法通过 invokedynamic 生成——JIT 可以内联这些方法，比手写 getter 更容易优化`,`模式匹配 + sealed class + Record 的组合让 Java 的函数式编程（Option/Optional/Result 模式）更加优雅和安全`],tags:[`JVM`,`Record`,`模式匹配`,`Java 17`],content_hash:`3e8b4869d5fc`,id:2521},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`Java 对象创建过程`,content:`请描述一个 Java 对象从 new 指令到完全可用的完整创建过程。`,answer:`答案：Java 对象创建分为五个步骤：类加载检查 → 分配内存 → 内存零值初始化 → 对象头设置 → 执行 init 方法。
+
+解析：1）类加载检查——当 new 指令执行时，先去常量池检查该类的符号引用，并检查该类是否被加载/解析/初始化。如果没有，则执行类加载过程。2）分配内存——从 Java 堆中划分一块内存给新对象。分配方式取决于堆是否规整：规整用指针碰撞（Bump the Pointer），不规整用空闲列表（Free List）。3）内存零值初始化——将分配到的内存空间全部初始化为零值（不包括对象头），这一步保证了对象的实例字段可以直接使用（不需要赋初值就能读到默认值）。4）对象头设置——设置 Mark Word（锁状态/GC 分代年龄/哈希码等）和 Klass Pointer（指向类元数据的指针）。5）执行 init 方法——执行字节码中的 <init> 方法（即构造方法），按照代码中的赋值语句完成初始化。
+
+扩展延伸：并发分配安全：多线程同时分配对象，JVM 通过 CAS + 失败重试（TLAB 未命中时）或 TLAB 预分配来解决。分配内存时的初始化顺序：零值初始化保证了对象的默认值，但 final 修饰的字段在 init 方法中必须赋值，否则编译错误。`,hints:[`指针碰撞和空闲列表分别适用什么 GC 算法`,`为什么需要内存零值初始化这一步`],tags:[`JVM`,`对象创建`,`内存分配`],content_hash:`42d9cce57279`,id:2522},{category:`jvm`,difficulty:`easy`,type:`short_answer`,title:`TLAB 线程本地分配缓冲区`,content:`JVM 中的 TLAB（Thread Local Allocation Buffer）是什么？为什么需要它？`,answer:`答案：TLAB 是 JVM 为每个线程在堆的 Eden 区中预分配的一小块私有内存区域，用于线程内对象分配，避免线程间的同步竞争。
+
+解析：默认设置下，每个线程启动时在 Eden 区分配一块 TLAB（典型大小约为 Eden 的 1% ——可通过 -XX:TLABSize 调整）。线程分配对象时优先在 TLAB 中分配（不需要加锁），TLAB 用完后才通过 CAS 竞争分配新的 TLAB 或者在老年代/直接 Eden 分配。
+
+扩展延伸：TLAB 的大小影响：TLAB 太小 → 线程频繁申请新 TLAB，竞争增多；TLAB 太大 → 浪费内存（TLAB 内部碎片，Eden 回收前未使用的 TLAB 空间无法给其他线程用）。JVM 通过 -XX:+UseTLAB（JDK 8 默认开启）控制。-XX:ResizeTLAB 允许 JVM 动态调整 TLAB 大小。TLAB 中的浪费：刚分配但未使用的 TLAB 空间在 Minor GC 时才会被回收。JVM 通过 TLAB Waste 统计浪费比例，动态调整大小以达到平衡。`,hints:[`TLAB 空间在 Minor GC 时会发生什么`,`如何通过 JVM 参数查看 TLAB 使用情况`],tags:[`JVM`,`TLAB`,`内存分配`],content_hash:`feff266a16f2`,id:2523},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`Java 对象内存布局`,content:`一个 Java 对象在堆内存中由哪些部分组成？Mark Word 和对象头各包含什么信息？`,answer:`答案：Java 对象在内存中由三部分组成：对象头（Header）、实例数据（Instance Data）、对齐填充（Padding）。对象头又分为 Mark Word 和 Klass Pointer。
+
+解析：1）Mark Word——存储对象运行时数据，包括锁状态（偏向锁/轻量级锁/重量级锁标志位）、GC 分代年龄（4bit，最大 15）、对象哈希码（identity hashcode）、锁相关信息等。Mark Word 的内容随锁状态变化而变化。64 位 JVM 下 Mark Word 大小为 8 字节。2）Klass Pointer——指向对象的类元数据的指针（即该对象属于哪个类）。默认开启指针压缩（-XX:+UseCompressedClassPointers）时为 4 字节，未压缩时为 8 字节。3）实例数据——对象的字段值，按声明顺序存储，父类字段在前。4）对齐填充——HotSpot 要求对象起始地址是 8 字节的整数倍，Padding 补足到 8 的倍数。
+
+扩展延伸：指针压缩（-XX:+UseCompressedOops，JDK 8 默认开启）：将 64 位指针压缩为 32 位（堆 < 32GB），通过基址 + 偏移 * 8 的方式寻址定位真实地址。最大支持 32GB 堆。若堆超过 32GB（或显式禁用），则指针不压缩。对象内存大小计算：空 Object（无字段）在 64 位 + 压缩指针下：Mark Word 8 + Klass Pointer 4 + 对齐填充 4 = 16 字节。Integer 实例：Mark Word 8 + Klass 4 + int value 4 = 16 字节。`,hints:[`为什么 JVM 要求对象起始地址是 8 字节整数倍`,`指针压缩 CompressedOops 与 CompressedClassPointers 的区别`],tags:[`JVM`,`对象头`,`Mark Word`,`指针压缩`],content_hash:`28dd7a4b02b8`,id:2524},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`CMS 垃圾回收器详解`,content:`CMS（Concurrent Mark Sweep）垃圾回收器的工作原理是什么？三色标记法和 Incremental Update 是什么？`,answer:`答案：CMS 以最短停顿时间为目标，使用标记-清除算法，工作流程分为四个阶段：初始标记（STW）→ 并发标记 → 重新标记（STW）→ 并发清除。三色标记法用于描述并发标记过程中的对象状态，Incremental Update 是 CMS 处理并发标记期间引用变更的机制。
+
+解析：1）初始标记（Initial Mark，STW 极短）——标记 GC Roots 直接引用的对象。2）并发标记（Concurrent Mark）——从 GC Roots 出发，遍历整个对象图。三色标记法用三种颜色描述对象状态：白色（未被访问过）、灰色（自身被访问但引用的子对象未全部被扫描）、黑色（自身和子对象都扫描完毕）。3）重新标记（Remark，STW 比初始标记长）——修正并发标记期间因引用变化导致漏标的对象。CMS 采用 Incremental Update（增量更新）：在并发标记期间，如果黑色对象新增了对白色对象的引用，将黑色对象变回灰色，重新扫描。4）并发清除（Concurrent Sweep）——回收被标记为白色的对象的内存。
+
+扩展延伸：CMS 的问题：1）Concurrent Mode Failure——并发回收期间老年代空间不够，JVM 退化为 Serial Old 做 Full GC（STW 时间极长）。2）内存碎片——标记-清除算法产生碎片，当无法找到足够大的连续空间分配老年代对象时触发 Full GC。3）CPU 敏感——并发阶段占用 CPU，吞吐量降低。CMS 在 JDK 9 被标记为废弃（Deprecated），JDK 14 正式移除。`,hints:[`CMS 的 Incremental Update 与 G1 的 SATB 有什么区别`,`CMS 为什么需要两个 STW 阶段`],tags:[`JVM`,`GC`,`CMS`,`三色标记`],content_hash:`144d3d876207`,id:2525},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`G1 垃圾回收器详解`,content:`G1（Garbage First）垃圾回收器的核心原理是什么？Region、RSet、SATB 分别是什么？`,answer:`答案：G1 将堆划分为多个大小相等的 Region（1-32MB），通过追踪每个 Region 的垃圾价值（回收收益），优先回收垃圾最多的 Region（Garbage First 得名）。核心组件包括 Region（分区）、RSet（外部引用记忆集）、SATB（并发标记算法）。
+
+解析：1）Region——G1 将堆分为 2048 个左右的 Region，每个 Region 大小 1-32MB（根据堆大小自动计算，-XX:G1HeapRegionSize 可手动设置）。Region 可以是 Eden、Survivor、Old 或 Humongous（大对象 Region，超过 Region 50% 的对象放入）。2）RSet（Remembered Set）——每个 Region 有一个 RSet，记录其他 Region 对该 Region 的引用。作用是避免 GC 时全堆扫描：只需要扫描 GC Roots + RSet 就能知道哪些 Region 中的对象引用了当前 Region。3）SATB（Snapshot At The Beginning）——并发标记的算法。在并发标记开始时记录一个对象图的快照（逻辑快照），并发期间新分配的对象全标记为黑色（存活）。SATB 通过写屏障记录所有并发期间引用被覆盖的旧对象，Remark 阶段重新处理。
+
+扩展延伸：G1 的回收流程：1）Young GC——Eden 用满时触发，Eden + Survivor 中的存活对象复制到新的 Survivor/Old Region。2）Mixed GC——并发标记完成后，对年轻代 + 部分高价值老年代 Region 一起回收。3）Full GC——Mixed GC 来不及回收导致老年代满或者 Humongous 分配失败，退化为 Serial Old（单线程 STW）。注意：G1 不是全能的，超小堆（<4GB）不如 Parallel GC，超低延迟需求不如 ZGC。`,hints:[`G1 的 Mixed GC 和 Full GC 分别在什么条件下触发`,`RSet 如何避免了全堆扫描`],tags:[`JVM`,`GC`,`G1`,`Region`,`SATB`],content_hash:`9fcbd63a84a5`,id:2526},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`ZGC 原理`,content:`ZGC（Z Garbage Collector）的核心原理是什么？为什么它能做到 <1ms 的停顿？`,answer:`答案：ZGC 基于染色指针（Colored Pointer）和读屏障（Load Barrier）实现并发标记-压缩，几乎所有工作阶段都与应用线程并发执行，因此停顿时间极短（<1ms，与堆大小无关）。
+
+解析：核心机制：1）染色指针（Colored Pointer）——ZGC 利用 64 位指针的高 4 位（42-45 bit）存储标记信息（Finalizable/Remapped/Mark0/Mark1），不依赖对象头的 GC 标记。因此 ZGC 只能用于 64 位系统且指针需要额外保留位。2）读屏障（Load Barrier）——每个指针加载操作（如对象字段访问）插入读屏障，检查指针的染色位。如果指针状态是 Bad Color（如处于 Mark0 状态但当前是 Mark1 周期），读屏障会修正指针（自愈，Self-Healing），然后返回正确的引用。3）Region 动态分配——ZGC 的 Region 分为小（2MB）、中（32MB）、大（N*2MB）三类，动态创建和销毁。
+
+扩展延伸：ZGC 的 GC 周期：并发标记（Concurrent Mark）→ 并发预备重分配（Concurrent Prepare for Relocate）→ 并发重分配（Concurrent Relocate）→ 并发重映射（Concurrent Remap）。所有阶段都是并发的，只有初始标记和最终处理有极短暂的 STW。ZGC 在 JDK 15 生产可用（JEP 377），JDK 21 以后做了大量改进（包括支持分代 ZGC——Generational ZGC，JEP 439）。ZGC vs G1 选择：低延迟要求（<10ms）→ ZGC；吞吐量 + 可接受 50-200ms 停顿 → G1。注意：ZGC 更耗 CPU（读屏障开销约 2-15%），不适合 CPU 密集且对停顿不敏感的应用。`,hints:[`染色指针为什么不能用于 32 位 JVM`,`ZGC 的读屏障为什么有自愈（Self-Healing）能力`],tags:[`JVM`,`GC`,`ZGC`,`染色指针`],content_hash:`fcd17aa0df24`,id:2527},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JIT 编译优化`,content:`JVM 的 JIT（Just-In-Time）编译是如何工作的？C1 和 C2 编译器有什么区别？分层编译是什么？`,answer:`答案：JIT 编译器在运行时将热点代码（Hot Method）编译为本地机器码，避免重复解释执行，提升性能。C1（Client Compiler）编译快但优化浅，C2（Server Compiler）编译慢但优化深。分层编译（Tiered Compilation）结合两者优势。
+
+解析：分层编译共 5 层：0）解释执行（Interpreter）——不编译。1）简单 C1——开启基础优化（方法内联等），不记录 profiling。2）受限 C1——C1 + 部分 profiling（分支/类型/方法接收者）。3）完整 C1——完整 profiling。4）C2——基于 profiling 的激进优化，编译最慢但代码质量最高。层之间的切换是自适应的：方法调用次数到达阈值（-XX:TierXCompileThreshold）后逐层升级。
+
+扩展延伸：核心优化技术：1）方法内联（Method Inlining）——将简短的方法体直接嵌入调用处，消除方法调用的开销（压栈/弹栈/参数传递）。-XX:MaxInlineSize=35（默认 35 字节）。2）循环优化——循环展开（Loop Unrolling）、循环剥离（Loop Peeling）。3）锁粗化（Lock Coarsening）——连续加锁解锁合并为一次。4）逃逸分析相关优化（标量替换/栈上分配/锁消除）。
+
+调试和观察：-XX:+PrintCompilation 打印编译日志；-XX:+UnlockDiagnosticVMOptions -XX:+PrintInlining 打印方法内联决策。C2 可能在极端场景下出现 bug（JDK 8u191 前曾有 C2 crash 的问题），此时可配置 -XX:-UseC2 降级为 C1。`,hints:[`分层编译中 Profiling 的开销如何控制`,`-XX:CompileThreshold 在分层编译下是否还生效`],tags:[`JVM`,`JIT`,`C1`,`C2`,`分层编译`],content_hash:`71ac2ab33ca6`,id:2528},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`类加载器与双亲委派破坏`,content:`双亲委派模型在哪些场景下被破坏？如何自定义类加载器来打破双亲委派？`,answer:`答案：双亲委派模型在 SPI 机制（JDBC）、Tomcat 容器、热部署、OSGi 等场景被打破。核心做法是重写 loadClass 方法或使用线程上下文类加载器（Thread Context ClassLoader）。
+
+解析：1）JDBC SPI——DriverManager 在 rt.jar 中（Bootstrap ClassLoader 加载），无法直接加载各数据库厂商的驱动实现（位于 classpath 的应用类）。JDK 引入 ServiceLoader + Thread Context ClassLoader 机制：线程上下文类加载器默认是应用类加载器，可以加载 classpath 下的类。2）Tomcat——每个 Web 应用有自己的 WebAppClassLoader，优先加载当前应用下的类，找不到才委派给父加载器。实现 Web 应用间隔离。3）热部署（如 Java IDE 热加载）——创建新的类加载器来加载修改后的类，旧类加载器及其加载的类可以被回收。4）OSGi——每个 Bundle 有独立的类加载器，不再遵循委派模型，而是声明式导入导出包。
+
+扩展延伸：自定义类加载器：继承 ClassLoader，重写 findClass（加载类逻辑）和 loadClass（打破双亲委派）。打破双亲委派的核心是在 loadClass 中先自己尝试加载类，再不委派给父加载器。Tomcat 使用的类加载顺序：Bootstrap → System → WEB-INF/classes → WEB-INF/lib/*.jar → Common（先加载应用类再委派）。注意：打破双亲委派必须小心，否则容易出现 ClassCastException 或 LinkageError——同一个类在不同类加载器中是不同的类型。`,hints:[`为什么 JDBC 4.0 不需要显式 Class.forName 注册驱动`,`Tomcat 为什么可以同时部署两个不同版本的 Spring 应用`],tags:[`JVM`,`类加载`,`双亲委派`,`ClassLoader`],content_hash:`f35aad594b5e`,id:2529},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`GC 日志分析与调优工具`,content:`如何解读 JVM GC 日志？有哪些 GC 日志分析工具？`,answer:`答案：GC 日志记录了各代的容量变化、停顿时间、GC 原因和晋升情况。常用工具有 GCeasy、gceasy.io、GCViewer。
+
+解析：启用 GC 日志（JDK 8 参数与 JDK 9+ 参数不同）：JDK 8 用 -Xloggc:gc.log -XX:+PrintGCDetails -XX:+PrintGCDateStamps；JDK 9+ 用 -Xlog:gc*:file=gc.log:time,uptime,level,tags。示例（ParNew + CMS）：[GC (Allocation Failure) [ParNew: 68204K->8498K(76672K), 0.0123456 secs] 68204K->12890K(251392K), 0.0125678 secs] [Times: user=0.03 sys=0.01, real=0.01 secs]。关键指标：ParNew 区 68204K->8498K（年轻代 GC 前后大小）、76672K（年轻代总容量）、251392K（堆总容量）。停顿时间 real=0.01 secs。
+
+扩展延伸：GC 调优目标：1）Minor GC 频率——每 5-10 秒一次比较正常，过于频繁说明年轻代太小。2）Full GC 频率——理想情况 0 次/天，每周 1-2 次可接受（取决于应用类型）。3）停顿时间——G1 目标 -XX:MaxGCPauseMillis=200（默认 200ms）。工具推荐：GCeasy（在线，自动生成调优建议）；gceasy.io（功能丰富，有 AI 辅助分析）；GCViewer（开源本地工具）。`,hints:[`GC 日志中的 user/sys/real 分别代表什么`,`如何从 GC 日志判断是否存在内存泄漏`],tags:[`JVM`,`GC`,`日志分析`,`调优`],content_hash:`752601eef8bf`,id:2530},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`内存泄漏模式与实战分析`,content:`Java 中常见的内存泄漏模式有哪些？分别如何排查？ThreadLocal 为什么会内存泄漏？`,answer:`答案：常见内存泄漏模式包括 ThreadLocal 未 remove、静态集合无限增长、类加载器泄漏、String.intern 失控、未关闭的资源。ThreadLocal 泄漏的原因是：ThreadLocalMap 的 key 是 WeakReference（GC 时 key 被回收），但 value 是强引用，导致 Entry.key=null 但 value 无法被回收。
+
+解析：1）ThreadLocal 泄漏——每个 Thread 持有 ThreadLocalMap，Entry 的 key 是 WeakReference<ThreadLocal>。当 ThreadLocal 对象被回收后，Entry.key 变为 null，但 value 仍然被 Entry 强引用。如果线程是长期存活（如 Tomcat Worker 线程池），这些 null-key Entry 永远不会被清理，除非 ThreadLocalMap 的 set/get 方法触发清理（expungeStaleEntry）。解决办法：每次用完后调用 remove()。2）静态集合——static List<Object> 添加对象后从未清理，对象数量持续增长。3）类加载器泄漏——Tomcat 热部署时，旧 WebAppClassLoader 因为被某些对象引用（如 java.beans.Introspector 缓存、用户线程未停止）无法 GC，其加载的所有类泄漏。4）String.intern——JDK 7+ 中 String.intern() 将字符串放入堆中，大量调用 intern 导致 char[] 无法被回收。
+
+扩展延伸：排查方法：使用 jmap -histo:live 查看存活对象分布，OOM 时 Heap Dump 后用 MAT 分析 Dominator Tree + GC Roots 链。排查思路：看哪个对象实例数异常多、确定该对象的 GC Root 持有者、反推业务代码。常见泄漏的 MAT 模式：Thread -> ThreadLocalMap -> Entry[] -> Value 的引用链。`,hints:[`ThreadLocalMap 的 set 方法中 expungeStaleEntry 做了什么`,`为什么线上 Tomcat 中 ThreadLocal 泄漏比独立 Java 应用更严重`],tags:[`JVM`,`内存泄漏`,`ThreadLocal`,`MAT`],content_hash:`1f4394260282`,id:2531},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 性能监控工具链`,content:`JVM 自带哪些性能监控工具？Arthas 相对 jstack/jmap 有什么优势？`,answer:`答案：JDK 自带的工具包括 jstat（统计类加载/GC/编译）、jmap（堆转储/堆直方图）、jstack（线程栈）、jcmd（多功能）、jinfo（运行时参数查看/修改）、jhsdb（异常诊断）。Arthas 是阿里巴巴开源的 Java 诊断工具，提供实时监控和在线调试能力。
+
+解析：核心工具用法：1）jstat -gcutil PID 1000 1s（每 1s 查看 GC 利用率）。示例输出：S0 0.00 S1 85.23 E 72.45 O 45.12 M 88.90 YGC 123 YGCT 4.56 FGC 3 FGCT 1.23 GCT 5.79。2）jmap -histo PID（查看堆中对象实例数排序）：instances 最多的类通常是排查嫌疑对象。jmap -dump:format=b,file=heap.hprof PID（生产谨慎使用，会 STW，尤其是大堆）。3）jstack PID（打印线程栈）：找死锁、卡顿线程。死锁时 jstack 输出会明确提示 Found one Java-level deadlock。4）jcmd PID VM.flags（查看 JVM 参数）、jcmd PID Thread.print（同 jstack）。
+
+扩展延伸：Arthas 的优势：1）运行时观测——无需重启应用，watch/trace/monitor 命令实时观测方法入参/返回值/异常（类似动态 tracer）。2）在线反编译——jad 命令反编译已加载的类。3）动态修改——OGNL 表达式执行任意代码。4）火焰图——profiler 命令采集 CPU/内存采样生成火焰图。5）生产安全——通过 -X 限制范围，不推荐在核心交易系统频繁使用高开销命令。
+
+实践建议：生产环境优先用 jstat/jcmd（低开销），jmap -dump 在高峰期前谨慎使用（大堆 dump 会 STW）。Arthas 推荐在预发环境或低峰期使用。`,hints:[`jmap -dump 为什么在大堆生产环境中要谨慎使用`,`Arthas watch 命令对性能的影响`],tags:[`JVM`,`监控`,`Arthas`,`jstat`],content_hash:`4a02b1997384`,id:2532},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`OOM 类型详解`,content:`Java 中有哪些不同类型的 OutOfMemoryError？分别是什么原因导致的？`,answer:`答案：常见 OOM 类型共 6 种：Java heap space、Metaspace、Direct buffer memory、GC overhead limit exceeded、Unable to create new native thread、Requested array size exceeds VM limit。
+
+解析：1）Java heap space——Java 堆内存耗尽。最常见类型。原因：对象泄漏、堆设置过小（-Xmx）。特征：GC 日志显示老年代持续增长，Full GC 无法回收。2）Metaspace——元空间耗尽（JDK 8+）。原因：大量动态生成类（CGLib 代理/动态语言/热部署频繁）、-XX:MaxMetaspaceSize 过小。3）Direct buffer memory——堆外直接内存耗尽。原因：Netty/NIO 分配 DirectByteBuffer 忘记释放（Cleaner 没被调用），或 -XX:MaxDirectMemorySize 过小。堆外内存用 NMT 或 pmap 排查。4）GC overhead limit exceeded——98% 的时间花在 GC 上但回收不到 2% 的堆。是 JVM 的预警，说明堆已经快满了且 GC 无效。5）Unable to create new native thread——OS 线程数限制。原因：线程泄漏（创建不停止）、服务器 ulimit nproc 限制、操作系统 pid_max 上限。排查：pstree -p PID | wc -l 看线程数。6）Requested array size exceeds VM limit——申请的数组长度超过 JVM 限制（约 Integer.MAX_VALUE - 2），通常是代码 bug。
+
+扩展延伸：OOM 发生后的处理：JVM 参数配置 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/ 自动 dump。有些类型的 OOM（特别是 Unable to create new native thread）可能来不及 dump，需要用 ulimit 和 OS 日志提前排查。堆外内存相关的 OOM 用 Native Memory Tracking（-XX:NativeMemoryTracking=summary，然后 jcmd PID VM.native_memory summary）。注意：OOM 错误日志不一定在最开始出现异常的地方——JVM 可能同时有多个线程在不同地方抛出 OOM，需要看第一个出现的异常。`,hints:[`为什么 Unable to create new native thread 常常来不及产生 Heap Dump`,`Direct buffer memory OOM 和普通堆 OOM 的排查方法有何不同`],tags:[`JVM`,`OOM`,`内存管理`],content_hash:`7cc876c6a866`,id:2533},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`Java 引用类型深入与应用`,content:`Java 的四种引用类型分别适用于什么场景？它们和引用队列（ReferenceQueue）的关系是什么？`,answer:`答案：四种引用类型从强到弱：强引用（Strong Reference）、软引用（SoftReference）、弱引用（WeakReference）、虚引用（PhantomReference）。ReferenceQueue 用于跟踪引用指向的对象被回收后的通知。
+
+解析：1）强引用（Strong Reference）——Object obj = new Object()。只要强引用还存在，GC 永远不会回收该对象。被 OOM 也不会回收。问题：强引用不注意清理就是内存泄漏的根源。2）软引用（SoftReference）——GC 在内存不足（即将 OOM）时回收。适用：缓存实现，如 Guava Cache 的软引用值、MyBatis 的缓存。JDK 9+ 中 -XX:SoftRefLRUPolicyMSPerMB=1000（默认 1s 内未被访问的软引用对象会被回收）。3）弱引用（WeakReference）——GC 扫描到弱引用对象时，无论内存是否充足都会回收。适用：ThreadLocalMap（key 是 WeakReference<ThreadLocal>）、WeakHashMap、某些框架的缓存。4）虚引用（PhantomReference）——最弱，get() 始终返回 null。唯一用途：跟踪对象被回收的时刻（通过 ReferenceQueue）。适用：NIO DirectByteBuffer 的回收——Cleaner（extends PhantomReference）在 DirectByteBuffer 被 GC 后回调 clean() 释放堆外内存。
+
+扩展延伸：引用队列（ReferenceQueue）：在创建 SoftReference/WeakReference/PhantomReference 时可以关联一个 ReferenceQueue。当引用指向的对象被 GC 回收后，该引用对象被入队到 ReferenceQueue 中。应用：资源回收（如 DirectByteBuffer Cleaner 机制）、缓存失效通知。注意：PhantomReference 必须在构造时传入 ReferenceQueue，且必须手动处理队列中的引用，否则会造成 phantom reference 本身的内存泄漏。`,hints:[`ThreadLocalMap 为什么用 WeakReference 作为 key 而不是 SoftReference`,`PhantomReference 和 finalize() 在对象回收机制上的区别`],tags:[`JVM`,`引用类型`,`ReferenceQueue`],content_hash:`2395082c793d`,id:2534},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 核心参数详解与调优`,content:`JVM 参数分为哪几类？日常调优中最重要的参数是哪些？`,answer:`答案：JVM 参数分为三类：标准参数（-开头，所有 JVM 实现都支持）、非标准参数（-X 开头，HotSpot 特有）、高级参数（-XX 开头，开发者选项，可能在不同版本间变化）。核心调优参数围绕堆大小、GC 选择、内存管理和日志诊断。
+
+解析：1）标准参数：-server（启用 Server Compiler C2，64 位 JVM 默认）、-version、-classpath。2）非标准参数（-X）：-Xms（初始堆大小）和 -Xmx（最大堆大小）必须设置，建议相同值避免运行时扩容开销。-Xss（线程栈大小，默认 1MB，减小可增加可创建线程数，但可能引起 StackOverflow）。3）高级参数（-XX）：-XX:+PrintFlagsFinal 打印所有 JVM 参数当前值（常用排查工具）。
+
+扩展延伸：生产环境常用参数模板（JDK 17+, G1）：-Xms4g -Xmx4g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp/dump -Xlog:gc*:file=gc.log:time,uptime:filecount=10,filesize=10M。调优原则：优先保证堆大小足够（避免频繁 GC），再调 GC 参数。99% 的应用默认 GC 参数已够好，调优前先用 jstat/jcmd 诊断。`,hints:[`为什么建议 Xms 和 Xmx 设置相同值`,`如何找到当前 JVM 所有参数的实际值`],tags:[`JVM`,`调优`,`参数`,`性能`],content_hash:`2734997be8d5`,id:2535},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`StackOverflowError 与线程栈`,content:`什么情况下会触发 StackOverflowError？如何估算 Java 线程栈能支持的最大递归深度？`,answer:`答案：StackOverflowError 在线程栈内存耗尽时触发，最常见原因是无限递归或深度递归。最大递归深度 = Xss 栈大小 / 平均每栈帧大小。每栈帧大小取决于方法的局部变量表、操作数栈、动态链接和返回地址。
+
+解析：Java 虚拟机栈（JVM Stack）是线程私有的，存储栈帧。每个方法调用创建一个栈帧，方法返回时销毁。栈帧中包含：局部变量表（this + 参数 + 局部变量，每个 slot 32 位）、操作数栈（字节码指令的工作区）、动态链接（指向运行时常量池的引用）、返回地址。Xss 默认值：JDK 17+ 默认 1MB（Linux x64），可通过 -Xss256k 减少。
+
+扩展延伸：计算递归深度：写一个简单递归方法（int depth=0; f(){depth++; f();}），在 catch(StackOverflowError) 中打印 depth。32 位 JDK 约 10K-20K 深度（Xss=256k），64 位约 20K-40K。如果递归深度可控（如树遍历），可增大 Xss。如果深度不可控（如错误的递归算法），应修复代码而不是调参数。栈溢出排查：jstack 打印的线程栈显示最深位置——这就是递归/调用链的末端。生产建议：限制递归深度（设置阈值）或用循环替代递归。`,hints:[`为什么栈帧大小影响可创建的线程总数`,`如何通过 jstack 定位 StackOverflow 的根因`],tags:[`JVM`,`栈`,`StackOverflow`,`异常`],content_hash:`992b8c411e1c`,id:2536},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`Java 异常表与异常处理机制`,content:`JVM 是如何实现 try-catch-finally 的？异常表（Exception Table）的结构是什么？`,answer:`答案：JVM 通过异常表（Exception Table）实现异常处理，不是通过 if-else 控制流。每个方法编译后生成一个异常表，记录 try 块的起始/结束字节码偏移、catch 类型的常量池索引、handler 的起始偏移。Finally 块通过代码复制实现。
+
+解析：try-catch 的编译结果：代码中的 try 块边界被标记为异常表中的 from/to 行，catch 类型和目标 handler 地址存入表项。当异常发生时，JVM 遍历异常表：如果异常发生的位置在 from-to 范围内且抛出的异常是 catch 类型的子类，JVM 跳转到 handler 地址执行。如果遍历完异常表没有匹配项，异常沿方法调用栈向上传播。finally 的实现（JDK 7+）：编译器将 finally 块的代码复制到三个位置——try 块正常出口、catch 块出口、catch 块未捕获异常时重新抛出前。
+
+扩展延伸：异常表的性能影响：try-catch 在无异常抛出时零开销（异常表只做数据存储，不在控制流上增加检查）。抛出异常时有开销（需要遍历异常表 + 构建异常栈帧 + 获取栈回溯）。所以 try-catch 不用来替代正常的控制流。JDK 7 的改进：Suppressed Exception（try-with-resources 中多个异常可叠加，通过 addSuppressed 方法）。try-with-resources：编译后每个资源调用 close() 在 finally 中执行，close 抛异常时通过异常抑制机制附加到主异常。`,hints:[`try 块没有抛出异常时是否有性能开销`,`try-with-resources 如何确保多个资源的 close 都被调用`],tags:[`JVM`,`异常`,`字节码`,`编译`],content_hash:`97dfae458d7b`,id:2537},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`字符串常量池与 String.intern`,content:`Java 字符串常量池（String Pool）是如何工作的？String.intern() 方法在 JDK 6 和 JDK 7+ 中有什么区别？`,answer:`答案：字符串常量池是 JVM 为 String 对象维护的一个特殊缓存池，用于减少字符串对象的重复创建。直接双引号声明的字符串字面量自动入池，String.intern() 可以手动将字符串对象加入池中。JDK 7+ 将字符串常量池从堆外（PermGen）移入 Java 堆。
+
+解析：字符串常量池的本质是一个 HashMap<String, String>（StringTable）。当用双引号声明 String s = "hello" 时，JVM 先查池中是否已有相同内容的字符串，有则返回引用，无则创建并放入池中。new String("hello")：显式创建新对象（不保证入池），可以用 intern() 手动入池。JDK 6 中字符串常量池在永久代（PermGen，固定大小，有上限），intern() 过多触发 PermGen OOM。JDK 7 中将字符串常量池移入 Java 堆（受 -Xmx 限制），且 intern() 的实现变为：如果池中已有相同内容的 String，返回池中引用；否则将堆中 String 对象的引用放入池中（而非复制到 PermGen）。
+
+扩展延伸：String.intern 的滥用：在循环中大量调用 intern() 会导致 StringTable 膨胀（链表查询变慢），即使字符串内容不同但 intern 竞争激烈（ConcurrentHashMap 式的桶锁）。优化方案：使用 Guava 的 Interners.newWeakInterner()（弱引用 + 自动 GC）或自定义缓存。StringTable 大小可通过 -XX:StringTableSize=N 调整（JDK 8 默认 60013，JDK 17+ 默认 65536）。大 StringTable（如 1000003）可减少哈希冲突，但增加内存开销。注意：G1 GC 会在 Full GC 时清理 StringTable 中的死字符串（JDK 8u20+ 默认开启 -XX:+UseStringDeduplication 去重相同 char[]）。`,hints:[`JDK 7 将 String Pool 移到堆后 intern 行为有哪些具体变化`,`为什么大量调用 intern() 可能导致性能下降`],tags:[`JVM`,`String`,`常量池`,`内存`],content_hash:`bb64fca3f7c2`,id:2538},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`堆外内存管理`,content:`Java 堆外内存（Off-Heap Memory）有哪些使用场景和实现方式？DirectByteBuffer 是如何分配和回收堆外内存的？`,answer:`答案：堆外内存指 JVM 堆之外的内存区域，通过 DirectByteBuffer（NIO）或 Unsafe.allocateMemory 分配。主要使用场景：高性能 IO（Netty）、缓存（MapDB）、减少 GC 压力。DirectByteBuffer 通过虚引用（Cleaner）机制自动回收堆外内存。
+
+解析：DirectByteBuffer 的分配：调用 ByteBuffer.allocateDirect(capacity) → DirectByteBuffer 构造器内部调用 Bits.reserveMemory() 检查堆外内存配额（-XX:MaxDirectMemorySize，默认等于 Xmx）→ Unsafe.allocateMemory() 在堆外分配内存 → 记录分配地址和大小到 DirectByteBuffer 实例。回收机制：DirectByteBuffer 实例在构造时关联一个 Cleaner（PhantomReference），当 DirectByteBuffer 对象被 GC 回收时，Cleaner 的 clean() 方法被 Reference Handler 线程调用 → 调用 Unsafe.freeMemory() 释放堆外内存。
+
+扩展延伸：堆外内存管理的关键问题：1）堆外内存不归 GC 管——GC 只管 DirectByteBuffer 这个小对象（几十字节），不管其引用的堆外大内存（GB 级）。因此堆外内存不足时不会触发 GC，只能靠 MaxDirectMemorySize 限制。2）堆外内存泄漏的排查——NMT（Native Memory Tracking，-XX:NativeMemoryTracking=summary）→ jcmd PID VM.native_memory summary 查看各类内存使用；pmap -x PID 观察 RSS 异常增长。3）Netty 的优化——Netty 使用 PooledByteBufAllocator 对 DirectByteBuffer 做池化管理（类似堆内对象池），减少分配和回收的开销。建议：使用 -XX:MaxDirectMemorySize 限制堆外内存上限，Netty 应用中开启 PooledByteBufAllocator。`,hints:[`为什么 DirectByteBuffer 对象很小（几十字节）但可能导致 OOM`,`Netty 为什么默认使用 PooledByteBufAllocator 而非 Unpooled`],tags:[`JVM`,`堆外内存`,`DirectByteBuffer`,`NIO`],content_hash:`5ad05fe97551`,id:2539},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`finalize 与 Cleaner 机制`,content:`Java 的 finalize() 方法为什么被弃用？Cleaner 机制如何替代 finalize 实现资源回收？`,answer:`答案：finalize() 被弃用（JDK 9 @Deprecated）的原因：执行时机不可预测、影响 GC 性能（需要两次 GC 周期）、线程安全问题。Cleaner（JDK 9+）替代 finalize，通过 PhantomReference + ReferenceQueue 在对象被回收后安全释放资源。
+
+解析：finalize 的问题：1）对象实现 finalize 后，GC 发现对象不可达时不直接回收，而是将对象放入 Finalization Queue，由 Finalizer 线程（低优先级）逐一执行 finalize()。执行后对象可能被重新引用（逃脱 GC），需要下次 GC 才能回收——至少两个 GC 周期。2）Finalizer 线程优先级低，如果 finalize() 执行慢，对象堆积，可能 OOM。3）finalize() 中抛出异常会被忽略（不中断 finalization 线程），异常信息丢失。4）存在竞态条件——对象在 finalize() 中被方法调用（this 引用逃逸）。
+
+扩展延伸：Cleaner 机制（JDK 9+，sun.misc.Cleaner → java.lang.ref.Cleaner）：1）构造时关联一个 PhantomReference + Runnable。2）对象被回收后，PhantomReference 入 ReferenceQueue。3）Cleaner 线程从队列取出引用，执行关联的 Runnable。4）相比 finalize：Cleaner 的线程是 daemon 线程（不会阻止 JVM 退出）、Runnable 中不会意外复活对象、释放时机更可预测。典型应用：DirectByteBuffer 使用 Cleaner 释放堆外内存（即使应用程序没有显式调用 clean()）。注意：Cleaner 仍不能完全保证及时执行——如果 Reference Handler 线程来不及处理，操作系统资源（文件描述符/堆外内存）可能耗尽。应优先使用 try-with-resources（AutoCloseable）显式释放资源，将 Cleaner 作为最后的兜底防线。`,hints:[`finalize 为什么至少需要两次 GC 才能回收对象`,`Cleaner 相比 finalize 解决了哪些具体问题`],tags:[`JVM`,`finalize`,`Cleaner`,`GC`],content_hash:`7c331d836bf6`,id:2540},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 类文件结构`,content:`Java 类文件（.class）的二进制结构包含哪些部分？常量池的作用是什么？`,answer:`答案：Class 文件是 8 字节流的二进制文件，严格按规范排列。结构包含：魔数（Magic Number）+ 版本号 + 常量池（Constant Pool）+ 访问标志 + 类/父类/接口索引 + 字段表 + 方法表 + 属性表。
+
+解析：1）魔数（4B）——每个 class 文件头 4 字节固定为 0xCAFEBABE。2）版本号（4B）——minor_version + major_version，JDK 17 对应 61.0。3）常量池——class 文件的资源仓库，存放字面量和符号引用。包含类和接口的全限定名、字段名和描述符、方法名和描述符、字符串常量等。每个常量有 tag 标志类型（CONSTANT_Utf8=1、CONSTANT_Class=7、CONSTANT_Methodref=10 等）。常量池索引从 1 开始（非 0）。4）访问标志——public/final/abstract/interface 等。
+
+扩展延伸：方法表和方法体的关系——方法表描述方法签名，方法体的字节码存在 Code 属性中。Code 属性包含：max_stack（操作数栈最大深度）、max_locals（局部变量表大小）、bytecode（字节码指令序列）、exception_table（异常表）、LineNumberTable（行号表，支持 Debug）。Class 文件格式是 JVM 实现跨平台和语言中立的关键——任何语言只要能编译成符合规范的 class 文件就能在 JVM 上运行（如 Kotlin、Scala、Groovy、Clojure）。`,hints:[`常量池中的 CONSTANT_Utf8 和 CONSTANT_String 有什么区别`,`为什么 Class 文件的常量池从 1 开始编号而不是 0`],tags:[`JVM`,`Class文件`,`字节码`,`常量池`],content_hash:`66bc682193e7`,id:2541},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JIT 方法内联优化`,content:`JIT 编译器的方法内联（Method Inlining）是什么？为什么它是 JIT 最重要的优化手段？内联的触发条件有哪些？`,answer:`答案：方法内联将调用点的方法体复制到调用方的方法中，消除方法调用开销（栈帧创建/销毁、参数传递）。它是 JIT 最重要的基础优化——因为内联之后才能触发其他优化（逃逸分析、死代码消除、常量折叠等）。
+
+解析：方法调用的开销——每次方法调用都需要创建新栈帧、参数传递、方法分派（虚方法表查找）、返回值处理。内联后这些全部消除。为什么重要——跨方法边界时很多优化无法进行。内联后整个调用链在一个方法体内，逃逸分析和死代码消除才能发挥作用。典型内联条件：1）方法体大小 < -XX:MaxInlineSize（默认 35 字节）。2）调用点是否频繁达到阈值（-XX:CompileThreshold，服务端 10000）。3）热方法（-XX:MaxFreqInlineSize，默认 325 字节）。
+
+扩展延伸：内联的限制——1）虚分派：如果方法被重写，JIT 无法静态确定调用目标。解决方案：CHA 检测如果只有一种实现则内联（带上类型检查 guard）。2）递归方法——JIT 不会无限内联，有嵌套深度限制（-XX:MaxInlineLevel，默认 9 层）。3）接口调用——InvokeInterface 的虚分派更复杂。常用诊断参数：-XX:+PrintInlining 打印内联决策。内联对性能的影响可以超过 10 倍（微基准测试中，空方法调用 1 亿次，内联前约 100ms，内联后约 2ms）。`,hints:[`为什么方法内联是其他 JIT 优化的前提条件`,`虚方法调用如何影响 JIT 的内联决策`],tags:[`JVM`,`JIT`,`内联`,`性能`],content_hash:`cc82339a40bd`,id:2542},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JIT 锁消除与锁粗化`,content:`JIT 编译器在锁优化方面做了哪些工作？锁消除（Lock Elimination）和锁粗化（Lock Coarsening）的原理分别是什么？`,answer:`答案：锁消除——JIT 通过逃逸分析判断对象不会逃逸出当前线程，消除其上的同步锁。锁粗化——将相邻的多个锁操作合并为一个更大的锁范围，减少锁的获取/释放次数。
+
+解析：锁消除——StringBuffer 的 append 方法是 synchronized 的。当 StringBuffer 对象只在方法内部创建和使用（未逃逸），JIT 可以安全地消除 append() 上的锁（其他线程不可能访问到这个对象）。由 -XX:+EliminateLocks（JDK 8 默认开启）控制。锁粗化——for 循环内部反复加锁/解锁同一个对象，JIT 会将锁的范围扩大到整个循环外部。另一个场景：同一方法中连续对同一对象加锁解锁再重新加锁，JIT 会合并为一个锁范围。
+
+扩展延伸：-XX:+EliminateLocks 和偏向锁的关系——偏向锁是运行时优化（偏向第一个获取锁的线程），锁消除是 JIT 编译期的优化（直接去掉不必要的同步代码）。两者可以同时生效。锁粗化的代价——粗化后的锁范围可能包含不需要保护的代码，导致其他线程等待时间增长。所以 JIT 的锁粗化范围是有限的。一般来说 JDK 8+ 默认的锁优化已够好，不需要手动干预。`,hints:[`锁消除的前提是逃逸分析——锁对象必须不逃逸当前线程`,`锁粗化和锁消除是互补的优化`],tags:[`JVM`,`JIT`,`锁消除`,`锁粗化`],content_hash:`2ea57f1d1d0d`,id:2543},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`偏向锁的原理与历史`,content:`什么是偏向锁（Biased Locking）？它有什么问题导致 JDK 15 之后被默认禁用？`,answer:`答案：偏向锁是 JDK 1.6 引入的锁优化，通过偏向第一个获取锁的线程来消除无竞争情况下的同步开销。JDK 15 后默认禁用，JDK 21 中被正式移除，因为维护成本高于收益，尤其是高并发框架中偏向锁的撤销（Revocation）成本很高。
+
+解析：偏向锁的原理——对象头（Mark Word）中存储偏向线程 ID，当同一个线程再次获取该锁时，只需测试偏向线程 ID 是否是自己，不需要 CAS 操作。这个优化假设大多数情况下同一锁大量被同个线程使用。偏向锁的升级路线：偏向锁 → 轻量级锁（CAS 自旋）→ 重量级锁（OS 互斥量）。撤销（Revocation）——当另一个线程尝试获取该锁时，需要撤销偏向锁：需要等待全局安全点（SafePoint）执行偏向锁撤销，这个操作会暂停所有线程（STW）。
+
+扩展延伸：为什么偏向锁被移除——1）撤销时需要等待 SafePoint（STW），对于使用大量锁的框架（如 ConcurrentHashMap、线程池），高并发下的偏向锁撤销成为性能瓶颈。2）JDK 13+ 中偏向锁的代码复杂度已经超过了其带来的性能收益。3）JDK 15+ 默认禁用（-XX:-UseBiasedLocking），JDK 21 中被移除。现在的锁顺序：轻量级锁（CAS 自旋）→ 重量级锁（OS 互斥量）。如果应用中大部分锁确实没有被多线程竞争（偏斜场景），偏向锁曾经有效，但在现代 Java 应用中，线程池和共享数据结构很普遍，初始偏向的设计假设不再成立。`,hints:[`偏向锁撤销为什么需要在全局安全点执行`,`偏向锁被移除后多线程同步的性能是否大幅下降`],tags:[`JVM`,`偏向锁`,`锁优化`,`并发`],content_hash:`d3e2ccb5b308`,id:2544},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`虚拟机字节码执行引擎`,content:`JVM 的字节码执行引擎是如何工作的？解释执行和编译执行的区别是什么？`,answer:`答案：字节码执行引擎是 JVM 的核心，负责执行 Class 文件中的字节码指令。两种执行方式：解释执行（逐条解释字节码，启动快但慢）和编译执行（通过 JIT 将热点字节码编译为本地机器码，启动慢但快）。混合模式是 HotSpot VM 的默认策略。
+
+解析：解释执行——字节码指令逐条读取、解码、执行。优点：无需编译等待，程序立即开始运行。缺点：每条指令的翻译执行都有开销。编译执行（JIT）——当方法被调用足够多次（-XX:CompileThreshold，C1 1500，C2 10000）触发编译优化，将整个方法的字节码翻译成本地机器码并缓存。优点：执行效率高（机器码直接运行，且能做大量优化）。缺点：编译本身需要时间和 CPU。
+
+扩展延伸：分层编译（Tiered Compilation，JDK 7u4+ 默认）：0-解释执行；1-简单 C1 编译（带 profiling）；2-受限 C1 编译；3-完整 C1 编译；4-C2 编译（终极优化）。通常在 3 层收集足够 profiling 数据后，客户端应用切到 C1（快速启动），服务端应用最终切到 C2（极致性能）。-Xint（纯解释执行）、-Xcomp（纯编译执行）。AOT（Ahead-of-Time Compilation，JDK 9+ 的 jaotc 工具）——将字节码提前编译为共享库，减少启动预热时间（GraalVM Native Image 也属于 AOT 编译）。`,hints:[`分层编译中 C1 和 C2 各自的定位是什么`,`为什么纯解释执行在某些场景下比纯编译执行更适合`],tags:[`JVM`,`解释器`,`JIT`,`字节码`],content_hash:`1b9812a5669d`,id:2545},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`堆外内存 DirectBuffer`,content:`什么是堆外内存（Direct Memory/Off-Heap Memory）？DirectByteBuffer 如何分配和回收堆外内存？堆外内存相比堆内存有哪些优势和风险？`,answer:`答案：堆外内存是 JVM 堆之外分配的本地内存（由 OS 管理，不在 GC 管辖范围）。DirectByteBuffer 通过 Unsafe.allocateMemory() 分配堆外内存，回收依赖 Cleaner 机制（虚引用 + ReferenceQueue 触发 Deallocator 线程释放）。
+
+解析：堆外内存的使用——1）NIO 的 ByteBuffer.allocateDirect(capacity) 创建的 DirectByteBuffer 背后是 OS 分配的本地内存。2）Network IO 和 File IO 中，堆外内存可以减少一次内存拷贝（堆内 → 堆外的 Copy），提升 IO 性能。3）Netty 使用 DirectBuffer 池化以减少堆外内存的分配和释放开销。
+
+扩展延伸：回收机制——1）DirectByteBuffer 对象本身在堆中（很小），其引用的堆外内存块不在堆中。2）当 DirectByteBuffer 对象被 GC 回收时，其关联的 Cleaner（虚引用）被加入 ReferenceQueue，由 Reference Handler 线程调用 Deallocator 释放堆外内存。3）风险：如果 DirectByteBuffer 对象的 GC 速度跟不上堆外内存分配速度，会抛 OutOfMemoryError: Direct buffer memory。4）-XX:MaxDirectMemorySize 控制堆外内存上限。监控：JMX 的 BufferPoolMXBean 可以监控 DirectBuffer 的使用情况。Netty 的优势之一是池化和主动追踪 DirectBuffer 的释放。`,hints:[`DirectByteBuffer 的堆外内存为什么能减少一次拷贝——内核空间和用户空间之间的切换代价`,`堆外内存泄漏的典型场景——DirectByteBuffer 对象在 GC 前堆外内存已耗尽`],tags:[`JVM`,`堆外内存`,`NIO`,`DirectByteBuffer`],content_hash:`eb7e4bd3449a`,id:2546},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM SafePoint 与 SafeRegion`,content:`JVM 的 SafePoint（安全点）是什么？哪些操作只能在 SafePoint 执行？SafeRegion 和 SafePoint 有什么区别？`,answer:`答案：SafePoint 是 JVM 中所有线程都暂停到某一确定执行点的状态（「Stop-The-World」），用于执行需要全局停顿的操作。SafeRegion 是线程知道自己在很长一段时间内不会修改堆内存的代码区域，无需到达 SafePoint 也能暂停。
+
+解析：SafePoint 的触发时机——1）GC 发生时所有线程必须到达 SafePoint。2）偏向锁撤销需要在 SafePoint 检查线程状态。3）代码反优化（Deoptimization）——JIT 编译的代码发现假设不成立时退回解释执行。4）Java 线程在 SafePoint 可以安全地修改线程的 Java 状态（如 Thread.currentThread()）。
+
+扩展延伸：线程进入 SafePoint 的方式——1）主动轮询（Polling）：JIT 编译的代码在方法返回处、循环回边处插入 SafePoint 轮询指令。2）被动等待：解释执行的线程通过解释器中的 SafePoint 检查点。SafeRegion——典型场景：JNI 调用期间（Java 线程执行 native 代码，不访问 Java 堆）。线程在执行 SafeRegion 中的代码时，JVM 认为该线程已处于安全状态。线程在退出 SafeRegion 时必须检查是否正在 GC（如果正在 GC 则等待 GC 完成）。-XX:+PrintGCApplicationStoppedTime 可以打印 STW 暂停时间。`,hints:[`SafePoint 轮询是如何实现的——JIT 在方法返回和循环回边插入的内存屏障指令`,`JNI 调用期间线程为什么不需要到达 SafePoint——因为 SafeRegion 机制避免了不必要的暂停`],tags:[`JVM`,`SafePoint`,`GC`,`STW`],content_hash:`a7759799fe6f`,id:2547},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 对象头 Mark Word`,content:`JVM 对象头中的 Mark Word 存储了哪些信息？在不同锁状态下 Mark Word 的布局有什么变化？64 位 JVM 中 Mark Word 的大小是多少？`,answer:`答案：Mark Word 是 JVM 对象头的第一部分（64 位 JVM 中 8 字节），存储对象的运行时数据：哈希码、GC 分代年龄、锁状态标志（偏向锁/轻量锁/重量锁/无锁）。不同锁状态下 Mark Word 的位布局不同。
+
+解析：Mark Word 的 64 位布局（64 位 JVM）——1）无锁（Normal）：前 25bits 未使用 + 31bits 哈希码（identity_hashcode）+ 1bit cms_free + 4bits 分代年龄 + 1bit biased_lock + 2bits lock=01。注意：哈希码是惰性计算的，在首次调用 identityHashCode() 时填充到 Mark Word。如果对象已处于偏向锁状态，调用 hashCode() 会导致偏向锁撤销。2）偏向锁（Biased）：54bits 持有线程 ID + 2bits epoch + 4bits 分代年龄 + 1bit biased_lock=1 + 2bits lock=01。3）轻量锁：62bits 指向 Lock Record 的指针 + 2bits lock=00。4）重量锁：62bits 指向 Monitor（ObjectMonitor）的指针 + 2bits lock=10。5）GC 标记：62bits 未使用（或 forwarding 指针）+ 2bits lock=11。
+
+扩展延伸：为什么 hashCode() 会导致偏向锁撤销——偏向锁的 Mark Word 中没有空间存储 hashCode。调用 identityHashCode() 后必须撤销偏向锁，变为无锁状态（填充 hash 值）或重量锁（hash 存储到 ObjectMonitor 中）。分代年龄 4bits 最大值 15（-XX:MaxTenuringThreshold）。对象头整体大小：64 位 JVM 默认开启指针压缩时，对象头 = Mark Word(8B) + Klass Pointer(4B，压缩后) = 12B。未开启指针压缩时 Klass Pointer 8B，对象头 16B。`,hints:[`偏向锁的 Mark Word 中没有存储 hashCode 的位置——理解为什么 hashcode() 会导致锁膨胀`,`Mark Word 的分代年龄为什么最大值是 15——4bits 空间的限制`],tags:[`JVM`,`对象头`,`Mark Word`,`锁`],content_hash:`bd8b391f4371`,id:2548},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`类加载器命名空间与可见性`,content:`Java 类加载器的命名空间（Namespace）是什么？不同类加载器加载的相同全限定名的类为什么被认为是不同的类？如何实现类加载器隔离？`,answer:`答案：类的唯一标识 = 全限定类名 + 定义类加载器。同一个 Class 文件被两个不同的类加载器加载会产生两个不同的 Class 对象（instanceof 检查为 false）。类加载器的命名空间由其已加载的类组成，子加载器可见父加载器的类，反之不可见。
+
+解析：类加载器命名空间规则——1）可见性：子加载器可见父加载器加载的类。父加载器不可见子加载器加载的类。2）同一个 JVM 中，两个类加载器可以各自加载相同全限定名的类，它们是不同的类型。3）两个类互相访问时，如果由不同类加载器加载，会报 ClassCastException。
+
+扩展延伸：应用场景——1）Tomcat 的类加载器隔离：每个 WebApp 有自己的 WebAppClassLoader，加载 WEB-INF/lib 和 WEB-INF/classes。不同 WebApp 的同名类互不干扰。WebApp 优先加载自己的类（破坏双亲委派），但基础类（java.*）仍由 Bootstrap 加载。2）OSGi 的模块化：每个 Bundle 有自己的类加载器，通过 Import-Package/Export-Package 控制类可见性（细粒度的类加载器间的可见性控制）。3）Java 模块系统（JPMS，JDK 9+）的模块化隔离。类加载器泄漏——如果某个类加载器加载的类的对象被更高层级的类加载器中的对象引用，该类加载器无法被 GC。这是 Java 常见的类加载器内存泄漏场景。`,hints:[`Tomcat 的 WebAppClassLoader 为什么要破坏双亲委派——Web 应用需要优先加载自己的类`,`类加载器内存泄漏的场景——对象跨类加载器引用导致整批类无法卸载`],tags:[`JVM`,`类加载器`,`命名空间`,`隔离`],content_hash:`dd5fe1069357`,id:2549},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 内存泄漏排查与工具`,content:`如何排查 JVM 内存泄漏？常用的内存分析工具有哪些？从堆转储（Heap Dump）中分析泄漏的一般步骤是什么？`,answer:`答案：内存泄漏排查流程：监控发现（GC 后堆不下降或持续增长）→ 触发 Heap Dump → 分析 Dominator Tree（支配树）找到 GC Root 路径 → 定位泄漏对象 → 修复代码。
+
+解析：排查步骤——1）发现阶段：JVM 指标监控（GC 次数和耗时、堆使用率趋势）。特征：Full GC 后老年代使用率不降或持续增长。用 jstat -gcutil <pid> 观察。2）获取堆转储：jmap -dump:live,format=b,file=dump.hprof <pid>（生产环境谨慎，会触发 Full GC 并暂停应用）。更安全的是自动转储：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=。Arthas 的 heapdump 命令也可以获取。3）分析工具：MAT（Memory Analyzer，Eclipse 基金会）是功能最强大的分析工具。Eclipse Memory Analyzer 的 Leak Suspects Report 自动分析泄漏嫌疑。JProfiler（商业）、VisualVM（轻量）、YourKit（商业）。
+
+扩展延伸：MAT 分析要点——1）Dominator Tree：按保留堆（Retained Heap）排序——保留堆最大的对象最可能是泄漏源头。2）GC Root 路径：从泄漏对象到 GC Root 的引用链——找到为什么 GC 无法回收它。Thread → ThreadLocalMap → Entry → Value 是最常见的。3）常见的泄漏模式——集合中累积未清理的对象（HashMap 只增不减）、ThreadLocal 未 remove、ClassLoader 泄漏、回调未解注册、静态集合持有大对象。4）In-Use / Uncollected 的分析：JProfiler 的 Heap Walker 可以标记哪些对象是「应该被回收的未回收对象」。`,hints:[`MAT 的 Dominator Tree 为什么比「大对象」列表更能找到泄漏源头——Retained Heap 反映的是「如果这个对象被回收能释放多少内存」`,`ThreadLocal 内存泄漏为什么在 Tomcat 等 Web 容器中最常见——Worker 线程长期存活`],tags:[`JVM`,`内存泄漏`,`MAT`,`排查`],content_hash:`ae04d73371ac`,id:2550},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 参数类型与调优`,content:`JVM 参数有哪几类？标准参数（-D）、-X 参数、-XX 参数的使用场景？常用 JVM 调优参数有哪些（内存/GC/日志）？如何查看 JVM 默认参数值？`,answer:`答案：JVM 参数分三类——标准参数（-开头，所有 JVM 实现都支持，如 -Dfile.encoding=UTF-8、-version、-classpath）、-X 参数（非标准但常用，如 -Xms/-Xmx、-Xss）、-XX 参数（不稳定，特定 JVM 实现特有，如 -XX:+UseG1GC、-XX:MaxMetaspaceSize）。
+
+解析：常用参数——1）堆内存：-Xms（初始堆大小）、-Xmx（最大堆大小，通常 = -Xms 避免动态调整）、-Xmn（年轻代大小）。2）元空间：-XX:MetaspaceSize（元空间初始大小）、-XX:MaxMetaspaceSize（最大元空间，无上限默认）。3）栈大小：-Xss（线程栈大小，默认 1MB，可减小到 256KB-512KB 节省内存）。4）GC 日志：-Xlog:gc*（JDK 9+ 统一日志）、-XX:+PrintGCDetails（JDK 8）。5）GC 选择：-XX:+UseG1GC（JDK 9+ 默认）、-XX:+UseParallelGC、-XX:+UseZGC（JDK 17+ 支持）。
+
+扩展延伸：查看参数——1）java -XX:+PrintFlagsFinal -version 打印所有 -XX 参数及其当前值（= 表示初始默认，:= 表示被修改过的值）。2）java -XX:+PrintCommandLineFlags 打印显式设置的参数。3）jinfo -flag <param> <pid> 查看运行中 JVM 的某个参数。调优原则——1）-Xms = -Xmx（避免堆扩展的开销）。2）设置 -Xmn（年轻代通常为堆的 1/3 到 1/4）。3）根据 GC 日志调整比率（如 SurvivorRatio、MaxTenuringThreshold）。4）JDK 版本不同默认配置不同——了解自己 JDK 版本的默认值。`,hints:[`-X 参数（非标准但稳定），-XX 参数（不稳定，特定实现特有，可能在不同版本间变化）`,`-XX:+PrintFlagsFinal 打印所有 JVM 参数——= 是默认值，:= 是被修改过的值`],tags:[`Java`,`JVM`,`参数`,`调优`],content_hash:`cf0456688236`,id:2551},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 调优实战步骤`,content:`JVM 调优的一般步骤是什么？常见的性能问题如何定位（CPU 高/内存泄漏/GC 频繁）？有哪些生态工具可以使用？`,answer:`答案：JVM 调优步骤——监控现状（GC 日志/Metrics）→ 定位问题（CPU/MEM/GC）→ 调整参数 → 验证效果。核心原则：先有问题再调优（不要为了调优而调优），每次只改一个参数。
+
+解析：问题定位——1）CPU 高（100%）：top -H 找到 CPU 高的线程 ID → 转为 16 进制 → jstack 获取线程栈 → 定位热点代码。也可能是 GC 线程导致——观察 GC 日志是否频繁 Full GC。2）内存泄漏：jmap -histo:live 查看存活对象统计 → jmap -dump:format=b,file=heap.hprof 获取堆 Dump → MAT（Memory Analyzer Tool）分析 dominator tree 和 GC root 路径。或者用 jcmd GC.heap_dump 获取 Dump。3）GC 频繁：-Xlog:gc* 分析 GC 频率和时间。Full GC 频繁通常意味着堆太小或老年代过早填满（对象晋升太快或内存泄漏）。
+
+扩展延伸：工具链——1）命令行工具：jps（JVM 进程）、jstat（GC/Metaspace/编译统计）、jstack（线程栈）、jmap（内存 Dump）、jcmd（多功能诊断）、jinfo（参数查看/修改）。2）可视化工具：VisualVM（CPU/MEM/GC 可视化，JFR 分析）、JMC（Java Mission Control，商业功能 JDK 11+ 免费）、MAT（堆 Dump 分析）。3）在线诊断：Arthas（阿里开源，在线 Watch/Trace/Monitor）、async-profiler（低开销 CPU/ALLOC 采样）。常见优化——1）Young GC 频繁 → 增大年轻代。2）Full GC 频繁 → heap Dump 分析 + 代码排查。3）单次 GC 时间长 → 切换 GC 算法（G1/ZGC）或调整并行线程数。4）STW（Stop-The-World）时间超标 → 使用低延迟 GC（ZGC/Shenandoah）。`,hints:[`CPU 高先看是不是 GC 线程导致的——jstat -gcutil 看 GC 频率，jstack 看线程栈`,`内存泄漏三件套——jmap dump + MAT dominator tree + GC root 路径查找`],tags:[`Java`,`JVM`,`调优`,`诊断`],content_hash:`6294764682a8`,id:2552},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 对象分配流程`,content:`Java 对象在 JVM 中的完整分配流程是怎样的？栈上分配、TLAB、Eden 区的选择逻辑？什么情况下对象直接在老年代分配？`,answer:`答案：JVM 对象分配流程：尝试栈上分配（标量替换/逃逸分析）→ TLAB（线程本地分配缓冲区）→ Eden 区 → 大对象直接进入老年代。JVM 优先以最低代价分配——栈上分配无 GC 开销，TLAB 避免线程竞争，Eden 区是常规分配位置。
+
+解析：各阶段——1）栈上分配（Stack Allocation）：通过逃逸分析，如果对象不逃逸出方法/线程，将对象拆散为成员变量（标量替换），直接在栈帧上分配（无需 GC，方法结束自动销毁）。-XX:+DoEscapeAnalysis 开启（JDK 8 默认开启）。2）TLAB（Thread Local Allocation Buffer）：Eden 区中每个线程独有的分配缓冲区。线程先在 TLAB 中分配对象（无锁），TLAB 用满后再从 Eden 区申请新 TLAB。\`-XX:+UseTLAB\`（默认开启）。3）Eden 区：普通对象在 Eden 区的共享空间中分配（需要线程安全——CAS + 指针碰撞）。
+
+扩展延伸：直接进入老年代——1）大对象（-XX:PretenureSizeThreshold，默认 0 即不启用）：超过指定大小的对象直接在老年代分配（避免在 Eden 区分配后在 Young GC 中被频繁复制）。注意：该参数只对 Serial/ParNew 收集器有效。2）年龄阈值（-XX:MaxTenuringThreshold，默认 15）：对象在 Young GC 中存活次数达到阈值后晋升老年代。3）动态年龄判定：如果 Survivor 区中相同年龄的所有对象大小总和超过 Survivor 区的一半，则年龄大于等于该值的对象直接晋升。`,hints:[`对象分配优先级——栈上分配（零代价）→ TLAB（无锁）→ Eden 区（CAS）→ 大对象直接入老年代`,`动态年龄判定——Survivor 区中某年龄对象超过 50% 则晋升（避免对象在 Survivor 区反复复制）`],tags:[`Java`,`JVM`,`对象分配`,`TLAB`],content_hash:`1d36b0d9a81f`,id:2553},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`ZGC 原理详解`,content:`ZGC（Z Garbage Collector）的设计目标是什么？ZGC 如何实现几乎不中断应用程序的并发垃圾回收？染色指针（Colored Pointer）和读屏障（Load Barrier）的原理？`,answer:`答案：ZGC 设计目标——低延迟（STW 不超过 10ms，无论堆大小）、支持 TB 级堆（可达 16TB）、全阶段并发（除初始标记和最终标记外都与应用线程并发执行）。核心技术：染色指针（Colored Pointer）+ 读屏障（Load Barrier）+ 多重映射（Multi-Mapping）实现并发标记和压缩。
+
+解析：核心技术——1）染色指针（Colored Pointer）：ZGC 将对象的元信息（Finalizable/Remapped/Marked0/Marked1）存储在指针的高 4 位中（64 位指针剩余 44 位寻址，最多 16TB 堆）。不需要对象头中的 GC 标记位。2）读屏障（Load Barrier）：应用线程每次读取堆中的对象引用时执行一段代码（检查指针颜色）。如果对象状态不是「好」（remapped），读屏障会修正指针。3）多重映射（Multi-Mapping）：将不同地址映射到同一个物理内存（不同视图映射到同一块内存），指针的不同颜色对应不同的视图。
+
+扩展延伸：ZGC 的阶段——1）并发标记（Concurrent Mark）：遍历对象图标记存活对象。读屏障确保标记过程中应用线程读取的对象也被标记。2）并发预备重分配（Concurrent Prepare for Relocate）：找到需要清理的 Region。3）并发重分配（Concurrent Relocate）：将存活对象复制到新 Region。读屏障确保并发重分配期间应用线程读取到的是新位置。4）并发重映射（Concurrent Remap）：更新所有指向旧位置的指针。配置——-XX:+UseZGC（JDK 15+ 生产可用，JDK 21+ 正式支持）。ZGC 适合对延迟敏感的大型服务（大堆 + 低延迟要求）。但 ZGC 吞吐量低于 G1（额外开销来自读屏障和染色指针）。`,hints:[`染色指针将 GC 元信息存到指针的高位——不需要对象头的 GC 标记位，也不需要对象移动时的指针更新`,`读屏障在每次读取对象引用时执行——检查对象状态并修正指针，确保应用线程总是读到最新位置`],tags:[`Java`,`JVM`,`ZGC`,`垃圾回收`],content_hash:`aeacadf7a6b9`,id:2554},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 方法区与元空间`,content:`JDK 8 中元空间（Metaspace）取代了永久代（PermGen）的原因？元空间和永久代的本质区别？元空间的内存管理机制是什么？`,answer:`答案：JDK 8 移除永久代（PermGen），改为元空间（Metaspace）。根本原因：永久代使用 JVM 堆内存（大小固定易 OOM），元空间使用本地内存（Native Memory，系统内存，默认无上限）。类元数据、常量池、静态变量等从永久代移到了元空间和堆中。
+
+解析：永久代的问题——1）大小固定难调优：PermSize 和 MaxPermSize 设置不合适时容易 OOM（PermGen space error）。类加载越多（如频繁热部署、动态代理生成大量类）越容易 OOM。2）Full GC 触发：永久代空间不足或碎片化会触发 Full GC，但永久代中的类通常生命周期长且占用小，GC 回收率极低。3）与堆不可分割的耦合：永久代 + 堆大小受限于 -Xmx，不如元空间使用本地内存灵活。
+
+扩展延伸：元空间机制——1）存储内容：类的元数据（Class/Method/Field 的字节码信息）、常量池、注解、方法字节码等。但静态变量移到堆中（JDK 8 中 static 变量存储在堆中而非元空间）。2）垃圾回收：元空间不足时会触发 Full GC 或 CMS GC。当一个类被卸载（ClassLoader 可被 GC）且该类所有实例都被回收时，其元数据被回收。3）参数：-XX:MetaspaceSize（初始空间大小，触发 GC 的阈值），-XX:MaxMetaspaceSize（最大空间，默认无上限——使用系统内存），-XX:MinMetaspaceFreeRatio（GC 后最小空闲比例）。4）内存分配：元空间使用块分配器（Chunk Allocator）——从系统内存分配大的 Chunk，内部切割为 Block 分配给类加载器。类加载器卸载时整个 Block 回收（不需要遍历单个类）。`,hints:[`永久代（PermGen）用堆内存（大小固定），元空间（Metaspace）用本地内存（默认无上限）`,`JDK 8 中静态变量移到了堆中（而非元空间）——永久代中的字符串常量池和静态变量都已移到堆`],tags:[`Java`,`JVM`,`元空间`,`永久代`],content_hash:`6de790493dca`,id:2555},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`ZGC 的核心原理与染色指针技术`,content:`ZGC 的核心原理是什么？染色指针（Colored Pointer）在其中起什么作用？`,answer:`答案：ZGC 是一种以低延迟为首要目标的并发垃圾回收器，核心原理是通过读屏障 + 染色指针技术实现大部分 GC 阶段与应用线程并发执行，STW 时间不超过 10ms。
+
+解析：染色指针（Colored Pointer）：ZGC 在 64 位指针的高 4 位中存储标记信息（Finalizable、Remapped、Marked1、Marked0），利用这些标志位来标识对象的状态，无需在对象头中额外存储 GC 信息。通过染色指针，ZGC 可以在指针层面直接判断对象所处的 GC 阶段，避免了对象头的频繁访问和修改。
+核心设计：1）基于 Region 的内存布局（动态创建和销毁，非固定大小）；2）并发标记（Mark）——通过读屏障更新染色指针的标志位；3）并发重定位（Relocate）——将存活对象复制到新 Region 并更新引用，旧内存可以立即回收；4）重映射（Remap）——修正所有指向旧地址的引用。
+
+扩展延伸：ZGC 最大支持 4TB 堆内存（64 位系统，染色指针占 4 位后还剩 42 位可用，42^2 = 4TB）。ZGC 适用于对延迟敏感的大内存应用（如金融交易系统、实时推荐系统）。ZGC 的读屏障是“标量替换友好”的，JIT 可以内联优化。JDK 21 中 ZGC 已将分代模式作为默认（分代 ZGC 进一步降低了 CPU 开销）。`,hints:[`染色指针利用 64 位指针的高 4 位存储 GC 状态`,`ZGC 的目标是 STW 不超过 10ms`,`读屏障 + 染色指针代替了写屏障 + 对象头标记`],tags:[`JVM`,`ZGC`,`GC`,`染色指针`],options:[],content_hash:`481ff5480f4a`,id:2556},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Shenandoah GC 与 ZGC 的对比`,content:`Shenandoah GC 与 ZGC 有什么区别和联系？`,answer:`答案：Shenandoah 和 ZGC 都是面向低延迟的并发 GC，但实现技术不同。ZGC 使用染色指针 + 读屏障，Shenandoah 使用 Brooks 指针 + 写屏障。两者都能将 STW 控制在 10ms 以内。
+
+解析：Shenandoah：由 RedHat 开发，JDK 12 引入（JDK 15 GA），核心是通过 Brooks 转发指针（forwarding pointer）实现并发压缩。每个对象头前增加一个转发指针字段，指向对象实际地址，GC 移动对象时只需更新该指针。使用写屏障（而非 ZGC 的读屏障）检查并修复引用。
+区别：
+1）指针技术：ZGC 染色指针（占用高 4 位） vs Shenandoah Brooks 指针（对象头前额外字段）；
+2）屏障类型：ZGC 读屏障 vs Shenandoah 写屏障（Shenandoah JDK 13+ 引入了读屏障优化）；
+3）内存管理：ZGC 基于 Region 动态分配 vs Shenandoah 沿用传统分代 Region；
+4）堆大小：ZGC 最大 4TB vs Shenandoah 最大也是 TB 级但受限于 64 位寻址；
+5）成熟度：ZGC 在 JDK 21 已支持分代模式，Shenandoah 的分代模式在 JDK 21 中孵化。
+
+扩展延伸：Shenandoah 在 JDK 15+ 已成为生产特性（-XX:+UseShenandoahGC）。对于大堆低延迟场景，两者都是好的选择：ZGC 在吞吐量方面略优，Shenandoah 在某些场景下 CPU 开销更低。选择取决于具体业务场景和 JDK 版本支持情况。`,hints:[`两者的核心区别是指针技术和屏障类型`,`ZGC 用读屏障 + 染色指针，Shenandoah 用写屏障 + Brooks 指针`],tags:[`JVM`,`Shenandoah`,`ZGC`,`GC对比`],options:[],content_hash:`b7a0e6376e4e`,id:2557},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`CDS（Class Data Sharing）原理`,content:`CDS（Class Data Sharing）是什么？它如何提升 JVM 启动速度？`,answer:`答案：CDS（Class Data Sharing）是 JVM 的一项功能，它将核心类库的预处理元数据转储到一个共享归档文件中，后续 JVM 实例启动时直接加载该存档，避免重复的类加载和解析过程，从而显著缩短启动时间。
+
+解析：原理：JDK 5 引入，最初只支持 Bootstrap ClassLoader 加载的类。Java 安装时运行 Class Data Sharing 工具将系统类（rt.jar 等）处理成共享归档（classes.jsa）。后续 JVM 启动时通过内存映射文件直接读取归档中的类元数据，跳过类加载、验证、解析等步骤。
+优势：1）减少启动时间（可达 30-50%）；2）多个 JVM 进程共享同一个归档文件的只读内存页，降低内存占用。
+JDK 12+：默认开启 CDS，归档文件为 classes.jsa。
+
+扩展延伸：CDS 的前提条件是需要固定的类路径。如果类路径变化，归档需要重新生成。CDS 对于短生命周期的 Java 应用（如 CLI 工具、微服务快速启动）收益最大。长期运行的 Web 应用收益较小（启动时间占比低）。JDK 12+ 的默认 CDS 归档文件位于 \${JAVA_HOME}/lib/server/classes.jsa。`,hints:[`CDS 通过共享归档避免重复类加载`,`对短生命周期应用收益最大`,`多个 JVM 进程可共享内存页`],tags:[`JVM`,`CDS`,`类加载`,`启动优化`],options:[],content_hash:`8b7e1c975e85`,id:2558},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`AppCDS 与 CDS 的区别`,content:`AppCDS（Application Class Data Sharing）和 CDS 有什么区别？`,answer:`答案：AppCDS 是 CDS 的扩展，不仅支持 Bootstrap ClassLoader 加载的系统类，还支持 Application ClassLoader 加载的应用类，进一步提升了启动速度。
+
+解析：CDS：仅归档 Bootstrap ClassLoader 加载的核心 JRE 类（rt.jar 等）。
+AppCDS（JDK 8u40+，商用特性；JDK 12+ 开源免费）：归档范围扩展为：1）Bootstrap ClassLoader 加载的 JDK 内部类；2）Platform ClassLoader 加载的模块类；3）Application ClassLoader 加载的用户应用类和第三方库。
+工作流程：1）使用 -XX:DumpLoadedClassList 生成类列表；2）使用 -Xshare:dump -XX:SharedArchiveFile 基于类列表创建归档；3）使用 -Xshare:auto -XX:SharedArchiveFile 指定归档文件启动应用。
+
+扩展延伸：动态 CDS 归档（JDK 13+）：通过 -XX:ArchiveClassesAtExit 在应用退出时自动转储加载的类为归档，无需先 dump 类列表。AppCDS 在微服务架构中的典型应用：每次部署新版本时，先运行一次训练（dumping）生成归档，作为应用启动参数的一部分。Spring Boot 应用使用 AppCDS 可减少 20-40% 启动时间。`,hints:[`AppCDS 在 CDS 基础上扩展了应用类的归档`,`JDK 13+ 支持动态 CDS 归档`,`对微服务和 Spring Boot 应用的快速启动有显著效果`],tags:[`JVM`,`AppCDS`,`CDS`,`类加载`],options:[],content_hash:`4764e41cab65`,id:2559},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JIT 编译层次与分层编译`,content:`JVM 的 JIT 编译层次（C1/C2/分层编译）是什么？它们如何配合工作？`,answer:`答案：JVM 的 JIT 编译器分为 C1（Client Compiler）和 C2（Server Compiler）两种，分层编译（Tiered Compilation）是两者的协同工作模式，综合了 C1 启动快和 C2 优化深的优点。
+
+解析：编译层次（共 5 层）：
+0 层：解释执行（Interpreter）——启动时全部解释执行，收集运行时 profiling 信息。
+1 层：C1 简单编译——开启基础优化（方法内联、死代码消除等），但不做 profiling。
+2 层：C1 编译 + 完整 profiling——收集控制流、类型信息等。
+3 层：C1 编译 + 部分 profiling——仅收集必要信息，降低 profiling 开销。
+4 层：C2 编译——在 C1 收集的 profiling 信息基础上做激进优化（如高级内联、循环展开、逃逸分析、自动向量化等），优化程度最高但编译耗时最长。
+
+工作流程：方法从 0 层逐步升级。C1（1-3 层）快速编译收集信息，当方法达到 JIT 阈值（默认 10000 次调用）时，C2 利用 profiling 信息进行深度优化编译。如果 profiling 信息不充分，降级到 C1 重新收集。
+
+扩展延伸：-XX:TieredStopAtLevel=1 可禁用 C2 编译（仅使用 C1）。C2 是传统的“长跑冠军”，适合长时间运行的服务器应用。Graal JIT 编译器（JDK 17+实验性，JDK 21+ 通过 incubator）可作为 C2 的替代方案。分层编译在 JDK 8 中默认启用（-XX:+TieredCompilation）。`,hints:[`5 层编译体系：解释执行 → C1 → C2`,`C1 启动快优化浅，C2 启动慢优化深`,`分层编译结合了两者的优势`],tags:[`JVM`,`JIT`,`C1`,`C2`,`分层编译`],options:[],content_hash:`efcb4cb1be34`,id:2560},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 的指针压缩技术（Compressed OOPs）`,content:`请解释 JVM 中的指针压缩（Compressed OOPs / 压缩普通对象指针）技术的原理和收益。`,answer:`答案：Compressed OOPs（压缩普通对象指针）将 64 位对象指针压缩为 32 位存储，减少内存占用和缓存未命中。
+
+解析：在 64 位 JVM 中，对象指针默认是 8 字节（64 位）。开启压缩后（JDK 8 默认开启，-XX:+UseCompressedOops），指针压缩为 4 字节（32 位），但实际访问时左移 3 位（乘以 8，因为 Java 对象按 8 字节对齐）恢复为 64 位地址。这样堆最大可寻址 32GB（2^32 * 8 = 32GB）。注意：压缩只对普通对象指针有效，对静态字段和 Class 指针无效。
+
+扩展延伸：指针压缩的收益：1）减少内存占用——每个引用减少 4 字节，堆中大量引用字段节省可观空间。2）改善缓存局部性——相同缓存行可以容纳更多引用（如数组）。局限性：堆超过 32GB 后需要关闭压缩（-XX:+UseCompressedOops 通常需要 -XX:-UseCompressedOops 手动关闭），指针回到 8 字节，此时内存占用上升 10-20%。超过 32GB 应考虑使用 ZGC 或调整架构。`,hints:[`压缩 OOPs 将 8 字节指针压缩为 4 字节，有效寻址 32GB 堆`,`堆超过 32GB 后压缩失效，内存占用显著增加`],tags:[`JVM`,`指针压缩`,`OOPs`,`性能`],content_hash:`e5a2e7c82947`,id:2561},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 的直接内存与 NIO`,content:`JVM 的直接内存（Direct Memory）是什么？它和堆内存有什么区别？如何监控和调优？`,answer:`答案：直接内存是 NIO 在堆外分配的内存，通过 DirectByteBuffer 管理，不受 -Xmx 限制，受 -XX:MaxDirectMemorySize 限制。
+
+解析：直接内存不是 JVM 运行时数据区的一部分，但频繁使用（如 NIO、Netty）时需要注意。分配方式——ByteBuffer.allocateDirect(capacity) 在堆外（Native Memory）分配内存。优势——写入 Socket 或从文件读取时减少一次内存拷贝（直接从堆外内存到内核缓冲区，零拷贝）。劣势——分配和回收成本高（Full GC 触发 DirectByteBuffer 的 Cleaner 回收堆外内存）。
+
+扩展延伸：监控——NMT（Native Memory Tracking，-XX:NativeMemoryTracking=summary/detail）可监控直接内存使用。回收——DirectByteBuffer 使用 PhantomReference + Cleaner 机制，由 Reference Handler 线程在 GC 时触发回收。如果堆外内存泄漏，JVM 的 DirectByteBuffer 抛 OutOfMemoryError: Direct buffer memory。Netty 使用 PooledByteBufAllocator 池化 DirectByteBuffer，避免频繁分配回收。`,hints:[`直接内存默认等于 -Xmx 的大小，通过 -XX:MaxDirectMemorySize 调整`,`NMT（Native Memory Tracking）是监控直接内存的主要工具`],tags:[`JVM`,`直接内存`,`NIO`,`调优`],content_hash:`3641287ff4b1`,id:2562},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 的安全点与安全区域`,content:`请解释 JVM 中的安全点（Safepoint）和安全区域（Safe Region）的区别和联系。为什么需要它们？`,answer:`答案：安全点是线程可以安全执行 GC 操作的位置；安全区域是安全点的扩展，处理线程不执行的场景。
+
+解析：安全点（Safepoint）——JVM 需要在某个位置让所有线程暂停以执行 GC 等操作。线程执行到安全点时检查全局 Safepoint 标志并暂停。安全点的位置：方法调用的返回处、循环的末尾、异常抛出的位置等。安全区域（Safe Region）——线程不执行的代码段（如 Thread.sleep()、阻塞 I/O 等）。此时线程无法进入安全点，安全区域标识该区域内的引用不会变化，GC 可以安全地处理该线程。
+
+扩展延伸：长时间触发 Safepoint 的原因——大数组遍历（无 Safepoint 轮询点的循环）、JIT 编译（编译线程请求 Safepoint 查看编译结果）。查看 Safepoint 耗时——使用 -XX:+PrintSafepointStatistics 和 -XX:PrintSafepointStatisticsCount=1。常见的长时间 Safepoint 原因——1）偏向锁批量撤销（JDK 15 前，已默认禁用）。2）PrintThreads（Thread Dump 触发）。3）Deoptimization。`,hints:[`安全点用于线程正在执行时暂停，安全区域用于线程不执行时`,`安全点的位置如何影响 GC 停顿时间`],tags:[`JVM`,`安全点`,`SafePoint`,`GC`],content_hash:`763064ddb164`,id:2563},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 方法内联优化`,content:`请解释 JVM JIT 编译中的方法内联（Method Inlining）优化。哪些情况下方法不会被内联？`,answer:`答案：方法内联是将目标方法的代码直接嵌入到调用方的方法体中，消除方法调用的开销，是 JIT 最重要和基础的优化手段。
+
+解析：内联的好处——消除方法调用（参数压栈、跳转、返回的重排），并使后续优化（如逃逸分析、死代码消除）受益。JIT 根据方法的调用频率和大小决定是否内联。HotSpot 的默认内联阈值：-XX:MaxInlineSize=35（字节码 ≤ 35 的方法强制内联），-XX:FreqInlineSize=325（热点方法 ≤ 325 字节可内联）。
+
+扩展延伸：不被内联的情况——1）大型方法（超过 MaxInlineSize 或 FreqInlineSize）。2）虚方法（需要运行时确定调用目标）——但 JIT 通过类型内联缓存（Inline Cache）或去虚化（Devirtualization）技术，在检测到单态（只有一种实际类型）时仍可内联。3）native 方法。4）构造方法（构造方法可内联但有特殊处理）。5）递归方法（有内联深度限制）。-XX:InlineSmallCode（默认 2000）——超过此大小的编译代码区域不再内联。`,hints:[`方法内联是 JIT 所有优化的基础`,`虚方法通过类型内联缓存或去虚化后仍可内联`],tags:[`JVM`,`JIT`,`内联`,`性能`],content_hash:`cea8bb2a7c21`,id:2564},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`GC 中的三色标记算法`,content:`请解释 GC 中的三色标记（Tri-Color Marking）算法原理。并发标记时如何解决浮动垃圾和漏标问题？`,answer:`答案：三色标记将对象分为白色（未扫描）、灰色（已扫描自身但未扫描引用）、黑色（自身和引用都已扫描），是并发标记的基石。
+
+解析：标记过程——初始时 GC Roots 为灰色。循环处理：取出灰色对象，标记为黑色，扫描其引用到的白色对象标记为灰色。最终所有白色对象为不可达（可回收）。并发标记的问题：1）浮动垃圾（Floating Garbage）——标记过程中新产生的垃圾对象，留在本次 GC 处理。2）对象漏标——标记过程中，黑色对象新引用了白色对象，而灰色对象到该白色对象的引用被删除。黑色对象不会重新扫描，导致该白色对象被误判为不可达。
+
+扩展延伸：解决漏标的两种方案——1）增量更新（Incremental Update，CMS 使用）：黑对象引用了白对象后，将黑对象重新标记为灰色（下次重新扫描）。2）原始快照（SATB, Snapshot At The Beginning，G1 使用）：在标记开始时拍快照，当灰色对象到白对象的引用被删除时，白对象仍被记录为可达。SATB 的优点是并发标记期间不需要再扫描黑色对象的引用变更。ZGC 使用染色指针完全不需要三色标记。`,hints:[`三色标记的核心问题是并发标记期的漏标`,`CMS 用增量更新，G1 用 SATB 解决漏标`],tags:[`JVM`,`GC`,`三色标记`,`CMS`,`G1`],content_hash:`d36ddb16fffe`,id:2565},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 的分层编译（Tiered Compilation）机制`,content:`请解释 JVM 的分层编译（Tiered Compilation）机制。一共有几个编译层次？各层次之间的升级条件是什么？`,answer:`答案：分层编译将代码执行过程划分为 5 个层次（0-4），从纯解释执行到最高优化的 C2 编译，逐层收集 profiling 信息并优化代码。
+
+解析：五个层次——0：解释执行（Interpreter），不收集 profiling 信息。1：简单 C1 编译（无 profiling），快速但优化少。2：受限的 C1 编译（部分 profiling），仅收集部分信息。3：完整 C1 编译（全部 profiling），收集所有 profiling 信息，用于指导 C2 优化。4：C2 编译（最优优化），使用完整的 profiling 信息进行激进优化。升级流程——方法开始时在 level 0 解释执行。达到调用阈值后进入 level 3（完整 profiling C1 编译）。C1 编译收集 profiling（分支概率、类型信息、方法调用频率等）。达到 C2 阈值后升级到 level 4，生成高度优化的机器码。特殊情况：level 1 适用于简单方法（不需要 profiling 时的快速 C1）。level 2 常用于内部编译器的过渡。
+
+扩展延伸：分层编译在 JDK 7 引入（默认开启 -XX:+TieredCompilation，JDK 8+ 默认开启）。JIT 开关参数：-Xint（纯解释，无 JIT）、-Xcomp（纯编译，不解释）。C1 的编译阈值：-XX:Tier3InvocationThreshold / -XX:Tier3MinInvocationThreshold。C2 的编译阈值：-XX:Tier4InvocationThreshold（默认 5000）。C1 用的 profiling 缓冲区大小：-XX:MethodDataSize。分层编译的好处是启动速度（解释 + C1 快速响应）与峰值性能（C2 激进优化）之间的平衡。`,hints:[`level 0 解释 → level 3 C1 带完整 profiling → level 4 C2 高优化`,`C1 编译收集 profiling 信息，C2 利用这些信息做激进优化`],tags:[`JVM`,`JIT`,`分层编译`,`C1`,`C2`],content_hash:`20fb39bfc252`,id:2566},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`OSR（On-Stack Replacement）栈上替换`,content:`请解释 JVM JIT 编译中的 OSR（On-Stack Replacement）栈上替换技术。它的作用是什么？什么场景下会触发 OSR？`,answer:`答案：OSR（On-Stack Replacement）是 JVM 在方法正在执行时替换其编译版本的技术，允许正在解释执行的长运行循环直接切换到编译后的机器码，不需要等待方法返回。
+
+解析：工作原理——当方法中的循环成为热点时（循环回边计数达到 OSR 阈值），JVM 背编译该方法的循环体（OSR 编译）。编译完成后，JVM 将栈帧中正在解释执行的代码替换为编译后的机器码。这需要保存和恢复执行状态（局部变量表、操作数栈等），因为解释帧和编译帧的布局不同。OSR 编译不同于标准编译：标准编译对整个方法编译，OSR 编译只编译循环体部分（从循环入口到循环出口）。
+
+扩展延伸：OSR 的触发条件——-XX:BackEdgeThreshold（循环回边阈值）配合 -XX:OnStackReplacePercentage。默认情况下 OSR 的编译触发阈值约为标准编译阈值的 1/10。OSR 的局限——1）OSR 编译后的代码可能不如标准编译优化充分（因为只能看到循环内的代码上下文）。2）OSR 编译需要更多的栈帧处理（JVM 内部需要 OSR 适配器处理栈帧转换）。观察 OSR——使用 -XX:+PrintCompilation 可以看到 osr 标记的编译条目（如 120  2 % MyClass::hotMethod @ 15）。如果循环足够长，OSR 编译会先被执行（先获得 OSR 版本的优化），然后方法退出后的下次调用获得标准编译版本。`,hints:[`OSR 替换正在执行的循环代码，不需要等循环结束`,`OSR 编译阈值默认为标准编译阈值的 1/10`],tags:[`JVM`,`JIT`,`OSR`,`性能`],content_hash:`f870e8716e0b`,id:2567},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JIT 去优化（Deoptimization）机制`,content:`请解释 JVM JIT 编译中的去优化（Deoptimization）机制。为什么会发生去优化？去优化后发生了什么？`,answer:`答案：去优化（Deoptimization）是 JVM 将从 JIT 编译的高优化代码回退到解释执行的过程，发生在优化假设被打破时（如类加载改变了类型层级、profiling 信息失效等）。
+
+解析：去优化的原因——C2 编译器在做优化时会基于一些假设（Speculative Assumptions）：1）类层次（Class Hierarchy）假设：接口只有一个实现类时，虚方法调用被去虚化（Devirtualize）优化为直接调用。如果后续加载了新子类，这个假设被打破，需要去优化。2）profiling 信息假设：观察到某个分支 99% 不走，C2 会把该分支优化掉（代码外提）。如果运行中分支走了异常路径，需要去优化。3）类型假设：对象总是某个具体类型（类型 profiling），如果遇到新的类型变体，需要去优化。
+
+扩展延伸：去优化过程——JVM 在编译时会在代码中插入去优化陷阱（Deoptimization Trap/Safepoint）。当假设被打破时，执行到该陷阱触发去优化。JVM 将正在执行的编译代码栈帧恢复（回滚）到解释执行对应的执行状态（包含局部变量、操作数栈等），然后从对应的解释执行点继续执行。去优化不是错误——它是动态编译的正常机制，JIT 可以在后续重新编译（使用更新后的 profiling 信息）。频繁去优化（如 -XX:+PrintDeoptimization 可见大量 deopt）是代码存在多态性的信号，影响性能。使用 -XX:CompileCommand=exclude 可以排除某些方法避免过度去优化。`,hints:[`去优化是 C2 基于假设优化的必然代价`,`频繁去优化说明代码多态性高，影响峰值性能`],tags:[`JVM`,`JIT`,`去优化`,`Deoptimization`],content_hash:`6b3a848aac56`,id:2568},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`偏向锁的废弃与移除`,content:`请介绍 Java 偏向锁（Biased Locking）的演变历史。为什么 JDK 15 默认关闭偏向锁？JDK 18 以后完全移除了吗？`,answer:`答案：偏向锁是 JDK 6 引入的锁优化，在 JDK 15 默认关闭（JEP 374），JDK 18 废弃（JEP 421），JDK 21 移除相关代码。原因是偏向锁的维护成本（STW 暂停）超过了其带来的收益。
+
+解析：偏向锁的原理——如果锁一直被同一个线程持有，对象头的 Mark Word 记录该线程 ID，后续进入同步块时无需 CAS 操作（线程检查 Mark Word 是自己的 ID 即成功），减少锁获取的开销。问题——偏向锁需要全局 Safepoint 才能进行偏向锁撤销（Revocation）。在高并发应用中，锁竞争激烈导致偏向锁频繁撤销，反而增加了 STW 暂停时间。且高并发应用的线程通常都是不同线程竞争锁，偏向锁几乎没有命中，徒增撤销开销。
+
+扩展延伸：废除历程——JDK 15：-XX:+UseBiasedLocking 默认关闭。JDK 18：标记为废弃（Deprecated，JEP 421）。JDK 21：移除了偏向锁相关代码（-XX:+UseBiasedLocking 参数不再可用）。影响评估——1）没有偏向锁不会影响正确性（只是少了这个优化）。2）之前的偏向锁场景（单线程重复获取同一锁）对应的代码量极少，影响微乎其微。3）改善：移除了偏向锁后，JVM 不再需要 Safepoint 执行偏向锁批量撤销操作，减少了全局暂停。移除偏向锁后 volatile 写的性能也有提升（因为偏向锁的 Mark Word 不再需要特殊处理）。`,hints:[`偏向锁撤销需要全局 Safepoint，在高竞争场景下得不偿失`,`JDK 15 默认关闭，JDK 18 废弃，JDK 21 移除`],tags:[`JVM`,`偏向锁`,`锁优化`,`SafePoint`],content_hash:`9e9343a0897e`,id:2569},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 监控工具与调优实践`,content:`请介绍常用的 JVM 监控和诊断工具（jps、jstat、jmap、jstack、jcmd、jhsdb）。各自的主要用途和使用场景是什么？`,answer:`答案：JDK 内置了丰富的 JVM 监控和诊断工具，帮助开发者定位内存泄漏、线程死锁、GC 性能等问题。
+
+解析：核心工具——1）jps（JVM Process Status）：列出当前用户的所有 Java 进程 PID 和主类名。2）jstat（JVM Statistics Monitoring）：实时监控 GC 和类加载情况。常用：jstat -gcutil <pid> 1s（每秒查看 GC 使用率百分比）。3）jmap（Memory Map）：堆转储和堆信息查看。常用：jmap -dump:live,format=b,file=heap.hprof <pid>（触发 Full GC 后 dump 存活对象）。jmap -histo:live <pid>（查看对象统计）。4）jstack（Thread Stack）：线程转储，查看线程状态、锁等待、死锁检测。5）jcmd（JDK 7+ 的诊断命令工具）：统一的诊断命令入口，功能覆盖以上所有工具。jcmd <pid> help 查看所有支持的命令。常用：jcmd <pid> GC.heap_dump heap.hprof、jcmd <pid> Thread.print、jcmd <pid> VM.native_memory summary。6）jhsdb（JDK 9+ 的 HSDB 替代）：JVM 故障排除和调试，可以 attach 到崩溃的 JVM 进程。
+
+扩展延伸：其他工具——1）jinfo：查看和修改 JVM 参数（-XX:+PrintFlagsFinal）。2）jvisualvm（JDK 6-8 内置图形工具）：集成 CPU/内存/线程/GC 监控。3）JMC（JDK Mission Control，JDK 7-8 需单独下载，Oracle JDK 11+ 商用）：飞行记录器 JFR 的图形分析工具。4）Native Memory Tracking（NMT，-XX:NativeMemoryTracking=summary/detail）：监控 JVM 本地内存使用。推荐使用 jcmd <pid> VM.native_memory summary 查看。5）Java Flight Recorder（JFR，JDK 8 需解锁）：低开销的事件记录系统，用于生产环境性能分析。容器环境注意：Java 10+ 支持 -XX:+UseContainerSupport 自动感知容器内存/CPU 限制。`,hints:[`jstat 监控 GC 实时情况，jmap 分析堆内存，jstack 分析线程`,`jcmd 是统一的诊断命令入口，推荐优先使用`],tags:[`JVM`,`监控`,`工具`,`调优`],content_hash:`fe756bb8f488`,id:2570},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`安全点日志分析`,content:`如何通过 JVM 的安全点日志诊断应用暂停时间过长的问题？安全点日志中 "Application time" 和 "Total time" 分别代表什么？`,answer:`答案：安全点日志通过 -XX:+PrintSafepointStatistics -XX:PrintSafepointStatisticsCount=1 -XX:+LogVMOutput -XX:LogFile=safepoint.log 开启。
+
+关键指标：
+- "Application time"：自上次安全点以来应用实际执行的时间（单位：ms）
+- "Total time"：当前安全点暂停的总时间（所有线程都到达安全点到最后一个线程离开安全点）
+- "Summary" 行：安全点的具体原因和各个阶段的耗时
+
+异常分析：
+- Application time 占比 < 90%：安全点频率过高或每次安全点暂停时间过长
+- Total time > 100ms：安全点暂停时间太长，可能导致应用延迟飙升
+- 频繁的 BulkRevokeBias（偏向锁撤销）：JDK 15 之前常见，升级 JDK 版本解决
+- 频繁的 G1CollectForAllocation：GC 太频繁，需要调整堆大小或 GC 策略
+
+扩展延伸：安全点日志中的线程状态：running（正在执行）、blocked（已到达安全点）。JVM 通过主动中断（SafepointTimeoutInMs）检测长时间未到达安全点的线程。减少安全点时间的方法：增大 -XX:GuaranteedSafepointInterval（默认 1000ms，增加安全点间隔）。`,hints:[`Application time 占比低 = 安全点暂停过多`,`频繁的 BulkRevokeBias 是 JDK 15 前的常见问题`],tags:[`JVM`,`安全点`,`暂停`,`性能分析`],content_hash:`afec196b8264`,id:2571},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`GC 日志分析与调优`,content:`请解释如何通过 GC 日志分析 JVM GC 性能。需要关注哪些关键指标？如何根据 GC 日志的表现调整 JVM 参数？`,answer:`答案：通过 -Xlog:gc*（JDK 9+）或 -verbose:gc -XX:+PrintGCDetails（JDK 8）开启 GC 日志。
+
+关键指标：
+1. GC 频率：Minor GC 间隔（正常几秒一次，过频繁则新生代太小）
+2. GC 暂停时间：每次 GC 暂停耗时（目标 < 200ms，G1 默认目标 200ms）
+3. 吞吐量：应用运行时间 / (应用运行时间 + GC 暂停时间)，目标 > 95%
+4. 晋升情况：每次 Minor GC 后有多少对象从 Eden 晋升到老年代
+5. Full GC 频率：Full GC 应极少发生（最坏情况 < 几分钟一次）
+
+根据 GC 日志调整：
+- 频繁 Minor GC：增大新生代（-Xmn）或调整 Eden:Survivor 比
+- 频繁 Full GC（CMS）：检查老年代是否碎片化，增大老年代或切换到 G1
+- G1 的 Humongous Allocation：大对象频繁触发 GC，增大 G1HeapRegionSize
+- GC 后可用空间骤降：可能存在内存泄漏
+
+扩展延伸：GC 日志分析工具：GCeasy、GCViewer、GCEasy。统一的 GC 日志格式（JDK 9+）：-Xlog:gc*:file=gc.log:time,uptime,level,tags。通用推荐：G1 在堆 > 4GB 时替代 Parallel GC。`,hints:[`GC 频率、暂停时间、吞吐量是三个核心指标`,`Full GC 频繁通常意味着有问题需要排查`],tags:[`JVM`,`GC`,`日志`,`调优`],content_hash:`9ec036b0e041`,id:2572},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Native Memory Tracking`,content:`请解释 JVM 的 Native Memory Tracking（NMT）的功能和使用方式。它如何帮助排查堆外内存泄漏？NMT 的 overhead 有多大？`,answer:`答案：NMT 跟踪 JVM 内部的所有原生内存（Native Memory）分配，包括堆内、堆外、Code Cache、GC、编译器、元空间等各个区域。
+
+启用方式：-XX:NativeMemoryTracking=summary（汇总模式）或 =detail（详细模式）。
+
+查看方式：
+1. jcmd <pid> VM.native_memory summary/detail baseline/diff
+2. 先设置基线：jcmd <pid> VM.native_memory baseline
+3. 运行一段时间后查看差异：jcmd <pid> VM.native_memory summary.diff
+
+NMT 跟踪的区域包括：Java Heap、Class、Thread、Code、GC、Compiler、Internal、Symbol、Native Memory Tracking、Arena Chunk。
+
+排查堆外内存泄漏：
+1. 使用 jcmd VM.native_memory 查看各区域的内存分配
+2. 重点检查 Internal（内部缓冲区泄漏）、Arena（内存池泄漏）
+3. 配合 pmap 查看进程内存映射
+4. 使用 jemalloc 的 heap profiling 功能跟踪 C++ 级别的内存分配
+
+扩展延伸：NMT 的 overhead 约 5-10%。生产环境建议开启 summary 模式（detail 模式 overhead 更高）。NMT 不能精确跟踪 JNI 调用中的原生内存分配——这需要 valgrind/ASAN 等外部工具。`,hints:[`NMT 通过 jcmd VM.native_memory 查看`,`NMT 跟踪堆外内存：Thread、Code Cache、GC、Compiler 等`],tags:[`JVM`,`NMT`,`内存`,`监控`],content_hash:`4937cc76f92f`,id:2573},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 参数优化常见模式`,content:`请介绍 JVM 参数优化的常见模式：如何设置堆大小？如何选择 GC 算法？生产环境推荐开启哪些参数？`,answer:`答案：堆大小设置：
+- -Xms = -Xmx（避免运行时扩容/缩容，建议设置为物理内存的 50-70%）
+- -Xmn（新生代大小，建议为堆的 25-50%）
+- -XX:MetaspaceSize 和 -XX:MaxMetaspaceSize（元空间阈值和上限）
+
+GC 算法选择：
+- 堆 < 4GB + 追求吞吐量：Parallel GC（-XX:+UseParallelGC）
+- 堆 > 4GB + 延迟敏感：G1 GC（JDK 9+ 默认）-XX:+UseG1GC
+- 超大堆 + 超低延迟：ZGC（JDK 21+）-XX:+UseZGC
+- 有 GC 暂停极限要求：Shenandoah -XX:+UseShenandoahGC
+
+生产环境推荐参数：
+- -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path
+- -Xlog:gc*:file=gc.log（JDK 9+ GC 日志）
+- -XX:+PrintCommandLineFlags（打印最终生效的 JVM 参数）
+- -XX:+AlwaysPreTouch（启动时预分配所有内存，减少运行期 Page Fault）
+- -Djava.security.egd=file:/dev/urandom（加速 SecureRandom 初始化）
+
+扩展延伸：配置验证——java -XX:+PrintFlagsFinal -version 打印所有 JVM 参数值。容器环境推荐 -XX:+UseContainerSupport（JDK 8u191+，JDK 10+ 默认开启），使 JVM 感知容器内存和 CPU 限制。`,hints:[`堆大小设固定值（Xms = Xmx），避免扩容开销`,`GC 选择：小堆+吞吐量→Parallel，大堆+低延迟→G1/ZGC`],tags:[`JVM`,`调优`,`参数`,`生产环境`],content_hash:`ea6720e4b72c`,id:2574},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 线程模型与调度`,content:`请解释 JVM 的线程模型（1:1 线程模型 vs N:M 绿色线程）。HotSpot 为什么采用 1:1 线程模型？JDK 21 虚拟线程的调度机制是怎样的？`,answer:`答案：1:1 线程模型（HotSpot）：每个 Java 线程对应一个操作系统原生线程（pthread/LWP）。优点：简单、能充分利用 OS 调度器、适合 CPU 密集型任务。缺点：线程数受 OS 限制、创建和上下文切换成本高。
+
+N:M 绿色线程（早期 Solaris 的 JVM、Go Goroutine）：M 个用户线程映射到 N 个内核线程。优点：线程数可以很大、切换成本低。缺点：实现复杂、I/O 阻塞可能导致整个进程阻塞。
+
+HotSpot 选择 1:1 的原因：Solaris 环境的成熟 LWP（轻量级进程）支持、更好的兼容性（JNI、Native 调用）。
+
+虚拟线程（JDK 21）的调度机制：
+- 虚拟线程是用户态线程（JVM 管理），搭载到平台线程（Carrier Thread）上执行
+- 使用 ForkJoinPool（默认 parallelism = 可用处理器数）作为调度器
+- 阻塞操作（I/O、锁等待）触发 unmount（栈从平台线程拷贝到堆，平台线程释放）
+- 操作完成时触发 mount（栈从堆拷贝回平台线程）
+- synchronized 和 native 方法中的阻塞会导致 pinning（不执行 unmount）
+
+扩展延伸：虚拟线程的调度类似 N:M 模型但更高效（通过 JVM 的辅助 VM 操作而不是内核级调度）。Park/Unpark 机制基于 LockSupport。使用 jcmd <pid> Thread.dump_to_file 可以 dump 虚拟线程栈。`,hints:[`HotSpot 使用 1:1 线程模型（Java 线程 = OS 线程）`,`虚拟线程是用户态线程，通过 mount/unmount 机制调度`],tags:[`JVM`,`线程`,`虚拟线程`,`调度`],content_hash:`e4e9cea67c0a`,id:2575},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`GC 调优常用参数`,content:`请介绍 JVM GC 调优的核心参数。新生代/老年代比例如何影响 GC 性能？为什么建议设置 -Xms 和 -Xmx 为相同的值？`,answer:`答案：GC 调优的核心参数包括堆大小、代际比例、GC 选择等。
+
+堆大小参数：
+- -Xms<size>：初始堆大小（启动时分配的堆）
+- -Xmx<size>：最大堆大小（堆可以扩展到的上限）
+- 建议设置为相同值：避免堆大小动态调整（Resize）带来的性能开销。运行时调整堆大小是 stop-the-world 的。
+
+新生代参数：
+- -Xmn<size>：新生代大小
+- -XX:NewRatio=N：老年代:新生代比例，默认 2（老年代是新生代的 2 倍）
+- -XX:SurvivorRatio=N：Eden:Survivor 比例，默认 8（Eden=8, S0=1, S1=1）
+
+代际比例对 GC 的影响：
+- 新生代越大 → Minor GC 频率降低但暂停时间增加
+- 新生代越小 → Minor GC 频率增加但每次暂停时间短
+- Survivor 区过小 → 对象直接晋升到老年代（promotion），老年代 GC 更频繁
+- 建议：新生代约占堆的 1/3~1/2
+
+GC 选择参数：
+- -XX:+UseG1GC：使用 G1（JDK 9+ 默认）
+- -XX:+UseZGC：使用 ZGC（JDK 15+）
+- -XX:+UseParallelGC：使用 Parallel（JDK 8 默认）
+- -XX:MaxGCPauseMillis=200：GC 目标暂停时间（G1/ZGC 会尝试达成）
+
+日志参数：
+- -Xlog:gc*：GC 详细日志（JDK 9+ 统一日志系统）
+- -XX:+PrintGCDetails -XX:+PrintGCDateStamps（JDK 8 格式）
+- -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<path>：OOM 时自动 dump
+
+扩展延伸：G1 的 -XX:G1HeapRegionSize 控制 Region 大小（1MB~32MB，影响大对象分配）。ZGC 的 -XX:ZAllocationSpikeTolerance 控制分配尖峰容忍度（默认 2.0）。分配速率比堆大小更关键——如果分配速率过高，再大的堆也会频繁 GC。G1 的 Mixed GC 在并发标记后回收老年代的分区，逐步回收而非一次清理全部老年代。`,hints:[`-Xms = -Xmx 避免堆调整的开销（resize 是 STW）`,`NewRatio=2（默认）意味着老年代是新生代的 2 倍`],tags:[`JVM`,`GC调优`,`堆配置`,`参数`],content_hash:`e4331b75f9e7`,id:2576},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`堆转储分析`,content:`请介绍 JVM 堆转储（Heap Dump）的分析方法。如何获取堆转储？MAT 和 jhat 如何分析堆文件？OOM 时自动获取堆转储的配置是什么？`,answer:`答案：堆转储是分析内存泄漏和内存占用问题的关键工具。
+
+获取堆转储的方法：
+1. 自动获取：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof
+2. 手动获取（jmap）：jmap -dump:live,format=b,file=heap.hprof <pid>
+   - live 参数：只保留存活对象（触发 Full GC）
+3. jcmd：jcmd <pid> GC.heap_dump /path/heap.hprof
+4. JMX：HeapDumpMXBean 通过 JMX 客户端获取
+5. VisualVM/JMC：图形界面获取
+
+MAT（Memory Analyzer Tool）分析：
+1. 打开 .hprof 文件
+2. Suspects Report（泄漏嫌疑报告）：自动分析最可能的泄漏
+3. Histogram（直方图）：按类的实例数量和占用内存排序
+   - Shallow Heap（浅堆）：对象本身占用的内存
+   - Retained Heap（保留堆）：对象 + 它引用的所有对象的总内存
+4. Dominator Tree（支配树）：从 GC Root 到对象的最大路径
+5. Path to GC Roots（GC Root 路径）：找出为什么对象未被回收
+   - 排除软/弱/虚引用（看强引用路径）
+
+常见问题模式：
+1. 集合类泄漏：HashMap 无限增长
+2. 未释放的监听器/回调
+3. ThreadLocal 未清除
+4. 类加载器泄漏（字符串 intern、ClassLoader 引用链）
+
+扩展延伸：JProfiler 和 YourKit 也支持堆分析。jhat 是 JDK 自带的轻量分析工具（已弃用，建议使用 MAT）。OOM 自动堆转储可能会产生巨大的文件（几个 GB），需要确保磁盘空间足够。生产环境中可以在监控脚本中捕获 OOM 信号自动触发转储。`,hints:[`-XX:+HeapDumpOnOutOfMemoryError 自动获取 OOM 时的堆转储`,`MAT 的 Suspects Report + Path to GC Roots 是分析泄漏的标准流程`],tags:[`JVM`,`堆转储`,`MAT`,`内存分析`],content_hash:`7028f7a4f8c0`,id:2577},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JIT 编译层次`,content:`请介绍 HotSpot JIT 编译的分层编译（Tiered Compilation）机制。C1（Client）和 C2（Server）编译器各有什么特点？JIT 编译如何决定方法是否达到编译阈值？`,answer:`答案：分层编译在 JDK 7 中引入，JDK 8 默认开启，结合 C1 和 C2 编译器的优势。
+
+五个编译层次：
+- Level 0：解释执行（Interpreter）——直接执行字节码
+- Level 1：C1 编译器，完全优化（无 profiling），用于 trivial 方法
+- Level 2：C1 编译器，部分 profiling（方法调用计数、分支跳转计数）
+- Level 3：C1 编译器，完全 profiling（收集完整性能数据）
+- Level 4：C2 编译器，使用 C1 收集的 profile 信息做深度优化编译
+
+编译流程：
+1. 方法初始解释执行，调用计数递增
+2. 达到 Tier 3 编译阈值（默认 200），C1 开始带 profiling 编译
+3. C1 编译的方法运行过程中继续收集 profile 数据
+4. 方法调用计数再次达到阈值后，触发 C2 深度编译
+5. C2 利用 C1 收集的 profiling 信息做大量假设优化（如类层次分析、去虚拟化）
+6. 如果 C2 编译的假设失效（如新的子类被加载），方法退回到 Level 3 重新收集数据
+
+C1 vs C2：
+- C1（Client）：编译速度快（~10ms），优化少。用于快速获得编译代码。
+- C2（Server）：编译速度慢（~100ms+），优化多（逃逸分析、循环展开、自动向量化）。
+- C1 适合 GUI 应用（需要快速启动），C2 适合长期运行的服务端应用。
+
+编译阈值：
+- -XX:CompileThreshold=10000（C2 的直接编译阈值。使用分层编译时，C2 的触发需要方法调用计数 + 回边计数之和达到此值）
+- 回边计数（Backedge Counter）+ 方法调用计数 = 热度
+- -XX:OnStackReplacePercentage=140 控制 OSR（栈上替换）的触发——循环热点导致 JIT 在循环执行过程中替换编译
+
+扩展延伸：分层编译可以通过 -XX:-TieredCompilation 关闭（回退到只使用 C2）。Graal JIT 可以用 -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI -XX:+UseJVMCICompiler 启用。AOT（Ahead-of-Time）编译（GraalVM native-image 或 jaotc）在应用启动前完成编译，消除 JIT 预热时间但放弃了运行时 profiling 优化。`,hints:[`分层编译 = 解释执行 → C1 轻量编译（带 profiling）→ C2 深度优化编译`,`C1 编译快优化少，C2 编译慢优化多（逃逸分析、循环展开）`],tags:[`JVM`,`JIT`,`分层编译`,`C1/C2`],content_hash:`39a5ee06e821`,id:2578},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JFR 事件机制`,content:`请介绍 JDK Flight Recorder（JFR）的原理和如何使用。JFR 与传统的 JMX 监控相比有什么优势？如何用 JFR 诊断性能问题？`,answer:`答案：JFR 是 JDK 内置的低开销事件记录框架，用于诊断 JVM 和应用性能。
+
+原理：
+1. JFR 包含大量预定义的事件（Event Type），如 GC 事件、锁竞争、方法采样分配、I/O 事件
+2. 事件分为三类：
+   - 即时事件（Instant）：时间点事件（如 OOM）
+   - 持续事件（Duration）：持续一段时间的事件（如 GC 暂停）
+   - 计时事件（Timed）：周期性触发的事件（如 CPU 采样）
+3. 事件写入环形缓冲区（Ring Buffer），溢出时丢弃旧事件
+4. 缓冲区定期刷新到磁盘文件（.jfr 文件）
+5. 默认配置下 JFR 的开销 < 1%
+
+启动方式：
+1. 命令行启动：-XX:StartFlightRecording:filename=recording.jfr,duration=120s
+2. 动态启动：jcmd <pid> JFR.start name=myrecording duration=120s
+3. jmc（JDK Mission Control）图形界面启动
+
+JFR vs JMX：
+- JMX：请求-响应模型，轮询采样（有间隔，可能错过峰值）。开销中等。
+- JFR：事件驱动模型，低开销连续记录（< 1%）。可以记录每一个事件（如每一次 GC 暂停、每一个锁竞争）
+- JFR 可以回溯分析（环形缓冲区保存了最近的记录），JMX 只能看当前值
+- JFR 可以记录方法级采样（-XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints），用于火焰图
+
+诊断性能问题：
+1. CPU 热点：JFR 的 CPU 采样事件找到热点方法
+2. 锁竞争：Java Monitor Blocked 事件显示线程等待锁的时长
+3. GC 问题：GC 暂停时间、暂停频率、晋升失败
+4. 内存分配：TLAB 分配事件显示哪些方法分配了大量对象
+5. I/O：Socket/File I/O 事件显示读写操作的延迟
+
+扩展延伸：JDK 14+ 支持自定义 JFR 事件（@jdk.jfr.Event 注解）。OpenJDK 的 async-profiler 也可以生成类似 JFR 的数据。JMC 的自动分析器（Automated Analysis）可以自动检测 GC 压力、锁竞争等问题。JFR 文件可以通过 JDK 自带的 jfr 工具解析和过滤。`,hints:[`JFR = 低开销事件驱动记录（<1%），环形缓冲区保存历史事件`,`JFR vs JMX：事件驱动 vs 轮询采样，低开销 vs 中等开销，可回溯 vs 当前快照`],tags:[`JVM`,`JFR`,`监控`,`性能诊断`],content_hash:`89b27c129cbd`,id:2579},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`类数据共享与 AOT`,content:`请介绍 JDK 的 AppCDS 和 jaotc（AOT 编译器）的关系。AppCDS 加速启动的原理是什么？GraalVM Native Image 的 AOT 编译与 jaotc 有什么区别？`,answer:`答案：AppCDS 和 jaotc 都是 JDK 自带的启动优化技术，但原理和效果不同。
+
+AppCDS 原理：
+- 将类和元数据提前解析、归档到 .jsa 文件
+- JVM 启动时通过内存映射直接加载归档的类元数据，跳过类文件的读取、解析、验证
+- 减少启动时间：省去类加载的 I/O 和解析阶段
+- 对运行时性能没有直接影响（只加速启动）
+- JDK 13+ 支持动态 CDS：-XX:ArchiveClassesAtExit=app.jsa 在退出时自动生成
+
+jaotc（JDK 引入的 AOT 编译器）：
+- 在应用启动前将 Java 字节码编译为机器码（.so 库文件）
+- 跳过 JIT 编译的预热阶段，应用启动就达到峰值性能
+- 限制：只能编译已知的代码路径，不能处理动态生成的类或 Lambda
+- JDK 17+ 的 jaotc 基于 Graal 编译器
+- 使用：jaotc --output=app.so --module=java.base 并在启动时 -XX:AOTLibrary=./app.so
+
+GraalVM Native Image vs jaotc：
+- GraalVM Native Image：
+  - 在构建时（build time）完成所有类的分析和编译
+  - 生成独立的可执行文件（包含 GC、线程管理等）
+  - 不依赖 JVM，启动时间极快（毫秒级）
+  - 限制：不支持反射（需要配置 reflect-config.json）、不支持动态代理（需配置）、不支持方法句柄
+  - 在云原生、Serverless 场景中有明显优势
+- jaotc：
+  - 生成共享库，仍然在 JVM 上运行
+  - 减少 JIT 预热但保留 JVM 的完整运行时能力
+  - 对所有动态特性完全支持
+
+扩展延伸：Spring Boot 3.x + GraalVM Native Image = Spring Native。Spring AOT 引擎在构建时处理反射配置、代理配置、序列化配置，生成 GraalVM 兼容的 native 配置。在 Serverless 环境中，Native Image 的启动时间（<100ms）比 JVM（2-5s）有数量级优势。`,hints:[`AppCDS 加速类加载（跳过 I/O+解析），jaotc 跳过 JIT 预热（提前编译为机器码）`,`GraalVM Native Image = 完全独立的可执行文件（毫秒级启动），但动态特性受限`],tags:[`JVM`,`CDS`,`AOT`,`GraalVM`],content_hash:`85399e2f6582`,id:2580},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 参数详解：GC 日志与诊断`,content:`请介绍 JDK 8+ 和 JDK 17+ 的 JVM GC 日志参数。如何启用 GC 日志？如何分析 GC 日志判断系统健康状态？`,answer:`答案：GC 日志是诊断 JVM 性能问题的第一手资料。
+
+JDK 8 参数：
+- -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:gc.log
+- -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=10 -XX:GCLogFileSize=10M
+
+JDK 17+ 参数（统一日志框架，更灵活）：
+- -Xlog:gc*:file=gc.log:time,uptime,tags
+- -Xlog:gc*:file=gc.log:time:filecount=10,filesize=10m
+- 格式：-Xlog:[tag][:output][:decorators][:output-options]
+- 常用 tag：gc、gc+heap、gc+age、gc+ergo、safepoint
+
+GC 日志中的关键信息：
+1. GC 原因（GC Cause）：Allocation Failure、System.gc()、Metadata GC Threshold
+2. GC 类型：Young GC / Full GC / Mixed GC（G1）
+3. 堆变化：2048K->512K(8192K) 表示使用量从 2MB 降到 512KB，总堆 8MB
+4. 停顿时间：real=0.08 secs vs user=0.12 secs（user > real 说明多线程 GC）
+5. 各区域详情：年轻代、老年代、元空间的使用量和容量
+
+健康状态判断：
+- 健康：Young GC 频率在几秒到几十秒一次，每次 < 100ms
+- 警告：频繁 Young GC（每秒多次）、每次 > 200ms、Full GC 出现
+- 不健康：Full GC 频繁、单次 GC 停顿 > 1s、GC 后可用内存增长不明显
+
+有用的诊断参数：
+- -XX:+PrintHeapAtGC：打印 GC 前后各区域详细使用量
+- -XX:+PrintTenuringDistribution：打印对象年龄分布（判断晋升阈值设置是否合理）
+- -XX:+PrintReferenceGC：打印各种引用的处理时间（Soft/Weak/Phantom/Final）
+- -XX:+PrintSafepointStatistics：打印安全点信息（安全点可能导致业务线程停顿）
+
+扩展延伸：GC 日志分析工具——GCeasy（在线）、gcViewer（本地）、jstat（命令行实时）。在生产环境中建议启用 GC 日志并保留至少 7 天的历史记录，以便问题复现时追溯。GC 日志本身也有性能开销（约 1-3%），但远小于用 Profiler 的开销。`,hints:[`JDK 8：-XX:+PrintGCDetails -Xloggc:gc.log；JDK 17+：-Xlog:gc*:file=gc.log:time`,`健康：Young GC < 100ms，间隔数秒；不健康：Full GC 频繁、停顿 > 1s`,`推荐加 PrintHeapAtGC + PrintTenuringDistribution + jstat/gcEasy 分析`],tags:[`JVM`,`GC`,`日志`,`诊断`],content_hash:`035592638d44`,id:2581},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JIT 编译层次与内联优化`,content:`请介绍 JIT（Just-In-Time）编译器的编译层次和核心优化技术。C1 和 C2 编译器的区别是什么？方法内联（Inlining）如何工作？`,answer:`答案：JIT 编译器将热点代码编译为本地机器码，有分层编译和多种优化技术。
+
+编译层次（Tiered Compilation，JDK 8+ 默认）：
+- 第 0 层：解释执行（Interpreter）
+- 第 1 层：C1 简单编译（带 profiling）
+- 第 2 层：C1 完整编译（有限 profiling）
+- 第 3 层：C1 完整编译（完整 profiling）
+- 第 4 层：C2 编译（最优本地代码，无 profiling）
+
+C1 vs C2：
+- C1（Client Compiler）：编译速度快，优化少，适合启动时间敏感的桌面应用
+- C2（Server Compiler）：编译速度慢，优化激进，适合长期运行的服务器应用
+- 分层编译的流程：方法先解释执行 → 达到阈值（-Xcomp）→ C1 编译（快速）→ 热点继续升温 → C2 编译（最优）
+- -XX:TieredStopAtLevel=1：只用 C1（减少编译时间，适合短生命周期应用）
+
+方法内联（最重要的 JIT 优化）：
+- 将方法调用处的调用替换为方法体的直接执行（消除调用开销）
+- 默认内联阈值：-XX:MaxInlineSize=35（字节码小于 35 字节的方法内联）
+- -XX:MaxFreqInlineSize=325（频繁调用的方法最大可内联 325 字节）
+- -XX:InlineSmallCode=2000（被编译后的机器码小于 2KB 的方法内联）
+- -XX:+PrintInlining：打印内联信息（诊断哪些方法被内联了）
+
+其他重要优化：
+1. 逃逸分析（Escape Analysis）：判断对象是否逃逸 → 栈上分配 + 标量替换 + 锁消除
+2. 循环展开（Loop Unrolling）：将多次循环体复制展开，减少循环控制开销
+3. 锁消除（Lock Elision）：线程局部对象的锁操作被消除
+4. 死代码消除（Dead Code Elimination）：删除不可达代码和无用代码
+5. 常量折叠（Constant Folding）：编译期计算常量表达式
+
+扩展延伸：JIT 编译日志（-XX:+PrintCompilation）可查看编译情况。JIT Watch 工具可查看 JIT 编译后的汇编代码。注意：JIT 优化基于 profiling，所以代码需要预热（Warm-up）才能达到最优性能。基准测试（JMH）时必须考虑预热。`,hints:[`分层：0=解释执行 → 1=C1简单 → 2=C1完限 → 3=C1完全 → 4=C2最优`,`最重要的优化：方法内联（消除调用开销，默认内联 ≤35 字节的方法）`,`三大利器：逃逸分析（栈分配+标量替换+锁消除）+ 方法内联 + 循环展开`],tags:[`JVM`,`JIT`,`编译`,`优化`],content_hash:`160fb131921f`,id:2582},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`堆转储分析（Heap Dump Analysis）`,content:`如何获取和分析 JVM 堆转储（Heap Dump）？什么情况下需要做堆转储分析？常见的堆问题有哪些？`,answer:`答案：堆转储是 JVM 堆内存的快照，用于排查内存泄漏、内存溢出和对象分配异常。
+
+获取堆转储的方式：
+1. 自动生成：-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/path/dump.hprof
+2. jmap：jmap -dump:format=b,file=heap.hprof <pid>
+3. jcmd：jcmd <pid> GC.heap_dump /path/heap.hprof
+4. 通过 JMX 的 HotSpotDiagnosticMXBean 编程获取
+5. IntelliJ Profiler / VisualVM 图形界面导出
+
+分析工具：
+1. Eclipse Memory Analyzer（MAT）：最强大，支持 Leak Suspect Report
+2. VisualVM：可视化查看（自带 classes/instances 视图）
+3. jhat（已弃用）：命令行分析
+4. IntelliJ Profiler：IDE 集成，使用方便
+
+MAT 分析步骤：
+1. 打开 Heap Dump → 运行 Leak Suspect Report → 找出 GC Root 的引用链
+2. 查看 Dominator Tree（支配树）：按保留堆大小排序的对象列表
+3. 查看 GC Root 路径（Path to GC Roots）：从 GC Root 到可疑对象的引用链
+4. 搜索大对象：byte[] 数组、char[] 数组、String 对象
+
+常见堆问题：
+1. 内存泄漏（Memory Leak）：对象被 GC Root 引用无法回收，占用量持续增长
+   - 典型症状：Full GC 后堆使用量不下降
+   - 常见原因：ThreadLocal 未清理、缓存无限增长、注册监听器未取消、类加载泄漏
+2. 内存溢出（OOM）：堆空间不足（Java heap space）
+   - 分析：看是「泄漏」还是「容量不够」——OOM 后看堆转储中是什么对象占用了空间
+3. 大对象分配：直接进入老年代的大对象（G1 的 Humongous Allocation > Region 的 50%）
+4. 元空间泄漏（Metaspace）：类加载器未回收导致元空间 OOM
+
+扩展延伸：堆转储文件可能很大（等于堆大小），生产环境建议在 OOM 时自动生成（-XX:+HeapDumpOnOutOfMemoryError）。堆转储会暂停 JVM（STW），生产环境注意时间窗口。OOM 的三种类型：OutOfMemoryError: Java heap space（堆满）、OutOfMemoryError: Metaspace（元空间满）、OutOfMemoryError: Direct buffer memory（Direct Memory 满）。`,hints:[`获取：-XX:+HeapDumpOnOutOfMemoryError 自动生成，jmap/jcmd 手动触发`,`MAT：Leak Suspect Report → Dominator Tree → GC Root 路径找泄漏`,`常见问题：ThreadLocal 泄漏/缓存无限增长/大对象分配/类加载泄漏`],tags:[`JVM`,`堆转储`,`MAT`,`OOM`],content_hash:`09b40b715a0a`,id:2583},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java Agent 与字节码增强`,content:`请介绍 Java Agent 和字节码增强技术的原理。java.lang.instrument 是什么？Instrumentation API 的主要用途有哪些？常用的字节码增强框架有哪些？`,answer:`答案：Java Agent 是一种在 JVM 启动时或运行时修改类字节码的机制，是 APM（应用性能监控）、热部署、代码覆盖率等工具的基础。
+
+java.lang.instrument 包：
+- 提供 Instrumentation 接口——可以在类加载前或已加载后修改类的字节码
+- ClassFileTransformer：转换器接口，transform() 方法接收原始字节码，返回修改后的字节码
+
+两种 Agent 模式：
+
+1. 启动时 Agent（premain）：
+   // META-INF/MANIFEST.MF 中指定 Premain-Class
+   // -javaagent:myagent.jar 启动参数
+   public static void premain(String args, Instrumentation inst) {
+       inst.addTransformer(new MyTransformer());  // 注册转换器
+   }
+   - 在 main() 方法执行前调用
+   - 可以转换所有类（包括 JDK 核心类）
+
+2. 运行时 Agent（agentmain）：
+   // META-INF/MANIFEST.MF 中指定 Agent-Class
+   // 通过 Attach API 动态附加到运行中的 JVM
+   public static void agentmain(String args, Instrumentation inst) {
+       inst.addTransformer(new MyTransformer(), true);
+       inst.retransformClasses(TargetClass.class);  // 重转换已加载的类
+   }
+   - 使用 VirtualMachine.attach(pid) 附加到目标 JVM
+   - 不能重新转换已加载的类（除非指定 retransform=true）
+
+Instrumentation API 的主要用途：
+1. 方法耗时监控（APM 工具：SkyWalking、Pinpoint、OpenTelemetry）
+2. 代码覆盖率统计（JaCoCo）
+3. 热部署（JRebel、Spring Boot DevTools）
+4. AOP 框架（AspectJ 的 LTW）
+5. Mock 框架（Mockito 的部分功能）
+
+字节码操作框架：
+- ASM：最底层、性能最好、学习曲线最陡
+- ByteBuddy：最现代、API 简洁、推荐使用（Spring 和 Mockito 的基础）
+- Javassist：基于源码字符串操作的框架，易用性好但性能略低
+- CGLIB：已被 ByteBuddy 替代
+
+扩展延伸：Java Agent 的安全风险——可以修改任何代码（包括 java.base 模块），是有最高权限的 JVM 扩展。JDK 9+ 模块化下，Agent 默认不能修改 JDK 核心模块（需要 --add-opens）。推荐使用 ByteBuddy 进行字节码增强——ASM 太底层，Javassist 性能差。`,hints:[`Java Agent = premain（启动时，-javaagent）或 agentmain（运行时，Attach API）`,`Instrumentation API：addTransformer() + ClassFileTransformer.transform() 修改字节码`,`字节码框架：ASM（底层）、ByteBuddy（推荐，现代API）、Javassist（字符串操作）`],tags:[`JVM`,`Agent`,`字节码`,`Instrumentation`],content_hash:`ee23152dad20`,id:2584},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java 内存模型（JMM）的 happens-before`,content:`请深入介绍 Java 内存模型（JMM）中的 happens-before 规则。为什么需要 happens-before？常用的 happens-before 规则有哪些？`,answer:`答案：happens-before 是 JMM 定义的多线程操作之间的偏序关系，保证前一个操作的结果对后一个操作可见。
+
+为什么需要 happens-before：
+- 编译器/CPU/内存系统会重排序指令以优化性能
+- 每个线程有自己的缓存（寄存器/L1/L2/L3 cache），写操作不立即刷入主内存
+- happens-before 定义了哪些重排序是不允许的（保证内存可见性）
+
+核心 happens-before 规则：
+
+1. 程序顺序规则：一个线程中的每个操作 happens-before 该线程中后续的每个操作（同一个线程内按程序顺序）
+
+2. volatile 规则：对 volatile 变量的写 happens-before 之后对同一 volatile 变量的读
+   - 写操作释放（Release）：写 volatile 变量时刷新缓存到主内存
+   - 读操作获取（Acquire）：读 volatile 变量时使本地缓存失效
+
+3. 锁规则：对一个锁的解锁（unlock）happens-before 之后对同一锁的加锁（lock）
+
+4. 传递性：如果 A happens-before B 且 B happens-before C，则 A happens-before C
+
+5. start() 规则：Thread.start() happens-before 被启动线程中的任何操作
+
+6. join() 规则：线程中的所有操作 happens-before Thread.join() 返回
+
+7. interrupt() 规则：对线程的 interrupt() 调用 happens-before 被中断线程检测到中断
+
+8. 对象构造规则：对象的构造方法结束（finalize）happens-before finalize() 的开始
+
+实战应用：
+\`\`\`java
+// 正确使用 volatile 实现安全的发布
+class SafePublisher {
+    private volatile int value;
+    public void set(int v) { value = v; }  // volatile 写（Release）
+    public int get() { return value; }    // volatile 读（Acquire）
+}
+\`\`\`
+
+常见的误区：
+- synchronized 保证的是「看到同一锁保护的变量的最新值」，不是「stop the world」
+- volatile 不保证原子性（i++ 用 volatile 仍然不是线程安全的）
+- final 字段的特殊保证：构造函数中初始化的 final 字段对其他线程可见（无需同步）
+
+扩展延伸：JMM 的禁止重排序规则通过内存屏障（Memory Barrier）实现。LoadLoad 屏障：禁止读重排序；StoreStore 屏障：禁止写重排序；LoadStore 屏障：禁止读写重排序；StoreLoad 屏障：禁止写读重排序（最重，volatile 写时使用）。x86 架构的内存模型比 ARM 更强——x86 不重排序写操作，所以 x86 上 volatile 的开销小于 ARM。`,hints:[`happens-before = 前一个操作对后一个操作可见的保证（JMM 的核心）`,`常用规则：volatile 写→读、锁解锁→加锁、Thread.start()/join()、传递性`,`通过内存屏障实现（LoadLoad/StoreStore/LoadStore/StoreLoad），x86 开销小于 ARM`],tags:[`JVM`,`JMM`,`happens-before`,`内存模型`],content_hash:`02c5d72f7adc`,id:2585},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 调优常用参数分类`,content:`请分类介绍 JVM 调优的常用参数。`,answer:`答案：JVM 调优参数大致分为堆配置、GC 选择、日志诊断和性能优化四类
+
+解析：堆配置：-Xms（初始堆大小，通常设为与 -Xmx 相同避免运行时调整）、-Xmx（最大堆，通常为系统内存的 50-70%）、-Xmn（年轻代大小，常用堆的 1/3-1/4）、-XX:MetaspaceSize/-XX:MaxMetaspaceSize（元空间）。GC 选择：-XX:+UseG1GC（JDK 9 默认，低延迟）、-XX:+UseParallelGC（高吞吐，适合批处理）、-XX:+UseZGC（极低延迟，适合大堆 >100GB）。G1 特有参数：-XX:MaxGCPauseMillis（默认 200ms，G1 尽量满足的目标 GC 暂停时间）、-XX:InitiatingHeapOccupancyPercent（默认 45%，触发并发标记的堆占用率，G1 根据目标调整）。
+
+扩展延伸：日志和诊断：-Xlog:gc*（JDK 9+ 统一日志）、-XX:+PrintGCDetails/-Xloggc:gc.log（JDK 8）、-XX:+HeapDumpOnOutOfMemoryError（OOM 时自动生成 heap dump）、-XX:HeapDumpPath。性能调优：-XX:+AlwaysPreTouch（启动时预分配物理内存，减少运行时缺页中断）、-XX:+UseStringDeduplication（String 去重，节省重复字符串内存）、-XX:+UseCompressedOops（默认开启，压缩对象指针至 32 位省内存）。典型云环境起步参数（JDK 17+，4C8G 容器）：-Xms4g -Xmx4g -XX:+UseZGC -XX:MaxGCPauseMillis=10 -Xlog:gc*:file=gc.log。注意 -Xmx 不应超过容器内存的 75%。`,hints:[`-Xms 和 -Xmx 设相同的值有什么好处`,`AlwaysPreTouch 的性能影响是什么`],tags:[`JVM`,`调优`,`参数`],content_hash:`75ad25d1603e`,id:2586},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`字符串常量池与 intern`,content:`请解释 JVM 字符串常量池的工作原理以及 String.intern() 方法的用途。`,answer:`答案：字符串常量池是 JVM 堆中用于存储字符串字面量的特殊区域，intern() 将运行时字符串手动加入池中
+
+解析：字符串常量池在 JDK 7 后被移到 Java 堆中（之前放在方法区的运行时常量池）。编译期确定的字符串字面量（如 "hello"）自动进入常量池，JVM 保证相同内容的字符串字面量在常量池中只有一个引用。通过 new String("hello") 会在堆上创建新的 String 对象，但字面量 "hello" 仍指向常量池中的字符串。intern() 方法运行时将字符串加入常量池：如果常量池中已有相同内容的字符串，返回池中的引用；否则将当前字符串的引用加入池中并返回。
+
+扩展延伸：String.intern() 的适用场景：程序中存在大量内容相同的运行时字符串（如从配置文件或网络读取的重复字符串），使用 intern 去重可以节省大量内存。但自 JDK 7+ 字符串常量池在堆上，intern 的字符串不会被 GC，大量唯一的字符串会导致常量池溢出（可以本地缓存 ConcurrentHashMap 用弱引用实现去重来代替 intern）。默认常量池大小（-XX:StringTableSize）在 JDK 6 是 1009（固定桶数），JDK 7+ 默认为 60013，可以通过该参数在大量字符串去重场景下调整哈希冲突。注意：字符串常量池使用哈希表实现（fixed size），intern 操作插入和查找都是 O(1) 均摊。不要在密集的不同字符串上使用 intern——那会使 hash table 过大，导致堆内存泄漏。替代方案：Guava 的 Interners.newWeakInterner() 用弱引用自动回收不被引用的字符串。`,hints:[`new String('hello') 创建了几个对象`,`为什么大量 intern 唯一字符串不是好做法`],tags:[`JVM`,`字符串`,`常量池`],content_hash:`047bd449cf98`,id:2587},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 锁膨胀过程`,content:`请解释 JVM 中 synchronized 锁从偏向锁到重量级锁的膨胀过程。`,answer:`答案：synchronized 锁根据竞争程度经历无锁→偏向锁→轻量级锁→重量级锁的渐进升级
+
+解析：1）偏向锁（Biased Locking）— 对象头的 Mark Word 记录偏向线程 ID，同一线程再次进入同步块时无需任何同步操作。撤销偏向锁时需在全局安全点暂停有偏向线程。2）轻量级锁（Lightweight Locking）— 偏向锁被撤销后升级，线程在自己的栈帧中创建 Lock Record，通过 CAS 操作将 Mark Word 替换为指向 Lock Record 的指针。如果 CAS 成功，获得轻量级锁；失败则膨胀为重量级锁。3）重量级锁（Heavyweight Locking，即 Mutex Lock）— 通过操作系统互斥量实现，线程会进入操作系统内核态的等待队列，涉及用户态/内核态上下文切换。重量级锁下未竞争到锁的线程进入 BLOCKED 状态（轻量级锁自旋失败再膨胀）。
+
+扩展延伸：锁升级是不可逆的——锁只能从偏向锁->轻量级->重量级方向升级，不能降级。一旦膨胀为重量级锁，下次即使无竞争仍然是重量级锁。JDK 15+ 废弃偏向锁后，默认从轻量级锁开始。锁粗化（Lock Coarsening）：JIT 将连续对同一个锁的加锁/解锁合并为一次加锁/解锁，减少锁操作次数（StringBuffer.append 连续调用场景）。锁消除（Lock Elimination）：JIT 逃逸分析确定对象不会逃逸则消除锁。对象头中的 Mark Word 在不同锁状态下存储不同数据：偏向锁存线程 ID+epoch，轻量级锁存指向 Lock Record 的指针，重量级锁存指向 Monitor 对象的指针。自旋适应性自旋：JVM 根据锁竞争历史的统计动态调整自旋次数。`,hints:[`为什么锁只能升级不能降级`,`自旋适应性自旋怎么确定自旋次数`],tags:[`JVM`,`synchronized`,`锁`],content_hash:`03760568e5da`,id:2588},{category:`jvm`,difficulty:`medium`,type:`choice`,title:`JVM 双亲委派模型`,content:`以下关于类加载器双亲委派模型的说法，正确的是？`,options:[`A) 应用程序类加载器的父类是启动类加载器`,`B) 扩展类加载器的父类是应用程序类加载器`,`C) 双亲委派模型要求先让父加载器尝试加载类，不成功才让子加载器加载`,`D) 双亲委派模型中，子加载器加载过的类父加载器可以再次加载`],answer:`C`,hints:[`应用程序类加载器的父类加载器是扩展类加载器，扩展类加载器的父类是启动类加载器`],tags:[`JVM`,`类加载`,`双亲委派`],content_hash:`7080daddf02f`,id:2589},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 安全点与安全区域`,content:`请解释 JVM 安全点（Safepoint）和安全区域的概念及其作用。`,answer:`答案：安全点是 JVM 进行 GC、偏向锁撤销、Code Deoptimization 等操作的线程暂停点
+
+解析：安全点是所有线程必须暂停到可安全操作的执行位置才能进行全局操作的点位。安全点位置在 JIT 编译的代码中选取：通常选在方法返回前、循环回跳点、可能抛出异常的指令后。HotSpot 通过主动式安全点实现：JIT 编译的代码检查一个全局的内存页（安全点轮询，polling page），当需要暂停线程时将内存页设为不可读，线程执行到检查点时触发 SIGSEGV 信号，JVM 信号处理器将线程挂起。安全区域（Safe Region）解决线程长时间不执行（如阻塞在 sleep、LockSupport.park）时的暂停问题——线程进入这类状态时主动标记自己在安全区域内，GC 不需要等待它到达安全点。安全区域的结束由线程退出阻塞时检查全局 GC 状态决定是否等待。
+
+扩展延伸：安全点对延迟的影响——在高吞吐应用中，安全点轮询的汇编指令本身开销很小（在 x86 上是一条比较指令），但安全点到达时的停顿（尤其是全局安全点同步）可能导致应用暂停数十到数百毫秒。JMH 的 -XX:+PrintGCApplicationStoppedTime 可以打印安全点暂停日志。导致长安全点暂停的常见原因：1）JIT 编译大量方法（CodeCache 满时的 deoptimization）2）大堆 GC 前的 finalization 3）线程数量多导致所有线程到达安全点的时间长。VM Thread 负责协调安全点，-XX:+PrintSafepointStatistics 输出安全点统计。减少安全点暂停时间：-XX:GuaranteedSafepointInterval（默认 1000ms，设为 0 关闭定期安全点但影响偏向锁等功能）、-XX:+UseBiasedLocking 等。`,hints:[`JIT 怎么选择安全点位置`,`安全区域和阻塞中的线程之间有什么关系`],tags:[`JVM`,`安全点`,`GC`],content_hash:`89f4b5771964`,id:2590},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`ZGC 并发标记与重映射机制`,content:`ZGC 的并发标记和重映射阶段如何协同工作？读屏障如何在重映射阶段实现自愈（Self-Healing）？`,answer:`答案：ZGC 的并发重映射（Concurrent Remap）阶段负责更新所有指向旧地址的引用到新地址。ZGC 将重映射与下一轮 GC 的并发标记阶段合并执行，以减少遍历对象图的开销。读屏障（Load Barrier）在重映射阶段实现自愈：当应用线程通过加载屏障读取指向旧地址的引用时，屏障会自动将引用修正为新地址。这样即使重映射尚未完成，应用线程也能立即读取到最新位置，且后续其他线程再次读取该引用时已经「愈合」为正确地址。
+
+解析：重映射在每轮 GC 结束时启动，但只处理部分引用（分片完成），未完成的在下一轮 GC 的标记阶段继续处理。这种「标记-重映射合并」的核心思路是：在并发标记遍历对象图的过程中，同时更新遇到的所有旧引用，避免了一次单独的全量重映射遍历。读屏障的自愈能力使得应用线程在重映射期间不会读到过时的地址，从而不需要像传统 GC 那样在 STW 阶段统一修复所有引用。
+
+扩展延伸：分代 ZGC（JDK 21+）中，标记-重映射合并更加高效，因为只遍历活跃的年轻代 Region，减少了需要更新的引用数量。对比 CMS 和 G1 需要在 Remark 或 Final 标记阶段 STW 修正确认引用，ZGC 的读屏障自愈彻底消除了这一 STW 需求。ZGC 的重映射/标记合并也是染色指针技术的自然结果——指针本身携带了状态信息，读屏障只需检查指针颜色就能判断是否需要修正。`,hints:[`ZGC 将重映射和下一轮的标记合并为一次遍历，避免单独全量遍历`,`读屏障自愈让应用线程在重映射期间立即获取到修正后的引用`],tags:[`JVM`,`ZGC`,`重映射`,`读屏障`],content_hash:`f034e6e33557`,id:2591},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Shenandoah GC 与 ZGC 架构差异比较`,content:`Shenandoah GC 和 ZGC 在架构设计上的核心差异有哪些？各自的优缺点和适用场景是什么？`,answer:`答案：Shenandoah 和 ZGC 都致力于低延迟 GC，但实现路径截然不同——ZGC 采用染色指针（Colored Pointer）+ 读屏障（Load Barrier），Shenandoah 采用 Brooks 转发指针（Forwarding Pointer）+ 写屏障（Write Barrier）。
+
+解析：核心差异：1）指针技术——ZGC 在 64 位指针的高 4 位编码 GC 状态（Finalizable/Remapped/Mark0/Mark1），不额外占用对象头空间；Shenandoah 在对象头前插入一个 Brooks 转发指针字段（每个对象额外 8 字节），GC 移动对象后只需更新该指针。2）屏障类型——ZGC 在读屏障中完成指针修正（自愈机制，拦截对象引用的读取操作）；Shenandoah 在写屏障中完成引用修正（拦截引用的写入操作）。JDK 13+ 为 Shenandoah 引入了读屏障优化以减少写屏障开销。3）内存布局——ZGC 使用动态大小 Region（小 2MB/中 32MB/大 N×2MB），Shenandoah 沿用传统统一大小的 Region。4）并发压缩——两者都支持并发压缩，但 ZGC 通过染色指针无需在对象头中维护转发指针，压缩路径更简洁。
+
+扩展延伸：吞吐量方面，ZGC 通常略优于 Shenandoah（读屏障比写屏障轻量）；CPU 开销方面，G1 < ZGC < Shenandoah（JDK 13 优化前 Shenandoah 的写屏障开销显著高于 ZGC）。适用场景：ZGC 适合超大堆（100GB+）且追求极致低延迟（如金融交易系统）；Shenandoah 在中等大小堆上表现接近 ZGC，且在某些工作负载下 CPU 开销更低。JDK 21+ 中 ZGC 已默认启用分代模式（Generational ZGC），Shenandoah 的分代模式在 JDK 21 中仍处于孵化阶段。`,hints:[`ZGC 用读屏障 + 染色指针，Shenandoah 用写屏障 + Brooks 指针`,`染色指针不占用对象头额外空间，Brooks 指针每个对象增加 8 字节开销`],tags:[`JVM`,`Shenandoah`,`ZGC`,`GC对比`],content_hash:`31e304ce1066`,id:2592},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`CDS 归档文件结构与使用`,content:`CDS 共享归档文件（classes.jsa）的内部结构是什么？如何创建和使用 CDS 归档？动态 CDS 归档（JDK 13+）的流程是怎样的？`,answer:`答案：CDS 归档文件（.jsa）是一种预处理的类元数据共享文件，包含解析后的类元数据、常量池和方法字节码的紧凑格式。多个 JVM 实例通过内存映射（mmap）共享同一个归档文件的只读物理内存页，从而减少启动时的类加载开销和内存占用。
+
+解析：文件结构——CDS 归档文件采用专有二进制格式（非 Class 文件格式），包含：1）归档头部（Magic Number + 版本号 + CRC 校验）；2）类元数据表（按类名排序的索引表，记录每个类的元数据在文件中的偏移量）；3）共享字符串表（字符串常量去重后的共享区域，多个 JVM 共享同一物理页）；4）字节码区域（存储预处理后的字节码）。归档文件通过 mmap 映射到 JVM 进程地址空间，所有进程共享同一物理内存页（写时复制 COW 机制处理少量差异）。
+
+创建和使用：JDK 12+ 自动在 \${JAVA_HOME}/lib/server/ 中生成默认的 classes.jsa 归档。手动创建步骤：1）使用 -XX:DumpLoadedClassList=classes.lst 运行应用生成类列表；2）使用 java -Xshare:dump -XX:SharedArchiveFile=app.jsa -XX:ClassList=classes.lst 生成归档；3）启动时使用 java -Xshare:auto -XX:SharedArchiveFile=app.jsa -jar app.jar 加载归档。
+
+动态 CDS 归档（JDK 13+，JEP 350）：在应用退出时自动转储已加载的类为归档文件（无需手动 dump 类列表）。流程：1）正常启动应用（添加 -XX:ArchiveClassesAtExit=app.jsa 参数）；2）运行应用覆盖主要代码路径，确保关键类已加载；3）应用退出时 JVM 自动将已加载的类元数据写入 app.jsa；4）后续启动时添加 -XX:SharedArchiveFile=app.jsa 使用归档。
+
+扩展延伸：CDS 不支持动态生成的类（Lambda、CGLib 代理等无法归档）；-Xshare:auto 在归档加载失败时自动退化到不启用 CDS 模式（不会导致启动失败）；多个应用共享 CDS 归档的前提是使用相同的类路径；Spring Boot 应用通过 AppCDS 可减少 20-40% 的启动时间。`,hints:[`CDS 归档通过内存映射（mmap）实现多进程共享只读物理页`,`动态 CDS 归档通过 -XX:ArchiveClassesAtExit 在应用退出时自动生成`],tags:[`JVM`,`CDS`,`归档`,`启动优化`],content_hash:`9d6328b5ee42`,id:2593},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JFR 事件流式 API 详解`,content:`JDK 14+ 引入的 JFR 事件流式 API（jdk.jfr.consumer）是什么？它与传统 JFR 录制模式有什么不同？实时监控场景下如何使用？`,answer:`答案：JFR 事件流式 API（JEP 349）允许应用程序以流式方式实时消费 JFR 事件，无需启动录制、无需转储文件、无需使用 JDK Mission Control。它提供了一等公民的编程接口，让应用可以直接订阅和处理 JFR 事件，实现亚毫秒级延迟的实时监控。
+
+解析：传统 JFR 录制模式——启动录制（-XX:StartFlightRecording 或 jcmd JFR.start）-> 运行 -> 停止录制 -> 转储 .jfr 文件 -> 用 JMC 或 jfr 工具离线分析。整个流程涉及多个步骤，不适合嵌入到应用程序内部的实时监控需求。
+
+流式 API 的工作方式——1）创建 RecordingStream 实例；2）通过 onEvent(String eventName, Consumer<RecordedEvent>) 注册事件处理器；3）stream.start() 启动流式处理。关键特性：实时处理（亚毫秒级延迟）、可编程过滤（支持事件类型过滤和时间范围）、无需文件 I/O、支持 Lambda 风格的事件处理。
+
+示例代码：
+\`\`\`java
+var stream = new RecordingStream();
+stream.enable("jdk.GCPhasePause").withThreshold(Duration.ofMillis(10));
+stream.onEvent("jdk.GCPhasePause", event -> {
+    long pauseMs = event.getDuration().toMillis();
+    if (pauseMs > 100)
+        System.err.printf("Long GC pause: %d ms at %s%n", pauseMs, event.getStartTime());
+});
+stream.start();
+\`\`\`
+
+扩展延伸：常用可订阅事件类型——jdk.GCHeapSummary（堆使用摘要）、jdk.ThreadSleep（线程休眠事件）、jdk.JavaMonitorWait（锁等待）、jdk.SocketRead/SocketWrite（Socket I/O 事件）、jdk.ActiveRecording（录制元事件）。流式 API 是 JMC Agent 的核心基础。注意：流式 API 需要 JDK 14+，事件处理线程是独立线程，不应在事件处理器中执行阻塞操作。JFR 的事件类型可以通过 @jdk.jfr.Event 注解自定义扩展（JDK 14+）。`,hints:[`流式 API 通过 RecordingStream 实时消费事件，无需录制文件和离线分析`,`onEvent 方法注册事件处理器，支持 Lambda 表达式和事件过滤`],tags:[`JVM`,`JFR`,`流式API`,`监控`],content_hash:`934eb0293367`,id:2594},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`压缩指针下的对象头布局分析`,content:`在开启和关闭指针压缩（Compressed OOPs）的不同配置下，Java 对象头的内存布局有何具体差异？一个空 Object 实例在两种模式下分别占用多少内存？如何通过 JOL 工具验证？`,answer:`答案：开启指针压缩时（JDK 8+ 默认），对象头 = Mark Word（8 字节）+ Klass Pointer（4 字节，压缩后）= 12 字节，空 Object 补齐 4 字节 padding 到 16 字节。关闭压缩时，对象头 = Mark Word（8 字节）+ Klass Pointer（8 字节，未压缩）= 16 字节（无需 padding）。空 Object 在两种模式下都是 16 字节，但内部布局不同。
+
+解析：对象头由两部分组成：1）Mark Word（固定 8 字节，64 位 JVM）——存储哈希码、GC 分代年龄（4bit，最大 15）、锁状态标志（偏向锁/轻量级锁/重量级锁）。Mark Word 内容随锁状态变化而变化。2）Klass Pointer——指向对象的类元数据指针。开启压缩时（-XX:+UseCompressedClassPointers，默认随 UseCompressedOops 开启）占 4 字节，可寻址 32GB 堆；关闭压缩时占 8 字节。
+
+常见对象大小对比（开启压缩 64 位 JVM）：
+- Object 实例：Mark(8) + Klass(4) + Padding(4) = 16 字节
+- Integer 实例：Mark(8) + Klass(4) + int value(4) = 16 字节（无需 padding）
+- Long 实例：Mark(8) + Klass(4) + long value(8) = 20 + 4 padding = 24 字节
+- int[]（长度 0）：Mark(8) + Klass(4) + length(4) = 16 字节
+- String（JDK 17+）：Mark(8) + Klass(4) + value(引用,4) + coder(1) + hash(4) = 21 + 3 padding = 24 字节
+
+扩展延伸：Compressed OOPs 压缩的是对象引用（oop），同时会连带压缩 Klass Pointer。通过 -XX:+UseCompressedOops 同时开启两者，-XX:+UseCompressedClassPointers 单独控制 Class 指针。堆超过 32GB 后两个压缩都自动关闭。使用 JOL（Java Object Layout，openjdk.jol 工具）可以精确查看对象内存布局：\`System.out.println(ClassLayout.parseInstance(obj).toPrintable())\`。关闭压缩后对象引用占 8 字节（而非 4 字节），整个应用的内存占用上升 10-20%。`,hints:[`开启压缩时对象头 12 字节（Mark 8 + Klass 4），关闭时 16 字节（Mark 8 + Klass 8）`,`JOL（Java Object Layout）工具可以精确测量对象内存布局`],tags:[`JVM`,`对象头`,`指针压缩`,`内存布局`],content_hash:`1e7b56758e82`,id:2595},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`G1 GC 的年轻代与老年代回收流程`,content:`请详细描述 G1 GC 的年轻代回收（Young GC）和混合回收（Mixed GC）的完整流程。Region、RSet、SATB 分别在其中起什么作用？`,answer:`答案：G1 GC 的回收分为 Young GC 和 Mixed GC 两大类。Young GC 在 Eden Region 用满时触发，Mixed GC 在并发标记完成后对年轻代和高价值老年代 Region 一起回收。
+
+解析：1）Region——G1 将堆划分为约 2048 个大小相等的 Region（1-32MB），每个 Region 可以是 Eden、Survivor、Old 或 Humongous（大对象 Region）。G1 不要求物理连续，逻辑上分代。2）Young GC——当所有 Eden Region 用满时触发。将所有 Eden Region 中的存活对象复制到 Survivor Region，同时部分 Survivor 对象晋升到 Old Region。这个过程是 STW（Stop-The-World）的，但通过 RSet 只扫描与年轻代有关联的 Old Region 引用，避免全堆扫描。3）RSet（Remembered Set）——每个 Region 维护一个 RSet，记录其他 Region 对当前 Region 的引用。Young GC 时，只需扫描 GC Roots + RSet，就可以确定哪些 Old Region 中的对象引用了 Eden 中的对象。RSet 使用写屏障（Write Barrier）维护引用变更，用卡表（Card Table）精细化管理引用粒度。4）SATB（Snapshot At The Beginning）——G1 的并发标记算法。并发标记开始时记录对象图快照（逻辑快照），并发期间新分配的对象标记为黑色（存活）。通过写屏障记录被覆盖引用的旧对象，在 Remark 阶段重新处理。5）Mixed GC——并发标记完成后，G1 计算每个 Old Region 的垃圾回收价值（存活率低的 Region 收益大），选择一批高收益 Old Region + 全部 Eden Region 一起回收。Mixed GC 也是 STW 的，会分多次进行（默认最多 8 次，-XX:G1MixedGCCountTarget），以避免单次停顿过长。
+
+扩展延伸：G1 的 Full GC——当 Mixed GC 回收速度跟不上对象分配速度时（Humongous 分配失败或老年代满），G1 退化为 Serial Old 做单线程 Full GC（极长 STW）。G1 适合大堆（4GB+）和可预期停顿（200ms 左右）的场景。小堆（<4GB）使用 Parallel GC 吞吐量更高。G1 的 RSet 也带来额外内存开销（约堆大小的 5-20%）。`,hints:[`G1 的 Young GC 是在所有 Eden Region 用满时触发，不是定时触发`,`Mixed GC 选择 Old Region 的标准是垃圾价值——存活率越低越优先回收`],tags:[`JVM`,`GC`,`G1`,`Region`,`RSet`],content_hash:`fe7091280294`,id:2596},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM 堆外内存管理（DirectBuffer 与 Cleaner）`,content:`请解释 Java 堆外内存的分配和回收机制。DirectByteBuffer 如何分配堆外内存？Cleaner 机制是如何工作的？堆外内存为什么可能导致 OOM？`,answer:`答案：堆外内存（Off-Heap Memory）是 JVM 堆之外由操作系统直接分配的内存。DirectByteBuffer 通过 Unsafe.allocateMemory() 分配堆外内存，通过 Cleaner 机制（基于 PhantomReference）在 DirectByteBuffer 对象被 GC 回收后自动释放。堆外内存不受 JVM 堆大小（-Xmx）控制，由 -XX:MaxDirectMemorySize 限制（默认等于 Xmx）。
+
+解析：1）分配过程——ByteBuffer.allocateDirect(capacity) 创建 DirectByteBuffer，构造器内部调用 Bits.reserveMemory() 检查 MaxDirectMemorySize 配额，然后通过 Unsafe.allocateMemory() 在堆外分配内存，记录分配地址和大小到 DirectByteBuffer 实例（堆上的一个小对象）。2）回收机制——DirectByteBuffer 构造时关联一个 Cleaner 对象（Cleaner 继承 PhantomReference）。当 DirectByteBuffer 对象不可达时，GC 将其关联的 Cleaner 加入 ReferenceQueue。Reference Handler 线程（高优先级 daemon 线程）处理 ReferenceQueue，调用 Cleaner.clean() → 最终调用 Unsafe.freeMemory(address) 释放堆外内存。3）堆外内存 OOM——DirectByteBuffer 对象本身很小（几十字节），但引用的堆外内存可能很大。GC 只看到堆上的小对象，如果 DirectByteBuffer 对象 GC 不及时（堆内存充足不触发 GC），堆外内存可能持续分配直到超过 MaxDirectMemorySize，抛出 OutOfMemoryError: Direct buffer memory。
+
+扩展延伸：堆外内存的优势——1）减少 GC 压力：生命周期长的数据放堆外，不被 GC 扫描。2）减少内存拷贝：NIO 直接读写堆外内存，避免堆内→堆外的中间拷贝。3）突破堆大小限制：堆外内存使用系统内存，不受 -Xmx 限制。Netty 的优化——Netty 使用 PooledByteBufAllocator 对 DirectByteBuffer 池化管理（分配/释放复用），显著减少堆外内存分配开销。排查工具：NMT（Native Memory Tracking，-XX:NativeMemoryTracking=summary）可查看堆外内存使用；jcmd PID VM.native_memory summary；pmap -x PID 查看进程内存映射。`,hints:[`DirectByteBuffer 对象很小，但其引用的堆外内存可能很大——这是堆外内存 OOM 的根本原因`,`Netty 使用 PooledByteBufAllocator 池化 DirectBuffer 以减少分配和释放开销`],tags:[`JVM`,`堆外内存`,`DirectByteBuffer`,`Cleaner`,`NIO`],content_hash:`33466a30b1ee`,id:2597},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JIT 编译层次：C1 vs C2 vs Graal JIT`,content:`请详细解释 JVM 的 JIT 编译层次。C1（Client Compiler）和 C2（Server Compiler）有什么区别？Graal JIT Compiler 与 C1/C2 有什么不同？分层编译是如何工作的？`,answer:`答案：C1（Client Compiler）编译速度快但优化程度低，适合对启动速度敏感的客户端应用。C2（Server Compiler）编译速度慢但优化深度大，适合追求峰值性能的服务端应用。Graal JIT 是用 Java 编写的 JIT 编译器，支持与 C2 同等甚至更强的优化，并且可扩展性更好。分层编译（Tiered Compilation，JDK 7u4+ 默认）结合三者优势：解释执行 → C1（轻量编译 + profiling）→ C2（深度优化）。
+
+解析：1）C1（Client Compiler）——基于 HIR（High-Level Intermediate Representation）做简单优化：方法内联（不超过 35 字节）、常量折叠、去虚拟化等。编译速度快（毫秒级），但生成的代码质量一般。适合桌面应用或短生命周期应用。2）C2（Server Compiler）——基于理想图（Ideal Graph，Sea-of-Nodes IR）做激进优化：完整逃逸分析、标量替换、锁消除、循环优化（展开/向量化）、递归优化等。编译速度慢（可能秒级甚至更久），但代码质量极高。C2 会收集完整的 profiling 数据指导优化决策。C2 的代码复杂度极高，被社区称为「The Great Oracle Monster」。3）Graal JIT——用 Java 自举实现的 JIT 编译器（JVMCI，JVM Compiler Interface，JDK 9+）。与 C2 同等级优化能力，但架构更清晰、更可维护。优势：可内联跨语言调用（Truffle 框架）、更激进的 partial escape analysis、更早的编译调度策略。在 JDK 16+ 可通过 -XX:+UseGraalJIT 启用（实验性）。4）分层编译（Tiered Compilation）共 5 层——第 0 层：解释执行（不编译）；第 1 层：简单 C1（基础优化，不 profiling）；第 2 层：受限 C1（部分 profiling）；第 3 层：完整 C1（全部 profiling）；第 4 层：C2（基于 profiling 数据做激进优化）。方法调用次数达到阈值后逐层升级。
+
+扩展延伸：编译阈值的动态调整——-XX:TierXCompileThreshold 控制各层的编译触发阈值。JIT 的激进优化可能因假设不成立而需要去优化（Deoptimization，退回解释执行再重新编译）。GraalVM 将 Graal JIT 用于 Native Image 的 AOT 编译，运行时不需要 JIT 编译器。Graal JIT 相比 C2 的主要优势是新优化技术的迭代速度（C2 的代码极其复杂，修改风险大）。`,hints:[`C1 编译快但代码质量低，C2 编译慢但代码质量极高`,`Graal JIT 用 Java 自实现，可扩展性优于 C2，但当前默认仍使用 C2`],tags:[`JVM`,`JIT`,`C1`,`C2`,`Graal`,`分层编译`],content_hash:`d8817979462e`,id:2598},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Class 文件的常量池结构`,content:`请解释 Java Class 文件中常量池（Constant Pool）的组成结构。常量池中主要包含哪些类型的常量？常量池在类加载过程中如何被解析为直接引用？`,answer:`答案：常量池（Constant Pool）是 Class 文件中最重要的资源仓库，存放字面量（Literal）和符号引用（Symbolic Reference）。结构上位于 Class 文件的魔数（Magic Number）和版本号之后，由常量池计数器和常量池表组成。常量池索引从 1 开始（0 保留表示「不引用任何常量」）。
+
+解析：1）常量池表——每个条目有一个 tag 标志类型（1 字节），后跟具体数据。主要类型：CONSTANT_Utf8（tag=1，字符串常量，使用改进的 UTF-8 编码，这是最基础的常量类型）、CONSTANT_Integer（tag=3，int 常量）、CONSTANT_Float（tag=4）、CONSTANT_Long（tag=5，占两个槽位）、CONSTANT_Double（tag=6，占两个槽位）、CONSTANT_Class（tag=7，类或接口的符号引用，指向 CONSTANT_Utf8）、CONSTANT_String（tag=8，字符串对象引用，指向 CONSTANT_Utf8）、CONSTANT_Fieldref（tag=9）、CONSTANT_Methodref（tag=10）、CONSTANT_InterfaceMethodref（tag=11）、CONSTANT_NameAndType（tag=12，字段或方法名+描述符）、CONSTANT_MethodHandle（tag=15，JDK 7+）、CONSTANT_MethodType（tag=16）、CONSTANT_InvokeDynamic（tag=18）。2）符号引用——当代码引用一个类、字段或方法时，编译后的字节码指令（如 ldc、invokevirtual）中存储的是常量池索引（符号引用），而非直接内存地址。符号引用包括：类的全限定名、字段名和描述符、方法名和描述符。3）解析过程——类加载的「解析」阶段（可能在初始化之前或之后），JVM 将常量池中的符号引用替换为直接引用（内存地址或偏移量）。例如 CONSTANT_Class 解析为类的方法区内存地址，CONSTANT_Methodref 解析为方法表的偏移量。
+
+扩展延伸：常量池与运行时常量池——Class 文件中的常量池是静态数据，加载到方法区后成为运行时常量池（Runtime Constant Pool），此时可动态添加新常量（如 String.intern() 添加的字符串）。常量池的内存开销——大型 Class 文件（如包含大量字符串的代码）的常量池可能很大。JDK 7+ 将运行时常量池从永久代移到堆中。查看工具：javap -verbose ClassName 可查看 Class 文件的常量池内容。`,hints:[`常量池索引从 1 开始，0 保留表示不引用任何常量`,`CONSTANT_Utf8 存储字符串内容，CONSTANT_String 引用 CONSTANT_Utf8（两者分离）`],tags:[`JVM`,`Class文件`,`常量池`,`字节码`,`符号引用`],content_hash:`20a2e36b354d`,id:2599},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`-XX:MaxMetaspaceSize 与元空间回收`,content:`请解释 JVM 元空间（Metaspace）的回收机制。-XX:MaxMetaspaceSize 参数的作用是什么？元空间不足时 JVM 会怎么处理？什么情况下会发生元空间泄漏？`,answer:`答案：元空间（Metaspace）是 JDK 8 替代永久代（PermGen）的类元数据存储区域，使用本地内存（Native Memory）而非 JVM 堆内存。-XX:MaxMetaspaceSize 限制元空间最大使用量（默认无上限）。元空间回收的触发条件是类加载器变为不可达——当 ClassLoader 可被 GC 时，其加载的所有类的元数据才可被回收。
+
+解析：1）内存模型——元空间使用本地内存，默认无上限（只受系统物理内存限制）。元空间内部使用 Chunk 分配器：从系统内存分配大的 Chunk（多个连续的 64KB 块），内部切割为 Block 分配给各个类加载器。类加载器卸载时，整个 Chunk 被回收（无需遍历单个类的元数据）。2）回收条件——元空间回收本质是类卸载（Class Unloading）。类卸载的条件苛刻：该类所有实例已被回收、加载该类的 ClassLoader 已被回收、该类对应的 java.lang.Class 对象没有在任何地方被引用。这三个条件全部满足时，类的元数据才能被回收。3）MaxMetaspaceSize 的作用——设置元空间上限。如果在使用过程中达到上限，JVM 会触发 Full GC 尝试回收类元数据。如果 Full GC 后元空间使用率仍未下降（类的元数据无法被回收），JVM 抛出 OutOfMemoryError: Metaspace。即使 MaxMetaspaceSize 未设置，JVM 也有内部阈值（-XX:MetaspaceSize，默认约 20MB），首次触发元空间 GC。之后根据空闲比例动态调整阈值。
+
+扩展延伸：元空间泄漏的典型场景——1）热部署/动态类生成：如 Spring Boot DevTools 频繁重启、CGLib 动态代理大量生成类、Groovy 等动态语言在运行时动态加载类。每次部署/调用产生新的 ClassLoader，不断累积的类元数据撑满元空间。2）排查方法：-XX:+TraceClassLoading 和 -XX:+TraceClassUnloading 查看类加载/卸载情况。如果类加载数量不断增长而卸载数为 0，说明存在泄漏。jstat -gc PID 的 MU 列显示元空间使用量，列 MC 显示元空间容量。3）调优建议：MaxMetaspaceSize 建议设置上限（避免无限膨胀导致操作系统 OOM Killer），但不宜过小（否则频繁触发 Full GC）。线上建议 256MB-512MB 作为起点。通过 jstat 观察元空间使用率后调整。`,hints:[`元空间回收必须满足类加载器可被 GC——三个条件缺一不可`,`MaxMetaspaceSize 不设置时默认无上限，但不代表不会触发 GC`],tags:[`JVM`,`元空间`,`MaxMetaspaceSize`,`类卸载`,`内存管理`],content_hash:`f9997acaaab6`,id:2600},{category:`jvm`,difficulty:`easy`,type:`choice`,title:`JVM 常量池索引设计`,content:`Java Class 文件中常量池的索引从什么数字开始编号？为什么这样设计？`,options:[`A) 从 1 开始，因为 0 被保留用于表示「不引用任何常量」`,`B) 从 1 开始，因为 Java 数组默认从 1 开始编号`,`C) 从 0 开始，与 C 语言数组索引一致`,`D) 从 1 开始，因为常量池第 0 项存储当前类的全限定名`],answer:`A`,hints:[`常量池索引 0 是无效索引——思考什么场景下需要表示「没有引用任何常量」`,`查看 class 文件中指令的操作数——指向常量池的索引 0 表示不引用`],tags:[`JVM`,`Class文件`,`常量池`,`字节码`],content_hash:`cd65a3f22caf`,id:2601},{category:`jvm`,difficulty:`easy`,type:`choice`,title:`ZGC 染色指针与最大堆限制`,content:`ZGC 使用染色指针（Colored Pointer）技术在 64 位指针的高位编码对象状态。在 Linux/x64 平台上（48 位虚拟地址空间），ZGC 支持的最大堆大小约为多少？`,options:[`A) 4TB，因为 64 位指针中 4 位用于染色标记，剩余地址空间受限`,`B) 4TB，与压缩指针（Compressed Oops）的最大 32GB 相比，4TB 是合理扩展`,`C) 16TB，因为 48 位虚拟地址减去 4 位染色指针后剩 44 位，2^44 = 16TB`,`D) 8TB，因为染色指针占用 6 位（含预留位），剩余 42 位可寻址空间`],answer:`C`,hints:[`Linux x64 使用 48 位虚拟地址空间（高位需符号扩展）`,`ZGC 的 4 个颜色位（Finalizable/Remapped/Marked0/Marked1）占用指针的 bits 44-47`],tags:[`JVM`,`ZGC`,`染色指针`,`GC`],content_hash:`678e11af3544`,id:2602},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JIT 逆优化（Deoptimization）机制`,content:`什么是 JIT 逆优化（Deoptimization）？在什么场景下会发生逆优化？JVM 如何从编译执行安全回退到解释执行？`,answer:`答案：逆优化（Deoptimization）是 JIT 编译器在执行过程中发现编译时所做的假设不再成立时，将当前执行点从编译后的机器码回退到解释执行的机制。
+
+解析：逆优化通常发生在以下场景：1）类层次分析（CHA）被打破——C2 编译器假设某个接口只有一个实现类并做了方法内联，但运行时新的实现类被加载，内联假设不再成立。2）罕见陷阱（Uncommon Trap）——编译优化的某个分支假设被违反。3）通过诊断参数可手动触发。
+
+实现机制：逆优化通过 SafePoint 实现。当 JIT 发现假设失效时，标记相关方法为「不可进入」，并在该方法的 SafePoint 处触发回退。正在栈上执行编译代码的线程通过 OSR（栈上替换）将当前执行帧中的状态恢复到解释器可以理解的形式，然后跳转到解释器继续执行。关键资源（寄存器中的局部变量和操作数栈值）必须从寄存器或栈帧位置安全地复原到解释器栈帧。
+
+扩展延伸：逆优化是分层编译能够安全运行的关键保障——C1 编译器收集 profiling 数据后传递给 C2，C2 基于 profiling 做激进优化。如果 profiling 数据因代码路径变化而失效，逆优化确保程序能正确降级运行。过多的逆优化（称为「逆优化风暴」Deoptimization Storm）会导致性能急剧下降，通常由动态类加载频繁触发，可通过 -XX:PerMethodTrapLimit 控制每个方法允许的陷阱次数。`,hints:[`CHA（Class Hierarchy Analysis）假设被打破是逆优化最常见的触发场景`,`C2 做激进优化基于 profiling 数据，当数据失效时需要回退保护`],tags:[`JVM`,`JIT`,`逆优化`,`Deoptimization`,`C2`],content_hash:`aa098fd9d851`,id:2603},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 虚方法分派与 vtable`,content:`JVM 如何处理虚方法调用（invokevirtual）？vtable（虚方法表）的作用是什么？它与接口方法调用（invokeinterface）的区别是什么？`,answer:`答案：虚方法分派（Dynamic Dispatch）是 JVM 处理 invokevirtual 指令的关键机制。每个类在方法区存储一个 vtable（虚方法表），按固定顺序排列该类及其父类的所有虚方法的入口地址。invokevirtual 通过接收者对象的实际类型在 vtable 中定位方法入口，实现运行时的多态分派。
+
+解析：1）vtable 的构建——子类的 vtable 复制父类的 vtable，然后覆盖被重写的方法入口，新增的方法追加到末尾。vtable 的索引在类加载时确定，之后不再变化。这使得虚方法分派的性能开销极低——只需要一次数组索引访问。
+
+2）invokevirtual vs invokeinterface：invokevirtual 的分派路径较短（vtable 索引已知，O(1) 访问），而 invokeinterface 需要先在实现类的方法表中搜索匹配的接口方法（JDK 8 前为线性搜索，JDK 8 后通过 itable 优化）。JDK 8 为每个类引入 itable（接口方法表），记录该类实现的接口列表及其方法偏移量，invokeinterface 通过 itable 实现 O(1) 分派。
+
+3）JIT 优化——C2 编译器通过 CHA（Class Hierarchy Analysis）检测接口/父类的实现类数量。如果只有一个实现类，JIT 可以将虚分派转为直接调用并内联（同时插入类型检查 guard 以防新的实现类被加载）。`,hints:[`vtable 的索引在类加载时确定——子类追加自己的方法到父类 vtable 末尾`,`invokeinterface 比 invokevirtual 慢的根源在于接口方法的分派路径更长`],tags:[`JVM`,`vtable`,`虚方法`,`invokevirtual`,`itable`],content_hash:`68422b241729`,id:2604},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`G1 Mixed GC 的触发与选区策略`,content:`G1 垃圾回收器的 Mixed GC 在什么条件下触发？它是如何选取参与回收的老年代 Region 的？Mixed GC 为什么需要分多次（多轮）执行？`,answer:`答案：Mixed GC 在 G1 的并发标记（Concurrent Marking）完成后触发，目标是同时回收年轻代和部分高价值的老年代 Region。
+
+触发条件：1）并发标记阶段完成。2）老年代已用空间占比超过 -XX:InitiatingHeapOccupancyPercent（IHOP，默认 45%）时，G1 启动并发标记。标记完成后，如果预估的老年代回收收益（垃圾量）满足停顿时间目标，则启动 Mixed GC。
+
+选区策略（CSet Selection）：G1 基于「垃圾最多优先」原则选择老年代 Region。并发标记阶段 G1 统计每个 Region 的存活对象比例（Live Data Percent）。Mixed GC 选择存活率最低（即垃圾最多）的 Region 优先回收——同样的停顿时间内能释放最多的空间。CSet 的构建受 -XX:G1MixedGCLiveThresholdPercent（默认 85%，存活率高于此值的 Region 不参与 Mixed GC）和 -XX:G1HeapWastePercent（默认 5%，可回收空间占比小于此值时停止 Mixed GC）控制。
+
+多轮执行的原因：G1 的停顿目标（-XX:MaxGCPauseMillis，默认 200ms）限制了单次 Mixed GC 能回收的 Region 数量。如果有大量高价值的 Region 需要回收，G1 分多轮 Mixed GC 逐渐回收——每一轮选一部分 Region，直到老年代可用空间足够或所有有价值 Region 都被回收。一轮 Mixed GC 的组成 = Eden + Survivor + 选中的老年代 Region。
+
+扩展延伸：如果 Mixed GC 的回收速度跟不上新晋升对象的速度，老年代空间持续增长，最终触发 G1 Full GC（退化到 Serial Old 做单线程 Full GC）。GC 日志中显示为「Pause Full (G1 Evacuation Pause)」。解决办法包括增大堆大小、降低 IHOP 提早开始并发标记、或调整 G1MixedGCCountTarget（目标轮数，默认 8 轮）。`,hints:[`Mixed GC 的选区依据存活率——存活率越低（垃圾越多）的 Region 优先回收`,`IHOP（Initiating Heap Occupancy Percent）控制并发标记的触发时机`],tags:[`JVM`,`G1`,`Mixed GC`,`GC调优`,`Region`],content_hash:`622370d4ffba`,id:2605},{category:`jvm`,difficulty:`medium`,type:`choice`,title:`Compressed OOPs 指针压缩原理`,content:`关于 JVM 的压缩普通对象指针（Compressed OOPs），以下说法正确的是？`,options:[`A) Compressed OOPs 默认开启，将 64 位堆指针压缩为 32 位，但仅在堆大小 ≤ 32GB 时有效；堆超过 32GB 时自动关闭`,`B) Compressed OOPs 只能压缩堆中对象的引用字段，无法压缩数组元素中的引用`,`C) Compressed OOPs 的压缩能力不依赖对象对齐，即使对象头没有 8 字节对齐也能正常工作`,`D) 关闭 Compressed OOPs（-XX:-UseCompressedOops）对性能没有任何影响`],answer:`A`,hints:[`Compressed OOPs 通过 32 位值加基址左移 3 位的方式寻址，最多覆盖 32GB 堆`,`指针压缩在堆 ≤ 32GB 时默认开启，节省约 40% 的引用内存占用，同时提升 CPU 缓存命中率`],tags:[`JVM`,`Compressed OOPs`,`指针压缩`,`堆内存`],content_hash:`567cd72f9ac0`,id:2606},{category:`jvm`,difficulty:`easy`,type:`choice`,title:`G1 Humongous 大对象提前回收`,content:`G1 GC 中，当一个对象的大小超过 Region 大小的一半时被标记为 humongous 对象。以下关于 humongous 对象的说法正确的是？`,options:[`A) 并发标记阶段如果发现 humongous 对象已无存活引用，G1 可以在 Mixed GC 之前将其所在 Region 整块回收（Eager Reclamation）`,`B) Humongous 对象在年轻代的 Survivor 区域分配，通过多次 Young GC 晋升到老年代`,`C) Humongous 对象不受 G1 停顿预测模型约束，任何 Mixed GC 都会扫描所有 Humongous Region`,`D) Humongous 对象只能通过 Full GC 回收，因为 G1 无法在并发阶段处理大对象`],answer:`A`,hints:[`Humongous Region 是一种特殊的老年代 Region，不参与正常的复制回收`,`Eager Reclamation 是 G1 在并发标记后的优化——直接回收全垃圾的 Humongous Region`],tags:[`JVM`,`G1`,`Humongous`,`GC`,`内存分配`],content_hash:`0a559fb982a4`,id:2607},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM CodeCache 代码缓存管理`,content:`JVM 的 CodeCache（代码缓存）是什么？它存储哪些内容？CodeCache 满了会发生什么？`,answer:`答案：CodeCache 是 JVM 用于存储 JIT 编译生成的本地机器码的内存区域，独立于堆和元空间。
+
+存储内容：1）JIT 编译后的方法代码（C1 和 C2 编译结果）。2）JVM 内部桩代码（Interpreter 入口、Stub 例程、异常处理代码）。3）Native 方法的适配代码。JDK 9+ 将 CodeCache 分为三个段（Segmented Code Cache）：non-method（JVM 内部桩代码，永不回收）、profiled（C1 编译代码，生命周期短）和 non-profiled（C2 编译代码，生命周期长）。
+
+CodeCache 满的影响：当 CodeCache 耗尽时，JVM 停止 JIT 编译，所有方法退回到解释执行，性能急剧下降。JVM 输出「CodeCache is full. Compiler has been disabled.」警告。CodeCache sweeper 线程会尝试回收未使用的编译代码，但如果回收速度跟不上，应用将长时间处于低性能的解释执行模式。
+
+调优：-XX:ReservedCodeCacheSize（JDK 8 默认 240MB，JDK 17+ 默认 256MB）、-XX:+PrintCodeCache 查看使用情况、jcmd <pid> Compiler.codecache 查看详细统计。对于大型微服务或复杂框架，建议适当增大 ReservedCodeCacheSize，避免 CodeCache 满导致的性能突降。`,hints:[`JDK 9 引入分段 CodeCache 将 C1 和 C2 编译代码分离，避免 C2 编译代码被 C1 代码的频繁回收影响`,`CodeCache 耗尽是生产环境性能突降的隐蔽原因——通常表现为某次部署后吞吐量骤降`],tags:[`JVM`,`CodeCache`,`JIT`,`编译优化`],content_hash:`8d995f3f4273`,id:2608},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM 编译器线程与编译队列机制`,content:`JVM 的编译器线程（Compiler Thread）是如何工作的？-XX:CICompilerCount 参数的作用和默认值是什么？容器环境下为什么需要关注这个参数？`,answer:`答案：编译器线程是 JVM 后台线程，负责将热点字节码编译为本地机器码。编译请求由解释执行线程（方法调用计数器达到阈值后）提交到编译队列，编译器线程从队列中取出任务异步编译。
+
+工作机制：1）编译请求提交——方法调用计数或循环回边计数达到阈值后，方法被放入编译队列（优先级队列，C2 任务优先级高于 C1）。2）异步编译——编译器线程从队列头部取出任务，在后台完成编译，不影响应用线程的执行。3）完成回调——编译完成后，方法的入口指针被更新为编译后的机器码地址。
+
+CICompilerCount 参数：控制编译器线程的总数。默认值 = CPU 核数 / 2（最小 2，最大约 16）。分层编译模式下，C1 线程数 = CICompilerCount / 3（向下取整），C2 线程数 = 剩余部分。如果编译队列持续堆积（可通过 jstat -compiler 观察编译任务数持续增长），说明编译器线程数不足。
+
+容器环境问题：JDK 8u191 之前，JVM 检测到的是宿主机的 CPU 核数而非容器的 CPU 核数。如果宿主机 64 核但容器只分配 4 核，CICompilerCount 默认值为 32（64/2），导致容器内 32 个编译器线程争抢 4 个 CPU 核，编译线程之间互相竞争反而拖慢编译速度。解决办法：显式设置 -XX:CICompilerCount=2（或根据容器 CPU 核数调整）。JDK 10+（JEP 293）已修复此问题。`,hints:[`编译队列堆积的症状——jstat -compiler 的 Failed 和 Invalid 数量增加，应用长时间无法达到峰值性能`,`宿主机 64 核容器 4 核的场景下，CICompilerCount 默认 32 个线程会成为严重的 CPU 争抢源`],tags:[`JVM`,`编译器线程`,`CICompilerCount`,`JIT`,`容器`],content_hash:`0aaa3e7a6653`,id:2609},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`invokedynamic 指令与 Lambda 实现原理`,content:`JDK 7 引入的 invokedynamic 指令是什么？Lambda 表达式是如何通过 invokedynamic 实现的？与匿名内部类相比有何优势？`,answer:`答案：invokedynamic（JDK 7, JSR 292）是 Java 虚拟机指令集中最灵活的调用指令，允许在运行时动态确定方法的调用目标。它通过引导方法（Bootstrap Method, BSM）和调用点（CallSite）机制，将方法分派的决策推迟到运行时。
+
+执行流程：1）第一次执行 invokedynamic 时，JVM 调用指定的 BSM（此时 BSM 执行一次）。2）BSM 返回一个 CallSite 对象，内部封装了一个 MethodHandle（方法句柄）。3）后续执行直接从 CallSite 获取目标方法句柄调用，不再经过 BSM。4）CallSite 分为常量调用点（ConstantCallSite，目标不可变，最常用）和可变调用点（MutableCallSite，目标可在运行时切换，用于动态语言）。
+
+Lambda 的实现：编译器将每个 Lambda 翻译为一个 invokedynamic 指令 + 对应的 BSM。BSM 在运行时调用 LambdaMetafactory.metafactory()，动态生成一个内部类（实现了目标函数式接口），Lambda 体的代码封装在该内部类的方法中。
+
+相比匿名内部类的优势：1）匿名内部类在编译时生成独立的 .class 文件；Lambda 在运行时动态生成，同一个 Lambda 的多次求值共享同一个 CallSite 和实现类。2）Lambda 的 this 指向外部类（匿名内部类的 this 指向内部类实例自身）。3）Lambda 不会每次调用都创建一个新实例——非捕获 Lambda 相当于单例，捕获 Lambda 每次调用创建新的实现类实例。`,hints:[`invokedynamic 的 BSM 在类加载时执行一次，后续调用直接通过 CallSite 获取方法句柄，性能与普通虚方法调用相当`,`非捕获 Lambda（如 x -> x + 1，没有引用外部非静态变量）相当于静态单例模式，每次 invokedynamic 返回同一个 CallSite`],tags:[`JVM`,`invokedynamic`,`Lambda`,`MethodHandle`,`字节码`],content_hash:`bdaf2e8a2d8b`,id:2610},{category:`jvm`,difficulty:`easy`,type:`choice`,title:`JVM 容器感知与资源检测`,content:`JVM 在容器环境（Docker/Kubernetes）中运行时，需要正确检测 CPU 和内存限制。以下哪个参数是控制 JVM 自动读取 cgroup 容器资源限制并调整自身行为的关键开关？`,answer:`A) -XX:+UseContainerSupport（JDK 10 引入 JEP 293，JDK 8u191 回移植，默认启用）。
+解析：UseContainerSupport 控制 JVM 是否读取 cgroup 的 CPU 和内存限制。启用后 JVM 自动检测容器分配的 CPU 数量（cpu.shares）和内存上限（memory.limit_in_bytes），据此调整默认堆大小、GC 线程数、JIT 编译器线程数等。若没有该参数，JVM 会检测到宿主机 64 核但容器只分配 4 核，导致 GC 线程数过多和性能问题。B) -XX:+UseCGroupMemoryLimitForHeap 是 JDK 8u131 引入的实验性参数，仅影响堆大小计算，不涉及 CPU 检测。C) 和 D) 都是虚构参数。`,options:[`A) -XX:+UseContainerSupport（JDK 10+ 默认开启，读取 cgroup 的 CPU 和内存限制）`,`B) -XX:+UseCGroupMemoryLimitForHeap（仅控制堆大小计算，不涉及 CPU）`,`C) -XX:+ContainerAwareness（通用容器感知开关）`,`D) -XX:+DetectContainerLimits（完整的资源检测参数）`],hints:[`容器中如果未配置此参数，JVM 会检测到宿主机全部核数`,`JDK 8u191 将此参数回移植，建议容器内 Java 应用升级至此版本以上`],tags:[`JVM`,`容器`,`UseContainerSupport`,`cgroup`],content_hash:`302145d5c2d0`,id:2611},{category:`jvm`,difficulty:`medium`,type:`choice`,title:`Graal JIT 编译器与 JVMCI`,content:`关于 JDK 17+ 中 Graal JIT 编译器（JVMCI，JEP 243）的描述，以下哪一项是正确的？`,answer:`A) Graal 编译器是用纯 Java 编写的 JIT/AOT 编译器，可以通过 JVMCI 接口作为 C2 Server Compiler 的替代，使用 -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler 启用。
+解析：Graal 由 Oracle Labs 开发，完全用 Java 编写。它使用 Sea-of-Nodes 中间表示（比 C2 的 Ideal Graph 更激进）实现更深的优化。Graal 既可作为 JIT 编译器（通过 JVMCI），也可作为 AOT 编译器（通过 Native Image 的 Substrate VM）。B 错误——Graal JIT 在标准 OpenJDK 中也可用（作为实验性特性），不限于 GraalVM 发行版。C 错误——Graal 替代的是 C2 编译器而非解释器。D 错误——Graal 既支持 JIT（运行时编译热点方法）也支持 AOT（提前编译）。`,options:[`A) Graal 是用 Java 编写的 JIT/AOT 编译器，可通过 JVMCI 接口作为 C2 的替代，使用 -XX:+UseJVMCICompiler 启用`,`B) Graal 编译器只能在 GraalVM 发行版中使用，不能在标准 Oracle/OpenJDK 中使用`,`C) Graal 编译器完全替代了解释器，所有代码都通过 Graal 编译执行而不经解释阶段`,`D) Graal 编译器是纯 AOT 编译器，只能在构建时使用，不能在运行时动态编译热点代码`],hints:[`Graal 的 JVMCI 接口是 JDK 9 引入的插件式编译器接口（JEP 243）`,`Graal 编译器最重要的特点是「用 Java 写 Java 编译器」——这是自我优化的关键`],tags:[`JVM`,`Graal`,`JIT`,`JVMCI`],content_hash:`286c01660807`,id:2612},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JVM JFR 架构与事件采集机制`,content:`JVM 的 Java Flight Recorder（JFR）是什么？它如何实现极低开销（<1%）的运行时事件采集？JFR 的持续事件、定时事件、即时事件三类事件分别在什么场景下使用？`,answer:`答案：JFR 是 JDK 7 引入（JDK 11 开源免费）的基于事件的内置性能监控框架，内置于 HotSpot JVM，支持连续采集运行时事件。其典型开销 <1%，可生产环境默认开启。
+
+解析：低开销实现机制包括：1）每个线程使用本地缓冲区（Thread Local Buffer）写入事件，完全无锁。缓冲区写满后通过 CAS 发布到全局缓冲区列表。2）热路径通过采样替代插桩——高频路径（如方法进入/退出）不做每事件写入，而是通过采样线程定期采集。3）事件存储在预分配的原生缓冲区中（Native Memory 而非 Java 堆），不触发 GC。4）事件定义在 JVM 本地代码（C++）层面，通过 JVM 级别的回调写入，无需经过 JNI 调用。
+
+三类事件：1）持续事件（Duration Event）——记录有持续时间的操作，记录开始和结束时间戳并计算耗时。适用于 GC 停顿、锁等待、Socket IO 等。2）定时事件（Timed Event）——通过采样线程定期采集 JVM 状态快照（默认每 20ms）。适用于 CPU 负载采样、对象分配采样、线程统计。3）即时事件（Instant Event）——记录无持续时间的瞬间状态变化。适用于异常抛出、类加载、线程状态变化。
+
+扩展延伸：JFR 数据可通过 jcmd JFR.dump 转储为 .jfr 文件，用 JMC（JDK Mission Control）可视化分析，或编程解析。JDK 9+ 支持 -XX:StartFlightRecording 启动时自动开启录制。自定义应用事件通过继承 jdk.jfr.Event 实现。JFR 的连续录制模式（Continuous Recording）默认保留最近数小时数据，适合保留在生产环境作为「黑匣子」。`,hints:[`JFR 为什么能实现 <1% 开销——无锁设计 + 采样替代插桩 + 原生内存分配`,`三种事件类型对应不同场景：持续事件=有持续时间操作，定时事件=周期性采样，即时事件=瞬间状态`],tags:[`JVM`,`JFR`,`监控`,`性能`],content_hash:`0d5f521f213e`,id:2613},{category:`jvm`,difficulty:`medium`,type:`short_answer`,title:`JVM Adaptive Sizing Policy 自适应调整`,content:`JVM 的 Adaptive Sizing Policy（-XX:+UseAdaptiveSizePolicy）是什么？它是如何根据 GC 性能统计自动调整新生代大小、Survivor 比例和晋升阈值的？什么场景下建议关闭自适应调整？`,answer:`答案：Adaptive Sizing Policy 是 Parallel Scavenge 收集器的自动化调优机制（默认开启），根据实时 GC 指标（吞吐量、停顿时间、GC 频率）自动调整堆的代区大小和 GC 参数，无需人工干预。
+
+解析：工作机制——GC 发生后，Adaptive Sizing Policy 分析以下数据：GC 耗时、每次回收量、晋升对象大小、吞吐量（应用时间 / GC 时间）。基于分析结果决定：1）自动增大/减小新生代（-Xmn 未手动设置时）。停顿过长则减小新生代（Eden 变小减少每轮 GC 工作量）；GC 频率过高则增大新生代。2）调整 SurvivorRatio——确保 Survivor 区有足够空间容纳晋升对象，避免对象过早晋升到老年代引发 Full GC。3）动态调整晋升阈值（MaxTenuringThreshold）——如果 Survivor 区溢出频繁，降低阈值让对象尽早进入老年代。4）调整吞吐量目标（-XX:GCTimeRatio，默认 99，即 GC 时间占总时间的 <1%）。
+
+扩展延伸：关闭自适应调整的场景：1）应用的内存分配模式非常稳定，需要精确控制各代区大小——手动设置 -Xmn、-XX:SurvivorRatio、-XX:MaxTenuringThreshold 并禁用 -XX:-UseAdaptiveSizePolicy。2）低延迟敏感应用——自适应调整可能导致代区大小波动，引发 GC 行为突变。注意：AdaptiveSizePolicy 只对 Parallel Scavenge（-XX:+UseParallelGC）有效。G1、ZGC、Shenandoah 使用各自的内置自适应策略（G1 的停顿预测模型、InitialHeapOccupancyPercent 等），不依赖此参数。`,hints:[`UseAdaptiveSizePolicy 默认开启，是 Parallel GC「自调优」特性的核心`,`手动设置 -Xmn、-XX:SurvivorRatio 等参数时会覆盖自适应策略的对应决策`],tags:[`JVM`,`AdaptiveSizePolicy`,`GC`,`Parallel GC`,`调优`],content_hash:`b2e8714a5306`,id:2614},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`invokedynamic 指令与 Lambda 表达式编译`,content:`JVM 的 invokedynamic 指令（JDK 7 引入，JSR 292）是什么？它与传统 invokevirtual/invokestatic 指令的核心区别是什么？Java 8 的 Lambda 表达式是如何借助 invokedynamic 和 LambdaMetafactory 实现的？`,answer:`答案：invokedynamic 是 JVM 指令集的第 186 条指令，允许在运行时通过引导方法（Bootstrap Method, BSM）自定义方法调用的链接规则。Lambda 表达式利用 invokedynamic 将闭包创建延迟到首次调用时，避免编译期生成匿名内部类。
+
+解析：与传统 invoke 指令的核心区别——invokevirtual/invokestatic 的调用目标在编译期基本确定（类加载解析阶段将符号引用转为直接引用，或通过虚方法表运行时查找）。invokedynamic 的调用目标在编译期完全未知：首次执行时 JVM 调用 BSM，BSM 返回一个 CallSite（封装 MethodHandle），将调用点与目标方法链接。后续执行直接跳转，BSM 不再参与。
+
+Lambda 编译流程：1）编译阶段——javac 将 Lambda 表达式编译为 invokedynamic 指令 + 一个私有静态方法（包含 Lambda 体代码）。2）首次调用——invokedynamic 触发 LambdaMetafactory.metafactory() BSM，传入函数式接口类型、实现方法名和私有静态方法的 MethodHandle。3）BSM 使用 ASM 字节码生成技术动态生成适配器类（实现函数式接口，方法体中调用私有静态方法），返回 ConstantCallSite 指向该适配器。4）后续调用——invokedynamic 直接跳转到已链接的 CallSite，BSM 无需再次执行。这种方案实现了「Lambda 的运行时生成成本只在首次调用时发生一次」——后续调用与普通方法调用无异。
+
+扩展延伸：invokedynamic 的其他应用——JDK 9 的字符串拼接（StringConcatFactory 替代 StringBuilder）、JDK 14 的 Record 类 equals/hashCode/toString 生成。底层依赖 java.lang.invoke.MethodHandle（方法句柄），比反射更轻量级（编译期类型检查）。VarHandle（JDK 9，JEP 193）也基于 MethodHandle 语法提供了类型安全的字段原子操作替代 sun.misc.Unsafe。`,hints:[`invokedynamic 的 BSM 在首次执行时运行一次，后续直接跳转到已链接的 CallSite`,`LambdaMetafactory 使用 ASM 运行时生成适配器类，这比编译期生成匿名内部类更高效`],tags:[`JVM`,`invokedynamic`,`Lambda`,`MethodHandle`,`字节码`],content_hash:`bbb33c38d2dc`,id:2615},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`invokedynamic 指令与 Lambda 底层实现`,content:`invokedynamic 指令在 Java 7 引入，是 Java 7 的五大新指令之一。Java 8 的 Lambda 表达式正是通过 invokedynamic 实现的。请详细说明 invokedynamic 的工作原理以及 Lambda 表达式如何通过它实现。`,answer:`答案：invokedynamic 是 JVM 指令集中最灵活的调用指令，它允许在运行时动态确定方法调用目标（调用点 CallSite）。Lambda 表达式通过 invokedynamic + java.lang.invoke.LambdaMetafactory 实现延迟翻译和轻量级实现。
+
+解析：传统的方法调用指令（invokevirtual/invokeinterface/invokestatic/invokespecial）在编译时就必须有固定的目标方法签名和类。invokedynamic 将方法查找延迟到运行时：编译器只在常量池中生成一个方法句柄（MethodHandle）的引导方法（Bootstrap Method，BSM），JVM 首次执行 invokedynamic 时调用 BSM 返回一个 CallSite 对象（包含 MethodHandle），后续执行直接通过 CallSite 调用，不再重复引导。
+
+Lambda 的实现过程：1）编译器将 Lambda 体（如 x -> x + 1）编译为一个静态方法（如 lambda$0(int)int）或一个 invokedynamic 调用点。2）运行时首次执行时，JVM 调用 LambdaMetafactory.metafactory() 引导方法，该工厂方法根据 Lambda 的签名和目标函数式接口动态生成一个内部类（通过 ASM 生成字节码或使用 Unsafe.defineAnonymousClass 生成隐藏类）。3）生成的内部类实现目标函数式接口（如 Function<Integer,Integer>），其中的函数式方法委托给 Lambda 体对应的静态方法。
+
+扩展延伸：Lambda 的 invokedynamic 实现的一大优势是捕获变量（capture）的成本分摊——引导方法只被调用一次，捕获变量的值通过构造函数参数传递给内部类实例，避免了匿名内部类每次创建都要加载一个新类的开销。另外 JDK 17+ 使用隐藏类（Hidden Class，JEP 371）替代了匿名类用于 Lambda 实现，进一步增强了安全性和生命周期可控性。invokedynamic 也被用于 Java 14+ 的 Record 模式和模式匹配（Pattern Matching）等新特性。`,hints:[`invokedynamic 的引导方法（BSM）只在首次执行时被调用一次`,`Lambda 通过 LambdaMetafactory 动态生成内部类实现函数式接口委托`],tags:[`JVM`,`字节码`,`invokedynamic`,`Lambda`,`Java 8`],content_hash:`5f7b746b1ff2`,id:2616},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`JFR（Java Flight Recorder）原理与实践`,content:`JFR（Java Flight Recorder）是什么？它为什么被认为对 JVM 性能影响极小？JFR 的架构和核心组件有哪些？如何分析 JFR 记录？`,answer:`答案：JFR 是 Oracle 开发的 JVM 内置的极低开销的事件记录和分析框架，设计目标是运行时开销低于 1%，可用于生产环境的连续监控。其核心思想是：JVM 内部的各种事件（GC、锁竞争、方法采样、IO、类加载等）在发生时写入一个循环缓冲区，需要时 dump 出来做离线分析。
+
+解析：JFR 架构包含三个核心组件：
+1）事件生产者（Event Producer）——JVM 内部的事件源（GC、JIT、线程调度、锁等），以及 Java 应用层的自定义事件（通过 jdk.jfr.Event API）。事件类型分为三种：瞬时事件（Duration Event，有持续时间的事件，如 GC 暂停）、定时事件（Timed Event，按时间间隔检查的事件）、即时事件（Instant Event，瞬时发生的事件，如线程创建）。
+2）核心记录引擎——JVM 内置的基于本地线程的缓冲区系统。每个线程在本地缓冲区中写入事件，缓冲区满后 flush 到全局缓冲区。事件写入和读取通过无锁化设计（每个线程独立写入自己的缓冲区）尽可能减少同步开销。
+3）数据输出——持续记录到循环缓冲区（默认在 JVM 内存中，内存大小由 -XX:FlightRecorderBufferSize 控制），或记录到磁盘文件（-XX:StartFlightRecording 指定）。可以被其他程序通过 MBean 或 jcmd 命令动态启停。
+
+极低开销的原因：1）采样为主——JFR 大量使用采样（Sampling）而非插桩（Instrumentation），如方法调用热点分析默认每 20ms 采样一次线程栈。2）无锁化设计——写入路径无锁（Thread Local Buffer + CAS-free）。3）环形缓冲区的异步消费——事件生产者和消费者之间没有同步阻塞，即使消费者跟不上也只是丢弃旧事件。4）JVM 内部集成——直接在 JVM 的 hot path 上插入记录点比外部代理（如 BTrace）开销低得多。
+
+扩展延伸：JFR 在 JDK 11+ 已完全开源且免费可用。常用命令：jcmd <pid> JFR.start name=myrecording（启动记录）、jcmd <pid> JFR.dump name=myrecording filename=recording.jfr（转储）、jcmd <pid> JFR.stop name=myrecording（停止）。JDK Mission Control（JMC）是官方分析工具，支持自动分析和事件关联。JFR 事件多达 200+，核心分析场景包括：GC 暂停分析、热点方法采样、锁竞争分析、IO 延迟分析、内存泄漏趋势。`,hints:[`JFR 的开销宣言 <1%——主要得益于采样+无锁缓冲区+循环写入`,`JMC 是 JFR 的主要可视化分析工具，提供自动问题检测（自动化规则引擎）`],tags:[`JVM`,`JFR`,`监控`,`性能`,`JMC`],content_hash:`b37410795ab0`,id:2617},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`Java Agent 与 Instrumentation 机制`,content:`Java Instrumentation 机制是什么？如何编写一个 Java Agent？Instrumentation 的核心 API 有哪些？它和 AOP、字节码增强有什么关系？`,answer:`答案：Java Instrumentation 是 JVM 提供的在类加载前后修改字节码的机制（JSR 163）。通过 Java Agent（-javaagent 指定），开发者可以在类加载前拦截类的字节码并做修改（如添加监控代码、插桩 APM 探针）。核心 API 由 java.lang.instrument.Instrumentation 接口提供。
+
+解析：Java Agent 有两种加载方式：
+1）启动时加载（Premain）——在 JVM 启动时通过 -javaagent:agent.jar 指定。Agent 需要实现 premain(String agentArgs, Instrumentation inst) 方法。在类加载之前执行，因此可以重新定义类（通过 ClassFileTransformer 转换字节码）。
+2）动态加载（Agentmain）——在运行时通过 Attach API 加载到已运行的 JVM 中。Agent 需要实现 agentmain 方法。动态加载的 Agent 不能重新转换已经被加载的类的字节码（除非调用 retransformClasses，但限制较多）。
+
+核心 API 包括：addTransformer(ClassFileTransformer) 注册字节码转换器；retransformClasses(Class<?>...) 对已加载的类重新转换；redefineClasses(ClassDefinition...) 重新定义类（只能升级，不能增删字段/方法）；getObjectSize(Object) 获取对象的浅堆大小；canRetransform/canRedefineClasses 检查 JVM 能力。
+
+扩展延伸：Instrumentation 的生产应用——1）APM 探针（SkyWalking、Pinpoint、New Relic）：通过 Agent 拦截业务方法，无侵入地采集调用链 Trace 数据。2）热加载 IDE（IntelliJ IDEA 的 HotSwap、JRebel）：通过 retransformClasses 实现方法级别的热替换。3）性能诊断（Arthas 的 watch/trace）：通过 Agent + ByteBuddy/ASM 动态注入监控代码。
+
+注意：Instrumentation 依赖底层的字节码操作框架（ASM、ByteBuddy、Javassist）。ClassFileTransformer 每次调用都会传入类字节码数组，回调方法必须在很小的开销内完成（否则拖累类加载速度）。常见的 APM Agent 在启动时用 ByteBuddy 构建拦截规则，运行时只做匹配和委托，不加额外转换。`,hints:[`premain 在类加载前执行——所以可以拦截所有类的加载过程`,`retransformClasses 是动态诊断工具的热替换核心——但只能修改方法体，不能增删字段/方法`],tags:[`JVM`,`Agent`,`Instrumentation`,`字节码`,`APM`],content_hash:`c084352bb6b2`,id:2618},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`自动装箱与 Integer 缓存池`,content:`Java 的自动装箱（Autoboxing）和拆箱（Unboxing）的底层实现机制是什么？Integer 缓存池的范围是多少？自动装箱有哪些可能被忽视的性能陷阱？`,answer:`答案：自动装箱和拆箱是 Java 编译器提供的语法糖——编译器在编译时插入 Integer.valueOf()/Integer.intValue() 等桥接方法调用。Integer 缓存池默认缓存 -128~127 之间的 Integer 对象。自动装箱在循环和频繁转换场景下可能产生大量不必要的中间对象，导致 GC 压力和性能下降。
+
+解析：自动装箱/拆箱的编译期行为——
+1）装箱（Boxing）：Integer i = 100 编译后变为 Integer i = Integer.valueOf(100)。编译为调用 valueOf 静态方法（boolean/short/byte/char/int/long 的 valueOf 方法都使用缓存池，Double/Float 没有缓存池）。
+2）拆箱（Unboxing）：int n = i 编译后变为 int n = i.intValue()。编译为调用对应类型的 xxxValue 方法（intValue、longValue、doubleValue 等）。
+
+Integer 缓存池：-128 到 127（下限固定不可调，上限可通过 -XX:AutoBoxCacheMax 调大，JDK 6u14+ 支持）。缓存池在 Integer 类首次加载时初始化，存储为 Integer[] 数组。用 == 比较两个 Integer 时，如果值在缓存范围内返回 true，范围外返回 false。推荐始终用 equals() 比较整型包装类。
+
+性能陷阱与避免：1）循环装箱——for (Integer i = 0; i < 100000; i++) 每次迭代都会创建一个新的 Integer 对象（i = i + 1 拆箱 + 计算 + 装箱），产生大量 GC 垃圾。应使用基本类型 int。
+2）混合计算中的频繁装箱/拆箱——Long sum = 0L; for (long i = 0; ...) { sum += i; } 每次迭代拆箱相加后装箱回 Long，产生大量临时 Long 对象。
+3）集合中装箱——将基本类型放入泛型集合（如 List<Integer>）会装箱，取出使用会拆箱。在性能敏感路径上使用 Trove/Agrona 的 primitive 集合或使用数组替代。
+4）Null 拆箱——包装类为 null 时拆箱会抛出 NullPointerException（编译不能发现，运行时触发）。
+
+扩展延伸：JIT 通过逃逸分析和标量替换可以在某些情况下消除装箱对象的堆分配（逃逸分析识别出装箱对象未逃逸时，直接在栈上分配），但依赖 JIT 的优化程度。推荐的原则：性能敏感路径一律使用基本类型；方法参数和返回值尽量使用基本类型；集合考虑使用 primitive 集合库。`,hints:[`Integer.valueOf() 使用了享元模式（Flyweight）——-128~127 共享对象`,`循环内自动装箱是最常见的性能陷阱——每次循环创建新对象，大量 GC 压力`],tags:[`Java`,`自动装箱`,`缓存池`,`性能`],content_hash:`9989db3009d8`,id:2619},{category:`jvm`,difficulty:`hard`,type:`short_answer`,title:`StackMapTable 与类型检查验证`,content:`StackMapTable 属性是什么？它在 JVM 类文件验证中起什么作用？为什么 StackMapTable 的引入改变了 Java 编译的兼容性？以及它在 JDK 7+ 中对类型检查验证（Type-Checking Verification）的优化效果。`,answer:`答案：StackMapTable 是 Class 文件中的一个属性（Attribute），描述了方法体中各个指令执行前栈帧（Stack Frame）的类型映射信息。它在 JDK 6 引入（JSR 202），JDK 7 开始对版本号 >= 51 的类文件强制要求。StackMapTable 加速了类型检查验证（Type-Checking Verifier），替代了传统的类型推导验证（Type-Inference Verifier）。
+
+解析：传统的类型推导验证（JDK 6 及以前）——类型推导验证器（也称为数据流验证器，Split-Verifier）通过数据流分析（Dataflow Analysis）模拟每条指令执行前后的栈帧类型。它从方法入口处的已知类型开始，沿着所有分支（分支/合并）模拟执行。如果某个指令的操作数栈或局部变量表中的类型与指令期望的类型不匹配，则验证失败。这种方法的优点是准确，缺点是复杂、验证慢（需要模拟全部路径）。
+
+StackMapTable 引入后——类型检查验证器不再做推导，而是直接读取 Class 文件中的 StackMapTable 属性获得每个程序点的栈帧类型。它的工作方式：从方法起始帧和 StackMapTable 条目开始，逐条指令检查当前栈帧类型是否匹配，如果遇到分支合并点，StackMapTable 提供了该合并点的期望帧类型，验证器只做检查不做推导。由于 StackMapTable 是由编译器一次性生成的，验证器不再需要符号执行（Dataflow Analysis），验证速度大幅提升。
+
+对编译兼容性的影响——StackMapTable 由 javac 生成（编译时），验证器在运行时读取。如果第三方工具（如字节码框架、代码混淆器、AspectJ 等）生成的字节码没有正确维护 StackMapTable 信息，会导致 VerifyError。这被称为 StackMapTable 兼容性问题，是 JDK 7/8 迁移中最常见的类文件验证失败原因。解决方案：使用 -noverify 参数关闭验证（JDK 13 已删除该参数），或者使用 -XX:-UseSplitVerifier 回退到旧验证器（JDK 8 及以前有效）。
+
+扩展延伸：StackMapTable 加速了 JVM 的启动过程（减少验证时间），是 JDK 7+ 默认开启类型检查验证的基础。字节码操作框架（ASM、ByteBuddy）必须正确处理 StackMapTable——更新字节码后需要重新计算（通过 ClassWriter.COMPUTE_FRAMES 让 ASM 自动计算）。StackMapTable 的一个设计考量是安全性：类型检查验证器比推导验证器更严格、更安全，可以有效防止类型混淆攻击（Type Confusion Attack，如利用非法字节码绕过程序访问控制）。`,hints:[`StackMapTable 让验证器从推导验证变为检查验证——更快更安全`,`字节码操作工具如果不同步更新 StackMapTable 会导致 VerifyError——需要 COMPUTE_FRAMES`],tags:[`JVM`,`Class文件`,`StackMapTable`,`验证`],content_hash:`73dee6fadc1c`,id:2620},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 运行时数据区域`,content:`JVM 运行时数据区包括：程序计数器、___、本地方法栈、___、方法区（JDK 8 后改为___）。`,answer:`{"correct":[["虚拟机栈","Java虚拟机栈"],["堆","Java堆","堆内存"],["元空间","Metaspace"]],"distractors":["永久代","直接内存","运行时常量池","栈内存"]}`,hints:[`除了程序计数器外，其他区域都可能发生 OOM`,`方法区在 JDK 8 中被彻底移除，替代品使用本地内存`],tags:[`JVM`,`内存管理`],content_hash:`334af564ae1b`,id:2621},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Java 堆内存分区`,content:`Java 堆被分为三个区域：___（新生代和老年代）、___（可选，JDK 7 后移除）。新生代又分为：___、Survivor 0 和 Survivor 1。`,answer:`{"correct":[["年轻代","新生代"],["永久代","PermGen"],["Eden","Eden区"]],"distractors":["老年代","元空间","代码缓存","直接内存"]}`,hints:[`默认 Eden:Survivor 比例为 8:1:1`,`大多数对象都在 Eden 区分配`],tags:[`JVM`,`堆内存`],content_hash:`ea9adb7ee3f5`,id:2622},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`GC Roots 包括哪些`,content:`可作为 GC Roots 的对象包括：虚拟机栈中___的对象、方法区中___引用的对象、方法区中___引用的对象、JNI（即一般说的 Native 方法）中引用的对象。`,answer:`{"correct":[["引用","引用的"],["静态属性","静态变量"],["常量","常量池"]],"distractors":["局部变量","实例方法","成员变量","临时变量"]}`,hints:[`GC Roots 是进行可达性分析的起始点`,`局部变量表中的引用是 GC Roots 的一部分`],tags:[`JVM`,`GC`],content_hash:`23dc3c94bc2d`,id:2623},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`类加载过程的步骤`,content:`JVM 类加载过程包括以下七个阶段：加载、___、准备、___、初始化、使用和___。`,answer:`{"correct":[["验证","校验"],["解析"],["卸载"]],"distractors":["编译","执行","链接","优化","运行"]}`,hints:[`前五个阶段（加载到初始化）是类加载的核心流程`,`解析阶段不一定在初始化之前，JVM 规范允许在初始化之后开始解析`],tags:[`JVM`,`类加载`],content_hash:`1c3e0778d00f`,id:2624},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`对象存活判断算法`,content:`JVM 判断对象是否存活有两种算法：___法（无法解决循环引用问题，不为主流）和___分析法（从 GC Roots 开始搜索，不可达的对象即为可回收对象）。`,answer:`{"correct":[["引用计数","引用计数法"],["可达性","可达性分析"]],"distractors":["标记清除","标记整理","分代收集","复制算法"]}`,hints:[`主流的 JVM 都采用第二种算法来判断对象是否存活`,`循环引用是第一种算法的致命缺陷`],tags:[`JVM`,`GC`],content_hash:`e9b843d3945a`,id:2625},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`主流 GC 收集器`,content:`JDK 11+ 默认的 GC 收集器是___，它通过将堆划分为多个固定大小的 Region 来实现可预测的停顿。JDK 21+ 引入的___（JDK 15 Preview、JDK 21 GA）使用染色指针和读屏障，将停顿时间控制在___以下。`,answer:`{"correct":[["G1","G1 GC","Garbage First"],["ZGC"],["1ms","10ms","毫秒级"]],"distractors":["CMS","Parallel","Serial","Shenandoah"]}`,hints:[`G1 GC 的目标是最大停顿时间可由 -XX:MaxGCPauseMillis 参数指定`,`ZGC 的核心创新是染色指针（Colored Pointers）和读屏障（Load Barrier）`],tags:[`JVM`,`GC`,`G1`,`ZGC`],content_hash:`83a8cc95a465`,id:2626},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 堆内存大小参数`,content:`设置 JVM 初始堆大小的参数是___，设置最大堆大小的参数是___，设置新生代大小的参数是___，设置元空间大小上限的参数是___。`,answer:`{"correct":[["-Xms"],["-Xmx"],["-Xmn"],["-XX:MaxMetaspaceSize"]],"distractors":["-Xss","-XX:PermSize","-XX:NewRatio","-XX:SurvivorRatio"]}`,hints:[`Xmx 和 Xms 设置为相同值可以避免运行时动态调整堆大小带来的性能损耗`,`JDK 8 使用 MaxMetaspaceSize 取代了 MaxPermSize`],tags:[`JVM`,`参数`,`堆内存`],content_hash:`f7a37447e7a6`,id:2627},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Java 对象头结构`,content:`在 64 位 JVM（未开启指针压缩）中，一个普通 Java 对象的对象头包含两个部分：___（存储哈希码、GC 分代年龄、锁状态标志、偏向线程 ID 等）和___（指向该对象所属类元数据的指针）。开启指针压缩后，第二部分在 64 位系统中从 8 字节压缩到___字节。`,answer:`{"correct":[["Mark Word","标记字"],["Klass Pointer","类指针","类型指针"],["4","4 字节"]],"distractors":["实例数据","对齐填充","对象体","元数据"]}`,hints:[`Mark Word 在 32 位系统上占 4 字节，64 位系统上占 8 字节`,`对象头是锁升级的关键——Mark Word 中存储了锁状态标志位`],tags:[`JVM`,`对象头`,`内存布局`],content_hash:`5c89e153c7c8`,id:2628},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Minor GC / Major GC / Full GC`,content:`发生在新生代的 GC 称为___（触发频率高，速度较快）；发生在老年代的 GC 称为___；对整个堆（包括新生代、老年代、元空间）进行垃圾回收称为___，通常伴随停顿时间较长。`,answer:`{"correct":[["Minor GC","Young GC"],["Major GC","Old GC"],["Full GC"]],"distractors":["部分 GC","全局 GC","并发 GC","停止 GC"]}`,hints:[`Full GC 通常伴随着至少一次 Minor GC`,`频繁 Full GC 是 JVM 性能问题的常见信号，通常需要排查内存泄漏`],tags:[`JVM`,`GC`,`分代`],content_hash:`10545cd463e1`,id:2629},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Java 引用类型强度`,content:`Java 提供了四种引用类型，强度从高到低依次为：___（new 出来的普通对象，GC 永不回收）、___（内存不足时才回收，常用于缓存）、___（下一次 GC 时一定回收，常用于补充原生 API 的 dispose 方法）、___（随时可被回收，无法通过 get 获得强引用，用于关联 GC 通知）。`,answer:`{"correct":[["强引用","Strong Reference"],["软引用","Soft Reference"],["弱引用","Weak Reference"],["虚引用","Phantom Reference"]],"distractors":["影子引用","空引用","幽灵引用","弹性引用"]}`,hints:[`WeakHashMap 是弱引用的典型应用——当 key 不再被外部引用时自动被 GC 回收`,`软引用适合实现缓存（如 Guava Cache 的 softValues）`],tags:[`JVM`,`引用`,`GC`],content_hash:`737bc22e12a1`,id:2630},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`类与实例的初始化顺序`,content:`类初始化时先执行___的 <clinit>（类构造器），再执行当前类的 <clinit>。创建对象时先执行___的 <init>（实例变量初始化 + 构造代码块 + 构造函数），再执行子类的。静态变量赋值和静态代码块按___顺序执行。`,answer:`{"correct":[["父类","超类"],["父类","超类"],["书写","定义","代码"]],"distractors":["接口","子类","顺序无关","任意"]}`,hints:[`<clinit> 由 JVM 保证线程安全，多个线程同时初始化一个类时只有一个线程执行 <clinit>`,`构造代码块（{}）在每次创建对象时执行，且在构造函数之前`],tags:[`JVM`,`类加载`,`初始化`],content_hash:`c81b18ec5b59`,id:2631},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`String Pool 与 intern()`,content:`JDK 7+ 中 String Pool 位于___。String s = new String("a") + new String("b") 执行后 s 指向堆中的___。调用 s.intern() 时，如果池中已有则___；如果池中没有则___（JDK 7+ 的实现策略）。`,answer:`{"correct":[["堆内存","堆"],["ab","字符串ab"],["返回池中引用","返回已有引用"],["将堆中引用存入常量池","记录首次出现实例的引用"]],"distractors":["方法区","元空间","永久代","复制字符串到池中"]}`,hints:[`JDK 6 中 String Pool 在永久代，intern() 会复制字符串到永久代（可能 OOM）`,`JDK 7+ 将 String Pool 移到了堆，intern() 只在常量池中记录堆中 String 对象的引用`],tags:[`JVM`,`String`,`常量池`],content_hash:`76a0caf7258d`,id:2632},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`DCL 单例与 volatile`,content:`双重检查锁定（DCL）单例中 instance 必须用___修饰。new 操作分为三步：分配内存、___、___，JIT 可能重排序后两步。不加关键字时另一个线程可能在第一步判断 instance 不为 null 后读取到___。`,answer:`{"correct":[["volatile"],["调用构造函数","初始化"],["赋值引用","设置引用"],["未初始化的对象","半初始化对象"]],"distractors":["synchronized","final","static","transient"]}`,hints:[`volatile 在 JDK 5+ 才提供完善的 happens-before 语义（JSR-133 修复）`,`静态内部类单例模式（Initialization-on-demand holder）可以避免 DCL 的复杂性`],tags:[`JVM`,`单例`,`volatile`,`指令重排序`],content_hash:`46ccc7c1b562`,id:2633},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`JIT 编译器与分层编译`,content:`HotSpot JVM 包含两种 JIT 编译器：___（C1，启动快、优化轻）和___（C2，启动慢、优化重）。方法被调用超过阈值（默认___次）后从解释执行进入 C1 编译。JDK 6 引入的___策略先用 C1 编译，热点继续上升后用 C2 重新编译。`,answer:`{"correct":[["Client Compiler","-client"],["Server Compiler","-server","C2"],["1500","10000"],["分层编译","Tiered Compilation"]],"distractors":["AOT Compiler","Graal Compiler","LLVM","-Xcomp"]}`,hints:[`C2 编译器优化程度高但编译本身也消耗 CPU，分层编译在启动速度和峰值性能间取得平衡`,`JDK 8 默认开启分层编译（-XX:+TieredCompilation）`],tags:[`JVM`,`JIT`,`编译优化`],content_hash:`73dce582cc26`,id:2634},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`栈上分配与 TLAB`,content:`未被逃逸分析识别为___的对象可以在___（线程栈）上分配，方法结束时随栈帧自动销毁。___（Thread Local Allocation Buffer）是每个线程在 Eden 区预分配的内存区域，用于___避免线程竞争 CAS 操作。`,answer:`{"correct":[["逃逸对象","逃逸"],["栈","栈上","虚拟机栈"],["TLAB"],["无锁分配","快速分配"]],"distractors":["堆上分配","标量替换","锁消除","同步分配"]}`,hints:[`逃逸分析在 JDK 6u23+ 默认开启（-XX:+DoEscapeAnalysis）`,`TLAB 默认开启（-XX:+UseTLAB），可通过 -XX:TLABSize 调整大小`],tags:[`JVM`,`逃逸分析`,`TLAB`,`优化`],content_hash:`913c32461d75`,id:2635},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`三色标记法与并发标记`,content:`三色标记法将对象分为三种颜色：___（未被 GC 访问过）、___（自身已扫描但引用的对象尚未全部扫描）和___（自身和引用的对象都已扫描完成，安全可回收）。CMS/G1 在并发标记阶段遇到的问题：___（标记过程中黑色对象引用了白色对象且该白色对象被灰色对象移除了引用）需要用到___（增量更新/CMS 或 SATB/G1）来解决。`,answer:`{"correct":[["白色","White"],["灰色","Gray"],["黑色","Black"],["对象消失问题","漏标问题"],["写屏障","Write Barrier"]],"distractors":["红色","蓝色","标记清除","计数器","读屏障"]}`,hints:[`三色标记中如果黑色对象引用了新的白色对象且灰色到该白色对象的引用已经消失，会导致白色对象被错误回收`,`CMS 使用增量更新（Incremental Update）解决对象消失问题，G1 使用 SATB（Snapshot At The Beginning）`],tags:[`JVM`,`GC`,`三色标记`,`并发`],content_hash:`d65bc3c9508a`,id:2636},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`安全点（SafePoint）与安全区域`,content:`安全点（SafePoint）是线程执行到某处时___信息是完整可描述的状态——JVM 在该位置执行 GC 等全局操作。线程在安全点通过___（轮询标志位）机制响应 GC 请求。安全区域（SafeRegion）是线程不执行 Java 代码时（如___或___状态）的区域，线程在这个区域时不需要响应 GC 请求但需要记录自己已经进入安全区域。`,answer:`{"correct":[["堆栈","栈","线程"],["轮询"],["Blocked","阻塞"],["Sleep","休眠"]],"distractors":["缓存","内存","中断","运行","等待"]}`,hints:[`安全点通常设置在循环末尾、方法返回前、可能抛异常的位置等「长时间运行」的指令之后`,`JIT 编译的代码中，安全点轮询通常通过一个简单的内存加载指令实现——读一个特定内存页`],tags:[`JVM`,`安全点`,`GC`,`SafePoint`],content_hash:`adb0dbd0ded0`,id:2637},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`双亲委派模型`,content:`JVM 类加载器按双亲委派模型工作：当一个类加载器收到类加载请求时，先将请求___给父类加载器（依次向上委派，直到 Bootstrap ClassLoader），只有当___（父类加载器找不到该类）时，才由当前类加载器尝试___。三个核心类加载器：___（加载 rt.jar）、___（加载 JRE/lib/ext）、Application ClassLoader（加载 CLASSPATH）。`,answer:`{"correct":[["委派","委托"],["父类加载器加载失败"],["自行加载"],["Bootstrap ClassLoader","启动类加载器"],["Extension ClassLoader","扩展类加载器"]],"distractors":["执行","缓存","Platform ClassLoader","System ClassLoader","URL ClassLoader"]}`,hints:[`双亲委派模型保证了 Java 核心类库的安全性——核心类由 Bootstrap ClassLoader 加载，不会被自定义类替换`,`破坏双亲委派模型的典型例子是 Tomcat——每个 Web App 独立加载类实现应用隔离`],tags:[`JVM`,`类加载`,`双亲委派`,`类加载器`],content_hash:`55ee50d9c7b8`,id:2638},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`堆外内存与 DirectByteBuffer`,content:`DirectByteBuffer 通过___方法分配堆外内存（Direct Memory），不受 JVM 堆大小限制（由___参数或操作系统控制上限）。堆外内存相对于堆内内存的优势：___（减少一次从堆到堆外的拷贝）、减少 GC 压力（不占用 GC Roots 扫描和对象移动的开销）。缺点：需要手动管理内存（通过___实现自动回收），内存释放不及时可能导致___。`,answer:`{"correct":[["ByteBuffer.allocateDirect()","allocateDirect"],["-XX:MaxDirectMemorySize"],["零拷贝","减少拷贝"],["Cleaner","虚引用","PhantomReference"],["堆外内存泄漏","Direct Memory OOM"]],"distractors":["malloc","-Xmx","堆内","手动释放","栈溢出"]}`,hints:[`堆外内存的释放依赖于 GC 触发 Cleaner 的 run() 方法，如果堆内存充足不触发 GC，堆外内存可能一直不会释放`,`Netty 使用 PooledByteBufAllocator 池化堆外内存，避免频繁分配和回收`],tags:[`JVM`,`堆外内存`,`DirectByteBuffer`,`NIO`],content_hash:`a87da6cb49f8`,id:2639},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Java 对象创建过程`,content:`JVM 创建一个 Java 对象（如 new Object()）的完整过程：1）___检查（能否在常量池中找到类的符号引用并验证类是否已加载）；2）如果类未加载则执行___（加载→验证→准备→解析→初始化）；3）___（在堆上分配对象内存，TLAB 优先）；4）___（将对象头外的内存区域初始化为零值）；5）设置___（Mark Word + Klass Pointer）；6）执行___（按照 父类变量初始化→父类构造代码块→父类构造函数→子类变量初始化→子类构造代码块→子类构造函数 的顺序）。`,answer:`{"correct":[["类加载"],["类加载","类加载过程"],["分配内存"],["零值初始化"],["对象头","对象头信息"],["<init>","实例构造器","初始化方法"]],"distractors":["权限检查","常量检查","设置引用","分配栈空间","<clinit>","静态初始化"]}`,hints:[`对象创建过程中，零值初始化（Step 4）保证了 Java 对象的成员变量在不赋值时也有默认值`,`<init> 和 <clinit> 的区别：前者是实例初始化方法（每次 new 都执行），后者是类初始化方法（类加载时执行一次）`],tags:[`JVM`,`对象创建`,`初始化`,`new`],content_hash:`5366ef44fe75`,id:2640},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`GC 调优核心参数`,content:`GC 调优核心参数：-Xms 设置初始堆大小，___设置最大堆大小（建议两者相等避免运行时扩容）。___设置新生代和老年代的比例。G1 GC 通过___设置期望的最大 GC 暂停时间，___设置并行 GC 线程数。打印 GC 日志使用___（JDK 9+ 统一日志格式）。`,answer:`{"correct":[["-Xmx","最大堆大小"],["-XX:NewRatio"],["-XX:MaxGCPauseMillis"],["-XX:ParallelGCThreads"],["-Xlog:gc*"]],"distractors":["-Xmn","-Xss","-XX:SurvivorRatio","-XX:G1HeapRegionSize","-verbose:gc"]}`,hints:[`Xms 和 Xmx 设为相同值可以避免运行时堆扩容和缩容的性能开销`,`G1 的 MaxGCPauseMillis 默认 200ms，降低此值会增加 GC 频率`],tags:[`JVM`,`GC`,`调优`,`参数`],content_hash:`6b266cb00249`,id:2641},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`类加载器层次结构`,content:`JDK 8 的类加载器层次（从父到子）：___→ 扩展类加载器（ExtClassLoader）→ ___。___加载 JDK 核心类库（rt.jar）。双亲委派的破坏——___让父类加载器请求子类加载器加载（如 JDBC 驱动通过 SPI 机制）。JDK 9 将扩展类加载器改为___。`,answer:`{"correct":[["Bootstrap ClassLoader","启动类加载器"],["Application ClassLoader","App ClassLoader","系统类加载器"],["Bootstrap ClassLoader","启动类加载器"],["线程上下文类加载器","Thread Context ClassLoader","TCCL"],["Platform ClassLoader","平台类加载器"]],"distractors":["自定义类加载器","Extension","URLClassLoader","Launcher","ClassLoader"]}`,hints:[`双亲委派模型的工作流程——先委托父加载器加载，父加载器找不到才自己加载`,`JDBC 驱动通过 ServiceLoader SPI + 线程上下文类加载器破坏双亲委派`],tags:[`JVM`,`类加载`,`双亲委派`,`类加载器`],content_hash:`cc828bd92bd9`,id:2642},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Java 四种引用类型`,content:`Java 的四种引用类型从强到弱：___、___（内存不足时回收）、___（GC 时立即回收）、___（get() 始终返回 null）。___引用类型通常配合 ReferenceQueue 使用，用于跟踪对象被回收后的通知。`,answer:`{"correct":[["强引用","StrongReference","Strong Reference"],["软引用","SoftReference","Soft Reference"],["弱引用","WeakReference","Weak Reference"],["虚引用","PhantomReference","Phantom Reference"],["虚","PhantomReference","Phantom"]],"distractors":["硬引用","软引用","弱引用","虚引用"]}`,hints:[`软引用适合做缓存——内存不足时自动回收`,`虚引用的 get() 永远返回 null——它的唯一作用是跟踪对象被回收的时机`],tags:[`JVM`,`引用类型`,`WeakReference`,`PhantomReference`],content_hash:`ba8380b53d66`,id:2643},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`元空间（Metaspace）`,content:`JDK 8 使用___替代永久代（PermGen）存储类的元数据。元空间使用___（而不是 JVM 堆）存储元数据，默认无上限（受操作系统物理内存限制）。通过___设置元空间的最大大小，___设置触发 Full GC 的阈值。字符串常量池和静态变量在 JDK 7 中被移到了___。`,answer:`{"correct":[["元空间","Metaspace"],["本地内存","堆外内存","Native Memory"],["-XX:MaxMetaspaceSize"],["-XX:MetaspaceSize"],["Java堆","堆","heap"]],"distractors":["永久代","堆","-XX:PermSize","-XX:MaxPermSize","直接内存"]}`,hints:[`元空间默认无上限——如果类加载过多可能导致物理内存耗尽`,`MetaspaceSize 是触发 Full GC 的初始阈值，不是最大限制`],tags:[`JVM`,`元空间`,`Metaspace`,`永久代`],content_hash:`6545470536b9`,id:2644},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`JIT 编译触发条件`,content:`HotSpot VM 中方法被调用超过___次时触发 JIT 编译（服务端模式默认 10000）。___（C1 编译器）进行少量优化、编译速度快；___（C2 编译器）进行大量优化、编译慢但代码质量高。JDK 7u4+ 默认使用___（在解释、C1、C2 之间动态切换）。OSR 用于___被 JIT 编译后，正在解释执行的代码立即切换到编译后的版本。`,answer:`{"correct":[["-XX:CompileThreshold","CompileThreshold"],["Client Compiler","C1"],["Server Compiler","C2"],["分层编译","TieredCompilation"],["热点循环","长时间运行的方法体"]],"distractors":["-XX:InlineThreshold","JIT","AOT","混合模式","OSR"]}`,hints:[`OSR（On-Stack Replacement）让正在栈上运行的解释帧切换到编译后的执行入口`,`分层编译的 0-4 层——从解释执行到 C2 顶级编译`],tags:[`JVM`,`JIT`,`编译`,`C1`,`C2`],content_hash:`d72ffd4b5477`,id:2645},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`CMS GC 阶段与停顿`,content:`CMS（Concurrent Mark Sweep）GC 的四个主要阶段为：1）___（STW，找到 GC Root 直接引用的对象）；2）___（并发，从已标记的对象遍历对象图）；3）___（STW，重新标记因并发阶段引用变化而遗漏的对象）；4）___（并发，回收死亡对象。CMS 的缺点是可能产生大量___，且无法解决内存碎片问题。`,answer:`{"correct":[["初始标记","Initial Mark"],["并发标记","Concurrent Mark"],["重新标记","Remark"],["并发清除","Concurrent Sweep"],["浮动垃圾","Floating Garbage"]],"distractors":["Final Mark","Parallel Sweep","Minor GC","碎片整理","晋升失败"]}`,hints:[`CMS 的「初始标记」和「重新标记」虽然都是 STW，但哪个阶段耗时更长？为什么？`,`浮动垃圾（Floating Garbage）的产生原因——并发标记阶段新产生的垃圾`],tags:[`JVM`,`GC`,`CMS`,`垃圾回收`],content_hash:`2b93ef6999e9`,id:2646},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`GC Root 对象类型`,content:`在 JVM 中，可作为 GC Root 的对象类型包括：___中的对象（当前栈帧引用的对象）、___（类静态属性引用的对象）、___（字符串常量池中的引用）、JNI ___（JNI 全局引用）、以及所有活跃线程的___。`,answer:`{"correct":[["虚拟机栈","局部变量表"],["方法区静态属性","静态变量"],["常量池"],["全局引用","Global Reference"],["Thread对象","线程"]],"distractors":["堆","JIT 编译的代码","新生代","老年代","直接内存"]}`,hints:[`方法区中的静态引用在 Java 8 中存在于 Metaspace 中，但 GC Root 的扫描方式没有变化`,`局部变量表中的引用为什么是最常见的 GC Root——每个方法调用都在创建新的栈帧`],tags:[`JVM`,`GC`,`GC Root`,`可达性分析`],content_hash:`b8b5ff5e8718`,id:2647},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`G1 GC 的 Region 与停顿预测`,content:`G1（Garbage First）GC 将堆划分为多个固定大小的___（默认 2048 个，大小 1MB-32MB）。每个 Region 可以是___（E）、___（S）或___（O）三种角色。G1 通过___（记录 Region 中存活对象最少、垃圾最多的区域优先回收）实现停顿时间可控。G1 的___（Remember Set）记录了 Region 之间的跨区域引用。`,answer:`{"correct":[["Region"],["Eden"],["Survivor"],["Old"],["垃圾最多的Region优先回收","Garbage First"]],"distractors":["Card Table","PLAB","TLAB","Mark Word","空闲列表"]}`,hints:[`G1 的 RSet 和 Card Table 的区别——RSet 属于 Region，Card Table 属于整个堆`,`G1 的停顿预测模型如何实现——基于历史每个 Region 的回收耗时统计`],tags:[`JVM`,`G1`,`GC`,`Region`],content_hash:`a067d1177ee9`,id:2648},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 内存区域划分`,content:`JVM 运行时数据区包括：___（存储局部变量、操作数栈、方法出口）、___（所有线程共享，存储类和接口的元数据）、___（所有线程共享，存储对象实例）、___（线程私有，存储本地方法调用栈帧）。其中___区域是 GC 的主要管理区域。`,answer:`{"correct":[["虚拟机栈","Java 栈"],["方法区","元空间"],["堆"],["本地方法栈"],["堆"]],"distractors":["程序计数器","运行时常量池","直接内存","Code Cache","字符串常量池"]}`,hints:[`程序计数器为什么没有被归为「内存区域」——因为它只存储指令地址，不涉及 GC 和 OOM`,`Java 8 中方法区被 Metaspace（元空间）替代——从堆内移到本地内存`],tags:[`JVM`,`运行时数据区`,`内存`,`基础`],content_hash:`4810c16e5caf`,id:2649},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`对象分配与指针压缩`,content:`64 位 JVM 中，对象引用占___字节（开启压缩后占 4 字节）。对象在堆中的分配优先在___线程本地缓冲区（TLAB）中分配。如果 TLAB 空间不足，对象会直接进入___（Eden）。-XX：___控制是否启用指针压缩（默认开启）。指针压缩在堆大小不超过___时生效。`,answer:`{"correct":[["8"],["TLAB"],["Eden"],["UseCompressedOops"],["32GB"]],"distractors":["4","PLAB","Survivor","UseCompressedClassPointers","64GB"]}`,hints:[`为什么指针压缩在堆超过 32GB 时失效——因为对象指针需要寻址 2^32 个 8 字节对齐的位置，覆盖 32GB 地址空间`,`TLAB 为什么能减少同步开销——每个线程有自己的分配区域，无需锁竞争`],tags:[`JVM`,`对象分配`,`指针压缩`,`TLAB`],content_hash:`6b7b50f380a7`,id:2650},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`类加载过程`,content:`Java 类加载过程包括{{____}}、{{____}}、{{____}}、{{____}}和{{____}}五个阶段。其中{{____}}阶段主要是通过类的全限定名获取定义此类的二进制字节流。验证阶段包括文件格式验证、{{____}}验证、字节码验证和符号引用验证。初始化阶段执行<clinit>() 方法——收集{{____}}和{{____}}的赋值动作。`,answer:`{"correct":[["加载"],["验证"],["准备"],["解析"],["初始化"],["加载"],["元数据"],["静态变量"],["静态代码块"]],"distractors":[["编译","链接","执行"],["编译","优化","链接"],["执行","优化","编译"],["链接","验证","优化"],["执行","编译","运行时"],["验证","准备","解析"],["字节码","语法","语义"],["实例变量","局部变量","常量"],["构造方法","实例代码块","方法调用"]]}`,hints:[`类加载五阶段——加载、验证、准备、解析、初始化（验证和解析顺序可能交换）`,`<clinit>() 方法由静态变量赋值和静态代码块合并而成——JVM 保证 <clinit>() 执行时的线程安全`],tags:[`Java`,`JVM`,`类加载`,`初始化`],content_hash:`ddf9a91c1318`,id:2651},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`JVM 调优参数分类`,content:`JVM 的 -XX 参数分为三种类型：{{____}}参数（加号启用，如 -XX:+UseG1GC）、{{____}}参数（减号禁用，如 -XX:-UseAdaptiveSizePolicy）和{{____}}参数（需要赋值，如 -XX:MaxMetaspaceSize=256m）。打印所有 -XX 参数使用命令 java {{____}}。查看运行中 JVM 的参数使用{{____}}工具。`,answer:`{"correct":[["布尔型"],["布尔型"],["数值/字符串型"],["-XX:+PrintFlagsFinal -version"],["jinfo"]],"distractors":[["开关型","启用型","功能型"],["开关型","禁用型","功能型"],["配置型","赋值型","字符串型"],["-XX:+PrintFlagsInitial","-XX:+PrintCommandLineFlags","-version"],["jstat","jmap","jstack"]]}`,hints:[`-XX:+Flag 启用，-XX:-Flag 禁用，-XX:Flag=value 赋值的数值或字符串`,`jinfo -flag <param> <pid> 查看或修改运行中 JVM 的参数（-XX:+PrintFlagsFinal 打印所有默认值和当前值）`],tags:[`Java`,`JVM`,`参数`,`调优`],content_hash:`6825c39a570c`,id:2652},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JDK 命令行工具`,content:`JDK 自带的命令行诊断工具中，{{____}}用于查看 JVM 进程状态（类似 ps），{{____}}用于监控 GC 统计信息，{{____}}用于生成堆 Dump 快照，{{____}}用于查看 JVM 线程栈信息。其中生成堆 Dump 还可以使用{{____}}命令（更推荐，JDK 8+）。Arthas 是阿里巴巴开源的{{____}}诊断工具。`,answer:`{"correct":[["jps"],["jstat"],["jmap"],["jstack"],["jcmd"],["在线"]],"distractors":[["jstat","jinfo","jcmd"],["jps","jmap","jstack"],["jstack","jstat","jcmd"],["jmap","jstat","jinfo"],["jmap","jprofiler","jconsole"],["离线","内存","性能"]]}`,hints:[`jps（进程）→ jstat（GC）→ jmap（堆 Dump）→ jstack（线程栈）→ jcmd（多功能替代 jmap）`,`jcmd <pid> GC.heap_dump <path> 是生成堆 Dump 的推荐方式（比 jmap 更安全）`],tags:[`Java`,`JVM`,`诊断`,`工具`],content_hash:`b585fe9bbd34`,id:2653},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`逃逸分析与标量替换`,content:`逃逸分析（Escape Analysis）判断对象是否{{____}}方法或线程。如果对象不逃逸，JVM 可以进行{{____}}（将对象的成员变量拆散为独立变量分配在栈上）和{{____}}（去掉不需要的锁同步）。逃逸分析由 -XX:{{____}} 参数开启（JDK 8 默认{{____}}）。标量替换将对象拆散为{{____}}后在栈帧中分配，方法结束后自动销毁，减少了{{____}}压力。`,answer:`{"correct":[["逃逸出"],["标量替换"],["锁消除"],["+DoEscapeAnalysis"],["开启"],["基本类型变量"],["GC"]],"distractors":[["分配在","引用在","依赖"],["栈上分配","内联","优化"],["锁粗化","偏向锁","轻量级锁"],["+UseTLAB","+UseCompressedOops","+UseBiasedLocking"],["关闭","实验性","需要手动"],["对象","引用","数组"],["内存","CPU","线程"]]}`,hints:[`标量替换将对象的字段拆散为独立变量——对象不再在堆上分配，直接在栈帧中分配各字段`,`锁消除：如果 JVM 发现同步代码块只被单线程访问则去掉锁——逃逸分析 + 锁消除互相配合`],tags:[`Java`,`JVM`,`逃逸分析`,`优化`],content_hash:`1676a5e57000`,id:2654},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Compressed Oops 指针压缩`,content:`Compressed Oops（Ordinary Object Pointers）是 JVM 的{{____}}优化技术。在 64 位 JVM 中，对象引用默认是{{____}}位（8 字节），压缩后为{{____}}位（4 字节）。开启条件：堆大小 < {{____}}GB。使用 -XX:{{____}} 手动控制。指针压缩可以减少{{____}}占用和{{____}}带宽。在 JDK 8 中，如果堆小于 32GB 则{{____}}启用。`,answer:`{"correct":[["对象指针"],["64"],["32"],["32"],["+UseCompressedOops"],["内存"],["缓存"],["默认"]],"distractors":[["内存","引用","堆"],["32","48","128"],["16","8","48"],["16","64","128"],["+UseCompressedClassPointers","+CompactStrings","+UseTransparentHugePages"],["CPU","GC","IO"],["网络","磁盘","寄存器"],["必须手动","需要配置","不支持"]]}`,hints:[`Compressed Oops 将 64 位引用压缩为 32 位——节省内存，增加 CPU 缓存命中率`,`堆大小超过 32GB 时 Compressed Oops 自动关闭——这是为什么 32GB 以下堆性能更好的原因之一`],tags:[`Java`,`JVM`,`指针压缩`,`优化`],content_hash:`fe74591b9b7a`,id:2655},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`ZGC 的核心阶段`,content:`ZGC 的垃圾回收过程包括三个主要阶段：___、___和___。`,answer:`{"correct":[["并发标记","Mark"],["并发重定位","Relocate"],["重映射","Remap"]],"distractors":[["并发清除","标记-复制","并发整理"],["并发压缩","根扫描","并发过滤"],["并发引用更新","标记-清除","并发翻新"]]}`,hints:[`ZGC 的所有 GC 阶段几乎都是并发的`,`重映射通常在下一轮 GC 中完成，与标记阶段合并`],tags:[`JVM`,`ZGC`,`GC阶段`],content_hash:`4e8e1b066769`,id:2656},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Shenandoah GC 的关键技术`,content:`Shenandoah GC 使用___指针实现并发压缩，每次 GC 开始时在对象头前插入一个___字段，GC 移动对象后只需更新该字段。Shenandoah GC 的屏障是___屏障。`,answer:`{"correct":[["Brooks"],["转发","forwarding"],["写","write"]],"distractors":[["染色","Colored","标记"],["引用","偏移","标记位"],["读","read","内存"]]}`,hints:[`Shenandoah 的指针技术不同于 ZGC 的染色指针`,`Shenandoah 通过更新指针实现并发移动`],tags:[`JVM`,`Shenandoah`,`GC`],content_hash:`ff3b7e397726`,id:2657},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`CDS 归档加载方式`,content:`CDS 全称为___，它创建___文件（扩展名为___）来存储类元数据。AppCDS 在此之上增加了对类加载器加载的应用类和___库的支持。`,answer:`{"correct":[["Class Data Sharing"],["共享归档","归档"],["jsa"],["第三方","third-party","third party"]],"distractors":[["Class Dependency Sharing","Class Data Storage","类数据共享"],["预编译类","类缓存","类快照"],["jar","class","zip"],["系统","JDK内部","标准"]]}`,hints:[`CDS 文件的后缀名`,`AppCDS 扩展了 CDS 的应用范围`],tags:[`JVM`,`CDS`,`AppCDS`,`类加载`],content_hash:`b5f2ed348f3a`,id:2658},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`JIT 分层编译层次`,content:`JVM 的分层编译共分为___层。第 0 层是___执行；第 1 层是___简单编译；第 4 层是___编译器编译（优化最深）。`,answer:`{"correct":[["5","五"],["解释"],["C1","Client"],["C2","Server"]],"distractors":[["4","四","3","三"],["编译","JIT","即时"],["C2","Server","字节码"],["C1","Client","Graal"]]}`,hints:[`C1 编译占用层数多于 C2`,`解释执行是第 0 层，C2 是最后一层`],tags:[`JVM`,`JIT`,`分层编译`],content_hash:`88ee0d4c01c2`,id:2659},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 调优关键参数`,content:`JVM 调优中，设置堆大小的参数是___和___；设置栈大小的参数是___；设置元空间大小的参数是___。`,answer:`{"correct":[["-Xms"],["-Xmx"],["-Xss"],["-XX:MetaspaceSize"]],"distractors":[["-Xss","-Xmn","-XX:MaxHeap"],["-Xms","-XX:HeapSize","-XX:MaxRAM"],["-Xmx","-XX:StackSize","-XX:ThreadStack"],["-XX:MaxMetaspaceSize","-XX:PermSize","-XX:MaxPermSize"]]}`,hints:[`-X 开头的参数是 JVM 标准参数`,`元空间参数以 -XX: 开头`],tags:[`JVM`,`调优`,`参数`],content_hash:`d6ed60d67037`,id:2660},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`CMS GC 工作阶段`,content:`CMS 垃圾回收器的工作流程分为：___（STW 暂停，标记 GC Roots 直接引用的对象）、___（与应用并发运行，从已标记的对象出发继续标记）、___（STW 暂停，修正并发标记期间变动的对象引用）和并发清理。`,answer:`{"correct":[["初始标记","Initial Mark"],["并发标记","Concurrent Mark"],["重新标记","Final Remark","Remark"]],"distractors":[["最终标记","预清理","并发预清理","预标记"],["并发预清理","并行标记","串行标记"],["并发重标记","并行重标记","并发清理","重置"]]}`,hints:[`初始标记和重新标记是 STW 的`,`并发标记阶段最长`],tags:[`JVM`,`CMS`,`GC`],content_hash:`a0228261f686`,id:2661},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`ZGC 核心概念`,content:`ZGC 的核心技术包括：___（利用指针的未使用位存储元数据）、___（在对象引用读取时执行操作）、以及基于 Region 的动态堆管理。ZGC 使用___指针重映射。`,answer:`{"correct":[["染色指针","Colored Pointer"],["读屏障","Load Barrier"],["多重映射","Multi-Mapping"]],"distractors":[["标记指针","着色指针","写屏障","对象头"],["写屏障","Store Barrier","屏障","内存屏障"],["指针折叠","指针压缩","重映射","自映射"]]}`,hints:[`染色指针用 64 位地址中高 4 位存储状态信息`,`读屏障在对象引用读取时修正指针`],tags:[`JVM`,`ZGC`,`GC`],content_hash:`84043f5ca48f`,id:2662},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 对象内存布局`,content:`Java 对象在堆中的内存布局分为三部分：___（存储哈希码、GC 分代年龄、锁状态标志等）、___（指向类元数据的指针，JDK 8+ 默认压缩为 4 字节）、以及___（实例字段数据，按类型对齐）。`,answer:`{"correct":[["对象头","Mark Word","Header"],["类型指针","Klass Pointer","类指针"],["实例数据","Instance Data"]],"distractors":[["方法表","虚方法表","对齐填充","锁记录"],["类型信息","方法指针","类元数据","对象指针"],["对齐填充","Padding","补齐","元数据"]]}`,hints:[`对象头在 64 位 JVM 上默认占 12 字节（Mark Word 8 字节 + Klass Pointer 4 字节压缩）`,`实例数据顺序受字段声明顺序和虚拟机的分配策略影响`],tags:[`JVM`,`对象`,`内存布局`],content_hash:`389bf4e07865`,id:2663},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`G1 GC Region 类型`,content:`G1 将堆划分为多个大小相等的 Region（默认约___MB）。Region 分为三种类型：___（对象分配和 Minor GC 的区域）、___（存储长期存活对象的区域）、以及大对象 Region（存储超过 Region 大小 50% 的对象）。`,answer:`{"correct":[["1","2","1~2"],["年轻代","Eden","新生代"],["老年代","Old"]],"distractors":[["0.5","0.5~1","4","8","16","32"],["Survivor","存活区","From","To","存活"],["巨型","Humongous","大对象","巨型对象"]]}`,hints:[`Region 大小根据堆大小自动计算（目标 2048 个 Region）`,`大对象（Humongous Object）直接分配到 Humongous Region`],tags:[`JVM`,`G1`,`GC`],content_hash:`0e3c257c5f29`,id:2664},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`类的生命周期阶段`,content:`类的生命周期分为七个阶段：加载→___→准备→___→初始化→使用→___。其中验证阶段包括四个动作：文件格式验证、___验证、字节码验证和符号引用验证。`,answer:`{"correct":[["验证","Verification"],["解析","Resolution"],["卸载","Unloading"]],"distractors":[["校验","检查","确认"],["编译","连接","链接","绑定"],["销毁","回收","释放","结束"]]}`,hints:[`解析阶段将符号引用替换为直接引用`,`卸载阶段类加载器被 GC 时才可能发生`],tags:[`JVM`,`类加载`,`生命周期`],content_hash:`8fc0507f3cfc`,id:2665},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`JIT 编译的触发条件`,content:`JIT 编译的触发基于方法调用计数和循环回边计数。当方法在解释执行时调用次数超过___阈值（默认 10000 次 for C2）时，该方法会排队等待 JIT 编译。每个方法有两个计数器：即___计数器和___计数器。方法在安全点（Safepoint）处检查计数器状态决定是否触发编译。`,answer:`{"correct":[["MethodInvocationThreshold","方法调用阈值","调用计数器阈值","Tier4InvocationThreshold"],["调用","方法调用","调用次数"],["回边","循环回边","BackEdge"]],"distractors":[["编译阈值","OSR 阈值"],["编译","JIT","循环"],["栈上替换","OSR","BackEdgeThreshold"]]}`,hints:[`C2 的编译触发阈值为 10000（Tier4InvocationThreshold），但实际会经过 C1 warmup`,`循环回边计数器触发 OSR（栈上替换）编译`],tags:[`JVM`,`JIT`,`编译`,`计数器`],content_hash:`3147a69b9867`,id:2666},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`类加载器的双亲委派模型`,content:`Java 类加载器的双亲委派模型（Parent Delegation Model）的工作流程：当一个类加载器收到类加载请求时，它首先将请求委派给___类加载器加载。只有当父加载器无法加载（抛出___异常）时，子加载器才尝试自己加载。三个核心类加载器从顶层到下层依次是：___、扩展类加载器（JDK 9 后为平台类加载器）和___。`,answer:`{"correct":[["父","父类","parent","父加载器"],["ClassNotFoundException"],["启动类加载器","Bootstrap ClassLoader"],["应用类加载器","Application ClassLoader","系统类加载器","System ClassLoader"]],"distractors":[["子","子加载器","根"],["NoClassDefFoundError","ClassCastException"],["扩展类加载器","平台类加载器","自定义类加载器"],["上下文类加载器","线程上下文类加载器","ExtClassLoader"]]}`,hints:[`双亲委派模型保证了 Java 核心库的类型安全（防止自定义的 java.lang.String 替代核心类）`,`JDK 9 模块化后扩展类加载器（ExtClassLoader）被平台类加载器（Platform ClassLoader）替代`],tags:[`JVM`,`类加载`,`双亲委派`,`ClassLoader`],content_hash:`329d94d4f59e`,id:2667},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`String 常量池的位置变化`,content:`String 常量池（String Pool / StringTable）在不同 JDK 版本中的位置不同：JDK 6 及之前位于___（通过 -XX:PermSize 控制）；JDK 7 之后移到了___（因为永久代空间太小导致 intern 失败）；JDK 8 移除永久代后，常量池在___中分配。`,answer:`{"correct":[["永久代","PermGen","PermGen space","方法区"],["堆","Java堆","堆内存"],["堆","Java堆","堆内存"]],"distractors":[["堆","栈","元空间"],["元空间","字符串常量池","永久代"],["元空间","Metaspace","永久代"]]}`,hints:[`JDK 6 中 PermGen 默认只有 64MB，大量 intern 容易 OOM`,`String 常量池也是垃圾回收的一部分（GC 会清理没有引用的 String 对象）`],tags:[`JVM`,`String`,`常量池`,`内存`],content_hash:`b71bcc9569ba`,id:2668},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 堆内存参数设置`,content:`JVM 堆内存相关的关键参数：-Xms 设置___；-Xmx 设置___；-Xmn 设置___大小；-XX:NewRatio 设置___与老年代的比例（默认 1:2 即年轻代占堆的 1/3）；-XX:SurvivorRatio 设置 Eden 与___区的比例（默认 8:1:1）。`,answer:`{"correct":[["初始堆大小","堆初始值","最小堆内存"],["最大堆大小","堆最大值","最大堆内存"],["年轻代","新生代","年轻代大小"],["年轻代","新生代"],["Survivor","存活区","Survivor 区"]],"distractors":[["堆最大值","最大堆","堆初始"],["堆初始值","初始堆","堆内存"],["老年代","Eden","Survivor"],["老年代","Eden","Survivor"],["Eden","老年代"]]}`,hints:[`官方建议 -Xms 和 -Xmx 设置为相同值避免运行时扩容开销`,`-Xmn 越小，Young GC 越频繁但每次暂停越短；-Xmn 越大，GC 频率降低但单次暂停变长`],tags:[`JVM`,`内存`,`参数`,`调优`],content_hash:`ff506af9ebd0`,id:2669},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`GC 日志相关 JVM 参数`,content:`JDK 8 中开启 GC 日志的核心参数：-XX:+PrintGCDetails（打印 GC 详细信息）、-XX:+PrintGCDateStamps（打印 GC 发生的___）、-Xloggc:gc.log（指定 GC 日志的___）。JDK 9+ 使用统一的日志系统：-Xlog:gc*:file=gc.log:time,uptime,level,tags。通过 GC 日志可以分析___GC 频率、Full GC 频率、___和晋升情况。`,answer:`{"correct":[["时间戳","日期","日期时间","时间"],["输出文件","文件名","文件路径","文件"],["Young","年轻代","Minor","新生代"],["堆内存变化","堆变化","内存使用","GC 暂停时间"]],"distractors":[["堆大小","GC 次数"],["输出位置","日志级别","日志格式"],["Major","Old","Mixed","Full"],["线程数","类加载数","编译时间"]]}`,hints:[`JDK 8 和 JDK 9+ 的 GC 日志参数格式完全不同`,`-XX:+PrintGCDetails 是 JDK 8 最常用的 GC 日志选项`],tags:[`JVM`,`GC`,`日志`,`调优`],content_hash:`01ce8788719f`,id:2670},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`GC 根节点枚举`,content:`GC 根节点（GC Roots）枚举需要在___（安全点/安全区域）进行。OopMap 记录了栈帧中哪些位置是___引用。在___（解释/编译）代码中 OopMap 更易维护。SafePoint 轮询通过___实现（读取一个内存页）。默认安全点间隔参数为___。`,answer:`{"correct":[["安全点"],["对象"],["解释"],["内存陷阱页","轮询内存页"],["1000ms","1 秒"]],"distractors":["安全区域","变量","编译","超时检测","500ms"]}`,hints:[`OopMap 记录栈和寄存器中的对象引用位置`,`安全点轮询通常通过读取故障页（signal handler 处理）实现`],tags:[`JVM`,`GC Roots`,`OopMap`,`SafePoint`],content_hash:`006df628c8a0`,id:2671},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`记忆集与卡表`,content:`GC 中的记忆集（Remembered Set）用于记录___（跨代/跨 Region）引用，避免扫描整个堆。卡表（Card Table）是记忆集的实现方式之一——将堆划分为多个___（512 字节），通过___（写屏障）在对象引用变更时标记对应卡页为脏页。G1 使用___（Per-Region Remembered Set）更精确地记录跨 Region 引用。卡表的写屏障是一种___（精确/近似）的内存屏障。`,answer:`{"correct":[["跨代","跨区域"],["卡页","Card"],["写屏障"],["PRS"],["近似"]],"distractors":["对象","物理","读屏障","精确"]}`,hints:[`卡表写屏障标记脏页（不精确但性能好）`,`G1 的 PRS（Per-Region Remembered Set）比 CMS 的 Card Table 更精确`],tags:[`JVM`,`GC`,`记忆集`,`卡表`],content_hash:`5ccc22df7b6b`,id:2672},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Stop-The-World 机制`,content:`JVM 进行 Full GC 时所有用户线程会进入___状态。这个机制称为___（STW / Stop-The-World）。在___（安全点/安全区域）线程的状态信息是完整一致的。STW 是通过在___代码中插入安全点检查实现的。JVM 通过___信号机制中断长时间未到达安全点的线程。`,answer:`{"correct":[["暂停","阻塞"],["STW"],["安全点"],["JIT 编译"],["SafepointTimeoutInMs","超时中断"]],"distractors":["运行","SafePoint","解释","信号"]}`,hints:[`安全点通常设置在方法返回、循环回边、异常抛出的位置`,`长时间 STW 是 GC 调优的核心关注点`],tags:[`JVM`,`STW`,`安全点`,`GC`],content_hash:`7fc06bdd1d41`,id:2673},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`类加载器 API`,content:`Class.forName() 默认使用调用者的类加载器并___（执行/不执行）类的初始化。ClassLoader.loadClass() 加载类___（执行/不执行）初始化。线程上下文类加载器通过___方法设置，用于___（破坏双亲委派/加载 SPI 实现类）。URLClassLoader 可以从___路径加载类。`,answer:`{"correct":[["执行"],["不执行"],["Thread.currentThread().setContextClassLoader()"],["破坏双亲委派"],["远程"]],"distractors":["不执行","执行","getContextClassLoader()","加载 SPI 实现类","本地"]}`,hints:[`Class.forName 和 ClassLoader.loadClass 的区别在于是否执行初始化`,`SPI 机制的核心是 ServiceLoader + 线程上下文类加载器`],tags:[`JVM`,`类加载`,`ClassLoader`,`SPI`],content_hash:`3e2556d4cf34`,id:2674},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`方法区结构`,content:`JDK 8 中方法区移到了___（本地内存）。方法区存储：___（类的版本、字段、方法、接口信息）、运行时常量池（字面量和符号引用）、___（JIT 编译后的代码）、JNI 相关数据。___（-XX:MaxMetaspaceSize）控制方法区的最大大小。如果类加载过多导致方法区溢出，会抛出___。`,answer:`{"correct":[["元空间","Metaspace"],["类型信息","类元数据"],["Code Cache","JIT 代码缓存"],["-XX:MaxMetaspaceSize"],["OutOfMemoryError: Metaspace"]],"distractors":["堆","堆外内存","直接内存","常量","字符串"]}`,hints:[`JDK 8 将永久代替换为元空间——类型信息移到本地内存`,`类加载泄漏（类加载器未被 GC）是 Metaspace OOM 的常见原因`],tags:[`JVM`,`方法区`,`元空间`,`Metaspace`],content_hash:`451948157360`,id:2675},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`堆的分代布局`,content:`HotSpot JVM 的堆内存按照_____观点分为新生代、老年代和元空间。新生代进一步划分为 Eden 区和两个_____区（S0 和 S1）。对象首先分配在_____区，经过多次 GC 后仍存活的对象被晋升到_____代。`,answer:`{"correct": [["分代"], ["Survivor"], ["Eden"], ["老"]], "distractors": [["分区"], ["From/To"], ["Young"], ["新生"]]}`,tags:[`JVM`,`堆内存`,`GC`,`分代`],content_hash:`d2d2eac7e485`,id:2676},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`GC Root 类型`,content:`在 JVM 的 GC Roots 分析中，以下几种是常见的 GC Root：活动线程的栈帧中的_____引用、静态变量引用的对象、JNI 全局引用的对象、_____中的引用类型等。GC Root 是 GC 的可达性分析的_____。`,answer:`{"correct": [["局部变量"], ["运行时常量池"], ["起点"]], "distractors": [["全局"], ["堆"], ["终点"]]}`,tags:[`JVM`,`GC Root`,`可达性`,`JNI`],content_hash:`62b0c5dcd8af`,id:2677},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`G1 Region 类型`,content:`G1 GC 将堆划分为大小相等的 Region，每个 Region 可以扮演三种角色：_____（E）、Survivor（S）或 Old（O）。这个设计使 G1 不需要在物理上连续的新生代和老年代空间。G1 的并发标记阶段标记_____对象。Mixed GC 同时在新生代和_____代回收对象。`,answer:`{"correct": [["Eden"], ["存活"], ["老"]], "distractors": [["Young"], ["死亡"], ["新生"]]}`,tags:[`JVM`,`G1`,`Region`,`GC`],content_hash:`418794a8f51b`,id:2678},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`对象晋升阈值`,content:`对象从新生代晋升到老年代的年龄阈值由参数_____控制，默认值为 _____。JVM 会动态计算 Threshold（热点对象的提前晋升），通过 -XX:+_____ 开启。如果 Survivor 区空间不足，对象将被_____晋升到老年代。`,answer:`{"correct": [["-XX:MaxTenuringThreshold"], ["15"], ["UseAdaptiveSizePolicy"], ["提前"]], "distractors": [["MaxTenuringThreshold"], ["8"], ["UseParallelGC"], ["直接"]]}`,tags:[`JVM`,`晋升`,`Survivor`,`参数`],content_hash:`ac287f071083`,id:2679},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Direct Memory 特点`,content:`DirectBuffer 使用_____ API 分配堆外内存。它通过 _____ 机制避免内核态到用户态的数据拷贝。与堆内缓冲区相比，DirectBuffer 的分配和释放开销更_____。它的容量通过 -XX:_____ 参数控制（默认为 0，即与堆上限相同）。`,answer:`{"correct": [["unsafe.allocateMemory"], ["零拷贝"], ["大"], ["MaxDirectMemorySize"]], "distractors": [["malloc"], ["DMA"], ["小"], ["DirectMemorySize"]]}`,tags:[`JVM`,`DirectBuffer`,`堆外内存`,`NIO`],content_hash:`2b6af522cd42`,id:2680},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`GC 停顿类型`,content:`在 G1 GC 中，____ 停顿进行年轻代垃圾回收，____ 停顿进行全局并发标记和混合回收。`,answer:`{"correct": [["YGC", "Young GC", "年轻代GC"], ["Mixed GC", "混合GC"]], "distractors": []}`,hints:[`G1 的 YGC 是 Stop-The-World 的，但通常非常快`,`Mixed GC 处理年轻代和老年代的混合回收，分多次完成`],tags:[`JVM`],content_hash:`8ba83de7be62`,id:2681},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`对象头 Mark Word`,content:`在 64 位 JVM 中，对象头的 Mark Word 占用 ____ 字节。处于偏向锁状态时，Mark Word 中存储的是____。`,answer:`{"correct": [["8", "8字节"], ["持有偏向锁的线程ID", "线程ID"]], "distractors": []}`,hints:[`Mark Word 是 JVM 实现锁机制的关键数据结构，长度等于机器字长`,`偏向锁模式：存储线程 ID + epoch + 分代年龄 + 偏向锁标志位`],tags:[`JVM`],content_hash:`0ca071589ab1`,id:2682},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`方法区与 MetaSpace`,content:`JDK 8 中永久代（PermGen）被移除，替代的是____。它与永久代的最大区别是使用____内存而非 JVM 堆内存。`,answer:`{"correct": [["元空间", "MetaSpace", "Metaspace"], ["本地内存", "本地内存（Native Memory）", "堆外"]], "distractors": []}`,hints:[`MetaSpace 使用操作系统本地内存（Native Memory），默认无上限`,`避免 PermGen 的 OOM（PermGen 大小固定且有限）`],tags:[`JVM`],content_hash:`1589b3210fe9`,id:2683},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`ZGC 染色指针`,content:`ZGC 使用____位地址空间来编码对象状态（标记、重映射、最终化），称为染色指针（Colored Pointers）。`,answer:`{"correct": [["64", "64位", "全"]], "distractors": []}`,hints:[`ZGC 将 64 位地址的高几位用于编码对象状态（而非直接寻址）`,`染色指针使 ZGC 可以在不访问对象的前提下判断对象状态`],tags:[`JVM`],content_hash:`92e9af5af589`,id:2684},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`类加载双亲委派`,content:`JVM 的类加载双亲委派模型中，如果一个类加载器收到类加载请求，它首先将请求____。防止 Java 核心 API 被篡改。`,answer:`{"correct": [["委派给父加载器", "交给父加载器", "委托给父类加载器"]], "distractors": []}`,hints:[`每个加载器先将请求委派给父加载器（依次向上到 Bootstrap ClassLoader）`,`父加载器找不到类时，子加载器才尝试自己加载`],tags:[`JVM`],content_hash:`efc879adfa61`,id:2685},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 对象结构`,content:`在 HotSpot JVM 中，一个 Java 对象在堆中的结构由三部分组成：对象头（包含 ___(1)___ 和 ___(2)___）、实例数据和对齐填充。`,answer:`{"correct": [["Mark Word", "标记字"], ["Klass Pointer", "类指针", "类型指针"]], "distractors": [["对象头"], ["实例数据"]]}`,hints:[`对象头包括运行时元数据和类型指针两部分`],tags:[`JVM`,`对象`,`内存`],content_hash:`47604cd9eb4f`,id:2686},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`GC 停顿分析`,content:`JVM Full GC 通常包括标记、___(1)___ 和 ___(2)___ 三个阶段。`,answer:`{"correct": [["清扫", "Sweep"], ["压缩", "Compact", "Compaction"]], "distractors": [["复制"], ["整理"]]}`,hints:[`Mark-Sweep-Compact 是 Full GC 的三个典型阶段`],tags:[`JVM`,`GC`,`停顿`],content_hash:`fc62bea5f0cf`,id:2687},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 命令行诊断工具`,content:`在排查 JVM 问题时常使用命令行工具：___(1)___ 查看虚拟机进程，___(2)___ 导出堆快照。`,answer:`{"correct": [["jps", "jps -l"], ["jmap", "jmap -dump"]], "distractors": [["jstack"], ["jstat"]]}`,hints:[`jps 和 jmap 是最常用的 JVM 诊断工具`],tags:[`JVM`,`诊断`,`工具`],content_hash:`2f5d47fc727a`,id:2688},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 编译模式`,content:`HotSpot JIT 编译模式包括 ___(1)___（客户端编译器）、___(2)___（服务端编译器）和 Tiered Compilation（分层编译）。`,answer:`{"correct": [["C1", "Client Compiler"], ["C2", "Server Compiler", "Opto"]], "distractors": [["Graal"], ["AOT"]]}`,hints:[`C1 注重启动速度，C2 注重峰值性能`],tags:[`JVM`,`JIT`,`编译`],content_hash:`efc3cc9be17f`,id:2689},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`直接内存与零拷贝`,content:`Java NIO 使用 ___(1)___ 进行直接内存分配，零拷贝通常通过 ___(2)___ 或 transferTo 方法实现。`,answer:`{"correct": [["ByteBuffer.allocateDirect", "DirectByteBuffer", "allocateDirect"], ["FileChannel", "FileChannel.map"]], "distractors": [["MappedByteBuffer"], ["SocketChannel"]]}`,hints:[`allocateDirect 在堆外分配内存，FileChannel.transferTo 实现零拷贝`],tags:[`JVM`,`NIO`,`内存`],content_hash:`c1d22ed2a566`,id:2690},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`ZGC 指针染色管理引用`,content:`ZGC 使用 ___ 指针染色来管理引用，在 64 位指针的高 ___ 位中编码对象状态（Finalizable、Remapped、Mark0、Mark1）。`,answer:`{"correct": [["染色", "Colored", "彩色"], ["4", "四", "4位"]], "distractors": ["标记", "8", "2", "着色", "3"]}`,hints:[`ZGC 不依赖对象头中的 GC 标记位，而是利用指针高位编码状态`,`染色指针使 ZGC 可以在不访问对象的前提下判断对象状态`],tags:[`JVM`,`ZGC`,`染色指针`],content_hash:`688c38580aff`,id:2691},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Java 21 默认垃圾回收器`,content:`Java 21+ 的默认垃圾回收器是 ___，但在低延迟场景下推荐使用 ___。在 JDK 21 中分代 ZGC（Generational ZGC）已成为 ___。`,answer:`{"correct": [["G1", "G1 GC", "Garbage First"], ["ZGC"], ["默认模式", "默认", "默认选项"]], "distractors": ["Parallel GC", "CMS", "Shenandoah", "Serial GC", "Epsilon GC"]}`,hints:[`JDK 9 起 G1 成为默认 GC，JDK 21 起分代 ZGC 成为默认 ZGC 模式`,`CMS 在 JDK 14 已被移除`],tags:[`JVM`,`GC`,`G1`,`ZGC`],content_hash:`35b37546de3a`,id:2692},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`压缩 OOP 开启参数`,content:`压缩 OOP（Compressed Ordinary Object Pointer）通过 JVM 参数 ___ 开启（JDK 8+ 默认开启），class 指针压缩通过单独的参数 ___ 控制。堆大小超过 ___ 时压缩自动失效。`,answer:`{"correct": [["-XX:+UseCompressedOops", "UseCompressedOops"], ["-XX:+UseCompressedClassPointers", "UseCompressedClassPointers"], ["32GB", "32G"]], "distractors": ["-XX:+UseTLAB", "-XX:+DoEscapeAnalysis", "-XX:+EliminateLocks", "64GB", "16GB"]}`,hints:[`UseCompressedOops 同时控制引用压缩和 Class 指针压缩`,`堆超过 32GB 时指针压缩自动关闭，因为 32 位寻址无法覆盖更大的堆空间`],tags:[`JVM`,`指针压缩`,`OOP`,`参数`],content_hash:`1754638f0f01`,id:2693},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`运行时常量池存放区域`,content:`运行时常量池（Runtime Constant Pool）存放在 ___ 区域中。JDK 8 之前它位于 ___ 中，JDK 8 之后随着 ___ 替代永久代，它分配在本地内存中。`,answer:`{"correct": [["方法区", "Method Area"], ["永久代", "PermGen"], ["元空间", "Metaspace"]], "distractors": ["堆", "虚拟机栈", "Code Cache", "直接内存", "程序计数器"]}`,hints:[`JDK 8 的方法区被元空间替代，使用本地内存而非 JVM 堆内存`,`运行时常量池是方法区的一部分，存放字面量和符号引用`],tags:[`JVM`,`方法区`,`常量池`,`Metaspace`],content_hash:`57c049af9e83`,id:2694},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`最大堆对齐因子`,content:`最大堆对齐因子是 ___。HotSpot JVM 要求对象起始地址必须是 ___ 的整数倍，压缩指针通过左移 ___ 位将 32 位引用扩展为 64 位地址（2^32 x 8 = 32GB 寻址空间）。`,answer:`{"correct": [["8", "8字节", "8Byte"], ["8", "8字节"], ["3", "3位"]], "distractors": ["4", "16", "32", "2", "6"]}`,hints:[`8 字节对齐是 HotSpot 的默认对齐要求，通过 -XX:ObjectAlignmentInBytes 参数调整`,`对齐因子直接影响指针压缩的寻址范围`],tags:[`JVM`,`对齐`,`对象布局`,`指针压缩`],content_hash:`4672f5fdd150`,id:2695},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM 默认最大堆内存`,content:`在不设置 -Xmx 参数的情况下，JVM 默认最大堆内存为物理内存的___。当物理内存大于 192MB 时，服务器模式下默认初始堆内存为物理内存的___。`,answer:`{"correct":[["1/4","四分之一","25%"]],"distractors":["1/2","1/8","1/16","1/64","64%"]}`,hints:[`初始堆（-Xms）的默认值与最大堆（-Xmx）不同`,`客户端模式（-client）和服务端模式（-server）的默认值不同`],tags:[`JVM`,`堆内存`,`-Xmx`],content_hash:`225c9f79de11`,id:2696},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`CMS GC 的生命周期`,content:`CMS（Concurrent Mark Sweep）垃圾回收器在 JDK 9 中被标注为___，在 JDK 14 中被正式___。它的主要替代方案是___垃圾回收器。`,answer:`{"correct":[["Deprecated","废弃","已废弃"],["移除","删除","去掉"],["G1","G1 GC","Garbage First"]],"distractors":["过时","淘汰","Parallel","ZGC","Shenandoah"]}`,hints:[`CMS 的缺陷包括内存碎片和 CPU 敏感——JDK 9 默认 GC 已切换`,`Deprecated 意味着 JDK 后续版本中可能被移除`],tags:[`JVM`,`GC`,`CMS`,`Deprecated`],content_hash:`c043360b9819`,id:2697},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM GC 日志参数`,content:`JDK 9+ 中启用 GC 统一日志的 JVM 参数是___。JDK 8 中启用 GC 详细日志使用___参数，JDK 8 中在 GC 日志中添加时间戳用___参数。`,answer:`{"correct":[["-Xlog:gc*","-Xlog:gc"],["-XX:+PrintGCDetails"],["-XX:+PrintGCDateStamps","-XX:+PrintGCTimeStamps"]],"distractors":["-verbose:gc","-Xloggc:gc.log","-XX:+UseGCLogFileRotation","-XX:+HeapDumpOnOutOfMemoryError"]}`,hints:[`JDK 9+ 统一日志系统使用 -Xlog 前缀，旧的 PrintGCDetails 已废弃`,`-Xlog:gc* 中的星号表示包含所有 GC 子模块的日志`],tags:[`JVM`,`GC日志`,`-Xlog`,`PrintGCDetails`],content_hash:`523347b0c6bc`,id:2698},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`字符串常量池的位置`,content:`JDK 7 之前，字符串常量池位于___中。JDK 7 之后字符串常量池被移入___中。JDK 8 移除永久代后，字符串常量池仍然位于___中。`,answer:`{"correct":[["永久代","PermGen"],["堆","Java堆","堆内存"],["堆","Java堆","堆内存"]],"distractors":["元空间","Metaspace","直接内存","栈","代码缓存"]}`,hints:[`JDK 7 将字符串常量池移入堆是为了缓解永久代 OOM`,`JDK 8 中静态变量也移到了堆中，而非元空间`],tags:[`JVM`,`字符串常量池`,`永久代`,`堆`],content_hash:`6cc97fefec33`,id:2699},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Epsilon GC 的特性`,content:`Epsilon GC 是 JDK 11 引入的一种___（无操作）垃圾回收器。它不执行任何实际的___回收。当堆内存耗尽时 Epsilon GC 直接___，适用于___或性能测试。`,answer:`{"correct":[["No-Op","无操作","NoOp"],["内存","垃圾"],["抛出 OutOfMemoryError","OOM"],["短生命周期应用","一次性任务","短暂任务"]],"distractors":["并行","并发","CMS","G1","暂停","降级","触发 Full GC","长周期应用"]}`,hints:[`Epsilon 的字面意思是「ε」（极小量）——暗示它的 GC 工作量几乎为零`,`Epsilon 适合知道不会产生垃圾或对延迟极端敏感的实验性场景`],tags:[`JVM`,`GC`,`Epsilon`,`无操作`],content_hash:`10874ef0547b`,id:2700},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`栈帧的组成部分`,content:`每个栈帧包含四个主要部分：___（存储方法参数和局部变量，以 slot 为单位）、___（字节码指令的工作区）、___（指向运行时常量池中当前方法所属类的引用）和___（方法正常退出或异常退出时的恢复信息）。`,answer:`{"correct":[["局部变量表"],["操作数栈"],["动态链接"],["方法返回地址"]],"distractors":["静态变量表","实例变量表","常量池","类元数据","对象头"]}`,hints:[`局部变量表在编译期确定大小，每个槽位（Slot）32 位`,`动态链接将符号引用转换为直接引用，支持方法多态分派`],tags:[`JVM`,`栈帧`,`运行时数据区`,`字节码`],content_hash:`e8279a661663`,id:2701},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Humongous Region 与大对象分配`,content:`G1 GC 中大小超过 Region 容量___的对象称为 Humongous Object。这类对象直接分配到___个连续的 Humongous Region 中，且这些 Region 在 GC 过程中___（会被/不会被）复制或移动。G1 中 Full GC 的常见触发原因之一就是___分配失败。-XX:___参数可以控制 Region 的大小。`,answer:`{"correct":[["50%","一半"],["多","连续多","若干"],["不会被","不会","不"],["Humongous","大对象"],["G1HeapRegionSize"]],"distractors":["75%","100%","单","一个","会被","依赖标记","Young GC","Promotion Failed","G1MixedGCLiveThresholdPercent","G1NewSizePercent"]}`,hints:[`Humongous Region 本质上是一种特殊的 Old Region，但不会参与正常的复制/移动`,`G1 对 Humongous 对象的处理比较笨重——分配和回收都有额外的性能开销`],tags:[`JVM`,`G1`,`Humongous`,`大对象`,`Region`],content_hash:`bcf325f3cce1`,id:2702},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Card Table 与写屏障`,content:`JVM 的卡表（Card Table）将堆内存划分为多个___字节的卡页（Card Page）。当跨代引用发生变化时，JVM 通过___机制将对应的卡页标记为脏页。Minor GC 扫描老年代中的脏卡页来找到跨代引用，从而避免___整个老年代。G1 使用更精确的___（Per-Region Remembered Set）来记录跨 Region 引用。`,answer:`{"correct":[["512"],["写屏障","写屏障（Write Barrier）"],["全堆扫描","全堆扫描的"],["PRS","RSet","Remembered Set","记忆集"]],"distractors":["64","256","1024","读屏障","读屏障（Load Barrier）","增量扫描","逃逸分析","SATB","Card Table"]}`,hints:[`卡表是记忆集（Remembered Set）的一种实现方式，使用位图标记脏页`,`写屏障在每次引用赋值时触发，标记被修改的引用所在的卡页为脏页`],tags:[`JVM`,`Card Table`,`写屏障`,`GC`,`记忆集`],content_hash:`e9c2f85f9d8d`,id:2703},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`对象对齐填充规则`,content:`HotSpot JVM 要求对象的起始地址必须是___字节的整数倍（可通过 -XX:___参数调整）。空 Java 对象（仅 Object 实例）在 64 位 JVM 上开启压缩指针时的内存大小为：Mark Word（8 字节）+ Klass Pointer（压缩后___字节）+ 对齐填充（___字节）= 16 字节。对齐填充确保整个对象的大小为___的整数倍。`,answer:`{"correct":[["8"],["ObjectAlignmentInBytes"],["4"],["4"],["8","8字节"]],"distractors":["4","16","32","AlignObjects","HeapAlignment","8","16","0","4","16"]}`,hints:[`为什么 HotSpot 选择 8 字节对齐——便于指针压缩的实现`,`对齐填充是对象内存布局的第三部分，确保对象大小是 8 的倍数`],tags:[`JVM`,`对象布局`,`对齐`,`指针压缩`],content_hash:`759972cf7697`,id:2704},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Full GC 的常见触发原因`,content:`JVM Full GC 的主要触发场景包括：1）老年代空间___（对象晋升过快或内存泄漏导致）；2）___空间不足（JDK 7 及之前，类加载过多或频繁热部署导致）；3）___失败（CMS GC 特有，老年代碎片化严重且并发清理无法跟上）；4）___分配失败（G1 GC 特有，大对象找不到连续 Region 空间）；5）显式调用 System.gc() 可通过 -XX:+___选项将其转换为 CMS 并发 GC 或完全忽略。`,answer:`{"correct":[["不足","已满","耗尽"],["永久代","PermGen"],["并发模式","Concurrent Mode","Concurrent Mode Failure"],["Humongous","大对象"],["DisableExplicitGC"]],"distractors":["碎片化","过大","元空间","堆","线程","STW 超时","晋升","Promotion Failed","Eden 区满","FullGCOnGCLog","EnableExplicitGC","SkipSystemGC"]}`,hints:[`CMS 的 Concurrent Mode Failure 发生后会退化为 Serial Old GC，导致极长的 STW 停顿`,`G1 的 Humongous 分配失败通常与对象大小刚好略大于半个 Region 大小有关`],tags:[`JVM`,`Full GC`,`CMS`,`G1`,`GC调优`],content_hash:`e031d03e49e3`,id:2705},{category:`jvm`,difficulty:`medium`,type:`fill_in_blank`,title:`Native Memory Tracking 堆外内存追踪`,content:`NMT（Native Memory Tracking）是 JVM 用于追踪___内存使用情况的功能。通过 JVM 参数___启用（推荐 summary 级别）。运行时通过___命令查看追踪报告。NMT 可以区分___、CodeCache、Metaspace、DirectBuffer、线程栈等各类内存占用。启用 NMT 会带来约___的性能开销。`,answer:`{"correct": [["\\u5806\\u5916", "\\u672c\\u5730", "Native"], ["-XX:NativeMemoryTracking=summary", "-XX:NativeMemoryTracking=detail"], ["jcmd <pid> VM.native_memory", "VM.native_memory"], ["\\u5806", "Java \\u5806", "\\u5806\\u5185\\u5b58"], ["5-10%", "5% \\u5230 10%", "\\u5c11\\u91cf"]], "distractors": ["\\u5806\\u5185", "-XX:+HeapDumpOnOutOfMemoryError", "jstat -gccapacity", "\\u65b9\\u6cd5\\u533a", "\\u65e0\\u5f71\\u54cd"]}`,hints:[`NMT 的 baseline 功能可以计算两次追踪之间的增量（jcmd <pid> VM.native_memory baseline）`,`生产环境建议排查时临时启用 NMT，用完关闭避免持续性能损耗`],tags:[`JVM`,`NMT`,`堆外内存`,`监控`,`诊断`],content_hash:`83b720d63e22`,id:2706},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`编译器线程数与容器适配`,content:`JVM 编译器线程总数由___参数控制，默认值为___。分层编译模式下，___约占总数的 1/3，___约占 2/3。编译请求由___线程提交到编译队列，编译器线程___执行编译。在容器环境（宿主机 64 核容器分配 4 核）中，JDK 8u191 之前 JVM 检测到___核数，创建过多编译器线程导致___。解决方法是显式设置___。`,answer:`{"correct": [["-XX:CICompilerCount", "CICompilerCount"], ["CPU \\u6838\\u6570/2", "N/2", "CPU \\u6838\\u6570\\u9664\\u4ee5 2"], ["C1 \\u7ebf\\u7a0b", "Client \\u7f16\\u8bd1\\u5668"], ["C2 \\u7ebf\\u7a0b", "Server \\u7f16\\u8bd1\\u5668"], ["\\u89e3\\u91ca\\u6267\\u884c", "\\u65b9\\u6cd5\\u8c03\\u7528\\u8ba1\\u6570"], ["\\u5f02\\u6b65", "\\u540e\\u53f0"], ["\\u5bbf\\u4e3b\\u673a", "\\u7269\\u7406\\u673a"], ["CPU \\u4e89\\u62a2", "\\u7ebf\\u7a0b\\u7ade\\u4e89", "\\u6027\\u80fd\\u4e0b\\u964d"], ["-XX:CICompilerCount=2", "CICompilerCount=2"]], "distractors": ["-XX:CompileThreshold", "CPU \\u6838\\u6570 \\u00d7 2", "C0 \\u7ebf\\u7a0b", "JIT \\u7f16\\u8bd1\\u5668", "\\u540c\\u6b65", "\\u5e76\\u884c", "\\u865a\\u62df\\u673a", "\\u5185\\u5b58\\u6cc4\\u6f0f", "-XX:ParallelGCThreads"]}`,hints:[`jstat -compiler <pid> 的 Compiled 和 Failed 列分别表示编译成功和失败的任务数`,`JDK 10 的容器感知（JEP 293）修复了此问题，JDK 8u191 通过 UseContainerSupport 回移植`],tags:[`JVM`,`编译器线程`,`CICompilerCount`,`容器`,`JIT`],content_hash:`0312a2b2b9e3`,id:2707},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`大内存页（Huge Pages）优化`,content:`操作系统默认内存页大小为___KB。JVM 通过___参数启用大内存页支持。大页的优势是减少___（TLB Miss），提高内存访问效率。Linux 上大页分为两种：___（HugeTLBFS，需预先分配）和___（Transparent Huge Pages，内核自动管理）。数据库和延迟敏感应用建议关闭透明大页，因为它可能导致___。`,answer:`{"correct": [["4"], ["-XX:+UseLargePages"], ["TLB \\u7f3a\\u5931", "TLB Miss", "TLB \\u672a\\u547d\\u4e2d"], ["\\u663e\\u5f0f\\u5927\\u9875", "\\u9759\\u6001\\u5927\\u9875", "\\u9884\\u7559\\u5927\\u9875"], ["\\u900f\\u660e\\u5927\\u9875", "THP"], ["\\u5185\\u5b58\\u6296\\u52a8", "\\u5206\\u914d\\u5ef6\\u8fdf", "\\u6027\\u80fd\\u6296\\u52a8"]], "distractors": ["8", "16", "-XX:+UseHugePages", "-XX:+UseTHP", "\\u7f3a\\u9875\\u4e2d\\u65ad", "\\u4e0a\\u4e0b\\u6587\\u5207\\u6362", "\\u52a8\\u6001\\u5927\\u9875", "CPU \\u6ce2\\u52a8", "OOM"]}`,hints:[`TLB（Translation Lookaside Buffer）是 CPU 的页表缓存，TLB Miss 导致额外的内存访问延迟`,`Red Hat 和 Oracle 官方文档均建议在数据库服务器上关闭 Transparent Huge Pages`],tags:[`JVM`,`大页`,`HugePages`,`TLB`,`性能优化`],content_hash:`b51e151e54ef`,id:2708},{category:`jvm`,difficulty:`medium`,type:`fill_in_blank`,title:`G1 字符串去重（String Deduplication）`,content:`JDK 8u20 引入的 G1 GC 字符串去重功能通过 JVM 参数___启用。该功能将堆中具有相同___的 String 对象的 char[] 指向同一个数组，减少重复字符串的内存占用。去重在___阶段进行，只处理___（年龄超过阈值的）字符串对象。该功能对___（业务类型）应用效果尤其显著。`,answer:`{"correct": [["-XX:+UseStringDeduplication"], ["\\u5185\\u5bb9", "\\u503c"], ["GC", "Young GC", "\\u5e76\\u53d1\\u6807\\u8bb0"], ["\\u5b58\\u6d3b", "\\u8fbe\\u5230\\u5e74\\u9f84\\u9608\\u503c"], ["\\u5927\\u91cf\\u91cd\\u590d\\u5b57\\u7b26\\u4e32", "\\u6587\\u672c\\u5904\\u7406", "\\u6570\\u636e\\u5bc6\\u96c6\\u578b"]], "distractors": ["-XX:+CompactStrings", "-XX:+UseG1GC", "\\u5f15\\u7528", "\\u54c8\\u5e0c\\u7801", "JIT \\u7f16\\u8bd1", "Minor GC", "\\u65b0\\u751f\\u4ee3", "\\u65b0\\u5efa", "\\u521a\\u5206\\u914d", "\\u8ba1\\u7b97\\u5bc6\\u96c6\\u578b", "IO \\u5bc6\\u96c6\\u578b"]}`,hints:[`String Deduplication 与 String.intern() 不同——前者自动识别堆中重复字符串，不涉及 String Pool`,`该功能默认只处理 GC 后存活次数达到阈值的 String 对象（默认 3 次），避免对短生命周期对象的无效处理`],tags:[`JVM`,`G1`,`String Deduplication`,`GC调优`,`内存优化`],content_hash:`781609ee8c99`,id:2709},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`GC Overhead Limit Exceeded 错误`,content:`OutOfMemoryError「GC overhead limit exceeded」当超过___% 的 CPU 时间花在 GC 上但回收不到___% 的堆空间时触发。该机制由参数___控制（默认开启），可通过___关闭。此错误是 JVM 的___（保护机制/降级策略），说明堆已太小或存在___。与普通 Java heap space OOM 的区别是：此时 JVM 判断 GC 已失效，___。`,answer:`{"correct": [["98"], ["2"], ["-XX:+UseGCOverheadLimit"], ["-XX:-UseGCOverheadLimit"], ["\\u4fdd\\u62a4\\u673a\\u5236", "\\u5b89\\u5168\\u7f51"], ["\\u5185\\u5b58\\u6cc4\\u6f0f", "\\u5bf9\\u8c61\\u6cc4\\u6f0f"], ["\\u63d0\\u524d\\u629b\\u51fa\\u5f02\\u5e38\\u800c\\u975e\\u7ee7\\u7eed\\u65e0\\u6548 GC", "\\u76f4\\u63a5\\u629b\\u51fa OOM"]], "distractors": ["90", "95", "5", "10", "-XX:+UseParallelGC", "-XX:+PrintGCDetails", "-XX:-PrintGCDetails", "\\u4f18\\u5316\\u5668", "\\u8bca\\u65ad", "\\u6027\\u80fd\\u95ee\\u9898", "\\u7b49\\u5f85 GC \\u5b8c\\u6210\\u540e\\u518d\\u629b\\u51fa", "jmap \\u5806\\u8f6c\\u50a8"]}`,hints:[`此错误的本质是 JVM 认为 GC 已无法解决问题（回收率极低），与其无休止 GC 不如尽早抛出 OOM`,`生产环境中如果频繁出现此错误，通常意味着老年代被大量不可回收对象占满——需要 heap dump 分析`],tags:[`JVM`,`OOM`,`GC`,`内存泄漏`,`调优`],content_hash:`ed1ba2302779`,id:2710},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`JVM HeapDump 自动触发参数`,content:`JVM 在 OOM 时自动生成堆转储文件的参数是___。指定转储文件路径用___。JDK 9+ 中在 OOM 后强制 JVM 立即退出用___。jmap -dump 子参数中___表示只转储存活对象（触发 Full GC 后转储）。HeapDumpOnOutOfMemoryError 生成的转储包含___（所有对象 / 仅存活对象）。`,answer:`{"correct": [["-XX:+HeapDumpOnOutOfMemoryError", "HeapDumpOnOutOfMemoryError"], ["-XX:HeapDumpPath=", "HeapDumpPath"], ["-XX:+ExitOnOutOfMemoryError", "ExitOnOutOfMemoryError"], ["live"], ["所有对象"]], "distractors": ["-XX:+DumpOnOOM", "-XX:HeapDumpDir", "-Xdump:heap", "-XX:+CoreDumpOnOOM", "-XX:+StopOnOOM", "all", "active", "仅存活对象"]}`,hints:[`HeapDumpOnOutOfMemoryError 生成的 hprof 文件默认包含所有对象（含不可达对象），生成时不会触发 Full GC`,`ExitOnOutOfMemoryError 让 JVM 在 OOM 时立即退出，避免不可恢复状态下的继续运行`],tags:[`JVM`,`OOM`,`HeapDump`,`jmap`],content_hash:`2b9e8bb48eff`,id:2711},{category:`jvm`,difficulty:`medium`,type:`fill_in_blank`,title:`JVM 容器资源检测参数`,content:`JDK 10 引入的___参数（JEP 293，JDK 8u191 回移植并默认开启）使 JVM 自动读取 cgroup 的 CPU 和内存限制。JVM 据此调整默认值和并行线程数量。___参数显式设置 JVM 使用的处理器数量并覆盖自动检测结果。当容器配置内存限制且未设置 -Xmx 时，默认最大堆约为容器内存的___。JDK 8u131+ 引入的___是容器堆大小检测的实验性前身参数。部分旧版本 JDK 中 JVM 在容器内检测到宿主机核数过多会导致___过多。`,answer:`{"correct": [["-XX:+UseContainerSupport", "UseContainerSupport"], ["-XX:ActiveProcessorCount", "ActiveProcessorCount"], ["25%", "四分之一", "1/4"], ["-XX:+UseCGroupMemoryLimitForHeap", "UseCGroupMemoryLimitForHeap"], ["GC 线程", "并行线程", "编译器线程", "JIT 编译线程"]], "distractors": ["-XX:+ContainerSupport", "-XX:+CGroupSupport", "-XX:ProcessorLimit", "-XX:CPUCount", "50%", "一半", "75%", "1/2", "-XX:+CGroupMemoryForHeap", "-XX:+ContainerMemory", "堆内存", "GC 暂停"]}`,hints:[`JDK 8u191 之前的容器内 Java 应用常见问题：检测到宿主机 64 核但容器只分配 4 核，ParallelGCThreads 和 CICompilerCount 过高`,`ActiveProcessorCount 不仅影响 GC 线程，还影响 JIT 编译器线程数、ForkJoinPool 并行度等`],tags:[`JVM`,`容器`,`UseContainerSupport`,`cgroup`],content_hash:`56d4f37c0a18`,id:2712},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Compact Strings 字符串内部表示`,content:`JDK 9 引入的 Compact Strings（JEP 254，由___参数控制，默认开启）将 String 的内部存储从___（UTF-16 char[]，每字符 2 字节）改为___（byte[] + coder 编码标志位）。当字符串所有字符可用 Latin-1 表示时，coder 标志值为___，每字符仅占 1 字节；否则 coder 值为___，每字符 2 字节。压缩后典型字符串对象内存占用减少约___。JDK 6 中 String 的 offset 和 count 字段用于___（子串共享 / 内存压缩），Compact Strings 替代了该方案。`,answer:`{"correct": [["-XX:+CompactStrings", "CompactStrings"], ["char[]", "char 数组"], ["byte[]", "byte 数组"], ["0", "LATIN1", "Latin-1"], ["1"], ["50%", "一半"], ["子串共享"]], "distractors": ["-XX:+CompressStrings", "-XX:+StringCompression", "-XX:StringCompact", "int[]", "short[]", "UTF8[]", "-1", "LATIN", "2", "UTF16", "90%", "25%", "30%", "内存压缩", "字符串去重", "字符串驻留"]}`,hints:[`Compact Strings 与 String Deduplication（G1 的 -XX:+UseStringDeduplication）是两个不同特性`,`coder 字段存储在 String 对象的 value 属性之前，作为单独的 byte 字段`],tags:[`JVM`,`String`,`Compact Strings`,`内存优化`],content_hash:`ff6280682386`,id:2713},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`CodeCache 代码缓存管理`,content:`Code Cache 是 JVM 中存储___（JIT 编译后的本地机器码）的内存区域。默认最大大小由___参数控制（JDK 8 默认 240MB）。Code Cache 分为三个区域：___（non-method code，存放 JVM 内部适配器和 stubs）、___（profiled nmethods，C1 编译代码）、和___（non-profiled nmethods，C2 编译代码）。当 Code Cache 满时 JVM 的行为由___控制（默认启用，尝试清理过时代码）。若清理失败则 JVM 降级为只解释执行不再编译，并输出___警告。InitialCodeCacheSize 控制 Code Cache 的___大小。`,answer:`{"correct": [["本地机器码", "编译后的代码", "JIT 编译代码"], ["-XX:ReservedCodeCacheSize", "ReservedCodeCacheSize"], ["non-method", "非方法代码"], ["profiled nmethod", "profiled 代码", "C1 编译代码"], ["non-profiled nmethod", "non-profiled 代码", "C2 编译代码"], ["-XX:+UseCodeCacheFlushing", "UseCodeCacheFlushing"], ["CodeCache is full", "CodeCache 已满"], ["初始", "最小"]], "distractors": ["字节码", "类元数据", "堆内存", "-XX:MaxCodeCache", "-XX:CodeCacheSize", "-XX:CacheSize", "静态代码", "非方法区", "C0 代码", "C3 代码", "non-opt 代码", "-XX:-UseCodeCacheFlush", "-XX:CodeCacheFlushSize", "Compilation failed", "JIT 关闭", "CodeCache 溢出", "运行时"]}`,hints:[`JDK 9 将 Code Cache 分段的目的是不同生命周期不同 GC 策略——non-method 代码几乎不更新，profiled 代码可能被更频繁地刷新`,`Code Cache 满的典型表现是 JIT 编译日志中大量「CodeCache is full. Compiler has been disabled」警告，之后系统性能持续下降`],tags:[`JVM`,`CodeCache`,`JIT`,`编译`],content_hash:`d89bf60357fe`,id:2714},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`JVM OOM 应急钩子与退出策略`,content:`JVM 的___参数指定在 OOM 发生时自动执行指定脚本或命令（如自动重启应用或触发诊断脚本），命令通过___（子进程 / JVM 内线程）执行。___参数（JDK 9+）使 JVM 在首次 OOM 时立即退出进程并返回错误码。___参数（JDK 9+）使 JVM 在首次 OOM 时生成 core dump 并退出。当应用因 OOM 进入不可恢复状态时，使用___参数可以避免「空转」——JVM 仍然运行但无法响应请求。生产环境推荐将___与 HeapDumpOnOutOfMemoryError 配合使用来构建完整的故障捕获方案。`,answer:`{"correct": [["-XX:OnOutOfMemoryError", "OnOutOfMemoryError"], ["子进程", "外部进程"], ["-XX:+ExitOnOutOfMemoryError", "ExitOnOutOfMemoryError"], ["-XX:+CrashOnOutOfMemoryError", "CrashOnOutOfMemoryError"], ["ExitOnOutOfMemoryError", "-XX:+ExitOnOutOfMemoryError"], ["OnOutOfMemoryError", "-XX:OnOutOfMemoryError"]], "distractors": ["-XX:OnError", "-XX:FatalErrorLog", "-XX:OOMAction", "-XX:+OnOOMExit", "JVM 线程", "GC 线程", "系统线程", "-XX:+CoreOnOOM", "-XX:+CreateCoreDump", "-XX:+GenerateCoreOnOOM", "RunOnOutOfMemoryError", "CoreOnOutOfMemoryError", "-XX:DumpOnOOM"]}`,hints:[`OnOutOfMemoryError 的参数格式为 -XX:OnOutOfMemoryError="<command> <args>"，命令会在 JVM 子进程中执行`,`ExitOnOutOfMemoryError 结合 HeapDumpOnOutOfMemoryError 可以实现「OOM 时先 dump 再退出」，避免不可恢复状态下的继续运行`],tags:[`JVM`,`OOM`,`ExitOnOutOfMemoryError`,`CrashOnOutOfMemoryError`],content_hash:`9aa7729f92d1`,id:2715},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`G1 Mixed GC 的触发时机`,content:`G1 GC 的 Mixed GC 在___标记完成后触发，回收范围包括年轻代 Region 和___（按回收收益排序的部分老年代 Region）。G1 通过参数___（默认 45%）控制触发并发标记的堆占用阈值。Mixed GC 会分___次完成（通过-XX:G1MixedGCCountTarget控制），避免单次停顿过长。如果 Mixed GC 回收速度跟不上老年代分配速度，最终退化为___。`,answer:`{"correct":[["并发","并发标记"],["高价值老年代 Region","垃圾最多的老年代 Region"],["-XX:InitiatingHeapOccupancyPercent","IHOP"],["多","多次"],["Full GC","Serial Old Full GC"]],"distractors":["初始","所有 Region","-XX:MaxGCPauseMillis","Young GC"]}`,hints:[`IHOP 默认值 45% 表示堆使用率达到 45% 时触发并发标记`,`Mixed GC 分多次执行是为了满足 -XX:MaxGCPauseMillis 的停顿时间目标`],tags:[`JVM`,`G1`,`GC`,`Mixed GC`],content_hash:`43476fc29064`,id:2716},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`空间分配担保机制`,content:`Minor GC 前 JVM 会检查老年代___大小是否大于新生代___总和。如果大于，说明老年代有空间容纳晋升对象，Minor GC 安全。如果小于，则检查___是否允许担保失败（JDK 6+ 默认___）。如果允许，继续 Minor GC 但风险是___（老年代空间不足导致 Full GC）；如果不允许，直接触发 Full GC。JDK 6 Update 24 后该参数失效，担保判断由___自动决定。`,answer:`{"correct":[["最大可用连续空间","最大连续空间"],["所有对象","全部对象"],["-XX:-HandlePromotionFailure","HandlePromotionFailure"],["开启","true","允许"],["担保失败","Promotion Failed"],["JVM","GC 自适应"]],"distractors":["最小可用空间","存活对象","-XX:+UseAdaptiveSizePolicy","关闭"]}`,hints:[`担保失败（Promotion Failed）会导致老年代无法容纳晋升对象，触发 Full GC`,`JDK 6u24 之后 -XX:HandlePromotionFailure 已失效，由 JVM 自动决策`],tags:[`JVM`,`GC`,`晋升`,`担保`],content_hash:`b8a44d0b8390`,id:2717},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`Full GC 的常见触发条件`,content:`Full GC 的常见触发条件包括：1）老年代___不足（对象晋升或大对象分配失败）；2）___空间不足（类加载过多或动态代理频繁生成类）；3）___（Concurrent Mode Failure，CMS 并发回收期间老年代被填满）；4）调用___（显式 GC，通过 System.gc() 或 JNI 触发，可通过___参数禁用）；5）G1 的___分配失败（超过 Region 大小 50% 的对象无法分配到 Humongous Region）。`,answer:`{"correct":[["空间","连续空间"],["元空间","Metaspace"],["CMS 并发模式失败"],["System.gc()","System.gc"],["-XX:+DisableExplicitGC"],["大对象","Humongous"]],"distractors":["时间","堆外内存","Runtime.gc()","-XX:-UseTLAB"]}`,hints:[`System.gc() 在 RMI 或 NIO 框架中可能被自动调用，生产环境建议 -XX:+DisableExplicitGC`,`Concurrent Mode Failure 是 CMS 特有的 Full GC 触发原因，G1 不存在此问题`],tags:[`JVM`,`GC`,`Full GC`,`调优`],content_hash:`4024bd0beff9`,id:2718},{category:`jvm`,difficulty:`hard`,type:`fill_in_blank`,title:`JIT 方法内联的限制条件`,content:`JIT 方法内联受到多个参数限制：默认最大内联方法体大小为___字节（-XX:MaxInlineSize），热方法最大内联大小为___字节（-XX:MaxFreqInlineSize）。嵌套内联深度限制为___层（-XX:MaxInlineLevel）。接口/虚方法的内联需要通过___确保只有一种实现，否则插入___作为兜底。递归方法不会被无限内联，JIT 通过___深度限制防止栈溢出。`,answer:`{"correct":[["35","35 字节"],["325","325 字节"],["9","9 层"],["CHA","类层次分析"],["类型检查守卫","type guard"],["MaxRecursiveInlineLevel"]],"distractors":["50","500","15","MaxInlineSize"]}`,hints:[`MaxInlineLevel 默认 9 层——超过 9 层嵌套调用的方法不会被内联`,`虚方法内联通过 CHA 检测——如果只有一个实现类则内联，否则使用 guard 条件检查`],tags:[`JVM`,`JIT`,`方法内联`,`编译优化`],content_hash:`6c932240de5b`,id:2719},{category:`jvm`,difficulty:`easy`,type:`fill_in_blank`,title:`Graal JIT 编译器`,content:`Graal JIT 编译器是 Oracle 用___语言实现的 JIT 编译器（替代 C2）。它在 JDK 17+ 中作为___（实验性特性）可用。Graal 的核心优势是___（更激进的优化如自动向量化、部分逃逸分析）和___（可以作为提前编译 AOT 和即时编译 JIT 的统一编译器框架）。在 JDK 21+ 中 Graal 可通过___参数启用。与 C2 相比，Graal 在___（代码生成速度）上通常优于 C2。`,answer:`{"correct":[["Java","纯 Java"],["实验性特性"],["更强的优化能力","更好的优化"],["可嵌入性","通用性"],["-XX:+EnableExperimentalVMOptions -XX:+UseJVMCICompiler","JVMCICompiler"],["编译速度"]],"distractors":["C++","正式特性","-XX:+UseZGC","代码质量"]}`,hints:[`Graal 用 Java 实现——面临自举（bootstrapping）问题，需要 HotSpot C2 先启动`,`GraalVM 底层也使用了 Graal JIT 编译器，支持 Polyglot（多语言混编）`],tags:[`JVM`,`JIT`,`Graal`,`编译器`],content_hash:`1e3b03f54c9d`,id:2720}];export{e as category,t as questions};
