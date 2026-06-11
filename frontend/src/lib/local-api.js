@@ -365,6 +365,8 @@ export const api = {
         notes: body.notes || existing.notes || "",
         bookmarked: body.bookmarked !== undefined ? body.bookmarked : (existing.bookmarked || false),
         source: body.source || "quiz",
+        ai_overall: body.aiInfo?.ai_overall ?? existing.ai_overall ?? null,
+        ai_dimensions: body.aiInfo?.ai_dimensions ?? existing.ai_dimensions ?? null,
       };
       progress[questionId] = entry;
       saveProgress(progress);
@@ -661,6 +663,27 @@ export const api = {
       try { localStorage.setItem(GOAL_KEY, String(val)); } catch { /* ignore */ }
       return val;
     },
+
+    /** Get progress for a learning path stage/category */
+    pathProgress(paths) {
+      const progress = getProgress();
+      const stats = this.stats();
+      const cats = stats?.by_category || {};
+      return paths.map((path) => {
+        const stages = path.stages.map((stage) => {
+          const targets = stage.targets.map((t) => {
+            const cat = cats[t.category] || { total: 0, done: 0, wrong: 0 };
+            return { ...t, total: cat.total, done: cat.done, wrong: cat.wrong };
+          });
+          const totalRequired = targets.reduce((s, t) => s + t.required, 0);
+          const totalDone = targets.reduce((s, t) => s + Math.min(t.done, t.required), 0);
+          return { ...stage, targets, totalRequired, totalDone, pct: totalRequired > 0 ? Math.round((totalDone / totalRequired) * 100) : 0 };
+        });
+        const overallTotal = stages.reduce((s, st) => s + st.totalRequired, 0);
+        const overallDone = stages.reduce((s, st) => s + st.totalDone, 0);
+        return { ...path, stages, overallTotal, overallDone, pct: overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0 };
+      });
+    },
   },
 
   // ── Quick Review Session ──────────────────────────────────
@@ -891,22 +914,71 @@ export const api = {
   migrateProgress() {
     const progress = getProgress();
     let changed = false;
-    for (const id of Object.keys(progress)) {
-      const entry = progress[id];
+
+    // Build hash→id map from current question index
+    const hashToId = {};
+    for (const q of questionIndex) {
+      if (q.content_hash) {
+        hashToId[q.content_hash] = q.id;
+      }
+    }
+
+    // Remap progress entries by content hash when IDs shift
+    const remapped = {};
+    const oldKeys = Object.keys(progress);
+    for (const idStr of oldKeys) {
+      const id = Number(idStr);
+      const entry = progress[idStr];
+      if (!entry) continue;
+
+      const currentQuestion = questionIndex.find((q) => q.id === id);
+
+      if (currentQuestion && entry.content_hash && entry.content_hash === currentQuestion.content_hash) {
+        // Hash matches current ID — no remap needed
+        remapped[id] = entry;
+      } else if (entry.content_hash && hashToId[entry.content_hash]) {
+        // Hash still exists but at a different ID — remap
+        const newId = hashToId[entry.content_hash];
+        if (newId !== id) {
+          if (!remapped[newId]) {
+            remapped[newId] = entry;
+            changed = true;
+          }
+        } else {
+          remapped[newId] = entry;
+        }
+      } else {
+        // No hash or hash not found — keep original mapping
+        remapped[id] = entry;
+      }
+    }
+
+    // Add content_hash to old entries that don't have it
+    for (const q of questionIndex) {
+      if (remapped[q.id] && !remapped[q.id].content_hash) {
+        remapped[q.id].content_hash = q.content_hash;
+        changed = true;
+      }
+    }
+
+    // Schema migration: ensure SM-2 defaults for old entries
+    for (const id of Object.keys(remapped)) {
+      const entry = remapped[id];
       if (entry.ef === undefined) {
         const defaults = getDefaultProgress();
-        progress[id] = { ...defaults, ...entry };
+        remapped[id] = { ...defaults, ...entry };
         if (entry.status === "correct" && !entry.next_review_at) {
           const d = new Date();
           d.setDate(d.getDate() + 4);
-          progress[id].next_review_at = d.toISOString();
-          progress[id].interval = 4;
-          progress[id].repetitions = 1;
+          remapped[id].next_review_at = d.toISOString();
+          remapped[id].interval = 4;
+          remapped[id].repetitions = 1;
         }
         changed = true;
       }
     }
-    if (changed) saveProgress(progress);
+
+    if (changed) saveProgress(remapped);
     return { migrated: changed };
   },
 };

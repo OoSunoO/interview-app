@@ -10,6 +10,8 @@
   import KnowledgePointDetail from "./pages/KnowledgePointDetail.svelte";
   import QuickReview from "./pages/QuickReview.svelte";
   import ReviewSession from "./pages/ReviewSession.svelte";
+  import LearningPaths from "./pages/LearningPaths.svelte";
+  import AIMockInterview from "./pages/AIMockInterview.svelte";
   import { fade } from "svelte/transition";
   import { api, ready } from "./lib/local-api.js";
   import { store } from "./lib/stores.svelte.js";
@@ -114,6 +116,10 @@
           <QuickReview config={reviewConfig} onNavigate={navigate} />
         {:else if page === "review-session"}
           <ReviewSession config={reviewConfig} onNavigate={navigate} />
+        {:else if page === "learning-paths"}
+          <LearningPaths onNavigate={navigate} />
+        {:else if page === "ai-interview"}
+          <AIMockInterview onNavigate={navigate} config={reviewConfig} />
         {/if}
       </div>
     {/key}

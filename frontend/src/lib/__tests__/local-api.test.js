@@ -79,6 +79,7 @@ const FIXTURE = [
     tags: ["事务"],
     options: ["A) 原子性", "B) 一致性", "C) 隔离性", "D) 冗余性"],
     company: "腾讯",
+    content_hash: "hash_6_abc123",
   },
 ];
 
@@ -90,6 +91,7 @@ const FIXTURE_INDEX = FIXTURE.map((q) => ({
   title: q.title,
   tags: q.tags || [],
   company: q.company || "",
+  content_hash: q.content_hash || `hash_${q.id}_test`,
 }));
 
 vi.mock("../question-data/index.js", () => ({
@@ -1126,6 +1128,7 @@ describe("migrateProgress no-op", () => {
           interval: 4,
           repetitions: 1,
           next_review_at: new Date().toISOString(),
+          content_hash: "hash_1_test",
         },
       }),
     );
@@ -1177,6 +1180,151 @@ describe("recordReviewActivity edge cases", () => {
     const all = api.progress.allDailyStats();
     const keys = Object.keys(all);
     expect(keys.length).toBeLessThanOrEqual(366);
+  });
+});
+
+describe("progress.pathProgress", () => {
+  it("returns empty progress for each path stage", async () => {
+    const api = await getApi();
+    const pathDefs = [
+      {
+        id: "test-path",
+        title: "Test",
+        stages: [
+          {
+            id: "stage-1",
+            title: "Stage 1",
+            targets: [
+              { category: "java_basic", label: "Java 基础", required: 10 },
+              { category: "database", label: "数据库", required: 5 },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = api.progress.pathProgress(pathDefs);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("test-path");
+    expect(result[0].stages).toHaveLength(1);
+    expect(result[0].stages[0].targets).toHaveLength(2);
+    expect(result[0].stages[0].totalRequired).toBe(15);
+    expect(result[0].stages[0].totalDone).toBe(0);
+    expect(result[0].stages[0].pct).toBe(0);
+    expect(result[0].pct).toBe(0);
+  });
+
+  it("computes partial progress correctly", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { status: "correct" });
+    const pathDefs = [
+      {
+        id: "test-path",
+        title: "Test",
+        stages: [
+          {
+            id: "stage-1",
+            title: "Stage 1",
+            targets: [{ category: "java_basic", label: "Java 基础", required: 5 }],
+          },
+        ],
+      },
+    ];
+    const result = api.progress.pathProgress(pathDefs);
+    expect(result[0].stages[0].targets[0].done).toBe(1);
+    expect(result[0].stages[0].totalDone).toBe(1);
+  });
+
+  it("caps done at required amount", async () => {
+    const api = await getApi();
+    await api.progress.update(1, { status: "correct" });
+    const pathDefs = [
+      {
+        id: "test-path",
+        title: "Test",
+        stages: [
+          {
+            id: "stage-1",
+            title: "Stage 1",
+            targets: [{ category: "java_basic", label: "Java 基础", required: 1 }],
+          },
+        ],
+      },
+    ];
+    const result = api.progress.pathProgress(pathDefs);
+    expect(result[0].stages[0].targets[0].done).toBe(1);
+    expect(result[0].stages[0].totalDone).toBe(1);
+    expect(result[0].stages[0].pct).toBe(100);
+  });
+});
+
+describe("migrateProgress content_hash remapping", () => {
+  it("preserves entries when hash matches", async () => {
+    // Create a progress entry with the exact content_hash from question 1
+    const newQuestionIndex = await import("../question-data/index.js").then((m) => m.questionIndex);
+    const q1 = newQuestionIndex.find((q) => q.id === 1);
+    if (q1?.content_hash) {
+      localStorage.setItem(
+        "quiz_progress",
+        JSON.stringify({
+          1: {
+            status: "correct",
+            ef: 2.5,
+            interval: 4,
+            repetitions: 1,
+            next_review_at: new Date().toISOString(),
+            content_hash: q1.content_hash,
+          },
+        }),
+      );
+      vi.resetModules();
+      const api2 = await getApi();
+      api2.migrateProgress();
+      const progress = JSON.parse(localStorage.getItem("quiz_progress"));
+      expect(progress["1"].status).toBe("correct");
+    }
+  });
+
+  it("backfills content_hash for entries missing it", async () => {
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "correct", ef: 2.5, interval: 4, next_review_at: new Date().toISOString() },
+      }),
+    );
+    vi.resetModules();
+    const api2 = await getApi();
+    api2.migrateProgress();
+    const progress = JSON.parse(localStorage.getItem("quiz_progress"));
+    expect(progress["1"].content_hash).toBeTruthy();
+    expect(typeof progress["1"].content_hash).toBe("string");
+  });
+
+  it("remaps entry when hash exists but ID changed", async () => {
+    const newQuestionIndex = await import("../question-data/index.js").then((m) => m.questionIndex);
+    const targetQuestion = newQuestionIndex.find((q) => q.content_hash && q.id !== 99999);
+    if (targetQuestion) {
+      // Store progress with content_hash but wrong ID
+      localStorage.setItem(
+        "quiz_progress",
+        JSON.stringify({
+          99999: {
+            status: "correct",
+            ef: 2.5,
+            interval: 4,
+            repetitions: 1,
+            next_review_at: new Date().toISOString(),
+            content_hash: targetQuestion.content_hash,
+          },
+        }),
+      );
+      vi.resetModules();
+      const api2 = await getApi();
+      api2.migrateProgress();
+      const progress = JSON.parse(localStorage.getItem("quiz_progress"));
+      // Should be remapped from 99999 to targetQuestion.id
+      expect(progress[String(targetQuestion.id)]).toBeTruthy();
+      expect(progress["99999"]).toBeUndefined();
+    }
   });
 });
 

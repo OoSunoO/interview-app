@@ -9,12 +9,17 @@
 // via loadCategory() / loadAll(). This reduces initial bundle size by ~83%.
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const seedDir = path.resolve(__dirname, "../../backend/seed_data");
 const outDir = path.resolve(__dirname, "../src/lib/question-data");
 const catsDir = path.resolve(outDir, "categories");
+
+function contentHash(q) {
+  return crypto.createHash("sha256").update(q.title + "\0" + q.content + "\0" + q.answer).digest("hex").slice(0, 12);
+}
 
 // ── Read & assign IDs ─────────────────────────────────────────
 const files = fs.readdirSync(seedDir).filter(f => f.endsWith(".json")).sort();
@@ -26,7 +31,7 @@ for (const f of files) {
   for (const q of data) {
     const cat = q.category;
     if (!byCategory[cat]) byCategory[cat] = [];
-    byCategory[cat].push({ ...q, id: id++ });
+    byCategory[cat].push({ ...q, content_hash: contentHash(q), id: id++ });
   }
 }
 
@@ -63,6 +68,7 @@ for (const cat of sortedCats) {
       title: q.title,
       tags: q.tags || [],
       company: q.company || "",
+      content_hash: q.content_hash,
     });
   }
 }

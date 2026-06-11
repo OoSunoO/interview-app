@@ -251,8 +251,8 @@ export const store = {
     return _currentQuestion;
   },
 
-  async markProgress(questionId, status, duration = 0, rating) {
-    await api.progress.update(questionId, { status, rating, duration_seconds: duration });
+  async markProgress(questionId, status, duration = 0, rating, aiInfo = null) {
+    await api.progress.update(questionId, { status, rating, duration_seconds: duration, aiInfo });
     if (status === "wrong" || rating === "forgot" || rating === "hard") {
       _wrongQuestions = await api.progress.wrong();
       _dueReviews = await api.progress.dueReviews();

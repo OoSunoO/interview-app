@@ -8,8 +8,10 @@
   import { renderContent, renderAnswer } from "../lib/render-utils.js";
   import { api } from "../lib/local-api.js";
   import { toast } from "../lib/toast.js";
+  import CodeEditor from "../components/CodeEditor.svelte";
   import QuizAIConfig from "../components/QuizAIConfig.svelte";
   import QuizSessionSummary from "../components/QuizSessionSummary.svelte";
+  import { hasAI, gradeDetailed, saveScoreEntry } from "../lib/ai.js";
 
   let { questionId, onNavigate, mockInterview = null } = $props();
   let q = $state(null);
@@ -56,6 +58,8 @@
   let showSubmitResult = $state(false);
   let multiSubmitted = $state(false);
   let feedbackResult = $state(null);
+  let aiGrade = $state(null);
+  let aiLoading = $state(false);
   let sessionResults = $state([]);
   let showSessionSummary = $state(false);
   let sessionSummary = $derived.by(() => {
@@ -224,8 +228,29 @@
     }, 2000);
   }
 
-  function submitAnswer() {
+  function onUpdate(val) {
+    userAnswer = val;
+  }
+
+  async function submitAnswer() {
     showSubmitResult = true;
+    if ((q.type === "short_answer" || q.type === "coding") && hasAI()) {
+      aiLoading = true;
+      aiGrade = null;
+      try {
+        const result = await gradeDetailed(q.title + "\n" + q.content, userAnswer, q.answer);
+        aiGrade = result;
+        saveScoreEntry({
+          questionId: q.id,
+          title: q.title,
+          overall: result.overall,
+          dimensions: result.dimensions,
+        });
+      } catch {
+        aiGrade = null;
+      }
+      aiLoading = false;
+    }
   }
 
   async function selfEvaluate(correct) {
@@ -233,7 +258,10 @@
     saving = true;
     const status = correct ? "correct" : "wrong";
     const rating = correct ? "good" : "forgot";
-    await store.markProgress(q.id, status, timer, rating);
+    const aiInfo = aiGrade
+      ? { ai_overall: aiGrade.overall, ai_dimensions: aiGrade.dimensions }
+      : null;
+    await store.markProgress(q.id, status, timer, rating, aiInfo);
     recordSessionResult(status);
     q.status = status;
     feedbackResult = status;
@@ -336,6 +364,7 @@
     showSubmitResult = false;
     feedbackResult = null;
     aiGrade = null;
+    aiLoading = false;
     timer = 0;
     countdown = interviewed ? timeLimit : 0;
     if (timerInterval) {
@@ -774,13 +803,11 @@
         {#if !showAnswer}
           <div class="input-area">
             {#if q.type === "coding"}
-              <textarea
-                class="code-input"
-                bind:value={userAnswer}
-                placeholder="写下你的代码..."
-                rows="8"
-                spellcheck="false"
-              ></textarea>
+              <CodeEditor
+                value={userAnswer}
+                language={q.tags?.length > 0 ? q.tags[0] : "auto"}
+                {onUpdate}
+              />
             {:else}
               <textarea
                 class="answer-input"
@@ -797,12 +824,39 @@
           {:else}
             <div class="self-eval">
               <p class="eval-hint">对比参考答案，你答对了吗？</p>
+              {#if aiLoading}
+                <div class="ai-loading">
+                  <span class="ai-loading-spinner"></span>
+                  <span>AI 评估中...</span>
+                </div>
+              {:else if aiGrade}
+                <div class="ai-grade-inline">
+                  <div class="ai-grade-header">
+                    <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    AI 评分
+                    <span class="ai-overall-badge" class:pass={aiGrade.overall === "通过"} class:partial={aiGrade.overall === "部分通过"} class:fail={aiGrade.overall === "不通过"}>{aiGrade.overall}</span>
+                  </div>
+                  <div class="ai-grade-dims">
+                    {#each aiGrade.dimensions as dim}
+                      <div class="ai-grade-dim">
+                        <span class="ai-dim-name">{dim.name}</span>
+                        <div class="ai-dim-bar-track">
+                          <div class="ai-dim-bar-fill" style="width: {dim.score}%"></div>
+                        </div>
+                        <span class="ai-dim-score">{dim.score}</span>
+                      </div>
+                    {/each}
+                  </div>
+                  {#if aiGrade.suggestion}
+                    <p class="ai-grade-suggestion">{aiGrade.suggestion}</p>
+                  {/if}
+                </div>
+              {/if}
               <div class="eval-actions">
                 <button class="eval-wrong" onclick={() => selfEvaluate(false)}>答错了</button>
                 <button class="eval-correct" onclick={() => selfEvaluate(true)}>答对了</button>
               </div>
             </div>
-            <QuizAIConfig {q} {userAnswer} />
           {/if}
         {/if}
       {/if}
@@ -862,7 +916,13 @@
         <div class="ua-header">
           <span class="ua-label">你的回答</span>
         </div>
-        <div class="ua-body">{userAnswer}</div>
+        {#if q.type === "coding"}
+          <div class="ua-body">
+            <CodeEditor value={userAnswer} language={q.tags?.[0] || "auto"} readonly={true} />
+          </div>
+        {:else}
+          <div class="ua-body">{userAnswer}</div>
+        {/if}
         <div class="ua-status">
           {#if feedbackResult === "correct"}
             <span class="ua-correct">✓ 自评正确</span>
@@ -1517,18 +1577,11 @@
     flex-direction: column;
     gap: 8px;
   }
-  .answer-input,
-  .code-input {
+  .answer-input {
     resize: vertical;
     min-height: 80px;
     line-height: 1.6;
     font-size: 16px;
-  }
-  .code-input {
-    font-family: "SF Mono", "Fira Code", "JetBrains Mono", monospace;
-    font-size: 13px;
-    tab-size: 2;
-    background: var(--code-bg);
   }
   .submit-btn {
     width: 100%;
@@ -1572,6 +1625,98 @@
     font-weight: 600;
     background: var(--success);
     border-radius: var(--radius-sm);
+  }
+
+  /* ── AI Auto-Grade Inline ── */
+  .ai-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .ai-loading-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: ai-spin 0.6s linear infinite;
+  }
+  @keyframes ai-spin {
+    to { transform: rotate(360deg); }
+  }
+  .ai-grade-inline {
+    padding: 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+  }
+  .ai-grade-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .ai-overall-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: auto;
+  }
+  .ai-overall-badge.pass { background: var(--success-bg); color: var(--success); }
+  .ai-overall-badge.partial { background: var(--warning-bg); color: var(--warning); }
+  .ai-overall-badge.fail { background: var(--danger-bg); color: var(--danger); }
+  .ai-grade-dims {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ai-grade-dim {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .ai-dim-name {
+    min-width: 48px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .ai-dim-bar-track {
+    flex: 1;
+    height: 6px;
+    background: var(--danger-bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .ai-dim-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s var(--spring);
+  }
+  .ai-dim-score {
+    min-width: 28px;
+    text-align: right;
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  .ai-grade-suggestion {
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: var(--accent-bg);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--accent);
+    line-height: 1.5;
   }
 
   /* ── Knowledge Tags ── */
@@ -2060,8 +2205,7 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
-    .answer-input,
-    .code-input {
+    .answer-input {
       min-height: 120px;
       font-size: 16px;
     }

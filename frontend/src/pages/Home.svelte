@@ -490,6 +490,13 @@
         随机一题
       </button>
 
+      <button class="lp-entry-btn" onclick={() => onNavigate("learning-paths")}>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M16 8.2C14.4 6.8 12 6 9.5 6c-3 0-5.5 1.5-7 3.5l2.5 2.5C6 10.5 7.5 9 9.5 9c1.8 0 3.5.6 4.8 1.7L12 13l6 1-1-6-2.1 2.2z" /></svg>
+        学习路径
+      </button>
+
       <button class="qr-entry-btn" onclick={openQuickReview}>
         <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
@@ -504,6 +511,13 @@
           stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" />
           <path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>
         模拟面试
+      </button>
+
+      <button class="ai-mi-entry-btn" onclick={() => onNavigate("ai-interview")}>
+        <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
+        AI 面试官
       </button>
     {/if}
   </div>
@@ -1065,6 +1079,29 @@
   background: var(--accent-bg);
 }
 
+/* ── Learning Paths Entry Button ── */
+.lp-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--success);
+  border: 1px solid var(--success);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s var(--spring);
+}
+.lp-entry-btn:active {
+  transform: scale(0.97);
+  background: var(--success-bg);
+}
+
 /* ── Quick Review Entry Button ── */
 .qr-entry-btn {
   display: flex;
@@ -1109,6 +1146,30 @@
 .mi-entry-btn:active {
   transform: scale(0.97);
   background: var(--danger-bg);
+}
+
+/* ── AI Mock Interview Entry Button ── */
+.ai-mi-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s var(--spring);
+  margin-top: 8px;
+}
+.ai-mi-entry-btn:active {
+  transform: scale(0.97);
+  background: var(--accent-bg);
 }
 
 /* ── Reminder Toggle ── */
