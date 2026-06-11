@@ -3,35 +3,8 @@
     "category": "concurrency",
     "type": "short_answer",
     "difficulty": "medium",
-    "title": "线程的生命周期与状态转换",
-    "answer": "Java 线程有六种状态：NEW（新建）、RUNNABLE（可运行，含就绪+运行）、BLOCKED（阻塞，等待监视器锁）、WAITING（等待，需显式唤醒）、TIMED_WAITING（超时等待）、TERMINATED（终止）。\n\n关键转换：\n- NEW → RUNNABLE：调用 start()，注意不能重复调用\n- RUNNABLE → BLOCKED：进入 synchronized 代码块但锁被占用\n- RUNNABLE → WAITING：Object.wait()、Thread.join()、LockSupport.park()\n- RUNNABLE → TIMED_WAITING：Thread.sleep()、wait(1000)、parkNanos()\n- BLOCKED → RUNNABLE：获得锁\n- WAITING → RUNNABLE：notify()/notifyAll()/unpark()\n- RUNNABLE → TERMINATED：run() 执行完毕或未捕获异常\n\n注意：yield() 不改变线程状态（仍为 RUNNABLE，只是让出 CPU 时间片）。操作系统层面的 Ready vs Running 在 JVM 层面统一为 RUNNABLE，不区分。\n\n排查线程状态用 jstack，重点关注 BLOCKED（锁竞争）和 WAITING（可能死锁）的线程。",
-    "content": "请详细说明 Java 线程的六种状态及其完整转换关系。包括每种状态的触发条件、yield() 对状态的影响、以及如何用 jstack 排查线程状态问题。",
-    "tags": [
-      "线程状态",
-      "JVM",
-      "操作系统"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "medium",
-    "title": "synchronized 的锁升级过程与原理",
-    "answer": "从 JDK 6 起，synchronized 通过锁升级（偏向锁→轻量级锁→重量级锁）实现渐进式优化，核心是减少 CAS 和 OS 互斥的开销。\n\n锁对象头（Mark Word）布局：\n- 无锁：biased_bias 未设置，分代年龄\n- 偏向锁：线程 ID + epoch + 偏向位=1 + 锁标志位=01\n- 轻量级锁：指向栈中 Lock Record 的指针 + 锁标志位=00\n- 重量级锁：指向 Monitor（ObjectMonitor）的指针 + 锁标志位=10\n\n升级过程：\n1. 偏向锁：首次获取时 CAS 将线程 ID 写入 Mark Word。之后该线程再进入同步块无需任何同步操作。\n2. 偏向锁撤销：另一个线程尝试获取时，在安全点检查原持有线程是否存活。若已结束则撤销偏向并升级为轻量级锁；若仍在活动则膨胀为重量级锁（偏向锁撤销代价高）。\n3. 轻量级锁：在当前线程栈帧创建 Lock Record，CAS 尝试将 Mark Word 替换为指向 Lock Record 的指针。成功则持有；失败则自旋。\n4. 重量级锁：自旋超过阈值或线程数过多时，膨胀为重量级锁，未获取到的线程进入 BLOCKED 状态（挂起到内核态）。\n\nJDK 15+ 默认禁用偏向锁（-XX：-UseBiasedLocking），因为维护成本和撤销带来的 STW 开销在高并发下反而劣化性能。\n\n调优参数：-XX：BiasedLockingStartupDelay=0（启动即启用偏向锁）、-XX：-UseBiasedLocking（禁用偏向锁）。",
-    "content": "请详细解释 JDK 6 引入的 synchronized 锁升级机制（偏向锁→轻量级锁→重量级锁），重点说明每种锁状态的 Mark Word 布局、升级触发条件，以及 JDK 15+ 默认禁用偏向锁的原因。",
-    "tags": [
-      "synchronized",
-      "锁升级",
-      "偏向锁",
-      "轻量级锁"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "medium",
     "title": "AQS（AbstractQueuedSynchronizer）的核心原理",
-    "answer": "AQS 是 JUC 锁和同步器的基础框架，ReentrantLock、CountDownLatch、Semaphore、ThreadPoolExecutor（Worker）等都基于 AQS 实现。\n\n核心组件：\n1. state（volatile int）：同步状态，子类通过 getState()/setState()/compareAndSetState() 操作。ReentrantLock 表示持有锁的线程重入次数，Semaphore 表示剩余许可数。\n2. CLH 变体队列（FIFO）：双向链表，每个节点（Node）包含 waitStatus、前驱/后继指针、线程引用。\n\nNode.waitStatus：\n- CANCELLED（1）：超时或中断的节点，不会再被唤醒\n- SIGNAL（-1）：后继节点需要被唤醒\n- CONDITION（-2）：在 Condition 条件队列中\n- PROPAGATE（-3）：共享锁模式下向后传播唤醒\n\n加锁流程（以独占模式为例）：\n1. tryAcquire()：模板方法，子类实现（ReentrantLock 的 nonfairTryAcquire 尝试 CAS 设置 state）\n2. 失败 → addWaiter(Node.EXCLUSIVE)：将当前线程包装为 Node 加入队列尾部\n3. acquireQueued()：循环尝试获取锁，失败则判断是否应挂起（前驱节点的 waitStatus 为 SIGNAL）\n4. 挂起后等待前驱节点释放锁时 unpark\n\n解锁流程：\n1. tryRelease()：减少 state，为 0 表示完全释放\n2. 唤醒后继节点（unparkSuccessor）\n\nCondition 实现：\n每个 ConditionObject 维护一个单向条件队列。await() 将当前线程移入条件队列并释放锁，signal() 将条件队列头节点转移到同步队列。",
+    "answer": "答案：AQS 是 JUC 锁和同步器的基础框架，ReentrantLock、CountDownLatch、Semaphore、ThreadPoolExecutor（Worker）等都基于 AQS 实现。\n\n解析：核心组件：\n1. state（volatile int）：同步状态，子类通过 getState()/setState()/compareAndSetState() 操作。ReentrantLock 表示持有锁的线程重入次数，Semaphore 表示剩余许可数。\n2. CLH 变体队列（FIFO）：双向链表，每个节点（Node）包含 waitStatus、前驱/后继指针、线程引用。\n\nNode.waitStatus：\n- CANCELLED（1）：超时或中断的节点，不会再被唤醒\n- SIGNAL（-1）：后继节点需要被唤醒\n- CONDITION（-2）：在 Condition 条件队列中\n- PROPAGATE（-3）：共享锁模式下向后传播唤醒\n\n加锁流程（以独占模式为例）：\n1. tryAcquire()：模板方法，子类实现（ReentrantLock 的 nonfairTryAcquire 尝试 CAS 设置 state）\n2. 失败 → addWaiter(Node.EXCLUSIVE)：将当前线程包装为 Node 加入队列尾部\n3. acquireQueued()：循环尝试获取锁，失败则判断是否应挂起（前驱节点的 waitStatus 为 SIGNAL）\n4. 挂起后等待前驱节点释放锁时 unpark\n\n解锁流程：\n1. tryRelease()：减少 state，为 0 表示完全释放\n2. 唤醒后继节点（unparkSuccessor）\n\nCondition 实现：\n每个 ConditionObject 维护一个单向条件队列。await() 将当前线程移入条件队列并释放锁，signal() 将条件队列头节点转移到同步队列。",
     "content": "请详细阐述 AbstractQueuedSynchronizer 的设计原理，包括 state 语义、CLH 变体队列结构、独占模式下的加解锁流程，以及 ConditionObject 的实现机制。",
     "tags": [
       "AQS",
@@ -43,76 +16,8 @@
     "category": "concurrency",
     "type": "short_answer",
     "difficulty": "medium",
-    "title": "ReentrantLock 的实现原理与公平性",
-    "answer": "ReentrantLock 基于 AQS 实现，提供可重入、可中断、超时、公平/非公平选择、Condition 等 synchronized 不具备的能力。\n\n内部结构：\n- 继承 AQS 的 Sync 抽象类\n- NonfairSync：非公平实现\n- FairSync：公平实现\n\n非公平锁（默认）获取流程：\n1. 一进来直接 CAS 尝试获取锁（插队）\n2. 失败才调用 acquire() → tryAcquire() 检查 state\n3. 如果 state==0 再 CAS 获取一次（又插队）\n4. 如果当前线程已持有，state+1（重入）\n\n公平锁获取流程：\n1. 不直接 CAS，先调用 hasQueuedPredecessors() 检查队列中是否有等待线程\n2. 只有队列为空或当前线程是队首时才尝试获取\n3. 重入逻辑同非公平锁\n\n性能差异：\n- 非公平锁吞吐量更高（减少线程挂起/唤醒的上下文切换）\n- 公平锁更均匀，避免线程饥饿，但吞吐量低\n- 默认用非公平锁，除非业务需要严格公平\n\n其他特性：\n- lockInterruptibly()：可中断响应\n- tryLock(timeout)：超时放弃\n- newCondition()：多个 Condition 对象\n- getHoldCount()：当前线程重入次数\n- isHeldByCurrentThread()：是否持有锁",
-    "content": "请详细分析 ReentrantLock 的实现原理，重点说明 NonfairSync 和 FairSync 在获取锁时的关键差异，以及公平性对吞吐量和线程调度的影响。",
-    "tags": [
-      "ReentrantLock",
-      "AQS",
-      "公平锁",
-      "非公平锁"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "medium",
-    "title": "CAS 原理、ABA 问题及其解决方案",
-    "answer": "CAS（Compare-And-Swap/Compare-And-Set）是乐观锁的核心操作，由 Unsafe 类的 compareAndSwapXXX 方法提供，最终调用 CPU 的 CMPXCHG 指令。\n\n原理：比较内存地址 V 的当前值是否为预期值 A，是则更新为新值 B，返回 true；否则不更新，返回 false。整个过程是原子的（CPU 层面保证）。\n\nUnsafe 实现：\n- compareAndSwapObject、compareAndSwapInt、compareAndSwapLong\n- JDK 9+ 由 VarHandle 替代（MethodHandles.varHandle()）\n\nABA 问题：\n线程 1 将 A→B→A，线程 2 CAS 检查到仍是 A 就成功更新。但此时值虽然相同，语义已变（如链表节点被回收重用）。\n\n解决方案：\n1. AtomicStampedReference：带 int 版本号，每次修改 stamp+1\n2. AtomicMarkableReference：带 boolean 标记，只关心是否被修改过\n3. 业务层面容忍（很多场景 ABA 不影响正确性，如原子计数器）\n\n适用场景：\n- 适合竞争不激烈的场景（自旋等待）\n- 不适合长时间自旋（浪费 CPU）\n- 比 synchronized 轻量，但需要调用方处理重试\n\nJDK 中的应用：\n- AtomicInteger、AtomicLong 等原子类\n- ConcurrentHashMap 的 putIfAbsent\n- AQS 的 compareAndSetState\n- 各种队列的入队出队操作",
-    "content": "请详细解释 CAS（Compare-And-Swap）在 CPU 指令层面和 Unsafe 层面的实现机制，分析 ABA 问题的产生原因和解决方案（AtomicStampedReference 等），并说明 CAS 的适用场景与局限性。",
-    "tags": [
-      "CAS",
-      "ABA",
-      "AtomicStampedReference"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "medium",
-    "title": "volatile 的内存语义与实现原理",
-    "answer": "volatile 是 JVM 提供的最轻量的同步机制，核心语义是保证可见性和禁止指令重排序，但不保证原子性。\n\n三种语义：\n1. 可见性：写 volatile 变量后，其他线程立即可见该修改\n2. 禁止重排序：volatile 读写前后插入内存屏障，禁止 CPU 和编译器重排序\n3. 不保证原子性：count++ 这种复合操作仍需加锁\n\n实现原理（JSR-133 内存模型）：\n- 写 volatile 变量时：在写操作前插入 StoreStore 屏障，写操作后插入 StoreLoad 屏障（强制刷新缓存到主存）\n- 读 volatile 变量时：在读操作前插入 LoadLoad 屏障，读操作后插入 LoadStore 屏障（强制从主存读取，无效化缓存行）\n\nx86 实现（x86 已经是 TSO 模型，只需要 StoreLoad）：\n- volatile 写：编译为 lock addl $0x0, (%rsp) → 触发缓存一致性协议（MESI）\n- volatile 读：普通读（x86 的 TSO 保证读不会读到过时值）\n\nHappens-before 关系：\n- 对 volatile 变量的写 happens-before 后续对该变量的读\n- 这条规则连锁传递：A 线程写 volatile → B 线程读 volatile → B 可见 A 在写之前的所有操作\n\n典型应用场景：\n- 状态标志（如 volatile boolean running）\n- 双重检查锁定（DCL）中的单例 instance\n- 读写严格遵循 volatile 规则的内存安全的复合操作",
-    "content": "请详细解释 volatile 关键字的三个核心语义——可见性、禁止指令重排序和不保证原子性，以及在 JSR-133 内存模型和 x86 处理器层面的实现机制。",
-    "tags": [
-      "volatile",
-      "JMM",
-      "内存屏障",
-      "可见性"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "hard",
-    "title": "ThreadLocal 原理与内存泄漏分析",
-    "answer": "ThreadLocal 为每个线程维护独立的变量副本，实现线程隔离。核心原理是通过每个 Thread 内部的 ThreadLocalMap 存储。\n\n数据结构：\n- 每个 Thread 对象有一个 threadLocals 字段（ThreadLocalMap 类型）\n- ThreadLocalMap 的 Entry[] 数组，Entry 的 key 是 ThreadLocal 弱引用（WeakReference<ThreadLocal>），value 是线程本地变量值\n- 哈希冲突用线性探测法解决（开放寻址）\n\n弱引用设计：\n- key 是弱引用：ThreadLocal 对象没有强引用时可以被 GC 回收\n- value 是强引用：如果 ThreadLocal 回收后线程还在，value 就无法被访问\n- 内存泄漏场景：线程池中的线程长期存活，Entry 的 key=null 但 value 有引用链无法回收\n\n正确的使用方式：\n1. 每次用完调用 remove() 清除 Entry\n2. 用 try-finally 保证：\n   try { tl.set(value); doWork(); } finally { tl.remove(); }\n\n常见的面试陷阱：\n- 子线程无法继承父线程的 ThreadLocal → 用 InheritableThreadLocal\n- InheritableThreadLocal 在创建子线程时复制，线程池复用场景不生效 → 用 TransmittableThreadLocal（阿里扩展）\n- 跨线程传递上下文用透传工具类（如阿里 TTL）\n\n源码关键点：\n- ThreadLocalMap 的 set() 在设置新值时清理过期 Entry（key=null）\n- ThreadLocalMap 的 get()/set() 都会调用 expungeStaleEntry()\n- 但如果没有 get/set 操作，泄漏的 value 一直存在",
-    "content": "请详细分析 ThreadLocal 的内部实现原理，包括 ThreadLocalMap 的 Entry 数组结构、弱引用 key 的设计意图、内存泄漏的产生原因和复现场景，以及正确的使用方式（remove）。",
-    "tags": [
-      "ThreadLocal",
-      "内存泄漏",
-      "弱引用"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "medium",
-    "title": "ConcurrentHashMap 1.7 vs 1.8 原理对比",
-    "answer": "JDK 1.8 对 ConcurrentHashMap 进行了重大重构，从分段锁改为 CAS+synchronized，性能大幅提升。\n\nJDK 1.7 实现：\n- 数据结构：Segment 数组 + HashEntry 数组 + 链表\n- 并发策略：继承 ReentrantLock 的 Segment 数组，默认 16 个 Segment，理论最大并发度 16\n- put：先定位 Segment，再调用 Segment 的 lock()（继承 ReentrantLock），锁粒度是 Segment\n- size()：先无锁统计两次，不一致再加所有 Segment 锁\n- 缺点：Segment 数量固定，扩容只扩 HashEntry 数组，Segment 数组不能扩容\n\nJDK 1.8 实现：\n- 数据结构：Node 数组 + 链表/红黑树\n- 并发策略：CAS（插入空位）+ synchronized（链表/树头节点锁），并发度更高\n- put 流程：\n  1. 空位：CAS 直接插入\n  2. 正在扩容：helpTransfer() 协助迁移\n  3. 冲突：synchronized(头节点) → 遍历链表/树更新或插入\n- 扩容：多线程协助迁移（每个线程领取一个 stride 的任务），并发扩容\n- size()：用 CounterCell 数组（LongAdder 思想）避免竞争\n- 红黑树：链表长度≥8 转红黑树，≤6 退化为链表\n\n核心改进：\n- 锁粒度从 Segment 级降到桶级\n- synchronized 在 JDK 1.8 已经有锁升级优化，不再比 ReentrantLock 差\n- 多线程协助扩容显著减少扩容 STW 时间\n- 读操作无锁（get 全程不加锁）",
-    "content": "请详细对比 ConcurrentHashMap 在 JDK 1.7 和 1.8 之间的实现差异，重点分析锁粒度优化、多线程扩容和红黑树引入等核心改进。",
-    "tags": [
-      "ConcurrentHashMap",
-      "并发容器",
-      "锁分段",
-      "CAS"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "medium",
     "title": "ThreadPoolExecutor 核心参数与运行原理",
-    "answer": "ThreadPoolExecutor 是 JDK 线程池的核心实现，通过 7 个构造参数控制行为。\n\n核心参数：\n1. corePoolSize：核心线程数（即使空闲也保留）\n2. maximumPoolSize：最大线程数（核心 + 临时）\n3. keepAliveTime：临时线程空闲存活时间\n4. unit：时间单位\n5. workQueue：任务队列（BlockingQueue<Runnable>）\n6. threadFactory：线程工厂（可设置线程名、daemon 等）\n7. handler：拒绝策略\n\n运行流程：\n1. 提交任务 → 线程数 < corePoolSize → 新建核心线程执行\n2. 核心线程满 → 任务入 workQueue 排队\n3. 队列满 → 线程数 < maximumPoolSize → 新建临时线程执行\n4. 临时线程也满 → 执行拒绝策略\n\n拒绝策略（四种）：\n- AbortPolicy（默认）：抛 RejectedExecutionException\n- CallerRunsPolicy：调用者线程执行（降低提交速度）\n- DiscardPolicy：静默丢弃\n- DiscardOldestPolicy：丢弃队首任务（最旧的）\n\n预定义工厂方法（Executors）：\n- newCachedThreadPool()：0/Integer.MAX_VALUE/SynchronousQueue（适合大量短任务）\n- newFixedThreadPool(n)：n/n/LinkedBlockingQueue（负载恒定场景）\n- newSingleThreadExecutor()：1/1/LinkedBlockingQueue（串行执行）\n- newScheduledThreadPool(n)：n/Integer.MAX_VALUE/DelayedWorkQueue（定时/周期任务）\n\n坑点：\n- newFixedThreadPool 的 LinkedBlockingQueue 无界 → 可能 OOM\n- newCachedThreadPool 最大线程无限 → 可能创建过多线程\n- 线程池用完要 shutdown() 避免线程泄漏\n- 阿里规范：禁止 Executors 工厂方法，手动 new ThreadPoolExecutor 更安全",
+    "answer": "答案：ThreadPoolExecutor 是 JDK 线程池的核心实现，通过 7 个构造参数控制行为。\n\n解析：核心参数：\n1. corePoolSize：核心线程数（即使空闲也保留）\n2. maximumPoolSize：最大线程数（核心 + 临时）\n3. keepAliveTime：临时线程空闲存活时间\n4. unit：时间单位\n5. workQueue：任务队列（BlockingQueue<Runnable>）\n6. threadFactory：线程工厂（可设置线程名、daemon 等）\n7. handler：拒绝策略\n\n运行流程：\n1. 提交任务 → 线程数 < corePoolSize → 新建核心线程执行\n2. 核心线程满 → 任务入 workQueue 排队\n3. 队列满 → 线程数 < maximumPoolSize → 新建临时线程执行\n4. 临时线程也满 → 执行拒绝策略\n\n拒绝策略（四种）：\n- AbortPolicy（默认）：抛 RejectedExecutionException\n- CallerRunsPolicy：调用者线程执行（降低提交速度）\n- DiscardPolicy：静默丢弃\n- DiscardOldestPolicy：丢弃队首任务（最旧的）\n\n预定义工厂方法（Executors）：\n- newCachedThreadPool()：0/Integer.MAX_VALUE/SynchronousQueue（适合大量短任务）\n- newFixedThreadPool(n)：n/n/LinkedBlockingQueue（负载恒定场景）\n- newSingleThreadExecutor()：1/1/LinkedBlockingQueue（串行执行）\n- newScheduledThreadPool(n)：n/Integer.MAX_VALUE/DelayedWorkQueue（定时/周期任务）\n\n坑点：\n- newFixedThreadPool 的 LinkedBlockingQueue 无界 → 可能 OOM\n- newCachedThreadPool 最大线程无限 → 可能创建过多线程\n- 线程池用完要 shutdown() 避免线程泄漏\n- 阿里规范：禁止 Executors 工厂方法，手动 new ThreadPoolExecutor 更安全",
     "content": "请详细说明 ThreadPoolExecutor 的七个核心参数各自的含义，以及一个任务从提交到执行的完整流程（核心线程→队列→临时线程→拒绝策略）。",
     "tags": [
       "ThreadPoolExecutor",
@@ -125,7 +30,7 @@
     "type": "short_answer",
     "difficulty": "medium",
     "title": "线程池线程数估算方法",
-    "answer": "合理地设置线程池大小需要根据任务类型、系统资源和延迟要求综合评估。\n\n经典公式（Brian Goetz）：\n- 线程数 = CPU 核数 × (1 + 等待时间/计算时间)\n- Nthreads = Ncpu × (1 + W/C)\n- Ncpu = Runtime.getRuntime().availableProcessors()\n\nCPU 密集型（W/C ≈ 0）：\n- 推荐线程数 = Ncpu + 1（+1 防止缺页等导致 CPU 空闲）\n- 太多线程反而增加上下文切换开销\n\nIO 密集型（W/C 大，如 RPC、DB）：\n- 推荐线程数 = 2 × Ncpu（经验值）\n- 或根据实际 W/C 比：Ncpu × (1 + 等待时间/计算时间)\n- 示例：IO 耗时 100ms，计算 10ms → W/C=10 → Ncpu × 11\n\n混合型任务：\n- 拆分 CPU 密集和 IO 密集为不同线程池\n- 或使用 ForkJoinPool 进行工作窃取\n\n实际考量因素：\n1. 系统资源：CPU、内存、文件描述符、网络连接\n2. 任务队列长度：内存限制（每个等待任务占内存）\n3. QPS 要求：线程数 × 单任务处理能力 ≥ 目标 QPS\n4. 下游系统承载能力：DB 连接池、上游接口限流\n5. 压测验证：用 JFR/jmc 采集，调整参数\n\ntomcat 的实践：\n- minSpareThreads（类似 corePoolSize）= 10\n- maxThreads（类似 maximumPoolSize）= 200\n- workQueue 用无界 LinkedBlockingQueue\n\n调优步骤：\n1. 压测基线（默认配置）\n2. 监控线程使用率、队列积压、CPU、GC\n3. 逐步调整 corePoolSize 和 maximumPoolSize\n4. 验证后固化配置到配置中心",
+    "answer": "答案：合理地设置线程池大小需要根据任务类型、系统资源和延迟要求综合评估。\n\n经典公式（Brian Goetz）：\n- 线程数 = CPU 核数 × (1 + 等待时间/计算时间)\n- Nthreads = Ncpu × (1 + W/C)\n- Ncpu = Runtime.getRuntime().availableProcessors()\n\nCPU 密集型（W/C ≈ 0）：\n- 推荐线程数 = Ncpu + 1（+1 防止缺页等导致 CPU 空闲）\n- 太多线程反而增加上下文切换开销\n\nIO 密集型（W/C 大，如 RPC、DB）：\n- 推荐线程数 = 2 × Ncpu（经验值）\n- 或根据实际 W/C 比：Ncpu × (1 + 等待时间/计算时间)\n- 示例：IO 耗时 100ms，计算 10ms → W/C=10 → Ncpu × 11\n\n混合型任务：\n- 拆分 CPU 密集和 IO 密集为不同线程池\n- 或使用 ForkJoinPool 进行工作窃取\n\n实际考量因素：\n1. 系统资源：CPU、内存、文件描述符、网络连接\n2. 任务队列长度：内存限制（每个等待任务占内存）\n3. QPS 要求：线程数 × 单任务处理能力 ≥ 目标 QPS\n4. 下游系统承载能力：DB 连接池、上游接口限流\n5. 压测验证：用 JFR/jmc 采集，调整参数\n\ntomcat 的实践：\n- minSpareThreads（类似 corePoolSize）= 10\n- maxThreads（类似 maximumPoolSize）= 200\n- workQueue 用无界 LinkedBlockingQueue\n\n调优步骤：\n1. 压测基线（默认配置）\n2. 监控线程使用率、队列积压、CPU、GC\n3. 逐步调整 corePoolSize 和 maximumPoolSize\n4. 验证后固化配置到配置中心",
     "content": "请详细说明线程池线程数的估算方法，区分 CPU 密集型（Ncpu+1）和 IO 密集型（2×Ncpu 或根据等待/计算时间比），以及实际压测调优的步骤。",
     "tags": [
       "线程池",
@@ -136,22 +41,9 @@
   {
     "category": "concurrency",
     "type": "short_answer",
-    "difficulty": "medium",
-    "title": "ForkJoinPool 的工作窃取原理",
-    "answer": "ForkJoinPool 是 JDK 7 引入的线程池，专为分治任务设计，核心特点是工作窃取（Work-Stealing）算法。\n\n适用场景：\n- 递归分解的大计算任务（如归并排序、矩阵乘法、文件扫描）\n- 任务是 CPU 密集且可分解\n- 子任务粒度要适中（太小则窃取/切分开销 > 计算收益）\n\n数据结构：\n- 每个工作线程维护一个双端队列（Deque）\n- 队列中存储 ForkJoinTask 子任务\n- 线程从队尾取任务执行（LIFO，利用局部性）\n\n工作窃取过程：\n1. 线程自己的队列非空 → push/pop 队尾（LIFO）\n2. 队列为空 → 随机窃取其他线程的队首任务（FIFO）\n3. 避免竞争：推/取在队尾（单线程操作），窃取在队首（CAS 操作），队首队尾不冲突\n4. join() 时如果任务未完成 → 不阻塞，而是执行其他任务（帮助模式）\n\n不同于 ThreadPoolExecutor：\n- TPE 的提交者和线程是生产者/消费者关系\n- FJP 的每个线程既是生产者也是消费者（fork 产生新任务，自己或别人执行）\n- ForkJoinTask 的 fork() 是异步提交，join() 是同步等待结果\n\n关键参数：\n- parallelism：默认 = CPU 核数\n- ForkJoinPool.commonPool()：全局共享池（CompletableFuture 默认使用）\n- 池中线程都是守护线程（daemon=true）\n\n常见实现：\n- java.util.stream 的并行流（.parallelStream()）\n- Arrays.parallelSort()\n- CompletableFuture 的 parallel execution",
-    "content": "请详细解释 ForkJoinPool 的工作窃取（Work-Stealing）算法原理，包括双端队列的数据结构、窃取过程的竞争避免策略，以及与 ThreadPoolExecutor 的本质区别。",
-    "tags": [
-      "ForkJoinPool",
-      "工作窃取",
-      "WorkQueue"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
     "difficulty": "hard",
     "title": "CompletableFuture 异步编排核心原理",
-    "answer": "CompletableFuture 是 JDK 8 引入的异步编程工具，实现了 Future 和 CompletionStage 接口，支持声明式回调编排和异常处理。\n\n核心设计：\n1. 零依赖（ALL 模式）：allOf() 等待所有完成\n2. 任意完成（ANY 模式）：anyOf() 任意一个完成即返回\n3. 串行依赖（THEN 模式）：thenApply/thenCompose/thenAccept\n4. AND 组合（AND 模式）：thenCombine\n5. OR 组合（OR 模式）：applyToEither\n\n执行线程机制：\n- thenApply：由上一个任务的线程执行（无需额外线程池）\n- thenApplyAsync：提交到 ForkJoinPool.commonPool() 或指定的线程池\n- 默认使用 ForkJoinPool.commonPool()（注意不是 ThreadPoolExecutor）\n\n异常处理链：\n- exceptionally：异常恢复（类似 catch）\n- handle：无论正常/异常都执行（类似 finally）\n- whenComplete：消费结果但不会改变结果值\n- 异常隐式传递：异常被封装在 CompletionStage 中传递，下游可处理\n\n对比 Future 的改进：\n1. 手动 complete() 主动完成\n2. 回调编排无需手动 get() 阻塞\n3. 声明式异常处理\n4. 超时控制（JDK 9+ completeOnTimeout/orTimeout）\n\n常见使用模式：\n```\nCompletableFuture.supplyAsync(() -> service1())\n    .thenCombine(CompletableFuture.supplyAsync(() -> service2()), (a, b) -> combine(a, b))\n    .thenApplyAsync(result -> enrich(result), executor)\n    .exceptionally(e -> fallback())\n    .orTimeout(5, TimeUnit.SECONDS)\n    .join();\n```\n\n坑点：\n1. get()/join() 阻塞调用线程\n2. 默认线程池是 ForkJoinPool.commonPool()，如果所有线程被阻塞会死锁\n3. 超时要显式设置（JDK 9+）\n4. 取消不一定会中断执行线程",
+    "answer": "答案：CompletableFuture 是 JDK 8 引入的异步编程工具，实现了 Future 和 CompletionStage 接口，支持声明式回调编排和异常处理。\n\n解析：核心设计：\n1. 零依赖（ALL 模式）：allOf() 等待所有完成\n2. 任意完成（ANY 模式）：anyOf() 任意一个完成即返回\n3. 串行依赖（THEN 模式）：thenApply/thenCompose/thenAccept\n4. AND 组合（AND 模式）：thenCombine\n5. OR 组合（OR 模式）：applyToEither\n\n执行线程机制：\n- thenApply：由上一个任务的线程执行（无需额外线程池）\n- thenApplyAsync：提交到 ForkJoinPool.commonPool() 或指定的线程池\n- 默认使用 ForkJoinPool.commonPool()（注意不是 ThreadPoolExecutor）\n\n异常处理链：\n- exceptionally：异常恢复（类似 catch）\n- handle：无论正常/异常都执行（类似 finally）\n- whenComplete：消费结果但不会改变结果值\n- 异常隐式传递：异常被封装在 CompletionStage 中传递，下游可处理\n\n对比 Future 的改进：\n1. 手动 complete() 主动完成\n2. 回调编排无需手动 get() 阻塞\n3. 声明式异常处理\n4. 超时控制（JDK 9+ completeOnTimeout/orTimeout）\n\n常见使用模式：\n```\nCompletableFuture.supplyAsync(() -> service1())\n    .thenCombine(CompletableFuture.supplyAsync(() -> service2()), (a, b) -> combine(a, b))\n    .thenApplyAsync(result -> enrich(result), executor)\n    .exceptionally(e -> fallback())\n    .orTimeout(5, TimeUnit.SECONDS)\n    .join();\n```\n\n坑点：\n1. get()/join() 阻塞调用线程\n2. 默认线程池是 ForkJoinPool.commonPool()，如果所有线程被阻塞会死锁\n3. 超时要显式设置（JDK 9+）\n4. 取消不一定会中断执行线程",
     "content": "请详细说明 CompletableFuture 的五种编排模式（ALL/ANY/THEN/AND/OR）、执行线程机制（thenApply vs thenApplyAsync），以及异常传递和处理链。",
     "tags": [
       "CompletableFuture",
@@ -162,23 +54,9 @@
   {
     "category": "concurrency",
     "type": "short_answer",
-    "difficulty": "medium",
-    "title": "CountDownLatch vs CyclicBarrier vs Semaphore",
-    "answer": "三者都是 JUC 工具类，但使用场景和实现机制完全不同。\n\nCountDownLatch：\n- 场景：一个线程等待多个线程完成（一等多）\n- 机制：计数器递减，到 0 时等待线程被唤醒\n- 不可重置（一次性）\n- 实现基于 AQS（共享模式）\n- 示例：主线程等待所有服务启动完毕\n\nCyclicBarrier：\n- 场景：多个线程互相等待到同一时间点（多等多）\n- 机制：最后一个到达的线程触发 barrier action\n- 可重置（调用 reset() 循环使用）\n- 实现基于 ReentrantLock + Condition\n- 示例：分批计算，每组 10 个线程到齐后开始下一轮\n\nSemaphore：\n- 场景：控制同时访问资源的线程数（流量控制）\n- 机制：acquire() 获取许可，release() 释放许可\n- 可动态调整许可数\n- 实现基于 AQS（共享模式，state 表示剩余许可）\n- 公平/非公平可配置\n- 示例：连接池限流\n\n对比表：\n| 特性 | CountDownLatch | CyclicBarrier | Semaphore |\n|------|---------------|---------------|-----------|\n| 核心 | 计数器（减） | 屏障（加） | 信号量 |\n| 可重用 | ❌ | ✅ reset() | ✅ |\n| 动作 | countDown() | await() | acquire()/release() |\n| 超时 | ✅ await(timeout) | ✅ await(timeout) | ✅ tryAcquire(timeout) |\n| 突破 | 减到 0 触发 | 满 触发 | 不限次数 |\n| 实现 | AQS 共享 | ReentrantLock+Condition | AQS 共享 |",
-    "content": "请从使用场景、核心机制、实现原理和是否可重用等维度，详细对比 CountDownLatch、CyclicBarrier 和 Semaphore 这三个 JUC 工具类的差异。",
-    "tags": [
-      "CountDownLatch",
-      "CyclicBarrier",
-      "Semaphore",
-      "同步工具"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
     "difficulty": "hard",
     "title": "StampedLock 原理与乐观读",
-    "answer": "StampedLock 是 JDK 8 引入的新锁，比 ReentrantReadWriteLock 性能更高，核心创新是乐观读（Optimistic Read）和不重入。\n\n三种模式：\n1. 写锁（Write Lock）：排他锁，类似 ReentrantReadWriteLock 的写锁\n2. 悲观读锁（Read Lock）：共享锁，类似 RRWL 的读锁\n3. 乐观读（Optimistic Read）：不加锁，通过版本号验证\n\n乐观读流程：\n```\nlong stamp = sl.tryOptimisticRead(); // 获取版本戳\nint x = value;                       // 读数据（不加锁）\nif (!sl.validate(stamp)) {           // 验证期间是否有写操作\n    stamp = sl.readLock();            // 验证失败 → 降级为悲观读\n    try { x = value; } finally { sl.unlockRead(stamp); }\n}\n```\n\n实现原理：\n- state 为 long 型，用位运算区分三种状态\n- 写锁：state 第 8 位 = 1，低 7 位记录写锁重入次数\n- 悲观读：低 7 位溢出后在高位记录读锁数量\n- 乐观读：验证 stamp 与当前 state 是否一致（即没有写锁获取过）\n\n对比 ReadWriteLock：\n| 特性 | StampedLock | ReentrantReadWriteLock |\n|------|------------|----------------------|\n| 锁模式 | 3 种（含乐观读） | 2 种 |\n| 可重入 | ❌ | ✅ |\n| 条件变量 | ❌ | ✅ |\n| 适用于 | 读多写少、读写极不均 | 一般读写分离 |\n| 乐观读 | ✅ 无锁读 | ❌ |\n\n使用限制：\n- 不可重入，同一线程不能再次获取\n- 不支持 Condition\n- 锁升级转换一旦失败可能死锁（tryConvertToWriteLock 不阻塞）\n- 适用于读远多于写的场景（乐观读命中率高）",
+    "answer": "答案：StampedLock 是 JDK 8 引入的新锁，比 ReentrantReadWriteLock 性能更高，核心创新是乐观读（Optimistic Read）和不重入。\n\n三种模式：\n1. 写锁（Write Lock）：排他锁，类似 ReentrantReadWriteLock 的写锁\n2. 悲观读锁（Read Lock）：共享锁，类似 RRWL 的读锁\n3. 乐观读（Optimistic Read）：不加锁，通过版本号验证\n\n乐观读流程：\n```\nlong stamp = sl.tryOptimisticRead(); // 获取版本戳\nint x = value;                       // 读数据（不加锁）\nif (!sl.validate(stamp)) {           // 验证期间是否有写操作\n    stamp = sl.readLock();            // 验证失败 → 降级为悲观读\n    try { x = value; } finally { sl.unlockRead(stamp); }\n}\n```\n\n解析：实现原理：\n- state 为 long 型，用位运算区分三种状态\n- 写锁：state 第 8 位 = 1，低 7 位记录写锁重入次数\n- 悲观读：低 7 位溢出后在高位记录读锁数量\n- 乐观读：验证 stamp 与当前 state 是否一致（即没有写锁获取过）\n\n对比 ReadWriteLock：\n| 特性 | StampedLock | ReentrantReadWriteLock |\n|------|------------|----------------------|\n| 锁模式 | 3 种（含乐观读） | 2 种 |\n| 可重入 | ❌ | ✅ |\n| 条件变量 | ❌ | ✅ |\n| 适用于 | 读多写少、读写极不均 | 一般读写分离 |\n| 乐观读 | ✅ 无锁读 | ❌ |\n\n使用限制：\n- 不可重入，同一线程不能再次获取\n- 不支持 Condition\n- 锁升级转换一旦失败可能死锁（tryConvertToWriteLock 不阻塞）\n- 适用于读远多于写的场景（乐观读命中率高）",
     "content": "请详细解释 StampedLock 的三种锁模式（写锁、悲观读锁、乐观读），重点说明乐观读的实现流程和版本号验证机制，并与 ReentrantReadWriteLock 进行性能对比。",
     "tags": [
       "StampedLock",
@@ -191,7 +69,7 @@
     "type": "short_answer",
     "difficulty": "medium",
     "title": "死锁的四个必要条件与排查方法",
-    "answer": "死锁是指两个或多个线程互相持有对方需要的资源，永久阻塞的状态。\n\n四个必要条件：\n1. 互斥（Mutual Exclusion）：资源一次只能被一个线程占用\n2. 持有并等待（Hold and Wait）：线程持有资源同时在等待其他资源\n3. 不可剥夺（No Preemption）：资源不能被强制剥夺\n4. 循环等待（Circular Wait）：形成资源等待环路\n\n预防策略：\n1. 打破互斥：用乐观锁替代（但有些场景资源天然互斥）\n2. 打破持有并等待：一次获取所有资源（但降低并发度）\n3. 打破不可剥夺：tryLock(timeout) 超时放弃\n4. 打破循环等待：固定获取锁的顺序（最常用）\n\n排查步骤：\n1. jps 找到 Java 进程 PID\n2. jstack -l <PID>（或 jcmd <PID> Thread.print）\n3. 搜索「Found one Java-level deadlock」（jstack 自动检测）\n4. 查看 BLOCKED 线程的堆栈和等待的锁\n5. 用 jconsole/jvisualvm 的图形化界面更直观\n\n示例：\n```\nFound one Java-level deadlock：\n\"Thread-1\"：\n  waiting to lock <0x...> (a LockA)\n  which is held by \"Thread-0\"\n\"Thread-0\"：\n  waiting to lock <0x...> (a LockB)\n  which is held by \"Thread-1\"\n```\n\n死锁检测：\n- jstack 自动检测循环等待链\n- ThreadMXBean.findDeadlockedThreads() 程序化检测\n- 建议：开发阶段用 jstack + 代码审查，线上用 JMX 监控\n- 阿里 Arthas：thread -b 直接显示阻塞的线程",
+    "answer": "答案：死锁是指两个或多个线程互相持有对方需要的资源，永久阻塞的状态。\n\n四个必要条件：\n1. 互斥（Mutual Exclusion）：资源一次只能被一个线程占用\n2. 持有并等待（Hold and Wait）：线程持有资源同时在等待其他资源\n3. 不可剥夺（No Preemption）：资源不能被强制剥夺\n4. 循环等待（Circular Wait）：形成资源等待环路\n\n预防策略：\n1. 打破互斥：用乐观锁替代（但有些场景资源天然互斥）\n2. 打破持有并等待：一次获取所有资源（但降低并发度）\n3. 打破不可剥夺：tryLock(timeout) 超时放弃\n4. 打破循环等待：固定获取锁的顺序（最常用）\n\n排查步骤：\n1. jps 找到 Java 进程 PID\n2. jstack -l <PID>（或 jcmd <PID> Thread.print）\n3. 搜索「Found one Java-level deadlock」（jstack 自动检测）\n4. 查看 BLOCKED 线程的堆栈和等待的锁\n5. 用 jconsole/jvisualvm 的图形化界面更直观\n\n解析：示例：\n```\nFound one Java-level deadlock：\n\"Thread-1\"：\n  waiting to lock <0x...> (a LockA)\n  which is held by \"Thread-0\"\n\"Thread-0\"：\n  waiting to lock <0x...> (a LockB)\n  which is held by \"Thread-1\"\n```\n\n死锁检测：\n- jstack 自动检测循环等待链\n- ThreadMXBean.findDeadlockedThreads() 程序化检测\n- 建议：开发阶段用 jstack + 代码审查，线上用 JMX 监控\n- 阿里 Arthas：thread -b 直接显示阻塞的线程",
     "content": "请详细说明死锁的四个必要条件，逐一分析对应的预防策略，以及用 jstack/jcmd 排查死锁的具体步骤。",
     "tags": [
       "死锁",
@@ -202,23 +80,9 @@
   {
     "category": "concurrency",
     "type": "short_answer",
-    "difficulty": "medium",
-    "title": "LockSupport 的 park/unpark 与 Thread.suspend/resume",
-    "answer": "LockSupport 是 JUC 的基础线程阻塞/唤醒原语，AQS 的挂起唤醒机制就是基于它实现的。\n\n核心方法：\n- park()：阻塞当前线程（许可证被占用）\n- unpark(Thread)：给指定线程发放许可证\n- parkNanos(nanos)：超时版\n- parkUntil(deadline)：绝对时间版\n\n与 Object.wait/notify 的区别：\n- wait/notify 必须在 synchronized 块内使用\n- park/unpark 不需要持有锁\n- wait/notify 的通知可能丢失（signal 必须在 wait 之后）\n- park/unpark 许可证累积，unpark 提前调用后 park 立即返回\n\n与 Thread.suspend/resume 的区别：\n- suspend 挂起线程时不释放锁，容易死锁（被禁止使用）\n- resume 在 suspend 之前调用会导致线程永远挂起\n- park/unpark 不涉及锁，有许可证机制保证不会永久挂起\n\n许可证机制：\n- 每个线程关联一个 Parker（C++ 实现），有 _counter 字段\n- unpark：_counter = 1\n- park：_counter > 0 → _counter = 0，立即返回；_counter = 0 → 阻塞\n- 所以 unpark 可以在 park 之前调用（提前发放许可证）\n\n实现（HotSpot）：\n- Linux：pthread_cond_wait/pthread_cond_signal + mutex\n- 通过 mutex 保护 _counter\n- 支持 SPARC/X86 平台的避免虚假唤醒的优化\n\n经典应用：\n- AQS 的 parkAndCheckInterrupt()\n- 线程池的 getTask() 超时等待\n- FIFO 队列的 take() 阻塞获取",
-    "content": "请详细对比 LockSupport 的 park/unpark 与 Object.wait/notify 以及已废弃的 Thread.suspend/resume 的差异，重点说明许可证机制如何避免信号丢失问题。",
-    "tags": [
-      "LockSupport",
-      "park",
-      "unpark",
-      "线程阻塞"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
     "difficulty": "hard",
     "title": "伪共享（False Sharing）与缓存行填充",
-    "answer": "伪共享是并发编程中一种隐蔽的性能问题，发生在多个线程修改同一缓存行中的不同变量时。\n\n原理：\n- CPU 缓存行（Cache Line）大小 64 字节\n- 如果变量 A 和变量 B 在同一缓存行，线程 1 改 A、线程 2 改 B\n- 缓存一致性协议（MESI）会让缓存行在 CPU 核之间无效化\n- 导致本该并行的操作变成串行的缓存同步\n\n性能影响：\n- 本质问题是缓存行在 CPU 核间频繁 bouncing\n- 多个线程操作逻辑上无关的变量，但硬件层面互相牵制\n- 被测可导致性能下降 1-2 个数量级\n\n解决方案：\n1. @Contended 注解（JDK 8+）：自动填充到 64 字节\n  ```\n  @sun.misc.Contended\n  class Counter {\n      volatile long value;\n  }\n  ```\n  - 需要 -XX：-RestrictContended 解锁\n  - 自动前后填充 padding 到缓存行对齐\n\n2. 手动缓存行填充（JDK 8 前）：\n  ```\n  class PaddedCounter {\n      volatile long value;\n      long p1, p2, p3, p4, p5, p6, p7; // 7 个 long 填充\n  }\n  ```\n  注意 JDK 9+ 自动优化掉未使用的填充字段（需用 @Contended）\n\nJDK 中的应用：\n- Disruptor 框架的 RingBuffer（Sequence 类显式填充）\n- LongAdder 的 Cell（@sun.misc.Contended）\n- ConcurrentHashMap 的 CounterCell\n- ThreadPoolExecutor 的 mainLock\n\n识别方法：\n- perf stat -e cache-misses 观察缓存缺失率\n- JFR 的 CPU Load 和 Cache Miss 分析\n- Profile 发现预期无竞争的方法核数增加但线性不提升",
+    "answer": "答案：伪共享是并发编程中一种隐蔽的性能问题，发生在多个线程修改同一缓存行中的不同变量时。\n\n解析：原理：\n- CPU 缓存行（Cache Line）大小 64 字节\n- 如果变量 A 和变量 B 在同一缓存行，线程 1 改 A、线程 2 改 B\n- 缓存一致性协议（MESI）会让缓存行在 CPU 核之间无效化\n- 导致本该并行的操作变成串行的缓存同步\n\n性能影响：\n- 本质问题是缓存行在 CPU 核间频繁 bouncing\n- 多个线程操作逻辑上无关的变量，但硬件层面互相牵制\n- 被测可导致性能下降 1-2 个数量级\n\n解决方案：\n1. @Contended 注解（JDK 8+）：自动填充到 64 字节\n  ```\n  @sun.misc.Contended\n  class Counter {\n      volatile long value;\n  }\n  ```\n  - 需要 -XX：-RestrictContended 解锁\n  - 自动前后填充 padding 到缓存行对齐\n\n2. 手动缓存行填充（JDK 8 前）：\n  ```\n  class PaddedCounter {\n      volatile long value;\n      long p1, p2, p3, p4, p5, p6, p7; // 7 个 long 填充\n  }\n  ```\n  注意 JDK 9+ 自动优化掉未使用的填充字段（需用 @Contended）\n\nJDK 中的应用：\n- Disruptor 框架的 RingBuffer（Sequence 类显式填充）\n- LongAdder 的 Cell（@sun.misc.Contended）\n- ConcurrentHashMap 的 CounterCell\n- ThreadPoolExecutor 的 mainLock\n\n识别方法：\n- perf stat -e cache-misses 观察缓存缺失率\n- JFR 的 CPU Load 和 Cache Miss 分析\n- Profile 发现预期无竞争的方法核数增加但线性不提升",
     "content": "请详细解释伪共享问题的产生原因（CPU 缓存一致性协议 MESI），以及 @Contended 注解和手动缓存行填充两种解决方案。",
     "tags": [
       "伪共享",
@@ -231,7 +95,7 @@
     "type": "short_answer",
     "difficulty": "hard",
     "title": "BlockingQueue 的实现对比",
-    "answer": "BlockingQueue 是 JUC 提供的阻塞队列接口，支持线程安全的插入和移除，常用于生产者-消费者模型。\n\n核心方法（四类）：\n| 操作 | 抛异常 | 返回特殊值 | 阻塞 | 超时 |\n|------|--------|-----------|------|------|\n| 插入 | add(e) | offer(e) | put(e) | offer(e, time) |\n| 移除 | remove() | poll() | take() | poll(time) |\n| 检查 | element() | peek() | - | - |\n\n常用实现：\n\nArrayBlockingQueue：\n- 有界数组，FIFO\n- 一把锁（ReentrantLock）+ 两个 Condition（notFull/notEmpty）\n- 生产和消费用同一把锁，竞争激烈时性能差\n- 公平性可配\n\nLinkedBlockingQueue：\n- 可选有界（默认 Integer.MAX_VALUE）\n- 两把锁（takeLock/putLock）+ 各自 Condition\n- 生产和消费可以并发，吞吐量高于 ABQ\n- 不指定容量可能 OOM（Executors.newFixedThreadPool 的坑）\n\nSynchronousQueue：\n- 容量为 0（不存储元素）\n- put 必须等 take，take 必须等 put\n- 适合直接传递（CachedThreadPool 使用）\n- 实现：公平模式用 TransferQueue，非公平用 TransferStack\n\nPriorityBlockingQueue：\n- 无界优先级队列\n- 对象需实现 Comparable 或传入 Comparator\n- 内部是二叉堆数组\n- 无界 → 可能 OOM\n\nDelayQueue：\n- 元素实现 Delayed 接口（getDelay + compareTo）\n- 仅在到期时才能 take 到\n- 实现：PriorityQueue + 锁 + Condition\n- 应用：定时任务、ScheduledThreadPoolExecutor\n\nLinkedTransferQueue：\n- JDK 7 加入，类似 SynchronousQueue + LinkedBlockingQueue\n- transfer()：等待消费者直接接收\n- tryTransfer()：有消费者则直接传递，否则返回 false\n- 异步性能优于 LinkedBlockingQueue",
+    "answer": "答案：BlockingQueue 是 JUC 提供的阻塞队列接口，支持线程安全的插入和移除，常用于生产者-消费者模型。\n\n解析：核心方法（四类）：\n| 操作 | 抛异常 | 返回特殊值 | 阻塞 | 超时 |\n|------|--------|-----------|------|------|\n| 插入 | add(e) | offer(e) | put(e) | offer(e, time) |\n| 移除 | remove() | poll() | take() | poll(time) |\n| 检查 | element() | peek() | - | - |\n\n常用实现：\n\nArrayBlockingQueue：\n- 有界数组，FIFO\n- 一把锁（ReentrantLock）+ 两个 Condition（notFull/notEmpty）\n- 生产和消费用同一把锁，竞争激烈时性能差\n- 公平性可配\n\nLinkedBlockingQueue：\n- 可选有界（默认 Integer.MAX_VALUE）\n- 两把锁（takeLock/putLock）+ 各自 Condition\n- 生产和消费可以并发，吞吐量高于 ABQ\n- 不指定容量可能 OOM（Executors.newFixedThreadPool 的坑）\n\nSynchronousQueue：\n- 容量为 0（不存储元素）\n- put 必须等 take，take 必须等 put\n- 适合直接传递（CachedThreadPool 使用）\n- 实现：公平模式用 TransferQueue，非公平用 TransferStack\n\nPriorityBlockingQueue：\n- 无界优先级队列\n- 对象需实现 Comparable 或传入 Comparator\n- 内部是二叉堆数组\n- 无界 → 可能 OOM\n\nDelayQueue：\n- 元素实现 Delayed 接口（getDelay + compareTo）\n- 仅在到期时才能 take 到\n- 实现：PriorityQueue + 锁 + Condition\n- 应用：定时任务、ScheduledThreadPoolExecutor\n\nLinkedTransferQueue：\n- JDK 7 加入，类似 SynchronousQueue + LinkedBlockingQueue\n- transfer()：等待消费者直接接收\n- tryTransfer()：有消费者则直接传递，否则返回 false\n- 异步性能优于 LinkedBlockingQueue",
     "content": "请详细对比 JUC 中各 BlockingQueue 实现类（ArrayBlockingQueue、LinkedBlockingQueue、SynchronousQueue、PriorityBlockingQueue、DelayQueue、LinkedTransferQueue）的内部结构、并发策略和适用场景。",
     "tags": [
       "BlockingQueue",
@@ -243,21 +107,8 @@
     "category": "concurrency",
     "type": "short_answer",
     "difficulty": "hard",
-    "title": "JMM（Java 内存模型）与 happens-before 规则",
-    "answer": "JMM（Java Memory Model）定义了多线程读写共享内存的规范，屏蔽各种硬件和编译器实现的差异。\n\n核心问题：\n- 缓存一致性（CPU 缓存导致可见性问题）\n- 指令重排序（编译器/CPU 重排序导致有序性问题）\n- 原子性问题（复合操作非原子）\n\nhappens-before 规则（JSR-133）：\n两个操作之间如果有 happens-before 关系，前一个操作的结果对后一个操作可见。\n\n8 条规则：\n1. 程序次序规则：同一个线程中，写在前面的操作 happens-before 后面的\n2. 监视器锁规则：锁的解锁 happens-before 后续的加锁\n3. volatile 规则：volatile 写 happens-before 后续的读\n4. 传递性：A hb B, B hb C ⇒ A hb C\n5. 线程启动规则：Thread.start() happens-before 该线程的任何操作\n6. 线程结束规则：线程的所有操作 happens-before Thread.join() 返回\n7. 中断规则：interrupt() happens-before 检测中断（isInterrupted()）\n8. 终结规则：对象的构造函数结束 happens-before finalize() 开始\n\nas-if-serial 语义：\n- 单线程中，不管怎么重排序，执行结果不能改变\n- 允许没有数据依赖的操作重排序\n\n内存屏障类型：\n- LoadLoad：确保 Load1 的数据加载先于 Load2\n- StoreStore：确保 Store1 的数据对其他处理器可见先于 Store2\n- LoadStore：确保 Load1 的数据加载先于 Store2 的数据刷新\n- StoreLoad：最重，确保 Store1 可见后 Load2 才开始（volatile 写用这个）\n\nx86-TSO 模型：\n- x86 只允许写后读重排序\n- 所以 x86 只需要 StoreLoad 屏障（volatile 写时的 lock addl）",
-    "content": "请详细解释 JMM 要解决的三个核心问题（可见性、有序性、原子性），以及八条 happens-before 规则及其在并发编程中的应用。",
-    "tags": [
-      "JMM",
-      "happen-before",
-      "内存一致性"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "hard",
     "title": "线程安全的单例模式实现方式",
-    "answer": "单例模式有 7 种常见实现，线程安全性各异。\n\n1. 饿汉式（类加载时初始化）：\n  - 优点：简单、天然线程安全（类加载的锁保证）\n  - 缺点：可能浪费资源（不管用不用都创建）\n\n2. 懒汉式 + synchronized：\n  - 方法级加锁，性能差，不推荐\n\n3. 双重检查锁定（DCL）：\n```\nprivate static volatile Singleton instance;\npublic static Singleton getInstance() {\n    if (instance == null) {           // 第一次检查\n        synchronized (Singleton.class) {\n            if (instance == null) {   // 第二次检查\n                instance = new Singleton();\n            }\n        }\n    }\n    return instance;\n}\n```\n  - 必须用 volatile（禁止 new Singleton 的指令重排序）\n  - new 操作：1.分配内存→2.初始化对象→3.赋值引用\n  - 不加 volatile 可能 1→3→2，导致另一个线程拿到未初始化的对象\n\n4. 静态内部类（Bill Pugh）：\n```\nprivate static class SingletonHolder {\n    static final Singleton INSTANCE = new Singleton();\n}\npublic static Singleton getInstance() {\n    return SingletonHolder.INSTANCE;\n}\n```\n  - JVM 类加载机制保证线程安全\n  - 懒加载（只有调用 getInstance 才加载内部类）\n  - 最推荐的实现方式\n\n5. 枚举（Effective Java 推荐）：\n```\nenum Singleton { INSTANCE; }\n```\n  - 天然防反射、防序列化攻击\n  - 简洁，但不是懒加载\n\n6. CAS 实现（不常用）：\n```AtomicReference<Singleton> INSTANCE = new AtomicReference<>();```\n\n总结推荐：\n- 需要懒加载 → 静态内部类\n- 不需要懒加载 → 饿汉式或枚举\n- 需要防反射攻击 → 枚举",
+    "answer": "答案：单例模式有 7 种常见实现，线程安全性各异。\n\n解析：1. 饿汉式（类加载时初始化）：\n  - 优点：简单、天然线程安全（类加载的锁保证）\n  - 缺点：可能浪费资源（不管用不用都创建）\n\n2. 懒汉式 + synchronized：\n  - 方法级加锁，性能差，不推荐\n\n3. 双重检查锁定（DCL）：\n```\nprivate static volatile Singleton instance;\npublic static Singleton getInstance() {\n    if (instance == null) {           // 第一次检查\n        synchronized (Singleton.class) {\n            if (instance == null) {   // 第二次检查\n                instance = new Singleton();\n            }\n        }\n    }\n    return instance;\n}\n```\n  - 必须用 volatile（禁止 new Singleton 的指令重排序）\n  - new 操作：1.分配内存→2.初始化对象→3.赋值引用\n  - 不加 volatile 可能 1→3→2，导致另一个线程拿到未初始化的对象\n\n4. 静态内部类（Bill Pugh）：\n```\nprivate static class SingletonHolder {\n    static final Singleton INSTANCE = new Singleton();\n}\npublic static Singleton getInstance() {\n    return SingletonHolder.INSTANCE;\n}\n```\n  - JVM 类加载机制保证线程安全\n  - 懒加载（只有调用 getInstance 才加载内部类）\n  - 最推荐的实现方式\n\n5. 枚举（Effective Java 推荐）：\n```\nenum Singleton { INSTANCE; }\n```\n  - 天然防反射、防序列化攻击\n  - 简洁，但不是懒加载\n\n6. CAS 实现（不常用）：\n```AtomicReference<Singleton> INSTANCE = new AtomicReference<>();```\n\n总结推荐：\n- 需要懒加载 → 静态内部类\n- 不需要懒加载 → 饿汉式或枚举\n- 需要防反射攻击 → 枚举",
     "content": "请详细列举线程安全的单例实现方式（饿汉式、DCL、静态内部类、枚举），重点分析 DCL 中 volatile 的必要性和静态内部类的线程安全保障机制。",
     "tags": [
       "单例",
@@ -270,35 +121,8 @@
     "category": "concurrency",
     "type": "short_answer",
     "difficulty": "hard",
-    "title": "LongAdder 原理与 AtomicLong 对比",
-    "answer": "LongAdder 是 JDK 8 引入的原子累加器，比 AtomicLong 在高并发下吞吐量高一个数量级。\n\nAtomicLong 的问题：\n- 所有线程 CAS 同一个 volatile long base\n- 高并发时 CAS 失败率高，大量自旋重试，缓存行 bouncing 严重\n- 所有线程竞争同一内存地址\n\nLongAdder 的设计：\n- 把单点竞争分散到多个 Cell\n- base（无竞争时直接 CAS base）\n- Cell 数组（竞争激烈时分散累加）\n- 每个 Cell 用 @Contended 填充避免伪共享\n\n累加流程：\n1. 先尝试 CAS base（低竞争时高效）\n2. 失败 → 计算当前线程的 hash 映射到 Cell\n3. CAS 对应的 Cell\n4. Cell CAS 也失败 → 扩容 Cell 数组（2 倍）\n5. sum() 时累加 base + 所有 Cell\n\n空间换时间思想：\n- sum() 不保证强一致性（累加过程中 Cell 可能被修改）\n- 适合统计类场景（计数器、QPS、延迟分位值）\n- 不适合需要强一致性的场景（如序列号生成）\n\n性能对比：\n| 线程数 | AtomicLong | LongAdder |\n|--------|-----------|-----------|\n| 1      | 基准      | 略慢（多一次判断）|\n| 8      | ~5M ops  | ~20M ops |\n| 16     | ~3M ops  | ~35M ops |\n| 32     | ~2M ops  | ~50M ops |\n\nJDK 应用：\n- ConcurrentHashMap 的 CounterCell（LongAdder 的简化版）\n- 各种监控指标采集\n\n总结：\n- 低竞争场景（1-4 线程）：AtomicLong 足够\n- 高竞争、写多读少：LongAdder\n- 需要强一致、snapshot 准确：AtomicLong\n- 附：LongAccumulator 更通用的累加器（可指定累加函数）",
-    "content": "请详细分析 LongAdder 如何通过 Cell 数组将单点竞争分散到多个槽位，在高并发下获得比 AtomicLong 更高的吞吐量，并说明各自的适用场景。",
-    "tags": [
-      "LongAdder",
-      "AtomicLong",
-      "Striped64",
-      "Cell"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "hard",
-    "title": "虚拟线程（Virtual Threads）原理与局限",
-    "answer": "虚拟线程是 JDK 21 正式版（Project Loom）引入的轻量级线程，由 JVM 管理而非 OS 管理。\n\n核心原理：\n- 虚拟线程是 java.lang.Thread 的子类，但不由 OS 调度\n- 挂载（mount）到平台线程（Carrier Thread，通常 ForkJoinPool）上执行\n- 遇到阻塞操作（IO、锁、park）时 unmount（从载体线程剥离）\n- 载体线程可以执行其他虚拟线程\n\n关键设计：\n- 延续（Continuation）：保存和恢复执行上下文\n- 每个阻塞点（如 socket read）插入 yield 点\n- Flattening：非侵入式，现有代码基本不需要改\n- 栈存储在堆上（可扩展，初始小，按需增长）\n\n使用方式：\n```\n// 线程池\nExecutors.newVirtualThreadPerTaskExecutor()\n// 直接创建\nThread.startVirtualThread(() -> doWork())\n// 或\nThread.ofVirtual().name(\"vt-\").start(task)\n```\n\n适用场景：\n✅ 大量 IO 密集型任务（Web 服务器、RPC 调用、DB 访问）\n✅ 每个请求一个线程模型（简化编程）\n✅ 高吞吐、低延迟下的资源利用率\n\n不适用场景：\n❌ CPU 密集型任务（计算量大的任务）\n❌ 持有 synchronized 块长时间阻塞（pin 问题）\n❌ 持有 native frame 或 JNI 调用\n❌ 与池化技术混用（线程池 + 虚拟线程无意义）\n\n局限性：\n- synchronized 块内 IO 会导致载体线程 pinned（虚拟线程不能 unmount）\n- 解决方案：用 ReentrantLock 替代 synchronized\n- 调试工具不成熟（jstack 看到的是载体线程）\n- ThreadLocal 场景要谨慎（虚拟线程数量巨大，内存膨胀）\n\n对比 Go Routine：\n- 类似 Golang 的 goroutine，但 Go 从语言层面内置了调度器\n- Java 虚拟线程是 JVM 实现，对用户透明\n- Go 使用 channel 通信，Java 虚拟线程仍用传统同步机制",
-    "content": "请详细解释 JDK 21 虚拟线程的核心原理（Continuation、mount/unmount 机制），分析其适用场景（IO 密集型）和已知局限（synchronized pinning、ThreadLocal 膨胀）。",
-    "tags": [
-      "虚拟线程",
-      "Loom",
-      "协程"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "hard",
     "title": "CopyOnWriteArrayList 的设计思路与适用场景",
-    "answer": "CopyOnWriteArrayList 是 JUC 提供的线程安全 List，核心策略是\"写时复制\"（Copy-On-Write）。\n\n实现原理：\n- 内部用 volatile 数组存储数据\n- 读操作：不加锁，直接读 volatile 数组\n- 写操作：加锁，复制新数组，在新数组上修改，再将新数组赋值给 volatile 引用\n```\n// add 的简化逻辑\npublic boolean add(E e) {\n    synchronized (lock) {\n        Object[] old = getArray();\n        int len = old.length;\n        Object[] newArr = Arrays.copyOf(old, len + 1);\n        newArr[len] = e;\n        setArray(newArr);\n        return true;\n    }\n}\n```\n\n特点：\n- 读操作无锁（高性能读）\n- 写操作需要复制整个数组（O(n) 开销）\n- 弱一致性：迭代器遍历的是创建时的快照，不会反映后续修改\n- 不会抛 ConcurrentModificationException\n\n适用场景：\n✅ 读远多于写的场景（如白名单、配置缓存）\n✅ 遍历操作频繁（迭代器快照安全）\n✅ 集合大小较小（复制成本可接受）\n\n不适用场景：\n❌ 写频繁的场景（每次写 O(n) 复制，内存压力大）\n❌ 需要强一致性的场景（读可能读到旧数据）\n❌ 大集合（复制大数组占用内存大）\n\n性能对比：\n| 操作 | ArrayList | CopyOnWriteArrayList | Collections.synchronizedList |\n|------|-----------|---------------------|---------------------------|\n| 读 | 无锁 | 无锁 | 加锁，可能阻塞 |\n| 写 | 有锁（外部） | O(n) 复制 | 加锁 |\n| 迭代 | 一致性快照 | 弱一致性（快照） | 加锁遍历 |\n\n实现细节：\n- 内部使用 ReentrantLock（不是 synchronized）\n- setArray() 是 volatile 写，保证新数组对其他线程立即可见\n- remove() 也是复制数组（System.arraycopy 左右两部分）\n- 批量操作（如 addAll）也按元素逐个复制",
+    "answer": "答案：CopyOnWriteArrayList 是 JUC 提供的线程安全 List，核心策略是\"写时复制\"（Copy-On-Write）。\n\n解析：实现原理：\n- 内部用 volatile 数组存储数据\n- 读操作：不加锁，直接读 volatile 数组\n- 写操作：加锁，复制新数组，在新数组上修改，再将新数组赋值给 volatile 引用\n```\n// add 的简化逻辑\npublic boolean add(E e) {\n    synchronized (lock) {\n        Object[] old = getArray();\n        int len = old.length;\n        Object[] newArr = Arrays.copyOf(old, len + 1);\n        newArr[len] = e;\n        setArray(newArr);\n        return true;\n    }\n}\n```\n\n特点：\n- 读操作无锁（高性能读）\n- 写操作需要复制整个数组（O(n) 开销）\n- 弱一致性：迭代器遍历的是创建时的快照，不会反映后续修改\n- 不会抛 ConcurrentModificationException\n\n适用场景：\n✅ 读远多于写的场景（如白名单、配置缓存）\n✅ 遍历操作频繁（迭代器快照安全）\n✅ 集合大小较小（复制成本可接受）\n\n不适用场景：\n❌ 写频繁的场景（每次写 O(n) 复制，内存压力大）\n❌ 需要强一致性的场景（读可能读到旧数据）\n❌ 大集合（复制大数组占用内存大）\n\n性能对比：\n| 操作 | ArrayList | CopyOnWriteArrayList | Collections.synchronizedList |\n|------|-----------|---------------------|---------------------------|\n| 读 | 无锁 | 无锁 | 加锁，可能阻塞 |\n| 写 | 有锁（外部） | O(n) 复制 | 加锁 |\n| 迭代 | 一致性快照 | 弱一致性（快照） | 加锁遍历 |\n\n实现细节：\n- 内部使用 ReentrantLock（不是 synchronized）\n- setArray() 是 volatile 写，保证新数组对其他线程立即可见\n- remove() 也是复制数组（System.arraycopy 左右两部分）\n- 批量操作（如 addAll）也按元素逐个复制",
     "content": "请详细分析 CopyOnWriteArrayList 的写时复制（Copy-On-Write）策略，线程安全迭代器为何不抛 ConcurrentModificationException，以及读写场景的适用性分析。",
     "tags": [
       "CopyOnWriteArrayList",
@@ -311,7 +135,7 @@
     "type": "short_answer",
     "difficulty": "hard",
     "title": "Condition 的实现原理与经典应用",
-    "answer": "Condition 是 JUC 提供的线程等待/通知机制，与 Object.wait/notify 对应，但功能更强大。\n\n接口定义：\n- await()：释放锁并等待（对应 Object.wait）\n- signal()：唤醒一个等待线程（对应 Object.notify）\n- signalAll()：唤醒所有等待线程（对应 Object.notifyAll）\n- awaitUninterruptibly()：不可中断的等待\n- awaitNanos()/awaitUntil()：超时等待\n\n实现原理（基于 AQS 的 ConditionObject）：\n1. 每个 Condition 维护一个条件队列（单向链表）\n2. await()：\n   - 当前线程已持有锁（Condition 必须在 lock 块中调用）\n   - 构建 Node（waitStatus=CONDITION）加入条件队列尾部\n   - 释放锁（AQS state 清 0，唤醒同步队列后继）\n   - 阻塞（park）\n3. signal()：\n   - 检查当前线程是否持有锁\n   - 条件队列头节点转移到同步队列（waitStatus→SIGNAL）\n   - 后继节点在同步队列中竞争锁\n\n与 Object.wait/notify 的对比：\n| 特性 | Object.wait/notify | Condition.await/signal |\n|------|-------------------|----------------------|\n| 使用前提 | synchronized 块内 | lock.lock() 块内 |\n| 等待集 | 每个对象一个 | 每个 Lock 多个 Condition |\n| 响应中断 | 自动 | 可配（await 抛异常/awaitUninterruptibly 不抛）| \n| 超时 | wait(timeout) | awaitNanos/awaitUntil |\n| 唤醒顺序 | 无序 | 按条件队列 FIFO |\n| 虚假唤醒 | 需 while 检查 | 需 while 检查 |\n\n经典应用：\n- ArrayBlockingQueue：lock + notEmpty + notFull 两个 Condition\n- BoundedBuffer：两个 Condition 分别管理满和空\n- ReentrantLock 的 newCondition() 创建多个 Condition\n\n多个 Condition 的优势：\n- 精确唤醒：notFull.signal() 只唤醒等待插入的线程\n- 避免 signalAll 带来的惊群效应",
+    "answer": "答案：Condition 是 JUC 提供的线程等待/通知机制，与 Object.wait/notify 对应，但功能更强大。\n\n接口定义：\n- await()：释放锁并等待（对应 Object.wait）\n- signal()：唤醒一个等待线程（对应 Object.notify）\n- signalAll()：唤醒所有等待线程（对应 Object.notifyAll）\n- awaitUninterruptibly()：不可中断的等待\n- awaitNanos()/awaitUntil()：超时等待\n\n解析：实现原理（基于 AQS 的 ConditionObject）：\n1. 每个 Condition 维护一个条件队列（单向链表）\n2. await()：\n   - 当前线程已持有锁（Condition 必须在 lock 块中调用）\n   - 构建 Node（waitStatus=CONDITION）加入条件队列尾部\n   - 释放锁（AQS state 清 0，唤醒同步队列后继）\n   - 阻塞（park）\n3. signal()：\n   - 检查当前线程是否持有锁\n   - 条件队列头节点转移到同步队列（waitStatus→SIGNAL）\n   - 后继节点在同步队列中竞争锁\n\n与 Object.wait/notify 的对比：\n| 特性 | Object.wait/notify | Condition.await/signal |\n|------|-------------------|----------------------|\n| 使用前提 | synchronized 块内 | lock.lock() 块内 |\n| 等待集 | 每个对象一个 | 每个 Lock 多个 Condition |\n| 响应中断 | 自动 | 可配（await 抛异常/awaitUninterruptibly 不抛）| \n| 超时 | wait(timeout) | awaitNanos/awaitUntil |\n| 唤醒顺序 | 无序 | 按条件队列 FIFO |\n| 虚假唤醒 | 需 while 检查 | 需 while 检查 |\n\n经典应用：\n- ArrayBlockingQueue：lock + notEmpty + notFull 两个 Condition\n- BoundedBuffer：两个 Condition 分别管理满和空\n- ReentrantLock 的 newCondition() 创建多个 Condition\n\n多个 Condition 的优势：\n- 精确唤醒：notFull.signal() 只唤醒等待插入的线程\n- 避免 signalAll 带来的惊群效应",
     "content": "请详细解释 Condition 基于 AQS 的实现原理（条件队列、await/signal 流程），与 Object.wait/notify 的对比，以及在 ArrayBlockingQueue 中的经典应用。",
     "tags": [
       "Condition",
@@ -323,37 +147,9 @@
   {
     "category": "concurrency",
     "type": "short_answer",
-    "difficulty": "medium",
-    "title": "Java 中的锁优化技术（JIT 层面）",
-    "answer": "JVM 在 JIT 编译阶段对锁进行了多种优化，减少锁操作的开销。\n\n1. 锁消除（Lock Elision）：\n- 逃逸分析发现对象不会逃逸出当前线程\n- 直接去掉 synchronized 同步\n- 示例：StringBuffer 在方法内部使用，实际上没有多线程竞争\n- 参数：-XX：+DoEscapeAnalysis（默认开启）\n\n2. 锁粗化（Lock Coarsening）：\n- 连续的加锁解锁操作合并为一次\n- 示例：for 循环中每次 append() 都加解锁 → 粗化为整个循环一次\n- 避免频繁的锁获取/释放开销\n\n3. 偏向锁（Biased Locking）：\n- 第一次获取时 CAS 记录线程 ID\n- 后续进入无需任何同步操作\n- JDK 15+ 默认关闭（维护成本高）\n\n4. 轻量级锁（Lightweight Locking）：\n- 用 CAS 替换 Monitor Enter/Exit\n- 只有未锁竞争时才使用\n\n5. 适应性自旋（Adaptive Spinning）：\n- 如果上次自旋成功了，这次多自旋一会儿\n- 如果上次自旋失败了，少自旋或不自旋\n- 避免线程挂起/唤醒的上下文切换\n\n6. 逃逸分析相关优化：\n- 标量替换：对象拆散为基本类型在栈上分配\n- 栈上分配：小对象在栈上分配，随方法结束自动回收\n- 不仅优化锁，还减少 GC 压力\n\n使用建议：\n- 不要过早优化，JIT 已经做了很多\n- 真正关注的是锁竞争程度（而不是锁本身的开销）\n- 使用 jmc/jfr 观察锁竞争情况再做优化",
-    "content": "请详细说明 JVM 在 JIT 编译阶段对锁的主要优化技术：锁消除（逃逸分析）、锁粗化、偏向锁、轻量级锁和适应性自旋的原理和触发条件。",
-    "tags": [
-      "锁优化",
-      "JIT",
-      "锁消除",
-      "锁粗化",
-      "逃逸分析"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "hard",
-    "title": "Exchanger 的实现原理",
-    "answer": "Exchanger 是 JUC 提供的线程间数据交换工具，用于两个线程在同步点交换数据。\n\n基本用法：\n- exchange(V data)：等待另一个线程到达交换点，交换数据\n- exchange(V data, timeout)：超时版\n- 两个线程都到达 exchange() 时交换数据，否则阻塞等待\n\n实现原理（JDK 8）：\nExchanger 内部使用 Slot（单槽位）和 Slot 数组（多槽位）的双重数据结构管理等待线程。\n1. 线程 A 到达 exchange()，创建 Node 存储数据，进入自旋+阻塞等待\n2. 线程 B 到达 exchange()，发现等待的线程 A\n3. B 把数据写入 A 的 Node，读取 A 的数据，唤醒 A\n4. A 被唤醒后从 Node 读取 B 的数据\n\nJDK 8 改进（双重数据结构）：\n- 单槽位（Slot）：仅一个线程等待时使用\n- 多槽位（Slot 数组）：多个线程同时交换时使用\n- 使用淘汰机制（类似缓存行填充避免伪共享）\n- 自旋 + LockSupport.park 混合等待\n\n应用场景：\n1. 遗传算法中的两两交叉\n2. 双缓冲区交换（一个线程填满，另一个消费）\n3. pipeline 中两个相邻阶段的对接\n\n双缓冲区示例：\n```\nExchanger<List<Data>> exchanger = new Exchanger<>();\nList<Data> buffer = new ArrayList<>();\n// 生产者\nwhile (true) {\n    fill(buffer);\n    buffer = exchanger.exchange(buffer);\n}\n```\n\n与 SynchronousQueue 的区别：\n- SynchronousQueue 是队列（put/take 模式），持久化配对意愿\n- Exchanger 是匿名配对，双方都直接传递数据\n- Exchanger 更适合两个线程频繁交换的场景",
-    "content": "请详细分析 Exchanger 的内部实现原理，包括单槽位和多槽位的双重数据结构设计、自旋+park 混合等待机制，以及与 SynchronousQueue 的差异。",
-    "tags": [
-      "Exchanger",
-      "线程交换",
-      "数据交换"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "type": "short_answer",
     "difficulty": "hard",
     "title": "CompletableFuture 的 thenApply/thenCompose/thenCombine 区别",
-    "answer": "这三个方法是 CompletableFuture 中重要的编排方法，适用场景不同。\n\nthenApply（同步转换）：\n- Function<T, R>：接收上一个阶段的结果，同步计算，返回新的值\n- 类比：Stream.map()\n- 执行线程：由上一个任务的执行线程执行（不一定在哪个线程）\n```\nCompletableFuture.supplyAsync(() -> fetchUser())\n    .thenApply(user -> user.getName())  // 线程：fetchUser 的那个线程\n    .thenApply(name -> name.toUpperCase())\n```\n\nthenCompose（异步组合）：\n- Function<T, CompletableFuture<R>>：返回一个新的 CompletableFuture\n- 类比：flatMap（扁平化）\n- 避免 CompletableFuture<CompletableFuture<R>> 嵌套\n```\n// 错误：嵌套\nCompletableFuture<CompletableFuture<Order>> cf =\n    getUser().thenApply(user -> fetchOrder(user.getId()));\n\n// 正确：扁平化\nCompletableFuture<Order> cf =\n    getUser().thenCompose(user -> fetchOrder(user.getId()));\n```\n\nthenCombine（合并两个独立 Future）：\n- BiFunction<T, U, R>：合并两个不依赖的异步结果\n- 两个 Future 并行执行（并行度取决于线程池）\n- 类比：Promise.all()\n```\nCompletableFuture<User> user = fetchUser();\nCompletableFuture<Config> config = fetchConfig();\nuser.thenCombine(config, (u, c) -> buildResult(u, c));\n```\n\nAsync 变体：\n- thenApplyAsync：异步到 ForkJoinPool.commonPool() 执行\n- thenApplyAsync(executor)：到指定线程池执行\n- 什么时候用 Async：当计算较重或需要在特定线程池执行时\n\n选择指南：\n- 同步转换该阶段结果 → thenApply\n- 链式调用返回 Future 的方法 → thenCompose\n- 合并两个独立的异步结果 → thenCombine\n- 只消费不返回 → thenAccept / thenAcceptBoth",
+    "answer": "答案：这三个方法是 CompletableFuture 中重要的编排方法，适用场景不同。\n\nthenApply（同步转换）：\n- Function<T, R>：接收上一个阶段的结果，同步计算，返回新的值\n- 类比：Stream.map()\n- 执行线程：由上一个任务的执行线程执行（不一定在哪个线程）\n```\nCompletableFuture.supplyAsync(() -> fetchUser())\n    .thenApply(user -> user.getName())  // 线程：fetchUser 的那个线程\n    .thenApply(name -> name.toUpperCase())\n```\n\nthenCompose（异步组合）：\n- Function<T, CompletableFuture<R>>：返回一个新的 CompletableFuture\n- 类比：flatMap（扁平化）\n- 避免 CompletableFuture<CompletableFuture<R>> 嵌套\n```\n// 错误：嵌套\nCompletableFuture<CompletableFuture<Order>> cf =\n    getUser().thenApply(user -> fetchOrder(user.getId()));\n\n// 正确：扁平化\nCompletableFuture<Order> cf =\n    getUser().thenCompose(user -> fetchOrder(user.getId()));\n```\n\nthenCombine（合并两个独立 Future）：\n- BiFunction<T, U, R>：合并两个不依赖的异步结果\n- 两个 Future 并行执行（并行度取决于线程池）\n- 类比：Promise.all()\n```\nCompletableFuture<User> user = fetchUser();\nCompletableFuture<Config> config = fetchConfig();\nuser.thenCombine(config, (u, c) -> buildResult(u, c));\n```\n\nAsync 变体：\n- thenApplyAsync：异步到 ForkJoinPool.commonPool() 执行\n- thenApplyAsync(executor)：到指定线程池执行\n- 什么时候用 Async：当计算较重或需要在特定线程池执行时\n\n选择指南：\n- 同步转换该阶段结果 → thenApply\n- 链式调用返回 Future 的方法 → thenCompose\n- 合并两个独立的异步结果 → thenCombine\n- 只消费不返回 → thenAccept / thenAcceptBoth",
     "content": "请详细对比 thenApply（同步转换）、thenCompose（异步组合，flatMap）和 thenCombine（合并两个独立 Future）这三个 CompletableFuture 编排方法的用途、执行线程策略和适用场景。",
     "tags": [
       "CompletableFuture",
@@ -366,7 +162,7 @@
     "type": "short_answer",
     "difficulty": "hard",
     "title": "编译器的重排序规则与内存屏障插入策略",
-    "answer": "编译器和 CPU 为了优化性能会对指令重排序，JMM 规定了哪些重排序允许、哪些禁止。\n\n重排序类型：\n1. 编译器重排序：不改变单线程语义下重排语句\n2. 处理器重排序：指令流水线优化\n3. 内存系统重排序：写缓冲使读/写顺序变化\n\nJMM 的保守策略：\n对于三种基本操作（read/write/lock，volatile 读当 read，volatile 写当 write）：\n\n| 第一个操作 | 第二个操作 | 能否重排序 |\n|-----------|-----------|-----------|\n| 普通读 | 普通读 | 能 |\n| 普通读 | 普通写 | 能（x86 可以）|\n| 普通写 | 普通读 | 能 |\n| volatile 读 | volatile 读/写/普通读/写 | 不能（volatile 读后屏障）|\n| volatile 写 | volatile 写 | 不能 |\n| volatile 写 | 普通读/写 | 不能（volatile 写前屏障）|\n| 普通读/写 | volatile 写 | 能 |\n| 普通读/写 | volatile 读 | 不能（volatile 读前屏障）|\n\nJMM 内存屏障插入策略：\n```\nvolatile 写：\n  [StoreStore] ← 禁止前面的写与这个 volatile 写重排序\n  volatile 写操作\n  [StoreLoad] ← 禁止这个 volatile 写与后面的 volatile 读/写重排序\n\nvolatile 读：\n  [LoadLoad] ← 禁止这个 volatile 读与后面的普通读重排序\n  [LoadStore] ← 禁止这个 volatile 读与后面的普通写重排序\n  volatile 读操作\n```\n\n实际处理器实现：\n- x86：只需要 volatile 写时的 StoreLoad（lock addl）\n- ARM/PowerPC：需要更完整的屏障指令（dmb/msync）\n- 不同平台 JMM 保证语义一致，但实现不同\n\nfinal 重排序规则：\n- 在构造函数内对 final 字段的写，与随后把这个对象引用赋值给其他线程可见的引用变量之间，不能重排序\n- 即保证其他线程读到的 final 字段是初始化后的值",
+    "answer": "答案：编译器和 CPU 为了优化性能会对指令重排序，JMM 规定了哪些重排序允许、哪些禁止。\n\n重排序类型：\n1. 编译器重排序：不改变单线程语义下重排语句\n2. 处理器重排序：指令流水线优化\n3. 内存系统重排序：写缓冲使读/写顺序变化\n\nJMM 的保守策略：\n对于三种基本操作（read/write/lock，volatile 读当 read，volatile 写当 write）：\n\n| 第一个操作 | 第二个操作 | 能否重排序 |\n|-----------|-----------|-----------|\n| 普通读 | 普通读 | 能 |\n| 普通读 | 普通写 | 能（x86 可以）|\n| 普通写 | 普通读 | 能 |\n| volatile 读 | volatile 读/写/普通读/写 | 不能（volatile 读后屏障）|\n| volatile 写 | volatile 写 | 不能 |\n| volatile 写 | 普通读/写 | 不能（volatile 写前屏障）|\n| 普通读/写 | volatile 写 | 能 |\n| 普通读/写 | volatile 读 | 不能（volatile 读前屏障）|\n\nJMM 内存屏障插入策略：\n```\nvolatile 写：\n  [StoreStore] ← 禁止前面的写与这个 volatile 写重排序\n  volatile 写操作\n  [StoreLoad] ← 禁止这个 volatile 写与后面的 volatile 读/写重排序\n\nvolatile 读：\n  [LoadLoad] ← 禁止这个 volatile 读与后面的普通读重排序\n  [LoadStore] ← 禁止这个 volatile 读与后面的普通写重排序\n  volatile 读操作\n```\n\n实际处理器实现：\n- x86：只需要 volatile 写时的 StoreLoad（lock addl）\n- ARM/PowerPC：需要更完整的屏障指令（dmb/msync）\n- 不同平台 JMM 保证语义一致，但实现不同\n\nfinal 重排序规则：\n- 在构造函数内对 final 字段的写，与随后把这个对象引用赋值给其他线程可见的引用变量之间，不能重排序\n- 即保证其他线程读到的 final 字段是初始化后的值",
     "content": "请详细说明 JMM 对各种重排序的约束规则（普通读/写 vs volatile 读/写），以及在 x86 和 ARM 平台上内存屏障插入策略的差异。",
     "tags": [
       "重排序",
@@ -380,7 +176,7 @@
     "type": "short_answer",
     "difficulty": "hard",
     "title": "线程池的监控与动态调优",
-    "answer": "线上线程池需要监控关键指标和动态调整参数以适应负载变化。\n\n监控指标：\n1. getPoolSize()：当前线程数\n2. getActiveCount()：活动线程数（→ 活跃率 = active/poolSize）\n3. getQueue().size()：队列积压\n4. getCompletedTaskCount()：累计完成任务数\n5. getTaskCount()：累计提交任务数\n6. getLargestPoolSize()：历史最大线程数（→ 扩容历史）\n\n实现方式：\n1. 继承 ThreadPoolExecutor 扩展钩子方法：\n```\nbeforeExecute(Thread t, Runnable r)\nafterExecute(Runnable r, Throwable t)\nterminated()\n```\n\n2. 自定义 ThreadFactory：\n```\nnew ThreadFactoryBuilder()\n    .setNameFormat(\"biz-pool-%d\")\n    .setDaemon(true)\n    .setUncaughtExceptionHandler(...)\n    .build()\n```\n\n3. 暴露 JMX MBean：\n```\nManagementFactory.getPlatformMBeanServer()\n    .registerMBean(poolMonitor, objectName)\n```\n\n动态调参（可修改参数）：\n- setCorePoolSize()：动态调整核心线程数\n- setMaximumPoolSize()：动态调整最大线程数\n- setKeepAliveTime()：动态调整空闲存活时间\n- setRejectedExecutionHandler()：动态更换拒绝策略\n- 注意：corePoolSize 可缩小，多余的核心线程会在空闲后终止\n\n常用监控工具：\n- Micrometer / Prometheus 埋点\n- Alibaba Sentinel 的连接池管理\n- 配置中心（Nacos/Apollo）动态下发参数\n\n告警规则：\n- 活跃线程数 > corePoolSize 持续 5 分钟\n- 队列积压 > 阈值\n- 拒绝任务计数 > 0\n- 线程创建速率异常\n\n最佳实践：\n- 线程池命名规范：业务名 + 池角色（如 db-query-pool）\n- 统一线程池管理，避免各自 new\n- 业务分级使用不同线程池（核心业务、非核心业务分离）",
+    "answer": "答案：线上线程池需要监控关键指标和动态调整参数以适应负载变化。\n\n监控指标：\n1. getPoolSize()：当前线程数\n2. getActiveCount()：活动线程数（→ 活跃率 = active/poolSize）\n3. getQueue().size()：队列积压\n4. getCompletedTaskCount()：累计完成任务数\n5. getTaskCount()：累计提交任务数\n6. getLargestPoolSize()：历史最大线程数（→ 扩容历史）\n\n解析：实现方式：\n1. 继承 ThreadPoolExecutor 扩展钩子方法：\n```\nbeforeExecute(Thread t, Runnable r)\nafterExecute(Runnable r, Throwable t)\nterminated()\n```\n\n2. 自定义 ThreadFactory：\n```\nnew ThreadFactoryBuilder()\n    .setNameFormat(\"biz-pool-%d\")\n    .setDaemon(true)\n    .setUncaughtExceptionHandler(...)\n    .build()\n```\n\n3. 暴露 JMX MBean：\n```\nManagementFactory.getPlatformMBeanServer()\n    .registerMBean(poolMonitor, objectName)\n```\n\n动态调参（可修改参数）：\n- setCorePoolSize()：动态调整核心线程数\n- setMaximumPoolSize()：动态调整最大线程数\n- setKeepAliveTime()：动态调整空闲存活时间\n- setRejectedExecutionHandler()：动态更换拒绝策略\n- 注意：corePoolSize 可缩小，多余的核心线程会在空闲后终止\n\n常用监控工具：\n- Micrometer / Prometheus 埋点\n- Alibaba Sentinel 的连接池管理\n- 配置中心（Nacos/Apollo）动态下发参数\n\n告警规则：\n- 活跃线程数 > corePoolSize 持续 5 分钟\n- 队列积压 > 阈值\n- 拒绝任务计数 > 0\n- 线程创建速率异常\n\n最佳实践：\n- 线程池命名规范：业务名 + 池角色（如 db-query-pool）\n- 统一线程池管理，避免各自 new\n- 业务分级使用不同线程池（核心业务、非核心业务分离）",
     "content": "请详细说明线程池的关键监控指标（poolSize、activeCount、queueSize、taskCount 等）及获取方式，以及如何扩展钩子方法和动态调整核心参数实现运行时调优。",
     "tags": [
       "线程池",
@@ -394,7 +190,7 @@
     "type": "short_answer",
     "difficulty": "hard",
     "title": "ReentrantReadWriteLock 的原理与饥饿问题",
-    "answer": "ReentrantReadWriteLock（RRWL）维护一对锁：读锁（共享）和写锁（排他），适合读多写少场景。\n\n实现原理：\n- 也是基于 AQS，state（int 32 位）高 16 位存读锁计数，低 16 位存写锁计数\n- 写锁计数 = state & 0xFFFF（低 16 位）\n- 读锁计数 = state >>> 16（高 16 位，实际是持有读锁的线程总数）\n- 每个线程的读锁重入次数存在 ThreadLocalHoldCounter 中\n\n锁获取规则：\n- 读锁：没有其他线程持有写锁时才能获取\n- 写锁：没有其他线程持有读锁或写锁时才能获取\n- 同一个线程可以在持有写锁时获取读锁（锁降级）\n\n饥饿问题：\n默认是非公平模式，读写锁都存在线程饥饿的风险。\n- 写锁饥饿：大量读线程持续持有读锁，写线程永远无法获取\n- 公平模式：用 hasQueuedPredecessors() 保证 FIFO 顺序\n- 但公平模式下读吞吐量大幅下降\n\n解决方案：\n1. 公平模式：写线程必须在队列中排队，防止读线程插队\n2. 写锁降级：写线程获取写锁→读数据→获取读锁→释放写锁→释放读锁\n3. 超时机制：tryLock(timeout) 避免永久阻塞\n4. 替代方案：StampedLock 的乐观读避免读写互斥\n\n使用模式——锁降级：\n```\nrwl.writeLock().lock();\ntry {\n    // 修改数据\n    cache.put(key, value);\n    // 降级为读锁\n    rwl.readLock().lock();\n} finally {\n    rwl.writeLock().unlock();\n}\n// 持有读锁，其他线程可见最新值\ntry {\n    // 读取数据\n} finally {\n    rwl.readLock().unlock();\n}\n```\n\nReentrantReadWriteLock 的局限：\n- 读锁互斥写锁（反过来也是），高并发时写锁很难获取\n- 写锁降级可以但不能升级（读锁→写锁会死锁）\n- 读锁不支持 Condition\n- 写锁支持 Condition（因为内部是独占模式）",
+    "answer": "答案：ReentrantReadWriteLock（RRWL）维护一对锁：读锁（共享）和写锁（排他），适合读多写少场景。\n\n解析：实现原理：\n- 也是基于 AQS，state（int 32 位）高 16 位存读锁计数，低 16 位存写锁计数\n- 写锁计数 = state & 0xFFFF（低 16 位）\n- 读锁计数 = state >>> 16（高 16 位，实际是持有读锁的线程总数）\n- 每个线程的读锁重入次数存在 ThreadLocalHoldCounter 中\n\n锁获取规则：\n- 读锁：没有其他线程持有写锁时才能获取\n- 写锁：没有其他线程持有读锁或写锁时才能获取\n- 同一个线程可以在持有写锁时获取读锁（锁降级）\n\n饥饿问题：\n默认是非公平模式，读写锁都存在线程饥饿的风险。\n- 写锁饥饿：大量读线程持续持有读锁，写线程永远无法获取\n- 公平模式：用 hasQueuedPredecessors() 保证 FIFO 顺序\n- 但公平模式下读吞吐量大幅下降\n\n解决方案：\n1. 公平模式：写线程必须在队列中排队，防止读线程插队\n2. 写锁降级：写线程获取写锁→读数据→获取读锁→释放写锁→释放读锁\n3. 超时机制：tryLock(timeout) 避免永久阻塞\n4. 替代方案：StampedLock 的乐观读避免读写互斥\n\n使用模式——锁降级：\n```\nrwl.writeLock().lock();\ntry {\n    // 修改数据\n    cache.put(key, value);\n    // 降级为读锁\n    rwl.readLock().lock();\n} finally {\n    rwl.writeLock().unlock();\n}\n// 持有读锁，其他线程可见最新值\ntry {\n    // 读取数据\n} finally {\n    rwl.readLock().unlock();\n}\n```\n\nReentrantReadWriteLock 的局限：\n- 读锁互斥写锁（反过来也是），高并发时写锁很难获取\n- 写锁降级可以但不能升级（读锁→写锁会死锁）\n- 读锁不支持 Condition\n- 写锁支持 Condition（因为内部是独占模式）",
     "content": "请详细解释 ReentrantReadWriteLock 基于 AQS 的实现原理（state 高 16 位存读锁、低 16 位存写锁），分析写锁饥饿问题的产生原因和解决方案（公平模式、锁降级）。",
     "tags": [
       "ReentrantReadWriteLock",
@@ -405,42 +201,11 @@
   },
   {
     "category": "concurrency",
-    "type": "short_answer",
-    "difficulty": "hard",
-    "title": "Phaser 的原理与分阶段协调",
-    "answer": "Phaser 是 JDK 7 引入的同步屏障，比 CyclicBarrier 和 CountDownLatch 更灵活，支持分阶段、动态增减参与者。\n\n核心概念：\n- phase（阶段）：每完成一次同步，phase+1\n- parties（参与者）：注册的线程数，可动态 register()/arriveAndDeregister()\n- 每个参与者调用 arriveAndAwaitAdvance() 等待其他参与者\n\n对应关系：\n| 特性 | CountDownLatch | CyclicBarrier | Phaser |\n|------|---------------|---------------|--------|\n| 阶段 | 一次性 | 可循环 | 多阶段 |\n| 参与者 | 固定 | 固定 | 动态增减 |\n| 动作 | countDown | barrierAction | onAdvance |\n| 使用场景 | 一等多 | 多等多 | 多阶段多等多 |\n\n常用方法：\n- register()：注册一个新参与者\n- bulkRegister(n)：批量注册\n- arrive()：到达但不等待（非阻塞）\n- arriveAndAwaitAdvance()：到达并等待其他参与者\n- arriveAndDeregister()：到达并取消注册\n- getPhase()：当前阶段编号\n- onAdvance()：阶段推进时的回调\n\n多阶段示例：\n```\nPhaser phaser = new Phaser(3) {  // 3 个参与者\n    protected boolean onAdvance(int phase, int regParties) {\n        System.out.println(\"Phase \" + phase + \" done\");\n        return regParties == 0;  // true → 终止\n    }\n};\n\n// 每轮（阶段）所有线程都到达后再进入下一轮\nfor (int i = 0; i < 3; i++) {\n    new Thread(() -> {\n        // Phase 0\n        doWork();\n        phaser.arriveAndAwaitAdvance();\n        // Phase 1\n        doWork();\n        phaser.arriveAndAwaitAdvance();\n    }).start();\n}\n```\n\n应用场景：\n- 多阶段并行计算（如遗传算法每一代都是一个阶段）\n- 测试中的多线程并发协调\n- 分阶段加载资源（如先加载配置→再连接 DB→再缓存预热）\n\n实现原理：\n- 内部使用 long state 打包存储 phase/unarrived/parties 等信息\n- 使用 CAS + Treiber Stack 无锁栈管理等待线程\n- 自旋 + LockSupport.park 混合等待\n- termination：onAdvance 返回 true 时 Phaser 进入终止态",
-    "content": "请详细解释 Phaser 相比 CountDownLatch 和 CyclicBarrier 的独特设计——分阶段推进、动态增减参与者，以及核心方法 arrive、arriveAndAwaitAdvance、register 和 onAdvance 回调机制。",
-    "tags": [
-      "Phaser",
-      "多阶段同步",
-      "同步工具"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "ThreadPoolExecutor 的核心参数和拒绝策略有哪些？",
-    "content": "请详细说明 ThreadPoolExecutor 的构造参数含义，以及当任务队列满时的四种拒绝策略。",
-    "answer": "ThreadPoolExecutor 有 7 个核心参数——corePoolSize（核心线程数）、maximumPoolSize（最大线程数）、keepAliveTime（空闲线程存活时间）、unit（时间单位）、workQueue（任务队列）、threadFactory（线程工厂）、handler（拒绝策略）。四种拒绝策略：AbortPolicy（默认，抛 RejectedExecutionException）、CallerRunsPolicy（调用者线程自己执行任务）、DiscardPolicy（静默丢弃）、DiscardOldestPolicy（丢弃队列中最旧的任务）。\n\n解析：1）线程池工作流程——提交任务时，如果当前线程数 < corePoolSize，创建新线程执行；如果 >= corePoolSize，放入 workQueue；如果队列满了且线程数 < maximumPoolSize，创建新线程；如果队列满了且线程数已达 maximumPoolSize，执行拒绝策略。2）keepAliveTime 只在超出 corePoolSize 的线程上生效，如果 allowCoreThreadTimeOut(true) 则核心线程也会超时回收。3）常见的 workQueue 类型：LinkedBlockingQueue（无界，核心线程数即最大线程数）、ArrayBlockingQueue（有界，配合 maximumPoolSize 使用）、SynchronousQueue（不存储任务，直接转交）、PriorityBlockingQueue（优先级队列）。\n\n扩展延伸：1）线程池大小估算：CPU 密集型 → N+1（N 为 CPU 核数）；IO 密集型 → 2N（或根据等待时间/计算时间比估算）。2）核心线程预热：prestartAllCoreThreads() 可预先创建所有核心线程。3）Spring 的 ThreadPoolTaskExecutor 提供了装饰器能力和优雅关闭。4）监控关键指标：activeCount、queue.size()、completedTaskCount、largestPoolSize。5）阿里 Java 规范强制使用 ThreadPoolExecutor 创建线程池，禁止使用 Executors 工厂类（避免 OOM 风险）。",
-    "hints": [
-      "线程池的工作流程是怎样的？corePoolSize、maximumPoolSize、workQueue 三者关系是什么？",
-      "四种拒绝策略分别适用于什么场景？"
-    ],
-    "tags": [
-      "线程池",
-      "ThreadPoolExecutor",
-      "拒绝策略",
-      "参数调优"
-    ]
-  },
-  {
-    "category": "concurrency",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "synchronized 关键字在 JVM 层面的实现原理是什么？",
     "content": "请解释 synchronized 在 Java 对象头中的实现机制，以及锁升级过程（偏向锁→轻量级锁→重量级锁）。",
-    "answer": "synchronized 基于对象头的 Mark Word 实现锁状态标记，通过锁升级（无锁→偏向锁→轻量级锁→重量级锁）来优化性能。\n\n解析：1）对象头 Mark Word——64 位 JVM 中 Mark Word 占 8 字节，最低 2 位表示锁标记（lock），与其它位配合表示锁状态。无锁状态：Mark Word 存储 hashCode、GC 分代年龄等。2）偏向锁（Biased Locking）——当锁只被一个线程反复获取时，Mark Word 存储线程 ID。CAS 操作设置偏向位。如果同一线程再次获取，无需 CAS 或上下文切换。当有竞争时撤销偏向锁（需等待全局安全点 STW）。3）轻量级锁——偏向锁撤销后升级为轻量级锁。线程在自己的栈帧中创建 Lock Record，通过 CAS 尝试将 Mark Word 替换为指向 Lock Record 的指针。如果 CAS 成功则获取锁，失败则自旋。4）重量级锁——自旋超过阈值（可通过自旋次数或自适应自旋）后，升级为重量级锁。Mark Word 指向 Monitor 对象（由 ObjectMonitor 实现），线程进入 EntryList 阻塞等待，由操作系统 mutex 管理。重量级锁的阻塞和唤醒涉及用户态和内核态切换，开销大。\n\n扩展延伸：1）JDK 15 起默认禁用偏向锁（-XX：-UseBiasedLocking），因撤销偏向锁在安全点 STW 带来的性能损失大于收益。2）锁粗化和锁消除 JIT 优化：锁粗化——将相邻的多个同步块合并为一个；锁消除——JIT 逃逸分析发现变量不会逃逸出线程时消除同步。3）尽量不要在高并发场景使用 synchronized 保护大量代码块，考虑使用 Lock 接口实现更精细的锁控制。",
+    "answer": "答案：synchronized 基于对象头的 Mark Word 实现锁状态标记，通过锁升级（无锁→偏向锁→轻量级锁→重量级锁）来优化性能。\n\n解析：1）对象头 Mark Word——64 位 JVM 中 Mark Word 占 8 字节，最低 2 位表示锁标记（lock），与其它位配合表示锁状态。无锁状态：Mark Word 存储 hashCode、GC 分代年龄等。2）偏向锁（Biased Locking）——当锁只被一个线程反复获取时，Mark Word 存储线程 ID。CAS 操作设置偏向位。如果同一线程再次获取，无需 CAS 或上下文切换。当有竞争时撤销偏向锁（需等待全局安全点 STW）。3）轻量级锁——偏向锁撤销后升级为轻量级锁。线程在自己的栈帧中创建 Lock Record，通过 CAS 尝试将 Mark Word 替换为指向 Lock Record 的指针。如果 CAS 成功则获取锁，失败则自旋。4）重量级锁——自旋超过阈值（可通过自旋次数或自适应自旋）后，升级为重量级锁。Mark Word 指向 Monitor 对象（由 ObjectMonitor 实现），线程进入 EntryList 阻塞等待，由操作系统 mutex 管理。重量级锁的阻塞和唤醒涉及用户态和内核态切换，开销大。\n\n扩展延伸：1）JDK 15 起默认禁用偏向锁（-XX：-UseBiasedLocking），因撤销偏向锁在安全点 STW 带来的性能损失大于收益。2）锁粗化和锁消除 JIT 优化：锁粗化——将相邻的多个同步块合并为一个；锁消除——JIT 逃逸分析发现变量不会逃逸出线程时消除同步。3）尽量不要在高并发场景使用 synchronized 保护大量代码块，考虑使用 Lock 接口实现更精细的锁控制。",
     "hints": [
       "Mark Word 在对象头中如何表示锁状态？",
       "锁升级的四个阶段分别是什么？什么条件下触发升级？"
@@ -459,7 +224,7 @@
     "type": "short_answer",
     "title": "volatile 关键字的语义和实现原理是什么？",
     "content": "请解释 volatile 的可见性和有序性保证，以及它如何通过内存屏障实现。",
-    "answer": "volatile 保证可见性（一个线程修改值，其他线程立即可见）和有序性（禁止指令重排序），但不保证原子性。底层通过内存屏障（Memory Barrier）实现。\n\n解析：1）可见性——volatile 变量在被修改后，JMM 会强制将工作内存中的新值刷新回主内存。其他线程读取 volatile 变量时直接从主内存读取（失效自己的缓存行）。本质是 MESI 缓存一致性协议。2）禁止重排序——JMM 针对 volatile 规定：写 volatile 变量时，在写之前插入 StoreStore 屏障（禁止前面的普通写与 volatile 写重排序），写之后插入 StoreLoad 屏障（禁止 volatile 写与后面的 volatile 读/写重排序）；读 volatile 变量时，在读之后插入 LoadLoad 屏障（禁止后面的普通读与 volatile 读重排序）和 LoadStore 屏障（禁止后面的普通写与 volatile 读重排序）。3）不保证原子性——i++ 操作（读→改→写）涉及三步，volatile 只保证每一步的可见性，不保证这三步的原子性。因此 count++ 在多线程下仍会丢失更新，需用 AtomicInteger 或 synchronized。\n\n扩展延伸：1）volatile 的典型使用场景：DCL 单例中的状态标志（防止 new 对象时指令重排序导致的半初始化对象逸出）；状态检查标志（如 isRunning 控制线程循环）。2）volatile 与 AtomicBoolean 的区别：volatile 只能保证单个变量的可见性，AtomicBoolean 通过 CAS 提供原子性操作。3）JSR-133 对 volatile 语义的增强：旧的 JMM 中 volatile 写不能与普通写互斥重排序，JSR-133 后加强了，使得 DCL 单例可以正常工作。",
+    "answer": "答案：volatile 保证可见性（一个线程修改值，其他线程立即可见）和有序性（禁止指令重排序），但不保证原子性。底层通过内存屏障（Memory Barrier）实现。\n\n解析：1）可见性——volatile 变量在被修改后，JMM 会强制将工作内存中的新值刷新回主内存。其他线程读取 volatile 变量时直接从主内存读取（失效自己的缓存行）。本质是 MESI 缓存一致性协议。2）禁止重排序——JMM 针对 volatile 规定：写 volatile 变量时，在写之前插入 StoreStore 屏障（禁止前面的普通写与 volatile 写重排序），写之后插入 StoreLoad 屏障（禁止 volatile 写与后面的 volatile 读/写重排序）；读 volatile 变量时，在读之后插入 LoadLoad 屏障（禁止后面的普通读与 volatile 读重排序）和 LoadStore 屏障（禁止后面的普通写与 volatile 读重排序）。3）不保证原子性——i++ 操作（读→改→写）涉及三步，volatile 只保证每一步的可见性，不保证这三步的原子性。因此 count++ 在多线程下仍会丢失更新，需用 AtomicInteger 或 synchronized。\n\n扩展延伸：1）volatile 的典型使用场景：DCL 单例中的状态标志（防止 new 对象时指令重排序导致的半初始化对象逸出）；状态检查标志（如 isRunning 控制线程循环）。2）volatile 与 AtomicBoolean 的区别：volatile 只能保证单个变量的可见性，AtomicBoolean 通过 CAS 提供原子性操作。3）JSR-133 对 volatile 语义的增强：旧的 JMM 中 volatile 写不能与普通写互斥重排序，JSR-133 后加强了，使得 DCL 单例可以正常工作。",
     "hints": [
       "volatile 保证可见性的底层硬件机制是什么？",
       "volatile 在哪些场景下不适合使用？"
@@ -477,7 +242,7 @@
     "type": "short_answer",
     "title": "CAS 操作的原理、ABA 问题及解决方案是什么？",
     "content": "请解释 CAS（Compare-And-Swap）的底层实现，ABA 问题的产生原因和常见的解决方式。",
-    "answer": "CAS 是一种乐观锁操作，包含三个操作数——内存位置 V、期望值 A、新值 B。只有当 V 的值等于 A 时，才将 V 更新为 B，否则不操作。ABA 问题指 V 的值从 A→B→A 的过程。解决方式：使用版本号或时间戳，如 AtomicStampedReference。\n\n解析：1）CPU 层面的 CAS 实现——在 x86 平台上通过 CMPXCHG 指令实现，在 ARM 平台上通过 LL/SC（Load-Linked/Store-Conditional）指令对实现。CMPXCHG 指令是原子的，保证了比较和交换的不可分割性。2）Java 中的 CAS 实现——Unsafe 类（sun.misc.Unsafe）提供了 compareAndSwapObject、compareAndSwapInt、compareAndSwapLong 等 native 方法。AtomicInteger、AtomicLong 等原子类都基于 Unsafe.CAS 实现。3）ABA 问题的危害场景——例如用 CAS 操作链表节点时，A 节点被移除→回收→重新插入，虽然地址相同但内容已变，CAS 无法感知这种变化。4）AtomicStampedReference——pair（reference, stamp）作为整体进行 CAS 操作，stamp 类似于版本号，每次更新都递增，从而检测出 ABA。\n\n扩展延伸：1）CAS 的缺点——自旋开销（长时间 CAS 不成功时 CPU 空转）；只能保证单个变量的原子操作；ABA 问题。2）LongAdder 在热点场景下替代 AtomicLong——将热点数据分散到 Cell 数组中，降低 CAS 失败概率（空间换时间的思想）。3）JDK 8+ 对 CAS 的优化——通过 @jdk.internal.vm.annotation.Contended 注解避免缓存行伪共享（False Sharing）。",
+    "answer": "答案：CAS 是一种乐观锁操作，包含三个操作数——内存位置 V、期望值 A、新值 B。只有当 V 的值等于 A 时，才将 V 更新为 B，否则不操作。ABA 问题指 V 的值从 A→B→A 的过程。解决方式：使用版本号或时间戳，如 AtomicStampedReference。\n\n解析：1）CPU 层面的 CAS 实现——在 x86 平台上通过 CMPXCHG 指令实现，在 ARM 平台上通过 LL/SC（Load-Linked/Store-Conditional）指令对实现。CMPXCHG 指令是原子的，保证了比较和交换的不可分割性。2）Java 中的 CAS 实现——Unsafe 类（sun.misc.Unsafe）提供了 compareAndSwapObject、compareAndSwapInt、compareAndSwapLong 等 native 方法。AtomicInteger、AtomicLong 等原子类都基于 Unsafe.CAS 实现。3）ABA 问题的危害场景——例如用 CAS 操作链表节点时，A 节点被移除→回收→重新插入，虽然地址相同但内容已变，CAS 无法感知这种变化。4）AtomicStampedReference——pair（reference, stamp）作为整体进行 CAS 操作，stamp 类似于版本号，每次更新都递增，从而检测出 ABA。\n\n扩展延伸：1）CAS 的缺点——自旋开销（长时间 CAS 不成功时 CPU 空转）；只能保证单个变量的原子操作；ABA 问题。2）LongAdder 在热点场景下替代 AtomicLong——将热点数据分散到 Cell 数组中，降低 CAS 失败概率（空间换时间的思想）。3）JDK 8+ 对 CAS 的优化——通过 @jdk.internal.vm.annotation.Contended 注解避免缓存行伪共享（False Sharing）。",
     "hints": [
       "CAS 在 CPU 层面是如何实现的？x86 和 ARM 的实现有何不同？",
       "ABA 问题在什么场景下真正有危害？"
@@ -495,7 +260,7 @@
     "type": "short_answer",
     "title": "ReentrantLock 的实现原理和公平性机制是什么？",
     "content": "请分析 ReentrantLock 的 AQS 实现基础、加锁/解锁流程，以及公平锁与非公平锁的区别。",
-    "answer": "ReentrantLock 基于 AQS（AbstractQueuedSynchronizer）实现，通过内部 Sync 类（继承 AQS）管理同步状态。公平锁按线程排队顺序获取锁，非公平锁允许抢占。\n\n解析：1）AQS 核心——一个 volatile int state（同步状态）和一个 CLH（Craig-Landim-Hagersten）变体双向队列（等待队列）。state=0 表示锁未被持有，state>0 表示已被持有（可重入计数）。CLH 队列的每个节点（Node）保存线程引用和等待状态（waitStatus：SIGNAL=-1，CANCELLED=1，CONDITION=-2，PROPAGATE=-3）。2）非公平锁加锁流程——lock() 直接尝试 CAS 修改 state 0→1（抢占），如果成功则获得锁；如果失败则调用 acquire(1) 进入 tryAcquire 再次尝试 CAS，失败后通过 addWaiter 加入队列尾部，然后挂起线程。3）公平锁加锁流程——lock() 直接调用 acquire(1)，tryAcquire 中先检查 hasQueuedPredecessors()（队列中是否有等待更久的线程），如果有则加入队列排队，不抢占。4）释放锁——unlock() 调用 release(1) 将 state-1，当 state=0 时锁完全释放，然后 unparkSuccessor 唤醒队列中第一个等待线程。release 过程同样受 AQS 控制。\n\n扩展延伸：1）ReentrantLock 比 synchronized 的优势：响应中断（lockInterruptibly）、超时获取（tryLock(timeout)）、条件变量（Condition 机制）、更精细的控制。2）Condition 实现——每个 ConditionObject 内部维护一个条件等待队列，await() 将线程加入条件队列并释放锁，signal() 将条件队列头节点转移到 AQS 同步队列。3）JDK 6+ 对 synchronized 做了大量优化（锁升级、粗化、消除），在低竞争场景下 synchronized 性能可能优于 ReentrantLock。高竞争或需要超时/中断的场景下 ReentrantLock 更合适。",
+    "answer": "答案：ReentrantLock 基于 AQS（AbstractQueuedSynchronizer）实现，通过内部 Sync 类（继承 AQS）管理同步状态。公平锁按线程排队顺序获取锁，非公平锁允许抢占。\n\n解析：1）AQS 核心——一个 volatile int state（同步状态）和一个 CLH（Craig-Landim-Hagersten）变体双向队列（等待队列）。state=0 表示锁未被持有，state>0 表示已被持有（可重入计数）。CLH 队列的每个节点（Node）保存线程引用和等待状态（waitStatus：SIGNAL=-1，CANCELLED=1，CONDITION=-2，PROPAGATE=-3）。2）非公平锁加锁流程——lock() 直接尝试 CAS 修改 state 0→1（抢占），如果成功则获得锁；如果失败则调用 acquire(1) 进入 tryAcquire 再次尝试 CAS，失败后通过 addWaiter 加入队列尾部，然后挂起线程。3）公平锁加锁流程——lock() 直接调用 acquire(1)，tryAcquire 中先检查 hasQueuedPredecessors()（队列中是否有等待更久的线程），如果有则加入队列排队，不抢占。4）释放锁——unlock() 调用 release(1) 将 state-1，当 state=0 时锁完全释放，然后 unparkSuccessor 唤醒队列中第一个等待线程。release 过程同样受 AQS 控制。\n\n扩展延伸：1）ReentrantLock 比 synchronized 的优势：响应中断（lockInterruptibly）、超时获取（tryLock(timeout)）、条件变量（Condition 机制）、更精细的控制。2）Condition 实现——每个 ConditionObject 内部维护一个条件等待队列，await() 将线程加入条件队列并释放锁，signal() 将条件队列头节点转移到 AQS 同步队列。3）JDK 6+ 对 synchronized 做了大量优化（锁升级、粗化、消除），在低竞争场景下 synchronized 性能可能优于 ReentrantLock。高竞争或需要超时/中断的场景下 ReentrantLock 更合适。",
     "hints": [
       "AQS 的 state 和 CLH 队列分别是做什么的？",
       "公平锁和非公平锁在 tryAcquire 中的实现有何不同？"
@@ -514,7 +279,7 @@
     "type": "short_answer",
     "title": "ConcurrentHashMap JDK 8 的实现原理和扩容机制是什么？",
     "content": "请详细说明 ConcurrentHashMap 在 JDK 8 中的数据结构、并发安全策略和扩容机制。",
-    "answer": "JDK 8 的 ConcurrentHashMap 采用 Node 数组 + 链表/红黑树结构，通过 CAS + synchronized 实现并发安全。扩容支持多线程协助迁移（transfer）。\n\n解析：1）数据结构——与 JDK 7 的 Segment 分段锁不同，JDK 8 放弃了 Segment，改用 Node 数组（table）。每个桶可以是链表或红黑树（当链表长度 > 8 且数组长度 > 64 时树化）。2）并发安全——put 操作时：如果桶为空，通过 CAS 插入节点（无锁）；如果桶不为空，对桶的头节点加 synchronized 锁后再插入。读取操作（get）完全无锁，因为 Node 的 val 和 next 字段是 volatile 的。3）扩容（transfer）机制——当节点总数超过阈值（0.75 * 数组长度）时触发扩容。数组长度翻倍，创建新数组（nextTable）。扩容时从旧数组向新数组迁移节点。迁移完成后用新数组替换旧数组。4）多线程协助扩容——put 操作发现正在扩容（sizeCtl 为负数）时，当前线程会加入扩容工作。每个线程负责迁移一个 stride（步长）数量的桶。通过 ForwardingNode（fwd 节点）标记已迁移的桶，其他线程遇到 fwd 节点则跳过。\n\n扩展延伸：1）JDK 8 相比 JDK 7 的改进：JDK 7 使用 Segment 数组（继承 ReentrantLock），每个 Segment 管理一部分桶，最多 16 个 Segment 并发度有限；JDK 8 使用 finer-grained 锁，每个桶独立加锁，并发度更高。2）1.8 中的 size() 方法使用 CounterCell 数组统计元素数量，类似 LongAdder 思想。3）红黑树用于解决哈希冲突严重时链表查找 O(n) 的问题，将查找时间复杂度降到 O(logn)。普通情况下用链表，树化只在必要时触发。",
+    "answer": "答案：JDK 8 的 ConcurrentHashMap 采用 Node 数组 + 链表/红黑树结构，通过 CAS + synchronized 实现并发安全。扩容支持多线程协助迁移（transfer）。\n\n解析：1）数据结构——与 JDK 7 的 Segment 分段锁不同，JDK 8 放弃了 Segment，改用 Node 数组（table）。每个桶可以是链表或红黑树（当链表长度 > 8 且数组长度 > 64 时树化）。2）并发安全——put 操作时：如果桶为空，通过 CAS 插入节点（无锁）；如果桶不为空，对桶的头节点加 synchronized 锁后再插入。读取操作（get）完全无锁，因为 Node 的 val 和 next 字段是 volatile 的。3）扩容（transfer）机制——当节点总数超过阈值（0.75 * 数组长度）时触发扩容。数组长度翻倍，创建新数组（nextTable）。扩容时从旧数组向新数组迁移节点。迁移完成后用新数组替换旧数组。4）多线程协助扩容——put 操作发现正在扩容（sizeCtl 为负数）时，当前线程会加入扩容工作。每个线程负责迁移一个 stride（步长）数量的桶。通过 ForwardingNode（fwd 节点）标记已迁移的桶，其他线程遇到 fwd 节点则跳过。\n\n扩展延伸：1）JDK 8 相比 JDK 7 的改进：JDK 7 使用 Segment 数组（继承 ReentrantLock），每个 Segment 管理一部分桶，最多 16 个 Segment 并发度有限；JDK 8 使用 finer-grained 锁，每个桶独立加锁，并发度更高。2）1.8 中的 size() 方法使用 CounterCell 数组统计元素数量，类似 LongAdder 思想。3）红黑树用于解决哈希冲突严重时链表查找 O(n) 的问题，将查找时间复杂度降到 O(logn)。普通情况下用链表，树化只在必要时触发。",
     "hints": [
       "JDK 8 的 ConcurrentHashMap 为什么放弃了 Segment？",
       "多线程是如何协助扩容的？ForwardingNode 的作用是什么？"
@@ -533,7 +298,7 @@
     "type": "short_answer",
     "title": "Java 中的 happen-before 原则有哪些？",
     "content": "请列举 JMM（Java Memory Model）中的 happen-before 规则，并说明它们在多线程编程中的作用。",
-    "answer": "happen-before 是 JMM 定义的多线程操作之间的偏序关系。如果操作 A happen-before 操作 B，则 A 的操作结果对 B 可见。主要规则有 8 条。\n\n解析：1）程序次序规则（Program Order Rule）——在一个线程中，按照代码顺序，前面的操作 happen-before 后面的操作（同一线程内，控制流顺序决定了执行顺序）。2）管程锁定规则（Monitor Lock Rule）——一个 unlock 操作 happen-before 后面对同一个锁的 lock 操作。3）volatile 变量规则（Volatile Variable Rule）——对一个 volatile 变量的写操作 happen-before 后面对该变量的读操作。4）线程启动规则（Thread Start Rule）——Thread.start() happen-before 该线程中的任何操作。5）线程终止规则（Thread Termination Rule）——线程中的所有操作 happen-before 其他线程检测到该线程终止（从 Thread.join() 返回或 Thread.isAlive() 返回 false）。6）线程中断规则（Thread Interruption Rule）——调用线程 interrupt() 方法 happen-before 被中断线程检测到中断事件（通过 Thread.interrupted() 或 isInterrupted()）。7）对象终结规则（Finalizer Rule）——对象的构造函数结束 happen-before finalize() 方法。8）传递性（Transitivity）——若 A happen-before B，B happen-before C，则 A happen-before C。\n\n扩展延伸：happen-before 仅仅是 JMM 保证的最弱约束——程序员不需要再额外加同步就能保证结果正确。JMM 禁止编译器/处理器对 happen-before 关系涉及的操作进行重排序。理解 happen-before 是编写正确并发代码的基础，尤其是在分析 DCL（Double-Checked Locking）等模式时。",
+    "answer": "答案：happen-before 是 JMM 定义的多线程操作之间的偏序关系。如果操作 A happen-before 操作 B，则 A 的操作结果对 B 可见。主要规则有 8 条。\n\n解析：1）程序次序规则（Program Order Rule）——在一个线程中，按照代码顺序，前面的操作 happen-before 后面的操作（同一线程内，控制流顺序决定了执行顺序）。2）管程锁定规则（Monitor Lock Rule）——一个 unlock 操作 happen-before 后面对同一个锁的 lock 操作。3）volatile 变量规则（Volatile Variable Rule）——对一个 volatile 变量的写操作 happen-before 后面对该变量的读操作。4）线程启动规则（Thread Start Rule）——Thread.start() happen-before 该线程中的任何操作。5）线程终止规则（Thread Termination Rule）——线程中的所有操作 happen-before 其他线程检测到该线程终止（从 Thread.join() 返回或 Thread.isAlive() 返回 false）。6）线程中断规则（Thread Interruption Rule）——调用线程 interrupt() 方法 happen-before 被中断线程检测到中断事件（通过 Thread.interrupted() 或 isInterrupted()）。7）对象终结规则（Finalizer Rule）——对象的构造函数结束 happen-before finalize() 方法。8）传递性（Transitivity）——若 A happen-before B，B happen-before C，则 A happen-before C。\n\n扩展延伸：happen-before 仅仅是 JMM 保证的最弱约束——程序员不需要再额外加同步就能保证结果正确。JMM 禁止编译器/处理器对 happen-before 关系涉及的操作进行重排序。理解 happen-before 是编写正确并发代码的基础，尤其是在分析 DCL（Double-Checked Locking）等模式时。",
     "hints": [
       "happen-before 和重排序之间是什么关系？",
       "哪些常见的同步机制提供了 happen-before 保证？"
@@ -551,7 +316,7 @@
     "type": "short_answer",
     "title": "ForkJoinPool 的工作窃取（Work-Stealing）机制是什么？",
     "content": "请解释 ForkJoinPool 的工作窃取算法原理、双端队列的使用方式以及适用场景。",
-    "answer": "ForkJoinPool 采用工作窃取算法——每个工作线程维护一个双端队列（Deque），自己从队尾取任务执行，空闲线程从其他线程队列的队首「窃取」任务。这种设计平衡了线程间的负载。\n\n解析：1）ForkJoinPool 架构——核心是 ForkJoinWorkerThread 数组，每个线程关联一个 WorkQueue（双端队列）。任务通过 fork() 方法提交到当前线程的 WorkQueue 队尾，线程从队尾取任务执行（LIFO）。2）工作窃取——当线程的 WorkQueue 为空时，从其他线程的 WorkQueue 队首窃取任务（FIFO）。队尾 LIFO + 队首 FIFO 的组合分摊了工作，减少了竞争。窃取者从队首取任务（较少竞争），被窃取者从队尾取任务（也较少竞争）。3）join() 实现——ForkJoinTask.join() 不是简单的阻塞等待，而是：检查任务是否已完成；如果未完成且当前线程有 WorkQueue，尝试执行其他任务（helpJoin）；如果无法处理，则阻塞。这种设计避免了传统线程池中任务阻塞导致的资源浪费。4）核心参数——parallelism（并行度，默认 CPU 核数）、ForkJoinPool.commonPool()（公共池，所有使用 CompletableFuture/ForkJoinTask 的任务共享）。\n\n扩展延伸：1）典型应用——CompletableFuture 的默认异步执行池（commonPool）、Java 8 Stream 的 parallelStream()、ForkJoinTask 子类 RecursiveTask（有返回值）和 RecursiveAction（无返回值）。2）适用场景——适合 CPU 密集型的、可递归分解的任务。IO 密集型任务不适合（线程阻塞时无法窃取）。3）ForkJoinPool 与 ThreadPoolExecutor 的选择：任务可分解为大→小的递归结构 → ForkJoinPool；任务为独立的、不可分解的单元 → ThreadPoolExecutor。",
+    "answer": "答案：ForkJoinPool 采用工作窃取算法——每个工作线程维护一个双端队列（Deque），自己从队尾取任务执行，空闲线程从其他线程队列的队首「窃取」任务。这种设计平衡了线程间的负载。\n\n解析：1）ForkJoinPool 架构——核心是 ForkJoinWorkerThread 数组，每个线程关联一个 WorkQueue（双端队列）。任务通过 fork() 方法提交到当前线程的 WorkQueue 队尾，线程从队尾取任务执行（LIFO）。2）工作窃取——当线程的 WorkQueue 为空时，从其他线程的 WorkQueue 队首窃取任务（FIFO）。队尾 LIFO + 队首 FIFO 的组合分摊了工作，减少了竞争。窃取者从队首取任务（较少竞争），被窃取者从队尾取任务（也较少竞争）。3）join() 实现——ForkJoinTask.join() 不是简单的阻塞等待，而是：检查任务是否已完成；如果未完成且当前线程有 WorkQueue，尝试执行其他任务（helpJoin）；如果无法处理，则阻塞。这种设计避免了传统线程池中任务阻塞导致的资源浪费。4）核心参数——parallelism（并行度，默认 CPU 核数）、ForkJoinPool.commonPool()（公共池，所有使用 CompletableFuture/ForkJoinTask 的任务共享）。\n\n扩展延伸：1）典型应用——CompletableFuture 的默认异步执行池（commonPool）、Java 8 Stream 的 parallelStream()、ForkJoinTask 子类 RecursiveTask（有返回值）和 RecursiveAction（无返回值）。2）适用场景——适合 CPU 密集型的、可递归分解的任务。IO 密集型任务不适合（线程阻塞时无法窃取）。3）ForkJoinPool 与 ThreadPoolExecutor 的选择：任务可分解为大→小的递归结构 → ForkJoinPool；任务为独立的、不可分解的单元 → ThreadPoolExecutor。",
     "hints": [
       "工作窃取为什么不从队尾窃取？",
       "ForkJoinPool 的 join() 和普通的线程阻塞有何不同？"
@@ -567,27 +332,9 @@
     "category": "concurrency",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "CompletableFuture 的核心方法和异步编排能力有哪些？",
-    "content": "请介绍 CompletableFuture 常用 API 分类（创建、转换、组合、异常处理）以及异步回调机制。",
-    "answer": "CompletableFuture 实现了 CompletionStage 和 Future，提供了丰富的异步编排 API。分为创建（supplyAsync/runAsync）、转换（thenApply/thenCompose）、消费（thenAccept/thenRun）、组合（thenCombine/allOf/anyOf）、异常处理（exceptionally/handle/whenComplete）等。\n\n解析：1）创建——supplyAsync(Supplier) 有返回值、runAsync(Runnable) 无返回值，可指定 Executor。2）转换——thenApply（同步转换）、thenApplyAsync（异步执行转换函数）、thenCompose（用于 flatMap 场景，两个 CompletableFuture 串联）。3）组合——thenCombine（合并两个任务的结果）、allOf（等待所有任务完成）、anyOf（任意一个任务完成即返回）。4）消费——thenAccept（消费结果，无返回值）、thenRun（执行 Runnable）。5）异常处理——exceptionally（类似 catch，返回替代值）、handle（类似 finally，可处理结果或异常）、whenComplete（类似 finally，不改变结果）。6）触发——get()/join() 阻塞获取，get(timeout) 超时获取，complete(T) 主动完成。\n\n扩展延伸：1）CompletableFuture 默认使用 ForkJoinPool.commonPool()，IO 密集型任务务必指定自定义线程池，避免 commonPool 被阻塞。2）thenApply 和 thenCompose 的区别：thenApply 的返回值会包装到 CompletableFuture 中（Future<Future<T>>），而 thenCompose 直接将内部的 CompletableFuture 展开，类似 flatMap。3）超时处理 —— JDK 9+ 的 orTimeout(timeout, unit) 和 completeOnTimeout(value, timeout, unit) 可用于设置超时兜底。4）不建议在回调中做重量级操作，否则会阻塞 ForkJoinPool 的工作线程。",
-    "hints": [
-      "thenApply 和 thenCompose 的返回值有何区别？",
-      "CompletableFuture 默认使用哪个线程池？为什么 IO 密集型任务需要自定义线程池？"
-    ],
-    "tags": [
-      "CompletableFuture",
-      "异步",
-      "Future",
-      "回调"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "ThreadLocal 的实现原理和内存泄漏问题是什么？",
     "content": "请解释 ThreadLocal 的数据结构、get/set 流程，以及为何在 ThreadLocal 使用中可能发生内存泄漏。",
-    "answer": "每个 Thread 对象内部维护一个 ThreadLocalMap（Entry 数组）。ThreadLocal 作为弱引用 Key，值（Value）存储在 Entry 中。内存泄漏的原因是 Entry 的 Key 是弱引用（GC 后变为 null），但 Value 存在强引用链路无法被回收。\n\n解析：1）数据结构——每个 Thread 拥有一个 threadLocals 字段（ThreadLocalMap 类型）。ThreadLocalMap 用 Entry 数组存储，Entry 继承自 WeakReference<ThreadLocal>，Key 是 ThreadLocal 实例（弱引用），Value 是实际存储的对象。2）set 流程——Thread.currentThread().threadLocals → 根据 ThreadLocal 的 hash 值定位数组索引 → 线性探测解决哈希冲突 → 存入或覆盖。3）get 流程——Thread.currentThread().threadLocals → 通过 hash 找到 Entry。4）内存泄漏原理——ThreadLocal 被 GC 回收后，Entry 的 Key 变为 null（弱引用特性），但 Entry 的 Value 仍然被强引用（Entry → Value → Thread → JVM Root）。只有当 Thread 结束时才会清理整个 ThreadLocalMap。对于线程池中的线程（线程不会被销毁），这些 null-key 的 Entry 永远不会被回收，导致内存泄漏。\n\n扩展延伸：1）最佳实践——每次用完 ThreadLocal 后调用 remove() 方法清理，尤其是线程池场景。Ali Java 规约也强制要求。2）InheritableThreadLocal——允许子线程继承父线程的 ThreadLocal 值，在创建子线程时复制。适用于 traceId 等上下文传递场景。但注意线程池中复用线程不会重新继承，需要用 TransmittableThreadLocal（阿里开源）解决。3）JDK 改进——ThreadLocalMap 的 get/set 操作会主动清理部分过期的 Entry（key 为 null 的槽位），但不能保证完全清理。",
+    "answer": "答案：每个 Thread 对象内部维护一个 ThreadLocalMap（Entry 数组）。ThreadLocal 作为弱引用 Key，值（Value）存储在 Entry 中。内存泄漏的原因是 Entry 的 Key 是弱引用（GC 后变为 null），但 Value 存在强引用链路无法被回收。\n\n解析：1）数据结构——每个 Thread 拥有一个 threadLocals 字段（ThreadLocalMap 类型）。ThreadLocalMap 用 Entry 数组存储，Entry 继承自 WeakReference<ThreadLocal>，Key 是 ThreadLocal 实例（弱引用），Value 是实际存储的对象。2）set 流程——Thread.currentThread().threadLocals → 根据 ThreadLocal 的 hash 值定位数组索引 → 线性探测解决哈希冲突 → 存入或覆盖。3）get 流程——Thread.currentThread().threadLocals → 通过 hash 找到 Entry。4）内存泄漏原理——ThreadLocal 被 GC 回收后，Entry 的 Key 变为 null（弱引用特性），但 Entry 的 Value 仍然被强引用（Entry → Value → Thread → JVM Root）。只有当 Thread 结束时才会清理整个 ThreadLocalMap。对于线程池中的线程（线程不会被销毁），这些 null-key 的 Entry 永远不会被回收，导致内存泄漏。\n\n扩展延伸：1）最佳实践——每次用完 ThreadLocal 后调用 remove() 方法清理，尤其是线程池场景。Ali Java 规约也强制要求。2）InheritableThreadLocal——允许子线程继承父线程的 ThreadLocal 值，在创建子线程时复制。适用于 traceId 等上下文传递场景。但注意线程池中复用线程不会重新继承，需要用 TransmittableThreadLocal（阿里开源）解决。3）JDK 改进——ThreadLocalMap 的 get/set 操作会主动清理部分过期的 Entry（key 为 null 的槽位），但不能保证完全清理。",
     "hints": [
       "为什么 ThreadLocalMap 的 Key 要设计为弱引用而不是强引用？",
       "在线程池中使用 ThreadLocal 有什么特殊风险？"
@@ -605,7 +352,7 @@
     "type": "short_answer",
     "title": "CountDownLatch 和 CyclicBarrier 的区别是什么？",
     "content": "请比较 CountDownLatch 和 CyclicBarrier 在使用场景、复用机制和内部实现上的区别。",
-    "answer": "CountDownLatch 是「门闩」——一个或多个线程等待其他线程完成操作。不可复用。CyclicBarrier 是「栅栏」——多个线程相互等待至同一个屏障点，可复用（reset）。CountDownLatch 基于 AQS 共享锁，CyclicBarrier 基于 ReentrantLock + Condition。\n\n解析：1）CountDownLatch 使用场景——主线程等待多个子任务加载完成（await + countDown）。典型例子：主线程等待所有服务启动完毕后再处理请求。计数器归零后不可重置。2）CyclicBarrier 使用场景——多个线程到达屏障后继续执行。典型例子：并行计算中每个线程计算一部分数据，全部计算完毕后合并结果。支持 barrierAction（到达屏障时优先执行的回调）。3）内部实现——CountDownLatch：使用 AQS 的共享锁模式，state 初始值为 N，每次 countDown 将 state-1，await 在 state>0 时阻塞。state=0 时释放所有等待线程。CyclicBarrier：使用 ReentrantLock 和 Condition（trip）实现，每次 await 使 parties-1（计数器-1），如果计数器未归零则通过 trip.await() 挂起线程。计数器归零时通过 trip.signalAll() 唤醒所有线程，并生成新的 Generation。\n\n扩展延伸：1）Semaphore——信号量，控制同时访问资源的线程数。与 CountDownLatch 不同，Semaphore 的许可证可以归还（release），不要求状态达到 0。2）Phaser——JDK 7 引入的灵活屏障，可以动态注册/注销参与者，支持分层结构，功能上可替代 CountDownLatch 和 CyclicBarrier。3）Exchanger——两个线程交换数据的屏障点。",
+    "answer": "答案：CountDownLatch 是「门闩」——一个或多个线程等待其他线程完成操作。不可复用。CyclicBarrier 是「栅栏」——多个线程相互等待至同一个屏障点，可复用（reset）。CountDownLatch 基于 AQS 共享锁，CyclicBarrier 基于 ReentrantLock + Condition。\n\n解析：1）CountDownLatch 使用场景——主线程等待多个子任务加载完成（await + countDown）。典型例子：主线程等待所有服务启动完毕后再处理请求。计数器归零后不可重置。2）CyclicBarrier 使用场景——多个线程到达屏障后继续执行。典型例子：并行计算中每个线程计算一部分数据，全部计算完毕后合并结果。支持 barrierAction（到达屏障时优先执行的回调）。3）内部实现——CountDownLatch：使用 AQS 的共享锁模式，state 初始值为 N，每次 countDown 将 state-1，await 在 state>0 时阻塞。state=0 时释放所有等待线程。CyclicBarrier：使用 ReentrantLock 和 Condition（trip）实现，每次 await 使 parties-1（计数器-1），如果计数器未归零则通过 trip.await() 挂起线程。计数器归零时通过 trip.signalAll() 唤醒所有线程，并生成新的 Generation。\n\n扩展延伸：1）Semaphore——信号量，控制同时访问资源的线程数。与 CountDownLatch 不同，Semaphore 的许可证可以归还（release），不要求状态达到 0。2）Phaser——JDK 7 引入的灵活屏障，可以动态注册/注销参与者，支持分层结构，功能上可替代 CountDownLatch 和 CyclicBarrier。3）Exchanger——两个线程交换数据的屏障点。",
     "hints": [
       "CountDownLatch 为什么不能复用？从 AQS 角度解释。",
       "CyclicBarrier 的 broken barrier 状态是什么意思？什么情况下会进入该状态？"
@@ -623,7 +370,7 @@
     "type": "short_answer",
     "title": "Java 中线程的状态有哪些？状态之间如何转换？",
     "content": "请列举 Java 线程的 6 种状态（Thread.State 枚举），并说明状态转换的条件。",
-    "answer": "Java 线程有 6 种状态：NEW（新建）、RUNNABLE（可运行，含运行+就绪）、BLOCKED（阻塞，等待锁）、WAITING（等待，无限期等待）、TIMED_WAITING（超时等待）、TERMINATED（终止）。\n\n解析：1）NEW——线程被创建但尚未启动（start() 未被调用）。2）RUNNABLE——线程正在 JVM 中执行（可能正在运行也可能在等待操作系统调度，Java 不区分就绪和运行）。包括了传统 OS 中的 Running + Ready 状态。3）BLOCKED——线程在尝试获取锁时，锁已被其他线程持有。进入 synchronized 代码块/方法时发生。BLOCKED 的线程在锁释放后自动回到 RUNNABLE。4）WAITING——线程进入等待状态，需要其他线程显式唤醒。调用 Object.wait()（无超时）、Thread.join()（无超时）、LockSupport.park() 后进入。等待 notify/notifyAll 或 unpark 来唤醒。5）TIMED_WAITING——带超时时间的等待。调用 Thread.sleep(time)、Object.wait(timeout)、Thread.join(timeout)、LockSupport.parkNanos/ parkUntil 后进入。超时后自动回到 RUNNABLE。6）TERMINATED——线程已完成执行（run() 方法正常返回或抛出异常）。\n\n扩展延伸：1）BLOCKED vs WAITING——BLOCKED 是竞争 synchronized 锁时的状态，不需要手动唤醒；WAITING 是需要被显式唤醒的状态（如 wait/notify 或 Condition.await/signal）。2）线程转储分析（jstack）常用这些状态来诊断死锁和线程阻塞问题。死锁的典型特征：两个以上线程相互持有对方需要的锁，都在 BLOCKED 状态等待。",
+    "answer": "答案：Java 线程有 6 种状态：NEW（新建）、RUNNABLE（可运行，含运行+就绪）、BLOCKED（阻塞，等待锁）、WAITING（等待，无限期等待）、TIMED_WAITING（超时等待）、TERMINATED（终止）。\n\n解析：1）NEW——线程被创建但尚未启动（start() 未被调用）。2）RUNNABLE——线程正在 JVM 中执行（可能正在运行也可能在等待操作系统调度，Java 不区分就绪和运行）。包括了传统 OS 中的 Running + Ready 状态。3）BLOCKED——线程在尝试获取锁时，锁已被其他线程持有。进入 synchronized 代码块/方法时发生。BLOCKED 的线程在锁释放后自动回到 RUNNABLE。4）WAITING——线程进入等待状态，需要其他线程显式唤醒。调用 Object.wait()（无超时）、Thread.join()（无超时）、LockSupport.park() 后进入。等待 notify/notifyAll 或 unpark 来唤醒。5）TIMED_WAITING——带超时时间的等待。调用 Thread.sleep(time)、Object.wait(timeout)、Thread.join(timeout)、LockSupport.parkNanos/ parkUntil 后进入。超时后自动回到 RUNNABLE。6）TERMINATED——线程已完成执行（run() 方法正常返回或抛出异常）。\n\n扩展延伸：1）BLOCKED vs WAITING——BLOCKED 是竞争 synchronized 锁时的状态，不需要手动唤醒；WAITING 是需要被显式唤醒的状态（如 wait/notify 或 Condition.await/signal）。2）线程转储分析（jstack）常用这些状态来诊断死锁和线程阻塞问题。死锁的典型特征：两个以上线程相互持有对方需要的锁，都在 BLOCKED 状态等待。",
     "hints": [
       "BLOCKED 和 WAITING 状态的根本区别是什么？",
       "调用 Thread.sleep(100) 后线程进入什么状态？"
@@ -637,66 +384,11 @@
   },
   {
     "category": "concurrency",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Java 死锁产生的四个必要条件是什么？如何预防和检测？",
-    "content": "请解释死锁的四个必要条件（Coffman 条件），以及预防、避免和检测死锁的方法。",
-    "answer": "死锁产生的四个必要条件：互斥（Mutual Exclusion）、持有并等待（Hold and Wait）、不可抢占（No Preemption）、循环等待（Circular Wait）。破坏任意一个条件即可预防死锁。\n\n解析：1）互斥——资源至少有一个不能被共享，同一时间只能由一个线程使用。这个条件通常是必要的，不可能破坏（锁本身就是互斥的）。2）持有并等待——线程持有一个资源的同时等待另一个资源。破坏方式：要求线程一次性获取所有资源（全有或全无分配）。3）不可抢占——线程持有的资源不能被其他线程强行夺取。破坏方式：当线程获取不到下一个资源时释放已持有的资源。4）循环等待——两个以上线程形成等待环路。破坏方式：对资源编号排序，每个线程按固定顺序获取锁（有序加锁）。5）检测方法——jstack 可直接检测死锁（会输出 \"Found one Java-level deadlock\"）。也可以通过 JMX 的 ThreadMXBean.findMonitorDeadlockedThreads() 编程检测。6）避免方法——锁排序（按固定顺序获取锁）、锁超时（tryLock 设置超时）、使用并发工具类替代手动加锁。\n\n扩展延伸：1）活锁（Livelock）——线程没有阻塞但一直在重复做同样的事情（例如两个线程互相谦让释放锁又重试）。与死锁不同，线程在活跃地执行但无进展。2）锁饥饿（Starvation）——低优先级的线程始终得不到执行机会。通过公平锁（如 ReentrantLock(true)）可以缓解。",
-    "hints": [
-      "如何通过锁排序来预防死锁？",
-      "死锁和活锁的区别是什么？"
-    ],
-    "tags": [
-      "死锁",
-      "互斥",
-      "循环等待",
-      "jstack"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "ReadWriteLock 和 StampedLock 的区别是什么？",
-    "content": "请比较 ReentrantReadWriteLock 和 StampedLock 的实现机制、锁模式特点和性能差异。",
-    "answer": "ReentrantReadWriteLock 分读锁和写锁，读读不互斥、读写/写写互斥。StampedLock 增加了乐观读模式，在读多写少场景下性能更优，但不可重入且不支持 Condition。\n\n解析：1）ReentrantReadWriteLock 实现——基于 AQS 实现，用 state 的高 16 位表示读锁计数，低 16 位表示写锁计数。读锁是共享锁，写锁是独占锁。支持可重入和公平/非公平选择。2）StampedLock 的三种模式——写锁（writeLock）：独占锁，返回一个 stamp；读锁（readLock）：共享锁，返回一个 stamp；乐观读（tryOptimisticRead）：无锁操作，不阻塞写线程，返回 stamp 后需 validate() 确认数据未被修改。如果 validate() 失败，可以升级为读锁再重读。3）性能差异——StampedLock 的乐观读完全无锁，在 JDK 8 中性能显著优于 ReadWriteLock。但它不可重入（重新进入会导致死锁）且不支持 Condition。4）Stamp 的作用——每个加锁操作返回一个 long 类型的 stamp（票据），解锁时需要传入同样的 stamp。stamp 值由锁的内部状态和线程信息计算得出。\n\n扩展延伸：1）StampedLock 的使用模板——先 tryOptimisticRead → 读数据 → validate。如果 validate 返回 false，升级为 readLock 或直接 retryRead。如果写操作非常频繁，乐观读大部分会 validate 失败，退化为读锁后性能反而不如 ReadWriteLock。2）StampedLock 的陷阱——不支持重入，不支持 Condition，不可中断的锁方法可能导致 CPU 100%。建议在完全确认场景适合时再使用。JDK 9+ 对 StampedLock 添加了锁转换方法（tryConvertToWriteLock 等）。",
-    "hints": [
-      "StampedLock 的乐观读为什么比 ReadWriteLock 的读锁快？",
-      "什么场景下 StampedLock 的乐观读收益最大？什么场景下反而不如 ReadWriteLock？"
-    ],
-    "tags": [
-      "ReadWriteLock",
-      "StampedLock",
-      "乐观读",
-      "锁性能"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Java 中的伪共享（False Sharing）问题是什么？如何解决？",
-    "content": "请解释缓存行（Cache Line）导致的伪共享问题、检测方法和解决方案。",
-    "answer": "伪共享（False Sharing）指多个线程同时修改同一缓存行中的不同变量，导致缓存行无效和频繁的缓存一致性同步，即使这些变量在逻辑上无关。解决方式包括缓存行填充和 @Contended 注解。\n\n解析：1）缓存行基础——CPU 缓存以缓存行为单位（x86 通常 64 字节）。当 CPU 加载一个变量时，会同时加载其相邻的 64 字节数据到缓存行。MESI 协议保证缓存一致性：当某个 CPU 写入自己的缓存行时，其他 CPU 中的相同缓存行全部失效。2）伪共享的危害——假设两个 long 类型变量 A 和 B 位于同一缓存行，两个 CPU 核分别频繁修改 A 和 B。每次 A 变更都会导致 B 所在缓存行在其他 CPU 上失效，即使 B 根本没被修改。这造成了大量的缓存未命中（cache miss）和总线通信。3）检测方法——Linux perf 的 cache-miss 事件；Intel VTune 的 False Sharing 分析；JFR（Java Flight Recorder）的事件分析。性能特征：CPU 利用率高但实际指令吞吐量低。4）解决方案——缓存行填充：JDK 8 之前手动在字段前后填充 64 字节的 padding（如 long p1-p7）。@Contended 注解：JDK 8+ 提供 jdk.internal.vm.annotation.Contended（需开启 -XX：-RestrictContended），JVM 自动填充到独立缓存行。\n\n扩展延伸：1）JDK 中伪共享优化的经典案例——Disruptor 框架的 RingBuffer 使用缓存行填充来避免 Sequence 变量的伪共享。LongAdder 的 Cell 数组也用 @Contended 注解避免伪共享。2）不是所有场景都需要优化伪共享。仅在高并发、高频率访问热点的场景下才考虑。3）Java 对象头对齐：JVM 默认启用对象指针压缩（-XX：+UseCompressedOops），对象按 8 字节对齐。",
-    "hints": [
-      "缓存行大小为 64 字节，如果一个缓存行中有 4 个 int 变量，修改其中一个为什么会导致其他变量的缓存失效？",
-      "为什么 Disruptor 框架要特别关注伪共享问题？"
-    ],
-    "tags": [
-      "伪共享",
-      "缓存行",
-      "MESI",
-      "@Contended",
-      "性能优化"
-    ]
-  },
-  {
-    "category": "concurrency",
     "difficulty": "medium",
     "type": "short_answer",
     "title": "Java 中如何正确停止线程？interrupt 机制的原理是什么？",
     "content": "请解释线程中断机制（Interruption），以及 stop()/interrupt()/标志位的区别。",
-    "answer": "正确的线程停止方式是使用 interrupt() 方法设置中断标志，线程检查中断状态后自行停止。不推荐 Thread.stop()（强制终止导致数据不一致）也不推荐使用 volatile 标志位（无法处理阻塞中的 IO）。\n\n解析：1）interrupt 机制——调用线程的 interrupt() 方法设置该线程的中断标志位（interrupt flag）。线程可以通过 isInterrupted() 或 interrupted()（静态方法，会清除标志位）检查自己是否被中断。2）响应中断——线程在以下情况下会抛出 InterruptedException 并清除中断标志：Object.wait()、Thread.sleep()、Thread.join()、BlockingQueue.put()/take()、Lock.lockInterruptibly() 等。捕获 InterruptedException 后的最佳实践：直接抛出或重新设置中断标志（Thread.currentThread().interrupt()）。3）为什么不用 stop()——Thread.stop() 强制终止线程时不会释放锁的正确性保证，可能导致被保护的对象处于不一致状态。该方法已被标记为 @Deprecated。4）为什么不用 volatile 标志——当线程正在执行阻塞操作（如 sleep、wait）时，无法检查标志位。interrupt() 可以中断这些阻塞操作（抛出 InterruptedException）。5）最佳实践——在 Runnable 或 Callable 中循环检查 isInterrupted()，当检测到中断时清理资源并退出。对于阻塞调用，捕获 InterruptedException 后设置中断标志。",
+    "answer": "答案：正确的线程停止方式是使用 interrupt() 方法设置中断标志，线程检查中断状态后自行停止。不推荐 Thread.stop()（强制终止导致数据不一致）也不推荐使用 volatile 标志位（无法处理阻塞中的 IO）。\n\n解析：1）interrupt 机制——调用线程的 interrupt() 方法设置该线程的中断标志位（interrupt flag）。线程可以通过 isInterrupted() 或 interrupted()（静态方法，会清除标志位）检查自己是否被中断。2）响应中断——线程在以下情况下会抛出 InterruptedException 并清除中断标志：Object.wait()、Thread.sleep()、Thread.join()、BlockingQueue.put()/take()、Lock.lockInterruptibly() 等。捕获 InterruptedException 后的最佳实践：直接抛出或重新设置中断标志（Thread.currentThread().interrupt()）。3）为什么不用 stop()——Thread.stop() 强制终止线程时不会释放锁的正确性保证，可能导致被保护的对象处于不一致状态。该方法已被标记为 @Deprecated。4）为什么不用 volatile 标志——当线程正在执行阻塞操作（如 sleep、wait）时，无法检查标志位。interrupt() 可以中断这些阻塞操作（抛出 InterruptedException）。5）最佳实践——在 Runnable 或 Callable 中循环检查 isInterrupted()，当检测到中断时清理资源并退出。对于阻塞调用，捕获 InterruptedException 后设置中断标志。",
     "hints": [
       "捕获 InterruptedException 后应该做什么？为什么？",
       "interrupt() 如何中断正在 sleep 的线程？底层机制是什么？"
@@ -714,7 +406,7 @@
     "type": "short_answer",
     "title": "Semaphore 信号量的实现原理和限流应用是什么？",
     "content": "请解释 Semaphore 的 AQS 实现、公平/非公平模式和典型应用场景。",
-    "answer": "Semaphore（信号量）基于 AQS 共享锁实现，通过 state 表示可用许可数。acquire() 获取许可（state-1，不够时阻塞），release() 归还许可（state+1，唤醒等待线程）。常用于限流和控制并发数。\n\n解析：1）实现原理——Semaphore 内部继承 AQS 的 Sync 类（公平版 FairSync 和非公平版 NonfairSync）。tryAcquireShared()：非公平版直接 CAS 尝试 state-1（允许插队），公平版检查队列中是否有等待者。release()：CAS 将 state+1，然后 unparkSuccessor 唤醒等待线程。2）限流场景——控制最多 N 个线程同时访问某个资源。在获取资源前 acquire()，使用完毕后 release()。注意与线程池的区别：Semaphore 控制资源的并发访问数，线程池控制线程的创建和执行。3）其他应用——连接池限流（限制同时获取数据库连接的线程数）、文件并发访问控制。4）常用方法——acquire(int permits) 一次获取多个许可、tryAcquire() 非阻塞获取、tryAcquire(timeout) 超时获取、availablePermits() 查询当前许可数、drainPermits() 获取并清空剩余许可。\n\n扩展延伸：1）Semaphore 用于实现生产者-消费者模式时注意公平性，防止消费者线程饥饿。2）Semaphore 与互斥锁的区别：Semaphore 可以控制多个线程同时访问（计数不为 1），而互斥锁只允许一个。当 Semaphore(1) 时可以实现互斥锁的功能（称为「二元信号量」），但不具有拥有者概念，任何线程都可以 release。3）注意：release() 不应该放在 try 块的开始（如果业务代码抛异常，release() 会跳过，导致许可泄漏），应该放 finally 中。",
+    "answer": "答案：Semaphore（信号量）基于 AQS 共享锁实现，通过 state 表示可用许可数。acquire() 获取许可（state-1，不够时阻塞），release() 归还许可（state+1，唤醒等待线程）。常用于限流和控制并发数。\n\n解析：1）实现原理——Semaphore 内部继承 AQS 的 Sync 类（公平版 FairSync 和非公平版 NonfairSync）。tryAcquireShared()：非公平版直接 CAS 尝试 state-1（允许插队），公平版检查队列中是否有等待者。release()：CAS 将 state+1，然后 unparkSuccessor 唤醒等待线程。2）限流场景——控制最多 N 个线程同时访问某个资源。在获取资源前 acquire()，使用完毕后 release()。注意与线程池的区别：Semaphore 控制资源的并发访问数，线程池控制线程的创建和执行。3）其他应用——连接池限流（限制同时获取数据库连接的线程数）、文件并发访问控制。4）常用方法——acquire(int permits) 一次获取多个许可、tryAcquire() 非阻塞获取、tryAcquire(timeout) 超时获取、availablePermits() 查询当前许可数、drainPermits() 获取并清空剩余许可。\n\n扩展延伸：1）Semaphore 用于实现生产者-消费者模式时注意公平性，防止消费者线程饥饿。2）Semaphore 与互斥锁的区别：Semaphore 可以控制多个线程同时访问（计数不为 1），而互斥锁只允许一个。当 Semaphore(1) 时可以实现互斥锁的功能（称为「二元信号量」），但不具有拥有者概念，任何线程都可以 release。3）注意：release() 不应该放在 try 块的开始（如果业务代码抛异常，release() 会跳过，导致许可泄漏），应该放 finally 中。",
     "hints": [
       "Semaphore(1) 和 ReentrantLock 有何不同？",
       "Semaphore 的 release() 方法应该放在哪里（try 还是 finally）？"
@@ -732,7 +424,7 @@
     "type": "short_answer",
     "title": "Java 8 的 LongAdder 比 AtomicLong 快在哪里？",
     "content": "请解释 LongAdder 的设计思想和实现原理，以及在什么场景下应该用 LongAdder 替代 AtomicLong。",
-    "answer": "LongAdder 将单个热点变量分散到一个 Cell 数组中，每个线程操作自己的 Cell，最后 sum() 时汇总。通过空间换时间，在高竞争场景下比 AtomicLong 的 CAS 自旋性能更好。\n\n解析：1）LongAdder 的核心思想——AtomicLong 在高并发下所有线程 CAS 同一个变量，大量线程自旋等待，缓存行颠簸严重（伪共享）。LongAdder 借鉴了 JDK 7 ConcurrentHashMap 的分段思想，内部维护一个 Cell 数组（base + Cell[] cells），每个 Cell 是一个 volatile long 值，通过 @Contended 注解避免伪共享。2）操作流程——最初只操作 base 变量（类似 AtomicLong）。当 CAS 失败时（检测到竞争），初始化 Cell 数组并将竞争分散到不同 Cell 上。每个线程通过 hash 映射到对应的 Cell 进行 CAS 累加。sum() 时累加 base + 所有 Cell 值。3）性能对比——低竞争时 LongAdder ≈ AtomicLong（仅操作 base）。高竞争时 LongAdder 的优势明显（Cell 分散了竞争）。但 LongAdder 在低竞争下也有额外开销（hash 计算，Cell 数组维护）。4）AtomicLong 的适用场景——需要精确到个位数的全局计数（如 ID 生成、序列号）。LongAdder 的适用场景——高并发下的统计计数（如 QPS 统计、请求计数、日志量统计）。LongAdder 不提供 compareAndSet 方法。\n\n扩展延伸：1）LongAccumulator——LongAdder 的扩展，可以提供更灵活的累加函数（不限于加法）。2）Striped64——LongAdder 和 LongAccumulator 的父类，提供了核心的 Cell 数组管理和 hash 算法（@Contended 注解、probe 探针值）。3）使用建议：如果只需要 sum() 的最终值且高并发，用 LongAdder；如果需要精确且频繁 read 的场景（如监控面板每 1 秒读一次），保持 AtomicLong。",
+    "answer": "答案：LongAdder 将单个热点变量分散到一个 Cell 数组中，每个线程操作自己的 Cell，最后 sum() 时汇总。通过空间换时间，在高竞争场景下比 AtomicLong 的 CAS 自旋性能更好。\n\n解析：1）LongAdder 的核心思想——AtomicLong 在高并发下所有线程 CAS 同一个变量，大量线程自旋等待，缓存行颠簸严重（伪共享）。LongAdder 借鉴了 JDK 7 ConcurrentHashMap 的分段思想，内部维护一个 Cell 数组（base + Cell[] cells），每个 Cell 是一个 volatile long 值，通过 @Contended 注解避免伪共享。2）操作流程——最初只操作 base 变量（类似 AtomicLong）。当 CAS 失败时（检测到竞争），初始化 Cell 数组并将竞争分散到不同 Cell 上。每个线程通过 hash 映射到对应的 Cell 进行 CAS 累加。sum() 时累加 base + 所有 Cell 值。3）性能对比——低竞争时 LongAdder ≈ AtomicLong（仅操作 base）。高竞争时 LongAdder 的优势明显（Cell 分散了竞争）。但 LongAdder 在低竞争下也有额外开销（hash 计算，Cell 数组维护）。4）AtomicLong 的适用场景——需要精确到个位数的全局计数（如 ID 生成、序列号）。LongAdder 的适用场景——高并发下的统计计数（如 QPS 统计、请求计数、日志量统计）。LongAdder 不提供 compareAndSet 方法。\n\n扩展延伸：1）LongAccumulator——LongAdder 的扩展，可以提供更灵活的累加函数（不限于加法）。2）Striped64——LongAdder 和 LongAccumulator 的父类，提供了核心的 Cell 数组管理和 hash 算法（@Contended 注解、probe 探针值）。3）使用建议：如果只需要 sum() 的最终值且高并发，用 LongAdder；如果需要精确且频繁 read 的场景（如监控面板每 1 秒读一次），保持 AtomicLong。",
     "hints": [
       "LongAdder 如何在 Cell 数组上避免伪共享？",
       "为什么 LongAdder 不适合做 ID 生成器？"
@@ -747,29 +439,11 @@
   },
   {
     "category": "concurrency",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Java 中的 CopyOnWriteArrayList 适用于什么场景？",
-    "content": "请解释 CopyOnWriteArrayList 的实现原理、优缺点和适用场景。",
-    "answer": "CopyOnWriteArrayList 在写操作时复制一份新数组（写时复制），读操作不加锁。适用于读多写少、读操作远多于写操作的并发场景。\n\n解析：1）实现原理——内部维护一个 volatile Object[] array（用 volatile 保证数组引用的可见性）。add() 操作：获取 ReentrantLock 锁 → 复制原数组（长度+1）→ 在新数组末尾添加元素 → 将新数组赋值给 volatile 引用 → 释放锁。写操作期间，读操作仍然在原数组上进行，读写不冲突。2）迭代器弱一致性——COW 的迭代器（Iterator）基于创建时的数组快照，迭代过程中不会反映后来添加的修改，也不会抛 ConcurrentModificationException。3）优点——读操作完全无锁（get、contains、iterator），高性能；读写分离，读线程不受写线程影响。4）缺点——写操作开销大（每次写都复制整个数组，O(n) 复制的内存消耗和 GC 压力）；数据最终一致性而非强一致性（读线程可能读到旧数据）；不适合写频繁的场景（每次写都复制大量数据）。5）适用场景——读频率远远高于写频率的场景，如缓存配置数据、白名单/黑名单、监听器列表。频率比建议超过 99：1。\n\n扩展延伸：1）CopyOnWriteArraySet 基于 CopyOnWriteArrayList 实现（内部直接持有 COWAL）。2）COW 思想的本质——用不可变性（immutability）解决并发问题。通过对修改时复制（Copy-on-Write）来保证数据的线程安全。这种思想也用于 Linux 进程 fork、文件系统快照等。3）COW 不适用的场景：数据量大（数组过大复制成本高）、写多读少（频繁复制，GC 压力大）。",
-    "hints": [
-      "CopyOnWriteArrayList 的迭代器为什么不会抛 ConcurrentModificationException？",
-      "写操作期间读操作在读取什么数据？读线程会遇到脏数据吗？"
-    ],
-    "tags": [
-      "CopyOnWriteArrayList",
-      "写时复制",
-      "并发容器",
-      "弱一致性"
-    ]
-  },
-  {
-    "category": "concurrency",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "Java 虚拟线程（Virtual Threads）的实现原理是什么？",
     "content": "请解释 JDK 21 虚拟线程的架构、与平台线程的映射关系，以及它在 I/O 密集型场景下的优势。",
-    "answer": "虚拟线程（Virtual Threads，Project Loom）是 JDK 21 正式 GA 的轻量级线程，由 JVM 管理而非 OS 管理。通过 M:N 调度（多个虚拟线程映射到少量平台线程），在阻塞操作时自动挂起和恢复，实现极高的并发度。\n\n解析：1）架构——每个虚拟线程对应一个 continuation（可挂起/恢复的执行流），由 JVM 的用户态调度器（ForkJoinPool）调度到 carrier 线程（平台线程）上执行。虚拟线程栈存储在堆内存中（stack chunk）。2）挂起与恢复——当虚拟线程执行阻塞操作（如 Socket I/O、BlockingQueue.take()）时，JVM 会捕获其执行状态（stack chunk 中的帧），挂起该虚拟线程，将 carrier 线程腾出来执行其他虚拟线程。I/O 完成后，调度器将虚拟线程的 continuation 恢复到某个 carrier 线程上继续执行。3）M:N 调度——M 个虚拟线程调度到 N 个平台线程（carrier 线程）上。默认 carrier 线程数为 CPU 核数。4）优势——极低的创建成本（微秒级 vs 平台线程的毫秒级）；巨大的并发度（百万级虚拟线程）；代码简单（无需写异步回调，用同步代码即可）。5）局限——不适用于 CPU 密集型任务（虚拟线程不会比平台线程快）；不支持 synchronized 的 pinning 现象（synchronized 块中执行阻塞操作时虚拟线程会被 pinned 到 carrier 线程上，不会挂起）；需要同时更新相关库（如 Netty、JDBC 驱动）以支持虚拟线程。\n\n扩展延伸：1）pinning 问题：JVM 会将 synchronized 块执行期间被阻塞的虚拟线程 pinned 到 carrier 线程上。解决方法是用 ReentrantLock 替代 synchronized。2）JDK 21 中 Executors.newVirtualThreadPerTaskExecutor() 可以创建为每个任务创建单独虚拟线程的线程池。3）虚拟线程的调试——jcmd 支持虚拟线程的 dump（jcmd <pid> Thread.vthread_print）。通过 jfr 也可以监控虚拟线程的挂起/恢复事件。",
+    "answer": "答案：虚拟线程（Virtual Threads，Project Loom）是 JDK 21 正式 GA 的轻量级线程，由 JVM 管理而非 OS 管理。通过 M:N 调度（多个虚拟线程映射到少量平台线程），在阻塞操作时自动挂起和恢复，实现极高的并发度。\n\n解析：1）架构——每个虚拟线程对应一个 continuation（可挂起/恢复的执行流），由 JVM 的用户态调度器（ForkJoinPool）调度到 carrier 线程（平台线程）上执行。虚拟线程栈存储在堆内存中（stack chunk）。2）挂起与恢复——当虚拟线程执行阻塞操作（如 Socket I/O、BlockingQueue.take()）时，JVM 会捕获其执行状态（stack chunk 中的帧），挂起该虚拟线程，将 carrier 线程腾出来执行其他虚拟线程。I/O 完成后，调度器将虚拟线程的 continuation 恢复到某个 carrier 线程上继续执行。3）M:N 调度——M 个虚拟线程调度到 N 个平台线程（carrier 线程）上。默认 carrier 线程数为 CPU 核数。4）优势——极低的创建成本（微秒级 vs 平台线程的毫秒级）；巨大的并发度（百万级虚拟线程）；代码简单（无需写异步回调，用同步代码即可）。5）局限——不适用于 CPU 密集型任务（虚拟线程不会比平台线程快）；不支持 synchronized 的 pinning 现象（synchronized 块中执行阻塞操作时虚拟线程会被 pinned 到 carrier 线程上，不会挂起）；需要同时更新相关库（如 Netty、JDBC 驱动）以支持虚拟线程。\n\n扩展延伸：1）pinning 问题：JVM 会将 synchronized 块执行期间被阻塞的虚拟线程 pinned 到 carrier 线程上。解决方法是用 ReentrantLock 替代 synchronized。2）JDK 21 中 Executors.newVirtualThreadPerTaskExecutor() 可以创建为每个任务创建单独虚拟线程的线程池。3）虚拟线程的调试——jcmd 支持虚拟线程的 dump（jcmd <pid> Thread.vthread_print）。通过 jfr 也可以监控虚拟线程的挂起/恢复事件。",
     "hints": [
       "虚拟线程被挂起时，其执行状态（栈帧）存储在哪里？",
       "为什么 synchronized 会导致虚拟线程 pinned？如何避免？"
@@ -788,7 +462,7 @@
     "type": "short_answer",
     "title": "线程池的优雅关闭流程是怎样的？shutdown 和 shutdownNow 的区别？",
     "content": "请说明关闭线程池的正确步骤，以及 shutdown()、shutdownNow()、awaitTermination() 的区别。",
-    "answer": "优雅关闭线程池的三步流程：shutdown() → awaitTermination(timeout) → shutdownNow()（如果超时未关闭）。shutdown 拒绝新任务但不中断正在执行的任务；shutdownNow 尝试中断正在执行的任务并返回队列中未执行的任务。\n\n解析：1）shutdown()——将线程池状态设为 SHUTDOWN，不再接收新任务。已提交的任务会继续执行完（包括队列中等待的任务）。不会中断正在执行的任务。2）shutdownNow()——将线程池状态设为 STOP。尝试中断正在执行的任务（通过 Thread.interrupt()）。返回等待队列中尚未执行的任务列表（List<Runnable>）。如果任务在中断后继续执行（不响应中断），shutdownNow 不能强制停止它。3）awaitTermination(timeout, unit)——阻塞等待线程池完全关闭，在超时时间内检查是否所有任务都执行完毕。通常在 shutdown() 后调用。4）最佳关闭流程——先调用 shutdown 停止接收新任务，然后用 awaitTermination 等待一段时间（如 60 秒），如果超时仍有未完成的任务，调用 shutdownNow 强制中断，再 awaitTermination 确认。对于 Spring 应用，可配置 destroy-method=\"shutdown\"。5）未关闭的后果——程序无法退出（非守护线程会阻止 JVM 退出）、任务泄漏、资源无法释放。\n\n扩展延伸：1）shutdownNow 能否终止正在执行的任务取决于任务本身是否响应中断。建议任务代码中检查 Thread.currentThread().isInterrupted() 并正确清理。2）ExecutorService 的 submit 方法返回的 Future 也可以通过 future.cancel(true) 来发送中断信号。3）阿里编程规约中强调：「线程资源必须通过线程池或自定义线程池提供，不允许在应用中自行显式创建线程」和「线程池不允许使用 Executors 去创建，而是通过 ThreadPoolExecutor 的方式」。",
+    "answer": "答案：优雅关闭线程池的三步流程：shutdown() → awaitTermination(timeout) → shutdownNow()（如果超时未关闭）。shutdown 拒绝新任务但不中断正在执行的任务；shutdownNow 尝试中断正在执行的任务并返回队列中未执行的任务。\n\n解析：1）shutdown()——将线程池状态设为 SHUTDOWN，不再接收新任务。已提交的任务会继续执行完（包括队列中等待的任务）。不会中断正在执行的任务。2）shutdownNow()——将线程池状态设为 STOP。尝试中断正在执行的任务（通过 Thread.interrupt()）。返回等待队列中尚未执行的任务列表（List<Runnable>）。如果任务在中断后继续执行（不响应中断），shutdownNow 不能强制停止它。3）awaitTermination(timeout, unit)——阻塞等待线程池完全关闭，在超时时间内检查是否所有任务都执行完毕。通常在 shutdown() 后调用。4）最佳关闭流程——先调用 shutdown 停止接收新任务，然后用 awaitTermination 等待一段时间（如 60 秒），如果超时仍有未完成的任务，调用 shutdownNow 强制中断，再 awaitTermination 确认。对于 Spring 应用，可配置 destroy-method=\"shutdown\"。5）未关闭的后果——程序无法退出（非守护线程会阻止 JVM 退出）、任务泄漏、资源无法释放。\n\n扩展延伸：1）shutdownNow 能否终止正在执行的任务取决于任务本身是否响应中断。建议任务代码中检查 Thread.currentThread().isInterrupted() 并正确清理。2）ExecutorService 的 submit 方法返回的 Future 也可以通过 future.cancel(true) 来发送中断信号。3）阿里编程规约中强调：「线程资源必须通过线程池或自定义线程池提供，不允许在应用中自行显式创建线程」和「线程池不允许使用 Executors 去创建，而是通过 ThreadPoolExecutor 的方式」。",
     "hints": [
       "shutdownNow 是否一定能终止正在执行的任务？为什么？",
       "如果 awaitTermination 返回 false，下一步应该怎么做？"
@@ -806,7 +480,7 @@
     "type": "short_answer",
     "title": "AQS 共享锁和独占锁的区别？CountDownLatch 是如何利用 AQS 实现的？",
     "content": "请解释 AQS 中独占模式（Exclusive）和共享模式（Shared）的区别，并以 CountDownLatch 为例说明共享模式的应用。",
-    "answer": "独占模式（Exclusive）一次只允许一个线程获取锁；共享模式（Shared）一次允许多个线程同时获取锁。CountDownLatch 利用 AQS 共享模式实现——state 初始为 N，countDown() 释放共享锁（state-1），await() 获取共享锁（state>0 时阻塞）。\n\n解析：1）AQS 独占模式——tryAcquire 返回 boolean，一次只有一个线程可以成功。addWaiter 添加 Node.EXCLUSIVE 节点到等待队列。典型应用：ReentrantLock。2）AQS 共享模式——tryAcquireShared 返回 int（负值表示失败，0 表示成功但后续获取者会失败，正值表示成功且后续获取者也可能成功）。addWaiter 添加 Node.SHARED 节点。释放时传播唤醒所有的共享节点。3）CountDownLatch 实现——构造函数 new CountDownLatch(N) 将 AQS state 设为 N。await() 调用 acquireSharedInterruptibly(1)，内部调用 tryAcquireShared(1)：如果 state=0 返回 1（不需要等待），如果 state>0 返回 -1（加入队列等待）。countDown() 调用 releaseShared(1)，内部 CAS 将 state-1，当 state=0 时 doReleaseShared 唤醒所有等待的线程。4）传播机制——共享锁释放时，在队列中向后传播（setHeadAndPropagate），确保等待的共享节点都被唤醒。这是共享锁和独占锁的关键区别：独占锁只唤醒后继的一个节点，共享锁唤醒队列中所有连续的共享节点。\n\n扩展延伸：1）AQS 的设计思想——模板方法模式。子类需要实现 tryAcquire/tryRelease（独占）或 tryAcquireShared/tryReleaseShared（共享），AQS 负责队列管理、阻塞/唤醒等。2）Semaphore 也是共享模式的典型应用，tryAcquireShared 中对 state 减 permits。3）AQS 提供了 ConditionObject 用于条件等待/通知机制（内部维护条件等待队列）。",
+    "answer": "答案：独占模式（Exclusive）一次只允许一个线程获取锁；共享模式（Shared）一次允许多个线程同时获取锁。CountDownLatch 利用 AQS 共享模式实现——state 初始为 N，countDown() 释放共享锁（state-1），await() 获取共享锁（state>0 时阻塞）。\n\n解析：1）AQS 独占模式——tryAcquire 返回 boolean，一次只有一个线程可以成功。addWaiter 添加 Node.EXCLUSIVE 节点到等待队列。典型应用：ReentrantLock。2）AQS 共享模式——tryAcquireShared 返回 int（负值表示失败，0 表示成功但后续获取者会失败，正值表示成功且后续获取者也可能成功）。addWaiter 添加 Node.SHARED 节点。释放时传播唤醒所有的共享节点。3）CountDownLatch 实现——构造函数 new CountDownLatch(N) 将 AQS state 设为 N。await() 调用 acquireSharedInterruptibly(1)，内部调用 tryAcquireShared(1)：如果 state=0 返回 1（不需要等待），如果 state>0 返回 -1（加入队列等待）。countDown() 调用 releaseShared(1)，内部 CAS 将 state-1，当 state=0 时 doReleaseShared 唤醒所有等待的线程。4）传播机制——共享锁释放时，在队列中向后传播（setHeadAndPropagate），确保等待的共享节点都被唤醒。这是共享锁和独占锁的关键区别：独占锁只唤醒后继的一个节点，共享锁唤醒队列中所有连续的共享节点。\n\n扩展延伸：1）AQS 的设计思想——模板方法模式。子类需要实现 tryAcquire/tryRelease（独占）或 tryAcquireShared/tryReleaseShared（共享），AQS 负责队列管理、阻塞/唤醒等。2）Semaphore 也是共享模式的典型应用，tryAcquireShared 中对 state 减 permits。3）AQS 提供了 ConditionObject 用于条件等待/通知机制（内部维护条件等待队列）。",
     "hints": [
       "共享锁释放时为什么要传播（propagate）唤醒？独占锁不传播的原因是什么？",
       "CountDownLatch 的 state 归零后，再次调用 await() 会怎样？"
@@ -823,28 +497,9 @@
     "category": "concurrency",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "Java 中 Condition 的 await/signal 实现原理是什么？",
-    "content": "请解释 Condition 与 Object.wait/notify 的区别，以及 Condition 基于 AQS 的内部实现。",
-    "answer": "Condition 将管程（Monitor）的 wait/notify 机制与显式 Lock 关联，一个 Lock 可以关联多个 Condition。Condition 内部维护一个条件等待队列（单向链表），await 将线程移入条件队列，signal 将条件队列头节点转移到 AQS 同步队列。\n\n解析：1）条件等待队列——每个 ConditionObject 内部维护一个 Node 类型的 firstWaiter 和 lastWaiter，形成一个 FIFO 单向链表。与 AQS 同步队列的双向链表不同，条件队列使用 nextWaiter 指针单向连接。2）await() 流程——将当前线程包装为 Node 加入条件队列尾部（无需 CAS，await 时当前线程已持有锁，不存在竞争）→ 完全释放锁（保存状态后 release 到 0）→ 挂起当前线程（LockSupport.park）。3）signal() 流程——检查当前线程是否持有锁（若不持有则抛出 IllegalMonitorStateException）→ 将条件队列的头节点（firstWaiter）移到 AQS 同步队列的尾部（通过 transferForSignal）→ 设置节点 waitStatus 为 SIGNAL。signalAll 循环转移所有节点。4）等待线程恢复——条件队列中的节点被转移到 AQS 同步队列后，它在同步队列中排队等待锁。当它成功获取锁后，从 await() 返回。整个过程是高效的——条件等待与同步队列分离。5）与 Object.wait/notify 的对比——Object 的 wait/notify 与 synchronized 绑定，一个锁只有一个等待集。Condition 支持一个 Lock 多个等待集（如 BoundedQueue 中的 notFull 和 notEmpty），更灵活。Condition 支持超时等待（awaitNanos）、不响应中断（awaitUninterruptibly）、截止时间等待（awaitUntil）。\n\n扩展延伸：1）Object.wait/notify 的线程在 wait 后也可能被虚假唤醒（spurious wakeup），Condition.await 也会有。因此 await 应该在循环中调用（while (!condition) { condition.await(); }）。2）AQS 的设计精妙之处在于条件队列和同步队列分离实现，既减少锁竞争（await 时完全释放锁），又实现了精细的条件等待。",
-    "hints": [
-      "Condition 的 await/signal 和 Object.wait/notify 在设计上的核心区别是什么？",
-      "条件队列的节点在 signal 后是如何转移到同步队列的？"
-    ],
-    "tags": [
-      "Condition",
-      "await",
-      "signal",
-      "AQS",
-      "条件队列"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "Java 内存模型（JMM）中的内存屏障有几种类型？各有什么作用？",
     "content": "请列举 JMM 的四种内存屏障指令（LoadLoad、StoreStore、LoadStore、StoreLoad）及其在并发中的作用。",
-    "answer": "JMM 定义了四种内存屏障：LoadLoad（保证 Load1 的读取先于 Load2 及后续读取）、StoreStore（保证 Store1 的写入对后续 Store2 可见）、LoadStore（保证 Load1 的读取先于 Store2 及后续写入）、StoreLoad（保证 Store1 的写入对后续 Load2 可见，最严格且开销最大）。\n\n解析：1）LoadLoad 屏障——指令：Load1；LoadLoad；Load2。确保 Load1 读取的数据在 Load2 及后续读取指令之前被读取。防止后续读操作重排序到 Load1 之前。2）StoreStore 屏障——指令：Store1；StoreStore；Store2。确保 Store1 的数据对其他处理器可见（刷入缓存），且先于 Store2 及后续写操作。防止 Store2 重排序到 Store1 之前。volatile 写之前插入 StoreStore。3）LoadStore 屏障——指令：Load1；LoadStore；Store2。确保 Load1 的读数据在 Store2 及后续写操作之前完成。防止写操作重排序到读操作之前。4）StoreLoad 屏障——指令：Store1；StoreLoad；Load2。确保 Store1 的数据对其他处理器可见，且先于 Load2 及后续读操作。开销最大（通常导致清空写缓冲区的操作）。volatile 写之后插入 StoreLoad（同时也具有 LoadLoad 的能力）。5）volatile 的内存屏障插入策略（JSR-133）——volatile 写前：普通写 → StoreStore → volatile 写 → StoreLoad → 后续 volatile 读。volatile 读后：volatile 读 → LoadLoad → 后续普通读；volatile 读 → LoadStore → 后续普通写。\n\n扩展延伸：1）x86 架构的内存模型（TSO）比 ARM/PowerPC 更强——x86 只有 StoreLoad 需要显式屏障指令（mfence/lfence/sfence），LoadLoad、LoadStore、StoreStore 在 x86 上由硬件保证。ARM 和 PowerPC 的内存模型更弱，需要显式的 dmb 指令。2）实际 JVM 实现中，JIT 编译器会根据目标平台特性选择性地插入内存屏障。不需要多强的保证就不插入。JMM 是最低保证，平台实现可以选择更强的保证。",
+    "answer": "答案：JMM 定义了四种内存屏障：LoadLoad（保证 Load1 的读取先于 Load2 及后续读取）、StoreStore（保证 Store1 的写入对后续 Store2 可见）、LoadStore（保证 Load1 的读取先于 Store2 及后续写入）、StoreLoad（保证 Store1 的写入对后续 Load2 可见，最严格且开销最大）。\n\n解析：1）LoadLoad 屏障——指令：Load1；LoadLoad；Load2。确保 Load1 读取的数据在 Load2 及后续读取指令之前被读取。防止后续读操作重排序到 Load1 之前。2）StoreStore 屏障——指令：Store1；StoreStore；Store2。确保 Store1 的数据对其他处理器可见（刷入缓存），且先于 Store2 及后续写操作。防止 Store2 重排序到 Store1 之前。volatile 写之前插入 StoreStore。3）LoadStore 屏障——指令：Load1；LoadStore；Store2。确保 Load1 的读数据在 Store2 及后续写操作之前完成。防止写操作重排序到读操作之前。4）StoreLoad 屏障——指令：Store1；StoreLoad；Load2。确保 Store1 的数据对其他处理器可见，且先于 Load2 及后续读操作。开销最大（通常导致清空写缓冲区的操作）。volatile 写之后插入 StoreLoad（同时也具有 LoadLoad 的能力）。5）volatile 的内存屏障插入策略（JSR-133）——volatile 写前：普通写 → StoreStore → volatile 写 → StoreLoad → 后续 volatile 读。volatile 读后：volatile 读 → LoadLoad → 后续普通读；volatile 读 → LoadStore → 后续普通写。\n\n扩展延伸：1）x86 架构的内存模型（TSO）比 ARM/PowerPC 更强——x86 只有 StoreLoad 需要显式屏障指令（mfence/lfence/sfence），LoadLoad、LoadStore、StoreStore 在 x86 上由硬件保证。ARM 和 PowerPC 的内存模型更弱，需要显式的 dmb 指令。2）实际 JVM 实现中，JIT 编译器会根据目标平台特性选择性地插入内存屏障。不需要多强的保证就不插入。JMM 是最低保证，平台实现可以选择更强的保证。",
     "hints": [
       "为什么 StoreLoad 屏障开销最大？在 x86 和 ARM 上分别对应什么指令？",
       "volatile 变量的写操作中，StoreStore 和 StoreLoad 屏障分别起什么作用？"
@@ -863,7 +518,7 @@
     "type": "short_answer",
     "title": "什么是锁消除和锁粗化？JIT 如何优化锁？",
     "content": "请解释 JIT 编译器的锁消除（Lock Elimination）和锁粗化（Lock Coarsening）优化，以及逃逸分析在这其中的作用。",
-    "answer": "锁消除（Lock Elimination）——通过逃逸分析，如果变量不会逃逸出线程，则消除其上的同步锁。锁粗化（Lock Coarsening）——将相邻的多个同步块合并为一个，减少锁获取/释放的开销。两者都是 JIT 编译器的自动优化。\n\n解析：1）锁消除原理——JIT 进行逃逸分析（Escape Analysis），判断对象是否只在当前线程内被访问。如果不会逃逸，则对应的 synchronized/lock 可以安全消除。例如在单个方法内部创建并使用的局部变量（如 StringBuffer/StringBuilder，虽然 StringBuffer 方法都是 synchronized，但在局部分配时 JIT 会消除锁）。2）锁消除的例子——public String concatStrings(String a, String b) { StringBuffer sb = new StringBuffer(); sb.append(a); sb.append(b); return sb.toString(); } 这里 sb 不会逃逸，JIT 消除 append 的 synchronized 锁。3）锁粗化原理——当 JIT 检测到同一个线程对同一个锁连续获取和释放时（如循环中的同步块），会将锁的范围扩大到整个循环外。例如：for (int i=0; i<100; i++) { synchronized(lock) { ... } } 优化为 synchronized(lock) { for (...) { ... } }。4）逃逸分析的额外收益——除了锁消除，还支持：标量替换（将对象分解为基本类型分配在栈上）、栈上分配（对象直接在栈上分配而非堆上，减少 GC 压力）。\n\n扩展延伸：1）-XX：+DoEscapeAnalysis 开启逃逸分析（JDK 8u 默认开启），-XX：+EliminateLocks 开启锁消除（默认开启），-XX：+EliminateAllocations 开启标量替换（默认开启）。2）锁消除和锁粗化是\"不要过度优化\"的例证——在单线程环境下用线程安全类（比如 StringBuffer vs StringBuilder），JIT 会消除锁，但源码的可读性和意图被损害了。单线程应该直接用 StringBuilder。3）逃逸分析只能分析当前 JIT 编译的作用域（通常是方法内联后的范围），跨方法的逃逸分析依赖于方法内联的效果。",
+    "answer": "答案：锁消除（Lock Elimination）——通过逃逸分析，如果变量不会逃逸出线程，则消除其上的同步锁。锁粗化（Lock Coarsening）——将相邻的多个同步块合并为一个，减少锁获取/释放的开销。两者都是 JIT 编译器的自动优化。\n\n解析：1）锁消除原理——JIT 进行逃逸分析（Escape Analysis），判断对象是否只在当前线程内被访问。如果不会逃逸，则对应的 synchronized/lock 可以安全消除。例如在单个方法内部创建并使用的局部变量（如 StringBuffer/StringBuilder，虽然 StringBuffer 方法都是 synchronized，但在局部分配时 JIT 会消除锁）。2）锁消除的例子——public String concatStrings(String a, String b) { StringBuffer sb = new StringBuffer(); sb.append(a); sb.append(b); return sb.toString(); } 这里 sb 不会逃逸，JIT 消除 append 的 synchronized 锁。3）锁粗化原理——当 JIT 检测到同一个线程对同一个锁连续获取和释放时（如循环中的同步块），会将锁的范围扩大到整个循环外。例如：for (int i=0; i<100; i++) { synchronized(lock) { ... } } 优化为 synchronized(lock) { for (...) { ... } }。4）逃逸分析的额外收益——除了锁消除，还支持：标量替换（将对象分解为基本类型分配在栈上）、栈上分配（对象直接在栈上分配而非堆上，减少 GC 压力）。\n\n扩展延伸：1）-XX：+DoEscapeAnalysis 开启逃逸分析（JDK 8u 默认开启），-XX：+EliminateLocks 开启锁消除（默认开启），-XX：+EliminateAllocations 开启标量替换（默认开启）。2）锁消除和锁粗化是\"不要过度优化\"的例证——在单线程环境下用线程安全类（比如 StringBuffer vs StringBuilder），JIT 会消除锁，但源码的可读性和意图被损害了。单线程应该直接用 StringBuilder。3）逃逸分析只能分析当前 JIT 编译的作用域（通常是方法内联后的范围），跨方法的逃逸分析依赖于方法内联的效果。",
     "hints": [
       "锁消除依赖什么分析技术？在什么条件下才会触发？",
       "锁粗化在什么场景下可能带来负面影响？"
@@ -882,7 +537,7 @@
     "type": "short_answer",
     "title": "Phaser 比 CyclicBarrier 和 CountDownLatch 强大在哪里？",
     "content": "请解释 Phaser 的 phase 概念、动态参与者注册、分层结构等高级特性。",
-    "answer": "Phaser 是可重用的同步屏障，支持动态增减参与者（register/bulkRegister）、多阶段同步（phase）、分层结构（父子 Phaser），可以视为 CountDownLatch + CyclicBarrier 的增强版。\n\n解析：1）Phaser 的核心概念——每个 Phaser 实例有多个 phase（阶段），从 0 开始递增。每个 phase 中有多个参与者（parties）。当所有参与者都 arriveAndAwaitAdvance() 后，当前 phase 结束，进入下一个 phase。2）动态参与者管理——使用 register() 或 bulkRegister(N) 注册新参与者。到达时可以调用 arrive()（不等待）或 arriveAndAwaitAdvance()（等待所有参与者）。也可以用 arriveAndDeregister() 取消注册。这使得线程可以动态地加入/退出同步。3）phaser 的 API——onAdvance() 回调（每个 phase 结束时执行，类似 CyclicBarrier 的 barrierAction）。如果 onAdvance 返回 true，Phaser 终止（可用于实现多阶段任务的结束条件）。4）分层 Phaser——父子结构用于减少对单个 Phaser 的竞争。子 Phaser 的参与者计数会累加到父 Phaser 上。通常用于 ForkJoinPool 这样的多层结构中。5）与 CountDownLatch 的对比：CountDownLatch 不可复用，Phaser 可复用且支持多阶段。与 CyclicBarrier 的对比：CyclicBarrier 参与者固定，Phaser 可动态变化。\n\n扩展延伸：1）典型使用场景——多阶段并行计算：第一阶段各线程加载数据（注册+ arriveAndAwaitAdvance）→ 第二阶段各线程处理数据 → 第三阶段各线程输出结果。2）Phaser 替代 CountDownLatch：创建 Phaser(1) 作为主线程自己注册，工作线程 register()，完成后 arrive()（deregister），主线程 arriveAndAwaitAdvance() 等待所有工作线程完成。3）Phaser 的 termination() 方法可以提前终止，之后的 arrive/await 立即返回负数。",
+    "answer": "答案：Phaser 是可重用的同步屏障，支持动态增减参与者（register/bulkRegister）、多阶段同步（phase）、分层结构（父子 Phaser），可以视为 CountDownLatch + CyclicBarrier 的增强版。\n\n解析：1）Phaser 的核心概念——每个 Phaser 实例有多个 phase（阶段），从 0 开始递增。每个 phase 中有多个参与者（parties）。当所有参与者都 arriveAndAwaitAdvance() 后，当前 phase 结束，进入下一个 phase。2）动态参与者管理——使用 register() 或 bulkRegister(N) 注册新参与者。到达时可以调用 arrive()（不等待）或 arriveAndAwaitAdvance()（等待所有参与者）。也可以用 arriveAndDeregister() 取消注册。这使得线程可以动态地加入/退出同步。3）phaser 的 API——onAdvance() 回调（每个 phase 结束时执行，类似 CyclicBarrier 的 barrierAction）。如果 onAdvance 返回 true，Phaser 终止（可用于实现多阶段任务的结束条件）。4）分层 Phaser——父子结构用于减少对单个 Phaser 的竞争。子 Phaser 的参与者计数会累加到父 Phaser 上。通常用于 ForkJoinPool 这样的多层结构中。5）与 CountDownLatch 的对比：CountDownLatch 不可复用，Phaser 可复用且支持多阶段。与 CyclicBarrier 的对比：CyclicBarrier 参与者固定，Phaser 可动态变化。\n\n扩展延伸：1）典型使用场景——多阶段并行计算：第一阶段各线程加载数据（注册+ arriveAndAwaitAdvance）→ 第二阶段各线程处理数据 → 第三阶段各线程输出结果。2）Phaser 替代 CountDownLatch：创建 Phaser(1) 作为主线程自己注册，工作线程 register()，完成后 arrive()（deregister），主线程 arriveAndAwaitAdvance() 等待所有工作线程完成。3）Phaser 的 termination() 方法可以提前终止，之后的 arrive/await 立即返回负数。",
     "hints": [
       "Phaser 如何支持线程在同步屏障中动态加入和退出？",
       "分层 Phaser 适用于什么场景？"
@@ -900,7 +555,7 @@
     "type": "short_answer",
     "title": "乐观锁和悲观锁的区别是什么？分别在什么场景下使用？",
     "content": "请比较乐观锁和悲观锁的设计思想、实现方式及适用场景。",
-    "answer": "悲观锁假设冲突一定会发生，操作前先加锁（synchronized、Lock）。乐观锁假设冲突很少发生，操作时不加锁，提交时检查冲突（CAS、版本号）。数据库层面的乐观锁通常使用版本号机制。\n\n解析：1）悲观锁——认为操作数据时一定会被其他线程干扰，所以先获取锁再操作。特点：阻塞安全（加锁失败就等待），并发度较低（串行执行临界区）。Java 中的实现：synchronized 关键字、ReentrantLock 等。DB 中的实现：SELECT ... FOR UPDATE。2）乐观锁——认为操作数据时不会被其他线程干扰，所以直接操作，最后再检查冲突。特点：非阻塞（操作失败一般重试），并发度高。Java 中的实现：AtomicInteger（CAS）、StampedLock 乐观读。DB 中的实现：version 字段 + UPDATE ... WHERE version = ?。3）CAS（Compare And Swap）——乐观锁的核心操作。Java 中 Unsafe.compareAndSwapInt 等提供 CPU 级别的原子 CAS 操作。ABA 问题可通过版本号解决。4）选型建议——写冲突频繁（写多读少）→ 悲观锁，避免 CAS 大量自旋浪费 CPU。写冲突极少（读多写少）→ 乐观锁，利用无锁操作提升吞吐。5）数据库层的选择——并发扣库存等高冲突场景用悲观锁（或 Redis 分布式锁），数据版本更新用乐观锁。\n\n扩展延伸：1）乐观锁在分布式系统中的应用——Etcd 的基于 revision 的 CAS 操作、ZooKeeper 的版本号检查、Git 的版本控制（每个提交的 hash 保证数据完整性）。2）乐观锁重试策略——失败后重试几次？退避时间？无限制重试可能造成活锁。通常设置最大重试次数（如 3 次）和指数退避。3）MySQL InnoDB 中的隐式锁与显式锁——MVCC 实现乐观并发控制，FOR UPDATE 实现悲观锁。",
+    "answer": "答案：悲观锁假设冲突一定会发生，操作前先加锁（synchronized、Lock）。乐观锁假设冲突很少发生，操作时不加锁，提交时检查冲突（CAS、版本号）。数据库层面的乐观锁通常使用版本号机制。\n\n解析：1）悲观锁——认为操作数据时一定会被其他线程干扰，所以先获取锁再操作。特点：阻塞安全（加锁失败就等待），并发度较低（串行执行临界区）。Java 中的实现：synchronized 关键字、ReentrantLock 等。DB 中的实现：SELECT ... FOR UPDATE。2）乐观锁——认为操作数据时不会被其他线程干扰，所以直接操作，最后再检查冲突。特点：非阻塞（操作失败一般重试），并发度高。Java 中的实现：AtomicInteger（CAS）、StampedLock 乐观读。DB 中的实现：version 字段 + UPDATE ... WHERE version = ?。3）CAS（Compare And Swap）——乐观锁的核心操作。Java 中 Unsafe.compareAndSwapInt 等提供 CPU 级别的原子 CAS 操作。ABA 问题可通过版本号解决。4）选型建议——写冲突频繁（写多读少）→ 悲观锁，避免 CAS 大量自旋浪费 CPU。写冲突极少（读多写少）→ 乐观锁，利用无锁操作提升吞吐。5）数据库层的选择——并发扣库存等高冲突场景用悲观锁（或 Redis 分布式锁），数据版本更新用乐观锁。\n\n扩展延伸：1）乐观锁在分布式系统中的应用——Etcd 的基于 revision 的 CAS 操作、ZooKeeper 的版本号检查、Git 的版本控制（每个提交的 hash 保证数据完整性）。2）乐观锁重试策略——失败后重试几次？退避时间？无限制重试可能造成活锁。通常设置最大重试次数（如 3 次）和指数退避。3）MySQL InnoDB 中的隐式锁与显式锁——MVCC 实现乐观并发控制，FOR UPDATE 实现悲观锁。",
     "hints": [
       "在高并发扣库存场景下，乐观锁和悲观锁哪个更合适？为什么？",
       "数据库的乐观锁实现中，version 字段的更新 SQL 语句应该怎么写？"
@@ -918,7 +573,7 @@
     "type": "short_answer",
     "title": "wait() 和 sleep() 的区别是什么？",
     "content": "请从锁的释放、所属类、使用场景等方面比较 Object.wait() 和 Thread.sleep() 的区别。",
-    "answer": "wait() 释放锁并进入 WAITING 状态，需要被 notify/notifyAll 唤醒；sleep() 不释放锁，进入 TIMED_WAITING 状态，超时后自动唤醒。\n\n解析：1）锁的行为区别——wait() 必须在 synchronized 块中调用，调用后线程释放锁（释放 monitor 的所有权），其他线程可以进入该同步块。sleep() 不释放任何锁（无论是 synchronized 还是 Lock），线程在睡眠期间仍然持有锁，其他线程无法进入该锁的同步块。2）所属类——wait() 是 Object 的实例方法（Object.wait()），因为 Java 的锁是基于对象的（每个对象都有一个 monitor）。sleep() 是 Thread 的静态方法（Thread.sleep()）。3）唤醒方式——wait() 需要其他线程调用相同对象的 notify() 或 notifyAll() 来唤醒（或者也可以响应 interrupt），如果没被唤醒会一直等待（无限等待）。sleep() 在指定时间后自动唤醒。两者都响应 interrupt。4）使用场景——wait/notify 用于线程间通信（生产者-消费者模式），sleep 用于暂停当前线程执行（如轮询等待、模拟耗时操作）。5）常见陷阱——wait() 必须在循环中调用（while (!condition) { wait(); }），否则虚假唤醒（spurious wakeup）可能导致条件未满足时继续执行。\n\n扩展延伸：1）虚假唤醒（Spurious Wakeup）——即使没有 notify 信号，wait() 也可能返回。这是一个 OS 层面的 phenomena，Java 允许这种行为。所以 wait 必须放在 while 循环中。2）sleep(0) 与 Thread.yield()——sleep(0) 会触发 OS 重新调度（可能切换到其他线程），而 yield 只是建议调度器给其他相同优先级的线程执行机会，不保证实际效果。",
+    "answer": "答案：wait() 释放锁并进入 WAITING 状态，需要被 notify/notifyAll 唤醒；sleep() 不释放锁，进入 TIMED_WAITING 状态，超时后自动唤醒。\n\n解析：1）锁的行为区别——wait() 必须在 synchronized 块中调用，调用后线程释放锁（释放 monitor 的所有权），其他线程可以进入该同步块。sleep() 不释放任何锁（无论是 synchronized 还是 Lock），线程在睡眠期间仍然持有锁，其他线程无法进入该锁的同步块。2）所属类——wait() 是 Object 的实例方法（Object.wait()），因为 Java 的锁是基于对象的（每个对象都有一个 monitor）。sleep() 是 Thread 的静态方法（Thread.sleep()）。3）唤醒方式——wait() 需要其他线程调用相同对象的 notify() 或 notifyAll() 来唤醒（或者也可以响应 interrupt），如果没被唤醒会一直等待（无限等待）。sleep() 在指定时间后自动唤醒。两者都响应 interrupt。4）使用场景——wait/notify 用于线程间通信（生产者-消费者模式），sleep 用于暂停当前线程执行（如轮询等待、模拟耗时操作）。5）常见陷阱——wait() 必须在循环中调用（while (!condition) { wait(); }），否则虚假唤醒（spurious wakeup）可能导致条件未满足时继续执行。\n\n扩展延伸：1）虚假唤醒（Spurious Wakeup）——即使没有 notify 信号，wait() 也可能返回。这是一个 OS 层面的 phenomena，Java 允许这种行为。所以 wait 必须放在 while 循环中。2）sleep(0) 与 Thread.yield()——sleep(0) 会触发 OS 重新调度（可能切换到其他线程），而 yield 只是建议调度器给其他相同优先级的线程执行机会，不保证实际效果。",
     "hints": [
       "sleep(0) 和 yield() 有什么区别？",
       "为什么 wait 必须放在 synchronized 块中？"
@@ -936,7 +591,7 @@
     "type": "short_answer",
     "title": "什么是守护线程（Daemon Thread）？有什么特点和使用场景？",
     "content": "请解释守护线程的概念、与用户线程的区别，以及典型的应用场景。",
-    "answer": "守护线程（Daemon Thread）是后台运行的线程，当所有用户线程结束时 JVM 自动退出，不会等待守护线程执行完毕。通过 setDaemon(true) 在线程启动前设置。\n\n解析：1）定义——守护线程是为其他线程提供服务的线程。当 JVM 中只剩下守护线程时，JVM 会退出（守护线程被自动终止，不会执行 finally 块）。2）创建——thread.setDaemon(true) 必须在 start() 之前调用，否则会抛 IllegalThreadStateException。isDaemon() 可查询是否为守护线程。3）守护线程的特性——不会阻止 JVM 退出；创建的线程默认继承父线程的 daemon 状态（main 线程是非守护的，所以默认创建的是非守护线程）；守护线程中创建的子线程也是守护线程。4）典型应用——GC 线程（JVM 中最著名的守护线程）；Finalizer 线程。自定义场景：后台监控线程、心跳检测线程、自动清理线程、超时检查线程等。5）注意事项——守护线程不应该执行需要确保完成的操作，如 I/O 操作、数据库事务，因为 JVM 退出时它们会突然终止。守护线程中创建的资源可能不会被正确关闭。\n\n扩展延伸：1）JVM 退出时机——JVM 会检查所有非守护线程是否已终止。如果所有非用户线程都已结束，即使守护线程还在运行，JVM 也会退出并强制终止守护线程。2）为什么 main 线程不是守护线程——JVM 启动时，main 线程执行程序的入口，必须是非守护线程，否则程序一启动就会退出。3）Spring 的 TaskExecutor 默认创建非守护线程（daemon=false），确保任务执行完成。",
+    "answer": "答案：守护线程（Daemon Thread）是后台运行的线程，当所有用户线程结束时 JVM 自动退出，不会等待守护线程执行完毕。通过 setDaemon(true) 在线程启动前设置。\n\n解析：1）定义——守护线程是为其他线程提供服务的线程。当 JVM 中只剩下守护线程时，JVM 会退出（守护线程被自动终止，不会执行 finally 块）。2）创建——thread.setDaemon(true) 必须在 start() 之前调用，否则会抛 IllegalThreadStateException。isDaemon() 可查询是否为守护线程。3）守护线程的特性——不会阻止 JVM 退出；创建的线程默认继承父线程的 daemon 状态（main 线程是非守护的，所以默认创建的是非守护线程）；守护线程中创建的子线程也是守护线程。4）典型应用——GC 线程（JVM 中最著名的守护线程）；Finalizer 线程。自定义场景：后台监控线程、心跳检测线程、自动清理线程、超时检查线程等。5）注意事项——守护线程不应该执行需要确保完成的操作，如 I/O 操作、数据库事务，因为 JVM 退出时它们会突然终止。守护线程中创建的资源可能不会被正确关闭。\n\n扩展延伸：1）JVM 退出时机——JVM 会检查所有非守护线程是否已终止。如果所有非用户线程都已结束，即使守护线程还在运行，JVM 也会退出并强制终止守护线程。2）为什么 main 线程不是守护线程——JVM 启动时，main 线程执行程序的入口，必须是非守护线程，否则程序一启动就会退出。3）Spring 的 TaskExecutor 默认创建非守护线程（daemon=false），确保任务执行完成。",
     "hints": [
       "如果守护线程正在执行 finally 块，JVM 退出时 finally 块会执行吗？",
       "为什么 GC 线程被设计为守护线程？"
@@ -954,7 +609,7 @@
     "type": "short_answer",
     "title": "什么是线程安全？如何实现线程安全？",
     "content": "请解释线程安全的定义、Java 中实现线程安全的几种方式及其对比。",
-    "answer": "线程安全指多个线程同时访问一个对象时，不需要额外的同步，调用这个对象的任何方法都能得到正确的结果。实现方式包括：不可变对象、同步锁、非阻塞机制（CAS）、线程封闭（ThreadLocal）、并发容器等。\n\n解析：1）不可变（Immutable）——对象创建后状态不可变，天然线程安全。如 String、基本数据类型包装类（Integer、Long 等，但需注意自动装箱）、不可变集合（List.of()、Collections.unmodifiableList()）。2）互斥同步（阻塞同步）——synchronized 关键字和 ReentrantLock 等显式锁。简单可靠但性能开销大（线程阻塞和唤醒）。3）非阻塞同步（乐观锁）——基于 CAS 的原子类（Atomic*）。无锁冲突，适合低竞争场景，高竞争下自旋浪费 CPU。4）无同步方案——不共享数据或共享不可变数据。线程封闭：ThreadLocal 将变量封闭在线程内部。栈封闭：局部变量天然线程安全。5）并发容器——ConcurrentHashMap、CopyOnWriteArrayList、BlockingQueue 等内部已经实现同步，直接使用即可。\n\n扩展延伸：1）线程安全的级别：不可变（最强）→ 绝对线程安全 → 相对线程安全（如 Vector、HashTable 的单个方法安全但复合操作不安全）→ 线程兼容（可用同步）→ 线程对立（几乎不存在）。2）大部分类（如 ArrayList、HashMap）都是线程兼容的，不是线程安全的。需要用 Collections.synchronizedList 包装或在调用方加锁。3）无状态对象（不包含任何字段或不引用其他对象的字段）永远是线程安全的。",
+    "answer": "答案：线程安全指多个线程同时访问一个对象时，不需要额外的同步，调用这个对象的任何方法都能得到正确的结果。实现方式包括：不可变对象、同步锁、非阻塞机制（CAS）、线程封闭（ThreadLocal）、并发容器等。\n\n解析：1）不可变（Immutable）——对象创建后状态不可变，天然线程安全。如 String、基本数据类型包装类（Integer、Long 等，但需注意自动装箱）、不可变集合（List.of()、Collections.unmodifiableList()）。2）互斥同步（阻塞同步）——synchronized 关键字和 ReentrantLock 等显式锁。简单可靠但性能开销大（线程阻塞和唤醒）。3）非阻塞同步（乐观锁）——基于 CAS 的原子类（Atomic*）。无锁冲突，适合低竞争场景，高竞争下自旋浪费 CPU。4）无同步方案——不共享数据或共享不可变数据。线程封闭：ThreadLocal 将变量封闭在线程内部。栈封闭：局部变量天然线程安全。5）并发容器——ConcurrentHashMap、CopyOnWriteArrayList、BlockingQueue 等内部已经实现同步，直接使用即可。\n\n扩展延伸：1）线程安全的级别：不可变（最强）→ 绝对线程安全 → 相对线程安全（如 Vector、HashTable 的单个方法安全但复合操作不安全）→ 线程兼容（可用同步）→ 线程对立（几乎不存在）。2）大部分类（如 ArrayList、HashMap）都是线程兼容的，不是线程安全的。需要用 Collections.synchronizedList 包装或在调用方加锁。3）无状态对象（不包含任何字段或不引用其他对象的字段）永远是线程安全的。",
     "hints": [
       "为什么 SimpleDateFormat 不是线程安全的？如何在线程安全地使用日期格式化？",
       "Vector 的每个方法都是 synchronized 的，为什么它不完全线程安全？"
@@ -968,29 +623,11 @@
   },
   {
     "category": "concurrency",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "Java 中的 BlockingQueue 有哪些实现？各有什么特点？",
-    "content": "请介绍 BlockingQueue 的常见实现类及其底层数据结构、适用场景。",
-    "answer": "BlockingQueue 是线程安全的阻塞队列。主要实现有：ArrayBlockingQueue（有界数组）、LinkedBlockingQueue（可选有界链表）、PriorityBlockingQueue（优先级堆）、SynchronousQueue（无容量直接传递）、DelayQueue（延迟出队）、LinkedTransferQueue（高效传输）。\n\n解析：1）ArrayBlockingQueue——基于数组的有界队列，创建时指定固定容量。使用单锁（ReentrantLock）+ 两个 Condition（notFull、notEmpty）。适用于有界缓冲场景。2）LinkedBlockingQueue——基于链表的可选有界队列，默认容量 Integer.MAX_VALUE（即无界）。使用双锁（takeLock + putLock），读写分离，吞吐量高于 ArrayBlockingQueue。适用于高吞吐的生产者-消费者。3）PriorityBlockingQueue——基于堆（数组）的优先级队列，无界。元素需实现 Comparable 或传入 Comparator。适用于按优先级处理任务的场景。4）SynchronousQueue——容量为 0，每个 put 必须等待一个 take（直接交接）。不存储元素，适合直接传递（Hand-off）场景。Executors.newCachedThreadPool 用它作为工作队列。5）DelayQueue——元素需实现 Delayed（getDelay + compareTo）。元素只有在延迟时间到后才能取出。适用于定时任务、缓存过期。6）LinkedTransferQueue——JDK 7 加入的传输队列，基于链表。支持 transfer() 方法（等待消费者接收），比 SynchronousQueue 更灵活且性能更好。\n\n扩展延伸：1）BlockingQueue 的方法分类：add/remove/element（抛异常）、offer/poll/peek（返回特殊值）、put/take（阻塞）、offer(timeout)/poll(timeout)（超时）。2）ArrayBlockingQueue 和 LinkedBlockingQueue 的选择：需要有界、元素数量可控 → ArrayBlockingQueue（更快）；需要高吞吐或不确定边界 → LinkedBlockingQueue。",
-    "hints": [
-      "LinkedBlockingQueue 为什么比 ArrayBlockingQueue 吞吐量更高？",
-      "SynchronousQueue 的容量为什么是 0？它有什么特别的用途？"
-    ],
-    "tags": [
-      "BlockingQueue",
-      "生产者-消费者",
-      "并发队列",
-      "ArrayBlockingQueue"
-    ]
-  },
-  {
-    "category": "concurrency",
     "difficulty": "hard",
     "type": "short_answer",
     "title": "Java 中 LockSupport 的 park/unpark 原理是什么？与 wait/notify 的对比？",
     "content": "请解释 LockSupport 的许可证机制、park/unpark 的使用方式，以及与 Object.wait/notify 的区别。",
-    "answer": "LockSupport 使用基于线程的许可证（permit）机制——park() 消费一个 permit（没有则阻塞），unpark(thread) 发放一个 permit。与 wait/notify 不同，park/unpark 不需要在同步块中调用，且 unpark 可以提前于 park 发生。\n\n解析：1）permit 机制——每个线程关联一个许可证（permit），类似于二进制信号量（0 或 1）。初始值为 0。unpark(thread) 将 permit 设为 1（多次 unpark 不会叠加）。park() 检查 permit：为 1 则消费并返回；为 0 则阻塞。2）与 wait/notify 对比——park/unpark 可以指定特定线程操作（细粒度）；不需要在 synchronized 块中调用；unpark 可以提前调用（预先发 permit），而 notify 不能提前；unpark 不会累加（最多 1 个 permit）。3）底层实现——Unsafe.park()/unpark()，在 Linux 上基于 pthread_cond_wait/pthread_cond_signal 实现。4）应用——AQS 的线程阻塞/唤醒使用 LockSupport.park()/unpark()，所以 ReentrantLock、Semaphore、CountDownLatch 等都依赖 LockSupport。5）中断响应——park() 会响应中断（被中断时返回），但不会抛出 InterruptedException。可以通过 Thread.interrupted() 检查中断状态。\n\n扩展延伸：1）park 的副作用——Java 线程的 6 种状态中，park 对应的状态是 WAITING 或 TIMED_WAITING（parkNanos/parkUntil）。2）与 suspend/resume 的区别：Thread.suspend()/resume() 已废弃，因为 suspend 不释放锁且容易死锁（挂起时持有锁）。LockSupport 是安全的替代。3）JVM 的 safepoint 与 park——线程在 park 时不会主动进入 safepoint，但被 unpark 后会进入 safepoint 检查点。",
+    "answer": "答案：LockSupport 使用基于线程的许可证（permit）机制——park() 消费一个 permit（没有则阻塞），unpark(thread) 发放一个 permit。与 wait/notify 不同，park/unpark 不需要在同步块中调用，且 unpark 可以提前于 park 发生。\n\n解析：1）permit 机制——每个线程关联一个许可证（permit），类似于二进制信号量（0 或 1）。初始值为 0。unpark(thread) 将 permit 设为 1（多次 unpark 不会叠加）。park() 检查 permit：为 1 则消费并返回；为 0 则阻塞。2）与 wait/notify 对比——park/unpark 可以指定特定线程操作（细粒度）；不需要在 synchronized 块中调用；unpark 可以提前调用（预先发 permit），而 notify 不能提前；unpark 不会累加（最多 1 个 permit）。3）底层实现——Unsafe.park()/unpark()，在 Linux 上基于 pthread_cond_wait/pthread_cond_signal 实现。4）应用——AQS 的线程阻塞/唤醒使用 LockSupport.park()/unpark()，所以 ReentrantLock、Semaphore、CountDownLatch 等都依赖 LockSupport。5）中断响应——park() 会响应中断（被中断时返回），但不会抛出 InterruptedException。可以通过 Thread.interrupted() 检查中断状态。\n\n扩展延伸：1）park 的副作用——Java 线程的 6 种状态中，park 对应的状态是 WAITING 或 TIMED_WAITING（parkNanos/parkUntil）。2）与 suspend/resume 的区别：Thread.suspend()/resume() 已废弃，因为 suspend 不释放锁且容易死锁（挂起时持有锁）。LockSupport 是安全的替代。3）JVM 的 safepoint 与 park——线程在 park 时不会主动进入 safepoint，但被 unpark 后会进入 safepoint 检查点。",
     "hints": [
       "unpark 先于 park 调用时会发生什么？",
       "为什么 unpark 不能累加（多次 unpark 也只相当于一次）？"
@@ -1009,7 +646,7 @@
     "type": "short_answer",
     "title": "Java 中 Exchanger 的使用场景和实现原理是什么？",
     "content": "请解释 Exchanger 的双向数据交换机制、适用场景和底层实现。",
-    "answer": "Exchanger（交换器）用于两个线程在同步点交换数据。每个线程调用 exchange(data) 将数据传给对方并接收对方的数据。底层基于 CAS + 自旋 + 槽位机制实现。\n\n解析：1）使用场景——两个线程互相交换数据的场景，典型应用如遗传算法中交换两个个体的数据、校对工作（一个线程填充缓冲区、另一个线程校验缓冲区）。2）API——exchange(V x) 阻塞直到另一个线程到达并交换数据；exchange(V x, timeout, unit) 超时等待，超时则抛 TimeoutException。3）实现机制——内部使用 Exchanger.Node 表示参与者的槽位。第一个线程到达时将自己的数据存入 Node 并自旋等待；第二个线程到达时找到等待的 Node，交换数据并唤醒第一个线程。4）多对多场景——Exchanger 内部维护了一个 Node 数组（多个槽位），可以扩展为多个线程参与（但一次仍只有一对交换）。5）内存可见性——交换操作保证跨线程的内存可见性，exchange 返回后读到的数据是最新的。\n\n扩展延伸：1）Exchanger 在并发流式处理中的应用——两个线程处理同一个数据流的不同阶段，通过 Exchanger 传递处理好的数据块。2）性能特性——低竞争下 Exchanger 性能优秀（CAS + 自旋，不需要阻塞队列）。高竞争下自旋消耗 CPU，此时考虑用 BlockingQueue 替代。3）注意——如果只有一个线程调用 exchange()，它会一直阻塞。实际使用中需要确保成对调用。",
+    "answer": "答案：Exchanger（交换器）用于两个线程在同步点交换数据。每个线程调用 exchange(data) 将数据传给对方并接收对方的数据。底层基于 CAS + 自旋 + 槽位机制实现。\n\n解析：1）使用场景——两个线程互相交换数据的场景，典型应用如遗传算法中交换两个个体的数据、校对工作（一个线程填充缓冲区、另一个线程校验缓冲区）。2）API——exchange(V x) 阻塞直到另一个线程到达并交换数据；exchange(V x, timeout, unit) 超时等待，超时则抛 TimeoutException。3）实现机制——内部使用 Exchanger.Node 表示参与者的槽位。第一个线程到达时将自己的数据存入 Node 并自旋等待；第二个线程到达时找到等待的 Node，交换数据并唤醒第一个线程。4）多对多场景——Exchanger 内部维护了一个 Node 数组（多个槽位），可以扩展为多个线程参与（但一次仍只有一对交换）。5）内存可见性——交换操作保证跨线程的内存可见性，exchange 返回后读到的数据是最新的。\n\n扩展延伸：1）Exchanger 在并发流式处理中的应用——两个线程处理同一个数据流的不同阶段，通过 Exchanger 传递处理好的数据块。2）性能特性——低竞争下 Exchanger 性能优秀（CAS + 自旋，不需要阻塞队列）。高竞争下自旋消耗 CPU，此时考虑用 BlockingQueue 替代。3）注意——如果只有一个线程调用 exchange()，它会一直阻塞。实际使用中需要确保成对调用。",
     "hints": [
       "Exchanger 适用什么类型的双线程同步场景？",
       "一个线程调用了 exchange()，但另一个线程还没调用，会发生什么？"
@@ -1027,7 +664,7 @@
     "type": "short_answer",
     "title": "Java 8 的 Stream.parallel() 并行流背后的线程模型是什么？",
     "content": "请解释并行流使用的线程池、拆分策略（Spliterator）以及使用时的注意事项。",
-    "answer": "parallelStream 默认使用 ForkJoinPool.commonPool()（线程数为 CPU 核数-1），通过 Spliterator 将数据源拆分为子任务，交给 ForkJoinPool 中的线程并行处理。\n\n解析：1）线程池——默认使用 ForkJoinPool.commonPool()，线程数 = Runtime.getRuntime().availableProcessors() - 1。可以通过设置系统属性 java.util.concurrent.ForkJoinPool.common.parallelism 调整。2）拆分机制——Spliterator（可分迭代器）负责将数据源拆分成可并行处理的子集。关键方法：trySplit() 将当前数据集拆分为两部分，estimateSize() 估算剩余元素数。拆分策略因数据源而异：ArrayList 按索引拆分（快速且均匀）、LinkedList 逐个拆分（慢）、HashSet/TreeSet 通过尝试拆分底层数组。3）Fork-Join 过程——ForkJoinTask 继承 RecursiveTask，在 commonPool 上执行。任务递归拆分直到足够小，然后依次 join。4）使用注意事项——parallelStream 的工作线程数固定，如果某个线程执行阻塞操作（如网络 I/O）会导致整个 commonPool 的性能下降。避免在并行流中使用阻塞操作，或自定义 ForkJoinPool（通过 ForkJoinTask 提交）。5）性能收益条件——数据量大（元素数 > 10000）、数据处理计算量大、数据拆分均匀、无阻塞操作。否则串行流反而更快（没有线程创建/调度开销）。\n\n扩展延伸：1）自定义并行流线程池——可以将 parallelStream 提交到自定义 ForkJoinPool 中（task.submit(() -> stream.parallel().collect(...))）。2）并行流的有序性——通过 parallel() 流执行 forEachOrdered 可以保持顺序，但会牺牲部分并行性能。forEach 不保证顺序。3）非线程安全的收集器——parallelStream 中使用 Collectors.toMap 或自定义累加器时，需确保累加器线程安全（或使用 ConcurrentHashMap）。",
+    "answer": "答案：parallelStream 默认使用 ForkJoinPool.commonPool()（线程数为 CPU 核数-1），通过 Spliterator 将数据源拆分为子任务，交给 ForkJoinPool 中的线程并行处理。\n\n解析：1）线程池——默认使用 ForkJoinPool.commonPool()，线程数 = Runtime.getRuntime().availableProcessors() - 1。可以通过设置系统属性 java.util.concurrent.ForkJoinPool.common.parallelism 调整。2）拆分机制——Spliterator（可分迭代器）负责将数据源拆分成可并行处理的子集。关键方法：trySplit() 将当前数据集拆分为两部分，estimateSize() 估算剩余元素数。拆分策略因数据源而异：ArrayList 按索引拆分（快速且均匀）、LinkedList 逐个拆分（慢）、HashSet/TreeSet 通过尝试拆分底层数组。3）Fork-Join 过程——ForkJoinTask 继承 RecursiveTask，在 commonPool 上执行。任务递归拆分直到足够小，然后依次 join。4）使用注意事项——parallelStream 的工作线程数固定，如果某个线程执行阻塞操作（如网络 I/O）会导致整个 commonPool 的性能下降。避免在并行流中使用阻塞操作，或自定义 ForkJoinPool（通过 ForkJoinTask 提交）。5）性能收益条件——数据量大（元素数 > 10000）、数据处理计算量大、数据拆分均匀、无阻塞操作。否则串行流反而更快（没有线程创建/调度开销）。\n\n扩展延伸：1）自定义并行流线程池——可以将 parallelStream 提交到自定义 ForkJoinPool 中（task.submit(() -> stream.parallel().collect(...))）。2）并行流的有序性——通过 parallel() 流执行 forEachOrdered 可以保持顺序，但会牺牲部分并行性能。forEach 不保证顺序。3）非线程安全的收集器——parallelStream 中使用 Collectors.toMap 或自定义累加器时，需确保累加器线程安全（或使用 ConcurrentHashMap）。",
     "hints": [
       "为什么 parallelStream 默认使用 commonPool？阻塞操作对 commonPool 有什么影响？",
       "并行流在什么样的数据源上拆分效果最好？为什么？"
@@ -1045,7 +682,7 @@
     "type": "short_answer",
     "title": "Java 中的偏向锁为什么在 JDK 15 中被默认禁用？",
     "content": "请解释偏向锁的设计初衷、撤销过程的开销，以及 JDK 15+ 默认禁用的原因。",
-    "answer": "偏向锁设计初衷是优化同一线程反复获取锁的场景。但撤销偏向锁需要在全局安全点（SafePoint）执行，高竞争应用大量的锁撤销导致 STW 时间过长，收益被开销抵消，故 JDK 15+ 默认禁用。\n\n解析：1）偏向锁工作原理——Mark Word 存储持有锁的线程 ID。当线程再次进入同步块时，只需检查线程 ID 是否匹配（无需 CAS 和操作系统互斥量）。只有在偏向锁被撤销时才有额外的 STW 开销。2）偏向锁撤销流程——当偏向锁被其他线程竞争时，需要撤销。撤销过程：到达全局安全点（Stop-The-World）→ 检查持有偏向锁的线程是否存活→ 如果已终止则偏向锁重置为无锁状态→ 如果存活则升级为轻量级锁或重量级锁→ 恢复所有线程。3）JDK 15 禁用原因——现代应用（如 Spring Boot、微服务）中，锁通常被多个线程竞争，偏向锁几乎立即被撤销。撤销偏向锁的 STW 开销超过了其带来的收益。换句话说，偏向锁在低竞争场景有效，但在高竞争场景下反而成为性能瓶颈。4）禁用方式——JDK 12-14 默认启用偏向锁但可关闭（-XX：-UseBiasedLocking）。JDK 15+ 默认禁用且标记为废弃（-XX：+UseBiasedLocking 可启用但会打印弃用警告）。JDK 18 中偏向锁实现被移除。5）对代码的影响——应用代码无需修改。禁用偏向锁意味着所有 synchronized 行为从轻量级锁开始（跳过偏向锁阶段），锁升级流程变短，减少了不必要的 STW。\n\n扩展延伸：1）什么应用受偏向锁禁用影响最大？——少量线程反复获取相同锁的遗留系统（如老式 HashMap 用同步块同步），这类代码在 JDK 15+ 上性能可能下降。应该改为使用 ConcurrentHashMap。2）禁用偏向锁的额外收益——JVM 减少了 Mark Word 中偏向锁相关逻辑，简化了 JIT 编译器的锁优化策略。使代码更加可预测（偏向锁的行为本身有一定的不可预测性）。",
+    "answer": "答案：偏向锁设计初衷是优化同一线程反复获取锁的场景。但撤销偏向锁需要在全局安全点（SafePoint）执行，高竞争应用大量的锁撤销导致 STW 时间过长，收益被开销抵消，故 JDK 15+ 默认禁用。\n\n解析：1）偏向锁工作原理——Mark Word 存储持有锁的线程 ID。当线程再次进入同步块时，只需检查线程 ID 是否匹配（无需 CAS 和操作系统互斥量）。只有在偏向锁被撤销时才有额外的 STW 开销。2）偏向锁撤销流程——当偏向锁被其他线程竞争时，需要撤销。撤销过程：到达全局安全点（Stop-The-World）→ 检查持有偏向锁的线程是否存活→ 如果已终止则偏向锁重置为无锁状态→ 如果存活则升级为轻量级锁或重量级锁→ 恢复所有线程。3）JDK 15 禁用原因——现代应用（如 Spring Boot、微服务）中，锁通常被多个线程竞争，偏向锁几乎立即被撤销。撤销偏向锁的 STW 开销超过了其带来的收益。换句话说，偏向锁在低竞争场景有效，但在高竞争场景下反而成为性能瓶颈。4）禁用方式——JDK 12-14 默认启用偏向锁但可关闭（-XX：-UseBiasedLocking）。JDK 15+ 默认禁用且标记为废弃（-XX：+UseBiasedLocking 可启用但会打印弃用警告）。JDK 18 中偏向锁实现被移除。5）对代码的影响——应用代码无需修改。禁用偏向锁意味着所有 synchronized 行为从轻量级锁开始（跳过偏向锁阶段），锁升级流程变短，减少了不必要的 STW。\n\n扩展延伸：1）什么应用受偏向锁禁用影响最大？——少量线程反复获取相同锁的遗留系统（如老式 HashMap 用同步块同步），这类代码在 JDK 15+ 上性能可能下降。应该改为使用 ConcurrentHashMap。2）禁用偏向锁的额外收益——JVM 减少了 Mark Word 中偏向锁相关逻辑，简化了 JIT 编译器的锁优化策略。使代码更加可预测（偏向锁的行为本身有一定的不可预测性）。",
     "hints": [
       "偏向锁撤销必须在安全点执行？为什么不能在运行时直接撤销？",
       "偏向锁被禁用后，synchronized 从哪种锁状态开始？"
@@ -1064,7 +701,7 @@
     "type": "short_answer",
     "title": "AQS 中的 Condition 队列和同步队列是什么关系？",
     "content": "请解释 AQS 中的同步队列（Sync Queue）和条件队列（Condition Queue）的双队列结构及其交互。",
-    "answer": "AQS 维护两个队列——同步队列（Sync Queue/CLH Queue）用于等待获取锁的线程，条件队列（Condition Queue）用于等待条件的线程。signal 将条件队列的节点转移到同步队列，await 释放锁并将当前线程移入条件队列。\n\n解析：1）同步队列（Sync Queue）——CLH 锁的变体实现，双向链表（prev + next）。每个 Node 代表一个等待获取锁的线程，node.waitStatus 记录等待状态（SIGNAL、CANCELLED、CONDITION、PROPAGATE 等）。独占模式下每个节点自旋检查前驱节点是否为 head 并尝试获取锁。2）条件队列（Condition Queue）——单向链表（仅 nextWaiter 指针），每个 ConditionObject 维护 firstWaiter 和 lastWaiter。Node.waitStatus 为 CONDITION（-2）表示在条件队列中等待。3）await 操作——当前线程（已持有锁）→ 包装成 Node → 加入条件队列尾部（nextWaiter）→ 完全释放锁（记录锁的重入次数）→ 阻塞（parkAndCheckInterrupt）。4）signal 操作——检查当前线程是否持有锁（否则抛 IllegalMonitorStateException）→ 条件队列头节点出队 → 节点状态 CONDITION 改为 0 → 加入同步队列尾部（通过 enq 方法）→ 设置 waitStatus 为 SIGNAL → 在同步队列中等待锁。5）交互关系——条件队列不参与锁竞争，只有转移到同步队列后才能开始竞争锁。这就是为什么 await 的线程被 signal 后不会立即执行，而是需要重新竞争到锁才从 await 返回。\n\n扩展延伸：1）一个 Lock 可以对应多个 Condition，每个 Condition 独立的条件队列（如 BoundedQueue 中的 notFull 和 notEmpty）。Object 的 monitor 则只有一个等待集。2）条件队列中节点被 signal 后没获取到锁又 await 会怎样？——节点在同步队列和条件队列之间来回转移，但 Java 的 AQS 中的 Node 可以在两个队列中移动，通过 waitStatus 的 CONDITION 标记来区分。3）条件队列的节点取消（CANCELLED）——在 await 期间线程被中断或超时，节点会被标记为 CANCELLED 并从条件队列移除（transferAfterCancelledWait 或 fullyRelease）。",
+    "answer": "答案：AQS 维护两个队列——同步队列（Sync Queue/CLH Queue）用于等待获取锁的线程，条件队列（Condition Queue）用于等待条件的线程。signal 将条件队列的节点转移到同步队列，await 释放锁并将当前线程移入条件队列。\n\n解析：1）同步队列（Sync Queue）——CLH 锁的变体实现，双向链表（prev + next）。每个 Node 代表一个等待获取锁的线程，node.waitStatus 记录等待状态（SIGNAL、CANCELLED、CONDITION、PROPAGATE 等）。独占模式下每个节点自旋检查前驱节点是否为 head 并尝试获取锁。2）条件队列（Condition Queue）——单向链表（仅 nextWaiter 指针），每个 ConditionObject 维护 firstWaiter 和 lastWaiter。Node.waitStatus 为 CONDITION（-2）表示在条件队列中等待。3）await 操作——当前线程（已持有锁）→ 包装成 Node → 加入条件队列尾部（nextWaiter）→ 完全释放锁（记录锁的重入次数）→ 阻塞（parkAndCheckInterrupt）。4）signal 操作——检查当前线程是否持有锁（否则抛 IllegalMonitorStateException）→ 条件队列头节点出队 → 节点状态 CONDITION 改为 0 → 加入同步队列尾部（通过 enq 方法）→ 设置 waitStatus 为 SIGNAL → 在同步队列中等待锁。5）交互关系——条件队列不参与锁竞争，只有转移到同步队列后才能开始竞争锁。这就是为什么 await 的线程被 signal 后不会立即执行，而是需要重新竞争到锁才从 await 返回。\n\n扩展延伸：1）一个 Lock 可以对应多个 Condition，每个 Condition 独立的条件队列（如 BoundedQueue 中的 notFull 和 notEmpty）。Object 的 monitor 则只有一个等待集。2）条件队列中节点被 signal 后没获取到锁又 await 会怎样？——节点在同步队列和条件队列之间来回转移，但 Java 的 AQS 中的 Node 可以在两个队列中移动，通过 waitStatus 的 CONDITION 标记来区分。3）条件队列的节点取消（CANCELLED）——在 await 期间线程被中断或超时，节点会被标记为 CANCELLED 并从条件队列移除（transferAfterCancelledWait 或 fullyRelease）。",
     "hints": [
       "为什么 await 时需要释放锁？signal 时为什么要检查当前线程是否持有锁？",
       "条件队列中的节点被 signal 后，它在什么位置开始竞争锁？"
@@ -1083,7 +720,7 @@
     "type": "short_answer",
     "title": "ThreadPoolExecutor 中的 Worker 是如何工作的？",
     "content": "请解释 ThreadPoolExecutor 内部 Worker 类的设计，以及 addWorker 和 runWorker 中的线程管理逻辑。",
-    "answer": "Worker 继承了 AbstractQueuedSynchronizer 和 Runnable，封装了工作线程和首个任务。addWorker 创建 Worker 并启动线程，runWorker 循环从队列取任务执行并处理异常。\n\n解析：1）Worker 的结构——持有 Thread thread（执行任务的线程）和 Runnable firstTask（创建时指定的首个任务）。Worker 继承 AQS 用于实现独占锁（lock/unlock），主要作用是标记线程是否处于活跃状态（运行任务期间加锁，shutdownNow 时检查并中断）。2）addWorker 流程——检查线程池状态（RUNNING 或 SHUTDOWN 且 firstTask==null 才允许添加新 Worker）→ 通过 CAS 增加 workerCount → 创建 Worker 对象（Worker 的构造会通过 ThreadFactory 创建新线程）→ 将 Worker 添加到 workers（HashSet<Worker>）→ 启动 Worker 的线程（thread.start()）。3）runWorker 流程——从 firstTask 开始执行（可能为 null）→ 任务完成后循环从 getTask() 获取队列中的任务 → 执行每个任务（beforeExecute ➔ task.run ➔ afterExecute）→ 如果 getTask 返回 null（队列空且线程数 > corePoolSize 或线程池已停止），则退出循环 → processWorkerExit 处理 Worker 退出。4）getTask 方法——从 workQueue 取任务的操作，如果允许核心线程超时或当前线程数 > corePoolSize，用 poll(timeout)（超时未取到返回 null → 该 Worker 退出）；否则用 take()（阻塞等待）。\n\n扩展延伸：1）Worker 的 AQS 用途——Worker 继承 AQS 实现不可重写的独占锁（tryAcquire 总是尝试设置 state 0→1）。这样可以在 runWorker 执行任务时加锁，shutdownNow 时可以检查 Worker 的 lock 状态：如果锁定状态表示该 Worker 正在执行任务，不中断（允许任务完成）；如果未锁定表示该 Worker 正在 getTask 阻塞等待，此时中断它。2）Worker 退出的清理——processWorkerExit 将完成的 Worker 从 workers 集合移除，减少 workerCount，检查是否需要添加新的 Worker（如果队列还有任务且当前线程数不够）。",
+    "answer": "答案：Worker 继承了 AbstractQueuedSynchronizer 和 Runnable，封装了工作线程和首个任务。addWorker 创建 Worker 并启动线程，runWorker 循环从队列取任务执行并处理异常。\n\n解析：1）Worker 的结构——持有 Thread thread（执行任务的线程）和 Runnable firstTask（创建时指定的首个任务）。Worker 继承 AQS 用于实现独占锁（lock/unlock），主要作用是标记线程是否处于活跃状态（运行任务期间加锁，shutdownNow 时检查并中断）。2）addWorker 流程——检查线程池状态（RUNNING 或 SHUTDOWN 且 firstTask==null 才允许添加新 Worker）→ 通过 CAS 增加 workerCount → 创建 Worker 对象（Worker 的构造会通过 ThreadFactory 创建新线程）→ 将 Worker 添加到 workers（HashSet<Worker>）→ 启动 Worker 的线程（thread.start()）。3）runWorker 流程——从 firstTask 开始执行（可能为 null）→ 任务完成后循环从 getTask() 获取队列中的任务 → 执行每个任务（beforeExecute ➔ task.run ➔ afterExecute）→ 如果 getTask 返回 null（队列空且线程数 > corePoolSize 或线程池已停止），则退出循环 → processWorkerExit 处理 Worker 退出。4）getTask 方法——从 workQueue 取任务的操作，如果允许核心线程超时或当前线程数 > corePoolSize，用 poll(timeout)（超时未取到返回 null → 该 Worker 退出）；否则用 take()（阻塞等待）。\n\n扩展延伸：1）Worker 的 AQS 用途——Worker 继承 AQS 实现不可重写的独占锁（tryAcquire 总是尝试设置 state 0→1）。这样可以在 runWorker 执行任务时加锁，shutdownNow 时可以检查 Worker 的 lock 状态：如果锁定状态表示该 Worker 正在执行任务，不中断（允许任务完成）；如果未锁定表示该 Worker 正在 getTask 阻塞等待，此时中断它。2）Worker 退出的清理——processWorkerExit 将完成的 Worker 从 workers 集合移除，减少 workerCount，检查是否需要添加新的 Worker（如果队列还有任务且当前线程数不够）。",
     "hints": [
       "Worker 为什么要继承 AQS？Worker 的加锁/解锁状态是如何被 shutdownNow 使用的？",
       "getTask 返回 null 的条件是什么？Worker 退出后如何保证队列中的任务仍然会被处理？"
@@ -1101,7 +738,7 @@
     "type": "short_answer",
     "title": "Java 并发编程中的 Memory Consistency 问题是什么？",
     "content": "请解释内存一致性的概念、导致内存不一致的原因，以及在 Java 中如何保证内存一致性。",
-    "answer": "内存一致性（Memory Consistency）指在多线程环境下，每个线程对共享变量的操作顺序和效果在全局上保持一致。不一致的根本原因是 CPU 缓存、指令重排序和编译器优化。保证方式包括 volatile、synchronized、final、Lock 等。\n\n解析：1）内存不一致的原因——CPU 缓存：每个 CPU 核有自己的 L1/L2 缓存，修改暂存在缓存未刷新到主存时其他核不可见。指令重排序：编译器和 CPU 可能为了优化而重排序指令（只要单线程语义不变）。编译器优化：变量被优化为寄存器存储，未被写回内存。2）顺序一致性模型——理想化的内存模型，所有线程看到相同的操作顺序。JMM 不保证完全的顺序一致性，它只保证存在「happen-before」关系的操作可见。3）JMM 的保证——每个线程有独立的工作内存（线程栈），共享变量存储在主内存。线程对变量的操作必须在工作内存中进行，再同步回主内存。volatile 保证每次读取/写入都直接从主内存操作（禁止工作内存缓存）。synchronized 通过互斥锁保证临界区的原子性和内存可见性。4）final 的特殊保证——final 字段在构造函数内初始化，JMM 保证构造函数结束后 final 字段对所有线程可见（正确构造的对象）。前提是对象引用不会在构造函数中逸出（this 引用逸出问题）。5）检测工具——jmc（Java Mission Control）、JFR（Java Flight Recorder）可以分析内存一致性问题。但根本上，内存一致性问题难以检测，只能通过正确使用同步来预防。\n\n扩展延伸：1）总线锁和缓存锁——x86 CPU 使用 MESI 协议保证缓存一致性，在跨缓存行操作时使用总线锁（LOCK# 信号）。2）Java 早期版本的内存一致性问题——JDK 1.5（JSR-133）之前 volatile 语义不够强，DCL（Double-Checked Locking）在旧 JMM 下不成立。JSR-133 修正了 volatile 语义，使 DCL 可以正常工作。3）ARM/PowerPC 等弱内存模型架构上，内存一致性问题更明显，相同 Java 代码在不同架构上的并发行为可能不同。",
+    "answer": "答案：内存一致性（Memory Consistency）指在多线程环境下，每个线程对共享变量的操作顺序和效果在全局上保持一致。不一致的根本原因是 CPU 缓存、指令重排序和编译器优化。保证方式包括 volatile、synchronized、final、Lock 等。\n\n解析：1）内存不一致的原因——CPU 缓存：每个 CPU 核有自己的 L1/L2 缓存，修改暂存在缓存未刷新到主存时其他核不可见。指令重排序：编译器和 CPU 可能为了优化而重排序指令（只要单线程语义不变）。编译器优化：变量被优化为寄存器存储，未被写回内存。2）顺序一致性模型——理想化的内存模型，所有线程看到相同的操作顺序。JMM 不保证完全的顺序一致性，它只保证存在「happen-before」关系的操作可见。3）JMM 的保证——每个线程有独立的工作内存（线程栈），共享变量存储在主内存。线程对变量的操作必须在工作内存中进行，再同步回主内存。volatile 保证每次读取/写入都直接从主内存操作（禁止工作内存缓存）。synchronized 通过互斥锁保证临界区的原子性和内存可见性。4）final 的特殊保证——final 字段在构造函数内初始化，JMM 保证构造函数结束后 final 字段对所有线程可见（正确构造的对象）。前提是对象引用不会在构造函数中逸出（this 引用逸出问题）。5）检测工具——jmc（Java Mission Control）、JFR（Java Flight Recorder）可以分析内存一致性问题。但根本上，内存一致性问题难以检测，只能通过正确使用同步来预防。\n\n扩展延伸：1）总线锁和缓存锁——x86 CPU 使用 MESI 协议保证缓存一致性，在跨缓存行操作时使用总线锁（LOCK# 信号）。2）Java 早期版本的内存一致性问题——JDK 1.5（JSR-133）之前 volatile 语义不够强，DCL（Double-Checked Locking）在旧 JMM 下不成立。JSR-133 修正了 volatile 语义，使 DCL 可以正常工作。3）ARM/PowerPC 等弱内存模型架构上，内存一致性问题更明显，相同 Java 代码在不同架构上的并发行为可能不同。",
     "hints": [
       "每个 CPU 核都有自己的缓存，当一个核修改了变量时其他核什么时候能看到？",
       "final 字段的内存一致性保证有什么限制条件（比如 this 逸出）？"
@@ -1119,7 +756,7 @@
     "type": "short_answer",
     "title": "CompletableFuture 的 thenAccept 和 thenAcceptAsync 有什么区别？",
     "content": "请解释 thenAccept/thenAcceptAsync/thenRun/thenRunAsync 等方法的异步执行策略和执行线程差异。",
-    "answer": "thenAccept（不带 Async）使用触发线程执行回调——如果前一个阶段已经完成，在当前线程（调用 thenAccept 的线程）执行；如果尚未完成，在完成任务的线程中执行。thenAcceptAsync 始终在指定线程池（或默认的 ForkJoinPool.commonPool()）中提交一个新任务执行。thenRun 与 thenAccept 的区别在于不消费结果。\n\n解析：1）thenAccept(Consumer)——注册一个 Consumer 回调，接收前一个阶段的结果但不返回新值。执行策略：如果 thenAccept 注册时前一个阶段已经完成（isDone() == true），则 callback 立即在当前线程执行；如果前一个阶段还未完成，当前阶段完成后在完成任务的线程中执行 callback。2）thenAcceptAsync(Consumer, Executor)——无论前一个阶段是否已完成，都向 Executor（或默认的 ForkJoinPool.commonPool()）提交一个任务来执行 callback。这意味着 callback 始终在异步线程池中执行。3）thenRun(Runnable)——与 thenAccept 类似，但不接收前一个阶段的返回值（Runnable 而非 Consumer）。适用于「阶段 A 完成后执行 B，但 B 不需要 A 的结果」场景。4）线程选择的影响——不带 Async 的方法在某些场景避免线程切换（减少上下文切换开销），但可能导致回调在不可预测的线程中执行（如 Netty 的 EventLoop 线程）。如果回调中有阻塞操作，应该始终使用 Async 版本并在自定义线程池中执行。5）最佳实践——轻量级、非阻塞的操作可以用不带 Async 的方法（避免线程切换开销）。重量级操作或阻塞操作必须使用 Async 版本并使用自定义线程池（避免阻塞 commonPool 或 Netty 的 EventLoop）。\n\n扩展延伸：1）thenCompose（flatMap）和 thenApply（map）也有同样的 Async 区分。2）thenApply vs thenApplyAsync：thenApply 可能在前一个阶段线程执行（减少上下文切换和调度开销），但不可控；thenApplyAsync 的线程池和执行时机可控。3）类似规则同样适用于 exceptionally/handle/whenComplete 的 Async 变体。",
+    "answer": "答案：thenAccept（不带 Async）使用触发线程执行回调——如果前一个阶段已经完成，在当前线程（调用 thenAccept 的线程）执行；如果尚未完成，在完成任务的线程中执行。thenAcceptAsync 始终在指定线程池（或默认的 ForkJoinPool.commonPool()）中提交一个新任务执行。thenRun 与 thenAccept 的区别在于不消费结果。\n\n解析：1）thenAccept(Consumer)——注册一个 Consumer 回调，接收前一个阶段的结果但不返回新值。执行策略：如果 thenAccept 注册时前一个阶段已经完成（isDone() == true），则 callback 立即在当前线程执行；如果前一个阶段还未完成，当前阶段完成后在完成任务的线程中执行 callback。2）thenAcceptAsync(Consumer, Executor)——无论前一个阶段是否已完成，都向 Executor（或默认的 ForkJoinPool.commonPool()）提交一个任务来执行 callback。这意味着 callback 始终在异步线程池中执行。3）thenRun(Runnable)——与 thenAccept 类似，但不接收前一个阶段的返回值（Runnable 而非 Consumer）。适用于「阶段 A 完成后执行 B，但 B 不需要 A 的结果」场景。4）线程选择的影响——不带 Async 的方法在某些场景避免线程切换（减少上下文切换开销），但可能导致回调在不可预测的线程中执行（如 Netty 的 EventLoop 线程）。如果回调中有阻塞操作，应该始终使用 Async 版本并在自定义线程池中执行。5）最佳实践——轻量级、非阻塞的操作可以用不带 Async 的方法（避免线程切换开销）。重量级操作或阻塞操作必须使用 Async 版本并使用自定义线程池（避免阻塞 commonPool 或 Netty 的 EventLoop）。\n\n扩展延伸：1）thenCompose（flatMap）和 thenApply（map）也有同样的 Async 区分。2）thenApply vs thenApplyAsync：thenApply 可能在前一个阶段线程执行（减少上下文切换和调度开销），但不可控；thenApplyAsync 的线程池和执行时机可控。3）类似规则同样适用于 exceptionally/handle/whenComplete 的 Async 变体。",
     "hints": [
       "不带 Async 的方法一定在当前线程执行回调吗？什么情况下会在不同线程执行？",
       "在 Netty 的 EventLoop 中，如果 CompletableFuture 的回调做了重量级操作会有什么后果？"
@@ -1137,7 +774,7 @@
     "type": "short_answer",
     "title": "ScheduledThreadPoolExecutor 的实现原理是什么？",
     "content": "请解释 ScheduledThreadPoolExecutor 的任务延期执行机制、周期任务调度和底层数据结构。",
-    "answer": "ScheduledThreadPoolExecutor 继承 ThreadPoolExecutor，使用 DelayWorkQueue（基于 Delayed 的优先级队列）存储任务。ScheduledFutureTask 封装了任务的延时时间、周期间隔和剩余执行次数。核心是 delayedExecute 方法和任务出队的 poll 逻辑。\n\n解析：1）ScheduledFutureTask——继承 FutureTask 实现 RunnableScheduledFuture。关键字段：time（下次执行时间，纳秒）、period（周期间隔，0 表示一次性任务，正数表示固定速率，负数表示固定延时）、sequenceNumber（序列号，用于相同时间任务的排序）。2）DelayWorkQueue——基于堆实现的优先级队列（PriorityQueue 的变体），元素按 time（到期时间）排序。take() 方法检查堆顶元素的 getDelay(TimeUnit.NANOSECONDS) 是否 ≤ 0——如果已到期则返回；否则等待 getDelay 时间。3）scheduleAtFixedRate——固定速率执行：period > 0，任务执行时间与上次开始时间间隔固定。如果任务执行时间超过 period，则下一个任务立即开始（无间隔调整）。4）scheduleWithFixedDelay——固定延时执行：period < 0，任务执行完成后等待固定时间再执行下一个。两个任务之间始终有固定间隔。5）delayedExecute 流程——确保线程池未关闭 → 添加任务到 DelayWorkQueue → 如果添加后线程池已关闭则拒绝任务并回滚 → 如果工作线程数为 0 则添加一个 Worker（即使 corePoolSize=0 也需要，因为 DelayWorkQueue 需要至少一个线程来触发到期任务）。6）cancel 机制——取消的任务不会自动从 DelayWorkQueue 移除（因为堆结构中移除指定元素效率低），而是在任务轮到执行时自动跳过（判断 isCancelled）。\n\n扩展延伸：1）ScheduledThreadPoolExecutor 与 Timer 的对比——Timer 单线程执行，任务抛异常会导致所有任务终止；ScheduledThreadPoolExecutor 多线程执行，任务异常不影响其他任务。Timer 使用系统时钟（系统时间调整影响调度），ScheduledThreadPoolExecutor 使用相对时间。2）HashedWheelTimer——Netty 实现的环形哈希轮定时器，适用于大量超时任务的场景（如网络连接超时），比 ScheduledThreadPoolExecutor 更高效（O(1) 插入/删除，堆结构的入队是 O(logN)）。",
+    "answer": "答案：ScheduledThreadPoolExecutor 继承 ThreadPoolExecutor，使用 DelayWorkQueue（基于 Delayed 的优先级队列）存储任务。ScheduledFutureTask 封装了任务的延时时间、周期间隔和剩余执行次数。核心是 delayedExecute 方法和任务出队的 poll 逻辑。\n\n解析：1）ScheduledFutureTask——继承 FutureTask 实现 RunnableScheduledFuture。关键字段：time（下次执行时间，纳秒）、period（周期间隔，0 表示一次性任务，正数表示固定速率，负数表示固定延时）、sequenceNumber（序列号，用于相同时间任务的排序）。2）DelayWorkQueue——基于堆实现的优先级队列（PriorityQueue 的变体），元素按 time（到期时间）排序。take() 方法检查堆顶元素的 getDelay(TimeUnit.NANOSECONDS) 是否 ≤ 0——如果已到期则返回；否则等待 getDelay 时间。3）scheduleAtFixedRate——固定速率执行：period > 0，任务执行时间与上次开始时间间隔固定。如果任务执行时间超过 period，则下一个任务立即开始（无间隔调整）。4）scheduleWithFixedDelay——固定延时执行：period < 0，任务执行完成后等待固定时间再执行下一个。两个任务之间始终有固定间隔。5）delayedExecute 流程——确保线程池未关闭 → 添加任务到 DelayWorkQueue → 如果添加后线程池已关闭则拒绝任务并回滚 → 如果工作线程数为 0 则添加一个 Worker（即使 corePoolSize=0 也需要，因为 DelayWorkQueue 需要至少一个线程来触发到期任务）。6）cancel 机制——取消的任务不会自动从 DelayWorkQueue 移除（因为堆结构中移除指定元素效率低），而是在任务轮到执行时自动跳过（判断 isCancelled）。\n\n扩展延伸：1）ScheduledThreadPoolExecutor 与 Timer 的对比——Timer 单线程执行，任务抛异常会导致所有任务终止；ScheduledThreadPoolExecutor 多线程执行，任务异常不影响其他任务。Timer 使用系统时钟（系统时间调整影响调度），ScheduledThreadPoolExecutor 使用相对时间。2）HashedWheelTimer——Netty 实现的环形哈希轮定时器，适用于大量超时任务的场景（如网络连接超时），比 ScheduledThreadPoolExecutor 更高效（O(1) 插入/删除，堆结构的入队是 O(logN)）。",
     "hints": [
       "DelayWorkQueue 使用什么数据结构？为什么 take() 方法在堆顶任务未到期时阻塞？",
       "scheduleAtFixedRate 和 scheduleWithFixedDelay 的核心区别是什么？"
@@ -1155,7 +792,7 @@
     "type": "short_answer",
     "title": "Java 中可见性、原子性和有序性分别是什么？如何保证？",
     "content": "请解释并发编程的三大特征，以及 volatile、synchronized、Lock 分别保证了哪些特征。",
-    "answer": "可见性——一个线程修改共享变量后其他线程能立即看到。原子性——一个或多个操作不可被中断。有序性——程序按代码顺序执行。volatile 保证可见性和有序性，不保证原子性。synchronized 和 Lock 同时保证三者。\n\n解析：1）可见性——线程有自己的工作内存（寄存器/缓存），对变量的修改可能不会立即写回主存，其他线程读取到的可能是旧值。volatile：每次读取都从主存加载，每次写都立即刷新到主存。synchronized：锁的释放会将工作内存刷新到主存（happen-before 规则）。final：正确构造的对象中 final 字段对所有线程可见。2）原子性——最简单的 i++ 操作包含「读→改→写」三步，不是原子的。synchronized：临界区内代码原子执行。Lock：lock()/unlock() 之间的代码原子执行。Atomic* 类：基于 CAS 的原子操作（如 AtomicInteger.incrementAndGet()）。volatile：不保证原子性，所以 count++ 在多线程下会丢数据。3）有序性——编译器/CPU/内存系统可能重排序指令，但保证不影响单线程执行结果。volatile：通过内存屏障禁止重排序。synchronized：同一个锁的 unlock 和 lock 之间不能重排序（AS-IF-SERIAL 语义 + happen-before）。Lock：同样遵循 AQS 的 happen-before 保证。4）三者的关系——可见性是基础（不保证可见性则原子性无意义）。有序性保证大部分可见性（重排序可能破坏可见性）。原子性保证数据在并发修改中不产生竞争。5）x86 架构的额外保证——x86 的 TSO 模型只允许写后读重排序，所以 x86 上的 volatile 读不需要显式屏障（只有 volatile 写需要 mfence 或 lock 指令）。\n\n扩展延伸：1）JMM 对原子性的承诺——除了 long/double 外的 32 位变量读写是原子的。long/double 在 32 位 JVM 上可能被分两次 32 位操作（非原子），但用 volatile 修饰后保证原子读写（JDK 5+）。2）CAS 提供的原子性——CAS 的「读→比较→写」在 CPU 层面是原子的，基于 CMPXCHG（x86）或 LL/SC（ARM）指令。",
+    "answer": "答案：可见性——一个线程修改共享变量后其他线程能立即看到。原子性——一个或多个操作不可被中断。有序性——程序按代码顺序执行。volatile 保证可见性和有序性，不保证原子性。synchronized 和 Lock 同时保证三者。\n\n解析：1）可见性——线程有自己的工作内存（寄存器/缓存），对变量的修改可能不会立即写回主存，其他线程读取到的可能是旧值。volatile：每次读取都从主存加载，每次写都立即刷新到主存。synchronized：锁的释放会将工作内存刷新到主存（happen-before 规则）。final：正确构造的对象中 final 字段对所有线程可见。2）原子性——最简单的 i++ 操作包含「读→改→写」三步，不是原子的。synchronized：临界区内代码原子执行。Lock：lock()/unlock() 之间的代码原子执行。Atomic* 类：基于 CAS 的原子操作（如 AtomicInteger.incrementAndGet()）。volatile：不保证原子性，所以 count++ 在多线程下会丢数据。3）有序性——编译器/CPU/内存系统可能重排序指令，但保证不影响单线程执行结果。volatile：通过内存屏障禁止重排序。synchronized：同一个锁的 unlock 和 lock 之间不能重排序（AS-IF-SERIAL 语义 + happen-before）。Lock：同样遵循 AQS 的 happen-before 保证。4）三者的关系——可见性是基础（不保证可见性则原子性无意义）。有序性保证大部分可见性（重排序可能破坏可见性）。原子性保证数据在并发修改中不产生竞争。5）x86 架构的额外保证——x86 的 TSO 模型只允许写后读重排序，所以 x86 上的 volatile 读不需要显式屏障（只有 volatile 写需要 mfence 或 lock 指令）。\n\n扩展延伸：1）JMM 对原子性的承诺——除了 long/double 外的 32 位变量读写是原子的。long/double 在 32 位 JVM 上可能被分两次 32 位操作（非原子），但用 volatile 修饰后保证原子读写（JDK 5+）。2）CAS 提供的原子性——CAS 的「读→比较→写」在 CPU 层面是原子的，基于 CMPXCHG（x86）或 LL/SC（ARM）指令。",
     "hints": [
       "volatile 能保证 i++ 原子性吗？为什么？",
       "synchronized 是如何同时保证三个特征的？"
@@ -1174,7 +811,7 @@
     "type": "short_answer",
     "title": "Java 中的 ReentrantReadWriteLock 为什么适合读多写少场景？存在什么问题？",
     "content": "请分析 ReentrantReadWriteLock 的读写分离机制，以及写线程饥饿问题的原因和解决方案。",
-    "answer": "ReentrantReadWriteLock 将锁分为读锁（共享）和写锁（独占），读读不互斥，在读多写少场景下提高并发度。但问题是写线程饥饿——当读锁被长时间持有时，写锁无法获取，导致写线程一直被阻塞。\n\n解析：1）读写分离机制——读锁（ReadLock）是共享锁，多个线程可以同时持有读锁。写锁（WriteLock）是独占锁，只有一个线程能持有写锁。读锁和写锁互斥（有读锁时不能获取写锁，有写锁时不能获取读锁）。2）内部实现——使用 AQS 的 state 的高 16 位表示读锁计数，低 16 位表示写锁计数。读锁的 tryAcquireShared：没有写锁或当前线程持有写锁（锁降级）时 CAS 增加读计数。写锁的 tryAcquire：没有读锁和写锁时 CAS 设置写计数。3）写线程饥饿——如果读锁被持续持有（读线程一直不释放锁），写锁永远无法获取。而新的读线程总是可以获取读锁（因为读读不互斥），进一步导致写线程饥饿。默认的非公平模式下，写线程可能被不停涌入的读线程「插队」——虽然 tryAcquire 有尝试获取写锁，但读锁的 tryAcquireShared 总比写锁的 tryAcquire 更容易成功。4）解决方案——ReentrantReadWriteLock 的公平模式（构造参数 true）按队列顺序分配锁，避免写线程饥饿。但公平模式下吞吐量下降。或者使用 StampedLock 的乐观读替代普通读锁，乐观读不阻塞写锁。5）锁降级——写锁 → 读锁：写线程获取写锁后，可以再获取读锁（读锁的 tryAcquireShared 允许当前持有写锁的线程获取读锁），然后释放写锁。锁降级可以保证写操作完成后降级为读锁保护数据的可见性。\n\n扩展延伸：1）锁升级（读 → 写）不支持——持有读锁时不能获取写锁，否则会导致死锁（尝试获取读锁的线程被自己阻塞）。2）ReentrantReadWriteLock 在读多写少、写操作不频繁的场景性能显著优于互斥锁。但如果写操作占比超过 20%，ReentrantLock 的性能可能更好（避免读写切换的开销）。3）缓存场景的典型应用——ReentrantReadWriteLock 保护缓存数据。读数据时获取读锁（多个线程可同时读），更新缓存时获取写锁（确保读写隔离）。",
+    "answer": "答案：ReentrantReadWriteLock 将锁分为读锁（共享）和写锁（独占），读读不互斥，在读多写少场景下提高并发度。但问题是写线程饥饿——当读锁被长时间持有时，写锁无法获取，导致写线程一直被阻塞。\n\n解析：1）读写分离机制——读锁（ReadLock）是共享锁，多个线程可以同时持有读锁。写锁（WriteLock）是独占锁，只有一个线程能持有写锁。读锁和写锁互斥（有读锁时不能获取写锁，有写锁时不能获取读锁）。2）内部实现——使用 AQS 的 state 的高 16 位表示读锁计数，低 16 位表示写锁计数。读锁的 tryAcquireShared：没有写锁或当前线程持有写锁（锁降级）时 CAS 增加读计数。写锁的 tryAcquire：没有读锁和写锁时 CAS 设置写计数。3）写线程饥饿——如果读锁被持续持有（读线程一直不释放锁），写锁永远无法获取。而新的读线程总是可以获取读锁（因为读读不互斥），进一步导致写线程饥饿。默认的非公平模式下，写线程可能被不停涌入的读线程「插队」——虽然 tryAcquire 有尝试获取写锁，但读锁的 tryAcquireShared 总比写锁的 tryAcquire 更容易成功。4）解决方案——ReentrantReadWriteLock 的公平模式（构造参数 true）按队列顺序分配锁，避免写线程饥饿。但公平模式下吞吐量下降。或者使用 StampedLock 的乐观读替代普通读锁，乐观读不阻塞写锁。5）锁降级——写锁 → 读锁：写线程获取写锁后，可以再获取读锁（读锁的 tryAcquireShared 允许当前持有写锁的线程获取读锁），然后释放写锁。锁降级可以保证写操作完成后降级为读锁保护数据的可见性。\n\n扩展延伸：1）锁升级（读 → 写）不支持——持有读锁时不能获取写锁，否则会导致死锁（尝试获取读锁的线程被自己阻塞）。2）ReentrantReadWriteLock 在读多写少、写操作不频繁的场景性能显著优于互斥锁。但如果写操作占比超过 20%，ReentrantLock 的性能可能更好（避免读写切换的开销）。3）缓存场景的典型应用——ReentrantReadWriteLock 保护缓存数据。读数据时获取读锁（多个线程可同时读），更新缓存时获取写锁（确保读写隔离）。",
     "hints": [
       "读锁和写锁的互斥关系在 AQS state 中如何表示？",
       "什么是锁降级？为什么需要锁降级？"
@@ -1192,7 +829,7 @@
     "type": "short_answer",
     "title": "什么是 Java 中的自旋锁？自适应自旋是怎么工作的？",
     "content": "请解释自旋锁的原理、优缺点，以及 JVM 自适应自旋（Adaptive Spinning）的优化策略。",
-    "answer": "自旋锁（Spin Lock）是线程获取锁失败时不立即挂起，而是在 CPU 上循环检查锁状态（自旋等待），避免线程切换的开销。自适应自旋（JDK 6+）根据前一次自旋等待时间和锁持有者的状态动态调整自旋次数。\n\n解析：1）自旋锁的原理——线程获取锁失败时，不进入阻塞状态，而是执行一个忙循环（while (!CAS(...)) {})，循环检查锁是否已被释放。如果自旋过程中锁被释放，线程立即获取锁，避免了线程阻塞和唤醒的上下文切换开销（一次切换约 1-10μs）。2）自旋的代价——自旋消耗 CPU 时间。如果锁持有时间短，自旋的收益大于线程切换开销。如果锁持有时间长（如 I/O 操作），自旋会浪费 CPU。3）JVM 固定自旋——JDK 1.6 之前用 -XX：PreBlockSpin 设置固定自旋次数（默认 10 次）。缺点是静态的，无法适应运行时变化。4）自适应自旋（Adaptive Spinning）——JDK 6+ 默认开启。JVM 会根据同一个锁的前一次自旋情况和锁持有者的状态动态决定自旋次数。如果前一次自旋成功获取了锁（说明这次自旋很可能也成功），则允许更多次自旋；如果前一次自旋失败（锁被持有很长时间），则减少甚至跳过自旋。5）自适应自旋的参考信息——还会参考当前持有锁的线程是否正在运行（如果持有锁的线程处于阻塞状态，自旋无意义）。如果锁持有者在另一个 CPU 上运行，自旋才有意义。\n\n扩展延伸：1）-XX：+UseSpinning 开启自旋（JDK 6 之前手动，JDK 6+ 默认）。JDK 7+ 不再提供 PreBlockSpin 参数，由 JVM 完全控制。2）轻量级锁的 CAS 自旋失败多次后会膨胀为重量级锁（线程阻塞，不再自旋）。这意味着重量级锁的线程切换开销只在确实需要时才会发生。3）在 Java 层面实现自旋锁的注意点：需要 volatile 变量保证可见性；需要 AtomicReference/Unsafe CAS 实现原子状态转换；注意在单核机器上自旋浪费 CPU（单核只有一个线程在跑，自旋没有意义）。",
+    "answer": "答案：自旋锁（Spin Lock）是线程获取锁失败时不立即挂起，而是在 CPU 上循环检查锁状态（自旋等待），避免线程切换的开销。自适应自旋（JDK 6+）根据前一次自旋等待时间和锁持有者的状态动态调整自旋次数。\n\n解析：1）自旋锁的原理——线程获取锁失败时，不进入阻塞状态，而是执行一个忙循环（while (!CAS(...)) {})，循环检查锁是否已被释放。如果自旋过程中锁被释放，线程立即获取锁，避免了线程阻塞和唤醒的上下文切换开销（一次切换约 1-10μs）。2）自旋的代价——自旋消耗 CPU 时间。如果锁持有时间短，自旋的收益大于线程切换开销。如果锁持有时间长（如 I/O 操作），自旋会浪费 CPU。3）JVM 固定自旋——JDK 1.6 之前用 -XX：PreBlockSpin 设置固定自旋次数（默认 10 次）。缺点是静态的，无法适应运行时变化。4）自适应自旋（Adaptive Spinning）——JDK 6+ 默认开启。JVM 会根据同一个锁的前一次自旋情况和锁持有者的状态动态决定自旋次数。如果前一次自旋成功获取了锁（说明这次自旋很可能也成功），则允许更多次自旋；如果前一次自旋失败（锁被持有很长时间），则减少甚至跳过自旋。5）自适应自旋的参考信息——还会参考当前持有锁的线程是否正在运行（如果持有锁的线程处于阻塞状态，自旋无意义）。如果锁持有者在另一个 CPU 上运行，自旋才有意义。\n\n扩展延伸：1）-XX：+UseSpinning 开启自旋（JDK 6 之前手动，JDK 6+ 默认）。JDK 7+ 不再提供 PreBlockSpin 参数，由 JVM 完全控制。2）轻量级锁的 CAS 自旋失败多次后会膨胀为重量级锁（线程阻塞，不再自旋）。这意味着重量级锁的线程切换开销只在确实需要时才会发生。3）在 Java 层面实现自旋锁的注意点：需要 volatile 变量保证可见性；需要 AtomicReference/Unsafe CAS 实现原子状态转换；注意在单核机器上自旋浪费 CPU（单核只有一个线程在跑，自旋没有意义）。",
     "hints": [
       "为什么单核 CPU 上自旋锁没有意义？",
       "自适应自旋如何决定自旋次数？如果上次自旋失败会怎样？"
@@ -1210,7 +847,7 @@
     "type": "short_answer",
     "title": "什么是并发级别？Java 中的非阻塞算法如何分类？",
     "content": "请解释并发编程的级别划分（阻塞→无锁→无等待），以及 CAS 是如何支持非阻塞算法的。",
-    "answer": "并发级别从低到高：阻塞（Blocking）→ 无饥饿（Starvation-Free）→ 无锁（Lock-Free）→ 无等待（Wait-Free）。非阻塞算法指不阻塞线程执行就能保证线程安全的算法，基于 CAS 实现。\n\n解析：1）阻塞——线程在获取不到锁时挂起（如 synchronized、ReentrantLock）。一个线程阻塞会导致其他线程可以继续执行（吞吐量受线程切换影响）。2）无饥饿——系统保证每个线程最终都能获得所需的资源。公平锁（如 new ReentrantLock(true)）保证等待时间最长的线程优先获得锁，避免饥饿。3）无锁（Lock-Free）——所有线程在任意时刻至少有一个线程在执行（整个系统在推进），没有线程被阻塞。CAS 是无锁算法的基石。但可能有线程遭遇活锁（持续的 CAS 失败重试）。ConcurrentLinkedQueue 是无锁算法的典型例子。4）无等待（Wait-Free）——在无锁的基础上进一步保证所有线程都能在有限步内完成操作。每步操作必须在有限步骤内结束，不依赖其他线程的进度。这是最强的保证。目前 Java 中很少有完全无等待的数据结构（有些原子类的方法接近）。5）CAS 支持非阻塞算法——通过 CPU 提供的原子指令（CMPXCHG）实现「读→比较→写」的原子性。无锁数据结构的关键是：使用 CAS 操作链表/树的指针变更，通过失败重试避免线程阻塞。\n\n扩展延伸：1）无锁数据结构的 ABA 问题——CAS 只看值相等，不关心中间变化。用 AtomicStampedReference 或 AtomicMarkableReference 解决。2）Java 中的无锁队列——ConcurrentLinkedQueue 使用 CAS 操作头尾节点。出队：CAS 更新 head 指针。入队：CAS 更新 tail 指针。3）并非所有场景都需要无锁算法——锁的运行时开销（并非复杂度）在低竞争场景下已经很小。非阻塞算法通常比基于锁的算法复杂得多，调试和验证难度大。只在确实需要高并发、实时性要求高的场景才使用。",
+    "answer": "答案：并发级别从低到高：阻塞（Blocking）→ 无饥饿（Starvation-Free）→ 无锁（Lock-Free）→ 无等待（Wait-Free）。非阻塞算法指不阻塞线程执行就能保证线程安全的算法，基于 CAS 实现。\n\n解析：1）阻塞——线程在获取不到锁时挂起（如 synchronized、ReentrantLock）。一个线程阻塞会导致其他线程可以继续执行（吞吐量受线程切换影响）。2）无饥饿——系统保证每个线程最终都能获得所需的资源。公平锁（如 new ReentrantLock(true)）保证等待时间最长的线程优先获得锁，避免饥饿。3）无锁（Lock-Free）——所有线程在任意时刻至少有一个线程在执行（整个系统在推进），没有线程被阻塞。CAS 是无锁算法的基石。但可能有线程遭遇活锁（持续的 CAS 失败重试）。ConcurrentLinkedQueue 是无锁算法的典型例子。4）无等待（Wait-Free）——在无锁的基础上进一步保证所有线程都能在有限步内完成操作。每步操作必须在有限步骤内结束，不依赖其他线程的进度。这是最强的保证。目前 Java 中很少有完全无等待的数据结构（有些原子类的方法接近）。5）CAS 支持非阻塞算法——通过 CPU 提供的原子指令（CMPXCHG）实现「读→比较→写」的原子性。无锁数据结构的关键是：使用 CAS 操作链表/树的指针变更，通过失败重试避免线程阻塞。\n\n扩展延伸：1）无锁数据结构的 ABA 问题——CAS 只看值相等，不关心中间变化。用 AtomicStampedReference 或 AtomicMarkableReference 解决。2）Java 中的无锁队列——ConcurrentLinkedQueue 使用 CAS 操作头尾节点。出队：CAS 更新 head 指针。入队：CAS 更新 tail 指针。3）并非所有场景都需要无锁算法——锁的运行时开销（并非复杂度）在低竞争场景下已经很小。非阻塞算法通常比基于锁的算法复杂得多，调试和验证难度大。只在确实需要高并发、实时性要求高的场景才使用。",
     "hints": [
       "Lock-Free 为什么要求「至少一个线程在推进」而不是「所有线程都在推进」？",
       "非阻塞算法比基于锁的算法有什么不足之处？"
@@ -1228,7 +865,7 @@
     "type": "short_answer",
     "title": "Java 中的 Thread MXBean 有什么作用？如何用它检测死锁？",
     "content": "请介绍 JMX 的 ThreadMXBean API，以及如何通过编程方式检测 JVM 中的死锁。",
-    "answer": "ThreadMXBean 是 JMX 提供的线程监控接口，支持获取线程信息、CPU 时间、死锁检测等。通过 findMonitorDeadlockedThreads() 或 findDeadlockedThreads() 检测死锁。\n\n解析：1）获取 ThreadMXBean——ManagementFactory.getThreadMXBean() 获取平台 ThreadMXBean 实例。所有线程相关的监控信息通过它获取。2）线程信息——getThreadInfo(long threadId) 获取单个线程信息（名称、状态、堆栈、锁信息等）。getThreadInfo(long[] ids) 批量获取。getAllThreadIds() 获取所有活跃线程的 ID。3）deadlock 检测——findMonitorDeadlockedThreads()：检测由 Object monitor（synchronized）导致的死锁，返回死锁线程 ID 数组。findDeadlockedThreads()：JDK 6+，检测由 synchronized 和显式锁（如 ReentrantLock、AQS 同步器）综合导致的死锁。4）CPU 时间——isThreadCpuTimeEnabled()/setThreadCpuTimeEnabled(boolean)。getThreadCpuTime(threadId) 获取线程 CPU 时间（纳秒），用于监控线程的 CPU 消耗。5）其他功能——getThreadInfo(ids, maxDepth) 指定堆栈深度、resetPeakThreadCount() 重置峰值线程计数、getDaemonThreadCount()/getPeakThreadCount()/getThreadCount() 统计信息。\n\n扩展延伸：1）使用场景——健康检查和诊断系统：定时检测死锁并发送告警。监控系统：记录线程数变化趋势、分析线程泄漏。2）获取当前线程的堆栈——Thread.getAllStackTraces() 是另一种快速获取所有线程堆栈的方式（底层也是 JMX）。3）VisualVM 等监控工具也是通过 JMX 的 ThreadMXBean 来展示线程信息的。",
+    "answer": "答案：ThreadMXBean 是 JMX 提供的线程监控接口，支持获取线程信息、CPU 时间、死锁检测等。通过 findMonitorDeadlockedThreads() 或 findDeadlockedThreads() 检测死锁。\n\n解析：1）获取 ThreadMXBean——ManagementFactory.getThreadMXBean() 获取平台 ThreadMXBean 实例。所有线程相关的监控信息通过它获取。2）线程信息——getThreadInfo(long threadId) 获取单个线程信息（名称、状态、堆栈、锁信息等）。getThreadInfo(long[] ids) 批量获取。getAllThreadIds() 获取所有活跃线程的 ID。3）deadlock 检测——findMonitorDeadlockedThreads()：检测由 Object monitor（synchronized）导致的死锁，返回死锁线程 ID 数组。findDeadlockedThreads()：JDK 6+，检测由 synchronized 和显式锁（如 ReentrantLock、AQS 同步器）综合导致的死锁。4）CPU 时间——isThreadCpuTimeEnabled()/setThreadCpuTimeEnabled(boolean)。getThreadCpuTime(threadId) 获取线程 CPU 时间（纳秒），用于监控线程的 CPU 消耗。5）其他功能——getThreadInfo(ids, maxDepth) 指定堆栈深度、resetPeakThreadCount() 重置峰值线程计数、getDaemonThreadCount()/getPeakThreadCount()/getThreadCount() 统计信息。\n\n扩展延伸：1）使用场景——健康检查和诊断系统：定时检测死锁并发送告警。监控系统：记录线程数变化趋势、分析线程泄漏。2）获取当前线程的堆栈——Thread.getAllStackTraces() 是另一种快速获取所有线程堆栈的方式（底层也是 JMX）。3）VisualVM 等监控工具也是通过 JMX 的 ThreadMXBean 来展示线程信息的。",
     "hints": [
       "findMonitorDeadlockedThreads 和 findDeadlockedThreads 有什么区别？",
       "如何利用 ThreadMXBean 监控线程泄漏？"
@@ -1246,7 +883,7 @@
     "type": "short_answer",
     "title": "FutureTask 的状态机和实现原理是什么？",
     "content": "请解释 FutureTask 的内部状态转换（NEW→COMPLETING→NORMAL 等）以及 get/cancel 的实现逻辑。",
-    "answer": "FutureTask 的状态机有 7 个状态：NEW（初始）、COMPLETING（结果设置中）、NORMAL（正常完成）、EXCEPTIONAL（异常）、CANCELLED（取消）、INTERRUPTING（中断中）、INTERRUPTED（已中断）。状态单向转换，不可逆。\n\n解析：1）状态定义——NEW = 0（初始状态，任务新建或正在运行）、COMPLETING = 1（正在设置结果，volatile 赋值前的瞬间）、NORMAL = 2（正常完成）、EXCEPTIONAL = 3（run() 抛出异常）、CANCELLED = 4（cancel(false) 取消）、INTERRUPTING = 5（cancel(true) 正在中断线程）、INTERRUPTED = 6（中断完成）。2）run() 流程——检查 state == NEW 且 CAS 设置 runner 为当前线程 → 执行 Callable.call() → 结果通过 set(result) 设置 → state NEW → COMPLETING → NORMAL。如果有异常 setException(ex) → state NEW → COMPLETING → EXCEPTIONAL。3）get() 流程——检查 state < COMPLETING（未完成），线程加入等待节点（Treiber 栈），通过 LockSupport.park 阻塞。当 state 变为 COMPLETING 或结束后（run 完成/cancel），唤醒所有等待线程。get() 抛出 CancellationException（如果被取消）或 ExecutionException（如果执行异常）。4）cancel(boolean mayInterruptIfRunning)——mayInterruptIfRunning=true：state NEW → INTERRUPTING → 中断 runner 线程 → INTERRUPTED。mayInterruptIfRunning=false：state NEW → CANCELLED。如果任务已经开始执行（runner 非 null），中断取决于参数。如果任务已完成或已取消，返回 false。5）Waiting Node——FutureTask 内部维护一个 Treiber 栈（WaitNode 单向链表），get() 等待的线程被包装为 WaitNode 压入栈，任务完成后遍历栈唤醒所有等待线程。\n\n扩展延伸：1）FutureTask 在 Executor 框架中的作用——ThreadPoolExecutor.submit(Callable) 将 Callable 包装为 FutureTask 提交到线程池，返回 Future 给用户。FutureTask 的 runner 字段用于任务取消和中断。2）实现自己的 Future——如果需要实现类似的效果，可以利用 AQS（像 FutureTask 一样）或直接使用 CompletableFuture 替代（JDK 8+）。",
+    "answer": "答案：FutureTask 的状态机有 7 个状态：NEW（初始）、COMPLETING（结果设置中）、NORMAL（正常完成）、EXCEPTIONAL（异常）、CANCELLED（取消）、INTERRUPTING（中断中）、INTERRUPTED（已中断）。状态单向转换，不可逆。\n\n解析：1）状态定义——NEW = 0（初始状态，任务新建或正在运行）、COMPLETING = 1（正在设置结果，volatile 赋值前的瞬间）、NORMAL = 2（正常完成）、EXCEPTIONAL = 3（run() 抛出异常）、CANCELLED = 4（cancel(false) 取消）、INTERRUPTING = 5（cancel(true) 正在中断线程）、INTERRUPTED = 6（中断完成）。2）run() 流程——检查 state == NEW 且 CAS 设置 runner 为当前线程 → 执行 Callable.call() → 结果通过 set(result) 设置 → state NEW → COMPLETING → NORMAL。如果有异常 setException(ex) → state NEW → COMPLETING → EXCEPTIONAL。3）get() 流程——检查 state < COMPLETING（未完成），线程加入等待节点（Treiber 栈），通过 LockSupport.park 阻塞。当 state 变为 COMPLETING 或结束后（run 完成/cancel），唤醒所有等待线程。get() 抛出 CancellationException（如果被取消）或 ExecutionException（如果执行异常）。4）cancel(boolean mayInterruptIfRunning)——mayInterruptIfRunning=true：state NEW → INTERRUPTING → 中断 runner 线程 → INTERRUPTED。mayInterruptIfRunning=false：state NEW → CANCELLED。如果任务已经开始执行（runner 非 null），中断取决于参数。如果任务已完成或已取消，返回 false。5）Waiting Node——FutureTask 内部维护一个 Treiber 栈（WaitNode 单向链表），get() 等待的线程被包装为 WaitNode 压入栈，任务完成后遍历栈唤醒所有等待线程。\n\n扩展延伸：1）FutureTask 在 Executor 框架中的作用——ThreadPoolExecutor.submit(Callable) 将 Callable 包装为 FutureTask 提交到线程池，返回 Future 给用户。FutureTask 的 runner 字段用于任务取消和中断。2）实现自己的 Future——如果需要实现类似的效果，可以利用 AQS（像 FutureTask 一样）或直接使用 CompletableFuture 替代（JDK 8+）。",
     "hints": [
       "FutureTask 的 state 为什么要定义为 volatile？cancel(true) 和 cancel(false) 的区别是什么？",
       "get() 方法在任务未完成时是如何阻塞的？多个线程同时 get() 会怎样？"
@@ -1264,7 +901,7 @@
     "type": "short_answer",
     "title": "JUC 包中的 Striped64 类是如何实现高性能累加的？",
     "content": "请解释 Striped64（LongAdder/DoubleAdder 父类）的 Cell 设计、probe 探针值 hash 算法和扩容策略。",
-    "answer": "Striped64 通过将热点累加分散到 Cell 数组（每个 Cell 是一个 volatile long），通过线程的 probe 值 hash 到不同 Cell 上，减少 CAS 竞争。当竞争加剧时动态扩容 Cell 数组（2 的幂次增长）。\n\n解析：1）核心结构——base 变量（初始累加位置，无竞争时使用）和 Cell[] cells 数组（有竞争时展开）。每个 Cell 用 @Contended 注解填充缓存行（避免伪共享）。Cell 的 value 是 volatile long，通过 CAS 更新。2）操作流程——先尝试 CAS base → 成功则返回 → 失败（有竞争）→ 检查 cells 是否初始化 → 未初始化则初始化（capacity=2）→ 通过 probe 值定位到 cells[(probe & (cells.length-1))] → 尝试 CAS 该 Cell → 如果失败则扩容或重新 hash（probe 更新）。3）扩容策略——CAS cells 中的一个 Cell 失败时触发扩容（cells.length << 1），最多扩容到 4 倍 CPU 核数（NCPU）。扩容后原有数据分散到更多 Cell 上。不是每次失败都扩容——当 CAS base 失败时优先尝试 cells 而不是立即扩容。4）probe 机制——每个线程有一个探针值（ThreadLocalRandomProbe），通过 ThreadLocalRandom 初始化。当 CAS 失败时，通过计算新的 probe 值（advanceProbe）将线程映射到不同的 Cell，避免线程之间持续竞争同一个 Cell。5）sum()——累加 base + 所有 cells[i].value，但不保证一致性（可能漏掉正在累加的值）。适用于最终一致性场景的计数。\n\n扩展延伸：1）为什么 Striped64 用 @Contended 而不用手动 padding——@Contended 在 JDK 8+ 可用，自动添加 128 字节（对象前后各 64 字节）避免伪共享。2）Striped64 在 JDK 17 中的改进——更好的扩容策略，默认 cells 从 2 开始，根据 CPU 核数调整最大容量。3）应用——LongAdder 继承 Striped64，LongAccumulator 也继承 Striped64。Striped64 的性能关键是：将单个 CAS 热点分散到 2*N 个 Cell 上，在高竞争下每个 Cell 的 CAS 压力降低到 1/(2*N)。",
+    "answer": "答案：Striped64 通过将热点累加分散到 Cell 数组（每个 Cell 是一个 volatile long），通过线程的 probe 值 hash 到不同 Cell 上，减少 CAS 竞争。当竞争加剧时动态扩容 Cell 数组（2 的幂次增长）。\n\n解析：1）核心结构——base 变量（初始累加位置，无竞争时使用）和 Cell[] cells 数组（有竞争时展开）。每个 Cell 用 @Contended 注解填充缓存行（避免伪共享）。Cell 的 value 是 volatile long，通过 CAS 更新。2）操作流程——先尝试 CAS base → 成功则返回 → 失败（有竞争）→ 检查 cells 是否初始化 → 未初始化则初始化（capacity=2）→ 通过 probe 值定位到 cells[(probe & (cells.length-1))] → 尝试 CAS 该 Cell → 如果失败则扩容或重新 hash（probe 更新）。3）扩容策略——CAS cells 中的一个 Cell 失败时触发扩容（cells.length << 1），最多扩容到 4 倍 CPU 核数（NCPU）。扩容后原有数据分散到更多 Cell 上。不是每次失败都扩容——当 CAS base 失败时优先尝试 cells 而不是立即扩容。4）probe 机制——每个线程有一个探针值（ThreadLocalRandomProbe），通过 ThreadLocalRandom 初始化。当 CAS 失败时，通过计算新的 probe 值（advanceProbe）将线程映射到不同的 Cell，避免线程之间持续竞争同一个 Cell。5）sum()——累加 base + 所有 cells[i].value，但不保证一致性（可能漏掉正在累加的值）。适用于最终一致性场景的计数。\n\n扩展延伸：1）为什么 Striped64 用 @Contended 而不用手动 padding——@Contended 在 JDK 8+ 可用，自动添加 128 字节（对象前后各 64 字节）避免伪共享。2）Striped64 在 JDK 17 中的改进——更好的扩容策略，默认 cells 从 2 开始，根据 CPU 核数调整最大容量。3）应用——LongAdder 继承 Striped64，LongAccumulator 也继承 Striped64。Striped64 的性能关键是：将单个 CAS 热点分散到 2*N 个 Cell 上，在高竞争下每个 Cell 的 CAS 压力降低到 1/(2*N)。",
     "hints": [
       "为什么 Cell 要用 @Contended 注解填充缓存行？",
       "如果所有线程都 hash 到同一个 Cell 上会发生什么？Striped64 如何解决？"
@@ -1283,7 +920,7 @@
     "type": "short_answer",
     "title": "Java 中的 Thread.yield() 有什么作用？在什么场景下有用？",
     "content": "请解释 Thread.yield() 的语义、与 sleep(0) 的区别，以及实际开发中的使用建议。",
-    "answer": "Thread.yield() 提示线程调度器当前线程愿意放弃当前 CPU 时间片，调度器可以选择忽略这个提示。与 sleep(0) 类似但语义不同。实际开发中 yield 的使用场景有限，主要用于自旋锁中的优化和调试。\n\n解析：1）yield 语义——向调度器发出提示：当前线程愿意让出 CPU 给相同优先级的其他线程执行。调度器不保证会采纳（不强制让出）。yield 后线程进入 RUNNABLE 状态（就绪），不释放锁，不进入等待状态。2）与 sleep(0) 的对比——sleep(0) 也会让出当前时间片并立即重新参与调度，底层实现略有不同。两者效果类似但 sleep(0) 有更明确的语义（Thread.sleep 保证至少等待指定毫秒，0 表示触发一次上下文切换）。3）yield 的可能行为——在不同平台上行为不同：Windows 上 yield 实现为 Sleep(0)，Linux 上通过 sched_yield() 实现。单核 CPU 上 yield 可能立即让出时间片；多核上可能只是重新加入运行队列。4）使用场景——自旋锁优化：在自旋循环中间歇调用 yield 或 Thread.onSpinWait()（JDK 9+）来提示 CPU 当前正在自旋，避免 CPU 功耗过高。调试阶段临时代码，不应在生产代码中依赖 yield 来实现同步。5）注意事项——yield 不应被用于实现正确的同步或超时。它的语义不够明确（不可预测），不能替代 wait/notify、Condition 或 LockSupport。Java 官方文档也明确指出 yield 不应该被用来控制应用逻辑。\n\n扩展延伸：1）Thread.onSpinWait()——JDK 9 引入，专门用于自旋等待场景。在 x86 上对应 PAUSE 指令，ARM 上对应 YIELD 指令。相比 yield，onSpinWait 功耗更低且语义更明确。2）自旋等待的现代做法——while (!ready) { Thread.onSpinWait(); } 而不是 while (!ready) { Thread.yield(); }。",
+    "answer": "答案：Thread.yield() 提示线程调度器当前线程愿意放弃当前 CPU 时间片，调度器可以选择忽略这个提示。与 sleep(0) 类似但语义不同。实际开发中 yield 的使用场景有限，主要用于自旋锁中的优化和调试。\n\n解析：1）yield 语义——向调度器发出提示：当前线程愿意让出 CPU 给相同优先级的其他线程执行。调度器不保证会采纳（不强制让出）。yield 后线程进入 RUNNABLE 状态（就绪），不释放锁，不进入等待状态。2）与 sleep(0) 的对比——sleep(0) 也会让出当前时间片并立即重新参与调度，底层实现略有不同。两者效果类似但 sleep(0) 有更明确的语义（Thread.sleep 保证至少等待指定毫秒，0 表示触发一次上下文切换）。3）yield 的可能行为——在不同平台上行为不同：Windows 上 yield 实现为 Sleep(0)，Linux 上通过 sched_yield() 实现。单核 CPU 上 yield 可能立即让出时间片；多核上可能只是重新加入运行队列。4）使用场景——自旋锁优化：在自旋循环中间歇调用 yield 或 Thread.onSpinWait()（JDK 9+）来提示 CPU 当前正在自旋，避免 CPU 功耗过高。调试阶段临时代码，不应在生产代码中依赖 yield 来实现同步。5）注意事项——yield 不应被用于实现正确的同步或超时。它的语义不够明确（不可预测），不能替代 wait/notify、Condition 或 LockSupport。Java 官方文档也明确指出 yield 不应该被用来控制应用逻辑。\n\n扩展延伸：1）Thread.onSpinWait()——JDK 9 引入，专门用于自旋等待场景。在 x86 上对应 PAUSE 指令，ARM 上对应 YIELD 指令。相比 yield，onSpinWait 功耗更低且语义更明确。2）自旋等待的现代做法——while (!ready) { Thread.onSpinWait(); } 而不是 while (!ready) { Thread.yield(); }。",
     "hints": [
       "yield() 和 sleep(0) 在底层实现上的区别是什么？",
       "在自旋等待场景中，为什么 Thread.onSpinWait() 比 yield() 更适合？"
@@ -1301,7 +938,7 @@
     "type": "short_answer",
     "title": "什么是 VarHandle？和 Unsafe 有什么区别？",
     "content": "什么是 VarHandle？和 Unsafe 有什么区别？",
-    "answer": "VarHandle（JDK 9+）是对 Java 字段和数组元素的引用句柄，提供类型安全的内存访问操作。通过 MethodHandles.lookup().findVarHandle() 获取。\n\nVarHandle 的操作模式：普通读/写（plain）、Opaque（松散有序）、Acquire/Release（读写排序）、Volatile（完全有序）、CAS（compareAndSet）、compareAndExchange、getAndAdd。\n\n与 Unsafe 的区别：VarHandle 类型安全（Unsafe 绕过类型检查直接操作内存偏移）。VarHandle 受 JMM 规范（JDK 9+ 更新）。VarHandle 在所有 JVM 上行为一致（Unsafe 是 HotSpot 私有 API）。VarHandle 允许 JIT 内联优化（Unsafe 很难优化）。\n\nJDK 9 对 Unsafe：不删除但标记弃用。应用代码应迁移到 VarHandle 和 Standard Cleaner。",
+    "answer": "答案：VarHandle（JDK 9+）是对 Java 字段和数组元素的引用句柄，提供类型安全的内存访问操作。通过 MethodHandles.lookup().findVarHandle() 获取。\n\nVarHandle 的操作模式：普通读/写（plain）、Opaque（松散有序）、Acquire/Release（读写排序）、Volatile（完全有序）、CAS（compareAndSet）、compareAndExchange、getAndAdd。\n\n与 Unsafe 的区别：VarHandle 类型安全（Unsafe 绕过类型检查直接操作内存偏移）。VarHandle 受 JMM 规范（JDK 9+ 更新）。VarHandle 在所有 JVM 上行为一致（Unsafe 是 HotSpot 私有 API）。VarHandle 允许 JIT 内联优化（Unsafe 很难优化）。\n\nJDK 9 对 Unsafe：不删除但标记弃用。应用代码应迁移到 VarHandle 和 Standard Cleaner。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1313,7 +950,7 @@
     "type": "short_answer",
     "title": "JDK 21 的 Structured Concurrency（结构化并发）是什么？",
     "content": "JDK 21 的 Structured Concurrency（结构化并发）是什么？",
-    "answer": "结构化并发（JEP 453，JDK 21）将并发任务视为一个结构化单元——任务的声明周期被限制在语法作用域内。核心 API：StructuredTaskScope。\n\n基本用法：try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { Future<String> t1 = scope.fork(() -> s1.call()); Future<Integer> t2 = scope.fork(() -> s2.call()); scope.join(); scope.throwIfFailed(); return new Result(t1.resultNow(), t2.resultNow()); }\n\n核心原则：1) 子任务在父任务结束前必须结束 2) 错误传播（子任务失败→scope 自动取消其他任务）3) 自动清理（try-with-resources 确保子线程终止）。\n\n隔离策略：ShutdownOnFailure（一个失败立即取消所有）、ShutdownOnSuccess（一个成功立即取消其他）。",
+    "answer": "答案：结构化并发（JEP 453，JDK 21）将并发任务视为一个结构化单元——任务的声明周期被限制在语法作用域内。核心 API：StructuredTaskScope。\n\n基本用法：try (var scope = new StructuredTaskScope.ShutdownOnFailure()) { Future<String> t1 = scope.fork(() -> s1.call()); Future<Integer> t2 = scope.fork(() -> s2.call()); scope.join(); scope.throwIfFailed(); return new Result(t1.resultNow(), t2.resultNow()); }\n\n解析：核心原则：1) 子任务在父任务结束前必须结束 2) 错误传播（子任务失败→scope 自动取消其他任务）3) 自动清理（try-with-resources 确保子线程终止）。\n\n隔离策略：ShutdownOnFailure（一个失败立即取消所有）、ShutdownOnSuccess（一个成功立即取消其他）。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1325,7 +962,7 @@
     "type": "short_answer",
     "title": "什么是 JDK 21 的 Scoped Values？和 ThreadLocal 比有什么优势？",
     "content": "什么是 JDK 21 的 Scoped Values？和 ThreadLocal 比有什么优势？",
-    "answer": "Scoped Values（JEP 446，JDK 21）是 ThreadLocal 的替代方案，允许在线程作用域内共享不可变数据。\n\n用法：声明 static final ScopedValue<String> USER_ID = ScopedValue.newInstance()；绑定：ScopedValue.where(USER_ID, value).run(() -> { /* 在此作用域内 USER_ID.get() 可用 */ })；\n\n与 ThreadLocal 的区别：ScopedValue 只读（绑定后不可变）、生命周期受作用域限制、子线程自动继承（Virtual Thread 场景下自动 propagate）。\n\n性能优势：不需要 ThreadLocal 的 Map 查找（ThreadLocalMap 在大量变量时性能下降），JVM 可以将 ScopedValue 优化为寄存器变量。\n\n场景：Web 请求上下文中传递用户身份/TraceID。",
+    "answer": "答案：Scoped Values（JEP 446，JDK 21）是 ThreadLocal 的替代方案，允许在线程作用域内共享不可变数据。\n\n用法：声明 static final ScopedValue<String> USER_ID = ScopedValue.newInstance()；绑定：ScopedValue.where(USER_ID, value).run(() -> { /* 在此作用域内 USER_ID.get() 可用 */ })；\n\n与 ThreadLocal 的区别：ScopedValue 只读（绑定后不可变）、生命周期受作用域限制、子线程自动继承（Virtual Thread 场景下自动 propagate）。\n\n性能优势：不需要 ThreadLocal 的 Map 查找（ThreadLocalMap 在大量变量时性能下降），JVM 可以将 ScopedValue 优化为寄存器变量。\n\n场景：Web 请求上下文中传递用户身份/TraceID。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1337,7 +974,7 @@
     "type": "short_answer",
     "title": "什么是 AtomicFieldUpdater？和 AtomicInteger 的区别？",
     "content": "什么是 AtomicFieldUpdater？和 AtomicInteger 的区别？",
-    "answer": "AtomicIntegerFieldUpdater / AtomicLongFieldUpdater / AtomicReferenceFieldUpdater 是基于反射的原子更新器，将 volatile 字段包装为原子操作而不需要创建包装对象。\n\n用法：AtomicIntegerFieldUpdater<MyClass> UPD = AtomicIntegerFieldUpdater.newUpdater(MyClass.class, \"count\")；UPD.incrementAndGet(obj)。要求：字段必须是 volatile int/long/reference 且可访问。\n\n与 AtomicInteger 的区别：AtomicInteger 创建新对象（独立存储值）。AtomicFieldUpdater 直接操作对象现有 volatile 字段（零额外内存）。\n\n适合在已有对象中嵌入原子计数器（如 FutureTask 的 runner 字段）。",
+    "answer": "答案：AtomicIntegerFieldUpdater / AtomicLongFieldUpdater / AtomicReferenceFieldUpdater 是基于反射的原子更新器，将 volatile 字段包装为原子操作而不需要创建包装对象。\n\n用法：AtomicIntegerFieldUpdater<MyClass> UPD = AtomicIntegerFieldUpdater.newUpdater(MyClass.class, \"count\")；UPD.incrementAndGet(obj)。要求：字段必须是 volatile int/long/reference 且可访问。\n\n与 AtomicInteger 的区别：AtomicInteger 创建新对象（独立存储值）。AtomicFieldUpdater 直接操作对象现有 volatile 字段（零额外内存）。\n\n适合在已有对象中嵌入原子计数器（如 FutureTask 的 runner 字段）。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1349,7 +986,7 @@
     "type": "short_answer",
     "title": "ConcurrentLinkedQueue 和 LinkedBlockingQueue 的区别？",
     "content": "ConcurrentLinkedQueue 和 LinkedBlockingQueue 的区别？",
-    "answer": "ConcurrentLinkedQueue（CLQ）是无界非阻塞队列（基于 CAS + Michael-Scott 算法），提供无锁的 FIFO 操作。LinkedBlockingQueue（LBQ）是有界阻塞队列（基于链表 + ReentrantLock 的 putLock/takeLock 两把锁）。\n\n算法差异：CLQ 使用 Michael-Scott 非阻塞算法，通过 CAS 更新 head/tail。LBQ 使用两把锁（putLock + takeLock）+ Condition（notFull/notEmpty）实现阻塞。\n\n适用场景：CLQ 适合多线程同时入队/出队的高并发场景。LBQ 适合生产者-消费者模式（需要阻塞等待）。\n\n特点：CLQ 的 size() 是 O(n) 操作，LBQ 有 AtomicInteger count 实时维护。CLQ 无界可能 OOM。LBQ 非阻塞（忙等自旋消耗 CPU）vs LBQ 阻塞（线程挂起）。",
+    "answer": "答案：ConcurrentLinkedQueue（CLQ）是无界非阻塞队列（基于 CAS + Michael-Scott 算法），提供无锁的 FIFO 操作。LinkedBlockingQueue（LBQ）是有界阻塞队列（基于链表 + ReentrantLock 的 putLock/takeLock 两把锁）。\n\n算法差异：CLQ 使用 Michael-Scott 非阻塞算法，通过 CAS 更新 head/tail。LBQ 使用两把锁（putLock + takeLock）+ Condition（notFull/notEmpty）实现阻塞。\n\n解析：适用场景：CLQ 适合多线程同时入队/出队的高并发场景。LBQ 适合生产者-消费者模式（需要阻塞等待）。\n\n特点：CLQ 的 size() 是 O(n) 操作，LBQ 有 AtomicInteger count 实时维护。CLQ 无界可能 OOM。LBQ 非阻塞（忙等自旋消耗 CPU）vs LBQ 阻塞（线程挂起）。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1361,7 +998,7 @@
     "type": "short_answer",
     "title": "什么是 TransferQueue？LinkedTransferQueue 的实现原理？",
     "content": "什么是 TransferQueue？LinkedTransferQueue 的实现原理？",
-    "answer": "TransferQueue（JDK 7+）是 BlockingQueue 的增强版，增加生产者直接等待消费者取走的语义。唯一实现：LinkedTransferQueue（LTQ）。\n\n核心方法：transfer(E e)——阻塞直到消费者取走该元素。tryTransfer(E e)——尝试直接交给消费者，如有等待的消费者则成功返回 true。\n\n实现原理：LTQ 基于 Dual Data Structure——将 put/take 抽象为 Node，每个 Node 包含操作类型（REQUEST=消费者等待，DATA=生产者等待或数据）和线程引用。\n\n交换过程：transfer(e) 创建 DATA 节点→CAS 入队尾→如果前面都是 DATA（无等待消费者）则 park→消费者 take() 时创建 REQUEST 节点匹配 DATA→unpark 唤醒生产者。",
+    "answer": "答案：TransferQueue（JDK 7+）是 BlockingQueue 的增强版，增加生产者直接等待消费者取走的语义。唯一实现：LinkedTransferQueue（LTQ）。\n\n解析：核心方法：transfer(E e)——阻塞直到消费者取走该元素。tryTransfer(E e)——尝试直接交给消费者，如有等待的消费者则成功返回 true。\n\n实现原理：LTQ 基于 Dual Data Structure——将 put/take 抽象为 Node，每个 Node 包含操作类型（REQUEST=消费者等待，DATA=生产者等待或数据）和线程引用。\n\n交换过程：transfer(e) 创建 DATA 节点→CAS 入队尾→如果前面都是 DATA（无等待消费者）则 park→消费者 take() 时创建 REQUEST 节点匹配 DATA→unpark 唤醒生产者。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1373,7 +1010,7 @@
     "type": "short_answer",
     "title": "CompletableFuture 的 allOf 和 anyOf 实现原理？",
     "content": "CompletableFuture 的 allOf 和 anyOf 实现原理？",
-    "answer": "allOf——等待所有 CompletableFuture 完成（返回 CompletableFuture<Void>，不聚集结果）。anyOf——等待任意一个完成（返回 Object，结果为最先完成的那个）。\n\nallOf 实现原理（JDK 9+）：创建一个无状态的 CompletionStage 作为结果。所有输入 CF 完成时，通过零消耗的 finally 机制（不创建新线程，复用完成的线程）触发结果完成。当最后一个输入 CF 完成时，使用它的线程直接完成 allOf 返回的 CF。\n\nanyOf 实现原理：创建一个新的 CompletableFuture。每个输入 CF 完成时（最先完成的那个），将完成结果传递出去。\n\n手动聚合结果：CompletableFuture.allOf(cf1, cf2).thenApply(v -> new Result(cf1.join(), cf2.join()))。\n\n注意：allOf 中任何一个 CF 异常完成时，整个也异常完成。",
+    "answer": "答案：allOf——等待所有 CompletableFuture 完成（返回 CompletableFuture<Void>，不聚集结果）。anyOf——等待任意一个完成（返回 Object，结果为最先完成的那个）。\n\nallOf 实现原理（JDK 9+）：创建一个无状态的 CompletionStage 作为结果。所有输入 CF 完成时，通过零消耗的 finally 机制（不创建新线程，复用完成的线程）触发结果完成。当最后一个输入 CF 完成时，使用它的线程直接完成 allOf 返回的 CF。\n\nanyOf 实现原理：创建一个新的 CompletableFuture。每个输入 CF 完成时（最先完成的那个），将完成结果传递出去。\n\n手动聚合结果：CompletableFuture.allOf(cf1, cf2).thenApply(v -> new Result(cf1.join(), cf2.join()))。\n\n注意：allOf 中任何一个 CF 异常完成时，整个也异常完成。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1385,7 +1022,7 @@
     "type": "short_answer",
     "title": "什么是 CompletionService？ExecutorCompletionService 的工作原理？",
     "content": "什么是 CompletionService？ExecutorCompletionService 的工作原理？",
-    "answer": "CompletionService 接口将任务的生产（submit）和消费（take/poll 按完成顺序获取结果）分离。标准实现：ExecutorCompletionService（ECS）。\n\nECS 工作原理：提交任务时，将 Callable 包装为 RunnableFuture（通过 Executor 的 newTaskFor），并在 Future 完成时将结果放入内部的 BlockingQueue（LinkedBlockingQueue）。take() 从队列中阻塞获取最先完成的任务结果。\n\n经典场景：向多个服务发送并行请求（谁先完成用谁的结果，其他取消）。for (int i = 0; i < tasks.length; i++) { ecs.submit(tasks[i]); } for (int i = 0; i < tasks.length; i++) { Future<Result> f = ecs.take(); 处理结果。}\n\n与 allOf 的区别：ECS 的结果顺序是完成的先后顺序，allOf 是全部完成后按提交顺序取结果。",
+    "answer": "答案：CompletionService 接口将任务的生产（submit）和消费（take/poll 按完成顺序获取结果）分离。标准实现：ExecutorCompletionService（ECS）。\n\nECS 工作原理：提交任务时，将 Callable 包装为 RunnableFuture（通过 Executor 的 newTaskFor），并在 Future 完成时将结果放入内部的 BlockingQueue（LinkedBlockingQueue）。take() 从队列中阻塞获取最先完成的任务结果。\n\n经典场景：向多个服务发送并行请求（谁先完成用谁的结果，其他取消）。for (int i = 0; i < tasks.length; i++) { ecs.submit(tasks[i]); } for (int i = 0; i < tasks.length; i++) { Future<Result> f = ecs.take(); 处理结果。}\n\n与 allOf 的区别：ECS 的结果顺序是完成的先后顺序，allOf 是全部完成后按提交顺序取结果。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1397,7 +1034,7 @@
     "type": "short_answer",
     "title": "什么是 ThreadGroup？为什么 JDK 21 弃用了它？",
     "content": "什么是 ThreadGroup？为什么 JDK 21 弃用了它？",
-    "answer": "ThreadGroup 是 Java 1.0 引入的线程分组管理机制，支持批量操作（interrupt、suspend、resume）和异常处理（uncaughtException）。\n\n弃用原因：不安全的方法（suspend/resume/stop 已废弃）。对虚拟线程不友好——虚拟线程数量巨大（百万级），ThreadGroup 的树形管理无法扩展（虚拟线程不支持 ThreadGroup）。无实际用途——日常开发几乎不使用。\n\nJDK 21 将 ThreadGroup 标记为弃用以备未来移除。",
+    "answer": "答案：ThreadGroup 是 Java 中用于组织和管理线程组的类，提供批量操作（如 interrupt()、suspend()、resume()、stop() 等）和异常处理能力。\n\n解析：ThreadGroup 的功能——1）线程分组管理：将线程放入同一组统一操作。2）异常处理：组内未捕获异常由 uncaughtException() 处理。3）信息获取：activeCount()、enumerate() 等获取组内线程信息。\n\n弃用原因（JDK 21 将 ThreadGroup 标记为弃用）：1）suspend()/resume()/stop() 等方法已被弃用（不安全），ThreadGroup 的批量操作价值大幅降低。2）虚拟线程（Virtual Threads）不需要分组管理。3）更现代的线程管理方案：Executors + CompletionService + Structured Concurrency 提供了更好的线程生命周期管理。4）实际项目中 ThreadGroup 很少直接使用。\n\n替代方案：使用 ThreadPoolExecutor 管理线程池、使用 CompletableFuture 编排异步任务、使用 Structured Task API（JDK 21）管理结构化并发。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1409,7 +1046,7 @@
     "type": "short_answer",
     "title": "ForkJoinPool 的 common pool 是什么？如何配置？",
     "content": "ForkJoinPool 的 common pool 是什么？如何配置？",
-    "answer": "ForkJoinPool.commonPool() 是 JVM 全局共享的 ForkJoinPool 实例（所有并行流和 CompletableFuture 默认使用）。parallelism = CPU 核数 - 1（Runtime.getRuntime().availableProcessors() - 1）。\n\n配置参数：java.util.concurrent.ForkJoinPool.common.parallelism（设置并行度）。java.util.concurrent.ForkJoinPool.common.threadFactory（自定义线程工厂）。java.util.concurrent.ForkJoinPool.common.exceptionHandler（异常处理器）。\n\n默认使用场景：parallelStream() 默认使用 common pool。CompletableFuture 的默认异步池也是 common pool。\n\n注意：common pool 共享的，一个任务的阻塞会影响其他任务。IO 密集型任务应使用单独的线程池。",
+    "answer": "答案：ForkJoinPool.commonPool() 是 JVM 全局共享的 ForkJoinPool 实例（所有并行流和 CompletableFuture 默认使用）。parallelism = CPU 核数 - 1（Runtime.getRuntime().availableProcessors() - 1）。\n\n配置参数：java.util.concurrent.ForkJoinPool.common.parallelism（设置并行度）。java.util.concurrent.ForkJoinPool.common.threadFactory（自定义线程工厂）。java.util.concurrent.ForkJoinPool.common.exceptionHandler（异常处理器）。\n\n默认使用场景：parallelStream() 默认使用 common pool。CompletableFuture 的默认异步池也是 common pool。\n\n注意：common pool 共享的，一个任务的阻塞会影响其他任务。IO 密集型任务应使用单独的线程池。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1421,7 +1058,7 @@
     "type": "short_answer",
     "title": "RecursiveTask 和 RecursiveAction 有什么区别？",
     "content": "RecursiveTask 和 RecursiveAction 有什么区别？",
-    "answer": "ForkJoinTask 是 ForkJoinPool 中运行的任务基类。RecursiveTask<V> 返回结果（用于有返回值的分治计算）。RecursiveAction 不返回结果（纯执行）。\n\nRecursiveTask 的典型用法：compute() 判断是否小到可直接计算→是则直接返回；否则拆分问题→fork() 子任务→join() 等待并合并。\n\nRecursiveAction 的典型用法：compute() 拆分任务到子任务→fork() 或 invokeAll() 提交子任务。\n\n性能注意：任务拆分阈值太小题库并发利用不充分，太小会带来过大的 fork/join 开销。典型值 1000-10000 个元素。",
+    "answer": "答案：RecursiveTask 和 RecursiveAction 都是 ForkJoinPool 中用于分治任务的抽象类，区别在于 RecursiveTask 有返回值（compute() 返回泛型 V），而 RecursiveAction 没有返回值（compute() 返回 void）。\n\n解析：1）RecursiveTask<V>——compute() 方法返回 V 类型结果，适用于需要计算返回值的场景（如求和、最值、统计）。通过 fork() 提交子任务，join() 获取子任务结果。2）RecursiveAction——compute() 方法返回 void，适用于不需要返回值的场景（如数组排序、遍历操作）。无需合并子任务结果。\n\n经典案例——RecursiveTask：并行计算数组和（fork 子数组求和任务，join 合并结果）。RecursiveAction：并行排序数组（fork 左右半区排序，不合并结果）。\n\n选型依据：任务需要返回值 → RecursiveTask；任务只执行操作不关心返回值 → RecursiveAction。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1433,7 +1070,7 @@
     "type": "short_answer",
     "title": "ReentrantLock 和 synchronized 的性能对比（JDK 21）？",
     "content": "ReentrantLock 和 synchronized 的性能对比（JDK 21）？",
-    "answer": "JDK 8+ 以来的优化让两者的性能差距几乎消失——synchronized 经过锁升级优化后，低竞争下性能已经很好了。\n\n单线程/低竞争：synchronized 可能略快（无锁竞争时几乎零开销）。\n\n高竞争：ReentrantLock 更可控（可中断、超时等待、公平锁、Condition 灵活、tryLock 非阻塞）。synchronized 在高竞争下膨胀为重量级锁（线程阻塞在内核态），ReentrantLock 可以通过 tryLock 避免不必要的挂起。\n\n建议：新代码优先用 synchronized（语法更简洁）。需要以下特性时换 ReentrantLock：可中断等待、超时获取、公平锁、多个 Condition。",
+    "answer": "答案：在 JDK 21 中，synchronized 和 ReentrantLock 的性能差距已经很小，选择依据从性能转向功能需求。\n\n解析：JDK 21 中两者的对比——1）性能：synchronized 经过锁升级（偏向锁→轻量级锁→重量级锁）和 JIT 优化（锁消除、锁粗化），在低竞争场景下与 ReentrantLock 几乎无差异。JDK 15 默认禁用偏向锁后，synchronized 的冷启动性能进一步提升。2）功能对比：ReentrantLock 支持可中断锁（lockInterruptibly()）、超时锁（tryLock(timeout)）、公平锁、Condition 条件变量、多个等待队列。synchronized 不支持以上功能。\n\n选型建议：需要可中断/超时/公平锁 → ReentrantLock；需要 Condition → ReentrantLock；简单同步 → synchronized（更简洁、不易出错）。性能不是选型的关键差异因素。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1445,31 +1082,7 @@
     "type": "short_answer",
     "title": "什么是 Striped Lock（锁分段）模式？",
     "content": "什么是 Striped Lock（锁分段）模式？",
-    "answer": "Striped Lock 将锁粒度从一把锁保护整个数据结构细化为一把锁保护数据的一个分段，减少锁竞争。与 ConcurrentHashMap 的锁分段原理类似。\n\nJDK 实现：Guava Striped（可以创建 64 个锁的 striped lock，对象根据 hashCode 路由到对应的锁）。\n\n场景举例：处理大量不同 Key 的请求（每个 Key 的操作需要互斥但不同 Key 之间不需要）。使用 Striped<Lock> 创建 N 个锁的池，每个 key 的 hashCode % N 决定使用哪个锁。\n\n设计注意：N 不能太大（内存开销），不能太小（竞争加剧）。N 通常设置为 2 的幂。",
-    "hints": [],
-    "tags": [
-      "并发扩展"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "什么是 PriorityBlockingQueue？内部实现？",
-    "content": "什么是 PriorityBlockingQueue？内部实现？",
-    "answer": "PriorityBlockingQueue（PBQ）是无界阻塞优先队列——元素按优先级顺序出队（由 Comparator 或自然顺序定义），优先级相同的按 FIFO。\n\n内部实现：基于 Object[] 数组的二叉堆。入队 offer()：插入数组末尾，执行上浮（siftUp）O(log n)。出队 take()：取出堆顶，将末尾元素移到堆顶，执行下沉（siftDown）O(log n)。\n\n线程安全：所有修改操作加 ReentrantLock 锁。通过 Condition notEmpty 实现阻塞。\n\n注意事项：不能放 null。迭代器不保证顺序（遍历整个底层数组）。数据快照是弱一致性的。",
-    "hints": [],
-    "tags": [
-      "并发扩展"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "什么是 DelayQueue？ScheduledThreadPoolExecutor 如何用它？",
-    "content": "什么是 DelayQueue？ScheduledThreadPoolExecutor 如何用它？",
-    "answer": "DelayQueue 是无界阻塞队列，元素只有在其延迟时间到期后才能被 take() 取出。元素必须实现 Delayed 接口（getDelay() 返回剩余延迟，compareTo() 决定出队顺序）。\n\nScheduledThreadPoolExecutor（STPE）内部使用 DelayQueue 存储 ScheduledFutureTask。每个周期性任务的执行时间作为延迟（到期时间 = scheduledExecutionTime - now）。\n\nSTPE 的工作循环：工作线程从 DelayQueue take() → 运行 → 计算下次执行时间 → 重新放入。周期性任务的放入动作在 Worker 线程中完成。\n\nDelayQueue 内部使用 PriorityQueue + ReentrantLock + Condition available。工作线程通过 Condition.awaitNanos(delay) 精确等待到期。",
+    "answer": "答案：Striped Lock（锁分段/条带锁）是一种通过将锁资源分解为多个独立的锁来减少锁竞争的并发优化模式。\n\n解析：核心思想——将整体锁拆分为 N 个独立的锁（通常用数组实现），每个锁负责保护一部分资源。通过哈希映射，不同的键被分配到不同的锁上，从而允许多个线程同时操作不同段的数据。\n\n经典实现——1）ConcurrentHashMap 的 JDK 7 版本使用 Segment 数组实现分段锁，每个 Segment 继承 ReentrantLock，锁住一段哈希桶。2）Striped64/LongAdder 使用 Cell 数组，不同线程累加到不同 Cell，减少 CAS 竞争。3）Guava 的 Striped 工具类提供 Flexible 的锁分段实现。\n\n优缺点：优点——减少锁竞争、提高并发度。缺点——实现复杂、段的数量需要权衡（太少竞争大、太多浪费内存）。适用场景——高频访问的键值映射、计数器、缓存。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1481,7 +1094,7 @@
     "type": "short_answer",
     "title": "Lock-Free 和 Wait-Free 算法有什么区别？",
     "content": "Lock-Free 和 Wait-Free 算法有什么区别？",
-    "answer": "Lock-Free：系统整体保证至少一个线程在有限步数内取得进展。可能存在线程忙等但不会阻塞。实现方式：CAS 循环。例子：ConcurrentLinkedQueue、AtomicInteger.incrementAndGet。没有死锁但可能有活锁。\n\nWait-Free：更强的保证——每个线程都在有限步数内完成操作（不被其他线程饿死）。更难实现。例子：ThreadLocalRandom 的 seed 更新。实现方式：使用线程本地辅助槽位避免回退。\n\n无锁的代价：ABA 问题（CAS 可能把 A→B→A 误认为没变过，使用 AtomicStampedReference 解决）。额外复杂性。性能不是免费的（高竞争下 CAS 频繁失败，回退消耗 CPU）。",
+    "answer": "答案：Lock-Free 和 Wait-Free 是非阻塞算法的两种级别，区别在于对线程进展的保证强度不同。\n\n解析：1）Lock-Free——保证至少有一个线程能在有限步骤内取得进展（system-wide progress）。如果某个线程被挂起，不会阻止其他线程完成工作。使用 CAS（Compare-And-Swap）等原子操作实现。可能存在活锁（线程持续重试但都不成功）。经典实现：ConcurrentLinkedQueue、ConcurrentHashMap 的部分操作。\n2）Wait-Free——更强的保证，每个线程都能在有限的步骤内完成操作（per-thread progress）。所有线程都能在有限的步骤内完成操作，无论其他线程的行为如何。不依赖 CAS 循环，使用原子数组和帮助机制实现。实现更复杂，实际使用较少。\n\n对比——Lock-Free 通常具有更好的平均性能（大多数线程很快成功），但最坏情况下可能有线程无限重试。Wait-Free 保证确定的响应时间，适合实时系统。Java 的 java.util.concurrent 包主要是 Lock-Free 实现。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1493,19 +1106,7 @@
     "type": "short_answer",
     "title": "什么是 JMX 线程死锁检测？如何实现？",
     "content": "什么是 JMX 线程死锁检测？如何实现？",
-    "answer": "ThreadMXBean.findDeadlockedThreads() 是 JVM 内置的死锁检测 API。\n\n原理：遍历所有活着的线程的锁依赖关系图，检测循环依赖（线程 A 持有锁 1 等待锁 2，线程 B 持有锁 2 等待锁 1）。findMonitorDeadlockedThreads()（JDK 5）检测 synchronized 死锁。findDeadlockedThreads()（JDK 6+）还能检测 juc 锁（ReentrantLock）的死锁。\n\n实现机制：遍历线程堆栈，找到每个线程持有的锁和等待的锁。对锁图做拓扑排序检测环。\n\n生产实践：定时任务每 5 分钟调用一次 findDeadlockedThreads()，发现死锁记录日志并告警。",
-    "hints": [],
-    "tags": [
-      "并发扩展"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "并发中的 ABA 问题是什么？如何解决？",
-    "content": "并发中的 ABA 问题是什么？如何解决？",
-    "answer": "ABA 问题是 CAS 操作的陷阱——值从 A→B→A，CAS 判断没有变化但语义上可能已经变化。\n\n具体例子：Treiber Stack（CAS 实现的无锁栈）。线程 1 观察到栈顶是 A（A.next = B），准备将栈顶 CAS 从 A 改为 B。但线程 2 先弹出 A+B，然后 push A（栈顶变为 A）。此时 CAS 成功（值没变），但 A.next 已经不指向 B 了，数据丢失。\n\nAtomicStampedReference：用 int stamp（版本号）标记引用，每次 CAS 同时比较引用和版本号。引用变 B 时 stamp+1，变回 A 时 stamp 已经不同。\n\n注意：JDK 中大多数 CAS 不需要处理 ABA（如 AtomicInteger——值曾经是 1 现在是 1 不是问题）。只有涉及引用链的结构需要处理，如 Lock-Free 栈和队列。",
+    "answer": "答案：ThreadMXBean.findDeadlockedThreads() 是 JVM 内置的死锁检测 API。\n\n解析：原理：遍历所有活着的线程的锁依赖关系图，检测循环依赖（线程 A 持有锁 1 等待锁 2，线程 B 持有锁 2 等待锁 1）。findMonitorDeadlockedThreads()（JDK 5）检测 synchronized 死锁。findDeadlockedThreads()（JDK 6+）还能检测 juc 锁（ReentrantLock）的死锁。\n\n实现机制：遍历线程堆栈，找到每个线程持有的锁和等待的锁。对锁图做拓扑排序检测环。\n\n生产实践：定时任务每 5 分钟调用一次 findDeadlockedThreads()，发现死锁记录日志并告警。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1517,7 +1118,7 @@
     "type": "short_answer",
     "title": "Reactor 模式和 Proactor 模式的区别？Java 中的实现？",
     "content": "Reactor 模式和 Proactor 模式的区别？Java 中的实现？",
-    "answer": "Reactor 模式（同步非阻塞）：事件分发器等待 IO 事件就绪→分发到 Handler 处理。读操作由 Handler 发起（应用层主动读取数据）。\n\nProactor 模式（异步非阻塞）：操作系统完成异步 IO 操作（内核把数据读到缓冲区）→通知应用处理。应用不需要等待 IO 就绪和主动读取。\n\nJava 实现：Reactor——Java NIO 的 Selector（select() 等待事件就绪→分配 Handle→Handler 处理读写）。Netty 的 EventLoop（每个 EventLoop 内部是一个 Reactor）。Proactor——JDK 7 的 AsynchronousChannelGroup + AsynchronousSocketChannel（通过 CompletionHandler 回调）。\n\nNetty 选择 Reactor 而非 Proactor 的原因：Java 的 AIO 在 Linux 上基于 epoll 模拟（非真正异步 IO），性能不如 NIO。",
+    "answer": "答案：Reactor 和 Proactor 是两种高性能 I/O 模式，区别在于谁负责实际的 I/O 操作——Reactor 是同步非阻塞，Proactor 是异步。\n\n解析：1）Reactor 模式——事件循环等待 I/O 事件就绪（可读/可写），就绪后回调注册的 handler 进行数据读写。I/O 操作由 handler 同步执行。Java 实现：NIO 的 Selector（多路复用器）+ Channel（通道）+ ByteBuffer。Netty 的 EventLoop 也是 Reactor 的变体（主从 Reactor 多线程模型）。\n2）Proactor 模式——操作系统完成实际的 I/O 操作（读/写），完成后通知应用程序处理已就绪的数据。应用程序发起异步 I/O 调用后立即返回。Java 实现：NIO.2 的 AsynchronousServerSocketChannel / AsynchronousSocketChannel（基于 AIO，使用回调或 Future）。Windows 的完成端口（IOCP）是经典的 Proactor 实现。\n\n选型——Reactor 在 Linux 上表现更好（Linux AIO 不成熟），Proactor 在 Windows 上表现更好（IOCP 成熟）。Java 中 Netty 用的是 Reactor 模型（跨平台兼容性好），JDK 的 AIO（Proactor）在 Linux 上底层用 epoll 模拟，性能不如 Netty 的 Reactor。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1529,7 +1130,7 @@
     "type": "short_answer",
     "title": "什么是 JDK 的并行流 Spliterator？",
     "content": "什么是 JDK 的并行流 Spliterator？",
-    "answer": "Spliterator（JDK 8+）是可分迭代器，支持顺序遍历和分区遍历，是并行流的基础。\n\n核心方法：tryAdvance(Consumer)——处理单个元素，返回是否有剩余。trySplit()——将剩余元素分成两部分。estimateSize()——估算剩余数量。characteristics()——返回特性标志。\n\n特性对性能的影响：SIZED 让拆分更均匀。IMMUTABLE 让并行流可以安全地多线程处理。ORDERED 保持顺序但限制并行性。\n\n自定义场景：分页从数据库读取数据——tryAdvance 从 ResultSet 读一行，trySplit 返回新的 Spliterator 读取后半部分。",
+    "answer": "答案：Spliterator（Splittable Iterator，可拆分迭代器）是 Java 8 引入的遍历和拆分数据源的接口，是并行流（parallel stream）的核心基础设施。\n\n解析：Spliterator 的作用——1）遍历元素：tryAdvance() 逐个消费元素，forEachRemaining() 批量消费。2）拆分数据源：trySplit() 将当前数据源拆分为两部分，返回新的 Spliterator 处理子任务。拆分是递归的，直到数据块足够小（达到阈值）。3）特征标记：characteristics() 返回 SIZED、SUBSIZED、ORDERED、DISTINCT、SORTED、NONNULL、IMMUTABLE、CONCURRENT 等特征，用于优化遍历策略。\n\n并行流执行流程：Stream.parallel() → 调用 Spliterator.trySplit() 递归拆分 → ForkJoinPool 分派子任务 → 每个子任务独立处理 → join 合并结果。\n\n自定义 Spliterator：可以实现 Spliterator 接口自定义数据源的分裂策略，用于并行处理非集合类数据源。",
     "hints": [],
     "tags": [
       "并发扩展"
@@ -1541,7 +1142,7 @@
     "type": "short_answer",
     "title": "什么是 ConcurrentHashMap 的 size() 和 mappingCount()？",
     "content": "什么是 ConcurrentHashMap 的 size() 和 mappingCount()？",
-    "answer": "ConcurrentHashMap 的 size() 和 mappingCount() 都是返回键值对数量，但有细微区别。\n\nsize()（JDK 7+）：返回 int 类型。如果元素数量超过 Integer.MAX_VALUE，只返回最大值。底层实现：sumCount() 方法——累加 baseCount（未发生竞争时的基础计数）和 CounterCell[] 数组的 value（高并发时多个线程在各自 Cell 中计数以减少竞争）。\n\nmappingCount()（JDK 8+ 推荐）：返回 long 类型。实现与 size() 相同（也是 sumCount），只是返回类型为 long（可表示超过 2^31 的键值对）。\n\nCounterCell 机制（JDK 8+）：当多个线程同时调用 addCount()（如 put 操作）时，通过 CounterCell 数组进行分散。每个 CounterCell 包含一个 volatile long value 字段。线程通过 ThreadLocalRandom 选择 Cell 做 CAS 累加，避免单一 counter 的竞争。\n\n注意：size() 和 mappingCount() 都是弱一致性的——它们返回的是统计时刻的近似值（不是在所有 put/remove 操作加锁的状态下计算）。在高并发下可能是过期数据。\n\nThe JDK 12+ 的 size() 内部实现使用 sumCount()（与 mappingCount() 同），sumCount() 通过遍历 baseCount 和 CounterCell 数组累加得到结果。",
+    "answer": "答案：ConcurrentHashMap 的 size() 和 mappingCount() 都是返回键值对数量，但有细微区别。\n\nsize()（JDK 7+）：返回 int 类型。如果元素数量超过 Integer.MAX_VALUE，只返回最大值。底层实现：sumCount() 方法——累加 baseCount（未发生竞争时的基础计数）和 CounterCell[] 数组的 value（高并发时多个线程在各自 Cell 中计数以减少竞争）。\n\nmappingCount()（JDK 8+ 推荐）：返回 long 类型。实现与 size() 相同（也是 sumCount），只是返回类型为 long（可表示超过 2^31 的键值对）。\n\nCounterCell 机制（JDK 8+）：当多个线程同时调用 addCount()（如 put 操作）时，通过 CounterCell 数组进行分散。每个 CounterCell 包含一个 volatile long value 字段。线程通过 ThreadLocalRandom 选择 Cell 做 CAS 累加，避免单一 counter 的竞争。\n\n注意：size() 和 mappingCount() 都是弱一致性的——它们返回的是统计时刻的近似值（不是在所有 put/remove 操作加锁的状态下计算）。在高并发下可能是过期数据。\n\nThe JDK 12+ 的 size() 内部实现使用 sumCount()（与 mappingCount() 同），sumCount() 通过遍历 baseCount 和 CounterCell 数组累加得到结果。",
     "hints": [],
     "tags": [
       "并发扩展"

@@ -1434,7 +1434,7 @@
     "type": "multiple_choice",
     "title": "Lambda 表达式的限制",
     "content": "以下哪些是 Java Lambda 表达式的限制？",
-    "answer": "A) Lambda 表达式不能有命名的局部变量（必须有名称）",
+    "answer": "B) Lambda 表达式引入的局部变量必须是 effectively final",
     "correct": [
       "B",
       "C"
@@ -2048,7 +2048,7 @@
     "type": "short_answer",
     "title": "线程安全的集合类识别",
     "content": "以下哪些集合是线程安全的，可以直接在多线程环境中使用而不需要额外同步？（多选）\nA) ConcurrentHashMap\nB) CopyOnWriteArrayList\nC) HashMap\nD) Collections.synchronizedMap(new HashMap<>())",
-    "answer": "A, B, D",
+    "answer": "答案：A, B, D",
     "hints": [
       "HashMap 的 fast-fail 机制在多线程下容易触发",
       "synchronizedMap 使用 mutex 锁包装所有方法"
@@ -2065,7 +2065,7 @@
     "type": "short_answer",
     "title": "保证迭代顺序的 Map 实现",
     "content": "以下哪些 Map 实现能够保证遍历时键值对的顺序是确定的？（多选）\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",
-    "answer": "B, C",
+    "answer": "答案：B, C",
     "hints": [
       "LinkedHashMap 维护双向链表记录顺序",
       "TreeMap 基于红黑树按 key 排序"
@@ -2083,7 +2083,7 @@
     "type": "short_answer",
     "title": "ConcurrentModificationException 的触发路径",
     "content": "以下哪些场景会抛出 ConcurrentModificationException？（多选）\nA) 线程 A 使用 Iterator 遍历 ArrayList 的同时，线程 B 调用 list.add() 添加元素\nB) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 list.remove(index)\nC) 单线程中使用 Iterator 遍历 ArrayList，遍历过程中调用 iterator.remove()\nD) 一个线程遍历 CopyOnWriteArrayList 的同时另一个线程向其中添加元素",
-    "answer": "A, B",
+    "answer": "答案：A, B",
     "hints": [
       "iterator.remove 是安全的删除方式",
       "CopyOnWriteArrayList 的迭代器基于快照"
@@ -2100,7 +2100,7 @@
     "type": "short_answer",
     "title": "Collections 包装方法的语义陷阱",
     "content": "关于 Collections 工具类的包装方法，以下哪些描述是正确的？（多选）\nA) Collections.unmodifiableList() 返回的视图拦截所有修改操作，调用 add/remove/set 时抛出 UnsupportedOperationException\nB) Collections.synchronizedList() 返回的同步列表在迭代时仍需外部手动加锁\nC) Collections.checkedList() 在运行时对所有插入元素执行类型检查\nD) Collections.emptyList() 返回的空列表可以正常调用 add() 来扩展元素",
-    "answer": "A, B, C",
+    "answer": "答案：A, B, C",
     "hints": [
       "unmodifiableList 是视图而非不可变副本",
       "synchronizedList 的迭代器本身不加锁"
@@ -2118,7 +2118,7 @@
     "type": "short_answer",
     "title": "Queue 与 Deque 实现的核心特性",
     "content": "以下关于 Java 队列实现的描述，哪些是正确的？（多选）\nA) ArrayDeque 的初始容量为 16，且容量始终保持为 2 的幂次方\nB) LinkedList 同时实现了 List 和 Deque 接口，可作为双端队列使用\nC) PriorityBlockingQueue 是有界阻塞队列，插入操作在队列满时阻塞\nD) DelayQueue 要求元素实现 Delayed 接口，take() 方法在有元素到期前阻塞",
-    "answer": "A, B, D",
+    "answer": "答案：A, B, D",
     "hints": [
       "ArrayDeque 的 2 的幂次方容量用于位运算优化头尾指针",
       "PriorityBlockingQueue 是无界队列"
@@ -2137,7 +2137,7 @@
     "type": "short_answer",
     "title": "线程上下文类加载器与 SPI 的违背",
     "content": "关于 Java 的线程上下文类加载器（Thread Context ClassLoader, TCCL）在 SPI 机制中的作用，以下哪些描述是正确的？（多选）\nA) SPI 机制的典型实现（如 JDBC DriverManager）使用 TCCL 加载第三方实现类，因为启动类加载器无法访问应用 classpath 中的类\nB) TCCL 的使用是对「双亲委派模型」的一种破坏，因为加载方向变成了从子加载器向父加载器请求\nC) TCCL 默认值就是启动类加载器（Bootstrap ClassLoader），因此 SPI 总是能加载到所有类\nD) TCCL 在 Java 9+ 模块化系统中已完全废弃，被 ModuleLayer 的 findLoader 机制取代",
-    "answer": "A)、B)",
+    "answer": "答案：A)、B)",
     "hints": [
       "双亲委派模型是从父加载器向子加载器委派，而 TCCL 允许子加载器「向上突破」加载框架类",
       "JDBC 4.0 的 DriverManager 初始化时使用 TCCL 扫描所有实现了 java.sql.Driver 的类"
@@ -2156,7 +2156,7 @@
     "type": "short_answer",
     "title": "PhantomReference 与 ReferenceQueue 的交互时机",
     "content": "关于 PhantomReference（虚引用）和 ReferenceQueue 的交互，以下哪些描述是正确的？（多选）\nA) PhantomReference.get() 始终返回 null，无论被引用对象是否可达\nB) PhantomReference 在 GC 确定对象为虚可达后，会清除引用并将 PhantomReference 对象入队到 ReferenceQueue\nC) PhantomReference 所指对象只有在 PhantomReference 本身被清除（clear）或不再可访问时，其内存才会被真正回收\nD) PhantomReference 必须与 ReferenceQueue 配合使用，无参构造方法不存在",
-    "answer": "A)、C)、D)",
+    "answer": "答案：A)、C)、D)",
     "hints": [
       "PhantomReference 的用途是「对象被回收后收到通知」，而不是获取对象引用",
       "PhantomReference 的入队和清理时机决定了它不像 SoftReference/WeakReference 那样能被自动清除"
@@ -2175,7 +2175,7 @@
     "type": "short_answer",
     "title": "ConcurrentHashMap compute vs merge 原子性差异",
     "content": "ConcurrentHashMap 提供了 compute()、computeIfAbsent()、merge() 等方法。以下关于这些方法原子性保证和行为差异的描述，哪些是正确的？（多选）\nA) compute() 和 merge() 都保证整个函数在 ConcurrentHashMap 的分段锁内原子执行\nB) merge(key, value, remappingFunction) 的 remappingFunction 仅在 key 已存在时才会被调用，如果 key 不存在则直接放入 value（类似 put 但返回已存在的值或新值）\nC) compute() 函数的 remappingFunction 如果返回 null，则删除该 key（如果存在）\nD) computeIfAbsent() 的 mappingFunction 如果返回 null，则 key 不会被插入，且方法返回 null",
-    "answer": "A)、B)、C)、D)",
+    "answer": "答案：A)、B)、C)、D)",
     "hints": [
       "所有四个选项都涉及 ConcurrentHashMap 的核心原子操作语义",
       "compute 系列方法与 Map 接口的其他默认方法（如 replaceAll）的区别在于原子性保证"
@@ -2194,7 +2194,7 @@
     "type": "short_answer",
     "title": "Stream collect 与 reduce 的选择原则",
     "content": "Java Stream API 提供了 `collect(Collector)` 和 `reduce(T, BinaryOperator)` 两种归约操作。以下关于二者选择原则的描述，哪些是正确的？（多选）\nA) reduce() 适用于不可变的归约操作（如求和、最大值），其累加器是纯函数，不会修改已有状态\nB) collect() 适用于可变的归约操作（如追加到集合、拼接字符串），其累加器可以修改可变容器\nC) 在并行流中，reduce() 的 combiner 只有在结果类型与输入类型不一致时才被调用\nD) collect() 的 combiner（在 Collector 中定义）必须能处理任意两个部分结果容器的合并，且合并后结果与顺序执行等价",
-    "answer": "A)、B)、D)",
+    "answer": "答案：A)、B)、D)",
     "hints": [
       "reduce 的三个参数版本：identity、accumulator、combiner——所有参数都必须是关联的（associative）",
       "可变的累加容器用 collect（StringBuilder、ArrayList），不可变的标量累加用 reduce"
@@ -2213,7 +2213,7 @@
     "type": "short_answer",
     "title": "JMM final 字段在构造过程中的保证",
     "content": "JSR 133（Java Memory Model）为 final 字段提供了特殊的初始化安全保证。以下关于 final 字段的 JMM 语义描述，哪些是正确的？（多选）\nA) 一个对象的 final 字段在构造函数完成后、对象引用被发布到其他线程时，其他线程保证看到 final 字段的正确初始化值，即使该对象引用存在 data race\nB) final 字段的保证不适用于通过反射（Field.set()）修改后的值——修改后的值没有跨线程可见性保证\nC) final 字段的保证要求构造函数中没有将 this 引用泄漏（如将 this 传给其他线程注册）——如果发生逃逸，则保证失效\nD) final 字段的初始化安全保证仅适用于 primitive 类型的 final 字段，不适用于引用类型的 final 字段指向的对象内部状态",
-    "answer": "A)、B)、C)",
+    "answer": "答案：A)、B)、C)",
     "hints": [
       "JSR 133 中 final 的「冻结」(freeze) 语义：在构造函数尾部，所有 final 字段会被「冻结」，在此之后发布的引用保证能看到冻结后的值",
       "this 引用在构造函数中逃逸会导致「未冻结」的 final 字段被其他线程观察到默认值 0/null"
@@ -2232,7 +2232,7 @@
     "type": "short_answer",
     "title": "ConcurrentHashMap.search 系列方法的短路终止语义",
     "content": "ConcurrentHashMap 的 search 系列方法（search / searchKeys / searchValues / searchEntries）提供了在映射上应用搜索的并行操作。以下关于这些方法的正确描述是哪些？（多选）\nA) search 方法接受一个函数，应用到映射的每个元素上，返回第一个非 null 的函数结果\nB) 当任一分区找到非 null 结果后，其他正在执行的分区任务会被取消或忽略其返回结果\nC) search 方法会捕获函数中抛出的异常，继续在其他元素上执行搜索\nD) 搜索函数返回的非 null 结果被严格保证是「映射中第一个」满足条件的元素（按迭代顺序）\nE) searchEntries 的搜索函数接收 Map.Entry 作为参数，而 search 接收键值对",
-    "answer": "A)、B)",
+    "answer": "答案：A)、B)",
     "hints": [
       "search 系列的短路行为是基于 ForkJoinTask 的 complete() 方法实现的——当找到一个结果时，调用 complete() 设置结果并通知 ForkJoinPool 取消未执行的任务",
       "如果 search 函数对所有元素都返回 null（即未找到匹配项），search 返回 null"
@@ -2253,7 +2253,7 @@
     "type": "short_answer",
     "title": "Collectors.teeing 多路聚合的特性",
     "content": "Collectors.teeing(Collector, Collector, BiFunction) 是 JDK 12 引入的 Collector。以下关于 teeing 的正确描述是哪些？（多选）\nA) 可以将同一个流中的元素同时发送到两个不同的 Collector 中进行聚合\nB) 两个下游 Collector 共享同一个中间结果容器\nC) 最终通过一个 BiFunction 将两个下游 Collector 的结果合并为一个结果\nD) teeing 要求两个下游 Collector 的类型和中间结果类型完全相同\nE) 在并行流中，teeing 要求两个 Collector 都是 CONCURRENT 且 UNORDERED",
-    "answer": "A)、C)",
+    "answer": "答案：A)、C)",
     "hints": [
       "Teeing 的经典用例：同时计算流的统计信息——Collectors.teeing(summingInt(), counting(), (sum, count) -> sum / count) 计算平均值",
       "两个下游 Collector 各自独立维护自己的中间结果容器，它们互不干扰"
@@ -2274,7 +2274,7 @@
     "type": "short_answer",
     "title": "Spliterator 特性标志对 Stream 并行拆分策略的影响",
     "content": "Spliterator 的特性标志（characteristics）通过 trySplit() 方法控制 Stream 的并行拆分行为。以下关于特性标志影响的正确描述是哪些？（多选）\nA) SIZED + SUBSIZED 保证通过 trySplit() 拆分得到的两个子 Spliterator 的大小精确可知\nB) CONCURRENT 特征表示元素源可以被其他线程并发修改，因此在拆分时不能依赖 trySplit 的稳定性\nC) IMMUTABLE 特征保证元素源在 Spliterator 的遍历期间不会发生结构变更\nD) ORDERED 特征要求 Spliterator 拆分时必须保持遇到顺序（encounter order）\nE) NONNULL 特征表示 Spliterator 会在遍历时自动跳过 null 元素",
-    "answer": "A)、B)、C)",
+    "answer": "答案：A)、B)、C)",
     "hints": [
       "SUBSIZED 是 SIZED 的增强版本——不仅当前 Spliterator 大小已知，且任何由 trySplit() 产生的子 Spliterator 也报告已知大小",
       "CONCURRENT 和 IMMUTABLE 是互斥的特征——一个流不能同时被其他线程修改又是不可变的"
@@ -2295,7 +2295,7 @@
     "type": "short_answer",
     "title": "BlockingQueue.drainTo 方法的并发语义保证",
     "content": "BlockingQueue.drainTo(Collection<? super E> c) 和 drainTo(Collection<? super E> c, int maxElements) 用于将队列中的元素批量转移到目标集合。以下关于 drainTo 并发语义的正确描述是哪些？（多选）\nA) drainTo 将队列中「当前可用」的元素一次性转移到目标集合\nB) drainTo(Collection, int maxElements) 最多转移 maxElements 个元素\nC) 相比循环调用 poll，drainTo 可以减少锁获取次数，提高批量元素获取效率\nD) drainTo 执行期间其他线程添加的元素一定会被包含在本次转移中\nE) drainTo 会在没有可用元素时阻塞等待新元素到达",
-    "answer": "A)、B)、C)",
+    "answer": "答案：A)、B)、C)",
     "hints": [
       "drainTo 不阻塞等待新元素——它只转移当前可用的元素。如果需要等待，使用 take() 或 poll(timeout, unit)",
       "drainTo 常用于批量消费消息队列中的可用消息，减少锁竞争的同时提高吞吐量"
@@ -2316,7 +2316,7 @@
     "type": "short_answer",
     "title": "Map.Entry 实现类与 Map.entry 工厂方法的行为对比",
     "content": "关于 AbstractMap.SimpleEntry、AbstractMap.SimpleImmutableEntry 和 Map.entry(K, V) 工厂方法（JDK 9+），以下哪些描述是正确的？（多选）\nA) SimpleEntry 是可变的——setValue(V value) 修改 Entry 内部的值并返回旧值\nB) SimpleImmutableEntry 的 setValue 方法抛出 UnsupportedOperationException\nC) Map.entry(K, V) 返回的 Entry 支持 setValue 方法修改值\nD) SimpleEntry 和 SimpleImmutableEntry 都重写了 equals 和 hashCode 方法，基于键值对进行比较\nE) SimpleImmutableEntry 的 key 和 value 使用 final 修饰",
-    "answer": "A)、B)、D)、E)",
+    "answer": "答案：A)、B)、D)、E)",
     "hints": [
       "Map.entry() 返回的是一个私有实现（不可变的），其 setValue 抛出 UnsupportedOperationException——常用于 Stream 中生成不可变 Entry",
       "SimpleEntry 的 equals 比较：Objects.equals(key, other.key) && Objects.equals(value, other.value)，不涉及对象标识"

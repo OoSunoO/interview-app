@@ -378,24 +378,6 @@
     "category": "concurrency",
     "difficulty": "hard",
     "type": "fill_in_blank",
-    "title": "SynchronousQueue 原理",
-    "content": "SynchronousQueue 是一个容量为___的 BlockingQueue，每个插入必须等待一个对应的___操作。公平模式下内部使用___（FIFO），非公平模式下使用___（LIFO）。核心的 transfer 方法通过自旋 + ___避免不必要的上下文切换。",
-    "answer": "{\"correct\":[[\"0\",\"零\"],[\"移除\",\"take\",\"poll\"],[\"TransferQueue\"],[\"TransferStack\"],[\"LockSupport.park\",\"park\",\"阻塞\"]],\"distractors\":[\"1\",\"无界\",\"put\",\"LinkedBlockingQueue\",\"SynchronousQueue\",\"yield\"]}",
-    "hints": [
-      "SynchronousQueue 的 take() 和 put() 必须成对出现——没有缓冲",
-      "TransferStack 使用 SCM（Singly-linked list + CAS）模式实现线程配对"
-    ],
-    "tags": [
-      "并发",
-      "SynchronousQueue",
-      "BlockingQueue",
-      "线程配对"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
     "title": "FutureTask 状态转换",
     "content": "FutureTask 的状态转换：NEW 能转换为___（正常完成前的中间态）再转换为___（正常完成）；或转换为___（异常完成）；也可从 NEW 直接转换为___（被取消）。get() 方法通过___使调用线程等待，任务完成后通过___唤醒。",
     "answer": "{\"correct\":[[\"COMPLETING\"],[\"NORMAL\"],[\"EXCEPTIONAL\"],[\"CANCELLED\"],[\"LockSupport.park\",\"park\"],[\"LockSupport.unpark\",\"unpark\",\"finishCompletion\"]],\"distractors\":[\"SUCCESS\",\"FAILED\",\"INTERRUPTED\",\"DONE\",\"wait\",\"notify\"]}",
@@ -540,24 +522,6 @@
     "category": "concurrency",
     "difficulty": "easy",
     "type": "fill_in_blank",
-    "title": "Exchanger 线程间数据交换",
-    "content": "java.util.concurrent.Exchanger 是一个用于线程间{{____}}的工具类。两个线程在某个同步点调用 exchange() 方法可以{{____}}各自的数据。如果只有一个线程到达同步点而另一个未到达，该线程会{{____}}。Exchanger 适用于{{____}}问题场景。",
-    "answer": "{\"correct\":[[\"数据交换\"],[\"交换\"],[\"阻塞等待\"],[\"生产者-消费者\"]],\"distractors\":[[\"通信\",\"同步\",\"协作\"],[\"复制\",\"同步\",\"合并\"],[\"超时返回\",\"抛出异常\",\"轮询等待\"],[\"读写锁\",\"死锁\",\"活锁\"]]}",
-    "hints": [
-      "Exchanger 的 exchange() 方法是阻塞的，直到配对线程也到达同步点",
-      "Exchanger 的典型应用：两个线程交换缓冲区（如一个线程填满缓冲区，另一个线程读取后交换）"
-    ],
-    "tags": [
-      "Java",
-      "并发",
-      "Exchanger",
-      "线程间通信"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "easy",
-    "type": "fill_in_blank",
     "title": "ThreadPoolExecutor 的线程工厂",
     "content": "ThreadPoolExecutor 允许通过{{____}}接口自定义线程的创建方式。通过自定义线程工厂可以设置线程的{{____}}、{{____}}、{{____}}和异常处理器。默认的线程工厂由{{____}}类提供。",
     "answer": "{\"correct\":[[\"ThreadFactory\"],[\"名称\"],[\"优先级\"],[\"daemon 状态\"],[\"Executors\"]],\"distractors\":[[\"Executor\",\"Runnable\",\"Callable\"],[\"大小\",\"数量\",\"数量限制\"],[\"超时时间\",\"生命周期\",\"缓存策略\"],[\"运行状态\",\"等待队列\",\"核心线程数\"],[\"Thread\",\"Executor\",\"ExecutorService\"]]}",
@@ -570,24 +534,6 @@
       "并发",
       "线程池",
       "ThreadFactory"
-    ]
-  },
-  {
-    "category": "concurrency",
-    "difficulty": "hard",
-    "type": "fill_in_blank",
-    "title": "Phaser 阶段同步器",
-    "content": "Phaser 是 Java 7 引入的{{____}}同步器。它支持{{____}}阶段的同步，每个阶段可以有不同数量的{{____}}。Phaser 的{{____}}方法用于注册新的参与者，{{____}}方法用于等待当前阶段所有参与者完成。Phaser 的参与者可以{{____}}注册或撤销注册。",
-    "answer": "{\"correct\":[[\"可复用\"],[\"多\"],[\"参与者\"],[\"register()\"],[\"arriveAndAwaitAdvance()\"],[\"动态\"]],\"distractors\":[[\"一次性\",\"基本\",\"高级\"],[\"单\",\"固定\",\"可变\"],[\"线程\",\"操作\",\"任务\"],[\"await()\",\"sync()\",\"join()\"],[\"arrive()\",\"awaitAdvance()\",\"forceTermination()\"],[\"静态\",\"自动\",\"手动\"]]}",
-    "hints": [
-      "Phaser 比 CyclicBarrier 更灵活——参与者数量可以动态变化（register/bulkRegister）",
-      "Phaser 的 arrive() 和 arriveAndDeregister() 允许参与者通知到达后退出"
-    ],
-    "tags": [
-      "Java",
-      "并发",
-      "Phaser",
-      "同步器"
     ]
   },
   {

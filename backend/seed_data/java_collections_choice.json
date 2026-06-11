@@ -1349,53 +1349,9 @@
     "category": "java_collections_choice",
     "difficulty": "easy",
     "type": "choice",
-    "title": "WeakHashMap 的 Entry 何时被回收",
-    "content": "WeakHashMap 中的 Entry（键值对）在什么条件下会被 GC 回收？",
-    "answer": "A) 当 WeakHashMap 对象被 GC 回收时",
-    "correct": "C",
-    "hints": [
-      "WeakHashMap 的 Key 使用 WeakReference 包装",
-      "当 Key 只有 WeakReference 指向时，下次 GC 就会回收 Entry"
-    ],
-    "tags": [
-      "Java Collections"
-    ],
-    "options": [
-      "A) 当 WeakHashMap 对象被 GC 回收时",
-      "B) 当调用 WeakHashMap.clear() 时",
-      "C) 当键（Key）不再被强引用指向时",
-      "D) 当值（Value）不再被强引用指向时"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "easy",
-    "type": "choice",
-    "title": "ConcurrentSkipListMap 的数据结构",
-    "content": "ConcurrentSkipListMap 基于什么数据结构实现？",
-    "answer": "A) 红黑树",
-    "correct": "C",
-    "hints": [
-      "跳表是一种多层链表结构，支持 O(log n) 的查找、插入和删除",
-      "ConcurrentSkipListMap 是有序的并发 Map（不需要锁的树结构）"
-    ],
-    "tags": [
-      "Java Collections"
-    ],
-    "options": [
-      "A) 红黑树",
-      "B) B+ 树",
-      "C) 跳表（Skip List）",
-      "D) 哈希表 + 链表"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "easy",
-    "type": "choice",
     "title": "Collections.unmodifiableMap 的特点",
     "content": "关于 Collections.unmodifiableMap() 返回的不可修改 Map，以下哪项描述是正确的？",
-    "answer": "A) 返回的 Map 是深度不可变的（所有值对象也变为不可变）",
+    "answer": "B) 对原始 Map 的修改会反映在不可变视图上",
     "correct": "B",
     "hints": [
       "unmodifiableMap 返回的是原 Map 的视图包装器，底层仍然是原 Map",
@@ -1415,31 +1371,9 @@
     "category": "java_collections_choice",
     "difficulty": "easy",
     "type": "choice",
-    "title": "EnumMap 的内部存储",
-    "content": "EnumMap 在内部使用什么数据结构存储键值对？",
-    "answer": "A) 红黑树",
-    "correct": "C",
-    "hints": [
-      "EnumMap 内部使用两个长度等于 enum 常量个数的数组（keys[] 和 values[]）",
-      "因为 enum 的 ordinal 是连续的整数，可以直接作为数组下标访问"
-    ],
-    "tags": [
-      "Java Collections"
-    ],
-    "options": [
-      "A) 红黑树",
-      "B) 哈希表",
-      "C) 数组",
-      "D) 链表"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "easy",
-    "type": "choice",
     "title": "TreeSet 的底层实现",
     "content": "TreeSet 在 Java 中基于什么数据结构实现？",
-    "answer": "A) 哈希表",
+    "answer": "B) 红黑树（通过 TreeMap 实现）",
     "correct": "B",
     "hints": [
       "TreeSet 内部使用 TreeMap 作为底层存储（TreeSet 是 TreeMap 的包装）",
@@ -1944,7 +1878,7 @@
     "type": "short_answer",
     "title": "ArrayList 与 LinkedList 的适用场景分析",
     "content": "在以下哪种业务场景中，LinkedList 的性能明显优于 ArrayList？\nA) 按索引频繁随机访问元素\nB) 在列表尾部频繁追加大量元素\nC) 在列表头部频繁执行插入和删除操作\nD) 需要对列表执行频繁的排序操作",
-    "answer": "C",
+    "answer": "答案：C",
     "hints": [
       "LinkedList 头尾操作 O(1)，中间操作 O(n)",
       "ArrayList 尾部追加均摊 O(1)，头部插入 O(n)"
@@ -1962,7 +1896,7 @@
     "type": "short_answer",
     "title": "有序 Map 的选择依据",
     "content": "当需要键值对始终按照自然顺序（或自定义 Comparator）排序，且要求单次查找时间复杂度为 O(log n) 时，应选择哪个实现？\nA) HashMap\nB) LinkedHashMap\nC) TreeMap\nD) IdentityHashMap",
-    "answer": "C",
+    "answer": "答案：C",
     "hints": [
       "HashMap 的遍历顺序是无序的",
       "LinkedHashMap 只保证插入或访问顺序而非排序"
@@ -1978,45 +1912,9 @@
     "category": "java_collections_choice",
     "difficulty": "hard",
     "type": "short_answer",
-    "title": "PriorityQueue 的底层数据结构与扩容策略",
-    "content": "关于 PriorityQueue 的内部实现，以下哪项是正确的？\nA) PriorityQueue 采用红黑树维护优先级顺序，保证 O(log n) 的入队和出队\nB) PriorityQueue 采用最小二叉堆实现，初始容量为 11，扩容策略为容量不足时增长 50% 或更少\nC) PriorityQueue 允许插入 null 值，null 在比较中被视为最小值\nD) PriorityQueue 的 iterator() 遍历顺序与 poll() 出队顺序完全一致",
-    "answer": "B",
-    "hints": [
-      "二叉堆用数组存储，堆化操作是 O(log n)",
-      "iterator 返回的是底层数组顺序而非堆序"
-    ],
-    "tags": [
-      "Java",
-      "PriorityQueue",
-      "二叉堆",
-      "集合框架"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "NavigableMap 的特有方法",
-    "content": "以下方法中，哪一个是 NavigableMap 接口独有而 Map 接口没有定义的？\nA) putIfAbsent()\nB) merge()\nC) ceilingKey()\nD) forEach()",
-    "answer": "C",
-    "hints": [
-      "ceilingKey 返回大于等于给定键的最小键",
-      "putIfAbsent 和 merge 来自 Map 的默认方法"
-    ],
-    "tags": [
-      "Java",
-      "NavigableMap",
-      "TreeMap",
-      "集合框架"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
     "title": "WeakHashMap 的引用队列机制",
     "content": "关于 WeakHashMap 的实现原理，以下哪项是正确的？\nA) WeakHashMap 的 key 在被 GC 回收后，对应 entry 会立即自动从 map 中删除\nB) WeakHashMap 使用 SoftReference 引用 key，适用于实现内存敏感缓存\nC) WeakHashMap 在每次调用 get、put、size 操作时，通过 ReferenceQueue 轮询已被 GC 回收的 key，同步清理对应 entry\nD) WeakHashMap 是线程安全的，可以在并发环境下直接使用",
-    "answer": "C",
+    "answer": "答案：C",
     "hints": [
       "ReferenceQueue 配合 WeakReference 实现延迟清理",
       "清理是在 Map 操作方法内部顺带执行的"
@@ -2027,205 +1925,5 @@
       "引用队列",
       "集合框架"
     ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Collections.newSetFromMap 的 null 处理",
-    "content": "`Collections.newSetFromMap(Map<E, Boolean> map)` 创建一个由指定 Map 支持的 Set。以下关于该方法的描述，哪项是正确的？\nA) 如果传入的 map 是 HashMap，返回的 Set 不允许 null 元素\nB) 传入的 map 在创建时必须为空（为空则抛出 IllegalArgumentException），且对返回 Set 的操作会委托给底层的 map；如果底层 map 允许 null key（如 HashMap），则返回的 Set 也允许 null 元素\nC) 该方法只能传入 ConcurrentHashMap，因为实现内部假设该 map 是并发安全的\nD) 返回的 Set 的 add() 方法会调用 map.put(key, Boolean.TRUE)，如果 put 返回 null 则视为添加成功；如果 put 返回 Boolean.FALSE 则视为重复元素",
-    "answer": "B) 传入的 map 在创建时必须为空（否则 Set 的行为不可预测，但规范未强制抛出异常）。返回的 Set 的 add() 委托给 map.put(e, Boolean.TRUE)，remove() 委托给 map.remove(e)，contains() 委托给 map.containsKey(e) 等。底层 map 的特性直接决定了 Set 的特性：如果传入 HashMap 则允许 null 元素且非线程安全；如果传入 ConcurrentHashMap 则得到一个并发安全的 Set（这正是该方法的典型用途——创建 ConcurrentHashSet，因为 JDK 没有直接的 ConcurrentHashSet 类）。",
-    "hints": [
-      "思考：为什么 JDK 提供了 java.util.concurrent.ConcurrentSkipListSet 但不提供 ConcurrentHashSet？",
-      "newSetFromMap 是「适配器模式」在集合框架中的经典应用——把 Map 适配为 Set"
-    ],
-    "tags": [
-      "Collections",
-      "newSetFromMap",
-      "Set",
-      "ConcurrentHashMap",
-      "adapter-pattern"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "AbstractList 的 modCount 与子列表结构修改一致性",
-    "content": "AbstractList 通过 modCount 实现 fail-fast 迭代器机制。对于通过 `subList(from, to)` 返回的子列表视图，以下关于结构修改（structural modification）一致性保证的描述，哪项是正确的？\nA) 对子列表的 add/remove 操作如果在父列表上通过迭代器执行，会导致子列表抛出 ConcurrentModificationException\nB) 通过子列表的 add/remove 修改元素时，父列表的 modCount 也会同步增加，父列表的迭代器在下次访问时会抛出 ConcurrentModificationException\nC) 子列表和父列表共享同一个 modCount——子列表的每次结构修改会增加父列表的 modCount；但通过父列表直接修改（如直接调用父列表的 add），子列表的状态不会被更新，但不会抛出异常\nD) 子列表和父列表共享同一个 modCount——子列表的任何结构修改均会更新父列表的 modCount，反之亦然；如果迭代器遍历子列表过程中父列表发生了结构修改，迭代器会抛出 ConcurrentModificationException",
-    "answer": "D) SubList 内部持有对父列表的引用，并共享同一个 modCount。子列表的任何结构修改（add/remove）都通过父列表的相应方法完成，因此更新的是同一个 modCount 计数器。同样，通过父列表直接进行的结构修改也会增加 modCount。如果遍历子列表（通过子列表的 Iterator）期间父列表发生了结构修改，modCount 会与子列表迭代器创建时记录的 expectedModCount 不一致，从而抛出 ConcurrentModificationException。这也是 SubList 视图一致性保证的基础——它不是快照而是实时视图。",
-    "hints": [
-      "SubList 不是独立的列表——它持有 root（父列表）的引用并共享 modCount",
-      "思考：ArrayList 的 SubList 是 RandomAccess 的吗？这会影响什么性能决策？"
-    ],
-    "tags": [
-      "abstractlist",
-      "subList",
-      "modcount",
-      "fail-fast",
-      "concurrentmodification"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "PriorityQueue Spliterator 遍历顺序",
-    "content": "PriorityQueue 实现了 Iterable 接口，提供了 iterator() 和 spliterator() 方法。以下关于 PriorityQueue 的 Spliterator 遍历顺序的描述，哪项是正确的？\nA) PriorityQueue 的 Spliterator 保证按优先级顺序（堆序）遍历元素\nB) PriorityQueue 的 Spliterator 不保证任何特定顺序——它使用 late-binding 策略，按底层数组的物理顺序遍历，不保证优先级顺序；如果需要按优先级顺序遍历，必须使用 poll() 循环\nC) PriorityQueue 的 Spliterator 保证以 SORTED 特性按自然顺序遍历\nD) PriorityQueue 的 Spliterator 默认以并行方式遍历，但不保证线程安全",
-    "answer": "B) PriorityQueue 的 Spliterator 使用 late-binding 策略（在首次遍历或拆分时才绑定到数据源），遍历时按底层 Object[] queue 数组的物理存储顺序顺序扫描，而不是按堆序（优先级顺序）输出。这一点与 iterator() 的行为一致——PriorityQueue 的 iterator() 也不保证按优先级顺序遍历。如果需要按优先级顺序获取元素，必须使用 poll() 方法循环取出。此外，PriorityQueue 的 Spliterator 带有 SIZED、SUBSIZED（如果未拆分时）特性，但不带有 SORTED 或 ORDERED 特性。",
-    "hints": [
-      "PriorityQueue 使用堆（heap）结构存储，数组的物理顺序≠堆的逻辑顺序",
-      "poll() 方法每次移除堆顶元素（最高优先级）后重建堆序，这是唯一能保证按优先级顺序遍历的方式"
-    ],
-    "tags": [
-      "PriorityQueue",
-      "Spliterator",
-      "heap",
-      "traversal-order",
-      "sorting"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "Collections.asLifoQueue 与 Deque 互操作",
-    "content": "`Collections.asLifoQueue(Deque<T> deque)` 将 Deque 适配为 LIFO 队列视图。以下关于该方法的行为描述，哪项是正确的？\nA) asLifoQueue 返回一个队列，其中 add() 调用 deque.addLast()，remove() 调用 deque.removeLast()，element() 调用 deque.getLast()\nB) asLifoQueue 返回的 Queue 的 add() 方法实际调用的是 deque 的 addFirst()，remove() 调用 removeFirst()，element() 调用 getFirst()——与栈的后进先出语义一致\nC) asLifoQueue 是一个独立的数据结构，在返回时复制了 Deque 的所有元素\nD) asLifoQueue 的 add() 方法抛出 UnsupportedOperationException，因为 LIFO 队列的语义与 Queue 接口的 FIFO 语义冲突",
-    "answer": "A) asLifoQueue 将 Queue 接口的标准方法映射到 Deque 的操作上以实现 LIFO 语义：\n- Queue.add(e) → Deque.addLast(e)（在队列末尾添加）\n- Queue.remove() → Deque.removeLast()（从队列末尾移除——先进的后出）\n- Queue.element() → Deque.getLast()（查看队尾）\n- Queue.offer(e) → Deque.offerLast(e)\n- Queue.poll() → Deque.pollLast()\n- Queue.peek() → Deque.peekLast()\n\n这种映射实现了 LIFO：最后添加（addLast）的元素最先被移除（removeLast）。典型的应用场景：将 ArrayDeque 包装为 LIFO Queue 传递给需要 Queue 接口的 API。",
-    "hints": [
-      "关键洞察：Deque 接口既有 addLast/removeLast（作为队列）也有 addFirst/removeFirst（作为栈）的能力",
-      "asLifoQueue 选用了 Last 系列操作方法来实现 Queue 接口的 LIFO 语义"
-    ],
-    "tags": [
-      "Collections",
-      "aslifoqueue",
-      "Deque",
-      "lifo",
-      "adapter-pattern"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "BitSet 字长优化与 cardinality 性能",
-    "content": "java.util.BitSet 在内部使用 long[] words 存储位数据，并通过字长（word-size）优化实现高性能位运算。以下关于 BitSet.cardinality() 方法的描述，哪项是正确的？\nA) cardinality() 遍历所有 bit 位逐一检查 true/false，时间复杂度为 O(n) 其中 n 是总位数\nB) cardinality() 使用内置的 Long.bitCount() 和 JDK 9+ 的 Integer.bitCount() 对每个 word 计算 population count，调用 words 数组的长度次；同时 BitSet 维护了一个 volatile 的 sizeInBits 缓存，在每次 set/clear 时更新，避免遍历\nC) cardinality() 在第一次调用时计算并缓存结果，后续调用直接返回缓存值；但如果中间有 set/clear 操作，缓存会失效\nD) cardinality() 使用并行算法——当 words 数组长度超过阈值时，使用 ForkJoinPool 并行计算各段的 bitCount",
-    "answer": "B) BitSet.cardinality() 的实现对内部 long[] words 数组的每个有效的 long word 调用 Long.bitCount()，对各 word 的 population count 求和。Long.bitCount() 在 HotSpot JIT 中会被编译为 x86 的 POPCNT 指令（如果 CPU 支持），或者使用 JDK 内置的分治算法实现。JDK 20+ 中 BitSet 内部对 cardinality() 的结果做了缓存（volatile 修饰的字段），set/clear/flip 等修改方法会重置缓存，保证 cardinality() 在无修改时的重复调用为 O(1)。JDK 20 之前的版本没有此优化，每次调用都遍历所有 words。",
-    "hints": [
-      "Long.bitCount 在 x86 上会被 JIT 编译成 POPCNT 指令（如果支持），吞吐量极高",
-      "JDK 20+ 对 BitSet 的 cardinality() 增加了缓存机制——说明了缓存一致性在并发下的处理方式"
-    ],
-    "tags": [
-      "bitset",
-      "cardinality",
-      "bitcount",
-      "popcnt",
-      "performance"
-    ]
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "Collections.checkedQueue 动态类型检查的作用范围",
-    "content": "Collections.checkedQueue(Queue<E> queue, Class<E> type) 在 JDK 8 中引入，用于在运行时动态检查放入队列的元素类型。其类型检查的作用范围是以下哪项？\nA) 在 offer/add 插入元素时检查类型，在 poll/remove 取出元素时不检查\nB) 在 offer/add 插入和 poll/remove 取出时都检查类型\nC) 仅在迭代队列元素时检查\nD) 通过编译期泛型保证，运行时无额外检查",
-    "answer": "A) Collections.checkedQueue 包装的队列在 offer(E) 和 add(E) 方法插入元素时执行 Class.cast() 类型检查——如果插入的元素类型与声明的 Class<E> type 不匹配，抛出 ClassCastException。poll/remove 等取出方法的返回值不做类型检查，因为这些元素已经通过插入检查（或被保证为正确类型）。checkedQueue 的价值在于防止因泛型擦除导致的类型安全问题——泛型信息在运行期被擦除，如果通过未检查的绕行方式（如原始类型或反射）插入错误类型的元素，checkedQueue 能在插入点立即捕获错误，避免在后续取出时出现隐蔽的 ClassCastException。",
-    "hints": [
-      "checkedQueue 检查的底层实现是内部类 CheckedQueue 重写 offer/add/addAll 方法，在调用源队列方法之前执行 Class.cast()",
-      "checkedCollection、checkedList、checkedSet、checkedMap、checkedSortedMap 等系列方法提供相同的运行时类型安全检查"
-    ],
-    "tags": [
-      "checkedQueue",
-      "类型安全",
-      "泛型擦除",
-      "Collections",
-      "运行时检查"
-    ],
-    "options": [],
-    "company": ""
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "medium",
-    "type": "short_answer",
-    "title": "ConcurrentHashMap.newKeySet 底层实现机制",
-    "content": "ConcurrentHashMap.newKeySet()（JDK 8+）返回一个线程安全的 Set。该 Set 的底层实现机制是以下哪项？\nA) 独立于 ConcurrentHashMap 的 HashSet 实现，使用读写锁保证线程安全\nB) 基于 ConcurrentHashMap 的键视图（keySet），值统一使用 Boolean.TRUE 作为占位虚拟值\nC) 使用独立的 ConcurrentSkipListSet 实现\nD) 通过 Collections.synchronizedSet 包装的 HashSet 实现",
-    "answer": "B) ConcurrentHashMap.newKeySet() 返回的是 ConcurrentHashMap.KeySetView，其底层就是一个 ConcurrentHashMap，所有 add/remove/contains 操作转换为对应 ConcurrentHashMap 的 put/remove/containsKey 操作。每次 add(element) 调用 put(element, Boolean.TRUE)，remove(element) 调用 remove(element)，contains(element) 调用 containsKey(element)。KeySetView 实际上是 ConcurrentHashMap 内部 keySet 视图的一个特殊变体，它提供额外的 addAll/removeAll 等方法，但底层仍然是同一个 ConcurrentHashMap。这一设计复用 ConcurrentHashMap 的全部并发能力（分段锁/红黑树/CAS 操作）而无需额外实现，且能保证键集合的弱一致性迭代。newKeySet() 等价于 Collections.newSetFromMap(new ConcurrentHashMap<>()) 但提供了更明确的类型约束。",
-    "hints": [
-      "KeySetView 还提供了 getMappedValue() 方法返回虚拟值 Boolean.TRUE——这是与普通 keySet 视图的一个重要区别",
-      "ConcurrentHashMap.newKeySet(int initialCapacity) 创建时可以指定初始容量，底层 ConcurrentHashMap 以此容量初始化"
-    ],
-    "tags": [
-      "ConcurrentHashMap",
-      "newKeySet",
-      "KeySetView",
-      "线程安全",
-      "Set"
-    ],
-    "options": [],
-    "company": ""
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "ArrayDeque 环形数组头尾指针的位运算回绕原理",
-    "content": "ArrayDeque 内部使用环形数组（circular array）实现高效的头尾双端操作。其头指针和尾指针在数组边界上的回绕实现方式是以下哪项？\nA) 头指针始终为 0，元素出队时使用 System.arraycopy 整体前移\nB) 通过位运算 `head = (head - 1) & (elements.length - 1)` 和 `tail = (tail + 1) & (elements.length - 1)` 实现无分支回绕\nC) 使用双向链表实现头尾操作\nD) 通过取模运算 `head = (head - 1) % elements.length` 实现回绕",
-    "answer": "B) ArrayDeque 内部使用 long 数组（JDK 17+ 优化后）作为环形缓冲区，数组容量始终为 2 的幂。头指针 head 指向队列头元素，尾指针 tail 指向下一个空闲插入位置。在头部插入时 head 左移：`head = (head - 1) & (elements.length - 1)`；在尾部插入时 tail 右移：`tail = (tail + 1) & (elements.length - 1)`。由于数组长度始终是 2 的幂，`elements.length - 1` 是一个全 1 的掩码（mask），位运算 AND 等价于取模操作但无需分支判断——无论是正数还是负数（head - 1 可能为 -1），位运算都能正确回绕。这一设计比取模运算（%）更快，是基于整数的无分支（branch-free）实现，对 JIT 编译友好，避免条件分支预测失败的性能惩罚。",
-    "hints": [
-      "ArrayDeque 在容量不足时扩容为原来的 2 倍（始终保持2的幂），扩容时通过 System.arraycopy 分两段复制头尾元素",
-      "JDK 17 将 ArrayDeque 的底层存储从 Object[] 改为 @Stable 注释的 long[] 数组以支持更好的 JIT 编译优化"
-    ],
-    "tags": [
-      "ArrayDeque",
-      "环形数组",
-      "位运算",
-      "无分支代码",
-      "数据结构"
-    ],
-    "options": [],
-    "company": ""
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "easy",
-    "type": "short_answer",
-    "title": "IdentityHashMap 默认序列化后引用恒等性的恢复",
-    "content": "IdentityHashMap 使用引用恒等性（==）而非 equals() 比较键。在默认 Java 序列化/反序列化过程中，其引用恒等语义能否恢复？\nA) 序列化会按照 key 的 equals/hashCode 重新组织数据，反序列化后失去引用恒等语义\nB) 通过自定义 writeObject/readObject 保持键值对的数组结构，反序列化后仍然使用 == 比较\nC) IdentityHashMap 不支持序列化，调用 writeObject 会抛出 NotSerializableException\nD) 反序列化后会自动转换为 HashMap",
-    "answer": "B) IdentityHashMap 实现了自定义的 writeObject() 和 readObject() 方法（通过 Serializable 接口的自定义序列化协议），在序列化时将键值对以平坦数组的形式写出，反序列化时重建内部数组并依次插入元素。由于反序列化过程中键对象本身也被反序列化（即创建新的对象实例），因此同一个 IdentityHashMap 中两次被引用的同一个键对象在反序列化后不再是同一个对象——序列化只保留值语义不保留对象标识。但 IdentityHashMap 本身的数据结构仍然使用 == 比较键，所以反序列化后的 IdentityHashMap 继续使用引用相等性。这一点与 HashMap 的序列化机制不同：HashMap 序列化依赖键的 hashCode/equals，而 IdentityHashMap 序列化仅依赖于键对象在字节流中的引用路径。",
-    "hints": [
-      "如果序列化流中同一键对象被多次引用，IdentityHashMap 反序列化后这些引用不再指向同一内存地址，因为每个键被独立反序列化为不同实例",
-      "IdentityHashMap 的序列化格式不兼容于标准 Map 序列化格式——它是 IdentityHashMap 专用的私有不兼容格式"
-    ],
-    "tags": [
-      "IdentityHashMap",
-      "序列化",
-      "引用恒等",
-      "==比较",
-      "自定义序列化"
-    ],
-    "options": [],
-    "company": ""
-  },
-  {
-    "category": "java_collections_choice",
-    "difficulty": "hard",
-    "type": "short_answer",
-    "title": "NavigableMap headMap 两个重载版本的边界包含性差异",
-    "content": "NavigableMap 提供了两个重载的 headMap 方法：headMap(K toKey) 和 headMap(K toKey, boolean inclusive)。以下关于两者边界处理差异的描述，哪项是正确的？\nA) headMap(toKey) 包含 toKey，headMap(toKey, inclusive) 的包含性由 boolean 参数控制\nB) headMap(toKey) 不包含 toKey，headMap(toKey, inclusive) 的包含性由 boolean 参数控制\nC) 两个版本都包含 toKey\nD) 两个版本都不包含 toKey",
-    "answer": "B) NavigableMap.headMap(K toKey) 返回的视图中的键严格小于 toKey（不包含 toKey）。NavigableMap.headMap(K toKey, boolean inclusive) 返回的视图中的键小于等于（inclusive=true）或小于（inclusive=false）toKey，由 boolean 参数显式控制。这套设计风格贯穿 NavigableMap 的全部边界方法：\n- headMap(toKey) = headMap(toKey, false)，即默认不包含\n- tailMap(fromKey) = tailMap(fromKey, true)，即默认包含\n- subMap(fromKey, toKey) = subMap(fromKey, true, toKey, false)，即包含下界不包含上界\n- subMap(fromKey, fromInclusive, toKey, toInclusive) 由 boolean 参数控制两端包含性\n- 同理，descendingMap 的 headMap/tailMap 边界语义也对应反转。",
-    "hints": [
-      "SortedMap（NavigableMap 的父接口）的 subMap(fromKey, toKey) 约定为包含下界、不包含上界，NavigableMap 的 4 参数版本提供了更灵活的控制",
-      "向 subMap 中插入键时，如果键不在子范围边界内，会抛出 IllegalArgumentException"
-    ],
-    "tags": [
-      "NavigableMap",
-      "headMap",
-      "边界包含性",
-      "SortedMap",
-      "范围查询"
-    ],
-    "options": [],
-    "company": ""
   }
 ]
