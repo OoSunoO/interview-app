@@ -27,6 +27,10 @@
   let countdown = $state(0);
   let autoAdvancing = $state(false);
 
+  function typeLabel(t) {
+    return { short_answer: "问答题", choice: "选择题", multiple_choice: "多选题", true_false: "判断题", coding: "编程题", fill_in_blank: "填空题" }[t] || t;
+  }
+
   function miFilterLabel(config) {
     const parts = [];
     if (config?.category) parts.push(config.category);
@@ -705,7 +709,7 @@
       <div class="q-card-header">
         <span class="cat-pill {q.category}">{categoryLabel(q.category)}</span>
         <span class="diff-pill {q.difficulty}">{q.difficulty}</span>
-        <span class="type-pill {q.type}">{q.type}</span>
+        <span class="type-pill {q.type}">{typeLabel(q.type)}</span>
       </div>
 
       <h2 class="q-title" data-testid="question-title">{q.title}</h2>

@@ -10,6 +10,10 @@
 
   let { onNavigate } = $props();
 
+  function typeLabel(t) {
+    return { short_answer: "问答题", choice: "选择题", multiple_choice: "多选题", true_false: "判断题", coding: "编程题", fill_in_blank: "填空题" }[t] || t;
+  }
+
   let showRandomHint = $state(false);
   let selectedIds = $state(new Set());
   let selectionMode = $state(false);
@@ -579,7 +583,7 @@
             </span>
             <span class="tag">{categoryLabel(q.category)}</span>
             <span class="tag diff {q.difficulty}">{q.difficulty}</span>
-            <span class="tag type">{q.type}</span>
+            <span class="tag type">{typeLabel(q.type)}</span>
             {#if q.company}
               <span class="tag company">{q.company}</span>
             {/if}
@@ -648,7 +652,7 @@
         <div class="dp-badges">
           <span class="tag">{categoryLabel(detailQuestion.category)}</span>
           <span class="tag diff {detailQuestion.difficulty}">{detailQuestion.difficulty}</span>
-          <span class="tag type">{detailQuestion.type}</span>
+          <span class="tag type">{typeLabel(detailQuestion.type)}</span>
           {#if detailQuestion.company}
             <span class="tag company">{detailQuestion.company}</span>
           {/if}
@@ -796,7 +800,7 @@
                 <span class="dp-related-title">{rq.title}</span>
                 <div class="dp-related-meta">
                   <span class="tag diff {rq.difficulty}">{rq.difficulty}</span>
-                  <span class="tag type">{rq.type}</span>
+                  <span class="tag type">{typeLabel(rq.type)}</span>
                 </div>
               </button>
             {/each}

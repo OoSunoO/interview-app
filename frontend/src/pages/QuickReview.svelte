@@ -321,7 +321,7 @@
         <div class="qr-card-badges">
           <span class="tag">{currentQuestion?.category ? categoryLabel(currentQuestion.category) : ""}</span>
           <span class="tag diff {currentQuestion?.difficulty}">{currentQuestion?.difficulty}</span>
-          <span class="tag type">{currentQuestion?.type}</span>
+          <span class="tag type">{TYPE_LABELS[currentQuestion?.type] || currentQuestion?.type}</span>
           <button
             class="qr-bm-btn {currentQuestion?.bookmarked ? 'active' : ''}"
             onclick={() => toggleBookmark(currentQuestion)}

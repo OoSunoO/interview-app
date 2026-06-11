@@ -21,6 +21,10 @@
   let currentIndex = $state(0);
   let showAnswer = $state(false);
   let results = $state({});
+  function typeLabel(t) {
+    return { short_answer: "问答题", choice: "选择题", multiple_choice: "多选题", true_false: "判断题", coding: "编程题", fill_in_blank: "填空题" }[t] || t;
+  }
+
   function _initVal(key, fallback) { return config?.[key] ?? fallback; }
   let configCategory = $state(_initVal("category", ""));
   let configDifficulty = $state(_initVal("difficulty", ""));
@@ -276,7 +280,7 @@
         <div class="rs-card-badges">
           <span class="tag">{currentCard?.category ? categoryLabel(currentCard.category) : ""}</span>
           <span class="tag diff {currentCard?.difficulty}">{currentCard?.difficulty}</span>
-          <span class="tag type">{currentCard?.type}</span>
+          <span class="tag type">{typeLabel(currentCard?.type)}</span>
           <span
             class="rs-bm-toggle"
             class:active={currentCard?.bookmarked}

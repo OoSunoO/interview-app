@@ -35,6 +35,10 @@
   let miTimeLimit = $state(Number(localStorage.getItem("mi_time_limit")) || 120);
   let allTags = $state([]);
 
+  function typeLabel(t) {
+    return { short_answer: "问答题", choice: "选择题", multiple_choice: "多选题", true_false: "判断题", coding: "编程题", fill_in_blank: "填空题" }[t] || t;
+  }
+
   const categories = FILTER_CATEGORIES;
 
   async function loadData() {
@@ -452,7 +456,7 @@
                 <span class="tag diff {q.difficulty}">{q.difficulty}</span>
               </div>
               <p class="rec-title">{q.title}</p>
-              <span class="rec-type">{q.type}</span>
+              <span class="rec-type">{typeLabel(q.type)}</span>
             </button>
           {/each}
         </div>

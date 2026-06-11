@@ -387,7 +387,7 @@
         {#each Object.entries(stats.by_type) as [type, data]}
           {@const pct = data.total > 0 ? Math.round((data.done / data.total) * 100) : 0}
           <div class="type-item">
-            <span class="type-tag {type}">{type}</span>
+            <span class="type-tag {type}">{typeLabel(type)}</span>
             <span class="type-count">{data.done}/{data.total}</span>
             <div class="type-bar-bg"><div class="type-bar-fill" style="width:{pct}%"></div></div>
             <span class="type-pct">{pct}%</span>
