@@ -4,7 +4,7 @@ import { categoryLabel, CATEGORY_LABELS, MAIN_CATEGORY, FILTER_CATEGORIES } from
 describe("categoryLabel", () => {
   it("returns label for known slugs", () => {
     expect(categoryLabel("cs_basics")).toBe("计算机基础");
-    expect(categoryLabel("algorithm")).toBe("算法");
+    expect(categoryLabel("algorithm")).toBe("算法与数据结构");
     expect(categoryLabel("java_basic")).toBe("Java 基础");
     expect(categoryLabel("jvm")).toBe("JVM");
     expect(categoryLabel("system_design")).toBe("系统设计");

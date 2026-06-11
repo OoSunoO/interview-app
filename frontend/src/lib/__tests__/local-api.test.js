@@ -160,7 +160,7 @@ describe("questions.list", () => {
 
   it("filters by category", async () => {
     const api = await getApi();
-    expect(api.questions.list({ category: "java_basic" })).toHaveLength(3);
+    expect(api.questions.list({ category: "java" })).toHaveLength(3);
     expect(api.questions.list({ category: "database" })).toHaveLength(2);
     expect(api.questions.list({ category: "nonexistent" })).toHaveLength(0);
   });
@@ -421,7 +421,7 @@ describe("progress.stats", () => {
     const stats2 = api2.progress.stats();
     expect(stats2.done).toBe(1); // only correct
     expect(stats2.wrong).toBe(1);
-    expect(stats2.by_category.java_basic).toEqual({ total: 3, done: 1 });
+    expect(stats2.by_category.java).toEqual({ total: 3, done: 1 });
     expect(stats2.by_category.database).toEqual({ total: 2, done: 0 });
     expect(stats2.by_type.short_answer).toEqual({ total: 2, done: 1, wrong: 1 });
     expect(stats2.by_type.choice).toEqual({ total: 1, done: 0, wrong: 0 });
@@ -1195,7 +1195,7 @@ describe("progress.pathProgress", () => {
             id: "stage-1",
             title: "Stage 1",
             targets: [
-              { category: "java_basic", label: "Java 基础", required: 10 },
+              { category: "java", label: "Java", required: 10 },
               { category: "database", label: "数据库", required: 5 },
             ],
           },
@@ -1224,7 +1224,7 @@ describe("progress.pathProgress", () => {
           {
             id: "stage-1",
             title: "Stage 1",
-            targets: [{ category: "java_basic", label: "Java 基础", required: 5 }],
+            targets: [{ category: "java", label: "Java", required: 5 }],
           },
         ],
       },
@@ -1245,7 +1245,7 @@ describe("progress.pathProgress", () => {
           {
             id: "stage-1",
             title: "Stage 1",
-            targets: [{ category: "java_basic", label: "Java 基础", required: 1 }],
+            targets: [{ category: "java", label: "Java", required: 1 }],
           },
         ],
       },
@@ -1354,9 +1354,15 @@ describe("knowledge.list content search", () => {
 describe("questions.random extras", () => {
   it("filters by category", async () => {
     const api = await getApi();
-    const q = api.questions.random({ category: "java_basic" });
+    const q = api.questions.random({ category: "java" });
     expect(q).not.toBeNull();
-    expect(["java_basic", "java_basic_extras"]).toContain(q.category);
+    expect([
+      "java_basic",
+      "java_basic_extras",
+      "java_multiple_choice",
+      "java_true_false",
+      "java",
+    ]).toContain(q.category);
   });
 
   it("filters by difficulty", async () => {

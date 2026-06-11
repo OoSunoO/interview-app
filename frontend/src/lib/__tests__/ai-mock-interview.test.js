@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const FIXTURE = [
   {
     id: 1,
-    category: "java_basic",
+    category: "java",
     title: "Java是什么",
     content: "问Java核心",
     answer: "答Java",
@@ -11,7 +11,7 @@ const FIXTURE = [
   },
   {
     id: 2,
-    category: "java_basic",
+    category: "java",
     title: "Java选择",
     content: "选哪个",
     answer: "A",
@@ -41,7 +41,7 @@ vi.mock("../question-data/index.js", () => ({
   questionIndex: FIXTURE_INDEX,
   questions: FIXTURE,
   categoryIndex: {
-    java_basic: FIXTURE.filter((q) => q.category === "java_basic"),
+    java_basic: FIXTURE.filter((q) => q.category === "java"),
     database: FIXTURE.filter((q) => q.category === "database"),
   },
   loadCategory: vi.fn(async () => {}),
@@ -68,7 +68,7 @@ beforeEach(async () => {
 
 describe("startInterview", () => {
   it("creates a session with specified question count", () => {
-    const session = startInterview({ category: "java_basic", count: 2 });
+    const session = startInterview({ category: "java", count: 2 });
     expect(session).toBeTruthy();
     expect(session.questions).toHaveLength(2);
     expect(session.currentIndex).toBe(0);
@@ -79,13 +79,13 @@ describe("startInterview", () => {
   });
 
   it("defaults to up to 5 questions when count is not specified", () => {
-    const session = startInterview({ category: "java_basic" });
+    const session = startInterview({ category: "java" });
     expect(session.questions.length).toBeLessThanOrEqual(5);
     expect(session.questions.length).toBeGreaterThan(0);
   });
 
   it("persists session to sessionStorage", () => {
-    startInterview({ category: "java_basic", count: 2 });
+    startInterview({ category: "java", count: 2 });
     const saved = getSession();
     expect(saved).toBeTruthy();
     expect(saved.questions).toHaveLength(2);
@@ -99,7 +99,7 @@ describe("startInterview", () => {
 
 describe("clearSession", () => {
   it("removes session from sessionStorage", () => {
-    startInterview({ category: "java_basic", count: 2 });
+    startInterview({ category: "java", count: 2 });
     expect(getSession()).toBeTruthy();
     clearSession();
     expect(getSession()).toBeNull();
@@ -108,7 +108,7 @@ describe("clearSession", () => {
 
 describe("finishInterview", () => {
   it("marks session as completed and saves history", () => {
-    const session = startInterview({ category: "java_basic", count: 2 });
+    const session = startInterview({ category: "java", count: 2 });
     const results = [
       { questionId: session.questions[0].id, status: "correct" },
       { questionId: session.questions[1].id, status: "wrong" },
@@ -119,7 +119,7 @@ describe("finishInterview", () => {
   });
 
   it("saves to localStorage history", () => {
-    const session = startInterview({ category: "java_basic", count: 2 });
+    const session = startInterview({ category: "java", count: 2 });
     const results = [
       { questionId: 1, status: "correct" },
       { questionId: 2, status: "wrong" },

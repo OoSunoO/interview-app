@@ -11,10 +11,7 @@ export const PATHS = [
         id: "java-core",
         title: "Java 核心基础",
         description: "语法、OOP、集合、异常",
-        targets: [
-          { category: "java_basic", label: "Java 基础", required: 20 },
-          { category: "java_collections", label: "Java 集合", required: 15 },
-        ],
+        targets: [{ category: "java", label: "Java", required: 35 }],
       },
       {
         id: "jvm",
@@ -62,7 +59,7 @@ export const PATHS = [
         description: "架构设计、高并发、高可用",
         targets: [
           { category: "system_design", label: "系统设计", required: 30 },
-          { category: "design_network", label: "网络设计", required: 8 },
+          { category: "network", label: "网络", required: 8 },
         ],
       },
       {
@@ -91,7 +88,7 @@ export const PATHS = [
         description: "理论、模式、网络",
         targets: [
           { category: "design_patterns", label: "设计模式", required: 12 },
-          { category: "design_network", label: "网络设计", required: 8 },
+          { category: "network", label: "网络", required: 8 },
         ],
       },
       {
@@ -210,7 +207,7 @@ export const PATHS = [
         description: "前端架构设计",
         targets: [
           { category: "system_design", label: "系统设计", required: 10 },
-          { category: "design_network", label: "网络设计", required: 5 },
+          { category: "network", label: "网络", required: 5 },
         ],
       },
     ],
