@@ -1871,5 +1871,377 @@
       "CPython",
       "性能分析"
     ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "实现 LRU 缓存",
+    "content": "使用 Python 实现一个 LRU（最近最少使用）缓存类，支持 get(key) 和 put(key, value) 操作，get 和 put 的时间复杂度均为 O(1)。当缓存达到容量上限时，淘汰最久未使用的键值对。",
+    "answer": "\"\"\"\n使用 collections.OrderedDict 实现（Python 3.2+）：\nOrderedDict 的 move_to_end 和 popitem 可以 O(1) 实现 LRU。\n\nclass LRUCache:\n    def __init__(self, capacity: int):\n        self.cache = OrderedDict()\n        self.capacity = capacity\n\n    def get(self, key: int) -> int:\n        if key not in self.cache:\n            return -1\n        self.cache.move_to_end(key)\n        return self.cache[key]\n\n    def put(self, key: int, value: int) -> None:\n        if key in self.cache:\n            self.cache.move_to_end(key)\n        self.cache[key] = value\n        if len(self.cache) > self.capacity:\n            self.cache.popitem(last=False)\n\n复杂度：get O(1)，put O(1)。\n空间复杂度：O(capacity)。\n\n如果不使用 OrderedDict，可以用 dict + 双向链表手动实现。\n\"\"\"",
+    "hints": [
+      "Python 的 OrderedDict 天然支持 move_to_end 和 popitem"
+    ],
+    "tags": [
+      "Python",
+      "LRU",
+      "缓存",
+      "数据结构"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "实现一个简单的装饰器重试机制",
+    "content": "编写一个 @retry 装饰器，当被装饰函数抛出指定异常时，自动重试最多 max_attempts 次，每次重试间隔递增（指数退避）。要求：支持指定异常类型和最大重试次数。",
+    "answer": "\"\"\"\nimport time\nimport functools\n\ndef retry(max_attempts=3, exceptions=(Exception,), base_delay=1):\n    def decorator(func):\n        @functools.wraps(func)\n        def wrapper(*args, **kwargs):\n            for attempt in range(max_attempts):\n                try:\n                    return func(*args, **kwargs)\n                except exceptions as e:\n                    if attempt == max_attempts - 1:\n                        raise\n                    delay = base_delay * (2 ** attempt)\n                    time.sleep(delay)\n            return wrapper\n        return decorator\n\n使用示例：\n@retry(max_attempts=3, exceptions=(ConnectionError,))\ndef fetch_data():\n    return requests.get(\"https://api.example.com\")\n\"\"\"",
+    "hints": [
+      "functools.wraps 保留原函数元信息",
+      "指数退避：delay = base_delay * 2^attempt"
+    ],
+    "tags": [
+      "Python",
+      "装饰器",
+      "重试",
+      "异常"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "实现一个异步上下文管理器",
+    "content": "使用 Python 的 asyncio 实现一个简单的异步上下文管理器 AsyncTimer，用于统计异步代码块的执行时间。支持 async with 语法。",
+    "answer": "\"\"\"\nimport asyncio\nimport time\n\nclass AsyncTimer:\n    async def __aenter__(self):\n        self.start = time.monotonic()\n        return self\n\n    async def __aexit__(self, exc_type, exc_val, exc_tb):\n        self.elapsed = time.monotonic() - self.start\n        print(f\"耗时: {self.elapsed:.3f}s\")\n\n# 使用\nasync def main():\n    async with AsyncTimer() as timer:\n        await asyncio.sleep(1)\n    print(f\"执行时间: {timer.elapsed:.3f}s\")\n\n也可以用 @contextlib.asynccontextmanager 实现：\nfrom contextlib import asynccontextmanager\n\n@asynccontextmanager\nasync def async_timer():\n    start = time.monotonic()\n    try:\n        yield\n    finally:\n        elapsed = time.monotonic() - start\n        print(f\"耗时: {elapsed:.3f}s\")\n\"\"\"",
+    "hints": [
+      "实现 __aenter__ 和 __aexit__ 两个异步方法",
+      "contextlib.asynccontextmanager 是更简洁的替代方案"
+    ],
+    "tags": [
+      "Python",
+      "asyncio",
+      "异步",
+      "上下文管理器"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "coding",
+    "title": "实现斐波那契数列生成器",
+    "content": "分别用生成器（generator）和迭代器类两种方式实现斐波那契数列。要求支持任意长度的惰性求值。",
+    "answer": "\"\"\"\n# 生成器方式\ndef fibonacci(n):\n    a, b = 0, 1\n    for _ in range(n):\n        yield a\n        a, b = b, a + b\n\n# 使用\nfor x in fibonacci(10):\n    print(x)\n\n# 迭代器类方式\nclass Fibonacci:\n    def __init__(self, n):\n        self.n = n\n        self.i = 0\n        self.a, self.b = 0, 1\n\n    def __iter__(self):\n        return self\n\n    def __next__(self):\n        if self.i >= self.n:\n            raise StopIteration\n        val = self.a\n        self.a, self.b = self.b, self.a + self.b\n        self.i += 1\n        return val\n\n# 无限序列\nfrom itertools import islice\ndef fibonacci_inf():\n    a, b = 0, 1\n    while True:\n        yield a\n        a, b = b, a + b\n\nlist(islice(fibonacci_inf(), 10))  # 前 10 项\n\"\"\"",
+    "hints": [
+      "生成器用 yield 关键字，自动实现迭代器协议",
+      "迭代器类需要实现 __iter__ 和 __next__"
+    ],
+    "tags": [
+      "Python",
+      "生成器",
+      "迭代器",
+      "yield"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "coding",
+    "title": "实现上下文切换的协程调度器",
+    "content": "不使用 asyncio，用 Python 生成器实现一个简单的协程调度器（类比 JavaScript 的 generator + promise）。要求：支持创建协程、yield 挂起、resume 恢复、以及简单的调度循环。",
+    "answer": "\"\"\"\nclass Task:\n    def __init__(self, gen):\n        self.gen = gen\n        self.step()\n\n    def step(self, value=None):\n        try:\n            fut = self.gen.send(value)\n            if fut:\n                fut.add_done_callback(self.step)\n        except StopIteration:\n            pass\n\nclass Future:\n    def __init__(self):\n        self._result = None\n        self._callbacks = []\n\n    def add_done_callback(self, cb):\n        self._callbacks.append(cb)\n\n    def set_result(self, result):\n        self._result = result\n        for cb in self._callbacks:\n            cb(result)\n\nclass Scheduler:\n    def __init__(self):\n        self.tasks = []\n\n    def create_task(self, gen):\n        Task(gen)\n\n    def run(self):\n        pass\n\ndef sleep(delay):\n    fut = Future()\n    import threading\n    timer = threading.Timer(delay, lambda: fut.set_result(None))\n    timer.start()\n    return fut\n\n# 使用\ndef coro():\n    print(\"start\")\n    yield sleep(1)\n    print(\"after 1s\")\n    yield sleep(0.5)\n    print(\"after 0.5s\")\n\nTask(coro())\n\"\"\"",
+    "hints": [
+      "生成器通过 yield 挂起，send() 恢复执行",
+      "Future 对象用于回调注册和结果传递"
+    ],
+    "tags": [
+      "Python",
+      "协程",
+      "生成器",
+      "调度器"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "coding",
+    "title": "实现一个链式调用类",
+    "content": "设计一个 QueryBuilder 类，支持链式调用 filter、sort、limit 方法，最终通过 execute 执行并返回结果。要求每个方法都返回 self。",
+    "answer": "\"\"\"\nclass QueryBuilder:\n    def __init__(self):\n        self._filters = []\n        self._sort_key = None\n        self._limit_val = None\n\n    def filter(self, condition):\n        self._filters.append(condition)\n        return self\n\n    def sort(self, key):\n        self._sort_key = key\n        return self\n\n    def limit(self, n):\n        self._limit_val = n\n        return self\n\n    def execute(self, data):\n        result = data[:]\n        for f in self._filters:\n            result = [x for x in result if f(x)]\n        if self._sort_key:\n            result.sort(key=self._sort_key)\n        if self._limit_val is not None:\n            result = result[:self._limit_val]\n        return result\n\n# 使用\nqb = QueryBuilder()\nresult = qb.filter(lambda x: x > 0).sort(lambda x: x).limit(5).execute([3, -1, 2, 5, 0, 4])\n# [2, 3, 4, 5]\n\"\"\"",
+    "hints": [
+      "每个方法返回 self 实现链式调用",
+      "execute 是终结操作"
+    ],
+    "tags": [
+      "Python",
+      "链式调用",
+      "设计模式",
+      "Fluent Interface"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Python is 与 ==",
+    "content": "在 Python 中，a == b 和 a is b 是完全等价的，都用于比较两个对象是否相等。",
+    "answer": "错误\n\n解析：== 比较的是值是否相等（调用 __eq__ 方法），而 is 比较的是两个变量是否引用同一个对象（即内存地址是否相同）。例如：a = [1, 2, 3]; b = [1, 2, 3]; a == b 为 True，但 a is b 为 False。CPython 对小整数（-5 到 256）和短字符串做了 intern 缓存，所以有时 is 也返回 True，但依赖这个行为是危险的。",
+    "hints": [
+      "== 调用 __eq__ 方法，is 比较 id()"
+    ],
+    "tags": [
+      "Python",
+      "is",
+      "相等",
+      "比较"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Python 中全局解释器锁（GIL）",
+    "content": "Python 的 GIL（全局解释器锁）确保同一时刻只有一个线程执行 Python 字节码，因此多线程在任何情况下都无法提升程序的执行速度。",
+    "answer": "错误\n\n解析：GIL 确保同一时刻只有一个线程执行 Python 字节码，但多线程在 I/O 密集型场景下仍然能提升性能——因为当线程执行 I/O 操作（如网络请求、文件读写）时，GIL 会被释放，其他线程可以继续执行。在 CPU 密集型场景下，多线程确实无法利用多核优势（此时 multiprocessing 是更好的选择）。Python 3.13 引入了自由线程（Free-threaded）模式作为实验特性，可以禁用 GIL。",
+    "hints": [
+      "I/O 密集型任务多线程仍然有效，GIL 在 I/O 等待时释放"
+    ],
+    "tags": [
+      "Python",
+      "GIL",
+      "多线程",
+      "并发"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Python 闭包变量绑定",
+    "content": "以下 Python 代码会输出 0, 1, 2, 3, 4：\nfuncs = [lambda: i for i in range(5)]\nfor f in funcs: print(f())",
+    "answer": "错误\n\n解析：输出是 4, 4, 4, 4, 4。因为 Python 的闭包捕获的是变量 i 的引用，而非创建时的值。循环结束后 i 的值为 4，所有 lambda 函数调用时都返回 i 的当前值。修正方法：funcs = [lambda i=i: i for i in range(5)]（默认参数在定义时求值）或使用 functools.partial。",
+    "hints": [
+      "闭包捕获的是变量的引用而非值",
+      "默认参数在定义时求值可以解决这个问题"
+    ],
+    "tags": [
+      "Python",
+      "闭包",
+      "作用域",
+      "lambda"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "true_false",
+    "title": "Python 浅拷贝与深拷贝",
+    "content": "Python 的 copy.copy() 和 copy.deepcopy() 对不可变对象（如 tuple、frozenset）的效果是相同的。",
+    "answer": "正确\n\n解析：对于不可变对象（int、str、tuple、frozenset），浅拷贝和深拷贝的结果相同，因为不可变对象本身无法被修改，不存在共享引用导致副作用的问题。但对于包含可变对象的嵌套元组——如 t = ([1,2], 3)——copy.copy(t) 会复制元组本身但内部的列表仍然是同一个引用，而 copy.deepcopy(t) 会递归复制所有嵌套对象。",
+    "hints": [
+      "不可变对象本身不需要深拷贝，但嵌套的可变子对象需要"
+    ],
+    "tags": [
+      "Python",
+      "深拷贝",
+      "浅拷贝",
+      "内存"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "true_false",
+    "title": "Python 中的 __slots__",
+    "content": "在类中定义 __slots__ 可以限制实例只能拥有在 __slots__ 中声明的属性，并且可以减少内存占用，因为不再需要 __dict__。",
+    "answer": "正确\n\n解析：__slots__ 的作用：1）限制属性——实例只能设置 __slots__ 中定义的属性，设置其他属性会抛出 AttributeError。2）节省内存——每个 Python 实例默认有一个 __dict__ 字典存储属性，约占用 64 字节（空字典）+ 属性占用。使用 __slots__ 后，属性存储在固定长度的数组中（类似 C 结构的字段），可以节省大量内存。3）访问速度略快——属性查找从字典查找变为索引访问。注意：使用 __slots__ 的类不能与多继承混合使用（除非所有父类也都定义了 __slots__），且子类也需要定义 __slots__ 才能受益。",
+    "hints": [
+      "__slots__ 通过数组存储属性替代 __dict__ 来节省内存"
+    ],
+    "tags": [
+      "Python",
+      "__slots__",
+      "内存",
+      "优化"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "true_false",
+    "title": "Python 参数传递方式",
+    "content": "Python 的参数传递方式是传值（Pass by Value），函数内修改参数不会影响外部变量。",
+    "answer": "错误\n\n解析：Python 的参数传递是传对象引用（Call by Object Reference），也称为传指针的值。对于可变对象（list、dict、set），函数内对对象的修改会影响到外部。例如：def foo(lst): lst.append(4); a = [1,2,3]; foo(a) 后 a 变为 [1,2,3,4]。但如果函数内对参数重新赋值（=），则不会影响外部变量——因为重新赋值只是改变了局部变量的指向。这本质上和 Java 的引用传递行为一致。",
+    "hints": [
+      "可变对象在函数内被修改会影响外部，但重新赋值不会"
+    ],
+    "tags": [
+      "Python",
+      "传参",
+      "可变",
+      "不可变"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "multiple_choice",
+    "title": "Python 内置数据类型",
+    "content": "以下哪些是 Python 的内置可变数据类型？（多选）",
+    "options": [
+      "A) list",
+      "B) tuple",
+      "C) dict",
+      "D) set"
+    ],
+    "answer": "A)、C)、D)。解析：list、dict、set 都是可变类型，tuple 是不可变类型。可变类型支持原地修改（append、pop、赋值等），不可变类型则不行。frozenset 也是不可变类型。",
+    "hints": [
+      "可变类型支持原地修改操作",
+      "tuple 和 frozenset 是不可变的"
+    ],
+    "tags": [
+      "Python",
+      "数据类型",
+      "可变",
+      "基础"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Python 魔法方法",
+    "content": "以下哪些是 Python 中用于重载运算符的魔法方法？（多选）",
+    "options": [
+      "A) __add__",
+      "B) __str__",
+      "C) __enter__",
+      "D) __getitem__"
+    ],
+    "answer": "A)、D)。解析：__add__ 重载 + 运算符，__getitem__ 重载 [] 索引访问。__str__ 用于定义字符串表示（str() 调用），不属于运算符重载。__enter__ 是上下文管理器协议的一部分（with 语句使用），也不属于运算符重载。",
+    "hints": [
+      "运算符重载方法包括 __add__、__sub__、__mul__ 等",
+      "__str__ 是类型转换方法，__enter__ 是上下文管理器协议"
+    ],
+    "tags": [
+      "Python",
+      "魔术方法",
+      "运算符重载",
+      "OOP"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "multiple_choice",
+    "title": "Python 函数式编程工具",
+    "content": "Python 标准库中哪些模块或函数支持函数式编程风格？（多选）",
+    "options": [
+      "A) functools",
+      "B) itertools",
+      "C) asyncio",
+      "D) operator"
+    ],
+    "answer": "A)、B)、D)。解析：functools 提供 reduce、partial、lru_cache、wraps 等函数式工具。itertools 提供迭代器操作函数（chain、groupby、islice 等），是惰性求值的函数式组合。operator 提供运算符的函数形式（add、sub、itemgetter 等）。asyncio 是异步 I/O 框架，不属于函数式编程范畴。",
+    "hints": [
+      "functools 和 itertools 是函数式编程的核心工具",
+      "operator 模块提供运算符的函数版本"
+    ],
+    "tags": [
+      "Python",
+      "函数式",
+      "functools",
+      "itertools"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "multiple_choice",
+    "title": "Python 新特性（3.10+）",
+    "content": "以下哪些是 Python 3.10 及以上版本引入的特性？（多选）",
+    "options": [
+      "A) 结构模式匹配（match/case）",
+      "B) ParamSpec 泛型参数",
+      "C) zoneinfo 时区支持",
+      "D) 自由线程模式（Free-threaded）"
+    ],
+    "answer": "A)、B)、C)。解析：A) 结构模式匹配（match/case）在 Python 3.10 引入。B) ParamSpec 在 Python 3.10 的 typing 模块中引入，用于泛型化函数签名。C) zoneinfo 在 Python 3.9 引入作为标准库时区支持。D) 自由线程模式（Free-threaded，禁用 GIL）在 Python 3.13 作为实验特性引入。",
+    "hints": [
+      "match/case 是 3.10 的最大亮点",
+      "自由线程模式是 3.13 的实验特性"
+    ],
+    "tags": [
+      "Python",
+      "3.10",
+      "3.13",
+      "新特性"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "easy",
+    "type": "fill_in_blank",
+    "title": "Python 列表推导式",
+    "content": "生成 0 到 9 之间所有偶数的平方的列表，Python 列表推导式为：[x**2 for x in range(10) if x % 2 ___ 0]",
+    "answer": "{\"correct\": [[\"==\"]], \"distractors\": [\"!=\", \">\", \"<\", \"is\"]}",
+    "hints": [
+      "列表推导式语法：[expression for item in iterable if condition]"
+    ],
+    "tags": [
+      "Python",
+      "列表推导式",
+      "基础"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Python 装饰器语法糖",
+    "content": "以下两段代码等价：\n@decorator\ndef func(): pass\n等价于\nfunc = ___(func)",
+    "answer": "{\"correct\": [[\"decorator\"]], \"distractors\": [\"@decorator\", \"decorator()\", \"decorator(func)\"]}",
+    "hints": [
+      "@decorator 是语法糖，本质是一个函数调用"
+    ],
+    "tags": [
+      "Python",
+      "装饰器",
+      "语法糖"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "medium",
+    "type": "fill_in_blank",
+    "title": "Python 异常处理结构",
+    "content": "完整的 Python 异常处理结构包括 try、___、else 和 ___ 四个子句。",
+    "answer": "{\"correct\": [[\"except\", \"except Exception\"], [\"finally\"]], \"distractors\": [\"catch\", \"final\", \"ensure\", \"finally:\"]}",
+    "hints": [
+      "四个子句的执行顺序：try → except → else → finally"
+    ],
+    "tags": [
+      "Python",
+      "异常",
+      "错误处理"
+    ]
+  },
+  {
+    "category": "python",
+    "difficulty": "hard",
+    "type": "fill_in_blank",
+    "title": "Python 上下文管理器协议",
+    "content": "实现 with 语句的上下文管理器需要实现 ___ 和 ___ 两个方法。如果使用 contextlib 模块，可以用 ___ 装饰器将生成器函数转换为上下文管理器。",
+    "answer": "{\"correct\": [[\"__enter__\"], [\"__exit__\"], [\"@contextmanager\", \"contextmanager\"]], \"distractors\": [\"__aenter__\", \"__aexit__\", \"__del__\", \"__init__\"]}",
+    "hints": [
+      "__exit__ 接收 exc_type, exc_val, exc_tb 三个参数",
+      "contextlib.asynccontextmanager 是异步版本"
+    ],
+    "tags": [
+      "Python",
+      "上下文管理器",
+      "with",
+      "contextlib"
+    ]
   }
 ]
