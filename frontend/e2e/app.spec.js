@@ -398,33 +398,32 @@ test.describe("Stats", () => {
   test("export and import buttons exist", async ({ page }) => {
     await goTo(page, NAV.stats);
     await expect(page.locator("[data-testid=stats-overview]")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole("button", { name: /导出进度备份/ })).toBeVisible();
-    await expect(page.getByRole("button", { name: /导入进度备份/ })).toBeVisible();
+    await expect(page.locator("button.export-btn-sm")).toBeVisible();
+    await expect(page.locator("button.import-btn-sm")).toBeVisible();
   });
 });
 
 test.describe("Knowledge Points", () => {
-  test("loads knowledge points grouped by category", async ({ page }) => {
+  test("loads knowledge points as domain tree", async ({ page }) => {
     await goTo(page, NAV.knowledge);
-    await expect(page.locator("[data-testid=page-title]")).toHaveText("知识点", { timeout: 5000 });
-    await expect(page.locator("[data-testid=category-card]").first()).toBeVisible({
-      timeout: 8000,
-    });
-    expect(await page.locator("[data-testid=category-card]").count()).toBeGreaterThan(0);
+    await expect(page.locator("[data-testid=page-title]")).toHaveText("知识体系", { timeout: 5000 });
+    await expect(page.locator(".domain-card").first()).toBeVisible({ timeout: 8000 });
+    expect(await page.locator(".domain-card").count()).toBeGreaterThan(0);
   });
 
   test("clicking a knowledge point opens detail page", async ({ page }) => {
     await goTo(page, NAV.knowledge);
-    await expect(page.locator("[data-testid=category-card]").first()).toBeVisible({
-      timeout: 8000,
-    });
-    // Expand the first category
-    await page.locator("[data-testid=category-header]").first().click();
-    await expect(page.locator("[data-testid=knowledge-item]").first()).toBeVisible({
-      timeout: 3000,
-    });
-    // Click a child knowledge point to expand inline
-    await page.locator("[data-testid=knowledge-item]").first().click();
+    await expect(page.locator(".domain-card").first()).toBeVisible({ timeout: 8000 });
+    // Expand the first domain
+    await page.locator(".domain-header").first().click();
+    // Expand the first sub-section if any
+    const subHeader = page.locator(".sub-header").first();
+    if (await subHeader.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await subHeader.click();
+    }
+    // Click a knowledge item
+    await expect(page.locator(".kp-item").first()).toBeVisible({ timeout: 3000 });
+    await page.locator(".kp-item").first().click();
     // Click "查看完整内容 →" to navigate to the detail page
     const detailBtn = page.getByRole("button", { name: /查看完整内容/ });
     if (await detailBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
@@ -598,6 +597,9 @@ test.describe("QuickReview History on Stats", () => {
     // Navigate to Stats
     await page.getByRole("button", { name: "进度" }).click();
     await page.waitForTimeout(300);
+    // Switch to "记录" tab
+    await page.getByRole("button", { name: "记录" }).click();
+    await page.waitForTimeout(200);
 
     // Should see the QR history section with summary
     await expect(page.locator(".qr-summary")).toBeVisible({ timeout: 5000 });
@@ -649,6 +651,9 @@ test.describe("Mock Interview History on Stats", () => {
     // Navigate to Stats
     await page.getByRole("button", { name: "进度" }).click();
     await page.waitForTimeout(300);
+    // Switch to "记录" tab
+    await page.getByRole("button", { name: "记录" }).click();
+    await page.waitForTimeout(200);
 
     // Should see the MI history section with summary
     await expect(page.locator(".mi-summary")).toBeVisible({ timeout: 5000 });
@@ -693,7 +698,7 @@ test.describe("Mock Interview Flow", () => {
     await expect(page.locator(".dialog-title")).toHaveText("模拟面试", { timeout: 3000 });
 
     // Set category to one with questions
-    await page.locator("#mi-cat").selectOption("java_basic");
+    await page.locator("#mi-cat").selectOption("java");
     // Set count to 5
     await page.locator("button.count-btn").filter({ hasText: "5" }).click();
     // Set time limit to 5min to avoid auto-advance interference
