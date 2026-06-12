@@ -1,41 +1,20 @@
-import { getProgress, saveProgress } from "./storage.js";
-import { gistSync } from "../gist-sync.js";
-
-function usernameSuffix(key) {
-  const u = gistSync.getUsername();
-  if (!u) return key;
-  return `${key}_${u}`;
-}
-
-const TAG_DEFS_KEY = "user_tag_definitions";
+import { getProgress, saveProgress, getTagDefs, saveTagDefs } from "./storage.js";
 
 export const tags = {
   definitions() {
-    try {
-      return JSON.parse(localStorage.getItem(usernameSuffix(TAG_DEFS_KEY)) || "[]");
-    } catch {
-      return [];
-    }
+    return getTagDefs();
   },
   saveDefinition(tag) {
-    const all = this.definitions();
+    const all = getTagDefs();
     const idx = all.findIndex((t) => t.id === tag.id);
     if (idx >= 0) all[idx] = tag;
     else all.push(tag);
-    try {
-      localStorage.setItem(usernameSuffix(TAG_DEFS_KEY), JSON.stringify(all));
-    } catch {
-      /* ignore */
-    }
+    saveTagDefs(all);
     return all;
   },
   deleteDefinition(tagId) {
-    const all = this.definitions().filter((t) => t.id !== tagId);
-    try {
-      localStorage.setItem(usernameSuffix(TAG_DEFS_KEY), JSON.stringify(all));
-    } catch {
-      /* ignore */
-    }
+    const all = getTagDefs().filter((t) => t.id !== tagId);
+    saveTagDefs(all);
     const progress = getProgress();
     let changed = false;
     for (const [qId, entry] of Object.entries(progress)) {

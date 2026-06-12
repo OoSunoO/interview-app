@@ -1,4 +1,5 @@
 import { gistSync } from "../gist-sync.js";
+import { idbGet, idbSet } from "./db.js";
 
 function usernameSuffix(key) {
   const u = gistSync.getUsername();
@@ -11,55 +12,99 @@ const SESSION_KEY = "quiz_review_sessions";
 const DAILY_STATS_KEY = "quiz_daily_stats";
 const GOAL_KEY = "quiz_daily_goal";
 
-export function getProgress() {
+const cache = {};
+
+let ready = false;
+let initPromise = null;
+
+function lsFallback(key, fallback) {
   try {
-    return JSON.parse(localStorage.getItem(usernameSuffix(PROGRESS_KEY)) || "{}");
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
   } catch {
-    return {};
+    return fallback;
   }
 }
 
+export async function initStorage() {
+  if (ready) return;
+  if (initPromise) return initPromise;
+  initPromise = (async () => {
+    const progress =
+      (await idbGet("progress", usernameSuffix(PROGRESS_KEY))) ??
+      lsFallback(usernameSuffix(PROGRESS_KEY), {});
+    const sessions =
+      (await idbGet("sessions", usernameSuffix(SESSION_KEY))) ??
+      lsFallback(usernameSuffix(SESSION_KEY), []);
+    const dailyStats =
+      (await idbGet("dailyStats", usernameSuffix(DAILY_STATS_KEY))) ??
+      lsFallback(usernameSuffix(DAILY_STATS_KEY), {});
+    const tagDefs =
+      (await idbGet("tagDefs", "user_tag_definitions")) ?? lsFallback("user_tag_definitions", []);
+    cache.progress = progress;
+    cache.sessions = sessions;
+    cache.dailyStats = dailyStats;
+    cache.tagDefs = tagDefs;
+    ready = true;
+  })();
+  return initPromise;
+}
+
+export function getProgress() {
+  return cache.progress || {};
+}
+
 export function saveProgress(p) {
+  cache.progress = p;
+  idbSet("progress", usernameSuffix(PROGRESS_KEY), p);
   try {
     localStorage.setItem(usernameSuffix(PROGRESS_KEY), JSON.stringify(p));
-    gistSync.queueSync();
   } catch (e) {
     if (e.name === "QuotaExceededError" || e.code === 22 || e.code === 1014) {
       document.dispatchEvent(new CustomEvent("storage-quota-exceeded"));
     }
-    console.warn("localStorage write failed:", e);
   }
+  gistSync.queueSync();
 }
 
 export function getSessions() {
-  try {
-    return JSON.parse(localStorage.getItem(usernameSuffix(SESSION_KEY)) || "[]");
-  } catch {
-    return [];
-  }
+  return cache.sessions || [];
 }
 
 export function saveSessions(s) {
+  const trimmed = s.slice(-500);
+  cache.sessions = trimmed;
+  idbSet("sessions", usernameSuffix(SESSION_KEY), trimmed);
   try {
-    localStorage.setItem(usernameSuffix(SESSION_KEY), JSON.stringify(s.slice(-500)));
-    gistSync.queueSync();
+    localStorage.setItem(usernameSuffix(SESSION_KEY), JSON.stringify(trimmed));
+  } catch {
+    /* ignore */
+  }
+  gistSync.queueSync();
+}
+
+export function getDailyStats() {
+  return cache.dailyStats || {};
+}
+
+export function saveDailyStats(stats) {
+  cache.dailyStats = stats;
+  idbSet("dailyStats", usernameSuffix(DAILY_STATS_KEY), stats);
+  try {
+    localStorage.setItem(usernameSuffix(DAILY_STATS_KEY), JSON.stringify(stats));
   } catch {
     /* ignore */
   }
 }
 
-export function getDailyStats() {
-  try {
-    return JSON.parse(localStorage.getItem(usernameSuffix(DAILY_STATS_KEY)) || "{}");
-  } catch {
-    return {};
-  }
+export function getTagDefs() {
+  return cache.tagDefs || [];
 }
 
-export function saveDailyStats(stats) {
+export function saveTagDefs(defs) {
+  cache.tagDefs = defs;
+  idbSet("tagDefs", "user_tag_definitions", defs);
   try {
-    localStorage.setItem(usernameSuffix(DAILY_STATS_KEY), JSON.stringify(stats));
-    gistSync.queueSync();
+    localStorage.setItem("user_tag_definitions", JSON.stringify(defs));
   } catch {
     /* ignore */
   }

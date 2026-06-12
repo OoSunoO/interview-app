@@ -1,3 +1,5 @@
+import { initStorage } from "./storage.js";
+
 export let questionIndex,
   knowledgeMap,
   loadCategory,
@@ -8,6 +10,7 @@ export let questionIndex,
   getKnowledgeForTag;
 
 export const ready = (async () => {
+  await initStorage();
   try {
     const [qMod, kMod] = await Promise.all([
       import("../question-data/index.js"),
