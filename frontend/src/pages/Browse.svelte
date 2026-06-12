@@ -35,6 +35,9 @@
   let inlineTagName = $state("");
   let inlineTagColor = $state("#6366f1");
   const INLINE_COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6"];
+  let showBatchTag = $state(false);
+  let batchTagChecked = $state(new Set());
+  let selectAllOnPage = $state(false);
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -224,6 +227,40 @@
     }
     clearSelection();
     toast.success(`已批量收藏 ${selected.length} 题`);
+  }
+
+  function openBatchTag() {
+    batchTagChecked = new Set();
+    showBatchTag = true;
+  }
+
+  function confirmBatchTag() {
+    const tagIds = [...batchTagChecked];
+    if (tagIds.length === 0) { showBatchTag = false; return; }
+    const selected = store.questions.filter((q) => selectedIds.has(q.id));
+    for (const q of selected) {
+      const existing = q.user_tags || [];
+      for (const tid of tagIds) {
+        if (!existing.includes(tid)) existing.push(tid);
+      }
+      q.user_tags = existing;
+      api.tags.setForQuestion(q.id, existing);
+    }
+    showBatchTag = false;
+    clearSelection();
+    toast.success(`已为 ${selected.length} 题添加 ${tagIds.length} 个标签`);
+  }
+
+  function selectAllToggle() {
+    if (selectAllOnPage) {
+      for (const q of pagedQuestions) selectedIds.delete(q.id);
+      selectAllOnPage = false;
+    } else {
+      for (const q of pagedQuestions) selectedIds.add(q.id);
+      selectAllOnPage = true;
+    }
+    selectedIds = new Set(selectedIds);
+    selectionMode = selectedIds.size > 0;
   }
 
   let hasActiveFilters = $derived(
@@ -510,6 +547,9 @@
 
   {#if selectedIds.size > 0}
     <div class="sel-bar">
+      <button class="sel-all-btn" onclick={selectAllToggle}>
+        <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill={selectAllOnPage ? "currentColor" : "none"} stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/>{#if selectAllOnPage}<polyline points="9 12 11 14 15 10" />{/if}</svg>
+      </button>
       <span class="sel-count">已选 {selectedIds.size} 题</span>
       <div class="sel-actions">
         <button class="sel-cancel" onclick={clearSelection}>取消</button>
@@ -526,7 +566,11 @@
           ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
           收藏
         </button>
-        <button class="sel-start" onclick={startSelected}>开始答题</button>
+        <button class="sel-tag" onclick={openBatchTag} title="批量添加标签">
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+          标签
+        </button>
+        <button class="sel-start" onclick={startSelected}>答题</button>
       </div>
     </div>
   {/if}
@@ -741,6 +785,36 @@
   onclose={() => { showTagManager = false; }}
   onchange={(defs) => { userTagDefs = defs; }}
 />
+
+{#if showBatchTag}
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div class="overlay" onclick={() => (showBatchTag = false)}>
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <div class="batch-tag-dialog" onclick={(e) => e.stopPropagation()}>
+      <div class="bt-header">
+        <span class="bt-title">批量添加标签</span>
+        <button class="bt-close" onclick={() => (showBatchTag = false)}>✕</button>
+      </div>
+      <p class="bt-desc">已选 {selectedIds.size} 题 — 勾选要添加的标签：</p>
+      <div class="bt-list">
+        {#each userTagDefs as ut}
+          <label class="bt-item">
+            <input type="checkbox" checked={batchTagChecked.has(ut.id)} onchange={() => { const next = new Set(batchTagChecked); if (next.has(ut.id)) next.delete(ut.id); else next.add(ut.id); batchTagChecked = next; }} />
+            <span class="bt-dot" style="background:{ut.color}"></span>
+            {ut.name}
+          </label>
+        {/each}
+      </div>
+      {#if userTagDefs.length === 0}
+        <p class="bt-empty">暂无标签，请先在标签管理中创建。</p>
+      {/if}
+      <div class="bt-actions">
+        <button class="bt-cancel" onclick={() => (showBatchTag = false)}>取消</button>
+        <button class="bt-confirm" onclick={confirmBatchTag} disabled={batchTagChecked.size === 0}>确认添加</button>
+      </div>
+    </div>
+  </div>
+{/if}
 
 {#if detailQuestion}
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
@@ -1372,6 +1446,103 @@
   .sel-start:active {
     transform: scale(0.96);
   }
+  .sel-all-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    border-radius: 4px;
+    transition: all 0.15s;
+  }
+  .sel-all-btn:active { transform: scale(0.85); }
+  .sel-tag {
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: var(--radius-pill);
+    background: none;
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s var(--spring);
+  }
+  .sel-tag:active {
+    transform: scale(0.96);
+  }
+
+  /* ── Batch Tag Dialog ── */
+  .batch-tag-dialog {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: scale-in 0.25s var(--spring) both;
+  }
+  .bt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .bt-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .bt-close {
+    background: none; border: none; font-size: 16px; color: var(--text-dim);
+    cursor: pointer; padding: 2px 6px; border-radius: 4px;
+  }
+  .bt-close:active { background: var(--bg-surface); }
+  .bt-desc { font-size: 12px; color: var(--text-muted); margin: 0; }
+  .bt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .bt-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .bt-item:active { background: var(--bg-surface); }
+  .bt-item input { margin: 0; }
+  .bt-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .bt-empty { font-size: 12px; color: var(--text-dim); text-align: center; }
+  .bt-actions {
+    display: flex; gap: 8px;
+  }
+  .bt-cancel, .bt-confirm {
+    flex: 1; padding: 10px; font-size: 13px; font-weight: 600;
+    border-radius: var(--radius-sm); cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .bt-cancel {
+    background: none; color: var(--text-muted); border: 1px solid var(--border);
+  }
+  .bt-cancel:active { transform: scale(0.97); }
+  .bt-confirm {
+    background: var(--accent); color: #fff; border: none;
+  }
+  .bt-confirm:active { transform: scale(0.97); }
+  .bt-confirm:disabled { opacity: 0.4; cursor: default; }
 
   /* ── User Tags ── */
   .q-card-wrap {
