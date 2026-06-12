@@ -1,22 +1,42 @@
 <script>
-  import hljs from "highlight.js/lib/core";
-  import java from "highlight.js/lib/languages/java";
-  import python from "highlight.js/lib/languages/python";
-  import javascript from "highlight.js/lib/languages/javascript";
-  import bash from "highlight.js/lib/languages/bash";
-  import json from "highlight.js/lib/languages/json";
+  import { onMount } from "svelte";
   import { toast } from "../lib/toast.js";
 
-  hljs.registerLanguage("java", java);
-  hljs.registerLanguage("python", python);
-  hljs.registerLanguage("javascript", javascript);
-  hljs.registerLanguage("bash", bash);
-  hljs.registerLanguage("json", json);
-
   let { code = "", lang = "" } = $props();
-  let highlighted = $derived(
-    lang ? hljs.highlight(code, { language: lang }).value : hljs.highlightAuto(code).value,
-  );
+  let _hljs = $state(null);
+  let highlighted = $state(code);
+
+  async function loadHljs() {
+    if (_hljs) return;
+    const mod = await import("highlight.js/lib/core");
+    const h = mod.default;
+    const [java, python, javascript, bash, json] = await Promise.all([
+      import("highlight.js/lib/languages/java"),
+      import("highlight.js/lib/languages/python"),
+      import("highlight.js/lib/languages/javascript"),
+      import("highlight.js/lib/languages/bash"),
+      import("highlight.js/lib/languages/json"),
+    ]);
+    h.registerLanguage("java", java.default);
+    h.registerLanguage("python", python.default);
+    h.registerLanguage("javascript", javascript.default);
+    h.registerLanguage("bash", bash.default);
+    h.registerLanguage("json", json.default);
+    _hljs = h;
+  }
+
+  $effect(() => {
+    if (!_hljs) return;
+    try {
+      highlighted = lang
+        ? _hljs.highlight(code, { language: lang }).value
+        : _hljs.highlightAuto(code).value;
+    } catch {
+      highlighted = code;
+    }
+  });
+
+  onMount(loadHljs);
 
   let copied = $state(false);
 

@@ -2,17 +2,6 @@
   import { onMount } from "svelte";
   import NavBar from "./components/NavBar.svelte";
   import Home from "./pages/Home.svelte";
-  import Browse from "./pages/Browse.svelte";
-  import Quiz from "./pages/Quiz.svelte";
-  import WrongBook from "./pages/WrongBook.svelte";
-  import Stats from "./pages/Stats.svelte";
-  import KnowledgePoints from "./pages/KnowledgePoints.svelte";
-  import KnowledgePointDetail from "./pages/KnowledgePointDetail.svelte";
-  import QuickReview from "./pages/QuickReview.svelte";
-  import ReviewSession from "./pages/ReviewSession.svelte";
-  import LearningPaths from "./pages/LearningPaths.svelte";
-  import AIMockInterview from "./pages/AIMockInterview.svelte";
-  import Bookmarks from "./pages/Bookmarks.svelte";
   import { fade } from "svelte/transition";
   import { api, ready } from "./lib/local-api.js";
   import { store } from "./lib/stores.svelte.js";
@@ -43,7 +32,6 @@
   function handleGistComplete(result) {
     showGistSetup = false;
     showGistBtn = true;
-    // If restored from Gist, refresh all views
     if (result?.restored) {
       store.refreshStats();
       store.refreshDue();
@@ -74,22 +62,56 @@
     api.migrateProgress();
     store.refreshDue();
 
-    // Install beforeunload hook for last-chance sync
     gistSync.installBeforeUnloadHook();
     gistSync.migrateToSlotKeys();
 
-    // Show GistSetup if first time (no username)
     if (!gistSync.hasUsername()) {
       showGistSetup = true;
     } else {
       showGistBtn = true;
-      // If token is set, queue an initial sync
       if (gistSync.hasToken()) {
         gistSync.queueSync();
       }
     }
 
     appReady = true;
+  });
+
+  let Page = $state(Home);
+  let pageLoading = $state(false);
+
+  const _loaders = {
+    browse: () => import("./pages/Browse.svelte"),
+    quiz: () => import("./pages/Quiz.svelte"),
+    wrong: () => import("./pages/WrongBook.svelte"),
+    knowledge: () => import("./pages/KnowledgePoints.svelte"),
+    "knowledge-detail": () => import("./pages/KnowledgePointDetail.svelte"),
+    stats: () => import("./pages/Stats.svelte"),
+    "quick-review": () => import("./pages/QuickReview.svelte"),
+    "review-session": () => import("./pages/ReviewSession.svelte"),
+    "learning-paths": () => import("./pages/LearningPaths.svelte"),
+    "ai-interview": () => import("./pages/AIMockInterview.svelte"),
+    bookmarks: () => import("./pages/Bookmarks.svelte"),
+  };
+
+  $effect(() => {
+    const p = page;
+    if (p === "home") {
+      Page = Home;
+      pageLoading = false;
+      return;
+    }
+    pageLoading = true;
+    Page = null;
+    const loader = _loaders[p];
+    if (loader) {
+      loader().then(mod => {
+        if (page === p) {
+          Page = mod.default;
+          pageLoading = false;
+        }
+      });
+    }
   });
 </script>
 
@@ -103,35 +125,19 @@
     <div class="app-loading-inner"></div>
   {:else}
   <main class="content">
-    {#key page}
+    {#if Page}
       <div transition:fade={{ duration: 150 }}>
-        {#if page === "home"}
-          <Home onNavigate={navigate} />
-        {:else if page === "browse"}
-          <Browse onNavigate={navigate} />
-        {:else if page === "quiz"}
-          <Quiz questionId={selectedQuestionId} onNavigate={navigate} mockInterview={mockInterviewConfig} />
-        {:else if page === "wrong"}
-          <WrongBook onNavigate={navigate} />
-        {:else if page === "knowledge"}
-          <KnowledgePoints onNavigate={navigate} />
-        {:else if page === "knowledge-detail"}
-          <KnowledgePointDetail tag={selectedTag} onNavigate={navigate} />
-        {:else if page === "stats"}
-          <Stats onNavigate={navigate} />
-        {:else if page === "quick-review"}
-          <QuickReview config={reviewConfig} onNavigate={navigate} />
-        {:else if page === "review-session"}
-          <ReviewSession config={reviewConfig} onNavigate={navigate} />
-        {:else if page === "learning-paths"}
-          <LearningPaths onNavigate={navigate} />
-        {:else if page === "ai-interview"}
-          <AIMockInterview onNavigate={navigate} config={reviewConfig} />
-        {:else if page === "bookmarks"}
-          <Bookmarks onNavigate={navigate} />
-        {/if}
+        <Page
+          onNavigate={navigate}
+          questionId={selectedQuestionId}
+          tag={selectedTag}
+          config={reviewConfig}
+          mockInterview={mockInterviewConfig}
+        />
       </div>
-    {/key}
+    {:else if pageLoading}
+      <div class="page-loading">加载中...</div>
+    {/if}
   </main>
   <NavBar current={page} onNavigate={(p) => navigate(p)} />
   <CommandPalette onNavigate={navigate} />
@@ -170,6 +176,14 @@
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+  .page-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 14px;
   }
   .app-quota-warn {
     position: fixed;
