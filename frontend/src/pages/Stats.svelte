@@ -267,10 +267,10 @@
             <span class="ch-lbl">待复习</span>
           </div>
           {#if stats.bookmarked > 0}
-            <div class="ch-stat">
+            <button class="ch-stat ch-stat-link" onclick={() => onNavigate("bookmarks")}>
               <span class="ch-num" style="color:var(--warning)">{stats.bookmarked}</span>
               <span class="ch-lbl">收藏</span>
-            </div>
+            </button>
           {/if}
         </div>
         {#if dailyStats}
@@ -834,6 +834,18 @@
     flex: 1;
     text-align: center;
     min-width: 0;
+  }
+  .ch-stat-link {
+    background: none;
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .ch-stat-link:active {
+    background: var(--bg-surface);
   }
   .ch-num {
     display: block;

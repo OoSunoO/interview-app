@@ -12,6 +12,7 @@
   import ReviewSession from "./pages/ReviewSession.svelte";
   import LearningPaths from "./pages/LearningPaths.svelte";
   import AIMockInterview from "./pages/AIMockInterview.svelte";
+  import Bookmarks from "./pages/Bookmarks.svelte";
   import { fade } from "svelte/transition";
   import { api, ready } from "./lib/local-api.js";
   import { store } from "./lib/stores.svelte.js";
@@ -126,6 +127,8 @@
           <LearningPaths onNavigate={navigate} />
         {:else if page === "ai-interview"}
           <AIMockInterview onNavigate={navigate} config={reviewConfig} />
+        {:else if page === "bookmarks"}
+          <Bookmarks onNavigate={navigate} />
         {/if}
       </div>
     {/key}
