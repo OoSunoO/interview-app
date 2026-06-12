@@ -572,4 +572,21 @@
     transition: all 0.2s var(--spring);
   }
   .home-btn:active { transform: scale(0.97); }
+
+  @media (max-width: 480px) {
+    .setup-section { padding: 12px 0; }
+    .setup-title { font-size: 16px; }
+    .ai-config-block { padding: 12px; }
+    .count-options { gap: 4px; }
+    .count-btn { font-size: 12px; padding: 8px; }
+    .input-row { gap: 6px; }
+    .chat-input { font-size: 15px; }
+    .summary-stats { flex-wrap: wrap; gap: 8px; }
+    .summary-stat { padding: 12px 16px; min-width: 60px; flex: 1; }
+    .summary-num { font-size: 22px; }
+    .summary-actions { flex-direction: column; gap: 8px; }
+    .summary-q-item { gap: 6px; padding: 8px 10px; }
+    .sq-title { font-size: 12px; }
+    .restart-btn, .home-btn { font-size: 13px; padding: 10px; }
+  }
 </style>

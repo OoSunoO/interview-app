@@ -204,4 +204,18 @@
   .hm-legend-label {
     font-size: 10px;
   }
+  @media (max-width: 480px) {
+    .heatmap { min-width: auto; }
+    .hm-cell { width: 9px; height: 9px; }
+    .hm-day-label { height: 9px; line-height: 9px; font-size: 8px; }
+    .hm-days-col { width: 12px; }
+    .hm-grid { gap: 2px; }
+    .hm-week { gap: 2px; }
+    .hm-spacer { width: 24px; }
+    .hm-month { width: 9px; font-size: 9px; }
+  }
+  @media (max-width: 360px) {
+    .hm-cell { width: 8px; height: 8px; }
+    .hm-month { width: 8px; }
+  }
 </style>

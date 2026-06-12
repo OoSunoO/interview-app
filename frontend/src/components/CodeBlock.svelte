@@ -85,6 +85,11 @@
   .code-block:hover .copy-btn {
     opacity: 1;
   }
+  @media (hover: none) {
+    .copy-btn {
+      opacity: 1;
+    }
+  }
   .copy-btn:active {
     background: var(--bg-card-hover);
     color: var(--text);

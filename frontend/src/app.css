@@ -33,6 +33,7 @@
   --radius-xl: 32px;
   --radius-pill: 9999px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
   --nav-height: 56px;
   --nav-bg: rgba(5, 5, 5, 0.85);
   --spring: cubic-bezier(0.32, 0.72, 0, 1);
@@ -327,8 +328,8 @@ textarea:focus {
 
 /* ── Page Shell ── */
 .page {
-  padding: 24px max(20px, var(--safe-left)) calc(var(--nav-height) + 24px + var(--safe-bottom))
-    max(20px, var(--safe-right));
+  padding: calc(24px + var(--safe-top)) max(20px, var(--safe-left))
+    calc(var(--nav-height) + 24px + var(--safe-bottom)) max(20px, var(--safe-right));
 }
 @media (display-mode: standalone) {
   .page {
@@ -337,8 +338,8 @@ textarea:focus {
 }
 @media (max-width: 360px) {
   .page {
-    padding: 16px max(12px, var(--safe-left)) calc(var(--nav-height) + 16px + var(--safe-bottom))
-      max(12px, var(--safe-right));
+    padding: calc(16px + var(--safe-top)) max(12px, var(--safe-left))
+      calc(var(--nav-height) + 16px + var(--safe-bottom)) max(12px, var(--safe-right));
   }
 }
 @media (min-width: 768px) {
