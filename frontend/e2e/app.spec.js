@@ -840,3 +840,62 @@ test.describe("Mobile", () => {
     expect(scrolled).toBeGreaterThan(0);
   });
 });
+
+test.describe("Stats Tabs", () => {
+  test("switches between tabs and shows content", async ({ page }) => {
+    await goTo(page, NAV.stats);
+    await expect(page.locator("[data-testid=stats-overview]")).toBeVisible({ timeout: 5000 });
+    // Default tab is 统计 — difficulty and category sections should be visible
+    await expect(page.locator(".section-title").first()).toBeVisible({ timeout: 3000 });
+    // Switch to 记录 tab
+    await page.getByRole("button", { name: "记录" }).click();
+    await page.waitForTimeout(200);
+    // Should show yearly activity or weekly chart
+    await expect(page.locator(".section-title").first()).toBeVisible();
+    // Switch to 薄弱 tab
+    await page.getByRole("button", { name: "薄弱" }).click();
+    await page.waitForTimeout(200);
+    // Should show empty state with encouragement
+    await expect(page.getByText("暂无薄弱知识点")).toBeVisible({ timeout: 3000 });
+  });
+});
+
+test.describe("WrongBook AI Analysis", () => {
+  test("shows AI analysis tab with CTA", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    // Inject wrong questions so tab bar appears
+    await page.evaluate(() => {
+      localStorage.setItem(
+        "quiz_progress_e2e-test",
+        JSON.stringify({
+          1: { status: "wrong", wrong_count: 2 },
+          2: { status: "wrong", wrong_count: 1 },
+        }),
+      );
+    });
+    await page.getByRole("button", { name: NAV.wrong }).click();
+    await page.waitForTimeout(300);
+    await expect(page.locator("[data-testid=page-title]")).toHaveText("错题本", { timeout: 3000 });
+    // Switch to AI 分析 tab
+    await page.getByRole("button", { name: "AI 分析" }).click();
+    await page.waitForTimeout(200);
+    // CTA should be visible
+    await expect(page.getByText("AI 将分析你的错题")).toBeVisible({ timeout: 3000 });
+    await expect(page.getByRole("button", { name: /开始分析/ })).toBeVisible();
+  });
+});
+
+test.describe("Empty States", () => {
+  test("wrong book shows empty state when no wrong questions", async ({ page }) => {
+    await page.goto("/");
+    await page.waitForTimeout(300);
+    // Ensure no wrong questions exist
+    await page.evaluate(() => {
+      localStorage.removeItem("quiz_progress_e2e-test");
+    });
+    await page.getByRole("button", { name: NAV.wrong }).click();
+    await page.waitForTimeout(300);
+    await expect(page.getByText("暂无错题")).toBeVisible({ timeout: 3000 });
+  });
+});
