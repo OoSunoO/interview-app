@@ -56,8 +56,14 @@
   }
 
   let loadError = $state(null);
+  let showQuotaWarning = $state(false);
+
+  function dismissQuotaWarning() {
+    showQuotaWarning = false;
+  }
 
   onMount(async () => {
+    document.addEventListener("storage-quota-exceeded", () => { showQuotaWarning = true; });
     try {
       await ready;
     } catch (e) {
@@ -138,6 +144,16 @@
       <SyncStatus />
     </button>
   {/if}
+
+  {#if showQuotaWarning}
+    <div class="app-quota-warn" role="alert">
+      <span>存储空间不足，请及时导出备份以防数据丢失</span>
+      <div class="app-quota-actions">
+        <button class="app-quota-btn" onclick={() => navigate("stats")}>去导出</button>
+        <button class="app-quota-close" onclick={dismissQuotaWarning}>✕</button>
+      </div>
+    </div>
+  {/if}
   {/if}
 </div>
 
@@ -152,6 +168,60 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
+  .app-quota-warn {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-modal, 100);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--warning-bg, #fef3c7);
+    color: var(--warning, #d97706);
+    font-size: 13px;
+    font-weight: 500;
+    border-top: 1px solid var(--warning-glow, #f59e0b33);
+    animation: slideUp 0.3s ease;
+  }
+  .app-quota-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .app-quota-btn {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    background: var(--warning, #d97706);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .app-quota-btn:active { opacity: 0.8; }
+  .app-quota-close {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: none;
+    border: 1px solid var(--warning-glow, transparent);
+    color: var(--warning, #d97706);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .app-quota-close:active {
+    background: var(--warning-bg, transparent);
+  }
+
   .app-sync-btn {
     position: fixed;
     top: 12px;

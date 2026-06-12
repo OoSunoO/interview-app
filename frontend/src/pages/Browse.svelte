@@ -31,6 +31,10 @@
   let userTagDefs = $state([]);
   let showTagPicker = $state(null);
   let showTagManager = $state(false);
+  let showInlineNewTag = $state(null);
+  let inlineTagName = $state("");
+  let inlineTagColor = $state("#6366f1");
+  const INLINE_COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#ef4444", "#f97316", "#eab308", "#22c55e", "#14b8a6"];
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -176,6 +180,17 @@
     selectedIds = next;
     if (next.size > 0) selectionMode = true;
     else selectionMode = false;
+  }
+
+  function createInlineTag() {
+    const name = inlineTagName.trim();
+    if (!name) return;
+    const id = "ut_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+    api.tags.saveDefinition({ id, name, color: inlineTagColor });
+    userTagDefs = api.tags.definitions();
+    inlineTagName = "";
+    inlineTagColor = INLINE_COLORS[0];
+    showInlineNewTag = null;
   }
 
   function toggleQuestionTag(q, tagId) {
@@ -673,8 +688,21 @@
                     {ut.name}
                   </label>
                 {/each}
-                {#if userTagDefs.length === 0}
-                  <span class="utp-empty">先创建标签</span>
+                {#if showInlineNewTag === q.id}
+                  <div class="utp-new">
+                    <input class="utp-new-input" placeholder="标签名称" bind:value={inlineTagName} onkeydown={(e) => { if (e.key === "Enter") createInlineTag(); }} />
+                    <div class="utp-new-colors">
+                      {#each INLINE_COLORS as c}
+                        <button class="utp-new-color" class:active={inlineTagColor === c} style="background:{c}" onclick={() => (inlineTagColor = c)}></button>
+                      {/each}
+                    </div>
+                    <button class="utp-new-confirm" disabled={!inlineTagName.trim()} onclick={createInlineTag}>确定</button>
+                  </div>
+                {:else}
+                  <button class="utp-new-btn" onclick={() => { showInlineNewTag = q.id; inlineTagName = ""; inlineTagColor = INLINE_COLORS[0]; }}>
+                    <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    新建标签
+                  </button>
                 {/if}
               </div>
             {/if}
@@ -1431,6 +1459,78 @@
     padding: 6px 4px;
     text-align: center;
   }
+  .utp-new-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: 1px dashed var(--accent-dim);
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    margin-top: 2px;
+  }
+  .utp-new-btn:active {
+    background: var(--accent-bg);
+  }
+  .utp-new {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    margin-top: 2px;
+  }
+  .utp-new-input {
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+  }
+  .utp-new-input:focus {
+    border-color: var(--accent);
+  }
+  .utp-new-colors {
+    display: flex;
+    gap: 4px;
+  }
+  .utp-new-color {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s;
+  }
+  .utp-new-color.active {
+    border-color: var(--text);
+    transform: scale(1.15);
+  }
+  .utp-new-confirm {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 4px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    align-self: flex-end;
+    transition: opacity 0.15s;
+  }
+  .utp-new-confirm:disabled { opacity: 0.4; cursor: default; }
+  .utp-new-confirm:active:not(:disabled) { opacity: 0.8; }
   .dp-utags {
     display: flex;
     flex-wrap: wrap;

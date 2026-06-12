@@ -1351,6 +1351,113 @@ describe("knowledge.list content search", () => {
   });
 });
 
+describe("progress.sm2Stats", () => {
+  it("returns zeros when no progress data", async () => {
+    const api = await getApi();
+    const s = api.progress.sm2Stats();
+    expect(s.dueToday).toBe(0);
+    expect(s.dueWeek).toBe(0);
+    expect(s.overdue).toBe(0);
+    expect(s.avgEF).toBe(0);
+    expect(s.avgInterval).toBe(0);
+    expect(s.maturity.total).toBe(0);
+    expect(s.forecast).toHaveLength(30);
+  });
+
+  it("counts due today and overdue correctly", async () => {
+    const now = new Date();
+    const hoursAgo = (h) => new Date(now.getTime() - h * 3600000).toISOString();
+    const hoursLater = (h) => new Date(now.getTime() + h * 3600000).toISOString();
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: {
+          status: "reviewing",
+          ef: 2.5,
+          interval: 6,
+          repetitions: 1,
+          next_review_at: hoursAgo(2),
+        },
+        2: { status: "wrong", ef: 2.0, interval: 3, repetitions: 0, next_review_at: hoursLater(6) },
+        3: { status: "wrong", ef: 1.8, interval: 1, repetitions: 2, next_review_at: hoursAgo(48) },
+        4: {
+          status: "correct",
+          ef: 2.8,
+          interval: 30,
+          repetitions: 5,
+          next_review_at: hoursLater(72),
+        },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const s = api.progress.sm2Stats();
+    expect(s.dueToday).toBe(2); // 1 + 3 (overdue AND due today)
+    expect(s.dueWeek).toBe(4); // all 4 due within week
+    expect(s.overdue).toBe(2); // 1 and 3 are past now
+  });
+
+  it("computes EF buckets and intervals correctly", async () => {
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "reviewing", ef: 2.5, interval: 6, repetitions: 2 },
+        2: { status: "wrong", ef: 1.5, interval: 1, repetitions: 0 },
+        3: { status: "correct", ef: 2.9, interval: 60, repetitions: 8 },
+        4: { status: "wrong", ef: 1.3, interval: 0, repetitions: 0 },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const s = api.progress.sm2Stats();
+    expect(s.efBuckets["1.3-1.7"]).toBe(2); // id 2 (1.5) + id 4 (1.3)
+    expect(s.efBuckets["2.0-2.3"]).toBe(0);
+    expect(s.efBuckets["2.6-3.0"]).toBe(1); // id 3 (2.9)
+    expect(s.intervals["<1d"]).toBe(1); // id 4 (0)
+    expect(s.intervals["3-7d"]).toBe(1); // id 1 (6)
+    expect(s.avgEF).toBe(2.05); // (2.5+1.5+2.9+1.3)/4
+    expect(s.avgInterval).toBe(16.8); // (6+1+60+0)/4
+  });
+
+  it("categories maturity levels", async () => {
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "reviewing", ef: 2.5, interval: 6, repetitions: 0 },
+        2: { status: "reviewing", ef: 2.5, interval: 6, repetitions: 1 },
+        3: { status: "correct", ef: 2.5, interval: 6, repetitions: 2 },
+        4: { status: "correct", ef: 2.5, interval: 6, repetitions: 5 },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const s = api.progress.sm2Stats();
+    expect(s.maturity.new).toBe(1); // repetitions 0
+    expect(s.maturity.learning).toBe(2); // repetitions 1, 2
+    expect(s.maturity.mature).toBe(1); // repetitions 5
+    expect(s.maturity.total).toBe(4);
+  });
+
+  it("forecasts upcoming reviews", async () => {
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 86400000).toISOString();
+    const nextWeek = new Date(now.getTime() + 7 * 86400000).toISOString();
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "reviewing", ef: 2.5, interval: 1, repetitions: 1, next_review_at: tomorrow },
+        2: { status: "reviewing", ef: 2.5, interval: 7, repetitions: 2, next_review_at: nextWeek },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const s = api.progress.sm2Stats();
+    expect(s.forecast[1].count).toBe(1); // tomorrow (index 1)
+    expect(s.forecast[7].count).toBe(1); // 7 days later (index 7)
+    expect(s.forecast[0].count).toBe(0); // today
+  });
+});
+
 describe("questions.random extras", () => {
   it("filters by category", async () => {
     const api = await getApi();
