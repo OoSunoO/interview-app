@@ -1716,7 +1716,7 @@
     "type": "fill_in_blank",
     "title": "文件权限修改",
     "content": "要将文件 script.sh 设置为「所有者可读可写可执行，组用户和其他用户只读可执行」，应执行命令：`chmod _______ script.sh`",
-    "answer": "755",
+    "answer": "{\"answer\": \"755\"}",
     "hints": [
       "所有者 = 7（rwx），组 = 5（r-x），其他 = 5（r-x）"
     ],
@@ -1733,7 +1733,7 @@
     "type": "fill_in_blank",
     "title": "输出重定向",
     "content": "要将命令的标准输出追加到文件 app.log，同时将标准错误输出重定向到标准输出，应使用命令：`./run.sh _______ _______`",
-    "answer": ">> app.log 2>&1",
+    "answer": "{\"answer\": \">> app.log 2>&1\"}",
     "hints": [
       "追加用 >> 而非 >（覆盖）",
       "2>&1 的 & 符号含义"
@@ -1751,7 +1751,7 @@
     "type": "fill_in_blank",
     "title": "SSH 隧道",
     "content": "要在本地监听 8080 端口，将通过该端口的流量通过跳板机跳板机 jump.example.com 转发到内网服务器 10.0.0.1:80，应使用命令：`ssh _______ jump.example.com`",
-    "answer": "-L 8080:10.0.0.1:80",
+    "answer": "{\"answer\": \"-L 8080:10.0.0.1:80\"}",
     "hints": [
       "L 表示本地转发（Local），R 表示远程转发（Remote）",
       "格式是 本地端口:目标地址:目标端口"
@@ -1770,12 +1770,12 @@
     "title": "进程间通信方式",
     "content": "以下哪种不是 Linux 进程间通信（IPC）的方式？",
     "answer": "D",
-    "options": {
-      "A": "管道（Pipe）",
-      "B": "共享内存（Shared Memory）",
-      "C": "信号量（Semaphore）",
-      "D": "远程过程调用（RPC）"
-    },
+    "options": [
+      "A) A",
+      "B) B",
+      "C) C",
+      "D) D"
+    ],
     "hints": [
       "IPC 是同一主机内进程通信",
       "RPC 一般用于跨网络通信"
@@ -1794,12 +1794,12 @@
     "title": "crontab 定时任务",
     "content": "crontab 表达式 `30 8 * * 1-5 /script.sh` 表示什么？",
     "answer": "A",
-    "options": {
-      "A": "每周一至周五 8:30 执行",
-      "B": "每周一至周五 8:30 执行，仅在 1 月到 5 月",
-      "C": "每天 8:30 执行，仅限第 1-5 分钟",
-      "D": "每小时 30 分执行，每周 1-5 天"
-    },
+    "options": [
+      "A) A",
+      "B) B",
+      "C) C",
+      "D) D"
+    ],
     "tags": [
       "Shell",
       "任务调度"

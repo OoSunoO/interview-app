@@ -1594,12 +1594,12 @@
     "title": "Git 合并冲突",
     "content": "当 Git 合并发生冲突时，冲突标记的 `<<<<<<< HEAD` 和 `=======` 之间是什么内容？",
     "answer": "C",
-    "options": {
-      "A": "合并目标分支的版本",
-      "B": "远程仓库的版本",
-      "C": "当前分支（HEAD）的版本",
-      "D": "共同祖先的版本"
-    },
+    "options": [
+      "A) A",
+      "B) B",
+      "C) C",
+      "D) D"
+    ],
     "tags": [
       "Git"
     ],
@@ -1613,12 +1613,12 @@
     "title": "Git 工作流策略",
     "content": "以下哪种 Git 工作流每个功能分支合入 main 时只产生一个提交，历史最简洁？",
     "answer": "C",
-    "options": {
-      "A": "Git Flow",
-      "B": "GitHub Flow",
-      "C": "GitLab Flow with Squash merge",
-      "D": "Trunk-Based Development"
-    },
+    "options": [
+      "A) A",
+      "B) B",
+      "C) C",
+      "D) D"
+    ],
     "tags": [
       "Git",
       "工作流"
@@ -1704,12 +1704,12 @@
     "title": "Docker Compose restart 策略",
     "content": "Docker Compose 中，以下哪个 restart 策略表示「仅在容器异常退出时自动重启，手动停止时不重启」？",
     "answer": "C",
-    "options": {
-      "A": "restart: always",
-      "B": "restart: unless-stopped",
-      "C": "restart: on-failure",
-      "D": "restart: no"
-    },
+    "options": [
+      "A) A",
+      "B) B",
+      "C) C",
+      "D) D"
+    ],
     "tags": [
       "Docker",
       "Compose",
@@ -1725,12 +1725,12 @@
     "title": "Docker 镜像层缓存",
     "content": "```\nFROM node:18-alpine\nCOPY package.json ./\nRUN npm install\nCOPY src/ ./\nRUN npm run build\n```",
     "answer": "B",
-    "options": {
-      "A": "FROM node:18-alpine",
-      "B": "COPY src/ ./",
-      "C": "RUN npm install",
-      "D": "RUN npm run build"
-    },
+    "options": [
+      "A) A",
+      "B) B",
+      "C) C",
+      "D) D"
+    ],
     "tags": [
       "Docker",
       "构建"
@@ -1744,7 +1744,7 @@
     "type": "fill_in_blank",
     "title": "Docker 容器交互",
     "content": "要在正在运行的容器 myapp 中启动一个交互式 Shell（bash），应使用命令：`docker _______ -it myapp bash`",
-    "answer": "exec",
+    "answer": "{\"answer\": \"exec\"}",
     "tags": [
       "Docker",
       "命令"
