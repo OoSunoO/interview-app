@@ -58,9 +58,42 @@
   let forgottenCount = $derived(
     Object.values(results).filter((r) => r === "forgot").length,
   );
+  let timedOutCount = $derived(timedOutIds.size);
   let showSessionMap = $state(false);
   let mapDialog = $state(null);
   let showHistory = $state(false);
+
+  // ── Timer state ──
+  let timed = $derived(config?.timed ?? false);
+  let timePerQuestion = $derived(config?.timePerQuestion ?? 60);
+  let timeLeft = $state(timePerQuestion);
+  let intervalId = $state(null);
+  let timedOut = $state(false);
+  let timedOutIds = $state(new Set());
+
+  function startTimer() {
+    stopTimer();
+    if (!timed || showAnswer || showSessionMap) return;
+    timeLeft = timePerQuestion;
+    timedOut = false;
+    intervalId = setInterval(() => {
+      if (showSessionMap) return;
+      timeLeft = Math.max(0, timeLeft - 1);
+      if (timeLeft <= 0) {
+        stopTimer();
+        timedOut = true;
+        if (currentQuestion) timedOutIds.add(currentQuestion.id);
+        if (!showAnswer) revealAnswer();
+      }
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (intervalId !== null) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
 
   function trapFocus(e, container) {
     if (e.key !== "Tab" || !container) return;
@@ -107,6 +140,9 @@
           difficulty: filter.difficulty || undefined,
           type: filter.type || undefined,
           tag: filter.tag || undefined,
+          search: filter.search || undefined,
+          source: filter.source || undefined,
+          status: filter.status || undefined,
           page_size: filter.count || 20,
         });
         if (list.length === 0) {
@@ -118,8 +154,11 @@
       currentIndex = 0;
       showAnswer = false;
       results = {};
+      timedOutIds = new Set();
+      timedOut = false;
       sessionStart = Date.now();
       phase = "active";
+      startTimer();
       saveSession();
     } catch (e) {
       // If load fails, stay in loading and show nothing
@@ -132,9 +171,12 @@
       questions = await Promise.all(saved.questionIds.map((id) => api.questions.get(id)));
       currentIndex = saved.currentIndex;
       results = saved.results || {};
+      timedOutIds = new Set(saved.timedOutIds || []);
+      timedOut = false;
       sessionStart = Date.now();
       phase = "active";
       showAnswer = false;
+      startTimer();
     } catch {
       // If restore fails, start fresh with saved filter
       startSession(saved.filter || { count: 20 });
@@ -147,6 +189,7 @@
       questionIds: questions.map((q) => q.id),
       currentIndex,
       results,
+      timedOutIds: [...timedOutIds],
       filter: config || { count: 20 },
       updated_at: new Date().toISOString(),
     });
@@ -165,6 +208,7 @@
 
   function revealAnswer() {
     showAnswer = true;
+    stopTimer();
   }
 
   function handleKeydown(e) {
@@ -194,6 +238,8 @@
 
   function selfRate(rating) {
     results = { ...results, [currentQuestion.id]: rating };
+    timedOutIds.delete(currentQuestion.id);
+    timedOut = false;
 
     const sm2Rating = { forgot: "forgot", unsure: "hard", remembered: "good" }[rating];
 
@@ -208,6 +254,7 @@
     if (currentIndex < questions.length - 1) {
       currentIndex++;
       showAnswer = false;
+      startTimer();
       saveSession();
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
@@ -315,6 +362,13 @@
     <div class="qr-progress-track">
       <div class="qr-progress-fill" style="transform: scaleX({doneCount / total})"></div>
     </div>
+
+    {#if timed}
+      <div class="qr-timer-track" class:qr-timer-warn={timeLeft <= 10 && timeLeft > 0} class:qr-timer-expired={timeLeft <= 0}>
+        <div class="qr-timer-fill" style="transform: scaleX({timeLeft / timePerQuestion})"></div>
+        <span class="qr-timer-text">{Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}</span>
+      </div>
+    {/if}
 
     {#key currentQuestion?.id}
       <div class="qr-card" data-testid="qr-card">
@@ -507,6 +561,12 @@
             <span class="summary-stat-num">{forgotCount}</span>
             <span class="summary-stat-lbl">要复习</span>
           </div>
+          {#if timed && timedOutCount > 0}
+            <div class="summary-stat timedout">
+              <span class="summary-stat-num">{timedOutCount}</span>
+              <span class="summary-stat-lbl">超时</span>
+            </div>
+          {/if}
         </div>
         <p class="summary-pct">{Math.round((rememberedCount / total) * 100)}% 掌握率</p>
         <p class="summary-duration">{formatDuration()}</p>
@@ -764,6 +824,41 @@
     transform-origin: left;
     transition: transform 0.5s var(--spring);
   }
+
+  /* ── Timer ── */
+  .qr-timer-track {
+    position: relative;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .qr-timer-fill {
+    height: 100%;
+    background: var(--accent);
+    transform-origin: left;
+    transition: transform 0.3s linear;
+    border-radius: 3px;
+  }
+  .qr-timer-track.qr-timer-warn .qr-timer-fill {
+    background: #f59e0b;
+  }
+  .qr-timer-track.qr-timer-expired .qr-timer-fill {
+    background: #ef4444;
+  }
+  .qr-timer-text {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .qr-timer-warn .qr-timer-text { color: #f59e0b; }
+  .qr-timer-expired .qr-timer-text { color: #ef4444; }
 
   /* ── Question Card ── */
   .qr-card {
@@ -1057,6 +1152,9 @@
   }
   .summary-stat.forgot .summary-stat-num {
     color: var(--danger);
+  }
+  .summary-stat.timedout .summary-stat-num {
+    color: #f59e0b;
   }
   .summary-stat-lbl {
     font-size: 11px;

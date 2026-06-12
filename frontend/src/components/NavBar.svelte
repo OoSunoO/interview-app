@@ -1,9 +1,10 @@
 <script>
   import { store } from "../lib/stores.svelte.js";
+  import { api } from "../lib/local-api.js";
   import { version as appVersion } from "../../package.json";
   let { current = "home", onNavigate } = $props();
 
-  let dueCount = $derived(store.dueCount);
+  let wrongCount = $derived(api.progress.wrong().length);
 
   const tabs = [
     { id: "home", label: "首页", icon: "home" },
@@ -79,8 +80,8 @@
             >
               <circle cx="12" cy="12" r="10" /><path d="M15 9l-6 6M9 9l6 6" />
             </svg>
-            {#if dueCount > 0}
-              <span class="badge">{dueCount > 99 ? "99+" : dueCount}</span>
+            {#if wrongCount > 0}
+              <span class="badge">{wrongCount > 99 ? "99+" : wrongCount}</span>
             {/if}
           {:else if tab.icon === "stats"}
             <svg aria-hidden="true"

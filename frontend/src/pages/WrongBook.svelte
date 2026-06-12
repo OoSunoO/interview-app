@@ -868,8 +868,8 @@
   .wb-filter {
     flex: 1;
     min-width: 0;
-    padding: 8px 10px;
-    font-size: 13px;
+    padding: 8px 12px;
+    font-size: 14px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
     background: var(--bg-surface);
@@ -1927,6 +1927,9 @@
     .schedule-questions button {
       flex: 1;
       min-width: 0;
+    }
+    .wb-filter {
+      min-height: 44px;
     }
     .detail-card-inner {
       padding: 14px;

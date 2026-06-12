@@ -7,6 +7,9 @@
   import { version as appVersion } from "../../package.json";
   import ProgressRing from "../components/ProgressRing.svelte";
   import MonthlyCalendar from "../components/MonthlyCalendar.svelte";
+  import TrendChart from "../components/TrendChart.svelte";
+  import { questionIndex } from "../lib/api/loader.js";
+  import { getProgress } from "../lib/api/storage.js";
 
   let { onNavigate } = $props();
 
@@ -114,14 +117,85 @@
   let miHistory = $state([]);
   let sm2 = $state(null);
 
-  let trendLayout = $derived.by(() => {
-    if (!trendData || trendData.length < 2) return null;
-    const w = 340, h = 120, padL = 30, padR = 8, padT = 8, padB = 20;
-    const chartW = w - padL - padR, chartH = h - padT - padB;
-    const step = chartW / Math.max(trendData.length - 1, 1);
-    const points = trendData.map((d, i) => `${padL + i * step},${padT + chartH - (d.retention / 100) * chartH}`).join(' ');
-    return { w, h, padL, padR, padT, padB, chartW, chartH, step, points, gridY: [0, 25, 50, 75, 100] };
+  // ── Quality Analysis ──
+  let qAll = $derived(questionIndex || []);
+  let noTagQ = $derived(qAll.filter((q) => !q.tags || q.tags.length === 0));
+  let noSourceQ = $derived(qAll.filter((q) => !q.source));
+  let topWrongQ = $derived.by(() => {
+    return [...wrongList].sort((a, b) => b.wrong_count - a.wrong_count).slice(0, 15);
   });
+  let neverReviewedCount = $derived.by(() => {
+    const p = getProgress();
+    const keys = new Set(Object.keys(p));
+    return qAll.filter((q) => !keys.has(String(q.id))).length;
+  });
+
+  let tagQuality = $derived.by(() => {
+    const tagQCount = {};
+    const tagWrong = {};
+    for (const q of qAll) {
+      for (const t of q.tags || []) {
+        tagQCount[t] = (tagQCount[t] || 0) + 1;
+      }
+    }
+    for (const q of wrongList) {
+      for (const t of q.tags || []) {
+        tagWrong[t] = (tagWrong[t] || 0) + 1;
+      }
+    }
+    return Object.entries(tagQCount)
+      .map(([tag, count]) => ({
+        tag,
+        total: count,
+        wrong: tagWrong[tag] || 0,
+        rate: count > 0 ? Math.round(((tagWrong[tag] || 0) / count) * 100) : 0,
+      }))
+      .sort((a, b) => b.wrong - a.wrong);
+  });
+  let highErrorTags = $derived(tagQuality.filter((t) => t.wrong >= 3 && t.rate >= 30).slice(0, 10));
+  let lowCoverageTags = $derived(tagQuality.filter((t) => t.total < 3).sort((a, b) => a.total - b.total));
+
+  let typeDist = $derived.by(() => {
+    const d = {};
+    for (const q of qAll) d[q.type] = (d[q.type] || 0) + 1;
+    return d;
+  });
+  let catDist = $derived.by(() => {
+    const d = {};
+    for (const q of qAll) d[q.category] = (d[q.category] || 0) + 1;
+    return Object.entries(d).sort((a, b) => b[1] - a[1]);
+  });
+  let diffDist = $derived.by(() => {
+    const d = {};
+    for (const q of qAll) d[q.difficulty] = (d[q.difficulty] || 0) + 1;
+    return d;
+  });
+
+  // ── Batch Quality per Category ──
+  let catQuality = $derived.by(() => {
+    const map = {};
+    for (const q of qAll) {
+      if (!map[q.category]) map[q.category] = { total: 0, noTag: 0, noSource: 0, hints: 0, totalTagCount: 0 };
+      map[q.category].total++;
+      if (!q.tags || q.tags.length === 0) map[q.category].noTag++;
+      if (!q.source) map[q.category].noSource++;
+      map[q.category].totalTagCount += (q.tags?.length || 0);
+    }
+    return Object.entries(map)
+      .map(([cat, d]) => ({
+        cat,
+        label: categoryLabel(cat),
+        total: d.total,
+        noTag: d.noTag,
+        noSource: d.noSource,
+        avgTags: d.total > 0 ? (d.totalTagCount / d.total).toFixed(1) : "0",
+        score: Math.round(
+          ((d.total - d.noTag - d.noSource) / d.total) * 100
+        ),
+      }))
+      .sort((a, b) => a.score - b.score);
+  });
+  let batchCat = $state(null);
 
   let trendData = $derived.by(() => {
     if (!allDaily) return [];
@@ -223,6 +297,7 @@
     { id: "records", label: "记录" },
     { id: "weak", label: "薄弱" },
     { id: "sm2", label: "间隔" },
+    { id: "quality", label: "质量" },
   ];
 </script>
 
@@ -385,29 +460,7 @@
     {:else if activeTab === "records"}
       {#if trendData.length > 0}
         <h2 class="section-title">近 30 天掌握率趋势</h2>
-        <div class="trend-chart-wrap">
-          {#if trendLayout}
-            {@const { w, h, padL, padR, padT, padB, chartW, chartH, step, points, gridY } = trendLayout}
-            <svg aria-hidden="true" viewBox="0 0 {w} {h}" class="trend-chart">
-              {#each gridY as pct}
-                <line x1={padL} y1={padT + chartH - (pct / 100) * chartH} x2={w - padR} y2={padT + chartH - (pct / 100) * chartH} stroke="currentColor" stroke-opacity="0.08" stroke-width="1" />
-                <text x={padL - 4} y={padT + chartH - (pct / 100) * chartH + 3} text-anchor="end" fill="currentColor" fill-opacity="0.4" font-size="8">{pct}%</text>
-              {/each}
-              <path d="M{points} L{padL + (trendData.length - 1) * step},{padT + chartH} L{padL},{padT + chartH}Z" fill="var(--accent)" fill-opacity="0.1" />
-              <polyline points={points} fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              {#each trendData as d, i}
-                <circle cx={padL + i * step} cy={padT + chartH - (d.retention / 100) * chartH} r="2.5" fill="var(--accent)" />
-              {/each}
-              <text x={padL} y={h - 2} text-anchor="start" fill="currentColor" fill-opacity="0.4" font-size="8">{trendData[0].label}</text>
-              {#if trendData.length > 2}
-                <text x={padL + chartW / 2} y={h - 2} text-anchor="middle" fill="currentColor" fill-opacity="0.4" font-size="8">{trendData[Math.floor(trendData.length / 2)].label}</text>
-              {/if}
-              <text x={padL + (trendData.length - 1) * step} y={h - 2} text-anchor="end" fill="currentColor" fill-opacity="0.4" font-size="8">{trendData[trendData.length - 1].label}</text>
-            </svg>
-          {:else if trendData.length === 1}
-            <div class="trend-single">今日掌握率：{trendData[0].retention}%（{trendData[0].reviewed} 题）</div>
-          {/if}
-        </div>
+        <TrendChart data={trendData} />
       {/if}
 
       {#if allDaily}
@@ -712,6 +765,159 @@
         </div>
       {:else}
         <p class="empty-weak">请先练习一些题目，SM-2 数据将在答题后生成。</p>
+      {/if}
+    {:else if activeTab === "quality"}
+      <h2 class="section-title">题库总览</h2>
+      <div class="qy-grid">
+        <div class="qy-card"><span class="qy-num">{qAll.length}</span><span class="qy-lbl">总题目</span></div>
+        <div class="qy-card"><span class="qy-num">{Object.keys(typeDist).length}</span><span class="qy-lbl">题型数</span></div>
+        <div class="qy-card"><span class="qy-num accent">{Object.keys(catDist).length}</span><span class="qy-lbl">分类数</span></div>
+        <div class="qy-card"><span class="qy-num">{Object.keys(tagQuality).length}</span><span class="qy-lbl">标签数</span></div>
+        <div class="qy-card"><span class="qy-num">{neverReviewedCount}</span><span class="qy-lbl">未复习</span></div>
+        <div class="qy-card"><span class="qy-num warn">{store.stats?.wrong || 0}</span><span class="qy-lbl">待复习</span></div>
+      </div>
+
+      <h2 class="section-title">题型分布</h2>
+      <div class="qy-tags">
+        {#each Object.entries(typeDist) as [type, count]}
+          <span class="qy-tag">{typeLabel(type)} <strong>{count}</strong></span>
+        {/each}
+      </div>
+
+      <h2 class="section-title">难度分布</h2>
+      <div class="qy-tags">
+        {#each Object.entries(diffDist) as [diff, count]}
+          <span class="qy-tag diff {diff}">{difficultyLabel(diff)} <strong>{count}</strong></span>
+        {/each}
+      </div>
+
+      <h2 class="section-title">分类分布</h2>
+      <div class="qy-cat-list">
+        {#each catDist as [cat, count]}
+          <div class="qy-cat-row">
+            <span class="qy-cat-name">{categoryLabel(cat)}</span>
+            <span class="qy-cat-bar-bg">
+              <span class="qy-cat-bar" style="width:{(count / qAll.length) * 100}%"></span>
+            </span>
+            <span class="qy-cat-count">{count}</span>
+          </div>
+        {/each}
+      </div>
+
+      {#if noTagQ.length > 0}
+        <h2 class="section-title warn">无标签题目（{noTagQ.length}）</h2>
+        <div class="qy-list">
+          {#each noTagQ.slice(0, 20) as q}
+            <div class="qy-item clickable" role="button" tabindex="0" onclick={() => { store.filters.category = q.category; store.filters.search = q.title; onNavigate("browse"); }} onkeydown={(e) => e.key === 'Enter' && (store.filters.category = q.category, store.filters.search = q.title, onNavigate("browse"))}>
+              <span class="qy-item-tag">{categoryLabel(q.category)}</span>
+              <span class="qy-item-title">{q.title}</span>
+            </div>
+          {/each}
+          {#if noTagQ.length > 20}
+            <p class="qy-more">还有 {noTagQ.length - 20} 道...</p>
+          {/if}
+        </div>
+      {/if}
+
+      {#if noSourceQ.length > 0}
+        <h2 class="section-title warn">无来源题目（{noSourceQ.length}）</h2>
+        <div class="qy-list">
+          {#each noSourceQ.slice(0, 10) as q}
+            <div class="qy-item clickable" role="button" tabindex="0" onclick={() => { store.filters.category = q.category; store.filters.search = q.title; onNavigate("browse"); }} onkeydown={(e) => e.key === 'Enter' && (store.filters.category = q.category, store.filters.search = q.title, onNavigate("browse"))}>
+              <span class="qy-item-tag">{categoryLabel(q.category)}</span>
+              <span class="qy-item-title">{q.title}</span>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if topWrongQ.length > 0}
+        <h2 class="section-title danger">最高错误率题目</h2>
+        <div class="qy-list">
+          {#each topWrongQ as q}
+            <div class="qy-item clickable" role="button" tabindex="0" onclick={() => { store.filters.category = q.category; store.filters.search = q.title; onNavigate("browse"); }} onkeydown={(e) => e.key === 'Enter' && (store.filters.category = q.category, store.filters.search = q.title, onNavigate("browse"))}>
+              <span class="qy-item-tag">{categoryLabel(q.category)}</span>
+              <span class="qy-item-title">{q.title}</span>
+              <span class="qy-item-count danger">{q.wrong_count} 次</span>
+            </div>
+          {/each}
+        </div>
+      {/if}
+
+      {#if highErrorTags.length > 0}
+        <h2 class="section-title danger">高错误率知识点</h2>
+        <div class="qy-tags">
+          {#each highErrorTags as t}
+            <span class="qy-tag danger" role="button" tabindex="0" onclick={() => onNavigate("knowledge-detail", { tag: t.tag })} onkeydown={(e) => e.key === 'Enter' && onNavigate("knowledge-detail", { tag: t.tag })} style="cursor:pointer">
+              {t.tag} <strong>{t.wrong}/{t.total}</strong> <small>{t.rate}%</small>
+            </span>
+          {/each}
+        </div>
+      {/if}
+
+      {#if lowCoverageTags.length > 0}
+        <h2 class="section-title">低覆盖知识点（{lowCoverageTags.length}）</h2>
+        <p class="qy-desc">题目数量少于 3 道的知识点标签</p>
+        <div class="qy-tags">
+          {#each lowCoverageTags.slice(0, 20) as t}
+            <span class="qy-tag" role="button" tabindex="0" onclick={() => onNavigate("knowledge-detail", { tag: t.tag })} onkeydown={(e) => e.key === 'Enter' && onNavigate("knowledge-detail", { tag: t.tag })} style="cursor:pointer">
+              {t.tag} <strong>{t.total}题</strong>
+            </span>
+          {/each}
+        </div>
+      {/if}
+
+      <h2 class="section-title">按批审核</h2>
+      <p class="qy-desc">按分类查看题目质量，分数 = 有标签 + 有来源的题目占比</p>
+
+      {#if batchCat}
+        <button class="qy-back" onclick={() => (batchCat = null)}>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          返回批次列表
+        </button>
+        {@const cat = catQuality.find((c) => c.cat === batchCat)}
+        {#if cat}
+          <div class="qy-batch-header">
+            <span class="qy-batch-name">{cat.label}</span>
+            <span class="qy-batch-score" class:qy-batch-poor={cat.score < 60} class:qy-batch-ok={cat.score >= 60 && cat.score < 90}>{cat.score} 分</span>
+          </div>
+          <div class="qy-grid" style="margin-bottom:12px">
+            <div class="qy-card"><span class="qy-num">{cat.total}</span><span class="qy-lbl">题目</span></div>
+            <div class="qy-card"><span class="qy-num warn">{cat.noTag}</span><span class="qy-lbl">无标签</span></div>
+            <div class="qy-card"><span class="qy-num warn">{cat.noSource}</span><span class="qy-lbl">无来源</span></div>
+            <div class="qy-card"><span class="qy-num">{cat.avgTags}</span><span class="qy-lbl">平均标签</span></div>
+          </div>
+          {@const batchQuestions = qAll.filter((q) => q.category === batchCat)}
+          {@const flagged = batchQuestions.filter((q) => !q.tags?.length || !q.source).slice(0, 50)}
+          {#if flagged.length > 0}
+            <h3 class="qy-subtitle">待改进题目（{flagged.length}）</h3>
+            <div class="qy-list">
+              {#each flagged as q}
+                <div class="qy-item clickable" role="button" tabindex="0" onclick={() => { store.filters.category = q.category; store.filters.search = q.title; onNavigate("browse"); }} onkeydown={(e) => e.key === 'Enter' && (store.filters.category = q.category, store.filters.search = q.title, onNavigate("browse"))}>
+                  {#if !q.tags?.length}<span class="qy-flag">无标签</span>{/if}
+                  {#if !q.source}<span class="qy-flag src">无来源</span>{/if}
+                  <span class="qy-item-title">{q.title}</span>
+                  <span class="qy-item-count">{q.tags?.length || 0} 标签</span>
+                </div>
+              {/each}
+            </div>
+          {:else}
+            <p class="qy-desc">该分类所有题目质量良好 ✓</p>
+          {/if}
+        {/if}
+      {:else}
+        <div class="qy-batch-grid">
+          {#each catQuality as c}
+            <button class="qy-batch-card" class:qy-batch-poor={c.score < 60} class:qy-batch-ok={c.score >= 60 && c.score < 90} onclick={() => (batchCat = c.cat)}>
+              <span class="qy-batch-score">{c.score}</span>
+              <span class="qy-batch-name">{c.label}</span>
+              <span class="qy-batch-meta">{c.total} 题 · {c.noTag} 无标签 · {c.noSource} 无来源</span>
+              <div class="qy-batch-bar-bg">
+                <div class="qy-batch-bar" style="width:{c.score}%"></div>
+              </div>
+            </button>
+          {/each}
+        </div>
       {/if}
     {/if}
   {/if}
@@ -1229,25 +1435,6 @@
   }
 
   /* ── Trend Chart ── */
-  .trend-chart-wrap {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px;
-    overflow: hidden;
-  }
-  .trend-chart {
-    width: 100%;
-    height: 120px;
-    display: block;
-  }
-  .trend-single {
-    text-align: center;
-    font-size: 13px;
-    color: var(--text-muted);
-    padding: 12px;
-  }
-
   /* ── History List ── */
   .history-list {
     display: flex;
@@ -1644,6 +1831,96 @@
     transition: width 0.5s;
   }
   .sm2-mat-item + .sm2-mat-track { margin-bottom: 4px; }
+
+  /* ── Quality Tab ── */
+  .qy-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .qy-card {
+    flex: 1 0 calc(33% - 10px); min-width: 80px;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 14px 10px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--bg-card);
+  }
+  .qy-num { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--text); }
+  .qy-num.accent { color: var(--accent); }
+  .qy-num.warn { color: var(--warning); }
+  .qy-num.danger { color: var(--danger); }
+  .qy-lbl { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .qy-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .qy-tag {
+    padding: 4px 10px; font-size: 12px; border-radius: var(--radius-pill);
+    background: var(--bg-surface); border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  .qy-tag strong { color: var(--text); margin-left: 4px; }
+  .qy-tag.danger { border-color: var(--danger); color: var(--danger); }
+  .qy-tag.danger strong { color: var(--danger); }
+  .qy-tag.diff.easy { border-color: var(--success); color: var(--success); }
+  .qy-tag.diff.medium { border-color: var(--warning); color: var(--warning); }
+  .qy-tag.diff.hard { border-color: var(--danger); color: var(--danger); }
+  .qy-desc { font-size: 12px; color: var(--text-dim); margin: -4px 0 8px; }
+  .qy-cat-list { display: flex; flex-direction: column; gap: 6px; }
+  .qy-cat-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .qy-cat-name { width: 80px; flex-shrink: 0; color: var(--text); }
+  .qy-cat-bar-bg { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .qy-cat-bar { height: 100%; background: var(--accent); border-radius: 4px; }
+  .qy-cat-count { width: 36px; text-align: right; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .qy-list { display: flex; flex-direction: column; gap: 4px; }
+  .qy-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .qy-item.clickable { cursor: pointer; transition: background 0.2s; }
+  .qy-item.clickable:hover { background: var(--bg-surface); }
+  .qy-item.clickable:active { transform: scale(0.99); }
+  .qy-item-tag {
+    padding: 2px 6px; border-radius: 3px; font-size: 10px;
+    background: var(--accent-bg); color: var(--accent);
+    white-space: nowrap; flex-shrink: 0;
+  }
+  .qy-item-title { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .qy-item-count { flex-shrink: 0; font-weight: 700; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .qy-item-count.danger { color: var(--danger); }
+  .qy-more { font-size: 12px; color: var(--text-dim); text-align: center; }
+
+  /* ── Batch Review ── */
+  .qy-back {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--accent); cursor: pointer;
+    background: none; border: none; padding: 4px 0; font-family: inherit;
+  }
+  .qy-batch-header {
+    display: flex; align-items: center; gap: 10px; margin: 8px 0;
+  }
+  .qy-batch-name { font-size: 15px; font-weight: 700; color: var(--text); flex: 1; }
+  .qy-batch-grid { display: flex; flex-direction: column; gap: 6px; }
+  .qy-batch-card {
+    display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+    padding: 12px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--bg-card);
+    cursor: pointer; font-family: inherit; text-align: left;
+    transition: all 0.2s;
+  }
+  .qy-batch-card:active { transform: scale(0.99); }
+  .qy-batch-card.qy-batch-poor { border-left: 3px solid var(--danger); }
+  .qy-batch-card.qy-batch-ok { border-left: 3px solid var(--warning); }
+  .qy-batch-card:not(.qy-batch-poor):not(.qy-batch-ok) { border-left: 3px solid var(--success); }
+  .qy-batch-score { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .qy-batch-card.qy-batch-poor .qy-batch-score { color: var(--danger); }
+  .qy-batch-card.qy-batch-ok .qy-batch-score { color: var(--warning); }
+  .qy-batch-card:not(.qy-batch-poor):not(.qy-batch-ok) .qy-batch-score { color: var(--success); }
+  .qy-batch-meta { font-size: 11px; color: var(--text-dim); }
+  .qy-batch-bar-bg { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .qy-batch-bar { height: 100%; border-radius: 2px; background: var(--accent); }
+  .qy-batch-poor .qy-batch-bar { background: var(--danger); }
+  .qy-batch-ok .qy-batch-bar { background: var(--warning); }
+  .qy-subtitle { font-size: 13px; font-weight: 700; color: var(--text); margin: 8px 0 4px; }
+  .qy-flag {
+    padding: 1px 5px; border-radius: 3px; font-size: 10px; font-weight: 600;
+    background: var(--danger); color: #fff; flex-shrink: 0;
+  }
+  .qy-flag.src { background: var(--warning); }
 
   .skeleton { background: var(--bg-card); border-radius: var(--radius); animation: pulse 1.5s ease infinite; }
   @keyframes pulse {

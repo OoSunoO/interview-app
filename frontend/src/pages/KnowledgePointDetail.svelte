@@ -286,18 +286,32 @@
     border-radius: 12px;
     display: inline-block;
   }
+  .kp-meta {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
   .kp-cats {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     flex-wrap: wrap;
   }
   .mini-tag {
-    font-size: 10px;
-    padding: 1px 6px;
-    border-radius: 3px;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
     background: var(--bg-surface);
     color: var(--text-muted);
     border: 1px solid var(--border);
+  }
+  .mini-tag.domain {
+    background: var(--accent-bg);
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .mini-tag.source {
+    background: var(--bg-surface);
+    color: var(--text);
   }
 
   /* Knowledge Content: rendered markdown */

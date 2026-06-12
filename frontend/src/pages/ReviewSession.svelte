@@ -1030,7 +1030,7 @@
   }
   .rs-count-btn {
     flex: 1;
-    padding: 10px;
+    padding: 10px 16px;
     font-size: 14px;
     font-weight: 600;
     border-radius: var(--radius-sm);

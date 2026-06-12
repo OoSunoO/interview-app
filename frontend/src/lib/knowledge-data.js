@@ -8,7 +8,6 @@
 import { knowledge as javaBasics } from "./knowledge-data/java-basics.js";
 import { knowledge as javaCollections } from "./knowledge-data/java-collections.js";
 import { knowledge as javaAdvanced } from "./knowledge-data/java-advanced.js";
-import { knowledge as jvmConcurrency } from "./knowledge-data/jvm-concurrency.js";
 import { knowledge as spring } from "./knowledge-data/spring.js";
 import { knowledge as database } from "./knowledge-data/database.js";
 import { knowledge as network } from "./knowledge-data/network.js";
@@ -23,13 +22,18 @@ import { knowledge as security } from "./knowledge-data/security.js";
 import { knowledge as redis } from "./knowledge-data/redis.js";
 import { knowledge as mq } from "./knowledge-data/mq.js";
 import { knowledge as distributed } from "./knowledge-data/distributed.js";
+import { knowledge as os } from "./knowledge-data/os.js";
+import { knowledge as jvm } from "./knowledge-data/jvm.js";
+import { knowledge as concurrency } from "./knowledge-data/concurrency.js";
+import { knowledge as designPatterns } from "./knowledge-data/design-patterns.js";
+import { knowledge as python } from "./knowledge-data/python.js";
+import { knowledge as server } from "./knowledge-data/server.js";
 
 // Merge all knowledge data
 export const knowledgeContent = {
   ...javaBasics,
   ...javaCollections,
   ...javaAdvanced,
-  ...jvmConcurrency,
   ...spring,
   ...database,
   ...network,
@@ -44,6 +48,12 @@ export const knowledgeContent = {
   ...redis,
   ...mq,
   ...distributed,
+  ...os,
+  ...jvm,
+  ...concurrency,
+  ...designPatterns,
+  ...python,
+  ...server,
 };
 
 /**

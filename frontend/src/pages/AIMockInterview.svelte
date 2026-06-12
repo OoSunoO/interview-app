@@ -310,7 +310,7 @@
   }
   .count-btn {
     flex: 1;
-    padding: 10px;
+    padding: 10px 16px;
     font-size: 14px;
     font-weight: 600;
     border-radius: var(--radius-sm);
@@ -578,7 +578,7 @@
     .setup-title { font-size: 16px; }
     .ai-config-block { padding: 12px; }
     .count-options { gap: 4px; }
-    .count-btn { font-size: 12px; padding: 8px; }
+    .count-btn { font-size: 12px; padding: 8px 12px; }
     .input-row { gap: 6px; }
     .chat-input { font-size: 15px; }
     .summary-stats { flex-wrap: wrap; gap: 8px; }

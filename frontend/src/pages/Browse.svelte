@@ -492,7 +492,10 @@
       {/if}
       <button
         class="qr-browse-btn"
-        onclick={() => onNavigate("quick-review", { reviewConfig: { category: store.filters.category, difficulty: store.filters.difficulty, type: store.filters.type, tag: store.filters.tag, count: 20 } })}
+        onclick={() => {
+          const rc = { category: store.filters.category, difficulty: store.filters.difficulty, type: store.filters.type, tag: store.filters.tag, search: store.filters.search, source: store.filters.source, status: store.filters.status, count: 20 };
+          onNavigate("quick-review", { reviewConfig: rc });
+        }}
         disabled={store.questions.length === 0}
       >
         <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -500,6 +503,20 @@
           stroke-linejoin="round"><circle cx="12" cy="12" r="10" />
           <path d="M12 6v6l4 2" /></svg>
         速记
+      </button>
+      <button
+        class="rs-browse-btn"
+        onclick={() => {
+          const rc = { category: store.filters.category, difficulty: store.filters.difficulty, count: 20 };
+          onNavigate("review-session", { reviewConfig: rc });
+        }}
+        disabled={store.questions.length === 0}
+      >
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+        间隔复习
       </button>
     </div>
   </div>
@@ -1047,6 +1064,8 @@
   }
   .filters-row select {
     width: 100%;
+    font-size: 14px;
+    padding: 8px 12px;
   }
   .filters-row select.filter-active {
     border-color: var(--accent-dim);
@@ -1165,6 +1184,24 @@
     transform: scale(0.96);
     background: var(--accent-bg);
   }
+  .rs-browse-btn {
+    white-space: nowrap;
+    padding: 8px 12px;
+    font-size: 12px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s var(--spring);
+    font-family: inherit;
+  }
+  .rs-browse-btn:disabled { opacity: 0.4; cursor: default; }
+  .rs-browse-btn:not(:disabled):active { transform: scale(0.96); opacity: 0.85; }
   .reset-filter-btn {
     white-space: nowrap;
     padding: 8px 12px;
@@ -1273,6 +1310,7 @@
   .search {
     padding-left: 36px;
     padding-right: 32px;
+    flex: 1;
   }
   .search-clear {
     position: absolute;
@@ -1823,7 +1861,8 @@
     }
     .filter-item select {
       font-size: 13px;
-      padding: 8px 10px;
+      padding: 10px 10px;
+      min-height: 44px;
     }
     .actions-row {
       justify-content: stretch;
@@ -1831,6 +1870,7 @@
     .random-btn,
     .export-btn,
     .qr-browse-btn,
+    .rs-browse-btn,
     .reset-filter-btn {
       flex: 1;
       justify-content: center;

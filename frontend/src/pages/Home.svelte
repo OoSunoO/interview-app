@@ -24,6 +24,8 @@
   let qrDifficulty = $state(localStorage.getItem("qr_difficulty") || "");
   let qrType = $state(localStorage.getItem("qr_type") || "");
   let qrCount = $state(Number(localStorage.getItem("qr_count")) || 20);
+  let qrTimed = $state(localStorage.getItem("qr_timed") === "true");
+  let qrTimePerQuestion = $state(Number(localStorage.getItem("qr_time_per_question")) || 60);
   let lastSession = $state(null);
   let showMIDialog = $state(false);
   let showGoalDialog = $state(false);
@@ -145,8 +147,10 @@
     localStorage.setItem("qr_difficulty", qrDifficulty);
     localStorage.setItem("qr_type", qrType);
     localStorage.setItem("qr_count", String(qrCount));
+    localStorage.setItem("qr_timed", String(qrTimed));
+    localStorage.setItem("qr_time_per_question", String(qrTimePerQuestion));
     onNavigate("quick-review", {
-      reviewConfig: { category: qrCategory, difficulty: qrDifficulty, type: qrType, count: qrCount },
+      reviewConfig: { category: qrCategory, difficulty: qrDifficulty, type: qrType, count: qrCount, timed: qrTimed || undefined, timePerQuestion: qrTimed ? qrTimePerQuestion : undefined },
     });
   }
 
@@ -565,7 +569,22 @@
         <button class="count-btn" class:active={qrCount === 10} onclick={() => (qrCount = 10)}>10</button>
         <button class="count-btn" class:active={qrCount === 20} onclick={() => (qrCount = 20)}>20</button>
         <button class="count-btn" class:active={qrCount === 30} onclick={() => (qrCount = 30)}>30</button>
+        <button class="count-btn" class:active={![10, 20, 30].includes(qrCount)} onclick={() => (qrCount = 50)}>50</button>
+        <input class="count-input" type="number" min="1" max="500" bind:value={qrCount} placeholder="其他" aria-label="自定义题量" />
       </div>
+
+      <label class="dialog-toggle">
+        <input type="checkbox" bind:checked={qrTimed} />
+        <span>每题限时</span>
+      </label>
+      {#if qrTimed}
+        <span class="dialog-label">每题时长</span>
+        <div class="count-options">
+          <button class="count-btn" class:active={qrTimePerQuestion === 30} onclick={() => (qrTimePerQuestion = 30)}>30s</button>
+          <button class="count-btn" class:active={qrTimePerQuestion === 60} onclick={() => (qrTimePerQuestion = 60)}>60s</button>
+          <button class="count-btn" class:active={qrTimePerQuestion === 120} onclick={() => (qrTimePerQuestion = 120)}>120s</button>
+        </div>
+      {/if}
 
       <div class="dialog-actions">
         <button class="dialog-btn cancel" onclick={() => (showQRDialog = false)}>取消</button>
@@ -1362,7 +1381,7 @@
 }
 .count-btn {
   flex: 1;
-  padding: 10px;
+  padding: 10px 16px;
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-sm);
@@ -1382,13 +1401,48 @@
   color: var(--accent);
   border-color: var(--accent);
 }
+.count-input {
+  width: 60px;
+  padding: 10px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  outline: none;
+}
+.count-input:focus {
+  border-color: var(--accent);
+}
+.count-input::-webkit-inner-spin-button {
+  opacity: 1;
+}
 .time-options {
   display: flex;
   gap: 8px;
 }
+.dialog-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  padding: 8px 0;
+}
+.dialog-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
 .time-btn {
   flex: 1;
-  padding: 10px;
+  padding: 10px 16px;
   font-size: 14px;
   font-weight: 600;
   border-radius: var(--radius-sm);
