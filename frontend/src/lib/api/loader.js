@@ -1,4 +1,5 @@
 import { initStorage } from "./storage.js";
+import { initSearch } from "../search.js";
 
 export let questionIndex,
   knowledgeMap,
@@ -19,6 +20,7 @@ export const ready = (async () => {
     ({ questionIndex, loadCategory, loadAll, questions, categoryIndex } = qMod);
     ({ buildKnowledgeMap, getKnowledgeForTag } = kMod);
     knowledgeMap = buildKnowledgeMap(questionIndex);
+    initSearch(questionIndex);
     loadAll();
   } catch (e) {
     console.error("Failed to load question/knowledge data:", e);

@@ -1,6 +1,7 @@
-import { matchesSearch, getProgress } from "./storage.js";
+import { getProgress } from "./storage.js";
 import { questionIndex, loadCategory, questions as allQuestions } from "./loader.js";
 import { MAIN_CATEGORY } from "../categories.js";
+import { searchQuestions } from "../search.js";
 
 const diffRank = { easy: 0, medium: 1, hard: 2 };
 
@@ -12,7 +13,7 @@ export const questions = {
     }
     if (params.difficulty) result = result.filter((q) => q.difficulty === params.difficulty);
     if (params.type) result = result.filter((q) => q.type === params.type);
-    if (params.search) result = result.filter((q) => matchesSearch(q, params.search));
+    if (params.search) result = searchQuestions(params.search, result);
     if (params.tag) result = result.filter((q) => q.tags.includes(params.tag));
     if (params.user_tag) {
       const p = getProgress();

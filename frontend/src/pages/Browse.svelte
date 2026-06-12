@@ -8,6 +8,7 @@
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import Pagination from "../components/Pagination.svelte";
   import TagManager from "../components/TagManager.svelte";
+  import { getSearchHistory, addSearchHistory, clearSearchHistory } from "../lib/search.js";
 
   let { onNavigate } = $props();
 
@@ -22,6 +23,8 @@
   let allTags = $state([]);
   let allTagsWithCount = $state([]);
   let searchInput = $state(null);
+  let showSearchHistory = $state(false);
+  let searchHistory = $derived(getSearchHistory());
   let detailQuestion = $state(null);
   let showDetailAnswer = $state(false);
   let detailDialog = $state(null);
@@ -102,6 +105,7 @@
   function applyFilter() {
     currentPage = 1;
     clearSelection();
+    if (store.filters.search) addSearchHistory(store.filters.search);
     store.loadQuestions({ page: 1 });
   }
 
@@ -500,7 +504,8 @@
     </div>
   </div>
 
-  <div class="search-wrap">
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div class="search-wrap" onclick={(e) => e.stopPropagation()}>
     <svg aria-hidden="true"
       class="search-icon"
       width="16"
@@ -519,7 +524,9 @@
       placeholder="搜索题目、答案、标签... (按 / 快速定位)"
       bind:value={store.filters.search}
       oninput={() => applyFilter()}
-			  bind:this={searchInput}
+      onfocus={() => { showSearchHistory = true; }}
+      onblur={() => { setTimeout(() => { showSearchHistory = false; }, 200); }}
+      bind:this={searchInput}
     />
     {#if store.filters.search}
       <button
@@ -542,6 +549,20 @@
           ><path d="M18 6 6 18M6 6l12 12" /></svg
         >
       </button>
+    {/if}
+    {#if showSearchHistory && searchHistory.length > 0 && !store.filters.search}
+      <div class="sh-dropdown">
+        <div class="sh-header">
+          <span class="sh-title">搜索历史</span>
+          <button class="sh-clear-btn" onclick={clearSearchHistory}>清除</button>
+        </div>
+        {#each searchHistory as h}
+          <button class="sh-item" onclick={() => { store.filters.search = h; applyFilter(); }}>
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            {h}
+          </button>
+        {/each}
+      </div>
     {/if}
   </div>
 
@@ -1269,6 +1290,66 @@
     background: var(--bg-surface);
     transform: scale(0.85);
   }
+  .sh-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    animation: fade-in 0.15s both;
+  }
+  .sh-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 6px 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+  }
+  .sh-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .sh-clear-btn {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--danger);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: inherit;
+  }
+  .sh-clear-btn:active { background: var(--danger-bg); }
+  .sh-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: none;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    width: 100%;
+    transition: background 0.15s;
+  }
+  .sh-item:active { background: var(--bg-surface); color: var(--text); }
   .result-count {
     font-size: 12px;
     color: var(--text-muted);
