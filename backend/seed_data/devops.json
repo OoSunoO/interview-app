@@ -1744,7 +1744,7 @@
     "type": "fill_in_blank",
     "title": "Docker 容器交互",
     "content": "要在正在运行的容器 myapp 中启动一个交互式 Shell（bash），应使用命令：`docker _______ -it myapp bash`",
-    "answer": "{\"answer\": \"exec\"}",
+    "answer": "{\"correct\": [[\"exec\"]], \"distractors\": [\"attach\", \"run -it\", \"logs -f\"]}",
     "tags": [
       "Docker",
       "命令"

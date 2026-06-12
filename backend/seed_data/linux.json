@@ -1716,7 +1716,7 @@
     "type": "fill_in_blank",
     "title": "文件权限修改",
     "content": "要将文件 script.sh 设置为「所有者可读可写可执行，组用户和其他用户只读可执行」，应执行命令：`chmod _______ script.sh`",
-    "answer": "{\"answer\": \"755\"}",
+    "answer": "{\"correct\": [[\"755\"]], \"distractors\": [\"644\", \"777\", \"655\", \"754\"]}",
     "hints": [
       "所有者 = 7（rwx），组 = 5（r-x），其他 = 5（r-x）"
     ],
@@ -1733,7 +1733,7 @@
     "type": "fill_in_blank",
     "title": "输出重定向",
     "content": "要将命令的标准输出追加到文件 app.log，同时将标准错误输出重定向到标准输出，应使用命令：`./run.sh _______ _______`",
-    "answer": "{\"answer\": \">> app.log 2>&1\"}",
+    "answer": "{\"correct\": [[\">> app.log 2>&1\"]], \"distractors\": [\"> app.log\", \"2> app.log\", \"&> app.log\", \"tee app.log\"]}",
     "hints": [
       "追加用 >> 而非 >（覆盖）",
       "2>&1 的 & 符号含义"
@@ -1751,7 +1751,7 @@
     "type": "fill_in_blank",
     "title": "SSH 隧道",
     "content": "要在本地监听 8080 端口，将通过该端口的流量通过跳板机跳板机 jump.example.com 转发到内网服务器 10.0.0.1:80，应使用命令：`ssh _______ jump.example.com`",
-    "answer": "{\"answer\": \"-L 8080:10.0.0.1:80\"}",
+    "answer": "{\"correct\": [[\"-L 8080:10.0.0.1:80\"]], \"distractors\": [\"-R 8080:10.0.0.1:80\", \"-D 8080\", \"-N -L 8080:localhost:80\"]}",
     "hints": [
       "L 表示本地转发（Local），R 表示远程转发（Remote）",
       "格式是 本地端口:目标地址:目标端口"
