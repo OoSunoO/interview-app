@@ -650,6 +650,75 @@ describe("startReviewSession", () => {
     expect(session.length).toBe(3);
     expect(session.find((q) => q.id === 1)).toBeDefined();
   });
+
+  it("dueOnly returns only overdue cards, no new cards", async () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    const tomorrow = new Date(Date.now() + 86400000).toISOString();
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: {
+          status: "wrong",
+          wrong_count: 1,
+          next_review_at: yesterday,
+          ef: 2.5,
+          interval: 1,
+          repetitions: 1,
+        },
+        2: {
+          status: "correct",
+          next_review_at: tomorrow,
+          ef: 2.5,
+          interval: 7,
+          repetitions: 3,
+        },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    const session = await api.progress.startReviewSession(10, "", "", true);
+    expect(session.length).toBe(1);
+    expect(session[0].id).toBe(1);
+  });
+});
+
+describe("countDue", () => {
+  it("returns 0 when no progress exists", async () => {
+    const api = await getApi();
+    expect(api.progress.countDue()).toBe(0);
+  });
+
+  it("counts only overdue cards", async () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    const tomorrow = new Date(Date.now() + 86400000).toISOString();
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "wrong", next_review_at: yesterday, ef: 2.5, interval: 1, repetitions: 1 },
+        2: { status: "correct", next_review_at: tomorrow, ef: 2.5, interval: 7, repetitions: 3 },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    expect(api.progress.countDue()).toBe(1);
+  });
+
+  it("filters by category", async () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString();
+    // id=1 is java_basic, id=3 is database
+    localStorage.setItem(
+      "quiz_progress",
+      JSON.stringify({
+        1: { status: "wrong", next_review_at: yesterday, ef: 2.5, interval: 1, repetitions: 1 },
+        3: { status: "wrong", next_review_at: yesterday, ef: 2.5, interval: 1, repetitions: 1 },
+      }),
+    );
+    vi.resetModules();
+    const api = await getApi();
+    expect(api.progress.countDue("java_basic")).toBe(1);
+    expect(api.progress.countDue("database")).toBe(1);
+    expect(api.progress.countDue("algorithm")).toBe(0);
+  });
 });
 
 describe("migrateProgress", () => {
@@ -1477,5 +1546,64 @@ describe("questions.random extras", () => {
     const q = api.questions.random({ difficulty: "hard" });
     expect(q).not.toBeNull();
     expect(q.difficulty).toBe("hard");
+  });
+
+  describe("tags CRUD", () => {
+    beforeEach(() => {
+      localStorage.removeItem("user_tag_definitions");
+      localStorage.removeItem("user_tag_definitions_testuser");
+    });
+
+    it("definitions returns empty array initially", async () => {
+      const api = await getApi();
+      expect(api.tags.definitions()).toEqual([]);
+    });
+
+    it("saveDefinition creates and persists a tag", async () => {
+      const api = await getApi();
+      const tag = { id: "ut_1", name: "面试常考", color: "#ef4444" };
+      const all = api.tags.saveDefinition(tag);
+      expect(all).toHaveLength(1);
+      expect(all[0]).toEqual(tag);
+      expect(api.tags.definitions()).toEqual([tag]);
+    });
+
+    it("saveDefinition updates existing tag", async () => {
+      const api = await getApi();
+      const tag = { id: "ut_1", name: "面试常考", color: "#ef4444" };
+      api.tags.saveDefinition(tag);
+      const updated = api.tags.saveDefinition({ id: "ut_1", name: "重点", color: "#eab308" });
+      expect(updated).toHaveLength(1);
+      expect(updated[0].name).toBe("重点");
+    });
+
+    it("saveDefinition stores multiple tags", async () => {
+      const api = await getApi();
+      api.tags.saveDefinition({ id: "ut_1", name: "A", color: "#f00" });
+      api.tags.saveDefinition({ id: "ut_2", name: "B", color: "#0f0" });
+      expect(api.tags.definitions()).toHaveLength(2);
+    });
+
+    it("deleteDefinition removes tag and cleans up progress", async () => {
+      const api = await getApi();
+      api.tags.saveDefinition({ id: "ut_1", name: "A", color: "#f00" });
+      api.tags.setForQuestion(1, ["ut_1"]);
+      api.tags.deleteDefinition("ut_1");
+      expect(api.tags.definitions()).toEqual([]);
+      expect(api.tags.getForQuestion(1)).toEqual([]);
+    });
+
+    it("setForQuestion and getForQuestion round-trip", async () => {
+      const api = await getApi();
+      api.tags.saveDefinition({ id: "ut_1", name: "A", color: "#f00" });
+      api.tags.saveDefinition({ id: "ut_2", name: "B", color: "#0f0" });
+      api.tags.setForQuestion(2, ["ut_1", "ut_2"]);
+      expect(api.tags.getForQuestion(2)).toEqual(["ut_1", "ut_2"]);
+    });
+
+    it("getForQuestion returns empty for unassigned", async () => {
+      const api = await getApi();
+      expect(api.tags.getForQuestion(999)).toEqual([]);
+    });
   });
 });

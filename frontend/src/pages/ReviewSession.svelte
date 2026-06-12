@@ -29,6 +29,8 @@
   let configCategory = $state(_initVal("category", ""));
   let configDifficulty = $state(_initVal("difficulty", ""));
   let configCount = $state(_initVal("count", 20));
+  let configDueOnly = $state(_initVal("dueOnly", false));
+  let dueCount = $derived(api.progress.countDue(configCategory, configDifficulty));
 
   let showSessionMap = $state(false);
   let mapDialog = $state(null);
@@ -79,9 +81,9 @@
 
   const SAVE_KEY = "review_session";
 
-  async function startSession(count, category, difficulty) {
+  async function startSession(count, category, difficulty, dueOnly) {
     try {
-      const session = await api.progress.startReviewSession(count || 20, category || "", difficulty || "");
+      const session = await api.progress.startReviewSession(count || 20, category || "", difficulty || "", dueOnly);
       if (session.length === 0) {
         phase = "empty";
         return;
@@ -145,7 +147,7 @@
     if (e.key === "r" || e.key === "R") {
       if (phase === "completed" && cards.length > 0) {
         e.preventDefault();
-        startSession(configCount, configCategory, configDifficulty);
+        startSession(configCount, configCategory, configDifficulty, configDueOnly);
         return;
       }
     }
@@ -246,7 +248,18 @@
         <button class="rs-count-btn" class:active={configCount === 50} onclick={() => (configCount = 50)}>50</button>
       </div>
 
-      <button class="rs-setup-start" onclick={() => startSession(configCount, configCategory, configDifficulty)}>
+      <div class="rs-due-toggle">
+        <label class="rs-toggle-item">
+          <input type="checkbox" bind:checked={configDueOnly} />
+          <span class="rs-toggle-track">
+            <span class="rs-toggle-thumb"></span>
+          </span>
+          <span class="rs-toggle-lbl">仅到期题</span>
+        </label>
+        <span class="rs-due-count" class:zero={dueCount === 0}>{dueCount} 题待复习</span>
+      </div>
+
+      <button class="rs-setup-start" onclick={() => startSession(configCount, configCategory, configDifficulty, configDueOnly)}>
         开始复习
       </button>
     </div>
@@ -1036,6 +1049,62 @@
     background: var(--accent-bg);
     color: var(--accent);
     border-color: var(--accent);
+  }
+  .rs-due-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .rs-toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  .rs-toggle-item input {
+    display: none;
+  }
+  .rs-toggle-track {
+    width: 36px;
+    height: 20px;
+    border-radius: 10px;
+    background: var(--border);
+    position: relative;
+    transition: background 0.2s;
+  }
+  .rs-toggle-item input:checked + .rs-toggle-track {
+    background: var(--accent);
+  }
+  .rs-toggle-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s;
+  }
+  .rs-toggle-item input:checked + .rs-toggle-track .rs-toggle-thumb {
+    transform: translateX(16px);
+  }
+  .rs-toggle-lbl {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .rs-due-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--warning);
+  }
+  .rs-due-count.zero {
+    color: var(--text-dim);
   }
   .rs-setup-start {
     width: 100%;

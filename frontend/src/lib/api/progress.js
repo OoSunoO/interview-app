@@ -252,7 +252,7 @@ export const progress = {
       });
   },
 
-  async startReviewSession(count = 20, category, difficulty) {
+  async startReviewSession(count = 20, category, difficulty, dueOnly = false) {
     await loadAll();
     const p = getProgress();
     const now = new Date();
@@ -269,7 +269,9 @@ export const progress = {
       }
     }
     overdue.sort((a, b) => new Date(p[a.id].next_review_at) - new Date(p[b.id].next_review_at));
-    const session = [...overdue.slice(0, count), ...newCards].slice(0, count);
+    const session = dueOnly
+      ? overdue.slice(0, count)
+      : [...overdue.slice(0, count), ...newCards].slice(0, count);
     for (let i = session.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [session[i], session[j]] = [session[j], session[i]];
@@ -291,6 +293,19 @@ export const progress = {
         interval: pEntry.interval,
       };
     });
+  },
+
+  countDue(category, difficulty) {
+    const p = getProgress();
+    const now = new Date().toISOString();
+    let count = 0;
+    for (const q of questionIndex) {
+      if (category && q.category !== category) continue;
+      if (difficulty && q.difficulty !== difficulty) continue;
+      const pEntry = p[q.id];
+      if (pEntry?.next_review_at && pEntry.next_review_at <= now) count++;
+    }
+    return count;
   },
 
   knowledge() {
