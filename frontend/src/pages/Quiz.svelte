@@ -8,13 +8,19 @@
   import { renderContent, renderAnswer } from "../lib/render-utils.js";
   import { api } from "../lib/local-api.js";
   import { toast } from "../lib/toast.js";
-  import CodeEditor from "../components/CodeEditor.svelte";
+  // CodeEditor is lazy-loaded (codemirror ~500KB)
   import QuizAIConfig from "../components/QuizAIConfig.svelte";
   import QuizSessionSummary from "../components/QuizSessionSummary.svelte";
   import { hasAI, gradeDetailed, saveScoreEntry } from "../lib/ai.js";
 
   let { questionId, onNavigate, mockInterview = null } = $props();
   let q = $state(null);
+  let CodeEditor = $state(null);
+  $effect(() => {
+    if (q?.type === "coding" && !CodeEditor) {
+      import("../components/CodeEditor.svelte").then(m => CodeEditor = m.default);
+    }
+  });
   let loadError = $state(null);
   let showAnswer = $state(false);
   let showHints = $state(false);
@@ -807,11 +813,15 @@
         {#if !showAnswer}
           <div class="input-area">
             {#if q.type === "coding"}
-              <CodeEditor
-                value={userAnswer}
-                language={q.tags?.length > 0 ? q.tags[0] : "auto"}
-                {onUpdate}
-              />
+              {#if CodeEditor}
+                <CodeEditor
+                  value={userAnswer}
+                  language={q.tags?.length > 0 ? q.tags[0] : "auto"}
+                  {onUpdate}
+                />
+              {:else}
+                <div class="editor-loading">加载代码编辑器中...</div>
+              {/if}
             {:else}
               <textarea
                 class="answer-input"
@@ -922,7 +932,11 @@
         </div>
         {#if q.type === "coding"}
           <div class="ua-body">
-            <CodeEditor value={userAnswer} language={q.tags?.[0] || "auto"} readonly={true} />
+            {#if CodeEditor}
+              <CodeEditor value={userAnswer} language={q.tags?.[0] || "auto"} readonly={true} />
+            {:else}
+              <div class="editor-loading">加载代码编辑器中...</div>
+            {/if}
           </div>
         {:else}
           <div class="ua-body">{userAnswer}</div>
@@ -1837,6 +1851,12 @@
     border: 1px solid var(--border);
     max-height: 200px;
     overflow-y: auto;
+  }
+  .editor-loading {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
   }
   .ua-status {
     font-size: 12px;
