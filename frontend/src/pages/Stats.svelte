@@ -6,7 +6,7 @@
   import { toast } from "../lib/toast.js";
   import { version as appVersion } from "../../package.json";
   import ProgressRing from "../components/ProgressRing.svelte";
-  import CalendarHeatmap from "../components/CalendarHeatmap.svelte";
+  import MonthlyCalendar from "../components/MonthlyCalendar.svelte";
 
   let { onNavigate } = $props();
 
@@ -99,6 +99,7 @@
       history = await api.progress.reviewHistory(30);
       qrHistory = api.quickReview.getHistory();
       miHistory = api.mockInterview.getHistory();
+      sm2 = api.progress.sm2Stats();
     } catch (e) {
       // wrongList stays empty on error — weak sections gracefully show nothing
     }
@@ -111,6 +112,7 @@
   let history = $state([]);
   let qrHistory = $state([]);
   let miHistory = $state([]);
+  let sm2 = $state(null);
 
   let trendLayout = $derived.by(() => {
     if (!trendData || trendData.length < 2) return null;
@@ -220,6 +222,7 @@
     { id: "stats", label: "统计" },
     { id: "records", label: "记录" },
     { id: "weak", label: "薄弱" },
+    { id: "sm2", label: "间隔" },
   ];
 </script>
 
@@ -408,8 +411,8 @@
       {/if}
 
       {#if allDaily}
-        <h2 class="section-title">年度活动</h2>
-        <CalendarHeatmap data={allDaily} />
+        <h2 class="section-title">月度日历</h2>
+        <MonthlyCalendar data={allDaily} />
       {/if}
 
       {#if weeklyData.length > 0}
@@ -607,6 +610,108 @@
         </div>
       {:else}
         <p class="empty-weak">暂无薄弱知识点，继续保持！</p>
+      {/if}
+
+    <!-- ── Tab: 间隔 (SM-2) ── -->
+    {:else if activeTab === "sm2"}
+      {#if sm2}
+        <div class="sm2-grid">
+          <div class="sm2-card">
+            <span class="sm2-num warn">{sm2.dueToday}</span>
+            <span class="sm2-lbl">今日到期</span>
+          </div>
+          <div class="sm2-card">
+            <span class="sm2-num">{sm2.dueWeek}</span>
+            <span class="sm2-lbl">本周预计</span>
+          </div>
+          <div class="sm2-card">
+            <span class="sm2-num danger">{sm2.overdue}</span>
+            <span class="sm2-lbl">已逾期</span>
+          </div>
+          <div class="sm2-card">
+            <span class="sm2-num">{sm2.avgEF}</span>
+            <span class="sm2-lbl">平均 EF</span>
+          </div>
+          <div class="sm2-card">
+            <span class="sm2-num">{sm2.avgInterval}d</span>
+            <span class="sm2-lbl">平均间隔</span>
+          </div>
+          <div class="sm2-card">
+            <span class="sm2-num accent">{sm2.maturity.mature}</span>
+            <span class="sm2-lbl">已成熟</span>
+          </div>
+        </div>
+
+        {#if sm2.forecast.length > 0}
+          <h2 class="section-title">未来 30 天复习预测</h2>
+          <div class="fc-wrap">
+            <div class="fc-chart">
+              {#each sm2.forecast as day}
+                <div class="fc-col" title="{day.label}: {day.count} 题">
+                  <div class="fc-bar" style="height: {(day.count / sm2.maxForecast) * 100}%"></div>
+                  <div class="fc-count">{day.count}</div>
+                  <div class="fc-label">{day.label}</div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+
+        <h2 class="section-title">复习间隔分布</h2>
+        <div class="sm2-dist">
+          {#each Object.entries(sm2.intervals) as [label, count]}
+            <div class="sm2-dist-item">
+              <span class="sm2-dist-lbl">{label}</span>
+              <span class="sm2-dist-val">{count} 题</span>
+            </div>
+            <div class="sm2-dist-bar-bg">
+              <div class="sm2-dist-bar" style="width: {sm2.maturity.total > 0 ? (count / sm2.maturity.total) * 100 : 0}%"></div>
+            </div>
+          {/each}
+        </div>
+
+        <h2 class="section-title">EF 难度分布</h2>
+        <div class="sm2-dist">
+          {#each Object.entries(sm2.efBuckets) as [label, count]}
+            <div class="sm2-dist-item">
+              <span class="sm2-dist-lbl">{label}</span>
+              <span class="sm2-dist-val">{count} 题</span>
+            </div>
+            <div class="sm2-dist-bar-bg">
+              <div class="sm2-dist-bar" style="width: {sm2.maturity.total > 0 ? (count / sm2.maturity.total) * 100 : 0}%"></div>
+            </div>
+          {/each}
+        </div>
+
+        <h2 class="section-title">卡片成熟度</h2>
+        <div class="sm2-maturity">
+          <div class="sm2-mat-item">
+            <span class="sm2-mat-dot new"></span>
+            <span class="sm2-mat-lbl">未学习</span>
+            <span class="sm2-mat-val">{sm2.maturity.new}</span>
+          </div>
+          <div class="sm2-mat-track">
+            <div class="sm2-mat-bar" style="width: {sm2.maturity.total > 0 ? (sm2.maturity.new / sm2.maturity.total) * 100 : 0}%"></div>
+          </div>
+          <div class="sm2-mat-item">
+            <span class="sm2-mat-dot learning"></span>
+            <span class="sm2-mat-lbl">学习中</span>
+            <span class="sm2-mat-val">{sm2.maturity.learning}</span>
+          </div>
+          <div class="sm2-mat-track">
+            <div class="sm2-mat-bar" style="width: {sm2.maturity.total > 0 ? (sm2.maturity.learning / sm2.maturity.total) * 100 : 0}%"></div>
+          </div>
+          <div class="sm2-mat-item">
+            <span class="sm2-mat-dot mature"></span>
+            <span class="sm2-mat-lbl">已成熟</span>
+            <span class="sm2-mat-val">{sm2.maturity.mature}</span>
+          </div>
+          <div class="sm2-mat-track">
+            <div class="sm2-mat-bar" style="width: {sm2.maturity.total > 0 ? (sm2.maturity.mature / sm2.maturity.total) * 100 : 0}%"></div>
+          </div>
+        </div>
+      {:else}
+        <p class="empty-weak">请先练习一些题目，SM-2 数据将在答题后生成。</p>
       {/if}
     {/if}
   {/if}
@@ -1396,6 +1501,137 @@
   }
   .import-btn-primary:active { opacity: 0.85; }
   .import-btn-primary.danger { background: var(--danger); }
+
+  /* ── SM-2 Stats ── */
+  .sm2-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .sm2-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+  }
+  .sm2-num {
+    display: block;
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+  }
+  .sm2-num.warn { color: var(--warning); }
+  .sm2-num.danger { color: var(--danger); }
+  .sm2-num.accent { color: var(--accent); }
+  .sm2-lbl {
+    display: block;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+    font-weight: 500;
+  }
+  .fc-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 8px 4px;
+    overflow-x: auto;
+  }
+  .fc-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 100px;
+  }
+  .fc-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    gap: 2px;
+    min-width: 14px;
+  }
+  .fc-bar {
+    width: 100%;
+    max-width: 24px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    transition: height 0.3s;
+  }
+  .fc-count {
+    font-size: 8px;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .fc-label {
+    font-size: 8px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .sm2-dist {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .sm2-dist-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+  }
+  .sm2-dist-lbl { font-weight: 600; color: var(--text); }
+  .sm2-dist-val { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .sm2-dist-bar-bg {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .sm2-dist-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.5s;
+  }
+  .sm2-maturity {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sm2-mat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .sm2-mat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sm2-mat-dot.new { background: var(--text-dim); }
+  .sm2-mat-dot.learning { background: var(--warning); }
+  .sm2-mat-dot.mature { background: var(--success); }
+  .sm2-mat-lbl { flex: 1; color: var(--text); }
+  .sm2-mat-val { font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .sm2-mat-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .sm2-mat-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s;
+  }
+  .sm2-mat-item + .sm2-mat-track { margin-bottom: 4px; }
 
   .skeleton { background: var(--bg-card); border-radius: var(--radius); animation: pulse 1.5s ease infinite; }
   @keyframes pulse {

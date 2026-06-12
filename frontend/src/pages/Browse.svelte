@@ -7,6 +7,7 @@
   import { renderContent, renderAnswer } from "../lib/render-utils.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
   import Pagination from "../components/Pagination.svelte";
+  import TagManager from "../components/TagManager.svelte";
 
   let { onNavigate } = $props();
 
@@ -27,6 +28,9 @@
   let detailNotes = $state("");
   let noteSaving = $state(false);
   let relatedQuestions = $state([]);
+  let userTagDefs = $state([]);
+  let showTagPicker = $state(null);
+  let showTagManager = $state(false);
 
   const PAGE_SIZE = 20;
   let currentPage = $state(1);
@@ -79,6 +83,7 @@
     sources = api.questions.sources();
     allTags = api.questions.tags();
     allTagsWithCount = api.questions.tagsWithCount();
+    userTagDefs = api.tags.definitions();
     store.loadQuestions();
     document.addEventListener("keydown", handleKeydown);
   });
@@ -173,6 +178,15 @@
     else selectionMode = false;
   }
 
+  function toggleQuestionTag(q, tagId) {
+    const tags = q.user_tags || [];
+    const idx = tags.indexOf(tagId);
+    if (idx >= 0) tags.splice(idx, 1);
+    else tags.push(tagId);
+    q.user_tags = tags;
+    api.tags.setForQuestion(q.id, tags);
+  }
+
   function clearSelection() {
     selectedIds = new Set();
     selectionMode = false;
@@ -204,6 +218,7 @@
     !!store.filters.status ||
     !!store.filters.source ||
     !!store.filters.tag ||
+    !!store.filters.user_tag ||
     !!store.filters.search ||
     !!store.filters.sort_by ||
     store.filters.bookmarked
@@ -216,6 +231,7 @@
     store.filters.status = "";
     store.filters.source = "";
     store.filters.tag = "";
+    store.filters.user_tag = "";
     store.filters.search = "";
     store.filters.sort_by = "";
     store.filters.bookmarked = false;
@@ -309,6 +325,21 @@
           {/each}
         </select>
       </div>
+      {#if userTagDefs.length > 0}
+        <div class="filter-item">
+          <span class="filter-label">我的标签</span>
+          <select
+            bind:value={store.filters.user_tag}
+            onchange={applyFilter}
+            class:filter-active={store.filters.user_tag}
+          >
+            <option value="">全部</option>
+            {#each userTagDefs as ut}
+              <option value={ut.id}>{ut.name}</option>
+            {/each}
+          </select>
+        </div>
+      {/if}
       <div class="filter-item">
         <span class="filter-label">排序</span>
         <select
@@ -389,6 +420,10 @@
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
         导出
+      </button>
+      <button class="export-btn" onclick={() => (showTagManager = true)}>
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+        标签管理
       </button>
             {#if hasActiveFilters}
         <button class="reset-filter-btn" onclick={resetFilters}>
@@ -493,156 +528,191 @@
     <p class="result-count">共 {store.questions.length} 题</p>
     <div class="list">
       {#each pagedQuestions as q}
-        <button
-          class="card q-item status-{q.status}"
-          class:selected={selectedIds.has(q.id)}
-          data-testid="question-item"
-          onclick={() => openDetail(q)}
-        >
-          <span
-            class="sel-check"
-            role="checkbox"
-            aria-checked={selectedIds.has(q.id)}
-            tabindex="0"
-            onclick={(e) => e.stopPropagation()}
-            onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); toggleSelection(q.id); } }}
-            onmousedown={(e) => e.stopPropagation()}
-            onpointerdown={(e) => e.stopPropagation()}
+        <div class="q-card-wrap">
+          <button
+            class="card q-item status-{q.status}"
+            class:selected={selectedIds.has(q.id)}
+            data-testid="question-item"
+            onclick={() => openDetail(q)}
           >
-            <svg aria-hidden="true"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill={selectedIds.has(q.id) ? "currentColor" : "none"}
-              stroke="currentColor"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ><rect x="3" y="3" width="18" height="18" rx="3" />
-              {#if selectedIds.has(q.id)}
-                <polyline points="9 12 11 14 15 10" />
-              {/if}
-            </svg>
-          </span>
-          <div class="q-body">
-          <div class="q-header">
-            <span class="status-icon {q.status}">
-              {#if q.status === "correct"}
-                <svg aria-hidden="true"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline
-                    points="22 4 12 14.01 9 11.01"
-                  /></svg
-                >
-              {:else if q.status === "wrong"}
-                <svg aria-hidden="true"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
-                >
-              {:else if q.status === "reviewing"}
-                <svg aria-hidden="true"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><circle cx="12" cy="12" r="10" /><polyline
-                    points="12 6 12 12 16 14"
-                  /></svg
-                >
-              {:else}
-                <svg aria-hidden="true"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><circle cx="12" cy="12" r="10" /></svg
-                >
-              {/if}
+            <span
+              class="sel-check"
+              role="checkbox"
+              aria-checked={selectedIds.has(q.id)}
+              tabindex="0"
+              onclick={(e) => e.stopPropagation()}
+              onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); toggleSelection(q.id); } }}
+              onmousedown={(e) => e.stopPropagation()}
+              onpointerdown={(e) => e.stopPropagation()}
+            >
+              <svg aria-hidden="true"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill={selectedIds.has(q.id) ? "currentColor" : "none"}
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ><rect x="3" y="3" width="18" height="18" rx="3" />
+                {#if selectedIds.has(q.id)}
+                  <polyline points="9 12 11 14 15 10" />
+                {/if}
+              </svg>
             </span>
-            <span class="tag">{categoryLabel(q.category)}</span>
-            <span class="tag diff {q.difficulty}">{q.difficulty}</span>
-            <span class="tag type">{typeLabel(q.type)}</span>
-            {#if q.source}
-              <span class="tag company">{q.source}</span>
+            <div class="q-body">
+            <div class="q-header">
+              <span class="status-icon {q.status}">
+                {#if q.status === "correct"}
+                  <svg aria-hidden="true"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline
+                      points="22 4 12 14.01 9 11.01"
+                    /></svg
+                  >
+                {:else if q.status === "wrong"}
+                  <svg aria-hidden="true"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><circle cx="12" cy="12" r="10" /><path d="m15 9-6 6M9 9l6 6" /></svg
+                  >
+                {:else if q.status === "reviewing"}
+                  <svg aria-hidden="true"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><circle cx="12" cy="12" r="10" /><polyline
+                      points="12 6 12 12 16 14"
+                    /></svg
+                  >
+                {:else}
+                  <svg aria-hidden="true"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    ><circle cx="12" cy="12" r="10" /></svg
+                  >
+                {/if}
+              </span>
+              <span class="tag">{categoryLabel(q.category)}</span>
+              <span class="tag diff {q.difficulty}">{q.difficulty}</span>
+              <span class="tag type">{typeLabel(q.type)}</span>
+              {#if q.source}
+                <span class="tag company">{q.source}</span>
+              {/if}
+            </div>
+            <p class="q-title">{@html highlight(q.title)}</p>
+            {#if store.filters.search}
+              <p class="q-snippet">{@html contentSnippet(q.content)}</p>
             {/if}
-          </div>
-          <p class="q-title">{@html highlight(q.title)}</p>
-          {#if store.filters.search}
-            <p class="q-snippet">{@html contentSnippet(q.content)}</p>
-          {/if}
-          {#if q.tags.length > 0}
-            <div class="q-tags">
-              {#each q.tags.slice(0, 3) as t}
-                <span
-                  class="mini-tag kp-link"
-                  role="button"
-                  tabindex="0"
-                  onkeydown={(e) => {
-                    if (e.key === "Enter") {
+            {#if q.tags.length > 0}
+              <div class="q-tags">
+                {#each q.tags.slice(0, 3) as t}
+                  <span
+                    class="mini-tag kp-link"
+                    role="button"
+                    tabindex="0"
+                    onkeydown={(e) => {
+                      if (e.key === "Enter") {
+                        e.stopPropagation();
+                        onNavigate("knowledge-detail", { tag: t });
+                      }
+                    }}
+                    onclick={(e) => {
                       e.stopPropagation();
                       onNavigate("knowledge-detail", { tag: t });
-                    }
-                  }}
-                  onclick={(e) => {
-                    e.stopPropagation();
-                    onNavigate("knowledge-detail", { tag: t });
-                  }}
-                  title="查看知识点：{t}"
-                >
-                  {t}
-                </span>
+                    }}
+                    title="查看知识点：{t}"
+                  >
+                    {t}
+                  </span>
+                {/each}
+              </div>
+            {/if}
+            <div class="q-utags-row">
+              {#each (q.user_tags || []).filter((tid) => userTagDefs.find((ut) => ut.id === tid)) as tid}
+                {@const ut = userTagDefs.find((t) => t.id === tid)}
+                {#if ut}
+                  <span class="q-utag" role="button" tabindex="0" style="--ut-color: {ut.color}" onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); toggleQuestionTag(q, tid); } }} onclick={(e) => { e.stopPropagation(); toggleQuestionTag(q, tid); }}>{ut.name} ✕</span>
+                {/if}
               {/each}
+              <span class="q-utag-add" role="button" tabindex="0" title="添加标签" onkeydown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); showTagPicker = showTagPicker === q.id ? null : q.id; } }} onclick={(e) => { e.stopPropagation(); showTagPicker = showTagPicker === q.id ? null : q.id; }}>
+                <svg aria-hidden="true" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              </span>
             </div>
-          {/if}
-          </div>
-          <span
-            class="bm-toggle"
-            class:active={q.bookmarked}
-            role="button"
-            tabindex="0"
-            onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }}
-            onclick={(e) => toggleBookmark(e, q)}
-            title={q.bookmarked ? "取消收藏" : "收藏"}
-          >
-            <svg aria-hidden="true"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill={q.bookmarked ? "currentColor" : "none"}
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
-          </span>
-        </button>
+            {#if showTagPicker === q.id}
+              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+              <div class="q-utag-picker" onclick={(e) => e.stopPropagation()}>
+                {#each userTagDefs as ut}
+                  <label class="utp-item">
+                    <input type="checkbox" checked={(q.user_tags || []).includes(ut.id)} onchange={() => toggleQuestionTag(q, ut.id)} />
+                    <span class="utp-dot" style="background:{ut.color}"></span>
+                    {ut.name}
+                  </label>
+                {/each}
+                {#if userTagDefs.length === 0}
+                  <span class="utp-empty">先创建标签</span>
+                {/if}
+              </div>
+            {/if}
+            </div>
+            <span
+              class="bm-toggle"
+              class:active={q.bookmarked}
+              role="button"
+              tabindex="0"
+              onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }}
+              onclick={(e) => toggleBookmark(e, q)}
+              title={q.bookmarked ? "取消收藏" : "收藏"}
+            >
+              <svg aria-hidden="true"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill={q.bookmarked ? "currentColor" : "none"}
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+            </span>
+          </button>
+        </div>
       {/each}
     </div>
     <Pagination page={currentPage} {totalPages} onPageChange={(n) => { currentPage = n; }} />
   {/if}
 </div>
+
+<TagManager
+  show={showTagManager}
+  questions={store.questions}
+  onclose={() => { showTagManager = false; }}
+  onchange={(defs) => { userTagDefs = defs; }}
+/>
 
 {#if detailQuestion}
   <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
@@ -694,6 +764,16 @@
               onkeydown={(e) => { if (e.key === "Enter") { closeDetail(); onNavigate("knowledge-detail", { tag: t }); } }}
               onclick={() => { closeDetail(); onNavigate("knowledge-detail", { tag: t }); }}
             >{t}</span>
+          {/each}
+        </div>
+      {/if}
+      {#if (detailQuestion.user_tags || []).length > 0}
+        <div class="dp-utags">
+          {#each detailQuestion.user_tags.filter((tid) => userTagDefs.find((ut) => ut.id === tid)) as tid}
+            {@const ut = userTagDefs.find((t) => t.id === tid)}
+            {#if ut}
+              <span class="dp-utag" style="--ut-color: {ut.color}">{ut.name}</span>
+            {/if}
           {/each}
         </div>
       {/if}
@@ -1263,6 +1343,107 @@
   }
   .sel-start:active {
     transform: scale(0.96);
+  }
+
+  /* ── User Tags ── */
+  .q-card-wrap {
+    position: relative;
+  }
+  .q-utags-row {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .q-utag {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--ut-color, #6366f1) 20%, transparent);
+    color: var(--ut-color, #6366f1);
+    border: 1px solid color-mix(in srgb, var(--ut-color, #6366f1) 40%, transparent);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-family: inherit;
+  }
+  .q-utag:active { opacity: 0.6; }
+  .q-utag-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+  .q-utag-add:active {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .q-utag-picker {
+    position: absolute;
+    top: 100%;
+    right: 10px;
+    z-index: 10;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 150px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .utp-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+  }
+  .utp-item:active { background: var(--bg-surface); }
+  .utp-item input { margin: 0; }
+  .utp-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .utp-empty {
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 6px 4px;
+    text-align: center;
+  }
+  .dp-utags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .dp-utag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--ut-color, #6366f1) 20%, transparent);
+    color: var(--ut-color, #6366f1);
+    border: 1px solid color-mix(in srgb, var(--ut-color, #6366f1) 40%, transparent);
   }
 
   /* ── Mobile ── */

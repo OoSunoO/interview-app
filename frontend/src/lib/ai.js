@@ -55,6 +55,68 @@ export function hasAI() {
   return !!load().key;
 }
 
+const STATUS_KEY = "ai_connection_status";
+
+const ERROR_MESSAGES = {
+  400: "请求格式错误，请检查 API 配置",
+  401: "API Key 无效，请检查后重试",
+  403: "API Key 无权访问该模型，请检查权限",
+  404: "API 端点地址错误",
+  429: "请求过于频繁，请稍后重试",
+  500: "AI 服务端错误，请稍后重试",
+  default: "连接失败，请检查网络和 API 配置",
+};
+
+function friendlyError(status, detail) {
+  const msg = ERROR_MESSAGES[status] || ERROR_MESSAGES.default;
+  return `${msg}${detail ? `（${detail.slice(0, 100)}）` : ""}`;
+}
+
+export function getConnectionStatus() {
+  try {
+    return JSON.parse(localStorage.getItem(STATUS_KEY) || "null");
+  } catch {
+    return null;
+  }
+}
+
+export async function testConnection(key, providerIdx) {
+  const p = PROVIDERS[providerIdx];
+  if (!p) throw new Error("请选择 AI 服务商");
+  if (!key) throw new Error("请输入 API Key");
+
+  const headers = { "Content-Type": "application/json" };
+  const isAnthropic = p.endpoint.includes("anthropic.com");
+  const isGemini = p.endpoint.includes("googleapis.com");
+  let url = p.endpoint;
+  let body;
+
+  if (isAnthropic) {
+    headers["x-api-key"] = key;
+    headers["anthropic-version"] = "2023-06-01";
+    body = {
+      model: p.model,
+      max_tokens: 10,
+      system: "Respond with 'ok'",
+      messages: [{ role: "user", content: "hi" }],
+    };
+  } else if (isGemini) {
+    url += `?key=${key}`;
+    body = {
+      contents: [{ role: "user", parts: [{ text: "hi" }] }],
+      generationConfig: { maxOutputTokens: 10 },
+    };
+  } else {
+    headers["Authorization"] = `Bearer ${key}`;
+    body = { model: p.model, max_tokens: 10, messages: [{ role: "user", content: "hi" }] };
+  }
+
+  const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
+  const status = { ok: res.ok, provider: p.label, testedAt: new Date().toISOString() };
+  localStorage.setItem(STATUS_KEY, JSON.stringify(status));
+  if (!res.ok) throw new Error(friendlyError(res.status));
+}
+
 export async function aiChat(systemPrompt, messages) {
   const cfg = load();
   if (!cfg.key) throw new Error("请先配置 API Key");
@@ -88,7 +150,7 @@ export async function aiChat(systemPrompt, messages) {
   const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body) });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`API 错误 (${res.status}): ${text.slice(0, 200)}`);
+    throw new Error(friendlyError(res.status, text));
   }
 
   const data = await res.json();

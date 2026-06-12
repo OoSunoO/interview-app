@@ -17,6 +17,7 @@ let _filters = $state({
   sort_by: "",
   source: "",
   tag: "",
+  user_tag: "",
   bookmarked: false,
 });
 let _quizSession = $state([]);

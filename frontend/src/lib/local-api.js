@@ -185,6 +185,10 @@ export const api = {
       if (params.type) result = result.filter((q) => q.type === params.type);
       if (params.search) result = result.filter((q) => matchesSearch(q, params.search));
       if (params.tag) result = result.filter((q) => q.tags.includes(params.tag));
+      if (params.user_tag) {
+        const p = getProgress();
+        result = result.filter((q) => (p[q.id]?.user_tags || []).includes(params.user_tag));
+      }
 
       const progress = getProgress();
       if (params.source) {
@@ -216,18 +220,19 @@ export const api = {
 
       return result.slice(offset, offset + pageSize).map((q) => {
         const p = progress[q.id] || {};
-        return {
-          id: q.id,
-          category: q.category,
-          difficulty: q.difficulty,
-          type: q.type,
-          title: q.title,
-          tags: q.tags,
-          source: q.source || "",
-          status: p.status || "new",
-          wrong_count: p.wrong_count || 0,
-          bookmarked: p.bookmarked || false,
-        };
+          return {
+            id: q.id,
+            category: q.category,
+            difficulty: q.difficulty,
+            type: q.type,
+            title: q.title,
+            tags: q.tags,
+            source: q.source || "",
+            status: p.status || "new",
+            wrong_count: p.wrong_count || 0,
+            bookmarked: p.bookmarked || false,
+            user_tags: p.user_tags || [],
+          };
       });
     },
 
@@ -321,6 +326,7 @@ export const api = {
         next_review_at: p.next_review_at || null,
         notes: p.notes || "",
         bookmarked: p.bookmarked || false,
+        user_tags: p.user_tags || [],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -365,6 +371,7 @@ export const api = {
         repetitions: sm2.repetitions ?? existing.repetitions ?? 0,
         notes: body.notes || existing.notes || "",
         bookmarked: body.bookmarked !== undefined ? body.bookmarked : (existing.bookmarked || false),
+        user_tags: body.user_tags ?? existing.user_tags ?? [],
         source: body.source || "quiz",
         ai_overall: body.aiInfo?.ai_overall ?? existing.ai_overall ?? null,
         ai_dimensions: body.aiInfo?.ai_dimensions ?? existing.ai_dimensions ?? null,
@@ -530,6 +537,7 @@ export const api = {
             last_reviewed_at: p.last_reviewed_at || null,
             next_review_at: p.next_review_at || null,
             bookmarked: p.bookmarked || false,
+            user_tags: p.user_tags || [],
           };
         });
     },
@@ -651,6 +659,103 @@ export const api = {
             .sort(([, a], [, b]) => b.total - a.total)
             .map(([tname, td]) => ({ name: tname, total: td.total, done: td.done })),
         }));
+    },
+
+    /** SM-2 analytics: due counts, interval/EF distributions, 30-day forecast */
+    sm2Stats() {
+      const progress = getProgress();
+      const now = new Date();
+      const todayKey = dateKey(now);
+      const todayEnd = new Date(todayKey + "T23:59:59.999Z");
+      const weekEnd = new Date(now);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+
+      let dueToday = 0, dueWeek = 0, overdue = 0;
+      let totalEF = 0, efCount = 0;
+      let totalInterval = 0, intervalCount = 0;
+      const intervals = { "<1d": 0, "1-3d": 0, "3-7d": 0, "7-30d": 0, ">30d": 0 };
+      const efBuckets = { "1.3-1.7": 0, "1.7-2.0": 0, "2.0-2.3": 0, "2.3-2.6": 0, "2.6-3.0": 0 };
+      const statusCounts = { new: 0, wrong: 0, reviewing: 0, correct: 0 };
+      let withSM2 = 0, sm2New = 0, learning = 0, mature = 0;
+
+      for (const [idStr, entry] of Object.entries(progress)) {
+        if (!entry || !idStr) continue;
+        const st = entry.status || "new";
+        statusCounts[st] = (statusCounts[st] || 0) + 1;
+
+        if (entry.ef !== undefined && entry.ef !== null) {
+          totalEF += entry.ef;
+          efCount++;
+          // EF buckets
+          if (entry.ef < 1.7) efBuckets["1.3-1.7"]++;
+          else if (entry.ef < 2.0) efBuckets["1.7-2.0"]++;
+          else if (entry.ef < 2.3) efBuckets["2.0-2.3"]++;
+          else if (entry.ef < 2.6) efBuckets["2.3-2.6"]++;
+          else efBuckets["2.6-3.0"]++;
+        }
+
+        if (entry.interval !== undefined && entry.interval !== null) {
+          totalInterval += entry.interval;
+          intervalCount++;
+          if (entry.interval < 1) intervals["<1d"]++;
+          else if (entry.interval < 3) intervals["1-3d"]++;
+          else if (entry.interval < 7) intervals["3-7d"]++;
+          else if (entry.interval < 30) intervals["7-30d"]++;
+          else intervals[">30d"]++;
+        }
+
+        if (entry.ef !== undefined && entry.repetitions !== undefined) {
+          withSM2++;
+          const reps = entry.repetitions || 0;
+          if (reps === 0) sm2New++;
+          else if (reps < 3) learning++;
+          else mature++;
+        }
+
+        // Due calculations
+        if (entry.next_review_at) {
+          const due = new Date(entry.next_review_at);
+          if (due <= now) {
+            overdue++;
+            if (due <= todayEnd) dueToday++;
+          }
+          if (due <= weekEnd) dueWeek++;
+        }
+      }
+
+      // 30-day forecast: count cards due per day
+      const forecast = [];
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() + i);
+        const dayStart = new Date(dateKey(d) + "T00:00:00.000Z");
+        const dayEnd = new Date(dateKey(d) + "T23:59:59.999Z");
+        let count = 0;
+        for (const entry of Object.values(progress)) {
+          if (entry?.next_review_at) {
+            const due = new Date(entry.next_review_at);
+            if (due >= dayStart && due <= dayEnd) count++;
+          }
+        }
+        const label = i === 0 ? "今天" : i === 1 ? "明天" : `${d.getMonth() + 1}/${d.getDate()}`;
+        forecast.push({ label, count });
+      }
+
+      const maxForecast = Math.max(1, ...forecast.map((f) => f.count));
+
+      return {
+        dueToday,
+        dueWeek,
+        overdue,
+        avgEF: efCount > 0 ? Math.round((totalEF / efCount) * 100) / 100 : 0,
+        avgInterval: intervalCount > 0 ? Math.round((totalInterval / intervalCount) * 10) / 10 : 0,
+        intervals,
+        efBuckets,
+        statusCounts,
+        maturity: { new: sm2New, learning, mature, total: withSM2 },
+        forecast,
+        maxForecast,
+      };
     },
 
     /** Get/set daily review goal */
@@ -777,6 +882,58 @@ export const api = {
       try {
         localStorage.removeItem(usernameSuffix("mock_interview_history"));
       } catch { /* ignore */ }
+    },
+  },
+
+  // ── User Tag Management ─────────────────────────────────────
+  tags: {
+    TAG_DEFS_KEY: "user_tag_definitions",
+
+    definitions() {
+      try {
+        return JSON.parse(localStorage.getItem(usernameSuffix(this.TAG_DEFS_KEY)) || "[]");
+      } catch { return []; }
+    },
+
+    saveDefinition(tag) {
+      const all = this.definitions();
+      const idx = all.findIndex((t) => t.id === tag.id);
+      if (idx >= 0) all[idx] = tag;
+      else all.push(tag);
+      try {
+        localStorage.setItem(usernameSuffix(this.TAG_DEFS_KEY), JSON.stringify(all));
+      } catch { /* ignore */ }
+      return all;
+    },
+
+    deleteDefinition(tagId) {
+      const all = this.definitions().filter((t) => t.id !== tagId);
+      try {
+        localStorage.setItem(usernameSuffix(this.TAG_DEFS_KEY), JSON.stringify(all));
+      } catch { /* ignore */ }
+      // Remove this tag from all progress entries
+      const progress = getProgress();
+      let changed = false;
+      for (const [qId, entry] of Object.entries(progress)) {
+        if (entry.user_tags?.includes(tagId)) {
+          entry.user_tags = entry.user_tags.filter((id) => id !== tagId);
+          changed = true;
+        }
+      }
+      if (changed) saveProgress(progress);
+      return all;
+    },
+
+    getForQuestion(questionId) {
+      const progress = getProgress();
+      return progress[questionId]?.user_tags || [];
+    },
+
+    setForQuestion(questionId, tagIds) {
+      const progress = getProgress();
+      if (!progress[questionId]) progress[questionId] = {};
+      progress[questionId].user_tags = tagIds;
+      saveProgress(progress);
     },
   },
 

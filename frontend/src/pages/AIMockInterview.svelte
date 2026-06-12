@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
-  import { hasAI, getAIConfig, saveAIConfig, setProvider, PROVIDERS } from "../lib/ai.js";
+  import { hasAI } from "../lib/ai.js";
+  import AIConfigPanel from "../components/AIConfigPanel.svelte";
   import { startInterview, nextRound, finishInterview, clearSession, getSession } from "../lib/ai-mock-interview.js";
   import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
   import { toast } from "../lib/toast.js";
@@ -13,9 +14,6 @@
   let aiLoading = $state(false);
   let showSetup = $state(!hasAI());
   let showSummary = $state(false);
-
-  let apiKeyInput = $state(getAIConfig().key);
-  let apiProvider = $state(getAIConfig().provider ?? 0);
 
   let category = $state(initialConfig?.category || "");
   let difficulty = $state(initialConfig?.difficulty || "");
@@ -119,11 +117,8 @@
     }
   }
 
-  function saveAIKey() {
-    setProvider(apiProvider);
-    saveAIConfig({ key: apiKeyInput });
-    toast.success("AI 配置已保存");
-    if (apiKeyInput) showSetup = false;
+  function handleAIConfigSave(hasKey) {
+    if (hasKey) showSetup = false;
   }
 </script>
 
@@ -134,15 +129,7 @@
         <div class="ai-config-block">
           <h2 class="setup-title">AI 模拟面试</h2>
           <p class="setup-desc">配置 AI 服务商后，AI 面试官将根据你的回答动态出题和追问，模拟真实面试体验</p>
-          <select class="provider-select" bind:value={apiProvider}>
-            {#each PROVIDERS as p, i}
-              <option value={i}>{p.label}</option>
-            {/each}
-          </select>
-          <div class="config-row">
-            <input type="password" bind:value={apiKeyInput} placeholder="输入 API Key..." />
-            <button class="config-save" onclick={saveAIKey}>保存</button>
-          </div>
+          <AIConfigPanel onSave={handleAIConfigSave} />
         </div>
       {/if}
 
@@ -293,42 +280,6 @@
     border-radius: var(--radius);
     margin-bottom: 8px;
   }
-  .provider-select {
-    padding: 8px 10px;
-    font-size: 13px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    color: var(--text);
-    border: 1px solid var(--border);
-    font-family: inherit;
-  }
-  .config-row {
-    display: flex;
-    gap: 8px;
-  }
-  .config-row input {
-    flex: 1;
-    padding: 8px 10px;
-    font-size: 13px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    color: var(--text);
-    border: 1px solid var(--border);
-    font-family: inherit;
-  }
-  .config-save {
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: var(--radius-sm);
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s var(--spring);
-  }
-  .config-save:active { transform: scale(0.97); }
   .setup-section label {
     font-size: 12px;
     font-weight: 600;

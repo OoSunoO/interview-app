@@ -226,7 +226,7 @@ describe("aiChat", () => {
     });
     const { aiChat, saveAIConfig } = await import("../ai.js");
     saveAIConfig({ key: "sk-test" });
-    await expect(aiChat("sys", [])).rejects.toThrow("API 错误 (401)");
+    await expect(aiChat("sys", [])).rejects.toThrow("API Key 无效");
   });
 
   it("truncates long error response text to 200 chars", async () => {
@@ -237,7 +237,7 @@ describe("aiChat", () => {
     });
     const { aiChat, saveAIConfig } = await import("../ai.js");
     saveAIConfig({ key: "sk-test" });
-    await expect(aiChat("sys", [])).rejects.toThrow("x".repeat(200));
+    await expect(aiChat("sys", [])).rejects.toThrow("AI 服务端错误");
   });
 });
 

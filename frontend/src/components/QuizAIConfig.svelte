@@ -1,14 +1,6 @@
 <script>
-  import {
-    hasAI,
-    getAIConfig,
-    saveAIConfig,
-    setProvider,
-    PROVIDERS,
-    gradeDetailed,
-    saveScoreEntry,
-    getScoreHistory,
-  } from "../lib/ai.js";
+  import { hasAI, gradeDetailed, saveScoreEntry, getScoreHistory } from "../lib/ai.js";
+  import AIConfigPanel from "./AIConfigPanel.svelte";
 
   let { q, userAnswer, onGradeResult } = $props();
 
@@ -16,8 +8,6 @@
   let aiLoading = $state(false);
   let showAIConfig = $state(false);
   let showScoreHistory = $state(false);
-  let apiKeyInput = $state(getAIConfig().key);
-  let apiProvider = $state(getAIConfig().provider ?? 0);
   let scoreHistory = $state(getScoreHistory());
 
   async function gradeWithAI() {
@@ -43,11 +33,9 @@
     aiLoading = false;
   }
 
-  function saveAIKey() {
-    setProvider(apiProvider);
-    saveAIConfig({ key: apiKeyInput });
+  function handleAIConfigSave(hasKey) {
     showAIConfig = false;
-    if (apiKeyInput) gradeWithAI();
+    if (hasKey) gradeWithAI();
   }
 
   $effect(() => {
@@ -61,21 +49,13 @@
   <button class="ai-grade-trigger" onclick={gradeWithAI} disabled={aiLoading}>
     {aiLoading ? "AI 评分中..." : "AI 评分"}
   </button>
+  {#if !hasAI() && !showAIConfig}
+    <p class="ai-config-hint">首次使用需配置 AI 服务</p>
+  {/if}
 </div>
 
 {#if showAIConfig}
-  <div class="ai-config">
-    <p class="config-hint">选择 AI 服务商并输入 API Key</p>
-    <select class="provider-select" bind:value={apiProvider}>
-      {#each PROVIDERS as p, i}
-        <option value={i}>{p.label}</option>
-      {/each}
-    </select>
-    <div class="config-row">
-      <input type="password" bind:value={apiKeyInput} placeholder="输入 API Key..." />
-      <button class="config-save" onclick={saveAIKey}>保存</button>
-    </div>
-  </div>
+  <AIConfigPanel onSave={handleAIConfigSave} />
 {/if}
 
 {#if aiGrade}
@@ -156,6 +136,11 @@
   .ai-grade-trigger:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+  .ai-config-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin: 4px 0 0;
   }
   .ai-grade {
     margin-top: 12px;
@@ -276,58 +261,5 @@
     padding: 1px 5px;
     background: var(--bg-elevated);
     border-radius: 3px;
-  }
-  .ai-config {
-    margin-top: 12px;
-    padding: 14px;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-  .config-hint {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin: 0;
-  }
-  .provider-select {
-    padding: 8px 10px;
-    font-size: 13px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    color: var(--text);
-    border: 1px solid var(--border);
-    font-family: inherit;
-  }
-  .config-row {
-    display: flex;
-    gap: 8px;
-  }
-  .config-row input {
-    flex: 1;
-    padding: 8px 10px;
-    font-size: 13px;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    color: var(--text);
-    border: 1px solid var(--border);
-    font-family: inherit;
-  }
-  .config-save {
-    padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 600;
-    border-radius: var(--radius-sm);
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.2s var(--spring);
-  }
-  .config-save:active {
-    transform: scale(0.97);
   }
 </style>

@@ -4,6 +4,7 @@
   import { store } from "../lib/stores.svelte.js";
   import { FILTER_CATEGORIES, categoryLabel } from "../lib/categories.js";
   import { toast } from "../lib/toast.js";
+  import { hasAI } from "../lib/ai.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
 
   let { onNavigate } = $props();
@@ -459,6 +460,19 @@
               <span class="rec-type">{typeLabel(q.type)}</span>
             </button>
           {/each}
+        </div>
+      {/if}
+
+      {#if !hasAI()}
+        <div class="ai-intro-card">
+          <div class="ai-intro-icon">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
+          </div>
+          <div class="ai-intro-body">
+            <p class="ai-intro-title">AI 智能辅助</p>
+            <p class="ai-intro-desc">AI 评分、苏格拉底式探讨、错题分析、AI 模拟面试 — 配置 API Key 即可体验</p>
+            <button class="ai-intro-btn" onclick={() => onNavigate("ai-interview")}>去配置 →</button>
+          </div>
         </div>
       {/if}
 
@@ -979,6 +993,56 @@
     color: var(--text-muted);
     font-size: 14px;
     padding: 20px 0;
+  }
+
+  .ai-intro-card {
+    display: flex;
+    gap: 12px;
+    background: linear-gradient(135deg, var(--accent-bg), var(--bg-card));
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    padding: 14px;
+    align-items: flex-start;
+  }
+  .ai-intro-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  .ai-intro-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .ai-intro-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 4px;
+  }
+  .ai-intro-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0 0 8px;
+  }
+  .ai-intro-btn {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .ai-intro-btn:hover {
+    text-decoration: underline;
   }
 
   /* ── Action Grid ── */

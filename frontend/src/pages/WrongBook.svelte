@@ -5,15 +5,10 @@
   import { categoryLabel } from "../lib/categories.js";
   import { toast } from "../lib/toast.js";
   import ErrorAlert from "../components/ErrorAlert.svelte";
-  import {
-    hasAI,
-    getAIConfig,
-    saveAIConfig,
-    setProvider,
-    PROVIDERS,
-    socraticChat,
-    analyzeMistakes,
-  } from "../lib/ai.js";
+  import { hasAI, socraticChat, analyzeMistakes } from "../lib/ai.js";
+  import { RATINGS, calculateSM2 } from "../lib/sm2.js";
+  import AIConfigPanel from "../components/AIConfigPanel.svelte";
+  import TagManager from "../components/TagManager.svelte";
 
   let { onNavigate } = $props();
   let wrongQuestions = $state([]);
@@ -24,8 +19,6 @@
   let socraticLoading = $state(false);
   let chatInput = $state("");
   let showAIConfig = $state(false);
-  let apiKeyInput = $state(getAIConfig().key);
-  let apiProvider = $state(getAIConfig().provider ?? 0);
   let knowledgeTags = $state([]);
   let showSchedule = $state(true);
   let loading = $state(true);
@@ -33,14 +26,20 @@
   let wrongFilterCat = $state("");
   let wrongFilterDiff = $state("");
   let wrongSearch = $state("");
+  let wrongFilterUserTag = $state("");
   let currentDetail = $state(null);
   let detailLoading = $state(false);
   let detailVersion = $state(0);
   let lastDetailIndex = $state(-1);
+  let reviewResults = $state({});
+  let reviewDone = $state(false);
   let analysisResult = $state(null);
   let analysisLoading = $state(false);
   let analysisError = $state(null);
   let wrongTab = $state(localStorage.getItem("wrongbook_tab") || "list");
+  let userTagDefs = $state([]);
+  let showTagManager = $state(false);
+  let showTagPicker = $state(null);
 
   function switchWrongTab(tab) {
     wrongTab = tab;
@@ -92,12 +91,14 @@
     loading = true;
     error = null;
     try {
-      const [wrong, kp] = await Promise.all([
+      const [wrong, kp, tags] = await Promise.all([
         api.progress.wrong(),
         api.knowledge.list(),
+        Promise.resolve(api.tags.definitions()),
       ]);
       wrongQuestions = wrong;
       knowledgeTags = kp;
+      userTagDefs = tags;
     } catch (e) {
       error = e.message ?? "加载错题失败";
     } finally {
@@ -115,17 +116,16 @@
     if (!reviewMode) return;
     if (e.key === "Escape") {
       e.preventDefault();
-      reviewMode = false;
-      showAnswer = false;
-      currentDetail = null;
+      exitReview();
       return;
     }
     if (e.key === " " || e.key === "Spacebar") {
       if (!showAnswer) { e.preventDefault(); revealAnswer(); return; }
     }
-    if (showAnswer) {
-      if (e.key === "1") { e.preventDefault(); markWrongAgain(); return; }
-      if (e.key === "2") { e.preventDefault(); markCorrect(); return; }
+    if (showAnswer && !reviewDone) {
+      const map = { "1": "forgot", "2": "hard", "3": "good", "4": "easy" };
+      const rating = map[e.key];
+      if (rating) { e.preventDefault(); rateQuestion(rating); return; }
     }
   }
 
@@ -137,21 +137,47 @@
     window.removeEventListener("keydown", handleReviewKeydown);
   });
 
-  async function markCorrect() {
-    const q = wrongQuestions[currentIndex];
-    await api.progress.update(q.id, { status: "correct", rating: "good", duration_seconds: 0 });
-    wrongQuestions.splice(currentIndex, 1);
-    showAnswer = false;
-    if (wrongQuestions.length === 0) { reviewMode = false; currentDetail = null; }
-    else loadReviewDetail(currentIndex);
+  function computeNextReview(rating, q) {
+    const progress = { ef: q.ef, interval: q.interval, repetitions: q.repetitions };
+    const sm2 = calculateSM2(RATINGS[rating].quality, progress);
+    const d = new Date(sm2.next_review_at);
+    const now = new Date();
+    const diffDays = Math.round((d - now) / 86400000);
+    if (diffDays <= 0) return "今天";
+    if (diffDays === 1) return "明天";
+    return `${diffDays} 天后`;
   }
 
-  async function markWrongAgain() {
+  async function rateQuestion(rating) {
     const q = wrongQuestions[currentIndex];
-    await api.progress.update(q.id, { status: "wrong", rating: "forgot", duration_seconds: 0 });
-    currentIndex = (currentIndex + 1) % wrongQuestions.length;
+    reviewResults = { ...reviewResults, [q.id]: rating };
+    await api.progress.update(q.id, { rating, duration_seconds: 0 });
+    wrongQuestions.splice(currentIndex, 1);
     showAnswer = false;
-    loadReviewDetail(currentIndex);
+    if (wrongQuestions.length === 0) {
+      reviewDone = true;
+      currentDetail = null;
+    } else {
+      if (currentIndex >= wrongQuestions.length) currentIndex = wrongQuestions.length - 1;
+      loadReviewDetail(currentIndex);
+    }
+  }
+
+  let reviewSummary = $derived.by(() => {
+    const entries = Object.entries(reviewResults);
+    const total = entries.length;
+    const counts = { forgot: 0, hard: 0, good: 0, easy: 0 };
+    for (const [, r] of entries) { if (counts[r] !== undefined) counts[r]++; }
+    const retention = total > 0 ? Math.round(((counts.good + counts.easy) / total) * 100) : 0;
+    return { total, counts, retention };
+  });
+
+  function exitReview() {
+    reviewMode = false;
+    showAnswer = false;
+    currentDetail = null;
+    reviewDone = false;
+    reviewResults = {};
   }
 
   async function startSocratic() {
@@ -195,6 +221,9 @@
     wrongQuestions.filter((q) => {
       if (wrongFilterCat && q.category !== wrongFilterCat) return false;
       if (wrongFilterDiff && q.difficulty !== wrongFilterDiff) return false;
+      if (wrongFilterUserTag) {
+        if (!(q.user_tags || []).includes(wrongFilterUserTag)) return false;
+      }
       if (wrongSearch) {
         const s = wrongSearch.toLowerCase();
         const matches = (q.title || "").toLowerCase().includes(s) ||
@@ -275,66 +304,103 @@
     toast.success(newVal ? "已收藏" : "已取消收藏");
   }
 
-  function saveAIKey() {
-    setProvider(apiProvider);
-    saveAIConfig({ key: apiKeyInput });
+  function handleAIConfigSave(hasKey) {
     showAIConfig = false;
-    if (apiKeyInput) startSocratic();
+    if (hasKey) startSocratic();
+  }
+
+  function toggleQuestionTag(q, tagId) {
+    const tags = q.user_tags || [];
+    const idx = tags.indexOf(tagId);
+    if (idx >= 0) tags.splice(idx, 1);
+    else tags.push(tagId);
+    q.user_tags = tags;
+    api.tags.setForQuestion(q.id, tags);
   }
 </script>
 
 <div class="page wrong">
-  {#if reviewMode}
+  {#if reviewMode && !reviewDone}
     <div class="review-header">
-      <button
-        class="back-btn"
-        onclick={() => {
-          reviewMode = false;
-          showAnswer = false;
-          currentDetail = null;
-        }}>← 退出</button
-      >
-      <span class="review-progress">{currentIndex + 1}/{wrongQuestions.length}</span>
+      <button class="back-btn" onclick={exitReview}>← 退出</button>
+      <span class="review-progress">{wrongQuestions.length - currentIndex}/{wrongQuestions.length}</span>
+    </div>
+
+    <div class="rs-progress-track">
+      <div class="rs-progress-fill" style="transform: scaleX({1 - (wrongQuestions.length > 0 ? currentIndex / wrongQuestions.length : 0)})"></div>
     </div>
 
     {#if wrongQuestions.length > 0}
-      <div class="review-card">
-        <div class="q-info">
-          <span class="tag">{categoryLabel(wrongQuestions[currentIndex].category)}</span>
-          <span class="tag diff {wrongQuestions[currentIndex].difficulty}"
-            >{wrongQuestions[currentIndex].difficulty}</span
-          >
-          <span class="wrong-badge-sm">答错 {wrongQuestions[currentIndex].wrong_count} 次</span>
+      {#key wrongQuestions[currentIndex]?.id}
+        <div class="review-card">
+          <div class="q-info">
+            <span class="tag">{categoryLabel(wrongQuestions[currentIndex].category)}</span>
+            <span class="tag diff {wrongQuestions[currentIndex].difficulty}"
+              >{wrongQuestions[currentIndex].difficulty}</span
+            >
+            <span class="wrong-badge-sm">答错 {wrongQuestions[currentIndex].wrong_count} 次</span>
+          </div>
+          <h2 class="review-title">{wrongQuestions[currentIndex].title}</h2>
+          {#if detailLoading}
+            <p class="loading" style="padding:20px 0">加载详情...</p>
+          {:else if currentDetail}
+            <div class="review-content">{currentDetail.content}</div>
+          {/if}
         </div>
-        <h2 class="review-title">{wrongQuestions[currentIndex].title}</h2>
-        {#if detailLoading}
-          <p class="loading" style="padding:20px 0">加载详情...</p>
-        {:else if currentDetail}
-          <div class="review-content">{currentDetail.content}</div>
+        {#if showAnswer && currentDetail}
+          <div class="review-answer">
+            <strong>答案：</strong>
+            <div class="review-answer-text">{currentDetail.answer}</div>
+          </div>
         {/if}
-      </div>
-      {#if showAnswer && currentDetail}
-        <div class="review-answer">
-          <strong>答案：</strong>
-          <div class="review-answer-text">{currentDetail.answer}</div>
-        </div>
-      {/if}
 
-      <button
-        class="reveal-btn"
-        class:revealed={showAnswer}
-        onclick={() => (showAnswer = !showAnswer)}
-      >
-        <span>{showAnswer ? "隐藏答案" : "查看答案"}</span>
-        {#if !showAnswer}<span class="kbd-hint">Space</span>{/if}
-      </button>
+        <button
+          class="reveal-btn"
+          class:revealed={showAnswer}
+          onclick={() => (showAnswer = !showAnswer)}
+        >
+          <span>{showAnswer ? "隐藏答案" : "查看答案"}</span>
+          {#if !showAnswer}<span class="kbd-hint">Space</span>{/if}
+        </button>
 
-      {#if showAnswer}
-        <div class="review-actions">
-          <button class="wrong-btn" onclick={markWrongAgain}><span class="kbd-hint">1</span> 还是不会</button>
-          <button class="correct-btn" onclick={markCorrect}><span class="kbd-hint">2</span> 掌握了</button>
-        </div>
-        <button class="socratic-btn" onclick={startSocratic} disabled={socraticLoading}>
+        {#if showAnswer}
+          <div class="rs-rate-area">
+            <div class="rs-rate-btns">
+              <button class="rs-rate-btn forgot" onclick={() => rateQuestion("forgot")}>
+                <span class="rs-rate-kbd">1</span>
+                <span class="rs-rate-icon">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" /><line x1="9" y1="9" x2="15" y2="15" /></svg>
+                </span>
+                <span class="rs-rate-lbl">忘记了</span>
+                <span class="rs-rate-sub">{computeNextReview("forgot", wrongQuestions[currentIndex])}</span>
+              </button>
+              <button class="rs-rate-btn hard" onclick={() => rateQuestion("hard")}>
+                <span class="rs-rate-kbd">2</span>
+                <span class="rs-rate-icon">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+                </span>
+                <span class="rs-rate-lbl">不太熟</span>
+                <span class="rs-rate-sub">{computeNextReview("hard", wrongQuestions[currentIndex])}</span>
+              </button>
+              <button class="rs-rate-btn good" onclick={() => rateQuestion("good")}>
+                <span class="rs-rate-kbd">3</span>
+                <span class="rs-rate-icon">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                </span>
+                <span class="rs-rate-lbl">答对了</span>
+                <span class="rs-rate-sub">{computeNextReview("good", wrongQuestions[currentIndex])}</span>
+              </button>
+              <button class="rs-rate-btn easy" onclick={() => rateQuestion("easy")}>
+                <span class="rs-rate-kbd">4</span>
+                <span class="rs-rate-icon">
+                  <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                </span>
+                <span class="rs-rate-lbl">很简单</span>
+                <span class="rs-rate-sub">{computeNextReview("easy", wrongQuestions[currentIndex])}</span>
+              </button>
+            </div>
+          </div>
+          <button class="socratic-btn" onclick={startSocratic} disabled={socraticLoading}>
           {#if socraticLoading}
             思考中...
           {:else}
@@ -343,20 +409,10 @@
           {/if}
         </button>
       {/if}
+    {/key}
 
       {#if showAIConfig}
-        <div class="ai-config">
-          <p class="config-hint">选择 AI 服务商并输入 API Key</p>
-          <select class="provider-select" bind:value={apiProvider}>
-            {#each PROVIDERS as p, i}
-              <option value={i}>{p.label}</option>
-            {/each}
-          </select>
-          <div class="config-row">
-            <input type="password" bind:value={apiKeyInput} placeholder="输入 API Key..." />
-            <button class="config-save" onclick={saveAIKey}>保存</button>
-          </div>
-        </div>
+        <AIConfigPanel onSave={handleAIConfigSave} />
       {/if}
 
       {#if socraticMsgs.length > 0}
@@ -388,6 +444,35 @@
         全部掌握！
       </p>
     {/if}
+  {:else if reviewDone}
+    <div class="rs-summary">
+      <div class="summary-icon" class:good={reviewSummary.retention >= 70} class:ok={reviewSummary.retention >= 40 && reviewSummary.retention < 70} class:bad={reviewSummary.retention < 40}>
+        {#if reviewSummary.retention >= 70}
+          <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+        {:else}
+          <svg aria-hidden="true" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+        {/if}
+      </div>
+      <h2 class="summary-title">复习完成！</h2>
+      <div class="summary-stats">
+        <div class="summary-stat good">
+          <span class="summary-stat-num">{reviewSummary.counts.good + reviewSummary.counts.easy}</span>
+          <span class="summary-stat-lbl">已掌握</span>
+        </div>
+        <div class="summary-stat hard">
+          <span class="summary-stat-num">{reviewSummary.counts.hard}</span>
+          <span class="summary-stat-lbl">待巩固</span>
+        </div>
+        <div class="summary-stat forgot">
+          <span class="summary-stat-num">{reviewSummary.counts.forgot}</span>
+          <span class="summary-stat-lbl">要复习</span>
+        </div>
+      </div>
+      <p class="summary-pct">{reviewSummary.retention}% 掌握率</p>
+      <div class="summary-actions">
+        <button class="summary-btn primary" onclick={exitReview}>完成</button>
+      </div>
+    </div>
   {:else}
     <div class="wrong-header">
       <h1 class="page-title" data-testid="page-title">错题本</h1>
@@ -425,6 +510,10 @@
         <button class="export-btn" onclick={exportWrongAsMarkdown}>
           <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
           导出
+        </button>
+        <button class="tag-mgr-btn" onclick={openTagManager}>
+          <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2z"/><path d="M7 7h.01"/></svg>
+          标签管理
         </button>
       </div>
 
@@ -516,6 +605,14 @@
               <option value="medium">中等</option>
               <option value="hard">困难</option>
             </select>
+            {#if userTagDefs.length > 0}
+              <select bind:value={wrongFilterUserTag} class="wb-filter">
+                <option value="">全部标签</option>
+                {#each userTagDefs as ut}
+                  <option value={ut.id}>{ut.name}</option>
+                {/each}
+              </select>
+            {/if}
             <span class="wb-filter-count">{filteredQuestions.length} 题</span>
           </div>
         {/if}
@@ -537,18 +634,46 @@
                 </div>
               {/if}
               <div class="group-questions">
-                {#each group.questions as q}
-                  <button class="card" onclick={async () => { await store.startQuiz(filteredQuestions); onNavigate("quiz", { questionId: q.id }); }}>
-                    <div class="q-header">
-                      <span class="tag">{categoryLabel(q.category)}</span>
-                      <span class="tag diff {q.difficulty}">{q.difficulty}</span>
-                      <span class="wb-bm-toggle" class:active={q.bookmarked} role="button" tabindex="0" onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }} onclick={(e) => toggleBookmark(e, q)} title={q.bookmarked ? "取消收藏" : "收藏"}>
-                        <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill={q.bookmarked ? "currentColor" : "none"} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
-                      </span>
-                      <span class="wrong-count">答错 {q.wrong_count} 次</span>
+                  {#each group.questions as q}
+                  <div class="card-wrap">
+                    <button class="card" onclick={async () => { await store.startQuiz(filteredQuestions); onNavigate("quiz", { questionId: q.id }); }}>
+                      <div class="q-header">
+                        <span class="tag">{categoryLabel(q.category)}</span>
+                        <span class="tag diff {q.difficulty}">{q.difficulty}</span>
+                        <span class="wb-bm-toggle" class:active={q.bookmarked} role="button" tabindex="0" onkeydown={(e) => { if (e.key === "Enter") toggleBookmark(e, q); }} onclick={(e) => toggleBookmark(e, q)} title={q.bookmarked ? "取消收藏" : "收藏"}>
+                          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 24 24" fill={q.bookmarked ? "currentColor" : "none"} stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 21 12 17.27 5 21 5 3 19 3 19 21" /></svg>
+                        </span>
+                        <span class="wrong-count">答错 {q.wrong_count} 次</span>
+                      </div>
+                      <p class="q-title-text">{@html highlightText(q.title)}</p>
+                    </button>
+                    <div class="q-tags-row">
+                      {#each (q.user_tags || []).filter((tid) => userTagDefs.find((ut) => ut.id === tid)) as tid}
+                        {@const ut = userTagDefs.find((t) => t.id === tid)}
+                        {#if ut}
+                          <button class="q-user-tag" style="--ut-color: {ut.color}" onclick={(e) => { e.stopPropagation(); toggleQuestionTag(q, tid); }}>{ut.name} ✕</button>
+                        {/if}
+                      {/each}
+                      <button class="q-tag-add" onclick={(e) => { e.stopPropagation(); showTagPicker = showTagPicker === q.id ? null : q.id; }} title="添加标签">
+                        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                      </button>
                     </div>
-                    <p class="q-title-text">{@html highlightText(q.title)}</p>
-                  </button>
+                    {#if showTagPicker === q.id}
+                      <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+                      <div class="tag-picker" onclick={(e) => e.stopPropagation()}>
+                        {#each userTagDefs as ut}
+                          <label class="tag-picker-item">
+                            <input type="checkbox" checked={(q.user_tags || []).includes(ut.id)} onchange={() => toggleQuestionTag(q, ut.id)} />
+                            <span class="tag-picker-dot" style="background:{ut.color}"></span>
+                            {ut.name}
+                          </label>
+                        {/each}
+                        {#if userTagDefs.length === 0}
+                          <span class="tag-picker-empty">暂无标签，请先创建</span>
+                        {/if}
+                      </div>
+                    {/if}
+                  </div>
                 {/each}
               </div>
             </div>
@@ -630,6 +755,13 @@
       {/if}
     {/if}
   {/if}
+
+  <TagManager
+    show={showTagManager}
+    questions={wrongQuestions}
+    onclose={() => { showTagManager = false; }}
+    onchange={(defs) => { userTagDefs = defs; }}
+  />
 </div>
 
 <style>
@@ -1202,31 +1334,6 @@
     white-space: nowrap;
     padding: 10px 16px;
   }
-  .ai-config {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 12px;
-  }
-  .config-hint {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-bottom: 8px;
-  }
-  .provider-select {
-    margin-bottom: 8px;
-  }
-  .config-row {
-    display: flex;
-    gap: 8px;
-  }
-  .config-row input {
-    flex: 1;
-  }
-  .config-save {
-    white-space: nowrap;
-    padding: 10px 16px;
-  }
   .analysis-btn {
     display: inline-flex;
     align-items: center;
@@ -1500,6 +1607,300 @@
   }
 
   /* ── Mobile ── */
+  .tag-mgr-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s var(--spring);
+  }
+  .tag-mgr-btn:active {
+    background: var(--bg-surface);
+    color: var(--text);
+    transform: scale(0.97);
+  }
+
+  /* ── User Tags on Cards ── */
+  .card-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .q-tags-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 4px 14px 10px;
+  }
+  .q-user-tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--ut-color, #6366f1) 20%, transparent);
+    color: var(--ut-color, #6366f1);
+    border: 1px solid color-mix(in srgb, var(--ut-color, #6366f1) 40%, transparent);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .q-user-tag:active { opacity: 0.6; }
+  .q-tag-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s;
+  }
+  .q-tag-add:active {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .tag-picker {
+    position: absolute;
+    top: 100%;
+    right: 10px;
+    z-index: 10;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 160px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  }
+  .tag-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    transition: background 0.1s;
+  }
+  .tag-picker-item:active { background: var(--bg-surface); }
+  .tag-picker-item input { margin: 0; }
+  .tag-picker-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tag-picker-empty {
+    font-size: 12px;
+    color: var(--text-dim);
+    padding: 8px 4px;
+    text-align: center;
+  }
+
+  /* ── Review Progress ── */
+  .rs-progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .rs-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transform-origin: left;
+    transition: transform 0.5s var(--spring);
+  }
+
+  /* ── Rating Buttons ── */
+  .rs-rate-area {
+    animation: fadeIn 0.3s ease;
+  }
+  .rs-rate-btns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .rs-rate-btn {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text);
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+    transition: all 0.2s var(--spring);
+  }
+  .rs-rate-btn:active {
+    transform: scale(0.96);
+  }
+  .rs-rate-kbd {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    opacity: 0.6;
+  }
+  .rs-rate-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    margin-bottom: 2px;
+  }
+  .rs-rate-lbl {
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .rs-rate-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+  .rs-rate-btn.forgot:active,
+  .rs-rate-btn.forgot .rs-rate-icon {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  .rs-rate-btn.hard:active,
+  .rs-rate-btn.hard .rs-rate-icon {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  .rs-rate-btn.good:active,
+  .rs-rate-btn.good .rs-rate-icon {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  .rs-rate-btn.easy:active,
+  .rs-rate-btn.easy .rs-rate-icon {
+    background: var(--accent-bg);
+    color: var(--accent);
+  }
+
+  /* ── Summary ── */
+  .rs-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 20px;
+    text-align: center;
+  }
+  .summary-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+  }
+  .summary-icon.good { background: var(--success-bg); color: var(--success); }
+  .summary-icon.ok { background: var(--warning-bg); color: var(--warning); }
+  .summary-icon.bad { background: var(--danger-bg); color: var(--danger); }
+  .summary-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .summary-stats {
+    display: flex;
+    gap: 16px;
+  }
+  .summary-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+  }
+  .summary-stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary-stat.good .summary-stat-num { color: var(--success); }
+  .summary-stat.hard .summary-stat-num { color: var(--warning); }
+  .summary-stat.forgot .summary-stat-num { color: var(--danger); }
+  .summary-stat-lbl {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .summary-pct {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .summary-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 240px;
+  }
+  .summary-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s var(--spring);
+  }
+  .summary-btn:active { transform: scale(0.97); }
+  .summary-btn.primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+  }
+
   @media (max-width: 480px) {
     .filter-tabs {
       gap: 6px;
